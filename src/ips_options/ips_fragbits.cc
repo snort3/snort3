@@ -143,17 +143,16 @@ bool FragBitsOption::operator==(const IpsOption& ips) const
 
 int FragBitsOption::eval(Cursor&, Packet* p)
 {
-    FragBitsData* fb = &config;
-    int rval = DETECTION_OPTION_NO_MATCH;
-    PROFILE_VARS;
+    PERF_PROFILE(fragBitsPerfStats);
 
-    if(!p->ptrs.ip_api.is_ip())
-    {
-        return rval;
-    }
+    FragBitsData* fb = &config;
+
+    if ( !p->has_ip() )
+        return DETECTION_OPTION_NO_MATCH;
+
 
     const uint16_t frag_offset = p->ptrs.ip_api.off_w_flags();
-    MODULE_PROFILE_START(fragBitsPerfStats);
+
 
     DebugMessage(DEBUG_IPS_OPTION, "           <!!> CheckFragBits: ");
         DebugFormat(DEBUG_IPS_OPTION, "[rule: 0x%X:%d   pkt: 0x%X] ",
@@ -166,12 +165,13 @@ int FragBitsOption::eval(Cursor&, Packet* p)
         if (fb->frag_bits == (frag_offset & bitmask))
         {
             DebugMessage(DEBUG_IPS_OPTION,"Got Normal bits match\n");
-            rval = DETECTION_OPTION_MATCH;
+            return DETECTION_OPTION_MATCH;
         }
         else
         {
             DebugMessage(DEBUG_IPS_OPTION,"Normal test failed\n");
         }
+
         break;
 
     case FB_NOT:
@@ -179,7 +179,7 @@ int FragBitsOption::eval(Cursor&, Packet* p)
         if ((fb->frag_bits & (frag_offset & bitmask)) == 0)
         {
             DebugMessage(DEBUG_IPS_OPTION,"Got NOT bits match\n");
-            rval = DETECTION_OPTION_MATCH;
+            return DETECTION_OPTION_MATCH;
         }
         else
         {
@@ -192,7 +192,7 @@ int FragBitsOption::eval(Cursor&, Packet* p)
         if ((fb->frag_bits & (frag_offset & bitmask)) == fb->frag_bits)
         {
             DebugMessage(DEBUG_IPS_OPTION,"Got ALL bits match\n");
-            rval = DETECTION_OPTION_MATCH;
+            return DETECTION_OPTION_MATCH;
         }
         else
         {
@@ -205,20 +205,20 @@ int FragBitsOption::eval(Cursor&, Packet* p)
         if ((fb->frag_bits & (frag_offset & bitmask)) != 0)
         {
             DebugMessage(DEBUG_IPS_OPTION,"Got ANY bits match\n");
-            rval = DETECTION_OPTION_MATCH;
+            return DETECTION_OPTION_MATCH;
         }
         else
         {
             DebugMessage(DEBUG_IPS_OPTION,"ANY test failed\n");
         }
         break;
+
     default:
         break;
     }
 
     /* if the test isn't successful, this function *must* return 0 */
-    MODULE_PROFILE_END(fragBitsPerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

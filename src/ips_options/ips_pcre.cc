@@ -561,19 +561,13 @@ bool PcreOption::operator==(const IpsOption& ips) const
 
 int PcreOption::eval(Cursor& c, Packet*)
 {
-    PcreData* pcre_data = config;
-    int found_offset = -1;  /* where is the ending location of the pattern */
-    bool matched = false;
+    PERF_PROFILE(pcrePerfStats);
 
-    PROFILE_VARS;
-    MODULE_PROFILE_START(pcrePerfStats);
+    PcreData* pcre_data = config;
 
     // short circuit this for testing pcre performance impact
     if (SnortConfig::no_pcre())
-    {
-        MODULE_PROFILE_END(pcrePerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
     unsigned pos = c.get_delta();
 
@@ -583,7 +577,9 @@ int PcreOption::eval(Cursor& c, Packet*)
     if ( pos > c.size() )
         return 0;
 
-    matched = pcre_search(pcre_data, c.buffer(), c.size(), pos, &found_offset);
+    int found_offset = -1; // where is the ending location of the pattern
+    bool matched = pcre_search(pcre_data, c.buffer(), c.size(), pos,
+        &found_offset);
 
     if (matched)
     {
@@ -592,11 +588,10 @@ int PcreOption::eval(Cursor& c, Packet*)
             c.set_pos(found_offset);
             c.set_delta(found_offset);
         }
-        MODULE_PROFILE_END(pcrePerfStats);
+
         return DETECTION_OPTION_MATCH;
     }
 
-    MODULE_PROFILE_END(pcrePerfStats);
     return DETECTION_OPTION_NO_MATCH;
 }
 

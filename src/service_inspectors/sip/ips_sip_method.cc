@@ -99,39 +99,24 @@ bool SipMethodOption::operator==(const IpsOption& ips) const
 
 int SipMethodOption::eval(Cursor&, Packet* p)
 {
-    SIPData* sd;
-    SIP_Roptions* ropts;
-    uint32_t methodFlag;
-
-    PROFILE_VARS;
-    MODULE_PROFILE_START(sipMethodRuleOptionPerfStats);
+    PERF_PROFILE(sipMethodRuleOptionPerfStats);
 
     if ((!p->is_tcp() && !p->is_udp()) || !p->flow || !p->dsize)
-    {
-        MODULE_PROFILE_END(sipMethodRuleOptionPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
-    sd = get_sip_session_data(p->flow);
+    SIPData* sd = get_sip_session_data(p->flow);
 
     if (!sd)
-    {
-        MODULE_PROFILE_END(sipMethodRuleOptionPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
-    ropts = &sd->ropts;
+    SIP_Roptions* ropts = &sd->ropts;
 
     // Not response
-    methodFlag = 1 << (ropts->methodFlag - 1);
+    uint32_t methodFlag = 1 << (ropts->methodFlag - 1);
 
     if (IsRequest(ropts) && ((smod.flags & methodFlag) ^ smod.mask))
-    {
-        MODULE_PROFILE_END(sipMethodRuleOptionPerfStats);
         return DETECTION_OPTION_MATCH;
-    }
 
-    MODULE_PROFILE_END(sipMethodRuleOptionPerfStats);
     return DETECTION_OPTION_NO_MATCH;
 }
 

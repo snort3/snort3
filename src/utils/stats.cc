@@ -356,7 +356,7 @@ void PrintStatistics(void)
 
         snort_conf->logging_flags &= ~LOGGING_FLAG__QUIET;
 
-        ShowAllProfiles();
+        PerfProfilerManager::show_all_stats();
 
         snort_conf->logging_flags |= save_quiet_flag;
     }

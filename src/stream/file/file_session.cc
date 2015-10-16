@@ -72,8 +72,7 @@ static FilePosition position(Packet* p)
 
 int FileSession::process(Packet* p)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(file_ssn_stats);
+    PERF_PROFILE(file_ssn_stats);
 
     p->flow->ssn_state.application_protocol = SNORT_PROTO_USER;
     StreamFileConfig* c = get_file_cfg(p->flow->ssn_server);
@@ -84,7 +83,6 @@ int FileSession::process(Packet* p)
         file_flows->file_process((uint8_t*)p->data, p->dsize, position(p), c->upload);
     set_file_data((uint8_t*)p->data, p->dsize);
 
-    MODULE_PROFILE_END(file_ssn_stats);
     return 0;
 }
 

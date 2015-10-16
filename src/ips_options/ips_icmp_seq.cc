@@ -109,12 +109,10 @@ bool IcmpSeqOption::operator==(const IpsOption& ips) const
 
 int IcmpSeqOption::eval(Cursor&, Packet* p)
 {
-    PROFILE_VARS;
+    PERF_PROFILE(icmpSeqPerfStats);
 
     if (!p->ptrs.icmph)
         return DETECTION_OPTION_NO_MATCH;
-
-    MODULE_PROFILE_START(icmpSeqPerfStats);
 
     if ( (p->ptrs.icmph->type == ICMP_ECHO ||
         p->ptrs.icmph->type == ICMP_ECHOREPLY) ||
@@ -123,11 +121,10 @@ int IcmpSeqOption::eval(Cursor&, Packet* p)
     {
         if ( config.eval(p->ptrs.icmph->s_icmp_seq) )
         {
-            MODULE_PROFILE_END(icmpSeqPerfStats);
             return DETECTION_OPTION_MATCH;
         }
     }
-    MODULE_PROFILE_END(icmpSeqPerfStats);
+
     return DETECTION_OPTION_NO_MATCH;
 }
 

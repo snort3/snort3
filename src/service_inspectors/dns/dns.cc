@@ -995,16 +995,14 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
 
 static void snort_dns(Packet* p)
 {
-    DNSData* dnsSessionData = NULL;
-    uint8_t direction = 0;
-    PROFILE_VARS;
+    PERF_PROFILE(dnsPerfStats);
 
-    /* For TCP, do a few extra checks... */
+    // For TCP, do a few extra checks...
     if ( p->has_tcp_data() )
     {
-        /* If session picked up mid-stream, do not process further.
-         * Would be almost impossible to tell where we are in the
-         * data stream. */
+        // If session picked up mid-stream, do not process further.
+        // Would be almost impossible to tell where we are in the
+        // data stream.
         if ( p->flow->get_session_flags() & SSNFLAG_MIDSTREAM )
         {
             return;
@@ -1015,49 +1013,39 @@ static void snort_dns(Packet* p)
             return;
         }
 
-        /* If we're waiting on stream reassembly, don't process this packet. */
+        // If we're waiting on stream reassembly, don't process this packet.
         if ( p->packet_flags & PKT_STREAM_INSERT )
         {
             return;
         }
     }
 
-    /* Get the direction of the packet. */
-    direction = ( (p->packet_flags & PKT_FROM_SERVER ) ?
+    // Get the direction of the packet.
+    uint8_t direction = ( (p->packet_flags & PKT_FROM_SERVER ) ?
         DNS_DIR_FROM_SERVER : DNS_DIR_FROM_CLIENT );
 
-    MODULE_PROFILE_START(dnsPerfStats);
 
-    /* Attempt to get a previously allocated DNS block. */
-    dnsSessionData = get_dns_session_data(p);
+    // Attempt to get a previously allocated DNS block.
+    DNSData* dnsSessionData = get_dns_session_data(p);
 
     if (dnsSessionData == NULL)
     {
-        /* Check the stream session. If it does not currently
-         * have our DNS data-block attached, create one.
-         */
+        // Check the stream session. If it does not currently
+        // have our DNS data-block attached, create one.
         dnsSessionData = SetNewDNSData(p);
 
         if ( !dnsSessionData )
-        {
-            /* Could not get/create the session data for this packet. */
-            MODULE_PROFILE_END(dnsPerfStats);
+            // Could not get/create the session data for this packet.
             return;
-        }
     }
 
     if (dnsSessionData->flags & DNS_FLAG_NOT_DNS)
-    {
-        MODULE_PROFILE_END(dnsPerfStats);
         return;
-    }
 
     if (direction == DNS_DIR_FROM_SERVER)
     {
         ParseDNSResponseMessage(p, dnsSessionData);
     }
-
-    MODULE_PROFILE_END(dnsPerfStats);
 }
 
 //-------------------------------------------------------------------------

@@ -84,19 +84,15 @@ bool IpTosOption::operator==(const IpsOption& ips) const
 
 int IpTosOption::eval(Cursor&, Packet* p)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
-    PROFILE_VARS;
+    PERF_PROFILE(ipTosPerfStats);
 
     if(!p->ptrs.ip_api.is_ip())
-        return rval;
-
-    MODULE_PROFILE_START(ipTosPerfStats);
+        return DETECTION_OPTION_NO_MATCH;
 
     if ( config.eval(p->ptrs.ip_api.tos()) )
-        rval = DETECTION_OPTION_MATCH;
+        return DETECTION_OPTION_MATCH;
 
-    MODULE_PROFILE_END(ipTosPerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

@@ -112,53 +112,52 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
     if (!pkt->flow || !pkt->ptrs.tcph)
         return 0;
 
-    PROFILE_VARS;
-    MODULE_PROFILE_START(streamReassembleRuleOptionPerfStats);
-
-    Flow* lwssn = (Flow*)pkt->flow;
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-
-    if ( !srod.enable ) /* Turn it off */
+    PERF_PROFILE_BLOCK(streamReassembleRuleOptionPerfStats)
     {
-        if ( srod.direction & SSN_DIR_FROM_SERVER )
+        Flow* lwssn = (Flow*)pkt->flow;
+        TcpSession* tcpssn = (TcpSession*)lwssn->session;
+
+        if ( !srod.enable ) /* Turn it off */
         {
-            tcpssn->server.flush_policy = STREAM_FLPOLICY_IGNORE;
-            stream.set_splitter(lwssn, true);
+            if ( srod.direction & SSN_DIR_FROM_SERVER )
+            {
+                tcpssn->server.flush_policy = STREAM_FLPOLICY_IGNORE;
+                stream.set_splitter(lwssn, true);
+            }
+
+            if ( srod.direction & SSN_DIR_FROM_CLIENT )
+            {
+                tcpssn->client.flush_policy = STREAM_FLPOLICY_IGNORE;
+                stream.set_splitter(lwssn, false);
+            }
+        }
+        else
+        {
+            // FIXIT-M PAF need to instantiate service splitter?
+            // FIXIT-M PAF need to check for ips / on-data
+            if ( srod.direction & SSN_DIR_FROM_SERVER )
+            {
+                tcpssn->server.flush_policy = STREAM_FLPOLICY_ON_ACK;
+                stream.set_splitter(lwssn, true, new AtomSplitter(true));
+            }
+
+            if ( srod.direction & SSN_DIR_FROM_CLIENT )
+            {
+                tcpssn->client.flush_policy = STREAM_FLPOLICY_ON_ACK;
+                stream.set_splitter(lwssn, false, new AtomSplitter(false));
+            }
         }
 
-        if ( srod.direction & SSN_DIR_FROM_CLIENT )
+        if (srod.fastpath)
         {
-            tcpssn->client.flush_policy = STREAM_FLPOLICY_IGNORE;
-            stream.set_splitter(lwssn, false);
+            /* Turn off inspection */
+            lwssn->ssn_state.ignore_direction |= srod.direction;
+            DisableInspection(pkt);
+
+            /* TBD: Set TF_FORCE_FLUSH ? */
         }
     }
-    else
-    {
-        // FIXIT-M PAF need to instantiate service splitter?
-        // FIXIT-M PAF need to check for ips / on-data
-        if ( srod.direction & SSN_DIR_FROM_SERVER )
-        {
-            tcpssn->server.flush_policy = STREAM_FLPOLICY_ON_ACK;
-            stream.set_splitter(lwssn, true, new AtomSplitter(true));
-        }
 
-        if ( srod.direction & SSN_DIR_FROM_CLIENT )
-        {
-            tcpssn->client.flush_policy = STREAM_FLPOLICY_ON_ACK;
-            stream.set_splitter(lwssn, false, new AtomSplitter(false));
-        }
-    }
-
-    if (srod.fastpath)
-    {
-        /* Turn off inspection */
-        lwssn->ssn_state.ignore_direction |= srod.direction;
-        DisableInspection(pkt);
-
-        /* TBD: Set TF_FORCE_FLUSH ? */
-    }
-
-    MODULE_PROFILE_END(streamReassembleRuleOptionPerfStats);
 
     if (srod.alert)
         return DETECTION_OPTION_MATCH;

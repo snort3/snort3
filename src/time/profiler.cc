@@ -31,8 +31,8 @@
 #include <unistd.h>
 
 #include <mutex>
-using namespace std;
 
+#include "time/cpuclock.h"
 #include "detection/fp_detect.h"
 #include "detection/treenodes.h"
 #include "detection/rules.h"
@@ -43,10 +43,27 @@ using namespace std;
 #include "framework/module.h"
 #include "hash/sfghash.h"
 
-// FIXIT-M: Instead of using preprocessor directives, use the build system
-//          to control compilation of this module
-#ifdef PERF_PROFILING
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
 
+using namespace std;
+
+#define TOTAL "total"
+
+// -----------------------------------------------------------------------------
+// types
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+// static variables
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+// static functions
+// -----------------------------------------------------------------------------
+
+// FIXIT-L legacy stuff (to be cleaned up)
 typedef struct _ProfileStatsNode
 {
     ProfileStats stats;
@@ -94,7 +111,6 @@ static int max_layers = 0;
 
 static ProfileStatsNode* get_node(const char*);
 
-#define TOTAL "total"
 
 static ProfileStatsNode* get_root(ProfileStatsNode* idx)
 {
@@ -572,11 +588,10 @@ void PrintPreprocPerformance(int num, Preproc_WorstPerformer* idx)
     if (num != 0)
     {
         indent += 2;
-        LogMessage("%*d%*s%*d" FMTu64("*") FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
+        LogMessage("%*d%*s%*d" FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
             indent, num,
             28 - indent, idx->node->name, 6, idx->node->layer,
             11, idx->node->stats.checks,
-            11, idx->node->stats.exits,
             20, (uint64_t)(idx->node->stats.ticks/ticks_per_microsec),
             11, idx->ticks_per_check/ticks_per_microsec,
             14, idx->pct_of_parent,
@@ -587,11 +602,10 @@ void PrintPreprocPerformance(int num, Preproc_WorstPerformer* idx)
         /* The totals */
         indent += strlen(idx->node->name);
 
-        LogMessage("%*s%*s%*d" FMTu64("*") FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
+        LogMessage("%*s%*s%*d" FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
             indent, idx->node->name,
             28 - indent, idx->node->name, 6, idx->node->layer,
             11, idx->node->stats.checks,
-            11, idx->node->stats.exits,
             20, (uint64_t)(idx->node->stats.ticks/ticks_per_microsec),
             11, idx->ticks_per_check/ticks_per_microsec,
             14, idx->pct_of_parent,
@@ -646,9 +660,7 @@ void ReleaseProfileStats(void)
         assert(ps);
 
         node->stats.ticks += ps->ticks;
-        node->stats.ticks_start += ps->ticks_start;
         node->stats.checks += ps->checks;
-        node->stats.exits += ps->exits;
 
         node = node->next;
     }
@@ -689,23 +701,21 @@ void PrintWorstPreprocs(int numToPrint)
     else
         LogMessage("Module Profile Statistics (all)\n");
 
-    LogMessage("%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+    LogMessage("%*s%*s%*s%*s%*s%*s%*s%*s\n",
         4, "Num",
         24, "Module",
         6, "Layer",
         11, "Checks",
-        11, "Exits",
         20, "Microsecs",
         11, "Avg/Check",
         14, "Pct of Caller",
         13, "Pct of Total");
 
-    LogMessage("%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+    LogMessage("%*s%*s%*s%*s%*s%*s%*s%*s\n",
         4, "===",
         24, "======",
         6, "=====",
         11, "======",
-        11, "=====",
         20, "=========",
         11, "=========",
         14, "=============",
@@ -770,9 +780,7 @@ void ResetPreprocProfiling(void)
     for (idx = gProfileStatsNodeList; idx != NULL; idx = idx->next)
     {
         idx->stats.ticks = 0;
-        idx->stats.ticks_start = 0;
         idx->stats.checks = 0;
-        idx->stats.exits = 0;
     }
 }
 
@@ -916,5 +924,371 @@ void ShowPreprocProfiles(void)
     CleanupProfileStatsNodeList();
 }
 
-#endif
+// -----------------------------------------------------------------------------
+// non-static implementation
+// -----------------------------------------------------------------------------
 
+void NodePerfProfiler::update(bool match)
+{ stats.update(get_delta(), match); }
+
+// -----------------------------------------------------------------------------
+// public API
+// -----------------------------------------------------------------------------
+
+void PerfProfilerManager::register_module(Module* m)
+{ RegisterProfile(m); }
+
+void PerfProfilerManager::register_module(const char* name, const char* pname, Module* m)
+{ RegisterProfile(name, pname, nullptr, m); }
+
+void PerfProfilerManager::register_module(const char* name, const char* pname,
+    get_profile_func getter)
+{ RegisterProfile(name, pname, getter, nullptr); }
+
+// thread local
+void PerfProfilerManager::consolidate_stats()
+{ ReleaseProfileStats(); }
+
+void PerfProfilerManager::show_module_stats()
+{ ShowPreprocProfiles(); }
+
+void PerfProfilerManager::reset_module_stats()
+{ }
+
+void PerfProfilerManager::show_rule_stats()
+{ ShowRuleProfiles(); }
+
+void PerfProfilerManager::reset_rule_stats()
+{ }
+
+void PerfProfilerManager::show_all_stats()
+{
+    if ( SnortConfig::get_profile_modules() )
+        show_module_stats();
+
+    if ( SnortConfig::get_profile_rules() )
+        show_rule_stats();
+}
+
+void PerfProfilerManager::reset_all_stats()
+{ }
+
+void PerfProfilerManager::init()
+{ }
+
+void PerfProfilerManager::term()
+{ CleanupProfileStatsNodeList(); }
+
+// -----------------------------------------------------------------------------
+// unit tests
+// -----------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+struct ProfilePauseObserver
+{
+    void start()
+    {
+        start_called = true;
+        if ( pause_called )
+            pause_called_before_start = true;
+    }
+
+    void pause()
+    { pause_called = true; }
+
+    bool pause_called = false;
+    bool start_called = false;
+    bool pause_called_before_start = false;
+};
+
+TEST_CASE( "stopwatch", "[profiler]" )
+{
+    Stopwatch sw;
+
+    REQUIRE_FALSE( sw.alive() );
+    REQUIRE( sw.get() == 0 );
+
+    SECTION( "start" )
+    {
+        sw.start();
+
+        SECTION( "sets clock to alive" )
+        {
+            CHECK( sw.alive() );
+        }
+
+        SECTION( "running elapsed time should be non-zero" )
+        {
+            CHECK( sw.get() > 0 );
+        }
+
+        SECTION( "start on running clock has no effect" )
+        {
+            auto val = sw.get();
+            sw.start();
+            CHECK( sw.alive() );
+            CHECK( sw.get() > val );
+        }
+    }
+
+    SECTION( "stop" )
+    {
+        sw.start();
+        sw.stop();
+
+        SECTION( "sets clock to be dead" )
+        {
+            CHECK_FALSE( sw.alive() );
+        }
+
+        SECTION( "ticks should not increase after death" )
+        {
+            auto val = sw.get();
+            CHECK( val == sw.get() );
+        }
+
+        SECTION( "stop on stopped clock has no effect" )
+        {
+            auto val = sw.get();
+            sw.stop();
+            CHECK_FALSE( sw.alive() );
+            CHECK( val == sw.get() );
+        }
+    }
+
+    SECTION( "reset" )
+    {
+        sw.start();
+
+        SECTION( "reset on running clock" )
+        {
+            sw.reset();
+            CHECK_FALSE( sw.alive() );
+            CHECK( sw.get() == 0 );
+        }
+
+        SECTION( "reset on stopped clock" )
+        {
+            sw.stop();
+            sw.reset();
+            CHECK_FALSE( sw.alive() );
+            CHECK( sw.get() == 0 );
+        }
+    }
+
+    SECTION( "cancel" )
+    {
+        sw.start();
+        SECTION( "cancel on running clock that has no lap time" )
+        {
+            sw.cancel();
+            CHECK_FALSE( sw.alive() );
+            CHECK( sw.get() == 0 );
+        }
+
+        SECTION( "cancel on stopped clock that has lap time" )
+        {
+            sw.stop();
+            auto val = sw.get();
+            sw.cancel();
+
+            CHECK_FALSE( sw.alive() );
+            CHECK( val == sw.get() );
+        }
+    }
+}
+
+TEST_CASE( "perf profiler base", "[profiler]" )
+{
+    SECTION( "profiler is started on instantiation" )
+    {
+        PerfProfilerBase prof;
+        CHECK( prof.get_delta() > 0 );
+    }
+
+    SECTION( "profiler evaluates to true" )
+    {
+        PerfProfilerBase prof;
+        CHECK( prof );
+    }
+}
+
+TEST_CASE( "perf profiler", "[profiler]" )
+{
+    ProfileStats stats = { 0, 0 };
+
+    REQUIRE( stats.ticks == 0 );
+    REQUIRE( stats.checks == 0 );
+
+    SECTION( "going out of scope causes profiler to update stats" )
+    {
+        {
+            PerfProfiler prof(stats);
+        }
+
+        CHECK( stats.ticks > 0 );
+        CHECK( stats.checks == 1 );
+    }
+
+    SECTION( "stopping profiler is only done once" )
+    {
+        PerfProfiler prof(stats);
+        prof.stop();
+        ProfileStats saved = stats;
+        prof.stop();
+
+        CHECK( saved.ticks == stats.ticks );
+        CHECK( saved.checks == stats.checks );
+    }
+
+    SECTION( "profiler can be stopped while paused" )
+    {
+        PerfProfiler prof(stats);
+        prof.pause();
+        prof.stop();
+
+        CHECK( stats.ticks > 0 );
+        CHECK( stats.checks == 1 );
+    }
+
+    SECTION( "profiler can be pause and restarted" )
+    {
+        PerfProfiler prof(stats);
+        prof.pause();
+        prof.start();
+
+        CHECK( stats.ticks == 0 );
+        CHECK( stats.checks == 0 );
+
+        prof.stop();
+
+        CHECK( stats.ticks > 0 );
+        CHECK( stats.checks == 1 );
+    }
+
+    SECTION( "profiler correctly handles exceptions" )
+    {
+        try
+        {
+            PerfProfiler prof(stats);
+            throw int(1);
+        }
+
+        catch( int& )
+        { }
+
+        CHECK( stats.ticks > 0 );
+        CHECK( stats.checks == 1 );
+    }
+}
+
+TEST_CASE( "node perf profiler", "[profiler]" )
+{
+    dot_node_state_t stats;
+
+    stats.ticks = 0;
+    stats.ticks_match = 0;
+    stats.ticks_no_match = 0;
+    stats.checks = 0;
+
+    SECTION( "going out of scope causes profiler to update stats" )
+    {
+        {
+            NodePerfProfiler prof(stats);
+        }
+
+        CHECK( stats.ticks > 0 );
+        CHECK( stats.checks == 1 );
+
+        SECTION( "evaluates to NO MATCH by default" )
+        {
+            CHECK( stats.ticks_no_match > 0 );
+        }
+    }
+
+    SECTION( "stopping profiler is only done once" )
+    {
+        NodePerfProfiler prof(stats);
+        prof.stop(false);
+        dot_node_state_t saved = stats;
+        prof.stop(true);
+
+        CHECK( saved.ticks == stats.ticks );
+        CHECK( saved.checks == stats.checks );
+
+        SECTION( "only one of match or no match is updated" )
+        {
+            CHECK( stats.ticks_no_match > 0 );
+            CHECK( stats.ticks_match == 0 );
+        }
+    }
+
+    SECTION( "profiler can be stopped while paused" )
+    {
+        NodePerfProfiler prof(stats);
+        prof.pause();
+        prof.stop(false);
+
+        CHECK( stats.ticks > 0 );
+        CHECK( stats.checks == 1 );
+    }
+
+    SECTION( "profiler can be pause and restarted" )
+    {
+        NodePerfProfiler prof(stats);
+        prof.pause();
+        prof.start();
+
+        CHECK( stats.ticks == 0 );
+        CHECK( stats.checks == 0 );
+
+        prof.stop(false);
+
+        CHECK( stats.ticks > 0 );
+        CHECK( stats.checks == 1 );
+    }
+
+    SECTION( "profiler uses MATCH when stop(true) is called" )
+    {
+        NodePerfProfiler prof(stats);
+        prof.stop(true);
+
+        CHECK( stats.ticks_match > 0 );
+
+        SECTION( "and doesn't update NO MATCH" )
+        {
+            CHECK( stats.ticks_no_match == 0 );
+        }
+    }
+
+    SECTION( "profiler correctly handles exceptions" )
+    {
+        try
+        {
+            NodePerfProfiler prof(stats);
+            throw int(1);
+        }
+
+        catch( int& )
+        { }
+
+        CHECK( stats.ticks > 0 );
+        CHECK( stats.checks == 1 );
+    }
+}
+
+TEST_CASE( "perf profiler pause", "[profiler]" )
+{
+    ProfilePauseObserver observer;
+
+    {
+        ProfilerPause<decltype(observer)> pause(observer);
+    }
+
+    CHECK( observer.pause_called );
+    CHECK( observer.start_called );
+    CHECK( observer.pause_called_before_start );
+}
+
+#endif

@@ -527,8 +527,6 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
     int iCallDetect = 1;
     HttpSessionData* hsd = NULL;
 
-    PROFILE_VARS;
-
     hi_stats.total++;
 
     /*
@@ -612,12 +610,14 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             return 0;
         }
         // see comments on call to snort_detect() below
-        MODULE_PROFILE_START(hiDetectPerfStats);
-        get_data_bus().publish(PACKET_EVENT, p);
+        PERF_PROFILE_BLOCK(hiDetectPerfStats)
+        {
+            get_data_bus().publish(PACKET_EVENT, p);
 #ifdef PERF_PROFILING
-        hiDetectCalled = 1;
+            hiDetectCalled = 1;
 #endif
-        MODULE_PROFILE_END(hiDetectPerfStats);
+        }
+
         return 0;
     }
 
@@ -1105,12 +1105,13 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
         **  better than having all these Packet struct field checks in the
         **  main detection engine for each protocol field.
         */
-        MODULE_PROFILE_START(hiDetectPerfStats);
-        snort_detect(p);
+        PERF_PROFILE_BLOCK(hiDetectPerfStats)
+        {
+            snort_detect(p);
 #ifdef PERF_PROFILING
-        hiDetectCalled = 1;
+            hiDetectCalled = 1;
 #endif
-        MODULE_PROFILE_END(hiDetectPerfStats);
+        }
 
         /*
         **  We set the global detection flag here so that if request pipelines

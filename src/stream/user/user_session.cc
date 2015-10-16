@@ -431,10 +431,7 @@ bool UserSession::setup(Packet*)
 
 #ifdef ENABLE_EXPECTED_USER
     if ( flow_con->expected_session(flow, p))
-    {
-        MODULE_PROFILE_END(user_perf_stats);
         return false;
-    }
 #endif
     return true;
 }
@@ -467,8 +464,7 @@ StreamSplitter* UserSession::get_splitter(bool c2s)
 
 int UserSession::process(Packet* p)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(user_perf_stats);
+    PERF_PROFILE(user_perf_stats);
 
     if ( stream.expired_session(flow, p) )
     {
@@ -477,20 +473,14 @@ int UserSession::process(Packet* p)
 
 #ifdef ENABLE_EXPECTED_USER
         if ( flow_con->expected_session(flow, p))
-        {
-            MODULE_PROFILE_END(user_perf_stats);
             return 0;
-        }
 #endif
     }
 
     flow->set_direction(p);
 
     if ( stream.blocked_session(flow, p) || stream.ignored_session(flow, p) )
-    {
-        MODULE_PROFILE_END(user_perf_stats);
         return 0;
-    }
 
     update(p, flow);
 
@@ -505,7 +495,6 @@ int UserSession::process(Packet* p)
     if ( p->ptrs.decode_flags & DECODE_EOF )
         end(p, flow);
 
-    MODULE_PROFILE_END(user_perf_stats);
     return 0;
 }
 

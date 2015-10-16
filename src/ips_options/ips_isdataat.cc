@@ -137,15 +137,13 @@ bool IsDataAtOption::operator==(const IpsOption& ips) const
 
 int IsDataAtOption::eval(Cursor& c, Packet*)
 {
+    PERF_PROFILE(isDataAtPerfStats);
+
     IsDataAtData* isdata = &config;
-    int rval = DETECTION_OPTION_NO_MATCH;
-    const uint8_t* start_ptr;
+
     int offset;
 
-    PROFILE_VARS;
-    MODULE_PROFILE_START(isDataAtPerfStats);
-
-    /* Get values from byte_extract variables, if present. */
+    // Get values from byte_extract variables, if present.
     if (isdata->offset_var >= 0 && isdata->offset_var < NUM_BYTE_EXTRACT_VARS)
     {
         uint32_t value;
@@ -155,6 +153,7 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
     else
         offset = isdata->offset;
 
+    const uint8_t* start_ptr;
     if ( isdata->flags & ISDATAAT_RELATIVE_FLAG )
     {
         start_ptr = c.start();
@@ -165,6 +164,7 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
     }
     start_ptr += offset;
 
+    int rval = DETECTION_OPTION_NO_MATCH;
     if (inBounds(c.buffer(), c.endo(), start_ptr))
     {
         DebugMessage(DEBUG_PATTERN_MATCH,
@@ -177,8 +177,7 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
         rval = !rval;
     }
 
-    /* otherwise dump */
-    MODULE_PROFILE_END(isDataAtPerfStats);
+    // otherwise dump
     return rval;
 }
 

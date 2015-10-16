@@ -696,18 +696,15 @@ void Pop::show(SnortConfig*)
 
 void Pop::eval(Packet* p)
 {
-    PROFILE_VARS;
+    PERF_PROFILE(popPerfStats);
+
     // precondition - what we registered for
     assert(p->has_tcp_data());
     assert(p->flow);
 
     ++popstats.total_packets;
 
-    MODULE_PROFILE_START(popPerfStats);
-
     snort_pop(config, p);
-
-    MODULE_PROFILE_END(popPerfStats);
 }
 
 //-------------------------------------------------------------------------

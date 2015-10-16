@@ -988,51 +988,45 @@ void RpcDecode::show(SnortConfig*)
  */
 void RpcDecode::eval(Packet* p)
 {
-    RpcSsnData* rsdata = NULL;
-    PROFILE_VARS;
+    PERF_PROFILE(rpcdecodePerfStats);
 
     // preconditions - what we registered for
     assert(p->has_tcp_data());
 
-    /* If we're stateful that means stream has been configured.
-     * In this case we don't look at server packets.
-     * There is the case were stream configuration requires a 3 way handshake.
-     * If no 3 way, then the packet flags won't be set, so don't look at it
-     * since we won't be able to determeine who's the client and who's the server. */
-    if ( !(p->packet_flags & PKT_FROM_CLIENT) )
-    {
+    // If we're stateful that means stream has been configured.
+    // In this case we don't look at server packets.
+    // There is the case were stream configuration requires a 3 way handshake.
+    // If no 3 way, then the packet flags won't be set, so don't look at it
+    // since we won't be able to determeine who's the client and who's the
+    // server.
+    if ( !p->from_client() )
         return;
-    }
 
-    if ( p->flow != NULL )
+    RpcSsnData* rsdata = nullptr;
+
+    if ( p->flow )
     {
         RpcFlowData* fd = (RpcFlowData*)p->flow->get_application_data(
             RpcFlowData::flow_id);
 
-        rsdata = fd ? &fd->session : NULL;
+        if ( fd )
+            rsdata = &fd->session;
     }
 
-    MODULE_PROFILE_START(rpcdecodePerfStats);
     ++rdstats.total_packets;
 
-    if ((rsdata == NULL) && (p->flow != NULL))
-    {
-        if (!stream.is_midstream(p->flow))
-            rsdata = RpcSsnDataNew(p);
-    }
+    if ( !rsdata && p->flow && !stream.is_midstream(p->flow) )
+        rsdata = RpcSsnDataNew(p);
 
     if ( RpcSsnIsActive(rsdata) and (p->packet_flags & PKT_REBUILT_STREAM) )
     {
         RpcStatus ret = RpcStatefulInspection(&config, rsdata, p);
 
         if (ret == RPC_STATUS__SUCCESS)
-        {
-            MODULE_PROFILE_END(rpcdecodePerfStats);
             return;
-        }
 
-        /* Something went wrong - deactivate session tracking
-         * and decode normally */
+        // Something went wrong - deactivate session tracking
+        // and decode normally
         if (ret == RPC_STATUS__ERROR)
             RpcSsnSetInactive(rsdata, p);
     }
@@ -1040,8 +1034,6 @@ void RpcDecode::eval(Packet* p)
     DebugMessage(DEBUG_RPC,"Stateless inspection\n");
 
     RpcPreprocEvent(&config, rsdata, ConvertRPC(&config, rsdata, p));
-
-    MODULE_PROFILE_END(rpcdecodePerfStats);
 }
 
 bool RpcDecode::get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b)

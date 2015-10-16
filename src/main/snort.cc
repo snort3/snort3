@@ -162,15 +162,15 @@ static ProfileStats* get_profile(const char* key)
 static void register_profiles()
 {
 #ifdef PERF_PROFILING
-    RegisterProfile("detect", nullptr, get_profile);
-    RegisterProfile("mpse", "detect", get_profile);
-    RegisterProfile("rule eval", "detect", get_profile);
-    RegisterProfile("rtn eval", "rule eval", get_profile);
-    RegisterProfile("rule tree eval", "rule eval", get_profile);
-    RegisterProfile("decode", nullptr, get_profile);
-    RegisterProfile("eventq", nullptr, get_profile);
-    RegisterProfile("total", nullptr, get_profile);
-    RegisterProfile("daq meta", nullptr, get_profile);
+    PerfProfilerManager::register_module("detect", nullptr, get_profile);
+    PerfProfilerManager::register_module("mpse", "detect", get_profile);
+    PerfProfilerManager::register_module("rule eval", "detect", get_profile);
+    PerfProfilerManager::register_module("rtn eval", "rule eval", get_profile);
+    PerfProfilerManager::register_module("rule tree eval", "rule eval", get_profile);
+    PerfProfilerManager::register_module("decode", nullptr, get_profile);
+    PerfProfilerManager::register_module("eventq", nullptr, get_profile);
+    PerfProfilerManager::register_module("total", nullptr, get_profile);
+    PerfProfilerManager::register_module("daq meta", nullptr, get_profile);
 #endif
 }
 
@@ -405,7 +405,7 @@ void Snort::term()
     periodic_release();
 
 #ifdef PERF_PROFILING
-    CleanupProfileStatsNodeList();
+    PerfProfilerManager::term();
 #endif
 
     /* free allocated memory */
@@ -671,7 +671,7 @@ void Snort::thread_term()
     DAQ_Delete();
 
 #ifdef PERF_PROFILING
-    ReleaseProfileStats();
+    PerfProfilerManager::consolidate_stats();
 #endif
 
     otnx_match_data_term();
@@ -794,30 +794,28 @@ static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
 DAQ_Verdict Snort::packet_callback(
     void*, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
-    int inject = 0;
-    PROFILE_VARS;
+    PERF_PROFILE(totalPerfStats);
 
-    MODULE_PROFILE_START(totalPerfStats);
 
     pc.total_from_daq++;
     rule_eval_pkt_count++;
     packet_time_update(&pkthdr->ts);
 
     if ( snort_conf->pkt_skip && pc.total_from_daq <= snort_conf->pkt_skip )
-    {
-        MODULE_PROFILE_END(totalPerfStats);
         return DAQ_VERDICT_PASS;
-    }
 
-    MODULE_PROFILE_START(eventqPerfStats);
-    SnortEventqReset();
-    MODULE_PROFILE_END(eventqPerfStats);
+    PERF_PROFILE_BLOCK(eventqPerfStats)
+    {
+        SnortEventqReset();
+    }
 
     sfthreshold_reset();
     ActionManager::reset_queue();
 
     DAQ_Verdict verdict = process_packet(s_packet, pkthdr, pkt);
     ActionManager::execute(s_packet);
+
+    int inject = 0;
     verdict = update_verdict(verdict, inject);
 
     UpdateWireStats(&sfBase, pkthdr->caplen, Active::packet_was_dropped(), inject);
@@ -837,7 +835,6 @@ DAQ_Verdict Snort::packet_callback(
     else if ( break_time() )
         DAQ_BreakLoop(0);
 
-    MODULE_PROFILE_END(totalPerfStats);
     return verdict;
 }
 

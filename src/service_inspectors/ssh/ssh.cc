@@ -140,16 +140,10 @@ static unsigned int SSHPacket_GetLength(SSH2Packet* p, size_t buflen)
  */
 static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
 {
-    SSHData* sessp = NULL;
-    uint8_t direction;
-    unsigned int offset = 0;
-    uint32_t search_dir_ver, search_dir_keyinit;
-    PROFILE_VARS;
+    PERF_PROFILE(sshPerfStats);
 
-    MODULE_PROFILE_START(sshPerfStats);
-
-    /* Attempt to get a previously allocated SSH block. */
-    sessp = get_session_data(p->flow);
+    // Attempt to get a previously allocated SSH block.
+    SSHData* sessp = get_session_data(p->flow);
 
     if (sessp == NULL)
     {
@@ -159,47 +153,39 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
         sessp = SetNewSSHData(p);
 
         if ( !sessp )
-        {
-            /* Could not get/create the session data for this packet. */
-            MODULE_PROFILE_END(sshPerfStats);
+            // Could not get/create the session data for this packet.
             return;
-        }
 
     }
 
-
-    /* Don't process if we've missed packets */
+    // Don't process if we've missed packets
     if (sessp->state_flags & SSH_FLG_MISSED_PACKETS)
-    {
-        MODULE_PROFILE_END(sshPerfStats);
         return;
-    }
 
-    /* Make sure this preprocessor should run.
-       check if we're waiting on stream reassembly */
+    // Make sure this preprocessor should run.
+    // check if we're waiting on stream reassembly
     if ( p->packet_flags & PKT_STREAM_INSERT )
-    {
-        MODULE_PROFILE_END(sshPerfStats);
         return;
-    }
 
-    /* If we picked up mid-stream or missed any packets (midstream pick up
-     *      * means we've already missed packets) set missed packets flag and make
-     *           * sure we don't do any more reassembly on this session */
+    // If we picked up mid-stream or missed any packets (midstream pick up
+    // means we've already missed packets) set missed packets flag and make
+    // sure we don't do any more reassembly on this session
     if ((p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
         || stream.missed_packets(p->flow, SSN_DIR_BOTH))
     {
-        /* Order only matters if the packets are not encrypted */
+        // Order only matters if the packets are not encrypted
         if ( !(sessp->state_flags & SSH_FLG_SESS_ENCRYPTED ))
         {
             sessp->state_flags |= SSH_FLG_MISSED_PACKETS;
-
-            MODULE_PROFILE_END(sshPerfStats);
             return;
         }
     }
 
-    /* Get the direction of the packet. */
+    uint8_t direction;
+    uint32_t search_dir_ver;
+    uint32_t search_dir_keyinit;
+
+    // Get the direction of the packet.
     if ( p->packet_flags & PKT_FROM_SERVER )
     {
         direction = SSH_DIR_FROM_SERVER;
@@ -212,28 +198,28 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
         search_dir_ver = SSH_FLG_CLIENT_IDSTRING_SEEN;
         search_dir_keyinit = SSH_FLG_CLIENT_SKEY_SEEN | SSH_FLG_CLIENT_KEXINIT_SEEN;
     }
+
+    unsigned int offset = 0;
+
     if ( !(sessp->state_flags & SSH_FLG_SESS_ENCRYPTED ))
     {
-        /* If server and client have not performed the protocol
-         * version exchange yet, must look for version strings.
-          */
+        // If server and client have not performed the protocol
+        // version exchange yet, must look for version strings.
         if ( !(sessp->state_flags & search_dir_ver) )
         {
             offset = ProcessSSHProtocolVersionExchange(config, sessp, p, direction);
             if (!offset)
-            {
-                /*Error processing protovers exchange msg */
-                MODULE_PROFILE_END(sshPerfStats);
+                // Error processing protovers exchange msg 
                 return;
-            }
-            /* found protocol version.  Stream reassembly might have appended an ssh packet,
-             * such as the key exchange init.  Thus call ProcessSSHKeyInitExchange() too.
-             */
+
+            // found protocol version.
+            // Stream reassembly might have appended an ssh packet,
+            // such as the key exchange init.
+            // Thus call ProcessSSHKeyInitExchange() too.
         }
 
-        /* Expecting to see the key init exchange at this point
-         * (in SSH2) or the actual key exchange if SSH1
-         */
+        // Expecting to see the key init exchange at this point
+        // (in SSH2) or the actual key exchange if SSH1
         if ( !(sessp->state_flags & search_dir_keyinit) )
         {
             offset = ProcessSSHKeyInitExchange(sessp, p, direction, offset);
@@ -241,33 +227,26 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
             if (!offset)
             {
                 if ( !(sessp->state_flags & SSH_FLG_SESS_ENCRYPTED ))
-                {
-                    MODULE_PROFILE_END(sshPerfStats);
                     return;
-                }
             }
         }
 
-        /* If SSH2, need to process the actual key exchange msgs.
-         * The actual key exchange type was negotiated in the
-         * key exchange init msgs. SSH1 won't arrive here.
-         */
+        // If SSH2, need to process the actual key exchange msgs.
+        // The actual key exchange type was negotiated in the
+        // key exchange init msgs. SSH1 won't arrive here.
         offset = ProcessSSHKeyExchange(sessp, p, direction, offset);
         if (!offset)
-        {
-            MODULE_PROFILE_END(sshPerfStats);
             return;
-        }
     }
+
     if ( (sessp->state_flags & SSH_FLG_SESS_ENCRYPTED ))
     {
-        /* Traffic on this session is currently encrypted.
-         * Two of the major SSH exploits, SSH1 CRC-32 and
-          * the Challenge-Response Overflow attack occur within
-         * the encrypted portion of the SSH session. Therefore,
-         * the only way to detect these attacks is by examining
-         * amounts of data exchanged for anomalies.
-           */
+        // Traffic on this session is currently encrypted.
+        // Two of the major SSH exploits, SSH1 CRC-32 and
+        // the Challenge-Response Overflow attack occur within
+        // the encrypted portion of the SSH session. Therefore,
+        // the only way to detect these attacks is by examining
+        // amounts of data exchanged for anomalies.
         sessp->num_enc_pkts++;
 
         if ( sessp->num_enc_pkts <= config->MaxEncryptedPackets )
@@ -275,58 +254,43 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
             if ( direction == SSH_DIR_FROM_CLIENT )
             {
                 if (!offset)
-                {
                     sessp->num_client_bytes += p->dsize;
-                }
+
                 else
-                {
                     sessp->num_client_bytes += (p->dsize - offset);
-                }
 
                 if ( sessp->num_client_bytes >= config->MaxClientBytes )
                 {
-                    /* Probable exploit in progress.*/
+                    // Probable exploit in progress.
                     if (sessp->version == SSH_VERSION_1)
-                    {
-                        {
-                            SnortEventqAdd(GID_SSH, SSH_EVENT_CRC32);
+                        SnortEventqAdd(GID_SSH, SSH_EVENT_CRC32);
 
-                            stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
-                        }
-                    }
                     else
-                    {
-                        {
-                            SnortEventqAdd(GID_SSH, SSH_EVENT_RESPOVERFLOW);
+                        SnortEventqAdd(GID_SSH, SSH_EVENT_RESPOVERFLOW);
 
-                            stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
-                        }
-                    }
+                    stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
                 }
             }
+
             else
             {
-                /*
-                 * Have seen a server response, so
-                 * this appears to be a valid exchange.
-                 * Reset suspicious byte count to zero.
-                 */
+                 // Have seen a server response, so this appears to be a valid
+                 // exchange. Reset suspicious byte count to zero
                 sessp->num_client_bytes = 0;
             }
         }
+
         else
         {
-            /* Have already examined more than the limit
-             * of encrypted packets. Both the Gobbles and
-             * the CRC32 attacks occur during authentication
-             * and therefore cannot be used late in an
-             * encrypted session. For performance purposes,
-             * stop examining this session.
-             */
+            // Have already examined more than the limit
+            // of encrypted packets. Both the Gobbles and
+            // the CRC32 attacks occur during authentication
+            // and therefore cannot be used late in an
+            // encrypted session. For performance purposes,
+            // stop examining this session.
             stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
         }
     }
-    MODULE_PROFILE_END(sshPerfStats);
 }
 
 /* Checks if the string 'str' is 'max' bytes long or longer.

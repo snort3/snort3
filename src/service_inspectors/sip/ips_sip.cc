@@ -97,29 +97,22 @@ private:
 
 int SipIpsOption::eval(Cursor& c, Packet* p)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(sip_ps[idx]);
+    auto& sip_stats = sip_ps[idx];
+    PERF_PROFILE(sip_stats);
 
-    int rval;
     SIPData* sd;
     SIP_Roptions* ropts;
     const uint8_t* data = NULL;
     unsigned len = 0;
 
     if ((!p->is_tcp() && !p->is_udp()) || !p->flow || !p->dsize)
-    {
-        MODULE_PROFILE_END(sip_ps[idx]);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
     // FIXIT-P cache id at parse time for runtime use
 
     sd = get_sip_session_data(p->flow);
     if (!sd)
-    {
-        MODULE_PROFILE_END(sip_ps[idx]);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
     ropts = &sd->ropts;
 
@@ -140,15 +133,11 @@ int SipIpsOption::eval(Cursor& c, Packet* p)
     if (data != NULL)
     {
         c.set(key, data, len);
-        rval = DETECTION_OPTION_MATCH;
-    }
-    else
-    {
-        rval = DETECTION_OPTION_NO_MATCH;
+        return DETECTION_OPTION_MATCH;
     }
 
-    MODULE_PROFILE_END(sip_ps[idx]);
-    return rval;
+    else
+        return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

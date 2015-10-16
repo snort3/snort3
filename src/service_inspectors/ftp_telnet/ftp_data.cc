@@ -251,19 +251,16 @@ ProfileStats* FtpDataModule::get_profile() const
 
 void FtpData::eval(Packet* p)
 {
+    PERF_PROFILE(ftpdataPerfStats);
+
     // precondition - what we registered for
     assert(p->has_tcp_data());
 
     if ( FileService::get_max_file_depth() < 0 )
         return;
 
-    PROFILE_VARS;
-    MODULE_PROFILE_START(ftpdataPerfStats);
-
     SnortFTPData(p);
     ++fdstats.total_packets;
-
-    MODULE_PROFILE_END(ftpdataPerfStats);
 }
 
 //-------------------------------------------------------------------------

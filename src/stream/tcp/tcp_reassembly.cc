@@ -681,13 +681,14 @@ static inline unsigned int getSegmentFlushSize(TcpTracker* st, TcpSegment *ss,
 static int FlushStream(Packet* p, TcpTracker *st, uint32_t toSeq,
         uint8_t *flushbuf, const uint8_t *flushbuf_end)
 {
+    PERF_PROFILE(s5TcpBuildPacketPerfStats);
+
     uint16_t bytes_flushed = 0;
     DEBUG_WRAP(uint32_t bytes_queued = st->seg_bytes_logical; );
     uint32_t segs = 0;
     uint32_t flags = PKT_PDU_HEAD;
-    PROFILE_VARS;
 
-    assert(st->seglist_next); MODULE_PROFILE_START(s5TcpBuildPacketPerfStats);
+    assert(st->seglist_next);
 
     uint32_t total = toSeq - st->seglist_next->seq;
 
@@ -771,7 +772,6 @@ static int FlushStream(Packet* p, TcpTracker *st, uint32_t toSeq,
     DebugFormat(DEBUG_STREAM_STATE, "flushed %d bytes / %d segs on stream, %d still queued\n",
             bytes_flushed, segs, bytes_queued);
 
-    MODULE_PROFILE_END(s5TcpBuildPacketPerfStats);
     return bytes_flushed;
 }
 
@@ -826,14 +826,13 @@ static void prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags)
 static inline int _flush_to_seq(TcpSession *tcpssn, TcpTracker *st,
         uint32_t bytes, Packet *p, uint32_t pkt_flags)
 {
+    PERF_PROFILE(s5TcpFlushPerfStats);
+
     uint32_t stop_seq;
     uint32_t footprint;
     uint32_t bytes_processed = 0;
     int32_t flushed_bytes;
     EncodeFlags enc_flags = 0;
-    PROFILE_VARS;
-
-    MODULE_PROFILE_START(s5TcpFlushPerfStats);
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     DAQ_PktHdr_t pkth;
@@ -861,7 +860,6 @@ static inline int _flush_to_seq(TcpSession *tcpssn, TcpTracker *st,
         {
             DebugFormat(DEBUG_STREAM_STATE, "Negative footprint, bailing %d (0x%X - 0x%X)\n",
                     footprint, stop_seq, st->seglist_base_seq);
-            MODULE_PROFILE_END(s5TcpFlushPerfStats);
 
             return bytes_processed;
         }
@@ -914,14 +912,11 @@ static inline int _flush_to_seq(TcpSession *tcpssn, TcpTracker *st,
             tcpStats.rebuilt_packets++;
             UpdateStreamReassStats(&sfBase, flushed_bytes);
 
-            MODULE_PROFILE_TMPEND(s5TcpFlushPerfStats);
+            PERF_PAUSE_BLOCK(s5TcpFlushPerfStats)
+            PERF_PROFILE_BLOCK(s5TcpProcessRebuiltPerfStats)
             {
-                PROFILE_VARS; MODULE_PROFILE_START(s5TcpProcessRebuiltPerfStats);
-
                 Snort::detect_rebuilt_packet(s5_pkt);
-
-                MODULE_PROFILE_END(s5TcpProcessRebuiltPerfStats);
-            } MODULE_PROFILE_TMPSTART(s5TcpFlushPerfStats);
+            }
         }
 
         st->seglist_base_seq += flushed_bytes;
@@ -946,7 +941,6 @@ static inline int _flush_to_seq(TcpSession *tcpssn, TcpTracker *st,
     } while (st->seglist_next and DataToFlush(st));
 
     /* tell them how many bytes we processed */
-    MODULE_PROFILE_END(s5TcpFlushPerfStats);
     return bytes_processed;
 }
 
@@ -1167,15 +1161,14 @@ static inline uint32_t GetForwardDir(const Packet* p)
 // because we don't wait until it is acknowledged
 static inline uint32_t flush_pdu_ips(TcpSession* ssn, TcpTracker* trk, uint32_t* flags)
 {
-    uint32_t total = 0, avail;
-    TcpSegment* seg;
-    PROFILE_VARS;
+    PERF_PROFILE(s5TcpPAFPerfStats);
 
-    MODULE_PROFILE_START(s5TcpPAFPerfStats);
-    avail = get_q_sequenced(trk);
-    seg = trk->seglist_next;
+    TcpSegment* seg = trk->seglist_next;
 
-    // * must stop if gap (checked in paf_check)
+    uint32_t total = 0;
+    uint32_t avail = get_q_sequenced(trk);
+
+    // must stop if gap (checked in paf_check)
     while (seg && *flags && (total < avail))
     {
         int32_t flush_pt;
@@ -1196,8 +1189,6 @@ static inline uint32_t flush_pdu_ips(TcpSession* ssn, TcpTracker* trk, uint32_t*
 
         if (flush_pt >= 0)
         {
-            MODULE_PROFILE_END(s5TcpPAFPerfStats);
-
             // see flush_pdu_ackd()
             if (!trk->splitter->is_paf() && avail > (unsigned) flush_pt)
             {
@@ -1209,7 +1200,6 @@ static inline uint32_t flush_pdu_ips(TcpSession* ssn, TcpTracker* trk, uint32_t*
         seg = seg->next;
     }
 
-    MODULE_PROFILE_END(s5TcpPAFPerfStats);
     return -1;
 }
 
@@ -1241,12 +1231,15 @@ static inline void fallback(TcpTracker* a)
 static inline uint32_t flush_pdu_ackd(TcpSession* ssn, TcpTracker* trk,
         uint32_t* flags)
 {
-    uint32_t total = 0;
-    TcpSegment* seg;
-    PROFILE_VARS;
+    PERF_PROFILE(s5TcpPAFPerfStats);
 
-    MODULE_PROFILE_START(s5TcpPAFPerfStats);
-    seg = SEQ_LT(trk->seglist_base_seq, trk->r_win_base) ? trk->seglist : NULL;
+    TcpSegment* seg;
+    if ( SEQ_LT(trk->seglist_base_seq, trk->r_win_base) )
+        seg = trk->seglist;
+    else
+        seg = nullptr;
+
+    uint32_t total = 0;
 
     // * must stop if not acked
     // * must use adjusted size of seg if not fully acked
@@ -1274,8 +1267,6 @@ static inline uint32_t flush_pdu_ackd(TcpSession* ssn, TcpTracker* trk,
 
         if (flush_pt >= 0)
         {
-            MODULE_PROFILE_END(s5TcpPAFPerfStats);
-
             // for non-paf splitters, flush_pt > 0 means we reached
             // the minimum required, but we flush what is available
             // instead of creating more, but smaller, packets
@@ -1296,9 +1287,9 @@ static inline uint32_t flush_pdu_ackd(TcpSession* ssn, TcpTracker* trk,
         seg = seg->next;
     }
 
-    MODULE_PROFILE_END(s5TcpPAFPerfStats);
     return -1;
 }
+
 int CheckFlushPolicyOnData(TcpSession *tcpssn, TcpTracker *talker, TcpTracker *listener, Packet *p)
 {
     uint32_t flushed = 0;
@@ -1481,7 +1472,6 @@ int StreamQueue(TcpTracker *st, TcpDataBlock *tdb, TcpSession *tcpssn)
     const uint8_t* rdata = tdb->pkt->data;
     uint16_t rsize = tdb->pkt->dsize;
     uint32_t rseq = tdb->seq;
-    PROFILE_VARS;
     DEBUG_WRAP(
             TcpSegment *lastptr = NULL;
             uint32_t base_seq = st->seglist_base_seq;
@@ -1503,7 +1493,7 @@ int StreamQueue(TcpTracker *st, TcpDataBlock *tdb, TcpSession *tcpssn)
     DebugMessage(DEBUG_STREAM_STATE, "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n");
     DebugMessage(DEBUG_STREAM_STATE, "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n");
 
-    MODULE_PROFILE_START(s5TcpInsertPerfStats);
+    PERF_PROFILE(s5TcpInsertPerfStats);
 
     // NORM fast tracks are in sequence - no norms
     if (st->seglist_tail && SegmentFastTrack(st->seglist_tail, tdb))
@@ -1518,7 +1508,6 @@ int StreamQueue(TcpTracker *st, TcpDataBlock *tdb, TcpSession *tcpssn)
         // BLOCK add to existing block and/or allocate new block
         ret = AddStreamNode(st, tdb, len, slide /* 0 */, trunc /* 0 */, seq, left /* tail */);
 
-        MODULE_PROFILE_END(s5TcpInsertPerfStats);
         return ret;
     }
 
@@ -1673,7 +1662,6 @@ int StreamQueue(TcpTracker *st, TcpDataBlock *tdb, TcpSession *tcpssn)
                         /* flag an anomaly */
                         EventBadSegment();
                         inc_tcp_discards();
-                        MODULE_PROFILE_END(s5TcpInsertPerfStats);
                         return STREAM_INSERT_ANOMALY;
                     }
                     break;
@@ -1697,7 +1685,6 @@ int StreamQueue(TcpTracker *st, TcpDataBlock *tdb, TcpSession *tcpssn)
                             /* flag an anomaly */
                             EventBadSegment();
                             inc_tcp_discards();
-                            MODULE_PROFILE_END(s5TcpInsertPerfStats);
                             return STREAM_INSERT_ANOMALY;
                         }
                     }
@@ -1725,7 +1712,6 @@ int StreamQueue(TcpTracker *st, TcpDataBlock *tdb, TcpSession *tcpssn)
                         if (ret != STREAM_INSERT_OK)
                         {
                             /* No warning, its done in StreamSeglistAddNode */
-                            MODULE_PROFILE_END(s5TcpInsertPerfStats);
                             return ret;
                         }
                         left->size -= (int16_t) overlap;
@@ -1756,7 +1742,6 @@ int StreamQueue(TcpTracker *st, TcpDataBlock *tdb, TcpSession *tcpssn)
                 /* flag an anomaly */
                 EventBadSegment();
                 inc_tcp_discards();
-                MODULE_PROFILE_END(s5TcpInsertPerfStats);
                 return STREAM_INSERT_ANOMALY;
             }
         }
@@ -1947,7 +1932,6 @@ int StreamQueue(TcpTracker *st, TcpDataBlock *tdb, TcpSession *tcpssn)
                                     "(seq: %X  seq_end: %X overlap: %lu\n", seq, seq_end, overlap);
                             EventBadSegment();
                             inc_tcp_discards();
-                            MODULE_PROFILE_END(s5TcpInsertPerfStats);
                             return STREAM_INSERT_ANOMALY;
                         }
 
@@ -1967,11 +1951,8 @@ int StreamQueue(TcpTracker *st, TcpDataBlock *tdb, TcpSession *tcpssn)
                     slide = seq - tdb->seq;
                     ret = AddStreamNode(st, tdb, len, slide, trunc, seq, left);
                     if (ret != STREAM_INSERT_OK)
-                    {
-                        /* no warning, already done above */
-                        MODULE_PROFILE_END(s5TcpInsertPerfStats);
+                        // no warning, already done above
                         return ret;
-                    }
 
                     /* Set seq to end of right since overlap was greater than
                      * or equal to right->size and inserted seq has been
@@ -2002,7 +1983,6 @@ int StreamQueue(TcpTracker *st, TcpDataBlock *tdb, TcpSession *tcpssn)
                                     seq, seq_end, overlap);
                             EventBadSegment();
                             inc_tcp_discards();
-                            MODULE_PROFILE_END(s5TcpInsertPerfStats);
                             return STREAM_INSERT_ANOMALY;
                         }
                         break;
@@ -2033,7 +2013,6 @@ right_overlap_last:
 
     DebugMessage(DEBUG_STREAM_STATE, "StreamQueue returning normally\n");
 
-    MODULE_PROFILE_END(s5TcpInsertPerfStats);
     return ret;
 }
 

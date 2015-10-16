@@ -785,7 +785,7 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
     s_modules.push_back(mh);
 
 #ifdef PERF_PROFILING
-    RegisterProfile(m);
+    PerfProfilerManager::register_module(m);
 #endif
 }
 

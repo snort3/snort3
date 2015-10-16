@@ -107,12 +107,11 @@ bool IcmpIdOption::operator==(const IpsOption& ips) const
 
 int IcmpIdOption::eval(Cursor&, Packet* p)
 {
-    PROFILE_VARS;
+    PERF_PROFILE(icmpIdPerfStats);
 
     if (!p->ptrs.icmph)
         return DETECTION_OPTION_NO_MATCH;
 
-    MODULE_PROFILE_START(icmpIdPerfStats);
 
     if ( (p->ptrs.icmph->type == ICMP_ECHO ||
         p->ptrs.icmph->type == ICMP_ECHOREPLY) ||
@@ -120,12 +119,9 @@ int IcmpIdOption::eval(Cursor&, Packet* p)
         (uint16_t)p->ptrs.icmph->type == icmp::Icmp6Types::REPLY_6) )
     {
         if ( config.eval(p->ptrs.icmph->s_icmp_id) )
-        {
-            MODULE_PROFILE_END(icmpIdPerfStats);
             return DETECTION_OPTION_MATCH;
-        }
     }
-    MODULE_PROFILE_END(icmpIdPerfStats);
+
     return DETECTION_OPTION_NO_MATCH;
 }
 

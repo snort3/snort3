@@ -84,8 +84,6 @@ void snort_ignore(Packet*) { }
 
 void snort_inspect(Packet* p)
 {
-    PROFILE_VARS;
-
 #ifdef PPM_MGR
     uint64_t pktcnt=0;
 
@@ -194,10 +192,10 @@ void snort_inspect(Packet* p)
         PPM_END_PKT_TIMER();
     }
 #endif
-    MODULE_PROFILE_START(eventqPerfStats);
+
+    PERF_PROFILE(eventqPerfStats);
     SnortEventqLog(p);
     SnortEventqReset();
-    MODULE_PROFILE_END(eventqPerfStats);
 }
 
 void snort_log(Packet* p)
@@ -338,8 +336,6 @@ bool snort_detect(Packet* p)
     case PktType::PDU:
     case PktType::FILE:
     {
-        PROFILE_VARS;
-
 #       ifdef PPM_MGR
         /*
          * Packet Performance Monitoring
@@ -359,11 +355,8 @@ bool snort_detect(Packet* p)
         **  This is where we short circuit so
         **  that we can do IP checks.
         */
-        MODULE_PROFILE_START(detectPerfStats);
-        int detected = fpEvalPacket(p);
-        MODULE_PROFILE_END(detectPerfStats);
-
-        return detected;
+        PERF_PROFILE(detectPerfStats);
+        return fpEvalPacket(p);
     }
 
     default:

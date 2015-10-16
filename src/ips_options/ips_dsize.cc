@@ -92,26 +92,17 @@ bool DsizeOption::operator==(const IpsOption& ips) const
 // Test the packet's payload size against the rule payload size value
 int DsizeOption::eval(Cursor&, Packet* p)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
-    PROFILE_VARS;
-
-    MODULE_PROFILE_START(dsizePerfStats);
+    PERF_PROFILE(dsizePerfStats);
 
     /* fake packet dsizes are always wrong
        (unless they are PDUs) */
-    if (
-        (p->packet_flags & PKT_REBUILT_STREAM) &&
-        !(p->packet_flags & PKT_PDU_HEAD) )
-    {
-        MODULE_PROFILE_END(dsizePerfStats);
-        return rval;
-    }
+    if ((p->packet_flags & PKT_REBUILT_STREAM) && !p->is_pdu_start())
+        return DETECTION_OPTION_NO_MATCH;
 
     if ( config.eval(p->dsize) )
-        rval = DETECTION_OPTION_MATCH;
+        return DETECTION_OPTION_MATCH;
 
-    MODULE_PROFILE_END(dsizePerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

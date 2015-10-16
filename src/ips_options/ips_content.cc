@@ -401,15 +401,11 @@ static int uniSearchReal(PatternMatchData* pmd, Cursor& c)
 
 static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
-    int found = 0;
-
-    PROFILE_VARS;
-    MODULE_PROFILE_START(contentPerfStats);
+    PERF_PROFILE(contentPerfStats);
 
     DebugMessage(DEBUG_PATTERN_MATCH, "CheckPatternANDMatch: ");
 
-    found = uniSearchReal(idx, c);
+    int found = uniSearchReal(idx, c);
 
     if ( found == -1 )
     {
@@ -426,16 +422,15 @@ static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
 
     if ( found )
     {
-        rval = DETECTION_OPTION_MATCH;
         DebugMessage(DEBUG_PATTERN_MATCH, "Pattern match found\n");
+        return DETECTION_OPTION_MATCH;
     }
+
     else
     {
         DebugMessage(DEBUG_PATTERN_MATCH, "Pattern match failed\n");
+        return DETECTION_OPTION_NO_MATCH;
     }
-
-    MODULE_PROFILE_END(contentPerfStats);
-    return rval;
 }
 
 PatternMatchData* content_get_data(void* pv)

@@ -1524,18 +1524,15 @@ void Smtp::show(SnortConfig*)
 
 void Smtp::eval(Packet* p)
 {
-    PROFILE_VARS;
+    PERF_PROFILE(smtpPerfStats);
+
     // precondition - what we registered for
     assert(p->has_tcp_data());
     assert(p->flow);
 
     ++smtpstats.total_packets;
 
-    MODULE_PROFILE_START(smtpPerfStats);
-
     snort_smtp(config, p);
-
-    MODULE_PROFILE_END(smtpPerfStats);
 }
 
 bool Smtp::get_buf(

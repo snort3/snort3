@@ -126,17 +126,15 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
 
 int Base64DecodeOption::eval(Cursor& c, Packet*)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
-    const uint8_t* start_ptr;
-    unsigned size;
-    uint8_t base64_buf[DECODE_BLEN];
-    uint32_t base64_size =0;
+    PERF_PROFILE(base64PerfStats);
 
-    PROFILE_VARS;
-    MODULE_PROFILE_START(base64PerfStats);
+
 
     base64_decode_size = 0;
+
     Base64DecodeData* idx = (Base64DecodeData*)&config;
+    const uint8_t* start_ptr = nullptr;
+    unsigned size = 0;
 
     if (idx->flags & BASE64DECODE_RELATIVE_FLAG)
     {
@@ -150,18 +148,16 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
     }
 
     if ( idx->offset >= size )
-    {
-        MODULE_PROFILE_END(base64PerfStats);
-        return rval;
-    }
+        return DETECTION_OPTION_NO_MATCH;
+
     start_ptr += idx->offset;
     size -= idx->offset;
 
+    uint8_t base64_buf[DECODE_BLEN];
+    uint32_t base64_size = 0;
+
     if (sf_unfold_header(start_ptr, size, base64_buf, sizeof(base64_buf), &base64_size, 0, 0) != 0)
-    {
-        MODULE_PROFILE_END(base64PerfStats);
-        return rval;
-    }
+        return DETECTION_OPTION_NO_MATCH;
 
     if (idx->bytes_to_decode && (base64_size > idx->bytes_to_decode))
     {
@@ -170,12 +166,7 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
 
     if (sf_base64decode(base64_buf, base64_size, (uint8_t*)base64_decode_buf,
         sizeof(base64_decode_buf), &base64_decode_size) != 0)
-    {
-        MODULE_PROFILE_END(base64PerfStats);
-        return rval;
-    }
-
-    MODULE_PROFILE_END(base64PerfStats);
+        return DETECTION_OPTION_NO_MATCH;
 
     return DETECTION_OPTION_MATCH;
 }
@@ -305,22 +296,14 @@ public:
 
 int Base64DataOption::eval(Cursor& c, Packet*)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
-    PROFILE_VARS;
-
-    MODULE_PROFILE_START(base64PerfStats);
+    PERF_PROFILE(base64PerfStats);
 
     if ( !base64_decode_size )
-    {
-        MODULE_PROFILE_END(base64PerfStats);
-        return rval;
-    }
+        return DETECTION_OPTION_NO_MATCH;
 
     c.set(s_data_name, base64_decode_buf, base64_decode_size);
-    rval = DETECTION_OPTION_MATCH;
 
-    MODULE_PROFILE_END(base64PerfStats);
-    return rval;
+    return DETECTION_OPTION_MATCH;
 }
 
 //-------------------------------------------------------------------------

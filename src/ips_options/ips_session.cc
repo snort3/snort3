@@ -137,32 +137,27 @@ bool SessionOption::operator==(const IpsOption& ips) const
 
 int SessionOption::eval(Cursor&, Packet* p)
 {
+    PERF_PROFILE(sessionPerfStats);
+
     SessionData* session_data = &config;
-    FILE* session;         /* session file ptr */
-    PROFILE_VARS;
 
-    MODULE_PROFILE_START(sessionPerfStats);
+    if ( !p || !p->dsize || !p->data )
+        return DETECTION_OPTION_MATCH;
 
-    /* if there's data in this packet */
-    if (p != NULL)
+    if ( p->is_fragment() )
+        return DETECTION_OPTION_MATCH;
+
+    // FIXIT-M should wrap file open/close in a class to ensure cleanup
     {
-        if ((p->dsize != 0 && p->data != NULL) || (!(p->ptrs.decode_flags & DECODE_FRAG)))
-        {
-            session = OpenSessionFile(p);
+        FILE* session = OpenSessionFile(p);
+        if ( !session )
+            return DETECTION_OPTION_MATCH;
 
-            if (session == NULL)
-            {
-                MODULE_PROFILE_END(sessionPerfStats);
-                return DETECTION_OPTION_MATCH;
-            }
+        DumpSessionData(session, p, session_data);
 
-            DumpSessionData(session, p, session_data);
-
-            fclose(session);
-        }
+        fclose(session);
     }
 
-    MODULE_PROFILE_END(sessionPerfStats);
     return DETECTION_OPTION_MATCH;
 }
 

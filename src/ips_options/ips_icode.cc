@@ -86,20 +86,16 @@ bool IcodeOption::operator==(const IpsOption& ips) const
 
 int IcodeOption::eval(Cursor&, Packet* p)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
-    PROFILE_VARS;
+    PERF_PROFILE(icmpCodePerfStats);
 
-    /* return 0  if we don't have an icmp header */
+    // return 0  if we don't have an icmp header
     if (!p->ptrs.icmph)
-        return rval;
-
-    MODULE_PROFILE_START(icmpCodePerfStats);
+        return DETECTION_OPTION_NO_MATCH;
 
     if ( config.eval(p->ptrs.icmph->code) )
-        rval = DETECTION_OPTION_MATCH;
+        return DETECTION_OPTION_MATCH;
 
-    MODULE_PROFILE_END(icmpCodePerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

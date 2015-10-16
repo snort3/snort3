@@ -87,16 +87,12 @@ bool LenOption::operator==(const IpsOption& ips) const
 
 int LenOption::eval(Cursor& c, Packet*)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
-
-    PROFILE_VARS;
-    MODULE_PROFILE_START(lenCheckPerfStats);
+    PERF_PROFILE(lenCheckPerfStats);
 
     if ( config.eval(c.length()) )
-        rval = DETECTION_OPTION_MATCH;
+        return DETECTION_OPTION_MATCH;
 
-    MODULE_PROFILE_END(lenCheckPerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

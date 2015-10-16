@@ -121,21 +121,14 @@ bool RpcOption::operator==(const IpsOption& ips) const
 
 int RpcOption::eval(Cursor&, Packet* p)
 {
+    PERF_PROFILE(rpcCheckPerfStats);
+
     RpcCheckData* ds_ptr = &config;
-    unsigned char* c=(unsigned char*)p->data;
-    u_long rpcvers, prog, vers, proc;
-    enum msg_type direction;
-    int rval = DETECTION_OPTION_NO_MATCH;
-#ifdef DEBUG_MSGS
-    int i;
-#endif
-    PROFILE_VARS;
 
     if (!(p->is_tcp() || p->is_udp()))
-        return 0; /* if error occured while ip header
-                   * was processed, return 0 automagically.  */
+        return DETECTION_OPTION_NO_MATCH; 
 
-    MODULE_PROFILE_START(rpcCheckPerfStats);
+    auto c = p->data;
 
     if ( p->is_tcp() )
     {
@@ -145,8 +138,7 @@ int RpcOption::eval(Cursor&, Packet* p)
         if (p->dsize<28)
         {
             DebugMessage(DEBUG_IPS_OPTION, "RPC packet too small");
-            MODULE_PROFILE_END(rpcCheckPerfStats);
-            return rval;
+            return DETECTION_OPTION_NO_MATCH;
         }
     }
     else
@@ -155,18 +147,18 @@ int RpcOption::eval(Cursor&, Packet* p)
         if (p->dsize<24)
         {
             DebugMessage(DEBUG_IPS_OPTION, "RPC packet too small");
-            MODULE_PROFILE_END(rpcCheckPerfStats);
-            return rval;
+            return DETECTION_OPTION_NO_MATCH;
         }
     }
 
 #ifdef DEBUG_MSGS
     DebugMessage(DEBUG_IPS_OPTION,"<---xid---> <---dir---> <---rpc--->"
         " <---prog--> <---vers--> <---proc-->\n");
-    for (i=0; i<24; i++)
+    for (int i = 0; i < 24; i++)
     {
         DebugFormat(DEBUG_IPS_OPTION, "%02X ",c[i]);
     }
+
     DebugMessage(DEBUG_IPS_OPTION,"\n");
 #endif
 
@@ -174,31 +166,29 @@ int RpcOption::eval(Cursor&, Packet* p)
     (void)IXDR_GET_LONG (c);
 
     /* Read direction : CALL or REPLY */
-    direction = IXDR_GET_ENUM (c, enum msg_type);
+    enum msg_type direction = IXDR_GET_ENUM (c, enum msg_type);
 
     /* We only look at calls */
     if (direction != CALL)
     {
         DebugMessage(DEBUG_IPS_OPTION, "RPC packet not a call");
-        MODULE_PROFILE_END(rpcCheckPerfStats);
-        return rval;
+        return DETECTION_OPTION_NO_MATCH;
     }
 
     /* Read the RPC message version */
-    rpcvers = IXDR_GET_LONG (c);
+    u_long rpcvers = IXDR_GET_LONG (c);
 
     /* Fail if it is not right */
     if (rpcvers != RPC_MSG_VERSION)
     {
         DebugMessage(DEBUG_IPS_OPTION,"RPC msg version invalid");
-        MODULE_PROFILE_END(rpcCheckPerfStats);
-        return rval;
+        return DETECTION_OPTION_NO_MATCH;
     }
 
     /* Read the program number, version, and procedure */
-    prog = IXDR_GET_LONG (c);
-    vers = IXDR_GET_LONG (c);
-    proc = IXDR_GET_LONG (c);
+    u_long prog = IXDR_GET_LONG (c);
+    u_long vers = IXDR_GET_LONG (c);
+    u_long proc = IXDR_GET_LONG (c);
 
     DebugFormat(DEBUG_IPS_OPTION,"RPC decoded to: %lu %lu %lu\n",
         prog,vers,proc);
@@ -220,7 +210,7 @@ int RpcOption::eval(Cursor&, Packet* p)
             {
                 DebugMessage(DEBUG_IPS_OPTION,"RPC proc matches");
                 DebugMessage(DEBUG_IPS_OPTION, "Yippee! Found one!");
-                rval = DETECTION_OPTION_MATCH;
+                return DETECTION_OPTION_MATCH;
             }
         }
     }
@@ -231,8 +221,7 @@ int RpcOption::eval(Cursor&, Packet* p)
     }
 
     /* if the test isn't successful, return 0 */
-    MODULE_PROFILE_END(rpcCheckPerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

@@ -93,27 +93,21 @@ private:
 
 int HttpIpsOption::eval(Cursor& c, Packet* p)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(http_ps[idx]);
+    auto& http_option_stats = http_ps[idx];
+    PERF_PROFILE(http_option_stats);
 
-    int rval;
     InspectionBuffer hb;
 
     if ( !p->flow || !p->flow->gadget )
-        rval = DETECTION_OPTION_NO_MATCH;
+        return DETECTION_OPTION_NO_MATCH;
 
     // FIXIT-P cache id at parse time for runtime use
     else if ( !p->flow->gadget->get_buf(key, p, hb) )
-        rval = DETECTION_OPTION_NO_MATCH;
+        return DETECTION_OPTION_NO_MATCH;
 
-    else
-    {
-        c.set(key, hb.data, hb.len);
-        rval = DETECTION_OPTION_MATCH;
-    }
+    c.set(key, hb.data, hb.len);
 
-    MODULE_PROFILE_END(http_ps[idx]);
-    return rval;
+    return DETECTION_OPTION_MATCH;
 }
 
 //-------------------------------------------------------------------------

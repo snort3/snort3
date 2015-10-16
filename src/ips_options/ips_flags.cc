@@ -122,25 +122,18 @@ bool TcpFlagOption::operator==(const IpsOption& ips) const
 
 int TcpFlagOption::eval(Cursor&, Packet* p)
 {
-    TcpFlagCheckData* flagptr = &config;
-    int rval = DETECTION_OPTION_NO_MATCH;
-    u_char tcp_flags;
-    PROFILE_VARS;
+    PERF_PROFILE(tcpFlagsPerfStats);
 
-    MODULE_PROFILE_START(tcpFlagsPerfStats);
-
+    // if error appeared when tcp header was processed,
+    // test fails automagically.
     if (!p->ptrs.tcph)
-    {
-        /* if error appeared when tcp header was processed,
-         * test fails automagically */
-        MODULE_PROFILE_END(tcpFlagsPerfStats);
-        return rval;
-    }
+        return DETECTION_OPTION_NO_MATCH;
 
     /* the flags we really want to check are all the ones
      */
 
-    tcp_flags = p->ptrs.tcph->th_flags & (0xFF ^ flagptr->tcp_mask);
+    TcpFlagCheckData* flagptr = &config;
+    u_char tcp_flags = p->ptrs.tcph->th_flags & (0xFF ^ flagptr->tcp_mask);
 
     DebugMessage(DEBUG_IPS_OPTION, "           <!!> CheckTcpFlags: ");
 
@@ -150,7 +143,7 @@ int TcpFlagOption::eval(Cursor&, Packet* p)
         if (flagptr->tcp_flags == tcp_flags)    /* only these set */
         {
             DebugMessage(DEBUG_IPS_OPTION,"Got TCP [default] flag match!\n");
-            rval = DETECTION_OPTION_MATCH;
+            return DETECTION_OPTION_MATCH;
         }
         else
         {
@@ -163,7 +156,7 @@ int TcpFlagOption::eval(Cursor&, Packet* p)
         if ((flagptr->tcp_flags & tcp_flags) == flagptr->tcp_flags)
         {
             DebugMessage(DEBUG_IPS_OPTION, "Got TCP [ALL] flag match!\n");
-            rval = DETECTION_OPTION_MATCH;
+            return DETECTION_OPTION_MATCH;
         }
         else
         {
@@ -175,7 +168,7 @@ int TcpFlagOption::eval(Cursor&, Packet* p)
         if ((flagptr->tcp_flags & tcp_flags) == 0)     /* none set */
         {
             DebugMessage(DEBUG_IPS_OPTION,"Got TCP [NOT] flag match!\n");
-            rval = DETECTION_OPTION_MATCH;
+            return DETECTION_OPTION_MATCH;
         }
         else
         {
@@ -187,7 +180,7 @@ int TcpFlagOption::eval(Cursor&, Packet* p)
         if ((flagptr->tcp_flags & tcp_flags) != 0)     /* something set */
         {
             DebugMessage(DEBUG_IPS_OPTION,"Got TCP [ANY] flag match!\n");
-            rval = DETECTION_OPTION_MATCH;
+            return DETECTION_OPTION_MATCH;
         }
         else
         {
@@ -201,8 +194,7 @@ int TcpFlagOption::eval(Cursor&, Packet* p)
         break;
     }
 
-    MODULE_PROFILE_END(tcpFlagsPerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

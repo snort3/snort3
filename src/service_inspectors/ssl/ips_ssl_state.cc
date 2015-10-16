@@ -98,38 +98,21 @@ bool SslStateOption::operator==(const IpsOption& ips) const
 
 int SslStateOption::eval(Cursor&, Packet* pkt)
 {
-    SSLData* sd;
-
-    PROFILE_VARS;
-    MODULE_PROFILE_START(sslStateRuleOptionPerfStats);
+    PERF_PROFILE(sslStateRuleOptionPerfStats);
 
     if ( !(pkt->packet_flags & PKT_REBUILT_STREAM) && !pkt->is_full_pdu() )
-    {
-        MODULE_PROFILE_END(sslStateRuleOptionPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
     if (!pkt->flow)
-    {
-        MODULE_PROFILE_END(sslStateRuleOptionPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
-    sd = get_ssl_session_data(pkt->flow);
+    SSLData* sd = get_ssl_session_data(pkt->flow);
 
     if (!sd)
-    {
-        MODULE_PROFILE_END(sslStateRuleOptionPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
     if ((ssod.flags & sd->ssn_flags) ^ ssod.mask)
-    {
-        MODULE_PROFILE_END(sslStateRuleOptionPerfStats);
         return DETECTION_OPTION_MATCH;
-    }
-
-    MODULE_PROFILE_END(sslStateRuleOptionPerfStats);
 
     return DETECTION_OPTION_NO_MATCH;
 }

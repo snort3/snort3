@@ -98,38 +98,21 @@ bool SslVersionOption::operator==(const IpsOption& ips) const
 
 int SslVersionOption::eval(Cursor&, Packet* pkt)
 {
-    SSLData* sd;
-
-    PROFILE_VARS;
-    MODULE_PROFILE_START(sslVersionRuleOptionPerfStats);
+    PERF_PROFILE(sslVersionRuleOptionPerfStats);
 
     if ( !(pkt->packet_flags & PKT_REBUILT_STREAM) && !pkt->is_full_pdu() )
-    {
-        MODULE_PROFILE_END(sslVersionRuleOptionPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
     if (!pkt->flow)
-    {
-        MODULE_PROFILE_END(sslVersionRuleOptionPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
-    sd = get_ssl_session_data(pkt->flow);
+    SSLData* sd = get_ssl_session_data(pkt->flow);
 
     if (!sd)
-    {
-        MODULE_PROFILE_END(sslVersionRuleOptionPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
     if ((svod.flags & sd->ssn_flags) ^ svod.mask)
-    {
-        MODULE_PROFILE_END(sslVersionRuleOptionPerfStats);
         return DETECTION_OPTION_MATCH;
-    }
-
-    MODULE_PROFILE_END(sslVersionRuleOptionPerfStats);
 
     return DETECTION_OPTION_NO_MATCH;
 }

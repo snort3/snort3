@@ -112,17 +112,15 @@ bool IpProtoOption::operator==(const IpsOption& ips) const
 
 int IpProtoOption::eval(Cursor&, Packet* p)
 {
+    PERF_PROFILE(ipProtoPerfStats);
+
     IpProtoData* ipd = &config;
-    int rval = DETECTION_OPTION_NO_MATCH;
-    PROFILE_VARS;
 
     if (!p->has_ip())
     {
         DebugMessage(DEBUG_IPS_OPTION,"Not IP\n");
-        return rval;
+        return DETECTION_OPTION_NO_MATCH;
     }
-
-    MODULE_PROFILE_START(ipProtoPerfStats);
 
     const uint8_t ip_proto = p->get_ip_proto_next();
 
@@ -130,22 +128,26 @@ int IpProtoOption::eval(Cursor&, Packet* p)
     {
     case IP_PROTO__EQUAL:
         if (ip_proto == ipd->protocol)
-            rval = DETECTION_OPTION_MATCH;
+            return DETECTION_OPTION_MATCH;
+
         break;
 
     case IP_PROTO__NOT_EQUAL:
         if (ip_proto != ipd->protocol)
-            rval = DETECTION_OPTION_MATCH;
+            return DETECTION_OPTION_MATCH;
+
         break;
 
     case IP_PROTO__GREATER_THAN:
         if (ip_proto > ipd->protocol)
-            rval = DETECTION_OPTION_MATCH;
+            return DETECTION_OPTION_MATCH;
+
         break;
 
     case IP_PROTO__LESS_THAN:
         if (ip_proto < ipd->protocol)
-            rval = DETECTION_OPTION_MATCH;
+            return DETECTION_OPTION_MATCH;
+
         break;
 
     default:
@@ -155,8 +157,7 @@ int IpProtoOption::eval(Cursor&, Packet* p)
     }
 
     /* if the test isn't successful, this function *must* return 0 */
-    MODULE_PROFILE_END(ipProtoPerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

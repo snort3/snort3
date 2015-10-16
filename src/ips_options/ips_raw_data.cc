@@ -48,12 +48,9 @@ public:
 
 int RawDataOption::eval(Cursor& c, Packet* p)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(rawDataPerfStats);
+    PERF_PROFILE(rawDataPerfStats);
 
     c.set(s_name, p->data, p->dsize);
-
-    MODULE_PROFILE_END(rawDataPerfStats);
     return DETECTION_OPTION_MATCH;
 }
 

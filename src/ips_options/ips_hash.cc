@@ -199,10 +199,9 @@ int HashOption::match(Cursor& c)
 
 int HashOption::eval(Cursor& c, Packet*)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(hash_ps[idx]);
+    auto& hash_option_stats = hash_ps[idx];
+    PERF_PROFILE(hash_option_stats);
 
-    int rval = DETECTION_OPTION_NO_MATCH;
     int found = match(c);
 
     if ( found == -1 )
@@ -213,18 +212,14 @@ int HashOption::eval(Cursor& c, Packet*)
            which is not what we want.  */
         found = 0;
     }
+
     else
-    {
         found ^= config->negated;
-    }
 
     if ( found )
-    {
-        rval = DETECTION_OPTION_MATCH;
-    }
+        return DETECTION_OPTION_MATCH;
 
-    MODULE_PROFILE_END(hash_ps[idx]);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

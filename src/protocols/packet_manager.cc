@@ -187,7 +187,8 @@ RawData::RawData(const DAQ_PktHdr_t* h, const uint8_t* p)
 void PacketManager::decode(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, bool cooked)
 {
-    PROFILE_VARS;
+    PERF_PROFILE(decodePerfStats);
+
     DecodeData unsure_encap_ptrs;
 
     uint8_t mapped_prot = CodecManager::grinder;
@@ -206,7 +207,6 @@ void PacketManager::decode(
     p->ptrs.reset();
     layer::set_packet_pointer(p);
 
-    MODULE_PROFILE_START(decodePerfStats);
     s_stats[total_processed]++;
 
     // loop until the protocol id is no longer valid
@@ -343,8 +343,6 @@ void PacketManager::decode(
 
     if ( !p->proto_bits )
         p->proto_bits = PROTO_BIT__OTHER;
-
-    MODULE_PROFILE_END(decodePerfStats);
 }
 
 //-------------------------------------------------------------------------

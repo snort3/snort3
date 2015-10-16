@@ -83,19 +83,15 @@ bool IpIdOption::operator==(const IpsOption& ips) const
 
 int IpIdOption::eval(Cursor&, Packet* p)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
-    PROFILE_VARS;
+    PERF_PROFILE(ipIdPerfStats);
 
     if (!p->has_ip())
-        return rval;
-
-    MODULE_PROFILE_START(ipIdPerfStats);
+        return DETECTION_OPTION_NO_MATCH;
 
     if ( config.eval(p->ptrs.ip_api.id()) )
-        rval = DETECTION_OPTION_MATCH;
+        return DETECTION_OPTION_MATCH;
 
-    MODULE_PROFILE_END(ipIdPerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

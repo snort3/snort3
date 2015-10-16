@@ -76,36 +76,27 @@ static int TelnetCheckConfigs(SnortConfig*, void* pData)
 static int SnortTelnet(TELNET_PROTO_CONF* telnet_config, TELNET_SESSION* Telnetsession,
     Packet* p, int iInspectMode)
 {
-    int iRet;
-    PROFILE_VARS;
+    PERF_PROFILE(telnetPerfStats);
 
-    if (!Telnetsession)
-    {
+    if ( !Telnetsession )
         return FTPP_NONFATAL_ERR;
-    }
 
-    if (Telnetsession->encr_state && !Telnetsession->telnet_conf->check_encrypted_data)
-    {
+    if ( Telnetsession->encr_state &&
+         !Telnetsession->telnet_conf->check_encrypted_data )
         return FTPP_SUCCESS;
-    }
 
-    MODULE_PROFILE_START(telnetPerfStats);
-
-    if (!telnet_config->normalize)
+    if ( telnet_config->normalize )
     {
-        do_detection(p);
-    }
-    else
-    {
-        iRet = normalize_telnet(
-            Telnetsession, p, iInspectMode, FTPP_APPLY_TNC_ERASE_CMDS);
+        int ret = normalize_telnet(Telnetsession, p, iInspectMode,
+            FTPP_APPLY_TNC_ERASE_CMDS);
 
-        if ((iRet == FTPP_SUCCESS) || (iRet == FTPP_NORMALIZED))
-        {
+        if ( ret == FTPP_SUCCESS || ret == FTPP_NORMALIZED )
             do_detection(p);
-        }
     }
-    MODULE_PROFILE_END(telnetPerfStats);
+
+    else
+        do_detection(p);
+
 #ifdef PERF_PROFILING
     ft_update_perf(telnetPerfStats);
 #endif

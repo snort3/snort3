@@ -912,17 +912,16 @@ void PortScan::show(SnortConfig*)
 
 void PortScan::eval(Packet* p)
 {
-    PS_PKT ps_pkt;
-    PROFILE_VARS;
+    PERF_PROFILE(psPerfStats);
 
     assert(p->ptrs.ip_api.is_ip());
 
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;
 
-    MODULE_PROFILE_START(psPerfStats);
     ++spstats.total_packets;
 
+    PS_PKT ps_pkt;
     memset(&ps_pkt, 0x00, sizeof(PS_PKT)); // FIXIT-P don't zap unless necessary
     ps_pkt.pkt = (void*)p;
 
@@ -940,8 +939,6 @@ void PortScan::eval(Packet* p)
     {
         PortscanAlert(&ps_pkt, &ps_pkt.scanned->proto, ps_pkt.proto);
     }
-
-    MODULE_PROFILE_END(psPerfStats);
 }
 
 //-------------------------------------------------------------------------

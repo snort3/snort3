@@ -124,67 +124,55 @@ bool FlowCheckOption::operator==(const IpsOption& ips) const
 
 int FlowCheckOption::eval(Cursor&, Packet* p)
 {
+    PERF_PROFILE(flowCheckPerfStats);
+
     FlowCheckData* fcd = &config;
-    PROFILE_VARS;
 
-    MODULE_PROFILE_START(flowCheckPerfStats);
-
-    /* Check established/unestablished first */
+    // Check established/unestablished first
     {
         if ((fcd->established == 1) && !(p->packet_flags & PKT_STREAM_EST))
         {
-            /*
-            ** This option requires an established connection and it isn't
-            ** in that state yet, so no match.
-            */
-            MODULE_PROFILE_END(flowCheckPerfStats);
+            // This option requires an established connection and it isn't
+            // in that state yet, so no match.
             return DETECTION_OPTION_NO_MATCH;
         }
         else if ((fcd->unestablished == 1) && (p->packet_flags & PKT_STREAM_EST))
         {
-            /*
-            **  We're looking for an unestablished stream, and this is
-            **  established, so don't continue processing.
-            */
-            MODULE_PROFILE_END(flowCheckPerfStats);
+            //  We're looking for an unestablished stream, and this is
+            //  established, so don't continue processing.
             return DETECTION_OPTION_NO_MATCH;
         }
     }
 
-    /* Now check from client */
+    // Now check from client
     if (fcd->from_client)
     {
         {
-            if (!(p->packet_flags & PKT_FROM_CLIENT) &&
-                (p->packet_flags & PKT_FROM_SERVER))
+            if (!p->from_client() && p->from_server())
             {
-                /* No match on from_client */
-                MODULE_PROFILE_END(flowCheckPerfStats);
+                // No match on from_client
                 return DETECTION_OPTION_NO_MATCH;
             }
         }
     }
 
-    /* And from server */
+    // And from server
     if (fcd->from_server)
     {
         {
-            if (!(p->packet_flags & PKT_FROM_SERVER) &&
-                (p->packet_flags & PKT_FROM_CLIENT))
+            if (!p->from_server() && p->from_client())
             {
-                /* No match on from_server */
-                MODULE_PROFILE_END(flowCheckPerfStats);
+                // No match on from_server
                 return DETECTION_OPTION_NO_MATCH;
             }
         }
     }
 
-    /* ...ignore_reassembled */
+    // ...ignore_reassembled
     if (fcd->ignore_reassembled & IGNORE_STREAM)
     {
         if (p->packet_flags & PKT_REBUILT_STREAM)
         {
-            MODULE_PROFILE_END(flowCheckPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
     }
@@ -193,17 +181,15 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
     {
         if (p->packet_flags & PKT_REBUILT_FRAG)
         {
-            MODULE_PROFILE_END(flowCheckPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
     }
 
-    /* ...only_reassembled */
+    // ...only_reassembled
     if (fcd->only_reassembled & ONLY_STREAM)
     {
         if ( !(p->packet_flags & PKT_REBUILT_STREAM) && !p->is_full_pdu() )
         {
-            MODULE_PROFILE_END(flowCheckPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
     }
@@ -212,12 +198,10 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
     {
         if (!(p->packet_flags & PKT_REBUILT_FRAG))
         {
-            MODULE_PROFILE_END(flowCheckPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
     }
 
-    MODULE_PROFILE_END(flowCheckPerfStats);
     return DETECTION_OPTION_MATCH;
 }
 

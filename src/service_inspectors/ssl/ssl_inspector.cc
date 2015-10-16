@@ -296,17 +296,10 @@ static inline void SSLPP_process_other(SSL_PROTO_CONF* config, SSLData* sd, uint
  */
 static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 {
-    SSLData* sd = NULL;
-    uint8_t dir;
-    uint8_t index;
-    uint32_t new_flags;
-    uint8_t heartbleed_type = 0;
-    PROFILE_VARS;
-
-    MODULE_PROFILE_START(sslPerfStats);
+    PERF_PROFILE(sslPerfStats);
 
     /* Attempt to get a previously allocated SSL block. */
-    sd = get_ssl_session_data(p->flow);
+    SSLData* sd = get_ssl_session_data(p->flow);
 
     if (sd == NULL)
     {
@@ -316,17 +309,17 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
         sd = SetNewSSLData(p);
 
         if ( !sd )
-        {
-            /* Could not get/create the session data for this packet. */
-            MODULE_PROFILE_END(sslPerfStats);
+            // Could not get/create the session data for this packet.
             return;
-        }
     }
+
     SSL_CLEAR_TEMPORARY_FLAGS(sd->ssn_flags);
 
-    dir = (p->packet_flags & PKT_FROM_SERVER) ? 1 : 0;
-    index = (p->packet_flags & PKT_REBUILT_STREAM) ? 2 : 0;
-    new_flags = SSL_decode(p->data, (int)p->dsize, p->packet_flags, sd->ssn_flags,
+    uint8_t dir = (p->packet_flags & PKT_FROM_SERVER) ? 1 : 0;
+    uint8_t index = (p->packet_flags & PKT_REBUILT_STREAM) ? 2 : 0;
+
+    uint8_t heartbleed_type = 0;
+    uint32_t new_flags = SSL_decode(p->data, (int)p->dsize, p->packet_flags, sd->ssn_flags,
         &heartbleed_type, &(sd->partial_rec_len[dir+index]), config->max_heartbeat_len);
 
     if (heartbleed_type & SSL_HEARTBLEED_REQUEST)
@@ -361,7 +354,6 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 
         sd->ssn_flags |= new_flags;
 
-        MODULE_PROFILE_END(sslPerfStats);
         return;
     }
 
@@ -416,13 +408,10 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 
         /* Application data is updated inside of SSLPP_process_other */
 
-        MODULE_PROFILE_END(sslPerfStats);
         return;
     }
 
     sd->ssn_flags |= new_flags;
-
-    MODULE_PROFILE_END(sslPerfStats);
 }
 
 //-------------------------------------------------------------------------

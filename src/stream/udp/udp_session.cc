@@ -203,15 +203,11 @@ void UdpSession::update_direction(
 
 int UdpSession::process(Packet* p)
 {
-    StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
-    SFXHASH_NODE* hash_node = NULL;
+    PERF_PROFILE(udp_perf_stats);
 
-    PROFILE_VARS;
-    MODULE_PROFILE_START(udp_perf_stats);
-    /*
-     * Check if the session is expired.
-     * Should be done before we do something with the packet...
-     */
+    StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
+     // Check if the session is expired.
+     // Should be done before we do something with the packet...
     if ( stream.expired_session(flow, p) )
     {
         UdpSessionCleanup(flow);
@@ -220,11 +216,11 @@ int UdpSession::process(Packet* p)
         udpStats.created++;
         udpStats.timeouts++;
     }
-    ProcessUdp(flow, p, pc, hash_node);
+
+    ProcessUdp(flow, p, pc, nullptr);
     flow->markup_packet_flags(p);
     flow->set_expire(p, pc->session_timeout);
 
-    MODULE_PROFILE_END(udp_perf_stats);
     return 0;
 }
 

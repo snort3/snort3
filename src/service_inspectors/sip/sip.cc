@@ -244,13 +244,10 @@ static inline int SIP_Process(Packet* p, SIPData* sessp, SIP_PROTO_CONF* config)
  */
 static void snort_sip(SIP_PROTO_CONF* config, Packet* p)
 {
-    SIPData* sessp = NULL;
-    PROFILE_VARS;
-
-    MODULE_PROFILE_START(sipPerfStats);
+    PERF_PROFILE(sipPerfStats);
 
     /* Attempt to get a previously allocated SIP block. */
-    sessp = get_sip_session_data(p->flow);
+    SIPData* sessp = get_sip_session_data(p->flow);
 
     if (sessp == NULL)
     {
@@ -260,23 +257,15 @@ static void snort_sip(SIP_PROTO_CONF* config, Packet* p)
         sessp = SetNewSIPData(p, config);
 
         if ( !sessp )
-        {
-            /* Could not get/create the session data for this packet. */
-            MODULE_PROFILE_END(sipPerfStats);
+            // Could not get/create the session data for this packet.
             return;
-        }
     }
 
     /* Don't process if we've missed packets */
     if (sessp->state_flags & SIP_FLG_MISSED_PACKETS)
-    {
-        MODULE_PROFILE_END(sipPerfStats);
         return;
-    }
 
     SIP_Process(p,sessp, config);
-
-    MODULE_PROFILE_END(sipPerfStats);
 }
 
 //-------------------------------------------------------------------------

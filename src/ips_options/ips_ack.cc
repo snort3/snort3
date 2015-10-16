@@ -92,19 +92,12 @@ bool TcpAckOption::operator==(const IpsOption& ips) const
 
 int TcpAckOption::eval(Cursor&, Packet* p)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(tcpAckPerfStats);
-
-    int rval;
+    PERF_PROFILE(tcpAckPerfStats);
 
     if ( p->ptrs.tcph && config.eval(p->ptrs.tcph->th_ack) )
-        rval = DETECTION_OPTION_MATCH;
+        return DETECTION_OPTION_MATCH;
 
-    else
-        rval = DETECTION_OPTION_NO_MATCH;
-
-    MODULE_PROFILE_END(tcpAckPerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

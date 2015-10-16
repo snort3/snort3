@@ -248,24 +248,20 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
  */
 void do_detection(Packet* p)
 {
-    PROFILE_VARS;
+    PERF_PROFILE(ftppDetectPerfStats);
 
-    /*
-     * If we get here we either had a client or server request/response.
-     * We do the detection here, because we're starting a new paradigm
-     * about protocol decoders.
-     *
-     * Protocol decoders are now their own detection engine, since we are
-     * going to be moving protocol field detection from the generic
-     * detection engine into the protocol module.  This idea scales much
-     * better than having all these Packet struct field checks in the
-     * main detection engine for each protocol field.
-     */
-    MODULE_PROFILE_START(ftppDetectPerfStats);
+     // If we get here we either had a client or server request/response.
+     // We do the detection here, because we're starting a new paradigm
+     // about protocol decoders.
+     //
+     // Protocol decoders are now their own detection engine, since we are
+     // going to be moving protocol field detection from the generic
+     // detection engine into the protocol module.  This idea scales much
+     // better than having all these Packet struct field checks in the
+     // main detection engine for each protocol field.
     get_data_bus().publish(PACKET_EVENT, p);
 
     DisableInspection(p);
-    MODULE_PROFILE_END(ftppDetectPerfStats);
 #ifdef PERF_PROFILING
     ftppDetectCalled = 1;
 #endif

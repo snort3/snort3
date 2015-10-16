@@ -82,19 +82,15 @@ bool TtlOption::operator==(const IpsOption& ips) const
 
 int TtlOption::eval(Cursor&, Packet* p)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
-    PROFILE_VARS;
+    PERF_PROFILE(ttlCheckPerfStats);
 
     if(!p->ptrs.ip_api.is_ip())
-        return rval;
-
-    MODULE_PROFILE_START(ttlCheckPerfStats);
+        return DETECTION_OPTION_NO_MATCH;
 
     if ( config.eval(p->ptrs.ip_api.ttl()) )
-        rval = DETECTION_OPTION_MATCH;
+        return DETECTION_OPTION_MATCH;
 
-    MODULE_PROFILE_END(ttlCheckPerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

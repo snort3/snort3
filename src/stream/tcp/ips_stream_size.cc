@@ -96,11 +96,10 @@ bool SizeOption::operator==(const IpsOption& ips) const
 
 int SizeOption::eval(Cursor&, Packet* pkt)
 {
+    PERF_PROFILE(streamSizePerfStats);
+
     if (!pkt->flow || !pkt->ptrs.tcph)
         return DETECTION_OPTION_NO_MATCH;
-
-    PROFILE_VARS;
-    MODULE_PROFILE_START(streamSizePerfStats);
 
     Flow* lwssn = (Flow*)pkt->flow;
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
@@ -157,7 +156,7 @@ int SizeOption::eval(Cursor&, Packet* pkt)
     default:
         break;
     }
-    MODULE_PROFILE_END(streamSizePerfStats);
+
     return result;
 }
 

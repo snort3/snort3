@@ -141,13 +141,10 @@ ReactAction::~ReactAction()
 
 void ReactAction::exec(Packet* p)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(reactPerfStats);
+    PERF_PROFILE(reactPerfStats);
 
     if ( Active::is_reset_candidate(p) )
         send(p);
-
-    MODULE_PROFILE_END(reactPerfStats);
 }
 
 void ReactAction::send(Packet* p)

@@ -321,7 +321,7 @@ static void PrecalcPrefix(void)
  *      CRC         1
  *
  */
-static int BoGetDirection(Packet* p, char* pkt_data)
+static int BoGetDirection(Packet* p, const char* pkt_data)
 {
     uint32_t len = 0;
     uint32_t id = 0;
@@ -465,105 +465,86 @@ void BackOrifice::show(SnortConfig*)
 
 void BackOrifice::eval(Packet* p)
 {
-    uint16_t cyphertext_referent;
-    uint16_t cyphertext_suffix;
-    uint16_t key;
-    const char* magic_cookie = "*!*QWTY?";
-    char* pkt_data;
-    const char* magic_data;
-    char* end;
-    char plaintext;
-    int i;
-    int bo_direction = 0;
-    PROFILE_VARS;
+    PERF_PROFILE(boPerfStats);
+
+    const char* const magic_cookie = "*!*QWTY?";
 
     // preconditions - what we registered for
     assert(p->is_udp());
 
-    /* make sure it's at least 19 bytes long */
+    // make sure it's at least 19 bytes long
     if (p->dsize < BO_MIN_SIZE)
-    {
         return;
-    }
 
-    MODULE_PROFILE_START(boPerfStats);
     ++bostats.total_packets;
 
-    /*
-     * take the first two characters of the packet and generate the
-     * first reference that gives us a reference key
-     */
-    cyphertext_referent = (uint16_t)(p->data[0] << 8) & 0xFF00;
+     // take the first two characters of the packet and generate the
+     // first reference that gives us a reference key
+    uint16_t cyphertext_referent = (uint16_t)(p->data[0] << 8) & 0xFF00;
     cyphertext_referent |= (uint16_t)(p->data[1]) & 0x00FF;
 
-    /*
-     * generate the second referent from the last two characters
-     * of the cyphertext
-     */
-    cyphertext_suffix = (uint16_t)(p->data[6] << 8) & 0xFF00;
+     // generate the second referent from the last two characters
+     // of the cyphertext
+    uint16_t cyphertext_suffix = (uint16_t)(p->data[6] << 8) & 0xFF00;
     cyphertext_suffix |= (uint16_t)(p->data[7]) & 0x00FF;
 
-    for (i=0; i<3; i++)
+    for ( int i = 0; i < 3; ++i )
     {
-        /* get the key from the cyphertext */
-        key = lookup1[cyphertext_referent][i];
+        // get the key from the cyphertext
+        uint16_t key = lookup1[cyphertext_referent][i];
 
-        /*
-         * if the lookup from the proposed key matches the cyphertext reference
-         * then we've probably go the right key and can proceed to full
-         * decryption using the key
-         *
-         * moral of the story: don't use a lame keyspace
-         */
-        if (lookup2[key] == cyphertext_suffix)
+        // if the lookup from the proposed key matches the cyphertext reference
+        // then we've probably go the right key and can proceed to full
+        // decryption using the key
+        // moral of the story: don't use a lame keyspace
+        if ( lookup2[key] == cyphertext_suffix )
         {
+            auto pkt_data = reinterpret_cast<const char*>(p->data);
+            auto end = pkt_data + BO_MAGIC_SIZE;
+            const char* magic_data = magic_cookie;
+
             holdrand = key;
-            pkt_data = (char*)p->data;
-            end = (char*)p->data + BO_MAGIC_SIZE;
-            magic_data = magic_cookie;
 
-            while (pkt_data<end)
+            while ( pkt_data < end )
             {
-                plaintext = (char)(*pkt_data ^ BoRand());
+                char plaintext = *pkt_data ^ BoRand();
 
-                if (*magic_data != plaintext)
+                if ( *magic_data != plaintext )
                 {
                     DebugFormat(DEBUG_INSPECTOR,
                         "Failed check one on 0x%X : 0x%X\n",
                         *magic_data, plaintext);
-                    MODULE_PROFILE_END(boPerfStats);
+
                     return;
                 }
 
-                magic_data++;
-                pkt_data++;
+                ++magic_data;
+                ++pkt_data;
             }
 
-            /* if we fall thru there's a detect */
+            // if we fall thru there's a detect
             DebugMessage(DEBUG_INSPECTOR,
                 "Detected Back Orifice Data!\n");
                 DebugFormat(DEBUG_INSPECTOR, "hash value: %d\n", key);
 
-            bo_direction = BoGetDirection(p, pkt_data);
+            int bo_direction = BoGetDirection(p, pkt_data);
 
             if ( bo_direction == BO_FROM_CLIENT )
             {
                 SnortEventqAdd(GID_BO, BO_CLIENT_TRAFFIC_DETECT);
                 DebugMessage(DEBUG_INSPECTOR, "Client packet\n");
             }
+
             else if ( bo_direction == BO_FROM_SERVER )
             {
                 SnortEventqAdd(GID_BO, BO_SERVER_TRAFFIC_DETECT);
                 DebugMessage(DEBUG_INSPECTOR, "Server packet\n");
             }
+
             else
-            {
                 SnortEventqAdd(GID_BO, BO_TRAFFIC_DETECT);
-            }
         }
     }
-
-    MODULE_PROFILE_END(boPerfStats);
 }
 
 //-------------------------------------------------------------------------

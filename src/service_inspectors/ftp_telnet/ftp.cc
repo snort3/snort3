@@ -73,25 +73,19 @@ static inline int InspectClientPacket(Packet* p)
 static int SnortFTP(
     FTP_SESSION* FTPsession, Packet* p, int iInspectMode)
 {
-    int iRet;
-    PROFILE_VARS;
+    PERF_PROFILE(ftpPerfStats);
 
-    if (!FTPsession ||
-        FTPsession->server_conf == NULL ||
-        FTPsession->client_conf == NULL)
-    {
+    if ( !FTPsession || !FTPsession->server_conf || !FTPsession->client_conf )
         return FTPP_INVALID_SESSION;
-    }
 
-    if (!FTPsession->server_conf->check_encrypted_data &&
-        ((FTPsession->encr_state == AUTH_TLS_ENCRYPTED) ||
-        (FTPsession->encr_state == AUTH_SSL_ENCRYPTED) ||
-        (FTPsession->encr_state == AUTH_UNKNOWN_ENCRYPTED)) )
+    if ( !FTPsession->server_conf->check_encrypted_data )
     {
-        return FTPP_SUCCESS;
-    }
+        if ( FTPsession->encr_state == AUTH_TLS_ENCRYPTED ||
+             FTPsession->encr_state == AUTH_SSL_ENCRYPTED ||
+             FTPsession->encr_state == AUTH_UNKNOWN_ENCRYPTED )
 
-    MODULE_PROFILE_START(ftpPerfStats);
+            return FTPP_SUCCESS;
+    }
 
     if (iInspectMode == FTPP_SI_SERVER_MODE)
     {
@@ -109,7 +103,6 @@ static int SnortFTP(
         {
             DebugMessage(DEBUG_FTPTELNET,
                 "Client packet will be reassembled\n");
-            MODULE_PROFILE_END(ftpPerfStats);
             return FTPP_SUCCESS;
         }
         else
@@ -121,32 +114,27 @@ static int SnortFTP(
         }
     }
 
-    iRet = initialize_ftp(FTPsession, p, iInspectMode);
-    if (iRet)
-    {
-        MODULE_PROFILE_END(ftpPerfStats);
-        return iRet;
-    }
+    int ret = initialize_ftp(FTPsession, p, iInspectMode);
+    if ( ret )
+        return ret;
 
-    iRet = check_ftp(FTPsession, p, iInspectMode);
-    if (iRet == FTPP_SUCCESS)
+    ret = check_ftp(FTPsession, p, iInspectMode);
+    if ( ret == FTPP_SUCCESS )
     {
-        /* Ideally, snort_detect(), called from do_detection, will look at
-         * the cmd & param buffers, or the rsp & msg buffers.  Current
-         * architecture does not support this...
-         * So, we call do_detection() here.  Otherwise, we'd call it
-         * from inside check_ftp -- each time we process a pipelined
-         * FTP command.
-         */
+        // Ideally, snort_detect(), called from do_detection, will look at
+        // the cmd & param buffers, or the rsp & msg buffers.  Current
+        // architecture does not support this...
+        // So, we call do_detection() here.  Otherwise, we'd call it
+        // from inside check_ftp -- each time we process a pipelined
+        // FTP command.
         do_detection(p);
     }
 
-    MODULE_PROFILE_END(ftpPerfStats);
 #ifdef PERF_PROFILING
     ft_update_perf(ftpPerfStats);
 #endif
 
-    return iRet;
+    return ret;
 }
 
 static int snort_ftp(Packet* p)

@@ -162,32 +162,27 @@ static bool find(
 
 int HttpHeaderOption::eval(Cursor& c, Packet* p)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(httpHeaderPerfStats);
+    PERF_PROFILE(httpHeaderPerfStats);
 
-    int rval;
     InspectionBuffer hb;
 
     if ( !p->flow || !p->flow->gadget )
-        rval = DETECTION_OPTION_NO_MATCH;
+        return DETECTION_OPTION_NO_MATCH;
 
     // FIXIT-P cache id at parse time for runtime use
-    else if ( !p->flow->gadget->get_buf(s_name, p, hb) )
-        rval = DETECTION_OPTION_NO_MATCH;
+    if ( !p->flow->gadget->get_buf(s_name, p, hb) )
+        return DETECTION_OPTION_NO_MATCH;
 
-    else if ( !name.size() )
+    if ( !name.size() )
     {
         c.set(s_name, hb.data, hb.len);
-        rval = DETECTION_OPTION_MATCH;
+        return DETECTION_OPTION_MATCH;
     }
-    else if ( find(name, hb, c) )
-        rval = DETECTION_OPTION_MATCH;
 
-    else
-        rval = DETECTION_OPTION_NO_MATCH;
+    if ( find(name, hb, c) )
+        return DETECTION_OPTION_MATCH;
 
-    MODULE_PROFILE_END(httpHeaderPerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

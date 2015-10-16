@@ -761,18 +761,15 @@ void Imap::show(SnortConfig*)
 
 void Imap::eval(Packet* p)
 {
-    PROFILE_VARS;
+    PERF_PROFILE(imapPerfStats);
+
     // precondition - what we registered for
     assert(p->has_tcp_data());
     assert(p->flow);
 
     ++imapstats.total_packets;
 
-    MODULE_PROFILE_START(imapPerfStats);
-
     snort_imap(config, p);
-
-    MODULE_PROFILE_END(imapPerfStats);
 }
 
 //-------------------------------------------------------------------------

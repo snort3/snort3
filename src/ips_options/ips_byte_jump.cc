@@ -198,16 +198,13 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
 
 int ByteJumpOption::eval(Cursor& c, Packet*)
 {
+    PERF_PROFILE(byteJumpPerfStats);
+
     ByteJumpData* bjd = (ByteJumpData*)&config;
-    int rval = DETECTION_OPTION_NO_MATCH;
-    uint32_t jump = 0;
-    uint32_t payload_bytes_grabbed = 0;
-    int32_t offset;
 
-    PROFILE_VARS;
-    MODULE_PROFILE_START(byteJumpPerfStats);
+    int32_t offset = 0;
 
-    /* Get values from byte_extract variables, if present. */
+    // Get values from byte_extract variables, if present.
     if (bjd->offset_var >= 0 && bjd->offset_var < NUM_BYTE_EXTRACT_VARS)
     {
         uint32_t extract_offset;
@@ -225,17 +222,17 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
     const uint8_t* const base_ptr = offset +
         ((bjd->relative_flag) ? c.start() : start_ptr);
 
-    /* Both of the extraction functions contain checks to ensure the data
-     * is inbounds and will return no match if it isn't */
+    uint32_t jump = 0;
+    uint32_t payload_bytes_grabbed = 0;
+
+    // Both of the extraction functions contain checks to ensure the data
+    // is inbounds and will return no match if it isn't
     if ( !bjd->data_string_convert_flag )
     {
         if ( byte_extract(
             bjd->endianess, bjd->bytes_to_grab,
             base_ptr, start_ptr, end_ptr, &jump) )
-        {
-            MODULE_PROFILE_END(byteJumpPerfStats);
-            return rval;
-        }
+            return DETECTION_OPTION_NO_MATCH;
 
         payload_bytes_grabbed = bjd->bytes_to_grab;
     }
@@ -246,10 +243,8 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
             base_ptr, start_ptr, end_ptr, &jump);
 
         if (tmp < 0)
-        {
-            MODULE_PROFILE_END(byteJumpPerfStats);
-            return rval;
-        }
+            return DETECTION_OPTION_NO_MATCH;
+
         payload_bytes_grabbed = tmp;
     }
     // Negative offsets that put us outside the buffer should have been caught
@@ -280,17 +275,9 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
     jump += bjd->post_offset;
 
     if ( !c.set_pos(jump) )
-    {
-        MODULE_PROFILE_END(byteJumpPerfStats);
-        return rval;
-    }
-    else
-    {
-        rval = DETECTION_OPTION_MATCH;
-    }
+        return DETECTION_OPTION_NO_MATCH;
 
-    MODULE_PROFILE_END(byteJumpPerfStats);
-    return rval;
+    return DETECTION_OPTION_MATCH;
 }
 
 //-------------------------------------------------------------------------

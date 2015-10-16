@@ -58,27 +58,17 @@ public:
 
 int FileDataOption::eval(Cursor& c, Packet*)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
-    uint8_t* data;
-    uint16_t len;
+    PERF_PROFILE(fileDataPerfStats);
 
-    PROFILE_VARS;
-    MODULE_PROFILE_START(fileDataPerfStats);
+    uint8_t* data = g_file_data.data;
+    uint16_t len = g_file_data.len;
 
-    data = g_file_data.data;
-    len = g_file_data.len;
-
-    if ( (data == NULL)|| (len == 0) )
-    {
-        MODULE_PROFILE_END(fileDataPerfStats);
-        return rval;
-    }
+    if ( !data || !len )
+        return DETECTION_OPTION_NO_MATCH;
 
     c.set(s_name, data, len);
-    rval = DETECTION_OPTION_MATCH;
 
-    MODULE_PROFILE_END(fileDataPerfStats);
-    return rval;
+    return DETECTION_OPTION_MATCH;
 }
 
 //-------------------------------------------------------------------------

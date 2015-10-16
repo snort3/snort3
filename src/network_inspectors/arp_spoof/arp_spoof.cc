@@ -176,24 +176,20 @@ void ArpSpoof::show(SnortConfig*)
 
 void ArpSpoof::eval(Packet* p)
 {
-    IPMacEntry* ipme;
-    PROFILE_VARS;
-    const arp::EtherARP* ah;
-    const eth::EtherHdr* eh;
+    PERF_PROFILE(arpPerfStats);
 
     // preconditions - what we registered for
     assert(p->type() == PktType::ARP);
     assert(p->proto_bits & PROTO_BIT__ETH);
 
-    ah = layer::get_arp_layer(p);
-    eh = layer::get_eth_layer(p);
+    const arp::EtherARP* ah = layer::get_arp_layer(p);
+    const eth::EtherHdr* eh = layer::get_eth_layer(p);
 
     /* is the ARP protocol type IP and the ARP hardware type Ethernet? */
     if ((ntohs(ah->ea_hdr.ar_hrd) != 0x0001) ||
         (ntohs(ah->ea_hdr.ar_pro) != ETHERNET_TYPE_IP))
         return;
 
-    MODULE_PROFILE_START(arpPerfStats);
     ++asstats.total_packets;
 
     switch (ntohs(ah->ea_hdr.ar_op))
@@ -238,41 +234,34 @@ void ArpSpoof::eval(Packet* p)
         }
         break;
     }
-    MODULE_PROFILE_END(arpPerfStats);
 
     /* return if the overwrite list hasn't been initialized */
     if (!config->check_overwrite)
         return;
 
-    if ((ipme = LookupIPMacEntryByIP(config->ipmel,
-            ah->arp_spa32)) == NULL)
-    {
-        DebugMessage(DEBUG_INSPECTOR,
-            "MODNAME: LookupIPMacEntryByIp returned NULL\n");
-        return;
-    }
-    else
+    IPMacEntry* ipme = LookupIPMacEntryByIP(config->ipmel, ah->arp_spa32);
+    if ( ipme )
     {
         DebugFormat(DEBUG_INSPECTOR,
             "MODNAME: LookupIPMacEntryByIP returned %p\n", ipme);
 
-        /* If the Ethernet source address or the ARP source hardware address
-         * in p doesn't match the MAC address in ipme, then generate an alert
-         */
-        if ((memcmp((uint8_t*)eh->ether_src,
-            (uint8_t*)ipme->mac_addr, 6)) ||
-            (memcmp((uint8_t*)ah->arp_sha,
-            (uint8_t*)ipme->mac_addr, 6)))
+        auto cmp_ether_src = memcmp(eh->ether_src, ipme->mac_addr, 6);
+        auto cmp_arp_sha = memcmp(ah->arp_sha, ipme->mac_addr, 6);
+
+        // If the Ethernet source address or the ARP source hardware address
+        // in p doesn't match the MAC address in ipme, then generate an alert
+        if ( cmp_ether_src || cmp_arp_sha )
         {
-            SnortEventqAdd(GID_ARP_SPOOF,
-                ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK);
+            SnortEventqAdd(GID_ARP_SPOOF, ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK);
 
             DebugMessage(DEBUG_INSPECTOR,
                 "MODNAME: Attempted ARP cache overwrite attack\n");
-
-            return;
         }
     }
+
+    else
+        DebugMessage(DEBUG_INSPECTOR,
+            "MODNAME: LookupIPMacEntryByIp returned NULL\n");
 }
 
 //-------------------------------------------------------------------------

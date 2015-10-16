@@ -303,9 +303,10 @@ void PerfMonitor::tterm()
 
 void PerfMonitor::eval(Packet* p)
 {
+    PERF_PROFILE(perfmonStats);
+
     static THREAD_LOCAL bool first = true;
-    PROFILE_VARS;
-    MODULE_PROFILE_START(perfmonStats);
+
 
     if (first)
     {
@@ -335,8 +336,6 @@ void PerfMonitor::eval(Packet* p)
 
     sfPerformanceStats(&config, p);
     ++pmstats.total_packets;
-
-    MODULE_PROFILE_END(perfmonStats);
 }
 
 //-------------------------------------------------------------------------

@@ -14,8 +14,10 @@ packet_time.h \
 ppm.cc \
 ppm_module.cc \
 ppm_module.h \
-profiler.cc \
 periodic.cc \
 periodic.h \
 timersub.h
 
+if PERF_PROFILING
+libtime_a_SOURCES += profiler.cc
+endif

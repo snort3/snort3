@@ -50,15 +50,13 @@ int Mpse::search(
     const unsigned char* T, int n, MpseMatch match,
     void* data, int* current_state)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(mpsePerfStats);
+    PERF_PROFILE(mpsePerfStats);
 
     int ret = _search(T, n, match, data, current_state);
 
     if ( inc_global_counter )
         s_bcnt += n;
 
-    MODULE_PROFILE_END(mpsePerfStats);
     return ret;
 }
 

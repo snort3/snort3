@@ -88,22 +88,16 @@ bool FragOffsetOption::operator==(const IpsOption& ips) const
 
 int FragOffsetOption::eval(Cursor&, Packet* p)
 {
-    int p_offset = p->ptrs.ip_api.off();
-    int rval = DETECTION_OPTION_NO_MATCH;
-    PROFILE_VARS;
+    PERF_PROFILE(fragOffsetPerfStats);
 
     if (!p->has_ip())
-    {
-        return rval;
-    }
+        return DETECTION_OPTION_NO_MATCH;
 
-    MODULE_PROFILE_START(fragOffsetPerfStats);
 
-    if ( config.eval(p_offset) )
-        rval = DETECTION_OPTION_MATCH;
+    if ( !config.eval(p->ptrs.ip_api.off()) )
+        return DETECTION_OPTION_NO_MATCH;
 
-    MODULE_PROFILE_END(fragOffsetPerfStats);
-    return rval;
+    return DETECTION_OPTION_MATCH;
 }
 
 //-------------------------------------------------------------------------

@@ -110,16 +110,16 @@ bool IpOptOption::operator==(const IpsOption& ips) const
 
 int IpOptOption::eval(Cursor&, Packet* p)
 {
+    PERF_PROFILE(ipOptionPerfStats);
+
     IpOptionData* ipOptionData = &config;
-    int rval = DETECTION_OPTION_NO_MATCH;
-    PROFILE_VARS;
 
     DebugMessage(DEBUG_IPS_OPTION, "CheckIpOptions:");
-    if (!p->ptrs.ip_api.is_ip4())
-        return rval; /* if error occured while ip header
-                   * was processed, return 0 automatically.  */
 
-    MODULE_PROFILE_START(ipOptionPerfStats);
+    if ( !p->is_ip4() )
+        // if error occured while ip header
+        // was processed, return 0 automatically.
+        return DETECTION_OPTION_NO_MATCH;
 
     const ip::IP4Hdr* const ip4h = p->ptrs.ip_api.get_ip4h();
     const uint8_t option_len = ip4h->get_opt_len();
@@ -127,9 +127,7 @@ int IpOptOption::eval(Cursor&, Packet* p)
     if ((ipOptionData->any_flag == 1) && (option_len > 0))
     {
         DebugMessage(DEBUG_IPS_OPTION, "Matched any ip options!\n");
-        rval = DETECTION_OPTION_MATCH;
-        MODULE_PROFILE_END(ipOptionPerfStats);
-        return rval;
+        return DETECTION_OPTION_MATCH;
     }
 
     ip::IpOptionIterator iter(ip4h, p);
@@ -140,16 +138,11 @@ int IpOptOption::eval(Cursor&, Packet* p)
             static_cast<int>(opt.code));
 
         if (ipOptionData->ip_option == opt.code)
-        {
-            rval = DETECTION_OPTION_MATCH;
-            MODULE_PROFILE_END(ipOptionPerfStats);
-            return rval;
-        }
+            return DETECTION_OPTION_MATCH;
+
     }
 
-    /* if the test isn't successful, return 0 */
-    MODULE_PROFILE_END(ipOptionPerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

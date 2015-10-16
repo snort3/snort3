@@ -95,12 +95,8 @@ private:
 
 void RejectAction::exec(Packet* p)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(rejPerfStats);
-
+    PERF_PROFILE(rejPerfStats);
     send(p);
-
-    MODULE_PROFILE_END(rejPerfStats);
 }
 
 void RejectAction::send(Packet* p)

@@ -256,21 +256,16 @@ bool FlowBitsOption::operator==(const IpsOption& ips) const
 
 int FlowBitsOption::eval(Cursor&, Packet* p)
 {
-    FLOWBITS_OP* flowbits = config;
-    int rval = DETECTION_OPTION_NO_MATCH;
+    PERF_PROFILE(flowBitsPerfStats);
 
-    PROFILE_VARS;
+    FLOWBITS_OP* flowbits = config;
 
     if (!flowbits)
-        return rval;
+        return DETECTION_OPTION_NO_MATCH;
 
-    MODULE_PROFILE_START(flowBitsPerfStats);
 
-    rval = check_flowbits(flowbits->type, (uint8_t)flowbits->eval,
+    return check_flowbits(flowbits->type, (uint8_t)flowbits->eval,
         flowbits->ids, flowbits->num_ids, flowbits->group, p);
-
-    MODULE_PROFILE_END(flowBitsPerfStats);
-    return rval;
 }
 
 //-------------------------------------------------------------------------

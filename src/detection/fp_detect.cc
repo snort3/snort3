@@ -244,7 +244,10 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         fpLogOther(p, rtn, otn, rtn->type);
         return 1;
     }
-    OTN_PROFILE_ALERT(otn);
+
+#ifdef PERF_PROFILING
+    otn->state[get_instance_id()].alerts++;
+#endif
 
     event_id++;
     action_execute((RuleType)action, p, otn, event_id);
@@ -368,17 +371,12 @@ int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, const OptTreeNode* otn)
 */
 int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 {
-    PROFILE_VARS;
-
-    MODULE_PROFILE_START(ruleRTNEvalPerfStats);
+    PERF_PROFILE(ruleRTNEvalPerfStats);
 
     if ( !rtn )
-    {
-        MODULE_PROFILE_END(ruleRTNEvalPerfStats);
         return 0;
-    }
 
-    /* FIXIT: maybe add a port test here ... */
+    // FIXIT: maybe add a port test here ...
 
     DebugFormat(DEBUG_DETECT, "[*] Rule Head %p\n", rtn);
 
@@ -388,7 +386,6 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
             "   => Header check failed, checking next node\n");
         DebugMessage(DEBUG_DETECT,
             "   => returned from next node check\n");
-        MODULE_PROFILE_END(ruleRTNEvalPerfStats);
         return 0;
     }
 
@@ -401,7 +398,6 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
     **  Return that there is a rule match and log the event outside
     **  of this routine.
     */
-    MODULE_PROFILE_END(ruleRTNEvalPerfStats);
     return 1;
 }
 
@@ -409,13 +405,11 @@ static int detection_option_tree_evaluate(
     detection_option_tree_root_t* root,
     detection_option_eval_data_t* eval_data)
 {
-    int i, rval = 0;
-    PROFILE_VARS;
+    PERF_PROFILE(ruleOTNEvalPerfStats);
 
     if (!root)
         return 0;
 
-    MODULE_PROFILE_START(ruleOTNEvalPerfStats); /* Not really OTN, but close */
 
 #ifdef PPM_MGR
     /* Start Rule Timer */
@@ -440,7 +434,8 @@ static int detection_option_tree_evaluate(
 
     Cursor c(eval_data->p);
 
-    for ( i = 0; i< root->num_children; i++)
+    int rval = 0;
+    for ( int i = 0; i< root->num_children; i++)
     {
         /* Increment number of events generated from that child */
         rval += detection_option_node_evaluate(root->children[i], eval_data, c);
@@ -464,7 +459,6 @@ static int detection_option_tree_evaluate(
     }
 #endif
 
-    MODULE_PROFILE_END(ruleOTNEvalPerfStats);
     return rval;
 }
 
@@ -476,8 +470,6 @@ static int rule_tree_match(void* id, void* tree, int index, void* data, void* ne
     detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
     detection_option_eval_data_t eval_data;
     NCListNode* ncl;
-    int rval=0;
-    PROFILE_VARS;
 
     eval_data.pomd = pomd;
     eval_data.p = pomd->p;
@@ -485,46 +477,43 @@ static int rule_tree_match(void* id, void* tree, int index, void* data, void* ne
     eval_data.flowbit_failed = 0;
     eval_data.flowbit_noalert = 0;
 
-    MODULE_PROFILE_START(rulePerfStats);
-
-    /* NOTE: The otn will be the first one in the match state. If there are
-     * multiple rules associated with a match state, mucking with the otn
-     * may muck with an unintended rule */
-
-    /* Set flag for not contents so they aren't evaluated */
-    for (ncl = (NCListNode*)neg_list; ncl != nullptr; ncl = ncl->next)
+    PERF_PROFILE_BLOCK(rulePerfStats)
     {
-        PMX* neg_pmx = (PMX*)ncl->pmx;
-        PatternMatchData* neg_pmd = (PatternMatchData*)neg_pmx->PatternMatchData;
+        /* NOTE: The otn will be the first one in the match state. If there are
+         * multiple rules associated with a match state, mucking with the otn
+         * may muck with an unintended rule */
 
-        assert(neg_pmd->last_check);
+        /* Set flag for not contents so they aren't evaluated */
+        for (ncl = (NCListNode*)neg_list; ncl != nullptr; ncl = ncl->next)
+        {
+            PMX* neg_pmx = (PMX*)ncl->pmx;
+            PatternMatchData* neg_pmd = (PatternMatchData*)neg_pmx->PatternMatchData;
 
-        PmdLastCheck* last_check =
-            neg_pmd->last_check + get_instance_id();
+            assert(neg_pmd->last_check);
 
-        last_check->ts.tv_sec = eval_data.p->pkth->ts.tv_sec;
-        last_check->ts.tv_usec = eval_data.p->pkth->ts.tv_usec;
-        last_check->packet_number = (rule_eval_pkt_count
-            + (PacketManager::get_rebuilt_packet_count()));
-        last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
+            PmdLastCheck* last_check =
+                neg_pmd->last_check + get_instance_id();
+
+            last_check->ts.tv_sec = eval_data.p->pkth->ts.tv_sec;
+            last_check->ts.tv_usec = eval_data.p->pkth->ts.tv_usec;
+            last_check->packet_number = (rule_eval_pkt_count
+                + (PacketManager::get_rebuilt_packet_count()));
+            last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
+        }
+
+        if ( detection_option_tree_evaluate(root, &eval_data) )
+        {
+            //  We have a qualified event from this tree
+            pomd->pg->event_count++;
+            UpdateQEvents(&sfEvent);
+        }
+        else
+        {
+            // This means that the event is non-qualified.
+            pomd->pg->match_count++;
+            UpdateNQEvents(&sfEvent);
+        }
     }
-
-    rval = detection_option_tree_evaluate(root, &eval_data);
-
-    if (rval)
-    {
-        //  We have a qualified event from this tree
-        pomd->pg->event_count++;
-        UpdateQEvents(&sfEvent);
-    }
-    else
-    {
-        // This means that the event is non-qualified.
-        pomd->pg->match_count++;
-        UpdateNQEvents(&sfEvent);
-    }
-
-    MODULE_PROFILE_END(rulePerfStats);
 
     if (eval_data.flowbit_failed)
         return -1;
@@ -980,7 +969,6 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
     bool repeat = false;
     uint16_t tmp_dsize;
     FastPatternConfig* fp = snort_conf->fast_pattern_config;
-    PROFILE_VARS;
 
     if (ip_rule)
     {
@@ -1030,7 +1018,6 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
                 LogMessage("NC-testing %u rules\n", port_group->nfp_rule_count);
 
             detection_option_eval_data_t eval_data;
-            int rval;
 
             eval_data.pomd = omd;
             eval_data.p = p;
@@ -1038,10 +1025,14 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
             eval_data.flowbit_failed = 0;
             eval_data.flowbit_noalert = 0;
 
-            MODULE_PROFILE_START(ncrulePerfStats);
-            rval = detection_option_tree_evaluate(
-                (detection_option_tree_root_t*)port_group->nfp_tree, &eval_data);
-            MODULE_PROFILE_END(ncrulePerfStats);
+            int rval = 0;
+
+            PERF_PROFILE_BLOCK(ncrulePerfStats)
+            {
+                rval = detection_option_tree_evaluate(
+                    (detection_option_tree_root_t*)port_group->nfp_tree,
+                    &eval_data);
+            }
 
             if (rval)
             {

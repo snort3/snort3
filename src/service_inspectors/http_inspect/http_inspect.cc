@@ -321,12 +321,11 @@ void HttpInspect::show(SnortConfig*)
 
 void HttpInspect::eval(Packet* p)
 {
-    PROFILE_VARS;
+    PERF_PROFILE(hiPerfStats);
 
     // preconditions - what we registered for
     assert(p->has_tcp_data());
 
-    MODULE_PROFILE_START(hiPerfStats);
     hi_clear_events();
 
     HttpInspectMain(config, p);
@@ -342,7 +341,6 @@ void HttpInspect::eval(Packet* p)
      * spent in snort_detect().
      * Subtract the ticks from this if iCallDetect == 0
      */
-    MODULE_PROFILE_END(hiPerfStats);
 #ifdef PERF_PROFILING
     if (hiDetectCalled)
     {

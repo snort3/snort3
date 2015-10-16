@@ -1,4 +1,8 @@
 
+if ( ENABLE_PERFPROFILING )
+    set ( PERFPROFILING_SOURCES profiler.cc )
+endif ( ENABLE_PERFPROFILING )
+
 set (TIME_INCLUDES
     cpuclock.h
     profiler.h
@@ -12,7 +16,7 @@ add_library( time  STATIC
     ppm.h 
     ppm_module.cc
     ppm_module.h
-    profiler.cc 
+    ${PERFPROFILING_SOURCES}
     periodic.cc 
     periodic.h 
     timersub.h

@@ -206,28 +206,21 @@ LuaJitLogger::~LuaJitLogger()
 
 void LuaJitLogger::alert(Packet* p, const char*, Event* e)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(luaLogPerfStats);
+    PERF_PROFILE(luaLogPerfStats);
 
     packet = p;
     event = e;
 
     lua_State* L = states[get_instance_id()];
 
+    Lua::ManageStack ms(L, 1);
+
+    lua_getglobal(L, "alert");
+    if ( lua_pcall(L, 0, 1, 0) )
     {
-        Lua::ManageStack ms(L, 1);
-
-        lua_getglobal(L, "alert");
-
-        if ( lua_pcall(L, 0, 1, 0) )
-        {
-            const char* err = lua_tostring(L, -1);
-            ErrorMessage("%s\n", err);
-            MODULE_PROFILE_END(luaLogPerfStats);
-        }
+        const char* err = lua_tostring(L, -1);
+        ErrorMessage("%s\n", err);
     }
-
-    MODULE_PROFILE_END(luaLogPerfStats);
 }
 
 //-------------------------------------------------------------------------

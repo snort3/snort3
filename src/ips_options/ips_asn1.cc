@@ -167,23 +167,16 @@ bool Asn1Option::operator==(const IpsOption& rhs) const
 
 int Asn1Option::eval(Cursor& c, Packet* p)
 {
-    PROFILE_VARS;
+    PERF_PROFILE(asn1PerfStats);
 
-    /*
-    **  Failed if there is no data to decode.
-    */
+    //  Failed if there is no data to decode.
     if (!p->data)
         return DETECTION_OPTION_NO_MATCH;
 
-    MODULE_PROFILE_START(asn1PerfStats);
 
     if ( Asn1DoDetect(c.buffer(), c.size(), &config, c.start()) )
-    {
-        MODULE_PROFILE_END(asn1PerfStats);
         return DETECTION_OPTION_MATCH;
-    }
 
-    MODULE_PROFILE_END(asn1PerfStats);
     return DETECTION_OPTION_NO_MATCH;
 }
 

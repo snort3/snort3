@@ -138,6 +138,7 @@ typedef struct _ByteTestData
 {
     uint32_t bytes_to_compare;
     uint32_t cmp_value;
+    // FIXIT-L should be an enum
     uint32_t opcode;
     int32_t offset;
     uint8_t not_flag;
@@ -148,6 +149,69 @@ typedef struct _ByteTestData
     int8_t cmp_value_var;
     int8_t offset_var;
 } ByteTestData;
+
+// -----------------------------------------------------------------------------
+// static functions
+// -----------------------------------------------------------------------------
+
+static inline bool byte_test_check(uint32_t op, uint32_t val, uint32_t cmp, bool not_flag)
+{
+    bool success = false;
+
+    switch ( op )
+    {
+    case CHECK_LT:
+        success = (val < cmp);
+        break;
+
+    case CHECK_EQ:
+        success = (val == cmp);
+        break;
+
+    case CHECK_GT:
+        success = (val > cmp);
+        break;
+
+    case CHECK_AND:
+        success = ((val & cmp) > 0);
+        break;
+
+    case CHECK_XOR:
+        success = ((val ^ cmp) > 0);
+        break;
+
+    case CHECK_GTE:
+        success = (val >= cmp);
+        break;
+
+    case CHECK_LTE:
+        success = (val <= cmp);
+        break;
+
+    case CHECK_ALL:
+        success = ((val & cmp) == cmp);
+        break;
+
+    case CHECK_GT0:
+        success = ((val & cmp) != 0);
+        break;
+
+    case CHECK_NONE:
+        success = ((val & cmp) == 0);
+        break;
+    }
+
+    if ( not_flag )
+    {
+        DebugMessage(DEBUG_PATTERN_MATCH,
+            "checking for not success...flag\n");
+
+        success = !success;
+    }
+
+    return success;
+}
+
 
 class ByteTestOption : public IpsOption
 {
@@ -232,27 +296,23 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
 
 int ByteTestOption::eval(Cursor& c, Packet*)
 {
+    PERF_PROFILE(byteTestPerfStats);
+
     ByteTestData* btd = (ByteTestData*)&config;
-    int rval = DETECTION_OPTION_NO_MATCH;
-    uint32_t value = 0;
-    int success = 0;
-    const uint8_t* start_ptr;
-    int payload_bytes_grabbed;
-    int offset;
-    uint32_t cmp_value;
+    uint32_t cmp_value = 0;
 
-    PROFILE_VARS;
-    MODULE_PROFILE_START(byteTestPerfStats);
-
-    /* Get values from byte_extract variables, if present. */
+    // Get values from byte_extract variables, if present.
     if (btd->cmp_value_var >= 0 && btd->cmp_value_var < NUM_BYTE_EXTRACT_VARS)
     {
         uint32_t val;
         GetByteExtractValue(&val, btd->cmp_value_var);
         cmp_value = val;
     }
+
     else
         cmp_value = btd->cmp_value;
+
+    int offset = 0;
 
     if (btd->offset_var >= 0 && btd->offset_var < NUM_BYTE_EXTRACT_VARS)
     {
@@ -260,29 +320,22 @@ int ByteTestOption::eval(Cursor& c, Packet*)
         GetByteExtractValue(&val, btd->offset_var);
         offset = (int32_t)val;
     }
+
     else
         offset = btd->offset;
 
-    if ( btd->relative_flag )
-        start_ptr = c.start();
-    else
-        start_ptr = c.buffer();
-
+    const uint8_t* start_ptr = btd->relative_flag ? c.start() : c.buffer();
     start_ptr += offset;
 
-    /* both of these functions below perform their own bounds checking within
-     * byte_extract.c
-     */
+    uint32_t value = 0;
+    int payload_bytes_grabbed = 0;
 
     if (!btd->data_string_convert_flag)
     {
         if ( byte_extract(
             btd->endianess, btd->bytes_to_compare,
             start_ptr, c.buffer(), c.endo(), &value))
-        {
-            MODULE_PROFILE_END(byteTestPerfStats);
-            return rval;
-        }
+            return DETECTION_OPTION_NO_MATCH;
 #ifdef DEBUG
         payload_bytes_grabbed = (int)btd->bytes_to_compare;
 #endif
@@ -298,8 +351,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
             DebugMessage(DEBUG_PATTERN_MATCH,
                 "String Extraction Failed\n");
 
-            MODULE_PROFILE_END(byteTestPerfStats);
-            return rval;
+            return DETECTION_OPTION_NO_MATCH;
         }
     }
 
@@ -307,66 +359,10 @@ int ByteTestOption::eval(Cursor& c, Packet*)
         "Grabbed %d bytes at offset %d, value = 0x%08X(%u)\n",
         payload_bytes_grabbed, btd->offset, value, value);
 
-    switch (btd->opcode)
-    {
-    case CHECK_LT:
-        success = (value < cmp_value);
-        break;
+    if ( byte_test_check(btd->opcode, value, cmp_value, btd->not_flag) )
+        return DETECTION_OPTION_MATCH;
 
-    case CHECK_EQ:
-        success = (value == cmp_value);
-        break;
-
-    case CHECK_GT:
-        success = (value > cmp_value);
-        break;
-
-    case CHECK_AND:
-        success =  ((value & cmp_value) > 0);
-        break;
-
-    case CHECK_XOR:
-        success =  ((value ^ cmp_value) > 0);
-        break;
-
-    case CHECK_GTE:
-        success =  (value >= cmp_value);
-        break;
-
-    case CHECK_LTE:
-        success =  (value <= cmp_value);
-        break;
-
-    case CHECK_ALL:
-        success =  ((value & cmp_value) == cmp_value);
-        break;
-
-    case CHECK_GT0:
-        success =  ((value & cmp_value) != 0);
-        break;
-
-    case CHECK_NONE:
-        success =  ((value & cmp_value) == 0);
-        break;
-    }
-
-    if (btd->not_flag)
-    {
-        DebugMessage(DEBUG_PATTERN_MATCH,
-            "checking for not success...flag\n");
-        if (!success)
-        {
-            rval = DETECTION_OPTION_MATCH;
-        }
-    }
-    else if (success)
-    {
-        rval = DETECTION_OPTION_MATCH;
-    }
-
-    /* if the test isn't successful, this function *must* return 0 */
-    MODULE_PROFILE_END(byteTestPerfStats);
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

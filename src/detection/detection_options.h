@@ -68,6 +68,20 @@ struct dot_node_state_t
     uint64_t ppm_disable_cnt;
     uint64_t ppm_enable_cnt;
 #endif
+
+#ifdef PERF_PROFILING
+    void update(uint64_t elapsed, bool match)
+    {
+        ticks += elapsed;
+
+        if ( match )
+            ticks_match += elapsed;
+        else
+            ticks_no_match += elapsed;
+
+        ++checks;
+    }
+#endif
 };
 
 struct detection_option_tree_node_t

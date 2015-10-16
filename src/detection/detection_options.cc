@@ -65,6 +65,10 @@ typedef struct _detection_option_key
 #define HASH_RULE_OPTIONS 16384
 #define HASH_RULE_TREE 8192
 
+// FIXIT-L find a better place for this
+static inline bool operator==(const struct timeval& a, const struct timeval& b)
+{ return a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec; }
+
 uint32_t detection_option_hash_func(SFHASHFCN*, unsigned char* k, int)
 {
     detection_option_key_t* key = (detection_option_key_t*)k;
@@ -377,7 +381,15 @@ int detection_option_node_evaluate(
     detection_option_tree_node_t* node, detection_option_eval_data_t* eval_data,
     Cursor& orig_cursor)
 {
-    int i, result = 0;
+    // need node->state to do perf profiling
+    if ( !node )
+        return 0;
+
+    dot_node_state_t* state = node->state + get_instance_id();
+    auto& node_stats = *state;
+    NODE_PERF_PROFILE(node_stats);
+
+    int result = 0;
     int rval = DETECTION_OPTION_NO_MATCH;
     char tmp_noalert_flag = 0;
     Cursor cursor = orig_cursor;
@@ -387,206 +399,208 @@ int detection_option_node_evaluate(
     uint32_t tmp_byte_extract_vars[NUM_BYTE_EXTRACT_VARS];
     uint64_t cur_eval_pkt_count =
         (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
-    NODE_PROFILE_VARS;
 
     // FIXIT-P these are initialized only to silence -O2 warnings
     // they are set before use below
     PatternMatchData* content_data = nullptr;
     PcreData* pcre_data = nullptr;
 
-    if (!node || !eval_data || !eval_data->p || !eval_data->pomd)
+    if ( !eval_data || !eval_data->p || !eval_data->pomd )
         return 0;
 
-    dot_node_state_t* state = node->state + get_instance_id();
+    auto p = eval_data->p;
+    auto pomd = eval_data->pomd;
 
-    /* see if evaluated it before ... */
-    if (node->is_relative == 0)
+    // see if evaluated it before ...
+    if ( !node->is_relative )
     {
-        /* Only matters if not relative... */
-        if ((state->last_check.ts.tv_usec == eval_data->p->pkth->ts.tv_usec) &&
-            (state->last_check.ts.tv_sec == eval_data->p->pkth->ts.tv_sec) &&
-            (state->last_check.packet_number == cur_eval_pkt_count) &&
-            (state->last_check.rebuild_flag == (eval_data->p->packet_flags &
-            PKT_REBUILT_STREAM)) &&
-            (!(eval_data->p->packet_flags & PKT_ALLOW_MULTIPLE_DETECT)))
+        auto last_check = state->last_check;
+
+        if ( last_check.ts == p->pkth->ts &&
+             last_check.packet_number == cur_eval_pkt_count &&
+             last_check.rebuild_flag == (p->packet_flags & PKT_REBUILT_STREAM) &&
+             !(p->packet_flags & PKT_ALLOW_MULTIPLE_DETECT) )
         {
-            /* eval'd this rule option before on this packet,
-             * use the cached result. */
-            if ((state->last_check.flowbit_failed == 0) &&
-                !(eval_data->p->packet_flags & PKT_IP_RULE_2ND) &&
-                !(eval_data->p->proto_bits & (PROTO_BIT__TEREDO | PROTO_BIT__GTP )))
+            if ( !last_check.flowbit_failed &&
+                 !(p->packet_flags & PKT_IP_RULE_2ND) &&
+                 !(p->packet_flags & (PROTO_BIT__TEREDO|PROTO_BIT__GTP)) )
             {
-                return state->last_check.result;
+                return last_check.result;
             }
         }
     }
 
-    NODE_PROFILE_START(node);
-
-    state->last_check.ts.tv_sec = eval_data->p->pkth->ts.tv_sec;
-    state->last_check.ts.tv_usec = eval_data->p->pkth->ts.tv_usec;
+    state->last_check.ts = eval_data->p->pkth->ts;
     state->last_check.packet_number = cur_eval_pkt_count;
-    state->last_check.rebuild_flag = (eval_data->p->packet_flags & PKT_REBUILT_STREAM);
     state->last_check.flowbit_failed = 0;
+    state->last_check.rebuild_flag = p->packet_flags & PKT_REBUILT_STREAM;
 
-    /* Save some stuff off for repeated pattern tests */
+    // Save some stuff off for repeated pattern tests
     if ( node->option_type == RULE_OPTION_TYPE_CONTENT )
-    {
         content_data = content_get_data(node->option_data);
-    }
-    else if (node->option_type == RULE_OPTION_TYPE_PCRE)
-    {
-        pcre_data = pcre_get_data(node->option_data);
-    }
 
-    /* No, haven't evaluated this one before... Check it. */
+    else if (node->option_type == RULE_OPTION_TYPE_PCRE)
+        pcre_data = pcre_get_data(node->option_data);
+
+    // No, haven't evaluated this one before... Check it.
     do
     {
-        switch (node->option_type)
+        switch ( node->option_type )
         {
         case RULE_OPTION_TYPE_LEAF_NODE:
-            /* Add the match for this otn to the queue. */
+        // Add the match for this otn to the queue.
         {
             OptTreeNode* otn = (OptTreeNode*)node->option_data;
             PatternMatchData* pmd = (PatternMatchData*)eval_data->pmd;
 
             int pattern_size = 0;
-            int check_ports = 1;
-            int eval_rtn_result;
-            unsigned int svc_idx;
-            int16_t app_proto = eval_data->p->get_application_protocol();
-
-            if (pmd)
+            if ( pmd )
                 pattern_size = pmd->pattern_size;
 
-            if ( app_proto and ((OTNX_MATCH_DATA*)(eval_data->pomd))->check_ports != 2 )
+            int16_t app_proto = p->get_application_protocol();
+            int check_ports = 1;
+
+            if ( app_proto and ((OTNX_MATCH_DATA*)(pomd))->check_ports != 2 )
             {
-                for (svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
+                auto sig_info = otn->sigInfo;
+
+                for ( unsigned svc_idx = 0; svc_idx < sig_info.num_services; ++svc_idx )
                 {
-                    if ( app_proto == otn->sigInfo.services[svc_idx].service_ordinal )
+                    if ( app_proto == sig_info.services[svc_idx].service_ordinal )
                     {
                         check_ports = 0;
-                        break;  /* out of for */
+                        break;  // out of for
                     }
                 }
 
-                if (otn->sigInfo.num_services && check_ports)
+                if (sig_info.num_services && check_ports)
                 {
-                    /* none of the services match */
+                    // none of the services match
                     DebugFormat(DEBUG_DETECT,
                         "[**] SID %d not matched because of service mismatch (%d!=%d [**]\n",
-                        otn->sigInfo.id, app_proto, otn->sigInfo.services[0].service_ordinal);
-                    break;  /* out of case */
+                        sig_info.id, app_proto, sig_info.services[0].service_ordinal);
+
+                    break;  // out of case
                 }
             }
-            // Don't include RTN time
-            NODE_PROFILE_TMPEND(node);
-            eval_rtn_result = fpEvalRTN(getRuntimeRtnFromOtn(otn), eval_data->p, check_ports);
-            NODE_PROFILE_TMPSTART(node);
 
-            if (eval_rtn_result)
+            int eval_rtn_result = 0;
+
+            // Don't include RTN time
+            PERF_PAUSE_BLOCK(node_stats)
             {
-                if ( !otn->detection_filter ||
-                    !detection_filter_test(
-                    otn->detection_filter,
-                    eval_data->p->ptrs.ip_api.get_src(), eval_data->p->ptrs.ip_api.get_dst(),
-                    eval_data->p->pkth->ts.tv_sec) )
+                eval_rtn_result = fpEvalRTN(getRuntimeRtnFromOtn(otn), p,
+                    check_ports);
+            }
+
+            if ( eval_rtn_result )
+            {
+                bool f_result = true;
+
+                if ( otn->detection_filter )
+                    f_result = detection_filter_test(otn->detection_filter,
+                        p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(),
+                        p->pkth->ts.tv_sec);
+
+                if ( f_result )
                 {
 #ifdef PERF_PROFILING
                     if (PROFILING_RULES)
                         otn->state[get_instance_id()].matches++;
 #endif
-                    if (!eval_data->flowbit_noalert)
-                    {
-                        fpAddMatch((OTNX_MATCH_DATA*)eval_data->pomd, pattern_size, otn);
-                    }
+                    if ( !eval_data->flowbit_noalert )
+                        fpAddMatch((OTNX_MATCH_DATA*)pomd, pattern_size, otn);
+
                     result = rval = DETECTION_OPTION_MATCH;
                 }
             }
-        }
-        break;
-        case RULE_OPTION_TYPE_CONTENT:
-            if (node->evaluate)
-            {
-                /* This will be set in the fast pattern matcher if we found
-                 * a content and the rule option specifies not that
-                 * content. Essentially we've already evaluated this rule
-                 * option via the content option processing since only not
-                 * contents that are not relative in any way will have this
-                 * flag set */
-                if (content_data->last_check)
-                {
-                    PmdLastCheck* last_check =
-                        content_data->last_check + get_instance_id();
 
-                    if ((last_check->ts.tv_sec == eval_data->p->pkth->ts.tv_sec) &&
-                        (last_check->ts.tv_usec == eval_data->p->pkth->ts.tv_usec) &&
-                        (last_check->packet_number == cur_eval_pkt_count) &&
-                        (last_check->rebuild_flag == (eval_data->p->packet_flags &
-                        PKT_REBUILT_STREAM)))
+            break;
+        }
+
+        case RULE_OPTION_TYPE_CONTENT:
+            if ( node->evaluate )
+            {
+                // This will be set in the fast pattern matcher if we found
+                // a content and the rule option specifies not that
+                // content. Essentially we've already evaluated this rule
+                // option via the content option processing since only not
+                // contents that are not relative in any way will have this
+                // flag set
+                if ( content_data->last_check )
+                {
+                    auto last_check = content_data->last_check + get_instance_id();
+
+                    if ( last_check->ts == p->pkth->ts &&
+                         last_check->packet_number == cur_eval_pkt_count &&
+                         last_check->rebuild_flag == (p->packet_flags & PKT_REBUILT_STREAM) )
                     {
                         rval = DETECTION_OPTION_NO_MATCH;
                         break;
                     }
                 }
-                rval = node->evaluate(node->option_data, cursor, eval_data->p);
+
+                rval = node->evaluate(node->option_data, cursor, p);
             }
+
             break;
+
         case RULE_OPTION_TYPE_PCRE:
-            if (node->evaluate)
-            {
-                rval = node->evaluate(node->option_data, cursor, eval_data->p);
-            }
+            if ( node->evaluate )
+                rval = node->evaluate(node->option_data, cursor, p);
+
             break;
+
         case RULE_OPTION_TYPE_FLOWBIT:
-            if (node->evaluate)
+            if ( node->evaluate )
             {
-                flowbits_setoperation = FlowBits_SetOperation(node->option_data);
-                if (!flowbits_setoperation)
-                {
-                    rval = node->evaluate(node->option_data, cursor, eval_data->p);
-                }
-                else
-                {
-                    /* set to match so we don't bail early.  */
+                flowbits_setoperation =
+                    FlowBits_SetOperation(node->option_data);
+
+                if ( flowbits_setoperation )
+                    // set to match so we don't bail early
                     rval = DETECTION_OPTION_MATCH;
-                }
+
+                else
+                    rval = node->evaluate(node->option_data, cursor, eval_data->p);
             }
+
             break;
+
         default:
-            if (node->evaluate)
-                rval = node->evaluate(node->option_data, cursor, eval_data->p);
+            if ( node->evaluate )
+                rval = node->evaluate(node->option_data, cursor, p);
+
             break;
+
         }
 
-        if (rval == DETECTION_OPTION_NO_MATCH)
+        if ( rval == DETECTION_OPTION_NO_MATCH )
         {
             state->last_check.result = result;
-            NODE_PROFILE_END_NOMATCH(node);
             return result;
         }
-        else if (rval == DETECTION_OPTION_FAILED_BIT)
+
+        else if ( rval == DETECTION_OPTION_FAILED_BIT )
         {
             eval_data->flowbit_failed = 1;
-            /* clear the timestamp so failed flowbit gets eval'd again */
+            // clear the timestamp so failed flowbit gets eval'd again
             state->last_check.flowbit_failed = 1;
             state->last_check.result = result;
-            NODE_PROFILE_END_NOMATCH(node);
             return 0;
         }
-        else if (rval == DETECTION_OPTION_NO_ALERT)
+
+        else if ( rval == DETECTION_OPTION_NO_ALERT )
         {
-            /* Cache the current flowbit_noalert flag, and set it
-             * so nodes below this don't alert. */
+            // Cache the current flowbit_noalert flag, and set it
+            // so nodes below this don't alert.
             tmp_noalert_flag = eval_data->flowbit_noalert;
             eval_data->flowbit_noalert = 1;
         }
 
-        /* Back up byte_extract vars so they don't get overwritten between rules */
-        for (i = 0; i < NUM_BYTE_EXTRACT_VARS; i++)
-        {
+        // Back up byte_extract vars so they don't get overwritten between rules
+        for ( int i = 0; i < NUM_BYTE_EXTRACT_VARS; ++i )
             GetByteExtractValue(&(tmp_byte_extract_vars[i]), (int8_t)i);
-        }
 
 #ifdef PPM_MGR
         if ( PPM_PKTS_ENABLED() )
@@ -595,193 +609,179 @@ int detection_option_node_evaluate(
             PPM_PACKET_TEST();
             if ( PPM_PACKET_ABORT_FLAG() )
             {
-                /* bail if we exceeded time */
-                if (result == DETECTION_OPTION_NO_MATCH)
-                {
-                    NODE_PROFILE_END_NOMATCH(node);
-                }
-                else
-                {
-                    NODE_PROFILE_END_MATCH(node);
-                }
+                // bail if we exceeded time
+
+                if ( result != DETECTION_OPTION_NO_MATCH )
+                    NODE_PERF_PROFILE_STOP_MATCH(node_stats);
+
                 state->last_check.result = result;
                 return result;
             }
         }
 #endif
-        /* Don't include children's time in this node */
-        NODE_PROFILE_TMPEND(node);
 
-        /* Passed, check the children. */
-        if (node->num_children)
+        PERF_PAUSE_BLOCK(node_stats)
         {
-            for (i=0; i<node->num_children; i++)
+            // Passed, check the children.
+            if ( node->num_children )
             {
-                int j = 0;
-                detection_option_tree_node_t* child_node = node->children[i];
-                dot_node_state_t* child_state = child_node->state + get_instance_id();
-
-                for (j = 0; j < NUM_BYTE_EXTRACT_VARS; j++)
+                for ( int i = 0; i < node->num_children; ++i )
                 {
-                    SetByteExtractValue(tmp_byte_extract_vars[j], (int8_t)j);
-                }
+                    detection_option_tree_node_t* child_node =
+                        node->children[i];
 
-                if (loop_count > 0)
-                {
-                    if (child_state->result == DETECTION_OPTION_NO_MATCH)
+                    dot_node_state_t* child_state =
+                        child_node->state + get_instance_id();
+
+                    for ( int j = 0; j < NUM_BYTE_EXTRACT_VARS; ++j )
+                        SetByteExtractValue(tmp_byte_extract_vars[j], (int8_t)j);
+
+                    if ( loop_count > 0 )
                     {
-                        if (((child_node->option_type == RULE_OPTION_TYPE_CONTENT)
-                            || (child_node->option_type == RULE_OPTION_TYPE_PCRE))
-                            && !child_node->is_relative)
+                        if ( child_state->result == DETECTION_OPTION_NO_MATCH )
                         {
-                            /* If it's a non-relative content or pcre, no reason
-                             * to check again.  Only increment result once.
-                             * Should hit this condition on first loop iteration. */
-                            if (loop_count == 1)
-                                result++;
-                            continue;
-                        }
-                        else if ((child_node->option_type == RULE_OPTION_TYPE_CONTENT)
-                            && child_node->is_relative)
-                        {
-                            /* Check for an unbounded relative search.  If this
-                             * failed before, it's going to fail again so don't
-                             * go down this path again */
-                            if ( is_unbounded(child_node->option_data) )
+                            if ( (child_node->option_type == RULE_OPTION_TYPE_CONTENT ||
+                                  child_node->option_type == RULE_OPTION_TYPE_PCRE) &&
+                                 !child_node->is_relative )
                             {
-                                /* Only increment result once. Should hit this
-                                 * condition on first loop iteration. */
-                                if (loop_count == 1)
-                                    result++;
+                                // If it's a non-relative content or pcre, no reason
+                                // to check again.  Only increment result once.
+                                // Should hit this condition on first loop iteration.
+                                if ( loop_count == 1 )
+                                    ++result;
+
                                 continue;
                             }
+
+                            else if ( child_node->option_type == RULE_OPTION_TYPE_CONTENT &&
+                                      child_node->is_relative )
+                            {
+                                // Check for an unbounded relative search.  If this
+                                // failed before, it's going to fail again so don't
+                                // go down this path again
+                                if ( is_unbounded(child_node->option_data) )
+                                {
+                                    // Only increment result once. Should hit this
+                                    // condition on first loop iteration
+                                    if (loop_count == 1)
+                                        ++result;
+
+                                    continue;
+                                }
+                            }
+                        }
+
+                        else if ( child_node->option_type == RULE_OPTION_TYPE_LEAF_NODE )
+                            // Leaf node matched, don't eval again
+                            continue;
+
+                        else if ( child_state->result == child_node->num_children )
+                            // This branch of the tree matched or has options that
+                            // don't need to be evaluated again, so don't need to
+                            // evaluate this option again
+                            continue;
+                    }
+
+                    child_state->result = detection_option_node_evaluate(
+                        node->children[i], eval_data, cursor);
+
+                    if ( child_node->option_type == RULE_OPTION_TYPE_LEAF_NODE )
+                        // Leaf node won't have any children but will return success
+                        // or failure
+                        result += child_state->result;
+
+                    else if (child_state->result == child_node->num_children)
+                        // Indicate that the child's tree branches are done
+                        ++result;
+#ifdef PPM_MGR
+                    if ( PPM_PKTS_ENABLED() )
+                    {
+                        PPM_GET_TIME();
+                        PPM_PACKET_TEST();
+                        if ( PPM_PACKET_ABORT_FLAG() )
+                        {
+                            // bail if we exceeded time
+                            state->last_check.result = result;
+                            return result;
                         }
                     }
-                    else if (child_node->option_type == RULE_OPTION_TYPE_LEAF_NODE)
-                    {
-                        /* Leaf node matched, don't eval again */
-                        continue;
-                    }
-                    else if (child_state->result == child_node->num_children)
-                    {
-                        /* This branch of the tree matched or has options that
-                         * don't need to be evaluated again, so don't need to
-                         * evaluate this option again */
-                        continue;
-                    }
-                }
-
-                child_state->result = detection_option_node_evaluate(
-                    node->children[i], eval_data, cursor);
-
-                if (child_node->option_type == RULE_OPTION_TYPE_LEAF_NODE)
-                {
-                    /* Leaf node won't have any children but will return success
-                     * or failure */
-                    result += child_state->result;
-                }
-                else if (child_state->result == child_node->num_children)
-                {
-                    /* Indicate that the child's tree branches are done */
-                    result++;
-                }
-#ifdef PPM_MGR
-                if ( PPM_PKTS_ENABLED() )
-                {
-                    PPM_GET_TIME();
-                    PPM_PACKET_TEST();
-                    if ( PPM_PACKET_ABORT_FLAG() )
-                    {
-                        /* bail if we exceeded time */
-                        state->last_check.result = result;
-                        return result;
-                    }
-                }
 #endif
+                }
+
+                // If all children branches matched, we don't need to reeval any of
+                // the children so don't need to reeval this content/pcre rule
+                // option at a new offset.
+                // Else, reset the DOE ptr to last eval for offset/depth,
+                // distance/within adjustments for this same content/pcre
+                // rule option
+                if ( result == node->num_children )
+                    continue_loop = 0;
+
+                // Don't need to reset since it's only checked after we've gone
+                // through the loop at least once and the result will have
+                // been set again already
+                //for (i = 0; i < node->num_children; i++)
+                //    node->children[i]->result;
             }
-
-            /* If all children branches matched, we don't need to reeval any of
-             * the children so don't need to reeval this content/pcre rule
-             * option at a new offset.
-             * Else, reset the DOE ptr to last eval for offset/depth,
-             * distance/within adjustments for this same content/pcre
-             * rule option */
-            if (result == node->num_children)
-                continue_loop = 0;
-
-            /* Don't need to reset since it's only checked after we've gone
-             * through the loop at least once and the result will have
-             * been set again already */
-            //for (i = 0; i < node->num_children; i++)
-            //    node->children[i]->result;
         }
 
-        NODE_PROFILE_TMPSTART(node);
-
-        if (rval == DETECTION_OPTION_NO_ALERT)
+        if ( rval == DETECTION_OPTION_NO_ALERT )
         {
-            /* Reset the flowbit_noalert flag in eval data */
+            // Reset the flowbit_noalert flag in eval data
             eval_data->flowbit_noalert = tmp_noalert_flag;
         }
 
-        if (continue_loop && (rval == DETECTION_OPTION_MATCH) && (node->relative_children))
+        if ( continue_loop &&
+             rval == DETECTION_OPTION_MATCH &&
+             node->relative_children )
         {
             if ( node->option_type == RULE_OPTION_TYPE_CONTENT )
-            {
                 continue_loop = content_next(content_data);
-            }
+
             else if (node->option_type == RULE_OPTION_TYPE_PCRE)
-            {
                 continue_loop = pcre_next(pcre_data);
-            }
+
             else
-            {
                 continue_loop = 0;
-            }
-        }
-        else
-        {
-            continue_loop = 0;
         }
 
+        else
+            continue_loop = 0;
+
 #ifdef PERF_PROFILING
-        /* We're essentially checking this node again and it potentially
-         * might match again */
-        if (continue_loop && PROFILING_RULES)
+        // We're essentially checking this node again and it potentially
+        // might match again
+        if ( continue_loop && PROFILING_RULES )
             state->checks++;
 #endif
 
         loop_count++;
     }
-    while (continue_loop);
 
-    if (flowbits_setoperation && (result == DETECTION_OPTION_MATCH))
+    // FIXIT-H What's the point of this?
+    // either it infinite loops, or effective no-op
+    while ( continue_loop );
+
+    if ( flowbits_setoperation && result == DETECTION_OPTION_MATCH )
     {
-        /* Do any setting/clearing/resetting/toggling of flowbits here
-         * given that other rule options matched. */
-        rval = node->evaluate(node->option_data, cursor, eval_data->p);
-        if (rval != DETECTION_OPTION_MATCH)
-        {
+        // Do any setting/clearing/resetting/toggling of flowbits here
+        // given that other rule options matched
+        rval = node->evaluate(node->option_data, cursor, p);
+        if ( rval != DETECTION_OPTION_MATCH )
             result = rval;
-        }
     }
 
-    if (eval_data->flowbit_failed)
+    if ( eval_data->flowbit_failed )
     {
-        /* something deeper in the tree failed a flowbit test, we may need to
-         * reeval this node. */
+        // something deeper in the tree failed a flowbit test, we may need to
+        // reeval this node
         state->last_check.flowbit_failed = 1;
     }
+
     state->last_check.result = result;
 
-    if (result == DETECTION_OPTION_NO_MATCH)
-    {
-        NODE_PROFILE_END_NOMATCH(node);
-    }
-    else
-    {
-        NODE_PROFILE_END_MATCH(node);
-    }
+    if ( result != DETECTION_OPTION_NO_MATCH )
+        NODE_PERF_PROFILE_STOP_MATCH(node_stats);
 
     return result;
 }

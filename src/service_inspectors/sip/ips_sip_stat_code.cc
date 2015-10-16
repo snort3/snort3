@@ -61,49 +61,29 @@ private:
 
 int SipStatCodeOption::eval(Cursor&, Packet* p)
 {
-    SIPData* sd;
-    SIP_Roptions* ropts;
-    uint16_t short_code;
-    int i_code;
-
-    PROFILE_VARS;
-    MODULE_PROFILE_START(sipStatCodeRuleOptionPerfStats);
+    PERF_PROFILE(sipStatCodeRuleOptionPerfStats);
 
     if ((!p->is_tcp() && !p->is_udp()) || !p->flow || !p->dsize)
-    {
-        MODULE_PROFILE_END(sipStatCodeRuleOptionPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
-    sd = get_sip_session_data(p->flow);
+    SIPData* sd = get_sip_session_data(p->flow);
 
     if (!sd)
-    {
-        MODULE_PROFILE_END(sipStatCodeRuleOptionPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
-    ropts = &sd->ropts;
+    SIP_Roptions* ropts = &sd->ropts;
 
     if (0 == ropts->status_code)
-    {
-        MODULE_PROFILE_END(sipStatCodeRuleOptionPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
-    /*Match the stat code*/
-    short_code = ropts->status_code / 100;
-    for (i_code = 0; i_code < SIP_NUM_STAT_CODE_MAX; i_code++)
+    // Match the stat code
+    uint16_t short_code = ropts->status_code / 100;
+    for ( int i = 0; i < SIP_NUM_STAT_CODE_MAX; i++ )
     {
-        if ((ssod.stat_codes[i_code] == short_code)||
-            (ssod.stat_codes[i_code] == ropts->status_code))
-        {
-            MODULE_PROFILE_END(sipStatCodeRuleOptionPerfStats);
+        auto stat_code = ssod.stat_codes[i];
+        if ( stat_code == short_code || stat_code == ropts->status_code )
             return DETECTION_OPTION_MATCH;
-        }
     }
-
-    MODULE_PROFILE_END(sipStatCodeRuleOptionPerfStats);
 
     return DETECTION_OPTION_NO_MATCH;
 }

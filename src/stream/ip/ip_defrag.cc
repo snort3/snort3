@@ -776,17 +776,16 @@ static inline int FragIsComplete(FragTracker* ft)
  */
 static void FragRebuild(FragTracker* ft, Packet* p)
 {
+    PERF_PROFILE(fragRebuildPerfStats);
+
     static THREAD_LOCAL uint8_t encap_frag_cnt = 0;
     uint8_t* rebuild_ptr = NULL;  /* ptr to the start of the reassembly buffer */
     const uint8_t* rebuild_end;  /* ptr to the end of the reassembly buffer */
     Fragment* frag;    /* frag pointer for managing fragments */
     int ret = 0;
     Packet* dpkt;
-    PROFILE_VARS;
 
 // XXX NOT YET IMPLEMENTED - debugging
-
-    MODULE_PROFILE_START(fragRebuildPerfStats);
 
     if (!defrag_pkts[encap_frag_cnt])
         defrag_pkts[encap_frag_cnt] = PacketManager::encode_new();
@@ -929,7 +928,6 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     sfBase.iFragFlushes++;
 
     /* Rebuild is complete */
-    MODULE_PROFILE_END(fragRebuildPerfStats);
 
     /*
      * process the packet through the detection engine
@@ -1159,7 +1157,6 @@ void Defrag::process(Packet* p, FragTracker* ft)
 {
     FragEngine* fe = &engine;
     int insert_return = 0;   /* return value from the insert function */
-    PROFILE_VARS;
 
     // preconditions - what we registered for
     assert(p->has_ip() && !(p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP));
@@ -1218,14 +1215,13 @@ void Defrag::process(Packet* p, FragTracker* ft)
     ip_stats.total++;
     UpdateIPFragStats(&sfBase, p->pkth->caplen);
 
-    MODULE_PROFILE_START(fragPerfStats);
+    PERF_PROFILE(fragPerfStats);
 
     pkttime = (struct timeval*)&p->pkth->ts;
 
     if (!ft->engine )
     {
         new_tracker(p, ft);
-        MODULE_PROFILE_END(fragPerfStats);
         return;
     }
     else if (expire(p, ft, fe) == FRAG_TRACKER_TIMEOUT)
@@ -1270,7 +1266,6 @@ void Defrag::process(Packet* p, FragTracker* ft)
             LogMessage("WARNING: Insert into Fraglist failed, "
                 "(offset: %u).\n", frag_offset);
 #endif
-            MODULE_PROFILE_END(fragPerfStats);
             return;
         case FRAG_INSERT_TTL:
 
@@ -1288,19 +1283,16 @@ void Defrag::process(Packet* p, FragTracker* ft)
             }
 #endif
             ip_stats.discards++;
-            MODULE_PROFILE_END(fragPerfStats);
             return;
         case FRAG_INSERT_ATTACK:
         case FRAG_INSERT_ANOMALY:
             ip_stats.discards++;
-            MODULE_PROFILE_END(fragPerfStats);
             return;
         case FRAG_INSERT_TIMEOUT:
 #ifdef DEBUG
             LogMessage("WARNING: Insert into Fraglist failed due to timeout, "
                 "(offset: %u).\n", frag_offset);
 #endif
-            MODULE_PROFILE_END(fragPerfStats);
             return;
         case FRAG_INSERT_OVERLAP_LIMIT:
 #ifdef DEBUG
@@ -1310,7 +1302,6 @@ void Defrag::process(Packet* p, FragTracker* ft)
                 (frag_offset << 3), p->dsize);
 #endif
             ip_stats.discards++;
-            MODULE_PROFILE_END(fragPerfStats);
             return;
         default:
             break;
@@ -1354,8 +1345,6 @@ void Defrag::process(Packet* p, FragTracker* ft)
             release_tracker(ft);
         }
     }
-
-    MODULE_PROFILE_END(fragPerfStats);
 }
 
 /**
@@ -1397,12 +1386,11 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     Fragment* dump_me = NULL;  /* frag ptr for complete overlaps to dump */
     const uint8_t* fragStart;
     int16_t fragLength;
-    PROFILE_VARS;
     const uint16_t net_frag_offset = p->ptrs.ip_api.off();
 
     sfBase.iFragInserts++;
 
-    MODULE_PROFILE_START(fragInsertPerfStats);
+    PERF_PROFILE(fragInsertPerfStats);
 
     if (p->is_ip6() && (net_frag_offset == 0))
     {
@@ -1491,7 +1479,6 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
 
                 EventAnomOversize(fe);
 
-                MODULE_PROFILE_END(fragInsertPerfStats);
                 return FRAG_INSERT_ANOMALY;
             }
             ft->calculated_size = frag_end;
@@ -1508,7 +1495,6 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
 
         EventAnomZeroFrag(fe);
 
-        MODULE_PROFILE_END(fragInsertPerfStats);
         return FRAG_INSERT_ANOMALY;
     }
 
@@ -1524,7 +1510,6 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
 
         ft->frag_flags |= FRAG_BAD;
 
-        MODULE_PROFILE_END(fragInsertPerfStats);
         return FRAG_INSERT_ANOMALY;
     }
 
@@ -1608,7 +1593,6 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
 
                     ft->frag_flags |= FRAG_BAD;
 
-                    MODULE_PROFILE_END(fragInsertPerfStats);
                     return FRAG_INSERT_ATTACK;
                 }
             }
@@ -1646,7 +1630,6 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
 
                     EventAnomZeroFrag(fe);
 
-                    MODULE_PROFILE_END(fragInsertPerfStats);
                     return FRAG_INSERT_ANOMALY;
                 }
 
@@ -1688,7 +1671,6 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                     {
                         /* Some warning here,
                          * no, its done in add_frag_node */
-                        MODULE_PROFILE_END(fragInsertPerfStats);
                         return ret;
                     }
                     left->size -= (int16_t)overlap;
@@ -1736,7 +1718,6 @@ left_overlap_last:
 
                 EventAnomBadsizeSm(fe);
 
-                MODULE_PROFILE_END(fragInsertPerfStats);
                 return FRAG_INSERT_ANOMALY;
             }
         }
@@ -1752,7 +1733,6 @@ left_overlap_last:
             "Overly large fragment %d 0x%x 0x%x %d\n",
             fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off(),
             net_frag_offset);
-        MODULE_PROFILE_END(fragInsertPerfStats);
         return FRAG_INSERT_FAILED;
     }
 
@@ -1789,7 +1769,6 @@ left_overlap_last:
 
                     ft->frag_flags |= FRAG_BAD;
 
-                    MODULE_PROFILE_END(fragInsertPerfStats);
                     return FRAG_INSERT_ATTACK;
                 }
             }
@@ -1973,7 +1952,6 @@ left_overlap_last:
 
                     ip_stats.discards++;
 
-                    MODULE_PROFILE_END(fragInsertPerfStats);
                     return FRAG_INSERT_ANOMALY;
                 }
 
@@ -1992,7 +1970,6 @@ left_overlap_last:
                     {
                         /* Some warning here,
                          * no, its done in add_frag_node */
-                        MODULE_PROFILE_END(fragInsertPerfStats);
                         return ret;
                     }
 
@@ -2080,7 +2057,6 @@ right_overlap_last:
 
         EventExcessiveOverlap(fe);
 
-        MODULE_PROFILE_END(fragInsertPerfStats);
         return FRAG_INSERT_OVERLAP_LIMIT;
     }
 
@@ -2098,7 +2074,6 @@ right_overlap_last:
     DebugMessage(DEBUG_FRAG,
         "insert(): returning normally\n");
 
-    MODULE_PROFILE_END(fragInsertPerfStats);
     return ret;
 }
 

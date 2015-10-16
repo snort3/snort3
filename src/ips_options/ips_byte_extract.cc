@@ -144,18 +144,12 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
 
 int ByteExtractOption::eval(Cursor& c, Packet* p)
 {
-    ByteExtractData* data = &config;
-    int ret, bytes_read;
-    uint32_t* value;
+    PERF_PROFILE(byteExtractPerfStats);
 
-    PROFILE_VARS;
-    MODULE_PROFILE_START(byteExtractPerfStats);
+    ByteExtractData* data = &config;
 
     if (data == NULL || p == NULL)
-    {
-        MODULE_PROFILE_END(byteExtractPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
     const uint8_t* start = c.buffer();
     int dsize = c.size();
@@ -164,34 +158,30 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
     ptr += data->offset;
 
     const uint8_t* end = start + dsize;
-    value = &(extracted_values[data->var_number]);
+    uint32_t* value = &(extracted_values[data->var_number]);
 
-    /* check bounds */
+    // check bounds
     if (ptr < start || ptr >= end)
-    {
-        MODULE_PROFILE_END(byteExtractPerfStats);
         return DETECTION_OPTION_NO_MATCH;
-    }
 
-    /* do the extraction */
+    // do the extraction
+    int ret = 0;
+    int bytes_read = 0;
+
     if (data->data_string_convert_flag == 0)
     {
         ret = byte_extract(data->endianess, data->bytes_to_grab, ptr, start, end, value);
         if (ret < 0)
-        {
-            MODULE_PROFILE_END(byteExtractPerfStats);
             return DETECTION_OPTION_NO_MATCH;
-        }
+
         bytes_read = data->bytes_to_grab;
     }
     else
     {
         ret = string_extract(data->bytes_to_grab, data->base, ptr, start, end, value);
         if (ret < 0)
-        {
-            MODULE_PROFILE_END(byteExtractPerfStats);
             return DETECTION_OPTION_NO_MATCH;
-        }
+
         bytes_read = ret;
     }
 
@@ -212,7 +202,6 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
     c.add_pos(bytes_read);
 
     /* this rule option always "matches" if the read is performed correctly */
-    MODULE_PROFILE_END(byteExtractPerfStats);
     return DETECTION_OPTION_MATCH;
 }
 

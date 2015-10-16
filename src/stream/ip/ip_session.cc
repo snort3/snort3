@@ -132,18 +132,14 @@ bool IpSession::setup(Packet*)
 
 #ifdef ENABLE_EXPECTED_IP
     if ( flow_con->expected_session(flow, p))
-    {
-        MODULE_PROFILE_END(ip_perf_stats);
         return false;
-    }
 #endif
     return true;
 }
 
 int IpSession::process(Packet* p)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(ip_perf_stats);
+    PERF_PROFILE(ip_perf_stats);
 
     if ( stream.expired_session(flow, p) )
     {
@@ -152,18 +148,12 @@ int IpSession::process(Packet* p)
 
 #ifdef ENABLE_EXPECTED_IP
         if ( flow_con->expected_session(flow, p))
-        {
-            MODULE_PROFILE_END(ip_perf_stats);
             return 0;
-        }
 #endif
     }
 
     if ( stream.blocked_session(flow, p) || stream.ignored_session(flow, p) )
-    {
-        MODULE_PROFILE_END(ip_perf_stats);
         return 0;
-    }
 
     if ( p->ptrs.decode_flags & DECODE_FRAG )
     {
@@ -173,7 +163,6 @@ int IpSession::process(Packet* p)
 
     UpdateSession(p, flow);
 
-    MODULE_PROFILE_END(ip_perf_stats);
     return 0;
 }
 

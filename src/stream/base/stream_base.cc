@@ -243,12 +243,10 @@ void StreamBase::show(SnortConfig*)
 
 void StreamBase::eval(Packet* p)
 {
-    PROFILE_VARS;
+    PERF_PROFILE(s5PerfStats);
 
     if ( !is_eligible(p) )
         return;
-
-    MODULE_PROFILE_START(s5PerfStats);
 
     switch ( p->type() )
     {
@@ -286,8 +284,6 @@ void StreamBase::eval(Packet* p)
     default:
         break;
     }
-
-    MODULE_PROFILE_END(s5PerfStats);
 }
 
 #if 0

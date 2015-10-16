@@ -857,9 +857,9 @@ static inline void EndOfFileHandle(Packet* p, TcpSession* tcpssn)
 
 static void NewQueue(TcpTracker *st, TcpDataBlock *tdb)
 {
-    const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
+    PERF_PROFILE(s5TcpInsertPerfStats);
 
-    PROFILE_VARS; MODULE_PROFILE_START(s5TcpInsertPerfStats);
+    const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
 
     DebugMessage(DEBUG_STREAM_STATE, "In NewQueue\n");
 
@@ -878,7 +878,6 @@ static void NewQueue(TcpTracker *st, TcpDataBlock *tdb)
         if (overlap >= tdb->pkt->dsize)
         {
             DebugMessage(DEBUG_STREAM_STATE, "full overlap on ack'd data, dropping segment\n");
-            MODULE_PROFILE_END(s5TcpInsertPerfStats);
             return;
         }
     }
@@ -888,8 +887,6 @@ static void NewQueue(TcpTracker *st, TcpDataBlock *tdb)
 
     DebugFormat(DEBUG_STREAM_STATE, "Attached new queue to seglist, %d bytes queued, base_seq 0x%X\n",
             tdb->pkt->dsize-overlap, st->seglist_base_seq);
-
-    MODULE_PROFILE_END(s5TcpInsertPerfStats);
 }
 
 
@@ -986,10 +983,9 @@ static void ProcessTcpStream(TcpTracker *rcv, TcpSession *tcpssn, TcpDataBlock *
 static int ProcessTcpData(TcpTracker *listener, TcpSession *tcpssn,
         TcpDataBlock *tdb, StreamTcpConfig *config)
 {
+    PERF_PROFILE(s5TcpDataPerfStats);
+
     const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
-
-    PROFILE_VARS; MODULE_PROFILE_START(s5TcpDataPerfStats);
-
     uint32_t seq = tdb->seq;
 
     if( tcph->is_syn() )
@@ -1001,7 +997,6 @@ static int ProcessTcpData(TcpTracker *listener, TcpSession *tcpssn,
         {
             DebugMessage(DEBUG_STREAM_STATE, "Bailing, data on SYN, not MAC Policy!\n");
             listener->normalizer->trim_syn_payload( tdb );
-            MODULE_PROFILE_END(s5TcpDataPerfStats);
             return STREAM_UNALIGNED;
         }
     }
@@ -1015,7 +1010,6 @@ static int ProcessTcpData(TcpTracker *listener, TcpSession *tcpssn,
         {
             DebugMessage(DEBUG_STREAM_STATE, "Bailing, we're out of the window!\n");
             listener->normalizer->trim_win_payload( tdb );
-            MODULE_PROFILE_END(s5TcpDataPerfStats);
             return STREAM_UNALIGNED;
         }
 
@@ -1032,7 +1026,6 @@ static int ProcessTcpData(TcpTracker *listener, TcpSession *tcpssn,
             ProcessTcpStream(listener, tcpssn, tdb, config);
             /* set flags to session flags */
 
-            MODULE_PROFILE_END(s5TcpDataPerfStats);
             return STREAM_ALIGNED;
         }
     }
@@ -1059,7 +1052,6 @@ static int ProcessTcpData(TcpTracker *listener, TcpSession *tcpssn,
             {
                 DebugMessage(DEBUG_STREAM_STATE, "Bailing, we're out of the window!\n");
                 listener->normalizer->trim_win_payload( tdb );
-                MODULE_PROFILE_END(s5TcpDataPerfStats);
                 return STREAM_UNALIGNED;
             }
 
@@ -1087,7 +1079,6 @@ static int ProcessTcpData(TcpTracker *listener, TcpSession *tcpssn,
         }
     }
 
-    MODULE_PROFILE_END(s5TcpDataPerfStats);
     return STREAM_UNALIGNED;
 }
 
@@ -1280,9 +1271,9 @@ static void NewTcpSession(Packet* p, Flow* flow, StreamTcpConfig* dstPolicy, Tcp
 
 static void NewTcpSessionOnSyn(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* dstPolicy)
 {
-    const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
+    PERF_PROFILE(s5TcpNewSessPerfStats);
 
-    PROFILE_VARS; MODULE_PROFILE_START(s5TcpNewSessPerfStats);
+    const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
     TcpSession* tss;
 
     /******************************************************************
@@ -1331,14 +1322,13 @@ static void NewTcpSessionOnSyn(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* d
 
     tcpStats.sessions_on_syn++;
     NewTcpSession(tdb->pkt, flow, dstPolicy, tss);
-    MODULE_PROFILE_END(s5TcpNewSessPerfStats);
 }
 
 static void NewTcpSessionOnSynAck(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* dstPolicy)
 {
-    const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
+    PERF_PROFILE(s5TcpNewSessPerfStats);
 
-    PROFILE_VARS; MODULE_PROFILE_START(s5TcpNewSessPerfStats);
+    const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
     TcpSession* tss;
 
     tss = (TcpSession*) flow->session;
@@ -1385,15 +1375,14 @@ static void NewTcpSessionOnSynAck(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig
 
     tcpStats.sessions_on_syn_ack++;
     NewTcpSession(tdb->pkt, flow, dstPolicy, tss);
-    MODULE_PROFILE_END(s5TcpNewSessPerfStats);
 }
 
 static void NewTcpSessionOn3Way(Flow* flow, TcpDataBlock* tdb,
         StreamTcpConfig* dstPolicy)
 {
-    const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
+    PERF_PROFILE(s5TcpNewSessPerfStats);
 
-    PROFILE_VARS; MODULE_PROFILE_START(s5TcpNewSessPerfStats);
+    const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
     TcpSession* tss;
 
     /******************************************************************
@@ -1439,14 +1428,13 @@ static void NewTcpSessionOn3Way(Flow* flow, TcpDataBlock* tdb,
 
     tcpStats.sessions_on_3way++;
     NewTcpSession(tdb->pkt, flow, dstPolicy, tss);
-    MODULE_PROFILE_END(s5TcpNewSessPerfStats);
 }
 
 static void NewTcpSessionOnData(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* dstPolicy)
 {
-    const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
+    PERF_PROFILE(s5TcpNewSessPerfStats);
 
-    PROFILE_VARS; MODULE_PROFILE_START(s5TcpNewSessPerfStats);
+    const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
     TcpSession* tss;
 
     tss = (TcpSession*) flow->session;
@@ -1537,11 +1525,12 @@ static void NewTcpSessionOnData(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* 
 
     tcpStats.sessions_on_data++;
     NewTcpSession(tdb->pkt, flow, dstPolicy, tss);
-    MODULE_PROFILE_END(s5TcpNewSessPerfStats);
 }
 
 static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
 {
+    PERF_PROFILE(s5TcpStatePerfStats);
+
     int retcode = ACTION_NOTHING;
     int eventcode = 0;
     int got_ts = 0;
@@ -1552,7 +1541,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
     TcpTracker* talker = NULL;
     TcpTracker* listener = NULL;
     DEBUG_WRAP( const char* t = NULL; const char* l = NULL; );
-    PROFILE_VARS;
 
     if (flow->protocol != PktType::TCP)
     {
@@ -1561,8 +1549,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
     }
 
     tcpssn = ( TcpSession* ) flow->session;
-
-    MODULE_PROFILE_START(s5TcpStatePerfStats);
 
     if (!tcpssn->tcp_init)
     {
@@ -1653,11 +1639,8 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
                 StreamUpdatePerfBaseState(&sfBase, flow, TCP_STATE_ESTABLISHED);
         }
         else if (!tdb->pkt->dsize)
-        {
-            /* Do nothing. */
-            MODULE_PROFILE_END(s5TcpStatePerfStats);
+            // Do nothing.
             return retcode;
-        }
     }
     else
     {
@@ -1782,7 +1765,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
                 /* Got SYN/RST.  We're done. */
                 listener->normalizer->trim_syn_payload( tdb );
                 listener->normalizer->trim_rst_payload( tdb );
-                MODULE_PROFILE_END(s5TcpStatePerfStats);
                 return retcode | ACTION_RST;
             }
             else if (tcph->is_syn_only())
@@ -1864,7 +1846,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
     if (!tcpssn->tcp_init)
     {
         LogTcpEvents(eventcode);
-        MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode;
     }
 
@@ -1893,7 +1874,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
                 inc_tcp_discards();
                 listener->normalizer->trim_win_payload( tdb );
                 LogTcpEvents(eventcode);
-                MODULE_PROFILE_END(s5TcpStatePerfStats);
                 return retcode | ACTION_BAD_PKT;
             }
         }
@@ -1927,7 +1907,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
                 StreamUpdatePerfBaseState(&sfBase, flow, TCP_STATE_CLOSING);
                 /* Leave listener open, data may be in transit */
                 LogTcpEvents(eventcode);
-                MODULE_PROFILE_END(s5TcpStatePerfStats);
                 return retcode | ACTION_RST;
             }
             /* Reset not valid. */
@@ -1936,7 +1915,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
             eventcode |= EVENT_BAD_RST;
             listener->normalizer->packet_dropper(tdb, NORM_TCP_BLOCK);
             LogTcpEvents(eventcode);
-            MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode;
         }
 
@@ -1966,7 +1944,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
         listener->s_mgr.state = TCP_STATE_SYN_SENT;
         DebugMessage(DEBUG_STREAM_STATE, "Accepted SYN ACK\n");
         LogTcpEvents(eventcode);
-        MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode;
     }
 
@@ -2021,7 +1998,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
                leave listener open, data may be in transit */
 
             LogTcpEvents(eventcode);
-            MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode | ACTION_RST;
         }
         /* Reset not valid. */
@@ -2030,7 +2006,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
         eventcode |= EVENT_BAD_RST;
         listener->normalizer->packet_dropper(tdb, NORM_TCP_BLOCK);
         LogTcpEvents(eventcode);
-        MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ts_action;
     }
     else
@@ -2044,7 +2019,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
             inc_tcp_discards();
             listener->normalizer->trim_win_payload( tdb );
             LogTcpEvents(eventcode);
-            MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode | ts_action;
         }
     }
@@ -2055,7 +2029,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
         inc_tcp_discards();
         // this packet was normalized elsewhere
         LogTcpEvents(eventcode);
-        MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ts_action;
     }
 
@@ -2096,7 +2069,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
             /* got a bad SYN on the session, alert! */
             eventcode |= EVENT_SYN_ON_EST;
             LogTcpEvents(eventcode);
-            MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode | action;
         }
     }
@@ -2114,7 +2086,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
             inc_tcp_discards();
             listener->normalizer->packet_dropper(tdb, NORM_TCP_BLOCK);
             LogTcpEvents(eventcode);
-            MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode | ACTION_BAD_PKT;
         }
         else if ((tdb->pkt->packet_flags & PKT_FROM_CLIENT) && (tdb->win <= SLAM_MAX)
@@ -2130,7 +2101,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
             if (listener->normalizer->packet_dropper(tdb, NORM_TCP_BLOCK))
             {
                 LogTcpEvents(eventcode);
-                MODULE_PROFILE_END(s5TcpStatePerfStats);
                 return retcode | ACTION_BAD_PKT;
             }
         }
@@ -2203,7 +2173,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
                         if (listener->normalizer->packet_dropper(tdb, NORM_TCP_BLOCK))
                         {
                             LogTcpEvents(eventcode);
-                            MODULE_PROFILE_END(s5TcpStatePerfStats);
                             return retcode | ACTION_BAD_PKT;
                         }
                     }
@@ -2246,7 +2215,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
                     eventcode |= EVENT_BAD_ACK;
                     LogTcpEvents(eventcode);
                     listener->normalizer->packet_dropper(tdb, NORM_TCP_BLOCK);
-                    MODULE_PROFILE_END(s5TcpStatePerfStats);
                     return retcode | ACTION_BAD_PKT;
                 }
                 break;
@@ -2431,7 +2399,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
                     eventcode |= EVENT_BAD_FIN;
                     LogTcpEvents(eventcode);
                     listener->normalizer->packet_dropper(tdb, NORM_TCP_BLOCK);
-                    MODULE_PROFILE_END(s5TcpStatePerfStats);
                     return retcode | ACTION_BAD_PKT;
                 }
             }
@@ -2473,7 +2440,6 @@ dupfin:
         LogTcpEvents(eventcode);
         TcpSessionCleanup(flow, 0, tdb->pkt);
         flow->session_state |= STREAM_STATE_CLOSED;
-        MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ACTION_LWSSN_CLOSED;
     }
     else if( listener->s_mgr.state == TCP_STATE_CLOSED
@@ -2484,7 +2450,6 @@ dupfin:
     }
 
     LogTcpEvents(eventcode);
-    MODULE_PROFILE_END(s5TcpStatePerfStats);
     return retcode;
 }
 
@@ -2964,9 +2929,10 @@ void TcpSession::update_direction(char dir, const sfip_t* ip, uint16_t port)
  */
 int TcpSession::process(Packet* p)
 {
+    PERF_PROFILE(s5TcpPerfStats);
+
     TcpDataBlock tdb;
     int status;
-    PROFILE_VARS;
 
     DEBUG_WRAP(
             char flagbuf[9];
@@ -2977,14 +2943,10 @@ int TcpSession::process(Packet* p)
                 ntohl(p->ptrs.tcph->th_seq), ntohl(p->ptrs.tcph->th_ack), p->dsize);
             );
 
-    MODULE_PROFILE_START(s5TcpPerfStats);
-
     if (stream.blocked_session(flow, p)
             || (flow->session_state & STREAM_STATE_IGNORE))
-    {
-        MODULE_PROFILE_END(s5TcpPerfStats);
         return ACTION_NOTHING;
-    }
+
     SetupTcpDataBlock(&tdb, p);
 
     StreamTcpConfig* config = get_tcp_cfg(flow->ssn_server);
@@ -3019,7 +2981,6 @@ int TcpSession::process(Packet* p)
                     event_mask |= EVENT_NO_3WHS;
                 }
 
-                MODULE_PROFILE_END(s5TcpPerfStats);
 #ifdef REG_TEST
                 S5TraceTCP(p, flow, &tdb, 1);
 #endif
@@ -3031,7 +2992,6 @@ int TcpSession::process(Packet* p)
 midstream_pickup_allowed: if (!p->ptrs.tcph->is_syn_ack()
                                   && !p->dsize && !(StreamPacketHasWscale(p) & TF_WSCALE))
                           {
-                              MODULE_PROFILE_END(s5TcpPerfStats);
 #ifdef REG_TEST
                               S5TraceTCP(p, flow, &tdb, 1);
 #endif
@@ -3082,7 +3042,6 @@ midstream_pickup_allowed: if (!p->ptrs.tcph->is_syn_ack()
                 p->packet_flags & PKT_FROM_SERVER ? "server" : "client");
     }
 
-    MODULE_PROFILE_END(s5TcpPerfStats);
     S5TraceTCP(p, flow, &tdb, 0);
     return 0;
 }
