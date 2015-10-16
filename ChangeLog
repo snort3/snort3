@@ -1,3 +1,17 @@
+15/10/16 - build 174
+
+-- legacy daemonization cleanup
+-- decouple -D, -M, -q
+-- delete -E
+-- initial rewrite of profiler
+-- don't create pid file unless requested
+-- remove pid lock file
+-- new_http_inspect header processing, normalization, and decompression tweaks
+-- convert README to markdown for pretty github rendering
+   (contributed by gavares@gmail.com)
+-- perfmonitor fixes
+-- ssl stats updates
+
 15/10/09 - build 173
 
 -- added pkt_num rule option to extras
