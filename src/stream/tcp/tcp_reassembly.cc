@@ -1163,10 +1163,9 @@ static inline uint32_t flush_pdu_ips(TcpSession* ssn, TcpTracker* trk, uint32_t*
 {
     PERF_PROFILE(s5TcpPAFPerfStats);
 
-    TcpSegment* seg = trk->seglist_next;
-
     uint32_t total = 0;
     uint32_t avail = get_q_sequenced(trk);
+    TcpSegment* seg = trk->seglist_next;
 
     // must stop if gap (checked in paf_check)
     while (seg && *flags && (total < avail))
