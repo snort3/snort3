@@ -44,7 +44,7 @@
 #include "hash/sfghash.h"
 
 #ifdef UNIT_TEST
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 #endif
 
 using namespace std;
