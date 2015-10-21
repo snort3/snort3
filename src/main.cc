@@ -65,7 +65,7 @@ using namespace std;
 #include "time/periodic.h"
 
 #ifdef UNIT_TEST
-#include "test/unit_test.h"
+#include "catch/unit_test.h"
 #endif
 
 #ifdef PIGLET

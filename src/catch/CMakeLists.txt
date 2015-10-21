@@ -25,13 +25,13 @@ add_custom_command(
     DEPENDS build_list.sh
 )
 
-add_library(unit_tests STATIC
+add_library(catch_tests STATIC
     catch.hpp
     unit_test.cc
     unit_test.h
 )
 
-target_link_libraries(unit_tests
+target_link_libraries(catch_tests
     ${CHECK_LIBRARIES}
     ${LIBRT}
 )

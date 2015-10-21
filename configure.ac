@@ -1017,7 +1017,7 @@ src/search_engines/Makefile \
 src/sfip/Makefile \
 src/sfrt/Makefile \
 src/target_based/Makefile \
-src/test/Makefile \
+src/catch/Makefile \
 src/time/Makefile \
 src/utils/Makefile \
 src/utils/test/Makefile \

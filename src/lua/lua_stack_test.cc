@@ -20,7 +20,7 @@
 #include <string>
 #include <luajit-2.0/lua.hpp>
 
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 
 #include "lua_test_common.h"
 #include "lua/lua_stack.h"

@@ -26,7 +26,7 @@
 #include <list>
 
 #ifdef UNIT_TEST
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 #endif
 
 #include "main/snort_types.h"

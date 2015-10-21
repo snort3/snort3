@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 
 #include "main/snort_types.h"
 #include "sfrt/sfrt.h"

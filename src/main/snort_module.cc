@@ -48,7 +48,7 @@ using namespace std;
 #include "utils/stats.h"
 
 #ifdef UNIT_TEST
-#include "test/unit_test.h"
+#include "catch/unit_test.h"
 #endif
 
 //-------------------------------------------------------------------------

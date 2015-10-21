@@ -32,7 +32,7 @@
 #include "time/profiler.h"
 
 #ifdef UNIT_TEST
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 #include "stream/libtcp/stream_tcp_unit_test.h"
 #endif
 

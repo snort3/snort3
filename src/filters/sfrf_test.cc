@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 
 #include "main/snort_types.h"
 #include "main/snort_config.h"

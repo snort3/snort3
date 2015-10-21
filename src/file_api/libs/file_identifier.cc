@@ -39,7 +39,7 @@
 #include "utils/util.h"
 
 #ifdef UNIT_TEST
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 #endif
 
 typedef struct _IdentifierSharedNode

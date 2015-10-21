@@ -30,7 +30,7 @@
 using namespace std;
 
 #ifdef UNIT_TEST
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 #endif
 
 Value::~Value()

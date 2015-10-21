@@ -50,7 +50,7 @@
 #include "sfip/sf_ip.h"
 
 #ifdef UNIT_TEST
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 #endif
 
 static int already_fatal = 0;

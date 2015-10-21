@@ -30,7 +30,7 @@
 #include "decompress/file_decomp_swf.h"
 
 #ifdef UNIT_TEST
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 #endif
 
 static const char PDF_Sig[5] = { '%', 'P', 'D', 'F', '-' };

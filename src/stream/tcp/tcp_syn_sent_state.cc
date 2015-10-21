@@ -25,7 +25,7 @@ using namespace std;
 #include "tcp_syn_sent_state.h"
 
 #ifdef UNIT_TEST
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 #endif
 
 TcpSynSentState::TcpSynSentState()

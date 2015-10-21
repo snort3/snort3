@@ -29,7 +29,7 @@ codecs/link/liblink_codecs.a
 endif
 
 if BUILD_UNIT_TESTS
-test_list = test/libtest.a
+test_list = catch/libcatch_tests.a
 endif
 
 if BUILD_PIGLET
@@ -132,7 +132,7 @@ time \
 utils
 
 if BUILD_UNIT_TESTS
-SUBDIRS += test
+SUBDIRS += catch
 endif
 
 if BUILD_PIGLET

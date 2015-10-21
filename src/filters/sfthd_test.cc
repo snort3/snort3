@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 
 #include "sfip/sf_ip.h"
 #include "parser/parse_ip.h"

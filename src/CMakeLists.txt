@@ -62,8 +62,8 @@ if (STATIC_CODECS)
 endif()
 
 if (BUILD_UNIT_TESTS)
-    set( UNIT_TESTS_LIBRARIES unit_tests)
-    add_subdirectory(test)
+    set( UNIT_TESTS_LIBRARIES catch_tests)
+    add_subdirectory(catch)
 endif (BUILD_UNIT_TESTS)
 
 if (BUILD_PIGLET)

@@ -27,7 +27,7 @@ using namespace std;
 #include "main/snort_debug.h"
 
 #ifdef UNIT_TEST
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 #include "stream_tcp_unit_test.h"
 #endif
 

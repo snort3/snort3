@@ -52,3 +52,17 @@ if (BUILD_EXTRA_PLUGINS)
     endif()
 endif (BUILD_EXTRA_PLUGINS)
 
+# directories named "test" are expected to contain cpputests
+if(BUILD_UNIT_TESTS)
+    pkg_check_modules(CPPUTEST REQUIRED cpputest)
+    include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CPPUTEST_INCLUDE_DIRS})
+    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
+
+    file(GLOB_RECURSE unit_tests RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "CMakeLists.txt")
+    foreach (unit_test ${unit_tests})
+        if(${unit_test} MATCHES  ".*/test/CMakeLists.txt")
+            string(REGEX REPLACE "(.*/test)/CMakeLists.txt" "\\1" test_path ${unit_test})
+            add_subdirectory(${test_path} EXCLUDE_FROM_ALL)
+        endif()
+    endforeach()
+endif (BUILD_UNIT_TESTS)

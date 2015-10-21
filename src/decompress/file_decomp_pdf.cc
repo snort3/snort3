@@ -33,7 +33,7 @@
 #include "main/thread.h"
 
 #ifdef UNIT_TEST
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 #endif
 
 /* Define characters and tokens in PDF grammar */

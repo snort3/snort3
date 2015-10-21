@@ -32,7 +32,7 @@
 #include <vector>
 
 #ifdef UNIT_TEST
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 #endif
 
 typedef std::vector<IdleHook> IdleList;

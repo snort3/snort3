@@ -33,7 +33,7 @@
 #include <vector>
 
 #ifdef UNIT_TEST
-#include "test/catch.hpp"
+#include "catch/catch.hpp"
 #endif
 
 struct rule_number_t
