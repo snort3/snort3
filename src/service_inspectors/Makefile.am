@@ -18,6 +18,7 @@ SUBDIRS = \
 back_orifice \
 dns \
 ftp_telnet \
+gtp \
 http_inspect \
 imap \
 nhttp_inspect \

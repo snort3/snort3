@@ -28,6 +28,9 @@ extern const BaseApi* sin_http_global;
 extern const BaseApi* sin_http_inspect;
 
 #ifdef STATIC_INSPECTORS
+extern const BaseApi* ips_gtp_info;
+extern const BaseApi* ips_gtp_type;
+extern const BaseApi* ips_gtp_version;
 extern const BaseApi* ips_sip_body;
 extern const BaseApi* ips_sip_header;
 extern const BaseApi* ips_sip_method;
@@ -39,6 +42,7 @@ extern const BaseApi* sin_dns;
 extern const BaseApi* sin_ftp_client;
 extern const BaseApi* sin_ftp_server;
 extern const BaseApi* sin_ftp_data;
+extern const BaseApi* sin_gtp;
 extern const BaseApi* sin_imap;
 extern const BaseApi* sin_nhttp;
 extern const BaseApi* sin_pop;
@@ -57,6 +61,9 @@ const BaseApi* service_inspectors[] =
     sin_http_inspect,
 
 #ifdef STATIC_INSPECTORS
+    ips_gtp_info,
+    ips_gtp_type,
+    ips_gtp_version,
     ips_sip_body,
     ips_sip_header,
     ips_sip_method,
@@ -68,6 +75,7 @@ const BaseApi* service_inspectors[] =
     sin_ftp_client,
     sin_ftp_server,
     sin_ftp_data,
+    sin_gtp,
     sin_imap,
     sin_nhttp,
     sin_pop,

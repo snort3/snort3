@@ -173,9 +173,6 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         else
             len = GTP_MIN_LEN;
 
-        codec.lyr_len = len;
-        codec.proto_bits |= PROTO_BIT__GTP;
-
         if (raw.len != ((unsigned int)ntohs(hdr->length) + GTP_MIN_LEN))
         {
             DebugFormat(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
@@ -183,8 +180,8 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
             codec_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
-
         break;
+
     default:
         DebugMessage(DEBUG_DECODE, "Unknown protocol version.\n");
         return false;
@@ -193,11 +190,18 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_GTP) )
         Active::set_tunnel_bypass();
 
+    codec.lyr_len = len;
+
+    if ( codec.proto_bits & PROTO_BIT__GTP )
+        codec_event(codec, DECODE_GTP_MULTIPLE_ENCAPSULATION);
+    else
+        codec.proto_bits |= PROTO_BIT__GTP;
+
     if (raw.len > 0)
     {
         codec.codec_flags |= CODEC_ENCAP_LAYER;
 
-        ip_ver = *(raw.data + GTP_MIN_LEN) & 0xF0;
+        ip_ver = *(raw.data + len) & 0xF0;
         if (ip_ver == 0x40)
             codec.next_prot_id = IPPROTO_ID_IPIP;
         else if (ip_ver == 0x60)

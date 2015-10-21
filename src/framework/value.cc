@@ -162,6 +162,23 @@ bool Value::strtol(long& n) const
     return true;
 }
 
+bool Value::strtol(long& n, const std::string& tok) const
+{
+    const char* s = tok.c_str();
+
+    if ( !*s )
+        return false;
+
+    char* end = nullptr;
+
+    n = ::strtol(s, &end, 0);
+
+    if ( *end )
+        return false;
+
+    return true;
+}
+
 const char* Value::get_as_string()
 {
     switch ( type )

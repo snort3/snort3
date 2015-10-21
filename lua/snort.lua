@@ -68,6 +68,7 @@ stream_file = { }
 arp_spoof = { }
 back_orifice = { }
 dns = { }
+gtp_inspect = default_gtp
 imap = { }
 smtp = { }
 perf_monitor = { }

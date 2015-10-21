@@ -244,3 +244,7 @@ The working config is crusty.cfg in the top level directory.  It does well
 but will munge some things.  Specially formatted INDENT-OFF comments were
 added in 2 places to avoid a real mess.
 
+Example usage:
+
+    uncrustify -c crusty.cfg --replace <file>
+

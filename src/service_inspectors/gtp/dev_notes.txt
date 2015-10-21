@@ -1,0 +1,18 @@
+gtp_inspect provides anomaly detection and IPS rule options for matching on
+version, types, and information elements in GTP control messages.  The
+inspector is independent of the codec used for data channel encapsulations.
+
+At present 3 versions are supported: 0, 1, and 2.  The basic configuration
+is provided in snort_defaults.lua.  Adding a version 3 requires updating
+both code and lua defaults.  The key code change is to MAX_GTP_VERSION_CODE,
+which is defined in gtp.h.
+
+PDU processing for all versions is currently in gtp_parser.cc.  A message
+ID is used to determine if information element data applies to the current
+message.  This eliminates the need to reset all possible information
+element offsets.  This data is used to support rule options.
+
+GTP control messages do not contain sufficient information to enable
+automatic protocol detection, hence there is no support in the wizard.
+Ports, typically UDP 2123, must be configured in the binder.
+

@@ -208,6 +208,9 @@ struct SO_PUBLIC Packet
     inline bool has_tcp_data() const
     { return (proto_bits & PROTO_BIT__TCP) and data and dsize; }
 
+    inline bool has_udp_data() const
+    { return (proto_bits & PROTO_BIT__UDP) and data and dsize; }
+
     /* Get general, non-boolean information */
     inline PktType type() const
     { return ptrs.get_pkt_type(); } // defined in codec.h

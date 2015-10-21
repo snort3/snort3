@@ -18,10 +18,7 @@
 //--------------------------------------------------------------------------
 
 /**
-**  @author     Daniel Roelker <droelker@sourcefire.com>
-**
-**  @brief      This file initializes HttpInspect as a Snort
-**              preprocessor.
+**  original author Daniel Roelker <droelker@sourcefire.com>
 **
 **  This file registers the HttpInspect initialization function,
 **  adds the HttpInspect function into the preprocessor list, reads

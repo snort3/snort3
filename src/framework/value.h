@@ -101,6 +101,7 @@ public:
     const char* get_as_string();
 
     bool strtol(long&) const;
+    bool strtol(long&, const std::string&) const;
 
     bool operator==(const char* s) const
     { return str == s; }
