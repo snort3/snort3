@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,27 +15,26 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// pps_gtp.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// pps_modbus.cc author Russ Combs <rucombs@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "helpers/util_binder.h"
-#include "helpers/converter.h"
 #include "helpers/s2l_util.h"
+#include "helpers/util_binder.h"
 
 namespace preprocessors
 {
 namespace
 {
-class Gtp : public ConversionState
+class Modbus : public ConversionState
 {
 public:
-    Gtp(Converter& c) : ConversionState(c)
+    Modbus(Converter& c) : ConversionState(c)
     { converted_args = false; }
 
-    virtual ~Gtp();
+    virtual ~Modbus();
     virtual bool convert(std::istringstream& data_stream);
 
 private:
@@ -43,22 +42,21 @@ private:
 };
 } // namespace
 
-Gtp::~Gtp()
+Modbus::~Modbus()
 {
     if (converted_args)
         return;
 
     Binder bind(table_api);
     bind.set_when_proto("tcp");
-    bind.add_when_port("2123");
-    bind.add_when_port("3386");
-    bind.set_use_type("gtp_inspect");
+    bind.add_when_port("502");
+    bind.set_use_type("modbus");
 
-    table_api.open_table("gtp_inspect");
+    table_api.open_table("modbus");
     table_api.close_table();
 }
 
-bool Gtp::convert(std::istringstream& data_stream)
+bool Modbus::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
@@ -66,9 +64,9 @@ bool Gtp::convert(std::istringstream& data_stream)
     Binder bind(table_api);
 
     bind.set_when_proto("tcp");
-    bind.set_use_type("gtp_inspect");
+    bind.set_use_type("modbus");
 
-    table_api.open_table("gtp_inspect");
+    table_api.open_table("modbus");
 
     // parse the file configuration
     while (data_stream >> keyword)
@@ -108,10 +106,7 @@ bool Gtp::convert(std::istringstream& data_stream)
     }
 
     if (!ports_set)
-    {
-        bind.add_when_port("2123");
-        bind.add_when_port("3386");
-    }
+        bind.add_when_port("502");
 
     table_api.close_table();
     return retval;
@@ -123,15 +118,15 @@ bool Gtp::convert(std::istringstream& data_stream)
 
 static ConversionState* ctor(Converter& c)
 {
-    return new Gtp(c);
+    return new Modbus(c);
 }
 
-static const ConvertMap preprocessor_gtp =
+static const ConvertMap preprocessor_modbus =
 {
-    "gtp",
+    "modbus",
     ctor,
 };
 
-const ConvertMap* gtp_map = &preprocessor_gtp;
-} // namespace preprocessors
+const ConvertMap* modbus_map = &preprocessor_modbus;
+}
 

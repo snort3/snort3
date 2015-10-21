@@ -484,6 +484,84 @@ static const ConvertMap rule_byte_extract =
 const ConvertMap* byte_extract_map = &rule_byte_extract;
 
 /************************************
+ ************  GTP_INFO  ************
+ ************************************/
+
+static const std::string gtp_info = "gtp_info";
+static const ConvertMap rule_gtp_info =
+{
+    gtp_info,
+    unchanged_rule_ctor<& gtp_info>,
+};
+
+const ConvertMap* gtp_info_map = &rule_gtp_info;
+
+/************************************
+ ************  GTP_TYPE  ************
+ ************************************/
+
+static const std::string gtp_type = "gtp_type";
+static const ConvertMap rule_gtp_type =
+{
+    gtp_type,
+    unchanged_rule_ctor<& gtp_type>,
+};
+
+const ConvertMap* gtp_type_map = &rule_gtp_type;
+
+/************************************
+ **********  GTP_VERSION  ***********
+ ************************************/
+
+static const std::string gtp_version = "gtp_version";
+static const ConvertMap rule_gtp_version =
+{
+    gtp_version,
+    unchanged_rule_ctor<& gtp_version>,
+};
+
+const ConvertMap* gtp_version_map = &rule_gtp_version;
+
+/************************************
+ **********  MODBUS_DATA  ***********
+ ************************************/
+
+static const std::string modbus_data = "modbus_data";
+static const ConvertMap rule_modbus_data =
+{
+    modbus_data,
+    unchanged_rule_ctor<& modbus_data>,
+};
+
+const ConvertMap* modbus_data_map = &rule_modbus_data;
+
+/************************************
+ **********  MODBUS_FUNC  ***********
+ ************************************/
+
+static const std::string modbus_func = "modbus_func";
+static const ConvertMap rule_modbus_func =
+{
+    modbus_func,
+    unchanged_rule_ctor<& modbus_func>,
+};
+
+const ConvertMap* modbus_func_map = &rule_modbus_func;
+
+/************************************
+ **********  MODBUS_UNIT  ***********
+ ************************************/
+
+static const std::string modbus_unit = "modbus_unit";
+static const ConvertMap rule_modbus_unit =
+{
+    modbus_unit,
+    unchanged_rule_ctor<& modbus_unit>,
+};
+
+const ConvertMap* modbus_unit_map = &rule_modbus_unit;
+
+/************************************
  ************  PKT_DATA  ************
  ************************************/
 

@@ -43,6 +43,9 @@ extern const ConvertMap* flowbits_map;
 extern const ConvertMap* fragbits_map;
 extern const ConvertMap* fragoffset_map;
 extern const ConvertMap* gid_map;
+extern const ConvertMap* gtp_info_map;
+extern const ConvertMap* gtp_type_map;
+extern const ConvertMap* gtp_version_map;
 extern const ConvertMap* http_encode_map;
 extern const ConvertMap* icmp_id_map;
 extern const ConvertMap* icmp_seq_map;
@@ -55,6 +58,9 @@ extern const ConvertMap* itype_map;
 extern const ConvertMap* logto_map;
 extern const ConvertMap* metadata_map;
 extern const ConvertMap* msg_map;
+extern const ConvertMap* modbus_data_map;
+extern const ConvertMap* modbus_func_map;
+extern const ConvertMap* modbus_unit_map;
 extern const ConvertMap* pcre_map;
 extern const ConvertMap* pkt_data_map;
 extern const ConvertMap* react_map;
@@ -106,6 +112,9 @@ const std::vector<const ConvertMap*> rule_options_api =
     fragbits_map,
     fragoffset_map,
     gid_map,
+    gtp_info_map,
+    gtp_type_map,
+    gtp_version_map,
     http_encode_map,
     icmp_id_map,
     icmp_seq_map,
@@ -118,6 +127,9 @@ const std::vector<const ConvertMap*> rule_options_api =
     logto_map,
     metadata_map,
     msg_map,
+    modbus_data_map,
+    modbus_func_map,
+    modbus_unit_map,
     pcre_map,
     pkt_data_map,
     priority_map,

@@ -18,6 +18,7 @@ add_library(preprocessor_states
     pps_dns.cc
     pps_pop.cc
     pps_imap.cc
+    pps_modbus.cc
     pps_smtp.cc
     pps_sfportscan.cc
     pps_stream5_ip.cc

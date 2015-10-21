@@ -44,6 +44,7 @@ extern const ConvertMap* ssl_map;
 extern const ConvertMap* dns_map;
 extern const ConvertMap* pop_map;
 extern const ConvertMap* imap_map;
+extern const ConvertMap* modbus_map;
 extern const ConvertMap* smtp_map;
 extern const ConvertMap* sfportscan_map;
 extern const ConvertMap* stream_ip_map;
@@ -76,6 +77,7 @@ const std::vector<const ConvertMap*> preprocessor_api =
     dns_map,
     pop_map,
     imap_map,
+    modbus_map,
     smtp_map,
     sfportscan_map,
     stream_ip_map,
