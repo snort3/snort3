@@ -49,7 +49,7 @@ Gtp::~Gtp()
         return;
 
     Binder bind(table_api);
-    bind.set_when_proto("tcp");
+    bind.set_when_proto("udp");
     bind.add_when_port("2123");
     bind.add_when_port("3386");
     bind.set_use_type("gtp_inspect");
@@ -65,7 +65,7 @@ bool Gtp::convert(std::istringstream& data_stream)
     bool ports_set = false;
     Binder bind(table_api);
 
-    bind.set_when_proto("tcp");
+    bind.set_when_proto("udp");
     bind.set_use_type("gtp_inspect");
 
     table_api.open_table("gtp_inspect");
