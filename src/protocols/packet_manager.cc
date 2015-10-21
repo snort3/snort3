@@ -272,9 +272,11 @@ void PacketManager::decode(
         assert(curr_lyr_len <= raw.len);
         raw.len -= curr_lyr_len;
         raw.data += curr_lyr_len;
+        p->proto_bits |= codec_data.proto_bits;
         codec_data.next_prot_id = FINISHED_DECODE;
         codec_data.lyr_len = 0;
         codec_data.invalid_bytes = 0;
+        codec_data.proto_bits = 0;
     }
 
     DebugFormat(DEBUG_DECODE, "Codec %s (protocol_id: %hu: ip header"

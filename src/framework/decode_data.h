@@ -80,6 +80,7 @@ enum DecodeFlags : std::uint16_t
     DECODE_C2S =            0x0100,  // user - client to server
     DECODE_SOF =            0x0200,  // user - start of flow
     DECODE_EOF =            0x0400,  // user - end of flow
+    DECODE_GTP =            0x0800,  // gtp encap
 };
 
 // FIXIT-L make this an enum!!

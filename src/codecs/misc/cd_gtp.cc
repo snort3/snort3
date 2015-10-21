@@ -85,7 +85,7 @@ void GtpCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(PROTO_GTP);
 }
 
-bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
+bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
 {
     uint8_t next_hdr_type;
     uint8_t version;
@@ -191,11 +191,12 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         Active::set_tunnel_bypass();
 
     codec.lyr_len = len;
+    codec.proto_bits |= PROTO_BIT__GTP;
 
-    if ( codec.proto_bits & PROTO_BIT__GTP )
+    if ( dd.decode_flags & DECODE_GTP )
         codec_event(codec, DECODE_GTP_MULTIPLE_ENCAPSULATION);
     else
-        codec.proto_bits |= PROTO_BIT__GTP;
+        dd.decode_flags |= DECODE_GTP;
 
     if (raw.len > 0)
     {
