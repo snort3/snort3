@@ -29,6 +29,7 @@
 struct ModbusStats
 {
     PegCount sessions;
+    PegCount frames;
 };
 
 struct modbus_session_data_t

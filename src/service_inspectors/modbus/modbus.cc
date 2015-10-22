@@ -93,6 +93,7 @@ void Modbus::eval(Packet* p)
     {
         mfd = new ModbusFlowData;
         p->flow->set_application_data(mfd);
+        modbus_stats.sessions++;
     }
 
     // When pipelined Modbus PDUs appear in a single TCP segment, the

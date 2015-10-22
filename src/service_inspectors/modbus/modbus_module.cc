@@ -32,6 +32,7 @@ THREAD_LOCAL ProfileStats modbus_prof;
 const PegInfo peg_names[] =
 {
     { "sessions", "total sessions processed" },
+    { "frames", "total Modbus messages" },
 
     { nullptr, nullptr }
 };

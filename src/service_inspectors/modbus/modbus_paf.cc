@@ -79,6 +79,7 @@ StreamSplitter::Status ModbusSplitter::scan(
             *fp = modbus_length + bytes_processed;
             state = MODBUS_PAF_STATE__TRANS_ID_1;
             modbus_length = 0;
+            modbus_stats.frames++;
             return StreamSplitter::FLUSH;
         }
 

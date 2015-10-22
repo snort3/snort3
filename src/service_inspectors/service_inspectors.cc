@@ -40,6 +40,7 @@ extern const BaseApi* ips_sip_method;
 extern const BaseApi* ips_sip_stat_code;
 extern const BaseApi* ips_ssl_state;
 extern const BaseApi* ips_ssl_version;
+
 extern const BaseApi* sin_bo;
 extern const BaseApi* sin_dns;
 extern const BaseApi* sin_ftp_client;
@@ -77,6 +78,7 @@ const BaseApi* service_inspectors[] =
     ips_sip_stat_code,
     ips_ssl_state,
     ips_ssl_version,
+
     sin_bo,
     sin_dns,
     sin_ftp_client,
@@ -95,6 +97,6 @@ const BaseApi* service_inspectors[] =
     sin_telnet,
     sin_wizard,
 #endif
-    nullptr,
+    nullptr
 };
 
