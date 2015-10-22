@@ -5,6 +5,7 @@ add_subdirectory(ftp_telnet)
 add_subdirectory(gtp)
 add_subdirectory(http_inspect)
 add_subdirectory(imap)
+add_subdirectory(modbus)
 add_subdirectory(nhttp_inspect)
 add_subdirectory(pop)
 add_subdirectory(rpc_decode)
@@ -21,6 +22,7 @@ if (STATIC_INSPECTORS)
         ftp_telnet
         gtp
         imap
+        modbus
         nhttp_inspect
         pop
         rpc_decode

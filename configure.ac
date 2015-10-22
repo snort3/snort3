@@ -1004,6 +1004,7 @@ src/service_inspectors/ftp_telnet/Makefile \
 src/service_inspectors/gtp/Makefile \
 src/service_inspectors/http_inspect/Makefile \
 src/service_inspectors/imap/Makefile \
+src/service_inspectors/modbus/Makefile \
 src/service_inspectors/nhttp_inspect/Makefile \
 src/service_inspectors/pop/Makefile \
 src/service_inspectors/rpc_decode/Makefile \

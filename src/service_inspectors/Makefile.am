@@ -21,6 +21,7 @@ ftp_telnet \
 gtp \
 http_inspect \
 imap \
+modbus \
 nhttp_inspect \
 pop \
 rpc_decode \

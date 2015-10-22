@@ -13,6 +13,7 @@ service_inspectors/dns/libdns.a \
 service_inspectors/ftp_telnet/libftp_telnet.a \
 service_inspectors/gtp/libgtp_inspect.a \
 service_inspectors/imap/libimap.a \
+service_inspectors/modbus/libmodbus.a \
 service_inspectors/nhttp_inspect/libnhttp_inspect.a \
 service_inspectors/pop/libpop.a \
 service_inspectors/rpc_decode/librpc_decode.a \
