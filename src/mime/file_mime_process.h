@@ -25,6 +25,7 @@
 // Provides list of MIME processing functions. Encoded file data will be decoded
 // and file name will be extracted from MIME header
 
+#include "main/snort_types.h"
 #include "file_api/file_api.h"
 #include "file_mime_config.h"
 #include "file_mime_paf.h"
@@ -51,7 +52,7 @@
 /* Maximum length of header chars before colon, based on Exim 4.32 exploit */
 #define MAX_HEADER_NAME_LEN 64
 
-class MimeSession
+class SO_PUBLIC MimeSession
 {
 public:
     MimeSession(DecodeConfig*, MailLogConfig*);

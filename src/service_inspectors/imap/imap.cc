@@ -832,13 +832,14 @@ const InspectApi imap_api =
     nullptr  // reset
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &imap_api.base,
-    nullptr
-};
-#else
+// can't be linked dynamically yet
+//#ifdef BUILDING_SO
+//SO_PUBLIC const BaseApi* snort_plugins[] =
+//{
+//    &imap_api.base,
+//    nullptr
+//};
+//#else
 const BaseApi* sin_imap = &imap_api.base;
-#endif
+//#endif
 

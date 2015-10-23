@@ -9,10 +9,12 @@ set( FILE_LIST
     imap_module.h
 )
 
-if (STATIC_INSPECTORS)
+# can't be be linked dynamically yet
+#if (STATIC_INSPECTORS)
     add_library( imap STATIC ${FILE_LIST})
 
-else (STATIC_INSPECTORS)
-    add_shared_library(imap inspectors ${FILE_LIST})
+#else (STATIC_INSPECTORS)
+    #add_shared_library(imap inspectors ${FILE_LIST})
 
-endif (STATIC_INSPECTORS)
+#endif (STATIC_INSPECTORS)
+

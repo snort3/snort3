@@ -83,10 +83,10 @@ static inline bool scanning_boundary(MimeDataPafInfo* mime_info, uint32_t bounda
     return false;
 }
 
-void reset_mime_paf_state(MimeDataPafInfo *data_info);
+SO_PUBLIC void reset_mime_paf_state(MimeDataPafInfo *data_info);
 /*  Process data boundary and flush each file based on boundary*/
-bool process_mime_paf_data(MimeDataPafInfo *data_info,  uint8_t val);
-bool check_data_end(void *end_state,  uint8_t val);
+SO_PUBLIC bool process_mime_paf_data(MimeDataPafInfo *data_info,  uint8_t val);
+SO_PUBLIC bool check_data_end(void *end_state,  uint8_t val);
 
 #endif
 

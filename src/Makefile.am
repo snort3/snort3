@@ -12,15 +12,11 @@ service_inspectors/back_orifice/libback_orifice.a \
 service_inspectors/dns/libdns.a \
 service_inspectors/ftp_telnet/libftp_telnet.a \
 service_inspectors/gtp/libgtp_inspect.a \
-service_inspectors/imap/libimap.a \
 service_inspectors/modbus/libmodbus.a \
 service_inspectors/nhttp_inspect/libnhttp_inspect.a \
-service_inspectors/pop/libpop.a \
 service_inspectors/rpc_decode/librpc_decode.a \
 service_inspectors/sip/libsip.a \
-service_inspectors/smtp/libsmtp.a \
 service_inspectors/ssh/libssh.a \
-service_inspectors/ssl/libssl.a \
 service_inspectors/wizard/libwizard.a
 endif
 
@@ -59,6 +55,10 @@ network_inspectors/normalize/libnormalize.a \
 network_inspectors/perf_monitor/libperf_monitor.a \
 service_inspectors/libservice_inspectors.a \
 $(lib_list) \
+service_inspectors/imap/libimap.a \
+service_inspectors/pop/libpop.a \
+service_inspectors/smtp/libsmtp.a \
+service_inspectors/ssl/libssl.a \
 network_inspectors/port_scan/libport_scan.a \
 stream/libstream.a \
 stream/base/libstream_base.a \

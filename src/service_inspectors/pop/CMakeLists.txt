@@ -9,10 +9,12 @@ set( FILE_LIST
     pop_module.h
 )
 
-if (STATIC_INSPECTORS)
+# can't be be linked dynamically yet
+#if (STATIC_INSPECTORS)
     add_library( pop STATIC ${FILE_LIST})
 
-else (STATIC_INSPECTORS)
-    add_shared_library(pop inspectors ${FILE_LIST})
+#else (STATIC_INSPECTORS)
+    #add_shared_library(pop inspectors ${FILE_LIST})
 
-endif (STATIC_INSPECTORS)
+#endif (STATIC_INSPECTORS)
+

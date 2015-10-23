@@ -25,8 +25,9 @@
 // This provides a wrapper to start/stop file service
 
 #include <sys/types.h>
+#include "main/snort_types.h"
 
-class FileService
+class SO_PUBLIC FileService
 {
 public:
     // This must be called when snort restarts

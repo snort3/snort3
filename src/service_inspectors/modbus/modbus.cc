@@ -163,7 +163,7 @@ static const InspectApi modbus_api =
 #ifdef BUILDING_SO
 extern const BaseApi* ips_modbus_data;
 extern const BaseApi* ips_modbus_func;
-extern const BaseApi* ips_modbus_func;
+extern const BaseApi* ips_modbus_unit;
 
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {

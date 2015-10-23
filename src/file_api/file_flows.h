@@ -29,7 +29,7 @@
 
 class FileContext;
 
-class FileFlows:public FlowData
+class SO_PUBLIC FileFlows : public FlowData
 {
 public:
 

@@ -767,13 +767,14 @@ const InspectApi pop_api =
     nullptr  // reset
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &pop_api.base,
-    nullptr
-};
-#else
+// can't be linked dynamically yet
+//#ifdef BUILDING_SO
+//SO_PUBLIC const BaseApi* snort_plugins[] =
+//{
+//    &pop_api.base,
+//    nullptr
+//};
+//#else
 const BaseApi* sin_pop = &pop_api.base;
-#endif
+//#endif
 

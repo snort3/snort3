@@ -88,8 +88,7 @@ bool TcpUrgOption::operator==(const IpsOption& ips) const
 
 int TcpUrgOption::eval(Cursor&, Packet* p)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(tcpUrgPerfStats);
+    PERF_PROFILE(tcpUrgPerfStats);
 
     int rval = DETECTION_OPTION_NO_MATCH;
 
@@ -99,7 +98,6 @@ int TcpUrgOption::eval(Cursor&, Packet* p)
         rval = DETECTION_OPTION_MATCH;
     }
 
-    MODULE_PROFILE_END(tcpUrgPerfStats);
     return rval;
 }
 

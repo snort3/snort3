@@ -23,6 +23,7 @@
 extern "C" {
 #include <daq.h>
 }
+#include "main/snort_types.h"
 #include "protocols/packet.h"
 
 /*******************************************************************************
@@ -256,7 +257,7 @@ typedef struct _ObfuscationApi
 } ObfuscationApi;
 
 /* For access when including header */
-extern ObfuscationApi* obApi;
+SO_PUBLIC extern ObfuscationApi* obApi;
 
 #endif
 

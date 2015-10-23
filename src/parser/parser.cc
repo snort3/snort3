@@ -518,7 +518,6 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname)
     SnortConfig* sc = new SnortConfig;
 
     sc->logging_flags = boot_conf->logging_flags;
-    sc->warning_flags = boot_conf->warning_flags;
     VarNode* tmp = boot_conf->var_list;
 
     if ( !fname )

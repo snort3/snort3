@@ -154,8 +154,8 @@ static inline bool isFileEnd(FilePosition position)
     return ((position == SNORT_FILE_END) || (position == SNORT_FILE_FULL));
 }
 
-uint64_t get_file_processed_size(Flow* flow);
+SO_PUBLIC uint64_t get_file_processed_size(Flow* flow);
 FilePosition get_file_position(Packet* pkt);
 
-#endif /* FILE_API_H */
+#endif
 

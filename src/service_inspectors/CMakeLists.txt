@@ -20,7 +20,7 @@ if (STATIC_INSPECTORS)
         back_orifice
         dns
         ftp_telnet
-        gtp
+        gtp_inspect
         imap
         modbus
         nhttp_inspect

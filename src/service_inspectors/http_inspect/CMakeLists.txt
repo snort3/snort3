@@ -37,7 +37,7 @@ set (FILE_LIST
     hi_util.h
 )
 
-# Can'be be dynamic yet
+# can't be be linked dynamically yet
 #if (STATIC_INSPECTORS)
     add_library(http_inspect STATIC ${FILE_LIST})
 

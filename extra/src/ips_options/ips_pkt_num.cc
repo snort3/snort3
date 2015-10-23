@@ -89,8 +89,7 @@ bool PktNumOption::operator==(const IpsOption& ips) const
 
 int PktNumOption::eval(Cursor&, Packet*)
 {
-    PROFILE_VARS;
-    MODULE_PROFILE_START(pkt_num_perf_stats);
+    PERF_PROFILE(pkt_num_perf_stats);
 
     int rval;
 
@@ -100,7 +99,6 @@ int PktNumOption::eval(Cursor&, Packet*)
     else
         rval = DETECTION_OPTION_NO_MATCH;
 
-    MODULE_PROFILE_END(pkt_num_perf_stats);
     return rval;
 }
 

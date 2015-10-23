@@ -13,10 +13,6 @@
 * With cmake, make install will rebuild the docs even though when already
   built.
 
-* IPS option hash and inspectors pop, imap, smtp, and ssl fail to build
-  dynamically due to missing symbols in hash/ and protocols/ despite them
-  being declared SO_PUBLIC.
-
 * Enabling large pcap may erroneously affect the number of packets processed
   from pcaps
 

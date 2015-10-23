@@ -493,17 +493,18 @@ static const IpsApi sha512_api =
 // plugins
 //-------------------------------------------------------------------------
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &md5_api.base,
-    &sha256_api.base,
-    &sha512_api.base,
-    nullptr
-};
-#else
+// can't be linked dynamically yet
+//#ifdef BUILDING_SO
+//SO_PUBLIC const BaseApi* snort_plugins[] =
+//{
+//    &md5_api.base,
+//    &sha256_api.base,
+//    &sha512_api.base,
+//    nullptr
+//};
+//#else
 const BaseApi* ips_md5 = &md5_api.base;
 const BaseApi* ips_sha256 = &sha256_api.base;
 const BaseApi* ips_sha512 = &sha512_api.base;
-#endif
+//#endif
 

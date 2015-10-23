@@ -36,24 +36,25 @@ namespace tcp { struct TCPHdr; }
 
 typedef ip::IP4Hdr IP4Hdr;
 
-void LogPriorityData(TextLog*, const Event*, bool doNewLine);
-void LogXrefs(TextLog*, const Event*, bool doNewLine);
+SO_PUBLIC void LogPriorityData(TextLog*, const Event*, bool doNewLine);
+SO_PUBLIC void LogXrefs(TextLog*, const Event*, bool doNewLine);
 
-void LogIPPkt(TextLog*, Packet*);
-void LogPayload(TextLog*, Packet*);
-void LogNetData(TextLog*, const uint8_t* data, const int len, Packet*);
+SO_PUBLIC void LogIPPkt(TextLog*, Packet*);
+SO_PUBLIC void LogPayload(TextLog*, Packet*);
+SO_PUBLIC void LogNetData(TextLog*, const uint8_t* data, const int len, Packet*);
 
-void LogDiv(TextLog*);
-void LogTimeStamp(TextLog*, Packet*);
+SO_PUBLIC void LogDiv(TextLog*);
+SO_PUBLIC void LogTimeStamp(TextLog*, Packet*);
 
-void LogTrHeader(TextLog*, Packet*);
-void Log2ndHeader(TextLog*, Packet*);
-void LogIpAddrs(TextLog*, Packet*);
+SO_PUBLIC void LogTrHeader(TextLog*, Packet*);
+SO_PUBLIC void Log2ndHeader(TextLog*, Packet*);
 
-void LogIPHeader(TextLog*, Packet*);
-void LogTCPHeader(TextLog*, Packet*);
-void LogUDPHeader(TextLog*, Packet*);
-void LogICMPHeader(TextLog*, Packet*);
+SO_PUBLIC void LogTCPHeader(TextLog*, Packet*);
+SO_PUBLIC void LogUDPHeader(TextLog*, Packet*);
+SO_PUBLIC void LogICMPHeader(TextLog*, Packet*);
+
+SO_PUBLIC void LogIpAddrs(TextLog*, Packet*);
+SO_PUBLIC void LogIPHeader(TextLog*, Packet*);
 
 SO_PUBLIC void LogIpOptions(TextLog*, const IP4Hdr*, uint16_t valid_ip4_len);
 SO_PUBLIC void LogTcpOptions(TextLog*, const tcp::TCPHdr*, uint16_t valid_tcp_len);

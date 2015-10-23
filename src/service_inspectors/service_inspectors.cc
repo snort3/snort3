@@ -26,6 +26,10 @@
 
 extern const BaseApi* sin_http_global;
 extern const BaseApi* sin_http_inspect;
+extern const BaseApi* sin_imap;
+extern const BaseApi* sin_pop;
+extern const BaseApi* sin_smtp;
+extern const BaseApi* sin_ssl;
 
 #ifdef STATIC_INSPECTORS
 extern const BaseApi* ips_gtp_info;
@@ -47,15 +51,11 @@ extern const BaseApi* sin_ftp_client;
 extern const BaseApi* sin_ftp_server;
 extern const BaseApi* sin_ftp_data;
 extern const BaseApi* sin_gtp;
-extern const BaseApi* sin_imap;
 extern const BaseApi* sin_modbus;
 extern const BaseApi* sin_nhttp;
-extern const BaseApi* sin_pop;
 extern const BaseApi* sin_rpc_decode;
 extern const BaseApi* sin_sip;
-extern const BaseApi* sin_smtp;
 extern const BaseApi* sin_ssh;
-extern const BaseApi* sin_ssl;
 extern const BaseApi* sin_telnet;
 extern const BaseApi* sin_wizard;
 #endif
@@ -64,6 +64,10 @@ const BaseApi* service_inspectors[] =
 {
     sin_http_global,
     sin_http_inspect,
+    sin_imap,
+    sin_pop,
+    sin_smtp,
+    sin_ssl,
 
 #ifdef STATIC_INSPECTORS
     ips_gtp_info,
@@ -85,15 +89,11 @@ const BaseApi* service_inspectors[] =
     sin_ftp_server,
     sin_ftp_data,
     sin_gtp,
-    sin_imap,
     sin_modbus,
     sin_nhttp,
-    sin_pop,
     sin_rpc_decode,
     sin_sip,
-    sin_smtp,
     sin_ssh,
-    sin_ssl,
     sin_telnet,
     sin_wizard,
 #endif

@@ -144,6 +144,11 @@ public:
 
 public:
     //------------------------------------------------------
+    // non-reloadable stuff (single instance)
+    // FIXIT-L non-reloadable stuff should be made static
+    static uint32_t warning_flags;
+
+    //------------------------------------------------------
     // alert module stuff
     bool default_rule_state = true;
 
@@ -153,7 +158,6 @@ public:
     // output module stuff
     uint32_t output_flags = 0;
     uint32_t logging_flags = 0;
-    uint32_t warning_flags = 0;
 
     uint8_t log_ipv6_extra = 0;
     uint16_t event_trace_max = 0;

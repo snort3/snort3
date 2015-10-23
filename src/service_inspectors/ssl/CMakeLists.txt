@@ -9,10 +9,12 @@ set( FILE_LIST
     ips_ssl_version.cc
 )
 
-if (STATIC_INSPECTORS)
+# can't be be linked dynamically yet
+#if (STATIC_INSPECTORS)
     add_library( ssl STATIC ${FILE_LIST})
 
-else (STATIC_INSPECTORS)
-    add_shared_library(ssl inspectors ${FILE_LIST})
+#else (STATIC_INSPECTORS)
+    #add_shared_library(ssl inspectors ${FILE_LIST})
 
-endif (STATIC_INSPECTORS)
+#endif (STATIC_INSPECTORS)
+

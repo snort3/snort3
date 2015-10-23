@@ -14,10 +14,10 @@ set( FILE_LIST
 )
 
 if (STATIC_INSPECTORS)
-    add_library(gtp STATIC ${FILE_LIST})
+    add_library(gtp_inspect STATIC ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
-    add_shared_library(gtp inspectors ${FILE_LIST})
+    add_shared_library(gtp_inspect inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)
 

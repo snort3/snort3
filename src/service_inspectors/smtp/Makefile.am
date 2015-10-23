@@ -14,16 +14,17 @@ smtp_paf.h \
 smtp_module.cc \
 smtp_module.h
 
-if STATIC_INSPECTORS
+# can't be linked dynamically yet
+#if STATIC_INSPECTORS
 noinst_LIBRARIES = libsmtp.a
 libsmtp_a_SOURCES = $(file_list)
-else
-shlibdir = $(pkglibdir)/inspectors
-shlib_LTLIBRARIES = libsmtp.la
-libsmtp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libsmtp_la_LDFLAGS = -export-dynamic -shared
-libsmtp_la_SOURCES = $(file_list)
-endif
+#else
+#shlibdir = $(pkglibdir)/inspectors
+#shlib_LTLIBRARIES = libsmtp.la
+#libsmtp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+#libsmtp_la_LDFLAGS = -export-dynamic -shared
+#libsmtp_la_SOURCES = $(file_list)
+#endif
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

@@ -58,6 +58,7 @@
 #include "sfip/sf_ip.h"
 
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
+uint32_t SnortConfig::warning_flags = 0;
 
 //-------------------------------------------------------------------------
 // private implementation

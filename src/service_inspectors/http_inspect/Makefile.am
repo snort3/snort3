@@ -21,7 +21,7 @@ hi_ui_config.cc hi_ui_config.h \
 hi_ui_iis_unicode_map.cc hi_ui_iis_unicode_map.h \
 hi_util.h
 
-# can't be built dynamically yet
+# can't be linked dynamically yet
 #if STATIC_INSPECTORS
 noinst_LIBRARIES = libhttp_inspect.a
 libhttp_inspect_a_SOURCES = $(file_list)

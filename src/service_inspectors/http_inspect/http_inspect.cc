@@ -478,7 +478,7 @@ static const InspectApi hi_api =
     nullptr  // reset
 };
 
-// can't be built dynamically yet
+// can't be linked dynamically yet
 //#ifdef BUILDING_SO
 //SO_PUBLIC const BaseApi* snort_plugins[] =
 //{

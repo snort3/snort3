@@ -41,14 +41,10 @@ if (STATIC_INSPECTORS)
         back_orifice
         dns
         ftp_telnet
-	imap
         nhttp_inspect
-	pop
         rpc_decode
         sip
-        smtp
         ssh
-        ssl
         wizard
     )
 endif()
@@ -106,6 +102,10 @@ target_link_libraries( snort
     file_api
     mime
     http_inspect
+    imap
+    pop
+    smtp
+    ssl
     ${PIGLET_LIBRARIES}
     ips_options
     search_engines

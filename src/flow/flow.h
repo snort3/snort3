@@ -126,7 +126,7 @@ struct LwState
 };
 
 // this struct is organized by member size for compactness
-class Flow
+class SO_PUBLIC Flow
 {
 public:
     enum FlowState
