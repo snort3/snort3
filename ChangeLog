@@ -1,3 +1,11 @@
+15/10/23 - build 175
+
+-- ported gtp preprocessor and rule options from 2.X
+-- ported modbus preprocessor and rule options from 2.X
+-- fixed 116:297
+-- added unit test build for cmake (already in autotools builds)
+-- fixed dynamic builds (187 plugins, 138 dynamic)
+
 15/10/16 - build 174
 
 -- legacy daemonization cleanup
