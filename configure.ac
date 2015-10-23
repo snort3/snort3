@@ -93,9 +93,6 @@ case "$host" in
   *-openbsd*)
     AC_DEFINE([OPENBSD],[1],[Define if OpenBSD])
     ;;
-  *-sgi-irix*)
-    AC_DEFINE([IRIX],[1],[Define if Irix])
-    ;;
   *-solaris*)
     AC_DEFINE([SOLARIS],[1],[Define if Solaris])
     ;;
@@ -106,23 +103,8 @@ case "$host" in
     linux="yes"
     AC_DEFINE([LINUX],[1],[Define if Linux])
     ;;
-  *-hpux*)
-    AC_DEFINE([HPUX],[1],[Define if HP-UX])
-    ;;
   *-freebsd*)
     AC_DEFINE([FREEBSD],[1],[Define if FreeBSD])
-    ;;
-  *-bsdi*)
-    AC_DEFINE([BSDI],[1],[Define if BSDi])
-    ;;
-  *-aix*)
-    AC_DEFINE([AIX],[1],[Define if AIX])
-    ;;
-  *-osf*)
-    AC_DEFINE([OSF1],[1],[Define if OSF])
-    ;;
-  *-tru64*)
-    AC_DEFINE([OSF1],[1],[Define if Tru64])
     ;;
   *-apple*)
     macos="yes"
