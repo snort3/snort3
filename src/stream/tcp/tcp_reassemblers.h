@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,53 +16,20 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef STREAM_TCP_H
-#define STREAM_TCP_H
+// tcp_reassemblers.h author davis mcpherson <davmcphe@@cisco.com>
+// Created on: Oct 9, 2015
 
-#include "flow/flow.h"
-#include "stream/stream_api.h"
-#include "protocols/packet.h"
+#ifndef TCP_REASSEMBLERS_H
+#define TCP_REASSEMBLERS_H
 
 #include "tcp_defs.h"
+#include "tcp_reassembler.h"
 
-struct StreamTcpConfig
+class TcpReassemblerFactory
 {
-    StreamPolicy policy;
-    ReassemblyPolicy reassembly_policy;
-
-    uint16_t flags;
-    uint16_t flush_factor;
-
-    uint32_t session_timeout;
-    uint32_t max_window;
-    uint32_t overlap_limit;
-
-    uint32_t max_queued_bytes;
-    uint32_t max_queued_segs;
-
-    uint32_t max_consec_small_segs;
-    uint32_t max_consec_small_seg_size;
-
-    int hs_timeout;
-    int footprint;
-    unsigned paf_max;
-
-    StreamTcpConfig();
-
-    bool require_3whs();
-    bool midstream_allowed(Packet*);
+public:
+    static TcpReassembler* create( TcpSession* session, TcpTracker* tracker,
+            StreamPolicy os_policy, bool server );
 };
 
-// misc stuff
-Session* get_tcp_session(Flow*);
-StreamTcpConfig* get_tcp_cfg(Inspector*);
-
-void tcp_sinit();
-void tcp_sterm();
-void tcp_sum();
-void tcp_stats();
-void tcp_reset_stats();
-void tcp_show(StreamTcpConfig*);
-
 #endif
-

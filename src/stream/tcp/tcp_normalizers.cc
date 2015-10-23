@@ -19,69 +19,240 @@
 // tcp_normalizers.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Sep 22, 2015
 
+#include "tcp_defs.h"
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
 
-TcpNormalizer* TcpNormalizerFactory::allocate_normalizer( uint16_t os_policy,
-        TcpSession* session, TcpTracker* tracker, TcpTracker* peer )
+class TcpNormalizerFirst : public TcpNormalizer
+{
+public:
+    TcpNormalizerFirst( TcpSession* session, TcpTracker* tracker ) :
+        TcpNormalizer( StreamPolicy::OS_FIRST, session, tracker )
+    { }
+
+    int handle_repeated_syn( TcpDataBlock* ) override;
+};
+
+class TcpNormalizerLast : public TcpNormalizer
+{
+public:
+    TcpNormalizerLast( TcpSession* session, TcpTracker* tracker  ) :
+            TcpNormalizer( StreamPolicy::OS_LAST, session, tracker )
+    { }
+
+    int handle_repeated_syn( TcpDataBlock* ) override;
+};
+
+class TcpNormalizerLinux : public TcpNormalizer
+{
+public:
+    TcpNormalizerLinux( TcpSession* session, TcpTracker* tracker  ) :
+            TcpNormalizer( StreamPolicy::OS_LINUX, session, tracker )
+    {
+        // Linux 2.6 accepts timestamp values that are off by one. so set fudge factor */
+        paws_ts_fudge = 1;
+    }
+
+    bool validate_rst( TcpDataBlock* ) override;
+    bool is_paws_ts_checked_required( TcpDataBlock* ) override;
+    int handle_repeated_syn( TcpDataBlock* ) override;
+    uint16_t set_urg_offset( const tcp::TCPHdr* tcph, uint16_t dsize ) override;
+
+};
+
+class TcpNormalizerOldLinux : public TcpNormalizer
+{
+public:
+    TcpNormalizerOldLinux( TcpSession* session, TcpTracker* tracker ) :
+            TcpNormalizer( StreamPolicy::OS_OLD_LINUX, session, tracker )
+    {
+        paws_drop_zero_ts = false;
+    }
+
+    bool validate_rst( TcpDataBlock* ) override;
+    bool is_paws_ts_checked_required( TcpDataBlock* ) override;
+    int handle_repeated_syn( TcpDataBlock* ) override;
+    uint16_t set_urg_offset( const tcp::TCPHdr* tcph, uint16_t dsize ) override;
+
+};
+
+class TcpNormalizerBSD : public TcpNormalizer
+{
+public:
+    TcpNormalizerBSD( TcpSession* session, TcpTracker* tracker  ) :
+            TcpNormalizer( StreamPolicy::OS_BSD, session, tracker )
+    { }
+
+    bool validate_rst( TcpDataBlock* ) override;
+    int handle_repeated_syn( TcpDataBlock* ) override;
+};
+
+class TcpNormalizerMacOS : public TcpNormalizer
+{
+public:
+    TcpNormalizerMacOS( TcpSession* session, TcpTracker* tracker  ) :
+            TcpNormalizer( StreamPolicy::OS_MACOS, session, tracker )
+    { }
+
+    int handle_repeated_syn( TcpDataBlock* ) override;
+};
+
+class TcpNormalizerSolaris : public TcpNormalizer
+{
+public:
+    TcpNormalizerSolaris( TcpSession* session, TcpTracker* tracker  ) :
+            TcpNormalizer( StreamPolicy::OS_SOLARIS, session, tracker )
+    {
+        paws_drop_zero_ts = false;
+    }
+
+    bool validate_rst( TcpDataBlock* ) override;
+    int handle_repeated_syn( TcpDataBlock* ) override;
+};
+
+class TcpNormalizerIrix : public TcpNormalizer
+{
+public:
+    TcpNormalizerIrix( TcpSession* session, TcpTracker* tracker  ) :
+            TcpNormalizer( StreamPolicy::OS_IRIX, session, tracker )
+    { }
+
+    int handle_repeated_syn( TcpDataBlock* ) override;
+};
+
+class TcpNormalizerHpux11 : public TcpNormalizer
+{
+public:
+    TcpNormalizerHpux11( TcpSession* session, TcpTracker* tracker  ) :
+            TcpNormalizer( StreamPolicy::OS_HPUX11, session, tracker )
+    { }
+
+    bool validate_rst( TcpDataBlock* ) override;
+    bool is_paws_ts_checked_required( TcpDataBlock* ) override;
+    int handle_repeated_syn( TcpDataBlock* ) override;
+};
+
+class TcpNormalizerHpux10 : public TcpNormalizer
+{
+public:
+    TcpNormalizerHpux10( TcpSession* session, TcpTracker* tracker  ) :
+            TcpNormalizer( StreamPolicy::OS_HPUX10, session, tracker )
+    { }
+
+    int handle_repeated_syn( TcpDataBlock* ) override;
+};
+
+class TcpNormalizerWindows : public TcpNormalizer
+{
+public:
+    TcpNormalizerWindows( TcpSession* session, TcpTracker* tracker  ) :
+            TcpNormalizer( StreamPolicy::OS_WINDOWS, session, tracker )
+    {
+        paws_drop_zero_ts = false;
+    }
+
+    bool is_paws_ts_checked_required( TcpDataBlock* ) override;
+    int handle_repeated_syn( TcpDataBlock* ) override;
+};
+
+class TcpNormalizerWindows2K3 : public TcpNormalizer
+{
+public:
+    TcpNormalizerWindows2K3( TcpSession* session, TcpTracker* tracker ) :
+            TcpNormalizer( StreamPolicy::OS_WINDOWS2K3, session, tracker )
+    {
+        paws_drop_zero_ts = false;
+    }
+
+    bool is_paws_ts_checked_required(  TcpDataBlock* ) override;
+    int handle_repeated_syn( TcpDataBlock* ) override;
+};
+
+class TcpNormalizerVista : public TcpNormalizer
+{
+public:
+    TcpNormalizerVista( TcpSession* session, TcpTracker* tracker  ) :
+            TcpNormalizer( StreamPolicy::OS_VISTA, session, tracker )
+    {
+        paws_drop_zero_ts = false;
+    }
+
+    bool is_paws_ts_checked_required( TcpDataBlock*) override;
+    int handle_repeated_syn( TcpDataBlock* ) override;
+};
+
+class TcpNormalizerProxy : public TcpNormalizer
+{
+public:
+    TcpNormalizerProxy( TcpSession* session, TcpTracker* tracker  ) :
+            TcpNormalizer( StreamPolicy::OS_PROXY, session, tracker )
+    { }
+
+    bool validate_rst(TcpDataBlock* ) override;
+    int handle_paws( TcpDataBlock*,int*, int* ) override;
+    int handle_repeated_syn( TcpDataBlock* ) override;
+};
+
+TcpNormalizer* TcpNormalizerFactory::create( StreamPolicy os_policy, TcpSession* session,
+        TcpTracker* tracker, TcpTracker* peer )
 {
     TcpNormalizer* normalizer;
 
     switch (os_policy)
     {
-    case STREAM_POLICY_FIRST:
+    case StreamPolicy::OS_FIRST:
         normalizer = new TcpNormalizerFirst( session, tracker );
         break;
 
-    case STREAM_POLICY_LAST:
+    case StreamPolicy::OS_LAST:
         normalizer = new TcpNormalizerLast( session, tracker );
         break;
 
-    case STREAM_POLICY_LINUX:
+    case StreamPolicy::OS_LINUX:
         normalizer = new TcpNormalizerLinux( session, tracker );
         break;
 
-    case STREAM_POLICY_OLD_LINUX:
+    case StreamPolicy::OS_OLD_LINUX:
         normalizer = new TcpNormalizerOldLinux( session, tracker );
         break;
 
-    case STREAM_POLICY_BSD:
+    case StreamPolicy::OS_BSD:
         normalizer = new TcpNormalizerBSD( session, tracker );
         break;
 
-    case STREAM_POLICY_MACOS:
+    case StreamPolicy::OS_MACOS:
         normalizer = new TcpNormalizerMacOS( session, tracker );
         break;
 
-    case STREAM_POLICY_SOLARIS:
+    case StreamPolicy::OS_SOLARIS:
         normalizer = new TcpNormalizerSolaris( session, tracker );
         break;
 
-    case STREAM_POLICY_IRIX:
+    case StreamPolicy::OS_IRIX:
         normalizer = new TcpNormalizerIrix( session, tracker );
         break;
 
-    case STREAM_POLICY_HPUX11:
+    case StreamPolicy::OS_HPUX11:
         normalizer = new TcpNormalizerHpux11( session, tracker );
         break;
 
-    case STREAM_POLICY_HPUX10:
+    case StreamPolicy::OS_HPUX10:
         normalizer = new TcpNormalizerHpux10( session, tracker );
         break;
 
-    case STREAM_POLICY_WINDOWS:
+    case StreamPolicy::OS_WINDOWS:
         normalizer = new TcpNormalizerWindows( session, tracker );
         break;
 
-    case STREAM_POLICY_WINDOWS2K3:
+    case StreamPolicy::OS_WINDOWS2K3:
         normalizer = new TcpNormalizerWindows2K3( session, tracker );
         break;
 
-    case STREAM_POLICY_VISTA:
+    case StreamPolicy::OS_VISTA:
         normalizer = new TcpNormalizerVista( session, tracker );
         break;
 
-    case STREAM_POLICY_PROXY:
+    case StreamPolicy::OS_PROXY:
         normalizer = new TcpNormalizerProxy( session, tracker );
         break;
 
@@ -167,6 +338,24 @@ static inline bool paws_3whs_zero_ts_supported(TcpTracker* talker, TcpTracker* l
     return check_ts;
 }
 
+static inline uint16_t set_urg_offset_linux( const tcp::TCPHdr* tcph, uint16_t dsize )
+{
+    uint16_t urg_offset = 0;
+
+    if(tcph->are_flags_set( TH_URG) )
+    {
+        urg_offset = tcph->urp();
+
+            // Linux, Old linux discard data from urgent pointer If urg pointer is 0,
+            // it's treated as a 1
+            if (tcph->urp() < dsize)
+                if (urg_offset == 0)
+                    urg_offset = 1;
+    }
+
+    return urg_offset;
+}
+
 int TcpNormalizerFirst::handle_repeated_syn( TcpDataBlock* tdb )
 {
     return handle_repeated_syn_bsd( peer_tracker, tdb, session );
@@ -192,6 +381,11 @@ int TcpNormalizerLinux::handle_repeated_syn( TcpDataBlock* tdb )
     return handle_repeated_syn_bsd( peer_tracker, tdb, session );
 }
 
+uint16_t TcpNormalizerLinux::set_urg_offset( const tcp::TCPHdr* tcph, uint16_t dsize )
+{
+    return set_urg_offset_linux( tcph, dsize );
+}
+
 bool TcpNormalizerOldLinux::validate_rst( TcpDataBlock *tdb )
 {
     return validate_rst_end_seq_geq( tdb );
@@ -205,6 +399,11 @@ bool TcpNormalizerOldLinux::is_paws_ts_checked_required( TcpDataBlock* tdb)
 int TcpNormalizerOldLinux::handle_repeated_syn( TcpDataBlock* tdb )
 {
     return handle_repeated_syn_bsd( peer_tracker, tdb, session );
+}
+
+uint16_t TcpNormalizerOldLinux::set_urg_offset( const tcp::TCPHdr* tcph, uint16_t dsize )
+{
+    return set_urg_offset_linux( tcph, dsize );
 }
 
 bool TcpNormalizerBSD::validate_rst( TcpDataBlock *tdb )

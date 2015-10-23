@@ -308,7 +308,7 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
         config->paf_max = v.get_long();
 
     else if ( v.is("policy") )
-        config->policy = v.get_long() + 1;
+        config->policy = static_cast< StreamPolicy >( v.get_long() + 1 );
 
     else if ( v.is("overlap_limit") )
         config->overlap_limit = v.get_long();

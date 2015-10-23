@@ -23,6 +23,7 @@
 #define TCP_DEBUG_TRACE_H
 
 #include "protocols/tcp.h"
+#include "tcp_reassembler.h"
 
 #ifndef REG_TEST
 #define S5TraceTCP(pkt, flow, tdb, evt)
@@ -76,31 +77,6 @@ static inline void TraceSession(const Flow* lws)
             lws->ssn_state.session_flags, lws->client_port, lws->server_port );
 }
 
-static inline void TraceSegments(const TcpTracker* a)
-{
-    TcpSegment* ss = a->seglist;
-    uint32_t sx = a->r_win_base;
-    unsigned segs = 0, bytes = 0;
-
-    while (ss)
-    {
-        if (SEQ_LT(sx, ss->seq))
-            fprintf(stdout, " +%u", ss->seq - sx);
-        else if (SEQ_GT(sx, ss->seq))
-            fprintf(stdout, " -%u", sx - ss->seq);
-
-        fprintf(stdout, " %u", ss->size);
-
-        segs++;
-        bytes += ss->size;
-
-        sx = ss->seq + ss->size;
-        ss = ss->next;
-    }
-    assert(a->seg_count == segs);
-    assert(a->seg_bytes_logical == bytes);
-}
-
 static inline void TraceState(const TcpTracker* a, const TcpTracker* b, const char* s)
 {
     uint32_t why = a->l_nxt_seq ? LCL(a, l_nxt_seq) : 0;
@@ -116,10 +92,11 @@ static inline void TraceState(const TcpTracker* a, const TcpTracker* b, const ch
     unsigned fpt = a->flush_policy ? 192 : 0;
 
     fprintf( stdout, "         FP=%s:%-4u SC=%-4u FL=%-4u SL=%-5u BS=%-4u", flushxt[a->flush_policy + paf], fpt,
-            a->seg_count, a->flush_count, a->seg_bytes_logical, a->seglist_base_seq - b->isn);
+            a->reassembler->get_seg_count(), a->reassembler->get_flush_count(),
+            a->reassembler->get_seg_bytes_logical(), a->reassembler->get_seglist_base_seq() - b->isn);
 
     if (s5_trace_enabled == 2)
-        TraceSegments(a);
+        a->reassembler->trace_segments();
 
     fprintf(stdout, "\n");
 }

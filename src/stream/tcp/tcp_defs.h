@@ -75,44 +75,53 @@
 #define SUB_RST_SENT  0x04
 #define SUB_FIN_SENT  0x08
 
-// reassembly definitions... FIXIT - move to reassembly class when we get there
-#define STREAM_INSERT_OK            0
-#define STREAM_INSERT_ANOMALY       1
-#define STREAM_INSERT_TIMEOUT       2
-#define STREAM_INSERT_FAILED        3
+// target-based policy types - changes to this enum require changes to stream_api.h::TCP_POLICIES
+enum class StreamPolicy
+{
+    OS_INVALID = 0,
+    OS_FIRST,
+    OS_LAST,
+    OS_LINUX,
+    OS_OLD_LINUX,
+    OS_BSD,
+    OS_MACOS,
+    OS_SOLARIS,
+    OS_IRIX,
+    OS_HPUX11,
+    OS_HPUX10,
+    OS_WINDOWS,
+    OS_WINDOWS2K3,
+    OS_VISTA,
+    OS_PROXY,
+    OS_DEFAULT = OS_BSD
+};
 
-#define REASSEMBLY_POLICY_FIRST       1
-#define REASSEMBLY_POLICY_LAST        2
-#define REASSEMBLY_POLICY_LINUX       3
-#define REASSEMBLY_POLICY_OLD_LINUX   4
-#define REASSEMBLY_POLICY_BSD         5
-#define REASSEMBLY_POLICY_MACOS       6
-#define REASSEMBLY_POLICY_SOLARIS     7
-#define REASSEMBLY_POLICY_IRIX        8
-#define REASSEMBLY_POLICY_HPUX11      9
-#define REASSEMBLY_POLICY_HPUX10     10
-#define REASSEMBLY_POLICY_WINDOWS    11
-#define REASSEMBLY_POLICY_WINDOWS2K3 12
-#define REASSEMBLY_POLICY_VISTA      13
-#define REASSEMBLY_POLICY_DEFAULT    REASSEMBLY_POLICY_BSD
+enum class ReassemblyPolicy
+{
+    OS_INVALID = 0,
+    OS_FIRST,
+    OS_LAST,
+    OS_LINUX,
+    OS_OLD_LINUX,
+    OS_BSD,
+    OS_MACOS,
+    OS_SOLARIS,
+    OS_IRIX,
+    OS_HPUX11,
+    OS_HPUX10,
+    OS_WINDOWS,
+    OS_WINDOWS2K3,
+    OS_VISTA,
+    OS_PROXY,
+    OS_DEFAULT = OS_BSD
+};
 
-/* target-based policy types */
-// changes to this enum require changes to stream_api.h::TCP_POLICIES
-#define STREAM_POLICY_FIRST       1
-#define STREAM_POLICY_LAST        2
-#define STREAM_POLICY_LINUX       3
-#define STREAM_POLICY_OLD_LINUX   4
-#define STREAM_POLICY_BSD         5
-#define STREAM_POLICY_MACOS       6
-#define STREAM_POLICY_SOLARIS     7
-#define STREAM_POLICY_IRIX        8
-#define STREAM_POLICY_HPUX11      9
-#define STREAM_POLICY_HPUX10     10
-#define STREAM_POLICY_WINDOWS    11
-#define STREAM_POLICY_WINDOWS2K3 12
-#define STREAM_POLICY_VISTA      13
-#define STREAM_POLICY_PROXY      14
-#define STREAM_POLICY_DEFAULT    STREAM_POLICY_BSD
+enum FlushPolicy
+{
+    STREAM_FLPOLICY_IGNORE, /* ignore this traffic */
+    STREAM_FLPOLICY_ON_ACK, /* protocol aware flushing (PAF) */
+    STREAM_FLPOLICY_ON_DATA, /* protocol aware ips */
+};
 
 struct TcpDataBlock
 {

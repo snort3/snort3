@@ -24,17 +24,12 @@
 #include "config.h"
 #endif
 
-#include "stream_tcp.h"
-#include "stream/paf.h"
+#include "detection/detect.h"
 #include "flow/session.h"
 
-class TcpNormalizer;
-
-// TBD-EDM - these includes are for functions moved to a new file to group related functionality
-// in specific files ... these functional groups will be further refactored as the stream tcp
-// rewrite continues...
-#include "tcp_reassembly.h"
-// TBD-EDM
+#include "stream_tcp.h"
+#include "stream/paf.h"
+#include "tcp_defs.h"
 
 /* Only track a maximum number of alerts per session */
 #define MAX_SESSION_ALERTS 8
@@ -42,6 +37,9 @@ class TcpNormalizer;
 #ifdef DEBUG
 extern const char* const flush_policy_names[];
 #endif
+
+class TcpNormalizer;
+class TcpReassembler;
 
 struct StateMgr
 {
@@ -99,14 +97,6 @@ struct TcpTracker
     PAF_State paf_state;    // for tracking protocol aware flushing
 
     StreamTcpConfig* config;
-    TcpSegment *seglist; /* first queued segment */
-    TcpSegment *seglist_tail; /* last queued segment */
-
-    // FIXIT-P seglist_base_seq is the sequence number to flush from
-    // and is valid even when seglist is empty.  seglist_next is
-    // the segment to flush from and is set per packet.  should keep
-    // up to date.
-    TcpSegment* seglist_next;
 
     /* Local for these variables means the local part of the connection.  For
      * example, if this particular TcpTracker was tracking the client side
@@ -124,20 +114,9 @@ struct TcpTracker
     uint32_t ts_last; /* last timestamp (for PAWS) */
     uint32_t ts_last_pkt; /* last packet timestamp we got */
 
-    uint32_t seglist_base_seq; /* seq of first queued segment */
-    uint32_t seg_count; /* number of current queued segments */
-    uint32_t seg_bytes_total; /* total bytes currently queued */
-    uint32_t seg_bytes_logical; /* logical bytes queued (total - overlaps) */
-    uint32_t total_bytes_queued; /* total bytes queued (life of session) */
-    uint32_t total_segs_queued; /* number of segments queued (life) */
-    uint32_t overlap_count; /* overlaps encountered */
-    uint32_t small_seg_count;
-    uint32_t flush_count; /* number of flushed queued segments */
-    uint32_t xtradata_mask; /* extra data available to log */
-
-    uint16_t os_policy;
     TcpNormalizer* normalizer;
-    uint16_t reassembly_policy;
+    TcpReassembler* reassembler;
+    uint32_t small_seg_count;
 
     uint16_t wscale; /* window scale setting */
     uint16_t mss; /* max segment size */
@@ -179,15 +158,25 @@ public:
 
     void set_splitter(bool /*c2s*/, StreamSplitter*) override;
     StreamSplitter* get_splitter(bool /*c2s*/) override;
-
     void set_extra_data(Packet*, uint32_t /*flag*/) override;
     void clear_extra_data(Packet*, uint32_t /*flag*/) override;
-
     bool is_sequenced(uint8_t /*dir*/) override;
     bool are_packets_missing(uint8_t /*dir*/) override;
-
     uint8_t get_reassembly_direction() override;
     uint8_t missing_in_reassembled(uint8_t /*dir*/) override;
+
+    // FIXIT - these 2 function names convey no meaning afaict... figure out
+    // why are they called and name appropriately...
+    void retransmit_process( Packet* p )
+    {
+        // Data has already been analyzed so don't bother looking at it again.
+        DisableDetect( p );
+    }
+
+    void  retransmit_handle( Packet* p )
+    {
+         flow->call_handlers(p, false);
+    }
 
     void reset();
     void flush();

@@ -2,6 +2,8 @@
 add_library( stream_tcp STATIC
     stream_tcp.cc
     stream_tcp.h
+    segment_overlap_editor.h
+    segment_overlap_editor.cc
     tcp_module.cc
     tcp_module.h
     tcp_defs.h
@@ -10,8 +12,12 @@ add_library( stream_tcp STATIC
     tcp_normalizer.cc
     tcp_normalizers.h
     tcp_normalizers.cc
-    tcp_reassembly.h
-    tcp_reassembly.cc
+    tcp_segment.h
+    tcp_segment.cc
+    tcp_reassembler.h
+    tcp_reassembler.cc
+    tcp_reassemblers.h
+    tcp_reassemblers.cc
     tcp_session.cc
     tcp_session.h
     tcp_closed_state.cc

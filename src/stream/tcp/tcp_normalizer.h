@@ -23,12 +23,10 @@
 #define TCP_NORMALIZER_H
 
 #include "main/snort_types.h"
-#include "framework/counts.h"
 #include "perf_monitor/perf.h"
 #include "protocols/tcp_options.h"
 #include "protocols/tcp.h"
 #include "normalize/normalize.h"
-#include "packet_io/active.h"
 #include "tcp_session.h"
 #include "tcp_defs.h"
 
@@ -60,12 +58,12 @@ public:
     virtual void trim_mss_payload( TcpDataBlock*, uint32_t max = 0 );
     virtual void ecn_tracker( tcp::TCPHdr*, bool req3way );
     virtual void ecn_stripper( Packet* );
-
     virtual uint32_t get_stream_window( TcpDataBlock* );
     virtual uint32_t get_tcp_timestamp( TcpDataBlock *, bool strip );
     virtual int handle_paws( TcpDataBlock*, int*, int* );
     virtual bool validate_rst( TcpDataBlock* );
     virtual int handle_repeated_syn( TcpDataBlock* ) = 0;
+    virtual uint16_t set_urg_offset( const tcp::TCPHdr* tcph, uint16_t dsize );
 
     static const PegInfo* get_normalization_pegs( void );
     static NormPegs get_normalization_counts( unsigned&  );
@@ -75,7 +73,7 @@ public:
         this->peer_tracker = peer_tracker;
     }
 
-    uint16_t get_os_policy() const
+    StreamPolicy get_os_policy() const
     {
         return os_policy;
     }
@@ -105,6 +103,16 @@ public:
         return tcp_block;
     }
 
+    NormMode get_trim_rst() const
+    {
+        return trim_rst;
+    }
+
+    NormMode get_trim_syn() const
+    {
+        return trim_syn;
+    }
+
     NormMode get_trim_mss() const
     {
         return trim_mss;
@@ -115,24 +123,29 @@ public:
         return trim_win;
     }
 
+    bool is_tcp_ips_enabled() const
+    {
+        return tcp_ips_enabled;
+    }
+
 protected:
-    TcpNormalizer( uint16_t, TcpSession*, TcpTracker* );
+    TcpNormalizer( StreamPolicy, TcpSession*, TcpTracker* );
     virtual void trim_payload( TcpDataBlock*, uint32_t, NormMode, PegCounts, PerfCounts );
     virtual bool strip_tcp_timestamp( TcpDataBlock*, const tcp::TcpOption*, NormMode );
     virtual bool validate_rst_seq_geq( TcpDataBlock* );
     virtual bool validate_rst_end_seq_geq(  TcpDataBlock* );
     virtual bool validate_rst_seq_eq( TcpDataBlock* );
 
-    int validate_paws_timestamp( TcpDataBlock*, int* );
+    virtual int validate_paws_timestamp( TcpDataBlock*, int* );
     virtual bool is_paws_ts_checked_required( TcpDataBlock* );
-    int validate_paws( TcpDataBlock*, int*, int* );
-    int handle_paws_no_timestamps( TcpDataBlock*, int* , int* );
+    virtual int validate_paws( TcpDataBlock*, int*, int* );
+    virtual int handle_paws_no_timestamps( TcpDataBlock*, int* , int* );
 
-    uint16_t os_policy;
+    StreamPolicy os_policy;
     TcpSession* session;
     TcpTracker* tracker;
     TcpTracker* peer_tracker;
-
+    bool tcp_ips_enabled;
     NormMode trim_syn;
     NormMode trim_rst;
     NormMode trim_win;
@@ -140,7 +153,6 @@ protected:
     NormMode strip_ecn;
     NormMode tcp_block;
     NormMode opt_block;
-
     int32_t paws_ts_fudge;
     bool paws_drop_zero_ts;
 };

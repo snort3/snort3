@@ -19,6 +19,8 @@
 // tcp_normalization.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 31, 2015
 
+#include "packet_io/active.h"
+
 #include "tcp_normalizer.h"
 #include "tcp_events.h"
 
@@ -42,10 +44,11 @@ static inline int SetupOK(const TcpTracker* st)
     return ((st->s_mgr.sub_state & SUB_SETUP_OK) == SUB_SETUP_OK);
 }
 
-TcpNormalizer::TcpNormalizer( uint16_t os_policy, TcpSession* session, TcpTracker* tracker ) :
+TcpNormalizer::TcpNormalizer( StreamPolicy os_policy, TcpSession* session, TcpTracker* tracker ) :
               os_policy( os_policy ), session( session ), tracker( tracker ),
               peer_tracker( nullptr )
 {
+    tcp_ips_enabled = Normalize_IsEnabled( NORM_TCP_IPS );
     trim_syn = Normalize_GetMode( NORM_TCP_TRIM_SYN );
     trim_rst = Normalize_GetMode( NORM_TCP_TRIM_RST );
     trim_win = Normalize_GetMode( NORM_TCP_TRIM_WIN );
@@ -331,7 +334,7 @@ int TcpNormalizer::validate_paws( TcpDataBlock* tdb, int* eventcode, int* got_ts
         *eventcode |= EVENT_NO_TIMESTAMP;
 
         /* Ignore the timestamp for this first packet, next one will checked. */
-        if (tracker->config->policy == STREAM_POLICY_SOLARIS)
+        if (tracker->config->policy == StreamPolicy::OS_SOLARIS)
             tracker->flags &= ~TF_TSTAMP;
 
         packet_dropper(tdb, NORM_TCP_OPT);
@@ -404,3 +407,19 @@ int TcpNormalizer::handle_paws(TcpDataBlock* tdb, int* eventcode, int* got_ts)
     }
 }
 
+uint16_t TcpNormalizer::set_urg_offset( const tcp::TCPHdr* tcph, uint16_t dsize )
+{
+    uint16_t urg_offset = 0;
+
+    if(tcph->are_flags_set( TH_URG) )
+    {
+        urg_offset = tcph->urp();
+
+        // discard data from urgent pointer If urg pointer is beyond this packet,
+        // it's treated as a 0
+        if (urg_offset > dsize)
+            urg_offset = 0;
+    }
+
+    return urg_offset;
+}

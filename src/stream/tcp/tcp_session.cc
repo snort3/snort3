@@ -58,7 +58,6 @@
 // in specific files ... these functional groups will be further refactored as the stream tcp
 // rewrite continues...
 #include "tcp_events.h"
-#include "tcp_reassembly.h"
 #include "tcp_debug_trace.h"
 
 #include "stream/libtcp/tcp_state_handler.h"
@@ -67,6 +66,7 @@
 #include "tcp_syn_sent_state.h"
 #include "tcp_syn_recv_state.h"
 #include "tcp_normalizers.h"
+#include "tcp_reassemblers.h"
 // TBD-EDM
 
 #include "main/snort_types.h"
@@ -155,7 +155,7 @@ static inline void init_flush_policy(Flow*, TcpTracker* trk)
 {
     if (!trk->splitter)
         trk->flush_policy = STREAM_FLPOLICY_IGNORE;
-    else if (!Normalize_IsEnabled(NORM_TCP_IPS))
+    else if (!trk->normalizer->is_tcp_ips_enabled() )
         trk->flush_policy = STREAM_FLPOLICY_ON_ACK;
     else
         trk->flush_policy = STREAM_FLPOLICY_ON_DATA;
@@ -248,53 +248,13 @@ void StreamUpdatePerfBaseState(SFBASE *sf_base, Flow *flow, char newState)
 }
 
 //-------------------------------------------------------------------------
-// policy translation
-//-------------------------------------------------------------------------
-
-static inline uint16_t GetTcpReassemblyPolicy(int os_policy)
-{
-    switch (os_policy) {
-        case STREAM_POLICY_FIRST:
-            return REASSEMBLY_POLICY_FIRST;
-        case STREAM_POLICY_LINUX:
-            return REASSEMBLY_POLICY_LINUX;
-        case STREAM_POLICY_BSD:
-            return REASSEMBLY_POLICY_BSD;
-        case STREAM_POLICY_OLD_LINUX:
-            return REASSEMBLY_POLICY_OLD_LINUX;
-        case STREAM_POLICY_LAST:
-            return REASSEMBLY_POLICY_LAST;
-        case STREAM_POLICY_WINDOWS:
-            return REASSEMBLY_POLICY_WINDOWS;
-        case STREAM_POLICY_SOLARIS:
-            return REASSEMBLY_POLICY_SOLARIS;
-        case STREAM_POLICY_WINDOWS2K3:
-            return REASSEMBLY_POLICY_WINDOWS2K3;
-        case STREAM_POLICY_VISTA:
-            return REASSEMBLY_POLICY_VISTA;
-        case STREAM_POLICY_HPUX11:
-            return REASSEMBLY_POLICY_HPUX11;
-        case STREAM_POLICY_HPUX10:
-            return REASSEMBLY_POLICY_HPUX10;
-        case STREAM_POLICY_IRIX:
-            return REASSEMBLY_POLICY_IRIX;
-        case STREAM_POLICY_MACOS:
-            return REASSEMBLY_POLICY_MACOS;
-        case STREAM_POLICY_PROXY:
-            return REASSEMBLY_POLICY_FIRST;
-        default:
-            return REASSEMBLY_POLICY_DEFAULT;
-    }
-}
-
-//-------------------------------------------------------------------------
 // config methods
 //-------------------------------------------------------------------------
 
 StreamTcpConfig::StreamTcpConfig()
 {
-    policy = STREAM_POLICY_DEFAULT;
-    reassembly_policy = REASSEMBLY_POLICY_DEFAULT;
+    policy = StreamPolicy::OS_DEFAULT;
+    reassembly_policy = ReassemblyPolicy::OS_DEFAULT;
 
     flags = 0;
     flush_factor = 0;
@@ -343,7 +303,8 @@ inline bool StreamTcpConfig::midstream_allowed(Packet* p)
 static void StreamPrintTcpConfig(StreamTcpConfig* config)
 {
     LogMessage("Stream TCP Policy config:\n");
-    LogMessage("    Reassembly Policy: %s\n", reassembly_policy_names[config->reassembly_policy]);
+    LogMessage("    Reassembly Policy: %s\n",
+            reassembly_policy_names[ static_cast<int>( config->reassembly_policy ) ] );
     LogMessage("    Timeout: %d seconds\n", config->session_timeout);
 
     if (config->max_window != 0)
@@ -410,12 +371,12 @@ static void PrintTcpTracker(TcpTracker *s)
     LogMessage("    l_window:           %u\n", s->l_window);
     LogMessage("    r_nxt_ack:          %X\n", s->r_nxt_ack);
     LogMessage("    r_win_base:         %X\n", s->r_win_base);
-    LogMessage("    seglist_base_seq:   %X\n", s->seglist_base_seq);
+    LogMessage("    seglist_base_seq:   %X\n", s->reassembler->get_seglist_base_seq( ));
     LogMessage("    seglist:            %p\n", (void*)s->seglist);
     LogMessage("    seglist_tail:       %p\n", (void*)s->seglist_tail);
-    LogMessage("    seg_count:          %d\n", s->seg_count);
-    LogMessage("    seg_bytes_total:    %d\n", s->seg_bytes_total);
-    LogMessage("    seg_bytes_logical:  %d\n", s->seg_bytes_logical);
+    LogMessage("    seg_count:          %d\n", s->reassembler->get_seg_count());
+    LogMessage("    seg_bytes_total:    %d\n", s->reassembler->get_seg_bytes_total());
+    LogMessage("    seg_bytes_logical:  %d\n", s->get_seg_bytes_logical() );
 
     PrintStateMgr(&s->s_mgr);
 }
@@ -514,8 +475,7 @@ static inline int ValidRstSynSent(TcpTracker *st, TcpDataBlock *tdb)
 //      >0      >0     RCV.NXT =< SEG.SEQ < RCV.NXT+RCV.WND
 //                     or RCV.NXT =< SEG.SEQ+SEG.LEN-1 < RCV.NXT+RCV.WND
 //
-static inline int ValidSeq(
-        const Packet* p, Flow* flow, TcpTracker *st, TcpDataBlock *tdb)
+static inline int ValidSeq( const Packet* p, Flow* flow, TcpTracker *st, TcpDataBlock *tdb )
 {
     uint32_t win = st->normalizer->get_stream_window(flow, st, tdb);
 
@@ -546,7 +506,7 @@ static inline int ValidSeq( TcpTracker *st, TcpDataBlock *tdb)
     uint32_t left_seq;
 
     DebugFormat(DEBUG_STREAM_STATE, "Checking end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
-            tdb->end_seq, st->r_win_base, tdb->seq, st->r_nxt_ack + st->normalizer->get_stream_window(tdb));
+            tdb->end_seq, st->r_win_base, tdb->seq, st->r_nxt_ack + st->normalizer->get_stream_window( tdb ));
 
     if (SEQ_LT(st->r_nxt_ack, st->r_win_base))
         left_seq = st->r_nxt_ack;
@@ -670,10 +630,6 @@ static inline void SetupTcpDataBlock(TcpDataBlock* tdb, Packet* p)
 
 static void TcpSessionClear(Flow* flow, TcpSession* tcpssn, int freeApplicationData)
 {
-    DebugFormat(DEBUG_STREAM_STATE, "In TcpSessionClear, %lu bytes in use\n", tcp_memcap->used());
-    DebugFormat(DEBUG_STREAM_STATE, "client has %d segs queued\n", tcpssn->client.seg_count);
-    DebugFormat(DEBUG_STREAM_STATE, "server has %d segs queued\n", tcpssn->server.seg_count);
-
     // update stats
     if (tcpssn->tcp_init)
         tcpStats.trackers_released++;
@@ -695,9 +651,19 @@ static void TcpSessionClear(Flow* flow, TcpSession* tcpssn, int freeApplicationD
     tcpssn->set_splitter(true, nullptr);
     tcpssn->set_splitter(false, nullptr);
 
-    // release internal protocol specific state
-    purge_all(&tcpssn->client);
-    purge_all(&tcpssn->server);
+    DebugFormat(DEBUG_STREAM_STATE, "In TcpSessionClear, %lu bytes in use\n", tcp_memcap->used());
+
+    if( tcpssn->client.reassembler )
+    {
+        DebugFormat(DEBUG_STREAM_STATE, "client has %d segs queued, freeing all.\n", tcpssn->client.reassembler->get_seg_count());
+        tcpssn->client.reassembler->purge_segment_list( );
+    }
+
+    if( tcpssn->server.reassembler )
+    {
+        DebugFormat(DEBUG_STREAM_STATE, "server has %d segs queued, freeing all\n", tcpssn->server.reassembler->get_seg_count());
+        tcpssn->server.reassembler->purge_segment_list( );
+    }
 
     paf_clear(&tcpssn->client.paf_state);
     paf_clear(&tcpssn->server.paf_state);
@@ -721,7 +687,12 @@ static void TcpSessionCleanup(Flow* flow, int freeApplicationData, Packet* p =
         nullptr)
 {
     TcpSession* tcpssn = (TcpSession*) flow->session;
-    FlushQueuedSegs(flow, tcpssn, true, p);
+    // FIXIT - this function does both client & server sides...refactor to do one and
+    // call for each
+    if( tcpssn->client.reassembler != nullptr )
+        tcpssn->client.reassembler->flush_queued_segments(flow, true, p);
+    if( tcpssn->server.reassembler != nullptr )
+        tcpssn->server.reassembler->flush_queued_segments(flow, true, p);
     TcpSessionClear(flow, tcpssn, freeApplicationData);
 }
 
@@ -821,17 +792,15 @@ static void FinishServerInit( TcpDataBlock* tdb, TcpSession* ssn )
     if( tcph->is_fin() )
         server->l_nxt_seq--;
 
-    DebugFormat(DEBUG_STREAM_STATE, "seglist_base_seq = %X\n", client->seglist_base_seq);
-
     if( !( ssn->flow->session_state & STREAM_STATE_MIDSTREAM ) )
     {
         server->s_mgr.state = TCP_STATE_SYN_RCVD;
-        client->seglist_base_seq = server->l_unackd;
+        client->reassembler->set_seglist_base_seq( server->l_unackd );
         client->r_win_base = tdb->end_seq;
     }
     else
     {
-        client->seglist_base_seq = tdb->seq;
+        client->reassembler->set_seglist_base_seq( tdb->seq );
         client->r_win_base = tdb->seq;
     }
 
@@ -855,40 +824,48 @@ static inline void EndOfFileHandle(Packet* p, TcpSession* tcpssn)
     tcpssn->flow->call_handlers(p, true);
 }
 
-static void NewQueue(TcpTracker *st, TcpDataBlock *tdb)
+static inline bool flow_exceeds_config_thresholds( TcpTracker *rcv, TcpSession *tcpssn, TcpDataBlock *tdb,
+        StreamTcpConfig* config )
 {
-    PERF_PROFILE(s5TcpInsertPerfStats);
-
-    const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
-
-    DebugMessage(DEBUG_STREAM_STATE, "In NewQueue\n");
-
-    uint32_t overlap = 0;
-    uint32_t seq = tdb->seq;
-
-    if( tcph->is_syn() )
-        seq++;
-
-    /* new packet seq is below the last ack... */
-    if (SEQ_GT(st->r_win_base, seq))
+    if (rcv->flush_policy == STREAM_FLPOLICY_IGNORE)
     {
-        DebugMessage(DEBUG_STREAM_STATE, "segment overlaps ack'd data...\n");
-        overlap = st->r_win_base - tdb->seq;
+        DebugMessage(DEBUG_STREAM_STATE, "Ignoring segment due to IGNORE flush_policy\n");
+        return true;
+    }
 
-        if (overlap >= tdb->pkt->dsize)
+    if( ( config->flags & STREAM_CONFIG_NO_ASYNC_REASSEMBLY ) && !tcpssn->flow->two_way_traffic() )
+        return true;
+
+    if( config->max_consec_small_segs && ( tdb->pkt->dsize < config->max_consec_small_seg_size ) )
+    {
+        rcv->small_seg_count++;
+
+        if( rcv->small_seg_count > config->max_consec_small_segs )
         {
-            DebugMessage(DEBUG_STREAM_STATE, "full overlap on ack'd data, dropping segment\n");
-            return;
+            /* Above threshold, log it...  in this TCP policy,
+             * action controlled by preprocessor rule. */
+            EventMaxSmallSegsExceeded();
+            /* Reset counter, so we're not too noisy */
+            rcv->small_seg_count = 0;
         }
     }
 
-    // BLOCK add new block to seglist containing data
-    AddStreamNode(st, tdb, tdb->pkt->dsize, overlap, 0, tdb->seq + overlap, NULL);
+    if( config->max_queued_bytes
+            && ( rcv->reassembler->get_seg_bytes_total() > config->max_queued_bytes ) )
+    {
+        tcpStats.max_bytes++;
+        return true;
+    }
 
-    DebugFormat(DEBUG_STREAM_STATE, "Attached new queue to seglist, %d bytes queued, base_seq 0x%X\n",
-            tdb->pkt->dsize-overlap, st->seglist_base_seq);
+    if( config->max_queued_segs
+            && ( rcv->reassembler->get_seg_count() + 1 > config->max_queued_segs ) )
+    {
+        tcpStats.max_segs++;
+        return true;
+    }
+
+    return false;
 }
-
 
 static void ProcessTcpStream(TcpTracker *rcv, TcpSession *tcpssn, TcpDataBlock *tdb,
         StreamTcpConfig* config)
@@ -902,81 +879,18 @@ static void ProcessTcpStream(TcpTracker *rcv, TcpSession *tcpssn, TcpDataBlock *
     SetPacketHeaderFoo(tcpssn, tdb->pkt);
 #endif
 
-    if (rcv->flush_policy == STREAM_FLPOLICY_IGNORE)
-    {
-        DebugMessage(DEBUG_STREAM_STATE, "Ignoring segment due to IGNORE flush_policy\n");
+    if( flow_exceeds_config_thresholds( rcv, tcpssn, tdb, config ) )
         return;
-    }
-
-    if ((config->flags & STREAM_CONFIG_NO_ASYNC_REASSEMBLY)
-            && !tcpssn->flow->two_way_traffic())
-    {
-        return;
-    }
-
-    if (config->max_consec_small_segs)
-    {
-        if (tdb->pkt->dsize < config->max_consec_small_seg_size)
-        {
-            rcv->small_seg_count++;
-
-            if (rcv->small_seg_count > config->max_consec_small_segs)
-            {
-                /* Above threshold, log it...  in this TCP policy,
-                 * action controlled by preprocessor rule. */
-                EventMaxSmallSegsExceeded();
-                /* Reset counter, so we're not too noisy */
-                rcv->small_seg_count = 0;
-            }
-        }
-    }
-
-    if (config->max_queued_bytes
-            && (rcv->seg_bytes_total > config->max_queued_bytes))
-    {
-        tcpStats.max_bytes++;
-        return;
-    }
-
-    if (config->max_queued_segs
-            && (rcv->seg_count + 1 > config->max_queued_segs))
-    {
-        tcpStats.max_segs++;
-        return;
-    }
 
     DebugMessage(DEBUG_STREAM_STATE, "queuing segment\n");
+    rcv->reassembler->queue_packet_for_reassembly( tdb );
 
-    if (!rcv->seg_count)
+    // Alert if overlap limit exceeded
+    if( ( rcv->config->overlap_limit )
+            && ( rcv->reassembler->get_overlap_count() > rcv->config->overlap_limit ) )
     {
-        NewQueue(rcv, tdb);
-        return;
-    }
-    if (SEQ_GT(rcv->r_win_base, tdb->seq))
-    {
-        uint32_t offset = rcv->r_win_base - tdb->seq;
-
-        if (offset < tdb->pkt->dsize)
-        {
-            tdb->seq += offset;
-            tdb->pkt->data += offset;
-            tdb->pkt->dsize -= (uint16_t) offset;
-
-            StreamQueue(rcv, tdb, tcpssn);
-
-            tdb->pkt->dsize += (uint16_t) offset;
-            tdb->pkt->data -= offset;
-            tdb->seq -= offset;
-        }
-    } else
-        StreamQueue(rcv, tdb, tcpssn);
-
-    if ((rcv->config->overlap_limit)
-            && (rcv->overlap_count > rcv->config->overlap_limit))
-    {
-        /* Alert on overlap limit and reset counter */
         EventExcessiveOverlap();
-        rcv->overlap_count = 0;
+        rcv->reassembler->set_overlap_count( 0 );
     }
 }
 
@@ -990,7 +904,7 @@ static int ProcessTcpData(TcpTracker *listener, TcpSession *tcpssn,
 
     if( tcph->is_syn() )
     {
-        if (listener->os_policy == STREAM_POLICY_MACOS)
+        if (listener->normalizer->get_os_policy() == StreamPolicy::OS_MACOS)
             seq++;
 
         else
@@ -1005,7 +919,7 @@ static int ProcessTcpData(TcpTracker *listener, TcpSession *tcpssn,
     if (seq == listener->r_nxt_ack)
     {
         /* check if we're in the window */
-        if (listener->config->policy != STREAM_POLICY_PROXY
+        if (listener->config->policy != StreamPolicy::OS_PROXY
                 and listener->normalizer->get_stream_window( tdb ) == 0)
         {
             DebugMessage(DEBUG_STREAM_STATE, "Bailing, we're out of the window!\n");
@@ -1031,23 +945,18 @@ static int ProcessTcpData(TcpTracker *listener, TcpSession *tcpssn,
     }
     else
     {
-        /* pkt is out of order, do some target-based shizzle here */
-
-        /* NO, we don't want to simply bail.  Some platforms
-         * favor unack'd dup data over the original data.
-         * Let the reassembly policy decide how to handle
-         * the overlapping data.
-         *
-         * See HP, Solaris, et al. for those that favor
-         * duplicate data over the original in some cases.
-         */
+        // pkt is out of order, do some target-based shizzle here...
+        // NO, we don't want to simply bail.  Some platforms favor unack'd dup data over the
+        // original data.  Let the reassembly policy decide how to handle the overlapping data.
+        // See HP, Solaris, et al. for those that favor duplicate data over the original in
+        // some cases.
         DebugFormat(DEBUG_STREAM_STATE, "out of order segment (tdb->seq: 0x%X l->r_nxt_ack: 0x%X!\n",
                 tdb->seq, listener->r_nxt_ack);
 
         if (listener->s_mgr.state_queue == TCP_STATE_NONE)
         {
             /* check if we're in the window */
-            if (listener->config->policy != STREAM_POLICY_PROXY
+            if (listener->config->policy != StreamPolicy::OS_PROXY
                     and listener->normalizer->get_stream_window( tdb ) == 0)
             {
                 DebugMessage(DEBUG_STREAM_STATE, "Bailing, we're out of the window!\n");
@@ -1060,8 +969,7 @@ static int ProcessTcpData(TcpTracker *listener, TcpSession *tcpssn,
             {
                 if (SEQ_GT(tdb->end_seq, listener->r_nxt_ack))
                 {
-                    /* set next ack so we are within the window going forward on
-                     * this side. */
+                    // set next ack so we are within the window going forward on this side.
                     // FIXIT-L for ips, must move all the way to first hole or right end
                     listener->r_nxt_ack = tdb->end_seq;
                 }
@@ -1082,28 +990,26 @@ static int ProcessTcpData(TcpTracker *listener, TcpSession *tcpssn,
     return STREAM_UNALIGNED;
 }
 
-void SetTcpReassemblyPolicy(TcpTracker *st)
+static void set_os_policy(Flow* flow, TcpSession* tcpssn)
 {
-    st->reassembly_policy = GetTcpReassemblyPolicy(st->os_policy);
-}
+    StreamPolicy client_os_policy = flow->ssn_policy ?
+            static_cast<StreamPolicy>( flow->ssn_policy ) : tcpssn->client.config->policy;
+    StreamPolicy server_os_policy = flow->ssn_policy ?
+            static_cast<StreamPolicy>( flow->ssn_policy ) : tcpssn->server.config->policy;
 
-static void SetOSPolicy(Flow* flow, TcpSession* tcpssn)
-{
-    if (!tcpssn->client.os_policy)
-    {
-        tcpssn->client.os_policy = flow->ssn_policy ? flow->ssn_policy : tcpssn->client.config->policy;
-        tcpssn->client.normalizer = TcpNormalizerFactory::allocate_normalizer( tcpssn->client.os_policy,
-                tcpssn, &tcpssn->client, &tcpssn->server );
-        SetTcpReassemblyPolicy(&tcpssn->client);
-    }
+    if( tcpssn->client.normalizer == nullptr )
+        tcpssn->client.normalizer = TcpNormalizerFactory::create( client_os_policy, tcpssn,
+                &tcpssn->client, &tcpssn->server );
 
-    if (!tcpssn->server.os_policy)
-    {
-        tcpssn->server.os_policy = flow->ssn_policy ? flow->ssn_policy : tcpssn->server.config->policy;
-        tcpssn->server.normalizer = TcpNormalizerFactory::allocate_normalizer( tcpssn->client.os_policy,
-                tcpssn, &tcpssn->server, &tcpssn->client );
-        SetTcpReassemblyPolicy(&tcpssn->server);
-    }
+    if( tcpssn->server.normalizer == nullptr )
+        tcpssn->server.normalizer = TcpNormalizerFactory::create( server_os_policy, tcpssn,
+                &tcpssn->server, &tcpssn->client );
+
+    if( tcpssn->client.reassembler == nullptr )
+        tcpssn->client.reassembler = TcpReassemblerFactory::create( tcpssn, &tcpssn->client, client_os_policy, false );
+
+    if( tcpssn->server.reassembler == nullptr )
+        tcpssn->server.reassembler = TcpReassemblerFactory::create( tcpssn, &tcpssn->server, server_os_policy, true );
 }
 
 /* Use a for loop and byte comparison, which has proven to be
@@ -1291,7 +1197,7 @@ static void NewTcpSessionOnSyn(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* d
     /* Set the StreamTcpConfig for each direction (pkt from client) */
     tss->client.config = dstPolicy; // FIXIT-M use external binding for both dirs
     tss->server.config = dstPolicy; // (applies to all the blocks in this funk)
-    SetOSPolicy(flow, tss);
+    set_os_policy(flow, tss);
 
     tss->client.s_mgr.state = TCP_STATE_SYN_SENT;
     tss->client.isn = tdb->seq;
@@ -1304,11 +1210,9 @@ static void NewTcpSessionOnSyn(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* d
     tss->client.l_window = tdb->win;
     tss->client.ts_last_pkt = tdb->pkt->pkth->ts.tv_sec;
 
-    tss->server.seglist_base_seq = tss->client.l_unackd;
+    tss->server.reassembler->set_seglist_base_seq( tss->client.l_unackd );
     tss->server.r_nxt_ack = tss->client.l_unackd;
     tss->server.r_win_base = tdb->seq + 1;
-
-    DebugFormat(DEBUG_STREAM_STATE, "seglist_base_seq = %X\n", tss->server.seglist_base_seq);
     tss->server.s_mgr.state = TCP_STATE_LISTEN;
 
     tss->client.flags |= tss->client.normalizer->get_tcp_timestamp(tdb, false);
@@ -1342,7 +1246,7 @@ static void NewTcpSessionOnSynAck(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig
     /* Set the config for each direction (pkt from server) */
     tss->server.config = dstPolicy;
     tss->client.config = dstPolicy;
-    SetOSPolicy(flow, tss);
+    set_os_policy(flow, tss);
 
     tss->server.s_mgr.state = TCP_STATE_SYN_RCVD;
     tss->server.isn = tdb->seq;
@@ -1350,18 +1254,16 @@ static void NewTcpSessionOnSynAck(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig
     tss->server.l_nxt_seq = tss->server.l_unackd;
     tss->server.l_window = tdb->win;
 
-    tss->server.seglist_base_seq = tdb->ack;
+    tss->server.reassembler->set_seglist_base_seq( tdb->ack );
     tss->server.r_win_base = tdb->ack;
     tss->server.r_nxt_ack = tdb->ack;
     tss->server.ts_last_pkt = tdb->pkt->pkth->ts.tv_sec;
 
-    tss->client.seglist_base_seq = tss->server.l_unackd;
+    tss->client.reassembler->set_seglist_base_seq( tss->server.l_unackd );
     tss->client.r_nxt_ack = tss->server.l_unackd;
     tss->client.r_win_base = tdb->seq + 1;
     tss->client.l_nxt_seq = tdb->ack;
     tss->client.isn = tdb->ack - 1;
-
-    DebugFormat(DEBUG_STREAM_STATE, "seglist_base_seq = %X\n", tss->client.seglist_base_seq);
     tss->client.s_mgr.state = TCP_STATE_SYN_SENT;
 
     tss->server.flags |= tss->server.normalizer->get_tcp_timestamp(tdb, false);
@@ -1388,7 +1290,7 @@ static void NewTcpSessionOn3Way(Flow* flow, TcpDataBlock* tdb,
     /******************************************************************
      * start new sessions on completion of 3-way (ACK only, no data)
      *****************************************************************/
-    tss = (TcpSession*) flow->session;
+    tss = ( TcpSession* ) flow->session;
     DebugMessage(DEBUG_STREAM_STATE, "Creating new session tracker on ACK!\n");
 
     flow->set_session_flags( SSNFLAG_SEEN_CLIENT );
@@ -1400,7 +1302,7 @@ static void NewTcpSessionOn3Way(Flow* flow, TcpDataBlock* tdb,
     /* Set the config for each direction (pkt from client) */
      tss->client.config = dstPolicy;
      tss->server.config = dstPolicy;
-     SetOSPolicy(flow, tss);
+     set_os_policy( flow, tss );
 
     tss->client.s_mgr.state = TCP_STATE_ESTABLISHED;
     tss->client.isn = tdb->seq;
@@ -1410,11 +1312,9 @@ static void NewTcpSessionOn3Way(Flow* flow, TcpDataBlock* tdb,
 
     tss->client.ts_last_pkt = tdb->pkt->pkth->ts.tv_sec;
 
-    tss->server.seglist_base_seq = tss->client.l_unackd;
+    tss->server.reassembler->set_seglist_base_seq( tss->client.l_unackd );
     tss->server.r_nxt_ack = tss->client.l_unackd;
     tss->server.r_win_base = tdb->seq + 1;
-
-    DebugFormat(DEBUG_STREAM_STATE, "seglist_base_seq = %X\n", tss->server.seglist_base_seq);
     tss->server.s_mgr.state = TCP_STATE_ESTABLISHED;
 
     tss->client.flags |= tss->client.normalizer->get_tcp_timestamp(tdb, false);
@@ -1443,7 +1343,7 @@ static void NewTcpSessionOnData(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* 
     /* Set the config for each direction (pkt from client) */
     tss->client.config = dstPolicy;
     tss->server.config = dstPolicy;
-    SetOSPolicy(flow, tss);
+    set_os_policy(flow, tss);
     if (flow->ssn_state.direction == FROM_CLIENT)
     {
         DebugMessage(DEBUG_STREAM_STATE, "Session direction is FROM_CLIENT\n");
@@ -1462,7 +1362,7 @@ static void NewTcpSessionOnData(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* 
 
         tss->client.ts_last_pkt = tdb->pkt->pkth->ts.tv_sec;
 
-        tss->server.seglist_base_seq = tss->client.l_unackd;
+        tss->server.reassembler->set_seglist_base_seq( tss->client.l_unackd );
         tss->server.r_nxt_ack = tss->client.l_unackd;
         tss->server.r_win_base = tdb->seq;
         tss->server.l_window = 0; /* reset later */
@@ -1470,8 +1370,6 @@ static void NewTcpSessionOnData(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* 
         /* Next server packet is what was ACKd */
         //tss->server.l_nxt_seq = tdb->ack + 1;
         tss->server.l_unackd = tdb->ack - 1;
-
-        DebugFormat(DEBUG_STREAM_STATE, "seglist_base_seq = %X\n", tss->server.seglist_base_seq);
         tss->server.s_mgr.state = TCP_STATE_ESTABLISHED;
 
         tss->client.flags |= tss->client.normalizer->get_tcp_timestamp(tdb, false);
@@ -1498,18 +1396,16 @@ static void NewTcpSessionOnData(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* 
         tss->server.l_nxt_seq = tss->server.l_unackd;
         tss->server.l_window = tdb->win;
 
-        tss->server.seglist_base_seq = tdb->ack;
+        tss->server.reassembler->set_seglist_base_seq( tdb->ack );
         tss->server.r_win_base = tdb->ack;
         tss->server.r_nxt_ack = tdb->ack;
         tss->server.ts_last_pkt = tdb->pkt->pkth->ts.tv_sec;
 
-        tss->client.seglist_base_seq = tss->server.l_unackd;
+        tss->client.reassembler->set_seglist_base_seq( tss->server.l_unackd );
         tss->client.r_nxt_ack = tss->server.l_unackd;
         tss->client.r_win_base = tdb->seq;
         tss->client.l_window = 0; /* reset later */
         tss->client.isn = tdb->ack - 1;
-
-        DebugFormat(DEBUG_STREAM_STATE, "seglist_base_seq = %X\n", tss->client.seglist_base_seq);
         tss->client.s_mgr.state = TCP_STATE_ESTABLISHED;
 
         tss->server.flags |= tss->server.normalizer->get_tcp_timestamp(tdb, 0);
@@ -1828,7 +1724,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
     if ((tdb->pkt->dsize) && tcph->is_syn())
     {
         /* MacOS accepts data on SYN, so don't alert if policy is MACOS */
-        if (talker->os_policy != STREAM_POLICY_MACOS)
+        if (talker->normalizer->get_os_policy() != StreamPolicy::OS_MACOS)
         {
             // remove data on SYN
             listener->normalizer->trim_syn_payload( tdb );
@@ -1938,9 +1834,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
         if( tcph->are_flags_set( TH_ECE ) && ( flow->get_session_flags() & SSNFLAG_ECN_CLIENT_QUERY ) )
             flow->set_session_flags( SSNFLAG_ECN_SERVER_REPLY );
 
-        /*
-         * explicitly set the state
-         */
+        // explicitly set the state
         listener->s_mgr.state = TCP_STATE_SYN_SENT;
         DebugMessage(DEBUG_STREAM_STATE, "Accepted SYN ACK\n");
         LogTcpEvents(eventcode);
@@ -1991,7 +1885,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
             talker->s_mgr.sub_state |= SUB_RST_SENT;
             StreamUpdatePerfBaseState(&sfBase, flow, TCP_STATE_CLOSING);
 
-            if (Normalize_IsEnabled(NORM_TCP_IPS))
+            if( listener->normalizer->is_tcp_ips_enabled() )
                 listener->s_mgr.state = TCP_STATE_CLOSED;
 
             /* else for ids:
@@ -2011,7 +1905,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
     else
     {
         /* check for valid seqeuence/retrans */
-        if (listener->config->policy != STREAM_POLICY_PROXY
+        if (listener->config->policy != StreamPolicy::OS_PROXY
                 and (listener->s_mgr.state >= TCP_STATE_ESTABLISHED)
                 and !ValidSeq( listener, tdb ))
         {
@@ -2032,9 +1926,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
         return retcode | ts_action;
     }
 
-    /*
-     * update PAWS timestamps
-     */
+    // update PAWS timestamps
     DebugFormat(DEBUG_STREAM_STATE, "PAWS update tdb->seq %lu > listener->r_win_base %lu\n",
             tdb->seq, listener->r_win_base);
     if (got_ts && SEQ_EQ(listener->r_win_base, tdb->seq))
@@ -2051,9 +1943,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
         DebugMessage(DEBUG_STREAM_STATE, "not updating timestamps...\n");
     }
 
-    /*
-     * check for repeat SYNs
-     */
+    // check for repeat SYNs
     if( !new_ssn && tcph->is_syn_only() )
     {
         int action;
@@ -2073,10 +1963,8 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
         }
     }
 
-    /*
-     * Check that the window is within the limits
-     */
-    if (listener->config->policy != STREAM_POLICY_PROXY)
+    // Check that the window is within the limits
+    if (listener->config->policy != StreamPolicy::OS_PROXY)
     {
         if (listener->config->max_window && (tdb->win > listener->config->max_window))
         {
@@ -2165,7 +2053,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
 
                 if (SEQ_EQ(tdb->ack, listener->l_nxt_seq))
                 {
-                    if ((listener->os_policy == STREAM_POLICY_WINDOWS) && (tdb->win == 0))
+                    if ((listener->normalizer->get_os_policy() == StreamPolicy::OS_WINDOWS) && (tdb->win == 0))
                     {
                         eventcode |= EVENT_WINDOW_SLAM;
                         inc_tcp_discards();
@@ -2237,24 +2125,20 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
                 break;
         }
 
-        CheckFlushPolicyOnAck(tcpssn, talker, listener,tdb->pkt);
+        talker->reassembler->flush_on_ack_policy( tdb->pkt );
     }
 
-    /*
-     * handle data in the segment
-     */
+    // handle data in the segment
     if (tdb->pkt->dsize)
     {
         DebugFormat(DEBUG_STREAM_STATE, "   %s state: %s(%d) getting data\n",
                 l, state_names[listener->s_mgr.state], listener->s_mgr.state);
 
-        // FIN means only that sender is done talking,
-        // other side may continue yapping.
+        // FIN means only that sender is done talking, other side may continue yapping.
         if (TCP_STATE_FIN_WAIT_2 == talker->s_mgr.state ||
                 TCP_STATE_TIME_WAIT == talker->s_mgr.state)
         {
-            /* data on a segment when we're not accepting data any more
-               alert! */
+            // data on a segment when we're not accepting data any more alert!
             //EventDataOnClosed(talker->config);
             eventcode |= EVENT_DATA_ON_CLOSED;
             retcode |= ACTION_BAD_PKT;
@@ -2262,8 +2146,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
         }
         else if (TCP_STATE_CLOSED == talker->s_mgr.state)
         {
-            /* data on a segment when we're not accepting data any more
-               alert! */
+            // data on a segment when we're not accepting data any more alert!
             if (flow->get_session_flags() & SSNFLAG_RESET)
             {
                 //EventDataAfterReset(listener->config);
@@ -2285,15 +2168,14 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
             DebugFormat(DEBUG_STREAM_STATE, "Queuing data on listener, t %s, l %s...\n",
                     flush_policy_names[talker->flush_policy], flush_policy_names[listener->flush_policy]);
 
-            if (config->policy != STREAM_POLICY_PROXY)
+            if (config->policy != StreamPolicy::OS_PROXY)
             {
                 // these normalizations can't be done if we missed setup. and
                 // window is zero in one direction until we've seen both sides.
                 if (!(flow->get_session_flags() & SSNFLAG_MIDSTREAM))
                 {
-                    // sender of syn w/mss limits payloads from peer
-                    // since we store mss on sender side, use listener mss
-                    // same reasoning for window size
+                    // sender of syn w/mss limits payloads from peer since we store mss on
+                    // sender side, use listener mss same reasoning for window size
                     TcpTracker* st = listener;
 
                     // trim to fit in window and mss as needed
@@ -2308,8 +2190,8 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
             // dunno if this is RFC but fragroute testing expects it  for the record,
             // I've seen FTP data sessions that send data packets with no tcp flags set
             if ((tcph->th_flags != 0)
-                    or (config->policy == STREAM_POLICY_LINUX)
-                    or (config->policy == STREAM_POLICY_PROXY))
+                    or (config->policy == StreamPolicy::OS_LINUX)
+                    or (config->policy == StreamPolicy::OS_PROXY))
             {
                 ProcessTcpData( listener, tcpssn, tdb, config);
             }
@@ -2320,7 +2202,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
             }
         }
 
-        CheckFlushPolicyOnData(tcpssn, talker, listener, tdb->pkt);
+        listener->reassembler->flush_on_data_policy( tdb->pkt );
     }
 
     if( tcph->is_fin() )
@@ -2353,7 +2235,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
 
                 if ((listener->flush_policy != STREAM_FLPOLICY_ON_ACK)
                         && (listener->flush_policy != STREAM_FLPOLICY_ON_DATA)
-                        && Normalize_IsEnabled(NORM_TCP_IPS))
+                        && listener->normalizer->is_tcp_ips_enabled() )
                 {
                     tdb->pkt->packet_flags |= PKT_PDU_TAIL;
                 }
@@ -2369,7 +2251,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
                     EndOfFileHandle(tdb->pkt, tcpssn);
 
                     if (!tdb->pkt->dsize)
-                        CheckFlushPolicyOnData(tcpssn, talker, listener, tdb->pkt);
+                        listener->reassembler->flush_on_data_policy( tdb->pkt );
 
                     StreamUpdatePerfBaseState(&sfBase, tcpssn->flow, TCP_STATE_CLOSING);
                     break;
@@ -2380,7 +2262,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
 
                 case TCP_STATE_FIN_WAIT_1:
                     if (!tdb->pkt->dsize)
-                        RetransmitHandle(tdb->pkt, tcpssn);
+                        tcpssn->retransmit_handle( tdb->pkt );
                     break;
 
                 default:
@@ -2467,7 +2349,15 @@ TcpSession::TcpSession(Flow* flow) :
 TcpSession::~TcpSession()
 {
     if (tcp_init)
+    {
         TcpSessionClear(flow, (TcpSession*) flow->session, 1);
+        // FIXIT - do these ever need to be freed, before session is reused for same flow
+        // i think not...
+        delete client.normalizer;
+        delete server.normalizer;
+        delete client.reassembler;
+        delete server.reassembler;
+    }
 }
 
 void TcpSession::reset()
@@ -2497,6 +2387,7 @@ bool TcpSession::setup(Packet*)
     daq_flags = address_space_id = 0;
 #endif
 
+    // FIXIT - this is just temp...remove...
     delete tsh;
     tsh = new TcpClosedState;
     delete tsh;
@@ -2542,10 +2433,10 @@ void TcpSession::restart(Packet* p)
 
     // FIXIT-H on data / on ack must be based on flush policy
     if (p->dsize > 0)
-        CheckFlushPolicyOnData(this, talker, listener, p);
+        listener->reassembler->flush_on_data_policy( p );
 
     if (p->ptrs.tcph->is_ack())
-        CheckFlushPolicyOnAck(this, talker, listener, p);
+        talker->reassembler->flush_on_ack_policy( p );
 }
 
 void TcpSession::set_splitter(bool c2s, StreamSplitter* ss)
@@ -2593,10 +2484,10 @@ void TcpSession::flush_server(Packet *p)
     }
 
     /* Need to convert the addresses to network order */
-    flushed = flush_stream(this, flushTracker, p, PKT_FROM_SERVER);
+    flushed = flushTracker->reassembler->flush_stream( p, PKT_FROM_SERVER);
 
     if (flushed)
-        purge_flushed_ackd(this, flushTracker);
+        flushTracker->reassembler->purge_flushed_ackd( );
 
     flushTracker->flags &= ~TF_FORCE_FLUSH;
 }
@@ -2618,10 +2509,10 @@ void TcpSession::flush_client(Packet* p)
     }
 
     /* Need to convert the addresses to network order */
-    flushed = flush_stream(this, flushTracker, p, PKT_FROM_CLIENT);
+    flushed = flushTracker->reassembler->flush_stream(p, PKT_FROM_CLIENT);
 
     if (flushed)
-        purge_flushed_ackd(this, flushTracker);
+        flushTracker->reassembler->purge_flushed_ackd( );
 
     flushTracker->flags &= ~TF_FORCE_FLUSH;
 }
@@ -2652,10 +2543,10 @@ void TcpSession::flush_listener(Packet* p)
     if (dir != 0)
     {
         listener->flags |= TF_FORCE_FLUSH;
-        flushed = flush_stream(this, listener, p, dir);
+        flushed = listener->reassembler->flush_stream( p, dir);
 
         if (flushed)
-            purge_flushed_ackd(this, listener);
+            listener->reassembler->purge_flushed_ackd( );
 
         listener->flags &= ~TF_FORCE_FLUSH;
     }
@@ -2687,10 +2578,10 @@ void TcpSession::flush_talker(Packet* p)
     if (dir != 0)
     {
         talker->flags |= TF_FORCE_FLUSH;
-        flushed = flush_stream(this, talker, p, dir);
+        flushed = talker->reassembler->flush_stream(p, dir);
 
         if (flushed)
-            purge_flushed_ackd(this, talker);
+            talker->reassembler->purge_flushed_ackd( );
 
         talker->flags &= ~TF_FORCE_FLUSH;
     }
@@ -2786,7 +2677,7 @@ void TcpSession::set_extra_data(Packet* p, uint32_t xid)
     else
         st = &client;
 
-    st->xtradata_mask |= BIT(xid);
+    st->reassembler->set_xtradata_mask( st->reassembler->get_xtradata_mask() | BIT(xid) );
 }
 
 void TcpSession::clear_extra_data(Packet* p, uint32_t xid)
@@ -2799,9 +2690,9 @@ void TcpSession::clear_extra_data(Packet* p, uint32_t xid)
         st = &client;
 
     if (xid)
-        st->xtradata_mask &= ~BIT(xid);
+        st->reassembler->set_xtradata_mask( st->reassembler->get_xtradata_mask() & ~BIT(xid) );
     else
-        st->xtradata_mask = 0;
+        st->reassembler->set_xtradata_mask( 0 );
 }
 
 uint8_t TcpSession::get_reassembly_direction()
@@ -3048,14 +2939,17 @@ midstream_pickup_allowed: if (!p->ptrs.tcph->is_syn_ack()
 
 void TcpSession::flush()
 {
-    if ((SegsToFlush(&server, 1) > 0) || (SegsToFlush(&client, 1) > 0))
-        FlushQueuedSegs(flow, this, false);
+    if( ( server.reassembler->is_segment_pending_flush() ) || (client.reassembler->is_segment_pending_flush() ) )
+    {
+        server.reassembler->flush_queued_segments( flow, false );
+        client.reassembler->flush_queued_segments( flow, false );
+    }
 }
 
 void TcpSession::start_proxy()
 {
-    client.config->policy = STREAM_POLICY_PROXY;
-    server.config->policy = STREAM_POLICY_PROXY;
+    client.config->policy = StreamPolicy::OS_PROXY;
+    server.config->policy = StreamPolicy::OS_PROXY;
 }
 
 //-------------------------------------------------------------------------
