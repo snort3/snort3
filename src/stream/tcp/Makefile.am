@@ -2,6 +2,7 @@
 noinst_LIBRARIES = libstream_tcp.a
 
 libstream_tcp_a_SOURCES = \
+../paf.cc \
 stream_tcp.cc \
 stream_tcp.h \
 segment_overlap_editor.h \

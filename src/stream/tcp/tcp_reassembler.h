@@ -62,12 +62,6 @@ public:
     virtual int flush_on_ack_policy( Packet* );
     void trace_segments( void );
 
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    virtual void SetPacketHeaderFoo(TcpSession* tcpssn, const Packet* p);
-    virtual void GetPacketHeaderFoo( const TcpSession* tcpssn, DAQ_PktHdr_t* pkth, uint32_t dir);
-    virtual void SwapPacketHeaderFoo(TcpSession* tcpssn);
-#endif
-
     void set_seglist_base_seq(uint32_t seglist_base_seq)
     {
         this->seglist_base_seq = seglist_base_seq;

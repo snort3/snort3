@@ -165,6 +165,13 @@ public:
     uint8_t get_reassembly_direction() override;
     uint8_t missing_in_reassembled(uint8_t /*dir*/) override;
 
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+    void SetPacketHeaderFoo( const Packet* p );
+    void GetPacketHeaderFoo( DAQ_PktHdr_t* pkth, uint32_t dir );
+    void SwapPacketHeaderFoo( void );
+#endif
+
+
     // FIXIT - these 2 function names convey no meaning afaict... figure out
     // why are they called and name appropriately...
     void retransmit_process( Packet* p )

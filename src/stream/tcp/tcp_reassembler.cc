@@ -634,7 +634,7 @@ int TcpReassembler::_flush_to_seq( uint32_t bytes, Packet* p, uint32_t pkt_flags
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     DAQ_PktHdr_t pkth;
-    GetPacketHeaderFoo(tcpssn, &pkth, pkt_flags);
+    session->GetPacketHeaderFoo( &pkth, pkt_flags );
     PacketManager::format_tcp(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
 #else
     PacketManager::format_tcp(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP);
@@ -1397,75 +1397,6 @@ int TcpReassembler::queue_packet_for_reassembly( TcpDataBlock* tdb )
 
     return rc;
 }
-
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-void SetPacketHeaderFoo(TcpSession* tcpssn, const Packet* p)
-{
-    if ( tcpssn->daq_flags & DAQ_PKT_FLAG_NOT_FORWARDING )
-    {
-        tcpssn->ingress_index = p->pkth->ingress_index;
-        tcpssn->ingress_group = p->pkth->ingress_group;
-        // ssn egress may be unknown, but will be correct
-        tcpssn->egress_index = p->pkth->egress_index;
-        tcpssn->egress_group = p->pkth->egress_group;
-    }
-    else if ( p->packet_flags & PKT_FROM_CLIENT )
-    {
-        tcpssn->ingress_index = p->pkth->ingress_index;
-        tcpssn->ingress_group = p->pkth->ingress_group;
-        // ssn egress not always correct here
-    }
-    else
-    {
-        // ssn ingress not always correct here
-        tcpssn->egress_index = p->pkth->ingress_index;
-        tcpssn->egress_group = p->pkth->ingress_group;
-    }
-    tcpssn->daq_flags = p->pkth->flags;
-    tcpssn->address_space_id = p->pkth->address_space_id;
-}
-
-void GetPacketHeaderFoo(
-        const TcpSession* tcpssn, DAQ_PktHdr_t* pkth, uint32_t dir)
-{
-    if ( (dir & PKT_FROM_CLIENT) || (tcpssn->daq_flags & DAQ_PKT_FLAG_NOT_FORWARDING) )
-    {
-        pkth->ingress_index = tcpssn->ingress_index;
-        pkth->ingress_group = tcpssn->ingress_group;
-        pkth->egress_index = tcpssn->egress_index;
-        pkth->egress_group = tcpssn->egress_group;
-    }
-    else
-    {
-        pkth->ingress_index = tcpssn->egress_index;
-        pkth->ingress_group = tcpssn->egress_group;
-        pkth->egress_index = tcpssn->ingress_index;
-        pkth->egress_group = tcpssn->ingress_group;
-    }
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    pkth->opaque = 0;
-#endif
-    pkth->flags = tcpssn->daq_flags;
-    pkth->address_space_id = tcpssn->address_space_id;
-}
-
-void SwapPacketHeaderFoo(TcpSession* tcpssn)
-{
-    if ( tcpssn->egress_index != DAQ_PKTHDR_UNKNOWN )
-    {
-        int32_t ingress_index;
-        int32_t ingress_group;
-
-        ingress_index = tcpssn->ingress_index;
-        ingress_group = tcpssn->ingress_group;
-        tcpssn->ingress_index = tcpssn->egress_index;
-        tcpssn->ingress_group = tcpssn->egress_group;
-        tcpssn->egress_index = ingress_index;
-        tcpssn->egress_group = ingress_group;
-    }
-}
-
-#endif
 
 #ifdef SEG_TEST
 static void CheckSegments (const TcpTracker* a)

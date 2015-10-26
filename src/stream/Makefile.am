@@ -11,7 +11,6 @@ stream_splitter.h
 libstream_a_SOURCES = \
 flush_bucket.cc \
 flush_bucket.h \
-paf.cc \
 stream.h \
 stream_api.cc \
 stream_inspectors.cc \

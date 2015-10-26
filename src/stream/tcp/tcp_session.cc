@@ -876,7 +876,7 @@ static void ProcessTcpStream(TcpTracker *rcv, TcpSession *tcpssn, TcpDataBlock *
         return;
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    SetPacketHeaderFoo(tcpssn, tdb->pkt);
+    tcpssn->SetPacketHeaderFoo( tdb->pkt );
 #endif
 
     if( flow_exceeds_config_thresholds( rcv, tcpssn, tdb, config ) )
@@ -2808,12 +2808,81 @@ void TcpSession::update_direction(char dir, const sfip_t* ip, uint16_t port)
     flow->server_port = tmpPort;
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    SwapPacketHeaderFoo(this);
+    SwapPacketHeaderFoo( );
 #endif
     memcpy(&tmpTracker, &client, sizeof(TcpTracker));
     memcpy(&client, &server, sizeof(TcpTracker));
     memcpy(&server, &tmpTracker, sizeof(TcpTracker));
 }
+
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+void TcpSession::SetPacketHeaderFoo( const Packet* p )
+{
+    if ( daq_flags & DAQ_PKT_FLAG_NOT_FORWARDING )
+    {
+        ingress_index = p->pkth->ingress_index;
+        ingress_group = p->pkth->ingress_group;
+        // ssn egress may be unknown, but will be correct
+        egress_index = p->pkth->egress_index;
+        egress_group = p->pkth->egress_group;
+    }
+    else if ( p->packet_flags & PKT_FROM_CLIENT )
+    {
+        ingress_index = p->pkth->ingress_index;
+        ingress_group = p->pkth->ingress_group;
+        // ssn egress not always correct here
+    }
+    else
+    {
+        // ssn ingress not always correct here
+        egress_index = p->pkth->ingress_index;
+        egress_group = p->pkth->ingress_group;
+    }
+    daq_flags = p->pkth->flags;
+    address_space_id = p->pkth->address_space_id;
+}
+
+void TcpSession::GetPacketHeaderFoo( DAQ_PktHdr_t* pkth, uint32_t dir )
+{
+    if ( (dir & PKT_FROM_CLIENT) || (daq_flags & DAQ_PKT_FLAG_NOT_FORWARDING) )
+    {
+        pkth->ingress_index = ingress_index;
+        pkth->ingress_group = ingress_group;
+        pkth->egress_index = egress_index;
+        pkth->egress_group = egress_group;
+    }
+    else
+    {
+        pkth->ingress_index = egress_index;
+        pkth->ingress_group = egress_group;
+        pkth->egress_index = ingress_index;
+        pkth->egress_group = ingress_group;
+    }
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+    pkth->opaque = 0;
+#endif
+    pkth->flags = daq_flags;
+    pkth->address_space_id = address_space_id;
+}
+
+void TcpSession::SwapPacketHeaderFoo( void )
+{
+    if ( egress_index != DAQ_PKTHDR_UNKNOWN )
+    {
+        int32_t save_ingress_index;
+        int32_t save_ingress_group;
+
+        save_ingress_index = ingress_index;
+        save_ingress_group = ingress_group;
+        ingress_index = egress_index;
+        ingress_group = egress_group;
+        egress_index = save_ingress_index;
+        egress_group = save_ingress_group;
+    }
+}
+
+#endif
+
 
 /*
  * Main entry point for TCP
