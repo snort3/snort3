@@ -63,7 +63,6 @@ extern THREAD_LOCAL ProfileStats s5TcpInsertPerfStats;
 extern THREAD_LOCAL ProfileStats s5TcpPAFPerfStats;
 extern THREAD_LOCAL ProfileStats s5TcpFlushPerfStats;
 extern THREAD_LOCAL ProfileStats s5TcpBuildPacketPerfStats;
-extern THREAD_LOCAL ProfileStats s5TcpProcessRebuiltPerfStats;
 extern THREAD_LOCAL ProfileStats streamSizePerfStats;
 
 struct TcpStats

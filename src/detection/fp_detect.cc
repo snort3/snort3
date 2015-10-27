@@ -78,9 +78,9 @@
 
 #ifdef PERF_PROFILING
 THREAD_LOCAL ProfileStats rulePerfStats;
-THREAD_LOCAL ProfileStats ncrulePerfStats;
 THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
 THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
+THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
 #endif
 
 THREAD_LOCAL uint64_t rule_eval_pkt_count = 0;
@@ -371,6 +371,7 @@ int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, const OptTreeNode* otn)
 */
 int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 {
+    PERF_PROFILE(rulePerfStats);
     PERF_PROFILE(ruleRTNEvalPerfStats);
 
     if ( !rtn )
@@ -405,11 +406,8 @@ static int detection_option_tree_evaluate(
     detection_option_tree_root_t* root,
     detection_option_eval_data_t* eval_data)
 {
-    PERF_PROFILE(ruleOTNEvalPerfStats);
-
     if (!root)
         return 0;
-
 
 #ifdef PPM_MGR
     /* Start Rule Timer */
@@ -501,7 +499,13 @@ static int rule_tree_match(void* id, void* tree, int index, void* data, void* ne
             last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
         }
 
-        if ( detection_option_tree_evaluate(root, &eval_data) )
+        int ret = 0;
+        PERF_PROFILE_BLOCK(ruleOTNEvalPerfStats)
+        {
+            ret = detection_option_tree_evaluate(root, &eval_data);
+        }
+
+        if ( ret )
         {
             //  We have a qualified event from this tree
             pomd->pg->event_count++;
@@ -1026,12 +1030,11 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
             eval_data.flowbit_noalert = 0;
 
             int rval = 0;
-
-            PERF_PROFILE_BLOCK(ncrulePerfStats)
+            PERF_PROFILE_BLOCK(rulePerfStats)
+            PERF_PROFILE_BLOCK(ruleNFPEvalPerfStats)
             {
                 rval = detection_option_tree_evaluate(
-                    (detection_option_tree_root_t*)port_group->nfp_tree,
-                    &eval_data);
+                    (detection_option_tree_root_t*)port_group->nfp_tree, &eval_data);
             }
 
             if (rval)

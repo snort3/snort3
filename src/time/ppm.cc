@@ -60,6 +60,7 @@
 #include "detection/fp_create.h"
 #include "detection/detect.h"
 #include "parser/parser.h"
+#include "events/event_queue.h"
 #include "events/event_wrapper.h"
 #include "actions/actions.h"
 #include "protocols/packet.h"

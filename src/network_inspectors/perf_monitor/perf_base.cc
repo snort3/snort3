@@ -55,7 +55,7 @@
 #include <sys/types.h>
 
 #include "perf.h"
-#include "main/snort_types.h"
+#include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "framework/mpse.h"
 #include "packet_io/sfdaq.h"

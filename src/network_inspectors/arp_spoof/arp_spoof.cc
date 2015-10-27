@@ -66,6 +66,8 @@
  */
 
 /*  I N C L U D E S  ************************************************/
+#include "arp_module.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -76,11 +78,11 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "arp_module.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "detection/detect.h"
 #include "events/event.h"
+#include "events/event_queue.h"
 #include "parser/parser.h"
 #include "utils/util.h"
 #include "time/profiler.h"

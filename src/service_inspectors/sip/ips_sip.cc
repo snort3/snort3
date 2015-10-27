@@ -97,8 +97,7 @@ private:
 
 int SipIpsOption::eval(Cursor& c, Packet* p)
 {
-    auto& sip_stats = sip_ps[idx];
-    PERF_PROFILE(sip_stats);
+    PERF_PROFILE_THREAD_LOCAL(sip_ps, idx);
 
     SIPData* sd;
     SIP_Roptions* ropts;

@@ -26,6 +26,7 @@
 #endif
 
 #include "managers/inspector_manager.h"
+#include "protocols/packet.h"
 #include "time/profiler.h"
 
 #include "gtp.h"

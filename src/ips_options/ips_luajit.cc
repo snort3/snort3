@@ -29,8 +29,10 @@
 #include "hash/sfhashfcn.h"
 #include "parser/parser.h"
 #include "framework/cursor.h"
+#include "framework/decode_data.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
+#include "log/messages.h"
 #include "time/profiler.h"
 #include "detection/detection_defines.h"
 

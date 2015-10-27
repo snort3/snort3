@@ -71,6 +71,7 @@
 #ifdef PERF_PROFILING
 THREAD_LOCAL ProfileStats detectPerfStats;
 THREAD_LOCAL ProfileStats eventqPerfStats;
+THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
 #endif
 
 THREAD_LOCAL int do_detect;

@@ -386,8 +386,11 @@ int detection_option_node_evaluate(
         return 0;
 
     dot_node_state_t* state = node->state + get_instance_id();
+
+#ifdef PERF_PROFILING
     auto& node_stats = *state;
     NODE_PERF_PROFILE(node_stats);
+#endif
 
     int result = 0;
     int rval = DETECTION_OPTION_NO_MATCH;
@@ -611,8 +614,10 @@ int detection_option_node_evaluate(
             {
                 // bail if we exceeded time
 
+#ifdef PERF_PROFILING
                 if ( result != DETECTION_OPTION_NO_MATCH )
                     NODE_PERF_PROFILE_STOP_MATCH(node_stats);
+#endif
 
                 state->last_check.result = result;
                 return result;

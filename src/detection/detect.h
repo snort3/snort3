@@ -41,6 +41,7 @@ extern SO_PUBLIC THREAD_LOCAL int do_detect_content;
 #ifdef PERF_PROFILING
 extern THREAD_LOCAL ProfileStats eventqPerfStats;
 extern THREAD_LOCAL ProfileStats detectPerfStats;
+extern THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
 #endif
 
 // main loop hooks

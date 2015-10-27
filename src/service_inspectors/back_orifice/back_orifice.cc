@@ -120,6 +120,7 @@
 #include "main/snort_debug.h"
 #include "detection/detect.h"
 #include "events/event.h"
+#include "events/event_queue.h"
 #include "parser/parser.h"
 #include "utils/util.h"
 #include "time/profiler.h"

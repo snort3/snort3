@@ -27,6 +27,7 @@
 using namespace std;
 
 #include "ips_content.h"
+#include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "utils/snort_bounds.h"

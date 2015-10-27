@@ -133,14 +133,20 @@ static ProfileStats* get_profile(const char* key)
     if ( !strcmp(key, "mpse") )
         return &mpsePerfStats;
 
-    if ( !strcmp(key, "rule eval") )
+    if ( !strcmp(key, "rebuilt_packet") )
+        return &rebuiltPacketPerfStats;
+
+    if ( !strcmp(key, "rule_eval") )
         return &rulePerfStats;
 
-    if ( !strcmp(key, "rtn eval") )
+    if ( !strcmp(key, "rtn_eval") )
         return &ruleRTNEvalPerfStats;
 
-    if ( !strcmp(key, "rule tree eval") )
+    if ( !strcmp(key, "rule_tree_eval") )
         return &ruleOTNEvalPerfStats;
+
+    if ( !strcmp(key, "nfp_rule_tree_eval") )
+        return &ruleNFPEvalPerfStats;
 
     if ( !strcmp(key, "decode") )
         return &decodePerfStats;
@@ -151,7 +157,7 @@ static ProfileStats* get_profile(const char* key)
     if ( !strcmp(key, "total") )
         return &totalPerfStats;
 
-    if ( !strcmp(key, "daq meta") )
+    if ( !strcmp(key, "daq_meta") )
         return &metaPerfStats;
 
     return nullptr;
@@ -164,13 +170,15 @@ static void register_profiles()
 #ifdef PERF_PROFILING
     PerfProfilerManager::register_module("detect", nullptr, get_profile);
     PerfProfilerManager::register_module("mpse", "detect", get_profile);
-    PerfProfilerManager::register_module("rule eval", "detect", get_profile);
-    PerfProfilerManager::register_module("rtn eval", "rule eval", get_profile);
-    PerfProfilerManager::register_module("rule tree eval", "rule eval", get_profile);
+    PerfProfilerManager::register_module("rebuilt_packet", "detect", get_profile);
+    PerfProfilerManager::register_module("rule_eval", "detect", get_profile);
+    PerfProfilerManager::register_module("rtn_eval", "rule_eval", get_profile);
+    PerfProfilerManager::register_module("rule_tree_eval", "rule_eval", get_profile);
+    PerfProfilerManager::register_module("nfp_rule_tree_eval", "rule_eval", get_profile);
     PerfProfilerManager::register_module("decode", nullptr, get_profile);
     PerfProfilerManager::register_module("eventq", nullptr, get_profile);
     PerfProfilerManager::register_module("total", nullptr, get_profile);
-    PerfProfilerManager::register_module("daq meta", nullptr, get_profile);
+    PerfProfilerManager::register_module("daq_meta", nullptr, get_profile);
 #endif
 }
 
@@ -403,10 +411,6 @@ void Snort::term()
     RateFilter_Cleanup();
 
     periodic_release();
-
-#ifdef PERF_PROFILING
-    PerfProfilerManager::term();
-#endif
 
     /* free allocated memory */
     if (snort_conf == snort_cmd_line_conf)
@@ -685,6 +689,10 @@ void Snort::thread_term()
 
 void Snort::detect_rebuilt_packet(Packet* p)
 {
+    // Need to include this b/c call is outside the detect tree
+    PERF_PROFILE(detectPerfStats);
+    PERF_PROFILE(rebuiltPacketPerfStats);
+
     int tmp_do_detect = do_detect;
     int tmp_do_detect_content = do_detect_content;
 
@@ -795,7 +803,6 @@ DAQ_Verdict Snort::packet_callback(
     void*, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
     PERF_PROFILE(totalPerfStats);
-
 
     pc.total_from_daq++;
     rule_eval_pkt_count++;

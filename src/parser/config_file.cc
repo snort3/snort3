@@ -41,6 +41,7 @@
 #include "cmd_line.h"
 #include "mstring.h"
 
+#include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/snort.h"

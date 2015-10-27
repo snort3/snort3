@@ -41,6 +41,7 @@
 #include "perf_module.h"
 
 #include "main/analyzer.h"
+#include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "parser/parser.h"

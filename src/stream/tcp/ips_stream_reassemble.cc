@@ -22,6 +22,8 @@
 #endif
 
 #include "tcp_session.h"
+
+#include "main/snort_config.h"
 #include "stream/stream_splitter.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"

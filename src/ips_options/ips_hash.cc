@@ -199,8 +199,7 @@ int HashOption::match(Cursor& c)
 
 int HashOption::eval(Cursor& c, Packet*)
 {
-    auto& hash_option_stats = hash_ps[idx];
-    PERF_PROFILE(hash_option_stats);
+    PERF_PROFILE_THREAD_LOCAL(hash_ps, idx);
 
     int found = match(c);
 

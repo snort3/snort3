@@ -43,9 +43,9 @@
 
 #ifdef PERF_PROFILING
 extern THREAD_LOCAL ProfileStats rulePerfStats;
-extern THREAD_LOCAL ProfileStats ncrulePerfStats;
 extern THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
 extern THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
+extern THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
 #endif
 
 /*

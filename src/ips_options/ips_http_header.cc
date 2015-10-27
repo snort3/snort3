@@ -34,6 +34,7 @@ using namespace std;
 #include "framework/cursor.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
+#include "protocols/packet.h"
 
 #define s_name "http_header"
 

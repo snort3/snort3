@@ -367,10 +367,10 @@ public:
 bool ProfileModule::begin(const char* fqn, int, SnortConfig* sc)
 {
     if ( !strcmp(fqn, "profile.rules") )
-        sc->profile_rules->num = -1;
+        sc->profile_rules->count = -1;
 
     else if ( !strcmp(fqn, "profile.modules") )
-        sc->profile_modules->num = -1;
+        sc->profile_modules->count = -1;
 
     return true;
 }
@@ -391,10 +391,10 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
         return false;
 
     if ( v.is("count") )
-        p->num = v.get_long();
+        p->count = v.get_long();
 
     else if ( v.is("sort") )
-        p->sort = v.get_long() + 1;
+        p->sort = static_cast<ProfileSort>(v.get_long() + 1);
 
     else
         return false;

@@ -30,6 +30,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
+#include "protocols/packet.h"
 #include "time/profiler.h"
 
 #include "gtp_inspect.h"

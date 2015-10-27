@@ -38,7 +38,6 @@ THREAD_LOCAL ProfileStats s5TcpInsertPerfStats;
 THREAD_LOCAL ProfileStats s5TcpPAFPerfStats;
 THREAD_LOCAL ProfileStats s5TcpFlushPerfStats;
 THREAD_LOCAL ProfileStats s5TcpBuildPacketPerfStats;
-THREAD_LOCAL ProfileStats s5TcpProcessRebuiltPerfStats;
 
 const PegInfo tcp_pegs[] = {
     { "sessions", "total sessions" },
@@ -262,11 +261,6 @@ ProfileStats* StreamTcpModule::get_profile(
         name = "tcpBuildPacket";
         parent = "tcpFlush";
         return &s5TcpBuildPacketPerfStats;
-
-    case 8:
-        name = "tcpProcessRebuilt";
-        parent = "tcpFlush";
-        return &s5TcpProcessRebuiltPerfStats;
     }
     return nullptr;
 }

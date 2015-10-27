@@ -713,7 +713,6 @@ int TcpReassembler::_flush_to_seq( uint32_t bytes, Packet* p, uint32_t pkt_flags
             UpdateStreamReassStats( &sfBase, flushed_bytes );
 
             PERF_PAUSE_BLOCK(s5TcpFlushPerfStats)
-            PERF_PROFILE_BLOCK(s5TcpProcessRebuiltPerfStats)
             {
                 Snort::detect_rebuilt_packet(s5_pkt);
             }

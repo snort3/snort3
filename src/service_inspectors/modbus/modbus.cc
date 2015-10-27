@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include "events/event_queue.h"
 #include "managers/inspector_manager.h"
 #include "time/profiler.h"
 

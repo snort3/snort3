@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#include "events/event_queue.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "time/profiler.h"

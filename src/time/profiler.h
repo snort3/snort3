@@ -16,8 +16,8 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-
-// profiler.h author Steven Sturges <ssturges@sourcefire.com>
+// profiler.h author Joel Cornett <jocornet@cisco.com>
+// based on work by Steven Sturges <ssturges@sourcefire.com>
 
 #ifndef PROFILER_H
 #define PROFILER_H
@@ -29,9 +29,23 @@
 #endif
 
 #include "main/snort_types.h"
-#include "main/snort_config.h"
+#include "main/thread.h"
+#include "time/cpuclock.h"
 
-// unconditionally declared
+class Module;
+
+enum ProfileSort
+{
+    PROFILE_SORT_NONE = 0,
+    PROFILE_SORT_CHECKS,
+    PROFILE_SORT_AVG_TICKS,
+    PROFILE_SORT_TOTAL_TICKS,
+    PROFILE_SORT_MATCHES,
+    PROFILE_SORT_NOMATCHES,
+    PROFILE_SORT_AVG_TICKS_PER_MATCH,
+    PROFILE_SORT_AVG_TICKS_PER_NOMATCH
+};
+
 struct ProfileStats
 {
     uint64_t ticks;
@@ -39,10 +53,46 @@ struct ProfileStats
 
     void update(uint64_t elapsed)
     { ++checks; ticks += elapsed; }
+
+    void reset()
+    { ticks = 0; checks = 0; }
+
+    bool operator==(const ProfileStats& rhs)
+    { return ticks == rhs.ticks && checks == rhs.checks; }
+
+    operator bool() const
+    { return ticks || checks; }
+
+    ProfileStats& operator+=(const ProfileStats& rhs)
+    {
+        ticks += rhs.ticks;
+        checks += rhs.checks;
+        return *this;
+    }
 };
 
-#include "main/thread.h"
-#include "time/cpuclock.h"
+struct RuleProfileStats : ProfileStats
+{
+    uint64_t ticks_match;
+
+    void update(uint64_t elapsed, bool match)
+    {
+        ProfileStats::update(elapsed);
+        if ( match )
+            ticks_match += elapsed;
+    }
+
+    void reset()
+    { ProfileStats::reset(); ticks_match = 0; }
+
+    RuleProfileStats& operator+=(const RuleProfileStats& o)
+    {
+        ticks += o.ticks;
+        checks += o.checks;
+        ticks_match += o.ticks_match;
+        return *this;
+    }
+};
 
 // FIXIT-L should go in its own module
 class Stopwatch
@@ -191,6 +241,9 @@ struct ProfilerPause
     Profiler& profiler;
 };
 
+// thread local access method
+using get_profile_func = ProfileStats* (*)(const char*);
+
 #ifdef PERF_PROFILING
 #ifndef PROFILING_MODULES
 #define PROFILING_MODULES SnortConfig::get_profile_modules()
@@ -209,8 +262,14 @@ struct ProfilerPause
 #define PERF_PROFILE(stats) \
     PerfProfiler PERF_PROFILER_NAME(stats) { stats }
 
+#define PERF_PROFILE_THREAD_LOCAL(stats, idx) \
+    PerfProfiler PERF_PROFILER_NAME(stats) { stats [ idx ] }
+
 #define PERF_PROFILE_BLOCK(stats) \
     if ( PERF_PROFILE(stats) )
+
+#define PERF_PROFILE_THREAD_LOCAL_BLOCK (stats, idx) \
+    if ( PERF_PROFILE_THREAD_LOCAL(stats, idx) )
 
 #define NODE_PERF_PROFILE(stats) \
     NodePerfProfiler PERF_PROFILER_NAME(stats) { stats }
@@ -228,9 +287,6 @@ struct ProfilerPause
     if ( ProfilerPause<decltype(PERF_PROFILER_NAME(stats))> \
         PERF_PAUSE_NAME(stats) { PERF_PROFILER_NAME(stats) } )
 
-
-// thread local access method
-using get_profile_func = ProfileStats* (*)(const char*);
 
 class PerfProfilerManager
 {
@@ -250,28 +306,12 @@ public:
 
     static void show_all_stats();
     static void reset_all_stats();
-
-    static void init();
-    static void term();
 };
-
-// Sort preferences for rule profiling
-#define PROFILE_SORT_CHECKS 1
-#define PROFILE_SORT_AVG_TICKS 2
-#define PROFILE_SORT_TOTAL_TICKS 3
-#define PROFILE_SORT_MATCHES 4
-#define PROFILE_SORT_NOMATCHES 5
-#define PROFILE_SORT_AVG_TICKS_PER_MATCH 6
-#define PROFILE_SORT_AVG_TICKS_PER_NOMATCH 7
-
-// -----------------------------------------------------------------------------
-// Profiling API
-// -----------------------------------------------------------------------------
 
 struct ProfileConfig
 {
-    int num;
-    int sort;
+    int count;
+    ProfileSort sort;
 };
 
 extern THREAD_LOCAL ProfileStats totalPerfStats;
@@ -281,7 +321,9 @@ extern THREAD_LOCAL ProfileStats metaPerfStats;
 #define PERF_PROFILER_NAME(stats)
 #define PERF_PAUSE_NAME(stats)
 #define PERF_PROFILE(stats)
+#define PERF_PROFILE_THREAD_LOCAL(stats, idx)
 #define PERF_PROFILE_BLOCK(stats)
+#define PERF_PROFILE_THREAD_LOCAL_BLOCK(stats, idx)
 #define NODE_PERF_PROFILE(stats)
 #define NODE_PERF_PROFILE_BLOCK(stats)
 #define NODE_PERF_PROFILE_STOP_MATCH(stats)

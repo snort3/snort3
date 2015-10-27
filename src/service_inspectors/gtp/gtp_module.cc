@@ -20,6 +20,8 @@
 
 #include "gtp_module.h"
 
+#include <cassert>
+
 #include "gtp.h"
 #include "time/profiler.h"
 
