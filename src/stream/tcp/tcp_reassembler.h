@@ -127,7 +127,7 @@ protected:
     uint32_t xtradata_mask; /* extra data available to log */
 
     TcpReassembler( TcpSession* session, TcpTracker* tracker, StreamPolicy os_policy, bool server ) :
-        server_side( server ), tracker(tracker)
+        server_side( server ), tracker(tracker), flush_count( 0 ), xtradata_mask( 0 )
     {
         this->session = session;
         set_tcp_reassembly_policy( os_policy );

@@ -495,7 +495,7 @@ int TcpReassembler::flush_data_segments( Packet* p, uint32_t toSeq, uint8_t* flu
     uint32_t total = toSeq - seglist.next->seq;
     while( SEQ_LT(seglist.next->seq, toSeq ) )
     {
-        TcpSegment* ss = seglist.next, *sr;
+        TcpSegment* ss = seglist.next, *sr = nullptr;
         unsigned flushbuf_size = flushbuf_end - flushbuf;
         unsigned bytes_to_copy = get_flush_data_len( ss, toSeq, flushbuf_size );
         unsigned bytes_copied = 0;
