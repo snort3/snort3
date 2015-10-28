@@ -20,20 +20,6 @@
 #ifndef IPS_PCRE_H
 #define IPS_PCRE_H
 
-#include <stdint.h>
-#include <pcre.h>
-
-struct PcreData
-{
-    pcre* re;           /* compiled regex */
-    pcre_extra* pe;     /* studied regex foo */
-    int options;        /* sp_pcre specfic options (relative & inverse) */
-    char* expression;
-};
-
-PcreData* pcre_get_data(void*);
-bool pcre_next(PcreData*);
-
 struct SnortConfig;
 void pcre_setup(SnortConfig*);
 void pcre_cleanup(SnortConfig*);

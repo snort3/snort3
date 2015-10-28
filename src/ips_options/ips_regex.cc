@@ -17,6 +17,7 @@
 //--------------------------------------------------------------------------
 
 // ips_regex.cc author Russ Combs <rucombs@cisco.com>
+// FIXIT-H add ! and anchor support like pcre and update retry
 
 #include <assert.h>
 #include <string>
@@ -29,6 +30,7 @@
 #include "framework/module.h"
 #include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
+#include "main/snort_config.h"
 #include "main/thread.h"
 #include "parser/parser.h"
 #include "time/profiler.h"
@@ -54,10 +56,13 @@ struct RegexConfig
     }
 };
 
-// we need to update scratch in the main thread as each pattern
-// is processed and then clone to packet thread in tinit()
+// we need to update scratch in the main thread as each pattern is processed
+// and then clone to thread specific after all rules are loaded.  s_scratch is
+// a prototype that is large enough for all uses.  since so rules may contain
+// regex options and are loaded only once at startup, s_scratch persists for
+// the lifetime of the program.
+
 static hs_scratch_t* s_scratch = NULL;
-static THREAD_LOCAL hs_scratch_t* t_scratch = NULL;
 static THREAD_LOCAL unsigned s_to = 0;
 static THREAD_LOCAL ProfileStats regex_perf_stats;
 
@@ -78,12 +83,13 @@ public:
     { return config.relative; }
 
     int eval(Cursor&, Packet*) override;
+    bool retry() override;
 
 private:
     RegexConfig config;
 };
 
-RegexOption::RegexOption(RegexConfig& c) : IpsOption(s_name, RULE_OPTION_TYPE_OTHER)
+RegexOption::RegexOption(RegexConfig& c) : IpsOption(s_name, RULE_OPTION_TYPE_PCRE)
 {
     config = c;
 
@@ -145,11 +151,14 @@ int RegexOption::eval(Cursor& c, Packet*)
     if ( pos > c.size() )
         return DETECTION_OPTION_NO_MATCH;
 
+    SnortState* ss = snort_conf->state + get_instance_id();
+    assert(ss->regex_scratch);
+
     s_to = 0;
 
     hs_error_t stat = hs_scan(
         config.db, (char*)c.buffer()+pos, c.size()-pos, config.flags,
-        t_scratch, hs_match, nullptr);
+        (hs_scratch_t*)ss->regex_scratch, hs_match, nullptr);
 
     if ( s_to and stat == HS_SCAN_TERMINATED )
     {
@@ -158,6 +167,11 @@ int RegexOption::eval(Cursor& c, Packet*)
         return DETECTION_OPTION_MATCH;
     }
     return DETECTION_OPTION_NO_MATCH;
+}
+
+bool RegexOption::retry()
+{
+    return !is_relative();
 }
 
 //-------------------------------------------------------------------------
@@ -262,6 +276,37 @@ bool RegexModule::end(const char*, int, SnortConfig*)
 }
 
 //-------------------------------------------------------------------------
+// public methods
+//-------------------------------------------------------------------------
+
+void regex_setup(SnortConfig* sc)
+{
+    for ( unsigned i = 0; i < sc->num_slots; ++i )
+    {
+        SnortState* ss = sc->state + i;
+
+        if ( s_scratch )
+            hs_clone_scratch(s_scratch, (hs_scratch_t**)&ss->regex_scratch);
+        else
+            ss->regex_scratch = nullptr;
+    }
+}
+
+void regex_cleanup(SnortConfig* sc)
+{
+    for ( unsigned i = 0; i < sc->num_slots; ++i )
+    {
+        SnortState* ss = sc->state + i;
+
+        if ( ss->regex_scratch )
+        {
+            hs_free_scratch((hs_scratch_t*)ss->regex_scratch);
+            ss->regex_scratch = nullptr;
+        }
+    }
+}
+
+//-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
@@ -282,16 +327,12 @@ static IpsOption* regex_ctor(Module* m, OptTreeNode*)
 static void regex_dtor(IpsOption* p)
 { delete p; }
 
-static void regex_tinit(SnortConfig*)
+static void regex_pterm(SnortConfig*)
 {
     if ( s_scratch )
-        hs_clone_scratch(s_scratch, &t_scratch);
-}
+        hs_free_scratch(s_scratch);
 
-static void regex_tterm(SnortConfig*)
-{
-    if ( t_scratch )
-        hs_free_scratch(t_scratch);
+    s_scratch = nullptr;
 }
 
 static const IpsApi regex_api =
@@ -311,9 +352,9 @@ static const IpsApi regex_api =
     OPT_TYPE_DETECTION,
     0, 0,
     nullptr,
+    regex_pterm,
     nullptr,
-    regex_tinit,
-    regex_tterm,
+    nullptr,
     regex_ctor,
     regex_dtor,
     nullptr

@@ -40,10 +40,6 @@ ips_ttl.cc \
 ips_bufferlen.cc \
 ips_window.cc
 
-if HAVE_HYPERSCAN
-plugin_list += ips_regex.cc
-endif
-
 libips_options_a_SOURCES = \
 ips_byte_extract.cc ips_byte_extract.h \
 extract.cc extract.h \
@@ -63,6 +59,10 @@ ips_pcre.cc ips_pcre.h \
 ips_reference.cc \
 ips_replace.cc \
 ips_so.cc
+
+if HAVE_HYPERSCAN
+libips_options_a_SOURCES += ips_regex.cc ips_regex.h
+endif
 
 if STATIC_IPS_OPTIONS
 libips_options_a_SOURCES += $(plugin_list)

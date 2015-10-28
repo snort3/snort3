@@ -66,6 +66,14 @@
 
 #define s_name "pcre"
 
+struct PcreData
+{
+    pcre* re;           /* compiled regex */
+    pcre_extra* pe;     /* studied regex foo */
+    int options;        /* sp_pcre specfic options (relative & inverse) */
+    char* expression;
+};
+
 /*
  * we need to specify the vector length for our pcre_exec call.  we only care
  * about the first vector, which if the match is successful will include the
@@ -458,6 +466,7 @@ public:
     { return (config->options & SNORT_PCRE_RELATIVE) != 0; }
 
     int eval(Cursor&, Packet*) override;
+    bool retry() override;
 
     PcreData* get_data()
     { return config; }
@@ -575,7 +584,7 @@ int PcreOption::eval(Cursor& c, Packet*)
         pos = c.get_pos();
 
     if ( pos > c.size() )
-        return 0;
+        return DETECTION_OPTION_NO_MATCH;
 
     int found_offset = -1; // where is the ending location of the pattern
     bool matched = pcre_search(pcre_data, c.buffer(), c.size(), pos,
@@ -595,16 +604,6 @@ int PcreOption::eval(Cursor& c, Packet*)
     return DETECTION_OPTION_NO_MATCH;
 }
 
-//-------------------------------------------------------------------------
-// public methods
-//-------------------------------------------------------------------------
-
-PcreData* pcre_get_data(void* pv)
-{
-    PcreOption* opt = (PcreOption*)pv;
-    return opt->get_data();
-}
-
 // we always advance by found_offset so no adjustments to cursor are done
 // here; note also that this means relative pcre matches on overlapping
 // patterns won't work.  given the test pattern "ABABACD":
@@ -616,15 +615,18 @@ PcreData* pcre_get_data(void* pv)
 // using content, but more advanced pcre won't work for the relative /
 // overlap case.
 
-bool pcre_next(PcreData* pcre)
+bool PcreOption::retry()
 {
-    if ((pcre->options & (SNORT_PCRE_INVERT | SNORT_PCRE_ANCHORED)))
+    if ((config->options & (SNORT_PCRE_INVERT | SNORT_PCRE_ANCHORED)))
     {
         return false; // no go
     }
-
     return true;  // continue
 }
+
+//-------------------------------------------------------------------------
+// public methods
+//-------------------------------------------------------------------------
 
 void pcre_setup(SnortConfig* sc)
 {

@@ -36,6 +36,9 @@ extern const BaseApi* ips_metadata;
 extern const BaseApi* ips_pcre;
 extern const BaseApi* ips_pkt_data;
 extern const BaseApi* ips_reference;
+#ifdef HAVE_HYPERSCAN
+extern const BaseApi* ips_regex;
+#endif
 extern const BaseApi* ips_replace;
 extern const BaseApi* ips_so;
 
@@ -73,9 +76,6 @@ extern const BaseApi* ips_md5;
 extern const BaseApi* ips_msg;
 extern const BaseApi* ips_priority;
 extern const BaseApi* ips_raw_data;
-#ifdef HAVE_HYPERSCAN
-extern const BaseApi* ips_regex;
-#endif
 extern const BaseApi* ips_rem;
 extern const BaseApi* ips_rev;
 extern const BaseApi* ips_rpc;
@@ -106,8 +106,12 @@ const BaseApi* ips_options[] =
     ips_pcre,
     ips_pkt_data,
     ips_reference,
+#ifdef HAVE_HYPERSCAN
+    ips_regex,
+#endif
     ips_replace,
     ips_so,
+
 #ifdef STATIC_IPS_OPTIONS
     ips_ack,
     ips_asn1,
@@ -142,9 +146,6 @@ const BaseApi* ips_options[] =
     ips_msg,
     ips_priority,
     ips_raw_data,
-#ifdef HAVE_HYPERSCAN
-    ips_regex,
-#endif
     ips_rem,
     ips_rev,
     ips_rpc,
