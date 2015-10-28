@@ -70,11 +70,15 @@ set (IPS_SOURCES
     ips_so.cc
 )
 
+if ( HAVE_HYPERSCAN )
+    set(OPTION_LIST ips_regex.cc ips_regex.h)
+endif
 
 if (STATIC_IPS_OPTIONS)
 
     add_library ( ips_options STATIC
         ${IPS_SOURCES}
+        ${OPTION_LIST}
         ${PLUGIN_LIST}
     )
 
@@ -82,6 +86,7 @@ else (STATIC_IPS_OPTIONS)
 
     add_library ( ips_options STATIC
         ${IPS_SOURCES}
+        ${OPTION_LIST}
     )
 
     add_shared_library(ips_ack ips_options ips_ack.cc)

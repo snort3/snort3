@@ -26,21 +26,22 @@
 
 #include <assert.h>
 #include <dirent.h>
-#include <fnmatch.h>
-#include <stdarg.h>
-#include <syslog.h>
 #include <errno.h>
-#include <time.h>
-#include <signal.h>
-#include <unistd.h>
-#include <pcap.h>
-#include <string.h>
-#include <grp.h>
-#include <pwd.h>
-#include <netdb.h>
-#include <limits.h>
 #include <fcntl.h>
+#include <fnmatch.h>
+#include <grp.h>
+#include <limits.h>
 #include <luajit-2.0/luajit.h>
+#include <netdb.h>
+#include <pcap.h>
+#include <pcre.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <string.h>
+#include <syslog.h>
+#include <time.h>
+#include <unistd.h>
 #include <zlib.h>
 
 #ifdef HAVE_OPENSSL_SHA

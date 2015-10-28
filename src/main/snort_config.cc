@@ -52,6 +52,7 @@
 #include "detection/fp_config.h"
 #include "detection/fp_create.h"
 #include "ips_options/ips_pcre.h"
+#include "ips_options/ips_regex.h"
 #include "protocols/udp.h"
 #include "time/ppm.h"
 #include "time/profiler.h"
@@ -199,6 +200,9 @@ SnortConfig::~SnortConfig()
     FreeClassifications(classifications);
     FreeReferences(references);
 
+#ifdef HAVE_HYPERSCAN
+    regex_cleanup(this);
+#endif
     pcre_cleanup(this);
 
     FreeRuleLists(this);
@@ -288,7 +292,11 @@ void SnortConfig::setup()
     ModuleManager::load_commands(this);
 
     fpCreateFastPacketDetection(this);
+
     pcre_setup(this);
+#ifdef HAVE_HYPERSCAN
+    regex_setup(this);
+#endif
 
 #ifdef PPM_MGR
     //PPM_PRINT_CFG(ppm_cfg);

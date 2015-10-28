@@ -31,8 +31,7 @@ enum option_type_t
     RULE_OPTION_TYPE_LEAF_NODE,
     RULE_OPTION_TYPE_CONTENT,
     RULE_OPTION_TYPE_FLOWBIT,
-    RULE_OPTION_TYPE_IP_PROTO,  // FIXIT-L this can be converted to other now
-    RULE_OPTION_TYPE_PCRE,
+    RULE_OPTION_TYPE_PCRE,  // pcre and regex
     RULE_OPTION_TYPE_OTHER
 };
 

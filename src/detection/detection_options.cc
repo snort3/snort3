@@ -319,7 +319,6 @@ static const char* const option_type_str[] =
     "RULE_OPTION_TYPE_LEAF_NODE",
     "RULE_OPTION_TYPE_CONTENT",
     "RULE_OPTION_TYPE_FLOWBIT",
-    "RULE_OPTION_TYPE_IP_PROTO",
     "RULE_OPTION_TYPE_PCRE",
     "RULE_OPTION_TYPE_OTHER"
 };
@@ -396,17 +395,12 @@ int detection_option_node_evaluate(
     int rval = DETECTION_OPTION_NO_MATCH;
     char tmp_noalert_flag = 0;
     Cursor cursor = orig_cursor;
-    char continue_loop = 1;
+    bool continue_loop = true;
     char flowbits_setoperation = 0;
     int loop_count = 0;
     uint32_t tmp_byte_extract_vars[NUM_BYTE_EXTRACT_VARS];
     uint64_t cur_eval_pkt_count =
         (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
-
-    // FIXIT-P these are initialized only to silence -O2 warnings
-    // they are set before use below
-    PatternMatchData* content_data = nullptr;
-    PcreData* pcre_data = nullptr;
 
     if ( !eval_data || !eval_data->p || !eval_data->pomd )
         return 0;
@@ -439,11 +433,22 @@ int detection_option_node_evaluate(
     state->last_check.rebuild_flag = p->packet_flags & PKT_REBUILT_STREAM;
 
     // Save some stuff off for repeated pattern tests
-    if ( node->option_type == RULE_OPTION_TYPE_CONTENT )
-        content_data = content_get_data(node->option_data);
+    bool try_again = false;
+    PmdLastCheck* content_last = nullptr;
 
+    if ( node->option_type == RULE_OPTION_TYPE_CONTENT )
+    {
+        PatternMatchData* content_data = content_get_data(node->option_data);
+        try_again = content_next(content_data);
+
+        if ( content_data->last_check )
+            content_last = content_data->last_check + get_instance_id();
+    }
     else if (node->option_type == RULE_OPTION_TYPE_PCRE)
-        pcre_data = pcre_get_data(node->option_data);
+    {
+        IpsOption* opt = (IpsOption*)node->option_data;
+        try_again = opt->retry();
+    }
 
     // No, haven't evaluated this one before... Check it.
     do
@@ -530,13 +535,11 @@ int detection_option_node_evaluate(
                 // option via the content option processing since only not
                 // contents that are not relative in any way will have this
                 // flag set
-                if ( content_data->last_check )
+                if ( content_last )
                 {
-                    auto last_check = content_data->last_check + get_instance_id();
-
-                    if ( last_check->ts == p->pkth->ts &&
-                         last_check->packet_number == cur_eval_pkt_count &&
-                         last_check->rebuild_flag == (p->packet_flags & PKT_REBUILT_STREAM) )
+                    if ( content_last->ts == p->pkth->ts &&
+                         content_last->packet_number == cur_eval_pkt_count &&
+                         content_last->rebuild_flag == (p->packet_flags & PKT_REBUILT_STREAM) )
                     {
                         rval = DETECTION_OPTION_NO_MATCH;
                         break;
@@ -545,12 +548,6 @@ int detection_option_node_evaluate(
 
                 rval = node->evaluate(node->option_data, cursor, p);
             }
-
-            break;
-
-        case RULE_OPTION_TYPE_PCRE:
-            if ( node->evaluate )
-                rval = node->evaluate(node->option_data, cursor, p);
 
             break;
 
@@ -720,7 +717,7 @@ int detection_option_node_evaluate(
                 // distance/within adjustments for this same content/pcre
                 // rule option
                 if ( result == node->num_children )
-                    continue_loop = 0;
+                    continue_loop = false;
 
                 // Don't need to reset since it's only checked after we've gone
                 // through the loop at least once and the result will have
@@ -740,18 +737,11 @@ int detection_option_node_evaluate(
              rval == DETECTION_OPTION_MATCH &&
              node->relative_children )
         {
-            if ( node->option_type == RULE_OPTION_TYPE_CONTENT )
-                continue_loop = content_next(content_data);
-
-            else if (node->option_type == RULE_OPTION_TYPE_PCRE)
-                continue_loop = pcre_next(pcre_data);
-
-            else
-                continue_loop = 0;
+            continue_loop = try_again;
         }
 
         else
-            continue_loop = 0;
+            continue_loop = false;
 
 #ifdef PERF_PROFILING
         // We're essentially checking this node again and it potentially
