@@ -167,7 +167,7 @@ void NHttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& body_offset
 {
     if ((compression == CMP_GZIP) || (compression == CMP_DEFLATE))
     {
-        compress_stream->next_in = (z_const Bytef*)data;
+        compress_stream->next_in = (Bytef*)data;
         compress_stream->avail_in = length;
         compress_stream->next_out = buffer + body_offset;
         compress_stream->avail_out = MAX_OCTETS - body_offset;

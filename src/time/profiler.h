@@ -277,11 +277,14 @@ using get_profile_func = ProfileStats* (*)(const char*);
 #define NODE_PERF_PROFILE_BLOCK(stats) \
     if ( NODE_PERF_PROFILE(stats) )
 
+#define NODE_PERF_PROFILE_STOP(stats, match) \
+    PERF_PROFILER_NAME(stats) .stop(match)
+
 #define NODE_PERF_PROFILE_STOP_MATCH(stats) \
-    PERF_PROFILER_NAME(stats) .stop(true)
+    NODE_PERF_PROFILE_STOP(stats, true)
 
 #define NODE_PERF_PROFILE_STOP_NO_MATCH(stats) \
-    PERF_PROFILER_NAME(stats) .stop(false)
+    NODE_PERF_PROFILE_STOP(stats, false)
 
 #define PERF_PAUSE_BLOCK(stats) \
     if ( ProfilerPause<decltype(PERF_PROFILER_NAME(stats))> \
@@ -326,6 +329,7 @@ extern THREAD_LOCAL ProfileStats metaPerfStats;
 #define PERF_PROFILE_THREAD_LOCAL_BLOCK(stats, idx)
 #define NODE_PERF_PROFILE(stats)
 #define NODE_PERF_PROFILE_BLOCK(stats)
+#define NODE_PERF_PROFILE_STOP(stats, match)
 #define NODE_PERF_PROFILE_STOP_MATCH(stats)
 #define NODE_PERF_PROFILE_STOP_NO_MATCH(stats)
 #define PERF_PAUSE_BLOCK(stats)
