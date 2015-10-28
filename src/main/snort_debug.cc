@@ -32,8 +32,6 @@
 #include "snort_types.h"
 #include "snort_config.h"
 
-#ifdef DEBUG_MSGS
-
 bool Debug::init = false;
 uint64_t Debug::mask = 0;
 
@@ -90,6 +88,3 @@ void Debug::print(
 
     va_end(ap);
 }
-
-#endif /* DEBUG_MSGS */
-

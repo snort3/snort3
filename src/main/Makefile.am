@@ -24,9 +24,13 @@ shell.h \
 snort.cc \
 snort.h \
 snort_config.cc \
-snort_config.h \
-snort_debug.cc \
+snort_config.h
+
+if DEBUG_MSGS
+libmain_a_SOURCES += snort_debug.cc
+endif
+
+libmain_a_SOURCES += \
 snort_module.cc \
 snort_module.h \
 thread.cc
-

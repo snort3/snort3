@@ -7,6 +7,10 @@ set (INCLUDES
     thread.h
 )
 
+if ( ENABLE_DEBUG_MSGS )
+    set ( DEBUG_MSGS_SOURCES snort_debug.cc )
+endif ( ENABLE_DEBUG_MSGS )
+
 add_library (main STATIC
     analyzer.h
     analyzer.cc 
@@ -20,12 +24,12 @@ add_library (main STATIC
     shell.cc
     snort.cc
     snort.h
-    snort_debug.cc
+    ${DEBUG_MSGS_SOURCES}
     snort_config.cc
     snort_module.h
     snort_module.cc
-    thread.cc 
-	${INCLUDES}
+    thread.cc
+    ${INCLUDES}
 )
 
 

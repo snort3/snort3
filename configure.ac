@@ -397,6 +397,8 @@ AC_ARG_ENABLE(debug-msgs,
         [enable debug printing options (bugreports and developers only)]),
     enable_debug_msgs="$enableval", enable_debug_msgs="no")
 
+AM_CONDITIONAL(DEBUG_MSGS, test "x$enable_debug_msgs" = "xyes")
+
 if test "x$enable_debug_msgs" = "xyes"; then
     CPPFLAGS="$CPPFLAGS -DDEBUG_MSGS"
     AC_DEFINE(DEBUG_MSGS, [1], [enable debug messages])
