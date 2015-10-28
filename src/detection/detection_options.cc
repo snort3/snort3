@@ -785,8 +785,7 @@ int detection_option_node_evaluate(
 
     state->last_check.result = result;
 
-    if ( result != DETECTION_OPTION_NO_MATCH )
-        NODE_PERF_PROFILE_STOP_MATCH(node_stats);
+    NODE_PERF_PROFILE_STOP(node_stats, result != DETECTION_OPTION_NO_MATCH);
 
     return result;
 }
