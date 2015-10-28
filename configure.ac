@@ -918,6 +918,38 @@ if test "x$enable_intel_soft_cpm" = "xyes"; then
 fi
 
 #--------------------------------------------------------------------------
+# hyperscan (optional)
+#--------------------------------------------------------------------------
+
+AC_ARG_WITH(hyperscan_includes,
+    AC_HELP_STRING([--with-hyperscan-includes=DIR],[libhs include directory]),
+    [with_hyperscan_includes="$withval"],[with_hyperscan_includes="no"])
+
+if test "x$with_hyperscan_includes" != "xno"; then
+    CPPFLAGS="${CPPFLAGS} -I${with_hyperscan_includes}"
+fi
+
+AC_ARG_WITH(hyperscan_libraries,
+    AC_HELP_STRING([--with-hyperscan-libraries=DIR],[libhs library directory]),
+    [with_hyperscan_libraries="$withval"],[with_hyperscan_libraries="no"])
+
+if test "x$with_hyperscan_libraries" != "xno"; then
+    LDFLAGS="${LDFLAGS} -L${with_hyperscan_libraries}"
+fi
+
+AC_CHECK_HEADERS(hs/hs.h, HS_HEADERS="yes", HS_HEADERS="no")
+AC_CHECK_LIB(hs, hs_scan, HS_LIB="yes", HS_LIB="no")
+
+if test "x$HS_LIB" != "xno"; then
+    if test "x$HS_HEADERS" != "xno"; then
+        AC_DEFINE([HAVE_HYPERSCAN],[1],[can build hyperscan code])
+        LIBS="${LIBS} -lhs"
+    fi
+fi
+
+AM_CONDITIONAL([HAVE_HYPERSCAN], [test "x$HS_HEADERS" = "xyes" -a "x$HS_LIB" = "xyes"])
+
+#--------------------------------------------------------------------------
 # outputs
 #--------------------------------------------------------------------------
 
@@ -957,6 +989,7 @@ src/hash/Makefile \
 src/helpers/Makefile \
 src/lua/Makefile \
 src/ips_options/Makefile \
+src/ips_options/test/Makefile \
 src/log/Makefile \
 src/loggers/Makefile    \
 src/main/Makefile \
