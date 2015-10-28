@@ -40,6 +40,8 @@ public:
     static bool use_test_output() { return test_output || test_input; }
     static FILE* get_output_file() { return (test_out != nullptr) ? test_out : stdout; }
     static int64_t get_test_number() { return test_number; }
+    static void set_print_amount(long print_amount_) { print_amount = print_amount_; }
+    static long get_print_amount() { return print_amount; }
 
 private:
     NHttpTestManager() = delete;
@@ -52,6 +54,7 @@ private:
     static const char* test_output_prefix;
     static FILE* test_out;
     static int64_t test_number;
+    static long print_amount;
 };
 
 #endif

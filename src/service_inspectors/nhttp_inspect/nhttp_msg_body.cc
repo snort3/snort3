@@ -49,8 +49,7 @@ void NHttpMsgBody::analyze()
     session_data->detect_depth_remaining[source_id] -= detect_data.length;
 
     // Always set file data. File processing will later set a new value in some cases.
-    // FIXIT-M should file data length here be independent of file_depth_remaining?
-    file_data.length = msg_text.length;
+    file_data.length = detect_data.length;
     if (file_data.length > 0)
     {
         file_data.start = msg_text.start;

@@ -20,6 +20,8 @@
 #ifndef NHTTP_STREAM_SPLITTER_H
 #define NHTTP_STREAM_SPLITTER_H
 
+#include <zlib.h>
+
 #include "stream/stream_splitter.h"
 
 #include "nhttp_flow_data.h"
@@ -49,6 +51,9 @@ private:
     NHttpCutter* get_cutter(NHttpEnums::SectionType type, const NHttpFlowData* session) const;
     void chunk_spray(NHttpFlowData* session_data, uint8_t* buffer, const uint8_t* data,
         unsigned length) const;
+    static void decompress_copy(uint8_t* buffer, uint32_t& body_offset, const uint8_t* data,
+        uint32_t length, NHttpEnums::CompressId& compression, z_stream*& compress_stream,
+        bool at_start, NHttpInfractions& infractions, NHttpEventGen& events);
 
     const NHttpEnums::SourceId source_id;
     NHttpInspect* const my_inspector;

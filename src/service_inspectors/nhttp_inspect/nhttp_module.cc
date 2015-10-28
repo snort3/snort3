@@ -28,9 +28,12 @@ const Parameter NHttpModule::nhttp_params[] =
           "maximum request message body bytes to examine (-1 no limit)" },
     { "response_depth", Parameter::PT_INT, "-1:", "-1",
           "maximum response message body bytes to examine (-1 no limit)" },
+    { "unzip", Parameter::PT_BOOL, nullptr, "true", "decompress gzip and deflate message bodies" },
 #ifdef REG_TEST
     { "test_input", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
     { "test_output", Parameter::PT_BOOL, nullptr, "false", "print out HTTP section data" },
+    { "print_amount", Parameter::PT_INT, "1:1000000", "1200",
+          "number of characters to print from a Field" },
 #endif
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -50,6 +53,10 @@ bool NHttpModule::set(const char*, Value& val, SnortConfig*)
     {
         params.response_depth = val.get_long();
     }
+    else if (val.is("unzip"))
+    {
+        params.unzip = val.get_bool();
+    }
 #ifdef REG_TEST
     else if (val.is("test_input"))
     {
@@ -58,6 +65,10 @@ bool NHttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("test_output"))
     {
         params.test_output = val.get_bool();
+    }
+    else if (val.is("print_amount"))
+    {
+        params.print_amount = val.get_long();
     }
 #endif
     else

@@ -329,6 +329,8 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_URI_BAD_PORT,               "URI bad port number" },
     { EVENT_BROKEN_CHUNK,               "HTTP chunk misformatted" },
     { EVENT_CHUNK_WHITESPACE,           "White space following chunk length" },
+    { EVENT_GZIP_OVERRUN,               "Excessive gzip compression" },
+    { EVENT_GZIP_FAILURE,               "Gzip decompression failed" },
     { 0, nullptr }
 };
 

@@ -30,10 +30,13 @@
 struct NHttpParaList
 {
 public:
-    bool test_input;
-    bool test_output;
     long request_depth;
     long response_depth;
+    bool unzip;
+
+    bool test_input;
+    bool test_output;
+    long print_amount;
 };
 
 class NHttpModule : public Module

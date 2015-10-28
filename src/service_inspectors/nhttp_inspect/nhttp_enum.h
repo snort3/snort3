@@ -28,8 +28,10 @@ static const int MAX_OCTETS = 65535;
 static const int DATA_BLOCK_SIZE = 16384;
 static const int FINAL_BLOCK_SIZE = 24576;
 static const int GZIP_BLOCK_SIZE = 2048;
-static const int FINAL_GZIP_BLOCK_SIZE = 3072;
+static const int FINAL_GZIP_BLOCK_SIZE = 2304;
 static const uint32_t NHTTP_GID = 219;
+static const int GZIP_WINDOWBITS = 31;
+static const int DEFLATE_WINDOWBITS = 15;
 
 // Field status codes for when no valid value is present in length or integer value. Positive
 // values are actual length or field value.
@@ -78,7 +80,7 @@ enum SchemeId { SCH__NOSOURCE=-16, SCH__NOTCOMPUTE=-14, SCH__INSUFMEMORY=-13, SC
     SCH_OTHER = 1, SCH_HTTP, SCH_HTTPS, SCH_FTP, SCH_GOPHER, SCH_FILE };
 
 // Body compression tpyes
-enum CompressId { CMP__NOTPRESENT=-11, CMP_NONE=2, CMP_GZIP, CMP_DEFLATE };
+enum CompressId { CMP_NONE=2, CMP_GZIP, CMP_DEFLATE };
 
 // Every header we have ever heard of
 enum HeaderId { HEAD__NOTCOMPUTE=-14, HEAD__INSUFMEMORY=-13, HEAD__PROBLEMATIC=-12,
@@ -151,6 +153,9 @@ enum Infraction
     INF_PARTIAL_START,
     INF_CHUNK_WHITESPACE,
     INF_HEAD_NAME_WHITESPACE,
+    INF_GZIP_OVERRUN,
+    INF_GZIP_FAILURE,
+    INF_GZIP_EARLY_END,
     INF__MAX_VALUE
 };
 
@@ -234,6 +239,8 @@ enum EventSid
     EVENT_BROKEN_CHUNK,
     EVENT_CHUNK_WHITESPACE,
     EVENT_HEAD_NAME_WHITESPACE,
+    EVENT_GZIP_OVERRUN,
+    EVENT_GZIP_FAILURE,
     EVENT__MAX_VALUE
 };
 

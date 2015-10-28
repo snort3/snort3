@@ -21,6 +21,8 @@
 #define NHTTP_FLOW_DATA_H
 
 #include <stdio.h>
+#include <zlib.h>
+
 #include "stream/stream_api.h"
 #include "mime/file_mime_process.h"
 
@@ -54,7 +56,9 @@ public:
     friend class NHttpTransaction;
 
 private:
+    // Convenience routines
     void half_reset(NHttpEnums::SourceId source_id);
+    void trailer_prep(NHttpEnums::SourceId source_id);
 
     // 0 element refers to client request, 1 element refers to server response
 
@@ -63,7 +67,7 @@ private:
 
     // *** StreamSplitter internal data - reassemble()
     uint8_t* section_buffer[2] = { nullptr, nullptr };
-    uint32_t chunk_offset[2] = { 0, 0 };
+    uint32_t body_offset[2] = { 0, 0 };
     NHttpEnums::ChunkState chunk_state[2] = { NHttpEnums::CHUNK_NUMBER, NHttpEnums::CHUNK_NUMBER };
     uint32_t chunk_expected_length[2] = { 0, 0 };
 
@@ -86,6 +90,8 @@ private:
     int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
     uint32_t section_size_target[2] = { 0, 0 };
     uint32_t section_size_max[2] = { 0, 0 };
+    NHttpEnums::CompressId compression[2] = { NHttpEnums::CMP_NONE, NHttpEnums::CMP_NONE };
+    z_stream* compress_stream[2] = { nullptr, nullptr };
 
     // *** Inspector's internal data about the current message
     NHttpEnums::VersionId version_id[2] = { NHttpEnums::VERS__NOTPRESENT,
@@ -95,8 +101,6 @@ private:
     int64_t file_depth_remaining[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
     int64_t detect_depth_remaining[2] = { NHttpEnums::STAT_NOTPRESENT,
         NHttpEnums::STAT_NOTPRESENT };
-    NHttpEnums::CompressId compression[2] = { NHttpEnums::CMP__NOTPRESENT,
-        NHttpEnums::CMP__NOTPRESENT };
     MimeSession* mime_state = nullptr;  // SRC_CLIENT only
 
     // number of user data octets seen so far (regular body or chunks)

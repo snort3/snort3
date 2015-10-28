@@ -28,6 +28,7 @@ NHttpTestInput* NHttpTestManager::test_input_source = nullptr;
 const char* NHttpTestManager::test_output_prefix = "nhttpresults/testcase";
 int64_t NHttpTestManager::test_number = -1;
 FILE* NHttpTestManager::test_out = nullptr;
+long NHttpTestManager::print_amount = 1200;
 
 void NHttpTestManager::update_test_number(int64_t new_test_number)
 {

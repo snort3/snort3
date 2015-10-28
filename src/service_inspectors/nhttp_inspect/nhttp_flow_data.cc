@@ -59,6 +59,11 @@ NHttpFlowData::~NHttpFlowData()
         delete[] section_buffer[k];
         delete transaction[k];
         delete cutter[k];
+        if (compress_stream[k] != nullptr)
+        {
+            inflateEnd(compress_stream[k]);
+            delete compress_stream[k];
+        }
     }
 
     if (mime_state != nullptr)
@@ -80,10 +85,16 @@ void NHttpFlowData::half_reset(SourceId source_id)
     section_size_max[source_id] = 0;
     file_depth_remaining[source_id] = STAT_NOTPRESENT;
     detect_depth_remaining[source_id] = STAT_NOTPRESENT;
-    compression[source_id] = CMP__NOTPRESENT;
+    compression[source_id] = CMP_NONE;
+    if (compress_stream[source_id] != nullptr)
+    {
+        inflateEnd(compress_stream[source_id]);
+        delete compress_stream[source_id];
+        compress_stream[source_id] = nullptr;
+    }
     infractions[source_id].reset();
     events[source_id].reset();
-    chunk_offset[source_id] = 0;
+    body_offset[source_id] = 0;
     chunk_state[source_id] = CHUNK_NUMBER;
     chunk_expected_length[source_id] = 0;
 
@@ -92,7 +103,7 @@ void NHttpFlowData::half_reset(SourceId source_id)
         method_id = METH__NOTPRESENT;
         if (mime_state != nullptr)
         {
-            delete(mime_state);
+            delete mime_state;
             mime_state = nullptr;
         }
     }
@@ -100,6 +111,20 @@ void NHttpFlowData::half_reset(SourceId source_id)
     {
         status_code_num = STAT_NOTPRESENT;
     }
+}
+
+void NHttpFlowData::trailer_prep(SourceId source_id)
+{
+    type_expected[source_id] = SEC_TRAILER;
+    compression[source_id] = CMP_NONE;
+    if (compress_stream[source_id] != nullptr)
+    {
+        inflateEnd(compress_stream[source_id]);
+        delete compress_stream[source_id];
+        compress_stream[source_id] = nullptr;
+    }
+    infractions[source_id].reset();
+    events[source_id].reset();
 }
 
 void NHttpFlowData::show(FILE* out_file) const

@@ -49,6 +49,7 @@ NHttpInspect::NHttpInspect(NHttpParaList params_) : params(params_)
     {
         NHttpTestManager::activate_test_output();
     }
+    NHttpTestManager::set_print_amount(params.print_amount);
 #endif
 }
 

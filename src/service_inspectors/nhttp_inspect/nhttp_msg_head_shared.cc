@@ -114,6 +114,8 @@ void NHttpMsgHeadShared::parse_header_block()
 // terminate at the end of the buffer. length is returned.
 //
 // Bare LF without CR is accepted as the terminator.
+//
+// FIXIT-M Need to generate EVENT_EXCEEDS_SPACES for excessive white space within a header
 
 uint32_t NHttpMsgHeadShared::find_header_end(const uint8_t* buffer, int32_t length, int& num_seps)
 {

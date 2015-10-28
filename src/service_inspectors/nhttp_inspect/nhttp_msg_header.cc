@@ -163,21 +163,38 @@ void NHttpMsgHeader::setup_file_processing()
 
 void NHttpMsgHeader::setup_decompression()
 {
+    if (!params->unzip)
+        return;
+
     // FIXIT-M add support for compression in transfer encoding
     // FIXIT-M add support for multiple content encoding values
     const Field& norm_content_encoding = get_header_value_norm(HEAD_CONTENT_ENCODING);
-    if (norm_content_encoding.length > 0)
-    {
-        const Contentcoding compress_code = (Contentcoding)norm_last_token_code(
-            norm_content_encoding, NHttpMsgHeadShared::content_code_list);
-        if ((compress_code == CONTENTCODE_GZIP) || (compress_code == CONTENTCODE_X_GZIP))
-            session_data->compression[source_id] = CMP_GZIP;
-        else if (compress_code == CONTENTCODE_DEFLATE)
-            session_data->compression[source_id] = CMP_DEFLATE;
-        else
-            session_data->compression[source_id] = CMP_NONE;
-    }
+    if (norm_content_encoding.length <= 0)
+        return;
+
+    const Contentcoding compress_code = (Contentcoding)norm_last_token_code(
+        norm_content_encoding, NHttpMsgHeadShared::content_code_list);
+
+    CompressId& compression = session_data->compression[source_id];
+
+    if ((compress_code == CONTENTCODE_GZIP) || (compress_code == CONTENTCODE_X_GZIP))
+        compression = CMP_GZIP;
+    else if (compress_code == CONTENTCODE_DEFLATE)
+        compression = CMP_DEFLATE;
     else
+        return;
+
+    session_data->compress_stream[source_id] = new z_stream;
+    session_data->compress_stream[source_id]->zalloc = Z_NULL;
+    session_data->compress_stream[source_id]->zfree = Z_NULL;
+    session_data->compress_stream[source_id]->next_in = Z_NULL;
+    session_data->compress_stream[source_id]->avail_in = 0;
+    const int window_bits = (compression == CMP_GZIP) ? GZIP_WINDOWBITS : DEFLATE_WINDOWBITS;
+    if (inflateInit2(session_data->compress_stream[source_id], window_bits) != Z_OK)
+    {
         session_data->compression[source_id] = CMP_NONE;
+        delete session_data->compress_stream[source_id];
+        session_data->compress_stream[source_id] = nullptr;
+    }
 }
 

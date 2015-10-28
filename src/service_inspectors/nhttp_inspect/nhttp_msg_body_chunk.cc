@@ -33,20 +33,16 @@ void NHttpMsgBodyChunk::print_section(FILE* output)
     NHttpMsgSection::print_message_title(output, "chunked body");
     fprintf(output, "Cumulative octets %" PRIi64 "\n", body_octets);
     detect_data.print(output, "Detect data");
-    file_data.print(output, "File data");
     NHttpMsgSection::print_message_wrapup(output);
 }
 
 void NHttpMsgBodyChunk::update_flow()
 {
+    // Cutter deleted when zero-length chunk received
     if (session_data->cutter[source_id] == nullptr)
     {
-        // Cutter deleted when zero-length chunk received
         session_data->body_octets[source_id] = body_octets;
-        session_data->type_expected[source_id] = SEC_TRAILER;
-        session_data->infractions[source_id].reset();
-        session_data->events[source_id].reset();
-
+        session_data->trailer_prep(source_id);
         if ((source_id == SRC_CLIENT) && (session_data->mime_state != nullptr))
         {
             delete session_data->mime_state;

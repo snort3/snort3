@@ -20,9 +20,11 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "nhttp_enum.h"
-#include "nhttp_field.h"
 #include "main/snort_types.h"
+
+#include "nhttp_enum.h"
+#include "nhttp_test_manager.h"
+#include "nhttp_field.h"
 
 using namespace NHttpEnums;
 
@@ -41,7 +43,8 @@ void Field::print(FILE* output, const char* name) const
         return;
     }
     // Limit the amount of data printed
-    const int32_t print_length = (length <= 1200) ? length : 1200;
+    const int32_t print_length = (length <= NHttpTestManager::get_print_amount()) ? length :
+        NHttpTestManager::get_print_amount();
     for (int k=0; k < print_length; k++)
     {
         if ((start[k] >= 0x20) && (start[k] <= 0x7E))
