@@ -20,6 +20,8 @@
 #ifndef NHTTP_TEST_MANAGER_H
 #define NHTTP_TEST_MANAGER_H
 
+#ifdef REG_TEST
+
 #include <sys/types.h>
 #include <stdio.h>
 
@@ -57,5 +59,6 @@ private:
     static long print_amount;
 };
 
+#endif
 #endif
 

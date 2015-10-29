@@ -17,6 +17,8 @@
 //--------------------------------------------------------------------------
 // nhttp_test_manager.cc author Tom Peters <thopeter@cisco.com>
 
+#ifdef REG_TEST
+
 #include <stdexcept>
 
 #include "nhttp_test_manager.h"
@@ -53,4 +55,6 @@ void NHttpTestManager::activate_test_input()
         test_input_source = new NHttpTestInput("nhttp_test_msgs.txt");
     }
 }
+
+#endif
 

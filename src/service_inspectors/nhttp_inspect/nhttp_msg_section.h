@@ -52,18 +52,15 @@ public:
 
     NHttpEnums::MethodId get_method_id() const { return method_id; }
 
+#ifdef REG_TEST
     // Test tool prints all derived message parts
     virtual void print_section(FILE* output) = 0;
+#endif
 
 protected:
     NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
         NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_, const NHttpParaList*
         params_);
-
-    // Convenience methods
-    void print_message_title(FILE* output, const char* title) const;
-    void print_message_wrapup(FILE* output);
-    void update_depth() const;
 
     const Field msg_text;
 
@@ -80,6 +77,13 @@ protected:
     NHttpEnums::VersionId version_id;
     NHttpEnums::MethodId method_id;
     int32_t status_code_num;
+
+    // Convenience methods
+    void update_depth() const;
+#ifdef REG_TEST
+    void print_message_title(FILE* output, const char* title) const;
+    void print_message_wrapup(FILE* output);
+#endif
 
 private:
     const bool delete_msg_on_destruct;

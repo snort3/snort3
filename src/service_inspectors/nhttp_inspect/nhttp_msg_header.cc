@@ -39,13 +39,6 @@ NHttpMsgHeader::NHttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
     transaction->set_header(this, source_id);
 }
 
-void NHttpMsgHeader::print_section(FILE* output)
-{
-    NHttpMsgSection::print_message_title(output, "header");
-    NHttpMsgHeadShared::print_headers(output);
-    NHttpMsgSection::print_message_wrapup(output);
-}
-
 void NHttpMsgHeader::update_flow()
 {
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
@@ -197,4 +190,13 @@ void NHttpMsgHeader::setup_decompression()
         session_data->compress_stream[source_id] = nullptr;
     }
 }
+
+#ifdef REG_TEST
+void NHttpMsgHeader::print_section(FILE* output)
+{
+    NHttpMsgSection::print_message_title(output, "header");
+    NHttpMsgHeadShared::print_headers(output);
+    NHttpMsgSection::print_message_wrapup(output);
+}
+#endif
 

@@ -52,29 +52,6 @@ NHttpMsgSection::NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     delete_msg_on_destruct(buf_owner)
 { }
 
-void NHttpMsgSection::print_message_title(FILE* output, const char* title) const
-{
-    fprintf(output, "HTTP message %s:\n", title);
-    msg_text.print(output, "Input");
-}
-
-void NHttpMsgSection::print_message_wrapup(FILE* output)
-{
-    fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 ", Events: %016" PRIx64 " %016" PRIx64 ", TCP Close: %s\n",
-        infractions.get_raw2(), infractions.get_raw(), events.get_raw2(), events.get_raw(), tcp_close ? "True" : "False");
-    for (unsigned k=1; k < HTTP_BUFFER_MAX; k++)
-    {
-        get_legacy(k).print(output, http_buffer_name[k]);
-    }
-    if (g_file_data.len > 0)
-    {
-        Field(g_file_data.len, g_file_data.data).print(output, "file_data");
-    }
-    fprintf(output, "\n");
-    session_data->show(output);
-    fprintf(output, "\n");
-}
-
 void NHttpMsgSection::update_depth() const
 {
     const int64_t& depth = (session_data->file_depth_remaining[source_id] >=
@@ -164,4 +141,31 @@ const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
         return Field::FIELD_NULL;
     }
 }
+
+#ifdef REG_TEST
+
+void NHttpMsgSection::print_message_title(FILE* output, const char* title) const
+{
+    fprintf(output, "HTTP message %s:\n", title);
+    msg_text.print(output, "Input");
+}
+
+void NHttpMsgSection::print_message_wrapup(FILE* output)
+{
+    fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 ", Events: %016" PRIx64 " %016" PRIx64 ", TCP Close: %s\n",
+        infractions.get_raw2(), infractions.get_raw(), events.get_raw2(), events.get_raw(), tcp_close ? "True" : "False");
+    for (unsigned k=1; k < HTTP_BUFFER_MAX; k++)
+    {
+        get_legacy(k).print(output, http_buffer_name[k]);
+    }
+    if (g_file_data.len > 0)
+    {
+        Field(g_file_data.len, g_file_data.data).print(output, "file_data");
+    }
+    fprintf(output, "\n");
+    session_data->show(output);
+    fprintf(output, "\n");
+}
+
+#endif
 

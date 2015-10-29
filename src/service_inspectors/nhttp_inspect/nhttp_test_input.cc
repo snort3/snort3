@@ -17,6 +17,8 @@
 //--------------------------------------------------------------------------
 // nhttp_test_input.cc author Tom Peters <thopeter@cisco.com>
 
+#ifdef REG_TEST
+
 #include <assert.h>
 #include <stdexcept>
 
@@ -403,4 +405,5 @@ void NHttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sou
     just_flushed = true;
     flushed = false;
 }
+#endif
 

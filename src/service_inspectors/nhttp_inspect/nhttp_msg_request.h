@@ -37,12 +37,15 @@ public:
         NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
         const NHttpParaList* params_);
     ~NHttpMsgRequest() { delete uri; }
-    void print_section(FILE* output) override;
     void gen_events() override;
     void update_flow() override;
     const Field& get_method() { return method; }
     const Field& get_uri();
     const Field& get_uri_norm_legacy();
+
+#ifdef REG_TEST
+    void print_section(FILE* output) override;
+#endif
 
 private:
     static const StrCode method_list[];

@@ -30,6 +30,7 @@ using namespace NHttpEnums;
 
 const Field Field::FIELD_NULL { STAT_NOSOURCE };
 
+#ifdef REG_TEST
 void Field::print(FILE* output, const char* name) const
 {
     if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE))
@@ -62,4 +63,5 @@ void Field::print(FILE* output, const char* name) const
     }
     fprintf(output, "\n");
 }
+#endif
 

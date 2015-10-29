@@ -145,6 +145,27 @@ void NHttpMsgRequest::gen_events()
         events.create_event(EVENT_UNKNOWN_METHOD);
 }
 
+void NHttpMsgRequest::update_flow()
+{
+    // The following logic to determine body type is by no means the last word on this topic.
+    if (infractions & INF_BAD_REQ_LINE)
+    {
+        session_data->type_expected[source_id] = SEC_ABORT;
+        session_data->half_reset(source_id);
+    }
+    else
+    {
+        session_data->type_expected[source_id] = SEC_HEADER;
+        session_data->version_id[source_id] = version_id;
+        session_data->method_id = method_id;
+        session_data->infractions[source_id].reset();
+        session_data->events[source_id].reset();
+    }
+    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+}
+
+#ifdef REG_TEST
+
 void NHttpMsgRequest::print_section(FILE* output)
 {
     NHttpMsgSection::print_message_title(output, "request line");
@@ -174,22 +195,5 @@ void NHttpMsgRequest::print_section(FILE* output)
     NHttpMsgSection::print_message_wrapup(output);
 }
 
-void NHttpMsgRequest::update_flow()
-{
-    // The following logic to determine body type is by no means the last word on this topic.
-    if (infractions & INF_BAD_REQ_LINE)
-    {
-        session_data->type_expected[source_id] = SEC_ABORT;
-        session_data->half_reset(source_id);
-    }
-    else
-    {
-        session_data->type_expected[source_id] = SEC_HEADER;
-        session_data->version_id[source_id] = version_id;
-        session_data->method_id = method_id;
-        session_data->infractions[source_id].reset();
-        session_data->events[source_id].reset();
-    }
-    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
-}
+#endif
 

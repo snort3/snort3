@@ -32,8 +32,11 @@ public:
     NHttpMsgBodyChunk(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
         NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_, const NHttpParaList* params_)
         : NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_) {}
-    void print_section(FILE* output) override;
     void update_flow() override;
+
+#ifdef REG_TEST
+    void print_section(FILE* output) override;
+#endif
 };
 
 #endif

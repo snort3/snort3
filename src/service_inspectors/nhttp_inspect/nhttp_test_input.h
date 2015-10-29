@@ -20,6 +20,8 @@
 #ifndef NHTTP_TEST_INPUT_H
 #define NHTTP_TEST_INPUT_H
 
+#ifdef REG_TEST
+
 #include <stdio.h>
 
 #include "nhttp_enum.h"
@@ -75,5 +77,6 @@ private:
     void reset();
 };
 
+#endif
 #endif
 

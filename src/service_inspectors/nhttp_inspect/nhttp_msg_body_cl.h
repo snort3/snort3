@@ -35,8 +35,11 @@ public:
         NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_, const NHttpParaList* params_)
         : NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_),
         data_length(session_data->data_length[source_id]) {}
-    void print_section(FILE* output) override;
     void update_flow() override;
+
+#ifdef REG_TEST
+    void print_section(FILE* output) override;
+#endif
 
 protected:
     int64_t data_length;

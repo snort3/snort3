@@ -33,12 +33,15 @@ public:
     NHttpMsgStatus(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
         NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
         const NHttpParaList* params_);
-    void print_section(FILE* output) override;
     void gen_events() override;
     void update_flow() override;
 
     const Field& get_status_code() { return status_code; }
     const Field& get_reason_phrase() { return reason_phrase; }
+
+#ifdef REG_TEST
+    void print_section(FILE* output) override;
+#endif
 
 private:
     void parse_start_line() override;

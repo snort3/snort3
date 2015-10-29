@@ -227,6 +227,7 @@ const Field& NHttpMsgHeadShared::get_header_value_norm(HeaderId header_id)
     return node->norm;
 }
 
+#ifdef REG_TEST
 void NHttpMsgHeadShared::print_headers(FILE* output)
 {
     char title_buf[100];
@@ -246,4 +247,5 @@ void NHttpMsgHeadShared::print_headers(FILE* output)
         }
     }
 }
+#endif
 

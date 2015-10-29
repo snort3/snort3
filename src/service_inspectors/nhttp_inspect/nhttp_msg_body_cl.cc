@@ -32,15 +32,6 @@
 
 using namespace NHttpEnums;
 
-void NHttpMsgBodyCl::print_section(FILE* output)
-{
-    NHttpMsgSection::print_message_title(output, "Content-Length body");
-    fprintf(output, "Content-Length %" PRIi64 ", octets seen %" PRIi64 "\n", data_length,
-        body_octets);
-    detect_data.print(output, "Detect data");
-    NHttpMsgSection::print_message_wrapup(output);
-}
-
 void NHttpMsgBodyCl::update_flow()
 {
     if (session_data->cutter[source_id] != nullptr)
@@ -60,4 +51,15 @@ void NHttpMsgBodyCl::update_flow()
     }
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
 }
+
+#ifdef REG_TEST
+void NHttpMsgBodyCl::print_section(FILE* output)
+{
+    NHttpMsgSection::print_message_title(output, "Content-Length body");
+    fprintf(output, "Content-Length %" PRIi64 ", octets seen %" PRIi64 "\n", data_length,
+        body_octets);
+    detect_data.print(output, "Detect data");
+    NHttpMsgSection::print_message_wrapup(output);
+}
+#endif
 

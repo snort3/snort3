@@ -144,15 +144,6 @@ void NHttpMsgStatus::gen_events()
     }
 }
 
-void NHttpMsgStatus::print_section(FILE* output)
-{
-    NHttpMsgSection::print_message_title(output, "status line");
-    fprintf(output, "Version Id: %d\n", version_id);
-    fprintf(output, "Status Code Num: %d\n", status_code_num);
-    reason_phrase.print(output, "Reason Phrase");
-    NHttpMsgSection::print_message_wrapup(output);
-}
-
 void NHttpMsgStatus::update_flow()
 {
     // The following logic to determine body type is by no means the last word on this topic.
@@ -171,4 +162,15 @@ void NHttpMsgStatus::update_flow()
     }
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
 }
+
+#ifdef REG_TEST
+void NHttpMsgStatus::print_section(FILE* output)
+{
+    NHttpMsgSection::print_message_title(output, "status line");
+    fprintf(output, "Version Id: %d\n", version_id);
+    fprintf(output, "Status Code Num: %d\n", status_code_num);
+    reason_phrase.print(output, "Reason Phrase");
+    NHttpMsgSection::print_message_wrapup(output);
+}
+#endif
 

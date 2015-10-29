@@ -36,13 +36,6 @@ NHttpMsgTrailer::NHttpMsgTrailer(const uint8_t* buffer, const uint16_t buf_size,
     transaction->set_trailer(this, source_id);
 }
 
-void NHttpMsgTrailer::print_section(FILE* output)
-{
-    NHttpMsgSection::print_message_title(output, "trailer");
-    NHttpMsgHeadShared::print_headers(output);
-    NHttpMsgSection::print_message_wrapup(output);
-}
-
 void NHttpMsgTrailer::update_flow()
 {
     session_data->type_expected[source_id] =
@@ -50,4 +43,13 @@ void NHttpMsgTrailer::update_flow()
     session_data->half_reset(source_id);
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
 }
+
+#ifdef REG_TEST
+void NHttpMsgTrailer::print_section(FILE* output)
+{
+    NHttpMsgSection::print_message_title(output, "trailer");
+    NHttpMsgHeadShared::print_headers(output);
+    NHttpMsgSection::print_message_wrapup(output);
+}
+#endif
 
