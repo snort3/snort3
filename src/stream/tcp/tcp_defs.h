@@ -93,8 +93,20 @@ enum class StreamPolicy
     OS_WINDOWS2K3,
     OS_VISTA,
     OS_PROXY,
+    OS_END_OF_LIST,
     OS_DEFAULT = OS_BSD
 };
+
+// increment operator...
+inline StreamPolicy& operator++( StreamPolicy &c )
+{
+    if( c < StreamPolicy::OS_END_OF_LIST )
+        c = static_cast<StreamPolicy>( static_cast<int>(c) + 1 );
+    else
+        c = StreamPolicy::OS_END_OF_LIST;
+
+    return c;
+}
 
 enum class ReassemblyPolicy
 {
@@ -113,8 +125,20 @@ enum class ReassemblyPolicy
     OS_WINDOWS2K3,
     OS_VISTA,
     OS_PROXY,
+    OS_END_OF_LIST,
     OS_DEFAULT = OS_BSD
 };
+
+// increment operator...
+inline ReassemblyPolicy& operator++( ReassemblyPolicy &c )
+{
+    if( c < ReassemblyPolicy::OS_END_OF_LIST )
+        c = static_cast<ReassemblyPolicy>( static_cast<int>(c) + 1 );
+    else
+        c = ReassemblyPolicy::OS_END_OF_LIST;
+
+    return c;
+}
 
 enum FlushPolicy
 {

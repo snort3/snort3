@@ -4,6 +4,7 @@
 #include "stream/tcp/tcp_module.h"
 #include "stream/tcp/tcp_normalizers.h"
 #include "protocols/tcp_options.h"
+#include "stream/tcp/tcp_defs.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -13,6 +14,7 @@ NormMode mockNormMode = NORM_MODE_ON;
 bool norm_enabled = true;
 THREAD_LOCAL SFBASE sfBase;
 THREAD_LOCAL TcpStats tcpStats;
+THREAD_LOCAL void *snort_conf = nullptr;
 
 Flow::Flow( void ) {}
 Flow::~Flow( void ) {}
@@ -66,7 +68,6 @@ public:
 
 void Active::drop_packet(const Packet* p, bool force ) { }
 
-
 bool Normalize_IsEnabled(NormFlags nf)
 {
     return norm_enabled;
@@ -96,13 +97,13 @@ TEST_GROUP(tcp_normalizers)
 
 TEST(tcp_normalizers, os_policy)
 {
-    uint16_t os_policy;
+    StreamPolicy os_policy;
     Flow* flow = new FlowMock;
     TcpSession* session = new TcpSessionMock( flow );
 
-    for( os_policy = STREAM_POLICY_FIRST; os_policy <= STREAM_POLICY_PROXY; os_policy++ )
+    for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
     {
-        TcpNormalizer* normalizer = TcpNormalizerFactory::allocate( os_policy, session,
+        TcpNormalizer* normalizer = TcpNormalizerFactory::create( os_policy, session,
             &session->client, &session->server );
         CHECK( normalizer->get_os_policy() == os_policy );
 
@@ -115,18 +116,18 @@ TEST(tcp_normalizers, os_policy)
 
 TEST(tcp_normalizers, paws_fudge_config)
 {
-    uint16_t os_policy;
+    StreamPolicy os_policy;
     Flow* flow = new FlowMock;
     TcpSession* session = new TcpSessionMock( flow );
 
-    for( os_policy = STREAM_POLICY_FIRST; os_policy <= STREAM_POLICY_PROXY; os_policy++ )
+    for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
     {
-        TcpNormalizer* normalizer = TcpNormalizerFactory::allocate( os_policy, session,
+        TcpNormalizer* normalizer = TcpNormalizerFactory::create( os_policy, session,
             &session->client, &session->server );
 
         switch ( os_policy )
         {
-        case STREAM_POLICY_LINUX:
+        case StreamPolicy::OS_LINUX:
             CHECK( normalizer->get_paws_ts_fudge() == 1 );
             break;
 
@@ -144,22 +145,22 @@ TEST(tcp_normalizers, paws_fudge_config)
 
 TEST(tcp_normalizers, paws_drop_zero_ts_config)
 {
-    uint16_t os_policy;
+    StreamPolicy os_policy;
     Flow* flow = new FlowMock;
     TcpSession* session = new TcpSessionMock( flow );
 
-    for( os_policy = STREAM_POLICY_FIRST; os_policy <= STREAM_POLICY_PROXY; os_policy++ )
+    for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
     {
-        TcpNormalizer* normalizer = TcpNormalizerFactory::allocate( os_policy, session,
+        TcpNormalizer* normalizer = TcpNormalizerFactory::create( os_policy, session,
             &session->client, &session->server );
 
         switch ( os_policy )
         {
-        case STREAM_POLICY_OLD_LINUX:
-        case STREAM_POLICY_SOLARIS:
-        case STREAM_POLICY_WINDOWS:
-        case STREAM_POLICY_WINDOWS2K3:
-        case STREAM_POLICY_VISTA:
+        case StreamPolicy::OS_OLD_LINUX:
+        case StreamPolicy::OS_SOLARIS:
+        case StreamPolicy::OS_WINDOWS:
+        case StreamPolicy::OS_WINDOWS2K3:
+        case StreamPolicy::OS_VISTA:
             CHECK( !normalizer->is_paws_drop_zero_ts() );
             break;
 
@@ -177,14 +178,14 @@ TEST(tcp_normalizers, paws_drop_zero_ts_config)
 
 TEST(tcp_normalizers, norm_options_enabled)
 {
-    uint16_t os_policy;
+    StreamPolicy os_policy;
     Flow* flow = new FlowMock;
     TcpSession* session = new TcpSessionMock( flow );
 
     norm_enabled = true;
-    for( os_policy = STREAM_POLICY_FIRST; os_policy <= STREAM_POLICY_PROXY; os_policy++ )
+    for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
     {
-        TcpNormalizer* normalizer = TcpNormalizerFactory::allocate( os_policy, session,
+        TcpNormalizer* normalizer = TcpNormalizerFactory::create( os_policy, session,
             &session->client, &session->server );
 
         CHECK( normalizer->get_opt_block() == NORM_MODE_ON );
@@ -200,9 +201,9 @@ TEST(tcp_normalizers, norm_options_enabled)
     }
 
     norm_enabled = false;
-    for( os_policy = STREAM_POLICY_FIRST; os_policy <= STREAM_POLICY_PROXY; os_policy++ )
+    for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
     {
-        TcpNormalizer* normalizer = TcpNormalizerFactory::allocate( os_policy, session,
+        TcpNormalizer* normalizer = TcpNormalizerFactory::create( os_policy, session,
             &session->client, &session->server );
 
         CHECK( normalizer->get_opt_block() == NORM_MODE_OFF );

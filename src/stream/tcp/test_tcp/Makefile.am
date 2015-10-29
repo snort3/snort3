@@ -9,5 +9,5 @@ TESTS = $(check_PROGRAMS)
 tcp_normalizer_test_LDADD = \
 ../tcp_normalizer.o \
 ../tcp_normalizers.o \
-../../../protocols/tcp_options.o 
-
+../../../protocols/tcp_options.o \
+../../../main/snort_debug.o

@@ -27,3 +27,9 @@ add_library( stream_tcp STATIC
     ips_stream_reassemble.cc
     ips_stream_size.cc
 )
+
+if (BUILD_UNIT_TESTS)
+    add_subdirectory(test_tcp)
+endif (BUILD_UNIT_TESTS)
+
+
