@@ -9,6 +9,7 @@ find_package(PCRE REQUIRED)
 find_package(ZLIB REQUIRED)
 
 # optional libraries
+find_package(LibHS QUIET)
 find_package(LibLZMA QUIET)
 find_package(OpenSSL QUIET)
 find_package(Asciidoc QUIET)
