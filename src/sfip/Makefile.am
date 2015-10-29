@@ -19,7 +19,7 @@ if BUILD_UNIT_TESTS
 libsfip_a_SOURCES += sfip_test.cc
 endif
 
-libsfip_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
+#libsfip_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 
