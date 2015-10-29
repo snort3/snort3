@@ -73,7 +73,7 @@ static THREAD_LOCAL ProfileStats regex_perf_stats;
 class RegexOption : public IpsOption
 {
 public:
-    RegexOption(RegexConfig&);
+    RegexOption(const RegexConfig&);
     ~RegexOption();
 
     uint32_t hash() const override;
@@ -89,7 +89,7 @@ private:
     RegexConfig config;
 };
 
-RegexOption::RegexOption(RegexConfig& c) : IpsOption(s_name, RULE_OPTION_TYPE_PCRE)
+RegexOption::RegexOption(const RegexConfig& c) : IpsOption(s_name, RULE_OPTION_TYPE_PCRE)
 {
     config = c;
 

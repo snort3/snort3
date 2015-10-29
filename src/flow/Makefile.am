@@ -17,7 +17,7 @@ expect_cache.cc expect_cache.h \
 flow_control.cc flow_control.h \
 session.h
 
-libflow_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
+#libflow_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

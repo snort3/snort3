@@ -17,7 +17,7 @@ messages.cc \
 obfuscation.cc \
 text_log.cc
 
-liblog_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
+#liblog_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

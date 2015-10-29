@@ -18,6 +18,8 @@
 
 // ips_regex_test.cc author Russ Combs <rucombs@cisco.com>
 
+#include "ips_options/ips_regex.h"
+
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
@@ -28,6 +30,7 @@
 #include "framework/module.h"
 #include "protocols/packet.h"
 #include "detection/detection_defines.h"
+#include "main/snort_config.h"
 
 //-------------------------------------------------------------------------
 // stubs, spies, etc.
@@ -46,9 +49,24 @@ Cursor::Cursor(Packet* p)
 static unsigned s_parse_errors = 0;
 
 void ParseError(const char*, ...)
+{ s_parse_errors++; }
+
+SnortConfig s_conf;
+THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
+
+static SnortState s_state;
+
+SnortConfig::SnortConfig()
 {
-    s_parse_errors++;
+    state = &s_state;
+    memset(state, 0, sizeof(*state));
+    num_slots = 1;
 }
+
+SnortConfig::~SnortConfig() { }
+
+unsigned get_instance_id()
+{ return 0; }
 
 //-------------------------------------------------------------------------
 // helpers
@@ -214,15 +232,14 @@ TEST_GROUP(ips_regex_option)
 
     void setup()
     { 
-        IpsApi* api = (IpsApi*)ips_regex;
-        opt = get_option("\\bfoo");
-        api->tinit(nullptr);
+        opt = get_option(" foo ");
+        regex_setup(snort_conf);
     }
     void teardown()
     {
         IpsApi* api = (IpsApi*)ips_regex;
         api->dtor(opt);
-        api->tterm(nullptr);
+        regex_cleanup(snort_conf);
     }
 };
 
@@ -242,7 +259,7 @@ TEST(ips_regex_option, hash)
 
 TEST(ips_regex_option, opeq)
 {
-    IpsOption* opt2 = get_option("\\bfoo");
+    IpsOption* opt2 = get_option(" foo ");
     CHECK(opt2);
     CHECK(*opt == *opt2);
     
@@ -283,15 +300,14 @@ TEST_GROUP(ips_regex_option_relative)
 
     void setup()
     { 
-        IpsApi* api = (IpsApi*)ips_regex;
         opt = get_option("\\bfoo", true);
-        api->tinit(nullptr);
+        regex_setup(snort_conf);
     }
     void teardown()
     {
         IpsApi* api = (IpsApi*)ips_regex;
         api->dtor(opt);
-        api->tterm(nullptr);
+        regex_cleanup(snort_conf);
     }
 };
 
