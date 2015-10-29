@@ -1153,8 +1153,7 @@ TEST_CASE( "mod stats node", "[profiler]" )
         ModStatsNode copied(node);
         auto copied_stats = copied.get_total();
 
-        CHECK( copied_stats.ticks == orig_stats.ticks );
-        CHECK( copied_stats.checks == orig_stats.checks );
+        CHECK( copied_stats == orig_stats );
     }
 
     SECTION( "accumulate() and get_total() correctly adds stats" )
@@ -1176,67 +1175,6 @@ TEST_CASE( "mod stats node", "[profiler]" )
     {
         auto ps = node.get_total();
         CHECK_FALSE( ps );
-    }
-
-    SECTION( "get_total() works correctly" )
-    {
-        ProfileStats a_stats = { 1, 3 };
-        ProfileStats b_stats = { 2, 4 };
-
-        MockProfilerModule a_mod(&a_stats);
-        MockProfilerModule b_mod(&b_stats);
-
-        ModStatsNode child("b");
-
-        node.set(&a_mod);
-        child.set(&b_mod);
-
-        node.add_child(&child);
-
-        node.accumulate();
-        child.accumulate();
-
-        SECTION( "A->get_total() calls B->get_total() and adds results only on the first call" )
-        {
-            ProfileStats expected = a_stats;
-            expected += b_stats;
-
-            auto ps = node.get_total();
-            CHECK( ps == expected );
-
-            ps = node.get_total();
-            CHECK( ps == expected );
-
-            SECTION( "child is totalled only once via call to parent" )
-            {
-                ProfileStats expected = b_stats;
-                auto ps = child.get_total();
-
-                CHECK( ps == expected );
-            }
-
-            SECTION( "reset forces totalling again for the current node" )
-            {
-                ProfileStats c_stats = { 7, 13 };
-                MockProfilerModule c_mod(&c_stats);
-                ModStatsNode second_child("c");
-
-                ProfileStats new_expected = expected;
-                new_expected += c_stats;
-
-                second_child.set(&c_mod);
-                second_child.accumulate();
-
-                node.add_child(&second_child);
-                REQUIRE( node.get_total() == expected );
-
-                node.reset();
-                node.accumulate();
-
-                auto ps = node.get_total();
-                CHECK( ps == new_expected );
-            }
-        }
     }
 }
 
