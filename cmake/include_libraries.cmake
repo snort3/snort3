@@ -14,5 +14,7 @@ find_package(OpenSSL QUIET)
 find_package(Asciidoc QUIET)
 find_package(DBLATEX QUIET)
 find_package(Ruby QUIET 1.8.7)
-find_package(HS QUIET)
+
+# need to fix cmake/FindHS.cmake
+#find_package(HS QUIET)
 
