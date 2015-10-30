@@ -62,18 +62,18 @@ public:
 class Active
 {
 public:
-    static void drop_packet(const Packet* p, bool force = false);
+    static void drop_packet(const Packet*, bool force = false);
 
 };
 
-void Active::drop_packet(const Packet* p, bool force ) { }
+void Active::drop_packet(const Packet* , bool ) { }
 
-bool Normalize_IsEnabled(NormFlags nf)
+bool Normalize_IsEnabled(NormFlags )
 {
     return norm_enabled;
 }
 
-NormMode Normalize_GetMode(NormFlags nf)
+NormMode Normalize_GetMode(NormFlags )
 {
     if( norm_enabled )
         return mockNormMode;
