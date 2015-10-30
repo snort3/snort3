@@ -11,7 +11,8 @@ Required:
 
 * daq from http://www.snort.org for packet IO
 
-* dnet from https://github.com/dugsong/libdnet.git for network utility functions
+* dnet from https://github.com/dugsong/libdnet.git for network utility
+  functions
 
 * LuaJIT from http://luajit.org for configuration and scripting
 
@@ -19,11 +20,22 @@ Required:
 
 * pcre from http://www.pcre.org for regular expression pattern matching
 
-* zlib >= 1.2.8 from http://www.zlib.net for decompression
+* zlib from http://www.zlib.net for decompression (>= 1.2.8 recommended)
 
 * pkgconfig from http://www.freedesktop.org to build the example plugins
 
 Optional:
+
+* lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of SWF fles
+
+* openssl from https://www.openssl.org for SHA and MD5 file signatures and
+  the protected_content rule option
+
+* hyperscan from https://github.com/01org/hyperscan to build new and improved
+  regex and (coming soon) fast pattern support
+
+* cpputest from http://cpputest.github.io to run additional unit tests with
+  make check
 
 * asciidoc from http://www.methods.co.nz/asciidoc/ to build the HTML
   manual
@@ -31,16 +43,11 @@ Optional:
 * dblatex from http://dblatex.sourceforge.net to build the pdf manual (in
   addition to asciidoc)
 
-* lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of SWF fles.
-
-* openssl from https://www.openssl.org for SHA and MD5 file signatures and
-  the protected_content rule option.
-
 * w3m from http://sourceforge.net/projects/w3m/ to build the plain text
   manual
 
 * source-highlight from http://www.gnu.org/software/src-highlite/ to
-  generate the dev guide.
+  generate the dev guide
 
 
 === Building
