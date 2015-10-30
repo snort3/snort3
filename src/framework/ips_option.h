@@ -67,6 +67,7 @@ public:
     virtual bool is_relative() { return false; }
     virtual bool fp_research() { return false; }
     virtual int eval(class Cursor&, Packet*) { return true; }
+    virtual bool retry() { return false; }
     virtual void action(Packet*) { }
 
     option_type_t get_type() const { return type; }

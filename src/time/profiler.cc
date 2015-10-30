@@ -29,6 +29,7 @@
 
 #include <functional>
 #include <mutex>
+#include <set>
 #include <string>
 #include <unordered_map>
 

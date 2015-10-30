@@ -40,10 +40,6 @@ ips_ttl.cc \
 ips_bufferlen.cc \
 ips_window.cc
 
-if HAVE_HYPERSCAN
-plugin_list += ips_regex.cc
-endif
-
 libips_options_a_SOURCES = \
 ips_byte_extract.cc ips_byte_extract.h \
 extract.cc extract.h \
@@ -63,6 +59,10 @@ ips_pcre.cc ips_pcre.h \
 ips_reference.cc \
 ips_replace.cc \
 ips_so.cc
+
+if HAVE_HYPERSCAN
+libips_options_a_SOURCES += ips_regex.cc ips_regex.h
+endif
 
 if STATIC_IPS_OPTIONS
 libips_options_a_SOURCES += $(plugin_list)
@@ -199,13 +199,6 @@ optlib_LTLIBRARIES += libips_raw_data.la
 libips_raw_data_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_raw_data_la_LDFLAGS = -export-dynamic -shared
 libips_raw_data_la_SOURCES = ips_raw_data.cc
-
-if HAVE_HYPERSCAN
-optlib_LTLIBRARIES += libips_regex.la
-libips_regex_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_regex_la_LDFLAGS = -export-dynamic -shared
-libips_regex_la_SOURCES = ips_regex.cc
-endif
 
 optlib_LTLIBRARIES += libips_rem.la
 libips_rem_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

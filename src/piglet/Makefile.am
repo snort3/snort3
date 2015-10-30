@@ -14,6 +14,6 @@ piglet_runner.h \
 piglet_utils.cc \
 piglet_utils.h
 
-libpiglet_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
+#libpiglet_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

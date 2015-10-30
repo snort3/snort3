@@ -11,6 +11,6 @@ intf.h \
 sfdaq.h \
 trough.h
 
-libpacket_io_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
+#libpacket_io_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
