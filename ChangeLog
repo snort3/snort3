@@ -1,3 +1,10 @@
+15/10/30 - build 176
+
+-- tcp reassembly refactoring
+-- profiler rewrite
+-- added gzip support to new_http_inspect
+-- added regex rule option based on hyperscan
+
 15/10/23 - build 175
 
 -- ported gtp preprocessor and rule options from 2.X
