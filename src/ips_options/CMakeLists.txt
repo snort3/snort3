@@ -72,7 +72,7 @@ set (IPS_SOURCES
 
 if ( HAVE_HYPERSCAN )
     set(OPTION_LIST ips_regex.cc ips_regex.h)
-endif
+endif ()
 
 if (STATIC_IPS_OPTIONS)
 

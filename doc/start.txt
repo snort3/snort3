@@ -19,7 +19,7 @@ Required:
 
 * pcre from http://www.pcre.org for regular expression pattern matching
 
-* zlib from http://www.zlib.net for decompression
+* zlib >= 1.2.8 from http://www.zlib.net for decompression
 
 * pkgconfig from http://www.freedesktop.org to build the example plugins
 

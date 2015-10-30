@@ -1,27 +1,29 @@
 
 # keeping track of external libraries seperately for use in pkg-config.
 set(EXTERNAL_LIBRARIES
-    ${LUAJIT_LIBRARIES}
-    ${PCRE_LIBRARIES}
-    ${PCAP_LIBRARIES}
-    ${OPENSSL_LIBRARIES}
-    ${LIBLZMA_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-#    ${OPENSSL_CRYPTO_LIBRARY}  -- part of OPENSSL_LIBRARIES
     ${DAQ_LIBRARIES}
     ${DNET_LIBRARIES}
     ${CLANG_CXX_LIBRARY}
-    ${CMAKE_THREAD_LIBS_INIT} # GCC says we must link to the threads library
     ${CMAKE_DL_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT} # GCC says we must link to the threads library
+    ${HS_LIBRARIES}
+    ${LIBLZMA_LIBRARIES}
+    ${LUAJIT_LIBRARIES}
+    ${OPENSSL_LIBRARIES}
+#    ${OPENSSL_CRYPTO_LIBRARY}  -- part of OPENSSL_LIBRARIES
+    ${PCAP_LIBRARIES}
+    ${PCRE_LIBRARIES}
+    ${ZLIB_LIBRARIES}
     CACHE INTERNAL "external libraries" FORCE
 )
 
 set(EXTERNAL_INCLUDES
     ${DAQ_INCLUDE_DIR}
+    ${DNET_INCLUDE_DIR}
+    ${HS_INCLUDE_DIR}
+    ${OPENSSL_INCLUDE_DIR}
     ${PCAP_INCLUDE_DIR}
     ${PCRE_INCLUDE_DIR}
-    ${DNET_INCLUDE_DIR}
-    ${OPENSSL_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIRS}
     CACHE INTERNAL "external INCLUDES" FORCE
 )

@@ -309,6 +309,9 @@
 
 #cmakedefine HAVE_OPENSSL_MD5 1
 
+/* hyperscan available */
+#cmakedefine HAVE_HYPERSCAN 1
+
 /* lzma available */
 #cmakedefine HAVE_LZMA 1
 

@@ -19,6 +19,9 @@
 * Enabling debug messages may erroneously affect the number of packets
   processed from pcaps
 
+* It is not possible to build unit tests w/o static plugins.
+
+
 ==== Config
 
 * Parsing issue with IP lists.  can't parse rules with $EXTERNAL_NET

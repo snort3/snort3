@@ -240,6 +240,7 @@ TEST_GROUP(ips_regex_option)
         IpsApi* api = (IpsApi*)ips_regex;
         api->dtor(opt);
         regex_cleanup(snort_conf);
+        api->pterm(snort_conf);
     }
 };
 
@@ -276,6 +277,7 @@ TEST(ips_regex_option, match_absolute)
     Cursor c(&pkt);
     CHECK(opt->eval(c, &pkt) == DETECTION_OPTION_MATCH);
     CHECK(!strcmp((char*)c.start(), " stew *"));
+    CHECK(opt->retry());
 }
 
 TEST(ips_regex_option, no_match_delta)
@@ -322,6 +324,7 @@ TEST(ips_regex_option_relative, no_match)
 
     CHECK(opt->is_relative());
     CHECK(opt->eval(c, &pkt) == DETECTION_OPTION_NO_MATCH);
+    CHECK(!opt->retry());
 }
 
 //-------------------------------------------------------------------------
