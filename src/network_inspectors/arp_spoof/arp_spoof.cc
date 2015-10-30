@@ -262,8 +262,10 @@ void ArpSpoof::eval(Packet* p)
     }
 
     else
+    {
         DebugMessage(DEBUG_INSPECTOR,
             "MODNAME: LookupIPMacEntryByIp returned NULL\n");
+    }
 }
 
 //-------------------------------------------------------------------------

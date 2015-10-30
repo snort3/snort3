@@ -24,7 +24,10 @@ lua_util.h \
 lua_table.h \
 lua_arg.h \
 lua_stack.h \
-lua_stack_test.cc \
 lua_test_common.h
+
+if BUILD_UNIT_TESTS
+liblua_a_SOURCES += lua_stack_test.cc
+endif
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
