@@ -496,6 +496,10 @@ int TcpNormalizerVista::handle_repeated_syn( TcpDataBlock *tdb )
 
 bool TcpNormalizerProxy::validate_rst( TcpDataBlock *tdb )
 {
+#ifndef DEBUG_MSGS
+    UNUSED( tdb );
+#endif
+
     // FIXIT - will session->flow ever be null? i would think not, remove this check if possible
     if( session->flow )
     {
