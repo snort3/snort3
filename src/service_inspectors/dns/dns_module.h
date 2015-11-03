@@ -37,7 +37,15 @@
 
 struct SnortConfig;
 
-extern THREAD_LOCAL SimpleStats dnsstats;
+struct DNSStats
+{
+    PegCount packets;
+    PegCount requests;
+    PegCount responses;
+};
+
+extern const PegInfo dns_peg_names[];
+extern THREAD_LOCAL DNSStats dnsstats;
 extern THREAD_LOCAL ProfileStats dnsPerfStats;
 
 class DnsModule : public Module

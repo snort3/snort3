@@ -56,7 +56,7 @@ const RuleMap* DnsModule::get_rules() const
 { return dns_rules; }
 
 const PegInfo* DnsModule::get_pegs() const
-{ return simple_pegs; }
+{ return dns_peg_names; }
 
 PegCount* DnsModule::get_counts() const
 { return (PegCount*)&dnsstats; }

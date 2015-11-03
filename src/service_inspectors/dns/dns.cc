@@ -43,11 +43,22 @@
 
 #include "dns_module.h"
 
-THREAD_LOCAL ProfileStats dnsPerfStats;
-THREAD_LOCAL SimpleStats dnsstats;
-
-#define MIN_UDP_PAYLOAD 0x1FFF
+#define MAX_UDP_PAYLOAD 0x1FFF
 #define DNS_RR_PTR 0xC0
+
+THREAD_LOCAL ProfileStats dnsPerfStats;
+THREAD_LOCAL DNSStats dnsstats;
+
+const PegInfo dns_peg_names[] =
+{
+    { "packets", "total packets processed" },
+    { "requests", "total dns requests" },
+    { "responses", "total dns responses" },
+
+    { nullptr, nullptr }
+};
+
+
 
 /*
  * Function prototype(s)
@@ -71,14 +82,25 @@ DNSData* SetNewDNSData(Packet* p)
     return &fd->session;
 }
 
-static DNSData* get_dns_session_data(Packet* p)
+static DNSData* get_dns_session_data(Packet* p, bool from_server)
 {
     DnsFlowData* fd;
 
     if (p->is_udp())
     {
-        if (p->dsize < (sizeof(DNSHdr) + sizeof(DNSRR) + MIN_UDP_PAYLOAD))
+        if(p->dsize > MAX_UDP_PAYLOAD)
             return NULL;
+
+        if(!from_server)
+        {
+            if (p->dsize < (sizeof(DNSHdr) + sizeof(DNSQuestion) + 2))
+                return NULL;
+        }
+        else
+        {
+            if (p->dsize < (sizeof(DNSHdr)))
+                return NULL;
+        }
 
         memset(&udpSessionData, 0, sizeof(udpSessionData));
         return &udpSessionData;
@@ -767,6 +789,8 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
             }
             else
             {
+                if (dnsSessionData->hdr.flags & DNS_HDR_FLAG_RESPONSE)
+                    dnsstats.responses++;
                 /* No more data */
                 return;
             }
@@ -794,6 +818,8 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
             /* Not a response */
             return;
         }
+        else
+            dnsstats.responses++;
 
         /* Handle the DNS Queries */
         if (dnsSessionData->state == DNS_RESP_STATE_QUESTION)
@@ -1022,12 +1048,11 @@ static void snort_dns(Packet* p)
     }
 
     // Get the direction of the packet.
-    uint8_t direction = ( (p->packet_flags & PKT_FROM_SERVER ) ?
-        DNS_DIR_FROM_SERVER : DNS_DIR_FROM_CLIENT );
+    bool from_server = ( (p->packet_flags & PKT_FROM_SERVER ) ? true : false );
 
 
     // Attempt to get a previously allocated DNS block.
-    DNSData* dnsSessionData = get_dns_session_data(p);
+    DNSData* dnsSessionData = get_dns_session_data(p, from_server);
 
     if (dnsSessionData == NULL)
     {
@@ -1043,9 +1068,13 @@ static void snort_dns(Packet* p)
     if (dnsSessionData->flags & DNS_FLAG_NOT_DNS)
         return;
 
-    if (direction == DNS_DIR_FROM_SERVER)
+    if ( from_server )
     {
         ParseDNSResponseMessage(p, dnsSessionData);
+    }
+    else
+    {
+        dnsstats.requests++;
     }
 }
 
@@ -1076,7 +1105,7 @@ void Dns::eval(Packet* p)
     assert((p->is_udp() and p->dsize and p->data) or p->has_tcp_data());
     assert(p->flow);
 
-    ++dnsstats.total_packets;
+    ++dnsstats.packets;
     snort_dns(p);
 }
 
