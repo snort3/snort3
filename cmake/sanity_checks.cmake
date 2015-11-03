@@ -189,7 +189,7 @@ if (DEFINED OPENSSL_CRYPTO_LIBRARIES)
     check_library_exists (${OPENSSL_CRYPTO_LIBRARIES} MD5_Init "" HAVE_OPENSSL_MD5)
 endif()
 
-if (DEFINED HS_LIBRARIES)
+if (HS_FOUND)
     check_library_exists (${HS_LIBRARIES} hs_scan "" HAVE_HYPERSCAN)
 endif()
 
