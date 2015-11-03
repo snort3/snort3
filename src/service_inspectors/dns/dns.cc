@@ -783,14 +783,16 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
             }
 
             bytes_unused = ParseDNSHeader(data, bytes_unused, dnsSessionData);
+
+            if (dnsSessionData->hdr.flags & DNS_HDR_FLAG_RESPONSE)
+                dnsstats.responses++;
+
             if (bytes_unused > 0)
             {
                 data = p->data + (p->dsize - bytes_unused);
             }
             else
             {
-                if (dnsSessionData->hdr.flags & DNS_HDR_FLAG_RESPONSE)
-                    dnsstats.responses++;
                 /* No more data */
                 return;
             }
@@ -818,8 +820,6 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
             /* Not a response */
             return;
         }
-        else
-            dnsstats.responses++;
 
         /* Handle the DNS Queries */
         if (dnsSessionData->state == DNS_RESP_STATE_QUESTION)
