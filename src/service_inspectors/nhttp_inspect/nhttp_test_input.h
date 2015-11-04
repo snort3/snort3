@@ -39,6 +39,7 @@ public:
 private:
     FILE* test_data_file;
     uint8_t msg_buf[2 * NHttpEnums::MAX_OCTETS];
+    FILE* include_file = nullptr;
 
     // break command has been read and we are waiting for a new flow to start
     bool need_break = false;

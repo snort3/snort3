@@ -27,6 +27,19 @@
 
 using namespace NHttpEnums;
 
+static unsigned convert_num_octets(char buffer[], unsigned length)
+{
+    unsigned amount = 0;
+    for (unsigned k = 0; k < length; k++)
+    {
+        if ((buffer[k] >= '0') && (buffer[k] <= '9'))
+        {
+            amount = amount * 10 + (buffer[k] - '0');
+        }
+    }
+    return amount;
+}
+
 NHttpTestInput::NHttpTestInput(const char* file_name)
 {
     if ((test_data_file = fopen(file_name, "r")) == nullptr)
@@ -45,6 +58,11 @@ void NHttpTestInput::reset()
     close_pending = false;
     close_notified = false;
     need_break = false;
+    if (include_file != nullptr)
+    {
+        fclose(include_file);
+        include_file = nullptr;
+    }
 }
 
 // Read from the test data file and present to StreamSplitter. In the process we may need to skip
@@ -107,8 +125,8 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
     enum State { WAITING, COMMENT, COMMAND, PARAGRAPH, ESCAPE, HEXVAL };
     State state = WAITING;
     bool ending = false;
-    int command_length = 0;
-    const int max_command = 100;
+    unsigned command_length = 0;
+    const int max_command = 1000;
     char command_value[max_command];
     uint8_t hex_val = 0;
     int num_digits = 0;
@@ -185,19 +203,13 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
                 {
                     tcp_closed = true;
                 }
-                else if ((command_length > 4) && !memcmp(command_value, "fill", 4))
+                else if ((command_length > strlen("fill")) && !memcmp(command_value, "fill",
+                    strlen("fill")))
                 {
-                    int amount = 0;
-                    for (int k = 4; k < command_length; k++)
-                    {
-                        if ((command_value[k] >= '0') && (command_value[k] <= '9'))
-                        {
-                            amount = amount * 10 + (command_value[k] - '0');
-                            assert(amount <= 2*MAX_OCTETS);
-                        }
-                    }
-                    assert(amount > 0);
-                    for (int k = 0; k < amount; k++)
+                    const unsigned amount = convert_num_octets(command_value + strlen("fill"),
+                        command_length - strlen("fill"));
+                    assert((amount > 0) && (amount <= MAX_OCTETS));
+                    for (unsigned k = 0; k < amount; k++)
                     {
                         // auto-fill ABCDEFGHIJABCD ...
                         msg_buf[end_offset++] = 'A' + k%10;
@@ -210,18 +222,80 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
                         return;
                     }
                 }
+                else if ((command_length > strlen("fileset")) && !memcmp(command_value, "fileset",
+                    strlen("fileset")))
+                {
+                    // Designate a file of data to be loaded into the message buffer
+                    char include_file_name[max_command];
+                    int offset = strlen("fileset");
+                    for (; command_value[offset] == ' '; offset++);
+                    unsigned k;
+                    for (k=0; k < command_length - offset; k++)
+                    {
+                        include_file_name[k] = command_value[k+offset];
+                    }
+                    include_file_name[k] = '\0';
+                    if (include_file != nullptr)
+                        fclose(include_file);
+                    if ((include_file = fopen(include_file_name, "r")) == nullptr)
+                        throw std::runtime_error("Cannot open test file to be included");
+                }
+                else if ((command_length > strlen("fileread")) && !memcmp(command_value,
+                    "fileread", strlen("fileread")))
+                {
+                    // Read the specified number of octets from the included file into the message
+                    // buffer and return the resulting segment
+                    const unsigned amount = convert_num_octets(command_value + strlen("fileread"),
+                        command_length - strlen("fileread"));
+                    assert((amount > 0) && (amount <= MAX_OCTETS));
+                    int new_octet;
+                    for (unsigned k=0; k < amount; k++)
+                    {
+                        new_octet = getc(include_file);
+                        assert(new_octet != EOF);
+                        msg_buf[end_offset++] = new_octet;
+                    }
+                    if (skip_to_break)
+                        end_offset = 0;
+                    else
+                    {
+                        length = end_offset - previous_offset;
+                        return;
+                    }
+                }
+                else if ((command_length > strlen("fileskip")) && !memcmp(command_value,
+                    "fileskip", strlen("fileskip")))
+                {
+                    // Skip the specified number of octets from the included file
+                    const unsigned amount = convert_num_octets(command_value + strlen("fileskip"),
+                        command_length - strlen("fileskip"));
+                    assert(amount > 0);
+                    for (unsigned k=0; k < amount; k++)
+                    {
+                        getc(include_file);
+                    }
+                }
+                else if ((command_length == strlen("fileclose")) && !memcmp(command_value,
+                    "fileclose", strlen("fileclose")))
+                {
+                    if (include_file != nullptr)
+                    {
+                        fclose(include_file);
+                        include_file = nullptr;
+                    }
+                }
                 else if (command_length > 0)
                 {
                     // Look for a test number
                     bool is_number = true;
-                    for (int k=0; (k < command_length) && is_number; k++)
+                    for (unsigned k=0; (k < command_length) && is_number; k++)
                     {
                         is_number = (command_value[k] >= '0') && (command_value[k] <= '9');
                     }
                     if (is_number)
                     {
                         int64_t test_number = 0;
-                        for (int j=0; j < command_length; j++)
+                        for (unsigned j=0; j < command_length; j++)
                         {
                             test_number = test_number * 10 + (command_value[j] - '0');
                         }
@@ -399,11 +473,21 @@ void NHttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sou
         // We need to generate additional data to fill out the body or chunk section.
         for (uint32_t k = end_offset; k < flush_octets; k++)
         {
-            msg_buf[k] = 'A' + k % 26;
+            if (include_file == nullptr)
+            {
+                msg_buf[k] = 'A' + k % 26;
+            }
+            else
+            {
+                int new_octet = getc(include_file);
+                assert(new_octet != EOF);
+                msg_buf[k] = new_octet;
+            }
         }
     }
     just_flushed = true;
     flushed = false;
 }
+
 #endif
 

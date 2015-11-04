@@ -101,14 +101,25 @@ must search and reassemble).
 Lines beginning with # are comments. Lines beginning with @ are commands. This does not apply to
 lines in the middle of a paragraph.
 
-Command lines are left justified, lower case, with no whitespace:
+Commands:
   @break resets HTTP Inspect data structures and begins a new test. Use it liberally to prevent
      unrelated tests from interfering with each other.
   @tcpclose simulates a half-duplex TCP close following the next paragraph of data.
   @request and @response set the message direction. Applies to subsequent paragraphs until changed.
      The initial direction is always request and the break command resets the direction to request.
-  @fill<decimal number> create a paragraph consisting of <number> octets of auto-fill data
+  @fill <decimal number> create a paragraph consisting of <number> octets of auto-fill data
      ABCDEFGHIJABC ... Primarily useful for chunk testing.
+  @fileset <pathname> specifies a file from which the tool will read data into the message buffer.
+     This may be used to include a zipped or other binary file into a message body. Data is read
+     beginning at the start of the file.
+  @fileread <decimal number> read the specified number of bytes from the included file into the
+     message buffer. Each read corresponds to one TCP section.
+  @fileskip <decimal number> skips over the specified number of bytes in the included file. This
+     must be a positive number. To move backward do a new fileset and skip forward from the
+     beginning.
+  @fileclose resets the current file to none. Closing is done automatically whenever a new file is
+     set or there is a break command. An explicit close is only necessary when you want to revert
+     to generated fill data (see below).
   @<decimal number> sets the test number and hence the test output file name. Applies to subsequent
      sections until changed. Don't reuse numbers.
 
@@ -125,12 +136,12 @@ Escape sequences begin with '\'. They may be used within a paragraph or to begin
 Data is separated into segments for presentation to the splitter whenever a paragraph ends (blank
 line).
 
-Whenever a segment contains insufficient data to make up a body, fill data will be generated to
+Whenever a segment contains insufficient data to make up a body, fill data will be provided to
 make up the difference based on the Content-Length field. Specifically, flushing more data than in
 the current segment will trigger filling. The user should include at least one character of body
 data either as part of the previous header segment or at the beginning of a new segment following
-the headers. All data bytes included in the file will be used followed by required fill data in the
-pattern ABC...XYZABC...
+the headers. Fill data will be read from the currently included file. If no included file is
+currently set the fill data will be generated in the pattern ABC...XYZABC...
 
 The current chunk reassembly algorithm does not flush data beyond the current segment. The fill
 feature does not work with chunked bodies but the fill command can be used.
