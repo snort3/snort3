@@ -94,7 +94,7 @@ void NHttpFlowData::half_reset(SourceId source_id)
     }
     infractions[source_id].reset();
     events[source_id].reset();
-    body_offset[source_id] = 0;
+    section_offset[source_id] = 0;
     chunk_state[source_id] = CHUNK_NUMBER;
     chunk_expected_length[source_id] = 0;
 

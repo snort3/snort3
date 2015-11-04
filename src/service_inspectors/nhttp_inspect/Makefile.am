@@ -10,6 +10,7 @@ nhttp_msg_header.cc nhttp_msg_header.h \
 nhttp_msg_body.cc nhttp_msg_body.h \
 nhttp_msg_body_cl.cc nhttp_msg_body_cl.h \
 nhttp_msg_body_chunk.cc nhttp_msg_body_chunk.h \
+nhttp_msg_body_old.cc nhttp_msg_body_old.h \
 nhttp_msg_trailer.cc nhttp_msg_trailer.h \
 nhttp_head_norm.cc nhttp_head_norm.h \
 nhttp_uri.cc nhttp_uri.h \

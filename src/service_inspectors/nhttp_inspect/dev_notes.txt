@@ -25,19 +25,21 @@ framework. It also glues together the inspector, the client-to-server splitter,
 and the server-to-client splitter which pass information through the flow data.
 
 Message section is a core concept of NHI. A message section is a piece of an
-HTTP message that is processed together. There are six types of message
+HTTP message that is processed together. There are seven types of message
 section:
 
 1. Request line (client-to-server start line)
 2. Status line (server-to-client start line)
 3. Headers (all headers after the start line as a group)
-4. Content-Length message body (a block of message data usually not much larger than 16K from a
-   body defined by the Content-Length header)
+4. Content-Length message body (a block of message data usually not much larger
+   than 16K from a body defined by the Content-Length header)
 5. Chunked message body (same but from a chunked body)
-6. Trailers (all header lines following a chunked body as a group)
+6. Old message body (same but from a body with no Content-Length header that
+   runs to connection close)
+7. Trailers (all header lines following a chunked body as a group)
 
 Message sections are represented by message section objects that contain and
-process them. There are ten message section classes that inherit as follows.
+process them. There are eleven message section classes that inherit as follows.
 An asterisk denotes a virtual class.
 
 1. NHttpMsgSection* - top level with all common elements
@@ -50,6 +52,7 @@ An asterisk denotes a virtual class.
 8. NHttpMsgBody* : NHttpMsgSection - common elements of message body processing
 9. NHttpMsgBodyCl : NHttpMsgBody
 10. NHttpMsgBodyChunk : NHttpMsgBody
+11. NHttpMsgBodyOld : NHttpMsgBody
 
 An NHttpTransaction is a container that keeps all the sections of a message
 together and associates the request message with the response message.

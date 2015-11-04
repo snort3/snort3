@@ -32,6 +32,7 @@
 #include "nhttp_msg_body.h"
 #include "nhttp_msg_body_chunk.h"
 #include "nhttp_msg_body_cl.h"
+#include "nhttp_msg_body_old.h"
 #include "nhttp_msg_trailer.h"
 #include "nhttp_test_manager.h"
 #include "nhttp_field.h"
@@ -111,11 +112,15 @@ const Field& NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Fl
         latest_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner, flow,
             &params);
         break;
-    case SEC_BODY:
+    case SEC_BODY_CL:
         latest_section = new NHttpMsgBodyCl(data, dsize, session_data, source_id, buf_owner, flow,
             &params);
         break;
-    case SEC_CHUNK:
+    case SEC_BODY_OLD:
+        latest_section = new NHttpMsgBodyOld(data, dsize, session_data, source_id, buf_owner, flow,
+            &params);
+        break;
+    case SEC_BODY_CHUNK:
         latest_section = new NHttpMsgBodyChunk(data, dsize, session_data, source_id, buf_owner,
             flow, &params);
         break;

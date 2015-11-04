@@ -52,6 +52,7 @@ public:
     friend class NHttpMsgBody;
     friend class NHttpMsgBodyChunk;
     friend class NHttpMsgBodyCl;
+    friend class NHttpMsgBodyOld;
     friend class NHttpStreamSplitter;
     friend class NHttpTransaction;
 
@@ -67,7 +68,7 @@ private:
 
     // *** StreamSplitter internal data - reassemble()
     uint8_t* section_buffer[2] = { nullptr, nullptr };
-    uint32_t body_offset[2] = { 0, 0 };
+    uint32_t section_offset[2] = { 0, 0 };
     NHttpEnums::ChunkState chunk_state[2] = { NHttpEnums::CHUNK_NUMBER, NHttpEnums::CHUNK_NUMBER };
     uint32_t chunk_expected_length[2] = { 0, 0 };
 

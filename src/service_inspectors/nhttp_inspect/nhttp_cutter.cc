@@ -211,6 +211,21 @@ ScanResult NHttpBodyClCutter::cut(const uint8_t*, uint32_t length, NHttpInfracti
     }
 }
 
+ScanResult NHttpBodyOldCutter::cut(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&,
+    uint32_t flow_target, uint32_t)
+{
+    if (flow_target == 0)
+    {
+        // With other types of body we could skip to the next message now. But this body will run
+        // to connection close so we just stop.
+        return SCAN_END;
+    }
+
+    // FIXIT-M need to implement random increments
+    num_flush = flow_target;
+    return SCAN_FOUND_PIECE;
+}
+
 ScanResult NHttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
     NHttpInfractions& infractions, NHttpEventGen& events, uint32_t flow_target, uint32_t)
 {

@@ -51,8 +51,6 @@ void NHttpMsgHeader::update_flow()
     // The following logic to determine body type is by no means the last word on this topic.
     // FIXIT-H need to distinguish methods such as POST that should have a body from those that
     // should not.
-    // FIXIT-H need to support old implementations that don't use Content-Length but just
-    // disconnect the connection.
     if ((source_id == SRC_SERVER) && ((status_code_num <= 199) || (status_code_num == 204) ||
         (status_code_num == 304)))
     {
@@ -83,7 +81,7 @@ void NHttpMsgHeader::update_flow()
         {
             // FIXIT-M inspect for Content-Length header which should not be present
             // Chunked body
-            session_data->type_expected[source_id] = SEC_CHUNK;
+            session_data->type_expected[source_id] = SEC_BODY_CHUNK;
             prepare_body();
             return;
         }
@@ -96,19 +94,40 @@ void NHttpMsgHeader::update_flow()
         if (content_length > 0)
         {
             // Regular body
-            session_data->type_expected[source_id] = SEC_BODY;
+            session_data->type_expected[source_id] = SEC_BODY_CL;
             session_data->data_length[source_id] = content_length;
             prepare_body();
             return;
         }
-        if (content_length < 0)
+        else if (content_length == 0)
+        {
+            // No body
+            session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST :
+                SEC_STATUS;
+            session_data->half_reset(source_id);
+            return;
+        }
+        else
+        {
             infractions += INF_BAD_HEADER_DATA;
+            // Treat as if there was no Content-Length header (drop through)
+        }
     }
 
-    // No body
-    session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
-    session_data->half_reset(source_id);
-    return;
+    if (source_id == SRC_CLIENT)
+    {
+        // No body
+        session_data->type_expected[source_id] = SEC_REQUEST;
+        session_data->half_reset(source_id);
+        return;
+    }
+    else
+    {
+        // Old-style response body runs to connection close
+        session_data->type_expected[source_id] = SEC_BODY_OLD;
+        prepare_body();
+        return;
+    }
 }
 
 // Common activities of preparing for upcoming regular body or chunked body

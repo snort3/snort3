@@ -65,10 +65,12 @@ NHttpCutter* NHttpStreamSplitter::get_cutter(SectionType type,
     case SEC_HEADER:
     case SEC_TRAILER:
         return (NHttpCutter*)new NHttpHeaderCutter;
-    case SEC_BODY:
+    case SEC_BODY_CL:
         return (NHttpCutter*)new NHttpBodyClCutter(session_data->data_length[source_id]);
-    case SEC_CHUNK:
+    case SEC_BODY_CHUNK:
         return (NHttpCutter*)new NHttpBodyChunkCutter;
+    case SEC_BODY_OLD:
+        return (NHttpCutter*)new NHttpBodyOldCutter;
     default:
         assert(false);
         return nullptr;
@@ -120,8 +122,8 @@ void NHttpStreamSplitter::chunk_spray(NHttpFlowData* session_data, uint8_t* buff
           {
             const uint32_t skip_amount = (length-k <= expected) ? length-k : expected;
             const bool at_start = (session_data->body_octets[source_id] == 0) &&
-                (session_data->body_offset[source_id] == 0);
-            decompress_copy(buffer, session_data->body_offset[source_id], data+k, skip_amount,
+                (session_data->section_offset[source_id] == 0);
+            decompress_copy(buffer, session_data->section_offset[source_id], data+k, skip_amount,
                 session_data->compression[source_id], session_data->compress_stream[source_id],
                 at_start, session_data->infractions[source_id], session_data->events[source_id]);
             if ((expected -= skip_amount) == 0)
@@ -145,8 +147,8 @@ void NHttpStreamSplitter::chunk_spray(NHttpFlowData* session_data, uint8_t* buff
           {
             const uint32_t skip_amount = length-k;
             const bool at_start = (session_data->body_octets[source_id] == 0) &&
-                (session_data->body_offset[source_id] == 0);
-            decompress_copy(buffer, session_data->body_offset[source_id], data+k, skip_amount,
+                (session_data->section_offset[source_id] == 0);
+            decompress_copy(buffer, session_data->section_offset[source_id], data+k, skip_amount,
                 session_data->compression[source_id], session_data->compress_stream[source_id],
                 at_start, session_data->infractions[source_id], session_data->events[source_id]);
             k += skip_amount-1;
@@ -160,22 +162,21 @@ void NHttpStreamSplitter::chunk_spray(NHttpFlowData* session_data, uint8_t* buff
     }
 }
 
-void NHttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& body_offset,
-    const uint8_t* data, uint32_t length, NHttpEnums::CompressId& compression,
-    z_stream*& compress_stream, bool at_start, NHttpInfractions& infractions,
-    NHttpEventGen& events)
+void NHttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, const uint8_t* data,
+    uint32_t length, NHttpEnums::CompressId& compression, z_stream*& compress_stream,
+    bool at_start, NHttpInfractions& infractions, NHttpEventGen& events)
 {
     if ((compression == CMP_GZIP) || (compression == CMP_DEFLATE))
     {
         compress_stream->next_in = (Bytef*)data;
         compress_stream->avail_in = length;
-        compress_stream->next_out = buffer + body_offset;
-        compress_stream->avail_out = MAX_OCTETS - body_offset;
+        compress_stream->next_out = buffer + offset;
+        compress_stream->avail_out = MAX_OCTETS - offset;
         int ret_val = inflate(compress_stream, Z_SYNC_FLUSH);
 
         if ((ret_val == Z_OK) || (ret_val == Z_STREAM_END))
         {
-            body_offset = MAX_OCTETS - compress_stream->avail_out;
+            offset = MAX_OCTETS - compress_stream->avail_out;
             if (compress_stream->avail_in > 0)
             {
                 // There are two ways not to consume all the input
@@ -187,8 +188,8 @@ void NHttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& body_offset
                     const uInt num_copy =
                         (compress_stream->avail_in <= compress_stream->avail_out) ?
                         compress_stream->avail_in : compress_stream->avail_out;
-                    memcpy(buffer + body_offset, data, num_copy);
-                    body_offset += num_copy;
+                    memcpy(buffer + offset, data, num_copy);
+                    offset += num_copy;
                 }
                 else
                 {
@@ -216,8 +217,8 @@ void NHttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& body_offset
             inflate(compress_stream, Z_SYNC_FLUSH);
 
             // Start over at the beginning
-            decompress_copy(buffer, body_offset, data, length, compression, compress_stream,
-                false, infractions, events);
+            decompress_copy(buffer, offset, data, length, compression, compress_stream, false,
+                infractions, events);
             return;
         }
         else
@@ -234,14 +235,14 @@ void NHttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& body_offset
 
     // The following precaution is necessary because mixed compressed and uncompressed data can
     // cause the buffer to overrun even though we are not decompressing right now
-    if (length > MAX_OCTETS - body_offset)
+    if (length > MAX_OCTETS - offset)
     {
-        length = MAX_OCTETS - body_offset;
+        length = MAX_OCTETS - offset;
         infractions += INF_GZIP_OVERRUN;
         events.create_event(EVENT_GZIP_OVERRUN);
     }
-    memcpy(buffer + body_offset, data, length);
-    body_offset += length;
+    memcpy(buffer + offset, data, length);
+    offset += length;
 }
 
 StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data, uint32_t length,
@@ -320,6 +321,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
 #endif
         return StreamSplitter::SEARCH;
     case SCAN_ABORT:
+    case SCAN_END: // FIXIT-H need StreamSplitter::END
         session_data->type_expected[source_id] = SEC_ABORT;
         delete cutter;
         cutter = nullptr;
@@ -354,14 +356,13 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
     }
 }
 
-const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, unsigned offset,
+const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, unsigned,
     const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
     static THREAD_LOCAL StreamBuffer nhttp_buf;
 
     copied = len;
 
-    assert(total >= offset + len);
     assert(total <= MAX_OCTETS);
 
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
@@ -392,14 +393,12 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
                 return nullptr;
             }
             data = test_buffer;
-            offset = 0;
             total = len;
         }
         else
         {
-            printf("Reassemble from flow data %" PRIu64
-                " direction %d total %u length %u offset %u\n",
-                session_data->seq_num, source_id, total, len, offset);
+            printf("Reassemble from flow data %" PRIu64 " direction %d total %u length %u\n",
+                session_data->seq_num, source_id, total, len);
             fflush(stdout);
         }
     }
@@ -430,13 +429,13 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             // next stage.
             if (session_data->cutter[source_id] == nullptr)
             {
-                if (session_data->type_expected[source_id] == SEC_BODY)
+                if (session_data->type_expected[source_id] == SEC_BODY_CL)
                 {
                     session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ?
                         SEC_REQUEST : SEC_STATUS;
                     session_data->half_reset(source_id);
                 }
-                else if (session_data->type_expected[source_id] == SEC_CHUNK)
+                else if (session_data->type_expected[source_id] == SEC_BODY_CHUNK)
                 {
                     session_data->trailer_prep(source_id);
                 }
@@ -447,10 +446,12 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
 
     uint8_t*& buffer = session_data->section_buffer[source_id];
 
+    const bool is_body = (session_data->section_type[source_id] == SEC_BODY_CHUNK) ||
+                         (session_data->section_type[source_id] == SEC_BODY_CL) ||
+                         (session_data->section_type[source_id] == SEC_BODY_OLD);
     if (buffer == nullptr)
     {
-        if ((session_data->section_type[source_id] == SEC_BODY) ||
-            (session_data->section_type[source_id] == SEC_CHUNK))
+        if (is_body)
         {
             buffer = NHttpInspect::body_buffer;
         }
@@ -460,11 +461,11 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         }
     }
 
-    if (session_data->section_type[source_id] != SEC_CHUNK)
+    if (session_data->section_type[source_id] != SEC_BODY_CHUNK)
     {
         const bool at_start = (session_data->body_octets[source_id] == 0) &&
-             (session_data->body_offset[source_id] == 0);
-        decompress_copy(buffer, session_data->body_offset[source_id], data, len,
+             (session_data->section_offset[source_id] == 0);
+        decompress_copy(buffer, session_data->section_offset[source_id], data, len,
             session_data->compression[source_id], session_data->compress_stream[source_id],
             at_start, session_data->infractions[source_id], session_data->events[source_id]);
     }
@@ -475,13 +476,11 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
 
     if (flags & PKT_PDU_TAIL)
     {
-        const bool not_chunk = session_data->section_type[source_id] != SEC_CHUNK;
-
         const Field& send_to_detection = my_inspector->process(buffer,
-            session_data->body_offset[source_id] - session_data->num_excess[source_id], flow,
-            source_id, not_chunk && (session_data->section_type[source_id] != SEC_BODY));
+            session_data->section_offset[source_id] - session_data->num_excess[source_id], flow,
+            source_id, !is_body);
 
-        session_data->body_offset[source_id] = 0;
+        session_data->section_offset[source_id] = 0;
 
         // Buffers are reset to nullptr without delete[] because NHttpMsgSection holds the pointer
         // and is responsible

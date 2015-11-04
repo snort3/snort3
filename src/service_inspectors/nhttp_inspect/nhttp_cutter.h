@@ -107,6 +107,13 @@ private:
     int64_t remaining;
 };
 
+class NHttpBodyOldCutter : public NHttpCutter
+{
+public:
+    NHttpEnums::ScanResult cut(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&,
+        uint32_t flow_target, uint32_t) override;
+};
+
 class NHttpBodyChunkCutter : public NHttpCutter
 {
 public:
