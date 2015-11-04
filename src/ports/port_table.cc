@@ -631,7 +631,8 @@ static int PortTableCompileMergePortObjects(PortTable* p)
         "***\n*** PortList-Merging, Large Rule groups must have %d rules\n",p->pt_lrc);
 
     plx_list = sflist_new();
-    sflist_init(plx_list);
+    if ( !plx_list )
+        return -1;
 
     p->pt_plx_list = plx_list;
 
