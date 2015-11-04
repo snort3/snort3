@@ -224,7 +224,7 @@ typedef struct
 #define Q0 (P3+3)
 #define Q1 (Q0+12)
 #define Q2 (Q1+6)
-#define Q3 (Q2+8)
+#define Q3 (Q2+9)
 
 #define R2 (Q3+3)
 #define R3 (R2+5)
@@ -311,9 +311,7 @@ static const HiRule hi_rule[] =
     { Q0+10, Q0+10, Q0+11, ACT_NOP, TOKS },
     { Q0+11, Q1+ 0, Q3+ 2, ACT_NOP, LWSS },
 
-    // check tokens before eol to determine version
-    // 2 tokens is a 0.9 SimpleRequest (1 line header)
-    // this gets URI
+    // this gets required URI / next token
     { Q1+ 0, R8+ 0, Q1+ 1, ACT_NOP, EOLS },
     { Q1+ 1, Q1+ 0, Q1+ 2, ACT_NOP, LWSS },
     { Q1+ 2, Q1+ 3, Q1+ 3, ACT_NOP, ANYS },
@@ -321,17 +319,18 @@ static const HiRule hi_rule[] =
     { Q1+ 4, Q2+ 0, Q1+ 5, ACT_NOP, LWSS },
     { Q1+ 5, Q1+ 3, Q1+ 3, ACT_NOP, ANYS },
 
-    // 3 tokens is >= 1.0 (1 or more header lines)
-    // this gets version
+    // this gets version, allowing extra tokens
+    // if start line doesn't end with version,
+    // assume 0.9 SimpleRequest (1 line header)
     { Q2+ 0, R8+ 0, Q2+ 1, ACT_V09, EOLS },
     { Q2+ 1, Q2+ 0, Q2+ 2, ACT_NOP, LWSS },
-    // TBD allow unescaped space in URI; alert later
-    { Q2+ 2, Q2+ 3, Q3+ 0, ACT_NOP, "H"  },
-    { Q2+ 3, Q2+ 4, Q3+ 2, ACT_NOP, "TTP/1." },
+    { Q2+ 2, Q2+ 3, Q2+ 8, ACT_NOP, "H"  },
+    { Q2+ 3, Q2+ 4, Q2+ 8, ACT_NOP, "TTP/1." },
     { Q2+ 4, Q2+ 6, Q2+ 5, ACT_V10, "0"  },
-    { Q2+ 5, Q2+ 6, Q3+ 2, ACT_V11, "1"  },
+    { Q2+ 5, Q2+ 6, Q2+ 8, ACT_V11, "1"  },
     { Q2+ 6, R2+ 0, Q2+ 7, ACT_REQ, EOLS },
-    { Q2+ 7, Q2+ 6, Q3+ 2, ACT_NOP, LWSS },
+    { Q2+ 7, Q2+ 6, Q2+ 8, ACT_NOP, LWSS },
+    { Q2+ 8, Q2+ 0, Q2+ 0, ACT_NOP, ANYS },
 
     // resync state
     { Q3+ 0, Q0   , Q3+ 1, ACT_NOP, LWSS },
