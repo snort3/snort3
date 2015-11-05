@@ -491,7 +491,7 @@ static bool house_keeping()
 {
     signal_check();
 
-    IdleProcessingExecute();
+    IdleProcessing::execute();
 
     periodic_check();
 

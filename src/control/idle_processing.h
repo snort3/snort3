@@ -22,10 +22,15 @@
 
 using IdleHook = void (*)();
 
-// FIXIT-L: These should be static class methods
-void IdleProcessingRegisterHandler(IdleHook);
-void IdleProcessingExecute(void);
-void IdleProcessingCleanUp(void);
+class IdleProcessing
+{
+public:
+    static void register_handler(IdleHook);
+    static void execute();
+
+    // only needs to be called if changing out the handler set
+    static void unregister_all();
+};
 
 #endif
 

@@ -379,8 +379,6 @@ void Snort::term()
     already_exiting = 1;
     initializing = false;  /* just in case we cut out early */
 
-    IdleProcessingCleanUp();
-
     IpsManager::global_term(snort_conf);
     SFAT_Cleanup();
 

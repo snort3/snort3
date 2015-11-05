@@ -28,31 +28,25 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
 #include <vector>
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
 
-typedef std::vector<IdleHook> IdleList;
-static IdleList idle_list;
+static std::vector<IdleHook> s_idle_handlers;
 
-void IdleProcessingRegisterHandler(IdleHook f)
-{
-    idle_list.push_back(f);
-}
+void IdleProcessing::register_handler(IdleHook f)
+{ s_idle_handlers.push_back(f); }
 
-void IdleProcessingExecute(void)
+void IdleProcessing::execute()
 {
-    for ( auto f : idle_list )
+    for ( const auto& f : s_idle_handlers )
         f();
 }
 
-void IdleProcessingCleanUp(void)
-{
-    idle_list.clear();
-}
+void IdleProcessing::unregister_all()
+{ s_idle_handlers.clear(); }
 
 //--------------------------------------------------------------------------
 // tests
@@ -67,18 +61,22 @@ static void iph2() { s_niph2++; }
 
 TEST_CASE("idle callback", "[control]")
 {
-    IdleProcessingRegisterHandler(iph1);
-    IdleProcessingRegisterHandler(iph2);
+    IdleProcessing::register_handler(iph1);
+    IdleProcessing::register_handler(iph2);
 
-    IdleProcessingExecute();
+    IdleProcessing::execute();
     CHECK(s_niph1 == 1);
     CHECK(s_niph2 == 1);
 
-    IdleProcessingExecute();
+    IdleProcessing::execute();
     CHECK(s_niph1 == 2);
     CHECK(s_niph2 == 2);
 
-    IdleProcessingCleanUp();
+    IdleProcessing::unregister_all();
+
+    IdleProcessing::execute();
+    CHECK(s_niph1 == 2);
+    CHECK(s_niph2 == 2);
 }
 #endif
 
