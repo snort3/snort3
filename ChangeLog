@@ -1,3 +1,15 @@
+15/11/05 - build 177
+
+-- idle processing cleanup
+-- fixed teredo payload detection
+-- new_http_inspect cleanup
+-- update old http_inspect to allow spaces in uri
+-- added null check suggest by Bill Parker
+-- fix cmake for hyperscan
+-- ssl and dns stats updates
+-- fix ppm config
+-- miscellanous code cleanup
+
 15/10/30 - build 176
 
 -- tcp reassembly refactoring
