@@ -465,17 +465,7 @@ static int gtp_parse_v2(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
  ********************************************************************/
 int gtp_parse(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 {
-    int status;
-    GTP_C_Hdr* hdr;
-    GTP_MsgType* msgType;
-
-    /*Initialize key values*/
-
-    status = true;
-
     DEBUG_WRAP(DebugMessage(DEBUG_GTP, "Start parsing...\n"));
-
-    hdr = (GTP_C_Hdr*)buff;
 
     /*Check the length*/
     DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Basic header length: %d\n", GTP_MIN_HEADER_LEN));
@@ -483,6 +473,7 @@ int gtp_parse(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
         return false;
 
     /*The first 3 bits are version number*/
+    GTP_C_Hdr* hdr = (GTP_C_Hdr*)buff;
     msg->version = (hdr->flag & 0xE0) >> 5;
     msg->msg_type = hdr->type;
     msg->gtp_header = (uint8_t*)buff;
@@ -499,7 +490,7 @@ int gtp_parse(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
         return false;
     }
 
-    msgType = &gtp_eval_config->msgv[msg->version][msg->msg_type];
+    GTP_MsgType* msgType = &gtp_eval_config->msgv[msg->version][msg->msg_type];
 
     if ( NULL == msgType )
     {
@@ -519,6 +510,8 @@ int gtp_parse(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
     /* We only care about control types*/
     if ( hdr->type == 255)
         return false;
+
+    bool status = true;
 
     switch (msg->version)
     {

@@ -92,7 +92,6 @@ void config_set_var(SnortConfig* sc, const char* val)
         /* Save these and parse when snort conf is parsed so
          * they can be added to the snort conf configuration */
         node = (VarNode*)SnortAlloc(sizeof(VarNode));
-        node->name = SnortStrndup(val, equal_ptr - val);
 
         /* Make sure it's not already in the list */
         if (sc->var_list != NULL)
@@ -101,17 +100,17 @@ void config_set_var(SnortConfig* sc, const char* val)
 
             while (tmp != NULL)
             {
-                if (strcasecmp(tmp->name, node->name) == 0)
+                if (strncasecmp(tmp->name, val, equal_ptr - val) == 0)
                 {
-                    ParseError("Duplicate variable name: %s.\n",
-                        tmp->name);
+                    ParseError("Duplicate variable name: %s.\n", tmp->name);
+                    free(node);
                     return;
                 }
-
                 tmp = tmp->next;
             }
         }
 
+        node->name = SnortStrndup(val, equal_ptr - val);
         node->value = SnortStrdup(equal_ptr + 1);
         node->line = SnortStrdup(val);
         node->next = sc->var_list;

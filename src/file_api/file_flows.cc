@@ -243,8 +243,11 @@ bool FileFlows::file_process(const uint8_t* file_data, int data_size,
 void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)
 {
     FileContext* context = get_current_file_context();
-    if (context)
-        context->set_file_name(fname, name_size);
+    if ( !context )
+        return;
+
+    context->set_file_name(fname, name_size);
+
     if ( FileConfig::trace_type )
         context->print();
 }

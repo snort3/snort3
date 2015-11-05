@@ -40,6 +40,9 @@
 * Modules instantiated by command line only will not get default settings
   unless hard-coded.  This notably applies to -A and -L options.
 
+* --lua can only be used in addition to, not in place of, a -c config.
+  Ideally, --lua could be used in lieu of -c.
+
 
 ==== Rules
 

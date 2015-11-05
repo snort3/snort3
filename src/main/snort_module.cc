@@ -55,6 +55,7 @@ using namespace std;
 // commands
 //-------------------------------------------------------------------------
 
+#ifdef BUILD_SHELL
 static const Parameter s_reload[] =
 {
     { "filename", Parameter::PT_STRING, nullptr, nullptr,
@@ -63,7 +64,6 @@ static const Parameter s_reload[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-#ifdef BUILD_SHELL
 static const Command snort_cmds[] =
 {
     { "show_plugins", main_dump_plugins, nullptr, "show available plugins" },
