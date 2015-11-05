@@ -420,7 +420,7 @@ int detection_option_node_evaluate(
         {
             if ( !last_check.flowbit_failed &&
                  !(p->packet_flags & PKT_IP_RULE_2ND) &&
-                 !(p->packet_flags & (PROTO_BIT__TEREDO|PROTO_BIT__GTP)) )
+                 !(p->proto_bits & (PROTO_BIT__TEREDO|PROTO_BIT__GTP)) )
             {
                 return last_check.result;
             }
