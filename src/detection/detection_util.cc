@@ -31,21 +31,6 @@
 THREAD_LOCAL DataPointer g_alt_data;
 THREAD_LOCAL DataPointer g_file_data;
 
-const char* http_buffer_name[HTTP_BUFFER_MAX] =
-{
-    "error/unset",
-    "http_client_body",
-    "http_cookie",
-    "http_header",
-    "http_method",
-    "http_raw_cookie",
-    "http_raw_header",
-    "http_raw_uri",
-    "http_stat_code",
-    "http_stat_msg",
-    "http_uri"
-};
-
 #define LOG_CHARS 16
 
 static THREAD_LOCAL TextLog* tlog = NULL;

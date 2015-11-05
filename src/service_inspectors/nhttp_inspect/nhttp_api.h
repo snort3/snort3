@@ -30,6 +30,7 @@ class NHttpApi
 {
 public:
     static const InspectApi nhttp_api;
+    static const char* legacy_buffers[];
 
 private:
     NHttpApi() = delete;

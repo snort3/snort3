@@ -35,8 +35,7 @@
 
 #define DECODE_BLEN 65535
 
-// FIXIT-L this is now used only by http_inspect and new_http_inspect
-// and should be relocated accordingly
+// FIXIT-L this is now used only by http_inspect and should be relocated accordingly
 enum HTTP_BUFFER
 {
     HTTP_BUFFER_NONE,
@@ -73,8 +72,6 @@ struct DataBuffer
     uint8_t data[DECODE_BLEN];
     unsigned len;
 };
-
-extern SO_PUBLIC const char* http_buffer_name[HTTP_BUFFER_MAX];
 
 extern SO_PUBLIC THREAD_LOCAL DataPointer g_file_data;
 

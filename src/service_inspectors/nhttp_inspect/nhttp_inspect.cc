@@ -23,7 +23,6 @@
 #include <stdio.h>
 
 #include "stream/stream_api.h"
-#include "detection/detection_util.h"
 
 #include "nhttp_enum.h"
 #include "nhttp_msg_request.h"
@@ -63,13 +62,13 @@ bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer
     switch ( ibt )
     {
     case InspectionBuffer::IBT_KEY:
-        return get_buf(HTTP_BUFFER_URI, nullptr, b);
+        return get_buf(NHTTP_BUFFER_URI, nullptr, b);
 
     case InspectionBuffer::IBT_HEADER:
-        return get_buf(HTTP_BUFFER_HEADER, nullptr, b);
+        return get_buf(NHTTP_BUFFER_HEADER, nullptr, b);
 
     case InspectionBuffer::IBT_BODY:
-        return get_buf(HTTP_BUFFER_CLIENT_BODY, nullptr, b);
+        return get_buf(NHTTP_BUFFER_CLIENT_BODY, nullptr, b);
 
     default:
         return false;

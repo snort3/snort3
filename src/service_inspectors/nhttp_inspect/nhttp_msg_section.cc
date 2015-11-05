@@ -21,10 +21,9 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "detection/detection_util.h"
-
 #include "nhttp_enum.h"
 #include "nhttp_transaction.h"
+#include "nhttp_api.h"
 #include "nhttp_msg_section.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_status.h"
@@ -84,13 +83,13 @@ const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
     // When current section is trailers, that is what will be used for header and cookie buffers.
     switch (buffer_id)
     {
-    case HTTP_BUFFER_CLIENT_BODY:
+    case NHTTP_BUFFER_CLIENT_BODY:
       {
         NHttpMsgBody* body = transaction->get_body();
         return (body != nullptr) ? body->get_detect_buf() : Field::FIELD_NULL;
       }
-    case HTTP_BUFFER_COOKIE:
-    case HTTP_BUFFER_RAW_COOKIE:
+    case NHTTP_BUFFER_COOKIE:
+    case NHTTP_BUFFER_RAW_COOKIE:
     // FIXIT-M when real cookie normalization is implemented these need to become separate cases.
     // Currently "normalization" is aggregation of multiple cookies. That is correct for raw
     // cookies and all there is for normalized cookies.
@@ -101,37 +100,37 @@ const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
         HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
         return header->get_header_value_norm(cookie_head);
       }
-    case HTTP_BUFFER_HEADER:
+    case NHTTP_BUFFER_HEADER:
       {
         NHttpMsgHeadShared* header = transaction->get_latest_header(source_id);
         return (header != nullptr) ? header->get_headers() : Field::FIELD_NULL;
       }
-    case HTTP_BUFFER_METHOD:
+    case NHTTP_BUFFER_METHOD:
       {
         NHttpMsgRequest* request = transaction->get_request();
         return (request != nullptr) ? request->get_method() : Field::FIELD_NULL;
       }
-    case HTTP_BUFFER_RAW_HEADER:
+    case NHTTP_BUFFER_RAW_HEADER:
       {
         NHttpMsgHeadShared* header = transaction->get_latest_header(source_id);
         return (header != nullptr) ? header->get_headers() : Field::FIELD_NULL;
       }
-    case HTTP_BUFFER_RAW_URI:
+    case NHTTP_BUFFER_RAW_URI:
       {
         NHttpMsgRequest* request = transaction->get_request();
         return (request != nullptr) ? request->get_uri() : Field::FIELD_NULL;
       }
-    case HTTP_BUFFER_STAT_CODE:
+    case NHTTP_BUFFER_STAT_CODE:
       {
         NHttpMsgStatus* status = transaction->get_status();
         return (status != nullptr) ? status->get_status_code() : Field::FIELD_NULL;
       }
-    case HTTP_BUFFER_STAT_MSG:
+    case NHTTP_BUFFER_STAT_MSG:
       {
         NHttpMsgStatus* status = transaction->get_status();
         return (status != nullptr) ? status->get_reason_phrase() : Field::FIELD_NULL;
       }
-    case HTTP_BUFFER_URI:
+    case NHTTP_BUFFER_URI:
       {
         NHttpMsgRequest* request = transaction->get_request();
         return (request != nullptr) ? request->get_uri_norm_legacy() : Field::FIELD_NULL;
@@ -154,9 +153,9 @@ void NHttpMsgSection::print_message_wrapup(FILE* output)
 {
     fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 ", Events: %016" PRIx64 " %016" PRIx64 ", TCP Close: %s\n",
         infractions.get_raw2(), infractions.get_raw(), events.get_raw2(), events.get_raw(), tcp_close ? "True" : "False");
-    for (unsigned k=1; k < HTTP_BUFFER_MAX; k++)
+    for (unsigned k=1; k < NHTTP_BUFFER_MAX; k++)
     {
-        get_legacy(k).print(output, http_buffer_name[k]);
+        get_legacy(k).print(output, NHttpApi::legacy_buffers[k-1]);
     }
     if (g_file_data.len > 0)
     {

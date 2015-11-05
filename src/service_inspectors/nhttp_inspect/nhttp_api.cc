@@ -33,7 +33,7 @@ Inspector* NHttpApi::nhttp_ctor(Module* mod)
     return new NHttpInspect(nhttp_mod->get_params());
 }
 
-static const char* legacy_buffers[] =
+const char* NHttpApi::legacy_buffers[] =
 {
     "http_client_body",
     "http_cookie",
