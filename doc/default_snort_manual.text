@@ -48,15 +48,13 @@ Table of Contents
     3.13. network
     3.14. output
     3.15. packets
-    3.16. ppm
-    3.17. process
-    3.18. profile
-    3.19. rate_filter
-    3.20. references
-    3.21. rule_state
-    3.22. search_engine
-    3.23. snort
-    3.24. suppress
+    3.16. process
+    3.17. rate_filter
+    3.18. references
+    3.19. rule_state
+    3.20. search_engine
+    3.21. snort
+    3.22. suppress
 
 4. Codec Modules
 
@@ -95,29 +93,31 @@ Table of Contents
     5.7. ftp_client
     5.8. ftp_data
     5.9. ftp_server
-    5.10. http_global
-    5.11. http_inspect
-    5.12. imap
-    5.13. new_http_inspect
-    5.14. normalizer
-    5.15. perf_monitor
-    5.16. pop
-    5.17. port_scan
-    5.18. port_scan_global
-    5.19. rpc_decode
-    5.20. sip
-    5.21. smtp
-    5.22. ssh
-    5.23. ssl
-    5.24. stream
-    5.25. stream_file
-    5.26. stream_icmp
-    5.27. stream_ip
-    5.28. stream_tcp
-    5.29. stream_udp
-    5.30. stream_user
-    5.31. telnet
-    5.32. wizard
+    5.10. gtp_inspect
+    5.11. http_global
+    5.12. http_inspect
+    5.13. imap
+    5.14. modbus
+    5.15. new_http_inspect
+    5.16. normalizer
+    5.17. perf_monitor
+    5.18. pop
+    5.19. port_scan
+    5.20. port_scan_global
+    5.21. rpc_decode
+    5.22. sip
+    5.23. smtp
+    5.24. ssh
+    5.25. ssl
+    5.26. stream
+    5.27. stream_file
+    5.28. stream_icmp
+    5.29. stream_ip
+    5.30. stream_tcp
+    5.31. stream_udp
+    5.32. stream_user
+    5.33. telnet
+    5.34. wizard
 
 6. IPS Action Modules
 
@@ -146,56 +146,63 @@ Table of Contents
     7.17. fragbits
     7.18. fragoffset
     7.19. gid
-    7.20. http_client_body
-    7.21. http_cookie
-    7.22. http_header
-    7.23. http_method
-    7.24. http_raw_cookie
-    7.25. http_raw_header
-    7.26. http_raw_uri
-    7.27. http_stat_code
-    7.28. http_stat_msg
-    7.29. http_uri
-    7.30. icmp_id
-    7.31. icmp_seq
-    7.32. icode
-    7.33. id
-    7.34. ip_proto
-    7.35. ipopts
-    7.36. isdataat
-    7.37. itype
-    7.38. md5
-    7.39. metadata
-    7.40. msg
-    7.41. pcre
-    7.42. pkt_data
-    7.43. priority
-    7.44. raw_data
-    7.45. reference
-    7.46. rem
-    7.47. replace
-    7.48. rev
-    7.49. rpc
-    7.50. seq
-    7.51. session
-    7.52. sha256
-    7.53. sha512
-    7.54. sid
-    7.55. sip_body
-    7.56. sip_header
-    7.57. sip_method
-    7.58. sip_stat_code
-    7.59. so
-    7.60. soid
-    7.61. ssl_state
-    7.62. ssl_version
-    7.63. stream_reassemble
-    7.64. stream_size
-    7.65. tag
-    7.66. tos
-    7.67. ttl
-    7.68. urg
-    7.69. window
+    7.20. gtp_info
+    7.21. gtp_type
+    7.22. gtp_version
+    7.23. http_client_body
+    7.24. http_cookie
+    7.25. http_header
+    7.26. http_method
+    7.27. http_raw_cookie
+    7.28. http_raw_header
+    7.29. http_raw_uri
+    7.30. http_stat_code
+    7.31. http_stat_msg
+    7.32. http_uri
+    7.33. icmp_id
+    7.34. icmp_seq
+    7.35. icode
+    7.36. id
+    7.37. ip_proto
+    7.38. ipopts
+    7.39. isdataat
+    7.40. itype
+    7.41. md5
+    7.42. metadata
+    7.43. modbus_data
+    7.44. modbus_func
+    7.45. modbus_unit
+    7.46. msg
+    7.47. pcre
+    7.48. pkt_data
+    7.49. pkt_num
+    7.50. priority
+    7.51. raw_data
+    7.52. reference
+    7.53. rem
+    7.54. replace
+    7.55. rev
+    7.56. rpc
+    7.57. seq
+    7.58. session
+    7.59. sha256
+    7.60. sha512
+    7.61. sid
+    7.62. sip_body
+    7.63. sip_header
+    7.64. sip_method
+    7.65. sip_stat_code
+    7.66. so
+    7.67. soid
+    7.68. ssl_state
+    7.69. ssl_version
+    7.70. stream_reassemble
+    7.71. stream_size
+    7.72. tag
+    7.73. tos
+    7.74. ttl
+    7.75. urg
+    7.76. window
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -291,7 +298,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0-a2 (Build 172) from 2.9.7-177
+o"  )~   Version 3.0.0-a2 (Build 177) from 2.9.7-177
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -686,24 +693,29 @@ Required:
   * pcap from http://www.tcpdump.org for tcpdump style logging
   * pcre from http://www.pcre.org for regular expression pattern
     matching
-  * zlib from http://www.zlib.net for decompression
+  * zlib from http://www.zlib.net for decompression (>= 1.2.8
+    recommended)
   * pkgconfig from http://www.freedesktop.org to build the example
     plugins
 
 Optional:
 
+  * lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of
+    SWF fles
+  * openssl from https://www.openssl.org for SHA and MD5 file
+    signatures and the protected_content rule option
+  * hyperscan from https://github.com/01org/hyperscan to build new
+    and improved regex and (coming soon) fast pattern support
+  * cpputest from http://cpputest.github.io to run additional unit
+    tests with make check
   * asciidoc from http://www.methods.co.nz/asciidoc/ to build the
     HTML manual
   * dblatex from http://dblatex.sourceforge.net to build the pdf
     manual (in addition to asciidoc)
-  * lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of
-    SWF fles.
-  * openssl from https://www.openssl.org for SHA and MD5 file
-    signatures and the protected_content rule option.
   * w3m from http://sourceforge.net/projects/w3m/ to build the plain
     text manual
   * source-highlight from http://www.gnu.org/software/src-highlite/
-    to generate the dev guide.
+    to generate the dev guide
 
 
 2.2. Building
@@ -1039,13 +1051,11 @@ WARNING: unknown symbol x
 
   * With cmake, make install will rebuild the docs even though when
     already built.
-  * IPS option hash and inspectors pop, imap, smtp, and ssl fail to
-    build dynamically due to missing symbols in hash/ and protocols/
-    despite them being declared SO_PUBLIC.
   * Enabling large pcap may erroneously affect the number of packets
     processed from pcaps
   * Enabling debug messages may erroneously affect the number of
     packets processed from pcaps
+  * It is not possible to build unit tests w/o static plugins.
 
 2.8.2. Config
 
@@ -1063,6 +1073,8 @@ WARNING: unknown symbol x
   * Modules instantiated by command line only will not get default
     settings unless hard-coded. This notably applies to -A and -L
     options.
+  * --lua can only be used in addition to, not in place of, a -c
+    config. Ideally, --lua could be used in lieu of -c.
 
 2.8.3. Rules
 
@@ -1071,22 +1083,19 @@ WARNING: unknown symbol x
     foo;
   * ip_proto doesn’t work properly with reassembled packets so it
     can’t be used to restrict the protocol of service rules.
-
-2.8.4. Rules
-
   * Inspector events generated while parsing TCP payload in non-IPS
     mode will indicate the wrong direction (ie they will be based on
     the ACK packet). (Same is true for Snort.)
 
-2.8.5. snort2lua
+2.8.4. snort2lua
 
   * uricontent:"foo"; content:"bar"; → http_uri; content:"foo";
     content:"bar"; (missing pkt_data)
   * stream_tcp ports and protocols both go into a single binder.when;
     this is incorrect as the when fields are logically anded together
-    (ie must all be true). should create 2 separate bindings.
+    (ie must all be true). Should create 2 separate bindings.
   * There is a bug in pps_stream_tcp.cc.. when stream_tcp: is
-    specified without any arguments, snort2lua doesn’t convert it
+    specified without any arguments, snort2lua doesn’t convert it.
   * Loses the ip list delimiters [ ]; change to ( )
 
     in snort.conf: var HOME_NET [A,B,C]
@@ -1094,6 +1103,19 @@ WARNING: unknown symbol x
 
   * Won’t convert packet rules (alert tcp etc.) to service rules
     (alert http etc.).
+  * alert_fast and alert_full: output configuration includes "file = 
+    foo.bar", but file is a bool and you cannot specify an output
+    file name in the configuration.
+
+2.8.5. Runtime
+
+  * -B <mask> feature does not work. It does ordinary IP address
+    obfuscation instead of using the mask.
+  * Obfuscation does not work for csv format.
+  * The hext DAQ will append a newline to text lines (starting with "
+    ).
+  * The hext DAQ does not support embedded quotes in text lines (use
+    hex lines as a workaround).
 
 
 ---------------------------------------------------------------------
@@ -1508,42 +1530,7 @@ Configuration:
     is used to track fragments and connections
 
 
-3.16. ppm
-
-------------
-
-What: packet and rule latency monitoring and control (requires
---enable-ppm)
-
-Type: basic
-
-Configuration:
-
-  * int ppm.max_pkt_time = 0: enable packet latency thresholding
-    (usec), 0 = off { 0: }
-  * bool ppm.fastpath_expensive_packets = false: stop inspection if
-    the max_pkt_time is exceeded
-  * enum ppm.pkt_log = none: log event if max_pkt_time is exceeded {
-    none | log | alert | both }
-  * int ppm.max_rule_time = 0: enable rule latency thresholding
-    (usec), 0 = off { 0: }
-  * int ppm.threshold = 5: number of times to exceed limit before
-    disabling rule { 1: }
-  * bool ppm.suspend_expensive_rules = false: temporarily disable
-    rule if threshold is reached
-  * int ppm.suspend_timeout = 60: seconds to suspend rule, 0 =
-    permanent { 0: }
-  * enum ppm.rule_log = none: enable event logging for suspended
-    rules { none|log|alert|both }
-
-Rules:
-
-  * 134:1 (ppm) rule options disabled by rule latency
-  * 134:2 (ppm) rule options re-enabled by rule latency
-  * 134:3 (ppm) packet aborted due to latency
-
-
-3.17. process
+3.16. process
 
 ------------
 
@@ -1569,29 +1556,7 @@ Configuration:
     timestamps
 
 
-3.18. profile
-
-------------
-
-What: configure profiling of rules and/or modules (requires
---enable-perf-profiling)
-
-Type: basic
-
-Configuration:
-
-  * int profile.rules.count = -1: print results to given level (-1 =
-    all, 0 = off) { -1: }
-  * enum profile.rules.sort = avg_ticks: sort by given field { checks
-    | avg_ticks | total_ticks | matches | no_matches |
-    avg_ticks_per_match | avg_ticks_per_no_match }
-  * int profile.modules.count = -1: print results to given level (-1
-    = all, 0 = off) { -1: }
-  * enum profile.modules.sort = avg_ticks: sort by given field {
-    checks | avg_ticks | total_ticks }
-
-
-3.19. rate_filter
+3.17. rate_filter
 
 ------------
 
@@ -1616,7 +1581,7 @@ Configuration:
     according to track
 
 
-3.20. references
+3.18. references
 
 ------------
 
@@ -1630,7 +1595,7 @@ Configuration:
   * string references[].url: where this reference is defined
 
 
-3.21. rule_state
+3.19. rule_state
 
 ------------
 
@@ -1646,7 +1611,7 @@ Configuration:
     policies
 
 
-3.22. search_engine
+3.20. search_engine
 
 ------------
 
@@ -1690,7 +1655,7 @@ Configuration:
     construction for better performance
 
 
-3.23. snort
+3.21. snort
 
 ------------
 
@@ -1703,14 +1668,13 @@ Configuration:
   * string snort.-?: <option prefix> output matching command line
     option quick help (same as --help-options) { (optional) }
   * string snort.-A: <mode> set alert mode: none, cmg, or alert_*
-  * implied snort.-B: <mask> obfuscated IP addresses in alerts and
-    packet dumps using CIDR mask
+  * addr snort.-B = 255.255.255.255/32: <mask> obfuscated IP
+    addresses in alerts and packet dumps using CIDR mask
   * implied snort.-C: print out payloads with character data only (no
     hex)
   * string snort.-c: <conf> use this configuration
   * implied snort.-D: run Snort in background (daemon) mode
   * implied snort.-d: dump the Application Layer
-  * implied snort.-E: enable daemon restart
   * implied snort.-e: display the second layer header info
   * implied snort.-f: turn off fflush() calls after binary log writes
   * int snort.-G: <0xid> (same as --logid) { 0:65535 }
@@ -1892,7 +1856,8 @@ Commands:
   * snort.show_plugins(): show available plugins
   * snort.dump_stats(): show summary statistics
   * snort.rotate_stats(): roll perfmonitor log files
-  * snort.reload_config(): load new configuration
+  * snort.reload_config(filename): load new configuration
+  * snort.reload_hosts(filename): load a new hosts table
   * snort.pause(): suspend packet processing
   * snort.resume(): continue packet processing
   * snort.detach(): exit shell w/o shutdown
@@ -1910,7 +1875,7 @@ Peg counts:
   * snort.attribute table hosts: total number of hosts in table
 
 
-3.24. suppress
+3.22. suppress
 
 ------------
 
@@ -2557,7 +2522,9 @@ Rules:
 
 Peg counts:
 
-  * dns.packets: total packets
+  * dns.packets: total packets processed
+  * dns.requests: total dns requests
+  * dns.responses: total dns responses
 
 
 5.6. dpx
@@ -2686,7 +2653,41 @@ Peg counts:
   * ftp_server.packets: total packets
 
 
-5.10. http_global
+5.10. gtp_inspect
+
+------------
+
+What: gtp control channel inspection
+
+Type: inspector
+
+Configuration:
+
+  * int gtp_inspect[].version = 2: gtp version { 0:2 }
+  * int gtp_inspect[].messages[].type = 0: message type code { 0:255
+    }
+  * string gtp_inspect[].messages[].name: message name
+  * int gtp_inspect[].infos[].type = 0: information element type code
+    { 0:255 }
+  * string gtp_inspect[].infos[].name: information element name
+  * int gtp_inspect[].infos[].length = 0: information element type
+    code { 0:255 }
+
+Rules:
+
+  * 143:1 (gtp_inspect) message length is invalid
+  * 143:2 (gtp_inspect) information element length is invalid
+  * 143:3 (gtp_inspect) information elements are out of order
+
+Peg counts:
+
+  * gtp_inspect.sessions: total sessions processed
+  * gtp_inspect.events: requests
+  * gtp_inspect.unknown types: unknown message types
+  * gtp_inspect.unknown infos: unknown information elements
+
+
+5.11. http_global
 
 ------------
 
@@ -2781,7 +2782,7 @@ Peg counts:
   * http_global.decompressed bytes: total bytes decompressed
 
 
-5.11. http_inspect
+5.12. http_inspect
 
 ------------
 
@@ -2925,7 +2926,7 @@ Rules:
   * 120:17 (http_inspect) HTTP response PDF file parse failure
 
 
-5.12. imap
+5.13. imap
 
 ------------
 
@@ -2957,7 +2958,28 @@ Peg counts:
   * imap.packets: total packets
 
 
-5.13. new_http_inspect
+5.14. modbus
+
+------------
+
+What: modbus inspection
+
+Type: inspector
+
+Rules:
+
+  * 144:1 (modbus) length in Modbus MBAP header does not match the
+    length needed for the given function
+  * 144:2 (modbus) Modbus protocol ID is non-zero
+  * 144:3 (modbus) Reserved Modbus function code in use
+
+Peg counts:
+
+  * modbus.sessions: total sessions processed
+  * modbus.frames: total Modbus messages
+
+
+5.15. new_http_inspect
 
 ------------
 
@@ -2971,10 +2993,14 @@ Configuration:
     body bytes to examine (-1 no limit) { -1: }
   * int new_http_inspect.response_depth = -1: maximum response
     message body bytes to examine (-1 no limit) { -1: }
+  * bool new_http_inspect.unzip = true: decompress gzip and deflate
+    message bodies
   * bool new_http_inspect.test_input = false: read HTTP messages from
     text file
   * bool new_http_inspect.test_output = false: print out HTTP section
     data
+  * int new_http_inspect.print_amount = 1200: number of characters to
+    print from a Field { 1:1000000 }
 
 Rules:
 
@@ -3050,9 +3076,11 @@ Rules:
   * 219:63 (new_http_inspect) URI bad port number
   * 219:64 (new_http_inspect) HTTP chunk misformatted
   * 219:65 (new_http_inspect) White space following chunk length
+  * 219:67 (new_http_inspect) Excessive gzip compression
+  * 219:68 (new_http_inspect) Gzip decompression failed
 
 
-5.14. normalizer
+5.16. normalizer
 
 ------------
 
@@ -3200,7 +3228,7 @@ Peg counts:
     segments
 
 
-5.15. perf_monitor
+5.17. perf_monitor
 
 ------------
 
@@ -3240,7 +3268,7 @@ Peg counts:
   * perf_monitor.packets: total packets
 
 
-5.16. pop
+5.18. pop
 
 ------------
 
@@ -3272,7 +3300,7 @@ Peg counts:
   * pop.packets: total packets
 
 
-5.17. port_scan
+5.19. port_scan
 
 ------------
 
@@ -3330,7 +3358,7 @@ Rules:
   * 122:27 (port_scan) open port
 
 
-5.18. port_scan_global
+5.20. port_scan_global
 
 ------------
 
@@ -3348,7 +3376,7 @@ Peg counts:
   * port_scan_global.packets: total packets
 
 
-5.19. rpc_decode
+5.21. rpc_decode
 
 ------------
 
@@ -3369,7 +3397,7 @@ Peg counts:
   * rpc_decode.packets: total packets
 
 
-5.20. sip
+5.22. sip
 
 ------------
 
@@ -3442,7 +3470,7 @@ Peg counts:
   * sip.responses: total responses
 
 
-5.21. smtp
+5.23. smtp
 
 ------------
 
@@ -3518,7 +3546,7 @@ Peg counts:
   * smtp.packets: total packets
 
 
-5.22. ssh
+5.24. ssh
 
 ------------
 
@@ -3550,7 +3578,7 @@ Peg counts:
   * ssh.packets: total packets
 
 
-5.23. ssl
+5.25. ssl
 
 ------------
 
@@ -3574,10 +3602,27 @@ Rules:
 
 Peg counts:
 
-  * ssl.packets: total packets
+  * ssl.packets: total packets processed
+  * ssl.decoded: ssl packets decoded
+  * ssl.client hello: total client hellos
+  * ssl.server hello: total server hellos
+  * ssl.certificate: total ssl certificates
+  * ssl.server done: total server done
+  * ssl.client key exchange: total client key exchanges
+  * ssl.server key exchange: total server key exchanges
+  * ssl.change cipher: total change cipher records
+  * ssl.finished: total handshakes finished
+  * ssl.client application: total client application records
+  * ssl.server application: total server application records
+  * ssl.alert: total ssl alert records
+  * ssl.unrecognized records: total unrecognized records
+  * ssl.handshakes completed: total completed ssl handshakes
+  * ssl.bad handshakes: total bad handshakes
+  * ssl.sessions ignored: total sessions ignore
+  * ssl.detection disabled: total detection disabled
 
 
-5.24. stream
+5.26. stream
 
 ------------
 
@@ -3652,7 +3697,7 @@ Peg counts:
   * stream.file prunes: file sessions pruned
 
 
-5.25. stream_file
+5.27. stream_file
 
 ------------
 
@@ -3665,7 +3710,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.26. stream_icmp
+5.28. stream_icmp
 
 ------------
 
@@ -3684,7 +3729,7 @@ Peg counts:
   * stream_icmp.released: icmp session trackers released
 
 
-5.27. stream_ip
+5.29. stream_ip
 
 ------------
 
@@ -3740,7 +3785,7 @@ Peg counts:
   * stream_ip.nodes deleted: fragments deleted from tracker
 
 
-5.28. stream_tcp
+5.30. stream_tcp
 
 ------------
 
@@ -3848,7 +3893,7 @@ Peg counts:
     flushed when session released
 
 
-5.29. stream_udp
+5.31. stream_udp
 
 ------------
 
@@ -3871,7 +3916,7 @@ Peg counts:
   * stream_udp.timeouts: udp session timeouts
 
 
-5.30. stream_user
+5.32. stream_user
 
 ------------
 
@@ -3885,7 +3930,7 @@ Configuration:
     1:86400 }
 
 
-5.31. telnet
+5.33. telnet
 
 ------------
 
@@ -3914,7 +3959,7 @@ Peg counts:
   * telnet.packets: total packets
 
 
-5.32. wizard
+5.34. wizard
 
 ------------
 
@@ -4369,7 +4414,46 @@ Configuration:
   * int gid.~: generator id { 1: }
 
 
-7.20. http_client_body
+7.20. gtp_info
+
+------------
+
+What: rule option to check gtp info element
+
+Type: ips_option
+
+Configuration:
+
+  * string gtp_info.~: info element to match
+
+
+7.21. gtp_type
+
+------------
+
+What: rule option to check gtp types
+
+Type: ips_option
+
+Configuration:
+
+  * string gtp_type.~: list of types to match
+
+
+7.22. gtp_version
+
+------------
+
+What: rule option to check gtp version
+
+Type: ips_option
+
+Configuration:
+
+  * int gtp_version.~: version to match { 0:2 }
+
+
+7.23. http_client_body
 
 ------------
 
@@ -4378,7 +4462,7 @@ What: rule option to set the detection cursor to the request body
 Type: ips_option
 
 
-7.21. http_cookie
+7.24. http_cookie
 
 ------------
 
@@ -4387,7 +4471,7 @@ What: rule option to set the detection cursor to the HTTP cookie
 Type: ips_option
 
 
-7.22. http_header
+7.25. http_header
 
 ------------
 
@@ -4401,7 +4485,7 @@ Configuration:
   * string http_header.~name: restrict to given header
 
 
-7.23. http_method
+7.26. http_method
 
 ------------
 
@@ -4411,7 +4495,7 @@ method
 Type: ips_option
 
 
-7.24. http_raw_cookie
+7.27. http_raw_cookie
 
 ------------
 
@@ -4421,7 +4505,7 @@ cookie
 Type: ips_option
 
 
-7.25. http_raw_header
+7.28. http_raw_header
 
 ------------
 
@@ -4431,7 +4515,7 @@ headers
 Type: ips_option
 
 
-7.26. http_raw_uri
+7.29. http_raw_uri
 
 ------------
 
@@ -4440,7 +4524,7 @@ What: rule option to set the detection cursor to the unnormalized URI
 Type: ips_option
 
 
-7.27. http_stat_code
+7.30. http_stat_code
 
 ------------
 
@@ -4449,7 +4533,7 @@ What: rule option to set the detection cursor to the HTTP status code
 Type: ips_option
 
 
-7.28. http_stat_msg
+7.31. http_stat_msg
 
 ------------
 
@@ -4459,7 +4543,7 @@ message
 Type: ips_option
 
 
-7.29. http_uri
+7.32. http_uri
 
 ------------
 
@@ -4469,7 +4553,7 @@ buffer
 Type: ips_option
 
 
-7.30. icmp_id
+7.33. icmp_id
 
 ------------
 
@@ -4483,7 +4567,7 @@ Configuration:
     >min
 
 
-7.31. icmp_seq
+7.34. icmp_seq
 
 ------------
 
@@ -4497,7 +4581,7 @@ Configuration:
     min<>max | <max | >min
 
 
-7.32. icode
+7.35. icode
 
 ------------
 
@@ -4511,7 +4595,7 @@ Configuration:
     | >min
 
 
-7.33. id
+7.36. id
 
 ------------
 
@@ -4525,7 +4609,7 @@ Configuration:
     min
 
 
-7.34. ip_proto
+7.37. ip_proto
 
 ------------
 
@@ -4538,7 +4622,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-7.35. ipopts
+7.38. ipopts
 
 ------------
 
@@ -4552,7 +4636,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-7.36. isdataat
+7.39. isdataat
 
 ------------
 
@@ -4567,7 +4651,7 @@ Configuration:
     buffer
 
 
-7.37. itype
+7.40. itype
 
 ------------
 
@@ -4581,7 +4665,7 @@ Configuration:
     | >min
 
 
-7.38. md5
+7.41. md5
 
 ------------
 
@@ -4599,7 +4683,7 @@ Configuration:
     of buffer
 
 
-7.39. metadata
+7.42. metadata
 
 ------------
 
@@ -4614,7 +4698,42 @@ Configuration:
   * string metadata.*: additional parameters not used by snort
 
 
-7.40. msg
+7.43. modbus_data
+
+------------
+
+What: rule option to set cursor to modbus data
+
+Type: ips_option
+
+
+7.44. modbus_func
+
+------------
+
+What: rule option to check modbus function code
+
+Type: ips_option
+
+Configuration:
+
+  * string modbus_func.~: function code to match
+
+
+7.45. modbus_unit
+
+------------
+
+What: rule option to check modbus unit ID
+
+Type: ips_option
+
+Configuration:
+
+  * int modbus_unit.~: modbus unit ID { 0:255 }
+
+
+7.46. msg
 
 ------------
 
@@ -4627,7 +4746,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.41. pcre
+7.47. pcre
 
 ------------
 
@@ -4640,7 +4759,7 @@ Configuration:
   * string pcre.~regex: Snort regular expression
 
 
-7.42. pkt_data
+7.48. pkt_data
 
 ------------
 
@@ -4650,7 +4769,20 @@ packet data
 Type: ips_option
 
 
-7.43. priority
+7.49. pkt_num
+
+------------
+
+What: alert on raw packet number
+
+Type: ips_option
+
+Configuration:
+
+  * string pkt_num.~range: check if packet number is in given range
+
+
+7.50. priority
 
 ------------
 
@@ -4664,7 +4796,7 @@ Configuration:
     1: }
 
 
-7.44. raw_data
+7.51. raw_data
 
 ------------
 
@@ -4673,7 +4805,7 @@ What: rule option to set the detection cursor to the raw packet data
 Type: ips_option
 
 
-7.45. reference
+7.52. reference
 
 ------------
 
@@ -4687,7 +4819,7 @@ Configuration:
   * string reference.~id: reference id
 
 
-7.46. rem
+7.53. rem
 
 ------------
 
@@ -4700,7 +4832,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.47. replace
+7.54. replace
 
 ------------
 
@@ -4713,7 +4845,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.48. rev
+7.55. rev
 
 ------------
 
@@ -4726,7 +4858,7 @@ Configuration:
   * int rev.~: revision { 1: }
 
 
-7.49. rpc
+7.56. rpc
 
 ------------
 
@@ -4741,7 +4873,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.50. seq
+7.57. seq
 
 ------------
 
@@ -4755,7 +4887,7 @@ Configuration:
     max | <max | >min
 
 
-7.51. session
+7.58. session
 
 ------------
 
@@ -4768,7 +4900,7 @@ Configuration:
   * enum session.~mode: output format { printable|binary|all }
 
 
-7.52. sha256
+7.59. sha256
 
 ------------
 
@@ -4786,7 +4918,7 @@ Configuration:
     start of buffer
 
 
-7.53. sha512
+7.60. sha512
 
 ------------
 
@@ -4804,7 +4936,7 @@ Configuration:
     start of buffer
 
 
-7.54. sid
+7.61. sid
 
 ------------
 
@@ -4817,7 +4949,7 @@ Configuration:
   * int sid.~: signature id { 1: }
 
 
-7.55. sip_body
+7.62. sip_body
 
 ------------
 
@@ -4826,7 +4958,7 @@ What: rule option to set the detection cursor to the request body
 Type: ips_option
 
 
-7.56. sip_header
+7.63. sip_header
 
 ------------
 
@@ -4836,7 +4968,7 @@ buffer
 Type: ips_option
 
 
-7.57. sip_method
+7.64. sip_method
 
 ------------
 
@@ -4849,7 +4981,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.58. sip_stat_code
+7.65. sip_stat_code
 
 ------------
 
@@ -4862,7 +4994,7 @@ Configuration:
   * int sip_stat_code.*code: stat code { 1:999 }
 
 
-7.59. so
+7.66. so
 
 ------------
 
@@ -4875,7 +5007,7 @@ Configuration:
   * string so.~func: name of eval function
 
 
-7.60. soid
+7.67. soid
 
 ------------
 
@@ -4888,7 +5020,7 @@ Configuration:
   * string soid.~: SO rule ID has <gid>|<sid> format, like 3|12345
 
 
-7.61. ssl_state
+7.68. ssl_state
 
 ------------
 
@@ -4915,7 +5047,7 @@ Configuration:
     unknown
 
 
-7.62. ssl_version
+7.69. ssl_version
 
 ------------
 
@@ -4940,7 +5072,7 @@ Configuration:
     tls1.2
 
 
-7.63. stream_reassemble
+7.70. stream_reassemble
 
 ------------
 
@@ -4959,7 +5091,7 @@ Configuration:
     remainder of the session
 
 
-7.64. stream_size
+7.71. stream_size
 
 ------------
 
@@ -4974,7 +5106,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.65. tag
+7.72. tag
 
 ------------
 
@@ -4991,7 +5123,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1: }
 
 
-7.66. tos
+7.73. tos
 
 ------------
 
@@ -5005,7 +5137,7 @@ Configuration:
     max | <max | >min
 
 
-7.67. ttl
+7.74. ttl
 
 ------------
 
@@ -5019,7 +5151,7 @@ Configuration:
     max | <max | >min
 
 
-7.68. urg
+7.75. urg
 
 ------------
 
@@ -5033,7 +5165,7 @@ Configuration:
     min
 
 
-7.69. window
+7.76. window
 
 ------------
 
@@ -7312,6 +7444,10 @@ The working config is crusty.cfg in the top level directory. It does
 well but will munge some things. Specially formatted INDENT-OFF
 comments were added in 2 places to avoid a real mess.
 
+You can use uncrustify something like this:
+
+uncrustify -c crusty.cfg --replace file.cc
+
 
 ---------------------------------------------------------------------
 
@@ -7865,7 +8001,6 @@ and intel-soft-cpm packages.
     using CIDR mask
   * -C print out payloads with character data only (no hex)
   * -D run Snort in background (daemon) mode
-  * -E enable daemon restart
   * -G <0xid> (same as --logid) (0:65535)
   * -H make hash tables deterministic
   * -L <mode> logging mode (none, dump, pcap, or log_*)
@@ -8294,6 +8429,18 @@ Some additional details to note:
   * bool ftp_server.telnet_cmds = false: detect telnet escape
     sequences of ftp control channel
   * int gid.~: generator id { 1: }
+  * string gtp_info.~: info element to match
+  * int gtp_inspect[].infos[].length = 0: information element type
+    code { 0:255 }
+  * string gtp_inspect[].infos[].name: information element name
+  * int gtp_inspect[].infos[].type = 0: information element type code
+    { 0:255 }
+  * string gtp_inspect[].messages[].name: message name
+  * int gtp_inspect[].messages[].type = 0: message type code { 0:255
+    }
+  * int gtp_inspect[].version = 2: gtp version { 0:2 }
+  * string gtp_type.~: list of types to match
+  * int gtp_version.~: version to match { 0:2 }
   * enum hosts[].frag_policy: defragmentation policy { first | linux
     | bsd | bsd_right | last | windows | solaris }
   * addr hosts[].ip = 0.0.0.0/32: hosts address / cidr
@@ -8486,6 +8633,8 @@ Some additional details to note:
   * string md5.~hash: data to match
   * string metadata.*: additional parameters not used by snort
   * string metadata.service: service name
+  * string modbus_func.~: function code to match
+  * int modbus_unit.~: modbus unit ID { 0:255 }
   * bool mpls.enable_mpls_multicast = false: enables support for MPLS
     multicast
   * bool mpls.enable_mpls_overlapping_ip = false: enable if private
@@ -8516,6 +8665,8 @@ Some additional details to note:
     1:255 }
   * int network.new_ttl = 1: use this value for responses and when
     normalizing { 1:255 }
+  * int new_http_inspect.print_amount = 1200: number of characters to
+    print from a Field { 1:1000000 }
   * int new_http_inspect.request_depth = -1: maximum request message
     body bytes to examine (-1 no limit) { -1: }
   * int new_http_inspect.response_depth = -1: maximum response
@@ -8524,6 +8675,8 @@ Some additional details to note:
     text file
   * bool new_http_inspect.test_output = false: print out HTTP section
     data
+  * bool new_http_inspect.unzip = true: decompress gzip and deflate
+    message bodies
   * bool normalizer.icmp4 = false: clear reserved flag
   * bool normalizer.icmp6 = false: clear reserved flag
   * bool normalizer.ip4.base = true: clear options
@@ -8622,6 +8775,7 @@ Some additional details to note:
     each reporting interval
   * int perf_monitor.seconds = 60: report interval; 0 means report at
     exit only { 0: }
+  * string pkt_num.~range: check if packet number is in given range
   * int pop.b64_decode_depth = 1460: base64 decoding depth { -1:65535
     }
   * int pop.bitenc_decode_depth = 1460: Non-Encoded MIME attachment
@@ -8648,22 +8802,6 @@ Some additional details to note:
     watch
   * int port_scan_global.memcap = 1048576: maximum tracker memory {
     1: }
-  * bool ppm.fastpath_expensive_packets = false: stop inspection if
-    the max_pkt_time is exceeded
-  * int ppm.max_pkt_time = 0: enable packet latency thresholding
-    (usec), 0 = off { 0: }
-  * int ppm.max_rule_time = 0: enable rule latency thresholding
-    (usec), 0 = off { 0: }
-  * enum ppm.pkt_log = none: log event if max_pkt_time is exceeded {
-    none | log | alert | both }
-  * enum ppm.rule_log = none: enable event logging for suspended
-    rules { none|log|alert|both }
-  * bool ppm.suspend_expensive_rules = false: temporarily disable
-    rule if threshold is reached
-  * int ppm.suspend_timeout = 60: seconds to suspend rule, 0 =
-    permanent { 0: }
-  * int ppm.threshold = 5: number of times to exceed limit before
-    disabling rule { 1: }
   * int priority.~: relative severity level; 1 is highest priority {
     1: }
   * string process.chroot: set chroot directory (same as -t)
@@ -8680,15 +8818,6 @@ Some additional details to note:
   * string process.umask: set process umask (same as -m)
   * bool process.utc = false: use UTC instead of local time for
     timestamps
-  * int profile.modules.count = -1: print results to given level (-1
-    = all, 0 = off) { -1: }
-  * enum profile.modules.sort = avg_ticks: sort by given field {
-    checks | avg_ticks | total_ticks }
-  * int profile.rules.count = -1: print results to given level (-1 =
-    all, 0 = off) { -1: }
-  * enum profile.rules.sort = avg_ticks: sort by given field { checks
-    | avg_ticks | total_ticks | matches | no_matches |
-    avg_ticks_per_match | avg_ticks_per_no_match }
   * string rate_filter[].apply_to: restrict filter to these addresses
     according to track
   * int rate_filter[].count = 1: number of events in interval before
@@ -8973,12 +9102,11 @@ Some additional details to note:
   * string snort.-?: <option prefix> output matching command line
     option quick help (same as --help-options) { (optional) }
   * string snort.-A: <mode> set alert mode: none, cmg, or alert_*
-  * implied snort.-B: <mask> obfuscated IP addresses in alerts and
-    packet dumps using CIDR mask
+  * addr snort.-B = 255.255.255.255/32: <mask> obfuscated IP
+    addresses in alerts and packet dumps using CIDR mask
   * implied snort.-C: print out payloads with character data only (no
     hex)
   * implied snort.-D: run Snort in background (daemon) mode
-  * implied snort.-E: enable daemon restart
   * int snort.-G: <0xid> (same as --logid) { 0:65535 }
   * implied snort.-H: make hash tables deterministic
   * string snort.-L: <mode> logging mode (none, dump, pcap, or log_*)
@@ -9286,10 +9414,16 @@ Some additional details to note:
   * detection.raw searches: fast pattern searches in raw packet data
   * detection.slow searches: non-fast pattern rule evaluations
   * detection.total alerts: alerts including IP reputation
-  * dns.packets: total packets
+  * dns.packets: total packets processed
+  * dns.requests: total dns requests
+  * dns.responses: total dns responses
   * dpx.packets: total packets
   * ftp_data.packets: total packets
   * ftp_server.packets: total packets
+  * gtp_inspect.events: requests
+  * gtp_inspect.sessions: total sessions processed
+  * gtp_inspect.unknown infos: unknown information elements
+  * gtp_inspect.unknown types: unknown message types
   * http_global.compressed bytes: total comparessed bytes processed
   * http_global.decompressed bytes: total bytes decompressed
   * http_global.double unicode: double unicode normalizations
@@ -9312,6 +9446,8 @@ Some additional details to note:
   * icmp6.bad checksum (ip6): nonzero ipcm6 checksums
   * imap.packets: total packets
   * ipv4.bad checksum: nonzero ip checksums
+  * modbus.frames: total Modbus messages
+  * modbus.sessions: total sessions processed
   * normalizer.icmp4 echo: icmp4 ping normalizations
   * normalizer.icmp6 echo: icmp6 echo normalizations
   * normalizer.ip4 df: don’t frag bit normalizations
@@ -9424,7 +9560,24 @@ Some additional details to note:
   * snort.remote commands: total remote commands processed
   * snort.signals: total signals processed
   * ssh.packets: total packets
-  * ssl.packets: total packets
+  * ssl.alert: total ssl alert records
+  * ssl.bad handshakes: total bad handshakes
+  * ssl.certificate: total ssl certificates
+  * ssl.change cipher: total change cipher records
+  * ssl.client application: total client application records
+  * ssl.client hello: total client hellos
+  * ssl.client key exchange: total client key exchanges
+  * ssl.decoded: ssl packets decoded
+  * ssl.detection disabled: total detection disabled
+  * ssl.finished: total handshakes finished
+  * ssl.handshakes completed: total completed ssl handshakes
+  * ssl.packets: total packets processed
+  * ssl.server application: total server application records
+  * ssl.server done: total server done
+  * ssl.server hello: total server hellos
+  * ssl.server key exchange: total server key exchanges
+  * ssl.sessions ignored: total sessions ignore
+  * ssl.unrecognized records: total unrecognized records
   * stream.file flows: total file sessions
   * stream.file prunes: file sessions pruned
   * stream.icmp flows: total icmp sessions
@@ -9542,11 +9695,12 @@ Some additional details to note:
   * 128: ssh
   * 129: stream_tcp
   * 131: dns
-  * 134: ppm
   * 137: ssl
   * 140: sip
   * 141: imap
   * 142: pop
+  * 143: gtp_inspect
+  * 144: modbus
   * 219: new_http_inspect
   * 256: dpx
 
@@ -9905,9 +10059,6 @@ Some additional details to note:
   * 131:1 (dns) Obsolete DNS RR Types
   * 131:2 (dns) Experimental DNS RR Types
   * 131:3 (dns) DNS Client rdata txt Overflow
-  * 134:1 (ppm) rule options disabled by rule latency
-  * 134:2 (ppm) rule options re-enabled by rule latency
-  * 134:3 (ppm) packet aborted due to latency
   * 137:1 (ssl) Invalid Client HELLO after Server HELLO Detected
   * 137:2 (ssl) Invalid Server HELLO without Client HELLO Detected
   * 137:3 (ssl) Heartbeat Read Overrun Attempt Detected
@@ -9949,6 +10100,13 @@ Some additional details to note:
   * 142:4 (pop) Base64 Decoding failed.
   * 142:5 (pop) Quoted-Printable Decoding failed.
   * 142:7 (pop) Unix-to-Unix Decoding failed.
+  * 143:1 (gtp_inspect) message length is invalid
+  * 143:2 (gtp_inspect) information element length is invalid
+  * 143:3 (gtp_inspect) information elements are out of order
+  * 144:1 (modbus) length in Modbus MBAP header does not match the
+    length needed for the given function
+  * 144:2 (modbus) Modbus protocol ID is non-zero
+  * 144:3 (modbus) Reserved Modbus function code in use
   * 219:1 (new_http_inspect) ascii encoding
   * 219:2 (new_http_inspect) double decoding attack
   * 219:3 (new_http_inspect) u encoding
@@ -10021,6 +10179,8 @@ Some additional details to note:
   * 219:63 (new_http_inspect) URI bad port number
   * 219:64 (new_http_inspect) HTTP chunk misformatted
   * 219:65 (new_http_inspect) White space following chunk length
+  * 219:67 (new_http_inspect) Excessive gzip compression
+  * 219:68 (new_http_inspect) Gzip decompression failed
   * 256:1 (dpx) too much data sent to port
 
 
@@ -10033,7 +10193,8 @@ Some additional details to note:
   * snort.help(): this output
   * snort.pause(): suspend packet processing
   * snort.quit(): shutdown and dump-stats
-  * snort.reload_config(): load new configuration
+  * snort.reload_config(filename): load new configuration
+  * snort.reload_hosts(filename): load a new hosts table
   * snort.resume(): continue packet processing
   * snort.rotate_stats(): roll perfmonitor log files
   * snort.show_plugins(): show available plugins
@@ -10440,6 +10601,10 @@ deleted -> unified2: 'filename'
   * gre (codec): support for generic routing encapsulation
   * gtp (codec): support for general-packet-radio-service tunnelling
     protocol
+  * gtp_info (ips_option): rule option to check gtp info element
+  * gtp_inspect (inspector): gtp control channel inspection
+  * gtp_type (ips_option): rule option to check gtp types
+  * gtp_version (ips_option): rule option to check gtp version
   * hosts (basic): configure hosts
   * http_client_body (ips_option): rule option to set the detection
     cursor to the request body
@@ -10489,6 +10654,12 @@ deleted -> unified2: 'filename'
   * md5 (ips_option): payload rule option for hash matching
   * metadata (ips_option): rule option for conveying arbitrary name,
     value data within the rule text
+  * modbus (inspector): modbus inspection
+  * modbus_data (ips_option): rule option to set cursor to modbus
+    data
+  * modbus_func (ips_option): rule option to check modbus function
+    code
+  * modbus_unit (ips_option): rule option to check modbus unit ID
   * mpls (codec): support for multiprotocol label switching
   * msg (ips_option): rule option summarizing rule purpose output
     with events
@@ -10504,18 +10675,15 @@ deleted -> unified2: 'filename'
   * pgm (codec): support for pragmatic general multicast
   * pkt_data (ips_option): rule option to set the detection cursor to
     the normalized packet data
+  * pkt_num (ips_option): alert on raw packet number
   * pop (inspector): pop inspection
   * port_scan (inspector): port scan inspector; also configure
     port_scan_global
   * port_scan_global (inspector): shared settings for port_scan
     inspectors for use with port_scan
-  * ppm (basic): packet and rule latency monitoring and control
-    (requires --enable-ppm)
   * pppoe (codec): support for point-to-point protocol over ethernet
   * priority (ips_option): rule option for prioritizing events
   * process (basic): configure basic process setup
-  * profile (basic): configure profiling of rules and/or modules
-    (requires --enable-perf-profiling)
   * rate_filter (basic): configure rate filters (which change rule
     actions)
   * raw_data (ips_option): rule option to set the detection cursor to
@@ -10657,9 +10825,11 @@ deleted -> unified2: 'filename'
   * inspector::ftp_client: FTP inspector client module
   * inspector::ftp_data: FTP data channel handler
   * inspector::ftp_server: FTP inspector server module
+  * inspector::gtp_inspect: gtp control channel inspection
   * inspector::http_global: shared HTTP inspector settings
   * inspector::http_inspect: main HTTP inspector module
   * inspector::imap: imap inspection
+  * inspector::modbus: modbus inspection
   * inspector::new_http_inspect: the new HTTP inspector!
   * inspector::normalizer: packet scrubbing for inline mode
   * inspector::perf_monitor: performance monitoring and flow
@@ -10723,6 +10893,9 @@ deleted -> unified2: 'filename'
   * ips_option::fragbits: rule option to test IP frag flags
   * ips_option::fragoffset: rule option to test IP frag offset
   * ips_option::gid: rule option specifying rule generator
+  * ips_option::gtp_info: rule option to check gtp info element
+  * ips_option::gtp_type: rule option to check gtp types
+  * ips_option::gtp_version: rule option to check gtp version
   * ips_option::http_client_body: rule option to set the detection
     cursor to the request body
   * ips_option::http_cookie: rule option to set the detection cursor
@@ -10755,12 +10928,17 @@ deleted -> unified2: 'filename'
   * ips_option::md5: payload rule option for hash matching
   * ips_option::metadata: rule option for conveying arbitrary name,
     value data within the rule text
+  * ips_option::modbus_data: rule option to set cursor to modbus data
+  * ips_option::modbus_func: rule option to check modbus function
+    code
+  * ips_option::modbus_unit: rule option to check modbus unit ID
   * ips_option::msg: rule option summarizing rule purpose output with
     events
   * ips_option::pcre: rule option for matching payload data with
     regex
   * ips_option::pkt_data: rule option to set the detection cursor to
     the normalized packet data
+  * ips_option::pkt_num: alert on raw packet number
   * ips_option::priority: rule option for prioritizing events
   * ips_option::raw_data: rule option to set the detection cursor to
     the raw packet data
@@ -10806,7 +10984,7 @@ deleted -> unified2: 'filename'
   * logger::alert_unixsock: output event over unix socket
   * logger::log_codecs: log protocols in packet by layer
   * logger::log_hext: output payload suitable for daq hext
-  * logger::log_null: support for null encapsulation
+  * logger::log_null: disable logging of packets
   * logger::log_pcap: log packet in pcap format
   * logger::unified2: output event and packet in unified2 format file
   * piglet::pp_codec: Codec piglet
