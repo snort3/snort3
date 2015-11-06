@@ -347,14 +347,6 @@ if test "x$enable_ppm" = "xyes"; then
     AC_DEFINE(PPM_MGR, [1], [build ppm manager])
 fi
 
-AC_ARG_ENABLE(ppm-test,
-    AC_HELP_STRING([--enable-ppm-test],[enable packet/rule performance monitor for readback]),
-    enable_ppm_test="$enableval", enable_ppm_test="no")
-
-if test "x$enable_ppm_test" = "xyes"; then
-    AC_DEFINE(PPM_TEST, [1], [build ppm manager for readback])
-fi
-
 AC_ARG_ENABLE(perf-profiling,
     AC_HELP_STRING([--enable-perf-profiling],[enable module and rule performance profiling]),
     enable_perf_profiling="$enableval", enable_perf_profiling="no")

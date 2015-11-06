@@ -35,8 +35,6 @@
 #include "time/cpuclock.h"
 #include "detection/detection_options.h"
 
-#define cputime get_clockticks
-
 typedef uint64_t PPM_TICKS;
 typedef uint64_t PPM_USECS;
 typedef unsigned int PPM_SECS;
@@ -141,10 +139,13 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
 #define PPM_ACCUM_NC_RULE_TIME() \
     ppm_stats.tot_nc_rule_time += ppm_rt->tot; \
     ppm_stats.tot_nc_rules++;
+
 #define PPM_ACCUM_PCRE_RULE_TIME() \
     ppm_stats.tot_pcre_rule_time += ppm_rt->tot; \
     ppm_stats.tot_pcre_rules++;
-#define PPM_GET_TIME()             cputime(ppm_cur_time)
+
+#define PPM_GET_TIME()             get_clockticks(ppm_cur_time)
+
 #define PPM_PKT_RULE_TESTS()       ppm_pt->rule_tests
 #define PPM_PKT_PCRE_RULE_TESTS()  ppm_pt->pcre_rule_tests
 #define PPM_PKT_NC_RULE_TESTS()    ppm_pt->nc_rule_tests
@@ -154,7 +155,7 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
 
 #define PPM_PRINT_PKT_TIME(a)    LogMessage(a, ppm_ticks_to_usecs((PPM_TICKS)ppm_pt->tot) );
 
-#ifdef PPM_TEST
+#ifdef REG_TEST
 // use usecs instead of ticks for rule suspension during pcap playback
 #define PPM_RULE_TIME(p) ((p->pkth->ts.tv_sec * 1000000) + p->pkth->ts.tv_usec)
 #else
@@ -225,16 +226,6 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
         } \
     }
 
-#if 0 && defined(PPM_TEST)
-#define PPM_DBG_CSV(state, otn, when) \
-    LogMessage( \
-    "PPM, %u, %u, %s, " STDu64 "\n", \
-    otn->sigInfo.generator, otn->sigInfo.id, state, when \
-    )
-#else
-#define PPM_DBG_CSV(state, otn, when)
-#endif
-
 // use PPM_GET_TIME; first to get the current time
 #define PPM_RULE_TEST(root,p) \
     if ( ppm_rt ) \
@@ -259,7 +250,6 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
                     ppm_set_rule_event(snort_conf->ppm_cfg, root); \
                     (root_state)->enabled=false; \
                     (root_state)->ppm_suspend_time=PPM_RULE_TIME(p); \
-                    PPM_DBG_CSV("disabled", (root), (root)->ppm_suspend_time); \
                 } \
                 else \
                 { \
@@ -286,11 +276,6 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
             (root_state)->ppm_suspend_time=0; \
             (root_state)->enabled=true; \
             ppm_clear_rule_event(snort_conf->ppm_cfg, root); \
-            PPM_DBG_CSV("enabled", (root), now); \
-        } \
-        else \
-        { \
-            PPM_DBG_CSV("pending", (root), then-now); \
         } \
     }
 

@@ -78,7 +78,7 @@
 #define PPM_DEFAULT_MAX_SUSP_SECS   60
 #define PPM_DEFAULT_RULE_THRESHOLD   5
 
-PPM_TICKS ppm_tpu = 0; /* ticks per usec */
+PPM_TICKS ppm_tpu = 1; /* ticks per usec */
 
 static ppm_stats_t g_ppm_stats;
 
@@ -142,17 +142,18 @@ void ppm_clear_rule(detection_option_tree_root_t* root)
 
 /*
  * calc ticks per micro-secs in integer units
+ * use usecs instead of ticks for rule suspension during pcap playback
  */
-static int ppm_calc_ticks(void)
+static PPM_TICKS ppm_calc_ticks(void)
 {
+#ifndef REG_TEST
     ppm_tpu = (PPM_TICKS)get_ticks_per_usec();
 
     if ( ppm_tpu == 0 )
-    {
-        return -1;
-    }
+#endif
+        ppm_tpu = 1;
 
-    return 0;
+    return ppm_tpu;
 }
 
 void ppm_print_cfg(ppm_cfg_t* ppm_cfg)
@@ -169,20 +170,27 @@ void ppm_print_cfg(ppm_cfg_t* ppm_cfg)
         LogMessage("Packet Performance Monitor Config:\n");
         LogMessage("  ticks per usec  : %lu ticks\n",(unsigned long)ppm_tpu);
 
-        LogMessage("  max packet time : %lu usecs\n",(unsigned long)(ppm_cfg->max_pkt_ticks/
-            ppm_tpu));
+        LogMessage("  max packet time : %lu usecs\n",
+            (unsigned long)(ppm_cfg->max_pkt_ticks/ppm_tpu));
+
         LogMessage("  packet action   : ");
+
         if ( ppm_cfg->pkt_action )
             LogMessage("fastpath-expensive-packets\n");
         else
             LogMessage("none\n");
+
         LogMessage("  packet logging  : ");
+
         if (ppm_cfg->pkt_log&PPM_LOG_ALERT)
             LogMessage("alert ");
+
         if (ppm_cfg->pkt_log&PPM_LOG_MESSAGE)
             LogMessage("log ");
+
         if (!ppm_cfg->pkt_log)
             LogMessage("none ");
+
         LogMessage("\n");
     }
 
@@ -192,9 +200,11 @@ void ppm_print_cfg(ppm_cfg_t* ppm_cfg)
         LogMessage("Rule Performance Monitor Config:\n");
         LogMessage("  ticks per usec  : %lu ticks\n",(unsigned long)ppm_tpu);
 
-        LogMessage("  max rule time   : %lu usecs\n",(unsigned long)(ppm_cfg->max_rule_ticks/
-            ppm_tpu));
+        LogMessage("  max rule time   : %lu usecs\n",
+            (unsigned long)(ppm_cfg->max_rule_ticks/ ppm_tpu));
+
         LogMessage("  rule action     : ");
+
         if ( ppm_cfg->rule_action )
         {
             LogMessage("suspend-expensive-rules\n");
@@ -203,21 +213,20 @@ void ppm_print_cfg(ppm_cfg_t* ppm_cfg)
         else
             LogMessage("none\n");
 
-#ifdef PPM_TEST
-        /* use usecs instead of ticks for rule suspension during pcap playback */
-        LogMessage("  suspend timeout : %lu secs\n", (unsigned long)(ppm_cfg->max_suspend_ticks/
-            ((uint64_t)1000000)) );
-#else
         LogMessage("  suspend timeout : %lu secs\n", (unsigned long)(ppm_cfg->max_suspend_ticks/
             ((uint64_t)ppm_tpu*1000000)) );
-#endif
+
         LogMessage("  rule logging    : ");
+
         if (ppm_cfg->rule_log&PPM_LOG_ALERT)
             LogMessage("alert ");
+
         if (ppm_cfg->rule_log&PPM_LOG_MESSAGE)
             LogMessage("log ");
+
         if (!ppm_cfg->rule_log)
             LogMessage("none ");
+
         LogMessage("\n");
     }
 }
@@ -305,10 +314,7 @@ void ppm_print_summary(ppm_cfg_t* ppm_cfg)
 
 double ppm_ticks_to_usecs(PPM_TICKS ticks)
 {
-    if (ppm_tpu > 0)
-        return (double)ticks / ppm_tpu;
-
-    return 0.0;
+    return (double)ticks / ppm_tpu;
 }
 
 /*
@@ -317,19 +323,14 @@ double ppm_ticks_to_usecs(PPM_TICKS ticks)
 void ppm_init(ppm_cfg_t* ppm_cfg)
 {
     /* calc ticks per usec */
-    if (ppm_calc_ticks() == -1)
-        return;
+    ppm_calc_ticks();
 
     ppm_cfg->enabled = 1;
 
     ppm_cfg->max_pkt_ticks = PPM_DEFAULT_MAX_PKT_TICKS;
     ppm_cfg->max_rule_ticks = PPM_DEFAULT_MAX_RULE_TICKS;
 
-    /* use usecs instead of ticks for rule suspension during pcap playback */
-    ppm_cfg->max_suspend_ticks = (uint64_t)PPM_DEFAULT_MAX_SUSP_SECS * 1000000;
-#ifndef PPM_TEST
-    ppm_cfg->max_suspend_ticks *= ppm_tpu;
-#endif
+    ppm_cfg->max_suspend_ticks = (uint64_t)PPM_DEFAULT_MAX_SUSP_SECS * 1000000 * ppm_tpu;
     ppm_cfg->rule_threshold = PPM_DEFAULT_RULE_THRESHOLD;
 }
 
@@ -517,11 +518,8 @@ void ppm_set_max_rule_time(ppm_cfg_t* ppm_cfg, PPM_USECS usecs)
 
 void ppm_set_max_suspend_time(ppm_cfg_t* ppm_cfg, PPM_SECS secs)
 {
-    /* use usecs instead of ticks for rule suspension during pcap playback */
-    ppm_cfg->max_suspend_ticks = (uint64_t)secs * 1000000;
-#ifndef PPM_TEST
+    ppm_cfg->max_suspend_ticks = (uint64_t)secs * 1000000 * ppm_tpu;
     ppm_cfg->max_suspend_ticks *= ppm_tpu;
-#endif
 }
 
 void ppm_set_rule_threshold(ppm_cfg_t* ppm_cfg, unsigned int cnt)

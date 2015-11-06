@@ -29,22 +29,21 @@ Optional Features:
     --disable-static-ips-options    do not include ips options in binary
     --disable-static-search-engines    do not include search engines in binary
     --disable-static-codecs    do not include codecs in binary
+    --disable-static-piglets   do not include piglets in binary
     --enable-valgrind        Only use if you are testing with valgrind.
     --enable-ppm            Enable packet/rule performance monitor
-    --enable-ppm-test        Enable packet/rule performance monitor for readback
     --enable-perf-profiling  Enable preprocessor and rule performance profiling
+    --enable-shell           enable command line shell support
     --enable-linux-smp-stats Enable statistics reporting through proc
     --enable-debug-msgs      Enable debug printing options (bugreports and developers only)
+    --enable-large-pcap      Enable support for pcaps larger than 2 GB
     --enable-debug           Enable debugging options (bugreports and developers only)
     --enable-gdb             Enable gdb debugging information
-    --enable-profile         Enable profiling options (developers only)
+    --enable-gprof-profile   Enable gprof profiling options (developers only)
     --disable-corefiles      Prevent Snort from generating core files
-    --enable-intel-soft-cpm  Enable Intel Soft CPM support
     --enable-unit-tests      Build unit tests
     --enable-piglet          Build piglet test capability
-    --enable-large-pcap      Enable support for pcaps larger than 2 GB
     --disable-static-daq     Link static DAQ modules.
-    --enable-shell           enable command line shell support
 
 
     Optional Packages:
@@ -170,6 +169,12 @@ while [ $# -ne 0 ]; do
         --enable-static-search-engines)
             append_cache_entry STATIC_SEARCH_ENGINES       BOOL   true
             ;;
+        --disable-static-piglets)
+            append_cache_entry STATIC_PIGLETS       BOOL   false
+            ;;
+        --enable-static-piglets)
+            append_cache_entry STATIC_PIGLETS       BOOL   true
+            ;;
         --disable-side-channel)
             append_cache_entry BUILD_SIDE_CHANNEL       BOOL   false
             ;;
@@ -193,12 +198,6 @@ while [ $# -ne 0 ]; do
             ;;
         --enable-ppm)
             append_cache_entry ENABLE_PPM    BOOL   true
-            ;;
-        --disable-ppm-test)
-            append_cache_entry ENABLE_PPM_TEST    BOOL   false
-            ;;
-        --enable-ppm-test)
-            append_cache_entry ENABLE_PPM_TEST    BOOL   true
             ;;
         --disable-perf-profiling)
             append_cache_entry ENABLE_PERFPROFILING    BOOL   false
@@ -230,10 +229,10 @@ while [ $# -ne 0 ]; do
         --enable-gdb)
             append_cache_entry ENABLE_GDB    BOOL   true
             ;;
-        --disable-profile)
+        --disable-gprof-profile)
             append_cache_entry ENABLE_PROFILE    BOOL   false
             ;;
-        --enable-profile)
+        --enable-gprof-profile)
             append_cache_entry ENABLE_PROFILE    BOOL   true
             ;;
         --disable-debug)
@@ -241,12 +240,6 @@ while [ $# -ne 0 ]; do
             ;;
         --enable-debug)
             append_cache_entry ENABLE_DEBUG    BOOL   true
-            ;;
-        --disable-ha)
-            append_cache_entry BUILD_HA    BOOL   false
-            ;;
-        --enable-ha)
-            append_cache_entry BUILD_HA    BOOL   true
             ;;
         --disable-corefiles)
             append_cache_entry ENABLE_COREFILES    BOOL   false
@@ -259,12 +252,6 @@ while [ $# -ne 0 ]; do
             ;;
         --enable-large-pcap)
             append_cache_entry ENABLE_LARGE_PCAP    BOOL   true
-            ;;
-        --disable-intel-soft-cpm)
-            append_cache_entry ENABLE_INTEL_SOFT_CPM    BOOL   false
-            ;;
-        --enable-intel-soft-cpm)
-            append_cache_entry ENABLE_INTEL_SOFT_CPM    BOOL   true
             ;;
         --enable-shell)
             append_cache_entry ENABLE_SHELL    BOOL   true
