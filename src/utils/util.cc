@@ -963,43 +963,6 @@ char* GetAbsolutePath(const char* dir)
     return (char*)buf;
 }
 
-int CheckValueInRange(const char* value_str, const char* option,
-    unsigned long lo, unsigned long hi, unsigned long* value)
-{
-    char* endptr;
-    uint32_t val;
-
-    if ( value_str == NULL )
-    {
-        ParseError("invalid format for %s.", option);
-        return -1;
-    }
-
-    if (SnortStrToU32(value_str, &endptr, &val, 10))
-    {
-        ParseError("invalid format for %s.", option);
-        return -1;
-    }
-
-    if (*endptr)
-    {
-        ParseError("invalid format for %s.", option);
-        return -1;
-    }
-
-    *value = val;
-
-    if ( (errno == ERANGE) || (*value) < lo || (*value) > hi)
-    {
-        ParseError("invalid value for %s."
-            "It should range between %u and %u.", option,
-            lo, hi);
-        return -1;
-    }
-
-    return 0;
-}
-
 void SetNoCores(void)
 {
     struct rlimit rlim;
@@ -1014,11 +977,5 @@ const char* get_error(int errnum)
     static THREAD_LOCAL char buf[128];
     (void)strerror_r(errnum, buf, sizeof(buf));
     return buf;
-}
-
-char* get_tok(char* s, const char* delim)
-{
-    static THREAD_LOCAL char* lasts = nullptr;
-    return strtok_r(s, delim, &lasts);
 }
 

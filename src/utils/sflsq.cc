@@ -20,10 +20,9 @@
 /*
 *   sflsq.c
 *
-*   Simple list, stack, queue, and dictionary implementations
+*   Simple list, queue, and dictionary implementations
 *   ( most of these implementations are list based - not performance monsters,
 *     and they all use alloc via s_alloc/s_free )
-*   Stack based Ineteger and Pointer Stacks, these are for performance.(inline would be better)
 *
 *   11/05/2005 - man - Added sflist_firstx() and sflist_nextx() with user
 *   provided SF_NODE inputs for tracking the list position.  This allows
@@ -77,11 +76,6 @@ SF_LIST* sflist_new(void)
     return s;
 }
 
-SF_STACK* sfstack_new(void)
-{
-    return (SF_STACK*)sflist_new();
-}
-
 SF_QUEUE* sfqueue_new(void)
 {
     return (SF_QUEUE*)sflist_new();
@@ -122,7 +116,7 @@ int sflist_add_before(SF_LIST* s, SF_LNODE* lnode, NODE_DATA ndata)
 }
 
 /*
-*     ADD to List/Stack/Queue/Dictionary
+*     ADD to List/Queue/Dictionary
 */
 /*
 *  Add-Head Item
@@ -187,11 +181,6 @@ int sflist_add_tail(SF_LIST* s, NODE_DATA ndata)
 }
 
 int sfqueue_add(SF_QUEUE* s, NODE_DATA ndata)
-{
-    return sflist_add_tail (s, ndata);
-}
-
-int sfstack_add(SF_STACK* s, NODE_DATA ndata)
 {
     return sflist_add_tail (s, ndata);
 }
@@ -331,14 +320,6 @@ NODE_DATA sfqueue_remove(SF_QUEUE* s)
 }
 
 /*
-*  Remove Tail Item from stack
-*/
-NODE_DATA sfstack_remove(SF_QUEUE* s)
-{
-    return (NODE_DATA)sflist_remove_tail(s);
-}
-
-/*
 *  COUNT
 */
 int sfqueue_count(SF_QUEUE* s)
@@ -349,13 +330,6 @@ int sfqueue_count(SF_QUEUE* s)
 }
 
 int sflist_count(SF_LIST* s)
-{
-    if (!s)
-        return 0;
-    return s->count;
-}
-
-int sfstack_count(SF_STACK* s)
 {
     if (!s)
         return 0;
@@ -387,11 +361,6 @@ void sfqueue_free_all(SF_QUEUE* s,void (* nfree)(void*) )
     sflist_free_all(s, nfree);
 }
 
-void sfstack_free_all(SF_STACK* s,void (* nfree)(void*) )
-{
-    sflist_free_all(s, nfree);
-}
-
 void sflist_static_free_all(SF_LIST* s, void (* nfree)(void*) )
 {
     void* p;
@@ -408,18 +377,8 @@ void sflist_static_free_all(SF_LIST* s, void (* nfree)(void*) )
     }
 }
 
-void sfqueue_static_free_all(SF_QUEUE* s,void (* nfree)(void*) )
-{
-    sflist_static_free_all(s, nfree);
-}
-
-void sfstack_static_free_all(SF_STACK* s,void (* nfree)(void*) )
-{
-    sflist_static_free_all(s, nfree);
-}
-
 /*
-*  FREE List/Queue/Stack/Dictionary
+*  FREE List/Queue/Dictionary
 *
 *  This does not free a nodes data
 */
@@ -435,107 +394,5 @@ void sflist_free(SF_LIST* s)
 void sfqueue_free(SF_QUEUE* s)
 {
     sflist_free (s);
-}
-
-void sfstack_free(SF_STACK* s)
-{
-    sflist_free (s);
-}
-
-/* Use these if the SF_LIST was not dynamically allocated via
- * sflist_new() */
-void sflist_static_free(SF_LIST* s)
-{
-    while (sflist_count(s))
-        sflist_remove_head(s);
-}
-
-void sfqueue_static_free(SF_QUEUE* s)
-{
-    sflist_static_free(s);
-}
-
-void sfstack_static_free(SF_STACK* s)
-{
-    sflist_static_free(s);
-}
-
-/*
-*   Integer stack functions - for performance scenarios
-*/
-int sfistack_init(SF_ISTACK* s, unsigned* a,  unsigned n)
-{
-    if ( a )
-        s->stack = a;
-    else
-    {
-        s->stack = (unsigned*)calloc(n, sizeof(unsigned) );
-    }
-    if ( !s->stack )
-        return -1;
-    s->nstack= n;
-    s->n =0;
-    return 0;
-}
-
-int sfistack_push(SF_ISTACK* s, unsigned value)
-{
-    if ( s->n < s->nstack )
-    {
-        s->stack[s->n++] = value;
-        return 0;
-    }
-    return -1;
-}
-
-int sfistack_pop(SF_ISTACK* s, unsigned* value)
-{
-    if ( s->n > 0 )
-    {
-        s->n--;
-        *value = s->stack[s->n];
-        return 0;
-    }
-    return -1;
-}
-
-/*
-*  Pointer Stack Functions - for performance scenarios
-*/
-int sfpstack_init(SF_PSTACK* s, void** a,  unsigned n)
-{
-    if ( a )
-        s->stack = a;
-    else
-    {
-        s->stack = (void**)calloc(n, sizeof(void*) );
-    }
-
-    if ( !s->stack )
-        return -1;
-    s->nstack= n;
-    s->n =0;
-    return 0;
-}
-
-int sfpstack_push(SF_PSTACK* s, void* value)
-{
-    if ( s->n < s->nstack )
-    {
-        s->stack[s->n++] = value;
-        return 0;
-    }
-    return -1;
-}
-
-int sfpstack_pop(SF_PSTACK* s, void** value)
-{
-    if ( s->n > 0 )
-    {
-        s->n--;
-        *value = s->stack[s->n];
-        return 0;
-    }
-    return -1;
 }
 

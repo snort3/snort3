@@ -1661,39 +1661,6 @@ int acsmAddPattern2(
 }
 
 /*
-*   Add a Key to the list of key+data pairs
-*/
-int acsmAddKey2(
-    ACSM_STRUCT2* p, unsigned char* key, int klen, int nocase, void*)
-{
-    ACSM_PATTERN2* plist;
-
-    plist = (ACSM_PATTERN2*)
-        AC_MALLOC(sizeof(ACSM_PATTERN2), ACSM2_MEMORY_TYPE__PATTERN);
-    MEMASSERT (plist, "acsmAddPattern");
-
-    plist->patrn =
-        (unsigned char*)AC_MALLOC(klen, ACSM2_MEMORY_TYPE__PATTERN);
-    MEMASSERT (plist->patrn, "acsmAddPattern");
-    memcpy (plist->patrn, key, klen);
-
-    plist->casepatrn =
-        (unsigned char*)AC_MALLOC(klen, ACSM2_MEMORY_TYPE__PATTERN);
-    MEMASSERT (plist->casepatrn, "acsmAddPattern");
-    memcpy (plist->casepatrn, key, klen);
-
-    plist->n      = klen;
-    plist->nocase = nocase;
-    plist->iid = 0;
-    plist->udata = 0;
-
-    plist->next = p->acsmPatterns;
-    p->acsmPatterns = plist;
-
-    return 0;
-}
-
-/*
 *  Copy a boolean match flag int NextState table, for caching purposes.
 */
 static void acsmUpdateMatchStates(ACSM_STRUCT2* acsm)

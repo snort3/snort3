@@ -29,7 +29,6 @@
 #include "sfip/sfip_t.h"
 
 SO_PUBLIC char* inet_ntoax(const sfip_t*);
-SO_PUBLIC char* mktcpflag_str(int flags);
 
 #endif
 

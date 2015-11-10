@@ -102,9 +102,6 @@ SO_PUBLIC const char* SnortStrnPbrk(const char* s, int slen, const char* accept)
 SO_PUBLIC int SnortStrncpy(char*, const char*, size_t);
 SO_PUBLIC int SnortStrnlen(const char*, int);
 
-int CheckValueInRange(const char* value_str, const char* option,
-    unsigned long lo, unsigned long hi, unsigned long* value);
-
 char* CurrentWorkingDir(void);
 char* GetAbsolutePath(const char* dir);
 char* StripPrefixDir(char* prefix, char* dir);
@@ -202,43 +199,6 @@ static inline int SnortStrToU32(const char* buffer, char** endptr,
     return 0;
 }
 
-static inline long SnortStrtolRange(const char* nptr, char** endptr, int base, long lo, long hi)
-{
-    long iRet = SnortStrtol(nptr, endptr, base);
-    if ((iRet > hi) || (iRet < lo))
-        *endptr = (char*)nptr;
-
-    return iRet;
-}
-
-static inline unsigned long SnortStrtoulRange(const char* nptr, char** endptr, int base, unsigned
-    long lo, unsigned long hi)
-{
-    unsigned long iRet = SnortStrtoul(nptr, endptr, base);
-    if ((iRet > hi) || (iRet < lo))
-        *endptr = (char*)nptr;
-
-    return iRet;
-}
-
-static inline int IsEmptyStr(const char* str)
-{
-    const char* end;
-
-    if (str == NULL)
-        return 1;
-
-    end = str + strlen(str);
-
-    while ((str < end) && isspace((int)*str))
-        str++;
-
-    if (str == end)
-        return 1;
-
-    return 0;
-}
-
 static inline pid_t gettid(void)
 {
 #if defined(LINUX) && defined(SYS_gettid)
@@ -249,12 +209,6 @@ static inline pid_t gettid(void)
 }
 
 SO_PUBLIC const char* get_error(int errnum);
-
-// get_tok() provided to retrofit distributed calls to
-// strtok() to use strtok_r().  use strtok_r() directly
-// for new code.  get_tok() is thread safe but not
-// reentrant.
-char* get_tok(char* s, const char* delim);
 
 #endif
 

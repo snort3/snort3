@@ -66,7 +66,6 @@ struct sf_list
 };
 
 typedef sf_list SF_QUEUE;
-typedef sf_list SF_STACK;
 typedef sf_list SF_LIST;
 
 // -----------------------------------------------------------------------------
@@ -87,19 +86,6 @@ NODE_DATA sflist_next(SF_LNODE**);
 void sflist_free(SF_LIST*);
 void sflist_free_all(SF_LIST*, void (* free)(void*) );
 void sflist_static_free_all(SF_LIST*, void (* nfree)(void*));
-void sflist_static_free(SF_LIST*);
-
-// -----------------------------------------------------------------------------
-// Stack Interface ( LIFO - Last in, First out )
-// -----------------------------------------------------------------------------
-SF_STACK* sfstack_new(void);
-int sfstack_add(SF_STACK*, NODE_DATA);
-NODE_DATA sfstack_remove(SF_STACK*);
-int sfstack_count(SF_STACK*);
-void sfstack_free(SF_STACK*);
-void sfstack_free_all(SF_STACK*, void (* free)(void*) );
-void sfstack_static_free_all(SF_STACK*, void (* nfree)(void*));
-void sfstack_static_free(SF_STACK*);
 
 // -----------------------------------------------------------------------------
 //  Queue Interface ( FIFO - First in, First out )
@@ -110,19 +96,6 @@ NODE_DATA sfqueue_remove(SF_QUEUE*);
 int sfqueue_count(SF_QUEUE*);
 void sfqueue_free(SF_QUEUE*);
 void sfqueue_free_all(SF_QUEUE*, void (* free)(void*) );
-void sfqueue_static_free_all(SF_QUEUE*,void (* nfree)(void*));
-void sfqueue_static_free(SF_QUEUE*);
-
-// Performance Stack functions for Integer/Unsigned and Pointers, uses
-// user provided array storage, perhaps from the program stack or a global.
-// These are efficient, and use no memory functions.
-int sfistack_init(SF_ISTACK*, unsigned* a,  unsigned n);
-int sfistack_push(SF_ISTACK*, unsigned value);
-int sfistack_pop(SF_ISTACK*, unsigned* value);
-
-int sfpstack_init(SF_PSTACK*, void** a,  unsigned n);
-int sfpstack_push(SF_PSTACK*, void* value);
-int sfpstack_pop(SF_PSTACK*, void** value);
 
 #endif
 

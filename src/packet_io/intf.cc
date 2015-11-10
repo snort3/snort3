@@ -70,26 +70,3 @@ void PrintAllInterfaces(void)
     pcap_freealldevs(alldevs);
 }
 
-char* GetFirstInterface(void)
-{
-    char* iface = NULL;
-    char errorbuf[PCAP_ERRBUF_SIZE];
-
-    DebugMessage(
-        DEBUG_INIT, "interface is NULL, looking up interface....");
-
-    /* look up the device and get the handle */
-    iface = pcap_lookupdev(errorbuf);
-
-    if ( !iface )
-    {
-        FatalError("Failed to lookup interface: %s. "
-            "Please specify one with -i switch\n", errorbuf);
-    }
-
-    DebugFormat(DEBUG_INIT, "found interface %s\n", PRINT_INTERFACE(iface));
-
-    iface = SnortStrdup(iface);
-    return iface;
-}
-

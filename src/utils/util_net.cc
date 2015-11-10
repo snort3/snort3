@@ -33,56 +33,6 @@
 #include "util.h"
 
 /**
- * give a textual representation of tcp flags
- *
- * @param flags tcph->flags
- *
- * @return ptr to a static buffer w/ the string represented
- */
-char* mktcpflag_str(int flags)
-{
-    static THREAD_LOCAL char buf[9];
-    const int fin      = 0x01;
-    const int syn      = 0x02;
-    const int rst      = 0x04;
-    const int psh      = 0x08;
-    const int ack      = 0x10;
-    const int urg      = 0x20;
-    const int cwr      = 0x40;
-    const int ecn_echo = 0x80;
-
-    memset(buf, '-', 9);
-
-    if (flags & fin)
-        buf[0] = 'F';
-
-    if (flags & syn)
-        buf[1] = 'S';
-
-    if (flags & rst)
-        buf[2] = 'R';
-
-    if (flags & psh)
-        buf[3] = 'P';
-
-    if (flags & ack)
-        buf[4] = 'A';
-
-    if (flags & urg)
-        buf[5] = 'U';
-
-    if (flags & cwr)
-        buf[6] = 'C';
-
-    if (flags & ecn_echo)
-        buf[7] = 'E';
-
-    buf[8] = '\0';
-
-    return buf;
-}
-
-/**
  * A inet_ntoa that has 2 static buffers that are changed between
  * subsequent calls
  *
