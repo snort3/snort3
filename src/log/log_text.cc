@@ -1380,6 +1380,7 @@ void LogDiv(TextLog* log)
     TextLog_Print(log, "%s\n", SEPARATOR);
 }
 
+#ifdef BUILD_OBFUSCATION
 static int LogObfuscatedData(TextLog* log, Packet* p)
 {
     uint8_t* payload = NULL;
@@ -1416,6 +1417,7 @@ static int LogObfuscatedData(TextLog* log, Packet* p)
     free(payload);
     return 0;
 }
+#endif
 
 /*--------------------------------------------------------------------
  * Function: LogIPPkt(TextLog*, int, Packet *)
@@ -1508,11 +1510,13 @@ void LogIPPkt(TextLog* log, Packet* p)
 
 void LogPayload(TextLog* log, Packet* p)
 {
+#ifdef BUILD_OBFUSCATION
     if ((p->dsize > 0) && obApi->payloadObfuscationRequired(p)
         && (LogObfuscatedData(log, p) == 0))
     {
         return;
     }
+#endif
 
     /* dump the application layer data */
     if (SnortConfig::output_app_data() && !SnortConfig::verbose_byte_dump())

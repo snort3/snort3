@@ -131,8 +131,10 @@ static void Unified2Write(uint8_t*, uint32_t, Unified2Config*);
 static void _AlertIP4_v2(Packet*, const char*, Unified2Config*, Event*);
 static void _AlertIP6_v2(Packet*, const char*, Unified2Config*, Event*);
 
+#ifdef BUILD_OBFUSCATION
 static ObRet Unified2LogObfuscationCallback(const DAQ_PktHdr_t* pkth,
     const uint8_t* packet_data, ob_size_t length, ob_char_t ob_char, void* userdata);
+#endif
 
 static void AlertExtraData(Flow*, void* data, LogFunction* log_funcs, uint32_t max_count, uint32_t
     xtradata_mask, uint32_t event_id, uint32_t event_second);
@@ -558,6 +560,7 @@ static void _Unified2LogPacketAlert(
         logheader.event_second = 0;
     }
 
+#ifdef BUILD_OBFUSCATION
     if ( p and p->pkth and obApi->payloadObfuscationRequired(p) )
     {
         Unified2LogCallbackData unifiedData;
@@ -576,6 +579,7 @@ static void _Unified2LogPacketAlert(
             return;
         }
     }
+#endif
 
     if ( p and p->pkth )
     {
@@ -632,6 +636,7 @@ static void _Unified2LogPacketAlert(
     Unified2Write(write_pkt_buffer, write_len, config);
 }
 
+#ifdef BUILD_OBFUSCATION
 static ObRet Unified2LogObfuscationCallback(const DAQ_PktHdr_t* pkth,
     const uint8_t* packet_data, ob_size_t length,
     ob_char_t ob_char, void* userdata)
@@ -720,6 +725,7 @@ static ObRet Unified2LogObfuscationCallback(const DAQ_PktHdr_t* pkth,
 
     return OB_RET_SUCCESS;
 }
+#endif
 
 /******************************************************************************
  * Function: Unified2Write()

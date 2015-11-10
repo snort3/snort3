@@ -127,6 +127,7 @@ void snort_inspect(Packet* p)
     }
     else
     {
+#ifdef BUILD_OBFUSCATION
         /* Not a completely ideal place for this since any entries added on
          * the packet callback trail will get obliterated - right now there
          * isn't anything adding entries there.  Really need it here for
@@ -136,6 +137,7 @@ void snort_inspect(Packet* p)
          * overflow if we don't reset it.  Putting it here does have the
          * advantage of fewer entries per logging cycle */
         obApi->resetObfuscationEntries();
+#endif
 
         do_detect = do_detect_content = 1;
 

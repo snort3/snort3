@@ -5,7 +5,6 @@ x_includedir = $(pkgincludedir)/log
 
 x_include_HEADERS = \
 messages.h \
-obfuscation.h \
 text_log.h
 
 liblog_a_SOURCES = \
@@ -14,8 +13,11 @@ log.h \
 log_text.cc \
 log_text.h \
 messages.cc \
-obfuscation.cc \
 text_log.cc
+
+EXTRA_DIST = \
+obfuscation.h \
+obfuscation.cc
 
 #liblog_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
 

@@ -35,32 +35,6 @@
 
 #define DECODE_BLEN 65535
 
-// FIXIT-L this is now used only by http_inspect and should be relocated accordingly
-enum HTTP_BUFFER
-{
-    HTTP_BUFFER_NONE,
-    HTTP_BUFFER_CLIENT_BODY,
-    HTTP_BUFFER_COOKIE,
-    HTTP_BUFFER_HEADER,
-    HTTP_BUFFER_METHOD,
-    HTTP_BUFFER_RAW_COOKIE,
-    HTTP_BUFFER_RAW_HEADER,
-    HTTP_BUFFER_RAW_URI,
-    HTTP_BUFFER_STAT_CODE,
-    HTTP_BUFFER_STAT_MSG,
-    HTTP_BUFFER_URI,
-    HTTP_BUFFER_MAX
-};
-
-// FIXIT-L this is now used only by http_inspect
-// and should be relocated accordingly
-struct HttpBuffer
-{
-    const uint8_t* buf;
-    unsigned length;
-    uint32_t encode_type;
-};
-
 struct DataPointer
 {
     uint8_t* data;

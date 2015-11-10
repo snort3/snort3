@@ -20,6 +20,13 @@
 #ifndef OBFUSCATION_H
 #define OBFUSCATION_H
 
+// BUILD_OBFUSCATION is not defined because nothing creates obfuscation
+// entries.  when sdf is ported, BUILD_OBFUSCATION should be deleted so the
+// full code is built.  at that time the api should be turned into an
+// obfuscator class and the test code should be replaced with actual unit
+// tests.  #ifdef BUILD_OBFUSCATION is used in detect.cc, log_text.cc, and
+// unified2.cc.
+
 extern "C" {
 #include <daq.h>
 }

@@ -50,6 +50,29 @@
 #define DEFLATE_WBITS      15
 #define GZIP_WBITS         31
 
+enum HTTP_BUFFER
+{
+    HTTP_BUFFER_NONE,
+    HTTP_BUFFER_CLIENT_BODY,
+    HTTP_BUFFER_COOKIE,
+    HTTP_BUFFER_HEADER,
+    HTTP_BUFFER_METHOD,
+    HTTP_BUFFER_RAW_COOKIE,
+    HTTP_BUFFER_RAW_HEADER,
+    HTTP_BUFFER_RAW_URI,
+    HTTP_BUFFER_STAT_CODE,
+    HTTP_BUFFER_STAT_MSG,
+    HTTP_BUFFER_URI,
+    HTTP_BUFFER_MAX
+};
+
+struct HttpBuffer
+{
+    const uint8_t* buf;
+    unsigned length;
+    uint32_t encode_type;
+};
+
 extern SO_PUBLIC THREAD_LOCAL uint32_t http_mask;
 extern SO_PUBLIC THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 extern THREAD_LOCAL DataBuffer HttpDecodeBuf;
