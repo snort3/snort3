@@ -1,6 +1,7 @@
 
 AM_DEFAULT_SOURCE_EXT = .cc
 
+if HAVE_HYPERSCAN
 check_PROGRAMS = \
 ips_regex_test
 
@@ -13,4 +14,5 @@ ips_regex_test_LDADD = \
 ../../framework/module.o \
 ../../framework/value.o \
 ../../sfip/sf_ip.o
+endif
 

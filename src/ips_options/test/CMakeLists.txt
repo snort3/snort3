@@ -1,4 +1,5 @@
 
+if ( HAVE_HYPERSCAN )
 add_cpputest(ips_regex_test ips_options
     ips_options
     framework
@@ -6,4 +7,5 @@ add_cpputest(ips_regex_test ips_options
     catch_tests
     hs
 )
+endif()
 
