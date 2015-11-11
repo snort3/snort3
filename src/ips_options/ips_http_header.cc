@@ -94,8 +94,7 @@ bool HttpHeaderModule::set(const char*, Value& v, SnortConfig*)
 class HttpHeaderOption : public IpsOption
 {
 public:
-    HttpHeaderOption(string& s) : IpsOption(s_name)
-    { name = s; }
+    HttpHeaderOption(string& s) : IpsOption(s_name), name(s) {}
 
     CursorActionType get_cursor_type() const override
     { return CAT_SET_HEADER; }
@@ -106,7 +105,7 @@ public:
     int eval(Cursor&, Packet*) override;
 
 private:
-    string name;
+    const string name;
 };
 
 static bool find(

@@ -34,9 +34,8 @@
 
 enum PsIdx
 {
-    PSI_URI, PSI_CB, PSI_METH, PSI_COOK, PSI_CODE,
-    PSI_MSG, PSI_RAW_URI, PSI_RAW_HDR, PSI_RAW_COOK,
-    PSI_MAX
+    PSI_URI, PSI_CLIENT_BODY, PSI_METHOD, PSI_COOKIE, PSI_STAT_CODE, PSI_STAT_MSG, PSI_RAW_URI,
+    PSI_RAW_HEADER, PSI_RAW_COOKIE, PSI_MAX
 };
 
 static THREAD_LOCAL ProfileStats http_ps[PSI_MAX];
@@ -49,13 +48,13 @@ class HttpCursorModule : public Module
 {
 public:
     HttpCursorModule(const char* s, const char* h, PsIdx psi) :
-        Module(s, h) { idx = psi; }
+        Module(s, h), idx(psi) {}
 
     ProfileStats* get_profile() const override
     { return http_ps + idx; }
 
 private:
-    PsIdx idx;
+    const PsIdx idx;
 };
 
 static void mod_dtor(Module* m)
@@ -77,8 +76,7 @@ class HttpIpsOption : public IpsOption
 public:
     HttpIpsOption(
         const char* s, PsIdx psi, CursorActionType c = CAT_SET_OTHER) :
-        IpsOption(s)
-    { key = s; cat = c; idx = psi; }
+        IpsOption(s), key(s), cat(c), idx(psi) {}
 
     CursorActionType get_cursor_type() const override
     { return cat; }
@@ -86,9 +84,9 @@ public:
     int eval(Cursor&, Packet*) override;
 
 private:
-    const char* key;
-    CursorActionType cat;
-    PsIdx idx;
+    const char* const key;
+    const CursorActionType cat;
+    const PsIdx idx;
 };
 
 int HttpIpsOption::eval(Cursor& c, Packet* p)
@@ -166,12 +164,12 @@ static const IpsApi uri_api =
 
 static Module* client_body_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, cb_help, PSI_CB);
+    return new HttpCursorModule(IPS_OPT, cb_help, PSI_CLIENT_BODY);
 }
 
 static IpsOption* client_body_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, PSI_CB, CAT_SET_BODY);
+    return new HttpIpsOption(IPS_OPT, PSI_CLIENT_BODY, CAT_SET_BODY);
 }
 
 static const IpsApi client_body_api =
@@ -211,12 +209,12 @@ static const IpsApi client_body_api =
 
 static Module* method_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, meth_help, PSI_METH);
+    return new HttpCursorModule(IPS_OPT, meth_help, PSI_METHOD);
 }
 
 static IpsOption* method_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, PSI_METH);
+    return new HttpIpsOption(IPS_OPT, PSI_METHOD);
 }
 
 static const IpsApi method_api =
@@ -256,12 +254,12 @@ static const IpsApi method_api =
 
 static Module* cookie_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, cookie_help, PSI_COOK);
+    return new HttpCursorModule(IPS_OPT, cookie_help, PSI_COOKIE);
 }
 
 static IpsOption* cookie_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, PSI_COOK);
+    return new HttpIpsOption(IPS_OPT, PSI_COOKIE);
 }
 
 static const IpsApi cookie_api =
@@ -301,12 +299,12 @@ static const IpsApi cookie_api =
 
 static Module* stat_code_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, stat_code_help, PSI_CODE);
+    return new HttpCursorModule(IPS_OPT, stat_code_help, PSI_STAT_CODE);
 }
 
 static IpsOption* stat_code_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, PSI_CODE);
+    return new HttpIpsOption(IPS_OPT, PSI_STAT_CODE);
 }
 
 static const IpsApi stat_code_api =
@@ -346,12 +344,12 @@ static const IpsApi stat_code_api =
 
 static Module* stat_msg_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, stat_msg_help, PSI_MSG);
+    return new HttpCursorModule(IPS_OPT, stat_msg_help, PSI_STAT_MSG);
 }
 
 static IpsOption* stat_msg_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, PSI_MSG);
+    return new HttpIpsOption(IPS_OPT, PSI_STAT_MSG);
 }
 
 static const IpsApi stat_msg_api =
@@ -436,12 +434,12 @@ static const IpsApi raw_uri_api =
 
 static Module* raw_header_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, raw_header_help, PSI_RAW_HDR);
+    return new HttpCursorModule(IPS_OPT, raw_header_help, PSI_RAW_HEADER);
 }
 
 static IpsOption* raw_header_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, PSI_RAW_HDR);
+    return new HttpIpsOption(IPS_OPT, PSI_RAW_HEADER);
 }
 
 static const IpsApi raw_header_api =
@@ -481,12 +479,12 @@ static const IpsApi raw_header_api =
 
 static Module* raw_cookie_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, raw_cookie_help, PSI_RAW_COOK);
+    return new HttpCursorModule(IPS_OPT, raw_cookie_help, PSI_RAW_COOKIE);
 }
 
 static IpsOption* raw_cookie_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, PSI_RAW_COOK);
+    return new HttpIpsOption(IPS_OPT, PSI_RAW_COOKIE);
 }
 
 static const IpsApi raw_cookie_api =

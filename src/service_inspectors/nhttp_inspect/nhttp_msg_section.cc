@@ -85,6 +85,8 @@ const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
     {
     case NHTTP_BUFFER_CLIENT_BODY:
       {
+        if (source_id != SRC_CLIENT)
+            return Field::FIELD_NULL;
         NHttpMsgBody* body = transaction->get_body();
         return (body != nullptr) ? body->get_detect_buf() : Field::FIELD_NULL;
       }
