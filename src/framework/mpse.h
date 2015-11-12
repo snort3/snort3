@@ -49,9 +49,9 @@
 struct SnortConfig;
 struct MpseApi;
 
-typedef int (* MpseBuild)(SnortConfig*, void* id, void** existing_tree);
-typedef int (* MpseNegate)(void* id, void** list);
-typedef int (* MpseMatch)(void* id, void* tree, int index, void* data, void* neg_list);
+typedef int (* MpseBuild)(SnortConfig*, void* user, void** existing_tree);
+typedef int (* MpseNegate)(void* user, void** list);
+typedef int (* MpseMatch)(void* user, void* tree, int index, void* data, void* neg_list);
 
 class SO_PUBLIC Mpse
 {
@@ -64,18 +64,17 @@ public:
 
     virtual int add_pattern(
         SnortConfig* sc, const uint8_t* pat, unsigned len,
-        bool noCase, bool negate, void* ID, int IID) = 0;
+        bool noCase, bool negate, void* user, int IID) = 0;
 
-    virtual int prep_patterns(
-    SnortConfig*, MpseBuild, MpseNegate) = 0;
+    virtual int prep_patterns(SnortConfig*, MpseBuild, MpseNegate) = 0;
 
     int search(
-    const unsigned char* T, int n, MpseMatch,
-    void* data, int* current_state);
+        const unsigned char* T, int n, MpseMatch,
+        void* data, int* current_state);
 
     virtual int search_all(
-    const unsigned char* T, int n, MpseMatch,
-    void* data, int* current_state);
+        const unsigned char* T, int n, MpseMatch,
+        void* data, int* current_state);
 
     virtual void set_opt(int) { }
     virtual int print_info() { return 0; }
@@ -91,8 +90,8 @@ protected:
     Mpse(const char* method, bool use_gc);
 
     virtual int _search(
-    const unsigned char* T, int n, MpseMatch,
-    void* data, int* current_state) = 0;
+        const unsigned char* T, int n, MpseMatch,
+        void* data, int* current_state) = 0;
 
 private:
     std::string method;
@@ -121,7 +120,7 @@ typedef void (* MpseDelFunc)(Mpse*);
 struct MpseApi
 {
     BaseApi base;
-    bool trim;
+    bool trim; // set true for NFAs to trim leading \0
 
     MpseOptFunc activate;
     MpseOptFunc setup;

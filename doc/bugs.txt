@@ -21,6 +21,18 @@
 
 * It is not possible to build unit tests w/o static plugins.
 
+* If you build with hyperscan on OS X and see:
+
+    dyld: Library not loaded: @rpath/libhs.4.0.dylib
+
+  when you try to run src/snort, this may help:
+
+    install_name_tool -change @rpath/libhs.4.0.dylib \
+        /path-to/libhs.4.0.dylib src/snort
+
+    install_name_tool -change @rpath/libhs.4.0.dylib \
+        /path-to/libhs.4.0.dylib tools/snort2lua/snort2lua
+
 
 ==== Config
 
