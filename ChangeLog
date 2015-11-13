@@ -1,3 +1,11 @@
+15/11/13 - build 178
+
+-- document runtime link issue with hyperscan on osx
+-- fix pathname generation for event trace file
+-- new_http_inspect tweaks
+-- remove --enable-ppm-test
+-- sync up auto tools and cmake build options
+
 15/11/05 - build 177
 
 -- idle processing cleanup
