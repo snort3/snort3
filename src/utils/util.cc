@@ -65,7 +65,7 @@
 #include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
 #include "ips_options/ips_pcre.h"
-#include "time/ppm.h"
+#include "ppm/ppm.h"
 #include "time/packet_time.h"
 #include "time/timersub.h"
 #include "stream/stream.h"

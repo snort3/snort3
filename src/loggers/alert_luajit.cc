@@ -35,7 +35,7 @@
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "utils/stats.h"
 
 static THREAD_LOCAL ProfileStats luaLogPerfStats;

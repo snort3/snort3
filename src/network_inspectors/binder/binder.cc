@@ -32,7 +32,7 @@ using namespace std;
 #include "protocols/layer.h"
 #include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "utils/stats.h"
 #include "log/messages.h"
 #include "main/snort_config.h"

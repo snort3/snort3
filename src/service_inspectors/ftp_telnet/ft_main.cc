@@ -61,7 +61,7 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "stream/stream_api.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "detection/detection_util.h"
 #include "parser/parser.h"
 #include "utils/sfsnprintfappend.h"

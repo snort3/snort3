@@ -36,12 +36,12 @@
 #include "detection/fp_create.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
-#include "time/profiler.h"
 #include "utils/sflsq.h"
 
 #define REBUILD_FLAGS (PKT_REBUILT_FRAG | PKT_REBUILT_STREAM)
 
 #ifdef PERF_PROFILING
+struct ProfileStats;
 extern THREAD_LOCAL ProfileStats rulePerfStats;
 extern THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
 extern THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;

@@ -85,7 +85,7 @@
 #include "events/event_queue.h"
 #include "parser/parser.h"
 #include "utils/util.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "framework/inspector.h"
 #include "protocols/packet.h"
 #include "protocols/layer.h"

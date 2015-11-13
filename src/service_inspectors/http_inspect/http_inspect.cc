@@ -44,7 +44,7 @@
 #include "main/snort_debug.h"
 #include "parser/parser.h"
 #include "decompress/file_decomp.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "detection/detection_util.h"
 #include "stream/stream_api.h"
 #include "target_based/snort_protocols.h"

@@ -31,7 +31,6 @@
 #include "detection/rules.h"
 #include "detection/treenodes.h"
 #include "parser/parser.h"
-#include "time/profiler.h"
 #include "log/log.h"
 #include "events/event.h"
 
@@ -39,6 +38,7 @@ extern SO_PUBLIC THREAD_LOCAL int do_detect;
 extern SO_PUBLIC THREAD_LOCAL int do_detect_content;
 
 #ifdef PERF_PROFILING
+struct ProfileStats;
 extern THREAD_LOCAL ProfileStats eventqPerfStats;
 extern THREAD_LOCAL ProfileStats detectPerfStats;
 extern THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;

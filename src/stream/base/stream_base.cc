@@ -29,7 +29,7 @@
 #include "managers/inspector_manager.h"
 #include "flow/flow_control.h"
 #include "stream/stream_api.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "stream/tcp/tcp_session.h"
 
 //-------------------------------------------------------------------------

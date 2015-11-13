@@ -27,12 +27,7 @@
 #include "config.h"
 #endif
 
-// FIXIT-M: Instead of an empty source file, use CMake/Make to enable/disable
-//          this compilation unit
-#ifdef PPM_MGR
-#include "main/snort_types.h"
 #include "main/thread.h"
-#include "time/cpuclock.h"
 #include "detection/detection_options.h"
 
 typedef uint64_t PPM_TICKS;
@@ -313,8 +308,6 @@ void ppm_set_rule(detection_option_tree_root_t*, PPM_TICKS);
 
 #define PPM_GET_TIME()
 #define PPM_SET_TIME()
-
-#endif // PPM_MGR
 
 #endif
 

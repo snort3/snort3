@@ -23,7 +23,6 @@
 
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
-#include "time/profiler.h"
 #include "ssl_config.h"
 
 #define SSLPP_ENCRYPTED_FLAGS \

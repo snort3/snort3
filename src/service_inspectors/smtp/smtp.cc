@@ -29,7 +29,7 @@
 
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "stream/stream_api.h"
 #include "file_api/file_api.h"
 #include "mime/file_mime_process.h"

@@ -61,7 +61,7 @@ using namespace std;
 #include "lua/lua.h"
 #include "helpers/process.h"
 #include "helpers/swapper.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "time/periodic.h"
 
 #ifdef UNIT_TEST

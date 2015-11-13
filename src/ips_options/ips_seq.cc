@@ -23,7 +23,7 @@
 
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "hash/sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"

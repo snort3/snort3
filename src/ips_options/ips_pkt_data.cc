@@ -25,7 +25,7 @@
 #include "main/snort_debug.h"
 #include "utils/snort_bounds.h"
 #include "protocols/packet.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"

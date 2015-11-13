@@ -51,7 +51,7 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "packet_io/active.h"
 #include "utils/util.h"
 #include "framework/ips_action.h"

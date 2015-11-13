@@ -26,7 +26,6 @@
 
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
-#include "time/profiler.h"
 #include "pop_config.h"
 
 // Direction packet is coming from, if we can figure it out

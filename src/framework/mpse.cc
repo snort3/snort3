@@ -26,6 +26,7 @@ using namespace std;
 
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
+#include "profiler/profiler.h"
 
 // this is accumulated only for fast pattern
 // searches for the detection engine

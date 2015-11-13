@@ -82,7 +82,7 @@
 #include "utils/util.h"
 #include "utils/snort_bounds.h"
 #include "hash/sfhashfcn.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "detection/treenodes.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"

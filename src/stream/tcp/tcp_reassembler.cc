@@ -26,7 +26,7 @@
 #include "main/snort.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "flow/flow_control.h"
 
 #include "tcp_module.h"

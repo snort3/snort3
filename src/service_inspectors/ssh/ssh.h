@@ -32,7 +32,6 @@
 
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
-#include "time/profiler.h"
 #include "ssh_config.h"
 
 // Per-session data block containing current state

@@ -34,7 +34,7 @@
 #include "protocols/ipv4_options.h"
 #include "parser/parser.h"
 #include "utils/util.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "hash/sfhashfcn.h"
 #include "detection/treenodes.h"
 #include "detection/detection_defines.h"

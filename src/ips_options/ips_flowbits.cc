@@ -62,7 +62,7 @@ using namespace std;
 #include "hash/sfghash.h"
 #include "parser/mstring.h"
 #include "stream/stream_api.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "hash/sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"

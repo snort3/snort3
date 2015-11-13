@@ -24,7 +24,7 @@
 #include "main/snort_types.h"
 #include "main/snort_config.h"
 #include "utils/util.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "framework/mpse.h"
 
 //-------------------------------------------------------------------------

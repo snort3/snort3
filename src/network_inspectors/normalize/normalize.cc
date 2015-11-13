@@ -24,7 +24,7 @@
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "parser/parser.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "main/snort_types.h"
 #include "main/snort_config.h"
 #include "framework/inspector.h"

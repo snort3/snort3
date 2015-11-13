@@ -25,7 +25,7 @@ using namespace std;
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 #include "stream/stream_splitter.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "utils/stats.h"
 #include "log/messages.h"
 

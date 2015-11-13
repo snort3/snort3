@@ -26,7 +26,7 @@
 #include "file_api/file_api.h"
 #include "file_api/file_flows.h"
 #include "perf_monitor/perf.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "packet_io/sfdaq.h"
 #include "detection/detection_util.h"
 #include "target_based/snort_protocols.h"

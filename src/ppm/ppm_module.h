@@ -26,9 +26,6 @@
 #include "config.h"
 #endif
 
-// FIXIT-M: Instead of an empty source file, use CMake/Make to enable/disable
-//          this compilation unit
-#ifdef PPM_MGR
 #include "framework/module.h"
 
 #define GID_PPM 134
@@ -52,6 +49,5 @@ public:
     { return GID_PPM; }
 };
 
-#endif // PPM_MGR
 #endif
 

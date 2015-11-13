@@ -74,6 +74,14 @@ if (BUILD_PIGLET)
     add_subdirectory(piglet_plugins)
 endif (BUILD_PIGLET)
 
+if (ENABLE_PPM)
+    set(PPM_LIBRARIES ppm)
+    add_subdirectory(ppm)
+endif (ENABLE_PPM)
+
+if (ENABLE_PERFPROFILING)
+    set(PERFPROFILING_LIBRARIES profiler)
+endif (ENABLE_PERFPROFILING)
 
 #  The main Snort executableRA
 add_executable( snort
@@ -124,6 +132,8 @@ target_link_libraries( snort
     detection
     framework
     time
+    ${PPM_LIBRARIES}
+    ${PERFPROFILING_LIBRARIES}
     ips_actions
     events
     hash
@@ -164,6 +174,7 @@ add_subdirectory(service_inspectors)
 add_subdirectory(stream)
 add_subdirectory(target_based)
 add_subdirectory(time)
+add_subdirectory(profiler)
 add_subdirectory(utils)
 add_subdirectory(helpers)
 add_subdirectory(lua)

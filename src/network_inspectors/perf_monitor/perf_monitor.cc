@@ -46,7 +46,7 @@
 #include "main/snort_debug.h"
 #include "parser/parser.h"
 #include "packet_io/sfdaq.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "framework/inspector.h"
 #include "utils/stats.h"
 #include "utils/util.h"

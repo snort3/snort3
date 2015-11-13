@@ -39,7 +39,7 @@
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "helpers/markup.h"
 #include "utils/stats.h"
 

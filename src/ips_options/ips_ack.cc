@@ -31,7 +31,7 @@
 #include "protocols/packet.h"
 #include "parser/parser.h"
 #include "utils/util.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "hash/sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"

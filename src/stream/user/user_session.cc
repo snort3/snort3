@@ -32,7 +32,7 @@
 #include "perf_monitor/perf.h"
 #include "flow/flow_control.h"
 #include "sfip/sf_ip.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "main/snort.h"
 
 THREAD_LOCAL ProfileStats user_perf_stats;

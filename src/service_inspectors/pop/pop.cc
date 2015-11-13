@@ -30,7 +30,7 @@
 #include "events/event_queue.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "stream/stream_api.h"
 #include "parser/parser.h"
 #include "framework/inspector.h"
