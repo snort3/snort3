@@ -1,23 +1,13 @@
-
 noinst_LIBRARIES = libtime.a
 
 x_includedir = $(pkgincludedir)/time
 
 x_include_HEADERS = \
-cpuclock.h \
-profiler.h \
-ppm.h
+cpuclock.h
 
 libtime_a_SOURCES = \
 packet_time.cc \
 packet_time.h \
-ppm.cc \
-ppm_module.cc \
-ppm_module.h \
 periodic.cc \
 periodic.h \
 timersub.h
-
-if PERF_PROFILING
-libtime_a_SOURCES += profiler.cc
-endif

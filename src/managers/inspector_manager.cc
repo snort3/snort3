@@ -33,7 +33,7 @@
 #include "log/obfuscation.h"
 #include "log/messages.h"
 #include "packet_io/active.h"
-#include "time/ppm.h"
+#include "ppm/ppm.h"
 #include "target_based/snort_protocols.h"
 #include "binder/bind_module.h"
 

@@ -31,8 +31,6 @@
 // ppm attributes
 //-------------------------------------------------------------------------
 
-#ifdef PPM_MGR
-
 #define s_name "ppm"
 #define s_help \
     "packet and rule latency monitoring and control (requires --enable-ppm)"
@@ -140,6 +138,3 @@ bool PpmModule::set(const char*, Value& v, SnortConfig* sc)
 
     return true;
 }
-
-#endif
-

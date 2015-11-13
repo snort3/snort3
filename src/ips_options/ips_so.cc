@@ -31,7 +31,7 @@ using namespace std;
 #include "managers/so_manager.h"
 #include "hash/sfhashfcn.h"
 #include "parser/parser.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 #define s_name "so"
 

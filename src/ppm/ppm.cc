@@ -45,30 +45,13 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <syslog.h>
-#include <time.h>
-
 #include "ppm_module.h"
-#include "main/snort_types.h"
-#include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "detection/rules.h"
 #include "detection/fp_create.h"
-#include "detection/detect.h"
 #include "parser/parser.h"
 #include "events/event_queue.h"
-#include "events/event_wrapper.h"
-#include "actions/actions.h"
-#include "protocols/packet.h"
 #include "utils/stats.h"
-#include "utils/util.h"
 #include "sfip/sf_ip.h"
-
-#ifdef PPM_MGR
+#include "time/cpuclock.h"
 
 #define PPM_BASE_SUSPEND_RULE_GID 1000
 #define PPM_BASE_CLEAR_RULE_GID   2000
@@ -526,6 +509,3 @@ void ppm_set_rule_threshold(ppm_cfg_t* ppm_cfg, unsigned int cnt)
 {
     ppm_cfg->rule_threshold = cnt;
 }
-
-#endif
-

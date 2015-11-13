@@ -26,7 +26,7 @@
 
 #include "events/event_queue.h"
 #include "managers/inspector_manager.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 #include "modbus_decode.h"
 #include "modbus_module.h"

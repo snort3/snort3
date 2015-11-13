@@ -21,7 +21,7 @@
 #include "modbus_module.h"
 
 #include "modbus.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 THREAD_LOCAL ProfileStats modbus_prof;
 

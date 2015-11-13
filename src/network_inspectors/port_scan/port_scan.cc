@@ -64,7 +64,7 @@
 #include "utils/util.h"
 #include "utils/sfsnprintfappend.h"
 #include "framework/inspector.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "time/packet_time.h"
 #include "detection/detect.h"
 

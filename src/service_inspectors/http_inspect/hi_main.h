@@ -31,7 +31,6 @@
 #include "stream/stream_api.h"
 #include "detection/detection_util.h"
 #include "search_engines/search_tool.h"
-#include "time/profiler.h"
 #include "utils/util_jsnorm.h"
 #include "utils/util_utf.h"
 
@@ -78,6 +77,7 @@ extern SO_PUBLIC THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 extern THREAD_LOCAL DataBuffer HttpDecodeBuf;
 
 #ifdef PERF_PROFILING
+struct ProfileStats;
 extern THREAD_LOCAL ProfileStats hiDetectPerfStats;
 extern THREAD_LOCAL int hiDetectCalled;
 #endif

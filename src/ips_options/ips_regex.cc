@@ -33,7 +33,7 @@
 #include "main/snort_config.h"
 #include "main/thread.h"
 #include "parser/parser.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 #define s_name "regex"
 

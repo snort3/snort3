@@ -32,7 +32,7 @@
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "parser/parser.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "utils/util.h"
 #include "mime/decode_b64.h"
 #include "utils/util_unfold.h"

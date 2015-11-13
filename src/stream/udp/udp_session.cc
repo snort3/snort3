@@ -39,7 +39,7 @@
 #include "flow/session.h"
 #include "packet_io/active.h"
 #include "perf_monitor/perf.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "sfip/sf_ip.h"
 
 // NOTE:  sender is assumed to be client

@@ -38,7 +38,7 @@
 #include "protocols/eth.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "parser/parser.h"
 
 #include "codecs/codec_module.h"

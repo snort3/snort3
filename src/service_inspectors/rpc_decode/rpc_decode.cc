@@ -49,7 +49,7 @@
 #include "main/snort_debug.h"
 #include "detection/detect.h"
 #include "log/log.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "utils/snort_bounds.h"
 #include "utils/util.h"
 #include "detection/detection_util.h"

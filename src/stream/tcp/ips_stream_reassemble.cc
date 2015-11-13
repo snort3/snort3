@@ -31,7 +31,7 @@
 #include "detection/detect.h"
 #include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"

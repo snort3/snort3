@@ -27,7 +27,7 @@
 
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 #include "gtp.h"
 #include "gtp_module.h"

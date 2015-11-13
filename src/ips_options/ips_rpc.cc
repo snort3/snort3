@@ -32,7 +32,7 @@
 #include "main/snort_debug.h"
 #include "utils/util.h"
 #include "hash/sfhashfcn.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "detection/treenodes.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"

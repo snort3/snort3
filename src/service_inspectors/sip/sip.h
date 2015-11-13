@@ -23,7 +23,6 @@
 
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
-#include "time/profiler.h"
 #include "sip_config.h"
 #include "sip_dialog.h"
 #include "sip_parser.h"

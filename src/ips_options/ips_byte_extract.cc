@@ -30,7 +30,7 @@
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"
 #include "hash/sfhashfcn.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "framework/ips_option.h"
 #include "framework/cursor.h"
 #include "framework/parameter.h"

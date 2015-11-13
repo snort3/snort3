@@ -33,7 +33,6 @@
 #include "main/snort_types.h"
 #include "main/thread.h"
 #include "framework/base_api.h"
-#include "time/profiler.h"
 
 /*
 *   Move these defines to a generic Win32/Unix compatability file,
@@ -101,6 +100,7 @@ private:
 };
 
 #ifdef PERF_PROFILING
+struct ProfileStats;
 extern THREAD_LOCAL ProfileStats mpsePerfStats;
 #endif
 

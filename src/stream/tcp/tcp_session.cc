@@ -91,7 +91,7 @@
 #include "flow/flow_control.h"
 #include "flow/session.h"
 #include "flow/memcap.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "file_api/file_api.h"
 #include "sfip/sf_ip.h"
 #include "filters/sfrf.h"

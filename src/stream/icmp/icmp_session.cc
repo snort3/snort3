@@ -32,7 +32,7 @@
 #include "flow/flow_control.h"
 #include "flow/session.h"
 #include "perf_monitor/perf.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/layer.h"
 #include "protocols/vlan.h"

@@ -25,7 +25,7 @@
 #include "hash/sfhashfcn.h"
 #include "parser/parser.h"
 #include "framework/cursor.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "lua/lua.h"
 
 #ifdef UNIT_TEST

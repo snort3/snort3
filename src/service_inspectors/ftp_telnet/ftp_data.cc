@@ -49,7 +49,7 @@
 #include "framework/inspector.h"
 #include "detection/detection_util.h"
 #include "protocols/tcp.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 #define s_name "ftp_data"
 

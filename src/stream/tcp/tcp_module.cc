@@ -21,10 +21,12 @@
 #include "tcp_module.h"
 
 #include <string>
-using namespace std;
 
+#include "profiler/profiler.h"
 #include "stream_tcp.h"
 #include "stream/stream.h"
+
+using namespace std;
 
 //-------------------------------------------------------------------------
 // stream_tcp module

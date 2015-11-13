@@ -42,7 +42,7 @@ using namespace std;
 #include "detection/detection_defines.h"
 #include "actions/act_replace.h"
 #include "hash/sfhashfcn.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 static void replace_parse(const char* args, string& s)
 {

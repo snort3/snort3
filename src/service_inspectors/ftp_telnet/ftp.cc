@@ -48,7 +48,7 @@
 #include "managers/inspector_manager.h"
 #include "detection/detection_util.h"
 #include "target_based/snort_protocols.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 

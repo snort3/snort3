@@ -54,8 +54,8 @@
 #include "ips_options/ips_pcre.h"
 #include "ips_options/ips_regex.h"
 #include "protocols/udp.h"
-#include "time/ppm.h"
-#include "time/profiler.h"
+#include "ppm/ppm.h"
+#include "profiler/profiler.h"
 #include "sfip/sf_ip.h"
 
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;

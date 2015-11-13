@@ -39,8 +39,8 @@
 #include "fp_detect.h"
 #include "rules.h"
 
-#include "time/ppm.h"
-#include "time/profiler.h"
+#include "ppm/ppm.h"
+#include "profiler/profiler.h"
 #include "utils/util.h"
 #include "hash/sfxhash.h"
 #include "hash/sfhashfcn.h"

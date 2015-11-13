@@ -38,7 +38,7 @@
 #include "parser/parser.h"
 #include "parser/parse_utils.h"
 #include "hash/sfhashfcn.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "detection/treenodes.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"

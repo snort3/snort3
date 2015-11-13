@@ -41,7 +41,7 @@
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "protocols/packet.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 #include "gtp.h"
 #include "gtp_inspect.h"

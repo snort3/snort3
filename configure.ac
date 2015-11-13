@@ -343,7 +343,10 @@ AC_ARG_ENABLE(ppm,
     AC_HELP_STRING([--enable-ppm],[enable packet/rule performance monitor]),
     enable_ppm="$enableval", enable_ppm="no")
 
+AM_CONDITIONAL(PPM_MGR, test "x$enable_ppm" = "xyes")
+
 if test "x$enable_ppm" = "xyes"; then
+    CPPFLAGS="$CPPFLAGS -DPPM_MGR"
     AC_DEFINE(PPM_MGR, [1], [build ppm manager])
 fi
 
@@ -1031,6 +1034,8 @@ src/sfrt/Makefile \
 src/target_based/Makefile \
 src/catch/Makefile \
 src/time/Makefile \
+src/ppm/Makefile \
+src/profiler/Makefile \
 src/utils/Makefile \
 src/utils/test/Makefile \
 lua/Makefile \

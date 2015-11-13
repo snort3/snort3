@@ -89,7 +89,7 @@
 #include "protocols/ipv4_options.h"
 #include "protocols/packet_manager.h"
 #include "main/snort_debug.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "time/timersub.h"
 #include "perf_monitor/perf.h"
 #include "utils/stats.h"

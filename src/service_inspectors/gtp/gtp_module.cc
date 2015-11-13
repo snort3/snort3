@@ -23,7 +23,7 @@
 #include <cassert>
 
 #include "gtp.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 THREAD_LOCAL ProfileStats gtp_inspect_prof;
 
