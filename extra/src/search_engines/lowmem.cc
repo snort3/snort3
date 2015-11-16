@@ -49,37 +49,31 @@ private:
     KTRIE_STRUCT* obj;
 
 public:
-    LowmemMpse(
-        SnortConfig*,
-        bool use_gc,
-        void (* user_free)(void*),
-        void (* tree_free)(void**),
-        void (* list_free)(void**))
+    LowmemMpse(SnortConfig*, bool use_gc, const MpseAgent* agent)
         : Mpse("lowmem", use_gc)
-    { obj = KTrieNew(0,user_free, tree_free, list_free); }
+    { obj = KTrieNew(0, agent); }
 
     ~LowmemMpse()
     { KTrieDelete(obj); }
 
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
-        bool noCase, bool negative, void* ID, int) override
+        bool noCase, bool negative, void* user) override
     {
-        return KTrieAddPattern(obj, P, m, noCase, negative, ID);
+        return KTrieAddPattern(obj, P, m, noCase, negative, user);
     }
 
-    int prep_patterns(
-        SnortConfig* sc, MpseBuild build_tree, MpseNegate neg_list) override
+    int prep_patterns(SnortConfig* sc) override
     {
-        return KTrieCompileWithSnortConf(sc, obj, build_tree, neg_list);
+        return KTrieCompileWithSnortConf(sc, obj);
     }
 
     int _search(
-        const unsigned char* T, int n, MpseMatch match,
-        void* data, int* current_state) override
+        const uint8_t* T, int n, MpseMatch match,
+        void* context, int* current_state) override
     {
         *current_state = 0;
-        return KTrieSearch(obj, (unsigned char*)T, n, match, data);
+        return KTrieSearch(obj, T, n, match, context);
     }
 
     int get_pattern_count() override
@@ -90,15 +84,9 @@ public:
 // api
 //-------------------------------------------------------------------------
 
-static Mpse* lm_ctor(
-    SnortConfig* sc,
-    class Module*,
-    bool use_gc,
-    void (* user_free)(void*),
-    void (* tree_free)(void**),
-    void (* list_free)(void**))
+static Mpse* lm_ctor(SnortConfig* sc, class Module*, bool use_gc, const MpseAgent* agent)
 {
-    return new LowmemMpse(sc, use_gc, user_free, tree_free, list_free);
+    return new LowmemMpse(sc, use_gc, agent);
 }
 
 static void lm_dtor(Mpse* p)

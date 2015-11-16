@@ -58,11 +58,15 @@ struct RegexConfig
 
 // we need to update scratch in the main thread as each pattern is processed
 // and then clone to thread specific after all rules are loaded.  s_scratch is
-// a prototype that is large enough for all uses.  since so rules may contain
-// regex options and are loaded only once at startup, s_scratch persists for
-// the lifetime of the program.
+// a prototype that is large enough for all uses.
 
-static hs_scratch_t* s_scratch = NULL;
+// FIXIT-L s_scratch persists for the lifetime of the program.  it is
+// modeled off 2X where, due to so rule processing at startup, it is necessary
+// to monotonically grow the ovector.  however, we should be able to free
+// s_scratch after cloning since so rules are now parsed the same as text
+// rules.
+
+static hs_scratch_t* s_scratch = nullptr;
 static THREAD_LOCAL unsigned s_to = 0;
 static THREAD_LOCAL ProfileStats regex_perf_stats;
 
@@ -157,7 +161,7 @@ int RegexOption::eval(Cursor& c, Packet*)
     s_to = 0;
 
     hs_error_t stat = hs_scan(
-        config.db, (char*)c.buffer()+pos, c.size()-pos, config.flags,
+        config.db, (char*)c.buffer()+pos, c.size()-pos, 0,
         (hs_scratch_t*)ss->regex_scratch, hs_match, nullptr);
 
     if ( s_to and stat == HS_SCAN_TERMINATED )
@@ -265,7 +269,7 @@ bool RegexModule::end(const char*, int, SnortConfig*)
 {
     hs_compile_error_t* err = nullptr;
 
-    if ( hs_compile(config.re.c_str(), config.flags, HS_MODE_BLOCK, NULL, &config.db, &err)
+    if ( hs_compile(config.re.c_str(), config.flags, HS_MODE_BLOCK, nullptr, &config.db, &err)
         or !config.db )
     {
         ParseError("can't compile regex '%s'", config.re.c_str());

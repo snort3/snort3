@@ -18,75 +18,63 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
-*   ksearch.h
-*
-*   Trie based multi-pattern matcher
-*/
-
 #ifndef SFKSEARCH_H
 #define SFKSEARCH_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+// ksearch.h - Trie based multi-pattern matcher
 
 #include <stdint.h>
+#include "search_engines/search_common.h"
 
 #define ALPHABET_SIZE 256
 
 #define KTRIEMETHOD_STD 0
 #define KTRIEMETHOD_QUEUE 1
 
-/*
-*
-*/
-typedef struct _ktriepattern
+struct KTRIEPATTERN
 {
-    struct  _ktriepattern* next; /* global list of all patterns*/
-    struct  _ktriepattern* mnext; /* matching list of duplicate keywords*/
+    KTRIEPATTERN* next; /* global list of all patterns*/
+    KTRIEPATTERN* mnext; /* matching list of duplicate keywords*/
 
-    unsigned char* P;  /* no case*/
-    unsigned char* Pcase; /* case sensitive*/
+    uint8_t* P;  /* no case*/
+    uint8_t* Pcase; /* case sensitive*/
+
+    void* user;
+    void* rule_option_tree;
+    void* neg_list;
+
     int n;
     int nocase;
     int negative;
-    void* id;
-    void* rule_option_tree;
-    void* neg_list;
-} KTRIEPATTERN;
+};
 
-/*
-*
-*/
-typedef struct _ktrienode
+struct KTRIENODE
 {
     int edge;   /* character*/
 
-    struct  _ktrienode* sibling;
-    struct  _ktrienode* child;
+    KTRIENODE* sibling;
+    KTRIENODE* child;
 
     KTRIEPATTERN* pkeyword;
-} KTRIENODE;
+};
 
 #define KTRIE_ROOT_NODES     256
 
 #define SFK_MAX_INQ 32
-typedef struct
+
+struct SFK_PMQ
 {
     unsigned inq;
     unsigned inq_flush;
     void* q[SFK_MAX_INQ];
-} SFK_PMQ;
+};
 
-/*
-*
-*/
-typedef struct
+struct KTRIE_STRUCT
 {
     KTRIEPATTERN* patrn; /* List of patterns, built as they are added*/
-
     KTRIENODE* root[KTRIE_ROOT_NODES];   /* KTrie nodes*/
+
+    const struct MpseAgent* agent;
 
     int memory;
     int nchars;
@@ -97,51 +85,30 @@ typedef struct
 
     int bcSize;
     unsigned short bcShift[KTRIE_ROOT_NODES];
-    void (* userfree)(void* p);
-    void (* optiontreefree)(void** p);
-    void (* neg_list_free)(void** p);
+
     SFK_PMQ q;
-} KTRIE_STRUCT;
+};
 
 void KTrie_init_xlatcase();
 
-KTRIE_STRUCT* KTrieNew(
-    int method, void (* userfree)(void* p),
-    void (* optiontreefree)(void** p),
-    void (* neg_list_free)(void** p));
+KTRIE_STRUCT* KTrieNew(int method, const MpseAgent*);
 
 int KTrieAddPattern(
-    KTRIE_STRUCT* ts, const uint8_t* P, unsigned n,
+    KTRIE_STRUCT*, const uint8_t* P, unsigned n,
     bool nocase, bool negative, void* id);
 
-int KTrieCompile(
-    KTRIE_STRUCT* ts,
-    int (* build_tree)(void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list));
+int KTrieCompileWithSnortConf(struct SnortConfig*, KTRIE_STRUCT*);
 
-struct SnortConfig;
+int KTrieSearch(KTRIE_STRUCT*, const uint8_t* T,  int n, MpseMatch, void* context);
+int KTrieSearchQ(KTRIE_STRUCT*, const uint8_t* T,  int n, MpseMatch, void* context);
 
-int KTrieCompileWithSnortConf(
-    SnortConfig*, KTRIE_STRUCT* ts,
-    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list));
+unsigned int KTrieMemUsed();
+void KTrieInitMemUsed();
 
-int KTrieSearch(
-    KTRIE_STRUCT* ts, unsigned char* T,  int n,
-    int (* match)(void* id, void* tree, int index, void* data, void* neg_list),
-    void* data);
+void KTrieDelete(KTRIE_STRUCT*);
+int KTriePatternCount(KTRIE_STRUCT*);
 
-int KTrieSearchQ(
-    KTRIE_STRUCT* ts, unsigned char* T,  int n,
-    int (* match)(void* id, void* tree, int index, void* data, void* neg_list),
-    void* data);
-
-unsigned int KTrieMemUsed(void);
-void KTrieInitMemUsed(void);
-void KTrieDelete(KTRIE_STRUCT* k);
-int KTriePatternCount(KTRIE_STRUCT* k);
-
-void sfksearch_print_qinfo(void);
+void sfksearch_print_qinfo();
 
 #endif
 

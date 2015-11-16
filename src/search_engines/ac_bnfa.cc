@@ -45,15 +45,10 @@ private:
     bnfa_struct_t* obj;
 
 public:
-    AcBnfaMpse(
-        SnortConfig*,
-        bool use_gc,
-        void (* user_free)(void*),
-        void (* tree_free)(void**),
-        void (* list_free)(void**))
+    AcBnfaMpse(SnortConfig*, bool use_gc, const MpseAgent* agent)
         : Mpse("ac_bnfa", use_gc)
     {
-        obj=bnfaNew(user_free, tree_free, list_free);
+        obj=bnfaNew(agent);
         if ( obj ) obj->bnfaMethod = 1;
     }
 
@@ -71,24 +66,23 @@ public:
 
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
-        bool noCase, bool negative, void* ID, int) override
+        bool noCase, bool negative, void* user) override
     {
-        return bnfaAddPattern(obj, P, m, noCase, negative, ID);
+        return bnfaAddPattern(obj, P, m, noCase, negative, user);
     }
 
-    int prep_patterns(
-        SnortConfig* sc, MpseBuild build_tree, MpseNegate neg_list) override
+    int prep_patterns(SnortConfig* sc) override
     {
-        return bnfaCompile(sc, obj, build_tree, neg_list);
+        return bnfaCompile(sc, obj);
     }
 
     int _search(
         const uint8_t* T, int n, MpseMatch match,
-        void* data, int* current_state) override
+        void* context, int* current_state) override
     {
         /* return is actually the state */
         return _bnfa_search_csparse_nfa(
-            obj, T, n, match, data, 0 /* start-state */, current_state);
+            obj, T, n, match, context, 0 /* start-state */, current_state);
     }
 
     int print_info() override
@@ -108,14 +102,9 @@ public:
 //-------------------------------------------------------------------------
 
 static Mpse* bnfa_ctor(
-    SnortConfig* sc,
-    class Module*,
-    bool use_gc,
-    void (* user_free)(void*),
-    void (* tree_free)(void**),
-    void (* list_free)(void**))
+    SnortConfig* sc, class Module*, bool use_gc, const MpseAgent* agent)
 {
-    return new AcBnfaMpse(sc, use_gc, user_free, tree_free, list_free);
+    return new AcBnfaMpse(sc, use_gc, agent);
 }
 
 static void bnfa_dtor(Mpse* p)

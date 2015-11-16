@@ -65,37 +65,37 @@ typedef  unsigned int bnfa_state_t;
 /*
 *   Internal Pattern Representation
 */
-typedef struct bnfa_pattern
+struct bnfa_pattern_t
 {
-    struct bnfa_pattern* next;
+    bnfa_pattern_t* next;
+    uint8_t* casepatrn;   /* case specific */
+    void* userdata;       /* ptr to users pattern data/info  */
 
-    unsigned char* casepatrn;          /* case specific */
-    unsigned n;                        /* pattern len */
-    int nocase;                        /* nocase flag */
-    int negative;                      /* pattern is negated */
-    void* userdata;                    /* ptr to users pattern data/info  */
-} bnfa_pattern_t;
+    unsigned n;           /* pattern len */
+    int nocase;           /* nocase flag */
+    int negative;         /* pattern is negated */
+};
 
 /*
 *  List format transition node
 */
-typedef struct bnfa_trans_node_s
+struct bnfa_trans_node_t
 {
+    bnfa_trans_node_t* next;
     bnfa_state_t key;
     bnfa_state_t next_state;
-    struct bnfa_trans_node_s* next;
-} bnfa_trans_node_t;
+};
 
 /*
 *  List format patterns
 */
-typedef struct bnfa_match_node_s
+struct bnfa_match_node_t
 {
     void* data;
     void* rule_option_tree;
     void* neg_list;
-    struct bnfa_match_node_s* next;
-} bnfa_match_node_t;
+    bnfa_match_node_t* next;
+};
 
 /*
 *  Final storage type for the state transitions
@@ -116,7 +116,7 @@ enum
 /*
 *   Aho-Corasick State Machine Struct
 */
-typedef struct
+struct bnfa_struct_t
 {
     int bnfaMethod;
     int bnfaCaseMode;
@@ -125,20 +125,21 @@ typedef struct
     int bnfaOpt;
 
     unsigned bnfaPatternCnt;
-    bnfa_pattern_t* bnfaPatterns;
 
     int bnfaMaxStates;
     int bnfaNumStates;
     int bnfaNumTrans;
     int bnfaMatchStates;
 
+    bnfa_pattern_t* bnfaPatterns;
     bnfa_trans_node_t** bnfaTransTable;
-
     bnfa_state_t** bnfaNextState;
     bnfa_match_node_t** bnfaMatchList;
     bnfa_state_t* bnfaFailState;
-
     bnfa_state_t* bnfaTransList;
+
+    const MpseAgent* agent;
+
     int bnfaForceFullZeroState;
 
     int bnfa_memory;
@@ -149,24 +150,18 @@ typedef struct
     int failstate_memory;
     int matchlist_memory;
 
-    void (* userfree)(void*);
-    void (* optiontreefree)(void**);
-    void (* neg_list_free)(void**);
-
 #define MAX_INQ 32
     unsigned inq;
     unsigned inq_flush;
     void* q[MAX_INQ];
-}bnfa_struct_t;
+};
 
 /*
 *   Prototypes
 */
 void bnfa_init_xlatcase();
 
-bnfa_struct_t* bnfaNew(void (* userfree)(void* p),
-    void (* optiontreefree)(void** p),
-    void (* neg_list_free)(void** p));
+bnfa_struct_t* bnfaNew(const MpseAgent*);
 
 void bnfaSetOpt(bnfa_struct_t* p, int flag);
 void bnfaSetCase(bnfa_struct_t* p, int flag);
@@ -176,15 +171,15 @@ int bnfaAddPattern(
     bnfa_struct_t* pstruct, const uint8_t* pat, unsigned patlen,
     bool nocase, bool negative, void* userdata);
 
-int bnfaCompile(struct SnortConfig*, bnfa_struct_t*, MpseBuild, MpseNegate);
+int bnfaCompile(struct SnortConfig*, bnfa_struct_t*);
 
 unsigned _bnfa_search_csparse_nfa(
     bnfa_struct_t * pstruct, const uint8_t* t, int tlen, MpseMatch,
-    void* sdata, unsigned sindex, int* current_state);
+    void* context, unsigned sindex, int* current_state);
 
 unsigned _bnfa_search_csparse_nfa_q(
-    bnfa_struct_t * pstruct, unsigned char* t, int tlen, MpseMatch,
-    void* sdata, unsigned sindex, int* current_state);
+    bnfa_struct_t * pstruct, const uint8_t* t, int tlen, MpseMatch,
+    void* context, unsigned sindex, int* current_state);
 
 int bnfaPatternCount(bnfa_struct_t* p);
 

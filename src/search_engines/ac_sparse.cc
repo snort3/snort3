@@ -37,15 +37,10 @@ private:
     ACSM_STRUCT2* obj;
 
 public:
-    AcsMpse(
-        SnortConfig*,
-        bool use_gc,
-        void (* user_free)(void*),
-        void (* tree_free)(void**),
-        void (* list_free)(void**))
+    AcsMpse(SnortConfig*, bool use_gc, const MpseAgent* agent)
         : Mpse("ac_sparse", use_gc)
     {
-        obj = acsmNew2(user_free, tree_free, list_free);
+        obj = acsmNew2(agent);
         if ( obj ) acsmSelectFormat2(obj, ACF_SPARSE);
     }
 
@@ -54,23 +49,21 @@ public:
 
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
-        bool noCase, bool negative, void* ID, int IID) override
+        bool noCase, bool negative, void* user) override
     {
-        return acsmAddPattern2(obj, P, m, noCase, negative, ID, IID);
+        return acsmAddPattern2(obj, P, m, noCase, negative, user);
     }
 
-    int prep_patterns(
-        SnortConfig* sc, MpseBuild build_tree, MpseNegate neg_list) override
+    int prep_patterns(SnortConfig* sc) override
     {
-        return acsmCompile2(sc, obj, build_tree, neg_list);
+        return acsmCompile2(sc, obj);
     }
 
     int _search(
-        const unsigned char* T, int n, MpseMatch match,
-        void* data, int* current_state) override
+        const uint8_t* T, int n, MpseMatch match,
+        void* context, int* current_state) override
     {
-        return acsmSearchSparseDFA(
-            obj, (unsigned char*)T, n, match, data, current_state);
+        return acsmSearchSparseDFA(obj, T, n, match, context, current_state);
     }
 
     int print_info() override
@@ -89,14 +82,9 @@ public:
 //-------------------------------------------------------------------------
 
 static Mpse* acs_ctor(
-    SnortConfig* sc,
-    class Module*,
-    bool use_gc,
-    void (* user_free)(void*),
-    void (* tree_free)(void**),
-    void (* list_free)(void**))
+    SnortConfig* sc, class Module*, bool use_gc, const MpseAgent* agent)
 {
-    return new AcsMpse(sc, use_gc, user_free, tree_free, list_free);
+    return new AcsMpse(sc, use_gc, agent);
 }
 
 static void acs_dtor(Mpse* p)

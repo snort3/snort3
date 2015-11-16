@@ -43,35 +43,36 @@
 
 #ifdef AC32
 
-typedef  unsigned int acstate_t;
+typedef unsigned int acstate_t;
 #define ACSM_FAIL_STATE2  0xffffffff
 
 #else
 
-typedef    unsigned short acstate_t;
+typedef unsigned short acstate_t;
 #define ACSM_FAIL_STATE2 0xffff
 
 #endif
 
-typedef struct _acsm_pattern2
+struct ACSM_PATTERN2
 {
-    struct  _acsm_pattern2* next;
+    ACSM_PATTERN2* next;
 
-    unsigned char* patrn;
-    unsigned char* casepatrn;
-    int n;
-    int nocase;
-    int negative;
-    int iid;
+    uint8_t* patrn;
+    uint8_t* casepatrn;
+
     void* udata;
     void* rule_option_tree;
     void* neg_list;
-} ACSM_PATTERN2;
+
+    int n;
+    int nocase;
+    int negative;
+};
 
 /*
 *    transition nodes  - either 8 or 12 bytes
 */
-typedef struct trans_node_s
+struct trans_node_t
 {
     /* The character that got us here - sized to keep structure aligned on 4 bytes
      * to better the caching opportunities. A value that crosses the cache line
@@ -79,8 +80,8 @@ typedef struct trans_node_s
      */
     acstate_t key;
     acstate_t next_state;
-    struct trans_node_s* next; /* next transition for this state */
-} trans_node_t;
+    trans_node_t* next; /* next transition for this state */
+};
 
 /*
 *  User specified final storage type for the state transitions
@@ -107,21 +108,18 @@ enum
 };
 
 #define AC_MAX_INQ 32
-typedef struct
+struct PMQ
 {
     unsigned inq;
     unsigned inq_flush;
     void* q[AC_MAX_INQ];
-} PMQ;
+};
 
 /*
 *   Aho-Corasick State Machine Struct - one per group of pattterns
 */
-typedef struct
+struct ACSM_STRUCT2
 {
-    int acsmMaxStates;
-    int acsmNumStates;
-
     ACSM_PATTERN2* acsmPatterns;
     acstate_t* acsmFailState;
     ACSM_PATTERN2** acsmMatchList;
@@ -130,8 +128,12 @@ typedef struct
        after construction we convert to sparse or full format matrix and free
        the transition lists */
     trans_node_t** acsmTransTable;
-
     acstate_t** acsmNextState;
+    const MpseAgent* agent;
+
+    int acsmMaxStates;
+    int acsmNumStates;
+
     int acsmFormat;
     int acsmSparseMaxRowNodes;
     int acsmSparseMaxZcnt;
@@ -140,57 +142,46 @@ typedef struct
     int acsmAlphabetSize;
     int acsmFSA;
     int numPatterns;
-    void (* userfree)(void* p);
-    void (* optiontreefree)(void** p);
-    void (* neg_list_free)(void** p);
-    PMQ q;
+
     int sizeofstate;
     int compress_states;
-}ACSM_STRUCT2;
+
+    PMQ q;
+};
 
 /*
 *   Prototypes
 */
 void acsmx2_init_xlatcase();
 
-ACSM_STRUCT2* acsmNew2(
-    void (* userfree)(void* p),
-    void (* optiontreefree)(void** p),
-    void (* neg_list_free)(void** p));
+ACSM_STRUCT2* acsmNew2(const MpseAgent*);
 
 int acsmAddPattern2(
     ACSM_STRUCT2* p, const uint8_t* pat, unsigned n,
-    bool nocase, bool negative, void* id, int iid);
+    bool nocase, bool negative, void* id);
 
-int acsmCompile2(struct SnortConfig*, ACSM_STRUCT2*, MpseBuild, MpseNegate);
+int acsmCompile2(struct SnortConfig*, ACSM_STRUCT2*);
 
 int acsmSearchSparseDFA_Full(
-    ACSM_STRUCT2*, unsigned char* T, int n, MpseMatch,
-    void* data, int* current_state);
+    ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
 int acsmSearchSparseDFA_Full_q(
-    ACSM_STRUCT2*, unsigned char* T, int n, MpseMatch,
-    void* data, int* current_state);
+    ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
 int acsmSearchSparseDFA_Banded(
-    ACSM_STRUCT2*, unsigned char* T, int n, MpseMatch,
-    void* data, int* current_state);
+    ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
 int acsmSearchSparseDFA(
-    ACSM_STRUCT2*, unsigned char* T, int n, MpseMatch,
-    void* data, int* current_state);
+    ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
 int acsmSearchSparseNFA(
-    ACSM_STRUCT2*, unsigned char* T, int n, MpseMatch,
-    void* data, int* current_state);
+    ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
 int acsmSearchSparseDFA_Full_All(
-    ACSM_STRUCT2*, const unsigned char* Tx, int n, MpseMatch,
-    void* data, int* current_state);
+    ACSM_STRUCT2*, const uint8_t* Tx, int n, MpseMatch, void* context, int* current_state);
 
 int acsmSearchSparseDFA_Full_q_all(
-    ACSM_STRUCT2*, const unsigned char* T, int n, MpseMatch,
-    void* data, int* current_state);
+    ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
 void acsmFree2(ACSM_STRUCT2* acsm);
 int acsmPatternCount2(ACSM_STRUCT2* acsm);

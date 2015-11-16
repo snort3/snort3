@@ -100,14 +100,9 @@ private:
     KTRIE_STRUCT* obj;
 
 public:
-    LowmemQMpse(
-        bool use_gc,
-        void (* user_free)(void*),
-        void (* tree_free)(void**),
-        void (* list_free)(void**))
-        : Mpse(s_name, use_gc)
+    LowmemQMpse(bool use_gc, const MpseAgent* agent) : Mpse(s_name, use_gc)
     {
-        obj = KTrieNew(1, user_free, tree_free, list_free);
+        obj = KTrieNew(1, agent);
     }
 
     ~LowmemQMpse()
@@ -118,23 +113,22 @@ public:
 
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
-        bool noCase, bool negative, void* ID, int) override
+        bool noCase, bool negative, void* user) override
     {
-        return KTrieAddPattern(obj, P, m, noCase, negative, ID);
+        return KTrieAddPattern(obj, P, m, noCase, negative, user);
     }
 
-    int prep_patterns(
-        SnortConfig* sc, MpseBuild build_tree, MpseNegate neg_list) override
+    int prep_patterns(SnortConfig* sc) override
     {
-        return KTrieCompileWithSnortConf(sc, obj, build_tree, neg_list);
+        return KTrieCompileWithSnortConf(sc, obj);
     }
 
     int _search(
-        const unsigned char* T, int n, MpseMatch match,
-        void* data, int* current_state) override
+        const uint8_t* T, int n, MpseMatch match,
+        void* context, int* current_state) override
     {
         *current_state = 0;
-        return KTrieSearchQ(obj, (unsigned char*)T, n, match, data);
+        return KTrieSearchQ(obj, T, n, match, context);
     }
 
     int get_pattern_count() override
@@ -153,17 +147,11 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Mpse* lmq_ctor(
-    SnortConfig*,
-    class Module* mod,
-    bool use_gc,
-    void (* user_free)(void*),
-    void (* tree_free)(void**),
-    void (* list_free)(void**))
+static Mpse* lmq_ctor(SnortConfig*, class Module* mod, bool use_gc, const MpseAgent* agent)
 {
     LowmemQModule* lmqm = (LowmemQModule*)mod;
     s_var = lmqm->var;
-    return new LowmemQMpse(use_gc, user_free, tree_free, list_free);
+    return new LowmemQMpse(use_gc, agent);
 }
 
 static void lmq_dtor(Mpse* p)

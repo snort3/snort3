@@ -36,6 +36,24 @@
 
 #define STD_BUF 1024
 
+enum WarningGroup
+{
+    WARN_DAQ, WARN_CONF, WARN_VARS, WARN_SYMBOLS, WARN_SCRIPTS,
+    WARN_HOSTS, WARN_RULES, WARN_FLOWBITS, WARN_PLUGINS,
+#ifdef PIGLET
+    WARN_PIGLET,
+#endif
+    WARN_MAX
+};
+
+unsigned get_parse_errors();
+unsigned get_parse_warnings();
+
+SO_PUBLIC void ParseMessage(const char*, ...);
+SO_PUBLIC void ParseWarning(WarningGroup, const char*, ...);
+SO_PUBLIC void ParseError(const char*, ...);
+SO_PUBLIC NORETURN void ParseAbort(const char*, ...);
+
 SO_PUBLIC void LogMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void WarningMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void ErrorMessage(const char*, ...) __attribute__((format (printf, 1, 2)));

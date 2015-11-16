@@ -1,6 +1,7 @@
 
 set (SEARCH_ENGINE_INCLUDES
     pat_stats.h
+    search_common.h
 )
 
 set (ACSMX_SOURCES
@@ -36,7 +37,6 @@ if ( ENABLE_INTEL_SOFT_CPM )
 endif (ENABLE_INTEL_SOFT_CPM)
 
 set (SEARCH_ENGINE_SOURCES
-    search_common.h
     search_engines.cc
     search_engines.h
     search_tool.cc

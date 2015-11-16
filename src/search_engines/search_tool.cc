@@ -46,8 +46,7 @@ void SearchTool::add(const char* pat, unsigned len, int id, bool no_case)
 void SearchTool::add(const uint8_t* pat, unsigned len, int id, bool no_case)
 {
     if ( mpse )
-        mpse->add_pattern(
-            nullptr,  pat, len, no_case, false, (void*)(long)id, 0);
+        mpse->add_pattern(nullptr,  pat, len, no_case, false, (void*)(long)id);
 
     if ( len > max_len )
         max_len = len;
@@ -56,7 +55,7 @@ void SearchTool::add(const uint8_t* pat, unsigned len, int id, bool no_case)
 void SearchTool::prep()
 {
     if ( mpse )
-        mpse->prep_patterns(nullptr, nullptr, nullptr);
+        mpse->prep_patterns(nullptr);
 }
 
 int SearchTool::find(
@@ -75,8 +74,7 @@ int SearchTool::find(
     if ( !user_data )
         user_data = (void*)str;
 
-    int num = mpse->search(
-        (const unsigned char*)str, len, mf, user_data, &state);
+    int num = mpse->search((const uint8_t*)str, len, mf, user_data, &state);
 
     return num;
 }
@@ -109,8 +107,7 @@ int SearchTool::find_all(
 
     int state = 0;
 
-    int num = mpse->search_all(
-        (const unsigned char*)str, len, mf, user_data, &state);
+    int num = mpse->search_all((const uint8_t*)str, len, mf, user_data, &state);
 
     return num;
 }

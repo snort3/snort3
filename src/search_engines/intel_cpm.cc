@@ -41,15 +41,10 @@ private:
     IntelPm* obj;
 
 public:
-    IntelCpmMpse(
-        SnortConfig* sc,
-        bool use_gc,
-        void (* user_free)(void*),
-        void (* tree_free)(void**),
-        void (* list_free)(void**))
+    IntelCpmMpse(SnortConfig* sc, bool use_gc, const MpseAgent* agent)
         : Mpse("intel_cpm", use_gc)
     {
-        obj = IntelPmNew(sc, user_free, tree_free, list_free);
+        obj = IntelPmNew(sc, agent);
     }
 
     ~IntelCpmMpse()
@@ -60,23 +55,22 @@ public:
 
     int add_pattern(
         SnortConfig* sc, const uint8_t* P, unsigned m,
-        bool noCase, bool negative, void* ID, int IID) override
+        bool noCase, bool negative, void* user) override
     {
-        return IntelPmAddPattern(sc, obj, P, m, noCase, negative, ID, IID);
+        return IntelPmAddPattern(sc, obj, P, m, noCase, negative, user);
     }
 
-    int prep_patterns(
-        SnortConfig* sc, MpseBuild build_tree, MpseNegate neg_list) override
+    int prep_patterns(SnortConfig* sc) override
     {
-        return IntelPmFinishGroup(sc, obj, build_tree, neg_list);
+        return IntelPmFinishGroup(sc, obj);
     }
 
     int _search(
-        const unsigned char* T, int n, MpseMatch match,
-        void* data, int* current_state) override
+        const uint8_t* T, int n, MpseMatch match,
+        void* context, int* current_state) override
     {
         *current_state = 0;
-        return IntelPmSearch((IntelPm*)p->obj, (unsigned char*)T, n, match, data);
+        return IntelPmSearch((IntelPm*)p->obj, T, n, match, context);
     }
 
     int get_pattern_count() override
@@ -109,14 +103,9 @@ static void cpm_stop()
 }
 
 static Mpse* cpm_ctor(
-    SnortConfig* sc,
-    class Module*,
-    bool use_gc,
-    void (* user_free)(void*),
-    void (* tree_free)(void**),
-    void (* list_free)(void**))
+    SnortConfig* sc, class Module*, bool use_gc, const MpseAgent* agent)
 {
-    return new IntelCpmMpse(sc, use_gc, user_free, tree_free, list_free);
+    return new IntelCpmMpse(sc, use_gc, agent);
 }
 
 static void cpm_dtor(Mpse* p)

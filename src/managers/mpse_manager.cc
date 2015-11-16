@@ -30,6 +30,7 @@ using namespace std;
 #include "framework/mpse.h"
 #include "parser/parser.h"
 #include "log/messages.h"
+#include "search_engines/search_common.h"
 
 typedef list<const MpseApi*> EngineList;
 static EngineList s_engines;
@@ -84,15 +85,10 @@ const MpseApi* MpseManager::get_search_api(const char* name)
 }
 
 Mpse* MpseManager::get_search_engine(
-    SnortConfig* sc,
-    const MpseApi* api,
-    bool use_gc,
-    void (* user_free)(void*),
-    void (* tree_free)(void**),
-    void (* list_free)(void**))
+    SnortConfig* sc, const MpseApi* api, bool use_gc, const MpseAgent* agent)
 {
     Module* mod = ModuleManager::get_module(api->base.name);
-    Mpse* eng = api->ctor(sc, mod, use_gc, user_free, tree_free, list_free);
+    Mpse* eng = api->ctor(sc, mod, use_gc, agent);
     eng->set_api(api);
     return eng;
 }
@@ -105,7 +101,7 @@ Mpse* MpseManager::get_search_engine(const char* type)
         return nullptr;
 
     Module* mod = ModuleManager::get_module(api->base.name);
-    Mpse* eng = api->ctor(nullptr, mod, false, nullptr, nullptr, nullptr);
+    Mpse* eng = api->ctor(nullptr, mod, false, nullptr);
     eng->set_api(api);
     return eng;
 }
@@ -181,7 +177,7 @@ MpseWrapper* MpseManager::instantiate(const char* name, Module* m, SnortConfig* 
         return nullptr;
 
     // FIXIT-M: Is use_gc = false correct?
-    auto p = api->ctor(sc, m, false, nullptr, nullptr, nullptr);
+    auto p = api->ctor(sc, m, false, nullptr);
     if ( !p )
         return nullptr;
 

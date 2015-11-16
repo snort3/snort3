@@ -34,9 +34,6 @@
 void parser_init();
 void parser_term();
 
-unsigned get_parse_errors();
-unsigned get_parse_warnings();
-
 const char* get_parse_file();
 void get_parse_location(const char*& name, unsigned& line);
 void push_parse_location(const char* name, unsigned line = 0);
@@ -61,22 +58,6 @@ void PortTablesFree(struct RulePortTables*);
 void parser_append_rules(const char*);
 
 void ConfigureSideChannelModules(SnortConfig*);
-
-SO_PUBLIC NORETURN void ParseAbort(const char*, ...);
-SO_PUBLIC void ParseError(const char*, ...);
-SO_PUBLIC void ParseMessage(const char*, ...);
-
-enum WarningGroup
-{
-    WARN_DAQ, WARN_CONF, WARN_VARS, WARN_SYMBOLS, WARN_SCRIPTS,
-    WARN_HOSTS, WARN_RULES, WARN_FLOWBITS, WARN_PLUGINS,
-#ifdef PIGLET
-    WARN_PIGLET,
-#endif
-    WARN_MAX
-};
-
-SO_PUBLIC void ParseWarning(WarningGroup, const char*, ...);
 
 int ParseBool(const char* arg);
 

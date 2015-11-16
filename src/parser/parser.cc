@@ -82,9 +82,6 @@
 #include "managers/module_manager.h"
 #include "target_based/snort_protocols.h"
 
-static unsigned parse_errors = 0;
-static unsigned parse_warnings = 0;
-
 static struct rule_index_map_t* ruleIndexMap = nullptr;
 
 static std::string s_aux_rules;
@@ -93,20 +90,6 @@ void parser_append_rules(const char* s)
 {
     s_aux_rules += s;
     s_aux_rules += "\n";
-}
-
-unsigned get_parse_errors()
-{
-    unsigned tmp = parse_errors;
-    parse_errors = 0;
-    return tmp;
-}
-
-unsigned get_parse_warnings()
-{
-    unsigned tmp = parse_warnings;
-    parse_warnings = 0;
-    return tmp;
 }
 
 //-------------------------------------------------------------------------
@@ -850,97 +833,6 @@ void OrderRuleLists(SnortConfig* sc, const char* order)
 
     /* set the rulelists to the ordered list */
     sc->rule_lists = ordered_list;
-}
-
-NORETURN void ParseAbort(const char* format, ...)
-{
-    char buf[STD_BUF+1];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(buf, STD_BUF, format, ap);
-    va_end(ap);
-
-    buf[STD_BUF] = '\0';
-
-    const char* file_name;
-    unsigned file_line;
-    get_parse_location(file_name, file_line);
-
-    if (file_name != NULL)
-        FatalError("%s(%d) %s\n", file_name, file_line, buf);
-    else
-        FatalError("%s\n", buf);
-}
-
-void ParseError(const char* format, ...)
-{
-    char buf[STD_BUF+1];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(buf, STD_BUF, format, ap);
-    va_end(ap);
-
-    buf[STD_BUF] = '\0';
-
-    const char* file_name;
-    unsigned file_line;
-    get_parse_location(file_name, file_line);
-
-    if (file_line )
-        LogMessage("ERROR: %s:%d %s\n", file_name, file_line, buf);
-    else
-        LogMessage("ERROR: %s\n", buf);
-
-    parse_errors++;
-}
-
-void ParseWarning(WarningGroup wg, const char* format, ...)
-{
-    if ( !(snort_conf->warning_flags & (1 << wg)) )
-        return;
-
-    char buf[STD_BUF+1];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(buf, STD_BUF, format, ap);
-    va_end(ap);
-
-    buf[STD_BUF] = '\0';
-
-    const char* file_name;
-    unsigned file_line;
-    get_parse_location(file_name, file_line);
-
-    if ( file_line )
-        LogMessage("WARNING: %s:%d %s\n", file_name, file_line, buf);
-    else
-        LogMessage("WARNING: %s\n", buf);
-
-    parse_warnings++;
-}
-
-void ParseMessage(const char* format, ...)
-{
-    char buf[STD_BUF+1];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(buf, STD_BUF, format, ap);
-    va_end(ap);
-
-    buf[STD_BUF] = '\0';
-
-    const char* file_name;
-    unsigned file_line;
-    get_parse_location(file_name, file_line);
-
-    if (file_name != NULL)
-        LogMessage("%s(%d) %s\n", file_name, file_line, buf);
-    else
-        LogMessage("%s\n", buf);
 }
 
 /**Delete rtn from OTN.

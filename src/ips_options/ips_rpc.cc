@@ -126,7 +126,7 @@ int RpcOption::eval(Cursor&, Packet* p)
     RpcCheckData* ds_ptr = &config;
 
     if (!(p->is_tcp() || p->is_udp()))
-        return DETECTION_OPTION_NO_MATCH; 
+        return DETECTION_OPTION_NO_MATCH;
 
     auto c = p->data;
 

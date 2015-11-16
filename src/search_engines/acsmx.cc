@@ -60,6 +60,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <list>
+
 #include "main/snort_debug.h"
 #include "main/thread.h"
 #include "utils/util.h"
@@ -85,105 +87,9 @@ static void AC_FREE(void* p)
 }
 
 /*
-*    Simple QUEUE NODE
-*/
-typedef struct _qnode
-{
-    int state;
-    struct _qnode* next;
-}
-QNODE;
-
-/*
-*    Simple QUEUE Structure
-*/
-typedef struct _queue
-{
-    QNODE* head, * tail;
-    int count;
-}
-QUEUE;
-
-/*
-*
-*/
-static void queue_init(QUEUE* s)
-{
-    s->head = s->tail = 0;
-    s->count = 0;
-}
-
-/*
-*  Add Tail Item to queue
-*/
-static void queue_add(QUEUE* s, int state)
-{
-    QNODE* q;
-    if (!s->head)
-    {
-        q = s->tail = s->head = (QNODE*)AC_MALLOC (sizeof (QNODE));
-        MEMASSERT (q, "queue_add");
-        q->state = state;
-        q->next = 0;
-    }
-    else
-    {
-        q = (QNODE*)AC_MALLOC (sizeof (QNODE));
-        MEMASSERT (q, "queue_add");
-        q->state = state;
-        q->next = 0;
-        s->tail->next = q;
-        s->tail = q;
-    }
-    s->count++;
-}
-
-/*
-*  Remove Head Item from queue
-*/
-static int queue_remove(QUEUE* s)
-{
-    int state = 0;
-    QNODE* q;
-    if (s->head)
-    {
-        q = s->head;
-        state = q->state;
-        s->head = s->head->next;
-        s->count--;
-        if (!s->head)
-        {
-            s->tail = 0;
-            s->count = 0;
-        }
-        AC_FREE (q);
-    }
-    return state;
-}
-
-/*
-*
-*/
-static int queue_count(QUEUE* s)
-{
-    return s->count;
-}
-
-/*
-*
-*/
-static void queue_free(QUEUE* s)
-{
-    while (queue_count (s))
-    {
-        queue_remove (s);
-    }
-}
-
-/*
 ** Case Translation Table
 */
-static unsigned char xlatcase[256];
+static uint8_t xlatcase[256];
 
 /*
 *
@@ -193,14 +99,14 @@ void acsmx_init_xlatcase()
     int i;
     for (i = 0; i < 256; i++)
     {
-        xlatcase[i] = (unsigned char)toupper (i);
+        xlatcase[i] = (uint8_t)toupper (i);
     }
 }
 
 /*
 *
 */
-static inline void ConvertCaseEx(unsigned char* d, const uint8_t* s, int m)
+static inline void ConvertCaseEx(uint8_t* d, const uint8_t* s, int m)
 {
     int i;
     for (i = 0; i < m; i++)
@@ -242,7 +148,7 @@ static void AddMatchListEntry(ACSM_STRUCT* acsm, int state, ACSM_PATTERN* px)
 */
 static void AddPatternStates(ACSM_STRUCT* acsm, ACSM_PATTERN* p)
 {
-    unsigned char* pattern;
+    uint8_t* pattern;
     int state=0, next, n;
     n = p->n;
     pattern = p->patrn;
@@ -276,39 +182,36 @@ static void AddPatternStates(ACSM_STRUCT* acsm, ACSM_PATTERN* p)
 */
 static void Build_NFA(ACSM_STRUCT* acsm)
 {
-    int r, s;
-    int i;
-    QUEUE q, * queue = &q;
     ACSM_PATTERN* mlist=0;
     ACSM_PATTERN* px=0;
 
-    /* Init a Queue */
-    queue_init (queue);
+    std::list<int> queue;
 
     /* Add the state 0 transitions 1st */
-    for (i = 0; i < ALPHABET_SIZE; i++)
+    for (int i = 0; i < ALPHABET_SIZE; i++)
     {
-        s = acsm->acsmStateTable[0].NextState[i];
+        int s = acsm->acsmStateTable[0].NextState[i];
+
         if (s)
         {
-            queue_add (queue, s);
+            queue.push_back(s);
             acsm->acsmStateTable[s].FailState = 0;
         }
     }
 
     /* Build the fail state transitions for each valid state */
-    while (queue_count (queue) > 0)
+    for ( auto r : queue )
     {
-        r = queue_remove (queue);
-
         /* Find Final States for any Failure */
-        for (i = 0; i < ALPHABET_SIZE; i++)
+        for (int i = 0; i < ALPHABET_SIZE; i++)
         {
-            int fs, next;
-            if ((s = acsm->acsmStateTable[r].NextState[i]) != ACSM_FAIL_STATE)
+            int next;
+            int s = acsm->acsmStateTable[r].NextState[i];
+
+            if ( s != ACSM_FAIL_STATE )
             {
-                queue_add (queue, s);
-                fs = acsm->acsmStateTable[r].FailState;
+                queue.push_back(s);
+                int fs = acsm->acsmStateTable[r].FailState;
 
                 /*
                  *  Locate the next valid state for 'i' starting at s
@@ -347,9 +250,6 @@ static void Build_NFA(ACSM_STRUCT* acsm)
             }
         }
     }
-
-    /* Clean up the queue */
-    queue_free (queue);
 }
 
 /*
@@ -357,64 +257,48 @@ static void Build_NFA(ACSM_STRUCT* acsm)
 */
 static void Convert_NFA_To_DFA(ACSM_STRUCT* acsm)
 {
-    int r, s;
-    int i;
-    QUEUE q, * queue = &q;
-
-    /* Init a Queue */
-    queue_init (queue);
+    std::list<int> queue;
 
     /* Add the state 0 transitions 1st */
-    for (i = 0; i < ALPHABET_SIZE; i++)
+    for (int i = 0; i < ALPHABET_SIZE; i++)
     {
-        s = acsm->acsmStateTable[0].NextState[i];
-        if (s)
-        {
-            queue_add (queue, s);
-        }
+        if ( int s = acsm->acsmStateTable[0].NextState[i] )
+            queue.push_back(s);
     }
 
     /* Start building the next layer of transitions */
-    while (queue_count (queue) > 0)
+    for ( auto r : queue )
     {
-        r = queue_remove (queue);
-
         /* State is a branch state */
-        for (i = 0; i < ALPHABET_SIZE; i++)
+        for (int i = 0; i < ALPHABET_SIZE; i++)
         {
-            if ((s = acsm->acsmStateTable[r].NextState[i]) != ACSM_FAIL_STATE)
+            int s = acsm->acsmStateTable[r].NextState[i];
+
+            if ( s != ACSM_FAIL_STATE )
             {
-                queue_add (queue, s);
+                queue.push_back(s);
             }
             else
             {
                 acsm->acsmStateTable[r].NextState[i] =
-                    acsm->acsmStateTable[acsm->acsmStateTable[r].FailState].
-                    NextState[i];
+                    acsm->acsmStateTable[acsm->acsmStateTable[r].FailState].NextState[i];
             }
         }
     }
-
-    /* Clean up the queue */
-    queue_free (queue);
 }
 
 /*
 *
 */
-ACSM_STRUCT* acsmNew(void (* userfree)(void* p),
-    void (* optiontreefree)(void** p),
-    void (* neg_list_free)(void** p))
+ACSM_STRUCT* acsmNew(const MpseAgent* agent)
 {
-    ACSM_STRUCT* p;
-    p = (ACSM_STRUCT*)AC_MALLOC (sizeof (ACSM_STRUCT));
+    ACSM_STRUCT* p = (ACSM_STRUCT*)AC_MALLOC (sizeof (ACSM_STRUCT));
     MEMASSERT (p, "acsmNew");
+
     if (p)
     {
         memset (p, 0, sizeof (ACSM_STRUCT));
-        p->userfree              = userfree;
-        p->optiontreefree        = optiontreefree;
-        p->neg_list_free         = neg_list_free;
+        p->agent = agent;
     }
     return p;
 }
@@ -424,68 +308,61 @@ ACSM_STRUCT* acsmNew(void (* userfree)(void* p),
 */
 int acsmAddPattern(
     ACSM_STRUCT* p, const uint8_t* pat, unsigned n, bool nocase,
-    bool negative, void* id, int iid)
+    bool negative, void* user)
 {
     ACSM_PATTERN* plist;
     plist = (ACSM_PATTERN*)AC_MALLOC (sizeof (ACSM_PATTERN));
     MEMASSERT (plist, "acsmAddPattern");
-    plist->patrn = (unsigned char*)AC_MALLOC (n);
+    plist->patrn = (uint8_t*)AC_MALLOC (n);
     ConvertCaseEx (plist->patrn, pat, n);
-    plist->casepatrn = (unsigned char*)AC_MALLOC (n);
+    plist->casepatrn = (uint8_t*)AC_MALLOC (n);
     memcpy (plist->casepatrn, pat, n);
 
     plist->udata = (ACSM_USERDATA*)AC_MALLOC(sizeof(ACSM_USERDATA));
     MEMASSERT (plist->udata, "acsmAddPattern");
     plist->udata->ref_count = 1;
-    plist->udata->id = id;
+    plist->udata->id = user;
 
     plist->n = n;
     plist->nocase = nocase;
     plist->negative = negative;
-    plist->iid = iid;
     plist->next = p->acsmPatterns;
     p->acsmPatterns = plist;
     p->numPatterns++;
     return 0;
 }
 
-static int acsmBuildMatchStateTrees(
-    SnortConfig* sc, ACSM_STRUCT* acsm, MpseBuild build_tree, MpseNegate neg_list_func)
+static void acsmBuildMatchStateTrees(SnortConfig* sc, ACSM_STRUCT* acsm)
 {
-    int i, cnt = 0;
     ACSM_PATTERN* mlist;
 
     /* Find the states that have a MatchList */
-    for (i = 0; i < acsm->acsmMaxStates; i++)
+    for (int i = 0; i < acsm->acsmMaxStates; i++)
     {
-        for ( mlist=acsm->acsmStateTable[i].MatchList;
-            mlist!=NULL;
-            mlist=mlist->next )
+        for ( mlist=acsm->acsmStateTable[i].MatchList; mlist!=NULL; mlist=mlist->next )
         {
             if (mlist->udata->id)
             {
                 if (mlist->negative)
                 {
-                    neg_list_func(mlist->udata->id, &acsm->acsmStateTable[i].MatchList->neg_list);
+                    acsm->agent->negate_list(
+                        mlist->udata->id, &acsm->acsmStateTable[i].MatchList->neg_list);
                 }
                 else
                 {
-                    build_tree(sc, mlist->udata->id,
+                    acsm->agent->build_tree(sc, mlist->udata->id,
                         &acsm->acsmStateTable[i].MatchList->rule_option_tree);
                 }
             }
-
-            cnt++;
         }
 
         if (acsm->acsmStateTable[i].MatchList)
         {
             /* Last call to finalize the tree */
-            build_tree(sc, NULL, &acsm->acsmStateTable[i].MatchList->rule_option_tree);
+            acsm->agent->build_tree(sc, NULL,
+                &acsm->acsmStateTable[i].MatchList->rule_option_tree);
         }
     }
-
-    return cnt;
 }
 
 /*
@@ -546,36 +423,32 @@ static inline int _acsmCompile(ACSM_STRUCT* acsm)
 }
 
 int acsmCompile(
-    SnortConfig* sc, ACSM_STRUCT* acsm, MpseBuild build_tree, MpseNegate neg_list_func)
+    SnortConfig* sc, ACSM_STRUCT* acsm)
 {
-    int rval;
-
-    if ((rval = _acsmCompile (acsm)))
+    if ( int rval = _acsmCompile (acsm) )
         return rval;
 
-    if (build_tree && neg_list_func)
-    {
-        acsmBuildMatchStateTrees(sc, acsm, build_tree, neg_list_func);
-    }
+    if ( acsm->agent )
+        acsmBuildMatchStateTrees(sc, acsm);
 
     return 0;
 }
 
-static THREAD_LOCAL unsigned char Tc[64*1024];
+static THREAD_LOCAL uint8_t Tc[64*1024];
 
 /*
 *   Search Text or Binary Data for Pattern matches
 */
 int acsmSearch(
-    ACSM_STRUCT* acsm, unsigned char* Tx, int n, MpseMatch match,
-    void* data, int* current_state)
+    ACSM_STRUCT* acsm, const uint8_t* Tx, int n, MpseMatch match,
+    void* context, int* current_state)
 {
     int state = 0;
     ACSM_PATTERN* mlist;
-    unsigned char* Tend;
+    const uint8_t* Tend;
     ACSM_STATETABLE* StateTable = acsm->acsmStateTable;
     int nfound = 0;
-    unsigned char* T;
+    const uint8_t* T;
     int index;
 
     /* Case conversion */
@@ -599,8 +472,8 @@ int acsmSearch(
             mlist = StateTable[state].MatchList;
             index = T - mlist->n + 1 - Tc;
             nfound++;
-            if (match (mlist->udata->id, mlist->rule_option_tree, index, data, mlist->neg_list) >
-                0)
+            if (match(mlist->udata->id, mlist->rule_option_tree, index, context,
+                mlist->neg_list) > 0)
             {
                 *current_state = state;
                 return nfound;
@@ -629,20 +502,20 @@ void acsmFree(ACSM_STRUCT* acsm)
             ilist->udata->ref_count--;
             if (ilist->udata->ref_count == 0)
             {
-                if (acsm->userfree && ilist->udata->id)
-                    acsm->userfree(ilist->udata->id);
+                if (acsm->agent && ilist->udata->id)
+                    acsm->agent->user_free(ilist->udata->id);
 
                 AC_FREE(ilist->udata);
             }
 
-            if (ilist->rule_option_tree && acsm->optiontreefree)
+            if (ilist->rule_option_tree && acsm->agent)
             {
-                acsm->optiontreefree(&(ilist->rule_option_tree));
+                acsm->agent->tree_free(&(ilist->rule_option_tree));
             }
 
-            if (ilist->neg_list && acsm->neg_list_free)
+            if (ilist->neg_list && acsm->agent)
             {
-                acsm->neg_list_free(&(ilist->neg_list));
+                acsm->agent->list_free(&(ilist->neg_list));
             }
 
             AC_FREE (ilist);
@@ -712,7 +585,7 @@ int acsmPrintSummaryInfo(void)
 /*
 *  Text Data Buffer
 */
-unsigned char text[512];
+uint8_t text[512];
 
 /*
 *    A Match is found

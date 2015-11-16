@@ -104,7 +104,7 @@ static const luaL_Reg methods[] =
             *ip_api_handle = &self.ip_api;
 
             // Make sure the decode data doesn't run out from under the ref
-            Lua::add_ref(L, *ip_api_handle, "decode_data", lua_gettop(L)); 
+            Lua::add_ref(L, *ip_api_handle, "decode_data", lua_gettop(L));
 
             return 1;
         }

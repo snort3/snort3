@@ -39,27 +39,29 @@
 #define ALPHABET_SIZE    256
 #define ACSM_FAIL_STATE   -1
 
-typedef struct _acsm_userdata
+struct ACSM_USERDATA
 {
-    uint32_t ref_count;
     void* id;
-} ACSM_USERDATA;
+    uint32_t ref_count;
+};
 
-typedef struct _acsm_pattern
+struct ACSM_PATTERN
 {
-    struct  _acsm_pattern* next;
-    unsigned char* patrn;
-    unsigned char* casepatrn;
+    ACSM_PATTERN* next;
+    ACSM_USERDATA* udata;
+
+    uint8_t* patrn;
+    uint8_t* casepatrn;
+
+    void* rule_option_tree;
+    void* neg_list;
+
     int n;
     int nocase;
     int negative;
-    int iid;
-    ACSM_USERDATA* udata;
-    void* rule_option_tree;
-    void* neg_list;
-} ACSM_PATTERN;
+};
 
-typedef struct
+struct ACSM_STATETABLE
 {
     /* Next state - based on input character */
     int NextState[ ALPHABET_SIZE ];
@@ -69,12 +71,12 @@ typedef struct
 
     /* List of patterns that end here, if any */
     ACSM_PATTERN* MatchList;
-}ACSM_STATETABLE;
+};
 
 /*
 * State machine Struct
 */
-typedef struct
+struct ACSM_STRUCT
 {
     int acsmMaxStates;
     int acsmNumStates;
@@ -86,28 +88,23 @@ typedef struct
     short bcShift[256];
 
     int numPatterns;
-    void (* userfree)(void* p);
-    void (* optiontreefree)(void** p);
-    void (* neg_list_free)(void** p);
-}ACSM_STRUCT;
+    const MpseAgent* agent;
+};
 
 /*
 *   Prototypes
 */
 void acsmx_init_xlatcase();
 
-ACSM_STRUCT* acsmNew(void (* userfree)(void* p),
-    void (* optiontreefree)(void** p),
-    void (* neg_list_free)(void** p));
+ACSM_STRUCT* acsmNew(const MpseAgent*);
 
 int acsmAddPattern(ACSM_STRUCT* p, const uint8_t* pat, unsigned n,
-    bool nocase, bool negative, void* id, int iid);
+    bool nocase, bool negative, void* id);
 
-int acsmCompile(struct SnortConfig*, ACSM_STRUCT* acsm, MpseBuild, MpseNegate);
+int acsmCompile(struct SnortConfig*, ACSM_STRUCT*);
 
-int acsmSearch (
-    ACSM_STRUCT * acsm,unsigned char* T, int n, MpseMatch,
-    void* data, int* current_state);
+int acsmSearch(ACSM_STRUCT * acsm, const uint8_t* T,
+    int n, MpseMatch, void* context, int* current_state);
 
 void acsmFree(ACSM_STRUCT* acsm);
 int acsmPatternCount(ACSM_STRUCT* acsm);

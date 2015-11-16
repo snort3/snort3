@@ -72,11 +72,7 @@ public:
 
     static Mpse* get_search_engine(const char*);
     static Mpse* get_search_engine(
-        SnortConfig* sc,const MpseApi* api,
-        bool use_gc,
-        void (* user_ree)(void*),
-        void (* tree_free)(void**),
-        void (* list_free)(void**));
+        SnortConfig* sc,const MpseApi* api, bool use_gc, const struct MpseAgent*);
 
     static void activate_search_engine(const MpseApi*, SnortConfig*);
     static void setup_search_engine(const MpseApi*, SnortConfig*);
