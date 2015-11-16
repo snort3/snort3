@@ -408,7 +408,7 @@ void Snort::term()
     sfthreshold_free();  // FIXDAQ etc.
     RateFilter_Cleanup();
 
-    periodic_release();
+    Periodic::unregister_all();
 
     /* free allocated memory */
     if (snort_conf == snort_cmd_line_conf)

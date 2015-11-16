@@ -19,104 +19,102 @@
 
 #include "periodic.h"
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <time.h>
-
 #include <list>
 
 #ifdef UNIT_TEST
+#include <vector>
 #include "catch/catch.hpp"
 #endif
 
-#include "main/snort_types.h"
-#include "utils/util.h"
-
-struct PeriodicCheckFuncNode
+struct PeriodicHookNode
 {
-    PeriodicFunc func;
+    PeriodicHook hook;
     void* arg;
+
+    uint16_t priority;
 
     uint32_t period;
     uint32_t time_left;
 
-    uint16_t priority;
+    PeriodicHookNode(PeriodicHook hook, void* arg, uint16_t priority, uint32_t period) :
+        hook(hook), arg(arg), priority(priority), period(period), time_left(period) { }
 };
 
-typedef std::list<PeriodicCheckFuncNode> PeriodicList;
-static PeriodicList periodic_list;
+static std::list<PeriodicHookNode> s_periodic_handlers;
 
-void periodic_register(
-    PeriodicFunc periodic_func, void* arg,
-    uint16_t priority, uint32_t period)
+void Periodic::register_handler(PeriodicHook hook, void* arg, uint16_t priority, uint32_t period)
 {
-    PeriodicCheckFuncNode node;
+    auto it = s_periodic_handlers.begin();
 
-    node.func = periodic_func;
-    node.arg = arg;
-    node.period = period;
-    node.time_left = period;
-    node.priority = priority;
-
-    std::list<PeriodicCheckFuncNode>::iterator it = periodic_list.begin();
-
-    while ( it != periodic_list.end() and it->priority < priority )
+    while ( it != s_periodic_handlers.end() && it->priority < priority )
         ++it;
 
-    // insert higher priority first
-    periodic_list.insert(it, node);
+    s_periodic_handlers.emplace(it, hook, arg, priority, period);
 }
 
-void periodic_release()
+void Periodic::check()
 {
-    periodic_list.clear();
-}
-
-void periodic_check()
-{
-    for ( auto& it : periodic_list )
+    for ( auto& it : s_periodic_handlers )
     {
         if ( !it.time_left )
         {
-            it.func(it.arg);
+            it.hook(it.arg);
             it.time_left = it.period;
         }
+
         else
-            it.time_left--;
+            --it.time_left;
     }
 }
+
+void Periodic::unregister_all()
+{ s_periodic_handlers.clear(); }
 
 //--------------------------------------------------------------------------
 // tests
 //--------------------------------------------------------------------------
 
 #ifdef UNIT_TEST
-static void* s_arg = nullptr;
+static std::vector<int> s_test_args;
 
-static void test(void* pv)
-{ s_arg = pv; }
+static void s_test_handler(void* pv)
+{ s_test_args.push_back(*(int*)(pv)); }
 
 TEST_CASE("periodic", "[periodic]")
 {
-    const char* arg1 = "arg1";
-    const char* arg2 = "arg2";
+    const int
+        arg1 = 1,
+        arg2 = 2,
+        arg3 = 3;
 
-    periodic_register(test, (void*)arg1, 1, 2);
-    periodic_register(test, (void*)arg2, 1, 1);
+    const std::vector<int>
+        expect2 = { arg1 },
+        expect3 = { arg2, arg3 };
 
-    periodic_register(test, nullptr, 0, 3);
-    periodic_register(test, nullptr, 3, 4);
+    REQUIRE( s_periodic_handlers.empty() );
+    REQUIRE( s_test_args.empty() );
 
-    periodic_check();
-    CHECK(!s_arg);
+    Periodic::register_handler(s_test_handler, (void*)&arg1, 1, 1);
+    Periodic::register_handler(s_test_handler, (void*)&arg2, 1, 2);
+    Periodic::register_handler(s_test_handler, (void*)&arg3, 2, 2);
 
-    periodic_check();
-    CHECK(s_arg == arg2);
+    Periodic::check();
+    CHECK( s_test_args.empty() );
 
-    periodic_check();
-    CHECK(s_arg == arg1);
+    Periodic::check();
+    CHECK( s_test_args == expect2 );
+    s_test_args.clear();
 
-    periodic_release();
+    Periodic::check();
+    CHECK( s_test_args == expect3 );
+    s_test_args.clear();
+
+    Periodic::check();
+    Periodic::check();
+    CHECK( s_test_args == expect2 );
+
+    Periodic::unregister_all();
+    CHECK( s_periodic_handlers.empty() );
 }
 #endif
 

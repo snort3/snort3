@@ -493,7 +493,7 @@ static bool house_keeping()
 
     IdleProcessing::execute();
 
-    periodic_check();
+    Periodic::check();
 
     InspectorManager::empty_trash();
 
