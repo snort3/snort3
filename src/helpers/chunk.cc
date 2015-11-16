@@ -23,7 +23,7 @@
 
 #include "managers/ips_manager.h"
 #include "hash/sfhashfcn.h"
-#include "parser/parser.h"
+#include "log/messages.h"
 #include "framework/cursor.h"
 #include "profiler/profiler.h"
 #include "lua/lua.h"

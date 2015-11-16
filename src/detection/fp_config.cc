@@ -32,7 +32,7 @@
 #include "fp_config.h"
 #include "framework/mpse.h"
 #include "managers/mpse_manager.h"
-#include "parser/parser.h"
+#include "log/messages.h"
 
 FastPatternConfig::FastPatternConfig()
 {

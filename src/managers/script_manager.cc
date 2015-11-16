@@ -33,7 +33,7 @@
 #include "framework/ips_option.h"
 #include "framework/logger.h"
 #include "framework/lua_api.h"
-#include "parser/parser.h"
+#include "log/messages.h"
 #include "helpers/directory.h"
 
 #ifdef PIGLET
