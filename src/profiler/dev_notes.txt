@@ -1,0 +1,3 @@
+Performance Profiling provides facilities for evaluating the performance of
+individual components of snort. It manages the collection of profiling statistics,
+as well as the display of those statistics at shutdown.
