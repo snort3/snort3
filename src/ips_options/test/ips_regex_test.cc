@@ -150,7 +150,7 @@ TEST_GROUP(ips_regex_module)
     unsigned expect = 0;
 
     void setup()
-    { 
+    {
         s_parse_errors = 0;
         mod = ips_regex->mod_ctor();
         CHECK(mod);
@@ -231,7 +231,7 @@ TEST_GROUP(ips_regex_option)
     IpsOption* opt = nullptr;
 
     void setup()
-    { 
+    {
         opt = get_option(" foo ");
         regex_setup(snort_conf);
     }
@@ -253,7 +253,7 @@ TEST(ips_regex_option, hash)
     uint32_t h1 = opt->hash();
     uint32_t h2 = opt2->hash();
     CHECK(h1 != h2);
-    
+
     IpsApi* api = (IpsApi*)ips_regex;
     api->dtor(opt2);
 }
@@ -263,7 +263,7 @@ TEST(ips_regex_option, opeq)
     IpsOption* opt2 = get_option(" foo ");
     CHECK(opt2);
     CHECK(*opt == *opt2);
-    
+
     IpsApi* api = (IpsApi*)ips_regex;
     api->dtor(opt2);
 }
@@ -301,7 +301,7 @@ TEST_GROUP(ips_regex_option_relative)
     IpsOption* opt = nullptr;
 
     void setup()
-    { 
+    {
         opt = get_option("\\bfoo", true);
         regex_setup(snort_conf);
     }

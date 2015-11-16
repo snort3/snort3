@@ -4,7 +4,8 @@ noinst_LIBRARIES = libsearch_engines.a
 x_includedir = $(pkgincludedir)/search_engines
 
 x_include_HEADERS = \
-pat_stats.h
+pat_stats.h \
+search_common.h
 
 acsmx_sources = \
 ac_std.cc \
@@ -39,7 +40,6 @@ $(acsmx2_sources) \
 $(intel_sources)
 
 libsearch_engines_a_SOURCES = \
-search_common.h \
 search_engines.cc \
 search_engines.h \
 search_tool.cc \

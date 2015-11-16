@@ -19,9 +19,21 @@
 #ifndef SEARCH_COMMON_H
 #define SEARCH_COMMON_H
 
-typedef int (* MpseBuild)(struct SnortConfig*, void* id, void** existing_tree);
-typedef int (* MpseNegate)(void* id, void** list);
-typedef int (* MpseMatch)(void* id, void* tree, int index, void* data, void* neg_list);
+// interface to Mpse
+
+struct MpseAgent
+{
+    int (* build_tree)(struct SnortConfig*, void* id, void** tree);
+    int (* negate_list)(void* id, void** list);
+
+    void (* user_free)(void*);
+    void (* tree_free)(void**);
+    void (* list_free)(void**);
+};
+
+// interface to Mpse and SearchTool
+
+typedef int (* MpseMatch)(void* user, void* tree, int index, void* context, void* list);
 
 #endif
 

@@ -461,11 +461,12 @@ static int detection_option_tree_evaluate(
     return rval;
 }
 
-static int rule_tree_match(void* id, void* tree, int index, void* data, void* neg_list)
+static int rule_tree_match(
+    void* user, void* tree, int index, void* context, void* neg_list)
 {
-    OTNX_MATCH_DATA* pomd   = (OTNX_MATCH_DATA*)data;
-    PMX* pmx    = (PMX*)id;
-    PatternMatchData* pmd    = (PatternMatchData*)pmx->PatternMatchData;
+    PMX* pmx = (PMX*)user;
+    OTNX_MATCH_DATA* pomd = (OTNX_MATCH_DATA*)context;
+    PatternMatchData* pmd = (PatternMatchData*)pmx->PatternMatchData;
     detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
     detection_option_eval_data_t eval_data;
     NCListNode* ncl;
@@ -548,7 +549,7 @@ static int rule_tree_match(void* id, void* tree, int index, void* data, void* ne
                 eval_data.p->dsize = eval_data.p->ptrs.ip_api.pay_len();
 
                 /* Recurse, and evaluate with the inner IP */
-                rule_tree_match(id, tree, index, data, nullptr);
+                rule_tree_match(user, tree, index, context, nullptr);
             }
             while (layer::set_inner_ip_api(eval_data.p,
                 eval_data.p->ptrs.ip_api,

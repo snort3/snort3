@@ -1,10 +1,7 @@
 This module provides miscellaneous utilities related to timing.
 
-* Packet Performance monitoring provides facilities for gathering
-  statistics about the packet processing system as a whole.  These
-  statistics include timing information for rule evaluation, packet
-  decoding and event processing, as well as counts for actions taken on
-  packets before and during rule evaluation.
+* Periodic provides registration and execution of callbacks that should be executed
+  periodically at certain time intervals.
 
-* Performance Profiling provides facilities for evaluating the performance
-  of individual preprocessors and rule subtrees.
+* Packet time manages the updating and reading of a clock based on time values
+  from acquired packets.

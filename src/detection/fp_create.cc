@@ -630,9 +630,14 @@ static int fpFinishPortGroupRule(
 
         if ( !pg->mpse[pmd->pm_type] )
         {
+            static MpseAgent agent =
+            {
+                  pmx_create_tree, add_patrn_to_neg_list,
+                  fpDeletePMX, free_detection_option_root, neg_list_free
+            };
+
             pg->mpse[pmd->pm_type] = MpseManager::get_search_engine(
-                sc, fp->get_search_api(), true, fpDeletePMX,
-                free_detection_option_root, neg_list_free);
+                sc, fp->get_search_api(), true, &agent);
 
             if ( !pg->mpse[pmd->pm_type] )
             {
@@ -646,8 +651,7 @@ static int fpFinishPortGroupRule(
         }
 
         pg->mpse[pmd->pm_type]->add_pattern(
-            sc, (uint8_t*)pattern, pattern_length, pmd->no_case, pmd->negated,
-            pmx, rn->iRuleNodeID);
+            sc, (uint8_t*)pattern, pattern_length, pmd->no_case, pmd->negated, pmx);
     }
 
     return 0;
@@ -668,8 +672,7 @@ static int fpFinishPortGroup(
         {
             if (pg->mpse[i]->get_pattern_count() != 0)
             {
-                if (pg->mpse[i]->prep_patterns(sc, pmx_create_tree,
-                    add_patrn_to_neg_list) != 0)
+                if (pg->mpse[i]->prep_patterns(sc) != 0)
                 {
                     FatalError("%s(%d) Failed to compile port group "
                         "patterns.\n", __FILE__, __LINE__);

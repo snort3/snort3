@@ -35,25 +35,24 @@
 #define DIM(x) (sizeof(x)/sizeof(x[0]))
 
 /* DATA TYPES *****************************************************************/
-typedef struct _IntelPmMatchQueue
+struct IntelPmMatchQueue
 {
     unsigned int inq;
     unsigned int inq_flush;
     void* q[MAX_INQ];
-} IntelPmMatchQueue;
+};
 
-typedef struct _IntelPmMatchState
+struct IntelPmMatchState
 {
     void* user_data;
     void* rule_option_tree;
     void* neg_list;
 
-    void (* user_free)(void*);
-    void (* option_tree_free)(void**);
-    void (* neg_list_free)(void**);
-} IntelPmMatchState;
+    const MpseAgent* agent;
 
-typedef struct _IntelPmHandles
+};
+
+struct IntelPmHandles
 {
     CpaPmPdbPatternSetHandle psh;  /* pattern set handle */
     CpaPmPdbHandle pdbh;  /* pattern database handle */
@@ -65,7 +64,7 @@ typedef struct _IntelPmHandles
     IntelPmMatchState* pm_mtchs;
     int pm_mtchs_len;
     int refs;
-} IntelPmHandles;
+};
 
 /* GLOBALS ********************************************************************/
 static CpaInstanceHandle ipm_instance = NULL;  /* instance handle */
@@ -79,7 +78,7 @@ static inline const char* GetCpaStatusStr(CpaStatus);
 static void IntelPmSearchCallback(const CpaInstanceHandle, CpaPmMatchCtx*);
 static inline void IntelPmInitQueue(IntelPmMatchQueue*);
 static inline int IntelPmAddQueue(IntelPmMatchQueue*, void*);
-static inline unsigned int IntelPmProcessQueue(IntelPmMatchQueue*, MatchFunc, void*);
+static inline unsigned int IntelPmProcessQueue(IntelPmMatchQueue*, MpseMatch, void*);
 static void IntelPmRelease(IntelPmHandles*);
 
 /* FUNCTIONS ******************************************************************/
@@ -132,7 +131,7 @@ static inline int IntelPmAddQueue(IntelPmMatchQueue* q, void* p)
 }
 
 static inline unsigned int IntelPmProcessQueue(
-    IntelPmMatchQueue* q, MatchFunc match, void* data)
+    IntelPmMatchQueue* q, MpseMatch match, void* context)
 {
     unsigned int i;
 
@@ -141,7 +140,8 @@ static inline unsigned int IntelPmProcessQueue(
         IntelPmMatchState* mstate = (IntelPmMatchState*)q->q[i];
         if (mstate != NULL)
         {
-            if (match(mstate->user_data, mstate->rule_option_tree, 0, data, mstate->neg_list) > 0)
+            if (match(mstate->user_data, mstate->rule_option_tree, 0, context,
+                mstate->neg_list) > 0)
             {
                 q->inq = 0;
                 return 1;
@@ -186,10 +186,7 @@ void IntelPmStartInstance(void)
 }
 
 void* IntelPmNew(
-    SnortConfig* sc,
-    void (* user_free)(void* p),
-    void (* option_tree_free)(void** p),
-    void (* neg_list_free)(void** p))
+    SnortConfig* sc, const MpseAgent* agent)
 {
     CpaStatus status;
     IntelPm* ipm = (IntelPm*)SnortAlloc(sizeof(IntelPm));
@@ -212,9 +209,7 @@ void* IntelPmNew(
         //memset(intel_pm_search_buf_sizes, 0, sizeof(intel_pm_search_buf_sizes));
     }
 
-    ipm->user_free = user_free;
-    ipm->option_tree_free = option_tree_free;
-    ipm->neg_list_free = neg_list_free;
+    ipm->uagent = agent;
     ipm->match_queue = SnortAlloc(sizeof(IntelPmMatchQueue));
 
     ipm->handles = sc->ipm_handles;
@@ -243,8 +238,8 @@ void IntelPmDelete(IntelPm* ipm)
     for (i = 0; i < ipm->pattern_array_len; i++)
     {
         IntelPmPattern* pat = &ipm->pattern_array[i];
-        if (ipm->user_free && pat->user_data)
-            ipm->user_free(pat->user_data);
+        if (ipm->agent && pat->user_data)
+            ipm->agent->user_free(pat->user_data);
     }
 
     free(ipm->pattern_array);
@@ -268,11 +263,11 @@ int IntelPmRelease(IntelPmHandles* handles)
     {
         IntelPmMatchState* ms = &handles->pm_mtchs[i];
 
-        if (ms->rule_option_tree && ms->option_tree_free)
-            ms->option_tree_free(&ms->rule_option_tree);
+        if (ms->rule_option_tree && ms->agent)
+            ms->agent->option_tree_free(&ms->rule_option_tree);
 
-        if (ms->neg_list && ms->neg_list_free)
-            ms->neg_list_free(&ms->neg_list);
+        if (ms->neg_list && ms->agent)
+            ms->agent->neg_list_free(&ms->neg_list);
     }
 
     if (handles->psh != NULL)
@@ -303,8 +298,7 @@ int IntelPmAddPattern(
     unsigned pat_len,
     bool no_case,
     bool negative,
-    void* pat_data,
-    int pat_id)
+    void* user)
 {
     Cpa32U patternOptions = CPA_PM_PDB_OPTIONS_CASELESS | CPA_PM_PDB_OPTIONS_LITERAL;
     CpaStatus status;
@@ -348,16 +342,15 @@ int IntelPmAddPattern(
     }
 
     ipp = &ipm->pattern_array[ipm->patternIds];
-    ipp->user_data = pat_data;
+    ipp->user_data = user;
     ipp->rule_option_tree = NULL;
     ipp->neg_list = NULL;
-    //ipp->pattern = (unsigned char *)SnortAlloc(pat_len);
+    //ipp->pattern = (uint8_t *)SnortAlloc(pat_len);
     //memcpy(ipp->pattern, pat, pat_len);
     ipp->pattern = NULL;
     ipp->pattern_len = pat_len;
     ipp->no_case = no_case;
     ipp->negative = negative;
-    ipp->id = pat_id;
     ipp->patternId = ipm->patternIds++;
 
     sc->ipm_handles->pids++;
@@ -367,7 +360,7 @@ int IntelPmAddPattern(
 }
 
 int IntelPmFinishGroup(
-    SnortConfig* sc, IntelPm* ipm, MpseBuild build_tree, MpseNegate net_list_func)
+    SnortConfig* sc, IntelPm* ipm)
 {
     Cpa32U sessionCtxSize;
     CpaPmSessionProperty sessionProperty;
@@ -376,9 +369,6 @@ int IntelPmFinishGroup(
 
     if (ipm == NULL)
         return -1;
-
-    ipm->build_tree = build_tree;
-    ipm->neg_list_func = neg_list_func;
 
     sessionProperty.numPatternGroupIds = 1;
     sessionProperty.patternGroups[0].id.pdb = 0;
@@ -484,9 +474,9 @@ void IntelPmCompile(SnortConfig* sc)
                         user_data = ipp->user_data;
 
                     if (ipp->negative)
-                        ipm->neg_list_func(ipp->user_data, &neg_list);
+                        ipm->agent->negate_list(ipp->user_data, &neg_list);
                     else
-                        ipm->build_tree(sc, ipp->user_data, &rule_option_tree);
+                        ipm->agent->build_tree(sc, ipp->user_data, &rule_option_tree);
 
                     status = cpaPmMsoGetNextPatternId(ipm_instance, sc->ipm_handles->pdbh,
                         &patternIdIter, &patternID);
@@ -498,24 +488,20 @@ void IntelPmCompile(SnortConfig* sc)
 
                 if (ipp != NULL)
                 {
-                    ipm->build_tree(sc, NULL, &rule_option_tree);
+                    ipm->agent->build_tree(sc, NULL, &rule_option_tree);
 
                     sc->ipm_handles->pm_mtchs[matchStateId].user_data = user_data;
                     sc->ipm_handles->pm_mtchs[matchStateId].neg_list = neg_list;
                     sc->ipm_handles->pm_mtchs[matchStateId].rule_option_tree = rule_option_tree;
-
-                    sc->ipm_handles->pm_mtchs[matchStateId].user_free = ipm->user_free;
-                    sc->ipm_handles->pm_mtchs[matchStateId].option_tree_free =
-                        ipm->option_tree_free;
-                    sc->ipm_handles->pm_mtchs[matchStateId].neg_list_free = ipm->neg_list_free;
+                    sc->ipm_handles->pm_mtchs[matchStateId].agent = ipm->agent;
                 }
 
                 status = cpaPmMsoGetNextMatchState(ipm_instance, sc->ipm_handles->pdbh,
                     patternGroup, &matchStateIter, &matchStateId);
 
                 if (status != CPA_STATUS_SUCCESS)
-                    FatalError("cpaPmMsoGetNextMatchState() failed: %s\n", GetCpaStatusStr(
-                        status));
+                    FatalError("cpaPmMsoGetNextMatchState() failed: %s\n",
+                        GetCpaStatusStr(status));
             }
         }
     }
@@ -558,15 +544,14 @@ static void IntelPmSearchCallback(const CpaInstanceHandle instanceHandle,
         if (IntelPmAddQueue((IntelPmMatchQueue*)ipm->match_queue,
             (void*)&handles->pm_mtchs[result->patternId]))
         {
-            IntelPmProcessQueue((IntelPmMatchQueue*)ipm->match_queue,
-                ipm->match, ipm->data);
+            IntelPmProcessQueue((IntelPmMatchQueue*)ipm->match_queue, ipm->match, ipm->data);
         }
     }
 }
 
 int IntelPmSearch(
-    IntelPm* ipm, unsigned char* buffer, int buffer_len,
-    MatchFunc match, void* data)
+    IntelPm* ipm, uint8_t* buffer, int buffer_len,
+    MpseMatch match, void* context)
 {
     CpaFlatBuffer flat_buffer = { buffer_len, buffer };
     CpaBufferList buffer_list = { 1, &flat_buffer, NULL, NULL };
@@ -576,7 +561,7 @@ int IntelPmSearch(
 
     //intel_pm_search_buf_sizes[buffer_len]++;
 
-    ipm->data = data;
+    ipm->data = context;
     ipm->match = match;
 
     /* Note: Search options
@@ -598,8 +583,7 @@ int IntelPmSearch(
     if (status != CPA_STATUS_SUCCESS)
         FatalError("cpaPmSearchExec() failed: %s\n", GetCpaStatusStr(status));
 
-    IntelPmProcessQueue((IntelPmMatchQueue*)ipm->match_queue,
-        ipm->match, ipm->data);
+    IntelPmProcessQueue((IntelPmMatchQueue*)ipm->match_queue, ipm->match, ipm->data);
 
     return 0;
 }

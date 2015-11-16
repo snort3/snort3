@@ -237,12 +237,12 @@ void Value::update_mask(uint64_t& mask, uint64_t flag, bool invert)
 
 #ifdef UNIT_TEST
 
-//The test strings used with some of the APIs below that return IP/MAC addrs
-//are random character strings and not actual addresses. This is fine since 
-//there is no IP address specific processing or validation. The internal 
-//representation of the data is a C string and the purpose was to exercise the 
-//APIs to ensure things like length checks are done correctly and the 
-//string value/zero is returned based on the result etc. 
+// The test strings used with some of the APIs below that return IP/MAC
+// addrs are random character strings and not actual addresses. This is
+// fine since there is no IP address specific processing or validation. The
+// internal representation of the data is a C string and the purpose was to
+// exercise the APIs to ensure things like length checks are done correctly
+// and the string value/zero is returned based on the result etc.
 
 TEST_CASE("mac addr negative test", "[Value]")
 {
@@ -407,7 +407,7 @@ TEST_CASE("update mask", "[Value]")
     SECTION("val true")
     {
         Value test_val(true);
-        
+
         SECTION("invert true")
         {
             invert = true;
@@ -453,7 +453,7 @@ TEST_CASE("update mask", "[Value]")
     SECTION("val false")
     {
         Value test_val(true);
-       
+
         SECTION("invert false")
         {
             invert = true;

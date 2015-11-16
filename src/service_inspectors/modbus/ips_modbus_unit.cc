@@ -82,7 +82,7 @@ int ModbusUnitOption::eval(Cursor&, Packet* p)
     if ( !p->is_full_pdu() )
         return DETECTION_OPTION_NO_MATCH;
 
-    ModbusFlowData* mfd = 
+    ModbusFlowData* mfd =
         (ModbusFlowData*)p->flow->get_application_data(ModbusFlowData::flow_id);
 
     if ( mfd and unit == mfd->ssn_data.unit )

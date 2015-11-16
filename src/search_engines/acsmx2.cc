@@ -134,6 +134,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <list>
+
 #define ACSMX2_TRACK_Q
 
 #ifdef  ACSMX2_TRACK_Q
@@ -160,7 +162,7 @@ static int acsm2_dfa4_memory = 0;
 static int acsm2_failstate_memory = 0;
 static int s_verbose=0;
 
-typedef struct acsm_summary_s
+struct acsm_summary_t
 {
     unsigned num_states;
     unsigned num_transitions;
@@ -172,7 +174,7 @@ typedef struct acsm_summary_s
     unsigned num_2byte_instances;
     unsigned num_4byte_instances;
     ACSM_STRUCT2 acsm;
-} acsm_summary_t;
+};
 
 static acsm_summary_t summary;
 
@@ -199,7 +201,7 @@ void acsm_init_summary(void)
 /*
 ** Case Translation Table
 */
-static unsigned char xlatcase[256];
+static uint8_t xlatcase[256];
 /*
 *
 */
@@ -208,14 +210,14 @@ void acsmx2_init_xlatcase()
     int i;
     for (i = 0; i < 256; i++)
     {
-        xlatcase[i] = (unsigned char)toupper(i);
+        xlatcase[i] = (uint8_t)toupper(i);
     }
 }
 
 /*
 *    Case Conversion
 */
-static inline void ConvertCaseEx(unsigned char* d, const uint8_t* s, int m)
+static inline void ConvertCaseEx(uint8_t* d, const uint8_t* s, int m)
 {
     int i;
 #ifdef XXXX
@@ -254,14 +256,14 @@ void acsmSetVerbose2(void)
     s_verbose = 1;
 }
 
-typedef enum _Acsm2MemoryType
+enum Acsm2MemoryType
 {
     ACSM2_MEMORY_TYPE__NONE = 0,
     ACSM2_MEMORY_TYPE__PATTERN,
     ACSM2_MEMORY_TYPE__MATCHLIST,
     ACSM2_MEMORY_TYPE__TRANSTABLE,
     ACSM2_MEMORY_TYPE__FAILSTATE
-} Acsm2MemoryType;
+};
 
 /*
 *
@@ -381,122 +383,13 @@ static void AC_FREE_DFA(void* p, int n, int sizeofstate)
     }
 }
 
-/*
- *    Simple QUEUE NODE
- */
-typedef struct _qnode
+static void queue_add(std::list<int>& q, int s)
 {
-    int state;
-    struct _qnode* next;
-}
-QNODE;
+    for ( auto qs : q )
+        if ( qs == s )
+            return;
 
-/*
-*    Simple QUEUE Structure
-*/
-typedef struct _queue
-{
-    QNODE* head, * tail;
-    int count;
-}
-QUEUE;
-
-/*
-*   Initialize the queue
-*/
-static void queue_init(QUEUE* s)
-{
-    s->head = s->tail = 0;
-    s->count= 0;
-}
-
-/*
-*  Find a State in the queue
-*/
-static int queue_find(QUEUE* s, int state)
-{
-    QNODE* q;
-    q = s->head;
-    while ( q )
-    {
-        if ( q->state == state )
-            return 1;
-        q = q->next;
-    }
-    return 0;
-}
-
-/*
-*  Add Tail Item to queue (FiFo/LiLo)
-*/
-static void queue_add(QUEUE* s, int state)
-{
-    QNODE* q;
-
-    if ( queue_find(s, state) )
-        return;
-
-    if (!s->head)
-    {
-        q = s->tail = s->head =
-                    (QNODE*)AC_MALLOC(sizeof(QNODE), ACSM2_MEMORY_TYPE__NONE);
-        MEMASSERT (q, "queue_add");
-        q->state = state;
-        q->next = 0;
-    }
-    else
-    {
-        q = (QNODE*)AC_MALLOC(sizeof(QNODE), ACSM2_MEMORY_TYPE__NONE);
-        MEMASSERT (q, "queue_add");
-        q->state = state;
-        q->next = 0;
-        s->tail->next = q;
-        s->tail = q;
-    }
-    s->count++;
-}
-
-/*
-*  Remove Head Item from queue
-*/
-static int queue_remove(QUEUE* s)
-{
-    int state = 0;
-    QNODE* q;
-    if (s->head)
-    {
-        q       = s->head;
-        state   = q->state;
-        s->head = s->head->next;
-        s->count--;
-
-        if ( !s->head )
-        {
-            s->tail = 0;
-            s->count = 0;
-        }
-        AC_FREE(q, sizeof(QNODE), ACSM2_MEMORY_TYPE__NONE);
-    }
-    return state;
-}
-
-/*
-*   Return items in the queue
-*/
-static int queue_count(QUEUE* s)
-{
-    return s->count;
-}
-
-/*
-*  Free the queue
-*/
-static void queue_free(QUEUE* s)
-{
-    while (queue_count (s))
-    {
-        queue_remove (s);
-    }
+    q.push_back(s);
 }
 
 /*
@@ -776,7 +669,7 @@ static void AddMatchListEntry(ACSM_STRUCT2* acsm, int state, ACSM_PATTERN2* px)
 static void AddPatternStates(ACSM_STRUCT2* acsm, ACSM_PATTERN2* p)
 {
     int state, next, n;
-    unsigned char* pattern;
+    uint8_t* pattern;
 
     n       = p->n;
     pattern = p->patrn;
@@ -829,43 +722,38 @@ static void AddPatternStates(ACSM_STRUCT2* acsm, ACSM_PATTERN2* p)
 */
 static void Build_NFA(ACSM_STRUCT2* acsm)
 {
-    int r, s, i;
-    QUEUE q, * queue = &q;
     acstate_t* FailState = acsm->acsmFailState;
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
     ACSM_PATTERN2* mlist,* px;
 
-    /* Init a Queue */
-    queue_init (queue);
+    std::list<int> queue;
 
     /* Add the state 0 transitions 1st, the states at depth 1, fail to state 0 */
-    for (i = 0; i < acsm->acsmAlphabetSize; i++)
+    for (int i = 0; i < acsm->acsmAlphabetSize; i++)
     {
-        s = List_GetNextState2(acsm,0,i);
+        int s = List_GetNextState2(acsm,0,i);
+
         if ( s )
         {
-            queue_add (queue, s);
+            queue_add(queue, s);
             FailState[s] = 0;
         }
     }
 
     /* Build the fail state successive layer of transitions */
-    while (queue_count (queue) > 0)
+    for ( auto r : queue )
     {
-        r = queue_remove (queue);
-
         /* Find Final States for any Failure */
-        for (i = 0; i < acsm->acsmAlphabetSize; i++)
+        for (int i = 0; i < acsm->acsmAlphabetSize; i++)
         {
-            int fs, next;
-
-            s = List_GetNextState(acsm,r,i);
+            int next;
+            int s = List_GetNextState(acsm,r,i);
 
             if ( (acstate_t)s != ACSM_FAIL_STATE2 )
             {
-                queue_add (queue, s);
+                queue_add(queue, s);
 
-                fs = FailState[r];
+                int fs = FailState[r];
 
                 /*
                  *  Locate the next valid state for 'i' starting at fs
@@ -900,9 +788,6 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
         }
     }
 
-    /* Clean up the queue */
-    queue_free (queue);
-
     if ( s_verbose)
         printf("End Build_NFA: NumStates=%d\n",acsm->acsmNumStates);
 }
@@ -912,36 +797,29 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
 */
 static void Convert_NFA_To_DFA(ACSM_STRUCT2* acsm)
 {
-    int i, r, s, cFailState;
-    QUEUE q, * queue = &q;
+    int cFailState;
     acstate_t* FailState = acsm->acsmFailState;
 
-    /* Init a Queue */
-    queue_init (queue);
+    std::list<int> queue;
 
     /* Add the state 0 transitions 1st */
-    for (i=0; i<acsm->acsmAlphabetSize; i++)
+    for (int i=0; i<acsm->acsmAlphabetSize; i++)
     {
-        s = List_GetNextState(acsm,0,i);
-        if ( s != 0 )
-        {
-            queue_add (queue, s);
-        }
+        if ( int s = List_GetNextState(acsm,0,i) )
+            queue_add(queue, s);
     }
 
     /* Start building the next layer of transitions */
-    while ( queue_count(queue) > 0 )
+    for ( auto r : queue )
     {
-        r = queue_remove(queue);
-
         /* Process this states layer */
-        for (i = 0; i < acsm->acsmAlphabetSize; i++)
+        for (int i = 0; i < acsm->acsmAlphabetSize; i++)
         {
-            s = List_GetNextState(acsm,r,i);
+            int s = List_GetNextState(acsm,r,i);
 
             if ( (acstate_t)s != ACSM_FAIL_STATE2 && s!= 0)
             {
-                queue_add (queue, s);
+                queue_add(queue, s);
             }
             else
             {
@@ -954,9 +832,6 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT2* acsm)
             }
         }
     }
-
-    /* Clean up the queue */
-    queue_free (queue);
 
     if (s_verbose)
         printf("End Convert_NFA_To_DFA: NumStates=%d\n",acsm->acsmNumStates);
@@ -1594,13 +1469,9 @@ int acsmSetAlphabetSize2(ACSM_STRUCT2* acsm, int n)
 /*
 *  Create a new AC state machine
 */
-ACSM_STRUCT2* acsmNew2(void (* userfree)(void* p),
-    void (* optiontreefree)(void** p),
-    void (* neg_list_free)(void** p))
+ACSM_STRUCT2* acsmNew2(const MpseAgent* agent)
 {
-    ACSM_STRUCT2* p;
-
-    p = (ACSM_STRUCT2*)AC_MALLOC(sizeof (ACSM_STRUCT2), ACSM2_MEMORY_TYPE__NONE);
+    ACSM_STRUCT2* p = (ACSM_STRUCT2*)AC_MALLOC(sizeof (ACSM_STRUCT2), ACSM2_MEMORY_TYPE__NONE);
     MEMASSERT (p, "acsmNew");
 
     if (p)
@@ -1613,9 +1484,7 @@ ACSM_STRUCT2* acsmNew2(void (* userfree)(void* p),
         p->acsmAlphabetSize      = 256;
         p->acsmSparseMaxRowNodes = 256;
         p->acsmSparseMaxZcnt     = 10;
-        p->userfree              = userfree;
-        p->optiontreefree        = optiontreefree;
-        p->neg_list_free         = neg_list_free;
+        p->agent                 = agent;
     }
 
     return p;
@@ -1627,7 +1496,7 @@ ACSM_STRUCT2* acsmNew2(void (* userfree)(void* p),
 */
 int acsmAddPattern2(
     ACSM_STRUCT2* p, const uint8_t* pat, unsigned n, bool nocase,
-    bool negative, void* id, int iid)
+    bool negative, void* user)
 {
     ACSM_PATTERN2* plist;
 
@@ -1636,24 +1505,23 @@ int acsmAddPattern2(
     MEMASSERT (plist, "acsmAddPattern");
 
     plist->patrn =
-        (unsigned char*)AC_MALLOC(n, ACSM2_MEMORY_TYPE__PATTERN);
+        (uint8_t*)AC_MALLOC(n, ACSM2_MEMORY_TYPE__PATTERN);
     MEMASSERT (plist->patrn, "acsmAddPattern");
 
     ConvertCaseEx(plist->patrn, pat, n);
 
     plist->casepatrn =
-        (unsigned char*)AC_MALLOC(n, ACSM2_MEMORY_TYPE__PATTERN);
+        (uint8_t*)AC_MALLOC(n, ACSM2_MEMORY_TYPE__PATTERN);
     MEMASSERT (plist->casepatrn, "acsmAddPattern");
 
     memcpy (plist->casepatrn, pat, n);
 
-    plist->n      = n;
+    plist->n = n;
     plist->nocase = nocase;
     plist->negative = negative;
-    plist->iid    = iid;
-    plist->udata = id;
+    plist->udata = user;
 
-    plist->next     = p->acsmPatterns;
+    plist->next = p->acsmPatterns;
     p->acsmPatterns = plist;
     p->numPatterns++;
 
@@ -1693,43 +1561,35 @@ static void acsmUpdateMatchStates(ACSM_STRUCT2* acsm)
     }
 }
 
-static int acsmBuildMatchStateTrees2(
-    SnortConfig* sc, ACSM_STRUCT2* acsm, MpseBuild build_tree, MpseNegate neg_list_func)
+static void acsmBuildMatchStateTrees2(SnortConfig* sc, ACSM_STRUCT2* acsm)
 {
-    int i, cnt = 0;
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
     ACSM_PATTERN2* mlist;
 
     /* Find the states that have a MatchList */
-    for (i = 0; i < acsm->acsmNumStates; i++)
+    for (int i = 0; i < acsm->acsmNumStates; i++)
     {
-        for ( mlist=MatchList[i];
-            mlist!=NULL;
-            mlist=mlist->next )
+        for ( mlist=MatchList[i]; mlist!=NULL; mlist=mlist->next )
         {
             if (mlist->udata)
             {
                 if (mlist->negative)
                 {
-                    neg_list_func(mlist->udata, &MatchList[i]->neg_list);
+                    acsm->agent->negate_list(mlist->udata, &MatchList[i]->neg_list);
                 }
                 else
                 {
-                    build_tree(sc, mlist->udata, &MatchList[i]->rule_option_tree);
+                    acsm->agent->build_tree(sc, mlist->udata, &MatchList[i]->rule_option_tree);
                 }
             }
-
-            cnt++;
         }
 
         if (MatchList[i])
         {
             /* Last call to finalize the tree */
-            build_tree(sc, NULL, &MatchList[i]->rule_option_tree);
+            acsm->agent->build_tree(sc, NULL, &MatchList[i]->rule_option_tree);
         }
     }
-
-    return cnt;
 }
 
 void acsmCompressStates(
@@ -1973,17 +1833,13 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
 }
 
 int acsmCompile2(
-    SnortConfig* sc, ACSM_STRUCT2* acsm, MpseBuild build_tree, MpseNegate neg_list_func)
+    SnortConfig* sc, ACSM_STRUCT2* acsm)
 {
-    int rval;
-
-    if ((rval = _acsmCompile2(acsm)))
+    if ( int rval = _acsmCompile2(acsm) )
         return rval;
 
-    if (build_tree && neg_list_func)
-    {
-        acsmBuildMatchStateTrees2(sc, acsm, build_tree, neg_list_func);
-    }
+    if ( acsm->agent )
+        acsmBuildMatchStateTrees2(sc, acsm);
 
     return 0;
 }
@@ -2212,14 +2068,14 @@ static inline acstate_t SparseGetNextStateDFA(
 *   Sparse & Sparse-Banded Matrix search
 */
 int acsmSearchSparseDFA(
-    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseMatch match,
-    void* data, int* current_state)
+    ACSM_STRUCT2* acsm, const uint8_t* Tx, int n, MpseMatch match,
+    void* context, int* current_state)
 {
     acstate_t state;
     ACSM_PATTERN2* mlist;
-    unsigned char* Tend;
+    const uint8_t* Tend;
     int nfound = 0;
-    unsigned char* T, * Tc;
+    const uint8_t* T, * Tc;
     int index;
     acstate_t** NextState = acsm->acsmNextState;
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
@@ -2247,8 +2103,8 @@ int acsmSearchSparseDFA(
             {
                 index = T - mlist->n - Tc + 1;
                 nfound++;
-                if (match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) >
-                    0)
+                if (match (mlist->udata, mlist->rule_option_tree, index, context,
+                    mlist->neg_list) > 0)
                 {
                     *current_state = state;
                     return nfound;
@@ -2307,8 +2163,7 @@ static inline int _add_queue(PMQ* b, void* p)
     return 0;
 }
 
-static inline unsigned _process_queue(
-    PMQ* q, MpseMatch match, void* data)
+static inline unsigned _process_queue(PMQ* q, MpseMatch match, void* context)
 {
     ACSM_PATTERN2* mlist;
     unsigned int i;
@@ -2324,7 +2179,7 @@ static inline unsigned _process_queue(
         mlist = (ACSM_PATTERN2*)q->q[i];
         if (mlist)
         {
-            if (match (mlist->udata, mlist->rule_option_tree, 0, data, mlist->neg_list) > 0)
+            if (match (mlist->udata, mlist->rule_option_tree, 0, context, mlist->neg_list) > 0)
             {
                 q->inq = 0;
                 return 1;
@@ -2355,7 +2210,7 @@ static inline unsigned _process_queue(
             { \
                 if (_add_queue(&acsm->q,MatchList[state])) \
                 { \
-                    if (_process_queue(&acsm->q, match, data)) \
+                    if (_process_queue(&acsm->q, match, context)) \
                     { \
                         *current_state = state; \
                         return 1; \
@@ -2367,10 +2222,10 @@ static inline unsigned _process_queue(
     }
 
 int acsmSearchSparseDFA_Full_q(
-    ACSM_STRUCT2* acsm, unsigned char* T, int n, MpseMatch match,
-    void* data, int* current_state)
+    ACSM_STRUCT2* acsm, const uint8_t* T, int n, MpseMatch match,
+    void* context, int* current_state)
 {
-    unsigned char* Tend;
+    const uint8_t* Tend;
     int sindex;
     acstate_t state;
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
@@ -2414,7 +2269,7 @@ int acsmSearchSparseDFA_Full_q(
     if (MatchList[state])
         _add_queue(&acsm->q,MatchList[state]);
 
-    _process_queue(&acsm->q, match, data);
+    _process_queue(&acsm->q, match, context);
 
     return 0;
 }
@@ -2443,7 +2298,7 @@ int acsmSearchSparseDFA_Full_q(
                 { \
                     if (_add_queue(&acsm->q,mlist)) \
                     { \
-                        if (_process_queue(&acsm->q, match, data)) \
+                        if (_process_queue(&acsm->q, match, context)) \
                         { \
                             *current_state = state; \
                             return 1; \
@@ -2456,10 +2311,10 @@ int acsmSearchSparseDFA_Full_q(
     }
 
 int acsmSearchSparseDFA_Full_q_all(
-    ACSM_STRUCT2* acsm, const unsigned char* T, int n, MpseMatch match,
-    void* data, int* current_state)
+    ACSM_STRUCT2* acsm, const uint8_t* T, int n, MpseMatch match,
+    void* context, int* current_state)
 {
-    const unsigned char* Tend;
+    const uint8_t* Tend;
     int sindex;
     acstate_t state;
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
@@ -2509,7 +2364,7 @@ int acsmSearchSparseDFA_Full_q_all(
         {
             if (_add_queue(&acsm->q,mlist))
             {
-                if (_process_queue(&acsm->q, match, data))
+                if (_process_queue(&acsm->q, match, context))
                 {
                     *current_state = state;
                     return 1;
@@ -2518,7 +2373,7 @@ int acsmSearchSparseDFA_Full_q_all(
         }
     }
 
-    _process_queue(&acsm->q, match, data);
+    _process_queue(&acsm->q, match, context);
 
     return 0;
 }
@@ -2545,8 +2400,8 @@ int acsmSearchSparseDFA_Full_q_all(
             { \
                 index = T - mlist->n - Tx; \
                 nfound++; \
-                if (match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > \
-                    0) \
+                if (match (mlist->udata, mlist->rule_option_tree, index, context, \
+                    mlist->neg_list) > 0) \
                 { \
                     *current_state = state; \
                     return nfound; \
@@ -2557,13 +2412,13 @@ int acsmSearchSparseDFA_Full_q_all(
     }
 
 int acsmSearchSparseDFA_Full(
-    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseMatch match,
-    void* data, int* current_state
+    ACSM_STRUCT2* acsm, const uint8_t* Tx, int n, MpseMatch match,
+    void* context, int* current_state
     )
 {
     ACSM_PATTERN2* mlist;
-    unsigned char* Tend;
-    unsigned char* T;
+    const uint8_t* Tend;
+    const uint8_t* T;
     int index;
     int sindex;
     int nfound = 0;
@@ -2609,7 +2464,7 @@ int acsmSearchSparseDFA_Full(
     {
         index = T - mlist->n - Tx;
         nfound++;
-        if (match(mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > 0)
+        if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
         {
             *current_state = state;
             return nfound;
@@ -2645,7 +2500,7 @@ int acsmSearchSparseDFA_Full(
                 if ( mlist->nocase || (memcmp (mlist->casepatrn, Tx + index, mlist->n) == 0)) \
                 { \
                     nfound++; \
-                    if (match (mlist->udata, mlist->rule_option_tree, index, data, \
+                    if (match (mlist->udata, mlist->rule_option_tree, index, context, \
                         mlist->neg_list) > 0) \
                     { \
                         *current_state = state; \
@@ -2658,12 +2513,12 @@ int acsmSearchSparseDFA_Full(
     }
 
 int acsmSearchSparseDFA_Full_All(
-    ACSM_STRUCT2* acsm, const unsigned char* Tx, int n, MpseMatch match,
-    void* data, int* current_state)
+    ACSM_STRUCT2* acsm, const uint8_t* Tx, int n, MpseMatch match,
+    void* context, int* current_state)
 {
     ACSM_PATTERN2* mlist;
-    const unsigned char* Tend;
-    const unsigned char* T;
+    const uint8_t* Tend;
+    const uint8_t* T;
     int index;
     int sindex;
     int nfound = 0;
@@ -2713,7 +2568,7 @@ int acsmSearchSparseDFA_Full_All(
         if ( mlist->nocase || (memcmp (mlist->casepatrn, Tx + index, mlist->n) == 0))
         {
             nfound++;
-            if (match(mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > 0)
+            if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
             {
                 *current_state = state;
                 return nfound;
@@ -2736,12 +2591,12 @@ int acsmSearchSparseDFA_Full_All(
 *   ps[3] = index of 1st element
 */
 int acsmSearchSparseDFA_Banded(
-    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseMatch match,
-    void* data, int* current_state)
+    ACSM_STRUCT2* acsm, const uint8_t* Tx, int n, MpseMatch match,
+    void* context, int* current_state)
 {
     acstate_t state;
-    unsigned char* Tend;
-    unsigned char* T;
+    const uint8_t* Tend;
+    const uint8_t* T;
     int sindex;
     int index;
     acstate_t** NextState = acsm->acsmNextState;
@@ -2750,7 +2605,7 @@ int acsmSearchSparseDFA_Banded(
     acstate_t* ps;
     int nfound = 0;
 
-    T    = Tx;
+    T = Tx;
     Tend = T + n;
 
     if ( !current_state )
@@ -2762,7 +2617,7 @@ int acsmSearchSparseDFA_Banded(
 
     for (; T < Tend; T++ )
     {
-        ps     = NextState[state];
+        ps = NextState[state];
 
         sindex = xlatcase[ T[0] ];
 
@@ -2774,8 +2629,8 @@ int acsmSearchSparseDFA_Banded(
             {
                 index = T - mlist->n - Tx;
                 nfound++;
-                if (match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) >
-                    0)
+                if (match (mlist->udata, mlist->rule_option_tree, index, context,
+                    mlist->neg_list) > 0)
                 {
                     *current_state = state;
                     return nfound;
@@ -2797,7 +2652,7 @@ int acsmSearchSparseDFA_Banded(
     {
         index = T - mlist->n - Tx;
         nfound++;
-        if (match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > 0)
+        if (match (mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
         {
             *current_state = state;
             return nfound;
@@ -2813,19 +2668,19 @@ int acsmSearchSparseDFA_Banded(
 *   Sparse Storage Version
 */
 int acsmSearchSparseNFA(
-    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseMatch match,
-    void* data, int* current_state)
+    ACSM_STRUCT2* acsm, uint8_t* Tx, int n, MpseMatch match,
+    void* context, int* current_state)
 {
     acstate_t state;
     ACSM_PATTERN2* mlist;
-    unsigned char* Tend;
+    uint8_t* Tend;
     int nfound = 0;
-    unsigned char* T;
+    uint8_t* T;
     int index;
     acstate_t** NextState= acsm->acsmNextState;
     acstate_t* FailState = acsm->acsmFailState;
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
-    unsigned char Tchar;
+    uint8_t Tchar;
 
     T    = Tx;
     Tend = T + n;
@@ -2853,7 +2708,7 @@ int acsmSearchSparseNFA(
         {
             index = T - mlist->n - Tx;
             nfound++;
-            if (match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > 0)
+            if (match (mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
             {
                 *current_state = state;
                 return nfound;
@@ -2883,11 +2738,11 @@ void acsmFree2(ACSM_STRUCT2* acsm)
             ilist = mlist;
             mlist = mlist->next;
 
-            if (ilist->rule_option_tree && acsm->optiontreefree)
-                acsm->optiontreefree(&(ilist->rule_option_tree));
+            if (ilist->rule_option_tree && acsm->agent)
+                acsm->agent->tree_free(&(ilist->rule_option_tree));
 
-            if (ilist->neg_list && acsm->neg_list_free)
-                acsm->neg_list_free(&(ilist->neg_list));
+            if (ilist->neg_list && acsm->agent)
+                acsm->agent->list_free(&(ilist->neg_list));
 
             AC_FREE(ilist, 0, ACSM2_MEMORY_TYPE__NONE);
         }
@@ -2899,8 +2754,8 @@ void acsmFree2(ACSM_STRUCT2* acsm)
     {
         ACSM_PATTERN2* tmpPlist = plist->next;
 
-        if (acsm->userfree && (plist->udata != NULL))
-            acsm->userfree(plist->udata);
+        if (acsm->agent && (plist->udata != NULL))
+            acsm->agent->user_free(plist->udata);
 
         AC_FREE(plist->patrn, 0, ACSM2_MEMORY_TYPE__NONE);
         AC_FREE(plist->casepatrn, 0, ACSM2_MEMORY_TYPE__NONE);
@@ -3073,75 +2928,53 @@ int acsmPrintSummaryInfo2(void)
 
 #ifdef ACSMX2S_MAIN
 static int acsmSearch2(
-    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseMatch match,
-    void* data, int* current_state)
+    ACSM_STRUCT2* acsm, uint8_t* Tx, int n, MpseMatch match,
+    void* context, int* current_state)
 {
     switch ( acsm->acsmFSA )
     {
     case FSA_DFA:
 
         if ( acsm->acsmFormat == ACF_FULL )
-        {
-            return acsmSearchSparseDFA_Full(acsm, Tx, n, match, data,
-                current_state);
-        }
+            return acsmSearchSparseDFA_Full(acsm, Tx, n, match, context, current_state);
+
         else if ( acsm->acsmFormat == ACF_FULLQ )
-        {
-            return acsmSearchSparseDFA_Full_q(acsm, Tx, n, match, data,
-                current_state);
-        }
+            return acsmSearchSparseDFA_Full_q(acsm, Tx, n, match, context, current_state);
+
         else if ( acsm->acsmFormat == ACF_BANDED )
-        {
-            return acsmSearchSparseDFA_Banded(acsm, Tx, n, match, data,
-                current_state);
-        }
+            return acsmSearchSparseDFA_Banded(acsm, Tx, n, match, context, current_state);
+
         else
-        {
-            return acsmSearchSparseDFA(acsm, Tx, n, match, data,
-                current_state);
-        }
+            return acsmSearchSparseDFA(acsm, Tx, n, match, context, current_state);
 
     case FSA_NFA:
-
-        return acsmSearchSparseNFA(acsm, Tx, n, match, data,
-            current_state);
+        return acsmSearchSparseNFA(acsm, Tx, n, match, context, current_state);
     }
     return 0;
 }
 
 static int acsmSearchAll2(
-    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseMatch match,
-    void* data, int* current_state)
+    ACSM_STRUCT2* acsm, uint8_t* Tx, int n, MpseMatch match,
+    void* context, int* current_state)
 {
     switch ( acsm->acsmFSA )
     {
     case FSA_DFA:
 
         if ( acsm->acsmFormat == ACF_FULL )
-        {
-            return acsmSearchSparseDFA_Full_All(acsm, Tx, n, match, data,
-                current_state);
-        }
+            return acsmSearchSparseDFA_Full_All(acsm, Tx, n, match, context, current_state);
+
         else if ( acsm->acsmFormat == ACF_FULLQ )
-        {
-            return acsmSearchSparseDFA_Full_q_all(acsm, Tx, n, match, data,
-                current_state);
-        }
+            return acsmSearchSparseDFA_Full_q_all(acsm, Tx, n, match, context, current_state);
+
         else if ( acsm->acsmFormat == ACF_BANDED )
-        {
-            return acsmSearchSparseDFA_Banded(acsm, Tx, n, match, data,
-                current_state);
-        }
+            return acsmSearchSparseDFA_Banded(acsm, Tx, n, match, context, current_state);
+
         else
-        {
-            return acsmSearchSparseDFA(acsm, Tx, n, match, data,
-                current_state);
-        }
+            return acsmSearchSparseDFA(acsm, Tx, n, match, context, current_state);
 
     case FSA_NFA:
-
-        return acsmSearchSparseNFA(acsm, Tx, n, match, data,
-            current_state);
+        return acsmSearchSparseNFA(acsm, Tx, n, match, context, current_state);
     }
     return 0;
 }
@@ -3149,7 +2982,7 @@ static int acsmSearchAll2(
 /*
 *  Text Data Buffer
 */
-unsigned char text[512];
+uint8_t text[512];
 
 /*
 *    A Match is found

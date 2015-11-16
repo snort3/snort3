@@ -30,7 +30,8 @@ using namespace std;
 #include "framework/module.h"
 #include "managers/so_manager.h"
 #include "hash/sfhashfcn.h"
-#include "parser/parser.h"
+#include "log/messages.h"
+#include "detection/treenodes.h"
 #include "profiler/profiler.h"
 
 #define s_name "so"

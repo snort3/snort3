@@ -102,7 +102,7 @@ void GtpInspect::eval(Packet* p)
 //-------------------------------------------------------------------------
 
 int GtpInspect::get_message_type(int version, const char* name)
-{   
+{
     if ( version < 0 or version > MAX_GTP_VERSION_CODE )
         return -1;
 
@@ -124,7 +124,7 @@ int get_message_type(int version, const char* name)
 }
 
 int GtpInspect::get_info_type(int version, const char* name)
-{   
+{
     if ( version < 0 or version > MAX_GTP_VERSION_CODE )
         return -1;
 

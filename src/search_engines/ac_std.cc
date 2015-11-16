@@ -41,14 +41,9 @@ private:
     ACSM_STRUCT* obj;
 
 public:
-    AcMpse(
-        SnortConfig*,
-        bool use_gc,
-        void (* user_free)(void*),
-        void (* tree_free)(void**),
-        void (* list_free)(void**))
+    AcMpse(SnortConfig*, bool use_gc, const MpseAgent* agent)
         : Mpse("ac_std", use_gc)
-    { obj = acsmNew(user_free, tree_free, list_free); }
+    { obj = acsmNew(agent); }
 
     ~AcMpse()
     {
@@ -58,23 +53,21 @@ public:
 
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
-        bool noCase, bool negative, void* ID, int IID) override
+        bool noCase, bool negative, void* user) override
     {
-        return acsmAddPattern(obj, P, m, noCase, negative, ID, IID);
+        return acsmAddPattern(obj, P, m, noCase, negative, user);
     }
 
-    int prep_patterns(
-        SnortConfig* sc, MpseBuild build_tree, MpseNegate neg_list) override
+    int prep_patterns(SnortConfig* sc) override
     {
-        return acsmCompile(sc, obj, build_tree, neg_list);
+        return acsmCompile(sc, obj);
     }
 
     int _search(
-        const unsigned char* T, int n, MpseMatch match,
-        void* data, int* current_state) override
+        const uint8_t* T, int n, MpseMatch match,
+        void* context, int* current_state) override
     {
-        return acsmSearch(
-            obj, (unsigned char*)T, n, match, data, current_state);
+        return acsmSearch(obj, T, n, match, context, current_state);
     }
 
     int print_info() override
@@ -93,14 +86,9 @@ public:
 //-------------------------------------------------------------------------
 
 static Mpse* ac_ctor(
-    SnortConfig* sc,
-    class Module*,
-    bool use_gc,
-    void (* user_free)(void*),
-    void (* tree_free)(void**),
-    void (* list_free)(void**))
+    SnortConfig* sc, class Module*, bool use_gc, const MpseAgent* agent)
 {
-    return new AcMpse(sc, use_gc, user_free, tree_free, list_free);
+    return new AcMpse(sc, use_gc, agent);
 }
 
 static void ac_dtor(Mpse* p)

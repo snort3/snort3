@@ -32,6 +32,7 @@ using namespace std;
 #include "parse_conf.h"
 #include "parse_rule.h"
 #include "detection/treenodes.h"
+#include "log/messages.h"
 
 static unsigned chars = 0, tokens = 0;
 static unsigned lines = 1, comments = 0;

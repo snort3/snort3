@@ -20,7 +20,7 @@
 #ifndef MPSE_H
 #define MPSE_H
 
-// MPSE = Multi-Pattern Search Engine - ie fast pattern matching The key
+// MPSE = Multi-Pattern Search Engine - ie fast pattern matching. The key
 // methods of an MPSE are the ability to add patterns, compile a state
 // machine from the patterns, and search a buffer for patterns.
 
@@ -33,24 +33,13 @@
 #include "main/snort_types.h"
 #include "main/thread.h"
 #include "framework/base_api.h"
-
-/*
-*   Move these defines to a generic Win32/Unix compatability file,
-*   there must be one somewhere...
-*/
-#ifndef CDECL
-#define CDECL
-#endif
+#include "search_engines/search_common.h"
 
 // this is the current version of the api
 #define SEAPI_VERSION ((BASE_API_VERSION << 16) | 0)
 
 struct SnortConfig;
 struct MpseApi;
-
-typedef int (* MpseBuild)(SnortConfig*, void* user, void** existing_tree);
-typedef int (* MpseNegate)(void* user, void** list);
-typedef int (* MpseMatch)(void* user, void* tree, int index, void* data, void* neg_list);
 
 class SO_PUBLIC Mpse
 {
@@ -63,17 +52,15 @@ public:
 
     virtual int add_pattern(
         SnortConfig* sc, const uint8_t* pat, unsigned len,
-        bool noCase, bool negate, void* user, int IID) = 0;
+        bool noCase, bool negate, void* user) = 0;
 
-    virtual int prep_patterns(SnortConfig*, MpseBuild, MpseNegate) = 0;
+    virtual int prep_patterns(SnortConfig*) = 0;
 
     int search(
-        const unsigned char* T, int n, MpseMatch,
-        void* data, int* current_state);
+        const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
     virtual int search_all(
-        const unsigned char* T, int n, MpseMatch,
-        void* data, int* current_state);
+        const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
     virtual void set_opt(int) { }
     virtual int print_info() { return 0; }
@@ -89,8 +76,7 @@ protected:
     Mpse(const char* method, bool use_gc);
 
     virtual int _search(
-        const unsigned char* T, int n, MpseMatch,
-        void* data, int* current_state) = 0;
+        const uint8_t* T, int n, MpseMatch, void* context, int* current_state) = 0;
 
 private:
     std::string method;
@@ -108,12 +94,7 @@ typedef void (* MpseOptFunc)(SnortConfig*);
 typedef void (* MpseExeFunc)();
 
 typedef Mpse* (* MpseNewFunc)(
-    SnortConfig* sc,
-    class Module*,
-    bool use_gc,
-    void (* user_free)(void*),
-    void (* tree_free)(void**),
-    void (* list_free)(void**));
+    SnortConfig* sc, class Module*, bool use_gc, const MpseAgent*);
 
 typedef void (* MpseDelFunc)(Mpse*);
 

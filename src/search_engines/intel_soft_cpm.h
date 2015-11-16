@@ -27,31 +27,28 @@
 #include "main/snort_debug.h"
 #include "search_common.h"
 
-typedef struct _IntelPmPattern
+struct IntelPmPattern
 {
     void* user_data;
     void* rule_option_tree;
     void* neg_list;
 
-    unsigned char* pattern;
+    uint8_t* pattern;
+
     unsigned int pattern_len;
     unsigned int no_case;
     unsigned int negative;
-    int id;   /* pattern id passed in from mpse */
-    Cpa32U patternId;  /* actual pattern id */
-} IntelPmPattern;
+
+    Cpa32U patternId;
+};
 
 struct SnortConfig;
 
-typedef struct _IntelPm
+struct IntelPm
 {
     Cpa16U patternGroupId;
     Cpa32U patternIds;
     CpaPmSessionCtx sessionCtx;
-
-    /* Temporary data for building trees */
-    MpseBuild build_tree;
-    MpseNegate neg_list_func;
 
     void* match_queue;
 
@@ -59,25 +56,19 @@ typedef struct _IntelPm
     void* data;
     MpseMatch match;
 
-    void (* user_free)(void*);
-    void (* option_tree_free)(void**);
-    void (* neg_list_free)(void**);
+    const MpseAgent* agent;
 
     IntelPmPattern* pattern_array;
     Cpa32U pattern_array_len;
 
     /* Every IntelPm has a reference to this */
     struct _IntelPmHandles* handles;
-} IntelPm;
+};
 
 void IntelPmStartInstance(void);
 void IntelPmStopInstance(void);
 
-void* IntelPmNew(
-    SnortConfig*,
-    void (* user_free)(void* p),
-    void (* option_tree_free)(void** p),
-    void (* neg_list_free)(void** p));
+void* IntelPmNew(SnortConfig*, const MpseAgent*);
 
 void IntelPmDelete(IntelPm*);
 
@@ -91,15 +82,13 @@ int IntelPmAddPattern(
     void* pat_data,
     int pat_id);
 
-int IntelPmFinishGroup(
-    SnortConfig*, IntelPm*, MpseBuild, MpseNegate);
+int IntelPmFinishGroup(SnortConfig*, IntelPm*);
 
 void IntelPmCompile(SnortConfig*);
 void IntelPmActivate(SnortConfig*);
 void IntelPmDeactivate(void);
 
-int IntelPmSearch(
-    IntelPm*, unsigned char* buffer, int buffer_len, MpseMatch, void* data);
+int IntelPmSearch(IntelPm*, uint8_t* buffer, int buffer_len, MpseMatch, void* context);
 
 int IntelGetPatternCount(IntelPm*);
 int IntelPmPrintInfo(IntelPm*);
