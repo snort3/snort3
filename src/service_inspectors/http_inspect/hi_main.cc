@@ -613,9 +613,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
         PERF_PROFILE_BLOCK(hiDetectPerfStats)
         {
             get_data_bus().publish(PACKET_EVENT, p);
-#ifdef PERF_PROFILING
+            // FIXIT-L J should be a bool
             hiDetectCalled = 1;
-#endif
         }
 
         return 0;
@@ -1108,9 +1107,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
         PERF_PROFILE_BLOCK(hiDetectPerfStats)
         {
             snort_detect(p);
-#ifdef PERF_PROFILING
             hiDetectCalled = 1;
-#endif
         }
 
         /*

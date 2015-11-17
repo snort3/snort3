@@ -7,7 +7,6 @@
 
 # convert cmake options into compiler defines
 
-set_project_compiler_defines_if_true (ENABLE_PERFPROFILING "PERF_PROFILING")
 set_project_compiler_defines_if_true (ENABLE_DEBUG_MSGS "DEBUG_MSGS")
 set_project_compiler_defines_if_true (ENABLE_DEBUG "DEBUG")
 set_project_compiler_defines_if_true (BUILD_HA "ENABLE_HA")
@@ -28,7 +27,6 @@ set_if_true (STATIC_CODECS STATIC_CODECS)
 set_if_true (ENABLE_VALGRIND VALGRIND_TESTING)
 set_if_true (ENABLE_PPM PPM_MGR)
 set_if_true (ENABLE_PPM_TEST PPM_TEST)
-set_if_true (ENABLE_PERFPROFILING PERF_PROFILING)
 set_if_true (BUILD_HA ENABLE_HA )
 set_if_true (ENABLE_LINUX_SMP_STATS LINUX_SMP)
 set_if_true (ENABLE_DEBUG DEBUG)

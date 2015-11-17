@@ -8,6 +8,8 @@ set ( TIME_INTERNAL_SOURCES
 
 set ( TIME_INCLUDES
     cpuclock.h
+    clock_defs.h
+    stopwatch.h
     )
 
 add_library ( time STATIC

@@ -44,13 +44,11 @@ struct CodecApi;
 class Codec;
 class Module;
 class PacketManager;
+struct ProfileStats;
 
 //-------------------------------------------------------------------------
 
-#ifdef PERF_PROFILING
-struct ProfileStats;
 extern THREAD_LOCAL ProfileStats decodePerfStats;
-#endif
 
 static const uint16_t max_protocol_id = 65535;
 

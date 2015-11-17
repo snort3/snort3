@@ -170,10 +170,8 @@ SnortConfig::SnortConfig()
     num_slots = get_instance_max();
     state = (SnortState*)SnortAlloc(sizeof(SnortState)*num_slots);
 
-#ifdef PERF_PROFILING
     profile_rules = (ProfileConfig*)SnortAlloc(sizeof(*profile_rules));
     profile_modules = (ProfileConfig*)SnortAlloc(sizeof(*profile_modules));
-#endif
 
 #ifdef PPM_MGR
     ppm_cfg = (ppm_cfg_t*)SnortAlloc(sizeof(*ppm_cfg));

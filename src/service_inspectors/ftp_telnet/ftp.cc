@@ -130,9 +130,7 @@ static int SnortFTP(
         do_detection(p);
     }
 
-#ifdef PERF_PROFILING
     ft_update_perf(ftpPerfStats);
-#endif
 
     return ret;
 }

@@ -74,8 +74,7 @@ static void opt_dtor(IpsOption* p)
 class HttpIpsOption : public IpsOption
 {
 public:
-    HttpIpsOption(
-        const char* s, PsIdx psi, CursorActionType c = CAT_SET_OTHER) :
+    HttpIpsOption(const char* s, PsIdx psi, CursorActionType c = CAT_SET_OTHER) :
         IpsOption(s), key(s), cat(c), idx(psi) {}
 
     CursorActionType get_cursor_type() const override

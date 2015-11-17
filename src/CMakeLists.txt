@@ -79,10 +79,6 @@ if (ENABLE_PPM)
     add_subdirectory(ppm)
 endif (ENABLE_PPM)
 
-if (ENABLE_PERFPROFILING)
-    set(PERFPROFILING_LIBRARIES profiler)
-endif (ENABLE_PERFPROFILING)
-
 #  The main Snort executableRA
 add_executable( snort
     main.h
@@ -133,7 +129,7 @@ target_link_libraries( snort
     framework
     time
     ${PPM_LIBRARIES}
-    ${PERFPROFILING_LIBRARIES}
+    profiler
     ips_actions
     events
     hash

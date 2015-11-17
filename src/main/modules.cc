@@ -316,7 +316,6 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
 // profile module
 //-------------------------------------------------------------------------
 
-#ifdef PERF_PROFILING
 static const Parameter profile_rule_params[] =
 {
     { "count", Parameter::PT_INT, "-1:", "-1",
@@ -401,7 +400,6 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
     return true;
 }
-#endif
 
 //-------------------------------------------------------------------------
 // classification module
@@ -2004,9 +2002,7 @@ void module_init()
     ModuleManager::add_module(new DetectionModule);
     ModuleManager::add_module(new PacketsModule);
     ModuleManager::add_module(new ProcessModule);
-#ifdef PERF_PROFILING
     ModuleManager::add_module(new ProfileModule);
-#endif
     ModuleManager::add_module(new ReferencesModule);
     ModuleManager::add_module(new RuleStateModule);
     ModuleManager::add_module(new SearchEngineModule);

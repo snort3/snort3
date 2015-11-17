@@ -68,7 +68,6 @@
 #include "framework/data_bus.h"
 #include "sfip/sf_ip.h"
 
-#ifdef PERF_PROFILING
 // FIXIT-M ftp, http, etc. should not be calling snort_detect()
 static THREAD_LOCAL int ftppDetectCalled = 0;
 static THREAD_LOCAL ProfileStats ftppDetectPerfStats;
@@ -77,14 +76,12 @@ void ft_update_perf(ProfileStats& stats)
 {
     if (ftppDetectCalled)
     {
-        stats.ticks -= ftppDetectPerfStats.ticks;
-        /* And Reset ticks to 0 */
-        ftppDetectPerfStats.ticks = 0;
+        stats.elapsed -= ftppDetectPerfStats.elapsed;
+        ftppDetectPerfStats.reset();
+        // FIXIT-L J should be a bool
         ftppDetectCalled = 0;
     }
 }
-
-#endif
 
 void CleanupFTPCMDConf(void* ftpCmd)
 {
@@ -262,8 +259,6 @@ void do_detection(Packet* p)
     get_data_bus().publish(PACKET_EVENT, p);
 
     DisableInspection(p);
-#ifdef PERF_PROFILING
     ftppDetectCalled = 1;
-#endif
 }
 

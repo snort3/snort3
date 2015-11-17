@@ -18,7 +18,7 @@
 # if you add an AC_DEFINE() for a symbol that appears in an exported
 # header, you must also add that symbol to CPPFLAGS.  This ensures that
 # external modules like those in examples can use pkg-config to get the
-# same symbols Snort did.  See PERF_PROFILING for an example.
+# same symbols Snort did.  See PPM for an example.
 #--------------------------------------------------------------------------
 # initialization
 #--------------------------------------------------------------------------
@@ -348,17 +348,6 @@ AM_CONDITIONAL(PPM_MGR, test "x$enable_ppm" = "xyes")
 if test "x$enable_ppm" = "xyes"; then
     CPPFLAGS="$CPPFLAGS -DPPM_MGR"
     AC_DEFINE(PPM_MGR, [1], [build ppm manager])
-fi
-
-AC_ARG_ENABLE(perf-profiling,
-    AC_HELP_STRING([--enable-perf-profiling],[enable module and rule performance profiling]),
-    enable_perf_profiling="$enableval", enable_perf_profiling="no")
-
-AM_CONDITIONAL(PERF_PROFILING, test "x$enable_perf_profiling" = "xyes")
-
-if test "x$enable_perf_profiling" = "xyes"; then
-    CPPFLAGS="$CPPFLAGS -DPERF_PROFILING"
-    AC_DEFINE(PERF_PROFILING, [1], [enable perf profiling])
 fi
 
 AC_ARG_ENABLE(shell,

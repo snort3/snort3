@@ -124,7 +124,6 @@ static THREAD_LOCAL Packet* s_packet = nullptr;
 // FIXIT-M move these to appropriate modules
 //-------------------------------------------------------------------------
 
-#ifdef PERF_PROFILING
 static ProfileStats* get_profile(const char* key)
 {
     if ( !strcmp(key, "detect") )
@@ -163,11 +162,8 @@ static ProfileStats* get_profile(const char* key)
     return nullptr;
 }
 
-#endif
-
 static void register_profiles()
 {
-#ifdef PERF_PROFILING
     PerfProfilerManager::register_module("detect", nullptr, get_profile);
     PerfProfilerManager::register_module("mpse", "detect", get_profile);
     PerfProfilerManager::register_module("rebuilt_packet", "detect", get_profile);
@@ -179,7 +175,6 @@ static void register_profiles()
     PerfProfilerManager::register_module("eventq", nullptr, get_profile);
     PerfProfilerManager::register_module("total", nullptr, get_profile);
     PerfProfilerManager::register_module("daq_meta", nullptr, get_profile);
-#endif
 }
 
 //-------------------------------------------------------------------------
@@ -672,9 +667,7 @@ void Snort::thread_term()
 
     DAQ_Delete();
 
-#ifdef PERF_PROFILING
     PerfProfilerManager::consolidate_stats();
-#endif
 
     otnx_match_data_term();
     detection_filter_term();

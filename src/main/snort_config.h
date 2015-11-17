@@ -543,13 +543,13 @@ public:
     static long int get_pcre_match_limit_recursion()
     { return snort_conf->pcre_match_limit_recursion; }
 
-#ifdef PERF_PROFILING
+    // FIXIT-H J No longer necessary, since this is always true
+    // or, we make it conditional on definition of table in lua
     static bool get_profile_modules()
     { return snort_conf->profile_modules; }
 
     static bool get_profile_rules()
     { return snort_conf->profile_rules; }
-#endif
 
     static long int get_tagged_packet_limit()
     { return snort_conf->tagged_packet_limit; }

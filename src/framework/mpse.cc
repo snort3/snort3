@@ -32,9 +32,7 @@ using namespace std;
 // searches for the detection engine
 static THREAD_LOCAL uint64_t s_bcnt=0;
 
-#ifdef PERF_PROFILING
 THREAD_LOCAL ProfileStats mpsePerfStats;
-#endif
 
 //-------------------------------------------------------------------------
 // base stuff

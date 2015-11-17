@@ -40,10 +40,6 @@ if PPM_MGR
 ppm_list = ppm/libppm.a
 endif
 
-if PERF_PROFILING
-profiler_list = profiler/libprofiler.a
-endif
-
 snort_LDFLAGS = -export-dynamic
 
 # order libs to avoid undefined symbols
@@ -94,7 +90,7 @@ detection/libdetection.a \
 framework/libframework.a \
 time/libtime.a \
 $(ppm_list) \
-$(profiler_list) \
+profiler/libprofiler.a \
 actions/libips_actions.a \
 events/libevents.a \
 hash/libhash.a \

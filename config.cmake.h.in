@@ -57,9 +57,6 @@
 /* build ppm manager for readback */
 #cmakedefine PPM_TEST 1
 
-/* enable profiling */
-#cmakedefine PERF_PROFILING 1
-
 /* enable proc stats */
 #cmakedefine LINUX_SMP 1
 

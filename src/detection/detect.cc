@@ -68,11 +68,9 @@
 #define CHECK_SRC_PORT       0x08
 #define CHECK_DST_PORT       0x10
 
-#ifdef PERF_PROFILING
 THREAD_LOCAL ProfileStats detectPerfStats;
 THREAD_LOCAL ProfileStats eventqPerfStats;
 THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
-#endif
 
 THREAD_LOCAL int do_detect;
 THREAD_LOCAL int do_detect_content;

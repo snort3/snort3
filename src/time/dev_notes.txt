@@ -5,3 +5,5 @@ This module provides miscellaneous utilities related to timing.
 
 * Packet time manages the updating and reading of a clock based on time values
   from acquired packets.
+
+* Stopwatch is a timekeeping utility that can be started and paused

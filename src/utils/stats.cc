@@ -350,8 +350,8 @@ void PrintStatistics(void)
     fpShowEventStats(snort_conf);
     print_thresholding(snort_conf->threshold_config, 1);
 
-#ifdef PERF_PROFILING
     {
+        // FIXIT-L J can do flag saving with RAII (much cleaner)
         int save_quiet_flag = snort_conf->logging_flags & LOGGING_FLAG__QUIET;
 
         snort_conf->logging_flags &= ~LOGGING_FLAG__QUIET;
@@ -360,7 +360,6 @@ void PrintStatistics(void)
 
         snort_conf->logging_flags |= save_quiet_flag;
     }
-#endif
 }
 
 //-------------------------------------------------------------------------

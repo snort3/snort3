@@ -30,6 +30,7 @@
 #include "detection/signature.h"
 #include "detection/rule_option_types.h"
 #include "actions/actions.h"
+#include "time/clock_defs.h"
 
 class IpsOption;
 struct Packet;
@@ -56,15 +57,15 @@ struct OptFpList
 struct OtnState
 {
     // profiling
-#ifdef PERF_PROFILING
-    uint64_t ticks;
-    uint64_t ticks_match;
-    uint64_t ticks_no_match;
+    // FIXIT-L J factor the profiling stuff out
+    hr_duration elapsed;
+    hr_duration elapsed_match;
+    hr_duration elapsed_no_match;
+
     uint64_t checks;
     uint64_t matches;
     uint8_t noalerts;
     uint64_t alerts;
-#endif
 
     // ppm
     uint64_t ppm_suspend_time;

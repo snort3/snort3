@@ -49,6 +49,8 @@
 #define DEFLATE_WBITS      15
 #define GZIP_WBITS         31
 
+struct ProfileStats;
+
 enum HTTP_BUFFER
 {
     HTTP_BUFFER_NONE,
@@ -76,11 +78,8 @@ extern SO_PUBLIC THREAD_LOCAL uint32_t http_mask;
 extern SO_PUBLIC THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 extern THREAD_LOCAL DataBuffer HttpDecodeBuf;
 
-#ifdef PERF_PROFILING
-struct ProfileStats;
 extern THREAD_LOCAL ProfileStats hiDetectPerfStats;
 extern THREAD_LOCAL int hiDetectCalled;
-#endif
 
 typedef enum _HttpRespCompressType
 {

@@ -29,6 +29,7 @@
 
 #include "main/thread.h"
 #include "detection/detection_options.h"
+#include "time/cpuclock.h"
 
 typedef uint64_t PPM_TICKS;
 typedef uint64_t PPM_USECS;

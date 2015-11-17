@@ -77,12 +77,10 @@
 #include "protocols/udp.h"
 #include "protocols/icmp4.h"
 
-#ifdef PERF_PROFILING
 THREAD_LOCAL ProfileStats rulePerfStats;
 THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
 THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
 THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
-#endif
 
 THREAD_LOCAL uint64_t rule_eval_pkt_count = 0;
 
@@ -246,9 +244,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         return 1;
     }
 
-#ifdef PERF_PROFILING
     otn->state[get_instance_id()].alerts++;
-#endif
 
     event_id++;
     action_execute((RuleType)action, p, otn, event_id);

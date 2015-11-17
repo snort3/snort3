@@ -50,9 +50,7 @@
 #include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
 
-#ifdef PERF_PROFILING
 THREAD_LOCAL ProfileStats decodePerfStats;
-#endif
 
 // Decoding statistics
 

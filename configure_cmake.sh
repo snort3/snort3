@@ -32,7 +32,6 @@ Optional Features:
     --disable-static-piglets   do not include piglets in binary
     --enable-valgrind        Only use if you are testing with valgrind.
     --enable-ppm            Enable packet/rule performance monitor
-    --enable-perf-profiling  Enable preprocessor and rule performance profiling
     --enable-shell           enable command line shell support
     --enable-linux-smp-stats Enable statistics reporting through proc
     --enable-debug-msgs      Enable debug printing options (bugreports and developers only)
@@ -198,12 +197,6 @@ while [ $# -ne 0 ]; do
             ;;
         --enable-ppm)
             append_cache_entry ENABLE_PPM    BOOL   true
-            ;;
-        --disable-perf-profiling)
-            append_cache_entry ENABLE_PERFPROFILING    BOOL   false
-            ;;
-        --enable-perf-profiling)
-            append_cache_entry ENABLE_PERFPROFILING    BOOL   true
             ;;
         --disable-linux-smp-stats)
             append_cache_entry ENABLE_LINUX_SMP_STATS    BOOL   false

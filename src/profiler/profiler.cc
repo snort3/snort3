@@ -102,21 +102,45 @@ public:
     std::set<ModStatsNode*> children;
 
 private:
-    ProfileStats stats { 0, 0 };
+    ProfileStats stats;
     bool totalled = false;
     ModStatsFunctor getter;
 };
 
 struct ModEntry
 {
+    using microseconds = std::chrono::microseconds;
+
     std::string name;
     ModStatsNode* node;
     ProfileStats stats;
-
-    double ticks_per_check;
-    double pct_of_parent;
+    ProfileStats caller_stats;
 
     std::vector<ModEntry> entries;
+
+
+    microseconds us() const
+    {
+        using std::chrono::duration_cast;
+        return duration_cast<microseconds>(stats.elapsed);
+    }
+
+    double avg_check() const
+    { return stats.checks? double(us().count()) / double(stats.checks) : 0.0; }
+
+    double pct_of(const ProfileStats& other) const
+    {
+        using std::chrono::duration_cast;
+
+        auto other_us = duration_cast<microseconds>(other.elapsed).count();
+        if ( other_us )
+            return double(us().count()) / double(other_us) * 100.0;
+
+        return 0.0;
+    }
+
+    double pct_of_caller() const
+    { return pct_of(caller_stats); }
 
     ModEntry(ModStatsNode*, const ProfileStats&);
 };
@@ -144,13 +168,41 @@ public:
 
 struct RuleEntry
 {
-    SigInfo sig_info;
+    using microseconds = std::chrono::microseconds;
 
+    SigInfo sig_info;
     OtnState state;
 
-    double ticks_per_check = 0.0;
-    double ticks_per_match = 0.0;
-    double ticks_per_nomatch = 0.0;
+    microseconds us() const
+    {
+        using std::chrono::duration_cast;
+        return duration_cast<microseconds>(state.elapsed);
+    }
+
+    microseconds us_match() const
+    {
+        using std::chrono::duration_cast;
+        return duration_cast<microseconds>(state.elapsed_match);
+    }
+
+    microseconds us_no_match() const
+    {
+        using std::chrono::duration_cast;
+        return duration_cast<microseconds>(state.elapsed_no_match);
+    }
+
+    template<typename T>
+    double us_per(microseconds t, T v) const
+    { return v ? double(t.count()) / double(v) : 0.0; }
+
+    double avg_match() const
+    { return us_per(us_match(), state.matches); }
+
+    double avg_no_match() const
+    { return us_per(us_no_match(), state.checks - state.matches); }
+
+    double avg_check() const
+    { return us_per(us(), state.checks); }
 
     RuleEntry(const SigInfo&, const OtnState&);
 };
@@ -172,23 +224,14 @@ static ModStatsTree s_module_nodes;
 
 static inline OtnState& operator+=(OtnState& lhs, const OtnState& rhs)
 {
-    lhs.ticks += rhs.ticks;
-    lhs.ticks_match += rhs.ticks_match;
-    lhs.ticks_no_match += rhs.ticks_no_match;
+    lhs.elapsed += rhs.elapsed;
+    lhs.elapsed_match += rhs.elapsed_match;
+    lhs.elapsed_no_match += rhs.elapsed_no_match;
     lhs.checks += rhs.checks;
     lhs.matches += rhs.matches;
     lhs.noalerts += rhs.noalerts;
     lhs.alerts += rhs.alerts;
     return lhs;
-}
-
-static double get_ticks_per_us()
-{
-    static double ticks_per_us = 0.0;
-    if ( ticks_per_us == 0.0 )
-        ticks_per_us = get_ticks_per_usec();
-
-    return ticks_per_us;
 }
 
 template<typename T>
@@ -235,14 +278,15 @@ static void get_mod_entries(ModEntry& parent, ModEntrySortFunc* sort_fn, int cou
 static void print_mod_entry(int layer, int num, const ModEntry& root, const ModEntry& cur)
 {
     unsigned indent = 6 - (5 - layer) + 2;
+
     LogMessage("%*d%*s%*d" FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
         indent, num,
         28 - indent, cur.name.c_str(), 6, layer,
         11, cur.stats.checks,
-        20, uint64_t((double(cur.stats.ticks) / get_ticks_per_us())),
-        11, cur.ticks_per_check / get_ticks_per_us(),
-        10, cur.pct_of_parent,
-        10, double(cur.stats.ticks) / double(root.stats.ticks) * 100.0);
+        20, cur.us().count(),
+        11, cur.avg_check(),
+        10, cur.pct_of_caller(),
+        10, cur.pct_of(root.stats));
 
     int num2 = 0;
     for ( const auto& entry : cur.entries )
@@ -284,15 +328,16 @@ static void print_mod_entries(ModEntry& root, int count)
     for ( const auto& entry : root.entries )
         print_mod_entry(0, ++num, root, entry);
 
-    int indent = root.name.size() + 1;
+    unsigned indent = root.name.size() + 1;
+
     LogMessage("%*s%*s%*d" FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
         indent, root.name.c_str(),
         28 - indent, root.name.c_str(), 6, 0,
         11, root.stats.checks,
-        20, uint64_t(double(root.stats.ticks) / get_ticks_per_us()),
-        11, root.ticks_per_check / get_ticks_per_us(),
-        10, root.pct_of_parent,
-        10, root.pct_of_parent);
+        20, root.us().count(),
+        11, root.avg_check(),
+        10, root.pct_of_caller(),
+        10, root.pct_of_caller());
 }
 
 bool get_mod_sort_function(ProfileSort sort_mode, ModEntrySortFunc& sort_fn)
@@ -306,12 +351,12 @@ bool get_mod_sort_function(ProfileSort sort_mode, ModEntrySortFunc& sort_fn)
 
     case PROFILE_SORT_TOTAL_TICKS:
         sort_fn = [](const ModEntry& a, const ModEntry& b) -> bool
-        { return a.stats.ticks > b.stats.ticks; };
+        { return a.stats.elapsed > b.stats.elapsed; };
         break;
 
     case PROFILE_SORT_AVG_TICKS:
         sort_fn = [](const ModEntry& a, const ModEntry& b) -> bool
-        { return a.ticks_per_check > b.ticks_per_check; };
+        { return a.avg_check() > b.avg_check(); };
         break;
 
     default:
@@ -350,22 +395,22 @@ static void sort_rule_stats(std::vector<RuleEntry>& entries, ProfileSort sort_mo
 
     case PROFILE_SORT_AVG_TICKS_PER_MATCH:
         sort_fn = [](const RuleEntry& a, const RuleEntry& b)
-        { return a.ticks_per_match >= b.ticks_per_match; };
+        { return a.avg_match() >= b.avg_match(); };
         break;
 
     case PROFILE_SORT_AVG_TICKS_PER_NOMATCH:
         sort_fn = [](const RuleEntry& a, const RuleEntry& b)
-        { return a.ticks_per_nomatch >= b.ticks_per_nomatch; };
+        { return a.avg_no_match() >= b.avg_no_match(); };
         break;
 
     case PROFILE_SORT_TOTAL_TICKS:
         sort_fn = [](const RuleEntry& a, const RuleEntry& b)
-        { return a.state.ticks >= b.state.ticks; };
+        { return a.state.elapsed >= b.state.elapsed; };
         break;
 
     case PROFILE_SORT_AVG_TICKS:
         sort_fn = [](const RuleEntry& a, const RuleEntry& b)
-        { return a.ticks_per_check >= b.ticks_per_check; };
+        { return a.avg_check() >= b.avg_check(); };
         break;
 
     default:
@@ -392,7 +437,7 @@ static void get_rule_stats_entries(std::vector<RuleEntry>& entries)
 
         consolidate_otn_states(states);
 
-        if ( !state.checks || !state.ticks )
+        if ( !state.checks || (state.elapsed == hr_duration::zero()) )
             continue;
 
         entries.emplace_back(otn->sigInfo, state);
@@ -471,10 +516,10 @@ static void print_rule_stats(std::vector<RuleEntry>& entries, int num)
             11, entry.state.checks,
             10, entry.state.matches,
             10, entry.state.alerts,
-            20, uint64_t(double(entry.state.ticks) / get_ticks_per_us()),
-            11, entry.ticks_per_check / get_ticks_per_us(),
-            11, entry.ticks_per_match / get_ticks_per_us(),
-            13, entry.ticks_per_nomatch / get_ticks_per_us()
+            20, entry.us().count(),
+            11, entry.avg_check(),
+            11, entry.avg_match(),
+            13, entry.avg_no_match()
 #ifdef PPM_MGR
             , 11, entry.state.ppm_disable_cnt
 #endif
@@ -525,36 +570,12 @@ void ModStatsNode::accumulate()
 }
 
 ModEntry::ModEntry(ModStatsNode* node, const ProfileStats& caller_stats) :
-        name(node->name), node(node), stats(node->get_total())
-{
-    assert(stats.ticks >= stats.checks);
-    assert(caller_stats.ticks >= stats.ticks);
-
-    if ( stats.checks == 0.0 )
-        ticks_per_check = 0.0;
-    else
-        ticks_per_check = double(stats.ticks) / double(stats.checks);
-
-    if ( caller_stats.ticks == 0.0 )
-        pct_of_parent = 0.0;
-    else
-        pct_of_parent = double(stats.ticks) / double(caller_stats.ticks) * 100.0;
-}
+        name(node->name), node(node), stats(node->get_total()), caller_stats(caller_stats)
+{ assert(caller_stats.elapsed >= stats.elapsed); }
 
 RuleEntry::RuleEntry(const SigInfo& si, const OtnState& os) :
     sig_info(si), state(os)
-{
-    ticks_per_check = double(state.ticks) / double(state.checks);
-
-    state.checks = std::max(state.checks, state.matches);
-
-    if ( state.matches )
-        ticks_per_match = double(state.ticks_match) / double(state.matches);
-
-    // can safely replace != with >
-    if ( state.checks != state.matches )
-        ticks_per_nomatch = double(state.ticks_no_match) / double(state.checks - state.matches);
-}
+{ state.checks = std::max(state.checks, state.matches); }
 
 // -----------------------------------------------------------------------------
 // public API
@@ -682,6 +703,9 @@ void PerfProfilerManager::reset_all_stats()
 
 #ifdef UNIT_TEST
 
+constexpr hr_duration operator "" _dur(unsigned long long v)
+{ return hr_duration(v); }
+
 struct ProfilePauseObserver
 {
     void start()
@@ -701,18 +725,18 @@ struct ProfilePauseObserver
 
 TEST_CASE( "profile stats", "[profiler]" )
 {
-    ProfileStats stats = { 1, 2 };
+    ProfileStats stats = { 1_ticks , 2 };
 
     SECTION( "operator bool()" )
     {
         CHECK( stats );
-        stats = { 0, 0 };
+        stats = { 0_dur, 0 };
         CHECK_FALSE( stats );
     }
 
     SECTION( "operator==" )
     {
-        ProfileStats compare = { 0, 0 };
+        ProfileStats compare = { 0_ticks, 0 };
         CHECK_FALSE( stats == compare );
         compare = stats;
         CHECK( stats == compare );
@@ -726,8 +750,8 @@ TEST_CASE( "profile stats", "[profiler]" )
 
     SECTION( "operator+=" )
     {
-        ProfileStats inc = { 3, 4 };
-        ProfileStats expected = { stats.ticks + inc.ticks, stats.checks + inc.checks };
+        ProfileStats inc = { 3_ticks, 4 };
+        ProfileStats expected = { stats.elapsed + inc.elapsed, stats.checks + inc.checks };
         stats += inc;
 
         CHECK( stats == expected );
@@ -739,7 +763,7 @@ TEST_CASE( "stopwatch", "[profiler]" )
     Stopwatch sw;
 
     REQUIRE_FALSE( sw.alive() );
-    REQUIRE( sw.get() == 0 );
+    REQUIRE( sw.get() == 0_ticks );
 
     SECTION( "start" )
     {
@@ -752,7 +776,7 @@ TEST_CASE( "stopwatch", "[profiler]" )
 
         SECTION( "running elapsed time should be non-zero" )
         {
-            CHECK( sw.get() > 0 );
+            CHECK( sw.get() > 0_ticks );
         }
 
         SECTION( "start on running clock has no effect" )
@@ -797,7 +821,7 @@ TEST_CASE( "stopwatch", "[profiler]" )
         {
             sw.reset();
             CHECK_FALSE( sw.alive() );
-            CHECK( sw.get() == 0 );
+            CHECK( sw.get() == 0_ticks );
         }
 
         SECTION( "reset on stopped clock" )
@@ -805,7 +829,7 @@ TEST_CASE( "stopwatch", "[profiler]" )
             sw.stop();
             sw.reset();
             CHECK_FALSE( sw.alive() );
-            CHECK( sw.get() == 0 );
+            CHECK( sw.get() == 0_ticks );
         }
     }
 
@@ -816,7 +840,7 @@ TEST_CASE( "stopwatch", "[profiler]" )
         {
             sw.cancel();
             CHECK_FALSE( sw.alive() );
-            CHECK( sw.get() == 0 );
+            CHECK( sw.get() == 0_ticks );
         }
 
         SECTION( "cancel on stopped clock that has lap time" )
@@ -836,7 +860,7 @@ TEST_CASE( "perf profiler base", "[profiler]" )
     SECTION( "profiler is started on instantiation" )
     {
         PerfProfilerBase prof;
-        CHECK( prof.get_delta() > 0 );
+        CHECK( prof.get_delta() > 0_ticks );
     }
 
     SECTION( "profiler evaluates to true" )
@@ -848,9 +872,9 @@ TEST_CASE( "perf profiler base", "[profiler]" )
 
 TEST_CASE( "perf profiler", "[profiler]" )
 {
-    ProfileStats stats = { 0, 0 };
+    ProfileStats stats = { 0_ticks, 0 };
 
-    REQUIRE( stats.ticks == 0 );
+    REQUIRE( stats.elapsed == 0_ticks );
     REQUIRE( stats.checks == 0 );
 
     SECTION( "going out of scope causes profiler to update stats" )
@@ -859,7 +883,7 @@ TEST_CASE( "perf profiler", "[profiler]" )
             PerfProfiler prof(stats);
         }
 
-        CHECK( stats.ticks > 0 );
+        CHECK( stats.elapsed > 0_ticks );
         CHECK( stats.checks == 1 );
     }
 
@@ -870,7 +894,7 @@ TEST_CASE( "perf profiler", "[profiler]" )
         ProfileStats saved = stats;
         prof.stop();
 
-        CHECK( saved.ticks == stats.ticks );
+        CHECK( saved.elapsed == stats.elapsed );
         CHECK( saved.checks == stats.checks );
     }
 
@@ -880,7 +904,7 @@ TEST_CASE( "perf profiler", "[profiler]" )
         prof.pause();
         prof.stop();
 
-        CHECK( stats.ticks > 0 );
+        CHECK( stats.elapsed > 0_ticks );
         CHECK( stats.checks == 1 );
     }
 
@@ -890,12 +914,12 @@ TEST_CASE( "perf profiler", "[profiler]" )
         prof.pause();
         prof.start();
 
-        CHECK( stats.ticks == 0 );
+        CHECK( stats.elapsed == 0_ticks );
         CHECK( stats.checks == 0 );
 
         prof.stop();
 
-        CHECK( stats.ticks > 0 );
+        CHECK( stats.elapsed > 0_ticks );
         CHECK( stats.checks == 1 );
     }
 
@@ -910,7 +934,7 @@ TEST_CASE( "perf profiler", "[profiler]" )
         catch( int& )
         { }
 
-        CHECK( stats.ticks > 0 );
+        CHECK( stats.elapsed > 0_ticks );
         CHECK( stats.checks == 1 );
     }
 }
@@ -926,12 +950,12 @@ TEST_CASE( "node perf profiler", "[profiler]" )
             NodePerfProfiler prof(stats);
         }
 
-        CHECK( stats.ticks > 0 );
+        CHECK( stats.elapsed > 0_ticks );
         CHECK( stats.checks == 1 );
 
         SECTION( "evaluates to NO MATCH by default" )
         {
-            CHECK( stats.ticks_no_match > 0 );
+            CHECK( stats.elapsed_no_match > 0_ticks );
         }
     }
 
@@ -942,13 +966,13 @@ TEST_CASE( "node perf profiler", "[profiler]" )
         dot_node_state_t saved = stats;
         prof.stop(true);
 
-        CHECK( saved.ticks == stats.ticks );
+        CHECK( saved.elapsed == stats.elapsed );
         CHECK( saved.checks == stats.checks );
 
         SECTION( "only one of match or no match is updated" )
         {
-            CHECK( stats.ticks_no_match > 0 );
-            CHECK( stats.ticks_match == 0 );
+            CHECK( stats.elapsed_no_match > 0_ticks );
+            CHECK( stats.elapsed_match == 0_ticks );
         }
     }
 
@@ -958,7 +982,7 @@ TEST_CASE( "node perf profiler", "[profiler]" )
         prof.pause();
         prof.stop(false);
 
-        CHECK( stats.ticks > 0 );
+        CHECK( stats.elapsed > 0_ticks );
         CHECK( stats.checks == 1 );
     }
 
@@ -968,12 +992,12 @@ TEST_CASE( "node perf profiler", "[profiler]" )
         prof.pause();
         prof.start();
 
-        CHECK( stats.ticks == 0 );
+        CHECK( stats.elapsed == 0_ticks );
         CHECK( stats.checks == 0 );
 
         prof.stop(false);
 
-        CHECK( stats.ticks > 0 );
+        CHECK( stats.elapsed > 0_ticks );
         CHECK( stats.checks == 1 );
     }
 
@@ -982,11 +1006,11 @@ TEST_CASE( "node perf profiler", "[profiler]" )
         NodePerfProfiler prof(stats);
         prof.stop(true);
 
-        CHECK( stats.ticks_match > 0 );
+        CHECK( stats.elapsed_match > 0_ticks );
 
         SECTION( "and doesn't update NO MATCH" )
         {
-            CHECK( stats.ticks_no_match == 0 );
+            CHECK( stats.elapsed_no_match == 0_ticks );
         }
     }
 
@@ -1001,7 +1025,7 @@ TEST_CASE( "node perf profiler", "[profiler]" )
         catch( int& )
         { }
 
-        CHECK( stats.ticks > 0 );
+        CHECK( stats.elapsed > 0_ticks );
         CHECK( stats.checks == 1 );
     }
 }
@@ -1146,7 +1170,7 @@ TEST_CASE( "mod stats node", "[profiler]" )
 
     SECTION( "copy-constructed node retains stats" )
     {
-        mod_stats_test_stats = { 1, 2 };
+        mod_stats_test_stats = { 1_ticks, 2 };
         node.set(mock_get_profile_func);
         node.accumulate();
         auto orig_stats = node.get_total();
@@ -1159,7 +1183,7 @@ TEST_CASE( "mod stats node", "[profiler]" )
 
     SECTION( "accumulate() and get_total() correctly adds stats" )
     {
-        mod_stats_test_stats = { 1, 2 };
+        mod_stats_test_stats = { 1_ticks, 2 };
         ProfileStats expected = mod_stats_test_stats;
         expected += mod_stats_test_stats;
 
@@ -1191,8 +1215,8 @@ TEST_CASE( "mod stats tree", "[profiler]" )
 
 TEST_CASE( "mod entry", "[profiler]" )
 {
-    ProfileStats stats = { 2, 1 };
-    ProfileStats caller_stats = { 20, 10 };
+    ProfileStats stats = { 200_ticks, 1 };
+    ProfileStats caller_stats = { 2000_ticks, 10 };
     MockProfilerModule m(&stats);
     ModStatsNode node("a");
 
@@ -1205,21 +1229,29 @@ TEST_CASE( "mod entry", "[profiler]" )
 
     SECTION( "ctor calculates percentages" )
     {
-        CHECK( entry.ticks_per_check == 2.0 );
-        CHECK( entry.pct_of_parent == 2.0 / 20.0 * 100.0 );
+        using std::chrono::duration_cast;
+        using std::chrono::microseconds;
+
+        const auto exp_avg_check = double(duration_cast<microseconds>(200_ticks).count());
+        const auto exp_pct = double(duration_cast<microseconds>(200_ticks).count()) /
+            double(duration_cast<microseconds>(2000_ticks).count()) * 100.0;
+
+
+        CHECK( entry.avg_check() == exp_avg_check );
+        CHECK( entry.pct_of_caller() == exp_pct );
     }
 
     SECTION( "zeros" )
     {
-        stats = { 0, 0 };
-        caller_stats = { 0, 0 };
+        stats = { 0_ticks, 0 };
+        caller_stats = { 0_ticks, 0 };
         node.reset();
         node.accumulate();
 
         ModEntry entry(&node, caller_stats);
 
-        CHECK( entry.ticks_per_check == 0.0 );
-        CHECK( entry.pct_of_parent == 0.0 );
+        CHECK( entry.avg_check() == 0.0 );
+        CHECK( entry.pct_of_caller() == 0.0 );
     }
 }
 

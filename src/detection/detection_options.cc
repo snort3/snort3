@@ -386,10 +386,8 @@ int detection_option_node_evaluate(
 
     dot_node_state_t* state = node->state + get_instance_id();
 
-#ifdef PERF_PROFILING
     auto& node_stats = *state;
     NODE_PERF_PROFILE(node_stats);
-#endif
 
     int result = 0;
     int rval = DETECTION_OPTION_NO_MATCH;
@@ -512,10 +510,8 @@ int detection_option_node_evaluate(
 
                 if ( f_result )
                 {
-#ifdef PERF_PROFILING
-                    if (PROFILING_RULES)
-                        otn->state[get_instance_id()].matches++;
-#endif
+                    otn->state[get_instance_id()].matches++;
+
                     if ( !eval_data->flowbit_noalert )
                         fpAddMatch((OTNX_MATCH_DATA*)pomd, pattern_size, otn);
 
@@ -611,10 +607,10 @@ int detection_option_node_evaluate(
             {
                 // bail if we exceeded time
 
-#ifdef PERF_PROFILING
+                // FIXIT-M J this is unconditional (match or no match) since this
+                // block is guaranteed to return
                 if ( result != DETECTION_OPTION_NO_MATCH )
                     NODE_PERF_PROFILE_STOP_MATCH(node_stats);
-#endif
 
                 state->last_check.result = result;
                 return result;
@@ -743,12 +739,10 @@ int detection_option_node_evaluate(
         else
             continue_loop = false;
 
-#ifdef PERF_PROFILING
         // We're essentially checking this node again and it potentially
         // might match again
-        if ( continue_loop && PROFILING_RULES )
+        if ( continue_loop )
             state->checks++;
-#endif
 
         loop_count++;
     }
@@ -780,42 +774,42 @@ int detection_option_node_evaluate(
     return result;
 }
 
-#ifdef PERF_PROFILING
-typedef struct node_profile_stats
+struct node_profile_stats
 {
-    uint64_t ticks;
-    uint64_t ticks_match;
-    uint64_t ticks_no_match;
+    // FIXIT-L J should be use factored out field from dot_node_state_t
+    hr_duration elapsed;
+    hr_duration elapsed_match;
+    hr_duration elapsed_no_match;
     uint64_t checks;
     uint64_t disables;
-} node_profile_stats_t;
+};
 
 static void detection_option_node_update_otn_stats(
     detection_option_tree_node_t* node,
-    node_profile_stats_t* stats, uint64_t checks
+    node_profile_stats* stats, uint64_t checks
 #ifdef PPM_MGR
     , uint64_t disables
 #endif
     )
 {
     int i;
-    node_profile_stats_t local_stats; /* cumulative stats for this node */
-    node_profile_stats_t node_stats;  /* sum of all instances */
+    node_profile_stats local_stats; /* cumulative stats for this node */
+    node_profile_stats node_stats;  /* sum of all instances */
 
     memset(&node_stats, 0, sizeof(node_stats));
 
     for ( unsigned i = 0; i < get_instance_max(); ++i )
     {
-        node_stats.ticks += node->state[i].ticks;
-        node_stats.ticks_match += node->state[i].ticks_match;
-        node_stats.ticks_no_match += node->state[i].ticks_no_match;
+        node_stats.elapsed += node->state[i].elapsed;
+        node_stats.elapsed_match += node->state[i].elapsed_match;
+        node_stats.elapsed_no_match += node->state[i].elapsed_no_match;
         node_stats.checks += node->state[i].checks;
     }
     if (stats)
     {
-        local_stats.ticks = stats->ticks + node_stats.ticks;
-        local_stats.ticks_match = stats->ticks_match + node_stats.ticks_match;
-        local_stats.ticks_no_match = stats->ticks_no_match + node_stats.ticks_no_match;
+        local_stats.elapsed = stats->elapsed + node_stats.elapsed;
+        local_stats.elapsed_match = stats->elapsed_match + node_stats.elapsed_match;
+        local_stats.elapsed_no_match = stats->elapsed_no_match + node_stats.elapsed_no_match;
         if (node_stats.checks > stats->checks)
             local_stats.checks = node_stats.checks;
         else
@@ -826,9 +820,9 @@ static void detection_option_node_update_otn_stats(
     }
     else
     {
-        local_stats.ticks = node_stats.ticks;
-        local_stats.ticks_match = node_stats.ticks_match;
-        local_stats.ticks_no_match = node_stats.ticks_no_match;
+        local_stats.elapsed = node_stats.elapsed;
+        local_stats.elapsed_match = node_stats.elapsed_match;
+        local_stats.elapsed_no_match = node_stats.elapsed_no_match;
         local_stats.checks = node_stats.checks;
 #ifdef PPM_MGR
         local_stats.disables = disables;
@@ -841,9 +835,9 @@ static void detection_option_node_update_otn_stats(
         // FIXIT-M should be sum of instances (only called from main thread)
         OptTreeNode* otn = (OptTreeNode*)node->option_data;
         OtnState* state = otn->state + get_instance_id();
-        state->ticks += local_stats.ticks;
-        state->ticks_match += local_stats.ticks_match;
-        state->ticks_no_match += local_stats.ticks_no_match;
+        state->elapsed += local_stats.elapsed;
+        state->elapsed_match += local_stats.elapsed_match;
+        state->elapsed_no_match += local_stats.elapsed_no_match;
         if (local_stats.checks > state->checks)
             state->checks = local_stats.checks;
 #ifdef PPM_MGR
@@ -904,7 +898,6 @@ void detection_option_tree_update_otn_stats(SFXHASH* doth)
     }
 }
 
-#endif
 
 detection_option_tree_root_t* new_root()
 {

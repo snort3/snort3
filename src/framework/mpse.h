@@ -40,6 +40,7 @@
 
 struct SnortConfig;
 struct MpseApi;
+struct ProfileStats;
 
 class SO_PUBLIC Mpse
 {
@@ -85,10 +86,7 @@ private:
     const MpseApi* api;
 };
 
-#ifdef PERF_PROFILING
-struct ProfileStats;
 extern THREAD_LOCAL ProfileStats mpsePerfStats;
-#endif
 
 typedef void (* MpseOptFunc)(SnortConfig*);
 typedef void (* MpseExeFunc)();

@@ -38,6 +38,7 @@
 #include <sys/time.h>
 #include "main/snort_types.h"
 #include "detection/rule_option_types.h"
+#include "time/clock_defs.h"
 
 struct Packet;
 struct SFXHASH;
@@ -57,31 +58,30 @@ struct dot_node_state_t
         char flowbit_failed;
     } last_check;
 
-#ifdef PERF_PROFILING
-    uint64_t ticks;
-    uint64_t ticks_match;
-    uint64_t ticks_no_match;
+    // FIXIT-L J perf profiler stuff should be factored of the node state struct
+    hr_duration elapsed;
+    hr_duration elapsed_match;
+    hr_duration elapsed_no_match;
     uint64_t checks;
     uint64_t disables;
-#endif
+
 #ifdef PPM_MGR
     uint64_t ppm_disable_cnt;
     uint64_t ppm_enable_cnt;
 #endif
 
-#ifdef PERF_PROFILING
-    void update(uint64_t elapsed, bool match)
+    // FIXIT-L J perf profiler stuff should be factored of the node state struct
+    void update(hr_duration delta, bool match)
     {
-        ticks += elapsed;
+        elapsed += delta;;
 
         if ( match )
-            ticks_match += elapsed;
+            elapsed_match += delta;
         else
-            ticks_no_match += elapsed;
+            elapsed_no_match += delta;
 
         ++checks;
     }
-#endif
 };
 
 struct detection_option_tree_node_t
@@ -138,9 +138,7 @@ void DetectionTreeHashTableFree(SFXHASH*);
 #ifdef DEBUG_OPTION_TREE
 void print_option_tree(detection_option_tree_node_t* node, int level);
 #endif
-#ifdef PERF_PROFILING
 void detection_option_tree_update_otn_stats(SFXHASH*);
-#endif
 
 detection_option_tree_root_t* new_root();
 void free_detection_option_root(void** existing_tree);

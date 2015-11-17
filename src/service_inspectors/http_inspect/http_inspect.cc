@@ -338,15 +338,12 @@ void HttpInspect::eval(Packet* p)
      * spent in snort_detect().
      * Subtract the ticks from this if iCallDetect == 0
      */
-#ifdef PERF_PROFILING
     if (hiDetectCalled)
     {
-        hiPerfStats.ticks -= hiDetectPerfStats.ticks;
-        /* And Reset ticks to 0 */
-        hiDetectPerfStats.ticks = 0;
+        hiPerfStats.elapsed -= hiDetectPerfStats.elapsed;
+        hiDetectPerfStats.reset();
         hiDetectCalled = 0;
     }
-#endif
 }
 
 //-------------------------------------------------------------------------

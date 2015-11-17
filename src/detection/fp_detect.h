@@ -40,13 +40,12 @@
 
 #define REBUILD_FLAGS (PKT_REBUILT_FRAG | PKT_REBUILT_STREAM)
 
-#ifdef PERF_PROFILING
 struct ProfileStats;
+
 extern THREAD_LOCAL ProfileStats rulePerfStats;
 extern THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
 extern THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
 extern THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
-#endif
 
 /*
 **  This is the only function that is needed to do an

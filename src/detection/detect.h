@@ -34,15 +34,14 @@
 #include "log/log.h"
 #include "events/event.h"
 
+struct ProfileStats;
+
 extern SO_PUBLIC THREAD_LOCAL int do_detect;
 extern SO_PUBLIC THREAD_LOCAL int do_detect_content;
 
-#ifdef PERF_PROFILING
-struct ProfileStats;
 extern THREAD_LOCAL ProfileStats eventqPerfStats;
 extern THREAD_LOCAL ProfileStats detectPerfStats;
 extern THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
-#endif
 
 // main loop hooks
 void snort_ignore(Packet*);

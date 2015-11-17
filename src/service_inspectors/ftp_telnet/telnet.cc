@@ -97,9 +97,7 @@ static int SnortTelnet(TELNET_PROTO_CONF* telnet_config, TELNET_SESSION* Telnets
     else
         do_detection(p);
 
-#ifdef PERF_PROFILING
     ft_update_perf(telnetPerfStats);
-#endif
 
     return FTPP_SUCCESS;
 }

@@ -30,7 +30,7 @@
 
 #include "main/snort_types.h"
 #include "main/thread.h"
-#include "time/cpuclock.h"
+#include "time/stopwatch.h"
 
 class Module;
 
@@ -48,105 +48,31 @@ enum ProfileSort
 
 struct ProfileStats
 {
-    uint64_t ticks;
-    uint64_t checks;
+    hr_duration elapsed = 0_ticks;
+    uint64_t checks = 0;
 
-    void update(uint64_t elapsed)
-    { ++checks; ticks += elapsed; }
+    void update(hr_duration delta)
+    { ++checks; elapsed += delta; }
 
     void reset()
-    { ticks = 0; checks = 0; }
+    { elapsed = 0_ticks; checks = 0; }
 
     bool operator==(const ProfileStats& rhs)
-    { return ticks == rhs.ticks && checks == rhs.checks; }
+    { return elapsed == rhs.elapsed && checks == rhs.checks; }
 
     operator bool() const
-    { return ticks || checks; }
+    { return (elapsed > hr_duration::zero()) || checks; }
 
     ProfileStats& operator+=(const ProfileStats& rhs)
     {
-        ticks += rhs.ticks;
+        elapsed += rhs.elapsed;
         checks += rhs.checks;
         return *this;
     }
-};
 
-struct RuleProfileStats : ProfileStats
-{
-    uint64_t ticks_match;
-
-    void update(uint64_t elapsed, bool match)
-    {
-        ProfileStats::update(elapsed);
-        if ( match )
-            ticks_match += elapsed;
-    }
-
-    void reset()
-    { ProfileStats::reset(); ticks_match = 0; }
-
-    RuleProfileStats& operator+=(const RuleProfileStats& o)
-    {
-        ticks += o.ticks;
-        checks += o.checks;
-        ticks_match += o.ticks_match;
-        return *this;
-    }
-};
-
-// FIXIT-L should go in its own module
-class Stopwatch
-{
-public:
-    Stopwatch() :
-        elapsed { 0 }, running { false } { }
-
-    void start()
-    {
-        if ( running )
-            return;
-
-        get_clockticks(ticks_start);
-        running = true;
-    }
-
-    void stop()
-    {
-        if ( !running )
-            return;
-
-        elapsed += get_delta();
-        running = false;
-    }
-
-    uint64_t get() const
-    {
-        if ( running )
-            return elapsed + get_delta();
-
-        return elapsed;
-    }
-
-    bool alive() const
-    { return running; }
-
-    void reset()
-    { running = false; elapsed = 0; }
-
-    void cancel()
-    { running = false; }
-
-private:
-    uint64_t get_delta() const
-    {
-        uint64_t ticks_stop;
-        get_clockticks(ticks_stop);
-        return ticks_stop - ticks_start;
-    }
-
-    uint64_t elapsed;
-    bool running;
-    uint64_t ticks_start;
+    ProfileStats() = default;
+    ProfileStats(hr_duration elapsed, uint64_t checks) :
+        elapsed(elapsed), checks(checks) { }
 };
 
 class PerfProfilerBase
@@ -165,7 +91,7 @@ public:
     operator bool() const
     { return true; }
 
-    uint64_t get_delta() const
+    hr_duration get_delta() const
     { return sw.get(); }
 
 private:
@@ -244,15 +170,6 @@ struct ProfilerPause
 // thread local access method
 using get_profile_func = ProfileStats* (*)(const char*);
 
-#ifdef PERF_PROFILING
-#ifndef PROFILING_MODULES
-#define PROFILING_MODULES SnortConfig::get_profile_modules()
-#endif
-
-#ifndef PROFILING_RULES
-#define PROFILING_RULES SnortConfig::get_profile_rules()
-#endif
-
 #define PERF_PROFILER_NAME(stats) \
     stats ## _perf_profiler
 
@@ -320,20 +237,5 @@ struct ProfileConfig
 extern THREAD_LOCAL ProfileStats totalPerfStats;
 extern THREAD_LOCAL ProfileStats metaPerfStats;
 
-#else
-#define PERF_PROFILER_NAME(stats)
-#define PERF_PAUSE_NAME(stats)
-#define PERF_PROFILE(stats)
-#define PERF_PROFILE_THREAD_LOCAL(stats, idx)
-#define PERF_PROFILE_BLOCK(stats)
-#define PERF_PROFILE_THREAD_LOCAL_BLOCK(stats, idx)
-#define NODE_PERF_PROFILE(stats)
-#define NODE_PERF_PROFILE_BLOCK(stats)
-#define NODE_PERF_PROFILE_STOP(stats, match)
-#define NODE_PERF_PROFILE_STOP_MATCH(stats)
-#define NODE_PERF_PROFILE_STOP_NO_MATCH(stats)
-#define PERF_PAUSE_BLOCK(stats)
-
-#endif // PERF_PROFILING
 #endif
 
