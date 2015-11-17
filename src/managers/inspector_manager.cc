@@ -793,7 +793,10 @@ void InspectorManager::execute(Packet* p)
 
     Flow* flow = p->flow;
 
-    if ( flow && flow->full_inspection() )
+    if ( !flow )
+        ::execute(p, fp->network.vec, fp->network.num);
+
+    else if ( flow->full_inspection() )
         full_inspection(fp, p);
 
     ::execute(p, fp->probe.vec, fp->probe.num);

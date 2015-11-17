@@ -22,6 +22,7 @@
 
 namespace arp
 {
+
 struct ARPHdr
 {
     uint16_t ar_hrd;       /* format of hardware address   */
@@ -42,9 +43,10 @@ struct EtherARP
     };
     uint8_t arp_tha[6];    /* target hardware address */
     uint8_t arp_tpa[4];    /* target protocol address */
-};
+} __attribute__((__packed__));
 
 constexpr uint16_t ETHERARP_HDR_LEN = 28; /*  sizeof EtherARP != 28 */
+
 } // namespace arp
 
 #ifndef ARPOP_REQUEST
