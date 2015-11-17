@@ -46,12 +46,8 @@ static void set_fields(lua_State* L, int tindex, struct _daq_pkthdr& self)
     table.get_field("egress_group", self.egress_group);
     table.get_field("flags", self.flags);
     table.get_field("opaque", self.opaque);
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-#ifdef HAVE_DAQ_FLOW_ID
     table.get_field("flow_id", self.flow_id);
-#endif
     table.get_field("address_space_id", self.address_space_id);
-#endif
 
     // FIXIT-L: Do we want to be able to set the priv_ptr field?
 }
@@ -68,12 +64,8 @@ static void get_fields(lua_State* L, int tindex, struct _daq_pkthdr& self)
     table.set_field("egress_group", self.egress_group);
     table.set_field("flags", self.flags);
     table.set_field("opaque", self.opaque);
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-#ifdef HAVE_DAQ_FLOW_ID
     table.set_field("flow_id", self.flow_id);
-#endif
     table.set_field("address_space_id", self.address_space_id);
-#endif
 }
 
 static const luaL_Reg methods[] =

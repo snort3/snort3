@@ -501,22 +501,15 @@ int DAQ_Stop()
 
 //--------------------------------------------------------------------
 
-#ifdef HAVE_DAQ_ACQUIRE_WITH_META
 static THREAD_LOCAL_TBD DAQ_Meta_Func_t daq_meta_callback = NULL;
 void DAQ_Set_MetaCallback(DAQ_Meta_Func_t meta_callback)
 {
     daq_meta_callback = meta_callback;
 }
 
-#endif
-
 int DAQ_Acquire(int max, DAQ_Analysis_Func_t callback, uint8_t* user)
 {
-#if HAVE_DAQ_ACQUIRE_WITH_META
     int err = daq_acquire_with_meta(daq_mod, daq_hand, max, callback, daq_meta_callback, user);
-#else
-    int err = daq_acquire(daq_mod, daq_hand, max, callback, user);
-#endif
 
     if ( err && err != DAQ_READFILE_EOF )
         LogMessage("Can't acquire (%d) - %s\n",
@@ -599,16 +592,10 @@ const DAQ_Stats_t* DAQ_GetStats(void)
 
 int DAQ_ModifyFlow(const void* h, uint32_t id)
 {
-#ifdef HAVE_DAQ_ACQUIRE_WITH_META
     const DAQ_PktHdr_t* hdr = (DAQ_PktHdr_t*)h;
     DAQ_ModFlow_t mod;
 
     mod.opaque = id;
     return daq_modify_flow(daq_mod, daq_hand, hdr, &mod);
-#else
-    UNUSED(h);
-    UNUSED(id);
-    return -1;
-#endif
 }
 

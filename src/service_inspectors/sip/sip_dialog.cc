@@ -413,16 +413,10 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
             sfip_to_str(&mdataB->maddress), mdataB->mport);
 
         /* Call into Streams to mark data channel as something to ignore. */
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
         FlowData* fd = stream.get_application_data_from_ip_port(
             (uint8_t)PktType::UDP, IPPROTO_UDP, &mdataA->maddress,mdataA->mport,
             &mdataB->maddress, mdataB->mport, 0, 0, p->pkth->address_space_id,
             SipFlowData::flow_id);
-#else
-        FlowData* fd = stream.get_application_data_from_ip_port(
-            (uint8_t)PktType::UDP, IPPROTO_UDP, &mdataA->maddress,mdataA->mport,
-            &mdataB->maddress, mdataB->mport, 0, 0, 0, SipFlowData::flow_id);
-#endif
         if ( fd )
         {
             p->flow->set_ignore_direction(SSN_DIR_BOTH);

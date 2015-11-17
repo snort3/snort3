@@ -875,9 +875,7 @@ static void ProcessTcpStream(TcpTracker *rcv, TcpSession *tcpssn, TcpDataBlock *
     if (tdb->pkt->packet_flags & PKT_IGNORE)
         return;
 
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     tcpssn->SetPacketHeaderFoo( tdb->pkt );
-#endif
 
     if( flow_exceeds_config_thresholds( rcv, tcpssn, tdb, config ) )
         return;
@@ -2381,11 +2379,9 @@ bool TcpSession::setup(Packet*)
     memset(&client, 0, offsetof(TcpTracker, alerts));
     memset(&server, 0, offsetof(TcpTracker, alerts));
 
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     ingress_index = egress_index = 0;
     ingress_group = egress_group = 0;
     daq_flags = address_space_id = 0;
-#endif
 
     // FIXIT - this is just temp...remove...
     delete tsh;
@@ -2807,15 +2803,12 @@ void TcpSession::update_direction(char dir, const sfip_t* ip, uint16_t port)
     flow->server_ip = tmpIp;
     flow->server_port = tmpPort;
 
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     SwapPacketHeaderFoo( );
-#endif
     memcpy(&tmpTracker, &client, sizeof(TcpTracker));
     memcpy(&client, &server, sizeof(TcpTracker));
     memcpy(&server, &tmpTracker, sizeof(TcpTracker));
 }
 
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
 void TcpSession::SetPacketHeaderFoo( const Packet* p )
 {
     if ( daq_flags & DAQ_PKT_FLAG_NOT_FORWARDING )
@@ -2858,9 +2851,7 @@ void TcpSession::GetPacketHeaderFoo( DAQ_PktHdr_t* pkth, uint32_t dir )
         pkth->egress_index = ingress_index;
         pkth->egress_group = ingress_group;
     }
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     pkth->opaque = 0;
-#endif
     pkth->flags = daq_flags;
     pkth->address_space_id = address_space_id;
 }
@@ -2881,7 +2872,6 @@ void TcpSession::SwapPacketHeaderFoo( void )
     }
 }
 
-#endif
 
 
 /*

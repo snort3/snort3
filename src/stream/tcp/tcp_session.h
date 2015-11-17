@@ -165,11 +165,9 @@ public:
     uint8_t get_reassembly_direction() override;
     uint8_t missing_in_reassembled(uint8_t /*dir*/) override;
 
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     void SetPacketHeaderFoo( const Packet* p );
     void GetPacketHeaderFoo( DAQ_PktHdr_t* pkth, uint32_t dir );
     void SwapPacketHeaderFoo( void );
-#endif
 
 
     // FIXIT - these 2 function names convey no meaning afaict... figure out
@@ -200,14 +198,12 @@ public:
 
     static void show(StreamTcpConfig*);
 
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     int32_t ingress_index; /* Index of the inbound interface. */
     int32_t egress_index; /* Index of the outbound interface. */
     int32_t ingress_group; /* Index of the inbound group. */
     int32_t egress_group; /* Index of the outbound group. */
     uint32_t daq_flags; /* Flags for the packet (DAQ_PKT_FLAG_*) */
     uint16_t address_space_id;
-#endif
 
     uint8_t ecn;
     bool lws_init;

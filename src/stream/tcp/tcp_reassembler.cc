@@ -632,13 +632,9 @@ int TcpReassembler::_flush_to_seq( uint32_t bytes, Packet* p, uint32_t pkt_flags
     int32_t flushed_bytes;
     EncodeFlags enc_flags = 0;
 
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     DAQ_PktHdr_t pkth;
     session->GetPacketHeaderFoo( &pkth, pkt_flags );
     PacketManager::format_tcp(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
-#else
-    PacketManager::format_tcp(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP);
-#endif
 
     prep_s5_pkt(session->flow, p, pkt_flags);
 

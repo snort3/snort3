@@ -180,15 +180,10 @@ void FlowKey::init_vlan(uint16_t vlanId)
 
 void FlowKey::init_address_space(uint16_t addrSpaceId)
 {
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     if (!SnortConfig::address_space_agnostic())
         addressSpaceId = addrSpaceId;
     else
         addressSpaceId = 0;
-#else
-    addressSpaceId = 0;
-    UNUSED(addrSpaceId);
-#endif
     addressSpaceIdPad1 = 0;
 }
 
@@ -264,9 +259,7 @@ uint32_t FlowKey::hash(SFHASHFCN*, unsigned char* d, int)
     uint32_t a,b,c;
     uint32_t offset = 0;
     uint32_t tmp = 0;
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     uint32_t tmp2 = 0;
-#endif
 
     a = *(uint32_t*)d;         /* IPv6 lo[0] */
     b = *(uint32_t*)(d+4);     /* IPv6 lo[1] */
@@ -293,11 +286,9 @@ uint32_t FlowKey::hash(SFHASHFCN*, unsigned char* d, int)
     {
         b += tmp;   /* mpls label */
     }
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     offset += 8;    /* skip past vlan/proto/ipver & mpls label */
     tmp2 = *(uint32_t*)(d+offset); /* after offset that has been moved */
     c += tmp2; /* address space id and 16bits of zero'd pad */
-#endif
     finalize(a,b,c);
 
     return c;
@@ -337,20 +328,8 @@ int FlowKey::compare(const void* s1, const void* s2, size_t)
 
     a++;
     b++;
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     if (*a - *b)
         return 1;               /* Compares MPLS label, AddressSpace ID and 16bit pad */
-#else
-    {
-        uint32_t* x, * y;
-        x = (uint32_t*)a;
-        y = (uint32_t*)b;
-        // x++;
-        // y++;
-        if (*x - *y)
-            return 1;           /* Compares mpls label, no pad */
-    }
-#endif
 
 #else /* SPARCV9 */
     uint32_t* a,* b;
@@ -395,7 +374,6 @@ int FlowKey::compare(const void* s1, const void* s2, size_t)
         if (*x - *y)
             return 1;           /* Compares mpls label */
     }
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     a++;
     b++;
     {
@@ -407,7 +385,6 @@ int FlowKey::compare(const void* s1, const void* s2, size_t)
         if (*x - *y)
             return 1;           /* Compares addressSpaceID, no pad */
     }
-#endif
 #endif /* SPARCV9 */
 
     return 0;

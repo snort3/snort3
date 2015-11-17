@@ -113,14 +113,8 @@ Flow* Stream::get_session_ptr_from_ip_port(
 
 void Stream::populate_session_key(Packet* p, FlowKey* key)
 {
-    uint16_t addressSpaceId = 0;
-
     if (!key || !p)
         return;
-
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    addressSpaceId = DAQ_GetAddressSpaceID(p->pkth);
-#endif
 
     key->init(
         (uint8_t)p->type(), p->get_ip_proto_next(),
@@ -129,7 +123,7 @@ void Stream::populate_session_key(Packet* p, FlowKey* key)
         // if the vlan protocol bit is defined, vlan layer gauranteed to exist
         (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
         (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
-        addressSpaceId);
+        DAQ_GetAddressSpaceID(p->pkth));
 }
 
 FlowKey* Stream::get_session_key(Packet* p)

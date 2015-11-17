@@ -647,7 +647,6 @@ static void set_hdr(
 {
     c->reset();
 
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     if ( !phdr )
         phdr = p->pkth;
 
@@ -659,16 +658,6 @@ static void set_hdr(
     pkth->flags = phdr->flags & (~DAQ_PKT_FLAG_HW_TCP_CS_GOOD);
     pkth->address_space_id = phdr->address_space_id;
     pkth->opaque = opaque;
-#else
-#ifdef HAVE_DAQ_ACQUIRE_WITH_META
-    DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
-    pkth->opaque = p->pkth->opaque;
-#else
-    UNUSED(p);
-#endif
-    UNUSED(phdr);
-    UNUSED(opaque);
-#endif
 }
 
 //-------------------------------------------------------------------------
