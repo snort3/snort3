@@ -72,7 +72,8 @@ NormPegs TcpNormalizer::get_normalization_counts(unsigned& c)
     return normStats;
 }
 
-void TcpNormalizer::trim_payload(TcpDataBlock* tdb, uint32_t max, NormMode mode, PegCounts peg, PerfCounts perf)
+void TcpNormalizer::trim_payload(
+    TcpDataBlock* tdb, uint32_t max, NormMode mode, PegCounts peg, PerfCounts perfc)
 {
     if (mode == NORM_MODE_ON)
     {
@@ -83,10 +84,11 @@ void TcpNormalizer::trim_payload(TcpDataBlock* tdb, uint32_t max, NormMode mode,
     }
 
     normStats[peg][mode]++;
-    sfBase.iPegs[perf][mode]++;
+    sfBase.iPegs[perfc][mode]++;
 }
 
-bool TcpNormalizer::strip_tcp_timestamp(TcpDataBlock* tdb, const tcp::TcpOption* opt, NormMode mode)
+bool TcpNormalizer::strip_tcp_timestamp(
+    TcpDataBlock* tdb, const tcp::TcpOption* opt, NormMode mode)
 {
      normStats[PC_TCP_TS_NOP][mode]++;
      sfBase.iPegs[PERF_COUNT_TCP_TS_NOP][mode]++;
