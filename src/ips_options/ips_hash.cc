@@ -21,6 +21,7 @@
 #endif
 
 #include <errno.h>
+#include <array>
 #include <string>
 
 #include "ips_byte_extract.h"
@@ -43,7 +44,7 @@ enum HashPsIdx
     HPI_MD5, HPI_SHA256, HPI_SHA512, HPI_MAX
 };
 
-static THREAD_LOCAL ProfileStats hash_ps[HPI_MAX];
+static THREAD_LOCAL std::array<ProfileStats, HPI_MAX> hash_ps;
 
 struct HashMatchData
 {
@@ -292,7 +293,7 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return hash_ps + idx; }
+    { return &hash_ps[idx]; }
 
     HashMatchData* get_data();
 

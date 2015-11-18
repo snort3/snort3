@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <array>
+
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
@@ -38,7 +40,7 @@ enum PsIdx
     PSI_RAW_HEADER, PSI_RAW_COOKIE, PSI_MAX
 };
 
-static THREAD_LOCAL ProfileStats http_ps[PSI_MAX];
+static THREAD_LOCAL std::array<ProfileStats, PSI_MAX> http_ps;
 
 //-------------------------------------------------------------------------
 // module
@@ -51,7 +53,7 @@ public:
         Module(s, h), idx(psi) {}
 
     ProfileStats* get_profile() const override
-    { return http_ps + idx; }
+    { return &http_ps[idx]; }
 
 private:
     const PsIdx idx;

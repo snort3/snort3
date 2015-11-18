@@ -48,8 +48,8 @@ enum ProfileSort
 
 struct ProfileStats
 {
-    hr_duration elapsed = 0_ticks;
-    uint64_t checks = 0;
+    hr_duration elapsed;
+    uint64_t checks;
 
     void update(hr_duration delta)
     { ++checks; elapsed += delta; }
@@ -70,10 +70,13 @@ struct ProfileStats
         return *this;
     }
 
-    ProfileStats() = default;
-    ProfileStats(hr_duration elapsed, uint64_t checks) :
-        elapsed(elapsed), checks(checks) { }
+    constexpr ProfileStats() :
+        elapsed { 0_ticks }, checks { 0 } { }
+
+    constexpr ProfileStats(hr_duration elapsed, uint64_t checks) :
+        elapsed { elapsed }, checks { checks } { }
 };
+
 
 class PerfProfilerBase
 {

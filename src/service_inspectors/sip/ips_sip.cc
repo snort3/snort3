@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include <array>
+
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
@@ -43,7 +45,8 @@ enum SipIdx
     SIP_HEADER, SIP_BODY, SIP_MAX
 };
 
-static THREAD_LOCAL ProfileStats sip_ps[SIP_MAX];
+static THREAD_LOCAL std::array<ProfileStats, SIP_MAX> sip_ps;
+// static THREAD_LOCAL ProfileStats sip_ps[SIP_MAX];
 
 //-------------------------------------------------------------------------
 // module
@@ -56,7 +59,7 @@ public:
         Module(s, h) { idx = psi; }
 
     ProfileStats* get_profile() const override
-    { return sip_ps + idx; }
+    { return &sip_ps[idx]; }
 
 private:
     SipIdx idx;
