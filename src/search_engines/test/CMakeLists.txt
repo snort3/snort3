@@ -4,7 +4,6 @@ if ( HAVE_HYPERSCAN )
         framework
         catch_tests
     )
+
+    target_link_libraries(hyperscan_test ${HS_LIBRARIES})
 endif()
-
-target_link_libraries(hyperscan_test ${HS_LIBRARIES})
-

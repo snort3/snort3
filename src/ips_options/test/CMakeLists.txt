@@ -5,9 +5,8 @@ if ( HAVE_HYPERSCAN )
         framework
         sfip
         catch_tests
-)
+    )
+
+    target_link_libraries(ips_regex_test ${HS_LIBRARIES})
+    target_include_directories(ips_regex_test PUBLIC ${LUAJIT_INCLUDE_DIR})
 endif()
-
-target_link_libraries(ips_regex_test ${HS_LIBRARIES})
-target_include_directories(ips_regex_test PUBLIC ${LUAJIT_INCLUDE_DIR})
-
