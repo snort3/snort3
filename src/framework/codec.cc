@@ -97,6 +97,7 @@ bool Codec::CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
 
     /* Skip to the options */
     pkt += 2;
+    bool my_bad = false;
 
     /* Iterate through the options, check for bad ones */
     while (pkt < hdr_end)
@@ -109,7 +110,11 @@ bool Codec::CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
             break;
 
         default:
-            codec_event(codec, DECODE_IPV6_BAD_OPT_TYPE);
+            if ( !my_bad )
+            {
+                codec_event(codec, DECODE_IPV6_BAD_OPT_TYPE);
+                my_bad = true;
+            }
             // fall thru ...
 
         case ip::HopByHopOptions::PADN:

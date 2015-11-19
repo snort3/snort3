@@ -40,7 +40,7 @@ static const Parameter s_params[] =
     { "flow_ip_memcap", Parameter::PT_INT, "8200:", "52428800",
       "maximum memory for flow tracking" },
 
-    { "max_file_size", Parameter::PT_INT, "4096:", "4294967295",
+    { "max_file_size", Parameter::PT_INT, "4096:", "1073741824",
       "files will be rolled over if they exceed this size" },
 
     { "flow_ports", Parameter::PT_INT, "0:", "1023",
