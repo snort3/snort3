@@ -25,13 +25,11 @@
 
     dyld: Library not loaded: @rpath/libhs.4.0.dylib
 
-  when you try to run src/snort, this may help:
+  when you try to run src/snort, export DYLD_LIBRARY_PATH with the path to
+  libhs.  You can also do:
 
     install_name_tool -change @rpath/libhs.4.0.dylib \
         /path-to/libhs.4.0.dylib src/snort
-
-    install_name_tool -change @rpath/libhs.4.0.dylib \
-        /path-to/libhs.4.0.dylib tools/snort2lua/snort2lua
 
 
 ==== Config

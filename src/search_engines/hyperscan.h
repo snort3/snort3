@@ -16,20 +16,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_normalizers.h author davis mcpherson <davmcphe@@cisco.com>
-// Created on: Sep 22, 2015
+// hyperscan.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef TCP_NORMALIZERS_H
-#define TCP_NORMALIZERS_H
+#ifndef HYPERSCAN_H
+#define HYPERSCAN_H
 
-#include "tcp_defs.h"
-#include "tcp_normalizer.h"
-
-class TcpNormalizerFactory
-{
-public:
-    static TcpNormalizer* create( StreamPolicy, TcpSession*, TcpTracker*, TcpTracker* );
-};
+struct SnortConfig;
+void hyperscan_setup(SnortConfig*);
+void hyperscan_cleanup(SnortConfig*);
 
 #endif
-

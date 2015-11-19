@@ -979,6 +979,7 @@ src/service_inspectors/wizard/Makefile \
 src/ports/Makefile \
 src/protocols/Makefile \
 src/search_engines/Makefile \
+src/search_engines/test/Makefile \
 src/sfip/Makefile \
 src/sfrt/Makefile \
 src/target_based/Makefile \

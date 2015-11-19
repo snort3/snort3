@@ -34,10 +34,17 @@ intel_soft_cpm.cc \
 intel_soft_cpm.h
 endif
 
+if HAVE_HYPERSCAN
+hyper_sources = \
+hyperscan.cc \
+hyperscan.h
+endif
+
 plugin_list = \
 $(acsmx_sources) \
 $(acsmx2_sources) \
-$(intel_sources)
+$(intel_sources) \
+$(hyper_sources)
 
 libsearch_engines_a_SOURCES = \
 search_engines.cc \
@@ -63,14 +70,11 @@ mpselib_LTLIBRARIES += libacsmx2.la
 libacsmx2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libacsmx2_la_LDFLAGS = -export-dynamic -shared
 libacsmx2_la_SOURCES = $(acsmx2_sources) acsmx2_api.cc pat_stats.cc
-
-if HAVE_INTEL_SOFT_CPM
-mpselib_LTLIBRARIES += libintel_cpm.la
-libintel_cpm_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libintel_cpm_la_LDFLAGS = -export-dynamic -shared
-libintel_cpm_la_SOURCES = $(intel_sources) pat_stats.cc
-endif
 endif
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
+
+if BUILD_UNIT_TESTS
+SUBDIRS = test
+endif
 

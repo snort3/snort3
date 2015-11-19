@@ -20,9 +20,6 @@
 
 #include "ips_options/ips_regex.h"
 
-#include <CppUTest/CommandLineTestRunner.h>
-#include <CppUTest/TestHarness.h>
-
 #include "framework/base_api.h"
 #include "framework/counts.h"
 #include "framework/cursor.h"
@@ -31,6 +28,10 @@
 #include "protocols/packet.h"
 #include "detection/detection_defines.h"
 #include "main/snort_config.h"
+
+// must appear after snort_config.h to avoid broken c++ map include
+#include <CppUTest/CommandLineTestRunner.h>
+#include <CppUTest/TestHarness.h>
 
 //-------------------------------------------------------------------------
 // stubs, spies, etc.

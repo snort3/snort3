@@ -64,10 +64,6 @@
 #include "managers/mpse_manager.h"
 #include "target_based/snort_protocols.h"
 
-#ifdef INTEL_SOFT_CPM
-#include "search/intel_soft_cpm.h"
-#endif
-
 static unsigned mpse_count = 0;
 
 static void fpDeletePMX(void* data);

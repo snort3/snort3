@@ -27,27 +27,45 @@ struct BaseApi;
 extern const BaseApi* se_ac_bnfa;
 extern const BaseApi* se_ac_bnfa_q;
 
-#ifdef STATIC_IPS_OPTIONS
 #ifdef INTEL_SOFT_CPM
 extern const BaseApi* se_intel_cpm;
 #endif
+
+#ifdef HAVE_HYPERSCAN
+extern const BaseApi* se_hyperscan;
+#endif
+
+#ifdef STATIC_SEARCH_ENGINES
+extern const BaseApi* se_ac_banded;
+extern const BaseApi* se_ac_full;
+extern const BaseApi* se_ac_full_q;
+extern const BaseApi* se_ac_sparse;
+extern const BaseApi* se_ac_sparse_bands;
+extern const BaseApi* se_ac_std;
 #endif
 
 const BaseApi* search_engines[] =
 {
-#ifdef STATIC_IPS_OPTIONS
+    se_ac_bnfa,
+    se_ac_bnfa_q,
+
+#ifdef INTEL_SOFT_CPM
+    se_intel_cpm,
+#endif
+
+#ifdef HAVE_HYPERSCAN
+    se_hyperscan,
+#endif
+
+#ifdef STATIC_SEARCH_ENGINES
     se_ac_banded,
     se_ac_full,
     se_ac_full_q,
     se_ac_sparse,
     se_ac_sparse_bands,
     se_ac_std,
-#ifdef INTEL_SOFT_CPM
-    se_intel_cpm,
 #endif
-#endif
-    se_ac_bnfa,
-    se_ac_bnfa_q,
+
     nullptr
 };
 

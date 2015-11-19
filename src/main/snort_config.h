@@ -125,14 +125,16 @@ SO_PUBLIC extern THREAD_LOCAL struct SnortConfig* snort_conf;
 
 // SnortState members are updated during runtime. an array in SnortConfig is
 // used instead of thread_locals because these must get changed on reload
+// FIXIT-L register this data to avoid explicit dependency
 struct SnortState
 {
     int* pcre_ovector;
 
-    // regex is conditionally built but we declare this unconditionally to
-    // avoid compatibility issues with plugins.  if this is conditional then
-    // API_OPTIONS must be updated.  note: a fwd decl here doesn't work.
+    // regex and hs are conditionally built but these are unconditional to
+    // avoid compatibility issues with plugins.  if these are conditional
+    // then API_OPTIONS must be updated.  note: fwd decls don't work here.
     void* regex_scratch;
+    void* hyperscan_scratch;
 };
 
 struct SnortConfig

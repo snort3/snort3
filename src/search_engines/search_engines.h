@@ -23,12 +23,5 @@ struct BaseApi;
 
 extern const BaseApi* search_engines[];
 
-extern const BaseApi* se_ac_banded;
-extern const BaseApi* se_ac_full;
-extern const BaseApi* se_ac_full_q;
-extern const BaseApi* se_ac_sparse;
-extern const BaseApi* se_ac_sparse_bands;
-extern const BaseApi* se_ac_std;
-
 #endif
 

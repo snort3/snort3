@@ -52,11 +52,15 @@
 #include "detection/fp_config.h"
 #include "detection/fp_create.h"
 #include "ips_options/ips_pcre.h"
-#include "ips_options/ips_regex.h"
 #include "protocols/udp.h"
 #include "ppm/ppm.h"
 #include "profiler/profiler.h"
 #include "sfip/sf_ip.h"
+
+#ifdef HAVE_HYPERSCAN
+#include "ips_options/ips_regex.h"
+#include "search_engines/hyperscan.h"
+#endif
 
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 uint32_t SnortConfig::warning_flags = 0;
@@ -199,6 +203,7 @@ SnortConfig::~SnortConfig()
     FreeReferences(references);
 
 #ifdef HAVE_HYPERSCAN
+    hyperscan_cleanup(this);
     regex_cleanup(this);
 #endif
     pcre_cleanup(this);
@@ -291,9 +296,12 @@ void SnortConfig::setup()
 
     fpCreateFastPacketDetection(this);
 
+    // FIXIT-L register setup and cleanup  to eliminate explicit calls and
+    // allow pcre, regex, and hyperscan to be built dynamically.
     pcre_setup(this);
 #ifdef HAVE_HYPERSCAN
     regex_setup(this);
+    hyperscan_setup(this);
 #endif
 
 #ifdef PPM_MGR

@@ -93,7 +93,7 @@ int http_cmd_lookup_cleanup(CMD_LOOKUP** CmdLookup)
  *          them, because on low endian machines the least significant
  *          byte is compared first.  This is what we want to compare
  *          IPs backward, doesn't work on high endian machines, but oh
- *          well.  Our platform is Intel.
+ *          well.  Our platform is Intel.  FIXIT-L say what?
  *
  * Arguments: CmdLookup    => a pointer to the lookup structure
  *            cmd          => the http cmd

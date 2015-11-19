@@ -11,3 +11,4 @@ tcp_normalizer_test_LDADD = \
 ../tcp_normalizers.o \
 ../../../protocols/tcp_options.o \
 ../../../main/snort_debug.o
+

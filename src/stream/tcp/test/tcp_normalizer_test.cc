@@ -1,4 +1,4 @@
-// main.cc author Russ Combs <rucombs@cisco.com>
+// tcp_normalizer_test.cc author Davis McPherson <davmcphe@cisco.com>
 // unit test main
 
 #include "stream/tcp/tcp_module.h"
