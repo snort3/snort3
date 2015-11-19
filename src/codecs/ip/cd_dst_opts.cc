@@ -62,15 +62,13 @@ bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     }
 
     if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
-    {
         codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
-        return false;
-    }
 
     if (dsthdr->ip6dest_nxt == IPPROTO_ROUTING)
         codec_event(codec, DECODE_IPV6_DSTOPTS_WITH_ROUTING);
 
     codec.lyr_len = sizeof(IP6Dest) + (dsthdr->ip6dest_len << 3);
+
     if (codec.lyr_len > raw.len)
     {
         codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);

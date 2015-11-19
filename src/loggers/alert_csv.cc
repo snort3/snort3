@@ -52,6 +52,7 @@
 #include "protocols/icmp6.h"
 #include "protocols/eth.h"
 #include "packet_io/active.h"
+#include "packet_io/sfdaq.h"
 
 #define LOG_BUFFER (4*K_BYTES)
 
@@ -197,6 +198,11 @@ static void ff_icmp_type(Args& a)
         TextLog_Print(csv_log, "%d", a.pkt->ptrs.icmph->type);
 }
 
+static void ff_iface(Args&)
+{
+    TextLog_Print(csv_log, "%s", DAQ_GetInterfaceSpec());
+}
+
 static void ff_ip_id(Args& a)
 {
     if (a.pkt->has_ip())
@@ -340,7 +346,7 @@ static const CsvFunc csv_func[] =
 {
     ff_action, ff_dir, ff_dgm_len, ff_dst_addr, ff_dst_ap, ff_dst_port,
     ff_eth_dst, ff_eth_len, ff_eth_src, ff_eth_type, ff_gid,
-    ff_icmp_code, ff_icmp_id, ff_icmp_seq, ff_icmp_type,
+    ff_icmp_code, ff_icmp_id, ff_icmp_seq, ff_icmp_type, ff_iface,
     ff_ip_id, ff_ip_len, ff_msg, ff_pkt_gen, ff_pkt_num, ff_proto,
     ff_rev, ff_rule, ff_sid, ff_src_addr, ff_src_ap, ff_src_port,
     ff_tcp_ack, ff_tcp_flags, ff_tcp_len, ff_tcp_seq, ff_tcp_win,
@@ -350,7 +356,7 @@ static const CsvFunc csv_func[] =
 #define csv_range \
     "action | dir | dgm_len | dst_addr | dst_ap | dst_port | " \
     "eth_dst | eth_len | eth_src | eth_type | gid | " \
-    "icmp_code | icmp_id | icmp_seq | icmp_type | " \
+    "icmp_code | icmp_id | icmp_seq | icmp_type | iface | " \
     "ip_id | ip_len | msg | pkt_gen | pkt_num | proto | " \
     "rev | rule | sid | src_addr | src_ap | src_port | " \
     "tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | " \

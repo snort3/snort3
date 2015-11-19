@@ -593,7 +593,7 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
             return nullptr;
 
         icmp::Icmp6Hdr* const icmph = reinterpret_cast<icmp::Icmp6Hdr*>(buf.data());
-        icmph->type = icmp::Icmp6Types::UNREACH;
+        icmph->type = icmp::Icmp6Types::DESTINATION_UNREACHABLE;
         icmph->csum = 0;
         icmph->opt32 = 0;
 

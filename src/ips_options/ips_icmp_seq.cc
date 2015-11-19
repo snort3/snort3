@@ -116,8 +116,8 @@ int IcmpSeqOption::eval(Cursor&, Packet* p)
 
     if ( (p->ptrs.icmph->type == ICMP_ECHO ||
         p->ptrs.icmph->type == ICMP_ECHOREPLY) ||
-        ((uint16_t)p->ptrs.icmph->type == icmp::Icmp6Types::ECHO_6 ||
-        (uint16_t)p->ptrs.icmph->type == icmp::Icmp6Types::REPLY_6) )
+        ((uint16_t)p->ptrs.icmph->type == icmp::Icmp6Types::ECHO_REQUEST ||
+        (uint16_t)p->ptrs.icmph->type == icmp::Icmp6Types::ECHO_REPLY) )
     {
         if ( config.eval(p->ptrs.icmph->s_icmp_seq) )
         {

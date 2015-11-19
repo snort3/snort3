@@ -157,8 +157,8 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     switch (icmp6h->type)
     {
-    case icmp::Icmp6Types::ECHO_6:
-    case icmp::Icmp6Types::REPLY_6:
+    case icmp::Icmp6Types::ECHO_REQUEST:
+    case icmp::Icmp6Types::ECHO_REPLY:
         if (dsize >= sizeof(ICMPHdr::icmp_hun.idseq))
         {
             len = icmp::ICMP6_HEADER_NORMAL_LEN;
@@ -173,7 +173,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
         break;
 
-    case icmp::Icmp6Types::BIG:
+    case icmp::Icmp6Types::PACKET_TOO_BIG:
         if (dsize >= sizeof(icmp::ICMP6TooBig))
         {
             icmp::ICMP6TooBig* too_big = (icmp::ICMP6TooBig*)raw.data;
@@ -191,12 +191,12 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
         break;
 
-    case icmp::Icmp6Types::TIME:
-    case icmp::Icmp6Types::PARAMS:
-    case icmp::Icmp6Types::UNREACH:
+    case icmp::Icmp6Types::TIME_EXCEEDED6:
+    case icmp::Icmp6Types::PARAMETER_PROBLEM:
+    case icmp::Icmp6Types::DESTINATION_UNREACHABLE:
         if (dsize >= 4)
         {
-            if (icmp6h->type == icmp::Icmp6Types::UNREACH)
+            if (icmp6h->type == icmp::Icmp6Types::DESTINATION_UNREACHABLE)
             {
                 if (icmp6h->code == icmp::Icmp6Code::UNREACH_INVALID)     // UNREACH_INVALID == 2
                     codec_event(codec, DECODE_ICMPV6_UNREACHABLE_NON_RFC_2463_CODE);
@@ -214,7 +214,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
         break;
 
-    case icmp::Icmp6Types::ADVERTISEMENT:
+    case icmp::Icmp6Types::ROUTER_ADVERTISEMENT:
         if (dsize >= (sizeof(icmp::ICMP6RouterAdvertisement) - icmp::ICMP6_HEADER_MIN_LEN))
         {
             icmp::ICMP6RouterAdvertisement* ra = (icmp::ICMP6RouterAdvertisement*)raw.data;
@@ -234,7 +234,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
         break;
 
-    case icmp::Icmp6Types::SOLICITATION:
+    case icmp::Icmp6Types::ROUTER_SOLICITATION:
         if (dsize >= (sizeof(icmp::ICMP6RouterSolicitation) - icmp::ICMP6_HEADER_MIN_LEN))
         {
             icmp::ICMP6RouterSolicitation* rs = (icmp::ICMP6RouterSolicitation*)raw.data;
@@ -253,8 +253,8 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
         break;
 
-    case icmp::Icmp6Types::NODE_INFO_QUERY:
-    case icmp::Icmp6Types::NODE_INFO_RESPONSE:
+    case icmp::Icmp6Types::NODE_INFORMATION_QUERY:
+    case icmp::Icmp6Types::NODE_INFORMATION_RESPONSE:
         if (dsize >= (sizeof(icmp::ICMP6NodeInfo) - icmp::ICMP6_HEADER_MIN_LEN))
         {
             icmp::ICMP6NodeInfo* ni = (icmp::ICMP6NodeInfo*)raw.data;
@@ -271,6 +271,33 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             codec_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
             return false;
         }
+        break;
+
+    // recognize these so we don't alert but no further checking (yet)
+    case icmp::Icmp6Types::MULTICAST_LISTENER_QUERY:
+    case icmp::Icmp6Types::MULTICAST_LISTENER_REPORT:
+    case icmp::Icmp6Types::MULTICAST_LISTENER_DONE:
+    case icmp::Icmp6Types::NEIGHBOR_SOLICITATION:
+    case icmp::Icmp6Types::NEIGHBOR_ADVERTISEMENT:
+    case icmp::Icmp6Types::REDIRECT6:
+    case icmp::Icmp6Types::INVERSE_NEIGHBOR_DISCOVERY_SOLICITATION:
+    case icmp::Icmp6Types::INVERSE_NEIGHBOR_DISCOVERY_ADVERTISEMENT:
+    case icmp::Icmp6Types::VERSION_2_MULTICAST_LISTENER_REPORT:
+    case icmp::Icmp6Types::HOME_AGENT_ADDRESS_DISCOVERY_REQUEST:
+    case icmp::Icmp6Types::HOME_AGENT_ADDRESS_DISCOVERY_REPLY:
+    case icmp::Icmp6Types::MOBILE_PREFIX_SOLICITATION:
+    case icmp::Icmp6Types::MOBILE_PREFIX_ADVERTISEMENT:
+    case icmp::Icmp6Types::CERTIFICATION_PATH_SOLICITATION:
+    case icmp::Icmp6Types::CERTIFICATION_PATH_ADVERTISEMENT:
+    case icmp::Icmp6Types::MULTICAST_ROUTER_ADVERTISEMENT:
+    case icmp::Icmp6Types::MULTICAST_ROUTER_SOLICITATION:
+    case icmp::Icmp6Types::MULTICAST_ROUTER_TERMINATION:
+    case icmp::Icmp6Types::FMIPV6:
+    case icmp::Icmp6Types::RPL_CONTROL:
+    case icmp::Icmp6Types::ILNPV6_LOCATOR_UPDATE:
+    case icmp::Icmp6Types::DUPLICATE_ADDRESS_REQUEST:
+    case icmp::Icmp6Types::DUPLICATE_ADDRESS_CONFIRMATION:
+    case icmp::Icmp6Types::MPL_CONTROL:
         break;
 
     default:

@@ -325,8 +325,8 @@ static int Norm_ICMP6(
 {
     ICMPHdr* h = reinterpret_cast<ICMPHdr*>(const_cast<uint8_t*>(p->layers[layer].start));
 
-    if ( ((uint16_t)h->type == icmp::Icmp6Types::ECHO_6 ||
-        (uint16_t)h->type == icmp::Icmp6Types::REPLY_6) &&
+    if ( ((uint16_t)h->type == icmp::Icmp6Types::ECHO_REQUEST ||
+        (uint16_t)h->type == icmp::Icmp6Types::ECHO_REPLY) &&
         (h->code != 0) )
     {
         const NormMode mode = get_norm_mode(c);

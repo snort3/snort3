@@ -107,6 +107,11 @@ bool Codec::CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
         case ip::HopByHopOptions::PAD1:
             pkt++;
             break;
+
+        default:
+            codec_event(codec, DECODE_IPV6_BAD_OPT_TYPE);
+            // fall thru ...
+
         case ip::HopByHopOptions::PADN:
         case ip::HopByHopOptions::JUMBO:
         case ip::HopByHopOptions::RTALERT:
@@ -123,9 +128,6 @@ bool Codec::CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
             }
             pkt += oplen + 1;
             break;
-        default:
-            codec_event(codec, DECODE_IPV6_BAD_OPT_TYPE);
-            return false;
         }
     }
 
