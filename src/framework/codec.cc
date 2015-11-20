@@ -80,7 +80,7 @@ void Codec::codec_event(const CodecData& codec, CodecSid sid)
     SnortEventqAdd(GID_DECODE, sid);
 }
 
-bool Codec::CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
+bool Codec::CheckIPV6HopOptions(const RawData& raw, CodecData& codec)
 {
     const ip::IP6Extension* const exthdr =
         reinterpret_cast<const ip::IP6Extension*>(raw.data);
@@ -97,7 +97,6 @@ bool Codec::CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
 
     /* Skip to the options */
     pkt += 2;
-    bool my_bad = false;
 
     /* Iterate through the options, check for bad ones */
     while (pkt < hdr_end)
@@ -110,10 +109,10 @@ bool Codec::CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
             break;
 
         default:
-            if ( !my_bad )
+            if ( !(codec.codec_flags & CODEC_IP6_BAD_OPT) )
             {
                 codec_event(codec, DECODE_IPV6_BAD_OPT_TYPE);
-                my_bad = true;
+                codec.codec_flags |= CODEC_IP6_BAD_OPT;
             }
             // fall thru ...
 
@@ -151,11 +150,15 @@ void Codec::CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto)
            1) A routing header was already seen, and
            2) The second destination header is the last one before the upper layer.
         */
-        if (!((codec.codec_flags & CODEC_ROUTING_SEEN) &&
-            (proto == IPPROTO_ID_DSTOPTS) &&
-            (next_order == ip::IPV6_ORDER_MAX)))
+        if ( !((codec.codec_flags & CODEC_ROUTING_SEEN) and
+            (proto == IPPROTO_ID_DSTOPTS) and
+            (next_order == ip::IPV6_ORDER_MAX)) )
         {
-            codec_event(codec, DECODE_IPV6_UNORDERED_EXTENSIONS);
+            if ( !(codec.codec_flags & CODEC_IP6_EXT_OOO) )
+            {
+                codec_event(codec, DECODE_IPV6_UNORDERED_EXTENSIONS);
+                codec.codec_flags |= CODEC_IP6_EXT_OOO;
+            }
         }
     }
     else

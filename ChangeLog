@@ -7,7 +7,7 @@
 -- decode past excess ip6 extensions and bad options
 -- add iface to alert_csv.fields
 -- add hyperscan fast pattern search engine - functional but not yet used
--- remote --enable-perf-profiling so it is always built
+-- remove --enable-perf-profiling so it is always built
 -- perf profiling changes in preparation for memory profiling
 -- remove obsolete LibDAQ preprocessor conditionals
 -- fix arp inspection
