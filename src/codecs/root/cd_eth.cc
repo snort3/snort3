@@ -101,6 +101,7 @@ bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     {
         codec.next_prot_id = PROTO_ETHERNET_LLC;
         codec.lyr_len = eth::ETH_HEADER_LEN;
+        codec.proto_bits |= PROTO_BIT__ETH;
     }
     else if ( next_prot == ETHERTYPE_FPATH )
     {
