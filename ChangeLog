@@ -1,3 +1,18 @@
+15/11/20 - build 179
+
+-- user manaul updates
+-- fix perf_monitor.max_file_size default to work on 32-bit systems, thanks
+   to noah_dietrich@86penny.org for reporting the issue
+-- fix bogus 116:431 events
+-- decode past excess ip6 extensions and bad options
+-- add iface to alert_csv.fields
+-- add hyperscan fast pattern search engine - functional but not yet used
+-- remote --enable-perf-profiling so it is always built
+-- perf profiling changes in preparation for memory profiling
+-- remove obsolete LibDAQ preprocessor conditionals
+-- fix arp inspection
+-- search engine refactoring
+
 15/11/13 - build 178
 
 -- document runtime link issue with hyperscan on osx

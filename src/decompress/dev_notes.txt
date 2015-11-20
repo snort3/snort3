@@ -10,7 +10,7 @@ In particular the components support these decompression options:
    This is only available if Snort ++ is built with the optional LZMA
    support.
 
-3. Decompress the Deflate compressed portions if PDF files.
+3. Decompress the Deflate compressed portions of PDF files.
 
 The three modes are individually enabled/disabled at initialization time.
 

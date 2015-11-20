@@ -26,7 +26,8 @@ Required:
 
 Optional:
 
-* lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of SWF fles
+* lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of SWF and
+  PDF files
 
 * openssl from https://www.openssl.org for SHA and MD5 file signatures and
   the protected_content rule option
