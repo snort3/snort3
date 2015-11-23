@@ -75,6 +75,7 @@ struct LtdContext
     pcap_dumper_t* dumpd;
     time_t lastTime;
     size_t size;
+    int log_cnt;
 };
 
 static THREAD_LOCAL LtdContext context;
@@ -178,36 +179,45 @@ static void LogTcpdumpStream(
 // (take original packet headers and append reassembled data)
 }
 
-static void TcpdumpInitLogFile(LtdConfig*, int /*nostamps?*/)
+static void TcpdumpInitLogFile(LtdConfig*, bool no_timestamp)
 {
-    context.lastTime = time(NULL);
-
     string file;
-    get_instance_file(file, F_NAME);
+    string filename;
+    char timestamp[16];
 
+    context.lastTime = time(NULL);
+    context.log_cnt = 0;
+
+    filename += F_NAME;
+    if(!no_timestamp)
     {
-        pcap_t* pcap;
-        int dlt = DAQ_GetBaseProtocol();
-
-        // convert these flavors of raw to the generic
-        // for compatibility with libpcap 1.0.0
-        if ( dlt == DLT_IPV4 || dlt == DLT_IPV6 )
-            dlt = DLT_RAW;
-
-        pcap = pcap_open_dead(dlt, DAQ_GetSnapLen());
-
-        if ( !pcap )
-            FatalError("%s: can't get pcap context\n", S_NAME);
-
-        context.dumpd = pcap ? pcap_dump_open(pcap, file.c_str()) : NULL;
-
-        if (context.dumpd == NULL)
-        {
-            FatalError("%s: can't open %s: %s\n",
-                S_NAME, file.c_str(), pcap_geterr(pcap));
-        }
-        pcap_close(pcap);
+        snprintf(timestamp, sizeof(timestamp), ".%lu", context.lastTime);
+        filename += timestamp;
     }
+
+    get_instance_file(file, filename.c_str());
+
+    int dlt = DAQ_GetBaseProtocol();
+
+    // convert these flavors of raw to the generic
+    // for compatibility with libpcap 1.0.0
+    if ( dlt == DLT_IPV4 || dlt == DLT_IPV6 )
+        dlt = DLT_RAW;
+
+    pcap_t* pcap;
+    pcap = pcap_open_dead(dlt, DAQ_GetSnapLen());
+
+    if ( !pcap )
+        FatalError("%s: can't get pcap context\n", S_NAME);
+
+    context.dumpd = pcap ? pcap_dump_open(pcap, file.c_str()) : NULL;
+
+    if (context.dumpd == NULL)
+    {
+        FatalError("%s: can't open %s: %s\n",
+            S_NAME, file.c_str(), pcap_geterr(pcap));
+    }
+    pcap_close(pcap);
 
     context.file = SnortStrdup(file.c_str());
     context.size = PCAP_FILE_HDR_SZ;
@@ -234,7 +244,7 @@ static void TcpdumpRollLogFile(LtdConfig* data)
     }
 
     /* Have to add stamps now to distinguish files */
-    TcpdumpInitLogFile(data, 0);
+    TcpdumpInitLogFile(data, false);
 }
 
 static void SpoLogTcpdumpCleanup(LtdConfig*)
@@ -243,7 +253,7 @@ static void SpoLogTcpdumpCleanup(LtdConfig*)
      * if we haven't written any data, dump the output file so there aren't
      * fragments all over the disk
      */
-    if (context.file && !pc.log_pkts && !pc.total_alert_pkts)
+    if (context.file && !context.log_cnt)
     {
         int ret = unlink(context.file);
 
@@ -284,7 +294,6 @@ PcapLogger::PcapLogger(TcpdumpModule* m)
 
 PcapLogger::~PcapLogger()
 {
-    SpoLogTcpdumpCleanup(config);
     delete config;
 }
 
@@ -295,6 +304,8 @@ void PcapLogger::open()
 
 void PcapLogger::close()
 {
+    SpoLogTcpdumpCleanup(nullptr);
+
     if ( context.dumpd )
     {
         pcap_dump_close(context.dumpd);
@@ -306,6 +317,10 @@ void PcapLogger::close()
 
 void PcapLogger::log(Packet* p, const char* msg, Event* event)
 {
+    if(!context.dumpd)
+        open();
+
+    context.log_cnt++;
     if (p->packet_flags & PKT_REBUILT_STREAM)
         LogTcpdumpStream(config, p, msg, event);
     else
@@ -314,7 +329,10 @@ void PcapLogger::log(Packet* p, const char* msg, Event* event)
 
 void PcapLogger::reset()
 {
-    TcpdumpRollLogFile(config);
+    if(!context.dumpd)
+        open();
+    else
+        TcpdumpRollLogFile(config);
 }
 
 //-------------------------------------------------------------------------
