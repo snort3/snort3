@@ -670,8 +670,7 @@ static int fpFinishPortGroup(
             {
                 if (pg->mpse[i]->prep_patterns(sc) != 0)
                 {
-                    FatalError("%s(%d) Failed to compile port group "
-                        "patterns.\n", __FILE__, __LINE__);
+                    FatalError("Failed to compile port group patterns.\n");
                 }
 
                 if (fp->get_debug_mode())

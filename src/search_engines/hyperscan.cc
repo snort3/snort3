@@ -19,6 +19,8 @@
 // hyperscan.cc author Russ Combs <rucombs@cisco.com>
 
 #include <assert.h>
+#include <ctype.h>
+#include <string.h>
 
 #include <string>
 #include <vector>
@@ -29,6 +31,7 @@
 #include "framework/mpse.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "utils/stats.h"
 
 struct Pattern
 {
@@ -36,10 +39,41 @@ struct Pattern
     unsigned len;
     bool no_case;
     bool negate;
+
     void* user;
+    void* user_tree;
+    void* user_list;
 
     Pattern(const uint8_t* s, unsigned n, bool bc, bool bn, void* u)
-    { pat.assign((char*)s, n); len = n; no_case = bc; negate = bn; user = u; }
+    {
+        // FIXIT-H only escape content patterns, not regex patterns
+        escape(s, n);
+        len = n;
+        no_case = bc;
+        negate = bn;
+        user = u;
+        user_tree = user_list = nullptr;
+    }
+    void escape(const uint8_t* s, unsigned n)
+    {
+        for ( unsigned i = 0; i < n; ++i )
+        {
+            if ( !isprint(s[i]) )
+            {
+                char hex[5];
+                snprintf(hex, sizeof(hex), "\\x%02X", s[i]);
+                pat += hex;
+            }
+            else
+            {
+                const char* special = ".^$*+?()[]{}\\|";
+
+                if ( strchr(special, s[i]) )
+                    pat += '\\';
+                pat += s[i];
+            }
+        }
+    }
 };
 
 typedef std::vector<Pattern> PatternVector;
@@ -59,12 +93,17 @@ class HyperscanMpse : public Mpse
 public:
     HyperscanMpse(SnortConfig*, bool use_gc, const MpseAgent* a)
         : Mpse("hyperscan", use_gc)
-    { agent = a; }
+    {
+        agent = a;
+        ++instances;
+    }
 
     ~HyperscanMpse()
     {
         if ( hs_db )
             hs_free_database(hs_db);
+
+        user_dtor();
     }
 
     int add_pattern(
@@ -73,6 +112,7 @@ public:
     {
         Pattern p(pat, len, no_case, negate, user);
         pvector.push_back(p);
+        ++patterns;
         return 0;
     }
 
@@ -90,6 +130,9 @@ public:
         unsigned flags, void*);
 
 private:
+    void user_ctor(SnortConfig*);
+    void user_dtor();
+
     const MpseAgent* agent;
     PatternVector pvector;
 
@@ -97,9 +140,49 @@ private:
 
     MpseMatch match_cb = nullptr;
     void* match_ctx = nullptr;
+
+public:
+    static uint64_t instances;
+    static uint64_t patterns;
 };
 
-int HyperscanMpse::prep_patterns(SnortConfig*)
+uint64_t HyperscanMpse::instances = 0;
+uint64_t HyperscanMpse::patterns = 0;
+
+// other mpse have direct access to their fsm match states and populate
+// user list and tree with each pattern that leads to the same match state.
+// with hyperscan we don't have internal fsm knowledge and each fast
+// pattern is considered to be in a distinct match state.  the resulting
+// detection option trees for hyperscan are thus just single option chains.
+
+void HyperscanMpse::user_ctor(SnortConfig* sc)
+{
+    for ( auto& p : pvector )
+    {
+        if ( p.user )
+        {
+            if ( p.negate )
+                agent->negate_list(p.user, &p.user_list);
+            else
+                agent->build_tree(sc, p.user, &p.user_tree);
+        }
+        agent->build_tree(sc, nullptr, &p.user_tree);
+    }
+}
+
+void HyperscanMpse::user_dtor()
+{
+    for ( auto& p : pvector )
+    {
+        if ( p.user_list )
+            agent->list_free(&p.user_list);
+
+        if ( p.user_tree )
+            agent->tree_free(&p.user_tree);
+    }
+}
+
+int HyperscanMpse::prep_patterns(SnortConfig* sc)
 {
     hs_compile_error_t* err = nullptr;
     std::vector<const char*> pats;
@@ -130,6 +213,7 @@ int HyperscanMpse::prep_patterns(SnortConfig*)
         return -2;
     }
 
+    user_ctor(sc);
     return 0;
 }
 
@@ -140,7 +224,8 @@ int HyperscanMpse::prep_patterns(SnortConfig*)
 int HyperscanMpse::match(unsigned id, unsigned long long to)
 {
     assert(id < pvector.size());
-    return match_cb(pvector[id].user, nullptr, (int)to, match_ctx, nullptr);
+    Pattern& p = pvector[id];
+    return match_cb(p.user, p.user_tree, (int)to, match_ctx, p.user_list);
 }
 
 int HyperscanMpse::match(
@@ -221,6 +306,18 @@ static void hs_dtor(Mpse* p)
     delete p;
 }
 
+static void hs_init()
+{
+    HyperscanMpse::instances = 0;
+    HyperscanMpse::patterns = 0;
+}
+
+static void hs_print()
+{
+    LogCount("instances", HyperscanMpse::instances);
+    LogCount("patterns", HyperscanMpse::patterns);
+}
+
 static const MpseApi hs_api =
 {
     {
@@ -236,14 +333,14 @@ static const MpseApi hs_api =
         nullptr
     },
     false,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
+    nullptr,  // activate
+    nullptr,  // setup
+    nullptr,  // start
+    nullptr,  // stop
     hs_ctor,
     hs_dtor,
-    nullptr,
-    nullptr,
+    hs_init,
+    hs_print,
 };
 
 #ifdef BUILDING_SO
