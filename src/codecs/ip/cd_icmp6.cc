@@ -298,11 +298,12 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::DUPLICATE_ADDRESS_REQUEST:
     case icmp::Icmp6Types::DUPLICATE_ADDRESS_CONFIRMATION:
     case icmp::Icmp6Types::MPL_CONTROL:
+        len = raw.len;
         break;
 
     default:
         codec_event(codec, DECODE_ICMP6_TYPE_OTHER);
-        len = icmp::ICMP6_HEADER_MIN_LEN;
+        len = raw.len;
         break;
     }
 
