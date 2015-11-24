@@ -37,7 +37,7 @@
 
 struct SnortConfig;
 
-struct DNSStats
+struct DnsStats
 {
     PegCount packets;
     PegCount requests;
@@ -45,7 +45,7 @@ struct DNSStats
 };
 
 extern const PegInfo dns_peg_names[];
-extern THREAD_LOCAL DNSStats dnsstats;
+extern THREAD_LOCAL DnsStats dnsstats;
 extern THREAD_LOCAL ProfileStats dnsPerfStats;
 
 class DnsModule : public Module

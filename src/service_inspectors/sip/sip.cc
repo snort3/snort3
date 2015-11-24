@@ -44,7 +44,6 @@
 #include "sip_module.h"
 
 THREAD_LOCAL ProfileStats sipPerfStats;
-THREAD_LOCAL SimpleStats sipstats;
 
 /*
  * Function prototype(s)
@@ -326,7 +325,7 @@ void Sip::eval(Packet* p)
     assert((p->is_udp() and p->dsize and p->data) or p->has_tcp_data());
     assert(p->flow);
 
-    ++sipstats.total_packets;
+    sip_stats.packets++;
     snort_sip(config, p);
 }
 

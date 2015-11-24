@@ -159,7 +159,7 @@ void MimeSession::setup_decode(const char* data, int size, bool cnt_xf)
 
         if (decode_state != NULL)
         {
-            decode_state->process_decode_type(data, size, cnt_xf);
+            decode_state->process_decode_type(data, size, cnt_xf, mime_stats);
             state_flags |= MIME_FLAG_EMAIL_ATTACH;
         }
     }
@@ -604,6 +604,26 @@ const uint8_t* MimeSession::process_mime_data_paf(
         {
             log_state->set_file_name_from_log(flow);
         }
+        if (mime_stats)
+        {
+            switch(decode_state->get_decode_type())
+            {
+                case DECODE_B64:
+                    mime_stats->b64_bytes += buf_size;
+                    break;
+                case DECODE_QP:
+                    mime_stats->qp_bytes += buf_size;
+                    break;
+                case DECODE_UU:
+                    mime_stats->uu_bytes += buf_size;
+                    break;
+                case DECODE_BITENC:
+                    mime_stats->bitenc_bytes += buf_size;
+                    break;
+                default:
+                    break;
+            }
+        }
 
         decode_state->reset_decoded_bytes();
     }
@@ -672,6 +692,11 @@ int MimeSession::get_data_state()
 void MimeSession::set_data_state(int state)
 {
     data_state = state;
+}
+
+void MimeSession::set_mime_stats(MimeStats* stats)
+{
+    mime_stats = stats;
 }
 
 MailLogState* MimeSession::get_log_state()

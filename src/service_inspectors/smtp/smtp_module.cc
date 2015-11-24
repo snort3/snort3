@@ -193,7 +193,7 @@ const RuleMap* SmtpModule::get_rules() const
 { return smtp_rules; }
 
 const PegInfo* SmtpModule::get_pegs() const
-{ return simple_pegs; }
+{ return smtp_peg_names; }
 
 PegCount* SmtpModule::get_counts() const
 { return (PegCount*)&smtpstats; }

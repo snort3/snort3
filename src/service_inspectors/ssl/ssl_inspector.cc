@@ -48,7 +48,7 @@
 #include "ssl_module.h"
 
 THREAD_LOCAL ProfileStats sslPerfStats;
-THREAD_LOCAL SSLStats sslstats;
+THREAD_LOCAL SslStats sslstats;
 
 /*
  * Function prototype(s)

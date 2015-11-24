@@ -29,6 +29,7 @@
 #include "file_mime_config.h"
 
 #include "main/snort_types.h"
+#include "framework/counts.h"
 
 enum DecodeType
 {
@@ -38,7 +39,19 @@ enum DecodeType
     DECODE_UU,
     DECODE_BITENC,
     DECODE_ALL
-} ;
+};
+
+struct MimeStats
+{
+    PegCount b64_attachments;
+    PegCount b64_bytes;
+    PegCount qp_attachments;
+    PegCount qp_bytes;
+    PegCount uu_attachments;
+    PegCount uu_bytes;
+    PegCount bitenc_attachments;
+    PegCount bitenc_bytes;
+};
 
 class MimeDecode
 {
@@ -48,7 +61,7 @@ public:
 
     // get the decode type from buffer
     // bool cnt_xf: true if there is transfer encode defined, false otherwise
-    void process_decode_type(const char* start, int length, bool cnt_xf);
+    void process_decode_type(const char* start, int length, bool cnt_xf, MimeStats* mime_stats);
 
     // Main function to decode file data
     DecodeResult decode_data(const uint8_t* start, const uint8_t* end);
@@ -68,14 +81,6 @@ private:
     DecodeConfig* config;
     DataDecode* decoder = NULL;
 };
-
-// FIXIT-L: add statistics
-//struct MimeStats
-//{
-//    uint64_t memcap_exceeded;
-//    uint64_t attachments[DECODE_ALL];
-//    uint64_t decoded_bytes[DECODE_ALL];
-//};
 
 #endif
 

@@ -78,7 +78,7 @@ const RuleMap* ImapModule::get_rules() const
 { return imap_rules; }
 
 const PegInfo* ImapModule::get_pegs() const
-{ return simple_pegs; }
+{ return imap_peg_names; }
 
 PegCount* ImapModule::get_counts() const
 { return (PegCount*)&imapstats; }

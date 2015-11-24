@@ -47,7 +47,7 @@
 #define DNS_RR_PTR 0xC0
 
 THREAD_LOCAL ProfileStats dnsPerfStats;
-THREAD_LOCAL DNSStats dnsstats;
+THREAD_LOCAL DnsStats dnsstats;
 
 const PegInfo dns_peg_names[] =
 {

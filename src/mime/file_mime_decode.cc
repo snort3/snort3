@@ -41,7 +41,7 @@ void MimeDecode::clear_decode_state()
         decoder->reset_decode_state();
 }
 
-void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf)
+void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf, MimeStats* mime_stats)
 {
     const char* tmp = NULL;
 
@@ -58,6 +58,8 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf)
             if ( tmp != NULL )
             {
                 decode_type = DECODE_B64;
+                if (mime_stats)
+                    mime_stats->b64_attachments++;
                 decoder = new B64Decode(config->get_b64_depth());
                 return;
             }
@@ -69,6 +71,8 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf)
             if ( tmp != NULL )
             {
                 decode_type = DECODE_QP;
+                if (mime_stats)
+                    mime_stats->qp_attachments++;
                 decoder = new QPDecode(config->get_qp_depth());
                 return;
             }
@@ -80,6 +84,8 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf)
             if ( tmp != NULL )
             {
                 decode_type = DECODE_UU;
+                if (mime_stats)
+                    mime_stats->uu_attachments++;
                 decoder = new UUDecode(config->get_uu_depth());
                 return;
             }
@@ -89,6 +95,8 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf)
     if (config->get_bitenc_depth() > -1)
     {
         decode_type = DECODE_BITENC;
+        if (mime_stats)
+            mime_stats->bitenc_attachments++;
         decoder = new BitDecode(config->get_bitenc_depth());
         return;
     }

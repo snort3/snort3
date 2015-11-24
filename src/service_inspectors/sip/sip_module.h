@@ -63,7 +63,6 @@
 
 struct SnortConfig;
 
-extern THREAD_LOCAL SimpleStats sipstats;
 extern THREAD_LOCAL ProfileStats sipPerfStats;
 
 class SipModule : public Module

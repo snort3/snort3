@@ -29,7 +29,7 @@ struct SSL_PROTO_CONF
     int max_heartbeat_len;
 };
 
-struct SSLStats
+struct SslStats
 {
     PegCount packets;
     PegCount decoded;
@@ -52,6 +52,6 @@ struct SSLStats
 };
 
 extern const PegInfo ssl_peg_names[];
-extern THREAD_LOCAL SSLStats sslstats;
+extern THREAD_LOCAL SslStats sslstats;
 
 #endif

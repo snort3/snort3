@@ -47,7 +47,7 @@
 #include "imap_module.h"
 
 THREAD_LOCAL ProfileStats imapPerfStats;
-THREAD_LOCAL SimpleStats imapstats;
+THREAD_LOCAL ImapStats imapstats;
 
 IMAPToken imap_known_cmds[] =
 {
@@ -129,6 +129,22 @@ IMAPSearch imap_cmd_search[CMD_LAST];
 THREAD_LOCAL const IMAPSearch* imap_current_search = NULL;
 THREAD_LOCAL IMAPSearchInfo imap_search_info;
 
+const PegInfo imap_peg_names[] =
+{
+    { "packets", "total packets processed" },
+    { "sessions", "total imap sessions" },
+    { "b64 attachments", "total base64 attachments decoded" },
+    { "b64 decoded bytes", "total base64 decoded bytes" },
+    { "qp attachments", "total quoted-printable attachments decoded" },
+    { "qp decoded bytes", "total quoted-printable decoded bytes" },
+    { "uu attachments", "total uu attachments decoded" },
+    { "uu decoded bytes", "total uu decoded bytes" },
+    { "non-encoded attachments", "total non-encoded attachments extracted" },
+    { "non-encoded bytes", "total non-encoded extracted bytes" },
+
+    { nullptr, nullptr }
+};
+
 ImapFlowData::ImapFlowData() : FlowData(flow_id)
 { memset(&session, 0, sizeof(session)); }
 
@@ -155,9 +171,9 @@ IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
     p->flow->set_application_data(fd);
     imap_ssn = &fd->session;
 
+    imapstats.sessions++;
     imap_ssn->mime_ssn= new ImapMime(&(config->decode_conf),&(config->log_config));
-    //imap_ssn->mime_ssn.methods = &(imap_mime_methods);
-    //imap_ssn->mime_ssn.config = config;
+    imap_ssn->mime_ssn->set_mime_stats(&(imapstats.mime_stats));
 
     if (p->packet_flags & SSNFLAG_MIDSTREAM)
     {
@@ -768,7 +784,7 @@ void Imap::eval(Packet* p)
     assert(p->has_tcp_data());
     assert(p->flow);
 
-    ++imapstats.total_packets;
+    ++imapstats.packets;
 
     snort_imap(config, p);
 }

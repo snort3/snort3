@@ -29,5 +29,15 @@ struct POP_PROTO_CONF
     MailLogConfig log_config;
 };
 
+struct PopStats
+{
+    PegCount packets;
+    PegCount sessions;
+    MimeStats mime_stats;
+};
+
+extern const PegInfo pop_peg_names[];
+extern THREAD_LOCAL PopStats popstats;
+
 #endif
 

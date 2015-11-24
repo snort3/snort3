@@ -41,7 +41,6 @@
 
 struct SnortConfig;
 
-extern THREAD_LOCAL SimpleStats imapstats;
 extern THREAD_LOCAL ProfileStats imapPerfStats;
 
 class ImapModule : public Module

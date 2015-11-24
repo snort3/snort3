@@ -64,6 +64,7 @@ public:
     int get_data_state();
     void set_data_state(int);
     MailLogState* get_log_state();
+    void set_mime_stats(MimeStats*);
 
 protected:
     MimeDecode* decode_state = NULL;
@@ -75,6 +76,7 @@ private:
     DecodeConfig* decode_conf = NULL;
     MailLogConfig* log_config = NULL;
     MailLogState* log_state = NULL;
+    MimeStats* mime_stats = NULL;
 
     // SMTP, IMAP, POP might have different implementation for this
     virtual int handle_header_line(const uint8_t*, const uint8_t*, int) { return 0; }

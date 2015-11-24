@@ -142,4 +142,16 @@ struct SMTP_PROTO_CONF
     SearchTool* cmd_search_mpse;
 };
 
+struct SmtpStats
+{
+    PegCount packets;
+    PegCount sessions;
+    PegCount conc_sessions;
+    PegCount max_conc_sessions;
+    MimeStats mime_stats;
+};
+
+extern const PegInfo smtp_peg_names[];
+extern THREAD_LOCAL SmtpStats smtpstats;
+
 #endif

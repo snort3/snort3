@@ -61,7 +61,6 @@
 
 struct SnortConfig;
 
-extern THREAD_LOCAL SimpleStats smtpstats;
 extern THREAD_LOCAL ProfileStats smtpPerfStats;
 struct SmtpCmd
 {

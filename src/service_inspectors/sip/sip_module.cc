@@ -131,17 +131,41 @@ static const RuleMap sip_rules[] =
     { 0, nullptr }
 };
 
-THREAD_LOCAL SIP_Stats sip_stats;
+THREAD_LOCAL SipStats sip_stats;
 
 static const PegInfo sip_pegs[] =
 {
+    { "packets", "total packets" },
     { "sessions", "total sessions" },
     { "events", "events generated" },
     { "dialogs", "total dialogs" },
     { "ignored channels", "total channels ignored" },
     { "ignored sessions", "total sessions ignored" },
-    { "requests", "total requests" },
-    { "responses", "total responses" },
+    { "total requests", "total requests" },
+    { "invite", "invite" },
+    { "cancel", "cancel" },
+    { "ack", "ack" },
+    { "bye", "bye" },
+    { "register", "register" },
+    { "options", "options" },
+    { "refer", "refer" },
+    { "subscribe", "subscribe" },
+    { "update", "update" },
+    { "join", "join" },
+    { "info", "info" },
+    { "message", "message" },
+    { "notify", "notify" },
+    { "prack", "prack" },
+    { "total responses", "total responses" },
+    { "1xx", "1xx" },
+    { "2xx", "2xx" },
+    { "3xx", "3xx" },
+    { "4xx", "4xx" },
+    { "5xx", "5xx" },
+    { "6xx", "6xx" },
+    { "7xx", "7xx" },
+    { "8xx", "8xx" },
+    { "9xx", "9xx" },
     { nullptr, nullptr }
 };
 

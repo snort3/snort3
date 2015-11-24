@@ -51,21 +51,22 @@
 #define SIP_DEFAULT_MAX_CONTACT_LEN         256
 #define SIP_DEFAULT_MAX_CONTENT_LEN         1024
 #define NUM_OF_RESPONSE_TYPES  10
-#define NUM_OF_REQUEST_TYPES  SIP_METHOD_USER_DEFINE_MAX
+#define NUM_OF_REQUEST_TYPES  SIP_METHOD_USER_DEFINE
 
-struct SIP_Stats
+struct SipStats
 {
+    PegCount packets;
     PegCount sessions;
     PegCount events;
 
     PegCount dialogs;
     PegCount ignoreChannels;
     PegCount ignoreSessions;
-    PegCount requests; // [NUM_OF_REQUEST_TYPES];    // FIXIT-L support this
-    PegCount responses; // [NUM_OF_RESPONSE_TYPES];  // FIXIT-L support this
+    PegCount requests[NUM_OF_REQUEST_TYPES];
+    PegCount responses[NUM_OF_RESPONSE_TYPES];
 };
 
-extern THREAD_LOCAL SIP_Stats sip_stats;
+extern THREAD_LOCAL SipStats sip_stats;
 
 
 // Header fields and processing functions

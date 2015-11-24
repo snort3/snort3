@@ -40,7 +40,6 @@
 
 struct SnortConfig;
 
-extern THREAD_LOCAL SimpleStats popstats;
 extern THREAD_LOCAL ProfileStats popPerfStats;
 
 class PopModule : public Module

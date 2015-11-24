@@ -46,7 +46,7 @@
 #include "pop_paf.h"
 
 THREAD_LOCAL ProfileStats popPerfStats;
-THREAD_LOCAL SimpleStats popstats;
+THREAD_LOCAL PopStats popstats;
 
 POPToken pop_known_cmds[] =
 {
@@ -83,6 +83,23 @@ POPSearch pop_cmd_search[CMD_LAST];
 THREAD_LOCAL const POPSearch* pop_current_search = NULL;
 THREAD_LOCAL POPSearchInfo pop_search_info;
 
+const PegInfo pop_peg_names[] =
+{
+    { "packets", "total packets processed" },
+    { "sessions", "total pop sessions" },
+    { "b64 attachments", "total base64 attachments decoded" },
+    { "b64 decoded bytes", "total base64 decoded bytes" },
+    { "qp attachments", "total quoted-printable attachments decoded" },
+    { "qp decoded bytes", "total quoted-printable decoded bytes" },
+    { "uu attachments", "total uu attachments decoded" },
+    { "uu decoded bytes", "total uu decoded bytes" },
+    { "non-encoded attachments", "total non-encoded attachments extracted" },
+    { "non-encoded bytes", "total non-encoded extracted bytes" },
+
+    { nullptr, nullptr }
+};
+
+
 static void snort_pop(POP_PROTO_CONF* GlobalConf, Packet* p);
 static void POP_ResetState(Flow*);
 
@@ -112,9 +129,9 @@ POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
     p->flow->set_application_data(fd);
     pop_ssn = &fd->session;
 
+    popstats.sessions++;
     pop_ssn->mime_ssn = new PopMime( &(config->decode_conf), &(config->log_config));
-    //pop_ssn->mime_ssn.methods = &(pop_mime_methods);
-    //pop_ssn->mime_ssn.config = config;
+    pop_ssn->mime_ssn->set_mime_stats(&(popstats.mime_stats));
 
     if (p->packet_flags & SSNFLAG_MIDSTREAM)
     {
@@ -703,7 +720,7 @@ void Pop::eval(Packet* p)
     assert(p->has_tcp_data());
     assert(p->flow);
 
-    ++popstats.total_packets;
+    ++popstats.packets;
 
     snort_pop(config, p);
 }

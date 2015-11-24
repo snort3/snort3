@@ -29,4 +29,14 @@ struct IMAP_PROTO_CONF
     MailLogConfig log_config;
 };
 
+struct ImapStats
+{
+    PegCount packets;
+    PegCount sessions;
+    MimeStats mime_stats;
+};
+
+extern const PegInfo imap_peg_names[];
+extern THREAD_LOCAL ImapStats imapstats;
+
 #endif

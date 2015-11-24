@@ -49,7 +49,7 @@
 #include "smtp_xlink2state.h"
 
 THREAD_LOCAL ProfileStats smtpPerfStats;
-THREAD_LOCAL SimpleStats smtpstats;
+THREAD_LOCAL SmtpStats smtpstats;
 THREAD_LOCAL bool smtp_normalizing;
 
 /* Globals ****************************************************************/
@@ -160,6 +160,26 @@ SMTPSearch smtp_resp_search[RESP_LAST];
 THREAD_LOCAL const SMTPSearch* smtp_current_search = NULL;
 THREAD_LOCAL SMTPSearchInfo smtp_search_info;
 
+
+const PegInfo smtp_peg_names[] =
+{
+    { "packets", "total packets processed" },
+    { "sessions", "total smtp sessions" },
+    { "concurrent sessions", "total concurrent smtp sessions" },
+    { "max concurrent sessions", "maximum concurrent smtp sessions" },
+    { "b64 attachments", "total base64 attachments decoded" },
+    { "b64 decoded bytes", "total base64 decoded bytes" },
+    { "qp attachments", "total quoted-printable attachments decoded" },
+    { "qp decoded bytes", "total quoted-printable decoded bytes" },
+    { "uu attachments", "total uu attachments decoded" },
+    { "uu decoded bytes", "total uu decoded bytes" },
+    { "non-encoded attachments", "total non-encoded attachments extracted" },
+    { "non-encoded bytes", "total non-encoded extracted bytes" },
+
+    { nullptr, nullptr }
+};
+
+
 static void snort_smtp(SMTP_PROTO_CONF* GlobalConf, Packet* p);
 static void SMTP_ResetState(Flow*);
 
@@ -170,6 +190,9 @@ SmtpFlowData::~SmtpFlowData()
 {
     if (session.mime_ssn)
         delete session.mime_ssn;
+
+    if(smtpstats.conc_sessions)
+        smtpstats.conc_sessions--;
 }
 
 unsigned SmtpFlowData::flow_id = 0;
@@ -189,8 +212,14 @@ SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
     p->flow->set_application_data(fd);
     smtp_ssn = &fd->session;
 
+    smtpstats.sessions++;
+    smtpstats.conc_sessions++;
+    if(smtpstats.max_conc_sessions < smtpstats.conc_sessions)
+        smtpstats.max_conc_sessions = smtpstats.conc_sessions;
+
     smtp_ssn->mime_ssn = new SmtpMime(&(config->decode_conf), &(config->log_config));
     smtp_ssn->mime_ssn->config = config;
+    smtp_ssn->mime_ssn->set_mime_stats(&(smtpstats.mime_stats));
 
     if(stream.is_midstream(p->flow))
     {
@@ -1530,7 +1559,7 @@ void Smtp::eval(Packet* p)
     assert(p->has_tcp_data());
     assert(p->flow);
 
-    ++smtpstats.total_packets;
+    ++smtpstats.packets;
 
     snort_smtp(config, p);
 }

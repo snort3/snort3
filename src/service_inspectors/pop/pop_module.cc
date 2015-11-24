@@ -78,7 +78,7 @@ const RuleMap* PopModule::get_rules() const
 { return pop_rules; }
 
 const PegInfo* PopModule::get_pegs() const
-{ return simple_pegs; }
+{ return pop_peg_names; }
 
 PegCount* PopModule::get_counts() const
 { return (PegCount*)&popstats; }
