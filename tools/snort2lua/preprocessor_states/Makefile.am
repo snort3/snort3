@@ -4,6 +4,7 @@ noinst_LIBRARIES = libpreprocessor_states.a
 libpreprocessor_states_a_SOURCES = \
 pps_arpspoof.cc \
 pps_bo.cc \
+pps_dnp3.cc \
 pps_frag3_engine.cc \
 pps_frag3_global.cc \
 pps_ftp_telnet.cc \

@@ -78,6 +78,7 @@
 
 * There is a bug in pps_stream_tcp.cc.. when stream_tcp: is
   specified without any arguments, snort2lua doesn't convert it.
+  Same for stream_udp.
 
 * Loses the ip list delimiters [ ]; change to ( )
 
@@ -90,6 +91,7 @@
 * alert_fast and alert_full: output configuration includes "file = 'foo.bar'", but file is a bool
   and you cannot specify an output file name in the configuration.
 
+* preprocessor ports option: ports <number> not supported.
 
 ==== Runtime
 
@@ -102,4 +104,6 @@
 
 * The hext DAQ does not support embedded quotes in text lines (use hex
   lines as a workaround).
+
+* Stream TCP alert squash mechanism incorrectly squashes alerts for different TCP packets.
 

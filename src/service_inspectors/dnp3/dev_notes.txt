@@ -1,0 +1,15 @@
+This directory contains all the files related to DNP3 protocol processing.
+
+DNP3 is supported over both TCP/IP and UDP. The inspector provides anomaly
+detection and IPS rule options for matching on data, functions, indications
+and objects in the messages.
+
+The protocol aware flushing (PAF) for DNP3 identifies and flushes frames at
+link layer. The reassembly code in dnp3_reassembly.cc handles transport layer 
+reassembly and generates application layer PDUs for inspection.
+For the UDP case, packets do not go through PAF and the inspector handles
+link layer decoding. Since there can be multiple application level PDUs in a 
+single UDP packet, the inspector performs detection as well.
+
+Configuration of ports is handled by the binder. The default server port is
+20000. The only other DNP3 specific configuration is CRC check enable/disable

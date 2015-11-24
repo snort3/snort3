@@ -35,6 +35,10 @@ extern const ConvertMap* classtype_map;
 extern const ConvertMap* content_map;
 extern const ConvertMap* cvs_map;
 extern const ConvertMap* detection_filter_map;
+extern const ConvertMap* dnp3_data_map;
+extern const ConvertMap* dnp3_func_map;
+extern const ConvertMap* dnp3_ind_map;
+extern const ConvertMap* dnp3_obj_map;
 extern const ConvertMap* dsize_map;
 extern const ConvertMap* file_data_map;
 extern const ConvertMap* flags_map;
@@ -104,6 +108,10 @@ const std::vector<const ConvertMap*> rule_options_api =
     content_map,
     cvs_map,
     detection_filter_map,
+    dnp3_data_map,
+    dnp3_func_map,
+    dnp3_ind_map,
+    dnp3_obj_map,
     dsize_map,
     file_data_map,
     flags_map,

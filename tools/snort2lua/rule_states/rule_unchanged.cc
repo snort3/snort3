@@ -704,5 +704,30 @@ static const ConvertMap rule_ssl_version =
 
 const ConvertMap* ssl_version_map = &rule_ssl_version;
 
+/************************************
+ *******  DNP3 DATA  ************
+ ************************************/
+
+static const std::string dnp3_data = "dnp3_data";
+static const ConvertMap rule_dnp3_data =
+{
+    dnp3_data,
+    unchanged_rule_ctor<& dnp3_data, false>,
+};
+
+const ConvertMap* dnp3_data_map = &rule_dnp3_data;
+
+/************************************
+ *********  DNP3 FUNC **************
+ ************************************/
+
+static const std::string dnp3_func = "dnp3_func";
+static const ConvertMap rule_dnp3_func =
+{
+    dnp3_func,
+    unchanged_rule_ctor<& dnp3_func>,
+};
+
+const ConvertMap* dnp3_func_map = &rule_dnp3_func;
 } // namespace rule
 

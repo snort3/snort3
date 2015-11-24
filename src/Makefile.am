@@ -12,6 +12,7 @@ service_inspectors/back_orifice/libback_orifice.a \
 service_inspectors/dns/libdns.a \
 service_inspectors/ftp_telnet/libftp_telnet.a \
 service_inspectors/gtp/libgtp_inspect.a \
+service_inspectors/dnp3/libdnp3.a \
 service_inspectors/modbus/libmodbus.a \
 service_inspectors/nhttp_inspect/libnhttp_inspect.a \
 service_inspectors/rpc_decode/librpc_decode.a \

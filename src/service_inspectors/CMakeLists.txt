@@ -1,5 +1,6 @@
 
 add_subdirectory(back_orifice)
+add_subdirectory(dnp3)
 add_subdirectory(dns)
 add_subdirectory(ftp_telnet)
 add_subdirectory(gtp)
@@ -18,6 +19,7 @@ add_subdirectory(wizard)
 if (STATIC_INSPECTORS)
     set (STATIC_INSECTOR_LIBS
         back_orifice
+        dnp3
         dns
         ftp_telnet
         gtp_inspect
