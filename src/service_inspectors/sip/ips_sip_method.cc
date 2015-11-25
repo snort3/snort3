@@ -154,6 +154,7 @@ bool SipMethodModule::begin(const char*, int, SnortConfig*)
 {
     num_tokens = 0;
     negated = false;
+    smod.flags = smod.mask = 0;
     return true;
 }
 
