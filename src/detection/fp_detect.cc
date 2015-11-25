@@ -46,6 +46,7 @@
 #include "service_map.h"
 #include "detection_util.h"
 #include "detection_options.h"
+#include "pattern_match_data.h"
 #include "pcrm.h"
 #include "tag.h"
 #include "rules.h"
