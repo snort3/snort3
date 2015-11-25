@@ -32,11 +32,8 @@
 #include <stdlib.h>
 #include <syslog.h>
 #include <string.h>
-
-#ifndef WIN32
 #include <strings.h>
 #include <sys/time.h>
-#endif
 
 #include "main/snort_debug.h"
 #include "main/snort_types.h"

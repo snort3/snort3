@@ -59,14 +59,14 @@ struct EthLlcOther
 
     uint16_t proto() const
     {
-#       if defined(__GNUC__)
+#ifdef __GNUC__
         // fixing the type_punned pointer problem
         const uint8_t* tmp1 = &proto_id[0];
         const uint16_t* const tmp2 = reinterpret_cast<const uint16_t*>(tmp1);
         return ntohs(*tmp2);
-#       else
+#else
         return ntohs(*((uint16_t*)(&proto_id[0])));
-#       endif
+#endif
     }
 };
 

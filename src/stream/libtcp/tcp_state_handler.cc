@@ -33,7 +33,7 @@ using namespace std;
 
 
 TcpStateHandler::TcpStateHandler() :
-		tcp_event( TcpStreamTracker::TCP_MAX_EVENTS )
+        tcp_event( TcpStreamTracker::TCP_MAX_EVENTS )
 {
     // TODO Auto-generated constructor stub
 
@@ -184,17 +184,17 @@ void TcpStateHandler::rst_recv(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &
 SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
 {
      // initialization code here
-	 Flow* flow = new Flow;
-	 TcpStateHandler* tsh = new TcpStateHandler;
+     Flow* flow = new Flow;
+     TcpStateHandler* tsh = new TcpStateHandler;
      TcpStreamTracker* client_tracker = new TcpStreamTracker( true );
      TcpStreamTracker* server_tracker = new TcpStreamTracker( false );
 
      GIVEN("a SYN Packet")
      {
-       	 Packet* pkt = get_syn_packet( flow );
-       	 REQUIRE( ( pkt != nullptr ) );
+            Packet* pkt = get_syn_packet( flow );
+            REQUIRE( ( pkt != nullptr ) );
 
-       	 WHEN("SYN is sent")
+            WHEN("SYN is sent")
          {
              TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
              REQUIRE( ( tcp_seg != nullptr ) );
@@ -222,10 +222,10 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
 
      SECTION("syn_ack_packet")
      {
-       	 Packet* pkt = get_syn_ack_packet( flow );
-       	 REQUIRE( ( pkt != nullptr ) );
+            Packet* pkt = get_syn_ack_packet( flow );
+            REQUIRE( ( pkt != nullptr ) );
 
-       	 SECTION("syn_ack_sent")
+            SECTION("syn_ack_sent")
          {
              TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
              REQUIRE( ( tcp_seg != nullptr ) );
@@ -250,10 +250,10 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
 
      SECTION("ack_packet")
      {
-       	 Packet* pkt = get_ack_packet( flow );
-       	 REQUIRE( ( pkt != nullptr ) );
+            Packet* pkt = get_ack_packet( flow );
+            REQUIRE( ( pkt != nullptr ) );
 
-       	 SECTION("ack_sent")
+            SECTION("ack_sent")
          {
              TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
              REQUIRE( ( tcp_seg != nullptr ) );
@@ -278,10 +278,10 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
 
      SECTION("data_seg_packet")
      {
-       	 Packet* pkt = get_data_packet( flow );
-       	 REQUIRE( ( pkt != nullptr ) );
+            Packet* pkt = get_data_packet( flow );
+            REQUIRE( ( pkt != nullptr ) );
 
-       	 SECTION("data_seg_sent")
+            SECTION("data_seg_sent")
          {
              TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
              REQUIRE( ( tcp_seg != nullptr ) );
@@ -306,10 +306,10 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
 
      SECTION("fin_packet")
       {
-        	 Packet* pkt = get_fin_packet( flow );
-        	 REQUIRE( ( pkt != nullptr ) );
+             Packet* pkt = get_fin_packet( flow );
+             REQUIRE( ( pkt != nullptr ) );
 
-        	 SECTION("fin_sent")
+             SECTION("fin_sent")
           {
               TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
               REQUIRE( ( tcp_seg != nullptr ) );
@@ -334,10 +334,10 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
 
      SECTION("rst_packet")
      {
-        	 Packet* pkt = get_rst_packet( flow );
-        	 REQUIRE( ( pkt != nullptr ) );
+             Packet* pkt = get_rst_packet( flow );
+             REQUIRE( ( pkt != nullptr ) );
 
-        	 SECTION("rst_sent")
+             SECTION("rst_sent")
           {
               TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
               REQUIRE( ( tcp_seg != nullptr ) );

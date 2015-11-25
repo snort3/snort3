@@ -26,21 +26,9 @@
 
 #include <stddef.h>
 #include <sys/types.h>
-
-#ifndef WIN32
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
-
-#else
-
-#include <netinet/in_systm.h>
-#ifndef IFNAMSIZ
-#define IFNAMESIZ MAX_ADAPTER_NAME
-#endif
-
-#endif
 
 extern "C" {
 #include <daq.h>
@@ -299,7 +287,7 @@ static inline uint16_t EXTRACT_16BITS(const uint8_t* const p)
 
 #ifdef WORDS_MUSTALIGN
 
-#if defined(__GNUC__)
+#ifdef __GNUC__
 /* force word-aligned ntohl parameter */
 static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
 {

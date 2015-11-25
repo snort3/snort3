@@ -26,23 +26,12 @@
 
 #include <cstdint>
 #include <arpa/inet.h>
-#include "sfip/sfip_t.h"
-#include "protocols/protocol_ids.h"
-
-#ifndef WIN32
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
 
-#else
-
-#include <netinet/in_systm.h>
-#ifndef IFNAMSIZ
-#define IFNAMESIZ MAX_ADAPTER_NAME
-#endif
-
-#endif
+#include "sfip/sfip_t.h"
+#include "protocols/protocol_ids.h"
 
 namespace ip
 {

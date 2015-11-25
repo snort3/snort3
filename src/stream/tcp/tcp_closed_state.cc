@@ -41,13 +41,13 @@ TcpClosedState::~TcpClosedState()
 
 void TcpClosedState::syn_sent( TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker )
 {
-	tracker.set_iss( tcp_seg.get_seq() );
-	tracker.set_snd_una( tcp_seg.get_seq() + 1 );
-	tracker.set_snd_nxt( tcp_seg.get_end_seq() );
-	tracker.set_snd_wnd( tcp_seg.get_win() );
-	tracker.set_ts_last_packet( tcp_seg.get_pkt()->pkth->ts.tv_sec );
+    tracker.set_iss( tcp_seg.get_seq() );
+    tracker.set_snd_una( tcp_seg.get_seq() + 1 );
+    tracker.set_snd_nxt( tcp_seg.get_end_seq() );
+    tracker.set_snd_wnd( tcp_seg.get_win() );
+    tracker.set_ts_last_packet( tcp_seg.get_pkt()->pkth->ts.tv_sec );
 
-	tracker.set_tcp_state( TcpStreamTracker::TCP_SYN_SENT );
+    tracker.set_tcp_state( TcpStreamTracker::TCP_SYN_SENT );
 }
 
 void TcpClosedState::syn_recv(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker)
@@ -110,16 +110,16 @@ void TcpClosedState::rst_recv(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &t
 TEST_CASE("TCP State Closed", "[tcp_closed_state][stream_tcp]")
 {
      // initialization code here
-	 Flow* flow = new Flow;
-	 TcpStateHandler* tsh = new TcpClosedState;
+     Flow* flow = new Flow;
+     TcpStateHandler* tsh = new TcpClosedState;
      TcpStreamTracker* client_tracker = new TcpStreamTracker( true );
 
      SECTION("syn_packet")
      {
-       	 Packet* pkt = get_syn_packet( flow );
-       	 REQUIRE( ( pkt != nullptr ) );
+            Packet* pkt = get_syn_packet( flow );
+            REQUIRE( ( pkt != nullptr ) );
 
-       	 SECTION("syn_sent")
+            SECTION("syn_sent")
          {
              flow->ssn_state.direction = FROM_CLIENT;
              TcpSegmentDescriptor tcp_seg( flow, pkt );
@@ -146,10 +146,10 @@ TEST_CASE("TCP State Closed", "[tcp_closed_state][stream_tcp]")
 
      SECTION("syn_ack_packet")
      {
-       	 Packet* pkt = get_syn_ack_packet( flow );
-       	 REQUIRE( ( pkt != nullptr ) );
+            Packet* pkt = get_syn_ack_packet( flow );
+            REQUIRE( ( pkt != nullptr ) );
 
-       	 SECTION("syn_ack_sent")
+            SECTION("syn_ack_sent")
          {
              flow->ssn_state.direction = FROM_CLIENT;
              TcpSegmentDescriptor tcp_seg( flow, pkt );
@@ -172,10 +172,10 @@ TEST_CASE("TCP State Closed", "[tcp_closed_state][stream_tcp]")
 
      SECTION("ack_packet")
      {
-       	 Packet* pkt = get_ack_packet( flow );
-       	 REQUIRE( ( pkt != nullptr ) );
+            Packet* pkt = get_ack_packet( flow );
+            REQUIRE( ( pkt != nullptr ) );
 
-       	 SECTION("ack_sent")
+            SECTION("ack_sent")
          {
              flow->ssn_state.direction = FROM_CLIENT;
              TcpSegmentDescriptor tcp_seg( flow, pkt );
@@ -198,10 +198,10 @@ TEST_CASE("TCP State Closed", "[tcp_closed_state][stream_tcp]")
 
      SECTION("data_seg_packet")
      {
-       	 Packet* pkt = get_data_packet( flow );
-       	 REQUIRE( ( pkt != nullptr ) );
+            Packet* pkt = get_data_packet( flow );
+            REQUIRE( ( pkt != nullptr ) );
 
-       	 SECTION("data_seg_sent")
+            SECTION("data_seg_sent")
          {
              flow->ssn_state.direction = FROM_CLIENT;
              TcpSegmentDescriptor tcp_seg( flow, pkt );
@@ -224,10 +224,10 @@ TEST_CASE("TCP State Closed", "[tcp_closed_state][stream_tcp]")
 
      SECTION("fin_packet")
       {
-        	 Packet* pkt = get_fin_packet( flow );
-        	 REQUIRE( ( pkt != nullptr ) );
+             Packet* pkt = get_fin_packet( flow );
+             REQUIRE( ( pkt != nullptr ) );
 
-        	 SECTION("fin_sent")
+             SECTION("fin_sent")
           {
               flow->ssn_state.direction = FROM_CLIENT;
               TcpSegmentDescriptor tcp_seg( flow, pkt );
@@ -250,12 +250,12 @@ TEST_CASE("TCP State Closed", "[tcp_closed_state][stream_tcp]")
 
      SECTION("rst_packet")
      {
-        	 Packet* pkt = get_rst_packet( flow );
-        	 REQUIRE( ( pkt != nullptr  ));
+             Packet* pkt = get_rst_packet( flow );
+             REQUIRE( ( pkt != nullptr  ));
 
-        	 SECTION("rst_sent")
+             SECTION("rst_sent")
           {
-        	  flow->ssn_state.direction = FROM_CLIENT;
+              flow->ssn_state.direction = FROM_CLIENT;
               TcpSegmentDescriptor tcp_seg( flow, pkt );
               client_tracker->set_tcp_event( tcp_seg, client_tracker->is_client_tracker( ) );
               tsh->eval( tcp_seg, *client_tracker );

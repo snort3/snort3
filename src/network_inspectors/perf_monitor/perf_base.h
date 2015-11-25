@@ -22,7 +22,7 @@
 ** Chris Green (stream4 instrumentation)
 **
 ** 9.1.04  : Added SFBASE iReset (MAN)
-**	     This is set by perfmonitor 'accrure' and 'reset' commands
+**         This is set by perfmonitor 'accrure' and 'reset' commands
 */
 #ifndef PERF_BASE_H
 #define PERF_BASE_H

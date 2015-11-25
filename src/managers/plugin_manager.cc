@@ -19,6 +19,10 @@
 
 #include "plugin_manager.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <assert.h>
 #include <sys/stat.h>
 #include <dlfcn.h>

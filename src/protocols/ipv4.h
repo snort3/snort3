@@ -26,21 +26,9 @@
 
 #include <cstdint>
 #include <arpa/inet.h>
-
-#ifndef WIN32
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
-
-#else
-
-#include <netinet/in_systm.h>
-#ifndef IFNAMSIZ
-#define IFNAMESIZ MAX_ADAPTER_NAME
-#endif
-
-#endif
 
 #include "protocols/protocol_ids.h" // include ipv4 protocol numbers
 
@@ -48,7 +36,7 @@
 
 #ifndef IP_MAXPACKET
 #define IP_MAXPACKET    65535        /* maximum packet size */
-#endif /* IP_MAXPACKET */
+#endif
 
 namespace ip
 {

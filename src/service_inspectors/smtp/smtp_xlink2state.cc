@@ -22,10 +22,7 @@
 
 #include "smtp_xlink2state.h"
 
-#ifndef WIN32
 #include <strings.h>
-#endif
-
 #include <ctype.h>
 #include <string.h>
 
