@@ -1,3 +1,14 @@
+15/11/25 - build 180
+
+-- ported dnp3 preprocessor and rule options from 2.X
+-- fixed various valgrind issues with stats from sip, imap, pop, and smtp
+-- fixed captured length of some icmp6 types
+-- added support for hyperscan search method using rule contents
+   (regex to follow)
+-- fixed various log pcap issues
+-- squelch repeated ip6 ooo extensions and bad options per packet
+-- fixed arp inspection bug
+
 15/11/20 - build 179
 
 -- user manaul updates
