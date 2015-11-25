@@ -22,7 +22,6 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
-#include "detection/detect.h"
 #include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
 #include "profiler/profiler.h"
@@ -141,21 +140,13 @@ bool Dnp3FuncModule::set(const char*, Value& v, SnortConfig*)
     if (v.strtol(n))
     {
         if ((n > 255) || (n < 0))
-        {
-            ParseError("dnp3_func requires a "
-                "number beween 0 and 255, or a valid function name.\n");
             return false;
-        }
     }
     else
     {
         n = dnp3_func_str_to_code(v.get_string());
         if (n == -1)
-        {
-            ParseError("dnp3_func requires a "
-                "number beween 0 and 255, or a valid function name.\n");
             return false;
-        }
     }
 
     func = (uint16_t)n;
