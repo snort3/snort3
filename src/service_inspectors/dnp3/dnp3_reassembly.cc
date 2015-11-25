@@ -300,7 +300,7 @@ static bool dnp3_check_remove_crc(dnp3ProtoConf& config, uint8_t* pdu_start,
         if ((config.check_crc) &&
             (dnp3_check_crc((unsigned char*)cursor, (DNP3_CHUNK_SIZE+DNP3_CRC_SIZE)) == false))
         {
-            SnortEventqAdd(GID_DNP3, DNP3_RESERVED_ADDRESS);
+            SnortEventqAdd(GID_DNP3, DNP3_BAD_CRC);
             return false;
         }
 
@@ -315,7 +315,7 @@ static bool dnp3_check_remove_crc(dnp3ProtoConf& config, uint8_t* pdu_start,
     {
         if ((config.check_crc) && (dnp3_check_crc((unsigned char*)cursor, bytes_left) == false))
         {
-            SnortEventqAdd(GID_DNP3, DNP3_RESERVED_ADDRESS);
+            SnortEventqAdd(GID_DNP3, DNP3_BAD_CRC);
             return false;
         }
 

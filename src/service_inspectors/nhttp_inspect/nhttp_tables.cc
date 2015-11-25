@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // nhttp_tables.cc author Tom Peters <thopeter@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <string.h>
 #include <sys/types.h>
 

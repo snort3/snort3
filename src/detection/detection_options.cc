@@ -37,6 +37,7 @@
 #include "treenodes.h"
 #include "fp_create.h"
 #include "fp_detect.h"
+#include "pattern_match_data.h"
 #include "rules.h"
 
 #include "ppm/ppm.h"

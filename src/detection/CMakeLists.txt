@@ -2,6 +2,7 @@
 set (DETECTION_INCLUDES
     detection_defines.h
     detection_options.h
+    pattern_match_data.h
     rule_option_types.h
     rules.h
     signature.h

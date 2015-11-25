@@ -228,16 +228,16 @@ static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
 
 void init_signals(void)
 {
-# if defined(LINUX) || defined(FREEBSD) || defined(OPENBSD) || \
+#if defined(LINUX) || defined(FREEBSD) || defined(OPENBSD) || \
     defined(SOLARIS) || defined(BSD) || defined(MACOS)
     sigset_t set;
 
     sigemptyset(&set);
     // FIXIT-L this is undefined for multithreaded apps
     sigprocmask(SIG_SETMASK, &set, NULL);
-# else
+#else
     sigsetmask(0);
-# endif
+#endif
 
     /* Make this prog behave nicely when signals come along.
      * Windows doesn't like all of these signals, and will

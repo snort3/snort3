@@ -36,11 +36,7 @@
 #include "gtp.h"
 #include "gtp_module.h"
 
-#ifdef WIN32
-#pragma pack(push,gtp_hdrs,1)
-#else
 #pragma pack(1)
-#endif
 
 static inline void alert(int sid)
 {
@@ -71,11 +67,7 @@ struct GTP_IE_Hdr
     uint16_t length;            /* length */
 };
 
-#ifdef WIN32
-#pragma pack(pop,gtp_hdrs)
-#else
 #pragma pack()
-#endif
 
 /* This table stores all the information elements in a packet
  * To save memory, only one table for all packets, because we inspect

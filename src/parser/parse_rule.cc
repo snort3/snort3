@@ -50,6 +50,7 @@
 #include "detection/signature.h"
 #include "detection/fp_config.h"
 #include "detection/fp_create.h"
+#include "detection/pattern_match_data.h"
 #include "detection/sfrim.h"
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
@@ -1145,6 +1146,36 @@ static int mergeDuplicateOtn(
     return 1;
 }
 
+static void finalize_content(OptFpList* ofl)
+{
+    PatternMatchData* pmd = get_pmd(ofl);
+
+    if ( !pmd )
+        return;
+
+    if ( pmd->negated )
+        pmd->last_check = (PmdLastCheck*)SnortAlloc(
+            get_instance_max() * sizeof(*pmd->last_check));
+}
+
+bool is_fast_pattern_only(OptFpList* ofl)
+{
+    PatternMatchData* pmd = get_pmd(ofl);
+
+    if ( !pmd )
+        return false;
+
+    return pmd->fp_only > 0;
+}
+
+static void clear_fast_pattern_only(OptFpList* ofl)
+{
+    PatternMatchData* pmd = get_pmd(ofl);
+
+    if ( pmd && pmd->fp_only > 0 )
+        pmd->fp_only = 0;
+}
+
 static void ValidateFastPattern(OptTreeNode* otn)
 {
     OptFpList* fpl, * fp = nullptr;
@@ -1180,6 +1211,7 @@ static void ValidateFastPattern(OptTreeNode* otn)
             else
                 relative_is_bad_mkay = false;
         }
+        finalize_content(fpl);
     }
 }
 

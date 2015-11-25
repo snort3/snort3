@@ -39,15 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "fp_config.h"
-#include "service_map.h"
 #include "main/snort_config.h"
-#include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "detection/fp_detect.h"
-#include "detection/detection_options.h"
-#include "detection/detection_defines.h"
-#include "detection/sfrim.h"
 #include "hash/sfghash.h"
 #include "ips_options/ips_content.h"
 #include "ips_options/ips_flow.h"
@@ -63,6 +55,16 @@
 #include "framework/ips_option.h"
 #include "managers/mpse_manager.h"
 #include "target_based/snort_protocols.h"
+
+#include "fp_config.h"
+#include "service_map.h"
+#include "rules.h"
+#include "treenodes.h"
+#include "fp_detect.h"
+#include "detection_options.h"
+#include "detection_defines.h"
+#include "sfrim.h"
+#include "pattern_match_data.h"
 
 static unsigned mpse_count = 0;
 

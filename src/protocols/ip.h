@@ -24,21 +24,9 @@
 #include "config.h"
 #endif
 
-#ifndef WIN32
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
-
-#else
-
-#include <netinet/in_systm.h>
-#ifndef IFNAMSIZ
-#define IFNAMESIZ MAX_ADAPTER_NAME
-#endif
-
-#endif
-
 #include <cstring>
 
 #include "protocols/ipv4.h"

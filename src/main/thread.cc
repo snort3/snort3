@@ -121,8 +121,7 @@ void pin_thread_to_cpu(const char* source)
 
     if (cpu != -1)
     {
-// PREPROCESSOR MACROS -- these are not actually if statements!
-#       if LINUX
+#if LINUX
         {
             static THREAD_LOCAL cpu_set_t cpu_set;
 
@@ -144,7 +143,7 @@ void pin_thread_to_cpu(const char* source)
                 FatalError("unable to pin source %s to CPU %d: %s\n",
                     source, cpu, std::strerror(errno));
         }
-#       else
+#else
         {
             static bool warning_printed = false;
             if (!warning_printed)
@@ -154,7 +153,7 @@ void pin_thread_to_cpu(const char* source)
                 warning_printed = true;
             }
         }
-#       endif
+#endif
     }
 }
 

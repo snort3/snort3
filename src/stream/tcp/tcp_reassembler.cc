@@ -19,6 +19,9 @@
 // tcp_reassembly.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 31, 2015
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <errno.h>
 #include <assert.h>

@@ -22,7 +22,6 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
-#include "detection/detect.h"
 #include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
 #include "profiler/profiler.h"
@@ -150,11 +149,8 @@ bool Dnp3IndModule::set(const char*, Value& v, SnortConfig*)
 
         flag = dnp3_ind_str_to_code(tok.c_str());
         if ( flag == -1 )
-        {
-            ParseError("dnp3_ind requires a valid indication flag "
-                "name. '%s' is invalid.\n", tok.c_str());
             return false;
-        }
+
         flags |= (uint16_t)flag;
     }
     return true;

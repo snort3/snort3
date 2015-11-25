@@ -134,11 +134,7 @@
 #define SSL_V2_CKEY    2
 #define SSL_V2_SHELLO  4
 
-#ifdef WIN32
-#pragma pack(push,ssl_hdrs,1)
-#else
 #pragma pack(1)
-#endif
 
 struct SSL_record_t
 {
@@ -197,11 +193,7 @@ struct SSLv2_shello_t
 
 #define SSL_V2_MIN_LEN 5
 
-#ifdef WIN32
-#pragma pack(pop,ssl_hdrs)
-#else
 #pragma pack()
-#endif
 
 #define SSL_HS_PAYLOAD_OFFSET (sizeof(uint8_t) * 4) /* Type and length fields */
 

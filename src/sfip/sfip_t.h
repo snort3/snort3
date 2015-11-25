@@ -33,13 +33,8 @@
 #include <cstddef>
 #include <stdint.h>
 #include <arpa/inet.h>
-
-#ifndef WIN32
 #include <netinet/in.h>
 #include <sys/socket.h>
-#else
-#include <winsock2.h>
-#endif
 
 #include "main/snort_types.h"
 
