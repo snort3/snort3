@@ -54,7 +54,7 @@ dofile(conf_dir .. '/file_magic.lua')
 -- uncomment normalizer if you are inline or not --pedantic
 --normalizer = { }
 
-profiler = { }
+-- profiler = { }
 
 stream = { }
 stream_ip = { }

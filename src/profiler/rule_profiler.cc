@@ -356,11 +356,9 @@ static inline OtnState make_otn_state(
         checks,
         matches,
         0,
+        0,
+        0,
         0
-#ifdef PPM_MGR
-        ,0,
-        0
-#endif
     };
 }
 

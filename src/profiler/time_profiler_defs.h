@@ -36,7 +36,7 @@ struct TimeProfilerConfig
     } sort = Sort::SORT_NONE;
 
     unsigned count = 0;
-    bool show = true;
+    bool show = false;
 };
 
 struct SO_PUBLIC TimeProfilerStats

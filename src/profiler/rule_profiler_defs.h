@@ -41,7 +41,7 @@ struct RuleProfilerConfig
     } sort = Sort::SORT_NONE;
 
     unsigned count = 0;
-    bool show = true;
+    bool show = false;
 };
 
 class RuleContext : public TimeContextBase
