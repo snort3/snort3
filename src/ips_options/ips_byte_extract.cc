@@ -144,7 +144,7 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
 
 int ByteExtractOption::eval(Cursor& c, Packet* p)
 {
-    PERF_PROFILE(byteExtractPerfStats);
+    Profile profile(byteExtractPerfStats);
 
     ByteExtractData* data = &config;
 

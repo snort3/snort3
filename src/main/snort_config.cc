@@ -174,8 +174,7 @@ SnortConfig::SnortConfig()
     num_slots = get_instance_max();
     state = (SnortState*)SnortAlloc(sizeof(SnortState)*num_slots);
 
-    profile_rules = (ProfileConfig*)SnortAlloc(sizeof(*profile_rules));
-    profile_modules = (ProfileConfig*)SnortAlloc(sizeof(*profile_modules));
+    profiler = new ProfilerConfig;
 
 #ifdef PPM_MGR
     ppm_cfg = (ppm_cfg_t*)SnortAlloc(sizeof(*ppm_cfg));
@@ -258,8 +257,8 @@ SnortConfig::~SnortConfig()
     if (gtp_ports)
         delete gtp_ports;
 
-    free(profile_rules);
-    free(profile_modules);
+    delete profiler;
+
     free(ppm_cfg);
 
 #ifdef INTEL_SOFT_CPM

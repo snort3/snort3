@@ -88,7 +88,7 @@ bool FragOffsetOption::operator==(const IpsOption& ips) const
 
 int FragOffsetOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(fragOffsetPerfStats);
+    Profile profile(fragOffsetPerfStats);
 
     if (!p->has_ip())
         return DETECTION_OPTION_NO_MATCH;

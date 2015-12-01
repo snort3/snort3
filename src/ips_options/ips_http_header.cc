@@ -162,7 +162,7 @@ static bool find(
 
 int HttpHeaderOption::eval(Cursor& c, Packet* p)
 {
-    PERF_PROFILE(httpHeaderPerfStats);
+    Profile profile(httpHeaderPerfStats);
 
     InspectionBuffer hb;
 

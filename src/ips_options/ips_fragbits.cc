@@ -143,7 +143,7 @@ bool FragBitsOption::operator==(const IpsOption& ips) const
 
 int FragBitsOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(fragBitsPerfStats);
+    Profile profile(fragBitsPerfStats);
 
     FragBitsData* fb = &config;
 

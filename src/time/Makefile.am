@@ -15,3 +15,7 @@ periodic.h \
 timersub.h \
 clock_defs.h \
 stopwatch.h
+
+if BUILD_UNIT_TESTS
+libtime_a_SOURCES += stopwatch_test.cc
+endif

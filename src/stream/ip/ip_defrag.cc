@@ -776,7 +776,7 @@ static inline int FragIsComplete(FragTracker* ft)
  */
 static void FragRebuild(FragTracker* ft, Packet* p)
 {
-    PERF_PROFILE(fragRebuildPerfStats);
+    Profile profile(fragRebuildPerfStats);
 
     static THREAD_LOCAL uint8_t encap_frag_cnt = 0;
     uint8_t* rebuild_ptr = NULL;  /* ptr to the start of the reassembly buffer */
@@ -1215,7 +1215,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     ip_stats.total++;
     UpdateIPFragStats(&sfBase, p->pkth->caplen);
 
-    PERF_PROFILE(fragPerfStats);
+    Profile profile(fragPerfStats);
 
     pkttime = (struct timeval*)&p->pkth->ts;
 
@@ -1390,7 +1390,7 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
 
     sfBase.iFragInserts++;
 
-    PERF_PROFILE(fragInsertPerfStats);
+    Profile profile(fragInsertPerfStats);
 
     if (p->is_ip6() && (net_frag_offset == 0))
     {

@@ -778,7 +778,7 @@ void Imap::show(SnortConfig*)
 
 void Imap::eval(Packet* p)
 {
-    PERF_PROFILE(imapPerfStats);
+    Profile profile(imapPerfStats);
 
     // precondition - what we registered for
     assert(p->has_tcp_data());

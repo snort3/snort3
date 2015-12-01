@@ -912,7 +912,7 @@ void PortScan::show(SnortConfig*)
 
 void PortScan::eval(Packet* p)
 {
-    PERF_PROFILE(psPerfStats);
+    Profile profile(psPerfStats);
 
     assert(p->ptrs.ip_api.is_ip());
 

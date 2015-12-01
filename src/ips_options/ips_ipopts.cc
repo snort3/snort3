@@ -110,7 +110,7 @@ bool IpOptOption::operator==(const IpsOption& ips) const
 
 int IpOptOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(ipOptionPerfStats);
+    Profile profile(ipOptionPerfStats);
 
     IpOptionData* ipOptionData = &config;
 

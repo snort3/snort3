@@ -203,7 +203,7 @@ void UdpSession::update_direction(
 
 int UdpSession::process(Packet* p)
 {
-    PERF_PROFILE(udp_perf_stats);
+    Profile profile(udp_perf_stats);
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
      // Check if the session is expired.

@@ -198,7 +198,7 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
 
 int ByteJumpOption::eval(Cursor& c, Packet*)
 {
-    PERF_PROFILE(byteJumpPerfStats);
+    Profile profile(byteJumpPerfStats);
 
     ByteJumpData* bjd = (ByteJumpData*)&config;
 

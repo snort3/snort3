@@ -137,7 +137,7 @@ bool IsDataAtOption::operator==(const IpsOption& ips) const
 
 int IsDataAtOption::eval(Cursor& c, Packet*)
 {
-    PERF_PROFILE(isDataAtPerfStats);
+    Profile profile(isDataAtPerfStats);
 
     IsDataAtData* isdata = &config;
 

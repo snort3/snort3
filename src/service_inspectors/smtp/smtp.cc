@@ -1553,7 +1553,7 @@ void Smtp::show(SnortConfig*)
 
 void Smtp::eval(Packet* p)
 {
-    PERF_PROFILE(smtpPerfStats);
+    Profile profile(smtpPerfStats);
 
     // precondition - what we registered for
     assert(p->has_tcp_data());

@@ -34,7 +34,7 @@
 #include "framework/module.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "utils/stats.h"
 
 #define DPX_GID 256

@@ -114,8 +114,8 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
     if (!pkt->flow || !pkt->ptrs.tcph)
         return 0;
 
-    PERF_PROFILE_BLOCK(streamReassembleRuleOptionPerfStats)
     {
+        Profile profile(streamReassembleRuleOptionPerfStats);
         Flow* lwssn = (Flow*)pkt->flow;
         TcpSession* tcpssn = (TcpSession*)lwssn->session;
 

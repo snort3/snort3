@@ -141,7 +141,7 @@ ReactAction::~ReactAction()
 
 void ReactAction::exec(Packet* p)
 {
-    PERF_PROFILE(reactPerfStats);
+    Profile profile(reactPerfStats);
 
     if ( Active::is_reset_candidate(p) )
         send(p);

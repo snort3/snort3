@@ -194,7 +194,7 @@ void snort_inspect(Packet* p)
     }
 #endif
 
-    PERF_PROFILE(eventqPerfStats);
+    Profile profile(eventqPerfStats);
     SnortEventqLog(p);
     SnortEventqReset();
 }
@@ -356,7 +356,7 @@ bool snort_detect(Packet* p)
         **  This is where we short circuit so
         **  that we can do IP checks.
         */
-        PERF_PROFILE(detectPerfStats);
+        Profile profile(detectPerfStats);
         return fpEvalPacket(p);
     }
 

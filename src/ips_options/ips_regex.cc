@@ -145,7 +145,7 @@ static int hs_match(
 
 int RegexOption::eval(Cursor& c, Packet*)
 {
-    PERF_PROFILE(regex_perf_stats);
+    Profile profile(regex_perf_stats);
 
     unsigned pos = c.get_delta();
 

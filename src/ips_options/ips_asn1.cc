@@ -167,7 +167,7 @@ bool Asn1Option::operator==(const IpsOption& rhs) const
 
 int Asn1Option::eval(Cursor& c, Packet* p)
 {
-    PERF_PROFILE(asn1PerfStats);
+    Profile profile(asn1PerfStats);
 
     //  Failed if there is no data to decode.
     if (!p->data)

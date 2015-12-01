@@ -126,7 +126,7 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
 
 int Base64DecodeOption::eval(Cursor& c, Packet*)
 {
-    PERF_PROFILE(base64PerfStats);
+    Profile profile(base64PerfStats);
 
 
 
@@ -296,7 +296,7 @@ public:
 
 int Base64DataOption::eval(Cursor& c, Packet*)
 {
-    PERF_PROFILE(base64PerfStats);
+    Profile profile(base64PerfStats);
 
     if ( !base64_decode_size )
         return DETECTION_OPTION_NO_MATCH;

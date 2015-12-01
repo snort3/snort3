@@ -385,10 +385,8 @@ int detection_option_node_evaluate(
     if ( !node )
         return 0;
 
-    dot_node_state_t* state = node->state + get_instance_id();
-
-    auto& node_stats = *state;
-    NODE_PERF_PROFILE(node_stats);
+    auto& state = node->state[get_instance_id()];
+    RuleContext profile(state);
 
     int result = 0;
     int rval = DETECTION_OPTION_NO_MATCH;
@@ -410,7 +408,7 @@ int detection_option_node_evaluate(
     // see if evaluated it before ...
     if ( !node->is_relative )
     {
-        auto last_check = state->last_check;
+        auto last_check = state.last_check;
 
         if ( last_check.ts == p->pkth->ts &&
              last_check.packet_number == cur_eval_pkt_count &&
@@ -426,10 +424,10 @@ int detection_option_node_evaluate(
         }
     }
 
-    state->last_check.ts = eval_data->p->pkth->ts;
-    state->last_check.packet_number = cur_eval_pkt_count;
-    state->last_check.flowbit_failed = 0;
-    state->last_check.rebuild_flag = p->packet_flags & PKT_REBUILT_STREAM;
+    state.last_check.ts = eval_data->p->pkth->ts;
+    state.last_check.packet_number = cur_eval_pkt_count;
+    state.last_check.flowbit_failed = 0;
+    state.last_check.rebuild_flag = p->packet_flags & PKT_REBUILT_STREAM;
 
     // Save some stuff off for repeated pattern tests
     bool try_again = false;
@@ -494,8 +492,8 @@ int detection_option_node_evaluate(
             int eval_rtn_result = 0;
 
             // Don't include RTN time
-            PERF_PAUSE_BLOCK(node_stats)
             {
+                TimePause profile_pause(profile);
                 eval_rtn_result = fpEvalRTN(getRuntimeRtnFromOtn(otn), p,
                     check_ports);
             }
@@ -574,7 +572,7 @@ int detection_option_node_evaluate(
 
         if ( rval == DETECTION_OPTION_NO_MATCH )
         {
-            state->last_check.result = result;
+            state.last_check.result = result;
             return result;
         }
 
@@ -582,8 +580,8 @@ int detection_option_node_evaluate(
         {
             eval_data->flowbit_failed = 1;
             // clear the timestamp so failed flowbit gets eval'd again
-            state->last_check.flowbit_failed = 1;
-            state->last_check.result = result;
+            state.last_check.flowbit_failed = 1;
+            state.last_check.result = result;
             return 0;
         }
 
@@ -608,19 +606,16 @@ int detection_option_node_evaluate(
             {
                 // bail if we exceeded time
 
-                // FIXIT-M J this is unconditional (match or no match) since this
-                // block is guaranteed to return
-                if ( result != DETECTION_OPTION_NO_MATCH )
-                    NODE_PERF_PROFILE_STOP_MATCH(node_stats);
+                profile.stop(result != DETECTION_OPTION_NO_MATCH);
 
-                state->last_check.result = result;
+                state.last_check.result = result;
                 return result;
             }
         }
 #endif
 
-        PERF_PAUSE_BLOCK(node_stats)
         {
+            TimePause profile_pause(profile);
             // Passed, check the children.
             if ( node->num_children )
             {
@@ -700,7 +695,7 @@ int detection_option_node_evaluate(
                         if ( PPM_PACKET_ABORT_FLAG() )
                         {
                             // bail if we exceeded time
-                            state->last_check.result = result;
+                            state.last_check.result = result;
                             return result;
                         }
                     }
@@ -743,13 +738,10 @@ int detection_option_node_evaluate(
         // We're essentially checking this node again and it potentially
         // might match again
         if ( continue_loop )
-            state->checks++;
+            state.checks++;
 
         loop_count++;
     }
-
-    // FIXIT-H What's the point of this?
-    // either it infinite loops, or effective no-op
     while ( continue_loop );
 
     if ( flowbits_setoperation && result == DETECTION_OPTION_MATCH )
@@ -765,19 +757,19 @@ int detection_option_node_evaluate(
     {
         // something deeper in the tree failed a flowbit test, we may need to
         // reeval this node
-        state->last_check.flowbit_failed = 1;
+        state.last_check.flowbit_failed = 1;
     }
 
-    state->last_check.result = result;
+    state.last_check.result = result;
 
-    NODE_PERF_PROFILE_STOP(node_stats, result != DETECTION_OPTION_NO_MATCH);
+    profile.stop(result != DETECTION_OPTION_NO_MATCH);
 
     return result;
 }
 
 struct node_profile_stats
 {
-    // FIXIT-L J should be use factored out field from dot_node_state_t
+    // FIXIT-L J duplicated from dot_node_state_t and OtnState
     hr_duration elapsed;
     hr_duration elapsed_match;
     hr_duration elapsed_no_match;
@@ -833,7 +825,10 @@ static void detection_option_node_update_otn_stats(
     if (node->option_type == RULE_OPTION_TYPE_LEAF_NODE)
     {
         /* Update stats for this otn */
-        // FIXIT-M should be sum of instances (only called from main thread)
+        // FIXIT-H J this should either be called from the packet threads at exit
+        // or *all* the states should get totalled by the main thread
+        // Right now, it looks like we're missing out on some stats although it's possible
+        // that this is "corrected" in the profiler code
         OptTreeNode* otn = (OptTreeNode*)node->option_data;
         OtnState* state = otn->state + get_instance_id();
         state->elapsed += local_stats.elapsed;

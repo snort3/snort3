@@ -244,7 +244,7 @@ void Normalizer::show(SnortConfig* sc)
 
 void Normalizer::eval(Packet* p)
 {
-    PERF_PROFILE(norm_perf_stats);
+    Profile profile(norm_perf_stats);
 
     if ( !p->is_rebuilt() && !Active::packet_was_dropped() )
         Norm_Packet(&config, p);

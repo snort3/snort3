@@ -21,6 +21,7 @@
 #include <luajit-2.0/lua.hpp>
 
 #include "main/snort_types.h"
+#include "main/thread.h"
 #include "helpers/chunk.h"
 #include "lua/lua.h"
 #include "managers/ips_manager.h"
@@ -187,7 +188,7 @@ bool LuaJitOption::operator==(const IpsOption& ips) const
 
 int LuaJitOption::eval(Cursor& c, Packet*)
 {
-    PERF_PROFILE(luaIpsPerfStats);
+    Profile profile(luaIpsPerfStats);
 
     cursor = &c;
 

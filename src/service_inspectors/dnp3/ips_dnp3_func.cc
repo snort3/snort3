@@ -74,7 +74,7 @@ bool Dnp3FuncOption::operator==(const IpsOption& ips) const
 
 int Dnp3FuncOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(dnp3_func_perf_stats);
+    Profile profile(dnp3_func_perf_stats);
 
     if ((p->has_tcp_data() && !p->is_full_pdu()) || !p->flow || !p->dsize)
         return DETECTION_OPTION_NO_MATCH;

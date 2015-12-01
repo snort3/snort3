@@ -251,7 +251,7 @@ ProfileStats* FtpDataModule::get_profile() const
 
 void FtpData::eval(Packet* p)
 {
-    PERF_PROFILE(ftpdataPerfStats);
+    Profile profile(ftpdataPerfStats);
 
     // precondition - what we registered for
     assert(p->has_tcp_data());

@@ -304,7 +304,7 @@ void PerfMonitor::tterm()
 
 void PerfMonitor::eval(Packet* p)
 {
-    PERF_PROFILE(perfmonStats);
+    Profile profile(perfmonStats);
 
     static THREAD_LOCAL bool first = true;
 

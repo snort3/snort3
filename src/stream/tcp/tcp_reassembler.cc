@@ -493,7 +493,7 @@ int TcpReassembler::flush_data_segments( Packet* p, uint32_t toSeq, uint8_t* flu
     DEBUG_WRAP( uint32_t bytes_queued = seg_bytes_logical; );
 
     assert( seglist.next );
-    PERF_PROFILE( s5TcpBuildPacketPerfStats );
+    Profile profile( s5TcpBuildPacketPerfStats );
 
     uint32_t total = toSeq - seglist.next->seq;
     while( SEQ_LT(seglist.next->seq, toSeq ) )
@@ -627,7 +627,7 @@ void TcpReassembler::prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags)
 
 int TcpReassembler::_flush_to_seq( uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
-    PERF_PROFILE(s5TcpFlushPerfStats);
+    Profile profile(s5TcpFlushPerfStats);
 
     uint32_t stop_seq;
     uint32_t footprint;
@@ -711,8 +711,8 @@ int TcpReassembler::_flush_to_seq( uint32_t bytes, Packet* p, uint32_t pkt_flags
             tcpStats.rebuilt_packets++;
             UpdateStreamReassStats( &sfBase, flushed_bytes );
 
-            PERF_PAUSE_BLOCK(s5TcpFlushPerfStats)
             {
+                ProfilePause profile_pause(profile);
                 Snort::detect_rebuilt_packet(s5_pkt);
             }
         }
@@ -942,7 +942,7 @@ uint32_t TcpReassembler::get_forward_packet_dir(const Packet* p)
 // because we don't wait until it is acknowledged
 uint32_t TcpReassembler::flush_pdu_ips( uint32_t* flags )
 {
-    PERF_PROFILE( s5TcpPAFPerfStats );
+    Profile profile( s5TcpPAFPerfStats );
 
     uint32_t total = 0, avail;
     TcpSegment* seg;
@@ -1012,7 +1012,7 @@ void TcpReassembler::fallback( void )
 
 uint32_t TcpReassembler::flush_pdu_ackd( uint32_t* flags )
 {
-    PERF_PROFILE(s5TcpPAFPerfStats);
+    Profile profile(s5TcpPAFPerfStats);
 
     uint32_t total = 0;
     TcpSegment* seg = SEQ_LT( seglist_base_seq, tracker->r_win_base ) ? seglist.head : nullptr;
@@ -1363,7 +1363,7 @@ int TcpReassembler::insert_segment_in_seglist( TcpDataBlock* tdb )
 
 int TcpReassembler::queue_packet_for_reassembly( TcpDataBlock* tdb )
 {
-    PERF_PROFILE( s5TcpInsertPerfStats );
+    Profile profile( s5TcpInsertPerfStats );
 
     int rc = STREAM_INSERT_OK;
 

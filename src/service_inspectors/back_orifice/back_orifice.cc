@@ -466,7 +466,7 @@ void BackOrifice::show(SnortConfig*)
 
 void BackOrifice::eval(Packet* p)
 {
-    PERF_PROFILE(boPerfStats);
+    Profile profile(boPerfStats);
 
     const char* const magic_cookie = "*!*QWTY?";
 

@@ -124,6 +124,9 @@ static THREAD_LOCAL Packet* s_packet = nullptr;
 // FIXIT-M move these to appropriate modules
 //-------------------------------------------------------------------------
 
+static THREAD_LOCAL ProfileStats totalPerfStats;
+static THREAD_LOCAL ProfileStats metaPerfStats;
+
 static ProfileStats* get_profile(const char* key)
 {
     if ( !strcmp(key, "detect") )
@@ -164,17 +167,17 @@ static ProfileStats* get_profile(const char* key)
 
 static void register_profiles()
 {
-    PerfProfilerManager::register_module("detect", nullptr, get_profile);
-    PerfProfilerManager::register_module("mpse", "detect", get_profile);
-    PerfProfilerManager::register_module("rebuilt_packet", "detect", get_profile);
-    PerfProfilerManager::register_module("rule_eval", "detect", get_profile);
-    PerfProfilerManager::register_module("rtn_eval", "rule_eval", get_profile);
-    PerfProfilerManager::register_module("rule_tree_eval", "rule_eval", get_profile);
-    PerfProfilerManager::register_module("nfp_rule_tree_eval", "rule_eval", get_profile);
-    PerfProfilerManager::register_module("decode", nullptr, get_profile);
-    PerfProfilerManager::register_module("eventq", nullptr, get_profile);
-    PerfProfilerManager::register_module("total", nullptr, get_profile);
-    PerfProfilerManager::register_module("daq_meta", nullptr, get_profile);
+    Profiler::register_module("detect", nullptr, get_profile);
+    Profiler::register_module("mpse", "detect", get_profile);
+    Profiler::register_module("rebuilt_packet", "detect", get_profile);
+    Profiler::register_module("rule_eval", "detect", get_profile);
+    Profiler::register_module("rtn_eval", "rule_eval", get_profile);
+    Profiler::register_module("rule_tree_eval", "rule_eval", get_profile);
+    Profiler::register_module("nfp_rule_tree_eval", "rule_eval", get_profile);
+    Profiler::register_module("decode", nullptr, get_profile);
+    Profiler::register_module("eventq", nullptr, get_profile);
+    Profiler::register_module("total", nullptr, get_profile);
+    Profiler::register_module("daq_meta", nullptr, get_profile);
 }
 
 //-------------------------------------------------------------------------
@@ -667,7 +670,7 @@ void Snort::thread_term()
 
     DAQ_Delete();
 
-    PerfProfilerManager::consolidate_stats();
+    Profiler::consolidate_stats();
 
     otnx_match_data_term();
     detection_filter_term();
@@ -681,8 +684,8 @@ void Snort::thread_term()
 void Snort::detect_rebuilt_packet(Packet* p)
 {
     // Need to include this b/c call is outside the detect tree
-    PERF_PROFILE(detectPerfStats);
-    PERF_PROFILE(rebuiltPacketPerfStats);
+    Profile detect_profile(detectPerfStats);
+    Profile rebuilt_profile(rebuiltPacketPerfStats);
 
     int tmp_do_detect = do_detect;
     int tmp_do_detect_content = do_detect_content;
@@ -793,7 +796,7 @@ static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
 DAQ_Verdict Snort::packet_callback(
     void*, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
-    PERF_PROFILE(totalPerfStats);
+    Profile profile(totalPerfStats);
 
     pc.total_from_daq++;
     rule_eval_pkt_count++;
@@ -802,8 +805,8 @@ DAQ_Verdict Snort::packet_callback(
     if ( snort_conf->pkt_skip && pc.total_from_daq <= snort_conf->pkt_skip )
         return DAQ_VERDICT_PASS;
 
-    PERF_PROFILE_BLOCK(eventqPerfStats)
     {
+        Profile eventq_profile(eventqPerfStats);
         SnortEventqReset();
     }
 

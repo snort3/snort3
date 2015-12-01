@@ -37,7 +37,7 @@
 #include "hash/sfhashfcn.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 static const char* s_name = "urg";
 static const char* s_help = "detection for TCP urgent pointer";
@@ -88,7 +88,7 @@ bool TcpUrgOption::operator==(const IpsOption& ips) const
 
 int TcpUrgOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(tcpUrgPerfStats);
+    Profile profile(tcpUrgPerfStats);
 
     int rval = DETECTION_OPTION_NO_MATCH;
 

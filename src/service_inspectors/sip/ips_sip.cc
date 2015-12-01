@@ -100,7 +100,7 @@ private:
 
 int SipIpsOption::eval(Cursor& c, Packet* p)
 {
-    PERF_PROFILE_THREAD_LOCAL(sip_ps, idx);
+    Profile profile(sip_ps[idx]);
 
     SIPData* sd;
     SIP_Roptions* ropts;

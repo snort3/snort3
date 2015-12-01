@@ -109,7 +109,7 @@ bool IcmpSeqOption::operator==(const IpsOption& ips) const
 
 int IcmpSeqOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(icmpSeqPerfStats);
+    Profile profile(icmpSeqPerfStats);
 
     if (!p->ptrs.icmph)
         return DETECTION_OPTION_NO_MATCH;

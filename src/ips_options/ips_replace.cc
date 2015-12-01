@@ -160,7 +160,7 @@ bool ReplaceOption::operator==(const IpsOption& ips) const
 
 int ReplaceOption::eval(Cursor& c, Packet* p)
 {
-    PERF_PROFILE(replacePerfStats);
+    Profile profile(replacePerfStats);
 
     if ( p->is_cooked() )
         return false;
@@ -178,7 +178,7 @@ int ReplaceOption::eval(Cursor& c, Packet* p)
 
 void ReplaceOption::action(Packet*)
 {
-    PERF_PROFILE(replacePerfStats);
+    Profile profile(replacePerfStats);
 
     if ( pending() )
         Replace_QueueChange(repl, (unsigned)pos());

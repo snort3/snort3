@@ -70,6 +70,16 @@ struct OtnState
     // ppm
     uint64_t ppm_suspend_time;
     uint64_t ppm_disable_cnt;
+
+    operator bool() const
+    { return elapsed > 0_ticks || checks > 0; }
+
+    void reset()
+    {
+        elapsed = elapsed_match = elapsed_no_match = 0_ticks;
+        checks = matches = noalerts = alerts = 0;
+        ppm_suspend_time = ppm_disable_cnt = 0;
+    }
 };
 
 // one of these for each rule

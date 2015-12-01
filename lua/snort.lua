@@ -51,11 +51,10 @@ dofile(conf_dir .. '/file_magic.lua')
 -- uncomment ppm if you built with --enable-ppm
 --ppm = { }
 
--- uncomment profile if you built with --enable-perfprofile
---profile = { }
-
 -- uncomment normalizer if you are inline or not --pedantic
 --normalizer = { }
+
+profiler = { }
 
 stream = { }
 stream_ip = { }

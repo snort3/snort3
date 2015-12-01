@@ -139,7 +139,7 @@ bool IpSession::setup(Packet*)
 
 int IpSession::process(Packet* p)
 {
-    PERF_PROFILE(ip_perf_stats);
+    Profile profile(ip_perf_stats);
 
     if ( stream.expired_session(flow, p) )
     {

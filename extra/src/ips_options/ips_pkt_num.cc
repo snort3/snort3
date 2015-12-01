@@ -37,7 +37,7 @@
 #include "hash/sfhashfcn.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "utils/stats.h"
 
 static const char* s_name = "pkt_num";
@@ -89,7 +89,7 @@ bool PktNumOption::operator==(const IpsOption& ips) const
 
 int PktNumOption::eval(Cursor&, Packet*)
 {
-    PERF_PROFILE(pkt_num_perf_stats);
+    ProfileContext profile(pkt_num_perf_stats);
 
     int rval;
 

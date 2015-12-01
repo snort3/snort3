@@ -296,7 +296,7 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
 
 int ByteTestOption::eval(Cursor& c, Packet*)
 {
-    PERF_PROFILE(byteTestPerfStats);
+    Profile profile(byteTestPerfStats);
 
     ByteTestData* btd = (ByteTestData*)&config;
     uint32_t cmp_value = 0;

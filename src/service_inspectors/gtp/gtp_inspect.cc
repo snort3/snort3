@@ -88,7 +88,7 @@ GtpInspect::GtpInspect(std::vector<GtpStuff>& v)
 
 void GtpInspect::eval(Packet* p)
 {
-    PERF_PROFILE(gtp_inspect_prof);
+    Profile profile(gtp_inspect_prof);
 
     // preconditions - what we registered for
     assert(p->has_udp_data());

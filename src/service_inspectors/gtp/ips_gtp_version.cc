@@ -79,7 +79,7 @@ bool GtpVersionOption::operator==(const IpsOption& ips) const
 
 int GtpVersionOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(gtp_ver_prof);
+    Profile profile(gtp_ver_prof);
 
     if ( !p or !p->flow )
         return DETECTION_OPTION_NO_MATCH;

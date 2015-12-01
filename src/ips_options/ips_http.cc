@@ -92,7 +92,7 @@ private:
 
 int HttpIpsOption::eval(Cursor& c, Packet* p)
 {
-    PERF_PROFILE_THREAD_LOCAL(http_ps, idx);
+    Profile profile(http_ps[idx]);
 
     InspectionBuffer hb;
 

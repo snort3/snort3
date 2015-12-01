@@ -178,7 +178,7 @@ void ArpSpoof::show(SnortConfig*)
 
 void ArpSpoof::eval(Packet* p)
 {
-    PERF_PROFILE(arpPerfStats);
+    Profile profile(arpPerfStats);
 
     // preconditions - what we registered for
     assert(p->type() == PktType::ARP);

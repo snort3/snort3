@@ -610,11 +610,10 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             return 0;
         }
         // see comments on call to snort_detect() below
-        PERF_PROFILE_BLOCK(hiDetectPerfStats)
         {
+            Profile profile(hiDetectPerfStats);
             get_data_bus().publish(PACKET_EVENT, p);
-            // FIXIT-L J should be a bool
-            hiDetectCalled = 1;
+            hiDetectCalled = true;
         }
 
         return 0;
@@ -1104,10 +1103,10 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
         **  better than having all these Packet struct field checks in the
         **  main detection engine for each protocol field.
         */
-        PERF_PROFILE_BLOCK(hiDetectPerfStats)
         {
+            Profile profile(hiDetectPerfStats);
             snort_detect(p);
-            hiDetectCalled = 1;
+            hiDetectCalled = true;
         }
 
         /*

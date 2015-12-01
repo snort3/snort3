@@ -69,7 +69,7 @@ public:
 
 void Modbus::eval(Packet* p)
 {
-    PERF_PROFILE(modbus_prof);
+    Profile profile(modbus_prof);
 
     // preconditions - what we registered for
     assert(p->has_tcp_data());

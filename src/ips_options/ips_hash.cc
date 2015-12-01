@@ -200,7 +200,7 @@ int HashOption::match(Cursor& c)
 
 int HashOption::eval(Cursor& c, Packet*)
 {
-    PERF_PROFILE_THREAD_LOCAL(hash_ps, idx);
+    Profile profile(hash_ps[idx]);
 
     int found = match(c);
 

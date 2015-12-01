@@ -784,7 +784,7 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
     ModHook* mh = new ModHook(m, b);
     s_modules.push_back(mh);
 
-    PerfProfilerManager::register_module(m);
+    Profiler::register_module(m);
 }
 
 Module* ModuleManager::get_module(const char* s)

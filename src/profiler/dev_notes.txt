@@ -1,3 +1,34 @@
 Performance Profiling provides facilities for evaluating the performance of
 individual components of snort. It manages the collection of profiling statistics,
 as well as the display of those statistics at shutdown.
+
+This module provides a data structure (called ProfileStats) which stores
+information about timing and entry counts. Similar data structures exist
+for accumulating rule profiling and can be found in the detection/ subdirectory.
+
+To facilitate accumulation of these statistics, this module provides a
+class called ProfileContext (aliased as Profile). Instantiating this
+class at the top of a scope allows for the automatic accumulation of
+statistics for a given ProfileStats struct upon scope exit.
+
+At startup, ProfileStats structs for different modules are registered
+via one of the Profiler::register_* functions. Internally, this
+defines a tree hierarchy of statistics intended to reflect the
+call graph of the different modules being profiled.
+
+Right before the packet threads are joined,
+ProfileStats for different thread-local statistics are consolidated
+in the internal tree. If configured to output statistics,
+this tree is traversed at shutdown and the statistics are displayed.
+
+Rule profiling is slightly different in that instead of a tree,
+a flat list of evaluated rules is output at shutdown.
+Additionally, rule profiling uses different accumulation logic.
+This logic is currently shared between the detection/ and profiler/
+subdirectory.
+
+Notes:
+* statistics are *always* accumulated, regardless of whether
+  profiler output is enabled.
+
+* by default, output is sorted by total_time

@@ -68,7 +68,7 @@ bool ModbusDataOption::operator==(const IpsOption& ips) const
 
 int ModbusDataOption::eval(Cursor& c, Packet* p)
 {
-    PERF_PROFILE(modbus_data_prof);
+    Profile profile(modbus_data_prof);
 
     if ( !p->flow )
         return DETECTION_OPTION_NO_MATCH;

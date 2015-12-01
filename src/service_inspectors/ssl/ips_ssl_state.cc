@@ -98,7 +98,7 @@ bool SslStateOption::operator==(const IpsOption& ips) const
 
 int SslStateOption::eval(Cursor&, Packet* pkt)
 {
-    PERF_PROFILE(sslStateRuleOptionPerfStats);
+    Profile profile(sslStateRuleOptionPerfStats);
 
     if ( !(pkt->packet_flags & PKT_REBUILT_STREAM) && !pkt->is_full_pdu() )
         return DETECTION_OPTION_NO_MATCH;

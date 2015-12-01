@@ -1022,7 +1022,7 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
 
 static void snort_dns(Packet* p)
 {
-    PERF_PROFILE(dnsPerfStats);
+    Profile profile(dnsPerfStats);
 
     // For TCP, do a few extra checks...
     if ( p->has_tcp_data() )

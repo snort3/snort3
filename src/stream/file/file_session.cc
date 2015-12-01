@@ -72,7 +72,7 @@ static FilePosition position(Packet* p)
 
 int FileSession::process(Packet* p)
 {
-    PERF_PROFILE(file_ssn_stats);
+    Profile profile(file_ssn_stats);
 
     p->flow->ssn_state.application_protocol = SNORT_PROTO_USER;
     StreamFileConfig* c = get_file_cfg(p->flow->ssn_server);

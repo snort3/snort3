@@ -141,7 +141,7 @@ static unsigned int SSHPacket_GetLength(SSH2Packet* p, size_t buflen)
  */
 static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
 {
-    PERF_PROFILE(sshPerfStats);
+    Profile profile(sshPerfStats);
 
     // Attempt to get a previously allocated SSH block.
     SSHData* sessp = get_session_data(p->flow);

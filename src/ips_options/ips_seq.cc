@@ -82,7 +82,7 @@ bool TcpSeqOption::operator==(const IpsOption& ips) const
 
 int TcpSeqOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(tcpSeqPerfStats);
+    Profile profile(tcpSeqPerfStats);
 
     if (!p->ptrs.tcph)
         return DETECTION_OPTION_NO_MATCH;

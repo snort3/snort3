@@ -206,7 +206,7 @@ LuaJitLogger::~LuaJitLogger()
 
 void LuaJitLogger::alert(Packet* p, const char*, Event* e)
 {
-    PERF_PROFILE(luaLogPerfStats);
+    Profile profile(luaLogPerfStats);
 
     packet = p;
     event = e;

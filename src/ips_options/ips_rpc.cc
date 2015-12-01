@@ -121,7 +121,7 @@ bool RpcOption::operator==(const IpsOption& ips) const
 
 int RpcOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(rpcCheckPerfStats);
+    Profile profile(rpcCheckPerfStats);
 
     RpcCheckData* ds_ptr = &config;
 

@@ -120,6 +120,7 @@ struct srmm_table_t;
 struct sopg_table_t;
 struct PORT_RULE_MAP;
 struct SFXHASH;
+struct ProfilerConfig;
 
 SO_PUBLIC extern THREAD_LOCAL struct SnortConfig* snort_conf;
 
@@ -322,8 +323,7 @@ public:
     //------------------------------------------------------
     // deliberately not conditional
     // to avoid plugin compatibility issues
-    struct ProfileConfig* profile_rules = nullptr;
-    struct ProfileConfig* profile_modules = nullptr;
+    ProfilerConfig* profiler = nullptr;
 
     struct ppm_cfg_t* ppm_cfg = nullptr;
     struct _IntelPmHandles* ipm_handles = nullptr;
@@ -545,13 +545,8 @@ public:
     static long int get_pcre_match_limit_recursion()
     { return snort_conf->pcre_match_limit_recursion; }
 
-    // FIXIT-H J No longer necessary, since this is always true
-    // or, we make it conditional on definition of table in lua
-    static bool get_profile_modules()
-    { return snort_conf->profile_modules; }
-
-    static bool get_profile_rules()
-    { return snort_conf->profile_rules; }
+    static const ProfilerConfig* get_profiler()
+    { return snort_conf->profiler; }
 
     static long int get_tagged_packet_limit()
     { return snort_conf->tagged_packet_limit; }

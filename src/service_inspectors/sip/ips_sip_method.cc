@@ -99,7 +99,7 @@ bool SipMethodOption::operator==(const IpsOption& ips) const
 
 int SipMethodOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(sipMethodRuleOptionPerfStats);
+    Profile profile(sipMethodRuleOptionPerfStats);
 
     if ((!p->is_tcp() && !p->is_udp()) || !p->flow || !p->dsize)
         return DETECTION_OPTION_NO_MATCH;

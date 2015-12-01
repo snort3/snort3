@@ -37,7 +37,7 @@
 #include "main/snort_types.h"
 #include "log/messages.h"
 #include "framework/mpse.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 
 //-------------------------------------------------------------------------
 // "lowmem"

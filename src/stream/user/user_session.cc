@@ -464,7 +464,7 @@ StreamSplitter* UserSession::get_splitter(bool c2s)
 
 int UserSession::process(Packet* p)
 {
-    PERF_PROFILE(user_perf_stats);
+    Profile profile(user_perf_stats);
 
     if ( stream.expired_session(flow, p) )
     {

@@ -35,7 +35,7 @@
 #include "log/messages.h"
 #include "log/text_log.h"
 #include "protocols/packet.h"
-#include "time/profiler.h"
+#include "profiler/profiler.h"
 #include "utils/stats.h"
 #include "flow/flow.h"
 #include "sfip/sfip_t.h"

@@ -895,7 +895,7 @@ static void ProcessTcpStream(TcpTracker *rcv, TcpSession *tcpssn, TcpDataBlock *
 static int ProcessTcpData(TcpTracker *listener, TcpSession *tcpssn,
         TcpDataBlock *tdb, StreamTcpConfig *config)
 {
-    PERF_PROFILE(s5TcpDataPerfStats);
+    Profile profile(s5TcpDataPerfStats);
 
     const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
     uint32_t seq = tdb->seq;
@@ -1175,7 +1175,7 @@ static void NewTcpSession(Packet* p, Flow* flow, StreamTcpConfig* dstPolicy, Tcp
 
 static void NewTcpSessionOnSyn(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* dstPolicy)
 {
-    PERF_PROFILE(s5TcpNewSessPerfStats);
+    Profile profile(s5TcpNewSessPerfStats);
 
     const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
     TcpSession* tss;
@@ -1228,7 +1228,7 @@ static void NewTcpSessionOnSyn(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* d
 
 static void NewTcpSessionOnSynAck(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* dstPolicy)
 {
-    PERF_PROFILE(s5TcpNewSessPerfStats);
+    Profile profile(s5TcpNewSessPerfStats);
 
     const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
     TcpSession* tss;
@@ -1280,7 +1280,7 @@ static void NewTcpSessionOnSynAck(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig
 static void NewTcpSessionOn3Way(Flow* flow, TcpDataBlock* tdb,
         StreamTcpConfig* dstPolicy)
 {
-    PERF_PROFILE(s5TcpNewSessPerfStats);
+    Profile profile(s5TcpNewSessPerfStats);
 
     const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
     TcpSession* tss;
@@ -1330,7 +1330,7 @@ static void NewTcpSessionOn3Way(Flow* flow, TcpDataBlock* tdb,
 
 static void NewTcpSessionOnData(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* dstPolicy)
 {
-    PERF_PROFILE(s5TcpNewSessPerfStats);
+    Profile profile(s5TcpNewSessPerfStats);
 
     const tcp::TCPHdr* tcph = tdb->pkt->ptrs.tcph;
     TcpSession* tss;
@@ -1423,7 +1423,7 @@ static void NewTcpSessionOnData(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* 
 
 static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
 {
-    PERF_PROFILE(s5TcpStatePerfStats);
+    Profile profile(s5TcpStatePerfStats);
 
     int retcode = ACTION_NOTHING;
     int eventcode = 0;
@@ -2879,7 +2879,7 @@ void TcpSession::SwapPacketHeaderFoo( void )
  */
 int TcpSession::process(Packet* p)
 {
-    PERF_PROFILE(s5TcpPerfStats);
+    Profile profile(s5TcpPerfStats);
 
     TcpDataBlock tdb;
     int status;

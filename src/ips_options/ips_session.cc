@@ -137,7 +137,7 @@ bool SessionOption::operator==(const IpsOption& ips) const
 
 int SessionOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(sessionPerfStats);
+    Profile profile(sessionPerfStats);
 
     SessionData* session_data = &config;
 

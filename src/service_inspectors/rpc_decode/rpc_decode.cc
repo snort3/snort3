@@ -988,7 +988,7 @@ void RpcDecode::show(SnortConfig*)
  */
 void RpcDecode::eval(Packet* p)
 {
-    PERF_PROFILE(rpcdecodePerfStats);
+    Profile profile(rpcdecodePerfStats);
 
     // preconditions - what we registered for
     assert(p->has_tcp_data());

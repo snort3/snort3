@@ -22,6 +22,10 @@
 
 #include <chrono>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "clock_defs.h"
 
 class Stopwatch
@@ -56,7 +60,7 @@ public:
         return elapsed;
     }
 
-    bool alive() const
+    bool active() const
     { return running; }
 
     void reset()
@@ -66,8 +70,13 @@ public:
     { running = false; }
 
 private:
+// Dirty, dirty hack to get Catch unit test visibility
+#ifdef UNIT_TEST
+    hr_duration get_delta() const;
+#else
     hr_duration get_delta() const
     { return hr_clock::now() - start_time; }
+#endif
 
     hr_duration elapsed;
     bool running;

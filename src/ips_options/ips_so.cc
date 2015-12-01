@@ -28,6 +28,7 @@ using namespace std;
 
 #include "framework/parameter.h"
 #include "framework/module.h"
+#include "main/thread.h"
 #include "managers/so_manager.h"
 #include "hash/sfhashfcn.h"
 #include "log/messages.h"
@@ -96,7 +97,7 @@ bool SoOption::operator==(const IpsOption& ips) const
 
 int SoOption::eval(Cursor& c, Packet* p)
 {
-    PERF_PROFILE(soPerfStats);
+    Profile profile(soPerfStats);
     return func(data, c, p);
 }
 

@@ -400,7 +400,7 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
 
 static int CheckANDPatternMatch(ContentData* idx, Cursor& c)
 {
-    PERF_PROFILE(contentPerfStats);
+    Profile profile(contentPerfStats);
 
     DebugMessage(DEBUG_PATTERN_MATCH, "CheckPatternANDMatch: ");
 

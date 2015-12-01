@@ -82,7 +82,7 @@ bool TcpWinOption::operator==(const IpsOption& ips) const
 
 int TcpWinOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(tcpWinPerfStats);
+    Profile profile(tcpWinPerfStats);
 
     if (!p->ptrs.tcph)
         return DETECTION_OPTION_NO_MATCH;

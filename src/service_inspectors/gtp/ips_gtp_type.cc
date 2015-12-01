@@ -100,7 +100,7 @@ bool GtpTypeOption::operator==(const IpsOption& ips) const
 
 int GtpTypeOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(gtp_type_prof);
+    Profile profile(gtp_type_prof);
 
     if ( !p or !p->flow )
         return DETECTION_OPTION_NO_MATCH;

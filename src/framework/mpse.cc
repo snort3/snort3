@@ -49,7 +49,7 @@ int Mpse::search(
     const unsigned char* T, int n, MpseMatch match,
     void* context, int* current_state)
 {
-    PERF_PROFILE(mpsePerfStats);
+    Profile profile(mpsePerfStats);
 
     int ret = _search(T, n, match, context, current_state);
 

@@ -185,7 +185,7 @@ RawData::RawData(const DAQ_PktHdr_t* h, const uint8_t* p)
 void PacketManager::decode(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, bool cooked)
 {
-    PERF_PROFILE(decodePerfStats);
+    Profile profile(decodePerfStats);
 
     DecodeData unsure_encap_ptrs;
 

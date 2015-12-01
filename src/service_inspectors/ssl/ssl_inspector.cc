@@ -297,7 +297,7 @@ static inline void SSLPP_process_other(SSL_PROTO_CONF* config, SSLData* sd, uint
  */
 static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 {
-    PERF_PROFILE(sslPerfStats);
+    Profile profile(sslPerfStats);
 
     /* Attempt to get a previously allocated SSL block. */
     SSLData* sd = get_ssl_session_data(p->flow);

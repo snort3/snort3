@@ -96,7 +96,7 @@ bool SizeOption::operator==(const IpsOption& ips) const
 
 int SizeOption::eval(Cursor&, Packet* pkt)
 {
-    PERF_PROFILE(streamSizePerfStats);
+    Profile profile(streamSizePerfStats);
 
     if (!pkt->flow || !pkt->ptrs.tcph)
         return DETECTION_OPTION_NO_MATCH;

@@ -369,8 +369,8 @@ int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, const OptTreeNode* otn)
 */
 int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 {
-    PERF_PROFILE(rulePerfStats);
-    PERF_PROFILE(ruleRTNEvalPerfStats);
+    Profile rule_profile(rulePerfStats);
+    Profile rule_rtn_eval_profile(ruleRTNEvalPerfStats);
 
     if ( !rtn )
         return 0;
@@ -474,8 +474,8 @@ static int rule_tree_match(
     eval_data.flowbit_failed = 0;
     eval_data.flowbit_noalert = 0;
 
-    PERF_PROFILE_BLOCK(rulePerfStats)
     {
+        Profile rule_profile(rulePerfStats);
         /* NOTE: The otn will be the first one in the match state. If there are
          * multiple rules associated with a match state, mucking with the otn
          * may muck with an unintended rule */
@@ -499,8 +499,8 @@ static int rule_tree_match(
         }
 
         int ret = 0;
-        PERF_PROFILE_BLOCK(ruleOTNEvalPerfStats)
         {
+            Profile rule_otn_eval_profile(ruleOTNEvalPerfStats);
             ret = detection_option_tree_evaluate(root, &eval_data);
         }
 
@@ -1029,9 +1029,9 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
             eval_data.flowbit_noalert = 0;
 
             int rval = 0;
-            PERF_PROFILE_BLOCK(rulePerfStats)
-            PERF_PROFILE_BLOCK(ruleNFPEvalPerfStats)
             {
+                Profile rule_profile(rulePerfStats);
+                Profile rule_nfp_eval_profile(ruleNFPEvalPerfStats);
                 rval = detection_option_tree_evaluate(
                     (detection_option_tree_root_t*)port_group->nfp_tree, &eval_data);
             }

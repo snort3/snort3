@@ -243,7 +243,7 @@ void StreamBase::show(SnortConfig*)
 
 void StreamBase::eval(Packet* p)
 {
-    PERF_PROFILE(s5PerfStats);
+    Profile profile(s5PerfStats);
 
     if ( !is_eligible(p) )
         return;

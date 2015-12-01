@@ -235,7 +235,7 @@ void Dnp3::show(SnortConfig*)
 
 void Dnp3::eval(Packet* p)
 {
-    PERF_PROFILE(dnp3_perf_stats);
+    Profile profile(dnp3_perf_stats);
 
     assert (p->has_tcp_data() || p->has_udp_data());
     assert(p->flow);

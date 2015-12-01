@@ -312,88 +312,91 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
     return true;
 }
 
-//-------------------------------------------------------------------------
-// profile module
-//-------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// profiler module
+// -----------------------------------------------------------------------------
 
-static const Parameter profile_rule_params[] =
+static const Parameter profiler_time_params[] =
 {
-    { "count", Parameter::PT_INT, "-1:", "-1",
-      "print results to given level (-1 = all, 0 = off)" },
+    { "show", Parameter::PT_BOOL, nullptr, "true",
+      "show module time profile stats" },
+
+    { "count", Parameter::PT_INT, "0:", "0",
+      "print results to given level (0 = all)" },
 
     { "sort", Parameter::PT_ENUM,
-      "checks | avg_ticks | total_ticks | matches | no_matches | "
-      "avg_ticks_per_match | avg_ticks_per_no_match",
-      "avg_ticks", "sort by given field" },
+      "none | checks | avg_check | total_time ",
+      "total_time", "sort by given field" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter profile_module_params[] =
+static const Parameter profiler_rule_params[] =
 {
-    { "count", Parameter::PT_INT, "-1:", "-1",
-      "print results to given level (-1 = all, 0 = off)" },
+    { "show", Parameter::PT_BOOL, nullptr, "true",
+      "show rule time profile stats" },
+
+    { "count", Parameter::PT_INT, "0:", "0",
+      "print results to given level (0 = all)" },
 
     { "sort", Parameter::PT_ENUM,
-      "checks | avg_ticks | total_ticks", "avg_ticks",
-      "sort by given field" },
+      "none | checks | avg_check | total_time | matches | no_matches | "
+      "avg_match | avg_no_match",
+      "total_time", "sort by given field" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter profile_params[] =
+static const Parameter profiler_params[] =
 {
-    { "rules", Parameter::PT_TABLE, profile_rule_params, nullptr,
+    // FIXIT-L J rename to time or vice-versa?
+    { "modules", Parameter::PT_TABLE, profiler_time_params, nullptr,
       "" },
 
-    { "modules", Parameter::PT_TABLE, profile_module_params, nullptr,
+    { "rules", Parameter::PT_TABLE, profiler_rule_params, nullptr,
       "" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-#define profile_help \
-    "configure profiling of rules and/or modules (requires --enable-perf-profiling)"
+#define profiler_help \
+    "configure profiling of rules and/or modules"
 
-class ProfileModule : public Module
+template<typename T>
+static bool s_profiler_module_set(T& config, Value& v)
 {
-public:
-    ProfileModule() : Module("profile", profile_help, profile_params) { }
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-};
+    if ( v.is("count") )
+        config.count = v.get_long();
 
-bool ProfileModule::begin(const char* fqn, int, SnortConfig* sc)
-{
-    if ( !strcmp(fqn, "profile.rules") )
-        sc->profile_rules->count = -1;
+    else if ( v.is("show") )
+        config.show = v.get_bool();
 
-    else if ( !strcmp(fqn, "profile.modules") )
-        sc->profile_modules->count = -1;
-
-    return true;
-}
-
-bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
-{
-    ProfileConfig* p;
-    const char* spr = "profile.rules";
-    const char* spp = "profile.modules";
-
-    if ( !strncmp(fqn, spr, strlen(spr)) )
-        p = sc->profile_rules;
-
-    else if ( !strncmp(fqn, spp, strlen(spp)) )
-        p = sc->profile_modules;
+    else if ( v.is("sort") )
+        config.sort = static_cast<typename T::Sort>(v.get_long());
 
     else
         return false;
 
-    if ( v.is("count") )
-        p->count = v.get_long();
+    return true;
+}
 
-    else if ( v.is("sort") )
-        p->sort = static_cast<ProfileSort>(v.get_long() + 1);
+class ProfilerModule : public Module
+{
+public:
+    ProfilerModule() : Module("profiler", profiler_help, profiler_params) { }
+    bool set(const char*, Value&, SnortConfig*) override;
+};
+
+bool ProfilerModule::set(const char* fqn, Value& v, SnortConfig* sc)
+{
+    const char* spm = "profiler.modules";
+    const char* spr = "profiler.rules";
+
+    if ( !strncmp(fqn, spm, strlen(spr)) )
+        return s_profiler_module_set(sc->profiler->time, v);
+
+    else if ( !strncmp(fqn, spr, strlen(spr)) )
+        return s_profiler_module_set(sc->profiler->rule, v);
 
     else
         return false;
@@ -2002,7 +2005,7 @@ void module_init()
     ModuleManager::add_module(new DetectionModule);
     ModuleManager::add_module(new PacketsModule);
     ModuleManager::add_module(new ProcessModule);
-    ModuleManager::add_module(new ProfileModule);
+    ModuleManager::add_module(new ProfilerModule);
     ModuleManager::add_module(new ReferencesModule);
     ModuleManager::add_module(new RuleStateModule);
     ModuleManager::add_module(new SearchEngineModule);

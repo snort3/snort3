@@ -95,7 +95,7 @@ private:
 
 void RejectAction::exec(Packet* p)
 {
-    PERF_PROFILE(rejPerfStats);
+    Profile profile(rejPerfStats);
     send(p);
 }
 

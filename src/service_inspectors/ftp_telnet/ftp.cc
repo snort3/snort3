@@ -73,7 +73,7 @@ static inline int InspectClientPacket(Packet* p)
 static int SnortFTP(
     FTP_SESSION* FTPsession, Packet* p, int iInspectMode)
 {
-    PERF_PROFILE(ftpPerfStats);
+    Profile profile(ftpPerfStats);
 
     if ( !FTPsession || !FTPsession->server_conf || !FTPsession->client_conf )
         return FTPP_INVALID_SESSION;

@@ -58,7 +58,7 @@ public:
 
 int FileDataOption::eval(Cursor& c, Packet*)
 {
-    PERF_PROFILE(fileDataPerfStats);
+    Profile profile(fileDataPerfStats);
 
     uint8_t* data = g_file_data.data;
     uint16_t len = g_file_data.len;

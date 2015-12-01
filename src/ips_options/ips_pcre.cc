@@ -570,7 +570,7 @@ bool PcreOption::operator==(const IpsOption& ips) const
 
 int PcreOption::eval(Cursor& c, Packet*)
 {
-    PERF_PROFILE(pcrePerfStats);
+    Profile profile(pcrePerfStats);
 
     PcreData* pcre_data = config;
 

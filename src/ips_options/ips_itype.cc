@@ -83,7 +83,7 @@ bool IcmpTypeOption::operator==(const IpsOption& ips) const
 
 int IcmpTypeOption::eval(Cursor&, Packet* p)
 {
-    PERF_PROFILE(icmpTypePerfStats);
+    Profile profile(icmpTypePerfStats);
 
     // return 0 if we don't have an icmp header
     if (!p->ptrs.icmph)

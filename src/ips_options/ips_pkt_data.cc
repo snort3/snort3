@@ -48,7 +48,7 @@ public:
 
 int PktDataOption::eval(Cursor& c, Packet* p)
 {
-    PERF_PROFILE(pktDataPerfStats);
+    Profile profile(pktDataPerfStats);
 
     c.reset(p);
     return DETECTION_OPTION_MATCH;

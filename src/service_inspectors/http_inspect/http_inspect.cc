@@ -99,7 +99,7 @@ const PegInfo peg_names[] =
     { nullptr, nullptr }
 };
 
-THREAD_LOCAL int hiDetectCalled = 0;
+THREAD_LOCAL bool hiDetectCalled = false;
 
 /*
 ** Prototypes
@@ -318,7 +318,7 @@ void HttpInspect::show(SnortConfig*)
 
 void HttpInspect::eval(Packet* p)
 {
-    PERF_PROFILE(hiPerfStats);
+    Profile profile(hiPerfStats);
 
     // preconditions - what we registered for
     assert(p->has_tcp_data());
@@ -338,11 +338,13 @@ void HttpInspect::eval(Packet* p)
      * spent in snort_detect().
      * Subtract the ticks from this if iCallDetect == 0
      */
-    if (hiDetectCalled)
+    // FIXIT-M J need better a way to pause a profiler when the context
+    // is not visible from the current scope
+    if ( hiDetectCalled )
     {
-        hiPerfStats.elapsed -= hiDetectPerfStats.elapsed;
-        hiDetectPerfStats.reset();
-        hiDetectCalled = 0;
+        hiPerfStats.time.elapsed -= hiDetectPerfStats.time.elapsed;
+        hiDetectPerfStats.time.reset();
+        hiDetectCalled = false;
     }
 }
 

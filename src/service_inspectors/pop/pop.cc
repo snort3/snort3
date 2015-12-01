@@ -714,7 +714,7 @@ void Pop::show(SnortConfig*)
 
 void Pop::eval(Packet* p)
 {
-    PERF_PROFILE(popPerfStats);
+    Profile profile(popPerfStats);
 
     // precondition - what we registered for
     assert(p->has_tcp_data());
