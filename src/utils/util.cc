@@ -52,6 +52,10 @@
 #include <lzma.h>
 #endif
 
+#ifdef HAVE_HYPERSCAN
+#include <hs/hs_compile.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
@@ -123,8 +127,8 @@ int DisplayBanner(void)
         VERSION, BUILD, info);
     LogMessage("   ''''    By Martin Roesch & The Snort Team\n");
     LogMessage("           http://snort.org/contact#team\n");
-    LogMessage(
-        "           Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.\n");
+    LogMessage("           Copyright (C) 2014-2015 Cisco and/or its affiliates."
+                           " All rights reserved.\n");
     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
 #ifdef HAVE_PCAP_LIB_VERSION
     LogMessage("           Using %s\n", pcap_lib_version());
@@ -137,6 +141,9 @@ int DisplayBanner(void)
 #endif
 #ifdef HAVE_OPENSSL_SHA
     LogMessage("           Using %s\n", SSLeay_version(SSLEAY_VERSION));
+#endif
+#ifdef HAVE_HYPERSCAN
+    LogMessage("           Using Hyperscan version %s\n", hs_version());
 #endif
     LogMessage("\n");
 
