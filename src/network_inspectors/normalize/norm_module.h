@@ -21,6 +21,9 @@
 #ifndef NORM_MODULE_H
 #define NORM_MODULE_H
 
+#include <string>
+#include <vector>
+
 #include "framework/module.h"
 #include "norm.h"
 
@@ -33,6 +36,7 @@ class NormalizeModule : public Module
 {
 public:
     NormalizeModule();
+    ~NormalizeModule();
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -49,7 +53,12 @@ private:
     bool set_ip4(const char*, Value&, SnortConfig*);
     bool set_tcp(const char*, Value&, SnortConfig*);
 
+    void add_test_peg(const PegInfo&) const;
+
     NormalizerConfig config;
+
+    static std::vector<const std::string*> test_text;
+    static std::vector<PegInfo> test_pegs;
 };
 
 #endif

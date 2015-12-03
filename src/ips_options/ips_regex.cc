@@ -47,6 +47,9 @@ struct RegexConfig
     unsigned flags;
     bool relative;
 
+    RegexConfig()
+    { reset(); }
+
     void reset()
     {
         re.clear();

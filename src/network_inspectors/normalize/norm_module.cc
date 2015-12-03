@@ -187,13 +187,27 @@ static const Parameter s_params[] =
 };
 
 //-------------------------------------------------------------------------
-// normalize parameters
+// normalize module
 //-------------------------------------------------------------------------
+
+// using string* instead of string because clang++ 5.1
+// vector::back() does not seem to return a reference 
+//
+// FIXIT-L these are static since get_pegs() is const
+// consider making that non-const
+std::vector<const std::string*> NormalizeModule::test_text;
+std::vector<PegInfo> NormalizeModule::test_pegs;
 
 NormalizeModule::NormalizeModule() :
     Module(NORM_NAME, NORM_HELP, s_params)
 {
     memset(&config, 0, sizeof(config));
+}
+
+NormalizeModule::~NormalizeModule()
+{
+    for ( auto s : test_text )
+        delete s;
 }
 
 ProfileStats* NormalizeModule::get_profile() const
@@ -360,38 +374,35 @@ bool NormalizeModule::end(const char* fqn, int, SnortConfig*)
     return true;
 }
 
-static inline PegInfo createTestPeg(const PegInfo p)
+void NormalizeModule::add_test_peg(const PegInfo& norm) const
 {
-    // using a static vector to ensure the char* referred to in the PegInfo
-    // are valid after this function returns
-    static vector<std::string> test_pegs;
-    PegInfo test_peg;
+    PegInfo test;
 
-    std::string test_name("test ");
-    test_name.append(p.name);
-    test_pegs.push_back(test_name);
-    test_peg.name = test_pegs.back().c_str();
+    std::string* test_name = new std::string("test ");
+    test_name->append(norm.name);
+    test_text.push_back(test_name);
+    test.name = test_text.back()->c_str();
 
-    std::string test_info("During inline mode, would have ");
-    test_info.append(p.help);
-    test_pegs.push_back(test_info);
-    test_peg.help = test_pegs.back().c_str();
+    std::string* test_info = new std::string("test ");
+    test_info->append(norm.help);
+    test_text.push_back(test_info);
+    test.help = test_text.back()->c_str();
 
-    return test_peg;
+    test_pegs.push_back(test);
 }
 
 const PegInfo* NormalizeModule::get_pegs() const
 {
-    static vector<PegInfo> pegs;
-    pegs.clear();
+    if ( test_pegs.size() )
+        return &test_pegs[0];
 
     const PegInfo* p = Norm_GetPegs();
     assert(p);
 
     while ( p->name )
     {
-        pegs.push_back(*p);
-        pegs.push_back(createTestPeg(*p));
+        test_pegs.push_back(*p);
+        add_test_peg(*p);
         p++;
     }
 
@@ -400,13 +411,13 @@ const PegInfo* NormalizeModule::get_pegs() const
 
     while ( p->name )
     {
-        pegs.push_back(*p);
-        pegs.push_back(createTestPeg(*p));
+        test_pegs.push_back(*p);
+        add_test_peg(*p);
         p++;
     }
 
-    pegs.push_back(*p);
-    return &pegs[0];
+    test_pegs.push_back(*p);
+    return &test_pegs[0];
 }
 
 PegCount* NormalizeModule::get_counts() const
