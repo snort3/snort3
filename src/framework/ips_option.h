@@ -82,17 +82,9 @@ public:
         return opt->eval(c, p);
     }
 
-    static CursorActionType get_cat(void* v)
-    {
-        IpsOption* opt = (IpsOption*)v;
-        return opt->get_cursor_type();
-    }
-
-    static bool get_fp_only(void* v)
-    {
-        IpsOption* opt = (IpsOption*)v;
-        return !opt->fp_research();
-    }
+    // for fast-pattern options like content
+    virtual struct PatternMatchData* get_pattern()
+    { return nullptr; }
 
 protected:
     IpsOption(const char* s, option_type_t t = RULE_OPTION_TYPE_OTHER)

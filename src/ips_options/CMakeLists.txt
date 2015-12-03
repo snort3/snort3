@@ -49,7 +49,6 @@ set (IPS_SOURCES
     extract.h
     ips_classtype.cc
     ips_content.cc
-    ips_content.h
     ips_detection_filter.cc
     ips_dsize.cc
     ips_file_data.cc

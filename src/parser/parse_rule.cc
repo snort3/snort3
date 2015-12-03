@@ -60,7 +60,6 @@
 #include "filters/sfthreshold.h"
 #include "filters/sfthd.h"
 #include "hash/sfghash.h"
-#include "ips_options/ips_content.h"
 #include "sfip/sf_vartable.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_ipvar.h"
@@ -1146,6 +1145,14 @@ static int mergeDuplicateOtn(
     return 1;
 }
 
+PatternMatchData* get_pmd(OptFpList* ofl)
+{
+    if ( !ofl->ips_opt )
+        return nullptr;
+
+    return ofl->ips_opt->get_pattern();
+}
+
 static void finalize_content(OptFpList* ofl)
 {
     PatternMatchData* pmd = get_pmd(ofl);
@@ -1178,10 +1185,10 @@ static void clear_fast_pattern_only(OptFpList* ofl)
 
 static void ValidateFastPattern(OptTreeNode* otn)
 {
-    OptFpList* fpl, * fp = nullptr;
+    OptFpList* fp = nullptr;
     bool relative_is_bad_mkay = false;
 
-    for (fpl = otn->opt_func; fpl != NULL; fpl = fpl->next)
+    for (OptFpList* fpl = otn->opt_func; fpl; fpl = fpl->next)
     {
         // a relative option is following a fast_pattern/only and
         if ( relative_is_bad_mkay )
@@ -1195,9 +1202,9 @@ static void ValidateFastPattern(OptTreeNode* otn)
         }
 
         // reset the check if one of these are present.
-        if ( fpl->type != RULE_OPTION_TYPE_CONTENT )
+        if ( fpl->ips_opt and !fpl->ips_opt->get_pattern() )
         {
-            if ( fpl->context && IpsOption::get_cat(fpl->context) > CAT_NONE )
+            if ( fpl->ips_opt->get_cursor_type() > CAT_NONE )
                 relative_is_bad_mkay = false;
         }
         // set/unset the check on content options.

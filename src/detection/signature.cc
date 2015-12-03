@@ -30,9 +30,6 @@
 #include "parser/parser.h"
 #include "main/snort_config.h"
 
-/* for eval and free functions */
-#include "ips_options/ips_content.h"
-
 /********************* Reference Implementation *******************************/
 
 ReferenceNode* AddReference(
@@ -238,23 +235,21 @@ void OtnRemove(SFGHASH* otn_map, OptTreeNode* otn)
 void OtnFree(void* data)
 {
     OptTreeNode* otn = (OptTreeNode*)data;
-    OptFpList* opt_func;
-    ReferenceNode* ref_node;
     unsigned int svc_idx;
 
-    if (otn == NULL)
+    if ( !otn )
         return;
 
-    opt_func = otn->opt_func;
+    OptFpList* opt_func = otn->opt_func;
 
-    while (opt_func != NULL)
+    while ( opt_func )
     {
         OptFpList* tmp = opt_func;
         opt_func = opt_func->next;
         free(tmp);
     }
 
-    if (otn->sigInfo.message != NULL)
+    if ( otn->sigInfo.message )
     {
         if (!otn->generated)
             free(otn->sigInfo.message);
@@ -267,17 +262,17 @@ void OtnFree(void* data)
     if (otn->sigInfo.services)
         free(otn->sigInfo.services);
 
-    ref_node = otn->sigInfo.refs;
-    while (ref_node != NULL)
+    ReferenceNode* ref_node = otn->sigInfo.refs;
+
+    while ( ref_node )
     {
         ReferenceNode* tmp = ref_node;
-
         ref_node = ref_node->next;
         free(tmp->id);
         free(tmp);
     }
 
-    if (otn->tag != NULL)
+    if ( otn->tag )
         free(otn->tag);
 
     if ( otn->soid )
@@ -287,12 +282,11 @@ void OtnFree(void* data)
      * at this point so go through all RTNs and delete them */
     if (otn->generated)
     {
-        int i;
-
-        for (i = 0; i < otn->proto_node_num; i++)
+        for (int i = 0; i < otn->proto_node_num; i++)
         {
             RuleTreeNode* rtn = deleteRtnFromOtn(otn, i);
-            if (rtn != NULL)
+
+            if ( rtn )
                 free(rtn);
         }
     }

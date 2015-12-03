@@ -18,8 +18,6 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "ips_content.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -136,6 +134,9 @@ public:
     bool is_relative() override
     { return (config->pmd.relative == 1); }
 
+    bool retry() override
+    { return !config->pmd.negated; }
+
     ContentData* get_data()
     { return config; }
 
@@ -144,6 +145,9 @@ public:
 
     int eval(Cursor& c, Packet*) override
     { return CheckANDPatternMatch(config, c); }
+
+    PatternMatchData* get_pattern() override
+    { return &config->pmd; }
 
 protected:
     ContentData* config;
@@ -267,43 +271,6 @@ bool ContentOption::operator==(const IpsOption& ips) const
     }
 
     return false;
-}
-
-//-------------------------------------------------------------------------
-// public methods
-//-------------------------------------------------------------------------
-
-PatternMatchData* get_pmd(OptFpList* ofl)
-{
-    if ( ofl->type != RULE_OPTION_TYPE_CONTENT )
-        return nullptr;
-
-    ContentOption* opt = (ContentOption*)ofl->context;
-    return &opt->get_data()->pmd;
-}
-
-bool is_unbounded(void* pv)
-{
-    ContentOption* opt = (ContentOption*)pv;
-    ContentData* cd = opt->get_data();
-    return ( cd->pmd.depth == 0 );
-}
-
-PatternMatchData* content_get_data(void* pv)
-{
-    ContentOption* opt = (ContentOption*)pv;
-    return &opt->get_data()->pmd;
-}
-
-// current should be the cursor after this content rule option matched
-// orig is the place from where we first did evaluation of this content
-
-bool content_next(PatternMatchData* pmd)
-{
-    if ( pmd->negated )
-        return false;
-
-    return true;
 }
 
 //-------------------------------------------------------------------------
@@ -815,5 +782,15 @@ static const IpsApi content_api =
     nullptr
 };
 
+// FIXIT-L need boyer_moore.cc funcs but they
+// aren't otherwise called
+//#ifdef BUILDING_SO
+//SO_PUBLIC const BaseApi* snort_plugins[] =
+//{
+//    &content_api.base,
+//    nullptr
+//};
+//#else
 const BaseApi* ips_content = &content_api.base;
+//#endif
 

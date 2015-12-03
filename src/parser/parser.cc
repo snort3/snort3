@@ -415,7 +415,6 @@ static void printRuleListOrder(RuleListNode* node)
 
 static void IntegrityCheckRules(SnortConfig* sc)
 {
-    OptFpList* ofl_idx = NULL;
     int opt_func_count;
     SFGHASH_NODE* hashNode = NULL;
     OptTreeNode* otn  = NULL;
@@ -442,10 +441,10 @@ static void IntegrityCheckRules(SnortConfig* sc)
             if ( is_network_protocol(rtn->proto) )
             {
                 //do operation
-                ofl_idx = otn->opt_func;
+                OptFpList* ofl_idx = otn->opt_func;
                 opt_func_count = 0;
 
-                while (ofl_idx != NULL)
+                while ( ofl_idx )
                 {
                     opt_func_count++;
                     //DebugFormat(DEBUG_DETECT, "%p->",ofl_idx->OptTestFunc);

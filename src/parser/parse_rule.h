@@ -22,9 +22,10 @@
 
 #include "detection/rules.h"
 
-struct SnortConfig;
+struct OptFpList;
 struct OptTreeNode;
 struct RuleTreeNode;
+struct SnortConfig;
 
 void parse_rule_init();
 void parse_rule_term();
@@ -42,7 +43,8 @@ void parse_rule_opt_end(SnortConfig*, const char* key, OptTreeNode*);
 OptTreeNode* parse_rule_open(SnortConfig*, RuleTreeNode&, bool stub = false);
 const char* parse_rule_close(SnortConfig*, RuleTreeNode&, OptTreeNode*);
 
-bool is_fast_pattern_only(struct OptFpList*);
+bool is_fast_pattern_only(OptFpList*);
+struct PatternMatchData* get_pmd(OptFpList*);
 
 int get_rule_count();
 

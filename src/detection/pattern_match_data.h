@@ -67,6 +67,9 @@ struct PatternMatchData
        but the rule option specifies a negated content. Only
        applies to negative contents that are not relative */
     PmdLastCheck* last_check;
+
+    bool unbounded()
+    { return !depth; }
 };
 
 #endif

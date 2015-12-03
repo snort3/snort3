@@ -31,6 +31,10 @@
     install_name_tool -change @rpath/libhs.4.0.dylib \
         /path-to/libhs.4.0.dylib src/snort
 
+* g++ 4.9.2 with -O3 reports:
+
+    src/service_inspectors/back_orifice/back_orifice.cc:231:25: warning:
+    iteration 930u invokes undefined behavior [-Waggressive-loop-optimizations]
 
 ==== Config
 

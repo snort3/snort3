@@ -41,7 +41,6 @@
 
 #include "main/snort_config.h"
 #include "hash/sfghash.h"
-#include "ips_options/ips_content.h"
 #include "ips_options/ips_flow.h"
 #include "utils/util.h"
 #include "utils/stats.h"
@@ -109,9 +108,6 @@ int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree_root_t
 int otn_create_tree(OptTreeNode* otn, void** existing_tree)
 {
     detection_option_tree_node_t* node = NULL, * child;
-    detection_option_tree_root_t* root = NULL;
-    OptFpList* opt_fp = NULL;
-    int i;
 
     if (!existing_tree)
         return -1;
@@ -119,13 +115,14 @@ int otn_create_tree(OptTreeNode* otn, void** existing_tree)
     if (!*existing_tree)
         *existing_tree = new_root();
 
-    root = (detection_option_tree_root_t*)*existing_tree;
+    detection_option_tree_root_t* root = (detection_option_tree_root_t*)*existing_tree;
+
 #ifdef PPM_MGR
     for ( unsigned i = 0; i < get_instance_max(); ++i )
         root->state[i].enabled = true;
 #endif
 
-    opt_fp = otn->opt_func;
+    OptFpList* opt_fp = otn->opt_func;
 
     if (!root->children)
     {
@@ -134,7 +131,7 @@ int otn_create_tree(OptTreeNode* otn, void** existing_tree)
             SnortAlloc(sizeof(detection_option_tree_node_t*) * root->num_children);
     }
 
-    i = 0;
+    int i = 0;
     child = root->children[i];
 
     /* Build out sub-nodes for each option in the OTN fp list */
@@ -142,7 +139,7 @@ int otn_create_tree(OptTreeNode* otn, void** existing_tree)
     {
         /* If child node does not match existing option_data,
          * Create a child branch from a given sub-node. */
-        void* option_data = opt_fp->context;
+        void* option_data = opt_fp->ips_opt;
         char found_child_match = 0;
 
         if (opt_fp->type == RULE_OPTION_TYPE_LEAF_NODE)
@@ -153,13 +150,10 @@ int otn_create_tree(OptTreeNode* otn, void** existing_tree)
 
         /* Don't add contents that are only for use in the
          * fast pattern matcher */
-        if ( opt_fp->type == RULE_OPTION_TYPE_CONTENT )
+        if ( is_fast_pattern_only(opt_fp) )
         {
-            if ( is_fast_pattern_only(opt_fp) )
-            {
-                opt_fp = opt_fp->next;
-                continue;
-            }
+            opt_fp = opt_fp->next;
+            continue;
         }
 
         if (!child)
@@ -489,32 +483,31 @@ static PmType get_pm_type(CursorActionType cat)
 
 bool set_fp_content(OptTreeNode* otn)
 {
-    OptFpList* ofl;
     CursorActionType curr_cat = CAT_SET_RAW;
     FpFoo best;
     PatternMatchData* pmd = nullptr;
     bool content = false;
     bool fp_only = true;
 
-    for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
+    for (OptFpList* ofl = otn->opt_func; ofl; ofl = ofl->next)
     {
-        if ( !ofl->context )
+        if ( !ofl->ips_opt )
             continue;
 
-        CursorActionType cat = IpsOption::get_cat(ofl->context);
+        CursorActionType cat = ofl->ips_opt->get_cursor_type();
 
         if ( cat > CAT_ADJUST )
         {
             curr_cat = cat;
-            fp_only = IpsOption::get_fp_only(ofl->context);
+            fp_only = !ofl->ips_opt->fp_research();
         }
 
-        if ( ofl->type != RULE_OPTION_TYPE_CONTENT )
+        PatternMatchData* tmp = get_pmd(ofl);
+
+        if ( !tmp )
             continue;
 
         content = true;
-        PatternMatchData* tmp = get_pmd(ofl);
-        assert(tmp);
 
         if ( !fp_only )
             tmp->fp_only = -1;
@@ -570,18 +563,15 @@ bool set_fp_content(OptTreeNode* otn)
 
 static PatternMatchData* get_fp_content(OptTreeNode* otn, OptFpList*& next)
 {
-    OptFpList* ofl;
-
-    for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
+    for (OptFpList* ofl = otn->opt_func; ofl; ofl = ofl->next)
     {
-        if ( !ofl->context )
-            continue;
-
-        if ( ofl->type != RULE_OPTION_TYPE_CONTENT )
+        if ( !ofl->ips_opt )
             continue;
 
         PatternMatchData* pmd = get_pmd(ofl);
-        assert(pmd);
+
+        if ( !pmd )
+            continue;
 
         next = ofl->next;
 
@@ -621,7 +611,7 @@ static int fpFinishPortGroupRule(
         /* create pmx */
         PMX* pmx = (PMX*)SnortAlloc(sizeof(PMX));
         pmx->RuleNode = rn;
-        pmx->PatternMatchData = pmd;
+        pmx->pmd = pmd;
 
         if (fp->get_debug_print_fast_patterns())
             PrintFastPatternInfo(otn, pmd, pattern, pattern_length);
@@ -735,7 +725,7 @@ static int fpAddPortGroupRule(
             pmd->fp && !pmd->relative && !pmd->negated && pmd->fp_only >= 0 &&
             !pmd->offset && !pmd->depth && pmd->no_case )
         {
-            if ( !next || !next->context || !((IpsOption*)next->context)->is_relative() )
+            if ( !next || !next->ips_opt || !next->ips_opt->is_relative() )
                 pmd->fp_only = 1;
         }
 

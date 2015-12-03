@@ -35,7 +35,7 @@ struct SnortConfig;
 struct PMX
 {
     void* RuleNode;
-    void* PatternMatchData;
+    struct PatternMatchData* pmd;
 };
 
 /* Used for negative content list */

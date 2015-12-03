@@ -48,7 +48,6 @@
 #include "parser/parser.h"
 #include "ips_options/ips_byte_extract.h"
 #include "ips_options/ips_flowbits.h"
-#include "ips_options/ips_content.h"
 #include "ips_options/ips_pcre.h"
 #include "filters/detection_filter.h"
 #include "main/thread.h"
@@ -57,11 +56,11 @@
 #include "managers/ips_manager.h"
 #include "protocols/packet_manager.h"
 
-typedef struct _detection_option_key
+struct detection_option_key_t
 {
     option_type_t option_type;
     void* option_data;
-} detection_option_key_t;
+};
 
 #define HASH_RULE_OPTIONS 16384
 #define HASH_RULE_TREE 8192
@@ -433,18 +432,15 @@ int detection_option_node_evaluate(
     bool try_again = false;
     PmdLastCheck* content_last = nullptr;
 
-    if ( node->option_type == RULE_OPTION_TYPE_CONTENT )
-    {
-        PatternMatchData* content_data = content_get_data(node->option_data);
-        try_again = content_next(content_data);
-
-        if ( content_data->last_check )
-            content_last = content_data->last_check + get_instance_id();
-    }
-    else if (node->option_type == RULE_OPTION_TYPE_PCRE)
+    if ( node->option_type != RULE_OPTION_TYPE_LEAF_NODE )
     {
         IpsOption* opt = (IpsOption*)node->option_data;
         try_again = opt->retry();
+
+        PatternMatchData* pmd = opt->get_pattern();
+
+        if ( pmd and pmd->last_check )
+            content_last = pmd->last_check + get_instance_id();
     }
 
     // No, haven't evaluated this one before... Check it.
@@ -653,7 +649,10 @@ int detection_option_node_evaluate(
                                 // Check for an unbounded relative search.  If this
                                 // failed before, it's going to fail again so don't
                                 // go down this path again
-                                if ( is_unbounded(child_node->option_data) )
+                                IpsOption* opt = (IpsOption*)node->option_data;
+                                PatternMatchData* pmd = opt->get_pattern();
+
+                                if ( pmd->unbounded() )
                                 {
                                     // Only increment result once. Should hit this
                                     // condition on first loop iteration

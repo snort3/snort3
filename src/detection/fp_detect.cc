@@ -64,7 +64,6 @@
 #include "filters/rate_filter.h"
 #include "events/event_wrapper.h"
 #include "packet_io/active.h"
-#include "ips_options/ips_content.h"
 #include "stream/stream_api.h"
 #include "utils/sflsq.h"
 #include "utils/util.h"
@@ -463,14 +462,13 @@ static int rule_tree_match(
 {
     PMX* pmx = (PMX*)user;
     OTNX_MATCH_DATA* pomd = (OTNX_MATCH_DATA*)context;
-    PatternMatchData* pmd = (PatternMatchData*)pmx->PatternMatchData;
     detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
     detection_option_eval_data_t eval_data;
     NCListNode* ncl;
 
     eval_data.pomd = pomd;
     eval_data.p = pomd->p;
-    eval_data.pmd = pmd;
+    eval_data.pmd = pmx->pmd;
     eval_data.flowbit_failed = 0;
     eval_data.flowbit_noalert = 0;
 
@@ -484,12 +482,10 @@ static int rule_tree_match(
         for (ncl = (NCListNode*)neg_list; ncl != nullptr; ncl = ncl->next)
         {
             PMX* neg_pmx = (PMX*)ncl->pmx;
-            PatternMatchData* neg_pmd = (PatternMatchData*)neg_pmx->PatternMatchData;
-
-            assert(neg_pmd->last_check);
+            assert(neg_pmx->pmd->last_check);
 
             PmdLastCheck* last_check =
-                neg_pmd->last_check + get_instance_id();
+                neg_pmx->pmd->last_check + get_instance_id();
 
             last_check->ts.tv_sec = eval_data.p->pkth->ts.tv_sec;
             last_check->ts.tv_usec = eval_data.p->pkth->ts.tv_usec;

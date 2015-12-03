@@ -246,11 +246,9 @@ int8_t GetVarByName(const char* name)
 /* If given an OptFpList with no byte_extracts, clear the variable_names array */
 static void ClearVarNames(OptFpList* fpl)
 {
-    while (fpl != NULL)
+    while ( fpl )
     {
-        IpsOption* opt = (IpsOption*)fpl->context;
-
-        if ( !strcmp(opt->get_name(), s_name) )
+        if ( !strcmp(fpl->ips_opt->get_name(), s_name) )
             return;
 
         fpl = fpl->next;

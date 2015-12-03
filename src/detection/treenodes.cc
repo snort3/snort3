@@ -64,7 +64,7 @@ OptFpList* AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode* otn)
         OptFpList* tmp = otn->opt_func;
 
         /* walk to the end of the list */
-        while (tmp->next != NULL)
+        while ( tmp->next )
             tmp = tmp->next;
 
         tmp->next = ofp;
@@ -103,7 +103,7 @@ void* get_rule_type_data(OptTreeNode* otn, option_type_t type)
     while ( fpl )
     {
         if ( fpl->type == type )
-            return fpl->context;
+            return fpl->ips_opt;
 
         fpl = fpl->next;
     }
@@ -116,12 +116,10 @@ void* get_rule_type_data(OptTreeNode* otn, const char* name)
 
     while ( fpl )
     {
-        if ( fpl->context )
+        if ( fpl->ips_opt )
         {
-            IpsOption* opt = (IpsOption*)fpl->context;
-
-            if ( !strcmp(opt->get_name(), name) )
-                return fpl->context;
+            if ( !strcmp(fpl->ips_opt->get_name(), name) )
+                return fpl->ips_opt;
         }
         fpl = fpl->next;
     }
@@ -134,12 +132,10 @@ bool otn_has_plugin(OptTreeNode* otn, const char* name)
 
     while ( fpl )
     {
-        if ( !fpl->context )
+        if ( !fpl->ips_opt )
             continue;
 
-        IpsOption* opt = (IpsOption*)fpl->context;
-
-        if ( !strcmp(opt->get_name(), name) )
+        if ( !strcmp(fpl->ips_opt->get_name(), name) )
             return true;
 
         fpl = fpl->next;

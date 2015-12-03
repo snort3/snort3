@@ -44,7 +44,7 @@ libips_options_a_SOURCES = \
 ips_byte_extract.cc ips_byte_extract.h \
 extract.cc extract.h \
 ips_classtype.cc \
-ips_content.cc ips_content.h  \
+ips_content.cc \
 ips_detection_filter.cc \
 ips_dsize.cc \
 ips_file_data.cc \
@@ -98,6 +98,11 @@ optlib_LTLIBRARIES += libips_byte_jump.la
 libips_byte_jump_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_byte_jump_la_LDFLAGS = -export-dynamic -shared
 libips_byte_jump_la_SOURCES = ips_byte_jump.cc
+
+#optlib_LTLIBRARIES += libips_content.la
+#libips_content_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+#libips_content_la_LDFLAGS = -export-dynamic -shared
+#libips_content_la_SOURCES = ips_content.cc
 
 optlib_LTLIBRARIES += libips_cvs.la
 libips_cvs_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

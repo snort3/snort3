@@ -286,7 +286,7 @@ bool IpsManager::option_end(
     }
 
     OptFpList* fpl = AddOptFuncToList(IpsOption::eval, otn);
-    fpl->context = ips;
+    fpl->ips_opt = ips;
     fpl->type = ips->get_type();
 
     if ( ips->is_relative() )

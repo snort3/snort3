@@ -26,10 +26,11 @@
 #include "main/snort_types.h"
 
 // FIXIT-M: No associated resource destructor for make_skip & make_shift :(
-int* make_skip(char*, int);
-int* make_shift(char*, int);
-int mSearch(const char*, int, const char*, int, int*, int*);
-int mSearchCI(const char*, int, const char*, int, int*, int*);
+SO_PUBLIC int* make_skip(char*, int);
+SO_PUBLIC int* make_shift(char*, int);
+
+SO_PUBLIC int mSearch(const char*, int, const char*, int, int*, int*);
+SO_PUBLIC int mSearchCI(const char*, int, const char*, int, int*, int*);
 
 #endif
 

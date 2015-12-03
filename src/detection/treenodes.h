@@ -43,8 +43,7 @@ struct sfip_var_t;
 /* same as the rule header FP list */
 struct OptFpList
 {
-    /* context data for this test */
-    void* context;
+    IpsOption* ips_opt;
 
     int (* OptTestFunc)(void* option_data, class Cursor&, Packet*);
 

@@ -26,7 +26,8 @@
 #include "config.h"
 #endif
 
-#include "clock_defs.h"
+#include "time/clock_defs.h"
+#include "main/snort_types.h"
 
 class Stopwatch
 {
@@ -72,7 +73,7 @@ public:
 private:
 // Dirty, dirty hack to get Catch unit test visibility
 #ifdef UNIT_TEST
-    hr_duration get_delta() const;
+    SO_PUBLIC hr_duration get_delta() const;
 #else
     hr_duration get_delta() const
     { return hr_clock::now() - start_time; }
