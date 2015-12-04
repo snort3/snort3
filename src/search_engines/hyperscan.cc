@@ -174,6 +174,9 @@ void HyperscanMpse::user_dtor()
 {
     for ( auto& p : pvector )
     {
+        if ( p.user )
+            agent->user_free(p.user);
+
         if ( p.user_list )
             agent->list_free(&p.user_list);
 

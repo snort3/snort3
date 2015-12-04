@@ -293,15 +293,13 @@ int otn_create_tree(OptTreeNode* otn, void** existing_tree)
 
 static int add_patrn_to_neg_list(void* id, void** list)
 {
-    PMX* pmx = (PMX*)id;
-    NCListNode** ncl = (NCListNode**)list;
-    NCListNode* node;
-
-    if ((id == NULL) || (list == NULL))
+    if ( !id or !list )
         return -1;
 
-    node = (NCListNode*)SnortAlloc(sizeof(NCListNode));
-    node->pmx = pmx;
+    NCListNode** ncl = (NCListNode**)list;
+    NCListNode* node = (NCListNode*)SnortAlloc(sizeof(NCListNode));
+
+    node->pmx = (PMX*)id;
     node->next = *ncl;
     *ncl = node;
 
@@ -328,10 +326,6 @@ static void neg_list_free(void** list)
 
 static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree)
 {
-    PMX* pmx    = NULL;
-    RULE_NODE* rnNode = NULL;
-    OptTreeNode* otn    = NULL;
-
     if (!existing_tree)
         return -1;
 
@@ -344,9 +338,9 @@ static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree)
         return finalize_detection_option_tree(sc, (detection_option_tree_root_t*)*existing_tree);
     }
 
-    pmx    = (PMX*)id;
-    rnNode = (RULE_NODE*)(pmx->RuleNode);
-    otn    = (OptTreeNode*)rnNode->rnRuleData;
+    PMX* pmx = (PMX*)id;
+    OptTreeNode* otn = (OptTreeNode*)pmx->rule_node.rnRuleData;
+
     return otn_create_tree(otn, existing_tree);
 }
 
@@ -604,13 +598,9 @@ static int fpFinishPortGroupRule(
         if (fpGetFinalPattern(fp, pmd, &pattern, &pattern_length) == -1)
             return -1;
 
-        /* create a rule_node */
-        RULE_NODE* rn = (RULE_NODE*)SnortAlloc(sizeof(RULE_NODE));
-        rn->rnRuleData = otn;
-
         /* create pmx */
         PMX* pmx = (PMX*)SnortAlloc(sizeof(PMX));
-        pmx->RuleNode = rn;
+        pmx->rule_node.rnRuleData = otn;
         pmx->pmd = pmd;
 
         if (fp->get_debug_print_fast_patterns())
@@ -1060,15 +1050,8 @@ static void fpPortGroupPrintRuleCount(PortGroup* pg, const char* what)
 
 static void fpDeletePMX(void* data)
 {
-    PMX* pmx = (PMX*)data;
-
-    if (data == NULL)
-        return;
-
-    if (pmx->RuleNode != NULL)
-        free(pmx->RuleNode);
-
-    free(pmx);
+    if ( data )
+        free(data);
 }
 
 void fpDeletePortGroup(void* data)

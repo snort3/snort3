@@ -295,8 +295,6 @@ bool HttpInspect::configure(SnortConfig* sc)
     global = (HttpData*)InspectorManager::acquire(GLOBAL_KEYWORD, sc);
     config->global = global->data;
 
-    HttpInspectInitializeGlobalConfig(config->global);
-
     CheckGzipConfig(config->global);
     CheckMemcap(config->global);
 
