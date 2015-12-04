@@ -1,3 +1,10 @@
+15/12/04 - build 181
+
+-- perf profiling enhancements
+-- fixed build issues and memory leaks
+-- continued pattern match refactoring
+-- fix spurious sip_method matching
+
 15/11/25 - build 180
 
 -- ported dnp3 preprocessor and rule options from 2.X

@@ -48,7 +48,6 @@ public:
     void clear();
 };
 
-class Packet;
 class FileInfo;
 
 class FilePolicy
