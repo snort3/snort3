@@ -26,6 +26,7 @@
 
 #include "file_lib.h"
 #include "file_identifier.h"
+#include "file_api/file_policy.h"
 
 #define DEFAULT_FILE_TYPE_DEPTH 1460
 #define DEFAULT_FILE_SIGNATURE_DEPTH 10485760 /*10 Mbytes*/
@@ -42,8 +43,12 @@ public:
     void print_file_rule(FileMagicRule&);
     FileMagicRule* get_rule_from_id(uint32_t);
     void process_file_rule(FileMagicRule&);
+    void process_file_policy_rule(FileRule&);
     bool process_file_magic(FileMagicData&);
     uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t file_offset, void** context);
+    FilePolicy& get_file_policy() {return filePolicy;}
+    std::string file_type_name( uint32_t id);
+
     int64_t file_type_depth = DEFAULT_FILE_TYPE_DEPTH;
     int64_t file_signature_depth = DEFAULT_FILE_SIGNATURE_DEPTH;
     int64_t file_block_timeout = DEFAULT_FILE_BLOCK_TIMEOUT;
@@ -62,6 +67,7 @@ public:
 
 private:
     FileIdentifier fileIdentifier;
+    FilePolicy filePolicy;
 };
 
 #endif

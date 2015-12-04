@@ -17,16 +17,17 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-**  Author(s):  Hui Cao <huica@cisco.com>
-**
-**  NOTES
-**  9.25.2012 - Initial Source Code. Hui Cao
-*/
+ **  Author(s):  Hui Cao <huica@cisco.com>
+ **
+ **  NOTES
+ **  9.25.2012 - Initial Source Code. Hui Cao
+ */
 
 #include "file_resume_block.h"
 
 #include "file_service.h"
 #include "file_api.h"
+#include "file_lib.h"
 
 #include "main/snort_types.h"
 #include "sfip/sfip_t.h"
@@ -38,103 +39,97 @@
 #include "hash/hashes.h"
 #include "managers/action_manager.h"
 #include "sfip/sf_ip.h"
+#include "time/packet_time.h"
 
-/* The hash table of expected files */
-static THREAD_LOCAL_TBD SFXHASH* fileHash = NULL;
-Log_file_action_func log_file_action;
-File_type_callback_func file_type_cb;
-File_signature_callback_func file_signature_cb;
-
-static FileState sig_file_state = { FILE_CAPTURE_SUCCESS, FILE_SIG_DONE };
-
-typedef struct _FileHashKey
+FileBlock::FileBlock()
 {
-    sfip_t sip;
-    sfip_t dip;
-    uint32_t file_sig;
-} FileHashKey;
-
-typedef struct _FileNode
-{
-    time_t expires;
-    File_Verdict verdict;
-    uint32_t file_type_id;
-    uint8_t sha256[SHA256_HASH_SIZE];
-} FileNode;
-
-#define MAX_FILES_TRACKED 16384
-
-void file_resume_block_init(void)
-{
-    fileHash = sfxhash_new(MAX_FILES_TRACKED, sizeof(FileHashKey), sizeof(FileNode), 0, 1,
-        NULL, NULL, 1);
+    fileHash = sfxhash_new(MAX_FILES_TRACKED, sizeof(FileHashKey), sizeof(FileNode),
+        MAX_MEMORY_USED, 1, NULL, NULL, 1);
     if (!fileHash)
         FatalError("Failed to create the expected channel hash table.\n");
 }
 
-void file_resume_block_cleanup(void)
+FileBlock::~FileBlock()
 {
     if (fileHash)
     {
         sfxhash_delete(fileHash);
-        fileHash = NULL;
     }
 }
 
-static inline void updateFileNode(FileNode* node, File_Verdict verdict,
-    uint32_t file_type_id, uint8_t* signature)
+void FileBlock::update_file_node(FileNode* node, FileVerdict verdict, FileInfo* file)
 {
     node->verdict = verdict;
-    node->file_type_id = file_type_id;
-    if (signature)
-    {
-        memcpy(node->sha256, signature, SHA256_HASH_SIZE);
-    }
+    node->file = *file;
 }
 
-/** *
- * @param sip - source IP address
- * @param dip - destination IP address
- * @param sport - server sport number
- * @param file_sig - file signature
- * @param expiry - session expiry in seconds.
- */
-int file_resume_block_add_file(Packet* pkt, uint32_t file_sig, uint32_t timeout,
-    File_Verdict verdict, uint32_t file_type_id, uint8_t* signature)
+FileVerdict FileBlock::check_verdict(Flow* flow, FileNode* node, SFXHASH_NODE* hash_node)
 {
-    FileHashKey hashKey;
-    SFXHASH_NODE* hash_node = NULL;
-    FileNode* node;
-    FileNode new_node;
-    const sfip_t* srcIP;
-    const sfip_t* dstIP;
-    Packet* p = (Packet*)pkt;
-    time_t now = p->pkth->ts.tv_sec;
+    FileVerdict verdict = FILE_VERDICT_UNKNOWN;
 
-    srcIP = p->ptrs.ip_api.get_src();
-    dstIP = p->ptrs.ip_api.get_dst();
-    sfip_copy(hashKey.dip, dstIP);
-    sfip_copy(hashKey.sip, srcIP);
+    // Query the file policy in case verdict has been changed
+    // Check file type first
+    FilePolicy& inspect = FileService::get_inspect();
+
+    verdict = inspect.type_lookup(flow, &(node->file));
+
+    if ((verdict == FILE_VERDICT_UNKNOWN) ||
+        (verdict == FILE_VERDICT_STOP_CAPTURE))
+    {
+        verdict = inspect.signature_lookup(flow, &(node->file));
+    }
+
+    if ((verdict == FILE_VERDICT_UNKNOWN) ||
+        (verdict == FILE_VERDICT_STOP_CAPTURE))
+    {
+        verdict = node->verdict;
+    }
+
+    if (verdict == FILE_VERDICT_LOG)
+    {
+        sfxhash_free_node(fileHash, hash_node);
+    }
+
+    apply_verdict(flow, verdict);
+
+    return verdict;
+}
+
+int FileBlock::store_verdict(Flow* flow, FileInfo* file, FileVerdict verdict)
+{
+    assert(file);
+    size_t file_sig = file->get_file_id();
+
+    if (!file_sig)
+        return 0;
+
+    time_t now = packet_time();
+    FileHashKey hashKey;
+    sfip_copy(hashKey.dip, &(flow->client_ip));
+    sfip_copy(hashKey.sip, &(flow->server_ip));
     hashKey.file_sig = file_sig;
 
-    hash_node = sfxhash_find_node(fileHash, &hashKey);
+    FileNode* node;
+    SFXHASH_NODE* hash_node = sfxhash_find_node(fileHash, &hashKey);
     if (hash_node)
     {
         if (!(node = (FileNode*)hash_node->data))
             sfxhash_free_node(fileHash, hash_node);
     }
     else
-        node = NULL;
+        node = nullptr;
+
     if (node)
     {
         node->expires = now + timeout;
-        updateFileNode(node, verdict, file_type_id, signature);
+        update_file_node(node, verdict, file);
     }
     else
     {
+        FileNode new_node;
         DebugMessage(DEBUG_FILE, "Adding file node\n");
 
-        updateFileNode(&new_node, verdict, file_type_id, signature);
+        update_file_node(&new_node, verdict, file);
 
         /*
          * use the time that we keep files around
@@ -153,96 +148,59 @@ int file_resume_block_add_file(Packet* pkt, uint32_t file_sig, uint32_t timeout,
              * gracefully.
              */
             DebugMessage(DEBUG_FILE,
-                    "Failed to add file node to hash table\n");
+                "Failed to add file node to hash table\n");
             return -1;
         }
     }
+
     return 0;
 }
 
-static inline File_Verdict checkVerdict(Packet* p, FileNode* node, SFXHASH_NODE* hash_node)
+bool FileBlock::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict)
 {
-    File_Verdict verdict = FILE_VERDICT_UNKNOWN;
-
-    /*Query the file policy in case verdict has been changed
-      Check file type first*/
-    if (file_type_cb)
+    if (apply_verdict(flow, verdict))
     {
-        verdict = file_type_cb(p, p->flow, node->file_type_id, 0, DEFAULT_FILE_ID);
+        store_verdict(flow, file, verdict);
+        return true;
     }
 
-    if ((verdict == FILE_VERDICT_UNKNOWN) ||
-        (verdict == FILE_VERDICT_STOP_CAPTURE))
-    {
-        if (file_signature_cb)
-        {
-            verdict = file_signature_cb(p, p->flow, node->sha256, 0,
-                &sig_file_state, 0, DEFAULT_FILE_ID);
-        }
-    }
+    return false;
+}
 
-    if ((verdict == FILE_VERDICT_UNKNOWN) ||
-        (verdict == FILE_VERDICT_STOP_CAPTURE))
-    {
-        verdict = node->verdict;
-    }
-
+bool FileBlock::apply_verdict(Flow*, FileVerdict verdict)
+{
     if (verdict == FILE_VERDICT_LOG)
     {
-        sfxhash_free_node(fileHash, hash_node);
-        if (log_file_action)
-        {
-            log_file_action(p->flow, FILE_RESUME_LOG);
-        }
+        // Log file event through data bus
     }
     else if (verdict == FILE_VERDICT_BLOCK)
     {
-        Active::drop_packet(p, true);
-        Active::block_session(p);
-
-        if (log_file_action)
-        {
-            log_file_action(p->flow, FILE_RESUME_BLOCK);
-        }
-        node->verdict = verdict;
+        // can't block session inside a session
+        Active::set_delayed_action(Active::ACT_BLOCK, 1);
+        return true;
     }
     else if (verdict == FILE_VERDICT_REJECT)
     {
-        Active::drop_packet(p, true);
-        Active::reset_session(p);
-
-        if (log_file_action)
-        {
-            log_file_action(p->flow, FILE_RESUME_BLOCK);
-        }
-        node->verdict = verdict;
+        // can't reset session inside a session
+        Active::set_delayed_action(Active::ACT_RESET, 1);
+        return true;
     }
     else if (verdict == FILE_VERDICT_PENDING)
     {
         /*Take the cached verdict*/
-        Active::drop_packet(p, true);
-
-        if (FILE_VERDICT_REJECT == node->verdict)
-            ActionManager::queue_reject(p);
-        if (log_file_action)
-        {
-            log_file_action(p->flow, FILE_RESUME_BLOCK);
-        }
-        verdict = node->verdict;
+        Active::set_delayed_action(Active::ACT_DROP, 1);
+        return true;
     }
 
-    return verdict;
+    return false;
 }
 
-File_Verdict file_resume_block_check(Packet* pkt, uint32_t file_sig)
+FileVerdict  FileBlock::cached_verdict_lookup(Flow* flow, FileInfo* file)
 {
-    File_Verdict verdict = FILE_VERDICT_UNKNOWN;
-    const sfip_t* srcIP;
-    const sfip_t* dstIP;
+    FileVerdict verdict = FILE_VERDICT_UNKNOWN;
     SFXHASH_NODE* hash_node;
     FileHashKey hashKey;
     FileNode* node;
-    Packet* p = (Packet*)pkt;
 
     /* No hash table, or its empty?  Get out of dodge.  */
     if ((!fileHash) || (!sfxhash_count(fileHash)))
@@ -250,10 +208,14 @@ File_Verdict file_resume_block_check(Packet* pkt, uint32_t file_sig)
         DebugMessage(DEBUG_FILE, "No expected sessions\n");
         return verdict;
     }
-    srcIP = p->ptrs.ip_api.get_src();
-    dstIP = p->ptrs.ip_api.get_dst();
-    sfip_copy(hashKey.dip, dstIP);
-    sfip_copy(hashKey.sip, srcIP);
+
+    assert(file);
+    size_t file_sig = file->get_file_id();
+    if (!file_sig)
+        return verdict;
+
+    sfip_copy(hashKey.dip, &(flow->client_ip));
+    sfip_copy(hashKey.sip, &(flow->server_ip));
     hashKey.file_sig = file_sig;
 
     hash_node = sfxhash_find_node(fileHash, &hashKey);
@@ -269,15 +231,16 @@ File_Verdict file_resume_block_check(Packet* pkt, uint32_t file_sig)
     if (node)
     {
         DebugMessage(DEBUG_FILE, "Found resumed file\n");
-        if (node->expires && p->pkth->ts.tv_sec > node->expires)
+        if (node->expires && packet_time() > node->expires)
         {
             DebugMessage(DEBUG_FILE, "File expired\n");
             sfxhash_free_node(fileHash, hash_node);
             return verdict;
         }
         /*Query the file policy in case verdict has been changed*/
-        verdict = checkVerdict(p, node, hash_node);
+        verdict = check_verdict(flow, node, hash_node);
     }
+
     return verdict;
 }
 

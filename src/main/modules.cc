@@ -44,7 +44,7 @@ using namespace std;
 #include "parser/cmd_line.h"
 #include "parser/parse_ip.h"
 #include "file_api/file_service.h"
-#include "file_api/libs/file_config.h"
+#include "file_api/file_config.h"
 #include "filters/sfthd.h"
 #include "filters/sfrf.h"
 #include "filters/rate_filter.h"
@@ -1307,6 +1307,48 @@ static const Parameter file_rule_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+// File policy
+static const Parameter file_when_params[] =
+{
+    // FIXIT when.policy_id should be an arbitrary string auto converted
+    // into index for binder matching and lookups
+    { "file_type_id", Parameter::PT_INT, "0:", "0",
+      "unique ID for file type in file magic rule" },
+
+    { "sha256", Parameter::PT_STRING, nullptr, nullptr,
+      "SHA 256" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter file_use_params[] =
+{
+    { "verdict", Parameter::PT_ENUM, "unknown | log | stop | block | reset ", "unknown",
+      "what to do with matching traffic" },
+
+    { "enable_file_type", Parameter::PT_BOOL, nullptr, "false",
+      "true/false -> enable/disable file type identification" },
+
+    { "enable_file_signature", Parameter::PT_BOOL, nullptr, "false",
+      "true/false -> enable/disable file signature" },
+
+    { "enable_file_capture", Parameter::PT_BOOL, nullptr, "false",
+      "true/false -> enable/disable file capture" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter file_policy_rule_params[] =
+{
+    { "when", Parameter::PT_TABLE, file_when_params, nullptr,
+      "match criteria" },
+
+    { "use", Parameter::PT_TABLE, file_use_params, nullptr,
+      "target configuration" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter file_id_params[] =
 {
     { "type_depth", Parameter::PT_INT, "0:", "1460",
@@ -1339,6 +1381,9 @@ static const Parameter file_id_params[] =
     { "file_rules", Parameter::PT_LIST, file_rule_params, nullptr,
         "list of file magic rules" },
 
+    { "file_policy", Parameter::PT_LIST, file_policy_rule_params, nullptr,
+        "list of file rules" },
+
     { "trace_type", Parameter::PT_BOOL, nullptr, "false",
       "enable runtime dump of type info" },
 
@@ -1364,42 +1409,50 @@ public:
 private:
     FileMagicRule rule;
     FileMagicData magic;
+    FileRule file_rule;
 };
 
 bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    FileConfig* fc = sc->file_config;
-    assert(fc);
+    FileConfig& fc = sc->file_config;
+
+    FilePolicy& fp = fc.get_file_policy();
 
     if ( v.is("type_depth") )
-        fc->file_type_depth = v.get_long();
+        fc.file_type_depth = v.get_long();
 
     else if ( v.is("signature_depth") )
-        fc->file_signature_depth = v.get_long();
+        fc.file_signature_depth = v.get_long();
 
     else if ( v.is("block_timeout") )
-        fc->file_block_timeout = v.get_long();
+        fc.file_block_timeout = v.get_long();
 
     else if ( v.is("lookup_timeout") )
-        fc->file_lookup_timeout = v.get_long();
+        fc.file_lookup_timeout = v.get_long();
 
     else if ( v.is("block_timeout_lookup") )
-        fc->block_timeout_lookup = v.get_bool();
+        fc.block_timeout_lookup = v.get_bool();
 
     else if ( v.is("enable_type") )
     {
         if ( v.get_bool() )
-            FileService::enable_file_type();
+        {
+            fp.set_file_type(true);
+        }
     }
     else if ( v.is("enable_signature") )
     {
         if ( v.get_bool() )
-            FileService::enable_file_signature();
+        {
+            fp.set_file_signature(true);
+        }
     }
     else if ( v.is("enable_capture") )
     {
         if ( v.get_bool() )
-            FileService::enable_file_capture();
+        {
+            fp.set_file_capture(true);
+        }
     }
     else if ( v.is("show_data_depth") )
         FileConfig::show_data_depth = v.get_long();
@@ -1443,22 +1496,41 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("offset") )
         magic.offset = v.get_long();
 
+    else if ( v.is("file_policy") )
+        return true;
+
+    else if ( v.is("when") )
+        return true;
+
+    else if ( v.is("file_type_id") )
+        file_rule.when.type_id = v.get_long();
+
+    else if ( v.is("sha256") )
+        file_rule.when.sha256 = v.get_string();
+
+    else if ( v.is("use") )
+        return true;
+
+    else if ( v.is("verdict") )
+        file_rule.use.verdict = (FileVerdict)v.get_long();
+
+    else if ( v.is("enable_file_type") )
+        file_rule.use.type_enabled = v.get_bool();
+
+    else if ( v.is("enable_file_signature") )
+        file_rule.use.signature_enabled = v.get_bool();
+
+    else if ( v.is("enable_file_capture") )
+        file_rule.use.capture_enabled = v.get_bool();
+
     else
         return false;
 
     return true;
 }
 
-bool FileIdModule::begin(const char* fqn, int idx, SnortConfig* sc)
+bool FileIdModule::begin(const char* fqn, int idx, SnortConfig*)
 {
-    FileConfig* fc = sc->file_config;
-
-    if (!fc)
-    {
-        fc = new FileConfig;
-        sc->file_config = fc;
-    }
-
     if (!idx)
         return true;
 
@@ -1472,26 +1544,36 @@ bool FileIdModule::begin(const char* fqn, int idx, SnortConfig* sc)
         magic.clear();
     }
 
+    else if ( !strcmp(fqn, "file_id.file_policy") )
+    {
+        file_rule.clear();
+    }
+
+
     return true;
 }
 
 bool FileIdModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
-    FileConfig* fc = sc->file_config;
+    FileConfig& fc = sc->file_config;
 
     if (!idx)
         return true;
 
     if ( !strcmp(fqn, "file_id.file_rules") )
     {
-        fc->process_file_rule(rule);
-        //fc->print_file_rule(rule);
+        fc.process_file_rule(rule);
     }
 
     else if ( !strcmp(fqn, "file_id.file_rules.magic") )
     {
-        fc->process_file_magic(magic);
+        fc.process_file_magic(magic);
         rule.file_magics.push_back(magic);
+    }
+
+    else if ( !strcmp(fqn, "file_id.file_policy") )
+    {
+        fc.process_file_policy_rule(file_rule);
     }
 
     return true;

@@ -82,7 +82,28 @@ void FileConfig::process_file_rule(FileMagicRule &rule)
     fileIdentifier.insert_file_rule(rule);
 }
 
+void FileConfig::process_file_policy_rule(FileRule &rule)
+{
+    filePolicy.insert_file_rule(rule);
+}
+
 FileMagicRule*  FileConfig::get_rule_from_id(uint32_t id)
 {
     return fileIdentifier.get_rule_from_id(id);
+}
+
+std::string FileConfig::file_type_name( uint32_t id)
+{
+    if (SNORT_FILE_TYPE_UNKNOWN == id)
+        return "Unknown file type, done";
+
+    else if (SNORT_FILE_TYPE_CONTINUE == id)
+        return "Undecided file type, continue...";
+
+    FileMagicRule* info = get_rule_from_id(id);
+
+    if (info != nullptr)
+        return info->type;
+
+    return "";
 }

@@ -25,47 +25,50 @@
 
 #include <sys/types.h>
 #include "main/snort_types.h"
-#include "libs/file_lib.h"
+#include "file_lib.h"
 
 class FileContext;
+class Flow;
 
 class SO_PUBLIC FileFlows : public FlowData
 {
 public:
 
-    FileFlows() : FlowData(flow_id) {};
+    FileFlows(Flow* f) : FlowData(flow_id), flow(f) {};
     ~FileFlows();
     static void init()
     { flow_id = FlowData::get_flow_id(); }
 
     // Factory method to get file flows
-    static FileFlows* get_file_flows(Flow* flow);
+    static FileFlows* get_file_flows(Flow*);
 
     FileContext* get_current_file_context() {return current_context; };
-    void set_current_file_context(FileContext* ctx);
+    void set_current_file_context(FileContext*);
 
     uint32_t get_new_file_instance();
 
     void set_file_name(const uint8_t* fname, uint32_t name_size);
 
     // This is used when there is only one file per session
-    bool file_process(const uint8_t* file_data, int data_size,
-        FilePosition position, bool upload);
+    bool file_process(const uint8_t* file_data, int data_size, FilePosition,
+        bool upload, size_t file_index = 0);
 
     // This is used for each file context. Support multiple files per session
-    bool file_process(FileContext* context, const uint8_t* file_data, int data_size,
-        FilePosition position);
+    bool file_process(FileContext*, const uint8_t* file_data, int data_size, FilePosition);
 
     //void handle_retransmit(Packet*) override;
     static unsigned flow_id;
 
 private:
     void save_to_pending_context();
-    FileContext* find_main_file_context(FilePosition position, FileDirection direction);
-    FileContext* main_context = NULL;
-    FileContext* pending_context = NULL;
-    FileContext* current_context = NULL;
+    void finish_signature_lookup(FileContext*);
+    void init_file_context(FileDirection, FileContext*);
+    FileContext* find_main_file_context(FilePosition, FileDirection, size_t id = 0);
+    FileContext* main_context = nullptr;
+    FileContext* pending_context = nullptr;
+    FileContext* current_context = nullptr;
     uint32_t max_file_id = 0;
+    Flow* flow = nullptr;
 };
 #endif
 

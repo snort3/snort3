@@ -35,7 +35,7 @@
 #include "port_scan/ps_detect.h"  // FIXIT-L for PS_PROTO_*
 #include "utils/strvec.h"
 #include "file_api/file_service.h"
-#include "file_api/libs/file_config.h"
+#include "file_api/file_config.h"
 #include "target_based/sftarget_reader.h"
 #include "parser/parser.h"
 #include "parser/config_file.h"
@@ -228,8 +228,6 @@ SnortConfig::~SnortConfig()
 
     if (eth_dst )
         free(eth_dst);
-
-    delete file_config;
 
     if ( var_list )
         FreeVarList(var_list);

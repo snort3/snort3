@@ -41,17 +41,7 @@
 #define     FILE_RESUME_BLOCK                    0x01
 #define     FILE_RESUME_LOG                      0x02
 
-/*
- * Generator id. Define here the same as the official register
- * in generators.h
- */
-#define GENERATOR_FILE_TYPE         146
-#define GENERATOR_FILE_SIGNATURE    147
-
-#define FILE_SIGNATURE_SHA256       1
-#define FILE_SIGNATURE_SHA256_STR   "(file) malware detected"
-
-enum File_Verdict
+enum FileVerdict
 {
     FILE_VERDICT_UNKNOWN = 0,
     FILE_VERDICT_LOG,
@@ -112,14 +102,6 @@ class FileContext;
 struct FileCaptureInfo;
 
 #define DEFAULT_FILE_ID   0
-
-typedef uint32_t (*File_policy_callback_func)(Flow* flow, int16_t app_id, bool upload);
-typedef File_Verdict (*File_type_callback_func)(Packet* p, Flow* flow,
-    uint32_t file_type_id, bool upload, uint32_t file_id);
-typedef File_Verdict (*File_signature_callback_func)(Packet* p, Flow* flow,
-    uint8_t* file_sig, uint64_t file_size, FileState* state, bool upload,
-    uint32_t file_id);
-typedef void (*Log_file_action_func)(Flow* flow, int action);
 
 static inline void initFilePosition(FilePosition* position, uint64_t processed_size)
 {

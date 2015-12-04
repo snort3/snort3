@@ -38,8 +38,9 @@
 #include "file_stats.h"
 #include "file_capture.h"
 #include "file_resume_block.h"
-#include "libs/file_lib.h"
-#include "libs/file_config.h"
+#include "file_policy.h"
+#include "file_lib.h"
+#include "file_config.h"
 
 #include "main/snort_types.h"
 #include "stream/stream_api.h"
@@ -53,9 +54,6 @@ bool FileConfig::trace_stream = false;
 
 unsigned FileFlows::flow_id = 0;
 
-static inline void finish_signature_lookup(FileContext* context);
-
-
 FileFlows* FileFlows::get_file_flows(Flow* flow)
 {
     FileFlows* fd = (FileFlows*) flow->get_application_data(FileFlows::flow_id);
@@ -65,7 +63,7 @@ FileFlows* FileFlows::get_file_flows(Flow* flow)
 
     if (FileService::is_file_service_enabled())
     {
-        fd = new FileFlows;
+        fd = new FileFlows(flow);
         flow->set_application_data(fd);
     }
 
@@ -100,22 +98,21 @@ FileFlows::~FileFlows()
     delete(main_context);
 }
 
-static inline void init_file_context(FileDirection direction, FileContext* context)
+void FileFlows::init_file_context(FileDirection direction, FileContext* context)
 {
-    context->config_file_type(FileService::is_file_type_id_enabled());
-    context->config_file_signature(FileService::is_file_signature_enabled());
-    context->config_file_capture(FileService::is_file_capture_enabled());
+    FilePolicy& inspect = FileService::get_inspect();
+    inspect.policy_check(flow, context);
     context->set_file_direction(direction);
 }
 
-FileContext* FileFlows::find_main_file_context(FilePosition position, FileDirection direction)
+FileContext* FileFlows::find_main_file_context(FilePosition pos, FileDirection dir, size_t index)
 {
     /* Attempt to get a previously allocated context. */
     FileContext* context = main_context;
 
     if (context)
     {
-        if ((position == SNORT_FILE_MIDDLE) or (position == SNORT_FILE_END))
+        if ((pos == SNORT_FILE_MIDDLE) or (pos == SNORT_FILE_END))
             return context;
         else
             delete context;
@@ -124,15 +121,24 @@ FileContext* FileFlows::find_main_file_context(FilePosition position, FileDirect
     context = new FileContext;
     file_stats.files_total++;
     main_context = context;
-    init_file_context(direction, context);
-    context->set_file_id(max_file_id++);
+    init_file_context(dir, context);
+
+    if (!index)
+        context->set_file_id(max_file_id++);
+    else
+        context->set_file_id(index);
+
     return context;
 }
 
-static inline void finish_signature_lookup(FileContext* context)
+void FileFlows::finish_signature_lookup(FileContext* context)
 {
     if (context->get_file_sig_sha256())
     {
+        //Check file type based on file policy
+        FilePolicy& inspect = FileService::get_inspect();
+        inspect.signature_lookup(flow, context);
+
         context->config_file_signature(false);
         file_stats.signatures_processed[context->get_file_type()][context->get_file_direction()]++;
     }
@@ -148,9 +154,8 @@ bool FileFlows::file_process(FileContext* context, const uint8_t* file_data,
 {
     if ( FileConfig::trace_stream )
     {
-        if (snort_conf->file_config)
-            FileContext::print_file_data(stdout, file_data, data_size,
-                snort_conf->file_config->show_data_depth);
+        FileContext::print_file_data(stdout, file_data, data_size,
+            snort_conf->file_config.show_data_depth);
     }
 
     if (!context)
@@ -165,7 +170,12 @@ bool FileFlows::file_process(FileContext* context, const uint8_t* file_data,
         return false;
     }
 
-    context->set_file_config(snort_conf->file_config);
+    context->set_file_config(&(snort_conf->file_config));
+
+    FileBlock* file_block = FileService::get_file_block();
+    if (file_block &&
+        (file_block->cached_verdict_lookup(flow, context) != FILE_VERDICT_UNKNOWN))
+        return true;
 
     /*file type id*/
     if (context->is_file_type_enabled())
@@ -186,6 +196,9 @@ bool FileFlows::file_process(FileContext* context, const uint8_t* file_data,
         {
             context->config_file_type(false);
             file_stats.files_processed[context->get_file_type()][context->get_file_direction()]++;
+            //Check file type based on file policy
+            FilePolicy& inspect = FileService::get_inspect();
+            inspect.type_lookup(flow, context);
         }
     }
 
@@ -224,7 +237,7 @@ bool FileFlows::file_process(FileContext* context, const uint8_t* file_data,
  *    false: ignore this file
  */
 bool FileFlows::file_process(const uint8_t* file_data, int data_size,
-    FilePosition position, bool upload)
+    FilePosition position, bool upload, size_t file_index)
 {
     FileContext* context;
     FileDirection direction = upload ? FILE_UPLOAD:FILE_DOWNLOAD;
@@ -235,7 +248,7 @@ bool FileFlows::file_process(const uint8_t* file_data, int data_size,
     if (position == SNORT_FILE_POSITION_UNKNOWN)
         return false;
 
-    context = find_main_file_context(position, direction);
+    context = find_main_file_context(position, direction, file_index);
 
     return file_process(context, file_data, data_size, position);
 }

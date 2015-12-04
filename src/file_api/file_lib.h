@@ -36,11 +36,38 @@
 class FileCapture;
 class FileConfig;
 
-class FileContext
+class FileInfo
 {
 public:
-     FileContext();
-     ~FileContext();
+    virtual ~FileInfo();
+    FileInfo& operator=(const FileInfo& other);
+    uint32_t get_file_type();
+    void set_file_name(const uint8_t* file_name, uint32_t name_size);
+    bool get_file_name( uint8_t** file_name, uint32_t* name_size);
+    void set_file_size(uint64_t size);
+    uint64_t get_file_size();
+    void set_file_direction(FileDirection dir);
+    FileDirection get_file_direction();
+    void set_file_sig_sha256(uint8_t* signature);
+    uint8_t* get_file_sig_sha256();
+    void set_file_id(size_t index);
+    size_t get_file_id();
+
+protected:
+    uint8_t* file_name = nullptr;
+    uint32_t file_name_size = 0;
+    uint64_t file_size = 0;
+    FileDirection direction = DIRECTION_UNKNOWN;
+    uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
+    uint8_t* sha256 = nullptr;
+    size_t file_id = 0;
+};
+
+class FileContext: public FileInfo
+{
+public:
+    FileContext();
+    ~FileContext();
 
     // main processing functions
     void process_file_type(const uint8_t* file_data, int data_size, FilePosition position);
@@ -58,18 +85,8 @@ public:
     bool is_file_capture_enabled();
 
     //File properties
-    uint32_t get_file_type();
-    void set_file_name(const uint8_t* file_name, uint32_t name_size);
-    bool get_file_name( uint8_t** file_name, uint32_t* name_size);
-    void set_file_size(uint64_t size);
-    uint64_t get_file_size();
     uint64_t get_processed_bytes();
-    void set_file_direction(FileDirection dir);
-    FileDirection get_file_direction();
-    void set_file_sig_sha256(uint8_t* signature);
-    uint8_t* get_file_sig_sha256();
-    void set_file_id(uint32_t size);
-    uint32_t get_file_id();
+
     void set_file_config(FileConfig* file_config);
     FileConfig*  get_file_config();
 
@@ -81,19 +98,12 @@ private:
     bool file_type_enabled = false;
     bool file_signature_enabled = false;
     bool file_capture_enabled = false;
-    uint8_t* file_name = nullptr;
-    uint32_t file_name_size = 0;
-    uint64_t file_size = 0;
-    FileDirection direction = DIRECTION_UNKNOWN;
     uint64_t processed_bytes = 0;
-    uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
-    uint8_t* sha256 = NULL;
     void* file_type_context;
     void* file_signature_context;
     FileConfig* file_config;
     FileCapture *file_capture;
     FileState file_state = {FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING};
-    uint32_t file_id = 0;
 
     inline int get_data_size_from_depth_limit(FileProcessType type, int data_size);
     inline void finalize_file_type ();

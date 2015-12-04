@@ -33,7 +33,7 @@
 
 #include "file_stats.h"
 #include "file_capture.h"
-#include "libs/file_config.h"
+#include "file_config.h"
 
 #include "main/snort_types.h"
 #include "main/snort_config.h"
@@ -73,7 +73,7 @@ void print_file_stats()
 
     for (i = 0; i < FILE_ID_MAX; i++)
     {
-        const char* type_name =  file_type_name(snort_conf->file_config, i);
+        const char* type_name =  snort_conf->file_config.file_type_name(i).c_str();
         if (type_name &&
             (file_stats.files_processed[i][0] || file_stats.files_processed[i][1] ))
         {
@@ -95,7 +95,7 @@ void print_file_stats()
 
     for (i = 0; i < FILE_ID_MAX; i++)
     {
-        const char* type_name =  file_type_name(snort_conf->file_config, i);
+        const char* type_name = snort_conf->file_config.file_type_name(i).c_str();
         if (type_name &&
             (file_stats.files_processed[i][0] || file_stats.files_processed[i][1] ))
         {
@@ -131,7 +131,7 @@ void print_file_stats()
     processed_total[1] = 0;
     for (i = 0; i < FILE_ID_MAX; i++)
     {
-        const char* type_name =  file_type_name(snort_conf->file_config, i);
+        const char* type_name = snort_conf->file_config.file_type_name(i).c_str();
         if (type_name &&
             (file_stats.signatures_processed[i][0] || file_stats.signatures_processed[i][1] ))
         {

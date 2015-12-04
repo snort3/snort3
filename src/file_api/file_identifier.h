@@ -103,9 +103,9 @@ private:
     void update_trie(IdentifierNode* start, IdentifierNode* append);
 
     /*properties*/
-    IdentifierNode* identifier_root = NULL; /*Root of magic tries*/
+    IdentifierNode* identifier_root = nullptr; /*Root of magic tries*/
     uint32_t memory_used = 0; /*Track memory usage*/
-    SFGHASH* identifier_merge_hash = NULL;
+    SFGHASH* identifier_merge_hash = nullptr;
     FileMagicRule file_magic_rules[FILE_ID_MAX + 1];
     IDMemoryBlocks idMemoryBlocks;
 };

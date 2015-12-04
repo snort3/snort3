@@ -38,8 +38,8 @@
 #include "file_capture.h"
 #include "file_flows.h"
 #include "file_resume_block.h"
-#include "libs/file_lib.h"
-#include "libs/file_config.h"
+#include "file_lib.h"
+#include "file_config.h"
 
 #include "mime/file_mime_config.h"
 #include "mime/file_mime_process.h"
@@ -55,6 +55,7 @@ bool FileService::file_type_id_enabled = false;
 bool FileService::file_signature_enabled = false;
 bool FileService::file_capture_enabled = false;
 bool FileService::file_processing_initiated = false;
+FileBlock* FileService::file_block = nullptr;
 
 void FileService::init(void)
 {
@@ -64,25 +65,22 @@ void FileService::init(void)
 
 void FileService::post_init(void)
 {
-    FileConfig* file_config = (FileConfig*)(snort_conf->file_config);
+    FileConfig& file_config = snort_conf->file_config;
 
-    if (file_type_id_enabled or file_signature_enabled or file_capture_enabled)
-    {
-        if (!file_config)
-        {
-            file_config =  new FileConfig;
-            snort_conf->file_config = file_config;
-        }
-    }
+    FilePolicy& fp  = get_inspect();
+
+    fp.load();
 
     if ( file_capture_enabled)
-        FileCapture::init_mempool(file_config->file_capture_memcap,
-            file_config->file_capture_block_size);
+        FileCapture::init_mempool(file_config.file_capture_memcap,
+            file_config.file_capture_block_size);
 }
 
 void FileService::close(void)
 {
-    file_resume_block_cleanup();
+    if (file_block)
+        delete file_block;
+
     MimeSession::exit();
     FileCapture::exit();
 }
@@ -91,7 +89,7 @@ void FileService::start_file_processing(void)
 {
     if (!file_processing_initiated)
     {
-        file_resume_block_init();
+        file_block = new FileBlock;
         //RegisterProfileStats("file", print_file_stats);  FIXIT-M put in module
         file_processing_initiated = true;
     }
@@ -116,7 +114,6 @@ void FileService::enable_file_type()
 
 void FileService::enable_file_signature()
 {
-
     if (!file_signature_enabled)
     {
         file_signature_enabled = true;
@@ -139,43 +136,44 @@ bool FileService::is_file_service_enabled()
     return (file_type_id_enabled or file_signature_enabled);
 }
 
-
 /* Get maximal file depth based on configuration
  * This function must be called after all file services are configured/enabled.
  */
 int64_t FileService::get_max_file_depth(void)
 {
-    FileConfig* file_config =  (FileConfig*)(snort_conf->file_config);
+    FileConfig& file_config =  snort_conf->file_config;
 
-    if (!file_config)
-        return -1;
+    if (file_config.file_depth)
+        return file_config.file_depth;
 
-    if (file_config->file_depth)
-        return file_config->file_depth;
-
-    file_config->file_depth = -1;
+    file_config.file_depth = -1;
 
     if (file_type_id_enabled)
     {
-        file_config->file_depth = file_config->file_type_depth;
+        file_config.file_depth = file_config.file_type_depth;
     }
 
     if (file_signature_enabled)
     {
-        if (file_config->file_signature_depth > file_config->file_depth)
-            file_config->file_depth = file_config->file_signature_depth;
+        if (file_config.file_signature_depth > file_config.file_depth)
+            file_config.file_depth = file_config.file_signature_depth;
     }
 
-    if (file_config->file_depth > 0)
+    if (file_config.file_depth > 0)
     {
         /*Extra byte for deciding whether file data will be over limit*/
-        file_config->file_depth++;
-        return (file_config->file_depth);
+        file_config.file_depth++;
+        return (file_config.file_depth);
     }
     else
     {
         return -1;
     }
+}
+
+FilePolicy& FileService::get_inspect()
+{
+    return (snort_conf->file_config.get_file_policy());
 }
 
 uint64_t get_file_processed_size(Flow* flow)

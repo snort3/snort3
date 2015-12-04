@@ -39,6 +39,7 @@
 #include "protocols/packet.h"
 #include "framework/bits.h"
 #include "events/event_queue.h"
+#include "file_api/file_config.h"
 
 #define DEFAULT_LOG_DIR "."
 
@@ -252,7 +253,7 @@ public:
     class FastPatternConfig* fast_pattern_config = nullptr;
     struct EventQueueConfig* event_queue_config = nullptr;
 
-    class FileConfig* file_config = nullptr;
+    class FileConfig file_config;
 
     /* XXX XXX policy specific? */
     struct ThresholdConfig* threshold_config = nullptr;

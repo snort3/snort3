@@ -90,7 +90,8 @@ int hi_ui_config_init_global_conf(HTTPINSPECT_GLOBAL_CONF* gc)
     gc->decompr_depth = 65535;
     gc->memcap = 150994944;
     gc->max_gzip_mem = 838860;
-    gc->decode_conf = new DecodeConfig;
+    if (!gc->decode_conf)
+        gc->decode_conf = new DecodeConfig;
     return HI_SUCCESS;
 }
 

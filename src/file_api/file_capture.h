@@ -32,7 +32,7 @@
 // 4) Finally, fila data must be released from mempool file_capture_release()
 
 #include "file_api.h"
-#include "libs/file_lib.h"
+#include "file_lib.h"
 #include "file_mempool.h"
 
 struct FileCaptureBlock

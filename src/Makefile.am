@@ -75,7 +75,6 @@ stream/udp/libstream_udp.a \
 stream/user/libstream_user.a \
 stream/file/libstream_file.a \
 file_api/libfile_api.a \
-file_api/libs/libfile.a \
 mime/libmime.a \
 service_inspectors/http_inspect/libhttp_inspect.a \
 $(pig_list) \

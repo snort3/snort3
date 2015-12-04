@@ -31,8 +31,8 @@
 #include "target_based/sftarget_reader.h"
 
 #include "main/snort_debug.h"
-#include "libs/file_config.h"
-#include "file_api/file_api.h"
+#include "file_config.h"
+#include "file_api.h"
 
 #define MAX_PROTOCOL_ORDINAL 8192  // FIXIT-L use std::vector and get_protocol_count()
 

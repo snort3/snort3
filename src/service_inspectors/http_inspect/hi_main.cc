@@ -482,7 +482,7 @@ static inline void HttpLogFuncs(
 
 static inline void setFileName(Packet* p)
 {
-    uint8_t* buf = NULL;
+    uint8_t* buf = nullptr;
     uint32_t len = 0;
     uint32_t type = 0;
     GetHttpUriData(p->flow, &buf, &len, &type);
@@ -491,6 +491,22 @@ static inline void setFileName(Packet* p)
 
     if (file_flows)
         file_flows->set_file_name (buf, len);
+}
+
+static inline size_t getFileIndex(Flow* flow)
+{
+    static std::hash<std::string> hash_fn;
+    uint8_t* buf = nullptr;
+    uint32_t len = 0;
+    uint32_t type = 0;
+
+    GetHttpUriData(flow, &buf, &len, &type);
+
+    if (!len or !buf)
+        return 0;
+
+    std::string str = std::string((const char*)buf,len);
+    return (hash_fn(str));
 }
 
 /*
@@ -1078,7 +1094,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                     && file_flows &&  file_flows->file_process(
                     (uint8_t*)session->server.response.body,
                     (uint16_t)session->server.response.body_size,
-                    getFilePoistion(p), false))
+                    getFilePoistion(p), false, getFileIndex(p->flow)))
                 {
                     setFileName(p);
                 }

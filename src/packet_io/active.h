@@ -53,6 +53,7 @@ public:
         active_status = AST_ALLOW;
         active_action = ACT_PASS;
         active_tunnel_bypass = 0;
+        delayed_active_action = ACT_PASS;
     }
 
     static void kill_session(Packet*, EncodeFlags = ENC_FLAG_FWD);
@@ -124,6 +125,10 @@ public:
     static uint64_t get_injects()
     { return s_injects; }
 
+    static void set_delayed_action(ActiveAction, bool force = false);
+
+    static void apply_delayed_action(const Packet* p);
+
 private:
     static bool open(const char*);
     static void close();
@@ -144,6 +149,7 @@ private:
 private:
     static THREAD_LOCAL ActiveStatus active_status;
     static THREAD_LOCAL ActiveAction active_action;
+    static THREAD_LOCAL ActiveAction delayed_active_action;
 
     static THREAD_LOCAL int active_tunnel_bypass;
     static THREAD_LOCAL bool active_suspend;

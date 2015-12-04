@@ -76,7 +76,7 @@
 #include "sfip/sf_ipvar.h"
 #include "ppm/ppm.h"
 #include "packet_io/active.h"
-#include "file_api/libs/file_config.h"
+#include "file_api/file_config.h"
 #include "actions/actions.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"

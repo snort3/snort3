@@ -65,7 +65,7 @@
 #include "sfip/sf_ipvar.h"
 #include "ppm/ppm.h"
 #include "packet_io/active.h"
-#include "file_api/libs/file_config.h"
+#include "file_api/file_config.h"
 #include "framework/ips_option.h"
 
 #ifdef UNIT_TEST

@@ -43,6 +43,7 @@
 // or response may have been produced by a pseudopacket.
 THREAD_LOCAL Active::ActiveStatus Active::active_status = Active::AST_ALLOW;
 THREAD_LOCAL Active::ActiveAction Active::active_action = Active::ACT_PASS;
+THREAD_LOCAL Active::ActiveAction Active::delayed_active_action = Active::ACT_PASS;
 
 THREAD_LOCAL int Active::active_tunnel_bypass = 0;
 THREAD_LOCAL bool Active::active_suspend = 0;
@@ -432,6 +433,37 @@ void Active::reset_session(const Packet* p, bool force)
     }
 }
 
+void Active::set_delayed_action(ActiveAction action, bool force)
+{
+    delayed_active_action = action;
+
+    if (force)
+        active_status = AST_FORCE;
+}
+
+void Active::apply_delayed_action(const Packet* p)
+{
+    bool force = (active_status == AST_FORCE);
+
+    switch(delayed_active_action)
+    {
+    case ACT_PASS:
+        break;
+    case ACT_DROP:
+        drop_packet(p, force);
+        break;
+    case ACT_BLOCK:
+        block_session(p, force);
+        break;
+    case ACT_RESET:
+        reset_session(p, force);
+        break;
+    default:
+        break;
+    }
+
+    delayed_active_action = ACT_PASS;
+}
 //--------------------------------------------------------------------
 
 bool Active::open(const char* dev)

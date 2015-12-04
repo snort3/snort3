@@ -26,14 +26,52 @@
 // to request the file data left. To block the new session, we use URL and IPs
 // to continue blocking the same file.
 
-#include "protocols/packet.h"
-#include "file_api/file_api.h"
+#include "file_api.h"
+#include "file_lib.h"
+#include "file_config.h"
 
-void file_resume_block_init(void);
-void file_resume_block_cleanup(void);
-int file_resume_block_add_file(Packet* pkt, uint32_t file_sig, uint32_t timeout,
-    File_Verdict verdict, uint32_t file_type_id, uint8_t* signature);
-File_Verdict file_resume_block_check(Packet* pkt, uint32_t file_sig);
+#include "protocols/packet.h"
+#include "hash/sfxhash.h"
+#include "hash/hashes.h"
+
+class FileInfo;
+
+class FileBlock
+{
+
+    struct FileHashKey
+    {
+        sfip_t sip;
+        sfip_t dip;
+        size_t file_sig;
+    } ;
+
+    struct FileNode
+    {
+        time_t expires;
+        FileVerdict verdict;
+        FileInfo file;
+    };
+
+    #define MAX_FILES_TRACKED 16384
+    #define MAX_MEMORY_USED 10*1024*1024  // 10M
+
+public:
+    FileBlock();
+    ~FileBlock();
+    FileVerdict cached_verdict_lookup(Flow*, FileInfo*);
+    bool apply_verdict(Flow*, FileVerdict);
+    bool apply_verdict(Flow*, FileInfo*, FileVerdict);
+
+private:
+    void update_file_node(FileNode*, FileVerdict, FileInfo*);
+    FileVerdict check_verdict(Flow*, FileNode*, SFXHASH_NODE*);
+    int store_verdict(Flow*, FileInfo*, FileVerdict);
+
+    /* The hash table of expected files */
+    SFXHASH* fileHash = nullptr;
+    uint32_t timeout = DEFAULT_FILE_BLOCK_TIMEOUT;
+};
 
 #endif
 

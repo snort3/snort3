@@ -40,20 +40,134 @@
 #include "utils/util.h"
 #include "file_api/file_capture.h"
 
+FileInfo::~FileInfo ()
+{
+    if(sha256)
+        delete[] sha256;
+    if(file_name)
+        delete[] file_name;
+}
+
+FileInfo& FileInfo::operator=(const FileInfo& other)
+{
+    // check for self-assignment
+    if(&other == this)
+        return *this;
+
+    if (other.file_name and other.file_name_size)
+    {
+        file_name = new uint8_t[file_name_size];
+        if (file_name)
+        {
+            strncpy( (char *)file_name, (const char *)other.file_name, file_name_size);
+            file_name_size = other.file_name_size;
+        }
+    }
+
+    if (other.sha256)
+    {
+        sha256 = new uint8_t[SHA256_HASH_SIZE];
+        if (sha256)
+            strncpy( (char *)sha256, (const char *)other.sha256, SHA256_HASH_SIZE);
+    }
+
+    file_size = other.file_size;
+    direction = other.direction;
+    file_type_id = other.file_type_id;
+    file_id = other.file_id;
+
+    return *this;
+}
+
+/*File properties*/
+
+void FileInfo::set_file_name (const uint8_t *name, uint32_t name_size)
+{
+    if (name and name_size and !file_name)
+    {
+        file_name = new uint8_t[name_size];
+        if (file_name)
+        {
+            strncpy( (char *)file_name, (const char *)name, name_size);
+            file_name_size = name_size;
+        }
+    }
+}
+
+// Return true: file name available,
+//        false: file name is unavailable
+bool FileInfo::get_file_name(uint8_t** name, uint32_t* name_size)
+{
+    assert(name);
+    assert(name_size);
+
+    if (!file_name or !file_name_size)
+        return false;
+
+    *name = file_name;
+    *name_size = file_name_size;
+
+    return true;
+}
+
+void FileInfo::set_file_size(uint64_t size)
+{
+    file_size = size;
+}
+
+uint64_t FileInfo::get_file_size()
+{
+    return file_size;
+}
+
+uint32_t FileInfo::get_file_type()
+{
+    return file_type_id;
+}
+
+void FileInfo::set_file_id(size_t id)
+{
+    file_id = id;
+}
+
+size_t FileInfo::get_file_id()
+{
+    return file_id;
+}
+
+
+void FileInfo::set_file_direction(FileDirection dir)
+{
+    direction = dir;
+}
+
+FileDirection FileInfo::get_file_direction()
+{
+    return (direction);
+}
+
+void FileInfo::set_file_sig_sha256(uint8_t* signature)
+{
+    sha256 = signature;
+}
+
+uint8_t* FileInfo::get_file_sig_sha256()
+{
+    return (sha256);
+}
+
 FileContext::FileContext ()
 {
-    file_type_context = NULL;
-    file_signature_context = NULL;
-    file_config = NULL;
-    file_capture = NULL;
+    file_type_context = nullptr;
+    file_signature_context = nullptr;
+    file_config = nullptr;
+    file_capture = nullptr;
 }
 
 FileContext::~FileContext ()
 {
     if (file_signature_context)
         free(file_signature_context);
-    if(sha256)
-        free(sha256);
     if(file_capture)
         stop_file_capture();
 }
@@ -91,7 +205,7 @@ inline void FileContext::finalize_file_type ()
 {
     if (SNORT_FILE_TYPE_CONTINUE ==  file_type_id)
         file_type_id = SNORT_FILE_TYPE_UNKNOWN;
-    file_type_context = NULL;
+    file_type_context = nullptr;
 }
 /*
  * Main File type processing function
@@ -163,7 +277,7 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
         if (processed_bytes == 0)
             SHA256_Init((SHA256_CTX*)file_signature_context);
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
-        sha256 = (uint8_t*)SnortAlloc(SHA256_HASH_SIZE);
+        sha256 = new uint8_t[SHA256_HASH_SIZE];
         SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
         file_state.sig_state = FILE_SIG_DONE;
         break;
@@ -171,7 +285,7 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
         file_signature_context = SnortAlloc(sizeof (SHA256_CTX));
         SHA256_Init((SHA256_CTX*)file_signature_context);
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
-        sha256 = (uint8_t*)SnortAlloc(SHA256_HASH_SIZE);
+        sha256 = new uint8_t[SHA256_HASH_SIZE];
         SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
         file_state.sig_state = FILE_SIG_DONE;
         break;
@@ -205,7 +319,6 @@ void FileContext::stop_file_capture()
     file_capture_enabled = false;
 }
 
-
 void FileContext::update_file_size(int data_size, FilePosition position)
 {
     processed_bytes += data_size;
@@ -214,11 +327,6 @@ void FileContext::update_file_size(int data_size, FilePosition position)
         file_size = processed_bytes;
         processed_bytes = 0;
     }
-}
-
-uint32_t FileContext::get_file_type()
-{
-    return file_type_id;
 }
 
 void FileContext::config_file_type(bool enabled)
@@ -251,77 +359,11 @@ bool FileContext::is_file_capture_enabled()
     return file_capture_enabled;
 }
 
-/*File properties*/
-/*Only set the pointer for performance, no deep copy*/
-void FileContext::set_file_name (const uint8_t *name, uint32_t name_size)
-{
-    file_name = (uint8_t*) name;
-    file_name_size = name_size;
-}
-
-/* Return true: file name available,
- *        false: file name is unavailable
- */
-
-bool FileContext::get_file_name(uint8_t** name, uint32_t* name_size)
-{
-    if (name)
-        *name = file_name;
-    else
-        return false;
-
-    if (name_size)
-        *name_size = file_name_size;
-    else
-        return false;
-
-    return true;
-}
-
-void FileContext::set_file_size(uint64_t size)
-{
-    file_size = size;
-}
-
-uint64_t FileContext::get_file_size()
-{
-    return file_size;
-}
-
 uint64_t FileContext::get_processed_bytes()
 {
     return processed_bytes;
 }
-void FileContext::set_file_id(uint32_t id)
-{
-    file_id = id;
-}
 
-uint32_t FileContext::get_file_id()
-{
-    return file_id;
-}
-
-
-void FileContext::set_file_direction(FileDirection dir)
-{
-    direction = dir;
-}
-
-FileDirection FileContext::get_file_direction()
-{
-    return (direction);
-}
-
-void FileContext::set_file_sig_sha256(uint8_t* signature)
-{
-    sha256 = signature;
-}
-
-uint8_t* FileContext::get_file_sig_sha256()
-{
-    return (sha256);
-}
 
 void FileContext::set_file_config(FileConfig* config)
 {
@@ -331,25 +373,6 @@ void FileContext::set_file_config(FileConfig* config)
 FileConfig*  FileContext::get_file_config()
 {
     return file_config;
-}
-
-const char* file_type_name(void* conf, uint32_t id)
-{
-    FileMagicRule* info = NULL;
-    FileConfig* file_config =  (FileConfig*) conf;
-
-    if (SNORT_FILE_TYPE_UNKNOWN == id)
-        return "Unknown file type, done";
-
-    else if (SNORT_FILE_TYPE_CONTINUE == id)
-        return "Undecided file type, continue...";
-
-    info = file_config->get_rule_from_id(id);
-
-    if (info != NULL)
-        return info->type.c_str();
-
-    return NULL;
 }
 
 void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth)
@@ -458,7 +481,7 @@ void FileContext::print()
     if (unused > 0)
     {
         used = snprintf(cur, unused, "\nFile type: %s(%d)",
-            file_type_name(file_config, file_type_id), file_type_id);
+            file_config->file_type_name(file_type_id).c_str(), file_type_id);
         unused -= used;
         cur += used;
     }

@@ -147,6 +147,8 @@ void snort_inspect(Packet* p)
         InspectorManager::execute(p);
         inspected = true;
 
+        Active::apply_delayed_action(p);
+
         if ( do_detect )
             snort_detect(p);
     }

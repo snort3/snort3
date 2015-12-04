@@ -70,7 +70,7 @@
 #include "filters/rate_filter.h"
 #include "filters/detection_filter.h"
 #include "packet_io/active.h"
-#include "file_api/libs/file_config.h"
+#include "file_api/file_config.h"
 #include "framework/ips_option.h"
 #include "managers/ips_manager.h"
 #include "managers/so_manager.h"

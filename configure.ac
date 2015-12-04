@@ -928,7 +928,6 @@ src/decompress/Makefile \
 src/detection/Makefile \
 src/events/Makefile \
 src/file_api/Makefile \
-src/file_api/libs/Makefile \
 src/filters/Makefile \
 src/flow/Makefile \
 src/framework/Makefile \

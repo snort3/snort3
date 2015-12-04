@@ -63,7 +63,7 @@
 #include "sfip/sf_ip.h"
 #include "sfip/sf_vartable.h"
 #include "packet_io/active.h"
-#include "file_api/libs/file_config.h"
+#include "file_api/file_config.h"
 #include "framework/ips_option.h"
 #include "managers/action_manager.h"
 #include "actions/actions.h"
