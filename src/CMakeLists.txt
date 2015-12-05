@@ -108,7 +108,6 @@ target_link_libraries( snort
     stream_udp
     stream_user
     stream_file
-    file
     file_api
     mime
     http_inspect
