@@ -54,9 +54,6 @@
 /* build ppm manager */
 #cmakedefine PPM_MGR 1
 
-/* build ppm manager for readback */
-#cmakedefine PPM_TEST 1
-
 /* enable proc stats */
 #cmakedefine LINUX_SMP 1
 
