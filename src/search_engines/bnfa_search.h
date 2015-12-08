@@ -149,11 +149,6 @@ struct bnfa_struct_t
     int nextstate_memory;
     int failstate_memory;
     int matchlist_memory;
-
-#define MAX_INQ 32
-    unsigned inq;
-    unsigned inq_flush;
-    void* q[MAX_INQ];
 };
 
 /*
@@ -174,10 +169,6 @@ int bnfaAddPattern(
 int bnfaCompile(struct SnortConfig*, bnfa_struct_t*);
 
 unsigned _bnfa_search_csparse_nfa(
-    bnfa_struct_t * pstruct, const uint8_t* t, int tlen, MpseMatch,
-    void* context, unsigned sindex, int* current_state);
-
-unsigned _bnfa_search_csparse_nfa_q(
     bnfa_struct_t * pstruct, const uint8_t* t, int tlen, MpseMatch,
     void* context, unsigned sindex, int* current_state);
 

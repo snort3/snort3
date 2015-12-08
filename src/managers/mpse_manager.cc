@@ -155,7 +155,6 @@ bool MpseManager::search_engine_trim(const MpseApi* api)
 void MpseManager::print_qinfo()
 {
     sfksearch_print_qinfo();
-    bnfa_print_qinfo();
     acsmx2_print_qinfo();
 }
 

@@ -90,6 +90,10 @@ struct OTNX_MATCH_DATA
 {
     PortGroup* pg;
     Packet* p;
+
+    const uint8_t* data;
+    unsigned size;
+
     int check_ports;
 
     MATCH_INFO* matchInfo;

@@ -69,11 +69,11 @@ static unsigned mpse_count = 0;
 
 static void fpDeletePMX(void* data);
 
-static int fpGetFinalPattern(FastPatternConfig*, PatternMatchData* pmd,
-    char** ret_pattern, int* ret_bytes);
+static int fpGetFinalPattern(
+    FastPatternConfig*, PatternMatchData*, char** ret_pattern, int* ret_bytes);
 
-static void PrintFastPatternInfo(OptTreeNode* otn, PatternMatchData* pmd,
-    const char* pattern, int pattern_length);
+static void PrintFastPatternInfo(
+    OptTreeNode*, PatternMatchData*, const char* pattern, int pattern_length);
 
 static const char* const pm_type_strings[PM_TYPE_MAX] =
 {
@@ -384,28 +384,10 @@ static int FLP_Trim(char* p, int plen, char** buff)
 
 static bool pmd_can_be_fp(PatternMatchData* pmd, CursorActionType cat)
 {
-    if ( !pmd->pattern_buf || !pmd->pattern_size )
-        return false;
-
     if ( cat <= CAT_SET_OTHER )
         return false;
 
-    if ( !pmd->negated )
-        return true;
-
-    /* Negative contents can only be considered if they are not relative
-     * and don't have any offset or depth.  This is because the pattern
-     * matcher does not take these into consideration and may find the
-     * content in a non-relevant section of the payload and thus disable
-     * the rule when it shouldn't be.
-     * Also case sensitive patterns cannot be considered since patterns
-     * are inserted into the pattern matcher without case which may
-     * lead to false negatives */
-    if ( pmd->relative || !pmd->no_case ||
-        pmd->offset || pmd->depth )
-        return false;
-
-    return true;
+    return pmd->can_be_fp();
 }
 
 struct FpFoo

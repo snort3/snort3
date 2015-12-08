@@ -462,6 +462,9 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
+    CursorActionType get_cursor_type() const override
+    { return CAT_ADJUST; }
+
     bool is_relative() override
     { return (config->options & SNORT_PCRE_RELATIVE) != 0; }
 

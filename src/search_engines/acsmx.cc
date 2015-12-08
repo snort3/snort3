@@ -470,7 +470,7 @@ int acsmSearch(
         if ( StateTable[state].MatchList != NULL )
         {
             mlist = StateTable[state].MatchList;
-            index = T - mlist->n + 1 - Tc;
+            index = T + 1 - Tc;
             nfound++;
             if (match(mlist->udata->id, mlist->rule_option_tree, index, context,
                 mlist->neg_list) > 0)

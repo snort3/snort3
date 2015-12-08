@@ -22,7 +22,7 @@
 
 // Unit test interface
 
-void unit_test_catch_test_filter(const char* s);
+void catch_set_filter(const char* s);
 
 bool catch_enabled();
 

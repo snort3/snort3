@@ -71,7 +71,7 @@ class HashOption : public IpsOption
 {
 public:
     HashOption(const char* s, HashPsIdx hpi, HashMatchData* c, HashFunc f, unsigned n) :
-        IpsOption(s, RULE_OPTION_TYPE_OTHER)
+        IpsOption(s)
     { config = c; hashf = f; size = n; idx = hpi; assert(n <= MAX_HASH_SIZE); }
 
     ~HashOption() { delete config; }

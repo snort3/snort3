@@ -830,7 +830,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
 #ifdef UNIT_TEST
     else if ( v.is("--catch-test") )
-        unit_test_catch_test_filter(v.get_string());
+        catch_set_filter(v.get_string());
 #endif
     else if ( v.is("--version") )
         help_version(sc, v.get_string());

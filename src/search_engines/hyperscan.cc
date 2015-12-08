@@ -220,10 +220,6 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
     return 0;
 }
 
-// FIXIT-P first cut does not queue matches which will likley be required
-// to improve cache performance.  for now each match results in an
-// immediate callback.
-
 int HyperscanMpse::match(unsigned id, unsigned long long to)
 {
     assert(id < pvector.size());

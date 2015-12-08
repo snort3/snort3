@@ -3,12 +3,15 @@ Builtin fast pattern matching algorithms are implemented here.
 * MPSE = multi-pattern search engine
 * DFA = deterministic finite automaton
 * NFA = non-DFA
+* HFA = hybrid FA
 
-This code has has evolved through 3 major versions:
+This code has has evolved through 4 major versions:
 
 1.  acsmx.cc:  ac_std
-2.  acsmx2.cc:  ac_full, ac_full_q, ac_sparse, ac_banded, ac_sparse_bands
-3.  bnfa_search.cc:  ac_bnfa, ac_bnfa_q
+2.  acsmx2.cc:  ac_full, ac_sparse, ac_banded, ac_sparse_bands
+3.  bnfa_search.cc:  ac_bnfa
+    intel_cpm.cc:  intel_cpm was added later based on ac_bnfa
+4.  hyperscan.cc:  support of regex fast patterns
 
 Check the comments at the start of the above files for details on the
 implementation.
@@ -25,10 +28,27 @@ DFA flavors try to reduce memory for transition storage by various schemes:
   transitions are not stored
 * sparse bands - a list of bands
 
-The *_q flavors use a match queue to defer rule tree evaluation until after
-the full buffer is searched in order to keep the cache warm.  This aspect
-should be orthogonal such that any method can be used with or w/o a match
-queue.
+Version 4 entails a number of refactoring changes to support regex fast
+patterns using hyperscan, an HFA.  A key change is to return the offset of
+the end of match the way hyperscan does to support relative matches to fast
+pattern only contents and regexes.
+
+Version 4 also includes refactoring the match queues.  The *_q flavors were
+deleted as this aspect is orthogonal to the algorithm.  Instead a match
+queue is always used to defer rule tree evaluation until after the full
+buffer is searched in order to keep the cache warm.  This is a development
+decision based on overall performance.
+
+Note that hyperscan essentially results in single branch detection option
+trees because from a client view each match state is unique - one per rule.
+This is a potential negative impact on performance but does not yet seem
+significant.  Furthermore, regex based fast patterns may obviate the need
+for the tree.  However, the tree remains as it is essential for other
+algorithms.
+
+intel_cpm will likely be deleted as it requires a license and does not
+perform as well as hyperscan.  It remains pending further performance
+evaluations.
 
 SearchTool makes it easy to use ac_bnfa.  This is used by http, pop, imap,
 and smtp.

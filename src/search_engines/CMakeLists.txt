@@ -13,7 +13,6 @@ set (ACSMX_SOURCES
 set (ACSMX2_SOURCES
     ac_banded.cc
     ac_full.cc
-    ac_full_q.cc
     ac_sparse.cc
     ac_sparse_bands.cc
     acsmx2.cc
@@ -22,7 +21,6 @@ set (ACSMX2_SOURCES
 
 set (BNFA_SOURCES
     ac_bnfa.cc
-    ac_bnfa_q.cc
     bnfa_search.cc
     bnfa_search.h
 )

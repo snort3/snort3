@@ -219,7 +219,7 @@ static const Parameter search_engine_params[] =
     { "inspect_stream_inserts", Parameter::PT_BOOL, nullptr, "false",
       "inspect reassembled payload - disabling is good for performance, bad for detection" },
 
-    { "search_method", Parameter::PT_DYNAMIC, (void*)get_search_methods, "ac_bnfa_q",
+    { "search_method", Parameter::PT_DYNAMIC, (void*)get_search_methods, "ac_bnfa",
       "set fast pattern algorithm - choose available search engine" },
 
     { "split_any_any", Parameter::PT_BOOL, nullptr, "false",

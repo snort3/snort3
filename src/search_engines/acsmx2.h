@@ -107,14 +107,6 @@ enum
     FSA_DFA
 };
 
-#define AC_MAX_INQ 32
-struct PMQ
-{
-    unsigned inq;
-    unsigned inq_flush;
-    void* q[AC_MAX_INQ];
-};
-
 /*
 *   Aho-Corasick State Machine Struct - one per group of pattterns
 */
@@ -145,8 +137,6 @@ struct ACSM_STRUCT2
 
     int sizeofstate;
     int compress_states;
-
-    PMQ q;
 };
 
 /*
@@ -165,9 +155,6 @@ int acsmCompile2(struct SnortConfig*, ACSM_STRUCT2*);
 int acsmSearchSparseDFA_Full(
     ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
-int acsmSearchSparseDFA_Full_q(
-    ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
-
 int acsmSearchSparseDFA_Banded(
     ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
@@ -179,9 +166,6 @@ int acsmSearchSparseNFA(
 
 int acsmSearchSparseDFA_Full_All(
     ACSM_STRUCT2*, const uint8_t* Tx, int n, MpseMatch, void* context, int* current_state);
-
-int acsmSearchSparseDFA_Full_q_all(
-    ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
 void acsmFree2(ACSM_STRUCT2* acsm);
 int acsmPatternCount2(ACSM_STRUCT2* acsm);

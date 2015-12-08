@@ -25,7 +25,6 @@
 struct BaseApi;
 
 extern const BaseApi* se_ac_bnfa;
-extern const BaseApi* se_ac_bnfa_q;
 
 #ifdef INTEL_SOFT_CPM
 extern const BaseApi* se_intel_cpm;
@@ -38,7 +37,6 @@ extern const BaseApi* se_hyperscan;
 #ifdef STATIC_SEARCH_ENGINES
 extern const BaseApi* se_ac_banded;
 extern const BaseApi* se_ac_full;
-extern const BaseApi* se_ac_full_q;
 extern const BaseApi* se_ac_sparse;
 extern const BaseApi* se_ac_sparse_bands;
 extern const BaseApi* se_ac_std;
@@ -47,7 +45,6 @@ extern const BaseApi* se_ac_std;
 const BaseApi* search_engines[] =
 {
     se_ac_bnfa,
-    se_ac_bnfa_q,
 
 #ifdef INTEL_SOFT_CPM
     se_intel_cpm,
@@ -60,7 +57,6 @@ const BaseApi* search_engines[] =
 #ifdef STATIC_SEARCH_ENGINES
     se_ac_banded,
     se_ac_full,
-    se_ac_full_q,
     se_ac_sparse,
     se_ac_sparse_bands,
     se_ac_std,

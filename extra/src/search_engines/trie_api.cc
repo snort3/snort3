@@ -21,12 +21,10 @@
 #include "framework/mpse.h"
 
 extern const BaseApi* se_lowmem;
-extern const BaseApi* se_lowmem_q;
 
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     se_lowmem,
-    se_lowmem_q,
     nullptr
 };
 

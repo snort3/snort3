@@ -58,7 +58,7 @@ class IpProtoOption : public IpsOption
 {
 public:
     IpProtoOption(const IpProtoData& c) :
-        IpsOption(s_name, RULE_OPTION_TYPE_OTHER)
+        IpsOption(s_name)
     { config = c; }
 
     uint32_t hash() const override;

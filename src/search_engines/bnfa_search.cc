@@ -153,15 +153,8 @@
 
 #include <list>
 
-#define BNFA_TRACK_Q
-
-#ifdef BNFA_TRACK_Q
-# include "main/snort_config.h"
-#endif
-
 #include "search_common.h"
 #include "pat_stats.h"
-
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "utils/stats.h"
@@ -1401,13 +1394,6 @@ static inline int _bnfaCompile(bnfa_struct_t* bnfa)
 
     BNFA_FREE(tmpMatchList,sizeof(void*) * bnfa->bnfaMaxStates,bnfa->matchlist_memory);
 
-#ifdef MATCH_LIST_CNT
-    bnfa->bnfaMatchListCnt=(unsigned*)calloc(sizeof(unsigned) * bnfa->bnfaNumStates);
-    if (!bnfa->bnfaMatchListCnt)
-    {
-        return -1;
-    }
-#endif
     /* Alloc a failure state table -  only need NumStates */
     bnfa->bnfaFailState =(bnfa_state_t*)BNFA_MALLOC(sizeof(bnfa_state_t) * bnfa->bnfaNumStates,
         bnfa->failstate_memory);
@@ -1550,10 +1536,7 @@ static inline unsigned _bnfa_search_full_nfa(
                     continue;
                 }
                 patrn = (bnfa_pattern_t*)mlist->data;
-                if ( ( T - Tx) < patrn->n )
-                    index = 0;
-                else
-                    index = T - Tx - patrn->n + 1;
+                index = T - Tx + 1;
                 nfound++;
                 /* Don't do anything specific for case sensitive patterns and not,
                  * since that will be covered by the rule tree itself.  Each tree
@@ -1635,10 +1618,7 @@ static inline unsigned _bnfa_search_full_nfa_case(
                     continue;
                 }
                 patrn = (bnfa_pattern_t*)mlist->data;
-                if ( ( T - Tx) < patrn->n )
-                    index = 0;
-                else
-                    index = T - Tx - patrn->n + 1;
+                index = T - Tx + 1;
                 nfound++;
                 /* Don't do anything specific for case (in)sensitive patterns
                  * since that will be covered by the rule tree itself.  Each
@@ -1720,10 +1700,7 @@ static inline unsigned _bnfa_search_full_nfa_nocase(
                     continue;
                 }
                 patrn = (bnfa_pattern_t*)mlist->data;
-                if ( ( T - Tx) < patrn->n )
-                    index = 0;
-                else
-                    index = T - Tx - patrn->n + 1;
+                index = T - Tx + 1;
                 /* Don't do anything specific for case sensitive patterns and not,
                  * since that will be covered by the rule tree itself.  Each tree
                  * might have both case sensitive & case insensitive patterns.
@@ -1790,74 +1767,6 @@ static inline int _bnfa_binearch(bnfa_state_t* a, int a_len, int val)
     }
     return -1;
 }
-
-#ifdef BNFA_MAIN
-/*
-*   Sparse format for state table using single array storage
-*
-*   word 1: state
-*   word 2: control-word = cb<<24| fs
-*           cb    : control-byte
-*                : mb | fb | nt
-*                mb : bit 8 set if match state, zero otherwise
-*                fb : bit 7 set if using full format, zero otherwise
-*                nt : number of transitions 0..63 (more than 63 requires full format)
-*            fs: failure-transition-state
-*   word 3+: byte-value(0-255) << 24 | transition-state
-*/
-static inline unsigned _bnfa_get_next_state_csparse_nfa_qx(
-    bnfa_state_t* pcx, unsigned sindex, unsigned input)
-{
-    int k;
-    int nc;
-    int index;
-    bnfa_state_t* pcs;
-
-    for (;; )
-    {
-        pcs = pcx + sindex + 1; /* skip state-id == 1st word */
-
-        if ( pcs[0] & BNFA_SPARSE_FULL_BIT )
-        {
-            if ( sindex == 0 )
-            {
-                return pcs[1+input] & BNFA_SPARSE_MAX_STATE;
-            }
-            else
-            {
-                if ( pcs[1+input] & BNFA_SPARSE_MAX_STATE )
-                    return pcs[1+input] & BNFA_SPARSE_MAX_STATE;
-            }
-        }
-        else
-        {
-            nc = (pcs[0]>>BNFA_SPARSE_COUNT_SHIFT) & BNFA_SPARSE_MAX_ROW_TRANSITIONS;
-            if ( nc > BNFA_SPARSE_LINEAR_SEARCH_LIMIT )
-            {
-                /* binary search... */
-                index = _bnfa_binearch(pcs+1, nc, input);
-                if ( index >= 0 )
-                {
-                    return pcs[index+1] & BNFA_SPARSE_MAX_STATE;
-                }
-            }
-            else
-            {
-                /* linear search... */
-                for ( k=0; k<nc; k++ )
-                {
-                    if ( (pcs[k+1]>>BNFA_SPARSE_VALUE_SHIFT) == input )
-                    {
-                        return pcs[k+1] & BNFA_SPARSE_MAX_STATE;
-                    }
-                }
-            }
-        }
-
-        return 0; /* no transition keyword match failed */
-    }
-}
-#endif
 
 /*
 *   Sparse format for state table using single array storage
@@ -1927,191 +1836,14 @@ static inline unsigned _bnfa_get_next_state_csparse_nfa(
 }
 
 /*
- *  Per Pattern case search, case is on per pattern basis
- *  standard snort search
- *  note: index is not used by snort, so it's commented
- *  TRACK_Q can impose a modest couple % performance difference in the
- *  pattern matching rate.
+ *  Per Pattern case search, case is on per pattern basis standard snort
+ *  search note: index is not used by snort, so it's commented
  */
-
-/* Queue whole pattern groups at end states in AC */
-void bnfa_print_qinfo(void)
-{
-#ifdef BNFA_TRACK_Q
-    print_pat_stats("bnfa", MAX_INQ);
-#endif
-}
-
-static inline void _init_queue(bnfa_struct_t* b)
-{
-    b->inq=0;
-    b->inq_flush=0;
-}
-
-/* uniquely insert into q, should splay elements for performance */
-static inline int _add_queue(bnfa_struct_t* b, bnfa_match_node_t* p)
-{
-    int i;
-
-#ifdef BNFA_TRACK_Q
-    pmqs.tot_inq_inserts++;
-#endif
-
-    for (i=(int)(b->inq)-1; i>=0; i--)
-        if ( p == b->q[i] )
-            return 0;
-
-#ifdef BNFA_TRACK_Q
-    pmqs.tot_inq_uinserts++;
-#endif
-
-    if ( b->inq < MAX_INQ )
-    {
-        b->q[ b->inq++ ] = p;
-    }
-
-    if ( b->inq == MAX_INQ )
-    {
-#ifdef BNFA_TRACK_Q
-        b->inq_flush++;
-#endif
-        return 1;
-    }
-
-    return 0;
-}
-
-static inline unsigned _process_queue(
-    bnfa_struct_t* bnfa, MpseMatch match, void* context)
-{
-    bnfa_match_node_t* mlist;
-    bnfa_pattern_t* patrn;
-    int res;
-    unsigned int i;
-
-#ifdef BNFA_TRACK_Q
-    if ( bnfa->inq > pmqs.max_inq )
-        pmqs.max_inq = bnfa->inq;
-    pmqs.tot_inq_flush += bnfa->inq_flush;
-#endif
-
-    for ( i=0; i<bnfa->inq; i++ )
-    {
-        mlist = (bnfa_match_node_t*)bnfa->q[i];
-        if (mlist)
-        {
-            patrn = (bnfa_pattern_t*)mlist->data;
-            /*process a pattern -  case is handled by otn processing */
-            res = match(patrn->userdata, mlist->rule_option_tree, 0, context,
-                mlist->neg_list);
-            if ( res > 0 )
-            {
-                /* terminate matching */
-                bnfa->inq=0; /* clear the q */
-                return 1;
-            }
-        }
-    }
-    bnfa->inq=0; /* clear the q */
-    return 0;
-}
-
-#ifdef BNFA_MAIN
-static inline unsigned _bnfa_search_csparse_nfa_qx(
-    bnfa_struct_t* bnfa, uint8_t* T, int n, MpseMatch match, void* context)
-{
-    bnfa_match_node_t* mlist;
-    uint8_t* Tend;
-    bnfa_match_node_t** MatchList = bnfa->bnfaMatchList;
-    bnfa_state_t* transList = bnfa->bnfaTransList;
-    unsigned sindex=0;
-
-    Tend = T + n;
-
-    for (; T<Tend; T++)
-    {
-        /* Transition to next state index */
-        sindex = _bnfa_get_next_state_csparse_nfa_qx(transList,sindex,xlatcase[*T]);
-
-        /* Log matches in this state - if any */
-        if ( sindex )
-        {
-            if ( transList[sindex+1] & BNFA_SPARSE_MATCH_BIT )
-            {
-                mlist = MatchList[ transList[sindex] ];
-                if ( mlist )
-                {
-                    if ( _add_queue(bnfa,mlist) )
-                    {
-                        if ( _process_queue(bnfa, match, context) )
-                        {
-                            return 1;
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            return 0;
-        }
-    }
-    return 0;
-}
-#endif
-
-unsigned _bnfa_search_csparse_nfa_q(
-    bnfa_struct_t* bnfa, const uint8_t* T, int n, MpseMatch match,
-    void* context, unsigned sindex, int* current_state)
-{
-    bnfa_match_node_t* mlist;
-    const uint8_t* Tend;
-    bnfa_match_node_t** MatchList = bnfa->bnfaMatchList;
-    bnfa_state_t* transList = bnfa->bnfaTransList;
-    unsigned last_sindex;
-
-    Tend = T + n;
-
-    _init_queue(bnfa);
-
-    for (; T<Tend; T++)
-    {
-        last_sindex = sindex;
-
-        /* Transition to next state index */
-        sindex = _bnfa_get_next_state_csparse_nfa(transList,sindex,xlatcase[*T]);
-
-        /* Log matches in this state - if any */
-        if (sindex &&  (transList[sindex+1] & BNFA_SPARSE_MATCH_BIT) )
-        {
-            /* Test for same as last state */
-            if ( sindex == last_sindex )
-                continue;
-
-            mlist = MatchList[ transList[sindex] ];
-            if ( mlist )
-            {
-                if ( _add_queue(bnfa,mlist) )
-                {
-                    if ( _process_queue(bnfa, match, context) )
-                    {
-                        *current_state = sindex;
-                        return 1;
-                    }
-                }
-            }
-        }
-    }
-    *current_state = sindex;
-
-    return _process_queue(bnfa, match, context);
-}
 
 /*
  *  Per Pattern case search, case is on per pattern basis
  *  standard snort search
  *
- *  note: index is not used by snort, so it's commented
  */
 unsigned _bnfa_search_csparse_nfa(
     bnfa_struct_t* bnfa, const uint8_t* Tx, int n, MpseMatch match,
@@ -2129,9 +1861,7 @@ unsigned _bnfa_search_csparse_nfa(
     unsigned last_match=LAST_STATE_INIT;
     unsigned last_match_saved=LAST_STATE_INIT;
     int res;
-#ifdef MATCH_LIST_CNT
-    unsigned* MatchTestCnt = bnfa->bnfaMatchTestCnt;
-#endif
+
     T    = Tx;
     Tend = T + n;
 
@@ -2151,21 +1881,13 @@ unsigned _bnfa_search_csparse_nfa(
             last_match_saved = last_match;
             last_match = sindex;
 
-#ifdef MATCH_LIST_CNT
-            if ( MatchList[ transList[sindex] ] )
-                MatchTestCnt[ transList[index] ]++;
-#endif
-
             {
                 mlist = MatchList[ transList[sindex] ];
                 if ( !mlist )
                     return nfound;
 
                 patrn = (bnfa_pattern_t*)mlist->data;
-                if ( ( T - Tx) < patrn->n )
-                    index = 0;
-                else
-                    index = T - Tx - patrn->n + 1;
+                index = T - Tx + 1;
                 nfound++;
                 /* Don't do anything specific for case sensitive patterns and not,
                  * since that will be covered by the rule tree itself.  Each tree
@@ -2231,10 +1953,7 @@ static inline unsigned _bnfa_search_csparse_nfa_case(
             {
                 mlist = MatchList[ transList[sindex] ];
                 patrn = (bnfa_pattern_t*)mlist->data;
-                if ( ( T - Tx) < patrn->n )
-                    index = 0;
-                else
-                    index = T - Tx - patrn->n + 1;
+                index = T - Tx + 1;
                 nfound++;
                 /* Don't do anything specific for case sensitive patterns and not,
                  * since that will be covered by the rule tree itself.  Each tree
@@ -2302,10 +2021,7 @@ static inline unsigned _bnfa_search_csparse_nfa_nocase(
             {
                 mlist = MatchList[ transList[sindex] ];
                 patrn = (bnfa_pattern_t*)mlist->data;
-                if ( ( T - Tx) < patrn->n )
-                    index = 0;
-                else
-                    index = T - Tx - patrn->n + 1;
+                index = T - Tx + 1;
                 nfound++;
                 /* Don't do anything specific for case sensitive patterns and not,
                  * since that will be covered by the rule tree itself.  Each tree
@@ -2412,35 +2128,6 @@ void bnfaAccumInfo(bnfa_struct_t* p)
     px->failstate_memory += p->failstate_memory;
 }
 
-#ifdef MATCH_LIST_CNT
-void bnfaPrintMatchListCnt(bnfa_struct_t* p)
-{
-    unsigned* cnt = p->bnfaMatchListCnt;
-    int i;
-    bnfa_match_node_t* mn;
-    bnfa_pattern_t* patrn;
-
-    printf("[ MatchListCnt for ac-bnfa state machine\n ]");
-
-    for (i=0; i<bnfa->bnfaNumStates; i++)
-    {
-        if ( cnt[i] )
-        {
-            printf("state[%d] cnt=%d",i,cnt[i]);
-            mn = bnfa->MatchList[i];
-            if ( mn )
-            {
-                patrn  =(bnfa_pattern_t*)mn->data;
-                //xprintOTNSidGid(cnt,patrn->userdata);
-            }
-            printf("\n");
-            fflush(stdout);
-        }
-    }
-}
-
-#endif
-
 #ifdef BNFA_MAIN
 #include <stdarg.h>
 /*
@@ -2462,22 +2149,6 @@ void bnfaPrintMatchListCnt(bnfa_struct_t* p)
 *    The state or sindex of the state machine. This can than be passed back
 *   in on the next search, if desired.
 */
-static unsigned bnfaSearchX(
-    bnfa_struct_t* bnfa, uint8_t* T, int n, MpseMatch match,
-    void* context, unsigned, int*)
-{
-    int ret;
-
-    _init_queue(bnfa);
-    while ( n > 0)
-    {
-        ret = _bnfa_search_csparse_nfa_qx(bnfa, T++, n--, match, context);
-
-        if ( ret )
-            return 0;
-    }
-    return _process_queue(bnfa, match, context);
-}
 
 static unsigned bnfaSearch(
     bnfa_struct_t* bnfa, uint8_t* Tx, int n, MpseMatch match,

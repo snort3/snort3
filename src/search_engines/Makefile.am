@@ -15,7 +15,6 @@ acsmx.h
 acsmx2_sources = \
 ac_banded.cc \
 ac_full.cc \
-ac_full_q.cc \
 ac_sparse.cc \
 ac_sparse_bands.cc \
 acsmx2.cc \
@@ -23,7 +22,6 @@ acsmx2.h
 
 bnfa_sources = \
 ac_bnfa.cc \
-ac_bnfa_q.cc \
 bnfa_search.cc \
 bnfa_search.h
 

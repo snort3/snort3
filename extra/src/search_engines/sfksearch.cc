@@ -44,8 +44,6 @@
 #include "sfksearch.h"
 #include "search_engines/pat_stats.h"
 
-#define SFKSEARCH_TRACK_Q
-
 static void KTrieFree(KTRIENODE* n);
 
 static unsigned int mtot = 0;
@@ -484,7 +482,7 @@ static void Build_Bad_Character_Shifts(KTRIE_STRUCT* kt)
     }
 }
 
-static int KTrieBuildMatchStateNodeWithSnortConf(
+static int KTrieBuildMatchStateNode(
     SnortConfig* sc, KTRIENODE* root, KTRIE_STRUCT* ts)
 {
     int cnt = 0;
@@ -520,20 +518,20 @@ static int KTrieBuildMatchStateNodeWithSnortConf(
     /* for child of this root */
     if (root->child)
     {
-        cnt += KTrieBuildMatchStateNodeWithSnortConf(sc, root->child, ts);
+        cnt += KTrieBuildMatchStateNode(sc, root->child, ts);
     }
 
     /* 1st sibling of this root -- other siblings will be processed from
      * within the processing for root->sibling. */
     if (root->sibling)
     {
-        cnt += KTrieBuildMatchStateNodeWithSnortConf(sc, root->sibling, ts);
+        cnt += KTrieBuildMatchStateNode(sc, root->sibling, ts);
     }
 
     return cnt;
 }
 
-static int KTrieBuildMatchStateTreesWithSnortConf(SnortConfig* sc, KTRIE_STRUCT* ts)
+static int KTrieBuildMatchStateTrees(SnortConfig* sc, KTRIE_STRUCT* ts)
 {
     int i, cnt = 0;
     KTRIENODE* root;
@@ -545,7 +543,7 @@ static int KTrieBuildMatchStateTreesWithSnortConf(SnortConfig* sc, KTRIE_STRUCT*
         /* each and every prefix match at this root*/
         if ( root and ts->agent )
         {
-            cnt += KTrieBuildMatchStateNodeWithSnortConf(sc, root, ts);
+            cnt += KTrieBuildMatchStateNode(sc, root, ts);
         }
     }
 
@@ -585,7 +583,7 @@ static inline int _KTrieCompile(KTRIE_STRUCT* ts)
     return 0;
 }
 
-int KTrieCompileWithSnortConf(SnortConfig* sc, KTRIE_STRUCT* ts)
+int KTrieCompile(SnortConfig* sc, KTRIE_STRUCT* ts)
 {
     int rval;
 
@@ -593,136 +591,14 @@ int KTrieCompileWithSnortConf(SnortConfig* sc, KTRIE_STRUCT* ts)
         return rval;
 
     if ( ts->agent )
-        KTrieBuildMatchStateTreesWithSnortConf(sc, ts);
+        KTrieBuildMatchStateTrees(sc, ts);
 
     return 0;
 }
 
 void sfksearch_print_qinfo(void)
 {
-#ifdef SFKSEARCH_TRACK_Q
-    print_pat_stats("sfksearch", SFK_MAX_INQ);
-#endif
-}
-
-static inline void _init_queue(SFK_PMQ* b)
-{
-    b->inq=0;
-    b->inq_flush=0;
-}
-
-/* uniquely insert into q */
-static inline int _add_queue(SFK_PMQ* b, void* p)
-{
-    int i;
-
-#ifdef SFKSEARCH_TRACK_Q
-    pmqs.tot_inq_inserts++;
-#endif
-
-    for (i=(int)(b->inq)-1; i>=0; i--)
-        if ( p == b->q[i] )
-            return 0;
-
-#ifdef SFKSEARCH_TRACK_Q
-    pmqs.tot_inq_uinserts++;
-#endif
-
-    if ( b->inq < SFK_MAX_INQ )
-    {
-        b->q[ b->inq++ ] = p;
-    }
-
-    if ( b->inq == SFK_MAX_INQ )
-    {
-#ifdef SFKSEARCH_TRACK_Q
-        b->inq_flush++;
-#endif
-        return 1;
-    }
-    return 0;
-}
-
-static inline unsigned _process_queue(SFK_PMQ* q, MpseMatch match, void* context)
-{
-    KTRIEPATTERN* pk;
-    unsigned int i;
-
-#ifdef SFKSEARCH_TRACK_Q
-    if ( q->inq > pmqs.max_inq )
-        pmqs.max_inq = q->inq;
-    pmqs.tot_inq_flush += q->inq_flush;
-#endif
-
-    for ( i=0; i<q->inq; i++ )
-    {
-        pk = (KTRIEPATTERN*)q->q[i];
-        if (pk)
-        {
-            if (match(pk->user, pk->rule_option_tree, 0, context, pk->neg_list) > 0)
-            {
-                q->inq=0;
-                return 1;
-            }
-        }
-    }
-    q->inq=0;
-    return 0;
-}
-
-static inline int KTriePrefixMatchQ(
-    KTRIE_STRUCT* kt, const uint8_t* T, int n, MpseMatch match, void* context)
-{
-    KTRIENODE* root;
-    //KTRIEPATTERN  * pk;
-    //int index ;
-
-    root   = kt->root[ xlatcase[*T] ];
-
-    if ( !root )
-        return 0;
-
-    while ( n )
-    {
-        if ( root->edge == xlatcase[*T] )
-        {
-            T++;
-            n--;
-
-            if ( root->pkeyword )
-            {
-                if ( _add_queue(&kt->q, root->pkeyword) )
-                {
-                    if ( _process_queue(&kt->q,match,context) )
-                    {
-                        return 1;
-                    }
-                }
-            }
-
-            if ( n && root->child )
-            {
-                root = root->child;
-            }
-            else     /* cannot continue -- match is over */
-            {
-                break;
-            }
-        }
-        else
-        {
-            if ( root->sibling )
-            {
-                root = root->sibling;
-            }
-            else     /* cannot continue */
-            {
-                break;
-            }
-        }
-    }
-
-    return 0;
+    print_pat_stats("lowmem", 0);
 }
 
 /*
@@ -765,7 +641,7 @@ static inline int KTriePrefixMatch(
             pk = root->pkeyword;
             if (pk)
             {
-                index = (int)(T - bT - pk->n );
+                index = (int)(T - bT);
                 nfound++;
                 if (match (pk->user, pk->rule_option_tree, index, context, pk->neg_list) > 0)
                 {
@@ -796,52 +672,6 @@ static inline int KTriePrefixMatch(
     }
 
     return nfound;
-}
-
-int KTrieSearchQ(
-    KTRIE_STRUCT* ks, const uint8_t* T, int n, MpseMatch match, void* context)
-{
-    _init_queue(&ks->q);
-    while ( n > 0 )
-    {
-        if ( KTriePrefixMatchQ(ks, T++, n--, match, context) )
-            return 0;
-    }
-    _process_queue(&ks->q,match,context);
-
-    return 0;
-}
-
-static inline int KTrieSearchQBC(
-    KTRIE_STRUCT* ks, const uint8_t* T, int n, MpseMatch match, void* context)
-{
-    int tshift;
-    const uint8_t* Tend;
-    short* bcShift = (short*)ks->bcShift;
-    int bcSize  = ks->bcSize;
-
-    _init_queue(&ks->q);
-
-    Tend = T + n - bcSize;
-
-    bcSize--;
-
-    for (; T <= Tend; n--, T++ )
-    {
-        while ( (tshift = bcShift[ T[bcSize] ]) > 0 )
-        {
-            T  += tshift;
-            if ( T > Tend )
-                return 0;
-        }
-
-        if ( KTriePrefixMatchQ(ks, T, n, match, context) )
-            return 0;
-    }
-
-    _process_queue(&ks->q,match,context);
-
-    return 0;
 }
 
 /*
@@ -970,7 +800,7 @@ int main(int argc, char** argv)
 
     printf("Patterns added \n");
 
-    KTrieCompileWithSnortConf(nullptr, ts);
+    KTrieCompile(nullptr, ts);
 
     printf("Patterns compiled \n");
     printf("--> %d characters, %d patterns, %d bytes allocated\n",ts->nchars,ts->npats,ts->memory);

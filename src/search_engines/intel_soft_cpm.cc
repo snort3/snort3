@@ -140,6 +140,7 @@ static inline unsigned int IntelPmProcessQueue(
         IntelPmMatchState* mstate = (IntelPmMatchState*)q->q[i];
         if (mstate != NULL)
         {
+            // FIXIT-L delete soft-cpm or delete queue and get index
             if (match(mstate->user_data, mstate->rule_option_tree, 0, context,
                 mstate->neg_list) > 0)
             {

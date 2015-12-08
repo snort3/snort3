@@ -452,12 +452,6 @@ int detection_option_node_evaluate(
         // Add the match for this otn to the queue.
         {
             OptTreeNode* otn = (OptTreeNode*)node->option_data;
-            PatternMatchData* pmd = (PatternMatchData*)eval_data->pmd;
-
-            int pattern_size = 0;
-            if ( pmd )
-                pattern_size = pmd->pattern_size;
-
             int16_t app_proto = p->get_application_protocol();
             int check_ports = 1;
 
@@ -508,8 +502,11 @@ int detection_option_node_evaluate(
                     otn->state[get_instance_id()].matches++;
 
                     if ( !eval_data->flowbit_noalert )
+                    {
+                        PatternMatchData* pmd = (PatternMatchData*)eval_data->pmd;
+                        int pattern_size = pmd ? pmd->pattern_size : 0;
                         fpAddMatch((OTNX_MATCH_DATA*)pomd, pattern_size, otn);
-
+                    }
                     result = rval = DETECTION_OPTION_MATCH;
                 }
             }

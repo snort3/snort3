@@ -70,6 +70,30 @@ struct PatternMatchData
 
     bool unbounded()
     { return !depth; }
+
+    bool can_be_fp()
+    {
+        if ( !pattern_buf || !pattern_size )
+            return false;
+
+        if ( !negated )
+            return true;
+
+        // Negative contents can only be considered if they are not
+        // relative and don't have any offset or depth.  This is because
+        // the pattern matcher does not take these into consideration and
+        // may find the content in a non-relevant section of the payload
+        // and thus disable the rule when it shouldn't be.
+
+        // Also case sensitive patterns cannot be considered since patterns
+        // are inserted into the pattern matcher without case which may
+        // lead to false negatives.
+
+        if ( relative || !no_case || offset || depth )
+            return false;
+
+        return true;
+    }
 };
 
 #endif

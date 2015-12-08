@@ -40,6 +40,8 @@
 #include "config.h"
 #endif
 
+#include <strings.h>
+
 #include "detect.h"
 #include "fp_config.h"
 #include "fp_create.h"
@@ -76,6 +78,7 @@
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/icmp4.h"
+#include "search_engines/pat_stats.h"
 
 THREAD_LOCAL ProfileStats rulePerfStats;
 THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
@@ -462,6 +465,11 @@ static int rule_tree_match(
 {
     PMX* pmx = (PMX*)user;
     OTNX_MATCH_DATA* pomd = (OTNX_MATCH_DATA*)context;
+
+    unsigned sz = pmx->pmd->pattern_size;
+    assert(sz <= (unsigned)index and (unsigned)index <= pomd->size);
+    assert(!strncasecmp((char*)pmx->pmd->pattern_buf, (char*)pomd->data+index-sz, sz));
+
     detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
     detection_option_eval_data_t eval_data;
     NCListNode* ncl;
@@ -855,6 +863,101 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
     return 0;
 }
 
+class MpseStash
+{
+public:
+    static const unsigned max = 32;
+
+    void init()
+    { count = flushed = 0; }
+
+    bool push(void* user, void* tree, int index, void* list);
+    bool process(MpseMatch, void*);
+
+private:
+    unsigned count;
+    unsigned flushed;
+
+    struct Node {
+        void* user;
+        void* tree;
+        void* list;
+        int index;
+    } queue[max];
+};
+
+static THREAD_LOCAL MpseStash stash;
+
+// uniquely insert into q, should splay elements for performance
+// return true if maxed out to trigger a flush
+bool MpseStash::push(void* user, void* tree, int index, void* list)
+{
+    pmqs.tot_inq_inserts++;
+
+    for ( int i = (int)(count) - 1; i >= 0; --i )
+    {
+        if ( tree == queue[i].tree )
+            return false;
+    }
+
+    if ( count < max )
+    {
+        Node& node = queue[count++];
+        node.user = user;
+        node.tree = tree;
+        node.index = index;
+        node.list = list;
+        pmqs.tot_inq_uinserts++;
+    }
+
+    if ( count == max )
+    {
+        flushed++;
+        return true;
+    }
+
+    return false;
+}
+
+bool MpseStash::process(MpseMatch match, void* context)
+{
+    if ( count > pmqs.max_inq )
+        pmqs.max_inq = count;
+
+    pmqs.tot_inq_flush += flushed;
+
+    for ( unsigned i = 0; i < count; ++i )
+    {
+        Node& node = queue[i];
+
+        // process a pattern - case is handled by otn processing
+        int res = match(node.user, node.tree, node.index, context, node.list);
+
+        if ( res > 0 )
+        {
+            /* terminate matching */
+            count = 0;
+            return true;
+        }
+    }
+    count = 0;
+    return false;
+}
+
+// rule_tree_match() could be used instead to bypass the queuing
+static int rule_tree_queue(
+    void* user, void* tree, int index, void* context, void* list)
+{
+    if ( stash.push(user, tree, index, list) )
+    {
+        if ( stash.process(rule_tree_match, context) )
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 #ifdef PPM_MGR
 #define CHECK_PPM() \
     if (PPM_PACKET_ABORT_FLAG()) \
@@ -868,7 +971,10 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
         assert(so->get_pattern_count() > 0); \
         int start_state = 0; \
         cnt++; \
-        so->search(buf, len, rule_tree_match, omd, &start_state); \
+        omd->data = buf; omd->size = len; \
+        stash.init(); \
+        so->search(buf, len, rule_tree_queue, omd, &start_state); \
+        stash.process(rule_tree_match, omd); \
         CHECK_PPM() \
     }
 

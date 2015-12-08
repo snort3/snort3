@@ -65,7 +65,7 @@ public:
 
     int prep_patterns(SnortConfig* sc) override
     {
-        return KTrieCompileWithSnortConf(sc, obj);
+        return KTrieCompile(sc, obj);
     }
 
     int _search(

@@ -42,7 +42,7 @@ FastPatternConfig::FastPatternConfig()
     max_queue_events = 5;
     bleedover_port_limit = 1024;
 
-    search_api = MpseManager::get_search_api("ac_bnfa_q");
+    search_api = MpseManager::get_search_api("ac_bnfa");
     assert(search_api);
     trim = MpseManager::search_engine_trim(search_api);
 }

@@ -109,18 +109,6 @@
 ** 8/28/06
 ** man - Sparse and SparseBands - fixed off by one in calculating matching index
 **       SparseBands changed ps increment to 2+n to increment between bands.
-**
-** 01/2008
-**  man - added 2 phase pattern matcher using a pattern match queue.
-**
-**  Matching states are queued, duplicate matches are dropped,
-**  and after the complete buffer scan the queued matches are
-**  processed.  This improves cacheing performance, and reduces
-**  duplicate rule processing.  The queue is limited in size and
-**  is flushed if it becomes full during the scan.  This allows
-**  simple insertions. Tracking queue ops is optional, as this can
-**  impose a modest performance hit of a few percent.
-**
 */
 
 #include "acsmx2.h"
@@ -2101,7 +2089,7 @@ int acsmSearchSparseDFA(
             mlist = MatchList[state];
             if (mlist)
             {
-                index = T - mlist->n - Tc + 1;
+                index = T - Tc + 1;
                 nfound++;
                 if (match (mlist->udata, mlist->rule_option_tree, index, context,
                     mlist->neg_list) > 0)
@@ -2121,261 +2109,8 @@ int acsmSearchSparseDFA(
 void acsmx2_print_qinfo(void)
 {
 #ifdef ACSMX2_TRACK_Q
-    print_pat_stats("acsmx2", AC_MAX_INQ);
+    print_pat_stats("acsmx2", 0);
 #endif
-}
-
-static inline void _init_queue(PMQ* b)
-{
-    b->inq=0;
-    b->inq_flush=0;
-}
-
-/* uniquely insert into q, should splay elements for performance */
-static inline int _add_queue(PMQ* b, void* p)
-{
-    int i;
-
-#ifdef ACSMX2_TRACK_Q
-    pmqs.tot_inq_inserts++;
-#endif
-
-    for (i=(int)(b->inq)-1; i>=0; i--)
-        if ( p == b->q[i] )
-            return 0;
-
-#ifdef ACSMX2_TRACK_Q
-    pmqs.tot_inq_uinserts++;
-#endif
-
-    if ( b->inq < AC_MAX_INQ )
-    {
-        b->q[ b->inq++ ] = p;
-    }
-
-    if ( b->inq == AC_MAX_INQ )
-    {
-#ifdef ACSMX2_TRACK_Q
-        b->inq_flush++;
-#endif
-        return 1;
-    }
-    return 0;
-}
-
-static inline unsigned _process_queue(PMQ* q, MpseMatch match, void* context)
-{
-    ACSM_PATTERN2* mlist;
-    unsigned int i;
-
-#ifdef ACSMX2_TRACK_Q
-    if ( q->inq > pmqs.max_inq )
-        pmqs.max_inq = q->inq;
-    pmqs.tot_inq_flush += q->inq_flush;
-#endif
-
-    for ( i=0; i<q->inq; i++ )
-    {
-        mlist = (ACSM_PATTERN2*)q->q[i];
-        if (mlist)
-        {
-            if (match (mlist->udata, mlist->rule_option_tree, 0, context, mlist->neg_list) > 0)
-            {
-                q->inq = 0;
-                return 1;
-            }
-        }
-    }
-    q->inq=0;
-    return 0;
-}
-
-/*
- *  Matching states are queued, duplicate matches are dropped,
- *  and after the complete buffer scan, the queued matches are
- *  processed.  This improves cacheing performance, and reduces
- *  duplicate rule processing. The queue is limited in size and
- *  is flushed if it becomes full during the scan.  This allows
- *  simple insertions. Tracking queue ops is optional, as this can
- *  impose a modest performance hit of a few percent.
- */
-#define AC_SEARCH_Q \
-    for (; T < Tend; T++) \
-    { \
-        ps = NextState[state]; \
-        sindex = xlatcase[T[0]]; \
-        if (ps[1]) \
-        { \
-            if (MatchList[state]) \
-            { \
-                if (_add_queue(&acsm->q,MatchList[state])) \
-                { \
-                    if (_process_queue(&acsm->q, match, context)) \
-                    { \
-                        *current_state = state; \
-                        return 1; \
-                    } \
-                } \
-            } \
-        } \
-        state = ps[2 + sindex]; \
-    }
-
-int acsmSearchSparseDFA_Full_q(
-    ACSM_STRUCT2* acsm, const uint8_t* T, int n, MpseMatch match,
-    void* context, int* current_state)
-{
-    const uint8_t* Tend;
-    int sindex;
-    acstate_t state;
-    ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
-
-    Tend = T + n;
-
-    if (current_state == NULL)
-        return 0;
-
-    _init_queue(&acsm->q);
-
-    state = *current_state;
-
-    switch (acsm->sizeofstate)
-    {
-    case 1:
-    {
-        uint8_t* ps;
-        uint8_t** NextState = (uint8_t**)acsm->acsmNextState;
-        AC_SEARCH_Q;
-    }
-    break;
-    case 2:
-    {
-        uint16_t* ps;
-        uint16_t** NextState = (uint16_t**)acsm->acsmNextState;
-        AC_SEARCH_Q;
-    }
-    break;
-    default:
-    {
-        acstate_t* ps;
-        acstate_t** NextState = acsm->acsmNextState;
-        AC_SEARCH_Q;
-    }
-    break;
-    }
-
-    *current_state = state;
-
-    if (MatchList[state])
-        _add_queue(&acsm->q,MatchList[state]);
-
-    _process_queue(&acsm->q, match, context);
-
-    return 0;
-}
-
-/*
- *  Matching states are queued, duplicate matches are dropped,
- *  and after the complete buffer scan, the queued matches are
- *  processed.  This improves cacheing performance, and reduces
- *  duplicate rule processing. The queue is limited in size and
- *  is flushed if it becomes full during the scan.  This allows
- *  simple insertions. Tracking queue ops is optional, as this can
- *  impose a modest performance hit of a few percent.
- */
-#define AC_SEARCH_Q_ALL \
-    for (; T < Tend; T++) \
-    { \
-        ps = NextState[state]; \
-        sindex = xlatcase[T[0]]; \
-        if (ps[1]) \
-        { \
-            for ( mlist = MatchList[state]; \
-                mlist!= NULL; \
-                mlist = mlist->next ) \
-            { \
-                if ( mlist->nocase || (memcmp (mlist->casepatrn, T - mlist->n, mlist->n) == 0)) \
-                { \
-                    if (_add_queue(&acsm->q,mlist)) \
-                    { \
-                        if (_process_queue(&acsm->q, match, context)) \
-                        { \
-                            *current_state = state; \
-                            return 1; \
-                        } \
-                    } \
-                } \
-            } \
-        } \
-        state = ps[2 + sindex]; \
-    }
-
-int acsmSearchSparseDFA_Full_q_all(
-    ACSM_STRUCT2* acsm, const uint8_t* T, int n, MpseMatch match,
-    void* context, int* current_state)
-{
-    const uint8_t* Tend;
-    int sindex;
-    acstate_t state;
-    ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
-    ACSM_PATTERN2* mlist;
-
-    Tend = T + n;
-
-    if (current_state == NULL)
-        return 0;
-
-    _init_queue(&acsm->q);
-
-    state = *current_state;
-
-    switch (acsm->sizeofstate)
-    {
-    case 1:
-    {
-        uint8_t* ps;
-        uint8_t** NextState = (uint8_t**)acsm->acsmNextState;
-        AC_SEARCH_Q_ALL;
-    }
-    break;
-    case 2:
-    {
-        uint16_t* ps;
-        uint16_t** NextState = (uint16_t**)acsm->acsmNextState;
-        AC_SEARCH_Q_ALL;
-    }
-    break;
-    default:
-    {
-        acstate_t* ps;
-        acstate_t** NextState = acsm->acsmNextState;
-        AC_SEARCH_Q_ALL;
-    }
-    break;
-    }
-
-    *current_state = state;
-
-    for ( mlist = MatchList[state];
-        mlist!= NULL;
-        mlist = mlist->next )
-    {
-        if ( mlist->nocase || (memcmp (mlist->casepatrn, T - mlist->n, mlist->n) == 0))
-        {
-            if (_add_queue(&acsm->q,mlist))
-            {
-                if (_process_queue(&acsm->q, match, context))
-                {
-                    *current_state = state;
-                    return 1;
-                }
-            }
-        }
-    }
-
-    _process_queue(&acsm->q, match, context);
-
-    return 0;
 }
 
 /*
@@ -2398,7 +2133,7 @@ int acsmSearchSparseDFA_Full_q_all(
             mlist = MatchList[state]; \
             if (mlist) \
             { \
-                index = T - mlist->n - Tx; \
+                index = T - Tx; \
                 nfound++; \
                 if (match (mlist->udata, mlist->rule_option_tree, index, context, \
                     mlist->neg_list) > 0) \
@@ -2462,7 +2197,7 @@ int acsmSearchSparseDFA_Full(
     mlist = MatchList[state];
     if (mlist)
     {
-        index = T - mlist->n - Tx;
+        index = T - Tx;
         nfound++;
         if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
         {
@@ -2496,7 +2231,7 @@ int acsmSearchSparseDFA_Full(
                 mlist!= NULL; \
                 mlist = mlist->next ) \
             { \
-                index = T - mlist->n - Tx; \
+                index = T - Tx; \
                 if ( mlist->nocase || (memcmp (mlist->casepatrn, Tx + index, mlist->n) == 0)) \
                 { \
                     nfound++; \
@@ -2563,7 +2298,7 @@ int acsmSearchSparseDFA_Full_All(
         mlist!= NULL;
         mlist = mlist->next )
     {
-        index = T - mlist->n - Tx;
+        index = T - Tx;
 
         if ( mlist->nocase || (memcmp (mlist->casepatrn, Tx + index, mlist->n) == 0))
         {
@@ -2627,7 +2362,7 @@ int acsmSearchSparseDFA_Banded(
             mlist = MatchList[state];
             if (mlist)
             {
-                index = T - mlist->n - Tx;
+                index = T - Tx;
                 nfound++;
                 if (match (mlist->udata, mlist->rule_option_tree, index, context,
                     mlist->neg_list) > 0)
@@ -2650,7 +2385,7 @@ int acsmSearchSparseDFA_Banded(
     mlist = MatchList[state];
     if (mlist)
     {
-        index = T - mlist->n - Tx;
+        index = T - Tx;
         nfound++;
         if (match (mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
         {
@@ -2706,7 +2441,7 @@ int acsmSearchSparseNFA(
         mlist = MatchList[state];
         if (mlist)
         {
-            index = T - mlist->n - Tx;
+            index = T - Tx;
             nfound++;
             if (match (mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
             {

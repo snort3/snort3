@@ -17,18 +17,21 @@
 //--------------------------------------------------------------------------
 // unit_test.h author Russ Combs <rucombs@cisco.com>
 
+#include "unit_test.h"
+
 #include <stdlib.h>
 #include <string.h>
 
 #include <vector>
 #include <string>
 
-#include "unit_test.h"
+#define CATCH_CONFIG_RUNNER
+#include "catch.hpp"
 
 static bool s_catch = false;
 static std::vector<std::string> test_tags;
 
-void unit_test_catch_test_filter(const char* s)
+void catch_set_filter(const char* s)
 {
     if ( s && strcmp(s, "all") )
         test_tags.push_back( s );
@@ -40,12 +43,6 @@ bool catch_enabled()
 {
     return s_catch;
 }
-
-// check defines fail, so we must squash that because
-// catch uses stream and that has a fail method
-#undef fail
-#define CATCH_CONFIG_RUNNER
-#include "catch.hpp"
 
 static bool run_catch()
 {

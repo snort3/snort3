@@ -26,11 +26,6 @@
 #include <stdint.h>
 #include "search_engines/search_common.h"
 
-#define ALPHABET_SIZE 256
-
-#define KTRIEMETHOD_STD 0
-#define KTRIEMETHOD_QUEUE 1
-
 struct KTRIEPATTERN
 {
     KTRIEPATTERN* next; /* global list of all patterns*/
@@ -60,15 +55,6 @@ struct KTRIENODE
 
 #define KTRIE_ROOT_NODES     256
 
-#define SFK_MAX_INQ 32
-
-struct SFK_PMQ
-{
-    unsigned inq;
-    unsigned inq_flush;
-    void* q[SFK_MAX_INQ];
-};
-
 struct KTRIE_STRUCT
 {
     KTRIEPATTERN* patrn; /* List of patterns, built as they are added*/
@@ -85,8 +71,6 @@ struct KTRIE_STRUCT
 
     int bcSize;
     unsigned short bcShift[KTRIE_ROOT_NODES];
-
-    SFK_PMQ q;
 };
 
 void KTrie_init_xlatcase();
@@ -97,10 +81,9 @@ int KTrieAddPattern(
     KTRIE_STRUCT*, const uint8_t* P, unsigned n,
     bool nocase, bool negative, void* id);
 
-int KTrieCompileWithSnortConf(struct SnortConfig*, KTRIE_STRUCT*);
+int KTrieCompile(struct SnortConfig*, KTRIE_STRUCT*);
 
 int KTrieSearch(KTRIE_STRUCT*, const uint8_t* T,  int n, MpseMatch, void* context);
-int KTrieSearchQ(KTRIE_STRUCT*, const uint8_t* T,  int n, MpseMatch, void* context);
 
 unsigned int KTrieMemUsed();
 void KTrieInitMemUsed();
