@@ -160,13 +160,13 @@ bool Detection::convert(std::istringstream& data_stream)
 
             else if (!method.compare("ac"))
             {
-                table_api.add_diff_option_comment("ac", "ac_full_q");
-                tmpval = table_api.add_option("search_method", "ac_full_q");
+                table_api.add_diff_option_comment("ac", "ac_full");
+                tmpval = table_api.add_option("search_method", "ac_full");
             }
             else if (!method.compare("ac-q"))
             {
-                table_api.add_diff_option_comment("ac-q", "ac_full_q");
-                tmpval = table_api.add_option("search_method", "ac_full_q");
+                table_api.add_diff_option_comment("ac-q", "ac_full");
+                tmpval = table_api.add_option("search_method", "ac_full");
             }
             else if (!method.compare("ac-nq"))
             {
@@ -175,13 +175,13 @@ bool Detection::convert(std::istringstream& data_stream)
             }
             else if (!method.compare("ac-bnfa"))
             {
-                table_api.add_diff_option_comment("ac-bnfa", "ac_bnfa_q");
-                tmpval = table_api.add_option("search_method", "ac_bnfa_q");
+                table_api.add_diff_option_comment("ac-bnfa", "ac_bnfa");
+                tmpval = table_api.add_option("search_method", "ac_bnfa");
             }
             else if (!method.compare("ac-bnfa-q"))
             {
-                table_api.add_diff_option_comment("ac-bnfa-q", "ac_bnfa_q");
-                tmpval = table_api.add_option("search_method", "ac_bnfa_q");
+                table_api.add_diff_option_comment("ac-bnfa-q", "ac_bnfa");
+                tmpval = table_api.add_option("search_method", "ac_bnfa");
             }
             else if (!method.compare("ac-bnfa-nq"))
             {
@@ -213,15 +213,10 @@ bool Detection::convert(std::istringstream& data_stream)
                 table_api.add_diff_option_comment("ac-sparsebands", "ac_sparse_bands");
                 tmpval = table_api.add_option("search_method", "ac_sparse_bands");
             }
-            else if (!method.compare("lowmem"))
-            {
-                table_api.add_diff_option_comment("lowmem", "lowmem_q");
-                tmpval = table_api.add_option("search_method", "lowmem_q");
-            }
             else if (!method.compare("lowmem-q"))
             {
-                table_api.add_diff_option_comment("lowmem-q", "lowmem_q");
-                tmpval = table_api.add_option("search_method", "lowmem_q");
+                table_api.add_diff_option_comment("lowmem-q", "lowmem");
+                tmpval = table_api.add_option("search_method", "lowmem");
             }
             else if (!method.compare("lowmem-nq"))
             {
@@ -231,9 +226,9 @@ bool Detection::convert(std::istringstream& data_stream)
             else if (!method.compare("ac-split"))
             {
                 table_api.add_diff_option_comment("ac-split", "split_any_any");
-                table_api.add_diff_option_comment("ac-split", "ac_full_q");
+                table_api.add_diff_option_comment("ac-split", "ac_full");
                 bool tmpval2 = table_api.add_option("split_any_any", true);
-                bool tmpval1 = table_api.add_option("search_method", "ac_full_q");
+                bool tmpval1 = table_api.add_option("search_method", "ac_full");
                 tmpval = tmpval1 && tmpval2;
 
                 if (!table_api.add_option("split_any_any", true))
