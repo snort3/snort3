@@ -430,6 +430,49 @@ if test "x$enable_corefiles" = "xno"; then
 fi
 
 #--------------------------------------------------------------------------
+# C++11 threads
+#--------------------------------------------------------------------------
+
+AC_LANG_PUSH([C++])
+ax_cxx11_thread_flags="none -pthread"
+for flag in $ax_cxx11_thread_flags ; do
+    case $flag in
+        none)
+        AC_MSG_CHECKING([whether C++11 threads work without any flags])
+        ;;
+
+        -*)
+        AC_MSG_CHECKING([whether C++11 threads work with $flag])
+        CXX11_THREAD_CXXFLAGS="$flag"
+        ;;
+    esac
+
+    save_CXXFLAGS="$CXXFLAGS"
+    CXXFLAGS="$CXX11_THREAD_CXXFLAGS $CXXFLAGS"
+
+    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <iostream>
+                   #include <thread>
+                   void call_from_thread() { }],
+                   [std::thread t1(call_from_thread); t1.join()])],
+                   [ax_cxx11_thread_ok=yes],
+                   [ax_cxx11_thread_ok=no])
+
+    CXXFLAGS="$save_CXXFLAGS"
+
+    AC_MSG_RESULT([$ax_cxx11_thread_ok])
+    if test "x$ax_cxx11_thread_ok" = xyes ; then
+        break;
+    fi
+
+    CXX11_THREAD_CXXFLAGS=
+done
+AC_LANG_POP([C++])
+if test "x$ax_cxx11_thread_ok" != xyes ; then
+    AC_MSG_ERROR([could not find CXXFLAGS that allow C++11 threads to work])
+fi
+CXXFLAGS="$CXX11_THREAD_CXXFLAGS $CXXFLAGS"
+
+#--------------------------------------------------------------------------
 # unit tests
 #--------------------------------------------------------------------------
 
@@ -759,14 +802,6 @@ if test "x$Z_LIB" = "xno"; then
     exit
 fi
 LIBS="$LIBS -lz"
-
-#--------------------------------------------------------------------------
-# pthreads (optional)
-#--------------------------------------------------------------------------
-
-AX_PTHREAD
-LIBS="$PTHREAD_LIBS $LIBS"
-CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS"
 
 #--------------------------------------------------------------------------
 # lzma (optional)
