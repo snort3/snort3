@@ -1207,7 +1207,7 @@ void LogXrefs(TextLog* log, const Event* e, bool doNewLine)
  * Returns: void function
  *--------------------------------------------------------------------
  */
-static void LogCharData(TextLog* log, char* data, int len)
+static void LogCharData(TextLog* log, const char* data, int len)
 {
     const char* pb = data;
     const char* end = data + len;
@@ -1398,7 +1398,7 @@ static int LogObfuscatedData(TextLog* log, Packet* p)
     if (SnortConfig::output_app_data() && !SnortConfig::verbose_byte_dump())
     {
         if (SnortConfig::output_char_data())
-            LogCharData(log, (char*)payload, payload_len);
+            LogCharData(log, (const char*)payload, payload_len);
         else
             LogNetData(log, payload, payload_len, p);
     }
@@ -1523,16 +1523,16 @@ void LogPayload(TextLog* log, Packet* p)
     {
         if (SnortConfig::output_char_data())
         {
-            LogCharData(log, (char*)p->data, p->dsize);
+            LogCharData(log, (const char*)p->data, p->dsize);
             if (!IsJSNormData(p->flow))
             {
                 TextLog_Print(log, "%s\n", "Normalized JavaScript for this packet");
-                LogCharData(log, (char*)g_file_data.data, g_file_data.len);
+                LogCharData(log, (const char*)g_file_data.data, g_file_data.len);
             }
             else if (!IsGzipData(p->flow))
             {
                 TextLog_Print(log, "%s\n", "Decompressed Data for this packet");
-                LogCharData(log, (char*)g_file_data.data, g_file_data.len);
+                LogCharData(log, (const char*)g_file_data.data, g_file_data.len);
             }
         }
         else

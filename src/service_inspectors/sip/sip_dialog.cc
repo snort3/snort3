@@ -43,11 +43,11 @@ static int SIP_checkMediaChange(SIPMsg* sipMsg, SIP_DialogData* dialog);
 static int SIP_processRequest(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
 static int SIP_processInvite(SIPMsg*, SIP_DialogData*, SIP_DialogList*);
 static int SIP_processACK(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
-static int SIP_processResponse(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*,
-    SIP_PROTO_CONF*);
+static int SIP_processResponse(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
 static int SIP_ignoreChannels(SIP_DialogData*, Packet* p, SIP_PROTO_CONF*);
 static SIP_DialogData* SIP_addDialog(SIPMsg*, SIP_DialogData*, SIP_DialogList*);
 static int SIP_deleteDialog(SIP_DialogData*, SIP_DialogList*);
+
 #ifdef DEBUG_MSGS
 void SIP_displayMedias(SIP_MediaList* dList);
 #endif
@@ -507,27 +507,23 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList* dList)
     {
         mSession->nextS = *dList;
         *dList = mSession;
-        DebugFormat(DEBUG_SIP, "Add Session id: %u\n",
-            mSession->sessionID);
-        // Display the final media session
-    #ifdef DEBUG_MSGS
-        SIP_displayMedias(dList);
-    #endif
-        return;
+        DEBUG_WRAP(DebugMessage(DEBUG_SIP, "Add Session id: %u\n", mSession->sessionID));
     }
-    // if this session needs to be updated
-    DebugFormat(DEBUG_SIP, "Insert Session id: %u\n",
-        mSession->sessionID);
-    mSession->nextS = currSession->nextS;
-    // if this is the header, update the new header
-    if (NULL == preSession)
-        *dList = mSession;
     else
-        preSession->nextS = mSession;
+    {
+        // if this session needs to be updated
+        DebugFormat(DEBUG_SIP, "Insert Session id: %u\n", mSession->sessionID);
+        mSession->nextS = currSession->nextS;
+        // if this is the header, update the new header
+        if (NULL == preSession)
+            *dList = mSession;
+        else
+            preSession->nextS = mSession;
 
-    // Clear the old session
-    currSession->nextS = NULL;
-    sip_freeMediaSession(currSession);
+        // Clear the old session
+        currSession->nextS = NULL;
+        sip_freeMediaSession(currSession);
+    }
 
     // Display the final media session
 #ifdef DEBUG_MSGS

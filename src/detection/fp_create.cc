@@ -1430,7 +1430,7 @@ void fpWalkOtns(int enabled, OtnWalkFcn fcn)
 * list- list of otns for this service
 */
 static void fpBuildServicePortGroupByServiceOtnList(
-    SnortConfig* sc, SFGHASH* p, char* srvc, SF_LIST* list, FastPatternConfig* fp)
+    SnortConfig* sc, SFGHASH* p, const char* srvc, SF_LIST* list, FastPatternConfig* fp)
 {
     OptTreeNode* otn;
     PortGroup* pg = (PortGroup*)SnortAlloc(sizeof(PortGroup));
@@ -1473,7 +1473,7 @@ static void fpBuildServicePortGroups(
     SnortConfig* sc, SFGHASH* spg, PortGroupVector& sopg, SFGHASH* srm, FastPatternConfig* fp)
 {
     SFGHASH_NODE* n;
-    char* srvc;
+    const char* srvc;
     SF_LIST* list;
     PortGroup* pg;
 

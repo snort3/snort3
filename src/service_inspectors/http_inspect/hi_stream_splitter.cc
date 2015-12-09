@@ -146,6 +146,11 @@ static const uint8_t class_map[256] =
 #define CHRS "\6"  // matches CHAR
 #define DIGS "\7"  // matches DIGIT
 
+static inline bool is_lwspace(const char c)
+{
+    return (c == ' ' || c == '\t');
+}
+
 static uint8_t Classify(const char* s)
 {
     if ( !strcmp(s, ANYS) )
@@ -230,7 +235,7 @@ typedef struct
 #define R3 (R2+5)
 #define R4 (R3+5)
 #define R5 (R4+1)
-#define R6 (R5+2)
+#define R6 (R5+4)
 #define R7 (R6+2)
 #define R8 (R7+2)
 
@@ -359,7 +364,9 @@ static const HiRule hi_rule[] =
 
     // extract decimal content length
     { R5+ 0, R2   , R5+ 1, ACT_LNB, EOLS },
-    { R5+ 1, R5   , R5   , ACT_SHI, ANYS },
+    { R5+ 1, R5   , R5+ 2, ACT_SHI, DIGS },
+    { R5+ 2, R5   , R5+ 3, ACT_SHI, LWSS },
+    { R5+ 3, R8   , R8   , ACT_SHI, ANYS },
 
     // extract hex chunk length
     { R6+ 0, R7   , R6+ 1, ACT_LNC, EOLS },
@@ -722,8 +729,10 @@ static inline StreamSplitter::Status hi_exec(Hi5State* s, Action a, int c)
         if ( s->flags & HIF_ERR )
             break;
         if ( isdigit(c) && (s->len < 429496728) )
+        {
             s->len = (10 * s->len) + dton(c);
-        else
+        }
+        else if (!is_lwspace(c))
         {
             hi_paf_event_msg_size();
             s->flags |= HIF_ERR;

@@ -27,6 +27,9 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 
+
+#define MINIMUM_TABLE_MEMORY (768 * 1024)
+
 /* Create new lookup table
  * @param   table_flat_type Type of table. Uses the types enumeration in route.h
  * @param   ip_type    IPv4 or IPv6. Uses the types enumeration in route.h
@@ -38,6 +41,7 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
     table_flat_t* table;
     MEM_OFFSET table_ptr;
     uint8_t* base;
+    long data_size_max = 1;
 
     table_ptr = segment_malloc(sizeof(table_flat_t));
 
@@ -69,8 +73,15 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
     /* mem_cap is specified in megabytes, but internally uses bytes. Convert */
     mem_cap *= 1024*1024;
 
+    /* Maximum allowable number of stored entries based on memcap */
+    if (mem_cap > MINIMUM_TABLE_MEMORY)
+        data_size_max = (mem_cap - MINIMUM_TABLE_MEMORY) / sizeof(INFO);
+
     /* Maximum allowable number of stored entries */
-    table->max_size = data_size;
+    if (data_size < data_size_max)
+        table->max_size = data_size;
+    else
+        table->max_size = data_size_max;
 
     table->data = (INFO)segment_calloc(sizeof(INFO) * table->max_size, 1);
 

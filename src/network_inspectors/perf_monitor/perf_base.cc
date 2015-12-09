@@ -434,13 +434,18 @@ int AddStreamSession(SFBASE* sfBase, uint32_t flags)
 int CloseStreamSession(SFBASE* sfBase, char flags)
 {
     if (flags & SESSION_CLOSED_NORMALLY)
+    {
         sfBase->iClosedSessions++;
-    else if (flags & SESSION_CLOSED_TIMEDOUT)
-        sfBase->iStreamTimeouts++;
-    else if (flags & SESSION_CLOSED_PRUNED)
-        sfBase->iPrunedSessions++;
-    else if (flags & SESSION_CLOSED_ASYNC)
-        sfBase->iDroppedAsyncSessions++;
+    }
+    else
+    {
+        if (flags & SESSION_CLOSED_TIMEDOUT)
+            sfBase->iStreamTimeouts++;
+        if (flags & SESSION_CLOSED_PRUNED)
+            sfBase->iPrunedSessions++;
+        if (flags & SESSION_CLOSED_ASYNC)
+            sfBase->iDroppedAsyncSessions++;
+    }
 
     return 0;
 }

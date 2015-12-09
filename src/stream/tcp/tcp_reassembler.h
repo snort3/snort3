@@ -118,6 +118,8 @@ public:
         return reassembly_policy;
     }
 
+    int purge_to_seq( uint32_t flush_seq );
+
 protected:
     bool server_side;
     TcpTracker* tracker;
@@ -154,7 +156,6 @@ protected:
     void init_overlap_editor( TcpDataBlock* tdb );
     bool is_segment_fasttrack(TcpSegment *tail, TcpDataBlock *tdb);
     int purge_alerts( uint32_t /*flush_seq*/,  Flow* flow);
-    int purge_to_seq( uint32_t flush_seq );
     void show_rebuilt_packet( Packet* pkt );
     uint32_t get_flush_data_len( TcpSegment *ss, uint32_t to_seq, uint32_t flushBufSize);
     int flush_data_segments(Packet* p, uint32_t toSeq,  uint8_t *flushbuf, const uint8_t *flushbuf_end);

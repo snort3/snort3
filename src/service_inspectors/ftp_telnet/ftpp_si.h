@@ -115,19 +115,20 @@ public:
 #define NO_STATE                  0x00
 #define LOST_STATE                0xFFFFFFFF
 
-#define DATA_CHAN_PORT_CMD_ISSUED 0x01
-#define DATA_CHAN_PORT_CMD_ACCEPT 0x02
-#define DATA_CHAN_PASV_CMD_ISSUED 0x04
-#define DATA_CHAN_PASV_CMD_ACCEPT 0x08
-#define DATA_CHAN_XFER_CMD_ISSUED 0x10
-#define DATA_CHAN_XFER_STARTED    0x20
+#define DATA_CHAN_PORT_CMD_ISSUED   0x01
+#define DATA_CHAN_PORT_CMD_ACCEPT   0x02
+#define DATA_CHAN_PASV_CMD_ISSUED   0x04
+#define DATA_CHAN_PASV_CMD_ACCEPT   0x08
+#define DATA_CHAN_XFER_CMD_ISSUED   0x10
+#define DATA_CHAN_XFER_STARTED      0x20
+#define DATA_CHAN_CLIENT_HELLO_SEEN 0x40
 
-#define AUTH_TLS_CMD_ISSUED       0x01
-#define AUTH_SSL_CMD_ISSUED       0x02
-#define AUTH_UNKNOWN_CMD_ISSUED   0x04
-#define AUTH_TLS_ENCRYPTED        0x08
-#define AUTH_SSL_ENCRYPTED        0x10
-#define AUTH_UNKNOWN_ENCRYPTED    0x20
+#define AUTH_TLS_CMD_ISSUED         0x01
+#define AUTH_SSL_CMD_ISSUED         0x02
+#define AUTH_UNKNOWN_CMD_ISSUED     0x04
+#define AUTH_TLS_ENCRYPTED          0x08
+#define AUTH_SSL_ENCRYPTED          0x10
+#define AUTH_UNKNOWN_ENCRYPTED      0x20
 
 /*
  * The FTP_SESSION structure contains the complete FTP session, both the

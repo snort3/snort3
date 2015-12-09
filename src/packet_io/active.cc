@@ -239,13 +239,14 @@ bool Active::send_data(
 {
     uint16_t toSend;
     const uint8_t* seg;
+    uint32_t plen;
 
     flags |= GetFlags();
     flags &= ~ENC_FLAG_VAL;
 
     if ( flags & ENC_FLAG_RST_SRVR )
     {
-        uint32_t plen = 0;
+        plen = 0;
         EncodeFlags tmp_flags = flags ^ ENC_FLAG_FWD;
         seg = PacketManager::encode_response(TcpResponse::RST, tmp_flags, p, plen);
 
@@ -257,29 +258,39 @@ bool Active::send_data(
     uint32_t sent = 0;
     const uint16_t maxPayload = PacketManager::encode_get_max_payload(p);
 
-    if (!maxPayload)
+    if(maxPayload)
+    {
+        do
+        {
+            plen = 0;
+            toSend = blen > maxPayload ? maxPayload : blen;
+            flags = (flags & ~ENC_FLAG_VAL) | sent;
+            seg = PacketManager::encode_response(TcpResponse::PUSH, flags, p, plen, buf, toSend);
+
+            if ( !seg )
+                return false;
+
+            s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
+
+            buf += toSend;
+            sent += toSend;
+        } while(blen -= toSend);
+    }
+
+    plen = 0;
+    flags = (flags & ~ENC_FLAG_VAL) | sent;
+    seg = PacketManager::encode_response(TcpResponse::FIN, flags, p, plen, NULL, 0);
+
+    if ( !seg )
         return false;
 
-    do
-    {
-        uint32_t plen = 0;
-        toSend = blen > maxPayload ? maxPayload : blen;
-        flags = (flags & ~ENC_FLAG_VAL) | sent;
-        seg = PacketManager::encode_response(TcpResponse::PUSH, flags, p, plen, buf, toSend);
+    s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
 
-        if ( !seg )
-            return false;
-
-        s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
-
-        buf += toSend;
-        sent += toSend;
-    }
-    while (blen -= toSend);
 
     if (flags & ENC_FLAG_RST_CLNT)
     {
-        uint32_t plen = 0;
+        sent++;
+        plen = 0;
         flags = (flags & ~ENC_FLAG_VAL) | sent;
         seg = PacketManager::encode_response(TcpResponse::RST, flags, p, plen);
 

@@ -27,6 +27,7 @@
 
 #include "utils/stats.h"
 #include "perf_monitor/perf.h"
+#include "packet_io/sfdaq.h"
 #include "protocols/ipv4.h"
 #include "protocols/ipv4_options.h"
 #include "protocols/tcp.h"
@@ -161,8 +162,15 @@ static int Norm_Eth(Packet* p, uint8_t layer, int changes)
 // ether header + min payload (excludes FCS, which makes it 64 total)
 #define ETH_MIN_LEN 60
 
-static inline NormMode get_norm_mode(const NormalizerConfig* const c)
-{ return c->norm_mode; }
+static inline NormMode get_norm_mode(const NormalizerConfig* const c, const Packet * const p)
+{ 
+    NormMode mode = c->norm_mode;
+
+    if ( DAQ_GetInterfaceMode(p->pkth) != DAQ_MODE_INLINE )
+        mode = NORM_MODE_TEST;
+
+    return mode;
+}
 
 static int Norm_IP4(
     NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
@@ -170,7 +178,7 @@ static int Norm_IP4(
     IP4Hdr* h = (IP4Hdr*)const_cast<uint8_t*>(p->layers[layer].start);
     uint16_t fragbits = ntohs(h->ip_off);
     uint16_t origbits = fragbits;
-    const NormMode mode = get_norm_mode(c);
+    const NormMode mode = get_norm_mode(c, p);
 
     if ( Norm_IsEnabled(c, NORM_IP4_TRIM) && (layer == 1) )
     {
@@ -275,7 +283,7 @@ static int Norm_ICMP4(
     NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
 {
     ICMPHdr* h = (ICMPHdr*)(p->layers[layer].start);
-    const NormMode mode = get_norm_mode(c);
+    const NormMode mode = get_norm_mode(c, p);
 
     if ( (h->type == ICMP_ECHO || h->type == ICMP_ECHOREPLY) &&
         (h->code != icmp::IcmpCode::ECHO_CODE) )
@@ -303,7 +311,7 @@ static int Norm_IP6(
 
         if ( h->ip6_hoplim < SnortConfig::min_ttl() )
         {
-            const NormMode mode = get_norm_mode(c);
+            const NormMode mode = get_norm_mode(c, p);
 
             if ( mode == NORM_MODE_ON )
             {
@@ -329,7 +337,7 @@ static int Norm_ICMP6(
         (uint16_t)h->type == icmp::Icmp6Types::ECHO_REPLY) &&
         (h->code != 0) )
     {
-        const NormMode mode = get_norm_mode(c);
+        const NormMode mode = get_norm_mode(c, p);
 
         if ( mode == NORM_MODE_ON )
         {
@@ -359,7 +367,7 @@ struct ExtOpt
 static int Norm_IP6_Opts(
     NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
 {
-    NormMode mode = get_norm_mode(c);
+    NormMode mode = get_norm_mode(c, p);
 
     if ( mode == NORM_MODE_ON )
     {
@@ -398,12 +406,10 @@ static inline void NopDaOpt(uint8_t* opt, uint8_t len)
 #define TS_ECR_OFFSET 6
 #define TS_ECR_LENGTH 4
 
-static inline int Norm_TCPOptions(
-    NormalizerConfig* config,
+static inline int Norm_TCPOptions(NormalizerConfig* config, const NormMode mode,
     uint8_t* opts, size_t len, const tcp::TCPHdr* h, uint8_t validated_len, int changes)
 {
     size_t i = 0;
-    const NormMode mode = get_norm_mode(config);
 
     while ( (i < len) &&
         (opts[i] != (uint8_t)tcp::TcpOptCode::EOL) &&
@@ -479,11 +485,10 @@ static inline int Norm_TCPOptions(
     return changes;
 }
 
-static inline int Norm_TCPPadding(NormalizerConfig* config, uint8_t* opts,
-    size_t len, uint8_t validated_len, int changes)
+static inline int Norm_TCPPadding(NormalizerConfig* config, const NormMode mode,
+    uint8_t* opts, size_t len, uint8_t validated_len, int changes)
 {
     size_t i = 0;
-    const NormMode mode = get_norm_mode(config);
 
     while ( (i < len) &&
         (opts[i] != (uint8_t)tcp::TcpOptCode::EOL) &&
@@ -508,7 +513,7 @@ static int Norm_TCP(
     NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
 {
     tcp::TCPHdr* h = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(p->layers[layer].start));
-    const NormMode mode = get_norm_mode(c);
+    const NormMode mode = get_norm_mode(c, p);
 
     if ( Norm_IsEnabled(c, NORM_TCP_RSV) )
     {
@@ -614,13 +619,13 @@ static int Norm_TCP(
 
         if ( Norm_IsEnabled(c, NORM_TCP_OPT) )
         {
-            changes = Norm_TCPOptions(c, opts, tcp_options_len,
-                h, valid_opts_len, changes);
+            changes = Norm_TCPOptions(c, mode, opts,
+                tcp_options_len, h, valid_opts_len, changes);
         }
         else if ( Norm_IsEnabled(c, NORM_TCP_PAD) )
         {
-            changes = Norm_TCPPadding(c, opts, tcp_options_len,
-                valid_opts_len, changes);
+            changes = Norm_TCPPadding(c, mode, opts,
+                tcp_options_len, valid_opts_len, changes);
         }
     }
     return changes;

@@ -318,6 +318,9 @@ public:  // FIXIT-M privatize if possible
 public:
     LwState ssn_state;
 
+private:
+    bool is_two_way_traffic;
+
 };
 
 #endif

@@ -150,11 +150,16 @@ void ReactAction::exec(Packet* p)
 void ReactAction::send(Packet* p)
 {
     EncodeFlags df = (p->packet_flags & PKT_FROM_SERVER) ? ENC_FLAG_FWD : 0;
-    EncodeFlags rf = ENC_FLAG_SEQ | (ENC_FLAG_VAL & config->buf_len);
+    EncodeFlags sent = config->buf_len;
 
     if ( p->packet_flags & PKT_STREAM_EST )
+    {
         Active::send_data(p, df, (uint8_t*)config->resp_buf, config->buf_len);
+        // Active::send_data() sends a FIN, so need to bump seq by 1.
+        sent++;
+    }
 
+    EncodeFlags rf = ENC_FLAG_SEQ | (ENC_FLAG_VAL & sent);
     Active::send_reset(p, rf);
     Active::send_reset(p, ENC_FLAG_FWD);
 }

@@ -188,7 +188,7 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
     // ...only_reassembled
     if (fcd->only_reassembled & ONLY_STREAM)
     {
-        if ( !(p->packet_flags & PKT_REBUILT_STREAM) && !p->is_full_pdu() )
+        if ( !p->has_paf_payload() )
         {
             return DETECTION_OPTION_NO_MATCH;
         }

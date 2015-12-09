@@ -1085,7 +1085,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 }
                 else
                 {
-                    set_file_data((uint8_t*)session->server.response.body, detect_data_size);
+                    set_file_data((uint8_t*)session->server.response.body,
+                        (uint16_t)detect_data_size);
                 }
 
                 FileFlows* file_flows = FileFlows::get_file_flows(p->flow);

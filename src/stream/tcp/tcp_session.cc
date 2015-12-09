@@ -1533,8 +1533,10 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
                 StreamUpdatePerfBaseState(&sfBase, flow, TCP_STATE_ESTABLISHED);
         }
         else if (!tdb->pkt->dsize)
+        {
             // Do nothing.
             return retcode;
+        }
     }
     else
     {
@@ -2133,8 +2135,8 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
                 l, state_names[listener->s_mgr.state], listener->s_mgr.state);
 
         // FIN means only that sender is done talking, other side may continue yapping.
-        if (TCP_STATE_FIN_WAIT_2 == talker->s_mgr.state ||
-                TCP_STATE_TIME_WAIT == talker->s_mgr.state)
+        if ( talker->s_mgr.state == TCP_STATE_FIN_WAIT_2
+          or talker->s_mgr.state == TCP_STATE_TIME_WAIT )
         {
             // data on a segment when we're not accepting data any more alert!
             //EventDataOnClosed(talker->config);
@@ -2142,7 +2144,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
             retcode |= ACTION_BAD_PKT;
             listener->normalizer->packet_dropper(tdb, NORM_TCP_BLOCK);
         }
-        else if (TCP_STATE_CLOSED == talker->s_mgr.state)
+        else if (talker->s_mgr.state == TCP_STATE_CLOSED)
         {
             // data on a segment when we're not accepting data any more alert!
             if (flow->get_session_flags() & SSNFLAG_RESET)
@@ -2163,14 +2165,37 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
         }
         else
         {
+
             DebugFormat(DEBUG_STREAM_STATE, "Queuing data on listener, t %s, l %s...\n",
                     flush_policy_names[talker->flush_policy], flush_policy_names[listener->flush_policy]);
+
+            // In case of Asymmetric traffic, enforce flush_policy is IPS mode.
+            uint32_t flushed = 0;
+            if ( !flow->two_way_traffic()
+                    and (flow->session_state & (STREAM_STATE_SYN|STREAM_STATE_SYN_ACK))
+                    and !tcph->is_syn() )
+            {
+                // FIXIT-M (b042cf28c49)
+                // See "FIXIT-M (b042cf28c49)" in "src/service-inspectors/nhttp_inspect/nhttp_stream_splitter.cc".
+                if (listener->flush_policy == STREAM_FLPOLICY_ON_ACK)
+                    listener->flush_policy = STREAM_FLPOLICY_ON_DATA;
+            }
+
+            flushed = listener->reassembler->flush_on_data_policy( tdb->pkt );;
+
+            if ( !flow->two_way_traffic()
+                    and flushed
+                    and (flow->session_state & (STREAM_STATE_SYN|STREAM_STATE_SYN_ACK))
+                    and !tcph->is_syn() )
+            {
+                listener->reassembler->purge_to_seq(tdb->seq + flushed);
+            }
 
             if (config->policy != StreamPolicy::OS_PROXY)
             {
                 // these normalizations can't be done if we missed setup. and
                 // window is zero in one direction until we've seen both sides.
-                if (!(flow->get_session_flags() & SSNFLAG_MIDSTREAM))
+                if (!(flow->get_session_flags() & SSNFLAG_MIDSTREAM) && flow->two_way_traffic())
                 {
                     // sender of syn w/mss limits payloads from peer since we store mss on
                     // sender side, use listener mss same reasoning for window size
@@ -2312,9 +2337,23 @@ dupfin:
     DebugFormat(DEBUG_STREAM_STATE, "   %s state: %s(%d)\n", l, state_names[listener->s_mgr.state], listener->s_mgr.state);
 
     // handle TIME_WAIT timer stuff
-    if ((talker->s_mgr.state == TCP_STATE_TIME_WAIT && listener->s_mgr.state == TCP_STATE_CLOSED)
-            || (listener->s_mgr.state == TCP_STATE_TIME_WAIT && talker->s_mgr.state == TCP_STATE_CLOSED)
-            || (listener->s_mgr.state == TCP_STATE_TIME_WAIT && talker->s_mgr.state ==  TCP_STATE_TIME_WAIT))
+    if (!flow->two_way_traffic() &&
+        (talker->s_mgr.state >= TCP_STATE_FIN_WAIT_1 || listener->s_mgr.state >= TCP_STATE_FIN_WAIT_1))
+    {
+        if (tcph->is_fin() && tcph->is_ack())
+        {
+            if (talker->s_mgr.state >= TCP_STATE_FIN_WAIT_1)
+                talker->s_mgr.state = TCP_STATE_CLOSED;
+            if (listener->s_mgr.state >= TCP_STATE_FIN_WAIT_1)
+                listener->s_mgr.state = TCP_STATE_CLOSED;
+            listener->flags |= TF_FORCE_FLUSH;
+        }
+    }
+
+    if ( (talker->s_mgr.state == TCP_STATE_TIME_WAIT && listener->s_mgr.state == TCP_STATE_CLOSED)
+      || (listener->s_mgr.state == TCP_STATE_TIME_WAIT && talker->s_mgr.state == TCP_STATE_CLOSED)
+      || (listener->s_mgr.state == TCP_STATE_TIME_WAIT && talker->s_mgr.state ==  TCP_STATE_TIME_WAIT)
+      || (!flow->two_way_traffic() && (talker->s_mgr.state == TCP_STATE_CLOSED || listener->s_mgr.state == TCP_STATE_CLOSED)))
     {
         // The last ACK is a part of the session. Delete the session after processing is complete.
         LogTcpEvents(eventcode);
@@ -2939,14 +2978,19 @@ int TcpSession::process(Packet* p)
         }
         else
         {
-midstream_pickup_allowed: if (!p->ptrs.tcph->is_syn_ack()
-                                  && !p->dsize && !(StreamPacketHasWscale(p) & TF_WSCALE))
-                          {
+midstream_pickup_allowed:
+            if ( !p->ptrs.tcph->is_syn_ack()
+              && !p->dsize
+              && !(StreamPacketHasWscale(p) & TF_WSCALE) )
+            {
 #ifdef REG_TEST
-                              S5TraceTCP(p, flow, &tdb, 1);
+                  S5TraceTCP(p, flow, &tdb, 1);
 #endif
-                              return 0;
-                          }
+                  return 0;
+            }
+
+            if (p->ptrs.tcph->is_syn())
+                flow->session_state |= STREAM_STATE_SYN;
         }
         lws_init = true;
     }

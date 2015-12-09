@@ -363,7 +363,12 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
 
     copied = len;
 
-    assert(total <= MAX_OCTETS);
+    // FIXIT-M (b042cf28c49)
+    // assert(total <= MAX_OCTETS) was broke after changes in stream
+    // to accommodate asymmetric TCP connections.
+    // See "FIXIT-M (b042cf28c49)" in "src/tcp/tcp_session.c".
+    if (total > MAX_OCTETS)
+        total = MAX_OCTETS;
 
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
         NHttpFlowData::nhttp_flow_id);

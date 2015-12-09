@@ -96,7 +96,7 @@ struct HTTPINSPECT_GLOBAL_CONF
     int iis_unicode_codepage;
 
     int max_gzip_sessions;
-    int max_gzip_mem;
+    unsigned int max_gzip_mem;
     int compr_depth;
     int decompr_depth;
     int memcap;

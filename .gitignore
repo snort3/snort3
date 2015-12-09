@@ -12,6 +12,7 @@
 *.gcov
 *.trs
 *_test
+*.Po
 *~
 ._Xcode*
 Cbuild/

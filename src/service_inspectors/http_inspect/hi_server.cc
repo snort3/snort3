@@ -1598,7 +1598,7 @@ static int HttpResponseInspection(HI_SESSION* session, Packet* p, const unsigned
 
                         if (p->packet_flags & PKT_STREAM_INSERT)
                         {
-                            if ( p->is_full_pdu() )
+                            if ( p->packet_flags & PKT_PDU_TAIL )
                                 expected_pkt = 1;
                             else
                                 sd->resp_state.inspect_reassembled = 1;
