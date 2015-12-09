@@ -34,6 +34,6 @@ tcp_syn_recv_state.h \
 ips_stream_reassemble.cc \
 ips_stream_size.cc
 
-if BUILD_UNIT_TESTS
+if BUILD_CPPUTESTS
 SUBDIRS = test
 endif

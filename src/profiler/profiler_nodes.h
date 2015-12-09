@@ -75,7 +75,7 @@ inline bool operator==(const ProfilerNode& lhs, const ProfilerNode& rhs)
 inline bool operator!=(const ProfilerNode& lhs, const ProfilerNode& rhs)
 { return lhs.name == rhs.name; }
 
-class ProfilerTree
+class ProfilerNodeMap
 {
 public:
     using map_type = std::unordered_map<std::string, ProfilerNode>;

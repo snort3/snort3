@@ -627,9 +627,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
         }
         // see comments on call to snort_detect() below
         {
-            Profile profile(hiDetectPerfStats);
+            ProfileExclude exclude(hiPerfStats);
             get_data_bus().publish(PACKET_EVENT, p);
-            hiDetectCalled = true;
         }
 
         return 0;
@@ -1120,9 +1119,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
         **  main detection engine for each protocol field.
         */
         {
-            Profile profile(hiDetectPerfStats);
+            Profile exclude(hiPerfStats);
             snort_detect(p);
-            hiDetectCalled = true;
         }
 
         /*

@@ -68,22 +68,6 @@
 #include "framework/data_bus.h"
 #include "sfip/sf_ip.h"
 
-// FIXIT-M ftp, http, etc. should not be calling snort_detect()
-static THREAD_LOCAL bool ftppDetectCalled = false;
-static THREAD_LOCAL ProfileStats ftppDetectPerfStats;
-
-// FIXIT-M J need a better way to "pause" current profiling context,
-// see http_inspect
-void ft_update_perf(ProfileStats& stats)
-{
-    if ( ftppDetectCalled )
-    {
-        stats.time.elapsed -= ftppDetectPerfStats.time.elapsed;
-        ftppDetectPerfStats.reset();
-        ftppDetectCalled = false;
-    }
-}
-
 void CleanupFTPCMDConf(void* ftpCmd)
 {
     FTP_CMD_CONF* FTPCmd = (FTP_CMD_CONF*)ftpCmd;
@@ -246,8 +230,6 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
  */
 void do_detection(Packet* p)
 {
-    Profile profile(ftppDetectPerfStats);
-
      // If we get here we either had a client or server request/response.
      // We do the detection here, because we're starting a new paradigm
      // about protocol decoders.
@@ -260,6 +242,5 @@ void do_detection(Packet* p)
     get_data_bus().publish(PACKET_EVENT, p);
 
     DisableInspection(p);
-    ftppDetectCalled = true;
 }
 

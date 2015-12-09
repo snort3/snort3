@@ -20,6 +20,10 @@
 
 #include "profiler.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <cassert>
 #include <mutex>
 
@@ -27,10 +31,16 @@
 #include "main/snort_config.h"
 
 #include "profiler_nodes.h"
+#include "memory_manager.h"
+#include "memory_profiler.h"
 #include "time_profiler.h"
 #include "rule_profiler.h"
 
-static ProfilerTree s_profiler_nodes;
+#ifdef UNIT_TEST
+#include "catch/catch.hpp"
+#endif
+
+static ProfilerNodeMap s_profiler_nodes;
 
 void Profiler::register_module(Module* m)
 {
@@ -61,7 +71,10 @@ void Profiler::register_module(const char* n, const char* pn, get_profile_stats_
 }
 
 void Profiler::consolidate_stats()
-{ s_profiler_nodes.accumulate_nodes(); }
+{
+    s_profiler_nodes.accumulate_nodes();
+    Memory::consolidate_fallthrough_stats();
+}
 
 void Profiler::reset_stats()
 {
@@ -72,9 +85,88 @@ void Profiler::reset_stats()
 void Profiler::show_stats()
 {
     const auto* config = SnortConfig::get_profiler();
-    if ( !config )
-        return;
+    assert(config);
 
     show_time_profiler_stats(s_profiler_nodes, config->time);
+    show_memory_profiler_stats(s_profiler_nodes, config->memory);
     show_rule_profiler_stats(config->rule);
 }
+
+#ifdef UNIT_TEST
+
+TEST_CASE( "profile stats", "[profiler]" )
+{
+    SECTION( "ctor" )
+    {
+        SECTION( "default" )
+        {
+            ProfileStats stats;
+
+            CHECK( !stats.time );
+            CHECK( !stats.memory.stats );
+        }
+
+        SECTION( "il" )
+        {
+            TimeProfilerStats time_stats = { 12_ticks, 2 };
+            MemoryTracker memory_stats =
+            {{
+                { 1, 2, 3, 4 },
+                { 5, 6, 7, 8 }
+            }};
+
+            ProfileStats stats(time_stats, memory_stats);
+
+            CHECK( stats.time == time_stats );
+            CHECK( stats.memory.stats == memory_stats.stats );
+        }
+    }
+
+    SECTION( "members" )
+    {
+        ProfileStats stats {
+            { 1_ticks, 2 },
+            {{
+                { 1, 2, 3, 4 },
+                { 5, 6, 7, 8 },
+            }}
+        };
+
+        SECTION( "reset" )
+        {
+            stats.reset();
+
+            CHECK( !stats.time );
+            CHECK( !stats.memory.stats );
+        }
+
+        ProfileStats other_stats {
+            { 12_ticks, 12 },
+            {{
+                { 5, 6, 7, 8 },
+                { 9, 10, 11, 12 }
+            }}
+        };
+
+        SECTION( "==/!=" )
+        {
+            CHECK( stats == stats );
+            CHECK_FALSE( stats == other_stats );
+            CHECK( stats != other_stats );
+        }
+
+        SECTION( "+=" )
+        {
+            stats += other_stats;
+            CHECK( stats.time == TimeProfilerStats(13_ticks, 14) );
+            CombinedMemoryStats memory_result = {
+                { 6, 8, 10, 12 },
+                { 14, 16, 18, 20 }
+            };
+
+            CHECK( stats.memory.stats == memory_result );
+        }
+    }
+}
+
+#endif

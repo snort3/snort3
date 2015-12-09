@@ -119,13 +119,13 @@ void ProfilerNode::accumulate()
     }
 }
 
-void ProfilerTree::register_node(std::string n, const char* pn, Module* m)
+void ProfilerNodeMap::register_node(std::string n, const char* pn, Module* m)
 { setup_node(get_node(n), get_node(pn ? pn : ROOT_NODE), m); }
 
-void ProfilerTree::register_node(std::string n, const char* pn, get_profile_stats_fn fn)
+void ProfilerNodeMap::register_node(std::string n, const char* pn, get_profile_stats_fn fn)
 { setup_node(get_node(n), get_node(pn ? pn : ROOT_NODE), fn); }
 
-void ProfilerTree::accumulate_nodes()
+void ProfilerNodeMap::accumulate_nodes()
 {
     static std::mutex stats_mutex;
     std::lock_guard<std::mutex> lock(stats_mutex);
@@ -134,16 +134,16 @@ void ProfilerTree::accumulate_nodes()
         it->second.accumulate();
 }
 
-void ProfilerTree::reset_nodes()
+void ProfilerNodeMap::reset_nodes()
 {
     for ( auto it = nodes.begin(); it != nodes.end(); ++it )
         it->second.reset();
 }
 
-const ProfilerNode& ProfilerTree::get_root()
+const ProfilerNode& ProfilerNodeMap::get_root()
 { return get_node(ROOT_NODE); }
 
-ProfilerNode& ProfilerTree::get_node(std::string key)
+ProfilerNode& ProfilerNodeMap::get_node(std::string key)
 {
     auto node = nodes.emplace(key, key);
     return node.first->second;
@@ -162,7 +162,7 @@ static ProfileStats* s_profiler_stats_getter(const char* name)
     return nullptr;
 }
 
-static ProfilerNode find_node(const ProfilerTree& tree, std::string name)
+static ProfilerNode find_node(const ProfilerNodeMap& tree, std::string name)
 {
     for ( const auto& it : tree )
         if ( it.first == name )
@@ -264,7 +264,7 @@ TEST_CASE( "profiler node", "[profiler]" )
 
     SECTION( "set" )
     {
-        the_stats = { { 5_ticks, 7 } };
+        the_stats.time = { 5_ticks, 7 };
 
         SECTION( "module" )
         {
@@ -285,7 +285,8 @@ TEST_CASE( "profiler node", "[profiler]" )
 
     SECTION( "accumulate" )
     {
-        the_stats = { { 1_ticks, 1 } };
+        the_stats.time = { 1_ticks, 1 };
+
         node.accumulate();
         node.accumulate();
 
@@ -297,7 +298,8 @@ TEST_CASE( "profiler node", "[profiler]" )
 
     SECTION( "reset" )
     {
-        the_stats = { { 1_ticks, 1 } };
+        the_stats.time = { 1_ticks, 1 };
+
         node.accumulate();
 
         auto& r1 = node.get_stats();
@@ -309,9 +311,9 @@ TEST_CASE( "profiler node", "[profiler]" )
     }
 }
 
-TEST_CASE( "profiler tree", "[profiler]" )
+TEST_CASE( "profiler node map", "[profiler]" )
 {
-    ProfilerTree tree;
+    ProfilerNodeMap tree;
 
     SECTION( "register" )
     {

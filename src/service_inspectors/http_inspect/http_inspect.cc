@@ -68,10 +68,7 @@
 int hex_lookup[256];
 int valid_lookup[256];
 
-// hiDetectPerfStats is not registered; it is used
-// only to exclude detection from hiPerfStats
 THREAD_LOCAL ProfileStats hiPerfStats;
-THREAD_LOCAL ProfileStats hiDetectPerfStats;
 
 const PegInfo peg_names[] =
 {
@@ -329,23 +326,6 @@ void HttpInspect::eval(Packet* p)
 
     hi_queue_events();
     ClearHttpBuffers();
-
-    /* XXX:
-     * NOTE: this includes the HTTPInspect directly
-     * calling the detection engine -
-     * to get the true HTTPInspect only stats, have another
-     * var inside HttpInspectMain that tracks the time
-     * spent in snort_detect().
-     * Subtract the ticks from this if iCallDetect == 0
-     */
-    // FIXIT-M J need better a way to pause a profiler when the context
-    // is not visible from the current scope
-    if ( hiDetectCalled )
-    {
-        hiPerfStats.time.elapsed -= hiDetectPerfStats.time.elapsed;
-        hiDetectPerfStats.time.reset();
-        hiDetectCalled = false;
-    }
 }
 
 //-------------------------------------------------------------------------

@@ -181,7 +181,7 @@ private:
         template<typename T, typename... Args>
         inline T check(const char* msg, Args&&... args)
         {
-            T v;
+            T v = 0;
             return argcheck(
                 Stack<T>::validate(L, index, v, std::forward<Args>(args)...),
                 v, msg

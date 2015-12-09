@@ -28,6 +28,7 @@ using namespace std;
 #include "thread.h"
 #include "helpers/swapper.h"
 #include "packet_io/sfdaq.h"
+#include "profiler/memory_manager.h"
 
 typedef DAQ_Verdict
 (* PacketCallback)(void*, const DAQ_PktHdr_t*, const uint8_t*);
@@ -51,6 +52,8 @@ Analyzer::Analyzer(const char* s)
 
 void Analyzer::operator()(unsigned id, Swapper* ps)
 {
+    RuntimeContext runtime_context;
+
     set_instance_id(id);
     ps->apply();
 

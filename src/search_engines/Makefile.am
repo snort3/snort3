@@ -72,7 +72,10 @@ endif
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 
-if BUILD_UNIT_TESTS
-SUBDIRS = test
-endif
+# FIXIT-H new profiler dependencies break link but
+# resolving those leads to duplicate symbols for new,
+# new[], delete, and delete[].
+#if BUILD_CPPUTESTS
+#SUBDIRS = test
+#endif
 

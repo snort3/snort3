@@ -37,6 +37,7 @@
 #include "parser/parser.h"
 #include "target_based/snort_protocols.h"
 
+#include "profiler_printer.h"
 #include "profiler_stats_table.h"
 #include "rule_profiler_defs.h"
 
@@ -46,7 +47,20 @@
 
 #define s_rule_table_title "Rule Profile Statistics"
 
-static const StatsTable::Field rule_fields[] =
+static inline OtnState& operator+=(OtnState& lhs, const OtnState& rhs)
+{
+    lhs.elapsed += rhs.elapsed;
+    lhs.elapsed_match += rhs.elapsed_match;
+    lhs.checks += rhs.checks;
+    lhs.matches += rhs.matches;
+    lhs.alerts += rhs.alerts;
+    return lhs;
+}
+
+namespace rule_stats
+{
+
+static const StatsTable::Field fields[] =
 {
     { "#", 5, '\0', 0, std::ios_base::left },
     { "gid", 6, '\0', 0, std::ios_base::fmtflags() },
@@ -65,10 +79,10 @@ static const StatsTable::Field rule_fields[] =
     { nullptr, 0, '\0', 0, std::ios_base::fmtflags() }
 };
 
-struct RuleEntry
+struct View
 {
     OtnState state;
-    const SigInfo* sig_info;
+    SigInfo sig_info;
 
     hr_duration elapsed() const
     { return state.elapsed; }
@@ -113,70 +127,54 @@ struct RuleEntry
     hr_duration avg_check() const
     { return time_per(elapsed(), checks()); }
 
-    RuleEntry(const OtnState& otn_state, const SigInfo* si = nullptr) :
-        state(otn_state), sig_info(si) { }
+    View(const OtnState& otn_state, const SigInfo* si = nullptr) :
+        state(otn_state)
+    {
+        if ( si )
+            // FIXIT-L J does sig_info need to be initialized otherwise?
+            sig_info = *si;
+    }
 };
 
-using RuleEntrySortFn = std::function<bool(const RuleEntry&, const RuleEntry&)>;
-
-static inline OtnState& operator+=(OtnState& lhs, const OtnState& rhs)
+static const ProfilerSorter<View> sorters[] =
 {
-    lhs.elapsed += rhs.elapsed;
-    lhs.elapsed_match += rhs.elapsed_match;
-    lhs.checks += rhs.checks;
-    lhs.matches += rhs.matches;
-    lhs.alerts += rhs.alerts;
-    return lhs;
-}
-
-static bool get_rule_sort_fn(RuleProfilerConfig::Sort sort, RuleEntrySortFn& fn)
-{
-    using Sort = RuleProfilerConfig::Sort;
-
-    switch ( sort )
+    { "", nullptr },
     {
-        case Sort::SORT_CHECKS:
-            fn = [](const RuleEntry& lhs, const RuleEntry& rhs)
-            { return lhs.checks() >= rhs.checks(); };
-            break;
-
-        case Sort::SORT_AVG_CHECK:
-            fn = [](const RuleEntry& lhs, const RuleEntry& rhs)
-            { return lhs.avg_check() >= rhs.avg_check(); };
-            break;
-
-        case Sort::SORT_TOTAL_TIME:
-            fn = [](const RuleEntry& lhs, const RuleEntry& rhs)
-            { return lhs.elapsed() >= rhs.elapsed(); };
-            break;
-
-        case Sort::SORT_MATCHES:
-            fn = [](const RuleEntry& lhs, const RuleEntry& rhs)
-            { return lhs.matches() >= rhs.matches(); };
-            break;
-
-        case Sort::SORT_NO_MATCHES:
-            fn = [](const RuleEntry& lhs, const RuleEntry& rhs)
-            { return lhs.no_matches() >= rhs.no_matches(); };
-            break;
-
-        case Sort::SORT_AVG_MATCH:
-            fn = [](const RuleEntry& lhs, const RuleEntry& rhs)
-            { return lhs.avg_match() >= rhs.avg_match(); };
-            break;
-
-        case Sort::SORT_AVG_NO_MATCH:
-            fn = [](const RuleEntry& lhs, const RuleEntry& rhs)
-            { return lhs.avg_no_match() >= rhs.avg_no_match(); };
-            break;
-
-        default:
-            return false;
-            break;
+        "checks",
+        [](const View& lhs, const View& rhs)
+        { return lhs.checks() >= rhs.checks(); }
+    },
+    {
+        "avg_check",
+        [](const View& lhs, const View& rhs)
+        { return lhs.avg_check() >= rhs.avg_check(); }
+    },
+    {
+        "total_time",
+        [](const View& lhs, const View& rhs)
+        { return lhs.elapsed().count() >= rhs.elapsed().count(); }
+    },
+    {
+        "matches",
+        [](const View& lhs, const View& rhs)
+        { return lhs.matches() >= rhs.matches(); }
+    },
+    {
+        "no_matches",
+        [](const View& lhs, const View& rhs)
+        { return lhs.no_matches() >= rhs.no_matches(); }
+    },
+    {
+        "avg_match",
+        [](const View& lhs, const View& rhs)
+        { return lhs.avg_match() >= rhs.avg_match(); }
+    },
+    {
+        "avg_no_match",
+        [](const View& lhs, const View& rhs)
+        { return lhs.avg_no_match() >= rhs.avg_no_match(); }
     }
-
-    return true;
-}
+};
 
 static void consolidate_otn_states(OtnState* states)
 {
@@ -184,12 +182,14 @@ static void consolidate_otn_states(OtnState* states)
         states[0] += states[i];
 }
 
-static void build_entries(std::vector<RuleEntry>& entries)
+static std::vector<View> build_entries()
 {
     assert(snort_conf);
 
     detection_option_tree_update_otn_stats(snort_conf->detection_option_tree_hash_table);
     auto* otn_map = snort_conf->otn_map;
+
+    std::vector<View> entries;
 
     for ( auto* h = sfghash_findfirst(otn_map); h; h = sfghash_findnext(otn_map) )
     {
@@ -204,67 +204,85 @@ static void build_entries(std::vector<RuleEntry>& entries)
         if ( !state )
             continue;
 
+        // FIXIT-L J should we assert(otn->sigInfo)?
         entries.emplace_back(state, &otn->sigInfo);
     }
+
+    return entries;
 }
 
-static void print_single_entry(const RuleEntry& entry, unsigned n)
+// FIXIT-L J logic duplicated from ProfilerPrinter
+static void print_single_entry(const View& v, unsigned n)
 {
     using std::chrono::duration_cast;
     using std::chrono::microseconds;
 
     std::ostringstream ss;
-    StatsTable table(rule_fields, ss);
 
-    table << StatsTable::ROW;
+    {
+        StatsTable table(fields, ss);
 
-    table << n; // #
+        table << StatsTable::ROW;
 
-    // FIXIT-L J these should be guaranteed to be non-null
-    table << (entry.sig_info ? entry.sig_info->generator : 0); // gid
-    table << (entry.sig_info ? entry.sig_info->id : 0); // sid
-    table << (entry.sig_info ? entry.sig_info->rev : 0); // rev
+        table << n; // #
 
-    table << entry.checks(); // checks
-    table << entry.matches(); // matches
-    table << entry.alerts(); // alerts
+        table << v.sig_info.generator; // gid
+        table << v.sig_info.id; // sid
+        table << v.sig_info.rev; // rev
 
-    table << duration_cast<microseconds>(entry.elapsed()).count(); // time
-    table << duration_cast<microseconds>(entry.avg_check()).count(); // avg/check
-    table << duration_cast<microseconds>(entry.avg_match()).count(); // avg/match
-    table << duration_cast<microseconds>(entry.avg_no_match()).count(); // avg/non-match
+        table << v.checks(); // checks
+        table << v.matches(); // matches
+        table << v.alerts(); // alerts
+
+        table << duration_cast<microseconds>(v.elapsed()).count(); // time
+        table << duration_cast<microseconds>(v.avg_check()).count(); // avg/check
+        table << duration_cast<microseconds>(v.avg_match()).count(); // avg/match
+        table << duration_cast<microseconds>(v.avg_no_match()).count(); // avg/non-match
 
 #ifdef PPM_MGR
-    table << entry.ppm_disable_count(); // disables
+        table << v.ppm_disable_count(); // disables
 #endif
+    }
 
-    table.finish();
     LogMessage("%s", ss.str().c_str());
 }
 
-static void print_entries(std::vector<RuleEntry>& entries, unsigned count)
+// FIXIT-L J logic duplicated from ProfilerPrinter
+static void print_entries(std::vector<View>& entries, ProfilerSorter<View> sort, unsigned count)
 {
     std::ostringstream ss;
-    StatsTable table(rule_fields, ss);
 
-    table << StatsTable::SEP;
+    {
+        StatsTable table(fields, ss);
 
-    table << s_rule_table_title;
-    if ( count )
-        table << " (worst " << count << ")\n";
-    else
-        table << " (all)\n";
+        table << StatsTable::SEP;
 
-    table << StatsTable::HEADER;
-    table.finish();
+        table << s_rule_table_title;
+        if ( count )
+            table << " (worst" << count;
+        else
+            table << " (all";
+
+        if ( sort )
+            table << ", sorted by " << sort.name;
+
+        table << ")\n";
+
+        table << StatsTable::HEADER;
+    }
 
     LogMessage("%s", ss.str().c_str());
 
     if ( !count || count > entries.size() )
         count = entries.size();
 
+    if ( sort )
+        std::partial_sort(entries.begin(), entries.begin() + count, entries.end(), sort);
+
     for ( unsigned i = 0; i < count; ++i )
         print_single_entry(entries[i], i + 1);
+}
+
 }
 
 void show_rule_profiler_stats(const RuleProfilerConfig& config)
@@ -272,24 +290,16 @@ void show_rule_profiler_stats(const RuleProfilerConfig& config)
     if ( !config.show )
         return;
 
-    std::vector<RuleEntry> entries;
-    build_entries(entries);
+    auto entries = rule_stats::build_entries();
 
     // if there aren't any eval'd rules, don't sort or print
     if ( entries.empty() )
         return;
 
-    RuleEntrySortFn sort_fn;
-    if ( get_rule_sort_fn(config.sort, sort_fn) )
-    {
-        auto stop = ( !config.count || config.count >= entries.size() ) ?
-            entries.end() :
-            entries.begin() + config.count;
+    auto sort = rule_stats::sorters[config.sort];
 
-        std::partial_sort(entries.begin(), stop, entries.end(), sort_fn);
-    }
-
-    print_entries(entries, config.count);
+    // FIXIT-L J do we eventually want to be able print rule totals, too?
+    print_entries(entries, sort, config.count);
 }
 
 void reset_rule_profiler_stats()
@@ -328,7 +338,7 @@ void RuleContext::stop(bool match)
 
 namespace
 {
-using RuleEntryVector = std::vector<RuleEntry>;
+using RuleEntryVector = std::vector<rule_stats::View>;
 using RuleStatsVector = std::vector<OtnState>;
 } // anonymous namespace
 
@@ -362,7 +372,7 @@ static inline OtnState make_otn_state(
     };
 }
 
-static inline RuleEntry make_rule_entry(
+static inline rule_stats::View make_rule_entry(
     hr_duration elapsed, hr_duration elapsed_match,
     uint64_t checks, uint64_t matches)
 {
@@ -371,6 +381,9 @@ static inline RuleEntry make_rule_entry(
         nullptr
     };
 }
+
+static void avoid_optimization()
+{ for ( int i = 0; i < 1024; ++i ); }
 
 TEST_CASE( "otn state", "[profiler][rule_profiler]" )
 {
@@ -427,14 +440,18 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
     SECTION( "copy assignment" )
     {
         auto copy = entry;
-        CHECK( copy.sig_info == entry.sig_info );
+        CHECK( copy.sig_info.generator == entry.sig_info.generator );
+        CHECK( copy.sig_info.id == entry.sig_info.id );
+        CHECK( copy.sig_info.rev == entry.sig_info.rev );
         CHECK( copy.state == entry.state );
     }
 
     SECTION( "copy construction" )
     {
-        RuleEntry copy(entry);
-        CHECK( copy.sig_info == entry.sig_info );
+        rule_stats::View copy(entry);
+        CHECK( copy.sig_info.generator == entry.sig_info.generator );
+        CHECK( copy.sig_info.id == entry.sig_info.id );
+        CHECK( copy.sig_info.rev == entry.sig_info.rev );
         CHECK( copy.state == entry.state );
     }
 
@@ -505,7 +522,6 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
 TEST_CASE( "rule profiler sorting", "[profiler][rule_profiler]" )
 {
     using Sort = RuleProfilerConfig::Sort;
-    RuleEntrySortFn sort_fn;
 
     SECTION( "checks" )
     {
@@ -521,8 +537,8 @@ TEST_CASE( "rule profiler sorting", "[profiler][rule_profiler]" )
             make_otn_state(0_ticks, 0_ticks, 0, 0)
         };
 
-        REQUIRE( get_rule_sort_fn(Sort::SORT_CHECKS, sort_fn) );
-        std::stable_sort(entries.begin(), entries.end(), sort_fn);
+        const auto& sorter = rule_stats::sorters[Sort::SORT_CHECKS];
+        std::partial_sort(entries.begin(), entries.end(), entries.end(), sorter);
         CHECK( entries == expected );
     }
 
@@ -540,8 +556,8 @@ TEST_CASE( "rule profiler sorting", "[profiler][rule_profiler]" )
             make_otn_state(2_ticks, 0_ticks, 2, 0)
         };
 
-        REQUIRE( get_rule_sort_fn(Sort::SORT_AVG_CHECK, sort_fn) );
-        std::stable_sort(entries.begin(), entries.end(), sort_fn);
+        const auto& sorter = rule_stats::sorters[Sort::SORT_AVG_CHECK];
+        std::partial_sort(entries.begin(), entries.end(), entries.end(), sorter);
         CHECK( entries == expected );
     }
 
@@ -559,8 +575,8 @@ TEST_CASE( "rule profiler sorting", "[profiler][rule_profiler]" )
             make_otn_state(0_ticks, 0_ticks, 0, 0)
         };
 
-        REQUIRE( get_rule_sort_fn(Sort::SORT_TOTAL_TIME, sort_fn) );
-        std::stable_sort(entries.begin(), entries.end(), sort_fn);
+        const auto& sorter = rule_stats::sorters[Sort::SORT_TOTAL_TIME];
+        std::partial_sort(entries.begin(), entries.end(), entries.end(), sorter);
         CHECK( entries == expected );
     }
 
@@ -578,8 +594,8 @@ TEST_CASE( "rule profiler sorting", "[profiler][rule_profiler]" )
             make_otn_state(0_ticks, 0_ticks, 0, 0)
         };
 
-        REQUIRE( get_rule_sort_fn(Sort::SORT_MATCHES, sort_fn) );
-        std::stable_sort(entries.begin(), entries.end(), sort_fn);
+        const auto& sorter = rule_stats::sorters[Sort::SORT_MATCHES];
+        std::partial_sort(entries.begin(), entries.end(), entries.end(), sorter);
         CHECK( entries == expected );
     }
 
@@ -597,8 +613,8 @@ TEST_CASE( "rule profiler sorting", "[profiler][rule_profiler]" )
             make_otn_state(0_ticks, 0_ticks, 4, 3)
         };
 
-        REQUIRE( get_rule_sort_fn(Sort::SORT_NO_MATCHES, sort_fn) );
-        std::stable_sort(entries.begin(), entries.end(), sort_fn);
+        const auto& sorter = rule_stats::sorters[Sort::SORT_NO_MATCHES];
+        std::partial_sort(entries.begin(), entries.end(), entries.end(), sorter);
         CHECK( entries == expected );
     }
 
@@ -616,7 +632,8 @@ TEST_CASE( "rule profiler sorting", "[profiler][rule_profiler]" )
             make_otn_state(4_ticks, 0_ticks, 0, 2)
         };
 
-        REQUIRE( get_rule_sort_fn(Sort::SORT_AVG_MATCH, sort_fn) );
+        const auto& sorter = rule_stats::sorters[Sort::SORT_AVG_MATCH];
+        std::partial_sort(entries.begin(), entries.end(), entries.end(), sorter);
         CHECK( entries == expected );
     }
 
@@ -634,8 +651,8 @@ TEST_CASE( "rule profiler sorting", "[profiler][rule_profiler]" )
             make_otn_state(4_ticks, 0_ticks, 6, 2)
         };
 
-        REQUIRE( get_rule_sort_fn(Sort::SORT_AVG_NO_MATCH, sort_fn) );
-        std::stable_sort(entries.begin(), entries.end(), sort_fn);
+        const auto& sorter = rule_stats::sorters[Sort::SORT_AVG_NO_MATCH];
+        std::partial_sort(entries.begin(), entries.end(), entries.end(), sorter);
         CHECK( entries == expected );
     }
 }
@@ -643,16 +660,22 @@ TEST_CASE( "rule profiler sorting", "[profiler][rule_profiler]" )
 TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
 {
     dot_node_state_t stats;
-    memset(&stats, 0, sizeof(stats));
+
+    stats.elapsed = 0_ticks;
+    stats.checks = 0;
+    stats.elapsed_match = 0_ticks;
 
     SECTION( "automatically updates stats" )
     {
         {
             RuleContext ctx(stats);
+            avoid_optimization();
         }
 
+        INFO( "elapsed: " << stats.elapsed.count() );
         CHECK( stats.elapsed > 0_ticks );
         CHECK( stats.checks == 1 );
+        INFO( "elapsed_match: " << stats.elapsed_match.count() );
         CHECK( stats.elapsed_match == 0_ticks );
     }
 
@@ -664,8 +687,10 @@ TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
         {
             {
                 RuleContext ctx(stats);
+                avoid_optimization();
                 ctx.stop(true);
 
+                INFO( "elapsed: " << stats.elapsed.count() );
                 CHECK( stats.elapsed > 0_ticks );
                 CHECK( stats.checks == 1 );
                 CHECK( stats.elapsed_match == stats.elapsed );
@@ -677,8 +702,10 @@ TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
         {
             {
                 RuleContext ctx(stats);
+                avoid_optimization();
                 ctx.stop(false);
 
+                INFO( "elapsed: " << stats.elapsed.count() );
                 CHECK( stats.elapsed > 0_ticks );
                 CHECK( stats.checks == 1 );
                 CHECK( stats.elapsed_match == 0_ticks );
@@ -686,6 +713,7 @@ TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
             }
         }
 
+        INFO( "elapsed: " << stats.elapsed.count() );
         CHECK( stats.elapsed == save.elapsed );
         CHECK( stats.elapsed_match == save.elapsed_match );
         CHECK( stats.checks == save.checks );

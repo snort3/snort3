@@ -33,10 +33,10 @@ struct TimeProfilerConfig
         SORT_CHECKS,
         SORT_AVG_CHECK,
         SORT_TOTAL_TIME
-    } sort = Sort::SORT_NONE;
+    } sort = SORT_TOTAL_TIME;
 
-    unsigned count = 0;
     bool show = false;
+    unsigned count = 0;
 };
 
 struct SO_PUBLIC TimeProfilerStats
@@ -80,6 +80,9 @@ public:
         finished(false)
     { start(); }
 
+    TimeContextBase(const TimeContextBase&) = delete;
+    TimeContextBase& operator=(const TimeContextBase&) = delete;
+
     void start()
     { sw.start(); }
 
@@ -94,7 +97,7 @@ protected:
     bool finished;
 };
 
-class SO_PUBLIC TimeContext : public TimeContextBase
+class TimeContext : public TimeContextBase
 {
 public:
     TimeContext(TimeProfilerStats& stats) :
@@ -116,18 +119,42 @@ private:
     TimeProfilerStats& stats;
 };
 
-class SO_PUBLIC TimePause
+class TimePause
 {
 public:
     TimePause(TimeContextBase& ctx) :
         ctx(ctx)
     { ctx.pause(); }
 
+    TimePause(const TimePause&) = delete;
+    TimePause& operator=(const TimePause&) = delete;
+
     ~TimePause()
     { ctx.start(); }
 
 private:
     TimeContextBase& ctx;
+};
+
+class TimeExclude
+{
+public:
+    TimeExclude(TimeProfilerStats& stats) :
+        stats(stats), ctx(tmp) { }
+
+    TimeExclude(const TimeExclude&) = delete;
+    TimeExclude& operator=(const TimeExclude&) = delete;
+
+    ~TimeExclude()
+    {
+        ctx.stop();
+        stats.elapsed -= tmp.elapsed;
+    }
+
+private:
+    TimeProfilerStats& stats;
+    TimeProfilerStats tmp;
+    TimeContext ctx;
 };
 
 #endif

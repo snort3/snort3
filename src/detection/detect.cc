@@ -313,6 +313,8 @@ int CheckTagging(Packet* p)
  ***************************************************************************/
 bool snort_detect(Packet* p)
 {
+    Profile profile(detectPerfStats);
+
     if ((p == NULL) || !p->ptrs.ip_api.is_valid())
     {
         return false;
@@ -358,7 +360,6 @@ bool snort_detect(Packet* p)
         **  This is where we short circuit so
         **  that we can do IP checks.
         */
-        Profile profile(detectPerfStats);
         return fpEvalPacket(p);
     }
 

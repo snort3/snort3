@@ -331,6 +331,21 @@ static const Parameter profiler_time_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter profiler_memory_params[] =
+{
+    { "show", Parameter::PT_BOOL, nullptr, "true",
+      "show module memory profile stats" },
+
+    { "count", Parameter::PT_INT, "0:", "0",
+      "print results to given level (0 = all)" },
+
+    { "sort", Parameter::PT_ENUM,
+      "none | allocations | total_used | avg_allocation ",
+      "total_used", "sort by given field" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter profiler_rule_params[] =
 {
     { "show", Parameter::PT_BOOL, nullptr, "true",
@@ -347,14 +362,17 @@ static const Parameter profiler_rule_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+// FIXIT-L J add help
 static const Parameter profiler_params[] =
 {
-    // FIXIT-L J rename to time or vice-versa?
     { "modules", Parameter::PT_TABLE, profiler_time_params, nullptr,
-      "" },
+      "module time profiling" },
+
+    { "memory", Parameter::PT_TABLE, profiler_memory_params, nullptr,
+      "module memory profiling" },
 
     { "rules", Parameter::PT_TABLE, profiler_rule_params, nullptr,
-      "" },
+      "rule time profiling" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -389,11 +407,15 @@ public:
 
 bool ProfilerModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
-    const char* spm = "profiler.modules";
+    const char* spt = "profiler.modules";
+    const char* spm = "profiler.memory";
     const char* spr = "profiler.rules";
 
-    if ( !strncmp(fqn, spm, strlen(spr)) )
+    if ( !strncmp(fqn, spt, strlen(spt)) )
         return s_profiler_module_set(sc->profiler->time, v);
+
+    else if ( !strncmp(fqn, spm, strlen(spm)) )
+        return s_profiler_module_set(sc->profiler->memory, v);
 
     else if ( !strncmp(fqn, spr, strlen(spr)) )
         return s_profiler_module_set(sc->profiler->rule, v);

@@ -24,18 +24,13 @@
 #include "config.h"
 #endif
 
-#include <cassert>
 #include <chrono>
-#include <functional>
 #include <iostream>
-#include <sstream>
 #include <string>
-#include <vector>
 
-#include "log/messages.h"
-
-#include "profiler_builder.h"
 #include "profiler_nodes.h"
+#include "profiler_tree_builder.h"
+#include "profiler_printer.h"
 #include "profiler_stats_table.h"
 #include "time_profiler_defs.h"
 
@@ -45,7 +40,10 @@
 
 #define s_time_table_title "Module Profile Statistics"
 
-static const StatsTable::Field time_fields[] =
+namespace time_stats
+{
+
+static const StatsTable::Field fields[] =
 {
     { "#", 5, ' ', 0, std::ios_base::left },
     { "module", 24, ' ', 0, std::ios_base::fmtflags() },
@@ -58,19 +56,11 @@ static const StatsTable::Field time_fields[] =
     { nullptr, 0, '\0', 0, std::ios_base::fmtflags() }
 };
 
-struct TimeEntry
+struct View
 {
-    const ProfilerNode* node;
     std::string name;
     TimeProfilerStats stats;
     TimeProfilerStats caller_stats;
-    std::vector<TimeEntry> entries;
-
-    auto child_nodes() const -> const decltype(node->get_children())
-    { return node->get_children(); }
-
-    auto child_entries() -> decltype(entries)&
-    { return entries; }
 
     hr_duration elapsed() const
     { return stats.elapsed; }
@@ -89,179 +79,104 @@ struct TimeEntry
         return double(elapsed().count()) / double(o.elapsed.count()) * 100.0;
     }
 
-    double pct_of(const TimeEntry& o) const
-    { return pct_of(o.stats); }
-
     double pct_caller() const
     { return pct_of(caller_stats); }
 
-    operator bool() const
-    { return stats || !entries.empty(); }
+    bool operator==(const View& rhs) const
+    { return name == rhs.name; }
 
-    TimeEntry(const ProfilerNode& node, const ProfilerNode* parent = nullptr) :
-        node(&node), name(node.name), stats(node.get_stats().time)
+    bool operator!=(const View& rhs) const
+    { return !(*this == rhs); }
+
+    const TimeProfilerStats& get_stats() const
+    { return stats; }
+
+    View(const ProfilerNode& node, const View* parent = nullptr) :
+        name(node.name), stats(node.get_stats().time)
     {
         if ( parent )
-            caller_stats = parent->get_stats().time;
+            caller_stats = parent->stats;
     }
 };
 
-using TimeSort = TimeProfilerConfig::Sort;
-using TimeBuilder = ProfilerBuilder<TimeEntry>;
-using TimeIncludeFn = typename TimeBuilder::IncludeFn;
-using TimeSortFn = typename TimeBuilder::SortFn;
-using TimeBuilderConfig = typename TimeBuilder::Config;
+static const ProfilerSorter<View> sorters[] =
+{
+    { "", nullptr },
+    {
+        "checks",
+        [](const View& lhs, const View& rhs)
+        { return lhs.checks() >= rhs.checks(); }
+    },
+    {
+        "avg_check",
+        [](const View& lhs, const View& rhs)
+        { return lhs.avg_check() >= rhs.avg_check(); }
+    },
+    {
+        "total_time",
+        [](const View& lhs, const View& rhs)
+        { return lhs.elapsed() >= rhs.elapsed(); }
+    }
+};
 
-static inline bool operator==(const TimeEntry& lhs, const TimeEntry& rhs)
-{ return lhs.node == rhs.node; }
-
-static bool s_time_include_fn(const ProfilerNode& node)
+static bool include_fn(const ProfilerNode& node)
 { return node.get_stats().time; }
 
-static bool get_time_sort_fn(TimeSort sort, TimeSortFn& sort_fn)
-{
-    switch ( sort )
-    {
-    case TimeSort::SORT_CHECKS:
-        sort_fn = [](const TimeEntry& lhs, const TimeEntry& rhs)
-        { return lhs.checks() >= rhs.checks(); };
-        break;
-
-    case TimeSort::SORT_AVG_CHECK:
-        sort_fn = [](const TimeEntry& lhs, const TimeEntry& rhs)
-        { return lhs.avg_check() >= rhs.avg_check(); };
-        break;
-
-    case TimeSort::SORT_TOTAL_TIME:
-        sort_fn = [](const TimeEntry& lhs, const TimeEntry& rhs)
-        { return lhs.elapsed() >= rhs.elapsed(); };
-        break;
-
-    default:
-        return false;
-        break;
-    }
-
-    return true;
-}
-
-static void print_single_entry(const TimeEntry& root, const TimeEntry& cur, int layer, int num)
+static void print_fn(StatsTable& t, const View& v)
 {
     using std::chrono::duration_cast;
     using std::chrono::microseconds;
 
-    std::ostringstream ss;
-    StatsTable table(time_fields, ss);
-
-    table << StatsTable::ROW;
-
-    if ( root == cur )
-    {
-        // if we're printing the root node
-        table << "--";
-        table << root.name;
-        table << "--";
-    }
-
-    else
-    {
-        auto indent = std::string(layer, ' ') + std::to_string(num);
-        table << indent; // num
-        table << cur.name; // module
-        table << layer; // layer
-    }
-
-
     // checks
-    table << cur.checks();
+    t << v.checks();
 
     // total time
-    table << duration_cast<microseconds>(cur.elapsed()).count();
+    t << duration_cast<microseconds>(v.elapsed()).count();
 
     // avg/check
-    table << duration_cast<microseconds>(cur.avg_check()).count();
-
-    if ( root == cur )
-    {
-        table << "--";
-        table << "--";
-    }
-
-    else
-    {
-        table << cur.pct_caller(); // %/caller
-        table << cur.pct_of(root); // %/total
-    }
-
-    table.finish();
-    LogMessage("%s", ss.str().c_str());
+    t << duration_cast<microseconds>(v.avg_check()).count();
 }
 
-static void print_children(const TimeEntry& root, const TimeEntry& cur, int layer, unsigned count)
-{
-    if ( !count || count > cur.entries.size() )
-        count = cur.entries.size();
+} // namespace time_stats
 
-    for ( unsigned i = 0; i < count; ++i )
-    {
-        print_single_entry(root, cur.entries[i], layer + 1, i + 1);
-        print_children(root, cur.entries[i], layer + 1, count);
-    }
-}
-
-static void print_entries(TimeEntry& root, unsigned count)
-{
-    std::ostringstream ss;
-    StatsTable table(time_fields, ss);
-
-    table << StatsTable::SEP;
-
-    table << s_time_table_title;
-    if ( count )
-        table << " (worst " << count << ")\n";
-    else
-        table << " (all)\n";
-
-    table << StatsTable::HEADER;
-    table.finish();
-
-    LogMessage("%s", ss.str().c_str());
-
-    print_children(root, root, 0, count);
-    print_single_entry(root, root, 0, 0);
-}
-
-void show_time_profiler_stats(ProfilerTree& nodes, const TimeProfilerConfig& config)
+void show_time_profiler_stats(ProfilerNodeMap& nodes, const TimeProfilerConfig& config)
 {
     if ( !config.show )
         return;
 
-    TimeIncludeFn include_fn(s_time_include_fn);
-    TimeSortFn sort_fn;
+    ProfilerBuilder<time_stats::View> builder(time_stats::include_fn);
+    auto root = builder.build(nodes.get_root());
 
-    TimeBuilderConfig builder_config;
-    builder_config.include_fn = &include_fn;
-    builder_config.sort_fn = get_time_sort_fn(config.sort, sort_fn) ? &sort_fn : nullptr;
-    builder_config.max_entries = config.count;
-
-    TimeBuilder builder(builder_config);
-
-    TimeEntry root(nodes.get_root());
-
-    builder.build(root);
-
-    if ( root.entries.empty() && !root.stats )
+    if ( root.children.empty() && !root.view.stats )
         return;
 
-    print_entries(root, config.count);
+    const auto& sorter = time_stats::sorters[config.sort];
+
+    ProfilerPrinter<time_stats::View> printer(time_stats::fields, time_stats::print_fn, sorter);
+    printer.print_table(s_time_table_title, root, config.count);
 }
 
 #ifdef UNIT_TEST
 
 namespace
 {
+
+using TimeEntry = ProfilerBuilder<time_stats::View>::Entry;
 using TimeEntryVector = std::vector<TimeEntry>;
 using TimeStatsVector = std::vector<TimeProfilerStats>;
+using TimeSorter = ProfilerSorter<time_stats::View>;
+
+struct TestView
+{
+    std::string name;
+
+    bool operator==(const TestView& rhs) const
+    { return name == rhs.name; }
+
+    TestView(const ProfilerNode& node, const TestView*) :
+        name(node.name) { }
+};
+
 } // anonymous namespace
 
 static inline bool operator==(const TimeEntryVector& lhs, const TimeStatsVector& rhs)
@@ -270,25 +185,114 @@ static inline bool operator==(const TimeEntryVector& lhs, const TimeStatsVector&
         return false;
 
     for ( unsigned i = 0; i < lhs.size(); ++i )
-        if ( lhs[i].stats != rhs[i] )
+        if ( lhs[i].view.stats != rhs[i] )
             return false;
 
     return true;
-}
-
-static inline std::ostream& operator<<(std::ostream& os, const TimeProfilerStats& o)
-{
-    os << "{" << o.elapsed.count() << ", " << o.checks << "}";
-    return os;
 }
 
 static inline TimeEntry make_time_entry(hr_duration elapsed, uint64_t checks)
 {
     ProfilerNode node("");
     TimeEntry entry(node);
-    entry.stats = { elapsed, checks };
-    entry.node = nullptr;
+    entry.view.stats = { elapsed, checks };
     return entry;
+}
+
+static void avoid_optimization()
+{ for ( int i = 0; i < 1024; ++i ) ; }
+
+TEST_CASE( "profiler tree builder", "[profiler][profiler_tree_builder]" )
+{
+    using Builder = ProfilerBuilder<TestView>;
+    using Entry = Builder::Entry;
+
+    SECTION( "profiler tree builder entry" )
+    {
+        ProfilerNode node("foo");
+        Entry entry(node);
+
+        SECTION( "==/!=" )
+        {
+            CHECK( entry == entry );
+            CHECK_FALSE( entry != entry );
+
+            ProfilerNode other_node("bar");
+            Entry other_entry(other_node);
+
+            CHECK_FALSE( entry == other_entry );
+        }
+    }
+
+    SECTION( "builds tree" )
+    {
+        // Tree should look like this:
+        //
+        //  A -- B -- D
+        //     |
+        //     - C -- E
+        //          |
+        //          - F
+        //
+
+        // Construct the node tree
+        ProfilerNode a("a"), b("b"), c("c"), d("d"), e("e"), f("f");
+        a.add_child(&b); a.add_child(&c);
+        b.add_child(&d);
+        c.add_child(&e); c.add_child(&f);
+
+        SECTION( "base" )
+        {
+            Builder builder([](const ProfilerNode&) { return true; });
+            auto root = builder.build(a);
+
+            CHECK( root.view.name == "a" );
+
+            REQUIRE( root.children.size() == 2 );
+
+            SECTION( "b branch" )
+            {
+                auto& b_entry = root.children[0];
+
+                REQUIRE( b_entry.view.name == "b" );
+                REQUIRE( b_entry.children.size() == 1 );
+
+                auto& d_entry = b_entry.children.back();
+                CHECK( d_entry.view.name == "d" );
+            }
+
+            SECTION( "c branch" )
+            {
+                auto &c_entry = root.children[1];
+
+                REQUIRE( c_entry.view.name == "c" );
+                REQUIRE( c_entry.children.size() == 2 );
+
+                CHECK( c_entry.children[0].view.name == "e" );
+                CHECK( c_entry.children[1].view.name == "f" );
+            }
+        }
+
+        SECTION( "filter included nodes" )
+        {
+            // exclude the "c" branch of the tree
+            Builder builder([](const ProfilerNode& n) { return n.name != "c"; });
+            auto root = builder.build(a);
+
+            REQUIRE( root.children.size() == 1 );
+
+            auto& b_entry = root.children.back();
+            REQUIRE( b_entry.children.size() == 1 );
+            CHECK( b_entry.children[0].view.name == "d" );
+        }
+    }
+}
+
+TEST_CASE( "profiler printer", "[profiler][profiler_printer]" )
+{
+    // FIXIT-L J currently, we are using LogMessage as ProfilerPrinter output, this makes
+    // unit-testing output infeasible
+    // CHECK( false );
 }
 
 TEST_CASE( "time profiler stats", "[profiler][time_profiler]" )
@@ -334,62 +338,64 @@ TEST_CASE( "time profiler stats", "[profiler][time_profiler]" )
     }
 }
 
-TEST_CASE( "time profiler entry", "[profiler][time_profiler]" )
+TEST_CASE( "time profiler view", "[profiler][time_profiler]" )
 {
-    ProfileStats the_stats = { { 12_ticks, 6 } };
+    ProfileStats the_stats;
     ProfilerNode node("foo");
+
+    the_stats.time = { 12_ticks, 6 };
     node.set_stats(the_stats);
 
-    TimeEntry entry(node);
-
-    SECTION( "constructor sets members" )
+    SECTION( "no parent" )
     {
-        CHECK( entry.name == "foo" );
-        CHECK( entry.node == &node );
-        CHECK( entry.entries.empty() );
-        CHECK( entry.stats == the_stats );
-        CHECK_FALSE( entry.caller_stats );
+        time_stats::View view(node);
+
+        SECTION( "ctor sets members" )
+        {
+            CHECK( view.name == "foo" );
+            CHECK( view.stats == the_stats.time );
+            CHECK_FALSE( view.caller_stats );
+        }
+
+        SECTION( "elapsed" )
+        {
+            CHECK( view.elapsed() == 12_ticks );
+        }
+
+        SECTION( "checks" )
+        {
+            CHECK( view.checks() == 6 );
+        }
+
+        SECTION( "avg_check" )
+        {
+            CHECK( view.avg_check() == 2_ticks );
+        }
+
+        SECTION( "pct_of" )
+        {
+            TimeProfilerStats tps = { 24_ticks, 6 };
+            CHECK( view.pct_of(tps) == 50.0 );
+
+            SECTION( "zero division" )
+            {
+                tps.elapsed = 0_ticks;
+                CHECK( view.pct_of(tps) == 0.0 );
+            }
+        }
     }
 
-    SECTION( "operator bool()" )
+    SECTION( "parent set" )
     {
-        REQUIRE( entry.child_entries().empty() );
-        REQUIRE( entry.stats );
+        time_stats::View parent(node);
+        parent.stats = { 24_ticks, 6 };
 
-        CHECK( entry );
-
-        entry.stats.reset();
-        CHECK_FALSE( entry );
-
-        entry.child_entries().push_back(entry);
-        CHECK( entry );
-    }
-
-    SECTION( "elapsed" )
-    {
-        CHECK( entry.elapsed() == 12_ticks );
-    }
-
-    SECTION( "checks" )
-    {
-        CHECK( entry.checks() == 6 );
-    }
-
-    SECTION( "avg_check" )
-    {
-        CHECK( entry.avg_check() == 2_ticks );
-    }
-
-    SECTION( "pct_of" )
-    {
-        TimeProfilerStats tps = { 24_ticks, 0 };
-        CHECK( entry.pct_of(tps) == 50.0 );
-        CHECK( entry.pct_of(entry) == 100.0 );
+        time_stats::View child(node, &parent);
+        CHECK( child.caller_stats );
 
         SECTION( "pct_caller" )
         {
-            entry.caller_stats = tps;
-            CHECK( entry.pct_caller() == 50.0 );
+            CHECK( child.pct_caller() == 50.0 );
         }
     }
 }
@@ -397,8 +403,6 @@ TEST_CASE( "time profiler entry", "[profiler][time_profiler]" )
 TEST_CASE( "time profiler sorting", "[profiler][time_profiler]" )
 {
     using Sort = TimeProfilerConfig::Sort;
-
-    TimeSortFn sort_fn;
 
     SECTION( "checks" )
     {
@@ -414,8 +418,8 @@ TEST_CASE( "time profiler sorting", "[profiler][time_profiler]" )
             { 0_ticks, 0 }
         };
 
-        REQUIRE( get_time_sort_fn(Sort::SORT_CHECKS, sort_fn) );
-        std::stable_sort(entries.begin(), entries.end(), sort_fn);
+        const auto& sorter = time_stats::sorters[Sort::SORT_CHECKS];
+        std::partial_sort(entries.begin(), entries.end(), entries.end(), sorter);
 
         CHECK( entries == expected );
     }
@@ -434,8 +438,8 @@ TEST_CASE( "time profiler sorting", "[profiler][time_profiler]" )
             { 0_ticks, 0 }
         };
 
-        REQUIRE( get_time_sort_fn(Sort::SORT_AVG_CHECK, sort_fn) );
-        std::stable_sort(entries.begin(), entries.end(), sort_fn);
+        const auto& sorter = time_stats::sorters[Sort::SORT_AVG_CHECK];
+        std::partial_sort(entries.begin(), entries.end(), entries.end(), sorter);
 
         CHECK( entries == expected );
     }
@@ -454,89 +458,10 @@ TEST_CASE( "time profiler sorting", "[profiler][time_profiler]" )
             { 0_ticks, 0 }
         };
 
-        REQUIRE( get_time_sort_fn(Sort::SORT_TOTAL_TIME, sort_fn) );
-        std::stable_sort(entries.begin(), entries.end(), sort_fn);
+        const auto& sorter = time_stats::sorters[Sort::SORT_TOTAL_TIME];
+        std::partial_sort(entries.begin(), entries.end(), entries.end(), sorter);
 
         CHECK( entries == expected );
-    }
-}
-
-TEST_CASE( "build entries", "[profiler][time_profiler]" )
-{
-    // Tree should look like
-    //
-    //  A -- B -- D
-    //     |
-    //     - C -- E
-    //          |
-    //          - F
-    //
-
-    ProfileStats stats;
-    stats.time = { 1_ticks, 1 }; // make non-zero
-    REQUIRE( stats.time );
-
-    // Construct the node tree
-    ProfilerNode a("a"), b("b"), c("c"), d("d"), e("e"), f("f");
-    a.add_child(&b); a.add_child(&c);
-    b.add_child(&d);
-    c.add_child(&e); c.add_child(&f);
-
-    // Set the stats for each node
-    a.set_stats(stats);
-    b.set_stats(stats);
-    c.set_stats(stats);
-    d.set_stats(stats);
-    e.set_stats(stats);
-    f.set_stats(stats);
-
-    TimeEntry root(a);
-
-    TimeIncludeFn include_fn = s_time_include_fn;
-    TimeBuilderConfig builder_config;
-    builder_config.include_fn = &include_fn;
-    TimeBuilder builder(builder_config);
-
-    builder.build(root);
-
-    CHECK( root.name == "a" );
-    CHECK( root.entries.size() == 2 );
-
-    for ( const auto& child_L1 : root.entries )
-    {
-        if ( child_L1.name == "b" )
-        {
-            REQUIRE( child_L1.entries.size() == 1 );
-            auto& child_L2 = child_L1.entries[0];
-            CHECK( child_L2.name == "d" );
-            CHECK( child_L2.entries.size() == 0 );
-        }
-
-        else if ( child_L1.name == "c" )
-        {
-            CHECK( child_L1.entries.size() == 2 );
-            for ( const auto& child_L2 : child_L1.entries )
-            {
-                if ( child_L2.name == "e" )
-                    CHECK( child_L2.entries.size() == 0 );
-
-                else if ( child_L2.name == "f" )
-                    CHECK( child_L2.entries.size() == 0 );
-
-                else
-                    FAIL(
-                        "expected 'e' or 'f' node, instead got '" <<
-                        child_L1.name << "'"
-                    );
-
-            }
-        }
-
-        else
-            FAIL(
-                "expected 'b' or 'c' node, instead got '" <<
-                child_L1.name << "'"
-            );
     }
 }
 
@@ -570,8 +495,10 @@ TEST_CASE( "time profiler time context", "[profiler][time_profiler]" )
     {
         {
             TimeContext ctx(stats);
+            avoid_optimization();
         }
 
+        INFO( "elapsed: " << stats.elapsed.count() );
         CHECK( stats.elapsed > 0_ticks );
         CHECK( stats.checks == 1 );
     }
@@ -582,8 +509,10 @@ TEST_CASE( "time profiler time context", "[profiler][time_profiler]" )
 
         {
             TimeContext ctx(stats);
+            avoid_optimization();
             ctx.stop();
 
+            INFO( "elapsed: " << stats.elapsed.count() );
             CHECK( stats.elapsed > 0_ticks );
             CHECK( stats.checks == 1 );
             save = stats;
@@ -593,7 +522,7 @@ TEST_CASE( "time profiler time context", "[profiler][time_profiler]" )
     }
 }
 
-TEST_CASE( "time context pause", "[profiler][time_profiler]" )
+TEST_CASE( "time pause", "[profiler][time_profiler]" )
 {
     TimeContextBase ctx;
 
@@ -603,6 +532,18 @@ TEST_CASE( "time context pause", "[profiler][time_profiler]" )
     }
 
     CHECK( ctx.active() );
+}
+
+TEST_CASE( "time context exclude", "[profiler][time_profiler]" )
+{
+    // NOTE: this test *may* fail if the time it takes to execute the exclude context is 0_ticks (unlikely)
+    TimeProfilerStats stats = { hr_duration::max(), 0 };
+    {
+        TimeExclude exclude(stats);
+        avoid_optimization();
+    }
+
+    CHECK( stats.elapsed < hr_duration::max() );
 }
 
 #endif

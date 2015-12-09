@@ -22,8 +22,10 @@
 #define PROFILER_DEFS_H
 
 #include "main/snort_types.h"
-#include "time_profiler_defs.h"
+#include "memory_defs.h"
+#include "memory_profiler_defs.h"
 #include "rule_profiler_defs.h"
+#include "time_profiler_defs.h"
 
 #define ROOT_NODE "total"
 
@@ -31,57 +33,65 @@ struct ProfilerConfig
 {
     TimeProfilerConfig time;
     RuleProfilerConfig rule;
+    MemoryProfilerConfig memory;
 };
 
 struct SO_PUBLIC ProfileStats
 {
     TimeProfilerStats time;
+    MemoryTracker memory;
 
     void reset()
-    { time.reset(); }
+    {
+        time.reset();
+        memory.reset();
+    }
 
-    constexpr ProfileStats() :
-        time() { }
+    bool operator==(const ProfileStats&) const;
+    bool operator!=(const ProfileStats& rhs) const
+    { return !(*this == rhs); }
 
-    constexpr ProfileStats(TimeProfilerStats time) :
-        time(time) { }
+    ProfileStats& operator+=(const ProfileStats&);
+
+    constexpr ProfileStats() : time(), memory() { }
+    constexpr ProfileStats(TimeProfilerStats time, MemoryTracker memory) :
+        time(time), memory(memory) { }
 };
 
-inline bool operator==(const ProfileStats& lhs, const ProfileStats& rhs)
-{ return lhs.time == rhs.time; }
+inline bool ProfileStats::operator==(const ProfileStats& rhs) const
+{ return time == rhs.time && memory.stats == rhs.memory.stats; }
 
-inline bool operator!=(const ProfileStats& lhs, const ProfileStats& rhs)
-{ return !(lhs == rhs); }
-
-inline ProfileStats& operator+=(ProfileStats& lhs, const ProfileStats& rhs)
+inline ProfileStats& ProfileStats::operator+=(const ProfileStats& rhs)
 {
-    lhs.time += rhs.time;
-    return lhs;
+    time += rhs.time;
+    memory.stats += rhs.memory.stats;
+
+    return *this;
 }
 
-using get_profile_stats_fn = ProfileStats* (*)(const char*);
-
-struct SO_PUBLIC ProfileContext
+class ProfileContext
 {
-    TimeContext time;
-
-    void start()
-    { time.start(); }
-
-    void pause()
-    { time.pause(); }
-
+public:
     ProfileContext(ProfileStats& stats) :
-        time(stats.time) { }
+        time(stats.time), memory(stats.memory) { }
+
+private:
+    TimeContext time;
+    MemoryContext memory;
 };
 
-struct SO_PUBLIC ProfilePause
+class SO_PUBLIC ProfileExclude
 {
-    TimePause time;
+public:
+    ProfileExclude(ProfileStats& stats) : ProfileExclude(stats.time, stats.memory) { }
+    ProfileExclude(TimeProfilerStats& time, MemoryTracker&) : time(time), memory() { }
 
-    ProfilePause(ProfileContext& ctx) :
-        time(ctx.time) { }
+private:
+    TimeExclude time;
+    MemoryExclude memory;
 };
+
+using get_profile_stats_fn = ProfileStats* (*)(const char*);
 
 using Profile = ProfileContext;
 

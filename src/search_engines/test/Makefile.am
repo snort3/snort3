@@ -6,9 +6,12 @@ hyperscan_test
 
 TESTS = $(check_PROGRAMS)
 
+hyperscan_test_CPPFLAGS = @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
+
 hyperscan_test_LDADD = \
 ../hyperscan.o \
 ../../catch/unit_test.o \
-../../framework/mpse.o
+../../framework/mpse.o \
+@CPPUTEST_LDFLAGS@
 endif
 

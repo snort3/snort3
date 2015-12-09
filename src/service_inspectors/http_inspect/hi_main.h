@@ -78,8 +78,7 @@ extern SO_PUBLIC THREAD_LOCAL uint32_t http_mask;
 extern SO_PUBLIC THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 extern THREAD_LOCAL DataBuffer HttpDecodeBuf;
 
-extern THREAD_LOCAL ProfileStats hiDetectPerfStats;
-extern THREAD_LOCAL bool hiDetectCalled;
+extern THREAD_LOCAL ProfileStats hiPerfStats;
 
 typedef enum _HttpRespCompressType
 {

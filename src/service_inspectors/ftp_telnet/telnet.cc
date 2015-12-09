@@ -91,13 +91,17 @@ static int SnortTelnet(TELNET_PROTO_CONF* telnet_config, TELNET_SESSION* Telnets
             FTPP_APPLY_TNC_ERASE_CMDS);
 
         if ( ret == FTPP_SUCCESS || ret == FTPP_NORMALIZED )
+        {
+            ProfileExclude exclude(telnetPerfStats);
             do_detection(p);
+        }
     }
 
     else
+    {
+        ProfileExclude exclude(telnetPerfStats);
         do_detection(p);
-
-    ft_update_perf(telnetPerfStats);
+    }
 
     return FTPP_SUCCESS;
 }

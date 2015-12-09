@@ -38,10 +38,10 @@ struct RuleProfilerConfig
         SORT_NO_MATCHES,
         SORT_AVG_MATCH,
         SORT_AVG_NO_MATCH
-    } sort = Sort::SORT_NONE;
+    } sort = SORT_TOTAL_TIME;
 
-    unsigned count = 0;
     bool show = false;
+    unsigned count = 0;
 };
 
 class RuleContext : public TimeContextBase

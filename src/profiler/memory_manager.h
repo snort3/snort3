@@ -16,14 +16,41 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// time_profiler.h author Joel Cornett <jocornet@cisco.com>
+// memory_manager.h author Joel Cornett <jocornet@cisco.com>
 
-#ifndef TIME_PROFILER_H
-#define TIME_PROFILER_H
+#ifndef MEMORY_MANAGER_H
+#define MEMORY_MANAGER_H
 
-class ProfilerNodeMap;
-struct TimeProfilerConfig;
+#include "main/thread.h"
 
-void show_time_profiler_stats(ProfilerNodeMap&, const TimeProfilerConfig&);
+struct CombinedMemoryStats;
+
+class Memory
+{
+public:
+    static void set_runtime(bool yesno)
+    { is_runtime = yesno; }
+
+    static bool runtime()
+    { return is_runtime; }
+
+    // global accumulated stats
+    static const CombinedMemoryStats& get_fallthrough_stats();
+
+    // thread local call
+    static void consolidate_fallthrough_stats();
+
+private:
+    static THREAD_LOCAL bool is_runtime;
+};
+
+struct RuntimeContext
+{
+    RuntimeContext()
+    { Memory::set_runtime(true); }
+
+    ~RuntimeContext()
+    { Memory::set_runtime(false); }
+};
 
 #endif

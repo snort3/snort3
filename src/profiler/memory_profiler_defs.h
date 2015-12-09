@@ -16,14 +16,51 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// time_profiler.h author Joel Cornett <jocornet@cisco.com>
+// memory_profiler_defs.h author Joel Cornett <jocornet@cisco.com>
 
-#ifndef TIME_PROFILER_H
-#define TIME_PROFILER_H
+#ifndef MEMORY_PROFILER_DEFS_H
+#define MEMORY_PROFILER_DEFS_H
 
-class ProfilerNodeMap;
-struct TimeProfilerConfig;
+struct MemoryTracker;
 
-void show_time_profiler_stats(ProfilerNodeMap&, const TimeProfilerConfig&);
+struct MemoryProfilerConfig
+{
+    enum Sort
+    {
+        SORT_NONE,
+        SORT_ALLOCATIONS,
+        SORT_TOTAL_USED,
+        SORT_AVG_ALLOCATION
+    } sort = SORT_TOTAL_USED;
+
+    bool show = false;
+    unsigned count = 0;
+};
+
+class MemoryContext
+{
+public:
+    MemoryContext(MemoryTracker&);
+    ~MemoryContext();
+
+    MemoryContext(const MemoryContext&) = delete;
+    MemoryContext& operator=(const MemoryContext&) = delete;
+
+private:
+    MemoryTracker* saved;
+};
+
+class MemoryExclude
+{
+public:
+    MemoryExclude();
+    ~MemoryExclude();
+
+    MemoryExclude(const MemoryExclude&) = delete;
+    MemoryExclude& operator=(const MemoryExclude&) = delete;
+
+private:
+    MemoryTracker* saved;
+};
 
 #endif

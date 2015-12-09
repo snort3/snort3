@@ -59,7 +59,5 @@ int FTPCheckConfigs(SnortConfig*, void*);
 FTP_CLIENT_PROTO_CONF* get_ftp_client(Packet*);
 FTP_SERVER_PROTO_CONF* get_ftp_server(Packet*);
 
-void ft_update_perf(ProfileStats&);
-
 #endif
 

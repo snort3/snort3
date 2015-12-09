@@ -356,6 +356,8 @@ void PrintStatistics(void)
 
         snort_conf->logging_flags &= ~LOGGING_FLAG__QUIET;
 
+        // once more for the main thread
+        Profiler::consolidate_stats();
         Profiler::show_stats();
 
         snort_conf->logging_flags |= save_quiet_flag;

@@ -61,6 +61,7 @@ using namespace std;
 #include "lua/lua.h"
 #include "helpers/process.h"
 #include "helpers/swapper.h"
+#include "profiler/memory_manager.h"
 #include "profiler/profiler.h"
 #include "time/periodic.h"
 
@@ -71,6 +72,7 @@ using namespace std;
 #ifdef PIGLET
 #include "piglet/piglet.h"
 #endif
+
 
 //-------------------------------------------------------------------------
 
@@ -792,6 +794,8 @@ static const char* get_source()
 
 static void main_loop()
 {
+    RuntimeContext runtime_context;
+
     unsigned idx = max_pigs, swine = 0;
     init_main_thread_sig();
 

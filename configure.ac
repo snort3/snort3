@@ -149,12 +149,12 @@ AC_DEFUN([CC_VISIBILITY],
 [
     AC_REQUIRE([AC_PROG_CC])
     AC_MSG_CHECKING([for visibility support])
-    gl_save_CFLAGS="$CFLAGS"
+    gl_save_CPPFLAGS="$CPPFLAGS"
 
     AC_CACHE_VAL(gl_cv_cc_visibility, [
         # Add -Werror flag since some compilers, e.g. icc 7.1, don't support it,
         # but only warn about it instead of compilation failing
-        CFLAGS="$CFLAGS -Werror -fvisibility=hidden"
+        CPPFLAGS="$CPPFLAGS -Werror -fvisibility=hidden"
         AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
             extern __attribute__((__visibility__("hidden"))) int hiddenvar;
             extern __attribute__((__visibility__("default"))) int exportedvar;
@@ -165,10 +165,9 @@ AC_DEFUN([CC_VISIBILITY],
             [gl_cv_cc_visibility="no"])
     ])
     AC_MSG_RESULT([$gl_cv_cc_visibility])
-    CFLAGS="$gl_save_CFLAGS"
+    CPPFLAGS="$gl_save_CPPFLAGS"
     if test "x$gl_cv_cc_visibility" = "xyes"; then
-        CFLAGS="$CFLAGS -fvisibility=hidden"
-        CXXFLAGS="$CXXFLAGS -fvisibility=hidden"
+        CPPFLAGS="$CPPFLAGS -fvisibility=hidden"
         AC_DEFINE([HAVE_VISIBILITY],[1],
             [Define if the compiler supports visibility declarations.])
     fi
@@ -393,9 +392,7 @@ AC_ARG_ENABLE(debug,
     enable_debug="$enableval", enable_debug="no")
 
 if test "x$enable_debug" = "xyes"; then
-    CFLAGS="$CFLAGS -g"
-    CXXFLAGS="$CXXFLAGS -g"
-    CPPFLAGS="$CPPFLAGS -DDEBUG"
+    CPPFLAGS="$CPPFLAGS -g -DDEBUG"
     AC_DEFINE(DEBUG, [1], [enable debug build])
 else
     # disable assert()ions
@@ -440,18 +437,21 @@ AC_ARG_ENABLE(unit_tests,
     AC_HELP_STRING([--enable-unit-tests],[build unit tests]),
     enable_unit_tests="$enableval", enable_unit_tests="no")
 
+have_cpputest_pc="no"
+
 if test "x$enable_unit_tests" = "xyes"; then
     PKG_CHECK_EXISTS([cpputest], [ have_cpputest_pc="yes" ], [ have_cpputest_pc="no" ])
 
-    if test "${have_cpputest_pc}" = "yes" ; then
-        CPPFLAGS="${CPPFLAGS} `${PKG_CONFIG} --cflags cpputest`"
-        LDFLAGS="${LDFLAGS} `${PKG_CONFIG} --libs cpputest`"
+    if test "x${have_cpputest_pc}" = "xyes" ; then
+        CPPUTEST_CPPFLAGS="`${PKG_CONFIG} --cflags cpputest`"
+        CPPUTEST_LDFLAGS="`${PKG_CONFIG} --libs cpputest`"
     fi
 
     AC_DEFINE(UNIT_TEST, [1], [enable unit tests in build])
 fi
 
 AM_CONDITIONAL(BUILD_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
+AM_CONDITIONAL(BUILD_CPPUTESTS, test "x$have_cpputest_pc" = "xyes")
 
 #--------------------------------------------------------------------------
 # piglet
@@ -912,6 +912,9 @@ AC_SUBST(snort2lua_CPPFLAGS)
 
 AC_SUBST(AM_CFLAGS)
 AC_SUBST(AM_CXXFLAGS)
+
+AC_SUBST(CPPUTEST_CPPFLAGS)
+AC_SUBST(CPPUTEST_LDFLAGS)
 
 AC_CONFIG_FILES([ \
 snort.pc \

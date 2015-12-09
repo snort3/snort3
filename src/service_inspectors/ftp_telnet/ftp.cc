@@ -121,6 +121,7 @@ static int SnortFTP(
     ret = check_ftp(FTPsession, p, iInspectMode);
     if ( ret == FTPP_SUCCESS )
     {
+        ProfileExclude exclude(ftpPerfStats);
         // Ideally, snort_detect(), called from do_detection, will look at
         // the cmd & param buffers, or the rsp & msg buffers.  Current
         // architecture does not support this...
@@ -129,8 +130,6 @@ static int SnortFTP(
         // FTP command.
         do_detection(p);
     }
-
-    ft_update_perf(ftpPerfStats);
 
     return ret;
 }
