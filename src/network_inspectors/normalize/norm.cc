@@ -485,7 +485,7 @@ static inline int Norm_TCPOptions(NormalizerConfig* config, const NormMode mode,
     return changes;
 }
 
-static inline int Norm_TCPPadding(NormalizerConfig* config, const NormMode mode,
+static inline int Norm_TCPPadding(NormalizerConfig*, const NormMode mode,
     uint8_t* opts, size_t len, uint8_t validated_len, int changes)
 {
     size_t i = 0;

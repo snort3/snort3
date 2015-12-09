@@ -507,7 +507,7 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList* dList)
     {
         mSession->nextS = *dList;
         *dList = mSession;
-        DEBUG_WRAP(DebugMessage(DEBUG_SIP, "Add Session id: %u\n", mSession->sessionID));
+        DEBUG_WRAP(DebugFormat(DEBUG_SIP, "Add Session id: %u\n", mSession->sessionID));
     }
     else
     {
