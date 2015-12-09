@@ -160,7 +160,7 @@ case ${host_os} in
         ;;
 
         darwin*)
-        ax_pthread_flags="-pthread $ax_pthread_flags"
+        ax_pthread_flags="none -pthread $ax_pthread_flags"
         ;;
 esac
 

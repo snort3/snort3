@@ -764,12 +764,9 @@ LIBS="$LIBS -lz"
 # pthreads (optional)
 #--------------------------------------------------------------------------
 
-if test "x$CXX" = "xg++"; then
-    AX_PTHREAD
-    LIBS="$PTHREAD_LIBS $LIBS"
-    CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
-    LDFLAGS="$LDFLAGS $PTHREAD_LDFLAGS"
-fi
+AX_PTHREAD
+LIBS="$PTHREAD_LIBS $LIBS"
+CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS"
 
 #--------------------------------------------------------------------------
 # lzma (optional)
