@@ -331,8 +331,8 @@ static int IMAP_SearchStrFound(void* id, void* , int index, void* , void* )
     int search_id = (int)(uintptr_t)id;
 
     imap_search_info.id = search_id;
-    imap_search_info.index = index;
     imap_search_info.length = imap_current_search[search_id].name_len;
+    imap_search_info.index = index - imap_search_info.length;
 
     /* Returning non-zero stops search, which is okay since we only look for one at a time */
     return 1;

@@ -466,9 +466,9 @@ static int rule_tree_match(
     PMX* pmx = (PMX*)user;
     OTNX_MATCH_DATA* pomd = (OTNX_MATCH_DATA*)context;
 
-    unsigned sz = pmx->pmd->pattern_size;
-    assert(sz <= (unsigned)index and (unsigned)index <= pomd->size);
-    assert(!strncasecmp((char*)pmx->pmd->pattern_buf, (char*)pomd->data+index-sz, sz));
+    //unsigned sz = pmx->pmd->pattern_size;
+    //assert(sz <= (unsigned)index and (unsigned)index <= pomd->size);
+    //assert(!strncasecmp((char*)pmx->pmd->pattern_buf, (char*)pomd->data+index-sz, sz));
 
     detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
     detection_option_eval_data_t eval_data;

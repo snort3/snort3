@@ -287,8 +287,8 @@ static int POP_SearchStrFound(void* id, void* , int index, void* , void* )
     int search_id = (int)(uintptr_t)id;
 
     pop_search_info.id = search_id;
-    pop_search_info.index = index;
     pop_search_info.length = pop_current_search[search_id].name_len;
+    pop_search_info.index = index - pop_search_info.length;
 
     /* Returning non-zero stops search, which is okay since we only look for one at a time */
     return 1;

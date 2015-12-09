@@ -591,8 +591,8 @@ static int SMTP_SearchStrFound(void* id, void*, int index, void*, void*)
     int search_id = (int)(uintptr_t)id;
 
     smtp_search_info.id = search_id;
-    smtp_search_info.index = index;
     smtp_search_info.length = smtp_current_search[search_id].name_len;
+    smtp_search_info.index = index - smtp_search_info.length;
 
     /* Returning non-zero stops search, which is okay since we only look for one at a time */
     return 1;

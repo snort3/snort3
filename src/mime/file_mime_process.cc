@@ -140,8 +140,8 @@ static int search_str_found(void* id, void*, int index, void*, void*)
     int search_id = (int)(uintptr_t)id;
 
     mime_search_info.id = search_id;
-    mime_search_info.index = index;
     mime_search_info.length = mime_current_search[search_id].name_len;
+    mime_search_info.index = index - mime_search_info.length;
 
     /* Returning non-zero stops search, which is okay since we only look for one at a time */
     return 1;
