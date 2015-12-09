@@ -21,6 +21,8 @@
 #ifndef MEMORY_PROFILER_DEFS_H
 #define MEMORY_PROFILER_DEFS_H
 
+#include "main/snort_types.h"
+
 struct MemoryTracker;
 
 struct MemoryProfilerConfig
@@ -37,7 +39,7 @@ struct MemoryProfilerConfig
     unsigned count = 0;
 };
 
-class MemoryContext
+class SO_PUBLIC MemoryContext
 {
 public:
     MemoryContext(MemoryTracker&);
@@ -50,7 +52,7 @@ private:
     MemoryTracker* saved;
 };
 
-class MemoryExclude
+class SO_PUBLIC MemoryExclude
 {
 public:
     MemoryExclude();
