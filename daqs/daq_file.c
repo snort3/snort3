@@ -149,9 +149,6 @@ static void set_pkt_hdr(FileImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
     phdr->priv_ptr = &impl->pci;
 }
 
-// forward all but drops, retries and blacklists:
-static const int s_fwd[MAX_DAQ_VERDICT] = { 1, 0, 1, 1, 0, 1, 0 };
-
 static int file_daq_process(
     FileImpl* impl, DAQ_Analysis_Func_t cb, void* user)
 {
@@ -397,5 +394,6 @@ DAQ_Module_t file_daq_module_data =
     .hup_prep = NULL,
     .hup_apply = NULL,
     .hup_post = NULL,
+    .dp_add_dc = NULL
 };
 
