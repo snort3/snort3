@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,36 +16,34 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "network_inspectors.h"
+#ifndef REPUTATION_INSPECT_H
+#define REPUTATION_INSPECT_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include "framework/inspector.h"
+#include "protocols/packet.h"
+#include "stream/stream_api.h"
 
-extern const BaseApi* nin_binder;
-extern const BaseApi* nin_normalize;
-extern const BaseApi* nin_perf_monitor;
-extern const BaseApi* nin_port_scan_global;
-extern const BaseApi* nin_port_scan;
-extern const BaseApi* nin_reputation;
+// Per-session data block containing current state
+// of the Reputation preprocessor for the session.
 
-#ifdef STATIC_INSPECTORS
-extern const BaseApi* nin_arp_spoof;
-#endif
-
-const BaseApi* network_inspectors[] =
+struct ReputationData
 {
-    nin_binder,
-    nin_normalize,
-    nin_perf_monitor,
-    nin_port_scan_global,
-    nin_port_scan,
-    nin_reputation,
-
-#ifdef STATIC_INSPECTORS
-    nin_arp_spoof,
-#endif
-    nullptr
+    bool disabled = false;
 };
+
+class ReputationFlowData : public FlowData
+{
+public:
+    ReputationFlowData() : FlowData(flow_id){};
+
+    ~ReputationFlowData() { }
+
+    static void init()
+    { flow_id = FlowData::get_flow_id(); }
+
+public:
+    static unsigned flow_id;
+    ReputationData session;
+};
+
+#endif
 

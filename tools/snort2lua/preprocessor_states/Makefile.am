@@ -14,6 +14,7 @@ pps_http_inspect.cc \
 pps_http_inspect_server.cc \
 pps_normalizers.cc \
 pps_perfmonitor.cc \
+pps_reputation.cc \
 pps_rpc_decode.cc \
 pps_sip.cc \
 pps_ssh.cc \

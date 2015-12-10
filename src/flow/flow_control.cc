@@ -416,6 +416,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     unsigned news = 0;
 
     p->flow = flow;
+    p->disable_inspect = flow->is_inspection_disabled();
 
     if ( flow->flow_state )
         set_policies(snort_conf, flow->policy_id);

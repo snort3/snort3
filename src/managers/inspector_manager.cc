@@ -759,7 +759,7 @@ void InspectorManager::bumble(Packet* p)
         flow->session->restart(p);
 }
 
-void InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
+bool InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
 {
     Flow* flow = p->flow;
 
@@ -769,7 +769,10 @@ void InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
     else if ( flow->clouseau and !p->is_cooked() )
         bumble(p);
 
-    if ( !p->dsize )
+    if( p->disable_inspect )
+        return false;
+
+    else if ( !p->dsize )
         DisableDetect(p);
 
     else if ( flow->gadget && flow->gadget->likes(p) )
@@ -777,6 +780,8 @@ void InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
         flow->gadget->eval(p);
         s_clear = true;
     }
+
+    return true;
 }
 
 void InspectorManager::execute(Packet* p)
@@ -791,13 +796,19 @@ void InspectorManager::execute(Packet* p)
     if ( !p->has_paf_payload() )
         ::execute(p, fp->session.vec, fp->session.num);
 
+    if( p->disable_inspect )
+        return;
+
     Flow* flow = p->flow;
 
     if ( !flow )
         ::execute(p, fp->network.vec, fp->network.num);
 
     else if ( flow->full_inspection() )
-        full_inspection(fp, p);
+    {
+        if(!full_inspection(fp, p))
+            return;
+    }
 
     ::execute(p, fp->probe.vec, fp->probe.num);
 }

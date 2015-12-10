@@ -1,5 +1,6 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2004-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,36 +17,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "network_inspectors.h"
+#ifndef REPUTATION_PARSE_H
+#define REPUTATION_PARSE_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "reputation_config.h"
+
+void IpListInit(uint32_t,ReputationConfig *config);
+void EstimateNumEntries(ReputationConfig* config);
+void LoadListFile(char* filename, INFO info, ReputationConfig* config);
+
 #endif
-#include "framework/inspector.h"
-
-extern const BaseApi* nin_binder;
-extern const BaseApi* nin_normalize;
-extern const BaseApi* nin_perf_monitor;
-extern const BaseApi* nin_port_scan_global;
-extern const BaseApi* nin_port_scan;
-extern const BaseApi* nin_reputation;
-
-#ifdef STATIC_INSPECTORS
-extern const BaseApi* nin_arp_spoof;
-#endif
-
-const BaseApi* network_inspectors[] =
-{
-    nin_binder,
-    nin_normalize,
-    nin_perf_monitor,
-    nin_port_scan_global,
-    nin_port_scan,
-    nin_reputation,
-
-#ifdef STATIC_INSPECTORS
-    nin_arp_spoof,
-#endif
-    nullptr
-};
-

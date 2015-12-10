@@ -270,6 +270,16 @@ public:
         data = nullptr;
     }
 
+    void disable_inspection()
+    {
+        disable_inspect = true;
+    }
+
+    bool is_inspection_disabled()
+    {
+        return disable_inspect;
+    }
+
 public:  // FIXIT-M privatize if possible
     // these fields are const after initialization
     const FlowKey* key;
@@ -314,6 +324,7 @@ public:  // FIXIT-M privatize if possible
     uint8_t  outer_client_ttl, outer_server_ttl;
 
     uint8_t  response_count;
+    bool disable_inspect;
 
 public:
     LwState ssn_state;

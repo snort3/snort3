@@ -92,7 +92,7 @@ public:
 
 private:
     static void bumble(Packet*);
-    static void full_inspection(FrameworkPolicy*, Packet*);
+    static bool full_inspection(FrameworkPolicy*, Packet*);
 };
 
 #endif

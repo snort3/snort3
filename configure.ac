@@ -992,6 +992,7 @@ src/network_inspectors/binder/Makefile \
 src/network_inspectors/normalize/Makefile \
 src/network_inspectors/perf_monitor/Makefile \
 src/network_inspectors/port_scan/Makefile \
+src/network_inspectors/reputation/Makefile \
 src/packet_io/Makefile \
 src/parser/Makefile \
 src/piglet/Makefile \

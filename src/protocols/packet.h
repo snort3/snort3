@@ -134,6 +134,7 @@ struct SO_PUBLIC Packet
 
     uint8_t num_layers;         /* index into layers for next encap */
     uint8_t ip_proto_next;      /* the protocol ID after IP and all IP6 extension */
+    bool disable_inspect;
 
     // nothing after this point is zeroed ...
 

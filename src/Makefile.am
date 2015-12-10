@@ -58,6 +58,7 @@ network_inspectors/libnetwork_inspectors.a \
 network_inspectors/binder/libbinder.a \
 network_inspectors/normalize/libnormalize.a \
 network_inspectors/perf_monitor/libperf_monitor.a \
+network_inspectors/reputation/libreputation.a \
 service_inspectors/libservice_inspectors.a \
 $(lib_list) \
 service_inspectors/imap/libimap.a \

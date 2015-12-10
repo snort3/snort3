@@ -99,6 +99,7 @@ target_link_libraries( snort
     service_inspectors
     ${STATIC_INSPECTOR_LIBRARIES}
     port_scan
+    reputation
     stream
     stream_base
     stream_ip

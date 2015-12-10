@@ -74,6 +74,7 @@ smtp = { }
 perf_monitor = { }
 pop = { }
 port_scan = { }
+reputation = { }
 rpc_decode = { }
 sip = { }
 ssh = { }

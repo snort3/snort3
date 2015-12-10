@@ -1,0 +1,6 @@
+This directory contains all files related to IP Reputation inspection.
+
+Reputation inspector provides basic IP blacklist/whitelist capabilities, to
+block/drop/pass traffic from IP addresses listed. In the past, we use standard
+Snort rules to implement Reputation-based IP blocking. This inspector will
+address the performance issue and make the IP reputation management easier.

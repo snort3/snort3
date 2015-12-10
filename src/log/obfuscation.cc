@@ -1362,7 +1362,8 @@ int main(int argc, char* argv[])
     packet.pseudo_type = 0;
     packet.user_policy_id = 0;
     packet.iplist_id = 0;
-    packeet.ps_proto = 0;
+    packet.ps_proto = 0;
+    packet.disable_inspect = false;
 
     pkthtmp = (DAQ_PktHdr_t*)&packet.pkth;
     pkthtmp = &pkth;
