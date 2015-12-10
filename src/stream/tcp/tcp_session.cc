@@ -687,13 +687,15 @@ static void TcpSessionCleanup(Flow* flow, int freeApplicationData, Packet* p =
         nullptr)
 {
     TcpSession* tcpssn = (TcpSession*) flow->session;
-    // FIXIT - this function does both client & server sides...refactor to do one and
-    // call for each
-    if( tcpssn->client.reassembler != nullptr )
+
+    if( tcpssn->tcp_init )
+    {
+        // FIXIT - this function does both client & server sides...refactor to do one and
+        // call for each
         tcpssn->client.reassembler->flush_queued_segments(flow, true, p);
-    if( tcpssn->server.reassembler != nullptr )
         tcpssn->server.reassembler->flush_queued_segments(flow, true, p);
-    TcpSessionClear(flow, tcpssn, freeApplicationData);
+        TcpSessionClear(flow, tcpssn, freeApplicationData);
+    }
 }
 
 
@@ -2386,15 +2388,12 @@ TcpSession::TcpSession(Flow* flow) :
 TcpSession::~TcpSession()
 {
     if (tcp_init)
-    {
         TcpSessionClear(flow, (TcpSession*) flow->session, 1);
-        // FIXIT - do these ever need to be freed, before session is reused for same flow
-        // i think not...
-        delete client.normalizer;
-        delete server.normalizer;
-        delete client.reassembler;
-        delete server.reassembler;
-    }
+    
+    delete client.normalizer;
+    delete server.normalizer;
+    delete client.reassembler;
+    delete server.reassembler;
 }
 
 void TcpSession::reset()
