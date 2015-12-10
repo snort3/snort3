@@ -2383,6 +2383,9 @@ TcpSession::TcpSession(Flow* flow) :
     Session(flow), ecn(0), event_mask(0)
 {
     lws_init = tcp_init = false;
+
+    memset(&client, 0, sizeof(TcpTracker));
+    memset(&server, 0, sizeof(TcpTracker));
 }
 
 TcpSession::~TcpSession()
