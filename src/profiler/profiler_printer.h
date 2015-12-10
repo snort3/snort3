@@ -104,10 +104,10 @@ public:
         if ( sort )
             std::partial_sort(entries.begin(), entries.begin() + count, entries.end(), sort);
 
-        unsigned i = 0;
-        for ( auto& entry : entries )
+        for ( unsigned i = 0; i < count; ++i )
         {
-            print_row(root, entry, layer + 1, ++i);
+            auto& entry = entries[i];
+            print_row(root, entry, layer + 1, i + 1);
             print_children(root, entry, layer + 1, count);
         }
     }
