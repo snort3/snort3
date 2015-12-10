@@ -161,7 +161,7 @@ ContentOption::~ContentOption()
         return;
 
     if ( cd->pmd.pattern_buf )
-        free(cd->pmd.pattern_buf);
+        free((char*)cd->pmd.pattern_buf);
 
     if ( cd->pmd.last_check )
         free(cd->pmd.last_check);
@@ -439,10 +439,12 @@ static void parse_content(ContentData* cd, const char* rule)
     unsigned dummy_size = buf.size();
 
     cd->pmd.pattern_buf = (char*)SnortAlloc(dummy_size+1);
-    memcpy(cd->pmd.pattern_buf, tmp_buf, dummy_size);
+    memcpy((char*)cd->pmd.pattern_buf, tmp_buf, dummy_size);
 
     cd->pmd.pattern_size = dummy_size;
     cd->pmd.negated = negated;
+    cd->pmd.literal = true;
+
     cd->set_max_jump_size();
 }
 
@@ -685,8 +687,10 @@ bool ContentModule::end(const char*, int, SnortConfig*)
     }
     if ( cd->pmd.no_case )
     {
+        char* s = (char*)cd->pmd.pattern_buf;
+
         for ( unsigned i = 0; i < cd->pmd.pattern_size; i++ )
-            cd->pmd.pattern_buf[i] = toupper(cd->pmd.pattern_buf[i]);
+            s[i] = toupper(cd->pmd.pattern_buf[i]);
     }
     cd->setup_bm();
     return true;

@@ -70,7 +70,7 @@ static unsigned mpse_count = 0;
 static void fpDeletePMX(void* data);
 
 static int fpGetFinalPattern(
-    FastPatternConfig*, PatternMatchData*, char** ret_pattern, int* ret_bytes);
+    FastPatternConfig*, PatternMatchData*, const char*& ret_pattern, int& ret_bytes);
 
 static void PrintFastPatternInfo(
     OptTreeNode*, PatternMatchData*, const char* pattern, int pattern_length);
@@ -345,14 +345,14 @@ static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree)
 }
 
 /* FLP_Trim
-  *
   * Trim zero byte prefixes, this increases uniqueness
+  * will not alter regex since they can't contain bald \0
   *
   * returns
   *   length - of trimmed pattern
   *   buff - ptr to new beggining of trimmed buffer
   */
-static int FLP_Trim(char* p, int plen, char** buff)
+static int FLP_Trim(const char* p, int plen, const char** buff)
 {
     int i;
     int size = 0;
@@ -561,7 +561,7 @@ static int fpFinishPortGroupRule(
     SnortConfig* sc, PortGroup* pg,
     OptTreeNode* otn, PatternMatchData* pmd, FastPatternConfig* fp)
 {
-    char* pattern;
+    const char* pattern;
     int pattern_length;
 
     if ( !pmd )
@@ -577,7 +577,7 @@ static int fpFinishPortGroupRule(
         else
             pg->add_rule();
 
-        if (fpGetFinalPattern(fp, pmd, &pattern, &pattern_length) == -1)
+        if (fpGetFinalPattern(fp, pmd, pattern, pattern_length) == -1)
             return -1;
 
         /* create pmx */
@@ -610,8 +610,8 @@ static int fpFinishPortGroupRule(
                 pg->mpse[pmd->pm_type]->set_opt(1);
         }
 
-        pg->mpse[pmd->pm_type]->add_pattern(
-            sc, (uint8_t*)pattern, pattern_length, pmd->no_case, pmd->negated, pmx);
+        Mpse::PatternDescriptor desc(pmd->no_case, pmd->negated, pmd->literal);
+        pg->mpse[pmd->pm_type]->add_pattern(sc, (uint8_t*)pattern, pattern_length, desc, pmx);
     }
 
     return 0;
@@ -933,32 +933,34 @@ static void fpFreeRuleMaps(SnortConfig* sc)
 
 static int fpGetFinalPattern(
     FastPatternConfig* fp, PatternMatchData* pmd,
-    char** ret_pattern, int* ret_bytes)
+    const char*& ret_pattern, int& ret_bytes)
 {
-    char* pattern;
-    int bytes;
-
-    if ((fp == NULL) || (pmd == NULL)
-        || (ret_pattern == NULL) || (ret_bytes == NULL))
+    if ( !fp or !pmd )
     {
         return -1;
     }
 
-    pattern = pmd->pattern_buf;
-    bytes = pmd->pattern_size;
+    const char* pattern = pmd->pattern_buf;
+    int bytes = pmd->pattern_size;
 
-    /* Don't mess with fast pattern only contents - they should be inserted
-     * into the pattern matcher as is since the content won't be evaluated
-     * as a rule option.
-     * Don't mess with negated contents since truncating them could
-     * inadvertantly disable evaluation of a rule - the shorter pattern
-     * may be found, while the unaltered pattern may not be found,
-     * disabling inspection of a rule we should inspect */
-    if (pmd->fp_only > 0 || pmd->negated)
+    // Don't mess with:
+    //
+    // 1. fast pattern only contents - they should be inserted into the
+    // pattern matcher as is since the content won't be evaluated as a rule
+    // option.
+    //
+    // 2. negated contents since truncating them could inadvertantly
+    // disable evaluation of a rule - the shorter pattern may be found,
+    // while the unaltered pattern may not be found, disabling inspection
+    // of a rule we should inspect.
+    //
+    // 3. non-literals like regex - truncation could invalidate the
+    // expression.
+
+    if ( pmd->fp_only > 0 or pmd->negated or !pmd->literal )
     {
-        *ret_pattern = pattern;
-        *ret_bytes = bytes;
-
+        ret_pattern = pattern;
+        ret_bytes = bytes;
         return 0;
     }
 
@@ -1003,8 +1005,8 @@ static int fpGetFinalPattern(
         }
     }
 
-    *ret_pattern = pattern;
-    *ret_bytes = fp->set_max(bytes);
+    ret_pattern = pattern;
+    ret_bytes = fp->set_max(bytes);
 
     return 0;
 }

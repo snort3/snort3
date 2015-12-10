@@ -83,7 +83,7 @@ static uint8_t to_hex(char c)
 }
 
 static TokenType get_token(
-    istream& is, string& s, const char* punct, bool esc)
+    istream& is, string& s, const char* punct, int esc)
 {
     static int prev = EOF;
     int c, list = 0, state = 0;
@@ -205,7 +205,7 @@ static TokenType get_token(
                 return TT_STRING;
             }
             else if ( c == '\\' )
-                state = esc ? 4 : 16;
+                state = (esc > 0) ? 4 : 16;
             else if ( c == '\n' )
                 ParseWarning(WARN_RULES, "line break in string on line %d\n", lines-1);
             else
@@ -605,6 +605,20 @@ static bool exec(
     return false;
 }
 
+// FIXIT-L this should not be by name
+// probably should remove content escaping except for \" so
+// that individual rule options can do whatever
+static int get_escape(const string& s)
+{
+    if ( s == "pcre" )
+        return 0;  // no escape, option goes to ;
+
+    else if ( s == "regex" )
+        return -1; // no escape, option goes to "
+
+    return 1;      // escape, option goes to "
+}
+
 // parse_body() is called at the end of a stub rule to parse the detection
 // options in an so rule.  similar to parse_stream() except we start in a
 // different state.
@@ -614,7 +628,7 @@ static void parse_body(const char* extra, RuleParseState& rps, struct SnortConfi
 
     string tok;
     TokenType type;
-    bool esc = true;
+    int esc = 1;
 
     int num = 8;
     const char* punct = "(:,;)";
@@ -627,7 +641,7 @@ static void parse_body(const char* extra, RuleParseState& rps, struct SnortConfi
         exec(s->action, tok, rps, sc);
 
         num = s->next;
-        esc = (rps.key != "pcre");
+        esc = get_escape(rps.key);
 
         if ( s->punct )
             punct = s->punct;
@@ -638,7 +652,7 @@ void parse_stream(istream& is, struct SnortConfig* sc)
 {
     string tok;
     TokenType type;
-    bool esc = true;
+    int esc = 1;
 
     int num = 0;
     const char* punct = fsm[0].punct;
@@ -658,7 +672,7 @@ void parse_stream(istream& is, struct SnortConfig* sc)
             break;
 
         num = s->next;
-        esc = (rps.key != "pcre");
+        esc = get_escape(rps.key);
 
         if ( s->punct )
             punct = s->punct;

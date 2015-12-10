@@ -352,7 +352,7 @@ syntax:
     if ( !pcre_data->expression )
         pcre_data->expression = SnortStrdup("");
 
-    ParseError("unable to parse pcre regex %s", data);
+    ParseError("unable to parse pcre %s", data);
 }
 
 /**
@@ -454,7 +454,7 @@ class PcreOption : public IpsOption
 {
 public:
     PcreOption(PcreData* c) :
-        IpsOption(s_name, RULE_OPTION_TYPE_PCRE)
+        IpsOption(s_name, RULE_OPTION_TYPE_CONTENT)
     { config = c; }
 
     ~PcreOption();
@@ -659,14 +659,14 @@ void pcre_cleanup(SnortConfig* sc)
 
 static const Parameter s_params[] =
 {
-    { "~regex", Parameter::PT_STRING, nullptr, nullptr,
+    { "~re", Parameter::PT_STRING, nullptr, nullptr,
       "Snort regular expression" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 #define s_help \
-    "rule option for matching payload data with regex"
+    "rule option for matching payload data with pcre"
 
 class PcreModule : public Module
 {
@@ -704,7 +704,7 @@ bool PcreModule::begin(const char*, int, SnortConfig*)
 
 bool PcreModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("~regex") )
+    if ( v.is("~re") )
         pcre_parse(v.get_string(), data);
 
     else

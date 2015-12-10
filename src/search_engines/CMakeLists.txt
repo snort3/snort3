@@ -41,33 +41,31 @@ if ( HAVE_HYPERSCAN )
     )
 endif ()
 
+# FIXIT ideally don't include pat_stats.cc separately
+
 set (SEARCH_ENGINE_SOURCES
+    pat_stats.cc
     search_engines.cc
     search_engines.h
     search_tool.cc
     search_tool.h
     ${BNFA_SOURCES}
+    ${HYPER_SOURCES}
 )
-
-# FIXIT ideally don't include pat_stats.cc separately
 
 if ( STATIC_SEARCH_ENGINES )
     add_library(search_engines STATIC
         ${ACSMX_SOURCES}
         ${ACSMX2_SOURCES}
         ${INTEL_SOURCES}
-        ${HYPER_SOURCES}
         ${SEARCH_ENGINE_SOURCES}
         ${SEARCH_ENGINE_INCLUDES}
-        pat_stats.cc
     )
 
 else ( STATIC_SEARCH_ENGINES)
     add_library(search_engines STATIC
         ${SEARCH_ENGINE_SOURCES}
         ${SEARCH_ENGINE_INCLUDES}
-        ${BNFA_SOURCES}
-        pat_stats.cc
     )
 
     add_shared_library(acsmx search_engines ${ACSMX_SOURCES} pat_stats.cc)

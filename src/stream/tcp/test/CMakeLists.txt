@@ -9,5 +9,5 @@ add_library( stream_tcp_test
 )
 
 # this test is broken, uncomment below when fixed
-#add_cpputest( tcp_normalizer_test stream_tcp_test )
+add_cpputest( tcp_normalizer_test stream_tcp_test )
 

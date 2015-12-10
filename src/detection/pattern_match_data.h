@@ -37,26 +37,28 @@ struct PmdLastCheck
 struct PatternMatchData
 {
     // used by both
-    uint8_t negated;        /* search for "not this pattern" */
-    uint8_t fp;             /* For fast_pattern arguments */
-    uint8_t no_case;        /* Toggle case sensitivity */
-    uint8_t relative;       /* do relative pattern searching */
+    bool negated;        // search for "not this pattern"
+    bool fp;             // For fast_pattern arguments
+    bool no_case;        // Toggle case sensitivity
+    bool relative;       // do relative pattern searching
 
     uint16_t fp_offset;
     uint16_t fp_length;
 
-    int offset;             /* pattern search start offset */
-    int depth;              /* pattern search depth */
+    int offset;              // pattern search start offset
+    int depth;               // pattern search depth
 
-    unsigned pattern_size;  /* size of app layer pattern */
-    char* pattern_buf;      /* app layer pattern to match on */
+    unsigned pattern_size;   // size of app layer pattern
+    const char* pattern_buf; // app layer pattern to match on
+
+    bool literal;            // set to plain contents
 
     // not used by ips_content
     int8_t fp_only;
     uint8_t pm_type;
 
-    unsigned replace_size;  /* size of app layer replace pattern */
-    char* replace_buf;      /* app layer pattern to replace with */
+    unsigned replace_size;   // size of app layer replace pattern
+    const char* replace_buf; // app layer pattern to replace with
 
     // FIXIT-L wasting some memory here:
     // - this is not used by content option logic directly

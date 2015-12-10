@@ -41,8 +41,7 @@ endif
 plugin_list = \
 $(acsmx_sources) \
 $(acsmx2_sources) \
-$(intel_sources) \
-$(hyper_sources)
+$(intel_sources)
 
 libsearch_engines_a_SOURCES = \
 search_engines.cc \
@@ -50,7 +49,8 @@ search_engines.h \
 search_tool.cc \
 search_tool.h \
 pat_stats.cc \
-$(bnfa_sources)
+$(bnfa_sources) \
+$(hyper_sources)
 
 # FIXIT ideally don't include pat_stats.cc separately
 

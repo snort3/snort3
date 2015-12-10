@@ -25,11 +25,15 @@
 #include "framework/mpse.h"
 
 #ifdef BUILDING_SO
+extern const BaseApi* se_ac_banded;
+extern const BaseApi* se_ac_full;
+extern const BaseApi* se_ac_sparse;
+extern const BaseApi* se_ac_sparse_bands;
+
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     se_ac_banded,
     se_ac_full,
-    se_ac_full_q,
     se_ac_sparse,
     se_ac_sparse_bands,
     nullptr

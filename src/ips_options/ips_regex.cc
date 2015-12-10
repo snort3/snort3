@@ -19,6 +19,8 @@
 // ips_regex.cc author Russ Combs <rucombs@cisco.com>
 // FIXIT-H add ! and anchor support like pcre and update retry
 
+#include <string.h>
+
 #include <assert.h>
 #include <string>
 
@@ -29,6 +31,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "detection/detection_defines.h"
+#include "detection/pattern_match_data.h"
 #include "hash/sfhashfcn.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
@@ -42,6 +45,7 @@
 
 struct RegexConfig
 {
+    PatternMatchData pmd;
     std::string re;
     hs_database_t* db;
     unsigned flags;
@@ -52,10 +56,10 @@ struct RegexConfig
 
     void reset()
     {
+        memset(&pmd, 0, sizeof(pmd));
         re.clear();
         db = nullptr;
         flags = 0;
-        relative = false;
     }
 };
 
@@ -90,16 +94,21 @@ public:
     { return CAT_ADJUST; }
 
     bool is_relative() override
-    { return config.relative; }
+    { return config.pmd.relative; }
+
+    bool retry() override;
+
+    PatternMatchData* get_pattern() override
+    { return &config.pmd; }
 
     int eval(Cursor&, Packet*) override;
-    bool retry() override;
 
 private:
     RegexConfig config;
 };
 
-RegexOption::RegexOption(const RegexConfig& c) : IpsOption(s_name, RULE_OPTION_TYPE_PCRE)
+RegexOption::RegexOption(const RegexConfig& c) :
+    IpsOption(s_name, RULE_OPTION_TYPE_CONTENT)
 {
     config = c;
 
@@ -109,6 +118,10 @@ RegexOption::RegexOption(const RegexConfig& c) : IpsOption(s_name, RULE_OPTION_T
         //ParseError("can't initialize regex for '%s' (%d) %p",
         //    config.re.c_str(), err, s_scratch);
     }
+    config.pmd.pattern_buf = config.re.c_str();
+    config.pmd.pattern_size = config.re.size();
+    config.pmd.fp_length = config.pmd.pattern_size;
+    config.pmd.fp_offset = 0;
 }
 
 RegexOption::~RegexOption()
@@ -119,7 +132,7 @@ RegexOption::~RegexOption()
 
 uint32_t RegexOption::hash() const
 {
-    uint32_t a = config.flags, b = config.relative, c = 0;
+    uint32_t a = config.flags, b = config.pmd.relative, c = 0;
     mix_str(a, b, c, config.re.c_str());
     mix_str(a, b, c, get_name());
     finalize(a, b, c);
@@ -135,7 +148,7 @@ bool RegexOption::operator==(const IpsOption& ips) const
 
     if ( config.re == rhs.config.re and 
          config.flags == rhs.config.flags and
-         config.relative == rhs.config.relative )
+         config.pmd.relative == rhs.config.pmd.relative )
         return true;
 
     return false;
@@ -190,7 +203,7 @@ bool RegexOption::retry()
 
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_STRING, nullptr, nullptr,
+    { "~re", Parameter::PT_STRING, nullptr, nullptr,
       "hyperscan regular expression" },
 
     { "nocase", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -245,7 +258,7 @@ bool RegexModule::begin(const char*, int, SnortConfig*)
 
 bool RegexModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("~") )
+    if ( v.is("~re") )
     {
         config.re = v.get_string();
         // remove quotes
@@ -263,7 +276,7 @@ bool RegexModule::set(const char*, Value& v, SnortConfig*)
         config.flags |= HS_FLAG_MULTILINE;
 
     else if ( v.is("relative") )
-        config.relative = true;
+        config.pmd.relative = true;
 
     else
         return false;

@@ -45,8 +45,10 @@ void SearchTool::add(const char* pat, unsigned len, int id, bool no_case)
 
 void SearchTool::add(const uint8_t* pat, unsigned len, int id, bool no_case)
 {
+    Mpse::PatternDescriptor desc(no_case);
+
     if ( mpse )
-        mpse->add_pattern(nullptr,  pat, len, no_case, false, (void*)(long)id);
+        mpse->add_pattern(nullptr,  pat, len, desc, (void*)(long)id);
 
     if ( len > max_len )
         max_len = len;

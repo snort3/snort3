@@ -166,7 +166,9 @@ TEST(mpse_hs_match, empty)
 
 TEST(mpse_hs_match, single)
 {
-    CHECK(hs->add_pattern(nullptr, (uint8_t*)"foo", 3, false, false, s_user) == 0);
+    Mpse::PatternDescriptor desc;
+
+    CHECK(hs->add_pattern(nullptr, (uint8_t*)"foo", 3, desc, s_user) == 0);
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
 
@@ -179,9 +181,11 @@ TEST(mpse_hs_match, single)
 
 TEST(mpse_hs_match, other)
 {
-    CHECK(hs->add_pattern(nullptr, (uint8_t*)"foo", 3, false, true, s_user) == 0);
-    CHECK(hs->add_pattern(nullptr, (uint8_t*)"\rbar\n", 3, false, true, s_user) == 0);
-    CHECK(hs->add_pattern(nullptr, (uint8_t*)"(baz)", 3, false, true, s_user) == 0);
+    Mpse::PatternDescriptor desc(false, true, false);
+
+    CHECK(hs->add_pattern(nullptr, (uint8_t*)"foo", 3, desc, s_user) == 0);
+    CHECK(hs->add_pattern(nullptr, (uint8_t*)"\rbar\n", 3, desc, s_user) == 0);
+    CHECK(hs->add_pattern(nullptr, (uint8_t*)"(baz)", 3, desc, s_user) == 0);
 
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 3);
@@ -195,9 +199,11 @@ TEST(mpse_hs_match, other)
 
 TEST(mpse_hs_match, multi)
 {
-    CHECK(hs->add_pattern(nullptr, (uint8_t*)"foo", 3, false, false, s_user) == 0);
-    CHECK(hs->add_pattern(nullptr, (uint8_t*)"bar", 3, false, false, s_user) == 0);
-    CHECK(hs->add_pattern(nullptr, (uint8_t*)"baz", 3, false, false, s_user) == 0);
+    Mpse::PatternDescriptor desc;
+
+    CHECK(hs->add_pattern(nullptr, (uint8_t*)"foo", 3, desc, s_user) == 0);
+    CHECK(hs->add_pattern(nullptr, (uint8_t*)"bar", 3, desc, s_user) == 0);
+    CHECK(hs->add_pattern(nullptr, (uint8_t*)"baz", 3, desc, s_user) == 0);
 
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 3);
@@ -211,8 +217,10 @@ TEST(mpse_hs_match, multi)
 #if 0
 TEST(mpse_hs_match, regex)
 {
+    Mpse::PatternDescriptor desc;
+
     CHECK(hs->add_pattern(
-            nullptr, (uint8_t*)"(foo)|(bar)|(baz)", 17, false, false, s_user) == 0);
+            nullptr, (uint8_t*)"(foo)|(bar)|(baz)", 17, desc, s_user) == 0);
 
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
@@ -225,9 +233,11 @@ TEST(mpse_hs_match, regex)
 
 TEST(mpse_hs_match, pcre)
 {
+    Mpse::PatternDescriptor desc;
+
     // from sid 23286
     CHECK(hs->add_pattern(
-            nullptr, (uint8_t*)"\\.definition\\s*\\(", 21, false, false, s_user) == 0);
+            nullptr, (uint8_t*)"\\.definition\\s*\\(", 21, desc, s_user) == 0);
 
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
@@ -275,8 +285,10 @@ TEST_GROUP(mpse_hs_multi)
 
 TEST(mpse_hs_multi, single)
 {
-    CHECK(hs1->add_pattern(nullptr, (uint8_t*)"uba", 3, false, false, s_user) == 0);
-    CHECK(hs2->add_pattern(nullptr, (uint8_t*)"tuba", 4, false, false, s_user) == 0);
+    Mpse::PatternDescriptor desc;
+
+    CHECK(hs1->add_pattern(nullptr, (uint8_t*)"uba", 3, desc, s_user) == 0);
+    CHECK(hs2->add_pattern(nullptr, (uint8_t*)"tuba", 4, desc, s_user) == 0);
 
     CHECK(hs1->prep_patterns(snort_conf) == 0);
     CHECK(hs2->prep_patterns(snort_conf) == 0);

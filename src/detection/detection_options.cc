@@ -319,7 +319,6 @@ static const char* const option_type_str[] =
     "RULE_OPTION_TYPE_LEAF_NODE",
     "RULE_OPTION_TYPE_CONTENT",
     "RULE_OPTION_TYPE_FLOWBIT",
-    "RULE_OPTION_TYPE_PCRE",
     "RULE_OPTION_TYPE_OTHER"
 };
 
@@ -340,7 +339,6 @@ void print_option_tree(detection_option_tree_node_t* node, int level)
             print_option_tree(node->children[i], level+1);
         );
 }
-
 #endif
 
 int add_detection_option_tree(
@@ -627,21 +625,21 @@ int detection_option_node_evaluate(
                     {
                         if ( child_state->result == DETECTION_OPTION_NO_MATCH )
                         {
-                            if ( (child_node->option_type == RULE_OPTION_TYPE_CONTENT ||
-                                  child_node->option_type == RULE_OPTION_TYPE_PCRE) &&
-                                 !child_node->is_relative )
+                            if ( !child_node->is_relative )
                             {
-                                // If it's a non-relative content or pcre, no reason
-                                // to check again.  Only increment result once.
-                                // Should hit this condition on first loop iteration.
-                                if ( loop_count == 1 )
-                                    ++result;
+                                if ( child_node->option_type == RULE_OPTION_TYPE_CONTENT )
+                                {
+                                    // If it's a non-relative content or pcre, no reason
+                                    // to check again.  Only increment result once.
+                                    // Should hit this condition on first loop iteration.
+                                    if ( loop_count == 1 )
+                                        ++result;
 
-                                continue;
+                                    continue;
+                                }
                             }
 
-                            else if ( child_node->option_type == RULE_OPTION_TYPE_CONTENT &&
-                                      child_node->is_relative )
+                            else if ( child_node->option_type == RULE_OPTION_TYPE_CONTENT )
                             {
                                 // Check for an unbounded relative search.  If this
                                 // failed before, it's going to fail again so don't

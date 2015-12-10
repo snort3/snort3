@@ -44,37 +44,43 @@ struct Pattern
     void* user_tree;
     void* user_list;
 
-    Pattern(const uint8_t* s, unsigned n, bool bc, bool bn, void* u)
-    {
-        // FIXIT-H only escape content patterns, not regex patterns
-        escape(s, n);
-        len = n;
-        no_case = bc;
-        negate = bn;
-        user = u;
-        user_tree = user_list = nullptr;
-    }
-    void escape(const uint8_t* s, unsigned n)
-    {
-        for ( unsigned i = 0; i < n; ++i )
-        {
-            if ( !isprint(s[i]) )
-            {
-                char hex[5];
-                snprintf(hex, sizeof(hex), "\\x%02X", s[i]);
-                pat += hex;
-            }
-            else
-            {
-                const char* special = ".^$*+?()[]{}\\|";
+    Pattern(const uint8_t*, unsigned, const Mpse::PatternDescriptor&, void*);
+    void escape(const uint8_t*, unsigned, bool);
+};
 
-                if ( strchr(special, s[i]) )
-                    pat += '\\';
-                pat += s[i];
-            }
+Pattern::Pattern(
+    const uint8_t* s, unsigned n, const Mpse::PatternDescriptor& d, void* u)
+{
+    escape(s, n, d.literal);
+
+    len = n;
+    no_case = d.no_case;
+    negate = d.negated;
+    user = u;
+    user_tree = user_list = nullptr;
+}
+
+void Pattern::escape(const uint8_t* s, unsigned n, bool literal)
+{
+    for ( unsigned i = 0; i < n; ++i )
+    {
+        if ( !isprint(s[i]) )
+        {
+            char hex[5];
+            snprintf(hex, sizeof(hex), "\\x%02X", s[i]);
+            pat += hex;
+        }
+        else
+        {
+            const char* special = ".^$*+?()[]{}\\|";
+
+            if ( literal and strchr(special, s[i]) )
+                pat += '\\';
+
+            pat += s[i];
         }
     }
-};
+}
 
 typedef std::vector<Pattern> PatternVector;
 
@@ -108,9 +114,9 @@ public:
 
     int add_pattern(
         SnortConfig*, const uint8_t* pat, unsigned len,
-        bool no_case, bool negate, void* user) override
+        const PatternDescriptor& desc, void* user) override
     {
-        Pattern p(pat, len, no_case, negate, user);
+        Pattern p(pat, len, desc, user);
         pvector.push_back(p);
         ++patterns;
         return 0;
@@ -342,13 +348,13 @@ static const MpseApi hs_api =
     hs_print,
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &hs_api.base,
-    nullptr
-};
-#else
+//#ifdef BUILDING_SO
+//SO_PUBLIC const BaseApi* snort_plugins[] =
+//{
+//    &hs_api.base,
+//    nullptr
+//};
+//#else
 const BaseApi* se_hyperscan = &hs_api.base;
-#endif
+//#endif
 

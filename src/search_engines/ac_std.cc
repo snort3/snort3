@@ -53,9 +53,9 @@ public:
 
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
-        bool noCase, bool negative, void* user) override
+        const PatternDescriptor& desc, void* user) override
     {
-        return acsmAddPattern(obj, P, m, noCase, negative, user);
+        return acsmAddPattern(obj, P, m, desc.no_case, desc.negated, user);
     }
 
     int prep_patterns(SnortConfig* sc) override

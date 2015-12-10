@@ -95,7 +95,7 @@ int main()
  *      int * - the skip table
  *
  ****************************************************************/
-int* make_skip(char* ptrn, int plen)
+int* make_skip(const char* ptrn, int plen)
 {
     int i;
     int* skip = (int*)SnortAlloc(256* sizeof(int));
@@ -123,11 +123,11 @@ int* make_skip(char* ptrn, int plen)
  *      int * - the shift table
  *
  ****************************************************************/
-int* make_shift(char* ptrn, int plen)
+int* make_shift(const char* ptrn, int plen)
 {
     int* shift = (int*)SnortAlloc(plen * sizeof(int));
     int* sptr = shift + plen - 1;
-    char* pptr = ptrn + plen - 1;
+    const char* pptr = ptrn + plen - 1;
     char c;
 
     c = ptrn[plen - 1];
@@ -136,7 +136,7 @@ int* make_shift(char* ptrn, int plen)
 
     while (sptr-- != shift)
     {
-        char* p1 = ptrn + plen - 2, * p2, * p3;
+        const char* p1 = ptrn + plen - 2, * p2, * p3;
 
         do
         {

@@ -51,9 +51,19 @@ public:
 public:
     virtual ~Mpse() { }
 
+    struct PatternDescriptor
+    {
+        bool no_case;
+        bool negated;
+        bool literal;
+
+        PatternDescriptor(bool noc = false, bool neg = false, bool lit = false)
+        { no_case = noc; negated = neg; literal = lit; }
+    };
+
     virtual int add_pattern(
         SnortConfig* sc, const uint8_t* pat, unsigned len,
-        bool noCase, bool negate, void* user) = 0;
+        const PatternDescriptor&, void* user) = 0;
 
     virtual int prep_patterns(SnortConfig*) = 0;
 
