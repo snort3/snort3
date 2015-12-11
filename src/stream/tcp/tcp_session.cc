@@ -2171,28 +2171,6 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
             DebugFormat(DEBUG_STREAM_STATE, "Queuing data on listener, t %s, l %s...\n",
                     flush_policy_names[talker->flush_policy], flush_policy_names[listener->flush_policy]);
 
-            // In case of Asymmetric traffic, enforce flush_policy is IPS mode.
-            uint32_t flushed = 0;
-            if ( !flow->two_way_traffic()
-                    and (flow->session_state & (STREAM_STATE_SYN|STREAM_STATE_SYN_ACK))
-                    and !tcph->is_syn() )
-            {
-                // FIXIT-M (b042cf28c49)
-                // See "FIXIT-M (b042cf28c49)" in "src/service-inspectors/nhttp_inspect/nhttp_stream_splitter.cc".
-                if (listener->flush_policy == STREAM_FLPOLICY_ON_ACK)
-                    listener->flush_policy = STREAM_FLPOLICY_ON_DATA;
-            }
-
-            flushed = listener->reassembler->flush_on_data_policy( tdb->pkt );;
-
-            if ( !flow->two_way_traffic()
-                    and flushed
-                    and (flow->session_state & (STREAM_STATE_SYN|STREAM_STATE_SYN_ACK))
-                    and !tcph->is_syn() )
-            {
-                listener->reassembler->purge_to_seq(tdb->seq + flushed);
-            }
-
             if (config->policy != StreamPolicy::OS_PROXY)
             {
                 // these normalizations can't be done if we missed setup. and
