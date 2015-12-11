@@ -88,7 +88,8 @@ void ParseMessage(const char* format, ...)
     unsigned file_line;
     get_parse_location(file_name, file_line);
 
-    if (file_name != NULL)
+   // FIXIT-L Plz how can same format filename/linenum as ParseWarning
+   if (file_name != NULL)
         LogMessage("%s(%d) %s\n", file_name, file_line, buf);
     else
         LogMessage("%s\n", buf);
@@ -112,6 +113,7 @@ void ParseWarning(WarningGroup wg, const char* format, ...)
     unsigned file_line;
     get_parse_location(file_name, file_line);
 
+    // FIXIT-L Why `file_line` here and `file_name` in ParseMessage?
     if ( file_line )
         LogMessage("WARNING: %s:%d %s\n", file_name, file_line, buf);
     else
@@ -158,6 +160,7 @@ NORETURN void ParseAbort(const char* format, ...)
     unsigned file_line;
     get_parse_location(file_name, file_line);
 
+    // FIXIT-L Refer to ParseMessage above.
     if (file_name != NULL)
         FatalError("%s(%d) %s\n", file_name, file_line, buf);
     else

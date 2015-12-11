@@ -99,7 +99,7 @@ bool ImapModule::set(const char*, Value& v, SnortConfig*)
             {
                 decode_depth = decode_depth - 4;  // FIXIT-L what does this do?
             }
-            LogMessage("WARNING: IMAP: 'b64_decode_depth' is not a multiple of 4. "
+            ParseWarning(WARN_CONF, "IMAP: 'b64_decode_depth' is not a multiple of 4. "
                 "Rounding up to the next multiple of 4. The new 'b64_decode_depth' is %d.\n",
                 decode_depth);
         }

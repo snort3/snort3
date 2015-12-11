@@ -147,7 +147,7 @@ bool ReputationModule::end(const char*, int, SnortConfig*)
     EstimateNumEntries(conf);
     if (conf->numEntries <= 0)
     {
-        LogMessage("WARNING: Can't find any whitelist/blacklist entries. "
+        ParseWarning(WARN_CONF, "Can't find any whitelist/blacklist entries. "
             "Reputation Preprocessor disabled.\n");
         return true;
     }
@@ -156,9 +156,9 @@ bool ReputationModule::end(const char*, int, SnortConfig*)
 
     if ( (conf->priority == WHITELISTED_TRUST) && (conf->whiteAction == UNBLACK) )
     {
-        LogMessage("WARNING: Keyword \"whitelist\" for \"priority\" is not applied "
-            "when white action is unblack.\n");
-        conf->priority = WHITELISTED_UNBLACK;
+        ParseWarning(WARN_CONF, "Keyword \"whitelist\" for \"priority\" is "
+            "not applied when white action is unblack.\n");
+            conf->priority = WHITELISTED_UNBLACK;
     }
 
     LoadListFile(conf->blacklist_path, conf->local_black_ptr, conf);
