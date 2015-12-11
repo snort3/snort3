@@ -213,6 +213,10 @@ bool Detection::convert(std::istringstream& data_stream)
                 table_api.add_diff_option_comment("ac-sparsebands", "ac_sparse_bands");
                 tmpval = table_api.add_option("search_method", "ac_sparse_bands");
             }
+            else if (!method.compare("lowmem"))
+            {
+                tmpval = table_api.add_option("search_method", "lowmem");
+            }
             else if (!method.compare("lowmem-q"))
             {
                 table_api.add_diff_option_comment("lowmem-q", "lowmem");

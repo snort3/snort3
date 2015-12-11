@@ -282,13 +282,28 @@ include::errors.txt[]
   string concatenation to ensure Snort doesn't try to use a variable before
   it is defined (even when it is defined ahead of use in the file):
 
-  -- this may fail:
-  MY_SERVERS = [[ 172.20.0.0/16 172.21.0.0/16 ]]
-  EXTERNAL_NET = '!$MY_SERVERS'
+    -- this may fail:
+    MY_SERVERS = [[ 172.20.0.0/16 172.21.0.0/16 ]]
+    EXTERNAL_NET = '!$MY_SERVERS'
 
-  -- this will work:
-  MY_SERVERS = [[ 172.20.0.0/16 172.21.0.0/16 ]]
-  EXTERNAL_NET = '!' .. MY_SERVERS
+    -- this will work:
+    MY_SERVERS = [[ 172.20.0.0/16 172.21.0.0/16 ]]
+    EXTERNAL_NET = '!' .. MY_SERVERS
+
+* configure will use clang++ by default if it is installed.  To compile
+  with g++ instead:
+
+    export CXX=g++
+
+* If you build with hyperscan on OS X and see:
+
+    dyld: Library not loaded: @rpath/libhs.4.0.dylib
+
+  when you try to run src/snort, export DYLD_LIBRARY_PATH with the path to
+  libhs.  You can also do:
+
+    install_name_tool -change @rpath/libhs.4.0.dylib \
+        /path-to/libhs.4.0.dylib src/snort
 
 
 === Bugs

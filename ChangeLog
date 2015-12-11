@@ -1,3 +1,13 @@
+15/12/11 - build 182 - Alpha 3
+
+-- added memory profiling feature
+-- added regex fast pattern support
+-- ported reputation preprocessor from 2X
+-- synced to 297-262
+-- removed '_q' search method flavors - all are now queued
+-- removed PPM_TEST
+-- build and memory leak fixes
+
 15/12/04 - build 181
 
 -- perf profiling enhancements

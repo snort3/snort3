@@ -321,8 +321,6 @@ static bool dnp3_check_remove_crc(dnp3ProtoConf& config, uint8_t* pdu_start,
 
         memcpy((buf + curlen), cursor, (bytes_left - DNP3_CRC_SIZE));
         curlen += (bytes_left - DNP3_CRC_SIZE);
-        cursor += bytes_left;
-        bytes_left = 0;
     }
 
     *buflen = curlen;
