@@ -781,7 +781,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0-a2 (Build 177) from 2.9.7-177
+o"  )~   Version 3.0.0-a3 (Build 182) from 2.9.7-177
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -1324,7 +1324,8 @@ pkgconfig from <a href="http://www.freedesktop.org">http://www.freedesktop.org</
 <div class="ulist"><ul>
 <li>
 <p>
-lzma &gt;= 5.1.2 from <a href="http://tukaani.org/xz/">http://tukaani.org/xz/</a> for decompression of SWF fles
+lzma &gt;= 5.1.2 from <a href="http://tukaani.org/xz/">http://tukaani.org/xz/</a> for decompression of SWF and
+  PDF files
 </p>
 </li>
 <li>
@@ -1910,17 +1911,10 @@ MY_SERVERS = [[ 172.20.0.0/16 172.21.0.0/16 ]]
 EXTERNAL_NET = '!' .. MY_SERVERS</code></pre>
 </div></div>
 </li>
-</ul></div>
-</div>
-<div class="sect2">
-<h3 id="_bugs">Bugs</h3>
-<div class="sect3">
-<h4 id="_build">Build</h4>
-<div class="ulist"><ul>
 <li>
 <p>
-configure will use clang<code> by default if it is installed.
-  To compile with g</code> instead:
+configure will use clang<code> by default if it is installed.  To compile
+  with g</code> instead:
 </p>
 <div class="literalblock">
 <div class="content">
@@ -1929,14 +1923,30 @@ configure will use clang<code> by default if it is installed.
 </li>
 <li>
 <p>
-clang coughs up these warnings:
+If you build with hyperscan on OS X and see:
 </p>
 <div class="literalblock">
 <div class="content">
-<pre><code>Wunused-but-set-variable is not understood by clang
-clang: warning: argument unused during compilation: '-pthread'</code></pre>
+<pre><code>dyld: Library not loaded: @rpath/libhs.4.0.dylib</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>when you try to run src/snort, export DYLD_LIBRARY_PATH with the path to
+libhs.  You can also do:</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>install_name_tool -change @rpath/libhs.4.0.dylib \
+    /path-to/libhs.4.0.dylib src/snort</code></pre>
 </div></div>
 </li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_bugs">Bugs</h3>
+<div class="sect3">
+<h4 id="_build">Build</h4>
+<div class="ulist"><ul>
 <li>
 <p>
 With cmake, make install will rebuild the docs even though when already
@@ -1957,8 +1967,13 @@ Enabling debug messages may erroneously affect the number of packets
 </li>
 <li>
 <p>
-It is not possible to build unit tests w/o static plugins.
+g++ 4.9.2 with -O3 reports:
 </p>
+<div class="literalblock">
+<div class="content">
+<pre><code>src/service_inspectors/back_orifice/back_orifice.cc:231:25: warning:
+iteration 930u invokes undefined behavior [-Waggressive-loop-optimizations]</code></pre>
+</div></div>
 </li>
 </ul></div>
 </div>
@@ -2047,6 +2062,7 @@ stream_tcp ports and protocols both go into a single binder.when; this is
 <p>
 There is a bug in pps_stream_tcp.cc.. when stream_tcp: is
   specified without any arguments, snort2lua doesn&#8217;t convert it.
+  Same for stream_udp.
 </p>
 </li>
 <li>
@@ -2067,8 +2083,14 @@ Won&#8217;t convert packet rules (alert tcp etc.) to service rules (alert http
 </li>
 <li>
 <p>
-alert_fast and alert_full: output configuration includes "file = <em>foo.bar</em>", but file is a bool
-  and you cannot specify an output file name in the configuration.
+alert_fast and alert_full: output configuration includes "file =
+  <em>foo.bar</em>", but file is a bool and you cannot specify an output file name
+  in the configuration.
+</p>
+</li>
+<li>
+<p>
+preprocessor ports option: ports &lt;number&gt; not supported.
 </p>
 </li>
 </ul></div>
@@ -2078,8 +2100,8 @@ alert_fast and alert_full: output configuration includes "file = <em>foo.bar</em
 <div class="ulist"><ul>
 <li>
 <p>
--B &lt;mask&gt; feature does not work. It does ordinary IP address obfuscation instead of using the
-  mask.
+-B &lt;mask&gt; feature does not work. It does ordinary IP address obfuscation
+  instead of using the mask.
 </p>
 </li>
 <li>
@@ -2096,6 +2118,12 @@ The hext DAQ will append a newline to text lines (starting with <em>"</em>).
 <p>
 The hext DAQ does not support embedded quotes in text lines (use hex
   lines as a workaround).
+</p>
+</li>
+<li>
+<p>
+Stream TCP alert squash mechanism incorrectly squashes alerts for
+  different TCP packets.
 </p>
 </li>
 </ul></div>
@@ -2709,6 +2737,36 @@ int <strong>file_id.file_rules[].magic[].offset</strong> = 0: file magic offset 
 </li>
 <li>
 <p>
+int <strong>file_id.file_policy[].when.file_type_id</strong> = 0: unique ID for file type in file magic rule { 0: }
+</p>
+</li>
+<li>
+<p>
+string <strong>file_id.file_policy[].when.sha256</strong>: SHA 256
+</p>
+</li>
+<li>
+<p>
+enum <strong>file_id.file_policy[].use.verdict</strong> = unknown: what to do with matching traffic { unknown | log | stop | block | reset  }
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.file_policy[].use.enable_file_type</strong> = false: true/false &#8594; enable/disable file type identification
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.file_policy[].use.enable_file_signature</strong> = false: true/false &#8594; enable/disable file signature
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.file_policy[].use.enable_file_capture</strong> = false: true/false &#8594; enable/disable file capture
+</p>
+</li>
+<li>
+<p>
 bool <strong>file_id.trace_type</strong> = false: enable runtime dump of type info
 </p>
 </li>
@@ -3008,6 +3066,59 @@ bool <strong>process.utc</strong> = false: use UTC instead of local time for tim
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_profiler">profiler</h3>
+<div class="paragraph"><p>What: configure profiling of rules and/or modules</p></div>
+<div class="paragraph"><p>Type: basic</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+bool <strong>profiler.modules.show</strong> = true: show module time profile stats
+</p>
+</li>
+<li>
+<p>
+int <strong>profiler.modules.count</strong> = 0: print results to given level (0 = all) { 0: }
+</p>
+</li>
+<li>
+<p>
+enum <strong>profiler.modules.sort</strong> = total_time: sort by given field { none | checks | avg_check | total_time  }
+</p>
+</li>
+<li>
+<p>
+bool <strong>profiler.memory.show</strong> = true: show module memory profile stats
+</p>
+</li>
+<li>
+<p>
+int <strong>profiler.memory.count</strong> = 0: print results to given level (0 = all) { 0: }
+</p>
+</li>
+<li>
+<p>
+enum <strong>profiler.memory.sort</strong> = total_used: sort by given field { none | allocations | total_used | avg_allocation  }
+</p>
+</li>
+<li>
+<p>
+bool <strong>profiler.rules.show</strong> = true: show rule time profile stats
+</p>
+</li>
+<li>
+<p>
+int <strong>profiler.rules.count</strong> = 0: print results to given level (0 = all) { 0: }
+</p>
+</li>
+<li>
+<p>
+enum <strong>profiler.rules.sort</strong> = total_time: sort by given field { none | checks | avg_check | total_time | matches | no_matches | avg_match | avg_no_match }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_rate_filter">rate_filter</h3>
 <div class="paragraph"><p>What: configure rate filters (which change rule actions)</p></div>
 <div class="paragraph"><p>Type: basic</p></div>
@@ -3164,7 +3275,7 @@ bool <strong>search_engine.inspect_stream_inserts</strong> = false: inspect reas
 </li>
 <li>
 <p>
-dynamic <strong>search_engine.search_method</strong> = ac_bnfa_q: set fast pattern algorithm - choose available search engine { ac_banded | ac_bnfa | ac_bnfa_q | ac_full | ac_full_q | ac_sparse | ac_sparse_bands | ac_std }
+dynamic <strong>search_engine.search_method</strong> = ac_bnfa: set fast pattern algorithm - choose available search engine { ac_banded | ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan }
 </p>
 </li>
 <li>
@@ -5116,6 +5227,80 @@ string <strong>data_log.key</strong> = http_uri: name of data buffer to log
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_dnp3">dnp3</h3>
+<div class="paragraph"><p>What: dnp3 inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+bool <strong>dnp3.check_crc</strong> = false: validate checksums in DNP3 link layer frames
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>145:1</strong> (dnp3) DNP3 Link-Layer Frame contains bad CRC.
+</p>
+</li>
+<li>
+<p>
+<strong>145:2</strong> (dnp3) DNP3 Link-Layer Frame was dropped.
+</p>
+</li>
+<li>
+<p>
+<strong>145:3</strong> (dnp3) DNP3 Transport-Layer Segment was dropped during reassembly.
+</p>
+</li>
+<li>
+<p>
+<strong>145:4</strong> (dnp3) DNP3 Reassembly Buffer was cleared without reassembling a complete message.
+</p>
+</li>
+<li>
+<p>
+<strong>145:5</strong> (dnp3) DNP3 Link-Layer Frame uses a reserved address.
+</p>
+</li>
+<li>
+<p>
+<strong>145:6</strong> (dnp3) DNP3 Application-Layer Fragment uses a reserved function code.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>dnp3.total packets</strong>: total packets
+</p>
+</li>
+<li>
+<p>
+<strong>dnp3.udp packets</strong>: total udp packets
+</p>
+</li>
+<li>
+<p>
+<strong>dnp3.tcp pdus</strong>: total tcp pdus
+</p>
+</li>
+<li>
+<p>
+<strong>dnp3.dnp3 link layer frames</strong>: total dnp3 link layer frames
+</p>
+</li>
+<li>
+<p>
+<strong>dnp3.dnp3 application pdus</strong>: total dnp3 application pdus
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_dns">dns</h3>
 <div class="paragraph"><p>What: dns inspection</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -6223,7 +6408,52 @@ int <strong>imap.uu_decode_depth</strong> = 1460:  Unix-to-Unix decoding depth {
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>imap.packets</strong>: total packets
+<strong>imap.packets</strong>: total packets processed
+</p>
+</li>
+<li>
+<p>
+<strong>imap.sessions</strong>: total imap sessions
+</p>
+</li>
+<li>
+<p>
+<strong>imap.b64 attachments</strong>: total base64 attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>imap.b64 decoded bytes</strong>: total base64 decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>imap.qp attachments</strong>: total quoted-printable attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>imap.qp decoded bytes</strong>: total quoted-printable decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>imap.uu attachments</strong>: total uu attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>imap.uu decoded bytes</strong>: total uu decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>imap.non-encoded attachments</strong>: total non-encoded attachments extracted
+</p>
+</li>
+<li>
+<p>
+<strong>imap.non-encoded bytes</strong>: total non-encoded extracted bytes
 </p>
 </li>
 </ul></div>
@@ -6786,7 +7016,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test ip4 trim</strong>: During inline mode, would have eth packets trimmed to datagram size
+<strong>normalizer.test ip4 trim</strong>: test eth packets trimmed to datagram size
 </p>
 </li>
 <li>
@@ -6796,7 +7026,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test ip4 tos</strong>: During inline mode, would have type of service normalizations
+<strong>normalizer.test ip4 tos</strong>: test type of service normalizations
 </p>
 </li>
 <li>
@@ -6806,7 +7036,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test ip4 df</strong>: During inline mode, would have don&#8217;t frag bit normalizations
+<strong>normalizer.test ip4 df</strong>: test don&#8217;t frag bit normalizations
 </p>
 </li>
 <li>
@@ -6816,7 +7046,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test ip4 rf</strong>: During inline mode, would have reserved flag bit clears
+<strong>normalizer.test ip4 rf</strong>: test reserved flag bit clears
 </p>
 </li>
 <li>
@@ -6826,7 +7056,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test ip4 ttl</strong>: During inline mode, would have time-to-live normalizations
+<strong>normalizer.test ip4 ttl</strong>: test time-to-live normalizations
 </p>
 </li>
 <li>
@@ -6836,7 +7066,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test ip4 opts</strong>: During inline mode, would have ip4 options cleared
+<strong>normalizer.test ip4 opts</strong>: test ip4 options cleared
 </p>
 </li>
 <li>
@@ -6846,7 +7076,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test icmp4 echo</strong>: During inline mode, would have icmp4 ping normalizations
+<strong>normalizer.test icmp4 echo</strong>: test icmp4 ping normalizations
 </p>
 </li>
 <li>
@@ -6856,7 +7086,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test ip6 hops</strong>: During inline mode, would have ip6 hop limit normalizations
+<strong>normalizer.test ip6 hops</strong>: test ip6 hop limit normalizations
 </p>
 </li>
 <li>
@@ -6866,7 +7096,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test ip6 options</strong>: During inline mode, would have ip6 options cleared
+<strong>normalizer.test ip6 options</strong>: test ip6 options cleared
 </p>
 </li>
 <li>
@@ -6876,7 +7106,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test icmp6 echo</strong>: During inline mode, would have icmp6 echo normalizations
+<strong>normalizer.test icmp6 echo</strong>: test icmp6 echo normalizations
 </p>
 </li>
 <li>
@@ -6886,7 +7116,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp syn options</strong>: During inline mode, would have SYN only options cleared from non-SYN packets
+<strong>normalizer.test tcp syn options</strong>: test SYN only options cleared from non-SYN packets
 </p>
 </li>
 <li>
@@ -6896,7 +7126,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp options</strong>: During inline mode, would have packets with options cleared
+<strong>normalizer.test tcp options</strong>: test packets with options cleared
 </p>
 </li>
 <li>
@@ -6906,7 +7136,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp paddding</strong>: During inline mode, would have packets with padding cleared
+<strong>normalizer.test tcp paddding</strong>: test packets with padding cleared
 </p>
 </li>
 <li>
@@ -6916,7 +7146,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp reserved</strong>: During inline mode, would have packets with reserved bits cleared
+<strong>normalizer.test tcp reserved</strong>: test packets with reserved bits cleared
 </p>
 </li>
 <li>
@@ -6926,7 +7156,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp nonce</strong>: During inline mode, would have packets with nonce bit cleared
+<strong>normalizer.test tcp nonce</strong>: test packets with nonce bit cleared
 </p>
 </li>
 <li>
@@ -6936,7 +7166,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp urgent ptr</strong>: During inline mode, would have packets without data with urgent pointer cleared
+<strong>normalizer.test tcp urgent ptr</strong>: test packets without data with urgent pointer cleared
 </p>
 </li>
 <li>
@@ -6946,7 +7176,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp ecn pkt</strong>: During inline mode, would have packets with ECN bits cleared
+<strong>normalizer.test tcp ecn pkt</strong>: test packets with ECN bits cleared
 </p>
 </li>
 <li>
@@ -6956,7 +7186,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp ts ecr</strong>: During inline mode, would have timestamp cleared on non-ACKs
+<strong>normalizer.test tcp ts ecr</strong>: test timestamp cleared on non-ACKs
 </p>
 </li>
 <li>
@@ -6966,7 +7196,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp req urg</strong>: During inline mode, would have cleared urgent pointer when urgent flag is not set
+<strong>normalizer.test tcp req urg</strong>: test cleared urgent pointer when urgent flag is not set
 </p>
 </li>
 <li>
@@ -6976,7 +7206,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp req pay</strong>: During inline mode, would have cleared urgent pointer and urgent flag when there is no payload
+<strong>normalizer.test tcp req pay</strong>: test cleared urgent pointer and urgent flag when there is no payload
 </p>
 </li>
 <li>
@@ -6986,7 +7216,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp req urp</strong>: During inline mode, would have cleared the urgent flag if the urgent pointer is not set
+<strong>normalizer.test tcp req urp</strong>: test cleared the urgent flag if the urgent pointer is not set
 </p>
 </li>
 <li>
@@ -6996,7 +7226,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp trim syn</strong>: During inline mode, would have tcp segments trimmed on SYN
+<strong>normalizer.test tcp trim syn</strong>: test tcp segments trimmed on SYN
 </p>
 </li>
 <li>
@@ -7006,7 +7236,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp trim rst</strong>: During inline mode, would have RST packets with data trimmed
+<strong>normalizer.test tcp trim rst</strong>: test RST packets with data trimmed
 </p>
 </li>
 <li>
@@ -7016,7 +7246,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp trim win</strong>: During inline mode, would have data trimed to window
+<strong>normalizer.test tcp trim win</strong>: test data trimed to window
 </p>
 </li>
 <li>
@@ -7026,7 +7256,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp trim mss</strong>: During inline mode, would have data trimmed to MSS
+<strong>normalizer.test tcp trim mss</strong>: test data trimmed to MSS
 </p>
 </li>
 <li>
@@ -7036,7 +7266,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp ecn session</strong>: During inline mode, would have ECN bits cleared
+<strong>normalizer.test tcp ecn session</strong>: test ECN bits cleared
 </p>
 </li>
 <li>
@@ -7046,7 +7276,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp ts nop</strong>: During inline mode, would have timestamp options cleared
+<strong>normalizer.test tcp ts nop</strong>: test timestamp options cleared
 </p>
 </li>
 <li>
@@ -7056,7 +7286,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp ips data</strong>: During inline mode, would have normalized segments
+<strong>normalizer.test tcp ips data</strong>: test normalized segments
 </p>
 </li>
 <li>
@@ -7066,7 +7296,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp block</strong>: During inline mode, would have blocked segments
+<strong>normalizer.test tcp block</strong>: test blocked segments
 </p>
 </li>
 </ul></div>
@@ -7094,7 +7324,7 @@ int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory for 
 </li>
 <li>
 <p>
-int <strong>perf_monitor.max_file_size</strong> = 4294967295: files will be rolled over if they exceed this size { 4096: }
+int <strong>perf_monitor.max_file_size</strong> = 1073741824: files will be rolled over if they exceed this size { 4096: }
 </p>
 </li>
 <li>
@@ -7216,7 +7446,52 @@ int <strong>pop.uu_decode_depth</strong> = 1460:  Unix-to-Unix decoding depth { 
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>pop.packets</strong>: total packets
+<strong>pop.packets</strong>: total packets processed
+</p>
+</li>
+<li>
+<p>
+<strong>pop.sessions</strong>: total pop sessions
+</p>
+</li>
+<li>
+<p>
+<strong>pop.b64 attachments</strong>: total base64 attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>pop.b64 decoded bytes</strong>: total base64 decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>pop.qp attachments</strong>: total quoted-printable attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>pop.qp decoded bytes</strong>: total quoted-printable decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>pop.uu attachments</strong>: total uu attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>pop.uu decoded bytes</strong>: total uu decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>pop.non-encoded attachments</strong>: total non-encoded attachments extracted
+</p>
+</li>
+<li>
+<p>
+<strong>pop.non-encoded bytes</strong>: total non-encoded extracted bytes
 </p>
 </li>
 </ul></div>
@@ -7424,6 +7699,95 @@ int <strong>port_scan_global.memcap</strong> = 1048576: maximum tracker memory {
 <li>
 <p>
 <strong>port_scan_global.packets</strong>: total packets
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_reputation">reputation</h3>
+<div class="paragraph"><p>What: reputation inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>reputation.blacklist</strong>: blacklist file name with ip lists
+</p>
+</li>
+<li>
+<p>
+int <strong>reputation.memcap</strong> = 500: maximum total memory allocated { 1:4095 }
+</p>
+</li>
+<li>
+<p>
+enum <strong>reputation.nested_ip</strong> = inner: ip to use when there is IP encapsulation { inner|outer|all }
+</p>
+</li>
+<li>
+<p>
+enum <strong>reputation.priority</strong> = whitelist: defines priority when there is a decision conflict during run-time { blacklist|whitelist }
+</p>
+</li>
+<li>
+<p>
+bool <strong>reputation.scan_local</strong> = false: inspect local address defined in RFC 1918
+</p>
+</li>
+<li>
+<p>
+enum <strong>reputation.white</strong> = unblack: specify the meaning of whitelist { unblack|trust }
+</p>
+</li>
+<li>
+<p>
+string <strong>reputation.whitelist</strong>: whitelist file name with ip lists
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>136:1</strong> (reputation) packets blacklisted
+</p>
+</li>
+<li>
+<p>
+<strong>136:2</strong> (reputation) Packets whitelisted
+</p>
+</li>
+<li>
+<p>
+<strong>136:3</strong> (reputation) Packets monitored
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>reputation.packets</strong>: total packets processed
+</p>
+</li>
+<li>
+<p>
+<strong>reputation.blacklisted</strong>: number of packets blacklisted
+</p>
+</li>
+<li>
+<p>
+<strong>reputation.whitelisted</strong>: number of packets whitelisted
+</p>
+</li>
+<li>
+<p>
+<strong>reputation.monitored</strong>: number of packets monitored
+</p>
+</li>
+<li>
+<p>
+<strong>reputation.memory_allocated</strong>: total memory allocated
 </p>
 </li>
 </ul></div>
@@ -7678,6 +8042,11 @@ string <strong>sip.methods</strong> = invite cancel ack  bye register options: l
 <div class="ulist"><ul>
 <li>
 <p>
+<strong>sip.packets</strong>: total packets
+</p>
+</li>
+<li>
+<p>
 <strong>sip.sessions</strong>: total sessions
 </p>
 </li>
@@ -7703,12 +8072,127 @@ string <strong>sip.methods</strong> = invite cancel ack  bye register options: l
 </li>
 <li>
 <p>
-<strong>sip.requests</strong>: total requests
+<strong>sip.total requests</strong>: total requests
 </p>
 </li>
 <li>
 <p>
-<strong>sip.responses</strong>: total responses
+<strong>sip.invite</strong>: invite
+</p>
+</li>
+<li>
+<p>
+<strong>sip.cancel</strong>: cancel
+</p>
+</li>
+<li>
+<p>
+<strong>sip.ack</strong>: ack
+</p>
+</li>
+<li>
+<p>
+<strong>sip.bye</strong>: bye
+</p>
+</li>
+<li>
+<p>
+<strong>sip.register</strong>: register
+</p>
+</li>
+<li>
+<p>
+<strong>sip.options</strong>: options
+</p>
+</li>
+<li>
+<p>
+<strong>sip.refer</strong>: refer
+</p>
+</li>
+<li>
+<p>
+<strong>sip.subscribe</strong>: subscribe
+</p>
+</li>
+<li>
+<p>
+<strong>sip.update</strong>: update
+</p>
+</li>
+<li>
+<p>
+<strong>sip.join</strong>: join
+</p>
+</li>
+<li>
+<p>
+<strong>sip.info</strong>: info
+</p>
+</li>
+<li>
+<p>
+<strong>sip.message</strong>: message
+</p>
+</li>
+<li>
+<p>
+<strong>sip.notify</strong>: notify
+</p>
+</li>
+<li>
+<p>
+<strong>sip.prack</strong>: prack
+</p>
+</li>
+<li>
+<p>
+<strong>sip.total responses</strong>: total responses
+</p>
+</li>
+<li>
+<p>
+<strong>sip.1xx</strong>: 1xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.2xx</strong>: 2xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.3xx</strong>: 3xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.4xx</strong>: 4xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.5xx</strong>: 5xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.6xx</strong>: 6xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.7xx</strong>: 7xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.8xx</strong>: 8xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.9xx</strong>: 9xx
 </p>
 </li>
 </ul></div>
@@ -7907,7 +8391,62 @@ enum <strong>smtp.xlink2state</strong> = alert: enable/disable xlink2state alert
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>smtp.packets</strong>: total packets
+<strong>smtp.packets</strong>: total packets processed
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.sessions</strong>: total smtp sessions
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.concurrent sessions</strong>: total concurrent smtp sessions
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.max concurrent sessions</strong>: maximum concurrent smtp sessions
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.b64 attachments</strong>: total base64 attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.b64 decoded bytes</strong>: total base64 decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.qp attachments</strong>: total quoted-printable attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.qp decoded bytes</strong>: total quoted-printable decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.uu attachments</strong>: total uu attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.uu decoded bytes</strong>: total uu decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.non-encoded attachments</strong>: total non-encoded attachments extracted
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.non-encoded bytes</strong>: total non-encoded extracted bytes
 </p>
 </li>
 </ul></div>
@@ -9489,6 +10028,55 @@ int <strong>detection_filter.seconds</strong>: length of interval to count hits 
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_dnp3_data">dnp3_data</h3>
+<div class="paragraph"><p>What: sets the cursor to dnp3 data</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+</div>
+<div class="sect2">
+<h3 id="_dnp3_func">dnp3_func</h3>
+<div class="paragraph"><p>What: detection option to check dnp3 function code</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>dnp3_func.~</strong>: match dnp3 function code or name
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_dnp3_ind">dnp3_ind</h3>
+<div class="paragraph"><p>What: detection option to check dnp3 indicator flags</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>dnp3_ind.~</strong>: match given dnp3 indicator flags
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_dnp3_obj">dnp3_obj</h3>
+<div class="paragraph"><p>What: detection option to check dnp3 object headers</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>dnp3_obj.group</strong> = 0: match given dnp3 object header group { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>dnp3_obj.var</strong> = 0: match given dnp3 object header var { 0:255 }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_dsize">dsize</h3>
 <div class="paragraph"><p>What: rule option to test payload size</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
@@ -9947,13 +10535,13 @@ string <strong>msg.~</strong>: message describing rule
 </div>
 <div class="sect2">
 <h3 id="_pcre">pcre</h3>
-<div class="paragraph"><p>What: rule option for matching payload data with regex</p></div>
+<div class="paragraph"><p>What: rule option for matching payload data with pcre</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>pcre.~regex</strong>: Snort regular expression
+string <strong>pcre.~re</strong>: Snort regular expression
 </p>
 </li>
 </ul></div>
@@ -10008,6 +10596,39 @@ string <strong>reference.~scheme</strong>: reference scheme
 <li>
 <p>
 string <strong>reference.~id</strong>: reference id
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_regex">regex</h3>
+<div class="paragraph"><p>What: rule option for matching payload data with hyperscan regex</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>regex.~re</strong>: hyperscan regular expression
+</p>
+</li>
+<li>
+<p>
+implied <strong>regex.nocase</strong>: case insensitive match
+</p>
+</li>
+<li>
+<p>
+implied <strong>regex.dotall</strong>: matching a . will not exclude newlines
+</p>
+</li>
+<li>
+<p>
+implied <strong>regex.multiline</strong>: ^ and $ anchors match any newlines in data
+</p>
+</li>
+<li>
+<p>
+implied <strong>regex.relative</strong>: start search from end of last match instead of start of buffer
 </p>
 </li>
 </ul></div>
@@ -10509,7 +11130,7 @@ bool <strong>alert_csv.file</strong> = false: output to alert_csv.txt instead of
 </li>
 <li>
 <p>
-multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen dgm_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | dir | dgm_len | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | ip_id | ip_len | msg | pkt_gen | pkt_num | proto | rev | rule | sid | src_addr | src_ap | src_port | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len }
+multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen dgm_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | dir | dgm_len | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | pkt_gen | pkt_num | proto | rev | rule | sid | src_addr | src_ap | src_port | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len }
 </p>
 </li>
 <li>
@@ -14686,18 +15307,14 @@ into the Snort binary.  For a full list of build features, run ./configure
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>--enable-ppm</strong>: enable packet and rule performance monitoring and coarse
-   latency enforcement.
+<strong>--enable-ppm</strong>: enable building packet and rule performance monitoring
+   and coarse latency enforcement.
 </p>
 </li>
 <li>
 <p>
-<strong>--enable-perf-profiling</strong>: enable module and rule performance profiling.
-</p>
-</li>
-<li>
-<p>
-<strong>--enable-shell</strong>: enable local and remote command line shell support.
+<strong>--enable-shell</strong>: enable building local and remote command line shell
+   support.
 </p>
 </li>
 </ul></div>
@@ -14706,19 +15323,24 @@ present.  There is no need to explicitly enable.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>lzma</strong>: from <a href="http://www.7-zip.org/sdk.html">http://www.7-zip.org/sdk.html</a> for decompression of SWF fles.
+<strong>lzma</strong>: for decompression of SWF and PDF files.
 </p>
 </li>
 <li>
 <p>
-<strong>openssl</strong>: from <a href="https://www.openssl.org">https://www.openssl.org</a> for SHA and MD5 file signatures and
-  the protected_content rule option.
+<strong>openssl</strong>: for SHA and MD5 file signatures and the protected_content rule
+  option.
 </p>
 </li>
 <li>
 <p>
 *intel-soft-cpm": an optional pattern matcher based on a library from
   Intel.
+</p>
+</li>
+<li>
+<p>
+hyperscan for the regex rule option and hyperscan search engine.
 </p>
 </li>
 </ul></div>
@@ -14738,8 +15360,9 @@ can use these options:</p></div>
 </p>
 </li>
 </ul></div>
-<div class="paragraph"><p>These can be use for pcap, luajit, pcre, dnet, daq, lzma, openssl, and
-intel-soft-cpm packages.</p></div>
+<div class="paragraph"><p>These can be use for pcap, luajit, pcre, dnet, daq, lzma, openssl,
+intel-soft-cpm, and hyperscan packages.  For more information on these
+libraries see the Getting Started section of the manual.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_environment_variables">Environment Variables</h3>
@@ -15549,7 +16172,7 @@ int <strong>active.min_interval</strong> = 255: minimum number of seconds betwee
 </li>
 <li>
 <p>
-multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen dgm_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | dir | dgm_len | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | ip_id | ip_len | msg | pkt_gen | pkt_num | proto | rev | rule | sid | src_addr | src_ap | src_port | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len }
+multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen dgm_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | dir | dgm_len | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | pkt_gen | pkt_num | proto | rev | rule | sid | src_addr | src_ap | src_port | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len }
 </p>
 </li>
 <li>
@@ -16154,6 +16777,31 @@ enum <strong>detection_filter.track</strong>: track hits by source or destinatio
 </li>
 <li>
 <p>
+bool <strong>dnp3.check_crc</strong> = false: validate checksums in DNP3 link layer frames
+</p>
+</li>
+<li>
+<p>
+string <strong>dnp3_func.~</strong>: match dnp3 function code or name
+</p>
+</li>
+<li>
+<p>
+string <strong>dnp3_ind.~</strong>: match given dnp3 indicator flags
+</p>
+</li>
+<li>
+<p>
+int <strong>dnp3_obj.group</strong> = 0: match given dnp3 object header group { 0:255 }
+</p>
+</li>
+<li>
+<p>
+int <strong>dnp3_obj.var</strong> = 0: match given dnp3 object header var { 0:255 }
+</p>
+</li>
+<li>
+<p>
 int <strong>dpx.max</strong> = 0: maximum payload before alert { 0:65535 }
 </p>
 </li>
@@ -16250,6 +16898,36 @@ bool <strong>file_id.enable_signature</strong> = false: enable signature calcula
 <li>
 <p>
 bool <strong>file_id.enable_type</strong> = false: enable type ID
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.file_policy[].use.enable_file_capture</strong> = false: true/false &#8594; enable/disable file capture
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.file_policy[].use.enable_file_signature</strong> = false: true/false &#8594; enable/disable file signature
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.file_policy[].use.enable_file_type</strong> = false: true/false &#8594; enable/disable file type identification
+</p>
+</li>
+<li>
+<p>
+enum <strong>file_id.file_policy[].use.verdict</strong> = unknown: what to do with matching traffic { unknown | log | stop | block | reset  }
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.file_policy[].when.file_type_id</strong> = 0: unique ID for file type in file magic rule { 0: }
+</p>
+</li>
+<li>
+<p>
+string <strong>file_id.file_policy[].when.sha256</strong>: SHA 256
 </p>
 </li>
 <li>
@@ -17084,11 +17762,6 @@ enum <strong>log_pcap.units</strong> = B: bytes | KB | MB | GB { B | K | M | G }
 </li>
 <li>
 <p>
-string <strong>lowmem_q.var</strong>: additional print text
-</p>
-</li>
-<li>
-<p>
 int <strong>md5.length</strong>: number of octets in plain text { 1:65535 }
 </p>
 </li>
@@ -17444,7 +18117,7 @@ bool <strong>packets.vlan_agnostic</strong> = false: determines whether VLAN inf
 </li>
 <li>
 <p>
-string <strong>pcre.~regex</strong>: Snort regular expression
+string <strong>pcre.~re</strong>: Snort regular expression
 </p>
 </li>
 <li>
@@ -17499,7 +18172,7 @@ bool <strong>perf_monitor.max</strong> = false: calculate theoretical maximum pe
 </li>
 <li>
 <p>
-int <strong>perf_monitor.max_file_size</strong> = 4294967295: files will be rolled over if they exceed this size { 4096: }
+int <strong>perf_monitor.max_file_size</strong> = 1073741824: files will be rolled over if they exceed this size { 4096: }
 </p>
 </li>
 <li>
@@ -17644,6 +18317,51 @@ bool <strong>process.utc</strong> = false: use UTC instead of local time for tim
 </li>
 <li>
 <p>
+int <strong>profiler.memory.count</strong> = 0: print results to given level (0 = all) { 0: }
+</p>
+</li>
+<li>
+<p>
+bool <strong>profiler.memory.show</strong> = true: show module memory profile stats
+</p>
+</li>
+<li>
+<p>
+enum <strong>profiler.memory.sort</strong> = total_used: sort by given field { none | allocations | total_used | avg_allocation  }
+</p>
+</li>
+<li>
+<p>
+int <strong>profiler.modules.count</strong> = 0: print results to given level (0 = all) { 0: }
+</p>
+</li>
+<li>
+<p>
+bool <strong>profiler.modules.show</strong> = true: show module time profile stats
+</p>
+</li>
+<li>
+<p>
+enum <strong>profiler.modules.sort</strong> = total_time: sort by given field { none | checks | avg_check | total_time  }
+</p>
+</li>
+<li>
+<p>
+int <strong>profiler.rules.count</strong> = 0: print results to given level (0 = all) { 0: }
+</p>
+</li>
+<li>
+<p>
+bool <strong>profiler.rules.show</strong> = true: show rule time profile stats
+</p>
+</li>
+<li>
+<p>
+enum <strong>profiler.rules.sort</strong> = total_time: sort by given field { none | checks | avg_check | total_time | matches | no_matches | avg_match | avg_no_match }
+</p>
+</li>
+<li>
+<p>
 string <strong>rate_filter[].apply_to</strong>: restrict filter to these addresses according to track
 </p>
 </li>
@@ -17714,6 +18432,31 @@ string <strong>references[].url</strong>: where this reference is defined
 </li>
 <li>
 <p>
+implied <strong>regex.dotall</strong>: matching a . will not exclude newlines
+</p>
+</li>
+<li>
+<p>
+implied <strong>regex.multiline</strong>: ^ and $ anchors match any newlines in data
+</p>
+</li>
+<li>
+<p>
+implied <strong>regex.nocase</strong>: case insensitive match
+</p>
+</li>
+<li>
+<p>
+implied <strong>regex.relative</strong>: start search from end of last match instead of start of buffer
+</p>
+</li>
+<li>
+<p>
+string <strong>regex.~re</strong>: hyperscan regular expression
+</p>
+</li>
+<li>
+<p>
 enum <strong>reject.control</strong>: send icmp unreachable(s) { network|host|port|all }
 </p>
 </li>
@@ -17730,6 +18473,41 @@ string <strong>rem.~</strong>: comment
 <li>
 <p>
 string <strong>replace.~</strong>: byte code to replace with
+</p>
+</li>
+<li>
+<p>
+string <strong>reputation.blacklist</strong>: blacklist file name with ip lists
+</p>
+</li>
+<li>
+<p>
+int <strong>reputation.memcap</strong> = 500: maximum total memory allocated { 1:4095 }
+</p>
+</li>
+<li>
+<p>
+enum <strong>reputation.nested_ip</strong> = inner: ip to use when there is IP encapsulation { inner|outer|all }
+</p>
+</li>
+<li>
+<p>
+enum <strong>reputation.priority</strong> = whitelist: defines priority when there is a decision conflict during run-time { blacklist|whitelist }
+</p>
+</li>
+<li>
+<p>
+bool <strong>reputation.scan_local</strong> = false: inspect local address defined in RFC 1918
+</p>
+</li>
+<li>
+<p>
+enum <strong>reputation.white</strong> = unblack: specify the meaning of whitelist { unblack|trust }
+</p>
+</li>
+<li>
+<p>
+string <strong>reputation.whitelist</strong>: whitelist file name with ip lists
 </p>
 </li>
 <li>
@@ -17829,7 +18607,7 @@ int <strong>search_engine.max_queue_events</strong> = 5: maximum number of match
 </li>
 <li>
 <p>
-dynamic <strong>search_engine.search_method</strong> = ac_bnfa_q: set fast pattern algorithm - choose available search engine { ac_banded | ac_bnfa | ac_bnfa_q | ac_full | ac_full_q | ac_sparse | ac_sparse_bands | ac_std | lowmem | lowmem_q }
+dynamic <strong>search_engine.search_method</strong> = ac_bnfa: set fast pattern algorithm - choose available search engine { ac_banded | ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan | lowmem }
 </p>
 </li>
 <li>
@@ -19479,6 +20257,31 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>dnp3.dnp3 application pdus</strong>: total dnp3 application pdus
+</p>
+</li>
+<li>
+<p>
+<strong>dnp3.dnp3 link layer frames</strong>: total dnp3 link layer frames
+</p>
+</li>
+<li>
+<p>
+<strong>dnp3.tcp pdus</strong>: total tcp pdus
+</p>
+</li>
+<li>
+<p>
+<strong>dnp3.total packets</strong>: total packets
+</p>
+</li>
+<li>
+<p>
+<strong>dnp3.udp packets</strong>: total udp packets
+</p>
+</li>
+<li>
+<p>
 <strong>dns.packets</strong>: total packets processed
 </p>
 </li>
@@ -19629,7 +20432,52 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>imap.packets</strong>: total packets
+<strong>imap.b64 attachments</strong>: total base64 attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>imap.b64 decoded bytes</strong>: total base64 decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>imap.non-encoded attachments</strong>: total non-encoded attachments extracted
+</p>
+</li>
+<li>
+<p>
+<strong>imap.non-encoded bytes</strong>: total non-encoded extracted bytes
+</p>
+</li>
+<li>
+<p>
+<strong>imap.packets</strong>: total packets processed
+</p>
+</li>
+<li>
+<p>
+<strong>imap.qp attachments</strong>: total quoted-printable attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>imap.qp decoded bytes</strong>: total quoted-printable decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>imap.sessions</strong>: total imap sessions
+</p>
+</li>
+<li>
+<p>
+<strong>imap.uu attachments</strong>: total uu attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>imap.uu decoded bytes</strong>: total uu decoded bytes
 </p>
 </li>
 <li>
@@ -19794,147 +20642,147 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>normalizer.test icmp4 echo</strong>: During inline mode, would have icmp4 ping normalizations
+<strong>normalizer.test icmp4 echo</strong>: test icmp4 ping normalizations
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test icmp6 echo</strong>: During inline mode, would have icmp6 echo normalizations
+<strong>normalizer.test icmp6 echo</strong>: test icmp6 echo normalizations
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test ip4 df</strong>: During inline mode, would have don&#8217;t frag bit normalizations
+<strong>normalizer.test ip4 df</strong>: test don&#8217;t frag bit normalizations
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test ip4 opts</strong>: During inline mode, would have ip4 options cleared
+<strong>normalizer.test ip4 opts</strong>: test ip4 options cleared
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test ip4 rf</strong>: During inline mode, would have reserved flag bit clears
+<strong>normalizer.test ip4 rf</strong>: test reserved flag bit clears
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test ip4 tos</strong>: During inline mode, would have type of service normalizations
+<strong>normalizer.test ip4 tos</strong>: test type of service normalizations
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test ip4 trim</strong>: During inline mode, would have eth packets trimmed to datagram size
+<strong>normalizer.test ip4 trim</strong>: test eth packets trimmed to datagram size
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test ip4 ttl</strong>: During inline mode, would have time-to-live normalizations
+<strong>normalizer.test ip4 ttl</strong>: test time-to-live normalizations
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test ip6 hops</strong>: During inline mode, would have ip6 hop limit normalizations
+<strong>normalizer.test ip6 hops</strong>: test ip6 hop limit normalizations
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test ip6 options</strong>: During inline mode, would have ip6 options cleared
+<strong>normalizer.test ip6 options</strong>: test ip6 options cleared
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp block</strong>: During inline mode, would have blocked segments
+<strong>normalizer.test tcp block</strong>: test blocked segments
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp ecn pkt</strong>: During inline mode, would have packets with ECN bits cleared
+<strong>normalizer.test tcp ecn pkt</strong>: test packets with ECN bits cleared
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp ecn session</strong>: During inline mode, would have ECN bits cleared
+<strong>normalizer.test tcp ecn session</strong>: test ECN bits cleared
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp ips data</strong>: During inline mode, would have normalized segments
+<strong>normalizer.test tcp ips data</strong>: test normalized segments
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp nonce</strong>: During inline mode, would have packets with nonce bit cleared
+<strong>normalizer.test tcp nonce</strong>: test packets with nonce bit cleared
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp options</strong>: During inline mode, would have packets with options cleared
+<strong>normalizer.test tcp options</strong>: test packets with options cleared
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp paddding</strong>: During inline mode, would have packets with padding cleared
+<strong>normalizer.test tcp paddding</strong>: test packets with padding cleared
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp req pay</strong>: During inline mode, would have cleared urgent pointer and urgent flag when there is no payload
+<strong>normalizer.test tcp req pay</strong>: test cleared urgent pointer and urgent flag when there is no payload
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp req urg</strong>: During inline mode, would have cleared urgent pointer when urgent flag is not set
+<strong>normalizer.test tcp req urg</strong>: test cleared urgent pointer when urgent flag is not set
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp req urp</strong>: During inline mode, would have cleared the urgent flag if the urgent pointer is not set
+<strong>normalizer.test tcp req urp</strong>: test cleared the urgent flag if the urgent pointer is not set
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp reserved</strong>: During inline mode, would have packets with reserved bits cleared
+<strong>normalizer.test tcp reserved</strong>: test packets with reserved bits cleared
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp syn options</strong>: During inline mode, would have SYN only options cleared from non-SYN packets
+<strong>normalizer.test tcp syn options</strong>: test SYN only options cleared from non-SYN packets
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp trim mss</strong>: During inline mode, would have data trimmed to MSS
+<strong>normalizer.test tcp trim mss</strong>: test data trimmed to MSS
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp trim rst</strong>: During inline mode, would have RST packets with data trimmed
+<strong>normalizer.test tcp trim rst</strong>: test RST packets with data trimmed
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp trim syn</strong>: During inline mode, would have tcp segments trimmed on SYN
+<strong>normalizer.test tcp trim syn</strong>: test tcp segments trimmed on SYN
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp trim win</strong>: During inline mode, would have data trimed to window
+<strong>normalizer.test tcp trim win</strong>: test data trimed to window
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp ts ecr</strong>: During inline mode, would have timestamp cleared on non-ACKs
+<strong>normalizer.test tcp ts ecr</strong>: test timestamp cleared on non-ACKs
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp ts nop</strong>: During inline mode, would have timestamp options cleared
+<strong>normalizer.test tcp ts nop</strong>: test timestamp options cleared
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.test tcp urgent ptr</strong>: During inline mode, would have packets without data with urgent pointer cleared
+<strong>normalizer.test tcp urgent ptr</strong>: test packets without data with urgent pointer cleared
 </p>
 </li>
 <li>
@@ -19944,7 +20792,52 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>pop.packets</strong>: total packets
+<strong>pop.b64 attachments</strong>: total base64 attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>pop.b64 decoded bytes</strong>: total base64 decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>pop.non-encoded attachments</strong>: total non-encoded attachments extracted
+</p>
+</li>
+<li>
+<p>
+<strong>pop.non-encoded bytes</strong>: total non-encoded extracted bytes
+</p>
+</li>
+<li>
+<p>
+<strong>pop.packets</strong>: total packets processed
+</p>
+</li>
+<li>
+<p>
+<strong>pop.qp attachments</strong>: total quoted-printable attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>pop.qp decoded bytes</strong>: total quoted-printable decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>pop.sessions</strong>: total pop sessions
+</p>
+</li>
+<li>
+<p>
+<strong>pop.uu attachments</strong>: total uu attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>pop.uu decoded bytes</strong>: total uu decoded bytes
 </p>
 </li>
 <li>
@@ -19954,7 +20847,92 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>reputation.blacklisted</strong>: number of packets blacklisted
+</p>
+</li>
+<li>
+<p>
+<strong>reputation.memory_allocated</strong>: total memory allocated
+</p>
+</li>
+<li>
+<p>
+<strong>reputation.monitored</strong>: number of packets monitored
+</p>
+</li>
+<li>
+<p>
+<strong>reputation.packets</strong>: total packets processed
+</p>
+</li>
+<li>
+<p>
+<strong>reputation.whitelisted</strong>: number of packets whitelisted
+</p>
+</li>
+<li>
+<p>
 <strong>rpc_decode.packets</strong>: total packets
+</p>
+</li>
+<li>
+<p>
+<strong>sip.1xx</strong>: 1xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.2xx</strong>: 2xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.3xx</strong>: 3xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.4xx</strong>: 4xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.5xx</strong>: 5xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.6xx</strong>: 6xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.7xx</strong>: 7xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.8xx</strong>: 8xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.9xx</strong>: 9xx
+</p>
+</li>
+<li>
+<p>
+<strong>sip.ack</strong>: ack
+</p>
+</li>
+<li>
+<p>
+<strong>sip.bye</strong>: bye
+</p>
+</li>
+<li>
+<p>
+<strong>sip.cancel</strong>: cancel
 </p>
 </li>
 <li>
@@ -19979,12 +20957,52 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>sip.requests</strong>: total requests
+<strong>sip.info</strong>: info
 </p>
 </li>
 <li>
 <p>
-<strong>sip.responses</strong>: total responses
+<strong>sip.invite</strong>: invite
+</p>
+</li>
+<li>
+<p>
+<strong>sip.join</strong>: join
+</p>
+</li>
+<li>
+<p>
+<strong>sip.message</strong>: message
+</p>
+</li>
+<li>
+<p>
+<strong>sip.notify</strong>: notify
+</p>
+</li>
+<li>
+<p>
+<strong>sip.options</strong>: options
+</p>
+</li>
+<li>
+<p>
+<strong>sip.packets</strong>: total packets
+</p>
+</li>
+<li>
+<p>
+<strong>sip.prack</strong>: prack
+</p>
+</li>
+<li>
+<p>
+<strong>sip.refer</strong>: refer
+</p>
+</li>
+<li>
+<p>
+<strong>sip.register</strong>: register
 </p>
 </li>
 <li>
@@ -19994,7 +21012,82 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>smtp.packets</strong>: total packets
+<strong>sip.subscribe</strong>: subscribe
+</p>
+</li>
+<li>
+<p>
+<strong>sip.total requests</strong>: total requests
+</p>
+</li>
+<li>
+<p>
+<strong>sip.total responses</strong>: total responses
+</p>
+</li>
+<li>
+<p>
+<strong>sip.update</strong>: update
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.b64 attachments</strong>: total base64 attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.b64 decoded bytes</strong>: total base64 decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.concurrent sessions</strong>: total concurrent smtp sessions
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.max concurrent sessions</strong>: maximum concurrent smtp sessions
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.non-encoded attachments</strong>: total non-encoded attachments extracted
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.non-encoded bytes</strong>: total non-encoded extracted bytes
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.packets</strong>: total packets processed
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.qp attachments</strong>: total quoted-printable attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.qp decoded bytes</strong>: total quoted-printable decoded bytes
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.sessions</strong>: total smtp sessions
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.uu attachments</strong>: total uu attachments decoded
+</p>
+</li>
+<li>
+<p>
+<strong>smtp.uu decoded bytes</strong>: total uu decoded bytes
 </p>
 </li>
 <li>
@@ -20654,6 +21747,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>136</strong>: reputation
+</p>
+</li>
+<li>
+<p>
 <strong>137</strong>: ssl
 </p>
 </li>
@@ -20680,6 +21778,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>144</strong>: modbus
+</p>
+</li>
+<li>
+<p>
+<strong>145</strong>: dnp3
 </p>
 </li>
 <li>
@@ -22239,6 +23342,21 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>136:1</strong> (reputation) packets blacklisted
+</p>
+</li>
+<li>
+<p>
+<strong>136:2</strong> (reputation) Packets whitelisted
+</p>
+</li>
+<li>
+<p>
+<strong>136:3</strong> (reputation) Packets monitored
+</p>
+</li>
+<li>
+<p>
 <strong>137:1</strong> (ssl) Invalid Client HELLO after Server HELLO Detected
 </p>
 </li>
@@ -22470,6 +23588,36 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>144:3</strong> (modbus) Reserved Modbus function code in use
+</p>
+</li>
+<li>
+<p>
+<strong>145:1</strong> (dnp3) DNP3 Link-Layer Frame contains bad CRC.
+</p>
+</li>
+<li>
+<p>
+<strong>145:2</strong> (dnp3) DNP3 Link-Layer Frame was dropped.
+</p>
+</li>
+<li>
+<p>
+<strong>145:3</strong> (dnp3) DNP3 Transport-Layer Segment was dropped during reassembly.
+</p>
+</li>
+<li>
+<p>
+<strong>145:4</strong> (dnp3) DNP3 Reassembly Buffer was cleared without reassembling a complete message.
+</p>
+</li>
+<li>
+<p>
+<strong>145:5</strong> (dnp3) DNP3 Link-Layer Frame uses a reserved address.
+</p>
+</li>
+<li>
+<p>
+<strong>145:6</strong> (dnp3) DNP3 Application-Layer Fragment uses a reserved function code.
 </p>
 </li>
 <li>
@@ -23380,6 +24528,31 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>dnp3</strong> (inspector): dnp3 inspection
+</p>
+</li>
+<li>
+<p>
+<strong>dnp3_data</strong> (ips_option): sets the cursor to dnp3 data
+</p>
+</li>
+<li>
+<p>
+<strong>dnp3_func</strong> (ips_option): detection option to check dnp3 function code
+</p>
+</li>
+<li>
+<p>
+<strong>dnp3_ind</strong> (ips_option): detection option to check dnp3 indicator flags
+</p>
+</li>
+<li>
+<p>
+<strong>dnp3_obj</strong> (ips_option): detection option to check dnp3 object headers
+</p>
+</li>
+<li>
+<p>
 <strong>dns</strong> (inspector): dns inspection
 </p>
 </li>
@@ -23675,11 +24848,6 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>lowmem_q</strong> (search_engine): MPSE that minimizes memory used
-</p>
-</li>
-<li>
-<p>
 <strong>md5</strong> (ips_option): payload rule option for hash matching
 </p>
 </li>
@@ -23745,7 +24913,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>pcre</strong> (ips_option): rule option for matching payload data with regex
+<strong>pcre</strong> (ips_option): rule option for matching payload data with pcre
 </p>
 </li>
 <li>
@@ -23800,6 +24968,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>profiler</strong> (basic): configure profiling of rules and/or modules
+</p>
+</li>
+<li>
+<p>
 <strong>rate_filter</strong> (basic): configure rate filters (which change rule actions)
 </p>
 </li>
@@ -23825,6 +24998,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>regex</strong> (ips_option): rule option for matching payload data with hyperscan regex
+</p>
+</li>
+<li>
+<p>
 <strong>reject</strong> (ips_action): terminate session with TCP reset or ICMP unreachable
 </p>
 </li>
@@ -23836,6 +25014,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>replace</strong> (ips_option): rule option to overwrite payload data; use with rewrite action
+</p>
+</li>
+<li>
+<p>
+<strong>reputation</strong> (inspector): reputation inspection
 </p>
 </li>
 <li>
@@ -24340,6 +25523,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::dnp3</strong>: dnp3 inspection
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::dns</strong>: dns inspection
 </p>
 </li>
@@ -24416,6 +25604,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>inspector::port_scan_global</strong>: shared settings for port_scan inspectors for use with port_scan
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::reputation</strong>: reputation inspection
 </p>
 </li>
 <li>
@@ -24561,6 +25754,26 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>ips_option::detection_filter</strong>: rule option to require multiple hits before a rule generates an event
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::dnp3_data</strong>: sets the cursor to dnp3 data
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::dnp3_func</strong>: detection option to check dnp3 function code
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::dnp3_ind</strong>: detection option to check dnp3 indicator flags
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::dnp3_obj</strong>: detection option to check dnp3 object headers
 </p>
 </li>
 <li>
@@ -24740,7 +25953,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>ips_option::pcre</strong>: rule option for matching payload data with regex
+<strong>ips_option::pcre</strong>: rule option for matching payload data with pcre
 </p>
 </li>
 <li>
@@ -24766,6 +25979,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>ips_option::reference</strong>: rule option to indicate relevant attack identification system
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::regex</strong>: rule option for matching payload data with hyperscan regex
 </p>
 </li>
 <li>
@@ -24995,17 +26213,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>search_engine::ac_bnfa_q</strong>: Aho-Corasick Binary NFA (low memory, high performance) with queued events
-</p>
-</li>
-<li>
-<p>
 <strong>search_engine::ac_full</strong>: Aho-Corasick Full (high memory, best performance), implements search_all()
-</p>
-</li>
-<li>
-<p>
-<strong>search_engine::ac_full_q</strong>: Aho-Corasick Full (high memory, best performance) with queued events, implements search_all()
 </p>
 </li>
 <li>
@@ -25025,12 +26233,12 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>search_engine::lowmem</strong>: Keyword Trie (low memory, moderate performance) MPSE
+<strong>search_engine::hyperscan</strong>: intel hyperscan-based mpse with regex support
 </p>
 </li>
 <li>
 <p>
-<strong>search_engine::lowmem_q</strong>: Keyword Trie (low memory, moderate performance) MPSE with queued events
+<strong>search_engine::lowmem</strong>: Keyword Trie (low memory, moderate performance) MPSE
 </p>
 </li>
 <li>
@@ -25047,7 +26255,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-11-05 18:33:45 EST
+Last updated 2015-12-11 06:03:58 EST
 </div>
 </div>
 </body>

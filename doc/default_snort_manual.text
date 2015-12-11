@@ -49,12 +49,13 @@ Table of Contents
     3.14. output
     3.15. packets
     3.16. process
-    3.17. rate_filter
-    3.18. references
-    3.19. rule_state
-    3.20. search_engine
-    3.21. snort
-    3.22. suppress
+    3.17. profiler
+    3.18. rate_filter
+    3.19. references
+    3.20. rule_state
+    3.21. search_engine
+    3.22. snort
+    3.23. suppress
 
 4. Codec Modules
 
@@ -88,36 +89,38 @@ Table of Contents
     5.2. back_orifice
     5.3. binder
     5.4. data_log
-    5.5. dns
-    5.6. dpx
-    5.7. ftp_client
-    5.8. ftp_data
-    5.9. ftp_server
-    5.10. gtp_inspect
-    5.11. http_global
-    5.12. http_inspect
-    5.13. imap
-    5.14. modbus
-    5.15. new_http_inspect
-    5.16. normalizer
-    5.17. perf_monitor
-    5.18. pop
-    5.19. port_scan
-    5.20. port_scan_global
-    5.21. rpc_decode
-    5.22. sip
-    5.23. smtp
-    5.24. ssh
-    5.25. ssl
-    5.26. stream
-    5.27. stream_file
-    5.28. stream_icmp
-    5.29. stream_ip
-    5.30. stream_tcp
-    5.31. stream_udp
-    5.32. stream_user
-    5.33. telnet
-    5.34. wizard
+    5.5. dnp3
+    5.6. dns
+    5.7. dpx
+    5.8. ftp_client
+    5.9. ftp_data
+    5.10. ftp_server
+    5.11. gtp_inspect
+    5.12. http_global
+    5.13. http_inspect
+    5.14. imap
+    5.15. modbus
+    5.16. new_http_inspect
+    5.17. normalizer
+    5.18. perf_monitor
+    5.19. pop
+    5.20. port_scan
+    5.21. port_scan_global
+    5.22. reputation
+    5.23. rpc_decode
+    5.24. sip
+    5.25. smtp
+    5.26. ssh
+    5.27. ssl
+    5.28. stream
+    5.29. stream_file
+    5.30. stream_icmp
+    5.31. stream_ip
+    5.32. stream_tcp
+    5.33. stream_udp
+    5.34. stream_user
+    5.35. telnet
+    5.36. wizard
 
 6. IPS Action Modules
 
@@ -138,71 +141,76 @@ Table of Contents
     7.9. content
     7.10. cvs
     7.11. detection_filter
-    7.12. dsize
-    7.13. file_data
-    7.14. flags
-    7.15. flow
-    7.16. flowbits
-    7.17. fragbits
-    7.18. fragoffset
-    7.19. gid
-    7.20. gtp_info
-    7.21. gtp_type
-    7.22. gtp_version
-    7.23. http_client_body
-    7.24. http_cookie
-    7.25. http_header
-    7.26. http_method
-    7.27. http_raw_cookie
-    7.28. http_raw_header
-    7.29. http_raw_uri
-    7.30. http_stat_code
-    7.31. http_stat_msg
-    7.32. http_uri
-    7.33. icmp_id
-    7.34. icmp_seq
-    7.35. icode
-    7.36. id
-    7.37. ip_proto
-    7.38. ipopts
-    7.39. isdataat
-    7.40. itype
-    7.41. md5
-    7.42. metadata
-    7.43. modbus_data
-    7.44. modbus_func
-    7.45. modbus_unit
-    7.46. msg
-    7.47. pcre
-    7.48. pkt_data
-    7.49. pkt_num
-    7.50. priority
-    7.51. raw_data
-    7.52. reference
-    7.53. rem
-    7.54. replace
-    7.55. rev
-    7.56. rpc
-    7.57. seq
-    7.58. session
-    7.59. sha256
-    7.60. sha512
-    7.61. sid
-    7.62. sip_body
-    7.63. sip_header
-    7.64. sip_method
-    7.65. sip_stat_code
-    7.66. so
-    7.67. soid
-    7.68. ssl_state
-    7.69. ssl_version
-    7.70. stream_reassemble
-    7.71. stream_size
-    7.72. tag
-    7.73. tos
-    7.74. ttl
-    7.75. urg
-    7.76. window
+    7.12. dnp3_data
+    7.13. dnp3_func
+    7.14. dnp3_ind
+    7.15. dnp3_obj
+    7.16. dsize
+    7.17. file_data
+    7.18. flags
+    7.19. flow
+    7.20. flowbits
+    7.21. fragbits
+    7.22. fragoffset
+    7.23. gid
+    7.24. gtp_info
+    7.25. gtp_type
+    7.26. gtp_version
+    7.27. http_client_body
+    7.28. http_cookie
+    7.29. http_header
+    7.30. http_method
+    7.31. http_raw_cookie
+    7.32. http_raw_header
+    7.33. http_raw_uri
+    7.34. http_stat_code
+    7.35. http_stat_msg
+    7.36. http_uri
+    7.37. icmp_id
+    7.38. icmp_seq
+    7.39. icode
+    7.40. id
+    7.41. ip_proto
+    7.42. ipopts
+    7.43. isdataat
+    7.44. itype
+    7.45. md5
+    7.46. metadata
+    7.47. modbus_data
+    7.48. modbus_func
+    7.49. modbus_unit
+    7.50. msg
+    7.51. pcre
+    7.52. pkt_data
+    7.53. pkt_num
+    7.54. priority
+    7.55. raw_data
+    7.56. reference
+    7.57. regex
+    7.58. rem
+    7.59. replace
+    7.60. rev
+    7.61. rpc
+    7.62. seq
+    7.63. session
+    7.64. sha256
+    7.65. sha512
+    7.66. sid
+    7.67. sip_body
+    7.68. sip_header
+    7.69. sip_method
+    7.70. sip_stat_code
+    7.71. so
+    7.72. soid
+    7.73. ssl_state
+    7.74. ssl_version
+    7.75. stream_reassemble
+    7.76. stream_size
+    7.77. tag
+    7.78. tos
+    7.79. ttl
+    7.80. urg
+    7.81. window
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -298,7 +306,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0-a2 (Build 177) from 2.9.7-177
+o"  )~   Version 3.0.0-a3 (Build 182) from 2.9.7-177
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -701,7 +709,7 @@ Required:
 Optional:
 
   * lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of
-    SWF fles
+    SWF and PDF files
   * openssl from https://www.openssl.org for SHA and MD5 file
     signatures and the protected_content rule option
   * hyperscan from https://github.com/01org/hyperscan to build new
@@ -1032,6 +1040,21 @@ WARNING: unknown symbol x
     MY_SERVERS = [[ 172.20.0.0/16 172.21.0.0/16 ]]
     EXTERNAL_NET = '!' .. MY_SERVERS
 
+  * configure will use clang by default if it is installed. To
+    compile with g instead:
+
+    export CXX=g++
+
+  * If you build with hyperscan on OS X and see:
+
+    dyld: Library not loaded: @rpath/libhs.4.0.dylib
+
+    when you try to run src/snort, export DYLD_LIBRARY_PATH with the path to
+    libhs.  You can also do:
+
+    install_name_tool -change @rpath/libhs.4.0.dylib \
+        /path-to/libhs.4.0.dylib src/snort
+
 
 2.8. Bugs
 
@@ -1039,23 +1062,16 @@ WARNING: unknown symbol x
 
 2.8.1. Build
 
-  * configure will use clang by default if it is installed. To
-    compile with g instead:
-
-    export CXX=g++
-
-  * clang coughs up these warnings:
-
-    Wunused-but-set-variable is not understood by clang
-    clang: warning: argument unused during compilation: '-pthread'
-
   * With cmake, make install will rebuild the docs even though when
     already built.
   * Enabling large pcap may erroneously affect the number of packets
     processed from pcaps
   * Enabling debug messages may erroneously affect the number of
     packets processed from pcaps
-  * It is not possible to build unit tests w/o static plugins.
+  * g++ 4.9.2 with -O3 reports:
+
+    src/service_inspectors/back_orifice/back_orifice.cc:231:25: warning:
+    iteration 930u invokes undefined behavior [-Waggressive-loop-optimizations]
 
 2.8.2. Config
 
@@ -1096,6 +1112,7 @@ WARNING: unknown symbol x
     (ie must all be true). Should create 2 separate bindings.
   * There is a bug in pps_stream_tcp.cc.. when stream_tcp: is
     specified without any arguments, snort2lua doesn’t convert it.
+    Same for stream_udp.
   * Loses the ip list delimiters [ ]; change to ( )
 
     in snort.conf: var HOME_NET [A,B,C]
@@ -1106,6 +1123,7 @@ WARNING: unknown symbol x
   * alert_fast and alert_full: output configuration includes "file = 
     foo.bar", but file is a bool and you cannot specify an output
     file name in the configuration.
+  * preprocessor ports option: ports <number> not supported.
 
 2.8.5. Runtime
 
@@ -1116,6 +1134,8 @@ WARNING: unknown symbol x
     ).
   * The hext DAQ does not support embedded quotes in text lines (use
     hex lines as a workaround).
+  * Stream TCP alert squash mechanism incorrectly squashes alerts for
+    different TCP packets.
 
 
 ---------------------------------------------------------------------
@@ -1394,6 +1414,17 @@ Configuration:
   * string file_id.file_rules[].magic[].content: file magic content
   * int file_id.file_rules[].magic[].offset = 0: file magic offset {
     0: }
+  * int file_id.file_policy[].when.file_type_id = 0: unique ID for
+    file type in file magic rule { 0: }
+  * string file_id.file_policy[].when.sha256: SHA 256
+  * enum file_id.file_policy[].use.verdict = unknown: what to do with
+    matching traffic { unknown | log | stop | block | reset }
+  * bool file_id.file_policy[].use.enable_file_type = false: true/
+    false → enable/disable file type identification
+  * bool file_id.file_policy[].use.enable_file_signature = false:
+    true/false → enable/disable file signature
+  * bool file_id.file_policy[].use.enable_file_capture = false: true/
+    false → enable/disable file capture
   * bool file_id.trace_type = false: enable runtime dump of type info
   * bool file_id.trace_signature = false: enable runtime dump of
     signature info
@@ -1556,7 +1587,36 @@ Configuration:
     timestamps
 
 
-3.17. rate_filter
+3.17. profiler
+
+------------
+
+What: configure profiling of rules and/or modules
+
+Type: basic
+
+Configuration:
+
+  * bool profiler.modules.show = true: show module time profile stats
+  * int profiler.modules.count = 0: print results to given level (0 =
+    all) { 0: }
+  * enum profiler.modules.sort = total_time: sort by given field {
+    none | checks | avg_check | total_time }
+  * bool profiler.memory.show = true: show module memory profile
+    stats
+  * int profiler.memory.count = 0: print results to given level (0 =
+    all) { 0: }
+  * enum profiler.memory.sort = total_used: sort by given field {
+    none | allocations | total_used | avg_allocation }
+  * bool profiler.rules.show = true: show rule time profile stats
+  * int profiler.rules.count = 0: print results to given level (0 =
+    all) { 0: }
+  * enum profiler.rules.sort = total_time: sort by given field { none
+    | checks | avg_check | total_time | matches | no_matches |
+    avg_match | avg_no_match }
+
+
+3.18. rate_filter
 
 ------------
 
@@ -1581,7 +1641,7 @@ Configuration:
     according to track
 
 
-3.18. references
+3.19. references
 
 ------------
 
@@ -1595,7 +1655,7 @@ Configuration:
   * string references[].url: where this reference is defined
 
 
-3.19. rule_state
+3.20. rule_state
 
 ------------
 
@@ -1611,7 +1671,7 @@ Configuration:
     policies
 
 
-3.20. search_engine
+3.21. search_engine
 
 ------------
 
@@ -1645,17 +1705,16 @@ Configuration:
   * bool search_engine.inspect_stream_inserts = false: inspect
     reassembled payload - disabling is good for performance, bad for
     detection
-  * dynamic search_engine.search_method = ac_bnfa_q: set fast pattern
+  * dynamic search_engine.search_method = ac_bnfa: set fast pattern
     algorithm - choose available search engine { ac_banded | ac_bnfa
-    | ac_bnfa_q | ac_full | ac_full_q | ac_sparse | ac_sparse_bands |
-    ac_std }
+    | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan }
   * bool search_engine.split_any_any = false: evaluate any-any rules
     separately to save memory
   * bool search_engine.search_optimize = false: tweak state machine
     construction for better performance
 
 
-3.21. snort
+3.22. snort
 
 ------------
 
@@ -1875,7 +1934,7 @@ Peg counts:
   * snort.attribute table hosts: total number of hosts in table
 
 
-3.22. suppress
+3.23. suppress
 
 ------------
 
@@ -2506,7 +2565,41 @@ Peg counts:
   * data_log.packets: total packets
 
 
-5.5. dns
+5.5. dnp3
+
+------------
+
+What: dnp3 inspection
+
+Type: inspector
+
+Configuration:
+
+  * bool dnp3.check_crc = false: validate checksums in DNP3 link
+    layer frames
+
+Rules:
+
+  * 145:1 (dnp3) DNP3 Link-Layer Frame contains bad CRC.
+  * 145:2 (dnp3) DNP3 Link-Layer Frame was dropped.
+  * 145:3 (dnp3) DNP3 Transport-Layer Segment was dropped during
+    reassembly.
+  * 145:4 (dnp3) DNP3 Reassembly Buffer was cleared without
+    reassembling a complete message.
+  * 145:5 (dnp3) DNP3 Link-Layer Frame uses a reserved address.
+  * 145:6 (dnp3) DNP3 Application-Layer Fragment uses a reserved
+    function code.
+
+Peg counts:
+
+  * dnp3.total packets: total packets
+  * dnp3.udp packets: total udp packets
+  * dnp3.tcp pdus: total tcp pdus
+  * dnp3.dnp3 link layer frames: total dnp3 link layer frames
+  * dnp3.dnp3 application pdus: total dnp3 application pdus
+
+
+5.6. dns
 
 ------------
 
@@ -2527,7 +2620,7 @@ Peg counts:
   * dns.responses: total dns responses
 
 
-5.6. dpx
+5.7. dpx
 
 ------------
 
@@ -2549,7 +2642,7 @@ Peg counts:
   * dpx.packets: total packets
 
 
-5.7. ftp_client
+5.8. ftp_client
 
 ------------
 
@@ -2573,7 +2666,7 @@ Configuration:
     sequences on ftp control channel
 
 
-5.8. ftp_data
+5.9. ftp_data
 
 ------------
 
@@ -2586,7 +2679,7 @@ Peg counts:
   * ftp_data.packets: total packets
 
 
-5.9. ftp_server
+5.10. ftp_server
 
 ------------
 
@@ -2653,7 +2746,7 @@ Peg counts:
   * ftp_server.packets: total packets
 
 
-5.10. gtp_inspect
+5.11. gtp_inspect
 
 ------------
 
@@ -2687,7 +2780,7 @@ Peg counts:
   * gtp_inspect.unknown infos: unknown information elements
 
 
-5.11. http_global
+5.12. http_global
 
 ------------
 
@@ -2782,7 +2875,7 @@ Peg counts:
   * http_global.decompressed bytes: total bytes decompressed
 
 
-5.12. http_inspect
+5.13. http_inspect
 
 ------------
 
@@ -2926,7 +3019,7 @@ Rules:
   * 120:17 (http_inspect) HTTP response PDF file parse failure
 
 
-5.13. imap
+5.14. imap
 
 ------------
 
@@ -2955,10 +3048,20 @@ Rules:
 
 Peg counts:
 
-  * imap.packets: total packets
+  * imap.packets: total packets processed
+  * imap.sessions: total imap sessions
+  * imap.b64 attachments: total base64 attachments decoded
+  * imap.b64 decoded bytes: total base64 decoded bytes
+  * imap.qp attachments: total quoted-printable attachments decoded
+  * imap.qp decoded bytes: total quoted-printable decoded bytes
+  * imap.uu attachments: total uu attachments decoded
+  * imap.uu decoded bytes: total uu decoded bytes
+  * imap.non-encoded attachments: total non-encoded attachments
+    extracted
+  * imap.non-encoded bytes: total non-encoded extracted bytes
 
 
-5.14. modbus
+5.15. modbus
 
 ------------
 
@@ -2979,7 +3082,7 @@ Peg counts:
   * modbus.frames: total Modbus messages
 
 
-5.15. new_http_inspect
+5.16. new_http_inspect
 
 ------------
 
@@ -3080,7 +3183,7 @@ Rules:
   * 219:68 (new_http_inspect) Gzip decompression failed
 
 
-5.16. normalizer
+5.17. normalizer
 
 ------------
 
@@ -3135,100 +3238,78 @@ Configuration:
 Peg counts:
 
   * normalizer.ip4 trim: eth packets trimmed to datagram size
-  * normalizer.test ip4 trim: During inline mode, would have eth
-    packets trimmed to datagram size
+  * normalizer.test ip4 trim: test eth packets trimmed to datagram
+    size
   * normalizer.ip4 tos: type of service normalizations
-  * normalizer.test ip4 tos: During inline mode, would have type of
-    service normalizations
+  * normalizer.test ip4 tos: test type of service normalizations
   * normalizer.ip4 df: don’t frag bit normalizations
-  * normalizer.test ip4 df: During inline mode, would have don’t frag
-    bit normalizations
+  * normalizer.test ip4 df: test don’t frag bit normalizations
   * normalizer.ip4 rf: reserved flag bit clears
-  * normalizer.test ip4 rf: During inline mode, would have reserved
-    flag bit clears
+  * normalizer.test ip4 rf: test reserved flag bit clears
   * normalizer.ip4 ttl: time-to-live normalizations
-  * normalizer.test ip4 ttl: During inline mode, would have
-    time-to-live normalizations
+  * normalizer.test ip4 ttl: test time-to-live normalizations
   * normalizer.ip4 opts: ip4 options cleared
-  * normalizer.test ip4 opts: During inline mode, would have ip4
-    options cleared
+  * normalizer.test ip4 opts: test ip4 options cleared
   * normalizer.icmp4 echo: icmp4 ping normalizations
-  * normalizer.test icmp4 echo: During inline mode, would have icmp4
-    ping normalizations
+  * normalizer.test icmp4 echo: test icmp4 ping normalizations
   * normalizer.ip6 hops: ip6 hop limit normalizations
-  * normalizer.test ip6 hops: During inline mode, would have ip6 hop
-    limit normalizations
+  * normalizer.test ip6 hops: test ip6 hop limit normalizations
   * normalizer.ip6 options: ip6 options cleared
-  * normalizer.test ip6 options: During inline mode, would have ip6
-    options cleared
+  * normalizer.test ip6 options: test ip6 options cleared
   * normalizer.icmp6 echo: icmp6 echo normalizations
-  * normalizer.test icmp6 echo: During inline mode, would have icmp6
-    echo normalizations
+  * normalizer.test icmp6 echo: test icmp6 echo normalizations
   * normalizer.tcp syn options: SYN only options cleared from non-SYN
     packets
-  * normalizer.test tcp syn options: During inline mode, would have
-    SYN only options cleared from non-SYN packets
+  * normalizer.test tcp syn options: test SYN only options cleared
+    from non-SYN packets
   * normalizer.tcp options: packets with options cleared
-  * normalizer.test tcp options: During inline mode, would have
-    packets with options cleared
+  * normalizer.test tcp options: test packets with options cleared
   * normalizer.tcp paddding: packets with padding cleared
-  * normalizer.test tcp paddding: During inline mode, would have
-    packets with padding cleared
+  * normalizer.test tcp paddding: test packets with padding cleared
   * normalizer.tcp reserved: packets with reserved bits cleared
-  * normalizer.test tcp reserved: During inline mode, would have
-    packets with reserved bits cleared
+  * normalizer.test tcp reserved: test packets with reserved bits
+    cleared
   * normalizer.tcp nonce: packets with nonce bit cleared
-  * normalizer.test tcp nonce: During inline mode, would have packets
-    with nonce bit cleared
+  * normalizer.test tcp nonce: test packets with nonce bit cleared
   * normalizer.tcp urgent ptr: packets without data with urgent
     pointer cleared
-  * normalizer.test tcp urgent ptr: During inline mode, would have
-    packets without data with urgent pointer cleared
+  * normalizer.test tcp urgent ptr: test packets without data with
+    urgent pointer cleared
   * normalizer.tcp ecn pkt: packets with ECN bits cleared
-  * normalizer.test tcp ecn pkt: During inline mode, would have
-    packets with ECN bits cleared
+  * normalizer.test tcp ecn pkt: test packets with ECN bits cleared
   * normalizer.tcp ts ecr: timestamp cleared on non-ACKs
-  * normalizer.test tcp ts ecr: During inline mode, would have
-    timestamp cleared on non-ACKs
+  * normalizer.test tcp ts ecr: test timestamp cleared on non-ACKs
   * normalizer.tcp req urg: cleared urgent pointer when urgent flag
     is not set
-  * normalizer.test tcp req urg: During inline mode, would have
-    cleared urgent pointer when urgent flag is not set
+  * normalizer.test tcp req urg: test cleared urgent pointer when
+    urgent flag is not set
   * normalizer.tcp req pay: cleared urgent pointer and urgent flag
     when there is no payload
-  * normalizer.test tcp req pay: During inline mode, would have
-    cleared urgent pointer and urgent flag when there is no payload
+  * normalizer.test tcp req pay: test cleared urgent pointer and
+    urgent flag when there is no payload
   * normalizer.tcp req urp: cleared the urgent flag if the urgent
     pointer is not set
-  * normalizer.test tcp req urp: During inline mode, would have
-    cleared the urgent flag if the urgent pointer is not set
+  * normalizer.test tcp req urp: test cleared the urgent flag if the
+    urgent pointer is not set
   * normalizer.tcp trim syn: tcp segments trimmed on SYN
-  * normalizer.test tcp trim syn: During inline mode, would have tcp
-    segments trimmed on SYN
+  * normalizer.test tcp trim syn: test tcp segments trimmed on SYN
   * normalizer.tcp trim rst: RST packets with data trimmed
-  * normalizer.test tcp trim rst: During inline mode, would have RST
-    packets with data trimmed
+  * normalizer.test tcp trim rst: test RST packets with data trimmed
   * normalizer.tcp trim win: data trimed to window
-  * normalizer.test tcp trim win: During inline mode, would have data
-    trimed to window
+  * normalizer.test tcp trim win: test data trimed to window
   * normalizer.tcp trim mss: data trimmed to MSS
-  * normalizer.test tcp trim mss: During inline mode, would have data
-    trimmed to MSS
+  * normalizer.test tcp trim mss: test data trimmed to MSS
   * normalizer.tcp ecn session: ECN bits cleared
-  * normalizer.test tcp ecn session: During inline mode, would have
-    ECN bits cleared
+  * normalizer.test tcp ecn session: test ECN bits cleared
   * normalizer.tcp ts nop: timestamp options cleared
-  * normalizer.test tcp ts nop: During inline mode, would have
-    timestamp options cleared
+  * normalizer.test tcp ts nop: test timestamp options cleared
   * normalizer.tcp ips data: normalized segments
-  * normalizer.test tcp ips data: During inline mode, would have
-    normalized segments
+  * normalizer.test tcp ips data: test normalized segments
   * normalizer.tcp block: blocked segments
-  * normalizer.test tcp block: During inline mode, would have blocked
-    segments
+  * normalizer.test tcp block: test blocked segments
 
 
-5.17. perf_monitor
+5.18. perf_monitor
 
 ------------
 
@@ -3243,7 +3324,7 @@ Configuration:
     exit only { 0: }
   * int perf_monitor.flow_ip_memcap = 52428800: maximum memory for
     flow tracking { 8200: }
-  * int perf_monitor.max_file_size = 4294967295: files will be rolled
+  * int perf_monitor.max_file_size = 1073741824: files will be rolled
     over if they exceed this size { 4096: }
   * int perf_monitor.flow_ports = 1023: maximum ports to track { 0: }
   * bool perf_monitor.reset = true: reset (clear) statistics after
@@ -3268,7 +3349,7 @@ Peg counts:
   * perf_monitor.packets: total packets
 
 
-5.18. pop
+5.19. pop
 
 ------------
 
@@ -3297,10 +3378,20 @@ Rules:
 
 Peg counts:
 
-  * pop.packets: total packets
+  * pop.packets: total packets processed
+  * pop.sessions: total pop sessions
+  * pop.b64 attachments: total base64 attachments decoded
+  * pop.b64 decoded bytes: total base64 decoded bytes
+  * pop.qp attachments: total quoted-printable attachments decoded
+  * pop.qp decoded bytes: total quoted-printable decoded bytes
+  * pop.uu attachments: total uu attachments decoded
+  * pop.uu decoded bytes: total uu decoded bytes
+  * pop.non-encoded attachments: total non-encoded attachments
+    extracted
+  * pop.non-encoded bytes: total non-encoded extracted bytes
 
 
-5.19. port_scan
+5.20. port_scan
 
 ------------
 
@@ -3358,7 +3449,7 @@ Rules:
   * 122:27 (port_scan) open port
 
 
-5.20. port_scan_global
+5.21. port_scan_global
 
 ------------
 
@@ -3376,7 +3467,45 @@ Peg counts:
   * port_scan_global.packets: total packets
 
 
-5.21. rpc_decode
+5.22. reputation
+
+------------
+
+What: reputation inspection
+
+Type: inspector
+
+Configuration:
+
+  * string reputation.blacklist: blacklist file name with ip lists
+  * int reputation.memcap = 500: maximum total memory allocated {
+    1:4095 }
+  * enum reputation.nested_ip = inner: ip to use when there is IP
+    encapsulation { inner|outer|all }
+  * enum reputation.priority = whitelist: defines priority when there
+    is a decision conflict during run-time { blacklist|whitelist }
+  * bool reputation.scan_local = false: inspect local address defined
+    in RFC 1918
+  * enum reputation.white = unblack: specify the meaning of whitelist
+    { unblack|trust }
+  * string reputation.whitelist: whitelist file name with ip lists
+
+Rules:
+
+  * 136:1 (reputation) packets blacklisted
+  * 136:2 (reputation) Packets whitelisted
+  * 136:3 (reputation) Packets monitored
+
+Peg counts:
+
+  * reputation.packets: total packets processed
+  * reputation.blacklisted: number of packets blacklisted
+  * reputation.whitelisted: number of packets whitelisted
+  * reputation.monitored: number of packets monitored
+  * reputation.memory_allocated: total memory allocated
+
+
+5.23. rpc_decode
 
 ------------
 
@@ -3397,7 +3526,7 @@ Peg counts:
   * rpc_decode.packets: total packets
 
 
-5.22. sip
+5.24. sip
 
 ------------
 
@@ -3461,16 +3590,40 @@ Rules:
 
 Peg counts:
 
+  * sip.packets: total packets
   * sip.sessions: total sessions
   * sip.events: events generated
   * sip.dialogs: total dialogs
   * sip.ignored channels: total channels ignored
   * sip.ignored sessions: total sessions ignored
-  * sip.requests: total requests
-  * sip.responses: total responses
+  * sip.total requests: total requests
+  * sip.invite: invite
+  * sip.cancel: cancel
+  * sip.ack: ack
+  * sip.bye: bye
+  * sip.register: register
+  * sip.options: options
+  * sip.refer: refer
+  * sip.subscribe: subscribe
+  * sip.update: update
+  * sip.join: join
+  * sip.info: info
+  * sip.message: message
+  * sip.notify: notify
+  * sip.prack: prack
+  * sip.total responses: total responses
+  * sip.1xx: 1xx
+  * sip.2xx: 2xx
+  * sip.3xx: 3xx
+  * sip.4xx: 4xx
+  * sip.5xx: 5xx
+  * sip.6xx: 6xx
+  * sip.7xx: 7xx
+  * sip.8xx: 8xx
+  * sip.9xx: 9xx
 
 
-5.23. smtp
+5.25. smtp
 
 ------------
 
@@ -3543,10 +3696,22 @@ Rules:
 
 Peg counts:
 
-  * smtp.packets: total packets
+  * smtp.packets: total packets processed
+  * smtp.sessions: total smtp sessions
+  * smtp.concurrent sessions: total concurrent smtp sessions
+  * smtp.max concurrent sessions: maximum concurrent smtp sessions
+  * smtp.b64 attachments: total base64 attachments decoded
+  * smtp.b64 decoded bytes: total base64 decoded bytes
+  * smtp.qp attachments: total quoted-printable attachments decoded
+  * smtp.qp decoded bytes: total quoted-printable decoded bytes
+  * smtp.uu attachments: total uu attachments decoded
+  * smtp.uu decoded bytes: total uu decoded bytes
+  * smtp.non-encoded attachments: total non-encoded attachments
+    extracted
+  * smtp.non-encoded bytes: total non-encoded extracted bytes
 
 
-5.24. ssh
+5.26. ssh
 
 ------------
 
@@ -3578,7 +3743,7 @@ Peg counts:
   * ssh.packets: total packets
 
 
-5.25. ssl
+5.27. ssl
 
 ------------
 
@@ -3622,7 +3787,7 @@ Peg counts:
   * ssl.detection disabled: total detection disabled
 
 
-5.26. stream
+5.28. stream
 
 ------------
 
@@ -3697,7 +3862,7 @@ Peg counts:
   * stream.file prunes: file sessions pruned
 
 
-5.27. stream_file
+5.29. stream_file
 
 ------------
 
@@ -3710,7 +3875,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.28. stream_icmp
+5.30. stream_icmp
 
 ------------
 
@@ -3729,7 +3894,7 @@ Peg counts:
   * stream_icmp.released: icmp session trackers released
 
 
-5.29. stream_ip
+5.31. stream_ip
 
 ------------
 
@@ -3785,7 +3950,7 @@ Peg counts:
   * stream_ip.nodes deleted: fragments deleted from tracker
 
 
-5.30. stream_tcp
+5.32. stream_tcp
 
 ------------
 
@@ -3893,7 +4058,7 @@ Peg counts:
     flushed when session released
 
 
-5.31. stream_udp
+5.33. stream_udp
 
 ------------
 
@@ -3916,7 +4081,7 @@ Peg counts:
   * stream_udp.timeouts: udp session timeouts
 
 
-5.32. stream_user
+5.34. stream_user
 
 ------------
 
@@ -3930,7 +4095,7 @@ Configuration:
     1:86400 }
 
 
-5.33. telnet
+5.35. telnet
 
 ------------
 
@@ -3959,7 +4124,7 @@ Peg counts:
   * telnet.packets: total packets
 
 
-5.34. wizard
+5.36. wizard
 
 ------------
 
@@ -4298,7 +4463,58 @@ Configuration:
     1: }
 
 
-7.12. dsize
+7.12. dnp3_data
+
+------------
+
+What: sets the cursor to dnp3 data
+
+Type: ips_option
+
+
+7.13. dnp3_func
+
+------------
+
+What: detection option to check dnp3 function code
+
+Type: ips_option
+
+Configuration:
+
+  * string dnp3_func.~: match dnp3 function code or name
+
+
+7.14. dnp3_ind
+
+------------
+
+What: detection option to check dnp3 indicator flags
+
+Type: ips_option
+
+Configuration:
+
+  * string dnp3_ind.~: match given dnp3 indicator flags
+
+
+7.15. dnp3_obj
+
+------------
+
+What: detection option to check dnp3 object headers
+
+Type: ips_option
+
+Configuration:
+
+  * int dnp3_obj.group = 0: match given dnp3 object header group {
+    0:255 }
+  * int dnp3_obj.var = 0: match given dnp3 object header var { 0:255
+    }
+
+
+7.16. dsize
 
 ------------
 
@@ -4312,7 +4528,7 @@ Configuration:
     max | <max | >min
 
 
-7.13. file_data
+7.17. file_data
 
 ------------
 
@@ -4321,7 +4537,7 @@ What: rule option to set detection cursor to file data
 Type: ips_option
 
 
-7.14. flags
+7.18. flags
 
 ------------
 
@@ -4335,7 +4551,7 @@ Configuration:
   * string flags.~mask_flags: these flags are don’t cares
 
 
-7.15. flow
+7.19. flow
 
 ------------
 
@@ -4359,7 +4575,7 @@ Configuration:
   * implied flow.only_frag: match on defragmented packets only
 
 
-7.16. flowbits
+7.20. flowbits
 
 ------------
 
@@ -4374,7 +4590,7 @@ Configuration:
   * string flowbits.~arg2: group if arg1 is bits
 
 
-7.17. fragbits
+7.21. fragbits
 
 ------------
 
@@ -4387,7 +4603,7 @@ Configuration:
   * string fragbits.~flags: these flags are tested
 
 
-7.18. fragoffset
+7.22. fragoffset
 
 ------------
 
@@ -4401,7 +4617,7 @@ Configuration:
     min<>max | <max | >min
 
 
-7.19. gid
+7.23. gid
 
 ------------
 
@@ -4414,7 +4630,7 @@ Configuration:
   * int gid.~: generator id { 1: }
 
 
-7.20. gtp_info
+7.24. gtp_info
 
 ------------
 
@@ -4427,7 +4643,7 @@ Configuration:
   * string gtp_info.~: info element to match
 
 
-7.21. gtp_type
+7.25. gtp_type
 
 ------------
 
@@ -4440,7 +4656,7 @@ Configuration:
   * string gtp_type.~: list of types to match
 
 
-7.22. gtp_version
+7.26. gtp_version
 
 ------------
 
@@ -4453,7 +4669,7 @@ Configuration:
   * int gtp_version.~: version to match { 0:2 }
 
 
-7.23. http_client_body
+7.27. http_client_body
 
 ------------
 
@@ -4462,7 +4678,7 @@ What: rule option to set the detection cursor to the request body
 Type: ips_option
 
 
-7.24. http_cookie
+7.28. http_cookie
 
 ------------
 
@@ -4471,7 +4687,7 @@ What: rule option to set the detection cursor to the HTTP cookie
 Type: ips_option
 
 
-7.25. http_header
+7.29. http_header
 
 ------------
 
@@ -4485,7 +4701,7 @@ Configuration:
   * string http_header.~name: restrict to given header
 
 
-7.26. http_method
+7.30. http_method
 
 ------------
 
@@ -4495,7 +4711,7 @@ method
 Type: ips_option
 
 
-7.27. http_raw_cookie
+7.31. http_raw_cookie
 
 ------------
 
@@ -4505,7 +4721,7 @@ cookie
 Type: ips_option
 
 
-7.28. http_raw_header
+7.32. http_raw_header
 
 ------------
 
@@ -4515,7 +4731,7 @@ headers
 Type: ips_option
 
 
-7.29. http_raw_uri
+7.33. http_raw_uri
 
 ------------
 
@@ -4524,7 +4740,7 @@ What: rule option to set the detection cursor to the unnormalized URI
 Type: ips_option
 
 
-7.30. http_stat_code
+7.34. http_stat_code
 
 ------------
 
@@ -4533,7 +4749,7 @@ What: rule option to set the detection cursor to the HTTP status code
 Type: ips_option
 
 
-7.31. http_stat_msg
+7.35. http_stat_msg
 
 ------------
 
@@ -4543,7 +4759,7 @@ message
 Type: ips_option
 
 
-7.32. http_uri
+7.36. http_uri
 
 ------------
 
@@ -4553,7 +4769,7 @@ buffer
 Type: ips_option
 
 
-7.33. icmp_id
+7.37. icmp_id
 
 ------------
 
@@ -4567,7 +4783,7 @@ Configuration:
     >min
 
 
-7.34. icmp_seq
+7.38. icmp_seq
 
 ------------
 
@@ -4581,7 +4797,7 @@ Configuration:
     min<>max | <max | >min
 
 
-7.35. icode
+7.39. icode
 
 ------------
 
@@ -4595,7 +4811,7 @@ Configuration:
     | >min
 
 
-7.36. id
+7.40. id
 
 ------------
 
@@ -4609,7 +4825,7 @@ Configuration:
     min
 
 
-7.37. ip_proto
+7.41. ip_proto
 
 ------------
 
@@ -4622,7 +4838,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-7.38. ipopts
+7.42. ipopts
 
 ------------
 
@@ -4636,7 +4852,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-7.39. isdataat
+7.43. isdataat
 
 ------------
 
@@ -4651,7 +4867,7 @@ Configuration:
     buffer
 
 
-7.40. itype
+7.44. itype
 
 ------------
 
@@ -4665,7 +4881,7 @@ Configuration:
     | >min
 
 
-7.41. md5
+7.45. md5
 
 ------------
 
@@ -4683,7 +4899,7 @@ Configuration:
     of buffer
 
 
-7.42. metadata
+7.46. metadata
 
 ------------
 
@@ -4698,7 +4914,7 @@ Configuration:
   * string metadata.*: additional parameters not used by snort
 
 
-7.43. modbus_data
+7.47. modbus_data
 
 ------------
 
@@ -4707,7 +4923,7 @@ What: rule option to set cursor to modbus data
 Type: ips_option
 
 
-7.44. modbus_func
+7.48. modbus_func
 
 ------------
 
@@ -4720,7 +4936,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.45. modbus_unit
+7.49. modbus_unit
 
 ------------
 
@@ -4733,7 +4949,7 @@ Configuration:
   * int modbus_unit.~: modbus unit ID { 0:255 }
 
 
-7.46. msg
+7.50. msg
 
 ------------
 
@@ -4746,20 +4962,20 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.47. pcre
+7.51. pcre
 
 ------------
 
-What: rule option for matching payload data with regex
+What: rule option for matching payload data with pcre
 
 Type: ips_option
 
 Configuration:
 
-  * string pcre.~regex: Snort regular expression
+  * string pcre.~re: Snort regular expression
 
 
-7.48. pkt_data
+7.52. pkt_data
 
 ------------
 
@@ -4769,7 +4985,7 @@ packet data
 Type: ips_option
 
 
-7.49. pkt_num
+7.53. pkt_num
 
 ------------
 
@@ -4782,7 +4998,7 @@ Configuration:
   * string pkt_num.~range: check if packet number is in given range
 
 
-7.50. priority
+7.54. priority
 
 ------------
 
@@ -4796,7 +5012,7 @@ Configuration:
     1: }
 
 
-7.51. raw_data
+7.55. raw_data
 
 ------------
 
@@ -4805,7 +5021,7 @@ What: rule option to set the detection cursor to the raw packet data
 Type: ips_option
 
 
-7.52. reference
+7.56. reference
 
 ------------
 
@@ -4819,7 +5035,26 @@ Configuration:
   * string reference.~id: reference id
 
 
-7.53. rem
+7.57. regex
+
+------------
+
+What: rule option for matching payload data with hyperscan regex
+
+Type: ips_option
+
+Configuration:
+
+  * string regex.~re: hyperscan regular expression
+  * implied regex.nocase: case insensitive match
+  * implied regex.dotall: matching a . will not exclude newlines
+  * implied regex.multiline: ^ and $ anchors match any newlines in
+    data
+  * implied regex.relative: start search from end of last match
+    instead of start of buffer
+
+
+7.58. rem
 
 ------------
 
@@ -4832,7 +5067,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.54. replace
+7.59. replace
 
 ------------
 
@@ -4845,7 +5080,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.55. rev
+7.60. rev
 
 ------------
 
@@ -4858,7 +5093,7 @@ Configuration:
   * int rev.~: revision { 1: }
 
 
-7.56. rpc
+7.61. rpc
 
 ------------
 
@@ -4873,7 +5108,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.57. seq
+7.62. seq
 
 ------------
 
@@ -4887,7 +5122,7 @@ Configuration:
     max | <max | >min
 
 
-7.58. session
+7.63. session
 
 ------------
 
@@ -4900,7 +5135,7 @@ Configuration:
   * enum session.~mode: output format { printable|binary|all }
 
 
-7.59. sha256
+7.64. sha256
 
 ------------
 
@@ -4918,7 +5153,7 @@ Configuration:
     start of buffer
 
 
-7.60. sha512
+7.65. sha512
 
 ------------
 
@@ -4936,7 +5171,7 @@ Configuration:
     start of buffer
 
 
-7.61. sid
+7.66. sid
 
 ------------
 
@@ -4949,7 +5184,7 @@ Configuration:
   * int sid.~: signature id { 1: }
 
 
-7.62. sip_body
+7.67. sip_body
 
 ------------
 
@@ -4958,7 +5193,7 @@ What: rule option to set the detection cursor to the request body
 Type: ips_option
 
 
-7.63. sip_header
+7.68. sip_header
 
 ------------
 
@@ -4968,7 +5203,7 @@ buffer
 Type: ips_option
 
 
-7.64. sip_method
+7.69. sip_method
 
 ------------
 
@@ -4981,7 +5216,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.65. sip_stat_code
+7.70. sip_stat_code
 
 ------------
 
@@ -4994,7 +5229,7 @@ Configuration:
   * int sip_stat_code.*code: stat code { 1:999 }
 
 
-7.66. so
+7.71. so
 
 ------------
 
@@ -5007,7 +5242,7 @@ Configuration:
   * string so.~func: name of eval function
 
 
-7.67. soid
+7.72. soid
 
 ------------
 
@@ -5020,7 +5255,7 @@ Configuration:
   * string soid.~: SO rule ID has <gid>|<sid> format, like 3|12345
 
 
-7.68. ssl_state
+7.73. ssl_state
 
 ------------
 
@@ -5047,7 +5282,7 @@ Configuration:
     unknown
 
 
-7.69. ssl_version
+7.74. ssl_version
 
 ------------
 
@@ -5072,7 +5307,7 @@ Configuration:
     tls1.2
 
 
-7.70. stream_reassemble
+7.75. stream_reassemble
 
 ------------
 
@@ -5091,7 +5326,7 @@ Configuration:
     remainder of the session
 
 
-7.71. stream_size
+7.76. stream_size
 
 ------------
 
@@ -5106,7 +5341,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.72. tag
+7.77. tag
 
 ------------
 
@@ -5123,7 +5358,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1: }
 
 
-7.73. tos
+7.78. tos
 
 ------------
 
@@ -5137,7 +5372,7 @@ Configuration:
     max | <max | >min
 
 
-7.74. ttl
+7.79. ttl
 
 ------------
 
@@ -5151,7 +5386,7 @@ Configuration:
     max | <max | >min
 
 
-7.75. urg
+7.80. urg
 
 ------------
 
@@ -5165,7 +5400,7 @@ Configuration:
     min
 
 
-7.76. window
+7.81. window
 
 ------------
 
@@ -5227,10 +5462,10 @@ Configuration:
     dir src_ap dst_ap rule action: selected fields will be output in
     given order left to right { action | dir | dgm_len | dst_addr |
     dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid
-    | icmp_code | icmp_id | icmp_seq | icmp_type | ip_id | ip_len |
-    msg | pkt_gen | pkt_num | proto | rev | rule | sid | src_addr |
-    src_ap | src_port | tcp_ack | tcp_flags | tcp_len | tcp_seq |
-    tcp_win | timestamp | tos | ttl | udp_len }
+    | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id |
+    ip_len | msg | pkt_gen | pkt_num | proto | rev | rule | sid |
+    src_addr | src_ap | src_port | tcp_ack | tcp_flags | tcp_len |
+    tcp_seq | tcp_win | timestamp | tos | ttl | udp_len }
   * int alert_csv.limit = 0: set limit (0 is unlimited) { 0: }
   * string alert_csv.separator = , : separate fields with this
     character sequence
@@ -7825,22 +8060,20 @@ The features listed below must be explicitly enabled so they are
 built into the Snort binary. For a full list of build features, run .
 /configure --help.
 
-  * --enable-ppm: enable packet and rule performance monitoring and
-    coarse latency enforcement.
-  * --enable-perf-profiling: enable module and rule performance
-    profiling.
-  * --enable-shell: enable local and remote command line shell
-    support.
+  * --enable-ppm: enable building packet and rule performance
+    monitoring and coarse latency enforcement.
+  * --enable-shell: enable building local and remote command line
+    shell support.
 
 These features are built only if the required libraries and headers
 are present. There is no need to explicitly enable.
 
-  * lzma: from http://www.7-zip.org/sdk.html for decompression of SWF
-    fles.
-  * openssl: from https://www.openssl.org for SHA and MD5 file
-    signatures and the protected_content rule option.
+  * lzma: for decompression of SWF and PDF files.
+  * openssl: for SHA and MD5 file signatures and the
+    protected_content rule option.
   * *intel-soft-cpm": an optional pattern matcher based on a library
     from Intel.
+  * hyperscan for the regex rule option and hyperscan search engine.
 
 If you need to use headers and/or libraries in non-standard
 locations, you can use these options:
@@ -7851,7 +8084,8 @@ locations, you can use these options:
     package libraries.
 
 These can be use for pcap, luajit, pcre, dnet, daq, lzma, openssl,
-and intel-soft-cpm packages.
+intel-soft-cpm, and hyperscan packages. For more information on these
+libraries see the Getting Started section of the manual.
 
 
 16.6. Environment Variables
@@ -8112,10 +8346,10 @@ Some additional details to note:
     dir src_ap dst_ap rule action: selected fields will be output in
     given order left to right { action | dir | dgm_len | dst_addr |
     dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid
-    | icmp_code | icmp_id | icmp_seq | icmp_type | ip_id | ip_len |
-    msg | pkt_gen | pkt_num | proto | rev | rule | sid | src_addr |
-    src_ap | src_port | tcp_ack | tcp_flags | tcp_len | tcp_seq |
-    tcp_win | timestamp | tos | ttl | udp_len }
+    | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id |
+    ip_len | msg | pkt_gen | pkt_num | proto | rev | rule | sid |
+    src_addr | src_ap | src_port | tcp_ack | tcp_flags | tcp_len |
+    tcp_seq | tcp_win | timestamp | tos | ttl | udp_len }
   * bool alert_csv.file = false: output to alert_csv.txt instead of
     stdout
   * int alert_csv.limit = 0: set limit (0 is unlimited) { 0: }
@@ -8308,6 +8542,14 @@ Some additional details to note:
     1: }
   * enum detection_filter.track: track hits by source or destination
     IP address { by_src | by_dst }
+  * bool dnp3.check_crc = false: validate checksums in DNP3 link
+    layer frames
+  * string dnp3_func.~: match dnp3 function code or name
+  * string dnp3_ind.~: match given dnp3 indicator flags
+  * int dnp3_obj.group = 0: match given dnp3 object header group {
+    0:255 }
+  * int dnp3_obj.var = 0: match given dnp3 object header var { 0:255
+    }
   * int dpx.max = 0: maximum payload before alert { 0:65535 }
   * port dpx.port: port to check
   * string dsize.~range: check if packet payload size is size | min<>
@@ -8339,6 +8581,17 @@ Some additional details to note:
   * bool file_id.enable_signature = false: enable signature
     calculation
   * bool file_id.enable_type = false: enable type ID
+  * bool file_id.file_policy[].use.enable_file_capture = false: true/
+    false → enable/disable file capture
+  * bool file_id.file_policy[].use.enable_file_signature = false:
+    true/false → enable/disable file signature
+  * bool file_id.file_policy[].use.enable_file_type = false: true/
+    false → enable/disable file type identification
+  * enum file_id.file_policy[].use.verdict = unknown: what to do with
+    matching traffic { unknown | log | stop | block | reset }
+  * int file_id.file_policy[].when.file_type_id = 0: unique ID for
+    file type in file magic rule { 0: }
+  * string file_id.file_policy[].when.sha256: SHA 256
   * string file_id.file_rules[].category: file type category
   * int file_id.file_rules[].id = 0: file type id { 0: }
   * string file_id.file_rules[].magic[].content: file magic content
@@ -8624,7 +8877,6 @@ Some additional details to note:
   * int log_hext.width = 20: set line width (0 is unlimited) { 0: }
   * int log_pcap.limit = 0: set limit (0 is unlimited) { 0: }
   * enum log_pcap.units = B: bytes | KB | MB | GB { B | K | M | G }
-  * string lowmem_q.var: additional print text
   * int md5.length: number of octets in plain text { 1:65535 }
   * string md5.offset: var or number of bytes from start of buffer to
     start search
@@ -8750,7 +9002,7 @@ Some additional details to note:
     processing { 0: }
   * bool packets.vlan_agnostic = false: determines whether VLAN info
     is used to track fragments and connections
-  * string pcre.~regex: Snort regular expression
+  * string pcre.~re: Snort regular expression
   * bool perf_monitor.console = false: output to console
   * bool perf_monitor.events = false: report on qualified vs
     non-qualified events
@@ -8768,7 +9020,7 @@ Some additional details to note:
   * int perf_monitor.flow_ports = 1023: maximum ports to track { 0: }
   * bool perf_monitor.max = false: calculate theoretical maximum
     performance
-  * int perf_monitor.max_file_size = 4294967295: files will be rolled
+  * int perf_monitor.max_file_size = 1073741824: files will be rolled
     over if they exceed this size { 4096: }
   * int perf_monitor.packets = 10000: minim packets to report { 0: }
   * bool perf_monitor.reset = true: reset (clear) statistics after
@@ -8818,6 +9070,23 @@ Some additional details to note:
   * string process.umask: set process umask (same as -m)
   * bool process.utc = false: use UTC instead of local time for
     timestamps
+  * int profiler.memory.count = 0: print results to given level (0 =
+    all) { 0: }
+  * bool profiler.memory.show = true: show module memory profile
+    stats
+  * enum profiler.memory.sort = total_used: sort by given field {
+    none | allocations | total_used | avg_allocation }
+  * int profiler.modules.count = 0: print results to given level (0 =
+    all) { 0: }
+  * bool profiler.modules.show = true: show module time profile stats
+  * enum profiler.modules.sort = total_time: sort by given field {
+    none | checks | avg_check | total_time }
+  * int profiler.rules.count = 0: print results to given level (0 =
+    all) { 0: }
+  * bool profiler.rules.show = true: show rule time profile stats
+  * enum profiler.rules.sort = total_time: sort by given field { none
+    | checks | avg_check | total_time | matches | no_matches |
+    avg_match | avg_no_match }
   * string rate_filter[].apply_to: restrict filter to these addresses
     according to track
   * int rate_filter[].count = 1: number of events in interval before
@@ -8839,12 +9108,31 @@ Some additional details to note:
   * string reference.~scheme: reference scheme
   * string references[].name: name used with reference rule option
   * string references[].url: where this reference is defined
+  * implied regex.dotall: matching a . will not exclude newlines
+  * implied regex.multiline: ^ and $ anchors match any newlines in
+    data
+  * implied regex.nocase: case insensitive match
+  * implied regex.relative: start search from end of last match
+    instead of start of buffer
+  * string regex.~re: hyperscan regular expression
   * enum reject.control: send icmp unreachable(s) { network|host|port
     |all }
   * enum reject.reset: send tcp reset to one or both ends { source|
     dest|both }
   * string rem.~: comment
   * string replace.~: byte code to replace with
+  * string reputation.blacklist: blacklist file name with ip lists
+  * int reputation.memcap = 500: maximum total memory allocated {
+    1:4095 }
+  * enum reputation.nested_ip = inner: ip to use when there is IP
+    encapsulation { inner|outer|all }
+  * enum reputation.priority = whitelist: defines priority when there
+    is a decision conflict during run-time { blacklist|whitelist }
+  * bool reputation.scan_local = false: inspect local address defined
+    in RFC 1918
+  * enum reputation.white = unblack: specify the meaning of whitelist
+    { unblack|trust }
+  * string reputation.whitelist: whitelist file name with ip lists
   * int rev.~: revision { 1: }
   * string rpc.~app: application number
   * string rpc.~proc: procedure number or * for any
@@ -8877,10 +9165,10 @@ Some additional details to note:
     compiling into state machine (0 means no maximum) { 0: }
   * int search_engine.max_queue_events = 5: maximum number of
     matching fast pattern states to queue per packet
-  * dynamic search_engine.search_method = ac_bnfa_q: set fast pattern
+  * dynamic search_engine.search_method = ac_bnfa: set fast pattern
     algorithm - choose available search engine { ac_banded | ac_bnfa
-    | ac_bnfa_q | ac_full | ac_full_q | ac_sparse | ac_sparse_bands |
-    ac_std | lowmem | lowmem_q }
+    | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan |
+    lowmem }
   * bool search_engine.search_optimize = false: tweak state machine
     construction for better performance
   * bool search_engine.split_any_any = false: evaluate any-any rules
@@ -9414,6 +9702,11 @@ Some additional details to note:
   * detection.raw searches: fast pattern searches in raw packet data
   * detection.slow searches: non-fast pattern rule evaluations
   * detection.total alerts: alerts including IP reputation
+  * dnp3.dnp3 application pdus: total dnp3 application pdus
+  * dnp3.dnp3 link layer frames: total dnp3 link layer frames
+  * dnp3.tcp pdus: total tcp pdus
+  * dnp3.total packets: total packets
+  * dnp3.udp packets: total udp packets
   * dns.packets: total packets processed
   * dns.requests: total dns requests
   * dns.responses: total dns responses
@@ -9444,7 +9737,17 @@ Some additional details to note:
   * icmp4.bad checksum: non-zero icmp checksums
   * icmp6.bad checksum (ip4): nonzero ipcm4 checksums
   * icmp6.bad checksum (ip6): nonzero ipcm6 checksums
-  * imap.packets: total packets
+  * imap.b64 attachments: total base64 attachments decoded
+  * imap.b64 decoded bytes: total base64 decoded bytes
+  * imap.non-encoded attachments: total non-encoded attachments
+    extracted
+  * imap.non-encoded bytes: total non-encoded extracted bytes
+  * imap.packets: total packets processed
+  * imap.qp attachments: total quoted-printable attachments decoded
+  * imap.qp decoded bytes: total quoted-printable decoded bytes
+  * imap.sessions: total imap sessions
+  * imap.uu attachments: total uu attachments decoded
+  * imap.uu decoded bytes: total uu decoded bytes
   * ipv4.bad checksum: nonzero ip checksums
   * modbus.frames: total Modbus messages
   * modbus.sessions: total sessions processed
@@ -9482,76 +9785,105 @@ Some additional details to note:
   * normalizer.tcp ts nop: timestamp options cleared
   * normalizer.tcp urgent ptr: packets without data with urgent
     pointer cleared
-  * normalizer.test icmp4 echo: During inline mode, would have icmp4
-    ping normalizations
-  * normalizer.test icmp6 echo: During inline mode, would have icmp6
-    echo normalizations
-  * normalizer.test ip4 df: During inline mode, would have don’t frag
-    bit normalizations
-  * normalizer.test ip4 opts: During inline mode, would have ip4
-    options cleared
-  * normalizer.test ip4 rf: During inline mode, would have reserved
-    flag bit clears
-  * normalizer.test ip4 tos: During inline mode, would have type of
-    service normalizations
-  * normalizer.test ip4 trim: During inline mode, would have eth
-    packets trimmed to datagram size
-  * normalizer.test ip4 ttl: During inline mode, would have
-    time-to-live normalizations
-  * normalizer.test ip6 hops: During inline mode, would have ip6 hop
-    limit normalizations
-  * normalizer.test ip6 options: During inline mode, would have ip6
-    options cleared
-  * normalizer.test tcp block: During inline mode, would have blocked
-    segments
-  * normalizer.test tcp ecn pkt: During inline mode, would have
-    packets with ECN bits cleared
-  * normalizer.test tcp ecn session: During inline mode, would have
-    ECN bits cleared
-  * normalizer.test tcp ips data: During inline mode, would have
-    normalized segments
-  * normalizer.test tcp nonce: During inline mode, would have packets
-    with nonce bit cleared
-  * normalizer.test tcp options: During inline mode, would have
-    packets with options cleared
-  * normalizer.test tcp paddding: During inline mode, would have
-    packets with padding cleared
-  * normalizer.test tcp req pay: During inline mode, would have
-    cleared urgent pointer and urgent flag when there is no payload
-  * normalizer.test tcp req urg: During inline mode, would have
-    cleared urgent pointer when urgent flag is not set
-  * normalizer.test tcp req urp: During inline mode, would have
-    cleared the urgent flag if the urgent pointer is not set
-  * normalizer.test tcp reserved: During inline mode, would have
-    packets with reserved bits cleared
-  * normalizer.test tcp syn options: During inline mode, would have
-    SYN only options cleared from non-SYN packets
-  * normalizer.test tcp trim mss: During inline mode, would have data
-    trimmed to MSS
-  * normalizer.test tcp trim rst: During inline mode, would have RST
-    packets with data trimmed
-  * normalizer.test tcp trim syn: During inline mode, would have tcp
-    segments trimmed on SYN
-  * normalizer.test tcp trim win: During inline mode, would have data
-    trimed to window
-  * normalizer.test tcp ts ecr: During inline mode, would have
-    timestamp cleared on non-ACKs
-  * normalizer.test tcp ts nop: During inline mode, would have
-    timestamp options cleared
-  * normalizer.test tcp urgent ptr: During inline mode, would have
-    packets without data with urgent pointer cleared
+  * normalizer.test icmp4 echo: test icmp4 ping normalizations
+  * normalizer.test icmp6 echo: test icmp6 echo normalizations
+  * normalizer.test ip4 df: test don’t frag bit normalizations
+  * normalizer.test ip4 opts: test ip4 options cleared
+  * normalizer.test ip4 rf: test reserved flag bit clears
+  * normalizer.test ip4 tos: test type of service normalizations
+  * normalizer.test ip4 trim: test eth packets trimmed to datagram
+    size
+  * normalizer.test ip4 ttl: test time-to-live normalizations
+  * normalizer.test ip6 hops: test ip6 hop limit normalizations
+  * normalizer.test ip6 options: test ip6 options cleared
+  * normalizer.test tcp block: test blocked segments
+  * normalizer.test tcp ecn pkt: test packets with ECN bits cleared
+  * normalizer.test tcp ecn session: test ECN bits cleared
+  * normalizer.test tcp ips data: test normalized segments
+  * normalizer.test tcp nonce: test packets with nonce bit cleared
+  * normalizer.test tcp options: test packets with options cleared
+  * normalizer.test tcp paddding: test packets with padding cleared
+  * normalizer.test tcp req pay: test cleared urgent pointer and
+    urgent flag when there is no payload
+  * normalizer.test tcp req urg: test cleared urgent pointer when
+    urgent flag is not set
+  * normalizer.test tcp req urp: test cleared the urgent flag if the
+    urgent pointer is not set
+  * normalizer.test tcp reserved: test packets with reserved bits
+    cleared
+  * normalizer.test tcp syn options: test SYN only options cleared
+    from non-SYN packets
+  * normalizer.test tcp trim mss: test data trimmed to MSS
+  * normalizer.test tcp trim rst: test RST packets with data trimmed
+  * normalizer.test tcp trim syn: test tcp segments trimmed on SYN
+  * normalizer.test tcp trim win: test data trimed to window
+  * normalizer.test tcp ts ecr: test timestamp cleared on non-ACKs
+  * normalizer.test tcp ts nop: test timestamp options cleared
+  * normalizer.test tcp urgent ptr: test packets without data with
+    urgent pointer cleared
   * perf_monitor.packets: total packets
-  * pop.packets: total packets
+  * pop.b64 attachments: total base64 attachments decoded
+  * pop.b64 decoded bytes: total base64 decoded bytes
+  * pop.non-encoded attachments: total non-encoded attachments
+    extracted
+  * pop.non-encoded bytes: total non-encoded extracted bytes
+  * pop.packets: total packets processed
+  * pop.qp attachments: total quoted-printable attachments decoded
+  * pop.qp decoded bytes: total quoted-printable decoded bytes
+  * pop.sessions: total pop sessions
+  * pop.uu attachments: total uu attachments decoded
+  * pop.uu decoded bytes: total uu decoded bytes
   * port_scan_global.packets: total packets
+  * reputation.blacklisted: number of packets blacklisted
+  * reputation.memory_allocated: total memory allocated
+  * reputation.monitored: number of packets monitored
+  * reputation.packets: total packets processed
+  * reputation.whitelisted: number of packets whitelisted
   * rpc_decode.packets: total packets
+  * sip.1xx: 1xx
+  * sip.2xx: 2xx
+  * sip.3xx: 3xx
+  * sip.4xx: 4xx
+  * sip.5xx: 5xx
+  * sip.6xx: 6xx
+  * sip.7xx: 7xx
+  * sip.8xx: 8xx
+  * sip.9xx: 9xx
+  * sip.ack: ack
+  * sip.bye: bye
+  * sip.cancel: cancel
   * sip.dialogs: total dialogs
   * sip.events: events generated
   * sip.ignored channels: total channels ignored
   * sip.ignored sessions: total sessions ignored
-  * sip.requests: total requests
-  * sip.responses: total responses
+  * sip.info: info
+  * sip.invite: invite
+  * sip.join: join
+  * sip.message: message
+  * sip.notify: notify
+  * sip.options: options
+  * sip.packets: total packets
+  * sip.prack: prack
+  * sip.refer: refer
+  * sip.register: register
   * sip.sessions: total sessions
-  * smtp.packets: total packets
+  * sip.subscribe: subscribe
+  * sip.total requests: total requests
+  * sip.total responses: total responses
+  * sip.update: update
+  * smtp.b64 attachments: total base64 attachments decoded
+  * smtp.b64 decoded bytes: total base64 decoded bytes
+  * smtp.concurrent sessions: total concurrent smtp sessions
+  * smtp.max concurrent sessions: maximum concurrent smtp sessions
+  * smtp.non-encoded attachments: total non-encoded attachments
+    extracted
+  * smtp.non-encoded bytes: total non-encoded extracted bytes
+  * smtp.packets: total packets processed
+  * smtp.qp attachments: total quoted-printable attachments decoded
+  * smtp.qp decoded bytes: total quoted-printable decoded bytes
+  * smtp.sessions: total smtp sessions
+  * smtp.uu attachments: total uu attachments decoded
+  * smtp.uu decoded bytes: total uu decoded bytes
   * snort.attribute table hosts: total number of hosts in table
   * snort.attribute table reloads: number of times hosts table was
     reloaded
@@ -9695,12 +10027,14 @@ Some additional details to note:
   * 128: ssh
   * 129: stream_tcp
   * 131: dns
+  * 136: reputation
   * 137: ssl
   * 140: sip
   * 141: imap
   * 142: pop
   * 143: gtp_inspect
   * 144: modbus
+  * 145: dnp3
   * 219: new_http_inspect
   * 256: dpx
 
@@ -10059,6 +10393,9 @@ Some additional details to note:
   * 131:1 (dns) Obsolete DNS RR Types
   * 131:2 (dns) Experimental DNS RR Types
   * 131:3 (dns) DNS Client rdata txt Overflow
+  * 136:1 (reputation) packets blacklisted
+  * 136:2 (reputation) Packets whitelisted
+  * 136:3 (reputation) Packets monitored
   * 137:1 (ssl) Invalid Client HELLO after Server HELLO Detected
   * 137:2 (ssl) Invalid Server HELLO without Client HELLO Detected
   * 137:3 (ssl) Heartbeat Read Overrun Attempt Detected
@@ -10107,6 +10444,15 @@ Some additional details to note:
     length needed for the given function
   * 144:2 (modbus) Modbus protocol ID is non-zero
   * 144:3 (modbus) Reserved Modbus function code in use
+  * 145:1 (dnp3) DNP3 Link-Layer Frame contains bad CRC.
+  * 145:2 (dnp3) DNP3 Link-Layer Frame was dropped.
+  * 145:3 (dnp3) DNP3 Transport-Layer Segment was dropped during
+    reassembly.
+  * 145:4 (dnp3) DNP3 Reassembly Buffer was cleared without
+    reassembling a complete message.
+  * 145:5 (dnp3) DNP3 Link-Layer Frame uses a reserved address.
+  * 145:6 (dnp3) DNP3 Application-Layer Fragment uses a reserved
+    function code.
   * 219:1 (new_http_inspect) ascii encoding
   * 219:2 (new_http_inspect) double decoding attack
   * 219:3 (new_http_inspect) u encoding
@@ -10569,6 +10915,14 @@ deleted -> unified2: 'filename'
     parameters
   * detection_filter (ips_option): rule option to require multiple
     hits before a rule generates an event
+  * dnp3 (inspector): dnp3 inspection
+  * dnp3_data (ips_option): sets the cursor to dnp3 data
+  * dnp3_func (ips_option): detection option to check dnp3 function
+    code
+  * dnp3_ind (ips_option): detection option to check dnp3 indicator
+    flags
+  * dnp3_obj (ips_option): detection option to check dnp3 object
+    headers
   * dns (inspector): dns inspection
   * dpx (inspector): dynamic inspector example
   * dsize (ips_option): rule option to test payload size
@@ -10650,7 +11004,6 @@ deleted -> unified2: 'filename'
   * log_codecs (logger): log protocols in packet by layer
   * log_hext (logger): output payload suitable for daq hext
   * log_pcap (logger): log packet in pcap format
-  * lowmem_q (search_engine): MPSE that minimizes memory used
   * md5 (ips_option): payload rule option for hash matching
   * metadata (ips_option): rule option for conveying arbitrary name,
     value data within the rule text
@@ -10669,7 +11022,7 @@ deleted -> unified2: 'filename'
   * output (basic): configure general output parameters
   * packets (basic): configure basic packet handling
   * pcre (ips_option): rule option for matching payload data with
-    regex
+    pcre
   * perf_monitor (inspector): performance monitoring and flow
     statistics collection
   * pgm (codec): support for pragmatic general multicast
@@ -10684,6 +11037,7 @@ deleted -> unified2: 'filename'
   * pppoe (codec): support for point-to-point protocol over ethernet
   * priority (ips_option): rule option for prioritizing events
   * process (basic): configure basic process setup
+  * profiler (basic): configure profiling of rules and/or modules
   * rate_filter (basic): configure rate filters (which change rule
     actions)
   * raw_data (ips_option): rule option to set the detection cursor to
@@ -10692,12 +11046,15 @@ deleted -> unified2: 'filename'
   * reference (ips_option): rule option to indicate relevant attack
     identification system
   * references (basic): define reference systems used in rules
+  * regex (ips_option): rule option for matching payload data with
+    hyperscan regex
   * reject (ips_action): terminate session with TCP reset or ICMP
     unreachable
   * rem (ips_option): rule option to convey an arbitrary comment in
     the rule body
   * replace (ips_option): rule option to overwrite payload data; use
     with rewrite action
+  * reputation (inspector): reputation inspection
   * rev (ips_option): rule option to indicate current revision of
     signature
   * rewrite (ips_action): overwrite packet contents
@@ -10820,6 +11177,7 @@ deleted -> unified2: 'filename'
   * inspector::binder: configure processing based on CIDRs, ports,
     services, etc.
   * inspector::data_log: log selected published data to data.log
+  * inspector::dnp3: dnp3 inspection
   * inspector::dns: dns inspection
   * inspector::dpx: dynamic inspector example
   * inspector::ftp_client: FTP inspector client module
@@ -10839,6 +11197,7 @@ deleted -> unified2: 'filename'
     port_scan_global
   * inspector::port_scan_global: shared settings for port_scan
     inspectors for use with port_scan
+  * inspector::reputation: reputation inspection
   * inspector::rpc_decode: RPC inspector
   * inspector::sip: sip inspection
   * inspector::smtp: smtp inspection
@@ -10883,6 +11242,13 @@ deleted -> unified2: 'filename'
     attacks
   * ips_option::detection_filter: rule option to require multiple
     hits before a rule generates an event
+  * ips_option::dnp3_data: sets the cursor to dnp3 data
+  * ips_option::dnp3_func: detection option to check dnp3 function
+    code
+  * ips_option::dnp3_ind: detection option to check dnp3 indicator
+    flags
+  * ips_option::dnp3_obj: detection option to check dnp3 object
+    headers
   * ips_option::dsize: rule option to test payload size
   * ips_option::file_data: rule option to set detection cursor to
     file data
@@ -10934,8 +11300,7 @@ deleted -> unified2: 'filename'
   * ips_option::modbus_unit: rule option to check modbus unit ID
   * ips_option::msg: rule option summarizing rule purpose output with
     events
-  * ips_option::pcre: rule option for matching payload data with
-    regex
+  * ips_option::pcre: rule option for matching payload data with pcre
   * ips_option::pkt_data: rule option to set the detection cursor to
     the normalized packet data
   * ips_option::pkt_num: alert on raw packet number
@@ -10944,6 +11309,8 @@ deleted -> unified2: 'filename'
     the raw packet data
   * ips_option::reference: rule option to indicate relevant attack
     identification system
+  * ips_option::regex: rule option for matching payload data with
+    hyperscan regex
   * ips_option::rem: rule option to convey an arbitrary comment in
     the rule body
   * ips_option::replace: rule option to overwrite payload data; use
@@ -10999,21 +11366,17 @@ deleted -> unified2: 'filename'
     moderate performance)
   * search_engine::ac_bnfa: Aho-Corasick Binary NFA (low memory, high
     performance) MPSE
-  * search_engine::ac_bnfa_q: Aho-Corasick Binary NFA (low memory,
-    high performance) with queued events
   * search_engine::ac_full: Aho-Corasick Full (high memory, best
     performance), implements search_all()
-  * search_engine::ac_full_q: Aho-Corasick Full (high memory, best
-    performance) with queued events, implements search_all()
   * search_engine::ac_sparse: Aho-Corasick Sparse (high memory,
     moderate performance) MPSE
   * search_engine::ac_sparse_bands: Aho-Corasick Sparse-Banded (high
     memory, moderate performance) MPSE
   * search_engine::ac_std: Aho-Corasick Full (high memory, best
     performance) MPSE
+  * search_engine::hyperscan: intel hyperscan-based mpse with regex
+    support
   * search_engine::lowmem: Keyword Trie (low memory, moderate
     performance) MPSE
-  * search_engine::lowmem_q: Keyword Trie (low memory, moderate
-    performance) MPSE with queued events
   * so_rule::3|18758: SO rule example
 
