@@ -1,11 +1,11 @@
 # Snort++
 
->The Snort++ project has been hard at work for a while now and we are
->finally ready to release the first alpha of the next generation Snort IPS
->(Intrusion Prevention System).  This file will show you what Snort++ has to
->offer and guide you through the steps from download to demo.  If you are
->unfamiliar with Snort you should take a look at the Snort documentation
->first. We will cover the following topics:
+The Snort++ project has been hard at work for a while now and we have
+released the third alpha of the next generation Snort IPS (Intrusion
+Prevention System).  This file will show you what Snort++ has to offer and
+guide you through the steps from download to demo.  If you are unfamiliar
+with Snort you should take a look at the Snort documentation first. We will
+cover the following topics:
 
 ---
 
@@ -19,16 +19,16 @@
 
 # OVERVIEW
 
-This first alpha release is based on early Snort 2.9.6 and excludes all but
-one of Snort's dynamic preprocessors (ftp_telnet).  Work is underway to
-port that functionality and sync with 2.9.7; those updates will be rolled
-out as they become available.
+This version of Snort++ includes new features as well as all Snort 2.X
+features and bug fixes for the base version of Snort except as indicated
+below:
 
     Project = Snort++
     Binary = snort
-    Version = 3.0.0-a2
+    Version = 3.0.0-a3 build 183
+    Base = 2.9.7 build 262
 
-Here are some key features in this alpha release:
+Here are some key features of Snort++:
 
 * Support multiple packet processing threads
 * Use a shared configuration and attribute table
@@ -38,6 +38,16 @@ Here are some key features in this alpha release:
 * Support sticky buffers in rules
 * Autogenerate reference documentation
 * Provide better cross platform support
+* Facilitate component testing
+
+The following Snort 2.X features are not yet supported but are planned to
+be supported in the next and final alpha release:
+
+* side channel and high availability
+* session capture
+* dcerpc2 preprocessor
+* appid preprocessor
+* sdf preprocessor
 
 Additional features on the roadmap include:
 
@@ -46,9 +56,8 @@ Additional features on the roadmap include:
 * Support hardware offload and data plane integration
 * Rewrite critical modules like TCP reassembly and HTTP inspection
 * Support proxy mode
-* Facilitate component testing
 * Simplify memory management
-* Provide all of Snort's functionality
+* Windows support
 
 # DEPENDENCIES
 
@@ -58,23 +67,29 @@ the latest:
 * autotools or cmake to build from source
 * g++ >= 4.8 or other C++11 compiler
 * daq from http://www.snort.org for packet IO
-* dnet from http://code.google.com/p/libdnet/ for network utility functions
+* dnet from https://github.com/dugsong/libdnet.git for network utility functions
 * LuaJIT from http://luajit.org for configuration and scripting
 * pcap from http://www.tcpdump.org for tcpdump style logging
 * pcre from http://www.pcre.org for regular expression pattern matching
 * zlib from http://www.zlib.net for decompression
 * pkgconfig from http://www.freedesktop.org to build the example plugins
 
+Additional packages provide optional features.  Check the manual for more.
+
 # DOWNLOAD
 
-There are two source tarballs, once for autotools and one for cmake:
+There are two source tarballs, one for autotools and one for cmake:
 
-    snort-3.0.0-a1-130-auto.tar.gz
-    snort-3.0.0-a1-130-cmake.tar.gz
+    snort-3.0.0-a3-auto.tar.gz
+    snort-3.0.0-a3-cmake.tar.gz
 
-You can also git the code with:
+You can also get the code with:
 
     git clone git://github.com/snortadmin/snort3.git
+
+There are separate extras packages for autotools and cmake that provide
+additional features and demonstrate how to build plugins.  The source for
+extras is in git repo as well.
 
 # BUILD SNORT
 
