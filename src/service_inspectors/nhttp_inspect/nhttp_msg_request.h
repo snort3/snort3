@@ -42,6 +42,7 @@ public:
     const Field& get_method() { return method; }
     const Field& get_uri();
     const Field& get_uri_norm_legacy();
+    NHttpUri* get_nhttp_uri() { return uri; }
 
 #ifdef REG_TEST
     void print_section(FILE* output) override;

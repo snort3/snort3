@@ -19,11 +19,13 @@
 
 #include <string.h>
 
+#include "main/snort_types.h"
+
 #include "nhttp_enum.h"
 #include "nhttp_str_to_code.h"
 
 // Need to replace this simple algorithm for better performance FIXIT-P
-int32_t str_to_code(const uint8_t* text, const int32_t text_len, const StrCode table[])
+SO_PUBLIC int32_t str_to_code(const uint8_t* text, const int32_t text_len, const StrCode table[])
 {
     for (int32_t k=0; table[k].name != nullptr; k++)
     {

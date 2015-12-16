@@ -31,6 +31,9 @@ class NHttpMsgStart : public NHttpMsgSection
 {
 public:
     void analyze() override;
+    const Field& get_version() const { return version; }
+    NHttpEnums::InspectSection get_inspection_section() const override
+        { return NHttpEnums::IS_START; }
 
 protected:
     NHttpMsgStart(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,

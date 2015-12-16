@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <stdio.h>
 
+#include "main/snort_types.h"
 #include "stream/stream_api.h"
 
 #include "nhttp_enum.h"
@@ -55,21 +56,18 @@ NHttpInspect::NHttpInspect(NHttpParaList params_) : params(params_)
 
 THREAD_LOCAL uint8_t NHttpInspect::body_buffer[MAX_OCTETS];
 
-THREAD_LOCAL NHttpMsgSection* NHttpInspect::latest_section = nullptr;
+SO_PUBLIC THREAD_LOCAL NHttpMsgSection* NHttpInspect::latest_section = nullptr;
 
 bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b)
 {
-    switch ( ibt )
+    switch (ibt)
     {
     case InspectionBuffer::IBT_KEY:
-        return get_buf(NHTTP_BUFFER_URI, nullptr, b);
-
+        return get_buf(NHTTP_BUFFER_URI, 0, nullptr, b);
     case InspectionBuffer::IBT_HEADER:
-        return get_buf(NHTTP_BUFFER_HEADER, nullptr, b);
-
+        return get_buf(NHTTP_BUFFER_HEADER, 0, nullptr, b);
     case InspectionBuffer::IBT_BODY:
-        return get_buf(NHTTP_BUFFER_CLIENT_BODY, nullptr, b);
-
+        return get_buf(NHTTP_BUFFER_CLIENT_BODY, 0, nullptr, b);
     default:
         return false;
     }
@@ -77,16 +75,23 @@ bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer
 
 bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 {
+    return get_buf(id, 0, nullptr, b);
+}
+
+SO_PUBLIC bool NHttpInspect::get_buf(unsigned id, unsigned sub_id, Packet*, InspectionBuffer& b)
+{
+    // FIXIT-L some day we should add support for accessing the request headers, trailers, and
+    // version from the response side of the transaction.
     if (latest_section == nullptr)
         return false;
 
-    const Field& legacy = latest_section->get_legacy(id);
+    const Field& buffer = latest_section->get_classic_buffer(id, sub_id);
 
-    if (legacy.length <= 0)
+    if (buffer.length <= 0)
         return false;
 
-    b.data = legacy.start;
-    b.len = legacy.length;
+    b.data = buffer.start;
+    b.len = buffer.length;
     return true;
 }
 

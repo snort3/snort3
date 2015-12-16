@@ -25,6 +25,7 @@
 #include "detection/detection_util.h"
 
 #include "nhttp_enum.h"
+#include "nhttp_api.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_header.h"
 
@@ -192,6 +193,14 @@ void NHttpMsgRequest::print_section(FILE* output)
         uri->get_fragment().print(output, "Fragment");
         uri->get_norm_fragment().print(output, "Normalized Fragment");
     }
+    get_classic_buffer(NHTTP_BUFFER_METHOD, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_METHOD-1]);
+    get_classic_buffer(NHTTP_BUFFER_RAW_URI, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_RAW_URI-1]);
+    get_classic_buffer(NHTTP_BUFFER_URI, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_URI-1]);
+    get_classic_buffer(NHTTP_BUFFER_VERSION, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_VERSION-1]);
     NHttpMsgSection::print_message_wrapup(output);
 }
 

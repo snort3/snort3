@@ -23,11 +23,12 @@
 
 #include "nhttp_enum.h"
 #include "nhttp_transaction.h"
-#include "nhttp_api.h"
 #include "nhttp_msg_section.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_status.h"
 #include "nhttp_msg_head_shared.h"
+#include "nhttp_msg_header.h"
+#include "nhttp_msg_trailer.h"
 #include "nhttp_msg_body.h"
 
 using namespace NHttpEnums;
@@ -78,10 +79,9 @@ void NHttpMsgSection::update_depth() const
     }
 }
 
-const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
+const Field& NHttpMsgSection::get_classic_buffer(unsigned id, unsigned sub_id)
 {
-    // When current section is trailers, that is what will be used for header and cookie buffers.
-    switch (buffer_id)
+    switch (id)
     {
     case NHTTP_BUFFER_CLIENT_BODY:
       {
@@ -96,16 +96,24 @@ const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
     // Currently "normalization" is aggregation of multiple cookies. That is correct for raw
     // cookies and all there is for normalized cookies.
       {
-        NHttpMsgHeadShared* header = transaction->get_latest_header(source_id);
+        NHttpMsgHeader* header = transaction->get_header(source_id);
         if (header == nullptr)
             return Field::FIELD_NULL;
         HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
         return header->get_header_value_norm(cookie_head);
       }
     case NHTTP_BUFFER_HEADER:
+    case NHTTP_BUFFER_TRAILER:
       {
-        NHttpMsgHeadShared* header = transaction->get_latest_header(source_id);
-        return (header != nullptr) ? header->get_headers() : Field::FIELD_NULL;
+        // FIXIT-L Someday want to be able to return field name or raw field value
+        NHttpMsgHeadShared* const header = (id == NHTTP_BUFFER_HEADER) ?
+            (NHttpMsgHeadShared*)transaction->get_header(source_id) :
+            (NHttpMsgHeadShared*)transaction->get_trailer(source_id);
+        if (header == nullptr)
+            return Field::FIELD_NULL;
+        if (sub_id == 0)
+            return header->get_headers();
+        return header->get_header_value_norm((HeaderId)sub_id);
       }
     case NHTTP_BUFFER_METHOD:
       {
@@ -114,13 +122,8 @@ const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
       }
     case NHTTP_BUFFER_RAW_HEADER:
       {
-        NHttpMsgHeadShared* header = transaction->get_latest_header(source_id);
+        NHttpMsgHeader* header = transaction->get_header(source_id);
         return (header != nullptr) ? header->get_headers() : Field::FIELD_NULL;
-      }
-    case NHTTP_BUFFER_RAW_URI:
-      {
-        NHttpMsgRequest* request = transaction->get_request();
-        return (request != nullptr) ? request->get_uri() : Field::FIELD_NULL;
       }
     case NHTTP_BUFFER_STAT_CODE:
       {
@@ -132,10 +135,46 @@ const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
         NHttpMsgStatus* status = transaction->get_status();
         return (status != nullptr) ? status->get_reason_phrase() : Field::FIELD_NULL;
       }
+    case NHTTP_BUFFER_RAW_URI:
     case NHTTP_BUFFER_URI:
       {
+        const bool raw = (id == NHTTP_BUFFER_RAW_URI);
         NHttpMsgRequest* request = transaction->get_request();
-        return (request != nullptr) ? request->get_uri_norm_legacy() : Field::FIELD_NULL;
+        if (request == nullptr)
+            return Field::FIELD_NULL;
+        if (sub_id == 0)
+            return raw ? request->get_uri() : request->get_uri_norm_legacy();
+        NHttpUri* const uri = request->get_nhttp_uri();
+        if (uri == nullptr)
+            return Field::FIELD_NULL;
+        switch ((UriComponent)sub_id)
+        {
+        case UC_SCHEME:
+            return uri->get_scheme();
+        case UC_HOST:
+            return raw ? uri->get_host() : uri->get_norm_host();
+        case UC_PORT:
+            return uri->get_port();
+        case UC_PATH:
+            return raw ? uri->get_path() : uri->get_norm_path();
+        case UC_QUERY:
+            return raw ? uri->get_query() : uri->get_norm_query();
+        case UC_FRAGMENT:
+            return raw ? uri->get_fragment() : uri->get_norm_fragment();
+        }
+        assert(false);
+        return Field::FIELD_NULL;
+      }
+    case NHTTP_BUFFER_VERSION:
+      {
+        NHttpMsgStart* start = (source_id == SRC_CLIENT) ?
+            (NHttpMsgStart*)transaction->get_request() : (NHttpMsgStart*)transaction->get_status();
+        return (start != nullptr) ? start->get_version() : Field::FIELD_NULL;
+      }
+    case NHTTP_BUFFER_RAW_TRAILER:
+      {
+        NHttpMsgTrailer* trailer = transaction->get_trailer(source_id);
+        return (trailer != nullptr) ? trailer->get_headers() : Field::FIELD_NULL;
       }
     default:
         assert(false);
@@ -153,17 +192,9 @@ void NHttpMsgSection::print_message_title(FILE* output, const char* title) const
 
 void NHttpMsgSection::print_message_wrapup(FILE* output)
 {
-    fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 ", Events: %016" PRIx64 " %016" PRIx64 ", TCP Close: %s\n",
-        infractions.get_raw2(), infractions.get_raw(), events.get_raw2(), events.get_raw(), tcp_close ? "True" : "False");
-    for (unsigned k=1; k < NHTTP_BUFFER_MAX; k++)
-    {
-        get_legacy(k).print(output, NHttpApi::legacy_buffers[k-1]);
-    }
-    if (g_file_data.len > 0)
-    {
-        Field(g_file_data.len, g_file_data.data).print(output, "file_data");
-    }
-    fprintf(output, "\n");
+    fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 ", Events: %016" PRIx64 " %016"
+        PRIx64 ", TCP Close: %s\n\n", infractions.get_raw2(), infractions.get_raw(),
+        events.get_raw2(), events.get_raw(), tcp_close ? "True" : "False");
     session_data->show(output);
     fprintf(output, "\n");
 }

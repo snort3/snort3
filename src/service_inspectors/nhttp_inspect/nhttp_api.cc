@@ -45,6 +45,9 @@ const char* NHttpApi::legacy_buffers[] =
     "http_stat_code",
     "http_stat_msg",
     "http_uri",
+    "http_version",
+    "http_trailer",
+    "http_raw_trailer",
     nullptr
 };
 
@@ -72,8 +75,8 @@ const InspectApi NHttpApi::nhttp_api =
     NHttpApi::nhttp_tterm,
     NHttpApi::nhttp_ctor,
     NHttpApi::nhttp_dtor,
-    nullptr, // ssn
-    nullptr  // reset
+    nullptr,
+    nullptr
 };
 
 #ifdef BUILDING_SO

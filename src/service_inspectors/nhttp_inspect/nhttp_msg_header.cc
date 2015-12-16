@@ -26,6 +26,7 @@
 #include "file_api/file_service.h"
 #include "file_api/file_flows.h"
 
+#include "nhttp_api.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_header.h"
 
@@ -215,6 +216,14 @@ void NHttpMsgHeader::print_section(FILE* output)
 {
     NHttpMsgSection::print_message_title(output, "header");
     NHttpMsgHeadShared::print_headers(output);
+    get_classic_buffer(NHTTP_BUFFER_COOKIE, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_COOKIE-1]);
+    get_classic_buffer(NHTTP_BUFFER_HEADER, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_HEADER-1]);
+    get_classic_buffer(NHTTP_BUFFER_RAW_COOKIE, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_RAW_COOKIE-1]);
+    get_classic_buffer(NHTTP_BUFFER_RAW_HEADER, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_RAW_HEADER-1]);
     NHttpMsgSection::print_message_wrapup(output);
 }
 #endif

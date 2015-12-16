@@ -25,6 +25,7 @@
 #include "framework/inspector.h"
 
 #include "nhttp_module.h"
+#include "nhttp_flow_data.h"
 
 class NHttpApi
 {

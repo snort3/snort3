@@ -45,10 +45,9 @@ void NHttpMsgBodyOld::update_flow()
 #ifdef REG_TEST
 void NHttpMsgBodyOld::print_section(FILE* output)
 {
-    NHttpMsgSection::print_message_title(output, "Old-style body");
+    NHttpMsgSection::print_message_title(output, "old-style body");
     fprintf(output, "octets seen %" PRIi64 "\n", body_octets);
-    detect_data.print(output, "Detect data");
-    NHttpMsgSection::print_message_wrapup(output);
+    print_body_section(output);
 }
 #endif
 

@@ -27,6 +27,7 @@
 #include "mime/file_mime_process.h"
 
 #include "nhttp_enum.h"
+#include "nhttp_api.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_body.h"
 
@@ -126,4 +127,19 @@ void NHttpMsgBody::do_file_processing()
         }
     }
 }
+
+#ifdef REG_TEST
+// Common elements of print_section() for body sections
+void NHttpMsgBody::print_body_section(FILE* output)
+{
+    detect_data.print(output, "Detect data");
+    get_classic_buffer(NHTTP_BUFFER_CLIENT_BODY, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_CLIENT_BODY-1]);
+    if (g_file_data.len > 0)
+    {
+        Field(g_file_data.len, g_file_data.data).print(output, "file_data");
+    }
+    NHttpMsgSection::print_message_wrapup(output);
+}
+#endif
 

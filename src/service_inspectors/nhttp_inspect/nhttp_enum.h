@@ -33,6 +33,7 @@ static const int FINAL_GZIP_BLOCK_SIZE = 2304; // compromise value, too big caus
 static const uint32_t NHTTP_GID = 219;
 static const int GZIP_WINDOWBITS = 31;
 static const int DEFLATE_WINDOWBITS = 15;
+static const int MAX_FIELD_NAME_LENGTH = 100;
 
 // Field status codes for when no valid value is present in length or integer value. Positive
 // values are actual length or field value.
@@ -49,9 +50,11 @@ enum SectionType { SEC_DISCARD = -19, SEC_ABORT = -18, SEC__NOTCOMPUTE=-14, SEC_
     SEC_BODY_OLD };
 
 // Message buffers available to clients
+// This enum must remain synchronized with legacy_buffers[]
 enum NHTTP_BUFFER { NHTTP_BUFFER_CLIENT_BODY = 1, NHTTP_BUFFER_COOKIE, NHTTP_BUFFER_HEADER,
     NHTTP_BUFFER_METHOD, NHTTP_BUFFER_RAW_COOKIE, NHTTP_BUFFER_RAW_HEADER, NHTTP_BUFFER_RAW_URI,
-    NHTTP_BUFFER_STAT_CODE, NHTTP_BUFFER_STAT_MSG, NHTTP_BUFFER_URI, NHTTP_BUFFER_MAX };
+    NHTTP_BUFFER_STAT_CODE, NHTTP_BUFFER_STAT_MSG, NHTTP_BUFFER_URI, NHTTP_BUFFER_VERSION,
+    NHTTP_BUFFER_TRAILER, NHTTP_BUFFER_RAW_TRAILER, NHTTP_BUFFER_MAX };
 
 // Result of scanning by splitter
 enum ScanResult { SCAN_NOTFOUND, SCAN_FOUND, SCAN_FOUND_PIECE, SCAN_DISCARD, SCAN_DISCARD_PIECE,
@@ -88,6 +91,12 @@ enum SchemeId { SCH__NOSOURCE=-16, SCH__NOTCOMPUTE=-14, SCH__INSUFMEMORY=-13, SC
 
 // Body compression tpyes
 enum CompressId { CMP_NONE=2, CMP_GZIP, CMP_DEFLATE };
+
+// Message section in which an IPS option provides the buffer
+enum InspectSection { IS_NONE, IS_START, IS_HEADER, IS_BODY, IS_TRAILER };
+
+// Part of the URI to be provided
+enum UriComponent { UC_SCHEME = 1, UC_HOST, UC_PORT, UC_PATH, UC_QUERY, UC_FRAGMENT };
 
 // Every header we have ever heard of
 enum HeaderId { HEAD__NOTCOMPUTE=-14, HEAD__INSUFMEMORY=-13, HEAD__PROBLEMATIC=-12,

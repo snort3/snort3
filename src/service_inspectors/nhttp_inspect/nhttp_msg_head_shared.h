@@ -45,6 +45,11 @@ public:
     const Field& get_header_value_norm(NHttpEnums::HeaderId header_id);
     int get_header_count(NHttpEnums::HeaderId header_id) const;
 
+    // Tables of header field names and header value names
+    static const StrCode header_list[];
+    static const StrCode trans_code_list[];
+    static const StrCode content_code_list[];
+
 protected:
     NHttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size,
         NHttpFlowData* session_data_, NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
@@ -63,11 +68,6 @@ protected:
 
     // Master table of known header fields and their normalization strategies.
     static const HeaderNormalizer* const header_norms[];
-
-    // Tables of header field names and header value names
-    static const StrCode header_list[];
-    static const StrCode trans_code_list[];
-    static const StrCode content_code_list[];
 
     void parse_header_block();
     uint32_t find_header_end(const uint8_t* buffer, int32_t length, int& num_seps);

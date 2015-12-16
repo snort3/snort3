@@ -101,7 +101,7 @@ const StrCode NHttpUri::scheme_list[] =
     { 0,                       nullptr }
 };
 
-const StrCode NHttpMsgHeadShared::header_list[] =
+SO_PUBLIC const StrCode NHttpMsgHeadShared::header_list[] =
 {
     { HEAD_CACHE_CONTROL,        "cache-control" },
     { HEAD_CONNECTION,           "connection" },

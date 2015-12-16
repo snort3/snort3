@@ -58,8 +58,7 @@ void NHttpMsgBodyCl::print_section(FILE* output)
     NHttpMsgSection::print_message_title(output, "Content-Length body");
     fprintf(output, "Content-Length %" PRIi64 ", octets seen %" PRIi64 "\n", data_length,
         body_octets);
-    detect_data.print(output, "Detect data");
-    NHttpMsgSection::print_message_wrapup(output);
+    print_body_section(output);
 }
 #endif
 

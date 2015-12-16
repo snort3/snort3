@@ -29,10 +29,10 @@
 #include "nhttp_enum.h"
 #include "nhttp_field.h"
 #include "nhttp_module.h"
+#include "nhttp_msg_section.h"
 #include "nhttp_stream_splitter.h"
 
 class NHttpApi;
-class NHttpMsgSection;
 
 class NHttpInspect : public Inspector
 {
@@ -41,8 +41,9 @@ public:
 
     NHttpInspect(NHttpParaList params_);
 
-    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
-    bool get_buf(unsigned, Packet*, InspectionBuffer&) override;
+    bool get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b) override;
+    bool get_buf(unsigned id, Packet*, InspectionBuffer& b) override;
+    bool get_buf(unsigned id, unsigned sub_id, Packet*, InspectionBuffer& b);
     bool configure(SnortConfig*) override { return true; }
     void show(SnortConfig*) override { LogMessage("NHttpInspect\n"); }
     void eval(Packet*) override { }
@@ -54,6 +55,8 @@ public:
     {
         return new NHttpStreamSplitter(is_client_to_server, this);
     }
+    static NHttpEnums::InspectSection get_latest_is() { return (latest_section != nullptr) ?
+        latest_section->get_inspection_section() : NHttpEnums::IS_NONE; }
 private:
     friend NHttpApi;
     friend NHttpStreamSplitter;

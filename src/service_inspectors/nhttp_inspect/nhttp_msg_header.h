@@ -35,6 +35,8 @@ public:
     NHttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
         NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
         const NHttpParaList* params_);
+    NHttpEnums::InspectSection get_inspection_section() const override
+        { return NHttpEnums::IS_HEADER; }
     void update_flow() override;
 private:
     // Dummy configurations to support MIME processing

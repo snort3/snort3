@@ -25,6 +25,7 @@
 #include "detection/detection_util.h"
 
 #include "nhttp_enum.h"
+#include "nhttp_api.h"
 #include "nhttp_msg_status.h"
 #include "nhttp_msg_header.h"
 
@@ -170,6 +171,12 @@ void NHttpMsgStatus::print_section(FILE* output)
     fprintf(output, "Version Id: %d\n", version_id);
     fprintf(output, "Status Code Num: %d\n", status_code_num);
     reason_phrase.print(output, "Reason Phrase");
+    get_classic_buffer(NHTTP_BUFFER_STAT_CODE, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_STAT_CODE-1]);
+    get_classic_buffer(NHTTP_BUFFER_STAT_MSG, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_STAT_MSG-1]);
+    get_classic_buffer(NHTTP_BUFFER_VERSION, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_VERSION-1]);
     NHttpMsgSection::print_message_wrapup(output);
 }
 #endif

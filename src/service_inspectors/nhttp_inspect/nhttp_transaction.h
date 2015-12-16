@@ -56,13 +56,6 @@ public:
     NHttpMsgBody* get_body() const { return latest_body; }
     void set_body(NHttpMsgBody* latest_body_) { latest_body = latest_body_; }
 
-    // Convenience method
-    NHttpMsgHeadShared* get_latest_header(NHttpEnums::SourceId source_id)
-    {
-        return (trailer[source_id] != nullptr) ? (NHttpMsgHeadShared*)trailer[source_id] :
-            (NHttpMsgHeadShared*)header[source_id];
-    }
-
 private:
     NHttpTransaction() = default;
 

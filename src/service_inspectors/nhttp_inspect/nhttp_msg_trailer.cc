@@ -24,6 +24,7 @@
 #include "detection/detection_util.h"
 
 #include "nhttp_enum.h"
+#include "nhttp_api.h"
 #include "nhttp_msg_trailer.h"
 
 using namespace NHttpEnums;
@@ -49,6 +50,10 @@ void NHttpMsgTrailer::print_section(FILE* output)
 {
     NHttpMsgSection::print_message_title(output, "trailer");
     NHttpMsgHeadShared::print_headers(output);
+    get_classic_buffer(NHTTP_BUFFER_TRAILER, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_TRAILER-1]);
+    get_classic_buffer(NHTTP_BUFFER_RAW_TRAILER, 0).print(output,
+        NHttpApi::legacy_buffers[NHTTP_BUFFER_RAW_TRAILER-1]);
     NHttpMsgSection::print_message_wrapup(output);
 }
 #endif
