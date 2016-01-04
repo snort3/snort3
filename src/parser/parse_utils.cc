@@ -71,10 +71,7 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
                 ok = false;
             break;
         case 2:
-            if ( c == '\\' )
-                state = 3;
-
-            else if ( c == '|' )
+            if ( c == '|' )
             {
                 hex = 0;
                 nx = 0;
@@ -84,10 +81,6 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
                 state = 9;
             else
                 out += c;
-            break;
-        case 3:
-            out += c;
-            state = 2;
             break;
         case 4:
             if ( c == '|' )
