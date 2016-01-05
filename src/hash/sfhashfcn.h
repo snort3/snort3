@@ -65,10 +65,9 @@ struct SFHASHFCN
 };
 
 SFHASHFCN* sfhashfcn_new(int nrows);
-void sfhashfcn_free(SFHASHFCN* p);
-void sfhashfcn_static(SFHASHFCN* p);
+void sfhashfcn_free(SFHASHFCN*);
 
-unsigned sfhashfcn_hash(SFHASHFCN* p, unsigned char* d, int n);
+unsigned sfhashfcn_hash(SFHASHFCN*, unsigned char* d, int n);
 
 int sfhashfcn_set_keyops(
     SFHASHFCN*,

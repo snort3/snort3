@@ -606,10 +606,6 @@ static int PortTableCompileMergePortObjects(PortTable* p)
     /* Setup hashing function and key comparison function */
     sfhashfcn_set_keyops(mhash->sfhashfcn, PortObject_hash, PortObject_keycmp);
 
-    /* remove randomness */
-    if (SnortConfig::static_hash())
-        sfhashfcn_static(mhash->sfhashfcn);
-
     p->pt_mpo_hash = mhash;
 
     /* Create a Merged Port Object Table  - hash by ports */
@@ -620,10 +616,6 @@ static int PortTableCompileMergePortObjects(PortTable* p)
         return -1;
     /* Setup hashing function and key comparison function */
     sfhashfcn_set_keyops(mhashx->sfhashfcn,plx_hash,plx_keycmp);
-
-    /* remove randomness */
-    if (SnortConfig::static_hash())
-        sfhashfcn_static(mhashx->sfhashfcn);
 
     p->pt_mpxo_hash = mhashx;
 

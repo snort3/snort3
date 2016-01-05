@@ -141,9 +141,6 @@ PortObject2* PortObject2New(int nrules)
     /* Use hash function defined above for hashing the key as an int. */
     sfghash_set_keyops(po->rule_hash, po_rule_hash_func, memcmp);
 
-    //sfhashfcn_static( po->rule_hash->sfhashfcn ); /* FIXIT: Leave this in, else we get different
-    // events */
-
     return po;
 }
 

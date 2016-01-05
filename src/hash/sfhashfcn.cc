@@ -31,16 +31,9 @@
 
 #include "sfhashfcn.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "sfprimetable.h"
 #include "main/snort_types.h"
-
-#ifndef MODULUS_HASH
 #include "main/snort_config.h"
-#endif
 
 SFHASHFCN* sfhashfcn_new(int m)
 {
@@ -53,20 +46,18 @@ SFHASHFCN* sfhashfcn_new(int m)
         one = 0;
     }
 
-    // This can make all of the hashing static for testing.
-    //#define rand() 0
+    p = (SFHASHFCN*)SnortAlloc(sizeof(*p));
 
-    p = (SFHASHFCN*)calloc(1,sizeof(SFHASHFCN) );
     if ( !p )
         return 0;
 
-#ifndef MODULUS_HASH
-    if (SnortConfig::static_hash())
+    if ( SnortConfig::static_hash() )
     {
-        sfhashfcn_static(p);
+        p->seed     = 3193;
+        p->scale    = 719;
+        p->hardener = 133824503;
     }
     else
-#endif
     {
         p->seed     = sf_nearest_prime( (rand()%m)+3191);
         p->scale    = sf_nearest_prime( (rand()%m)+709);
@@ -85,13 +76,6 @@ void sfhashfcn_free(SFHASHFCN* p)
     {
         free(p);
     }
-}
-
-void sfhashfcn_static(SFHASHFCN* p)
-{
-    p->seed     = 3193;
-    p->scale    = 719;
-    p->hardener = 133824503;
 }
 
 unsigned sfhashfcn_hash(SFHASHFCN* p, unsigned char* d, int n)
