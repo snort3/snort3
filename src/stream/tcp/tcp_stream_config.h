@@ -16,19 +16,45 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_listen_state.cc author davis mcpherson <davmcphe@@cisco.com>
-// Created on: Jul 30, 2015
+// tcp_stream_config.h author davis mcpherson <davmcphe@@cisco.com>
+// Created on: Oct 22, 2015
 
-#include "tcp_listen_state.h"
+#ifndef TCP_STREAM_CONFIG_H
+#define TCP_STREAM_CONFIG_H
 
-TcpListenState::TcpListenState()
+#include "tcp_defs.h"
+
+class TcpStreamConfig
 {
-    // TODO Auto-generated constructor stub
+public:
+    TcpStreamConfig(void);
 
-}
+    bool require_3whs(void);
+    bool midstream_allowed(Packet*);
+    int verify_config(SnortConfig*);
+    void show_config(void);
+    static void show_config(TcpStreamConfig*);
 
-TcpListenState::~TcpListenState()
-{
-    // TODO Auto-generated destructor stub
-}
+    StreamPolicy policy;
+    ReassemblyPolicy reassembly_policy;
+
+    uint16_t flags;
+    uint16_t flush_factor;
+
+    uint32_t session_timeout;
+    uint32_t max_window;
+    uint32_t overlap_limit;
+
+    uint32_t max_queued_bytes;
+    uint32_t max_queued_segs;
+
+    uint32_t max_consec_small_segs;
+    uint32_t max_consec_small_seg_size;
+
+    int hs_timeout;
+    int footprint;
+    unsigned paf_max;
+};
+
+#endif
 

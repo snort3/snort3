@@ -41,7 +41,8 @@ THREAD_LOCAL ProfileStats s5TcpPAFPerfStats;
 THREAD_LOCAL ProfileStats s5TcpFlushPerfStats;
 THREAD_LOCAL ProfileStats s5TcpBuildPacketPerfStats;
 
-const PegInfo tcp_pegs[] = {
+const PegInfo tcp_pegs[] =
+{
     { "sessions", "total sessions" },
     { "timeouts", "sessions timed out" },
     { "resyns", "SYN received on established session" },
@@ -267,9 +268,9 @@ ProfileStats* StreamTcpModule::get_profile(
     return nullptr;
 }
 
-StreamTcpConfig* StreamTcpModule::get_data()
+TcpStreamConfig* StreamTcpModule::get_data()
 {
-    StreamTcpConfig* temp = config;
+    TcpStreamConfig* temp = config;
     config = nullptr;
     return temp;
 }
@@ -347,7 +348,7 @@ bool StreamTcpModule::begin(const char* fqn, int, SnortConfig*)
     if ( config )
         return false;
 
-    config = new StreamTcpConfig;
+    config = new TcpStreamConfig;
     return true;
 }
 

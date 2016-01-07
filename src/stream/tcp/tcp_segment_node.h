@@ -22,6 +22,7 @@
 #ifndef TCP_SEGMENT_H
 #define TCP_SEGMENT_H
 
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "flow/memcap.h"
 
@@ -33,24 +34,23 @@ extern THREAD_LOCAL Memcap* tcp_memcap;
 // ... however, use of padding below is critical, adjust if needed
 //-----------------------------------------------------------------
 
-
-class TcpSegment
+class TcpSegmentNode
 {
 public:
-    TcpSegment();
-    virtual ~TcpSegment();
+    TcpSegmentNode();
+    virtual ~TcpSegmentNode();
 
-    static TcpSegment* init( const struct timeval&, const uint8_t*, unsigned );
-    static bool needs_pruning( void )
+    static TcpSegmentNode* init(const struct timeval&, const uint8_t*, unsigned);
+    static bool needs_pruning(void)
     {
         return tcp_memcap->at_max();
     }
 
-    void term( void );
-    bool is_retransmit( const uint8_t*, uint16_t size, uint32_t );
+    void term(void);
+    bool is_retransmit(const uint8_t*, uint16_t size, uint32_t);
 
-    TcpSegment *prev;
-    TcpSegment *next;
+    TcpSegmentNode* prev;
+    TcpSegmentNode* next;
 
     struct timeval tv;
     uint32_t ts;
@@ -62,27 +62,38 @@ public:
 
     uint8_t* data;
     uint8_t* payload;
-
 };
 
 class TcpSegmentList
 {
 public:
-    TcpSegment *head;
-    TcpSegment *tail;
+    TcpSegmentList(void) :
+        head(nullptr), tail(nullptr), next(nullptr), count(0)
+    {
+    }
+
+    ~TcpSegmentList(void)
+    {
+        clear( );
+    }
+
+    TcpSegmentNode* head;
+    TcpSegmentNode* tail;
 
     // FIXIT-P seglist_base_seq is the sequence number to flush from
     // and is valid even when seglist is empty.  next points to
     // the segment to flush from and is set per packet.  should keep
     // up to date.
-    TcpSegment* next;
+    TcpSegmentNode* next;
 
-    uint32_t clear( void )
+    uint32_t count;
+
+    uint32_t clear(void)
     {
-        TcpSegment *dump_me;
+        TcpSegmentNode* dump_me;
         int i = 0;
 
-        DebugMessage(DEBUG_STREAM_STATE, "Clearing ssment list.\n");
+        DebugMessage(DEBUG_STREAM_STATE, "Clearing segment list.\n");
         while ( head )
         {
             i++;
@@ -92,18 +103,19 @@ public:
         }
 
         head = tail = next = nullptr;
+        count = 0;
         DebugFormat(DEBUG_STREAM_STATE, "Dropped %d segments\n", i);
         return i;
     }
 
-    void insert( TcpSegment *prev, TcpSegment *ss )
+    void insert(TcpSegmentNode* prev, TcpSegmentNode* ss)
     {
-        if( prev )
+        if ( prev )
         {
             ss->next = prev->next;
             ss->prev = prev;
             prev->next = ss;
-            if( ss->next )
+            if ( ss->next )
                 ss->next->prev = ss;
             else
                 tail = ss;
@@ -111,26 +123,31 @@ public:
         else
         {
             ss->next = head;
-            if( ss->next )
+            if ( ss->next )
                 ss->next->prev = ss;
             else
                 tail = ss;
             head = ss;
         }
+
+        count++;
     }
 
-    void remove( TcpSegment *ss )
+    void remove(TcpSegmentNode* ss)
     {
         if (ss->prev)
             ss->prev->next = ss->next;
         else
-           head = ss->next;
+            head = ss->next;
 
         if (ss->next)
             ss->next->prev = ss->prev;
         else
             tail = ss->prev;
+
+        count--;
     }
 };
 
 #endif
+

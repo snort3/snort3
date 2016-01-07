@@ -128,6 +128,9 @@ struct TCPHdr
     inline bool is_ack() const
     { return (th_flags & TH_ACK); }
 
+    inline bool is_psh() const
+    { return (th_flags & TH_PUSH); }
+
     inline bool is_rst() const
     { return (th_flags & TH_RST); }
 

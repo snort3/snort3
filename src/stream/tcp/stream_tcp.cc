@@ -36,7 +36,7 @@
 class StreamTcp : public Inspector
 {
 public:
-    StreamTcp(StreamTcpConfig*);
+    StreamTcp(TcpStreamConfig*);
     ~StreamTcp();
 
     void show(SnortConfig*) override;
@@ -48,10 +48,10 @@ public:
     void eval(Packet*) override;
 
 public:
-    StreamTcpConfig* config;
+    TcpStreamConfig* config;
 };
 
-StreamTcp::StreamTcp (StreamTcpConfig* c)
+StreamTcp::StreamTcp (TcpStreamConfig* c)
 {
     config = c;
 }
@@ -63,7 +63,7 @@ StreamTcp::~StreamTcp()
 
 void StreamTcp::show(SnortConfig*)
 {
-    TcpSession::show(config);
+    TcpStreamConfig::show_config(config);
 }
 
 bool StreamTcp::configure(SnortConfig*)
@@ -89,7 +89,7 @@ void StreamTcp::eval(Packet*)
     assert(false);
 }
 
-StreamTcpConfig* get_tcp_cfg(Inspector* ins)
+TcpStreamConfig* get_tcp_cfg(Inspector* ins)
 {
     assert(ins);
     return ((StreamTcp*)ins)->config;

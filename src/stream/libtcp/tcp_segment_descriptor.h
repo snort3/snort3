@@ -26,24 +26,41 @@
 #include "protocols/tcp.h"
 #include "protocols/packet.h"
 
+#include "stream/tcp/tcp_event_logger.h"
+
 class TcpSegmentDescriptor
 {
 public:
-    TcpSegmentDescriptor( Flow*, Packet* );
+    TcpSegmentDescriptor(Flow*, Packet*, TcpEventLogger*);
     virtual ~TcpSegmentDescriptor();
 
-    const Flow* get_flow() const
+    uint32_t init_mss(uint16_t* value);
+    uint32_t init_wscale(uint16_t* value);
+    uint32_t has_wscale(void);
+
+    Flow* get_flow() const
     {
         return flow;
     }
 
-    const Packet* get_pkt() const
+    Packet* get_pkt() const
     {
         return pkt;
     }
+
     const tcp::TCPHdr* get_tcph() const
     {
         return tcph;
+    }
+
+    void set_seq(uint32_t seq)
+    {
+        this->seq = seq;
+    }
+
+    uint32_t get_seq() const
+    {
+        return seq;
     }
 
     uint32_t get_ack() const
@@ -51,24 +68,34 @@ public:
         return ack;
     }
 
+    void set_end_seq(uint32_t end_seq)
+    {
+        this->end_seq = end_seq;
+    }
+
     uint32_t get_end_seq() const
     {
         return end_seq;
     }
 
-    uint32_t get_seq() const
+    void set_ts(uint32_t ts)
     {
-    	return seq;
+        this->ts = ts;
     }
 
     uint32_t get_ts() const
     {
-    	return ts;
+        return ts;
     }
 
-    uint16_t get_win() const
+    void set_win(uint32_t win)
     {
-    	return win;
+        this->win = win;
+    }
+
+    uint32_t get_win() const
+    {
+        return win;
     }
 
     uint16_t get_dst_port() const
@@ -83,39 +110,29 @@ public:
 
     uint8_t get_direction() const
     {
-        return direction;
-    }
-
-    void set_direction(uint8_t direction)
-    {
-        this->direction = direction;
+        return flow->ssn_state.direction;
     }
 
     uint32_t get_data_len() const
     {
-        return data_len;
+        return pkt->dsize;
     }
 
-    void set_data_len(uint32_t data_len)
-    {
-        this->data_len = data_len;
-    }
+    void print_tsd(void);
 
 private:
-    Flow*   flow;
+    Flow* flow;
     Packet* pkt;
 
-    uint8_t direction;
-
     const tcp::TCPHdr* tcph;
-    uint32_t data_len;
     uint16_t src_port;
     uint16_t dst_port;
     uint32_t seq;
     uint32_t ack;
-    uint16_t win;
+    uint32_t win;
     uint32_t end_seq;
     uint32_t ts;
 };
 
 #endif
+

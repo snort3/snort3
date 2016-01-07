@@ -51,24 +51,24 @@ public:
 
     virtual ~TcpNormalizer( ) { }
 
-    virtual bool packet_dropper (TcpDataBlock*, NormFlags );
-    virtual void trim_syn_payload( TcpDataBlock*, uint32_t max = 0 );
-    virtual void trim_rst_payload( TcpDataBlock*, uint32_t max = 0 );
-    virtual void trim_win_payload( TcpDataBlock*, uint32_t max = 0 );
-    virtual void trim_mss_payload( TcpDataBlock*, uint32_t max = 0 );
-    virtual void ecn_tracker( tcp::TCPHdr*, bool req3way );
-    virtual void ecn_stripper( Packet* );
-    virtual uint32_t get_stream_window( TcpDataBlock* );
-    virtual uint32_t get_tcp_timestamp( TcpDataBlock *, bool strip );
-    virtual int handle_paws( TcpDataBlock*, int*, int* );
-    virtual bool validate_rst( TcpDataBlock* );
-    virtual int handle_repeated_syn( TcpDataBlock* ) = 0;
-    virtual uint16_t set_urg_offset( const tcp::TCPHdr* tcph, uint16_t dsize );
+    virtual bool packet_dropper (TcpSegmentDescriptor&, NormFlags);
+    virtual void trim_syn_payload(TcpSegmentDescriptor&, uint32_t max = 0);
+    virtual void trim_rst_payload(TcpSegmentDescriptor&, uint32_t max = 0);
+    virtual void trim_win_payload(TcpSegmentDescriptor&, uint32_t max = 0);
+    virtual void trim_mss_payload(TcpSegmentDescriptor&, uint32_t max = 0);
+    virtual void ecn_tracker(const tcp::TCPHdr*, bool req3way);
+    virtual void ecn_stripper(Packet*);
+    virtual uint32_t get_stream_window(TcpSegmentDescriptor&);
+    virtual uint32_t get_tcp_timestamp(TcpSegmentDescriptor&, bool strip);
+    virtual int handle_paws(TcpSegmentDescriptor&, int*);
+    virtual bool validate_rst(TcpSegmentDescriptor&);
+    virtual int handle_repeated_syn(TcpSegmentDescriptor&) = 0;
+    virtual uint16_t set_urg_offset(const tcp::TCPHdr* tcph, uint16_t dsize);
 
-    static const PegInfo* get_normalization_pegs( void );
-    static NormPegs get_normalization_counts( unsigned&  );
+    static const PegInfo* get_normalization_pegs(void);
+    static NormPegs get_normalization_counts(unsigned&);
 
-    void set_peer_tracker( TcpTracker* peer_tracker )
+    void set_peer_tracker(TcpTracker* peer_tracker)
     {
         this->peer_tracker = peer_tracker;
     }
@@ -129,17 +129,17 @@ public:
     }
 
 protected:
-    TcpNormalizer( StreamPolicy, TcpSession*, TcpTracker* );
-    virtual void trim_payload( TcpDataBlock*, uint32_t, NormMode, PegCounts, PerfCounts );
-    virtual bool strip_tcp_timestamp( TcpDataBlock*, const tcp::TcpOption*, NormMode );
-    virtual bool validate_rst_seq_geq( TcpDataBlock* );
-    virtual bool validate_rst_end_seq_geq(  TcpDataBlock* );
-    virtual bool validate_rst_seq_eq( TcpDataBlock* );
+    TcpNormalizer(StreamPolicy, TcpSession*, TcpTracker*);
+    virtual void trim_payload(TcpSegmentDescriptor&, uint32_t, NormMode, PegCounts, PerfCounts);
+    virtual bool strip_tcp_timestamp(TcpSegmentDescriptor&, const tcp::TcpOption*, NormMode);
+    virtual bool validate_rst_seq_geq(TcpSegmentDescriptor&);
+    virtual bool validate_rst_end_seq_geq(TcpSegmentDescriptor&);
+    virtual bool validate_rst_seq_eq(TcpSegmentDescriptor&);
 
-    virtual int validate_paws_timestamp( TcpDataBlock*, int* );
-    virtual bool is_paws_ts_checked_required( TcpDataBlock* );
-    virtual int validate_paws( TcpDataBlock*, int*, int* );
-    virtual int handle_paws_no_timestamps( TcpDataBlock*, int* , int* );
+    virtual int validate_paws_timestamp(TcpSegmentDescriptor&);
+    virtual bool is_paws_ts_checked_required(TcpSegmentDescriptor&);
+    virtual int validate_paws(TcpSegmentDescriptor&, int*);
+    virtual int handle_paws_no_timestamps(TcpSegmentDescriptor&, int*);
 
     StreamPolicy os_policy;
     TcpSession* session;
@@ -158,3 +158,4 @@ protected:
 };
 
 #endif
+

@@ -24,45 +24,18 @@
 #include "protocols/packet.h"
 
 #include "tcp_defs.h"
-
-struct StreamTcpConfig
-{
-    StreamPolicy policy;
-    ReassemblyPolicy reassembly_policy;
-
-    uint16_t flags;
-    uint16_t flush_factor;
-
-    uint32_t session_timeout;
-    uint32_t max_window;
-    uint32_t overlap_limit;
-
-    uint32_t max_queued_bytes;
-    uint32_t max_queued_segs;
-
-    uint32_t max_consec_small_segs;
-    uint32_t max_consec_small_seg_size;
-
-    int hs_timeout;
-    int footprint;
-    unsigned paf_max;
-
-    StreamTcpConfig();
-
-    bool require_3whs();
-    bool midstream_allowed(Packet*);
-};
+#include "tcp_stream_config.h"
 
 // misc stuff
 Session* get_tcp_session(Flow*);
-StreamTcpConfig* get_tcp_cfg(Inspector*);
+TcpStreamConfig* get_tcp_cfg(Inspector*);
 
 void tcp_sinit();
 void tcp_sterm();
 void tcp_sum();
 void tcp_stats();
 void tcp_reset_stats();
-void tcp_show(StreamTcpConfig*);
+void tcp_show(TcpStreamConfig*);
 
 #endif
 

@@ -26,15 +26,15 @@
 #include "tcp_reassembler.h"
 
 #ifndef REG_TEST
-#define S5TraceTCP(pkt, flow, tdb, evt)
+#define S5TraceTCP(pkt, flow, tsd, evt)
 #else
-#define LCL(p, x)    (p->x - p->isn)
-#define RMT(p, x, q) (p->x - (q ? q->isn : 0))
+#define LCL(p, x)    (p->x() - p->get_iss())
+#define RMT(p, x, q) (p->x - (q ? q->get_iss() : 0))
 
 static const char* const statext[] =
 {
-    "NON", "LST", "SYR", "SYS", "EST", "CLW",
-    "LAK", "FW1", "CLG", "FW2", "TWT", "CLD"
+    "LST", "SYS", "SYR", "EST", "FW1", "FW2", "CLW",
+    "CLG", "LAK", "TWT", "CLD", "NON"
 };
 
 static const char* const flushxt[] = { "IGN", "FPR", "PRE", "PRO", "PAF" };
@@ -42,7 +42,7 @@ static const char* const flushxt[] = { "IGN", "FPR", "PRE", "PRO", "PAF" };
 // FIXIT-L this should not be thread specific
 static THREAD_LOCAL int s5_trace_enabled = -1;
 
-static inline void TraceEvent(const Packet* p, TcpDataBlock*, uint32_t txd, uint32_t rxd)
+static inline void TraceEvent(const Packet* p, TcpSegmentDescriptor*, uint32_t txd, uint32_t rxd)
 {
     int i;
     char flags[7] = "UAPRSF";
@@ -66,34 +66,37 @@ static inline void TraceEvent(const Packet* p, TcpDataBlock*, uint32_t txd, uint
         order = " (oos)";
 
     fprintf(stdout, "\n" FMTu64("-3") " %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4u Len=%-4u%s\n",
-            //"\n" FMTu64("-3") " %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4u Len=%-4u End=%-4u%s\n",
-            pc.total_from_daq, flags, h->th_flags, ntohl(h->th_seq) - txd, ntohl(h->th_ack) - rxd, ntohs(h->th_win),
-            p->dsize, order);
+        //"\n" FMTu64("-3") " %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4u Len=%-4u End=%-4u%s\n",
+        pc.total_from_daq, flags, h->th_flags, ntohl(h->th_seq) - txd, ntohl(h->th_ack) - rxd,
+        ntohs(h->th_win), p->dsize, order);
 }
 
 static inline void TraceSession(const Flow* lws)
 {
-    fprintf( stdout, "    LWS: ST=0x%x SF=0x%x CP=%u SP=%u\n", (unsigned)lws->session_state,
-            lws->ssn_state.session_flags, lws->client_port, lws->server_port );
+    fprintf(stdout, "    LWS: ST=0x%x SF=0x%x CP=%u SP=%u\n", (unsigned)lws->session_state,
+        lws->ssn_state.session_flags, lws->client_port, lws->server_port);
 }
 
 static inline void TraceState(const TcpTracker* a, const TcpTracker* b, const char* s)
 {
-    uint32_t why = a->l_nxt_seq ? LCL(a, l_nxt_seq) : 0;
+    uint32_t why = a->get_snd_nxt() ? LCL(a, get_snd_nxt) : 0;
 
-    fprintf(stdout, "    %s ST=%s:%02x   UA=%-4u NS=%-4u LW=%-5u RN=%-4u RW=%-4u ", s, statext[a->s_mgr.state],
-            a->s_mgr.sub_state, LCL(a, l_unackd), why, a->l_window, RMT(a, r_nxt_ack, b), RMT(a, r_win_base, b));
+    fprintf(stdout, "    %s ST=%s:%02x   UA=%-4u NS=%-4u LW=%-5u RN=%-4u RW=%-4u ", s,
+        statext[a->get_tcp_state()], a->s_mgr.sub_state, LCL(a, get_snd_una), why,
+        a->get_snd_wnd( ), RMT(a, r_nxt_ack, b), RMT(a, r_win_base, b));
 
-    if (a->s_mgr.state_queue)
-        fprintf(stdout, "QS=%s QC=0x%02x QA=%-4u", statext[a->s_mgr.state_queue], a->s_mgr.expected_flags,
-                RMT(a, s_mgr.transition_seq, b));
+    if ( a->s_mgr.state_queue != TcpStreamTracker::TCP_STATE_NONE )
+        fprintf(stdout, "QS=%s QC=0x%02x QA=%-4u", statext[a->s_mgr.state_queue],
+            a->s_mgr.expected_flags, RMT(a, s_mgr.transition_seq, b));
     fprintf(stdout, "\n");
     unsigned paf = (a->splitter and a->splitter->is_paf()) ? 2 : 0;
     unsigned fpt = a->flush_policy ? 192 : 0;
 
-    fprintf( stdout, "         FP=%s:%-4u SC=%-4u FL=%-4u SL=%-5u BS=%-4u", flushxt[a->flush_policy + paf], fpt,
-            a->reassembler->get_seg_count(), a->reassembler->get_flush_count(),
-            a->reassembler->get_seg_bytes_logical(), a->reassembler->get_seglist_base_seq() - b->isn);
+    fprintf(stdout, "         FP=%s:%-4u SC=%-4u FL=%-4u SL=%-5u BS=%-4u",
+        flushxt[a->flush_policy + paf], fpt,
+        a->reassembler->get_seg_count(), a->reassembler->get_flush_count(),
+        a->reassembler->get_seg_bytes_logical(),
+        a->reassembler->get_seglist_base_seq() - b->get_iss());
 
     if (s5_trace_enabled == 2)
         a->reassembler->trace_segments();
@@ -101,13 +104,13 @@ static inline void TraceState(const TcpTracker* a, const TcpTracker* b, const ch
     fprintf(stdout, "\n");
 }
 
-static inline void TraceTCP(const Packet* p, const Flow* lws, TcpDataBlock* tdb, int event)
+static inline void TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescriptor* tsd, int event)
 {
-    const TcpSession* ssn = (TcpSession*) lws->session;
-    const TcpTracker* srv = ssn ? &ssn->server : NULL;
-    const TcpTracker* cli = ssn ? &ssn->client : NULL;
+    const TcpSession* ssn = (TcpSession*)lws->session;
+    const TcpTracker* srv = ssn ? ssn->server : NULL;
+    const TcpTracker* cli = ssn ? ssn->client : NULL;
 
-    const char* cdir = "?", *sdir = "?";
+    const char* cdir = "?", * sdir = "?";
     uint32_t txd = 0, rxd = 0;
 
     if (p->packet_flags & PKT_FROM_SERVER)
@@ -117,21 +120,22 @@ static inline void TraceTCP(const Packet* p, const Flow* lws, TcpDataBlock* tdb,
 
         if (ssn->tcp_init)
         {
-            txd = srv->isn;
-            rxd = cli->isn;
+            txd = srv->get_iss();
+            rxd = cli->get_iss();
         }
-    } else if (p->packet_flags & PKT_FROM_CLIENT)
+    }
+    else if (p->packet_flags & PKT_FROM_CLIENT)
     {
         sdir = "SRV<";
         cdir = "CLI>";
 
         if (ssn->tcp_init)
         {
-            txd = cli->isn;
-            rxd = srv->isn;
+            txd = cli->get_iss();
+            rxd = srv->get_iss();
         }
     }
-    TraceEvent(p, tdb, txd, rxd);
+    TraceEvent(p, tsd, txd, rxd);
 
     if (!ssn->tcp_init)
         return;
@@ -146,7 +150,8 @@ static inline void TraceTCP(const Packet* p, const Flow* lws, TcpDataBlock* tdb,
     }
 }
 
-static inline void S5TraceTCP(const Packet* p, const Flow* lws, TcpDataBlock* tdb, int event)
+static inline void S5TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescriptor* tsd, int
+    event)
 {
     if (!s5_trace_enabled)
         return;
@@ -165,8 +170,9 @@ static inline void S5TraceTCP(const Packet* p, const Flow* lws, TcpDataBlock* td
         s5_trace_enabled = atoi(s5t);
     }
 
-    TraceTCP(p, lws, tdb, event);
+    TraceTCP(p, lws, tsd, event);
 }
+
 #endif  // REG_TEST
 
 #endif

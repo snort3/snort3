@@ -19,29 +19,35 @@
 // tcp_syn_sent_state.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Aug 5, 2015
 
-#ifndef TCP_SYN_SENT_STATE_H
-#define TCP_SYN_SENT_STATE_H
+#ifndef TCP_STATE_SYN_SENT_H
+#define TCP_STATE_SYN_SENT_H
 
 #include "stream/libtcp/tcp_state_handler.h"
 
-class TcpSynSentState: public TcpStateHandler
+class TcpSession;
+
+class TcpStateSynSent : public TcpStateHandler
 {
 public:
-    TcpSynSentState();
-    virtual ~TcpSynSentState();
+    TcpStateSynSent(TcpStateMachine&, TcpSession&);
+    virtual ~TcpStateSynSent(void);
 
-    void syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    void syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    void syn_ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    void syn_ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    void ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    void ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    void data_seg_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    void data_seg_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    void fin_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    void fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    void rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    void rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+    bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool syn_ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool syn_ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool data_seg_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool data_seg_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool fin_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+
+private:
+    TcpSession& session;
 };
 
 #endif
+

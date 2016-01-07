@@ -107,26 +107,26 @@ int SizeOption::eval(Cursor&, Packet* pkt)
     uint32_t client_size;
     uint32_t server_size;
 
-    if (tcpssn->client.l_nxt_seq > tcpssn->client.isn)
+    if (tcpssn->client->get_snd_nxt() > tcpssn->client->get_iss())
     {
         /* the normal case... */
-        client_size = tcpssn->client.l_nxt_seq - tcpssn->client.isn;
+        client_size = tcpssn->client->get_snd_nxt() - tcpssn->client->get_iss();
     }
     else
     {
         /* the seq num wrapping case... */
-        client_size = tcpssn->client.isn - tcpssn->client.l_nxt_seq;
+        client_size = tcpssn->client->get_iss() - tcpssn->client->get_snd_nxt();
     }
 
-    if (tcpssn->server.l_nxt_seq > tcpssn->server.isn)
+    if (tcpssn->server->get_snd_nxt() > tcpssn->server->get_iss())
     {
         /* the normal case... */
-        server_size = tcpssn->server.l_nxt_seq - tcpssn->server.isn;
+        server_size = tcpssn->server->get_snd_nxt() - tcpssn->server->get_iss();
     }
     else
     {
         /* the seq num wrapping case... */
-        server_size = tcpssn->server.isn - tcpssn->server.l_nxt_seq;
+        server_size = tcpssn->server->get_iss() - tcpssn->server->get_snd_nxt();
     }
 
     int result = DETECTION_OPTION_NO_MATCH;

@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_defs.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_defs.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 31, 2015
 
 #ifndef TCP_DEFS_H
@@ -25,6 +25,7 @@
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
 
+#if 0
 /* TCP states */
 #define TCP_STATE_NONE         0
 #define TCP_STATE_LISTEN       1
@@ -38,6 +39,7 @@
 #define TCP_STATE_FIN_WAIT_2   9
 #define TCP_STATE_TIME_WAIT   10
 #define TCP_STATE_CLOSED      11
+#endif
 
 /* actions */
 #define ACTION_NOTHING                  0x00000000
@@ -53,7 +55,6 @@
 #define ACTION_BAD_PKT                  0x00000400
 #define ACTION_LWSSN_CLOSED             0x00000800
 #define ACTION_DISABLE_INSPECTION       0x00001000
-
 
 #define TF_NONE                     0x0000
 #define TF_WSCALE                   0x0001
@@ -74,6 +75,18 @@
 #define SUB_SETUP_OK  0x03
 #define SUB_RST_SENT  0x04
 #define SUB_FIN_SENT  0x08
+
+#define STREAM_UNALIGNED       0
+#define STREAM_ALIGNED         1
+
+#define STREAM_DEFAULT_MAX_QUEUED_BYTES 1048576 /* 1 MB */
+#define AVG_PKT_SIZE            400
+#define STREAM_DEFAULT_MAX_QUEUED_SEGS ( STREAM_DEFAULT_MAX_QUEUED_BYTES / AVG_PKT_SIZE )
+
+#define STREAM_DEFAULT_MAX_SMALL_SEG_SIZE 0    /* disabled */
+#define STREAM_DEFAULT_CONSEC_SMALL_SEGS 0     /* disabled */
+
+#define SLAM_MAX 4
 
 // target-based policy types - changes to this enum require changes to stream_api.h::TCP_POLICIES
 enum class StreamPolicy
@@ -98,9 +111,9 @@ enum class StreamPolicy
 };
 
 // increment operator...
-inline StreamPolicy& operator++( StreamPolicy &c )
+inline StreamPolicy& operator++(StreamPolicy& c)
 {
-    if( c < StreamPolicy::OS_END_OF_LIST )
+    if ( c < StreamPolicy::OS_END_OF_LIST )
         c = static_cast<StreamPolicy>( static_cast<int>(c) + 1 );
     else
         c = StreamPolicy::OS_END_OF_LIST;
@@ -130,9 +143,9 @@ enum class ReassemblyPolicy
 };
 
 // increment operator...
-inline ReassemblyPolicy& operator++( ReassemblyPolicy &c )
+inline ReassemblyPolicy& operator++(ReassemblyPolicy& c)
 {
-    if( c < ReassemblyPolicy::OS_END_OF_LIST )
+    if ( c < ReassemblyPolicy::OS_END_OF_LIST )
         c = static_cast<ReassemblyPolicy>( static_cast<int>(c) + 1 );
     else
         c = ReassemblyPolicy::OS_END_OF_LIST;
@@ -147,6 +160,7 @@ enum FlushPolicy
     STREAM_FLPOLICY_ON_DATA, /* protocol aware ips */
 };
 
+#if 0
 struct TcpDataBlock
 {
     Packet* pkt;
@@ -156,7 +170,7 @@ struct TcpDataBlock
     uint32_t end_seq;
     uint32_t ts;
 };
-
+#endif
 
 //#define DEBUG_STREAM_EX
 #ifdef DEBUG_STREAM_EX
@@ -166,3 +180,4 @@ struct TcpDataBlock
 #endif
 
 #endif
+

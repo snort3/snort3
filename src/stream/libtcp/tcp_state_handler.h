@@ -26,36 +26,67 @@
 #include "tcp_segment_descriptor.h"
 #include "tcp_stream_tracker.h"
 
+class TcpStateMachine;
+
 class TcpStateHandler
 {
-
 public:
-    TcpStateHandler();
+    TcpStateHandler(TcpStreamTracker::TcpStates, TcpStateMachine&);
+    TcpStateHandler(void);
     virtual ~TcpStateHandler();
 
-    virtual void eval(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&);
 
-    TcpStreamTracker::TcpEvents get_tcp_event() const {
+    TcpStreamTracker::TcpEvents get_tcp_event() const
+    {
         return tcp_event;
     }
 
+    TcpStreamTracker::TcpStates get_tcp_state() const
+    {
+        return tcp_state;
+    }
+
+    void set_tcp_state(TcpStreamTracker::TcpStates tcp_state)
+    {
+        this->tcp_state = tcp_state;
+    }
+
+    void set_tcp_event(TcpStreamTracker::TcpEvents tcp_event)
+    {
+        this->tcp_event = tcp_event;
+    }
+
+    const TcpStateMachine* get_tsm() const
+    {
+        return tsm;
+    }
+
+    void set_tsm(const TcpStateMachine* tsm)
+    {
+        this->tsm = tsm;
+    }
+
 protected:
-    virtual void syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual void syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual void syn_ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual void syn_ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual void ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual void ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual void data_seg_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual void data_seg_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual void fin_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual void fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual void rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual void rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool syn_ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool syn_ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool data_seg_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool data_seg_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool fin_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
 
-    void default_state_action( TcpSegmentDescriptor*, TcpStreamTracker*, const char* );
+    bool default_state_action(TcpSegmentDescriptor&, TcpStreamTracker&, const char*);
 
+    const TcpStateMachine* tsm;
+    TcpStreamTracker::TcpStates tcp_state;
     TcpStreamTracker::TcpEvents tcp_event;
 };
 
 #endif
+

@@ -26,20 +26,19 @@
 #include "tcp_stream_tracker.h"
 #include "tcp_segment_descriptor.h"
 
-extern const char* tcp_state_names[];
-extern const char* tcp_event_names[];
-
 class TcpStateMachine
 {
 public:
-    virtual ~TcpStateMachine();
+    TcpStateMachine(void);
+    virtual ~TcpStateMachine(void);
 
-    virtual void eval(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual void register_state_handler(TcpStreamTracker::TcpStates, TcpStateHandler&);
+    virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&);
 
 private:
-    TcpStateMachine();
 
-    TcpStateHandler *tcp_state_handlers[ TcpStreamTracker::TCP_MAX_STATES ];
+    TcpStateHandler* tcp_state_handlers[ TcpStreamTracker::TCP_MAX_STATES ];
 };
 
 #endif
+

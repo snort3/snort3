@@ -28,6 +28,7 @@
 #include "main/thread.h"
 #include "framework/module.h"
 #include "stream/stream.h"
+#include "tcp_stream_config.h"
 
 #define GID_STREAM_TCP  129
 
@@ -100,6 +101,7 @@ static inline void inc_tcp_discards()
 {
     tcpStats.discards++;
 }
+
 //-------------------------------------------------------------------------
 // stream_tcp module
 //-------------------------------------------------------------------------
@@ -108,9 +110,8 @@ static inline void inc_tcp_discards()
 #define MOD_HELP "stream inspector for TCP flow tracking and stream normalization and reassembly"
 
 struct SnortConfig;
-struct StreamTcpConfig;
 
-class StreamTcpModule: public Module
+class StreamTcpModule : public Module
 {
 public:
     StreamTcpModule();
@@ -127,15 +128,15 @@ public:
         return GID_STREAM_TCP;
     }
 
-    StreamTcpConfig* get_data();
+    TcpStreamConfig* get_data();
 
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const
-            override;
+    override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
 private:
-    StreamTcpConfig* config;
+    TcpStreamConfig* config;
 };
 
 #endif

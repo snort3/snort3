@@ -19,32 +19,37 @@
 // tcp_state_machine.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 29, 2015
 
+#include "tcp_stream_tracker.h"
 #include "tcp_state_machine.h"
 
-const char* tcp_state_names[] =
-{ "TCP_LISTEN", "TCP_SYN_SENT", "TCP_SYN_RECV", "TCP_ESTABLISHED","TCP_FIN_WAIT1",
-  "TCP_FIN_WAIT2", "TCP_CLOSE_WAIT", "TCP_CLOSING", "TCP_LAST_ACK",
-  "TCP_TIME_WAIT", "TCP_CLOSED"
-};
+TcpStateMachine::TcpStateMachine(void)
+{
+    // register a default handler for each state...
+    for ( TcpStreamTracker::TcpStates state = TcpStreamTracker::TCP_LISTEN; state <
+        TcpStreamTracker::TCP_MAX_STATES; state++ )
+    {
+        tcp_state_handlers[ state ] = nullptr;
+        new TcpStateHandler(state, *this);
+    }
+}
 
-const char *tcp_event_names[] = { "TCP_SYN_SENT_EVENT", "TCP_SYN_RECV_EVENT",
-        "TCP_SYN_ACK_SENT_EVENT", "TCP_SYN_ACK_RECV_EVENT", "TCP_ACK_SENT_EVENT",
-        "TCP_ACK_RECV_EVENT", "TCP_DATA_SEG_SENT_EVENT", "TCP_DATA_SEG_RECV_EVENT",
-        "TCP_FIN_SENT_EVENT", "TCP_FIN_RECV_EVENT", "TCP_RST_SENT_EVENT", "TCP_RST_RECV_EVENT" };
-
-
-TcpStateMachine::~TcpStateMachine()
+TcpStateMachine::~TcpStateMachine(void)
 {
     // TODO Auto-generated destructor stub
 }
-TcpStateMachine::TcpStateMachine()
-{
-    // TODO Auto-generated constructor stub
 
+void TcpStateMachine::register_state_handler(TcpStreamTracker::TcpStates state,
+    TcpStateHandler& handler)
+{
+    if ( tcp_state_handlers[ state ] != nullptr )
+        delete tcp_state_handlers[ state ];
+
+    tcp_state_handlers[ state ] = &handler;
 }
 
-void TcpStateMachine::eval( TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker )
+bool TcpStateMachine::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    tracker.set_tcp_event( tcp_seg, tracker.is_client_tracker( ) );
-    tcp_state_handlers[ tracker.get_tcp_state( ) ]->eval( tcp_seg, tracker );
+    tracker.set_tcp_event(tsd);
+    return tcp_state_handlers[ tracker.get_tcp_state( ) ]->eval(tsd, tracker);
 }
+

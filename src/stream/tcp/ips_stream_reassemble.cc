@@ -123,13 +123,13 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
         {
             if ( srod.direction & SSN_DIR_FROM_SERVER )
             {
-                tcpssn->server.flush_policy = STREAM_FLPOLICY_IGNORE;
+                tcpssn->server->flush_policy = STREAM_FLPOLICY_IGNORE;
                 stream.set_splitter(lwssn, true);
             }
 
             if ( srod.direction & SSN_DIR_FROM_CLIENT )
             {
-                tcpssn->client.flush_policy = STREAM_FLPOLICY_IGNORE;
+                tcpssn->client->flush_policy = STREAM_FLPOLICY_IGNORE;
                 stream.set_splitter(lwssn, false);
             }
         }
@@ -139,13 +139,13 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
             // FIXIT-M PAF need to check for ips / on-data
             if ( srod.direction & SSN_DIR_FROM_SERVER )
             {
-                tcpssn->server.flush_policy = STREAM_FLPOLICY_ON_ACK;
+                tcpssn->server->flush_policy = STREAM_FLPOLICY_ON_ACK;
                 stream.set_splitter(lwssn, true, new AtomSplitter(true));
             }
 
             if ( srod.direction & SSN_DIR_FROM_CLIENT )
             {
-                tcpssn->client.flush_policy = STREAM_FLPOLICY_ON_ACK;
+                tcpssn->client->flush_policy = STREAM_FLPOLICY_ON_ACK;
                 stream.set_splitter(lwssn, false, new AtomSplitter(false));
             }
         }
@@ -159,7 +159,6 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
             /* TBD: Set TF_FORCE_FLUSH ? */
         }
     }
-
 
     if (srod.alert)
         return DETECTION_OPTION_MATCH;
@@ -291,19 +290,19 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
 {
     // initialization code here
     REQUIRE( ( ips_stream_reassemble->api_version == ((BASE_API_VERSION << 16) | 0) ) );
-    REQUIRE( ( strcmp( ips_stream_reassemble->name, s_name ) == 0 ) );
-    ReassembleModule* reassembler = ( ReassembleModule* ) ips_stream_reassemble->mod_ctor();
+    REQUIRE( ( strcmp(ips_stream_reassemble->name, s_name) == 0 ) );
+    ReassembleModule* reassembler = ( ReassembleModule* )ips_stream_reassemble->mod_ctor();
     REQUIRE( ( reassembler != nullptr ) );
 
     Flow* flow = new Flow;
-    Packet* pkt = get_syn_packet( flow );
-    pkt->flow->session = new TcpSession( flow );
-    Cursor cursor( pkt );
+    Packet* pkt = get_syn_packet(flow);
+    pkt->flow->session = new TcpSession(flow);
+    Cursor cursor(pkt);
 
     SECTION("reassembler initialization")
     {
-        bool status = reassembler->begin( nullptr, 0, snort_conf );
-        CHECK( status );
+        bool status = reassembler->begin(nullptr, 0, snort_conf);
+        CHECK(status);
         CHECK( ( reassembler->srod.enable == 0 ) );
         CHECK( ( reassembler->srod.direction == 0 ) );
         CHECK( ( reassembler->srod.alert == 1 ) );
@@ -314,18 +313,17 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
     SECTION("eval enable off")
     {
         reassembler->srod.direction = SSN_DIR_FROM_SERVER;
-        IpsOption* ropt = reassemble_api.ctor( reassembler, nullptr );
-        int rc = ropt->eval( cursor, pkt );
+        IpsOption* ropt = reassemble_api.ctor(reassembler, nullptr);
+        int rc = ropt->eval(cursor, pkt);
         CHECK( ( rc == DETECTION_OPTION_MATCH ) );
-        StreamSplitter* ss = stream.get_splitter( flow, true );
+        StreamSplitter* ss = stream.get_splitter(flow, true);
         CHECK( ( ss != nullptr ) );
         CHECK( ( !ss->is_paf() ) );
-        CHECK( ( ( ( TcpSession* ) pkt->flow->session)->server.flush_policy
-                == STREAM_FLPOLICY_IGNORE ) );
+        CHECK( ( ( ( TcpSession* )pkt->flow->session)->server.flush_policy
+            == STREAM_FLPOLICY_IGNORE ) );
     }
 #endif
-
 }
 
-
 #endif
+

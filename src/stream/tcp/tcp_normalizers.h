@@ -28,7 +28,7 @@
 class TcpNormalizerFactory
 {
 public:
-    static TcpNormalizer* create( StreamPolicy, TcpSession*, TcpTracker*, TcpTracker* );
+    static TcpNormalizer* create(TcpSession*, StreamPolicy, TcpTracker*, TcpTracker*);
 };
 
 #endif

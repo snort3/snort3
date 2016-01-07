@@ -22,349 +22,358 @@
 #include <iostream>
 using namespace std;
 
-#include "tcp_state_handler.h"
-
 #include "main/snort_debug.h"
+
+#include "tcp_state_machine.h"
+#include "tcp_state_handler.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #include "stream_tcp_unit_test.h"
 #endif
 
-
-TcpStateHandler::TcpStateHandler() :
-        tcp_event( TcpStreamTracker::TCP_MAX_EVENTS )
+TcpStateHandler::TcpStateHandler(TcpStreamTracker::TcpStates state, TcpStateMachine& tsm) :
+    tsm(&tsm), tcp_state(state), tcp_event(TcpStreamTracker::TCP_MAX_EVENTS)
 {
-    // TODO Auto-generated constructor stub
+    tsm.register_state_handler(state, *this);
+}
 
+TcpStateHandler::TcpStateHandler(void) :
+    tsm(nullptr), tcp_state(TcpStreamTracker::TCP_CLOSED),
+    tcp_event(TcpStreamTracker::TCP_MAX_EVENTS)
+{
 }
 
 TcpStateHandler::~TcpStateHandler()
 {
     // TODO Auto-generated destructor stub
-
 }
 
-void TcpStateHandler::eval( TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker )
+bool TcpStateHandler::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    switch( tcp_event = tracker.get_tcp_event() )
+    bool handled = false;
+
+    switch ( tcp_event = tracker.get_tcp_event() )
     {
     case TcpStreamTracker::TCP_SYN_SENT_EVENT:
-        syn_sent( tcp_seg, tracker );
+        handled = syn_sent(tsd, tracker);
         break;
 
     case TcpStreamTracker::TCP_SYN_RECV_EVENT:
-        syn_recv( tcp_seg, tracker );
+        handled = syn_recv(tsd, tracker);
         break;
 
     case TcpStreamTracker::TCP_SYN_ACK_SENT_EVENT:
-        syn_ack_sent( tcp_seg, tracker );
+        handled = syn_ack_sent(tsd, tracker);
         break;
 
     case TcpStreamTracker::TCP_SYN_ACK_RECV_EVENT:
-        syn_ack_recv( tcp_seg, tracker );
+        handled = syn_ack_recv(tsd, tracker);
         break;
 
     case TcpStreamTracker::TCP_ACK_SENT_EVENT:
-        ack_sent( tcp_seg, tracker );
+        handled = ack_sent(tsd, tracker);
         break;
 
     case TcpStreamTracker::TCP_ACK_RECV_EVENT:
-        ack_recv( tcp_seg, tracker );
+        handled = ack_recv(tsd, tracker);
         break;
 
     case TcpStreamTracker::TCP_DATA_SEG_SENT_EVENT:
-        data_seg_sent( tcp_seg, tracker );
+        handled = data_seg_sent(tsd, tracker);
         break;
 
     case TcpStreamTracker::TCP_DATA_SEG_RECV_EVENT:
-        data_seg_recv( tcp_seg, tracker );
+        handled = data_seg_recv(tsd, tracker);
         break;
 
     case TcpStreamTracker::TCP_FIN_SENT_EVENT:
-        fin_sent( tcp_seg, tracker );
+        handled = fin_sent(tsd, tracker);
         break;
 
     case TcpStreamTracker::TCP_FIN_RECV_EVENT:
-        fin_recv( tcp_seg, tracker );
+        handled = fin_recv(tsd, tracker);
         break;
 
     case TcpStreamTracker::TCP_RST_SENT_EVENT:
-        rst_sent( tcp_seg, tracker );
+        handled = rst_sent(tsd, tracker);
         break;
 
     case TcpStreamTracker::TCP_RST_RECV_EVENT:
-        rst_recv( tcp_seg, tracker );
+        handled = rst_recv(tsd, tracker);
         break;
 
     case TcpStreamTracker::TCP_MAX_EVENTS:
     default:
         cout << "Invalid Tcp Event " << tracker.get_tcp_event() << endl;
         break;
-
     }
+
+    return handled;
 }
 
-void TcpStateHandler::default_state_action(
-    TcpSegmentDescriptor* tcp_seg, TcpStreamTracker* tracker, const char* func_name )
+bool TcpStateHandler::default_state_action(
+    TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker, const char* func_name)
 {
 #ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_STREAM_STATE, "Default Implementation of: %s tcp_seg: %p tracker: %p\n",
-        func_name, tcp_seg, tracker );
+    DebugFormat(DEBUG_STREAM_STATE, "Default Implementation of: %s tsd: %p tracker: %p\n",
+        func_name, &tsd, &tracker);
 #else
-    UNUSED(tcp_seg);
+    UNUSED(tsd);
     UNUSED(func_name);
 #endif
 
-    tcp_event = tracker->get_tcp_event();
+    tcp_event = tracker.get_tcp_event();
+    return false;
 }
 
-void TcpStateHandler::syn_sent( TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker )
+bool TcpStateHandler::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    default_state_action( &tcp_seg, &tracker, __func__ );
+    return default_state_action(tsd, tracker, __func__);
 }
 
-void TcpStateHandler::syn_recv(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker)
+bool TcpStateHandler::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    default_state_action( &tcp_seg, &tracker, __func__ );
+    return default_state_action(tsd, tracker, __func__);
 }
 
-void TcpStateHandler::syn_ack_sent(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker)
+bool TcpStateHandler::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    default_state_action( &tcp_seg, &tracker, __func__ );
+    return default_state_action(tsd, tracker, __func__);
 }
 
-void TcpStateHandler::syn_ack_recv(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker)
+bool TcpStateHandler::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    default_state_action( &tcp_seg, &tracker, __func__ );
+    return default_state_action(tsd, tracker, __func__);
 }
 
-void TcpStateHandler::ack_sent(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker)
+bool TcpStateHandler::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    default_state_action( &tcp_seg, &tracker, __func__ );
+    return default_state_action(tsd, tracker, __func__);
 }
 
-void TcpStateHandler::ack_recv(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker)
+bool TcpStateHandler::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    default_state_action( &tcp_seg, &tracker, __func__ );
+    return default_state_action(tsd, tracker, __func__);
 }
 
-void TcpStateHandler::data_seg_sent(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker)
+bool TcpStateHandler::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    default_state_action( &tcp_seg, &tracker, __func__ );
+    return default_state_action(tsd, tracker, __func__);
 }
 
-void TcpStateHandler::data_seg_recv(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker)
+bool TcpStateHandler::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    default_state_action( &tcp_seg, &tracker, __func__ );
+    return default_state_action(tsd, tracker, __func__);
 }
 
-void TcpStateHandler::fin_sent(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker)
+bool TcpStateHandler::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    default_state_action( &tcp_seg, &tracker, __func__ );
+    return default_state_action(tsd, tracker, __func__);
 }
 
-void TcpStateHandler::fin_recv(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker)
+bool TcpStateHandler::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    default_state_action( &tcp_seg, &tracker, __func__ );
+    return default_state_action(tsd, tracker, __func__);
 }
 
-void TcpStateHandler::rst_sent(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker)
+bool TcpStateHandler::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    default_state_action( &tcp_seg, &tracker, __func__ );
+    return default_state_action(tsd, tracker, __func__);
 }
 
-void TcpStateHandler::rst_recv(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker)
+bool TcpStateHandler::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    default_state_action( &tcp_seg, &tracker, __func__ );
+    return default_state_action(tsd, tracker, __func__);
 }
 
 #ifdef UNIT_TEST
 
 SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
 {
-     // initialization code here
-     Flow* flow = new Flow;
-     TcpStateHandler* tsh = new TcpStateHandler;
-     TcpStreamTracker* client_tracker = new TcpStreamTracker( true );
-     TcpStreamTracker* server_tracker = new TcpStreamTracker( false );
+    // initialization code here
+    Flow* flow = new Flow;
+    TcpStateHandler* tsh = new TcpStateHandler;
+    TcpStreamTracker* client_tracker = new TcpStreamTracker(true);
+    TcpStreamTracker* server_tracker = new TcpStreamTracker(false);
+    TcpEventLogger* tel = new TcpEventLogger;
 
-     GIVEN("a SYN Packet")
-     {
-            Packet* pkt = get_syn_packet( flow );
-            REQUIRE( ( pkt != nullptr ) );
+    GIVEN("a SYN Packet")
+    {
+        Packet* pkt = get_syn_packet(flow);
+        REQUIRE( ( pkt != nullptr ) );
 
-            WHEN("SYN is sent")
-         {
-             TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
-             REQUIRE( ( tcp_seg != nullptr ) );
-             client_tracker->set_tcp_event( TcpStreamTracker::TCP_SYN_SENT_EVENT );
-             tsh->eval( *tcp_seg, *client_tracker );
-             THEN("Event should be TCP_SYN_SENT_EVENT")
-             {
-                 CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
-             }
-             delete tcp_seg;
-         }
+        WHEN("SYN is sent")
+        {
+            TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
+            REQUIRE( ( tsd != nullptr ) );
+            client_tracker->set_tcp_event(TcpStreamTracker::TCP_SYN_SENT_EVENT);
+            tsh->eval(*tsd, *client_tracker);
+            THEN("Event should be TCP_SYN_SENT_EVENT")
+            {
+                CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
+            }
+            delete tsd;
+        }
 
-         SECTION("SYN is received")
-         {
-              TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
-              REQUIRE( ( tcp_seg != nullptr ) );
-              server_tracker->set_tcp_event( TcpStreamTracker::TCP_SYN_RECV_EVENT );
-              tsh->eval( *tcp_seg, *server_tracker );
-              CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
-              delete tcp_seg;
-         }
+        SECTION("SYN is received")
+        {
+            TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
+            REQUIRE( ( tsd != nullptr ) );
+            server_tracker->set_tcp_event(TcpStreamTracker::TCP_SYN_RECV_EVENT);
+            tsh->eval(*tsd, *server_tracker);
+            CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
+            delete tsd;
+        }
 
-         delete pkt;
-     }
+        delete pkt;
+    }
 
-     SECTION("syn_ack_packet")
-     {
-            Packet* pkt = get_syn_ack_packet( flow );
-            REQUIRE( ( pkt != nullptr ) );
+    SECTION("syn_ack_packet")
+    {
+        Packet* pkt = get_syn_ack_packet(flow);
+        REQUIRE( ( pkt != nullptr ) );
 
-            SECTION("syn_ack_sent")
-         {
-             TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
-             REQUIRE( ( tcp_seg != nullptr ) );
-             client_tracker->set_tcp_event( TcpStreamTracker::TCP_SYN_ACK_SENT_EVENT );
-             tsh->eval( *tcp_seg, *client_tracker );
-             CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
-             delete tcp_seg;
-         }
+        SECTION("syn_ack_sent")
+        {
+            TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
+            REQUIRE( ( tsd != nullptr ) );
+            client_tracker->set_tcp_event(TcpStreamTracker::TCP_SYN_ACK_SENT_EVENT);
+            tsh->eval(*tsd, *client_tracker);
+            CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
+            delete tsd;
+        }
 
-         SECTION("syn_ack_recv")
-         {
-              TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
-              REQUIRE( ( tcp_seg != nullptr ) );
-              server_tracker->set_tcp_event( TcpStreamTracker::TCP_SYN_ACK_RECV_EVENT );
-              tsh->eval( *tcp_seg, *server_tracker );
-              CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
-              delete tcp_seg;
-         }
+        SECTION("syn_ack_recv")
+        {
+            TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
+            REQUIRE( ( tsd != nullptr ) );
+            server_tracker->set_tcp_event(TcpStreamTracker::TCP_SYN_ACK_RECV_EVENT);
+            tsh->eval(*tsd, *server_tracker);
+            CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
+            delete tsd;
+        }
 
-         delete pkt;
-     }
+        delete pkt;
+    }
 
-     SECTION("ack_packet")
-     {
-            Packet* pkt = get_ack_packet( flow );
-            REQUIRE( ( pkt != nullptr ) );
+    SECTION("ack_packet")
+    {
+        Packet* pkt = get_ack_packet(flow);
+        REQUIRE( ( pkt != nullptr ) );
 
-            SECTION("ack_sent")
-         {
-             TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
-             REQUIRE( ( tcp_seg != nullptr ) );
-             client_tracker->set_tcp_event( TcpStreamTracker::TCP_ACK_SENT_EVENT );
-             tsh->eval( *tcp_seg, *client_tracker );
-             CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
-             delete tcp_seg;
-         }
+        SECTION("ack_sent")
+        {
+            TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
+            REQUIRE( ( tsd != nullptr ) );
+            client_tracker->set_tcp_event(TcpStreamTracker::TCP_ACK_SENT_EVENT);
+            tsh->eval(*tsd, *client_tracker);
+            CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
+            delete tsd;
+        }
 
-         SECTION("ack_recv")
-         {
-              TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
-              REQUIRE( ( tcp_seg != nullptr ) );
-              server_tracker->set_tcp_event( TcpStreamTracker::TCP_ACK_RECV_EVENT );
-              tsh->eval( *tcp_seg, *server_tracker );
-              CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
-              delete tcp_seg;
-         }
+        SECTION("ack_recv")
+        {
+            TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
+            REQUIRE( ( tsd != nullptr ) );
+            server_tracker->set_tcp_event(TcpStreamTracker::TCP_ACK_RECV_EVENT);
+            tsh->eval(*tsd, *server_tracker);
+            CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
+            delete tsd;
+        }
 
-         delete pkt;
-     }
+        delete pkt;
+    }
 
-     SECTION("data_seg_packet")
-     {
-            Packet* pkt = get_data_packet( flow );
-            REQUIRE( ( pkt != nullptr ) );
+    SECTION("data_seg_packet")
+    {
+        Packet* pkt = get_data_packet(flow);
+        REQUIRE( ( pkt != nullptr ) );
 
-            SECTION("data_seg_sent")
-         {
-             TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
-             REQUIRE( ( tcp_seg != nullptr ) );
-             client_tracker->set_tcp_event( TcpStreamTracker::TCP_DATA_SEG_SENT_EVENT );
-             tsh->eval( *tcp_seg, *client_tracker );
-             CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
-             delete tcp_seg;
-         }
+        SECTION("data_seg_sent")
+        {
+            TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
+            REQUIRE( ( tsd != nullptr ) );
+            client_tracker->set_tcp_event(TcpStreamTracker::TCP_DATA_SEG_SENT_EVENT);
+            tsh->eval(*tsd, *client_tracker);
+            CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
+            delete tsd;
+        }
 
-         SECTION("data_seg_recv")
-         {
-              TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
-              REQUIRE( ( tcp_seg != nullptr ) );
-              server_tracker->set_tcp_event( TcpStreamTracker::TCP_DATA_SEG_RECV_EVENT );
-              tsh->eval( *tcp_seg, *server_tracker );
-              CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
-              delete tcp_seg;
-         }
+        SECTION("data_seg_recv")
+        {
+            TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
+            REQUIRE( ( tsd != nullptr ) );
+            server_tracker->set_tcp_event(TcpStreamTracker::TCP_DATA_SEG_RECV_EVENT);
+            tsh->eval(*tsd, *server_tracker);
+            CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
+            delete tsd;
+        }
 
-         delete pkt;
-     }
+        delete pkt;
+    }
 
-     SECTION("fin_packet")
-      {
-             Packet* pkt = get_fin_packet( flow );
-             REQUIRE( ( pkt != nullptr ) );
+    SECTION("fin_packet")
+    {
+        Packet* pkt = get_fin_packet(flow);
+        REQUIRE( ( pkt != nullptr ) );
 
-             SECTION("fin_sent")
-          {
-              TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
-              REQUIRE( ( tcp_seg != nullptr ) );
-              client_tracker->set_tcp_event( TcpStreamTracker::TCP_FIN_SENT_EVENT );
-              tsh->eval( *tcp_seg, *client_tracker );
-              CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
-              delete tcp_seg;
-          }
+        SECTION("fin_sent")
+        {
+            TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
+            REQUIRE( ( tsd != nullptr ) );
+            client_tracker->set_tcp_event(TcpStreamTracker::TCP_FIN_SENT_EVENT);
+            tsh->eval(*tsd, *client_tracker);
+            CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
+            delete tsd;
+        }
 
-          SECTION("fin_recv")
-          {
-               TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
-               REQUIRE( ( tcp_seg != nullptr ) );
-               server_tracker->set_tcp_event( TcpStreamTracker::TCP_FIN_RECV_EVENT );
-               tsh->eval( *tcp_seg, *server_tracker );
-               CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
-               delete tcp_seg;
-          }
+        SECTION("fin_recv")
+        {
+            TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
+            REQUIRE( ( tsd != nullptr ) );
+            server_tracker->set_tcp_event(TcpStreamTracker::TCP_FIN_RECV_EVENT);
+            tsh->eval(*tsd, *server_tracker);
+            CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
+            delete tsd;
+        }
 
-          delete pkt;
-      }
+        delete pkt;
+    }
 
-     SECTION("rst_packet")
-     {
-             Packet* pkt = get_rst_packet( flow );
-             REQUIRE( ( pkt != nullptr ) );
+    SECTION("rst_packet")
+    {
+        Packet* pkt = get_rst_packet(flow);
+        REQUIRE( ( pkt != nullptr ) );
 
-             SECTION("rst_sent")
-          {
-              TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
-              REQUIRE( ( tcp_seg != nullptr ) );
-              client_tracker->set_tcp_event( TcpStreamTracker::TCP_RST_SENT_EVENT );
-              tsh->eval( *tcp_seg, *client_tracker );
-              CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
-              delete tcp_seg;
-          }
+        SECTION("rst_sent")
+        {
+            TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
+            REQUIRE( ( tsd != nullptr ) );
+            client_tracker->set_tcp_event(TcpStreamTracker::TCP_RST_SENT_EVENT);
+            tsh->eval(*tsd, *client_tracker);
+            CHECK( ( tsh->get_tcp_event() == client_tracker->get_tcp_event() ) );
+            delete tsd;
+        }
 
-          SECTION("rst_recv")
-          {
-               TcpSegmentDescriptor* tcp_seg = new TcpSegmentDescriptor( flow, pkt );
-               REQUIRE( ( tcp_seg != nullptr ) );
-               server_tracker->set_tcp_event( TcpStreamTracker::TCP_RST_RECV_EVENT );
-               tsh->eval( *tcp_seg, *server_tracker );
-               CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
-               delete tcp_seg;
-          }
+        SECTION("rst_recv")
+        {
+            TcpSegmentDescriptor* tsd = new TcpSegmentDescriptor(flow, pkt, tel);
+            REQUIRE( ( tsd != nullptr ) );
+            server_tracker->set_tcp_event(TcpStreamTracker::TCP_RST_RECV_EVENT);
+            tsh->eval(*tsd, *server_tracker);
+            CHECK( ( tsh->get_tcp_event() == server_tracker->get_tcp_event() ) );
+            delete tsd;
+        }
 
-          delete pkt;
-     }
+        delete pkt;
+    }
 
-     delete flow;
-     delete tsh;
-     delete client_tracker;
-     delete server_tracker;
-
+    delete flow;
+    delete tsh;
+    delete client_tracker;
+    delete server_tracker;
 }
 
 #endif
+

@@ -16,222 +16,209 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_events.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_events.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 30, 2015
-
-#ifndef TCP_EVENTS_H
-#define TCP_EVENTS_H
 
 #include "main/snort_config.h"
 #include "events/event_queue.h"
 #include "filters/sfrf.h"
 #include "detection/rules.h"
+
 #include "tcp_defs.h"
 #include "tcp_module.h"
+#include "tcp_event_logger.h"
 
-/* events */
-#define EVENT_SYN_ON_EST                0x00000001
-#define EVENT_DATA_ON_SYN               0x00000002
-#define EVENT_DATA_ON_CLOSED            0x00000004
-#define EVENT_BAD_TIMESTAMP             0x00000008
-#define EVENT_WINDOW_TOO_LARGE          0x00000010
-#define EVENT_DATA_AFTER_RESET          0x00000020
-#define EVENT_SESSION_HIJACK_CLIENT     0x00000040
-#define EVENT_SESSION_HIJACK_SERVER     0x00000080
-#define EVENT_DATA_WITHOUT_FLAGS        0x00000100
-#define EVENT_4WHS                      0x00000200
-#define EVENT_NO_TIMESTAMP              0x00000400
-#define EVENT_BAD_RST                   0x00000800
-#define EVENT_BAD_FIN                   0x00001000
-#define EVENT_BAD_ACK                   0x00002000
-#define EVENT_DATA_AFTER_RST_RCVD       0x00004000
-#define EVENT_WINDOW_SLAM               0x00008000
-#define EVENT_NO_3WHS                   0x00010000
+void TcpEventLogger::set_tcp_internal_syn_event(void)
+{
+    tcp_events |= INTERNAL_EVENT_SYN_RECEIVED;
+}
 
-static inline void EventSynOnEst()
+void TcpEventLogger::EventSynOnEst(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SYN_ON_EST);
     tcpStats.events++;
 }
 
-static inline void EventExcessiveOverlap()
+void TcpEventLogger::EventExcessiveOverlap(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_EXCESSIVE_TCP_OVERLAPS);
     tcpStats.events++;
 }
 
-static inline void EventBadTimestamp()
+void TcpEventLogger::EventBadTimestamp(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_TIMESTAMP);
     tcpStats.events++;
 }
 
-static inline void EventWindowTooLarge()
+void TcpEventLogger::EventWindowTooLarge(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_WINDOW_TOO_LARGE);
     tcpStats.events++;
 }
 
-static inline void EventDataOnSyn()
+void TcpEventLogger::EventDataOnSyn(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_ON_SYN);
     tcpStats.events++;
 }
 
-static inline void EventDataOnClosed()
+void TcpEventLogger::EventDataOnClosed(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_ON_CLOSED);
     tcpStats.events++;
 }
 
-static inline void EventDataAfterReset()
+void TcpEventLogger::EventDataAfterReset(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_AFTER_RESET);
     tcpStats.events++;
 }
 
-static inline void EventBadSegment()
+void TcpEventLogger::EventBadSegment(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_SEGMENT);
     tcpStats.events++;
 }
 
-static inline void EventSessionHijackedClient()
+void TcpEventLogger::EventSessionHijackedClient(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SESSION_HIJACKED_CLIENT);
     tcpStats.events++;
 }
 
-static inline void EventSessionHijackedServer()
+void TcpEventLogger::EventSessionHijackedServer(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SESSION_HIJACKED_SERVER);
     tcpStats.events++;
 }
 
-static inline void EventDataWithoutFlags()
+void TcpEventLogger::EventDataWithoutFlags(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_WITHOUT_FLAGS);
     tcpStats.events++;
 }
 
-static inline void EventMaxSmallSegsExceeded()
+void TcpEventLogger::EventMaxSmallSegsExceeded(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SMALL_SEGMENT);
     tcpStats.events++;
 }
 
-static inline void Event4whs()
+void TcpEventLogger::Event4whs(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_4WAY_HANDSHAKE);
     tcpStats.events++;
 }
 
-static inline void EventNoTimestamp()
+void TcpEventLogger::EventNoTimestamp(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_NO_TIMESTAMP);
     tcpStats.events++;
 }
 
-static inline void EventBadReset()
+void TcpEventLogger::EventBadReset(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_RST);
     tcpStats.events++;
 }
 
-static inline void EventBadFin()
+void TcpEventLogger::EventBadFin(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_FIN);
     tcpStats.events++;
 }
 
-static inline void EventBadAck()
+void TcpEventLogger::EventBadAck(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_ACK);
     tcpStats.events++;
 }
 
-static inline void EventDataAfterRstRcvd()
+void TcpEventLogger::EventDataAfterRstRcvd(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_AFTER_RST_RCVD);
     tcpStats.events++;
 }
 
-static inline void EventInternal(uint32_t eventSid)
+void TcpEventLogger::EventInternal(uint32_t eventSid)
 {
     if (!InternalEventIsEnabled(snort_conf->rate_filter_config, eventSid))
         return;
 
     tcpStats.internalEvents++;
 
-    STREAM_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE, "Stream raised internal event %d\n", eventSid); );
+    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE, "Stream raised internal event %d\n",
+        eventSid); );
 
     SnortEventqAdd(GENERATOR_INTERNAL, eventSid);
 }
 
-static inline void EventWindowSlam()
+void TcpEventLogger::EventWindowSlam(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_WINDOW_SLAM);
     tcpStats.events++;
 }
 
-static inline void EventNo3whs()
+void TcpEventLogger::EventNo3whs(void)
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_NO_3WHS);
     tcpStats.events++;
 }
 
-static inline void LogTcpEvents(int eventcode)
+void TcpEventLogger::log_tcp_events(void)
 {
-    if (!eventcode)
+    if ( !tcp_events )
         return;
 
-    if (eventcode & EVENT_SYN_ON_EST)
+    if (tcp_events & EVENT_SYN_ON_EST)
         EventSynOnEst();
 
-    if (eventcode & EVENT_DATA_ON_SYN)
+    if (tcp_events & EVENT_DATA_ON_SYN)
         EventDataOnSyn();
 
-    if (eventcode & EVENT_DATA_ON_CLOSED)
+    if (tcp_events & EVENT_DATA_ON_CLOSED)
         EventDataOnClosed();
 
-    if (eventcode & EVENT_BAD_TIMESTAMP)
+    if (tcp_events & EVENT_BAD_TIMESTAMP)
         EventBadTimestamp();
 
-    if (eventcode & EVENT_WINDOW_TOO_LARGE)
+    if (tcp_events & EVENT_WINDOW_TOO_LARGE)
         EventWindowTooLarge();
 
-    if (eventcode & EVENT_DATA_AFTER_RESET)
+    if (tcp_events & EVENT_DATA_AFTER_RESET)
         EventDataAfterReset();
 
-    if (eventcode & EVENT_SESSION_HIJACK_CLIENT)
+    if (tcp_events & EVENT_SESSION_HIJACK_CLIENT)
         EventSessionHijackedClient();
 
-    if (eventcode & EVENT_SESSION_HIJACK_SERVER)
+    if (tcp_events & EVENT_SESSION_HIJACK_SERVER)
         EventSessionHijackedServer();
 
-    if (eventcode & EVENT_DATA_WITHOUT_FLAGS)
+    if (tcp_events & EVENT_DATA_WITHOUT_FLAGS)
         EventDataWithoutFlags();
 
-    if (eventcode & EVENT_4WHS)
+    if (tcp_events & EVENT_4WHS)
         Event4whs();
 
-    if (eventcode & EVENT_NO_TIMESTAMP)
+    if (tcp_events & EVENT_NO_TIMESTAMP)
         EventNoTimestamp();
 
-    if (eventcode & EVENT_BAD_RST)
+    if (tcp_events & EVENT_BAD_RST)
         EventBadReset();
 
-    if (eventcode & EVENT_BAD_FIN)
+    if (tcp_events & EVENT_BAD_FIN)
         EventBadFin();
 
-    if (eventcode & EVENT_BAD_ACK)
+    if (tcp_events & EVENT_BAD_ACK)
         EventBadAck();
 
-    if (eventcode & EVENT_DATA_AFTER_RST_RCVD)
+    if (tcp_events & EVENT_DATA_AFTER_RST_RCVD)
         EventDataAfterRstRcvd();
 
-    if (eventcode & EVENT_WINDOW_SLAM)
+    if (tcp_events & EVENT_WINDOW_SLAM)
         EventWindowSlam();
+
+    tcp_events = 0;
 }
 
-#endif

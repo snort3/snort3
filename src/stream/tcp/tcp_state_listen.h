@@ -19,17 +19,35 @@
 // tcp_listen_state.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 30, 2015
 
-#ifndef TCP_LISTEN_STATE_H
-#define TCP_LISTEN_STATE_H
+#ifndef TCP_STATE_LISTEN_H
+#define TCP_STATE_LISTEN_H
 
 #include "stream/libtcp/tcp_state_handler.h"
 
-class TcpListenState: public TcpStateHandler
+class TcpSession;
+
+class TcpStateListen : public TcpStateHandler
 {
 public:
-    TcpListenState();
-    virtual ~TcpListenState();
+    TcpStateListen(TcpStateMachine&, TcpSession&);
+    virtual ~TcpStateListen(void);
 
+    bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool syn_ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool syn_ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool data_seg_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool data_seg_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool fin_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+
+private:
+    TcpSession& session;
 };
 
 #endif
+
