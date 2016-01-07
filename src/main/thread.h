@@ -28,13 +28,13 @@
 #define THREAD_LOCAL_TBD
 //#define THREAD_LOCAL // for single-threaded debugging
 
-// this is a gnu extension that at present is slightly faster than the
-// c++11 form
-#define THREAD_LOCAL __thread
-
-// the c++11 form currently seems to be slightly slower than __thread
-// possibly due to dynamic initialization requirements
-//#define THREAD_LOCAL thread_local
+// `__thread` is a gnu extension that at present is slightly faster than
+// `thread_local` (possibly due to the lack of dynamic initialization)
+#if USE_THREAD_LOCAL
+#    define THREAD_LOCAL thread_local
+#else
+#    define THREAD_LOCAL __thread
+#endif
 
 void set_instance_id(unsigned);
 void set_instance_max(unsigned);

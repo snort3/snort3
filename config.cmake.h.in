@@ -327,6 +327,8 @@
 /* Define whether linuxthreads is being used */
 #cmakedefine HAVE_LINUXTHREADS 1
 
+/* Define if `thread_local` keyword should be used */
+#cmakedefine USE_THREAD_LOCAL 1
 
 #endif
 

@@ -16,6 +16,8 @@ include (cmake/include_libraries.cmake)
 include (cmake/platforms.cmake)
 include (cmake/configure_options.cmake)
 include (cmake/CheckCXX11Features.cmake)
+include (cmake/compiler_features.cmake)
+# FIXIT-L creation of the config.h file should live here, instead of in sanity_checks
 include (cmake/sanity_checks.cmake)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS}") # c++11 flag

@@ -175,6 +175,63 @@ AC_DEFUN([CC_VISIBILITY],
 CC_VISIBILITY()
 
 #--------------------------------------------------------------------------
+# thread-local storage foo
+#--------------------------------------------------------------------------
+# FIXIT-L should define a macro for try-compile-link-cache-val idiom
+AC_DEFUN([CXX_EXTERN_GNU_TLS],
+[
+    AC_REQUIRE([AC_PROG_CXX])
+    AC_MSG_CHECKING([for extern GNU __thread support])
+    gl_save_CPPFLAGS="$CPPFLAGS"
+
+    AC_LANG_PUSH(C++)
+    AC_CACHE_VAL(gl_cv_cxx_extern_gnu_tls, [
+        CPPFLAGS="-std=c++11 -shared -Wl,-undefined,dynamic_lookup"
+        AC_LINK_IFELSE([AC_LANG_SOURCE([[
+            extern __thread int x;
+            void foo() { ++x; }]])],
+            [gl_cv_cxx_extern_gnu_tls="yes"],
+            [gl_cv_cxx_extern_gnu_tls="no"])
+    ])
+    AC_LANG_POP()
+
+    AC_MSG_RESULT([$gl_cv_cxx_extern_gnu_tls])
+    CPPFLAGS="$gl_save_CPPFLAGS"
+])
+CXX_EXTERN_GNU_TLS()
+
+AC_DEFUN([CXX_THREAD_LOCAL],
+[
+    AC_REQUIRE([AC_PROG_CXX])
+    AC_MSG_CHECKING([for thread_local keyword support])
+    gl_save_CPPFLAGS="$CPPFLAGS"
+
+    AC_LANG_PUSH(C++)
+    AC_CACHE_VAL(gl_cv_cxx_thread_local, [
+        CPPFLAGS="-std=c++11"
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+            thread_local int x;]],
+            [[]])],
+            [gl_cv_cxx_thread_local="yes"],
+            [gl_cv_cxx_thread_local="no"])
+    ])
+    AC_LANG_POP()
+
+    AC_MSG_RESULT([$gl_cv_cxx_thread_local])
+    CPPFLAGS="$gl_save_CPPFLAGS"
+])
+CXX_THREAD_LOCAL()
+
+if test "x$gl_cv_cxx_extern_gnu_tls" = "xno"; then
+    if test "x$gl_cv_cxx_thread_local" = "xyes"; then
+        AC_DEFINE([USE_THREAD_LOCAL],[1],
+            [Define if thread_local keyword should be used])
+    else
+        AC_MSG_ERROR([Compiler does not support thread_local OR extern __thread declarations])
+    fi
+fi
+
+#--------------------------------------------------------------------------
 # typedefs, structures, and compiler characteristics
 #--------------------------------------------------------------------------
 
