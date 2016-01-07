@@ -363,12 +363,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
 
     copied = len;
 
-    // FIXIT-M (b042cf28c49)
-    // assert(total <= MAX_OCTETS) was broke after changes in stream
-    // to accommodate asymmetric TCP connections.
-    // See "FIXIT-M (b042cf28c49)" in "src/tcp/tcp_session.c".
-    if (total > MAX_OCTETS)
-        total = MAX_OCTETS;
+    assert(total <= MAX_OCTETS);
 
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
         NHttpFlowData::nhttp_flow_id);
@@ -409,7 +404,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
     }
 #endif
 
-    if (session_data->section_type[source_id] == SEC__NOTCOMPUTE)
+    if (session_data->section_type[source_id] == SEC__NOT_COMPUTE)
     {   // FIXIT-M In theory this check should not be necessary
         return nullptr;
     }
@@ -427,7 +422,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
 #endif
         if (flags & PKT_PDU_TAIL)
         {
-            session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+            session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 
             // When we are skipping through a message body beyond flow depth this is the end of
             // the line. Here we do the message section's normal job of updating the flow for the
@@ -488,12 +483,26 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         session_data->section_offset[source_id] = 0;
 
         // Buffers are reset to nullptr without delete[] because NHttpMsgSection holds the pointer
-        // and is responsible
-        if (send_to_detection.length > 0)
+        // and is responsible.
+        // The detection section of a message is the first body section, unless there is no body
+        // section in which case it is the headers. The detection section is always returned to the
+        // framework and forwarded to detection even if it is empty. Other body sections and the
+        // trailer section are only forwarded if nonempty. The start line section and header
+        // sections other than the detection section are never forwarded.
+        if (((send_to_detection.length > 0) && (NHttpInspect::get_latest_is() != IS_NONE)) ||
+            ((send_to_detection.length == 0) && (NHttpInspect::get_latest_is() == IS_DETECTION)))
         {
-            nhttp_buf.data = send_to_detection.start;
-            nhttp_buf.length = send_to_detection.length;
-            assert((nhttp_buf.length <= MAX_OCTETS) && (nhttp_buf.length != 0));
+            // FIXIT-M kludge until we work out issues with returning an empty buffer
+            if (send_to_detection.length > 0)
+            {
+                nhttp_buf.data = send_to_detection.start;
+                nhttp_buf.length = send_to_detection.length;
+            }
+            else
+            {
+                nhttp_buf.data = (const uint8_t*)"";
+                nhttp_buf.length = 1;
+            }
             buffer = nullptr;
 #ifdef REG_TEST
             if (NHttpTestManager::use_test_output())
@@ -537,7 +546,7 @@ bool NHttpStreamSplitter::finish(Flow* flow)
     // If there is leftover data for which we returned PAF_SEARCH and never flushed, we need to set
     // up to process because it is about to go to reassemble(). But we don't support partial start
     // lines.
-    if ((session_data->section_type[source_id] == SEC__NOTCOMPUTE) &&
+    if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) &&
         (session_data->cutter[source_id] != nullptr)               &&
         (session_data->cutter[source_id]->get_octets_seen() > 0))
     {
@@ -558,7 +567,7 @@ bool NHttpStreamSplitter::finish(Flow* flow)
     }
 
     // If there is no more data to process we need to wrap up file processing right now
-    if ((session_data->section_type[source_id] == SEC__NOTCOMPUTE) &&
+    if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) &&
         (session_data->file_depth_remaining[source_id] > 0)        &&
         (session_data->cutter[source_id] != nullptr)               &&
         (session_data->cutter[source_id]->get_octets_seen() == 0))
@@ -568,7 +577,7 @@ bool NHttpStreamSplitter::finish(Flow* flow)
             FileFlows* file_flows = FileFlows::get_file_flows(flow);
             file_flows->file_process(nullptr, 0, SNORT_FILE_END, false);
         }
-        else
+        else if (session_data->mime_state != nullptr)
         {
             session_data->mime_state->process_mime_data(flow, nullptr, 0, true,
                 SNORT_FILE_END);

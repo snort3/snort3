@@ -38,7 +38,9 @@ class NHttpMsgSection
 {
 public:
     virtual ~NHttpMsgSection() { if (delete_msg_on_destruct) delete[] msg_text.start; }
-    virtual NHttpEnums::InspectSection get_inspection_section() const = 0;
+    virtual NHttpEnums::InspectSection get_inspection_section() const
+        { return NHttpEnums::IS_NONE; }
+    NHttpEnums::SourceId get_source_id() { return source_id; }
 
     // Minimum necessary processing for every message
     virtual void analyze() = 0;
@@ -46,7 +48,7 @@ public:
     // Manages the splitter and communication between message sections
     virtual void update_flow() = 0;
 
-    const Field& get_classic_buffer(unsigned id, unsigned sub_id);
+    const Field& get_classic_buffer(unsigned id, uint64_t sub_id, uint64_t form);
 
     // Provide buffer to be sent to detection
     virtual const Field& get_detect_buf() const { return msg_text; }

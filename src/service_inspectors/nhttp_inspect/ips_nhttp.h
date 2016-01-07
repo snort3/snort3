@@ -36,7 +36,7 @@
 
 enum PsIdx { PSI_URI, PSI_CLIENT_BODY, PSI_METHOD, PSI_COOKIE, PSI_STAT_CODE, PSI_STAT_MSG,
     PSI_RAW_URI, PSI_RAW_HEADER, PSI_RAW_COOKIE, PSI_HEADER, PSI_VERSION, PSI_TRAILER,
-    PSI_RAW_TRAILER, PSI_MAX };
+    PSI_RAW_TRAILER, PSI_RAW_REQUEST, PSI_RAW_STATUS, PSI_MAX };
 
 class NHttpCursorModule : public Module
 {
@@ -61,6 +61,7 @@ private:
     {
     public:
         std::string field;        // provide buffer containing specific header field
+        bool request;             // provide buffer from request not response
         bool with_header;         // provide buffer with a later section than it appears in
         bool with_body;
         bool with_trailer;
@@ -81,7 +82,8 @@ private:
 
     NHttpRuleParaList para_list;
     NHttpEnums::InspectSection inspect_section;
-    unsigned sub_id;
+    uint64_t sub_id;
+    uint64_t form;
 };
 
 class NHttpIpsOption : public IpsOption
@@ -89,7 +91,7 @@ class NHttpIpsOption : public IpsOption
 public:
     NHttpIpsOption(const NHttpCursorModule* cm) : IpsOption(cm->key), key(cm->key),
         buffer_index(cm->buffer_index), cat(cm->cat), psi(cm->psi),
-        inspect_section(cm->inspect_section), sub_id(cm->sub_id) {}
+        inspect_section(cm->inspect_section), sub_id(cm->sub_id), form(cm->form) {}
     CursorActionType get_cursor_type() const override { return cat; }
     int eval(Cursor&, Packet*) override;
     static IpsOption* opt_ctor(Module* m, OptTreeNode*)
@@ -101,7 +103,8 @@ private:
     const CursorActionType cat;
     const PsIdx psi;
     const NHttpEnums::InspectSection inspect_section;
-    const unsigned sub_id;
+    const uint64_t sub_id;
+    const uint64_t form;
 };
 
 #endif

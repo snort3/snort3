@@ -36,7 +36,7 @@ public:
         NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
         const NHttpParaList* params_);
     NHttpEnums::InspectSection get_inspection_section() const override
-        { return NHttpEnums::IS_HEADER; }
+        { return detection_section ? NHttpEnums::IS_DETECTION : NHttpEnums::IS_NONE; }
     void update_flow() override;
 private:
     // Dummy configurations to support MIME processing
@@ -46,6 +46,8 @@ private:
     void prepare_body();
     void setup_file_processing();
     void setup_decompression();
+
+    bool detection_section = true;
 
 #ifdef REG_TEST
     void print_section(FILE* output) override;

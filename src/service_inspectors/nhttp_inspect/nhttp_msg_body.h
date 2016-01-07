@@ -33,7 +33,7 @@ public:
     void analyze() override;
     const Field& get_detect_buf() const override { return detect_data; }
     NHttpEnums::InspectSection get_inspection_section() const override
-        { return NHttpEnums::IS_BODY; }
+        { return detection_section ? NHttpEnums::IS_DETECTION : NHttpEnums::IS_BODY; }
 
 protected:
     NHttpMsgBody(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
@@ -44,6 +44,7 @@ protected:
     int64_t body_octets;
     Field detect_data;
     Field file_data;
+    const bool detection_section;
 
 #ifdef REG_TEST
     void print_body_section(FILE* output);

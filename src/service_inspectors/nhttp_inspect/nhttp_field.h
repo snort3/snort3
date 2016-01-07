@@ -32,7 +32,7 @@
 class Field
 {
 public:
-    int32_t length = NHttpEnums::STAT_NOTCOMPUTE;
+    int32_t length = NHttpEnums::STAT_NOT_COMPUTE;
     const uint8_t* start = nullptr;
 
     static const Field FIELD_NULL;

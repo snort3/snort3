@@ -78,34 +78,35 @@ private:
     uint32_t num_good_chunks[2] = { 0, 0 };
 
     // *** StreamSplitter => Inspector (facts about the most recent message section)
-    NHttpEnums::SectionType section_type[2] = { NHttpEnums::SEC__NOTCOMPUTE,
-                                                NHttpEnums::SEC__NOTCOMPUTE };
+    NHttpEnums::SectionType section_type[2] = { NHttpEnums::SEC__NOT_COMPUTE,
+                                                NHttpEnums::SEC__NOT_COMPUTE };
     bool tcp_close[2] = { false, false };
     NHttpInfractions infractions[2];
     NHttpEventGen events[2];
-    int32_t num_head_lines[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
+    int32_t num_head_lines[2] = { NHttpEnums::STAT_NOT_PRESENT, NHttpEnums::STAT_NOT_PRESENT };
 
     // *** Inspector => StreamSplitter (facts about the message section that is coming next)
     NHttpEnums::SectionType type_expected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
     // length of the data from Content-Length field
-    int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
+    int64_t data_length[2] = { NHttpEnums::STAT_NOT_PRESENT, NHttpEnums::STAT_NOT_PRESENT };
     uint32_t section_size_target[2] = { 0, 0 };
     uint32_t section_size_max[2] = { 0, 0 };
     NHttpEnums::CompressId compression[2] = { NHttpEnums::CMP_NONE, NHttpEnums::CMP_NONE };
     z_stream* compress_stream[2] = { nullptr, nullptr };
 
     // *** Inspector's internal data about the current message
-    NHttpEnums::VersionId version_id[2] = { NHttpEnums::VERS__NOTPRESENT,
-                                            NHttpEnums::VERS__NOTPRESENT };
-    NHttpEnums::MethodId method_id = NHttpEnums::METH__NOTPRESENT;
-    int32_t status_code_num = NHttpEnums::STAT_NOTPRESENT;
-    int64_t file_depth_remaining[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
-    int64_t detect_depth_remaining[2] = { NHttpEnums::STAT_NOTPRESENT,
-        NHttpEnums::STAT_NOTPRESENT };
+    NHttpEnums::VersionId version_id[2] = { NHttpEnums::VERS__NOT_PRESENT,
+                                            NHttpEnums::VERS__NOT_PRESENT };
+    NHttpEnums::MethodId method_id = NHttpEnums::METH__NOT_PRESENT;
+    int32_t status_code_num = NHttpEnums::STAT_NOT_PRESENT;
+    int64_t file_depth_remaining[2] = { NHttpEnums::STAT_NOT_PRESENT,
+        NHttpEnums::STAT_NOT_PRESENT };
+    int64_t detect_depth_remaining[2] = { NHttpEnums::STAT_NOT_PRESENT,
+        NHttpEnums::STAT_NOT_PRESENT };
     MimeSession* mime_state = nullptr;  // SRC_CLIENT only
 
     // number of user data octets seen so far (regular body or chunks)
-    int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
+    int64_t body_octets[2] = { NHttpEnums::STAT_NOT_PRESENT, NHttpEnums::STAT_NOT_PRESENT };
 
     // Transaction management including pipelining
     // FIXIT-L pipeline deserves to be its own class

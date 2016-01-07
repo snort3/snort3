@@ -49,7 +49,7 @@ void NHttpMsgBodyCl::update_flow()
             SEC_STATUS;
         session_data->half_reset(source_id);
     }
-    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 }
 
 #ifdef REG_TEST

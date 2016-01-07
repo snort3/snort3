@@ -42,7 +42,7 @@ void NHttpMsgTrailer::update_flow()
     session_data->type_expected[source_id] =
         (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
     session_data->half_reset(source_id);
-    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 }
 
 #ifdef REG_TEST
@@ -50,10 +50,10 @@ void NHttpMsgTrailer::print_section(FILE* output)
 {
     NHttpMsgSection::print_message_title(output, "trailer");
     NHttpMsgHeadShared::print_headers(output);
-    get_classic_buffer(NHTTP_BUFFER_TRAILER, 0).print(output,
-        NHttpApi::legacy_buffers[NHTTP_BUFFER_TRAILER-1]);
-    get_classic_buffer(NHTTP_BUFFER_RAW_TRAILER, 0).print(output,
-        NHttpApi::legacy_buffers[NHTTP_BUFFER_RAW_TRAILER-1]);
+    get_classic_buffer(NHTTP_BUFFER_TRAILER, 0, 0).print(output,
+        NHttpApi::classic_buffers[NHTTP_BUFFER_TRAILER-1]);
+    get_classic_buffer(NHTTP_BUFFER_RAW_TRAILER, 0, 0).print(output,
+        NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_TRAILER-1]);
     NHttpMsgSection::print_message_wrapup(output);
 }
 #endif

@@ -31,6 +31,7 @@
 #include "pp_raw_buffer_iface.h"
 #include "pp_stream_splitter_iface.h"
 
+// FIXIT-H needs to be updated for addition of get_fp_buf()
 template<typename T>
 static inline bool get_buf(
     Inspector& i, T v, Packet& p, std::string& rb)

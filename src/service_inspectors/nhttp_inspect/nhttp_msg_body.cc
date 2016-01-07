@@ -37,7 +37,8 @@ NHttpMsgBody::NHttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
     NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
     const NHttpParaList* params_) :
     NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_),
-    body_octets(session_data->body_octets[source_id])
+    body_octets(session_data->body_octets[source_id]),
+    detection_section((body_octets == 0) && (session_data->detect_depth_remaining[source_id] > 0))
 {
     transaction->set_body(this);
 }
@@ -100,7 +101,7 @@ void NHttpMsgBody::do_file_processing()
                 NHttpMsgRequest* request = transaction->get_request();
                 if (request != nullptr)
                 {
-                    const Field& tranaction_uri = request->get_uri_norm_legacy();
+                    const Field& tranaction_uri = request->get_uri_norm_classic();
                     if (tranaction_uri.length > 0)
                     {
                         file_flows->set_file_name(tranaction_uri.start, tranaction_uri.length);
@@ -133,8 +134,8 @@ void NHttpMsgBody::do_file_processing()
 void NHttpMsgBody::print_body_section(FILE* output)
 {
     detect_data.print(output, "Detect data");
-    get_classic_buffer(NHTTP_BUFFER_CLIENT_BODY, 0).print(output,
-        NHttpApi::legacy_buffers[NHTTP_BUFFER_CLIENT_BODY-1]);
+    get_classic_buffer(NHTTP_BUFFER_CLIENT_BODY, 0, 0).print(output,
+        NHttpApi::classic_buffers[NHTTP_BUFFER_CLIENT_BODY-1]);
     if (g_file_data.len > 0)
     {
         Field(g_file_data.len, g_file_data.data).print(output, "file_data");

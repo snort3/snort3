@@ -28,10 +28,6 @@ using namespace NHttpEnums;
 void UriNormalizer::normalize(const Field& input, Field& result, bool do_path,
     ScratchPad& scratch_pad, NHttpInfractions& infractions, NHttpEventGen& events)
 {
-    if (result.length != STAT_NOTCOMPUTE)
-        return;
-    assert (input.length >= 0);
-
     // Almost all HTTP requests are honest and rarely need expensive normalization processing. We
     // do a quick scan for red flags and only perform normalization if something comes up.
     // Otherwise we set the normalized field to point at the raw value.
@@ -50,7 +46,7 @@ void UriNormalizer::normalize(const Field& input, Field& result, bool do_path,
     uint8_t* const scratch = scratch_pad.request(2 * buffer_length);
     if (scratch == nullptr)
     {
-        result.length = STAT_INSUFMEMORY;
+        result.length = STAT_INSUF_MEMORY;
         return;
     }
     uint8_t* const front_half = scratch;

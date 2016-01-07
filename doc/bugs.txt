@@ -35,6 +35,10 @@
 * --lua can only be used in addition to, not in place of, a -c config.
   Ideally, --lua could be used in lieu of -c.
 
+* Rule line numbers provided with syntax error messages are off by one. The first rule is
+  unnumbered, the second rule is one, etc. See nhttp_inspect/detection_buffers/bad_rules/expected
+  for an example.
+
 
 ==== Rules
 

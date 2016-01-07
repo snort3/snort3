@@ -42,7 +42,7 @@ NHttpMsgHeader::NHttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
 
 void NHttpMsgHeader::update_flow()
 {
-    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 
     // FIXIT-L put this test here for now. May want to integrate into the following code and
     // do more careful checks for inappropriate Content-Length.
@@ -52,6 +52,13 @@ void NHttpMsgHeader::update_flow()
     // The following logic to determine body type is by no means the last word on this topic.
     // FIXIT-H need to distinguish methods such as POST that should have a body from those that
     // should not.
+    if (tcp_close)
+    {
+        session_data->type_expected[source_id] = SEC_ABORT;
+        session_data->half_reset(source_id);
+        return;
+    }
+
     if ((source_id == SRC_SERVER) && ((status_code_num <= 199) || (status_code_num == 204) ||
         (status_code_num == 304)))
     {
@@ -138,6 +145,12 @@ void NHttpMsgHeader::prepare_body()
     const int64_t& depth = (source_id == SRC_CLIENT) ? params->request_depth :
         params->response_depth;
     session_data->detect_depth_remaining[source_id] = (depth != -1) ? depth : INT64_MAX;
+    if (session_data->detect_depth_remaining[source_id] > 0)
+    {
+        // Depth must be positive because first body section must actually go to detection in order
+        // to be the detection section
+        detection_section = false;
+    }
     setup_file_processing();
     setup_decompression();
     update_depth();
@@ -202,7 +215,7 @@ void NHttpMsgHeader::setup_decompression()
     session_data->compress_stream[source_id]->zfree = Z_NULL;
     session_data->compress_stream[source_id]->next_in = Z_NULL;
     session_data->compress_stream[source_id]->avail_in = 0;
-    const int window_bits = (compression == CMP_GZIP) ? GZIP_WINDOWBITS : DEFLATE_WINDOWBITS;
+    const int window_bits = (compression == CMP_GZIP) ? GZIP_WINDOW_BITS : DEFLATE_WINDOW_BITS;
     if (inflateInit2(session_data->compress_stream[source_id], window_bits) != Z_OK)
     {
         session_data->compression[source_id] = CMP_NONE;
@@ -216,14 +229,14 @@ void NHttpMsgHeader::print_section(FILE* output)
 {
     NHttpMsgSection::print_message_title(output, "header");
     NHttpMsgHeadShared::print_headers(output);
-    get_classic_buffer(NHTTP_BUFFER_COOKIE, 0).print(output,
-        NHttpApi::legacy_buffers[NHTTP_BUFFER_COOKIE-1]);
-    get_classic_buffer(NHTTP_BUFFER_HEADER, 0).print(output,
-        NHttpApi::legacy_buffers[NHTTP_BUFFER_HEADER-1]);
-    get_classic_buffer(NHTTP_BUFFER_RAW_COOKIE, 0).print(output,
-        NHttpApi::legacy_buffers[NHTTP_BUFFER_RAW_COOKIE-1]);
-    get_classic_buffer(NHTTP_BUFFER_RAW_HEADER, 0).print(output,
-        NHttpApi::legacy_buffers[NHTTP_BUFFER_RAW_HEADER-1]);
+    get_classic_buffer(NHTTP_BUFFER_COOKIE, 0, 0).print(output,
+        NHttpApi::classic_buffers[NHTTP_BUFFER_COOKIE-1]);
+    get_classic_buffer(NHTTP_BUFFER_HEADER, 0, 0).print(output,
+        NHttpApi::classic_buffers[NHTTP_BUFFER_HEADER-1]);
+    get_classic_buffer(NHTTP_BUFFER_RAW_COOKIE, 0, 0).print(output,
+        NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_COOKIE-1]);
+    get_classic_buffer(NHTTP_BUFFER_RAW_HEADER, 0, 0).print(output,
+        NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_HEADER-1]);
     NHttpMsgSection::print_message_wrapup(output);
 }
 #endif

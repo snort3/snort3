@@ -182,7 +182,7 @@ void NHttpMsgHeadShared::derive_header_name_id(int index)
     if ((lower_name = scratch_pad.request(length)) == nullptr)
     {
         infractions += INF_NO_SCRATCH;
-        header_name_id[index] = HEAD__INSUFMEMORY;
+        header_name_id[index] = HEAD__INSUF_MEMORY;
         return;
     }
     for (int32_t k=0; k < length; k++)
@@ -231,7 +231,7 @@ const Field& NHttpMsgHeadShared::get_header_value_norm(HeaderId header_id)
 void NHttpMsgHeadShared::print_headers(FILE* output)
 {
     char title_buf[100];
-    if (num_headers != STAT_NOSOURCE)
+    if (num_headers != STAT_NO_SOURCE)
         fprintf(output, "Number of headers: %d\n", num_headers);
     for (int j=0; j < num_headers; j++)
     {
@@ -240,7 +240,7 @@ void NHttpMsgHeadShared::print_headers(FILE* output)
     }
     for (int k=1; k <= HEAD__MAX_VALUE-1; k++)
     {
-        if (get_header_value_norm((HeaderId)k).length != STAT_NOSOURCE)
+        if (get_header_value_norm((HeaderId)k).length != STAT_NO_SOURCE)
         {
             snprintf(title_buf, sizeof(title_buf), "Normalized header %d", k);
             get_header_value_norm((HeaderId)k).print(output, title_buf);

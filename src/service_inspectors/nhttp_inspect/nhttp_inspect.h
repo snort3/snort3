@@ -42,13 +42,12 @@ public:
     NHttpInspect(NHttpParaList params_);
 
     bool get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b) override;
-    bool get_buf(unsigned id, Packet*, InspectionBuffer& b) override;
-    bool get_buf(unsigned id, unsigned sub_id, Packet*, InspectionBuffer& b);
+    bool get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet*, InspectionBuffer& b);
+    bool get_fp_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b) override;
     bool configure(SnortConfig*) override { return true; }
     void show(SnortConfig*) override { LogMessage("NHttpInspect\n"); }
     void eval(Packet*) override { }
     void clear(Packet* p) override;
-    void clear(NHttpFlowData* session_data, NHttpEnums::SourceId source_id);
     void tinit() override { }
     void tterm() override { }
     NHttpStreamSplitter* get_splitter(bool is_client_to_server) override
@@ -63,6 +62,9 @@ private:
 
     const Field& process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
         NHttpEnums::SourceId source_id_, bool buf_owner) const;
+    void clear(NHttpFlowData* session_data, NHttpEnums::SourceId source_id);
+    static NHttpEnums::SourceId get_latest_src() { return (latest_section != nullptr) ?
+        latest_section->get_source_id() : NHttpEnums::SRC__NOT_COMPUTE; }
 
     static THREAD_LOCAL NHttpMsgSection* latest_section;
 

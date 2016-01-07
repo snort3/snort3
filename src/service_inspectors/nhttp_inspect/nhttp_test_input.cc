@@ -67,7 +67,7 @@ void NHttpTestInput::reset()
 
 // Read from the test data file and present to StreamSplitter. In the process we may need to skip
 // comments, execute simple commands, and handle escape sequences. The best way to understand this
-// function is to read the comments at the top of the file of test cases.
+// function is to read dev_notes.txt.
 void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, uint64_t seq_num)
 {
     bool skip_to_break = false;

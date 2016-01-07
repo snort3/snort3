@@ -975,7 +975,7 @@ static int rule_tree_queue(
     }
 
 #define SEARCH_BUFFER(ibt, pmt, cnt) \
-    if ( gadget->get_buf(ibt, p, buf) ) \
+    if ( gadget->get_fp_buf(ibt, p, buf) ) \
     { \
         if ( Mpse* so = port_group->mpse[pmt] ) \
             SEARCH_DATA(buf.data, buf.len, cnt) \

@@ -47,8 +47,8 @@ NHttpMsgSection::NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     infractions(session_data->infractions[source_id]),
     events(session_data->events[source_id]),
     version_id(session_data->version_id[source_id]),
-    method_id((source_id == SRC_CLIENT) ? session_data->method_id : METH__NOTPRESENT),
-    status_code_num((source_id == SRC_SERVER) ? session_data->status_code_num : STAT_NOTPRESENT),
+    method_id((source_id == SRC_CLIENT) ? session_data->method_id : METH__NOT_PRESENT),
+    status_code_num((source_id == SRC_SERVER) ? session_data->status_code_num : STAT_NOT_PRESENT),
     delete_msg_on_destruct(buf_owner)
 { }
 
@@ -79,8 +79,11 @@ void NHttpMsgSection::update_depth() const
     }
 }
 
-const Field& NHttpMsgSection::get_classic_buffer(unsigned id, unsigned sub_id)
+const Field& NHttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, uint64_t form)
 {
+    // Only use with buffers that support the request option
+    const SourceId buffer_side = (form & FORM_REQUEST) ? SRC_CLIENT : source_id;
+
     switch (id)
     {
     case NHTTP_BUFFER_CLIENT_BODY:
@@ -96,10 +99,10 @@ const Field& NHttpMsgSection::get_classic_buffer(unsigned id, unsigned sub_id)
     // Currently "normalization" is aggregation of multiple cookies. That is correct for raw
     // cookies and all there is for normalized cookies.
       {
-        NHttpMsgHeader* header = transaction->get_header(source_id);
+        NHttpMsgHeader* header = transaction->get_header(buffer_side);
         if (header == nullptr)
             return Field::FIELD_NULL;
-        HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
+        HeaderId cookie_head = (buffer_side == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
         return header->get_header_value_norm(cookie_head);
       }
     case NHTTP_BUFFER_HEADER:
@@ -107,8 +110,8 @@ const Field& NHttpMsgSection::get_classic_buffer(unsigned id, unsigned sub_id)
       {
         // FIXIT-L Someday want to be able to return field name or raw field value
         NHttpMsgHeadShared* const header = (id == NHTTP_BUFFER_HEADER) ?
-            (NHttpMsgHeadShared*)transaction->get_header(source_id) :
-            (NHttpMsgHeadShared*)transaction->get_trailer(source_id);
+            (NHttpMsgHeadShared*)transaction->get_header(buffer_side) :
+            (NHttpMsgHeadShared*)transaction->get_trailer(buffer_side);
         if (header == nullptr)
             return Field::FIELD_NULL;
         if (sub_id == 0)
@@ -122,7 +125,7 @@ const Field& NHttpMsgSection::get_classic_buffer(unsigned id, unsigned sub_id)
       }
     case NHTTP_BUFFER_RAW_HEADER:
       {
-        NHttpMsgHeader* header = transaction->get_header(source_id);
+        NHttpMsgHeader* header = transaction->get_header(buffer_side);
         return (header != nullptr) ? header->get_headers() : Field::FIELD_NULL;
       }
     case NHTTP_BUFFER_STAT_CODE:
@@ -143,7 +146,7 @@ const Field& NHttpMsgSection::get_classic_buffer(unsigned id, unsigned sub_id)
         if (request == nullptr)
             return Field::FIELD_NULL;
         if (sub_id == 0)
-            return raw ? request->get_uri() : request->get_uri_norm_legacy();
+            return raw ? request->get_uri() : request->get_uri_norm_classic();
         NHttpUri* const uri = request->get_nhttp_uri();
         if (uri == nullptr)
             return Field::FIELD_NULL;
@@ -167,13 +170,23 @@ const Field& NHttpMsgSection::get_classic_buffer(unsigned id, unsigned sub_id)
       }
     case NHTTP_BUFFER_VERSION:
       {
-        NHttpMsgStart* start = (source_id == SRC_CLIENT) ?
+        NHttpMsgStart* start = (buffer_side == SRC_CLIENT) ?
             (NHttpMsgStart*)transaction->get_request() : (NHttpMsgStart*)transaction->get_status();
         return (start != nullptr) ? start->get_version() : Field::FIELD_NULL;
       }
+    case NHTTP_BUFFER_RAW_REQUEST:
+      {
+        NHttpMsgRequest* request = transaction->get_request();
+        return (request != nullptr) ? request->get_detect_buf() : Field::FIELD_NULL;
+      }
+    case NHTTP_BUFFER_RAW_STATUS:
+      {
+        NHttpMsgStatus* status = transaction->get_status();
+        return (status != nullptr) ? status->get_detect_buf() : Field::FIELD_NULL;
+      }
     case NHTTP_BUFFER_RAW_TRAILER:
       {
-        NHttpMsgTrailer* trailer = transaction->get_trailer(source_id);
+        NHttpMsgTrailer* trailer = transaction->get_trailer(buffer_side);
         return (trailer != nullptr) ? trailer->get_headers() : Field::FIELD_NULL;
       }
     default:

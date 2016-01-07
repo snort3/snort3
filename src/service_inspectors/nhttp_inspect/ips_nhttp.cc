@@ -36,6 +36,7 @@ bool NHttpCursorModule::begin(const char*, int, SnortConfig*)
 {
     para_list.reset();
     sub_id = 0;
+    form = 0;
     switch (buffer_index)
     {
     case NHTTP_BUFFER_URI:
@@ -44,13 +45,13 @@ bool NHttpCursorModule::begin(const char*, int, SnortConfig*)
     case NHTTP_BUFFER_STAT_MSG:
     case NHTTP_BUFFER_VERSION:
     case NHTTP_BUFFER_METHOD:
-        inspect_section = IS_START;
-        break;
     case NHTTP_BUFFER_HEADER:
     case NHTTP_BUFFER_RAW_HEADER:
     case NHTTP_BUFFER_COOKIE:
     case NHTTP_BUFFER_RAW_COOKIE:
-        inspect_section = IS_HEADER;
+    case NHTTP_BUFFER_RAW_REQUEST:
+    case NHTTP_BUFFER_RAW_STATUS:
+        inspect_section = IS_DETECTION;
         break;
     case NHTTP_BUFFER_CLIENT_BODY:
         inspect_section = IS_BODY;
@@ -84,10 +85,15 @@ bool NHttpCursorModule::set(const char*, Value& v, SnortConfig*)
         if (sub_id == STAT_OTHER)
             ParseError("Unrecognized header field name");
     }
+    else if (v.is("request"))
+    {
+        para_list.request = true;
+        form |= FORM_REQUEST;
+    }
     else if (v.is("with_header"))
     {
         para_list.with_header = true;
-        inspect_section = IS_HEADER;
+        inspect_section = IS_DETECTION;
     }
     else if (v.is("with_body"))
     {
@@ -141,6 +147,10 @@ bool NHttpCursorModule::end(const char*, int, SnortConfig*)
     // Check for option conflicts
     if (para_list.with_header + para_list.with_body + para_list.with_trailer > 1)
         ParseError("Only specify one with_ option. Use the one that happens last.");
+    if (((buffer_index == NHTTP_BUFFER_TRAILER) || (buffer_index == NHTTP_BUFFER_RAW_TRAILER)) &&
+        (para_list.with_header || para_list.with_body) &&
+        !para_list.request)
+        ParseError("Trailers with with_ option must also specify request");
     if (para_list.scheme + para_list.host + para_list.port + para_list.path + para_list.query +
           para_list.fragment > 1)
         ParseError("Only specify one part of the URI");
@@ -150,6 +160,7 @@ bool NHttpCursorModule::end(const char*, int, SnortConfig*)
 void NHttpCursorModule::NHttpRuleParaList::reset()
 {
     field.clear();
+    request = false;
     with_header = false;
     with_body = false;
     with_trailer = false;
@@ -169,11 +180,17 @@ int NHttpIpsOption::eval(Cursor& c, Packet* p)
         return DETECTION_OPTION_NO_MATCH;
 
     if (NHttpInspect::get_latest_is() != inspect_section)
-        return DETECTION_OPTION_NO_MATCH;
+    {
+        // It is OK to provide a body buffer during the detection section. If there actually is
+        // a body buffer available then the detection section must also be the first body section.
+        if (! ((inspect_section == IS_BODY) && (NHttpInspect::get_latest_is() == IS_DETECTION)) )
+            return DETECTION_OPTION_NO_MATCH;
+    }
 
     InspectionBuffer hb;
 
-    if (! ((NHttpInspect*)(p->flow->gadget))->get_buf((unsigned)buffer_index, sub_id, nullptr, hb))
+    if (! ((NHttpInspect*)(p->flow->gadget))->
+           get_buf((unsigned)buffer_index, sub_id, form, nullptr, hb))
         return DETECTION_OPTION_NO_MATCH;
 
     c.set(key, hb.data, hb.len);
@@ -187,8 +204,6 @@ int NHttpIpsOption::eval(Cursor& c, Packet* p)
 
 static const Parameter http_uri_params[] =
 {
-    { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message headers" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
         "Parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -290,8 +305,6 @@ static const IpsApi client_body_api =
 
 static const Parameter http_method_params[] =
 {
-    { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message headers" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
         "Parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -341,6 +354,8 @@ static const IpsApi method_api =
 
 static const Parameter http_cookie_params[] =
 {
+    { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Match against the cookie from the request message even when examining the response" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
         "Parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -390,8 +405,6 @@ static const IpsApi cookie_api =
 
 static const Parameter http_stat_code_params[] =
 {
-    { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message headers" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
         "Parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -441,8 +454,6 @@ static const IpsApi stat_code_api =
 
 static const Parameter http_stat_msg_params[] =
 {
-    { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message headers" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
         "Parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -492,8 +503,6 @@ static const IpsApi stat_msg_api =
 
 static const Parameter http_raw_uri_params[] =
 {
-    { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message headers" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
         "Parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -555,6 +564,8 @@ static const IpsApi raw_uri_api =
 
 static const Parameter http_raw_header_params[] =
 {
+    { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Match against the headers from the request message even when examining the response" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
         "Parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -604,6 +615,8 @@ static const IpsApi raw_header_api =
 
 static const Parameter http_raw_cookie_params[] =
 {
+    { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Match against the cookie from the request message even when examining the response" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
         "Parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -653,8 +666,8 @@ static const IpsApi raw_cookie_api =
 
 static const Parameter http_version_params[] =
 {
-    { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message headers" },
+    { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Match against the version from the request message even when examining the response" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
         "Parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -708,12 +721,14 @@ static const IpsApi version_api =
 
 static const Parameter http_header_params[] =
 {
+    { "field", Parameter::PT_STRING, nullptr, nullptr,
+        "Restrict to given header. Header name is case insensitive." },
+    { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Match against the headers from the request message even when examining the response" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
         "Parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
         "Parts of this rule examine HTTP message trailers" },
-    { "field", Parameter::PT_STRING, nullptr, nullptr,
-        "Restrict to given header. Header name is case insensitive." },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -760,6 +775,13 @@ static const IpsApi header_api =
 static const Parameter http_trailer_params[] =
 {
     { "field", Parameter::PT_STRING, nullptr, nullptr, "restrict to given trailer" },
+    { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Match against the trailers from the request message even when examining the response" },
+    { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Parts of this rule examine HTTP response message headers (must be combined with request)"
+        },
+    { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Parts of this rule examine HTTP message body (must be combined with request)" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -770,7 +792,7 @@ static const Parameter http_trailer_params[] =
 
 static Module* trailer_mod_ctor()
 {
-    return new NHttpCursorModule(IPS_OPT, IPS_HELP, NHTTP_BUFFER_TRAILER, CAT_SET_OTHER,
+    return new NHttpCursorModule(IPS_OPT, IPS_HELP, NHTTP_BUFFER_TRAILER, CAT_SET_HEADER,
         PSI_TRAILER, http_trailer_params);
 }
 
@@ -803,6 +825,18 @@ static const IpsApi trailer_api =
 // http_raw_trailer
 //-------------------------------------------------------------------------
 
+static const Parameter http_raw_trailer_params[] =
+{
+    { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Match against the trailers from the request message even when examining the response" },
+    { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Parts of this rule examine HTTP response message headers (must be combined with request)"
+        },
+    { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Parts of this rule examine HTTP response message body (must be combined with request)" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 #undef IPS_OPT
 #define IPS_OPT "http_raw_trailer"
 #undef IPS_HELP
@@ -811,7 +845,7 @@ static const IpsApi trailer_api =
 static Module* raw_trailer_mod_ctor()
 {
     return new NHttpCursorModule(IPS_OPT, IPS_HELP, NHTTP_BUFFER_RAW_TRAILER, CAT_SET_OTHER,
-        PSI_RAW_TRAILER);
+        PSI_RAW_TRAILER, http_raw_trailer_params);
 }
 
 static const IpsApi raw_trailer_api =
@@ -826,6 +860,104 @@ static const IpsApi raw_trailer_api =
         IPS_OPT,
         IPS_HELP,
         raw_trailer_mod_ctor,
+        NHttpCursorModule::mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0, PROTO_BIT__TCP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    NHttpIpsOption::opt_ctor,
+    NHttpIpsOption::opt_dtor,
+    nullptr
+};
+
+//-------------------------------------------------------------------------
+// http_raw_request
+//-------------------------------------------------------------------------
+
+static const Parameter http_raw_request_params[] =
+{
+    { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Parts of this rule examine HTTP message body" },
+    { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Parts of this rule examine HTTP message trailers" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+#undef IPS_OPT
+#define IPS_OPT "http_raw_request"
+#undef IPS_HELP
+#define IPS_HELP "rule option to set the detection cursor to the unnormalized request line"
+
+static Module* raw_request_mod_ctor()
+{
+    return new NHttpCursorModule(IPS_OPT, IPS_HELP, NHTTP_BUFFER_RAW_REQUEST, CAT_SET_OTHER,
+        PSI_RAW_REQUEST, http_raw_request_params);
+}
+
+static const IpsApi raw_request_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        1,
+        API_RESERVED,
+        API_OPTIONS,
+        IPS_OPT,
+        IPS_HELP,
+        raw_request_mod_ctor,
+        NHttpCursorModule::mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0, PROTO_BIT__TCP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    NHttpIpsOption::opt_ctor,
+    NHttpIpsOption::opt_dtor,
+    nullptr
+};
+
+//-------------------------------------------------------------------------
+// http_raw_status
+//-------------------------------------------------------------------------
+
+static const Parameter http_raw_status_params[] =
+{
+    { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Parts of this rule examine HTTP message body" },
+    { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "Parts of this rule examine HTTP message trailers" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+#undef IPS_OPT
+#define IPS_OPT "http_raw_status"
+#undef IPS_HELP
+#define IPS_HELP "rule option to set the detection cursor to the unnormalized status line"
+
+static Module* raw_status_mod_ctor()
+{
+    return new NHttpCursorModule(IPS_OPT, IPS_HELP, NHTTP_BUFFER_RAW_STATUS, CAT_SET_OTHER,
+        PSI_RAW_STATUS, http_raw_status_params);
+}
+
+static const IpsApi raw_status_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        1,
+        API_RESERVED,
+        API_OPTIONS,
+        IPS_OPT,
+        IPS_HELP,
+        raw_status_mod_ctor,
         NHttpCursorModule::mod_dtor
     },
     OPT_TYPE_DETECTION,
@@ -858,6 +990,8 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     &header_api.base,
     &trailer_api.base,
     &raw_trailer_api.base,
+    &raw_request_api.base,
+    &raw_status_api.base,
     nullptr
 };
 

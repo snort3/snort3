@@ -63,29 +63,26 @@ bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer
     switch (ibt)
     {
     case InspectionBuffer::IBT_KEY:
-        return get_buf(NHTTP_BUFFER_URI, 0, nullptr, b);
+        return get_buf(NHTTP_BUFFER_URI, 0, 0, nullptr, b);
     case InspectionBuffer::IBT_HEADER:
-        return get_buf(NHTTP_BUFFER_HEADER, 0, nullptr, b);
+        if (get_latest_is() == IS_TRAILER)
+            return get_buf(NHTTP_BUFFER_TRAILER, 0, 0, nullptr, b);
+        else
+            return get_buf(NHTTP_BUFFER_HEADER, 0, 0, nullptr, b);
     case InspectionBuffer::IBT_BODY:
-        return get_buf(NHTTP_BUFFER_CLIENT_BODY, 0, nullptr, b);
+        return get_buf(NHTTP_BUFFER_CLIENT_BODY, 0, 0, nullptr, b);
     default:
         return false;
     }
 }
 
-bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
+SO_PUBLIC bool NHttpInspect::get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet*,
+    InspectionBuffer& b)
 {
-    return get_buf(id, 0, nullptr, b);
-}
-
-SO_PUBLIC bool NHttpInspect::get_buf(unsigned id, unsigned sub_id, Packet*, InspectionBuffer& b)
-{
-    // FIXIT-L some day we should add support for accessing the request headers, trailers, and
-    // version from the response side of the transaction.
     if (latest_section == nullptr)
         return false;
 
-    const Field& buffer = latest_section->get_classic_buffer(id, sub_id);
+    const Field& buffer = latest_section->get_classic_buffer(id, sub_id, form);
 
     if (buffer.length <= 0)
         return false;
@@ -93,6 +90,29 @@ SO_PUBLIC bool NHttpInspect::get_buf(unsigned id, unsigned sub_id, Packet*, Insp
     b.data = buffer.start;
     b.len = buffer.length;
     return true;
+}
+
+bool NHttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b)
+{
+    // Fast pattern buffers only supplied at specific times
+    switch (ibt)
+    {
+    case InspectionBuffer::IBT_KEY:
+        if ((get_latest_is() != IS_DETECTION) || (get_latest_src() != SRC_CLIENT))
+            return false;
+        break;
+    case InspectionBuffer::IBT_HEADER:
+        if ((get_latest_is() != IS_DETECTION) && (get_latest_is() != IS_TRAILER))
+            return false;
+        break;
+    case InspectionBuffer::IBT_BODY:
+        if ((get_latest_is() != IS_DETECTION) && (get_latest_is() != IS_BODY))
+            return false;
+        break;
+    default:
+        return false;
+    }
+    return get_buf(ibt, nullptr, b);
 }
 
 const Field& NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,

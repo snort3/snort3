@@ -32,8 +32,6 @@ class NHttpMsgStart : public NHttpMsgSection
 public:
     void analyze() override;
     const Field& get_version() const { return version; }
-    NHttpEnums::InspectSection get_inspection_section() const override
-        { return NHttpEnums::IS_START; }
 
 protected:
     NHttpMsgStart(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
@@ -41,7 +39,7 @@ protected:
         : NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
         { }
     virtual void parse_start_line() = 0;
-    virtual void gen_events() {};
+    virtual void gen_events() = 0;
     void derive_version_id();
 
     Field start_line;

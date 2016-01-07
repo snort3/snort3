@@ -91,16 +91,6 @@ const StrCode NHttpMsgRequest::method_list[] =
     { 0,                       nullptr }
 };
 
-const StrCode NHttpUri::scheme_list[] =
-{
-    { SCH_HTTP,                "http" },
-    { SCH_HTTPS,               "https" },
-    { SCH_FTP,                 "ftp" },
-    { SCH_GOPHER,              "gopher" },
-    { SCH_FILE,                "file" },
-    { 0,                       nullptr }
-};
-
 SO_PUBLIC const StrCode NHttpMsgHeadShared::header_list[] =
 {
     { HEAD_CACHE_CONTROL,        "cache-control" },
@@ -330,7 +320,7 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_BAD_HEADER,                 "Format error in HTTP header" },
     { EVENT_CHUNK_OPTIONS,              "Chunk header options present" },
     { EVENT_URI_BAD_FORMAT,             "URI badly formatted" },
-    { EVENT_URI_BAD_PORT,               "URI bad port number" },
+    { EVENT_UNUSED,                     "Unused" },
     { EVENT_BROKEN_CHUNK,               "HTTP chunk misformatted" },
     { EVENT_CHUNK_WHITESPACE,           "White space following chunk length" },
     { EVENT_GZIP_OVERRUN,               "Excessive gzip compression" },

@@ -39,7 +39,7 @@ void NHttpMsgBodyOld::update_flow()
     update_depth();
     session_data->infractions[source_id] = infractions;
     session_data->events[source_id] = events;
-    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 }
 
 #ifdef REG_TEST

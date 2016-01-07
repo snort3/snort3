@@ -94,11 +94,11 @@ const Field& NHttpMsgRequest::get_uri()
     return Field::FIELD_NULL;
 }
 
-const Field& NHttpMsgRequest::get_uri_norm_legacy()
+const Field& NHttpMsgRequest::get_uri_norm_classic()
 {
     if (uri != nullptr)
     {
-        return uri->get_norm_legacy();
+        return uri->get_norm_classic();
     }
     return Field::FIELD_NULL;
 }
@@ -162,7 +162,7 @@ void NHttpMsgRequest::update_flow()
         session_data->infractions[source_id].reset();
         session_data->events[source_id].reset();
     }
-    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 }
 
 #ifdef REG_TEST
@@ -177,14 +177,10 @@ void NHttpMsgRequest::print_section(FILE* output)
         uri->get_uri().print(output, "URI");
         fprintf(output, "URI Type: %d\n", uri->get_uri_type());
         uri->get_scheme().print(output, "Scheme");
-        if (uri->get_scheme_id() != SCH__NOSOURCE)
-            fprintf(output, "Scheme Id: %d\n", uri->get_scheme_id());
         uri->get_authority().print(output, "Authority");
         uri->get_host().print(output, "Host Name");
         uri->get_norm_host().print(output, "Normalized Host Name");
         uri->get_port().print(output, "Port");
-        if (uri->get_port_value() != STAT_NOSOURCE)
-            fprintf(output, "Port Value: %d\n", uri->get_port_value());
         uri->get_abs_path().print(output, "Absolute Path");
         uri->get_path().print(output, "Path");
         uri->get_norm_path().print(output, "Normalized Path");
@@ -193,14 +189,16 @@ void NHttpMsgRequest::print_section(FILE* output)
         uri->get_fragment().print(output, "Fragment");
         uri->get_norm_fragment().print(output, "Normalized Fragment");
     }
-    get_classic_buffer(NHTTP_BUFFER_METHOD, 0).print(output,
-        NHttpApi::legacy_buffers[NHTTP_BUFFER_METHOD-1]);
-    get_classic_buffer(NHTTP_BUFFER_RAW_URI, 0).print(output,
-        NHttpApi::legacy_buffers[NHTTP_BUFFER_RAW_URI-1]);
-    get_classic_buffer(NHTTP_BUFFER_URI, 0).print(output,
-        NHttpApi::legacy_buffers[NHTTP_BUFFER_URI-1]);
-    get_classic_buffer(NHTTP_BUFFER_VERSION, 0).print(output,
-        NHttpApi::legacy_buffers[NHTTP_BUFFER_VERSION-1]);
+    get_classic_buffer(NHTTP_BUFFER_METHOD, 0, 0).print(output,
+        NHttpApi::classic_buffers[NHTTP_BUFFER_METHOD-1]);
+    get_classic_buffer(NHTTP_BUFFER_RAW_URI, 0, 0).print(output,
+        NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_URI-1]);
+    get_classic_buffer(NHTTP_BUFFER_URI, 0, 0).print(output,
+        NHttpApi::classic_buffers[NHTTP_BUFFER_URI-1]);
+    get_classic_buffer(NHTTP_BUFFER_VERSION, 0, 0).print(output,
+        NHttpApi::classic_buffers[NHTTP_BUFFER_VERSION-1]);
+    get_classic_buffer(NHTTP_BUFFER_RAW_REQUEST, 0, 0).print(output,
+        NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_REQUEST-1]);
     NHttpMsgSection::print_message_wrapup(output);
 }
 

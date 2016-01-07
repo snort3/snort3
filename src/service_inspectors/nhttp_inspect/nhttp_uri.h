@@ -37,30 +37,25 @@ public:
     NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method,
         NHttpInfractions& infractions_, NHttpEventGen& events_) :
         uri(length, start), method_id(method), infractions(infractions_), events(events_),
-        scratch_pad(2*length+200) { }
+        scratch_pad(2*length+200) { normalize(); }
     const Field& get_uri() const { return uri; }
-    NHttpEnums::UriType get_uri_type() { parse_uri(); return uri_type; }
-    const Field& get_scheme() { parse_uri(); return scheme; }
-    const Field& get_authority() { parse_uri(); return authority; }
-    const Field& get_host() { parse_authority(); return host; }
-    const Field& get_port() { parse_authority(); return port; }
-    const Field& get_abs_path() { parse_uri(); return abs_path; }
-    const Field& get_path() { parse_abs_path(); return path; }
-    const Field& get_query() { parse_abs_path(); return query; }
-    const Field& get_fragment() { parse_abs_path(); return fragment; }
+    NHttpEnums::UriType get_uri_type() { return uri_type; }
+    const Field& get_scheme() { return scheme; }
+    const Field& get_authority() { return authority; }
+    const Field& get_host() { return host; }
+    const Field& get_port() { return port; }
+    const Field& get_abs_path() { return abs_path; }
+    const Field& get_path() { return path; }
+    const Field& get_query() { return query; }
+    const Field& get_fragment() { return fragment; }
 
-    NHttpEnums::SchemeId get_scheme_id();
-    const Field& get_norm_host();
-    int32_t get_port_value();
-    const Field& get_norm_path();
-    const Field& get_norm_query();
-    const Field& get_norm_fragment();
-    const Field& get_norm_legacy();
+    const Field& get_norm_host() { return host_norm; }
+    const Field& get_norm_path() { return path_norm; }
+    const Field& get_norm_query() { return query_norm; }
+    const Field& get_norm_fragment() { return fragment_norm; }
+    const Field& get_norm_classic() { return classic_norm; }
 
 private:
-    static const StrCode scheme_list[];
-    static const int MAX_PORT_VALUE = 65535;
-
     const Field uri;
     const NHttpEnums::MethodId method_id;
     NHttpInfractions& infractions;
@@ -75,19 +70,20 @@ private:
     Field query;
     Field fragment;
 
-    NHttpEnums::UriType uri_type = NHttpEnums::URI__NOTCOMPUTE;
-    NHttpEnums::SchemeId scheme_id = NHttpEnums::SCH__NOTCOMPUTE;
+    NHttpEnums::UriType uri_type = NHttpEnums::URI__NOT_COMPUTE;
     Field host_norm;
-    int32_t port_value = NHttpEnums::STAT_NOTCOMPUTE;
     Field path_norm;
     Field query_norm;
     Field fragment_norm;
-    Field legacy_norm;
+    Field classic_norm;
 
+    void normalize();
     void parse_uri();
     void parse_authority();
     void parse_abs_path();
 
+    // FIXIT-P there is an enormous memory waste that this is always allocated. It is only needed
+    // when the URI requires normalization. Most of the time the raw URI is already in normal form.
     ScratchPad scratch_pad;
 };
 

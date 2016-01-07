@@ -63,7 +63,7 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count, Scratc
     NHttpInfractions& infractions, NHttpEventGen& events, const HeaderId header_name_id[],
     const Field header_value[], const int32_t num_headers, Field& result_field) const
 {
-    if (result_field.length != STAT_NOTCOMPUTE)
+    if (result_field.length != STAT_NOT_COMPUTE)
     {
         return;
     }
@@ -109,7 +109,7 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count, Scratc
     uint8_t* const scratch = scratch_pad.request(2*buffer_length);
     if (scratch == nullptr)
     {
-        result_field.length = STAT_INSUFMEMORY;
+        result_field.length = STAT_INSUF_MEMORY;
         return;
     }
 

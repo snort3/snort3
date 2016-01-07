@@ -33,10 +33,11 @@ public:
     long request_depth;
     long response_depth;
     bool unzip;
-
+#ifdef REG_TEST
     bool test_input;
     bool test_output;
     long print_amount;
+#endif
 };
 
 class NHttpModule : public Module

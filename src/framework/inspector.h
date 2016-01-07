@@ -108,6 +108,9 @@ public:
     virtual bool get_buf(unsigned /*id*/, Packet*, InspectionBuffer&)
     { return false; }
 
+    virtual bool get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& bf)
+    { return get_buf(ibt, p, bf); }
+
     // IT_SERVICE only
     virtual class StreamSplitter* get_splitter(bool to_server);
 

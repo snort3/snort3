@@ -35,6 +35,7 @@ int32_t norm_to_lower(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf
 {
     for (int32_t k=0; k < in_length; k++)
     {
+        // FIXIT-P tolower() might perform better but must be sure <locale> cannot be pulled in
         out_buf[k] = ((in_buf[k] < 'A') || (in_buf[k] > 'Z')) ? in_buf[k] : in_buf[k] - ('A' -
             'a');
     }

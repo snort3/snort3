@@ -78,13 +78,13 @@ void NHttpFlowData::half_reset(SourceId source_id)
 {
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
 
-    version_id[source_id] = VERS__NOTPRESENT;
-    data_length[source_id] = STAT_NOTPRESENT;
-    body_octets[source_id] = STAT_NOTPRESENT;
+    version_id[source_id] = VERS__NOT_PRESENT;
+    data_length[source_id] = STAT_NOT_PRESENT;
+    body_octets[source_id] = STAT_NOT_PRESENT;
     section_size_target[source_id] = 0;
     section_size_max[source_id] = 0;
-    file_depth_remaining[source_id] = STAT_NOTPRESENT;
-    detect_depth_remaining[source_id] = STAT_NOTPRESENT;
+    file_depth_remaining[source_id] = STAT_NOT_PRESENT;
+    detect_depth_remaining[source_id] = STAT_NOT_PRESENT;
     compression[source_id] = CMP_NONE;
     if (compress_stream[source_id] != nullptr)
     {
@@ -100,7 +100,7 @@ void NHttpFlowData::half_reset(SourceId source_id)
 
     if (source_id == SRC_CLIENT)
     {
-        method_id = METH__NOTPRESENT;
+        method_id = METH__NOT_PRESENT;
         if (mime_state != nullptr)
         {
             delete mime_state;
@@ -109,7 +109,7 @@ void NHttpFlowData::half_reset(SourceId source_id)
     }
     else
     {
-        status_code_num = STAT_NOTPRESENT;
+        status_code_num = STAT_NOT_PRESENT;
     }
 }
 

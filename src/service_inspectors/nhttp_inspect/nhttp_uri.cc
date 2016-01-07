@@ -30,35 +30,30 @@ using namespace NHttpEnums;
 
 void NHttpUri::parse_uri()
 {
-    if (uri_type != URI__NOTCOMPUTE)
-    {
-        return;
-    }
-
     // Four basic types of HTTP URI
     // "*" means request does not apply to any specific resource
     if ((uri.length == 1) && (uri.start[0] == '*'))
     {
         uri_type = URI_ASTERISK;
-        scheme.length = STAT_NOTPRESENT;
-        authority.length = STAT_NOTPRESENT;
-        abs_path.length = STAT_NOTPRESENT;
+        scheme.length = STAT_NOT_PRESENT;
+        authority.length = STAT_NOT_PRESENT;
+        abs_path.length = STAT_NOT_PRESENT;
     }
     // CONNECT method uses an authority
     else if (method_id == METH_CONNECT)
     {
         uri_type = URI_AUTHORITY;
-        scheme.length = STAT_NOTPRESENT;
+        scheme.length = STAT_NOT_PRESENT;
         authority.length = uri.length;
         authority.start = uri.start;
-        abs_path.length = STAT_NOTPRESENT;
+        abs_path.length = STAT_NOT_PRESENT;
     }
     // Absolute path is a path but no scheme or authority
     else if (uri.start[0] == '/')
     {
         uri_type = URI_ABSPATH;
-        scheme.length = STAT_NOTPRESENT;
-        authority.length = STAT_NOTPRESENT;
+        scheme.length = STAT_NOT_PRESENT;
+        authority.length = STAT_NOT_PRESENT;
         abs_path.length = uri.length;
         abs_path.start = uri.start;
     }
@@ -92,200 +87,86 @@ void NHttpUri::parse_uri()
     }
 }
 
-SchemeId NHttpUri::get_scheme_id()
-{
-    if (scheme_id != SCH__NOTCOMPUTE)
-    {
-        return scheme_id;
-    }
-    if (get_scheme().length <= 0)
-    {
-        scheme_id = SCH__NOSOURCE;
-        return scheme_id;
-    }
-
-    // Normalize scheme name to lower case for matching purposes
-    uint8_t* lower_scheme;
-    if ((lower_scheme = scratch_pad.request(scheme.length)) == nullptr)
-    {
-        infractions += INF_NO_SCRATCH;
-        scheme_id = SCH__INSUFMEMORY;
-        return scheme_id;
-    }
-    norm_to_lower(scheme.start, scheme.length, lower_scheme, infractions, events);
-    scheme_id = (SchemeId)str_to_code(lower_scheme, scheme.length, scheme_list);
-    return scheme_id;
-}
-
-const Field& NHttpUri::get_norm_host()
-{
-    if (host_norm.length != STAT_NOTCOMPUTE)
-    {
-        return host_norm;
-    }
-    if (get_host().length < 0)
-    {
-        host_norm.length = STAT_NOSOURCE;
-        return host_norm;
-    }
-    UriNormalizer::normalize(host, host_norm, false, scratch_pad, infractions, events);
-    return host_norm;
-}
-
-const Field& NHttpUri::get_norm_path()
-{
-    if (path_norm.length != STAT_NOTCOMPUTE)
-    {
-        return path_norm;
-    }
-    if (get_path().length < 0)
-    {
-        path_norm.length = STAT_NOSOURCE;
-        return path_norm;
-    }
-    UriNormalizer::normalize(path, path_norm, true, scratch_pad, infractions, events);
-    return path_norm;
-}
-
-const Field& NHttpUri::get_norm_query()
-{
-    if (query_norm.length != STAT_NOTCOMPUTE)
-    {
-        return query_norm;
-    }
-    if (get_query().length < 0)
-    {
-        query_norm.length = STAT_NOSOURCE;
-        return query_norm;
-    }
-    UriNormalizer::normalize(query, query_norm, false, scratch_pad, infractions, events);
-    return query_norm;
-}
-
-const Field& NHttpUri::get_norm_fragment()
-{
-    if (fragment_norm.length != STAT_NOTCOMPUTE)
-    {
-        return fragment_norm;
-    }
-    if (get_fragment().length < 0)
-    {
-        fragment_norm.length = STAT_NOSOURCE;
-        return fragment_norm;
-    }
-    UriNormalizer::normalize(fragment, fragment_norm, false, scratch_pad, infractions, events);
-    return fragment_norm;
-}
-
-int32_t NHttpUri::get_port_value()
-{
-    if (port_value != STAT_NOTCOMPUTE)
-    {
-        return port_value;
-    }
-    if (get_port().length <= 0)
-    {
-        port_value = STAT_NOSOURCE;
-        return port_value;
-    }
-    port_value = 0;
-    for (int k = 0; k < port.length; k++)
-    {
-        port_value = port_value * 10 + (port.start[k] - '0');
-        if ((port.start[k] < '0') || (port.start[k] > '9') || (port_value > MAX_PORT_VALUE))
-        {
-            infractions += INF_BAD_PORT;
-            events.create_event(EVENT_URI_BAD_PORT);
-            port_value = STAT_PROBLEMATIC;
-            break;
-        }
-    }
-    return port_value;
-}
-
 void NHttpUri::parse_authority()
 {
-    if (host.length != STAT_NOTCOMPUTE)
+    if (authority.length <= 0)
     {
-        return;
-    }
-    if (get_authority().length <= 0)
-    {
-        host.length = STAT_NOSOURCE;
-        port.length = STAT_NOSOURCE;
+        host.length = STAT_NO_SOURCE;
+        port.length = STAT_NO_SOURCE;
         return;
     }
     host.start = authority.start;
     for (host.length = 0; (authority.start[host.length] != ':') && (host.length <
-        authority.length); host.length++)
-        ;
+        authority.length); host.length++);
     if (host.length < authority.length)
     {
         port.length = authority.length - host.length - 1;
         port.start = authority.start + host.length + 1;
     }
     else
-        port.length = STAT_NOTPRESENT;
+        port.length = STAT_NOT_PRESENT;
 }
 
 void NHttpUri::parse_abs_path()
 {
-    if (path.length != STAT_NOTCOMPUTE)
-        return;
-    if (get_abs_path().length <= 0)
+    // path?query#fragment
+    // path is always present in absolute path, while query and fragment are optional
+    if (abs_path.length <= 0)
     {
-        path.length = STAT_NOSOURCE;
-        query.length = STAT_NOSOURCE;
-        fragment.length = STAT_NOSOURCE;
+        path.length = STAT_NO_SOURCE;
+        query.length = STAT_NO_SOURCE;
+        fragment.length = STAT_NO_SOURCE;
         return;
     }
     path.start = abs_path.start;
     for (path.length = 0; (abs_path.start[path.length] != '?') && (abs_path.start[path.length] !=
-        '#') && (path.length < abs_path.length); path.length++)
-        ;
+        '#') && (path.length < abs_path.length); path.length++);
     if (path.length == abs_path.length)
     {
-        query.length = STAT_NOTPRESENT;
-        fragment.length = STAT_NOTPRESENT;
+        query.length = STAT_NOT_PRESENT;
+        fragment.length = STAT_NOT_PRESENT;
         return;
     }
     if (abs_path.start[path.length] == '?')
     {
         query.start = abs_path.start + path.length + 1;
         for (query.length = 0; (query.start[query.length] != '#') && (query.length <
-            abs_path.length - path.length - 1); query.length++)
-            ;
+            abs_path.length - path.length - 1); query.length++);
         fragment.start = query.start + query.length + 1;
         fragment.length = abs_path.length - path.length - 1 - query.length - 1;
     }
     else
     {
-        query.length = STAT_NOTPRESENT;
+        query.length = STAT_NOT_PRESENT;
         fragment.start = abs_path.start + path.length + 1;
         fragment.length = abs_path.length - path.length - 1;
     }
 }
 
-// Glue normalized URI fields back together
-const Field& NHttpUri::get_norm_legacy()
+void NHttpUri::normalize()
 {
-    if (legacy_norm.length != STAT_NOTCOMPUTE)
-    {
-        return legacy_norm;
-    }
-    if (get_path().length >= 0)
+    // FIXIT-P generating the normalized URI components directly into the normalized classic buffer
+    // would save a lot of memory and some copying.
+
+    // Divide the URI up into its six components: scheme, host, port, path, query, and fragment
+    parse_uri();
+    parse_authority();
+    parse_abs_path();
+
+    // Normalize the individual components. We don't do anything with scheme or port.
+    if (path.length >= 0)
     {
         UriNormalizer::normalize(path, path_norm, true, scratch_pad, infractions, events);
     }
-    if (get_host().length >= 0)
+    if (host.length >= 0)
     {
         UriNormalizer::normalize(host, host_norm, false, scratch_pad, infractions, events);
     }
-    if (get_query().length >= 0)
+    if (query.length >= 0)
     {
         UriNormalizer::normalize(query, query_norm, false, scratch_pad, infractions, events);
     }
-    if (get_fragment().length >= 0)
+    if (fragment.length >= 0)
     {
         UriNormalizer::normalize(fragment, fragment_norm, false, scratch_pad,
             infractions, events);
@@ -294,9 +175,9 @@ const Field& NHttpUri::get_norm_legacy()
     // We can reuse the raw URI for the normalized URI if no normalization is required
     if (!(infractions & INF_URI_NEED_NORM))
     {
-        legacy_norm.start = uri.start;
-        legacy_norm.length = uri.length;
-        return legacy_norm;
+        classic_norm.start = uri.start;
+        classic_norm.length = uri.length;
+        return;
     }
 
     // Glue normalized URI pieces back together
@@ -350,11 +231,10 @@ const Field& NHttpUri::get_norm_legacy()
         }
         assert(total_length == current - scratch);
         scratch_pad.commit(current - scratch);
-        legacy_norm.start = scratch;
-        legacy_norm.length = current - scratch;
+        classic_norm.start = scratch;
+        classic_norm.length = current - scratch;
     }
     else
-        legacy_norm.length = STAT_INSUFMEMORY;
-    return legacy_norm;
+        classic_norm.length = STAT_INSUF_MEMORY;
 }
 

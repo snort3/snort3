@@ -28,12 +28,12 @@
 
 using namespace NHttpEnums;
 
-const Field Field::FIELD_NULL { STAT_NOSOURCE };
+const Field Field::FIELD_NULL { STAT_NO_SOURCE };
 
 #ifdef REG_TEST
 void Field::print(FILE* output, const char* name) const
 {
-    if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE))
+    if ((length == STAT_NOT_PRESENT) || (length == STAT_NOT_COMPUTE) || (length == STAT_NO_SOURCE))
     {
         return;
     }

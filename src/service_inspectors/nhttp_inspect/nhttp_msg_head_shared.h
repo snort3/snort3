@@ -77,7 +77,7 @@ protected:
     // All of these are indexed by the relative position of the header field in the message
     static const int MAX_HEADERS = 200;  // I'm an arbitrary number. FIXIT-L
     static const int MAX_HEADER_LENGTH = 4096; // Based on max cookie size of some browsers
-    int32_t num_headers = NHttpEnums::STAT_NOTCOMPUTE;
+    int32_t num_headers = NHttpEnums::STAT_NOT_COMPUTE;
     Field* header_line = nullptr;
     Field* header_name = nullptr;
     NHttpEnums::HeaderId* header_name_id = nullptr;

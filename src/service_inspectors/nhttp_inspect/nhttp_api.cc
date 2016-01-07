@@ -33,7 +33,7 @@ Inspector* NHttpApi::nhttp_ctor(Module* mod)
     return new NHttpInspect(nhttp_mod->get_params());
 }
 
-const char* NHttpApi::legacy_buffers[] =
+const char* NHttpApi::classic_buffers[] =
 {
     "http_client_body",
     "http_cookie",
@@ -48,6 +48,8 @@ const char* NHttpApi::legacy_buffers[] =
     "http_version",
     "http_trailer",
     "http_raw_trailer",
+    "http_raw_request",
+    "http_raw_status",
     nullptr
 };
 
@@ -67,7 +69,7 @@ const InspectApi NHttpApi::nhttp_api =
     },
     IT_SERVICE,
     (uint16_t)PktType::PDU,
-    legacy_buffers,
+    classic_buffers,
     "http",
     NHttpApi::nhttp_init,
     NHttpApi::nhttp_term,
