@@ -3,3 +3,20 @@ SnortConfig is used heavily throughout the code and should be updated so
 that builtin modules can attach state in a generic but readily accessible
 fashion.
 
+Re THREAD_LOCAL defined in thread.h:
+
+In clang, this code compiles (std::array has, for all intents and purposes,
+a constexpr constructor). gcc, on the other hand has stricter requirements
+for constexpr expressions (tested on gcc 4.8, 4.9, and 5) and the code will
+not compile.  This article implies that at the very least, the clang
+treatment is more up-to-date:
+
+http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3597.html
+
+In any case, it does not matter right now, because we are only defining
+THREAD_LOCAL -> thread_local on compilers that do not support extern
+declarations of variables with the GNU __thread attribute (AKA clang).  In
+the future, we may want to consider making the code compatible with either
+TLS attribute, independent of the compiler (and of course
+__declspec(thread) for windows, whenever we cross that bridge).
+

@@ -1,3 +1,10 @@
+16/01/08 - build 184
+
+-- added new_http_inpsect rule options
+-- fixed build issue with Clang and thread_local
+-- continued tcp session refactoring
+-- fixed rule option string unescape issue
+
 15/12/11 - build 183
 
 -- circumvent asymmetric flow handling issue
