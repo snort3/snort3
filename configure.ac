@@ -186,7 +186,7 @@ AC_DEFUN([CXX_EXTERN_GNU_TLS],
 
     AC_LANG_PUSH(C++)
     AC_CACHE_VAL(gl_cv_cxx_extern_gnu_tls, [
-        CPPFLAGS="-std=c++11 -shared -Wl,-undefined,dynamic_lookup"
+        CPPFLAGS="-std=c++11 -fPIC -shared -Wl,-undefined,dynamic_lookup"
         AC_LINK_IFELSE([AC_LANG_SOURCE([[
             extern __thread int x;
             void foo() { ++x; }]])],

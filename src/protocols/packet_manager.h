@@ -165,6 +165,10 @@ private:
     // declared in header so it can access s_protocols
     static THREAD_LOCAL std::array<PegCount, stat_offset +
     CodecManager::s_protocols.size()> s_stats;
+    // FIXIT-L gcc apparently does not consider thread_local variables to be valid in
+    // constexpr expressions. As long as __thread is used instead of thread_local in gcc,
+    // this is not a problem. However, if we use thread_local and gcc, the declaration
+    // below will not compile.
     static std::array<PegCount, s_stats.size()> g_stats;
     static const std::array<const char*, stat_offset> stat_names;
 };
