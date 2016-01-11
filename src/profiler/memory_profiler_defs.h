@@ -37,6 +37,7 @@ struct MemoryProfilerConfig
 
     bool show = false;
     unsigned count = 0;
+    int max_depth = -1;
 };
 
 class SO_PUBLIC MemoryContext

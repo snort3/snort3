@@ -65,7 +65,7 @@ public:
     ProfilerPrinter(const StatsTable::Field* fields, const PrintFn print, const Sorter& sort) :
         fields(fields), print(print), sort(sort) { }
 
-    void print_table(std::string title, Entry& root, unsigned count)
+    void print_table(std::string title, Entry& root, unsigned count, int max_depth = -1)
     {
         std::ostringstream ss;
 
@@ -80,6 +80,9 @@ public:
             else
                 table << " (all";
 
+            if ( max_depth >= 0 )
+                table << ", depth " << max_depth;
+
             if ( sort )
                 table << ", sorted by " << sort.name;
 
@@ -90,11 +93,12 @@ public:
 
         LogMessage("%s", ss.str().c_str());
 
-        print_children(root, root, 0, count);
+        print_children(root, root, 0, count, max_depth);
         print_row(root, root, 0, 0);
     }
 
-    void print_children(const Entry& root, Entry& cur, int layer, unsigned count)
+    void print_children(const Entry& root, Entry& cur, int layer, unsigned count,
+        int max_depth = -1)
     {
         auto& entries = cur.children;
 
@@ -107,8 +111,13 @@ public:
         for ( unsigned i = 0; i < count; ++i )
         {
             auto& entry = entries[i];
+
             print_row(root, entry, layer + 1, i + 1);
-            print_children(root, entry, layer + 1, count);
+
+            if ( max_depth < 0 )
+                print_children(root, entry, layer + 1, count, max_depth);
+            else if ( max_depth > 0 )
+                print_children(root, entry, layer + 1, count, max_depth - 1);
         }
     }
 

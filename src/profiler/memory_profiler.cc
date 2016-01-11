@@ -171,7 +171,7 @@ void show_memory_profiler_stats(ProfilerNodeMap& nodes, const MemoryProfilerConf
     const auto& sorter = memory_stats::sorters[config.sort];
 
     ProfilerPrinter<memory_stats::View> printer(memory_stats::fields, memory_stats::print_fn, sorter);
-    printer.print_table(s_memory_table_title, root, config.count);
+    printer.print_table(s_memory_table_title, root, config.count, config.max_depth);
 }
 
 #ifdef UNIT_TEST

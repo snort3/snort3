@@ -153,7 +153,7 @@ void show_time_profiler_stats(ProfilerNodeMap& nodes, const TimeProfilerConfig& 
     const auto& sorter = time_stats::sorters[config.sort];
 
     ProfilerPrinter<time_stats::View> printer(time_stats::fields, time_stats::print_fn, sorter);
-    printer.print_table(s_time_table_title, root, config.count);
+    printer.print_table(s_time_table_title, root, config.count, config.max_depth);
 }
 
 #ifdef UNIT_TEST

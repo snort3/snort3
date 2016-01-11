@@ -37,6 +37,7 @@ struct TimeProfilerConfig
 
     bool show = false;
     unsigned count = 0;
+    int max_depth = -1;
 };
 
 struct SO_PUBLIC TimeProfilerStats

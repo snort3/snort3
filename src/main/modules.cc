@@ -322,11 +322,14 @@ static const Parameter profiler_time_params[] =
       "show module time profile stats" },
 
     { "count", Parameter::PT_INT, "0:", "0",
-      "print results to given level (0 = all)" },
+      "limit results to count items per level (0 = no limit)" },
 
     { "sort", Parameter::PT_ENUM,
       "none | checks | avg_check | total_time ",
       "total_time", "sort by given field" },
+
+    { "max_depth", Parameter::PT_INT, "-1:", "-1",
+      "limit depth to max_depth (-1 = no limit)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -337,11 +340,14 @@ static const Parameter profiler_memory_params[] =
       "show module memory profile stats" },
 
     { "count", Parameter::PT_INT, "0:", "0",
-      "print results to given level (0 = all)" },
+      "limit results to count items per level (0 = no limit)" },
 
     { "sort", Parameter::PT_ENUM,
       "none | allocations | total_used | avg_allocation ",
       "total_used", "sort by given field" },
+
+    { "max_depth", Parameter::PT_INT, "-1:", "-1",
+      "limit depth to max_depth (-1 = no limit)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -381,6 +387,13 @@ static const Parameter profiler_params[] =
     "configure profiling of rules and/or modules"
 
 template<typename T>
+static bool s_profiler_module_set_max_depth(T& config, Value& v)
+{ config.max_depth = v.get_long(); return true; }
+
+static bool s_profiler_module_set_max_depth(RuleProfilerConfig&, Value&)
+{ return false; }
+
+template<typename T>
 static bool s_profiler_module_set(T& config, Value& v)
 {
     if ( v.is("count") )
@@ -391,6 +404,9 @@ static bool s_profiler_module_set(T& config, Value& v)
 
     else if ( v.is("sort") )
         config.sort = static_cast<typename T::Sort>(v.get_long());
+
+    else if ( v.is("max_depth") )
+        return s_profiler_module_set_max_depth(config, v);
 
     else
         return false;
