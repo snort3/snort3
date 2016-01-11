@@ -1,4 +1,5 @@
-set ( CMAKE_REQUIRED_FLAGS "-std=c++11 -shared -Wl,-undefined,dynamic_lookup" )
+set ( _SAVE_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} )
+set ( CMAKE_REQUIRED_FLAGS "-std=c++11 -fPIC -shared -Wl,-undefined,dynamic_lookup" )
 
 unset ( HAVE_EXTERN_GNU_TLS )
 check_cxx_source_compiles (
@@ -23,3 +24,5 @@ if ( NOT HAVE_EXTERN_GNU_TLS )
         )
     endif ( HAVE_THREAD_LOCAL )
 endif ( NOT HAVE_EXTERN_GNU_TLS )
+
+set ( CMAKE_REQUIRED_FLAGS ${_SAVE_CMAKE_REQUIRED_FLAGS} )
