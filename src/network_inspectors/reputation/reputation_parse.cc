@@ -95,15 +95,14 @@ void IpListInit(uint32_t maxEntries, ReputationConfig* config)
     ListInfo* blackInfo;
     MEM_OFFSET list_ptr;
 
-    if (config->iplist == nullptr)
+    if ( !config->iplist )
     {
         uint32_t mem_size;
         mem_size = estimateSizeFromEntries(maxEntries, config->memcap);
         config->reputation_segment = (uint8_t*)malloc(mem_size);
-        if (config->reputation_segment == nullptr)
-        {
+
+        if ( !config->reputation_segment )
             FatalError("Failed to allocate memory for local segment\n");
-        }
 
         segment_meminit(config->reputation_segment, mem_size);
         base = config->reputation_segment;
@@ -113,12 +112,15 @@ void IpListInit(uint32_t maxEntries, ReputationConfig* config)
          *Use  DIR_16x7_4x4 worst case IPV4 500, IPV6 2.5M
          */
         config->iplist = sfrt_flat_new(DIR_8x16, IPv6, maxEntries, config->memcap);
-        if (config->iplist == nullptr)
-        {
+
+        if ( !config->iplist )
             FatalError("Failed to create IP list.\n");
-        }
 
         list_ptr = segment_calloc((size_t)DECISION_MAX, sizeof(ListInfo));
+
+        if ( !list_ptr )
+            FatalError("Failed to create IP list.\n");
+
         config->iplist->list_info = list_ptr;
 
         config->local_black_ptr = list_ptr + BLACKLISTED * sizeof(ListInfo);
