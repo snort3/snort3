@@ -93,12 +93,21 @@ public:
 
         LogMessage("%s", ss.str().c_str());
 
-        print_children(root, root, 0, count, max_depth);
+        print_recursive(root, root, 1, count, max_depth);
         print_row(root, root, 0, 0);
     }
 
+    void print_recursive(const Entry& root, Entry& cur, int layer, unsigned count,
+        int max_depth)
+    {
+        if ( max_depth >= 0 && max_depth < layer )
+            return;
+
+        print_children(root, cur, layer, count, max_depth);
+    }
+
     void print_children(const Entry& root, Entry& cur, int layer, unsigned count,
-        int max_depth = -1)
+        int max_depth)
     {
         auto& entries = cur.children;
 
@@ -112,12 +121,8 @@ public:
         {
             auto& entry = entries[i];
 
-            print_row(root, entry, layer + 1, i + 1);
-
-            if ( max_depth < 0 )
-                print_children(root, entry, layer + 1, count, max_depth);
-            else if ( max_depth > 0 )
-                print_children(root, entry, layer + 1, count, max_depth - 1);
+            print_row(root, entry, layer, i + 1);
+            print_recursive(root, entry, layer + 1, count, max_depth);
         }
     }
 
