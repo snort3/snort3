@@ -28,6 +28,12 @@
 
 using namespace NHttpEnums;
 
+NHttpUri::~NHttpUri()
+{
+    if (classic_norm_allocated)
+        delete[] classic_norm.start;
+}
+
 void NHttpUri::parse_uri()
 {
     // Four basic types of HTTP URI
@@ -132,6 +138,11 @@ void NHttpUri::parse_abs_path()
         query.start = abs_path.start + path.length + 1;
         for (query.length = 0; (query.start[query.length] != '#') && (query.length <
             abs_path.length - path.length - 1); query.length++);
+        if (abs_path.length - path.length - 1 - query.length == 0)
+        {
+            fragment.length = STAT_NOT_PRESENT;
+            return;
+        }
         fragment.start = query.start + query.length + 1;
         fragment.length = abs_path.length - path.length - 1 - query.length - 1;
     }
@@ -153,88 +164,101 @@ void NHttpUri::normalize()
     parse_authority();
     parse_abs_path();
 
-    // Normalize the individual components. We don't do anything with scheme or port.
-    if (path.length >= 0)
-    {
-        UriNormalizer::normalize(path, path_norm, true, scratch_pad, infractions, events);
-    }
-    if (host.length >= 0)
-    {
-        UriNormalizer::normalize(host, host_norm, false, scratch_pad, infractions, events);
-    }
-    if (query.length >= 0)
-    {
-        UriNormalizer::normalize(query, query_norm, false, scratch_pad, infractions, events);
-    }
-    if (fragment.length >= 0)
-    {
-        UriNormalizer::normalize(fragment, fragment_norm, false, scratch_pad,
-            infractions, events);
-    }
+    // Almost all HTTP requests are honest and rarely need expensive normalization processing. We
+    // do a quick scan for red flags and only perform normalization if something comes up.
+    // Otherwise we set the normalized fields to point at the raw values.
+    if ((host.length > 0) && UriNormalizer::need_norm_no_path(host))
+        infractions += INF_URI_NEED_NORM_HOST;
+    if ((path.length > 0) && UriNormalizer::need_norm_path(path))
+        infractions += INF_URI_NEED_NORM_PATH;
+    if ((query.length > 0) && UriNormalizer::need_norm_no_path(query))
+        infractions += INF_URI_NEED_NORM_QUERY;
+    if ((fragment.length > 0) && UriNormalizer::need_norm_no_path(fragment))
+        infractions += INF_URI_NEED_NORM_FRAGMENT;
 
-    // We can reuse the raw URI for the normalized URI if no normalization is required
-    if (!(infractions & INF_URI_NEED_NORM))
+    if (!((infractions & INF_URI_NEED_NORM_PATH)  || (infractions & INF_URI_NEED_NORM_HOST) ||
+          (infractions & INF_URI_NEED_NORM_QUERY) || (infractions & INF_URI_NEED_NORM_FRAGMENT)))
     {
-        classic_norm.start = uri.start;
-        classic_norm.length = uri.length;
+        host_norm = host;
+        path_norm = path;
+        query_norm = query;
+        fragment_norm = fragment;
+        classic_norm = uri;
         return;
     }
 
-    // Glue normalized URI pieces back together
-    const uint32_t total_length = ((scheme.length >= 0) ? scheme.length + 3 : 0) +
-        ((host_norm.length >= 0) ? host_norm.length : 0) +
-        ((port.length >= 0) ? port.length + 1 : 0) +
-        ((path_norm.length >= 0) ? path_norm.length : 0) +
-        ((query_norm.length >= 0) ? query_norm.length + 1 : 0) +
-        ((fragment_norm.length >= 0) ? fragment_norm.length + 1 : 0);
-    uint8_t* const scratch = scratch_pad.request(total_length);
-    if (scratch != nullptr)
+    // Create a new buffer containing the normalized URI by normalizing each individual piece.
+    const uint32_t total_length = uri.length + UriNormalizer::URI_NORM_EXPANSION;
+    uint8_t* const new_buf = new uint8_t[total_length];
+    uint8_t* current = new_buf;
+    if (scheme.length >= 0)
     {
-        uint8_t* current = scratch;
-        if (scheme.length >= 0)
-        {
-            memcpy(current, scheme.start, scheme.length);
-            current += scheme.length;
-            memcpy(current, "://", 3);
-            current += 3;
-        }
-        if (host_norm.length >= 0)
-        {
-            memcpy(current, host_norm.start, host_norm.length);
-            current += host_norm.length;
-        }
-        if (port.length >= 0)
-        {
-            memcpy(current, ":", 1);
-            current += 1;
-            memcpy(current, port.start, port.length);
-            current += port.length;
-        }
-        if (path_norm.length >= 0)
-        {
-            memcpy(current, path_norm.start, path_norm.length);
-            current += path_norm.length;
-        }
-        if (query_norm.length >= 0)
-        {
-            memcpy(current, "?", 1);
-            current += 1;
-            memcpy(current, query_norm.start, query_norm.length);
-            current += query_norm.length;
-        }
-        if (fragment_norm.length >= 0)
-        {
-            memcpy(current, "#", 1);
-            current += 1;
-            memcpy(current, fragment_norm.start, fragment_norm.length);
-            current += fragment_norm.length;
-        }
-        assert(total_length == current - scratch);
-        scratch_pad.commit(current - scratch);
-        classic_norm.start = scratch;
-        classic_norm.length = current - scratch;
+        memcpy(current, scheme.start, scheme.length);
+        current += scheme.length;
+        memcpy(current, "://", 3);
+        current += 3;
     }
-    else
-        classic_norm.length = STAT_INSUF_MEMORY;
+    if (host.length > 0)
+    {
+        if (infractions & INF_URI_NEED_NORM_HOST)
+            UriNormalizer::normalize(host, host_norm, false, current, infractions, events);
+        else
+        {
+            // The host component is not changing but other parts of the URI are being normalized.
+            // We need a copy of the raw host to provide that part of the normalized URI buffer we
+            // are assembling. But the normalized component will refer to the original raw buffer
+            // on the chance that the data retention policy in use might keep it longer.
+            memcpy(current, host.start, host.length);
+            host_norm = host;
+        }
+        current += host_norm.length;
+    }
+    if (port.length >= 0)
+    {
+        memcpy(current, ":", 1);
+        current += 1;
+        memcpy(current, port.start, port.length);
+        current += port.length;
+    }
+    if (path.length > 0)
+    {
+        if (infractions & INF_URI_NEED_NORM_PATH)
+            UriNormalizer::normalize(path, path_norm, true, current, infractions, events);
+        else
+        {
+            memcpy(current, path.start, path.length);
+            path_norm = path;
+        }
+        current += path_norm.length;
+    }
+    if (query.length >= 0)
+    {
+        memcpy(current, "?", 1);
+        current += 1;
+        if (infractions & INF_URI_NEED_NORM_QUERY)
+            UriNormalizer::normalize(query, query_norm, false, current, infractions, events);
+        else
+        {
+            memcpy(current, query.start, query.length);
+            query_norm = query;
+        }
+        current += query_norm.length;
+    }
+    if (fragment.length >= 0)
+    {
+        memcpy(current, "#", 1);
+        current += 1;
+        if (infractions & INF_URI_NEED_NORM_FRAGMENT)
+            UriNormalizer::normalize(fragment, fragment_norm, false, current, infractions, events);
+        else
+        {
+            memcpy(current, fragment.start, fragment.length);
+            fragment_norm = fragment;
+        }
+        current += fragment_norm.length;
+    }
+    assert(current - new_buf <= total_length);
+    classic_norm.set(current - new_buf, new_buf);
+    classic_norm_allocated = true;
 }
 

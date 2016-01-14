@@ -20,7 +20,6 @@
 #ifndef NHTTP_URI_H
 #define NHTTP_URI_H
 
-#include "nhttp_scratch_pad.h"
 #include "nhttp_str_to_code.h"
 #include "nhttp_uri_norm.h"
 #include "nhttp_field.h"
@@ -36,8 +35,9 @@ class NHttpUri
 public:
     NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method,
         NHttpInfractions& infractions_, NHttpEventGen& events_) :
-        uri(length, start), method_id(method), infractions(infractions_), events(events_),
-        scratch_pad(2*length+200) { normalize(); }
+        uri(length, start), method_id(method), infractions(infractions_), events(events_)
+        { normalize(); }
+    ~NHttpUri();
     const Field& get_uri() const { return uri; }
     NHttpEnums::UriType get_uri_type() { return uri_type; }
     const Field& get_scheme() { return scheme; }
@@ -76,15 +76,12 @@ private:
     Field query_norm;
     Field fragment_norm;
     Field classic_norm;
+    bool classic_norm_allocated = false;
 
     void normalize();
     void parse_uri();
     void parse_authority();
     void parse_abs_path();
-
-    // FIXIT-P there is an enormous memory waste that this is always allocated. It is only needed
-    // when the URI requires normalization. Most of the time the raw URI is already in normal form.
-    ScratchPad scratch_pad;
 };
 
 #endif

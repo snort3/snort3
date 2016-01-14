@@ -29,6 +29,15 @@
 using namespace NHttpEnums;
 
 const Field Field::FIELD_NULL { STAT_NO_SOURCE };
+void Field::set(int32_t length_, const uint8_t* start_)
+{
+    assert(length == STAT_NOT_COMPUTE);
+    assert(start == nullptr);
+    assert(start_ != nullptr);
+    assert(length_ >= 0);
+    start = start_;
+    length = length_;
+}
 
 #ifdef REG_TEST
 void Field::print(FILE* output, const char* name) const

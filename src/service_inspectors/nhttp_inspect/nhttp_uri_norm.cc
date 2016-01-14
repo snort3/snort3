@@ -25,76 +25,52 @@
 
 using namespace NHttpEnums;
 
-void UriNormalizer::normalize(const Field& input, Field& result, bool do_path,
-    ScratchPad& scratch_pad, NHttpInfractions& infractions, NHttpEventGen& events)
+void UriNormalizer::normalize(const Field& input, Field& result, bool do_path, uint8_t* buffer,
+    NHttpInfractions& infractions, NHttpEventGen& events)
 {
-    // Almost all HTTP requests are honest and rarely need expensive normalization processing. We
-    // do a quick scan for red flags and only perform normalization if something comes up.
-    // Otherwise we set the normalized field to point at the raw value.
-    if ( ( do_path && path_check(input.start, input.length, infractions, events))      ||
-        (!do_path && no_path_check(input.start, input.length, infractions, events)))
-    {
-        result.start = input.start;
-        result.length = input.length;
-        return;
-    }
+    // Normalize character escape sequences
+    int32_t data_length = norm_char_clean(input.start, input.length, buffer, infractions, events);
 
-    // Add an extra byte because normalization on rare occasions adds an extra character
-    // We need working space for two copies to do multiple passes.
-    // Round up to multiple of eight so that both copies are 64-bit aligned.
-    const int32_t buffer_length = input.length + 1 + (8-(input.length+1)%8)%8;
-    uint8_t* const scratch = scratch_pad.request(2 * buffer_length);
-    if (scratch == nullptr)
-    {
-        result.length = STAT_INSUF_MEMORY;
-        return;
-    }
-    uint8_t* const front_half = scratch;
-    uint8_t* const back_half = scratch + buffer_length;
-
-    int32_t data_length;
-    data_length = norm_char_clean(input.start, input.length, front_half, infractions, events);
+    // Normalize path directory traversals
     if (do_path)
     {
-        data_length = norm_backslash(front_half, data_length, back_half, infractions, events);
-        data_length = norm_path_clean(back_half, data_length, front_half, infractions, events);
+        norm_backslash(buffer, data_length, infractions, events);
+        data_length = norm_path_clean(buffer, data_length, infractions, events);
     }
 
-    scratch_pad.commit(data_length);
-    result.start = front_half;
-    result.length = data_length;
+    result.set(data_length, buffer);
 }
 
-bool UriNormalizer::no_path_check(const uint8_t* in_buf, int32_t in_length,
-    NHttpInfractions& infractions, NHttpEventGen&)
+bool UriNormalizer::need_norm_no_path(const Field& uri_component)
 {
-    for (int32_t k = 0; k < in_length; k++)
+    const int32_t& length = uri_component.length;
+    const uint8_t* const & buf = uri_component.start;
+    for (int32_t k = 0; k < length; k++)
     {
-        if ((uri_char[in_buf[k]] == CHAR_NORMAL) || (uri_char[in_buf[k]] == CHAR_PATH))
+         if ((uri_char[buf[k]] == CHAR_NORMAL) || (uri_char[buf[k]] == CHAR_PATH))
             continue;
-        infractions += INF_URI_NEED_NORM;
-        return false;
+        return true;
     }
-    return true;
+    return false;
 }
 
-bool UriNormalizer::path_check(const uint8_t* in_buf, int32_t in_length,
-    NHttpInfractions& infractions, NHttpEventGen&)
+bool UriNormalizer::need_norm_path(const Field& uri_component)
 {
-    for (int32_t k = 0; k < in_length; k++)
+    const int32_t& length = uri_component.length;
+    const uint8_t* const & buf = uri_component.start;
+    for (int32_t k = 0; k < length; k++)
     {
-        if (uri_char[in_buf[k]] == CHAR_NORMAL)
+        if (uri_char[buf[k]] == CHAR_NORMAL)
             continue;
-        if ((in_buf[k] == '/') && ((k == 0) || (in_buf[k-1] != '/')))
+        if ((buf[k] == '/') && ((k == 0) || (buf[k-1] != '/')))
             continue;
-        if (  (in_buf[k] == '.')                                               &&
-              ((k == 0) || (uri_char[in_buf[k-1]] == CHAR_NORMAL))             &&
-              ((k == in_length-1) || (uri_char[in_buf[k+1]] == CHAR_NORMAL)))
+        if (  (buf[k] == '.')                                               &&
+              ((k == 0) || (uri_char[buf[k-1]] == CHAR_NORMAL))             &&
+              ((k == length-1) || (uri_char[buf[k+1]] == CHAR_NORMAL)))
             continue;
-        infractions += INF_URI_NEED_NORM;
-        return false;
+        return true;
     }
-    return true;
+    return false;
 }
 
 int32_t UriNormalizer::norm_char_clean(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
@@ -177,25 +153,22 @@ int32_t UriNormalizer::norm_char_clean(const uint8_t* in_buf, int32_t in_length,
 }
 
 // Convert URI backslashes to slashes
-int32_t UriNormalizer::norm_backslash(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    NHttpInfractions& infractions, NHttpEventGen& events)
+void UriNormalizer::norm_backslash(uint8_t* buf, int32_t length, NHttpInfractions& infractions,
+    NHttpEventGen& events)
 {
-    for (int32_t k = 0; k < in_length; k++)
+    for (int32_t k = 0; k < length; k++)
     {
-        if (in_buf[k] != '\\')
-            out_buf[k] = in_buf[k];
-        else
+        if (buf[k] == '\\')
         {
-            out_buf[k] = '/';
+            buf[k] = '/';
             infractions += INF_URI_BACKSLASH;
             events.create_event(EVENT_IIS_BACKSLASH);
         }
     }
-    return in_length;
 }
 
 // Caution: worst case output length is one greater than input length
-int32_t UriNormalizer::norm_path_clean(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
+int32_t UriNormalizer::norm_path_clean(uint8_t* buf, const int32_t in_length,
     NHttpInfractions& infractions, NHttpEventGen& events)
 {
     int32_t length = 0;
@@ -205,19 +178,19 @@ int32_t UriNormalizer::norm_path_clean(const uint8_t* in_buf, int32_t in_length,
     for (int32_t k = 0; k <= in_length; k++)
     {
         // Pass through all non-slash characters and also the leading slash
-        if (((k < in_length) && (in_buf[k] != '/')) || (k == 0))
+        if (((k < in_length) && (buf[k] != '/')) || (k == 0))
         {
-            out_buf[length++] = in_buf[k];
+            buf[length++] = buf[k];
         }
         // Ignore this slash if it directly follows another slash
-        else if ((k < in_length) && (length >= 1) && (out_buf[length-1] == '/'))
+        else if ((k < in_length) && (length >= 1) && (buf[length-1] == '/'))
         {
             infractions += INF_URI_MULTISLASH;
             events.create_event(EVENT_MULTI_SLASH);
         }
         // This slash is the end of a /./ pattern, ignore this slash and remove the period from the
         // output
-        else if ((length >= 2) && (out_buf[length-1] == '.') && (out_buf[length-2] == '/'))
+        else if ((length >= 2) && (buf[length-1] == '.') && (buf[length-2] == '/'))
         {
             infractions += INF_URI_SLASH_DOT;
             events.create_event(EVENT_SELF_DIR_TRAV);
@@ -225,8 +198,8 @@ int32_t UriNormalizer::norm_path_clean(const uint8_t* in_buf, int32_t in_length,
         }
         // This slash is the end of a /../ pattern, normalization depends on whether there is a
         // previous directory that we can remove
-        else if ((length >= 3) && (out_buf[length-1] == '.') && (out_buf[length-2] == '.') &&
-            (out_buf[length-3] == '/'))
+        else if ((length >= 3) && (buf[length-1] == '.') && (buf[length-2] == '.') &&
+            (buf[length-3] == '/'))
         {
             infractions += INF_URI_SLASH_DOT_DOT;
             events.create_event(EVENT_DIR_TRAV);
@@ -236,24 +209,23 @@ int32_t UriNormalizer::norm_path_clean(const uint8_t* in_buf, int32_t in_length,
             // pretend slash after the end of the buffer. That is intentional so that the normal
             // form of "/../../../.." is "/../../../../"
             if ( (length == 3) ||
-                ((length >= 6) && (out_buf[length-4] == '.') && (out_buf[length-5] == '.') &&
-                (out_buf[length-6] == '/')))
+                ((length >= 6) && (buf[length-4] == '.') && (buf[length-5] == '.') &&
+                (buf[length-6] == '/')))
             {
                 infractions += INF_URI_ROOT_TRAV;
                 events.create_event(EVENT_WEBROOT_DIR);
-                out_buf[length++] = '/';
+                buf[length++] = '/';
             }
             // Remove the previous directory from the output. "/foo/bar/../" becomes "/foo/"
             else
             {
-                for (length -= 3; out_buf[length-1] != '/'; length--)
-                    ;
+                for (length -= 3; buf[length-1] != '/'; length--);
             }
         }
         // Pass through an ordinary slash
         else if (k < in_length)
         {
-            out_buf[length++] = '/';
+            buf[length++] = '/';
         }
     }
     return length;
