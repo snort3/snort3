@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include <string>
+#include <memory>
 using namespace std;
 
 #include "framework/module.h"
@@ -60,11 +61,13 @@ using namespace std;
 #include "stream/stream_api.h"
 #include "utils/stats.h"
 #include "target_based/snort_protocols.h"
+#include "target_based/host_tracker.h"
 
 //-------------------------------------------------------------------------
 // detection module
 //-------------------------------------------------------------------------
 
+/* *INDENT-OFF* */   //  Uncrustify handles this section incorrectly.
 static const Parameter detection_params[] =
 {
     { "asn1", Parameter::PT_INT, "1:", "256",
@@ -81,6 +84,7 @@ static const Parameter detection_params[] =
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
+/* *INDENT-ON* */
 
 #define detection_help \
     "configure general IPS rule processing parameters"
@@ -1340,7 +1344,7 @@ static const Parameter file_rule_params[] =
       "file type version" },
 
     { "magic", Parameter::PT_LIST, file_magic_params, nullptr,
-        "list of file magic rules" },
+      "list of file magic rules" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1417,10 +1421,10 @@ static const Parameter file_id_params[] =
       "print this many octets" },
 
     { "file_rules", Parameter::PT_LIST, file_rule_params, nullptr,
-        "list of file magic rules" },
+      "list of file magic rules" },
 
     { "file_policy", Parameter::PT_LIST, file_policy_rule_params, nullptr,
-        "list of file rules" },
+      "list of file rules" },
 
     { "trace_type", Parameter::PT_BOOL, nullptr, "false",
       "enable runtime dump of type info" },
@@ -1444,6 +1448,7 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
+
 private:
     FileMagicRule rule;
     FileMagicData magic;
@@ -1576,17 +1581,14 @@ bool FileIdModule::begin(const char* fqn, int idx, SnortConfig*)
     {
         rule.clear();
     }
-
     else if ( !strcmp(fqn, "file_id.file_rules.magic") )
     {
         magic.clear();
     }
-
     else if ( !strcmp(fqn, "file_id.file_policy") )
     {
         file_rule.clear();
     }
-
 
     return true;
 }
@@ -1602,13 +1604,11 @@ bool FileIdModule::end(const char* fqn, int idx, SnortConfig* sc)
     {
         fc.process_file_rule(rule);
     }
-
     else if ( !strcmp(fqn, "file_id.file_rules.magic") )
     {
         fc.process_file_magic(magic);
         rule.file_magics.push_back(magic);
     }
-
     else if ( !strcmp(fqn, "file_id.file_policy") )
     {
         fc.process_file_policy_rule(file_rule);
@@ -1616,6 +1616,7 @@ bool FileIdModule::end(const char* fqn, int idx, SnortConfig* sc)
 
     return true;
 }
+
 //-------------------------------------------------------------------------
 // suppress module
 //-------------------------------------------------------------------------
@@ -2052,6 +2053,94 @@ bool HostsModule::end(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
+//-------------------------------------------------------------------------
+// HostTracker module
+//-------------------------------------------------------------------------
+
+//  FIXIT-M - Temporarily create new HostTracker module to test new
+//            HostTracker object.  May eventually replace old Hosts
+//            module with this one.
+
+class HostTrackerModule : public Module
+{
+public:
+    HostTrackerModule() : Module("host_tracker", hosts_help, hosts_params, true)
+    {
+        host = nullptr;
+    }
+
+    ~HostTrackerModule()
+    {
+        //  FIXIT-H: Change this back to an assert once we hand off the
+        //           host to a cache.
+        if (host)
+            delete host;
+    }
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
+
+private:
+    HostApplicationEntry app;
+    HostTracker* host;
+};
+
+bool HostTrackerModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( host and v.is("ip") )
+    {
+        sfip_t addr;
+        v.get_addr(addr);
+        host->set_ip_addr(addr);
+    }
+    else if ( host and v.is("frag_policy") )
+        host->set_frag_policy(v.get_long() + 1);
+
+    else if ( host and v.is("tcp_policy") )
+        host->set_stream_policy(v.get_long() + 1);
+
+    else if ( v.is("name") )
+        app.protocol = AddProtocolReference(v.get_string());
+
+    else if ( v.is("proto") )
+        app.ipproto = AddProtocolReference(v.get_string());
+
+    else if ( v.is("port") )
+        app.port = v.get_long();
+
+    else
+        return false;
+
+    return true;
+}
+
+bool HostTrackerModule::begin(const char* fqn, int idx, SnortConfig*)
+{
+    if ( idx && !strcmp(fqn, "host_tracker") )
+        host = new HostTracker;
+
+    return true;
+}
+
+bool HostTrackerModule::end(const char* fqn, int idx, SnortConfig*)
+{
+    if ( idx && !strcmp(fqn, "host_tracker.services") )
+    {
+        host->add_service(app);
+        memset(&app, 0, sizeof(app));
+    }
+    else if ( idx && !strcmp(fqn, "host_tracker") )
+    {
+        //  FIXIT-H: Next step will be to add the HostTracker object to
+        //  a cache.  For now just delete in the destructor.
+        //SFAT_AddHost(host);
+        //host = nullptr;
+    }
+
+    return true;
+}
+
 #if 0
 //-------------------------------------------------------------------------
 // xxx module - used as copy/paste template
@@ -2157,5 +2246,6 @@ void module_init()
     // these modules replace config and hosts.xml
     ModuleManager::add_module(new AttributeTableModule);
     ModuleManager::add_module(new HostsModule);
+    ModuleManager::add_module(new HostTrackerModule);
 }
 

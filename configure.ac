@@ -1078,6 +1078,7 @@ src/search_engines/test/Makefile \
 src/sfip/Makefile \
 src/sfrt/Makefile \
 src/target_based/Makefile \
+src/target_based/test/Makefile \
 src/catch/Makefile \
 src/time/Makefile \
 src/ppm/Makefile \
