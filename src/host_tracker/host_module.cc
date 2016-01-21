@@ -1,0 +1,112 @@
+//--------------------------------------------------------------------------
+// Copyright (C) 2015 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
+
+// host_module.cc author Steve Chew <stechew@cisco.com>
+
+#include "host_tracker/host_module.h"
+
+#include "stream/stream_api.h"
+#include "target_based/snort_protocols.h"
+
+const Parameter HostTrackerModule::service_params[] =
+{
+    { "name", Parameter::PT_STRING, nullptr, nullptr,
+      "service identifier" },
+
+    { "proto", Parameter::PT_ENUM, "tcp | udp", "tcp",
+      "ip protocol" },
+
+    { "port", Parameter::PT_PORT, nullptr, nullptr,
+      "port number" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+const Parameter HostTrackerModule::host_tracker_params[] =
+{
+    { "ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
+      "hosts address / cidr" },
+
+    { "frag_policy", Parameter::PT_ENUM, IP_POLICIES, nullptr,
+      "defragmentation policy" },
+
+    { "tcp_policy", Parameter::PT_ENUM, TCP_POLICIES, nullptr,
+      "tcp reassembly policy" },
+
+    { "services", Parameter::PT_LIST, HostTrackerModule::service_params, nullptr,
+      "list of service parameters" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+
+bool HostTrackerModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( host and v.is("ip") )
+    {
+        sfip_t addr;
+        v.get_addr(addr);
+        host->set_ip_addr(addr);
+    }
+    else if ( host and v.is("frag_policy") )
+        host->set_frag_policy(v.get_long() + 1);
+
+    else if ( host and v.is("tcp_policy") )
+        host->set_stream_policy(v.get_long() + 1);
+
+    else if ( v.is("name") )
+        app.protocol = AddProtocolReference(v.get_string());
+
+    else if ( v.is("proto") )
+        app.ipproto = AddProtocolReference(v.get_string());
+
+    else if ( v.is("port") )
+        app.port = v.get_long();
+
+    else
+        return false;
+
+    return true;
+}
+
+bool HostTrackerModule::begin(const char* fqn, int idx, SnortConfig*)
+{
+    if ( idx && !strcmp(fqn, "host_tracker") )
+        host = new HostTracker;
+
+    return true;
+}
+
+bool HostTrackerModule::end(const char* fqn, int idx, SnortConfig*)
+{
+    if ( idx && !strcmp(fqn, "host_tracker.services") )
+    {
+        host->add_service(app);
+        memset(&app, 0, sizeof(app));
+    }
+    else if ( idx && !strcmp(fqn, "host_tracker") )
+    {
+        //  FIXIT-H: Next step will be to add the HostTracker object to
+        //  a cache.  For now just delete in the destructor.
+        //SFAT_AddHost(host);
+        //host = nullptr;
+    }
+
+    return true;
+}
+

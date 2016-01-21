@@ -19,7 +19,7 @@
 // host_tracker_test.cc author Steve Chew <stechew@cisco.com>
 // unit tests for HostTracker class
 
-#include "target_based/host_tracker.h"
+#include "host_tracker/host_tracker.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>

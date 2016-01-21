@@ -83,6 +83,7 @@ ips_options/libips_options.a \
 search_engines/libsearch_engines.a \
 target_based/libtarget_based.a \
 main/libmain.a \
+host_tracker/libhost_tracker.a \
 parser/libparser.a \
 flow/libflow.a \
 control/libcontrol.a \
@@ -119,6 +120,7 @@ flow \
 framework \
 hash \
 helpers \
+host_tracker \
 lua \
 ips_options \
 log \

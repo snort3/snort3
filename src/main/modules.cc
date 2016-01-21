@@ -61,7 +61,7 @@ using namespace std;
 #include "stream/stream_api.h"
 #include "utils/stats.h"
 #include "target_based/snort_protocols.h"
-#include "target_based/host_tracker.h"
+#include "host_tracker/host_module.h"
 
 //-------------------------------------------------------------------------
 // detection module
@@ -2053,93 +2053,6 @@ bool HostsModule::end(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-//-------------------------------------------------------------------------
-// HostTracker module
-//-------------------------------------------------------------------------
-
-//  FIXIT-M - Temporarily create new HostTracker module to test new
-//            HostTracker object.  May eventually replace old Hosts
-//            module with this one.
-
-class HostTrackerModule : public Module
-{
-public:
-    HostTrackerModule() : Module("host_tracker", hosts_help, hosts_params, true)
-    {
-        host = nullptr;
-    }
-
-    ~HostTrackerModule()
-    {
-        //  FIXIT-H: Change this back to an assert once we hand off the
-        //           host to a cache.
-        if (host)
-            delete host;
-    }
-
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
-
-private:
-    HostApplicationEntry app;
-    HostTracker* host;
-};
-
-bool HostTrackerModule::set(const char*, Value& v, SnortConfig*)
-{
-    if ( host and v.is("ip") )
-    {
-        sfip_t addr;
-        v.get_addr(addr);
-        host->set_ip_addr(addr);
-    }
-    else if ( host and v.is("frag_policy") )
-        host->set_frag_policy(v.get_long() + 1);
-
-    else if ( host and v.is("tcp_policy") )
-        host->set_stream_policy(v.get_long() + 1);
-
-    else if ( v.is("name") )
-        app.protocol = AddProtocolReference(v.get_string());
-
-    else if ( v.is("proto") )
-        app.ipproto = AddProtocolReference(v.get_string());
-
-    else if ( v.is("port") )
-        app.port = v.get_long();
-
-    else
-        return false;
-
-    return true;
-}
-
-bool HostTrackerModule::begin(const char* fqn, int idx, SnortConfig*)
-{
-    if ( idx && !strcmp(fqn, "host_tracker") )
-        host = new HostTracker;
-
-    return true;
-}
-
-bool HostTrackerModule::end(const char* fqn, int idx, SnortConfig*)
-{
-    if ( idx && !strcmp(fqn, "host_tracker.services") )
-    {
-        host->add_service(app);
-        memset(&app, 0, sizeof(app));
-    }
-    else if ( idx && !strcmp(fqn, "host_tracker") )
-    {
-        //  FIXIT-H: Next step will be to add the HostTracker object to
-        //  a cache.  For now just delete in the destructor.
-        //SFAT_AddHost(host);
-        //host = nullptr;
-    }
-
-    return true;
-}
 
 #if 0
 //-------------------------------------------------------------------------
