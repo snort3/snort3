@@ -121,6 +121,7 @@ target_link_libraries( snort
     search_engines
     target_based
     main
+    host_tracker
     parser
     flow
     control
@@ -169,6 +170,7 @@ add_subdirectory(sfrt)
 add_subdirectory(service_inspectors)
 add_subdirectory(stream)
 add_subdirectory(target_based)
+add_subdirectory(host_tracker)
 add_subdirectory(time)
 add_subdirectory(profiler)
 add_subdirectory(utils)

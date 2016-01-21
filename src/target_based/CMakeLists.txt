@@ -7,5 +7,4 @@ add_library( target_based STATIC
     sftarget_data.h
     snort_protocols.cc
     snort_protocols.h
-    host_tracker.h
 )
