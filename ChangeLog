@@ -1,3 +1,11 @@
+16/01/25 - build 185
+
+-- initial host_tracker for new integrated netmap
+-- new_http_inspect refactoring for time and space considerations
+-- fix profiler depth bug
+-- fatal on failed IP rep segment allocation - thanks to Bill Parker
+-- tweaked style guide wrt class declarations
+
 16/01/08 - build 184
 
 -- added new_http_inpsect rule options

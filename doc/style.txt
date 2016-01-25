@@ -164,6 +164,20 @@ yet firm so feedback is welcome to get something we can live with.
       if ( test )
           foo();
 
+=== Classes
+
+* Use the order public, protected, private top to bottom in a class
+  declaration.
+
+* Keep inline functions in a class declaration very brief, preferably just
+  one line.  If you need a more complex inline function, move the
+  definition outside the class declaration.
+
+* The goal is to have highly readable class declarations.  The user
+  shouldn't have to sift through implementation details to see what is
+  available to the client.
+
+
 === Headers
 
 * Don't hesitate to create a new header if it is needed.  Don't lump
