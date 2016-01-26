@@ -72,6 +72,7 @@ protected:
     void parse_header_block();
     uint32_t find_header_end(const uint8_t* buffer, int32_t length, int& num_seps);
     void parse_header_lines();
+    void create_norm_head_list();
     void derive_header_name_id(int index);
 
     // All of these are indexed by the relative position of the header field in the message

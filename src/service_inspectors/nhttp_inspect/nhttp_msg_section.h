@@ -23,7 +23,6 @@
 #include "stream/stream_api.h"
 #include "detection/detection_util.h"
 
-#include "nhttp_scratch_pad.h"
 #include "nhttp_field.h"
 #include "nhttp_module.h"
 #include "nhttp_flow_data.h"
@@ -73,7 +72,6 @@ protected:
     const NHttpParaList* const params;
     NHttpTransaction* const transaction;
     const bool tcp_close;
-    ScratchPad scratch_pad;
 
     NHttpInfractions infractions;
     NHttpEventGen events;

@@ -38,6 +38,8 @@ NHttpMsgHeadShared::~NHttpMsgHeadShared()
     {
         NormalizedHeader* temp_ptr = list_ptr;
         list_ptr = list_ptr->next;
+        if (temp_ptr->norm.length >= 0)
+            delete[] temp_ptr->norm.start;
         delete temp_ptr;
     }
 }
@@ -47,6 +49,14 @@ void NHttpMsgHeadShared::analyze()
 {
     parse_header_block();
     parse_header_lines();
+    create_norm_head_list();
+}
+
+void NHttpMsgHeadShared::create_norm_head_list()
+{
+    // This function does not do the actual JIT normalization of header values. It converts the
+    // header names into numeric IDs and creates a linked list of all the different headers that
+    // are present in the message along with the number of times each one appears.
     for (int j=0; j < num_headers; j++)
     {
         derive_header_name_id(j);
@@ -167,6 +177,8 @@ void NHttpMsgHeadShared::parse_header_lines()
         {
             infractions += INF_BAD_HEADER;
             events.create_event(EVENT_BAD_HEADER);
+            header_name[k].set(STAT_PROBLEMATIC);
+            header_value[k].set(STAT_PROBLEMATIC);
         }
     }
 }
@@ -176,15 +188,15 @@ void NHttpMsgHeadShared::derive_header_name_id(int index)
     const int32_t& length = header_name[index].length;
     const uint8_t*& buffer = header_name[index].start;
 
-    // Normalize header field name to lower case and remove LWS for matching purposes
-    int32_t lower_length = 0;
-    uint8_t* lower_name;
-    if ((lower_name = scratch_pad.request(length)) == nullptr)
+    if (length <= 0)
     {
-        infractions += INF_NO_SCRATCH;
-        header_name_id[index] = HEAD__INSUF_MEMORY;
+        header_name_id[index] = HEAD__PROBLEMATIC;
         return;
     }
+
+    // Normalize header field name to lower case and remove LWS for matching purposes
+    int32_t lower_length = 0;
+    uint8_t* lower_name = new uint8_t[length];
     for (int32_t k=0; k < length; k++)
     {
         if (!is_sp_tab[buffer[k]])
@@ -199,6 +211,7 @@ void NHttpMsgHeadShared::derive_header_name_id(int index)
         }
     }
     header_name_id[index] = (HeaderId)str_to_code(lower_name, lower_length, header_list);
+    delete[] lower_name;
 }
 
 NHttpMsgHeadShared::NormalizedHeader* NHttpMsgHeadShared::get_header_node(HeaderId header_id) const
@@ -222,8 +235,8 @@ const Field& NHttpMsgHeadShared::get_header_value_norm(HeaderId header_id)
     NormalizedHeader* node = get_header_node(header_id);
     if (node == nullptr)
         return Field::FIELD_NULL;
-    header_norms[header_id]->normalize(header_id, node->count, scratch_pad, infractions, events,
-        header_name_id, header_value, num_headers, node->norm);
+    header_norms[header_id]->normalize(header_id, node->count, infractions, events, header_name_id,
+        header_value, num_headers, node->norm);
     return node->norm;
 }
 

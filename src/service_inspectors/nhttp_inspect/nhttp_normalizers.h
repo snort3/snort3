@@ -25,11 +25,17 @@
 #include "nhttp_field.h"
 #include "nhttp_str_to_code.h"
 
+// There are currently no normalization functions that make header values bigger. Changes are
+// required to HeaderNormalizer::normalize() to allocate more space before you can introduce a
+// normalizer that may expand a header value.
+//
+// Normalization functions must return an output buffer with nonnegative length. Status codes are
+// not acceptable.
 typedef int32_t (NormFunc)(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, NHttpEventGen&);
-
 NormFunc norm_to_lower;
 NormFunc norm_remove_lws;
 
+// Other normalization-related utilities
 int64_t norm_decimal_integer(const Field& input);
 int32_t norm_last_token_code(const Field& input, const StrCode table[]);
 

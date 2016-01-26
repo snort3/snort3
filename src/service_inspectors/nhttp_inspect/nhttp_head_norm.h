@@ -20,7 +20,6 @@
 #ifndef NHTTP_HEAD_NORM_H
 #define NHTTP_HEAD_NORM_H
 
-#include "nhttp_scratch_pad.h"
 #include "nhttp_field.h"
 #include "nhttp_infractions.h"
 #include "nhttp_normalizers.h"
@@ -44,7 +43,7 @@ public:
         num_normalizers((f1 != nullptr) + (f1 != nullptr)*(f2 != nullptr) + (f1 != nullptr)*(f2 !=
             nullptr)*(f3 != nullptr)) { }
 
-    void normalize(const NHttpEnums::HeaderId head_id, const int count, ScratchPad& scratch_pad,
+    void normalize(const NHttpEnums::HeaderId head_id, const int count,
         NHttpInfractions& infractions, NHttpEventGen& events,
         const NHttpEnums::HeaderId header_name_id[], const Field header_value[],
         const int32_t num_headers, Field& result_field) const;

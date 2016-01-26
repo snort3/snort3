@@ -59,7 +59,7 @@ int32_t HeaderNormalizer::derive_header_content(const uint8_t* value, int32_t le
 }
 
 // This method normalizes the header field value for headId.
-void HeaderNormalizer::normalize(const HeaderId head_id, const int count, ScratchPad& scratch_pad,
+void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
     NHttpInfractions& infractions, NHttpEventGen& events, const HeaderId header_name_id[],
     const Field header_value[], const int32_t num_headers, Field& result_field) const
 {
@@ -93,29 +93,16 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count, Scratc
             (concatenate_repeats && (num_matches == count)));
     buffer_length += num_matches - 1;    // allow space for concatenation commas
 
-    // We are allocating twice as much memory as we need to store the normalized field value. The
-    // raw field value will be copied into one half of the buffer. Concatenation and white space
-    // normalization happen during this step. Next a series of normalization functions will
-    // transform the value into final form. Each normalization copies the value from one half of
-    // the buffer to the other. Based on whether the number of normalization functions is odd or
-    // even, the initial placement in the buffer is chosen so that the final normalization leaves
-    // the field value at the front of the buffer. The buffer space actually used is locked down in
-    // the scratch_pad. The remainder of the first half and all of the second half are returned to
-    // the scratch_pad for future use.
+    // We are allocating two buffers to store the normalized field value. The raw field value will
+    // be copied into one of them. Concatenation and white space normalization happen during this
+    // step. Next a series of normalization functions will transform the value into final form.
+    // Each normalization copies the value from one buffer to the other. Based on whether the
+    // number of normalization functions is odd or even, the initial buffer is chosen so that the
+    // final normalization leaves the normalized header value in norm_value.
 
-    // Round up to multiple of eight so that both halves are 64-bit aligned. 200 is a "way too big"
-    // fudge factor to allow for modest expansion of field size during normalization.
-    buffer_length += (8-buffer_length%8)%8 + 200;
-    uint8_t* const scratch = scratch_pad.request(2*buffer_length);
-    if (scratch == nullptr)
-    {
-        result_field.length = STAT_INSUF_MEMORY;
-        return;
-    }
-
-    uint8_t* const front_half = scratch;
-    uint8_t* const back_half = scratch + buffer_length;
-    uint8_t* working = (num_normalizers%2 == 0) ? front_half : back_half;
+    uint8_t* const norm_value = new uint8_t[buffer_length];
+    uint8_t* const temp_space = new uint8_t[buffer_length];
+    uint8_t* working = (num_normalizers%2 == 0) ? norm_value : temp_space;
     int32_t data_length = 0;
     for (int j=0; j < num_matches; j++)
     {
@@ -135,21 +122,15 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count, Scratc
     {
         if (i%2 != num_normalizers%2)
         {
-            data_length = normalizer[i](back_half, data_length, front_half, infractions, events);
+            data_length = normalizer[i](temp_space, data_length, norm_value, infractions, events);
         }
         else
         {
-            data_length = normalizer[i](front_half, data_length, back_half, infractions, events);
-        }
-        if (data_length <= 0)
-        {
-            result_field.length = data_length;
-            return;
+            data_length = normalizer[i](norm_value, data_length, temp_space, infractions, events);
         }
     }
-    result_field.start = scratch;
-    result_field.length = data_length;
-    scratch_pad.commit(data_length);
+    delete[] temp_space;
+    result_field.set(data_length, norm_value);
     return;
 }
 

@@ -41,6 +41,8 @@ public:
     explicit Field(int32_t length_) : length(length_) { assert(length<=0); }
     Field() = default;
     void set(int32_t length_, const uint8_t* start_);
+    void set(NHttpEnums::StatusCode stat_code);
+    void set(int32_t length) { set(static_cast<NHttpEnums::StatusCode>(length)); }
 
 #ifdef REG_TEST
     void print(FILE* output, const char* name) const;

@@ -35,9 +35,20 @@ void Field::set(int32_t length_, const uint8_t* start_)
     assert(start == nullptr);
     assert(start_ != nullptr);
     assert(length_ >= 0);
+    assert(length_ <= MAX_OCTETS);
     start = start_;
     length = length_;
 }
+
+void Field::set(StatusCode stat_code)
+{
+    assert(length == STAT_NOT_COMPUTE);
+    assert(start == nullptr);
+    assert(stat_code <= 0);
+    start = nullptr;
+    length = stat_code;
+}
+
 
 #ifdef REG_TEST
 void Field::print(FILE* output, const char* name) const

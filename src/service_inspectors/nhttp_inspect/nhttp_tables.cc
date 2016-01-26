@@ -173,19 +173,19 @@ const StrCode NHttpMsgHeadShared::content_code_list[] =
 };
 
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_BASIC
-{ false, nullptr, nullptr, nullptr };
+    { false, nullptr, nullptr, nullptr };
 
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NUMBER
-{ false, norm_remove_lws, nullptr, nullptr };
+    { false, norm_remove_lws, nullptr, nullptr };
 
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TOKEN_LIST
-{ true, norm_remove_lws, norm_to_lower, nullptr };
+    { true, norm_remove_lws, norm_to_lower, nullptr };
 
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CAT
-{ true, norm_remove_lws, nullptr, nullptr };
+    { true, norm_remove_lws, nullptr, nullptr };
 
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_COOKIE
-{ true, nullptr, nullptr, nullptr };
+    { true, nullptr, nullptr, nullptr };
 
 #if defined(__clang__)
 // Designated initializers are not supported in C++11. However we're going to play compilation
