@@ -1,49 +1,31 @@
 
-add_subdirectory(back_orifice)
-add_subdirectory(dce_rpc)
-add_subdirectory(dnp3)
-add_subdirectory(dns)
-add_subdirectory(ftp_telnet)
-add_subdirectory(gtp)
-add_subdirectory(http_inspect)
-add_subdirectory(imap)
-add_subdirectory(modbus)
-add_subdirectory(nhttp_inspect)
-add_subdirectory(pop)
-add_subdirectory(rpc_decode)
-add_subdirectory(sip)
-add_subdirectory(smtp)
-add_subdirectory(ssh)
-add_subdirectory(ssl)
-add_subdirectory(wizard)
+set( FILE_LIST
+   dce2_co.h 
+   dce2_common.cc 
+   dce2_common.h 
+   dce2_list.h
+   dce2_list.cc
+   dce2_smb.cc 
+   dce2_smb.h 
+   dce2_smb_module.cc 
+   dce2_smb_module.h 
+   dce2_tcp.cc
+   dce2_tcp.h 
+   dce2_tcp_module.cc 
+   dce2_tcp_module.h 
+   dce2_utils.cc
+   dce2_utils.h
+   ips_dce2_iface.cc
+   ips_dce2_opnum.cc
+   ips_dce2_stub_data.cc
+
+)
 
 if (STATIC_INSPECTORS)
-    set (STATIC_INSECTOR_LIBS
-        back_orifice
-    	dce_rpc
-        dnp3
-        dns
-        ftp_telnet
-        gtp_inspect
-        imap
-        modbus
-        nhttp_inspect
-        pop
-        rpc_decode
-        sip
-        smtp
-        ssh
-        ssl
-        wizard
-    )
-endif()
 
-add_library( service_inspectors STATIC
-    service_inspectors.cc
-    service_inspectors.h
-)
+    add_library(dce_rpc STATIC ${FILE_LIST})
 
-target_link_libraries( service_inspectors
-    http_inspect
-    ${STATIC_INSECTOR_LIBS}
-)
+else (STATIC_INSPECTORS)
+    add_shared_library(dce_rpc inspectors ${FILE_LIST})
+
+endif (STATIC_INSPECTORS)
