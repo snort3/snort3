@@ -1,0 +1,12 @@
+This directory contains the implementation of the HostTracker components.
+
+* The HostTracker object contains information that is known or discovered
+about a host.  It provides an API to get/set host data in a thread-safe
+manner.
+
+* The global host_cache is used to cache HostTracker objects so that they
+can be shared between threads.
+
+* The HostTrackerModule is used to read in initial known information about
+hosts, populate HostTracker objects, and place them in the host_cache.
+

@@ -5,6 +5,7 @@ x_includedir = $(pkgincludedir)/hash
 
 x_include_HEADERS = \
 hashes.h \
+lru_cache_shared.h \
 sfghash.h \
 sfxhash.h \
 sfhashfcn.h
@@ -23,5 +24,9 @@ endif
 
 if BUILD_SSL_SHA
 libhash_a_SOURCES += sha2.c sha2.h
+endif
+
+if BUILD_CPPUTESTS
+SUBDIRS = test
 endif
 

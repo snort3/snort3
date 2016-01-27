@@ -11,6 +11,10 @@ Message digests and hash maps/table implementations:
 
 * zhash: zero runtime allocations/preallocated hash table.
 
-Use of these hashing utilities is primarily for use by pre-existing code.
+Use of the above hashing utilities is primarily for use by pre-existing code.
 For new code, use standard template library and C++11 features.
+
+For thread-safe shared caches:
+
+* lru_cache_shared: A thread-safe LRU map.
 

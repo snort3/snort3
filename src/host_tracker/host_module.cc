@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -20,6 +20,7 @@
 
 #include "host_tracker/host_module.h"
 
+#include "host_tracker/host_cache.h"
 #include "stream/stream_api.h"
 #include "target_based/snort_protocols.h"
 
@@ -53,7 +54,6 @@ const Parameter HostTrackerModule::host_tracker_params[] =
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
-
 
 bool HostTrackerModule::set(const char*, Value& v, SnortConfig*)
 {
@@ -101,10 +101,7 @@ bool HostTrackerModule::end(const char* fqn, int idx, SnortConfig*)
     }
     else if ( idx && !strcmp(fqn, "host_tracker") )
     {
-        //  FIXIT-H: Next step will be to add the HostTracker object to
-        //  a cache.  For now just delete in the destructor.
-        //SFAT_AddHost(host);
-        //host = nullptr;
+        host_cache_add_host_tracker(host);
     }
 
     return true;

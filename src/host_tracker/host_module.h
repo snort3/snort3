@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -29,6 +29,7 @@
 
 #include "framework/module.h"
 #include "host_tracker/host_tracker.h"
+#include <assert.h>
 
 #define host_tracker_help \
     "configure hosts"
@@ -43,10 +44,7 @@ public:
 
     ~HostTrackerModule()
     {
-        //  FIXIT-H: Change this back to an assert once we hand off the
-        //           host to a cache.
-        if (host)
-            delete host;
+        assert(!host);
     }
 
     bool set(const char*, Value&, SnortConfig*) override;

@@ -1024,6 +1024,7 @@ src/filters/Makefile \
 src/flow/Makefile \
 src/framework/Makefile \
 src/hash/Makefile \
+src/hash/test/Makefile \
 src/helpers/Makefile \
 src/lua/Makefile \
 src/ips_options/Makefile \

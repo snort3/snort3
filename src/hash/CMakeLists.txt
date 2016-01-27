@@ -1,6 +1,7 @@
 
 set (HASH_INCLUDES
     hashes.h
+    lru_cache_shared.h
     sfghash.h 
     sfxhash.h 
     sfhashfcn.h 
@@ -20,6 +21,7 @@ add_library( hash STATIC
     ${HASH_INCLUDES}
     ${HASH_SOURCES}
     hashes.cc
+    lru_cache_shared.h
     sfghash.cc 
     sfhashfcn.cc 
     sfprimetable.cc 

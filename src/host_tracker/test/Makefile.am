@@ -2,12 +2,14 @@
 AM_DEFAULT_SOURCE_EXT = .cc
 
 check_PROGRAMS = \
+host_cache_test \
 host_tracker_test
 
 TESTS = $(check_PROGRAMS)
 
+host_cache_test_CPPFLAGS = @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
 host_tracker_test_CPPFLAGS = @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
 
-host_tracker_test_LDADD = \
-@CPPUTEST_LDFLAGS@
+host_cache_test_LDADD = @CPPUTEST_LDFLAGS@
+host_tracker_test_LDADD = @CPPUTEST_LDFLAGS@
 
