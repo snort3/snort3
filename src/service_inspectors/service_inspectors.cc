@@ -32,6 +32,9 @@ extern const BaseApi* sin_smtp;
 extern const BaseApi* sin_ssl;
 
 #ifdef STATIC_INSPECTORS
+extern const BaseApi* ips_dce_iface;
+extern const BaseApi* ips_dce_opnum;
+extern const BaseApi* ips_dce_stub_data;
 extern const BaseApi* ips_dnp3_data;
 extern const BaseApi* ips_dnp3_func;
 extern const BaseApi* ips_dnp3_ind;
@@ -50,6 +53,8 @@ extern const BaseApi* ips_ssl_state;
 extern const BaseApi* ips_ssl_version;
 
 extern const BaseApi* sin_bo;
+extern const BaseApi* sin_dce_smb;
+extern const BaseApi* sin_dce_tcp;
 extern const BaseApi* sin_dnp3;
 extern const BaseApi* sin_dns;
 extern const BaseApi* sin_ftp_client;
@@ -75,6 +80,9 @@ const BaseApi* service_inspectors[] =
     sin_ssl,
 
 #ifdef STATIC_INSPECTORS
+    ips_dce_iface,
+    ips_dce_opnum,
+    ips_dce_stub_data,
     ips_dnp3_data,
     ips_dnp3_func,
     ips_dnp3_ind,
@@ -93,6 +101,8 @@ const BaseApi* service_inspectors[] =
     ips_ssl_version,
 
     sin_bo,
+    sin_dce_smb,
+    sin_dce_tcp,
     sin_dnp3,
     sin_dns,
     sin_ftp_client,

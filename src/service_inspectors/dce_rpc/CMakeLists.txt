@@ -20,7 +20,7 @@ add_subdirectory(wizard)
 if (STATIC_INSPECTORS)
     set (STATIC_INSECTOR_LIBS
         back_orifice
-	dce_rpc
+    	dce_rpc
         dnp3
         dns
         ftp_telnet

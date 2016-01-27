@@ -16,6 +16,7 @@ service_inspectors.h
 
 SUBDIRS = \
 back_orifice \
+dce_rpc \
 dnp3 \
 dns \
 ftp_telnet \

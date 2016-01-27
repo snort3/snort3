@@ -1,0 +1,382 @@
+//--------------------------------------------------------------------------
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
+
+// ips_dce2_iface.cc author Maya Dagon <mdagon@cisco.com>
+// based on work by Todd Wease
+
+#include "dce2_utils.h"
+
+#include "framework/ips_option.h"
+#include "framework/module.h"
+#include "framework/parameter.h"
+#include "framework/range.h"
+#include "detection/detect.h"
+#include "detection/detection_defines.h"
+#include "hash/sfhashfcn.h"
+#include "profiler/profiler.h"
+
+//-------------------------------------------------------------------------
+// dcerpc2 interface rule options
+//-------------------------------------------------------------------------
+
+#define DCE2_RTOKEN__ARG_SEP      " \t"   /* Rule option argument separator */
+#define DCE2_RTOKEN__IFACE_SEP    "-"     /* Rule option interface separator */
+
+#define DCE2_IFACE__LEN  36  /* counting the dashes */
+#define DCE2_IFACE__TIME_LOW_LEN    8
+#define DCE2_IFACE__TIME_MID_LEN    4
+#define DCE2_IFACE__TIME_HIGH_LEN   4
+#define DCE2_IFACE__CLOCK_SEQ_LEN   4
+#define DCE2_IFACE__NODE_LEN       12
+
+#define s_name "dce_iface"
+#define s_help \
+    "detection option to check dcerpc interface"
+
+static THREAD_LOCAL ProfileStats dce2_iface_perf_stats;
+
+static bool DCE2_ParseIface(char* token, Uuid* uuid)
+{
+    char* iface, * ifaceptr = nullptr;
+    char* if_hex, * if_hexptr = nullptr;
+    int num_pieces = 0;
+
+    /* Has to be a uuid in string format, e.g 4b324fc8-1670-01d3-1278-5a47bf6ee188
+     * Check the length */
+    if (strlen(token) != DCE2_IFACE__LEN)
+        return false;
+
+    /* Detach token */
+    iface = strtok_r(token, DCE2_RTOKEN__ARG_SEP, &ifaceptr);
+    if (iface == nullptr)
+        return false;
+
+    /* Cut into pieces separated by '-' */
+    if_hex = strtok_r(iface, DCE2_RTOKEN__IFACE_SEP, &if_hexptr);
+    if (if_hex == nullptr)
+        return false;
+
+    do
+    {
+        char* endptr;
+
+        switch (num_pieces)
+        {
+        case 0:
+        {
+            unsigned long int time_low;
+
+            if (strlen(if_hex) != DCE2_IFACE__TIME_LOW_LEN)
+                return false;
+
+            time_low = strtoul(if_hex, &endptr, 16);
+            if ((errno == ERANGE) || (*endptr != '\0'))
+                return false;
+
+            uuid->time_low = (uint32_t)time_low;
+        }
+
+        break;
+
+        case 1:
+        {
+            unsigned long int time_mid;
+
+            if (strlen(if_hex) != DCE2_IFACE__TIME_MID_LEN)
+                return false;
+
+            time_mid = strtoul(if_hex, &endptr, 16);
+            if ((errno == ERANGE) || (*endptr != '\0'))
+                return false;
+
+            /* Length check ensures 16 bit value */
+            uuid->time_mid = (uint16_t)time_mid;
+        }
+
+        break;
+
+        case 2:
+        {
+            unsigned long int time_high;
+
+            if (strlen(if_hex) != DCE2_IFACE__TIME_HIGH_LEN)
+                return false;
+
+            time_high = strtoul(if_hex, &endptr, 16);
+            if ((errno == ERANGE) || (*endptr != '\0'))
+                return false;
+
+            /* Length check ensures 16 bit value */
+            uuid->time_high_and_version = (uint16_t)time_high;
+        }
+
+        break;
+
+        case 3:
+        {
+            unsigned long int clock_seq_and_reserved, clock_seq_low;
+
+            if (strlen(if_hex) != DCE2_IFACE__CLOCK_SEQ_LEN)
+                return false;
+
+            /* Work backwards */
+            clock_seq_low = strtoul(&if_hex[2], &endptr, 16);
+            if ((errno == ERANGE) || (*endptr != '\0'))
+                return false;
+
+            uuid->clock_seq_low = (uint8_t)clock_seq_low;
+
+            /* Set third byte to null so we can _dpd.SnortStrtoul the first part */
+            if_hex[2] = '\x00';
+
+            clock_seq_and_reserved = strtoul(if_hex, &endptr, 16);
+            if ((errno == ERANGE) || (*endptr != '\0'))
+                return false;
+
+            uuid->clock_seq_and_reserved = (uint8_t)clock_seq_and_reserved;
+        }
+
+        break;
+
+        case 4:
+        {
+            int i, j;
+
+            if (strlen(if_hex) != DCE2_IFACE__NODE_LEN)
+                return false;
+
+            /* Walk back a byte at a time - 2 hex digits */
+            for (i = DCE2_IFACE__NODE_LEN - 2, j = sizeof(uuid->node) - 1;
+                (i >= 0) && (j >= 0);
+                i -= 2, j--)
+            {
+                /* Only giving strtoul 1 byte */
+                uuid->node[j] = (uint8_t)strtoul(&if_hex[i], &endptr, 16);
+                if ((errno == ERANGE) || (*endptr != '\0'))
+                    return false;
+                if_hex[i] = '\0';
+            }
+        }
+        break;
+
+        default:
+            break;
+        }
+
+        num_pieces++;
+    }
+    while ((if_hex = strtok_r(nullptr, DCE2_RTOKEN__IFACE_SEP, &if_hexptr)) != nullptr);
+
+    if (num_pieces != 5)
+        return false;
+
+    /* Check for more arguments */
+    iface = strtok_r(nullptr, DCE2_RTOKEN__ARG_SEP, &ifaceptr);
+    if (iface != nullptr)
+        return false;
+
+    return true;
+}
+
+class Dce2IfaceOption : public IpsOption
+{
+public:
+    Dce2IfaceOption(RangeCheck iface_version, bool iface_any_frag, Uuid iface_uuid) :
+        IpsOption(s_name)
+    { version = iface_version; any_frag = iface_any_frag; uuid = iface_uuid; }
+
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
+    int eval(Cursor&, Packet*) override;
+
+private:
+    RangeCheck version;
+    bool any_frag;
+    Uuid uuid;
+};
+
+uint32_t Dce2IfaceOption::hash() const
+{
+    uint32_t a, b, c;
+
+    a = uuid.time_low;
+    b = (uuid.time_mid << 16) | (uuid.time_high_and_version);
+    c = (uuid.clock_seq_and_reserved << 24) |
+        (uuid.clock_seq_low << 16) |
+        (uuid.node[0] << 8) |
+        (uuid.node[1]);
+
+    mix_str(a, b, c, get_name());
+
+    a += (uuid.node[2] << 24) |
+        (uuid.node[3] << 16) |
+        (uuid.node[4] << 8) |
+        (uuid.node[5]);
+    b += version.max;
+    c += version.min;
+
+    mix(a, b, c);
+
+    a += version.op;
+    b += any_frag;
+
+    finalize(a, b, c);
+
+    return c;
+}
+
+bool Dce2IfaceOption::operator==(const IpsOption& ips) const
+{
+    if ( strcmp(get_name(), ips.get_name()) )
+        return false;
+
+    const Dce2IfaceOption& rhs = (Dce2IfaceOption&)ips;
+
+    if ((DCE2_UuidCompare(&uuid, &rhs.uuid) == 0) &&
+        (version == rhs.version) &&
+        (any_frag == rhs.any_frag))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+int Dce2IfaceOption::eval(Cursor&, Packet*)
+{
+    Profile profile(dce2_iface_perf_stats);
+    //FIXIT - add eval code
+    return DETECTION_OPTION_NO_MATCH;
+}
+
+//-------------------------------------------------------------------------
+// dce2_iface module
+//-------------------------------------------------------------------------
+
+static const Parameter s_params[] =
+{
+    { "uuid", Parameter::PT_STRING, nullptr, nullptr,
+      "match given dcerpc uuid" },
+    { "version",Parameter::PT_STRING, nullptr, nullptr,
+      "interface version" },
+    { "any_frag", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "match on any fragment" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class Dce2IfaceModule : public Module
+{
+public:
+    Dce2IfaceModule() : Module(s_name, s_help, s_params) { }
+
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
+    ProfileStats* get_profile() const override;
+
+    RangeCheck version;
+    bool any_frag;
+    Uuid uuid;
+};
+
+bool Dce2IfaceModule::begin(const char*, int, SnortConfig*)
+{
+    version.init();
+    any_frag = false;
+    return true;
+}
+
+bool Dce2IfaceModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("version") )
+        return version.parse(v.get_string());
+    else if ( v.is("any_frag") )
+        any_frag = true;
+    else if ( v.is("uuid") )
+    {
+        char* token = (char*)v.get_string();
+        token = DCE2_PruneWhiteSpace(token);
+        return DCE2_ParseIface(token, &uuid);
+    }
+    else
+        return false;
+
+    return true;
+}
+
+ProfileStats* Dce2IfaceModule::get_profile() const
+{
+    return &dce2_iface_perf_stats;
+}
+
+//-------------------------------------------------------------------------
+// dce2_iface api
+//-------------------------------------------------------------------------
+
+static Module* dce2_iface_mod_ctor()
+{
+    return new Dce2IfaceModule;
+}
+
+static void dce2_iface_mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* dce2_iface_ctor(Module* p, OptTreeNode*)
+{
+    Dce2IfaceModule* m = (Dce2IfaceModule*)p;
+    return new Dce2IfaceOption(m->version, m->any_frag, m->uuid);
+}
+
+static void dce2_iface_dtor(IpsOption* p)
+{
+    delete p;
+}
+
+static const IpsApi dce2_iface_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        0,
+        API_RESERVED,
+        API_OPTIONS,
+        s_name,
+        s_help,
+        dce2_iface_mod_ctor,
+        dce2_iface_mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0, PROTO_BIT__TCP | PROTO_BIT__UDP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    dce2_iface_ctor,
+    dce2_iface_dtor,
+    nullptr
+};
+
+//-------------------------------------------------------------------------
+// plugin
+//-------------------------------------------------------------------------
+
+// added to snort_plugins in dce2.cc
+const BaseApi* ips_dce_iface = &dce2_iface_api.base;
+
