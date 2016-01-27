@@ -73,6 +73,7 @@ static const StatsTable::Field fields[] =
     { "avg/check", 10, '\0', 1, std::ios_base::fmtflags() },
     { "avg/match", 10, '\0', 1, std::ios_base::fmtflags() },
     { "avg/non-match", 14, '\0', 1, std::ios_base::fmtflags() },
+    { "disables", 9, '\0', 0, std::ios_base::fmtflags() },
     { nullptr, 0, '\0', 0, std::ios_base::fmtflags() }
 };
 
@@ -252,7 +253,7 @@ static void print_entries(std::vector<View>& entries, ProfilerSorter<View> sort,
 
         table << s_rule_table_title;
         if ( count )
-            table << " (worst" << count;
+            table << " (worst " << count;
         else
             table << " (all";
 
