@@ -2143,9 +2143,7 @@ void module_init()
     ModuleManager::add_module(new ActiveModule);
     ModuleManager::add_module(new FileIdModule);
 
-#ifdef PPM_MGR
     ModuleManager::add_module(new PpmModule);
-#endif
 
     // these modules should be in ips policy
     ModuleManager::add_module(new EventFilterModule);

@@ -409,13 +409,12 @@ static int detection_option_tree_evaluate(
     if (!root)
         return 0;
 
-#ifdef PPM_MGR
     /* Start Rule Timer */
     if ( PPM_RULES_ENABLED() )
     {
         PPM_GET_TIME();
         PPM_INIT_RULE_TIMER();
-        dot_root_state_t* root_state = root->state + get_instance_id();
+        ppm_dot_root_state_t* root_state = root->state + get_instance_id();
 
         if ( !root_state->enabled )
         {
@@ -428,7 +427,6 @@ static int detection_option_tree_evaluate(
             }
         }
     }
-#endif
 
     Cursor c(eval_data->p);
 
@@ -439,7 +437,6 @@ static int detection_option_tree_evaluate(
         rval += detection_option_node_evaluate(root->children[i], eval_data, c);
     }
 
-#ifdef PPM_MGR
     if ( PPM_ENABLED() )
     {
         PPM_GET_TIME();
@@ -455,7 +452,6 @@ static int detection_option_tree_evaluate(
             PPM_END_RULE_TIMER();
         }
     }
-#endif
 
     return rval;
 }
@@ -954,13 +950,9 @@ static int rule_tree_queue(
     return 0;
 }
 
-#ifdef PPM_MGR
 #define CHECK_PPM() \
     if (PPM_PACKET_ABORT_FLAG()) \
         return 1;
-#else
-#define CHECK_PPM()
-#endif
 
 #define SEARCH_DATA(buf, len, cnt) \
     { \
@@ -1098,10 +1090,8 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
                 return 0;
     }
 
-#ifdef PPM_MGR
     if ( PPM_ENABLED() )
         PPM_GET_TIME();
-#endif
 
     do
     {

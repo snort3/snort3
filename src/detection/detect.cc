@@ -83,8 +83,7 @@ void snort_ignore(Packet*) { }
 
 void snort_inspect(Packet* p)
 {
-#ifdef PPM_MGR
-    uint64_t pktcnt=0;
+    uint64_t pktcnt = 0;
 
     /* Begin Packet Performance Monitoring  */
     if ( PPM_PKTS_ENABLED() )
@@ -94,18 +93,15 @@ void snort_inspect(Packet* p)
         PPM_INIT_PKT_TIMER();
 
 #ifdef DEBUG_MSGS
+        /* for debugging, info gathering, so don't worry about
+        *  (unsigned) casting of pktcnt, were not likely to debug
+        *  4G packets
+        */
         if ( Debug::enabled(DEBUG_PPM) )
-        {
-            /* for debugging, info gathering, so don't worry about
-            *  (unsigned) casting of pktcnt, were not likely to debug
-            *  4G packets
-            */
             LogMessage("PPM: Process-BeginPkt[%u] caplen=%u\n",
-                (unsigned)pktcnt,p->pkth->caplen);
-        }
+                (unsigned)pktcnt, p->pkth->caplen);
 #endif
     }
-#endif
 
     bool inspected = false;
 
@@ -168,7 +164,6 @@ void snort_inspect(Packet* p)
     if ( inspected )
         InspectorManager::clear(p);
 
-#ifdef PPM_MGR
     if ( PPM_PKTS_ENABLED() )
     {
         PPM_GET_TIME();
@@ -179,22 +174,19 @@ void snort_inspect(Packet* p)
         if ( Debug::enabled(DEBUG_PPM) )
         {
             // FIXIT-L logs should be debugs
-            LogMessage("PPM: Pkt[%u] Used= ",(unsigned)pktcnt);
+            LogMessage("PPM: Pkt[%u] Used= ", (unsigned)pktcnt);
             PPM_PRINT_PKT_TIME("%g usecs\n");
-            LogMessage("PPM: Process-EndPkt[%u]\n\n",(unsigned)pktcnt);
+            LogMessage("PPM: Process-EndPkt[%u]\n\n", (unsigned)pktcnt);
         }
 #endif
         PPM_PKT_LOG(p);
     }
+
     if ( PPM_RULES_ENABLED() )
-    {
         PPM_RULE_LOG(pktcnt, p);
-    }
+
     if ( PPM_PKTS_ENABLED() )
-    {
         PPM_END_PKT_TIMER();
-    }
-#endif
 
     Profile profile(eventqPerfStats);
     SnortEventqLog(p);
@@ -341,7 +333,6 @@ bool snort_detect(Packet* p)
     case PktType::PDU:
     case PktType::FILE:
     {
-#       ifdef PPM_MGR
         /*
          * Packet Performance Monitoring
          * (see if preprocessing took too long)
@@ -354,7 +345,6 @@ bool snort_detect(Packet* p)
             if ( PPM_PACKET_ABORT_FLAG() )
                 return false;
         }
-#       endif /* PPM_MGR */
 
         /*
         **  This is where we short circuit so

@@ -2,9 +2,6 @@ The features listed below must be explicitly enabled so they are built
 into the Snort binary.  For a full list of build features, run ./configure
 --help.
 
-*  *--enable-ppm*: enable building packet and rule performance monitoring
-   and coarse latency enforcement.
-
 *  *--enable-shell*: enable building local and remote command line shell
    support.
 

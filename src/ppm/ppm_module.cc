@@ -33,7 +33,7 @@
 
 #define s_name "ppm"
 #define s_help \
-    "packet and rule latency monitoring and control (requires --enable-ppm)"
+    "packet and rule latency monitoring and control"
 
 static const Parameter s_params[] =
 {

@@ -74,11 +74,6 @@ if (BUILD_PIGLET)
     add_subdirectory(piglet_plugins)
 endif (BUILD_PIGLET)
 
-if (ENABLE_PPM)
-    set(PPM_LIBRARIES ppm)
-    add_subdirectory(ppm)
-endif (ENABLE_PPM)
-
 #  The main Snort executableRA
 add_executable( snort
     main.h
@@ -129,7 +124,7 @@ target_link_libraries( snort
     detection
     framework
     time
-    ${PPM_LIBRARIES}
+    ppm
     profiler
     ips_actions
     events
@@ -164,6 +159,7 @@ add_subdirectory(mime)
 add_subdirectory(packet_io)
 add_subdirectory(parser)
 add_subdirectory(ports)
+add_subdirectory(ppm)
 add_subdirectory(protocols)
 add_subdirectory(sfip)
 add_subdirectory(sfrt)

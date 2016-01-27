@@ -48,13 +48,12 @@ dofile(conf_dir .. '/file_magic.lua')
 -- you can also use default_ftp_server and default_wizard
 ---------------------------------------------------------------------------
 
--- uncomment ppm if you built with --enable-ppm
---ppm = { }
 
 -- uncomment normalizer if you are inline or not --pedantic
 --normalizer = { }
 
--- profiler = { }
+--ppm = { }
+--profiler = { }
 
 stream = { }
 stream_ip = { }

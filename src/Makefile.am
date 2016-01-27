@@ -38,10 +38,6 @@ piglet/libpiglet.a \
 piglet_plugins/libpiglet_plugins.a
 endif
 
-if PPM_MGR
-ppm_list = ppm/libppm.a
-endif
-
 snort_LDFLAGS = -export-dynamic
 
 # order libs to avoid undefined symbols
@@ -92,7 +88,7 @@ filters/libfilter.a \
 detection/libdetection.a \
 framework/libframework.a \
 time/libtime.a \
-$(ppm_list) \
+ppm/libppm.a \
 profiler/libprofiler.a \
 actions/libips_actions.a \
 events/libevents.a \
@@ -133,6 +129,7 @@ network_inspectors \
 packet_io \
 parser \
 ports \
+ppm \
 protocols \
 search_engines \
 service_inspectors \
@@ -150,8 +147,4 @@ endif
 
 if BUILD_PIGLET
 SUBDIRS += piglet piglet_plugins
-endif
-
-if PPM_MGR
-SUBDIRS += ppm
 endif

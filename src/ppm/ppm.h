@@ -229,7 +229,7 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
         ppm_rt->tot = ppm_cur_time - ppm_rt->start; \
         if (ppm_rt->tot > ppm_rt->max_rule_ticks) \
         { \
-            dot_root_state_t* root_state = (root)->state + get_instance_id(); \
+            ppm_dot_root_state_t* root_state = (root)->state + get_instance_id(); \
             if ( snort_conf->ppm_cfg->rule_action & PPM_ACTION_SUSPEND ) \
             { \
                 int ii; \
@@ -262,7 +262,7 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
     }
 
 #define PPM_REENABLE_TREE(root,p) \
-    dot_root_state_t* root_state = (root)->state + get_instance_id(); \
+    ppm_dot_root_state_t* root_state = (root)->state + get_instance_id(); \
     if ( (root_state)->ppm_suspend_time && snort_conf->ppm_cfg->max_suspend_ticks ) \
     { \
         PPM_TICKS now = PPM_RULE_TIME(p); \

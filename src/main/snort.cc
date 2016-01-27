@@ -645,9 +645,8 @@ void Snort::thread_init(const char* intf)
 
 void Snort::thread_term()
 {
-#ifdef PPM_MGR
     ppm_sum_stats();
-#endif
+
     if ( !snort_conf->dirty_pig )
         InspectorManager::thread_stop(snort_conf);
 

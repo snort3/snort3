@@ -31,7 +31,6 @@ Optional Features:
     --disable-static-codecs    do not include codecs in binary
     --disable-static-piglets   do not include piglets in binary
     --enable-valgrind        Only use if you are testing with valgrind.
-    --enable-ppm            Enable packet/rule performance monitor
     --enable-shell           enable command line shell support
     --enable-linux-smp-stats Enable statistics reporting through proc
     --enable-debug-msgs      Enable debug printing options (bugreports and developers only)
@@ -191,12 +190,6 @@ while [ $# -ne 0 ]; do
             ;;
         --enable-valgrind)
             append_cache_entry ENABLE_VALGRIND       BOOL   true
-            ;;
-        --disable-ppm)
-            append_cache_entry ENABLE_PPM    BOOL   false
-            ;;
-        --enable-ppm)
-            append_cache_entry ENABLE_PPM    BOOL   true
             ;;
         --disable-linux-smp-stats)
             append_cache_entry ENABLE_LINUX_SMP_STATS    BOOL   false

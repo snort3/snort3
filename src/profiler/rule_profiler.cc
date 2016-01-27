@@ -73,9 +73,6 @@ static const StatsTable::Field fields[] =
     { "avg/check", 10, '\0', 1, std::ios_base::fmtflags() },
     { "avg/match", 10, '\0', 1, std::ios_base::fmtflags() },
     { "avg/non-match", 14, '\0', 1, std::ios_base::fmtflags() },
-#ifdef PPM_MGR
-    { "disables", 9, '\0', 0, std::ios_base::fmtflags() },
-#endif
     { nullptr, 0, '\0', 0, std::ios_base::fmtflags() }
 };
 
@@ -105,10 +102,8 @@ struct View
     uint64_t alerts() const
     { return state.alerts; }
 
-#ifdef PPM_MGR
     uint64_t ppm_disable_count() const
     { return state.ppm_disable_cnt; }
-#endif
 
     hr_duration time_per(hr_duration d, uint64_t v) const
     {
@@ -239,9 +234,7 @@ static void print_single_entry(const View& v, unsigned n)
         table << duration_cast<microseconds>(v.avg_match()).count(); // avg/match
         table << duration_cast<microseconds>(v.avg_no_match()).count(); // avg/non-match
 
-#ifdef PPM_MGR
         table << v.ppm_disable_count(); // disables
-#endif
     }
 
     LogMessage("%s", ss.str().c_str());
@@ -433,9 +426,7 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
     SigInfo sig_info;
     auto entry = make_rule_entry(3_ticks, 2_ticks, 3, 2);
     entry.state.alerts = 77;
-#ifdef PPM_MGR
     entry.state.ppm_disable_cnt = 5;
-#endif
 
     SECTION( "copy assignment" )
     {
@@ -490,12 +481,10 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
         CHECK( entry.alerts() == 77 );
     }
 
-#ifdef PPM_MGR
     SECTION( "ppm_disable_count" )
     {
         CHECK( entry.ppm_disable_count() == 5 );
     }
-#endif
 
     SECTION( "avg_match" )
     {

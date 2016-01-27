@@ -176,9 +176,7 @@ SnortConfig::SnortConfig()
 
     profiler = new ProfilerConfig;
 
-#ifdef PPM_MGR
     ppm_cfg = (ppm_cfg_t*)SnortAlloc(sizeof(*ppm_cfg));
-#endif
 
     policy_map = new PolicyMap;
 
@@ -299,10 +297,6 @@ void SnortConfig::setup()
 #ifdef HAVE_HYPERSCAN
     regex_setup(this);
     hyperscan_setup(this);
-#endif
-
-#ifdef PPM_MGR
-    //PPM_PRINT_CFG(ppm_cfg);
 #endif
 }
 
@@ -519,7 +513,6 @@ bool SnortConfig::verify()
         return false;
     }
 
-#ifdef PPM_MGR
     /* XXX XXX Not really sure we need to disallow this */
     if (snort_conf->ppm_cfg->rule_log != ppm_cfg->rule_log)
     {
@@ -527,7 +520,6 @@ bool SnortConfig::verify()
             "configuration requires a restart.\n");
         return false;
     }
-#endif
 
     if (snort_conf->group_id != group_id)
     {

@@ -65,10 +65,8 @@ struct dot_node_state_t
     uint64_t checks;
     uint64_t disables;
 
-#ifdef PPM_MGR
     uint64_t ppm_disable_cnt;
     uint64_t ppm_enable_cnt;
-#endif
 
     // FIXIT-L J perf profiler stuff should be factored of the node state struct
     void update(hr_duration delta, bool match)
@@ -97,22 +95,18 @@ struct detection_option_tree_node_t
 };
 
 // this is per packet thread
-#ifdef PPM_MGR
-struct dot_root_state_t
+struct ppm_dot_root_state_t
 {
     uint64_t ppm_suspend_time;
     uint64_t ppm_disable_cnt;
     bool enabled;
 };
-#endif
 
 struct detection_option_tree_root_t
 {
     int num_children;
     detection_option_tree_node_t** children;
-#ifdef PPM_MGR
-    dot_root_state_t* state;
-#endif
+    ppm_dot_root_state_t* state;
 };
 
 struct detection_option_eval_data_t

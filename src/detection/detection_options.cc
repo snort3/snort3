@@ -588,7 +588,6 @@ int detection_option_node_evaluate(
         for ( int i = 0; i < NUM_BYTE_EXTRACT_VARS; ++i )
             GetByteExtractValue(&(tmp_byte_extract_vars[i]), (int8_t)i);
 
-#ifdef PPM_MGR
         if ( PPM_PKTS_ENABLED() )
         {
             PPM_GET_TIME();
@@ -603,7 +602,6 @@ int detection_option_node_evaluate(
                 return result;
             }
         }
-#endif
 
         {
             TimePause profile_pause(profile);
@@ -681,7 +679,7 @@ int detection_option_node_evaluate(
                     else if (child_state->result == child_node->num_children)
                         // Indicate that the child's tree branches are done
                         ++result;
-#ifdef PPM_MGR
+
                     if ( PPM_PKTS_ENABLED() )
                     {
                         PPM_GET_TIME();
@@ -693,7 +691,6 @@ int detection_option_node_evaluate(
                             return result;
                         }
                     }
-#endif
                 }
 
                 // If all children branches matched, we don't need to reeval any of
@@ -768,16 +765,11 @@ struct node_profile_stats
     hr_duration elapsed_match;
     hr_duration elapsed_no_match;
     uint64_t checks;
-    uint64_t disables;
+    uint64_t ppm_disables;
 };
 
-static void detection_option_node_update_otn_stats(
-    detection_option_tree_node_t* node,
-    node_profile_stats* stats, uint64_t checks
-#ifdef PPM_MGR
-    , uint64_t disables
-#endif
-    )
+static void detection_option_node_update_otn_stats(detection_option_tree_node_t* node,
+    node_profile_stats* stats, uint64_t checks, uint64_t disables)
 {
     int i;
     node_profile_stats local_stats; /* cumulative stats for this node */
@@ -801,9 +793,8 @@ static void detection_option_node_update_otn_stats(
             local_stats.checks = node_stats.checks;
         else
             local_stats.checks = stats->checks;
-#ifdef PPM_MGR
-        local_stats.disables = disables;
-#endif
+
+        local_stats.ppm_disables = disables;
     }
     else
     {
@@ -811,9 +802,7 @@ static void detection_option_node_update_otn_stats(
         local_stats.elapsed_match = node_stats.elapsed_match;
         local_stats.elapsed_no_match = node_stats.elapsed_no_match;
         local_stats.checks = node_stats.checks;
-#ifdef PPM_MGR
-        local_stats.disables = disables;
-#endif
+        local_stats.ppm_disables = disables;
     }
 
     if (node->option_type == RULE_OPTION_TYPE_LEAF_NODE)
@@ -830,22 +819,15 @@ static void detection_option_node_update_otn_stats(
         state->elapsed_no_match += local_stats.elapsed_no_match;
         if (local_stats.checks > state->checks)
             state->checks = local_stats.checks;
-#ifdef PPM_MGR
-        state->ppm_disable_cnt += local_stats.disables;
-#endif
+
+        state->ppm_disable_cnt += local_stats.ppm_disables;
     }
 
-    if (node->num_children)
+    if ( node->num_children )
     {
-        for (i=0; i<node->num_children; i++)
-        {
-            detection_option_node_update_otn_stats(
-                node->children[i], &local_stats, checks
-#ifdef PPM_MGR
-                , disables
-#endif
-                );
-        }
+        for ( i=0; i < node->num_children; ++i )
+            detection_option_node_update_otn_stats(node->children[i], &local_stats, checks,
+                disables);
     }
 }
 
@@ -863,27 +845,17 @@ void detection_option_tree_update_otn_stats(SFXHASH* doth)
             (detection_option_tree_node_t*)hashnode->data;
 
         uint64_t checks = 0;
-#ifdef PPM_MGR
         uint64_t disables = 0;
-#endif
 
         for ( unsigned i = 0; i < get_instance_max(); ++i )
         {
             checks += node->state[i].checks;
-#ifdef PPM_MGR
             disables += node->state[i].ppm_disable_cnt;
-#endif
         }
 
         if ( checks )
-        {
-            detection_option_node_update_otn_stats(
-                node, NULL, checks
-#ifdef PPM_MGR
-                , disables
-#endif
-                );
-        }
+            detection_option_node_update_otn_stats(node, nullptr, checks, disables);
+
         hashnode = sfxhash_findnext(doth);
     }
 }
@@ -894,10 +866,8 @@ detection_option_tree_root_t* new_root()
     detection_option_tree_root_t* p = (detection_option_tree_root_t*)
         SnortAlloc(sizeof(detection_option_tree_root_t));
 
-#ifdef PPM_MGR
-    p->state = (dot_root_state_t*)
-        SnortAlloc(sizeof(dot_root_state_t)*get_instance_max());
-#endif
+    p->state = (ppm_dot_root_state_t*)
+        SnortAlloc(sizeof(ppm_dot_root_state_t)*get_instance_max());
 
     return p;
 }
@@ -911,9 +881,8 @@ void free_detection_option_root(void** existing_tree)
 
     root = (detection_option_tree_root_t*)*existing_tree;
     free(root->children);
-#ifdef PPM_MGR
+
     free(root->state);
-#endif
     free(root);
     *existing_tree = NULL;
 }

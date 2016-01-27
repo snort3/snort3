@@ -18,7 +18,7 @@
 # if you add an AC_DEFINE() for a symbol that appears in an exported
 # header, you must also add that symbol to CPPFLAGS.  This ensures that
 # external modules like those in examples can use pkg-config to get the
-# same symbols Snort did.  See PPM for an example.
+# same symbols Snort did.
 #--------------------------------------------------------------------------
 # initialization
 #--------------------------------------------------------------------------
@@ -393,17 +393,6 @@ AC_ARG_ENABLE(valgrind,
 
 if test "x$enable_valgrind" = "xyes"; then
     AC_DEFINE([VALGRIND_TESTING],[1],[Workarounds for valgrind testing])
-fi
-
-AC_ARG_ENABLE(ppm,
-    AC_HELP_STRING([--enable-ppm],[enable packet/rule performance monitor]),
-    enable_ppm="$enableval", enable_ppm="no")
-
-AM_CONDITIONAL(PPM_MGR, test "x$enable_ppm" = "xyes")
-
-if test "x$enable_ppm" = "xyes"; then
-    CPPFLAGS="$CPPFLAGS -DPPM_MGR"
-    AC_DEFINE(PPM_MGR, [1], [build ppm manager])
 fi
 
 AC_ARG_ENABLE(shell,
