@@ -139,16 +139,3 @@ const InspectApi dce2_smb_api =
     nullptr  // reset
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &dce2_smb_api.base,
-    ips_dce_iface,
-    ips_dce_opnum,
-    ips_dce_stub_data,
-    nullptr
-};
-#else
-const BaseApi* sin_dce_smb = &dce2_smb_api.base;
-#endif
-

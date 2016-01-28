@@ -20,6 +20,7 @@
 
 #include "dce2_common.h"
 #include "framework/module.h"
+#include "framework/base_api.h"
 #include "log/messages.h"
 
 const char* dce2_get_policy_name(DCE2_POLICY policy)
@@ -88,4 +89,26 @@ void print_dce2_common_config(dce2CommonProtoConf& common)
     LogMessage("    Policy : %s\n",
         dce2_get_policy_name(common.policy));
 }
+
+#ifdef BUILDING_SO
+
+extern const BaseApi* ips_dce_iface;
+extern const BaseApi* ips_dce_opnum;
+extern const BaseApi* ips_dce_stub_data;
+
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &dce2_tcp_api.base,
+    &dce2_smb_api.base,
+    ips_dce_iface,
+    ips_dce_opnum,
+    ips_dce_stub_data,
+    nullptr
+};
+#else
+
+const BaseApi* sin_dce_tcp = &dce2_tcp_api.base;
+const BaseApi* sin_dce_smb = &dce2_smb_api.base;
+
+#endif
 

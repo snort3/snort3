@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License along
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-//--------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
 //dce2_common.h author Rashmi Pitre <rrp@cisco.com>
 
@@ -23,6 +23,10 @@
 
 #include "main/snort_types.h"
 #include "framework/module.h"
+#include "framework/inspector.h"
+
+extern const InspectApi dce2_smb_api;
+extern const InspectApi dce2_tcp_api;
 
 #define GID_DCE2 145
 
