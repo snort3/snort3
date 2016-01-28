@@ -729,5 +729,18 @@ static const ConvertMap rule_dnp3_func =
 };
 
 const ConvertMap* dnp3_func_map = &rule_dnp3_func;
+
+/************************************
+ *********  DCE STUB DATA  **********
+ ************************************/
+
+static const std::string dce_stub_data = "dce_stub_data";
+static const ConvertMap rule_dce_stub_data =
+{
+    dce_stub_data,
+    unchanged_rule_ctor<& dce_stub_data, false>,
+};
+
+const ConvertMap* dce_stub_data_map = &rule_dce_stub_data;
 } // namespace rule
 

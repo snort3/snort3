@@ -73,5 +73,18 @@ static const ConvertMap dnp3_ind_api =
 };
 
 const ConvertMap* dnp3_ind_map = &dnp3_ind_api;
+
+/************************************
+ *********  DCE OPNUM **************
+ ************************************/
+static const std::string dce_opnum = "dce_opnum";
+static const ConvertMap dce_opnum_api =
+{
+    dce_opnum,
+    comma_list_conversion_ctor<& dce_opnum>,
+};
+
+const ConvertMap* dce_opnum_map = &dce_opnum_api;
+
 } // namespace rules
 

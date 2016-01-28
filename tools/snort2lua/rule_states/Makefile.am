@@ -5,6 +5,7 @@ librule_states_a_SOURCES = \
 rule_base64_decode.cc \
 rule_content.cc \
 rule_convert_comma_list.cc \
+rule_dce_iface.cc \
 rule_dnp3_obj.cc \
 rule_file_data.cc \
 rule_http_encode.cc \
