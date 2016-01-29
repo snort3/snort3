@@ -506,7 +506,7 @@ void print_dce2_smb_conf(dce2SmbProtoConf& config)
         else if (config.smb_file_depth == 0)
             LogMessage("    SMB file depth: Unlimited\n");
         else
-            LogMessage("    SMB file depth: %ld\n",config.smb_file_depth);
+            LogMessage("    SMB file depth: %d\n",config.smb_file_depth);
     }
 
     if (config.smb_valid_versions_mask  == DCE2_VALID_SMB_VERSION_FLAG_V1)

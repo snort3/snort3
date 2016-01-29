@@ -120,5 +120,4 @@ static inline bool DCE2_ListIsEmpty(DCE2_List* list)
     return false;
 }
 
-#endif   /* _DCE2_LIST_H_ */
-
+#endif   

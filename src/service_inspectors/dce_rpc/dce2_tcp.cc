@@ -63,6 +63,7 @@ void Dce2Tcp::show(SnortConfig*)
 
 void Dce2Tcp::eval(Packet* p)
 {
+    UNUSED(p);
 }
 
 //-------------------------------------------------------------------------

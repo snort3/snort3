@@ -62,7 +62,7 @@ struct dce2SmbProtoConf
     uint8_t smb_max_compound;
     uint16_t smb_valid_versions_mask;
     dce2SmbFileInspection smb_file_inspection;
-    int64_t smb_file_depth;
+    int16_t smb_file_depth;
     DCE2_List* smb_invalid_shares;
 };
 

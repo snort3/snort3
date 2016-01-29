@@ -82,6 +82,7 @@ void Dce2Smb::show(SnortConfig*)
 
 void Dce2Smb::eval(Packet* p)
 {
+    UNUSED(p);
 }
 
 //-------------------------------------------------------------------------

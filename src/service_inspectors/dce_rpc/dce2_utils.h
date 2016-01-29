@@ -214,16 +214,6 @@ static inline bool DCE2_IsEmptyStr(char* str)
     return false;
 }
 
-/*********************************************************************
- * Function:
- *
- * Purpose:
- *
- * Arguments:
- *
- * Returns:
- *
- *********************************************************************/
 static inline int DCE2_UuidCompare(const void* data1, const void* data2)
 {
     const Uuid* uuid1 = (Uuid*)data1;
