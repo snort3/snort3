@@ -27,18 +27,44 @@
 #include "ip_module.h"
 #include "ip_defrag.h"
 #include "stream/stream.h"
-#include "perf_monitor/perf.h"
 #include "flow/flow_control.h"
 #include "sfip/sf_ip.h"
 #include "profiler/profiler.h"
 
+const PegInfo ip_pegs[] =
+{
+    SESSION_PEGS("ip"),
+    { "total", "total fragments" },
+    { "current", "current fragments" },
+    { "max frags", "max fragments" },
+    { "reassembled", "reassembled datagrams" },
+    { "discards", "fragments discarded" },
+    { "memory faults", "memory faults" },
+    { "frag timeouts", "datagrams abandoned" },
+    { "overlaps", "overlapping fragments" },
+    { "anomalies", "anomalies detected" },
+    { "alerts", "alerts generated" },
+    { "drops", "fragments dropped" },
+    { "trackers added", "datagram trackers created" },
+    { "trackers freed", "datagram trackers released" },
+    { "trackers cleared", "datagram trackers cleared" },
+    { "trackers completed", "datagram trackers completed" },
+    { "nodes inserted", "fragments added to tracker" },
+    { "nodes deleted", "fragments deleted from tracker" },
+    { "memory used", "current memory usage in bytes" },
+    { "reassembled bytes", "total reassembled bytes" },
+    { "fragmented bytes", "total fragmented bytes" },
+    { nullptr, nullptr }
+};
+
+THREAD_LOCAL IpStats ip_stats;
 THREAD_LOCAL ProfileStats ip_perf_stats;
 
 //-------------------------------------------------------------------------
 // private methods
 //-------------------------------------------------------------------------
 
-static void IpSessionCleanup (Flow* lws, FragTracker* tracker)
+static void IpSessionCleanup(Flow* lws, FragTracker* tracker)
 {
     if ( lws->ssn_server )
     {
@@ -46,19 +72,17 @@ static void IpSessionCleanup (Flow* lws, FragTracker* tracker)
         d->cleanup(tracker);
     }
 
-    if (lws->ssn_state.session_flags & SSNFLAG_PRUNED)
-    {
-        CloseStreamSession(&sfBase, SESSION_CLOSED_PRUNED);
-    }
-    else if (lws->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
-    {
-        CloseStreamSession(&sfBase, SESSION_CLOSED_TIMEDOUT);
-    }
-    else
-    {
-        CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
-    }
+    if ( lws->ssn_state.session_flags & SSNFLAG_TIMEDOUT )
+        ip_stats.timeouts++;
+    else if ( lws->ssn_state.session_flags & SSNFLAG_PRUNED )
+        ip_stats.prunes++;
 
+    if ( lws->ssn_state.session_flags & SSNFLAG_TIMEDOUT )
+        ip_stats.timeouts++;
+    else if ( lws->ssn_state.session_flags & SSNFLAG_PRUNED )
+        ip_stats.prunes++;
+
+    ip_stats.released++;
     lws->restart();
 }
 
@@ -117,7 +141,7 @@ IpSession::IpSession(Flow* flow) : Session(flow)
 void IpSession::clear()
 {
     IpSessionCleanup(flow, &tracker);
-    sfBase.iCurrentFrags--;
+    ip_stats.current--;
 }
 
 bool IpSession::setup(Packet*)
@@ -126,12 +150,14 @@ bool IpSession::setup(Packet*)
         "Stream IP session created!\n");
 
     memset(&tracker, 0, sizeof(tracker));
-    sfBase.iCurrentFrags++;
-    if (sfBase.iCurrentFrags > sfBase.iMaxFrags)
-        sfBase.iMaxFrags = sfBase.iCurrentFrags;
+    SESSION_STATS_ADD(ip_stats);
+    ip_stats.trackers_created++;
 
 #ifdef ENABLE_EXPECTED_IP
     if ( flow_con->expected_session(flow, p))
+    {
+        ip_stats.sessions--; // Incremented in SESSION_STATS_ADD
+        MODULE_PROFILE_END(ip_perf_stats);
         return false;
 #endif
     return true;
@@ -144,7 +170,6 @@ int IpSession::process(Packet* p)
     if ( stream.expired_session(flow, p) )
     {
         IpSessionCleanup(flow, &tracker);
-        // FIXIT count ip session timeouts here
 
 #ifdef ENABLE_EXPECTED_IP
         if ( flow_con->expected_session(flow, p))

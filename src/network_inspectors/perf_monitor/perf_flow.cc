@@ -47,11 +47,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "perf.h"
 #include "main/snort_types.h"
-#include "main/snort_types.h"
-#include "sfip/sf_ip.h"
+#include "perf_monitor.h"
 #include "protocols/icmp4.h"
+#include "sfip/sf_ip.h"
 #include "utils/util.h"
 
 static void DisplayFlowStats(SFFLOW_STATS* sfFlowStats);
@@ -80,115 +79,6 @@ typedef struct _sfSingleFlowStatsValue
     uint64_t total_bytes;
     uint32_t stateChanges[SFS_STATE_MAX];
 } sfSFSValue;
-
-/*
-*  Allocate Memory, initialize arrays, etc...
-*/
-int InitFlowStats(SFFLOW* sfFlow)
-{
-    static THREAD_LOCAL char first = 1;
-
-    if (first)
-    {
-        sfFlow->pktLenCnt = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (SF_MAX_PKT_LEN + 2));
-        sfFlow->portTcpSrc = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (SF_MAX_PORT+1));
-        sfFlow->portTcpDst = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (SF_MAX_PORT+1));
-        sfFlow->portUdpSrc = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (SF_MAX_PORT+1));
-        sfFlow->portUdpDst = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (SF_MAX_PORT+1));
-        sfFlow->typeIcmp = (uint64_t*)SnortAlloc(sizeof(uint64_t) * 256);
-
-        first = 0;
-    }
-    else
-    {
-        memset(sfFlow->pktLenCnt, 0, sizeof(uint64_t) * (SF_MAX_PKT_LEN + 2));
-        memset(sfFlow->portTcpSrc, 0, sizeof(uint64_t) * (SF_MAX_PORT+1));
-        memset(sfFlow->portTcpDst, 0, sizeof(uint64_t) * (SF_MAX_PORT+1));
-        memset(sfFlow->portUdpSrc, 0, sizeof(uint64_t) * (SF_MAX_PORT+1));
-        memset(sfFlow->portUdpDst, 0, sizeof(uint64_t) * (SF_MAX_PORT+1));
-        memset(sfFlow->typeIcmp, 0, sizeof(uint64_t) * 256);
-    }
-
-    sfFlow->pktTotal = 0;
-    sfFlow->byteTotal = 0;
-
-    sfFlow->portTcpHigh=0;
-    sfFlow->portTcpTotal=0;
-
-    sfFlow->portUdpHigh=0;
-    sfFlow->portUdpTotal=0;
-
-    sfFlow->typeIcmpTotal = 0;
-
-    return 0;
-}
-
-int InitFlowIPStats(SFFLOW* sfFlow)
-{
-    static THREAD_LOCAL char first = 1;
-
-    if (first)
-    {
-        sfFlow->ipMap = sfxhash_new(1021, sizeof(sfSFSKey), sizeof(sfSFSValue),
-            perfmon_config->flowip_memcap, 1, NULL, NULL, 1);
-        if (!sfFlow->ipMap)
-            FatalError("Unable to allocate memory for FlowIP stats\n");
-
-        first = 0;
-    }
-    else
-    {
-        sfxhash_make_empty(sfFlow->ipMap);
-    }
-
-    return 0;
-}
-
-void FreeFlowStats(SFFLOW* sfFlow)
-{
-    if (sfFlow->pktLenCnt != NULL)
-    {
-        free(sfFlow->pktLenCnt);
-        sfFlow->pktLenCnt = NULL;
-    }
-
-    if (sfFlow->portTcpSrc != NULL)
-    {
-        free(sfFlow->portTcpSrc);
-        sfFlow->portTcpSrc = NULL;
-    }
-
-    if (sfFlow->portTcpDst != NULL)
-    {
-        free(sfFlow->portTcpDst);
-        sfFlow->portTcpDst = NULL;
-    }
-
-    if (sfFlow->portUdpSrc != NULL)
-    {
-        free(sfFlow->portUdpSrc);
-        sfFlow->portUdpSrc = NULL;
-    }
-
-    if (sfFlow->portUdpDst != NULL)
-    {
-        free(sfFlow->portUdpDst);
-        sfFlow->portUdpDst = NULL;
-    }
-
-    if (sfFlow->typeIcmp != NULL)
-    {
-        free(sfFlow->typeIcmp);
-        sfFlow->typeIcmp = NULL;
-    }
-
-    if (sfFlow->ipMap != NULL)
-    {
-        sfxhash_delete(sfFlow->ipMap);
-        sfFlow->ipMap = NULL;
-    }
-}
-
 int UpdateTCPFlowStats(SFFLOW* sfFlow, int sport, int dport, int len)
 {
     /*
@@ -280,89 +170,6 @@ int UpdateICMPFlowStats(SFFLOW* sfFlow, int type, int len)
     return 0;
 }
 
-static sfSFSValue* findFlowIPStats(SFFLOW* sfFlow, const sfip_t* src_addr, const sfip_t* dst_addr,
-    int* swapped)
-{
-    SFXHASH_NODE* node;
-    sfSFSKey key;
-    sfSFSValue* value;
-
-    if (sfip_lesser(src_addr, dst_addr))
-    {
-        sfip_copy(key.ipA, src_addr);
-        sfip_copy(key.ipB, dst_addr);
-        *swapped = 0;
-    }
-    else
-    {
-        sfip_copy(key.ipA, dst_addr);
-        sfip_copy(key.ipB, src_addr);
-        *swapped = 1;
-    }
-
-    value = (sfSFSValue*)sfxhash_find(sfFlow->ipMap, &key);
-    if (!value)
-    {
-        node = sfxhash_get_node(sfFlow->ipMap, &key);
-        if (!node)
-        {
-            DebugMessage(DEBUG_STREAM,
-                "Key/Value pair didn't exist in the flow stats table and we couldn't add it!\n");
-            return NULL;
-        }
-        memset(node->data, 0, sizeof(sfSFSValue));
-        value = (sfSFSValue*)node->data;
-    }
-
-    return value;
-}
-
-int UpdateFlowIPStats(SFFLOW* sfFlow, const sfip_t* src_addr, const sfip_t* dst_addr, int len,
-    SFSType type)
-{
-    sfSFSValue* value;
-    sfBTStats* stats;
-    int swapped;
-
-    value = findFlowIPStats(sfFlow, src_addr, dst_addr, &swapped);
-    if (!value)
-        return 1;
-
-    stats = &value->trafficStats[type];
-
-    if (!swapped)
-    {
-        stats->packets_AtoB++;
-        stats->bytes_AtoB += len;
-    }
-    else
-    {
-        stats->packets_BtoA++;
-        stats->bytes_BtoA += len;
-    }
-    value->total_packets++;
-    value->total_bytes += len;
-
-    return 0;
-}
-
-int UpdateFlowIPState(SFFLOW* sfFlow,
-    const sfip_t* src_addr,
-    const sfip_t* dst_addr,
-    SFSState state)
-{
-    sfSFSValue* value;
-    int swapped;
-
-    value = findFlowIPStats(sfFlow, src_addr, dst_addr, &swapped);
-    if (!value)
-        return 1;
-
-    value->stateChanges[state]++;
-
-    return 0;
-}
-
 /*
 *   Add in stats for this packet
 *
@@ -372,11 +179,11 @@ void UpdateFlowStats(SFFLOW* sfFlow, Packet* p)
 {
     uint32_t len = p->pkth->caplen;
 
-    if (p->ptrs.tcph != NULL)
+    if (p->ptrs.tcph)
         UpdateTCPFlowStats(sfFlow, p->ptrs.sp, p->ptrs.dp, len);
-    else if (p->ptrs.udph != NULL)
+    else if (p->ptrs.udph)
         UpdateUDPFlowStats(sfFlow, p->ptrs.sp, p->ptrs.dp, len);
-    else if (p->ptrs.icmph != NULL)
+    else if (p->ptrs.icmph)
         UpdateICMPFlowStats(sfFlow, p->ptrs.icmph->type, len);
 
     // Track how many packets of each length
@@ -558,7 +365,7 @@ void ProcessFlowStats(SFFLOW* sfFlow, FILE* fh, int console)
     if (console)
         DisplayFlowStats(&sfFlowStats);
 
-    if (fh != NULL)
+    if (fh)
         WriteFlowStats(&sfFlowStats, fh);
 }
 
@@ -694,7 +501,7 @@ static void WriteFlowStats(SFFLOW_STATS* sfFlowStats, FILE* fh)
 {
     int i;
 
-    if (fh == NULL)
+    if (!fh)
         return;
 
     fprintf(fh, "%u,", (uint32_t)sfFlowStats->time);
@@ -755,7 +562,7 @@ static void WriteFlowStats(SFFLOW_STATS* sfFlowStats, FILE* fh)
 // they correspond to the WriteFlowStats() above!
 void LogFlowPerfHeader(FILE* fh)
 {
-    if (fh == NULL)
+    if (!fh)
         return;
 
     fprintf(fh,
@@ -794,83 +601,5 @@ void LogFlowPerfHeader(FILE* fh)
 
     fprintf(fh, "\n");
     fflush(fh);
-}
-
-void ProcessFlowIPStats(SFFLOW* sfFlow, FILE* fh, int console)
-{
-    if (console)
-        DisplayFlowIPStats(sfFlow);
-
-    if (fh != NULL)
-        WriteFlowIPStats(sfFlow, fh);
-}
-
-static void DisplayFlowIPStats(SFFLOW* sfFlow)
-{
-    SFXHASH_NODE* node;
-    sfSFSKey* key;
-    sfSFSValue* stats;
-    char ipA[41], ipB[41];
-    uint64_t total = 0;
-
-    LogMessage("\n");
-    LogMessage("\n");
-    LogMessage("IP Flows (%d unique IP pairs)\n", sfxhash_count(sfFlow->ipMap));
-    LogMessage("---------------\n");
-    for (node = sfxhash_findfirst(sfFlow->ipMap); node; node = sfxhash_findnext(sfFlow->ipMap))
-    {
-        key = (sfSFSKey*)node->key;
-        stats = (sfSFSValue*)node->data;
-
-        sfip_raw_ntop(key->ipA.family, key->ipA.ip32, ipA, sizeof(ipA));
-        sfip_raw_ntop(key->ipB.family, key->ipB.ip32, ipB, sizeof(ipB));
-        LogMessage("[%s <-> %s]: " STDu64 " bytes in " STDu64 " packets (%u, %u, %u)\n", ipA, ipB,
-            stats->total_bytes, stats->total_packets,
-            stats->stateChanges[SFS_STATE_TCP_ESTABLISHED],
-            stats->stateChanges[SFS_STATE_TCP_CLOSED], stats->stateChanges[SFS_STATE_UDP_CREATED]);
-        total += stats->total_packets;
-    }
-    LogMessage("Classified " STDu64 " packets.\n", total);
-}
-
-static void WriteFlowIPStats(SFFLOW* sfFlow, FILE* fp)
-{
-    SFXHASH_NODE* node;
-    sfSFSKey* key;
-    sfSFSValue* stats;
-    char ipA[41], ipB[41];
-
-    if (!fp)
-        return;
-
-    fprintf(fp, "%u,%u\n", (uint32_t)time(NULL), sfxhash_count(sfFlow->ipMap));
-    for (node = sfxhash_findfirst(sfFlow->ipMap); node; node = sfxhash_findnext(sfFlow->ipMap))
-    {
-        key = (sfSFSKey*)node->key;
-        stats = (sfSFSValue*)node->data;
-
-        sfip_raw_ntop(key->ipA.family, key->ipA.ip32, ipA, sizeof(ipA));
-        sfip_raw_ntop(key->ipB.family, key->ipB.ip32, ipB, sizeof(ipB));
-        fprintf(fp, "%s,%s," CSVu64 CSVu64 CSVu64 CSVu64 CSVu64 CSVu64 CSVu64
-            CSVu64 CSVu64 CSVu64 CSVu64 CSVu64 "%u,%u,%u\n",
-            ipA, ipB,
-            stats->trafficStats[SFS_TYPE_TCP].packets_AtoB,
-            stats->trafficStats[SFS_TYPE_TCP].bytes_AtoB,
-            stats->trafficStats[SFS_TYPE_TCP].packets_BtoA,
-            stats->trafficStats[SFS_TYPE_TCP].bytes_BtoA,
-            stats->trafficStats[SFS_TYPE_UDP].packets_AtoB,
-            stats->trafficStats[SFS_TYPE_UDP].bytes_AtoB,
-            stats->trafficStats[SFS_TYPE_UDP].packets_BtoA,
-            stats->trafficStats[SFS_TYPE_UDP].bytes_BtoA,
-            stats->trafficStats[SFS_TYPE_OTHER].packets_AtoB,
-            stats->trafficStats[SFS_TYPE_OTHER].bytes_AtoB,
-            stats->trafficStats[SFS_TYPE_OTHER].packets_BtoA,
-            stats->trafficStats[SFS_TYPE_OTHER].bytes_BtoA,
-            stats->stateChanges[SFS_STATE_TCP_ESTABLISHED],
-            stats->stateChanges[SFS_STATE_TCP_CLOSED],
-            stats->stateChanges[SFS_STATE_UDP_CREATED]);
-    }
-
-    fflush(fp);
 }
 

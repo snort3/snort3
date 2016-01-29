@@ -73,5 +73,38 @@ public:
     Flow* flow;  // FIXIT-L use reference?
 };
 
+/* These should be tracked by all Session subclasses. Add to top of peg list.
+ * Having these predefined stats improves consistency and provides convenience.
+ * Some useful derived stats:
+ * current = created - released
+ * normal closes = released - timeouts - prunes
+ */
+#define SESSION_PEGS(module) \
+    { "sessions", "total " module " sessions" }, \
+    { "max", "max " module " sessions" }, \
+    { "created", module " session trackers created" }, \
+    { "released", module " session trackers released" }, \
+    { "timeouts", module " session timeouts" }, \
+    { "prunes", module " session prunes" }
+
+// See above. Add to end of stats array.
+#define SESSION_STATS \
+    PegCount sessions; \
+    PegCount max; \
+    PegCount created; \
+    PegCount released; \
+    PegCount timeouts; \
+    PegCount prunes;
+
+#define SESSION_STATS_ADD(stats) \
+    { \
+        PegCount current; \
+        stats.sessions++; \
+        stats.created++; \
+        current = (stats).created - (stats).released; \
+        if ( (stats).max < current ) \
+            (stats).max = current; \
+    }
+
 #endif
 

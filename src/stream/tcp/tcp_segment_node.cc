@@ -21,7 +21,6 @@
 
 #include <stream/tcp/tcp_segment_node.h>
 #include "flow/flow_control.h"
-#include "perf_monitor/perf.h"
 #include "protocols/packet.h"
 #include "tcp_module.h"
 

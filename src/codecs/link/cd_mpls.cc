@@ -20,7 +20,6 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "perf_monitor/perf.h"
 #include "protocols/mpls.h"
 #include "packet_io/active.h"
 #include "protocols/protocol_ids.h"
@@ -65,6 +64,20 @@ static const RuleMap mpls_rules[] =
     { 0, nullptr }
 };
 
+static const PegInfo mpls_pegs[] =
+{
+    { "total packets", "total mpls labeled packets processed" },
+    { "total bytes", "total mpls labeled bytes processed" },
+    { nullptr, nullptr }
+};
+
+struct MplsStats
+{
+    PegCount total_packets;
+    PegCount total_bytes;
+};
+static THREAD_LOCAL MplsStats mpls_stats;
+
 class MplsModule : public CodecModule
 {
 public:
@@ -99,6 +112,12 @@ public:
 
         return true;
     }
+
+    virtual const PegInfo* get_pegs() const override
+    { return mpls_pegs; }
+
+    virtual PegCount* get_counts() const override
+    { return (PegCount*)&mpls_stats; }
 };
 
 class MplsCodec : public Codec
@@ -141,7 +160,9 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     int iRet = 0;
 
-    UpdateMPLSStats(&sfBase, raw.len, Active::packet_was_dropped());
+    mpls_stats.total_packets++;
+    mpls_stats.total_bytes += raw.len + 4; //4 bytes for CRC
+
     const uint32_t* tmpMplsHdr =
         reinterpret_cast<const uint32_t*>(raw.data);
 

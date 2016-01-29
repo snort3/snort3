@@ -43,8 +43,7 @@ THREAD_LOCAL ProfileStats s5TcpBuildPacketPerfStats;
 
 const PegInfo tcp_pegs[] =
 {
-    { "sessions", "total sessions" },
-    { "timeouts", "sessions timed out" },
+    SESSION_PEGS("tcp"),
     { "resyns", "SYN received on established session" },
     { "discards", "tcp packets discarded" },
     { "events", "events generated" },
@@ -54,14 +53,13 @@ const PegInfo tcp_pegs[] =
     { "syn-ack trackers", "tcp session tracking started on syn-ack" },
     { "3way trackers", "tcp session tracking started on ack" },
     { "data trackers", "tcp session tracking started on data" },
-    { "trackers created", "tcp session trackers created" },
-    { "trackers released", "tcp session trackers released" },
     { "segs queued", "total segments queued" },
     { "segs released", "total segments released" },
     { "segs split", "tcp segments split when reassembling PDUs" },
     { "segs used", "queued tcp segments applied to reassembled PDUs" },
     { "rebuilt packets", "total reassembled PDUs" },
     { "rebuilt buffers", "rebuilt PDU sections" },
+    { "rebuilt bytes", "total rebuilt bytes" },
     { "overlaps", "overlapping segments queued" },
     { "gaps", "missing data between PDUs" },
     { "max segs", "number of times the maximum queued segment limit was reached" },
@@ -69,9 +67,13 @@ const PegInfo tcp_pegs[] =
     { "internal events", "135:X events generated" },
     { "client cleanups", "number of times data from server was flushed when session released" },
     { "server cleanups", "number of times data from client was flushed when session released" },
+    { "faults", "number of times a new segment triggered a prune" },
+    { "memory", "current memory in use" },
+    { "initializing", "number of sessions currently initializing" },
+    { "established", "number of sessions currently established" },
+    { "closing", "number of sessions currently closing" },
     { nullptr, nullptr }
 };
-
 THREAD_LOCAL TcpStats tcpStats;
 
 #define STREAM_TCP_SYN_ON_EST_STR \
@@ -362,4 +364,18 @@ const PegInfo* StreamTcpModule::get_pegs() const
 
 PegCount* StreamTcpModule::get_counts() const
 { return (PegCount*)&tcpStats; }
+
+void StreamTcpModule::sum_stats()
+{
+    //FIXIT-M is there a way this can be derived from other pegs?
+    PegCount init = tcpStats.sessions_initializing;
+    PegCount est = tcpStats.sessions_established;
+    PegCount closing = tcpStats.sessions_closing;
+
+    Module::sum_stats();
+
+    tcpStats.sessions_initializing = init;
+    tcpStats.sessions_established = est;
+    tcpStats.sessions_closing = closing;
+}
 

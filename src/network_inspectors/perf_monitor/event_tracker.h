@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2002-2013 Sourcefire, Inc.
+// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,53 +15,38 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-**  Marc Norton <mnorton@sourcefire.com>
-**  Dan Roelker <droelker@sourcefire.com>
-**
-**  NOTES
-**  5.28.02 - Initial Source Code. Norton/Roelker
-*/
 
-#ifndef PERF_EVENT_H
-#define PERF_EVENT_H
+// event_tracker.h author Carter Waxman <cwaxman@cisco.com>
 
-#include "main/snort_types.h"
+#ifndef EVENT_TRACKER_H
+#define EVENT_TRACKER_H
+
+#include "perf_tracker.h"
 
 /* Raw event counters */
-typedef struct _SFEVENT
+struct PerfEventCounts
 {
     uint64_t NQEvents;
     uint64_t QEvents;
 
     uint64_t TotalEvents;
-} SFEVENT;
+};
 
-/* Processed event counters */
-typedef struct _SFEVENT_STATS
+class EventTracker : public PerfTracker
 {
-    uint64_t NQEvents;
-    uint64_t QEvents;
+public:
+    EventTracker(SFPERF* perf) :
+        PerfTracker(perf, perf->perf_flags & SFPERF_SUMMARY_EVENT, nullptr) { }
+    void reset() override;
+    void process(bool) override;
 
-    uint64_t TotalEvents;
+    void UpdateNQEvents();
+    void UpdateQEvents();
 
-    double NQPercent;
-    double QPercent;
-}  SFEVENT_STATS;
+private:
+    PerfEventCounts event_counts;
+};
 
-/*
-**  These functions are for interfacing with the main
-**  perf module.
-*/
-int InitEventStats(SFEVENT* sfEvent);
-int ProcessEventStats(SFEVENT* sfEvent);
-
-/*
-**  These functions are external for updating the
-**  SFEVENT structure.
-*/
-int UpdateNQEvents(SFEVENT*);
-int UpdateQEvents(SFEVENT*);
-
+extern THREAD_LOCAL EventTracker* perf_event;
 #endif
 

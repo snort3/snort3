@@ -55,8 +55,8 @@ typedef struct _USERSYS
 
 static THREAD_LOCAL int giCPUs = 1;
 
-static THREAD_LOCAL USERSYS* gpStatCPUs = NULL;
-static THREAD_LOCAL USERSYS* gpStatCPUs_2 = NULL;
+static THREAD_LOCAL USERSYS* gpStatCPUs = nullptr;
+static THREAD_LOCAL USERSYS* gpStatCPUs_2 = nullptr;
 
 static THREAD_LOCAL FILE* proc_stat;
 
@@ -154,7 +154,7 @@ static int GetCpuNum(void)
 int sfInitProcPidStats(SFPROCPIDSTATS* sfProcPidStats)
 {
     /* Do not re-allocate memory */
-    if (gpStatCPUs != NULL)
+    if (gpStatCPUs)
         return 0;
 
     proc_stat = fopen(PROC_STAT, "r");
@@ -198,22 +198,22 @@ int sfInitProcPidStats(SFPROCPIDSTATS* sfProcPidStats)
 
 void FreeProcPidStats(SFPROCPIDSTATS* sfProcPidStats)
 {
-    if (gpStatCPUs != NULL)
+    if (gpStatCPUs)
     {
         free(gpStatCPUs);
-        gpStatCPUs = NULL;
+        gpStatCPUs = nullptr;
     }
 
-    if (gpStatCPUs_2 != NULL)
+    if (gpStatCPUs_2)
     {
         free(gpStatCPUs_2);
-        gpStatCPUs_2 = NULL;
+        gpStatCPUs_2 = nullptr;
     }
 
-    if (sfProcPidStats->SysCPUs != NULL)
+    if (sfProcPidStats->SysCPUs)
     {
         free(sfProcPidStats->SysCPUs);
-        sfProcPidStats->SysCPUs = NULL;
+        sfProcPidStats->SysCPUs = nullptr;
     }
 }
 

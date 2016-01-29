@@ -48,7 +48,7 @@ void Module::init(const char* s, const char* h)
     help = h;
     params = null_params;
     list = false;
-    num_counts = -1;
+    reset_stats();
 }
 
 Module::Module(const char* s, const char* h)

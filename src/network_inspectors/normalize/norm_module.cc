@@ -422,7 +422,8 @@ const PegInfo* NormalizeModule::get_pegs() const
 
 PegCount* NormalizeModule::get_counts() const
 {
-    static vector<PegCount> counts;
+    //FIXIT-H this initialization breaks in clang
+    static THREAD_LOCAL vector<PegCount> counts;
     counts.clear();
     unsigned c = 0;
 

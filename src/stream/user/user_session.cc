@@ -29,7 +29,7 @@
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
 #include "stream/paf.h"
-#include "perf_monitor/perf.h"
+#include "perf_monitor/perf_monitor.h"
 #include "flow/flow_control.h"
 #include "sfip/sf_ip.h"
 #include "profiler/profiler.h"
@@ -263,7 +263,7 @@ void UserTracker::process(Packet* p)
 void UserTracker::add_data(Packet* p)
 {
     //printf("user add[%d]\n", p->dsize);
-   unsigned avail = 0;
+    unsigned avail = 0;
 
     if ( !seg_list.empty() )
     {
@@ -290,7 +290,6 @@ void UserTracker::add_data(Packet* p)
     total += p->dsize;
     process(p);
 }
-
 
 //-------------------------------------------------------------------------
 // private user session methods
@@ -387,7 +386,7 @@ void UserSession::update(Packet* p, Flow* flow)
             flow->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
 
         if ( (flow->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT) &&
-             (flow->ssn_state.session_flags & SSNFLAG_SEEN_SERVER) )
+            (flow->ssn_state.session_flags & SSNFLAG_SEEN_SERVER) )
         {
             flow->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
 

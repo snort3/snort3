@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -21,15 +21,13 @@
 **    These are the basic functions and structures that are needed to call
 **    performance functions.
 **
-** Dan Roelker <droelker@sourcefire.com>
+** Carter Waxman <cwaxman@cisco.com>
 */
 
-#ifndef PERF_H
-#define PERF_H
+#ifndef PERF_MONITOR_H
+#define PERF_MONITOR_H
 
-#include "perf_base.h"
 #include "perf_flow.h"
-#include "perf_event.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
@@ -53,49 +51,24 @@
 #define SFPERF_SUMMARY \
     (SFPERF_SUMMARY_BASE|SFPERF_SUMMARY_FLOW|SFPERF_SUMMARY_FLOWIP|SFPERF_SUMMARY_EVENT)
 
-#define ROLLOVER_THRESH     512
-#define MAX_PERF_FILE_SIZE  INT32_MAX
-#define MIN_PERF_FILE_SIZE  4096
-
 /* The perfmonitor configuration */
 typedef struct _SFPERF
 {
     int perf_flags;
     uint32_t pkt_cnt;
     int sample_interval;
-    time_t sample_time;
-    char* file;
-    FILE* fh;
+    bool file;
     int base_reset;
     int flow_max_port_to_track;
-    char* flow_file;
-    FILE* flow_fh;
-    uint32_t max_file_size;
-    char* flowip_file;
-    FILE* flowip_fh;
+    bool flow_file;
+    uint64_t max_file_size;
+    bool flowip_file;
     uint32_t flowip_memcap;
 } SFPERF;
 
-/* The perf_monitor state information and collected statistics */
-SO_PUBLIC extern THREAD_LOCAL SFBASE sfBase;
-extern THREAD_LOCAL SFFLOW sfFlow;
-extern THREAD_LOCAL SFEVENT sfEvent;
-extern THREAD_LOCAL SFPERF* perfmon_config;
-extern THREAD_LOCAL int perfmon_rotate_perf_file;
-
-void sfInitPerformanceStatistics(SFPERF*);
-FILE* sfOpenBaseStatsFile(const char*);
-void sfCloseBaseStatsFile(SFPERF* sfPerf);
-FILE* sfOpenFlowStatsFile(const char*);
-void sfCloseFlowStatsFile(SFPERF* sfPerf);
-FILE* sfOpenFlowIPStatsFile(const char*);
-void sfCloseFlowIPStatsFile(SFPERF* sfPerf);
-int sfRotateBaseStatsFile(SFPERF* sfPerf);
-int sfRotateFlowStatsFile(SFPERF* sfPerf);
-void sfPerformanceStats(SFPERF*, Packet*);
-void sfPerfStatsSummary(SFPERF*);
-void SetSampleTime(SFPERF*, Packet*);
-void InitPerfStats(SFPERF* sfPerf);
+//FIXIT-M: this shouldn't be needed outside of perfmon
+extern SFPERF* perfmon_config;
+extern int perfmon_rotate_perf_file;
 
 /* functions to set & get the RotatePerfFileFlag */
 static inline void SetRotatePerfFileFlag(void)

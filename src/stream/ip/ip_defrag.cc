@@ -77,7 +77,6 @@
 #include <array>
 
 #include "framework/codec.h"
-#include "framework/counts.h"
 #include "flow/flow_control.h"
 #include "ip_defrag.h"
 #include "stream/ip/ip_session.h"
@@ -91,7 +90,6 @@
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
 #include "time/timersub.h"
-#include "perf_monitor/perf.h"
 #include "utils/stats.h"
 #include "utils/snort_bounds.h"
 #include "detection/detect.h"
@@ -151,48 +149,10 @@ struct Fragment
     char last;
 };
 
-/* statistics tracking struct */
-struct IpStats
-{
-    PegCount total;
-    PegCount reassembles;
-    PegCount discards;
-    PegCount prunes;
-    PegCount timeouts;
-    PegCount overlaps;
-    PegCount anomalies;
-    PegCount alerts;
-    PegCount drops;
-    PegCount trackers_created;
-    PegCount trackers_released;
-    PegCount nodes_created;
-    PegCount nodes_released;
-};
-
-const PegInfo ip_pegs[] =
-{
-    { "fragments", "total fragments" },
-    { "reassembled", "reassembled datagrams" },
-    { "discards", "fragments discarded" },
-    { "memory faults", "memory faults" },
-    { "frag timeouts", "datagrams abandoned" },
-    { "overlaps", "overlapping fragments" },
-    { "anomalies", "anomalies detected" },
-    { "alerts", "alerts generated" },
-    { "drops", "fragments dropped" },
-    { "trackers added", "datagram trackers created" },
-    { "trackers freed", "datagram trackers released" },
-    { "nodes inserted", "fragments added to tracker" },
-    { "nodes deleted", "fragments deleted from tracker" },
-    { nullptr, nullptr }
-};
-
 /*  G L O B A L S  **************************************************/
 
 // FIXIT-M convert to session memcap
 static THREAD_LOCAL unsigned long mem_in_use = 0; /* memory in use, used for self pres */
-
-THREAD_LOCAL IpStats ip_stats;
 
 static THREAD_LOCAL uint32_t pkt_snaplen = 0;
 static THREAD_LOCAL Packet** defrag_pkts;  // An array of Packet pointers
@@ -733,7 +693,7 @@ static inline int FragIsComplete(FragTracker* ft)
             DebugMessage(DEBUG_FRAG,
                 "   [!] frag_bytes = calculated_size!\n");
 
-            sfBase.iFragCompletes++;
+            ip_stats.trackers_completed++;
 
             return 1;
         }
@@ -743,7 +703,7 @@ static inline int FragIsComplete(FragTracker* ft)
             DebugMessage(DEBUG_FRAG,
                 "   [!] frag_bytes > calculated_size!\n");
 
-            sfBase.iFragCompletes++;
+            ip_stats.trackers_completed++;
 
             return 1;
         }
@@ -925,8 +885,6 @@ static void FragRebuild(FragTracker* ft, Packet* p)
         PacketManager::encode_update(dpkt);
     }
 
-    sfBase.iFragFlushes++;
-
     /* Rebuild is complete */
 
     /*
@@ -936,8 +894,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
         "Processing rebuilt packet:\n");
 
     ip_stats.reassembles++;
-
-    UpdateIPReassStats(&sfBase, dpkt->pkth->caplen);
+    ip_stats.reassembled_bytes += dpkt->pkth->caplen;
 
 #if defined(DEBUG_FRAG_EX) && defined(DEBUG)
     /*
@@ -1009,16 +966,13 @@ static void delete_frag(Fragment* frag)
     /*
      * delete the fragment either in prealloc or dynamic mode
      */
-    {
-        free(frag->fptr);
-        mem_in_use -= frag->flen;
+    free(frag->fptr);
+    mem_in_use -= frag->flen;
 
-        free(frag);
-        mem_in_use -= sizeof(Fragment);
+    free(frag);
+    mem_in_use -= sizeof(Fragment);
 
-        sfBase.frag_mem_in_use = mem_in_use;
-    }
-
+    ip_stats.mem_in_use = mem_in_use;
     ip_stats.nodes_released++;
 }
 
@@ -1089,7 +1043,7 @@ static void delete_tracker(FragTracker* ft)
         ft->ip_options_data = NULL;
     }
 
-    sfBase.iFragDeletes++;
+    ip_stats.trackers_cleared++;
 }
 
 static void release_tracker(FragTracker* ft)
@@ -1213,7 +1167,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     }
 
     ip_stats.total++;
-    UpdateIPFragStats(&sfBase, p->pkth->caplen);
+    ip_stats.fragmented_bytes += p->pkth->caplen + 4; /* 4 for the CRC */
 
     Profile profile(fragPerfStats);
 
@@ -1387,8 +1341,6 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     const uint8_t* fragStart;
     int16_t fragLength;
     const uint16_t net_frag_offset = p->ptrs.ip_api.off();
-
-    sfBase.iFragInserts++;
 
     Profile profile(fragInsertPerfStats);
 
@@ -1812,7 +1764,7 @@ left_overlap_last:
                 DebugFormat(DEBUG_FRAG, "[!!] right overlap, "
                     "truncating old frag (offset: %d, "
                     "overlap: %d)\n", right->offset, overlap);
-                    DebugMessage(DEBUG_FRAG,
+                DebugMessage(DEBUG_FRAG,
                     "Exiting right overlap loop...\n");
                 if (right->size <= 0)
                 {
@@ -1840,7 +1792,7 @@ left_overlap_last:
                     "truncating new frag (offset: %d "
                     "overlap: %d)\n",
                     right->offset, overlap);
-                    DebugMessage(DEBUG_FRAG,
+                DebugMessage(DEBUG_FRAG,
                     "Exiting right overlap loop...\n");
                 break;
             }
@@ -2162,11 +2114,8 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
         f->fptr = (uint8_t*)SnortAlloc(fragLength);
         mem_in_use += fragLength;
 
-        sfBase.frag_mem_in_use = mem_in_use;
+        ip_stats.mem_in_use = mem_in_use;
     }
-
-    ip_stats.nodes_created++;
-    sfBase.iFragCreates++;
 
     /* initialize the fragment list */
     ft->fraglist = NULL;
@@ -2226,7 +2175,6 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     if ( p->is_ip4() )
         FragHandleIPOptions(ft, p, frag_off);
 
-    ip_stats.trackers_created++;
     return 1;
 }
 
@@ -2315,7 +2263,7 @@ int Defrag::add_frag_node(FragTracker* ft,
         newfrag->fptr = (uint8_t*)SnortAlloc(fragLength);
         mem_in_use += fragLength;
 
-        sfBase.frag_mem_in_use = mem_in_use;
+        ip_stats.mem_in_use = mem_in_use;
     }
 
     ip_stats.nodes_created++;
@@ -2402,7 +2350,7 @@ int Defrag::dup_frag_node(
         newfrag->fptr = (uint8_t*)SnortAlloc(left->flen);
         mem_in_use += left->flen;
 
-        sfBase.frag_mem_in_use = mem_in_use;
+        ip_stats.mem_in_use = mem_in_use;
     }
 
     ip_stats.nodes_created++;
@@ -2473,8 +2421,7 @@ inline int Defrag::expire(Packet*, FragTracker* ft, FragEngine* fe)
          */
         delete_tracker(ft);
 
-        ip_stats.timeouts++;
-        sfBase.iFragTimeouts++;
+        ip_stats.frag_timeouts++;
 
         return FRAG_TRACKER_TIMEOUT;
     }

@@ -24,7 +24,6 @@
 #include "config.h"
 #endif
 
-#include "perf_monitor/perf_base.h"
 #include "detection/detect.h"
 #include "flow/session.h"
 
@@ -80,7 +79,7 @@ public:
     uint8_t get_reassembly_direction(void) override;
     uint8_t missing_in_reassembled(uint8_t /*dir*/) override;
 
-    void update_perf_base_state(SFBASE* sf_base, char newState);
+    void update_perf_base_state(char newState);
 
     void SetPacketHeaderFoo(const Packet* p);
     void GetPacketHeaderFoo(DAQ_PktHdr_t* pkth, uint32_t dir);

@@ -44,7 +44,6 @@
 #include "icmp/stream_icmp.h"
 #include "ip/stream_ip.h"
 #include "detection/detect.h"
-#include "perf_monitor/perf.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "ips_options/ips_flowbits.h"
@@ -74,7 +73,7 @@ Stream::Stream()
     // appears to be breaking up the libs further to avoid the circularity.
     // not a bad requirement in theory, but in practice a bit restrictive.
     // links just fine on osx w/o this hack!
-    typedef void (*ugh)();
+    typedef void (* ugh)();
     if ( (ugh)paf_setup == (ugh)paf_clear || (ugh)paf_clear == (ugh)paf_check )
         printf("ugh! this check failed to ensure that gnus links finds paf setup/clear/check\n");
 }
@@ -100,8 +99,8 @@ void Stream::delete_session(const FlowKey* key)
 
 Flow* Stream::get_session_ptr_from_ip_port(
     uint8_t type, uint8_t proto,
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     uint16_t vlan, uint32_t mplsId, uint16_t addressSpaceId)
 {
     FlowKey key;
@@ -151,8 +150,8 @@ FlowData* Stream::get_application_data_from_key(
 
 FlowData* Stream::get_application_data_from_ip_port(
     uint8_t type, uint8_t proto,
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceID, unsigned flow_id)
 {
@@ -163,7 +162,7 @@ FlowData* Stream::get_application_data_from_ip_port(
         srcIP, srcPort, dstIP, dstPort,
         vlan, mplsId, addressSpaceID);
 
-    if(!flow)
+    if (!flow)
         return NULL;
 
     return flow->get_application_data(flow_id);
@@ -189,8 +188,8 @@ void Stream::check_session_closed(Packet* p)
 }
 
 int Stream::ignore_session(
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     PktType protocol, char direction,
     uint32_t flow_id)
 {
@@ -355,8 +354,8 @@ void Stream::init_active_response(const Packet* p, Flow* flow)
 //-------------------------------------------------------------------------
 
 int Stream::set_application_protocol_id_expected(
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     PktType protocol, int16_t appId, FlowData* fd)
 {
     assert(flow_con);
@@ -635,7 +634,6 @@ bool Stream::ignored_session(Flow* flow, Packet* p)
 
 static int StreamExpireSession(Flow* lwssn)
 {
-    sfBase.iStreamTimeouts++;
     lwssn->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
     lwssn->session_state |= STREAM_STATE_TIMEDOUT;
 
@@ -794,7 +792,6 @@ bool Stream::missed_packets(Flow* flow, uint8_t dir)
     return flow->session->are_packets_missing(dir);
 }
 
-
 #ifdef UNIT_TEST
 
 #include "framework/cursor.h"
@@ -806,22 +803,22 @@ TEST_CASE("Stream API", "[stream_api][stream]")
 
     SECTION("set/get ignore direction")
     {
-        int dir = flow->set_ignore_direction( SSN_DIR_NONE);
+        int dir = flow->set_ignore_direction(SSN_DIR_NONE);
         CHECK( ( dir == SSN_DIR_NONE ) );
         dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_NONE ) );
 
-        dir = flow->set_ignore_direction( SSN_DIR_FROM_CLIENT);
+        dir = flow->set_ignore_direction(SSN_DIR_FROM_CLIENT);
         CHECK( ( dir == SSN_DIR_FROM_CLIENT ) );
         dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_FROM_CLIENT ) );
 
-        dir = flow->set_ignore_direction( SSN_DIR_FROM_SERVER);
+        dir = flow->set_ignore_direction(SSN_DIR_FROM_SERVER);
         CHECK( ( dir == SSN_DIR_FROM_SERVER ) );
         dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_FROM_SERVER ) );
 
-        dir = flow->set_ignore_direction( SSN_DIR_BOTH);
+        dir = flow->set_ignore_direction(SSN_DIR_BOTH);
         CHECK( ( dir == SSN_DIR_BOTH ) );
         dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_BOTH ) );
@@ -829,16 +826,16 @@ TEST_CASE("Stream API", "[stream_api][stream]")
 
     SECTION("stop inspection")
     {
-        Packet* pkt = get_syn_packet( flow );
-        pkt->flow->session = new TcpSession( flow );
+        Packet* pkt = get_syn_packet(flow);
+        pkt->flow->session = new TcpSession(flow);
         int dir;
 
-        Stream::stop_inspection( flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0 );
+        Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0);
         dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_FROM_CLIENT ) );
         CHECK( ( flow->flow_state == Flow::ALLOW ) );
 
-        Stream::stop_inspection( flow, pkt, SSN_DIR_FROM_SERVER, 0, 0 );
+        Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_SERVER, 0, 0);
         dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_FROM_SERVER ) );
         CHECK( ( flow->flow_state == Flow::ALLOW ) );
@@ -849,13 +846,13 @@ TEST_CASE("Stream API", "[stream_api][stream]")
 
     SECTION("stop inspection from server - client packet")
     {
-        Packet* pkt = get_syn_packet( flow );
-        pkt->flow->session = new TcpSession( flow );
+        Packet* pkt = get_syn_packet(flow);
+        pkt->flow->session = new TcpSession(flow);
         int dir;
 
-        Stream::stop_inspection( flow, pkt, SSN_DIR_FROM_SERVER, 0, 0 );
-        bool ignored = Stream::ignored_session( flow, pkt );
-        CHECK( ignored );
+        Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_SERVER, 0, 0);
+        bool ignored = Stream::ignored_session(flow, pkt);
+        CHECK(ignored);
 
         delete pkt->flow->session;
         delete pkt;
@@ -863,26 +860,26 @@ TEST_CASE("Stream API", "[stream_api][stream]")
 
     SECTION("stop inspection from server - server packet")
     {
-        Packet* pkt = get_syn_ack_packet( flow );
-        pkt->flow->session = new TcpSession( flow );
+        Packet* pkt = get_syn_ack_packet(flow);
+        pkt->flow->session = new TcpSession(flow);
         int dir;
 
-        Stream::stop_inspection( flow, pkt, SSN_DIR_FROM_SERVER, 0, 0 );
-        bool ignored = Stream::ignored_session( flow, pkt );
-        CHECK( !ignored );
+        Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_SERVER, 0, 0);
+        bool ignored = Stream::ignored_session(flow, pkt);
+        CHECK(!ignored);
         delete pkt->flow->session;
         delete pkt;
     }
 
     SECTION("stop inspection from client - client packet")
     {
-        Packet* pkt = get_syn_packet( flow );
-        pkt->flow->session = new TcpSession( flow );
+        Packet* pkt = get_syn_packet(flow);
+        pkt->flow->session = new TcpSession(flow);
         int dir;
 
-        Stream::stop_inspection( flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0 );
-        bool ignored = Stream::ignored_session( flow, pkt );
-        CHECK( !ignored );
+        Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0);
+        bool ignored = Stream::ignored_session(flow, pkt);
+        CHECK(!ignored);
 
         delete pkt->flow->session;
         delete pkt;
@@ -890,26 +887,26 @@ TEST_CASE("Stream API", "[stream_api][stream]")
 
     SECTION("stop inspection from client - server packet")
     {
-        Packet* pkt = get_syn_ack_packet( flow );
-        pkt->flow->session = new TcpSession( flow );
+        Packet* pkt = get_syn_ack_packet(flow);
+        pkt->flow->session = new TcpSession(flow);
         int dir;
 
-        Stream::stop_inspection( flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0 );
-        bool ignored = Stream::ignored_session( flow, pkt );
-        CHECK( ignored );
+        Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0);
+        bool ignored = Stream::ignored_session(flow, pkt);
+        CHECK(ignored);
         delete pkt->flow->session;
         delete pkt;
     }
 
     SECTION("stop inspection both - client packet")
     {
-        Packet* pkt = get_syn_packet( flow );
-        pkt->flow->session = new TcpSession( flow );
+        Packet* pkt = get_syn_packet(flow);
+        pkt->flow->session = new TcpSession(flow);
         int dir;
 
-        Stream::stop_inspection( flow, pkt, SSN_DIR_BOTH, 0, 0 );
-        bool ignored = Stream::ignored_session( flow, pkt );
-        CHECK( ignored );
+        Stream::stop_inspection(flow, pkt, SSN_DIR_BOTH, 0, 0);
+        bool ignored = Stream::ignored_session(flow, pkt);
+        CHECK(ignored);
 
         delete pkt->flow->session;
         delete pkt;
@@ -917,20 +914,19 @@ TEST_CASE("Stream API", "[stream_api][stream]")
 
     SECTION("stop inspection both - server packet")
     {
-        Packet* pkt = get_syn_ack_packet( flow );
-        pkt->flow->session = new TcpSession( flow );
+        Packet* pkt = get_syn_ack_packet(flow);
+        pkt->flow->session = new TcpSession(flow);
         int dir;
 
-        Stream::stop_inspection( flow, pkt, SSN_DIR_BOTH, 0, 0 );
-        bool ignored = Stream::ignored_session( flow, pkt );
-        CHECK( ignored );
+        Stream::stop_inspection(flow, pkt, SSN_DIR_BOTH, 0, 0);
+        bool ignored = Stream::ignored_session(flow, pkt);
+        CHECK(ignored);
         delete pkt->flow->session;
         delete pkt;
     }
 
     delete flow;
 }
-
 
 #endif
 

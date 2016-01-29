@@ -45,7 +45,6 @@
 #include "main/snort_debug.h"
 #include "parser/parser.h"
 #include "hash/sfxhash.h"
-#include "perf_monitor/perf.h"
 #include "utils/util.h"
 #include "utils/util_net.h"
 #include "utils/stats.h"
@@ -192,6 +191,7 @@ int SFAT_AddApplicationData(HostAttributeEntry* host, ApplicationEntry* app)
 
     return SFAT_OK;
 }
+
 #endif
 
 #ifdef DEBUG_MSGS
@@ -355,11 +355,10 @@ tTargetBasedConfig* SFAT_Swap()
     curr_cfg = next_cfg;
     next_cfg = new tTargetBasedConfig;
 
-    sfBase.iAttributeHosts = SFAT_NumberOfHosts();
-    sfBase.iAttributeReloads++;
+    proc_stats.attribute_table_hosts = SFAT_NumberOfHosts();
     proc_stats.attribute_table_reloads++;
 
-    LogMessage(STDu64 " hosts loaded\n", sfBase.iAttributeHosts);
+    LogMessage(STDu64 " hosts loaded\n", proc_stats.attribute_table_hosts);
     return curr_cfg;
 }
 

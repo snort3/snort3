@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -21,7 +21,7 @@
 #ifndef PERF_MODULE_H
 #define PERF_MODULE_H
 
-#include "perf.h"
+#include "perf_monitor.h"
 #include "framework/module.h"
 
 #define PERF_NAME "perf_monitor"
@@ -48,6 +48,14 @@ public:
 private:
     SFPERF config;
 };
+
+#define BASE_FILE "perf_monitor.csv"
+#define FLOW_FILE "perf_monitor_flow.csv"
+#define FLIP_FILE "perf_monitor_flow_ip.csv"
+
+#define ROLLOVER_THRESH     512
+#define MAX_PERF_FILE_SIZE  UINT64_MAX
+#define MIN_PERF_FILE_SIZE  4096
 
 #endif
 

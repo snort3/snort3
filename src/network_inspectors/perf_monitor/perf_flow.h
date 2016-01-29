@@ -87,8 +87,6 @@ typedef struct _sfflow
     uint64_t portUdpTotal;
 
     uint64_t typeIcmpTotal;
-
-    SFXHASH* ipMap;
 }  SFFLOW;
 
 /* Processed flow statistics */
@@ -118,14 +116,9 @@ typedef struct _sfflow_stats
 /*
 **  Functions for the performance functions to call
 */
-int InitFlowStats(SFFLOW* sfFlow);
-int InitFlowIPStats(SFFLOW* sfFlow);
 void UpdateFlowStats(SFFLOW*, Packet*);
 void ProcessFlowStats(SFFLOW* sfFlow, FILE* fh, int console);
 void ProcessFlowIPStats(SFFLOW* sfFlow, FILE* fh, int console);
-int UpdateFlowIPStats(SFFLOW*, const sfip_t* src_addr, const sfip_t* dst_addr, int len, SFSType
-    type);
-int UpdateFlowIPState(SFFLOW*, const sfip_t* src_addr, const sfip_t* dst_addr, SFSState state);
 void FreeFlowStats(SFFLOW* sfFlow);
 void LogFlowPerfHeader(FILE*);
 

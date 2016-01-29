@@ -254,7 +254,7 @@ int TcpReassembler::add_reassembly_segment(TcpSegmentDescriptor& tsd, int16_t le
         return STREAM_INSERT_FAILED;
     else if ( TcpSegmentNode::needs_pruning() )
     {
-        sfBase.iStreamFaults++;
+        tcpStats.faults++;
         flow_con->prune_flows(PktType::TCP, tsd.get_pkt() );
     }
 
@@ -290,7 +290,7 @@ int TcpReassembler::dup_reassembly_segment(Packet* p, TcpSegmentNode* left,
         return STREAM_INSERT_FAILED;
     if ( TcpSegmentNode::needs_pruning() )
     {
-        sfBase.iStreamFaults++;
+        tcpStats.faults++;
         flow_con->prune_flows(PktType::TCP, p);
     }
 
@@ -713,7 +713,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             if ( ( p->packet_flags & PKT_PDU_TAIL ) )
                 s5_pkt->packet_flags |= PKT_PDU_TAIL;
 
-            sfBase.iStreamFlushes++;
+            tcpStats.rebuilt_packets++;
             bytes_processed += flushed_bytes;
 
             // FIXIT - this came with merge should it be here?
@@ -722,7 +722,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 
             show_rebuilt_packet(s5_pkt);
             tcpStats.rebuilt_packets++;
-            UpdateStreamReassStats(&sfBase, flushed_bytes);
+            tcpStats.rebuilt_bytes += flushed_bytes;
 
             {
                 ProfileExclude profile_exclude(s5TcpFlushPerfStats);

@@ -73,7 +73,7 @@ NormPegs TcpNormalizer::get_normalization_counts(unsigned& c)
 }
 
 void TcpNormalizer::trim_payload(
-    TcpSegmentDescriptor& tsd, uint32_t max, NormMode mode, PegCounts peg, PerfCounts perfc)
+    TcpSegmentDescriptor& tsd, uint32_t max, NormMode mode, PegCounts peg)
 {
     if (mode == NORM_MODE_ON)
     {
@@ -84,14 +84,12 @@ void TcpNormalizer::trim_payload(
     }
 
     normStats[peg][mode]++;
-    sfBase.iPegs[perfc][mode]++;
 }
 
 bool TcpNormalizer::strip_tcp_timestamp(
     TcpSegmentDescriptor& tsd, const tcp::TcpOption* opt, NormMode mode)
 {
     normStats[PC_TCP_TS_NOP][mode]++;
-    sfBase.iPegs[PERF_COUNT_TCP_TS_NOP][mode]++;
 
     if (mode == NORM_MODE_ON)
     {
@@ -109,7 +107,6 @@ bool TcpNormalizer::packet_dropper(TcpSegmentDescriptor& tsd, NormFlags f)
     const NormMode mode = (f == NORM_TCP_BLOCK) ? tcp_block : opt_block;
 
     normStats[PC_TCP_BLOCK][mode]++;
-    sfBase.iPegs[PERF_COUNT_TCP_BLOCK][mode]++;
 
     if (mode == NORM_MODE_ON)
     {
@@ -123,25 +120,25 @@ bool TcpNormalizer::packet_dropper(TcpSegmentDescriptor& tsd, NormFlags f)
 void TcpNormalizer::trim_syn_payload(TcpSegmentDescriptor& tsd, uint32_t max)
 {
     if (tsd.get_pkt()->dsize > max)
-        trim_payload(tsd, max, trim_syn, PC_TCP_TRIM_SYN, PERF_COUNT_TCP_TRIM_SYN);
+        trim_payload(tsd, max, trim_syn, PC_TCP_TRIM_SYN);
 }
 
 void TcpNormalizer::trim_rst_payload(TcpSegmentDescriptor& tsd, uint32_t max)
 {
     if (tsd.get_pkt()->dsize > max)
-        trim_payload(tsd, max, trim_rst, PC_TCP_TRIM_RST, PERF_COUNT_TCP_TRIM_RST);
+        trim_payload(tsd, max, trim_rst, PC_TCP_TRIM_RST);
 }
 
 void TcpNormalizer::trim_win_payload(TcpSegmentDescriptor& tsd, uint32_t max)
 {
     if (tsd.get_pkt()->dsize > max)
-        trim_payload(tsd, max, trim_win, PC_TCP_TRIM_WIN, PERF_COUNT_TCP_TRIM_WIN);
+        trim_payload(tsd, max, trim_win, PC_TCP_TRIM_WIN);
 }
 
 void TcpNormalizer::trim_mss_payload(TcpSegmentDescriptor& tsd, uint32_t max)
 {
     if (tsd.get_pkt()->dsize > max)
-        trim_payload(tsd, max, trim_mss, PC_TCP_TRIM_MSS, PERF_COUNT_TCP_TRIM_MSS);
+        trim_payload(tsd, max, trim_mss, PC_TCP_TRIM_MSS);
 }
 
 void TcpNormalizer::ecn_tracker(const tcp::TCPHdr* tcph, bool req3way)
@@ -166,7 +163,6 @@ void TcpNormalizer::ecn_stripper(Packet* p)
         }
 
         normStats[PC_TCP_ECN_SSN][strip_ecn]++;
-        sfBase.iPegs[PERF_COUNT_TCP_ECN_SSN][strip_ecn]++;
     }
 }
 

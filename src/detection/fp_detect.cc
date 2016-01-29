@@ -60,8 +60,7 @@
 #include "framework/inspector.h"
 #include "framework/ips_action.h"
 #include "framework/mpse.h"
-#include "perf_monitor/perf.h"
-#include "network_inspectors/perf_monitor/perf_event.h"
+#include "perf_monitor/event_tracker.h"
 #include "filters/sfthreshold.h"
 #include "filters/rate_filter.h"
 #include "events/event_wrapper.h"
@@ -504,13 +503,13 @@ static int rule_tree_match(
         {
             //  We have a qualified event from this tree
             pomd->pg->event_count++;
-            UpdateQEvents(&sfEvent);
+            perf_event->UpdateQEvents();
         }
         else
         {
             // This means that the event is non-qualified.
             pomd->pg->match_count++;
-            UpdateNQEvents(&sfEvent);
+            perf_event->UpdateNQEvents();
         }
     }
 
@@ -1128,13 +1127,13 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
             {
                 // We have a qualified event from this tree
                 port_group->event_count++;
-                UpdateQEvents(&sfEvent);
+                perf_event->UpdateQEvents();
             }
             else
             {
                 // This means that the event is non-qualified.
                 port_group->match_count++;
-                UpdateNQEvents(&sfEvent);
+                perf_event->UpdateNQEvents();
             }
             pc.slow_searches++;
         }

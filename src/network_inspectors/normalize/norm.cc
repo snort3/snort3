@@ -25,8 +25,7 @@
 
 #include <string.h>
 
-#include "utils/stats.h"
-#include "perf_monitor/perf.h"
+#include "main/snort_config.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/ipv4.h"
 #include "protocols/ipv4_options.h"
@@ -35,7 +34,7 @@
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 #include "stream/stream.h"
-#include "main/snort_config.h"
+#include "utils/stats.h"
 
 enum PegCounts
 {
@@ -195,7 +194,6 @@ static int Norm_IP4(
                 changes++;
             }
             normStats[PC_IP4_TRIM][mode]++;
-            sfBase.iPegs[PERF_COUNT_IP4_TRIM][mode]++;
         }
     }
     if ( Norm_IsEnabled(c, NORM_IP4_TOS) )
@@ -208,7 +206,6 @@ static int Norm_IP4(
                 changes++;
             }
             normStats[PC_IP4_TOS][mode]++;
-            sfBase.iPegs[PERF_COUNT_IP4_TOS][mode]++;
         }
     }
 #if 0
@@ -227,7 +224,6 @@ static int Norm_IP4(
                 changes++;
             }
             normStats[PC_IP4_DF][mode]++;
-            sfBase.iPegs[PERF_COUNT_IP4_DF][mode]++;
         }
     }
     if ( Norm_IsEnabled(c, NORM_IP4_RF) )
@@ -240,7 +236,6 @@ static int Norm_IP4(
                 changes++;
             }
             normStats[PC_IP4_RF][mode]++;
-            sfBase.iPegs[PERF_COUNT_IP4_RF][mode]++;
         }
     }
     if ( fragbits != origbits )
@@ -258,7 +253,6 @@ static int Norm_IP4(
                 changes++;
             }
             normStats[PC_IP4_TTL][mode]++;
-            sfBase.iPegs[PERF_COUNT_IP4_TTL][mode]++;
         }
     }
     if ( p->layers[layer].length > ip::IP4_HEADER_LEN )
@@ -272,7 +266,6 @@ static int Norm_IP4(
             changes++;
         }
         normStats[PC_IP4_OPTS][mode]++;
-        sfBase.iPegs[PERF_COUNT_IP4_OPTS][mode]++;
     }
     return changes;
 }
@@ -294,7 +287,6 @@ static int Norm_ICMP4(
             changes++;
         }
         normStats[PC_ICMP4_ECHO][mode]++;
-        sfBase.iPegs[PERF_COUNT_ICMP4_ECHO][mode]++;
     }
     return changes;
 }
@@ -320,7 +312,6 @@ static int Norm_IP6(
                 changes++;
             }
             normStats[PC_IP6_TTL][mode]++;
-            sfBase.iPegs[PERF_COUNT_IP6_TTL][mode]++;
         }
     }
     return changes;
@@ -345,7 +336,6 @@ static int Norm_ICMP6(
             changes++;
         }
         normStats[PC_ICMP6_ECHO][mode]++;
-        sfBase.iPegs[PERF_COUNT_ICMP6_ECHO][mode]++;
     }
     return changes;
 }
@@ -382,7 +372,6 @@ static int Norm_IP6_Opts(
         changes++;
     }
     normStats[PC_IP6_OPTS][mode]++;
-    sfBase.iPegs[PERF_COUNT_IP6_OPTS][mode]++;
     return changes;
 }
 
@@ -438,7 +427,6 @@ static inline int Norm_TCPOptions(NormalizerConfig* config, const NormMode mode,
                     changes++;
                 }
                 normStats[PC_TCP_SYN_OPT][mode]++;
-                sfBase.iPegs[PERF_COUNT_TCP_SYN_OPT][mode]++;
             }
             break;
 
@@ -454,7 +442,6 @@ static inline int Norm_TCPOptions(NormalizerConfig* config, const NormMode mode,
                     changes++;
                 }
                 normStats[PC_TCP_TS_ECR][mode]++;
-                sfBase.iPegs[PERF_COUNT_TCP_TS_ECR][mode]++;
             }
             break;
 
@@ -467,7 +454,6 @@ static inline int Norm_TCPOptions(NormalizerConfig* config, const NormMode mode,
                     changes++;
                 }
                 normStats[PC_TCP_OPT][mode]++;
-                sfBase.iPegs[PERF_COUNT_TCP_OPT][mode]++;
             }
         }
         i += olen;
@@ -480,7 +466,6 @@ static inline int Norm_TCPOptions(NormalizerConfig* config, const NormMode mode,
             changes++;
         }
         normStats[PC_TCP_PAD][mode]++;
-        sfBase.iPegs[PERF_COUNT_TCP_PAD][mode]++;
     }
     return changes;
 }
@@ -504,7 +489,6 @@ static inline int Norm_TCPPadding(NormalizerConfig*, const NormMode mode,
             changes++;
         }
         normStats[PC_TCP_PAD][mode]++;
-        sfBase.iPegs[PERF_COUNT_TCP_PAD][mode]++;
     }
     return changes;
 }
@@ -525,7 +509,6 @@ static int Norm_TCP(
                 changes++;
             }
             normStats[PC_TCP_RSV][mode]++;
-            sfBase.iPegs[PERF_COUNT_TCP_RSV][mode]++;
         }
     }
     if ( Norm_IsEnabled(c, NORM_TCP_ECN_PKT) )
@@ -538,7 +521,6 @@ static int Norm_TCP(
                 changes++;
             }
             normStats[PC_TCP_ECN_PKT][mode]++;
-            sfBase.iPegs[PERF_COUNT_TCP_ECN_PKT][mode]++;
         }
         if ( h->th_offx2 & TH_NS )
         {
@@ -548,7 +530,6 @@ static int Norm_TCP(
                 changes++;
             }
             normStats[PC_TCP_NS][mode]++;
-            sfBase.iPegs[PERF_COUNT_TCP_NS][mode]++;
         }
     }
     if ( h->th_urp )
@@ -563,7 +544,6 @@ static int Norm_TCP(
                     changes++;
                 }
                 normStats[PC_TCP_REQ_URG][mode]++;
-                sfBase.iPegs[PERF_COUNT_TCP_REQ_URG][mode]++;
             }
         }
         else if ( !p->dsize )
@@ -577,7 +557,6 @@ static int Norm_TCP(
                     changes++;
                 }
                 normStats[PC_TCP_REQ_PAY][mode]++;
-                sfBase.iPegs[PERF_COUNT_TCP_REQ_PAY][mode]++;
             }
         }
         else if ( h->urp() > p->dsize )
@@ -590,7 +569,6 @@ static int Norm_TCP(
                     changes++;
                 }
                 normStats[PC_TCP_URP][mode]++;
-                sfBase.iPegs[PERF_COUNT_TCP_URP][mode]++;
             }
         }
     }
@@ -604,7 +582,6 @@ static int Norm_TCP(
                 changes++;
             }
             normStats[PC_TCP_REQ_URP][mode]++;
-            sfBase.iPegs[PERF_COUNT_TCP_REQ_URP][mode]++;
         }
     }
 

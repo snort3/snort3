@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -21,18 +21,33 @@
 #include "perf_module.h"
 #include "utils/util.h"
 
-#define PERF_FILE "perf_monitor.csv"
-#define FLOW_FILE "perf_monitor_flow.csv"
-#define FLIP_FILE "perf_monitor_flow_ip.csv"
-
 //-------------------------------------------------------------------------
 // perf attributes
 //-------------------------------------------------------------------------
 
+static const Parameter peg_params[] =
+{
+    { "name", Parameter::PT_STRING, nullptr, nullptr,
+      "name of the statistic to track" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr },
+};
+
+static const Parameter module_params[] =
+{
+    { "name", Parameter::PT_STRING, nullptr, nullptr,
+      "name of the module" },
+
+    { "pegs", Parameter::PT_LIST, peg_params, nullptr,
+      "list of statistics to track" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr },
+};
+
 static const Parameter s_params[] =
 {
     { "packets", Parameter::PT_INT, "0:", "10000",
-      "minim packets to report" },
+      "minimum packets to report" },
 
     { "seconds", Parameter::PT_INT, "0:", "60",
       "report interval; 0 means report at exit only" },
@@ -61,7 +76,7 @@ static const Parameter s_params[] =
       "report on qualified vs non-qualified events" },
 
     { "file", Parameter::PT_BOOL, nullptr, "false",
-      "output base stats to " PERF_FILE " instead of stdout" },
+      "output base stats to " BASE_FILE " instead of stdout" },
 
     { "flow", Parameter::PT_BOOL, nullptr, "false",
       "enable traffic statistics" },
@@ -74,6 +89,9 @@ static const Parameter s_params[] =
 
     { "flow_ip_file", Parameter::PT_BOOL, nullptr, "false",
       "output host pair statistics to " FLIP_FILE " instead of stdout" },
+
+    { "modules", Parameter::PT_LIST, module_params, "false",
+      "gather statistics from the specified modules" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -103,11 +121,9 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
             config.perf_flags &= ~SFPERF_TIME_COUNT;
         }
     }
-
     else if ( v.is("flow_ip_memcap") )
     {
         config.flowip_memcap = v.get_long();
-        config.perf_flags |= SFPERF_FLOWIP;
     }
     else if ( v.is("max_file_size") )
         config.max_file_size = v.get_long() - ROLLOVER_THRESH;
@@ -115,7 +131,6 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("flow_ports") )
     {
         config.flow_max_port_to_track = v.get_long();
-        config.perf_flags |= SFPERF_FLOW;
     }
     else if ( v.is("reset") )
         config.base_reset = v.get_bool();
@@ -138,10 +153,7 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
             config.perf_flags |= SFPERF_EVENT;
     }
     else if ( v.is("file") )
-    {
-        if ( v.get_bool() )
-            config.file = SnortStrdup(PERF_FILE);
-    }
+        config.file = v.get_bool();
     else if ( v.is("flow") )
     {
         if ( v.get_bool() )
@@ -152,7 +164,7 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
         if ( v.get_bool() )
         {
             config.perf_flags |= SFPERF_FLOW;
-            config.flow_file = SnortStrdup(FLOW_FILE);
+            config.flow_file = true;
         }
     }
     else if ( v.is("flow_ip") )
@@ -165,7 +177,7 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
         if ( v.get_bool() )
         {
             config.perf_flags |= SFPERF_FLOWIP;
-            config.flowip_file = SnortStrdup(FLIP_FILE);
+            config.flowip_file = true;
         }
     }
     else
@@ -176,7 +188,8 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
 
 bool PerfMonModule::begin(const char*, int, SnortConfig*)
 {
-    sfInitPerformanceStatistics(&config);
+    memset(&config, 0, sizeof(SFPERF));
+    config.perf_flags |= SFPERF_BASE | SFPERF_TIME_COUNT;
     return true;
 }
 

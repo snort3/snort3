@@ -67,8 +67,7 @@ extern THREAD_LOCAL ProfileStats streamSizePerfStats;
 
 struct TcpStats
 {
-    PegCount sessions;
-    PegCount timeouts;
+    SESSION_STATS
     PegCount resyns;
     PegCount discards;
     PegCount events;
@@ -78,14 +77,13 @@ struct TcpStats
     PegCount sessions_on_syn_ack;
     PegCount sessions_on_3way;
     PegCount sessions_on_data;
-    PegCount trackers_created;
-    PegCount trackers_released;
     PegCount segs_queued;
     PegCount segs_released;
     PegCount segs_split;
     PegCount segs_used;
-    PegCount rebuilt_packets;
+    PegCount rebuilt_packets;   //iStreamFlushes
     PegCount rebuilt_buffers;
+    PegCount rebuilt_bytes;     //total_rebuilt_bytes
     PegCount overlaps;
     PegCount gaps;
     PegCount max_segs;
@@ -93,6 +91,11 @@ struct TcpStats
     PegCount internalEvents;
     PegCount s5tcp1;
     PegCount s5tcp2;
+    PegCount mem_in_use;
+    PegCount faults;
+    PegCount sessions_initializing;
+    PegCount sessions_established;
+    PegCount sessions_closing;
 };
 
 extern THREAD_LOCAL struct TcpStats tcpStats;
@@ -134,6 +137,7 @@ public:
     override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
+    void sum_stats() override;
 
 private:
     TcpStreamConfig* config;

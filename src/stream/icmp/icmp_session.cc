@@ -31,7 +31,6 @@
 #include "flow/flow.h"
 #include "flow/flow_control.h"
 #include "flow/session.h"
-#include "perf_monitor/perf.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/layer.h"
@@ -47,14 +46,12 @@
 
 struct IcmpStats
 {
-    PegCount created;
-    PegCount released;
+    SESSION_STATS
 };
 
 const PegInfo icmp_pegs[] =
 {
-    { "created", "icmp session trackers created" },
-    { "released", "icmp session trackers released" },
+    SESSION_PEGS("icmp"),
     { nullptr, nullptr }
 };
 
@@ -68,17 +65,9 @@ THREAD_LOCAL ProfileStats icmp_perf_stats;
 static void IcmpSessionCleanup(Flow* ssn)
 {
     if (ssn->ssn_state.session_flags & SSNFLAG_PRUNED)
-    {
-        CloseStreamSession(&sfBase, SESSION_CLOSED_PRUNED);
-    }
+        icmpStats.prunes++;
     else if (ssn->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
-    {
-        CloseStreamSession(&sfBase, SESSION_CLOSED_TIMEDOUT);
-    }
-    else
-    {
-        CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
-    }
+        icmpStats.timeouts++;
 
     if ( ssn->ssn_state.session_flags & SSNFLAG_SEEN_SENDER )
         icmpStats.released++;
@@ -212,8 +201,8 @@ bool IcmpSession::setup(Packet*)
     echo_count = 0;
     ssn_time.tv_sec = 0;
     ssn_time.tv_usec = 0;
-    icmpStats.created++;
     flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
+    SESSION_STATS_ADD(icmpStats);
     return true;
 }
 

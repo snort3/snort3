@@ -126,6 +126,9 @@ public:
     virtual PegCount* get_counts() const
     { return nullptr; }
 
+    virtual int get_num_counts() const
+    { return num_counts; }
+
     virtual ProfileStats* get_profile() const
     { return nullptr; }
 

@@ -84,7 +84,6 @@ using namespace std;
 #include "ppm/ppm.h"
 #include "profiler/profiler.h"
 #include "time/periodic.h"
-#include "perf_monitor/perf.h"
 #include "ips_options/ips_flowbits.h"
 #include "events/event_queue.h"
 #include "framework/mpse.h"
@@ -103,6 +102,7 @@ using namespace std;
 #include "flow/flow.h"
 #include "stream/stream.h"
 #include "target_based/sftarget_reader.h"
+#include "perf_monitor/perf_monitor.h"
 
 #ifdef PIGLET
 #include "piglet/piglet.h"
@@ -781,7 +781,7 @@ static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
     }
     else if ( s_packet->ptrs.decode_flags & DECODE_PKT_TRUST )
     {
-        if(s_packet->flow)
+        if (s_packet->flow)
             s_packet->flow->set_ignore_direction(SSN_DIR_BOTH);
         verdict = DAQ_VERDICT_WHITELIST;
     }
@@ -818,7 +818,8 @@ DAQ_Verdict Snort::packet_callback(
     int inject = 0;
     verdict = update_verdict(verdict, inject);
 
-    UpdateWireStats(&sfBase, pkthdr->caplen, Active::packet_was_dropped(), inject);
+    //FIXIT-H move this to the appropriate struct
+    //perfBase->UpdateWireStats(pkthdr->caplen, Active::packet_was_dropped(), inject);
     Active::reset();
     PacketManager::encode_reset();
 

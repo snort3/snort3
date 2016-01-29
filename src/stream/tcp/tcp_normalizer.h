@@ -23,7 +23,7 @@
 #define TCP_NORMALIZER_H
 
 #include "main/snort_types.h"
-#include "perf_monitor/perf.h"
+#include "framework/counts.h"
 #include "protocols/tcp_options.h"
 #include "protocols/tcp.h"
 #include "normalize/normalize.h"
@@ -130,7 +130,7 @@ public:
 
 protected:
     TcpNormalizer(StreamPolicy, TcpSession*, TcpTracker*);
-    virtual void trim_payload(TcpSegmentDescriptor&, uint32_t, NormMode, PegCounts, PerfCounts);
+    virtual void trim_payload(TcpSegmentDescriptor&, uint32_t, NormMode, PegCounts);
     virtual bool strip_tcp_timestamp(TcpSegmentDescriptor&, const tcp::TcpOption*, NormMode);
     virtual bool validate_rst_seq_geq(TcpSegmentDescriptor&);
     virtual bool validate_rst_end_seq_geq(TcpSegmentDescriptor&);

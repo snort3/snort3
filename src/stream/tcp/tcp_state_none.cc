@@ -126,7 +126,7 @@ bool TcpStateNone::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
         trk.init_on_3whs_ack_sent(tsd);
         session.init_new_tcp_session(tsd);
-        session.update_perf_base_state(&sfBase, TcpStreamTracker::TCP_ESTABLISHED);
+        session.update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
         tcpStats.sessions_on_3way++;
     }
 
@@ -174,7 +174,7 @@ bool TcpStateNone::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         session.init_new_tcp_session(tsd);
 
         if ( flow->session_state & STREAM_STATE_ESTABLISHED )
-            session.update_perf_base_state(&sfBase, TcpStreamTracker::TCP_ESTABLISHED);
+            session.update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
 
         tcpStats.sessions_on_data++;
     }

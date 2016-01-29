@@ -38,27 +38,21 @@
 #include "flow/flow_control.h"
 #include "flow/session.h"
 #include "packet_io/active.h"
-#include "perf_monitor/perf.h"
 #include "profiler/profiler.h"
 #include "sfip/sf_ip.h"
+#include "perf_monitor/flow_ip_tracker.h"
 
 // NOTE:  sender is assumed to be client
 //        responder is assumed to be server
 
 struct UdpStats
 {
-    PegCount sessions;
-    PegCount created;
-    PegCount released;
-    PegCount timeouts;
+    SESSION_STATS;
 };
 
 const PegInfo udp_pegs[] =
 {
-    { "sessions", "total udp sessions" },
-    { "created", "udp session trackers created" },
-    { "released", "udp session trackers released" },
-    { "timeouts", "udp session timeouts" },
+    SESSION_PEGS("udp"),
     { nullptr, nullptr }
 };
 
@@ -70,22 +64,12 @@ THREAD_LOCAL ProfileStats udp_perf_stats;
 static void UdpSessionCleanup(Flow* lwssn)
 {
     if (lwssn->ssn_state.session_flags & SSNFLAG_PRUNED)
-    {
-        CloseStreamSession(&sfBase, SESSION_CLOSED_PRUNED);
-    }
+        udpStats.prunes++;
     else if (lwssn->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
-    {
-        CloseStreamSession(&sfBase, SESSION_CLOSED_TIMEDOUT);
-    }
-    else
-    {
-        CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
-    }
+        udpStats.timeouts++;
 
     if ( lwssn->ssn_state.session_flags & SSNFLAG_SEEN_SENDER )
         udpStats.released++;
-
-    RemoveUDPSession(&sfBase);
 }
 
 static int ProcessUdp(
@@ -140,6 +124,8 @@ UdpSession::UdpSession(Flow* flow) : Session(flow)
 
 bool UdpSession::setup(Packet* p)
 {
+    PegCount current;
+
     ssn_time.tv_sec = p->pkth->ts.tv_sec;
     ssn_time.tv_usec = p->pkth->ts.tv_usec;
     flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
@@ -150,16 +136,20 @@ bool UdpSession::setup(Packet* p)
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
     flow->set_expire(p, pc->session_timeout);
 
-    udpStats.created++;
-    AddUDPSession(&sfBase);
+    SESSION_STATS_ADD(udpStats);
 
     if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
-        UpdateFlowIPState(&sfFlow, &flow->client_ip, &flow->server_ip, SFS_STATE_UDP_CREATED);
+    {
+        perf_flow_ip->updateState(&flow->client_ip,
+            &flow->server_ip, SFS_STATE_UDP_CREATED);
+    }
 
     if ( flow_con->expected_flow(flow, p) )
+    {
+        udpStats.sessions--; // incremented in SESSIONS_STATS_ADD
         return false;
+    }
 
-    udpStats.sessions++;
     return true;
 }
 
@@ -206,14 +196,14 @@ int UdpSession::process(Packet* p)
     Profile profile(udp_perf_stats);
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
-     // Check if the session is expired.
-     // Should be done before we do something with the packet...
+    // Check if the session is expired.
+    // Should be done before we do something with the packet...
     if ( stream.expired_session(flow, p) )
     {
         UdpSessionCleanup(flow);
         flow->restart();
         flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
-        udpStats.created++;
+        udpStats.created++; //FIXIT-M is this correct? will mess with calc of current sessions
         udpStats.timeouts++;
     }
 

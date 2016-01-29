@@ -60,6 +60,7 @@
 #include "utils/sflsq.h"
 #include "utils/snort_bounds.h"
 #include "time/packet_time.h"
+#include "perf_monitor/flow_ip_tracker.h"
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"
 #include "protocols/tcp_options.h"
@@ -74,6 +75,8 @@
 #include "profiler/profiler.h"
 #include "file_api/file_api.h"
 #include "sfip/sf_ip.h"
+#include "normalize/normalize.h"
+#include "perf_monitor/flow_tracker.h"
 #include "filters/sfrf.h"
 
 #include "stream/paf.h"
@@ -108,7 +111,7 @@ const char* const flush_policy_names[] =
 };
 #endif
 
-void TcpSession::update_perf_base_state(SFBASE* sf_base, char newState)
+void TcpSession::update_perf_base_state(char newState)
 {
     uint32_t session_flags = flow->get_session_flags();
     switch ( newState )
@@ -116,7 +119,7 @@ void TcpSession::update_perf_base_state(SFBASE* sf_base, char newState)
     case TcpStreamTracker::TCP_SYN_SENT:
         if ( !( session_flags & SSNFLAG_COUNTED_INITIALIZE ) )
         {
-            sf_base->iSessionsInitializing++;
+            tcpStats.sessions_initializing++;
             session_flags |= SSNFLAG_COUNTED_INITIALIZE;
         }
         break;
@@ -124,19 +127,17 @@ void TcpSession::update_perf_base_state(SFBASE* sf_base, char newState)
     case TcpStreamTracker::TCP_ESTABLISHED:
         if ( !( session_flags & SSNFLAG_COUNTED_ESTABLISH ) )
         {
-            sf_base->iSessionsEstablished++;
-
+            tcpStats.sessions_established++;
             if ( perfmon_config && ( perfmon_config->perf_flags & SFPERF_FLOWIP ) )
-                UpdateFlowIPState(&sfFlow, &flow->client_ip,
+                perf_flow_ip->updateState(&flow->client_ip,
                     &flow->server_ip, SFS_STATE_TCP_ESTABLISHED);
 
             session_flags |= SSNFLAG_COUNTED_ESTABLISH;
-
             if ( ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
                 && !( session_flags & SSNFLAG_COUNTED_CLOSING ) )
             {
-                assert(sf_base->iSessionsInitializing);
-                sf_base->iSessionsInitializing--;
+                assert(tcpStats.sessions_initializing);
+                tcpStats.sessions_initializing--;
             }
         }
         break;
@@ -144,22 +145,22 @@ void TcpSession::update_perf_base_state(SFBASE* sf_base, char newState)
     case TcpStreamTracker::TCP_CLOSING:
         if ( !( session_flags & SSNFLAG_COUNTED_CLOSING ) )
         {
-            sf_base->iSessionsClosing++;
+            tcpStats.sessions_closing++;
             session_flags |= SSNFLAG_COUNTED_CLOSING;
 
             if ( session_flags & SSNFLAG_COUNTED_ESTABLISH )
             {
-                assert(sf_base->iSessionsEstablished);
-                sf_base->iSessionsEstablished--;
+                assert(tcpStats.sessions_established);
+                tcpStats.sessions_established--;
 
-                if ( perfmon_config  && ( perfmon_config->perf_flags & SFPERF_FLOWIP ) )
-                    UpdateFlowIPState(&sfFlow, &flow->client_ip,
-                        &flow->server_ip, SFS_STATE_TCP_CLOSED);
+                if (perfmon_config  && (perfmon_config->perf_flags & SFPERF_FLOWIP))
+                    perf_flow_ip->updateState(&flow->client_ip, &flow->server_ip,
+                        SFS_STATE_TCP_CLOSED);
             }
             else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
             {
-                assert(sf_base->iSessionsInitializing);
-                sf_base->iSessionsInitializing--;
+                assert(tcpStats.sessions_initializing);
+                tcpStats.sessions_initializing--;
             }
         }
         break;
@@ -167,22 +168,22 @@ void TcpSession::update_perf_base_state(SFBASE* sf_base, char newState)
     case TcpStreamTracker::TCP_CLOSED:
         if ( session_flags & SSNFLAG_COUNTED_CLOSING )
         {
-            assert(sf_base->iSessionsClosing);
-            sf_base->iSessionsClosing--;
+            assert(tcpStats.sessions_closing);
+            tcpStats.sessions_closing--;
         }
         else if ( session_flags & SSNFLAG_COUNTED_ESTABLISH )
         {
-            assert(sf_base->iSessionsEstablished);
-            sf_base->iSessionsEstablished--;
+            assert(tcpStats.sessions_established);
+            tcpStats.sessions_established--;
 
             if ( perfmon_config && ( perfmon_config->perf_flags & SFPERF_FLOWIP ) )
-                UpdateFlowIPState(&sfFlow, &flow->client_ip,
+                perf_flow_ip->updateState(&flow->client_ip,
                     &flow->server_ip, SFS_STATE_TCP_CLOSED);
         }
         else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
         {
-            assert(sf_base->iSessionsInitializing);
-            sf_base->iSessionsInitializing--;
+            assert(tcpStats.sessions_initializing);
+            tcpStats.sessions_initializing--;
         }
         break;
 
@@ -191,7 +192,7 @@ void TcpSession::update_perf_base_state(SFBASE* sf_base, char newState)
     }
 
     flow->update_session_flags(session_flags);
-    sf_base->stream_mem_in_use = tcp_memcap->used();
+    tcpStats.mem_in_use = tcp_memcap->used();
 }
 
 //-------------------------------------------------------------------------
@@ -431,21 +432,19 @@ void TcpSession::clear_session(int freeApplicationData)
 {
     // update stats
     if ( tcp_init )
-        tcpStats.trackers_released++;
+        tcpStats.released++;
     else if ( lws_init )
         tcpStats.no_pickups++;
     else
         return;
 
-    update_perf_base_state(&sfBase, TcpStreamTracker::TCP_CLOSED);
-    RemoveStreamSession(&sfBase);
+    update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
 
-    if ( flow->get_session_flags() & SSNFLAG_PRUNED )
-        CloseStreamSession(&sfBase, SESSION_CLOSED_PRUNED);
-    else if ( flow->get_session_flags() & SSNFLAG_TIMEDOUT )
-        CloseStreamSession(&sfBase, SESSION_CLOSED_TIMEDOUT);
-    else
-        CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
+    if (flow->get_session_flags() & SSNFLAG_PRUNED)
+        tcpStats.prunes++;
+    else if (flow->get_session_flags() & SSNFLAG_TIMEDOUT)
+        tcpStats.timeouts++;
+    tcpStats.released++;
 
     set_splitter(true, nullptr);
     set_splitter(false, nullptr);
@@ -777,8 +776,8 @@ void TcpSession::init_new_tcp_session(TcpSegmentDescriptor& tsd)
     /* New session, previous was marked as reset.  Clear the reset flag. */
     flow->clear_session_flags(SSNFLAG_RESET);
     flow->set_expire(tsd.get_pkt(), config->session_timeout);
-    AddStreamSession(&sfBase, flow->session_state & STREAM_STATE_MIDSTREAM ? SSNFLAG_MIDSTREAM : 0);
-    update_perf_base_state(&sfBase, TcpStreamTracker::TCP_SYN_SENT);
+
+    update_perf_base_state(TcpStreamTracker::TCP_SYN_SENT);
     tel->EventInternal(INTERNAL_EVENT_SESSION_ADD);
 
     //assert( !tcp_init );
@@ -786,7 +785,7 @@ void TcpSession::init_new_tcp_session(TcpSegmentDescriptor& tsd)
     new_ssn = true;
 
     // FIXIT - this state is bogus... move to tracker init...
-    tcpStats.trackers_created++;
+    tcpStats.created++;
 }
 
 void TcpSession::NewTcpSessionOnSyn(TcpSegmentDescriptor& tsd)
@@ -820,12 +819,13 @@ void TcpSession::update_session_state(const tcp::TCPHdr* tcph, TcpSegmentDescrip
             if (flow->session_state != STREAM_STATE_NONE)
             {
                 flow->session_state |= STREAM_STATE_SYN_ACK;
+                update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
             }
         }
         else if (tcph->is_ack() && (flow->session_state & STREAM_STATE_SYN_ACK))
         {
             flow->session_state |= STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED;
-            update_perf_base_state(&sfBase, TcpStreamTracker::TCP_ESTABLISHED);
+            update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
         }
     }
 }
@@ -858,7 +858,7 @@ void TcpSession::update_session_on_server_packet(const tcp::TCPHdr* tcph,
             // should TCP state go to established too?
             flow->session_state |= STREAM_STATE_ESTABLISHED;
             flow->set_session_flags(SSNFLAG_ESTABLISHED);
-            update_perf_base_state(&sfBase, TcpStreamTracker::TCP_ESTABLISHED);
+            update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
         }
     }
 
@@ -1091,7 +1091,7 @@ void TcpSession::process_tcp_packet(TcpSegmentDescriptor& tsd)
                  */
                 flow->set_session_flags(SSNFLAG_RESET);
                 talker->set_tcp_state(TcpStreamTracker::TCP_CLOSED);
-                update_perf_base_state(&sfBase, TcpStreamTracker::TCP_CLOSING);
+                update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
                 /* Leave listener open, data may be in transit */
                 pkt_action_mask |= ACTION_RST;
                 return;
@@ -1174,7 +1174,7 @@ void TcpSession::process_tcp_packet(TcpSegmentDescriptor& tsd)
             flow->set_session_flags(SSNFLAG_RESET);
             talker->set_tcp_state(TcpStreamTracker::TCP_CLOSED);
             talker->s_mgr.sub_state |= SUB_RST_SENT;
-            update_perf_base_state(&sfBase, TcpStreamTracker::TCP_CLOSING);
+            update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
 
             if ( listener->normalizer->is_tcp_ips_enabled() )
                 listener->set_tcp_state(TcpStreamTracker::TCP_CLOSED);
@@ -1317,7 +1317,7 @@ void TcpSession::process_tcp_packet(TcpSegmentDescriptor& tsd)
                 flow->session_state |= STREAM_STATE_ESTABLISHED;
                 listener->set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
                 talker->set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
-                update_perf_base_state(&sfBase, TcpStreamTracker::TCP_ESTABLISHED);
+                update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
                 /* Indicate this packet completes 3-way handshake */
                 tsd.get_pkt()->packet_flags |= PKT_STREAM_TWH;
             }
@@ -1552,7 +1552,7 @@ void TcpSession::process_tcp_packet(TcpSegmentDescriptor& tsd)
                 if ( !tsd.get_pkt()->dsize )
                     listener->reassembler->flush_on_data_policy(tsd.get_pkt() );
 
-                update_perf_base_state(&sfBase, TcpStreamTracker::TCP_CLOSING);
+                update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
                 break;
 
             case TcpStreamTracker::TCP_CLOSE_WAIT:
@@ -1726,7 +1726,7 @@ bool TcpSession::setup(Packet*)
     ingress_group = egress_group = 0;
     daq_flags = address_space_id = 0;
 
-    tcpStats.sessions++;
+    SESSION_STATS_ADD(tcpStats);
     return true;
 }
 
