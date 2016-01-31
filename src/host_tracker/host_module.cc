@@ -102,6 +102,7 @@ bool HostTrackerModule::end(const char* fqn, int idx, SnortConfig*)
     else if ( idx && !strcmp(fqn, "host_tracker") )
     {
         host_cache_add_host_tracker(host);
+        host = nullptr;  //  Host cache is now responsible for freeing host
     }
 
     return true;
