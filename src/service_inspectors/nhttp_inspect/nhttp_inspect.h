@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -54,8 +54,8 @@ public:
     {
         return new NHttpStreamSplitter(is_client_to_server, this);
     }
-    static NHttpEnums::InspectSection get_latest_is() { return (latest_section != nullptr) ?
-        latest_section->get_inspection_section() : NHttpEnums::IS_NONE; }
+    static NHttpEnums::InspectSection get_latest_is();
+
 private:
     friend NHttpApi;
     friend NHttpStreamSplitter;

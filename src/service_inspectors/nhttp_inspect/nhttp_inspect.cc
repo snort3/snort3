@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -57,6 +57,12 @@ NHttpInspect::NHttpInspect(NHttpParaList params_) : params(params_)
 THREAD_LOCAL uint8_t NHttpInspect::body_buffer[MAX_OCTETS];
 
 SO_PUBLIC THREAD_LOCAL NHttpMsgSection* NHttpInspect::latest_section = nullptr;
+
+NHttpEnums::InspectSection NHttpInspect::get_latest_is()
+{
+    return (latest_section != nullptr) ?
+        latest_section->get_inspection_section() : NHttpEnums::IS_NONE;
+}
 
 bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b)
 {

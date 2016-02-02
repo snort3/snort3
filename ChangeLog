@@ -1,3 +1,14 @@
+16/02/02 - build 186
+
+-- update copyright to 2016, add missing license blocks
+-- fix xcode builds
+-- fix static analysis issues
+-- update default manuals
+-- host_module and host_tracker updates
+-- start perf_monitor rewrite - 1st of many updates
+-- start dce2 port - 1st of many updates
+-- remove --enable-ppm - always enabled
+
 16/01/25 - build 185
 
 -- initial host_tracker for new integrated netmap

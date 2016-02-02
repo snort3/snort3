@@ -27,7 +27,6 @@ class BaseTracker : public PerfTracker
 {
 public:
     BaseTracker(SFPERF* perf);
-    ~BaseTracker();
 
     static void so_init();
     static bool so_configure();

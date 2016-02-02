@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -31,8 +31,8 @@
 #include "stream/libtcp/stream_tcp_unit_test.h"
 #endif
 
-TcpStateClosed::TcpStateClosed(TcpStateMachine& tsm, TcpSession& session) :
-    TcpStateHandler(TcpStreamTracker::TCP_CLOSED, tsm), session(session)
+TcpStateClosed::TcpStateClosed(TcpStateMachine& tsm, TcpSession& ssn) :
+    TcpStateHandler(TcpStreamTracker::TCP_CLOSED, tsm), session(ssn)
 {
 }
 
@@ -42,85 +42,61 @@ TcpStateClosed::~TcpStateClosed()
 
 bool TcpStateClosed::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
-
     return default_state_action(tsd, tracker, __func__);
 }
 
 bool TcpStateClosed::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
-
     return default_state_action(tsd, tracker, __func__);
 }
 
 bool TcpStateClosed::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
-
     return default_state_action(tsd, tracker, __func__);
 }
 
 bool TcpStateClosed::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
-
     return default_state_action(tsd, tracker, __func__);
 }
 
 bool TcpStateClosed::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
-
     return default_state_action(tsd, tracker, __func__);
 }
 
 bool TcpStateClosed::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
-
     return default_state_action(tsd, tracker, __func__);
 }
 
 bool TcpStateClosed::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
-
     return default_state_action(tsd, tracker, __func__);
 }
 
 bool TcpStateClosed::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
-
     return default_state_action(tsd, tracker, __func__);
 }
 
 bool TcpStateClosed::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
-
     return default_state_action(tsd, tracker, __func__);
 }
 
 bool TcpStateClosed::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
-
     return default_state_action(tsd, tracker, __func__);
 }
 
 bool TcpStateClosed::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
-
     return default_state_action(tsd, tracker, __func__);
 }
 
 bool TcpStateClosed::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
-
     return default_state_action(tsd, tracker, __func__);
 }
 

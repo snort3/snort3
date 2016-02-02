@@ -14,6 +14,9 @@
     src/service_inspectors/back_orifice/back_orifice.cc:231:25: warning:
     iteration 930u invokes undefined behavior [-Waggressive-loop-optimizations]
 
+* openssl is required for cmake builds.
+
+
 ==== Config
 
 * Parsing issue with IP lists.  can't parse rules with $EXTERNAL_NET

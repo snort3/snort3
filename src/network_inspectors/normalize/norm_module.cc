@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2010-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -422,27 +422,18 @@ const PegInfo* NormalizeModule::get_pegs() const
 
 PegCount* NormalizeModule::get_counts() const
 {
-    //FIXIT-H this initialization breaks in clang
-    static THREAD_LOCAL vector<PegCount> counts;
-    counts.clear();
     unsigned c = 0;
-
     NormPegs p = Norm_GetCounts(c);
 
-    for ( unsigned i = 0; i < c; ++i )
+    unsigned tc = 0;
+    NormPegs tp = TcpNormalizer::get_normalization_counts(tc);
+
+    for ( unsigned i = 0; i < tc; ++i )
     {
-        counts.push_back(p[i][NORM_MODE_ON]);
-        counts.push_back(p[i][NORM_MODE_TEST]);
+        p[c+i][NORM_MODE_ON] = tp[i][NORM_MODE_ON];
+        p[c+i][NORM_MODE_TEST] = tp[i][NORM_MODE_TEST];
     }
 
-    p = TcpNormalizer::get_normalization_counts(c);
-
-    for ( unsigned i = 0; i < c; ++i )
-    {
-        counts.push_back(p[i][NORM_MODE_ON]);
-        counts.push_back(p[i][NORM_MODE_TEST]);
-    }
-
-    return &counts[0];
+    return (PegCount*)p;
 }
 

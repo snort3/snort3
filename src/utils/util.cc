@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 // Copyright (C) 2002 Martin Roesch <roesch@sourcefire.com>
 //
@@ -115,7 +115,7 @@ int DisplayBanner(void)
     const char* info = getenv("HOSTTYPE");
 
     if ( !info )
-        info="from 2.9.7-177";  // last sync with head
+        info="from 2.9.7-262";  // last sync with head
 
     const char* ljv = LUAJIT_VERSION;
     while ( *ljv && !isdigit(*ljv) )
@@ -127,7 +127,7 @@ int DisplayBanner(void)
         VERSION, BUILD, info);
     LogMessage("   ''''    By Martin Roesch & The Snort Team\n");
     LogMessage("           http://snort.org/contact#team\n");
-    LogMessage("           Copyright (C) 2014-2015 Cisco and/or its affiliates."
+    LogMessage("           Copyright (C) 2014-2016 Cisco and/or its affiliates."
                            " All rights reserved.\n");
     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
 #ifdef HAVE_PCAP_LIB_VERSION

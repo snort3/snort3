@@ -39,7 +39,7 @@ public:
     virtual void rotate() final;
     virtual void auto_rotate() final;
 
-    ~PerfTracker();
+    virtual ~PerfTracker();
 
 protected:
     SFPERF* config;

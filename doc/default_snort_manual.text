@@ -43,19 +43,21 @@ Table of Contents
     3.8. event_filter
     3.9. event_queue
     3.10. file_id
-    3.11. hosts
-    3.12. ips
-    3.13. network
-    3.14. output
-    3.15. packets
-    3.16. process
-    3.17. profiler
-    3.18. rate_filter
-    3.19. references
-    3.20. rule_state
-    3.21. search_engine
-    3.22. snort
-    3.23. suppress
+    3.11. host_tracker
+    3.12. hosts
+    3.13. ips
+    3.14. network
+    3.15. output
+    3.16. packets
+    3.17. ppm
+    3.18. process
+    3.19. profiler
+    3.20. rate_filter
+    3.21. references
+    3.22. rule_state
+    3.23. search_engine
+    3.24. snort
+    3.25. suppress
 
 4. Codec Modules
 
@@ -89,38 +91,40 @@ Table of Contents
     5.2. back_orifice
     5.3. binder
     5.4. data_log
-    5.5. dnp3
-    5.6. dns
-    5.7. dpx
-    5.8. ftp_client
-    5.9. ftp_data
-    5.10. ftp_server
-    5.11. gtp_inspect
-    5.12. http_global
-    5.13. http_inspect
-    5.14. imap
-    5.15. modbus
-    5.16. new_http_inspect
-    5.17. normalizer
-    5.18. perf_monitor
-    5.19. pop
-    5.20. port_scan
-    5.21. port_scan_global
-    5.22. reputation
-    5.23. rpc_decode
-    5.24. sip
-    5.25. smtp
-    5.26. ssh
-    5.27. ssl
-    5.28. stream
-    5.29. stream_file
-    5.30. stream_icmp
-    5.31. stream_ip
-    5.32. stream_tcp
-    5.33. stream_udp
-    5.34. stream_user
-    5.35. telnet
-    5.36. wizard
+    5.5. dce_smb
+    5.6. dce_tcp
+    5.7. dnp3
+    5.8. dns
+    5.9. dpx
+    5.10. ftp_client
+    5.11. ftp_data
+    5.12. ftp_server
+    5.13. gtp_inspect
+    5.14. http_global
+    5.15. http_inspect
+    5.16. imap
+    5.17. modbus
+    5.18. new_http_inspect
+    5.19. normalizer
+    5.20. perf_monitor
+    5.21. pop
+    5.22. port_scan
+    5.23. port_scan_global
+    5.24. reputation
+    5.25. rpc_decode
+    5.26. sip
+    5.27. smtp
+    5.28. ssh
+    5.29. ssl
+    5.30. stream
+    5.31. stream_file
+    5.32. stream_icmp
+    5.33. stream_ip
+    5.34. stream_tcp
+    5.35. stream_udp
+    5.36. stream_user
+    5.37. telnet
+    5.38. wizard
 
 6. IPS Action Modules
 
@@ -140,77 +144,80 @@ Table of Contents
     7.8. classtype
     7.9. content
     7.10. cvs
-    7.11. detection_filter
-    7.12. dnp3_data
-    7.13. dnp3_func
-    7.14. dnp3_ind
-    7.15. dnp3_obj
-    7.16. dsize
-    7.17. file_data
-    7.18. flags
-    7.19. flow
-    7.20. flowbits
-    7.21. fragbits
-    7.22. fragoffset
-    7.23. gid
-    7.24. gtp_info
-    7.25. gtp_type
-    7.26. gtp_version
-    7.27. http_client_body
-    7.28. http_cookie
-    7.29. http_header
-    7.30. http_method
-    7.31. http_raw_cookie
-    7.32. http_raw_header
-    7.33. http_raw_uri
-    7.34. http_stat_code
-    7.35. http_stat_msg
-    7.36. http_uri
-    7.37. icmp_id
-    7.38. icmp_seq
-    7.39. icode
-    7.40. id
-    7.41. ip_proto
-    7.42. ipopts
-    7.43. isdataat
-    7.44. itype
-    7.45. md5
-    7.46. metadata
-    7.47. modbus_data
-    7.48. modbus_func
-    7.49. modbus_unit
-    7.50. msg
-    7.51. pcre
-    7.52. pkt_data
-    7.53. pkt_num
-    7.54. priority
-    7.55. raw_data
-    7.56. reference
-    7.57. regex
-    7.58. rem
-    7.59. replace
-    7.60. rev
-    7.61. rpc
-    7.62. seq
-    7.63. session
-    7.64. sha256
-    7.65. sha512
-    7.66. sid
-    7.67. sip_body
-    7.68. sip_header
-    7.69. sip_method
-    7.70. sip_stat_code
-    7.71. so
-    7.72. soid
-    7.73. ssl_state
-    7.74. ssl_version
-    7.75. stream_reassemble
-    7.76. stream_size
-    7.77. tag
-    7.78. tos
-    7.79. ttl
-    7.80. urg
-    7.81. window
+    7.11. dce_iface
+    7.12. dce_opnum
+    7.13. dce_stub_data
+    7.14. detection_filter
+    7.15. dnp3_data
+    7.16. dnp3_func
+    7.17. dnp3_ind
+    7.18. dnp3_obj
+    7.19. dsize
+    7.20. file_data
+    7.21. flags
+    7.22. flow
+    7.23. flowbits
+    7.24. fragbits
+    7.25. fragoffset
+    7.26. gid
+    7.27. gtp_info
+    7.28. gtp_type
+    7.29. gtp_version
+    7.30. http_client_body
+    7.31. http_cookie
+    7.32. http_header
+    7.33. http_method
+    7.34. http_raw_cookie
+    7.35. http_raw_header
+    7.36. http_raw_uri
+    7.37. http_stat_code
+    7.38. http_stat_msg
+    7.39. http_uri
+    7.40. icmp_id
+    7.41. icmp_seq
+    7.42. icode
+    7.43. id
+    7.44. ip_proto
+    7.45. ipopts
+    7.46. isdataat
+    7.47. itype
+    7.48. md5
+    7.49. metadata
+    7.50. modbus_data
+    7.51. modbus_func
+    7.52. modbus_unit
+    7.53. msg
+    7.54. pcre
+    7.55. pkt_data
+    7.56. pkt_num
+    7.57. priority
+    7.58. raw_data
+    7.59. reference
+    7.60. regex
+    7.61. rem
+    7.62. replace
+    7.63. rev
+    7.64. rpc
+    7.65. seq
+    7.66. session
+    7.67. sha256
+    7.68. sha512
+    7.69. sid
+    7.70. sip_body
+    7.71. sip_header
+    7.72. sip_method
+    7.73. sip_stat_code
+    7.74. so
+    7.75. soid
+    7.76. ssl_state
+    7.77. ssl_version
+    7.78. stream_reassemble
+    7.79. stream_size
+    7.80. tag
+    7.81. tos
+    7.82. ttl
+    7.83. urg
+    7.84. window
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -279,10 +286,11 @@ Table of Contents
     15.5. Types
     15.6. Macros (aka defines)
     15.7. Formatting
-    15.8. Headers
-    15.9. Warnings
-    15.10. Other
-    15.11. Uncrustify
+    15.8. Classes
+    15.9. Headers
+    15.10. Warnings
+    15.11. Other
+    15.12. Uncrustify
 
 16. Reference
 
@@ -306,7 +314,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0-a3 (Build 182) from 2.9.7-177
+o"  )~   Version 3.0.0-a3 (Build 186) from 2.9.7-262
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -1091,6 +1099,10 @@ WARNING: unknown symbol x
     options.
   * --lua can only be used in addition to, not in place of, a -c
     config. Ideally, --lua could be used in lieu of -c.
+  * Rule line numbers provided with syntax error messages are off by
+    one. The first rule is unnumbered, the second rule is one, etc.
+    See nhttp_inspect/detection_buffers/bad_rules/expected for an
+    example.
 
 2.8.3. Rules
 
@@ -1432,7 +1444,29 @@ Configuration:
     data
 
 
-3.11. hosts
+3.11. host_tracker
+
+------------
+
+What: configure hosts
+
+Type: basic
+
+Configuration:
+
+  * addr host_tracker[].ip = 0.0.0.0/32: hosts address / cidr
+  * enum host_tracker[].frag_policy: defragmentation policy { first |
+    linux | bsd | bsd_right | last | windows | solaris }
+  * enum host_tracker[].tcp_policy: tcp reassembly policy { first |
+    last | linux | old_linux | bsd | macos | solaris | irix | hpux11
+    | hpux10 | windows | win_2003 | vista | proxy }
+  * string host_tracker[].services[].name: service identifier
+  * enum host_tracker[].services[].proto = tcp: ip protocol { tcp |
+    udp }
+  * port host_tracker[].services[].port: port number
+
+
+3.12. hosts
 
 ------------
 
@@ -1453,7 +1487,7 @@ Configuration:
   * port hosts[].services[].port: port number
 
 
-3.12. ips
+3.13. ips
 
 ------------
 
@@ -1472,7 +1506,7 @@ Configuration:
   * string ips.rules: snort rules and includes
 
 
-3.13. network
+3.14. network
 
 ------------
 
@@ -1505,7 +1539,7 @@ Configuration:
     116:293 may fire. 0 = unlimited { 0:255 }
 
 
-3.14. output
+3.15. output
 
 ------------
 
@@ -1537,7 +1571,7 @@ Configuration:
   * bool output.verbose = false: be verbose (same as -v)
 
 
-3.15. packets
+3.16. packets
 
 ------------
 
@@ -1561,7 +1595,41 @@ Configuration:
     is used to track fragments and connections
 
 
-3.16. process
+3.17. ppm
+
+------------
+
+What: packet and rule latency monitoring and control
+
+Type: basic
+
+Configuration:
+
+  * int ppm.max_pkt_time = 0: enable packet latency thresholding
+    (usec), 0 = off { 0: }
+  * bool ppm.fastpath_expensive_packets = false: stop inspection if
+    the max_pkt_time is exceeded
+  * enum ppm.pkt_log = none: log event if max_pkt_time is exceeded {
+    none | log | alert | both }
+  * int ppm.max_rule_time = 0: enable rule latency thresholding
+    (usec), 0 = off { 0: }
+  * int ppm.threshold = 5: number of times to exceed limit before
+    disabling rule { 1: }
+  * bool ppm.suspend_expensive_rules = false: temporarily disable
+    rule if threshold is reached
+  * int ppm.suspend_timeout = 60: seconds to suspend rule, 0 =
+    permanent { 0: }
+  * enum ppm.rule_log = none: enable event logging for suspended
+    rules { none|log|alert|both }
+
+Rules:
+
+  * 134:1 (ppm) rule options disabled by rule latency
+  * 134:2 (ppm) rule options re-enabled by rule latency
+  * 134:3 (ppm) packet aborted due to latency
+
+
+3.18. process
 
 ------------
 
@@ -1587,7 +1655,7 @@ Configuration:
     timestamps
 
 
-3.17. profiler
+3.19. profiler
 
 ------------
 
@@ -1598,16 +1666,20 @@ Type: basic
 Configuration:
 
   * bool profiler.modules.show = true: show module time profile stats
-  * int profiler.modules.count = 0: print results to given level (0 =
-    all) { 0: }
+  * int profiler.modules.count = 0: limit results to count items per
+    level (0 = no limit) { 0: }
   * enum profiler.modules.sort = total_time: sort by given field {
     none | checks | avg_check | total_time }
+  * int profiler.modules.max_depth = -1: limit depth to max_depth (-1
+    = no limit) { -1: }
   * bool profiler.memory.show = true: show module memory profile
     stats
-  * int profiler.memory.count = 0: print results to given level (0 =
-    all) { 0: }
+  * int profiler.memory.count = 0: limit results to count items per
+    level (0 = no limit) { 0: }
   * enum profiler.memory.sort = total_used: sort by given field {
     none | allocations | total_used | avg_allocation }
+  * int profiler.memory.max_depth = -1: limit depth to max_depth (-1
+    = no limit) { -1: }
   * bool profiler.rules.show = true: show rule time profile stats
   * int profiler.rules.count = 0: print results to given level (0 =
     all) { 0: }
@@ -1616,7 +1688,7 @@ Configuration:
     avg_match | avg_no_match }
 
 
-3.18. rate_filter
+3.20. rate_filter
 
 ------------
 
@@ -1641,7 +1713,7 @@ Configuration:
     according to track
 
 
-3.19. references
+3.21. references
 
 ------------
 
@@ -1655,7 +1727,7 @@ Configuration:
   * string references[].url: where this reference is defined
 
 
-3.20. rule_state
+3.22. rule_state
 
 ------------
 
@@ -1671,7 +1743,7 @@ Configuration:
     policies
 
 
-3.21. search_engine
+3.23. search_engine
 
 ------------
 
@@ -1714,7 +1786,7 @@ Configuration:
     construction for better performance
 
 
-3.22. snort
+3.24. snort
 
 ------------
 
@@ -1934,7 +2006,7 @@ Peg counts:
   * snort.attribute table hosts: total number of hosts in table
 
 
-3.23. suppress
+3.25. suppress
 
 ------------
 
@@ -2314,6 +2386,11 @@ Rules:
   * 116:175 (mpls) MPLS label 4, 5,.. or 15 appears in header
   * 116:176 (mpls) too many MPLS headers
 
+Peg counts:
+
+  * mpls.total packets: total mpls labeled packets processed
+  * mpls.total bytes: total mpls labeled bytes processed
+
 
 4.17. pgm
 
@@ -2565,7 +2642,297 @@ Peg counts:
   * data_log.packets: total packets
 
 
-5.5. dnp3
+5.5. dce_smb
+
+------------
+
+What: dce over smb inspection
+
+Type: inspector
+
+Configuration:
+
+  * bool dce_smb.disable_defrag = false: Disable DCE/RPC
+    defragmentation
+  * int dce_smb.max_frag_len = 65535: Maximum fragment size for
+    defragmentation { 1514:65535 }
+  * int dce_smb.reassemble_threshold = 0: Minimum bytes received
+    before performing reassembly { 0:65535 }
+  * enum dce_smb.smb_fingerprint_policy = none: Target based SMB
+    policy to use { none | client | server | both }
+  * enum dce_smb.policy = WinXP: Target based policy to use { Win2000
+    | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba |
+    Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
+  * int dce_smb.smb_max_chain = 3: SMB max chain size { 0:255 }
+  * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
+  * multi dce_smb.valid_smb_versions = all: Valid SMB versions { v1 |
+    v2 | all }
+  * enum dce_smb.smb_file_inspection = off: SMB file inspection { off
+    | on | only }
+  * int dce_smb.smb_file_depth = 16384: SMB file depth for file data
+    { -1: }
+  * string dce_smb.smb_invalid_shares: SMB shares to alert on
+
+Rules:
+
+  * 145:2 (dce_smb) SMB - Bad NetBIOS Session Service session type.
+  * 145:3 (dce_smb) SMB - Bad SMB message type.
+  * 145:4 (dce_smb) SMB - Bad SMB Id (not \xffSMB for SMB1 or not \
+    xfeSMB for SMB2).
+  * 145:5 (dce_smb) SMB - Bad word count or structure size.
+  * 145:6 (dce_smb) SMB - Bad byte count.
+  * 145:7 (dce_smb) SMB - Bad format type.
+  * 145:8 (dce_smb) SMB - Bad offset.
+  * 145:9 (dce_smb) SMB - Zero total data count.
+  * 145:10 (dce_smb) SMB - NetBIOS data length less than SMB header
+    length.
+  * 145:12 (dce_smb) SMB - Remaining NetBIOS data length less than
+    command byte count.
+  * 145:13 (dce_smb) SMB - Remaining NetBIOS data length less than
+    command data size.
+  * 145:14 (dce_smb) SMB - Remaining total data count less than this
+    command data size.
+  * 145:15 (dce_smb) SMB - Total data sent (STDu64) greater than
+    command total data expected.
+  * 145:16 (dce_smb) SMB - Byte count less than command data size
+    (STDu64)
+  * 145:17 (dce_smb) SMB - Invalid command data size for byte count.
+  * 145:18 (dce_smb) SMB - Excessive Tree Connect requests with
+    pending Tree Connect responses.
+  * 145:19 (dce_smb) SMB - Excessive Read requests with pending Read
+    responses.
+  * 145:20 (dce_smb) SMB - Excessive command chaining.
+  * 145:21 (dce_smb) SMB - Multiple chained tree connect requests.
+  * 145:22 (dce_smb) SMB - Multiple chained tree connect requests.
+  * 145:23 (dce_smb) SMB - Chained/Compounded login followed by
+    logoff.
+  * 145:24 (dce_smb) SMB - Chained/Compounded tree connect followed
+    by tree disconnect.
+  * 145:25 (dce_smb) SMB - Chained/Compounded open pipe followed by
+    close pipe.
+  * 145:26 (dce_smb) SMB - Invalid share access.
+  * 145:27 (dce_smb) Connection oriented DCE/RPC - Invalid major
+    version.
+  * 145:28 (dce_smb) Connection oriented DCE/RPC - Invalid minor
+    version.
+  * 145:29 (dce_smb) Connection-oriented DCE/RPC - Invalid pdu type.
+  * 145:30 (dce_smb) Connection-oriented DCE/RPC - Fragment length
+    less than header size.
+  * 145:32 (dce_smb) Connection-oriented DCE/RPC - No context items
+    specified.
+  * 145:33 (dce_smb) Connection-oriented DCE/RPC -No transfer
+    syntaxes specified.
+  * 145:34 (dce_smb) Connection-oriented DCE/RPC - Fragment length on
+    non-last fragment less than maximum negotiated fragment transmit
+    size for client.
+  * 145:35 (dce_smb) Connection-oriented DCE/RPC - Fragment length
+    greater than maximum negotiated fragment transmit size.
+  * 145:36 (dce_smb) Connection-oriented DCE/RPC - Alter Context byte
+    order different from Bind
+  * 145:37 (dce_smb) Connection-oriented DCE/RPC - Call id of non
+    first/last fragment different from call id established for
+    fragmented request.
+  * 145:38 (dce_smb) Connection-oriented DCE/RPC - Opnum of non first
+    /last fragment different from opnum established for fragmented
+    request.
+  * 145:39 (dce_smb) Connection-oriented DCE/RPC - Context id of non
+    first/last fragment different from context id established for
+    fragmented request.
+  * 145:44 (dce_smb) SMB - Invalid SMB version 1 seen.
+  * 145:45 (dce_smb) SMB - Invalid SMB version 2 seen.
+  * 145:46 (dce_smb) SMB - Invalid user, tree connect, file binding.
+  * 145:47 (dce_smb) SMB - Excessive command compounding.
+  * 145:48 (dce_smb) SMB - Zero data count.
+  * 145:50 (dce_smb) SMB - Maximum number of outstanding requests
+    exceeded.
+  * 145:51 (dce_smb) SMB - Outstanding requests with same MID.
+  * 145:52 (dce_smb) SMB - Deprecated dialect negotiated.
+  * 145:53 (dce_smb) SMB - Deprecated command used.
+  * 145:54 (dce_smb) SMB - Unusual command used.
+  * 145:55 (dce_smb) SMB - Invalid setup count for command.
+  * 145:56 (dce_smb) SMB - Client attempted multiple dialect
+    negotiations on session.
+  * 145:57 (dce_smb) SMB - Client attempted to create or set a file’s
+    attributes to readonly/hidden/system.
+
+Peg counts:
+
+  * dce_smb.events: total events
+  * dce_smb.aborted sessions: total aborted sessions
+  * dce_smb.bad autodetects: total bad autodetects
+  * dce_smb.smb sessions: total smb sessions
+  * dce_smb.smb packets: total smb packets
+  * dce_smb.connection-oriented PDUs: total connection-oriented PDUs
+  * dce_smb.connection-oriented binds: total connection-oriented
+    binds
+  * dce_smb.connection-oriented bind acks: total connection-oriented
+    binds acks
+  * dce_smb.connection-oriented alter contexts: total
+    connection-oriented alter contexts
+  * dce_smb.connection-oriented alter context responses: total
+    connection-oriented alter context responses
+  * dce_smb.connection-oriented bind naks: total connection-oriented
+    bind naks
+  * dce_smb.connection-oriented requests: total connection-oriented
+    requests
+  * dce_smb.connection-oriented responses: total connection-oriented
+    responses
+  * dce_smb.connection-oriented cancels: total connection-oriented
+    cancels
+  * dce_smb.connection-oriented orphaned: total connection-oriented
+    orphaned
+  * dce_smb.connection-oriented faults: total connection-oriented
+    faults
+  * dce_smb.connection-oriented auth3s: total connection-oriented
+    auth3s
+  * dce_smb.connection-oriented shutdowns: total connection-oriented
+    shutdowns
+  * dce_smb.connection-oriented rejects: total connection-oriented
+    rejects
+  * dce_smb.connection-oriented other requests: total
+    connection-oriented other requests
+  * dce_smb.connection-oriented other responses: total
+    connection-oriented other responses
+  * dce_smb.connection-oriented request fragments: total
+    connection-oriented request fragments
+  * dce_smb.connection-oriented response fragments: total
+    connection-oriented response fragments
+  * dce_smb.connection-oriented client maximum fragment size:
+    connection-oriented client maximum fragment size
+  * dce_smb.connection-oriented client minimum fragment size:
+    connection-oriented client minimum fragment size
+  * dce_smb.connection-oriented client segments reassembled: total
+    connection-oriented client segments reassembled
+  * dce_smb.connection-oriented client fragments reassembled: total
+    connection-oriented client fragments reassembled
+  * dce_smb.connection-oriented server maximum fragment size:
+    connection-oriented server maximum fragment size
+  * dce_smb.connection-oriented server minimum fragment size:
+    connection-oriented server minimum fragment size
+  * dce_smb.connection-oriented server segments reassembled: total
+    connection-oriented server segments reassembled
+  * dce_smb.connection-oriented server fragments reassembled: total
+    connection-oriented server fragments reassembled
+  * dce_smb.smb client segments reassembled: total smb client
+    segments reassembled
+  * dce_smb.smb server segments reassembled: total smb server
+    segments reassembled
+  * dce_smb.smb maximum outstanding requests: total smb maximum
+    outstanding requests
+  * dce_smb.smb files processed: total smb files processed
+
+
+5.6. dce_tcp
+
+------------
+
+What: dce over tcp inspection
+
+Type: inspector
+
+Configuration:
+
+  * bool dce_tcp.disable_defrag = false: Disable DCE/RPC
+    defragmentation
+  * int dce_tcp.max_frag_len = 65535: Maximum fragment size for
+    defragmentation { 1514:65535 }
+  * int dce_tcp.reassemble_threshold = 0: Minimum bytes received
+    before performing reassembly { 0:65535 }
+  * enum dce_tcp.policy = WinXP: Target based policy to use { Win2000
+    | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba |
+    Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
+
+Rules:
+
+  * 145:27 (dce_tcp) Connection oriented DCE/RPC - Invalid major
+    version.
+  * 145:28 (dce_tcp) Connection oriented DCE/RPC - Invalid minor
+    version.
+  * 145:29 (dce_tcp) Connection-oriented DCE/RPC - Invalid pdu type.
+  * 145:30 (dce_tcp) Connection-oriented DCE/RPC - Fragment length
+    less than header size.
+  * 145:32 (dce_tcp) Connection-oriented DCE/RPC - No context items
+    specified.
+  * 145:33 (dce_tcp) Connection-oriented DCE/RPC -No transfer
+    syntaxes specified.
+  * 145:34 (dce_tcp) Connection-oriented DCE/RPC - Fragment length on
+    non-last fragment less than maximum negotiated fragment transmit
+    size for client.
+  * 145:35 (dce_tcp) Connection-oriented DCE/RPC - Fragment length
+    greater than maximum negotiated fragment transmit size.
+  * 145:36 (dce_tcp) Connection-oriented DCE/RPC - Alter Context byte
+    order different from Bind
+  * 145:37 (dce_tcp) Connection-oriented DCE/RPC - Call id of non
+    first/last fragment different from call id established for
+    fragmented request.
+  * 145:38 (dce_tcp) Connection-oriented DCE/RPC - Opnum of non first
+    /last fragment different from opnum established for fragmented
+    request.
+  * 145:39 (dce_tcp) Connection-oriented DCE/RPC - Context id of non
+    first/last fragment different from context id established for
+    fragmented request.
+
+Peg counts:
+
+  * dce_tcp.events: total events
+  * dce_tcp.aborted sessions: total aborted sessions
+  * dce_tcp.bad autodetects: total bad autodetects
+  * dce_tcp.tcp sessions: total tcp sessions
+  * dce_tcp.tcp packets: total tcp packets
+  * dce_tcp.connection-oriented PDUs: total connection-oriented PDUs
+  * dce_tcp.connection-oriented binds: total connection-oriented
+    binds
+  * dce_tcp.connection-oriented bind acks: total connection-oriented
+    binds acks
+  * dce_tcp.connection-oriented alter contexts: total
+    connection-oriented alter contexts
+  * dce_tcp.connection-oriented alter context responses: total
+    connection-oriented alter context responses
+  * dce_tcp.connection-oriented bind naks: total connection-oriented
+    bind naks
+  * dce_tcp.connection-oriented requests: total connection-oriented
+    requests
+  * dce_tcp.connection-oriented responses: total connection-oriented
+    responses
+  * dce_tcp.connection-oriented cancels: total connection-oriented
+    cancels
+  * dce_tcp.connection-oriented orphaned: total connection-oriented
+    orphaned
+  * dce_tcp.connection-oriented faults: total connection-oriented
+    faults
+  * dce_tcp.connection-oriented auth3s: total connection-oriented
+    auth3s
+  * dce_tcp.connection-oriented shutdowns: total connection-oriented
+    shutdowns
+  * dce_tcp.connection-oriented rejects: total connection-oriented
+    rejects
+  * dce_tcp.connection-oriented other requests: total
+    connection-oriented other requests
+  * dce_tcp.connection-oriented other responses: total
+    connection-oriented other responses
+  * dce_tcp.connection-oriented request fragments: total
+    connection-oriented request fragments
+  * dce_tcp.connection-oriented response fragments: total
+    connection-oriented response fragments
+  * dce_tcp.connection-oriented client maximum fragment size:
+    connection-oriented client maximum fragment size
+  * dce_tcp.connection-oriented client minimum fragment size:
+    connection-oriented client minimum fragment size
+  * dce_tcp.connection-oriented client segments reassembled: total
+    connection-oriented client segments reassembled
+  * dce_tcp.connection-oriented client fragments reassembled: total
+    connection-oriented client fragments reassembled
+  * dce_tcp.connection-oriented server maximum fragment size:
+    connection-oriented server maximum fragment size
+  * dce_tcp.connection-oriented server minimum fragment size:
+    connection-oriented server minimum fragment size
+  * dce_tcp.connection-oriented server segments reassembled: total
+    connection-oriented server segments reassembled
+  * dce_tcp.connection-oriented server fragments reassembled: total
+    connection-oriented server fragments reassembled
+
+
+5.7. dnp3
 
 ------------
 
@@ -2599,7 +2966,7 @@ Peg counts:
   * dnp3.dnp3 application pdus: total dnp3 application pdus
 
 
-5.6. dns
+5.8. dns
 
 ------------
 
@@ -2620,7 +2987,7 @@ Peg counts:
   * dns.responses: total dns responses
 
 
-5.7. dpx
+5.9. dpx
 
 ------------
 
@@ -2642,7 +3009,7 @@ Peg counts:
   * dpx.packets: total packets
 
 
-5.8. ftp_client
+5.10. ftp_client
 
 ------------
 
@@ -2666,7 +3033,7 @@ Configuration:
     sequences on ftp control channel
 
 
-5.9. ftp_data
+5.11. ftp_data
 
 ------------
 
@@ -2679,7 +3046,7 @@ Peg counts:
   * ftp_data.packets: total packets
 
 
-5.10. ftp_server
+5.12. ftp_server
 
 ------------
 
@@ -2746,7 +3113,7 @@ Peg counts:
   * ftp_server.packets: total packets
 
 
-5.11. gtp_inspect
+5.13. gtp_inspect
 
 ------------
 
@@ -2780,7 +3147,7 @@ Peg counts:
   * gtp_inspect.unknown infos: unknown information elements
 
 
-5.12. http_global
+5.14. http_global
 
 ------------
 
@@ -2875,7 +3242,7 @@ Peg counts:
   * http_global.decompressed bytes: total bytes decompressed
 
 
-5.13. http_inspect
+5.15. http_inspect
 
 ------------
 
@@ -3019,7 +3386,7 @@ Rules:
   * 120:17 (http_inspect) HTTP response PDF file parse failure
 
 
-5.14. imap
+5.16. imap
 
 ------------
 
@@ -3061,7 +3428,7 @@ Peg counts:
   * imap.non-encoded bytes: total non-encoded extracted bytes
 
 
-5.15. modbus
+5.17. modbus
 
 ------------
 
@@ -3082,7 +3449,7 @@ Peg counts:
   * modbus.frames: total Modbus messages
 
 
-5.16. new_http_inspect
+5.18. new_http_inspect
 
 ------------
 
@@ -3176,14 +3543,14 @@ Rules:
   * 219:60 (new_http_inspect) Format error in HTTP header
   * 219:61 (new_http_inspect) Chunk header options present
   * 219:62 (new_http_inspect) URI badly formatted
-  * 219:63 (new_http_inspect) URI bad port number
+  * 219:63 (new_http_inspect) Unused
   * 219:64 (new_http_inspect) HTTP chunk misformatted
   * 219:65 (new_http_inspect) White space following chunk length
   * 219:67 (new_http_inspect) Excessive gzip compression
   * 219:68 (new_http_inspect) Gzip decompression failed
 
 
-5.17. normalizer
+5.19. normalizer
 
 ------------
 
@@ -3309,7 +3676,7 @@ Peg counts:
   * normalizer.test tcp block: test blocked segments
 
 
-5.18. perf_monitor
+5.20. perf_monitor
 
 ------------
 
@@ -3319,7 +3686,8 @@ Type: inspector
 
 Configuration:
 
-  * int perf_monitor.packets = 10000: minim packets to report { 0: }
+  * int perf_monitor.packets = 10000: minimum packets to report { 0:
+    }
   * int perf_monitor.seconds = 60: report interval; 0 means report at
     exit only { 0: }
   * int perf_monitor.flow_ip_memcap = 52428800: maximum memory for
@@ -3343,13 +3711,16 @@ Configuration:
     pairs
   * bool perf_monitor.flow_ip_file = false: output host pair
     statistics to perf_monitor_flow_ip.csv instead of stdout
+  * string perf_monitor.modules[].name: name of the module
+  * string perf_monitor.modules[].pegs[].name: name of the statistic
+    to track
 
 Peg counts:
 
   * perf_monitor.packets: total packets
 
 
-5.19. pop
+5.21. pop
 
 ------------
 
@@ -3391,7 +3762,7 @@ Peg counts:
   * pop.non-encoded bytes: total non-encoded extracted bytes
 
 
-5.20. port_scan
+5.22. port_scan
 
 ------------
 
@@ -3449,7 +3820,7 @@ Rules:
   * 122:27 (port_scan) open port
 
 
-5.21. port_scan_global
+5.23. port_scan_global
 
 ------------
 
@@ -3467,7 +3838,7 @@ Peg counts:
   * port_scan_global.packets: total packets
 
 
-5.22. reputation
+5.24. reputation
 
 ------------
 
@@ -3505,7 +3876,7 @@ Peg counts:
   * reputation.memory_allocated: total memory allocated
 
 
-5.23. rpc_decode
+5.25. rpc_decode
 
 ------------
 
@@ -3526,7 +3897,7 @@ Peg counts:
   * rpc_decode.packets: total packets
 
 
-5.24. sip
+5.26. sip
 
 ------------
 
@@ -3623,7 +3994,7 @@ Peg counts:
   * sip.9xx: 9xx
 
 
-5.25. smtp
+5.27. smtp
 
 ------------
 
@@ -3711,7 +4082,7 @@ Peg counts:
   * smtp.non-encoded bytes: total non-encoded extracted bytes
 
 
-5.26. ssh
+5.28. ssh
 
 ------------
 
@@ -3743,7 +4114,7 @@ Peg counts:
   * ssh.packets: total packets
 
 
-5.27. ssl
+5.29. ssl
 
 ------------
 
@@ -3787,7 +4158,7 @@ Peg counts:
   * ssl.detection disabled: total detection disabled
 
 
-5.28. stream
+5.30. stream
 
 ------------
 
@@ -3862,7 +4233,7 @@ Peg counts:
   * stream.file prunes: file sessions pruned
 
 
-5.29. stream_file
+5.31. stream_file
 
 ------------
 
@@ -3875,7 +4246,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.30. stream_icmp
+5.32. stream_icmp
 
 ------------
 
@@ -3890,11 +4261,15 @@ Configuration:
 
 Peg counts:
 
+  * stream_icmp.sessions: total icmp sessions
+  * stream_icmp.max: max icmp sessions
   * stream_icmp.created: icmp session trackers created
   * stream_icmp.released: icmp session trackers released
+  * stream_icmp.timeouts: icmp session timeouts
+  * stream_icmp.prunes: icmp session prunes
 
 
-5.31. stream_ip
+5.33. stream_ip
 
 ------------
 
@@ -3935,7 +4310,15 @@ Rules:
 
 Peg counts:
 
-  * stream_ip.fragments: total fragments
+  * stream_ip.sessions: total ip sessions
+  * stream_ip.max: max ip sessions
+  * stream_ip.created: ip session trackers created
+  * stream_ip.released: ip session trackers released
+  * stream_ip.timeouts: ip session timeouts
+  * stream_ip.prunes: ip session prunes
+  * stream_ip.total: total fragments
+  * stream_ip.current: current fragments
+  * stream_ip.max frags: max fragments
   * stream_ip.reassembled: reassembled datagrams
   * stream_ip.discards: fragments discarded
   * stream_ip.memory faults: memory faults
@@ -3946,11 +4329,16 @@ Peg counts:
   * stream_ip.drops: fragments dropped
   * stream_ip.trackers added: datagram trackers created
   * stream_ip.trackers freed: datagram trackers released
+  * stream_ip.trackers cleared: datagram trackers cleared
+  * stream_ip.trackers completed: datagram trackers completed
   * stream_ip.nodes inserted: fragments added to tracker
   * stream_ip.nodes deleted: fragments deleted from tracker
+  * stream_ip.memory used: current memory usage in bytes
+  * stream_ip.reassembled bytes: total reassembled bytes
+  * stream_ip.fragmented bytes: total fragmented bytes
 
 
-5.32. stream_tcp
+5.34. stream_tcp
 
 ------------
 
@@ -4024,8 +4412,12 @@ Rules:
 
 Peg counts:
 
-  * stream_tcp.sessions: total sessions
-  * stream_tcp.timeouts: sessions timed out
+  * stream_tcp.sessions: total tcp sessions
+  * stream_tcp.max: max tcp sessions
+  * stream_tcp.created: tcp session trackers created
+  * stream_tcp.released: tcp session trackers released
+  * stream_tcp.timeouts: tcp session timeouts
+  * stream_tcp.prunes: tcp session prunes
   * stream_tcp.resyns: SYN received on established session
   * stream_tcp.discards: tcp packets discarded
   * stream_tcp.events: events generated
@@ -4036,8 +4428,6 @@ Peg counts:
     syn-ack
   * stream_tcp.3way trackers: tcp session tracking started on ack
   * stream_tcp.data trackers: tcp session tracking started on data
-  * stream_tcp.trackers created: tcp session trackers created
-  * stream_tcp.trackers released: tcp session trackers released
   * stream_tcp.segs queued: total segments queued
   * stream_tcp.segs released: total segments released
   * stream_tcp.segs split: tcp segments split when reassembling PDUs
@@ -4045,6 +4435,7 @@ Peg counts:
     PDUs
   * stream_tcp.rebuilt packets: total reassembled PDUs
   * stream_tcp.rebuilt buffers: rebuilt PDU sections
+  * stream_tcp.rebuilt bytes: total rebuilt bytes
   * stream_tcp.overlaps: overlapping segments queued
   * stream_tcp.gaps: missing data between PDUs
   * stream_tcp.max segs: number of times the maximum queued segment
@@ -4056,9 +4447,16 @@ Peg counts:
     flushed when session released
   * stream_tcp.server cleanups: number of times data from client was
     flushed when session released
+  * stream_tcp.faults: number of times a new segment triggered a
+    prune
+  * stream_tcp.memory: current memory in use
+  * stream_tcp.initializing: number of sessions currently
+    initializing
+  * stream_tcp.established: number of sessions currently established
+  * stream_tcp.closing: number of sessions currently closing
 
 
-5.33. stream_udp
+5.35. stream_udp
 
 ------------
 
@@ -4076,12 +4474,14 @@ Configuration:
 Peg counts:
 
   * stream_udp.sessions: total udp sessions
+  * stream_udp.max: max udp sessions
   * stream_udp.created: udp session trackers created
   * stream_udp.released: udp session trackers released
   * stream_udp.timeouts: udp session timeouts
+  * stream_udp.prunes: udp session prunes
 
 
-5.34. stream_user
+5.36. stream_user
 
 ------------
 
@@ -4095,7 +4495,7 @@ Configuration:
     1:86400 }
 
 
-5.35. telnet
+5.37. telnet
 
 ------------
 
@@ -4124,7 +4524,7 @@ Peg counts:
   * telnet.packets: total packets
 
 
-5.36. wizard
+5.38. wizard
 
 ------------
 
@@ -4444,7 +4844,45 @@ Configuration:
   * implied cvs.invalid-entry: looks for an invalid Entry string
 
 
-7.11. detection_filter
+7.11. dce_iface
+
+------------
+
+What: detection option to check dcerpc interface
+
+Type: ips_option
+
+Configuration:
+
+  * string dce_iface.uuid: match given dcerpc uuid
+  * string dce_iface.version: interface version
+  * implied dce_iface.any_frag: match on any fragment
+
+
+7.12. dce_opnum
+
+------------
+
+What: detection option to check dcerpc operation number
+
+Type: ips_option
+
+Configuration:
+
+  * string dce_opnum.~: match given dcerpc operation number, range or
+    list
+
+
+7.13. dce_stub_data
+
+------------
+
+What: sets the cursor to dcerpc stub data
+
+Type: ips_option
+
+
+7.14. detection_filter
 
 ------------
 
@@ -4463,7 +4901,7 @@ Configuration:
     1: }
 
 
-7.12. dnp3_data
+7.15. dnp3_data
 
 ------------
 
@@ -4472,7 +4910,7 @@ What: sets the cursor to dnp3 data
 Type: ips_option
 
 
-7.13. dnp3_func
+7.16. dnp3_func
 
 ------------
 
@@ -4485,7 +4923,7 @@ Configuration:
   * string dnp3_func.~: match dnp3 function code or name
 
 
-7.14. dnp3_ind
+7.17. dnp3_ind
 
 ------------
 
@@ -4498,7 +4936,7 @@ Configuration:
   * string dnp3_ind.~: match given dnp3 indicator flags
 
 
-7.15. dnp3_obj
+7.18. dnp3_obj
 
 ------------
 
@@ -4514,7 +4952,7 @@ Configuration:
     }
 
 
-7.16. dsize
+7.19. dsize
 
 ------------
 
@@ -4528,7 +4966,7 @@ Configuration:
     max | <max | >min
 
 
-7.17. file_data
+7.20. file_data
 
 ------------
 
@@ -4537,7 +4975,7 @@ What: rule option to set detection cursor to file data
 Type: ips_option
 
 
-7.18. flags
+7.21. flags
 
 ------------
 
@@ -4551,7 +4989,7 @@ Configuration:
   * string flags.~mask_flags: these flags are don’t cares
 
 
-7.19. flow
+7.22. flow
 
 ------------
 
@@ -4575,7 +5013,7 @@ Configuration:
   * implied flow.only_frag: match on defragmented packets only
 
 
-7.20. flowbits
+7.23. flowbits
 
 ------------
 
@@ -4590,7 +5028,7 @@ Configuration:
   * string flowbits.~arg2: group if arg1 is bits
 
 
-7.21. fragbits
+7.24. fragbits
 
 ------------
 
@@ -4603,7 +5041,7 @@ Configuration:
   * string fragbits.~flags: these flags are tested
 
 
-7.22. fragoffset
+7.25. fragoffset
 
 ------------
 
@@ -4617,7 +5055,7 @@ Configuration:
     min<>max | <max | >min
 
 
-7.23. gid
+7.26. gid
 
 ------------
 
@@ -4630,7 +5068,7 @@ Configuration:
   * int gid.~: generator id { 1: }
 
 
-7.24. gtp_info
+7.27. gtp_info
 
 ------------
 
@@ -4643,7 +5081,7 @@ Configuration:
   * string gtp_info.~: info element to match
 
 
-7.25. gtp_type
+7.28. gtp_type
 
 ------------
 
@@ -4656,7 +5094,7 @@ Configuration:
   * string gtp_type.~: list of types to match
 
 
-7.26. gtp_version
+7.29. gtp_version
 
 ------------
 
@@ -4669,7 +5107,7 @@ Configuration:
   * int gtp_version.~: version to match { 0:2 }
 
 
-7.27. http_client_body
+7.30. http_client_body
 
 ------------
 
@@ -4678,7 +5116,7 @@ What: rule option to set the detection cursor to the request body
 Type: ips_option
 
 
-7.28. http_cookie
+7.31. http_cookie
 
 ------------
 
@@ -4687,7 +5125,7 @@ What: rule option to set the detection cursor to the HTTP cookie
 Type: ips_option
 
 
-7.29. http_header
+7.32. http_header
 
 ------------
 
@@ -4701,7 +5139,7 @@ Configuration:
   * string http_header.~name: restrict to given header
 
 
-7.30. http_method
+7.33. http_method
 
 ------------
 
@@ -4711,7 +5149,7 @@ method
 Type: ips_option
 
 
-7.31. http_raw_cookie
+7.34. http_raw_cookie
 
 ------------
 
@@ -4721,7 +5159,7 @@ cookie
 Type: ips_option
 
 
-7.32. http_raw_header
+7.35. http_raw_header
 
 ------------
 
@@ -4731,7 +5169,7 @@ headers
 Type: ips_option
 
 
-7.33. http_raw_uri
+7.36. http_raw_uri
 
 ------------
 
@@ -4740,7 +5178,7 @@ What: rule option to set the detection cursor to the unnormalized URI
 Type: ips_option
 
 
-7.34. http_stat_code
+7.37. http_stat_code
 
 ------------
 
@@ -4749,7 +5187,7 @@ What: rule option to set the detection cursor to the HTTP status code
 Type: ips_option
 
 
-7.35. http_stat_msg
+7.38. http_stat_msg
 
 ------------
 
@@ -4759,7 +5197,7 @@ message
 Type: ips_option
 
 
-7.36. http_uri
+7.39. http_uri
 
 ------------
 
@@ -4769,7 +5207,7 @@ buffer
 Type: ips_option
 
 
-7.37. icmp_id
+7.40. icmp_id
 
 ------------
 
@@ -4783,7 +5221,7 @@ Configuration:
     >min
 
 
-7.38. icmp_seq
+7.41. icmp_seq
 
 ------------
 
@@ -4797,7 +5235,7 @@ Configuration:
     min<>max | <max | >min
 
 
-7.39. icode
+7.42. icode
 
 ------------
 
@@ -4811,7 +5249,7 @@ Configuration:
     | >min
 
 
-7.40. id
+7.43. id
 
 ------------
 
@@ -4825,7 +5263,7 @@ Configuration:
     min
 
 
-7.41. ip_proto
+7.44. ip_proto
 
 ------------
 
@@ -4838,7 +5276,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-7.42. ipopts
+7.45. ipopts
 
 ------------
 
@@ -4852,7 +5290,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-7.43. isdataat
+7.46. isdataat
 
 ------------
 
@@ -4867,7 +5305,7 @@ Configuration:
     buffer
 
 
-7.44. itype
+7.47. itype
 
 ------------
 
@@ -4881,7 +5319,7 @@ Configuration:
     | >min
 
 
-7.45. md5
+7.48. md5
 
 ------------
 
@@ -4899,7 +5337,7 @@ Configuration:
     of buffer
 
 
-7.46. metadata
+7.49. metadata
 
 ------------
 
@@ -4914,7 +5352,7 @@ Configuration:
   * string metadata.*: additional parameters not used by snort
 
 
-7.47. modbus_data
+7.50. modbus_data
 
 ------------
 
@@ -4923,7 +5361,7 @@ What: rule option to set cursor to modbus data
 Type: ips_option
 
 
-7.48. modbus_func
+7.51. modbus_func
 
 ------------
 
@@ -4936,7 +5374,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.49. modbus_unit
+7.52. modbus_unit
 
 ------------
 
@@ -4949,7 +5387,7 @@ Configuration:
   * int modbus_unit.~: modbus unit ID { 0:255 }
 
 
-7.50. msg
+7.53. msg
 
 ------------
 
@@ -4962,7 +5400,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.51. pcre
+7.54. pcre
 
 ------------
 
@@ -4975,7 +5413,7 @@ Configuration:
   * string pcre.~re: Snort regular expression
 
 
-7.52. pkt_data
+7.55. pkt_data
 
 ------------
 
@@ -4985,7 +5423,7 @@ packet data
 Type: ips_option
 
 
-7.53. pkt_num
+7.56. pkt_num
 
 ------------
 
@@ -4998,7 +5436,7 @@ Configuration:
   * string pkt_num.~range: check if packet number is in given range
 
 
-7.54. priority
+7.57. priority
 
 ------------
 
@@ -5012,7 +5450,7 @@ Configuration:
     1: }
 
 
-7.55. raw_data
+7.58. raw_data
 
 ------------
 
@@ -5021,7 +5459,7 @@ What: rule option to set the detection cursor to the raw packet data
 Type: ips_option
 
 
-7.56. reference
+7.59. reference
 
 ------------
 
@@ -5035,7 +5473,7 @@ Configuration:
   * string reference.~id: reference id
 
 
-7.57. regex
+7.60. regex
 
 ------------
 
@@ -5054,7 +5492,7 @@ Configuration:
     instead of start of buffer
 
 
-7.58. rem
+7.61. rem
 
 ------------
 
@@ -5067,7 +5505,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.59. replace
+7.62. replace
 
 ------------
 
@@ -5080,7 +5518,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.60. rev
+7.63. rev
 
 ------------
 
@@ -5093,7 +5531,7 @@ Configuration:
   * int rev.~: revision { 1: }
 
 
-7.61. rpc
+7.64. rpc
 
 ------------
 
@@ -5108,7 +5546,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.62. seq
+7.65. seq
 
 ------------
 
@@ -5122,7 +5560,7 @@ Configuration:
     max | <max | >min
 
 
-7.63. session
+7.66. session
 
 ------------
 
@@ -5135,7 +5573,7 @@ Configuration:
   * enum session.~mode: output format { printable|binary|all }
 
 
-7.64. sha256
+7.67. sha256
 
 ------------
 
@@ -5153,7 +5591,7 @@ Configuration:
     start of buffer
 
 
-7.65. sha512
+7.68. sha512
 
 ------------
 
@@ -5171,7 +5609,7 @@ Configuration:
     start of buffer
 
 
-7.66. sid
+7.69. sid
 
 ------------
 
@@ -5184,7 +5622,7 @@ Configuration:
   * int sid.~: signature id { 1: }
 
 
-7.67. sip_body
+7.70. sip_body
 
 ------------
 
@@ -5193,7 +5631,7 @@ What: rule option to set the detection cursor to the request body
 Type: ips_option
 
 
-7.68. sip_header
+7.71. sip_header
 
 ------------
 
@@ -5203,7 +5641,7 @@ buffer
 Type: ips_option
 
 
-7.69. sip_method
+7.72. sip_method
 
 ------------
 
@@ -5216,7 +5654,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.70. sip_stat_code
+7.73. sip_stat_code
 
 ------------
 
@@ -5229,7 +5667,7 @@ Configuration:
   * int sip_stat_code.*code: stat code { 1:999 }
 
 
-7.71. so
+7.74. so
 
 ------------
 
@@ -5242,7 +5680,7 @@ Configuration:
   * string so.~func: name of eval function
 
 
-7.72. soid
+7.75. soid
 
 ------------
 
@@ -5255,7 +5693,7 @@ Configuration:
   * string soid.~: SO rule ID has <gid>|<sid> format, like 3|12345
 
 
-7.73. ssl_state
+7.76. ssl_state
 
 ------------
 
@@ -5282,7 +5720,7 @@ Configuration:
     unknown
 
 
-7.74. ssl_version
+7.77. ssl_version
 
 ------------
 
@@ -5307,7 +5745,7 @@ Configuration:
     tls1.2
 
 
-7.75. stream_reassemble
+7.78. stream_reassemble
 
 ------------
 
@@ -5326,7 +5764,7 @@ Configuration:
     remainder of the session
 
 
-7.76. stream_size
+7.79. stream_size
 
 ------------
 
@@ -5341,7 +5779,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.77. tag
+7.80. tag
 
 ------------
 
@@ -5358,7 +5796,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1: }
 
 
-7.78. tos
+7.81. tos
 
 ------------
 
@@ -5372,7 +5810,7 @@ Configuration:
     max | <max | >min
 
 
-7.79. ttl
+7.82. ttl
 
 ------------
 
@@ -5386,7 +5824,7 @@ Configuration:
     max | <max | >min
 
 
-7.80. urg
+7.83. urg
 
 ------------
 
@@ -5400,7 +5838,7 @@ Configuration:
     min
 
 
-7.81. window
+7.84. window
 
 ------------
 
@@ -7589,7 +8027,21 @@ with.
             foo();
 
 
-15.8. Headers
+15.8. Classes
+
+------------
+
+  * Use the order public, protected, private top to bottom in a class
+    declaration.
+  * Keep inline functions in a class declaration very brief,
+    preferably just one line. If you need a more complex inline
+    function, move the definition outside the class declaration.
+  * The goal is to have highly readable class declarations. The user
+    shouldn’t have to sift through implementation details to see what
+    is available to the client.
+
+
+15.9. Headers
 
 ------------
 
@@ -7643,7 +8095,7 @@ with.
   * Do not put using statements in headers.
 
 
-15.9. Warnings
+15.10. Warnings
 
 ------------
 
@@ -7660,14 +8112,14 @@ with.
   * Then Fix All Warnings. None Allowed.
 
 
-15.10. Other
+15.11. Other
 
 ------------
 
   * Prefer and over && and or over || for new source files.
 
 
-15.11. Uncrustify
+15.12. Uncrustify
 
 ------------
 
@@ -8060,8 +8512,6 @@ The features listed below must be explicitly enabled so they are
 built into the Snort binary. For a full list of build features, run .
 /configure --help.
 
-  * --enable-ppm: enable building packet and rule performance
-    monitoring and coarse latency enforcement.
   * --enable-shell: enable building local and remote command line
     shell support.
 
@@ -8530,6 +8980,40 @@ Some additional details to note:
   * string daq.vars: comma separated list of name=value DAQ-specific
     parameters
   * string data_log.key = http_uri: name of data buffer to log
+  * implied dce_iface.any_frag: match on any fragment
+  * string dce_iface.uuid: match given dcerpc uuid
+  * string dce_iface.version: interface version
+  * string dce_opnum.~: match given dcerpc operation number, range or
+    list
+  * bool dce_smb.disable_defrag = false: Disable DCE/RPC
+    defragmentation
+  * int dce_smb.max_frag_len = 65535: Maximum fragment size for
+    defragmentation { 1514:65535 }
+  * enum dce_smb.policy = WinXP: Target based policy to use { Win2000
+    | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba |
+    Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
+  * int dce_smb.reassemble_threshold = 0: Minimum bytes received
+    before performing reassembly { 0:65535 }
+  * int dce_smb.smb_file_depth = 16384: SMB file depth for file data
+    { -1: }
+  * enum dce_smb.smb_file_inspection = off: SMB file inspection { off
+    | on | only }
+  * enum dce_smb.smb_fingerprint_policy = none: Target based SMB
+    policy to use { none | client | server | both }
+  * string dce_smb.smb_invalid_shares: SMB shares to alert on
+  * int dce_smb.smb_max_chain = 3: SMB max chain size { 0:255 }
+  * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
+  * multi dce_smb.valid_smb_versions = all: Valid SMB versions { v1 |
+    v2 | all }
+  * bool dce_tcp.disable_defrag = false: Disable DCE/RPC
+    defragmentation
+  * int dce_tcp.max_frag_len = 65535: Maximum fragment size for
+    defragmentation { 1514:65535 }
+  * enum dce_tcp.policy = WinXP: Target based policy to use { Win2000
+    | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba |
+    Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
+  * int dce_tcp.reassemble_threshold = 0: Minimum bytes received
+    before performing reassembly { 0:65535 }
   * int detection.asn1 = 256: maximum decode nodes { 1: }
   * bool detection.pcre_enable = true: disable pcre pattern matching
   * int detection.pcre_match_limit = 1500: limit pcre backtracking,
@@ -8694,6 +9178,16 @@ Some additional details to note:
   * int gtp_inspect[].version = 2: gtp version { 0:2 }
   * string gtp_type.~: list of types to match
   * int gtp_version.~: version to match { 0:2 }
+  * enum host_tracker[].frag_policy: defragmentation policy { first |
+    linux | bsd | bsd_right | last | windows | solaris }
+  * addr host_tracker[].ip = 0.0.0.0/32: hosts address / cidr
+  * string host_tracker[].services[].name: service identifier
+  * port host_tracker[].services[].port: port number
+  * enum host_tracker[].services[].proto = tcp: ip protocol { tcp |
+    udp }
+  * enum host_tracker[].tcp_policy: tcp reassembly policy { first |
+    last | linux | old_linux | bsd | macos | solaris | irix | hpux11
+    | hpux10 | windows | win_2003 | vista | proxy }
   * enum hosts[].frag_policy: defragmentation policy { first | linux
     | bsd | bsd_right | last | windows | solaris }
   * addr hosts[].ip = 0.0.0.0/32: hosts address / cidr
@@ -9022,7 +9516,11 @@ Some additional details to note:
     performance
   * int perf_monitor.max_file_size = 1073741824: files will be rolled
     over if they exceed this size { 4096: }
-  * int perf_monitor.packets = 10000: minim packets to report { 0: }
+  * string perf_monitor.modules[].name: name of the module
+  * string perf_monitor.modules[].pegs[].name: name of the statistic
+    to track
+  * int perf_monitor.packets = 10000: minimum packets to report { 0:
+    }
   * bool perf_monitor.reset = true: reset (clear) statistics after
     each reporting interval
   * int perf_monitor.seconds = 60: report interval; 0 means report at
@@ -9054,6 +9552,22 @@ Some additional details to note:
     watch
   * int port_scan_global.memcap = 1048576: maximum tracker memory {
     1: }
+  * bool ppm.fastpath_expensive_packets = false: stop inspection if
+    the max_pkt_time is exceeded
+  * int ppm.max_pkt_time = 0: enable packet latency thresholding
+    (usec), 0 = off { 0: }
+  * int ppm.max_rule_time = 0: enable rule latency thresholding
+    (usec), 0 = off { 0: }
+  * enum ppm.pkt_log = none: log event if max_pkt_time is exceeded {
+    none | log | alert | both }
+  * enum ppm.rule_log = none: enable event logging for suspended
+    rules { none|log|alert|both }
+  * bool ppm.suspend_expensive_rules = false: temporarily disable
+    rule if threshold is reached
+  * int ppm.suspend_timeout = 60: seconds to suspend rule, 0 =
+    permanent { 0: }
+  * int ppm.threshold = 5: number of times to exceed limit before
+    disabling rule { 1: }
   * int priority.~: relative severity level; 1 is highest priority {
     1: }
   * string process.chroot: set chroot directory (same as -t)
@@ -9070,14 +9584,18 @@ Some additional details to note:
   * string process.umask: set process umask (same as -m)
   * bool process.utc = false: use UTC instead of local time for
     timestamps
-  * int profiler.memory.count = 0: print results to given level (0 =
-    all) { 0: }
+  * int profiler.memory.count = 0: limit results to count items per
+    level (0 = no limit) { 0: }
+  * int profiler.memory.max_depth = -1: limit depth to max_depth (-1
+    = no limit) { -1: }
   * bool profiler.memory.show = true: show module memory profile
     stats
   * enum profiler.memory.sort = total_used: sort by given field {
     none | allocations | total_used | avg_allocation }
-  * int profiler.modules.count = 0: print results to given level (0 =
-    all) { 0: }
+  * int profiler.modules.count = 0: limit results to count items per
+    level (0 = no limit) { 0: }
+  * int profiler.modules.max_depth = -1: limit depth to max_depth (-1
+    = no limit) { -1: }
   * bool profiler.modules.show = true: show module time profile stats
   * enum profiler.modules.sort = total_time: sort by given field {
     none | checks | avg_check | total_time }
@@ -9682,6 +10200,125 @@ Some additional details to note:
   * daq.skipped: packets skipped at startup
   * daq.whitelist: total whitelist verdicts
   * data_log.packets: total packets
+  * dce_smb.aborted sessions: total aborted sessions
+  * dce_smb.bad autodetects: total bad autodetects
+  * dce_smb.connection-oriented PDUs: total connection-oriented PDUs
+  * dce_smb.connection-oriented alter context responses: total
+    connection-oriented alter context responses
+  * dce_smb.connection-oriented alter contexts: total
+    connection-oriented alter contexts
+  * dce_smb.connection-oriented auth3s: total connection-oriented
+    auth3s
+  * dce_smb.connection-oriented bind acks: total connection-oriented
+    binds acks
+  * dce_smb.connection-oriented bind naks: total connection-oriented
+    bind naks
+  * dce_smb.connection-oriented binds: total connection-oriented
+    binds
+  * dce_smb.connection-oriented cancels: total connection-oriented
+    cancels
+  * dce_smb.connection-oriented client fragments reassembled: total
+    connection-oriented client fragments reassembled
+  * dce_smb.connection-oriented client maximum fragment size:
+    connection-oriented client maximum fragment size
+  * dce_smb.connection-oriented client minimum fragment size:
+    connection-oriented client minimum fragment size
+  * dce_smb.connection-oriented client segments reassembled: total
+    connection-oriented client segments reassembled
+  * dce_smb.connection-oriented faults: total connection-oriented
+    faults
+  * dce_smb.connection-oriented orphaned: total connection-oriented
+    orphaned
+  * dce_smb.connection-oriented other requests: total
+    connection-oriented other requests
+  * dce_smb.connection-oriented other responses: total
+    connection-oriented other responses
+  * dce_smb.connection-oriented rejects: total connection-oriented
+    rejects
+  * dce_smb.connection-oriented request fragments: total
+    connection-oriented request fragments
+  * dce_smb.connection-oriented requests: total connection-oriented
+    requests
+  * dce_smb.connection-oriented response fragments: total
+    connection-oriented response fragments
+  * dce_smb.connection-oriented responses: total connection-oriented
+    responses
+  * dce_smb.connection-oriented server fragments reassembled: total
+    connection-oriented server fragments reassembled
+  * dce_smb.connection-oriented server maximum fragment size:
+    connection-oriented server maximum fragment size
+  * dce_smb.connection-oriented server minimum fragment size:
+    connection-oriented server minimum fragment size
+  * dce_smb.connection-oriented server segments reassembled: total
+    connection-oriented server segments reassembled
+  * dce_smb.connection-oriented shutdowns: total connection-oriented
+    shutdowns
+  * dce_smb.events: total events
+  * dce_smb.smb client segments reassembled: total smb client
+    segments reassembled
+  * dce_smb.smb files processed: total smb files processed
+  * dce_smb.smb maximum outstanding requests: total smb maximum
+    outstanding requests
+  * dce_smb.smb packets: total smb packets
+  * dce_smb.smb server segments reassembled: total smb server
+    segments reassembled
+  * dce_smb.smb sessions: total smb sessions
+  * dce_tcp.aborted sessions: total aborted sessions
+  * dce_tcp.bad autodetects: total bad autodetects
+  * dce_tcp.connection-oriented PDUs: total connection-oriented PDUs
+  * dce_tcp.connection-oriented alter context responses: total
+    connection-oriented alter context responses
+  * dce_tcp.connection-oriented alter contexts: total
+    connection-oriented alter contexts
+  * dce_tcp.connection-oriented auth3s: total connection-oriented
+    auth3s
+  * dce_tcp.connection-oriented bind acks: total connection-oriented
+    binds acks
+  * dce_tcp.connection-oriented bind naks: total connection-oriented
+    bind naks
+  * dce_tcp.connection-oriented binds: total connection-oriented
+    binds
+  * dce_tcp.connection-oriented cancels: total connection-oriented
+    cancels
+  * dce_tcp.connection-oriented client fragments reassembled: total
+    connection-oriented client fragments reassembled
+  * dce_tcp.connection-oriented client maximum fragment size:
+    connection-oriented client maximum fragment size
+  * dce_tcp.connection-oriented client minimum fragment size:
+    connection-oriented client minimum fragment size
+  * dce_tcp.connection-oriented client segments reassembled: total
+    connection-oriented client segments reassembled
+  * dce_tcp.connection-oriented faults: total connection-oriented
+    faults
+  * dce_tcp.connection-oriented orphaned: total connection-oriented
+    orphaned
+  * dce_tcp.connection-oriented other requests: total
+    connection-oriented other requests
+  * dce_tcp.connection-oriented other responses: total
+    connection-oriented other responses
+  * dce_tcp.connection-oriented rejects: total connection-oriented
+    rejects
+  * dce_tcp.connection-oriented request fragments: total
+    connection-oriented request fragments
+  * dce_tcp.connection-oriented requests: total connection-oriented
+    requests
+  * dce_tcp.connection-oriented response fragments: total
+    connection-oriented response fragments
+  * dce_tcp.connection-oriented responses: total connection-oriented
+    responses
+  * dce_tcp.connection-oriented server fragments reassembled: total
+    connection-oriented server fragments reassembled
+  * dce_tcp.connection-oriented server maximum fragment size:
+    connection-oriented server maximum fragment size
+  * dce_tcp.connection-oriented server minimum fragment size:
+    connection-oriented server minimum fragment size
+  * dce_tcp.connection-oriented server segments reassembled: total
+    connection-oriented server segments reassembled
+  * dce_tcp.connection-oriented shutdowns: total connection-oriented
+    shutdowns
+  * dce_tcp.events: total events
+  * dce_tcp.tcp packets: total tcp packets
+  * dce_tcp.tcp sessions: total tcp sessions
   * detection.alert limit: events previously triggered on same PDU
   * detection.alerts: alerts not including IP reputation
   * detection.alt searches: alt fast pattern searches in packet data
@@ -9751,6 +10388,8 @@ Some additional details to note:
   * ipv4.bad checksum: nonzero ip checksums
   * modbus.frames: total Modbus messages
   * modbus.sessions: total sessions processed
+  * mpls.total bytes: total mpls labeled bytes processed
+  * mpls.total packets: total mpls labeled packets processed
   * normalizer.icmp4 echo: icmp4 ping normalizations
   * normalizer.icmp6 echo: icmp6 echo normalizations
   * normalizer.ip4 df: don’t frag bit normalizations
@@ -9923,36 +10562,65 @@ Some additional details to note:
   * stream.user flows: total user sessions
   * stream.user prunes: user sessions pruned
   * stream_icmp.created: icmp session trackers created
+  * stream_icmp.max: max icmp sessions
+  * stream_icmp.prunes: icmp session prunes
   * stream_icmp.released: icmp session trackers released
+  * stream_icmp.sessions: total icmp sessions
+  * stream_icmp.timeouts: icmp session timeouts
   * stream_ip.alerts: alerts generated
   * stream_ip.anomalies: anomalies detected
+  * stream_ip.created: ip session trackers created
+  * stream_ip.current: current fragments
   * stream_ip.discards: fragments discarded
   * stream_ip.drops: fragments dropped
   * stream_ip.frag timeouts: datagrams abandoned
-  * stream_ip.fragments: total fragments
+  * stream_ip.fragmented bytes: total fragmented bytes
+  * stream_ip.max frags: max fragments
+  * stream_ip.max: max ip sessions
   * stream_ip.memory faults: memory faults
+  * stream_ip.memory used: current memory usage in bytes
   * stream_ip.nodes deleted: fragments deleted from tracker
   * stream_ip.nodes inserted: fragments added to tracker
   * stream_ip.overlaps: overlapping fragments
+  * stream_ip.prunes: ip session prunes
+  * stream_ip.reassembled bytes: total reassembled bytes
   * stream_ip.reassembled: reassembled datagrams
+  * stream_ip.released: ip session trackers released
+  * stream_ip.sessions: total ip sessions
+  * stream_ip.timeouts: ip session timeouts
+  * stream_ip.total: total fragments
   * stream_ip.trackers added: datagram trackers created
+  * stream_ip.trackers cleared: datagram trackers cleared
+  * stream_ip.trackers completed: datagram trackers completed
   * stream_ip.trackers freed: datagram trackers released
   * stream_tcp.3way trackers: tcp session tracking started on ack
   * stream_tcp.client cleanups: number of times data from server was
     flushed when session released
+  * stream_tcp.closing: number of sessions currently closing
+  * stream_tcp.created: tcp session trackers created
   * stream_tcp.data trackers: tcp session tracking started on data
   * stream_tcp.discards: tcp packets discarded
+  * stream_tcp.established: number of sessions currently established
   * stream_tcp.events: events generated
+  * stream_tcp.faults: number of times a new segment triggered a
+    prune
   * stream_tcp.gaps: missing data between PDUs
   * stream_tcp.ignored: tcp packets ignored
+  * stream_tcp.initializing: number of sessions currently
+    initializing
   * stream_tcp.internal events: 135:X events generated
   * stream_tcp.max bytes: number of times the maximum queued byte
     limit was reached
   * stream_tcp.max segs: number of times the maximum queued segment
     limit was reached
+  * stream_tcp.max: max tcp sessions
+  * stream_tcp.memory: current memory in use
   * stream_tcp.overlaps: overlapping segments queued
+  * stream_tcp.prunes: tcp session prunes
   * stream_tcp.rebuilt buffers: rebuilt PDU sections
+  * stream_tcp.rebuilt bytes: total rebuilt bytes
   * stream_tcp.rebuilt packets: total reassembled PDUs
+  * stream_tcp.released: tcp session trackers released
   * stream_tcp.resyns: SYN received on established session
   * stream_tcp.segs queued: total segments queued
   * stream_tcp.segs released: total segments released
@@ -9961,15 +10629,15 @@ Some additional details to note:
     PDUs
   * stream_tcp.server cleanups: number of times data from client was
     flushed when session released
-  * stream_tcp.sessions: total sessions
+  * stream_tcp.sessions: total tcp sessions
   * stream_tcp.syn trackers: tcp session tracking started on syn
   * stream_tcp.syn-ack trackers: tcp session tracking started on
     syn-ack
-  * stream_tcp.timeouts: sessions timed out
-  * stream_tcp.trackers created: tcp session trackers created
-  * stream_tcp.trackers released: tcp session trackers released
+  * stream_tcp.timeouts: tcp session timeouts
   * stream_tcp.untracked: tcp packets not tracked
   * stream_udp.created: udp session trackers created
+  * stream_udp.max: max udp sessions
+  * stream_udp.prunes: udp session prunes
   * stream_udp.released: udp session trackers released
   * stream_udp.sessions: total udp sessions
   * stream_udp.timeouts: udp session timeouts
@@ -10027,6 +10695,7 @@ Some additional details to note:
   * 128: ssh
   * 129: stream_tcp
   * 131: dns
+  * 134: ppm
   * 136: reputation
   * 137: ssl
   * 140: sip
@@ -10034,6 +10703,8 @@ Some additional details to note:
   * 142: pop
   * 143: gtp_inspect
   * 144: modbus
+  * 145: dce_smb
+  * 145: dce_tcp
   * 145: dnp3
   * 219: new_http_inspect
   * 256: dpx
@@ -10393,6 +11064,9 @@ Some additional details to note:
   * 131:1 (dns) Obsolete DNS RR Types
   * 131:2 (dns) Experimental DNS RR Types
   * 131:3 (dns) DNS Client rdata txt Overflow
+  * 134:1 (ppm) rule options disabled by rule latency
+  * 134:2 (ppm) rule options re-enabled by rule latency
+  * 134:3 (ppm) packet aborted due to latency
   * 136:1 (reputation) packets blacklisted
   * 136:2 (reputation) Packets whitelisted
   * 136:3 (reputation) Packets monitored
@@ -10445,14 +11119,120 @@ Some additional details to note:
   * 144:2 (modbus) Modbus protocol ID is non-zero
   * 144:3 (modbus) Reserved Modbus function code in use
   * 145:1 (dnp3) DNP3 Link-Layer Frame contains bad CRC.
+  * 145:2 (dce_smb) SMB - Bad NetBIOS Session Service session type.
   * 145:2 (dnp3) DNP3 Link-Layer Frame was dropped.
+  * 145:3 (dce_smb) SMB - Bad SMB message type.
   * 145:3 (dnp3) DNP3 Transport-Layer Segment was dropped during
     reassembly.
+  * 145:4 (dce_smb) SMB - Bad SMB Id (not \xffSMB for SMB1 or not \
+    xfeSMB for SMB2).
   * 145:4 (dnp3) DNP3 Reassembly Buffer was cleared without
     reassembling a complete message.
+  * 145:5 (dce_smb) SMB - Bad word count or structure size.
   * 145:5 (dnp3) DNP3 Link-Layer Frame uses a reserved address.
+  * 145:6 (dce_smb) SMB - Bad byte count.
   * 145:6 (dnp3) DNP3 Application-Layer Fragment uses a reserved
     function code.
+  * 145:7 (dce_smb) SMB - Bad format type.
+  * 145:8 (dce_smb) SMB - Bad offset.
+  * 145:9 (dce_smb) SMB - Zero total data count.
+  * 145:10 (dce_smb) SMB - NetBIOS data length less than SMB header
+    length.
+  * 145:12 (dce_smb) SMB - Remaining NetBIOS data length less than
+    command byte count.
+  * 145:13 (dce_smb) SMB - Remaining NetBIOS data length less than
+    command data size.
+  * 145:14 (dce_smb) SMB - Remaining total data count less than this
+    command data size.
+  * 145:15 (dce_smb) SMB - Total data sent (STDu64) greater than
+    command total data expected.
+  * 145:16 (dce_smb) SMB - Byte count less than command data size
+    (STDu64)
+  * 145:17 (dce_smb) SMB - Invalid command data size for byte count.
+  * 145:18 (dce_smb) SMB - Excessive Tree Connect requests with
+    pending Tree Connect responses.
+  * 145:19 (dce_smb) SMB - Excessive Read requests with pending Read
+    responses.
+  * 145:20 (dce_smb) SMB - Excessive command chaining.
+  * 145:21 (dce_smb) SMB - Multiple chained tree connect requests.
+  * 145:22 (dce_smb) SMB - Multiple chained tree connect requests.
+  * 145:23 (dce_smb) SMB - Chained/Compounded login followed by
+    logoff.
+  * 145:24 (dce_smb) SMB - Chained/Compounded tree connect followed
+    by tree disconnect.
+  * 145:25 (dce_smb) SMB - Chained/Compounded open pipe followed by
+    close pipe.
+  * 145:26 (dce_smb) SMB - Invalid share access.
+  * 145:27 (dce_smb) Connection oriented DCE/RPC - Invalid major
+    version.
+  * 145:27 (dce_tcp) Connection oriented DCE/RPC - Invalid major
+    version.
+  * 145:28 (dce_smb) Connection oriented DCE/RPC - Invalid minor
+    version.
+  * 145:28 (dce_tcp) Connection oriented DCE/RPC - Invalid minor
+    version.
+  * 145:29 (dce_smb) Connection-oriented DCE/RPC - Invalid pdu type.
+  * 145:29 (dce_tcp) Connection-oriented DCE/RPC - Invalid pdu type.
+  * 145:30 (dce_smb) Connection-oriented DCE/RPC - Fragment length
+    less than header size.
+  * 145:30 (dce_tcp) Connection-oriented DCE/RPC - Fragment length
+    less than header size.
+  * 145:32 (dce_smb) Connection-oriented DCE/RPC - No context items
+    specified.
+  * 145:32 (dce_tcp) Connection-oriented DCE/RPC - No context items
+    specified.
+  * 145:33 (dce_smb) Connection-oriented DCE/RPC -No transfer
+    syntaxes specified.
+  * 145:33 (dce_tcp) Connection-oriented DCE/RPC -No transfer
+    syntaxes specified.
+  * 145:34 (dce_smb) Connection-oriented DCE/RPC - Fragment length on
+    non-last fragment less than maximum negotiated fragment transmit
+    size for client.
+  * 145:34 (dce_tcp) Connection-oriented DCE/RPC - Fragment length on
+    non-last fragment less than maximum negotiated fragment transmit
+    size for client.
+  * 145:35 (dce_smb) Connection-oriented DCE/RPC - Fragment length
+    greater than maximum negotiated fragment transmit size.
+  * 145:35 (dce_tcp) Connection-oriented DCE/RPC - Fragment length
+    greater than maximum negotiated fragment transmit size.
+  * 145:36 (dce_smb) Connection-oriented DCE/RPC - Alter Context byte
+    order different from Bind
+  * 145:36 (dce_tcp) Connection-oriented DCE/RPC - Alter Context byte
+    order different from Bind
+  * 145:37 (dce_smb) Connection-oriented DCE/RPC - Call id of non
+    first/last fragment different from call id established for
+    fragmented request.
+  * 145:37 (dce_tcp) Connection-oriented DCE/RPC - Call id of non
+    first/last fragment different from call id established for
+    fragmented request.
+  * 145:38 (dce_smb) Connection-oriented DCE/RPC - Opnum of non first
+    /last fragment different from opnum established for fragmented
+    request.
+  * 145:38 (dce_tcp) Connection-oriented DCE/RPC - Opnum of non first
+    /last fragment different from opnum established for fragmented
+    request.
+  * 145:39 (dce_smb) Connection-oriented DCE/RPC - Context id of non
+    first/last fragment different from context id established for
+    fragmented request.
+  * 145:39 (dce_tcp) Connection-oriented DCE/RPC - Context id of non
+    first/last fragment different from context id established for
+    fragmented request.
+  * 145:44 (dce_smb) SMB - Invalid SMB version 1 seen.
+  * 145:45 (dce_smb) SMB - Invalid SMB version 2 seen.
+  * 145:46 (dce_smb) SMB - Invalid user, tree connect, file binding.
+  * 145:47 (dce_smb) SMB - Excessive command compounding.
+  * 145:48 (dce_smb) SMB - Zero data count.
+  * 145:50 (dce_smb) SMB - Maximum number of outstanding requests
+    exceeded.
+  * 145:51 (dce_smb) SMB - Outstanding requests with same MID.
+  * 145:52 (dce_smb) SMB - Deprecated dialect negotiated.
+  * 145:53 (dce_smb) SMB - Deprecated command used.
+  * 145:54 (dce_smb) SMB - Unusual command used.
+  * 145:55 (dce_smb) SMB - Invalid setup count for command.
+  * 145:56 (dce_smb) SMB - Client attempted multiple dialect
+    negotiations on session.
+  * 145:57 (dce_smb) SMB - Client attempted to create or set a file’s
+    attributes to readonly/hidden/system.
   * 219:1 (new_http_inspect) ascii encoding
   * 219:2 (new_http_inspect) double decoding attack
   * 219:3 (new_http_inspect) u encoding
@@ -10522,7 +11302,7 @@ Some additional details to note:
   * 219:60 (new_http_inspect) Format error in HTTP header
   * 219:61 (new_http_inspect) Chunk header options present
   * 219:62 (new_http_inspect) URI badly formatted
-  * 219:63 (new_http_inspect) URI bad port number
+  * 219:63 (new_http_inspect) Unused
   * 219:64 (new_http_inspect) HTTP chunk misformatted
   * 219:65 (new_http_inspect) White space following chunk length
   * 219:67 (new_http_inspect) Excessive gzip compression
@@ -10910,6 +11690,13 @@ deleted -> unified2: 'filename'
     attacks
   * daq (basic): configure packet acquisition interface
   * data_log (inspector): log selected published data to data.log
+  * dce_iface (ips_option): detection option to check dcerpc
+    interface
+  * dce_opnum (ips_option): detection option to check dcerpc
+    operation number
+  * dce_smb (inspector): dce over smb inspection
+  * dce_stub_data (ips_option): sets the cursor to dcerpc stub data
+  * dce_tcp (inspector): dce over tcp inspection
   * decode (basic): general decoder rules
   * detection (basic): configure general IPS rule processing
     parameters
@@ -10959,6 +11746,7 @@ deleted -> unified2: 'filename'
   * gtp_inspect (inspector): gtp control channel inspection
   * gtp_type (ips_option): rule option to check gtp types
   * gtp_version (ips_option): rule option to check gtp version
+  * host_tracker (basic): configure hosts
   * hosts (basic): configure hosts
   * http_client_body (ips_option): rule option to set the detection
     cursor to the request body
@@ -11034,6 +11822,7 @@ deleted -> unified2: 'filename'
     port_scan_global
   * port_scan_global (inspector): shared settings for port_scan
     inspectors for use with port_scan
+  * ppm (basic): packet and rule latency monitoring and control
   * pppoe (codec): support for point-to-point protocol over ethernet
   * priority (ips_option): rule option for prioritizing events
   * process (basic): configure basic process setup
@@ -11177,6 +11966,8 @@ deleted -> unified2: 'filename'
   * inspector::binder: configure processing based on CIDRs, ports,
     services, etc.
   * inspector::data_log: log selected published data to data.log
+  * inspector::dce_smb: dce over smb inspection
+  * inspector::dce_tcp: dce over tcp inspection
   * inspector::dnp3: dnp3 inspection
   * inspector::dns: dns inspection
   * inspector::dpx: dynamic inspector example
@@ -11240,6 +12031,10 @@ deleted -> unified2: 'filename'
     matching
   * ips_option::cvs: payload rule option for detecting specific
     attacks
+  * ips_option::dce_iface: detection option to check dcerpc interface
+  * ips_option::dce_opnum: detection option to check dcerpc operation
+    number
+  * ips_option::dce_stub_data: sets the cursor to dcerpc stub data
   * ips_option::detection_filter: rule option to require multiple
     hits before a rule generates an event
   * ips_option::dnp3_data: sets the cursor to dnp3 data

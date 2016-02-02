@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -55,8 +55,6 @@
 
 static void DisplayFlowStats(SFFLOW_STATS* sfFlowStats);
 static void WriteFlowStats(SFFLOW_STATS*, FILE*);
-static void DisplayFlowIPStats(SFFLOW* sfFlow);
-static void WriteFlowIPStats(SFFLOW* sfFlow, FILE* fp);
 
 typedef struct _sfSingleFlowStatsKey
 {

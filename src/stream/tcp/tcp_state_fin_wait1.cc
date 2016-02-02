@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -32,8 +32,8 @@ using namespace std;
 #include "catch/catch.hpp"
 #endif
 
-TcpStateFinWait1::TcpStateFinWait1(TcpStateMachine& tsm, TcpSession& session) :
-    TcpStateHandler(TcpStreamTracker::TCP_FIN_WAIT1, tsm), session(session)
+TcpStateFinWait1::TcpStateFinWait1(TcpStateMachine& tsm, TcpSession& ssn) :
+    TcpStateHandler(TcpStreamTracker::TCP_FIN_WAIT1, tsm), session(ssn)
 {
 }
 

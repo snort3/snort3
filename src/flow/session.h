@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -94,7 +94,7 @@ public:
     PegCount created; \
     PegCount released; \
     PegCount timeouts; \
-    PegCount prunes;
+    PegCount prunes
 
 #define SESSION_STATS_ADD(stats) \
     { \

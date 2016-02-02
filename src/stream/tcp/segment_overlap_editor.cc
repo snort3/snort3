@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -162,7 +162,7 @@ int SegmentOverlapEditor::left_overlap_keep_first(void)
                     tsd->get_pkt()->dsize);
                 tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
             }
-            normStats[PC_TCP_IPS_DATA][tcp_ips_data]++;
+            tcp_norm_stats[PC_TCP_IPS_DATA][tcp_ips_data]++;
         }
         else if ( SEQ_LT(left->seq, tsd->get_seq() ) )
         {
@@ -174,7 +174,7 @@ int SegmentOverlapEditor::left_overlap_keep_first(void)
                 tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
             }
 
-            normStats[PC_TCP_IPS_DATA][tcp_ips_data]++;
+            tcp_norm_stats[PC_TCP_IPS_DATA][tcp_ips_data]++;
         }
 
         seq += overlap;
@@ -289,7 +289,7 @@ void SegmentOverlapEditor::right_overlap_truncate_new(void)
         tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
     }
 
-    normStats[PC_TCP_IPS_DATA][tcp_ips_data]++;
+    tcp_norm_stats[PC_TCP_IPS_DATA][tcp_ips_data]++;
     trunc_len = overlap;
 }
 
@@ -306,7 +306,7 @@ int SegmentOverlapEditor::full_right_overlap_truncate_new(void)
         tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
     }
 
-    normStats[PC_TCP_IPS_DATA][tcp_ips_data]++;
+    tcp_norm_stats[PC_TCP_IPS_DATA][tcp_ips_data]++;
 
     if ( SEQ_EQ(right->seq, seq) )
     {

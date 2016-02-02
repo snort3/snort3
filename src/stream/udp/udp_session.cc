@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -124,8 +124,6 @@ UdpSession::UdpSession(Flow* flow) : Session(flow)
 
 bool UdpSession::setup(Packet* p)
 {
-    PegCount current;
-
     ssn_time.tv_sec = p->pkth->ts.tv_sec;
     ssn_time.tv_usec = p->pkth->ts.tv_usec;
     flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;

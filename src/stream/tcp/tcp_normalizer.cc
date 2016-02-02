@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -24,7 +24,7 @@
 #include "tcp_normalizer.h"
 #include "tcp_event_logger.h"
 
-THREAD_LOCAL PegCount normStats[PC_MAX][NORM_MODE_MAX];
+THREAD_LOCAL PegCount tcp_norm_stats[PC_TCP_MAX][NORM_MODE_MAX];
 
 static const PegInfo pegName[] =
 {
@@ -68,12 +68,12 @@ const PegInfo* TcpNormalizer::get_normalization_pegs()
 
 NormPegs TcpNormalizer::get_normalization_counts(unsigned& c)
 {
-    c = PC_MAX;
-    return normStats;
+    c = PC_TCP_MAX;
+    return tcp_norm_stats;
 }
 
 void TcpNormalizer::trim_payload(
-    TcpSegmentDescriptor& tsd, uint32_t max, NormMode mode, PegCounts peg)
+    TcpSegmentDescriptor& tsd, uint32_t max, NormMode mode, TcpPegCounts peg)
 {
     if (mode == NORM_MODE_ON)
     {
@@ -83,13 +83,13 @@ void TcpNormalizer::trim_payload(
         tsd.set_end_seq(tsd.get_end_seq() - fat);
     }
 
-    normStats[peg][mode]++;
+    tcp_norm_stats[peg][mode]++;
 }
 
 bool TcpNormalizer::strip_tcp_timestamp(
     TcpSegmentDescriptor& tsd, const tcp::TcpOption* opt, NormMode mode)
 {
-    normStats[PC_TCP_TS_NOP][mode]++;
+    tcp_norm_stats[PC_TCP_TS_NOP][mode]++;
 
     if (mode == NORM_MODE_ON)
     {
@@ -106,7 +106,7 @@ bool TcpNormalizer::packet_dropper(TcpSegmentDescriptor& tsd, NormFlags f)
 {
     const NormMode mode = (f == NORM_TCP_BLOCK) ? tcp_block : opt_block;
 
-    normStats[PC_TCP_BLOCK][mode]++;
+    tcp_norm_stats[PC_TCP_BLOCK][mode]++;
 
     if (mode == NORM_MODE_ON)
     {
@@ -162,7 +162,7 @@ void TcpNormalizer::ecn_stripper(Packet* p)
             p->packet_flags |= PKT_MODIFIED;
         }
 
-        normStats[PC_TCP_ECN_SSN][strip_ecn]++;
+        tcp_norm_stats[PC_TCP_ECN_SSN][strip_ecn]++;
     }
 }
 

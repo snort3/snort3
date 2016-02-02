@@ -1,6 +1,6 @@
 Snort++ Extras
 
-Snort++ is all about plugins.  It has over 140 by default and makes it easy
+Snort++ is all about plugins.  It has over 200 by default and makes it easy
 to add more in C++ or LuaJIT.  This file will walk you through building and
 running a set of extra example plugins.  If you haven't installed and
 verified Snort++, you will need to do that first.  We will cover the

@@ -105,7 +105,7 @@ void PerfMonitor::show(SnortConfig*)
     LogMessage("PerfMonitor config:\n");
     LogMessage("  Sample Time:      %d seconds\n", config.sample_interval);
     LogMessage("  Packet Count:     %d\n", config.pkt_cnt);
-    LogMessage("  Max File Size:    %u\n", config.max_file_size);
+    LogMessage("  Max File Size:    " STDu64 "\n", config.max_file_size);
     LogMessage("  Base Stats:       %s%s\n",
         config.perf_flags & SFPERF_BASE ? "ACTIVE" : "INACTIVE",
         config.perf_flags & SFPERF_SUMMARY_BASE ? " (SUMMARY)" : "");
@@ -251,8 +251,7 @@ static bool ready_to_process(Packet* p)
     if (sample_time == 0)
         sample_time = p->pkth->ts.tv_sec;
 
-    cnt++;
-    if (cnt >= config.pkt_cnt)
+    if ( ++cnt >= config.pkt_cnt )
     {
         if ((p->pkth->ts.tv_sec - sample_time) >= config.sample_interval)
         {

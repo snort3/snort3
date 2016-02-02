@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -30,7 +30,7 @@
 #include "tcp_session.h"
 #include "tcp_defs.h"
 
-enum PegCounts
+enum TcpPegCounts
 {
     PC_TCP_TRIM_SYN,
     PC_TCP_TRIM_RST,
@@ -40,10 +40,10 @@ enum PegCounts
     PC_TCP_TS_NOP,
     PC_TCP_IPS_DATA,
     PC_TCP_BLOCK,
-    PC_MAX
+    PC_TCP_MAX
 };
 
-extern THREAD_LOCAL PegCount normStats[PC_MAX][NORM_MODE_MAX];
+extern THREAD_LOCAL PegCount tcp_norm_stats[PC_TCP_MAX][NORM_MODE_MAX];
 
 class TcpNormalizer
 {
@@ -130,7 +130,7 @@ public:
 
 protected:
     TcpNormalizer(StreamPolicy, TcpSession*, TcpTracker*);
-    virtual void trim_payload(TcpSegmentDescriptor&, uint32_t, NormMode, PegCounts);
+    virtual void trim_payload(TcpSegmentDescriptor&, uint32_t, NormMode, TcpPegCounts);
     virtual bool strip_tcp_timestamp(TcpSegmentDescriptor&, const tcp::TcpOption*, NormMode);
     virtual bool validate_rst_seq_geq(TcpSegmentDescriptor&);
     virtual bool validate_rst_end_seq_geq(TcpSegmentDescriptor&);

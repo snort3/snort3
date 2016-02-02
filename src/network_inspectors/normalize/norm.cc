@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 #include "stream/stream.h"
+#include "stream/tcp/tcp_normalizer.h"
 #include "utils/stats.h"
 
 enum PegCounts
@@ -88,7 +89,7 @@ const PegInfo norm_names[] =
     { nullptr, nullptr }
 };
 
-static THREAD_LOCAL PegCount normStats[PC_MAX][NORM_MODE_MAX];
+static THREAD_LOCAL PegCount normStats[PC_MAX+PC_TCP_MAX][NORM_MODE_MAX];
 
 //static int Norm_Eth(Packet*, uint8_t layer, int changes);
 static int Norm_IP4(NormalizerConfig*, Packet*, uint8_t layer, int changes);

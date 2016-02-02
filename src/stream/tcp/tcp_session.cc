@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -836,15 +836,18 @@ void TcpSession::update_session_on_server_packet(const tcp::TCPHdr* tcph,
     DebugMessage(DEBUG_STREAM_STATE, "Stream: Updating on packet from server\n");
 
     flow->set_session_flags(SSNFLAG_SEEN_SERVER);
+
     if (tcp_init)
     {
         talker = server;
         listener = client;
     }
 
-    if (talker && (talker->get_tcp_state() == TcpStreamTracker::TCP_LISTEN) && tcph->is_syn_only())
+    if ( talker and (talker->get_tcp_state() == TcpStreamTracker::TCP_LISTEN)
+        and tcph->is_syn_only() )
+    {
         tel->set_tcp_event(EVENT_4WHS);
-
+    }
     /* If we picked this guy up midstream, finish the initialization */
     if ((flow->session_state & STREAM_STATE_MIDSTREAM) && !(flow->session_state &
         STREAM_STATE_ESTABLISHED))

@@ -100,13 +100,6 @@ while [ $# -ne 0 ]; do
         --with-daq-libraries=*)
             append_cache_entry DAQ_LIBRARIES_DIR PATH $optarg
             ;;
-#  Currently unsupported
-#        --with-intel-soft-cpm-includes=*)
-#            append_cache_entry INTEL_SOFT_CPM_INCLUDE_DIR PATH $optarg
-#            ;;
-#        --with-intel-soft-cpm-libraries=*)
-#            append_cache_entry INTEL_SOFT_CPM_LIBRARIES_DIR PATH $optarg
-#            ;;
         *)
             echo "Invalid option '$1'.  Try $0 --help to see available options."
             exit 1

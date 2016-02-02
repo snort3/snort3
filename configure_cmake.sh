@@ -43,8 +43,7 @@ Optional Features:
     --enable-piglet          Build piglet test capability
     --disable-static-daq     Link static DAQ modules.
 
-
-    Optional Packages:
+Optional Packages:
     --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
     --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
     --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
@@ -66,7 +65,7 @@ Optional Features:
     --with-daq-includes=DIR        DAQ include directory
     --with-daq-libraries=DIR       DAQ library directory
 
-
+Some influential environment variables:
     SIGNAL_SNORT_RELOAD=<value>
                 set the SIGNAL_SNORT_RELOAD value
     SIGNAL_SNORT_DUMP_STATS<value>

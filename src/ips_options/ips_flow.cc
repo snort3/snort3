@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -73,7 +73,7 @@ public:
 
     int eval(Cursor&, Packet*) override;
 
-//private:  // FIXTHIS-L privatize
+//private:  // FIXIT-L privatize
     FlowCheckData config;
 };
 

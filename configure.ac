@@ -31,6 +31,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h src/framework/api_options.h])
 
 AM_INIT_AUTOMAKE(foreign nostdinc)
+AM_SILENT_RULES([yes])
 
 LT_INIT
 
@@ -222,14 +223,14 @@ AC_DEFUN([CXX_THREAD_LOCAL],
 ])
 CXX_THREAD_LOCAL()
 
-if test "x$gl_cv_cxx_extern_gnu_tls" = "xno"; then
-    if test "x$gl_cv_cxx_thread_local" = "xyes"; then
-        AC_DEFINE([USE_THREAD_LOCAL],[1],
-            [Define if thread_local keyword should be used])
-    else
-        AC_MSG_ERROR([Compiler does not support thread_local OR extern __thread declarations])
-    fi
-fi
+#if test "x$gl_cv_cxx_extern_gnu_tls" = "xno"; then
+#    if test "x$gl_cv_cxx_thread_local" = "xyes"; then
+#        AC_DEFINE([USE_THREAD_LOCAL],[1],
+#            [Define if thread_local keyword should be used])
+#    else
+#        AC_MSG_ERROR([Compiler does not support thread_local OR extern __thread declarations])
+#    fi
+#fi
 
 #--------------------------------------------------------------------------
 # typedefs, structures, and compiler characteristics
