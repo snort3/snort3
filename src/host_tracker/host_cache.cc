@@ -20,6 +20,7 @@
 
 #include "host_tracker/host_cache.h"
 
+#include "target_based/snort_protocols.h"
 #include <memory>
 
 #define LRU_CACHE_INITIAL_SIZE 65535
@@ -31,5 +32,26 @@ void host_cache_add_host_tracker(HostTracker* ht)
 {
     std::shared_ptr<HostTracker> sptr(ht);
     host_cache.insert(ht->get_ip_addr().ip8, sptr);
+}
+
+bool host_cache_add_service(sfip_t ipaddr, Protocol ipproto, Port port, const char* service)
+{
+    HostIpKey ipkey(ipaddr.ip8);
+    HostApplicationEntry app_entry(ipproto, port, AddProtocolReference(service));
+    std::shared_ptr<HostTracker> ht;
+
+    if (!host_cache.find(ipkey, ht))
+    {
+        //  This host hasn't been seen.  Add it.
+        ht = std::make_shared<HostTracker>();
+        if (ht == nullptr)
+        {
+            //  FIXIT-L:  Log error here?
+            return false;
+        }
+        host_cache.insert(ipkey, ht);
+    }
+
+    return ht->add_service(app_entry);
 }
 

@@ -102,6 +102,7 @@ using namespace std;
 #include "flow/flow.h"
 #include "stream/stream.h"
 #include "target_based/sftarget_reader.h"
+#include "host_tracker/host_cache.h"
 #include "perf_monitor/perf_monitor.h"
 
 #ifdef PIGLET
@@ -379,6 +380,7 @@ void Snort::term()
 
     IpsManager::global_term(snort_conf);
     SFAT_Cleanup();
+    host_cache.clear();
 
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )

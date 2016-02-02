@@ -8,7 +8,7 @@ manner.
 can be shared between threads.
     - The host_cache holds a shared_ptr to each HostTracker object. This
     allows the HostTracker to be removed from the host cache without 
-    invalidating the HostTracker helped by other threads.
+    invalidating the HostTracker held by other threads.
 
 * The HostTrackerModule is used to read in initial known information about
 hosts, populate HostTracker objects, and place them in the host_cache.

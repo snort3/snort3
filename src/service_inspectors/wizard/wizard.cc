@@ -28,6 +28,7 @@ using namespace std;
 #include "profiler/profiler.h"
 #include "utils/stats.h"
 #include "log/messages.h"
+#include "host_tracker/host_cache.h"
 
 #include "magic.h"
 #include "wiz_module.h"
@@ -204,7 +205,16 @@ bool Wizard::spellbind(
     const MagicPage*& m, Flow* f, const uint8_t* data, unsigned len)
 {
     f->service = m->book.find_spell(data, len, m);
-    return f->service != nullptr;
+
+    if (f->service != nullptr)
+    {
+        // FIXIT-H: Need to make sure Flow's ipproto and service
+        //          correspond to HostApplicationEntry's ipproto and service
+        host_cache_add_service(f->server_ip, f->ip_proto, f->server_port, f->service);
+        return true;
+    }
+
+    return false;
 }
 
 bool Wizard::cast_spell(
