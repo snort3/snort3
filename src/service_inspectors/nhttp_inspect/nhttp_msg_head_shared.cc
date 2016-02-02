@@ -23,6 +23,7 @@
 
 #include "nhttp_enum.h"
 #include "nhttp_normalizers.h"
+#include "nhttp_uri_norm.h"
 #include "nhttp_msg_head_shared.h"
 
 using namespace NHttpEnums;
@@ -38,10 +39,14 @@ NHttpMsgHeadShared::~NHttpMsgHeadShared()
     {
         NormalizedHeader* temp_ptr = list_ptr;
         list_ptr = list_ptr->next;
-        if (temp_ptr->norm.length >= 0)
-            delete[] temp_ptr->norm.start;
-        delete temp_ptr;
+        temp_ptr->norm.delete_buffer();
     }
+    if (classic_raw_header_alloc)
+        classic_raw_header.delete_buffer();
+    if (classic_norm_header_alloc)
+        classic_norm_header.delete_buffer();
+    if (classic_norm_cookie_alloc)
+        classic_norm_cookie.delete_buffer();
 }
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
@@ -228,6 +233,69 @@ int NHttpMsgHeadShared::get_header_count(HeaderId header_id) const
 {
     NormalizedHeader* node = get_header_node(header_id);
     return (node != nullptr) ? node->count : 0;
+}
+
+const Field& NHttpMsgHeadShared::get_classic_raw_header()
+{
+    if (classic_raw_header.length != STAT_NOT_COMPUTE)
+        return classic_raw_header;
+    const HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
+    if (!headers_present[cookie_head])
+    {
+        // There are no cookies so the classic headers are the whole thing
+        classic_raw_header.set(msg_text);
+        return classic_raw_header;
+    }
+
+    // Figure out how much space to allocate by stepping through the headers in advance
+    int32_t length = 0;
+    for (int k = 0; k < num_headers; k++)
+    {
+        if (header_name_id[k] == cookie_head)
+            continue;
+        // All header line Fields point into the buffer holding the entire message section.
+        // Calculation must account for separators between header lines, but there are none
+        // following the final header line.
+        const int32_t head_len = (k == num_headers-1) ? header_line[k].length :
+            header_line[k+1].start - header_line[k].start;
+        length += head_len;
+    }
+
+    // Step through headers again and do the copying this time
+    uint8_t* const buffer = new uint8_t[length];
+    int32_t current = 0;
+    for (int k = 0; k < num_headers; k++)
+    {
+        if (header_name_id[k] == cookie_head)
+            continue;
+        const int32_t head_len = (k == num_headers-1) ? header_line[k].length :
+            header_line[k+1].start - header_line[k].start;
+        memcpy(buffer + current, header_line[k].start, head_len);
+        current += head_len;
+    }
+    assert(current == length);
+
+    classic_raw_header.set(length, buffer);
+    classic_raw_header_alloc = true;
+    return classic_raw_header;
+}
+
+const Field& NHttpMsgHeadShared::get_classic_norm_header()
+{
+    return classic_normalize(get_classic_raw_header(), classic_norm_header,
+        classic_norm_header_alloc);
+}
+
+const Field& NHttpMsgHeadShared::get_classic_raw_cookie()
+{
+    HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
+    return get_header_value_norm(cookie_head);
+}
+
+const Field& NHttpMsgHeadShared::get_classic_norm_cookie()
+{
+    return classic_normalize(get_classic_raw_cookie(), classic_norm_cookie,
+        classic_norm_cookie_alloc);
 }
 
 const Field& NHttpMsgHeadShared::get_header_value_norm(HeaderId header_id)

@@ -171,6 +171,10 @@ void UriNormalizer::norm_backslash(uint8_t* buf, int32_t length, NHttpInfraction
 int32_t UriNormalizer::norm_path_clean(uint8_t* buf, const int32_t in_length,
     NHttpInfractions& infractions, NHttpEventGen& events)
 {
+    // This is supposed to be the path portion of a URI. Read NHttpUri::parse_uri() for an
+    // explanation.
+    assert(buf[0] == '/');
+
     int32_t length = 0;
     // It simplifies the code that handles /./ and /../ to pretend there is an extra '/' after the
     // buffer. Avoids making a special case of URIs that end in . or .. That is why the loop steps
@@ -229,5 +233,42 @@ int32_t UriNormalizer::norm_path_clean(uint8_t* buf, const int32_t in_length,
         }
     }
     return length;
+}
+
+// Provide traditional URI-style normalization for buffers that usually are not URIs
+void UriNormalizer::classic_normalize(const Field& input, Field& result, uint8_t* buffer)
+{
+    // The requirements for generating events related to these normalizations are unclear. It
+    // definitely doesn't seem right to generate standard URI events. For now we won't generate
+    // any events at all because these buffers may well not be URIs so regardless of what we find
+    // it is "normal". Similarly we don't have any reason to track any infractions.
+
+    // We want to reuse all the URI-normalization functions without complicating their event and
+    // infraction logic with legacy problems. The following centralizes all the messiness here so
+    // that we can conveniently modify it as requirements are better understood.
+
+    class NHttpDummyEventGen : public NHttpEventGen
+    {
+        void create_event(NHttpEnums::EventSid) override {}
+    };
+
+    NHttpInfractions unused;
+    NHttpDummyEventGen dummy_ev;
+
+    // Normalize character escape sequences
+    int32_t data_length = norm_char_clean(input.start, input.length, buffer, unused, dummy_ev);
+
+    // Normalize path directory traversals
+    // Find the leading slash if there is one
+    int32_t uri_offset;
+    for (uri_offset = 0; (uri_offset < data_length) && (buffer[uri_offset] != '/'); uri_offset++);
+    if (uri_offset < data_length)
+    {
+        norm_backslash(buffer + uri_offset, data_length - uri_offset, unused, dummy_ev);
+        data_length = uri_offset +
+            norm_path_clean(buffer + uri_offset, data_length - uri_offset, unused, dummy_ev);
+    }
+
+    result.set(data_length, buffer);
 }
 

@@ -34,8 +34,9 @@
 class NHttpEventGen
 {
 public:
+    virtual ~NHttpEventGen() = default;
     void reset() { events_generated = 0; }
-    void create_event(NHttpEnums::EventSid sid)
+    virtual void create_event(NHttpEnums::EventSid sid)
     {
         assert(((int)sid > 0) && ((int)sid <= MAX));
         if (!events_generated[sid-1])

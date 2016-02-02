@@ -190,7 +190,7 @@ int NHttpIpsOption::eval(Cursor& c, Packet* p)
     InspectionBuffer hb;
 
     if (! ((NHttpInspect*)(p->flow->gadget))->
-           get_buf((unsigned)buffer_index, sub_id, form, nullptr, hb))
+           nhttp_get_buf((unsigned)buffer_index, sub_id, form, nullptr, hb))
         return DETECTION_OPTION_NO_MATCH;
 
     c.set(key, hb.data, hb.len);

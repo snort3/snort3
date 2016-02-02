@@ -43,6 +43,12 @@ NHttpMsgBody::NHttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
     transaction->set_body(this);
 }
 
+NHttpMsgBody::~NHttpMsgBody()
+{
+    if (classic_client_body_alloc)
+        classic_client_body.delete_buffer();
+}
+
 void NHttpMsgBody::analyze()
 {
     detect_data.length = (msg_text.length <= session_data->detect_depth_remaining[source_id]) ?
@@ -127,6 +133,11 @@ void NHttpMsgBody::do_file_processing()
             session_data->mime_state = nullptr;
         }
     }
+}
+
+const Field& NHttpMsgBody::get_classic_client_body()
+{
+    return classic_normalize(detect_data, classic_client_body, classic_client_body_alloc);
 }
 
 #ifdef REG_TEST

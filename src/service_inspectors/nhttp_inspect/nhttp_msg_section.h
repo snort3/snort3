@@ -79,8 +79,9 @@ protected:
     NHttpEnums::MethodId method_id;
     int32_t status_code_num;
 
-    // Convenience methods
+    // Convenience methods shared by multiple subclasses
     void update_depth() const;
+    static const Field& classic_normalize(const Field& raw, Field& norm, bool& norm_alloc);
 #ifdef REG_TEST
     void print_message_title(FILE* output, const char* title) const;
     void print_message_wrapup(FILE* output);

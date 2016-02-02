@@ -78,9 +78,25 @@ void NHttpMsgSection::update_depth() const
     }
 }
 
+const Field& NHttpMsgSection::classic_normalize(const Field& raw, Field& norm, bool& norm_alloc)
+{
+    if (norm.length != STAT_NOT_COMPUTE)
+        return norm;
+
+    if ((raw.length <= 0) || !UriNormalizer::need_norm_path(raw))
+    {
+        norm.set(raw);
+        return norm;
+    }
+    uint8_t* buffer = new uint8_t[raw.length + UriNormalizer::URI_NORM_EXPANSION];
+    UriNormalizer::classic_normalize(raw, norm, buffer);
+    norm_alloc = true;
+    return norm;
+}
+
 const Field& NHttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, uint64_t form)
 {
-    // Only use with buffers that support the request option
+    // buffer_side replaces source_id for buffers that support the request option
     const SourceId buffer_side = (form & FORM_REQUEST) ? SRC_CLIENT : source_id;
 
     switch (id)
@@ -90,19 +106,16 @@ const Field& NHttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, u
         if (source_id != SRC_CLIENT)
             return Field::FIELD_NULL;
         NHttpMsgBody* body = transaction->get_body();
-        return (body != nullptr) ? body->get_detect_buf() : Field::FIELD_NULL;
+        return (body != nullptr) ? body->get_classic_client_body() : Field::FIELD_NULL;
       }
     case NHTTP_BUFFER_COOKIE:
     case NHTTP_BUFFER_RAW_COOKIE:
-    // FIXIT-M when real cookie normalization is implemented these need to become separate cases.
-    // Currently "normalization" is aggregation of multiple cookies. That is correct for raw
-    // cookies and all there is for normalized cookies.
       {
         NHttpMsgHeader* header = transaction->get_header(buffer_side);
         if (header == nullptr)
             return Field::FIELD_NULL;
-        HeaderId cookie_head = (buffer_side == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
-        return header->get_header_value_norm(cookie_head);
+        return (id == NHTTP_BUFFER_COOKIE) ? header->get_classic_norm_cookie() :
+            header->get_classic_raw_cookie();
       }
     case NHTTP_BUFFER_HEADER:
     case NHTTP_BUFFER_TRAILER:
@@ -114,7 +127,7 @@ const Field& NHttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, u
         if (header == nullptr)
             return Field::FIELD_NULL;
         if (sub_id == 0)
-            return header->get_headers();
+            return header->get_classic_norm_header();
         return header->get_header_value_norm((HeaderId)sub_id);
       }
     case NHTTP_BUFFER_METHOD:
@@ -125,7 +138,7 @@ const Field& NHttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, u
     case NHTTP_BUFFER_RAW_HEADER:
       {
         NHttpMsgHeader* header = transaction->get_header(buffer_side);
-        return (header != nullptr) ? header->get_headers() : Field::FIELD_NULL;
+        return (header != nullptr) ? header->get_classic_raw_header() : Field::FIELD_NULL;
       }
     case NHTTP_BUFFER_STAT_CODE:
       {
@@ -186,7 +199,7 @@ const Field& NHttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, u
     case NHTTP_BUFFER_RAW_TRAILER:
       {
         NHttpMsgTrailer* trailer = transaction->get_trailer(buffer_side);
-        return (trailer != nullptr) ? trailer->get_headers() : Field::FIELD_NULL;
+        return (trailer != nullptr) ? trailer->get_classic_raw_header() : Field::FIELD_NULL;
       }
     default:
         assert(false);

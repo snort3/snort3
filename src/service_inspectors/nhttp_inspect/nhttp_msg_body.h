@@ -30,25 +30,32 @@
 class NHttpMsgBody : public NHttpMsgSection
 {
 public:
+    virtual ~NHttpMsgBody();
     void analyze() override;
     const Field& get_detect_buf() const override { return detect_data; }
     NHttpEnums::InspectSection get_inspection_section() const override
         { return detection_section ? NHttpEnums::IS_DETECTION : NHttpEnums::IS_BODY; }
+    const Field& get_classic_client_body();
 
 protected:
     NHttpMsgBody(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
         NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
         const NHttpParaList* params_);
-    void do_file_processing();
 
     int64_t body_octets;
-    Field detect_data;
-    Field file_data;
-    const bool detection_section;
 
 #ifdef REG_TEST
     void print_body_section(FILE* output);
 #endif
+
+private:
+    void do_file_processing();
+
+    Field detect_data;
+    Field file_data;
+    const bool detection_section;
+    Field classic_client_body;   // URI normalization applied
+    bool classic_client_body_alloc = false;
 };
 
 #endif

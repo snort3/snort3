@@ -49,6 +49,13 @@ void Field::set(StatusCode stat_code)
     length = stat_code;
 }
 
+void Field::set(const Field& f)
+{
+    assert(length == STAT_NOT_COMPUTE);
+    assert(start == nullptr);
+    start = f.start;
+    length = f.length;
+}
 
 #ifdef REG_TEST
 void Field::print(FILE* output, const char* name) const

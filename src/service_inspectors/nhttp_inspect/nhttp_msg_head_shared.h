@@ -37,7 +37,10 @@ public:
     void analyze() override;
 
     int32_t get_num_headers() const { return num_headers; }
-    const Field& get_headers() const { return msg_text; }
+    const Field& get_classic_raw_header();
+    const Field& get_classic_raw_cookie();
+    const Field& get_classic_norm_header();
+    const Field& get_classic_norm_cookie();
     const Field& get_header_line(int k) const { return header_line[k]; }
     const Field& get_header_name(int k) const { return header_name[k]; }
     const Field& get_header_value(int k) const { return header_value[k]; }
@@ -58,6 +61,13 @@ protected:
         { }
     ~NHttpMsgHeadShared();
 
+#ifdef REG_TEST
+    void print_headers(FILE* output);
+#endif
+
+private:
+    static const int MAX = NHttpEnums::HEAD__MAX_VALUE;
+
     // Header normalization strategies. There should be one defined for every different way we can
     // process a header field value.
     static const HeaderNormalizer NORMALIZER_BASIC;
@@ -69,28 +79,29 @@ protected:
     // Master table of known header fields and their normalization strategies.
     static const HeaderNormalizer* const header_norms[];
 
+    // All of these are indexed by the relative position of the header field in the message
+    static const int MAX_HEADERS = 200;  // I'm an arbitrary number. FIXIT-L
+    static const int MAX_HEADER_LENGTH = 4096; // Based on max cookie size of some browsers
+
     void parse_header_block();
     uint32_t find_header_end(const uint8_t* buffer, int32_t length, int& num_seps);
     void parse_header_lines();
     void create_norm_head_list();
     void derive_header_name_id(int index);
 
-    // All of these are indexed by the relative position of the header field in the message
-    static const int MAX_HEADERS = 200;  // I'm an arbitrary number. FIXIT-L
-    static const int MAX_HEADER_LENGTH = 4096; // Based on max cookie size of some browsers
+    std::bitset<MAX> headers_present = 0;
     int32_t num_headers = NHttpEnums::STAT_NOT_COMPUTE;
     Field* header_line = nullptr;
     Field* header_name = nullptr;
     NHttpEnums::HeaderId* header_name_id = nullptr;
     Field* header_value = nullptr;
 
-#ifdef REG_TEST
-    void print_headers(FILE* output);
-#endif
-
-private:
-    static const int MAX = NHttpEnums::HEAD__MAX_VALUE;
-    std::bitset<MAX> headers_present = 0;
+    Field classic_raw_header;    // raw headers with cookies spliced out
+    bool classic_raw_header_alloc = false;
+    Field classic_norm_header;   // URI normalization applied
+    bool classic_norm_header_alloc = false;
+    Field classic_norm_cookie;   // URI normalization applied to concatenated cookie values
+    bool classic_norm_cookie_alloc = false;
 
     struct NormalizedHeader
     {

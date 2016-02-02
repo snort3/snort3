@@ -69,20 +69,20 @@ bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer
     switch (ibt)
     {
     case InspectionBuffer::IBT_KEY:
-        return get_buf(NHTTP_BUFFER_URI, 0, 0, nullptr, b);
+        return nhttp_get_buf(NHTTP_BUFFER_URI, 0, 0, nullptr, b);
     case InspectionBuffer::IBT_HEADER:
         if (get_latest_is() == IS_TRAILER)
-            return get_buf(NHTTP_BUFFER_TRAILER, 0, 0, nullptr, b);
+            return nhttp_get_buf(NHTTP_BUFFER_TRAILER, 0, 0, nullptr, b);
         else
-            return get_buf(NHTTP_BUFFER_HEADER, 0, 0, nullptr, b);
+            return nhttp_get_buf(NHTTP_BUFFER_HEADER, 0, 0, nullptr, b);
     case InspectionBuffer::IBT_BODY:
-        return get_buf(NHTTP_BUFFER_CLIENT_BODY, 0, 0, nullptr, b);
+        return nhttp_get_buf(NHTTP_BUFFER_CLIENT_BODY, 0, 0, nullptr, b);
     default:
         return false;
     }
 }
 
-SO_PUBLIC bool NHttpInspect::get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet*,
+SO_PUBLIC bool NHttpInspect::nhttp_get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet*,
     InspectionBuffer& b)
 {
     if (latest_section == nullptr)

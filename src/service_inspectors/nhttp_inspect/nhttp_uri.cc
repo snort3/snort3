@@ -23,7 +23,6 @@
 #include <stdio.h>
 
 #include "nhttp_enum.h"
-#include "nhttp_normalizers.h"
 #include "nhttp_uri.h"
 
 using namespace NHttpEnums;

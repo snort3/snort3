@@ -42,7 +42,7 @@ public:
     NHttpInspect(NHttpParaList params_);
 
     bool get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b) override;
-    bool get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet*, InspectionBuffer& b);
+    bool nhttp_get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet*, InspectionBuffer& b);
     bool get_fp_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b) override;
     bool configure(SnortConfig*) override { return true; }
     void show(SnortConfig*) override { LogMessage("NHttpInspect\n"); }

@@ -23,22 +23,24 @@
 #include "nhttp_field.h"
 #include "nhttp_infractions.h"
 #include "nhttp_event_gen.h"
-#include "nhttp_normalizers.h"
 
 class UriNormalizer
 {
 public:
+    static const unsigned URI_NORM_EXPANSION = 1;
+
     static void normalize(const Field& input, Field& result, bool do_path, uint8_t* buffer,
         NHttpInfractions& infractions, NHttpEventGen& events);
     static bool need_norm_path(const Field& uri_component);
     static bool need_norm_no_path(const Field& uri_component);
-    static const unsigned URI_NORM_EXPANSION = 1;
+    static void classic_normalize(const Field& input, Field& result, uint8_t* buffer);
 
 private:
     static const NHttpEnums::CharAction uri_char[256];
     static const bool good_percent[256];
 
-    static NormFunc norm_char_clean;
+    static int32_t norm_char_clean(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
+        NHttpInfractions& infractions, NHttpEventGen& events);
     static void norm_backslash(uint8_t* buf, int32_t length, NHttpInfractions& infractions,
         NHttpEventGen& events);
     static int32_t norm_path_clean(uint8_t* buf, const int32_t in_length,
