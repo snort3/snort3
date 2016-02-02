@@ -54,7 +54,7 @@ public:
     {
         return new NHttpStreamSplitter(is_client_to_server, this);
     }
-    static NHttpEnums::InspectSection get_latest_is();
+    SO_PUBLIC static NHttpEnums::InspectSection get_latest_is();
 
 private:
     friend NHttpApi;
