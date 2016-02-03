@@ -100,7 +100,6 @@ void BaseTracker::process(bool summary)
         PegCount* pegs = m->get_counts();
         const PegInfo* pegInfos = m->get_pegs();
 
-        LogLabel(m->get_name());
         for (int i = 0; i < m->get_num_counts(); i++)
         {
             if (fh)
@@ -108,12 +107,10 @@ void BaseTracker::process(bool summary)
                 snprintf(buf, sizeof(buf), ",%" PRIu64, pegs[i]);
                 statLine += buf;
             }
-            if (config->perf_flags & SFPERF_CONSOLE)
-                LogCount(pegInfos[i].name,  pegs[i]);
         }
-        m->sum_stats();
-        if (summary && (config->perf_flags & SFPERF_SUMMARY))
-            m->show_stats();
+        m->show_interval_stats();
+        if(!summary)
+            m->sum_stats();
     }
     if (fh)
     {

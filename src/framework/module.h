@@ -141,6 +141,7 @@ public:
     { return nullptr; }
 
     virtual void sum_stats();
+    virtual void show_interval_stats();
     virtual void show_stats();
     virtual void reset_stats();
 

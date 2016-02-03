@@ -48,7 +48,7 @@ void Module::init(const char* s, const char* h)
     help = h;
     params = null_params;
     list = false;
-    reset_stats();
+    num_counts = -1;
 }
 
 Module::Module(const char* s, const char* h)
@@ -76,6 +76,12 @@ void Module::sum_stats()
         counts[i] += p[i];
         p[i] = 0;
     }
+}
+
+void Module::show_interval_stats()
+{
+    if ( num_counts > 0 )
+        ::show_stats(get_counts(), get_pegs(), num_counts, get_name());
 }
 
 void Module::show_stats()
