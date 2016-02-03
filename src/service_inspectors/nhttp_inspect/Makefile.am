@@ -24,7 +24,7 @@ nhttp_module.cc nhttp_module.h \
 nhttp_test_input.cc nhttp_test_input.h \
 nhttp_flow_data.cc nhttp_flow_data.h \
 nhttp_transaction.cc nhttp_transaction.h \
-nhttp_stream_splitter.cc nhttp_stream_splitter.h \
+nhttp_stream_splitter_reassemble.cc nhttp_stream_splitter_scan.cc nhttp_stream_splitter.h \
 nhttp_cutter.cc nhttp_cutter.h \
 nhttp_enum.h \
 nhttp_test_manager.cc nhttp_test_manager.h \

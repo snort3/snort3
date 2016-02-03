@@ -50,7 +50,8 @@ set (FILE_LIST
     nhttp_enum.h
     nhttp_field.cc
     nhttp_field.h
-    nhttp_stream_splitter.cc
+    nhttp_stream_splitter_reassemble.cc
+    nhttp_stream_splitter_scan.cc
     nhttp_stream_splitter.h
     nhttp_cutter.cc
     nhttp_cutter.h
