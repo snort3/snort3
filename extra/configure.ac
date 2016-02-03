@@ -12,29 +12,21 @@ AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE(foreign)
 AM_SILENT_RULES([yes])
 
-LT_INIT
-
 # Checks for programs.
-AC_PROG_CXX
+AC_PROG_CC([clang gcc])
+AC_PROG_CXX([clang++ g++])
 AC_PROG_LIBTOOL
+
+LT_INIT
 
 # Use the same defines Snort used
 # (absolutely critical to ensure struct definitions match)
-CFLAGS=`pkg-config --cflags snort`
-CXXFLAGS=`pkg-config --variable=cxxflags snort`
-CPPFLAGS=`pkg-config --variable=cppflags snort`
+CPPFLAGS="$CPPFLAGS `pkg-config --cflags snort`"
 
-CPPFLAGS+=" -DBUILDING_SO"
+CPPFLAGS="$CPPFLAGS -DBUILDING_SO"
 
 AX_CXX_COMPILE_STDCXX_11
 
-AC_ARG_WITH(snort-includes,
-    AC_HELP_STRING([--with-snort-includes=DIR],[snort include directory]),
-    [with_snort_includes="$withval"],[with_snort_includes="no"])
-
-if test "x$with_snort_includes" != "xno"; then
-    CPPFLAGS="${CPPFLAGS} -I${with_snort_includes}"
-fi
 
 #--------------------------------------------------------------------------
 # visibility foo
@@ -92,3 +84,20 @@ AC_CONFIG_FILES([ \
 
 AC_OUTPUT
 
+AC_MSG_RESULT([
+    $PACKAGE $VERSION
+    ========
+
+    prefix:         ${prefix}
+    sysconfdir:     ${sysconfdir}
+    libdir:         ${libdir}
+    includedir:     ${includedir}
+
+    compiler:       ${CC}
+    compiler++:     ${CXX}
+    cflags:         ${CFLAGS}
+    cxxflags:       ${CXXFLAGS}
+    cppflags:       ${CPPFLAGS}
+    ldflags:        ${LDFLAGS}
+    libs:           ${LIBS}
+])

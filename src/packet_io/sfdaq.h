@@ -78,12 +78,7 @@ int DAQ_BreakLoop(int error, void* handle = nullptr);
 void DAQ_Set_MetaCallback(DAQ_Meta_Func_t meta_callback);
 SO_PUBLIC DAQ_Mode DAQ_GetInterfaceMode(const DAQ_PktHdr_t* h);
 
-int DAQ_ModifyFlow(const void* h, uint32_t id);
-
-static inline uint16_t DAQ_GetAddressSpaceID(const DAQ_PktHdr_t* h)
-{
-    return h->address_space_id;
-}
+int DAQ_ModifyFlowOpaque(const void* h, uint32_t opaque);
 
 // returns total stats if no daq else current stats
 // returns statically allocated stats - don't free

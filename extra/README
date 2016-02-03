@@ -58,13 +58,13 @@ Follow these steps:
 
 * To build with autotools, simply do the usual from the top level directory:
 
-    ./configure --prefix=$my_path --with-snort-includes=$my_path/include/snort
+    ./configure --prefix=$my_path
     make -j 8 install
 
-* To build with cmake, do the following:
+* To build with cmake and make, run configure_cmake.sh.  It will automatically create and populate a new subdirectory named 'build'.
 
-    mkdir build && cd build
-    cmake ..
+    ./configure_cmake.sh --prefix=$my_path
+    cd build
     make -j 8 install
 
 Note:

@@ -122,7 +122,7 @@ void Stream::populate_session_key(Packet* p, FlowKey* key)
         // if the vlan protocol bit is defined, vlan layer gauranteed to exist
         (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
         (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
-        DAQ_GetAddressSpaceID(p->pkth));
+        p->pkth->address_space_id);
 }
 
 FlowKey* Stream::get_session_key(Packet* p)

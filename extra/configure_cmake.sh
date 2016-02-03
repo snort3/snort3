@@ -21,7 +21,6 @@ Usage: $0 [OPTION]... [VAR=VALUE]...
         --prefix=     Snort++ installation prefix
 
     Optional Packages:
-    --with-snort-includes=DIR    snort include directory
     --with-daq-includes=DIR        DAQ include directory
     --with-daq-libraries=DIR       DAQ library directory
     --with-luajit-includes=DIR    luajit include directory
@@ -81,12 +80,6 @@ while [ $# -ne 0 ]; do
         --prefix=*)
             prefix=$optarg
             append_cache_entry CMAKE_INSTALL_PREFIX PATH $optarg
-            ;;
-        --with-snort-includes=*)
-            append_cache_entry SNORT_INCLUDE_DIR PATH $optarg
-            ;;
-        --with-snort-executable=*)
-            append_cache_entry SNORT_EXECUTABLE FILEPATH $optarg
             ;;
         --with-luajit-includes=*)
             append_cache_entry LUAJIT_INCLUDE_DIR PATH $optarg

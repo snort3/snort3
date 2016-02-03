@@ -286,7 +286,7 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
     else
         mplsId = 0;
 
-    addressSpaceId = DAQ_GetAddressSpaceID(p->pkth);
+    addressSpaceId = p->pkth->address_space_id;
 
     if ( (p->ptrs.decode_flags & DECODE_FRAG) )
     {

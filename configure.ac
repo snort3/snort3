@@ -33,8 +33,7 @@ AC_CONFIG_HEADERS([config.h src/framework/api_options.h])
 AM_INIT_AUTOMAKE(foreign nostdinc)
 AM_SILENT_RULES([yes])
 
-LT_INIT
-
+AC_PROG_CC([clang gcc])
 AC_PROG_CXX([clang++ g++])
 AC_PROG_AWK
 AC_PROG_CC
@@ -60,6 +59,8 @@ if test "x$CXX" = "xg++"; then
        exit 1
     fi
 fi
+
+LT_INIT
 
 PKG_PROG_PKG_CONFIG
 

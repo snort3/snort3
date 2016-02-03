@@ -590,12 +590,19 @@ const DAQ_Stats_t* DAQ_GetStats(void)
 
 //--------------------------------------------------------------------
 
-int DAQ_ModifyFlow(const void* h, uint32_t id)
+int DAQ_ModifyFlowOpaque(const void* h, uint32_t opaque)
 {
     const DAQ_PktHdr_t* hdr = (DAQ_PktHdr_t*)h;
     DAQ_ModFlow_t mod;
 
-    mod.opaque = id;
+#ifdef DAQ_MODFLOW_TYPE_OPAQUE
+    mod.type = DAQ_MODFLOW_TYPE_OPAQUE;
+    mod.length = sizeof(opaque);
+    mod.value = &opaque;
+#else
+    mod.opaque = opaque;
+#endif
+
     return daq_modify_flow(daq_mod, daq_hand, hdr, &mod);
 }
 
