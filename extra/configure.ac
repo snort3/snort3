@@ -25,8 +25,10 @@ CPPFLAGS="$CPPFLAGS `pkg-config --cflags snort`"
 
 CPPFLAGS="$CPPFLAGS -DBUILDING_SO"
 
-AX_CXX_COMPILE_STDCXX_11
+CFLAGS="$CFLAGS -std=gnu99"
+CXXFLAGS="$CXXFLAGS -std=c++11"
 
+AX_CXX_COMPILE_STDCXX_11
 
 #--------------------------------------------------------------------------
 # visibility foo
