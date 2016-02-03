@@ -98,7 +98,6 @@ void BaseTracker::process(bool summary)
     for (Module* m : modules)
     {
         PegCount* pegs = m->get_counts();
-        const PegInfo* pegInfos = m->get_pegs();
 
         for (int i = 0; i < m->get_num_counts(); i++)
         {
