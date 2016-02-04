@@ -2,8 +2,7 @@
 
 # creating pkg-config module.  these will all be substituted into snort.pc
 
-foreach(flag CMAKE_CXX_FLAGS CMAKE_C_FLAGS COMPILE_DEFINITIONS
-            COMPILE_FLAGS COMPILE_OPTIONS)
+foreach(flag COMPILE_DEFINITIONS COMPILE_FLAGS COMPILE_OPTIONS)
     set(CPPFLAGS "${CPPFLAGS} ${${flag}}")
 endforeach()
 

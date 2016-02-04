@@ -16,9 +16,9 @@ use this configure script to access CMake equivalent functionality.\
 usage="\
 Usage: $0 [OPTION]... [VAR=VALUE]...
 
-        --builddir=   The build directory
-        --generator=  run cmake --help for a list of generators
-        --prefix=     Snort++ installation prefix
+    --builddir=   The build directory
+    --generator=  run cmake --help for a list of generators
+    --prefix=     Snort++ installation prefix
 
     Optional Packages:
     --with-daq-includes=DIR        DAQ include directory
@@ -117,12 +117,16 @@ echo "Build Directory : $builddir"
 echo "Source Directory: $sourcedir"
 cd $builddir
 
-if [ -n "$CMakeGenerator" ]; then
-    cmake -G "$CMakeGenerator" $CMakeCacheEntries $sourcedir
-else
-    cmake $CMakeCacheEntries $sourcedir
-fi
+gen=""
+[ "$CMakeGenerator" ] && gen+=" -G $CMakeGenerator"
+
+cmake $gen \
+    -DCOMPILE_DEFINITIONS:STRING="$CPPFLAGS" \
+    -DCMAKE_CXX_FLAGS:STRING="$CXXFLAGS $CPPFLAGS" \
+    -DCMAKE_C_FLAGS:STRING="$CFLAGS $CPPFLAGS" \
+    $CMakeCacheEntries $sourcedir
 
 echo "# This is the command used to configure this build" > config.status
 echo $command >> config.status
 chmod u+x config.status
+

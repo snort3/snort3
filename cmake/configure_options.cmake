@@ -89,6 +89,3 @@ else()
     set(STATIC_DAQ_PRREVIOUSLY_ENABLED "${ENABLE_STATIC_DAQ}" CACHE INTERNAL "save daq link type" FORCE)
 endif()
 
-
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -Wall -Wextra -pedantic -Wformat")
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wformat-security -Wno-deprecated-declarations")
