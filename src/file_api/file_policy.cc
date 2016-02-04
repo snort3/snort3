@@ -27,7 +27,9 @@
 #include "file_service.h"
 #include "file_resume_block.h"
 #include "file_lib.h"
+#include "file_capture.h"
 
+#include "framework/logger.h"
 #include "events/event_queue.h"
 
 static FileRule emptyRule;
@@ -68,7 +70,6 @@ void FilePolicy::insert_file_rule(FileRule &rule)
 
     if (!rule.when.sha256.empty())
     {
-        //std::cout << "Adding sha " <<rule.when.sha256 << '\n';
         size_t offset = 0;
 
         std::string hex = rule.when.sha256;
@@ -82,7 +83,6 @@ void FilePolicy::insert_file_rule(FileRule &rule)
         }
 
         file_shas[bytes] = rule.use.verdict;
-        //std::cout << "Added sha " << bytes << '\n';
     }
 
     // Enable file type for all other features
@@ -136,7 +136,6 @@ FileVerdict FilePolicy::match_file_signature(Flow*, FileInfo* file)
 
         std::map<std::string, FileVerdict>::iterator it;
 
-        //std::cout << "Check sha " << sha << '\n';
         return file_shas[sha];
     }
 
@@ -149,7 +148,6 @@ void FilePolicy::policy_check(Flow*, FileContext* file)
     file->config_file_type(type_enabled);
     file->config_file_signature(signature_enabled);
     file->config_file_capture(capture_enabled);
-
 }
 
 FileVerdict FilePolicy::type_lookup(Flow* flow, FileInfo* file)
@@ -177,11 +175,25 @@ FileVerdict FilePolicy::signature_lookup(Flow* flow, FileInfo* file)
     FileBlock* file_block = FileService::get_file_block();
     if (file_block)
         file_block->apply_verdict(flow, file, verdict);
+
     return FILE_VERDICT_UNKNOWN;
 }
 
 FileVerdict FilePolicy::signature_lookup(Flow* flow, FileContext* file )
 {
+    FileRule rule = match_file_rule(nullptr, file);
+
+    if (rule.use.capture_enabled)
+    {
+        FileCapture *capture = file->get_file_capture();
+        if (capture)
+        {
+            capture->reserve_file(file);
+            capture->store_file(file);
+            capture->release_file();
+        }
+    }
+
     return (signature_lookup(flow, (FileInfo *)file));
 }
 

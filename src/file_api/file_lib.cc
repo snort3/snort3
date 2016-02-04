@@ -156,6 +156,26 @@ uint8_t* FileInfo::get_file_sig_sha256()
     return (sha256);
 }
 
+std::string FileInfo::sha_to_string (uint8_t *sha256)
+{
+    uint8_t conv[] = "0123456789ABCDEF";
+    const uint8_t *index;
+    const uint8_t *end;
+    std::string sha_out;
+
+    index = sha256;
+    end = index + SHA256_HASH_SIZE;
+
+    while(index < end)
+    {
+        sha_out.push_back(conv[((*index & 0xFF)>>4)]);
+        sha_out.push_back(conv[((*index & 0xFF)&0x0F)]);
+        index++;
+    }
+
+    return sha_out;
+}
+
 FileContext::FileContext ()
 {
     file_type_context = nullptr;
@@ -292,6 +312,11 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
     default:
         break;
     }
+}
+
+FileCapture *FileContext::get_file_capture()
+{
+    return file_capture;
 }
 
 FileCaptureState FileContext::process_file_capture(const uint8_t* file_data,

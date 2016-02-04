@@ -50,6 +50,7 @@ public:
     FileDirection get_file_direction();
     void set_file_sig_sha256(uint8_t* signature);
     uint8_t* get_file_sig_sha256();
+    std::string sha_to_string(uint8_t *sha256);
     void set_file_id(size_t index);
     size_t get_file_id();
 
@@ -87,8 +88,11 @@ public:
     //File properties
     uint64_t get_processed_bytes();
 
+    FileCapture *get_file_capture();
+
     void set_file_config(FileConfig* file_config);
     FileConfig*  get_file_config();
+
 
     void print_file_sha256();
     static void print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth);

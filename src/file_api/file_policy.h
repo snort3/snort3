@@ -85,7 +85,6 @@ public:
 private:
     FileRule& match_file_rule(Flow*, FileInfo* file);
     FileVerdict match_file_signature(Flow*, FileInfo* file);
-
     std::vector<FileRule> file_rules;
     std::map<std::string, FileVerdict> file_shas;
     bool type_enabled = false;

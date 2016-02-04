@@ -45,7 +45,6 @@ class FileCapture
 {
 public:
     FileCapture();
-    void verifiy(FileContext* context);
 
     // this must be called during snort init
     static void init_mempool(int64_t max_file_mem, int64_t block_size);
@@ -59,20 +58,22 @@ public:
     void stop();
 
     // Preserve the file in memory until it is released
-    FileCaptureState reserve_file(FileContext* context, FileCaptureBlock** file_mem);
+    FileCaptureState reserve_file(FileContext* context);
 
     // Get the file that is reserved in memory, this should be called repeatedly
     // until NULL is returned to get the full file
     // Returns:
     //   the next memory block
     //   NULL: end of file or fail to get file
-    FileCaptureBlock* read_file(FileCaptureBlock* file_mem, uint8_t** buff, int* size);
+    FileCaptureBlock* get_file_data(uint8_t** buff, int* size);
 
     // Get the file size captured in the file buffer
     // Returns:
     //   the size of file
-    //   0: no memory or fail to get file
-    size_t capture_size(FileCapture* file_mem);
+    uint64_t capture_size();
+
+    // Store files on local disk
+    void store_file(FileContext *file);
 
     // Release the file that is reserved in memory, this function might be
     // called in a different thread.
@@ -90,10 +91,13 @@ private:
     inline FileCaptureBlock* create_file_buffer(FileMemPool* file_mempool);
     inline FileCaptureState save_to_file_buffer(FileMemPool* file_mempool,
          const uint8_t* file_data, int data_size, int64_t max_size);
+    void write_file(uint8_t *buf, size_t buf_len, FILE *fh);
+
     bool reserved;
     uint64_t file_size; /*file_size*/
     FileCaptureBlock* last;  /* last block of file data */
     FileCaptureBlock* head;  /* first block of file data */
+    FileCaptureBlock* current_block = nullptr;  /* current block of file data */
     const uint8_t *current_data;  /*current file data*/
     uint32_t current_data_len;
     FileCaptureState capture_state;
