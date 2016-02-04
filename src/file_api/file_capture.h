@@ -70,7 +70,7 @@ public:
     // Get the file size captured in the file buffer
     // Returns:
     //   the size of file
-    uint64_t capture_size();
+    uint64_t capture_size() const;
 
     // Store files on local disk
     void store_file(FileContext *file);
