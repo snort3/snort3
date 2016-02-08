@@ -330,6 +330,9 @@ FileCaptureState FileContext::process_file_capture(const uint8_t* file_data,
     file_state.capture_state =
         file_capture->process_buffer(file_data, data_size, position);
 
+    if (file_state.capture_state != FILE_CAPTURE_SUCCESS)
+        stop_file_capture();
+
     return file_state.capture_state;
 }
 

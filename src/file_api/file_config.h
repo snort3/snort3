@@ -54,10 +54,10 @@ public:
     int64_t file_block_timeout = DEFAULT_FILE_BLOCK_TIMEOUT;
     int64_t file_lookup_timeout = DEFAULT_FILE_LOOKUP_TIMEOUT;
     bool block_timeout_lookup = false;
-    int64_t file_capture_memcap = DEFAULT_FILE_CAPTURE_MEM;
-    int64_t file_capture_max_size = DEFAULT_FILE_CAPTURE_MAX_SIZE;
-    int64_t file_capture_min_size = DEFAULT_FILE_CAPTURE_MIN_SIZE;
-    int64_t file_capture_block_size = DEFAULT_FILE_CAPTURE_BLOCK_SIZE;
+    int64_t capture_memcap = DEFAULT_FILE_CAPTURE_MEM;
+    int64_t capture_max_size = DEFAULT_FILE_CAPTURE_MAX_SIZE;
+    int64_t capture_min_size = DEFAULT_FILE_CAPTURE_MIN_SIZE;
+    int64_t capture_block_size = DEFAULT_FILE_CAPTURE_BLOCK_SIZE;
     int64_t file_depth =  0;
 
     static int64_t show_data_depth;

@@ -188,9 +188,11 @@ FileVerdict FilePolicy::signature_lookup(Flow* flow, FileContext* file )
         FileCapture *capture = file->get_file_capture();
         if (capture)
         {
-            capture->reserve_file(file);
-            capture->store_file(file);
-            capture->release_file();
+            if (capture->reserve_file(file) == FILE_CAPTURE_SUCCESS)
+            {
+                capture->store_file(file);
+                capture->release_file();
+            }
         }
     }
 

@@ -45,6 +45,7 @@ class FileCapture
 {
 public:
     FileCapture();
+    ~FileCapture();
 
     // this must be called during snort init
     static void init_mempool(int64_t max_file_mem, int64_t block_size);

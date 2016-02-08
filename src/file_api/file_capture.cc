@@ -56,6 +56,11 @@ FileCapture::FileCapture()
     capture_state = FILE_CAPTURE_SUCCESS;
 }
 
+FileCapture:: ~FileCapture()
+{
+    stop();
+}
+
 /*
  * Initialize the file memory pool
  *
@@ -174,7 +179,7 @@ inline FileCaptureState FileCapture::save_to_file_buffer(FileMemPool* file_mempo
     }
 
     /* Check whether current file block can hold file data*/
-    available_bytes = file_config.file_capture_block_size - lastBlock->length;
+    available_bytes = file_config.capture_block_size - lastBlock->length;
 
     if ( data_size > available_bytes)
     {
@@ -186,7 +191,7 @@ inline FileCaptureState FileCapture::save_to_file_buffer(FileMemPool* file_mempo
         memcpy((uint8_t*)lastBlock + lastBlock->length + sizeof (*lastBlock),
             file_current, available_bytes);
 
-        lastBlock->length = file_config.file_capture_block_size;
+        lastBlock->length = file_config.capture_block_size;
         file_current += available_bytes;
 
         /* We can support any file capture block size */
@@ -205,12 +210,12 @@ inline FileCaptureState FileCapture::save_to_file_buffer(FileMemPool* file_mempo
             last = new_block;
 
             /*Save data to the new block*/
-            if (file_current + file_config.file_capture_block_size < file_end)
+            if (file_current + file_config.capture_block_size < file_end)
             {
                 memcpy((uint8_t*)last + sizeof(*new_block),
-                    file_current,  file_config.file_capture_block_size);
-                new_block->length =  file_config.file_capture_block_size;
-                file_current += file_config.file_capture_block_size;
+                    file_current,  file_config.capture_block_size);
+                new_block->length =  file_config.capture_block_size;
+                file_current += file_config.capture_block_size;
             }
             else
             {
@@ -284,7 +289,7 @@ FileCaptureState FileCapture::process_buffer(const uint8_t* file_data,
         }
 
         return (save_to_file_buffer(file_mempool, file_data, data_size,
-                file_config.file_capture_max_size));
+                file_config.capture_max_size));
     }
 
     return FILE_CAPTURE_SUCCESS;
@@ -321,13 +326,13 @@ FileCaptureState FileCapture::reserve_file(FileContext* context)
      */
     fileSize = context->get_file_size();
 
-    if ( fileSize < (unsigned)file_config.file_capture_min_size)
+    if ( fileSize < (unsigned)file_config.capture_min_size)
     {
         file_capture_stats.file_size_min++;
         return ERROR_capture(FILE_CAPTURE_MIN);
     }
 
-    if ( fileSize > (unsigned)file_config.file_capture_max_size)
+    if ( fileSize > (unsigned)file_config.capture_max_size)
     {
         file_capture_stats.file_size_max++;
         return ERROR_capture(FILE_CAPTURE_MAX);
@@ -357,7 +362,7 @@ FileCaptureState FileCapture::reserve_file(FileContext* context)
 
     /*Copy the last piece of file to file buffer*/
     if (save_to_file_buffer(file_mempool, current_data,
-            current_data_len, file_config.file_capture_max_size) )
+            current_data_len, file_config.capture_max_size) )
     {
         return ERROR_capture(capture_state);
     }

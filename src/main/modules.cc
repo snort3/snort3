@@ -1408,6 +1408,18 @@ static const Parameter file_id_params[] =
     { "block_timeout_lookup", Parameter::PT_BOOL, nullptr, "false",
       "block if lookup times out" },
 
+    { "capture_memcap", Parameter::PT_INT, "0:", "100",
+      "memcap for file capture in megabytes" },
+
+    { "capture_max_size", Parameter::PT_INT, "0:", "1048576",
+      "stop file capture beyond this point" },
+
+    { "capture_min_size", Parameter::PT_INT, "0:", "0",
+      "stop file capture if file size less than this" },
+
+    { "capture_block_size", Parameter::PT_INT, "8:", "32768",
+      "file capture block size in bytes" },
+
     { "enable_type", Parameter::PT_BOOL, nullptr, "false",
       "enable type ID" },
 
@@ -1475,6 +1487,18 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("block_timeout_lookup") )
         fc.block_timeout_lookup = v.get_bool();
+        
+    else if ( v.is("capture_memcap") )
+        fc.capture_memcap = v.get_long();
+
+    else if ( v.is("capture_max_size") )
+        fc.capture_max_size = v.get_long();
+
+    else if ( v.is("capture_min_size") )
+        fc.capture_min_size = v.get_long();
+
+    else if ( v.is("capture_block_size") )
+        fc.capture_block_size = v.get_long();
 
     else if ( v.is("enable_type") )
     {

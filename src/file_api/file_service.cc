@@ -72,8 +72,8 @@ void FileService::post_init(void)
     fp.load();
 
     if ( file_capture_enabled)
-        FileCapture::init_mempool(file_config.file_capture_memcap,
-            file_config.file_capture_block_size);
+        FileCapture::init_mempool(file_config.capture_memcap,
+            file_config.capture_block_size);
 }
 
 void FileService::close(void)
