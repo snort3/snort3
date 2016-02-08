@@ -202,10 +202,10 @@ void TcpReassembler::queue_reassembly_segment(TcpSegmentNode* prev, TcpSegmentNo
 
 bool TcpReassembler::is_segment_fasttrack(TcpSegmentNode* tail, TcpSegmentDescriptor& tsd)
 {
-    DebugFormat(DEBUG_STREAM_STATE,  "Checking seq for fast track: %X > %X\n", tsd.get_seq(),
+    DebugFormat(DEBUG_STREAM_STATE,  "Checking seq for fast track: %X > %X\n", tsd.get_seg_seq(),
         tail->seq + tail->payload_size);
 
-    if ( SEQ_EQ(tsd.get_seq(), tail->seq + tail->payload_size) )
+    if ( SEQ_EQ(tsd.get_seg_seq(), tail->seq + tail->payload_size) )
         return true;
 
     return false;
@@ -249,7 +249,7 @@ int TcpReassembler::add_reassembly_segment(TcpSegmentDescriptor& tsd, int16_t le
     }
 
     // FIXIT-L don't allocate overlapped part
-    tsn = TcpSegmentNode::init(tsd.get_pkt()->pkth->ts, tsd.get_pkt()->data, tsd.get_pkt()->dsize);
+    tsn = TcpSegmentNode::init(tsd);
     if ( !tsn )
         return STREAM_INSERT_FAILED;
     else if ( TcpSegmentNode::needs_pruning() )
@@ -266,7 +266,7 @@ int TcpReassembler::add_reassembly_segment(TcpSegmentDescriptor& tsd, int16_t le
     // FIXIT - The urgent ptr handling is broken... urg_offset is set here but currently
     // not actually referenced anywhere else.  In 2.9.7 the FlushStream function did reference
     // this field but that code has been lost... urg ptr handling needs to be reviewed and fixed
-    tsn->urg_offset = tracker->normalizer->set_urg_offset(tsd.get_tcph(), tsd.get_pkt()->dsize);
+    tsn->urg_offset = tracker->normalizer->set_urg_offset(tsd.get_tcph(), tsd.get_seg_len() );
     queue_reassembly_segment(left, tsn);
     seg_bytes_logical += tsn->payload_size;
     total_bytes_queued += tsn->payload_size;
@@ -285,7 +285,7 @@ int TcpReassembler::add_reassembly_segment(TcpSegmentDescriptor& tsd, int16_t le
 int TcpReassembler::dup_reassembly_segment(Packet* p, TcpSegmentNode* left,
     TcpSegmentNode** retSeg)
 {
-    TcpSegmentNode* tsn = TcpSegmentNode::init(left->tv, left->payload, left->payload_size);
+    TcpSegmentNode* tsn = TcpSegmentNode::init(*left);
     if ( !tsn )
         return STREAM_INSERT_FAILED;
     if ( TcpSegmentNode::needs_pruning() )
@@ -414,15 +414,15 @@ int TcpReassembler::purge_to_seq(uint32_t flush_seq)
 
     if ( !server_side )
     {
-        int32_t delta = last_ts - session->server->ts_last;
+        int32_t delta = last_ts - session->server->get_ts_last();
         if ( delta > 0 )
-            session->server->ts_last = last_ts;
+            session->server->set_ts_last(last_ts);
     }
     else
     {
-        int32_t delta = last_ts - session->client->ts_last;
+        int32_t delta = last_ts - session->client->get_ts_last();
         if ( delta > 0 )
-            session->client->ts_last = last_ts;
+            session->client->set_ts_last(last_ts);
     }
 
     return purged_bytes;
@@ -467,8 +467,7 @@ int TcpReassembler::purge_flushed_ackd(void)
 
 void TcpReassembler::show_rebuilt_packet(Packet* pkt)
 {
-    if ( ( session->config->flags & STREAM_CONFIG_SHOW_PACKETS )
-        || ( session->config->flags & STREAM_CONFIG_SHOW_PACKETS ) )
+    if ( session->config->flags & STREAM_CONFIG_SHOW_PACKETS )
     {
         LogFlow(pkt);
         LogNetData(pkt->data, pkt->dsize, pkt);
@@ -564,12 +563,12 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq, uint8_t* flus
         // FIXIT-L FIN may be in toSeq causing bogus gap counts.
         if (((tsn->next && (tsn->seq + tsn->payload_size != tsn->next->seq))
             || (!tsn->next && (tsn->seq + tsn->payload_size < toSeq)))
-            && !(tracker->flags & TF_FIRST_PKT_MISSING))
+            && !(tracker->get_tf_flags() & TF_FIRST_PKT_MISSING))
         {
             if ( tsn->next )
                 seglist.next = tsn->next;
 
-            tracker->flags |= TF_MISSING_PKT;
+            tracker->set_tf_flags(TF_MISSING_PKT);
             break;
         }
         seglist.next = tsn->next;
@@ -698,23 +697,18 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         const uint8_t* s5_pkt_end = s5_pkt->data + s5_pkt->max_dsize;
         flushed_bytes = flush_data_segments(p, stop_seq, ( uint8_t* )s5_pkt->data, s5_pkt_end);
 
-        if ( !flushed_bytes )
+        if ( flushed_bytes == 0 )
             break; /* No more data... bail */
 
-        else if ( !s5_pkt->dsize )
-        {
-            tcpStats.rebuilt_buffers++;
-            bytes_processed += flushed_bytes;
-        }
-        else
-        {
-            s5_pkt->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST );
+        bytes_processed += flushed_bytes;
+        seglist_base_seq += flushed_bytes;
 
-            if ( ( p->packet_flags & PKT_PDU_TAIL ) )
-                s5_pkt->packet_flags |= PKT_PDU_TAIL;
-
-            tcpStats.rebuilt_packets++;
-            bytes_processed += flushed_bytes;
+        if ( s5_pkt->dsize )
+        {
+            if ( p->packet_flags & PKT_PDU_TAIL )
+                s5_pkt->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST | PKT_PDU_TAIL );
+            else
+                s5_pkt->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST );
 
             // FIXIT - this came with merge should it be here?
             //s5_pkt->application_protocol_ordinal =
@@ -724,32 +718,30 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             tcpStats.rebuilt_packets++;
             tcpStats.rebuilt_bytes += flushed_bytes;
 
-            {
-                ProfileExclude profile_exclude(s5TcpFlushPerfStats);
-                Snort::detect_rebuilt_packet(s5_pkt);
-            }
+            ProfileExclude profile_exclude(s5TcpFlushPerfStats);
+            Snort::detect_rebuilt_packet(s5_pkt);
         }
-
-        seglist_base_seq += flushed_bytes;
+        else
+        {
+            tcpStats.rebuilt_buffers++;
+            tcpStats.rebuilt_buffers++;
+        }
 
         DebugFormat(DEBUG_STREAM_STATE, "setting seglist_base_seq to 0x%X\n", seglist_base_seq);
 
         if ( tracker->splitter )
             tracker->splitter->update();
 
-        // TBD abort should be by PAF callback only since
-        // recovery may be possible in some cases
-        if ( tracker->flags & TF_MISSING_PKT )
+        // FIXIT - abort should be by PAF callback only since recovery may be
+        // possible in some cases
+        if ( tracker->get_tf_flags() & TF_MISSING_PKT )
         {
-            tracker->flags |= TF_MISSING_PREV_PKT;
-            tracker->flags |= TF_PKT_MISSED;
-            tracker->flags &= ~TF_MISSING_PKT;
+            tracker->set_tf_flags(TF_MISSING_PREV_PKT | TF_PKT_MISSED);
+            tracker->clear_tf_flags(TF_MISSING_PKT);
             tcpStats.gaps++;
         }
         else
-        {
-            tracker->flags &= ~TF_MISSING_PREV_PKT;
-        }
+            tracker->clear_tf_flags(TF_MISSING_PREV_PKT);
     }
     while ( seglist.next and flush_data_ready( ) );
 
@@ -776,27 +768,25 @@ int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         return 0;
     }
 
-    if ( !flush_data_ready( ) && !( tracker->flags & TF_FORCE_FLUSH ) )
+    if ( !flush_data_ready( ) && !( tracker->get_tf_flags() & TF_FORCE_FLUSH ) )
     {
         DebugMessage(DEBUG_STREAM_STATE, "only 1 packet in seglist no need to flush\n");
         return 0;
     }
 
-    tracker->flags &= ~TF_MISSING_PKT;
-    tracker->flags &= ~TF_MISSING_PREV_PKT;
+    tracker->clear_tf_flags(TF_MISSING_PKT | TF_MISSING_PREV_PKT);
 
     /* This will set this flag on the first reassembly
      * if reassembly for this direction was set midstream */
     if ( SEQ_LT(seglist_base_seq, seglist.next->seq)
-        && !( tracker->flags & TF_FIRST_PKT_MISSING ) )
+        && !( tracker->get_tf_flags() & TF_FIRST_PKT_MISSING ) )
     {
         uint32_t missed = seglist.next->seq - seglist_base_seq;
 
         if ( missed <= bytes )
             bytes -= missed;
 
-        tracker->flags |= TF_MISSING_PREV_PKT;
-        tracker->flags |= TF_PKT_MISSED;
+        tracker->set_tf_flags(TF_MISSING_PREV_PKT | TF_PKT_MISSED);
 
         tcpStats.gaps++;
         seglist_base_seq = seglist.next->seq;
@@ -805,7 +795,7 @@ int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             return 0;
     }
 
-    tracker->flags &= ~TF_FIRST_PKT_MISSING;
+    tracker->clear_tf_flags(TF_FIRST_PKT_MISSING);
 
     return _flush_to_seq(bytes, p, pkt_flags);
 }
@@ -896,12 +886,12 @@ void TcpReassembler::final_flush(Packet* p, PegCount& peg, uint32_t dir)
         tmp_pcap_hdr->ts.tv_usec = seglist.head->tv.tv_usec;
     }
 
-    tracker->flags |= TF_FORCE_FLUSH;
+    tracker->set_tf_flags(TF_FORCE_FLUSH);
 
     if ( flush_stream(p, dir) )
         purge_flushed_ackd( );
 
-    tracker->flags &= ~TF_FORCE_FLUSH;
+    tracker->clear_tf_flags(TF_FORCE_FLUSH);
 }
 
 void TcpReassembler::flush_queued_segments(Flow* flow, bool clear, Packet* p)
@@ -1219,7 +1209,7 @@ void TcpReassembler::insert_segment_in_empty_seglist(TcpSegmentDescriptor& tsd)
     const tcp::TCPHdr* tcph = tsd.get_tcph();
 
     uint32_t overlap = 0;
-    uint32_t seq = tsd.get_seq();
+    uint32_t seq = tsd.get_seg_seq();
 
     if ( tcph->is_syn() )
         seq++;
@@ -1227,8 +1217,8 @@ void TcpReassembler::insert_segment_in_empty_seglist(TcpSegmentDescriptor& tsd)
     if ( SEQ_GT(tracker->r_win_base, seq) )
     {
         DebugMessage(DEBUG_STREAM_STATE, "segment overlaps ack'd data...\n");
-        overlap = tracker->r_win_base - tsd.get_seq();
-        if ( overlap >= tsd.get_pkt()->dsize )
+        overlap = tracker->r_win_base - tsd.get_seg_seq();
+        if ( overlap >= tsd.get_seg_len() )
         {
             DebugMessage(DEBUG_STREAM_STATE, "full overlap on ack'd data, dropping segment\n");
             return;
@@ -1236,11 +1226,11 @@ void TcpReassembler::insert_segment_in_empty_seglist(TcpSegmentDescriptor& tsd)
     }
 
     // BLOCK add new block to seglist containing data
-    add_reassembly_segment(tsd, tsd.get_pkt()->dsize, overlap, 0, tsd.get_seq() + overlap, NULL);
+    add_reassembly_segment(tsd, tsd.get_seg_len(), overlap, 0, tsd.get_seg_seq() + overlap, NULL);
 
     DebugFormat(DEBUG_STREAM_STATE,
         "Attached new queue to seglist, %d bytes queued, base_seq 0x%X\n",
-        tsd.get_pkt()->dsize - overlap, seglist_base_seq);
+        tsd.get_seg_len() - overlap, seglist_base_seq);
 }
 
 void TcpReassembler::init_overlap_editor(TcpSegmentDescriptor& tsd)
@@ -1258,15 +1248,15 @@ void TcpReassembler::init_overlap_editor(TcpSegmentDescriptor& tsd)
 
     if ( seglist.head && seglist.tail )
     {
-        if ( SEQ_GT(tsd.get_seq(), seglist.head->seq) )
-            dist_head = tsd.get_seq() - seglist.head->seq;
+        if ( SEQ_GT(tsd.get_seg_seq(), seglist.head->seq) )
+            dist_head = tsd.get_seg_seq() - seglist.head->seq;
         else
-            dist_head = seglist.head->seq - tsd.get_seq();
+            dist_head = seglist.head->seq - tsd.get_seg_seq();
 
-        if ( SEQ_GT(tsd.get_seq(), seglist.tail->seq) )
-            dist_tail = tsd.get_seq() - seglist.tail->seq;
+        if ( SEQ_GT(tsd.get_seg_seq(), seglist.tail->seq) )
+            dist_tail = tsd.get_seg_seq() - seglist.tail->seq;
         else
-            dist_tail = seglist.tail->seq - tsd.get_seq();
+            dist_tail = seglist.tail->seq - tsd.get_seg_seq();
     }
     else
         dist_head = dist_tail = 0;
@@ -1286,7 +1276,7 @@ void TcpReassembler::init_overlap_editor(TcpSegmentDescriptor& tsd)
                 );
 
             right = tsn;
-            if ( SEQ_GEQ(right->seq, tsd.get_seq() ) )
+            if ( SEQ_GEQ(right->seq, tsd.get_seg_seq() ) )
                 break;
             left = right;
         }
@@ -1309,7 +1299,7 @@ void TcpReassembler::init_overlap_editor(TcpSegmentDescriptor& tsd)
                 );
 
             left = tsn;
-            if ( SEQ_LT(left->seq, tsd.get_seq() ) )
+            if ( SEQ_LT(left->seq, tsd.get_seg_seq() ) )
                 break;
             right = left;
         }
@@ -1332,7 +1322,8 @@ int TcpReassembler::insert_segment_in_seglist(TcpSegmentDescriptor& tsd)
 
     DebugFormat(DEBUG_STREAM_STATE,
         "Queuing %d bytes on stream!\nbase_seq: %X seq: %X  seq_end: %X\n",
-        tsd.get_end_seq() - tsd.get_seq(), seglist_base_seq, tsd.get_seq(), tsd.get_end_seq());
+        tsd.get_end_seq() - tsd.get_seg_seq(), seglist_base_seq, tsd.get_seg_seq(),
+        tsd.get_end_seq());
 
     DebugFormat(DEBUG_STREAM_STATE, "%d segments on seglist\n", get_pending_segment_count(0));
     DebugMessage(DEBUG_STREAM_STATE, "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n");
@@ -1348,7 +1339,7 @@ int TcpReassembler::insert_segment_in_seglist(TcpSegmentDescriptor& tsd)
             seglist.tail->seq, seglist.tail->payload_size);
 
         // BLOCK add to existing block and/or allocate new block
-        rc = add_reassembly_segment(tsd, tsd.get_pkt()->dsize, 0, 0, tsd.get_seq(), left);
+        rc = add_reassembly_segment(tsd, tsd.get_seg_len(), 0, 0, tsd.get_seg_seq(), left);
         return rc;
     }
 
@@ -1364,7 +1355,7 @@ int TcpReassembler::insert_segment_in_seglist(TcpSegmentDescriptor& tsd)
     if ( keep_segment )
     {
         /* Adjust slide so that is correct relative to orig seq */
-        slide = seq - tsd.get_seq();
+        slide = seq - tsd.get_seg_seq();
         rc = add_reassembly_segment(tsd, len, slide, trunc_len, seq, left);
     }
     else
@@ -1388,21 +1379,15 @@ int TcpReassembler::queue_packet_for_reassembly(TcpSegmentDescriptor& tsd)
         return STREAM_INSERT_OK;
     }
 
-    if ( SEQ_GT(tracker->r_win_base, tsd.get_seq() ) )
+    if ( SEQ_GT(tracker->r_win_base, tsd.get_seg_seq() ) )
     {
-        uint32_t offset = tracker->r_win_base - tsd.get_seq();
+        int32_t offset = tracker->r_win_base - tsd.get_seg_seq();
 
-        if ( offset < tsd.get_pkt()->dsize )
+        if ( offset < tsd.get_seg_len() )
         {
-            tsd.set_seq(tsd.get_seq() + offset);
-            tsd.get_pkt()->data += offset;
-            tsd.get_pkt()->dsize -= (uint16_t)offset;
-
+            tsd.slide_segment_in_rcv_window(offset);
             rc = insert_segment_in_seglist(tsd);
-
-            tsd.get_pkt()->dsize += (uint16_t)offset;
-            tsd.get_pkt()->data -= offset;
-            tsd.set_seq(tsd.get_seq() - offset);
+            tsd.slide_segment_in_rcv_window(-offset);
         }
     }
     else

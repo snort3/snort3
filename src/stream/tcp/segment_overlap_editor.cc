@@ -131,7 +131,7 @@ int SegmentOverlapEditor::generate_bad_segment_event(void)
 {
     DebugFormat(DEBUG_STREAM_STATE, "bad segment: overlap with invalid sequence number"
         "(seq: %X  seq_end: %X overlap: %lu\n", seq, seq_end, overlap);
-    session->tel->EventBadSegment();
+    session->tel.EventBadSegment();
     inc_tcp_discards();
     return STREAM_INSERT_ANOMALY;
 }
@@ -142,7 +142,7 @@ int SegmentOverlapEditor::left_overlap_keep_first(void)
 
     DebugFormat(DEBUG_STREAM_STATE, "left overlap %d\n", overlap);
 
-    len = tsd->get_pkt()->dsize;
+    len = tsd->get_seg_len();
     overlap = left->seq + left->payload_size - seq;
     if ( overlap > 0 )
     {
@@ -152,24 +152,24 @@ int SegmentOverlapEditor::left_overlap_keep_first(void)
         overlap_count++;
 
         DebugMessage(DEBUG_STREAM_STATE, "left overlap, honoring old data\n");
-        if ( SEQ_LT(left->seq, tsd->get_seq() ) && SEQ_GT(left->seq + left->payload_size,
-            tsd->get_seq() + tsd->get_pkt()->dsize) )
+        if ( SEQ_LT(left->seq, tsd->get_seg_seq() ) && SEQ_GT(left->seq + left->payload_size,
+            tsd->get_seg_seq() + tsd->get_seg_len() ) )
         {
             if (tcp_ips_data == NORM_MODE_ON)
             {
-                unsigned offset = tsd->get_seq() - left->seq;
+                unsigned offset = tsd->get_seg_seq() - left->seq;
                 memcpy( ( uint8_t* )tsd->get_pkt()->data, left->payload + offset,
-                    tsd->get_pkt()->dsize);
+                    tsd->get_seg_len() );
                 tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
             }
             tcp_norm_stats[PC_TCP_IPS_DATA][tcp_ips_data]++;
         }
-        else if ( SEQ_LT(left->seq, tsd->get_seq() ) )
+        else if ( SEQ_LT(left->seq, tsd->get_seg_seq() ) )
         {
             if ( tcp_ips_data == NORM_MODE_ON )
             {
-                unsigned offset = tsd->get_seq() - left->seq;
-                unsigned length = left->seq + left->payload_size - tsd->get_seq();
+                unsigned offset = tsd->get_seg_seq() - left->seq;
+                unsigned length = left->seq + left->payload_size - tsd->get_seg_seq();
                 memcpy( ( uint8_t* )tsd->get_pkt()->data, left->payload + offset, length);
                 tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
             }
@@ -191,7 +191,7 @@ int SegmentOverlapEditor::left_overlap_trim_first(void)
 
     DebugFormat(DEBUG_STREAM_STATE, "left overlap %d\n", overlap);
 
-    len = tsd->get_pkt()->dsize;
+    len = tsd->get_seg_len();
     overlap = left->seq + left->payload_size - seq;
     if ( overlap > 0 )
     {
@@ -222,7 +222,7 @@ int SegmentOverlapEditor::left_overlap_keep_last(void)
 
     DebugFormat(DEBUG_STREAM_STATE, "left overlap %d\n", overlap);
 
-    len = tsd->get_pkt()->dsize;
+    len = tsd->get_seg_len();
     overlap = left->seq + left->payload_size - seq;
     if ( overlap > 0 )
     {
@@ -283,8 +283,8 @@ void SegmentOverlapEditor::right_overlap_truncate_new(void)
 {
     if (tcp_ips_data == NORM_MODE_ON)
     {
-        unsigned offset = right->seq - tsd->get_seq();
-        unsigned length = tsd->get_seq() + tsd->get_pkt()->dsize - right->seq;
+        unsigned offset = right->seq - tsd->get_seg_seq();
+        unsigned length = tsd->get_seg_seq() + tsd->get_seg_len() - right->seq;
         memcpy( ( uint8_t* )tsd->get_pkt()->data + offset, right->payload, length);
         tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
     }
@@ -301,7 +301,7 @@ int SegmentOverlapEditor::full_right_overlap_truncate_new(void)
 
     if ( tcp_ips_data == NORM_MODE_ON )
     {
-        unsigned offset = right->seq - tsd->get_seq();
+        unsigned offset = right->seq - tsd->get_seg_seq();
         memcpy( ( uint8_t* )tsd->get_pkt()->data + offset, right->payload, right->payload_size);
         tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
     }
@@ -327,7 +327,7 @@ int SegmentOverlapEditor::full_right_overlap_truncate_new(void)
 
         /* insert this one, and see if we need to chunk it up
           Adjust slide so that is correct relative to orig seq */
-        slide = seq - tsd->get_seq();
+        slide = seq - tsd->get_seg_seq();
         int rc = add_reassembly_segment(*tsd, len, slide, trunc_len, seq, left);
         if ( rc != STREAM_INSERT_OK )
             return rc;

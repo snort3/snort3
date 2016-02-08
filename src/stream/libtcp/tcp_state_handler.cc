@@ -32,15 +32,14 @@ using namespace std;
 #include "stream_tcp_unit_test.h"
 #endif
 
-TcpStateHandler::TcpStateHandler(TcpStreamTracker::TcpStates state, TcpStateMachine& tsm) :
-    tsm(&tsm), tcp_state(state), tcp_event(TcpStreamTracker::TCP_MAX_EVENTS)
+TcpStateHandler::TcpStateHandler(TcpStreamTracker::TcpState state, TcpStateMachine& tsm) :
+    tsm(&tsm), tcp_state(state)
 {
     tsm.register_state_handler(state, *this);
 }
 
 TcpStateHandler::TcpStateHandler(void) :
-    tsm(nullptr), tcp_state(TcpStreamTracker::TCP_CLOSED),
-    tcp_event(TcpStreamTracker::TCP_MAX_EVENTS)
+    tsm(nullptr), tcp_state(TcpStreamTracker::TCP_CLOSED)
 {
 }
 
@@ -49,9 +48,21 @@ TcpStateHandler::~TcpStateHandler()
     // TODO Auto-generated destructor stub
 }
 
+void TcpStateHandler::do_pre_sm_packet_actions(TcpSegmentDescriptor& tsd)
+{
+    UNUSED(tsd);
+}
+
+void TcpStateHandler::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd)
+{
+    UNUSED(tsd);
+}
+
 bool TcpStateHandler::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
     bool handled = false;
+
+    do_pre_sm_packet_actions(tsd);
 
     switch ( tcp_event = tracker.get_tcp_event() )
     {
@@ -109,82 +120,81 @@ bool TcpStateHandler::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
         break;
     }
 
+    do_post_sm_packet_actions(tsd);
     return handled;
 }
 
-bool TcpStateHandler::default_state_action(
-    TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker, const char* func_name)
+bool TcpStateHandler::default_state_action(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
 #ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_STREAM_STATE, "Default Implementation of: %s tsd: %p tracker: %p\n",
-        func_name, &tsd, &tracker);
+    DebugFormat(DEBUG_STREAM_STATE, "tsd: %p tracker: %p state: %u event: %u\n",
+        &tsd, &tracker, tracker.get_tcp_state(), tracker.get_tcp_event() );
 #else
     UNUSED(tsd);
-    UNUSED(func_name);
+    UNUSED(tracker)
 #endif
 
-    tcp_event = tracker.get_tcp_event();
-    return false;
+    return true;
 }
 
 bool TcpStateHandler::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateHandler::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateHandler::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateHandler::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateHandler::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateHandler::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateHandler::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateHandler::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateHandler::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateHandler::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateHandler::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateHandler::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    return default_state_action(tsd, tracker);
 }
 
 #ifdef UNIT_TEST
@@ -196,7 +206,7 @@ SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")
     TcpStateHandler* tsh = new TcpStateHandler;
     TcpStreamTracker* client_tracker = new TcpStreamTracker(true);
     TcpStreamTracker* server_tracker = new TcpStreamTracker(false);
-    TcpEventLogger* tel = new TcpEventLogger;
+    TcpEventLogger tel;
 
     GIVEN("a SYN Packet")
     {

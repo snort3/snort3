@@ -110,15 +110,8 @@ public:
     void trace_segments(void);
 
 protected:
-    bool server_side;
-    TcpTracker* tracker;
-    uint8_t ignore_dir;
-    uint8_t packet_dir;
-    uint32_t flush_count; /* number of flushed queued segments */
-    uint32_t xtradata_mask; /* extra data available to log */
-
     TcpReassembler(TcpSession* session, TcpTracker* tracker, StreamPolicy os_policy, bool server) :
-        server_side(server), tracker(tracker), flush_count(0), xtradata_mask(0)
+       server_side(server), tracker(tracker)
     {
         this->session = session;
         set_tcp_reassembly_policy(os_policy);
@@ -172,6 +165,13 @@ protected:
     void fallback(void);
     uint32_t flush_pdu_ackd(uint32_t* flags);
     int purge_to_seq(uint32_t flush_seq);
+
+    bool server_side;
+    TcpTracker* tracker;
+    uint8_t ignore_dir;
+    uint8_t packet_dir;
+    uint32_t flush_count = 0; /* number of flushed queued segments */
+    uint32_t xtradata_mask = 0; /* extra data available to log */
 };
 
 #endif

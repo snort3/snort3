@@ -57,9 +57,6 @@ public:
 
     void set_splitter(bool, StreamSplitter*) override;
     StreamSplitter* get_splitter(bool) override;
-    void init_new_tcp_session(TcpSegmentDescriptor& tsd);
-    void update_session_state(const tcp::TCPHdr* tcph, TcpSegmentDescriptor& tsd);
-
     void update_direction(char dir, const sfip_t*, uint16_t port) override;
 
     bool add_alert(Packet*, uint32_t gid, uint32_t sid) override;
@@ -104,40 +101,62 @@ public:
     static void set_memcap(class Memcap&);
     static void sinit(void);
     static void sterm(void);
-    void update_session_on_server_packet(const tcp::TCPHdr* tcph, TcpSegmentDescriptor& tsd);
-    void update_session_on_client_packet(TcpSegmentDescriptor& tsd);
-    bool handle_syn_on_reset_session(const tcp::TCPHdr* tcph, TcpSegmentDescriptor& tsd);
-    void update_ignored_session(TcpSegmentDescriptor& tsd);
 
-    TcpEventLogger* tel;
-    TcpStreamConfig* config;
+    void init_new_tcp_session(TcpSegmentDescriptor&);
+    void update_timestamp_tracking(TcpSegmentDescriptor&);
+    void update_session_on_syn_ack(void);
+    void update_session_on_ack(void);
+    void update_session_on_server_packet(TcpSegmentDescriptor&);
+    void update_session_on_client_packet(TcpSegmentDescriptor&);
+    void update_session_on_rst(TcpSegmentDescriptor&, bool);
+    bool handle_syn_on_reset_session(TcpSegmentDescriptor&);
+    void handle_data_on_syn(TcpSegmentDescriptor&);
+    void handle_fin_recv_in_fw1(TcpSegmentDescriptor&);
+    bool handle_fin_recv(TcpSegmentDescriptor&);
+    void finalize_tcp_packet_processing(TcpSegmentDescriptor&);
+
+    void update_ignored_session(TcpSegmentDescriptor&);
+
+    void generate_no_3whs_event(void)
+    {
+        if ( !no_3whs )
+        {
+            tel.EventNo3whs();
+            no_3whs = true;
+        }
+    }
+
+    void set_pkt_action_flag(uint32_t flag)
+    {
+        pkt_action_mask |= flag;
+    }
+
+    void update_paws_timestamps(TcpSegmentDescriptor&);
+    void check_for_session_hijack(TcpSegmentDescriptor&);
+    void handle_data_segment(TcpSegmentDescriptor&);
+
     TcpTracker* client;
     TcpTracker* server;
-    uint8_t ecn;
-    bool lws_init;
-    bool tcp_init;
-
-    int32_t ingress_index; /* Index of the inbound interface. */
-    int32_t ingress_group; /* Index of the inbound group. */
-    int32_t egress_index; /* Index of the outbound interface. */
-    int32_t egress_group; /* Index of the outbound group. */
-    uint32_t daq_flags; /* Flags for the packet (DAQ_PKT_FLAG_*) */
-    uint16_t address_space_id;
-
-    uint32_t pkt_action_mask;
-    bool require_3whs;
-    bool no_3whs;
-
-    // FIXIT - deprecate this once tcp state machine is fully implemented
-    bool new_ssn;
+    TcpEventLogger tel;
+    TcpStreamConfig* config = nullptr;
+    bool lws_init = false;
+    bool tcp_init = false;
+    uint8_t ecn = 0;
+    int32_t ingress_index = 0;
+    int32_t ingress_group = 0;
+    int32_t egress_index = 0;
+    int32_t egress_group = 0;
+    uint32_t daq_flags = 0;
+    uint16_t address_space_id = 0;
+    uint32_t pkt_action_mask = ACTION_NOTHING;
 
 private:
     void EndOfFileHandle(Packet* p);
-    bool flow_exceeds_config_thresholds(TcpTracker* rcv, TcpSegmentDescriptor& tsd);
-    void process_tcp_stream(TcpTracker* rcv, TcpSegmentDescriptor& tsd);
-    int process_tcp_data(TcpTracker* listener, TcpSegmentDescriptor& tsd);
+    bool flow_exceeds_config_thresholds(TcpTracker*, TcpSegmentDescriptor&);
+    void process_tcp_stream(TcpTracker*, TcpSegmentDescriptor&);
+    int process_tcp_data(TcpTracker*, TcpSegmentDescriptor&);
     void process_tcp_packet(TcpSegmentDescriptor&);
-    void FinishServerInit(TcpSegmentDescriptor& tsd);
+    void FinishServerInit(TcpSegmentDescriptor&);
     void swap_trackers(void);
 
     void NewTcpSessionOnSyn(TcpSegmentDescriptor&);
@@ -148,10 +167,11 @@ private:
     void clear_session(int freeApplicationData);
 
     int process_dis(Packet*);
-    void handle_data_on_syn(const tcp::TCPHdr* tcph, TcpSegmentDescriptor& tsd);
+    void update_on_3whs_complete(TcpSegmentDescriptor&);
 
-    TcpTracker* talker;
-    TcpTracker* listener;
+    bool no_3whs = false;
+    TcpTracker* talker = nullptr;
+    TcpTracker* listener = nullptr;
     TcpStateMachine tsm;
 };
 

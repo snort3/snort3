@@ -29,7 +29,7 @@
 struct StateMgr
 {
     uint8_t sub_state;
-    enum TcpStreamTracker::TcpStates state_queue;
+    enum TcpStreamTracker::TcpState state_queue;
     uint8_t expected_flags;
     uint32_t transition_seq;
     uint32_t stq_get_seq;
@@ -79,6 +79,7 @@ class TcpTracker : public TcpStreamTracker
 public:
     TcpTracker(bool);
     virtual ~TcpTracker(void);
+
     void init_tracker(void);
     void print(void);
     void init_flush_policy(void);
@@ -93,26 +94,29 @@ public:
     void init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd);
     void init_on_data_seg_sent(TcpSegmentDescriptor& tsd);
     void init_on_data_seg_recv(TcpSegmentDescriptor& tsd);
+    void finish_server_init(TcpSegmentDescriptor& tsd);
+    void finish_client_init(TcpSegmentDescriptor& tsd);
 
+    void update_tracker_ack_recv(TcpSegmentDescriptor& tsd);
+    void update_tracker_ack_sent(TcpSegmentDescriptor& tsd);
+    bool update_on_3whs_ack(TcpSegmentDescriptor& tsd);
+    bool update_on_rst_recv(TcpSegmentDescriptor& tsd);
+    void update_on_rst_sent(void);
+
+    bool is_segment_seq_valid(TcpSegmentDescriptor& tsd);
+
+    StreamSplitter* splitter = nullptr;
+    TcpNormalizer* normalizer = nullptr;
+    TcpReassembler* reassembler = nullptr;
+    uint32_t small_seg_count = 0;
+    uint8_t alert_count = 0;
+    StreamAlertInfo alerts[MAX_SESSION_ALERTS];
     StateMgr s_mgr; /* state tracking goodies */
-
+    FlushPolicy flush_policy = STREAM_FLPOLICY_IGNORE;
     // this is intended to be private to paf but is included
     // directly to avoid the need for allocation; do not directly
     // manipulate within this module.
     PAF_State paf_state;    // for tracking protocol aware flushing
-    FlushPolicy flush_policy;
-    StreamSplitter* splitter;
-    TcpNormalizer* normalizer;
-    TcpReassembler* reassembler;
-
-    uint32_t r_nxt_ack; /* next expected ack from remote side */
-    uint32_t r_win_base; /* remote side window base sequence number
-     * (i.e. the last ack we got) */
-
-    uint32_t small_seg_count;
-
-    uint8_t alert_count; /* number alerts stored (up to MAX_SESSION_ALERTS) */
-    StreamAlertInfo alerts[MAX_SESSION_ALERTS]; /* history of alerts */
 };
 
 #endif

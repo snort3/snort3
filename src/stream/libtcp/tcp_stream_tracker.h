@@ -32,7 +32,7 @@ extern const char* tcp_event_names[];
 class TcpStreamTracker
 {
 public:
-    enum TcpStates
+    enum TcpState
     {
         TCP_LISTEN,
         TCP_SYN_SENT,
@@ -49,7 +49,7 @@ public:
         TCP_MAX_STATES
     };
 
-    enum TcpEvents
+    enum TcpEvent
     {
         TCP_SYN_SENT_EVENT,
         TCP_SYN_RECV_EVENT,
@@ -74,34 +74,29 @@ public:
         return client_tracker;
     }
 
-    bool is_3whs_required() const
+    bool is_server_tracker() const
     {
-        return require_3whs;
+        return !client_tracker;
     }
 
-    void set_require_3whs(bool require3_whs)
-    {
-        this->require_3whs = require3_whs;
-    }
-
-    TcpStates get_tcp_state() const
+    TcpState get_tcp_state() const
     {
         return tcp_state;
     }
 
-    void set_tcp_state(TcpStates tcp_state)
+    void set_tcp_state(TcpState tcp_state)
     {
         this->tcp_state = tcp_state;
     }
 
-    TcpEvents get_tcp_event() const
+    TcpEvent get_tcp_event() const
     {
         return tcp_event;
     }
 
-    void set_tcp_event(TcpSegmentDescriptor& tsd);
+    TcpEvent set_tcp_event(TcpSegmentDescriptor& tsd);
 
-    void set_tcp_event(TcpEvents tcp_event)
+    void set_tcp_event(TcpEvent tcp_event)
     {
         this->tcp_event = tcp_event;
     }
@@ -228,6 +223,8 @@ public:
 
     bool is_ack_valid(uint32_t cur)
     {
+        // FIXIT - do we need this check? we've alwasy seen something by the time
+        // we get here
         /* If we haven't seen anything, ie, low & high are 0, return true */
         if ( ( snd_una == 0 ) && ( snd_una == snd_nxt ) )
             return 1;
@@ -238,7 +235,52 @@ public:
     // ack number must ack syn
     bool is_rst_valid_in_syn_sent(TcpSegmentDescriptor& tsd)
     {
-        return tsd.get_ack() == snd_una;
+        return tsd.get_seg_ack() == snd_una;
+    }
+
+    uint32_t get_ts_last() const
+    {
+        return ts_last;
+    }
+
+    void set_ts_last(uint32_t ts_last)
+    {
+        this->ts_last = ts_last;
+    }
+
+    uint8_t get_tf_flags() const
+    {
+        return tf_flags;
+    }
+
+    void set_tf_flags(uint16_t flags)
+    {
+        this->tf_flags |= flags;
+    }
+
+    void clear_tf_flags(uint16_t flags)
+    {
+        this->tf_flags &= ~flags;
+    }
+
+    uint16_t get_wscale() const
+    {
+        return wscale;
+    }
+
+    void set_wscale(uint16_t wscale)
+    {
+        this->wscale = wscale;
+    }
+
+    uint16_t get_mss() const
+    {
+        return mss;
+    }
+
+    void set_mss(uint16_t mss)
+    {
+        this->mss = mss;
     }
 
     void cache_mac_address(TcpSegmentDescriptor& tsd, uint8_t direction);
@@ -246,45 +288,50 @@ public:
 
 protected:
     bool client_tracker;
-    bool require_3whs;
+    TcpState tcp_state;
+    TcpEvent tcp_event = TCP_MAX_EVENTS;
+    bool require_3whs = false;
 
-    uint32_t snd_una; // SND.UNA - send unacknowledged
-    uint32_t snd_nxt; // SND.NXT - send next
-    uint32_t snd_wnd; // SND.WND - send window
-    uint16_t snd_up;  // SND.UP  - send urgent pointer
-    uint32_t snd_wl1; // SND.WL1 - segment sequence number used for last window update
-    uint32_t snd_wl2; // SND.WL2 - segment acknowledgment number used for last window update
-    uint32_t iss;     // ISS     - initial send sequence number
+    uint32_t snd_una = 0; // SND.UNA - send unacknowledged
+    uint32_t snd_nxt = 0; // SND.NXT - send next
+    uint32_t snd_wnd = 0; // SND.WND - send window
+    uint16_t snd_up = 0;  // SND.UP  - send urgent pointer
+    uint32_t snd_wl1 = 0; // SND.WL1 - segment sequence number used for last window update
+    uint32_t snd_wl2 = 0; // SND.WL2 - segment acknowledgment number used for last window update
+    uint32_t iss = 0;     // ISS     - initial send sequence number
 
-    uint32_t rcv_nxt; // RCV.NXT - receive next
-    uint32_t rcv_wnd; // RCV.WND - receive window
-    uint16_t rcv_up;  // RCV.UP  - receive urgent pointer
-    uint32_t irs;     // IRS     - initial receive sequence number
+    uint32_t rcv_nxt = 0; // RCV.NXT - receive next
+    uint32_t rcv_wnd = 0; // RCV.WND - receive window
+    uint16_t rcv_up = 0;  // RCV.UP  - receive urgent pointer
+    uint32_t irs = 0;     // IRS     - initial receive sequence number
 
-    uint32_t ts_last_packet; // timestamp of last packet we got
-
-    // FIXIT - make this protected
+// FIXIT - make these non-public
 
 public:
-    uint32_t ts_last; /* last timestamp (for PAWS) */
-    uint16_t wscale; /* window scale setting */
-    uint16_t mss; /* max segment size */
-
-    uint8_t mac_addr[6];
-    uint8_t flags; /* bitmap flags (TF_xxx) */
+    uint32_t r_nxt_ack = 0; /* next expected ack from remote side */
+    uint32_t r_win_base = 0; /* remote side window base sequence number
+     * (i.e. the last ack we got) */
 
 protected:
-    TcpStates tcp_state;
-    TcpEvents tcp_event;
+    uint32_t ts_last_packet = 0;
+    uint32_t ts_last = 0; /* last timestamp (for PAWS) */
+    uint16_t tf_flags = 0;
+
+    uint8_t mac_addr[6] = {};
+    bool mac_addr_valid = false;
+
+    // FIXIT - make this protected...
+
+public:
+    uint16_t wscale; /* window scale setting */
+    uint16_t mss; /* max segment size */
 };
 
-inline TcpStreamTracker::TcpStates& operator++(TcpStreamTracker::TcpStates& state, int)  // <---
-                                                                                         // note --
-                                                                                         // must be
-                                                                                         // a reference
+// <--- note -- the 'state' parameter must be a reference
+inline TcpStreamTracker::TcpState& operator++(TcpStreamTracker::TcpState& state, int)
 {
     const int i = static_cast<int>(state);
-    state = static_cast<TcpStreamTracker::TcpStates>((i + 1) % ( TcpStreamTracker::TCP_MAX_EVENTS +
+    state = static_cast<TcpStreamTracker::TcpState>((i + 1) % ( TcpStreamTracker::TCP_MAX_EVENTS +
         1 ) );
     return state;
 }

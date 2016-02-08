@@ -164,6 +164,9 @@ struct SO_PUBLIC Packet
     static const uint32_t max_dsize = IP_MAXPACKET;
 
     /*  Boolean functions - general information about this packet */
+    inline bool is_eth() const
+    { return proto_bits & PROTO_BIT__ETH; }
+
     inline bool has_ip() const
     { return ptrs.ip_api.is_ip(); }
 
@@ -283,14 +286,14 @@ struct SO_PUBLIC Packet
 static inline void SetExtraData(Packet* p, const uint32_t xid)
 { p->xtradata_mask |= BIT(xid); }
 
-static inline uint16_t EXTRACT_16BITS(const uint8_t* const p)
+static inline uint16_t extract_16bits(const uint8_t* const p)
 { return ntohs(*(uint16_t*)(p)); }
 
 #ifdef WORDS_MUSTALIGN
 
 #ifdef __GNUC__
 /* force word-aligned ntohl parameter */
-static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
+static inline uint32_t extract_32bits(const uint8_t* p)
 {
     uint32_t tmp;
     memmove(&tmp, p, sizeof(uint32_t));
@@ -301,7 +304,7 @@ static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
 #else
 
 /* allows unaligned ntohl parameter - dies w/SIGBUS on SPARCs */
-static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
+static inline uint32_t extract_32bits(const uint8_t* p)
 { return ntohl(*(uint32_t*)p); }
 
 #endif

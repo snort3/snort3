@@ -45,8 +45,7 @@ static inline int SetupOK(const TcpTracker* st)
 }
 
 TcpNormalizer::TcpNormalizer(StreamPolicy os_policy, TcpSession* session, TcpTracker* tracker) :
-    os_policy(os_policy), session(session), tracker(tracker),
-    peer_tracker(nullptr)
+    os_policy(os_policy), session(session), tracker(tracker)
 {
     tcp_ips_enabled = Normalize_IsEnabled(NORM_TCP_IPS);
     trim_syn = Normalize_GetMode(NORM_TCP_TRIM_SYN);
@@ -56,9 +55,6 @@ TcpNormalizer::TcpNormalizer(StreamPolicy os_policy, TcpSession* session, TcpTra
     strip_ecn = Normalize_GetMode(NORM_TCP_ECN_STR);
     tcp_block = Normalize_GetMode(NORM_TCP_BLOCK);
     opt_block = Normalize_GetMode(NORM_TCP_OPT);
-
-    paws_ts_fudge = 0;
-    paws_drop_zero_ts = true;
 }
 
 const PegInfo* TcpNormalizer::get_normalization_pegs()
@@ -77,8 +73,8 @@ void TcpNormalizer::trim_payload(
 {
     if (mode == NORM_MODE_ON)
     {
-        uint16_t fat = tsd.get_pkt()->dsize - max;
-        tsd.get_pkt()->dsize = max;
+        uint16_t fat = tsd.get_seg_len() - max;
+        tsd.set_seg_len(max);
         tsd.get_pkt()->packet_flags |= (PKT_MODIFIED | PKT_RESIZED);
         tsd.set_end_seq(tsd.get_end_seq() - fat);
     }
@@ -196,9 +192,9 @@ uint32_t TcpNormalizer::get_tcp_timestamp(TcpSegmentDescriptor& tsd, bool strip)
     tcp::TcpOptIterator iter(tsd.get_tcph(), tsd.get_pkt() );
 
     // using const because non-const is not supported
-    for (const tcp::TcpOption& opt : iter)
+    for ( const tcp::TcpOption& opt : iter )
     {
-        if (opt.code == tcp::TcpOptCode::TIMESTAMP)
+        if ( opt.code == tcp::TcpOptCode::TIMESTAMP )
         {
             bool stripped = false;
 
@@ -207,7 +203,7 @@ uint32_t TcpNormalizer::get_tcp_timestamp(TcpSegmentDescriptor& tsd, bool strip)
 
             if (!stripped)
             {
-                tsd.set_ts(EXTRACT_32BITS(opt.data) );
+                tsd.set_ts(extract_32bits(opt.data) );
                 DebugFormat(DEBUG_STREAM_STATE, "Found timestamp %lu\n", tsd.get_ts());
                 return TF_TSTAMP;
             }
@@ -224,10 +220,10 @@ bool TcpNormalizer::validate_rst_seq_geq(TcpSegmentDescriptor& tsd)
 {
     DebugFormat(DEBUG_STREAM_STATE,
         "Checking end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
-        tsd.get_end_seq(), tracker->r_win_base, tsd.get_seq(), tracker->r_nxt_ack +
+        tsd.get_end_seq(), tracker->r_win_base, tsd.get_seg_seq(), tracker->r_nxt_ack +
         get_stream_window(tsd));
 
-    if (SEQ_GEQ(tsd.get_seq(), tracker->r_nxt_ack))
+    if ( ( tracker->r_nxt_ack == 0 ) || SEQ_GEQ(tsd.get_seg_seq(), tracker->r_nxt_ack) )
     {
         DebugMessage(DEBUG_STREAM_STATE, "rst is valid seq (>= next seq)!\n");
         return true;
@@ -241,13 +237,17 @@ bool TcpNormalizer::validate_rst_end_seq_geq(TcpSegmentDescriptor& tsd)
 {
     DebugFormat(DEBUG_STREAM_STATE,
         "Checking end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
-        tsd.get_end_seq(), tracker->r_win_base, tsd.get_seq(), tracker->r_nxt_ack +
+        tsd.get_end_seq(), tracker->r_win_base, tsd.get_seg_seq(), tracker->r_nxt_ack +
         get_stream_window(tsd));
 
-    if (SEQ_GEQ(tsd.get_end_seq(), tracker->r_win_base))
+    // FIXIT - check for r_win_base == 0 is hack for uninitialized r_win_base, fix this
+    if ( tracker->r_win_base == 0 )
+        return true;
+
+    if ( SEQ_GEQ(tsd.get_end_seq(), tracker->r_win_base))
     {
         // reset must be admitted when window closed
-        if (SEQ_LEQ(tsd.get_seq(), tracker->r_win_base + get_stream_window(tsd)))
+        if (SEQ_LEQ(tsd.get_seg_seq(), tracker->r_win_base + get_stream_window(tsd)))
         {
             DebugMessage(DEBUG_STREAM_STATE, "rst is valid seq (within window)!\n");
             return true;
@@ -262,10 +262,11 @@ bool TcpNormalizer::validate_rst_seq_eq(TcpSegmentDescriptor& tsd)
 {
     DebugFormat(DEBUG_STREAM_STATE,
         "Checking end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
-        tsd.get_end_seq(), tracker->r_win_base, tsd.get_seq(), tracker->r_nxt_ack +
+        tsd.get_end_seq(), tracker->r_win_base, tsd.get_seg_seq(), tracker->r_nxt_ack +
         get_stream_window(tsd));
 
-    if (SEQ_EQ(tsd.get_seq(), tracker->r_nxt_ack))
+    // FIXIT - check for r_nxt_ack == 0 is hack for uninitialized r_nxt_ack, fix this
+    if ( ( tracker->r_nxt_ack == 0 ) || SEQ_EQ(tsd.get_seg_seq(), tracker->r_nxt_ack) )
     {
         DebugMessage(DEBUG_STREAM_STATE, "rst is valid seq (next seq)!\n");
         return true;
@@ -286,16 +287,16 @@ bool TcpNormalizer::validate_rst(TcpSegmentDescriptor& tsd)
 
 int TcpNormalizer::validate_paws_timestamp(TcpSegmentDescriptor& tsd)
 {
-    if ( ( (int)( ( tsd.get_ts() - peer_tracker->ts_last ) + paws_ts_fudge ) ) < 0 )
+    if ( ( (int)( ( tsd.get_ts() - peer_tracker->get_ts_last() ) + paws_ts_fudge ) ) < 0 )
     {
         DebugMessage(DEBUG_STREAM_STATE, "Packet outside PAWS window, dropping\n");
         /* bail, we've got a packet outside the PAWS window! */
         //inc_tcp_discards();
-        ( ( TcpSession* )tsd.get_flow()->session )->tel->set_tcp_event(EVENT_BAD_TIMESTAMP);
+        ( ( TcpSession* )tsd.get_flow()->session )->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
         packet_dropper(tsd, NORM_TCP_OPT);
         return ACTION_BAD_PKT;
     }
-    else if ( ( peer_tracker->ts_last != 0 )
+    else if ( ( peer_tracker->get_ts_last() != 0 )
         && ( ( uint32_t )tsd.get_pkt()->pkth->ts.tv_sec > peer_tracker->get_ts_last_packet() +
         PAWS_24DAYS ) )
     {
@@ -304,7 +305,7 @@ int TcpNormalizer::validate_paws_timestamp(TcpSegmentDescriptor& tsd)
             "packet PAWS timestamp way too far ahead of last packet %d %d...\n",
             tsd.get_pkt()->pkth->ts.tv_sec, peer_tracker->get_ts_last_packet() );
         //inc_tcp_discards();
-        ( ( TcpSession* )tsd.get_flow()->session )->tel->set_tcp_event(EVENT_BAD_TIMESTAMP);
+        ( ( TcpSession* )tsd.get_flow()->session )->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
         packet_dropper(tsd, NORM_TCP_OPT);
         return ACTION_BAD_PKT;
     }
@@ -320,10 +321,10 @@ bool TcpNormalizer::is_paws_ts_checked_required(TcpSegmentDescriptor&)
     return true;
 }
 
-int TcpNormalizer::validate_paws(TcpSegmentDescriptor& tsd, int* got_ts)
+int TcpNormalizer::validate_paws(TcpSegmentDescriptor& tsd)
 {
-    *got_ts = get_tcp_timestamp(tsd, false);
-    if ( *got_ts )
+    tcp_ts_flags = get_tcp_timestamp(tsd, false);
+    if ( tcp_ts_flags )
     {
         bool check_ts = is_paws_ts_checked_required(tsd);
 
@@ -339,18 +340,18 @@ int TcpNormalizer::validate_paws(TcpSegmentDescriptor& tsd, int* got_ts)
         //   with the missing timestamp.  Log an alert, but continue to process the packet
         DebugMessage(DEBUG_STREAM_STATE,
             "packet no timestamp, had one earlier from this side...ok for now...\n");
-        ( ( TcpSession* )tsd.get_flow()->session )->tel->set_tcp_event(EVENT_NO_TIMESTAMP);
+        ( ( TcpSession* )tsd.get_flow()->session )->tel.set_tcp_event(EVENT_NO_TIMESTAMP);
 
         /* Ignore the timestamp for this first packet, next one will checked. */
         if ( session->config->policy == StreamPolicy::OS_SOLARIS )
-            tracker->flags &= ~TF_TSTAMP;
+            tracker->clear_tf_flags(TF_TSTAMP);
 
         packet_dropper(tsd, NORM_TCP_OPT);
         return ACTION_NOTHING;
     }
 }
 
-int TcpNormalizer::handle_paws_no_timestamps(TcpSegmentDescriptor& tsd, int* got_ts)
+int TcpNormalizer::handle_paws_no_timestamps(TcpSegmentDescriptor& tsd)
 {
     // if we are not handling timestamps, and this isn't a syn (only), and we have seen a
     // valid 3way setup, then we strip (nop) the timestamp option.  this includes the cases
@@ -358,23 +359,25 @@ int TcpNormalizer::handle_paws_no_timestamps(TcpSegmentDescriptor& tsd, int* got
     int strip = ( SetupOK(peer_tracker) && SetupOK(tracker) );
     DebugMessage(DEBUG_STREAM_STATE, "listener not doing timestamps...\n");
 
-    *got_ts = get_tcp_timestamp(tsd, strip);
-    if (*got_ts)
+    tcp_ts_flags = get_tcp_timestamp(tsd, strip);
+    if (tcp_ts_flags)
     {
-        if (!(peer_tracker->flags & TF_TSTAMP))
+        if (!(peer_tracker->get_tf_flags() & TF_TSTAMP))
         {
             // SYN skipped, may have missed talker's timestamp , so set it now.
-            peer_tracker->flags |= TF_TSTAMP;
             if (tsd.get_ts() == 0)
-                peer_tracker->flags |= TF_TSTAMP_ZERO;
+                peer_tracker->set_tf_flags(TF_TSTAMP | TF_TSTAMP_ZERO);
+            else
+                peer_tracker->set_tf_flags(TF_TSTAMP);
         }
 
         // Only valid to test this if listener is using timestamps. Otherwise, timestamp
         // in this packet is not used, regardless of its value.
-        if ( ( paws_drop_zero_ts && ( tsd.get_ts() == 0 ) ) && ( tracker->flags & TF_TSTAMP ) )
+        if ( ( paws_drop_zero_ts && ( tsd.get_ts() == 0 ) ) && ( tracker->get_tf_flags() &
+            TF_TSTAMP ) )
         {
             DebugMessage(DEBUG_STREAM_STATE, "Packet with 0 timestamp, dropping\n");
-            ( ( TcpSession* )tsd.get_flow()->session )->tel->set_tcp_event(EVENT_BAD_TIMESTAMP);
+            ( ( TcpSession* )tsd.get_flow()->session )->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
             return ACTION_BAD_PKT;
         }
     }
@@ -382,7 +385,7 @@ int TcpNormalizer::handle_paws_no_timestamps(TcpSegmentDescriptor& tsd, int* got
     return ACTION_NOTHING;
 }
 
-int TcpNormalizer::handle_paws(TcpSegmentDescriptor& tsd, int* got_ts)
+int TcpNormalizer::handle_paws(TcpSegmentDescriptor& tsd)
 {
     if ( tsd.get_tcph()->is_rst() )
         return ACTION_NOTHING;
@@ -396,22 +399,22 @@ int TcpNormalizer::handle_paws(TcpSegmentDescriptor& tsd, int* got_ts)
     }
 #endif
 
-    if ((peer_tracker->flags & TF_TSTAMP) && (tracker->flags & TF_TSTAMP))
+    if ((peer_tracker->get_tf_flags() & TF_TSTAMP) && (tracker->get_tf_flags() & TF_TSTAMP))
     {
         DebugMessage(DEBUG_STREAM_STATE, "Checking timestamps for PAWS\n");
-        return validate_paws(tsd, got_ts);
+        return validate_paws(tsd);
     }
     else if (tsd.get_tcph()->is_syn_only())
     {
-        *got_ts = get_tcp_timestamp(tsd, 0);
-        if (*got_ts)
-            peer_tracker->flags |= TF_TSTAMP;
+        tcp_ts_flags = get_tcp_timestamp(tsd, 0);
+        if (tcp_ts_flags)
+            peer_tracker->set_tf_flags(TF_TSTAMP);
 
         return ACTION_NOTHING;
     }
     else
     {
-        return handle_paws_no_timestamps(tsd, got_ts);
+        return handle_paws_no_timestamps(tsd);
     }
 }
 

@@ -32,7 +32,7 @@ public:
     TcpStateMachine(void);
     virtual ~TcpStateMachine(void);
 
-    virtual void register_state_handler(TcpStreamTracker::TcpStates, TcpStateHandler&);
+    virtual void register_state_handler(TcpStreamTracker::TcpState, TcpStateHandler&);
     virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&);
 
 private:

@@ -46,6 +46,8 @@ public:
     bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
 
 private:
+    bool check_for_window_slam(TcpSegmentDescriptor& tsd, TcpTracker& trk);
+
     TcpSession& session;
 };
 

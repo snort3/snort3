@@ -22,6 +22,9 @@
 #ifndef TCP_STREAM_CONFIG_H
 #define TCP_STREAM_CONFIG_H
 
+#include "time/packet_time.h"
+#include "stream/stream.h"
+
 #include "tcp_defs.h"
 
 class TcpStreamConfig
@@ -29,31 +32,42 @@ class TcpStreamConfig
 public:
     TcpStreamConfig(void);
 
-    bool require_3whs(void);
-    bool midstream_allowed(Packet*);
+    bool require_3whs(void)
+    {
+        return hs_timeout >= 0;
+    }
+
+    bool midstream_allowed(Packet* p)
+    {
+        if ( ( hs_timeout < 0 ) || ( p->pkth->ts.tv_sec - packet_first_time() < hs_timeout ) )
+            return true;
+
+        return false;
+    }
+
     int verify_config(SnortConfig*);
     void show_config(void);
     static void show_config(TcpStreamConfig*);
 
-    StreamPolicy policy;
-    ReassemblyPolicy reassembly_policy;
+    StreamPolicy policy = StreamPolicy::OS_DEFAULT;
+    ReassemblyPolicy reassembly_policy = ReassemblyPolicy::OS_DEFAULT;
 
-    uint16_t flags;
-    uint16_t flush_factor;
+    uint16_t flags = 0;
+    uint16_t flush_factor = 0;
 
-    uint32_t session_timeout;
-    uint32_t max_window;
-    uint32_t overlap_limit;
+    uint32_t session_timeout = STREAM_DEFAULT_SSN_TIMEOUT;
+    uint32_t max_window = 0;
+    uint32_t overlap_limit = 0;
 
-    uint32_t max_queued_bytes;
-    uint32_t max_queued_segs;
+    uint32_t max_queued_bytes = STREAM_DEFAULT_MAX_QUEUED_BYTES;
+    uint32_t max_queued_segs = STREAM_DEFAULT_MAX_QUEUED_SEGS;
 
-    uint32_t max_consec_small_segs;
-    uint32_t max_consec_small_seg_size;
+    uint32_t max_consec_small_segs = STREAM_DEFAULT_CONSEC_SMALL_SEGS;
+    uint32_t max_consec_small_seg_size = STREAM_DEFAULT_MAX_SMALL_SEG_SIZE;
 
-    int hs_timeout;
-    int footprint;
-    unsigned paf_max;
+    int hs_timeout = -1;
+    int footprint = 0;
+    uint32_t paf_max = 16384;
 };
 
 #endif

@@ -25,22 +25,6 @@
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
 
-#if 0
-/* TCP states */
-#define TCP_STATE_NONE         0
-#define TCP_STATE_LISTEN       1
-#define TCP_STATE_SYN_RCVD     2
-#define TCP_STATE_SYN_SENT     3
-#define TCP_STATE_ESTABLISHED  4
-#define TCP_STATE_CLOSE_WAIT   5
-#define TCP_STATE_LAST_ACK     6
-#define TCP_STATE_FIN_WAIT_1   7
-#define TCP_STATE_CLOSING      8
-#define TCP_STATE_FIN_WAIT_2   9
-#define TCP_STATE_TIME_WAIT   10
-#define TCP_STATE_CLOSED      11
-#endif
-
 /* actions */
 #define ACTION_NOTHING                  0x00000000
 #define ACTION_FLUSH_SENDER_STREAM      0x00000001
@@ -70,6 +54,7 @@
 #define PAWS_WINDOW         60
 #define PAWS_24DAYS         2073600         /* 24 days in seconds */
 
+#define SUB_STATE_NONE 0x00
 #define SUB_SYN_SENT  0x01
 #define SUB_ACK_SENT  0x02
 #define SUB_SETUP_OK  0x03
@@ -160,17 +145,6 @@ enum FlushPolicy
     STREAM_FLPOLICY_ON_DATA, /* protocol aware ips */
 };
 
-#if 0
-struct TcpDataBlock
-{
-    Packet* pkt;
-    uint32_t seq;
-    uint32_t ack;
-    uint32_t win;
-    uint32_t end_seq;
-    uint32_t ts;
-};
-#endif
 
 //#define DEBUG_STREAM_EX
 #ifdef DEBUG_STREAM_EX

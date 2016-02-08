@@ -24,6 +24,7 @@
 #include "tcp_module.h"
 #include "tcp_tracker.h"
 #include "tcp_session.h"
+#include "tcp_normalizer.h"
 #include "tcp_state_closed.h"
 
 #ifdef UNIT_TEST
@@ -42,62 +43,118 @@ TcpStateClosed::~TcpStateClosed()
 
 bool TcpStateClosed::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    auto& trk = static_cast< TcpTracker& >( tracker );
+    Flow* flow = tsd.get_flow();
+
+    trk.s_mgr.sub_state |= SUB_SYN_SENT;
+
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateClosed::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    auto& trk = static_cast< TcpTracker& >( tracker );
+
+    trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
+    if ( tsd.get_seg_len() )
+        session.handle_data_on_syn(tsd);
+
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateClosed::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    auto& trk = static_cast< TcpTracker& >( tracker );
+
+    trk.s_mgr.sub_state |= ( SUB_SYN_SENT | SUB_ACK_SENT );
+
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateClosed::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    auto& trk = static_cast< TcpTracker& >( tracker );
+
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateClosed::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    auto& trk = static_cast< TcpTracker& >( tracker );
+
+    trk.update_tracker_ack_sent(tsd);
+
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateClosed::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    auto& trk = static_cast< TcpTracker& >( tracker );
+
+    trk.update_tracker_ack_recv(tsd);
+
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateClosed::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    auto& trk = static_cast< TcpTracker& >( tracker );
+
+    trk.update_tracker_ack_sent(tsd);
+
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateClosed::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    auto& trk = static_cast< TcpTracker& >( tracker );
+
+    trk.update_tracker_ack_recv(tsd);
+
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateClosed::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    auto& trk = static_cast< TcpTracker& >( tracker );
+
+    trk.update_tracker_ack_sent(tsd);
+
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateClosed::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    auto& trk = static_cast< TcpTracker& >( tracker );
+
+    trk.update_tracker_ack_recv(tsd);
+
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateClosed::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    auto& trk = static_cast< TcpTracker& >( tracker );
+
+    return default_state_action(tsd, tracker);
 }
 
 bool TcpStateClosed::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    return default_state_action(tsd, tracker, __func__);
+    auto& trk = static_cast< TcpTracker& >( tracker );
+
+    if ( trk.update_on_rst_recv(tsd) )
+    {
+        session.update_session_on_rst(tsd, false);
+        session.update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
+        session.set_pkt_action_flag(ACTION_RST);
+    }
+    else
+    {
+        session.tel.set_tcp_event(EVENT_BAD_RST);
+    }
+
+    return default_state_action(tsd, tracker);
 }
 
 #ifdef FOO  // FIXIT - UNIT_TEST need work!!

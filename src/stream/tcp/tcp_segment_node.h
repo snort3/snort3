@@ -26,6 +26,8 @@
 #include "protocols/packet.h"
 #include "flow/memcap.h"
 
+#include "stream/libtcp/tcp_segment_descriptor.h"
+
 extern THREAD_LOCAL Memcap* tcp_memcap;
 
 //-----------------------------------------------------------------
@@ -40,6 +42,8 @@ public:
     TcpSegmentNode();
     virtual ~TcpSegmentNode();
 
+    static TcpSegmentNode* init(TcpSegmentDescriptor& tsd);
+    static TcpSegmentNode* init(TcpSegmentNode& tsn);
     static TcpSegmentNode* init(const struct timeval&, const uint8_t*, unsigned);
     static bool needs_pruning(void)
     {

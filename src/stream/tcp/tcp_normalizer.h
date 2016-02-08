@@ -60,7 +60,7 @@ public:
     virtual void ecn_stripper(Packet*);
     virtual uint32_t get_stream_window(TcpSegmentDescriptor&);
     virtual uint32_t get_tcp_timestamp(TcpSegmentDescriptor&, bool strip);
-    virtual int handle_paws(TcpSegmentDescriptor&, int*);
+    virtual int handle_paws(TcpSegmentDescriptor&);
     virtual bool validate_rst(TcpSegmentDescriptor&);
     virtual int handle_repeated_syn(TcpSegmentDescriptor&) = 0;
     virtual uint16_t set_urg_offset(const tcp::TCPHdr* tcph, uint16_t dsize);
@@ -128,6 +128,16 @@ public:
         return tcp_ips_enabled;
     }
 
+    bool handling_timestamps(void) const
+    {
+        return tcp_ts_flags != TF_NONE;
+    }
+
+    uint32_t get_timestamp_flags(void)
+    {
+        return tcp_ts_flags;
+    }
+
 protected:
     TcpNormalizer(StreamPolicy, TcpSession*, TcpTracker*);
     virtual void trim_payload(TcpSegmentDescriptor&, uint32_t, NormMode, TcpPegCounts);
@@ -138,13 +148,13 @@ protected:
 
     virtual int validate_paws_timestamp(TcpSegmentDescriptor&);
     virtual bool is_paws_ts_checked_required(TcpSegmentDescriptor&);
-    virtual int validate_paws(TcpSegmentDescriptor&, int*);
-    virtual int handle_paws_no_timestamps(TcpSegmentDescriptor&, int*);
+    virtual int validate_paws(TcpSegmentDescriptor&);
+    virtual int handle_paws_no_timestamps(TcpSegmentDescriptor&);
 
     StreamPolicy os_policy;
-    TcpSession* session;
-    TcpTracker* tracker;
-    TcpTracker* peer_tracker;
+    TcpSession* session = nullptr;
+    TcpTracker* tracker = nullptr;
+    TcpTracker* peer_tracker = nullptr;
     bool tcp_ips_enabled;
     NormMode trim_syn;
     NormMode trim_rst;
@@ -153,8 +163,9 @@ protected:
     NormMode strip_ecn;
     NormMode tcp_block;
     NormMode opt_block;
-    int32_t paws_ts_fudge;
-    bool paws_drop_zero_ts;
+    int32_t paws_ts_fudge = 0;
+    bool paws_drop_zero_ts = true;
+    int tcp_ts_flags = 0;
 };
 
 #endif

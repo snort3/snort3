@@ -20,50 +20,14 @@
 // Created on: Oct 22, 2015
 
 #include "main/snort_config.h"
-#include "time/packet_time.h"
-#include "stream/stream.h"
 #include "tcp_stream_config.h"
 
-static const char* const reassembly_policy_names[] = { "no policy", "first",
-                                                       "last", "linux", "old_linux", "bsd",
-                                                       "macos", "solaris", "irix",
-                                                       "hpux11", "hpux10", "windows", "win_2003",
-                                                       "vista", "proxy" };
+static const char* const reassembly_policy_names[] =
+{ "no policy", "first", "last", "linux", "old_linux", "bsd", "macos", "solaris", "irix",
+  "hpux11", "hpux10", "windows", "win_2003", "vista", "proxy" };
 
 TcpStreamConfig::TcpStreamConfig(void)
 {
-    policy = StreamPolicy::OS_DEFAULT;
-    reassembly_policy = ReassemblyPolicy::OS_DEFAULT;
-
-    flags = 0;
-    flush_factor = 0;
-
-    session_timeout = STREAM_DEFAULT_SSN_TIMEOUT;
-    max_window = 0;
-    overlap_limit = 0;
-
-    max_queued_bytes = STREAM_DEFAULT_MAX_QUEUED_BYTES;
-    max_queued_segs = STREAM_DEFAULT_MAX_QUEUED_SEGS;
-
-    max_consec_small_segs = STREAM_DEFAULT_CONSEC_SMALL_SEGS;
-    max_consec_small_seg_size = STREAM_DEFAULT_MAX_SMALL_SEG_SIZE;
-
-    hs_timeout = -1;
-    footprint = 0;
-    paf_max = 16384;
-}
-
-bool TcpStreamConfig::require_3whs(void)
-{
-    return hs_timeout >= 0;
-}
-
-bool TcpStreamConfig::midstream_allowed(Packet* p)
-{
-    if ( ( hs_timeout < 0 ) || ( p->pkth->ts.tv_sec - packet_first_time() < hs_timeout ) )
-        return true;
-
-    return false;
 }
 
 void TcpStreamConfig::show_config(void)

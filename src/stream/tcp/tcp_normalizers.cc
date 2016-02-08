@@ -187,7 +187,7 @@ public:
     { }
 
     bool validate_rst(TcpSegmentDescriptor&) override;
-    int handle_paws(TcpSegmentDescriptor&, int*) override;
+    int handle_paws(TcpSegmentDescriptor&) override;
     int handle_repeated_syn(TcpSegmentDescriptor&) override;
 };
 
@@ -269,7 +269,7 @@ static inline int handle_repeated_syn_mswin(TcpTracker* talker, TcpTracker* list
     /* Windows has some strange behaviour here.  If the sequence of the reset is the
      *  next expected sequence, it Resets.  Otherwise it ignores the 2nd SYN.
      */
-    if (SEQ_EQ(tsd.get_seq(), listener->r_nxt_ack))
+    if (SEQ_EQ(tsd.get_seg_seq(), listener->r_nxt_ack))
     {
         DebugMessage(DEBUG_STREAM_STATE,
             "Got syn on established windows ssn, which causes Reset, bailing\n");
@@ -290,7 +290,7 @@ static inline int handle_repeated_syn_bsd(TcpTracker* talker, TcpSegmentDescript
     TcpSession* session)
 {
     /* If its not a retransmission of the actual SYN... RESET */
-    if (!SEQ_EQ(tsd.get_seq(), talker->get_iss()))
+    if (!SEQ_EQ(tsd.get_seg_seq(), talker->get_iss()))
     {
         DebugMessage(DEBUG_STREAM_STATE,
             "Got syn on established ssn, which causes Reset, bailing\n");
@@ -312,10 +312,10 @@ static inline bool paws_3whs_zero_ts_not_supported(TcpTracker* talker, TcpTracke
 {
     bool check_ts = true;
 
-    if (talker->flags & TF_TSTAMP_ZERO)
+    if (talker->get_tf_flags() & TF_TSTAMP_ZERO)
     {
-        talker->flags &= ~TF_TSTAMP;
-        listener->flags &= ~TF_TSTAMP;
+        talker->clear_tf_flags(TF_TSTAMP);
+        listener->clear_tf_flags(TF_TSTAMP);
         check_ts = false;
     }
 
@@ -328,13 +328,13 @@ static inline bool paws_3whs_zero_ts_supported(TcpTracker* talker, TcpTracker* l
 {
     bool check_ts = true;
 
-    if ( talker->flags & TF_TSTAMP_ZERO )
+    if ( talker->get_tf_flags() & TF_TSTAMP_ZERO )
     {
-        talker->flags &= ~TF_TSTAMP_ZERO;
-        if ( SEQ_EQ(listener->r_nxt_ack, tsd.get_seq() ) )
+        talker->clear_tf_flags(TF_TSTAMP_ZERO);
+        if ( SEQ_EQ(listener->r_nxt_ack, tsd.get_seg_seq() ) )
         {
             // Ignore timestamp for this first packet, save to check on next
-            talker->ts_last = tsd.get_ts();
+            talker->set_ts_last(tsd.get_ts() );
             check_ts = false;
         }
     }
@@ -452,7 +452,8 @@ bool TcpNormalizerHpux11::validate_rst(TcpSegmentDescriptor& tsd)
 bool TcpNormalizerHpux11::is_paws_ts_checked_required(TcpSegmentDescriptor& tsd)
 {
     /* HPUX 11 ignores timestamps for out of order segments */
-    if ((tracker->flags & TF_MISSING_PKT) || !SEQ_EQ(tracker->r_nxt_ack, tsd.get_seq()))
+    if ((tracker->get_tf_flags() & TF_MISSING_PKT) || !SEQ_EQ(tracker->r_nxt_ack,
+        tsd.get_seg_seq()))
         return false;
     else
         return true;
@@ -509,14 +510,14 @@ bool TcpNormalizerProxy::validate_rst(TcpSegmentDescriptor& tsd)
     {
         DebugFormat(DEBUG_STREAM_STATE,
             "Proxy Normalizer - Not Valid\n end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
-            tsd.get_end_seq(), tracker->r_win_base, tsd.get_seq(), tracker->r_nxt_ack +
+            tsd.get_end_seq(), tracker->r_win_base, tsd.get_seg_seq(), tracker->r_nxt_ack +
             get_stream_window(tsd));
     }
 
     return false;
 }
 
-int TcpNormalizerProxy::handle_paws(TcpSegmentDescriptor&, int*)
+int TcpNormalizerProxy::handle_paws(TcpSegmentDescriptor&)
 {
     return ACTION_NOTHING;
 }

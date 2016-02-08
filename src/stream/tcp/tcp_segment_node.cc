@@ -40,6 +40,15 @@ TcpSegmentNode::~TcpSegmentNode()
 //-------------------------------------------------------------------------
 // TcpSegment stuff
 //-------------------------------------------------------------------------
+TcpSegmentNode* TcpSegmentNode::init(TcpSegmentDescriptor& tsd)
+{
+    return init(tsd.get_pkt()->pkth->ts, tsd.get_pkt()->data, tsd.get_seg_len() );
+}
+
+TcpSegmentNode* TcpSegmentNode::init(TcpSegmentNode& tsn)
+{
+    return init(tsn.tv, tsn.payload, tsn.payload_size);
+}
 
 TcpSegmentNode* TcpSegmentNode::init(const struct timeval& tv, const uint8_t* data, unsigned dsize)
 {

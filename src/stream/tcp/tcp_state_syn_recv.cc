@@ -28,8 +28,8 @@ using namespace std;
 #include "tcp_normalizer.h"
 #include "tcp_state_syn_recv.h"
 
-TcpStateSynRecv::TcpStateSynRecv(TcpStateMachine& tsm, TcpSession& session) :
-    TcpStateHandler(TcpStreamTracker::TCP_SYN_RECV, tsm), session(session)
+TcpStateSynRecv::TcpStateSynRecv(TcpStateMachine& tsm, TcpSession& ssn) :
+    TcpStateHandler(TcpStreamTracker::TCP_SYN_RECV, tsm), session(ssn)
 {
 }
 
@@ -39,85 +39,168 @@ TcpStateSynRecv::~TcpStateSynRecv()
 
 bool TcpStateSynRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
+    Flow* flow = tsd.get_flow();
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    return default_state_action(tsd, trk, __func__);
+    trk.finish_server_init(tsd);
+    trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
+    session.update_timestamp_tracking(tsd);
+    if ( tsd.get_tcph()->are_flags_set(TH_ECE) &&
+        ( flow->get_session_flags() & SSNFLAG_ECN_CLIENT_QUERY ) )
+        flow->set_session_flags(SSNFLAG_ECN_SERVER_REPLY);
+
+    if ( tsd.get_pkt()->packet_flags & PKT_FROM_SERVER )
+    {
+        flow->set_session_flags(SSNFLAG_SEEN_SERVER);
+        session.tel.set_tcp_event(EVENT_4WHS);
+    }
+
+    trk.s_mgr.sub_state |= SUB_SYN_SENT;
+
+    return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynRecv::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    return default_state_action(tsd, trk, __func__);
+    if ( tsd.get_seg_len() )
+        session.handle_data_on_syn(tsd);
+
+    return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynRecv::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
+    Flow* flow = tsd.get_flow();
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    return default_state_action(tsd, trk, __func__);
+    // FIXIT - verify ack being sent is valid...
+    trk.finish_server_init(tsd);
+    trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
+    flow->session_state |= STREAM_STATE_SYN_ACK;
+
+    trk.s_mgr.sub_state |= ( SUB_SYN_SENT | SUB_ACK_SENT );
+
+    return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynRecv::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    return default_state_action(tsd, trk, __func__);
+    if ( trk.is_ack_valid(tsd.get_seg_ack() ) )
+    {
+        Flow* flow = tsd.get_flow();
+
+        trk.update_tracker_ack_recv(tsd);
+        trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
+        flow->set_session_flags(SSNFLAG_ESTABLISHED);
+        flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
+        session.update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
+        trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
+    }
+
+    return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynRecv::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    return default_state_action(tsd, trk, __func__);
+    if ( session.config->midstream_allowed(tsd.get_pkt()) )
+    {
+        session.update_session_on_ack( );
+    }
+    trk.s_mgr.sub_state |= SUB_ACK_SENT;
+
+    return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynRecv::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    return default_state_action(tsd, trk, __func__);
+    if ( trk.is_ack_valid(tsd.get_seg_ack() ) )
+    {
+        trk.update_tracker_ack_recv(tsd);
+        tsd.get_pkt()->packet_flags |= PKT_STREAM_TWH;
+        session.update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
+        trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
+    }
+
+    return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynRecv::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    return default_state_action(tsd, trk, __func__);
+    trk.s_mgr.sub_state |= SUB_ACK_SENT;
+
+    return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynRecv::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    return default_state_action(tsd, trk, __func__);
+    if ( trk.is_ack_valid(tsd.get_seg_ack() ) )
+    {
+        trk.update_tracker_ack_recv(tsd);
+        tsd.get_pkt()->packet_flags |= PKT_STREAM_TWH;
+        session.update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
+        trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
+    }
+
+    return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynRecv::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    return default_state_action(tsd, trk, __func__);
+    trk.s_mgr.sub_state |= SUB_ACK_SENT;
+
+    return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynRecv::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
+    if ( tsd.get_tcph()->is_ack() )
+    {
+        Flow* flow = tsd.get_flow();
+        flow->session_state |= STREAM_STATE_ACK;
+        trk.update_tracker_ack_recv(tsd);
+        trk.set_tcp_state(TcpStreamTracker::TCP_CLOSE_WAIT);
+    }
 
-    return default_state_action(tsd, trk, __func__);
+    return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynRecv::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    return default_state_action(tsd, trk, __func__);
+    return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynRecv::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    TcpTracker& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    return default_state_action(tsd, trk, __func__);
+    if ( trk.update_on_rst_recv(tsd) )
+    {
+        session.update_session_on_rst(tsd, false);
+        session.update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
+        session.set_pkt_action_flag(ACTION_RST);
+    }
+    else
+    {
+        session.tel.set_tcp_event(EVENT_BAD_RST);
+    }
+
+    return default_state_action(tsd, trk);
 }
 

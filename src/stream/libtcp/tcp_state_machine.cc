@@ -24,12 +24,12 @@
 
 TcpStateMachine::TcpStateMachine(void)
 {
+    TcpStreamTracker::TcpState s;
     // register a default handler for each state...
-    for ( TcpStreamTracker::TcpStates state = TcpStreamTracker::TCP_LISTEN; state <
-        TcpStreamTracker::TCP_MAX_STATES; state++ )
+    for ( s = TcpStreamTracker::TCP_LISTEN; s < TcpStreamTracker::TCP_MAX_STATES; s++ )
     {
-        tcp_state_handlers[ state ] = nullptr;
-        new TcpStateHandler(state, *this);
+        tcp_state_handlers[ s ] = nullptr;
+        new TcpStateHandler(s, *this);
     }
 }
 
@@ -38,7 +38,7 @@ TcpStateMachine::~TcpStateMachine(void)
     // TODO Auto-generated destructor stub
 }
 
-void TcpStateMachine::register_state_handler(TcpStreamTracker::TcpStates state,
+void TcpStateMachine::register_state_handler(TcpStreamTracker::TcpState state,
     TcpStateHandler& handler)
 {
     if ( tcp_state_handlers[ state ] != nullptr )

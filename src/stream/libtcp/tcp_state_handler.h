@@ -31,28 +31,23 @@ class TcpStateMachine;
 class TcpStateHandler
 {
 public:
-    TcpStateHandler(TcpStreamTracker::TcpStates, TcpStateMachine&);
+    TcpStateHandler(TcpStreamTracker::TcpState, TcpStateMachine&);
     TcpStateHandler(void);
     virtual ~TcpStateHandler();
 
     virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&);
 
-    TcpStreamTracker::TcpEvents get_tcp_event() const
+    TcpStreamTracker::TcpEvent get_tcp_event() const
     {
         return tcp_event;
     }
 
-    TcpStreamTracker::TcpStates get_tcp_state() const
+    TcpStreamTracker::TcpState get_tcp_state() const
     {
         return tcp_state;
     }
 
-    void set_tcp_state(TcpStreamTracker::TcpStates tcp_state)
-    {
-        this->tcp_state = tcp_state;
-    }
-
-    void set_tcp_event(TcpStreamTracker::TcpEvents tcp_event)
+    void set_tcp_event(TcpStreamTracker::TcpEvent tcp_event)
     {
         this->tcp_event = tcp_event;
     }
@@ -68,6 +63,9 @@ public:
     }
 
 protected:
+    virtual void do_pre_sm_packet_actions(TcpSegmentDescriptor&);
+    virtual void do_post_sm_packet_actions(TcpSegmentDescriptor&);
+
     virtual bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
     virtual bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
     virtual bool syn_ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
@@ -81,11 +79,11 @@ protected:
     virtual bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
     virtual bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
 
-    bool default_state_action(TcpSegmentDescriptor&, TcpStreamTracker&, const char*);
+    bool default_state_action(TcpSegmentDescriptor&, TcpStreamTracker&);
 
     const TcpStateMachine* tsm;
-    TcpStreamTracker::TcpStates tcp_state;
-    TcpStreamTracker::TcpEvents tcp_event;
+    TcpStreamTracker::TcpState tcp_state;
+    TcpStreamTracker::TcpEvent tcp_event = TcpStreamTracker::TCP_MAX_EVENTS;
 };
 
 #endif

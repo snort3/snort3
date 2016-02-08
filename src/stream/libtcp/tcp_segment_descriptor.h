@@ -31,12 +31,12 @@
 class TcpSegmentDescriptor
 {
 public:
-    TcpSegmentDescriptor(Flow*, Packet*, TcpEventLogger*);
+    TcpSegmentDescriptor(Flow*, Packet*, TcpEventLogger&);
     virtual ~TcpSegmentDescriptor();
 
     uint32_t init_mss(uint16_t* value);
     uint32_t init_wscale(uint16_t* value);
-    uint32_t has_wscale(void);
+    bool has_wscale(void);
 
     Flow* get_flow() const
     {
@@ -53,19 +53,24 @@ public:
         return tcph;
     }
 
-    void set_seq(uint32_t seq)
+    void set_seg_seq(uint32_t seq)
     {
-        this->seq = seq;
+        this->seg_seq = seq;
     }
 
-    uint32_t get_seq() const
+    void update_seg_seq(int32_t offset)
     {
-        return seq;
+        seg_seq += offset;
     }
 
-    uint32_t get_ack() const
+    uint32_t get_seg_seq() const
     {
-        return ack;
+        return seg_seq;
+    }
+
+    uint32_t get_seg_ack() const
+    {
+        return seg_ack;
     }
 
     void set_end_seq(uint32_t end_seq)
@@ -88,14 +93,14 @@ public:
         return ts;
     }
 
-    void set_win(uint32_t win)
+    void scale_seg_wnd(uint16_t wscale)
     {
-        this->win = win;
+        this->seg_wnd <<= wscale;
     }
 
-    uint32_t get_win() const
+    uint32_t get_seg_wnd() const
     {
-        return win;
+        return seg_wnd;
     }
 
     uint16_t get_dst_port() const
@@ -113,9 +118,31 @@ public:
         return flow->ssn_state.direction;
     }
 
-    uint32_t get_data_len() const
+    uint16_t get_seg_len() const
     {
         return pkt->dsize;
+    }
+
+    void set_seg_len(uint16_t seg_len)
+    {
+        pkt->dsize = seg_len;
+    }
+
+    void update_seg_len(int32_t offset)
+    {
+        pkt->dsize += offset;
+    }
+
+    bool is_packet_from_server(void)
+    {
+        return pkt->packet_flags & PKT_FROM_SERVER;
+    }
+
+    void slide_segment_in_rcv_window(int32_t offset)
+    {
+        seg_seq += offset;
+        pkt->data += offset;
+        pkt->dsize -= offset;
     }
 
     void print_tsd(void);
@@ -127,9 +154,9 @@ private:
     const tcp::TCPHdr* tcph;
     uint16_t src_port;
     uint16_t dst_port;
-    uint32_t seq;
-    uint32_t ack;
-    uint32_t win;
+    uint32_t seg_seq;
+    uint32_t seg_ack;
+    uint32_t seg_wnd;
     uint32_t end_seq;
     uint32_t ts;
 };

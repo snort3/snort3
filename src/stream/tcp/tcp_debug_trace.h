@@ -58,17 +58,18 @@ static inline void TraceEvent(const Packet* p, TcpSegmentDescriptor*, uint32_t t
 
     // force relative ack to zero if not conveyed
     if (flags[1] != 'A')
-        rxd = ntohl(h->th_ack);
+        rxd = h->ack();   // FIXIT - SYN's seen with ack > 0 and ACK flag not set...
 
     if (p->packet_flags & PKT_STREAM_ORDER_OK)
         order = " (ins)";
     else if (p->packet_flags & PKT_STREAM_ORDER_BAD)
         order = " (oos)";
 
+    uint32_t rseq = ( txd ) ? h->seq() - txd : h->seq();
+    uint32_t rack = ( rxd ) ? h->ack() - rxd : h->ack();
     fprintf(stdout, "\n" FMTu64("-3") " %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4u Len=%-4u%s\n",
         //"\n" FMTu64("-3") " %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4u Len=%-4u End=%-4u%s\n",
-        pc.total_from_daq, flags, h->th_flags, ntohl(h->th_seq) - txd, ntohl(h->th_ack) - rxd,
-        ntohs(h->th_win), p->dsize, order);
+        pc.total_from_daq, flags, h->th_flags, rseq, rack, h->win(), p->dsize, order);
 }
 
 static inline void TraceSession(const Flow* lws)
@@ -79,11 +80,13 @@ static inline void TraceSession(const Flow* lws)
 
 static inline void TraceState(const TcpTracker* a, const TcpTracker* b, const char* s)
 {
-    uint32_t why = a->get_snd_nxt() ? LCL(a, get_snd_nxt) : 0;
+    uint32_t ua = a->get_snd_una() ? LCL(a, get_snd_una) : 0;
+    uint32_t ns = a->get_snd_nxt() ? LCL(a, get_snd_nxt) : 0;
 
-    fprintf(stdout, "    %s ST=%s:%02x   UA=%-4u NS=%-4u LW=%-5u RN=%-4u RW=%-4u ", s,
-        statext[a->get_tcp_state()], a->s_mgr.sub_state, LCL(a, get_snd_una), why,
-        a->get_snd_wnd( ), RMT(a, r_nxt_ack, b), RMT(a, r_win_base, b));
+    fprintf(stdout,
+        "    %s ST=%s:%02x   UA=%-4u NS=%-4u LW=%-5u RN=%-4u RW=%-4u ISS=%-4u IRS=%-4u ",
+        s, statext[a->get_tcp_state()], a->s_mgr.sub_state, ua, ns, a->get_snd_wnd( ),
+        RMT(a, r_nxt_ack, b), RMT(a, r_win_base, b), a->get_iss(), a->get_irs());
 
     if ( a->s_mgr.state_queue != TcpStreamTracker::TCP_STATE_NONE )
         fprintf(stdout, "QS=%s QC=0x%02x QA=%-4u", statext[a->s_mgr.state_queue],
@@ -118,27 +121,18 @@ static inline void TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescript
         sdir = "SRV>";
         cdir = "CLI<";
 
-        if (ssn->tcp_init)
-        {
-            txd = srv->get_iss();
-            rxd = cli->get_iss();
-        }
+        txd = srv->get_iss();
+        rxd = srv->get_irs();
     }
     else if (p->packet_flags & PKT_FROM_CLIENT)
     {
         sdir = "SRV<";
         cdir = "CLI>";
 
-        if (ssn->tcp_init)
-        {
-            txd = cli->get_iss();
-            rxd = srv->get_iss();
-        }
+        txd = cli->get_iss();
+        rxd = cli->get_irs();
     }
     TraceEvent(p, tsd, txd, rxd);
-
-    if (!ssn->tcp_init)
-        return;
 
     if (lws && ssn->lws_init)
         TraceSession(lws);

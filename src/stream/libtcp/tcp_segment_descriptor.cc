@@ -28,16 +28,16 @@
 
 using namespace tcp;
 
-TcpSegmentDescriptor::TcpSegmentDescriptor(Flow* flow, Packet* pkt, TcpEventLogger* tel) :
+TcpSegmentDescriptor::TcpSegmentDescriptor(Flow* flow, Packet* pkt, TcpEventLogger& tel) :
     flow(flow), pkt(pkt)
 {
     tcph = pkt->ptrs.tcph;
-    src_port = ntohs(tcph->th_sport);
-    dst_port = ntohs(tcph->th_dport);
-    seq = ntohl(pkt->ptrs.tcph->th_seq);
-    ack = ntohl(pkt->ptrs.tcph->th_ack);
-    win = ntohs(pkt->ptrs.tcph->th_win);
-    end_seq = seq + (uint32_t)pkt->dsize;
+    src_port = tcph->src_port();
+    dst_port = tcph->dst_port();
+    seg_seq = tcph->seq();
+    seg_ack = tcph->ack();
+    seg_wnd = tcph->win();
+    end_seq = seg_seq + (uint32_t)pkt->dsize;
     ts = 0;
 
     // don't bump end_seq for fin here we will bump if/when fin is processed
@@ -45,7 +45,7 @@ TcpSegmentDescriptor::TcpSegmentDescriptor(Flow* flow, Packet* pkt, TcpEventLogg
     {
         end_seq++;
         if ( !tcph->is_ack() )
-            tel->set_tcp_internal_syn_event( );
+            tel.set_tcp_internal_syn_event( );
     }
 
     #ifdef DEBUG_STREAM_EX
@@ -67,7 +67,7 @@ uint32_t TcpSegmentDescriptor::init_mss(uint16_t* value)
     {
         if ( opt.code == TcpOptCode::MAXSEG )
         {
-            *value = EXTRACT_16BITS(opt.data);
+            *value = extract_16bits(opt.data);
             DebugFormat(DEBUG_STREAM_STATE, "Found MSS %u\n", *value);
             return TF_MSS;
         }
@@ -86,7 +86,6 @@ uint32_t TcpSegmentDescriptor::init_wscale(uint16_t* value)
 
     TcpOptIterator iter(tcph, pkt);
 
-    // using const because non-const is not supported
     for (const TcpOption& opt : iter)
     {
         if (opt.code == TcpOptCode::WSCALE)
@@ -94,12 +93,9 @@ uint32_t TcpSegmentDescriptor::init_wscale(uint16_t* value)
             *value = (uint16_t)opt.data[0];
             DebugFormat(DEBUG_STREAM_STATE, "Found wscale %d\n", *value);
 
-            /* If scale specified in option is larger than 14,
-             * use 14 because of limitation in the math of
-             * shifting a 32bit value (max scaled window is 2^30th).
-             *
-             * See RFC 1323 for details.
-             */
+            // If scale specified in option is larger than 14, use 14 because of limitation
+            // in the math of shifting a 32bit value (max scaled window is 2^30th).
+            // See RFC 1323 for details.
             if (*value > 14)
                 *value = 14;
 
@@ -113,21 +109,21 @@ uint32_t TcpSegmentDescriptor::init_wscale(uint16_t* value)
     return TF_NONE;
 }
 
-uint32_t TcpSegmentDescriptor::has_wscale(void)
+bool TcpSegmentDescriptor::has_wscale(void)
 {
     uint16_t wscale;
 
     DebugMessage(DEBUG_STREAM_STATE, "Checking for wscale...\n");
 
-    return init_wscale(&wscale);
+    return ( init_wscale(&wscale) & TF_WSCALE ) != TF_NONE;
 }
 
 void TcpSegmentDescriptor::print_tsd(void)
 {
     LogMessage("Tcp Segment Descriptor:\n");
-    LogMessage("    seq:    0x%08X\n", seq);
-    LogMessage("    ack:    0x%08X\n", ack);
-    LogMessage("    win:    %d\n", win);
+    LogMessage("    seq:    0x%08X\n", seg_seq);
+    LogMessage("    ack:    0x%08X\n", seg_ack);
+    LogMessage("    win:    %d\n", seg_wnd);
     LogMessage("    end:    0x%08X\n", end_seq);
 }
 
