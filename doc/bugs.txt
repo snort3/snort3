@@ -7,7 +7,7 @@
   from pcaps.
 
 * Enabling debug messages may erroneously affect the number of packets
-  processed from pcaps
+  processed from pcaps.
 
 * g++ 4.9.2 with -O3 reports:
 
