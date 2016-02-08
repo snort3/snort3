@@ -347,7 +347,7 @@ FileCaptureState FileCapture::reserve_file(FileContext* context)
         }
 
         file_capture_stats.files_buffered_total++;
-        head = fileInfo;
+        head = last = fileInfo;
     }
 
     if (!fileInfo)
