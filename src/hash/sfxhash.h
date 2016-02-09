@@ -110,31 +110,31 @@ SO_PUBLIC SFXHASH_NODE* sfxhash_get_node(SFXHASH* t, const void* key);
 SO_PUBLIC int sfxhash_remove(SFXHASH* h, void* key);
 
 //  Get the # of Nodes in HASH the table
-static inline unsigned sfxhash_count(SFXHASH* t)
+inline unsigned sfxhash_count(SFXHASH* t)
 { return t->count; }
 
 //  Get the # auto recovery
-static inline unsigned sfxhash_anr_count(SFXHASH* t)
+inline unsigned sfxhash_anr_count(SFXHASH* t)
 { return t->anr_count; }
 
 //  Get the # finds
-static inline unsigned sfxhash_find_total(SFXHASH* t)
+inline unsigned sfxhash_find_total(SFXHASH* t)
 { return t->find_success + t->find_fail; }
 
 //  Get the # unsucessful finds
-static inline unsigned sfxhash_find_fail(SFXHASH* t)
+inline unsigned sfxhash_find_fail(SFXHASH* t)
 { return t->find_fail; }
 
 //  Get the # sucessful finds
-static inline unsigned sfxhash_find_success(SFXHASH* t)
+inline unsigned sfxhash_find_success(SFXHASH* t)
 { return t->find_success; }
 
 //  Get the # of overhead bytes
-static inline unsigned sfxhash_overhead_bytes(SFXHASH* t)
+inline unsigned sfxhash_overhead_bytes(SFXHASH* t)
 { return t->overhead_bytes; }
 
 // Get the # of overhead blocks
-static inline unsigned sfxhash_overhead_blocks(SFXHASH* t)
+inline unsigned sfxhash_overhead_blocks(SFXHASH* t)
 { return t->overhead_blocks; }
 
 SO_PUBLIC void* sfxhash_mru(SFXHASH* t);

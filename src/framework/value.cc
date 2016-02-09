@@ -282,7 +282,7 @@ TEST_CASE("get addr test", "[Value]")
     SECTION("invalid value")
     {
         Value test_val("12345678901234567890");
-        test_str = (uint8_t*)test_val.get_buffer(num_chars);
+        test_val.get_buffer(num_chars);
         REQUIRE(num_chars == 20);
 
         test_val.get_addr(addr);
@@ -312,7 +312,7 @@ TEST_CASE("get addr IPv4 test", "[Value]")
     SECTION("invalid value")
     {
         Value test_val("123456");
-        test_str = (uint8_t *)test_val.get_buffer(num_chars);
+        test_val.get_buffer(num_chars);
         REQUIRE(num_chars == 6);
 
         test_val.get_addr_ip4(addr);
@@ -341,7 +341,7 @@ TEST_CASE("get addr IPv6 test", "[Value]")
     SECTION("invalid value")
     {
         Value test_val("123456");
-        test_str = (uint8_t *)test_val.get_buffer(num_chars);
+        test_val.get_buffer(num_chars);
         REQUIRE(num_chars == 6);
 
         test_val.get_addr_ip6(addr);

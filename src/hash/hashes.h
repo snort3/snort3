@@ -42,13 +42,13 @@ extern "C"
 
 typedef MD5Context MD5_CTX;
 
-static inline int MD5_Init(MD5_CTX* c)
+inline int MD5_Init(MD5_CTX* c)
 { MD5Init(c); return 0; }
 
-static inline int MD5_Update(MD5_CTX* c, const unsigned char* data, unsigned long len)
+inline int MD5_Update(MD5_CTX* c, const unsigned char* data, unsigned long len)
 { MD5Update(c, data, len); return 0; }
 
-static inline int MD5_Final(unsigned char* md, MD5_CTX* c)
+inline int MD5_Final(unsigned char* md, MD5_CTX* c)
 { MD5Final(md, c); return 0; }
 #endif
 

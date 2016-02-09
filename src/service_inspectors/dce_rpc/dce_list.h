@@ -90,7 +90,7 @@ DCE2_List* DCE2_ListNew(DCE2_ListType, DCE2_ListKeyCompare, DCE2_ListDataFree,
 DCE2_Ret DCE2_ListInsert(DCE2_List*, void*, void*);
 void* DCE2_ListFirst(DCE2_List*);
 void* DCE2_ListNext(DCE2_List*);
-static inline bool DCE2_ListIsEmpty(DCE2_List*);
+inline bool DCE2_ListIsEmpty(DCE2_List*);
 void DCE2_ListEmpty(DCE2_List*);
 void DCE2_ListDestroy(DCE2_List*);
 
@@ -111,7 +111,7 @@ void DCE2_ListDestroy(DCE2_List*);
  *      false if the list has one or more nodes in it.
  *
  ********************************************************************/
-static inline bool DCE2_ListIsEmpty(DCE2_List* list)
+inline bool DCE2_ListIsEmpty(DCE2_List* list)
 {
     if (list == nullptr)
         return true;

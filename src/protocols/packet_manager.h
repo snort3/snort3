@@ -117,7 +117,7 @@ public:
     static uint16_t encode_get_max_payload(const Packet*);
 
     // reset the current 'clone' packet
-    static inline void encode_reset(void)
+    static void encode_reset(void)
     { encode_set_pkt(NULL); }
 
     // print codec information.  MUST be called after thread_term.

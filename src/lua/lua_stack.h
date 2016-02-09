@@ -27,7 +27,7 @@
 namespace Lua
 {
 template<typename T>
-static inline constexpr bool IsInteger()
+inline constexpr bool IsInteger()
 { return std::is_integral<T>::value && !std::is_same<T, bool>::value; }
 
 template<typename T, typename Integral = void, typename Unsigned = void>
@@ -38,16 +38,16 @@ template<typename T>
 struct Stack<T, typename std::enable_if<IsInteger<T>()>::type,
     typename std::enable_if<std::is_unsigned<T>::value>::type>
 {
-    static inline void push(lua_State* L, const T& v)
+    static void push(lua_State* L, const T& v)
     { lua_pushinteger(L, v); }
 
-    static inline T get(lua_State* L, int n)
+    static T get(lua_State* L, int n)
     { return lua_tointeger(L, n); }
 
-    static inline constexpr int type()
+    static constexpr int type()
     { return LUA_TNUMBER; }
 
-    static inline bool validate(lua_State* L, int n, T& v)
+    static bool validate(lua_State* L, int n, T& v)
     {
         if ( lua_type(L, n) != type() )
             return false;
@@ -60,7 +60,7 @@ struct Stack<T, typename std::enable_if<IsInteger<T>()>::type,
         return true;
     }
 
-    static inline bool validate(lua_State* L, int n)
+    static bool validate(lua_State* L, int n)
     {
         T v;
         return validate(L, n, v);
@@ -72,16 +72,16 @@ template<typename T>
 struct Stack<T, typename std::enable_if<IsInteger<T>()>::type,
     typename std::enable_if<!std::is_unsigned<T>::value>::type>
 {
-    static inline void push(lua_State* L, const T& v)
+    static void push(lua_State* L, const T& v)
     { lua_pushinteger(L, v); }
 
-    static inline T get(lua_State* L, int n)
+    static T get(lua_State* L, int n)
     { return lua_tointeger(L, n); }
 
-    static inline constexpr int type()
+    static constexpr int type()
     { return LUA_TNUMBER; }
 
-    static inline bool validate(lua_State* L, int n, T& v)
+    static bool validate(lua_State* L, int n, T& v)
     {
         if ( lua_type(L, n) != type() )
             return false;
@@ -90,7 +90,7 @@ struct Stack<T, typename std::enable_if<IsInteger<T>()>::type,
         return true;
     }
 
-    static inline bool validate(lua_State* L, int n)
+    static bool validate(lua_State* L, int n)
     {
         T v;
         return validate(L, n, v);
@@ -101,15 +101,15 @@ struct Stack<T, typename std::enable_if<IsInteger<T>()>::type,
 template<typename T>
 struct Stack<T, typename std::enable_if<!IsInteger<T>()>::type>
 {
-    static inline void push(lua_State*, T);
-    static inline void push(lua_State*, T, size_t);
+    static void push(lua_State*, T);
+    static void push(lua_State*, T, size_t);
 
-    static inline T get(lua_State*, int);
-    static inline T get(lua_State*, int, size_t&);
+    static T get(lua_State*, int);
+    static T get(lua_State*, int, size_t&);
 
-    static inline constexpr int type();
+    static constexpr int type();
 
-    static inline bool validate(lua_State* L, int n, T& v)
+    static bool validate(lua_State* L, int n, T& v)
     {
         if ( lua_type(L, n) != type() )
             return false;
@@ -118,13 +118,13 @@ struct Stack<T, typename std::enable_if<!IsInteger<T>()>::type>
         return true;
     }
 
-    static inline bool validate(lua_State* L, int n)
+    static bool validate(lua_State* L, int n)
     {
         T v;
         return validate(L, n, v);
     }
 
-    static inline bool validate(lua_State*, int, T&, size_t&);
+    static bool validate(lua_State*, int, T&, size_t&);
 };
 
 // const char*

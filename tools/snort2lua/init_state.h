@@ -33,7 +33,7 @@ public:
     virtual bool convert(std::istringstream& data);
 };
 
-static inline ConversionState* init_state_ctor(Converter& c)
+inline ConversionState* init_state_ctor(Converter& c)
 {
     return new InitState(c);
 }

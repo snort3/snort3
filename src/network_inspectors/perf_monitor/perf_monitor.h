@@ -71,17 +71,17 @@ extern SFPERF* perfmon_config;
 extern int perfmon_rotate_perf_file;
 
 /* functions to set & get the RotatePerfFileFlag */
-static inline void SetRotatePerfFileFlag(void)
+inline void SetRotatePerfFileFlag(void)
 {
     perfmon_rotate_perf_file = 1;
 }
 
-static inline int IsSetRotatePerfFileFlag(void)
+inline int IsSetRotatePerfFileFlag(void)
 {
     return perfmon_rotate_perf_file;
 }
 
-static inline void ClearRotatePerfFileFlag(void)
+inline void ClearRotatePerfFileFlag(void)
 {
     perfmon_rotate_perf_file = 0;
 }

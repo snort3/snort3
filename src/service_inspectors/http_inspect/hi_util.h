@@ -49,7 +49,7 @@
 **  @retval 1 within bounds
 **  @retval 0 not within bounds
 */
-static inline int hi_util_in_bounds(const u_char* start, const u_char* end, const u_char* p)
+inline int hi_util_in_bounds(const u_char* start, const u_char* end, const u_char* p)
 {
     if (p >= start && p < end)
     {
@@ -59,14 +59,14 @@ static inline int hi_util_in_bounds(const u_char* start, const u_char* end, cons
     return 0;
 }
 
-static inline void SkipWhiteSpace(const u_char* start, const u_char* end,
+inline void SkipWhiteSpace(const u_char* start, const u_char* end,
     const u_char** ptr)
 {
     while (hi_util_in_bounds(start, end, *ptr) && isspace((int)**ptr) && (**ptr != '\n'))
         (*ptr)++;
 }
 
-static inline int SkipBlankSpace(const u_char* start, const u_char* end,
+inline int SkipBlankSpace(const u_char* start, const u_char* end,
     const u_char** ptr)
 {
     int count = 0;
@@ -78,7 +78,7 @@ static inline int SkipBlankSpace(const u_char* start, const u_char* end,
     return count;
 }
 
-static inline void SkipDigits(const u_char* start, const u_char* end,
+inline void SkipDigits(const u_char* start, const u_char* end,
     const u_char** ptr)
 {
     while ((hi_util_in_bounds(start, end, *ptr)) && (isdigit((int)**ptr)) )
@@ -87,7 +87,7 @@ static inline void SkipDigits(const u_char* start, const u_char* end,
     }
 }
 
-static inline void SkipBlankAndNewLine(const u_char* start, const u_char* end,
+inline void SkipBlankAndNewLine(const u_char* start, const u_char* end,
     const u_char** ptr)
 {
     while ( (hi_util_in_bounds(start, end, *ptr)) &&
@@ -97,7 +97,7 @@ static inline void SkipBlankAndNewLine(const u_char* start, const u_char* end,
     }
 }
 
-static inline void SkipCRLF(const u_char* start, const u_char* end,
+inline void SkipCRLF(const u_char* start, const u_char* end,
     const u_char** ptr)
 {
     while ( (hi_util_in_bounds(start, end, *ptr)) &&
@@ -107,7 +107,7 @@ static inline void SkipCRLF(const u_char* start, const u_char* end,
     }
 }
 
-static inline int IsHeaderFieldName(const u_char* p, const u_char* end,
+inline int IsHeaderFieldName(const u_char* p, const u_char* end,
     const char* header_name, size_t header_len)
 {
     if ((p+header_len) <= end)

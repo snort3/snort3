@@ -149,7 +149,7 @@ uint32_t sfrt_num_entries(table_t* table);
 /* Perform a lookup on value contained in "ip"
  * For performance reason, we use this simplified version instead of sfrt_lookup
  * Note: this only applied to table setting: DIR_8x16 (DIR_16_8_4x2 for IPV4), DIR_8x4*/
-static inline GENERIC sfrt_dir8x_lookup(void* adr, table_t* table)
+inline GENERIC sfrt_dir8x_lookup(void* adr, table_t* table)
 {
     dir_sub_table_t* subtable;
     int i;

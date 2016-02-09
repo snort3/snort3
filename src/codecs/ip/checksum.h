@@ -87,7 +87,7 @@ struct Psuedoheader6Union
     };
 };
 
-static inline uint16_t cksum_add(const uint16_t* buf, std::size_t len, uint32_t cksum)
+inline uint16_t cksum_add(const uint16_t* buf, std::size_t len, uint32_t cksum)
 {
     const uint16_t* sp = buf;
     std::size_t n, sn;
@@ -167,7 +167,7 @@ static inline uint16_t cksum_add(const uint16_t* buf, std::size_t len, uint32_t 
     return (uint16_t)(~cksum);
 }
 
-static inline void add_ipv4_pseudoheader(const Pseudoheader* const ph4,
+inline void add_ipv4_pseudoheader(const Pseudoheader* const ph4,
     uint32_t& cksum)
 {
     /*
@@ -187,7 +187,7 @@ static inline void add_ipv4_pseudoheader(const Pseudoheader* const ph4,
     cksum += h[5];
 }
 
-static inline void add_ipv6_pseudoheader(const Pseudoheader6* const ph6,
+inline void add_ipv6_pseudoheader(const Pseudoheader6* const ph6,
     uint32_t& cksum)
 {
     /*
@@ -219,7 +219,7 @@ static inline void add_ipv6_pseudoheader(const Pseudoheader6* const ph6,
     cksum += h[17];
 }
 
-static inline void add_tcp_header(const uint16_t*& d,
+inline void add_tcp_header(const uint16_t*& d,
     std::size_t& len,
     uint32_t& cksum)
 {
@@ -238,7 +238,7 @@ static inline void add_tcp_header(const uint16_t*& d,
     len -= 20;
 }
 
-static inline void add_udp_header(const uint16_t*& d,
+inline void add_udp_header(const uint16_t*& d,
     size_t& len,
     uint32_t& cksum)
 {
@@ -251,7 +251,7 @@ static inline void add_udp_header(const uint16_t*& d,
     d += 4;
 }
 
-static inline void add_ip_header(const uint16_t*& d,
+inline void add_ip_header(const uint16_t*& d,
     std::size_t& len,
     uint32_t& cksum)
 {
@@ -338,7 +338,7 @@ inline uint16_t ip_cksum(const uint16_t* buf, std::size_t len)
     return detail::cksum_add(buf, len, cksum);
 }
 
-static inline uint16_t cksum_add(const uint16_t* buf, std::size_t len)
+inline uint16_t cksum_add(const uint16_t* buf, std::size_t len)
 { return detail::cksum_add(buf, len, 0); }
 } // namespace checksum
 

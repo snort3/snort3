@@ -48,17 +48,17 @@ struct NormalizerConfig
 int Norm_SetConfig(NormalizerConfig*);
 int Norm_Packet(NormalizerConfig*, Packet*);
 
-static inline void Norm_Enable(NormalizerConfig* nc, NormFlags nf)
+inline void Norm_Enable(NormalizerConfig* nc, NormFlags nf)
 {
     nc->normalizer_flags |= nf;
 }
 
-static inline void Norm_Disable(NormalizerConfig* nc, NormFlags nf)
+inline void Norm_Disable(NormalizerConfig* nc, NormFlags nf)
 {
     nc->normalizer_flags &= ~nf;
 }
 
-static inline void Norm_Set(NormalizerConfig* nc, NormFlags nf, bool enable)
+inline void Norm_Set(NormalizerConfig* nc, NormFlags nf, bool enable)
 {
     if ( enable )
         Norm_Enable(nc, nf);
@@ -66,24 +66,24 @@ static inline void Norm_Set(NormalizerConfig* nc, NormFlags nf, bool enable)
         Norm_Disable(nc, nf);
 }
 
-static inline int Norm_IsEnabled(const NormalizerConfig* nc, NormFlags nf)
+inline int Norm_IsEnabled(const NormalizerConfig* nc, NormFlags nf)
 {
     return ( (nc->normalizer_flags & nf) != 0 );
 }
 
-static inline void Norm_TcpPassOption(NormalizerConfig* nc, uint8_t opt)
+inline void Norm_TcpPassOption(NormalizerConfig* nc, uint8_t opt)
 {
     uint8_t byte = (opt >> 3), bit = (1 << (opt & 0x07));
     nc->normalizer_options[byte] |= bit;
 }
 
-static inline void Norm_TcpDropOption(NormalizerConfig* nc, uint8_t opt)
+inline void Norm_TcpDropOption(NormalizerConfig* nc, uint8_t opt)
 {
     uint8_t byte = (opt >> 3), bit = (1 << (opt & 0x07));
     nc->normalizer_options[byte] &= ~bit;
 }
 
-static inline int Norm_TcpIsOptional(const NormalizerConfig* nc, uint8_t opt)
+inline int Norm_TcpIsOptional(const NormalizerConfig* nc, uint8_t opt)
 {
     uint8_t byte = (opt >> 3), bit = (1 << (opt & 0x07));
     return ( (nc->normalizer_options[byte] & bit) != 0 );

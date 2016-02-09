@@ -100,7 +100,7 @@ struct TcpStats
 
 extern THREAD_LOCAL struct TcpStats tcpStats;
 
-static inline void inc_tcp_discards()
+inline void inc_tcp_discards()
 {
     tcpStats.discards++;
 }

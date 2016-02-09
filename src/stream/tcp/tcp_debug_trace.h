@@ -42,7 +42,7 @@ static const char* const flushxt[] = { "IGN", "FPR", "PRE", "PRO", "PAF" };
 // FIXIT-L this should not be thread specific
 static THREAD_LOCAL int s5_trace_enabled = -1;
 
-static inline void TraceEvent(const Packet* p, TcpSegmentDescriptor*, uint32_t txd, uint32_t rxd)
+inline void TraceEvent(const Packet* p, TcpSegmentDescriptor*, uint32_t txd, uint32_t rxd)
 {
     int i;
     char flags[7] = "UAPRSF";
@@ -72,13 +72,13 @@ static inline void TraceEvent(const Packet* p, TcpSegmentDescriptor*, uint32_t t
         pc.total_from_daq, flags, h->th_flags, rseq, rack, h->win(), p->dsize, order);
 }
 
-static inline void TraceSession(const Flow* lws)
+inline void TraceSession(const Flow* lws)
 {
     fprintf(stdout, "    LWS: ST=0x%x SF=0x%x CP=%u SP=%u\n", (unsigned)lws->session_state,
         lws->ssn_state.session_flags, lws->client_port, lws->server_port);
 }
 
-static inline void TraceState(const TcpTracker* a, const TcpTracker* b, const char* s)
+inline void TraceState(const TcpTracker* a, const TcpTracker* b, const char* s)
 {
     uint32_t ua = a->get_snd_una() ? LCL(a, get_snd_una) : 0;
     uint32_t ns = a->get_snd_nxt() ? LCL(a, get_snd_nxt) : 0;
@@ -107,7 +107,7 @@ static inline void TraceState(const TcpTracker* a, const TcpTracker* b, const ch
     fprintf(stdout, "\n");
 }
 
-static inline void TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescriptor* tsd, int event)
+inline void TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescriptor* tsd, int event)
 {
     const TcpSession* ssn = (TcpSession*)lws->session;
     const TcpTracker* srv = ssn ? ssn->server : NULL;
@@ -144,8 +144,7 @@ static inline void TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescript
     }
 }
 
-static inline void S5TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescriptor* tsd, int
-    event)
+inline void S5TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescriptor* tsd, int event)
 {
     if (!s5_trace_enabled)
         return;

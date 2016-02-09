@@ -88,7 +88,7 @@
 #endif // __ia64 && __GNUC__
 #endif // __i386 || __amd64 || __x86_64__
 
-static inline double get_ticks_per_usec(void)
+inline double get_ticks_per_usec(void)
 {
     uint64_t start = 0, end = 0;
     get_clockticks(start);

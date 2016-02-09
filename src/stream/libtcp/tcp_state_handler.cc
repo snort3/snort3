@@ -131,7 +131,7 @@ bool TcpStateHandler::default_state_action(TcpSegmentDescriptor& tsd, TcpStreamT
         &tsd, &tracker, tracker.get_tcp_state(), tracker.get_tcp_event() );
 #else
     UNUSED(tsd);
-    UNUSED(tracker)
+    UNUSED(tracker);
 #endif
 
     return true;

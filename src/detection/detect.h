@@ -71,14 +71,14 @@ void CallAlertFuncs(Packet*, const OptTreeNode*, ListHead*);
 
 // don't eval content rules
 // non-content rules are still evaluated
-static inline void DisableDetect(Packet*)
+inline void DisableDetect(Packet*)
 {
     do_detect_content = 0;
 }
 
 // don't want to do any detection with rules
 // (no content and no non-content)
-static inline void DisableInspection(Packet*)
+inline void DisableInspection(Packet*)
 {
     do_detect = do_detect_content = 0;
 }

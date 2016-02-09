@@ -79,7 +79,7 @@ struct Trh_hdr
 };
 /* End Token Ring Data Structures */
 
-static inline const Trh_mr* get_trhmr(const Trh_llc* llc)
+inline const Trh_mr* get_trhmr(const Trh_llc* llc)
 {
     if (llc->dsap != IPARP_SAP && llc->ssap != IPARP_SAP)
         return reinterpret_cast<const Trh_mr*>(llc);

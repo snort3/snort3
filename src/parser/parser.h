@@ -67,7 +67,7 @@ int addRtnToOtn(struct OptTreeNode*, RuleTreeNode*, PolicyId);
 RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*);
 RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*, PolicyId);
 
-static inline RuleTreeNode* getRtnFromOtn(
+inline RuleTreeNode* getRtnFromOtn(
     const struct OptTreeNode* otn, PolicyId policyId)
 {
     if (otn && otn->proto_nodes && (otn->proto_node_num > (unsigned)policyId))
@@ -78,13 +78,13 @@ static inline RuleTreeNode* getRtnFromOtn(
     return NULL;
 }
 
-static inline RuleTreeNode* getRtnFromOtn(
+inline RuleTreeNode* getRtnFromOtn(
     const struct OptTreeNode* otn)
 {
     return getRtnFromOtn(otn, get_ips_policy()->policy_id);
 }
 
-static inline RuleTreeNode* getRuntimeRtnFromOtn(
+inline RuleTreeNode* getRuntimeRtnFromOtn(
     const struct OptTreeNode* otn)
 {
     return getRtnFromOtn(otn);

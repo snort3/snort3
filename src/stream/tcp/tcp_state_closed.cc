@@ -44,7 +44,6 @@ TcpStateClosed::~TcpStateClosed()
 bool TcpStateClosed::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
     auto& trk = static_cast< TcpTracker& >( tracker );
-    Flow* flow = tsd.get_flow();
 
     trk.s_mgr.sub_state |= SUB_SYN_SENT;
 

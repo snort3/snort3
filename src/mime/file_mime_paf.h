@@ -69,8 +69,7 @@ struct MimeDataPafInfo
     MimeBoundaryState boundary_state;
 };
 
-static inline bool scanning_boundary(MimeDataPafInfo* mime_info, uint32_t boundary_start,
-    uint32_t* fp)
+inline bool scanning_boundary(MimeDataPafInfo* mime_info, uint32_t boundary_start, uint32_t* fp)
 {
     if (boundary_start &&
         mime_info->data_state == MIME_PAF_FOUND_BOUNDARY_STATE &&

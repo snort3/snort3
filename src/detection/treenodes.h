@@ -178,10 +178,10 @@ void* get_rule_type_data(OptTreeNode*, option_type_t);
 
 SO_PUBLIC bool otn_has_plugin(OptTreeNode* otn, const char* name);
 
-static inline bool otn_has_plugin(OptTreeNode* otn, int id)
+inline bool otn_has_plugin(OptTreeNode* otn, int id)
 { return (otn->plugins & (0x1 << id)) != 0; }
 
-static inline void otn_set_plugin(OptTreeNode* otn, int id)
+inline void otn_set_plugin(OptTreeNode* otn, int id)
 { otn->plugins |= (0x1 << id); }
 
 bool otn_set_agent(OptTreeNode*, IpsOption*);

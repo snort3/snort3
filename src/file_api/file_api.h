@@ -103,14 +103,14 @@ struct FileCaptureInfo;
 
 #define DEFAULT_FILE_ID   0
 
-static inline void initFilePosition(FilePosition* position, uint64_t processed_size)
+inline void initFilePosition(FilePosition* position, uint64_t processed_size)
 {
     *position = SNORT_FILE_START;
     if (processed_size)
         *position = SNORT_FILE_MIDDLE;
 }
 
-static inline void updateFilePosition(FilePosition* position, uint64_t processed_size)
+inline void updateFilePosition(FilePosition* position, uint64_t processed_size)
 {
     if ((*position == SNORT_FILE_END) || (*position == SNORT_FILE_FULL))
         *position = SNORT_FILE_START;
@@ -118,7 +118,7 @@ static inline void updateFilePosition(FilePosition* position, uint64_t processed
         *position = SNORT_FILE_MIDDLE;
 }
 
-static inline void finalFilePosition(FilePosition* position)
+inline void finalFilePosition(FilePosition* position)
 {
     if (*position == SNORT_FILE_START)
         *position = SNORT_FILE_FULL;
@@ -126,12 +126,12 @@ static inline void finalFilePosition(FilePosition* position)
         *position = SNORT_FILE_END;
 }
 
-static inline bool isFileStart(FilePosition position)
+inline bool isFileStart(FilePosition position)
 {
     return ((position == SNORT_FILE_START) || (position == SNORT_FILE_FULL));
 }
 
-static inline bool isFileEnd(FilePosition position)
+inline bool isFileEnd(FilePosition position)
 {
     return ((position == SNORT_FILE_END) || (position == SNORT_FILE_FULL));
 }

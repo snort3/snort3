@@ -56,7 +56,7 @@ extern SO_PUBLIC THREAD_LOCAL DataPointer g_file_data;
 
 #define IsLimitedDetect(pktPtr) (pktPtr->packet_flags & PKT_HTTP_DECODE)
 
-static inline void set_file_data(uint8_t* p, unsigned n)
+inline void set_file_data(uint8_t* p, unsigned n)
 {
     g_file_data.data = p;
     g_file_data.len = n;
@@ -68,12 +68,12 @@ void EventTrace_Term(void);
 
 void EventTrace_Log(const Packet*, const OptTreeNode*, int action);
 
-static inline int EventTrace_IsEnabled(void)
+inline int EventTrace_IsEnabled(void)
 {
     return ( snort_conf->event_trace_max > 0 );
 }
 
-static inline void DetectReset()
+inline void DetectReset()
 {
     g_file_data.len = 0;
 }

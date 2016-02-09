@@ -173,7 +173,7 @@ struct fd_session_s
 /* Inline Functions */
 
 /* If available, look at the next available byte in the input queue */
-static inline bool Peek_1(fd_session_p_t SessionPtr, uint8_t* c)
+inline bool Peek_1(fd_session_p_t SessionPtr, uint8_t* c)
 {
     if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
     {
@@ -185,7 +185,7 @@ static inline bool Peek_1(fd_session_p_t SessionPtr, uint8_t* c)
 }
 
 /* If available, get a byte from the input queue */
-static inline bool Get_1(fd_session_p_t SessionPtr, uint8_t* c)
+inline bool Get_1(fd_session_p_t SessionPtr, uint8_t* c)
 {
     if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
     {
@@ -200,7 +200,7 @@ static inline bool Get_1(fd_session_p_t SessionPtr, uint8_t* c)
 
 /* If available, get N bytes from the input queue.  All N must be
    availble for this call to succeed. */
-static inline bool Get_N(fd_session_p_t SessionPtr, uint8_t** c, uint16_t N)
+inline bool Get_N(fd_session_p_t SessionPtr, uint8_t** c, uint16_t N)
 {
     if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In >= N) )
     {
@@ -215,7 +215,7 @@ static inline bool Get_N(fd_session_p_t SessionPtr, uint8_t** c, uint16_t N)
 }
 
 /* If there's room in the output queue, put one byte. */
-static inline bool Put_1(fd_session_p_t SessionPtr, uint8_t c)
+inline bool Put_1(fd_session_p_t SessionPtr, uint8_t c)
 {
     if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out > 0) )
     {
@@ -230,7 +230,7 @@ static inline bool Put_1(fd_session_p_t SessionPtr, uint8_t c)
 
 /* If the output queue has room available, place N bytes onto the queue.
    The output queue must have space for N bytes for this call to succeed. */
-static inline bool Put_N(fd_session_p_t SessionPtr, uint8_t* c, uint16_t N)
+inline bool Put_N(fd_session_p_t SessionPtr, uint8_t* c, uint16_t N)
 {
     if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out >= N) )
     {
@@ -246,7 +246,7 @@ static inline bool Put_N(fd_session_p_t SessionPtr, uint8_t* c, uint16_t N)
 
 /* If the input queue has at least one byte available AND there's at
    space for at least one byte in the output queue, then move one byte. */
-static inline bool Move_1(fd_session_p_t SessionPtr)
+inline bool Move_1(fd_session_p_t SessionPtr)
 {
     if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out > 0) &&
         (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
@@ -266,7 +266,7 @@ static inline bool Move_1(fd_session_p_t SessionPtr)
 
 /* If the input queue has at least N bytes available AND there's at
    space for at least N bytes in the output queue, then move all N bytes. */
-static inline bool Move_N(fd_session_p_t SessionPtr, uint16_t N)
+inline bool Move_N(fd_session_p_t SessionPtr, uint16_t N)
 {
     if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out >= N) &&
         (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In >= N) )

@@ -66,12 +66,12 @@ SO_PUBLIC void TextLog_Reset(TextLog* const);
   * helper functions
   *-------------------------------------------------------------------
   */
-static inline bool TextLog_NewLine(TextLog* const txt)
+inline bool TextLog_NewLine(TextLog* const txt)
 {
     return TextLog_Putc(txt, '\n');
 }
 
-static inline bool TextLog_Puts(TextLog* const txt, const char* str)
+inline bool TextLog_Puts(TextLog* const txt, const char* str)
 {
     return TextLog_Write(txt, str, strlen(str));
 }

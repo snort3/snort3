@@ -36,14 +36,14 @@ template<typename T>
 inline T** regurgitate(lua_State* L, const char* name, int arg)
 { return static_cast<T**>(const_cast<void*>(luaL_checkudata(L, arg, name))); }
 
-static inline int register_methods(
+inline int register_methods(
     lua_State* L, const luaL_Reg* methods, const char* name = nullptr)
 {
     luaL_register(L, name, methods);
     return lua_gettop(L);
 }
 
-static inline int register_metamethods(
+inline int register_metamethods(
     lua_State* L, const luaL_Reg* methods, const char* name)
 {
     luaL_newmetatable(L, name);
@@ -51,7 +51,7 @@ static inline int register_metamethods(
     return lua_gettop(L);
 }
 
-static inline void register_with_closure(
+inline void register_with_closure(
     lua_State* L, const luaL_Reg* methods, int table, int cl)
 {
     ManageStack ms(L, 2);
@@ -65,7 +65,7 @@ static inline void register_with_closure(
     }
 }
 
-static inline int new_lib(lua_State* L, const char* name)
+inline int new_lib(lua_State* L, const char* name)
 {
     const luaL_Reg empty[] = { { nullptr, nullptr } };
     return register_methods(L, empty, name);

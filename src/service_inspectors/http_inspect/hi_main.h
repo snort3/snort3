@@ -219,17 +219,17 @@ int HI_SearchStrFound(void*, void*, int, void*, void*);
 int IsJSNormData(Flow* flow);
 int IsGzipData(Flow* flow);
 
-static inline void ClearHttpBuffers(void)
+inline void ClearHttpBuffers(void)
 {
     http_mask = 0;
 }
 
-static inline uint32_t GetHttpBufferMask(void)
+inline uint32_t GetHttpBufferMask(void)
 {
     return http_mask;
 }
 
-static inline const HttpBuffer* GetHttpBuffer(HTTP_BUFFER b)
+inline const HttpBuffer* GetHttpBuffer(HTTP_BUFFER b)
 {
     if ( !((1 << b) & http_mask) )
         return NULL;
@@ -237,7 +237,7 @@ static inline const HttpBuffer* GetHttpBuffer(HTTP_BUFFER b)
     return http_buffer + b;
 }
 
-static inline void SetHttpBuffer(
+inline void SetHttpBuffer(
     HTTP_BUFFER b, const uint8_t* buf, unsigned len, uint32_t enc = 0)
 {
     HttpBuffer* hb = http_buffer + b;
@@ -249,7 +249,7 @@ static inline void SetHttpBuffer(
     http_mask |= (1 << b);
 }
 
-static inline void ResetGzipState(DECOMPRESS_STATE* ds)
+inline void ResetGzipState(DECOMPRESS_STATE* ds)
 {
     if (ds == NULL)
         return;
@@ -263,7 +263,7 @@ static inline void ResetGzipState(DECOMPRESS_STATE* ds)
     ds->decompress_data = 0;
 }
 
-static inline void ResetRespState(HTTP_RESP_STATE* ds)
+inline void ResetRespState(HTTP_RESP_STATE* ds)
 {
     if (ds == NULL)
         return;
@@ -277,7 +277,7 @@ static inline void ResetRespState(HTTP_RESP_STATE* ds)
     ds->max_seq = 0;
 }
 
-static inline int SetLogBuffers(HttpSessionData* hsd)
+inline int SetLogBuffers(HttpSessionData* hsd)
 {
     int iRet = 0;
 
@@ -291,7 +291,7 @@ static inline int SetLogBuffers(HttpSessionData* hsd)
     return iRet;
 }
 
-static inline void SetHttpDecode(uint16_t altLen)
+inline void SetHttpDecode(uint16_t altLen)
 {
     HttpDecodeBuf.len = altLen;
 }

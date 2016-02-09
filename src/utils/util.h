@@ -110,7 +110,7 @@ char* StripPrefixDir(char* prefix, char* dir);
 void SetNoCores(void);
 #endif
 
-static inline void* SnortAlloc(unsigned long size)
+inline void* SnortAlloc(unsigned long size)
 {
     void* pv = calloc(size, sizeof(char));
 
@@ -123,7 +123,7 @@ static inline void* SnortAlloc(unsigned long size)
     return NULL;
 }
 
-static inline long SnortStrtol(const char* nptr, char** endptr, int base)
+inline long SnortStrtol(const char* nptr, char** endptr, int base)
 {
     long iRet;
     errno = 0;
@@ -132,7 +132,7 @@ static inline long SnortStrtol(const char* nptr, char** endptr, int base)
     return iRet;
 }
 
-static inline unsigned long SnortStrtoul(const char* nptr, char** endptr, int base)
+inline unsigned long SnortStrtoul(const char* nptr, char** endptr, int base)
 {
     unsigned long iRet;
     errno = 0;
@@ -159,7 +159,7 @@ static inline unsigned long SnortStrtoul(const char* nptr, char** endptr, int ba
 // Also will set errno to ERANGE on a value returned from strtoul that is
 // greater than UINT32_MAX, but still return success.
 //
-static inline int SnortStrToU32(const char* buffer, char** endptr,
+inline int SnortStrToU32(const char* buffer, char** endptr,
     uint32_t* value, int base)
 {
     unsigned long int tmp;
@@ -199,7 +199,7 @@ static inline int SnortStrToU32(const char* buffer, char** endptr,
     return 0;
 }
 
-static inline pid_t gettid(void)
+inline pid_t gettid(void)
 {
 #if defined(LINUX) && defined(SYS_gettid)
     return syscall(SYS_gettid);

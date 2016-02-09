@@ -144,7 +144,7 @@ struct IP4Hdr
     { ip_len = htons(new_len); }
 };
 
-static inline bool isPrivateIP(uint32_t addr)
+inline bool isPrivateIP(uint32_t addr)
 {
     addr = ntohl(addr);
     switch (addr & 0xFF000000)

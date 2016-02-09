@@ -89,27 +89,27 @@ struct DceRpcCoHdr
 
 #pragma pack()
 
-static inline uint8_t DceRpcCoVersMaj(const DceRpcCoHdr* co)
+inline uint8_t DceRpcCoVersMaj(const DceRpcCoHdr* co)
 {
     return co->pversion.major;
 }
 
-static inline uint8_t DceRpcCoVersMin(const DceRpcCoHdr* co)
+inline uint8_t DceRpcCoVersMin(const DceRpcCoHdr* co)
 {
     return co->pversion.minor;
 }
 
-static inline DceRpcPduType DceRpcCoPduType(const DceRpcCoHdr* co)
+inline DceRpcPduType DceRpcCoPduType(const DceRpcCoHdr* co)
 {
     return (DceRpcPduType)co->ptype;
 }
 
-static inline DceRpcBoFlag DceRpcCoByteOrder(const DceRpcCoHdr* co)
+inline DceRpcBoFlag DceRpcCoByteOrder(const DceRpcCoHdr* co)
 {
     return DceRpcByteOrder(co->packed_drep[0]);
 }
 
-static inline uint16_t DceRpcCoFragLen(const DceRpcCoHdr* co)
+inline uint16_t DceRpcCoFragLen(const DceRpcCoHdr* co)
 {
     return DceRpcNtohs(&co->frag_length, DceRpcCoByteOrder(co));
 }

@@ -104,7 +104,7 @@ struct Api
 };
 
 template<typename... Args>
-static inline void error(std::string fmt, Args&&... args)
+inline void error(std::string fmt, Args&&... args)
 {
     fmt.insert(0, "piglet: ");
     fmt.append("\n");

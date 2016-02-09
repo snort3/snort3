@@ -48,7 +48,7 @@ public:
     static bool init(SnortConfig*);
     static void term();
 
-    static inline void reset()
+    static void reset()
     {
         active_status = AST_ALLOW;
         active_action = ACT_PASS;

@@ -235,7 +235,7 @@ struct IP6Frag
 
 // Reflects the recomended IPv6 order in RFC 2460 4.1
 constexpr int IPV6_ORDER_MAX = 7;
-static inline int IPV6ExtensionOrder(uint8_t type)
+inline int IPV6ExtensionOrder(uint8_t type)
 {
     switch (type)
     {

@@ -90,10 +90,14 @@ StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, const uint8
     DebugFormat(DEBUG_DCE_SMB, "%s\n", DCE2_DEBUG__PAF_START_MSG_SMB);
     DebugFormat(DEBUG_DCE_SMB, "SMB: %u bytes of data\n", len);
 
+#ifdef DEBUG_MSGS
     if (flags & PKT_FROM_CLIENT)
         DebugMessage(DEBUG_DCE_SMB, "Packet from Client\n");
     else
         DebugMessage(DEBUG_DCE_SMB, "Packet from Server\n");
+#else
+    UNUSED(flags);
+#endif
 
     if (dce2_paf_abort(flow))
     {

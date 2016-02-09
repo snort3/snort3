@@ -34,7 +34,7 @@ namespace Lua
 const char* fmt_expected_message(const char* type);
 const char* fmt_range_message(unsigned min, unsigned max);
 
-static inline void set_script_dir(
+inline void set_script_dir(
     lua_State* L, const std::string varname, const std::string path)
 {
     std::string dir = path.substr(0, path.rfind(LUA_DIR_SEP));

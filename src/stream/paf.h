@@ -51,22 +51,22 @@ void paf_setup(PAF_State*);  // called at session start
 void paf_reset(PAF_State*);  // called for do overs
 void paf_clear(PAF_State*);  // called at session end
 
-static inline uint32_t paf_position (PAF_State* ps)
+inline uint32_t paf_position (PAF_State* ps)
 {
     return ps->seq;
 }
 
-static inline uint32_t paf_initialized (PAF_State* ps)
+inline uint32_t paf_initialized (PAF_State* ps)
 {
     return ( ps->paf != StreamSplitter::START );
 }
 
-static inline uint32_t paf_active (PAF_State* ps)
+inline uint32_t paf_active (PAF_State* ps)
 {
     return ( ps->paf != StreamSplitter::ABORT );
 }
 
-static inline void paf_jump(PAF_State* ps, uint32_t n)
+inline void paf_jump(PAF_State* ps, uint32_t n)
 {
     ps->pos += n;
     ps->seq = ps->pos;

@@ -55,7 +55,7 @@ void action_execute(RuleType, struct Packet*, const struct OptTreeNode*,
 
 void action_apply(RuleType, struct Packet*);
 
-static inline bool pass_action(RuleType a)
+inline bool pass_action(RuleType a)
 { return ( a == RULE_TYPE__PASS ); }
 
 #endif

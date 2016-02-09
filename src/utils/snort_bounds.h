@@ -53,7 +53,7 @@
 // Check to make sure that p is less than or equal to the ptr range
 // returns 1 if in bounds, 0 otherwise
 // FIXIT-L: Change return type to bool
-static inline int inBounds(const void* start, const void* end, const void* p)
+inline int inBounds(const void* start, const void* end, const void* p)
 {
     const uint8_t* pstart = (uint8_t*)start;
     const uint8_t* pend = (uint8_t*)end;
@@ -65,7 +65,7 @@ static inline int inBounds(const void* start, const void* end, const void* p)
 }
 
 // FIXIT-L: Change return type to bool
-static inline int SafeMemCheck(const void* dst, size_t n,
+inline int SafeMemCheck(const void* dst, size_t n,
     const void* start, const void* end)
 {
     const uint8_t* pstart = (uint8_t*)start;
@@ -90,7 +90,7 @@ static inline int SafeMemCheck(const void* dst, size_t n,
 
 // returns SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
 // FIXIT-L: Change return type to bool
-static inline int SafeMemcpy(
+inline int SafeMemcpy(
     void* dst, const void* src, size_t n, const void* start, const void* end)
 {
     if ( !n )
@@ -106,7 +106,7 @@ static inline int SafeMemcpy(
 // dst and src can be in the same buffer
 // returns SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
 // FIXIT-L: Change return type to bool
-static inline int SafeMemmove(
+inline int SafeMemmove(
     void* dst, const void* src, size_t n, const void* start, const void* end)
 {
     if (SafeMemCheck(dst, n, start, end) != SAFEMEM_SUCCESS)
@@ -120,7 +120,7 @@ static inline int SafeMemmove(
 // dst and src can be in the same buffer
 // returns SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
 // FIXIT-L: Change return type to bool
-static inline int SafeBoundsMemmove(
+inline int SafeBoundsMemmove(
     void* dst, const void* src, size_t n, const void* start, const void* end)
 {
     size_t overlap = 0;
@@ -154,7 +154,7 @@ static inline int SafeBoundsMemmove(
 
 // returns SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
 // FIXIT-L: Change return type to bool
-static inline int SafeMemset(
+inline int SafeMemset(
     void* dst, uint8_t c, size_t n, const void* start, const void* end)
 {
     if (SafeMemCheck(dst, n, start, end) != SAFEMEM_SUCCESS)
@@ -165,7 +165,7 @@ static inline int SafeMemset(
 
 // returns 0 on failure, 1 on success
 // FIXIT-L: Change return type to bool
-static inline int SafeWrite(uint8_t* start, uint8_t* end, uint8_t* dst, uint8_t* src)
+inline int SafeWrite(uint8_t* start, uint8_t* end, uint8_t* dst, uint8_t* src)
 {
     if (!inBounds(start, end, dst))
     {
@@ -178,7 +178,7 @@ static inline int SafeWrite(uint8_t* start, uint8_t* end, uint8_t* dst, uint8_t*
 
 // returns 0 on failure, 1 on success
 // FIXIT-L: Change return type to bool
-static inline int SafeRead(uint8_t* start, uint8_t* end, uint8_t* src, uint8_t* read)
+inline int SafeRead(uint8_t* start, uint8_t* end, uint8_t* src, uint8_t* read)
 {
     if (!inBounds(start,end, src))
     {
@@ -191,7 +191,7 @@ static inline int SafeRead(uint8_t* start, uint8_t* end, uint8_t* src, uint8_t* 
 
 // An wrapper around snprintf to make it safe.
 // returns the number of bytes written to the buffer
-static inline size_t SafeSnprintf(char* str, size_t size, const char* format, ...)
+inline size_t SafeSnprintf(char* str, size_t size, const char* format, ...)
 {
     va_list ap;
     int ret;

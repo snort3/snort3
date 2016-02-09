@@ -80,13 +80,13 @@ struct Uuid
  * Inline function prototypes
  ********************************************************************/
 
-static inline bool DCE2_IsSpaceChar(const char);
-static inline bool DCE2_IsConfigEndChar(const char);
+inline bool DCE2_IsSpaceChar(const char);
+inline bool DCE2_IsConfigEndChar(const char);
 
-static inline char* DCE2_PruneWhiteSpace(char*);
-static inline bool DCE2_IsEmptyStr(char*);
+inline char* DCE2_PruneWhiteSpace(char*);
+inline bool DCE2_IsEmptyStr(char*);
 
-static inline int DCE2_UuidCompare(const void*, const void*);
+inline int DCE2_UuidCompare(const void*, const void*);
 
 /********************************************************************
  * Public function prototypes
@@ -109,7 +109,7 @@ DCE2_Ret DCE2_GetValue(char*, char*, void*, int, DCE2_IntType, uint8_t);
  *      false if not a valid space character.
  *
  ********************************************************************/
-static inline bool DCE2_IsSpaceChar(const char c)
+inline bool DCE2_IsSpaceChar(const char c)
 {
     if (isspace((int)c))
         return true;
@@ -133,7 +133,7 @@ static inline bool DCE2_IsSpaceChar(const char c)
  *      false if not a valid end of configuration character.
  *
  ********************************************************************/
-static inline bool DCE2_IsConfigEndChar(const char c)
+inline bool DCE2_IsConfigEndChar(const char c)
 {
     if (c == DCE2_CFG_TOK__END)
         return true;
@@ -160,7 +160,7 @@ static inline bool DCE2_IsConfigEndChar(const char c)
  *               argument are replaced by NULL bytes.
  *
  ********************************************************************/
-static inline char* DCE2_PruneWhiteSpace(char* str)
+inline char* DCE2_PruneWhiteSpace(char* str)
 {
     char* end;
 
@@ -196,7 +196,7 @@ static inline char* DCE2_PruneWhiteSpace(char* str)
  *  false  otherwise
  *
  ********************************************************************/
-static inline bool DCE2_IsEmptyStr(char* str)
+inline bool DCE2_IsEmptyStr(char* str)
 {
     char* end;
 
@@ -214,7 +214,7 @@ static inline bool DCE2_IsEmptyStr(char* str)
     return false;
 }
 
-static inline int DCE2_UuidCompare(const void* data1, const void* data2)
+inline int DCE2_UuidCompare(const void* data1, const void* data2)
 {
     const Uuid* uuid1 = (Uuid*)data1;
     const Uuid* uuid2 = (Uuid*)data2;

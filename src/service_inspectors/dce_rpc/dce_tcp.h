@@ -86,7 +86,7 @@ extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_frag;
 extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_reass;
 extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_ctx;
 
-static inline bool DCE2_TcpAutodetect(Packet* p)
+inline bool DCE2_TcpAutodetect(Packet* p)
 {
     if (p->dsize >= sizeof(DceRpcCoHdr))
     {

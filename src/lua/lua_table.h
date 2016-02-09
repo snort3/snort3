@@ -135,7 +135,7 @@ struct Table
 };
 
 template<typename T>
-static inline void fill_table_from_vector(lua_State* L, int tindex, std::vector<T>& vec)
+inline void fill_table_from_vector(lua_State* L, int tindex, std::vector<T>& vec)
 {
     Table table(L, tindex);
     int i = 0;

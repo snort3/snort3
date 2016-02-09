@@ -256,18 +256,18 @@ struct DCE2_SmbSsnData
     // FIXIT-M add all the remaining fields
 };
 
-static inline uint32_t NbssLen(const NbssHdr* nb)
+inline uint32_t NbssLen(const NbssHdr* nb)
 {
     /* Treat first bit of flags as the upper byte to length */
     return ((nb->flags & 0x01) << 16) | ntohs(nb->length);
 }
 
-static inline uint8_t NbssType(const NbssHdr* nb)
+inline uint8_t NbssType(const NbssHdr* nb)
 {
     return nb->type;
 }
 
-static inline uint32_t SmbId(const SmbNtHdr* hdr)
+inline uint32_t SmbId(const SmbNtHdr* hdr)
 {
 #ifdef WORDS_MUSTALIGN
     uint8_t* idf = (uint8_t*)hdr->smb_idf;
@@ -277,7 +277,7 @@ static inline uint32_t SmbId(const SmbNtHdr* hdr)
 #endif  /* WORDS_MUSTALIGN */
 }
 
-static inline bool DCE2_SmbAutodetect(Packet* p)
+inline bool DCE2_SmbAutodetect(Packet* p)
 {
     if (p->dsize > (sizeof(NbssHdr) + sizeof(SmbNtHdr)))
     {

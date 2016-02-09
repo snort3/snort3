@@ -673,6 +673,8 @@ int ProcessFTPCmdValidity(
     FTP_CMD_CONF* FTPCmd = NULL;
     FTP_PARAM_FMT* HeadFmt = NULL;
 
+    assert(fmt);
+
     char buf[1024];
     strncpy(buf, fmt, sizeof(buf));
     buf[sizeof(buf)-1] = '\0';
