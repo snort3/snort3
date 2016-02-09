@@ -18,11 +18,11 @@
 
 // dce_tcp_module.cc author Rashmi Pitre <rrp@cisco.com>
 
-#include "dce2_tcp_module.h"
-#include "dce2_tcp.h"
-#include "dce2_common.h"
+#include "dce_tcp_module.h"
+#include "dce_tcp.h"
+#include "dce_common.h"
 #include "main/snort_config.h"
-#include "dce2_co.h"
+#include "dce_co.h"
 
 using namespace std;
 

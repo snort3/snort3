@@ -16,12 +16,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// dce2_common.cc author Rashmi Pitre <rrp@cisco.com>
+// dce_common.cc author Rashmi Pitre <rrp@cisco.com>
 
-#include "dce2_common.h"
-#include "framework/module.h"
+#include "dce_common.h"
 #include "framework/base_api.h"
+#include "framework/module.h"
+#include "flow/flow.h"
 #include "log/messages.h"
+#include "main/snort_debug.h"
 
 const char* dce2_get_policy_name(DCE2_POLICY policy)
 {
@@ -88,6 +90,25 @@ void print_dce2_common_config(dce2CommonProtoConf& common)
         common.max_frag_len);
     LogMessage("    Policy : %s\n",
         dce2_get_policy_name(common.policy));
+}
+
+bool dce2_paf_abort(Flow* flow)
+{
+    if (flow->get_session_flags() & SSNFLAG_MIDSTREAM)
+    {
+        DebugMessage(DEBUG_DCE_TCP,
+            "Aborting PAF because of midstream pickup.\n");
+        return true;
+    }
+    else if (!(flow->get_session_flags() & SSNFLAG_ESTABLISHED))
+    {
+        DebugMessage(DEBUG_DCE_TCP,
+            "Aborting PAF because of unestablished session.\n");
+        return true;
+    }
+    // FIXIT-M add the remaining checks
+
+    return false;
 }
 
 #ifdef BUILDING_SO

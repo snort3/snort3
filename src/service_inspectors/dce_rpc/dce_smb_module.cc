@@ -18,10 +18,10 @@
 
 // dce_smb_module.cc author Rashmi Pitre <rrp@cisco.com>
 
-#include "dce2_smb_module.h"
-#include "dce2_smb.h"
-#include "dce2_common.h"
-#include "dce2_co.h"
+#include "dce_smb_module.h"
+#include "dce_smb.h"
+#include "dce_common.h"
+#include "dce_co.h"
 
 #include "main/snort_config.h"
 

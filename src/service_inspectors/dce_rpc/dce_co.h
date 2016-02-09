@@ -16,11 +16,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// dce2_co.h author Rashmi Pitre <rrp@cisco.com>
+// dce_co.h author Rashmi Pitre <rrp@cisco.com>
 // based on work by Todd Wease
 
-#ifndef DCE2_CO_H
-#define DCE2_CO_H
+#ifndef DCE_CO_H
+#define DCE_CO_H
+
+#include "dce_common.h"
 
 #define DCE2_CO_BAD_MAJOR_VERSION           27
 #define DCE2_CO_BAD_MINOR_VERSION           28
@@ -64,6 +66,53 @@ from opnum established for fragmented request."
 #define DCE2_CO_FRAG_DIFF_CTX_ID_STR \
     "Connection-oriented DCE/RPC - Context id of non first/last fragment different \
 from context id established for fragmented request."
+
+#pragma pack(1)
+
+struct DceRpcCoVersion
+{
+    uint8_t major;
+    uint8_t minor;
+};
+
+/* Connection oriented common header */
+struct DceRpcCoHdr
+{
+    DceRpcCoVersion pversion;
+    uint8_t ptype;
+    uint8_t pfc_flags;
+    uint8_t packed_drep[4];
+    uint16_t frag_length;
+    uint16_t auth_length;
+    uint32_t call_id;
+};
+
+#pragma pack()
+
+static inline uint8_t DceRpcCoVersMaj(const DceRpcCoHdr* co)
+{
+    return co->pversion.major;
+}
+
+static inline uint8_t DceRpcCoVersMin(const DceRpcCoHdr* co)
+{
+    return co->pversion.minor;
+}
+
+static inline DceRpcPduType DceRpcCoPduType(const DceRpcCoHdr* co)
+{
+    return (DceRpcPduType)co->ptype;
+}
+
+static inline DceRpcBoFlag DceRpcCoByteOrder(const DceRpcCoHdr* co)
+{
+    return DceRpcByteOrder(co->packed_drep[0]);
+}
+
+static inline uint16_t DceRpcCoFragLen(const DceRpcCoHdr* co)
+{
+    return DceRpcNtohs(&co->frag_length, DceRpcCoByteOrder(co));
+}
 
 #endif
 

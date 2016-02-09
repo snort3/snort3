@@ -16,10 +16,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// ips_dce2_opnum.cc author Maya Dagon <mdagon@cisco.com>
+// ips_dce_opnum.cc author Maya Dagon <mdagon@cisco.com>
 // based on work by Todd Wease
 
-#include "dce2_utils.h"
+#include "dce_utils.h"
 
 #include "framework/ips_option.h"
 #include "framework/module.h"

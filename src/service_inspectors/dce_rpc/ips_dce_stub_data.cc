@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// ips_dce2_stub_data.cc author Maya Dagon <mdagon@cisco.com>
+// ips_dce_stub_data.cc author Maya Dagon <mdagon@cisco.com>
 // based on work by Todd Wease
 
 #include "detection/detection_defines.h"

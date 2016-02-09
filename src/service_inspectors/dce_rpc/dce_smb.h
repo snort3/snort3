@@ -16,12 +16,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-//dce2_smb.h author Rashmi Pitre <rrp@cisco.com>
+//dce_smb.h author Rashmi Pitre <rrp@cisco.com>
 // based on work by Todd Wease
 
-#ifndef DCE2_SMB_H
-#define DCE2_SMB_H
+#ifndef DCE_SMB_H
+#define DCE_SMB_H
 
+#include "dce_common.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
 #include "framework/counts.h"
@@ -199,5 +200,128 @@ extern THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_file_detect;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_file_api;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_fingerprint;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_negotiate;
+
+#define NBSS_SESSION_TYPE__MESSAGE            0x00
+#define NBSS_SESSION_TYPE__REQUEST            0x81
+#define NBSS_SESSION_TYPE__POS_RESPONSE       0x82
+#define NBSS_SESSION_TYPE__NEG_RESPONSE       0x83
+#define NBSS_SESSION_TYPE__RETARGET_RESPONSE  0x84
+#define NBSS_SESSION_TYPE__KEEP_ALIVE         0x85
+
+#define DCE2_SMB_ID   0xff534d42  /* \xffSMB */
+#define DCE2_SMB2_ID  0xfe534d42  /* \xfeSMB */
+
+#pragma pack(1)
+
+/********************************************************************
+ * NetBIOS Session Service header
+ ********************************************************************/
+struct NbssHdr
+{
+    uint8_t type;
+    uint8_t flags;   /* Treat flags as the upper byte to length */
+    uint16_t length;
+} ;
+
+struct SmbNtHdr
+{
+    uint8_t smb_idf[4];             /* contains 0xFF, 'SMB' */
+    uint8_t smb_com;                /* command code */
+    union
+    {
+        struct
+        {
+            uint8_t smb_class;      /* dos error class */
+            uint8_t smb_res;        /* reserved for future */
+            uint16_t smb_code;      /* dos error code */
+        } smb_status;
+        uint32_t nt_status;         /* nt status */
+    } smb_status;
+    uint8_t smb_flg;                /* flags */
+    uint16_t smb_flg2;              /* flags */
+    uint16_t smb_pid_high;
+    uint64_t smb_signature;
+    uint16_t smb_res;               /* reserved for future */
+    uint16_t smb_tid;               /* tree id */
+    uint16_t smb_pid;               /* caller's process id */
+    uint16_t smb_uid;               /* authenticated user id */
+    uint16_t smb_mid;               /* multiplex id */
+};
+
+#pragma pack()
+
+struct DCE2_SmbSsnData
+{
+    DCE2_SsnData sd;  // This member must be first
+    // FIXIT-M add all the remaining fields
+};
+
+static inline uint32_t NbssLen(const NbssHdr* nb)
+{
+    /* Treat first bit of flags as the upper byte to length */
+    return ((nb->flags & 0x01) << 16) | ntohs(nb->length);
+}
+
+static inline uint8_t NbssType(const NbssHdr* nb)
+{
+    return nb->type;
+}
+
+static inline uint32_t SmbId(const SmbNtHdr* hdr)
+{
+#ifdef WORDS_MUSTALIGN
+    uint8_t* idf = (uint8_t*)hdr->smb_idf;
+    return *idf << 24 | *(idf + 1) << 16 | *(idf + 2) << 8 | *(idf + 3);
+#else
+    return ntohl(*((uint32_t*)hdr->smb_idf));
+#endif  /* WORDS_MUSTALIGN */
+}
+
+static inline bool DCE2_SmbAutodetect(Packet* p)
+{
+    if (p->dsize > (sizeof(NbssHdr) + sizeof(SmbNtHdr)))
+    {
+        NbssHdr* nb_hdr = (NbssHdr*)p->data;
+
+        switch (NbssType(nb_hdr))
+        {
+        case NBSS_SESSION_TYPE__MESSAGE:
+        {
+            SmbNtHdr* smb_hdr = (SmbNtHdr*)(p->data + sizeof(NbssHdr));
+
+            if ((SmbId(smb_hdr) == DCE2_SMB_ID)
+                || (SmbId(smb_hdr) == DCE2_SMB2_ID))
+            {
+                return true;
+            }
+        }
+
+        break;
+
+        default:
+            break;
+        }
+    }
+
+    return false;
+}
+
+class Dce2SmbFlowData : public FlowData
+{
+public:
+    Dce2SmbFlowData();
+
+    static void init()
+    {
+        flow_id = FlowData::get_flow_id();
+    }
+
+public:
+    static unsigned flow_id;
+    DCE2_SmbSsnData dce2_smb_session;
+};
+
+DCE2_SmbSsnData* get_dce2_smb_session_data(Flow*);
+
 #endif
 

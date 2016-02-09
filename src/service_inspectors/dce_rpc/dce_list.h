@@ -25,10 +25,10 @@
 *
 ****************************************************************************/
 
-#ifndef _DCE2_LIST_H_
-#define _DCE2_LIST_H_
+#ifndef _DCE_LIST_H_
+#define _DCE_LIST_H_
 
-#include "dce2_utils.h"
+#include "dce_utils.h"
 
 #include "main/snort_types.h"
 

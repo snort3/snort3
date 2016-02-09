@@ -18,9 +18,11 @@
 
 // dce_smb.cc author Rashmi Pitre <rrp@cisco.com>
 
-#include "dce2_smb.h"
-#include "dce2_smb_module.h"
-#include "dce2_list.h"
+#include "dce_smb.h"
+#include "dce_smb_paf.h"
+#include "dce_smb_module.h"
+#include "dce_list.h"
+#include "main/snort_debug.h"
 
 THREAD_LOCAL dce2SmbStats dce2_smb_stats;
 
@@ -45,6 +47,16 @@ THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_file_api;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_fingerprint;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_negotiate;
 
+unsigned Dce2SmbFlowData::flow_id = 0;
+
+DCE2_SmbSsnData* get_dce2_smb_session_data(Flow* flow)
+{
+    Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_application_data(
+        Dce2SmbFlowData::flow_id);
+
+    return fd ? &fd->dce2_smb_session : nullptr;
+}
+
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -57,6 +69,10 @@ public:
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;
+    StreamSplitter* get_splitter(bool c2s) override
+    {
+        return new Dce2SmbSplitter(c2s);
+    }
 
 private:
     dce2SmbProtoConf config;
@@ -82,7 +98,17 @@ void Dce2Smb::show(SnortConfig*)
 
 void Dce2Smb::eval(Packet* p)
 {
-    UNUSED(p);
+    DCE2_SmbSsnData* dce2_sess = get_dce2_smb_session_data(p->flow);
+
+    if (dce2_sess == nullptr)
+    {
+        /*Check if it is a DCE2 over SMB packet*/
+
+        if (DCE2_SmbAutodetect(p))
+        {
+            DebugMessage(DEBUG_DCE_SMB, "DCE over SMB packet detected\n");
+        }
+    }
 }
 
 //-------------------------------------------------------------------------

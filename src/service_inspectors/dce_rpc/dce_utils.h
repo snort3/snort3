@@ -17,8 +17,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef _DCE2_UTILS_H_
-#define _DCE2_UTILS_H_
+#ifndef _DCE_UTILS_H_
+#define _DCE_UTILS_H_
 
 #include <string.h>
 #include <ctype.h>

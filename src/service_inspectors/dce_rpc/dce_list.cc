@@ -25,8 +25,8 @@
  *
  ****************************************************************************/
 
-#include "dce2_list.h"
-#include "dce2_utils.h"
+#include "dce_list.h"
+#include "dce_utils.h"
 
 #include "log/messages.h"
 #include "utils/util.h"

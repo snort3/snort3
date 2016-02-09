@@ -16,12 +16,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-//dce2_tcp.h author Rashmi Pitre <rrp@cisco.com>
+//dce_tcp.h author Rashmi Pitre <rrp@cisco.com>
 // based on work by Todd Wease
 
-#ifndef DCE2_TCP_H
-#define DCE2_TCP_H
+#ifndef DCE_TCP_H
+#define DCE_TCP_H
 
+#include "dce_co.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
 #include "framework/counts.h"
@@ -84,6 +85,54 @@ extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_seg;
 extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_frag;
 extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_reass;
 extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_ctx;
+
+static inline bool DCE2_TcpAutodetect(Packet* p)
+{
+    if (p->dsize >= sizeof(DceRpcCoHdr))
+    {
+        DceRpcCoHdr* co_hdr = (DceRpcCoHdr*)p->data;
+
+        if ((DceRpcCoVersMaj(co_hdr) == DCERPC_PROTO_MAJOR_VERS__5)
+            && (DceRpcCoVersMin(co_hdr) == DCERPC_PROTO_MINOR_VERS__0)
+            && ((p->from_client()
+            && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND)
+            || (p->from_server()
+            && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND_ACK))
+            && (DceRpcCoFragLen(co_hdr) >= sizeof(DceRpcCoHdr)))
+        {
+            return true;
+        }
+    }
+    else if ((*p->data == DCERPC_PROTO_MAJOR_VERS__5) && p->from_client())
+    {
+        return true;
+    }
+
+    return false;
+}
+
+struct DCE2_TcpSsnData
+{
+    DCE2_SsnData sd;  // This member must be first
+    // FIXIT-M add all the remaining fields
+};
+
+class Dce2TcpFlowData : public FlowData
+{
+public:
+    Dce2TcpFlowData();
+
+    static void init()
+    {
+        flow_id = FlowData::get_flow_id();
+    }
+
+public:
+    static unsigned flow_id;
+    DCE2_TcpSsnData dce2_tcp_session;
+};
+
+DCE2_TcpSsnData* get_dce2_tcp_session_data(Flow*);
 
 #endif
 

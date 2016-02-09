@@ -16,11 +16,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// dce2_tcp.cc author Rashmi Pitre <rrp@cisco.com>
+// dce_tcp.cc author Rashmi Pitre <rrp@cisco.com>
 // based on work by Todd Wease
 
-#include "dce2_tcp.h"
-#include "dce2_tcp_module.h"
+#include "dce_tcp.h"
+#include "dce_tcp_paf.h"
+#include "dce_tcp_module.h"
+#include "main/snort_debug.h"
 
 THREAD_LOCAL dce2TcpStats dce2_tcp_stats;
 
@@ -35,6 +37,16 @@ THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_frag;
 THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_reass;
 THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_ctx;
 
+unsigned Dce2TcpFlowData::flow_id = 0;
+
+DCE2_TcpSsnData* get_dce2_tcp_session_data(Flow* flow)
+{
+    Dce2TcpFlowData* fd = (Dce2TcpFlowData*)flow->get_application_data(
+        Dce2TcpFlowData::flow_id);
+
+    return fd ? &fd->dce2_tcp_session : nullptr;
+}
+
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -46,6 +58,10 @@ public:
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;
+    StreamSplitter* get_splitter(bool c2s) override
+    {
+        return new Dce2TcpSplitter(c2s);
+    }
 
 private:
     dce2TcpProtoConf config;
@@ -63,7 +79,18 @@ void Dce2Tcp::show(SnortConfig*)
 
 void Dce2Tcp::eval(Packet* p)
 {
-    UNUSED(p);
+    DCE2_TcpSsnData* dce2_sess = get_dce2_tcp_session_data(p->flow);
+
+    if (dce2_sess == nullptr)
+    {
+        /*Check if it is a DCE2 over TCP packet*/
+       
+        if (DCE2_TcpAutodetect(p))
+        {
+            DebugMessage(DEBUG_DCE_TCP, "DCE over TCP packet detected\n");
+        }
+        
+    }
 }
 
 //-------------------------------------------------------------------------
