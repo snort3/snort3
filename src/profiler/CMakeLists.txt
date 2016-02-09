@@ -1,6 +1,6 @@
 set ( PROFILER_INCLUDES
     memory_defs.h
-    memory_manager.h
+    memory_context.h
     memory_profiler_defs.h
     profiler.h
     profiler_defs.h
@@ -10,7 +10,7 @@ set ( PROFILER_INCLUDES
 
 set ( PROFILER_SOURCES
     active_context.h
-    memory_manager.cc
+    memory_context.cc
     memory_profiler.cc
     memory_profiler.h
     profiler.cc

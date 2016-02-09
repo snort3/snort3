@@ -31,7 +31,7 @@
 #include "main/snort_config.h"
 
 #include "profiler_nodes.h"
-#include "memory_manager.h"
+#include "memory_context.h"
 #include "memory_profiler.h"
 #include "time_profiler.h"
 #include "rule_profiler.h"
@@ -73,7 +73,7 @@ void Profiler::register_module(const char* n, const char* pn, get_profile_stats_
 void Profiler::consolidate_stats()
 {
     s_profiler_nodes.accumulate_nodes();
-    Memory::consolidate_fallthrough_stats();
+    MemoryProfiler::consolidate_fallthrough_stats();
 }
 
 void Profiler::reset_stats()

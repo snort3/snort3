@@ -4,8 +4,9 @@ x_includedir = $(pkgincludedir)/profiler
 
 x_include_HEADERS = \
 memory_defs.h \
-memory_manager.h \
+memory_context.h \
 memory_profiler_defs.h \
+memory_profiler_active_context.h \
 profiler.h \
 profiler_defs.h \
 rule_profiler_defs.h \
@@ -13,7 +14,7 @@ time_profiler_defs.h
 
 libprofiler_a_SOURCES = \
 active_context.h \
-memory_manager.cc \
+memory_context.cc \
 memory_profiler.cc \
 memory_profiler.h \
 profiler.cc \

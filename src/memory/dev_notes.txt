@@ -1,0 +1,4 @@
+TODO:
+
+- Add logging as default behavior for Cap/Tracker
+- Remove Memory Managment from profiler

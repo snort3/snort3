@@ -22,7 +22,7 @@
 #define MEMORY_DEFS_H
 
 #include "main/snort_types.h"
-#include "memory_manager.h"
+#include "memory_context.h"
 
 struct MemoryStats
 {
@@ -38,6 +38,14 @@ struct MemoryStats
     { ++deallocs; deallocated += n; }
 
     void reset();
+
+    uint64_t used() const
+    {
+        if ( allocated < deallocated )
+            return 0;
+
+        return allocated - deallocated;
+    }
 
     operator bool() const
     { return allocs || deallocs || allocated || deallocated; }
@@ -114,7 +122,7 @@ struct CombinedMemoryStats
 
 inline void CombinedMemoryStats::update_allocs(size_t n)
 {
-    if ( Memory::runtime() )
+    if ( is_packet_thread() )
         runtime.update_allocs(n);
     else
         startup.update_allocs(n);
@@ -122,7 +130,7 @@ inline void CombinedMemoryStats::update_allocs(size_t n)
 
 inline void CombinedMemoryStats::update_deallocs(size_t n)
 {
-    if ( Memory::runtime() )
+    if ( is_packet_thread() )
         runtime.update_deallocs(n);
     else
         startup.update_deallocs(n);
@@ -161,5 +169,7 @@ struct MemoryTracker
     constexpr MemoryTracker() : stats() { }
     constexpr MemoryTracker(CombinedMemoryStats stats) : stats(stats) { }
 };
+
+using MemoryHandler = void(*)();
 
 #endif

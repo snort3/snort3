@@ -43,6 +43,7 @@
 
 static unsigned instance_max = 1;
 static THREAD_LOCAL unsigned instance_id = 0;
+static THREAD_LOCAL bool s_is_packet_thread = false;
 
 void set_instance_id(unsigned id)
 {
@@ -57,6 +58,9 @@ void set_instance_max(unsigned max)
         instance_max = std::thread::hardware_concurrency();
 }
 
+void set_packet_thread(bool yesno)
+{ s_is_packet_thread = yesno; }
+
 unsigned get_instance_id()
 {
     return instance_id;
@@ -66,6 +70,9 @@ unsigned get_instance_max()
 {
     return instance_max;
 }
+
+bool is_packet_thread()
+{ return s_is_packet_thread; }
 
 bool set_cpu_affinity(SnortConfig* sc, const std::string& str, int cpu)
 {

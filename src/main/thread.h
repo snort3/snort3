@@ -38,6 +38,7 @@
 
 void set_instance_id(unsigned);
 void set_instance_max(unsigned);
+void set_packet_thread(bool);
 
 struct SnortConfig;
 bool set_cpu_affinity(SnortConfig*, const std::string&, int cpu);
@@ -46,6 +47,7 @@ void pin_thread_to_cpu(const char* source);
 
 SO_PUBLIC unsigned get_instance_id();
 SO_PUBLIC unsigned get_instance_max();
+SO_PUBLIC bool is_packet_thread();
 
 // all modules that use packet thread files should call this function to
 // get a packet thread specific path.  name should be the module name or

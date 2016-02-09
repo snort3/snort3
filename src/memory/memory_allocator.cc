@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,41 +16,19 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// memory_manager.h author Joel Cornett <jocornet@cisco.com>
+// memory_allocator.cc author Joel Cornett <jocornet@cisco.com>
 
-#ifndef MEMORY_MANAGER_H
-#define MEMORY_MANAGER_H
+#include "memory_allocator.h"
 
-#include "main/thread.h"
+#include <cstdlib>
 
-struct CombinedMemoryStats;
-
-class Memory
+namespace memory
 {
-public:
-    static void set_runtime(bool yesno)
-    { is_runtime = yesno; }
 
-    static bool runtime()
-    { return is_runtime; }
+void* DefaultAllocator::allocate(size_t n)
+{ return malloc(n); }
 
-    // global accumulated stats
-    static const CombinedMemoryStats& get_fallthrough_stats();
+void DefaultAllocator::deallocate(void* p)
+{ free(p); }
 
-    // thread local call
-    static void consolidate_fallthrough_stats();
-
-private:
-    static THREAD_LOCAL bool is_runtime;
-};
-
-struct RuntimeContext
-{
-    RuntimeContext()
-    { Memory::set_runtime(true); }
-
-    ~RuntimeContext()
-    { Memory::set_runtime(false); }
-};
-
-#endif
+} // namespace memory

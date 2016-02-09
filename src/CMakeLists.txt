@@ -105,6 +105,7 @@ target_link_libraries( snort
     stream_user
     stream_file
     file_api
+    memory
     mime
     http_inspect
     imap
@@ -155,6 +156,7 @@ add_subdirectory(hash)
 add_subdirectory(log)
 add_subdirectory(main)
 add_subdirectory(managers)
+add_subdirectory(memory)
 add_subdirectory(mime)
 add_subdirectory(packet_io)
 add_subdirectory(parser)
