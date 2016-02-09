@@ -94,7 +94,7 @@ public:
     { return sw.active(); }
 
 protected:
-    Stopwatch sw;
+    Stopwatch<hr_clock> sw;
     bool finished;
 };
 

@@ -29,4 +29,14 @@ using hr_time = hr_clock::time_point;
 inline constexpr hr_duration operator "" _ticks (unsigned long long int v)
 { return hr_duration(v); }
 
+template<typename Clock,
+    typename Duration = typename Clock::duration,
+    typename TimePoint = typename Clock::time_point,
+    typename Rep = typename Clock::rep>
+struct ClockTraits
+{
+    using duration = Duration;
+    using time_point = TimePoint;
+    using rep = Rep;
+};
 #endif

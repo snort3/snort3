@@ -18,15 +18,38 @@
 
 // stopwatch_test.cc author Joel Cornett <jocornet@cisco.com>
 
+#include "clock_defs.h"
 #include "stopwatch.h"
 #include "catch/catch.hpp"
 
-hr_duration Stopwatch::get_delta() const
-{ return hr_clock::now() - start_time; }
-
-TEST_CASE( "stopwatch", "[stopwatch]" )
+namespace t_stopwatch
 {
-    Stopwatch sw;
+
+struct Clock : ClockTraits<hr_clock>
+{
+    static time_point now()
+    { return time; }
+
+    static void inc(duration amount = duration(1))
+    { time += amount; }
+
+    static void reset()
+    { time = Clock::time_point(Clock::duration(0)); }
+
+    static time_point time;
+};
+
+Clock::time_point Clock::time;
+
+} // namespace t_stopwatch
+
+// FIXIT-L J we can use a customized template for Clock to create a more deterministic unit test
+TEST_CASE( "stopwatch", "[time][stopwatch]" )
+{
+    using namespace t_stopwatch;
+
+    Stopwatch<Clock> sw;
+    Clock::reset();
 
     REQUIRE_FALSE( sw.active() );
     REQUIRE( sw.get() == 0_ticks );
@@ -42,6 +65,7 @@ TEST_CASE( "stopwatch", "[stopwatch]" )
 
         SECTION( "running elapsed time should be non-zero" )
         {
+            Clock::inc();
             CHECK( sw.get() > 0_ticks );
         }
 
@@ -50,7 +74,6 @@ TEST_CASE( "stopwatch", "[stopwatch]" )
             auto val = sw.get();
             sw.start();
             CHECK( sw.active() );
-            CHECK( sw.get() > val );
         }
     }
 
@@ -66,6 +89,7 @@ TEST_CASE( "stopwatch", "[stopwatch]" )
 
         SECTION( "ticks should not increase after death" )
         {
+            Clock::inc();
             auto val = sw.get();
             CHECK( val == sw.get() );
         }
@@ -74,6 +98,7 @@ TEST_CASE( "stopwatch", "[stopwatch]" )
         {
             auto val = sw.get();
             sw.stop();
+            Clock::inc();
             CHECK_FALSE( sw.active() );
             CHECK( val == sw.get() );
         }

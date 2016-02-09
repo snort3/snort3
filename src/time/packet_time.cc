@@ -32,6 +32,11 @@
 #include "time/packet_time.h"
 #include "main/thread.h"
 
+#ifdef UNIT_TEST
+#include "stopwatch.h"
+#include "catch/catch.hpp"
+#endif
+
 static THREAD_LOCAL struct timeval s_recent_packet = { 0, 0 };
 static THREAD_LOCAL uint32_t s_first_packet = 0;
 
@@ -58,3 +63,6 @@ void packet_gettimeofday(struct timeval* tv)
     *tv = s_recent_packet;
 }
 
+#ifdef UNIT_TEST
+#include "stopwatch_test.cc"
+#endif

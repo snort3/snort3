@@ -20,27 +20,22 @@
 #ifndef STOPWATCH_H
 #define STOPWATCH_H
 
-#include <chrono>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "time/clock_defs.h"
-#include "main/snort_types.h"
-
+template<typename Clock>
 class Stopwatch
 {
 public:
+    using duration = typename Clock::duration;
+    using time_point = typename Clock::time_point;
+
     Stopwatch() :
-        elapsed { hr_duration::zero() }, running { false } { }
+        elapsed { duration::zero() }, running { false } { }
 
     void start()
     {
         if ( running )
             return;
 
-        start_time = hr_clock::now();
+        start_time = Clock::now();
         running = true;
     }
 
@@ -53,7 +48,7 @@ public:
         running = false;
     }
 
-    hr_duration get() const
+    duration get() const
     {
         if ( running )
             return elapsed + get_delta();
@@ -65,23 +60,18 @@ public:
     { return running; }
 
     void reset()
-    { running = false; elapsed = hr_duration::zero(); }
+    { running = false; elapsed = duration::zero(); }
 
     void cancel()
     { running = false; }
 
 private:
-// Dirty, dirty hack to get Catch unit test visibility
-#ifdef UNIT_TEST
-    SO_PUBLIC hr_duration get_delta() const;
-#else
-    hr_duration get_delta() const
-    { return hr_clock::now() - start_time; }
-#endif
+    duration get_delta() const
+    { return Clock::now() - start_time; }
 
-    hr_duration elapsed;
+    duration elapsed;
     bool running;
-    hr_time start_time;
+    time_point start_time;
 };
 
 #endif
