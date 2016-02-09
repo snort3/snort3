@@ -51,6 +51,9 @@ THREAD_LOCAL PacketCount pc;
 THREAD_LOCAL AuxCount aux_counts;
 ProcessCount proc_stats;
 
+PegCount get_packet_number()
+{ return pc.total_from_daq; }
+
 //-------------------------------------------------------------------------
 
 double CalcPct(uint64_t cnt, uint64_t total)

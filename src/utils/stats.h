@@ -84,6 +84,8 @@ extern const PegInfo daq_names[];
 extern const PegInfo pc_names[];
 extern const PegInfo proc_names[];
 
+SO_PUBLIC PegCount get_packet_number();
+
 SO_PUBLIC void LogLabel(const char*);
 SO_PUBLIC void LogValue(const char*, const char*);
 SO_PUBLIC void LogCount(const char*, uint64_t);

@@ -91,15 +91,10 @@ int PktNumOption::eval(Cursor&, Packet*)
 {
     ProfileContext profile(pkt_num_perf_stats);
 
-    int rval;
+    if ( config.eval(get_packet_number()) )
+        return DETECTION_OPTION_MATCH;
 
-    if ( config.eval(pc.total_from_daq) )
-        rval = DETECTION_OPTION_MATCH;
-
-    else
-        rval = DETECTION_OPTION_NO_MATCH;
-
-    return rval;
+    return DETECTION_OPTION_NO_MATCH;
 }
 
 //-------------------------------------------------------------------------
