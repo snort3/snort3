@@ -56,7 +56,11 @@ NHttpFlowData::~NHttpFlowData()
 #endif
     for (int k=0; k <= 1; k++)
     {
-        delete[] section_buffer[k];
+        if ((section_type[k] != SEC_BODY_CHUNK) &&
+            (section_type[k] != SEC_BODY_CL) &&
+            (section_type[k] != SEC_BODY_OLD))
+            // Body sections are reassembled in a static buffer
+            delete[] section_buffer[k];
         delete transaction[k];
         delete cutter[k];
         if (compress_stream[k] != nullptr)

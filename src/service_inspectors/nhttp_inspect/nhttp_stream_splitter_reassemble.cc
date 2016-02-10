@@ -293,6 +293,10 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
                          (session_data->section_type[source_id] == SEC_BODY_OLD);
     if (buffer == nullptr)
     {
+        // The type of buffer used is based on section type. All body sections reuse a single
+        // static buffer. Other sections use a dynamic buffer that may be saved for a while.
+        // Changes here must be mirrored below where the buffer is passed to NHttpInspect::process
+        // and in ~NHttpFlowData where the buffer will be deleted if it has not been processed.
         if (is_body)
         {
             buffer = NHttpInspect::body_buffer;
@@ -321,11 +325,11 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         const Field& send_to_detection = my_inspector->process(buffer,
             session_data->section_offset[source_id] - session_data->num_excess[source_id], flow,
             source_id, !is_body);
+        // delete[] not necessary because NHttpMsgSection is now responsible.
+        buffer = nullptr;
 
         session_data->section_offset[source_id] = 0;
 
-        // Buffers are reset to nullptr without delete[] because NHttpMsgSection holds the pointer
-        // and is responsible.
         // The detection section of a message is the first body section, unless there is no body
         // section in which case it is the headers. The detection section is always returned to the
         // framework and forwarded to detection even if it is empty. Other body sections and the
@@ -345,7 +349,6 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
                 nhttp_buf.data = (const uint8_t*)"";
                 nhttp_buf.length = 1;
             }
-            buffer = nullptr;
 #ifdef REG_TEST
             if (NHttpTestManager::use_test_output())
             {
@@ -357,7 +360,6 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             return &nhttp_buf;
         }
         my_inspector->clear(session_data, source_id);
-        buffer = nullptr;
     }
     return nullptr;
 }
