@@ -256,10 +256,10 @@ public:
     SearchEngineModule() : Module("search_engine", search_engine_help, search_engine_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
 
-    const PegInfo* get_pegs() const
+    const PegInfo* get_pegs() const override
     { return mpse_pegs; }
 
-    PegCount* get_counts() const
+    PegCount* get_counts() const override
     { return (PegCount*)&pmqs; }
 };
 
