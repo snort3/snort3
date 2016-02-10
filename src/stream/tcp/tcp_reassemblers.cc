@@ -342,7 +342,7 @@ public:
     TcpReassemblerProxy(TcpSession* session, TcpTracker* tracker, bool server) :
         TcpReassemblerFirst(session, tracker, server)
     {
-        tcp_ips_data = NORM_MODE_OFF;
+        tcp_ips_data = NORM_MODE_TEST;
     }
 
 private:

@@ -30,7 +30,6 @@
 
 NormMode mockNormMode = NORM_MODE_ON;
 bool norm_enabled = true;
-THREAD_LOCAL SFBASE sfBase;
 THREAD_LOCAL TcpStats tcpStats;
 THREAD_LOCAL void *snort_conf = nullptr;
 
@@ -70,7 +69,7 @@ uint8_t  TcpSession::missing_in_reassembled(unsigned char){ return 0; }
 class TcpSessionMock : public TcpSession
 {
 public:
-    TcpSessionMock( Flow* flow ) : TcpSession( flow ) { }
+    TcpSessionMock( Flow* flow ) : TcpSession( flow ), client( true ), server( false ) { }
     ~TcpSessionMock( void ) { }
 
     TcpTracker client;
@@ -96,7 +95,7 @@ NormMode Normalize_GetMode(NormFlags )
     if( norm_enabled )
         return mockNormMode;
     else
-        return NORM_MODE_OFF;
+        return NORM_MODE_TEST;
 }
 
 TEST_GROUP(tcp_normalizers)
@@ -121,8 +120,8 @@ TEST(tcp_normalizers, os_policy)
 
     for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
     {
-        TcpNormalizer* normalizer = TcpNormalizerFactory::create( os_policy, session,
-            &session->client, &session->server );
+        TcpNormalizer* normalizer = TcpNormalizerFactory::create( session, os_policy,
+            session->client, session->server );
         CHECK( normalizer->get_os_policy() == os_policy );
 
         delete normalizer;
@@ -140,8 +139,8 @@ TEST(tcp_normalizers, paws_fudge_config)
 
     for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
     {
-        TcpNormalizer* normalizer = TcpNormalizerFactory::create( os_policy, session,
-            &session->client, &session->server );
+        TcpNormalizer* normalizer = TcpNormalizerFactory::create( session, os_policy,
+            session->client, session->server );
 
         switch ( os_policy )
         {
@@ -169,8 +168,8 @@ TEST(tcp_normalizers, paws_drop_zero_ts_config)
 
     for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
     {
-        TcpNormalizer* normalizer = TcpNormalizerFactory::create( os_policy, session,
-            &session->client, &session->server );
+        TcpNormalizer* normalizer = TcpNormalizerFactory::create( session, os_policy,
+            session->client, session->server );
 
         switch ( os_policy )
         {
@@ -203,8 +202,8 @@ TEST(tcp_normalizers, norm_options_enabled)
     norm_enabled = true;
     for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
     {
-        TcpNormalizer* normalizer = TcpNormalizerFactory::create( os_policy, session,
-            &session->client, &session->server );
+        TcpNormalizer* normalizer = TcpNormalizerFactory::create( session, os_policy,
+            session->client, session->server );
 
         CHECK( normalizer->get_opt_block() == NORM_MODE_ON );
         CHECK( normalizer->get_strip_ecn() == NORM_MODE_ON );
@@ -221,16 +220,16 @@ TEST(tcp_normalizers, norm_options_enabled)
     norm_enabled = false;
     for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
     {
-        TcpNormalizer* normalizer = TcpNormalizerFactory::create( os_policy, session,
-            &session->client, &session->server );
+        TcpNormalizer* normalizer = TcpNormalizerFactory::create( session, os_policy, 
+            session->client, session->server );
 
-        CHECK( normalizer->get_opt_block() == NORM_MODE_OFF );
-        CHECK( normalizer->get_strip_ecn() == NORM_MODE_OFF );
-        CHECK( normalizer->get_tcp_block() == NORM_MODE_OFF );
-        CHECK( normalizer->get_trim_syn() == NORM_MODE_OFF );
-        CHECK( normalizer->get_trim_rst() == NORM_MODE_OFF );
-        CHECK( normalizer->get_trim_mss() == NORM_MODE_OFF );
-        CHECK( normalizer->get_trim_win() == NORM_MODE_OFF );
+        CHECK( normalizer->get_opt_block() == NORM_MODE_TEST );
+        CHECK( normalizer->get_strip_ecn() == NORM_MODE_TEST );
+        CHECK( normalizer->get_tcp_block() == NORM_MODE_TEST );
+        CHECK( normalizer->get_trim_syn() == NORM_MODE_TEST );
+        CHECK( normalizer->get_trim_rst() == NORM_MODE_TEST );
+        CHECK( normalizer->get_trim_mss() == NORM_MODE_TEST );
+        CHECK( normalizer->get_trim_win() == NORM_MODE_TEST );
         CHECK( !normalizer->is_tcp_ips_enabled() );
         delete normalizer;
     }

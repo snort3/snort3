@@ -922,7 +922,7 @@ void TcpSession::handle_data_on_syn(TcpSegmentDescriptor& tsd)
         // remove data on SYN
         listener->normalizer->trim_syn_payload(tsd);
 
-        if (Normalize_GetMode(NORM_TCP_TRIM_SYN) == NORM_MODE_OFF)
+        if (Normalize_GetMode(NORM_TCP_TRIM_SYN) != NORM_MODE_ON)
         {
             DebugMessage(DEBUG_STREAM_STATE, "Got data on SYN packet, not processing it\n");
             tel.set_tcp_event(EVENT_DATA_ON_SYN);

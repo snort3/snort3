@@ -64,9 +64,8 @@ enum NormFlags
 
 enum NormMode : int8_t
 {
-    NORM_MODE_OFF,
-    NORM_MODE_TEST,
     NORM_MODE_ON,
+    NORM_MODE_TEST,
     NORM_MODE_MAX
 };
 

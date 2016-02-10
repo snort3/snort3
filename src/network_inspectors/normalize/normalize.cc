@@ -228,8 +228,7 @@ NormMode Normalize_GetMode(NormFlags nf)
         else if ( mode == POLICY_MODE__INLINE_TEST )
             return NORM_MODE_TEST;
     }
-
-    return NORM_MODE_OFF;
+    return NORM_MODE_TEST;
 }
 
 void Normalizer::show(SnortConfig* sc)
