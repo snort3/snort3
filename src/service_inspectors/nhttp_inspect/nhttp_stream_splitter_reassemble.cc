@@ -273,8 +273,6 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             {
                 if (session_data->type_expected[source_id] == SEC_BODY_CL)
                 {
-                    session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ?
-                        SEC_REQUEST : SEC_STATUS;
                     session_data->half_reset(source_id);
                 }
                 else if (session_data->type_expected[source_id] == SEC_BODY_CHUNK)

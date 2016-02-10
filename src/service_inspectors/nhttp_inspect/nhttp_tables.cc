@@ -325,6 +325,8 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_CHUNK_WHITESPACE,           "White space following chunk length" },
     { EVENT_GZIP_OVERRUN,               "Excessive gzip compression" },
     { EVENT_GZIP_FAILURE,               "Gzip decompression failed" },
+    { EVENT_ZERO_NINE_CONTINUE,         "HTTP 0.9 requested followed by another request" },
+    { EVENT_ZERO_NINE_NOT_FIRST,        "HTTP 0.9 request following a normal request" },
     { 0, nullptr }
 };
 

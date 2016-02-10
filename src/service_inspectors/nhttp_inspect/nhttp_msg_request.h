@@ -52,6 +52,7 @@ private:
     static const StrCode method_list[];
 
     void parse_start_line() override;
+    bool handle_zero_nine();
 
     Field method;
     NHttpUri* uri = nullptr;

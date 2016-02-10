@@ -41,12 +41,19 @@ NHttpMsgRequest::NHttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size,
 
 void NHttpMsgRequest::parse_start_line()
 {
+    // Status line: "HTTP/X.Y KLM <text>" where X, Y, K, L, and M are decimal digits
     // Check the version field
+    // FIXIT-L An idea would be to move this test into the cutter and abort the scan() instead of
+    // allowing it to come here.
     if ((start_line.length < 10) || !is_sp_tab[start_line.start[start_line.length-9]] ||
          memcmp(start_line.start + start_line.length - 8, "HTTP/", 5))
     {
-        infractions += INF_BAD_REQ_LINE;
-        events.create_event(EVENT_LOSS_OF_SYNC);
+        if (!handle_zero_nine())
+        {
+            // Just a plain old bad request
+            infractions += INF_BAD_REQ_LINE;
+            events.create_event(EVENT_LOSS_OF_SYNC);
+        }
         return;
     }
 
@@ -85,6 +92,41 @@ void NHttpMsgRequest::parse_start_line()
     }
 }
 
+bool NHttpMsgRequest::handle_zero_nine()
+{
+    // 0.9 request line is supposed to be "GET <URI>\r\n"
+    if ((start_line.length >= 3) &&
+        !memcmp(start_line.start, "GET", 3) &&
+        ((start_line.length == 3) || is_sp_tab[start_line.start[3]]))
+    {
+        infractions += INF_ZERO_NINE_REQ;
+        events.create_event(EVENT_SIMPLE_REQUEST);
+        method.set(3, start_line.start);
+        method_id = METH_GET;
+        version_id = VERS_0_9;
+
+        // Eliminate the clump of whitespace following GET and possible clump of whitespace at the
+        // end and whatever is left is assumed to be the URI
+        int32_t uri_begin;
+        for (uri_begin = 4; (uri_begin < start_line.length) &&
+            is_sp_tab[start_line.start[uri_begin]]; uri_begin++);
+        if (uri_begin < start_line.length)
+        {
+            int32_t uri_end;
+            for (uri_end = start_line.length - 1; is_sp_tab[start_line.start[uri_end]]; uri_end--);
+            uri = new NHttpUri(start_line.start + uri_begin, uri_end - uri_begin + 1, method_id,
+                infractions, events);
+        }
+        else
+        {
+            infractions += INF_NO_URI;
+            events.create_event(EVENT_URI_MISSING);
+        }
+        return true;
+    }
+    return false;
+}
+
 const Field& NHttpMsgRequest::get_uri()
 {
     if (uri != nullptr)
@@ -108,21 +150,26 @@ void NHttpMsgRequest::gen_events()
     if (infractions & INF_BAD_REQ_LINE)
         return;
 
+    const bool zero_nine = infractions & INF_ZERO_NINE_REQ;
+
     if ((start_line.start[method.length] == '\t') ||
-        (start_line.start[start_line.length - 9] == '\t'))
+        (!zero_nine && (start_line.start[start_line.length - 9] == '\t')))
     {
         infractions += INF_REQUEST_TAB;
         events.create_event(EVENT_APACHE_WS);
     }
 
-    for (int k = method.length + 1; k < start_line.length - 9; k++)
+    // Look for white space issues in and around the URI.
+    // Supposed to be <method><space><URI><space><version> or 0.9 format GET<space><URI>
+    const int32_t version_start = !zero_nine ? start_line.length - 9 : start_line.length;
+    for (int32_t k = method.length + 1; k < version_start; k++)
     {
         if (is_sp_tab[start_line.start[k]])
         {
             if (uri && (uri->get_uri().start <= start_line.start + k) &&
                        (start_line.start + k < uri->get_uri().start + uri->get_uri().length))
             {
-                // inside the URI
+                // white space inside the URI is not allowed
                 if (start_line.start[k] == ' ')
                 {
                     infractions += INF_URI_SPACE;
@@ -131,10 +178,12 @@ void NHttpMsgRequest::gen_events()
             }
             else
             {
+                // extra white space before or after the URI
                 infractions += INF_REQUEST_WS;
                 events.create_event(EVENT_IMPROPER_WS);
                 if (start_line.start[k] == '\t')
                 {
+                    // which is also a tab
                     infractions += INF_REQUEST_TAB;
                     events.create_event(EVENT_APACHE_WS);
                 }
@@ -144,15 +193,40 @@ void NHttpMsgRequest::gen_events()
 
     if (method_id == METH__OTHER)
         events.create_event(EVENT_UNKNOWN_METHOD);
+
+    if (session_data->zero_nine_expected != 0)
+    {
+        // Previous 0.9 request on this connection should have been the last request message
+        infractions += INF_ZERO_NINE_CONTINUE;
+        events.create_event(EVENT_ZERO_NINE_CONTINUE);
+    }
+    else if (zero_nine && (msg_num != 1))
+    {
+        // Switched to 0.9 request after previously sending non-0.9 request on this connection
+        infractions += INF_ZERO_NINE_NOT_FIRST;
+        events.create_event(EVENT_ZERO_NINE_NOT_FIRST);
+    }
 }
 
 void NHttpMsgRequest::update_flow()
 {
-    // The following logic to determine body type is by no means the last word on this topic.
     if (infractions & INF_BAD_REQ_LINE)
     {
-        session_data->type_expected[source_id] = SEC_ABORT;
         session_data->half_reset(source_id);
+        session_data->type_expected[source_id] = SEC_ABORT;
+    }
+    else if (infractions & INF_ZERO_NINE_REQ)
+    {
+        session_data->half_reset(source_id);
+        // There can only be one 0.9 response per connection because it ends the S2C connection. Do
+        // not allow a pipelined request to overwrite a previous 0.9 setup.
+        if (session_data->zero_nine_expected == 0)
+        {
+            // FIXIT-L Add a configuration option to not do this. This would support an HTTP server
+            // that responds to a 0.9 GET request with a full-blown 1.0 or 1.1 response with status
+            // line and headers.
+            session_data->zero_nine_expected = msg_num;
+        }
     }
     else
     {
@@ -169,7 +243,7 @@ void NHttpMsgRequest::update_flow()
 
 void NHttpMsgRequest::print_section(FILE* output)
 {
-    NHttpMsgSection::print_message_title(output, "request line");
+    NHttpMsgSection::print_section_title(output, "request line");
     fprintf(output, "Version Id: %d\n", version_id);
     fprintf(output, "Method Id: %d\n", method_id);
     if (uri != nullptr)
@@ -199,7 +273,7 @@ void NHttpMsgRequest::print_section(FILE* output)
         NHttpApi::classic_buffers[NHTTP_BUFFER_VERSION-1]);
     get_classic_buffer(NHTTP_BUFFER_RAW_REQUEST, 0, 0).print(output,
         NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_REQUEST-1]);
-    NHttpMsgSection::print_message_wrapup(output);
+    NHttpMsgSection::print_section_wrapup(output);
 }
 
 #endif

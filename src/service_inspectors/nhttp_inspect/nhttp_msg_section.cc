@@ -40,6 +40,7 @@ NHttpMsgSection::NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     session_data(session_data_),
     source_id(source_id_),
     flow(flow_),
+    msg_num(session_data->expected_msg_num[source_id]),
     params(params_),
     transaction(NHttpTransaction::attach_my_transaction(session_data, source_id)),
     tcp_close(session_data->tcp_close[source_id]),
@@ -209,13 +210,13 @@ const Field& NHttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, u
 
 #ifdef REG_TEST
 
-void NHttpMsgSection::print_message_title(FILE* output, const char* title) const
+void NHttpMsgSection::print_section_title(FILE* output, const char* title) const
 {
-    fprintf(output, "HTTP message %s:\n", title);
+    fprintf(output, "HTTP message %" PRIu64 " %s:\n", msg_num, title);
     msg_text.print(output, "Input");
 }
 
-void NHttpMsgSection::print_message_wrapup(FILE* output)
+void NHttpMsgSection::print_section_wrapup(FILE* output) const
 {
     fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 ", Events: %016" PRIx64 " %016"
         PRIx64 ", TCP Close: %s\n\n", infractions.get_raw2(), infractions.get_raw(),

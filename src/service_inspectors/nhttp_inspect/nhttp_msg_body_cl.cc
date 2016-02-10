@@ -45,8 +45,6 @@ void NHttpMsgBodyCl::update_flow()
     else
     {
         // End of message
-        session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST :
-            SEC_STATUS;
         session_data->half_reset(source_id);
     }
     session_data->section_type[source_id] = SEC__NOT_COMPUTE;
@@ -55,7 +53,7 @@ void NHttpMsgBodyCl::update_flow()
 #ifdef REG_TEST
 void NHttpMsgBodyCl::print_section(FILE* output)
 {
-    NHttpMsgSection::print_message_title(output, "Content-Length body");
+    NHttpMsgSection::print_section_title(output, "Content-Length body");
     fprintf(output, "Content-Length %" PRIi64 ", octets seen %" PRIi64 "\n", data_length,
         body_octets);
     print_body_section(output);

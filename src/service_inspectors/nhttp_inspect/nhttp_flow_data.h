@@ -37,7 +37,6 @@ class NHttpFlowData : public FlowData
 public:
     NHttpFlowData();
     ~NHttpFlowData();
-    void show(FILE* out_file) const;
     static unsigned nhttp_flow_id;
     static void init() { nhttp_flow_id = FlowData::get_flow_id(); }
 
@@ -93,6 +92,7 @@ private:
     uint32_t section_size_max[2] = { 0, 0 };
     NHttpEnums::CompressId compression[2] = { NHttpEnums::CMP_NONE, NHttpEnums::CMP_NONE };
     z_stream* compress_stream[2] = { nullptr, nullptr };
+    uint64_t zero_nine_expected = 0;
 
     // *** Inspector's internal data about the current message
     NHttpEnums::VersionId version_id[2] = { NHttpEnums::VERS__NOT_PRESENT,
@@ -104,6 +104,7 @@ private:
     int64_t detect_depth_remaining[2] = { NHttpEnums::STAT_NOT_PRESENT,
         NHttpEnums::STAT_NOT_PRESENT };
     MimeSession* mime_state = nullptr;  // SRC_CLIENT only
+    uint64_t expected_msg_num[2] = { 1, 1 };
 
     // number of user data octets seen so far (regular body or chunks)
     int64_t body_octets[2] = { NHttpEnums::STAT_NOT_PRESENT, NHttpEnums::STAT_NOT_PRESENT };
@@ -123,6 +124,8 @@ private:
     void delete_pipeline();
 
 #ifdef REG_TEST
+    void show(FILE* out_file) const;
+
     static uint64_t instance_count;
     uint64_t seq_num;
 #endif

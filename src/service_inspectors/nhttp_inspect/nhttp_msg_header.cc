@@ -54,8 +54,8 @@ void NHttpMsgHeader::update_flow()
     // should not.
     if (tcp_close)
     {
-        session_data->type_expected[source_id] = SEC_ABORT;
         session_data->half_reset(source_id);
+        session_data->type_expected[source_id] = SEC_ABORT;
         return;
     }
 
@@ -65,7 +65,6 @@ void NHttpMsgHeader::update_flow()
         // No body allowed by RFC for these response codes
         // FIXIT-M inspect for Content-Length and Transfer-Encoding headers which should not be
         // present
-        session_data->type_expected[SRC_SERVER] = SEC_STATUS;
         session_data->half_reset(SRC_SERVER);
         return;
     }
@@ -74,7 +73,6 @@ void NHttpMsgHeader::update_flow()
         (transaction->get_request()->get_method_id() == METH_HEAD))
     {
         // No body allowed by RFC for response to HEAD method
-        session_data->type_expected[SRC_SERVER] = SEC_STATUS;
         session_data->half_reset(SRC_SERVER);
         return;
     }
@@ -110,8 +108,6 @@ void NHttpMsgHeader::update_flow()
         else if (content_length == 0)
         {
             // No body
-            session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST :
-                SEC_STATUS;
             session_data->half_reset(source_id);
             return;
         }
@@ -125,7 +121,6 @@ void NHttpMsgHeader::update_flow()
     if (source_id == SRC_CLIENT)
     {
         // No body
-        session_data->type_expected[source_id] = SEC_REQUEST;
         session_data->half_reset(source_id);
         return;
     }
@@ -227,7 +222,7 @@ void NHttpMsgHeader::setup_decompression()
 #ifdef REG_TEST
 void NHttpMsgHeader::print_section(FILE* output)
 {
-    NHttpMsgSection::print_message_title(output, "header");
+    NHttpMsgSection::print_section_title(output, "header");
     NHttpMsgHeadShared::print_headers(output);
     get_classic_buffer(NHTTP_BUFFER_COOKIE, 0, 0).print(output,
         NHttpApi::classic_buffers[NHTTP_BUFFER_COOKIE-1]);
@@ -237,7 +232,7 @@ void NHttpMsgHeader::print_section(FILE* output)
         NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_COOKIE-1]);
     get_classic_buffer(NHTTP_BUFFER_RAW_HEADER, 0, 0).print(output,
         NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_HEADER-1]);
-    NHttpMsgSection::print_message_wrapup(output);
+    NHttpMsgSection::print_section_wrapup(output);
 }
 #endif
 

@@ -47,7 +47,6 @@ public:
 protected:
     // number of octets processed by previous cut() calls that returned NOTFOUND
     uint32_t octets_seen = 0;
-
     uint32_t num_crlf = 0;
     uint32_t num_flush = 0;
 };

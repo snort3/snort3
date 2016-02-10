@@ -151,7 +151,7 @@ void NHttpMsgBody::print_body_section(FILE* output)
     {
         Field(g_file_data.len, g_file_data.data).print(output, "file_data");
     }
-    NHttpMsgSection::print_message_wrapup(output);
+    NHttpMsgSection::print_section_wrapup(output);
 }
 #endif
 

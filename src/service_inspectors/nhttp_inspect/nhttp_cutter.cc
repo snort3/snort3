@@ -62,6 +62,9 @@ ScanResult NHttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
         // reset to zero
         if (!validated)
         {
+            // The purpose of validate() is to quickly and efficiently dispose of obviously wrong
+            // bindings. Passing is no guarentee that the connection is really HTTP, but failing
+            // makes it clear that it isn't.
             switch (validate(buffer[k]))
             {
             case V_GOOD:
@@ -98,6 +101,13 @@ ScanResult NHttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
 
 NHttpStartCutter::ValidationResult NHttpRequestCutter::validate(uint8_t octet)
 {
+    // Request line must begin with a method. There is no list of all possible methods because
+    // extension is allowed, so there is no absolute way to tell whether something is a method.
+    // Instead we verify that all its characters are drawn from the RFC list of valid token
+    // characters, that it is followed by a whitespace character, and that it is at most 80
+    // characters long. There is nothing special or specified about 80. It is just more than any
+    // reasonable method name would be.
+
     static const int max_method_length = 80;
 
     if ((octet == ' ') || (octet == '\t'))
@@ -109,6 +119,7 @@ NHttpStartCutter::ValidationResult NHttpRequestCutter::validate(uint8_t octet)
 
 NHttpStartCutter::ValidationResult NHttpStatusCutter::validate(uint8_t octet)
 {
+    // Status line must begin "HTTP/"
     static const int match_size = 5;
     static const uint8_t match[match_size] = { 'H', 'T', 'T', 'P', '/' };
 

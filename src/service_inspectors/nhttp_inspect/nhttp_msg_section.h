@@ -69,6 +69,7 @@ protected:
     NHttpFlowData* const session_data;
     const NHttpEnums::SourceId source_id;
     Flow* const flow;
+    uint64_t msg_num;
     const NHttpParaList* const params;
     NHttpTransaction* const transaction;
     const bool tcp_close;
@@ -83,8 +84,8 @@ protected:
     void update_depth() const;
     static const Field& classic_normalize(const Field& raw, Field& norm, bool& norm_alloc);
 #ifdef REG_TEST
-    void print_message_title(FILE* output, const char* title) const;
-    void print_message_wrapup(FILE* output);
+    void print_section_title(FILE* output, const char* title) const;
+    void print_section_wrapup(FILE* output) const;
 #endif
 
 private:

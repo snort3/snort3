@@ -147,11 +147,10 @@ void NHttpMsgStatus::gen_events()
 
 void NHttpMsgStatus::update_flow()
 {
-    // The following logic to determine body type is by no means the last word on this topic.
     if (infractions & INF_BAD_STAT_LINE)
     {
-        session_data->type_expected[source_id] = SEC_ABORT;
         session_data->half_reset(source_id);
+        session_data->type_expected[source_id] = SEC_ABORT;
     }
     else
     {
@@ -167,7 +166,7 @@ void NHttpMsgStatus::update_flow()
 #ifdef REG_TEST
 void NHttpMsgStatus::print_section(FILE* output)
 {
-    NHttpMsgSection::print_message_title(output, "status line");
+    NHttpMsgSection::print_section_title(output, "status line");
     fprintf(output, "Version Id: %d\n", version_id);
     fprintf(output, "Status Code Num: %d\n", status_code_num);
     reason_phrase.print(output, "Reason Phrase");
@@ -179,7 +178,7 @@ void NHttpMsgStatus::print_section(FILE* output)
         NHttpApi::classic_buffers[NHTTP_BUFFER_VERSION-1]);
     get_classic_buffer(NHTTP_BUFFER_RAW_STATUS, 0, 0).print(output,
         NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_STATUS-1]);
-    NHttpMsgSection::print_message_wrapup(output);
+    NHttpMsgSection::print_section_wrapup(output);
 }
 #endif
 

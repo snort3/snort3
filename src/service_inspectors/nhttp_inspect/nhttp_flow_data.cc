@@ -104,6 +104,8 @@ void NHttpFlowData::half_reset(SourceId source_id)
 
     if (source_id == SRC_CLIENT)
     {
+        type_expected[SRC_CLIENT] = SEC_REQUEST;
+        expected_msg_num[SRC_CLIENT]++;
         method_id = METH__NOT_PRESENT;
         if (mime_state != nullptr)
         {
@@ -113,6 +115,8 @@ void NHttpFlowData::half_reset(SourceId source_id)
     }
     else
     {
+        type_expected[SRC_SERVER] = SEC_STATUS;
+        expected_msg_num[SRC_SERVER]++;
         status_code_num = STAT_NOT_PRESENT;
     }
 }
@@ -129,24 +133,6 @@ void NHttpFlowData::trailer_prep(SourceId source_id)
     }
     infractions[source_id].reset();
     events[source_id].reset();
-}
-
-void NHttpFlowData::show(FILE* out_file) const
-{
-    assert(out_file != nullptr);
-    fprintf(out_file, "Diagnostic output from NHttpFlowData (Client/Server):\n");
-    fprintf(out_file, "Version ID: %d/%d\n", version_id[0], version_id[1]);
-    fprintf(out_file, "Method ID: %d\n", method_id);
-    fprintf(out_file, "Status code: %d\n", status_code_num);
-    fprintf(out_file, "Type expected: %d/%d\n", type_expected[0], type_expected[1]);
-    fprintf(out_file, "Data length: %" PRIi64 "/%" PRIi64 "\n", data_length[0], data_length[1]);
-    fprintf(out_file, "Detect depth remaining: %" PRIi64 "/%" PRIi64 "\n",
-        detect_depth_remaining[0], detect_depth_remaining[1]);
-    fprintf(out_file, "File depth remaining: %" PRIi64 "/%" PRIi64 "\n", file_depth_remaining[0],
-        file_depth_remaining[1]);
-    fprintf(out_file, "Body octets: %" PRIi64 "/%" PRIi64 "\n", body_octets[0], body_octets[1]);
-    fprintf(out_file, "Pipelining: front %d back %d overflow %d underflow %d\n", pipeline_front,
-        pipeline_back, pipeline_overflow, pipeline_underflow);
 }
 
 bool NHttpFlowData::add_to_pipeline(NHttpTransaction* latest)
@@ -187,4 +173,24 @@ void NHttpFlowData::delete_pipeline()
     }
     delete[] pipeline;
 }
+
+#ifdef REG_TEST
+void NHttpFlowData::show(FILE* out_file) const
+{
+    assert(out_file != nullptr);
+    fprintf(out_file, "Diagnostic output from NHttpFlowData (Client/Server):\n");
+    fprintf(out_file, "Version ID: %d/%d\n", version_id[0], version_id[1]);
+    fprintf(out_file, "Method ID: %d\n", method_id);
+    fprintf(out_file, "Status code: %d\n", status_code_num);
+    fprintf(out_file, "Type expected: %d/%d\n", type_expected[0], type_expected[1]);
+    fprintf(out_file, "Data length: %" PRIi64 "/%" PRIi64 "\n", data_length[0], data_length[1]);
+    fprintf(out_file, "Detect depth remaining: %" PRIi64 "/%" PRIi64 "\n",
+        detect_depth_remaining[0], detect_depth_remaining[1]);
+    fprintf(out_file, "File depth remaining: %" PRIi64 "/%" PRIi64 "\n", file_depth_remaining[0],
+        file_depth_remaining[1]);
+    fprintf(out_file, "Body octets: %" PRIi64 "/%" PRIi64 "\n", body_octets[0], body_octets[1]);
+    fprintf(out_file, "Pipelining: front %d back %d overflow %d underflow %d\n", pipeline_front,
+        pipeline_back, pipeline_overflow, pipeline_underflow);
+}
+#endif
 

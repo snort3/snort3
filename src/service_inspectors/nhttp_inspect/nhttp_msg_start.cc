@@ -54,6 +54,15 @@ void NHttpMsgStart::derive_version_id()
     {
         version_id = VERS_2_0;
     }
+    else if ((version.start[5] == '0') && (version.start[7] == '9'))
+    {
+        // Real 0.9 traffic would never be labeled HTTP/0.9 because 0.9 is older than the version
+        // system. Aside from the possibility that someone might do this to make trouble,
+        // NHttpStreamSplitter::reassemble() converts 0.9 responses to a simple form of 1.0 format
+        // to allow us to process 0.9 without a lot of extra development. Such responses are
+        // labeled 0.9.
+        version_id = VERS_0_9;
+    }
     else if ((version.start[5] >= '0') && (version.start[5] <= '9') &&
         (version.start[7] >= '0') && (version.start[7] <= '9'))
     {

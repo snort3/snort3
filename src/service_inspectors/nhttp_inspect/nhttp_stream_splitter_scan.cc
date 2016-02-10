@@ -26,6 +26,7 @@
 #include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
 #include "nhttp_cutter.h"
+#include "nhttp_inspect.h"
 #include "nhttp_stream_splitter.h"
 
 using namespace NHttpEnums;
@@ -90,9 +91,9 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
     {
         flow->set_application_data(session_data = new NHttpFlowData);
     }
-    assert(session_data != nullptr);
 
-    const SectionType type = session_data->type_expected[source_id];
+    SectionType type = session_data->type_expected[source_id];
+
     if (type == SEC_ABORT)
         return StreamSplitter::ABORT;
 
@@ -119,11 +120,25 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
 
     assert(!session_data->tcp_close[source_id]);
 
+    // Check for 0.9 response message
+    if ((type == SEC_STATUS) &&
+        (session_data->expected_msg_num[SRC_SERVER] == session_data->zero_nine_expected))
+    {
+        // 0.9 response is a body that runs to connection end with no headers. NHttpInspect does
+        // not support no headers. Processing this imaginary status line and empty headers allows
+        // us to overcome this limitation and reuse the entire HTTP infrastructure.
+        type = SEC_BODY_OLD;
+        uint32_t not_used;
+        prepare_flush(session_data, &not_used, SEC_STATUS, 14, 0, 0, false, 0);
+        my_inspector->process((const uint8_t*)"HTTP/0.9 200 .", 14, flow, SRC_SERVER, false);
+        prepare_flush(session_data, &not_used, SEC_HEADER, 0, 0, 0, false, 0);
+        my_inspector->process((const uint8_t*)"", 0, flow, SRC_SERVER, false);
+    }
+
     NHttpCutter*& cutter = session_data->cutter[source_id];
     if (cutter == nullptr)
     {
         cutter = get_cutter(type, session_data);
-        assert(cutter != nullptr);
     }
     const uint32_t max_length = MAX_OCTETS - cutter->get_octets_seen();
     const ScanResult cut_result = cutter->cut(data, (length <= max_length) ? length :
