@@ -36,7 +36,5 @@ struct PatMatQStat
 
 SO_PUBLIC extern THREAD_LOCAL PatMatQStat pmqs;
 
-SO_PUBLIC void print_pat_stats(const char*, unsigned max);
-
 #endif
 

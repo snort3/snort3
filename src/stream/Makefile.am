@@ -1,5 +1,7 @@
 
-noinst_LIBRARIES = libstream.a
+noinst_LIBRARIES = \
+libstream.a \
+libstream_paf.a
 
 x_includedir = $(pkgincludedir)/stream
 
@@ -9,17 +11,20 @@ stream_api.h \
 stream_splitter.h
 
 libstream_a_SOURCES = \
-flush_bucket.cc \
-flush_bucket.h \
-paf.cc \
 stream.h \
 stream_api.cc \
 stream_inspectors.cc \
 stream_inspectors.h \
 stream_splitter.cc
 
+libstream_paf_a_SOURCES = \
+flush_bucket.cc \
+flush_bucket.h \
+paf.cc
+
 # FIXIT LIBADD here causes undefineds
 #libstream_a_LIBADD = \
+#libstream_paf_a_LIBADD = \
 #base/libstream_base.a
 #ip/libstream_ip.a
 #icmp/libstream_icmp.a

@@ -15,14 +15,17 @@ set (STREAM_INCLUDES
 )
 
 add_library( stream STATIC
-    flush_bucket.cc
-    flush_bucket.h
-    paf.cc
     stream.h
     stream_api.cc
     stream_inspectors.cc
     stream_inspectors.h
     stream_splitter.cc
+)
+
+add_library( stream_paf STATIC
+    flush_bucket.cc
+    flush_bucket.h
+    paf.cc
 )
 
 target_link_libraries( stream

@@ -40,9 +40,9 @@
 
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
-#include "utils/snort_bounds.h"
+#include "main/thread.h"
 #include "sfksearch.h"
-#include "search_engines/pat_stats.h"
+#include "utils/snort_bounds.h"
 
 static void KTrieFree(KTRIENODE* n);
 
@@ -598,7 +598,6 @@ int KTrieCompile(SnortConfig* sc, KTRIE_STRUCT* ts)
 
 void sfksearch_print_qinfo(void)
 {
-    print_pat_stats("lowmem", 0);
 }
 
 /*

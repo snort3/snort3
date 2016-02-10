@@ -57,6 +57,7 @@ using namespace std;
 #include "detection/signature.h"
 #include "filters/detection_filter.h"
 #include "filters/sfthreshold.h"
+#include "search_engines/pat_stats.h"
 #include "sfip/sf_ip.h"
 #include "stream/stream_api.h"
 #include "utils/stats.h"
@@ -238,11 +239,28 @@ static const Parameter search_engine_params[] =
 #define search_engine_help \
     "configure fast pattern matcher"
 
+THREAD_LOCAL PatMatQStat pmqs;
+
+const PegInfo mpse_pegs[] =
+{
+    { "max queued", "maximum fast pattern matches queued for further evaluation" },
+    { "total flushed", "fast pattern matches discarded due to overflow" },
+    { "total inserts", "total fast pattern hits" },
+    { "total unique", "total unique fast pattern hits" },
+    { nullptr, nullptr }
+};
+
 class SearchEngineModule : public Module
 {
 public:
     SearchEngineModule() : Module("search_engine", search_engine_help, search_engine_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    const PegInfo* get_pegs() const
+    { return mpse_pegs; }
+
+    PegCount* get_counts() const
+    { return (PegCount*)&pmqs; }
 };
 
 bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)

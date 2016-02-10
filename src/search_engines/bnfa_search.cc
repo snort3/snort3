@@ -154,7 +154,6 @@
 #include <list>
 
 #include "search_common.h"
-#include "pat_stats.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "utils/stats.h"

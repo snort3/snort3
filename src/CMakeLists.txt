@@ -104,6 +104,7 @@ target_link_libraries( snort
     stream_udp
     stream_user
     stream_file
+    stream_paf
     file_api
     memory
     mime

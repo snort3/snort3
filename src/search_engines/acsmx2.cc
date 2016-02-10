@@ -130,10 +130,10 @@
 #include "main/snort_config.h"
 #endif
 
-#include "pat_stats.h"
-#include "utils/util.h"
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
+#include "utils/stats.h"
+#include "utils/util.h"
 
 #define printf LogMessage
 
@@ -2108,9 +2108,6 @@ int acsmSearchSparseDFA(
 
 void acsmx2_print_qinfo(void)
 {
-#ifdef ACSMX2_TRACK_Q
-    print_pat_stats("acsmx2", 0);
-#endif
 }
 
 /*

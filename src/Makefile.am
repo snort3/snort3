@@ -72,6 +72,7 @@ stream/libtcp/libstream_libtcp.a \
 stream/udp/libstream_udp.a \
 stream/user/libstream_user.a \
 stream/file/libstream_file.a \
+stream/libstream_paf.a \
 file_api/libfile_api.a \
 memory/libmemory.a \
 mime/libmime.a \
