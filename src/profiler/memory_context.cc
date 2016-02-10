@@ -38,16 +38,6 @@
 #endif
 
 // -----------------------------------------------------------------------------
-// memory active context
-// -----------------------------------------------------------------------------
-
-void MemoryActiveContext::update_allocs(size_t n)
-{ get_default().update_allocs(n); }
-
-void MemoryActiveContext::update_deallocs(size_t n)
-{ get_default().update_deallocs(n); }
-
-// -----------------------------------------------------------------------------
 // static variables
 // -----------------------------------------------------------------------------
 
@@ -141,18 +131,6 @@ TEST_CASE( "active context", "[profiler][active_context]" )
     CHECK( active.is_set() );
     CHECK( active.get() == &b );
     CHECK( active.get_default() == b );
-}
-
-TEST_CASE( "memory context", "[profiler][memory]" )
-{
-    // Can't really unit test this without messing with the memory tracking
-    // CHECK( false );
-}
-
-TEST_CASE( "memory pop", "[profiler][memory]" )
-{
-    // Can't really unit test this without messing with the memory tracking
-    // CHECK( false );
 }
 
 #endif

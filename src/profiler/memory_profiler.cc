@@ -53,8 +53,6 @@ static const StatsTable::Field fields[] =
     { "allocs", 7, ' ', 0, std::ios_base::fmtflags() },
     { "used (kb)", 12, ' ', 2, std::ios_base::fmtflags() },
     { "avg/allocation", 15, ' ', 1, std::ios_base::fmtflags() },
-    { "deficit", 8, ' ', 0, std::ios_base::fmtflags() },
-    { "missing (kb)", 13, ' ', 2, std::ios_base::fmtflags() },
     { "%/caller", 10, ' ', 2, std::ios_base::fmtflags() },
     { "%/total", 9, ' ', 2, std::ios_base::fmtflags() },
     { nullptr, 0, '\0', 0, std::ios_base::fmtflags() }
@@ -71,12 +69,6 @@ struct View
 
     uint64_t total() const
     { return stats->allocated; }
-
-    int64_t deficit() const
-    { return stats->allocs - stats->deallocs; }
-
-    int64_t lost() const
-    { return stats->allocated - stats->deallocated; }
 
     double avg_alloc() const
     {
@@ -151,8 +143,6 @@ static void print_fn(StatsTable& t, const View& v)
     t << v.allocs();
     t << double(v.total()) / 1024.0;
     t << v.avg_alloc();
-    t << v.deficit();
-    t << double(v.lost()) / 1024.0;
 }
 
 } // namespace memory_stats

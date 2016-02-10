@@ -39,14 +39,6 @@ struct MemoryStats
 
     void reset();
 
-    uint64_t used() const
-    {
-        if ( allocated < deallocated )
-            return 0;
-
-        return allocated - deallocated;
-    }
-
     operator bool() const
     { return allocs || deallocs || allocated || deallocated; }
 
@@ -169,7 +161,5 @@ struct MemoryTracker
     constexpr MemoryTracker() : stats() { }
     constexpr MemoryTracker(CombinedMemoryStats stats) : stats(stats) { }
 };
-
-using MemoryHandler = void(*)();
 
 #endif

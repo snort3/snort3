@@ -27,8 +27,11 @@
 class MemoryActiveContext : public ActiveContext<MemoryTracker>
 {
 public:
-    void update_allocs(size_t);
-    void update_deallocs(size_t);
+    void update_allocs(size_t n)
+    { get_default().update_allocs(n); }
+
+    void update_deallocs(size_t n)
+    { get_default().update_deallocs(n); }
 };
 
 extern THREAD_LOCAL MemoryActiveContext mp_active_context;
