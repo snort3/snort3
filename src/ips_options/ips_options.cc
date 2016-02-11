@@ -32,6 +32,7 @@ extern const BaseApi* ips_dsize;
 extern const BaseApi* ips_file_data;
 extern const BaseApi* ips_flow;
 extern const BaseApi* ips_flowbits;
+extern const BaseApi* ips_md5;
 extern const BaseApi* ips_metadata;
 extern const BaseApi* ips_pcre;
 extern const BaseApi* ips_pkt_data;
@@ -40,6 +41,8 @@ extern const BaseApi* ips_reference;
 extern const BaseApi* ips_regex;
 #endif
 extern const BaseApi* ips_replace;
+extern const BaseApi* ips_sha256;
+extern const BaseApi* ips_sha512;
 extern const BaseApi* ips_so;
 
 #ifdef STATIC_IPS_OPTIONS
@@ -72,7 +75,6 @@ extern const BaseApi* ips_ipopts;
 extern const BaseApi* ips_ip_proto;
 extern const BaseApi* ips_isdataat;
 extern const BaseApi* ips_itype;
-extern const BaseApi* ips_md5;
 extern const BaseApi* ips_msg;
 extern const BaseApi* ips_priority;
 extern const BaseApi* ips_raw_data;
@@ -81,8 +83,6 @@ extern const BaseApi* ips_rev;
 extern const BaseApi* ips_rpc;
 extern const BaseApi* ips_seq;
 extern const BaseApi* ips_session;
-extern const BaseApi* ips_sha256;
-extern const BaseApi* ips_sha512;
 extern const BaseApi* ips_sid;
 extern const BaseApi* ips_soid;
 extern const BaseApi* ips_tag;
@@ -102,6 +102,7 @@ const BaseApi* ips_options[] =
     ips_file_data,
     ips_flow,
     ips_flowbits,
+    ips_md5,
     ips_metadata,
     ips_pcre,
     ips_pkt_data,
@@ -110,6 +111,8 @@ const BaseApi* ips_options[] =
     ips_regex,
 #endif
     ips_replace,
+    ips_sha256,
+    ips_sha512,
     ips_so,
 
 #ifdef STATIC_IPS_OPTIONS
@@ -142,7 +145,6 @@ const BaseApi* ips_options[] =
     ips_ip_proto,
     ips_isdataat,
     ips_itype,
-    ips_md5,
     ips_msg,
     ips_priority,
     ips_raw_data,
@@ -151,8 +153,6 @@ const BaseApi* ips_options[] =
     ips_rpc,
     ips_seq,
     ips_session,
-    ips_sha256,
-    ips_sha512,
     ips_sid,
     ips_soid,
     ips_tag,

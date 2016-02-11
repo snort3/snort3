@@ -27,6 +27,7 @@
 #include <functional>
 #include "host_tracker/host_tracker.h"
 #include "hash/lru_cache_shared.h"
+#include "main/snort_types.h"
 
 struct HostIpKey
 {
@@ -63,7 +64,7 @@ extern LruCacheShared<HostIpKey, std::shared_ptr<HostTracker>, HashHostIpKey> ho
 void host_cache_add_host_tracker(HostTracker*);
 
 //  Insert a new service into host cache if it doesn't already exist.
-bool host_cache_add_service(sfip_t, Protocol, Port, const char* service);
+SO_PUBLIC bool host_cache_add_service(sfip_t, Protocol, Port, const char* service);
 
 #endif
 
