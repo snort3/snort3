@@ -58,6 +58,7 @@ bool TcpStateListen::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
     {
         trk.init_on_syn_recv(tsd);
         trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
+        session.set_pkt_action_flag( trk.normalizer->handle_paws(tsd) );
         if ( tsd.get_seg_len() )
             session.handle_data_on_syn(tsd);
     }

@@ -505,7 +505,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq, uint8_t* flus
     uint32_t total = toSeq - seglist.next->seq;
     while ( SEQ_LT(seglist.next->seq, toSeq) )
     {
-        TcpSegmentNode* tsn = seglist.next, * sr = nullptr;
+        TcpSegmentNode* tsn = seglist.next, *sr = nullptr;
         unsigned flushbuf_size = flushbuf_end - flushbuf;
         unsigned bytes_to_copy = get_flush_data_len(tsn, toSeq, flushbuf_size);
         unsigned bytes_copied = 0;
@@ -513,9 +513,8 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq, uint8_t* flus
 
         DebugFormat(DEBUG_STREAM_STATE, "Flushing %u bytes from %X\n", bytes_to_copy, tsn->seq);
 
-        if ( !tsn->next || ( bytes_to_copy < tsn->payload_size ) || SEQ_EQ(tsn->seq +
-            bytes_to_copy,
-            toSeq) )
+        if ( !tsn->next || ( bytes_to_copy < tsn->payload_size )
+                || SEQ_EQ(tsn->seq +  bytes_to_copy, toSeq) )
             flags |= PKT_PDU_TAIL;
 
         const StreamBuffer* sb = tracker->splitter->reassemble(p->flow, total, bytes_flushed,

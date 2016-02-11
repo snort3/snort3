@@ -406,7 +406,7 @@ int TcpNormalizer::handle_paws(TcpSegmentDescriptor& tsd)
     }
     else if (tsd.get_tcph()->is_syn_only())
     {
-        tcp_ts_flags = get_tcp_timestamp(tsd, 0);
+        tcp_ts_flags = get_tcp_timestamp(tsd, false);
         if (tcp_ts_flags)
             peer_tracker->set_tf_flags(TF_TSTAMP);
 
