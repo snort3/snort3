@@ -62,9 +62,12 @@ static THREAD_LOCAL Tracker s_tracker;
 
 bool DefaultCap::free_space(size_t n)
 {
+    if ( !is_packet_thread() )
+        return true;
+
     const auto& config = *snort_conf->memory;
 
-    if ( !config.enable || !config.cap || !is_packet_thread() )
+    if ( !config.enable || !config.cap )
         return true;
 
     // FIXIT-H call prune handler and attempt to free memory
