@@ -68,22 +68,22 @@ typedef struct _SFPERF
 
 //FIXIT-M: this shouldn't be needed outside of perfmon
 extern SFPERF* perfmon_config;
-extern int perfmon_rotate_perf_file;
+extern THREAD_LOCAL bool perfmon_rotate_perf_file;
 
 /* functions to set & get the RotatePerfFileFlag */
 inline void SetRotatePerfFileFlag(void)
 {
-    perfmon_rotate_perf_file = 1;
+    perfmon_rotate_perf_file = true;
 }
 
-inline int IsSetRotatePerfFileFlag(void)
+inline bool IsSetRotatePerfFileFlag(void)
 {
     return perfmon_rotate_perf_file;
 }
 
 inline void ClearRotatePerfFileFlag(void)
 {
-    perfmon_rotate_perf_file = 0;
+    perfmon_rotate_perf_file = false;
 }
 
 #endif

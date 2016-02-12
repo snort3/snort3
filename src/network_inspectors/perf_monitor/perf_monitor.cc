@@ -61,7 +61,7 @@
 THREAD_LOCAL SimpleStats pmstats;
 THREAD_LOCAL ProfileStats perfmonStats;
 
-int perfmon_rotate_perf_file = 0;
+THREAD_LOCAL bool perfmon_rotate_perf_file = false;
 static SFPERF config;
 SFPERF* perfmon_config = &config;   //FIXIT-M remove this after flowip can be decoupled.
 THREAD_LOCAL std::vector<PerfTracker*>* trackers;
