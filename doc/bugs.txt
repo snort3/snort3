@@ -16,6 +16,11 @@
 
 * openssl is required for cmake builds.
 
+* Building with clang and autotools on Linux will show the following
+  warning many times.  Please ignore.
+
+    clang: warning: argument unused during compilation: '-pthread'
+
 
 ==== Config
 
