@@ -154,7 +154,7 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
         {
             /* Turn off inspection */
             lwssn->ssn_state.ignore_direction |= srod.direction;
-            DisableInspection(pkt);
+            DisableInspection();
 
             /* TBD: Set TF_FORCE_FLUSH ? */
         }

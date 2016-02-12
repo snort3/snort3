@@ -249,7 +249,7 @@ void Stream::stop_inspection(
 
     /* FIXIT: Handle bytes/response parameters */
 
-    DisableInspection(p);
+    DisableInspection();
     flow->set_state(Flow::ALLOW);
 }
 
@@ -606,7 +606,7 @@ bool Stream::blocked_session(Flow* flow, Packet* p)
             "Blocking %s packet as session was blocked\n",
             p->packet_flags & PKT_FROM_SERVER ?  "server" : "client");
 
-        DisableDetect(p);
+        DisableDetect();
         Active::drop_packet(p);
         active_response(p, flow);
         return true;
@@ -625,7 +625,7 @@ bool Stream::ignored_session(Flow* flow, Packet* p)
             "Stream Ignoring packet from %d. Session marked as ignore\n",
             p->packet_flags & PKT_FROM_CLIENT ? "sender" : "responder");
 
-        DisableInspection(p);
+        DisableInspection();
         return true;
     }
 

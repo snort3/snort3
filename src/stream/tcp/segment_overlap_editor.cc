@@ -46,7 +46,7 @@ bool SegmentOverlapEditor::is_segment_retransmit(void)
         if ( rsize == 0 )
         {
             // All data was retransmitted
-            session->retransmit_process(tsd->get_pkt() );
+            session->retransmit_process();
             keep_segment = false;
         }
 
@@ -85,7 +85,7 @@ int SegmentOverlapEditor::eval_right(void)
             if ( right->is_retransmit(rdata, rsize, rseq) )
             {
                 // All data was retransmitted
-                session->retransmit_process(tsd->get_pkt() );
+                session->retransmit_process();
                 keep_segment = false;
             }
             else

@@ -769,11 +769,11 @@ bool InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
     else if ( flow->clouseau and !p->is_cooked() )
         bumble(p);
 
-    if( p->disable_inspect )
+    if ( p->disable_inspect )
         return false;
 
     else if ( !p->dsize )
-        DisableDetect(p);
+        DisableDetect();
 
     else if ( flow->gadget && flow->gadget->likes(p) )
     {

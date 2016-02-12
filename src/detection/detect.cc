@@ -72,8 +72,8 @@ THREAD_LOCAL ProfileStats detectPerfStats;
 THREAD_LOCAL ProfileStats eventqPerfStats;
 THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
 
-THREAD_LOCAL int do_detect;
-THREAD_LOCAL int do_detect_content;
+THREAD_LOCAL bool do_detect;
+THREAD_LOCAL bool do_detect_content;
 
 static THREAD_LOCAL char check_tags_flag;
 
@@ -133,7 +133,7 @@ void snort_inspect(Packet* p)
         obApi->resetObfuscationEntries();
 #endif
 
-        do_detect = do_detect_content = 1;
+        do_detect = do_detect_content = true;
 
         /*
         **  Reset the appropriate application-layer protocol fields

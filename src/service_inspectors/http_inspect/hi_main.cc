@@ -622,7 +622,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
 
         if ( p->alt_dsize == 0 )
         {
-            DisableDetect(p);
+            DisableDetect();
             return 0;
         }
         // see comments on call to snort_detect() below
@@ -912,7 +912,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
 
                 if ( !GetHttpBufferMask() && (p->alt_dsize == 0)  )
                 {
-                    DisableDetect(p);
+                    DisableDetect();
                     return 0;
                 }
             }
@@ -929,7 +929,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             if ( !(session->server_conf->inspect_response) &&
                 IsLimitedDetect(p) && !p->alt_dsize )
             {
-                DisableDetect(p);
+                DisableDetect();
                 return 0;
             }
             ClearHttpBuffers();
@@ -1103,7 +1103,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             if ( IsLimitedDetect(p) &&
                 !GetHttpBufferMask() && (p->alt_dsize == 0)  )
             {
-                DisableDetect(p);
+                DisableDetect();
                 return 0;
             }
         }
@@ -1138,7 +1138,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
         // FIXIT this throws off nfp rules like this:
         // alert tcp any any -> any any ( sid:1; msg:"1"; flags:S; )
         // (check shutdown counts)
-        DisableInspection(p);
+        DisableInspection();
     }
 
     return 0;

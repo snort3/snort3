@@ -84,10 +84,10 @@ public:
 
     // FIXIT - these 2 function names convey no meaning afaict... figure out
     // why are they called and name appropriately...
-    void retransmit_process(Packet* p)
+    void retransmit_process()
     {
         // Data has already been analyzed so don't bother looking at it again.
-        DisableDetect(p);
+        DisableDetect();
     }
 
     void retransmit_handle(Packet* p)

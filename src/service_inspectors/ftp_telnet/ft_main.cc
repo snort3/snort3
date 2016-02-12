@@ -241,6 +241,6 @@ void do_detection(Packet* p)
      // main detection engine for each protocol field.
     get_data_bus().publish(PACKET_EVENT, p);
 
-    DisableInspection(p);
+    DisableInspection();
 }
 

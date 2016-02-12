@@ -313,7 +313,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         SnortEventqAdd(GID_REPUTATION, REPUTATION_EVENT_BLACKLIST);
         Active::drop_packet(p, true);
         // disable all preproc analysis and detection for this packet
-        DisableInspection(p);
+        DisableInspection();
         p->disable_inspect = true;
         if (p->flow)
         {
@@ -332,7 +332,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
     {
         SnortEventqAdd(GID_REPUTATION, REPUTATION_EVENT_WHITELIST);
         p->packet_flags |= PKT_IGNORE;
-        DisableInspection(p);
+        DisableInspection();
         p->disable_inspect = true;
         if (p->flow)
         {

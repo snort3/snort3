@@ -1080,7 +1080,7 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
         p->packet_flags &= ~PKT_IP_RULE;
     }
 
-    if (do_detect_content)
+    if ( do_detect_content )
     {
         // FIXIT-L sdf etc. ran here
 
@@ -1289,7 +1289,6 @@ static void fpEvalPacketUdp(Packet* p)
     uint16_t tmp_dp = p->ptrs.dp;
     const udp::UDPHdr* tmp_udph = p->ptrs.udph;
     const uint8_t* tmp_data = p->data;
-    int tmp_do_detect_content = do_detect_content;
     uint16_t tmp_dsize = p->dsize;
 
     const udp::UDPHdr* udph = layer::get_outer_udp_lyr(p);
@@ -1306,8 +1305,9 @@ static void fpEvalPacketUdp(Packet* p)
     if (tmp_api.pay_len() >  udp::UDP_HEADER_LEN)
         p->dsize = tmp_api.pay_len() - udp::UDP_HEADER_LEN;
 
-    if (p->dsize)
-        do_detect_content = 1;
+    auto save_do_detect_content = do_detect_content;
+    if ( p->dsize )
+        do_detect_content = true;
 
     fpEvalHeaderUdp(p, omd);
 
@@ -1316,7 +1316,8 @@ static void fpEvalPacketUdp(Packet* p)
     p->ptrs.udph = tmp_udph;
     p->data = tmp_data;
     p->dsize = tmp_dsize;
-    do_detect_content = tmp_do_detect_content;
+
+    do_detect_content = save_do_detect_content;
 }
 
 /*

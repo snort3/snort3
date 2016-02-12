@@ -36,8 +36,8 @@
 
 struct ProfileStats;
 
-extern SO_PUBLIC THREAD_LOCAL int do_detect;
-extern SO_PUBLIC THREAD_LOCAL int do_detect_content;
+extern SO_PUBLIC THREAD_LOCAL bool do_detect;
+extern SO_PUBLIC THREAD_LOCAL bool do_detect_content;
 
 extern THREAD_LOCAL ProfileStats eventqPerfStats;
 extern THREAD_LOCAL ProfileStats detectPerfStats;
@@ -71,16 +71,16 @@ void CallAlertFuncs(Packet*, const OptTreeNode*, ListHead*);
 
 // don't eval content rules
 // non-content rules are still evaluated
-inline void DisableDetect(Packet*)
+inline void DisableDetect()
 {
-    do_detect_content = 0;
+    do_detect_content = false;
 }
 
 // don't want to do any detection with rules
 // (no content and no non-content)
-inline void DisableInspection(Packet*)
+inline void DisableInspection()
 {
-    do_detect = do_detect_content = 0;
+    do_detect = do_detect_content = false;
 }
 
 #endif

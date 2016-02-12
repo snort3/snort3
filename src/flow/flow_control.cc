@@ -453,7 +453,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         if ( news )
             stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
         else
-            DisableInspection(p);
+            DisableInspection();
 
         p->ptrs.decode_flags |= DECODE_PKT_TRUST;
         break;
@@ -464,7 +464,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         else
             Active::block_again();
 
-        DisableInspection(p);
+        DisableInspection();
         break;
 
     case Flow::RESET:
@@ -474,7 +474,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
             Active::reset_again();
 
         stream.blocked_session(flow, p);
-        DisableInspection(p);
+        DisableInspection();
         break;
     }
 
@@ -788,7 +788,7 @@ char FlowControl::expected_flow(Flow* flow, Packet* p)
             p->packet_flags & PKT_FROM_CLIENT ? "sender" : "responder");
 
         flow->ssn_state.ignore_direction = ignore;
-        DisableInspection(p);
+        DisableInspection();
     }
 
     return ignore;

@@ -1906,7 +1906,7 @@ int TcpSession::process(Packet* p)
 
     if (pkt_action_mask & ACTION_DISABLE_INSPECTION)
     {
-        DisableInspection(p);
+        DisableInspection();
 
         DebugFormat(DEBUG_STREAM_STATE,
             "Stream Ignoring packet from %d. Session marked as ignore\n",

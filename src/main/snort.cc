@@ -688,16 +688,17 @@ void Snort::detect_rebuilt_packet(Packet* p)
     Profile detect_profile(detectPerfStats);
     Profile rebuilt_profile(rebuiltPacketPerfStats);
 
-    int tmp_do_detect = do_detect;
-    int tmp_do_detect_content = do_detect_content;
+    auto save_do_detect = do_detect;
+    auto save_do_detect_content = do_detect_content;
 
     SnortEventqPush();
     main_hook(p);
     SnortEventqPop();
 
     DetectReset();
-    do_detect = tmp_do_detect;
-    do_detect_content = tmp_do_detect_content;
+
+    do_detect = save_do_detect;
+    do_detect_content = save_do_detect_content;
 }
 
 DAQ_Verdict Snort::process_packet(
