@@ -16,75 +16,51 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// memory_cap.cc author Joel Cornett <jocornet@cisco.com>
+// memory_module.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "memory_cap.h"
-
-#include <cassert>
+#include "memory_module.h"
 
 #include "main/snort_config.h"
-#include "main/thread.h"
-#include "profiler/memory_profiler_active_context.h"
 #include "memory_config.h"
 
-namespace memory
-{
-
 // -----------------------------------------------------------------------------
-// helpers
+// memory attributes
 // -----------------------------------------------------------------------------
 
-struct Tracker
+#define s_name "memory"
+#define s_help \
+    "memory management configuration"
+
+static const Parameter s_params[] =
 {
-    size_t allocated = 0;
-    size_t deallocated = 0;
+    { "enable", Parameter::PT_BOOL, nullptr, "false",
+        "allow memory management to limit memory consumption" },
 
-    size_t used() const
-    {
-        assert(allocated >= deallocated);
-        return allocated - deallocated;
-    }
+    { "cap", Parameter::PT_INT, "0:", "0",
+        "set the per-packet-thread cap on memory (bytes)" },
 
-    constexpr Tracker() = default;
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 
 // -----------------------------------------------------------------------------
-// static variables
+// memory module
 // -----------------------------------------------------------------------------
 
-static THREAD_LOCAL Tracker s_tracker;
+MemoryModule::MemoryModule() :
+    Module(s_name, s_help, s_params)
+{ }
 
-
-// -----------------------------------------------------------------------------
-// public interface
-// -----------------------------------------------------------------------------
-
-bool DefaultCap::free_space(size_t n)
+bool MemoryModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    const auto& config = *snort_conf->memory;
+    if ( v.is("enable") )
+        sc->memory->enable = v.get_bool();
 
-    if ( !config.enable || !config.cap || !is_packet_thread() )
-        return true;
+    else if ( v.is("cap") )
+        sc->memory->cap = v.get_long();
 
-    // FIXIT-H call prune handler and attempt to free memory
-    return s_tracker.used() + n <= config.cap;
+    else
+        return false;
+
+    return true;
 }
-
-void DefaultCap::update_allocations(size_t n)
-{
-    if ( is_packet_thread() )
-        s_tracker.allocated += n;
-
-    mp_active_context.update_allocs(n);
-}
-
-void DefaultCap::update_deallocations(size_t n)
-{
-    if ( is_packet_thread() )
-        s_tracker.deallocated += n;
-
-    mp_active_context.update_deallocs(n);
-}
-
-} // namespace memory

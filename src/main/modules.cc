@@ -39,6 +39,7 @@ using namespace std;
 #include "main/snort_config.h"
 #include "main/snort_module.h"
 #include "main/thread.h"
+#include "memory/memory_module.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/config_file.h"
@@ -2164,6 +2165,7 @@ void module_init()
     ModuleManager::add_module(get_snort_module());
 
     // these modules are not policy specific
+    ModuleManager::add_module(new MemoryModule);
     ModuleManager::add_module(new ClassificationsModule);
     ModuleManager::add_module(new DaqModule);
     ModuleManager::add_module(new DetectionModule);

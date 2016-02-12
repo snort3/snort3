@@ -122,6 +122,7 @@ struct sopg_table_t;
 struct PORT_RULE_MAP;
 struct SFXHASH;
 struct ProfilerConfig;
+struct MemoryConfig;
 
 SO_PUBLIC extern THREAD_LOCAL struct SnortConfig* snort_conf;
 
@@ -330,6 +331,8 @@ public:
     struct _IntelPmHandles* ipm_handles = nullptr;
 
     unsigned remote_control = 0;
+
+    MemoryConfig* memory = nullptr;
     //------------------------------------------------------
 
     SnortState* state = nullptr;

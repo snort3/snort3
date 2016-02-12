@@ -47,6 +47,7 @@
 #include "managers/module_manager.h"
 #include "managers/mpse_manager.h"
 #include "managers/inspector_manager.h"
+#include "memory/memory_config.h"
 #include "filters/sfthreshold.h"
 #include "filters/detection_filter.h"
 #include "detection/fp_config.h"
@@ -178,6 +179,8 @@ SnortConfig::SnortConfig()
 
     ppm_cfg = (ppm_cfg_t*)SnortAlloc(sizeof(*ppm_cfg));
 
+    memory = new MemoryConfig();
+
     policy_map = new PolicyMap;
 
     set_inspection_policy(get_inspection_policy());
@@ -256,6 +259,8 @@ SnortConfig::~SnortConfig()
     delete profiler;
 
     free(ppm_cfg);
+
+    delete memory;
 
 #ifdef INTEL_SOFT_CPM
     IntelPmRelease(ipm_handles);
