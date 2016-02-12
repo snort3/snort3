@@ -1,3 +1,19 @@
+16/02/12 - build 187
+
+-- file capture added - initial version writes from packet thread
+-- added support for http 0.9 to new_http_inspect
+-- added URI normalization of headers, cookies, and post bodies to new_http_inspect
+-- configure_cmake.sh updates to better support scripting
+-- updated catch header (used for some unit tests)
+-- continued dce2 port
+-- fixed misc clang and dynamic plugin build issues
+-- fixed static analysis issues and crash in new_http_inspect
+-- fixed tcp paws issue
+-- fixed normalization stats
+-- fixed issues reported by Bill Parker
+-- refactoring updates to tcp session
+-- refactoring updates to profiler
+
 16/02/02 - build 186
 
 -- update copyright to 2016, add missing license blocks

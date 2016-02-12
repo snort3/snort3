@@ -21,6 +21,9 @@
 
     clang: warning: argument unused during compilation: '-pthread'
 
+* It is not possible to build dynamic plugins using apple clang due to its
+  limited support for thread local variables.
+
 
 ==== Config
 
