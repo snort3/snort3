@@ -74,7 +74,6 @@ stream/user/libstream_user.a \
 stream/file/libstream_file.a \
 stream/libstream_paf.a \
 file_api/libfile_api.a \
-memory/libmemory.a \
 mime/libmime.a \
 service_inspectors/http_inspect/libhttp_inspect.a \
 $(pig_list) \
@@ -82,6 +81,7 @@ ips_options/libips_options.a \
 search_engines/libsearch_engines.a \
 target_based/libtarget_based.a \
 main/libmain.a \
+memory/libmemory.a \
 host_tracker/libhost_tracker.a \
 parser/libparser.a \
 flow/libflow.a \
