@@ -106,7 +106,6 @@ target_link_libraries( snort
     stream_file
     stream_paf
     file_api
-    memory
     mime
     http_inspect
     imap
@@ -118,6 +117,7 @@ target_link_libraries( snort
     search_engines
     target_based
     main
+    memory
     host_tracker
     parser
     flow
