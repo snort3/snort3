@@ -521,7 +521,7 @@ static int socket_init()
 
     if (listener < 0)
     {
-        FatalError("socket failed: %s\n", strerror(errno));
+        FatalError("socket failed: %s\n", get_error(errno));
         return -2;
     }
 
@@ -538,14 +538,14 @@ static int socket_init()
 
     if ( ::bind(listener, (struct sockaddr*)&addr, sizeof(addr)) < 0 )
     {
-        FatalError("bind failed: %s\n", strerror(errno));
+        FatalError("bind failed: %s\n", get_error(errno));
         return -3;
     }
 
     // FIXIT-M configure max conns
     if ( listen(listener, 5) < 0 )
     {
-        FatalError("listen failed: %s\n", strerror(errno));
+        FatalError("listen failed: %s\n", get_error(errno));
         return -4;
     }
 

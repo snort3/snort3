@@ -468,7 +468,7 @@ void FileCapture::write_file(uint8_t* buf, size_t buf_len, FILE* fh)
 
     if (bytes_written < buf_len)
     {
-        ErrorMessage("File inspect: disk writing error - %s!\n", strerror(err));
+        ErrorMessage("File inspect: disk writing error - %s!\n", get_error(err));
     }
 }
 

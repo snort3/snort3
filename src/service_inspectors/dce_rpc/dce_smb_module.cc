@@ -170,6 +170,7 @@ static const RuleMap dce2_smb_rules[] =
 
 Dce2SmbModule::Dce2SmbModule() : Module(DCE2_SMB_NAME, DCE2_SMB_HELP, s_params)
 {
+    memset(&config, 0, sizeof(config));
 }
 
 Dce2SmbModule::~Dce2SmbModule()

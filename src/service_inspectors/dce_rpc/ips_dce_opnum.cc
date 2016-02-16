@@ -431,7 +431,7 @@ class Dce2OpnumModule : public Module
 {
 public:
     Dce2OpnumModule() : Module(s_name, s_help, s_params)
-    { }
+    { memset(&opnum, 0, sizeof(opnum)); }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;

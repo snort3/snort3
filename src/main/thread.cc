@@ -148,7 +148,7 @@ void pin_thread_to_cpu(const char* source)
 
             if (sched_setaffinity(0, sizeof(cpu_set), &cpu_set))
                 FatalError("unable to pin source %s to CPU %d: %s\n",
-                    source, cpu, std::strerror(errno));
+                    source, cpu, get_error(errno));
         }
 #else
         {

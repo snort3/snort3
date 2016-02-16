@@ -702,14 +702,7 @@ void LoadListFile(char* filename, INFO info, ReputationConfig* config)
 
     if ((fp = fopen(full_path_filename, "r")) == nullptr)
     {
-        char errBuf[STD_BUF];
-#ifdef WIN32
-        snprintf(errBuf, STD_BUF, "%s", strerror(errno));
-#else
-        strerror_r(errno, errBuf, STD_BUF);
-#endif
-        errBuf[STD_BUF-1] = '\0';
-        ErrorMessage("Unable to open address file %s, Error: %s\n", full_path_filename, errBuf);
+        ErrorMessage("Unable to open address file %s, Error: %s\n", full_path_filename, get_error(errno));
         return;
     }
 
@@ -820,13 +813,7 @@ static int LoadFile(int totalLines, char* path)
 
     if ((0 == numlines) && (0 != errno))
     {
-        char errBuf[STD_BUF];
-#ifdef WIN32
-        snprintf(errBuf, STD_BUF, "%s", strerror(errno));
-#else
-        strerror_r(errno, errBuf, STD_BUF);
-#endif
-        FatalError("Unable to open address file %s, Error: %s\n", full_path_filename, errBuf);
+        FatalError("Unable to open address file %s, Error: %s\n", full_path_filename, get_error(errno));
     }
 
     if (totalLines + numlines < totalLines)

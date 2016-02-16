@@ -303,7 +303,7 @@ static void snuff_stdio()
 
     if ( err )
         // message is hit or miss but we will exit with failure
-        FatalError("daemonization errors - %s", strerror(errno));
+        FatalError("daemonization errors - %s", get_error(errno));
 }
 
 // All threads need to be created after daemonizing.  If created in the
@@ -329,7 +329,7 @@ void daemonize()
     pid_t cpid = fork();
 
     if ( cpid < 0 )
-        FatalError("fork failed - %s", strerror(errno));
+        FatalError("fork failed - %s", get_error(errno));
 
     if ( cpid > 0 )
     {
