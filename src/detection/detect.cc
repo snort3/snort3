@@ -52,6 +52,7 @@
 #include "filters/sfthreshold.h"
 #include "events/event_wrapper.h"
 #include "events/event_queue.h"
+#include "latency/packet_latency.h"
 #include "log/obfuscation.h"
 #include "profiler/profiler.h"
 #include "ppm/ppm.h"
@@ -85,52 +86,37 @@ void snort_inspect(Packet* p)
 {
     uint64_t pktcnt = 0;
 
-    /* Begin Packet Performance Monitoring  */
-    if ( PPM_PKTS_ENABLED() )
     {
-        pktcnt = PPM_INC_PKT_CNT();
-        PPM_GET_TIME();
-        PPM_INIT_PKT_TIMER();
+        PacketLatency::Context pkt_latency_ctx { p };
 
-#ifdef DEBUG_MSGS
-        /* for debugging, info gathering, so don't worry about
-        *  (unsigned) casting of pktcnt, were not likely to debug
-        *  4G packets
-        */
-        if ( Debug::enabled(DEBUG_PPM) )
-            LogMessage("PPM: Process-BeginPkt[%u] caplen=%u\n",
-                (unsigned)pktcnt, p->pkth->caplen);
-#endif
-    }
+        bool inspected = false;
 
-    bool inspected = false;
-
-    // If the packet has errors, we won't analyze it.
-    if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
-    {
-        DebugFormat(DEBUG_DETECT,
-            "Packet errors = 0x%x, ignoring traffic!\n",
-            (p->ptrs.decode_flags & DECODE_ERR_FLAGS));
-
-        if ( SnortConfig::inline_mode() and
-            SnortConfig::checksum_drop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
+        // If the packet has errors, we won't analyze it.
+        if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
         {
-            DebugMessage(DEBUG_DECODE, "Dropping bad packet\n");
-            Active::drop_packet(p);
+            DebugFormat(DEBUG_DETECT,
+                "Packet errors = 0x%x, ignoring traffic!\n",
+                (p->ptrs.decode_flags & DECODE_ERR_FLAGS));
+
+            if ( SnortConfig::inline_mode() and
+                SnortConfig::checksum_drop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
+            {
+                DebugMessage(DEBUG_DECODE, "Dropping bad packet\n");
+                Active::drop_packet(p);
+            }
         }
-    }
-    else
-    {
+        else
+        {
 #ifdef BUILD_OBFUSCATION
-        /* Not a completely ideal place for this since any entries added on
-         * the packet callback trail will get obliterated - right now there
-         * isn't anything adding entries there.  Really need it here for
-         * stream clean exit, since all of the flushed, reassembled
-         * packets are going to be injected directly into this function and
-         * there may be enough that the obfuscation entry table will
-         * overflow if we don't reset it.  Putting it here does have the
-         * advantage of fewer entries per logging cycle */
-        obApi->resetObfuscationEntries();
+            /* Not a completely ideal place for this since any entries added on
+             * the packet callback trail will get obliterated - right now there
+             * isn't anything adding entries there.  Really need it here for
+             * stream clean exit, since all of the flushed, reassembled
+             * packets are going to be injected directly into this function and
+             * there may be enough that the obfuscation entry table will
+             * overflow if we don't reset it.  Putting it here does have the
+             * advantage of fewer entries per logging cycle */
+            obApi->resetObfuscationEntries();
 #endif
 
         do_detect = do_detect_content = true;
@@ -143,50 +129,38 @@ void snort_inspect(Packet* p)
         InspectorManager::execute(p);
         inspected = true;
 
-        Active::apply_delayed_action(p);
+            /*
+            **  Reset the appropriate application-layer protocol fields
+            */
+            p->alt_dsize = 0;
 
-        if ( do_detect )
-            snort_detect(p);
-    }
+            InspectorManager::execute(p);
+            inspected = true;
 
-    check_tags_flag = 1;
+            Active::apply_delayed_action(p);
 
-    /* Check for normally closed session */
-    stream.check_session_closed(p);
-
-    /*
-    ** By checking tagging here, we make sure that we log the
-    ** tagged packet whether it generates an alert or not.
-    */
-    if ( p->has_ip() )
-        CheckTagging(p);
-
-    if ( inspected )
-        InspectorManager::clear(p);
-
-    if ( PPM_PKTS_ENABLED() )
-    {
-        PPM_GET_TIME();
-        PPM_TOTAL_PKT_TIME();
-        PPM_ACCUM_PKT_TIME();
-
-#ifdef DEBUG_MSGS
-        if ( Debug::enabled(DEBUG_PPM) )
-        {
-            // FIXIT-L logs should be debugs
-            LogMessage("PPM: Pkt[%u] Used= ", (unsigned)pktcnt);
-            PPM_PRINT_PKT_TIME("%g usecs\n");
-            LogMessage("PPM: Process-EndPkt[%u]\n\n", (unsigned)pktcnt);
+            if ( do_detect )
+                snort_detect(p);
         }
-#endif
-        PPM_PKT_LOG(p);
+
+        check_tags_flag = 1;
+
+        /* Check for normally closed session */
+        stream.check_session_closed(p);
+
+        /*
+        ** By checking tagging here, we make sure that we log the
+        ** tagged packet whether it generates an alert or not.
+        */
+        if ( p->has_ip() )
+            CheckTagging(p);
+
+        if ( inspected )
+            InspectorManager::clear(p);
     }
 
     if ( PPM_RULES_ENABLED() )
         PPM_RULE_LOG(pktcnt, p);
-
-    if ( PPM_PKTS_ENABLED() )
-        PPM_END_PKT_TIMER();
 
     Profile profile(eventqPerfStats);
     SnortEventqLog(p);
@@ -333,18 +307,8 @@ bool snort_detect(Packet* p)
     case PktType::PDU:
     case PktType::FILE:
     {
-        /*
-         * Packet Performance Monitoring
-         * (see if preprocessing took too long)
-         */
-        if ( PPM_PKTS_ENABLED() )
-        {
-            PPM_GET_TIME();
-            PPM_PACKET_TEST();
-
-            if ( PPM_PACKET_ABORT_FLAG() )
-                return false;
-        }
+        if ( PacketLatency::fastpath() )
+            return false;
 
         /*
         **  This is where we short circuit so

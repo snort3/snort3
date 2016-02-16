@@ -1020,6 +1020,7 @@ src/helpers/Makefile \
 src/lua/Makefile \
 src/ips_options/Makefile \
 src/ips_options/test/Makefile \
+src/latency/Makefile \
 src/log/Makefile \
 src/loggers/Makefile    \
 src/main/Makefile \

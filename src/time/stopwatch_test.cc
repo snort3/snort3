@@ -71,7 +71,6 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
 
         SECTION( "start on running clock has no effect" )
         {
-            auto val = sw.get();
             sw.start();
             CHECK( sw.active() );
         }

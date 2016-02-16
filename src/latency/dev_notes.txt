@@ -1,0 +1,15 @@
+The latency directory contains code for latency logging and management.
+
+* Packet latency: tracks and manages latency in packet processing.
+  Packet latency maintains an internal stack of timers for each
+  packet processing context. The API can be queried to check if
+  a packet should be fastpathed, and upon context exit,
+  either an event, a log message or both can be generated
+  based on whether the packet was fastpathed and depending on
+  how the manager was configured.
+
+* Rule latency: To be ported over from ppm/
+
+Notes:
+
+ * Latency is intended to replace the legacy ppm/ code

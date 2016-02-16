@@ -50,6 +50,7 @@
 #include "ips_options/ips_flowbits.h"
 #include "ips_options/ips_pcre.h"
 #include "filters/detection_filter.h"
+#include "latency/packet_latency.h"
 #include "main/thread.h"
 #include "framework/ips_option.h"
 #include "framework/cursor.h"
@@ -588,19 +589,11 @@ int detection_option_node_evaluate(
         for ( int i = 0; i < NUM_BYTE_EXTRACT_VARS; ++i )
             GetByteExtractValue(&(tmp_byte_extract_vars[i]), (int8_t)i);
 
-        if ( PPM_PKTS_ENABLED() )
+        if ( PacketLatency::fastpath() )
         {
-            PPM_GET_TIME();
-            PPM_PACKET_TEST();
-            if ( PPM_PACKET_ABORT_FLAG() )
-            {
-                // bail if we exceeded time
-
-                profile.stop(result != DETECTION_OPTION_NO_MATCH);
-
-                state.last_check.result = result;
-                return result;
-            }
+            profile.stop(result != DETECTION_OPTION_NO_MATCH);
+            state.last_check.result = result;
+            return result;
         }
 
         {
@@ -680,16 +673,10 @@ int detection_option_node_evaluate(
                         // Indicate that the child's tree branches are done
                         ++result;
 
-                    if ( PPM_PKTS_ENABLED() )
+                    if ( PacketLatency::fastpath() )
                     {
-                        PPM_GET_TIME();
-                        PPM_PACKET_TEST();
-                        if ( PPM_PACKET_ABORT_FLAG() )
-                        {
-                            // bail if we exceeded time
-                            state.last_check.result = result;
-                            return result;
-                        }
+                        state.last_check.result = result;
+                        return result;
                     }
                 }
 

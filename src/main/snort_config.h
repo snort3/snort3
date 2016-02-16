@@ -123,6 +123,7 @@ struct PORT_RULE_MAP;
 struct SFXHASH;
 struct ProfilerConfig;
 struct MemoryConfig;
+struct LatencyConfig;
 
 SO_PUBLIC extern THREAD_LOCAL struct SnortConfig* snort_conf;
 
@@ -328,6 +329,7 @@ public:
     ProfilerConfig* profiler = nullptr;
 
     struct ppm_cfg_t* ppm_cfg = nullptr;
+    LatencyConfig* latency = nullptr;
     struct _IntelPmHandles* ipm_handles = nullptr;
 
     unsigned remote_control = 0;

@@ -54,6 +54,7 @@
 #include "rules.h"
 #include "treenodes.h"
 
+#include "latency/packet_latency.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "framework/cursor.h"
@@ -443,9 +444,6 @@ static int detection_option_tree_evaluate(
         /* Rule test */
         if ( PPM_RULES_ENABLED() )
         {
-            if ( PPM_PKTS_ENABLED() )
-                PPM_INC_PKT_RULE_TESTS();
-
             PPM_RULE_TEST(root, eval_data->p);
             PPM_ACCUM_RULE_TIME();
             PPM_END_RULE_TIMER();
@@ -950,7 +948,7 @@ static int rule_tree_queue(
 }
 
 #define CHECK_PPM() \
-    if (PPM_PACKET_ABORT_FLAG()) \
+    if ( PacketLatency::fastpath() ) \
         return 1;
 
 #define SEARCH_DATA(buf, len, cnt) \

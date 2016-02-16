@@ -127,6 +127,7 @@ target_link_libraries( snort
     framework
     time
     ppm
+    latency
     profiler
     ips_actions
     events
@@ -154,6 +155,7 @@ add_subdirectory(filters)
 add_subdirectory(flow)
 add_subdirectory(framework)
 add_subdirectory(hash)
+add_subdirectory(latency)
 add_subdirectory(log)
 add_subdirectory(main)
 add_subdirectory(managers)

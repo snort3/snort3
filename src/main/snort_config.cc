@@ -55,6 +55,7 @@
 #include "ips_options/ips_pcre.h"
 #include "protocols/udp.h"
 #include "ppm/ppm.h"
+#include "latency/latency_config.h"
 #include "profiler/profiler.h"
 #include "sfip/sf_ip.h"
 
@@ -178,6 +179,7 @@ SnortConfig::SnortConfig()
     profiler = new ProfilerConfig;
 
     ppm_cfg = (ppm_cfg_t*)SnortAlloc(sizeof(*ppm_cfg));
+    latency = new LatencyConfig();
 
     memory = new MemoryConfig();
 
@@ -259,6 +261,7 @@ SnortConfig::~SnortConfig()
     delete profiler;
 
     free(ppm_cfg);
+    delete latency;
 
     delete memory;
 

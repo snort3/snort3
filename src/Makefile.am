@@ -91,6 +91,7 @@ detection/libdetection.a \
 framework/libframework.a \
 time/libtime.a \
 ppm/libppm.a \
+latency/liblatency.a \
 profiler/libprofiler.a \
 actions/libips_actions.a \
 events/libevents.a \
@@ -120,6 +121,7 @@ framework \
 hash \
 helpers \
 host_tracker \
+latency \
 lua \
 ips_options \
 log \
