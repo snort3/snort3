@@ -49,8 +49,8 @@ static const Parameter s_params[] =
     { "packets", Parameter::PT_INT, "0:", "10000",
       "minimum packets to report" },
 
-    { "seconds", Parameter::PT_INT, "0:", "60",
-      "report interval; 0 means report at exit only" },
+    { "seconds", Parameter::PT_INT, "1:", "60",
+      "report interval" },
 
     { "flow_ip_memcap", Parameter::PT_INT, "8200:", "52428800",
       "maximum memory for flow tracking" },

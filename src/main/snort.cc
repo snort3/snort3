@@ -607,6 +607,7 @@ void Snort::thread_idle()
 {
     if ( flow_con )
         flow_con->timeout_flows(16384, time(NULL));
+    perf_monitor_idle_process();
     aux_counts.idle++;
 }
 

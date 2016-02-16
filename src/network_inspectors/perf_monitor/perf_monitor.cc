@@ -87,6 +87,8 @@ public:
     void tterm() override;
 };
 
+static THREAD_LOCAL PerfMonitor* this_perf_monitor;
+
 PerfMonitor::PerfMonitor(PerfMonModule* mod)
 {
     mod->get_config(config);
@@ -165,16 +167,18 @@ void PerfMonitor::tinit()
     if (config.perf_flags & SFPERF_EVENT)
         trackers->push_back(perf_event = new EventTracker(&config));
 
-    for (unsigned int i = 0; i < trackers->size(); i++)
-        trackers->at(i)->open(true);
+    for (auto& tracker : *trackers)
+        tracker->open(true);
 
     //FIXIT-M: move this
 #ifdef LINUX_SMP
     sfInitProcPidStats(&(sfBase.sfProcPidStats));
 #endif
 
-    for (unsigned int i = 0; i < trackers->size(); i++)
-        trackers->at(i)->reset();
+    for (auto& tracker : *trackers)
+        tracker->reset();
+
+    this_perf_monitor = this;
 }
 
 void PerfMonitor::tterm()
@@ -221,42 +225,62 @@ void PerfMonitor::eval(Packet* p)
 
     if (IsSetRotatePerfFileFlag())
     {
-        for (unsigned int i = 0; i < trackers->size(); i++)
-            trackers->at(i)->rotate();
+        for (auto& tracker : *trackers)
+            tracker->rotate();
         ClearRotatePerfFileFlag();
     }
 
-    for (unsigned int i = 0; i < trackers->size(); i++)
-        trackers->at(i)->update(p);
+    if (p)
+    {
+        for (auto& tracker : *trackers)
+            tracker->update(p);
+    }
 
-    if ((config.perf_flags & SFPERF_TIME_COUNT) && !p->is_rebuilt())
+    if (!p || ((config.perf_flags & SFPERF_TIME_COUNT) && !p->is_rebuilt()))
     {
         if (ready_to_process(p))
         {
-            for (unsigned int i = 0; i < trackers->size(); i++)
+            for (auto& tracker : *trackers)
             {
-                trackers->at(i)->process(false);
-                trackers->at(i)->auto_rotate();
+                tracker->process(false);
+                tracker->auto_rotate();
             }
         }
     }
-    ++pmstats.total_packets;
+
+    if (p)
+        ++pmstats.total_packets;
+}
+
+//FIXIT-M uncouple from Snort class when framework permits
+void perf_monitor_idle_process()
+{
+    this_perf_monitor->eval(nullptr);
 }
 
 static bool ready_to_process(Packet* p)
 {
     static THREAD_LOCAL time_t sample_time = 0;
+    static THREAD_LOCAL time_t cur_time;
     static THREAD_LOCAL uint64_t cnt = 0;
 
-    if (sample_time == 0)
-        sample_time = p->pkth->ts.tv_sec;
-
-    if ( ++cnt >= config.pkt_cnt )
+    if (p)
     {
-        if ((p->pkth->ts.tv_sec - sample_time) >= config.sample_interval)
+        cnt++;
+        cur_time = p->pkth->ts.tv_sec;
+    }
+    else
+        cur_time = time(nullptr);
+
+    if (!sample_time)
+        sample_time = cur_time;
+
+    if ( cnt >= config.pkt_cnt )
+    {
+        if ((cur_time - sample_time) >= config.sample_interval)
         {
             cnt = 0;
-            sample_time = p->pkth->ts.tv_sec;
+            sample_time = cur_time;
             return true;
         }
     }

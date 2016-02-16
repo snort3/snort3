@@ -70,6 +70,8 @@ typedef struct _SFPERF
 extern SFPERF* perfmon_config;
 extern THREAD_LOCAL bool perfmon_rotate_perf_file;
 
+void perf_monitor_idle_process();
+
 /* functions to set & get the RotatePerfFileFlag */
 inline void SetRotatePerfFileFlag(void)
 {
