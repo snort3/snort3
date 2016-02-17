@@ -25,8 +25,8 @@
 *
 ****************************************************************************/
 
-#ifndef _DCE_LIST_H_
-#define _DCE_LIST_H_
+#ifndef DCE_LIST_H
+#define DCE_LIST_H
 
 #include "dce_utils.h"
 
@@ -82,6 +82,26 @@ struct DCE2_List
     struct DCE2_ListNode* prev;
 };
 
+struct DCE2_QueueNode
+{
+    void* data;
+    DCE2_QueueNode* prev;
+    DCE2_QueueNode* next;
+};
+
+typedef DCE2_ListDataFree DCE2_QueueDataFree;
+
+struct DCE2_Queue
+{
+    uint32_t num_nodes;
+    DCE2_QueueDataFree data_free;
+    DCE2_QueueNode* current;
+    DCE2_QueueNode* head;
+    DCE2_QueueNode* tail;
+    DCE2_QueueNode* next;
+    DCE2_QueueNode* prev;
+};
+
 /********************************************************************
  * Public function prototypes
  ********************************************************************/
@@ -120,4 +140,5 @@ inline bool DCE2_ListIsEmpty(DCE2_List* list)
     return false;
 }
 
-#endif   
+#endif
+

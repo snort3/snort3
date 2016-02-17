@@ -23,6 +23,7 @@
 #define DCE_SMB_H
 
 #include "dce_common.h"
+#include "dce_co.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
 #include "framework/counts.h"
@@ -183,7 +184,6 @@ extern THREAD_LOCAL dce2SmbStats dce2_smb_stats;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_main;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_session;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_new_session;
-extern THREAD_LOCAL ProfileStats dce2_smb_pstat_session_state;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_detect;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_log;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_co_seg;
@@ -221,7 +221,7 @@ struct NbssHdr
     uint8_t type;
     uint8_t flags;   /* Treat flags as the upper byte to length */
     uint16_t length;
-} ;
+};
 
 struct SmbNtHdr
 {
@@ -249,11 +249,200 @@ struct SmbNtHdr
 };
 
 #pragma pack()
+enum DCE2_SmbSsnState
+{
+    DCE2_SMB_SSN_STATE__START         = 0x00,
+    DCE2_SMB_SSN_STATE__NEGOTIATED    = 0x01,
+    DCE2_SMB_SSN_STATE__FP_CLIENT     = 0x02,  // Fingerprinted client
+    DCE2_SMB_SSN_STATE__FP_SERVER     = 0x04   // Fingerprinted server
+};
+
+enum DCE2_SmbDataState
+{
+    DCE2_SMB_DATA_STATE__NETBIOS_HEADER,
+    DCE2_SMB_DATA_STATE__SMB_HEADER,
+    DCE2_SMB_DATA_STATE__NETBIOS_PDU
+};
+
+enum DCE2_SmbPduState
+{
+    DCE2_SMB_PDU_STATE__COMMAND,
+    DCE2_SMB_PDU_STATE__RAW_DATA
+};
+
+enum DCE2_SmbFileDirection
+{
+    DCE2_SMB_FILE_DIRECTION__UNKNOWN = 0,
+    DCE2_SMB_FILE_DIRECTION__UPLOAD,
+    DCE2_SMB_FILE_DIRECTION__DOWNLOAD
+};
+
+struct DCE2_SmbWriteAndXRaw
+{
+    int remaining;  // A signed integer so it can be negative
+    DCE2_Buffer* buf;
+};
+
+struct DCE2_SmbFileChunk
+{
+    uint64_t offset;
+    uint32_t length;
+    uint8_t* data;
+};
+
+struct DCE2_SmbFileTracker
+{
+    int fid;   // A signed integer so it can be set to sentinel
+    uint16_t uid;
+    uint16_t tid;
+    bool is_ipc;
+    char* file_name;
+
+    union
+    {
+        struct
+        {
+            // If pipe has been set to byte mode via TRANS_SET_NMPIPE_STATE
+            bool byte_mode;
+
+            // For Windows 2000
+            bool used;
+
+            // For WriteAndX requests that use raw mode flag
+            // Windows only
+            DCE2_SmbWriteAndXRaw* writex_raw;
+
+            // Connection-oriented DCE/RPC tracker
+            DCE2_CoTracker* co_tracker;
+        } nmpipe;
+
+        struct
+        {
+            uint64_t file_size;
+            uint64_t file_offset;
+            uint64_t bytes_processed;
+            DCE2_List* file_chunks;
+            uint32_t bytes_queued;
+            DCE2_SmbFileDirection file_direction;
+            bool sequential_only;
+        } file;
+    } tracker;
+
+#define fp_byte_mode   tracker.nmpipe.byte_mode
+#define fp_used        tracker.nmpipe.used
+#define fp_writex_raw  tracker.nmpipe.writex_raw
+#define fp_co_tracker  tracker.nmpipe.co_tracker
+#define ff_file_size          tracker.file.file_size
+#define ff_file_offset        tracker.file.file_offset
+#define ff_bytes_processed    tracker.file.bytes_processed
+#define ff_file_direction     tracker.file.file_direction
+#define ff_file_chunks        tracker.file.file_chunks
+#define ff_bytes_queued       tracker.file.bytes_queued
+#define ff_sequential_only    tracker.file.sequential_only
+};
+
+struct DCE2_SmbTransactionTracker
+{
+    int smb_type;
+    uint8_t subcom;
+    bool one_way;
+    bool disconnect_tid;
+    bool pipe_byte_mode;
+    uint32_t tdcnt;
+    uint32_t dsent;
+    DCE2_Buffer* dbuf;
+    uint32_t tpcnt;
+    uint32_t psent;
+    DCE2_Buffer* pbuf;
+    // For Transaction2/Query File Information
+    uint16_t info_level;
+};
+
+struct DCE2_SmbRequestTracker
+{
+    int smb_com;
+
+    int mid;   // A signed integer so it can be set to sentinel
+    uint16_t uid;
+    uint16_t tid;
+    uint16_t pid;
+
+    // For WriteRaw
+    bool writeraw_writethrough;
+    uint32_t writeraw_remaining;
+
+    // For Transaction/Transaction2/NtTransact
+    DCE2_SmbTransactionTracker ttracker;
+
+    // Client can chain a write to an open.  Need to write data, but also
+    // need to associate tracker with fid returned from server
+    DCE2_Queue* ft_queue;
+
+    // This is a reference to an existing file tracker
+    DCE2_SmbFileTracker* ftracker;
+
+    // Used for requests to cache data that will ultimately end up in
+    // the file tracker upon response.
+    char* file_name;
+    uint64_t file_size;
+    uint64_t file_offset;
+    bool sequential_only;
+
+    // For TreeConnect to know whether it's to IPC
+    bool is_ipc;
+};
 
 struct DCE2_SmbSsnData
 {
     DCE2_SsnData sd;  // This member must be first
-    // FIXIT-M add all the remaining fields
+
+    DCE2_Policy policy;
+
+    int dialect_index;
+    int ssn_state_flags;
+
+    DCE2_SmbDataState cli_data_state;
+    DCE2_SmbDataState srv_data_state;
+
+    DCE2_SmbPduState pdu_state;
+
+    int uid;   // A signed integer so it can be set to sentinel
+    int tid;   // A signed integer so it can be set to sentinel
+    DCE2_List* uids;
+    DCE2_List* tids;
+
+    // For tracking files and named pipes
+    DCE2_SmbFileTracker ftracker;
+    DCE2_List* ftrackers;  // List of DCE2_SmbFileTracker
+
+    // For tracking requests / responses
+    DCE2_SmbRequestTracker rtracker;
+    //DCE2_Queue *rtrackers;
+    uint16_t max_outstanding_requests;
+    uint16_t outstanding_requests;
+
+    // The current pid/mid node for this request/response
+    DCE2_SmbRequestTracker* cur_rtracker;
+
+    // Used for TCP segmentation to get full PDU
+    DCE2_Buffer* cli_seg;
+    DCE2_Buffer* srv_seg;
+
+    // These are used for commands we don't need to process
+    uint32_t cli_ignore_bytes;
+    uint32_t srv_ignore_bytes;
+
+    // The file API supports one concurrent upload/download per session.
+    // This is a reference to a file tracker so shouldn't be freed.
+    DCE2_SmbFileTracker* fapi_ftracker;
+
+#ifdef ACTIVE_RESPONSE
+    DCE2_SmbFileTracker* fb_ftracker;
+    bool block_pdus;
+#endif
+
+    // Maximum file depth as returned from file API
+    int64_t max_file_depth;
 };
 
 inline uint32_t NbssLen(const NbssHdr* nb)

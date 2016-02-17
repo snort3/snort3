@@ -1,4 +1,5 @@
 file_list = \
+dce_co.cc \
 dce_co.h \
 dce_common.cc \
 dce_common.h \

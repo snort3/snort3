@@ -23,6 +23,7 @@
 #define DCE_CO_H
 
 #include "dce_common.h"
+#include "dce_list.h"
 
 #define DCE2_CO_BAD_MAJOR_VERSION           27
 #define DCE2_CO_BAD_MINOR_VERSION           28
@@ -89,6 +90,56 @@ struct DceRpcCoHdr
 
 #pragma pack()
 
+struct DCE2_CoFragTracker
+{
+    DCE2_Buffer* cli_stub_buf;
+    DCE2_Buffer* srv_stub_buf;
+
+    int opnum;    /* Opnum that is ultimatley used for request */
+    int ctx_id;   /* Context id that is ultimatley used for request */
+
+    /* These are set on a first fragment received */
+    int expected_call_id;  /* Expected call id for fragments */
+    int expected_opnum;    /* Expected call id for fragments */
+    int expected_ctx_id;   /* Expected call id for fragments */
+};
+
+struct DCE2_CoSeg
+{
+    DCE2_Buffer* buf;
+
+    /* If there is enough data in segmentation buffer for header,
+     * this will be set to the frag length in the header */
+    uint16_t frag_len;
+};
+
+struct DCE2_CoTracker
+{
+    DCE2_List* ctx_ids;  /* splayed list so most recently used goes to front of list */
+    int got_bind;        /* got an accepted bind */
+
+    /* Queue of pending client bind or alter context request context items
+     * Since the actual context id number doesn't have to occur sequentially
+     * in the context list in the client packet, need to keep track to match
+     * up server response since server doesn't reply with actual context id
+     * numbers, but in the order they were in the client packet */
+    DCE2_Queue* pending_ctx_ids;
+
+    /* Keeps track of fragmentation buffer and frag specfic data */
+    DCE2_CoFragTracker frag_tracker;
+
+    int max_xmit_frag;    /* The maximum negotiated size of a client request */
+    int data_byte_order;  /* Depending on policy is from bind or request */
+    int ctx_id;           /* The current context id of the request */
+    int opnum;            /* The current opnum of the request */
+    int call_id;          /* The current call id of the request */
+    const uint8_t* stub_data;   /* Current pointer to stub data in the request */
+
+    /* For transport segmentation */
+    DCE2_CoSeg cli_seg;
+    DCE2_CoSeg srv_seg;
+};
+
 inline uint8_t DceRpcCoVersMaj(const DceRpcCoHdr* co)
 {
     return co->pversion.major;
@@ -113,6 +164,8 @@ inline uint16_t DceRpcCoFragLen(const DceRpcCoHdr* co)
 {
     return DceRpcNtohs(&co->frag_length, DceRpcCoByteOrder(co));
 }
+
+void DCE2_CoInitTracker(DCE2_CoTracker*);
 
 #endif
 

@@ -56,7 +56,7 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
         DebugMessage(DEBUG_DCE_TCP, "Packet from Server\n");
 #endif
 
-    if (dce2_paf_abort(flow))
+    if (dce2_paf_abort(flow, (DCE2_SsnData*)sd))
     {
         DebugFormat(DEBUG_DCE_TCP, "%s\n", DCE2_DEBUG__PAF_END_MSG);
         return StreamSplitter::ABORT;

@@ -17,8 +17,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef _DCE_UTILS_H_
-#define _DCE_UTILS_H_
+#ifndef DCE_UTILS_H
+#define DCE_UTILS_H
 
 #include <string.h>
 #include <ctype.h>
@@ -50,6 +50,14 @@ enum DCE2_Ret
     DCE2_RET__DUPLICATE
 };
 
+enum DCE2_TransType
+{
+    DCE2_TRANS_TYPE__NONE = 0,
+    DCE2_TRANS_TYPE__SMB,
+    DCE2_TRANS_TYPE__TCP,
+    DCE2_TRANS_TYPE__MAX
+};
+
 enum DCE2_IntType
 {
     DCE2_INT_TYPE__INT8,
@@ -74,6 +82,15 @@ struct Uuid
     uint8_t clock_seq_and_reserved;
     uint8_t clock_seq_low;
     uint8_t node[6];
+};
+
+struct DCE2_Buffer
+{
+    uint8_t* data;
+    uint32_t len;
+    uint32_t size;
+    uint32_t min_add_size;
+    uint32_t offset;
 };
 
 /********************************************************************

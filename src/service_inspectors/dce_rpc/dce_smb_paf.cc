@@ -86,6 +86,7 @@ StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, const uint8
     StreamSplitter::Status ps = StreamSplitter::SEARCH;
     uint32_t nb_hdr;
     uint32_t nb_len;
+    DCE2_SmbSsnData* sd = get_dce2_smb_session_data(flow);
 
     DebugFormat(DEBUG_DCE_SMB, "%s\n", DCE2_DEBUG__PAF_START_MSG_SMB);
     DebugFormat(DEBUG_DCE_SMB, "SMB: %u bytes of data\n", len);
@@ -99,7 +100,7 @@ StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, const uint8
     UNUSED(flags);
 #endif
 
-    if (dce2_paf_abort(flow))
+    if (dce2_paf_abort(flow, (DCE2_SsnData*)sd))
     {
         DebugFormat(DEBUG_DCE_SMB, "%s\n", DCE2_DEBUG__PAF_END_MSG);
         return StreamSplitter::ABORT;

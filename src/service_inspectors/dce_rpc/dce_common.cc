@@ -25,7 +25,7 @@
 #include "log/messages.h"
 #include "main/snort_debug.h"
 
-const char* dce2_get_policy_name(DCE2_POLICY policy)
+const char* dce2_get_policy_name(DCE2_Policy policy)
 {
     const char* policyStr = nullptr;
     switch (policy)
@@ -75,7 +75,7 @@ bool dce2_set_common_config(Value& v, dce2CommonProtoConf& common)
         common.max_frag_len = v.get_long();
 
     else if ( v.is("policy") )
-        common.policy = (DCE2_POLICY)v.get_long();
+        common.policy = (DCE2_Policy)v.get_long();
     else
         return false;
     return true;
@@ -92,21 +92,26 @@ void print_dce2_common_config(dce2CommonProtoConf& common)
         dce2_get_policy_name(common.policy));
 }
 
-bool dce2_paf_abort(Flow* flow)
+bool dce2_paf_abort(Flow* flow, DCE2_SsnData* sd)
 {
     if (flow->get_session_flags() & SSNFLAG_MIDSTREAM)
     {
-        DebugMessage(DEBUG_DCE_TCP,
+        DebugMessage(DEBUG_DCE_COMMON,
             "Aborting PAF because of midstream pickup.\n");
         return true;
     }
     else if (!(flow->get_session_flags() & SSNFLAG_ESTABLISHED))
     {
-        DebugMessage(DEBUG_DCE_TCP,
+        DebugMessage(DEBUG_DCE_COMMON,
             "Aborting PAF because of unestablished session.\n");
         return true;
     }
-    // FIXIT-M add the remaining checks
+
+    if ((sd != NULL) && DCE2_SsnNoInspect(sd))
+    {
+        DebugMessage(DEBUG_DCE_COMMON, "Aborting PAF because of session data check.\n");
+        return true;
+    }
 
     return false;
 }

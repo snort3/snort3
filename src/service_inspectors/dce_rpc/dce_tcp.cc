@@ -24,12 +24,15 @@
 #include "dce_tcp_module.h"
 #include "main/snort_debug.h"
 
+Dce2TcpFlowData::Dce2TcpFlowData() : FlowData(flow_id)
+{
+}
+
 THREAD_LOCAL dce2TcpStats dce2_tcp_stats;
 
 THREAD_LOCAL ProfileStats dce2_tcp_pstat_main;
 THREAD_LOCAL ProfileStats dce2_tcp_pstat_session;
 THREAD_LOCAL ProfileStats dce2_tcp_pstat_new_session;
-THREAD_LOCAL ProfileStats dce2_tcp_pstat_session_state;
 THREAD_LOCAL ProfileStats dce2_tcp_pstat_detect;
 THREAD_LOCAL ProfileStats dce2_tcp_pstat_log;
 THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_seg;
@@ -45,6 +48,84 @@ DCE2_TcpSsnData* get_dce2_tcp_session_data(Flow* flow)
         Dce2TcpFlowData::flow_id);
 
     return fd ? &fd->dce2_tcp_session : nullptr;
+}
+
+static DCE2_TcpSsnData* set_new_dce2_tcp_session(Packet* p)
+{
+    Dce2TcpFlowData* fd = new Dce2TcpFlowData;
+
+    p->flow->set_application_data(fd);
+    return(&fd->dce2_tcp_session);
+}
+
+static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf config)
+{
+    DCE2_TcpSsnData* dce2_tcp_sess = NULL;
+    Profile profile(dce2_tcp_pstat_new_session);
+
+    if (DCE2_TcpAutodetect(p))
+    {
+        DebugMessage(DEBUG_DCE_TCP, "DCE over TCP packet detected\n");
+        DebugMessage(DEBUG_DCE_TCP, "Creating new session\n");
+
+        dce2_tcp_sess = set_new_dce2_tcp_session(p);
+
+        if ( dce2_tcp_sess )
+        {
+            DCE2_CoInitTracker(&dce2_tcp_sess->co_tracker);
+            DCE2_ResetRopts(&dce2_tcp_sess->sd.ropts);
+
+            dce2_tcp_stats.tcp_sessions++;
+            DebugFormat(DEBUG_DCE_TCP,"Created (%p)\n", (void*)dce2_tcp_sess);
+
+            dce2_tcp_sess->sd.trans = DCE2_TRANS_TYPE__TCP;
+            dce2_tcp_sess->sd.server_policy = config.common.policy;
+            dce2_tcp_sess->sd.client_policy = DCE2_POLICY__WINXP;
+            dce2_tcp_sess->sd.wire_pkt = p;
+
+            DCE2_SsnSetAutodetected(&dce2_tcp_sess->sd, p);
+        }
+    }
+
+    return dce2_tcp_sess;
+}
+
+DCE2_TcpSsnData* dce2_handle_tcp_session(Packet* p, dce2TcpProtoConf& config)
+{
+    Profile profile(dce2_tcp_pstat_session);
+
+    DCE2_TcpSsnData* dce2_tcp_sess =  get_dce2_tcp_session_data(p->flow);
+
+    if (dce2_tcp_sess == nullptr)
+    {
+        dce2_tcp_sess = dce2_create_new_tcp_session(p, config);
+    }
+    else
+    {
+        DCE2_SsnData* sd = (DCE2_SsnData*)dce2_tcp_sess;
+        sd->wire_pkt = p;
+
+        if (DCE2_SsnAutodetected(sd) && !(p->packet_flags & sd->autodetect_dir))
+        {
+            /* Try to autodetect in opposite direction */
+            if (!DCE2_TcpAutodetect(p))
+            {
+                DebugMessage(DEBUG_DCE_TCP, "Bad autodetect.\n");
+                DCE2_SsnNoInspect(sd);
+                dce2_tcp_stats.sessions_aborted++;
+                dce2_tcp_stats.bad_autodetects++;
+                return NULL;
+            }
+
+            DCE2_SsnClearAutodetected(sd);
+        }
+    }
+
+    DebugFormat(DEBUG_DCE_TCP, "Session pointer: %p\n", (void*)dce2_tcp_sess);
+
+    // FIXIT-M add remaining session handling logic
+
+    return dce2_tcp_sess;
 }
 
 //-------------------------------------------------------------------------
@@ -79,18 +160,25 @@ void Dce2Tcp::show(SnortConfig*)
 
 void Dce2Tcp::eval(Packet* p)
 {
-    DCE2_TcpSsnData* dce2_sess = get_dce2_tcp_session_data(p->flow);
+    DCE2_TcpSsnData* dce2_tcp_sess;
+    Profile profile(dce2_tcp_pstat_main);
 
-    if (dce2_sess == nullptr)
+    assert(p->has_tcp_data());
+    assert(p->flow);
+
+    if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
     {
-        /*Check if it is a DCE2 over TCP packet*/
-       
-        if (DCE2_TcpAutodetect(p))
-        {
-            DebugMessage(DEBUG_DCE_TCP, "DCE over TCP packet detected\n");
-        }
-        
+        DebugMessage(DEBUG_DCE_TCP,
+            "Midstream - not inspecting.\n");
+        return;
     }
+
+    dce2_tcp_sess = dce2_handle_tcp_session(p, config);
+    if (!dce2_tcp_sess)
+    {
+        return;
+    }
+    dce2_tcp_stats.tcp_pkts++;
 }
 
 //-------------------------------------------------------------------------
@@ -120,6 +208,11 @@ static void dce2_tcp_dtor(Inspector* p)
     delete p;
 }
 
+static void dce2_tcp_init()
+{
+    Dce2TcpFlowData::init();
+}
+
 const InspectApi dce2_tcp_api =
 {
     {
@@ -138,7 +231,7 @@ const InspectApi dce2_tcp_api =
     (uint16_t)PktType::PDU,
     nullptr,  // buffers
     "dce_tcp",
-    nullptr,
+    dce2_tcp_init,
     nullptr, // pterm
     nullptr, // tinit
     nullptr, // tterm

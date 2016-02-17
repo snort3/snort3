@@ -114,7 +114,7 @@ inline bool DCE2_TcpAutodetect(Packet* p)
 struct DCE2_TcpSsnData
 {
     DCE2_SsnData sd;  // This member must be first
-    // FIXIT-M add all the remaining fields
+    DCE2_CoTracker co_tracker;
 };
 
 class Dce2TcpFlowData : public FlowData

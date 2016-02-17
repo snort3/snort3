@@ -143,36 +143,31 @@ ProfileStats* Dce2TcpModule::get_profile(
         return &dce2_tcp_pstat_new_session;
 
     case 3:
-        name = "dce tcp session state";
-        parent = "dce tcp session";
-        return &dce2_tcp_pstat_session_state;
-
-    case 4:
         name = "dce tcp detect";
         parent = "dce tcp main";
         return &dce2_tcp_pstat_detect;
 
-    case 5:
+    case 4:
         name = "dce tcp log";
         parent = "dce_tcp_main";
         return &dce2_tcp_pstat_log;
 
-    case 6:
+    case 5:
         name = "dce tcp connection-oriented segment";
         parent = "dce tcp main";
         return &dce2_tcp_pstat_co_seg;
 
-    case 7:
+    case 6:
         name = "dce tcp connection-oriented fragment";
         parent = "dce tcp main";
         return &dce2_tcp_pstat_co_frag;
 
-    case 8:
+    case 7:
         name = "dce tcp connection-oriented reassembly";
         parent = "dce tcp main";
         return &dce2_tcp_pstat_co_reass;
 
-    case 9:
+    case 8:
         name = "dce tcp connection-oriented context";
         parent = "dce tcp main";
         return &dce2_tcp_pstat_co_ctx;

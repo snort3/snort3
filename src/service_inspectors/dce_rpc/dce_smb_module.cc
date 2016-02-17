@@ -218,86 +218,81 @@ ProfileStats* Dce2SmbModule::get_profile(
         return &dce2_smb_pstat_new_session;
 
     case 3:
-        name = "dce smb session_state";
-        parent = "dce smb session";
-        return &dce2_smb_pstat_session_state;
-
-    case 4:
         name = "dce smb detect";
         parent = "dce smb main";
         return &dce2_smb_pstat_detect;
 
-    case 5:
+    case 4:
         name = "dce smb log";
         parent = "dce smb main";
         return &dce2_smb_pstat_log;
 
-    case 6:
+    case 5:
         name = "dce smb connection-oriented segment";
         parent = "dce smb main";
         return &dce2_smb_pstat_co_seg;
 
-    case 7:
+    case 6:
         name = "dce smb connection-oriented fragment";
         parent = "dce smb main";
         return &dce2_smb_pstat_co_frag;
 
-    case 8:
+    case 7:
         name = "dce smb connection-oriented reassembly";
         parent = "dce smb main";
         return &dce2_smb_pstat_co_reass;
 
-    case 9:
+    case 8:
         name = "dce smb connection-oriented context";
         parent = "dce smb main";
         return &dce2_smb_pstat_co_ctx;
 
-    case 10:
+    case 9:
         name = "dce smb segment";
         parent = "dce smb main";
         return &dce2_smb_pstat_smb_seg;
 
-    case 11:
+    case 10:
         name = "dce smb request";
         parent = "dce smb main";
         return &dce2_smb_pstat_smb_req;
 
-    case 12:
+    case 11:
         name = "dce smb uid";
         parent = "dce smb main";
         return &dce2_smb_pstat_smb_uid;
 
-    case 13:
+    case 12:
         name = "dce smb tid";
         parent = "dce smb main";
         return &dce2_smb_pstat_smb_tid;
 
-    case 14:
+    case 13:
         name = "dce smb fid";
         parent = "dce smb main";
         return &dce2_smb_pstat_smb_fid;
 
-    case 15:
+    case 14:
         name = "dce smb file";
         parent = "dce smb main";
         return &dce2_smb_pstat_smb_file;
 
-    case 16:
+    case 15:
         name = "dce smb file detect";
         parent = "dce smb file";
         return &dce2_smb_pstat_smb_file_detect;
 
-    case 17:
+    case 16:
         name = "dce smb file api";
         parent = "dce smb file";
         return &dce2_smb_pstat_smb_file_api;
 
-    case 18:
+    case 17:
         name = "dce smb fingerprint";
         parent = "dce smb main";
         return &dce2_smb_pstat_smb_fingerprint;
 
-    case 19:
+    case 18:
         name = "dce smb negotiate";
         parent = "dce smb main";
         return &dce2_smb_pstat_smb_negotiate;

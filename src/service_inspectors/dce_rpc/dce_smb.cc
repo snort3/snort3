@@ -23,13 +23,13 @@
 #include "dce_smb_module.h"
 #include "dce_list.h"
 #include "main/snort_debug.h"
+#include "file_api/file_service.h"
 
 THREAD_LOCAL dce2SmbStats dce2_smb_stats;
 
 THREAD_LOCAL ProfileStats dce2_smb_pstat_main;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_session;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_new_session;
-THREAD_LOCAL ProfileStats dce2_smb_pstat_session_state;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_detect;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_log;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_co_seg;
@@ -47,6 +47,10 @@ THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_file_api;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_fingerprint;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_negotiate;
 
+Dce2SmbFlowData::Dce2SmbFlowData() : FlowData(flow_id)
+{
+}
+
 unsigned Dce2SmbFlowData::flow_id = 0;
 
 DCE2_SmbSsnData* get_dce2_smb_session_data(Flow* flow)
@@ -55,6 +59,91 @@ DCE2_SmbSsnData* get_dce2_smb_session_data(Flow* flow)
         Dce2SmbFlowData::flow_id);
 
     return fd ? &fd->dce2_smb_session : nullptr;
+}
+
+static DCE2_SmbSsnData* set_new_dce2_smb_session(Packet* p)
+{
+    Dce2SmbFlowData* fd = new Dce2SmbFlowData;
+
+    p->flow->set_application_data(fd);
+    return(&fd->dce2_smb_session);
+}
+
+static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf config)
+{
+    DCE2_SmbSsnData* dce2_smb_sess = NULL;
+    Profile profile(dce2_smb_pstat_new_session);
+
+    if (DCE2_SmbAutodetect(p))
+    {
+        DebugMessage(DEBUG_DCE_SMB, "DCE over SMB packet detected\n");
+        DebugMessage(DEBUG_DCE_SMB, "Creating new session\n");
+
+        dce2_smb_sess = set_new_dce2_smb_session(p);
+        if ( dce2_smb_sess )
+        {
+            dce2_smb_sess->dialect_index = DCE2_SENTINEL;
+            dce2_smb_sess->max_outstanding_requests = 10;  // Until Negotiate/SessionSetupAndX
+            dce2_smb_sess->cli_data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+            dce2_smb_sess->srv_data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+            dce2_smb_sess->pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
+            dce2_smb_sess->uid = DCE2_SENTINEL;
+            dce2_smb_sess->tid = DCE2_SENTINEL;
+            dce2_smb_sess->ftracker.fid = DCE2_SENTINEL;
+            dce2_smb_sess->rtracker.mid = DCE2_SENTINEL;
+            dce2_smb_sess->max_file_depth = FileService::get_max_file_depth();
+
+            DCE2_ResetRopts(&dce2_smb_sess->sd.ropts);
+
+            dce2_smb_stats.smb_sessions++;
+            DebugFormat(DEBUG_DCE_SMB,"Created (%p)\n", (void*)dce2_smb_sess);
+
+            dce2_smb_sess->sd.trans = DCE2_TRANS_TYPE__SMB;
+            dce2_smb_sess->sd.server_policy = config.common.policy;
+            dce2_smb_sess->sd.client_policy = DCE2_POLICY__WINXP;
+            dce2_smb_sess->sd.wire_pkt = p;
+
+            DCE2_SsnSetAutodetected(&dce2_smb_sess->sd, p);
+        }
+    }
+
+    return dce2_smb_sess;
+}
+
+DCE2_SmbSsnData* dce2_handle_smb_session(Packet* p, dce2SmbProtoConf& config)
+{
+    Profile profile(dce2_smb_pstat_session);
+
+    DCE2_SmbSsnData* dce2_smb_sess =  get_dce2_smb_session_data(p->flow);
+
+    if (dce2_smb_sess == nullptr)
+    {
+        dce2_smb_sess = dce2_create_new_smb_session(p, config);
+    }
+    else
+    {
+        DCE2_SsnData* sd = (DCE2_SsnData*)dce2_smb_sess;
+        sd->wire_pkt = p;
+
+        if (DCE2_SsnAutodetected(sd) && !(p->packet_flags & sd->autodetect_dir))
+        {
+            /* Try to autodetect in opposite direction */
+            if (!DCE2_SmbAutodetect(p))
+            {
+                DebugMessage(DEBUG_DCE_SMB, "Bad autodetect.\n");
+                DCE2_SsnNoInspect(sd);
+                dce2_smb_stats.sessions_aborted++;
+                dce2_smb_stats.bad_autodetects++;
+                return NULL;
+            }
+            DCE2_SsnClearAutodetected(sd);
+        }
+    }
+    DebugFormat(DEBUG_DCE_SMB, "Session pointer: %p\n", (void*)dce2_smb_sess);
+
+    // FIXIT-M add remaining session handling logic
+
+    return dce2_smb_sess;
 }
 
 //-------------------------------------------------------------------------
@@ -98,17 +187,25 @@ void Dce2Smb::show(SnortConfig*)
 
 void Dce2Smb::eval(Packet* p)
 {
-    DCE2_SmbSsnData* dce2_sess = get_dce2_smb_session_data(p->flow);
+    DCE2_SmbSsnData* dce2_smb_sess;
+    Profile profile(dce2_smb_pstat_main);
 
-    if (dce2_sess == nullptr)
+    assert(p->has_tcp_data());
+    assert(p->flow);
+
+    if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
     {
-        /*Check if it is a DCE2 over SMB packet*/
-
-        if (DCE2_SmbAutodetect(p))
-        {
-            DebugMessage(DEBUG_DCE_SMB, "DCE over SMB packet detected\n");
-        }
+        DebugMessage(DEBUG_DCE_SMB,
+            "Midstream - not inspecting.\n");
+        return;
     }
+
+    dce2_smb_sess = dce2_handle_smb_session(p, config);
+    if (!dce2_smb_sess)
+    {
+        return;
+    }
+    dce2_smb_stats.smb_pkts++;
 }
 
 //-------------------------------------------------------------------------
@@ -123,6 +220,11 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 {
     delete m;
+}
+
+static void dce2_smb_init()
+{
+    Dce2SmbFlowData::init();
 }
 
 static Inspector* dce2_smb_ctor(Module* m)
@@ -156,7 +258,7 @@ const InspectApi dce2_smb_api =
     (uint16_t)PktType::PDU,
     nullptr,  // buffers
     "dce_smb",
-    nullptr,
+    dce2_smb_init,
     nullptr, // pterm
     nullptr, // tinit
     nullptr, // tterm

@@ -25,13 +25,14 @@
 #include "main/snort_types.h"
 #include "framework/module.h"
 #include "framework/inspector.h"
+#include "protocols/packet.h"
 
 extern const InspectApi dce2_smb_api;
 extern const InspectApi dce2_tcp_api;
 
 #define GID_DCE2 145
 
-enum DCE2_POLICY
+enum DCE2_Policy
 {
     DCE2_POLICY__WIN2000 = 0,
     DCE2_POLICY__WINXP,
@@ -60,7 +61,7 @@ struct dce2CommonProtoConf
 {
     bool disable_defrag;
     uint16_t max_frag_len;
-    DCE2_POLICY policy;
+    DCE2_Policy policy;
 };
 
 #define DCE2_DEBUG__PAF_END_MSG    "=========================================================="
@@ -136,10 +137,19 @@ struct DCE2_Roptions
     const uint8_t* stub_data;  /* Set to NULL if not applicable */
 };
 
+enum DCE2_SsnFlag
+{
+    DCE2_SSN_FLAG__NONE               = 0x0000,
+    DCE2_SSN_FLAG__AUTODETECTED       = 0x0001,
+    DCE2_SSN_FLAG__NO_INSPECT         = 0x0002,
+    DCE2_SSN_FLAG__ALL                = 0xffff
+};
+
 struct DCE2_SsnData
 {
-    DCE2_POLICY server_policy;
-    DCE2_POLICY client_policy;
+    DCE2_TransType trans;
+    DCE2_Policy server_policy;
+    DCE2_Policy client_policy;
     int flags;
     const Packet* wire_pkt;
     uint64_t alert_mask;
@@ -186,9 +196,50 @@ inline uint16_t DceRpcNtohs(const uint16_t* ptr, const DceRpcBoFlag bo_flag)
     return ((value & 0xff00) >> 8) | ((value & 0x00ff) << 8);
 }
 
+inline void DCE2_ResetRopts(DCE2_Roptions* ropts)
+{
+    ropts->first_frag = DCE2_SENTINEL;
+    ropts->opnum = DCE2_SENTINEL;
+    ropts->hdr_byte_order = DCE2_SENTINEL;
+    ropts->data_byte_order = DCE2_SENTINEL;
+    ropts->stub_data = NULL;
+}
+
+inline void DCE2_SsnSetAutodetected(DCE2_SsnData* sd, Packet* p)
+{
+    sd->flags |= DCE2_SSN_FLAG__AUTODETECTED;
+    sd->autodetect_dir = p->packet_flags & (PKT_FROM_CLIENT | PKT_FROM_SERVER);
+}
+
+inline int DCE2_SsnAutodetectDir(DCE2_SsnData* sd)
+{
+    return sd->autodetect_dir;
+}
+
+inline int DCE2_SsnAutodetected(DCE2_SsnData* sd)
+{
+    return sd->flags & DCE2_SSN_FLAG__AUTODETECTED;
+}
+
+inline void DCE2_SsnClearAutodetected(DCE2_SsnData* sd)
+{
+    sd->flags &= ~DCE2_SSN_FLAG__AUTODETECTED;
+    sd->autodetect_dir = 0;
+}
+
+inline void DCE2_SsnSetNoInspect(DCE2_SsnData* sd)
+{
+    sd->flags |= DCE2_SSN_FLAG__NO_INSPECT;
+}
+
+inline int DCE2_SsnNoInspect(DCE2_SsnData* sd)
+{
+    return sd->flags & DCE2_SSN_FLAG__NO_INSPECT;
+}
+
 bool dce2_set_common_config(Value&, dce2CommonProtoConf&);
 void print_dce2_common_config(dce2CommonProtoConf&);
-bool dce2_paf_abort(Flow*);
+bool dce2_paf_abort(Flow*, DCE2_SsnData*);
 
 #endif
 
