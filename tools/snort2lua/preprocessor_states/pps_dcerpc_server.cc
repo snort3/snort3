@@ -1,0 +1,625 @@
+//--------------------------------------------------------------------------
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
+// pps_dcerpc_server.cc author Maya Dagon <mdagon@cisco.com>
+
+#include <sstream>
+#include <vector>
+#include <map>
+#include <cstring>
+
+#include "conversion_state.h"
+#include "helpers/s2l_util.h"
+#include "helpers/util_binder.h"
+
+namespace preprocessors
+{
+namespace
+{
+#define MIN_PORT 0
+#define MAX_PORT 65535
+
+enum DceDetectListState
+{
+    DCE_DETECT_LIST_STATE__START,
+    DCE_DETECT_LIST_STATE__TYPE,
+    DCE_DETECT_LIST_STATE__PORTS_START,
+    DCE_DETECT_LIST_STATE__PORTS_END,
+    DCE_DETECT_LIST_STATE__END,
+};
+
+std::string transport[] = { "smb", "tcp" };
+
+std::map <std::string, std::vector<uint16_t> > default_ports
+{
+    { "smb", { 139, 445 }
+    },
+    { "tcp", { 135 }
+    }
+};
+
+class DcerpcServer : public ConversionState
+{
+public:
+    DcerpcServer(Converter& c);
+    virtual ~DcerpcServer() { }
+    virtual bool convert(std::istringstream& data_stream);
+
+private:
+    bool get_bracket_list(std::istringstream& data_stream, std::string& list);
+    bool convert_val_or_list(std::istringstream& data_stream, std::string& str);
+    bool parse_smb_file_inspection(std::istringstream& data_stream);
+    bool parse_detect(std::istringstream& data_stream, std::map<std::string, Binder*> bind, bool
+        is_detect);
+    void add_default_ports(std::string type, std::map<std::string, Binder*> bind);
+    bool parse_and_add_ports(std::string ports, std::string type,  std::map<std::string,
+        Binder*> bind, bool is_detect);
+    bool parse_nets(std::istringstream& data_stream, std::map<std::string,
+        Binder*> bind);
+    bool add_option_to_all_transports(std::string option, std::string value);
+
+    std::map<std::string, bool> detect_ports_set;
+    std::map<std::string, std::string> table_name;
+    static int binding_id;
+};
+} // namespace
+
+int DcerpcServer::binding_id = 0;
+
+DcerpcServer::DcerpcServer(Converter& c) : ConversionState(c)
+{
+    for (auto type: transport)
+        detect_ports_set[type] = false;
+}
+
+bool DcerpcServer::get_bracket_list(std::istringstream& data_stream, std::string& list)
+{
+    std::string tail;
+    do
+    {
+        if (!(data_stream >> tail))
+        {
+            return false;
+        }
+        list = list + tail;
+    }
+    while (tail.find(']') == std::string::npos);
+
+    return true;
+}
+
+// Read from data_stream either a single value x or list : [x,y,z ... ]
+// Put in str either a single value 'x', or space sperated list 'x y z'
+bool DcerpcServer::convert_val_or_list(std::istringstream& data_stream, std::string& str)
+{
+    if (!(data_stream >> str))
+    {
+        return false;
+    }
+
+    if ((str.find('[') != std::string::npos) &&  (str.find(']') == std::string::npos))
+    {
+        if (!get_bracket_list(data_stream, str))
+        {
+            return false;
+        }
+    }
+
+    if (str.back() == ',')
+        str.pop_back();
+
+    if (str.back() == ']')
+        str.pop_back();
+
+    if (str.front() == '[')
+        str.erase(0,1);
+
+    // remove additional whitespaces
+    str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
+
+    // convert ',' seperators to spaces
+    replace(str.begin(), str.end(), ',', ' ');
+
+    return true;
+}
+
+bool DcerpcServer::parse_smb_file_inspection(std::istringstream& data_stream)
+{
+    bool tmpval = true;
+    std::string file_inspect;
+
+    if (!(data_stream >> file_inspect))
+    {
+        return false;
+    }
+
+    if (file_inspect.find('[') == std::string::npos) //single arg
+    {
+        if (file_inspect.back() == ',')
+        {
+            file_inspect.pop_back();
+        }
+        tmpval = table_api.add_option("smb_file_inspection", file_inspect);
+    }
+    else
+    {
+        if (file_inspect.find(']') == std::string::npos)
+        {
+            if (!get_bracket_list(data_stream, file_inspect))
+            {
+                return false;
+            }
+        }
+
+        size_t pos = file_inspect.find(',');
+        if ((pos == std::string::npos) || (pos <= 1))
+        {
+            return false;
+        }
+
+        std::string arg = file_inspect.substr(1, pos-1);
+        // remove additional whitespaces
+        arg.erase(remove_if(arg.begin(), arg.end(), isspace), arg.end());
+        tmpval = table_api.add_option("smb_file_inspection", arg);
+
+        pos = file_inspect.find("file-depth");
+        if (pos == std::string::npos)
+        {
+            return false;
+        }
+
+        arg = file_inspect.substr(pos + strlen("file-depth"));
+        tmpval = table_api.add_option("smb_file_depth", std::stoi(arg)) && tmpval;
+    }
+
+    return tmpval;
+}
+
+void DcerpcServer::add_default_ports(std::string type,  std::map<std::string,Binder*> bind)
+{
+    for (auto port : default_ports[type])
+    {
+        bind[type]->add_when_port(std::to_string(port));
+    }
+}
+
+// add single port / range
+bool DcerpcServer::parse_and_add_ports(std::string ports, std::string type, std::map<std::string,
+    Binder*> bind, bool is_detect)
+{
+    if (ports.empty())
+    {
+        return true;
+    }
+
+    std::vector<std::string> port_list;
+
+    util::split(ports, ',', port_list);
+    for (std::string port : port_list)
+    {
+        size_t pos = port.find(':');
+        if (pos == std::string::npos)
+        {
+            bind[type]->add_when_port(port);
+        }
+        else
+        {
+            uint16_t min_port = MIN_PORT;
+            uint16_t max_port = MAX_PORT;
+
+            if (pos != 0)
+            {
+                min_port = std::stoi(port.substr(0, pos));
+            }
+
+            if (pos != (port.length()-1))
+            {
+                max_port = std::stoi(port.substr(pos+1));
+            }
+
+            if (max_port < min_port)
+            {
+                return false;
+            }
+
+            for (uint32_t i = min_port; i<= max_port; i++)
+            {
+                bind[type]->add_when_port(std::to_string(i));
+            }
+        }
+    }
+
+    if (is_detect)
+    {
+        detect_ports_set[type] = true;
+    }
+
+    return true;
+}
+
+bool DcerpcServer::parse_detect(std::istringstream& data_stream,
+    std::map<std::string,Binder*> bind, bool is_detect)
+{
+    std::string type;
+    bool one_type = false;
+    DceDetectListState state = DCE_DETECT_LIST_STATE__START;
+
+    while (state != DCE_DETECT_LIST_STATE__END)
+    {
+        switch (state)
+        {
+        case DCE_DETECT_LIST_STATE__START:
+        {
+            char c = data_stream.peek();
+            if (isspace(c))
+            {
+                data_stream.get(c);
+            }
+            else if (c == '[')
+            {
+                data_stream.get(c);
+                state = DCE_DETECT_LIST_STATE__TYPE;
+            }
+            else
+            {
+                one_type = true;
+                state = DCE_DETECT_LIST_STATE__TYPE;
+            }
+        }
+        break;
+
+        case DCE_DETECT_LIST_STATE__TYPE:
+        {
+            if (!(data_stream >> type))
+            {
+                return false;
+            }
+
+            // clear whitespaces
+            type.erase(remove_if(type.begin(), type.end(), isspace), type.end());
+
+            bool use_default_ports = false;
+
+            if (type.back() == ',')
+            {
+                use_default_ports = true;
+                type.pop_back();
+                if (one_type)
+                {
+                    return true;
+                }
+            }
+
+            if (type.back() == ']')
+            {
+                return true;
+            }
+
+            if (!use_default_ports)
+            {
+                state = DCE_DETECT_LIST_STATE__PORTS_START;
+            }
+        }
+        break;
+
+        case DCE_DETECT_LIST_STATE__PORTS_START:
+        {
+            std::string ports;
+
+            if (!(data_stream >> ports))
+            {
+                if (one_type)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            if ((ports.find('[') != std::string::npos) &&  (ports.find(']') == std::string::npos))
+            {
+                std::string tail;
+
+                if (!getline(data_stream, tail,']'))
+                {
+                    return false;
+                }
+                ports = ports + tail;
+            }
+
+            if (ports.back() == ',')
+            {
+                ports.pop_back();
+                if (!one_type)
+                {
+                    state = DCE_DETECT_LIST_STATE__TYPE;
+                }
+            }
+
+            size_t pos = ports.find("]]");
+            if ((pos != std::string::npos) ||
+                ((ports.find('[') == std::string::npos) &&  (ports.find(']') !=
+                std::string::npos)))
+            {
+                // found outer list seperator
+                if (one_type)
+                {
+                    return false;
+                }
+                else
+                {
+                    state = DCE_DETECT_LIST_STATE__END;
+                }
+            }
+
+            if (state == DCE_DETECT_LIST_STATE__PORTS_START) // didn't fall under previous
+            {                                                 // conditions
+                state = DCE_DETECT_LIST_STATE__PORTS_END;
+            }
+
+            // if ports are for unsupported types - stop here
+            if (bind.find(type) == bind.end())
+            {
+                continue;
+            }
+
+            // remove '[',']'
+            ports.erase(std::remove(ports.begin(), ports.end(), '['), ports.end());
+            ports.erase(std::remove(ports.begin(), ports.end(), ']'), ports.end());
+            // remove extra spaces
+            ports.erase(remove_if(ports.begin(), ports.end(), isspace), ports.end());
+
+            if (!parse_and_add_ports(ports, type, bind, is_detect))
+            {
+                return false;
+            }
+        }
+        break;
+
+        case DCE_DETECT_LIST_STATE__PORTS_END:
+        {
+            char c;
+
+            if (one_type)
+            {
+                return true;
+            }
+            else // wait for list terminator or item seperator
+            {
+                if (!data_stream.get(c))
+                    return false;
+
+                if (c == ']')
+                {
+                    state = DCE_DETECT_LIST_STATE__END;
+                }
+                else if (c == ',')
+                {
+                    state = DCE_DETECT_LIST_STATE__TYPE;
+                }
+                else if (!isspace(c))
+                {
+                    return false;
+                }
+            }
+        }
+        break;
+
+        default:
+            return false;
+        }
+    }
+    return true;
+}
+
+bool DcerpcServer::parse_nets(std::istringstream& data_stream, std::map<std::string,
+    Binder*> bind)
+{
+    for (auto type : transport)
+    {
+        table_name[type] = "dce_" + type + std::to_string(binding_id);
+        bind[type]->set_use_name(table_name[type]);
+    }
+    binding_id++;
+
+    std::string nets;
+    if (!convert_val_or_list(data_stream, nets))
+    {
+        return false;
+    }
+
+    for (auto type : transport)
+    {
+        bind[type]->add_when_net(nets);
+    }
+
+    return true;
+}
+
+bool DcerpcServer::add_option_to_all_transports(std::string option, std::string value)
+{
+    bool retval = true;
+
+    for (auto type: transport)
+    {
+        table_api.open_table(table_name[type]);
+        retval = table_api.add_option(option, value) && retval;
+        table_api.close_table();
+    }
+
+    return retval;
+}
+
+bool DcerpcServer::convert(std::istringstream& data_stream)
+{
+    std::string keyword;
+    bool retval = true;
+
+    Binder bind_tcp(table_api);
+    Binder bind_smb(table_api);
+
+    std::map<std::string, Binder*> bind;
+
+    bind["smb"] = &bind_smb;
+    bind["tcp"] = &bind_tcp;
+
+    for (auto type : transport)
+    {
+        bind[type]->set_when_proto("tcp");
+        bind[type]->set_use_type("dce_" + type);
+    }
+
+    if (!(data_stream >> keyword))
+        return false;
+
+    if (keyword.back() == ',')
+        keyword.pop_back();
+
+    if (!keyword.compare("default"))
+    {
+        for (auto type : transport)
+            table_name[type] = "dce_" + type;
+    }
+    else
+    {
+        if (keyword.compare("net"))
+        {
+            return false;
+        }
+        if (!parse_nets(data_stream, bind))
+        {
+            return false;
+        }
+    }
+
+    while (data_stream >> keyword)
+    {
+        bool tmpval = true;
+
+        if (keyword.back() == ',')
+            keyword.pop_back();
+
+        if (keyword.empty())
+            continue;
+
+        if (!keyword.compare("policy"))
+        {
+            std::string policy;
+
+            if (!(data_stream >> policy))
+                return false;
+
+            if (policy.back() == ',')
+                policy.pop_back();
+
+            tmpval = add_option_to_all_transports("policy", policy);
+        }
+        else if (!keyword.compare("detect"))
+        {
+            tmpval = parse_detect(data_stream, bind, true);
+        }
+        else if (!keyword.compare("autodetect"))
+        {
+            tmpval = parse_detect(data_stream, bind, false);
+        }
+        else if (!keyword.compare("no_autodetect_http_proxy_ports"))
+        {
+            // FIXIT - add once http transport is supported
+        }
+        else if (!keyword.compare("smb_invalid_shares"))
+        {
+            std::string invalid_shares;
+
+            if (!convert_val_or_list(data_stream, invalid_shares))
+                return false;
+
+            table_api.open_table(table_name["smb"]);
+            tmpval = table_api.add_option("smb_invalid_shares", invalid_shares);
+            table_api.close_table();
+        }
+        else if (!keyword.compare("smb_max_chain"))
+        {
+            table_api.open_table(table_name["smb"]);
+            tmpval = parse_int_option("smb_max_chain", data_stream, false);
+            table_api.close_table();
+        }
+        else if (!keyword.compare("smb_file_inspection"))
+        {
+            table_api.open_table(table_name["smb"]);
+            tmpval = parse_smb_file_inspection(data_stream);
+            table_api.close_table();
+        }
+        else if (!keyword.compare("smb2_max_compound"))
+        {
+            table_api.open_table(table_name["smb"]);
+            tmpval = parse_int_option("smb_max_compound", data_stream, false);
+            table_api.close_table();
+        }
+        else if (!keyword.compare("valid_smb_versions"))
+        {
+            std::string versions;
+
+            if (!convert_val_or_list(data_stream, versions))
+                return false;
+
+            table_api.open_table(table_name["smb"]);
+            tmpval = table_api.add_option("valid_smb_versions", versions);
+            table_api.close_table();
+        }
+        else
+        {
+            tmpval = false;
+        }
+
+        if (!tmpval)
+        {
+            data_api.failed_conversion(data_stream, keyword);
+            retval = false;
+        }
+    }
+
+    for (auto type : transport)
+    {
+        if (!detect_ports_set[type])
+        {
+            add_default_ports(type, bind);
+        }
+    }
+
+    return retval;
+}
+
+/**************************
+ *******  A P I ***********
+ **************************/
+
+static ConversionState* ctor(Converter& c)
+{
+    return new DcerpcServer(c);
+}
+
+static const ConvertMap preprocessor_dcerpc_server =
+{
+    "dcerpc2_server",
+    ctor,
+};
+
+const ConvertMap* dcerpc_server_map = &preprocessor_dcerpc_server;
+}
+
