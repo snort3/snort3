@@ -119,15 +119,7 @@ void snort_inspect(Packet* p)
             obApi->resetObfuscationEntries();
 #endif
 
-        do_detect = do_detect_content = true;
-
-        /*
-        **  Reset the appropriate application-layer protocol fields
-        */
-        p->alt_dsize = 0;
-
-        InspectorManager::execute(p);
-        inspected = true;
+            do_detect = do_detect_content = true;
 
             /*
             **  Reset the appropriate application-layer protocol fields
