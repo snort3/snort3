@@ -317,7 +317,7 @@ PortGroup* sopg_table_t::get_port_group(
 
     PortGroupVector& v = c2s ? to_srv[proto] : to_cli[proto];
 
-    if ( (unsigned)proto_ordinal > v.size() )
+    if ( (unsigned)proto_ordinal >= v.size() )
         return nullptr;
 
     return v[proto_ordinal];
