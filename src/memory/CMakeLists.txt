@@ -7,6 +7,8 @@ set ( MEMORY_SOURCES
     memory_module.h
     memory_config.h
     memory_manager.cc
+    prune_handler.cc
+    prune_handler.h
     )
 
 add_library ( memory STATIC

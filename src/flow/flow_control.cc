@@ -223,7 +223,7 @@ void FlowControl::purge_flows (PktType proto)
         cache->purge();
 }
 
-void FlowControl::prune_flows (PktType proto, Packet* p)
+void FlowControl::prune_flows(PktType proto, Packet* p)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -236,6 +236,25 @@ void FlowControl::prune_flows (PktType proto, Packet* p)
         // if no luck, try the memcap
         cache->prune_excess(true, (Flow*)p->flow);
     }
+}
+
+void FlowControl::prune_flows(PktType proto)
+{
+    auto cache = get_cache(proto);
+    if ( !cache )
+        return;
+
+    cache->prune_excess();
+}
+
+void FlowControl::prune_flows()
+{
+    prune_flows(PktType::IP);
+    prune_flows(PktType::ICMP);
+    prune_flows(PktType::TCP);
+    prune_flows(PktType::UDP);
+    prune_flows(PktType::PDU);
+    prune_flows(PktType::FILE);
 }
 
 void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)

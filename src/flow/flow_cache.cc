@@ -95,6 +95,8 @@ Flow* FlowCache::find(const FlowKey* key)
         if ( flow->last_data_seen < t )
             flow->last_data_seen = t;
     }
+
+    last = flow;
     return flow;
 }
 
@@ -136,13 +138,16 @@ Flow* FlowCache::get(const FlowKey* key)
             if ( !prune_unis() )
                 prune_excess(false, nullptr);
         }
+
         flow = (Flow*)hash_table->get(key);
 
         assert(flow);
         flow->reset();
         link_uni(flow);
     }
+
     flow->last_data_seen = timestamp;
+    last = flow;
 
     return flow;
 }
@@ -161,7 +166,7 @@ int FlowCache::remove(Flow* flow)
     return hash_table->remove(flow->key);
 }
 
-uint32_t FlowCache::prune_stale(uint32_t thetime, Flow* save_me)
+uint32_t FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
 {
     Flow* flow;
     uint32_t pruned = 0;
@@ -228,7 +233,7 @@ uint32_t FlowCache::prune_unis()
     return pruned;
 }
 
-uint32_t FlowCache::prune_excess(bool memCheck, Flow* save_me)
+uint32_t FlowCache::prune_excess(bool memCheck, const Flow* save_me)
 {
     /* Free up 'n' flows at a time until we get under the
      * memcap or free enough flows to be able to create

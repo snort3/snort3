@@ -20,12 +20,33 @@
 
 #include "memory_cap.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <cassert>
 
 #include "main/snort_config.h"
 #include "main/thread.h"
 #include "profiler/memory_profiler_active_context.h"
 #include "memory_config.h"
+#include "prune_handler.h"
+
+#ifdef UNIT_TEST
+#include "catch/catch.hpp"
+#endif
+
+template<typename Tracker, typename Handler>
+static inline bool free_space(size_t requested, size_t cap, Tracker& trk, Handler& handler)
+{
+    assert(requested <= cap);
+    const auto required = cap - requested;
+
+    if ( trk.used() > required )
+        handler();
+
+    return trk.used() <= required;
+}
 
 namespace memory
 {
@@ -48,13 +69,11 @@ struct Tracker
     constexpr Tracker() = default;
 };
 
-
 // -----------------------------------------------------------------------------
 // static variables
 // -----------------------------------------------------------------------------
 
 static THREAD_LOCAL Tracker s_tracker;
-
 
 // -----------------------------------------------------------------------------
 // public interface
@@ -70,8 +89,7 @@ bool DefaultCap::free_space(size_t n)
     if ( !config.enable || !config.cap )
         return true;
 
-    // FIXIT-H call prune handler and attempt to free memory
-    return s_tracker.used() + n <= config.cap;
+    return ::free_space(n, config.cap, s_tracker, prune_handler);
 }
 
 void DefaultCap::update_allocations(size_t n)
@@ -91,3 +109,70 @@ void DefaultCap::update_deallocations(size_t n)
 }
 
 } // namespace memory
+
+#ifdef UNIT_TEST
+
+namespace t_memory_cap
+{
+
+struct MockTracker
+{
+    size_t result;
+    size_t used() const
+    { return result; }
+};
+
+struct HandlerSpy
+{
+    bool called = false;
+    size_t modify_tracker;
+    MockTracker* tracker;
+
+    void operator()()
+    {
+        called = true;
+        if ( modify_tracker && tracker )
+            tracker->result = modify_tracker;
+    }
+
+    HandlerSpy(size_t n, MockTracker& trk) :
+        modify_tracker(n), tracker(&trk) { }
+};
+
+} // namespace t_memory_cap
+
+TEST_CASE( "memory cap free space", "[memory]" )
+{
+    using namespace t_memory_cap;
+
+    SECTION( "no handler call required" )
+    {
+        MockTracker tracker { 0 };
+        HandlerSpy handler { 1, tracker };
+
+        CHECK( ::free_space(1, 1024, tracker, handler) );
+        CHECK_FALSE( handler.called );
+    }
+
+    SECTION( "handler frees enough space" )
+    {
+        MockTracker tracker { 1024 };
+        HandlerSpy handler { 1023, tracker };
+
+        CHECK( ::free_space(1, 1024, tracker, handler) );
+        CHECK( handler.called );
+        CHECK( tracker.result == handler.modify_tracker );
+    }
+
+    SECTION( "handler fails to free enough space" )
+    {
+        MockTracker tracker { 1024 };
+        HandlerSpy handler { 0, tracker };
+
+        CHECK_FALSE( ::free_space(1, 1024, tracker, handler) );
+        CHECK( handler.called );
+        CHECK( tracker.result == 1024 );
+    }
+}
+
+#endif

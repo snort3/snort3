@@ -48,8 +48,9 @@ public:
     int release(Flow*, const char* reason);
 
     uint32_t prune_unis();
-    uint32_t prune_stale(uint32_t thetime, Flow* save_me);
-    uint32_t prune_excess(bool memCheck, Flow* save_me);
+    uint32_t prune_stale(uint32_t thetime, const Flow* save_me);
+    uint32_t prune_excess(bool memCheck, const Flow* save_me);
+    uint32_t prune_excess() { return prune_excess(false, last); }
     void timeout(uint32_t flowCount, time_t cur_time);
 
     int purge();
@@ -78,6 +79,7 @@ private:
 
     class ZHash* hash_table;
     Flow* uni_head, * uni_tail;
+    const Flow* last = nullptr;
 };
 
 #endif

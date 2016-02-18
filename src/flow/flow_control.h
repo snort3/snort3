@@ -58,6 +58,8 @@ public:
     void delete_flow(Flow*, const char* why);
     void purge_flows(PktType);
     void prune_flows(PktType, Packet*);
+    void prune_flows(PktType);
+    void prune_flows();
     void timeout_flows(uint32_t flowCount, time_t cur_time);
 
     char expected_flow(Flow*, Packet*);

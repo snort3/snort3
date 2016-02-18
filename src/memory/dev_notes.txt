@@ -31,7 +31,8 @@ memory_cap.h, respectively, are used in the new/delete replacements.
 
 TODO:
 
-- add MemoryModule
 - add prune handler
 - add logging
 - possibly add eventing
+- make sure FlowCache::last isn't dereferenced anywhere
+- write tests for prune handler
