@@ -176,7 +176,6 @@ void* operator new[](size_t n, const std::nothrow_t& tag) noexcept
 void operator delete[](void* p) noexcept
 { ::operator delete(p); }
 
-
 // -----------------------------------------------------------------------------
 // unit tests
 // -----------------------------------------------------------------------------

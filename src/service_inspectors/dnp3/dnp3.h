@@ -145,21 +145,21 @@ enum dnp3_reassembly_state_t
 struct dnp3_reassembly_data_t
 {
     uint8_t buffer[DNP3_BUFFER_SIZE];
-    uint16_t buflen;
-    dnp3_reassembly_state_t state;
-    uint8_t last_seq;
+    uint16_t buflen = 0;
+    dnp3_reassembly_state_t state = DNP3_REASSEMBLY_STATE__IDLE;
+    uint8_t last_seq = 0;
 };
 
 /* DNP3 session data */
 struct dnp3_session_data_t
 {
     /* Fields for rule option matching. */
-    uint8_t direction;
-    uint8_t func;
-    uint8_t obj_group;
-    uint8_t obj_var;
-    uint16_t indications;
-    uint16_t flags;
+    uint8_t direction = 0;
+    uint8_t func = 0;
+    uint8_t obj_group = 0;
+    uint8_t obj_var = 0;
+    uint16_t indications = 0;
+    uint16_t flags = 0;
 
     /* Reassembly stuff */
     dnp3_reassembly_data_t client_rdata;
