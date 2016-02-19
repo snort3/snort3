@@ -54,6 +54,7 @@ dofile(conf_dir .. '/file_magic.lua')
 
 --ppm = { }
 --profiler = { }
+--perf_monitor = { }
 
 stream = { }
 stream_ip = { }
@@ -70,7 +71,6 @@ dns = { }
 gtp_inspect = default_gtp
 imap = { }
 smtp = { }
-perf_monitor = { }
 pop = { }
 port_scan = { }
 reputation = { }
