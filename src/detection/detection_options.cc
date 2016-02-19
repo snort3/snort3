@@ -102,7 +102,7 @@ int detection_option_key_compare_func(const void* k1, const void* k2, size_t)
         IpsOption* opt1 = (IpsOption*)key1->option_data;
         IpsOption* opt2 = (IpsOption*)key2->option_data;
 
-        if ( opt1 == opt2 )
+        if ( *opt1 == *opt2 )
             return DETECTION_OPTION_EQUAL;
     }
     return DETECTION_OPTION_NOT_EQUAL;
