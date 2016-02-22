@@ -166,6 +166,9 @@ void* operator new(size_t n, const std::nothrow_t&) noexcept
 void operator delete(void* p) noexcept
 { memory::Interface<>::deallocate(p); }
 
+void operator delete(void* p, const std::nothrow_t&) noexcept
+{ ::operator delete(p); }
+
 void* operator new[](size_t n)
 { return ::operator new(n); }
 
@@ -174,6 +177,9 @@ void* operator new[](size_t n, const std::nothrow_t& tag) noexcept
 
 void operator delete[](void* p) noexcept
 { ::operator delete(p); }
+
+void operator delete[](void* p, const std::nothrow_t&) noexcept
+{ ::operator delete[](p); }
 
 // -----------------------------------------------------------------------------
 // unit tests
