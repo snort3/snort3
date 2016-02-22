@@ -2636,9 +2636,6 @@ int acsmPrintSummaryInfo2(void)
     LogStat("fail state memory", acsm2_failstate_memory/scale);
 
 #if 0  // FIXIT-L clean up format; not all this should be printed all the time
-//#ifndef VALGRIND_TESTING
-    // valgrind on macos claims leakage here ...
-
     if (acsm2_dfa_memory > 0)
     {
         if (summary.acsm.compress_states)

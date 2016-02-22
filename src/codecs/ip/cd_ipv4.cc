@@ -612,17 +612,16 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
 static inline uint16_t IpId_Next()
 {
-#if defined(REG_TEST) || defined(VALGRIND_TESTING)
+#if defined(REG_TEST)
     uint16_t id = htons(s_id_index + 1);
 #else
     uint16_t id = s_id_pool[s_id_index];
 #endif
     s_id_index = (s_id_index + 1) % IP_ID_COUNT;
 
-#ifndef VALGRIND_TESTING
     if ( !s_id_index )
         rand_shuffle(s_rand, &s_id_pool[0], sizeof(s_id_pool), 1);
-#endif
+
     return id;
 }
 
@@ -722,7 +721,6 @@ static void mod_dtor(Module* m)
 //-------------------------------------------------------------------------
 static void ipv4_codec_ginit()
 {
-#ifndef VALGRIND_TESTING
     if ( s_rand )
         rand_close(s_rand);
 
@@ -735,7 +733,6 @@ static void ipv4_codec_ginit()
         FatalError("rand_open() failed.\n");
 
     rand_get(s_rand, &s_id_pool[0], sizeof(s_id_pool));
-#endif
 
     // Reserved addresses within multicast address space (See RFC 5771)
     MulticastReservedIp = sfip_var_from_string(

@@ -249,11 +249,9 @@ void DAQ_Init(const SnortConfig* sc)
 
 void DAQ_Term()
 {
-//#ifndef VALGRIND_TESTING
     if ( loaded )
         DAQ_Unload();
     daq_mod = NULL;
-//#endif
 }
 
 void DAQ_Abort()

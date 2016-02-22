@@ -48,9 +48,6 @@
 /* build side channel */
 #cmakedefine SIDE_CHANNEL 1
 
-/* Workarounds for valgrind testing */
-#cmakedefine VALGRIND_TESTING 1
-
 /* enable proc stats */
 #cmakedefine LINUX_SMP 1
 

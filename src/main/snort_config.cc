@@ -277,10 +277,8 @@ void SnortConfig::setup()
     if ( output_use_utc() )
         thiszone = 0;
 
-#ifndef VALGRIND_TESTING
     else
         thiszone = gmt2local(0);
-#endif
 
     init_policies(this);
     ParseRules(this);

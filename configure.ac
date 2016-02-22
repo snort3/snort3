@@ -389,14 +389,6 @@ if test "x$static_piglets" = "xyes"; then
     AC_DEFINE(STATIC_PIGLETS, [1], [include internal piglets in binary])
 fi
 
-AC_ARG_ENABLE(valgrind,
-    AC_HELP_STRING([--enable-valgrind],[only use if you are testing with valgrind.]),
-    enable_valgrind="$enableval", enable_valgrind="no")
-
-if test "x$enable_valgrind" = "xyes"; then
-    AC_DEFINE([VALGRIND_TESTING],[1],[Workarounds for valgrind testing])
-fi
-
 AC_ARG_ENABLE(shell,
     AC_HELP_STRING([--enable-shell],[enable command line shell support]),
     enable_shell="$enableval", enable_shell="no")

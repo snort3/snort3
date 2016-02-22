@@ -107,11 +107,7 @@ void LogCount(const char* s, uint64_t c)
 
 void LogStat(const char* s, uint64_t n, uint64_t tot)
 {
-#ifdef VALGRIND_TESTING
-    LogMessage("%25.25s: " FMTu64("-12") "\n", s, n);
-#else
     LogMessage("%25.25s: " FMTu64("-12") "\t(%7.3f%%)\n", s, n, CalcPct(n, tot));
-#endif
 }
 
 void LogStat(const char* s, double d)

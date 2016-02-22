@@ -424,7 +424,6 @@ void InitProtoNames(void)
 
     for (i = 0; i < NUM_IP_PROTOS; i++)
     {
-#ifndef VALGRIND_TESTING
         struct protoent* pt = getprotobynumber(i);  // main thread only
 
         if (pt != NULL)
@@ -436,7 +435,6 @@ void InitProtoNames(void)
                 protocol_names[i][j] = toupper(protocol_names[i][j]);
         }
         else
-#endif
         {
             char protoname[10];
 

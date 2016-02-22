@@ -197,10 +197,6 @@ const char* get_signal_name(PigSignal s)
 // FIXIT-L convert sigaction, etc. to c++11
 static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
 {
-#ifdef VALGRIND_TESTING
-    if ( sig == SIGUSR2 )
-        return 0;  // used by valgrind
-#endif
     sighandler_t pre_handler;
 
 #ifdef HAVE_SIGACTION

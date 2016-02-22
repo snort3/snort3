@@ -332,7 +332,6 @@ static void DefineAllIfaceVars(SnortConfig* sc)
                 (uint8_t*)&iface_vars[i].netmask);
         }
     }
-#ifndef VALGRIND_TESTING
     else
     {
         char errbuf[PCAP_ERRBUF_SIZE];
@@ -366,7 +365,6 @@ static void DefineAllIfaceVars(SnortConfig* sc)
 
         pcap_freealldevs(alldevs);
     }
-#endif
 }
 
 static RuleListNode* addNodeToOrderedList(RuleListNode* ordered_list,
