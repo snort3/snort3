@@ -23,6 +23,7 @@
 #include "flow/flow.h"
 #include "detection/detection_defines.h"
 #include "framework/cursor.h"
+#include "hash/sfhashfcn.h"
 
 #include "nhttp_inspect.h"
 #include "nhttp_msg_head_shared.h"
@@ -170,6 +171,30 @@ void NHttpCursorModule::NHttpRuleParaList::reset()
     path = false;
     query = false;
     fragment = false;
+}
+
+uint32_t NHttpIpsOption::hash() const
+{
+    uint32_t a = IpsOption::hash();
+    uint32_t b = (uint32_t)inspect_section;
+    uint32_t c = sub_id >> 32;
+    uint32_t d = sub_id & 0xFFFFFFFF;
+    uint32_t e = form >> 32;
+    uint32_t f = form & 0xFFFFFFFF;
+    mix(a,b,c);
+    mix(d,e,f);
+    mix(a,c,f);
+    finalize(a,c,f);
+    return f;
+}
+
+bool NHttpIpsOption::operator==(const IpsOption& ips) const
+{
+    const NHttpIpsOption& nhio = static_cast<const NHttpIpsOption&>(ips);
+    return IpsOption::operator==(ips) &&
+           inspect_section == nhio.inspect_section &&
+           sub_id == nhio.sub_id &&
+           form == nhio.form;
 }
 
 int NHttpIpsOption::eval(Cursor& c, Packet* p)
