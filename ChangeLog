@@ -1,3 +1,16 @@
+16/02/22 - build 188
+
+-- added delete/delete[] replacements for nothrow overload
+   thanks to Ramya Potluri for reporting the issue
+-- fixed a detection option comparison bug which wasted time and space
+-- disable perf_monitor by default since the reporting interval should be set
+-- memory manager updates
+-- valgrind and unsanitary address fixes
+-- snort2lua updates for dce2
+-- build issue fix - make non-GNU strerror_r() the default case
+-- packet latency updates
+-- perfmon updates
+
 16/02/12 - build 187
 
 -- file capture added - initial version writes from packet thread

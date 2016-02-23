@@ -290,6 +290,7 @@ int hi_server_norm(HI_SESSION* session, HttpSessionData* hsd)
 
                 if (angle_bracket > js_start)
                 {
+                    hi_current_search = &hi_html_search[0];
                     script_found = hi_htmltype_search_mpse->find(
                         (const char*)js_start, (angle_bracket-js_start), HI_SearchStrFound);
 

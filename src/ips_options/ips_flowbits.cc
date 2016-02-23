@@ -235,19 +235,16 @@ bool FlowBitsOption::operator==(const IpsOption& ips) const
         return false;
 
     FlowBitsOption& rhs = (FlowBitsOption&)ips;
-    FLOWBITS_OP* left = (FLOWBITS_OP*)&config;
-    FLOWBITS_OP* right = (FLOWBITS_OP*)&rhs.config;
-    int i;
 
-    if ((left->num_ids != right->num_ids)||
-        (left->eval != right->eval)||
-        (left->type != right->type)||
-        (left->group_id != right->group_id))
+    if ( (config->num_ids != rhs.config->num_ids) or
+        (config->eval != rhs.config->eval) or
+        (config->type != rhs.config->type) or
+        (config->group_id != rhs.config->group_id) )
         return false;
 
-    for (i = 0; i < left->num_ids; i++)
+    for ( int i = 0; i < config->num_ids; i++ )
     {
-        if (left->ids[i] != right->ids[i])
+        if (config->ids[i] != rhs.config->ids[i])
             return false;
     }
 
