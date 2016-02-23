@@ -25,90 +25,85 @@
 
 // A simple, dynamically sized bit vector implementation
 
-#include <assert.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-
-#include "utils/util.h"
+#include <cassert>
+#include <cstring>
 
 class BitOp
 {
 public:
-    BitOp(unsigned int len)
-    {
-        assert(len);
-
-        bit_buf = (uint8_t*)SnortAlloc(len);
-
-        buf_size = (unsigned int)len;
-        max_bits = (unsigned int)(len << 3);
-    }
-
-    ~BitOp()
-    {
-        free(bit_buf);
-    }
+    BitOp(size_t);
+    ~BitOp();
 
     void reset();
     void set(unsigned int bit);
-    bool is_set(unsigned int bit);
+    bool is_set(unsigned int bit) const;
     void clear(unsigned int bit);
 
-    unsigned int get_max_bits()
-    { return max_bits; }
+    size_t size() const;
 
-    //FIXIT-L This should be eliminated and better encapsulated.
-    uint8_t& operator[](unsigned int pos)
-    { if ( pos > buf_size) pos = 0; return bit_buf[pos]; }
+    // FIXIT-L J add operator overloads for [], &=, |=, etc
+    size_t get_buf_size() const;
+    uint8_t& get_buf_element(size_t);
+    const uint8_t& get_buf_element(size_t) const;
 
 private:
+    uint8_t mask(size_t bit) const;
+
     uint8_t* bit_buf;
-    unsigned int buf_size;
-    unsigned int max_bits;
+    const size_t buf_size;
 };
 
+// -----------------------------------------------------------------------------
+// implementation
+// -----------------------------------------------------------------------------
+
+inline BitOp::BitOp(size_t len) :
+    bit_buf(new uint8_t[len]()), buf_size(len)
+{ }
+
+inline BitOp::~BitOp()
+{ delete[] bit_buf; }
+
+// FIXIT-L J ops that don't need to be inlined can probably be but into a .cc file
 // Reset the bit buffer so that it can be reused
 inline void BitOp::reset()
-{
-    memset(bit_buf, 0, buf_size);
-}
+{ memset(bit_buf, 0, buf_size); }
 
 // Set the bit in the specified position within the bit buffer.
 inline void BitOp::set(unsigned int bit)
 {
-    if ( max_bits <= bit )
-    {
-        assert(false);
-        return;
-    }
-    uint8_t mask = (uint8_t)(0x80 >> (bit & 7));
-    bit_buf[bit >> 3] |= mask;
+    assert(size() > bit);
+    bit_buf[bit >> 3] |= mask(bit);
 }
 
 // Checks if the bit at the specified position is set
-inline bool BitOp::is_set(unsigned int bit)
+inline bool BitOp::is_set(unsigned int bit) const
 {
-    if ( max_bits <= bit )
-    {
-        assert(false);
-        return false;
-    }
-    uint8_t mask = (uint8_t)(0x80 >> (bit & 7));
-    return (mask & bit_buf[bit >> 3]);
+    assert(size() > bit);
+    return mask(bit) & bit_buf[bit >> 3];
 }
 
 // Clear the bit in the specified position within the bit buffer.
 inline void BitOp::clear(unsigned int bit)
 {
-    if ( max_bits <= bit )
-    {
-        assert(false);
-        return;
-    }
-    uint8_t mask = (uint8_t)(0x80 >> (bit & 7));
-    bit_buf[bit >> 3] &= ~mask;
+    assert(size() > bit);
+    bit_buf[bit >> 3] &= ~mask(bit);
 }
+
+inline size_t BitOp::size() const
+{ return buf_size << 3; }
+
+inline uint8_t BitOp::mask(size_t bit) const
+{ return (uint8_t)(0x80 >> (bit & 7)); }
+
+inline size_t BitOp::get_buf_size() const
+{ return buf_size; }
+
+inline uint8_t& BitOp::get_buf_element(size_t i)
+{ return bit_buf[i]; }
+
+inline const uint8_t& BitOp::get_buf_element(size_t i) const
+{ return bit_buf[i]; }
 
 #endif
 

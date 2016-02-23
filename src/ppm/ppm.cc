@@ -45,13 +45,15 @@
 #include "config.h"
 #endif
 
-#include "ppm_module.h"
 #include "detection/fp_create.h"
-#include "parser/parser.h"
+#include "detection/treenodes.h"
 #include "events/event_queue.h"
-#include "utils/stats.h"
+#include "log/messages.h"
 #include "sfip/sf_ip.h"
-#include "time/cpuclock.h"
+#include "utils/stats.h"
+#include "utils/util.h"
+
+#include "ppm_module.h"
 
 #define PPM_BASE_SUSPEND_RULE_GID 1000
 #define PPM_BASE_CLEAR_RULE_GID   2000

@@ -21,6 +21,8 @@
 
 #include "dce_utils.h"
 
+#include <cerrno>
+
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/parameter.h"

@@ -19,10 +19,10 @@
 // tcp_segment_descriptor.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 30, 2015
 
+#include "log/messages.h"
 #include "main/snort_debug.h"
-
-#include "stream/tcp/tcp_defs.h"
 #include "protocols/tcp_options.h"
+#include "stream/tcp/tcp_defs.h"
 #include "stream/tcp/tcp_event_logger.h"
 #include "tcp_segment_descriptor.h"
 

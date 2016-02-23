@@ -33,6 +33,7 @@
 #include <sys/types.h>
 
 #include "events/event_queue.h"
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"

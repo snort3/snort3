@@ -20,21 +20,12 @@
 
 #include "treenodes.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <errno.h>
-
-#include "detect.h"
+#include "framework/ips_option.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
-#include "framework/ips_option.h"
+#include "utils/util.h"
+
+#include "detect.h"
 
 /****************************************************************************
  *

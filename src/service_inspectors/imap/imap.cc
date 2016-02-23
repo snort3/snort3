@@ -30,6 +30,7 @@
 #include <sys/types.h>
 
 #include "events/event_queue.h"
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
@@ -40,6 +41,7 @@
 #include "target_based/snort_protocols.h"
 #include "search_engines/search_tool.h"
 #include "utils/sfsnprintfappend.h"
+#include "utils/util.h"
 #include "protocols/ssl.h"
 #include "mime/file_mime_process.h"
 

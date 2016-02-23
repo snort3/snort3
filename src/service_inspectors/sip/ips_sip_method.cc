@@ -27,13 +27,13 @@
 #endif
 
 #include "sip.h"
-
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
 #include "detection/detect.h"
 #include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
+#include "log/messages.h"
 #include "profiler/profiler.h"
 
 //-------------------------------------------------------------------------

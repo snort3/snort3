@@ -19,8 +19,10 @@
 // ftp_module.cc author Russ Combs <rucombs@cisco.com>
 
 #include "ftp_module.h"
+
 #include <sstream>
 
+#include "log/messages.h"
 #include "parser/parser.h"
 
 using namespace std;

@@ -271,55 +271,52 @@ int FlowBitsOption::eval(Cursor&, Packet* p)
 
 static inline int clear_group_bit(BitOp* bitop, char* group)
 {
-    FLOWBITS_GRP* flowbits_grp;
-    BitOp* GrpBitOp;
-    unsigned int i, max_bytes;
-
-    if ( group == NULL )
+    if ( !group )
         return 0;
 
     // FIXIT-M why is the hash lookup done at runtime for flowbits groups?
     // a pointer to flowbis_grp should be in flowbits config data
     // this *should* be safe but iff splay mode is disabled
-    flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
-    if ( flowbits_grp == NULL )
+    auto flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
+
+    if ( !flowbits_grp )
         return 0;
-    if ((bitop == NULL) || (bitop->get_max_bits() <= flowbits_grp->max_id) || flowbits_grp->count == 0)
+
+    if ( !bitop || (bitop->size() <= flowbits_grp->max_id) || !flowbits_grp->count )
         return 0;
-    GrpBitOp = flowbits_grp->GrpBitOp;
+
+    auto GrpBitOp = flowbits_grp->GrpBitOp;
 
     /* note, max_id is an index, not a count.
      * Calculate max_bytes by adding 8 to max_id, then dividing by 8.  */
-    max_bytes = (flowbits_grp->max_id + 8) >> 3;
-    for ( i = 0; i < max_bytes; i++ )
-    {
-        (*bitop)[i] &= ~((*GrpBitOp)[i]);
-    }
+    unsigned int max_bytes = (flowbits_grp->max_id + 8) >> 3;
+    for ( unsigned int i = 0; i < max_bytes; i++ )
+        bitop->get_buf_element(i) &= ~GrpBitOp->get_buf_element(i);
+
     return 1;
 }
 
 static inline int toggle_group_bit(BitOp* bitop, char* group)
 {
-    FLOWBITS_GRP* flowbits_grp;
-    BitOp* GrpBitOp;
-    unsigned int i, max_bytes;
+    if ( !group  )
+        return 0;
 
-    if ( group == NULL )
+    auto flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
+
+    if ( !flowbits_grp )
         return 0;
-    flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
-    if ( flowbits_grp == NULL )
+
+    if ( !bitop || (bitop->size() <= flowbits_grp->max_id) || !flowbits_grp->count )
         return 0;
-    if ((bitop == NULL) || (bitop->get_max_bits() <= flowbits_grp->max_id) || flowbits_grp->count == 0)
-        return 0;
-    GrpBitOp = flowbits_grp->GrpBitOp;
+
+    auto GrpBitOp = flowbits_grp->GrpBitOp;
 
     /* note, max_id is an index, not a count.
      * Calculate max_bytes by adding 8 to max_id, then dividing by 8.  */
-    max_bytes = (flowbits_grp->max_id + 8) >> 3;
-    for ( i = 0; i < max_bytes; i++ )
-    {
-        (*bitop)[i] ^= (*GrpBitOp)[i];
-    }
+    unsigned int max_bytes = (flowbits_grp->max_id + 8) >> 3;
+    for ( unsigned int i = 0; i < max_bytes; i++ )
+        bitop->get_buf_element(i) ^= GrpBitOp->get_buf_element(i);
+
     return 1;
 }
 
@@ -366,9 +363,9 @@ static inline int is_set_flowbits(
             return 0;
         for ( i = 0; i <= (unsigned int)(flowbits_grp->max_id >>3); i++ )
         {
-            uint8_t val = (*bitop)[i] &
-                (*(flowbits_grp->GrpBitOp))[i];
-            if (val != (*(flowbits_grp->GrpBitOp))[i])
+            uint8_t val = bitop->get_buf_element(i) & flowbits_grp->GrpBitOp->get_buf_element(i);
+
+            if ( val != flowbits_grp->GrpBitOp->get_buf_element(i) )
                 return 0;
         }
         return 1;
@@ -379,9 +376,8 @@ static inline int is_set_flowbits(
             return 0;
         for ( i = 0; i <= (unsigned int)(flowbits_grp->max_id >>3); i++ )
         {
-            uint8_t val = (*bitop)[i] &
-                (*(flowbits_grp->GrpBitOp))[i];
-            if (val)
+            uint8_t val = bitop->get_buf_element(i) & flowbits_grp->GrpBitOp->get_buf_element(i);
+            if ( val )
                 return 1;
         }
         return 0;
