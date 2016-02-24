@@ -28,7 +28,7 @@ class RuleLatency
 public:
     static void push(detection_option_tree_root_t*);
     static void pop();
-    static bool enabled();
+    static bool suspended();
 
     class Context
     {

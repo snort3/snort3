@@ -27,19 +27,18 @@ struct RuleLatencyState
 {
     hr_time suspend_time { };
     unsigned timeouts = 0;
-    // FIXIT-L J should this be inverted to suspended?
-    bool enabled = true;
+    bool suspended = false;
 
     void enable()
     {
         timeouts = 0;
-        enabled = true;
+        suspended = false;
     }
 
     void suspend(hr_time cur_time)
     {
         suspend_time = cur_time;
-        enabled = false;
+        suspended = true;
     }
 };
 
