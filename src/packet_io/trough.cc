@@ -49,8 +49,6 @@ unsigned Trough::file_count = 0;
  ****************************************************************/
 int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol, std::vector<std::string> &pcap_queue)
 {
-    int ret = 0;
-
     for (const PcapReadObject &pro : pol)
     {
         const std::string& arg = pro.arg;
@@ -134,7 +132,8 @@ int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol, std::vector<std::
                 {
                     struct stat sb;
                     std::string pcap_name;
-                    auto i = 0, pos = 0;
+                    auto i = 0;
+                    size_t pos = 0;
 
                     if (arg.empty())
                     {
