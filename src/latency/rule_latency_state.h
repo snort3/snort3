@@ -16,28 +16,31 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// packet_latency_config.h author Joel Cornett <jocornet@cisco.com>
+// rule_latency_state.h author Joel Cornett <jocornet@cisco.com>
 
-#ifndef PACKET_LATENCY_CONFIG_H
-#define PACKET_LATENCY_CONFIG_H
+#ifndef RULE_LATENCY_STATE_H
+#define RULE_LATENCY_STATE_H
 
 #include "time/clock_defs.h"
 
-struct PacketLatencyConfig
+struct RuleLatencyState
 {
-    enum Action
+    hr_time suspend_time { };
+    unsigned timeouts = 0;
+    // FIXIT-L J should this be inverted to suspended?
+    bool enabled = true;
+
+    void enable()
     {
-        NONE = 0x00,
-        ALERT = 0x01,
-        LOG = 0x02,
-        ALERT_AND_LOG = ALERT | LOG
-    };
+        timeouts = 0;
+        enabled = true;
+    }
 
-    hr_duration max_time = 0_ticks;
-    bool fastpath = false;
-    Action action = NONE;
-
-    bool enabled() const { return max_time > 0_ticks; }
+    void suspend(hr_time cur_time)
+    {
+        suspend_time = cur_time;
+        enabled = false;
+    }
 };
 
 #endif

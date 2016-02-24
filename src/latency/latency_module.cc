@@ -37,17 +37,39 @@
 
 static const Parameter s_packet_params[] =
 {
-    { "enable", Parameter::PT_BOOL, nullptr, "true",
-        "enable packet latency" },
-
-    { "max_time", Parameter::PT_INT, "0:", "0",
+    { "max_time", Parameter::PT_INT, "0:", "500",
         "set timeout for packet latency thresholding (usec)" },
 
     { "fastpath", Parameter::PT_BOOL, nullptr, "false",
         "fastpath expensive packets (max_time exceeded)" },
 
+    // FIXIT-L J what is the most intuitive default action?
     { "action", Parameter::PT_ENUM, "none | alert | log | alert_and_log", "alert_and_log",
-        "event action if packet latency times out" },
+        "event action if packet times out and is fastpathed" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter s_rule_params[] =
+{
+    { "max_time", Parameter::PT_INT, "0:", "500",
+        "set timeout for rule evaluation (usec)" },
+
+    // We could just treat suspend_threshold == 0 as suspend == false
+    // but we leave this here for parity with packet latency
+    { "suspend", Parameter::PT_BOOL, nullptr, "false",
+        "temporarily suspend expensive rules" },
+
+    // FIXIT-L J what is a sensible default for this?
+    { "suspend_threshold", Parameter::PT_INT, "1:", "5",
+        "set threshold for number of timeouts before suspending a rule" },
+
+    { "max_suspend_time", Parameter::PT_INT, "0:", "30000",
+        "set max time for suspending a rule (ms, 0 means permanently disable rule)" },
+
+    // FIXIT-L J what is the most intuitive default action?
+    { "action", Parameter::PT_ENUM, "none | alert | log | alert_and_log", "alert_and_log",
+        "event action for rule latency enable and suspend events" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -57,11 +79,16 @@ static const Parameter s_params[] =
     { "packet", Parameter::PT_TABLE, s_packet_params, nullptr,
       "packet latency" },
 
+    { "rule", Parameter::PT_TABLE, s_rule_params, nullptr,
+      "rule latency" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static const RuleMap latency_rules[] =
 {
+    { LATENCY_EVENT_RULE_TREE_SUSPENDED, "rule tree suspended due to latency" },
+    { LATENCY_EVENT_RULE_TREE_ENABLED, "rule tree re-enabled after suspend timeout" },
     { LATENCY_EVENT_PACKET_FASTPATHED, "packet fastpathed due to latency" },
 
     { 0, nullptr }
@@ -71,8 +98,11 @@ THREAD_LOCAL LatencyStats latency_stats;
 
 static const PegInfo latency_pegs[] =
 {
-    { "packets", "total packets monitored" },
-    { "timeouts", "packets that timed out" },
+    { "total_packets", "total packets monitored" },
+    { "packet_timeouts", "packets that timed out" },
+    { "total_rule_evals", "total rule evals monitored" },
+    { "rule_eval_timeouts", "rule evals that timed out" },
+    { "rule_tree_enables", "rule tree re-enables" },
     { nullptr, nullptr }
 };
 
@@ -85,15 +115,42 @@ static inline bool latency_set(Value& v, PacketLatencyConfig& config)
     using std::chrono::duration_cast;
     using std::chrono::microseconds;
 
-    if ( v.is("enable") )
-        config.enable = v.get_bool();
-
-    else if ( v.is("max_time") )
+    if ( v.is("max_time") )
         config.max_time =
             duration_cast<decltype(config.max_time)>(microseconds(v.get_long()));
 
     else if ( v.is("fastpath") )
         config.fastpath = v.get_bool();
+
+    else if ( v.is("action") )
+        config.action =
+            static_cast<decltype(config.action)>(v.get_long());
+
+    else
+        return false;
+
+    return true;
+}
+
+static inline bool latency_set(Value& v, RuleLatencyConfig& config)
+{
+    using std::chrono::duration_cast;
+    using std::chrono::microseconds;
+    using std::chrono::milliseconds;
+
+    if ( v.is("max_time") )
+        config.max_time =
+            duration_cast<decltype(config.max_time)>(microseconds(v.get_long()));
+
+    else if ( v.is("suspend") )
+        config.suspend = v.get_bool();
+
+    else if ( v.is("suspend_threshold") )
+        config.suspend_threshold = v.get_long();
+
+    else if ( v.is("max_suspend_time") )
+        config.max_suspend_time =
+            duration_cast<decltype(config.max_time)>(milliseconds(v.get_long()));
 
     else if ( v.is("action") )
         config.action =
@@ -112,9 +169,14 @@ LatencyModule::LatencyModule() :
 bool LatencyModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
     const char* slp = "latency.packet";
+    const char* slr = "latency.rule";
 
     if ( !strncmp(fqn, slp, strlen(slp)) )
         return latency_set(v, sc->latency->packet_latency);
+
+    else if ( !strncmp(fqn, slr, strlen(slr)) )
+        return latency_set(v, sc->latency->rule_latency);
+
     else
         return false;
 

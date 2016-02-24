@@ -36,8 +36,9 @@
 #endif
 
 #include <sys/time.h>
-#include "main/snort_types.h"
 #include "detection/rule_option_types.h"
+#include "main/snort_types.h"
+#include "latency/rule_latency_state.h"
 #include "time/clock_defs.h"
 
 struct Packet;
@@ -65,8 +66,8 @@ struct dot_node_state_t
     uint64_t checks;
     uint64_t disables;
 
-    uint64_t ppm_disable_cnt;
-    uint64_t ppm_enable_cnt;
+    unsigned latency_timeouts;
+    unsigned latency_suspends;
 
     // FIXIT-L J perf profiler stuff should be factored of the node state struct
     void update(hr_duration delta, bool match)
@@ -94,19 +95,11 @@ struct detection_option_tree_node_t
     dot_node_state_t* state;
 };
 
-// this is per packet thread
-struct ppm_dot_root_state_t
-{
-    uint64_t ppm_suspend_time;
-    uint64_t ppm_disable_cnt;
-    bool enabled;
-};
-
 struct detection_option_tree_root_t
 {
     int num_children;
     detection_option_tree_node_t** children;
-    ppm_dot_root_state_t* state;
+    RuleLatencyState* latency_state;
 };
 
 struct detection_option_eval_data_t

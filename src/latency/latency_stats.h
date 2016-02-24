@@ -26,8 +26,11 @@
 
 struct LatencyStats
 {
-    PegCount packets;
-    PegCount timeouts;
+    PegCount total_packets;
+    PegCount packet_timeouts;
+    PegCount total_rule_evals;
+    PegCount rule_eval_timeouts;
+    PegCount rule_tree_enables;
 };
 
 extern THREAD_LOCAL LatencyStats latency_stats;

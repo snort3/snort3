@@ -752,11 +752,12 @@ struct node_profile_stats
     hr_duration elapsed_match;
     hr_duration elapsed_no_match;
     uint64_t checks;
-    uint64_t ppm_disables;
+    uint64_t latency_timeouts;
+    uint64_t latency_suspends;
 };
 
 static void detection_option_node_update_otn_stats(detection_option_tree_node_t* node,
-    node_profile_stats* stats, uint64_t checks, uint64_t disables)
+    node_profile_stats* stats, uint64_t checks, uint64_t timeouts, uint64_t suspends)
 {
     int i;
     node_profile_stats local_stats; /* cumulative stats for this node */
@@ -771,79 +772,84 @@ static void detection_option_node_update_otn_stats(detection_option_tree_node_t*
         node_stats.elapsed_no_match += node->state[i].elapsed_no_match;
         node_stats.checks += node->state[i].checks;
     }
-    if (stats)
+
+    if ( stats )
     {
         local_stats.elapsed = stats->elapsed + node_stats.elapsed;
         local_stats.elapsed_match = stats->elapsed_match + node_stats.elapsed_match;
         local_stats.elapsed_no_match = stats->elapsed_no_match + node_stats.elapsed_no_match;
+
         if (node_stats.checks > stats->checks)
             local_stats.checks = node_stats.checks;
         else
             local_stats.checks = stats->checks;
 
-        local_stats.ppm_disables = disables;
+        local_stats.latency_timeouts = timeouts;
+        local_stats.latency_suspends = suspends;
     }
+
     else
     {
         local_stats.elapsed = node_stats.elapsed;
         local_stats.elapsed_match = node_stats.elapsed_match;
         local_stats.elapsed_no_match = node_stats.elapsed_no_match;
         local_stats.checks = node_stats.checks;
-        local_stats.ppm_disables = disables;
+        local_stats.latency_timeouts = timeouts;
+        local_stats.latency_suspends = suspends;
     }
 
-    if (node->option_type == RULE_OPTION_TYPE_LEAF_NODE)
+    if ( node->option_type == RULE_OPTION_TYPE_LEAF_NODE )
     {
-        /* Update stats for this otn */
-        // FIXIT-H J this should either be called from the packet threads at exit
+        // Update stats for this otn
+        // FIXIT-L J this should either be called from the packet threads at exit
         // or *all* the states should get totalled by the main thread
         // Right now, it looks like we're missing out on some stats although it's possible
         // that this is "corrected" in the profiler code
-        OptTreeNode* otn = (OptTreeNode*)node->option_data;
-        OtnState* state = otn->state + get_instance_id();
-        state->elapsed += local_stats.elapsed;
-        state->elapsed_match += local_stats.elapsed_match;
-        state->elapsed_no_match += local_stats.elapsed_no_match;
-        if (local_stats.checks > state->checks)
-            state->checks = local_stats.checks;
+        auto* otn = (OptTreeNode*)node->option_data;
+        auto& state = otn->state[get_instance_id()];
 
-        state->ppm_disable_cnt += local_stats.ppm_disables;
+        state.elapsed += local_stats.elapsed;
+        state.elapsed_match += local_stats.elapsed_match;
+        state.elapsed_no_match += local_stats.elapsed_no_match;
+
+        if (local_stats.checks > state.checks)
+            state.checks = local_stats.checks;
+
+        state.latency_timeouts += local_stats.latency_timeouts;
+        state.latency_suspends += local_stats.latency_suspends;
     }
 
     if ( node->num_children )
     {
         for ( i=0; i < node->num_children; ++i )
             detection_option_node_update_otn_stats(node->children[i], &local_stats, checks,
-                disables);
+                timeouts, suspends);
     }
 }
 
 void detection_option_tree_update_otn_stats(SFXHASH* doth)
 {
-    if (doth == NULL)
+    if ( !doth )
         return;
 
-    /* Find the first tree root in the table */
-    SFXHASH_NODE* hashnode = sfxhash_findfirst(doth);
-
-    while (hashnode)
+    for ( auto hnode = sfxhash_findfirst(doth); hnode; hnode = sfxhash_findnext(doth) )
     {
-        detection_option_tree_node_t* node =
-            (detection_option_tree_node_t*)hashnode->data;
+        auto* node = (detection_option_tree_node_t*)hnode->data;
+        assert(node);
 
         uint64_t checks = 0;
-        uint64_t disables = 0;
+        uint64_t timeouts = 0;
+        uint64_t suspends = 0;
 
         for ( unsigned i = 0; i < get_instance_max(); ++i )
         {
             checks += node->state[i].checks;
-            disables += node->state[i].ppm_disable_cnt;
+            timeouts += node->state[i].latency_timeouts;
+            suspends += node->state[i].latency_suspends;
         }
 
         if ( checks )
-            detection_option_node_update_otn_stats(node, nullptr, checks, disables);
-
-        hashnode = sfxhash_findnext(doth);
+            detection_option_node_update_otn_stats(node, nullptr, checks, timeouts, suspends);
     }
 }
 
@@ -853,8 +859,7 @@ detection_option_tree_root_t* new_root()
     detection_option_tree_root_t* p = (detection_option_tree_root_t*)
         SnortAlloc(sizeof(detection_option_tree_root_t));
 
-    p->state = (ppm_dot_root_state_t*)
-        SnortAlloc(sizeof(ppm_dot_root_state_t)*get_instance_max());
+    p->latency_state = new RuleLatencyState[get_instance_max()]();
 
     return p;
 }
@@ -869,7 +874,7 @@ void free_detection_option_root(void** existing_tree)
     root = (detection_option_tree_root_t*)*existing_tree;
     free(root->children);
 
-    free(root->state);
+    delete[] root->latency_state;
     free(root);
     *existing_tree = NULL;
 }

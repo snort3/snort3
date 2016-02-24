@@ -8,8 +8,21 @@ The latency directory contains code for latency logging and management.
   based on whether the packet was fastpathed and depending on
   how the manager was configured.
 
-* Rule latency: To be ported over from ppm/
+* Rule latency: tracks and manages latency in rule tree evaluation.
+  Rule latency works much like packet latency. Instead of fastpath
+  the API contains an enabled() check that tests whether the
+  current rule tree should be evaluated. Pushing a rule tree
+  onto the stack has the side effect of re-enabling the rule
+  tree if conditions are met. Popping a rule tree off of the stack
+  has the side effect of suspending the rule tree if certain conditions
+  are met. Re-enables, suspends, and rule tree timeouts all
+  propagate log events. Re-enables and suspends propagate
+  alerts.
 
-Notes:
+  Pushing a rule tree side-effect: A rule tree is re-enabled if
+  1) it is currently disabled and 2) the suspend timeout is nonzero
+  and has been reached.
 
- * Latency is intended to replace the legacy ppm/ code
+  Popping a rule tree side-effect: A rule tree is suspended if
+  1) it is timed out and 2) the timeout threshold is met or
+  exceeded.

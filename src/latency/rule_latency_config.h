@@ -16,14 +16,15 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// packet_latency_config.h author Joel Cornett <jocornet@cisco.com>
+// rule_latency_config.h author Joel Cornett <jocornet@cisco.com>
 
-#ifndef PACKET_LATENCY_CONFIG_H
-#define PACKET_LATENCY_CONFIG_H
+#ifndef RULE_LATENCY_CONFIG_H
+#define RULE_LATENCY_CONFIG_H
 
+#include <cstdint>
 #include "time/clock_defs.h"
 
-struct PacketLatencyConfig
+struct RuleLatencyConfig
 {
     enum Action
     {
@@ -34,10 +35,13 @@ struct PacketLatencyConfig
     };
 
     hr_duration max_time = 0_ticks;
-    bool fastpath = false;
+    bool suspend = false;
+    unsigned suspend_threshold = 0;
+    hr_duration max_suspend_time = 0_ticks;
     Action action = NONE;
 
     bool enabled() const { return max_time > 0_ticks; }
+    bool allow_reenable() const { return max_suspend_time > 0_ticks; }
 };
 
 #endif

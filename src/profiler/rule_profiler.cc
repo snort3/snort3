@@ -73,7 +73,8 @@ static const StatsTable::Field fields[] =
     { "avg/check", 10, '\0', 1, std::ios_base::fmtflags() },
     { "avg/match", 10, '\0', 1, std::ios_base::fmtflags() },
     { "avg/non-match", 14, '\0', 1, std::ios_base::fmtflags() },
-    { "disables", 9, '\0', 0, std::ios_base::fmtflags() },
+    { "timeouts", 9, '\0', 0, std::ios_base::fmtflags() },
+    { "suspends", 9, '\0', 0, std::ios_base::fmtflags() },
     { nullptr, 0, '\0', 0, std::ios_base::fmtflags() }
 };
 
@@ -103,8 +104,11 @@ struct View
     uint64_t alerts() const
     { return state.alerts; }
 
-    uint64_t ppm_disable_count() const
-    { return state.ppm_disable_cnt; }
+    uint64_t timeouts() const
+    { return state.latency_timeouts; }
+
+    uint64_t suspends() const
+    { return state.latency_suspends; }
 
     hr_duration time_per(hr_duration d, uint64_t v) const
     {
@@ -235,7 +239,8 @@ static void print_single_entry(const View& v, unsigned n)
         table << duration_cast<microseconds>(v.avg_match()).count(); // avg/match
         table << duration_cast<microseconds>(v.avg_no_match()).count(); // avg/non-match
 
-        table << v.ppm_disable_count(); // disables
+        table << v.timeouts();
+        table << v.suspends();
     }
 
     LogMessage("%s", ss.str().c_str());
@@ -314,7 +319,7 @@ void reset_rule_profiler_stats()
         for ( unsigned i = 0; i < get_instance_max(); ++i )
         {
             auto& state = otn->state[i];
-            state.reset();
+            state = OtnState();
         }
     }
 }
@@ -352,18 +357,14 @@ static inline OtnState make_otn_state(
     hr_duration elapsed, hr_duration elapsed_match,
     uint64_t checks, uint64_t matches)
 {
-    return {
-        elapsed,
-        elapsed_match,
-        0_ticks,
+    OtnState state;
 
-        checks,
-        matches,
-        0,
-        0,
-        0,
-        0
-    };
+    state.elapsed = elapsed;
+    state.elapsed_match = elapsed_match;
+    state.checks = checks;
+    state.matches = matches;
+
+    return state;
 }
 
 static inline rule_stats::View make_rule_entry(
@@ -381,11 +382,27 @@ static void avoid_optimization()
 
 TEST_CASE( "otn state", "[profiler][rule_profiler]" )
 {
-    OtnState state_a = { 1_ticks, 2_ticks, 3_ticks, 1, 2, 3, 4, 0, 0};
+    OtnState state_a;
+
+    state_a.elapsed = 1_ticks;
+    state_a.elapsed_match = 2_ticks;
+    state_a.elapsed_no_match = 2_ticks;
+    state_a.checks = 1;
+    state_a.matches = 2;
+    state_a.noalerts = 3;
+    state_a.alerts = 4;
 
     SECTION( "incremental addition" )
     {
-        OtnState state_b = { 4_ticks, 5_ticks, 6_ticks, 5, 6, 7, 8, 0, 0};
+        OtnState state_b;
+
+        state_b.elapsed = 4_ticks;
+        state_b.elapsed_match = 5_ticks;
+        state_b.elapsed_no_match = 6_ticks;
+        state_b.checks = 5;
+        state_b.matches = 6;
+        state_b.noalerts = 7;
+        state_b.alerts = 8;
 
         state_a += state_b;
 
@@ -398,7 +415,8 @@ TEST_CASE( "otn state", "[profiler][rule_profiler]" )
 
     SECTION( "reset" )
     {
-        state_a.reset();
+        state_a = OtnState();
+
         CHECK( state_a.elapsed == 0_ticks );
         CHECK( state_a.elapsed_match == 0_ticks );
         CHECK( state_a.checks == 0 );
@@ -427,7 +445,8 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
     SigInfo sig_info;
     auto entry = make_rule_entry(3_ticks, 2_ticks, 3, 2);
     entry.state.alerts = 77;
-    entry.state.ppm_disable_cnt = 5;
+    entry.state.latency_timeouts = 5;
+    entry.state.latency_suspends = 2;
 
     SECTION( "copy assignment" )
     {
@@ -482,10 +501,16 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
         CHECK( entry.alerts() == 77 );
     }
 
-    SECTION( "ppm_disable_count" )
+    SECTION( "timeouts" )
     {
-        CHECK( entry.ppm_disable_count() == 5 );
+        CHECK( entry.timeouts() == 5 );
     }
+
+    SECTION( "suspends" )
+    {
+        CHECK( entry.suspends() == 2 );
+    }
+
 
     SECTION( "avg_match" )
     {

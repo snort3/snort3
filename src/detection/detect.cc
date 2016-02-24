@@ -84,8 +84,6 @@ void snort_ignore(Packet*) { }
 
 void snort_inspect(Packet* p)
 {
-    uint64_t pktcnt = 0;
-
     {
         PacketLatency::Context pkt_latency_ctx { p };
 
@@ -150,9 +148,6 @@ void snort_inspect(Packet* p)
         if ( inspected )
             InspectorManager::clear(p);
     }
-
-    if ( PPM_RULES_ENABLED() )
-        PPM_RULE_LOG(pktcnt, p);
 
     Profile profile(eventqPerfStats);
     SnortEventqLog(p);

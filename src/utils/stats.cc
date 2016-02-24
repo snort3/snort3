@@ -328,8 +328,6 @@ void DropStats()
     LogLabel("Summary Statistics");
     show_stats((PegCount*)&gpc, pc_names, array_size(pc_names)-1, "detection");
 
-    PPM_PRINT_SUMMARY(snort_conf->ppm_cfg);
-
     proc_stats.attribute_table_hosts = SFAT_NumberOfHosts();
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
 

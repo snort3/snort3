@@ -21,7 +21,6 @@
 #include "packet_latency.h"
 
 #include <cassert>
-#include <mutex>
 #include <sstream>
 #include <vector>
 
@@ -59,6 +58,16 @@ struct Event
     typename DefaultClock::duration elapsed;
 };
 
+template<typename Clock>
+class PacketTimer : public LatencyTimer<Clock>
+{
+public:
+    PacketTimer(typename Clock::duration d) :
+        LatencyTimer<Clock>(d) { }
+
+    bool marked_as_fastpathed = false;
+};
+
 using ConfigWrapper = ReferenceWrapper<PacketLatencyConfig>;
 using EventHandler = EventingWrapper<Event>;
 
@@ -78,9 +87,9 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
 
     os << "latency: packet timed out";
     if ( e.fastpathed )
-        os << " (fastpathed): ";
-    else
-        os << ": ";
+        os << " (fastpathed)";
+
+    os << ": ";
 
     os << duration_cast<microseconds>(e.elapsed).count() << " usec, [";
     os << e.packet->ptrs.ip_api.get_src() << " -> " <<
@@ -104,7 +113,9 @@ public:
     bool fastpath();
 
 private:
-    std::vector<LatencyTimer<Clock>> timers;
+    // FIXIT-H J use custom struct instead of std::pair for better semantics
+    // std::vector<std::pair<LatencyTimer<Clock>, bool>> contexts;
+    std::vector<PacketTimer<Clock>> timers;
     const ConfigWrapper& config;
     EventHandler& event_handler;
     EventHandler& log_handler;
@@ -119,8 +130,8 @@ template<typename Clock>
 inline void Impl<Clock>::push()
 {
     using std::chrono::duration_cast;
-    timers.push_back(duration_cast<typename Clock::duration>(
-        config->max_time));
+    auto max_time = duration_cast<typename Clock::duration>(config->max_time);
+    timers.emplace_back(max_time);
 }
 
 template<typename Clock>
@@ -128,17 +139,20 @@ inline bool Impl<Clock>::pop(const Packet* p)
 {
     assert(!timers.empty());
     const auto& timer = timers.back();
-    // timer.mark implies fastpath-related timeout
-    bool timed_out = timer.marked;
+
+    auto timed_out = timer.marked_as_fastpathed;
 
     if ( timer.timed_out() )
     {
-        Event e { p, timed_out, timers.back().elapsed() };
+        timed_out = true;
+
+        // timer.mark implies fastpath-related timeout
+        Event e { p, timer.marked_as_fastpathed, timer.elapsed() };
 
         if ( config->action & PacketLatencyConfig::LOG )
             log_handler.handle(e);
 
-        if ( timed_out and (config->action & PacketLatencyConfig::ALERT) )
+        if ( timer.marked_as_fastpathed and (config->action & PacketLatencyConfig::ALERT) )
             event_handler.handle(e);
     }
 
@@ -154,10 +168,14 @@ inline bool Impl<Clock>::fastpath()
 
     assert(!timers.empty());
     auto& timer = timers.back();
-    if ( timer.timed_out() )
-        timer.marked = true;
 
-    return timer.marked;
+    if ( !timer.marked_as_fastpathed )
+    {
+        if ( timer.timed_out() )
+            timer.marked_as_fastpathed = true;
+    }
+
+    return timer.marked_as_fastpathed;
 }
 
 // -----------------------------------------------------------------------------
@@ -206,25 +224,25 @@ static inline Impl<>& get_impl()
 
 void PacketLatency::push()
 {
-    if ( packet_latency::config->enable )
+    if ( packet_latency::config->enabled() )
     {
         packet_latency::get_impl().push();
-        ++latency_stats.packets;
+        ++latency_stats.total_packets;
     }
 }
 
 void PacketLatency::pop(const Packet* p)
 {
-    if ( packet_latency::config->enable )
+    if ( packet_latency::config->enabled() )
     {
         if ( packet_latency::get_impl().pop(p) )
-            ++latency_stats.timeouts;
+            ++latency_stats.packet_timeouts;
     }
 }
 
 bool PacketLatency::fastpath()
 {
-    if ( packet_latency::config->enable )
+    if ( packet_latency::config->enabled() )
         return packet_latency::get_impl().fastpath();
 
     return false;
@@ -329,7 +347,7 @@ TEST_CASE ( "packet latency impl", "[latency]" )
             MockClock::inc(config.config.max_time + 1_ticks);
 
             CHECK_FALSE( impl.fastpath() );
-            CHECK_FALSE( impl.pop(nullptr) );
+            CHECK( impl.pop(nullptr) );
 
             CHECK( event_handler.count == 0 );
             CHECK( log_handler.count == 1 );

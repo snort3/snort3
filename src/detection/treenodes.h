@@ -57,28 +57,20 @@ struct OtnState
 {
     // profiling
     // FIXIT-L J factor the profiling stuff out
-    hr_duration elapsed;
-    hr_duration elapsed_match;
-    hr_duration elapsed_no_match;
+    hr_duration elapsed = 0_ticks;
+    hr_duration elapsed_match = 0_ticks;
+    hr_duration elapsed_no_match = 0_ticks;
 
-    uint64_t checks;
-    uint64_t matches;
-    uint8_t noalerts;
-    uint64_t alerts;
+    uint64_t checks = 0;
+    uint64_t matches = 0;
+    uint8_t noalerts = 0;
+    uint64_t alerts = 0;
 
-    // ppm
-    uint64_t ppm_suspend_time;
-    uint64_t ppm_disable_cnt;
+    uint64_t latency_timeouts = 0;
+    uint64_t latency_suspends = 0;
 
     operator bool() const
     { return elapsed > 0_ticks || checks > 0; }
-
-    void reset()
-    {
-        elapsed = elapsed_match = elapsed_no_match = 0_ticks;
-        checks = matches = noalerts = alerts = 0;
-        ppm_suspend_time = ppm_disable_cnt = 0;
-    }
 };
 
 // one of these for each rule

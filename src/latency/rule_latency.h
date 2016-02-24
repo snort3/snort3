@@ -16,28 +16,29 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// packet_latency_config.h author Joel Cornett <jocornet@cisco.com>
+// rule_latency.h author Joel Cornett <jocornet@cisco.com>
 
-#ifndef PACKET_LATENCY_CONFIG_H
-#define PACKET_LATENCY_CONFIG_H
+#ifndef RULE_LATENCY_H
+#define RULE_LATENCY_H
 
-#include "time/clock_defs.h"
+struct detection_option_tree_root_t;
 
-struct PacketLatencyConfig
+class RuleLatency
 {
-    enum Action
+public:
+    static void push(detection_option_tree_root_t*);
+    static void pop();
+    static bool enabled();
+
+    class Context
     {
-        NONE = 0x00,
-        ALERT = 0x01,
-        LOG = 0x02,
-        ALERT_AND_LOG = ALERT | LOG
+    public:
+        Context(detection_option_tree_root_t* root)
+        { RuleLatency::push(root); }
+
+        ~Context()
+        { RuleLatency::pop(); }
     };
-
-    hr_duration max_time = 0_ticks;
-    bool fastpath = false;
-    Action action = NONE;
-
-    bool enabled() const { return max_time > 0_ticks; }
 };
 
 #endif

@@ -55,6 +55,7 @@
 #include "treenodes.h"
 
 #include "latency/packet_latency.h"
+#include "latency/rule_latency.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "framework/cursor.h"
@@ -402,52 +403,24 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
     return 1;
 }
 
-static int detection_option_tree_evaluate(
-    detection_option_tree_root_t* root,
+static int detection_option_tree_evaluate(detection_option_tree_root_t* root,
     detection_option_eval_data_t* eval_data)
 {
-    if (!root)
+    if ( !root )
         return 0;
 
-    /* Start Rule Timer */
-    if ( PPM_RULES_ENABLED() )
-    {
-        PPM_GET_TIME();
-        PPM_INIT_RULE_TIMER();
-        ppm_dot_root_state_t* root_state = root->state + get_instance_id();
+    RuleLatency::Context rule_latency_ctx(root);
 
-        if ( !root_state->enabled )
-        {
-            PPM_REENABLE_TREE(root, eval_data->p);
-
-            if ( !root_state->enabled )
-            {
-                PPM_END_RULE_TIMER();
-                return 0;
-            }
-        }
-    }
+    if ( !RuleLatency::enabled() )
+        return 0;
 
     Cursor c(eval_data->p);
-
     int rval = 0;
-    for ( int i = 0; i< root->num_children; i++)
+
+    for ( int i = 0; i < root->num_children; ++i )
     {
-        /* Increment number of events generated from that child */
+        // Increment number of events generated from that child 
         rval += detection_option_node_evaluate(root->children[i], eval_data, c);
-    }
-
-    if ( PPM_ENABLED() )
-    {
-        PPM_GET_TIME();
-
-        /* Rule test */
-        if ( PPM_RULES_ENABLED() )
-        {
-            PPM_RULE_TEST(root, eval_data->p);
-            PPM_ACCUM_RULE_TIME();
-            PPM_END_RULE_TIMER();
-        }
     }
 
     return rval;
@@ -1086,9 +1059,6 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
             if ( fp_search(port_group, p, check_ports, type, omd) )
                 return 0;
     }
-
-    if ( PPM_ENABLED() )
-        PPM_GET_TIME();
 
     do
     {

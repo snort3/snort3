@@ -1,0 +1,587 @@
+//--------------------------------------------------------------------------
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
+
+// rule_latency.cc author Joel Cornett <jocornet@cisco.com>
+
+#include "rule_latency.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <cassert>
+
+#include "detection/detection_options.h"
+#include "events/event_queue.h"
+#include "log/messages.h"
+#include "main/snort_config.h"
+#include "latency_config.h"
+#include "latency_rules.h"
+#include "latency_stats.h"
+#include "latency_timer.h"
+#include "latency_util.h"
+
+#ifdef UNIT_TEST
+#include "catch/catch.hpp"
+#endif
+
+namespace rule_latency
+{
+// -----------------------------------------------------------------------------
+// helpers
+// -----------------------------------------------------------------------------
+
+using DefaultClock = hr_clock;
+
+struct Event
+{
+    enum Type
+    {
+        EVENT_ENABLED,
+        EVENT_TIMED_OUT,
+        EVENT_SUSPENDED
+    };
+
+    Type type;
+    typename DefaultClock::duration elapsed;
+    detection_option_tree_root_t* root;
+};
+
+template<typename Clock>
+class RuleTimer : public LatencyTimer<Clock>
+{
+public:
+    RuleTimer(typename Clock::duration d, detection_option_tree_root_t* root) :
+        LatencyTimer<Clock>(d), root(root) { }
+
+    detection_option_tree_root_t* root;
+};
+
+using ConfigWrapper = ReferenceWrapper<RuleLatencyConfig>;
+using EventHandler = EventingWrapper<Event>;
+
+static inline std::ostream& operator<<(std::ostream& os, const Event& e)
+{
+    using std::chrono::duration_cast;
+    using std::chrono::microseconds;
+
+    os << "latency: ";
+
+    if ( e.type == Event::EVENT_ENABLED ) 
+        os << "rule tree enabled: ";
+
+    else
+    {
+        os << "rule tree timed out";
+        if ( e.type == Event::EVENT_SUSPENDED )
+            os << " (suspended)";
+
+        os << ": ";
+
+        os << duration_cast<microseconds>(e.elapsed).count() << " usec, ";
+    }
+
+    // FIXIT-L J seeing the address of the dot root is not particularly helpful
+    // except during debugging (ported from legacy ppm)
+    os << "[" << e.root << "]";
+
+    return os;
+}
+
+// -----------------------------------------------------------------------------
+// rule tree interface
+// -----------------------------------------------------------------------------
+
+// goes in a static structure so we can templatize Impl
+struct DefaultRuleInterface
+{
+    static bool is_enabled(const detection_option_tree_root_t& root)
+    { return root.latency_state[get_instance_id()].enabled; }
+
+    // return true if rule was *reenabled*
+    template<typename Duration, typename Time>
+    static bool reenable(detection_option_tree_root_t& root, Duration max_suspend_time,
+        Time cur_time)
+    {
+        auto& state = root.latency_state[get_instance_id()];
+        if ( !state.enabled && (cur_time - state.suspend_time > max_suspend_time) )
+        {
+            state.enable();
+            return true;
+        }
+
+        return false;
+    }
+
+    // FIXIT-L J traversing the children 2 separate times with timeout & suspend is inefficient
+    static inline void timeout(detection_option_tree_root_t& root)
+    {
+        ++root.latency_state[get_instance_id()].timeouts;
+        for ( int i = 0; i < root.num_children; ++i )
+            // FIXIT-L J rename to something like latency_timeout_count
+            ++root.children[i]->state[get_instance_id()].latency_timeouts;
+    }
+
+    template<typename Time>
+    static bool suspend(detection_option_tree_root_t& root, unsigned threshold,
+        Time cur_time)
+    {
+        auto& state = root.latency_state[get_instance_id()];
+        if ( state.timeouts >= threshold )
+        {
+            state.suspend(cur_time);
+            for ( int i = 0; i < root.num_children; ++i )
+                ++root.children[i]->state[get_instance_id()].latency_suspends;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    template<typename Time>
+    static bool timeout_and_suspend(detection_option_tree_root_t& root, unsigned threshold,
+        Time time, bool do_suspend)
+    {
+        auto& state = root.latency_state[get_instance_id()];
+
+        ++state.timeouts;
+
+        // the separate loops in each branch are so we can avoid iterating
+        // over the children twice in the suspend case
+
+        if ( do_suspend )
+        {
+            if ( state.timeouts >= threshold )
+            {
+                state.suspend(time);
+
+                for ( int i = 0; i < root.num_children; ++i )
+                {
+                    auto& child_state = root.children[i]->state[get_instance_id()];
+                    // FIXIT-L J rename to something like latency_timeout_count
+                    ++child_state.latency_timeouts;
+                    ++child_state.latency_suspends;
+                }
+
+                return true;
+            }
+        }
+
+        else
+        {
+            for ( int i = 0; i < root.num_children; ++i )
+            {
+                // FIXIT-L J rename to something like latency_timeout_count
+                ++root.children[i]->state[get_instance_id()].latency_timeouts;
+            }
+        }
+
+        return false;
+    }
+};
+
+
+// -----------------------------------------------------------------------------
+// implementation
+// -----------------------------------------------------------------------------
+
+template<typename Clock = DefaultClock, typename RuleTree = DefaultRuleInterface>
+class Impl
+{
+public:
+    Impl(const ConfigWrapper&, EventHandler&, EventHandler&);
+
+    bool push(detection_option_tree_root_t*);
+    bool pop();
+    // FIXIT-L J should this logic be inverted to suspended()?
+    // returns whether current rule tree is enabled
+    bool enabled() const;
+
+private:
+    void handle(const Event&);
+
+    std::vector<RuleTimer<Clock>> timers;
+    const ConfigWrapper& config;
+    EventHandler& event_handler;
+    EventHandler& log_handler;
+};
+
+template<typename Clock, typename RuleTree>
+inline Impl<Clock, RuleTree>::Impl(const ConfigWrapper& cfg, EventHandler& eh, EventHandler& lh) :
+    config(cfg), event_handler(eh), log_handler(lh)
+{ }
+
+template<typename Clock, typename RuleTree>
+inline bool Impl<Clock, RuleTree>::push(detection_option_tree_root_t* root)
+{
+    assert(root);
+
+    // FIXIT-L J rule timer is pushed even if rule is not enabled (no visible side-effects)
+    timers.emplace_back(config->max_time, root);
+
+    if ( config->allow_reenable() )
+    {
+        if ( RuleTree::reenable(*root, config->max_suspend_time, Clock::now()) )
+        {
+            Event e {
+                Event::EVENT_ENABLED,
+                typename Clock::duration(0),
+                root
+            };
+
+            handle(e);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+template<typename Clock, typename RuleTree>
+inline bool Impl<Clock, RuleTree>::pop()
+{
+    assert(!timers.empty());
+    const auto& timer = timers.back();
+
+    auto timed_out = timer.timed_out();
+    if ( timed_out )
+    {
+        auto suspended = RuleTree::timeout_and_suspend(*timer.root, config->suspend_threshold,
+            Clock::now(), config->suspend);
+
+        // FIXIT-L J first field doesn't matter
+        Event e {
+            suspended ? Event::EVENT_SUSPENDED : Event::EVENT_TIMED_OUT,
+            timer.elapsed(),
+            timer.root
+        };
+
+        handle(e);
+    }
+
+    timers.pop_back();
+    return timed_out;
+}
+
+template<typename Clock, typename RuleTree>
+inline bool Impl<Clock, RuleTree>::enabled() const
+{
+    if ( !config->suspend )
+        return true;
+
+    assert(!timers.empty());
+    return RuleTree::is_enabled(*timers.back().root);
+}
+
+template<typename Clock, typename RuleTree>
+inline void Impl<Clock, RuleTree>::handle(const Event& e)
+{
+    if ( config->action & RuleLatencyConfig::LOG )
+        log_handler.handle(e);
+
+    if ( config->action & RuleLatencyConfig::ALERT )
+        event_handler.handle(e);
+}
+
+// -----------------------------------------------------------------------------
+// static variables
+// -----------------------------------------------------------------------------
+
+static struct SnortConfigWrapper : ConfigWrapper
+{
+    const RuleLatencyConfig* operator->() const override
+    { return &snort_conf->latency->rule_latency; }
+
+} config;
+
+static struct SnortEventHandler : EventHandler
+{
+    void handle(const Event& e) override
+    {
+        switch ( e.type )
+        {
+            case Event::EVENT_ENABLED:
+                SnortEventqAdd(GID_LATENCY, LATENCY_EVENT_RULE_TREE_ENABLED);
+                break;
+
+            case Event::EVENT_SUSPENDED:
+                SnortEventqAdd(GID_LATENCY, LATENCY_EVENT_RULE_TREE_SUSPENDED);
+                break;
+
+            default:
+                break;
+        }
+    }
+} event_handler;
+
+static struct SnortLogHandler : EventHandler
+{
+    void handle(const Event& e) override
+    {
+        std::ostringstream ss;
+        ss << e;
+        LogMessage("%s\n", ss.str().c_str());
+    }
+} log_handler;
+
+static THREAD_LOCAL Impl<>* impl = nullptr;
+
+static inline Impl<>& get_impl()
+{
+    if ( !impl )
+        impl = new Impl<>(config, event_handler, log_handler);
+
+    return *impl;
+}
+
+} // namespace rule_latency
+
+// -----------------------------------------------------------------------------
+// rule latency interface
+// -----------------------------------------------------------------------------
+
+void RuleLatency::push(detection_option_tree_root_t* root)
+{
+    if ( rule_latency::config->enabled() )
+    {
+        if ( rule_latency::get_impl().push(root) )
+            ++latency_stats.rule_tree_enables;
+
+        ++latency_stats.total_rule_evals;
+    }
+}
+
+void RuleLatency::pop()
+{
+    if ( rule_latency::config->enabled() )
+    {
+        if ( rule_latency::get_impl().pop() )
+            ++latency_stats.rule_eval_timeouts;
+    }
+}
+
+bool RuleLatency::enabled()
+{
+    if ( rule_latency::config->enabled() )
+        return rule_latency::get_impl().enabled();
+
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+// unit tests
+// -----------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+namespace t_rule_latency
+{
+
+struct MockConfigWrapper : rule_latency::ConfigWrapper
+{
+    RuleLatencyConfig config;
+
+    const RuleLatencyConfig* operator->() const override
+    { return &config; }
+};
+
+struct EventHandlerSpy : rule_latency::EventHandler
+{
+    unsigned count = 0;
+    void handle(const rule_latency::Event&) override
+    { ++count; }
+};
+
+struct MockClock : ClockTraits<hr_clock>
+{
+    static hr_time t;
+
+    static void reset()
+    { t = hr_time(0_ticks); }
+
+    static void inc(hr_duration d = 1_ticks)
+    { t += d; }
+
+    static hr_time now()
+    { return t; }
+};
+
+hr_time MockClock::t = hr_time(0_ticks);
+
+struct RuleInterfaceSpy
+{
+    static bool is_enabled_result;
+    static bool is_enabled_called;
+    static bool reenable_result;
+    static bool reenable_called;
+    static bool timeout_and_suspend_result;
+    static bool timeout_and_suspend_called;
+
+    static void reset()
+    {
+        is_enabled_result = false;
+        is_enabled_called = false;
+        reenable_result = false;
+        reenable_called = false;
+        timeout_and_suspend_result = false;
+        timeout_and_suspend_called = false;
+    }
+
+    static bool is_enabled(const detection_option_tree_root_t&)
+    { is_enabled_called = true; return is_enabled_result; }
+
+    template<typename Duration, typename Time>
+    static bool reenable(detection_option_tree_root_t&, Duration, Time)
+    { reenable_called = true; return reenable_result; }
+
+    template<typename Time>
+    static bool timeout_and_suspend(detection_option_tree_root_t&, unsigned, Time, bool)
+    { timeout_and_suspend_called = true; return timeout_and_suspend_result; }
+};
+
+bool RuleInterfaceSpy::is_enabled_result = false;
+bool RuleInterfaceSpy::is_enabled_called = false;
+bool RuleInterfaceSpy::reenable_result = false;
+bool RuleInterfaceSpy::reenable_called = false;
+bool RuleInterfaceSpy::timeout_and_suspend_result = false;
+bool RuleInterfaceSpy::timeout_and_suspend_called = false;
+
+} // namespace t_rule_latency
+
+TEST_CASE ( "rule latency impl", "[latency]" )
+{
+    using namespace t_rule_latency;
+
+    MockConfigWrapper config;
+    EventHandlerSpy event_handler;
+    EventHandlerSpy log_handler;
+
+    MockClock::reset();
+    RuleInterfaceSpy::reset();
+
+    config.config.action = RuleLatencyConfig::ALERT_AND_LOG;
+
+    detection_option_tree_root_t root;
+
+    rule_latency::Impl<MockClock, RuleInterfaceSpy> impl(config, event_handler, log_handler);
+
+    SECTION( "push" )
+    {
+        SECTION( "reenable allowed" )
+        {
+            config.config.max_suspend_time = 1_ticks;
+
+            SECTION( "push rule" )
+            {
+                CHECK_FALSE( impl.push(&root) );
+                CHECK( log_handler.count == 0 );
+                CHECK( event_handler.count == 0 );
+                CHECK( RuleInterfaceSpy::reenable_called );
+            }
+
+            SECTION( "push rule -- reenabled" )
+            {
+                RuleInterfaceSpy::reenable_result = true;
+
+                CHECK( impl.push(&root) );
+                CHECK( log_handler.count == 1 );
+                CHECK( event_handler.count == 1 );
+                CHECK( RuleInterfaceSpy::reenable_called );
+            }
+        }
+
+        SECTION( "reenable not allowed" )
+        {
+            config.config.max_suspend_time = 0_ticks;
+
+            SECTION( "push rule" )
+            {
+                CHECK_FALSE( impl.push(&root) );
+                CHECK( log_handler.count == 0 );
+                CHECK( event_handler.count == 0 );
+                CHECK_FALSE( RuleInterfaceSpy::reenable_called );
+            }
+        }
+    }
+
+    SECTION( "enabled" )
+    {
+        RuleInterfaceSpy::is_enabled_result = false;
+
+        impl.push(&root);
+
+        SECTION( "suspending of rules disabled" )
+        {
+            config.config.suspend = false;
+
+            CHECK( impl.enabled() );
+            CHECK_FALSE( RuleInterfaceSpy::is_enabled_called );
+        }
+
+        SECTION( "suspend of rules enabled" )
+        {
+            config.config.suspend = true;
+
+            CHECK_FALSE( impl.enabled() );
+            CHECK( RuleInterfaceSpy::is_enabled_called );
+        }
+    }
+
+    SECTION( "pop" )
+    {
+        config.config.max_time = 1_ticks;
+
+        impl.push(&root);
+
+        SECTION( "rule timeout" )
+        {
+            MockClock::inc(2_ticks);
+
+            SECTION( "rule suspended" )
+            {
+                RuleInterfaceSpy::timeout_and_suspend_result = true;
+
+                CHECK( impl.pop() );
+                CHECK( log_handler.count == 1 );
+                CHECK( event_handler.count == 1 );
+                CHECK( RuleInterfaceSpy::timeout_and_suspend_called );
+            }
+
+            SECTION( "rule not suspended" )
+            {
+                RuleInterfaceSpy::timeout_and_suspend_result = false;
+
+                CHECK( impl.pop() );
+                CHECK( log_handler.count == 1 );
+                CHECK( event_handler.count == 1 );
+                CHECK( RuleInterfaceSpy::timeout_and_suspend_called );
+            }
+        }
+
+        SECTION( "no rule timeout" )
+        {
+            CHECK_FALSE( impl.pop() );
+            CHECK( log_handler.count == 0 );
+            CHECK( event_handler.count == 0 );
+            CHECK_FALSE( RuleInterfaceSpy::timeout_and_suspend_called );
+        }
+    }
+}
+
+#endif

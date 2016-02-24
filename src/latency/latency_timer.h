@@ -39,8 +39,6 @@ public:
     bool timed_out() const
     { return elapsed() > max_time; }
 
-    bool marked = false;
-
 private:
     duration max_time;
     Stopwatch<Clock> sw;

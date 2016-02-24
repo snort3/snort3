@@ -117,9 +117,6 @@ int otn_create_tree(OptTreeNode* otn, void** existing_tree)
 
     detection_option_tree_root_t* root = (detection_option_tree_root_t*)*existing_tree;
 
-    for ( unsigned i = 0; i < get_instance_max(); ++i )
-        root->state[i].enabled = true;
-
     OptFpList* opt_fp = otn->opt_func;
 
     if (!root->children)
