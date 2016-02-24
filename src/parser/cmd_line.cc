@@ -47,7 +47,7 @@ static void check_flags(SnortConfig* sc)
             "mode together. \n");
     }
 
-    if (Trough_GetLoopCount() && !(sc->run_flags & RUN_FLAG__READ))
+    if (Trough::get_loop_count() && !(sc->run_flags & RUN_FLAG__READ))
     {
         FatalError("--pcap-loop can only be used in combination with pcaps "
             "on the command line.\n");

@@ -33,10 +33,12 @@ using namespace std;
 Directory::Directory(const char* s, const char* f)
 {
     dir = opendir(s);
-    path = s;
+    root = s;
     len = strlen(s);
+    path = root;
     sub = nullptr;
     filter = f ? f : "";
+    error = dir ? 0 : errno;
 }
 
 Directory::~Directory()
@@ -48,6 +50,11 @@ Directory::~Directory()
         delete sub;
 }
 
+int Directory::error_on_open()
+{
+    return error;
+}
+
 void Directory::rewind()
 {
     if ( dir )
@@ -57,25 +64,11 @@ void Directory::rewind()
         delete sub;
 }
 
-static bool is_sub(const char* path)
-{
-    struct stat s;
-    unsigned n = strlen(path);
-
-    if ( !n || path[n-1] == '.' )
-        return false;
-
-    if ( stat(path, &s) )
-        return false;
-
-    return (s.st_mode & S_IFDIR) != 0;
-}
-
-const char* Directory::next(const char* ext)
+const char* Directory::next()
 {
     if ( sub )
     {
-        const char* s = sub->next(ext);
+        const char* s = sub->next();
 
         if ( s )
             return s;
@@ -83,31 +76,38 @@ const char* Directory::next(const char* ext)
         delete sub;
         sub = nullptr;
     }
-    struct dirent de, * dummy;
 
-    while ( dir && !readdir_r(dir, &de, &dummy) )
+    struct dirent de, * result;
+
+    while ( dir && !readdir_r(dir, &de, &result) )
     {
-        if ( !dummy )
+        if ( !result )
             break;
+
+        struct stat sb;
+
+        if ( !strncmp(de.d_name, ".", 1) )
+            continue;
 
         path.erase(len);
         path += "/";
         path += de.d_name;
 
-        if ( is_sub(path.c_str()) )
+        if ( path.size() > PATH_MAX - 1 || stat(path.c_str(), &sb) )
+            continue;
+
+        if ( S_ISDIR(sb.st_mode) )
         {
-            sub = new Directory(path.c_str());
-            return next(ext);
+            sub = new Directory(path.c_str(), filter.c_str());
+            return next();
         }
-        else if ( ext )
+        else if ( !S_ISREG(sb.st_mode) )
         {
-            if ( filter.size() && fnmatch(path.c_str(), filter.c_str(), 0) )
-                continue;
-
-            const char* p = strrchr(de.d_name, '.');
-
-            if ( !p || strcmp(p, ext) )
-                continue;
+            continue;
+        }
+        else if ( filter.size() && fnmatch(filter.c_str(), de.d_name, 0) )
+        {
+            continue;
         }
         return path.c_str();
     }

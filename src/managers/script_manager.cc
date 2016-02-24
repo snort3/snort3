@@ -49,7 +49,7 @@
 // keep just one copy of rule option + args
 
 using namespace std;
-#define script_ext ".lua"
+#define script_pattern "*.lua"
 
 //-------------------------------------------------------------------------
 // lua api stuff
@@ -270,9 +270,9 @@ void ScriptManager::load_scripts(const std::vector<std::string>& paths)
 
             if ( s.st_mode & S_IFDIR )
             {
-                Directory dir(d.c_str());
+                Directory dir(d.c_str(), script_pattern);
                 const char* f;
-                while ( (f = dir.next(script_ext)) )
+                while ( (f = dir.next()) )
                     load_script(f);
             }
 

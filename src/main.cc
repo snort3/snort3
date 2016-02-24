@@ -375,7 +375,7 @@ int main_process(lua_State* L)
         return 0;
     }
     request.respond("== queuing pcap\n");
-    Trough_Multi(SOURCE_LIST, f);
+    Trough::add_source(Trough::SOURCE_LIST, f);
     return 0;
 }
 
@@ -695,13 +695,13 @@ static bool just_validate()
 
     // pcap requires a source; as a convenience, if none given
     // just validate instead of erroring out
-    if ( !Trough_GetQCount() and strcmp(DAQ_GetType(), "pcap") )
+    if ( !Trough::get_queue_size() and strcmp(DAQ_GetType(), "pcap") )
         unknown_source = true;
 
     if ( use_shell(snort_conf) )
         return false;
 
-    if ( !Trough_GetQCount() and !strcmp(DAQ_GetType(), "pcap") )
+    if ( !Trough::get_queue_size() and !strcmp(DAQ_GetType(), "pcap") )
         return true;
 
     return false;
@@ -764,7 +764,7 @@ static bool set_mode()
 
 static inline bool dont_stop()
 {
-    if ( paused or unknown_source or Trough_Next() )
+    if ( paused or unknown_source or Trough::has_next() )
         return true;
 
     if ( pause_enabled )
@@ -779,8 +779,8 @@ static inline bool dont_stop()
 
 static const char* get_source()
 {
-    if ( Trough_Next() )
-        return Trough_First();
+    if ( Trough::has_next() )
+        return Trough::get_next();
 
     if ( unknown_source )
     {

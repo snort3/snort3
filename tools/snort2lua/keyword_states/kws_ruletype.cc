@@ -27,7 +27,7 @@
 
 namespace keywords
 {
-const std::vector<std::unique_ptr<const ConvertMap> > ruletype_api;
+const std::vector<std::unique_ptr<const ConvertMap> > ruletype_api = {};
 
 namespace
 {

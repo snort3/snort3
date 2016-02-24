@@ -282,7 +282,7 @@ static void get_daq_stats(DAQStats& daq_stats)
     if ( pkts_recv > g_daq_stats.packets_filtered + g_daq_stats.packets_received )
         pkts_out = pkts_recv - g_daq_stats.packets_filtered - g_daq_stats.packets_received;
 
-    daq_stats.pcaps = Trough_GetFileCount();
+    daq_stats.pcaps = Trough::get_file_count();
     daq_stats.received = pkts_recv;
     daq_stats.analyzed = g_daq_stats.packets_received;
     daq_stats.dropped =  pkts_drop;

@@ -557,7 +557,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__STATIC_HASH;
 
     else if ( v.is("-i") )
-        Trough_Multi(SOURCE_LIST, v.get_string());
+        Trough::add_source(Trough::SOURCE_LIST, v.get_string());
 
 #ifdef BUILD_SHELL
     else if ( v.is("-j") )
@@ -599,7 +599,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     }
     else if ( v.is("-r") || v.is("--pcap-list") )
     {
-        Trough_Multi(SOURCE_LIST, v.get_string());
+        Trough::add_source(Trough::SOURCE_LIST, v.get_string());
         sc->run_flags |= RUN_FLAG__READ;
     }
     else if ( v.is("-S") )
@@ -756,22 +756,22 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--pcap-file") )
     {
-        Trough_Multi(SOURCE_FILE_LIST, v.get_string());
+        Trough::add_source(Trough::SOURCE_FILE_LIST, v.get_string());
         sc->run_flags |= RUN_FLAG__READ;
     }
     else if ( v.is("--pcap-dir") )
     {
-        Trough_Multi(SOURCE_DIR, v.get_string());
+        Trough::add_source(Trough::SOURCE_DIR, v.get_string());
         sc->run_flags |= RUN_FLAG__READ;
     }
     else if ( v.is("--pcap-filter") )
-        Trough_SetFilter(v.get_string());
+        Trough::set_filter(v.get_string());
 
     else if ( v.is("--pcap-loop") )
-        Trough_SetLoopCount(v.get_long());
+        Trough::set_loop_count(v.get_long());
 
     else if ( v.is("--pcap-no-filter") )
-        Trough_SetFilter(NULL);
+        Trough::set_filter(NULL);
 
     else if ( v.is("--pcap-reload") )
         sc->run_flags |= RUN_FLAG__PCAP_RELOAD;

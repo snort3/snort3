@@ -20,25 +20,59 @@
 #ifndef TROUGH_H
 #define TROUGH_H
 
+#include <string>
+#include <vector>
+
 // Trough provides access to sources (interface, file, etc.).
 
-enum SourceType
+class Trough
 {
-    SOURCE_FILE_LIST,  // a file containing a list of sources
-    SOURCE_LIST,       // a list of sources (eg from cmd line)
-    SOURCE_DIR         // a directory of sources; often used wiht filter
-};
+public:
+    enum SourceType
+    {
+        SOURCE_FILE_LIST,  // a file containing a list of sources
+        SOURCE_LIST,       // a list of sources (eg from cmd line)
+        SOURCE_DIR         // a directory of sources; often used wiht filter
+    };
 
-void Trough_SetLoopCount(long int);
-long Trough_GetLoopCount();
-void Trough_SetFilter(const char*);
-void Trough_Multi(SourceType, const char* list);
-void Trough_SetUp(void);
-int Trough_CleanUp(void);
-const char* Trough_First(void);
-bool Trough_Next(void);
-unsigned Trough_GetFileCount();
-unsigned Trough_GetQCount();
+    static void set_loop_count(long int c)
+    {
+        pcap_loop_count = c;
+    }
+    static void set_filter(const char *f);
+    static void add_source(SourceType type, const char *list);
+    static void setup(void);
+    static bool has_next(void);
+    static const char *get_next(void);
+    static unsigned get_file_count(void)
+    {
+        return file_count;
+    }
+    static unsigned get_queue_size(void)
+    {
+        return pcap_queue.size();
+    }
+    static long get_loop_count(void)
+    {
+        return pcap_loop_count;
+    }
+    static void cleanup(void);
+private:
+    struct PcapReadObject
+    {
+        SourceType type;
+        std::string arg;
+        std::string filter;
+    };
+
+    static int get_pcaps(std::vector<struct PcapReadObject> &pol, std::vector<std::string> &pcap_queue);
+    static std::vector<struct PcapReadObject> pcap_object_list;
+    static std::vector<std::string> pcap_queue;
+    static std::vector<std::string>::const_iterator pcap_queue_iter;
+    static std::string pcap_filter;
+    static long pcap_loop_count;
+    static unsigned file_count;
+};
 
 #endif
 

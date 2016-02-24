@@ -70,9 +70,9 @@ using namespace std;
 #include "parser/parser.h"
 
 #if defined(LINUX)
-#define lib_ext ".so"
+#define lib_pattern "*.so"
 #else
-#define lib_ext ".dylib"
+#define lib_pattern "*.dylib"
 #endif
 
 struct Symbol
@@ -354,10 +354,10 @@ static void load_plugins(const std::string& paths)
 
     while ( s )
     {
-        Directory d(s);
+        Directory d(s, lib_pattern);
         const char* f;
 
-        while ( (f = d.next(lib_ext)) )
+        while ( (f = d.next()) )
             load_lib(f);
 
         s = strtok_r(nullptr, ":", &last);

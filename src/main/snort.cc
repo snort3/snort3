@@ -310,7 +310,7 @@ void Snort::init(int argc, char** argv)
     if ( !Piglet::piglet_mode() )
 #endif
     /* Finish up the pcap list and put in the queues */
-    Trough_SetUp();
+    Trough::setup();
 
     // FIXIT-L stuff like this that is also done in snort_config.cc::VerifyReload()
     // should be refactored
@@ -385,7 +385,7 @@ void Snort::term()
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )
 #endif
-    Trough_CleanUp();
+    Trough::cleanup();
 
     ClosePidFile();
 
