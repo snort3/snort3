@@ -67,19 +67,19 @@ public:
     { return &httpHeaderPerfStats; }
 
 public:
-    string name;
+    string hdr_name;
 };
 
 bool HttpHeaderModule::begin(const char*, int, SnortConfig*)
 {
-    name.clear();
+    hdr_name.clear();
     return true;
 }
 
 bool HttpHeaderModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~name") )
-        name = v.get_string();
+        hdr_name = v.get_string();
 
     else
         return false;
@@ -94,19 +94,44 @@ bool HttpHeaderModule::set(const char*, Value& v, SnortConfig*)
 class HttpHeaderOption : public IpsOption
 {
 public:
-    HttpHeaderOption(string& s) : IpsOption(s_name), name(s) {}
+    HttpHeaderOption(string& s) : IpsOption(s_name), hdr_name(s) {}
 
     CursorActionType get_cursor_type() const override
     { return CAT_SET_HEADER; }
 
+    uint32_t hash() const override;
+    bool operator==(const IpsOption& ips) const override;
+
     bool fp_research() override
-    { return name.size() != 0; }
+    { return hdr_name.size() != 0; }
 
     int eval(Cursor&, Packet*) override;
 
 private:
-    const string name;
+    const string hdr_name;
 };
+
+uint32_t HttpHeaderOption::hash() const
+{
+    uint32_t a = 0, b = 0, c = 0;
+
+    if ( hdr_name.size() )
+        mix_str(a, b, c, hdr_name.c_str());
+
+    mix_str(a, b, c, get_name());
+    finalize(a, b, c);
+
+    return c;
+}
+
+bool HttpHeaderOption::operator==(const IpsOption& ips) const
+{
+    if ( strcmp(get_name(), ips.get_name()) )
+        return false;
+
+    const HttpHeaderOption& rhs = static_cast<const HttpHeaderOption&>(ips);
+    return ( hdr_name == rhs.hdr_name );
+}
 
 static bool find(
     const string& s, const InspectionBuffer& b, Cursor& c)
@@ -173,13 +198,13 @@ int HttpHeaderOption::eval(Cursor& c, Packet* p)
     if ( !p->flow->gadget->get_buf(s_name, p, hb) )
         return DETECTION_OPTION_NO_MATCH;
 
-    if ( !name.size() )
+    if ( !hdr_name.size() )
     {
         c.set(s_name, hb.data, hb.len);
         return DETECTION_OPTION_MATCH;
     }
 
-    if ( find(name, hb, c) )
+    if ( find(hdr_name, hb, c) )
         return DETECTION_OPTION_MATCH;
 
     return DETECTION_OPTION_NO_MATCH;
@@ -202,7 +227,7 @@ static void mod_dtor(Module* m)
 static IpsOption* hh_ctor(Module* m, OptTreeNode*)
 {
     HttpHeaderModule* mod = (HttpHeaderModule*)m;
-    return new HttpHeaderOption(mod->name);
+    return new HttpHeaderOption(mod->hdr_name);
 }
 
 static void hh_dtor(IpsOption* p)

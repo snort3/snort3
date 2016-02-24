@@ -54,11 +54,39 @@ public:
         IpsOption(s_name)
     { ssod = c; }
 
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
     int eval(Cursor&, Packet*) override;
 
 private:
     SipStatCodeRuleOptData ssod;
 };
+
+uint32_t SipStatCodeOption::hash() const
+{
+    uint32_t a = 0, b = 0, c = 0;
+
+    unsigned n = 0;
+    while ( n < SIP_NUM_STAT_CODE_MAX and ssod.stat_codes[n] ) ++n;
+
+    mix_str(a, b, c, (char*)ssod.stat_codes, n*sizeof(ssod.stat_codes[0]));
+    mix_str(a, b, c, get_name());
+
+    return c;
+}
+
+bool SipStatCodeOption::operator==(const IpsOption& ips) const
+{
+    if ( strcmp(get_name(), ips.get_name()) )
+        return false;
+
+    const SipStatCodeOption& rhs = (SipStatCodeOption&)ips;
+
+    if ( !memcmp(ssod.stat_codes, rhs.ssod.stat_codes, sizeof(ssod.stat_codes)) )
+        return true;
+
+    return false;
+}
 
 int SipStatCodeOption::eval(Cursor&, Packet* p)
 {
@@ -82,6 +110,10 @@ int SipStatCodeOption::eval(Cursor&, Packet* p)
     for ( int i = 0; i < SIP_NUM_STAT_CODE_MAX; i++ )
     {
         auto stat_code = ssod.stat_codes[i];
+
+        if ( !stat_code )
+            break;
+
         if ( stat_code == short_code || stat_code == ropts->status_code )
             return DETECTION_OPTION_MATCH;
     }
