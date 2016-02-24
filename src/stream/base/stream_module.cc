@@ -76,6 +76,9 @@ StreamModule::StreamModule() :
 const PegInfo* StreamModule::get_pegs() const
 { return base_pegs; }
 
+PegCount* StreamModule::get_counts() const
+{ return (PegCount*)&stream_base_stats; }
+
 ProfileStats* StreamModule::get_profile() const
 { return &s5PerfStats; }
 

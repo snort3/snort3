@@ -29,10 +29,13 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <vector>
 
 #include "main/thread.h"
 #include "main/snort_types.h"
 #include "framework/counts.h"
+
+typedef std::vector<unsigned> IndexVec;
 
 // FIXIT-L: split this out into appropriate modules
 struct PacketCount
@@ -96,6 +99,9 @@ SO_PUBLIC void LogStat(const char*, double);
 void sum_stats(PegCount* sums, PegCount* counts, unsigned n);
 void show_stats(PegCount*, const PegInfo*, unsigned n,
     const char* module_name = nullptr);
+void show_stats(
+    PegCount*, const PegInfo*,
+    IndexVec&, const char* module_name = nullptr);
 void show_percent_stats(PegCount*, const char*[], unsigned n,
     const char* module_name = nullptr);
 

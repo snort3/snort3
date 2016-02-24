@@ -39,29 +39,8 @@
 THREAD_LOCAL ProfileStats s5PerfStats;
 THREAD_LOCAL FlowControl* flow_con = nullptr;
 
-struct BaseStats
-{
-    PegCount ip_flows;
-    PegCount ip_prunes;
-
-    PegCount icmp_flows;
-    PegCount icmp_prunes;
-
-    PegCount tcp_flows;
-    PegCount tcp_prunes;
-
-    PegCount udp_flows;
-    PegCount udp_prunes;
-
-    PegCount user_flows;
-    PegCount user_prunes;
-
-    PegCount file_flows;
-    PegCount file_prunes;
-};
-
 static BaseStats g_stats;
-static THREAD_LOCAL BaseStats t_stats;
+THREAD_LOCAL BaseStats stream_base_stats;
 
 const PegInfo base_pegs[] =
 {
@@ -85,25 +64,25 @@ void base_sum()
     if ( !flow_con )
         return;
 
-    t_stats.ip_flows = flow_con->get_flows(PktType::IP);
-    t_stats.ip_prunes = flow_con->get_prunes(PktType::IP);
+    stream_base_stats.ip_flows = flow_con->get_flows(PktType::IP);
+    stream_base_stats.ip_prunes = flow_con->get_prunes(PktType::IP);
 
-    t_stats.icmp_flows = flow_con->get_flows(PktType::ICMP);
-    t_stats.icmp_prunes = flow_con->get_prunes(PktType::ICMP);
+    stream_base_stats.icmp_flows = flow_con->get_flows(PktType::ICMP);
+    stream_base_stats.icmp_prunes = flow_con->get_prunes(PktType::ICMP);
 
-    t_stats.tcp_flows = flow_con->get_flows(PktType::TCP);
-    t_stats.tcp_prunes = flow_con->get_prunes(PktType::TCP);
+    stream_base_stats.tcp_flows = flow_con->get_flows(PktType::TCP);
+    stream_base_stats.tcp_prunes = flow_con->get_prunes(PktType::TCP);
 
-    t_stats.udp_flows = flow_con->get_flows(PktType::UDP);
-    t_stats.udp_prunes = flow_con->get_prunes(PktType::UDP);
+    stream_base_stats.udp_flows = flow_con->get_flows(PktType::UDP);
+    stream_base_stats.udp_prunes = flow_con->get_prunes(PktType::UDP);
 
-    t_stats.user_flows = flow_con->get_flows(PktType::PDU);
-    t_stats.user_prunes = flow_con->get_prunes(PktType::PDU);
+    stream_base_stats.user_flows = flow_con->get_flows(PktType::PDU);
+    stream_base_stats.user_prunes = flow_con->get_prunes(PktType::PDU);
 
-    t_stats.file_flows = flow_con->get_flows(PktType::FILE);
-    t_stats.file_prunes = flow_con->get_prunes(PktType::FILE);
+    stream_base_stats.file_flows = flow_con->get_flows(PktType::FILE);
+    stream_base_stats.file_prunes = flow_con->get_prunes(PktType::FILE);
 
-    sum_stats((PegCount*)&g_stats, (PegCount*)&t_stats,
+    sum_stats((PegCount*)&g_stats, (PegCount*)&stream_base_stats,
         array_size(base_pegs)-1);
 }
 
@@ -117,7 +96,7 @@ void base_reset()
     if ( flow_con )
         flow_con->clear_counts();
 
-    memset(&t_stats, 0, sizeof(t_stats));
+    memset(&stream_base_stats, 0, sizeof(stream_base_stats));
 }
 
 //-------------------------------------------------------------------------

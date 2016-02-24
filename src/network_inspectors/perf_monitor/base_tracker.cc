@@ -21,9 +21,6 @@
 #include "base_tracker.h"
 #include "perf_module.h"
 
-#include <dlfcn.h>
-#include <iostream>
-
 #include "framework/counts.h"
 #include "framework/module.h"
 #include "managers/module_manager.h"
@@ -32,50 +29,36 @@
 
 using namespace std;
 
-static vector<Module*> modules;
-static string csv_header;
 static THREAD_LOCAL time_t cur_time;
 
 BaseTracker::BaseTracker(SFPERF* perf) : PerfTracker(perf,
         perf->perf_flags & SFPERF_SUMMARY_BASE, perf->file ? BASE_FILE : nullptr)
-{ }
-
-//FIXIT-L should this really be p_init?
-void BaseTracker::so_init()
 {
-    modules.clear();
+    csv_header.clear();
 
-    for (std::string mod : PluginManager::get_all_available_plugins())
+    csv_header += ("#timestamp");
+    for (unsigned i = 0; i < config->modules.size(); i++)
     {
-        Module* m = ModuleManager::get_module(mod.c_str());
-        if (m)
+        Module *m = config->modules.at(i);
+        vector<unsigned> peg_map = config->mod_peg_idxs.at(i);
+        for (auto& idx : peg_map)
         {
-            m->reset_stats();
-            if (m->get_num_counts())
-                modules.push_back(m);
+            csv_header += ",";
+            csv_header += m->get_name();
+            csv_header += ".";
+            csv_header += m->get_pegs()[idx].name;
         }
     }
+    csv_header += "\n";
 }
-
-bool BaseTracker::so_configure() { return true; }
-
-void BaseTracker::so_term() { }
 
 void BaseTracker::reset()
 {
+    for (auto& mod : config->modules)
+        mod->reset_stats();
+
     if (fh)
     {
-        csv_header.clear();
-        csv_header += ("#timestamp");
-        for (Module* m : modules)
-            for (int i = 0; i < m->get_num_counts(); i++)
-            {
-                csv_header += ",";
-                csv_header += m->get_name();
-                csv_header += ".";
-                csv_header += m->get_pegs()[i].name;
-            }
-        csv_header += "\n";
         fwrite(csv_header.c_str(), csv_header.length(), 1, fh);
         fflush(fh);
     }
@@ -95,20 +78,23 @@ void BaseTracker::process(bool summary)
     snprintf(buf, sizeof(buf), "%ld", (long)cur_time);
     statLine += buf;
 
-    for (Module* m : modules)
+    for (unsigned i = 0; i < config->modules.size(); i++)
     {
+        Module* m = config->modules.at(i);
+        vector<unsigned> idxs = config->mod_peg_idxs.at(i);
         PegCount* pegs = m->get_counts();
 
-        for (int i = 0; i < m->get_num_counts(); i++)
+        for (auto& idx : idxs)
         {
             if (fh)
             {
-                snprintf(buf, sizeof(buf), ",%" PRIu64, pegs[i]);
+                snprintf(buf, sizeof(buf), ",%" PRIu64, pegs[idx]);
                 statLine += buf;
             }
         }
-        m->show_interval_stats();
-        if(!summary)
+        if (config->perf_flags & SFPERF_CONSOLE)
+            m->show_interval_stats(idxs);
+        if (!summary)
             m->sum_stats();
     }
     if (fh)

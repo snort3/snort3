@@ -28,7 +28,7 @@ class PerfTracker
 {
 public:
     virtual void reset() { }
-    virtual void show() { }         //FIXIT-L would it be better to let perfmon do this if it knows
+    virtual void show() { }         // FIXIT-L would it be better to let perfmon do this if it knows
                                     // the names of fields?
 
     virtual void update(Packet*) { }

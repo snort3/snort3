@@ -35,6 +35,28 @@ struct SnortConfig;
 #define MOD_NAME "stream"
 #define MOD_HELP "common flow tracking"
 
+struct BaseStats
+{
+    PegCount ip_flows;
+    PegCount ip_prunes;
+
+    PegCount icmp_flows;
+    PegCount icmp_prunes;
+
+    PegCount tcp_flows;
+    PegCount tcp_prunes;
+
+    PegCount udp_flows;
+    PegCount udp_prunes;
+
+    PegCount user_flows;
+    PegCount user_prunes;
+
+    PegCount file_flows;
+    PegCount file_prunes;
+};
+extern THREAD_LOCAL BaseStats stream_base_stats;
+
 struct StreamModuleConfig
 {
     FlowConfig ip_cfg;
@@ -53,6 +75,7 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
 
     const PegInfo* get_pegs() const override;
+    PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
     const StreamModuleConfig* get_data();
 

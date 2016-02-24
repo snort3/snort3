@@ -16,22 +16,22 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-**  DESCRIPTION
-**    These are the basic functions and structures that are needed to call
-**    performance functions.
-**
-** Carter Waxman <cwaxman@cisco.com>
-*/
+// perf_monitor.h author Carter Waxman <cwaxman@cisco.com>
 
 #ifndef PERF_MONITOR_H
 #define PERF_MONITOR_H
 
+// These are the basic functions and structures that are needed to call
+// performance functions.
+
+#include <vector>
+
 #include "perf_flow.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
-#include "protocols/packet.h"
 #include "main/thread.h"
+#include "protocols/packet.h"
+#include "utils/stats.h"
 
 // Perf Flags
 #define SFPERF_BASE             0x00000001
@@ -64,6 +64,9 @@ typedef struct _SFPERF
     uint64_t max_file_size;
     bool flowip_file;
     uint32_t flowip_memcap;
+
+    std::vector<Module*> modules;
+    std::vector<IndexVec> mod_peg_idxs;
 } SFPERF;
 
 //FIXIT-M: this shouldn't be needed outside of perfmon

@@ -19,27 +19,25 @@
 // perf_module.cc author Russ Combs <rucombs@cisco.com>
 
 #include "perf_module.h"
+
+#include "managers/module_manager.h"
+#include "managers/plugin_manager.h"
 #include "utils/util.h"
+
+static std::string mod_pegs;
+static std::string mod_name;
 
 //-------------------------------------------------------------------------
 // perf attributes
 //-------------------------------------------------------------------------
-
-static const Parameter peg_params[] =
-{
-    { "name", Parameter::PT_STRING, nullptr, nullptr,
-      "name of the statistic to track" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr },
-};
 
 static const Parameter module_params[] =
 {
     { "name", Parameter::PT_STRING, nullptr, nullptr,
       "name of the module" },
 
-    { "pegs", Parameter::PT_LIST, peg_params, nullptr,
-      "list of statistics to track" },
+    { "pegs", Parameter::PT_STRING, nullptr, nullptr,
+      "list of statistics to track or empty for all counters" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr },
 };
@@ -90,7 +88,7 @@ static const Parameter s_params[] =
     { "flow_ip_file", Parameter::PT_BOOL, nullptr, "false",
       "output host pair statistics to " FLIP_FILE " instead of stdout" },
 
-    { "modules", Parameter::PT_LIST, module_params, "false",
+    { "modules", Parameter::PT_LIST, module_params, nullptr,
       "gather statistics from the specified modules" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -180,16 +178,93 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
             config.flowip_file = true;
         }
     }
+    else if ( v.is("name") )
+    {
+        mod_name = v.get_string();
+    }
+    else if ( v.is("pegs") )
+    {
+        mod_pegs = v.get_string();
+        return true;
+    }
     else
         return false;
 
     return true;
 }
 
-bool PerfMonModule::begin(const char*, int, SnortConfig*)
+bool PerfMonModule::begin(const char* fqn, int, SnortConfig*)
 {
-    memset(&config, 0, sizeof(SFPERF));
-    config.perf_flags |= SFPERF_BASE | SFPERF_TIME_COUNT;
+    if ( !strcmp(fqn, "perf_monitor.modules") )
+    {
+        mod_name.clear();
+        mod_pegs.clear();
+    }
+    else
+    {
+        memset(&config, 0, sizeof(SFPERF));
+        config.perf_flags |= SFPERF_BASE | SFPERF_TIME_COUNT;
+    }
+    return true;
+}
+
+static bool add_module(SFPERF& config, Module *mod, std::string pegs)
+{
+    const PegInfo* peg_info;
+    std::string tok;
+    Value v(pegs.c_str());
+    unsigned t_count = 0;
+
+    if ( !mod )
+        return false;
+
+    config.modules.push_back(mod);
+    config.mod_peg_idxs.push_back(std::vector<unsigned>());
+
+    peg_info = mod->get_pegs();
+
+    for ( v.set_first_token(); v.get_next_token(tok); t_count++ )
+    {
+        bool found = false;
+
+        for ( int i = 0; peg_info[i].name; i++ )
+        {
+            if ( !strcmp(tok.c_str(), peg_info[i].name) )
+            {
+                config.mod_peg_idxs.back().push_back(i);
+                found = true;
+                break;
+            }
+        }
+        if ( !found )
+            return false;
+    }
+    if ( !t_count && peg_info )
+        for ( int i = 0; peg_info[i].name; i++ )
+            config.mod_peg_idxs.back().push_back(i);
+    return true;
+}
+
+bool PerfMonModule::end(const char* fqn, int idx, SnortConfig*)
+{
+    if ( !idx )
+    {
+        if ( !config.modules.size() )
+        {
+            auto modules = PluginManager::get_all_available_plugins();
+            for ( auto& mod_name : modules )
+            {
+                Module* mod = ModuleManager::get_module(mod_name.c_str());
+                if ( mod && !add_module(config, mod, std::string()) )
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    if ( !strcmp(fqn, "perf_monitor.modules") && mod_name.size() > 0 )
+        return add_module(config, ModuleManager::get_module(mod_name.c_str()), mod_pegs);
+
     return true;
 }
 

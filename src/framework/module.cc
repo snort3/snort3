@@ -78,10 +78,10 @@ void Module::sum_stats()
     }
 }
 
-void Module::show_interval_stats()
+void Module::show_interval_stats(IndexVec& peg_idxs)
 {
     if ( num_counts > 0 )
-        ::show_stats(get_counts(), get_pegs(), num_counts, get_name());
+        ::show_stats(get_counts(), get_pegs(), peg_idxs, get_name());
 }
 
 void Module::show_stats()

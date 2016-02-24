@@ -76,7 +76,6 @@ class PerfMonitor : public Inspector
 {
 public:
     PerfMonitor(PerfMonModule*);
-    ~PerfMonitor();
 
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
@@ -94,12 +93,6 @@ PerfMonitor::PerfMonitor(PerfMonModule* mod)
     mod->get_config(config);
     perfmon_config = &config;
 
-    BaseTracker::so_init();
-}
-
-PerfMonitor::~PerfMonitor ()
-{
-    BaseTracker::so_term();
 }
 
 void PerfMonitor::show(SnortConfig*)
@@ -148,7 +141,7 @@ void PerfMonitor::show(SnortConfig*)
 // seconds, usec, type, version#, data1, data2, ...
 bool PerfMonitor::configure(SnortConfig*)
 {
-    return BaseTracker::so_configure();
+    return true;
 }
 
 void PerfMonitor::tinit()

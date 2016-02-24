@@ -372,27 +372,39 @@ void sum_stats(
     }
 }
 
+static bool show_stat(
+    bool head, PegCount count, const char* name, const char* module_name)
+{
+    if ( !count )
+        return head;
+
+    if ( module_name && !head )
+    {
+        LogLabel(module_name);
+        head = true;
+    }
+
+    LogCount(name, count);
+    return head;
+}
+
 void show_stats(
     PegCount* pegs, const PegInfo* info, unsigned n, const char* module_name)
 {
     bool head = false;
 
     for ( unsigned i = 0; i < n; ++i )
-    {
-        PegCount c = pegs[i];
-        const char* s = info[i].name;
+        head = show_stat(head, pegs[i], info[i].name, module_name);
+}
 
-        if ( !c )
-            continue;
+void show_stats(
+    PegCount* pegs, const PegInfo* info,
+    IndexVec& peg_idxs, const char* module_name)
+{
+    bool head = false;
 
-        if ( module_name && !head )
-        {
-            LogLabel(module_name);
-            head = true;
-        }
-
-        LogCount(s, c);
-    }
+    for ( auto& i : peg_idxs)
+        head = show_stat(head, pegs[i], info[i].name, module_name);
 }
 
 void show_percent_stats(

@@ -28,13 +28,12 @@ class BaseTracker : public PerfTracker
 public:
     BaseTracker(SFPERF* perf);
 
-    static void so_init();
-    static bool so_configure();
-    static void so_term();
-
     void reset() override;
     void update(Packet*) override;
     void process(bool) override;
+
+private:
+    std::string csv_header;
 };
 
 #endif
