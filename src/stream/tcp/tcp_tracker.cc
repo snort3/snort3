@@ -19,11 +19,13 @@
 // tcp_tracker.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Dec 1, 2015
 
+#include "tcp_tracker.h"
+
+#include "log/messages.h"
 #include "profiler/profiler_defs.h"
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
 #include "tcp_reassemblers.h"
-#include "tcp_tracker.h"
 
 TcpTracker::TcpTracker(bool client) :
     TcpStreamTracker(client)

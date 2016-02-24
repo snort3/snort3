@@ -24,6 +24,7 @@
 #include "main/snort_types.h"
 #include "events/event.h"
 #include "helpers/chunk.h"
+#include "log/messages.h"
 #include "lua/lua.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"

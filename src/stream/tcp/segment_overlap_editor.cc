@@ -19,6 +19,9 @@
 // segment_overlap_editor.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Oct 11, 2015
 
+#include "segment_overlap_editor.h"
+
+#include "log/messages.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
 
@@ -26,7 +29,6 @@
 #include "tcp_event_logger.h"
 #include "tcp_normalizer.h"
 #include "tcp_reassembler.h"
-#include "segment_overlap_editor.h"
 
 bool SegmentOverlapEditor::is_segment_retransmit(void)
 {

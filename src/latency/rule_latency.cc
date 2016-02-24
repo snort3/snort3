@@ -25,6 +25,7 @@
 #endif
 
 #include <cassert>
+#include <sstream>
 
 #include "detection/detection_options.h"
 #include "events/event_queue.h"

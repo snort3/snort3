@@ -26,6 +26,7 @@
 // A simple, dynamically sized bit vector implementation
 
 #include <cassert>
+#include <cstdint>
 #include <cstring>
 
 class BitOp
