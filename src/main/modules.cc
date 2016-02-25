@@ -51,7 +51,6 @@ using namespace std;
 #include "filters/sfrf.h"
 #include "filters/rate_filter.h"
 #include "codecs/codec_module.h"
-#include "ppm/ppm_module.h"
 #include "latency/latency_module.h"
 #include "profiler/profiler.h"
 #include "target_based/sftarget_data.h"
@@ -2198,7 +2197,6 @@ void module_init()
     ModuleManager::add_module(new ActiveModule);
     ModuleManager::add_module(new FileIdModule);
 
-    ModuleManager::add_module(new PpmModule);
     ModuleManager::add_module(new LatencyModule);
 
     // these modules should be in ips policy

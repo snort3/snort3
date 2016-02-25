@@ -90,7 +90,6 @@ filters/libfilter.a \
 detection/libdetection.a \
 framework/libframework.a \
 time/libtime.a \
-ppm/libppm.a \
 latency/liblatency.a \
 profiler/libprofiler.a \
 actions/libips_actions.a \
@@ -134,7 +133,6 @@ network_inspectors \
 packet_io \
 parser \
 ports \
-ppm \
 protocols \
 search_engines \
 service_inspectors \

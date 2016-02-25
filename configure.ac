@@ -1069,7 +1069,6 @@ src/host_tracker/Makefile \
 src/host_tracker/test/Makefile \
 src/catch/Makefile \
 src/time/Makefile \
-src/ppm/Makefile \
 src/profiler/Makefile \
 src/utils/Makefile \
 src/utils/test/Makefile \

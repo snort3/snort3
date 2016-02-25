@@ -50,7 +50,8 @@
 #define DEBUG_LOG             0x0000000000000200LL
 #define DEBUG_FLOWBITS        0x0000000000000400LL
 #define DEBUG_FILE            0x0000000000000800LL
-#define DEBUG_PPM             0x0000000000001000LL
+// FIXIT-L J latency doesn't use any debug messages
+#define DEBUG_LATENCY         0x0000000000001000LL
 
 // this env var uses the upper 32 bits of the flags:
 #define DEBUG_PLUGIN "SNORT_PP_DEBUG"

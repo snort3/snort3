@@ -1,5 +1,0 @@
-Packet Performance monitoring provides facilities for gathering
-statistics about the packet processing system as a whole.  These
-statistics include timing information for rule evaluation, packet
-decoding and event processing, as well as counts for actions taken on
-packets before and during rule evaluation.

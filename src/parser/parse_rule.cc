@@ -66,7 +66,6 @@
 #include "utils/sflsq.h"
 #include "utils/util.h"
 #include "utils/snort_bounds.h"
-#include "ppm/ppm.h"
 #include "filters/rate_filter.h"
 #include "filters/detection_filter.h"
 #include "packet_io/active.h"

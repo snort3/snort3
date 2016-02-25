@@ -70,7 +70,6 @@
 #include "stream/stream_api.h"
 #include "utils/sflsq.h"
 #include "utils/util.h"
-#include "ppm/ppm.h"
 #include "profiler/profiler.h"
 #include "actions/actions.h"
 #include "sfip/sf_ip.h"
@@ -920,10 +919,6 @@ static int rule_tree_queue(
     return 0;
 }
 
-#define CHECK_PPM() \
-    if ( PacketLatency::fastpath() ) \
-        return 1;
-
 #define SEARCH_DATA(buf, len, cnt) \
     { \
         assert(so->get_pattern_count() > 0); \
@@ -933,7 +928,8 @@ static int rule_tree_queue(
         stash.init(); \
         so->search(buf, len, rule_tree_queue, omd, &start_state); \
         stash.process(rule_tree_match, omd); \
-        CHECK_PPM() \
+        if ( PacketLatency::fastpath() ) \
+            return 1; \
     }
 
 #define SEARCH_BUFFER(ibt, pmt, cnt) \
@@ -942,10 +938,6 @@ static int rule_tree_queue(
         if ( Mpse* so = port_group->mpse[pmt] ) \
             SEARCH_DATA(buf.data, buf.len, cnt) \
     }
-
-#define SEARCH_PACKET(buf, len, cnt) \
-    if ( len ) \
-        SEARCH_DATA(buf, len, cnt)
 
 static int fp_search(
     PortGroup* port_group, Packet* p,
@@ -970,7 +962,8 @@ static int fp_search(
             if ( IsLimitedDetect(p) && (p->alt_dsize < p->dsize) )
                 pattern_match_size = p->alt_dsize;
 
-            SEARCH_PACKET(p->data, pattern_match_size, pc.pkt_searches);
+            if ( pattern_match_size )
+                SEARCH_DATA(p->data, pattern_match_size, pc.pkt_searches);
 
             if ( pattern_match_size )
                 p->is_cooked() ?  pc.cooked_searches++ : pc.raw_searches++;
@@ -997,7 +990,8 @@ static int fp_search(
         {
             // FIXIT-M file data should be obtained from
             // inspector gadget as is done with SEARCH_BUFFER
-            SEARCH_PACKET(g_file_data.data, g_file_data.len, pc.file_searches);
+            if ( g_file_data.len )
+                SEARCH_DATA(g_file_data.data, g_file_data.len, pc.file_searches);
         }
     }
     return 0;

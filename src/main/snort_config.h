@@ -324,11 +324,8 @@ public:
     struct VarNode* var_list = nullptr;
 
     //------------------------------------------------------
-    // deliberately not conditional
-    // to avoid plugin compatibility issues
     ProfilerConfig* profiler = nullptr;
 
-    struct ppm_cfg_t* ppm_cfg = nullptr;
     LatencyConfig* latency = nullptr;
     struct _IntelPmHandles* ipm_handles = nullptr;
 

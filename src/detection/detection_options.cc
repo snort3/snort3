@@ -40,7 +40,6 @@
 #include "pattern_match_data.h"
 #include "rules.h"
 
-#include "ppm/ppm.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
 #include "hash/sfxhash.h"

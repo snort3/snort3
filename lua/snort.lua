@@ -52,7 +52,7 @@ dofile(conf_dir .. '/file_magic.lua')
 -- uncomment normalizer if you are inline or not --pedantic
 --normalizer = { }
 
---ppm = { }
+--latency = { }
 --profiler = { }
 --perf_monitor = { }
 

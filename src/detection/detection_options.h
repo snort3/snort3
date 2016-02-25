@@ -28,7 +28,7 @@
 // detection options only once per pattern match.
 //
 // These trees are instantiated at parse time, one per MPSE match state.
-// Eval, profiling, and ppm data are attached in an array sized per max
+// Eval, profiling, and latency data are attached in an array sized per max
 // packet threads.
 
 #ifdef HAVE_CONFIG_H

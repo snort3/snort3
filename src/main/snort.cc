@@ -81,7 +81,6 @@ using namespace std;
 #include "filters/rate_filter.h"
 #include "filters/detection_filter.h"
 #include "time/packet_time.h"
-#include "ppm/ppm.h"
 #include "profiler/profiler.h"
 #include "time/periodic.h"
 #include "ips_options/ips_flowbits.h"
@@ -648,8 +647,6 @@ void Snort::thread_init(const char* intf)
 
 void Snort::thread_term()
 {
-    ppm_sum_stats();
-
     if ( !snort_conf->dirty_pig )
         InspectorManager::thread_stop(snort_conf);
 

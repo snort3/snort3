@@ -63,7 +63,6 @@
 #include "sfip/sf_vartable.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_ipvar.h"
-#include "ppm/ppm.h"
 #include "packet_io/active.h"
 #include "file_api/file_config.h"
 #include "framework/ips_option.h"

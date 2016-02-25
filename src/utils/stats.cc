@@ -35,7 +35,6 @@
 #include "protocols/packet_manager.h"
 #include "detection/fp_create.h"
 #include "filters/sfthreshold.h"
-#include "ppm/ppm.h"
 #include "profiler/profiler.h"
 #include "time/timersub.h"
 #include "file_api/file_stats.h"

@@ -126,7 +126,6 @@ target_link_libraries( snort
     detection
     framework
     time
-    ppm
     latency
     profiler
     ips_actions
@@ -164,7 +163,6 @@ add_subdirectory(mime)
 add_subdirectory(packet_io)
 add_subdirectory(parser)
 add_subdirectory(ports)
-add_subdirectory(ppm)
 add_subdirectory(protocols)
 add_subdirectory(sfip)
 add_subdirectory(sfrt)
