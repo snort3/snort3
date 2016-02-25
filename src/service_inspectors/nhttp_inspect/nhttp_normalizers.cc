@@ -82,8 +82,8 @@ int32_t norm_last_token_code(const Field& input, const StrCode table[])
 {
     assert(input.length > 0);
     const uint8_t* last_start;
-    for (last_start = input.start + input.length - 1; (*last_start != ',') &&
-        (last_start >= input.start); last_start--);
+    for (last_start = input.start + input.length - 1; (last_start >= input.start) &&
+        (*last_start != ','); last_start--);
     last_start++;
     const int32_t last_length = input.length - (last_start - input.start);
     return str_to_code(last_start, last_length, table);
