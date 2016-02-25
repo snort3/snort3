@@ -48,6 +48,9 @@ public:
 
 private:
     SFPERF config;
+
+     std::string mod_pegs;
+     std::string mod_name;
 };
 
 #define BASE_FILE "perf_monitor.csv"

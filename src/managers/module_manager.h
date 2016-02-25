@@ -23,6 +23,7 @@
 // Factory for Modules, including all builtin and plugin modules.
 // Modules are strictly used during parse time.
 
+#include <list>
 #include <string>
 
 //-------------------------------------------------------------------------
@@ -39,6 +40,7 @@ public:
     static Module* get_module(const char*);
     static Module* get_default_module(const char*, SnortConfig*);
     static const char* get_current_module();
+    static std::list<Module*> get_all_modules();
 
     static void list_modules(const char* = nullptr);
     static void dump_modules();

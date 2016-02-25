@@ -63,7 +63,6 @@ public:
     static void instantiate(const BaseApi*, Module*, SnortConfig*, const char* name);
 
     static const char* get_available_plugins(PlugType);
-    static std::vector<std::string> get_all_available_plugins();
 };
 
 #endif

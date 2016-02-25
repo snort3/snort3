@@ -98,6 +98,7 @@ public:
     DetectionModule() : Module("detection", detection_help, detection_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     const PegInfo* get_pegs() const override { return pc_names; }
+    PegCount* get_counts() const override { return (PegCount*) &pc; }
 };
 
 bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
@@ -946,6 +947,7 @@ public:
     DaqModule() : Module("daq", daq_help, daq_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     const PegInfo* get_pegs() const override { return daq_names; }
+    PegCount* get_counts() const override;
 };
 
 bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
@@ -982,6 +984,14 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
         return false;
 
     return true;
+}
+
+PegCount* DaqModule::get_counts() const
+{
+    static THREAD_LOCAL DAQStats ds;
+
+    get_daq_stats(ds);
+    return (PegCount*) &ds;
 }
 
 //-------------------------------------------------------------------------
