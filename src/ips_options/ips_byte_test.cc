@@ -336,7 +336,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
             btd->endianess, btd->bytes_to_compare,
             start_ptr, c.buffer(), c.endo(), &value))
             return DETECTION_OPTION_NO_MATCH;
-#ifdef DEBUG
+#ifdef DEBUG_MSGS
         payload_bytes_grabbed = (int)btd->bytes_to_compare;
 #endif
     }

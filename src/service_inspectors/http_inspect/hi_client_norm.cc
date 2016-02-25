@@ -146,7 +146,7 @@ int hi_split_header_cookie(
         {
             this_header_len = cookie->cookie - this_header_start;
         }
-#ifdef DEBUG
+#ifdef DEBUG_MSGS
         this_header_end = this_header_start + this_header_len;
 #endif
 

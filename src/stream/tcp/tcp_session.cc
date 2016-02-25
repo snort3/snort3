@@ -102,7 +102,7 @@
 #include "tcp_reassemblers.h"
 #include "tcp_session.h"
 
-#ifdef DEBUG
+#ifdef DEBUG_MSGS
 const char* const flush_policy_names[] =
 {
     "ignore",

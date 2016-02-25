@@ -112,7 +112,7 @@ static IPMacEntry* LookupIPMacEntryByIP(
     return nullptr;
 }
 
-#ifdef DEBUG
+#ifdef DEBUG_MSGS
 static void PrintIPMacEntryList(IPMacEntryList& ipmel)
 {
     if ( !ipmel.size() )
@@ -171,8 +171,9 @@ void ArpSpoof::show(SnortConfig*)
 {
     LogMessage("arpspoof configured\n");
 
-#if defined(DEBUG)
-    PrintIPMacEntryList(config->ipmel);
+#ifdef DEBUG_MSGS
+    if ( Debug::enabled(DEBUG_INSPECTOR) )
+        PrintIPMacEntryList(config->ipmel);
 #endif
 }
 

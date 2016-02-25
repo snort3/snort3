@@ -33,7 +33,7 @@
 #include "tcp_stream_config.h"
 #include "tcp_tracker.h"
 
-#ifdef DEBUG
+#ifdef DEBUG_MSGS
 extern const char* const flush_policy_names[];
 #endif
 

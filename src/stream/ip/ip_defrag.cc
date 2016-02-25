@@ -896,7 +896,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     ip_stats.reassembles++;
     ip_stats.reassembled_bytes += dpkt->pkth->caplen;
 
-#if defined(DEBUG_FRAG_EX) && defined(DEBUG)
+#if defined(DEBUG_FRAG_EX) && defined(DEBUG_MSGS)
     /*
      * Note, that this won't print out the IP Options or any other
      * data that is established when the packet is decoded.
@@ -1148,7 +1148,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
      */
     if (p->ptrs.ip_api.ttl() < fe->min_ttl)
     {
-#ifdef DEBUG
+#ifdef DEBUG_MSGS
         if ( p->is_ip4() )
         {
             DebugFormat(DEBUG_FRAG,
@@ -1216,14 +1216,13 @@ void Defrag::process(Packet* p, FragTracker* ft)
         switch (insert_return)
         {
         case FRAG_INSERT_FAILED:
-#ifdef DEBUG
-            LogMessage("WARNING: Insert into Fraglist failed, "
+            DebugFormat(DEBUG_FRAG, "WARNING: Insert into Fraglist failed, "
                 "(offset: %u).\n", frag_offset);
-#endif
             return;
+
         case FRAG_INSERT_TTL:
 
-#ifdef DEBUG
+#ifdef DEBUG_MSGS
             if ( p->is_ip4() )
             {
                 DebugFormat(DEBUG_FRAG,
@@ -1238,25 +1237,26 @@ void Defrag::process(Packet* p, FragTracker* ft)
 #endif
             ip_stats.discards++;
             return;
+
         case FRAG_INSERT_ATTACK:
         case FRAG_INSERT_ANOMALY:
             ip_stats.discards++;
             return;
+
         case FRAG_INSERT_TIMEOUT:
-#ifdef DEBUG
-            LogMessage("WARNING: Insert into Fraglist failed due to timeout, "
+            DebugFormat(DEBUG_FRAG, "WARNING: Insert into Fraglist failed due to timeout, "
                 "(offset: %u).\n", frag_offset);
-#endif
             return;
+
         case FRAG_INSERT_OVERLAP_LIMIT:
-#ifdef DEBUG
-            LogMessage("WARNING: Excessive IP fragment overlap, "
+            DebugFormat(DEBUG_FRAG,
+                "WARNING: Excessive IP fragment overlap, "
                 "(More: %u, offset: %u, offsetSize: %u).\n",
                 (p->ptrs.decode_flags & DECODE_MF),
                 (frag_offset << 3), p->dsize);
-#endif
             ip_stats.discards++;
             return;
+
         default:
             break;
         }

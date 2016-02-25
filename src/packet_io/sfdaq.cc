@@ -524,7 +524,7 @@ int DAQ_Acquire(int max, DAQ_Analysis_Func_t callback, uint8_t* user)
 int DAQ_Inject(const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, uint32_t len)
 {
     int err = daq_inject(daq_mod, daq_hand, (DAQ_PktHdr_t*)h, buf, len, rev);
-#ifdef DEBUG
+#ifdef DEBUG_MSGS
     if ( err )
         LogMessage("Can't inject (%d) - %s\n",
             err, daq_get_error(daq_mod, daq_hand));
