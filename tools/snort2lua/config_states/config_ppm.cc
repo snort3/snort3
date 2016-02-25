@@ -42,7 +42,8 @@ bool Ppm::convert(std::istringstream& data_stream)
     bool retval = true;
     std::string keyword;
 
-    table_api.open_table("ppm");
+    table_api.open_table("latency");
+    table_api.add_diff_option_comment("ppm", "latency");
 
     while (data_stream >> keyword)
     {
@@ -63,67 +64,107 @@ bool Ppm::convert(std::istringstream& data_stream)
             continue;
 
         if (!keyword.compare("threshold"))
-            tmpval = parse_int_option("threshold", data_stream, false);
+        {
+            table_api.add_diff_option_comment("threshold", "rule.suspend_threshold");
+            table_api.open_table("rule");
+            tmpval = parse_int_option("suspend_threshold", data_stream, false);
+            table_api.close_table();
+        }
 
         else if (!keyword.compare("fastpath-expensive-packets"))
         {
-            table_api.add_diff_option_comment("fastpath-expensive-packets",
-                "fastpath_expensive_packets");
-            tmpval = table_api.add_option("fastpath_expensive_packets", true);
+            table_api.add_diff_option_comment("fastpath-expensive-packets", "packet.fastpath");
+            table_api.open_table("packet");
+            tmpval = table_api.add_option("fastpath", true);
+            table_api.close_table();
         }
+
         else if (!keyword.compare("max-pkt-time"))
         {
-            table_api.add_diff_option_comment("max-pkt-time", "max_pkt_time");
-            tmpval = parse_int_option("max_pkt_time", data_stream, false);
+            table_api.add_diff_option_comment("max-pkt-time", "packet.max_time");
+            table_api.open_table("packet");
+            tmpval = parse_int_option("max_time", data_stream, false);
+            table_api.close_table();
         }
+
         else if (!keyword.compare("debug-pkts"))
-        {
             table_api.add_deleted_comment("debug-pkts");
-        }
+
         else if (!keyword.compare("max-rule-time"))
         {
-            table_api.add_diff_option_comment("max-rule-time", "max_rule_time");
-            tmpval = parse_int_option("max_rule_time", data_stream, false);
+            table_api.add_diff_option_comment("max-rule-time", "rule.max_time");
+            table_api.open_table("rule");
+            tmpval = parse_int_option("max_time", data_stream, false);
+            table_api.close_table();
         }
+
         else if (!keyword.compare("suspend-expensive-rules"))
         {
-            table_api.add_diff_option_comment("suspend-expensive-rules",
-                "suspend_expensive_rules");
-            tmpval = table_api.add_option("suspend_expensive_rules", true);
+            table_api.add_diff_option_comment("suspend-expensive-rules", "rule.suspend");
+            table_api.open_table("rule");
+            tmpval = table_api.add_option("suspend", true);
+            table_api.close_table();
         }
+
         else if (!keyword.compare("suspend-timeout"))
         {
-            table_api.add_diff_option_comment("suspend-timeout", "suspend_timeout");
-            tmpval = parse_int_option("suspend_timeout", data_stream, false);
+            table_api.add_diff_option_comment("suspend-timeout", "max_suspend_time");
+            table_api.open_table("rule");
+
+            int opt;
+
+            if (!(data_stream >> opt))
+                tmpval = false;
+
+            else
+            {
+                table_api.add_diff_option_comment("suspend-timeout", "max_suspend_time");
+                table_api.add_comment("seconds changed to milliseconds");
+                tmpval = table_api.add_option("max_suspend_time", opt * 1000);
+            }
+
+            table_api.close_table();
         }
+
         else if (!keyword.compare("pkt-log"))
         {
-            table_api.add_diff_option_comment("pkt-log", "pkt_log");
+            table_api.add_diff_option_comment("pkt-log", "packet.action");
+            table_api.open_table("packet");
+
             std::string opt1;
             std::string opt2;
 
             if (popped_comma)
-                table_api.add_option("pkt_log", "log");
+                table_api.add_option("action", "log");
 
             else if (!(data_stream >> opt1))
-                table_api.add_option("pkt_log", "log");
+                table_api.add_option("action", "log");
 
             else if (opt1.back() == ',')
             {
                 opt1.pop_back();
-                tmpval = table_api.add_option("pkt_log", opt1);
+                tmpval = table_api.add_option("action", opt1);
             }
+
             else if (!(data_stream >> opt2))
-                tmpval = table_api.add_option("pkt_log", opt1);
+                tmpval = table_api.add_option("action", opt1);
 
             else
-                tmpval = table_api.add_option("pkt_log", "both");
+            {
+                table_api.add_diff_option_comment("'both'", "'alert_and_log'");
+                tmpval = table_api.add_option("action", "alert_and_log");
+            }
+
+            table_api.close_table();
         }
+
         else if (!keyword.compare("rule-log"))
         {
+            table_api.add_diff_option_comment("rule-log", "rule.action");
+            table_api.open_table("rule");
+
             std::string opt1;
             std::string opt2;
-            table_api.add_diff_option_comment("rule-log", "rule_log");
 
             if (!(data_stream >> opt1))
                 tmpval = false;
@@ -131,14 +172,21 @@ bool Ppm::convert(std::istringstream& data_stream)
             else if (opt1.back() == ',')
             {
                 opt1.pop_back();
-                tmpval = table_api.add_option("rule_log", opt1);
+                tmpval = table_api.add_option("action", opt1);
             }
+
             else if (!(data_stream >> opt2))
-                tmpval = table_api.add_option("rule_log", opt1);
+                tmpval = table_api.add_option("action", opt1);
 
             else
-                tmpval = table_api.add_option("rule_log", "both");
+            {
+                table_api.add_diff_option_comment("'both'", "'alert_and_log'");
+                tmpval = table_api.add_option("action", "alert_and_log");
+            }
+
+            table_api.close_table();
         }
+
         else
             tmpval = false;
 
