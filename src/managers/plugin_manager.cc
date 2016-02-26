@@ -573,3 +573,17 @@ const char* PluginManager::get_available_plugins(PlugType t)
     return s.c_str();
 }
 
+std::vector<std::string> PluginManager::get_all_available_plugins()
+{
+    std::vector<std::string> ret;
+
+    for ( auto it = plug_map.begin(); it != plug_map.end(); ++it )
+    {
+        const auto* api = it->second.api;
+
+        ret.push_back(api->name);
+    }
+
+    return ret;
+}
+

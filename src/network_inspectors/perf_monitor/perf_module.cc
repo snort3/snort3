@@ -24,6 +24,9 @@
 #include "managers/plugin_manager.h"
 #include "utils/util.h"
 
+static std::string mod_pegs;
+static std::string mod_name;
+
 //-------------------------------------------------------------------------
 // perf attributes
 //-------------------------------------------------------------------------
@@ -248,10 +251,11 @@ bool PerfMonModule::end(const char* fqn, int idx, SnortConfig*)
     {
         if ( !config.modules.size() )
         {
-            auto modules = ModuleManager::get_all_modules();
-            for ( auto& mod : modules )
+            auto modules = PluginManager::get_all_available_plugins();
+            for ( auto& mod_name : modules )
             {
-                if ( !add_module(config, mod, std::string()) )
+                Module* mod = ModuleManager::get_module(mod_name.c_str());
+                if ( mod && !add_module(config, mod, std::string()) )
                     return false;
             }
         }

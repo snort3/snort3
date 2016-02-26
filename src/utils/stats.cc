@@ -158,6 +158,31 @@ static void timing_stats()
 }
 
 //-------------------------------------------------------------------------
+// FIXIT-L 2.0.4 introduces the retry verdict
+// no way to reliably optionally leverage this with dynamic loaded daqs
+
+// FIXIT-L daq stats should be moved to sfdaq
+
+#define MAX_SFDAQ_VERDICT 6
+
+struct DAQStats
+{
+    PegCount pcaps;
+    PegCount received;
+    PegCount analyzed;
+    PegCount dropped;
+    PegCount filtered;
+    PegCount outstanding;
+    PegCount injected;
+    PegCount verdicts[MAX_SFDAQ_VERDICT];
+    PegCount internal_blacklist;
+    PegCount internal_whitelist;
+    PegCount skipped;
+    PegCount fail_open;
+    PegCount idle;
+};
+
+//-------------------------------------------------------------------------
 // FIXIT-L need better encapsulation of these counts by their modules
 
 const PegInfo daq_names[] =
@@ -245,7 +270,7 @@ void pc_sum()
 
 //-------------------------------------------------------------------------
 
-void get_daq_stats(DAQStats& daq_stats)
+static void get_daq_stats(DAQStats& daq_stats)
 {
     uint64_t pkts_recv = g_daq_stats.hw_packets_received;
     uint64_t pkts_drop = g_daq_stats.hw_packets_dropped;
