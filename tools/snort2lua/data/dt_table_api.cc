@@ -365,3 +365,14 @@ void TableApi::swap_tables(std::vector<Table*>& new_tables)
     tables.swap(new_tables);
 }
 
+bool TableApi::get_option_value(const std::string name, std::string& value)
+{
+    if (open_tables.size() == 0)
+    {
+        DataApi::developer_error("Must open table before calling option_exists() !!");
+        return false;
+    }
+
+    return open_tables.top()->get_option(name, value);
+}
+

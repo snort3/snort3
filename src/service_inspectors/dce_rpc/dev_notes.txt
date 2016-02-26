@@ -16,8 +16,8 @@ copied into each inspector configuration.
 
 The address/port mapping is handled by the binder. Since the
 infrastructure has no support for "autodetect" all ports are treated
-the same currently and autodetection performed. There are currently no
-default autodetect ranges.
+the same currently and autodetection performed. Default autodetect
+ranges were temporarly replaced by a single port default.
 
 The Snort 2x global configuration is now rolled into server
 configuration.

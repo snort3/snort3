@@ -24,6 +24,7 @@ namespace preprocessors
 extern const ConvertMap* arpspoof_map;
 extern const ConvertMap* arpspoof_host_map;
 extern const ConvertMap* bo_map;
+extern const ConvertMap* dcerpc_map;
 extern const ConvertMap* dcerpc_server_map;
 extern const ConvertMap* dnp3_map;
 extern const ConvertMap* frag3_engine_map;
@@ -60,6 +61,7 @@ const std::vector<const ConvertMap*> preprocessor_api =
     arpspoof_map,
     arpspoof_host_map,
     bo_map,
+    dcerpc_map,
     dcerpc_server_map,
     dnp3_map,
     frag3_engine_map,

@@ -116,6 +116,9 @@ public:
 
 // return true if this name exists as an option name for the selected table
     bool option_exists(const std::string name);
+// return true if this name exists as an option name for the selected table
+// and value updated successfully
+    bool get_option_value(const std::string name, std::string& value);
 
 private:
     void create_append_data(std::string& fqn, Table*& t);

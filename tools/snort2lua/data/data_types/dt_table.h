@@ -45,6 +45,7 @@ public:
     bool add_list(std::string, std::string next_elem);
     void add_comment(std::string comment);
     bool has_option(const std::string);
+    bool get_option(const std::string opt_name, std::string& value);
 
     /*  emit options after table has finished printing.
         These options will be appended to the previous table as supposed

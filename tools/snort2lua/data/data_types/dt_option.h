@@ -35,6 +35,9 @@ public:
     inline std::string get_name()
     { return name; }
 
+    inline std::string get_value()
+    { return value; }
+
     // overloading operators
     friend std::ostream& operator<<(std::ostream&, const Option&);
     friend bool operator!=(const Option& lhs, const Option& rhs);

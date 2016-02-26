@@ -17,6 +17,8 @@
 //--------------------------------------------------------------------------
 // pps_dcerpc_server.cc author Maya Dagon <mdagon@cisco.com>
 
+#include "pps_dcerpc_server.h"
+
 #include <sstream>
 #include <vector>
 #include <map>
@@ -28,7 +30,7 @@
 
 namespace preprocessors
 {
-namespace
+namespace dce
 {
 #define MIN_PORT 0
 #define MAX_PORT 65535
@@ -42,7 +44,7 @@ enum DceDetectListState
     DCE_DETECT_LIST_STATE__END,
 };
 
-std::string transport[] = { "smb", "tcp" };
+std::string transport[2] = { "smb", "tcp" };
 
 std::map <std::string, std::vector<uint16_t> > default_ports
 {
@@ -52,38 +54,62 @@ std::map <std::string, std::vector<uint16_t> > default_ports
     }
 };
 
-class DcerpcServer : public ConversionState
+// FIXIT - change to full range - 1025:
+std::map <std::string, std::vector<uint16_t> > autodetect_default_ports
 {
-public:
-    DcerpcServer(Converter& c);
-    virtual ~DcerpcServer() { }
-    virtual bool convert(std::istringstream& data_stream);
-
-private:
-    bool get_bracket_list(std::istringstream& data_stream, std::string& list);
-    bool convert_val_or_list(std::istringstream& data_stream, std::string& str);
-    bool parse_smb_file_inspection(std::istringstream& data_stream);
-    bool parse_detect(std::istringstream& data_stream, std::map<std::string, Binder*> bind, bool
-        is_detect);
-    void add_default_ports(std::string type, std::map<std::string, Binder*> bind);
-    bool parse_and_add_ports(std::string ports, std::string type,  std::map<std::string,
-        Binder*> bind, bool is_detect);
-    bool parse_nets(std::istringstream& data_stream, std::map<std::string,
-        Binder*> bind);
-    bool add_option_to_all_transports(std::string option, std::string value);
-
-    std::map<std::string, bool> detect_ports_set;
-    std::map<std::string, std::string> table_name;
-    static int binding_id;
+    { "smb", { 1025 }
+    },
+    { "tcp", { 1026 }
+    }
 };
-} // namespace
+
+/////////////////////////
+// Utility functions
+////////////////////////
+
+bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
+    option, const std::string val)
+{
+    table_api.open_table(table_name);
+    bool tmpval = table_api.add_option(option, val);
+    table_api.close_table();
+
+    return tmpval;
+}
+
+bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
+    option, const int val)
+{
+    table_api.open_table(table_name);
+    bool tmpval = table_api.add_option(option, val);
+    table_api.close_table();
+
+    return tmpval;
+}
+
+bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
+    option, const bool val)
+{
+    table_api.open_table(table_name);
+    bool tmpval = table_api.add_option(option, val);
+    table_api.close_table();
+
+    return tmpval;
+}
+
+/////////////////////////////
+/////   DcerpcServer
+/////////////////////////////
 
 int DcerpcServer::binding_id = 0;
 
 DcerpcServer::DcerpcServer(Converter& c) : ConversionState(c)
 {
     for (auto type: transport)
+    {
+        autodetect_ports_set[type] = false;
         detect_ports_set[type] = false;
+    }
 }
 
 bool DcerpcServer::get_bracket_list(std::istringstream& data_stream, std::string& list)
@@ -130,6 +156,9 @@ bool DcerpcServer::convert_val_or_list(std::istringstream& data_stream, std::str
 
     // remove additional whitespaces
     str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
+
+    // remove ""
+    str.erase(std::remove(str.begin(), str.end(), '"'), str.end());
 
     // convert ',' seperators to spaces
     replace(str.begin(), str.end(), ',', ' ');
@@ -197,6 +226,17 @@ void DcerpcServer::add_default_ports(std::string type,  std::map<std::string,Bin
     }
 }
 
+// FIXIT - for now add autodetect ports to binder just like regular detect port.
+// Change autodetect ports to full range once they are supported
+void DcerpcServer::add_default_autodetect_ports(std::string type,  std::map<std::string,
+    Binder*> bind)
+{
+    for (auto port : autodetect_default_ports[type])
+    {
+        bind[type]->add_when_port(std::to_string(port));
+    }
+}
+
 // add single port / range
 bool DcerpcServer::parse_and_add_ports(std::string ports, std::string type, std::map<std::string,
     Binder*> bind, bool is_detect)
@@ -246,6 +286,10 @@ bool DcerpcServer::parse_and_add_ports(std::string ports, std::string type, std:
     if (is_detect)
     {
         detect_ports_set[type] = true;
+    }
+    else
+    {
+        autodetect_ports_set[type] = true;
     }
 
     return true;
@@ -300,7 +344,18 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
                 type.pop_back();
                 if (one_type)
                 {
-                    return true;
+                    state = DCE_DETECT_LIST_STATE__END;
+                }
+            }
+
+            if (!type.compare("none"))
+            {
+                for (auto transport_type: transport)
+                {
+                    if (is_detect)
+                        detect_ports_set[transport_type] = true;
+                    else
+                        autodetect_ports_set[transport_type] = true;
                 }
             }
 
@@ -428,16 +483,99 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
     return true;
 }
 
-bool DcerpcServer::parse_nets(std::istringstream& data_stream, std::map<std::string,
-    Binder*> bind)
+bool DcerpcServer::init_net_created_table()
+{
+    bool tmpval = true;
+    std::string val;
+
+    table_api.open_table("dce_smb");
+    if (table_api.option_exists("disable_defrag"))
+    {
+        table_api.close_table();
+        for (auto type : transport)
+        {
+            tmpval = add_option_to_table(table_api, table_name[type], "disable_defrag", true) &&
+                tmpval;
+        }
+        table_api.open_table("dce_smb");
+    }
+    if (table_api.option_exists("max_frag_len"))
+    {
+        if (!table_api.get_option_value("max_frag_len", val))
+        {
+            return false;
+        }
+
+        table_api.close_table();
+        for (auto type : transport)
+        {
+            tmpval = add_option_to_table(table_api,table_name[type], "max_frag_len", std::stoi(
+                val)) && tmpval;
+        }
+        table_api.open_table("dce_smb");
+    }
+    if (table_api.option_exists("reassemble_threshold"))
+    {
+        if (!table_api.get_option_value("reassemble_threshold", val))
+        {
+            return false;
+        }
+
+        table_api.close_table();
+        for (auto type : transport)
+        {
+            tmpval = add_option_to_table(table_api,table_name[type], "reassemble_threshold",
+                std::stoi(val)) && tmpval;
+        }
+        table_api.open_table("dce_smb");
+    }
+    if (table_api.option_exists("smb_fingerprint_policy"))
+    {
+        if (!table_api.get_option_value("smb_fingerprint_policy", val))
+        {
+            return false;
+        }
+        table_api.close_table();
+        tmpval = add_option_to_table(table_api,table_name["smb"], "smb_fingerprint_policy", val) &&
+            tmpval;
+        table_api.open_table("dce_smb");
+    }
+    table_api.close_table();
+
+    return tmpval;
+}
+
+bool DcerpcServer::init_new_tables(bool is_default)
 {
     for (auto type : transport)
     {
-        table_name[type] = "dce_" + type + std::to_string(binding_id);
-        bind[type]->set_use_name(table_name[type]);
-    }
-    binding_id++;
+        if (!is_default)
+            table_name[type] = "dce_" + type + std::to_string(binding_id);
+        else
+            table_name[type] = "dce_" + type;
 
+        // open an empty table - if no args are read binder still
+        // reference it
+        table_api.open_table(table_name[type]);
+        table_api.close_table();
+    }
+
+    if (!is_default)
+    {
+        // copy global config options from default table
+        if (!init_net_created_table())
+        {
+            return false;
+        }
+
+        binding_id++;
+    }
+    return true;
+}
+
+bool DcerpcServer::parse_nets(std::istringstream& data_stream, std::map<std::string,
+    Binder*> bind)
+{
     std::string nets;
     if (!convert_val_or_list(data_stream, nets))
     {
@@ -446,6 +584,7 @@ bool DcerpcServer::parse_nets(std::istringstream& data_stream, std::map<std::str
 
     for (auto type : transport)
     {
+        bind[type]->set_use_name(table_name[type]);
         bind[type]->add_when_net(nets);
     }
 
@@ -481,7 +620,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
 
     for (auto type : transport)
     {
-        bind[type]->set_when_proto("tcp");
+        bind[type]->set_when_proto("tcp"); // FIXIT - once dce_udp is ported
         bind[type]->set_use_type("dce_" + type);
     }
 
@@ -493,8 +632,10 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
 
     if (!keyword.compare("default"))
     {
-        for (auto type : transport)
-            table_name[type] = "dce_" + type;
+        if (!init_new_tables(true))
+        {
+            return false;
+        }
     }
     else
     {
@@ -502,6 +643,12 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
         {
             return false;
         }
+
+        if (!init_new_tables(false))
+        {
+            return false;
+        }
+
         if (!parse_nets(data_stream, bind))
         {
             return false;
@@ -600,10 +747,15 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
         {
             add_default_ports(type, bind);
         }
+        if (!autodetect_ports_set[type])
+        {
+            add_default_autodetect_ports(type, bind);
+        }
     }
 
     return retval;
 }
+} // namespace dce
 
 /**************************
  *******  A P I ***********
@@ -611,7 +763,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
 
 static ConversionState* ctor(Converter& c)
 {
-    return new DcerpcServer(c);
+    return new dce::DcerpcServer(c);
 }
 
 static const ConvertMap preprocessor_dcerpc_server =
@@ -621,5 +773,5 @@ static const ConvertMap preprocessor_dcerpc_server =
 };
 
 const ConvertMap* dcerpc_server_map = &preprocessor_dcerpc_server;
-}
+} // namespace preprocessors
 

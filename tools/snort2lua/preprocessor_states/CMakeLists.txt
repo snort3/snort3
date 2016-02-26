@@ -2,6 +2,8 @@
 add_library(preprocessor_states
     pps_arpspoof.cc
     pps_bo.cc
+    pps_dcerpc.cc
+    pps_dcerpc_server.h
     pps_dcerpc_server.cc
     pps_dnp3.cc
     pps_frag3_engine.cc

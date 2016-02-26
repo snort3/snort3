@@ -177,6 +177,25 @@ bool Table::has_option(const std::string opt_name)
     return false;
 }
 
+bool Table::get_option(const std::string opt_name, std::string& value)
+{
+    for (Option* o : options)
+        if (!opt_name.compare(o->get_name()))
+        {
+            value = o->get_value();
+            return true;
+        }
+
+    for (Option* a : append_options)
+        if (!opt_name.compare(a->get_name()))
+        {
+            value = a->get_value();
+            return true;
+        }
+
+    return false;
+}
+
 bool Table::has_option(Option opt)
 {
     for (Option* o : options)
