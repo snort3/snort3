@@ -117,6 +117,7 @@ target_link_libraries( snort
     search_engines
     target_based
     main
+    codec_module
     memory
     host_tracker
     parser

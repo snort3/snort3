@@ -50,7 +50,6 @@ codecs/libcodecs.a \
 codecs/ip/libip_codecs.a \
 codecs/misc/libmisc_codecs.a \
 $(codec_list) \
-codecs/libcodec_module.a \
 network_inspectors/libnetwork_inspectors.a \
 network_inspectors/binder/libbinder.a \
 network_inspectors/normalize/libnormalize.a \
@@ -81,6 +80,7 @@ ips_options/libips_options.a \
 search_engines/libsearch_engines.a \
 target_based/libtarget_based.a \
 main/libmain.a \
+codecs/libcodec_module.a \
 memory/libmemory.a \
 host_tracker/libhost_tracker.a \
 parser/libparser.a \

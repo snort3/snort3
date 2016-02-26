@@ -11,6 +11,19 @@ yet firm so feedback is welcome to get something we can live with.
   key points for the code in that directory.  These are built into the
   developers guide.
 
+* Do not use exceptions.  Exception-safe code is non-trivial and we have
+  ported legacy code that makes use of exceptions unwise.  There are a few
+  exceptions to this rule for the memory manager, shell, etc.  Other code
+  should handle errors as errors.
+
+* Do not use dynamic_cast or RTTI.  Although compilers are getting better
+  all the time, there is a time and space cost to this that is easily
+  avoided.
+
+* Use smart pointers judiciously as they aren't free.  If you would have to
+  roll your own, then use a smart pointer.  If you just need a dtor to
+  delete something, write the dtor.
+
 === Naming
 
 * Use camel case for namespaces, classes, and types like WhizBangPdfChecker.
@@ -25,6 +38,14 @@ yet firm so feedback is welcome to get something we can live with.
 * Write comments sparingly with a mind towards future proofing.  Often the
   comments can be obviated with better code.  Clear code is better than a
   comment.
+
+* Heed Tim Ottinger's Rule on Comments (https://disqus.com/by/tim_ottinger/):
+
+    1. Comments should only say what the code is incapable of saying.
+    2. Comments that repeat (or pre-state) what the code is doing must be
+       removed.
+    3. If the code CAN say what the comment is saying, it must be changed at
+       least until rule #2 is in force.
 
 * Function comment blocks are generally just noise that quickly becomes
   obsolete.  If you absolutely must comment on parameters, put each on a
@@ -47,7 +68,11 @@ yet firm so feedback is welcome to get something we can live with.
 * Put author, description, etc. in separate comment(s) following the
   license.  Do not put such comments in the middle of the license foo.
   Be sure to put the author line ahead of the header guard to exclude them
-  from the developers guide.
+  from the developers guide.  Use the following format, and include a
+  mention to the original author if this is derived work:
+
+    // ips_dnp3_obj.cc author Maya Dagon <mdagon@cisco.com>
+    // based on work by Ryan Jordan
 
 * Each header should have a comment immediately after the header guard to
   give an overview of the file so the user knows what's going on.
@@ -177,7 +202,6 @@ yet firm so feedback is welcome to get something we can live with.
   shouldn't have to sift through implementation details to see what is
   available to the client.
 
-
 === Headers
 
 * Don't hesitate to create a new header if it is needed.  Don't lump
@@ -220,7 +244,7 @@ yet firm so feedback is welcome to get something we can live with.
 * Include required headers, all required headers, and nothing but required
   headers.  Don't just clone a bunch of headers because it is convenient.
 
-* Any file depending of #ifdefs should include config.h as shown below.  A
+* Any file depending on #ifdefs should include config.h as shown below.  A
   .h should include it before any other includes, and a .cc should include
   it immediately after the include of its own .h.
 
@@ -228,7 +252,7 @@ yet firm so feedback is welcome to get something we can live with.
     #include "config.h"
     #endif
 
-* Do not put using statements in headers.
+* Do not put using statements in headers unless they are tightly scoped.
 
 === Warnings
 
@@ -236,13 +260,15 @@ yet firm so feedback is welcome to get something we can live with.
 
     -Wall -Wextra -pedantic -Wformat -Wformat-security
     -Wunused-but-set-variable -Wno-deprecated-declarations
+    -fsanitize=address -fno-omit-frame-pointer
 
 * With clang, use at least these compiler flags:
 
     -Wall -Wextra -pedantic -Wformat -Wformat-security
     -Wno-deprecated-declarations
+    -fsanitize=address -fno-omit-frame-pointer
 
-* Then Fix All Warnings.  None Allowed.
+* Then Fix All Warnings and Aborts.  None Allowed.
 
 === Other
 
