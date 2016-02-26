@@ -1,3 +1,15 @@
+16/02/26 - build 189
+
+-- snort2lua for dce2 port (in progress)
+-- replace ppm with latency
+-- added rule latency
+-- fixed more address sanitizer bugs
+-- fixed use of debug vs debug-msgs
+-- add missing ips option hash and == methods
+-- perf_monitor configuration
+-- fix linux + clang build errors
+-- trough rewrite
+
 16/02/22 - build 188
 
 -- added delete/delete[] replacements for nothrow overload
