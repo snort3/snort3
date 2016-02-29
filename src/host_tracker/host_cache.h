@@ -29,23 +29,28 @@
 #include "hash/lru_cache_shared.h"
 #include "main/snort_types.h"
 
+
 struct HostIpKey
 {
     static const int key_size = 16;
-    uint8_t ip_addr[key_size] { 0 }; //  Holds either IPv4 or IPv6 addr
+    union host_ip_addr
+    {
+        uint8_t ip8[key_size];
+        uint64_t ip64[key_size/8];
+    } ip_addr = {{0}}; //  Holds either IPv4 or IPv6 addr
 
     HostIpKey()
     {
     }
 
-    HostIpKey(uint8_t ip[key_size])
+    HostIpKey(const uint8_t ip[key_size])
     {
-        memcpy(ip_addr, ip, key_size);
+        memcpy(&ip_addr, ip, key_size);
     }
 
     inline bool operator==(const HostIpKey& rhs) const
     {
-        return !memcmp(ip_addr, rhs.ip_addr, key_size);
+        return !memcmp(&ip_addr, &rhs.ip_addr, key_size);
     }
 };
 
@@ -54,8 +59,8 @@ struct HashHostIpKey
 {
     size_t operator()(const HostIpKey& ip) const
     {
-        return std::hash<long long>() (*((long long*)&ip.ip_addr[0])) ^
-               std::hash<long long>() (*((long long*)&ip.ip_addr[8]));
+        return std::hash<uint64_t>() (ip.ip_addr.ip64[0]) ^
+               std::hash<uint64_t>() (ip.ip_addr.ip64[1]);
     }
 };
 

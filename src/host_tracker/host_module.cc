@@ -24,6 +24,14 @@
 #include "stream/stream_api.h"
 #include "target_based/snort_protocols.h"
 
+const PegInfo host_tracker_pegs[] =
+{
+    { "service adds", "host service adds" },
+    { "service finds", "host service finds" },
+    { "service removes", "host service removes" },
+    { nullptr, nullptr },
+};
+
 const Parameter HostTrackerModule::service_params[] =
 {
     { "name", Parameter::PT_STRING, nullptr, nullptr,
@@ -107,4 +115,10 @@ bool HostTrackerModule::end(const char* fqn, int idx, SnortConfig*)
 
     return true;
 }
+
+const PegInfo* HostTrackerModule::get_pegs() const
+{ return host_tracker_pegs; }
+
+PegCount* HostTrackerModule::get_counts() const
+{ return (PegCount*)&host_tracker_stats; }
 
