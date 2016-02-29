@@ -305,8 +305,13 @@ int main_reload_config(lua_State* L)
         request.respond("== reload pending; retry\n");
         return 0;
     }
-    Lua::ManageStack(L, 1);
-    const char* fname = luaL_checkstring(L, 1);
+    const char* fname =  nullptr;
+
+    if ( L )
+    {
+        Lua::ManageStack(L, 1);
+        fname = luaL_checkstring(L, 1);
+    }
 
     request.respond(".. reloading configuration\n");
     SnortConfig* old = snort_conf;
