@@ -248,7 +248,8 @@ void PerfMonitor::eval(Packet* p)
 //FIXIT-M uncouple from Snort class when framework permits
 void perf_monitor_idle_process()
 {
-    this_perf_monitor->eval(nullptr);
+    if ( this_perf_monitor )
+        this_perf_monitor->eval(nullptr);
 }
 
 static bool ready_to_process(Packet* p)

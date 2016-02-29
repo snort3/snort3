@@ -58,7 +58,8 @@ StreamTcp::StreamTcp (TcpStreamConfig* c)
 
 StreamTcp::~StreamTcp()
 {
-    delete config;
+    // FIXIT-H this gets referenced by TcpReassembler later
+    //delete config;
 }
 
 void StreamTcp::show(SnortConfig*)
