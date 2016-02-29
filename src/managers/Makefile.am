@@ -19,3 +19,5 @@ plugin_manager.cc plugin_manager.h \
 script_manager.cc script_manager.h \
 so_manager.cc so_manager.h
 
+snort_plugin.lua:
+	$(srcdir)/ffi_wrap.sh $(srcdir)/lua_plugin_defs.h >$@

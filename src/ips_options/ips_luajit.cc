@@ -25,6 +25,7 @@
 #include "helpers/chunk.h"
 #include "lua/lua.h"
 #include "managers/ips_manager.h"
+#include "managers/lua_plugin_defs.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
 #include "hash/sfhashfcn.h"
@@ -40,22 +41,6 @@
 static THREAD_LOCAL ProfileStats luaIpsPerfStats;
 
 #define opt_eval "eval"
-
-//-------------------------------------------------------------------------
-// ffi stuff
-//-------------------------------------------------------------------------
-
-struct SnortBuffer
-{
-    const char* type;
-    const uint8_t* data;
-    unsigned len;
-};
-
-extern "C" {
-// ensure Lua can link with this
-    const SnortBuffer* get_buffer();
-}
 
 static THREAD_LOCAL Cursor* cursor;
 static THREAD_LOCAL SnortBuffer buf;

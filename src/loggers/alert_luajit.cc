@@ -27,6 +27,7 @@
 #include "log/messages.h"
 #include "lua/lua.h"
 #include "managers/event_manager.h"
+#include "managers/lua_plugin_defs.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
@@ -40,41 +41,6 @@
 #include "utils/stats.h"
 
 static THREAD_LOCAL ProfileStats luaLogPerfStats;
-
-//-------------------------------------------------------------------------
-// ffi stuff
-//
-// IMPORTANT - if you change these structs, you must also update
-// snort_plugins.lua.
-//-------------------------------------------------------------------------
-
-struct SnortEvent
-{
-    unsigned gid;
-    unsigned sid;
-    unsigned rev;
-
-    uint32_t event_id;
-    uint32_t event_ref;
-
-    const char* msg;
-    const char* svc;
-};
-
-struct SnortPacket
-{
-    // FIXIT-L add ip addrs and other useful foo to lua packet
-    const char* type;
-    uint64_t num;
-    unsigned sp;
-    unsigned dp;
-};
-
-extern "C" {
-// ensure Lua can link with this
-    const SnortEvent* get_event();
-    const SnortPacket* get_packet();
-}
 
 static THREAD_LOCAL Event* event;
 static THREAD_LOCAL SnortEvent lua_event;
