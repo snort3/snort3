@@ -59,6 +59,7 @@ doc/snort_manual.text
 doc/snort_manual.tgz
 doc/snort_manual.xml
 doc/version.txt
+extra/m4/*.m4
 extra/rule.xxd
 extra/snort_examples-1.0.tar.gz
 install-sh

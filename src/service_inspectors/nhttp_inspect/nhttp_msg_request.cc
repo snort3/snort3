@@ -83,7 +83,7 @@ void NHttpMsgRequest::parse_start_line()
     if (first_end < last_begin)
     {
         uri = new NHttpUri(start_line.start + first_end + 1, last_begin - first_end - 1,
-            method_id, infractions, events);
+            method_id, params->uri_param, infractions, events);
     }
     else
     {
@@ -115,7 +115,7 @@ bool NHttpMsgRequest::handle_zero_nine()
             int32_t uri_end;
             for (uri_end = start_line.length - 1; is_sp_tab[start_line.start[uri_end]]; uri_end--);
             uri = new NHttpUri(start_line.start + uri_begin, uri_end - uri_begin + 1, method_id,
-                infractions, events);
+                params->uri_param, infractions, events);
         }
         else
         {

@@ -79,18 +79,19 @@ void NHttpMsgSection::update_depth() const
     }
 }
 
-const Field& NHttpMsgSection::classic_normalize(const Field& raw, Field& norm, bool& norm_alloc)
+const Field& NHttpMsgSection::classic_normalize(const Field& raw, Field& norm, bool& norm_alloc,
+    const NHttpParaList::UriParam& uri_param)
 {
     if (norm.length != STAT_NOT_COMPUTE)
         return norm;
 
-    if ((raw.length <= 0) || !UriNormalizer::need_norm_path(raw))
+    if ((raw.length <= 0) || !UriNormalizer::classic_need_norm(raw, true, uri_param))
     {
         norm.set(raw);
         return norm;
     }
     uint8_t* buffer = new uint8_t[raw.length + UriNormalizer::URI_NORM_EXPANSION];
-    UriNormalizer::classic_normalize(raw, norm, buffer);
+    UriNormalizer::classic_normalize(raw, norm, buffer, uri_param);
     norm_alloc = true;
     return norm;
 }

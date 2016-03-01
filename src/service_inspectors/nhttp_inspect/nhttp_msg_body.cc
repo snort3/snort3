@@ -137,7 +137,8 @@ void NHttpMsgBody::do_file_processing()
 
 const Field& NHttpMsgBody::get_classic_client_body()
 {
-    return classic_normalize(detect_data, classic_client_body, classic_client_body_alloc);
+    return classic_normalize(detect_data, classic_client_body, classic_client_body_alloc,
+        params->uri_param);
 }
 
 #ifdef REG_TEST

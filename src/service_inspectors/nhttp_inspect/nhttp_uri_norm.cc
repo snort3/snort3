@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <sys/types.h>
+#include <cstring>
 
 #include "nhttp_enum.h"
 #include "nhttp_uri_norm.h"
@@ -26,125 +27,136 @@
 using namespace NHttpEnums;
 
 void UriNormalizer::normalize(const Field& input, Field& result, bool do_path, uint8_t* buffer,
-    NHttpInfractions& infractions, NHttpEventGen& events)
+    const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions, NHttpEventGen& events)
 {
-    // Normalize character escape sequences
-    int32_t data_length = norm_char_clean(input.start, input.length, buffer, infractions, events);
+    // Normalize percent encodings and similar escape sequences
+    int32_t data_length = norm_char_clean(input, buffer, uri_param, infractions, events);
+
+    detect_bad_char(Field(data_length, buffer), uri_param, infractions, events);
+
+    norm_substitute(buffer, data_length, uri_param, infractions, events);
 
     // Normalize path directory traversals
-    if (do_path)
+    if (do_path && uri_param.simplify_path)
     {
-        norm_backslash(buffer, data_length, infractions, events);
         data_length = norm_path_clean(buffer, data_length, infractions, events);
     }
 
     result.set(data_length, buffer);
 }
 
-bool UriNormalizer::need_norm_no_path(const Field& uri_component)
+bool UriNormalizer::need_norm(const Field& uri_component, bool do_path,
+    const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions, NHttpEventGen& events)
+{
+    bool need_it;
+    if (do_path && uri_param.simplify_path)
+        need_it = need_norm_path(uri_component, uri_param);
+    else
+        need_it = need_norm_no_path(uri_component, uri_param);
+
+    if (!need_it)
+    {
+        // Since we are not going to normalize we need to check for bad characters now
+        detect_bad_char(uri_component, uri_param, infractions, events);
+    }
+
+    return need_it;
+}
+
+bool UriNormalizer::need_norm_no_path(const Field& uri_component,
+    const NHttpParaList::UriParam& uri_param)
 {
     const int32_t& length = uri_component.length;
     const uint8_t* const & buf = uri_component.start;
     for (int32_t k = 0; k < length; k++)
     {
-         if ((uri_char[buf[k]] == CHAR_NORMAL) || (uri_char[buf[k]] == CHAR_PATH))
-            continue;
-        return true;
+        if ((uri_param.uri_char[buf[k]] == CHAR_PERCENT) ||
+            (uri_param.uri_char[buf[k]] == CHAR_SUBSTIT))
+            return true;
     }
     return false;
 }
 
-bool UriNormalizer::need_norm_path(const Field& uri_component)
+bool UriNormalizer::need_norm_path(const Field& uri_component,
+    const NHttpParaList::UriParam& uri_param)
 {
     const int32_t& length = uri_component.length;
     const uint8_t* const & buf = uri_component.start;
     for (int32_t k = 0; k < length; k++)
     {
-        if (uri_char[buf[k]] == CHAR_NORMAL)
-            continue;
-        if ((buf[k] == '/') && ((k == 0) || (buf[k-1] != '/')))
-            continue;
-        if (  (buf[k] == '.')                                               &&
-              ((k == 0) || (uri_char[buf[k-1]] == CHAR_NORMAL))             &&
-              ((k == length-1) || (uri_char[buf[k+1]] == CHAR_NORMAL)))
-            continue;
-        return true;
-    }
-    return false;
-}
-
-int32_t UriNormalizer::norm_char_clean(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    NHttpInfractions& infractions, NHttpEventGen& events)
-{
-    int32_t length = 0;
-    for (int32_t k = 0; k < in_length; k++)
-    {
-        switch (uri_char[in_buf[k]])
+        switch (uri_param.uri_char[buf[k]])
         {
         case CHAR_NORMAL:
-        case CHAR_PATH:
-            out_buf[length++] = in_buf[k];
-            break;
-        case CHAR_INVALID:
-            infractions += INF_URI_BAD_CHAR;
-            events.create_event(EVENT_NON_RFC_CHAR);
-            out_buf[length++] = in_buf[k];
-            break;
         case CHAR_EIGHTBIT:
-            infractions += INF_URI_8BIT_CHAR;
-            events.create_event(EVENT_BARE_BYTE);
-            out_buf[length++] = in_buf[k];
-            break;
+            continue;
         case CHAR_PERCENT:
-            if ((k+2 < in_length) && (as_hex[in_buf[k+1]] != -1) && (as_hex[in_buf[k+2]] != -1))
+        case CHAR_SUBSTIT:
+            return true;
+        case CHAR_PATH:
+            if (buf[k] == '/')
             {
-                if (as_hex[in_buf[k+1]] <= 7)
-                {
-                    uint8_t value = as_hex[in_buf[k+1]] * 16 + as_hex[in_buf[k+2]];
-                    if (good_percent[value])
-                    {
-                        // Normal % escape of an ASCII special character that is supposed to be
-                        // escaped
-                        infractions += INF_URI_PERCENT_NORMAL;
-                        out_buf[length++] = '%';
-                    }
-                    else
-                    {
-                        // Suspicious % escape of an ASCII character that does not need to be
-                        // escaped
-                        infractions += INF_URI_PERCENT_ASCII;
-                        events.create_event(EVENT_ASCII);
-                        if (uri_char[value] == CHAR_INVALID)
-                        {
-                            infractions += INF_URI_BAD_CHAR;
-                            events.create_event(EVENT_NON_RFC_CHAR);
-                        }
-                        out_buf[length++] = value;
-                        k += 2;
-                    }
-                }
-                else
-                {
-                    // UTF-8 decoding not implemented yet
-                    infractions += INF_URI_PERCENT_UTF8;
-                    events.create_event(EVENT_UTF_8);
-                    out_buf[length++] = '%';
-                }
+                // slash is safe if not preceded by another slash
+                if ((k == 0) || (buf[k-1] != '/'))
+                    continue;
+                return true;
             }
-            else if ((k+5 < in_length) && (in_buf[k+1] == 'u') && (as_hex[in_buf[k+2]] != -1) &&
-                (as_hex[in_buf[k+3]] != -1)
-                && (as_hex[in_buf[k+4]] != -1) && (as_hex[in_buf[k+5]] != -1))
+            else if (buf[k] == '.')
             {
-                // 'u' UTF-16 decoding not implemented yet
-                infractions += INF_URI_PERCENT_UCODE;
-                events.create_event(EVENT_U_ENCODE);
-                out_buf[length++] = '%';
+                // period is safe if not preceded or followed by another path character
+                if (((k == 0) || (uri_param.uri_char[buf[k-1]] != CHAR_PATH))          &&
+                    ((k == length-1) || (uri_param.uri_char[buf[k+1]] != CHAR_PATH)))
+                    continue;
+                return true;
             }
             else
             {
-                // Don't recognize it
-                infractions += INF_URI_PERCENT_OTHER;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+int32_t UriNormalizer::norm_char_clean(const Field& input, uint8_t* out_buf,
+    const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions, NHttpEventGen& events)
+{
+    int32_t length = 0;
+    for (int32_t k = 0; k < input.length; k++)
+    {
+        switch (uri_param.uri_char[input.start[k]])
+        {
+        case CHAR_NORMAL:
+        case CHAR_PATH:
+        case CHAR_EIGHTBIT:
+        case CHAR_SUBSTIT:
+            out_buf[length++] = input.start[k];
+            break;
+        case CHAR_PERCENT:
+            if ((k+2 < input.length) && (as_hex[input.start[k+1]] != -1) &&
+                (as_hex[input.start[k+2]] != -1))
+            {
+                // %hh => hex value
+                out_buf[length++] = as_hex[input.start[k+1]] * 16 + as_hex[input.start[k+2]];
+                k += 2;
+            }
+            else if ((k+1 < input.length) && (input.start[k+1] == '%'))
+            {
+                // %% => %
                 out_buf[length++] = '%';
+                k += 1;
+            }
+            else
+            {
+                // don't recognize, pass through for now (FIXIT-H unfinished feature)
+                out_buf[length++] = '%';
+            }
+
+            // The result of percent decoding should not be an "unreserved" character. That's a
+            // strong clue someone is hiding something.
+            if (uri_param.unreserved_char[out_buf[length-1]])
+            {
+                infractions += INF_URI_PERCENT_UNRESERVED;
+                events.create_event(EVENT_ASCII);
             }
             break;
         }
@@ -152,17 +164,48 @@ int32_t UriNormalizer::norm_char_clean(const uint8_t* in_buf, int32_t in_length,
     return length;
 }
 
-// Convert URI backslashes to slashes
-void UriNormalizer::norm_backslash(uint8_t* buf, int32_t length, NHttpInfractions& infractions,
-    NHttpEventGen& events)
+void UriNormalizer::detect_bad_char(const Field& uri_component,
+    const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions, NHttpEventGen& events)
 {
-    for (int32_t k = 0; k < length; k++)
+    // If the bad character detection feature is not configured we quit
+    if (uri_param.bad_characters.count() == 0)
+        return;
+
+    for (int32_t k = 0; k < uri_component.length; k++)
     {
-        if (buf[k] == '\\')
+        if (uri_param.bad_characters[uri_component.start[k]])
         {
-            buf[k] = '/';
-            infractions += INF_URI_BACKSLASH;
-            events.create_event(EVENT_IIS_BACKSLASH);
+            infractions += INF_URI_BAD_CHAR;
+            events.create_event(EVENT_NON_RFC_CHAR);
+            return;
+        }
+    }
+}
+
+// Replace backslash with slash and plus with space
+void UriNormalizer::norm_substitute(uint8_t* buf, int32_t length,
+    const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions, NHttpEventGen& events)
+{
+    if (uri_param.backslash_to_slash)
+    {
+        for (int32_t k = 0; k < length; k++)
+        {
+            if (buf[k] == '\\')
+            {
+                buf[k] = '/';
+                infractions += INF_URI_BACKSLASH;
+                events.create_event(EVENT_IIS_BACKSLASH);
+            }
+        }
+    }
+    if (uri_param.plus_to_space)
+    {
+        for (int32_t k = 0; k < length; k++)
+        {
+            if (buf[k] == '+')
+            {
+                buf[k] = ' ';
+            }
         }
     }
 }
@@ -236,7 +279,8 @@ int32_t UriNormalizer::norm_path_clean(uint8_t* buf, const int32_t in_length,
 }
 
 // Provide traditional URI-style normalization for buffers that usually are not URIs
-void UriNormalizer::classic_normalize(const Field& input, Field& result, uint8_t* buffer)
+void UriNormalizer::classic_normalize(const Field& input, Field& result, uint8_t* buffer,
+    const NHttpParaList::UriParam& uri_param)
 {
     // The requirements for generating events related to these normalizations are unclear. It
     // definitely doesn't seem right to generate standard URI events. For now we won't generate
@@ -247,28 +291,36 @@ void UriNormalizer::classic_normalize(const Field& input, Field& result, uint8_t
     // infraction logic with legacy problems. The following centralizes all the messiness here so
     // that we can conveniently modify it as requirements are better understood.
 
-    class NHttpDummyEventGen : public NHttpEventGen
-    {
-        void create_event(NHttpEnums::EventSid) override {}
-    };
-
     NHttpInfractions unused;
     NHttpDummyEventGen dummy_ev;
 
     // Normalize character escape sequences
-    int32_t data_length = norm_char_clean(input.start, input.length, buffer, unused, dummy_ev);
+    int32_t data_length = norm_char_clean(input, buffer, uri_param, unused, dummy_ev);
 
-    // Normalize path directory traversals
-    // Find the leading slash if there is one
-    int32_t uri_offset;
-    for (uri_offset = 0; (uri_offset < data_length) && (buffer[uri_offset] != '/'); uri_offset++);
-    if (uri_offset < data_length)
+    if (uri_param.simplify_path)
     {
-        norm_backslash(buffer + uri_offset, data_length - uri_offset, unused, dummy_ev);
-        data_length = uri_offset +
-            norm_path_clean(buffer + uri_offset, data_length - uri_offset, unused, dummy_ev);
+        // Normalize path directory traversals
+        // Find the leading slash if there is one
+        uint8_t* first_slash = (uint8_t*)memchr(buffer, '/', data_length);
+        if (first_slash != nullptr)
+        {
+            const int32_t uri_offset = first_slash - buffer;
+            norm_substitute(buffer + uri_offset, data_length - uri_offset, uri_param, unused,
+                dummy_ev);
+            data_length = uri_offset +
+                norm_path_clean(buffer + uri_offset, data_length - uri_offset, unused, dummy_ev);
+        }
     }
 
     result.set(data_length, buffer);
+}
+
+bool UriNormalizer::classic_need_norm(const Field& uri_component, bool do_path,
+    const NHttpParaList::UriParam& uri_param)
+{
+    NHttpInfractions unused;
+    NHttpDummyEventGen dummy_ev;
+
+    return need_norm(uri_component, do_path, uri_param, unused, dummy_ev);
 }
 

@@ -155,9 +155,6 @@ void NHttpUri::parse_abs_path()
 
 void NHttpUri::normalize()
 {
-    // FIXIT-P generating the normalized URI components directly into the normalized classic buffer
-    // would save a lot of memory and some copying.
-
     // Divide the URI up into its six components: scheme, host, port, path, query, and fragment
     parse_uri();
     parse_authority();
@@ -166,13 +163,15 @@ void NHttpUri::normalize()
     // Almost all HTTP requests are honest and rarely need expensive normalization processing. We
     // do a quick scan for red flags and only perform normalization if something comes up.
     // Otherwise we set the normalized fields to point at the raw values.
-    if ((host.length > 0) && UriNormalizer::need_norm_no_path(host))
+    if ((host.length > 0) && UriNormalizer::need_norm(host, false, uri_param, infractions, events))
         infractions += INF_URI_NEED_NORM_HOST;
-    if ((path.length > 0) && UriNormalizer::need_norm_path(path))
+    if ((path.length > 0) && UriNormalizer::need_norm(path, true, uri_param, infractions, events))
         infractions += INF_URI_NEED_NORM_PATH;
-    if ((query.length > 0) && UriNormalizer::need_norm_no_path(query))
+    if ((query.length > 0) && UriNormalizer::need_norm(query, false, uri_param, infractions,
+            events))
         infractions += INF_URI_NEED_NORM_QUERY;
-    if ((fragment.length > 0) && UriNormalizer::need_norm_no_path(fragment))
+    if ((fragment.length > 0) && UriNormalizer::need_norm(fragment, false, uri_param, infractions,
+            events))
         infractions += INF_URI_NEED_NORM_FRAGMENT;
 
     if (!((infractions & INF_URI_NEED_NORM_PATH)  || (infractions & INF_URI_NEED_NORM_HOST) ||
@@ -200,7 +199,8 @@ void NHttpUri::normalize()
     if (host.length > 0)
     {
         if (infractions & INF_URI_NEED_NORM_HOST)
-            UriNormalizer::normalize(host, host_norm, false, current, infractions, events);
+            UriNormalizer::normalize(host, host_norm, false, current, uri_param, infractions,
+                events);
         else
         {
             // The host component is not changing but other parts of the URI are being normalized.
@@ -222,7 +222,8 @@ void NHttpUri::normalize()
     if (path.length > 0)
     {
         if (infractions & INF_URI_NEED_NORM_PATH)
-            UriNormalizer::normalize(path, path_norm, true, current, infractions, events);
+            UriNormalizer::normalize(path, path_norm, true, current, uri_param, infractions,
+                events);
         else
         {
             memcpy(current, path.start, path.length);
@@ -235,7 +236,8 @@ void NHttpUri::normalize()
         memcpy(current, "?", 1);
         current += 1;
         if (infractions & INF_URI_NEED_NORM_QUERY)
-            UriNormalizer::normalize(query, query_norm, false, current, infractions, events);
+            UriNormalizer::normalize(query, query_norm, false, current, uri_param, infractions,
+                events);
         else
         {
             memcpy(current, query.start, query.length);
@@ -248,7 +250,8 @@ void NHttpUri::normalize()
         memcpy(current, "#", 1);
         current += 1;
         if (infractions & INF_URI_NEED_NORM_FRAGMENT)
-            UriNormalizer::normalize(fragment, fragment_norm, false, current, infractions, events);
+            UriNormalizer::normalize(fragment, fragment_norm, false, current, uri_param,
+                infractions, events);
         else
         {
             memcpy(current, fragment.start, fragment.length);

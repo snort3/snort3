@@ -20,6 +20,9 @@
 #ifndef NHTTP_MODULE_H
 #define NHTTP_MODULE_H
 
+#include <string>
+#include <bitset>
+
 #include "framework/module.h"
 
 #include "nhttp_enum.h"
@@ -33,6 +36,19 @@ public:
     long request_depth;
     long response_depth;
     bool unzip;
+    struct UriParam
+    {
+    public:
+        UriParam();
+
+        bool backslash_to_slash;
+        bool plus_to_space;
+        bool simplify_path;
+        std::bitset<256> bad_characters;
+        std::bitset<256> unreserved_char;
+        NHttpEnums::CharAction uri_char[256];
+    };
+    UriParam uri_param;
 #ifdef REG_TEST
     bool test_input;
     bool test_output;

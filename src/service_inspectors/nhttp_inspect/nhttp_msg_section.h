@@ -82,7 +82,8 @@ protected:
 
     // Convenience methods shared by multiple subclasses
     void update_depth() const;
-    static const Field& classic_normalize(const Field& raw, Field& norm, bool& norm_alloc);
+    static const Field& classic_normalize(const Field& raw, Field& norm, bool& norm_alloc,
+        const NHttpParaList::UriParam& uri_param);
 #ifdef REG_TEST
     void print_section_title(FILE* output, const char* title) const;
     void print_section_wrapup(FILE* output) const;

@@ -19,7 +19,6 @@ nhttp_normalizers.cc nhttp_normalizers.h \
 nhttp_str_to_code.cc nhttp_str_to_code.h \
 nhttp_api.cc nhttp_api.h \
 nhttp_tables.cc \
-nhttp_uri_tables.cc \
 nhttp_module.cc nhttp_module.h \
 nhttp_test_input.cc nhttp_test_input.h \
 nhttp_flow_data.cc nhttp_flow_data.h \

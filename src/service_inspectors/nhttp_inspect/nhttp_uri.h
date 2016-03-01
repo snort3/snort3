@@ -21,6 +21,7 @@
 #define NHTTP_URI_H
 
 #include "nhttp_str_to_code.h"
+#include "nhttp_module.h"
 #include "nhttp_uri_norm.h"
 #include "nhttp_field.h"
 #include "nhttp_infractions.h"
@@ -33,9 +34,11 @@
 class NHttpUri
 {
 public:
-    NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method,
-        NHttpInfractions& infractions_, NHttpEventGen& events_) :
-        uri(length, start), method_id(method), infractions(infractions_), events(events_)
+    NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method_id_,
+        const NHttpParaList::UriParam& uri_param_, NHttpInfractions& infractions_,
+        NHttpEventGen& events_) :
+        uri(length, start), method_id(method_id_), uri_param(uri_param_),
+        infractions(infractions_), events(events_)
         { normalize(); }
     ~NHttpUri();
     const Field& get_uri() const { return uri; }
@@ -58,6 +61,7 @@ public:
 private:
     const Field uri;
     const NHttpEnums::MethodId method_id;
+    const NHttpParaList::UriParam& uri_param;
     NHttpInfractions& infractions;
     NHttpEventGen& events;
 

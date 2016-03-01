@@ -21,6 +21,7 @@
 #define NHTTP_URI_NORM_H
 
 #include "nhttp_field.h"
+#include "nhttp_module.h"
 #include "nhttp_infractions.h"
 #include "nhttp_event_gen.h"
 
@@ -29,22 +30,39 @@ class UriNormalizer
 public:
     static const unsigned URI_NORM_EXPANSION = 1;
 
+    static bool need_norm(const Field& uri_component, bool do_path,
+        const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions,
+        NHttpEventGen& events);
     static void normalize(const Field& input, Field& result, bool do_path, uint8_t* buffer,
-        NHttpInfractions& infractions, NHttpEventGen& events);
-    static bool need_norm_path(const Field& uri_component);
-    static bool need_norm_no_path(const Field& uri_component);
-    static void classic_normalize(const Field& input, Field& result, uint8_t* buffer);
+        const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions,
+        NHttpEventGen& events);
+    static bool classic_need_norm(const Field& uri_component, bool do_path,
+        const NHttpParaList::UriParam& uri_param);
+    static void classic_normalize(const Field& input, Field& result, uint8_t* buffer,
+        const NHttpParaList::UriParam& uri_param);
 
 private:
-    static const NHttpEnums::CharAction uri_char[256];
-    static const bool good_percent[256];
-
-    static int32_t norm_char_clean(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-        NHttpInfractions& infractions, NHttpEventGen& events);
-    static void norm_backslash(uint8_t* buf, int32_t length, NHttpInfractions& infractions,
+    static bool need_norm_path(const Field& uri_component,
+        const NHttpParaList::UriParam& uri_param);
+    static bool need_norm_no_path(const Field& uri_component,
+        const NHttpParaList::UriParam& uri_param);
+    static int32_t norm_char_clean(const Field& input, uint8_t* out_buf,
+        const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions,
+        NHttpEventGen& events);
+    static void norm_substitute(uint8_t* buf, int32_t length,
+        const NHttpParaList::UriParam& uri_param,  NHttpInfractions& infractions,
         NHttpEventGen& events);
     static int32_t norm_path_clean(uint8_t* buf, const int32_t in_length,
         NHttpInfractions& infractions, NHttpEventGen& events);
+    static void detect_bad_char(const Field& uri_component,
+        const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions,
+        NHttpEventGen& events);
+
+    // An artifice used by the classic normalization methods to disable event generation
+    class NHttpDummyEventGen : public NHttpEventGen
+    {
+        void create_event(NHttpEnums::EventSid) override {}
+    };
 };
 
 #endif
