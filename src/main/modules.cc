@@ -1303,7 +1303,8 @@ bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
         if (cpu == -1)
         {
             ParseError("%s - cpu(%d) for thread (%d) and source (%s) "
-                "must be an integer in the range of 0 < cpu < max_cpus", fqn, cpu);
+                "must be an integer in the range of 0 < cpu < max_cpus",
+                fqn, cpu, thread, source.c_str());
             return false;
         }
         else if ((source.empty()) && (thread == -1))

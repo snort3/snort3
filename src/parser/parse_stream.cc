@@ -326,7 +326,8 @@ static TokenType get_token(
             }
             else
             {
-                ParseWarning(WARN_RULES, "\\x used with no following hex digits", lines-1);
+                ParseWarning(WARN_RULES, "\\x used with no following hex digits on line %d\n",
+                        lines-1);
                 s += c;
                 state = 3;
             }
