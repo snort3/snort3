@@ -43,7 +43,7 @@ TEST(host_cache, host_ip_key_test)
     uint8_t expected_hk[16] =
     { 0xde,0xad,0xbe,0xef,0xab,0xcd,0xef,0x01,0x23,0x34,0x56,0x78,0x90,0xab,0xcd,0xef };
 
-    memset(&zeroed_hk.ip_addr, 0, sizeof(zeroed_hk.ip_addr));
+    memset(zeroed_hk.ip_addr, 0, sizeof(zeroed_hk.ip_addr));
 
     HostIpKey hkey1;
     CHECK(hkey1 == zeroed_hk);
