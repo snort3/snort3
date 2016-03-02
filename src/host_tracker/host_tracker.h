@@ -32,6 +32,8 @@
 #include <algorithm>
 
 #include "sfip/sfip_t.h"
+#include "framework/counts.h"
+#include "main/thread.h"
 
 //  FIXIT-H -- For now this emulates the Snort++ attribute table. Need
 //             to add in sfrnaincludes/host_tracker.h data eventually.
@@ -39,6 +41,15 @@
 typedef uint16_t Port;
 typedef uint16_t Protocol;
 typedef uint8_t Policy;
+
+struct HostTrackerStats
+{
+    PegCount service_adds;
+    PegCount service_finds;
+    PegCount service_removes;
+};
+
+extern THREAD_LOCAL struct HostTrackerStats host_tracker_stats;
 
 struct HostApplicationEntry
 {
@@ -127,6 +138,8 @@ public:
     //  false if entry exists already, and true if entry was added.
     bool add_service(const HostApplicationEntry& app_entry)
     {
+        host_tracker_stats.service_adds++;
+
         std::lock_guard<std::mutex> lck(host_tracker_lock);
 
         auto iter = std::find(services.begin(), services.end(), app_entry);
@@ -141,6 +154,8 @@ public:
     //  replace the previous entry with the new entry.
     void add_or_replace_service(const HostApplicationEntry& app_entry)
     {
+        host_tracker_stats.service_adds++;
+
         std::lock_guard<std::mutex> lck(host_tracker_lock);
 
         auto iter = std::find(services.begin(), services.end(), app_entry);
@@ -155,6 +170,7 @@ public:
     bool find_service(Protocol ipproto, Port port, HostApplicationEntry& app_entry)
     {
         HostApplicationEntry tmp_entry(ipproto, port, HostApplicationEntry::UNKNOWN_PROTOCOL);
+        host_tracker_stats.service_finds++;
 
         std::lock_guard<std::mutex> lck(host_tracker_lock);
 
@@ -173,6 +189,7 @@ public:
     bool remove_service(Protocol ipproto, Port port)
     {
         HostApplicationEntry tmp_entry(ipproto, port, HostApplicationEntry::UNKNOWN_PROTOCOL);
+        host_tracker_stats.service_removes++;
 
         std::lock_guard<std::mutex> lck(host_tracker_lock);
 

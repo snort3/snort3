@@ -47,6 +47,9 @@ public:
         assert(!host);
     }
 
+    const PegInfo* get_pegs() const override;
+    PegCount* get_counts() const override;
+
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
