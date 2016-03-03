@@ -72,7 +72,6 @@ using namespace std;
 #include "piglet/piglet.h"
 #endif
 
-
 //-------------------------------------------------------------------------
 
 static Swapper* swapper = NULL;
@@ -165,7 +164,7 @@ public:
     void set(int, const char* = "");
     const char* get() const { return buf; }
 
-    void read(int);
+    bool read(int&);
     void respond(const char*) const;
     void show_prompt() const;
 
@@ -184,15 +183,24 @@ void Request::set(int f, const char* s)
 // FIXIT-L ignoring partial reads for now
 // using simple text for now so can use telnet as client
 // but must parse commands out of stream (ending with \n)
-void Request::read(int f)
+bool Request::read(int& f)
 {
     fd = f;
     buf[0] = '\0';
-    unsigned n = ::read(fd, buf, sizeof(buf)-1);
+    ssize_t n = ::read(fd, buf, sizeof(buf)-1);
 
-    do
+    if ( n <= 0 and errno != EAGAIN and errno != EINTR )
+    {
+        f = -1;
+        return false;
+    }
+
+    bool ok = n > 0;
+
+    while ( n > 0 and isspace(buf[--n]) )
         buf[n] = '\0';
-    while ( n-- and isspace(buf[n]) );
+
+    return ok;
 }
 
 // FIXIT-L supporting only simple strings for now
@@ -204,8 +212,8 @@ void Request::respond(const char* s) const
         LogMessage("%s", s);
         return;
     }
-    if ( write(fd, s, strlen(s)) )
-        return;  // FIXIT-L count errors?
+    // FIXIT-L count errors?
+    (void)write(fd, s, strlen(s));
 }
 
 // FIXIT-L would like to flush prompt w/o \n
@@ -516,6 +524,7 @@ static bool house_keeping()
 // FIXIT-M bind to configured ip including INADDR_ANY
 // (default is loopback if enabled)
 static int listener = -1;
+static int local_control = STDIN_FILENO;
 static int remote_control = -1;
 
 static int socket_init()
@@ -549,7 +558,7 @@ static int socket_init()
     }
 
     // FIXIT-M configure max conns
-    if ( listen(listener, 5) < 0 )
+    if ( listen(listener, 0) < 0 )
     {
         FatalError("listen failed: %s\n", get_error(errno));
         return -4;
@@ -585,10 +594,12 @@ static int socket_conn()
     return 0;
 }
 
-static void shell(int fd)
+static void shell(int& fd)
 {
     string rsp;
-    request.read(fd);
+
+    if ( !request.read(fd) )
+        return;
 
     SnortConfig* sc = snort_conf;
     sc->policy_map->get_shell()->execute(request.get(), rsp);
@@ -596,7 +607,8 @@ static void shell(int fd)
     if ( rsp.size() )
         request.respond(rsp.c_str());
 
-    request.show_prompt();
+    if ( fd >= 0 )
+        request.show_prompt();
 }
 
 static bool service_users()
@@ -605,43 +617,46 @@ static bool service_users()
     FD_ZERO(&inputs);
     int max_fd = -1;
 
-    if ( shell_enabled )
+    if ( shell_enabled and local_control >= 0 )
     {
-        FD_SET(STDIN_FILENO, &inputs);
-        max_fd = STDIN_FILENO;
+        FD_SET(local_control, &inputs);
+        max_fd = local_control;
     }
 
-    if ( listener > max_fd )
-    {
-        FD_SET(listener, &inputs);
-        max_fd = listener;
-    }
-
-    if ( remote_control > max_fd )
+    if ( remote_control >= 0 )
     {
         FD_SET(remote_control, &inputs);
-        max_fd = remote_control;
+        if ( remote_control > max_fd )
+            max_fd = remote_control;
+    }
+    // one remote at a time; the else prevents a new remote
+    // from taking control from an existing remote
+    else if ( listener >= 0 )
+    {
+        FD_SET(listener, &inputs);
+        if ( listener > max_fd )
+            max_fd = listener;
     }
 
     struct timeval timeout;
     timeout.tv_sec = 0;
     timeout.tv_usec = 0;
 
-    if ( select(max_fd+1, &inputs, NULL, NULL, &timeout) )
+    if ( select(max_fd+1, &inputs, NULL, NULL, &timeout) > 0 )
     {
-        if ( FD_ISSET(STDIN_FILENO, &inputs) )
+        if ( FD_ISSET(local_control, &inputs) )
         {
-            shell(STDIN_FILENO);
+            shell(local_control);
             proc_stats.local_commands++;
             return true;
         }
-        else if ( remote_control > 0 and FD_ISSET(remote_control, &inputs) )
+        else if ( FD_ISSET(remote_control, &inputs) )
         {
             shell(remote_control);
             proc_stats.remote_commands++;
             return true;
         }
-        else if ( listener > 0 and FD_ISSET(listener, &inputs) )
+        else if ( FD_ISSET(listener, &inputs) )
         {
             if ( !socket_conn() )
             {
