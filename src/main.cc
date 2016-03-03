@@ -50,6 +50,7 @@ using namespace std;
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/inspector_manager.h"
+#include "memory/memory_cap.h"
 #include "utils/util.h"
 #include "parser/parser.h"
 #include "packet_io/trough.h"
@@ -840,6 +841,8 @@ static void snort_main()
     assert(max_pigs > 0);
 
     pigs = new Pig[max_pigs];
+
+    memory::MemoryCap::calculate(max_pigs);
 
     main_loop();
 

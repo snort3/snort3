@@ -26,11 +26,17 @@
 namespace memory
 {
 
-struct DefaultCap
+struct MemoryCap
 {
     static bool free_space(size_t);
     static void update_allocations(size_t);
     static void update_deallocations(size_t);
+
+    // call from main thread before thread spawn
+    static void calculate(unsigned num_threads);
+
+    // call from threads
+    static void tinit();
 };
 
 } // namespace memory

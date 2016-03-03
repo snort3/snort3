@@ -25,10 +25,11 @@
 namespace memory
 {
 
-void* DefaultAllocator::allocate(size_t n)
+// FIXIT-L J these could be made inlineable by defining in memory_manager.cc
+void* MemoryAllocator::allocate(size_t n)
 { return malloc(n); }
 
-void DefaultAllocator::deallocate(void* p)
+void MemoryAllocator::deallocate(void* p)
 { free(p); }
 
 } // namespace memory

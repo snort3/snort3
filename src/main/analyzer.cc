@@ -27,6 +27,7 @@ using namespace std;
 #include "snort.h"
 #include "thread.h"
 #include "helpers/swapper.h"
+#include "memory/memory_cap.h"
 #include "packet_io/sfdaq.h"
 
 typedef DAQ_Verdict
@@ -52,6 +53,8 @@ Analyzer::Analyzer(const char* s)
 void Analyzer::operator()(unsigned id, Swapper* ps)
 {
     set_packet_thread(true);
+    // needs to happen before any heap allocations
+    memory::MemoryCap::tinit();
 
     set_instance_id(id);
     ps->apply();

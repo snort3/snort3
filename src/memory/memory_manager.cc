@@ -18,13 +18,15 @@
 
 // memory_manager.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <new>
 #include <cstdio>
 #include <cassert>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "main/thread.h"
 
 #include "memory_allocator.h"
 #include "memory_cap.h"
@@ -53,11 +55,14 @@ struct Metadata
 
     Metadata(size_t = 0);
 
-    static size_t SANITY_CHECK_VALUE;
-
     static size_t calculate_total_size(size_t);
-    template<typename Shim> static Metadata* create(size_t);
+
+    template<typename Allocator>
+    static Metadata* create(size_t);
+
     static Metadata* extract(void*);
+
+    static size_t SANITY_CHECK_VALUE;
 };
 
 inline size_t Metadata::total_size() const
@@ -73,16 +78,14 @@ inline Metadata::Metadata(size_t n) :
     sanity(SANITY_CHECK_VALUE), payload_size(n)
 { }
 
-size_t Metadata::SANITY_CHECK_VALUE = 0xabcdef;
-
 inline size_t Metadata::calculate_total_size(size_t n)
 { return sizeof(Metadata) + n; }
 
-template<typename Shim>
+template<typename Allocator>
 Metadata* Metadata::create(size_t n)
 {
     auto meta =
-        static_cast<Metadata*>(Shim::allocate(calculate_total_size(n)));
+        static_cast<Metadata*>(Allocator::allocate(calculate_total_size(n)));
 
     if ( !meta )
         return nullptr;
@@ -105,20 +108,46 @@ Metadata* Metadata::extract(void* p)
     return meta;
 }
 
+size_t Metadata::SANITY_CHECK_VALUE = 0xabcdef;
+
 // -----------------------------------------------------------------------------
 // the meat
 // -----------------------------------------------------------------------------
 
-template<typename Allocator = DefaultAllocator, typename Cap = DefaultCap>
+class ReentryContext
+{
+public:
+    ReentryContext(bool& flag) :
+        already_entered(flag), flag(flag)
+    { flag = true; }
+
+    ~ReentryContext()
+    { flag = false; }
+
+    bool is_reentry() const
+    { return already_entered; }
+
+private:
+    const bool already_entered;
+    bool& flag;
+};
+
+template<typename Allocator = MemoryAllocator, typename Cap = MemoryCap>
 struct Interface
 {
     static void* allocate(size_t);
     static void deallocate(void*);
+
+    static THREAD_LOCAL bool in_allocation_call;
 };
 
 template<typename Allocator, typename Cap>
 void* Interface<Allocator, Cap>::allocate(size_t n)
 {
+    // prevent allocation reentry
+    ReentryContext reentry_context(in_allocation_call);
+    assert(!reentry_context.is_reentry());
+
     if ( !Cap::free_space(Metadata::calculate_total_size(n)) )
         return nullptr;
 
@@ -142,6 +171,9 @@ void Interface<Allocator, Cap>::deallocate(void* p)
     Cap::update_deallocations(meta->total_size());
     Allocator::deallocate(meta);
 }
+
+template<typename Allocator, typename Cap>
+THREAD_LOCAL bool Interface<Allocator, Cap>::in_allocation_call = false;
 
 } //namespace memory
 

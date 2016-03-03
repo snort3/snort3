@@ -26,7 +26,7 @@
 namespace memory
 {
 
-struct DefaultAllocator
+struct MemoryAllocator
 {
     static void* allocate(size_t);
     static void deallocate(void*);

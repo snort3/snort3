@@ -27,6 +27,8 @@ struct MemoryConfig
 {
     bool enable = false;
     size_t cap = 0;
+
+    constexpr MemoryConfig() = default;
 };
 
 #endif
