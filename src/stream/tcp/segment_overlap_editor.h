@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// segment_overlap_editor.h author davis mcpherson <davmcphe@cisco.com>
+// segment_overlap_editor.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Oct 11, 2015
 
 #ifndef SEGMENT_OVERLAP_EDITOR_H
@@ -81,8 +81,7 @@ protected:
     virtual int insert_left_overlap(void) = 0;
     virtual void insert_right_overlap(void) = 0;
     virtual int insert_full_overlap(void) = 0;
-    virtual int add_reassembly_segment(TcpSegmentDescriptor&, int16_t, uint32_t, uint32_t,
-        uint32_t, TcpSegmentNode*) = 0;
+    virtual int add_reassembly_segment(TcpSegmentDescriptor&, int16_t, uint32_t, uint32_t, uint32_t, TcpSegmentNode*) = 0;
     virtual int dup_reassembly_segment(Packet*, TcpSegmentNode*, TcpSegmentNode**) = 0;
     virtual int delete_reassembly_segment(TcpSegmentNode*) = 0;
     virtual void print(void);

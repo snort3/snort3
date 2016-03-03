@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_segment.h author davis mcpherson <davmcphe@cisco.com>
+// tcp_segment.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Sep 21, 2015
 
 #ifndef TCP_SEGMENT_H
@@ -26,8 +26,9 @@
 #include "protocols/packet.h"
 #include "flow/memcap.h"
 
-#include "tcp_defs.h"
 #include "stream/libtcp/tcp_segment_descriptor.h"
+
+extern THREAD_LOCAL Memcap* tcp_memcap;
 
 //-----------------------------------------------------------------
 // we make a lot of TcpSegments so it is organized by member

@@ -170,7 +170,7 @@ inline void EnableInternalEvent(RateFilterConfig* config, uint32_t sid)
     config->internal_event_mask |= (1 << sid);
 }
 
-inline bool is_internal_event_enabled(RateFilterConfig* config, uint32_t sid)
+inline bool InternalEventIsEnabled(RateFilterConfig* config, uint32_t sid)
 {
     if (config == NULL)
         return 0;

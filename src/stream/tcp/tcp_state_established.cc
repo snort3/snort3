@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_state_established.cc author davis mcpherson <davmcphe@cisco.com>
+// tcp_state_established.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 30, 2015
 
 #include "tcp_module.h"
@@ -26,7 +26,7 @@
 #include "tcp_state_established.h"
 
 TcpStateEstablished::TcpStateEstablished(TcpStateMachine& tsm, TcpSession& ssn) :
-    TcpStateHandler(TcpStreamTracker::TCP_ESTABLISHED, tsm, ssn)
+    TcpStateHandler(TcpStreamTracker::TCP_ESTABLISHED, tsm), session(ssn)
 {
 }
 
@@ -36,27 +36,24 @@ TcpStateEstablished::~TcpStateEstablished()
 
 bool TcpStateEstablished::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    session.check_for_repeated_syn(tsd);
+    trk.s_mgr.sub_state |= SUB_SYN_SENT;
 
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateEstablished::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    session.check_for_repeated_syn(tsd);
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
-
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateEstablished::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     if ( session.config->midstream_allowed(tsd.get_pkt()) )
     {
@@ -71,14 +68,14 @@ bool TcpStateEstablished::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTrack
 
 bool TcpStateEstablished::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateEstablished::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     trk.update_tracker_ack_sent(tsd);
 
@@ -87,7 +84,7 @@ bool TcpStateEstablished::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateEstablished::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     trk.update_tracker_ack_recv(tsd);
 
@@ -96,7 +93,7 @@ bool TcpStateEstablished::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateEstablished::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     trk.update_tracker_ack_sent(tsd);
 
@@ -105,53 +102,41 @@ bool TcpStateEstablished::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTrac
 
 bool TcpStateEstablished::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     trk.update_tracker_ack_recv(tsd);
-
-    session.handle_data_segment(tsd);
 
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateEstablished::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    trk.update_on_fin_sent(tsd);
-    session.eof_handle(tsd.get_pkt());
-    trk.set_tcp_state(TcpStreamTracker::TCP_FIN_WAIT1);
+    trk.update_tracker_ack_sent(tsd);
 
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateEstablished::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     trk.update_tracker_ack_recv(tsd);
-    if ( tsd.get_seg_len() > 0 )
-    {
-        session.handle_data_segment(tsd);
-        trk.flush_data_on_fin_recv(tsd);
-    }
-    trk.update_on_fin_recv(tsd);
-    session.update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
-    trk.set_tcp_state(TcpStreamTracker::TCP_CLOSE_WAIT);
 
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateEstablished::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateEstablished::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     if ( trk.update_on_rst_recv(tsd) )
     {
@@ -164,24 +149,6 @@ bool TcpStateEstablished::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         session.tel.set_tcp_event(EVENT_BAD_RST);
     }
 
-    // FIXIT - might be good to create alert specific to RST with data
-    if ( tsd.get_seg_len() > 0 )
-        session.tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
-
     return default_state_action(tsd, trk);
-}
-
-bool TcpStateEstablished::do_pre_sm_packet_actions(TcpSegmentDescriptor& tsd)
-{
-    return session.validate_packet_established_session(tsd);
-}
-
-bool TcpStateEstablished::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd)
-{
-    session.update_paws_timestamps(tsd);
-
-    session.check_for_window_slam(tsd);
-
-    return true;
 }
 

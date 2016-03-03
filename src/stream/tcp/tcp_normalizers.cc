@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_normalizers.cc author davis mcpherson <davmcphe@cisco.com>
+// tcp_normalizers.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Sep 22, 2015
 
 #include "tcp_defs.h"
@@ -26,7 +26,7 @@
 class TcpNormalizerFirst : public TcpNormalizer
 {
 public:
-    TcpNormalizerFirst(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerFirst(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_FIRST, session, tracker)
     { }
 
@@ -36,7 +36,7 @@ public:
 class TcpNormalizerLast : public TcpNormalizer
 {
 public:
-    TcpNormalizerLast(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerLast(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_LAST, session, tracker)
     { }
 
@@ -46,7 +46,7 @@ public:
 class TcpNormalizerLinux : public TcpNormalizer
 {
 public:
-    TcpNormalizerLinux(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerLinux(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_LINUX, session, tracker)
     {
         // Linux 2.6 accepts timestamp values that are off by one. so set fudge factor */
@@ -62,7 +62,7 @@ public:
 class TcpNormalizerOldLinux : public TcpNormalizer
 {
 public:
-    TcpNormalizerOldLinux(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerOldLinux(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_OLD_LINUX, session, tracker)
     {
         paws_drop_zero_ts = false;
@@ -77,7 +77,7 @@ public:
 class TcpNormalizerBSD : public TcpNormalizer
 {
 public:
-    TcpNormalizerBSD(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerBSD(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_BSD, session, tracker)
     { }
 
@@ -88,7 +88,7 @@ public:
 class TcpNormalizerMacOS : public TcpNormalizer
 {
 public:
-    TcpNormalizerMacOS(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerMacOS(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_MACOS, session, tracker)
     { }
 
@@ -98,7 +98,7 @@ public:
 class TcpNormalizerSolaris : public TcpNormalizer
 {
 public:
-    TcpNormalizerSolaris(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerSolaris(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_SOLARIS, session, tracker)
     {
         paws_drop_zero_ts = false;
@@ -111,7 +111,7 @@ public:
 class TcpNormalizerIrix : public TcpNormalizer
 {
 public:
-    TcpNormalizerIrix(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerIrix(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_IRIX, session, tracker)
     { }
 
@@ -121,7 +121,7 @@ public:
 class TcpNormalizerHpux11 : public TcpNormalizer
 {
 public:
-    TcpNormalizerHpux11(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerHpux11(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_HPUX11, session, tracker)
     { }
 
@@ -133,7 +133,7 @@ public:
 class TcpNormalizerHpux10 : public TcpNormalizer
 {
 public:
-    TcpNormalizerHpux10(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerHpux10(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_HPUX10, session, tracker)
     { }
 
@@ -143,7 +143,7 @@ public:
 class TcpNormalizerWindows : public TcpNormalizer
 {
 public:
-    TcpNormalizerWindows(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerWindows(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_WINDOWS, session, tracker)
     {
         paws_drop_zero_ts = false;
@@ -156,7 +156,7 @@ public:
 class TcpNormalizerWindows2K3 : public TcpNormalizer
 {
 public:
-    TcpNormalizerWindows2K3(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerWindows2K3(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_WINDOWS2K3, session, tracker)
     {
         paws_drop_zero_ts = false;
@@ -169,7 +169,7 @@ public:
 class TcpNormalizerVista : public TcpNormalizer
 {
 public:
-    TcpNormalizerVista(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerVista(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_VISTA, session, tracker)
     {
         paws_drop_zero_ts = false;
@@ -182,7 +182,7 @@ public:
 class TcpNormalizerProxy : public TcpNormalizer
 {
 public:
-    TcpNormalizerProxy(TcpSession* session, TcpStreamTracker* tracker) :
+    TcpNormalizerProxy(TcpSession* session, TcpTracker* tracker) :
         TcpNormalizer(StreamPolicy::OS_PROXY, session, tracker)
     { }
 
@@ -192,7 +192,7 @@ public:
 };
 
 TcpNormalizer* TcpNormalizerFactory::create(TcpSession* session, StreamPolicy os_policy,
-    TcpStreamTracker* tracker, TcpStreamTracker* peer)
+    TcpTracker* tracker, TcpTracker* peer)
 {
     TcpNormalizer* normalizer;
 
@@ -263,7 +263,7 @@ TcpNormalizer* TcpNormalizerFactory::create(TcpSession* session, StreamPolicy os
     return normalizer;
 }
 
-static inline int handle_repeated_syn_mswin(TcpStreamTracker* talker, TcpStreamTracker* listener,
+static inline int handle_repeated_syn_mswin(TcpTracker* talker, TcpTracker* listener,
     TcpSegmentDescriptor& tsd, TcpSession* session)
 {
     /* Windows has some strange behaviour here.  If the sequence of the reset is the
@@ -286,7 +286,7 @@ static inline int handle_repeated_syn_mswin(TcpStreamTracker* talker, TcpStreamT
     }
 }
 
-static inline int handle_repeated_syn_bsd(TcpStreamTracker* talker, TcpSegmentDescriptor& tsd,
+static inline int handle_repeated_syn_bsd(TcpTracker* talker, TcpSegmentDescriptor& tsd,
     TcpSession* session)
 {
     /* If its not a retransmission of the actual SYN... RESET */
@@ -308,8 +308,7 @@ static inline int handle_repeated_syn_bsd(TcpStreamTracker* talker, TcpSegmentDe
 }
 
 // Linux, Win2k3 et al.  do not support timestamps if the 3whs used a 0 timestamp.
-static inline bool paws_3whs_zero_ts_not_supported(TcpStreamTracker* talker,
-    TcpStreamTracker* listener)
+static inline bool paws_3whs_zero_ts_not_supported(TcpTracker* talker, TcpTracker* listener)
 {
     bool check_ts = true;
 
@@ -324,8 +323,7 @@ static inline bool paws_3whs_zero_ts_not_supported(TcpStreamTracker* talker,
 }
 
 // Older Linux ( <= 2.2 kernel ), Win32 (non 2K3) allow the 3whs to use a 0 timestamp.
-static inline bool paws_3whs_zero_ts_supported(TcpStreamTracker* talker,
-    TcpStreamTracker* listener,
+static inline bool paws_3whs_zero_ts_supported(TcpTracker* talker, TcpTracker* listener,
     TcpSegmentDescriptor& tsd)
 {
     bool check_ts = true;

@@ -16,14 +16,24 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_tracker.h author davis mcpherson <davmcphe@cisco.com>
+// tcp_tracker.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Dec 1, 2015
 
 #ifndef TCP_TRACKER_H_
 #define TCP_TRACKER_H_
 
 #include "stream/libtcp/tcp_stream_tracker.h"
+#include "stream/paf.h"
 #include "tcp_defs.h"
+
+struct StateMgr
+{
+    uint8_t sub_state;
+    enum TcpStreamTracker::TcpState state_queue;
+    uint8_t expected_flags;
+    uint32_t transition_seq;
+    uint32_t stq_get_seq;
+};
 
 //-------------------------------------------------------------------------
 // extra, extra - read all about it!
@@ -48,6 +58,19 @@
 //    to set these fields
 //-------------------------------------------------------------------------
 
+/* Only track a maximum number of alerts per session */
+#define MAX_SESSION_ALERTS 8
+struct StreamAlertInfo
+{
+    /* For storing alerts that have already been seen on the session */
+    uint32_t sid;
+    uint32_t gid;
+    uint32_t seq;
+    // if we log extra data, event_* is used to correlate with alert
+    uint32_t event_id;
+    uint32_t event_second;
+};
+
 class TcpNormalizer;
 class TcpReassembler;
 
@@ -57,32 +80,43 @@ public:
     TcpTracker(bool);
     virtual ~TcpTracker(void);
 
-    void init_tracker(void) override;
-    void print(void) override;
-    void init_flush_policy(void) override;
-    void set_splitter(StreamSplitter* ss) override;
-    void set_splitter(const Flow* flow) override;
+    void init_tracker(void);
+    void print(void);
+    void init_flush_policy(void);
+    void set_splitter(StreamSplitter* ss);
+    void set_splitter(const Flow* flow);
 
-    void init_on_syn_sent(TcpSegmentDescriptor&) override;
-    void init_on_syn_recv(TcpSegmentDescriptor&) override;
-    void init_on_synack_sent(TcpSegmentDescriptor& tsd) override;
-    void init_on_synack_recv(TcpSegmentDescriptor& tsd) override;
-    void init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd) override;
-    void init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd) override;
-    void init_on_data_seg_sent(TcpSegmentDescriptor& tsd) override;
-    void init_on_data_seg_recv(TcpSegmentDescriptor& tsd) override;
-    void finish_server_init(TcpSegmentDescriptor& tsd) override;
-    void finish_client_init(TcpSegmentDescriptor& tsd) override;
+    void init_on_syn_sent(TcpSegmentDescriptor&);
+    void init_on_syn_recv(TcpSegmentDescriptor&);
+    void init_on_synack_sent(TcpSegmentDescriptor& tsd);
+    void init_on_synack_recv(TcpSegmentDescriptor& tsd);
+    void init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd);
+    void init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd);
+    void init_on_data_seg_sent(TcpSegmentDescriptor& tsd);
+    void init_on_data_seg_recv(TcpSegmentDescriptor& tsd);
+    void finish_server_init(TcpSegmentDescriptor& tsd);
+    void finish_client_init(TcpSegmentDescriptor& tsd);
 
-    void update_tracker_ack_recv(TcpSegmentDescriptor& tsd) override;
-    void update_tracker_ack_sent(TcpSegmentDescriptor& tsd) override;
-    bool update_on_3whs_ack(TcpSegmentDescriptor& tsd) override;
-    bool update_on_rst_recv(TcpSegmentDescriptor& tsd) override;
-    void update_on_rst_sent(void) override;
-    bool update_on_fin_recv(TcpSegmentDescriptor& tsd) override;
-    bool update_on_fin_sent(TcpSegmentDescriptor& tsd) override;
-    bool is_segment_seq_valid(TcpSegmentDescriptor& tsd) override;
-    void flush_data_on_fin_recv(TcpSegmentDescriptor& tsd) override;
+    void update_tracker_ack_recv(TcpSegmentDescriptor& tsd);
+    void update_tracker_ack_sent(TcpSegmentDescriptor& tsd);
+    bool update_on_3whs_ack(TcpSegmentDescriptor& tsd);
+    bool update_on_rst_recv(TcpSegmentDescriptor& tsd);
+    void update_on_rst_sent(void);
+
+    bool is_segment_seq_valid(TcpSegmentDescriptor& tsd);
+
+    StreamSplitter* splitter = nullptr;
+    TcpNormalizer* normalizer = nullptr;
+    TcpReassembler* reassembler = nullptr;
+    uint32_t small_seg_count = 0;
+    uint8_t alert_count = 0;
+    StreamAlertInfo alerts[MAX_SESSION_ALERTS];
+    StateMgr s_mgr; /* state tracking goodies */
+    FlushPolicy flush_policy = STREAM_FLPOLICY_IGNORE;
+    // this is intended to be private to paf but is included
+    // directly to avoid the need for allocation; do not directly
+    // manipulate within this module.
+    PAF_State paf_state;    // for tracking protocol aware flushing
 };
 
 #endif

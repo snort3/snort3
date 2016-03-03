@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_stream_tracker.h author davis mcpherson <davmcphe@cisco.com>
+// tcp_stream_tracker.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jun 24, 2015
 
 #ifndef TCP_STREAM_TRACKER_H
@@ -24,28 +24,10 @@
 
 #include "stdint.h"
 
-#include "stream/paf.h"
-#include "stream/tcp/tcp_defs.h"
 #include "tcp_segment_descriptor.h"
-
-/* Only track a maximum number of alerts per session */
-#define MAX_SESSION_ALERTS 8
-struct StreamAlertInfo
-{
-    /* For storing alerts that have already been seen on the session */
-    uint32_t sid;
-    uint32_t gid;
-    uint32_t seq;
-    // if we log extra data, event_* is used to correlate with alert
-    uint32_t event_id;
-    uint32_t event_second;
-};
 
 extern const char* tcp_state_names[];
 extern const char* tcp_event_names[];
-
-class TcpNormalizer;
-class TcpReassembler;
 
 class TcpStreamTracker
 {
@@ -229,16 +211,6 @@ public:
         this->iss = iss;
     }
 
-    uint32_t get_fin_final_seq() const
-    {
-        return fin_final_seq;
-    }
-
-    void set_fin_final_seq(uint32_t fin_final_seq = 0)
-    {
-        this->fin_final_seq = fin_final_seq;
-    }
-
     uint32_t get_ts_last_packet() const
     {
         return ts_last_packet;
@@ -314,38 +286,7 @@ public:
     void cache_mac_address(TcpSegmentDescriptor& tsd, uint8_t direction);
     bool compare_mac_addresses(const uint8_t eth_addr[]);
 
-    bool is_rst_pkt_sent() const
-    {
-        return rst_pkt_sent;
-    }
-
-    virtual void init_tracker(void) =  0;
-    virtual void print(void) =  0;
-    virtual void init_flush_policy(void) =  0;
-    virtual void set_splitter(StreamSplitter* ss) =  0;
-    virtual void set_splitter(const Flow* flow) =  0;
-
-    virtual void init_on_syn_sent(TcpSegmentDescriptor&) =  0;
-    virtual void init_on_syn_recv(TcpSegmentDescriptor&) =  0;
-    virtual void init_on_synack_sent(TcpSegmentDescriptor& tsd) =  0;
-    virtual void init_on_synack_recv(TcpSegmentDescriptor& tsd) =  0;
-    virtual void init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd) =  0;
-    virtual void init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd) =  0;
-    virtual void init_on_data_seg_sent(TcpSegmentDescriptor& tsd) =  0;
-    virtual void init_on_data_seg_recv(TcpSegmentDescriptor& tsd) =  0;
-    virtual void finish_server_init(TcpSegmentDescriptor& tsd) =  0;
-    virtual void finish_client_init(TcpSegmentDescriptor& tsd) =  0;
-
-    virtual void update_tracker_ack_recv(TcpSegmentDescriptor& tsd) =  0;
-    virtual void update_tracker_ack_sent(TcpSegmentDescriptor& tsd) =  0;
-    virtual bool update_on_3whs_ack(TcpSegmentDescriptor& tsd) =  0;
-    virtual bool update_on_rst_recv(TcpSegmentDescriptor& tsd) =  0;
-    virtual void update_on_rst_sent(void) =  0;
-    virtual bool update_on_fin_recv(TcpSegmentDescriptor& tsd) =  0;
-    virtual bool update_on_fin_sent(TcpSegmentDescriptor& tsd) =  0;
-    virtual bool is_segment_seq_valid(TcpSegmentDescriptor& tsd) =  0;
-    virtual void flush_data_on_fin_recv(TcpSegmentDescriptor& tsd) =  0;
-
+protected:
     bool client_tracker;
     TcpState tcp_state;
     TcpEvent tcp_event = TCP_MAX_EVENTS;
@@ -364,9 +305,6 @@ public:
     uint16_t rcv_up = 0;  // RCV.UP  - receive urgent pointer
     uint32_t irs = 0;     // IRS     - initial receive sequence number
 
-    uint32_t fin_final_seq = 0;
-    bool rst_pkt_sent = false;
-
 // FIXIT - make these non-public
 
 public:
@@ -374,25 +312,12 @@ public:
     uint32_t r_win_base = 0; /* remote side window base sequence number
      * (i.e. the last ack we got) */
 
-    StreamSplitter* splitter = nullptr;
-    TcpNormalizer* normalizer = nullptr;
-    TcpReassembler* reassembler = nullptr;
-
-    uint32_t small_seg_count = 0;
-    uint8_t alert_count = 0;
-    StreamAlertInfo alerts[MAX_SESSION_ALERTS];
-    FlushPolicy flush_policy = STREAM_FLPOLICY_IGNORE;
-    // this is intended to be private to paf but is included
-    // directly to avoid the need for allocation; do not directly
-    // manipulate within this module.
-    PAF_State paf_state;    // for tracking protocol aware flushing
-
 protected:
     uint32_t ts_last_packet = 0;
     uint32_t ts_last = 0; /* last timestamp (for PAWS) */
     uint16_t tf_flags = 0;
 
-    uint8_t mac_addr[6] = { };
+    uint8_t mac_addr[6] = {};
     bool mac_addr_valid = false;
 
     // FIXIT - make this protected...

@@ -72,8 +72,8 @@ public:
     TcpSessionMock( Flow* flow ) : TcpSession( flow ), client( true ), server( false ) { }
     ~TcpSessionMock( void ) { }
 
-    TcpStreamTracker client;
-    TcpStreamTracker server;
+    TcpTracker client;
+    TcpTracker server;
 };
 
 class Active

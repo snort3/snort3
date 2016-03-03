@@ -44,6 +44,9 @@ public:
     bool fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+
+private:
+    TcpSession& session;
 };
 
 #endif

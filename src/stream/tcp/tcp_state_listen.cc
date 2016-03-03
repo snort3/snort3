@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_state_listen.cc author davis mcpherson <davmcphe@cisco.com>
+// tcp_state_listen.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 30, 2015
 
 #include "tcp_module.h"
@@ -26,7 +26,7 @@
 #include "tcp_state_listen.h"
 
 TcpStateListen::TcpStateListen(TcpStateMachine& tsm, TcpSession& ssn) :
-    TcpStateHandler(TcpStreamTracker::TCP_LISTEN, tsm, ssn)
+    TcpStateHandler(TcpStreamTracker::TCP_LISTEN, tsm), session(ssn)
 {
 }
 
@@ -36,7 +36,7 @@ TcpStateListen::~TcpStateListen()
 
 bool TcpStateListen::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     if ( session.config->require_3whs() || tsd.has_wscale() || ( tsd.get_seg_len() > 0 ) )
     {
@@ -45,19 +45,21 @@ bool TcpStateListen::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
             session.tel.set_tcp_event(EVENT_4WHS);
     }
 
+    trk.s_mgr.sub_state |= SUB_SYN_SENT;
+
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateListen::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     if ( true || session.config->require_3whs() || tsd.has_wscale() || ( tsd.get_seg_len() > 0 ) )
     {
         trk.init_on_syn_recv(tsd);
         trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
-        session.set_pkt_action_flag(trk.normalizer->handle_paws(tsd) );
-        if ( tsd.get_seg_len() > 0 )
+        session.set_pkt_action_flag( trk.normalizer->handle_paws(tsd) );
+        if ( tsd.get_seg_len() )
             session.handle_data_on_syn(tsd);
     }
 
@@ -67,7 +69,7 @@ bool TcpStateListen::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
 bool TcpStateListen::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
     Flow* flow = tsd.get_flow();
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     flow->session_state |= ( STREAM_STATE_SYN | STREAM_STATE_SYN_ACK );
 
@@ -88,13 +90,11 @@ bool TcpStateListen::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& t
 
 bool TcpStateListen::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     if ( !session.config->require_3whs() || session.config->midstream_allowed(tsd.get_pkt() ) )
     {
         trk.init_on_synack_recv(tsd);
-        if ( tsd.get_seg_len() > 0 )
-            session.handle_data_segment(tsd);
     }
     else if ( session.config->require_3whs() )
     {
@@ -107,7 +107,7 @@ bool TcpStateListen::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& t
 
 bool TcpStateListen::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     if ( session.config->midstream_allowed(tsd.get_pkt() ) && ( tsd.has_wscale() ||
         ( tsd.get_seg_len() > 0 ) ) )
@@ -121,6 +121,7 @@ bool TcpStateListen::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
         trk.init_on_3whs_ack_sent(tsd);
         session.init_new_tcp_session(tsd);
         session.update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
+        tcpStats.sessions_on_3way++;
     }
     else if ( session.config->require_3whs() )
     {
@@ -133,7 +134,7 @@ bool TcpStateListen::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
 
 bool TcpStateListen::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     if ( session.config->midstream_allowed(tsd.get_pkt() ) && ( tsd.has_wscale() ||
         ( tsd.get_seg_len() > 0 ) ) )
@@ -157,7 +158,7 @@ bool TcpStateListen::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
 
 bool TcpStateListen::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     if ( session.config->midstream_allowed(tsd.get_pkt() ) )
     {
@@ -171,6 +172,8 @@ bool TcpStateListen::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
         if ( flow->session_state & STREAM_STATE_ESTABLISHED )
             session.update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
+
+        tcpStats.sessions_on_data++;
     }
     else if ( session.config->require_3whs() )
     {
@@ -183,7 +186,7 @@ bool TcpStateListen::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateListen::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     if ( session.config->midstream_allowed(tsd.get_pkt() ) )
     {
@@ -193,7 +196,6 @@ bool TcpStateListen::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         flow->set_session_flags(SSNFLAG_MIDSTREAM);
         trk.init_on_data_seg_recv(tsd);
         trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
-        session.handle_data_segment(tsd);
     }
     else if ( session.config->require_3whs() )
     {
@@ -206,7 +208,7 @@ bool TcpStateListen::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateListen::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     if ( session.config->midstream_allowed(tsd.get_pkt() ) )
     {
@@ -222,7 +224,7 @@ bool TcpStateListen::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
 
 bool TcpStateListen::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     if ( session.config->midstream_allowed(tsd.get_pkt() ) )
     {
@@ -239,7 +241,7 @@ bool TcpStateListen::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
 
 bool TcpStateListen::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
     if ( session.config->midstream_allowed(tsd.get_pkt() ) )
     {
@@ -250,9 +252,12 @@ bool TcpStateListen::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
 
 bool TcpStateListen::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+    auto& trk = static_cast< TcpTracker& >( tracker );
 
-    trk.normalizer->trim_rst_payload(tsd);
+    if ( session.config->midstream_allowed(tsd.get_pkt() ) )
+    {
+        // FIXIT - handle this
+    }
 
     return default_state_action(tsd, trk);
 }

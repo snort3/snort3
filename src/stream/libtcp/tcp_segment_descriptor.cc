@@ -22,8 +22,6 @@
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "protocols/tcp_options.h"
-#include "detection/rules.h"
-
 #include "stream/tcp/tcp_defs.h"
 #include "stream/tcp/tcp_event_logger.h"
 #include "tcp_segment_descriptor.h"
@@ -47,7 +45,7 @@ TcpSegmentDescriptor::TcpSegmentDescriptor(Flow* flow, Packet* pkt, TcpEventLogg
     {
         end_seq++;
         if ( !tcph->is_ack() )
-            tel.log_internal_event(INTERNAL_EVENT_SYN_RECEIVED);
+            tel.set_tcp_internal_syn_event( );
     }
 
     #ifdef DEBUG_STREAM_EX

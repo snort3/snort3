@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_segment_descriptor.h author davis mcpherson <davmcphe@cisco.com>
+// tcp_segment_descriptor.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 30, 2015
 
 #ifndef TCP_SEGMENT_DESCRIPTOR_H

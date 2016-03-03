@@ -74,7 +74,6 @@ const PegInfo tcp_pegs[] =
     { "closing", "number of sessions currently closing" },
     { nullptr, nullptr }
 };
-
 THREAD_LOCAL TcpStats tcpStats;
 
 #define STREAM_TCP_SYN_ON_EST_STR \

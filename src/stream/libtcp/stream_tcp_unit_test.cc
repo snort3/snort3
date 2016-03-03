@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// stream_libtcp_unit_test.h author davis mcpherson <davmcphe@cisco.com>
+// stream_libtcp_unit_test.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 30, 2015
 
 #ifndef STREAM_LIBTCP_UNIT_TEST

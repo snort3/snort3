@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_reassemblers.h author davis mcpherson <davmcphe@cisco.com>
+// tcp_reassemblers.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Oct 9, 2015
 
 #ifndef TCP_REASSEMBLERS_H
@@ -28,7 +28,8 @@
 class TcpReassemblerFactory
 {
 public:
-    static TcpReassembler* create(TcpSession*, TcpStreamTracker*, StreamPolicy, bool server);
+    static TcpReassembler* create(TcpSession* session, TcpTracker* tracker,
+        StreamPolicy os_policy, bool server);
 };
 
 #endif
