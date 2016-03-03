@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_syn_recv_state.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_syn_recv_state.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Aug 5, 2015
 
 #ifndef TCP_STATE_SYN_RECV_H
@@ -45,8 +45,7 @@ public:
     bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
 
-private:
-    TcpSession& session;
+    bool do_post_sm_packet_actions(TcpSegmentDescriptor& tsd) override;
 };
 
 #endif

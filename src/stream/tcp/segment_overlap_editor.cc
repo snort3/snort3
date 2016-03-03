@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// segment_overlap_editor.cc author davis mcpherson <davmcphe@@cisco.com>
+// segment_overlap_editor.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Oct 11, 2015
 
 #include "segment_overlap_editor.h"
@@ -133,7 +133,7 @@ int SegmentOverlapEditor::generate_bad_segment_event(void)
 {
     DebugFormat(DEBUG_STREAM_STATE, "bad segment: overlap with invalid sequence number"
         "(seq: %X  seq_end: %X overlap: %lu\n", seq, seq_end, overlap);
-    session->tel.EventBadSegment();
+    session->tel.set_tcp_event(EVENT_BAD_SEGMENT);
     inc_tcp_discards();
     return STREAM_INSERT_ANOMALY;
 }

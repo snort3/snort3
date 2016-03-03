@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_normalization.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_normalization.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 31, 2015
 
 #include "packet_io/active.h"
@@ -39,12 +39,8 @@ static const PegInfo pegName[] =
     { nullptr, nullptr }
 };
 
-static inline int SetupOK(const TcpTracker* st)
-{
-    return ((st->s_mgr.sub_state & SUB_SETUP_OK) == SUB_SETUP_OK);
-}
-
-TcpNormalizer::TcpNormalizer(StreamPolicy os_policy, TcpSession* session, TcpTracker* tracker) :
+TcpNormalizer::TcpNormalizer(StreamPolicy os_policy, TcpSession* session,
+    TcpStreamTracker* tracker) :
     os_policy(os_policy), session(session), tracker(tracker)
 {
     tcp_ips_enabled = Normalize_IsEnabled(NORM_TCP_IPS);
@@ -115,25 +111,25 @@ bool TcpNormalizer::packet_dropper(TcpSegmentDescriptor& tsd, NormFlags f)
 
 void TcpNormalizer::trim_syn_payload(TcpSegmentDescriptor& tsd, uint32_t max)
 {
-    if (tsd.get_pkt()->dsize > max)
+    if (tsd.get_seg_len() > max)
         trim_payload(tsd, max, trim_syn, PC_TCP_TRIM_SYN);
 }
 
 void TcpNormalizer::trim_rst_payload(TcpSegmentDescriptor& tsd, uint32_t max)
 {
-    if (tsd.get_pkt()->dsize > max)
+    if (tsd.get_seg_len() > max)
         trim_payload(tsd, max, trim_rst, PC_TCP_TRIM_RST);
 }
 
 void TcpNormalizer::trim_win_payload(TcpSegmentDescriptor& tsd, uint32_t max)
 {
-    if (tsd.get_pkt()->dsize > max)
+    if (tsd.get_seg_len() > max)
         trim_payload(tsd, max, trim_win, PC_TCP_TRIM_WIN);
 }
 
 void TcpNormalizer::trim_mss_payload(TcpSegmentDescriptor& tsd, uint32_t max)
 {
-    if (tsd.get_pkt()->dsize > max)
+    if (tsd.get_seg_len() > max)
         trim_payload(tsd, max, trim_mss, PC_TCP_TRIM_MSS);
 }
 
@@ -223,6 +219,7 @@ bool TcpNormalizer::validate_rst_seq_geq(TcpSegmentDescriptor& tsd)
         tsd.get_end_seq(), tracker->r_win_base, tsd.get_seg_seq(), tracker->r_nxt_ack +
         get_stream_window(tsd));
 
+    // FIXIT - check for r_win_base == 0 is hack for uninitialized r_win_base, fix this
     if ( ( tracker->r_nxt_ack == 0 ) || SEQ_GEQ(tsd.get_seg_seq(), tracker->r_nxt_ack) )
     {
         DebugMessage(DEBUG_STREAM_STATE, "rst is valid seq (>= next seq)!\n");
@@ -353,13 +350,7 @@ int TcpNormalizer::validate_paws(TcpSegmentDescriptor& tsd)
 
 int TcpNormalizer::handle_paws_no_timestamps(TcpSegmentDescriptor& tsd)
 {
-    // if we are not handling timestamps, and this isn't a syn (only), and we have seen a
-    // valid 3way setup, then we strip (nop) the timestamp option.  this includes the cases
-    // where we disable timestamp handling.
-    int strip = ( SetupOK(peer_tracker) && SetupOK(tracker) );
-    DebugMessage(DEBUG_STREAM_STATE, "listener not doing timestamps...\n");
-
-    tcp_ts_flags = get_tcp_timestamp(tsd, strip);
+    tcp_ts_flags = get_tcp_timestamp(tsd, true);
     if (tcp_ts_flags)
     {
         if (!(peer_tracker->get_tf_flags() & TF_TSTAMP))

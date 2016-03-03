@@ -33,7 +33,7 @@ using namespace std;
 #endif
 
 TcpStateSynSent::TcpStateSynSent(TcpStateMachine& tsm, TcpSession& ssn) :
-    TcpStateHandler(TcpStreamTracker::TCP_SYN_SENT, tsm), session(ssn)
+    TcpStateHandler(TcpStreamTracker::TCP_SYN_SENT, tsm, ssn)
 {
 }
 
@@ -43,16 +43,16 @@ TcpStateSynSent::~TcpStateSynSent()
 
 bool TcpStateSynSent::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
-    trk.s_mgr.sub_state |= SUB_SYN_SENT;
+    session.check_for_repeated_syn(tsd);
 
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynSent::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
     trk.finish_client_init(tsd);
     if ( tsd.get_seg_len() )
@@ -64,16 +64,14 @@ bool TcpStateSynSent::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trac
 
 bool TcpStateSynSent::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpTracker& >( tracker );
-
-    trk.s_mgr.sub_state |= ( SUB_SYN_SENT | SUB_ACK_SENT );
+    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynSent::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
     if ( trk.update_on_3whs_ack(tsd) )
     {
@@ -90,7 +88,7 @@ bool TcpStateSynSent::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 bool TcpStateSynSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
     Flow* flow = tsd.get_flow();
-    auto& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
     // FIXIT - verify ack being sent is valid...
     trk.update_tracker_ack_sent(tsd);
@@ -105,7 +103,10 @@ bool TcpStateSynSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trac
 
 bool TcpStateSynSent::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+
+    if ( tsd.get_seg_len() > 0 )
+        session.handle_data_segment(tsd);
 
     return default_state_action(tsd, trk);
 }
@@ -113,7 +114,7 @@ bool TcpStateSynSent::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trac
 bool TcpStateSynSent::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
     Flow* flow = tsd.get_flow();
-    auto& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
     // FIXIT - verify ack being sent is valid...
     trk.update_tracker_ack_sent(tsd);
@@ -128,35 +129,40 @@ bool TcpStateSynSent::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker&
 
 bool TcpStateSynSent::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+
+    session.handle_data_segment(tsd);
 
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynSent::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynSent::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpStreamTracker& >( tracker );
+
+    if ( tsd.get_seg_len() > 0 )
+        session.handle_data_segment(tsd);
 
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynSent::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
     return default_state_action(tsd, trk);
 }
 
 bool TcpStateSynSent::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    auto& trk = static_cast< TcpTracker& >( tracker );
+    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
     if ( trk.update_on_rst_recv(tsd) )
     {
@@ -168,6 +174,10 @@ bool TcpStateSynSent::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trac
     {
         session.tel.set_tcp_event(EVENT_BAD_RST);
     }
+
+    // FIXIT - might be good to create alert specific to RST with data
+    if ( tsd.get_seg_len() > 0 )
+        session.tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
 
     return default_state_action(tsd, trk);
 }

@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_tracker.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_tracker.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Dec 1, 2015
 
 #include "tcp_tracker.h"
@@ -41,8 +41,6 @@ TcpTracker::~TcpTracker(void)
 
 void TcpTracker::init_tracker(void)
 {
-    memset(&s_mgr, 0, sizeof(s_mgr));
-    s_mgr.state_queue = TcpStreamTracker::TCP_STATE_NONE;
     tcp_state = ( client_tracker ) ?
         TcpStreamTracker::TCP_STATE_NONE : TcpStreamTracker::TCP_LISTEN;
     flush_policy = STREAM_FLPOLICY_IGNORE;
@@ -54,6 +52,8 @@ void TcpTracker::init_tracker(void)
     alert_count = 0;
     memset(&alerts, 0, sizeof(alerts));
     memset(&mac_addr, 0, sizeof(mac_addr));
+    mac_addr_valid = false;
+    rst_pkt_sent = false;
 
     delete splitter;
     splitter = nullptr;
@@ -123,13 +123,13 @@ void TcpTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
         tf_flags |= TF_TSTAMP_ZERO;
     tf_flags |= tsd.init_mss(&mss);
     tf_flags |= tsd.init_wscale(&wscale);
-    s_mgr.sub_state |= SUB_SYN_SENT;
 
     cache_mac_address(tsd, FROM_CLIENT);
     set_splitter(tsd.get_flow() );
     init_flush_policy( );
 
     tcpStats.sessions_on_syn++;
+    tcpStats.created++;
     tcp_state = TcpStreamTracker::TCP_SYN_SENT;
 }
 
@@ -177,13 +177,13 @@ void TcpTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
         tf_flags |= TF_TSTAMP_ZERO;
     tf_flags |= tsd.init_mss(&mss);
     tf_flags |= tsd.init_wscale(&wscale);
-    s_mgr.sub_state |= ( SUB_SYN_SENT | SUB_ACK_SENT );
 
     cache_mac_address(tsd, FROM_SERVER);
     set_splitter(tsd.get_flow() );
     init_flush_policy();
 
     tcpStats.sessions_on_syn_ack++;
+    tcpStats.created++;
     tcp_state = TcpStreamTracker::TCP_SYN_RECV;
 }
 
@@ -204,7 +204,7 @@ void TcpTracker::init_on_synack_recv(TcpSegmentDescriptor& tsd)
     set_splitter(tsd.get_flow() );
     init_flush_policy();
 
-    tcp_state = TcpStreamTracker::TCP_SYN_SENT;
+    tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
 }
 
 void TcpTracker::init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd)
@@ -231,7 +231,6 @@ void TcpTracker::init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd)
         tf_flags |= TF_TSTAMP_ZERO;
     tf_flags |= tsd.init_mss(&mss);
     tf_flags |= tsd.init_wscale(&wscale);
-    s_mgr.sub_state |= SUB_ACK_SENT;
 
     cache_mac_address(tsd, FROM_CLIENT);
     set_splitter(tsd.get_flow() );
@@ -255,6 +254,9 @@ void TcpTracker::init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd)
     cache_mac_address(tsd, FROM_CLIENT);
     set_splitter(tsd.get_flow() );
     init_flush_policy();
+
+    tcpStats.sessions_on_3way++;
+    tcpStats.created++;
     tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
 }
 
@@ -286,7 +288,6 @@ void TcpTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
     if (ts_last == 0)
         tf_flags |= TF_TSTAMP_ZERO;
     tf_flags |= ( tsd.init_mss(&mss) | tsd.init_wscale(&wscale) );
-    s_mgr.sub_state |= SUB_ACK_SENT;
 
     cache_mac_address(tsd, tsd.get_direction() );
     set_splitter(tsd.get_flow() );
@@ -298,7 +299,6 @@ void TcpTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
 {
     Profile profile(s5TcpNewSessPerfStats);
 
-    // FIXIT - should we init these?
     iss = tsd.get_seg_ack();
     irs = tsd.get_seg_seq();
     snd_una = tsd.get_seg_ack();
@@ -312,6 +312,9 @@ void TcpTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
     cache_mac_address(tsd, tsd.get_direction() );
     set_splitter(tsd.get_flow() );
     init_flush_policy();
+
+    tcpStats.sessions_on_data++;
+    tcpStats.created++;
     tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
 }
 
@@ -360,7 +363,7 @@ void TcpTracker::update_tracker_ack_recv(TcpSegmentDescriptor& tsd)
     {
         snd_una = tsd.get_seg_ack();
         if ( snd_nxt < snd_una )
-            snd_nxt = snd_una + 1;
+            snd_nxt = snd_una;
     }
 }
 
@@ -387,9 +390,6 @@ void TcpTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
         r_win_base = tsd.get_seg_ack();
 
     snd_wnd = tsd.get_seg_wnd();
-
-    s_mgr.sub_state |= SUB_ACK_SENT;
-
     reassembler->flush_on_ack_policy(tsd.get_pkt() );
 }
 
@@ -452,7 +452,48 @@ bool TcpTracker::update_on_rst_recv(TcpSegmentDescriptor& tsd)
 void TcpTracker::update_on_rst_sent(void)
 {
     tcp_state = TcpStreamTracker::TCP_CLOSED;
-    s_mgr.sub_state |= SUB_RST_SENT;
+    rst_pkt_sent = true;
+}
+
+void TcpTracker::flush_data_on_fin_recv(TcpSegmentDescriptor& tsd)
+{
+    if ( (flush_policy != STREAM_FLPOLICY_ON_ACK)
+        && (flush_policy != STREAM_FLPOLICY_ON_DATA)
+        && normalizer->is_tcp_ips_enabled())
+    {
+        tsd.get_pkt()->packet_flags |= PKT_PDU_TAIL;
+    }
+
+    reassembler->flush_on_data_policy(tsd.get_pkt());
+}
+
+bool TcpTracker::update_on_fin_recv(TcpSegmentDescriptor& tsd)
+{
+    if ( SEQ_LT(tsd.get_end_seq(), r_win_base) )
+    {
+        DebugMessage(DEBUG_STREAM_STATE, "FIN inside r_win_base, bailing\n");
+        return true;
+    }
+
+    //--------------------------------------------------
+    // FIXIT-L don't bump r_nxt_ack unless FIN is in seq
+    // because it causes bogus 129:5 cases
+    // but doing so causes extra gaps
+    //if ( SEQ_EQ(tsd.end_seq, r_nxt_ack) )
+    r_nxt_ack++;
+
+    // set final seq # any packet rx'ed with seq > is bad
+    if ( fin_final_seq == 0 )
+        fin_final_seq = tsd.get_end_seq() + 1;
+
+    return true;
+}
+
+bool TcpTracker::update_on_fin_sent(TcpSegmentDescriptor& tsd)
+{
+    update_tracker_ack_sent(tsd);
+    snd_nxt++;
+    return true;
 }
 
 #ifdef S5_PEDANTIC
@@ -501,48 +542,42 @@ bool TcpTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
 {
     bool valid_seq = true;
 
-    /* check for valid seqeuence/retrans */
-    if ( tcp_state >= TcpStreamTracker::TCP_ESTABLISHED )
+    int right_ok;
+    uint32_t left_seq;
+
+    DebugFormat(DEBUG_STREAM_STATE,
+        "Checking end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
+        tsd.get_end_seq(), r_win_base, tsd.get_seg_seq(),
+        r_nxt_ack + normalizer->get_stream_window(tsd));
+
+    if ( SEQ_LT(r_nxt_ack, r_win_base) )
+        left_seq = r_nxt_ack;
+    else
+        left_seq = r_win_base;
+
+    if ( tsd.get_seg_len() )
+        right_ok = SEQ_GT(tsd.get_end_seq(), left_seq);
+    else
+        right_ok = SEQ_GEQ(tsd.get_end_seq(), left_seq);
+
+    if ( right_ok )
     {
-        //and
-        //and !ValidSeq(listener, tsd))
-        int right_ok;
-        uint32_t left_seq;
+        uint32_t win = normalizer->get_stream_window(tsd);
 
-        DebugFormat(DEBUG_STREAM_STATE,
-            "Checking end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
-            tsd.get_end_seq(), r_win_base, tsd.get_seg_seq(), r_nxt_ack +
-            normalizer->get_stream_window(tsd));
-
-        if ( SEQ_LT(r_nxt_ack, r_win_base) )
-            left_seq = r_nxt_ack;
-        else
-            left_seq = r_win_base;
-
-        if ( tsd.get_seg_len() )
-            right_ok = SEQ_GT(tsd.get_end_seq(), left_seq);
-        else
-            right_ok = SEQ_GEQ(tsd.get_end_seq(), left_seq);
-
-        if ( right_ok )
+        if ( SEQ_LEQ(tsd.get_seg_seq(), r_win_base + win) )
         {
-            uint32_t win = normalizer->get_stream_window(tsd);
-
-            if ( SEQ_LEQ(tsd.get_seg_seq(), r_win_base + win) )
-            {
-                DebugMessage(DEBUG_STREAM_STATE, "seq is within window!\n");
-            }
-            else
-            {
-                DebugMessage(DEBUG_STREAM_STATE, "seq is past the end of the window!\n");
-                valid_seq = false;
-            }
+            DebugMessage(DEBUG_STREAM_STATE, "seq is within window!\n");
         }
         else
         {
-            DebugMessage(DEBUG_STREAM_STATE, "end_seq is before win_base\n");
+            DebugMessage(DEBUG_STREAM_STATE, "seq is past the end of the window!\n");
             valid_seq = false;
         }
+    }
+    else
+    {
+        DebugMessage(DEBUG_STREAM_STATE, "end_seq is before win_base\n");
+        valid_seq = false;
     }
 
     if ( !valid_seq )
@@ -558,10 +593,6 @@ void TcpTracker::print(void)
 {
     LogMessage(" + TcpTracker +\n");
     LogMessage("    state:              %s\n", tcp_state_names[ tcp_state ]);
-    LogMessage("    state_queue:    %s\n", tcp_state_names[ s_mgr.state_queue ]);
-    LogMessage("    expected_flags: 0x%X\n", s_mgr.expected_flags);
-    LogMessage("    transition_seq: 0x%X\n", s_mgr.transition_seq);
-    LogMessage("    stq_get_seq:    %d\n", s_mgr.stq_get_seq);
     LogMessage("    iss:                0x%X\n", iss);
     LogMessage("    ts_last:            %u\n", ts_last);
     LogMessage("    wscale:             %u\n", wscale);

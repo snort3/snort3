@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_state_machine.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_state_machine.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 29, 2015
 
 #ifndef TCP_STATE_MACHINE_H
@@ -33,7 +33,7 @@ public:
     virtual ~TcpStateMachine(void);
 
     virtual void register_state_handler(TcpStreamTracker::TcpState, TcpStateHandler&);
-    virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&, TcpStreamTracker&);
 
 private:
 

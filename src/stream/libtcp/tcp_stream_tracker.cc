@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_stream_tracker.cpp author davis mcpherson <davmcphe@@cisco.com>
+// tcp_stream_tracker.cpp author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jun 24, 2015
 
 #include "protocols/tcp_options.h"
@@ -78,8 +78,9 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor&
             else
                 tcp_event = TCP_ACK_SENT_EVENT;
         }
-//        else if( tsd.get_data_len() > 0 )   // FIXIT - No flags set, how do we handle this?
-//            tcp_event = TCP_DATA_SEG_SENT_EVENT;
+        else if ( tsd.get_seg_len() > 0 )   // FIXIT - No flags set, check what 2.x does in this
+                                            // case...
+            tcp_event = TCP_DATA_SEG_SENT_EVENT;
         else
             tcp_event = TCP_ACK_SENT_EVENT;
     }
@@ -101,8 +102,8 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor&
             else
                 tcp_event = TCP_ACK_RECV_EVENT;
         }
-//       else if( tsd.get_data_len() > 0 )    // FIXIT - No flags set, how do we handle this?
-//             tcp_event = TCP_DATA_SEG_RECV_EVENT;
+        else if ( tsd.get_seg_len() > 0 )    // FIXIT - No flags set, how do we handle this?
+            tcp_event = TCP_DATA_SEG_RECV_EVENT;
         else
             tcp_event = TCP_ACK_RECV_EVENT;
     }
@@ -156,7 +157,5 @@ void TcpStreamTracker::cache_mac_address(TcpSegmentDescriptor& tsd, uint8_t dire
 
         mac_addr_valid = true;
     }
-
-    mac_addr_valid = true;
 }
 

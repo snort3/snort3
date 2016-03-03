@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_stream_config.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_stream_config.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Oct 22, 2015
 
 #include "main/snort_config.h"

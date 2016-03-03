@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_state_fin_wait1.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_state_fin_wait1.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Aug 5, 2015
 
 #ifndef TCP_STATE_FIN_WAIT1_H
@@ -45,10 +45,11 @@ public:
     bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
 
-private:
-    bool check_for_window_slam(TcpSegmentDescriptor& tsd, TcpTracker& trk);
+    bool do_pre_sm_packet_actions(TcpSegmentDescriptor&) override;
+    bool do_post_sm_packet_actions(TcpSegmentDescriptor& tsd) override;
 
-    TcpSession& session;
+private:
+    bool check_for_window_slam(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk);
 };
 
 #endif

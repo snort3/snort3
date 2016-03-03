@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_normalizers.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_normalizers.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Sep 22, 2015
 
 #ifndef TCP_NORMALIZERS_H
@@ -28,7 +28,7 @@
 class TcpNormalizerFactory
 {
 public:
-    static TcpNormalizer* create(TcpSession*, StreamPolicy, TcpTracker*, TcpTracker*);
+    static TcpNormalizer* create(TcpSession*, StreamPolicy, TcpStreamTracker*, TcpStreamTracker*);
 };
 
 #endif
