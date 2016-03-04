@@ -54,9 +54,6 @@ BaseTracker::BaseTracker(SFPERF* perf) : PerfTracker(perf,
 
 void BaseTracker::reset()
 {
-    for (auto& mod : config->modules)
-        mod->reset_stats();
-
     if (fh)
     {
         fwrite(csv_header.c_str(), csv_header.length(), 1, fh);

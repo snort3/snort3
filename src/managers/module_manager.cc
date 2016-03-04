@@ -57,7 +57,7 @@ struct ModHook
     void init();
 };
 
-typedef list<ModHook*> ModuleList;
+typedef std::list<ModHook*> ModuleList;
 static ModuleList s_modules;
 static unsigned s_errors = 0;
 
@@ -785,6 +785,7 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
     s_modules.push_back(mh);
 
     Profiler::register_module(m);
+    m->reset_stats();
 }
 
 Module* ModuleManager::get_module(const char* s)
@@ -810,6 +811,16 @@ Module* ModuleManager::get_default_module(const char* s, SnortConfig* sc)
 
 const char* ModuleManager::get_current_module()
 { return s_current.c_str(); }
+
+list<Module*> ModuleManager::get_all_modules()
+{
+    list<Module*> ret;
+
+    for ( auto& m : s_modules )
+       ret.push_back(m->mod);
+
+    return ret;
+}
 
 void ModuleManager::set_config(SnortConfig* sc)
 { s_config = sc; }
