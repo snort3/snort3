@@ -110,7 +110,7 @@ StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, const uint8
 
     while (n < len)
     {
-        DebugFormat(DEBUG_DCE_SMB, " State %d : 0x%02x", ss->paf_state, data[n]);
+        Debug::print(nullptr, 0, DEBUG_DCE_SMB, " State %d : 0x%02x\n", ss->paf_state, data[n]);
 
         switch (ss->paf_state)
         {
@@ -131,7 +131,7 @@ StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, const uint8
                 DebugFormat(DEBUG_DCE_SMB, "%s\n", DCE2_DEBUG__PAF_END_MSG);
                 return StreamSplitter::FLUSH;
             }
-            DebugMessage(DEBUG_DCE_SMB, "Invalid NetBIOS header - "
+             Debug::print(nullptr, 0, DEBUG_DCE_SMB, "%s", "Invalid NetBIOS header - "
                 "entering junk data states.\n");
             ss->paf_state = (DCE2_PafSmbStates)(((int)ss->paf_state) + 1);
             break;
@@ -140,14 +140,14 @@ StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, const uint8
 
             if (!DCE2_PafSmbIsValidNetbiosHdr((uint32_t)(ss->nb_hdr >> 32), true))
             {
-                DebugMessage(DEBUG_DCE_SMB, "Invalid NetBIOS header - "
+                 Debug::print(nullptr, 0, DEBUG_DCE_SMB, "%s", "Invalid NetBIOS header - "
                     "staying in State 7.\n");
                 break;
             }
             if (((uint32_t)ss->nb_hdr != DCE2_SMB_ID)
                 && ((uint32_t)ss->nb_hdr != DCE2_SMB2_ID))
             {
-                DebugMessage(DEBUG_DCE_SMB, "Invalid SMB ID - "
+                 Debug::print(nullptr, 0, DEBUG_DCE_SMB, "%s", "Invalid SMB ID - "
                     "staying in State 7.\n");
                 break;
             }

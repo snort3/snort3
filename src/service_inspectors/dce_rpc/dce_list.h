@@ -113,6 +113,15 @@ void* DCE2_ListNext(DCE2_List*);
 inline bool DCE2_ListIsEmpty(DCE2_List*);
 void DCE2_ListEmpty(DCE2_List*);
 void DCE2_ListDestroy(DCE2_List*);
+void* DCE2_ListFind(DCE2_List*, void*);
+
+DCE2_Queue* DCE2_QueueNew(DCE2_QueueDataFree);
+DCE2_Ret DCE2_QueueEnqueue(DCE2_Queue*, void*);
+void* DCE2_QueueDequeue(DCE2_Queue*);
+static inline bool DCE2_QueueIsEmpty(DCE2_Queue*);
+void DCE2_QueueEmpty(DCE2_Queue*);
+void* DCE2_QueueFirst(DCE2_Queue*);
+void* DCE2_QueueNext(DCE2_Queue*);
 
 /********************************************************************
  * Function: DCE2_ListIsEmpty()
@@ -138,6 +147,22 @@ inline bool DCE2_ListIsEmpty(DCE2_List* list)
     if (list->num_nodes == 0)
         return true;
     return false;
+}
+
+/********************************************************************
+ * Function: DCE2_QueueIsEmpty()
+ *
+ * Determines whether or not the queue has any items in it
+ * currently.
+ *
+ ********************************************************************/
+inline bool DCE2_QueueIsEmpty(DCE2_Queue* queue)
+{
+    if (queue == nullptr)
+        return 1;
+    if (queue->num_nodes == 0)
+        return 1;
+    return 0;
 }
 
 #endif

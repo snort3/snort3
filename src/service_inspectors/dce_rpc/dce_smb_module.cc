@@ -32,47 +32,48 @@ static const PegInfo dce2_smb_pegs[] =
     { "events", "total events" },
     { "aborted sessions", "total aborted sessions" },
     { "bad autodetects", "total  bad autodetects" },
-    { "smb sessions", "total smb sessions" },
-    { "smb packets", "total smb packets" },
-    { "connection-oriented PDUs", "total connection-oriented PDUs" },
-    { "connection-oriented binds", "total connection-oriented binds" },
-    { "connection-oriented bind acks", "total connection-oriented binds acks" },
-    { "connection-oriented alter contexts", "total connection-oriented alter contexts" },
-    { "connection-oriented alter context responses",
+    { "PDUs", "total connection-oriented PDUs" },
+    { "Binds", "total connection-oriented binds" },
+    { "Bind acks", "total connection-oriented binds acks" },
+    { "Alter contexts", "total connection-oriented alter contexts" },
+    { "Alter context responses",
       "total connection-oriented alter context responses" },
-    { "connection-oriented bind naks", "total connection-oriented bind naks" },
-    { "connection-oriented requests", "total connection-oriented requests" },
-    { "connection-oriented responses", "total connection-oriented responses" },
-    { "connection-oriented cancels", "total connection-oriented cancels" },
-    { "connection-oriented orphaned", "total connection-oriented orphaned" },
-    { "connection-oriented faults", "total connection-oriented faults" },
-    { "connection-oriented auth3s", "total connection-oriented auth3s" },
-    { "connection-oriented shutdowns", "total connection-oriented shutdowns" },
-    { "connection-oriented rejects", "total connection-oriented rejects" },
-    { "connection-oriented other requests", "total connection-oriented other requests" },
-    { "connection-oriented other responses", "total connection-oriented other responses" },
-    { "connection-oriented request fragments", "total connection-oriented request fragments" },
-    { "connection-oriented response fragments", "total connection-oriented response fragments" },
-    { "connection-oriented client maximum fragment size",
+    { "Bind naks", "total connection-oriented bind naks" },
+    { "Requests", "total connection-oriented requests" },
+    { "Responses", "total connection-oriented responses" },
+    { "Cancels", "total connection-oriented cancels" },
+    { "Orphaned", "total connection-oriented orphaned" },
+    { "Faults", "total connection-oriented faults" },
+    { "Auth3s", "total connection-oriented auth3s" },
+    { "Shutdowns", "total connection-oriented shutdowns" },
+    { "Rejects", "total connection-oriented rejects" },
+    { "MS RPC/HTTP PDUs", "total connection-oriented MS requests to send RPC over HTTP" },
+    { "Other requests", "total connection-oriented other requests" },
+    { "Other responses", "total connection-oriented other responses" },
+    { "Request fragments", "total connection-oriented request fragments" },
+    { "Response fragments", "total connection-oriented response fragments" },
+    { "Client max fragment size",
       "connection-oriented client maximum fragment size" },
-    { "connection-oriented client minimum fragment size",
+    { "Client min fragment size",
       "connection-oriented client minimum fragment size" },
-    { "connection-oriented client segments reassembled",
+    { "Client segs reassembled",
       "total connection-oriented client segments reassembled" },
-    { "connection-oriented client fragments reassembled",
+    { "Client frags reassembled",
       "total connection-oriented client fragments reassembled" },
-    { "connection-oriented server maximum fragment size",
+    { "Server max fragment size",
       "connection-oriented server maximum fragment size" },
-    { "connection-oriented server minimum fragment size",
+    { "Server min fragment size",
       "connection-oriented server minimum fragment size" },
-    { "connection-oriented server segments reassembled",
+    { "Server segs reassembled",
       "total connection-oriented server segments reassembled" },
-    { "connection-oriented server fragments reassembled",
+    { "Server frags reassembled",
       "total connection-oriented server fragments reassembled" },
-    { "smb client segments reassembled", "total smb client segments reassembled" },
-    { "smb server segments reassembled", "total smb server segments reassembled" },
-    { "smb maximum outstanding requests", "total smb maximum outstanding requests" },
-    { "smb files processed", "total smb files processed" },
+    { "Sessions", "total smb sessions" },
+    { "Packets", "total smb packets" },
+    { "Client segs reassembled", "total smb client segments reassembled" },
+    { "Server segs reassembled", "total smb server segments reassembled" },
+    { "Max outstanding requests", "total smb maximum outstanding requests" },
+    { "Files processed", "total smb files processed" },
     { nullptr, nullptr }
 };
 
@@ -202,99 +203,99 @@ ProfileStats* Dce2SmbModule::get_profile(
     switch ( index )
     {
     case 0:
-        name = "dce smb main";
+        name = "dce_smb_main";
         parent = nullptr;
         return &dce2_smb_pstat_main;
 
     case 1:
-        name = "dce smb session";
-        parent = "dce smb main";
+        name = "dce_smb_session";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_session;
 
     case 2:
-        name = "dce smb new_session";
-        parent = "dce smb session";
+        name = "dce_smb_new_session";
+        parent = "dce_smb_session";
 
         return &dce2_smb_pstat_new_session;
 
     case 3:
-        name = "dce smb detect";
-        parent = "dce smb main";
+        name = "dce_smb_detect";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_detect;
 
     case 4:
-        name = "dce smb log";
-        parent = "dce smb main";
+        name = "dce_smb_log";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_log;
 
     case 5:
-        name = "dce smb connection-oriented segment";
-        parent = "dce smb main";
+        name = "dce_smb_co_segment";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_co_seg;
 
     case 6:
-        name = "dce smb connection-oriented fragment";
-        parent = "dce smb main";
+        name = "dce_smb_co_fragment";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_co_frag;
 
     case 7:
-        name = "dce smb connection-oriented reassembly";
-        parent = "dce smb main";
+        name = "dce_smb_co_reassembly";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_co_reass;
 
     case 8:
-        name = "dce smb connection-oriented context";
-        parent = "dce smb main";
+        name = "dce_smb_co_context";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_co_ctx;
 
     case 9:
-        name = "dce smb segment";
-        parent = "dce smb main";
+        name = "dce_smb_segment";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_smb_seg;
 
     case 10:
-        name = "dce smb request";
-        parent = "dce smb main";
+        name = "dce_smb_request";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_smb_req;
 
     case 11:
-        name = "dce smb uid";
-        parent = "dce smb main";
+        name = "dce_smb_uid";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_smb_uid;
 
     case 12:
-        name = "dce smb tid";
-        parent = "dce smb main";
+        name = "dce_smb_tid";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_smb_tid;
 
     case 13:
-        name = "dce smb fid";
-        parent = "dce smb main";
+        name = "dce_smb_fid";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_smb_fid;
 
     case 14:
-        name = "dce smb file";
-        parent = "dce smb main";
+        name = "dce_smb_file";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_smb_file;
 
     case 15:
-        name = "dce smb file detect";
-        parent = "dce smb file";
+        name = "dce_smb_file_detect";
+        parent = "dce_smb_file";
         return &dce2_smb_pstat_smb_file_detect;
 
     case 16:
-        name = "dce smb file api";
-        parent = "dce smb file";
+        name = "dce_smb_file_api";
+        parent = "dce_smb_file";
         return &dce2_smb_pstat_smb_file_api;
 
     case 17:
-        name = "dce smb fingerprint";
-        parent = "dce smb main";
+        name = "dce_smb_fingerprint";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_smb_fingerprint;
 
     case 18:
-        name = "dce smb negotiate";
-        parent = "dce smb main";
+        name = "dce_smb_negotiate";
+        parent = "dce_smb_main";
         return &dce2_smb_pstat_smb_negotiate;
     }
     return nullptr;
@@ -305,7 +306,7 @@ static int smb_invalid_share_compare(const void* a, const void* b)
     dce2SmbShare* ashare = (dce2SmbShare*)a;
     dce2SmbShare* bshare = (dce2SmbShare*)b;
 
-    if ((ashare == NULL) || (bshare == NULL))
+    if ((ashare == nullptr) || (bshare == nullptr))
         return -1;
 
     /* Just check the ascii string */
@@ -323,7 +324,7 @@ static void smb_invalid_share_free(void* data)
 {
     dce2SmbShare* smb_share = (dce2SmbShare*)data;
 
-    if (smb_share == NULL)
+    if (smb_share == nullptr)
         return;
 
     free(smb_share->unicode_str);
@@ -373,7 +374,7 @@ static bool set_smb_invalid_shares(dce2SmbProtoConf& config, Value& v)
 
         smb_share = (dce2SmbShare*)calloc(sizeof(dce2SmbShare),1);
         smb_share_key = (dce2SmbShare*)calloc(sizeof(dce2SmbShare),1);
-        if ((smb_share == NULL) || (smb_share_key == NULL))
+        if ((smb_share == nullptr) || (smb_share_key == nullptr))
         {
             FatalError("DCE2 - Could not allocate memory for config\n");
         }
@@ -384,7 +385,7 @@ static bool set_smb_invalid_shares(dce2SmbProtoConf& config, Value& v)
         smb_share->ascii_str_len = share_len + 1;
         smb_share->ascii_str = (char*)calloc(smb_share->ascii_str_len,1);
 
-        if ((smb_share->unicode_str == NULL) || (smb_share->ascii_str == NULL))
+        if ((smb_share->unicode_str == nullptr) || (smb_share->ascii_str == nullptr))
         {
             FatalError("DCE2 - Could not allocate memory for config\n");
         }
@@ -399,7 +400,7 @@ static bool set_smb_invalid_shares(dce2SmbProtoConf& config, Value& v)
         smb_share_key->ascii_str_len = smb_share->ascii_str_len;
         smb_share_key->ascii_str = (char*)calloc(smb_share_key->ascii_str_len,1);
 
-        if (smb_share_key->ascii_str == NULL)
+        if (smb_share_key->ascii_str == nullptr)
         {
             FatalError("DCE2 - Could not allocate memory for config\n");
         }
@@ -424,7 +425,7 @@ static bool set_smb_invalid_shares(dce2SmbProtoConf& config, Value& v)
     if (error)
     {
         DCE2_ListDestroy(config.smb_invalid_shares);
-        config.smb_invalid_shares = NULL;
+        config.smb_invalid_shares = nullptr;
         return error;
     }
 
@@ -517,14 +518,14 @@ void print_dce2_smb_conf(dce2SmbProtoConf& config)
     {
         LogMessage("    SMB valid versions : all\n");
     }
-    if (config.smb_invalid_shares != NULL)
+    if (config.smb_invalid_shares != nullptr)
     {
         dce2SmbShare* share;
 
         LogMessage("    Invalid SMB shares:\n");
 
         for (share = (dce2SmbShare*)DCE2_ListFirst(config.smb_invalid_shares);
-            share != NULL;
+            share != nullptr;
             share = (dce2SmbShare*)DCE2_ListNext(config.smb_invalid_shares))
         {
             LogMessage("    %s\n",share->ascii_str);
