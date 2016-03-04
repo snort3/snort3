@@ -133,6 +133,9 @@ struct dce2SmbStats
     PegCount sessions_aborted;
     PegCount bad_autodetects;
 
+    PegCount smb_sessions;
+    PegCount smb_pkts;
+
     PegCount co_pdus;
     PegCount co_bind;
     PegCount co_bind_ack;
@@ -147,7 +150,6 @@ struct dce2SmbStats
     PegCount co_auth3;
     PegCount co_shutdown;
     PegCount co_reject;
-    PegCount co_ms_pdu;
     PegCount co_other_req;
     PegCount co_other_resp;
     PegCount co_req_fragments;
@@ -161,8 +163,6 @@ struct dce2SmbStats
     PegCount co_srv_seg_reassembled;
     PegCount co_srv_frag_reassembled;
 
-    PegCount smb_sessions;
-    PegCount smb_pkts;
     PegCount smb_ignored_bytes;
     PegCount smb_cli_seg_reassembled;
     PegCount smb_srv_seg_reassembled;
@@ -417,7 +417,7 @@ struct DCE2_SmbSsnData
 
     // For tracking requests / responses
     DCE2_SmbRequestTracker rtracker;
-    DCE2_Queue* rtrackers;
+    //DCE2_Queue *rtrackers;
     uint16_t max_outstanding_requests;
     uint16_t outstanding_requests;
 

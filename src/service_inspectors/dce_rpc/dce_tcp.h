@@ -38,13 +38,12 @@ struct dce2TcpStats
     PegCount autoports[65535][DCE2_TRANS_TYPE__MAX];
 #endif
 */
-    /* The common stats block has to be at the beginning followed
-       by the protocol specific stats */
-
-    /*common stats -defined in common.h*/
     PegCount events;
     PegCount sessions_aborted;
     PegCount bad_autodetects;
+
+    PegCount tcp_sessions;
+    PegCount tcp_pkts;
 
     PegCount co_pdus;
     PegCount co_bind;
@@ -60,7 +59,6 @@ struct dce2TcpStats
     PegCount co_auth3;
     PegCount co_shutdown;
     PegCount co_reject;
-    PegCount co_ms_pdu;
     PegCount co_other_req;
     PegCount co_other_resp;
     PegCount co_req_fragments;
@@ -73,10 +71,6 @@ struct dce2TcpStats
     PegCount co_srv_min_frag_size;
     PegCount co_srv_seg_reassembled;
     PegCount co_srv_frag_reassembled;
-
-    /*DCE TCP specific*/
-    PegCount tcp_sessions;
-    PegCount tcp_pkts;
 };
 
 extern THREAD_LOCAL dce2TcpStats dce2_tcp_stats;
@@ -102,7 +96,7 @@ inline bool DCE2_TcpAutodetect(Packet* p)
             && (DceRpcCoVersMin(co_hdr) == DCERPC_PROTO_MINOR_VERS__0)
             && ((p->from_client()
             && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND)
-            || (DCE2_SsnFromServer(p)
+            || (p->from_server()
             && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND_ACK))
             && (DceRpcCoFragLen(co_hdr) >= sizeof(DceRpcCoHdr)))
         {

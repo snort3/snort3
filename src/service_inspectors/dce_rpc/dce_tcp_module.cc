@@ -63,44 +63,43 @@ static const PegInfo dce2_tcp_pegs[] =
     { "events", "total events" },
     { "aborted sessions", "total aborted sessions" },
     { "bad autodetects", "total bad autodetects" },
-    { "PDUs", "total connection-oriented PDUs" },
-    { "Binds", "total connection-oriented binds" },
-    { "Bind acks", "total connection-oriented binds acks" },
-    { "Alter contexts", "total connection-oriented alter contexts" },
-    { "Alter context responses",
-      "total connection-oriented alter context responses" },
-    { "Bind naks", "total connection-oriented bind naks" },
-    { "Requests", "total connection-oriented requests" },
-    { "Responses", "total connection-oriented responses" },
-    { "Cancels", "total connection-oriented cancels" },
-    { "Orphaned", "total connection-oriented orphaned" },
-    { "Faults", "total connection-oriented faults" },
-    { "Auth3s", "total connection-oriented auth3s" },
-    { "Shutdowns", "total connection-oriented shutdowns" },
-    { "Rejects", "total connection-oriented rejects" },
-    { "MS RPC/HTTP PDUs", "total connection-oriented MS requests to send RPC over HTTP" },
-    { "Other requests", "total connection-oriented other requests" },
-    { "Other responses", "total connection-oriented other responses" },
-    { "Request fragments", "total connection-oriented request fragments" },
-    { "Response fragments", "total connection-oriented response fragments" },
-    { "Client max fragment size",
-      "connection-oriented client maximum fragment size" },
-    { "Client min fragment size",
-      "connection-oriented client minimum fragment size" },
-    { "Client segs reassembled",
-      "total connection-oriented client segments reassembled" },
-    { "Client frags reassembled",
-      "total connection-oriented client fragments reassembled" },
-    { "Server max fragment size",
-      "connection-oriented server maximum fragment size" },
-    { "Server min fragment size",
-      "connection-oriented server minimum fragment size" },
-    { "Server segs reassembled",
-      "total connection-oriented server segments reassembled" },
-    { "Server frags reassembled",
-      "total connection-oriented server fragments reassembled" },
     { "tcp sessions", "total tcp sessions" },
     { "tcp packets", "total tcp packets" },
+    { "connection-oriented PDUs", "total connection-oriented PDUs" },
+    { "connection-oriented binds", "total connection-oriented binds" },
+    { "connection-oriented bind acks", "total connection-oriented binds acks" },
+    { "connection-oriented alter contexts", "total connection-oriented alter contexts" },
+    { "connection-oriented alter context responses",
+      "total connection-oriented alter context responses" },
+    { "connection-oriented bind naks", "total connection-oriented bind naks" },
+    { "connection-oriented requests", "total connection-oriented requests" },
+    { "connection-oriented responses", "total connection-oriented responses" },
+    { "connection-oriented cancels", "total connection-oriented cancels" },
+    { "connection-oriented orphaned", "total connection-oriented orphaned" },
+    { "connection-oriented faults", "total connection-oriented faults" },
+    { "connection-oriented auth3s", "total connection-oriented auth3s" },
+    { "connection-oriented shutdowns", "total connection-oriented shutdowns" },
+    { "connection-oriented rejects", "total connection-oriented rejects" },
+    { "connection-oriented other requests", "total connection-oriented other requests" },
+    { "connection-oriented other responses", "total connection-oriented other responses" },
+    { "connection-oriented request fragments", "total connection-oriented request fragments" },
+    { "connection-oriented response fragments", "total connection-oriented response fragments" },
+    { "connection-oriented client maximum fragment size",
+      "connection-oriented client maximum fragment size" },
+    { "connection-oriented client minimum fragment size",
+      "connection-oriented client minimum fragment size" },
+    { "connection-oriented client segments reassembled",
+      "total connection-oriented client segments reassembled" },
+    { "connection-oriented client fragments reassembled",
+      "total connection-oriented client fragments reassembled" },
+    { "connection-oriented server maximum fragment size",
+      "connection-oriented server maximum fragment size" },
+    { "connection-oriented server minimum fragment size",
+      "connection-oriented server minimum fragment size" },
+    { "connection-oriented server segments reassembled",
+      "total connection-oriented server segments reassembled" },
+    { "connection-oriented server fragments reassembled",
+      "total connection-oriented server fragments reassembled" },
     { nullptr, nullptr }
 };
 
@@ -129,48 +128,48 @@ ProfileStats* Dce2TcpModule::get_profile(
     switch ( index )
     {
     case 0:
-        name = "dce_tcp_main";
+        name = "dce tcp main";
         parent = nullptr;
         return &dce2_tcp_pstat_main;
 
     case 1:
-        name = "dce_tcp_session";
-        parent = "dce_tcp_main";
+        name = "dce tcp session";
+        parent = "dce tcp main";
         return &dce2_tcp_pstat_session;
 
     case 2:
-        name = "dce_tcp_new_session";
-        parent = "dce_tcp_session";
+        name = "dce tcp new session";
+        parent = "dce tcp session";
         return &dce2_tcp_pstat_new_session;
 
     case 3:
-        name = "dce_tcp_detect";
-        parent = "dce_tcp_main";
+        name = "dce tcp detect";
+        parent = "dce tcp main";
         return &dce2_tcp_pstat_detect;
 
     case 4:
-        name = "dce_tcp_log";
+        name = "dce tcp log";
         parent = "dce_tcp_main";
         return &dce2_tcp_pstat_log;
 
     case 5:
-        name = "dce_tcp_co_segment";
-        parent = "dce_tcp_main";
+        name = "dce tcp connection-oriented segment";
+        parent = "dce tcp main";
         return &dce2_tcp_pstat_co_seg;
 
     case 6:
-        name = "dce_tcp_co_fragment";
-        parent = "dce_tcp_main";
+        name = "dce tcp connection-oriented fragment";
+        parent = "dce tcp main";
         return &dce2_tcp_pstat_co_frag;
 
     case 7:
-        name = "dce_tcp_co_reassembly";
-        parent = "dce_tcp_main";
+        name = "dce tcp connection-oriented reassembly";
+        parent = "dce tcp main";
         return &dce2_tcp_pstat_co_reass;
 
     case 8:
-        name = "dce_tcp_co_context";
-        parent = "dce_tcp_main";
+        name = "dce tcp connection-oriented context";
+        parent = "dce tcp main";
         return &dce2_tcp_pstat_co_ctx;
     }
     return nullptr;

@@ -19,16 +19,11 @@
 // dce_common.cc author Rashmi Pitre <rrp@cisco.com>
 
 #include "dce_common.h"
-#include "dce_tcp.h"
-#include "dce_smb.h"
 #include "framework/base_api.h"
 #include "framework/module.h"
 #include "flow/flow.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
-#include "detection/detect.h"
-
-THREAD_LOCAL int dce2_detected = 0;
 
 const char* dce2_get_policy_name(DCE2_Policy policy)
 {
@@ -112,85 +107,13 @@ bool dce2_paf_abort(Flow* flow, DCE2_SsnData* sd)
         return true;
     }
 
-    if ((sd != nullptr) && DCE2_SsnNoInspect(sd))
+    if ((sd != NULL) && DCE2_SsnNoInspect(sd))
     {
         DebugMessage(DEBUG_DCE_COMMON, "Aborting PAF because of session data check.\n");
         return true;
     }
 
     return false;
-}
-
-void DCE2_PrintRoptions(DCE2_Roptions* ropts)
-{
-    DebugFormat(DEBUG_DCE_COMMON,
-        "  First frag: %s\n", ropts->first_frag == 1 ? "yes" : (ropts->first_frag == 0 ? "no" :
-        "unset"));
-    if (ropts->first_frag == DCE2_SENTINEL)
-    {
-        DebugMessage(DEBUG_DCE_COMMON, "  Iface: unset\n");
-        DebugMessage(DEBUG_DCE_COMMON, "  Iface version: unset\n");
-    }
-    else
-    {
-        DebugFormat(DEBUG_DCE_COMMON, "  Iface: %s\n", DCE2_UuidToStr(&ropts->iface,
-            DCERPC_BO_FLAG__NONE));
-        DebugFormat(DEBUG_DCE_COMMON, "  Iface version: %u\n", ropts->iface_vers_maj);
-    }
-    if (ropts->opnum == DCE2_SENTINEL)
-        DebugMessage(DEBUG_DCE_COMMON, "  Opnum: unset\n");
-    else
-        DebugFormat(DEBUG_DCE_COMMON, "  Opnum: %u\n", ropts->opnum);
-    DebugFormat(DEBUG_DCE_COMMON, "  Header byte order: %s\n",
-        ropts->hdr_byte_order == DCERPC_BO_FLAG__LITTLE_ENDIAN ? "little endian" :
-        (ropts->hdr_byte_order == DCERPC_BO_FLAG__BIG_ENDIAN ? "big endian" : "unset"));
-    DebugFormat(DEBUG_DCE_COMMON, "  Data byte order: %s\n",
-        ropts->data_byte_order == DCERPC_BO_FLAG__LITTLE_ENDIAN ? "little endian" :
-        (ropts->data_byte_order == DCERPC_BO_FLAG__BIG_ENDIAN ? "big endian" : "unset"));
-    if (ropts->stub_data != nullptr)
-        DebugFormat(DEBUG_DCE_COMMON, "  Stub data: %p\n", ropts->stub_data);
-    else
-        DebugMessage(DEBUG_DCE_COMMON, "  Stub data: NULL\n");
-}
-
-static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
-{
-    if (sd->trans == DCE2_TRANS_TYPE__TCP)
-    {
-        Profile profile(dce2_tcp_pstat_detect);
-    }
-    else
-    {
-        Profile profile(dce2_smb_pstat_detect);
-    }
-    SnortEventqPush();
-    snort_detect(pkt);
-    SnortEventqPop();
-
-    dce2_detected = 1;
-}
-
-void DCE2_Detect(DCE2_SsnData* sd)
-{
-    Packet* top_pkt = sd->wire_pkt;
-    //FIXIT-M  Get packet from stack
-
-    DebugMessage(DEBUG_DCE_COMMON, "Detecting ------------------------------------------------\n");
-    DebugMessage(DEBUG_DCE_COMMON, " Rule options:\n");
-    DCE2_PrintRoptions(&sd->ropts);
-    DebugMessage(DEBUG_DCE_COMMON, "Payload:\n");
-    DCE2_PrintPktData(top_pkt->data, top_pkt->dsize);
-    if (sd->ropts.stub_data != nullptr)
-    {
-        DebugMessage(DEBUG_DCE_COMMON,"\nStub data:\n");
-        DCE2_PrintPktData(sd->ropts.stub_data,
-            top_pkt->dsize - (sd->ropts.stub_data - top_pkt->data));
-    }
-
-    dce2_protocol_detect(sd, top_pkt);
-    /* Always reset rule option data after detecting */
-    DCE2_ResetRopts(&sd->ropts);
-    DebugMessage(DEBUG_DCE_COMMON, "----------------------------------------------------------\n");
 }
 
 #ifdef BUILDING_SO

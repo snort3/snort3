@@ -18,7 +18,7 @@
 //--------------------------------------------------------------------------
 
 #include "dce_utils.h"
-#include "main/snort_debug.h"
+
 
 /********************************************************************
  * Function: DCE2_GetValue()
@@ -59,7 +59,7 @@ DCE2_Ret DCE2_GetValue(char* start, char* end, void* int_value, int negate,
     uint64_t place = 1;
     uint64_t max_value = 0;
 
-    if ((end == nullptr) || (start == nullptr) || (int_value == nullptr))
+    if ((end == NULL) || (start == NULL) || (int_value == NULL))
         return DCE2_RET__ERROR;
 
     if (start >= end)
@@ -158,145 +158,5 @@ DCE2_Ret DCE2_GetValue(char* start, char* end, void* int_value, int negate,
     }
 
     return DCE2_RET__SUCCESS;
-}
-
-const char* DCE2_UuidToStr(const Uuid* uuid, DceRpcBoFlag byte_order)
-{
-#define UUID_BUF_SIZE  50
-    static char uuid_buf1[UUID_BUF_SIZE];
-    static char uuid_buf2[UUID_BUF_SIZE];
-    static int buf_num = 0;
-    char* uuid_buf;
-
-    if (buf_num == 0)
-    {
-        uuid_buf = uuid_buf1;
-        buf_num = 1;
-    }
-    else
-    {
-        uuid_buf = uuid_buf2;
-        buf_num = 0;
-    }
-
-    snprintf(uuid_buf, UUID_BUF_SIZE,
-        "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-        DceRpcHtonl(&uuid->time_low, byte_order),
-        DceRpcHtons(&uuid->time_mid, byte_order),
-        DceRpcHtons(&uuid->time_high_and_version, byte_order),
-        uuid->clock_seq_and_reserved, uuid->clock_seq_low,
-        uuid->node[0], uuid->node[1], uuid->node[2],
-        uuid->node[3], uuid->node[4], uuid->node[5]);
-
-    uuid_buf[UUID_BUF_SIZE - 1] = '\0';
-
-    return uuid_buf;
-}
-
-void DCE2_PrintPktData(const uint8_t* data, const uint16_t len)
-{
-    unsigned int i, j = 0, line_len = 0;
-    uint8_t hex_buf[16];
-    uint8_t char_buf[16];
-
-    for (i = 0; i < len; i++)
-    {
-        hex_buf[j] = data[i];
-
-        if (isascii((int)data[i]) && isprint((int)data[i]))
-            char_buf[j] = data[i];
-        else
-            char_buf[j] = '.';
-
-        if (line_len == 15)
-        {
-            unsigned int k, sub_line_len = 0;
-            for (k = 0; k <= j; k++)
-            {
-                Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%02x ", hex_buf[k]);
-                if (sub_line_len >= 7)
-                {
-                    Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%s"," ");
-                    sub_line_len = 0;
-                }
-                else
-                {
-                    sub_line_len++;
-                }
-            }
-
-            Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%s"," ");
-
-            sub_line_len = 0;
-            for (k = 0; k <= j; k++)
-            {
-                Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%c", char_buf[k]);
-                if (sub_line_len >= 7)
-                {
-                    Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%s"," ");
-                    sub_line_len = 0;
-                }
-                else
-                {
-                    sub_line_len++;
-                }
-            }
-
-            Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%s","\n");
-
-            j = line_len = 0;
-        }
-        else
-        {
-            j++;
-            line_len++;
-        }
-    }
-
-    if (line_len > 0)
-    {
-        unsigned int k, sub_line_len = 0;
-        for (k = 0; k < j; k++)
-        {
-            Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%02x ", hex_buf[k]);
-            if (sub_line_len >= 7)
-            {
-                Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%s"," ");
-                sub_line_len = 0;
-            }
-            else
-            {
-                sub_line_len++;
-            }
-        }
-
-        if (k < 8)
-            Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%s","   ");
-        else
-            Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%s","  ");
-
-        while (k < 16)
-        {
-            Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%s","   ");
-            k++;
-        }
-
-        sub_line_len = 0;
-        for (k = 0; k < j; k++)
-        {
-           Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%c", char_buf[k]);
-            if (sub_line_len >= 7)
-            {
-                Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%s"," ");
-                sub_line_len = 0;
-            }
-            else
-            {
-                sub_line_len++;
-            }
-        }
-    }
-
-    Debug::print(nullptr, 0, DEBUG_DCE_COMMON,"%s","\n");
 }
 

@@ -70,14 +70,6 @@ enum DCE2_IntType
     DCE2_INT_TYPE__UINT64
 };
 
-/* DCE/RPC byte order flag */
-enum DceRpcBoFlag
-{
-    DCERPC_BO_FLAG__NONE,
-    DCERPC_BO_FLAG__BIG_ENDIAN,
-    DCERPC_BO_FLAG__LITTLE_ENDIAN
-};
-
 /********************************************************************
  * Structures
  ********************************************************************/
@@ -112,8 +104,6 @@ inline char* DCE2_PruneWhiteSpace(char*);
 inline bool DCE2_IsEmptyStr(char*);
 
 inline int DCE2_UuidCompare(const void*, const void*);
-const char* DCE2_UuidToStr(const Uuid*, DceRpcBoFlag);
-void DCE2_PrintPktData(const uint8_t*, const uint16_t);
 
 /********************************************************************
  * Public function prototypes
@@ -262,121 +252,6 @@ inline int DCE2_UuidCompare(const void* data1, const void* data2)
     /* Just return something other than 0 */
     return -1;
 }
-
-inline DceRpcBoFlag DceRpcByteOrder(const uint8_t value)
-{
-    if ((value & 0x10) >> 4)
-        return DCERPC_BO_FLAG__LITTLE_ENDIAN;
-
-    return DCERPC_BO_FLAG__BIG_ENDIAN;
-}
-
-inline uint16_t DceRpcNtohs(const uint16_t* ptr, const DceRpcBoFlag bo_flag)
-{
-    uint16_t value;
-
-    if (ptr == nullptr)
-        return 0;
-
-#ifdef WORDS_MUSTALIGN
-    value = *((uint8_t*)ptr) << 8 | *((uint8_t*)ptr + 1);
-#else
-    value = *ptr;
-#endif  /* WORDS_MUSTALIGN */
-
-    if (bo_flag == DCERPC_BO_FLAG__NONE)
-        return value;
-
-#ifdef WORDS_BIGENDIAN
-    if (bo_flag == DCERPC_BO_FLAG__BIG_ENDIAN)
-#else
-    if (bo_flag == DCERPC_BO_FLAG__LITTLE_ENDIAN)
-#endif  /* WORDS_BIGENDIAN */
-        return value;
-
-    return ((value & 0xff00) >> 8) | ((value & 0x00ff) << 8);
-}
-
-inline uint16_t DceRpcHtons(const uint16_t* ptr, const DceRpcBoFlag bo_flag)
-{
-    return DceRpcNtohs(ptr, bo_flag);
-}
-
-inline uint32_t DceRpcNtohl(const uint32_t* ptr, const DceRpcBoFlag bo_flag)
-{
-    uint32_t value;
-
-    if (ptr == nullptr)
-        return 0;
-
-#ifdef WORDS_MUSTALIGN
-    value = *((uint8_t*)ptr) << 24 | *((uint8_t*)ptr + 1) << 16 |
-        *((uint8_t*)ptr + 2) << 8  | *((uint8_t*)ptr + 3);
-#else
-    value = *ptr;
-#endif  /* WORDS_MUSTALIGN */
-
-    if (bo_flag == DCERPC_BO_FLAG__NONE)
-        return value;
-
-#ifdef WORDS_BIGENDIAN
-    if (bo_flag == DCERPC_BO_FLAG__BIG_ENDIAN)
-#else
-    if (bo_flag == DCERPC_BO_FLAG__LITTLE_ENDIAN)
-#endif  /* WORDS_BIGENDIAN */
-        return value;
-
-    return ((value & 0xff000000) >> 24) | ((value & 0x00ff0000) >> 8) |
-           ((value & 0x0000ff00) << 8)  | ((value & 0x000000ff) << 24);
-}
-
-inline uint32_t DceRpcHtonl(const uint32_t* ptr, const DceRpcBoFlag bo_flag)
-{
-    return DceRpcNtohl(ptr, bo_flag);
-}
-
-inline void DCE2_CopyUuid(Uuid* dst_uuid, const Uuid* pkt_uuid, const DceRpcBoFlag byte_order)
-{
-    dst_uuid->time_low = DceRpcNtohl(&pkt_uuid->time_low, byte_order);
-    dst_uuid->time_mid = DceRpcNtohs(&pkt_uuid->time_mid, byte_order);
-    dst_uuid->time_high_and_version = DceRpcNtohs(&pkt_uuid->time_high_and_version, byte_order);
-    dst_uuid->clock_seq_and_reserved = pkt_uuid->clock_seq_and_reserved;
-    dst_uuid->clock_seq_low = pkt_uuid->clock_seq_low;
-    memcpy(dst_uuid->node, pkt_uuid->node, sizeof(dst_uuid->node));
-}
-
-inline int DCE2_BufferIsEmpty(DCE2_Buffer* buf)
-{
-    if (buf == nullptr)
-        return 1;
-    if ((buf->data == nullptr) || (buf->len == 0))
-        return 1;
-    return 0;
-}
-
-inline uint32_t DCE2_BufferLength(DCE2_Buffer* buf)
-{
-    if (buf == nullptr)
-        return 0;
-    return buf->len;
-}
-
-inline uint8_t* DCE2_BufferData(DCE2_Buffer* buf)
-{
-    if (buf == nullptr)
-        return nullptr;
-    return buf->data;
-}
-
-inline void DCE2_BufferEmpty(DCE2_Buffer* buf)
-{
-    if (buf == nullptr)
-        return;
-    buf->len = 0;
-}
-
-#define DCE2_MOVE(data_ptr, data_len, amount) \
-    { data_len -= (amount); data_ptr = (uint8_t*)data_ptr + (amount); }
 
 #endif  /* _DCE2_UTILS_H_ */
 

@@ -22,9 +22,7 @@
 #include "dce_tcp.h"
 #include "dce_tcp_paf.h"
 #include "dce_tcp_module.h"
-#include "dce_co.h"
 #include "main/snort_debug.h"
-#include "detection/detect.h"
 
 Dce2TcpFlowData::Dce2TcpFlowData() : FlowData(flow_id)
 {
@@ -60,13 +58,11 @@ static DCE2_TcpSsnData* set_new_dce2_tcp_session(Packet* p)
     return(&fd->dce2_tcp_session);
 }
 
-static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf* config)
+static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf config)
 {
-    DCE2_TcpSsnData* dce2_tcp_sess = nullptr;
+    DCE2_TcpSsnData* dce2_tcp_sess = NULL;
     Profile profile(dce2_tcp_pstat_new_session);
 
-    //FIXIT-M Re-evaluate after infrastructure/binder support if autodetect here
-    //is necessary
     if (DCE2_TcpAutodetect(p))
     {
         DebugMessage(DEBUG_DCE_TCP, "DCE over TCP packet detected\n");
@@ -83,10 +79,9 @@ static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf*
             DebugFormat(DEBUG_DCE_TCP,"Created (%p)\n", (void*)dce2_tcp_sess);
 
             dce2_tcp_sess->sd.trans = DCE2_TRANS_TYPE__TCP;
-            dce2_tcp_sess->sd.server_policy = config->common.policy;
+            dce2_tcp_sess->sd.server_policy = config.common.policy;
             dce2_tcp_sess->sd.client_policy = DCE2_POLICY__WINXP;
             dce2_tcp_sess->sd.wire_pkt = p;
-            dce2_tcp_sess->sd.config = (void*)config;
 
             DCE2_SsnSetAutodetected(&dce2_tcp_sess->sd, p);
         }
@@ -95,7 +90,7 @@ static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf*
     return dce2_tcp_sess;
 }
 
-DCE2_TcpSsnData* dce2_handle_tcp_session(Packet* p, dce2TcpProtoConf* config)
+DCE2_TcpSsnData* dce2_handle_tcp_session(Packet* p, dce2TcpProtoConf& config)
 {
     Profile profile(dce2_tcp_pstat_session);
 
@@ -119,7 +114,7 @@ DCE2_TcpSsnData* dce2_handle_tcp_session(Packet* p, dce2TcpProtoConf* config)
                 DCE2_SsnNoInspect(sd);
                 dce2_tcp_stats.sessions_aborted++;
                 dce2_tcp_stats.bad_autodetects++;
-                return nullptr;
+                return NULL;
             }
 
             DCE2_SsnClearAutodetected(sd);
@@ -127,13 +122,8 @@ DCE2_TcpSsnData* dce2_handle_tcp_session(Packet* p, dce2TcpProtoConf* config)
     }
 
     DebugFormat(DEBUG_DCE_TCP, "Session pointer: %p\n", (void*)dce2_tcp_sess);
-    if (dce2_tcp_sess)
-    {
-        //FIXIT-M Stack push
 
-        p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
-        dce2_detected = 0;
-    }
+    // FIXIT-M add remaining session handling logic
 
     return dce2_tcp_sess;
 }
@@ -172,14 +162,6 @@ void Dce2Tcp::eval(Packet* p)
 {
     DCE2_TcpSsnData* dce2_tcp_sess;
     Profile profile(dce2_tcp_pstat_main);
-    if (DCE2_SsnFromServer(p))
-    {
-        DebugMessage(DEBUG_DCE_TCP, "Packet from Server.\n");
-    }
-    else
-    {
-        DebugMessage(DEBUG_DCE_TCP, "Packet from Client.\n");
-    }
 
     assert(p->has_tcp_data());
     assert(p->flow);
@@ -191,22 +173,12 @@ void Dce2Tcp::eval(Packet* p)
         return;
     }
 
-    dce2_tcp_sess = dce2_handle_tcp_session(p, &config);
-    if (dce2_tcp_sess)
+    dce2_tcp_sess = dce2_handle_tcp_session(p, config);
+    if (!dce2_tcp_sess)
     {
-        dce2_tcp_stats.tcp_pkts++;
-        DCE2_CoProcess(&dce2_tcp_sess->sd, &dce2_tcp_sess->co_tracker, p->data,
-            p->dsize);
-
-        if (!dce2_detected)
-            DCE2_Detect(&dce2_tcp_sess->sd);
-
-        DCE2_ResetRopts(&dce2_tcp_sess->sd.ropts);
-        //FIXIT-M DCE2_PopPkt(sd);
-
-        if (!DCE2_SsnAutodetected(&dce2_tcp_sess->sd))
-            DisableInspection();
+        return;
     }
+    dce2_tcp_stats.tcp_pkts++;
 }
 
 //-------------------------------------------------------------------------

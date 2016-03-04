@@ -24,7 +24,6 @@
 
 #include "dce_common.h"
 #include "dce_list.h"
-#include "dce_utils.h"
 
 #define DCE2_CO_BAD_MAJOR_VERSION           27
 #define DCE2_CO_BAD_MINOR_VERSION           28
@@ -69,8 +68,6 @@ from opnum established for fragmented request."
     "Connection-oriented DCE/RPC - Context id of non first/last fragment different \
 from context id established for fragmented request."
 
-#define DCE2_MAX_XMIT_SIZE_FUZZ    500
-
 #pragma pack(1)
 
 struct DceRpcCoVersion
@@ -90,80 +87,6 @@ struct DceRpcCoHdr
     uint16_t auth_length;
     uint32_t call_id;
 };
-
-/* Bind */
-struct DceRpcCoBind
-{
-    uint16_t max_xmit_frag;
-    uint16_t max_recv_frag;
-    uint32_t assoc_group_id;
-    uint8_t n_context_elem;   /* number of context elements */
-    uint8_t reserved;
-    uint16_t reserved2;
-};
-
-struct DceRpcCoSynId
-{
-    Uuid if_uuid;
-    uint32_t if_version;
-};
-
-struct DceRpcCoContElem
-{
-    uint16_t p_cont_id;
-    uint8_t n_transfer_syn;  /* number of transfer syntaxes */
-    uint8_t reserved;
-    DceRpcCoSynId abstract_syntax;
-};
-
-struct DceRpcCoBindAck
-{
-    uint16_t max_xmit_frag;
-    uint16_t max_recv_frag;
-    uint32_t assoc_group_id;
-    uint16_t sec_addr_len;
-};
-
-struct DceRpcCoContResult
-{
-    uint16_t result;
-    uint16_t reason;
-    DceRpcCoSynId transfer_syntax;
-};
-
-struct DceRpcCoAuthVerifier
-{
-    uint8_t auth_type;
-    uint8_t auth_level;
-    uint8_t auth_pad_length;
-    uint8_t auth_reserved;
-    uint32_t auth_context_id;
-};
-
-struct DceRpcCoRequest
-{
-    uint32_t alloc_hint;
-    uint16_t context_id;
-    uint16_t opnum;
-};
-
-struct DceRpcCoResponse
-{
-    uint32_t alloc_hint;
-    uint16_t context_id;
-    uint8_t cancel_count;
-    uint8_t reserved;
-};
-
-struct DceRpcCoContResultList
-{
-    uint8_t n_results;
-    uint8_t reserved;
-    uint16_t reserved2;
-};
-
-typedef DceRpcCoBind DceRpcCoAltCtx;
-typedef DceRpcCoBindAck DceRpcCoAltCtxResp;
 
 #pragma pack()
 
@@ -217,56 +140,6 @@ struct DCE2_CoTracker
     DCE2_CoSeg srv_seg;
 };
 
-/*
- * Connection oriented
- */
-enum DceRpcCoPfcFlags
-{
-    DCERPC_CO_PFC_FLAGS__FIRST_FRAG = 0x01,
-    DCERPC_CO_PFC_FLAGS__LAST_FRAG = 0x02,
-    DCERPC_CO_PFC_FLAGS__PENDING_CANCEL = 0x04,
-    DCERPC_CO_PFC_FLAGS__RESERVED_1 = 0x08,
-    DCERPC_CO_PFC_FLAGS__CONC_MPX = 0x10,
-    DCERPC_CO_PFC_FLAGS__DID_NOT_EXECUTE = 0x20,
-    DCERPC_CO_PFC_FLAGS__MAYBE = 0x40,
-    DCERPC_CO_PFC_FLAGS__OBJECT_UUID = 0x80
-};
-
-enum DCE2_CoCtxState
-{
-    DCE2_CO_CTX_STATE__ACCEPTED,
-    DCE2_CO_CTX_STATE__REJECTED,
-    DCE2_CO_CTX_STATE__PENDING
-};
-
-struct DCE2_CoCtxIdNode
-{
-    uint16_t ctx_id;           /* The context id */
-    Uuid iface;                /* The presentation syntax uuid for the interface */
-    uint16_t iface_vers_maj;   /* The major version of the interface */
-    uint16_t iface_vers_min;   /* The minor version of the interface */
-
-    /* Whether or not the server accepted or rejected the client bind/alter context
-     * request.  Initially set to pending until server response */
-    DCE2_CoCtxState state;
-};
-
-enum DceRpcCoAuthLevelType
-{
-    DCERPC_CO_AUTH_LEVEL__NONE = 1,
-    DCERPC_CO_AUTH_LEVEL__CONNECT,
-    DCERPC_CO_AUTH_LEVEL__CALL,
-    DCERPC_CO_AUTH_LEVEL__PKT,
-    DCERPC_CO_AUTH_LEVEL__PKT_INTEGRITY,
-    DCERPC_CO_AUTH_LEVEL__PKT_PRIVACY
-};
-
-enum DceRpcCoContDefResult
-{
-    DCERPC_CO_CONT_DEF_RESULT__ACCEPTANCE = 0,
-    DCERPC_CO_CONT_DEF_RESULT__USER_REJECTION,
-    DCERPC_CO_CONT_DEF_RESULT__PROVIDER_REJECTION
-};
 inline uint8_t DceRpcCoVersMaj(const DceRpcCoHdr* co)
 {
     return co->pversion.major;
@@ -292,115 +165,7 @@ inline uint16_t DceRpcCoFragLen(const DceRpcCoHdr* co)
     return DceRpcNtohs(&co->frag_length, DceRpcCoByteOrder(co));
 }
 
-inline uint8_t DceRpcCoNumCtxItems(const DceRpcCoBind* cob)
-{
-    return cob->n_context_elem;
-}
-
-inline uint16_t DceRpcCoContElemCtxId(const DceRpcCoHdr* co, const DceRpcCoContElem* coce)
-{
-    return DceRpcNtohs(&coce->p_cont_id, DceRpcCoByteOrder(co));
-}
-
-inline uint8_t DceRpcCoContElemNumTransSyntaxes(const DceRpcCoContElem* coce)
-{
-    return coce->n_transfer_syn;
-}
-
-inline const Uuid* DceRpcCoContElemIface(const DceRpcCoContElem* coce)
-{
-    return &coce->abstract_syntax.if_uuid;
-}
-
-inline uint16_t DceRpcCoContElemIfaceVersMaj(const DceRpcCoHdr* co, const DceRpcCoContElem* coce)
-{
-    return (uint16_t)(DceRpcNtohl(&coce->abstract_syntax.if_version, DceRpcCoByteOrder(co)) &
-           0x0000ffff);
-}
-
-inline uint16_t DceRpcCoContElemIfaceVersMin(const DceRpcCoHdr* co, const DceRpcCoContElem* coce)
-{
-    return (uint16_t)(DceRpcNtohl(&coce->abstract_syntax.if_version, DceRpcCoByteOrder(co)) >> 16);
-}
-
-inline uint16_t DceRpcCoBindAckMaxRecvFrag(const DceRpcCoHdr* co, const DceRpcCoBindAck* coba)
-{
-    return DceRpcNtohs(&coba->max_recv_frag, DceRpcCoByteOrder(co));
-}
-
-inline uint16_t DceRpcCoSecAddrLen(const DceRpcCoHdr* co, const DceRpcCoBindAck* coba)
-{
-    return DceRpcNtohs(&coba->sec_addr_len, DceRpcCoByteOrder(co));
-}
-
-inline uint16_t DceRpcCoContRes(const DceRpcCoHdr* co, const DceRpcCoContResult* cocr)
-{
-    return DceRpcNtohs(&cocr->result, DceRpcCoByteOrder(co));
-}
-
-inline int DceRpcCoObjectFlag(const DceRpcCoHdr* co)
-{
-    return co->pfc_flags & DCERPC_CO_PFC_FLAGS__OBJECT_UUID;
-}
-
-inline int DceRpcCoFirstFrag(const DceRpcCoHdr* co)
-{
-    return co->pfc_flags & DCERPC_CO_PFC_FLAGS__FIRST_FRAG;
-}
-
-inline int DceRpcCoLastFrag(const DceRpcCoHdr* co)
-{
-    return co->pfc_flags & DCERPC_CO_PFC_FLAGS__LAST_FRAG;
-}
-
-inline uint16_t DceRpcCoAuthLen(const DceRpcCoHdr* co)
-{
-    return DceRpcNtohs(&co->auth_length, DceRpcCoByteOrder(co));
-}
-
-inline uint8_t DceRpcCoAuthLevel(const DceRpcCoAuthVerifier* coav)
-{
-    return coav->auth_level;
-}
-
-inline uint16_t DceRpcCoAuthPad(const DceRpcCoAuthVerifier* coav)
-{
-    return coav->auth_pad_length;
-}
-
-inline uint16_t DceRpcCoCtxIdResp(const DceRpcCoHdr* co, const DceRpcCoResponse* cor)
-{
-    return DceRpcNtohs(&cor->context_id, DceRpcCoByteOrder(co));
-}
-
-inline uint16_t DceRpcCoBindMaxXmitFrag(const DceRpcCoHdr* co, const DceRpcCoBind* cob)
-{
-    return DceRpcNtohs(&cob->max_xmit_frag, DceRpcCoByteOrder(co));
-}
-
-inline uint8_t DceRpcCoContNumResults(const DceRpcCoContResultList* cocrl)
-{
-    return cocrl->n_results;
-}
-
-inline uint32_t DceRpcCoCallId(const DceRpcCoHdr* co)
-{
-    return DceRpcNtohl(&co->call_id, DceRpcCoByteOrder(co));
-}
-
-inline uint16_t DceRpcCoOpnum(const DceRpcCoHdr* co, const DceRpcCoRequest* cor)
-{
-    return DceRpcNtohs(&cor->opnum, DceRpcCoByteOrder(co));
-}
-
-inline uint16_t DceRpcCoCtxId(const DceRpcCoHdr* co, const DceRpcCoRequest* cor)
-{
-    return DceRpcNtohs(&cor->context_id, DceRpcCoByteOrder(co));
-}
-
 void DCE2_CoInitTracker(DCE2_CoTracker*);
-void DCE2_CoProcess(DCE2_SsnData*, DCE2_CoTracker*,
-    const uint8_t*, uint16_t);
 
 #endif
 
