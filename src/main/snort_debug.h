@@ -106,15 +106,18 @@ private:
 #define DebugFormat(dbg, fmt, ...) \
     Debug::print(__FILE__, __LINE__, dbg, fmt, __VA_ARGS__)
 
+#define DebugFormatNoFileLine(dbg, fmt, ...) \
+    Debug::print(nullptr, 0, dbg, fmt, __VA_ARGS__)
+
 #define DebugMessage(dbg, msg) DebugFormat(dbg, "%s", msg)
 
 #define DEBUG_WRAP(code) code
 
 #else
 #define DebugFormat(dbg, fmt, ...)
+#define DebugFormatNoFileLine(dbg, fmt, ...) 
 #define DebugMessage(dbg, msg)
 #define DEBUG_WRAP(code)
 #endif
 
 #endif
-

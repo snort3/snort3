@@ -89,6 +89,7 @@ DCE2_List* DCE2_ListNew(DCE2_ListType type, DCE2_ListKeyCompare kc,
 
     return list;
 }
+
 /********************************************************************
  * Function: DCE2_ListInsert()
  *
@@ -189,7 +190,6 @@ DCE2_Ret DCE2_ListInsert(DCE2_List* list, void* key, void* data)
     return DCE2_RET__SUCCESS;
 }
 
-
 /********************************************************************
  * Function: DCE2_ListFirst()
  *
@@ -261,7 +261,6 @@ void* DCE2_ListNext(DCE2_List* list)
 
     return nullptr;
 }
-
 
 /********************************************************************
  * Function: DCE2_ListEmpty()
@@ -445,3 +444,312 @@ static void DCE2_ListInsertBefore(DCE2_List* list, DCE2_ListNode* insert, DCE2_L
         list->num_nodes++;
     }
 }
+
+/********************************************************************
+ * Function: DCE2_ListFind()
+ *
+ * Trys to find a node in the list using key passed in.  If list
+ * is splayed, found node is moved to front of list.  The data
+ * associated with the node is returned.
+ *
+ * Arguments:
+ *  DCE2_List *
+ *      A pointer to the list object.
+ *  void *
+ *      Pointer to a key.
+ *
+ * Returns:
+ *  void *
+ *      If the key is found, the data associated with the node
+ *          is returned.
+ *      NULL is returned if the item cannot be found given the key.
+ *
+ ********************************************************************/
+void* DCE2_ListFind(DCE2_List* list, void* key)
+{
+    DCE2_ListNode* n;
+
+    if (list == nullptr)
+        return nullptr;
+
+    for (n = list->head; n != nullptr; n = n->next)
+    {
+        int comp = list->compare(key, n->key);
+        if (comp == 0)
+        {
+            /* Found it, break out */
+            break;
+        }
+        else if ((comp < 0) && (list->type == DCE2_LIST_TYPE__SORTED))
+        {
+            /* Don't look any more if the list is sorted */
+            return nullptr;
+        }
+    }
+
+    if (n != nullptr)
+    {
+        /* If list is splayed, move found node to front of list */
+        if ((list->type == DCE2_LIST_TYPE__SPLAYED) &&
+            (n != list->head))
+        {
+            n->prev->next = n->next;
+
+            if (n->next != nullptr)
+                n->next->prev = n->prev;
+            else  /* it's the tail */
+                list->tail = n->prev;
+
+            n->prev = nullptr;
+            n->next = list->head;
+            list->head->prev = n;
+            list->head = n;
+        }
+
+        return n->data;
+    }
+
+    return nullptr;
+}
+
+/********************************************************************
+ * Function: DCE2_QueueNew()
+ *
+ * Creates and initializes a new queue object.
+ *
+ * Arguments:
+ *  DCE2_QueueDataFree
+ *      An optional free function for the data inserted into
+ *      the queue.  If NULL is passed in, the user will be
+ *      responsible for freeing data left in the queue.
+ *
+ * Returns:
+ *  DCE2_Queue *
+ *      Pointer to a new queue object.
+ *      NULL if unable to allocate memory for the object.
+ *
+ ********************************************************************/
+DCE2_Queue* DCE2_QueueNew(DCE2_QueueDataFree df)
+{
+    DCE2_Queue* queue;
+
+    queue = (DCE2_Queue*)SnortAlloc(sizeof(DCE2_Queue));
+    if (queue == nullptr)
+        return nullptr;
+
+    queue->data_free = df;
+
+    return queue;
+}
+
+/********************************************************************
+ * Function: DCE2_QueueEnqueue()
+ *
+ * Inserts data into the queue.
+ *
+ * Arguments:
+ *  DCE2_Queue *
+ *      A pointer to the queue object.
+ *  void *
+ *      Pointer to the data to insert into the queue.
+ *
+ * Returns:
+ *  DCE2_Ret
+ *      DCE2_RET__ERROR if memory cannot be allocated for a new
+ *          queue node or the queue object passed in is NULL.
+ *      DCE2_RET__SUCCESS if the data is successfully added to
+ *          the queue.
+ *
+ ********************************************************************/
+DCE2_Ret DCE2_QueueEnqueue(DCE2_Queue* queue, void* data)
+{
+    DCE2_QueueNode* n;
+
+    if (queue == nullptr)
+        return DCE2_RET__ERROR;
+
+    n = (DCE2_QueueNode*)SnortAlloc(sizeof(DCE2_QueueNode));
+    if (n == nullptr)
+        return DCE2_RET__ERROR;
+
+    n->data = data;
+
+    if (queue->tail == nullptr)
+    {
+        queue->head = queue->tail = n;
+        n->next = nullptr;
+    }
+    else
+    {
+        queue->tail->next = n;
+        n->prev = queue->tail;
+        queue->tail = n;
+    }
+
+    queue->num_nodes++;
+
+    return DCE2_RET__SUCCESS;
+}
+
+/********************************************************************
+ * Function: DCE2_QueueDequeue()
+ *
+ * Removes and returns the data in the first node in the queue.
+ * Note that the user will have to free the data returned.  The
+ * data free function only applies to data that is in the queue
+ * when it is emptied or destroyed.
+ *
+ * Arguments:
+ *  DCE2_Queue *
+ *      A pointer to the queue object.
+ *
+ * Returns:
+ *  void *
+ *      The data in the first node in the queue.
+ *      NULL if there are no items in the queue or the queue object
+ *          passed in is NULL.
+ *
+ ********************************************************************/
+void* DCE2_QueueDequeue(DCE2_Queue* queue)
+{
+    DCE2_QueueNode* n;
+
+    if (queue == nullptr)
+        return nullptr;
+
+    n = queue->head;
+
+    if (n != nullptr)
+    {
+        void* data = n->data;
+
+        if (queue->head == queue->tail)
+        {
+            queue->head = queue->tail = nullptr;
+        }
+        else
+        {
+            queue->head->next->prev = nullptr;
+            queue->head = queue->head->next;
+        }
+
+        free((void*)n);
+
+        queue->num_nodes--;
+
+        return data;
+    }
+
+    return nullptr;
+}
+
+/********************************************************************
+ * Function: DCE2_QueueEmpty()
+ *
+ * Removes all of the nodes in a queue.  Does not delete the queue
+ * object itself.  Calls data free function for data if it is
+ * not NULL.
+ *
+ * Arguments:
+ *  DCE2_Queue *
+ *      A pointer to the queue object.
+ *
+ * Returns: None
+ *
+ ********************************************************************/
+void DCE2_QueueEmpty(DCE2_Queue* queue)
+{
+    DCE2_QueueNode* n;
+
+    if (queue == nullptr)
+        return;
+
+    n = queue->head;
+
+    while (n != nullptr)
+    {
+        DCE2_QueueNode* tmp = n->next;
+
+        if (queue->data_free != nullptr)
+            queue->data_free(n->data);
+
+        free((void*)n);
+        n = tmp;
+    }
+
+    queue->head = queue->tail = queue->current = nullptr;
+    queue->num_nodes = 0;
+}
+
+/********************************************************************
+ * Function: DCE2_QueueFirst()
+ *
+ * Returns a pointer to the data of the first node in the queue.
+ * Sets a current pointer to the first node in the queue for
+ * iterating over the queue.
+ *
+ * Arguments:
+ *  DCE2_Queue *
+ *      A pointer to the queue object.
+ *
+ * Returns:
+ *  void *
+ *      The data in the first node in the queue.
+ *      NULL if the queue object passed in is NULL, or there are
+ *          no items in the queue.
+ *
+ ********************************************************************/
+void* DCE2_QueueFirst(DCE2_Queue* queue)
+{
+    if (queue == nullptr)
+        return nullptr;
+
+    queue->current = queue->head;
+    queue->next = nullptr;
+
+    if (queue->current != nullptr)
+        return queue->current->data;
+
+    return nullptr;
+}
+
+/********************************************************************
+ * Function: DCE2_QueueNext()
+ *
+ * Increments the current pointer in the queue to the next node in
+ * the queue and returns the data associated with it.  This in
+ * combination with DCE2_QueueFirst is useful in a for loop to
+ * iterate over the items in a queue.
+ *
+ * Arguments:
+ *  DCE2_Queue *
+ *      A pointer to the queue object.
+ *
+ * Returns:
+ *  void *
+ *      The data in the next node in the queue.
+ *      NULL if the queue object passed in is NULL, or we are at
+ *          the end of the queue and there are no next nodes.
+ *
+ ********************************************************************/
+void* DCE2_QueueNext(DCE2_Queue* queue)
+{
+    if (queue == nullptr)
+        return nullptr;
+
+    if (queue->next != nullptr)
+    {
+        queue->current = queue->next;
+        queue->next = nullptr;
+        return queue->current->data;
+    }
+    else if (queue->current != nullptr)
+    {
+        queue->current = queue->current->next;
+        if (queue->current != nullptr)
+            return queue->current->data;
+    }
+
+    return nullptr;
+}
+

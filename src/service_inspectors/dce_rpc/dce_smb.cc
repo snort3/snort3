@@ -69,10 +69,13 @@ static DCE2_SmbSsnData* set_new_dce2_smb_session(Packet* p)
     return(&fd->dce2_smb_session);
 }
 
-static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf config)
+static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf* config)
 {
-    DCE2_SmbSsnData* dce2_smb_sess = NULL;
+    DCE2_SmbSsnData* dce2_smb_sess = nullptr;
     Profile profile(dce2_smb_pstat_new_session);
+
+    //FIXIT-M Re-evaluate after infrastructure/binder support if autodetect here
+    //is necessary
 
     if (DCE2_SmbAutodetect(p))
     {
@@ -99,9 +102,10 @@ static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf 
             DebugFormat(DEBUG_DCE_SMB,"Created (%p)\n", (void*)dce2_smb_sess);
 
             dce2_smb_sess->sd.trans = DCE2_TRANS_TYPE__SMB;
-            dce2_smb_sess->sd.server_policy = config.common.policy;
+            dce2_smb_sess->sd.server_policy = config->common.policy;
             dce2_smb_sess->sd.client_policy = DCE2_POLICY__WINXP;
             dce2_smb_sess->sd.wire_pkt = p;
+            dce2_smb_sess->sd.config = (void*)config;
 
             DCE2_SsnSetAutodetected(&dce2_smb_sess->sd, p);
         }
@@ -110,7 +114,7 @@ static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf 
     return dce2_smb_sess;
 }
 
-DCE2_SmbSsnData* dce2_handle_smb_session(Packet* p, dce2SmbProtoConf& config)
+DCE2_SmbSsnData* dce2_handle_smb_session(Packet* p, dce2SmbProtoConf* config)
 {
     Profile profile(dce2_smb_pstat_session);
 
@@ -134,7 +138,7 @@ DCE2_SmbSsnData* dce2_handle_smb_session(Packet* p, dce2SmbProtoConf& config)
                 DCE2_SsnNoInspect(sd);
                 dce2_smb_stats.sessions_aborted++;
                 dce2_smb_stats.bad_autodetects++;
-                return NULL;
+                return nullptr;
             }
             DCE2_SsnClearAutodetected(sd);
         }
@@ -200,7 +204,7 @@ void Dce2Smb::eval(Packet* p)
         return;
     }
 
-    dce2_smb_sess = dce2_handle_smb_session(p, config);
+    dce2_smb_sess = dce2_handle_smb_session(p, &config);
     if (!dce2_smb_sess)
     {
         return;

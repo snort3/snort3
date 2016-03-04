@@ -26,9 +26,11 @@
 #include "framework/module.h"
 #include "framework/inspector.h"
 #include "protocols/packet.h"
+#include "events/event_queue.h"
 
 extern const InspectApi dce2_smb_api;
 extern const InspectApi dce2_tcp_api;
+extern THREAD_LOCAL int dce2_detected;
 
 #define GID_DCE2 145
 
@@ -46,6 +48,40 @@ enum DCE2_Policy
     DCE2_POLICY__SAMBA_3_0_20,
 };
 
+struct dce2CommonStats
+{
+    PegCount events;
+    PegCount sessions_aborted;
+    PegCount bad_autodetects;
+
+    PegCount co_pdus;
+    PegCount co_bind;
+    PegCount co_bind_ack;
+    PegCount co_alter_ctx;
+    PegCount co_alter_ctx_resp;
+    PegCount co_bind_nack;
+    PegCount co_request;
+    PegCount co_response;
+    PegCount co_cancel;
+    PegCount co_orphaned;
+    PegCount co_fault;
+    PegCount co_auth3;
+    PegCount co_shutdown;
+    PegCount co_reject;
+    PegCount co_ms_pdu;
+    PegCount co_other_req;
+    PegCount co_other_resp;
+    PegCount co_req_fragments;
+    PegCount co_resp_fragments;
+    PegCount co_cli_max_frag_size;
+    PegCount co_cli_min_frag_size;
+    PegCount co_cli_seg_reassembled;
+    PegCount co_cli_frag_reassembled;
+    PegCount co_srv_max_frag_size;
+    PegCount co_srv_min_frag_size;
+    PegCount co_srv_seg_reassembled;
+    PegCount co_srv_frag_reassembled;
+};
 #define DCE2_SARG__POLICY_WIN2000       "Win2000"
 #define DCE2_SARG__POLICY_WINXP         "WinXP"
 #define DCE2_SARG__POLICY_WINVISTA      "WinVista"
@@ -65,14 +101,6 @@ struct dce2CommonProtoConf
 };
 
 #define DCE2_DEBUG__PAF_END_MSG    "=========================================================="
-
-/* DCE/RPC byte order flag */
-enum DceRpcBoFlag
-{
-    DCERPC_BO_FLAG__NONE,
-    DCERPC_BO_FLAG__BIG_ENDIAN,
-    DCERPC_BO_FLAG__LITTLE_ENDIAN
-};
 
 enum DceRpcPduType
 {
@@ -151,10 +179,11 @@ struct DCE2_SsnData
     DCE2_Policy server_policy;
     DCE2_Policy client_policy;
     int flags;
-    const Packet* wire_pkt;
+    Packet* wire_pkt;
     uint64_t alert_mask;
     DCE2_Roptions ropts;
     int autodetect_dir;
+    void* config;
 
     uint32_t cli_seq;
     uint32_t cli_nseq;
@@ -162,47 +191,13 @@ struct DCE2_SsnData
     uint32_t srv_nseq;
 };
 
-inline DceRpcBoFlag DceRpcByteOrder(const uint8_t value)
-{
-    if ((value & 0x10) >> 4)
-        return DCERPC_BO_FLAG__LITTLE_ENDIAN;
-
-    return DCERPC_BO_FLAG__BIG_ENDIAN;
-}
-
-inline uint16_t DceRpcNtohs(const uint16_t* ptr, const DceRpcBoFlag bo_flag)
-{
-    uint16_t value;
-
-    if (ptr == NULL)
-        return 0;
-
-#ifdef WORDS_MUSTALIGN
-    value = *((uint8_t*)ptr) << 8 | *((uint8_t*)ptr + 1);
-#else
-    value = *ptr;
-#endif  /* WORDS_MUSTALIGN */
-
-    if (bo_flag == DCERPC_BO_FLAG__NONE)
-        return value;
-
-#ifdef WORDS_BIGENDIAN
-    if (bo_flag == DCERPC_BO_FLAG__BIG_ENDIAN)
-#else
-    if (bo_flag == DCERPC_BO_FLAG__LITTLE_ENDIAN)
-#endif  /* WORDS_BIGENDIAN */
-        return value;
-
-    return ((value & 0xff00) >> 8) | ((value & 0x00ff) << 8);
-}
-
 inline void DCE2_ResetRopts(DCE2_Roptions* ropts)
 {
     ropts->first_frag = DCE2_SENTINEL;
     ropts->opnum = DCE2_SENTINEL;
     ropts->hdr_byte_order = DCE2_SENTINEL;
     ropts->data_byte_order = DCE2_SENTINEL;
-    ropts->stub_data = NULL;
+    ropts->stub_data = nullptr;
 }
 
 inline void DCE2_SsnSetAutodetected(DCE2_SsnData* sd, Packet* p)
@@ -237,9 +232,36 @@ inline int DCE2_SsnNoInspect(DCE2_SsnData* sd)
     return sd->flags & DCE2_SSN_FLAG__NO_INSPECT;
 }
 
+inline bool DCE2_GcDceDefrag(dce2CommonProtoConf* config)
+{
+    return config->disable_defrag;
+}
+
+inline int DCE2_SsnFromServer(Packet* p)
+{
+    return p->from_server();
+}
+
+inline int DCE2_SsnFromClient(Packet* p)
+{
+    return p->from_client();
+}
+
+inline DCE2_Policy DCE2_SsnGetServerPolicy(DCE2_SsnData* sd)
+{
+    return sd->server_policy;
+}
+
+inline void dce_alert(uint32_t gid, uint32_t sid, dce2CommonStats* stats)
+{
+    SnortEventqAdd(gid,sid);
+    stats->events++;
+}
+
 bool dce2_set_common_config(Value&, dce2CommonProtoConf&);
 void print_dce2_common_config(dce2CommonProtoConf&);
 bool dce2_paf_abort(Flow*, DCE2_SsnData*);
+void DCE2_Detect(DCE2_SsnData*);
 
 #endif
 
