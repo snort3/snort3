@@ -1,3 +1,12 @@
+16/03/04 - build 190
+
+-- fix console close and remote control disconnect issues
+-- added per-thread memcap calculation
+-- add statistics counters to host_tracker module
+-- new_http_inspect basic URI normalization with configuration options
+-- format string cleanup for parser logging
+-- fix conf reload by signal
+
 16/02/26 - build 189
 
 -- snort2lua for dce2 port (in progress)
