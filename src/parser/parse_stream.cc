@@ -614,7 +614,7 @@ static int get_escape(const string& s)
     if ( s == "pcre" )
         return 0;  // no escape, option goes to ;
 
-    else if ( s == "regex" )
+    else if ( s == "regex" || s == "sd_pattern" )
         return -1; // no escape, option goes to "
 
     return 1;      // escape, option goes to "

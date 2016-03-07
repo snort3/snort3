@@ -17,6 +17,7 @@ add_library(preprocessor_states
     pps_perfmonitor.cc
     pps_reputation.cc
     pps_rpc_decode.cc
+    pps_sdf.cc
     pps_sip.cc
     pps_ssh.cc
     pps_ssl.cc

@@ -12,6 +12,7 @@ add_library( rule_states
     rule_pcre.cc
     rule_react.cc
     rule_resp.cc
+    rule_sd_pattern.cc
     rule_stream_reassemble.cc
     rule_stream_size.cc
     rule_tag.cc

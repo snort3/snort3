@@ -31,6 +31,11 @@ SET( PLUGIN_LIST
     ips_rem.cc
     ips_rev.cc
     ips_rpc.cc
+    ips_sd_pattern.cc
+    sd_credit_card.cc
+    sd_credit_card.h
+    sd_pattern_match.cc
+    sd_pattern_match.h
     ips_seq.cc
     ips_session.cc
     ips_sid.cc
@@ -115,6 +120,7 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_rem ips_options ips_rem.cc)
     add_shared_library(ips_rev ips_options ips_rev.cc)
     add_shared_library(ips_rpc ips_options ips_rpc.cc)
+    add_shared_library(ips_sd_pattern ips_options ips_sd_pattern.cc sd_credit_card.cc sd_credit_card.h sd_pattern_match.cc sd_pattern_match.h)
     add_shared_library(ips_sid ips_options ips_sid.cc)
     add_shared_library(ips_seq ips_options ips_seq.cc)
     add_shared_library(ips_session ips_options ips_session.cc)
