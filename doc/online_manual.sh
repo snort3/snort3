@@ -46,7 +46,7 @@ cp ../*.{txt,png} ./
 
 # create a list of 'txt png' pairs
 grep -o 'image::.*.png' *.txt > $data
-sed -i .sed -e " s/:image::/ /" $data
+sed -i.sed -e " s/:image::/ /" $data
 
 # preprocess
 cat $data | while read txt png ; do
@@ -55,13 +55,17 @@ cat $data | while read txt png ; do
     #echo "preprocess $txt $png $pfx $img $b64"
 
     # get the raw base64 data file
-    base64 -b 80 -i $png -o $b64
+    # different options on osx linux :(
+    opt="w"
+    base64 --help | grep -q "\-b" && opt="b"
+
+    base64 -$opt 80 < $png > $b64
 
     # put this stub image tag into an include file
     make_img $pfx $img
 
     # make a version of the source that includes the above file
-    sed -i .sed -e " s/^image::$png.*/include::$img[]/" $txt
+    sed -i.sed -e " s/^image::$png.*/include::$img[]/" $txt
 done
 
 # generate the toc2 html with stub tag

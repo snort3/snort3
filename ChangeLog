@@ -1,3 +1,9 @@
+16/03/07 - build 191
+
+-- fix perf_monitor stats output at shutdown
+-- initial port of sensitive data as a rule option
+-- fix doc/online_manual.sh for linux
+
 16/03/04 - build 190
 
 -- fix console close and remote control disconnect issues
