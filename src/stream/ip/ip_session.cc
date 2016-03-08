@@ -152,6 +152,7 @@ bool IpSession::setup(Packet*)
     memset(&tracker, 0, sizeof(tracker));
     SESSION_STATS_ADD(ip_stats);
     ip_stats.trackers_created++;
+    ip_stats.current++;
 
 #ifdef ENABLE_EXPECTED_IP
     if ( flow_con->expected_session(flow, p))

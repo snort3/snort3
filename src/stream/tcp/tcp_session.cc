@@ -163,7 +163,7 @@ bool TcpSession::setup(Packet*)
     ingress_group = egress_group = 0;
     daq_flags = address_space_id = 0;
 
-    tcpStats.sessions++;
+    SESSION_STATS_ADD(tcpStats);
     return true;
 }
 

@@ -31,6 +31,11 @@
 
 struct SnortConfig;
 
+struct UdpStats
+{
+    SESSION_STATS;
+};
+
 extern const PegInfo udp_pegs[];
 extern THREAD_LOCAL struct UdpStats udpStats;
 extern THREAD_LOCAL ProfileStats udp_perf_stats;
@@ -56,6 +61,8 @@ public:
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     StreamUdpConfig* get_data();
+
+    void sum_stats() override;
 
 private:
     StreamUdpConfig* config;

@@ -91,3 +91,13 @@ const PegInfo* StreamUdpModule::get_pegs() const
 PegCount* StreamUdpModule::get_counts() const
 { return (PegCount*)&udpStats; }
 
+void StreamUdpModule::sum_stats()
+{
+    PegCount sessions = udpStats.sessions;
+
+    Module::sum_stats();
+
+    udpStats.sessions = sessions;
+    udpStats.max = sessions;
+}
+

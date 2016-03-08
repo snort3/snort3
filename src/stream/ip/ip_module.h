@@ -54,6 +54,32 @@ struct SnortConfig;
 #define DEFRAG_EXCESSIVE_OVERLAP  12
 #define DEFRAG_TINY_FRAGMENT      13
 
+/* statistics tracking struct */
+struct IpStats
+{
+    SESSION_STATS;
+    PegCount total;             //total_ipfragmented_packets
+    PegCount current;           //iCurrentFrags
+    PegCount max_frags;         //iMaxFrags
+    PegCount reassembles;       //total_ipreassembled_packets / iFragFlushes
+    PegCount discards;
+    PegCount frag_prunes;       //FIXIT-M: this isn't used. iFragFaults
+    PegCount frag_timeouts;     //iFragTimeouts
+    PegCount overlaps;
+    PegCount anomalies;
+    PegCount alerts;
+    PegCount drops;
+    PegCount trackers_created;  //iFragCreates
+    PegCount trackers_released;
+    PegCount trackers_cleared;  //iFragDeletes - delete meant dump the frag list
+    PegCount trackers_completed;//iFragComplete
+    PegCount nodes_created;     //iFragInserts tracked a similar stat (# calls to insert)
+    PegCount nodes_released;
+    PegCount mem_in_use;        //frag_mem_in_use
+    PegCount reassembled_bytes; //total_ipreassembled_bytes
+    PegCount fragmented_bytes;  //total_ipfragmented_bytes
+};
+
 extern const PegInfo ip_pegs[];
 extern THREAD_LOCAL struct IpStats ip_stats;
 extern THREAD_LOCAL ProfileStats ip_perf_stats;
@@ -88,6 +114,8 @@ public:
 
     unsigned get_gid() const override
     { return GID_DEFRAG; }
+
+    void sum_stats() override;
 
 private:
     StreamIpConfig* config;

@@ -371,11 +371,14 @@ void StreamTcpModule::sum_stats()
     PegCount init = tcpStats.sessions_initializing;
     PegCount est = tcpStats.sessions_established;
     PegCount closing = tcpStats.sessions_closing;
+    PegCount sessions = tcpStats.sessions;
 
     Module::sum_stats();
 
     tcpStats.sessions_initializing = init;
     tcpStats.sessions_established = est;
     tcpStats.sessions_closing = closing;
+    tcpStats.sessions = sessions;
+    tcpStats.max = sessions;
 }
 

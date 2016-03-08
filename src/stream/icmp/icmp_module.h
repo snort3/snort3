@@ -32,6 +32,11 @@ extern THREAD_LOCAL ProfileStats icmp_perf_stats;
 
 struct SnortConfig;
 
+struct IcmpStats
+{
+    SESSION_STATS;
+};
+
 //-------------------------------------------------------------------------
 // stream_icmp module
 //-------------------------------------------------------------------------
@@ -54,6 +59,8 @@ public:
     PegCount* get_counts() const override;
 
     StreamIcmpConfig* get_data();
+
+    void sum_stats() override;
 
 private:
     StreamIcmpConfig* config;

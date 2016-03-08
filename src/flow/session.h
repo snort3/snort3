@@ -75,9 +75,6 @@ public:
 
 /* These should be tracked by all Session subclasses. Add to top of peg list.
  * Having these predefined stats improves consistency and provides convenience.
- * Some useful derived stats:
- * current = created - released
- * normal closes = released - timeouts - prunes
  */
 #define SESSION_PEGS(module) \
     { "sessions", "total " module " sessions" }, \
@@ -98,12 +95,10 @@ public:
 
 #define SESSION_STATS_ADD(stats) \
     { \
-        PegCount current; \
         stats.sessions++; \
         stats.created++; \
-        current = (stats).created - (stats).released; \
-        if ( (stats).max < current ) \
-            (stats).max = current; \
+        if ( (stats).max < (stats).sessions ) \
+            (stats).max = (stats).sessions; \
     }
 
 #endif

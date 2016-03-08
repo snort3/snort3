@@ -216,3 +216,15 @@ const PegInfo* StreamIpModule::get_pegs() const
 PegCount* StreamIpModule::get_counts() const
 { return (PegCount*)&ip_stats; }
 
+void StreamIpModule::sum_stats()
+{
+    PegCount sessions = ip_stats.sessions;
+    PegCount current = ip_stats.current;
+
+    Module::sum_stats();
+
+    ip_stats.sessions = sessions;
+    ip_stats.max = sessions;
+    ip_stats.current = current;
+}
+

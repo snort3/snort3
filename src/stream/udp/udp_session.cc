@@ -45,11 +45,6 @@
 // NOTE:  sender is assumed to be client
 //        responder is assumed to be server
 
-struct UdpStats
-{
-    SESSION_STATS;
-};
-
 const PegInfo udp_pegs[] =
 {
     SESSION_PEGS("udp"),

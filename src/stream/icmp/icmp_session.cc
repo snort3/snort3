@@ -44,11 +44,6 @@
 #include "icmp_module.h"
 #include "icmp_session.h"
 
-struct IcmpStats
-{
-    SESSION_STATS;
-};
-
 const PegInfo icmp_pegs[] =
 {
     SESSION_PEGS("icmp"),

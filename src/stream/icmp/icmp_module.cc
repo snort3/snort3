@@ -83,3 +83,13 @@ const PegInfo* StreamIcmpModule::get_pegs() const
 PegCount* StreamIcmpModule::get_counts() const
 { return (PegCount*)&icmpStats; }
 
+void StreamIcmpModule::sum_stats()
+{
+    PegCount sessions = icmpStats.sessions;
+
+    Module::sum_stats();
+
+    icmpStats.sessions = sessions;
+    icmpStats.max = sessions;
+}
+
