@@ -12,7 +12,7 @@ host_module_test_CPPFLAGS = @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
 host_cache_test_CPPFLAGS = @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
 host_tracker_test_CPPFLAGS = @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
 
-host_module_test_LDADD = ../host_module.o ../host_cache.o ../host_tracker.o ../../framework/libframework.a ../../catch/libcatch_tests.a ../../sfip/libsfip.a ../../utils/libutils.a  @CPPUTEST_LDFLAGS@
+host_module_test_LDADD = ../host_module.o ../host_cache.o ../host_tracker.o ../../framework/libframework.a ../../catch/libcatch_tests.a ../../sfip/libsfip.a @CPPUTEST_LDFLAGS@
 host_cache_test_LDADD = ../host_cache.o ../host_tracker.o  @CPPUTEST_LDFLAGS@
 host_tracker_test_LDADD = ../host_tracker.o @CPPUTEST_LDFLAGS@
 

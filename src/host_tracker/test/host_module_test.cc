@@ -43,6 +43,10 @@ void show_stats(
 {
 }
 
+void show_stats( PegCount* , const PegInfo* , IndexVec& , const char* )
+{
+}
+
 #define FRAG_POLICY 33
 #define STREAM_POLICY 100
 
