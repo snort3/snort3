@@ -458,12 +458,8 @@ inline uint8_t NbssType(const NbssHdr* nb)
 
 inline uint32_t SmbId(const SmbNtHdr* hdr)
 {
-#ifdef WORDS_MUSTALIGN
     uint8_t* idf = (uint8_t*)hdr->smb_idf;
     return *idf << 24 | *(idf + 1) << 16 | *(idf + 2) << 8 | *(idf + 3);
-#else
-    return ntohl(*((uint32_t*)hdr->smb_idf));
-#endif  /* WORDS_MUSTALIGN */
 }
 
 inline bool DCE2_SmbAutodetect(Packet* p)

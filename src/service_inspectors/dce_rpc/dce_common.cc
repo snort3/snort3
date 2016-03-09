@@ -140,7 +140,9 @@ void DCE2_PrintRoptions(DCE2_Roptions* ropts)
     if (ropts->opnum == DCE2_SENTINEL)
         DebugMessage(DEBUG_DCE_COMMON, "  Opnum: unset\n");
     else
+    {
         DebugFormat(DEBUG_DCE_COMMON, "  Opnum: %u\n", ropts->opnum);
+    }
     DebugFormat(DEBUG_DCE_COMMON, "  Header byte order: %s\n",
         ropts->hdr_byte_order == DCERPC_BO_FLAG__LITTLE_ENDIAN ? "little endian" :
         (ropts->hdr_byte_order == DCERPC_BO_FLAG__BIG_ENDIAN ? "big endian" : "unset"));
@@ -150,7 +152,9 @@ void DCE2_PrintRoptions(DCE2_Roptions* ropts)
     if (ropts->stub_data != nullptr)
         DebugFormat(DEBUG_DCE_COMMON, "  Stub data: %p\n", ropts->stub_data);
     else
+    {
         DebugMessage(DEBUG_DCE_COMMON, "  Stub data: NULL\n");
+    }
 }
 
 static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)

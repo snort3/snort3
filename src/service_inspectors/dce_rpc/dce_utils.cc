@@ -193,6 +193,7 @@ const char* DCE2_UuidToStr(const Uuid* uuid, DceRpcBoFlag byte_order)
     return uuid_buf;
 }
 
+#ifdef DEBUG_MSGS
 void DCE2_PrintPktData(const uint8_t* data, const uint16_t len)
 {
     unsigned int i, j = 0, line_len = 0;
@@ -284,7 +285,7 @@ void DCE2_PrintPktData(const uint8_t* data, const uint16_t len)
         sub_line_len = 0;
         for (k = 0; k < j; k++)
         {
-           DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%c", char_buf[k]);
+            DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%c", char_buf[k]);
             if (sub_line_len >= 7)
             {
                 DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%s"," ");
@@ -299,4 +300,11 @@ void DCE2_PrintPktData(const uint8_t* data, const uint16_t len)
 
     DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%s","\n");
 }
+
+#else
+void DCE2_PrintPktData(const uint8_t*, const uint16_t)
+{
+}
+
+#endif // DEBUG_MSGS
 
