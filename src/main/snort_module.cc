@@ -518,6 +518,7 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     const PegInfo* get_pegs() const override { return proc_names; }
     PegCount* get_counts() const override { return (PegCount*) &proc_stats; }
+    bool global_stats() const override { return true; }
 };
 
 bool SnortModule::set(const char*, Value& v, SnortConfig* sc)

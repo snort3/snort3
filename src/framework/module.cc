@@ -71,10 +71,18 @@ void Module::sum_stats()
     if ( !p )
         return;
 
-    for ( int i = 0; i < num_counts; i++ )
+    if ( global_stats() )
     {
-        counts[i] += p[i];
-        p[i] = 0;
+        for ( int i = 0; i < num_counts; i++ )
+            counts[i] = p[i];
+    }
+    else
+    {
+        for ( int i = 0; i < num_counts; i++ )
+        {
+            counts[i] += p[i];
+            p[i] = 0;
+        }
     }
 }
 

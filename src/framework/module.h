@@ -141,6 +141,9 @@ public:
     virtual const char* get_defaults() const
     { return nullptr; }
 
+    virtual bool global_stats() const
+    { return false; }
+
     virtual void sum_stats();
     virtual void show_interval_stats(IndexVec&);
     virtual void show_stats();
