@@ -26,7 +26,7 @@
 
 static const std::string start_comments =
     "\nCOMMENTS:\n"
-    "    these line were commented "
+    "    these lines were commented "
     "in the configuration file.\n\n";
 
 static const std::string start_errors =
