@@ -19,13 +19,12 @@
 
 // zhash is based on sfxhash - see sfxhash.cc for details
 
+#include "zhash.h"
+
 #include <assert.h>
 #include <stdlib.h>
 
-#include "zhash.h"
 #include "sfhashfcn.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 #include "utils/util.h"
 
 //-------------------------------------------------------------------------
@@ -46,6 +45,18 @@ struct ZHashNode
     void* data = nullptr;
 };
 
+static inline ZHashNode* s_node_alloc(int keysize)
+{
+    auto node = static_cast<ZHashNode*>(
+        ::operator new(sizeof(ZHashNode) + keysize));
+
+    memset(node, 0, sizeof(ZHashNode));
+    return node;
+}
+
+static inline void s_node_free(ZHashNode* node)
+{ ::operator delete(node); }
+
 void ZHash::delete_free_list()
 {
     if ( !fhead )
@@ -56,7 +67,7 @@ void ZHash::delete_free_list()
     while ( cur )
     {
         fhead = cur->gnext;
-        free(cur);
+        s_node_free(cur);
         cur = fhead;
     }
 }
@@ -249,10 +260,7 @@ ZHash::ZHash(int rows, int keysz)
     }
 
     /* Allocate the array of node ptrs */
-    table = new ZHashNode*[rows];
-
-    for ( int i = 0; i < rows; ++i )
-        table[i] = nullptr;
+    table = new ZHashNode*[rows]();
 
     keysize = keysz;
     nrows = rows;
@@ -275,7 +283,7 @@ ZHash::~ZHash()
             {
                 ZHashNode* onode = node;
                 node = node->next;
-                free(onode);
+                s_node_free(onode);
             }
         }
         delete[] table;
@@ -285,8 +293,7 @@ ZHash::~ZHash()
 
 void* ZHash::push(void* p)
 {
-    ZHashNode* node =
-        (ZHashNode*)SnortAlloc(sizeof(ZHashNode) + keysize);
+    auto node = s_node_alloc(keysize);
 
     node->key = (char*)node + sizeof(ZHashNode);
     node->data = p;
@@ -303,7 +310,7 @@ void* ZHash::pop()
         return nullptr;
 
     void* pv = node->data;
-    free(node);
+    s_node_free(node);
 
     return pv;
 }

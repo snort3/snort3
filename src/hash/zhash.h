@@ -20,6 +20,8 @@
 #ifndef ZHASH_H
 #define ZHASH_H
 
+#include <cstddef>
+
 struct SFHASHFCN;
 struct ZHashNode;
 
