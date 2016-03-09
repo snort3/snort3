@@ -49,6 +49,7 @@ extern const ConvertMap* dns_map;
 extern const ConvertMap* pop_map;
 extern const ConvertMap* imap_map;
 extern const ConvertMap* modbus_map;
+extern const ConvertMap* sdf_map;
 extern const ConvertMap* smtp_map;
 extern const ConvertMap* sfportscan_map;
 extern const ConvertMap* stream_ip_map;
@@ -64,30 +65,31 @@ const std::vector<const ConvertMap*> preprocessor_api =
     dcerpc_map,
     dcerpc_server_map,
     dnp3_map,
+    dns_map,
     frag3_engine_map,
     frag3_global_map,
     ftptelnet_map,
-    httpinspect_map,
-    httpinspect_server_map,
     ftptelnet_protocol_map,
     gtp_map,
+    httpinspect_map,
+    httpinspect_server_map,
+    imap_map,
+    modbus_map,
     normalizer_icmp4_map,
     normalizer_icmp6_map,
     normalizer_ip4_map,
     normalizer_ip6_map,
     normalizer_tcp_map,
     perfmonitor_map,
+    pop_map,
     reputation_map,
     rpc_decode_map,
+    sdf_map,
+    sfportscan_map,
     sip_map,
+    smtp_map,
     ssh_map,
     ssl_map,
-    dns_map,
-    pop_map,
-    imap_map,
-    modbus_map,
-    smtp_map,
-    sfportscan_map,
     stream_ip_map,
     stream_global_map,
     stream_tcp_map,

@@ -79,6 +79,7 @@ extern const ConvertMap* resp_map;
 extern const ConvertMap* rev_map;
 extern const ConvertMap* rpc_map;
 extern const ConvertMap* sameip_map;
+extern const ConvertMap* sd_pattern_map;
 extern const ConvertMap* seq_map;
 extern const ConvertMap* session_map;
 extern const ConvertMap* sid_map;
@@ -155,6 +156,7 @@ const std::vector<const ConvertMap*> rule_options_api =
     rev_map,
     rpc_map,
     sameip_map,
+    sd_pattern_map,
     seq_map,
     session_map,
     sid_map,

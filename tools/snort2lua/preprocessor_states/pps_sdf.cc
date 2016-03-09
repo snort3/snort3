@@ -22,9 +22,28 @@
 
 namespace preprocessors
 {
-static ConversionState* sdf_ctor(Converter&)
+namespace
 {
-    return nullptr;
+class Sdf : public ConversionState
+{
+public:
+    Sdf(Converter& c) : ConversionState(c) { }
+    virtual ~Sdf() { }
+    virtual bool convert(std::istringstream& data_stream)
+    {
+        std::string keyword;
+
+        // skip over `preprocessor sensitive_data` because it is now a rule option.
+        while (data_stream >> keyword);
+
+        return true;
+    }
+};
+} // namespace
+
+static ConversionState* sdf_ctor(Converter& c)
+{
+    return new Sdf(c);
 }
 
 static const ConvertMap preprocessor_sdf =
