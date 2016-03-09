@@ -36,18 +36,21 @@
 #    define THREAD_LOCAL __thread
 #endif
 
-void set_instance_id(unsigned);
-void set_instance_max(unsigned);
-void set_packet_thread(bool);
+enum SThreadType
+{
+    STHREAD_TYPE_PACKET,
+    STHREAD_TYPE_MAIN
+};
 
-struct SnortConfig;
-bool set_cpu_affinity(SnortConfig*, const std::string&, int cpu);
-bool set_cpu_affinity(SnortConfig*, int thread, int cpu);
-void pin_thread_to_cpu(const char* source);
+void set_instance_id(unsigned);
+void set_thread_type(SThreadType);
 
 SO_PUBLIC unsigned get_instance_id();
-SO_PUBLIC unsigned get_instance_max();
-SO_PUBLIC bool is_packet_thread();
+SO_PUBLIC SThreadType get_thread_type();
+SO_PUBLIC inline bool is_packet_thread()
+{
+    return get_thread_type() == STHREAD_TYPE_PACKET;
+}
 
 // all modules that use packet thread files should call this function to
 // get a packet thread specific path.  name should be the module name or
@@ -58,4 +61,3 @@ void take_break();
 bool break_time();
 
 #endif
-

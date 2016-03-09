@@ -54,6 +54,7 @@
 #include "detection/sfrim.h"
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
+#include "main/thread_config.h"
 #include "ports/port_object.h"
 #include "ports/rule_port_tables.h"
 #include "protocols/packet.h"
@@ -1161,7 +1162,7 @@ static void finalize_content(OptFpList* ofl)
 
     if ( pmd->negated )
         pmd->last_check = (PmdLastCheck*)SnortAlloc(
-            get_instance_max() * sizeof(*pmd->last_check));
+            ThreadConfig::get_instance_max() * sizeof(*pmd->last_check));
 }
 
 bool is_fast_pattern_only(OptFpList* ofl)
@@ -1420,7 +1421,7 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
         parse_rule_ports(sc, "any", false, rtn);
     }
     OptTreeNode* otn = (OptTreeNode*)SnortAlloc(sizeof(OptTreeNode));
-    otn->state = (OtnState*)SnortAlloc(sizeof(OtnState)*get_instance_max());
+    otn->state = (OtnState*)SnortAlloc(sizeof(OtnState)*ThreadConfig::get_instance_max());
 
     if ( !stub )
         otn->sigInfo.generator = GENERATOR_SNORT_ENGINE;

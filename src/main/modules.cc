@@ -24,46 +24,34 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string.h>
+#include "snort_config.h"
+#include "snort_module.h"
+#include "thread_config.h"
 
-#include <string>
-#include <memory>
-using namespace std;
-
+#include "codecs/codec_module.h"
+#include "detection/fp_config.h"
+#include "filters/detection_filter.h"
+#include "filters/rate_filter.h"
+#include "filters/sfrf.h"
+#include "filters/sfthd.h"
+#include "filters/sfthreshold.h"
 #include "framework/module.h"
+#include "host_tracker/host_module.h"
+#include "latency/latency_module.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
-#include "main.h"
-#include "main/snort.h"
-#include "main/snort_config.h"
-#include "main/snort_module.h"
-#include "main/thread.h"
 #include "memory/memory_module.h"
-#include "parser/parser.h"
-#include "parser/parse_conf.h"
 #include "parser/config_file.h"
-#include "parser/cmd_line.h"
+#include "parser/parse_conf.h"
 #include "parser/parse_ip.h"
-#include "file_api/file_service.h"
-#include "file_api/file_config.h"
-#include "filters/sfthd.h"
-#include "filters/sfrf.h"
-#include "filters/rate_filter.h"
-#include "codecs/codec_module.h"
-#include "latency/latency_module.h"
+#include "parser/parser.h"
 #include "profiler/profiler.h"
-#include "target_based/sftarget_data.h"
-#include "detection/fp_config.h"
-#include "detection/signature.h"
-#include "filters/detection_filter.h"
-#include "filters/sfthreshold.h"
 #include "search_engines/pat_stats.h"
 #include "sfip/sf_ip.h"
-#include "stream/stream_api.h"
-#include "utils/stats.h"
+#include "target_based/sftarget_data.h"
 #include "target_based/snort_protocols.h"
-#include "host_tracker/host_module.h"
+
+using namespace std;
 
 //-------------------------------------------------------------------------
 // detection module
@@ -1200,11 +1188,8 @@ bool IpsModule::set(const char*, Value& v, SnortConfig*)
 
 static const Parameter thread_pinning_params[] =
 {
-    { "cpu", Parameter::PT_INT, "0:127", "0",
-      "pin the associated source/thread to this cpu" },
-
-    { "source", Parameter::PT_STRING, nullptr, nullptr,
-      "set cpu affinity for this source (either pcap or <iface>" },
+    { "cpuset", Parameter::PT_STRING, nullptr, nullptr,
+      "pin the associated thread to this cpuset" },
 
     { "thread", Parameter::PT_INT, "0:", "0",
       "set cpu affinity for the <cur_thread_num> thread that runs" },
@@ -1253,12 +1238,11 @@ public:
     bool end(const char*, int, SnortConfig*) override;
 
 private:
-    std::string source;
     int thread;
-    int cpu;
+    CpuSet* cpuset;
 };
 
-bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
+bool ProcessModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
     if ( v.is("daemon") )
     {
@@ -1287,12 +1271,11 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
         if ( v.get_bool() )
             ConfigUtc(sc, "");
     }
-    else if (v.is("cpu"))
-        cpu = v.get_long();
-
-    else if (v.is("source"))
-        source = v.get_string();
-
+    else if (v.is("cpuset"))
+    {
+        if (!(cpuset = ThreadConfig::validate_cpuset_string(v.get_string())))
+            return false;
+    }
     else if (v.is("thread"))
         thread = v.get_long();
 
@@ -1304,9 +1287,8 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
 
 bool ProcessModule::begin(const char*, int, SnortConfig*)
 {
-    source.clear();
     thread = -1;
-    cpu = -1;
+    cpuset = nullptr;
     return true;
 }
 
@@ -1317,29 +1299,19 @@ bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
 
     if (!strcmp(fqn, "process.threads"))
     {
-        if (cpu == -1)
+        if (thread == -1)
         {
-            ParseError("%s - cpu(%d) for thread (%d) and source (%s) "
-                "must be an integer in the range of 0 < cpu < max_cpus",
-                fqn, cpu, thread, source.c_str());
+            ParseError("%s - no thread ID specified", fqn);
+            if (cpuset)
+                ThreadConfig::destroy_cpuset(cpuset);
             return false;
         }
-        else if ((source.empty()) && (thread == -1))
+        if (!cpuset)
         {
-            ParseError("%s - must have either a source or a thread", fqn);
+            ParseError("%s - no cpuset specified for thread %d", fqn, thread);
             return false;
         }
-        else if ((!source.empty()) && (thread >= 0))
-        {
-            ParseError("%s - cannot set both thread(%d) and source(%s)",
-                fqn, thread, source.c_str());
-            return false;
-        }
-        else if (!source.empty())
-            set_cpu_affinity(sc, source, cpu);
-
-        else
-            set_cpu_affinity(sc, thread, cpu);
+        sc->thread_config->set_thread_affinity(STHREAD_TYPE_PACKET, thread, cpuset);
     }
 
     return true;

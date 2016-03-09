@@ -27,36 +27,28 @@
 #include <malloc.h>
 #endif
 
-#include "snort_types.h"
-#include "thread.h"
-#include "detection/treenodes.h"
-#include "events/event_queue.h"
-#include "stream/stream_api.h"
-#include "port_scan/ps_detect.h"  // FIXIT-L for PS_PROTO_*
-#include "utils/strvec.h"
-#include "file_api/file_service.h"
-#include "file_api/file_config.h"
-#include "target_based/sftarget_reader.h"
-#include "parser/parser.h"
-#include "parser/config_file.h"
-#include "parser/vars.h"
-#include "helpers/process.h"
+#include "thread_config.h"
+
+#include "detection/fp_config.h"
+#include "detection/fp_create.h"
+#include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
+#include "filters/sfthreshold.h"
+#include "helpers/process.h"
+#include "ips_options/ips_pcre.h"
+#include "latency/latency_config.h"
+#include "managers/inspector_manager.h"
 #include "managers/ips_manager.h"
 #include "managers/module_manager.h"
 #include "managers/mpse_manager.h"
-#include "managers/inspector_manager.h"
 #include "memory/memory_config.h"
-#include "filters/sfthreshold.h"
-#include "filters/detection_filter.h"
-#include "detection/fp_config.h"
-#include "detection/fp_create.h"
-#include "ips_options/ips_pcre.h"
-#include "protocols/udp.h"
-#include "latency/latency_config.h"
+#include "parser/parser.h"
+#include "parser/vars.h"
 #include "profiler/profiler.h"
 #include "sfip/sf_ip.h"
+#include "target_based/sftarget_reader.h"
+#include "utils/strvec.h"
 
 #ifdef HAVE_HYPERSCAN
 #include "ips_options/ips_regex.h"
@@ -172,7 +164,7 @@ SnortConfig::SnortConfig()
 
     InspectorManager::new_config(this);
 
-    num_slots = get_instance_max();
+    num_slots = ThreadConfig::get_instance_max();
     state = (SnortState*)SnortAlloc(sizeof(SnortState)*num_slots);
 
     profiler = new ProfilerConfig;
@@ -187,8 +179,7 @@ SnortConfig::SnortConfig()
     set_ips_policy(get_ips_policy());
     set_network_policy(get_network_policy());
 
-    source_affinity = new std::map<const std::string, int>;
-    thread_affinity = new std::vector<int>(32, -1);
+    thread_config = new ThreadConfig();
 
     sfip_clear(homenet);
     sfip_clear(obfuscation_net);
@@ -247,11 +238,7 @@ SnortConfig::~SnortConfig()
 
     free(state);
 
-    if (source_affinity)
-        delete source_affinity;
-
-    if (thread_affinity)
-        delete thread_affinity;
+    delete thread_config;
 
     if (gtp_ports)
         delete gtp_ports;
@@ -444,7 +431,7 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     var_list = NULL;
 
     free(state);
-    num_slots = get_instance_max();
+    num_slots = ThreadConfig::get_instance_max();
     state = (SnortState*)SnortAlloc(sizeof(SnortState)*num_slots);
 }
 

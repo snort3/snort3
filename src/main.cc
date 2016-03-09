@@ -41,11 +41,12 @@
 #include <thread>
 using namespace std;
 
+#include "main/analyzer.h"
+#include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/snort_module.h"
-#include "main/shell.h"
-#include "main/analyzer.h"
+#include "main/thread_config.h"
 #include "framework/module.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
@@ -77,6 +78,7 @@ using namespace std;
 static Swapper* swapper = NULL;
 
 static int exit_logged = 0;
+static int main_exit_code = 0;
 static bool paused = false;
 static bool unknown_source = false;
 
@@ -234,25 +236,29 @@ class Pig
 {
 public:
     Analyzer* analyzer;
-    std::thread* athread;
 
     Pig() { analyzer = nullptr; }
 
-    void start(unsigned, const char*, Swapper*);
-    void stop(unsigned);
+    void set_index(unsigned index) { idx = index; }
+
+    void start(const char*, Swapper*);
+    void stop();
 
     void execute(AnalyzerCommand);
     void swap(Swapper*);
+private:
+    std::thread* athread;
+    unsigned idx;
 };
 
-void Pig::start(unsigned idx, const char* source, Swapper* ps)
+void Pig::start(const char* source, Swapper* ps)
 {
     LogMessage("++ [%u] %s\n", idx, source);
     analyzer = new Analyzer(source);
     athread = new std::thread(std::ref(*analyzer), idx, ps);
 }
 
-void Pig::stop(unsigned idx)
+void Pig::stop()
 {
     if ( !analyzer->is_done() )
         analyzer->execute(AC_STOP);
@@ -735,8 +741,12 @@ static bool set_mode()
         exit(Piglet::main());
 #endif
 #ifdef UNIT_TEST
+    // FIXIT-M: X we should move this out of set_mode and not do Snort bringup/teardown at all
     if ( catch_enabled() )
-        exit(catch_test());
+    {
+        main_exit_code = catch_test();
+        return false;
+    }
 #endif
 
     if ( int k = get_parse_errors() )
@@ -829,14 +839,14 @@ static void main_loop()
             {
                 if ( pig.analyzer->is_done() )
                 {
-                    pig.stop(idx);
+                    pig.stop();
                     --swine;
                 }
             }
             else if ( const char* src = get_source() )
             {
                 Swapper* swapper = new Swapper(snort_conf, SFAT_GetConfig());
-                pig.start(idx, src, swapper);
+                pig.start(src, swapper);
                 ++swine;
                 continue;
             }
@@ -852,21 +862,26 @@ static void snort_main()
 #endif
     TimeStart();
 
-    max_pigs = get_instance_max();
+    max_pigs = ThreadConfig::get_instance_max();
     assert(max_pigs > 0);
 
     pigs = new Pig[max_pigs];
+
+    for (unsigned idx = 0; idx < max_pigs; idx++)
+    {
+        Pig& pig = pigs[idx];
+        pig.set_index(idx);
+    }
 
     memory::MemoryCap::calculate(max_pigs);
 
     main_loop();
 
-    for ( unsigned idx = 0; idx < max_pigs; ++idx )
+    for (unsigned idx = 0; idx < max_pigs; idx++)
     {
         Pig& pig = pigs[idx];
-
         if ( pig.analyzer )
-            pig.stop(idx);
+            pig.stop();
     }
     delete[] pigs;
     pigs = nullptr;
@@ -891,6 +906,6 @@ int main(int argc, char* argv[])
 
     Snort::cleanup();
 
-    return 0;
+    return main_exit_code;
 }
 

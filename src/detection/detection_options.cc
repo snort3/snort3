@@ -50,7 +50,7 @@
 #include "ips_options/ips_pcre.h"
 #include "filters/detection_filter.h"
 #include "latency/packet_latency.h"
-#include "main/thread.h"
+#include "main/thread_config.h"
 #include "framework/ips_option.h"
 #include "framework/cursor.h"
 #include "managers/ips_manager.h"
@@ -764,7 +764,7 @@ static void detection_option_node_update_otn_stats(detection_option_tree_node_t*
 
     memset(&node_stats, 0, sizeof(node_stats));
 
-    for ( unsigned i = 0; i < get_instance_max(); ++i )
+    for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
     {
         node_stats.elapsed += node->state[i].elapsed;
         node_stats.elapsed_match += node->state[i].elapsed_match;
@@ -840,7 +840,7 @@ void detection_option_tree_update_otn_stats(SFXHASH* doth)
         uint64_t timeouts = 0;
         uint64_t suspends = 0;
 
-        for ( unsigned i = 0; i < get_instance_max(); ++i )
+        for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
         {
             checks += node->state[i].checks;
             timeouts += node->state[i].latency_timeouts;
@@ -858,7 +858,7 @@ detection_option_tree_root_t* new_root()
     detection_option_tree_root_t* p = (detection_option_tree_root_t*)
         SnortAlloc(sizeof(detection_option_tree_root_t));
 
-    p->latency_state = new RuleLatencyState[get_instance_max()]();
+    p->latency_state = new RuleLatencyState[ThreadConfig::get_instance_max()]();
 
     return p;
 }
@@ -888,7 +888,7 @@ detection_option_tree_node_t* new_node(
     p->option_data = data;
 
     p->state = (dot_node_state_t*)
-        SnortAlloc(sizeof(*p->state) * get_instance_max());
+        SnortAlloc(sizeof(*p->state) * ThreadConfig::get_instance_max());
 
     return p;
 }

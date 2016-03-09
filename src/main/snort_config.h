@@ -34,7 +34,6 @@
 
 #include "sfip/sfip_t.h"
 #include "main/policy.h"
-#include "main/thread.h"
 #include "utils/util.h"
 #include "protocols/packet.h"
 #include "framework/bits.h"
@@ -124,6 +123,7 @@ struct SFXHASH;
 struct ProfilerConfig;
 struct MemoryConfig;
 struct LatencyConfig;
+class ThreadConfig;
 
 SO_PUBLIC extern THREAD_LOCAL struct SnortConfig* snort_conf;
 
@@ -337,8 +337,7 @@ public:
     SnortState* state = nullptr;
     unsigned num_slots = 0;
 
-    std::map<const std::string, int>* source_affinity;
-    std::vector<int>* thread_affinity = nullptr;
+    ThreadConfig* thread_config;
 
     //------------------------------------------------------
     // policy access

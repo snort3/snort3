@@ -20,3 +20,10 @@ the future, we may want to consider making the code compatible with either
 TLS attribute, independent of the compiler (and of course
 __declspec(thread) for windows, whenever we cross that bridge).
 
+
+Re Use of libhwloc in thread_config.cc:
+The Portable Hardware Locality (hwloc) library provides a nice,
+platform-independent abstraction layer for CPU and memory architecture
+information and management.  Currently it is being used as a cross-platform
+mechanism for managing CPU affinity of threads, but it will be used in the
+future for NUMA (non-uniform memory access) awareness among other things.

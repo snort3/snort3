@@ -34,6 +34,7 @@ using namespace std;
 #include "snort_config.h"
 #include "help.h"
 #include "shell.h"
+#include "thread_config.h"
 #include "detection/detect.h"
 #include "framework/base_api.h"
 #include "framework/module.h"
@@ -645,7 +646,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigShowYear(sc, v.get_string());
 
     else if ( v.is("-z") || v.is("--max-packet-threads") )
-        set_instance_max(v.get_long());
+        ThreadConfig::set_instance_max(v.get_long());
 
     else if ( v.is("--alert-before-pass") )
         ConfigAlertBeforePass(sc, v.get_string());

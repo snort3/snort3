@@ -524,7 +524,7 @@ static void DCE2_CoCtxReq(DCE2_SsnData* sd, DCE2_CoTracker* cot, const DceRpcCoH
         DCE2_CoCtxIdNode* ctx_node;
 
         ctx_node = dce_process_ctx_id(sd,cot,co_hdr,policy,frag_ptr,frag_len);
-        if ((ctx_node == nullptr))
+        if (ctx_node == nullptr)
         {
             return;
         }

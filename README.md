@@ -65,14 +65,15 @@ If you already build Snort, you may have everything you need.  If not, grab
 the latest:
 
 * autotools or cmake to build from source
-* g++ >= 4.8 or other C++11 compiler
 * daq from http://www.snort.org for packet IO
 * dnet from https://github.com/dugsong/libdnet.git for network utility functions
+* g++ >= 4.8 or other C++11 compiler
+* hwloc from https://www.open-mpi.org/projects/hwloc/ for CPU affinity management
 * LuaJIT from http://luajit.org for configuration and scripting
 * pcap from http://www.tcpdump.org for tcpdump style logging
 * pcre from http://www.pcre.org for regular expression pattern matching
+* pkgconfig from https://www.freedesktop.org/wiki/Software/pkg-config/ to locate build dependencies
 * zlib from http://www.zlib.net for decompression
-* pkgconfig from http://www.freedesktop.org to build the example plugins
 
 Additional packages provide optional features.  Check the manual for more.
 

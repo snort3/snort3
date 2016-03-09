@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "main/thread_config.h"
 #include "protocols/packet.h"
 #include "stream/stream_splitter.h"
 
@@ -34,7 +35,7 @@ unsigned Inspector::max_slots = 1;
 
 Inspector::Inspector()
 {
-    unsigned max = get_instance_max();
+    unsigned max = ThreadConfig::get_instance_max();
     assert(slot < max);
     ref_count = new unsigned[max];
 
@@ -46,7 +47,7 @@ Inspector::~Inspector()
 {
     unsigned total = 0;
 
-    for (unsigned i = 0; i < get_instance_max(); ++i )
+    for (unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
         total += ref_count[i];
 
     assert(!total);
@@ -56,7 +57,7 @@ Inspector::~Inspector()
 
 bool Inspector::is_inactive()
 {
-    for (unsigned i = 0; i < get_instance_max(); ++i )
+    for (unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
         if ( ref_count[i] )
             return false;
 

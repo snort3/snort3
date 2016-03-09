@@ -61,6 +61,7 @@ using namespace std;
 #include "build.h"
 #include "snort_config.h"
 #include "snort_debug.h"
+#include "thread_config.h"
 #include "helpers/process.h"
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"
@@ -222,6 +223,8 @@ static void show_source(const char* pcap)
 void Snort::init(int argc, char** argv)
 {
     init_signals();
+
+    ThreadConfig::init();
 
 #if defined(NOCOREFILE)
     SetNoCores();
@@ -498,6 +501,7 @@ void Snort::cleanup()
         PrintStatistics();
 
     CloseLogger();
+    ThreadConfig::term();
     clean_exit(0);
 }
 
@@ -618,6 +622,8 @@ void Snort::thread_rotate()
 void Snort::thread_init(const char* intf)
 {
     show_source(intf);
+
+    snort_conf->thread_config->implement_thread_affinity(STHREAD_TYPE_PACKET, get_instance_id());
 
     // FIXIT-M the start-up sequence is a little off due to dropping privs
     if ( !DAQ_New(snort_conf, intf) )

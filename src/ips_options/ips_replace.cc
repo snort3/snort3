@@ -29,6 +29,7 @@ using namespace std;
 #include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
+#include "main/thread_config.h"
 #include "utils/snort_bounds.h"
 #include "protocols/packet.h"
 #include "parser/parser.h"
@@ -111,7 +112,7 @@ private:
 
 ReplaceOption::ReplaceOption(string& s) : IpsOption(s_name)
 {
-    unsigned n = get_instance_max();
+    unsigned n = ThreadConfig::get_instance_max();
     offset = new int[n];
 
     for ( unsigned i = 0; i < n; i++ )

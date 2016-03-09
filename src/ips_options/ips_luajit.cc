@@ -22,6 +22,7 @@
 
 #include "main/snort_types.h"
 #include "main/thread.h"
+#include "main/thread_config.h"
 #include "helpers/chunk.h"
 #include "lua/lua.h"
 #include "managers/ips_manager.h"
@@ -137,7 +138,7 @@ LuaJitOption::LuaJitOption(
     config += mod->args;
     config += "}";
 
-    unsigned max = get_instance_max();
+    unsigned max = ThreadConfig::get_instance_max();
 
     for ( unsigned i = 0; i < max; ++i )
     {

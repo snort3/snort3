@@ -40,6 +40,7 @@
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
+#include "main/thread_config.h"
 #endif
 
 namespace rule_latency
@@ -580,7 +581,7 @@ TEST_CASE ( "default latency rule interface", "[latency]" )
 
     // construct a mock rule tree
 
-    auto instances = get_instance_max();
+    auto instances = ThreadConfig::get_instance_max();
     if ( !instances )
         instances = 1;
 

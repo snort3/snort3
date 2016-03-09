@@ -26,6 +26,7 @@
 
 #include "module_manager.h"
 #include "main/snort_config.h"
+#include "main/thread_config.h"
 #include "flow/flow.h"
 #include "flow/session.h"
 #include "framework/inspector.h"
@@ -74,9 +75,9 @@ struct PHClass
 
     PHClass(const InspectApi& p) : api(p)
     {
-        init = new bool[get_instance_max()];
-        term = new bool[get_instance_max()];
-        for ( unsigned i = 0; i < get_instance_max(); ++i )
+        init = new bool[ThreadConfig::get_instance_max()];
+        term = new bool[ThreadConfig::get_instance_max()];
+        for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
             init[i] = term[i] = true;
     }
 

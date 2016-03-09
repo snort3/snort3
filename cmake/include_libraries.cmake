@@ -7,6 +7,7 @@ find_package(DNET REQUIRED)
 find_package(PCAP REQUIRED)
 find_package(PCRE REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(HWLOC REQUIRED)
 
 # optional libraries
 find_package(LibLZMA QUIET)

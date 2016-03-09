@@ -17,23 +17,10 @@
 //--------------------------------------------------------------------------
 // thread.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 #include "thread.h"
 
-#ifdef LINUX
-# include <sched.h>
-#endif
-
-#include <sys/stat.h>
-#include <thread>
-#include <vector>
-
 #include "snort_config.h"
-#include "parser/parser.h"
-#include "log/messages.h"
+#include "thread_config.h"
 
 //-------------------------------------------------------------------------
 // FIXIT-L instance_id zero indicates main thread during parse time and the
@@ -41,128 +28,25 @@
 // works for now.
 //-------------------------------------------------------------------------
 
-static unsigned instance_max = 1;
 static THREAD_LOCAL unsigned instance_id = 0;
-static THREAD_LOCAL bool s_is_packet_thread = false;
+static THREAD_LOCAL SThreadType thread_type = STHREAD_TYPE_MAIN;
 
 void set_instance_id(unsigned id)
 {
     instance_id = id;
 }
 
-void set_instance_max(unsigned max)
-{
-    if ( max )
-        instance_max = max;
-    else
-        instance_max = std::thread::hardware_concurrency();
-}
-
-void set_packet_thread(bool yesno)
-{ s_is_packet_thread = yesno; }
+void set_thread_type(SThreadType type)
+{ thread_type = type; }
 
 unsigned get_instance_id()
 {
     return instance_id;
 }
 
-unsigned get_instance_max()
-{
-    return instance_max;
-}
+SThreadType get_thread_type()
+{ return thread_type; }
 
-bool is_packet_thread()
-{ return s_is_packet_thread; }
-
-bool set_cpu_affinity(SnortConfig* sc, const std::string& str, int cpu)
-{
-    std::map<const std::string, int>& sa = *(sc->source_affinity);
-
-    auto search = sa.find(str);
-    if (search != sa.end())
-        ParseError("Multiple CPU's set for interface %s", str.c_str());
-
-    sa[std::string(str)] = cpu;
-    return false;
-}
-
-bool set_cpu_affinity(SnortConfig* sc, int thread, int cpu)
-{
-    std::vector<int>& ta = *(sc->thread_affinity);
-
-    if (ta.size() <= (unsigned)thread)
-    {
-        const std::size_t curr_size = ta.size();
-        const std::size_t new_size = curr_size * 2;
-        ta.resize(new_size);
-
-        for (std::size_t i = curr_size; i < new_size; ++i)
-            ta[i] = -1;
-    }
-
-    if (ta[thread] >= 0)
-        ParseError("Multiple CPU's set for thread %d", thread);
-
-    ta[thread] = cpu;
-    return true;
-}
-
-void pin_thread_to_cpu(const char* source)
-{
-    std::vector<int>& ta = *(snort_conf->thread_affinity);
-    std::map<const std::string, int>& sa = *(snort_conf->source_affinity);
-    const std::string src = source;
-    int cpu = -1;
-
-    ta.shrink_to_fit();
-    auto search = sa.find(src);
-
-    if (search != sa.end())
-    {
-        cpu = sa[src];
-    }
-    else if (ta[instance_id] != -1)
-    {
-        cpu = ta[instance_id];
-    }
-
-    if (cpu != -1)
-    {
-#if LINUX
-        {
-            static THREAD_LOCAL cpu_set_t cpu_set;
-
-            if (cpu >= CPU_SETSIZE)
-                FatalError("maximum CPU value for this Operating System is %d",
-                    CPU_SETSIZE);
-
-            CPU_ZERO(&cpu_set);
-
-            if (!sched_getaffinity(0, sizeof(cpu_set), &cpu_set))
-                if (!CPU_ISSET(cpu, &cpu_set))
-                    FatalError("CPU %d is not part of source %s's and thread "
-                        "%d's CPU set\n", cpu, source, instance_id);
-
-            CPU_ZERO(&cpu_set);
-            CPU_SET(cpu, &cpu_set);
-
-            if (sched_setaffinity(0, sizeof(cpu_set), &cpu_set))
-                FatalError("unable to pin source %s to CPU %d: %s\n",
-                    source, cpu, get_error(errno));
-        }
-#else
-        {
-            static bool warning_printed = false;
-            if (!warning_printed)
-            {
-                WarningMessage("thread pinning / CPU affinity support is currently"
-                    " unsupported for this operating system");
-                warning_printed = true;
-            }
-        }
-#endif
-    }
-}
 
 //-------------------------------------------------------------------------
 // union rules - breaks are mandatory and must be taken in daq thread
@@ -208,7 +92,7 @@ const char* get_instance_file(std::string& file, const char* name)
         sep = true;
     }
 
-    if ( (get_instance_max() > 1) || snort_conf->id_zero )
+    if ( (ThreadConfig::get_instance_max() > 1) || snort_conf->id_zero )
     {
         char id[8];
         snprintf(id, sizeof(id), "%u", get_instance_id());
@@ -232,4 +116,3 @@ const char* get_instance_file(std::string& file, const char* name)
 
     return file.c_str();
 }
-

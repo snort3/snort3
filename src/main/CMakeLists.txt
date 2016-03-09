@@ -29,6 +29,8 @@ add_library (main STATIC
     snort_module.h
     snort_module.cc
     thread.cc
+    thread_config.h
+    thread_config.cc
     ${INCLUDES}
 )
 

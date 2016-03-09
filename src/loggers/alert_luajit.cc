@@ -22,6 +22,7 @@
 #include <luajit-2.0/lua.hpp>
 
 #include "main/snort_types.h"
+#include "main/thread_config.h"
 #include "events/event.h"
 #include "helpers/chunk.h"
 #include "log/messages.h"
@@ -155,7 +156,7 @@ LuaJitLogger::LuaJitLogger(const char* name, std::string& chunk, LuaLogModule* m
     config += mod->args;
     config += "}";
 
-    unsigned max = get_instance_max();
+    unsigned max = ThreadConfig::get_instance_max();
 
     // FIXIT-L might make more sense to have one instance
     // with one lua state in each thread instead of one

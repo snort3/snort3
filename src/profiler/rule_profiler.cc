@@ -34,6 +34,7 @@
 #include "detection/treenodes.h"
 #include "hash/sfghash.h"
 #include "main/snort_config.h"
+#include "main/thread_config.h"
 #include "parser/parser.h"
 #include "target_based/snort_protocols.h"
 
@@ -178,7 +179,7 @@ static const ProfilerSorter<View> sorters[] =
 
 static void consolidate_otn_states(OtnState* states)
 {
-    for ( unsigned i = 1; i < get_instance_max(); ++i )
+    for ( unsigned i = 1; i < ThreadConfig::get_instance_max(); ++i )
         states[0] += states[i];
 }
 
@@ -316,7 +317,7 @@ void reset_rule_profiler_stats()
         if ( !rtn || !is_network_protocol(rtn->proto) )
             continue;
 
-        for ( unsigned i = 0; i < get_instance_max(); ++i )
+        for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
         {
             auto& state = otn->state[i];
             state = OtnState();

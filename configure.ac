@@ -603,10 +603,47 @@ if test "x$have_pcap_lib_version" = "xyes"; then
 fi
 
 #--------------------------------------------------------------------------
+# hwloc
+#--------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for hwloc pkg-config presence])
+PKG_CHECK_EXISTS([hwloc], [have_hwloc_pkgconfig="yes"], [have_hwloc_pkgconfig="no"])
+AC_MSG_RESULT(${have_hwloc_pkgconfig})
+
+if test "${have_hwloc_pkgconfig}" = "yes" ; then
+    HWLOC_CFLAGS=`${PKG_CONFIG} --cflags hwloc`
+    HWLOC_LDFLAGS=`${PKG_CONFIG} --libs-only-L hwloc`
+fi
+
+AC_ARG_WITH(hwloc_includes,
+    AC_HELP_STRING([--with-hwloc-includes=DIR],[hwloc include directory]),
+    [with_hwloc_includes="$withval"],[with_hwloc_includes="no"])
+
+if test "x$with_hwloc_includes" != "xno"; then
+    HWLOC_CFLAGS="-I${with_hwloc_includes}"
+fi
+
+AC_ARG_WITH(hwloc_libraries,
+    AC_HELP_STRING([--with-hwloc-libraries=DIR],[hwloc library directory]),
+    [with_hwloc_libraries="$withval"],[with_hwloc_libraries="no"])
+
+if test "x$with_hwloc_libraries" != "xno"; then
+    HWLOC_LDFLAGS="-L${with_hwloc_libraries}"
+fi
+
+CPPFLAGS="${HWLOC_CFLAGS} ${CPPFLAGS}"
+LDFLAGS="${HWLOC_LDFLAGS} ${LDFLAGS}"
+
+AC_CHECK_HEADERS([hwloc.h], , [AC_MSG_ERROR(hwloc header not found.)])
+AC_CHECK_LIB(hwloc, hwloc_set_thread_cpubind, , [AC_MSG_ERROR(Linking against hwloc library failed.)])
+
+#--------------------------------------------------------------------------
 # luajit
 #--------------------------------------------------------------------------
 
+AC_MSG_CHECKING([for luajit pkg-config presence])
 PKG_CHECK_EXISTS([luajit], [ have_luajit_pkgconfig="yes" ], [ have_luajit_pkgconfig="no" ])
+AC_MSG_RESULT(${have_luajit_pkgconfig})
 
 if test "${have_luajit_pkgconfig}" = "yes" ; then
     LUAJIT_CFLAGS=`${PKG_CONFIG} --cflags luajit`
