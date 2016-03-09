@@ -31,6 +31,32 @@
 #include <CppUTest/TestHarness.h>
 
 //-------------------------------------------------------------------------
+// base stuff
+//-------------------------------------------------------------------------
+
+Mpse::Mpse(const char*, bool) { }
+
+int Mpse::search(
+    const unsigned char* T, int n, MpseMatch match,
+    void* context, int* current_state)
+{
+    return _search(T, n, match, context, current_state);
+}
+
+int Mpse::search_all(
+    const unsigned char* T, int n, MpseMatch match,
+    void* context, int* current_state)
+{
+    return _search(T, n, match, context, current_state);
+}
+
+uint64_t Mpse::get_pattern_byte_count()
+{ return 0; }
+
+void Mpse::reset_pattern_byte_count()
+{ }
+
+//-------------------------------------------------------------------------
 // stubs, spies, etc.
 //-------------------------------------------------------------------------
 
@@ -88,6 +114,20 @@ static MpseAgent s_agent =
     [](void** ppt) { CHECK(*ppt == s_tree); },
     [](void** ppl) { CHECK(*ppl == s_list); }
 };
+
+FileIdentifier::~FileIdentifier() { }
+
+FileVerdict FilePolicy::type_lookup(Flow*, FileContext*)
+{ return FILE_VERDICT_UNKNOWN; }
+
+FileVerdict FilePolicy::type_lookup(Flow*, FileInfo*)
+{ return FILE_VERDICT_UNKNOWN; }
+
+FileVerdict FilePolicy::signature_lookup(Flow*, FileContext*)
+{ return FILE_VERDICT_UNKNOWN; }
+
+FileVerdict FilePolicy::signature_lookup(Flow*, FileInfo*)
+{ return FILE_VERDICT_UNKNOWN; }
 
 //-------------------------------------------------------------------------
 // base tests
@@ -185,7 +225,7 @@ TEST(mpse_hs_match, other)
 
     CHECK(hs->add_pattern(nullptr, (uint8_t*)"foo", 3, desc, s_user) == 0);
     CHECK(hs->add_pattern(nullptr, (uint8_t*)"\rbar\n", 3, desc, s_user) == 0);
-    CHECK(hs->add_pattern(nullptr, (uint8_t*)"(baz)", 3, desc, s_user) == 0);
+    CHECK(hs->add_pattern(nullptr, (uint8_t*)"\\(baz\\)", 3, desc, s_user) == 0);
 
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 3);

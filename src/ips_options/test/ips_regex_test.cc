@@ -25,9 +25,10 @@
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "protocols/packet.h"
 #include "detection/detection_defines.h"
 #include "main/snort_config.h"
+#include "profiler/memory_profiler_defs.h"
+#include "protocols/packet.h"
 
 // must appear after snort_config.h to avoid broken c++ map include
 #include <CppUTest/CommandLineTestRunner.h>
@@ -69,6 +70,25 @@ SnortConfig::~SnortConfig() { }
 unsigned get_instance_id()
 { return 0; }
 
+FileIdentifier::~FileIdentifier() { }
+
+FileVerdict FilePolicy::type_lookup(Flow*, FileContext*)
+{ return FILE_VERDICT_UNKNOWN; }
+
+FileVerdict FilePolicy::type_lookup(Flow*, FileInfo*)
+{ return FILE_VERDICT_UNKNOWN; }
+
+FileVerdict FilePolicy::signature_lookup(Flow*, FileContext*)
+{ return FILE_VERDICT_UNKNOWN; }
+
+FileVerdict FilePolicy::signature_lookup(Flow*, FileInfo*)
+{ return FILE_VERDICT_UNKNOWN; }
+
+MemoryContext::MemoryContext(MemoryTracker&) { }
+MemoryContext::~MemoryContext() { }
+
+void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) { }
+
 //-------------------------------------------------------------------------
 // helpers
 //-------------------------------------------------------------------------
@@ -92,7 +112,7 @@ static IpsOption* get_option(const char* pat, bool relative = false)
     mod->begin(ips_regex->name, 0, nullptr);
 
     Value vs(pat);
-    vs.set(get_param(mod, "~"));
+    vs.set(get_param(mod, "~re"));
     mod->set(ips_regex->name, vs, nullptr);
 
     if ( relative )
@@ -169,7 +189,7 @@ TEST(ips_regex_module, basic)
 {
     // always need a re
     Value vs("foo");
-    const Parameter* p = get_param(mod, "~");
+    const Parameter* p = get_param(mod, "~re");
     CHECK(p);
     vs.set(p);
     CHECK(mod->set(ips_regex->name, vs, nullptr));
@@ -180,7 +200,7 @@ TEST(ips_regex_module, basic)
 TEST(ips_regex_module, config_pass)
 {
     Value vs("foo");
-    const Parameter* p = get_param(mod, "~");
+    const Parameter* p = get_param(mod, "~re");
     CHECK(p);
     vs.set(p);
     CHECK(mod->set(ips_regex->name, vs, nullptr));
@@ -210,7 +230,7 @@ TEST(ips_regex_module, config_pass)
 TEST(ips_regex_module, config_fail)
 {
     Value vs("[[:fubar:]]");
-    const Parameter* p = get_param(mod, "~");
+    const Parameter* p = get_param(mod, "~re");
     CHECK(p);
     vs.set(p);
     CHECK(mod->set(ips_regex->name, vs, nullptr));

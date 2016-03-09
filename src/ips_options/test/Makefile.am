@@ -1,12 +1,6 @@
 
 AM_DEFAULT_SOURCE_EXT = .cc
 
-if BUILD_CPPUTESTS
-# FIXIT-H new file_api and profiler dependencies break link but resolving
-# those leads to duplicate symbols for new, new[], delete, and delete[].
-# this if disables these tests until they are fixed.
-else
-
 if HAVE_HYPERSCAN
 check_PROGRAMS = \
 ips_regex_test
@@ -23,7 +17,5 @@ ips_regex_test_LDADD = \
 ../../framework/value.o \
 ../../sfip/sf_ip.o \
 @CPPUTEST_LDFLAGS@
-endif
-
 endif
 
