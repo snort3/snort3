@@ -29,6 +29,7 @@
 
 static hwloc_topology_t topology = nullptr;
 static hwloc_cpuset_t process_cpuset = nullptr;
+static const struct hwloc_topology_support* topology_support = nullptr;
 static unsigned instance_max = 1;
 
 struct CpuSet
@@ -52,8 +53,14 @@ bool ThreadConfig::init(void)
         hwloc_topology_destroy(topology);
         return false;
     }
-    process_cpuset = hwloc_bitmap_alloc();
-    hwloc_get_cpubind(topology, process_cpuset, HWLOC_CPUBIND_PROCESS);
+    topology_support = hwloc_topology_get_support(topology);
+    if (topology_support->cpubind->get_thisproc_cpubind)
+    {
+        process_cpuset = hwloc_bitmap_alloc();
+        hwloc_get_cpubind(topology, process_cpuset, HWLOC_CPUBIND_PROCESS);
+    }
+    else
+        process_cpuset = hwloc_bitmap_dup(hwloc_topology_get_allowed_cpuset(topology));
     return true;
 }
 
@@ -103,6 +110,7 @@ void ThreadConfig::term(void)
         hwloc_bitmap_free(process_cpuset);
         process_cpuset = nullptr;
     }
+    topology_support = nullptr;
 }
 
 ThreadConfig::~ThreadConfig(void)
@@ -113,16 +121,24 @@ ThreadConfig::~ThreadConfig(void)
 
 void ThreadConfig::set_thread_affinity(SThreadType type, unsigned id, CpuSet* cpuset)
 {
-    TypeIdPair key { type, id };
+    if (topology_support->cpubind->set_thisthread_cpubind)
+    {
+        TypeIdPair key { type, id };
 
-    auto iter = thread_affinity.find(key);
-    if (iter != thread_affinity.end())
-        delete iter->second;
-    thread_affinity[key] = cpuset;
+        auto iter = thread_affinity.find(key);
+        if (iter != thread_affinity.end())
+            delete iter->second;
+        thread_affinity[key] = cpuset;
+    }
+    else
+        ParseWarning(WARN_CONF, "This platform does not support setting thread affinity.\n");
 }
 
 void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
 {
+    if (!topology_support->cpubind->set_thisthread_cpubind)
+        return;
+
     TypeIdPair key { type, id };
     hwloc_cpuset_t desired_cpuset;
 
@@ -136,7 +152,7 @@ void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
     hwloc_bitmap_list_asprintf(&s, desired_cpuset);
     if (hwloc_set_cpubind(topology, desired_cpuset, HWLOC_CPUBIND_THREAD))
     {
-        FatalError("Unable to pin thread %u (type %u) to %s: %s (%d)",
+        FatalError("Unable to pin thread %u (type %u) to %s: %s (%d)\n",
                 id, type, s, get_error(errno), errno);
     }
 #ifndef REG_TEST
@@ -180,22 +196,25 @@ TEST_CASE("Set and check max packet threads", "[ThreadConfig]")
 
 TEST_CASE("Set and implement thread affinity", "[ThreadConfig]")
 {
-    CpuSet* cpuset = new CpuSet(hwloc_bitmap_dup(process_cpuset));
-    CpuSet* cpuset2 = new CpuSet(hwloc_bitmap_dup(process_cpuset));
-    ThreadConfig tc;
+    if (topology_support->cpubind->set_thisthread_cpubind)
+    {
+        CpuSet* cpuset = new CpuSet(hwloc_bitmap_dup(process_cpuset));
+        CpuSet* cpuset2 = new CpuSet(hwloc_bitmap_dup(process_cpuset));
+        ThreadConfig tc;
 
-    hwloc_bitmap_singlify(cpuset->cpuset);
-    tc.set_thread_affinity(STHREAD_TYPE_PACKET, 0, cpuset2);
-    tc.set_thread_affinity(STHREAD_TYPE_PACKET, 0, cpuset);
-    tc.implement_thread_affinity(STHREAD_TYPE_PACKET, 0);
+        hwloc_bitmap_singlify(cpuset->cpuset);
+        tc.set_thread_affinity(STHREAD_TYPE_PACKET, 0, cpuset2);
+        tc.set_thread_affinity(STHREAD_TYPE_PACKET, 0, cpuset);
+        tc.implement_thread_affinity(STHREAD_TYPE_PACKET, 0);
 
-    hwloc_cpuset_t thread_cpuset = hwloc_bitmap_alloc();
-    hwloc_get_cpubind(topology, thread_cpuset, HWLOC_CPUBIND_THREAD);
-    CHECK(hwloc_bitmap_isequal(thread_cpuset, cpuset->cpuset));
+        hwloc_cpuset_t thread_cpuset = hwloc_bitmap_alloc();
+        hwloc_get_cpubind(topology, thread_cpuset, HWLOC_CPUBIND_THREAD);
+        CHECK(hwloc_bitmap_isequal(thread_cpuset, cpuset->cpuset));
 
-    tc.implement_thread_affinity(STHREAD_TYPE_MAIN, 0);
-    hwloc_get_cpubind(topology, thread_cpuset, HWLOC_CPUBIND_THREAD);
-    CHECK(hwloc_bitmap_isequal(thread_cpuset, process_cpuset));
+        tc.implement_thread_affinity(STHREAD_TYPE_MAIN, 0);
+        hwloc_get_cpubind(topology, thread_cpuset, HWLOC_CPUBIND_THREAD);
+        CHECK(hwloc_bitmap_isequal(thread_cpuset, process_cpuset));
+    }
 }
 
 #endif
