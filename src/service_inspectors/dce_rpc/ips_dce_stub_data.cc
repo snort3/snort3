@@ -19,6 +19,8 @@
 // ips_dce_stub_data.cc author Maya Dagon <mdagon@cisco.com>
 // based on work by Todd Wease
 
+#include "dce_common.h"
+
 #include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -63,11 +65,30 @@ bool Dce2StubDataOption::operator==(const IpsOption& ips) const
     return !strcmp(get_name(), ips.get_name());
 }
 
-int Dce2StubDataOption::eval(Cursor&, Packet*)
+int Dce2StubDataOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(dce2_stub_data_perf_stats);
 
-    //FIXIT - add eval code
+    if (p->dsize == 0)
+    {
+        return DETECTION_OPTION_NO_MATCH;
+    }
+
+    DCE2_SsnData* sd = get_dce2_session_data(p);
+
+    if ((sd == nullptr) || DCE2_SsnNoInspect(sd))
+    {
+        return DETECTION_OPTION_NO_MATCH;
+    }
+
+    DCE2_Roptions* ropts = &sd->ropts;
+
+    if (ropts->stub_data != nullptr)
+    {
+        c.set(s_name,(uint8_t*)ropts->stub_data, (uint16_t)(p->dsize - (ropts->stub_data -
+            p->data)));
+        return DETECTION_OPTION_MATCH;
+    }
 
     return DETECTION_OPTION_NO_MATCH;
 }

@@ -62,15 +62,14 @@ private:
     static int binding_id;
 };
 
-bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
-						 option, const std::string val);
+bool add_option_to_table(
+    TableApi&, std::string table_name, std::string option, const std::string val);
 
-bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
-						 option, const int val);
+bool add_option_to_table(
+    TableApi&, std::string table_name, std::string option, const int val);
 
-bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
-						 option, const bool val);
-
+bool add_option_to_table(
+    TableApi&, std::string table_name, std::string option, const bool val);
 } // namespace dce
 } // namespace preprocessors
 

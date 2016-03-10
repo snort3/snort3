@@ -20,7 +20,7 @@
 // based on work by Todd Wease
 
 #include "dce_utils.h"
-
+#include "dce_common.h"
 #include <cerrno>
 
 #include "framework/ips_option.h"
@@ -259,11 +259,58 @@ bool Dce2IfaceOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int Dce2IfaceOption::eval(Cursor&, Packet*)
+int Dce2IfaceOption::eval(Cursor&, Packet* p)
 {
     Profile profile(dce2_iface_perf_stats);
-    //FIXIT - add eval code
-    return DETECTION_OPTION_NO_MATCH;
+
+    if (p->dsize == 0)
+    {
+        return DETECTION_OPTION_NO_MATCH;
+    }
+
+    DCE2_SsnData* sd= get_dce2_session_data(p);
+
+    if ((sd == nullptr) || DCE2_SsnNoInspect(sd))
+    {
+        return DETECTION_OPTION_NO_MATCH;
+    }
+
+    DCE2_Roptions* ropts = &sd->ropts;
+
+    if (ropts->first_frag == DCE2_SENTINEL)
+    {
+        return DETECTION_OPTION_NO_MATCH;
+    }
+
+    if (!any_frag && !ropts->first_frag)
+    {
+        return DETECTION_OPTION_NO_MATCH;
+    }
+
+    if (DCE2_UuidCompare((void*)&ropts->iface, &uuid) != 0)
+    {
+        return DETECTION_OPTION_NO_MATCH;
+    }
+
+    if (version.is_set())
+    {
+        if (p->has_tcp_data())
+        {
+            if (!version.eval(ropts->iface_vers_maj))
+            {
+                return DETECTION_OPTION_NO_MATCH;
+            }
+        }
+        else
+        {
+            if (!version.eval(ropts->iface_vers))
+            {
+                return DETECTION_OPTION_NO_MATCH;
+            }
+        }
+    }
+
+    return DETECTION_OPTION_MATCH;
 }
 
 //-------------------------------------------------------------------------

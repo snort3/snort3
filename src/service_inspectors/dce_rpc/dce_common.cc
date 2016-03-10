@@ -167,9 +167,11 @@ static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
     {
         Profile profile(dce2_smb_pstat_detect);
     }
-    SnortEventqPush();
+
+    // FIXIT - decide whether eventq push/pop is necessary once packet reassembly is supported
+    //SnortEventqPush();
     snort_detect(pkt);
-    SnortEventqPop();
+    //SnortEventqPop();
 
     dce2_detected = 1;
 }
@@ -195,6 +197,27 @@ void DCE2_Detect(DCE2_SsnData* sd)
     /* Always reset rule option data after detecting */
     DCE2_ResetRopts(&sd->ropts);
     DebugMessage(DEBUG_DCE_COMMON, "----------------------------------------------------------\n");
+}
+
+DCE2_SsnData* get_dce2_session_data(Packet* p)
+{
+    DCE2_SmbSsnData* smb_data = get_dce2_smb_session_data(p->flow);
+    DCE2_SsnData* sd = (smb_data != nullptr) ? &(smb_data->sd) : nullptr;
+    if ((sd != nullptr) && (sd->trans == DCE2_TRANS_TYPE__SMB))
+    {
+        return sd;
+    }
+
+    DCE2_TcpSsnData* tcp_data = get_dce2_tcp_session_data(p->flow);
+    sd = (tcp_data != nullptr) ? &(tcp_data->sd) : nullptr;
+    if ((sd != nullptr) && (sd->trans == DCE2_TRANS_TYPE__TCP))
+    {
+        return sd;
+    }
+
+    // FIXIT - add checks for http, udp once ported
+
+    return nullptr;
 }
 
 #ifdef BUILDING_SO

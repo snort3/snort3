@@ -263,5 +263,7 @@ void print_dce2_common_config(dce2CommonProtoConf&);
 bool dce2_paf_abort(Flow*, DCE2_SsnData*);
 void DCE2_Detect(DCE2_SsnData*);
 
+DCE2_SsnData* get_dce2_session_data(Packet*);
+
 #endif
 

@@ -159,7 +159,7 @@ static bool get_num(const string& s, long& num)
 static bool valid(RangeCheck::Op op, bool low, bool hi)
 {
     if ( op == RangeCheck::EQ )
-        return (low and !hi) or (hi and !low);
+        return (low and !hi)or (hi and !low);
 
     else if ( op == RangeCheck::LG or op == RangeCheck::LEG )
         return low and hi;
@@ -177,9 +177,14 @@ void RangeCheck::init()
     min = max = 0;
 }
 
+bool RangeCheck::is_set()
+{
+    return (op != MAX);
+}
+
 bool RangeCheck::operator==(const RangeCheck& rhs) const
 {
-    return (op == rhs.op) and (min == rhs.min) and (max == rhs.max);
+    return (op == rhs.op)and (min == rhs.min) and (max == rhs.max);
 }
 
 bool RangeCheck::parse(const char* s)
@@ -389,7 +394,6 @@ TEST_CASE("<>", "[RangeCheck]")
     CHECK(!rc.eval(5));
     CHECK(!rc.eval(6));
 }
-
 
 TEST_CASE("<=>", "[RangeCheck]")
 {

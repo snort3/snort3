@@ -48,6 +48,7 @@ public:
     bool operator==(const RangeCheck&) const;
 
     void init();
+    bool is_set();
     // FIXIT-L add ttl style syntax
     bool parse(const char* s);
     bool eval(long);

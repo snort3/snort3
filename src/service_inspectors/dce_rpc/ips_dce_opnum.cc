@@ -20,6 +20,7 @@
 // based on work by Todd Wease
 
 #include "dce_utils.h"
+#include "dce_common.h"
 
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -401,11 +402,44 @@ bool Dce2OpnumOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int Dce2OpnumOption::eval(Cursor&, Packet*)
+int Dce2OpnumOption::eval(Cursor&, Packet* p)
 {
     Profile profile(dce2_opnum_perf_stats);
 
-    // FIXIT - add eval code
+    if (p->dsize == 0)
+    {
+        return DETECTION_OPTION_NO_MATCH;
+    }
+
+    DCE2_SsnData* sd = get_dce2_session_data(p);
+
+    if ((sd == nullptr) || DCE2_SsnNoInspect(sd))
+    {
+        return DETECTION_OPTION_NO_MATCH;
+    }
+
+    DCE2_Roptions* ropts = &sd->ropts;
+
+    if (ropts->opnum == DCE2_SENTINEL)
+    {
+        return DETECTION_OPTION_NO_MATCH;
+    }
+
+    if (opnum.mask_size == 0)
+    {
+        if (ropts->opnum == opnum.opnum_lo)
+        {
+            return DETECTION_OPTION_MATCH;
+        }
+    }
+    else
+    {
+        if (DCE2_OpnumIsSet(opnum.mask, opnum.opnum_lo,
+            opnum.opnum_hi, (uint16_t)ropts->opnum))
+        {
+            return DETECTION_OPTION_MATCH;
+        }
+    }
 
     return DETECTION_OPTION_NO_MATCH;
 }
@@ -456,12 +490,9 @@ bool Dce2OpnumModule::set(const char*, Value& v, SnortConfig*)
     if ( !v.is("~") )
         return false;
 
-    v.set_first_token();
-
-    std::string tok;
-
-    if ( v.get_next_token(tok) )
+    if (v.get_string())
     {
+        std::string tok (v.get_string());
         if ( tok[0] == '"' )
             tok.erase(0, 1);
 
