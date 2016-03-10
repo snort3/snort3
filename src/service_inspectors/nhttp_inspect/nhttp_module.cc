@@ -86,18 +86,18 @@ bool NHttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("backslash_to_slash"))
     {
         params.uri_param.backslash_to_slash = val.get_bool();
-        params.uri_param.uri_char['\\'] = val.get_bool() ? CHAR_SUBSTIT : CHAR_NORMAL;
+        params.uri_param.uri_char[(uint8_t)'\\'] = val.get_bool() ? CHAR_SUBSTIT : CHAR_NORMAL;
     }
     else if (val.is("plus_to_space"))
     {
         params.uri_param.plus_to_space = val.get_bool();
-        params.uri_param.uri_char['+'] = val.get_bool() ? CHAR_SUBSTIT : CHAR_NORMAL;
+        params.uri_param.uri_char[(uint8_t)'+'] = val.get_bool() ? CHAR_SUBSTIT : CHAR_NORMAL;
     }
     else if (val.is("simplify_path"))
     {
         params.uri_param.simplify_path = val.get_bool();
-        params.uri_param.uri_char['/'] = val.get_bool() ? CHAR_PATH : CHAR_NORMAL;
-        params.uri_param.uri_char['.'] = val.get_bool() ? CHAR_PATH : CHAR_NORMAL;
+        params.uri_param.uri_char[(uint8_t)'/'] = val.get_bool() ? CHAR_PATH : CHAR_NORMAL;
+        params.uri_param.uri_char[(uint8_t)'.'] = val.get_bool() ? CHAR_PATH : CHAR_NORMAL;
     }
 #ifdef REG_TEST
     else if (val.is("test_input"))
