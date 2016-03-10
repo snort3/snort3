@@ -99,28 +99,6 @@ static inline void DCE2_CoResetTracker(DCE2_CoTracker* cot)
     DCE2_CoResetFragTracker(&cot->frag_tracker);
 }
 
-static inline bool DCE2_CoIsSegBuf(DCE2_SsnData* sd, DCE2_CoTracker* cot, const uint8_t* ptr)
-{
-    DCE2_Buffer* seg_buf;
-
-    if (DCE2_SsnFromServer(sd->wire_pkt))
-        seg_buf = cot->srv_seg.buf;
-    else
-        seg_buf = cot->cli_seg.buf;
-
-    if (DCE2_BufferIsEmpty(seg_buf))
-        return 0;
-
-    /* See if we're looking at a segmentation buffer */
-    if ((ptr < DCE2_BufferData(seg_buf)) ||
-        (ptr > (DCE2_BufferData(seg_buf) + DCE2_BufferLength(seg_buf))))
-    {
-        return 0;
-    }
-
-    return 1;
-}
-
 static inline DCE2_CoSeg* DCE2_CoGetSegPtr(DCE2_SsnData* sd, DCE2_CoTracker* cot)
 {
     if (DCE2_SsnFromServer(sd->wire_pkt))
