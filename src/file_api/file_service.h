@@ -45,9 +45,9 @@ public:
     static void enable_file_type();
     static void enable_file_signature ();
     static void enable_file_capture();
-    static bool is_file_type_id_enabled() {return file_type_id_enabled;};
-    static bool is_file_signature_enabled() {return file_signature_enabled;};
-    static bool is_file_capture_enabled() {return file_capture_enabled;};
+    static bool is_file_type_id_enabled() {return file_type_id_enabled;}
+    static bool is_file_signature_enabled() {return file_signature_enabled;}
+    static bool is_file_capture_enabled() {return file_capture_enabled;}
     static bool is_file_service_enabled();
     static int64_t get_max_file_depth();
 

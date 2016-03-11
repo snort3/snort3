@@ -34,7 +34,7 @@ class SO_PUBLIC FileFlows : public FlowData
 {
 public:
 
-    FileFlows(Flow* f) : FlowData(flow_id), flow(f) {};
+    FileFlows(Flow* f) : FlowData(flow_id), flow(f) {}
     ~FileFlows();
     static void init()
     { flow_id = FlowData::get_flow_id(); }
@@ -42,7 +42,7 @@ public:
     // Factory method to get file flows
     static FileFlows* get_file_flows(Flow*);
 
-    FileContext* get_current_file_context() {return current_context; };
+    FileContext* get_current_file_context() {return current_context; }
     void set_current_file_context(FileContext*);
 
     uint32_t get_new_file_instance();

@@ -60,7 +60,7 @@ NetworkPolicy::~NetworkPolicy()
 class AltPktHandler : public DataHandler
 {
 public:
-    AltPktHandler() { };
+    AltPktHandler() { }
 
     void handle(DataEvent& e, Flow*)
     { snort_detect((Packet*)e.get_packet()); }  // FIXIT-L not const!

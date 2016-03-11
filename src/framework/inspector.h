@@ -77,7 +77,7 @@ public:
     // clear is called when Snort is done with the previously eval'd
     // packet to release any thread-local or flow-based data
     virtual void eval(Packet*) = 0;
-    virtual void clear(Packet*) { };
+    virtual void clear(Packet*) { }
 
     virtual void meta(int, const uint8_t*) { }
     virtual int exec(int, void*) { return 0; }
@@ -144,7 +144,7 @@ public:
     ~InspectorData()
     { delete data; }
 
-    void eval(Packet*) override { };
+    void eval(Packet*) override { }
 
     T* data;
 };

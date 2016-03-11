@@ -1242,7 +1242,7 @@ private:
     CpuSet* cpuset;
 };
 
-bool ProcessModule::set(const char* fqn, Value& v, SnortConfig* sc)
+bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("daemon") )
     {

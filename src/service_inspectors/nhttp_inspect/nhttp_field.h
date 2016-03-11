@@ -47,7 +47,7 @@ public:
     // Only call this method if the field owns the dynamically allocated buffer you are deleting.
     // This method is a convenience but you still must know where the buffer came from. Many fields
     // refer to static buffers or a subfield of someone else's buffer.
-    void delete_buffer() { if (length >= 0) delete[] start; };
+    void delete_buffer() { if (length >= 0) delete[] start; }
 
 #ifdef REG_TEST
     void print(FILE* output, const char* name) const;

@@ -79,7 +79,7 @@ void ThreadConfig::set_instance_max(unsigned max)
 unsigned ThreadConfig::get_instance_max(void)
 {
     return instance_max;
-};
+}
 
 CpuSet* ThreadConfig::validate_cpuset_string(const char* cpuset_str)
 {

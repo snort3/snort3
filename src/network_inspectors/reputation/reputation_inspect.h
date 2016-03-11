@@ -33,7 +33,7 @@ struct ReputationData
 class ReputationFlowData : public FlowData
 {
 public:
-    ReputationFlowData() : FlowData(flow_id){};
+    ReputationFlowData() : FlowData(flow_id){}
 
     ~ReputationFlowData() { }
 
