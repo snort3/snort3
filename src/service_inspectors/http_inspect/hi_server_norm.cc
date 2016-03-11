@@ -44,6 +44,9 @@
 **  NOTES:
 **      - Initial development.  DJR
 */
+
+#include "hi_server_norm.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>

@@ -79,7 +79,7 @@ static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk)
  *          state 7 until this is the case.
  *
  *********************************************************************/
-StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, const uint8_t* data,
+static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, const uint8_t* data,
     uint32_t len, uint32_t flags, uint32_t* fp)
 {
     uint32_t n = 0;

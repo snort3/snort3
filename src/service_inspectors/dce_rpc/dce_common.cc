@@ -30,7 +30,7 @@
 
 THREAD_LOCAL int dce2_detected = 0;
 
-const char* dce2_get_policy_name(DCE2_Policy policy)
+static const char* dce2_get_policy_name(DCE2_Policy policy)
 {
     const char* policyStr = nullptr;
     switch (policy)
@@ -121,7 +121,7 @@ bool dce2_paf_abort(Flow* flow, DCE2_SsnData* sd)
     return false;
 }
 
-void DCE2_PrintRoptions(DCE2_Roptions* ropts)
+static void DCE2_PrintRoptions(DCE2_Roptions* ropts)
 {
     DebugFormat(DEBUG_DCE_COMMON,
         "  First frag: %s\n", ropts->first_frag == 1 ? "yes" : (ropts->first_frag == 0 ? "no" :

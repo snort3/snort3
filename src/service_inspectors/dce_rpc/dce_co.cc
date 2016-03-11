@@ -382,7 +382,7 @@ static inline void DCE2_CoEraseCtxIds(DCE2_CoTracker* cot)
     DCE2_ListEmpty(cot->ctx_ids);
 }
 
-DCE2_CoCtxIdNode* dce_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* cot,
+static DCE2_CoCtxIdNode* dce_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* cot,
     const DceRpcCoHdr* co_hdr,DCE2_Policy policy,
     const uint8_t* frag_ptr, uint16_t frag_len)
 {
@@ -532,7 +532,7 @@ static void DCE2_CoCtxReq(DCE2_SsnData* sd, DCE2_CoTracker* cot, const DceRpcCoH
     }
 }
 
-void dce_process_ctx_result(DCE2_SsnData* sd,DCE2_CoTracker* cot,
+static void dce_process_ctx_result(DCE2_SsnData* sd,DCE2_CoTracker* cot,
     const DceRpcCoHdr* co_hdr,DCE2_Policy policy,
     uint16_t result)
 {

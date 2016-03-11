@@ -22,6 +22,9 @@
  * Author: Chris Sherwin
  * Contributors: Adam Keeton, Ryan Jordan
  */
+
+#include "ssh.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -43,7 +46,6 @@
 #include "utils/sfsnprintfappend.h"
 #include "target_based/snort_protocols.h"
 
-#include "ssh.h"
 #include "ssh_module.h"
 
 THREAD_LOCAL ProfileStats sshPerfStats;
@@ -59,7 +61,7 @@ static unsigned int ProcessSSHKeyInitExchange(SSHData*, Packet*, uint8_t, unsign
 
 unsigned SshFlowData::flow_id = 0;
 
-SSHData* SetNewSSHData(Packet* p)
+static SSHData* SetNewSSHData(Packet* p)
 {
     SshFlowData* fd = new SshFlowData;
     p->flow->set_application_data(fd);

@@ -70,7 +70,7 @@ unsigned DnsFlowData::flow_id = 0;
 
 DNSData udpSessionData;
 
-DNSData* SetNewDNSData(Packet* p)
+static DNSData* SetNewDNSData(Packet* p)
 {
     DnsFlowData* fd;
 
@@ -274,7 +274,7 @@ static uint16_t ParseDNSHeader(
     return bytes_unused;
 }
 
-uint16_t ParseDNSName(
+static uint16_t ParseDNSName(
     const unsigned char* data,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
@@ -455,7 +455,7 @@ static uint16_t ParseDNSQuestion(
     return bytes_unused;
 }
 
-uint16_t ParseDNSAnswer(
+static uint16_t ParseDNSAnswer(
     const unsigned char* data,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
@@ -594,7 +594,7 @@ uint16_t ParseDNSAnswer(
  * Vulnerability Research by Lurene Grenier, Judy Novak,
  * and Brian Caswell.
  */
-uint16_t CheckRRTypeTXTVuln(
+static uint16_t CheckRRTypeTXTVuln(
     const unsigned char* data,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
@@ -687,7 +687,7 @@ uint16_t CheckRRTypeTXTVuln(
     return bytes_unused;
 }
 
-uint16_t SkipDNSRData(
+static uint16_t SkipDNSRData(
     const unsigned char*,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
@@ -710,7 +710,7 @@ uint16_t SkipDNSRData(
     return bytes_unused;
 }
 
-uint16_t ParseDNSRData(
+static uint16_t ParseDNSRData(
     const unsigned char* data,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
@@ -763,7 +763,7 @@ uint16_t ParseDNSRData(
     return bytes_unused;
 }
 
-void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
+static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
 {
     uint16_t bytes_unused = p->dsize;
     int i;

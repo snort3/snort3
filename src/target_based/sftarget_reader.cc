@@ -61,7 +61,7 @@ struct tTargetBasedConfig
     ~tTargetBasedConfig();
 };
 
-void SFAT_CleanupCallback(void* host_attr_ent)
+static void SFAT_CleanupCallback(void* host_attr_ent)
 {
     HostAttributeEntry* host_entry = (HostAttributeEntry*)host_attr_ent;
     FreeHostEntry(host_entry);
@@ -102,7 +102,7 @@ uint32_t SFAT_NumberOfHosts(void)
     return 0;
 }
 
-void FreeApplicationEntry(ApplicationEntry* app)
+static void FreeApplicationEntry(ApplicationEntry* app)
 {
     DebugFormat(DEBUG_ATTRIBUTE, "Freeing ApplicationEntry: 0x%x\n", app);
     free(app);
@@ -195,7 +195,7 @@ int SFAT_AddApplicationData(HostAttributeEntry* host, ApplicationEntry* app)
 #endif
 
 #ifdef DEBUG_MSGS
-void PrintHostAttributeEntry(HostAttributeEntry* host)
+static void PrintHostAttributeEntry(HostAttributeEntry* host)
 {
     ApplicationEntry* app;
     int i = 0;

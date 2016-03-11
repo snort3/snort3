@@ -2400,14 +2400,14 @@ int acsmSearchSparseDFA_Banded(
 *   Sparse Storage Version
 */
 int acsmSearchSparseNFA(
-    ACSM_STRUCT2* acsm, uint8_t* Tx, int n, MpseMatch match,
+    ACSM_STRUCT2* acsm, const uint8_t* Tx, int n, MpseMatch match,
     void* context, int* current_state)
 {
     acstate_t state;
     ACSM_PATTERN2* mlist;
-    uint8_t* Tend;
+    const uint8_t* Tend;
     int nfound = 0;
-    uint8_t* T;
+    const uint8_t* T;
     int index;
     acstate_t** NextState= acsm->acsmNextState;
     acstate_t* FailState = acsm->acsmFailState;

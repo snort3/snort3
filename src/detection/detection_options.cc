@@ -69,7 +69,7 @@ struct detection_option_key_t
 static inline bool operator==(const struct timeval& a, const struct timeval& b)
 { return a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec; }
 
-uint32_t detection_option_hash_func(SFHASHFCN*, unsigned char* k, int)
+static uint32_t detection_option_hash_func(SFHASHFCN*, unsigned char* k, int)
 {
     detection_option_key_t* key = (detection_option_key_t*)k;
 
@@ -81,7 +81,7 @@ uint32_t detection_option_hash_func(SFHASHFCN*, unsigned char* k, int)
     return 0;
 }
 
-int detection_option_key_compare_func(const void* k1, const void* k2, size_t)
+static int detection_option_key_compare_func(const void* k1, const void* k2, size_t)
 {
     const detection_option_key_t* key1 = (detection_option_key_t*)k1;
     const detection_option_key_t* key2 = (detection_option_key_t*)k2;
@@ -107,7 +107,7 @@ int detection_option_key_compare_func(const void* k1, const void* k2, size_t)
     return DETECTION_OPTION_NOT_EQUAL;
 }
 
-int detection_hash_free_func(void* option_key, void*)
+static int detection_hash_free_func(void* option_key, void*)
 {
     detection_option_key_t* key = (detection_option_key_t*)option_key;
 
@@ -119,7 +119,7 @@ int detection_hash_free_func(void* option_key, void*)
     return 0;
 }
 
-SFXHASH* DetectionHashTableNew(void)
+static SFXHASH* DetectionHashTableNew(void)
 {
     SFXHASH* doht = sfxhash_new(HASH_RULE_OPTIONS,
         sizeof(detection_option_key_t),
@@ -178,7 +178,7 @@ int add_detection_option(
     return DETECTION_OPTION_NOT_EQUAL;
 }
 
-uint32_t detection_option_tree_hash(detection_option_tree_node_t* node)
+static uint32_t detection_option_tree_hash(detection_option_tree_node_t* node)
 {
     uint32_t a,b,c;
     int i;
@@ -221,7 +221,7 @@ uint32_t detection_option_tree_hash(detection_option_tree_node_t* node)
     return c;
 }
 
-uint32_t detection_option_tree_hash_func(SFHASHFCN*, unsigned char* k, int)
+static uint32_t detection_option_tree_hash_func(SFHASHFCN*, unsigned char* k, int)
 {
     detection_option_key_t* key = (detection_option_key_t*)k;
     detection_option_tree_node_t* node;
@@ -234,7 +234,7 @@ uint32_t detection_option_tree_hash_func(SFHASHFCN*, unsigned char* k, int)
     return detection_option_tree_hash(node);
 }
 
-int detection_option_tree_compare(detection_option_tree_node_t* r, detection_option_tree_node_t* l)
+static int detection_option_tree_compare(detection_option_tree_node_t* r, detection_option_tree_node_t* l)
 {
     int ret = DETECTION_OPTION_NOT_EQUAL;
     int i;
@@ -262,7 +262,7 @@ int detection_option_tree_compare(detection_option_tree_node_t* r, detection_opt
     return DETECTION_OPTION_EQUAL;
 }
 
-int detection_option_tree_compare_func(const void* k1, const void* k2, size_t)
+static int detection_option_tree_compare_func(const void* k1, const void* k2, size_t)
 {
     detection_option_key_t* key_r = (detection_option_key_t*)k1;
     detection_option_key_t* key_l = (detection_option_key_t*)k2;
@@ -278,7 +278,7 @@ int detection_option_tree_compare_func(const void* k1, const void* k2, size_t)
     return detection_option_tree_compare(r, l);
 }
 
-int detection_option_tree_free_func(void*, void* data)
+static int detection_option_tree_free_func(void*, void* data)
 {
     detection_option_tree_node_t* node = (detection_option_tree_node_t*)data;
     free_detection_option_tree(node);
@@ -291,7 +291,7 @@ void DetectionTreeHashTableFree(SFXHASH* dtht)
         sfxhash_delete(dtht);
 }
 
-SFXHASH* DetectionTreeHashTableNew(void)
+static SFXHASH* DetectionTreeHashTableNew(void)
 {
     SFXHASH* dtht = sfxhash_new(
         HASH_RULE_TREE,

@@ -27,7 +27,6 @@ struct Packet;
 // from being dynamically built
 void Replace_ResetQueue(void);
 void Replace_QueueChange(const std::string&, unsigned);
-void Replace_ModifyPacket(struct Packet*);
 
 #endif
 

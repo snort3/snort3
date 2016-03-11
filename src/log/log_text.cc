@@ -292,7 +292,7 @@ void LogIpOptions(TextLog* log, const IP4Hdr* ip4h, uint16_t valid_ip4_len)
     LogIpOptions(log, options);
 }
 
-void LogIpOptions(TextLog* log, const IP4Hdr* ip4h, const Packet* const p)
+static void LogIpOptions(TextLog* log, const IP4Hdr* ip4h, const Packet* const p)
 {
     const ip::IpOptionIterator options(ip4h, p);
     LogIpOptions(log, options);
@@ -631,7 +631,7 @@ void LogTcpOptions(TextLog* log,  const tcp::TCPHdr* tcph, uint16_t valid_tcp_le
     LogTcpOptions(log, opt_iter);
 }
 
-void LogTcpOptions(TextLog* log, const Packet* const p)
+static void LogTcpOptions(TextLog* log, const Packet* const p)
 {
     tcp::TcpOptIterator opt_iter(p->ptrs.tcph, p);
     LogTcpOptions(log, opt_iter);

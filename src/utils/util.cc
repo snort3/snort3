@@ -967,6 +967,7 @@ char* GetAbsolutePath(const char* dir)
     return (char*)buf;
 }
 
+#if defined(NOCOREFILE)
 void SetNoCores(void)
 {
     struct rlimit rlim;
@@ -975,6 +976,7 @@ void SetNoCores(void)
     rlim.rlim_max = 0;
     setrlimit(RLIMIT_CORE, &rlim);
 }
+#endif
 
 const char* get_error(int errnum)
 {

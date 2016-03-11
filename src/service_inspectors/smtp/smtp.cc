@@ -204,7 +204,7 @@ static SMTPData* get_session_data(Flow* flow)
     return fd ? &fd->session : NULL;
 }
 
-SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
+static SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
 {
     SMTPData* smtp_ssn;
     SmtpFlowData* fd = new SmtpFlowData;
@@ -284,7 +284,7 @@ static void SMTP_CommandSearchTerm(SMTP_PROTO_CONF* config)
     delete config->cmd_search_mpse;
 }
 
-void SMTP_ResponseSearchInit(void)
+static void SMTP_ResponseSearchInit(void)
 {
     const SMTPToken* tmp;
     smtp_resp_search_mpse = new SearchTool();
@@ -301,7 +301,7 @@ void SMTP_ResponseSearchInit(void)
     smtp_resp_search_mpse->prep();
 }
 
-void SMTP_SearchFree(void)
+static void SMTP_SearchFree(void)
 {
     if (smtp_resp_search_mpse != NULL)
         delete smtp_resp_search_mpse;
@@ -376,7 +376,7 @@ static int GetCmdId(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum t
     return AddCmd(config, name, type);
 }
 
-void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
+static void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
 {
     const SMTPToken* cmd;
     char buf[8192];
@@ -1348,7 +1348,7 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
 }
 
 /* Callback to return the MIME attachment filenames accumulated */
-int SMTP_GetFilename(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
+static int SMTP_GetFilename(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     SMTPData* ssn = get_session_data(flow);
 
@@ -1361,7 +1361,7 @@ int SMTP_GetFilename(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 }
 
 /* Callback to return the email addresses accumulated from the MAIL FROM command */
-int SMTP_GetMailFrom(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
+static int SMTP_GetMailFrom(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     SMTPData* ssn = get_session_data(flow);
 
@@ -1374,7 +1374,7 @@ int SMTP_GetMailFrom(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 }
 
 /* Callback to return the email addresses accumulated from the RCP TO command */
-int SMTP_GetRcptTo(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
+static int SMTP_GetRcptTo(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     SMTPData* ssn = get_session_data(flow);
 
@@ -1387,7 +1387,7 @@ int SMTP_GetRcptTo(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 }
 
 /* Calback to return the email headers */
-int SMTP_GetEmailHdrs(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
+static int SMTP_GetEmailHdrs(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     SMTPData* ssn = get_session_data(flow);
 

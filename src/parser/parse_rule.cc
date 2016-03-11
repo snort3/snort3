@@ -816,7 +816,7 @@ static void XferHeader(RuleTreeNode* test_node, RuleTreeNode* rtn)
  * Returns: void function
  *
  ***************************************************************************/
-void AddRuleFuncToList(
+static void AddRuleFuncToList(
     int (* rfunc) (Packet*, RuleTreeNode*, struct RuleFpList*, int),
     RuleTreeNode* rtn)
 {

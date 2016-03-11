@@ -17,6 +17,8 @@
 //--------------------------------------------------------------------------
 // act_replace.cc author Russ Combs <rucombs@cisco.com>
 
+#include "act_replace.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

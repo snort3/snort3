@@ -558,7 +558,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-void bo_init()
+static void bo_init()
 {
     PrecalcPrefix();
 }

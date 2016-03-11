@@ -80,7 +80,7 @@ static const char* const pm_type_strings[PM_TYPE_MAX] =
     "packet", "alt", "key", "header", "body", "file"
 };
 
-int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree_root_t* root)
+static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree_root_t* root)
 {
     detection_option_tree_node_t* node = NULL;
     void* dup_node = NULL;
@@ -105,7 +105,7 @@ int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree_root_t
     return 0;
 }
 
-int otn_create_tree(OptTreeNode* otn, void** existing_tree)
+static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
 {
     detection_option_tree_node_t* node = NULL, * child;
 

@@ -425,7 +425,7 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, Event* 
     Unified2Write(write_pkt_buffer, write_len, config);
 }
 
-void _WriteExtraData(Unified2Config* config,
+static void _WriteExtraData(Unified2Config* config,
     uint32_t event_id,
     uint32_t event_second,
     const uint8_t* buffer,

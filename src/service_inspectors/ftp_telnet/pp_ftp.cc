@@ -255,7 +255,7 @@ static int getIP1639(
  * this copy is unfortunate but inet_pton() doesn't
  * like the delim and the src buf is const so ...
  */
-void CopyField(
+static void CopyField(
     char* buf, const char* tok, int max, const char* end, char delim
     )
 {

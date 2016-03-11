@@ -230,7 +230,7 @@ void sfthd_objs_free(ThresholdObjects* thd_objs)
     free(thd_objs);
 }
 
-void sfthd_item_free(void* item)
+static void sfthd_item_free(void* item)
 {
     THD_ITEM* sfthd_item = (THD_ITEM*)item;
     sflist_free_all(sfthd_item->sfthd_node_list, sfthd_node_free);

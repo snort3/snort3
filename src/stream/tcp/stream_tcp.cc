@@ -117,17 +117,17 @@ static void tcp_dtor(Inspector* p)
     delete p;
 }
 
-Session* tcp_ssn(Flow* lws)
+static Session* tcp_ssn(Flow* lws)
 {
     return new TcpSession(lws);
 }
 
-void tcp_tinit()
+static void tcp_tinit()
 {
     TcpSession::sinit();
 }
 
-void tcp_tterm()
+static void tcp_tterm()
 {
     TcpSession::sterm();
     FlushBucket::clear();

@@ -18,6 +18,8 @@
 //--------------------------------------------------------------------------
 // ips_flow.cc derived from sp_clientserver.c by Martin Roesch
 
+#include "ips_flow.h"
+
 #include <sys/types.h>
 
 #ifdef HAVE_CONFIG_H

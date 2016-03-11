@@ -50,7 +50,7 @@ static dnp3_session_data_t* set_new_dnp3_session(Packet* p)
     return(&fd->dnp3_session);
 }
 
-const uint8_t* dnp3_get_alt_buffer(Packet* p, unsigned& len)
+static const uint8_t* dnp3_get_alt_buffer(Packet* p, unsigned& len)
 {
     dnp3_session_data_t* dnp3_sess = get_session_data(p->flow);
     len = 0;
@@ -73,7 +73,7 @@ const uint8_t* dnp3_get_alt_buffer(Packet* p, unsigned& len)
     return len ? (const uint8_t*)rdata->buffer : nullptr;
 }
 
-void dnp3_reset_alt_buffer(const Packet* p)
+static void dnp3_reset_alt_buffer(const Packet* p)
 {
     dnp3_session_data_t* dnp3_sess = get_session_data(p->flow);
 

@@ -56,7 +56,7 @@ SIPMethod StandardMethods[] =
 
 static SIPMethodsFlag currentUseDefineMethod = SIP_METHOD_USER_DEFINE;
 
-int SIP_findMethod(const char* token, SIPMethod* methods)
+static int SIP_findMethod(const char* token, SIPMethod* methods)
 {
     int i = 0;
     while (NULL != methods[i].name)

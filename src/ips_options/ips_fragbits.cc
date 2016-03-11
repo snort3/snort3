@@ -225,7 +225,7 @@ int FragBitsOption::eval(Cursor&, Packet* p)
 // api methods
 //-------------------------------------------------------------------------
 
-void fragbits_parse(const char* data, FragBitsData* ds_ptr)
+static void fragbits_parse(const char* data, FragBitsData* ds_ptr)
 {
     const char* fptr;
     const char* fend;
@@ -352,7 +352,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-void fragbits_init(SnortConfig*)
+static void fragbits_init(SnortConfig*)
 {
     bitmask = htons(0xE000);
 }

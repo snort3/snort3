@@ -145,7 +145,7 @@ DAQ_Mode DAQ_GetInterfaceMode(const DAQ_PktHdr_t* h)
     return DAQ_MODE_PASSIVE;
 }
 
-DAQ_Mode DAQ_GetMode(const SnortConfig* sc)
+static DAQ_Mode DAQ_GetMode(const SnortConfig* sc)
 {
     if ( sc->daq_mode.size() )
     {

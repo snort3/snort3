@@ -82,7 +82,7 @@ const PegInfo ssl_peg_names[] =
     { nullptr, nullptr }
 };
 
-SSLData* SetNewSSLData(Packet* p)
+static SSLData* SetNewSSLData(Packet* p)
 {
     SslFlowData* fd = new SslFlowData;
     p->flow->set_application_data(fd);

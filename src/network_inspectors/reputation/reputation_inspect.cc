@@ -84,7 +84,7 @@ static void snort_reputation(ReputationConfig* GlobalConf, Packet* p);
 
 unsigned ReputationFlowData::flow_id = 0;
 
-ReputationData* SetNewReputationData(Flow* flow)
+static ReputationData* SetNewReputationData(Flow* flow)
 {
     ReputationFlowData* fd = new ReputationFlowData;
     flow->set_application_data(fd);
@@ -127,7 +127,7 @@ static void DisableReputation(Flow* flow)
         data->disabled = true;
 }
 
-void PrintIPlistStats(ReputationConfig* config)
+static void PrintIPlistStats(ReputationConfig* config)
 {
     /*Print out the summary*/
     LogMessage("    Reputation total memory usage: " STDu64 " bytes\n",
@@ -137,7 +137,7 @@ void PrintIPlistStats(ReputationConfig* config)
         config->numEntries,total_invalids,total_duplicates);
 }
 
-void PrintReputationConf(ReputationConfig* config)
+static void PrintReputationConf(ReputationConfig* config)
 {
     assert(config);
 

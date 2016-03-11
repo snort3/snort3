@@ -295,7 +295,7 @@ static void base_dtor(Inspector* p)
     delete p;
 }
 
-void base_tterm()
+static void base_tterm()
 {
     delete flow_con;
     flow_con = nullptr;

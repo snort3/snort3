@@ -362,7 +362,7 @@ void sfvt_free_table(vartable_t* table)
 }
 
 /* Prints a table's contents */
-void sfip_print_table(FILE* f, vartable_t* table)
+static void sfip_print_table(FILE* f, vartable_t* table)
 {
     sfip_var_t* p;
 

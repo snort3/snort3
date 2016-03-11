@@ -545,7 +545,7 @@ static inline const u_char* FindPipelineReq(HI_SESSION* session,
 **  @retval URI_END          delimiter found, end of URI
 **  @retval NO_URI
 */
-int NextNonWhiteSpace(HI_SESSION* session, const u_char* start,
+static int NextNonWhiteSpace(HI_SESSION* session, const u_char* start,
     const u_char* end, const u_char** ptr, URI_PTR* uri_ptr)
 {
     HTTPINSPECT_CONF* ServerConf = session->server_conf;
@@ -882,7 +882,7 @@ int IsHttpVersion(const u_char** ptr, const u_char* end)
 **  @retval URI_END end of the URI is found, check URI_PTR.
 **  @retval NO_URI  malformed delimiter, no URI.
 */
-int find_rfc_delimiter(HI_SESSION* session, const u_char* start,
+static int find_rfc_delimiter(HI_SESSION* session, const u_char* start,
     const u_char* end, const u_char** ptr, URI_PTR* uri_ptr)
 {
     if (*ptr == start || !uri_ptr->uri)
@@ -945,7 +945,7 @@ int find_rfc_delimiter(HI_SESSION* session, const u_char* start,
 **  @retval URI_END delimiter found, end of URI
 **  @retval NO_URI
 */
-int find_non_rfc_delimiter(
+static int find_non_rfc_delimiter(
     HI_SESSION* session, const u_char* start,
     const u_char*, const u_char** ptr, URI_PTR* uri_ptr)
 {
@@ -1016,7 +1016,7 @@ int find_non_rfc_delimiter(
 **
 **  @retval HI_SUCCESS function successful
 */
-int SetPercentNorm(
+static int SetPercentNorm(
     HI_SESSION* session, const u_char*,
     const u_char*, const u_char** ptr, URI_PTR* uri_ptr)
 {
@@ -1090,7 +1090,7 @@ static inline int CheckLongDir(HI_SESSION* session, URI_PTR* uri_ptr,
 **  @retval HI_SUCCESS       function successful
 **  @retval HI_OUT_OF_BOUNDS reached the end of the buffer
 */
-int SetSlashNorm(HI_SESSION* session, const u_char* start,
+static int SetSlashNorm(HI_SESSION* session, const u_char* start,
     const u_char* end, const u_char** ptr, URI_PTR* uri_ptr)
 {
     HTTPINSPECT_CONF* ServerConf = session->server_conf;
@@ -1182,7 +1182,7 @@ int SetSlashNorm(HI_SESSION* session, const u_char* start,
 **
 **  @retval HI_SUCCESS       function successful
 */
-int SetBackSlashNorm(
+static int SetBackSlashNorm(
     HI_SESSION* session, const u_char*,
     const u_char*, const u_char** ptr, URI_PTR* uri_ptr)
 {
@@ -1220,7 +1220,7 @@ int SetBackSlashNorm(
  * **  @retval HI_SUCCESS       function successful
  * */
 
-int SetPlusNorm(
+static int SetPlusNorm(
     HI_SESSION*, const u_char*,
     const u_char*, const u_char** ptr, URI_PTR* uri_ptr)
 {
@@ -1255,7 +1255,7 @@ int SetPlusNorm(
 **
 **  @retval HI_SUCCESS       function successful
 */
-int SetBinaryNorm(
+static int SetBinaryNorm(
     HI_SESSION*, const u_char*,
     const u_char*, const u_char** ptr, URI_PTR* uri_ptr)
 {
@@ -1288,7 +1288,7 @@ int SetBinaryNorm(
 **
 **  @retval HI_SUCCESS       function successful
 */
-int SetParamField(
+static int SetParamField(
     HI_SESSION*, const u_char*,
     const u_char*, const u_char** ptr, URI_PTR* uri_ptr)
 {
@@ -1319,7 +1319,7 @@ int SetParamField(
 **
 **  @retval HI_SUCCESS       function successful
 */
-int SetProxy(HI_SESSION* session, const u_char* start,
+static int SetProxy(HI_SESSION* session, const u_char* start,
     const u_char* end, const u_char** ptr, URI_PTR* uri_ptr)
 {
     HTTPINSPECT_CONF* ServerConf = session->server_conf;
@@ -1782,7 +1782,7 @@ const u_char* extract_http_cookie(const u_char* p, const u_char* end, HEADER_PTR
     return p;
 }
 
-const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, const u_char* start,
+static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, const u_char* start,
     const u_char* end, HI_CLIENT_HDR_ARGS* hdrs_args)
 {
     int num_spaces = 0;
@@ -1927,7 +1927,7 @@ const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, const u_cha
     return p;
 }
 
-const u_char* extract_http_hostname(HI_SESSION* session, const u_char* p, const u_char* start,
+static const u_char* extract_http_hostname(HI_SESSION* session, const u_char* p, const u_char* start,
     const u_char* end, HEADER_PTR* header_ptr, HttpSessionData* hsd)
 {
     int num_spaces = 0;
@@ -2697,7 +2697,7 @@ static inline const u_char* hi_client_extract_header(
 **  @retval HI_SUCCESS      URI detected and session pointers updated
 */
 
-int StatelessInspection(Packet* p, HI_SESSION* session, HttpSessionData* hsd, int stream_ins)
+static int StatelessInspection(Packet* p, HI_SESSION* session, HttpSessionData* hsd, int stream_ins)
 {
     HTTPINSPECT_CONF* ServerConf;
     HTTPINSPECT_CONF* ClientConf;

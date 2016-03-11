@@ -156,6 +156,5 @@ TEST(lru_cache_shared, remove_test)
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
-    return(0);
 }
 

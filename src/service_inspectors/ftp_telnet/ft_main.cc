@@ -130,7 +130,7 @@ void CleanupFTPClientConf(void* clientConf)
  *          1               => errors
  *
  */
-int CheckFTPCmdOptions(FTP_SERVER_PROTO_CONF* serverConf)
+static int CheckFTPCmdOptions(FTP_SERVER_PROTO_CONF* serverConf)
 {
     FTP_CMD_CONF* cmdConf;
     int iRet =0;

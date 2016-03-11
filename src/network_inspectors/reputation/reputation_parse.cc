@@ -63,7 +63,7 @@ ReputationConfig::~ReputationConfig()
 }
 
 
-uint32_t estimateSizeFromEntries(uint32_t num_entries, uint32_t memcap)
+static uint32_t estimateSizeFromEntries(uint32_t num_entries, uint32_t memcap)
 {
     uint64_t size;
     uint64_t sizeFromEntries;
@@ -768,7 +768,7 @@ void LoadListFile(char* filename, INFO info, ReputationConfig* config)
     fclose(fp);
 }
 
-int numLinesInFile(char* fname)
+static int numLinesInFile(char* fname)
 {
     FILE* fp;
     uint32_t numlines = 0;
@@ -831,7 +831,8 @@ void EstimateNumEntries(ReputationConfig* config)
     config->numEntries = totalLines;
 }
 
-void ReputationRepInfo(IPrepInfo* repInfo, uint8_t* base, char* repInfoBuff,
+#ifdef DEBUG_MSGS
+static void ReputationRepInfo(IPrepInfo* repInfo, uint8_t* base, char* repInfoBuff,
     int bufLen)
 {
     char* index = repInfoBuff;
@@ -875,7 +876,6 @@ void ReputationRepInfo(IPrepInfo* repInfo, uint8_t* base, char* repInfoBuff,
     }
 }
 
-#ifdef DEBUG_MSGS
 void ReputationPrintRepInfo(IPrepInfo* repInfo, uint8_t* base)
 {
     char repInfoBuff[STD_BUF];

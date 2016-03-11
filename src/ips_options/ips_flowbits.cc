@@ -706,7 +706,7 @@ static void processFlowbits(
     free(flowbits_name);
 }
 
-void validateFlowbitsSyntax(FLOWBITS_OP* flowbits)
+static void validateFlowbitsSyntax(FLOWBITS_OP* flowbits)
 {
     switch (flowbits->type)
     {

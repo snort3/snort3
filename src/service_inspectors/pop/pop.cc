@@ -18,6 +18,8 @@
 
 // pop.cc author Bhagyashree Bantwal < bbantwal@cisco.com>
 
+#include "pop.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -43,7 +45,6 @@
 #include "file_api/file_api.h"
 #include "mime/file_mime_process.h"
 
-#include "pop.h"
 #include "pop_module.h"
 #include "pop_paf.h"
 
@@ -123,7 +124,7 @@ static POPData* get_session_data(Flow* flow)
     return fd ? &fd->session : NULL;
 }
 
-POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
+static POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
 {
     POPData* pop_ssn;
     PopFlowData* fd = new PopFlowData;
@@ -145,7 +146,7 @@ POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
     return pop_ssn;
 }
 
-void POP_SearchInit(void)
+static void POP_SearchInit(void)
 {
     const POPToken* tmp;
     pop_cmd_search_mpse = new SearchTool();
@@ -175,7 +176,7 @@ void POP_SearchInit(void)
     pop_resp_search_mpse->prep();
 }
 
-void POP_SearchFree(void)
+static void POP_SearchFree(void)
 {
     if (pop_cmd_search_mpse != NULL)
         delete pop_cmd_search_mpse;
@@ -192,7 +193,7 @@ static void POP_ResetState(Flow* ssn)
     pop_ssn->state_flags = 0;
 }
 
-void POP_GetEOL(const uint8_t* ptr, const uint8_t* end,
+static void POP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
 {
     assert(ptr and end and eol and eolm);

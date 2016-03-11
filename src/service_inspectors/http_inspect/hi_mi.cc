@@ -33,6 +33,8 @@
 **    - 3.2.03:  Initial development.  DJR
 */
 
+#include "hi_mi.h"
+
 #include "hi_si.h"
 #include "hi_client.h"
 #include "hi_server.h"

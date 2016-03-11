@@ -59,7 +59,7 @@ SipFlowData::~SipFlowData()
     FreeSipData(&session);
 }
 
-SIPData* SetNewSIPData(Packet* p, SIP_PROTO_CONF* config)
+static SIPData* SetNewSIPData(Packet* p, SIP_PROTO_CONF* config)
 {
     static int MaxSessionsAlerted = 0;
     if (numSessions > config->maxNumSessions)

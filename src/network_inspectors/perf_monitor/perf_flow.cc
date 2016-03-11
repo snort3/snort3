@@ -77,7 +77,7 @@ typedef struct _sfSingleFlowStatsValue
     uint64_t total_bytes;
     uint32_t stateChanges[SFS_STATE_MAX];
 } sfSFSValue;
-int UpdateTCPFlowStats(SFFLOW* sfFlow, int sport, int dport, int len)
+static int UpdateTCPFlowStats(SFFLOW* sfFlow, int sport, int dport, int len)
 {
     /*
     ** Track how much data on each port, and hihg<-> high port data
@@ -125,7 +125,7 @@ int UpdateTCPFlowStats(SFFLOW* sfFlow, int sport, int dport, int len)
     return 0;
 }
 
-int UpdateUDPFlowStats(SFFLOW* sfFlow, int sport, int dport, int len)
+static int UpdateUDPFlowStats(SFFLOW* sfFlow, int sport, int dport, int len)
 {
     /*
      * Track how much data on each port, and hihg<-> high port data
@@ -156,7 +156,7 @@ int UpdateUDPFlowStats(SFFLOW* sfFlow, int sport, int dport, int len)
     return 0;
 }
 
-int UpdateICMPFlowStats(SFFLOW* sfFlow, int type, int len)
+static int UpdateICMPFlowStats(SFFLOW* sfFlow, int type, int len)
 {
     if (type < 256)
     {

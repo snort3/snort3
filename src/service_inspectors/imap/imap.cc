@@ -165,7 +165,7 @@ static IMAPData* get_session_data(Flow* flow)
     return fd ? &fd->session : NULL;
 }
 
-IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
+static IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
 {
     IMAPData* imap_ssn;
     ImapFlowData* fd = new ImapFlowData;
@@ -189,7 +189,7 @@ IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
     return imap_ssn;
 }
 
-void IMAP_SearchInit(void)
+static void IMAP_SearchInit(void)
 {
     const IMAPToken* tmp;
     imap_cmd_search_mpse = new SearchTool();
@@ -219,7 +219,7 @@ void IMAP_SearchInit(void)
     imap_resp_search_mpse->prep();
 }
 
-void IMAP_SearchFree(void)
+static void IMAP_SearchFree(void)
 {
     if (imap_cmd_search_mpse != NULL)
         delete imap_cmd_search_mpse;
@@ -236,7 +236,7 @@ static void IMAP_ResetState(Flow* ssn)
     imap_ssn->body_read = imap_ssn->body_len = 0;
 }
 
-void IMAP_GetEOL(const uint8_t* ptr, const uint8_t* end,
+static void IMAP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
 {
     assert(ptr and end and eol and eolm);

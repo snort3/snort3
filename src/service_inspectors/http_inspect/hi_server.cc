@@ -903,7 +903,7 @@ static void SetGzipBuffers(HttpSessionData* hsd, HI_SESSION* session)
     }
 }
 
-int uncompress_gzip(u_char* dest, int destLen, const u_char* source,
+static int uncompress_gzip(u_char* dest, int destLen, const u_char* source,
     int sourceLen, HttpSessionData* sd, int* total_bytes_read, int compr_fmt)
 {
     z_stream stream;
@@ -1702,7 +1702,7 @@ static int HttpResponseInspection(HI_SESSION* session, Packet* p, const unsigned
     return HI_SUCCESS;
 }
 
-int ServerInspection(HI_SESSION* session, Packet* p, HttpSessionData* hsd)
+static int ServerInspection(HI_SESSION* session, Packet* p, HttpSessionData* hsd)
 {
     int iRet;
 

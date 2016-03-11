@@ -437,7 +437,7 @@ static int ProcessDateFormat(FTP_DATE_FMT* dateFmt,
  *                     >0 = non-fatal error, <0 = fatal error)
  *
  */
-int DoNextFormat(FTP_PARAM_FMT* ThisFmt, int allocated,
+static int DoNextFormat(FTP_PARAM_FMT* ThisFmt, int allocated,
     char* ErrorString, int ErrStrLen)
 {
     FTP_PARAM_FMT* NextFmt;

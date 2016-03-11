@@ -33,6 +33,9 @@
  * Marc A. Norton <mnorton@sourcefire.com>
  * Kevin Liu <kliu@sourcefire.com>
  */
+
+#include "ftp_cmd_lookup.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

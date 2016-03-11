@@ -188,9 +188,6 @@ static void register_profiles()
 static void pass_pkts(Packet*) { }
 static MainHook_f main_hook = pass_pkts;
 
-Packet* get_current_packet()
-{ return s_packet; }
-
 static void set_policy(Packet* p)  // FIXIT-M delete this?
 {
     set_default_policy();

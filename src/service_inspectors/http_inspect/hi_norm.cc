@@ -32,6 +32,9 @@
 **  NOTES:
 **      - Initial development.  DJR
 */
+
+#include "hi_norm.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

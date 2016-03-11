@@ -182,7 +182,7 @@ static void sock_init(const char* args)
         context.connected = 1;
 }
 
-void send_sar(uint8_t* data, unsigned len)
+static void send_sar(uint8_t* data, unsigned len)
 {
     int tries = 0;
 
@@ -286,7 +286,7 @@ struct SnortActionRequest
     uint8_t protocol;
 };
 
-void load_sar(Packet* packet, Event* event, SnortActionRequest& sar)
+static void load_sar(Packet* packet, Event* event, SnortActionRequest& sar)
 {
     if(!event || !packet || !packet->ptrs.ip_api.is_ip())
         return;

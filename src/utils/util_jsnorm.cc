@@ -579,7 +579,7 @@ static int PNorm_scan_fsm(PNormState* s, int c, JSState* js)
     return(PNorm_exec(s, (ActionPNorm)m->action, c, js));
 }
 
-int PNormDecode(char* src, uint16_t srclen, char* dst, uint16_t dstlen, uint16_t* bytes_copied,
+static int PNormDecode(char* src, uint16_t srclen, char* dst, uint16_t dstlen, uint16_t* bytes_copied,
     JSState* js)
 {
     int iRet = RET_OK;
@@ -613,7 +613,7 @@ int PNormDecode(char* src, uint16_t srclen, char* dst, uint16_t dstlen, uint16_t
     return iRet;
 }
 
-int ConvertToChar(uint16_t flags, uint8_t* buf, uint8_t buflen)
+static int ConvertToChar(uint16_t flags, uint8_t* buf, uint8_t buflen)
 {
     int val = 0;
     char* p = NULL;
@@ -765,7 +765,7 @@ static int SFCC_scan_fsm(SFCCState* s, int c)
     return(SFCC_exec(s, (ActionSFCC)m->action, c));
 }
 
-void StringFromCharCodeDecode(char* src, uint16_t srclen, char** ptr, char** dst,
+static void StringFromCharCodeDecode(char* src, uint16_t srclen, char** ptr, char** dst,
     uint16_t* bytes_copied, JSState* js, uint8_t* iis_unicode_map)
 {
     int iRet;

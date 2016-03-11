@@ -84,7 +84,7 @@ SearchTool* mime_hdr_search_mpse = nullptr;
 MIMESearch mime_hdr_search[HDR_LAST];
 MIMESearch* mime_current_search = NULL;
 
-void get_mime_eol(const uint8_t* ptr, const uint8_t* end,
+static void get_mime_eol(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
 {
     const uint8_t* tmp_eol;
