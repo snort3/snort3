@@ -560,8 +560,6 @@ int CheckSrcIP(Packet* p, RuleTreeNode* rtn_idx, RuleFpList* fp_list, int check_
 
     DebugMessage(DEBUG_DETECT,"  Mismatch on SIP\n");
 
-    return 0;
-
     /* return 0 on a failed test */
     return 0;
 }

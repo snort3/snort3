@@ -82,8 +82,6 @@ bool FragOffsetOption::operator==(const IpsOption& ips) const
 
     FragOffsetOption& rhs = (FragOffsetOption&)ips;
     return config == rhs.config;
-
-    return false;
 }
 
 int FragOffsetOption::eval(Cursor&, Packet* p)

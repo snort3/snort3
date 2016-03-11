@@ -90,19 +90,19 @@ static const Command snort_cmds[] =
 // why not
 //-------------------------------------------------------------------------
 
-static void c2x(const char* s)
+NORETURN static void c2x(const char* s)
 {
     printf("'%c' = 0x%2.2X (%d)\n", s[0], s[0], s[0]);
     exit(0);
 }
 
-static void x2c(unsigned x)
+NORETURN static void x2c(unsigned x)
 {
     printf("0x%2.2X (%d) = '%c'\n", x, x, x);
     exit(0);
 }
 
-static void x2s(const char* s)
+NORETURN static void x2s(const char* s)
 {
     bool inv;
     string out, in = "\"";

@@ -254,10 +254,7 @@ ZHash::ZHash(int rows, int keysz)
     sfhashfcn = sfhashfcn_new(rows);
 
     if ( !sfhashfcn )
-    {
         FatalError("can't allocate hash table\n");
-        return;
-    }
 
     /* Allocate the array of node ptrs */
     table = new ZHashNode*[rows]();

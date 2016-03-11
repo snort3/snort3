@@ -103,8 +103,6 @@ bool IcmpSeqOption::operator==(const IpsOption& ips) const
 
     IcmpSeqOption& rhs = (IcmpSeqOption&)ips;
     return ( config == rhs.config );
-
-    return false;
 }
 
 int IcmpSeqOption::eval(Cursor&, Packet* p)

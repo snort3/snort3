@@ -121,10 +121,8 @@ TextLog* TextLog_Init(
     txt = (TextLog*)malloc(sizeof(TextLog)+maxBuf);
 
     if ( !txt )
-    {
         FatalError("Unable to allocate a TextLog(%u)\n", maxBuf);
-        return nullptr;
-    }
+
     txt->name = name ? SnortStrdup(name) : NULL;
     txt->file = TextLog_Open(txt->name);
     txt->size = TextLog_Size(txt->file);

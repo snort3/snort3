@@ -455,10 +455,7 @@ bool ProfilerModule::set(const char* fqn, Value& v, SnortConfig* sc)
     else if ( !strncmp(fqn, spr, strlen(spr)) )
         return s_profiler_module_set(sc->profiler->rule, v);
 
-    else
-        return false;
-
-    return true;
+    return false;
 }
 
 //-------------------------------------------------------------------------

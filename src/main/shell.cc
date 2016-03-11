@@ -49,7 +49,6 @@ int Shell::panic(lua_State* L)
 {
     fatal = lua_tostring(L, -1);
     throw runtime_error(fatal);
-    return -1;
 }
 
 // FIXIT-L --shell --pause should stop before loading config so Lua state
@@ -72,10 +71,7 @@ static void load_config(lua_State* L, const char* file)
     Lua::ManageStack ms(L);
 
     if ( luaL_loadfile(L, file) )
-    {
         FatalError("can't load %s: %s\n", file, lua_tostring(L, -1));
-        return;
-    }
 
     if ( lua_pcall(L, 0, 0, 0) )
         FatalError("can't init %s: %s\n", file, lua_tostring(L, -1));
@@ -91,7 +87,6 @@ static void load_overrides(lua_State* L, string& s)
         if ( strstr(err, "near '#'") )
             ParseError("this doesn't look like Lua.  Comments start with --, not #.");
         FatalError("can't load overrides: %s\n", err);
-        return;
     }
 
     if ( lua_pcall(L, 0, 0, 0) )

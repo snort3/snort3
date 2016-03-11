@@ -349,7 +349,7 @@ bool Active::is_unreachable_candidate(const Packet* p)
         return 1;
 
     default:
-        return 0;
+        break;
     }
 
     return 0;

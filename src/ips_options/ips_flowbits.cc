@@ -1097,10 +1097,7 @@ static void flowbits_ginit(SnortConfig*)
     flowbits_grp_hash = sfghash_new(10000, 0, 0, FlowBitsGrpFree);
 
     if ( !flowbits_grp_hash )
-    {
         FatalError("could not create flowbits group hash.\n");
-        return;
-    }
 
     flowbits_bit_queue = sfqueue_new();
 

@@ -565,16 +565,13 @@ static int UpdatePathToFile(char* full_path_filename, unsigned int max_size, cha
     const char* snort_conf_dir = get_snort_conf_dir();
 
     if (!snort_conf_dir || !(*snort_conf_dir) || !full_path_filename || !filename)
-    {
         FatalError("can't create path.\n");
-        return 0;
-    }
+
     /*filename is too long*/
     if ( max_size < strlen(filename) )
     {
-        FatalError("The file name length %u is longer than allowed %u.\n", (unsigned)strlen(
-            filename), max_size);
-        return 0;
+        FatalError("The file name length %u is longer than allowed %u.\n",
+            (unsigned)strlen(filename), max_size);
     }
 
     /*

@@ -541,10 +541,7 @@ static int socket_init()
     listener = socket(AF_INET, SOCK_STREAM, 0);
 
     if (listener < 0)
-    {
         FatalError("socket failed: %s\n", get_error(errno));
-        return -2;
-    }
 
     // FIXIT-M want to disable time wait
     int on = 1;
@@ -558,17 +555,11 @@ static int socket_init()
     addr.sin_port = htons(snort_conf->remote_control);
 
     if ( ::bind(listener, (struct sockaddr*)&addr, sizeof(addr)) < 0 )
-    {
         FatalError("bind failed: %s\n", get_error(errno));
-        return -3;
-    }
 
     // FIXIT-M configure max conns
     if ( listen(listener, 0) < 0 )
-    {
         FatalError("listen failed: %s\n", get_error(errno));
-        return -4;
-    }
 
     return 0;
 }
@@ -750,17 +741,12 @@ static bool set_mode()
 #endif
 
     if ( int k = get_parse_errors() )
-    {
         FatalError("see prior %d errors\n", k);
-        return false;
-    }
+
     if ( SnortConfig::conf_error_out() )
     {
         if ( int k = get_parse_warnings() )
-        {
             FatalError("see prior %d warnings\n", k);
-            return false;
-        }
     }
 
     if ( just_validate() )

@@ -115,13 +115,13 @@ void help_args(const char* pfx)
     }
 }
 
-void help_basic(SnortConfig*, const char*)
+NORETURN void help_basic(SnortConfig*, const char*)
 {
     fprintf(stdout, "%s\n", snort_help);
     exit(0);
 }
 
-void help_usage(SnortConfig*, const char* s)
+NORETURN void help_usage(SnortConfig*, const char* s)
 {
     fprintf(stdout, "usage:\n");
     fprintf(stdout, "    %s -?: list options\n", s);
@@ -133,13 +133,13 @@ void help_usage(SnortConfig*, const char* s)
     exit(1);
 }
 
-void help_options(SnortConfig*, const char* val)
+NORETURN void help_options(SnortConfig*, const char* val)
 {
     help_args(val);
     exit(0);
 }
 
-void help_signals(SnortConfig*, const char*)
+NORETURN void help_signals(SnortConfig*, const char*)
 {
     help_signals();
     exit(0);
@@ -152,7 +152,7 @@ enum HelpType
     HT_HMO, HT_HPL, HT_DFL, HT_PEG
 };
 
-static void show_help(SnortConfig* sc, const char* val, HelpType ht)
+NORETURN static void show_help(SnortConfig* sc, const char* val, HelpType ht)
 {
     snort_conf = new SnortConfig;
     ScriptManager::load_scripts(sc->script_paths);
@@ -210,12 +210,12 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
     exit(0);
 }
 
-void help_config(SnortConfig* sc, const char* val)
+NORETURN void help_config(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_CFG);
 }
 
-void help_commands(SnortConfig* sc, const char* val)
+NORETURN void help_commands(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_CMD);
 }
@@ -225,97 +225,97 @@ void config_markup(SnortConfig*, const char*)
     Markup::enable();
 }
 
-void help_gids(SnortConfig* sc, const char* val)
+NORETURN void help_gids(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_GID);
 }
 
-void help_buffers(SnortConfig* sc, const char* val)
+NORETURN void help_buffers(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_BUF);
 }
 
-void help_builtin(SnortConfig* sc, const char* val)
+NORETURN void help_builtin(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_IPS);
 }
 
-void help_module(SnortConfig* sc, const char* val)
+NORETURN void help_module(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_MOD);
 }
 
-void help_modules(SnortConfig* sc, const char* val)
+NORETURN void help_modules(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_HMO);
 }
 
-void help_plugins(SnortConfig* sc, const char* val)
+NORETURN void help_plugins(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_HPL);
 }
 
-void list_modules(SnortConfig* sc, const char* val)
+NORETURN void list_modules(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_LST);
 }
 
-void list_plugins(SnortConfig* sc, const char* val)
+NORETURN void list_plugins(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_PLG);
 }
 
-void dump_defaults(SnortConfig* sc, const char* val)
+NORETURN void dump_defaults(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_DFL);
 }
 
-void dump_builtin_rules(SnortConfig* sc, const char* val)
+NORETURN void dump_builtin_rules(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_DBR);
 }
 
-void dump_dynamic_rules(SnortConfig* sc, const char* val)
+NORETURN void dump_dynamic_rules(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_DDR);
 }
 
-void help_counts(SnortConfig* sc, const char* val)
+NORETURN void help_counts(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_PEG);
 }
 
-void dump_rule_hex(SnortConfig*, const char* val)
+NORETURN void dump_rule_hex(SnortConfig*, const char* val)
 {
     SoManager::rule_to_hex(val);
     exit(0);
 }
 
-void dump_rule_text(SnortConfig*, const char* val)
+NORETURN void dump_rule_text(SnortConfig*, const char* val)
 {
     SoManager::rule_to_text(val);
     exit(0);
 }
 
-void dump_version(SnortConfig*, const char*)
+NORETURN void dump_version(SnortConfig*, const char*)
 {
     cout << VERSION << endl;
     exit(0);
 }
 
-void help_version(SnortConfig*, const char*)
+NORETURN void help_version(SnortConfig*, const char*)
 {
     DisplayBanner();
     exit(0);
 }
 
-void list_interfaces(SnortConfig*, const char*)
+NORETURN void list_interfaces(SnortConfig*, const char*)
 {
     PrintAllInterfaces();
     exit(0);
 }
 
-void list_daqs(SnortConfig* sc, const char* val)
+NORETURN void list_daqs(SnortConfig* sc, const char* val)
 {
     if ( val )
         ConfigDaqDir(sc, val);

@@ -177,10 +177,7 @@ bool LatencyModule::set(const char* fqn, Value& v, SnortConfig* sc)
     else if ( !strncmp(fqn, slr, strlen(slr)) )
         return latency_set(v, sc->latency->rule_latency);
 
-    else
-        return false;
-
-    return true;
+    return false;
 }
 
 const RuleMap* LatencyModule::get_rules() const
