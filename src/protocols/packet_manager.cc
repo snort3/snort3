@@ -309,7 +309,7 @@ void PacketManager::decode(
         }
         else
         {
-            if ( (p->layers[p->num_layers-1].prot_id == PROTO_TEREDO) &&
+            if ( (p->num_layers > 0) && (p->layers[p->num_layers-1].prot_id == PROTO_TEREDO) &&
                 (prev_prot_id == IPPROTO_IPV6) )
             {
                 pop_teredo(p, raw);

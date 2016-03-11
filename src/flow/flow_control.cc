@@ -225,6 +225,9 @@ void FlowControl::purge_flows (PktType proto)
 
 void FlowControl::prune_flows(PktType proto, Packet* p)
 {
+    if ( !p )
+        return;
+
     FlowCache* cache = get_cache(proto);
 
     if ( !cache )
