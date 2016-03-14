@@ -22,8 +22,10 @@
 
 // defines common types if not already defined
 
-#include <stdint.h>
+#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+
+#include <stdint.h>
 #include <sys/types.h>
 
 #ifdef HAVE_CONFIG_H
@@ -31,19 +33,6 @@
 #endif
 
 typedef uint16_t Port;
-
-/* if PRIu64 isn't in <inttypes.h>
- * we define it and similar here */
-#ifndef PRIu64
-#  if SIZEOF_UNSIGNED_LONG_INT == 8
-#    define _SF_PREFIX "l"
-#  else
-#    define _SF_PREFIX "ll"
-#  endif  /* SIZEOF_UNSIGNED_LONG_INT == 8 */
-#  define PRIu64 _SF_PREFIX "u"
-#  define PRIi64 _SF_PREFIX "i"
-#  define PRIx64 _SF_PREFIX "x"
-#endif  /* PRIu64 */
 
 /* use these macros (and those in <inttypes.h>)
  * for 64 bit format portability

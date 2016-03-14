@@ -20,13 +20,14 @@
 
 #include "file_connector.h"
 
-#include <glob.h>
 #include <assert.h>
-#include <vector>
-#include <string>
-#include <fstream>
+#include <glob.h>
 #include <stdio.h>
 #include <sys/types.h>
+
+#include <fstream>
+#include <string>
+#include <vector>
 
 #include "file_connector_module.h"
 #include "main/snort_types.h"
