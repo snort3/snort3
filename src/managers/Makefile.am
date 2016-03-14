@@ -8,6 +8,7 @@ snort_config.lua \
 snort_plugin.lua
 
 libmanagers_a_SOURCES = \
+connector_manager.cc connector_manager.h \
 action_manager.cc action_manager.h \
 codec_manager.cc codec_manager.h \
 event_manager.cc event_manager.h \

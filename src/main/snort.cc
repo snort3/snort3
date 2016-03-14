@@ -96,14 +96,17 @@ using namespace std;
 #include "managers/mpse_manager.h"
 #include "managers/codec_manager.h"
 #include "managers/action_manager.h"
+#include "managers/connector_manager.h"
 #include "control/idle_processing.h"
 #include "file_api/file_service.h"
 #include "flow/flow_control.h"
 #include "flow/flow.h"
+#include "flow/ha.h"
 #include "stream/stream.h"
 #include "target_based/sftarget_reader.h"
 #include "host_tracker/host_cache.h"
 #include "perf_monitor/perf_monitor.h"
+#include "side_channel/side_channel.h"
 
 #ifdef PIGLET
 #include "piglet/piglet.h"
@@ -242,6 +245,8 @@ void Snort::init(int argc, char** argv)
 #ifdef PIGLET
     Piglet::Manager::init();
 #endif
+
+    SideChannelManager::pre_config_init();
 
     ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_paths);
@@ -646,6 +651,8 @@ void Snort::thread_init(const char* intf)
     IpsManager::setup_options();
     ActionManager::thread_init(snort_conf);
     InspectorManager::thread_init(snort_conf);
+    SideChannelManager::thread_init();
+    HighAvailabilityManager::thread_init();
 }
 
 void Snort::thread_term()
@@ -660,6 +667,8 @@ void Snort::thread_term()
     IpsManager::clear_options();
     EventManager::close_outputs();
     CodecManager::thread_term();
+    SideChannelManager::thread_term();
+    HighAvailabilityManager::thread_term();
 
     if ( s_packet )
     {
@@ -824,6 +833,8 @@ DAQ_Verdict Snort::packet_callback(
 
     //FIXIT-H move this to the appropriate struct
     //perfBase->UpdateWireStats(pkthdr->caplen, Active::packet_was_dropped(), inject);
+    HighAvailabilityManager::process(s_packet->flow, pkthdr);
+
     Active::reset();
     PacketManager::encode_reset();
 

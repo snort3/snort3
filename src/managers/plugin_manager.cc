@@ -48,6 +48,9 @@ using namespace std;
 #include "piglet_plugins/piglet_plugins.h"
 #endif
 
+#include "connector_manager.h"
+#include "connectors/connectors.h"
+
 #include "framework/codec.h"
 #include "framework/logger.h"
 #include "framework/ips_action.h"
@@ -93,7 +96,8 @@ static Symbol symbols[PT_MAX] =
     { "ips_option", IPSAPI_VERSION, sizeof(IpsApi) },
     { "search_engine", SEAPI_VERSION, sizeof(MpseApi) },
     { "so_rule", SOAPI_VERSION, sizeof(SoApi) },
-    { "logger", LOGAPI_VERSION, sizeof(LogApi) }
+    { "logger", LOGAPI_VERSION, sizeof(LogApi) },
+    { "connector", CONNECTOR_API_VERSION, sizeof(ConnectorApi) }
 #ifdef PIGLET
     ,
     { "piglet", PIGLET_API_VERSION, sizeof(Piglet::Api) }
@@ -332,6 +336,10 @@ static void add_plugin(Plugin& p)
         EventManager::add_plugin((LogApi*)p.api);
         break;
 
+    case PT_CONNECTOR:
+        ConnectorManager::add_plugin((ConnectorApi*)p.api);
+        break;
+
 #ifdef PIGLET
     case PT_PIGLET:
         Piglet::Manager::add_plugin((Piglet::Api*)p.api);
@@ -403,6 +411,7 @@ void PluginManager::load_plugins(const std::string& paths)
     load_list(service_inspectors);
     load_list(search_engines);
     load_list(loggers);
+    load_list(connectors);
 #ifdef PIGLET
     load_list(piglets);
 #endif
@@ -456,6 +465,7 @@ void PluginManager::dump_plugins()
     SoManager::dump_plugins();
     ActionManager::dump_plugins();
     EventManager::dump_plugins();
+    ConnectorManager::dump_plugins();
 }
 
 void PluginManager::release_plugins()
@@ -467,6 +477,7 @@ void PluginManager::release_plugins()
     SoManager::release_plugins();
     MpseManager::release_plugins();
     CodecManager::release_plugins();
+    ConnectorManager::release_plugins();
 
     unload_plugins();
 }
@@ -526,6 +537,10 @@ void PluginManager::instantiate(
 
     case PT_SEARCH_ENGINE:
         MpseManager::instantiate((MpseApi*)api, mod, sc);
+        break;
+
+    case PT_CONNECTOR:
+        ConnectorManager::instantiate((ConnectorApi*)api, mod, sc);
         break;
 
     case PT_SO_RULE:

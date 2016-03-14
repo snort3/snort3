@@ -52,6 +52,7 @@ enum PlugType
     PT_SEARCH_ENGINE,
     PT_SO_RULE,
     PT_LOGGER,
+    PT_CONNECTOR,
 #ifdef PIGLET
     PT_PIGLET,
 #endif

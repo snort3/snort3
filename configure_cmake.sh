@@ -172,12 +172,6 @@ while [ $# -ne 0 ]; do
         --enable-static-piglets)
             append_cache_entry STATIC_PIGLETS       BOOL   true
             ;;
-        --disable-side-channel)
-            append_cache_entry BUILD_SIDE_CHANNEL       BOOL   false
-            ;;
-        --enable-side-channel)
-            append_cache_entry BUILD_SIDE_CHANNEL       BOOL   true
-            ;;
         --disable-static-daq)
             append_cache_entry ENABLE_STATIC_DAQ    BOOL   false
             ;;
@@ -237,12 +231,6 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-shell)
             append_cache_entry ENABLE_SHELL    BOOL   false
-            ;;
-        --disable-side-channel)
-            append_cache_entry BUILD_SIDE_CHANNEL    BOOL   false
-            ;;
-        --enable-side-channel)
-            append_cache_entry BUILD_SIDE_CHANNEL    BOOL   true
             ;;
         --disable-unit-tests)
             append_cache_entry BUILD_UNIT_TESTS    BOOL   false

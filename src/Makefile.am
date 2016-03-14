@@ -103,6 +103,9 @@ decompress/libdecompress.a \
 sfip/libsfip.a \
 sfrt/libsfrt.a \
 protocols/libprotocols.a \
+connectors/libconnectors.a \
+connectors/file_connector/libfile_connector.a \
+side_channel/libside_channel.a \
 ports/libports.a \
 utils/libutils.a
 
@@ -138,6 +141,8 @@ search_engines \
 service_inspectors \
 sfip \
 sfrt \
+side_channel \
+connectors \
 stream \
 target_based \
 time \

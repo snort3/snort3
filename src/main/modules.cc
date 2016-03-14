@@ -50,6 +50,8 @@
 #include "sfip/sf_ip.h"
 #include "target_based/sftarget_data.h"
 #include "target_based/snort_protocols.h"
+#include "host_tracker/host_module.h"
+#include "side_channel/side_channel_module.h"
 
 using namespace std;
 
@@ -2175,6 +2177,8 @@ void module_init()
     ModuleManager::add_module(new FileIdModule);
 
     ModuleManager::add_module(new LatencyModule);
+
+    ModuleManager::add_module(new SideChannelModule);
 
     // these modules should be in ips policy
     ModuleManager::add_module(new EventFilterModule);

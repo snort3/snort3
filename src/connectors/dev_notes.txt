@@ -1,0 +1,9 @@
+Connectors house the collection of the plugin-type Connector.  As defined
+.../framework/connector.h, the Connector object implements a simplex
+communications channel that is in-turn used by SideChannel objects.
+
+Connectors have the standard plugin api and instantiation/destruction protocols.
+
+The file_connector writes messages to a file and reads messages from a file.
+
+Configuration entries map side channels to connector instances.

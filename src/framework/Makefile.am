@@ -4,6 +4,7 @@ x_includedir = $(pkgincludedir)/framework
 noinst_LIBRARIES = libframework.a
 
 x_include_HEADERS = \
+connector.h \
 api_options.h \
 base_api.h \
 bits.h \

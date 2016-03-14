@@ -30,3 +30,8 @@ provided by modules; that is strictly done in Lua with snort_defaults.lua.
 This not only simplifies the code somewhat, it also makes the most sense
 from a user perspective.
 
+The ConnectorManager (and associated) classes manage the set of Connector
+objects.  One ConnectorCommon is created to incapsulate a vector of
+configuration objects.  At thread startup, these config objects are used
+to instantiate thread specific instances of each configured Connector.
+

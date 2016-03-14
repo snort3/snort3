@@ -124,6 +124,9 @@ target_link_libraries( snort
     host_tracker
     parser
     flow
+    side_channel
+    connectors
+    file_connector
     control
     filter
     detection
@@ -183,6 +186,8 @@ add_subdirectory(ips_options)
 add_subdirectory(loggers)
 add_subdirectory(network_inspectors)
 add_subdirectory(search_engines)
+add_subdirectory(side_channel)
+add_subdirectory(connectors)
 
 
 #  setting export properties

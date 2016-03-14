@@ -1100,6 +1100,9 @@ src/protocols/Makefile \
 src/search_engines/Makefile \
 src/search_engines/test/Makefile \
 src/sfip/Makefile \
+src/side_channel/Makefile \
+src/connectors/Makefile \
+src/connectors/file_connector/Makefile \
 src/sfrt/Makefile \
 src/target_based/Makefile \
 src/host_tracker/Makefile \

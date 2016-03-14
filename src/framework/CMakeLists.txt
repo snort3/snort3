@@ -18,6 +18,7 @@ set (FRAMEWORK_INCLUDES
     range.h
     so_rule.h
     value.h
+    connector.h
 )
 
 add_library ( framework STATIC

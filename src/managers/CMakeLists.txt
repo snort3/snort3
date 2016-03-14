@@ -26,6 +26,8 @@ add_library( managers
     script_manager.h
     so_manager.cc
     so_manager.h
+    connector_manager.cc
+    connector_manager.h
 )
 
 target_link_libraries(managers

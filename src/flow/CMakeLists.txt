@@ -5,6 +5,7 @@ set (FLOW_INCLUDES
     flow_config.h
     flow_key.h
     memcap.h
+    ha.h
 )
 
 add_library (flow STATIC
@@ -18,6 +19,7 @@ add_library (flow STATIC
     flow_control.cc 
     flow_control.h 
     session.h
+    ha.cc
 )
 
 set_default_visibility_compile_flag(flow)

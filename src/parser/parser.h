@@ -57,8 +57,6 @@ void PortTablesFree(struct RulePortTables*);
 
 void parser_append_rules(const char*);
 
-void ConfigureSideChannelModules(SnortConfig*);
-
 int ParseBool(const char* arg);
 
 int addRtnToOtn(struct OptTreeNode*, RuleTreeNode*);

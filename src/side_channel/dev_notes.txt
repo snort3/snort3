@@ -1,0 +1,71 @@
+The modules/classes contained here implement the top-level interface for side
+channel use and control.
+
+There are two primary classes:
+
+1) SideChannelManager - Set of static methods to manage all SideChannel objects
+across all threads.  The SideChannelManager::get_side_channel() method is used
+by SC clients to fetch one of the SC objects.  Other SideChannelManager methods
+are used to configure the set of SC's.  SideChannelManager methods maintain one
+module global array of SC's to house configuration and one module global thread-
+specific array of SC's as the thread and channel specific objects.  These
+thread/channel specific objects are instantiated from the configuration objects
+as part of the thread_init() method.
+
+2) SideChannel - Set of methods for all SC communications activity. In
+particular:
+    SideChannel::register_receive_handler( handler ) - register the
+        client method to process received SC messages.
+    SideChannel::unregister_receive_handler()
+    SideChannel::alloc_transmit_message( length ) - Allocate a new SCMessage
+        object of a given size to be used for transmitting.
+    SideChannel::discard_message( SCMessage ) - Must be used in the client's
+        receive handler to discard the receive message.  Also used to discard
+        a transmit message if the client decides not to transmit it.
+    SideChannel::transmit_message( SCMessage ) - transmit the message
+    SideChannel::process( number_of_messages ) - synchronously process
+        receive messages.  Receive at most number_of_messages per
+        invocation.  Not used in asynchronous mode.
+
+The SCPort number is the primary 'key' used to configure SC's.  SCPort is a
+16bit value.  It is used in SC messages as the address/content descriptor.
+Conceptually one SC object can be used for a set of SCPort values.  However the
+current implementation associates ONE SCPort value with ONE SC object.  SCPort
+values are used by configuration entries to map side channel instances to side
+channel clients.  The SideChannelManager::get_side_channel( SCPort ) is used by
+an SC client to fetch the SC associated with a given SCPort value.
+
+The configuration entries map a side channel instance to a set of connector
+instances.
+
+The SideChannel service utilizes Connector objects for communications.
+Connector is a plugin class that provides side channel message handling
+services.  A SideChannel can own a transmit and/or a receive connector object.
+Connector objects implement a simplex channel.
+
+Each thread (packet thread or other thread) can own multiple SideChannel
+objects.  The SCPort is used to distinguish.  The
+SideChannelManager::thread_init() method is called during the thread
+initalization to instantiate SideChannel objects for the thread.  
+
+During snort configuration, one side channel object is created to capture the
+common configuration elements.  Then every thread that needs to utilize side
+channels must invoke SideChannelManager::thread_init().  This will instantiate
+thread specific side channel and connector objects.  All side channel and
+connector state is local to the thread.
+
+Side Channel messages are allocated dynamically.  The SC client invokes
+alloc_transmit_message() to get a transmit message of a given size.  The client
+owns the message until it either invokes transmit_message() to send it or
+discard_message() to discard it.
+
+Likewise, messages received are allocated by the connected and the ownership
+is passed to the SC client in the receive callback.  The client invokes
+discard_message() when the handler is done with it.
+
+The dynamic message allocation architecture is flexible and asynchronous.  Upon
+transmitting the message, the client transfers ownership to the connector.  The
+connector then discards the message upon transmission.
+
+A side channel can be bidirectional, but does not implement a request/reply
+paradigm.  Rather it should be viewed as two simplex channels.
