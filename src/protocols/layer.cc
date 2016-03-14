@@ -200,28 +200,6 @@ const uint8_t* get_root_layer(const Packet* const p)
     return nullptr;
 }
 
-uint8_t get_outer_ip_next_pro(const Packet* const p)
-{
-    const Layer* layers = p->layers;
-    const int max_layers = p->num_layers;
-
-    for (int i = 0; i < max_layers; i++)
-    {
-        switch (layers[i].prot_id)
-        {
-        case ETHERTYPE_IPV4:
-        case IPPROTO_ID_IPIP:
-            return reinterpret_cast<const ip::IP4Hdr*>(layers[i].start)->proto();
-        case ETHERTYPE_IPV6:
-        case IPPROTO_ID_IPV6:
-            return reinterpret_cast<const ip::IP6Hdr*>(layers[i].start)->next();
-        default:
-            break;
-        }
-    }
-    return -1;
-}
-
 int get_inner_ip_lyr_index(const Packet* const p)
 {
     const Layer* layers = p->layers;

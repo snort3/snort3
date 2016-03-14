@@ -93,9 +93,6 @@ struct vartable_t
  * Does a "deep" copy so it owns it's own pointers */
 sfip_var_t* sfvar_create_alias(const sfip_var_t* alias_from, const char* alias_to);
 
-/* Returns 1 if the two variables are aliases of each other, 0 otherwise */
-int sfvar_is_alias(const sfip_var_t* one, const sfip_var_t* two);
-
 /* Allocates a new variable as according to "str" */
 sfip_var_t* sfvar_alloc(vartable_t* table, const char* str, SFIP_RET* status);
 
@@ -107,23 +104,8 @@ SFIP_RET sfvar_validate(sfip_var_t* var);
 SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
     const char* str, int negation);
 
-/* Allocaties and returns an IP node described by 'str' */
-sfip_node_t* sfipnode_alloc(const char* str, SFIP_RET* status);
-
-/* Adds a deep copy of src to dst
-   Ordering is not necessarily preserved */
-SFIP_RET sfvar_add(sfip_var_t* dst, sfip_var_t* src);
-
-/* Adds the nodes in 'src' to the variable 'dst' */
-/* The mismatch of types is for ease-of-supporting Snort4 and
- * Snort6 simultaneously */
-SFIP_RET sfvar_add_node(sfip_var_t* dst, sfip_node_t* src, int negated);
-
 /* Compares two variables.  Necessary when building RTN structure */
 SFIP_RET sfvar_compare(const sfip_var_t* one, const sfip_var_t* two);
-
-/* Deep copy. Returns identical, new, linked list of sfipnodes. */
-sfip_var_t* sfvar_deep_copy(const sfip_var_t* src);
 
 /* Free an allocated variable */
 void sfvar_free(sfip_var_t* var);
@@ -132,15 +114,4 @@ void sfvar_free(sfip_var_t* var);
    If either argument is NULL, 0 is returned. */
 int sfvar_ip_in(sfip_var_t* var, const sfip_t* ip);
 
-/* Prints the variable "var" to the file descriptor 'f' */
-void sfvar_print(const char* prefix, sfip_var_t* var);
-void sfip_set_print(const char* prefix, sfip_node_t* head);
-
-void sfvar_print_to_file(FILE* f, sfip_var_t* var);
-void sfip_set_print_to_file(FILE* f, sfip_node_t* head);
-
-/* Returns the node's flags */
-int sfvar_flags(sfip_node_t* node);
-
 #endif
-

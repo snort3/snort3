@@ -163,14 +163,6 @@ SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, void (* userfree)(voi
 }
 
 /*
-*  Set Splay mode : Splays nodes to front of list on each access
-*/
-void sfghash_splaymode(SFGHASH* t, int n)
-{
-    t->splay = n;
-}
-
-/*
 *  Delete the hash Table
 *
 *  free key's, free node's, and free the users data, if they
@@ -525,51 +517,6 @@ int sfghash_remove(SFGHASH* t, const void* const key)
     }
 
     return SFGHASH_ERR;
-}
-
-/*
-*   Get First Hash Table Node
-*/
-SFGHASH_NODE* sfghash_findfirst1(SFGHASH* t)
-{
-    /* Start with 1st row */
-    for ( t->crow=0; t->crow < t->nrows; t->crow++ )
-    {
-        /* Get 1st Non-Null node in row list */
-        t->cnode = t->table[t->crow];
-
-        if ( t->cnode )
-            return t->cnode;
-    }
-    return NULL;
-}
-
-/*
-*   Get Next Hash Table Node
-*/
-SFGHASH_NODE* sfghash_findnext1(SFGHASH* t)
-{
-    if ( t->cnode ) /* get next in this list */
-    {
-        /* Next node in current node list */
-        t->cnode = t->cnode->next;
-        if ( t->cnode )
-        {
-            return t->cnode;
-        }
-    }
-
-    /* Get 1st node in next non-empty row/node list */
-    for ( t->crow++; t->crow < t->nrows; t->crow++ )
-    {
-        t->cnode = t->table[ t->crow ];
-        if ( t->cnode )
-        {
-            return t->cnode;
-        }
-    }
-
-    return NULL;
 }
 
 /* Internal use only */

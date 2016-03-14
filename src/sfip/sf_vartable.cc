@@ -362,21 +362,6 @@ void sfvt_free_table(vartable_t* table)
 }
 
 /* Prints a table's contents */
-static void sfip_print_table(FILE* f, vartable_t* table)
-{
-    sfip_var_t* p;
-
-    if (!f || !table)
-        return;
-
-    fprintf(f, "(Table %p)\n", (void*)table);
-    for (p=table->head; p; p=p->next)
-    {
-        sfvar_print_to_file(f, p);
-        puts("");
-    }
-}
-
 //#define TESTER
 
 #ifdef TESTER

@@ -379,11 +379,9 @@ fd_status_t File_Decomp_End(fd_session_p_t SessionPtr)
     {
         return( File_Decomp_End_PDF(SessionPtr) );
     }
-    default:
-        return( File_Decomp_Error );
     }
 
-    return( File_Decomp_OK );
+    return( File_Decomp_Error );
 }
 
 fd_status_t File_Decomp_Reset(fd_session_p_t SessionPtr)

@@ -332,11 +332,9 @@ fd_status_t File_Decomp_SWF(fd_session_p_t SessionPtr)
 
         return( File_Decomp_Complete );
     }
-    default:
-        return( File_Decomp_Error );
     }
 
-    return( File_Decomp_OK );
+    return( File_Decomp_Error );
 }
 
 //--------------------------------------------------------------------------

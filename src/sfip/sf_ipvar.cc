@@ -70,7 +70,8 @@ void sfvar_free(sfip_var_t* var)
     free(var);
 }
 
-sfip_node_t* sfipnode_alloc(const char* str, SFIP_RET* status)
+/* Allocaties and returns an IP node described by 'str' */
+static sfip_node_t* sfipnode_alloc(const char* str, SFIP_RET* status)
 {
     sfip_node_t* ret;
 
@@ -180,9 +181,63 @@ static inline void sfip_node_freelist(sfip_node_t* root)
     }
 }
 
+static inline sfip_node_t* _sfvar_deep_copy_list(const sfip_node_t* idx)
+{
+    sfip_node_t* ret, * temp, * prev;
+
+    ret = temp = NULL;
+
+    for (; idx; idx = idx->next)
+    {
+        prev = temp;
+
+        if ( (temp = (sfip_node_t*)calloc(1, sizeof(sfip_node_t))) == NULL )
+        {
+            sfip_node_freelist(ret);
+            return NULL;
+        }
+        if ( (temp->ip = (sfip_t*)calloc(1, sizeof(sfip_t))) == NULL )
+        {
+            sfip_node_freelist(ret);
+            free(temp);
+            return NULL;
+        }
+
+        temp->flags = idx->flags;
+        temp->addr_flags = idx->addr_flags;
+
+        /* If it's an "any", there may be no IP object */
+        if (idx->ip)
+            memcpy(temp->ip, idx->ip, sizeof(sfip_t));
+
+        if (prev)
+            prev->next = temp;
+        else
+            ret = temp;
+    }
+    return ret;
+}
+
+/* Deep copy. Returns identical, new, linked list of sfipnodes. */
+static sfip_var_t* sfvar_deep_copy(const sfip_var_t* var)
+{
+    sfip_var_t* ret;
+
+    if (!var)
+        return NULL;
+
+    ret = (sfip_var_t*)SnortAlloc(sizeof(sfip_var_t));
+
+    ret->mode = var->mode;
+    ret->head = _sfvar_deep_copy_list(var->head);
+    ret->neg_head = _sfvar_deep_copy_list(var->neg_head);
+
+    return ret;
+}
+
 /* Deep copy of src added to dst
    Ordering is not necessarily preserved */
-SFIP_RET sfvar_add(sfip_var_t* dst, sfip_var_t* src)
+static SFIP_RET sfvar_add(sfip_var_t* dst, sfip_var_t* src)
 {
     sfip_node_t* oldhead, * oldneg, * idx;
     sfip_var_t* copiedvar;
@@ -230,7 +285,10 @@ SFIP_RET sfvar_add(sfip_var_t* dst, sfip_var_t* src)
     return SFIP_SUCCESS;
 }
 
-SFIP_RET sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
+/* Adds the nodes in 'src' to the variable 'dst' */
+/* The mismatch of types is for ease-of-supporting Snort4 and
+ * Snort6 simultaneously */
+static SFIP_RET sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
 {
     sfip_node_t* p;
     sfip_node_t* swp;
@@ -292,6 +350,33 @@ SFIP_RET sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
 
     /* XXX Insert new node into routing table */
 //    sfrt_add(node->ip,
+}
+
+sfip_var_t* sfvar_create_alias(const sfip_var_t* alias_from, const char* alias_to)
+{
+    sfip_var_t* ret;
+
+    if ((alias_from == NULL) || (alias_to == NULL))
+        return NULL;
+
+    ret = sfvar_deep_copy(alias_from);
+    if (ret == NULL)
+        return NULL;
+
+    ret->name = SnortStrdup(alias_to);
+    ret->id = alias_from->id;
+
+    return ret;
+}
+
+static int sfvar_is_alias(const sfip_var_t* one, const sfip_var_t* two)
+{
+    if ((one == NULL) || (two == NULL))
+        return 0;
+
+    if ((one->id != 0) && (one->id == two->id))
+        return 1;
+    return 0;
 }
 
 static SFIP_RET sfvar_list_compare(sfip_node_t* list1, sfip_node_t* list2)
@@ -621,33 +706,6 @@ SFIP_RET sfvar_validate(sfip_var_t* var)
     return SFIP_SUCCESS;
 }
 
-sfip_var_t* sfvar_create_alias(const sfip_var_t* alias_from, const char* alias_to)
-{
-    sfip_var_t* ret;
-
-    if ((alias_from == NULL) || (alias_to == NULL))
-        return NULL;
-
-    ret = sfvar_deep_copy(alias_from);
-    if (ret == NULL)
-        return NULL;
-
-    ret->name = SnortStrdup(alias_to);
-    ret->id = alias_from->id;
-
-    return ret;
-}
-
-int sfvar_is_alias(const sfip_var_t* one, const sfip_var_t* two)
-{
-    if ((one == NULL) || (two == NULL))
-        return 0;
-
-    if ((one->id != 0) && (one->id == two->id))
-        return 1;
-    return 0;
-}
-
 /* Allocates and returns a new variable, described by "variable". */
 sfip_var_t* sfvar_alloc(vartable_t* table, const char* variable, SFIP_RET* status)
 {
@@ -773,59 +831,6 @@ sfip_var_t* sfvar_alloc(vartable_t* table, const char* variable, SFIP_RET* statu
         sfvar_free(ret);
         return NULL;
     }
-
-    return ret;
-}
-
-static inline sfip_node_t* _sfvar_deep_copy_list(const sfip_node_t* idx)
-{
-    sfip_node_t* ret, * temp, * prev;
-
-    ret = temp = NULL;
-
-    for (; idx; idx = idx->next)
-    {
-        prev = temp;
-
-        if ( (temp = (sfip_node_t*)calloc(1, sizeof(sfip_node_t))) == NULL )
-        {
-            sfip_node_freelist(ret);
-            return NULL;
-        }
-        if ( (temp->ip = (sfip_t*)calloc(1, sizeof(sfip_t))) == NULL )
-        {
-            sfip_node_freelist(ret);
-            free(temp);
-            return NULL;
-        }
-
-        temp->flags = idx->flags;
-        temp->addr_flags = idx->addr_flags;
-
-        /* If it's an "any", there may be no IP object */
-        if (idx->ip)
-            memcpy(temp->ip, idx->ip, sizeof(sfip_t));
-
-        if (prev)
-            prev->next = temp;
-        else
-            ret = temp;
-    }
-    return ret;
-}
-
-sfip_var_t* sfvar_deep_copy(const sfip_var_t* var)
-{
-    sfip_var_t* ret;
-
-    if (!var)
-        return NULL;
-
-    ret = (sfip_var_t*)SnortAlloc(sizeof(sfip_var_t));
-
-    ret->mode = var->mode;
-    ret->head = _sfvar_deep_copy_list(var->head);
-    ret->neg_head = _sfvar_deep_copy_list(var->neg_head);
 
     return ret;
 }
@@ -1001,158 +1006,4 @@ int sfvar_ip_in(sfip_var_t* var, const sfip_t* ip)
 #endif
 }
 
-void sfip_set_print(const char* prefix, sfip_node_t* p)
-{
-    char buffer[1024];
-    int ret;
-
-    for (; p; p = p->next)
-    {
-        buffer[0] = '\0';
-        if (!p->ip)
-            continue;
-        if (p->flags & SFIP_NEGATED)
-        {
-            if (((p->ip->family == AF_INET6) && (p->ip->bits != 128)) ||
-                ((p->ip->family == AF_INET) && (p->ip->bits != 32)))
-            {
-                ret = SnortSnprintfAppend(buffer, sizeof(buffer), "!%s/%d", sfip_to_str(p->ip),
-                    p->ip->bits);
-            }
-            else
-            {
-                ret = SnortSnprintfAppend(buffer, sizeof(buffer), "!%s", sfip_to_str(p->ip));
-            }
-            if (ret != SNORT_SNPRINTF_SUCCESS)
-                return;
-        }
-        else
-        {
-            if (((p->ip->family == AF_INET6) && (p->ip->bits != 128)) ||
-                ((p->ip->family == AF_INET) && (p->ip->bits != 32)))
-            {
-                ret = SnortSnprintfAppend(buffer, sizeof(buffer), "%s/%d", sfip_to_str(p->ip),
-                    p->ip->bits);
-            }
-            else
-            {
-                ret = SnortSnprintfAppend(buffer, sizeof(buffer), "%s", sfip_to_str(p->ip));
-            }
-            if (ret != SNORT_SNPRINTF_SUCCESS)
-                return;
-        }
-        if (prefix)
-            LogMessage("%s%s\n", prefix, buffer);
-        else
-            LogMessage("%s\n", buffer);
-    }
-}
-
-void sfvar_print(const char* prefix, sfip_var_t* var)
-{
-    if (!var || !var->head)
-    {
-        return;
-    }
-
-    if (var->mode == SFIP_LIST)
-    {
-        if (var->head->flags & SFIP_ANY)
-        {
-            if (prefix)
-                LogMessage("%sany\n", prefix);
-            else
-                LogMessage("any\n");
-        }
-        else
-        {
-            sfip_set_print(prefix, var->head);
-        }
-    }
-    else if (var->mode == SFIP_TABLE)
-    {
-        // XXX
-    }
-}
-
-void sfip_set_print_to_file(FILE* f, sfip_node_t* p)
-{
-    for (; p; p = p->next)
-    {
-        if (!p->ip)
-            continue;
-        if (p->flags & SFIP_NEGATED)
-            fprintf(f, "\t!%s\n", sfip_to_str(p->ip));
-        else
-            fprintf(f, "\t %s\n", sfip_to_str(p->ip));
-    }
-}
-
-/* Prints the variable "var" to the file descriptor 'f' */
-void sfvar_print_to_file(FILE* f, sfip_var_t* var)
-{
-    if (!f)
-        return;
-
-    if (!var || !var->head)
-    {
-        fprintf(f, "[no variable]\n");
-        return;
-    }
-
-    fprintf(f, "Name: %s\n", var->name);
-
-    if (var->mode == SFIP_LIST)
-    {
-        if (var->head->flags & SFIP_ANY)
-            fprintf(f, "\t%p: <any>\n", (void*)var->head);
-        else
-        {
-            sfip_set_print_to_file(f, var->head);
-        }
-    }
-    else if (var->mode == SFIP_TABLE)
-    {
-        // XXX
-    }
-}
-
-int sfvar_flags(sfip_node_t* node)
-{
-    if (node)
-        return node->flags;
-    return -1;
-}
-
 /* XXX The unit tests for this code are performed within sf_vartable.c */
-#if 0
-
-int main()
-{
-    sfip_vtable* table;
-    sfip_var_t* var;
-    sfip_t* ip;
-
-    /* Test parsing */
-    /* Allowable arguments:
-     *      { <ip>[, <ip>, ... , <ip> }
-     * Where an IP can be in CIDR notation, or be specified with a netmask.
-     * IPs may also be negated with '!' */
-    puts("********************************************************************");
-    puts("Testing parsing:");
-    var = sfvar_str(" {   1.2.3.4/8,  5.5.5.5 255.255.255.0, any} ");
-    sfip_print_var(stdout, var);
-    sfvar_free(var);
-    puts("");
-    var = sfvar_str(" {   1.2.3.4,  ffff::3/127, 0.0.0.1} ");
-    sfip_print_var(stdout, var);
-    ip = sfip_alloc("1.2.3.5");
-    printf("(need more of these) 'in': %d\n", sfip_in(var, ip));
-    puts("also, use 'sfip_in' for the unit tests");
-    puts("");
-
-    return 0;
-}
-
-#endif
-
