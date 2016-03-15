@@ -72,7 +72,11 @@ ProfileStats* FileConnectorModule::get_profile() const
 
 bool FileConnectorModule::set(const char* fqn, Value& v, SnortConfig*)
 {
+#ifdef DEBUG_MSGS
     DebugFormat(DEBUG_CONNECTORS,"FileConnectorModule::set(): %s, %s\n", fqn, v.get_name());
+#else
+    UNUSED(fqn);
+#endif
 
     if ( v.is("connector") )
         config->connector_name = v.get_string();
@@ -121,7 +125,12 @@ FileConnectorConfig::FileConnectorConfigSet FileConnectorModule::get_and_clear_c
 
 bool FileConnectorModule::begin(const char* fqn, int idx, SnortConfig*)
 {
+#ifdef DEBUG_MSGS
     DebugFormat(DEBUG_CONNECTORS,"FileConnectorModule::begin(): %s, %d\n", fqn, idx);
+#else
+    UNUSED(fqn);
+    UNUSED(idx);
+#endif
     if ( !config )
     {
         config = new FileConnectorConfig;
@@ -131,7 +140,11 @@ bool FileConnectorModule::begin(const char* fqn, int idx, SnortConfig*)
 
 bool FileConnectorModule::end(const char* fqn, int idx, SnortConfig*)
 {
+#ifdef DEBUG_MSGS
     DebugFormat(DEBUG_CONNECTORS,"FileConnectorModule::end(): %s, %d\n", fqn, idx);
+#else
+    UNUSED(fqn);
+#endif
 
     if (idx != 0)
     {
@@ -144,7 +157,7 @@ bool FileConnectorModule::end(const char* fqn, int idx, SnortConfig*)
 }
 
 const PegInfo* FileConnectorModule::get_pegs() const
-{ return simple_pegs; }
+{ return file_connector_pegs; }
 
 PegCount* FileConnectorModule::get_counts() const
 { return (PegCount*)&file_connector_stats; }

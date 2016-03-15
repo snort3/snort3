@@ -100,7 +100,11 @@ ProfileStats* SideChannelModule::get_profile() const
 
 bool SideChannelModule::set(const char* fqn, Value& v, SnortConfig*)
 {
+#ifdef DEBUG_MSGS
     DebugFormat(DEBUG_SIDE_CHANNEL,"SideChannelModule::set(): %s %s\n", fqn, v.get_name());
+#else
+    UNUSED(fqn);
+#endif
 
     assert(config);
 
@@ -121,7 +125,12 @@ bool SideChannelModule::set(const char* fqn, Value& v, SnortConfig*)
 
 bool SideChannelModule::begin(const char* fqn, int idx, SnortConfig*)
 {
+#ifdef DEBUG_MSGS
     DebugFormat(DEBUG_SIDE_CHANNEL,"SideChannelModule::begin(): %s %d\n", fqn, idx);
+#else
+    UNUSED(fqn);
+    UNUSED(idx);
+#endif
     if ( !config )
     {
         config = new SideChannelConfig;
@@ -132,7 +141,11 @@ bool SideChannelModule::begin(const char* fqn, int idx, SnortConfig*)
 
 bool SideChannelModule::end(const char* fqn, int idx, SnortConfig*)
 {
+#ifdef DEBUG_MSGS
     DebugFormat(DEBUG_SIDE_CHANNEL,"SideChannelModule::end(): %s %d\n", fqn, idx);
+#else
+    UNUSED(fqn);
+#endif
 
     if ( (idx == 0) || (strcmp(fqn, "side_channel.connectors") == 0 ) )
         return true;
@@ -155,7 +168,7 @@ bool SideChannelModule::end(const char* fqn, int idx, SnortConfig*)
 }
 
 const PegInfo* SideChannelModule::get_pegs() const
-{ return simple_pegs; }
+{ return sc_pegs; }
 
 PegCount* SideChannelModule::get_counts() const
 { return (PegCount*)&sc_stats; }

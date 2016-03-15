@@ -139,7 +139,7 @@ ConnectorMsgHandle* FileConnector::receive_message_binary()
     // If not present, then no message exists
     if ( (unsigned)file.gcount() < (sizeof(FileConnectorMsgHdr)+sizeof(SCMsgHdr)) )
     {
-        delete buffer;
+        delete[] buffer;
         return nullptr;
     }
 
@@ -150,7 +150,7 @@ ConnectorMsgHandle* FileConnector::receive_message_binary()
     // If not present, then no valid message exists
     if ( (unsigned)file.gcount() < (fc_hdr->connector_msg_length - sizeof(SCMsgHdr)) )
     {
-        delete buffer;
+        delete[] buffer;
         return nullptr;
     }
 
@@ -160,7 +160,7 @@ ConnectorMsgHandle* FileConnector::receive_message_binary()
     // Copy the connector message into the new ConnectorMsg
     memcpy(handle->connector_msg.data, (buffer+sizeof(FileConnectorMsgHdr)),
         fc_hdr->connector_msg_length);
-    delete buffer;
+    delete[] buffer;
 
     return handle;
 }

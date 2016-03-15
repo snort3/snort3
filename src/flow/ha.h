@@ -39,7 +39,6 @@ public:
 private:
     void receive_handler(SCMessage*);
     SideChannel* sc;
-    bool enabled;
 };
 
 class HighAvailabilityManager
