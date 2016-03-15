@@ -43,7 +43,7 @@ static THREAD_LOCAL ProfileStats modbus_data_prof;
 class ModbusDataOption : public IpsOption
 {
 public:
-    ModbusDataOption() : IpsOption(s_name) { }
+    ModbusDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET) { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;

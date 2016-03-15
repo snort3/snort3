@@ -71,7 +71,7 @@ typedef struct _Base64DecodeData
 class Base64DecodeOption : public IpsOption
 {
 public:
-    Base64DecodeOption(const Base64DecodeData& c) : IpsOption(s_name)
+    Base64DecodeOption(const Base64DecodeData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
     ~Base64DecodeOption() { }
@@ -107,7 +107,7 @@ uint32_t Base64DecodeOption::hash() const
 
 bool Base64DecodeOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(s_name, ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     Base64DecodeOption& rhs = (Base64DecodeOption&)ips;
@@ -127,9 +127,6 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
 int Base64DecodeOption::eval(Cursor& c, Packet*)
 {
     Profile profile(base64PerfStats);
-
-
-
     base64_decode_size = 0;
 
     Base64DecodeData* idx = (Base64DecodeData*)&config;
@@ -286,7 +283,7 @@ static const IpsApi base64_decode_api =
 class Base64DataOption : public IpsOption
 {
 public:
-    Base64DataOption() : IpsOption(s_data_name) { }
+    Base64DataOption() : IpsOption(s_data_name, RULE_OPTION_TYPE_BUFFER_SET) { }
 
     CursorActionType get_cursor_type() const override
     { return CAT_SET_OTHER; }

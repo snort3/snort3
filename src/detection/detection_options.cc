@@ -56,14 +56,17 @@
 #include "managers/ips_manager.h"
 #include "protocols/packet_manager.h"
 
+#define HASH_RULE_OPTIONS 16384
+#define HASH_RULE_TREE     8192
+
+#define DETECTION_OPTION_EQUAL        0
+#define DETECTION_OPTION_NOT_EQUAL    1
+
 struct detection_option_key_t
 {
     option_type_t option_type;
     void* option_data;
 };
-
-#define HASH_RULE_OPTIONS 16384
-#define HASH_RULE_TREE 8192
 
 // FIXIT-L find a better place for this
 static inline bool operator==(const struct timeval& a, const struct timeval& b)
@@ -86,14 +89,10 @@ static int detection_option_key_compare_func(const void* k1, const void* k2, siz
     const detection_option_key_t* key1 = (detection_option_key_t*)k1;
     const detection_option_key_t* key2 = (detection_option_key_t*)k2;
 
-#ifdef KEEP_THEM_ALLOCATED
-    return DETECTION_OPTION_NOT_EQUAL;
-#endif
-
-    if (!key1 || !key2)
+    if ( !key1 || !key2 )
         return DETECTION_OPTION_NOT_EQUAL;
 
-    if (key1->option_type != key2->option_type)
+    if ( key1->option_type != key2->option_type )
         return DETECTION_OPTION_NOT_EQUAL;
 
     if ( key1->option_type != RULE_OPTION_TYPE_LEAF_NODE )
@@ -133,8 +132,7 @@ static SFXHASH* DetectionHashTableNew(void)
     if (doht == NULL)
         FatalError("Failed to create rule detection option hash table");
 
-    sfxhash_set_keyops(doht, detection_option_hash_func,
-        detection_option_key_compare_func);
+    sfxhash_set_keyops(doht, detection_option_hash_func, detection_option_key_compare_func);
 
     return doht;
 }
@@ -145,37 +143,20 @@ void DetectionHashTableFree(SFXHASH* doht)
         sfxhash_delete(doht);
 }
 
-int add_detection_option(
-    SnortConfig* sc, option_type_t type, void* option_data, void** existing_data)
+void* add_detection_option(SnortConfig* sc, option_type_t type, void* option_data)
 {
-    detection_option_key_t key;
-
-    if (sc == NULL)
-    {
-        FatalError("%s(%d) Snort config is NULL.\n",
-            __FILE__, __LINE__);
-    }
-
-    if (sc->detection_option_hash_table == NULL)
+    if ( !sc->detection_option_hash_table )
         sc->detection_option_hash_table = DetectionHashTableNew();
 
-    if (!option_data)
-    {
-        /* No option data, no conflict to resolve. */
-        return DETECTION_OPTION_EQUAL;
-    }
-
+    detection_option_key_t key;
     key.option_type = type;
     key.option_data = option_data;
 
-    *existing_data = sfxhash_find(sc->detection_option_hash_table, &key);
-    if (*existing_data)
-    {
-        return DETECTION_OPTION_EQUAL;
-    }
+    if ( void* p = sfxhash_find(sc->detection_option_hash_table, &key) )
+        return p;
 
     sfxhash_add(sc->detection_option_hash_table, &key, option_data);
-    return DETECTION_OPTION_NOT_EQUAL;
+    return nullptr;
 }
 
 static uint32_t detection_option_tree_hash(detection_option_tree_node_t* node)
@@ -234,28 +215,27 @@ static uint32_t detection_option_tree_hash_func(SFHASHFCN*, unsigned char* k, in
     return detection_option_tree_hash(node);
 }
 
-static int detection_option_tree_compare(detection_option_tree_node_t* r, detection_option_tree_node_t* l)
+static bool detection_option_tree_compare(
+    detection_option_tree_node_t* r, detection_option_tree_node_t* l)
 {
-    int ret = DETECTION_OPTION_NOT_EQUAL;
-    int i;
-
-    if ((r == NULL) && (l == NULL))
+    if ( !r and !l )
         return DETECTION_OPTION_EQUAL;
 
-    if ((!r && l) || (r && !l))
+    if ( !r or !l )
         return DETECTION_OPTION_NOT_EQUAL;
 
-    if (r->option_data != l->option_data)
+    if ( r->option_data != l->option_data )
         return DETECTION_OPTION_NOT_EQUAL;
 
-    if (r->num_children != l->num_children)
+    if ( r->num_children != l->num_children )
         return DETECTION_OPTION_NOT_EQUAL;
 
-    for (i=0; i<r->num_children; i++)
+    for ( int i=0; i<r->num_children; i++ )
     {
         /* Recurse & check the children for equality */
-        ret = detection_option_tree_compare(r->children[i], l->children[i]);
-        if (ret != DETECTION_OPTION_EQUAL)
+        int ret = detection_option_tree_compare(r->children[i], l->children[i]);
+
+        if ( ret != DETECTION_OPTION_EQUAL )
             return ret;
     }
 
@@ -266,14 +246,12 @@ static int detection_option_tree_compare_func(const void* k1, const void* k2, si
 {
     detection_option_key_t* key_r = (detection_option_key_t*)k1;
     detection_option_key_t* key_l = (detection_option_key_t*)k2;
-    detection_option_tree_node_t* r;
-    detection_option_tree_node_t* l;
 
-    if (!key_r || !key_l)
+    if ( !key_r or !key_l )
         return DETECTION_OPTION_NOT_EQUAL;
 
-    r = (detection_option_tree_node_t*)key_r->option_data;
-    l = (detection_option_tree_node_t*)key_l->option_data;
+    detection_option_tree_node_t* r = (detection_option_tree_node_t*)key_r->option_data;
+    detection_option_tree_node_t* l = (detection_option_tree_node_t*)key_l->option_data;
 
     return detection_option_tree_compare(r, l);
 }
@@ -306,9 +284,7 @@ static SFXHASH* DetectionTreeHashTableNew(void)
     if (dtht == NULL)
         FatalError("Failed to create rule detection option hash table");
 
-    sfxhash_set_keyops(
-        dtht, detection_option_tree_hash_func,
-        detection_option_tree_compare_func);
+    sfxhash_set_keyops(dtht, detection_option_tree_hash_func, detection_option_tree_compare_func);
 
     return dtht;
 }
@@ -316,10 +292,12 @@ static SFXHASH* DetectionTreeHashTableNew(void)
 #ifdef DEBUG_OPTION_TREE
 static const char* const option_type_str[] =
 {
-    "RULE_OPTION_TYPE_LEAF_NODE",
-    "RULE_OPTION_TYPE_CONTENT",
-    "RULE_OPTION_TYPE_FLOWBIT",
-    "RULE_OPTION_TYPE_OTHER"
+    "leaf_node",
+    "buffer_set",
+    "buffer_use",
+    "content",
+    "flowbit",
+    "other"
 };
 
 void print_option_tree(detection_option_tree_node_t* node, int level)
@@ -341,37 +319,21 @@ void print_option_tree(detection_option_tree_node_t* node, int level)
 }
 #endif
 
-int add_detection_option_tree(
-    SnortConfig* sc, detection_option_tree_node_t* option_tree, void** existing_data)
+void* add_detection_option_tree(
+    SnortConfig* sc, detection_option_tree_node_t* option_tree)
 {
-    detection_option_key_t key;
-
-    if (sc == NULL)
-    {
-        FatalError("%s(%d) Snort config for parsing is NULL.\n",
-            __FILE__, __LINE__);
-    }
-
-    if (sc->detection_option_tree_hash_table == NULL)
+    if ( !sc->detection_option_tree_hash_table )
         sc->detection_option_tree_hash_table = DetectionTreeHashTableNew();
 
-    if (!option_tree)
-    {
-        /* No option data, no conflict to resolve. */
-        return DETECTION_OPTION_EQUAL;
-    }
-
+    detection_option_key_t key;
     key.option_data = (void*)option_tree;
     key.option_type = RULE_OPTION_TYPE_LEAF_NODE;
 
-    *existing_data = sfxhash_find(sc->detection_option_tree_hash_table, &key);
-    if (*existing_data)
-    {
-        return DETECTION_OPTION_EQUAL;
-    }
+    if ( void* p = sfxhash_find(sc->detection_option_tree_hash_table, &key) )
+        return p;
 
     sfxhash_add(sc->detection_option_tree_hash_table, &key, option_tree);
-    return DETECTION_OPTION_NOT_EQUAL;
+    return nullptr;
 }
 
 int detection_option_node_evaluate(

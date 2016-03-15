@@ -84,7 +84,7 @@ class SipIpsOption : public IpsOption
 public:
     SipIpsOption(
         const char* s, SipIdx psi, CursorActionType c = CAT_SET_OTHER) :
-        IpsOption(s)
+        IpsOption(s, RULE_OPTION_TYPE_BUFFER_SET)
     { key = s; cat = c; idx = psi; }
 
     CursorActionType get_cursor_type() const override

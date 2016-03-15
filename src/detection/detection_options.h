@@ -111,27 +111,26 @@ struct detection_option_eval_data_t
     char flowbit_noalert;
 };
 
-int add_detection_option(
-    struct SnortConfig*, option_type_t type, void* option_data, void** existing_data);
-
-int add_detection_option_tree(
-    struct SnortConfig*, detection_option_tree_node_t* option_tree, void** existing_data);
+// return existing data or add given and return nullptr
+void* add_detection_option(struct SnortConfig*, option_type_t, void*);
+void* add_detection_option_tree(struct SnortConfig*, detection_option_tree_node_t*);
 
 int detection_option_node_evaluate(
-detection_option_tree_node_t*, detection_option_eval_data_t*, class Cursor&);
+    detection_option_tree_node_t*, detection_option_eval_data_t*, class Cursor&);
 
 void DetectionHashTableFree(SFXHASH*);
 void DetectionTreeHashTableFree(SFXHASH*);
+
 #ifdef DEBUG_OPTION_TREE
-void print_option_tree(detection_option_tree_node_t* node, int level);
+void print_option_tree(detection_option_tree_node_t*, int level);
 #endif
 void detection_option_tree_update_otn_stats(SFXHASH*);
 
 detection_option_tree_root_t* new_root();
 void free_detection_option_root(void** existing_tree);
 
-detection_option_tree_node_t* new_node(option_type_t type, void* data);
-void free_detection_option_tree(detection_option_tree_node_t* node);
+detection_option_tree_node_t* new_node(option_type_t, void*);
+void free_detection_option_tree(detection_option_tree_node_t*);
 
 #endif
 

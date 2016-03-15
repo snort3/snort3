@@ -77,7 +77,7 @@ class HttpIpsOption : public IpsOption
 {
 public:
     HttpIpsOption(const char* s, PsIdx psi, CursorActionType c = CAT_SET_OTHER) :
-        IpsOption(s), key(s), cat(c), idx(psi) {}
+        IpsOption(s, RULE_OPTION_TYPE_BUFFER_SET), key(s), cat(c), idx(psi) {}
 
     CursorActionType get_cursor_type() const override
     { return cat; }

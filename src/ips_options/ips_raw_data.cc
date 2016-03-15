@@ -38,7 +38,7 @@ static THREAD_LOCAL ProfileStats rawDataPerfStats;
 class RawDataOption : public IpsOption
 {
 public:
-    RawDataOption() : IpsOption(s_name) { }
+    RawDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET) { }
 
     CursorActionType get_cursor_type() const override
     { return CAT_SET_RAW; }

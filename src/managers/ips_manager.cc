@@ -276,11 +276,9 @@ bool IpsManager::option_end(
     if ( !ips )
         return ( type == OPT_TYPE_META );
 
-    void* dup;
-
-    if ( !add_detection_option(
-        sc, ips->get_type(), ips, &dup) )
+    if ( void* dup = add_detection_option(sc, ips->get_type(), ips) )
     {
+        // FIXIT-L delete dup and keep original?
         delete ips;
         ips = (IpsOption*)dup;
     }
@@ -316,6 +314,9 @@ void IpsManager::reset_options()
 {
     for ( auto* p : s_options )
         p->count = 0;
+
+    // this is the default when we start parsing a rule body
+    IpsOption::set_buffer("pkt_data");
 }
 
 void IpsManager::setup_options()

@@ -43,7 +43,7 @@ static THREAD_LOCAL ProfileStats fileDataPerfStats;
 class FileDataOption : public IpsOption
 {
 public:
-    FileDataOption() : IpsOption(s_name) { }
+    FileDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET) { }
     ~FileDataOption() { }
 
     CursorActionType get_cursor_type() const override

@@ -66,7 +66,7 @@ static THREAD_LOCAL uint32_t extracted_values[NUM_BYTE_EXTRACT_VARS];
 class ByteExtractOption : public IpsOption
 {
 public:
-    ByteExtractOption(const ByteExtractData& c) : IpsOption(s_name)
+    ByteExtractOption(const ByteExtractData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
     ~ByteExtractOption()
@@ -119,7 +119,7 @@ uint32_t ByteExtractOption::hash() const
 
 bool ByteExtractOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(s_name, ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     ByteExtractOption& rhs = (ByteExtractOption&)ips;

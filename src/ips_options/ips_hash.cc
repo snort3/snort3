@@ -71,7 +71,7 @@ class HashOption : public IpsOption
 {
 public:
     HashOption(const char* s, HashPsIdx hpi, HashMatchData* c, HashFunc f, unsigned n) :
-        IpsOption(s)
+        IpsOption(s, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; hashf = f; size = n; idx = hpi; assert(n <= MAX_HASH_SIZE); }
 
     ~HashOption() { delete config; }
@@ -122,7 +122,7 @@ uint32_t HashOption::hash() const
 
 bool HashOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     HashOption& rhs = (HashOption&)ips;

@@ -38,7 +38,7 @@ static THREAD_LOCAL ProfileStats pktDataPerfStats;
 class PktDataOption : public IpsOption
 {
 public:
-    PktDataOption() : IpsOption(s_name) { }
+    PktDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET) { }
 
     CursorActionType get_cursor_type() const override
     { return CAT_SET_RAW; }

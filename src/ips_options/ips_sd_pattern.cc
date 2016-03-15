@@ -71,7 +71,7 @@ private:
 };
 
 SdPatternOption::SdPatternOption(const SdPatternConfig& c) :
-    IpsOption(s_name), config(c)
+    IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE), config(c)
 {
     sd_data = new SdOptionData(config.pii, config.threshold);
     sd_context = new SdContext(sd_data);
@@ -93,7 +93,7 @@ uint32_t SdPatternOption::hash() const
 
 bool SdPatternOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     const SdPatternOption& rhs = static_cast<const SdPatternOption&>(ips);

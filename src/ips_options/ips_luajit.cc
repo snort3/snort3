@@ -131,7 +131,7 @@ private:
 
 LuaJitOption::LuaJitOption(
     const char* name, std::string& chunk, LuaJitModule* mod)
-    : IpsOption(name)
+    : IpsOption(name, RULE_OPTION_TYPE_BUFFER_USE)
 {
     // create an args table with any rule options
     config = "args = { ";
@@ -161,10 +161,10 @@ uint32_t LuaJitOption::hash() const
 
 bool LuaJitOption::operator==(const IpsOption& ips) const
 {
-    LuaJitOption& rhs = (LuaJitOption&)ips;
-
-    if ( strcmp(get_name(), rhs.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
+
+    LuaJitOption& rhs = (LuaJitOption&)ips;
 
     if ( config != rhs.config )
         return false;

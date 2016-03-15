@@ -20,18 +20,15 @@
 #ifndef RULE_OPTION_TYPES_H
 #define RULE_OPTION_TYPES_H
 
-// RULE_OPTION_* is what is left from the original code which gave each
-// option a unique type.  the goal is put everything in the 'other'
-// category which means they are handled generically and this whole type
-// can be eliminated.  however, content, flowbits, and pcre still
-// require special handling.
-
+// if you change this, you must also update detection_options.cc::option_type_str[].
 enum option_type_t
 {
-    RULE_OPTION_TYPE_LEAF_NODE,
-    RULE_OPTION_TYPE_CONTENT,
-    RULE_OPTION_TYPE_FLOWBIT,
-    RULE_OPTION_TYPE_OTHER
+    RULE_OPTION_TYPE_LEAF_NODE,    // internal use by rule compiler
+    RULE_OPTION_TYPE_BUFFER_SET,   // sets sticky buffer
+    RULE_OPTION_TYPE_BUFFER_USE,   // uses sticky buffer
+    RULE_OPTION_TYPE_CONTENT,      // ideally would be eliminated (implies _BUFFER_USE)
+    RULE_OPTION_TYPE_FLOWBIT,      // ideally would be eliminated
+    RULE_OPTION_TYPE_OTHER         // for all new buffer independent rule options
 };
 
 #endif

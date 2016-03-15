@@ -97,7 +97,7 @@ static THREAD_LOCAL ProfileStats asn1PerfStats;
 class Asn1Option : public IpsOption
 {
 public:
-    Asn1Option(ASN1_CTXT& c) : IpsOption(s_name)
+    Asn1Option(ASN1_CTXT& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
     uint32_t hash() const override;
@@ -143,7 +143,7 @@ uint32_t Asn1Option::hash() const
 
 bool Asn1Option::operator==(const IpsOption& rhs) const
 {
-    if ( strcmp(s_name, rhs.get_name()) )
+    if ( !IpsOption::operator==(rhs) )
         return false;
 
     Asn1Option& asn1 = (Asn1Option&)rhs;

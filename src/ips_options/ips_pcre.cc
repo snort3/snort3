@@ -555,7 +555,7 @@ uint32_t PcreOption::hash() const
 
 bool PcreOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     PcreOption& rhs = (PcreOption&)ips;

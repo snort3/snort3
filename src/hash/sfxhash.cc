@@ -1212,16 +1212,12 @@ SFXHASH_NODE* sfxhash_findnext(SFXHASH* t)
  *
  * h sfhashfcn ptr
  * hash_fcn user specified hash function
- * keycmp_fcn user specified key comparisoin function
+ * keycmp_fcn user specified key comparison function
  */
 
 int sfxhash_set_keyops(SFXHASH* h,
-    unsigned (* hash_fcn)(SFHASHFCN* p,
-    unsigned char* d,
-    int n),
-    int (* keycmp_fcn)(const void* s1,
-    const void* s2,
-    size_t n))
+    unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
+    int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
 {
     if (h && hash_fcn && keycmp_fcn)
     {

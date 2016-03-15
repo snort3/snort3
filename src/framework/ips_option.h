@@ -72,9 +72,14 @@ public:
 
     option_type_t get_type() const { return type; }
     const char* get_name() const { return name; }
+    const char* get_buffer() const { return buffer; }
 
     virtual CursorActionType get_cursor_type() const
     { return CAT_NONE; }
+
+    // for fast-pattern options like content
+    virtual struct PatternMatchData* get_pattern()
+    { return nullptr; }
 
     static int eval(void* v, Cursor& c, Packet* p)
     {
@@ -82,16 +87,14 @@ public:
         return opt->eval(c, p);
     }
 
-    // for fast-pattern options like content
-    virtual struct PatternMatchData* get_pattern()
-    { return nullptr; }
+    static void set_buffer(const char*);
 
 protected:
-    IpsOption(const char* s, option_type_t t = RULE_OPTION_TYPE_OTHER)
-    { name = s; type = t; }
+    IpsOption(const char* s, option_type_t t = RULE_OPTION_TYPE_OTHER);
 
 private:
     const char* name;
+    const char* buffer;
     option_type_t type;
 };
 

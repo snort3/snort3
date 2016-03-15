@@ -160,12 +160,8 @@ SO_PUBLIC int sfxhash_free_node(SFXHASH* t, SFXHASH_NODE* node);
 SO_PUBLIC unsigned sfxhash_maxdepth(SFXHASH* t);
 
 SO_PUBLIC int sfxhash_set_keyops(SFXHASH* h,
-    unsigned (* hash_fcn)(SFHASHFCN* p,
-    unsigned char* d,
-    int n),
-    int (* keycmp_fcn)(const void* s1,
-    const void* s2,
-    size_t n));
+    unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
+    int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
 
 SFXHASH_NODE* sfxhash_gfindfirst(SFXHASH* t);
 SFXHASH_NODE* sfxhash_gfindnext(SFXHASH* t);

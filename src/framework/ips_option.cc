@@ -30,16 +30,39 @@
 #include "main/snort_debug.h"
 #include "hash/sfhashfcn.h"
 
+static const char* s_buffer = nullptr;
+
+void IpsOption::set_buffer(const char* s)
+{ s_buffer = s; }
+
 //-------------------------------------------------------------------------
+
+IpsOption::IpsOption(const char* s, option_type_t t)
+{
+    name = s;
+    type = t;
+
+    switch ( t )
+    {
+    case RULE_OPTION_TYPE_BUFFER_SET: buffer = s_buffer = s; break;
+    case RULE_OPTION_TYPE_CONTENT:
+    case RULE_OPTION_TYPE_BUFFER_USE: buffer = s_buffer; break;
+    default: buffer = "n/a";
+    }
+}
 
 uint32_t IpsOption::hash() const
 {
-    uint32_t a=0, b=0, c=0;
-    mix_str(a,b,c,get_name());
-    finalize(a,b,c);
+    uint32_t a = 0, b = 0, c = 0;
+    mix_str(a, b, c, get_name());
+    mix_str(a, b, c, get_buffer());
+    finalize(a, b, c);
     return c;
 }
 
 bool IpsOption::operator==(const IpsOption& ips) const
-{ return !strcmp(get_name(), ips.get_name()); }
+{
+    return !strcmp(get_name(), ips.get_name()) and
+        !strcmp(get_buffer(), ips.get_buffer());
+}
 

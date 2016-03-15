@@ -46,7 +46,7 @@ class LenOption : public IpsOption
 {
 public:
     LenOption(const RangeCheck& c) :
-        IpsOption(s_name)
+        IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
     uint32_t hash() const override;
@@ -78,7 +78,7 @@ uint32_t LenOption::hash() const
 
 bool LenOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     LenOption& rhs = (LenOption&)ips;

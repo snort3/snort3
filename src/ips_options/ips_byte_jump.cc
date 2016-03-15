@@ -114,7 +114,7 @@ typedef struct _ByteJumpData
 class ByteJumpOption : public IpsOption
 {
 public:
-    ByteJumpOption(const ByteJumpData& c) : IpsOption(s_name)
+    ByteJumpOption(const ByteJumpData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
     ~ByteJumpOption() { }
@@ -171,7 +171,7 @@ uint32_t ByteJumpOption::hash() const
 
 bool ByteJumpOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(s_name, ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     ByteJumpOption& rhs = (ByteJumpOption&)ips;

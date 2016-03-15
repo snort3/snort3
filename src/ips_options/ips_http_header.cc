@@ -94,7 +94,7 @@ bool HttpHeaderModule::set(const char*, Value& v, SnortConfig*)
 class HttpHeaderOption : public IpsOption
 {
 public:
-    HttpHeaderOption(string& s) : IpsOption(s_name), hdr_name(s) {}
+    HttpHeaderOption(string& s) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET), hdr_name(s) { }
 
     CursorActionType get_cursor_type() const override
     { return CAT_SET_HEADER; }

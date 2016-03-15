@@ -82,18 +82,16 @@ static const char* const pm_type_strings[PM_TYPE_MAX] =
 
 static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree_root_t* root)
 {
-    detection_option_tree_node_t* node = NULL;
-    void* dup_node = NULL;
-    int i;
-
-    if (!root)
+    if ( !root )
         return -1;
 
-    for (i=0; i<root->num_children; i++)
+    for ( int i=0; i<root->num_children; i++ )
     {
-        node = root->children[i];
-        if (add_detection_option_tree(sc, node, &dup_node) == DETECTION_OPTION_EQUAL)
+        detection_option_tree_node_t* node = root->children[i];
+
+        if ( void* dup_node = add_detection_option_tree(sc, node) )
         {
+            // FIXIT-L delete dup_node and keep original?
             free_detection_option_tree(node);
             root->children[i] = (detection_option_tree_node_t*)dup_node;
         }

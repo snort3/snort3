@@ -22,10 +22,6 @@
 #ifndef DETECTION_DEFINES_H
 #define DETECTION_DEFINES_H
 
-// FIXIT-L replace with bool
-#define DETECTION_OPTION_EQUAL        0
-#define DETECTION_OPTION_NOT_EQUAL    1
-
 // FIXIT-L replace with IpsOption enum
 #define DETECTION_OPTION_NO_MATCH     0
 #define DETECTION_OPTION_MATCH        1

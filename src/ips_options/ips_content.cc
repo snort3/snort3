@@ -118,9 +118,7 @@ void ContentData::set_max_jump_size()
 class ContentOption : public IpsOption
 {
 public:
-    ContentOption(ContentData* c,
-        option_type_t t = RULE_OPTION_TYPE_CONTENT) :
-        IpsOption(s_name, t)
+    ContentOption(ContentData* c) : IpsOption(s_name, RULE_OPTION_TYPE_CONTENT)
     { config = c; }
 
     ~ContentOption();
@@ -215,61 +213,83 @@ uint32_t ContentOption::hash() const
     return c;
 }
 
+#if 0
+// see below for why this is disabled
+static bool same_buffers(
+    unsigned len1, const char* buf1, bool no_case1,
+    unsigned len2, const char* buf2, bool no_case2)
+{
+    /* Sizes will be most different, check that first */
+    if ( len1 != len2 or no_case1 != no_case2 )
+        return false;
+
+    if ( !len1 )
+        return true;
+
+    /* Next compare the patterns for uniqueness */
+    if ( no_case1 )
+    {
+        /* If no_case is set, do case insensitive compare on pattern */
+        for ( unsigned i = 0; i < len1; ++i )
+        {
+            if ( toupper(buf1[i]) != toupper(buf2[i]) )
+                return false;
+        }
+    }
+    else
+    {
+        /* If no_case is not set, do case sensitive compare on pattern */
+        if ( memcmp(buf1, buf2, len1) )
+            return false;
+    }
+    return true;
+}
+#endif
+
+// FIXIT-P fp, fp_only are set after hash table comparisons so this must
+// return false to avoid unnecessary reevaluation and false positives.
+// when this is fixed, add PatternMatchData::operator==().
 bool ContentOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+#if 0
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     ContentOption& rhs = (ContentOption&)ips;
-    ContentData* left = config;
-    ContentData* right = rhs.config;
-    unsigned int i;
+    const ContentData& left = *config;
+    const ContentData& right = *rhs.config;
 
-    /* Sizes will be most different, check that first */
-    if ((left->pmd.pattern_size != right->pmd.pattern_size) ||
-        (left->pmd.no_case != right->pmd.no_case))
+    if ( !same_buffers(left.pmd.pattern_size, left.pmd.pattern_buf, left.pmd.no_case,
+        right.pmd.pattern_size, right.pmd.pattern_buf, right.pmd.no_case) )
         return false;
 
-    /* Next compare the patterns for uniqueness */
-    if (left->pmd.pattern_size)
-    {
-        if (left->pmd.no_case)
-        {
-            /* If no_case is set, do case insensitive compare on pattern */
-            for (i=0; i<left->pmd.pattern_size; i++)
-            {
-                if (toupper(left->pmd.pattern_buf[i]) != toupper(right->pmd.pattern_buf[i]))
-                {
-                    return false;
-                }
-            }
-        }
-        else
-        {
-            /* If no_case is not set, do case sensitive compare on pattern */
-            if (memcmp(left->pmd.pattern_buf, right->pmd.pattern_buf, left->pmd.pattern_size) != 0)
-            {
-                return false;
-            }
-        }
-    }
+    if ( !same_buffers(left.pmd.replace_size, left.pmd.replace_buf, left.pmd.no_case,
+        right.pmd.replace_size, right.pmd.replace_buf, right.pmd.no_case) )
+        return false;
 
     /* Now check the rest of the options */
-    if ((left->pmd.negated == right->pmd.negated) &&
-        (left->pmd.offset == right->pmd.offset) &&
-        (left->pmd.depth == right->pmd.depth) &&
-        (left->pmd.relative == right->pmd.relative) &&
-        (left->match_delta == right->match_delta) &&
-        (left->pmd.fp == right->pmd.fp) &&
-        (left->pmd.fp_only == right->pmd.fp_only) &&
-        (left->pmd.fp_offset == right->pmd.fp_offset) &&
-        (left->pmd.fp_length == right->pmd.fp_length) &&
-        (left->offset_var == right->offset_var) &&
-        (left->depth_var == right->depth_var) )
+    if ((left.pmd.negated == right.pmd.negated) &&
+        // fp set later - can't reliably check here
+        (left.pmd.fp == right.pmd.fp) &&
+        // no_case already checked
+        (left.pmd.relative == right.pmd.relative) &&
+        (left.pmd.fp_offset == right.pmd.fp_offset) &&
+        (left.pmd.fp_length == right.pmd.fp_length) &&
+        (left.pmd.offset == right.pmd.offset) &&
+        (left.pmd.depth == right.pmd.depth) &&
+        // pattern_size and pattern_buf already checked
+        (left.pmd.literal == right.pmd.literal) &&
+        // fp_only set later - can't reliably check here
+        // pm_type set later (but determined by CAT)
+        (left.match_delta == right.match_delta) &&
+        (left.offset_var == right.offset_var) &&
+        (left.depth_var == right.depth_var) )
     {
         return true;
     }
-
+#else
+    UNUSED(ips);
+#endif
     return false;
 }
 

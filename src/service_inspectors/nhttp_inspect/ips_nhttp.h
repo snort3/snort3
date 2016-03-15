@@ -89,7 +89,8 @@ private:
 class NHttpIpsOption : public IpsOption
 {
 public:
-    NHttpIpsOption(const NHttpCursorModule* cm) : IpsOption(cm->key), key(cm->key),
+    NHttpIpsOption(const NHttpCursorModule* cm) :
+        IpsOption(cm->key, RULE_OPTION_TYPE_BUFFER_SET), key(cm->key),
         buffer_index(cm->buffer_index), cat(cm->cat), psi(cm->psi),
         inspect_section(cm->inspect_section), sub_id(cm->sub_id), form(cm->form) {}
     CursorActionType get_cursor_type() const override { return cat; }

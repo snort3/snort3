@@ -139,9 +139,11 @@ uint32_t RegexOption::hash() const
     return c;
 }
 
+// see ContentOption::operator==() for why this is always false
 bool RegexOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
+#if 0
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     RegexOption& rhs = (RegexOption&)ips;
@@ -151,6 +153,9 @@ bool RegexOption::operator==(const IpsOption& ips) const
          config.pmd.relative == rhs.config.pmd.relative )
         return true;
 
+#else
+    UNUSED(ips);
+#endif
     return false;
 }
 

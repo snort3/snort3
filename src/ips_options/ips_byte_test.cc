@@ -216,7 +216,7 @@ static inline bool byte_test_check(uint32_t op, uint32_t val, uint32_t cmp, bool
 class ByteTestOption : public IpsOption
 {
 public:
-    ByteTestOption(const ByteTestData& c) : IpsOption(s_name)
+    ByteTestOption(const ByteTestData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
     ~ByteTestOption() { }
@@ -269,7 +269,7 @@ uint32_t ByteTestOption::hash() const
 
 bool ByteTestOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(s_name, ips.get_name()) )
+    if ( !IpsOption::operator==(ips) )
         return false;
 
     ByteTestOption& rhs = (ByteTestOption&)ips;

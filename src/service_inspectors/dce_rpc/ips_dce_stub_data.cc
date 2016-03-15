@@ -42,7 +42,7 @@ static THREAD_LOCAL ProfileStats dce2_stub_data_perf_stats;
 class Dce2StubDataOption : public IpsOption
 {
 public:
-    Dce2StubDataOption() : IpsOption(s_name) { }
+    Dce2StubDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET) { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;

@@ -64,7 +64,7 @@ public:
     uint8_t types[MAX_GTP_VERSION_CODE + 1];
 };
 
-GtpInfoOption::GtpInfoOption(uint8_t* t) : IpsOption(s_name)
+GtpInfoOption::GtpInfoOption(uint8_t* t) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET)
 {
     for ( int v = 0; v <= MAX_GTP_VERSION_CODE; ++v )
         types[v] = t[v];
