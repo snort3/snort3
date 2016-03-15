@@ -28,6 +28,7 @@
 #include <iostream>
 #include <functional>
 #include <unordered_map>
+#include <string.h>
 
 #include "time/stopwatch.h"
 
@@ -151,6 +152,60 @@ TEST(lru_cache_shared, remove_test)
 
     vec = lru_cache.get_all_data();
     CHECK(0 == vec.size());
+}
+
+//  Test statistics counters.
+TEST(lru_cache_shared, stats_test)
+{
+    std::string data;
+    LruCacheShared<int, std::string, std::hash<int> > lru_cache(5);
+
+    for (int i = 0; i < 10; i++)
+    {
+        lru_cache.insert(i, std::to_string(i));
+    }
+
+    lru_cache.insert(8, "new-eight");  //  Replace entries.
+    lru_cache.insert(9, "new-nine");
+
+    CHECK(5 == lru_cache.size());
+
+    lru_cache.find(7, data);     //  Hits
+    lru_cache.find(8, data);
+    lru_cache.find(9, data);
+
+    lru_cache.remove(7);
+    lru_cache.remove(8);
+    lru_cache.remove(9, data);
+    CHECK("new-nine" == data);
+
+    lru_cache.find(8, data);    //  Misses now that they're removed.
+    lru_cache.find(9, data);
+
+    lru_cache.remove(100);  //  Removing a non-existant entry does not
+                            //  increase remove count.
+
+    lru_cache.clear();
+
+    PegCount* stats = lru_cache.get_counts();
+
+    CHECK(stats[0] == 10);  //  adds
+    CHECK(stats[1] == 2);   //  replaces
+    CHECK(stats[2] == 5);   //  prunes
+    CHECK(stats[3] == 3);   //  find hits
+    CHECK(stats[4] == 2);   //  find misses
+    CHECK(stats[5] == 3);   //  removes
+    CHECK(stats[6] == 1);   //  clears
+
+    // Check statistics names.
+    const PegInfo* pegs = lru_cache.get_pegs();
+    CHECK(!strcmp(pegs[0].name, "lru cache adds"));
+    CHECK(!strcmp(pegs[1].name, "lru cache replaces"));
+    CHECK(!strcmp(pegs[2].name, "lru cache prunes"));
+    CHECK(!strcmp(pegs[3].name, "lru cache find hits"));
+    CHECK(!strcmp(pegs[4].name, "lru cache find misses"));
+    CHECK(!strcmp(pegs[5].name, "lru cache removes"));
+    CHECK(!strcmp(pegs[6].name, "lru cache clears"));
 }
 
 int main(int argc, char** argv)

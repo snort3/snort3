@@ -16,9 +16,9 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// host_module.cc author Steve Chew <stechew@cisco.com>
+// host_tracker_module.cc author Steve Chew <stechew@cisco.com>
 
-#include "host_tracker/host_module.h"
+#include "host_tracker/host_tracker_module.h"
 
 #include "host_tracker/host_cache.h"
 #include "stream/stream_api.h"

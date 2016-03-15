@@ -22,6 +22,7 @@ add_library( hash STATIC
     ${HASH_SOURCES}
     hashes.cc
     lru_cache_shared.h
+    lru_cache_shared.cc
     sfghash.cc 
     sfhashfcn.cc 
     sfprimetable.cc 

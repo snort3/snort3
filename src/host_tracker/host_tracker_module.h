@@ -16,10 +16,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// host_module.h author Steve Chew <stechew@cisco.com>
+// host_tracker_module.h author Steve Chew <stechew@cisco.com>
 
-#ifndef HOST_MODULE_H
-#define HOST_MODULE_H
+#ifndef HOST_TRACKER_MODULE_H
+#define HOST_TRACKER_MODULE_H
 
 //  Loads host configuration data.
 

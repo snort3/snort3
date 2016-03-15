@@ -13,3 +13,12 @@ can be shared between threads.
 * The HostTrackerModule is used to read in initial known information about
 hosts, populate HostTracker objects, and place them in the host_cache.
 
+* The HostCache object is a thread-safe global LRU cache.  The cache is
+shared between all packet threads.  It contains HostTracker objects and
+provides a way for packet threads to store and retrieve data about
+hosts as it is discovered.  In the long run this cache will replace the
+current Hosts table and will be the central, shared repository for data
+about hosts.
+
+* The HostCacheModule is used to configure the HostCache's size.
+

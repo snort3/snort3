@@ -2,8 +2,10 @@
 add_library( host_tracker STATIC
     host_cache.cc
     host_cache.h
-    host_module.cc
-    host_module.h
+    host_cache_module.cc
+    host_cache_module.h
+    host_tracker_module.cc
+    host_tracker_module.h
     host_tracker.cc
     host_tracker.h
 )

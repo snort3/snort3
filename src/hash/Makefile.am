@@ -12,6 +12,7 @@ sfhashfcn.h
 
 libhash_a_SOURCES = \
 hashes.cc \
+lru_cache_shared.cc \
 sfghash.cc \
 sfhashfcn.cc \
 sfprimetable.cc sfprimetable.h \

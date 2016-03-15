@@ -36,7 +36,8 @@
 #include "filters/sfthd.h"
 #include "filters/sfthreshold.h"
 #include "framework/module.h"
-#include "host_tracker/host_module.h"
+#include "host_tracker/host_tracker_module.h"
+#include "host_tracker/host_cache_module.h"
 #include "latency/latency_module.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
@@ -2193,5 +2194,6 @@ void module_init()
     ModuleManager::add_module(new AttributeTableModule);
     ModuleManager::add_module(new HostsModule);
     ModuleManager::add_module(new HostTrackerModule);
+    ModuleManager::add_module(new HostCacheModule);
 }
 

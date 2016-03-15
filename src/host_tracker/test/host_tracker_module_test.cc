@@ -16,10 +16,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// host_module_test.cc author Steve Chew <stechew@cisco.com>
+// host_tracker_module_test.cc author Steve Chew <stechew@cisco.com>
 // unit tests for the host module APIs
 
-#include "host_tracker/host_module.h"
+#include "host_tracker/host_tracker_module.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -52,7 +52,7 @@ void show_stats( PegCount* , const PegInfo* , IndexVec& , const char* )
 
 sfip_t expected_addr;
 
-TEST_GROUP(host_module)
+TEST_GROUP(host_tracker_module)
 {
     void setup()
     {
@@ -112,8 +112,8 @@ TEST_GROUP(host_module)
     }
 };
 
-//  Test that HostModules variables are set correctly.
-TEST(host_module, host_module_test_values)
+//  Test that HostTrackerModule variables are set correctly.
+TEST(host_tracker_module, host_tracker_module_test_values)
 {
     sfip_t cached_addr;
 
@@ -134,8 +134,8 @@ TEST(host_module, host_module_test_values)
 }
 
 
-//  Test that HostModules statistics are correct.
-TEST(host_module, host_module_test_stats)
+//  Test that HostTrackerModule statistics are correct.
+TEST(host_tracker_module, host_tracker_module_test_stats)
 {
     HostIpKey host_ip_key(expected_addr.ip8);
     std::shared_ptr<HostTracker> ht;
