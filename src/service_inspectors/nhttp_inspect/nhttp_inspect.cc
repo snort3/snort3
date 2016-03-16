@@ -39,18 +39,19 @@
 
 using namespace NHttpEnums;
 
-NHttpInspect::NHttpInspect(NHttpParaList params_) : params(params_)
+NHttpInspect::NHttpInspect(const NHttpParaList* params_) : params(params_)
 {
 #ifdef REG_TEST
-    if (params.test_input)
+    if (params->test_input)
     {
         NHttpTestManager::activate_test_input();
     }
-    if (params.test_output)
+    if (params->test_output)
     {
         NHttpTestManager::activate_test_output();
     }
-    NHttpTestManager::set_print_amount(params.print_amount);
+    NHttpTestManager::set_print_amount(params->print_amount);
+    NHttpTestManager::set_print_hex(params->print_hex);
 #endif
 }
 
@@ -132,31 +133,31 @@ const Field& NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Fl
     {
     case SEC_REQUEST:
         latest_section = new NHttpMsgRequest(data, dsize, session_data, source_id, buf_owner,
-            flow, &params);
+            flow, params);
         break;
     case SEC_STATUS:
         latest_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner, flow,
-            &params);
+            params);
         break;
     case SEC_HEADER:
         latest_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner, flow,
-            &params);
+            params);
         break;
     case SEC_BODY_CL:
         latest_section = new NHttpMsgBodyCl(data, dsize, session_data, source_id, buf_owner, flow,
-            &params);
+            params);
         break;
     case SEC_BODY_OLD:
         latest_section = new NHttpMsgBodyOld(data, dsize, session_data, source_id, buf_owner, flow,
-            &params);
+            params);
         break;
     case SEC_BODY_CHUNK:
         latest_section = new NHttpMsgBodyChunk(data, dsize, session_data, source_id, buf_owner,
-            flow, &params);
+            flow, params);
         break;
     case SEC_TRAILER:
         latest_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner,
-            flow, &params);
+            flow, params);
         break;
     default:
         assert(false);

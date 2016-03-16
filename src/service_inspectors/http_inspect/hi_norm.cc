@@ -578,7 +578,7 @@ static int UTF8Decode(HI_SESSION* session, const u_char* start,
     {
         if (ServerConf->iis_unicode.on)
         {
-            // FIXIT-L iNorm is an int; is it guaranteed to be < 64K?
+            // iNorm is based on max 3-byte UTF-8 and hence always fits in 16 bits
             iNorm = ServerConf->iis_unicode_map[iNorm];
 
             if (iNorm == HI_UI_NON_ASCII_CODEPOINT)

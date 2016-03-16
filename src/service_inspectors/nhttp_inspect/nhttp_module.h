@@ -40,7 +40,11 @@ public:
     {
     public:
         UriParam();
+        ~UriParam() { delete[] unicode_map; }
 
+        bool utf8;
+        bool iis_unicode;
+        uint8_t* unicode_map = nullptr;
         bool backslash_to_slash;
         bool plus_to_space;
         bool simplify_path;
@@ -53,6 +57,7 @@ public:
     bool test_input;
     bool test_output;
     long print_amount;
+    bool print_hex;
 #endif
 };
 
@@ -60,17 +65,23 @@ class NHttpModule : public Module
 {
 public:
     NHttpModule() : Module(NHTTP_NAME, NHTTP_HELP, nhttp_params) { }
+    ~NHttpModule() { delete params; }
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override { return true; }
     bool set(const char*, Value&, SnortConfig*) override;
     unsigned get_gid() const override { return NHttpEnums::NHTTP_GID; }
     const RuleMap* get_rules() const override { return nhttp_events; }
-    NHttpParaList get_params() const { return params; }
+    const NHttpParaList* get_once_params()
+    {
+        NHttpParaList* ret_val = params;
+        params = nullptr;
+        return ret_val;
+    }
 
 private:
     static const Parameter nhttp_params[];
     static const RuleMap nhttp_events[];
-    NHttpParaList params;
+    NHttpParaList* params = nullptr;
 };
 
 #endif

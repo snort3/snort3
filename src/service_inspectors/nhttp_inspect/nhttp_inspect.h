@@ -39,7 +39,8 @@ class NHttpInspect : public Inspector
 public:
     static THREAD_LOCAL uint8_t body_buffer[NHttpEnums::MAX_OCTETS];
 
-    NHttpInspect(NHttpParaList params_);
+    NHttpInspect(const NHttpParaList* params_);
+    ~NHttpInspect() { delete params; }
 
     bool get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b) override;
     bool nhttp_get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet*, InspectionBuffer& b);
@@ -68,7 +69,7 @@ private:
 
     static THREAD_LOCAL NHttpMsgSection* latest_section;
 
-    const NHttpParaList params;
+    const NHttpParaList* const params;
 };
 
 #endif

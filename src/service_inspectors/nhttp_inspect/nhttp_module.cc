@@ -37,6 +37,10 @@ const Parameter NHttpModule::nhttp_params[] =
     { "ignore_unreserved", Parameter::PT_STRING, "(optional)", nullptr,
           "do not alert when the specified unreserved characters are percent-encoded in a URI."
           "Unreserved characters are 0-9, a-z, A-Z, period, underscore, tilde, and minus." },
+    { "utf8", Parameter::PT_BOOL, nullptr, "true",
+          "normalize 2-byte and 3-byte UTF-8 characters to a single byte" },
+    { "iis_unicode", Parameter::PT_BOOL, nullptr, "false",
+          "use IIS unicode codepoint mapping to normalize characters" },
     { "backslash_to_slash", Parameter::PT_BOOL, nullptr, "false",
           "replace \\ with / when normalizing URIs" },
     { "plus_to_space", Parameter::PT_BOOL, nullptr, "true",
@@ -48,12 +52,16 @@ const Parameter NHttpModule::nhttp_params[] =
     { "test_output", Parameter::PT_BOOL, nullptr, "false", "print out HTTP section data" },
     { "print_amount", Parameter::PT_INT, "1:1000000", "1200",
           "number of characters to print from a Field" },
+    { "print_hex", Parameter::PT_BOOL, nullptr, "false",
+      "nonprinting characters printed in [HH] format instead of using an asterisk" },
 #endif
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 bool NHttpModule::begin(const char*, int, SnortConfig*)
 {
+    delete params;
+    params = new NHttpParaList;
     return true;
 }
 
@@ -61,56 +69,73 @@ bool NHttpModule::set(const char*, Value& val, SnortConfig*)
 {
     if (val.is("request_depth"))
     {
-        params.request_depth = val.get_long();
+        params->request_depth = val.get_long();
     }
     else if (val.is("response_depth"))
     {
-        params.response_depth = val.get_long();
+        params->response_depth = val.get_long();
     }
     else if (val.is("unzip"))
     {
-        params.unzip = val.get_bool();
+        params->unzip = val.get_bool();
     }
     else if (val.is("bad_characters"))
     {
-        val.get_bits(params.uri_param.bad_characters);
+        val.get_bits(params->uri_param.bad_characters);
     }
     else if (val.is("ignore_unreserved"))
     {
         const char* ignore = val.get_string();
         while (*ignore != '\0')
         {
-            params.uri_param.unreserved_char[*(ignore++)] = false;
+            params->uri_param.unreserved_char[*(ignore++)] = false;
+        }
+    }
+    else if (val.is("utf8"))
+    {
+        params->uri_param.utf8 = val.get_bool();
+    }
+    else if (val.is("iis_unicode"))
+    {
+        params->uri_param.iis_unicode = val.get_bool();
+        if (params->uri_param.iis_unicode)
+        {
+            params->uri_param.unicode_map = new uint8_t[65536];
+            UriNormalizer::load_default_unicode_map(params->uri_param.unicode_map);
         }
     }
     else if (val.is("backslash_to_slash"))
     {
-        params.uri_param.backslash_to_slash = val.get_bool();
-        params.uri_param.uri_char[(uint8_t)'\\'] = val.get_bool() ? CHAR_SUBSTIT : CHAR_NORMAL;
+        params->uri_param.backslash_to_slash = val.get_bool();
+        params->uri_param.uri_char[(uint8_t)'\\'] = val.get_bool() ? CHAR_SUBSTIT : CHAR_NORMAL;
     }
     else if (val.is("plus_to_space"))
     {
-        params.uri_param.plus_to_space = val.get_bool();
-        params.uri_param.uri_char[(uint8_t)'+'] = val.get_bool() ? CHAR_SUBSTIT : CHAR_NORMAL;
+        params->uri_param.plus_to_space = val.get_bool();
+        params->uri_param.uri_char[(uint8_t)'+'] = val.get_bool() ? CHAR_SUBSTIT : CHAR_NORMAL;
     }
     else if (val.is("simplify_path"))
     {
-        params.uri_param.simplify_path = val.get_bool();
-        params.uri_param.uri_char[(uint8_t)'/'] = val.get_bool() ? CHAR_PATH : CHAR_NORMAL;
-        params.uri_param.uri_char[(uint8_t)'.'] = val.get_bool() ? CHAR_PATH : CHAR_NORMAL;
+        params->uri_param.simplify_path = val.get_bool();
+        params->uri_param.uri_char[(uint8_t)'/'] = val.get_bool() ? CHAR_PATH : CHAR_NORMAL;
+        params->uri_param.uri_char[(uint8_t)'.'] = val.get_bool() ? CHAR_PATH : CHAR_NORMAL;
     }
 #ifdef REG_TEST
     else if (val.is("test_input"))
     {
-        params.test_input = val.get_bool();
+        params->test_input = val.get_bool();
     }
     else if (val.is("test_output"))
     {
-        params.test_output = val.get_bool();
+        params->test_output = val.get_bool();
     }
     else if (val.is("print_amount"))
     {
-        params.print_amount = val.get_long();
+        params->print_amount = val.get_long();
+    }
+    else if (val.is("print_hex"))
+    {
+        params->print_hex = val.get_bool();
     }
 #endif
     else
@@ -150,7 +175,7 @@ NHttpParaList::UriParam::UriParam() :
     CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,
     CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,
     CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,
-    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_PATH,      CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,
+    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,
 
     CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,
     CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,    CHAR_NORMAL,

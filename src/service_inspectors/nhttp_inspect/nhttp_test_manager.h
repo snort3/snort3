@@ -44,6 +44,8 @@ public:
     static int64_t get_test_number() { return test_number; }
     static void set_print_amount(long print_amount_) { print_amount = print_amount_; }
     static long get_print_amount() { return print_amount; }
+    static void set_print_hex(bool print_hex_) { print_hex = print_hex_; }
+    static bool get_print_hex() { return print_hex; }
 
 private:
     NHttpTestManager() = delete;
@@ -57,6 +59,7 @@ private:
     static FILE* test_out;
     static int64_t test_number;
     static long print_amount;
+    static bool print_hex;
 };
 
 #endif

@@ -281,6 +281,9 @@ int hi_ui_parse_iis_unicode_map(uint8_t** iis_unicode_map, char* filename,
 bool get_default_unicode_map(uint8_t*& map, int& page)
 {
     page = default_unicode_page;
+    // FIXIT-M This certainly looks wrong. Why isn't the background value for this table
+    // initialized to HI_UI_NON_ASCII_CODEPOINT instead of zero? Compare with
+    // hi_ui_parse_iis_unicode_map() above.
     map = (uint8_t*)SnortAlloc(65536*sizeof(uint8_t));
 
     std::stringstream ss(default_unicode_map);

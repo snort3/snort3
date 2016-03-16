@@ -29,8 +29,8 @@ const char* NHttpApi::nhttp_help = "the new HTTP inspector!";
 
 Inspector* NHttpApi::nhttp_ctor(Module* mod)
 {
-    const NHttpModule* const nhttp_mod = (NHttpModule*)mod;
-    return new NHttpInspect(nhttp_mod->get_params());
+    NHttpModule* const nhttp_mod = (NHttpModule*)mod;
+    return new NHttpInspect(nhttp_mod->get_once_params());
 }
 
 const char* NHttpApi::classic_buffers[] =

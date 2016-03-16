@@ -73,7 +73,7 @@ void Field::print(FILE* output, const char* name) const
     // Limit the amount of data printed
     const int32_t print_length = (length <= NHttpTestManager::get_print_amount()) ? length :
         NHttpTestManager::get_print_amount();
-    for (int k=0; k < print_length; k++)
+    for (int32_t k=0; k < print_length; k++)
     {
         if ((start[k] >= 0x20) && (start[k] <= 0x7E))
             fprintf(output, "%c", (char)start[k]);
@@ -81,6 +81,8 @@ void Field::print(FILE* output, const char* name) const
             fprintf(output, "~");
         else if (start[k] == 0xA)
             fprintf(output, "^");
+        else if (NHttpTestManager::get_print_hex())
+            fprintf(output, "[%.2x]", (uint8_t)start[k]);
         else
             fprintf(output, "*");
         if ((k%120 == (119 - out_count)) && (k+1 < print_length))
