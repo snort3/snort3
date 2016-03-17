@@ -173,7 +173,7 @@ static DCE2_Ret DCE2_CoSetIface(DCE2_SsnData* sd, DCE2_CoTracker* cot, uint16_t 
  *
  ********************************************************************/
 static inline void DCE2_CoSetRopts(DCE2_SsnData* sd, DCE2_CoTracker* cot, const
-    DceRpcCoHdr* co_hdr)
+    DceRpcCoHdr* co_hdr, Packet* p)
 {
     DCE2_CoFragTracker* ft = &cot->frag_tracker;
     int opnum = (ft->opnum != DCE2_SENTINEL) ? ft->opnum : cot->opnum;
@@ -188,10 +188,12 @@ static inline void DCE2_CoSetRopts(DCE2_SsnData* sd, DCE2_CoTracker* cot, const
     else
         sd->ropts.first_frag = DceRpcCoFirstFrag(co_hdr);
 
-    sd->ropts.hdr_byte_order = DceRpcCoByteOrder(co_hdr);
-    sd->ropts.data_byte_order = data_byte_order;
+    DceEndianness* endianness = (DceEndianness*)p->endianness;
+    endianness->hdr_byte_order = DceRpcCoByteOrder(co_hdr);
+    endianness->data_byte_order = data_byte_order;
     sd->ropts.opnum = opnum;
     sd->ropts.stub_data = cot->stub_data;
+    endianness->stub_data_offset = cot->stub_data - p->data;
 }
 
 static inline dce2CommonStats* dce_get_proto_stats_ptr(DCE2_SsnData* sd)
@@ -924,7 +926,7 @@ static int DCE2_CoGetAuthLen(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
  *
  ********************************************************************/
 static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
-    const DceRpcCoHdr* co_hdr, const uint8_t* frag_ptr, uint16_t frag_len)
+    const DceRpcCoHdr* co_hdr, const uint8_t* frag_ptr, uint16_t frag_len, Packet* p)
 {
     DceRpcCoRequest* rhdr = (DceRpcCoRequest*)frag_ptr;
     uint16_t req_size = sizeof(DceRpcCoRequest);
@@ -975,7 +977,7 @@ static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         DebugMessage(DEBUG_DCE_COMMON, "First and last fragment.\n");
         if (auth_len == -1)
             return;
-        DCE2_CoSetRopts(sd, cot, co_hdr);
+        DCE2_CoSetRopts(sd, cot, co_hdr, p);
     }
     else
     {
@@ -995,7 +997,7 @@ static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
  ********************************************************************/
 static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
-    const DceRpcCoHdr* co_hdr, const uint8_t* frag_ptr, uint16_t frag_len)
+    const DceRpcCoHdr* co_hdr, const uint8_t* frag_ptr, uint16_t frag_len, Packet* p)
 {
     DceRpcCoResponse* rhdr = (DceRpcCoResponse*)frag_ptr;
     uint16_t ctx_id;
@@ -1071,7 +1073,7 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         DebugMessage(DEBUG_DCE_COMMON, "First and last fragment.\n");
         if (auth_len == -1)
             return;
-        DCE2_CoSetRopts(sd, cot, co_hdr);
+        DCE2_CoSetRopts(sd, cot, co_hdr, p);
     }
     else
     {
@@ -1089,7 +1091,7 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
  *
  ********************************************************************/
 static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
-    const uint8_t* frag_ptr, uint16_t frag_len)
+    const uint8_t* frag_ptr, uint16_t frag_len, Packet* p)
 {
     /* Already checked that we have enough data for header */
     const DceRpcCoHdr* co_hdr = (DceRpcCoHdr*)frag_ptr;
@@ -1140,7 +1142,7 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                 return;
             }
 
-            DCE2_CoRequest(sd, cot, co_hdr, frag_ptr, frag_len);
+            DCE2_CoRequest(sd, cot, co_hdr, frag_ptr, frag_len, p);
 
             break;
 
@@ -1226,7 +1228,7 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         case DCERPC_PDU_TYPE__RESPONSE:
             DebugMessage(DEBUG_DCE_COMMON, "Response\n");
             dce_common_stats->co_response++;
-            DCE2_CoResponse(sd, cot, co_hdr, frag_ptr, frag_len);
+            DCE2_CoResponse(sd, cot, co_hdr, frag_ptr, frag_len, p);
             break;
 
         case DCERPC_PDU_TYPE__FAULT:
@@ -1280,7 +1282,7 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
  *
  ********************************************************************/
 void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
-    const uint8_t* data_ptr, uint16_t data_len)
+    const uint8_t* data_ptr, uint16_t data_len, Packet* p)
 {
     DCE2_CoSeg* seg = DCE2_CoGetSegPtr(sd, cot);
     uint32_t num_frags = 0;
@@ -1324,7 +1326,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             DCE2_MOVE(data_ptr, data_len, frag_len);
 
             /* Got a full DCE/RPC pdu */
-            DCE2_CoDecode(sd, cot, frag_ptr, frag_len);
+            DCE2_CoDecode(sd, cot, frag_ptr, frag_len, p);
 
             /* If we're configured to do defragmentation only detect on first frag
              * since we'll detect on reassembled */

@@ -164,13 +164,21 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
     if (ptr < start || ptr >= end)
         return DETECTION_OPTION_NO_MATCH;
 
+    int8_t endian = data->endianess;
+    if (data->endianess == ENDIAN_FUNC)
+    {
+        if (!p->endianness ||
+            !p->endianness->get_offset_endianness(ptr - p->data, endian))
+            return DETECTION_OPTION_NO_MATCH;
+    }
+
     // do the extraction
     int ret = 0;
     int bytes_read = 0;
 
     if (data->data_string_convert_flag == 0)
     {
-        ret = byte_extract(data->endianess, data->bytes_to_grab, ptr, start, end, value);
+        ret = byte_extract(endian, data->bytes_to_grab, ptr, start, end, value);
         if (ret < 0)
             return DETECTION_OPTION_NO_MATCH;
 
@@ -355,8 +363,8 @@ static bool ByteExtractVerify(ByteExtractData* data)
     if ( e1 && e2 )
     {
         ParseError("byte_extract rule option has multiple arguments "
-            "specifying the type of string conversion. Use only "
-            "one of 'dec', 'hex', or 'oct'.");
+            "specifying endianness. Use only "
+            "one of 'big', 'little', or 'dce'.");
         return false;
     }
     return true;

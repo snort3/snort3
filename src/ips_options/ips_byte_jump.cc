@@ -196,7 +196,7 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int ByteJumpOption::eval(Cursor& c, Packet*)
+int ByteJumpOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(byteJumpPerfStats);
 
@@ -224,13 +224,20 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
 
     uint32_t jump = 0;
     uint32_t payload_bytes_grabbed = 0;
+    int8_t endian = bjd->endianess;
+    if (endian == ENDIAN_FUNC)
+    {
+        if (!p->endianness ||
+            !p->endianness->get_offset_endianness(base_ptr - p->data, endian))
+            return DETECTION_OPTION_NO_MATCH;
+    }
 
     // Both of the extraction functions contain checks to ensure the data
     // is inbounds and will return no match if it isn't
     if ( !bjd->data_string_convert_flag )
     {
         if ( byte_extract(
-            bjd->endianess, bjd->bytes_to_grab,
+            endian, bjd->bytes_to_grab,
             base_ptr, start_ptr, end_ptr, &jump) )
             return DETECTION_OPTION_NO_MATCH;
 
@@ -378,10 +385,11 @@ bool ByteJumpModule::end(const char*, int, SnortConfig*)
     if ( e1 && e2 )
     {
         ParseError("byte_jump has multiple arguments "
-            "specifying the type of string conversion. Use only "
-            "one of 'dec', 'hex', or 'oct'.");
+            "specifying endianness. Use only "
+            "one of 'big', 'little', or 'dce'.");
         return false;
     }
+
     return true;
 }
 

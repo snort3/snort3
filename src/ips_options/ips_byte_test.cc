@@ -212,7 +212,6 @@ static inline bool byte_test_check(uint32_t op, uint32_t val, uint32_t cmp, bool
     return success;
 }
 
-
 class ByteTestOption : public IpsOption
 {
 public:
@@ -294,7 +293,7 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int ByteTestOption::eval(Cursor& c, Packet*)
+int ByteTestOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(byteTestPerfStats);
 
@@ -308,7 +307,6 @@ int ByteTestOption::eval(Cursor& c, Packet*)
         GetByteExtractValue(&val, btd->cmp_value_var);
         cmp_value = val;
     }
-
     else
         cmp_value = btd->cmp_value;
 
@@ -320,12 +318,19 @@ int ByteTestOption::eval(Cursor& c, Packet*)
         GetByteExtractValue(&val, btd->offset_var);
         offset = (int32_t)val;
     }
-
     else
         offset = btd->offset;
 
     const uint8_t* start_ptr = btd->relative_flag ? c.start() : c.buffer();
     start_ptr += offset;
+
+    int8_t endian = btd->endianess;
+    if (endian == ENDIAN_FUNC)
+    {
+        if (!p->endianness ||
+            !p->endianness->get_offset_endianness(start_ptr - p->data, endian))
+            return DETECTION_OPTION_NO_MATCH;
+    }
 
     uint32_t value = 0;
     int payload_bytes_grabbed = 0;
@@ -333,7 +338,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
     if (!btd->data_string_convert_flag)
     {
         if ( byte_extract(
-            btd->endianess, btd->bytes_to_compare,
+            endian, btd->bytes_to_compare,
             start_ptr, c.buffer(), c.endo(), &value))
             return DETECTION_OPTION_NO_MATCH;
 #ifdef DEBUG_MSGS
@@ -527,10 +532,11 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
     if ( e1 && e2 )
     {
         ParseError("byte_test has multiple arguments "
-            "specifying the type of string conversion. Use only "
-            "one of 'dec', 'hex', or 'oct'.");
+            "specifying endianness. Use only "
+            "one of 'big', 'little', or 'dce'.");
         return false;
     }
+
     return true;
 }
 

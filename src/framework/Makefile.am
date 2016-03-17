@@ -13,6 +13,7 @@ counts.h \
 cursor.h \
 data_bus.h \
 decode_data.h \
+endianness.h \
 inspector.h \
 ips_action.h \
 ips_option.h \

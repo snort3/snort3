@@ -195,8 +195,9 @@ void Dce2Tcp::eval(Packet* p)
     if (dce2_tcp_sess)
     {
         dce2_tcp_stats.tcp_pkts++;
-        DCE2_CoProcess(&dce2_tcp_sess->sd, &dce2_tcp_sess->co_tracker, p->data,
-            p->dsize);
+        p->endianness = (Endianness*)new DceEndianness();
+        DCE2_CoProcess(
+            &dce2_tcp_sess->sd, &dce2_tcp_sess->co_tracker, p->data, p->dsize, p);
 
         if (!dce2_detected)
             DCE2_Detect(&dce2_tcp_sess->sd);
@@ -206,6 +207,9 @@ void Dce2Tcp::eval(Packet* p)
 
         if (!DCE2_SsnAutodetected(&dce2_tcp_sess->sd))
             DisableInspection();
+
+        delete p->endianness;
+        p->endianness = nullptr;
     }
 }
 

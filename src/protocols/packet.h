@@ -39,6 +39,7 @@ extern "C" {
 #include "framework/decode_data.h"
 #include "flow/flow.h"
 #include "protocols/layer.h"
+#include "framework/endianness.h"
 
 /* packet status flags */
 #define PKT_REBUILT_FRAG     0x00000001  /* is a rebuilt fragment */
@@ -135,6 +136,7 @@ struct SO_PUBLIC Packet
     uint8_t num_layers;         /* index into layers for next encap */
     uint8_t ip_proto_next;      /* the protocol ID after IP and all IP6 extension */
     bool disable_inspect;
+    class Endianness* endianness;
 
     // nothing after this point is zeroed ...
 
@@ -189,7 +191,7 @@ struct SO_PUBLIC Packet
     { return ptrs.get_pkt_type() == PktType::ICMP; }
 
     inline bool is_data() const
-    { return (ptrs.get_pkt_type() == PktType::PDU) or (ptrs.get_pkt_type() == PktType::FILE); }
+    { return (ptrs.get_pkt_type() == PktType::PDU)or (ptrs.get_pkt_type() == PktType::FILE); }
 
     inline bool is_cooked() const
     { return packet_flags & PKT_PSEUDO; }
@@ -246,6 +248,7 @@ struct SO_PUBLIC Packet
         memset(this, 0, offsetof(Packet, pkth));
         ptrs.reset();
     }
+
     bool from_client()
     { return (packet_flags & PKT_FROM_CLIENT) != 0; }
 
@@ -299,6 +302,7 @@ inline uint32_t extract_32bits(const uint8_t* p)
     memmove(&tmp, p, sizeof(uint32_t));
     return ntohl(tmp);
 }
+
 #endif
 
 #else
@@ -308,6 +312,5 @@ inline uint32_t extract_32bits(const uint8_t* p)
 { return ntohl(*(uint32_t*)p); }
 
 #endif
-
 #endif
 

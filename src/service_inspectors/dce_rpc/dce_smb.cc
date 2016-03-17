@@ -210,6 +210,9 @@ void Dce2Smb::eval(Packet* p)
         return;
     }
     dce2_smb_stats.smb_pkts++;
+
+    // FIXIT-L - when porting processing code also add DceEndianness allocation
+    // (see dce_tcp.cc eval)
 }
 
 //-------------------------------------------------------------------------

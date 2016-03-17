@@ -400,7 +400,7 @@ inline uint16_t DceRpcCoCtxId(const DceRpcCoHdr* co, const DceRpcCoRequest* cor)
 
 void DCE2_CoInitTracker(DCE2_CoTracker*);
 void DCE2_CoProcess(DCE2_SsnData*, DCE2_CoTracker*,
-    const uint8_t*, uint16_t);
+    const uint8_t*, uint16_t, Packet* p);
 
 #endif
 

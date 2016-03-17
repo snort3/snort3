@@ -157,10 +157,6 @@ struct DCE2_Roptions
     /* dce_opnum */
     int opnum;    /* Set to sentinel if not applicable */
 
-    /* dce_byte_test */
-    int hdr_byte_order;   /* Set to sentinel if not applicable */
-    int data_byte_order;  /* Set to sentinel if not applicable */
-
     /* dce_stub_data */
     const uint8_t* stub_data;  /* Set to NULL if not applicable */
 };
@@ -191,12 +187,22 @@ struct DCE2_SsnData
     uint32_t srv_nseq;
 };
 
+class DceEndianness : public Endianness
+{
+public:
+    int hdr_byte_order;   /* Set to sentinel if not applicable */
+    int data_byte_order;  /* Set to sentinel if not applicable */
+    int32_t stub_data_offset;  /* Set to sentinel if not applicable */
+
+public:
+    DceEndianness();
+    virtual bool get_offset_endianness(int32_t offset, int8_t& endian);
+};
+
 inline void DCE2_ResetRopts(DCE2_Roptions* ropts)
 {
     ropts->first_frag = DCE2_SENTINEL;
     ropts->opnum = DCE2_SENTINEL;
-    ropts->hdr_byte_order = DCE2_SENTINEL;
-    ropts->data_byte_order = DCE2_SENTINEL;
     ropts->stub_data = nullptr;
 }
 

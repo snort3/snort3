@@ -182,4 +182,3 @@ const char* Packet::get_pseudo_type() const
     }
     return "other";
 }
-

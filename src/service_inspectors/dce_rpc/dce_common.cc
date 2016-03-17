@@ -27,6 +27,7 @@
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "detection/detect.h"
+#include "ips_options/extract.h"
 
 THREAD_LOCAL int dce2_detected = 0;
 
@@ -143,12 +144,6 @@ static void DCE2_PrintRoptions(DCE2_Roptions* ropts)
     {
         DebugFormat(DEBUG_DCE_COMMON, "  Opnum: %u\n", ropts->opnum);
     }
-    DebugFormat(DEBUG_DCE_COMMON, "  Header byte order: %s\n",
-        ropts->hdr_byte_order == DCERPC_BO_FLAG__LITTLE_ENDIAN ? "little endian" :
-        (ropts->hdr_byte_order == DCERPC_BO_FLAG__BIG_ENDIAN ? "big endian" : "unset"));
-    DebugFormat(DEBUG_DCE_COMMON, "  Data byte order: %s\n",
-        ropts->data_byte_order == DCERPC_BO_FLAG__LITTLE_ENDIAN ? "little endian" :
-        (ropts->data_byte_order == DCERPC_BO_FLAG__BIG_ENDIAN ? "big endian" : "unset"));
     if (ropts->stub_data != nullptr)
         DebugFormat(DEBUG_DCE_COMMON, "  Stub data: %p\n", ropts->stub_data);
     else
@@ -218,6 +213,53 @@ DCE2_SsnData* get_dce2_session_data(Packet* p)
     // FIXIT - add checks for http, udp once ported
 
     return nullptr;
+}
+
+DceEndianness::DceEndianness()
+{
+    hdr_byte_order = DCE2_SENTINEL;
+    data_byte_order = DCE2_SENTINEL;
+    stub_data_offset = DCE2_SENTINEL;
+}
+
+bool DceEndianness::get_offset_endianness(int32_t offset, int8_t& endian)
+{
+    int byte_order;
+
+    if ((data_byte_order == DCE2_SENTINEL) ||
+        (hdr_byte_order == DCE2_SENTINEL))
+    {
+        DebugMessage(DEBUG_DCE_COMMON,
+            "Data byte order or header byte order not set "
+            "in rule options - not evaluating.\n");
+        return false;
+    }
+
+    if (stub_data_offset == DCE2_SENTINEL)
+    {
+        DebugMessage(DEBUG_DCE_COMMON, "Stub data is NULL.  "
+            "Setting byte order to that of the header.\n");
+        byte_order = (DceRpcBoFlag)hdr_byte_order;
+    }
+    else if (offset < stub_data_offset)
+    {
+        DebugMessage(DEBUG_DCE_COMMON,
+            "Reading data in the header.  Setting byte order "
+            "to that of the header.\n");
+        byte_order = (DceRpcBoFlag)hdr_byte_order;
+    }
+    else
+    {
+        DebugMessage(DEBUG_DCE_COMMON,
+            "Reading data in the stub.  Setting byte order "
+            "to that of the stub data.\n");
+        byte_order = (DceRpcBoFlag)data_byte_order;
+    }
+
+    endian = (byte_order == DCERPC_BO_FLAG__BIG_ENDIAN) ? ENDIAN_BIG : ENDIAN_LITTLE;
+    DebugFormat(DEBUG_DCE_COMMON, " Byte order: %s\n",
+        endian == ENDIAN_LITTLE ? "little endian" : "big endian");
+    return true;
 }
 
 #ifdef BUILDING_SO
