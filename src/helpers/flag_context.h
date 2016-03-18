@@ -15,23 +15,22 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// flag_context.h author Joel Cornett <jocornet@cisco.com>
 
-// prune_handler.cc author Joel Cornett <jocornet@cisco.com>
+#ifndef FLAG_CONTEXT_H
+#define FLAG_CONTEXT_H
 
-#include "prune_handler.h"
-
-#include "flow/flow_cache.h"
-#include "flow/flow_control.h"
-#include "stream/stream.h"
-
-namespace memory
+template<typename T>
+struct FlagContext
 {
+    FlagContext(T& dst, T flags) : dst(dst), flags(flags)
+    { dst |= flags; }
 
-void prune_handler()
-{
-    // assert(flow_con);
-    if ( flow_con )
-        flow_con->prune_one(PruneReason::USER);
-}
+    ~FlagContext()
+    { dst &= ~flags; }
 
-} // namespace memory
+    T& dst;
+    T flags;
+};
+
+#endif

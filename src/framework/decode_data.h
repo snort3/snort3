@@ -22,6 +22,7 @@
 
 // Captures decode information from Codecs.
 
+#include <cstdint>
 #include <type_traits>
 
 #include "protocols/mpls.h"

@@ -171,8 +171,8 @@ void Stream::check_session_closed(Packet* p)
     if (flow->session_state & STREAM_STATE_CLOSED)
     {
         assert(flow_con);
-        flow_con->delete_flow(flow, "closed");
-        p->flow = NULL;
+        flow_con->delete_flow(flow, PruneReason::CLOSED);
+        p->flow = nullptr;
     }
 }
 

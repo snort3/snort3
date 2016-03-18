@@ -24,13 +24,26 @@
 #include "config.h"
 #endif
 
+#include "hash/zhash.h"
+#include "helpers/flag_context.h"
+#include "ips_options/ips_flowbits.h"
+#include "main/snort_debug.h"
 #include "packet_io/active.h"
 #include "time/packet_time.h"
-#include "ips_options/ips_flowbits.h"
-#include "hash/zhash.h"
-#include "main/snort_debug.h"
 
 #define SESSION_CACHE_FLAG_PURGING  0x01
+
+uint64_t PruneStats::get_total() const
+{
+    uint64_t total = 0;
+    for ( reason_t i = 0;
+          i < static_cast<reason_t>(PruneReason::MAX); ++i )
+    {
+        total += prunes[i];
+    }
+
+    return total;
+}
 
 //-------------------------------------------------------------------------
 // FlowCache stuff
@@ -46,6 +59,9 @@ FlowCache::FlowCache (
     else
         cleanup_flows = cleanup_count;
 
+    if ( cleanup_flows >= cfg.max_sessions )
+        cleanup_flows = cfg.max_sessions - 1;
+
     if ( !cleanup_flows )
         cleanup_flows = 1;
 
@@ -58,8 +74,10 @@ FlowCache::FlowCache (
     uni_head->next = uni_tail;
     uni_tail->prev = uni_head;
 
-    prunes = uni_count = 0;
+    uni_count = 0;
     flags = 0x0;
+
+    assert(prune_stats.get_total() == 0);
 }
 
 FlowCache::~FlowCache ()
@@ -96,7 +114,6 @@ Flow* FlowCache::find(const FlowKey* key)
             flow->last_data_seen = t;
     }
 
-    last = flow;
     return flow;
 }
 
@@ -136,7 +153,7 @@ Flow* FlowCache::get(const FlowKey* key)
         if ( !prune_stale(timestamp, nullptr) )
         {
             if ( !prune_unis() )
-                prune_excess(false, nullptr);
+                prune_excess(nullptr);
         }
 
         flow = (Flow*)hash_table->get(key);
@@ -147,14 +164,14 @@ Flow* FlowCache::get(const FlowKey* key)
     }
 
     flow->last_data_seen = timestamp;
-    last = flow;
 
     return flow;
 }
 
-int FlowCache::release(Flow* flow, const char*)
+int FlowCache::release(Flow* flow, PruneReason reason)
 {
     flow->reset();
+    prune_stats.update(reason);
     return remove(flow);
 }
 
@@ -168,54 +185,56 @@ int FlowCache::remove(Flow* flow)
 
 uint32_t FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
 {
-    Flow* flow;
+    ActiveSuspendContext act_susp;
+
     uint32_t pruned = 0;
-    Active::suspend();
+    auto flow = static_cast<Flow*>(hash_table->first());
 
-    /* Pruning, look for flows that have time'd out */
-    flow = (Flow*)hash_table->first();
-
-    while ( flow )
+    while ( flow and pruned <= cleanup_flows )
     {
+#if 0
         // FIXIT-L this loops forever if 1 flow in cache
         if (flow == save_me)
         {
+            break;
             if ( hash_table->get_count() == 1 )
                 break;
 
             hash_table->touch();
         }
-
-        else if ((flow->last_data_seen + config.pruning_timeout) < thetime)
+#else
+        // Reached the current flow. This *should* be the newest flow
+        if ( flow == save_me )
         {
-            DebugMessage(DEBUG_STREAM, "pruning stale flow\n");
-            flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
-            release(flow, "stale/timeout");
-            pruned++;
+            // assert( flow->last_data_seen + config.pruning_timeout >= thetime );
+            // bool rv = hash_table->touch(); assert( !rv );
+            break;
         }
-        else
+#endif
+        if ( flow->last_data_seen + config.pruning_timeout >= thetime )
             break;
 
-        if (pruned > cleanup_flows)
-            break;
+        DebugMessage(DEBUG_STREAM, "pruning stale flow\n");
+        flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
+        release(flow, PruneReason::TIMEOUT);
+        ++pruned;
 
-        flow = (Flow*)hash_table->first();
+        flow = static_cast<Flow*>(hash_table->first());
     }
 
-    prunes += pruned;
-    Active::resume();
     return pruned;
 }
 
 uint32_t FlowCache::prune_unis()
 {
+    ActiveSuspendContext act_susp;
+
     // we may have many or few unis; need to find reasonable ratio
     // FIXIT-L max_uni should be based on typical ratios seen in perfmon
     const uint32_t max_uni = (config.max_sessions >> 2) + 1;
 
     Flow* curr = uni_tail->prev;
     uint32_t pruned = 0;
-    Active::suspend();
 
     while ( (uni_count > max_uni) && curr && (pruned < cleanup_flows) )
     {
@@ -225,109 +244,104 @@ uint32_t FlowCache::prune_unis()
         if ( flow->was_blocked() )
             continue;
 
-        release(flow, "unidirectional");
+        release(flow, PruneReason::UNI);
         ++pruned;
     }
-    prunes += pruned;
-    Active::resume();
+
     return pruned;
 }
 
-uint32_t FlowCache::prune_excess(bool memCheck, const Flow* save_me)
+uint32_t FlowCache::prune_excess(const Flow* save_me)
 {
-    /* Free up 'n' flows at a time until we get under the
-     * memcap or free enough flows to be able to create
-     * new ones.
-     */
-    const uint32_t max_cap = config.max_sessions - cleanup_flows;
+    ActiveSuspendContext act_susp;
+
+    auto max_cap = config.max_sessions - cleanup_flows;
+    assert(max_cap > 0);
+
     uint32_t pruned = 0;
-    Active::suspend();
+    uint32_t blocks = 0;
 
-    while (
-        (hash_table->get_count() > 1) &&
-        ((!memCheck && ((hash_table->get_count() > max_cap) || !pruned)) ||
-        (memCheck && memcap.at_max()) ))
+    while ( hash_table->get_count() > max_cap and hash_table->get_count() > blocks )
     {
-        unsigned int blocks = 0;
-        Flow* flow = (Flow*)hash_table->first();
+        auto flow = static_cast<Flow*>(hash_table->first());
+        assert(flow); // holds true because hash_table->get_count() > 0
 
-        for (unsigned i=0; i<cleanup_flows &&
-            (hash_table->get_count() > blocks); i++)
+        if ( flow == save_me or flow->was_blocked() )
         {
-            if ( (flow != save_me) && (!memCheck || !flow->was_blocked()) )
-            {
-                flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
-                release(flow, memCheck ? "memcap/check" : "memcap/stale");
-                pruned++;
-            }
-            else
-            {
-                if ( flow && flow->was_blocked() )
-                    blocks++;
+            if ( flow->was_blocked() )
+                ++blocks;
 
-                if ( !hash_table->touch() )
-                    break; // this flow is the only one left
-
-                i--; /* Didn't clean this one */
-            }
-            flow = (Flow*)hash_table->first();
+            // FIXIT-M J we should update last_data_seen upon touch to ensure
+            // the hash_table LRU list remains sorted by time
+            if ( !hash_table->touch() )
+                break;
         }
 
-        /* Nothing (or the one we're working with) in table, couldn't kill it */
-        if (!memCheck && (pruned == 0))
-            break;
+        else
+        {
+            flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
+            release(flow, PruneReason::EXCESS);
+            ++pruned;
+        }
     }
-    prunes += pruned;
-    Active::resume();
+
     return pruned;
 }
 
-void FlowCache::timeout(uint32_t flowCount, time_t cur_time)
+bool FlowCache::prune_one(PruneReason reason)
 {
-    uint32_t flowRetiredCount = 0, flowExaminedCount = 0;
-    uint32_t flowMax = flowCount * 2;
+    // so we don't prune the current flow (assume current == MRU)
+    if ( hash_table->get_count() <= 1 )
+        return false;
 
-    Flow* flow = (Flow*)hash_table->current();
+    auto flow = static_cast<Flow*>(hash_table->first());
+    assert(flow);
+
+    flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
+    release(flow, reason);
+
+    return true;
+}
+
+void FlowCache::timeout(uint32_t num_flows, time_t thetime)
+{
+    uint32_t retired = 0;
+
+    auto flow = static_cast<Flow*>(hash_table->current());
 
     if ( !flow )
-        flow = (Flow*)hash_table->first();
+        flow = static_cast<Flow*>(hash_table->first());
 
-    while ( flow && flowRetiredCount < flowCount && flowExaminedCount < flowMax )
+    while ( flow and retired < num_flows )
     {
-        if ((time_t)(flow->last_data_seen + config.nominal_timeout) > cur_time)
+        if ( flow->last_data_seen + config.nominal_timeout > thetime )
             break;
-
-        flowExaminedCount++;
 
         DebugMessage(DEBUG_STREAM, "retiring stale flow\n");
         flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
-        release(flow, "stale/timeout");
+        release(flow, PruneReason::TIMEOUT);
 
-        flowRetiredCount++;
-        flow = (Flow*)hash_table->current();
+        ++retired;
+
+        flow = static_cast<Flow*>(hash_table->current());
     }
 }
 
-/* Remove all flows from the hash table. */
+// Remove all flows from the hash table.
 int FlowCache::purge()
 {
-    int retCount = 0;
+    ActiveSuspendContext act_susp;
+    FlagContext<decltype(flags)>(flags, SESSION_CACHE_FLAG_PURGING);
 
-    Active::suspend();
-    flags |= SESSION_CACHE_FLAG_PURGING;
-    Flow* flow = (Flow*)hash_table->first();
+    uint32_t retired = 0;
 
-    while ( flow )
+    while ( auto flow = static_cast<Flow*>(hash_table->first()) )
     {
         flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
-        release(flow, "purge whole cache");
-        retCount++;
-        flow = (Flow*)hash_table->first();
+        release(flow, PruneReason::PURGE);
+        ++retired;
     }
 
-    flags &= ~SESSION_CACHE_FLAG_PURGING;
-    Active::resume();
-
-    return retCount;
+    return retired;
 }
 

@@ -16,30 +16,26 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "flow/flow_control.h"
+#include "flow_control.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <arpa/inet.h>
+#include <cassert>
 
-#include "flow/flow_cache.h"
+#include "detection/detect.h"
 #include "flow/expect_cache.h"
+#include "flow/flow_cache.h"
 #include "flow/session.h"
-#include "packet_io/active.h"
-#include "packet_io/sfdaq.h"
-#include "utils/stats.h"
-#include "protocols/layer.h"
-#include "protocols/vlan.h"
 #include "managers/inspector_manager.h"
-#include "sfip/sf_ip.h"
-#include "protocols/tcp.h"
-#include "protocols/udp.h"
+#include "packet_io/active.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
-#include "detection/detect.h"
+#include "protocols/tcp.h"
+#include "protocols/udp.h"
+#include "protocols/vlan.h"
+#include "sfip/sf_ip.h"
 
 FlowControl::FlowControl()
 {
@@ -58,6 +54,8 @@ FlowControl::FlowControl()
     get_ip = get_icmp = nullptr;
     get_tcp = get_udp = nullptr;
     get_user = get_file = nullptr;
+
+    last_pkt_type = PktType::NONE;
 }
 
 FlowControl::~FlowControl()
@@ -204,15 +202,15 @@ void FlowControl::delete_flow(const FlowKey* key)
     Flow* flow = cache->find(key);
 
     if ( flow )
-        cache->release(flow, "ha sync");
+        cache->release(flow, PruneReason::HA_SYNC);
 }
 
-void FlowControl::delete_flow(Flow* flow, const char* why)
+void FlowControl::delete_flow(Flow* flow, PruneReason reason)
 {
     FlowCache* cache = get_cache(flow->protocol);
 
     if ( cache )
-        cache->release(flow, why);
+        cache->release(flow, reason);
 }
 
 void FlowControl::purge_flows (PktType proto)
@@ -237,27 +235,15 @@ void FlowControl::prune_flows(PktType proto, Packet* p)
     if (!cache->prune_stale(p->pkth->ts.tv_sec, (Flow*)p->flow))
     {
         // if no luck, try the memcap
-        cache->prune_excess(true, (Flow*)p->flow);
+        cache->prune_excess((Flow*)p->flow);
     }
 }
 
-void FlowControl::prune_flows(PktType proto)
+// hole for memory manager/prune handler
+bool FlowControl::prune_one(PruneReason reason)
 {
-    auto cache = get_cache(proto);
-    if ( !cache )
-        return;
-
-    cache->prune_excess();
-}
-
-void FlowControl::prune_flows()
-{
-    prune_flows(PktType::IP);
-    prune_flows(PktType::ICMP);
-    prune_flows(PktType::TCP);
-    prune_flows(PktType::UDP);
-    prune_flows(PktType::PDU);
-    prune_flows(PktType::FILE);
+    auto cache = get_cache(last_pkt_type);
+    return cache ? cache->prune_one(reason) : false;
 }
 
 void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)

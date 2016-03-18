@@ -25,9 +25,20 @@
 // this is where all the flow caches are managed and where all flows are
 // processed.  flows are pruned as needed to process new flows.
 
-#include "flow/flow.h"
+#include <cstdint>
+
 #include "flow/flow_config.h"
+#include "framework/decode_data.h"
+#include "framework/inspector.h"
 #include "utils/stats.h"
+
+class Flow;
+class FlowData;
+struct FlowKey;
+struct Packet;
+struct sfip_t;
+
+enum class PruneReason : uint8_t;
 
 class FlowControl
 {
@@ -55,11 +66,10 @@ public:
     void init_exp(uint32_t max);
 
     void delete_flow(const FlowKey*);
-    void delete_flow(Flow*, const char* why);
+    void delete_flow(Flow*, PruneReason);
     void purge_flows(PktType);
     void prune_flows(PktType, Packet*);
-    void prune_flows(PktType);
-    void prune_flows();
+    bool prune_one(PruneReason);
     void timeout_flows(uint32_t flowCount, time_t cur_time);
 
     char expected_flow(Flow*, Packet*);
@@ -113,6 +123,7 @@ private:
     InspectSsnFunc get_file;
 
     class ExpectCache* exp_cache;
+    PktType last_pkt_type;
 };
 
 #endif

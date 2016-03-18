@@ -71,6 +71,8 @@ inline bool free_space(size_t requested, size_t cap, Tracker& trk, Handler& hand
     assert(requested <= cap);
     const auto required = cap - requested;
 
+    // FIXIT-H J call handler repeatedly until unsuccessful or memory
+    // falls below 'required'
     if ( trk.used() > required )
         handler();
 

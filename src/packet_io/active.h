@@ -160,5 +160,11 @@ private:
     static bool s_enabled;
 };
 
+struct ActiveSuspendContext
+{
+    ActiveSuspendContext() { Active::suspend(); }
+    ~ActiveSuspendContext() { Active::resume(); }
+};
+
 #endif
 

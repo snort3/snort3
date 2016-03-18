@@ -25,10 +25,38 @@
 // there is a FlowCache instance for each protocol.
 // Flows are stored in a ZHash instance by FlowKey.
 
+#include <ctime>
+#include <type_traits>
+
 #include "flow/flow_config.h"
-#include "flow/flow_key.h"
 #include "flow/memcap.h"
-#include "stream/stream.h"
+
+class Flow;
+struct FlowKey;
+
+// FIXIT-L J we can probably fiddle with these breakdowns
+enum class PruneReason : uint8_t
+{
+    PURGE = 0,
+    TIMEOUT,
+    EXCESS,
+    UNI,
+    HA_SYNC,
+    CLOSED,
+    USER,
+    MAX
+};
+
+struct PruneStats
+{
+    using reason_t = std::underlying_type<PruneReason>::type;
+
+    uint32_t prunes[static_cast<reason_t>(PruneReason::MAX)] { };
+
+    uint64_t get_total() const;
+    void update(PruneReason reason)
+    { ++prunes[static_cast<reason_t>(reason)]; }
+};
 
 class FlowCache
 {
@@ -45,20 +73,25 @@ public:
     Flow* find(const FlowKey*);
     Flow* get(const FlowKey*);
 
-    int release(Flow*, const char* reason);
+    int release(Flow*, PruneReason = PruneReason::USER);
 
     uint32_t prune_unis();
     uint32_t prune_stale(uint32_t thetime, const Flow* save_me);
-    uint32_t prune_excess(bool memCheck, const Flow* save_me);
-    uint32_t prune_excess() { return prune_excess(false, last); }
-    void timeout(uint32_t flowCount, time_t cur_time);
+    uint32_t prune_excess(const Flow* save_me);
+    bool prune_one(PruneReason);
+    void timeout(uint32_t num_flows, time_t cur_time);
 
     int purge();
     int get_count();
 
-    uint32_t get_max_flows() { return config.max_sessions; }
-    uint32_t get_prunes() { return prunes; }
-    void reset_prunes() { prunes = 0; }
+    uint32_t get_max_flows() const
+    { return config.max_sessions; }
+
+    uint64_t get_prunes() const
+    { return prune_stats.get_total(); }
+
+    void reset_prunes()
+    { prune_stats = PruneStats(); }
 
     void unlink_uni(Flow*);
 
@@ -71,7 +104,6 @@ private:
 private:
     const FlowConfig& config;
     uint32_t cleanup_flows;
-    uint32_t prunes;
     uint32_t uni_count;
     uint32_t flags;
 
@@ -79,7 +111,7 @@ private:
 
     class ZHash* hash_table;
     Flow* uni_head, * uni_tail;
-    const Flow* last = nullptr;
+    PruneStats prune_stats;
 };
 
 #endif

@@ -14,5 +14,5 @@ process.cc \
 process.h \
 ring.h \
 ring_logic.h \
-swapper.h
-
+swapper.h \
+flag_context.h

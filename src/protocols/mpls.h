@@ -20,6 +20,8 @@
 #ifndef PROTOCOLS_MPLS_H
 #define PROTOCOLS_MPLS_H
 
+#include <cstdint>
+
 namespace mpls
 {
 struct MplsHdr
@@ -31,6 +33,7 @@ struct MplsHdr
 };
 } // namespace mpls
 
+// FIXIT-L J constexpr != const, they are orthogonal keywords
 constexpr int MPLS_PAYLOADTYPE_ETHERNET = 1;
 constexpr int MPLS_PAYLOADTYPE_IPV4 = 2;
 constexpr int MPLS_PAYLOADTYPE_IPV6 = 3;
