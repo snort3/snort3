@@ -1,3 +1,17 @@
+16/03/18 - build 192
+
+-- use hwloc for CPU affinity
+-- fix process stats output
+-- add dce rule options iface, opnum, smb, stub_data, tcp
+-- add dce option for byte_extract/jump/test
+-- initial side channel and file connector for HA
+-- continued memory manager implementation
+-- add UTF-8 normalization for new_http_inspect
+-- fix rule compilation for sticky buffers
+-- host_cache and host_tracker config and stats updates
+-- miscellaneous warning and lint cleanup
+-- snort2Lua updates for preproc sensitive_data and sd_pattern option
+
 16/03/07 - build 191
 
 -- fix perf_monitor stats output at shutdown
