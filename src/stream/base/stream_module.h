@@ -23,7 +23,7 @@
 
 #include "main/snort_types.h"
 #include "framework/module.h"
-#include "flow/flow_control.h"
+#include "flow/flow_config.h"
 
 extern THREAD_LOCAL ProfileStats s5PerfStats;
 struct SnortConfig;
@@ -35,26 +35,24 @@ struct SnortConfig;
 #define MOD_NAME "stream"
 #define MOD_HELP "common flow tracking"
 
+#define PROTO_FIELDS(proto) \
+    PegCount proto ## _flows; \
+    PegCount proto ## _total_prunes; \
+    PegCount proto ## _timeout_prunes; \
+    PegCount proto ## _excess_prunes; \
+    PegCount proto ## _uni_prunes; \
+    PegCount proto ## _user_prunes
+
 struct BaseStats
 {
-    PegCount ip_flows;
-    PegCount ip_prunes;
-
-    PegCount icmp_flows;
-    PegCount icmp_prunes;
-
-    PegCount tcp_flows;
-    PegCount tcp_prunes;
-
-    PegCount udp_flows;
-    PegCount udp_prunes;
-
-    PegCount user_flows;
-    PegCount user_prunes;
-
-    PegCount file_flows;
-    PegCount file_prunes;
+    PROTO_FIELDS(ip);
+    PROTO_FIELDS(icmp);
+    PROTO_FIELDS(tcp);
+    PROTO_FIELDS(udp);
+    PROTO_FIELDS(user);
+    PROTO_FIELDS(file);
 };
+
 extern THREAD_LOCAL BaseStats stream_base_stats;
 
 struct StreamModuleConfig

@@ -28,6 +28,7 @@
 #include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
 #include "flow/flow_control.h"
+#include "flow/prune_stats.h"
 #include "stream/stream_api.h"
 #include "profiler/profiler.h"
 #include "stream/tcp/tcp_session.h"
@@ -42,45 +43,50 @@ THREAD_LOCAL FlowControl* flow_con = nullptr;
 static BaseStats g_stats;
 THREAD_LOCAL BaseStats stream_base_stats;
 
+#define PROTO_PEGS(proto_str) \
+    { proto_str " flows", "total " proto_str " sessions" }, \
+    { proto_str " total prunes", "total " proto_str " sessions pruned" }, \
+    { proto_str " timeout prunes", proto_str " sessions pruned due to timeout" }, \
+    { proto_str " excess prunes", proto_str " sessions pruned due to excess" }, \
+    { proto_str " uni prunes", proto_str " uni sessions pruned" }, \
+    { proto_str " user prunes", proto_str " sessions pruned for other reasons" }
+
+#define SET_PROTO_COUNTS(proto, pkttype) \
+    stream_base_stats.proto ## _flows = flow_con->get_flows(PktType::pkttype); \
+    stream_base_stats.proto ## _total_prunes = flow_con->get_total_prunes(PktType::pkttype), \
+    stream_base_stats.proto ## _timeout_prunes = \
+        flow_con->get_prunes(PktType::pkttype, PruneReason::TIMEOUT), \
+    stream_base_stats.proto ## _excess_prunes = \
+        flow_con->get_prunes(PktType::pkttype, PruneReason::EXCESS), \
+    stream_base_stats.proto ## _uni_prunes = \
+        flow_con->get_prunes(PktType::pkttype, PruneReason::UNI), \
+    stream_base_stats.proto ## _user_prunes = \
+        flow_con->get_prunes(PktType::pkttype, PruneReason::USER)
+
+// FIXIT-L J dependency on stats define in another file
 const PegInfo base_pegs[] =
 {
-    { "ip flows", "total ip sessions" },
-    { "ip prunes", "ip sessions pruned" },
-    { "icmp flows", "total icmp sessions" },
-    { "icmp prunes", "icmp sessions pruned" },
-    { "tcp flows", "total tcp sessions" },
-    { "tcp prunes", "tcp sessions pruned" },
-    { "udp flows", "total udp sessions" },
-    { "udp prunes", "udp sessions pruned" },
-    { "user flows", "total user sessions" },
-    { "user prunes", "user sessions pruned" },
-    { "file flows", "total file sessions" },
-    { "file prunes", "file sessions pruned" },
+    PROTO_PEGS("ip"),
+    PROTO_PEGS("icmp"),
+    PROTO_PEGS("tcp"),
+    PROTO_PEGS("udp"),
+    PROTO_PEGS("user"),
+    PROTO_PEGS("file"),
     { nullptr, nullptr }
 };
 
+// FIXIT-L J dependency on stats define in another file
 void base_sum()
 {
     if ( !flow_con )
         return;
 
-    stream_base_stats.ip_flows = flow_con->get_flows(PktType::IP);
-    stream_base_stats.ip_prunes = flow_con->get_prunes(PktType::IP);
-
-    stream_base_stats.icmp_flows = flow_con->get_flows(PktType::ICMP);
-    stream_base_stats.icmp_prunes = flow_con->get_prunes(PktType::ICMP);
-
-    stream_base_stats.tcp_flows = flow_con->get_flows(PktType::TCP);
-    stream_base_stats.tcp_prunes = flow_con->get_prunes(PktType::TCP);
-
-    stream_base_stats.udp_flows = flow_con->get_flows(PktType::UDP);
-    stream_base_stats.udp_prunes = flow_con->get_prunes(PktType::UDP);
-
-    stream_base_stats.user_flows = flow_con->get_flows(PktType::PDU);
-    stream_base_stats.user_prunes = flow_con->get_prunes(PktType::PDU);
-
-    stream_base_stats.file_flows = flow_con->get_flows(PktType::FILE);
-    stream_base_stats.file_prunes = flow_con->get_prunes(PktType::FILE);
+    SET_PROTO_COUNTS(ip, IP);
+    SET_PROTO_COUNTS(icmp, ICMP);
+    SET_PROTO_COUNTS(tcp, TCP);
+    SET_PROTO_COUNTS(udp, UDP);
+    SET_PROTO_COUNTS(user, PDU);
+    SET_PROTO_COUNTS(file, FILE);
 
     sum_stats((PegCount*)&g_stats, (PegCount*)&stream_base_stats,
         array_size(base_pegs)-1);

@@ -19,19 +19,21 @@
 // stream_module.cc author Russ Combs <rucombs@cisco.com>
 
 #include "stream_module.h"
+
 #include "stream/stream.h"
 
 #include <string>
+
 using namespace std;
 
 //-------------------------------------------------------------------------
 // stream module
 //-------------------------------------------------------------------------
 
-#define CACHE_PARAMS(name, ssn, mem, prune, idle) \
+#define CACHE_PARAMS(name, ssn, mem, prune, idle, cleanup) \
 static const Parameter name[] = \
 { \
-    { "max_sessions", Parameter::PT_INT, "1:", ssn, \
+    { "max_sessions", Parameter::PT_INT, "2:", ssn, \
       "maximum simultaneous sessions tracked before pruning" }, \
  \
     { "memcap", Parameter::PT_INT, "0:", mem, \
@@ -43,15 +45,18 @@ static const Parameter name[] = \
     { "idle_timeout", Parameter::PT_INT, "1:", idle, \
       "maximum inactive time before retiring session tracker" }, \
  \
+    { "cleanup_pct", Parameter::PT_INT, "1:100", cleanup, \
+      "percent of cache to clean when max_sessions is reached" }, \
+\
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr } \
 }
 
-CACHE_PARAMS(ip_params,    "16384",  "23920640", "30", "180");
-CACHE_PARAMS(icmp_params,  "32768",   "1048576", "30", "180");
-CACHE_PARAMS(tcp_params,  "131072", "268435456", "30", "180");
-CACHE_PARAMS(udp_params,   "65536",         "0", "30", "180");
-CACHE_PARAMS(user_params,   "1024",   "1048576", "30", "180");
-CACHE_PARAMS(file_params,   " 128",         "0", "30", "180");
+CACHE_PARAMS(ip_params,    "16384",  "23920640", "30", "180", "5");
+CACHE_PARAMS(icmp_params,  "32768",   "1048576", "30", "180", "5");
+CACHE_PARAMS(tcp_params,  "131072", "268435456", "30", "180", "5");
+CACHE_PARAMS(udp_params,   "65536",         "0", "30", "180", "5");
+CACHE_PARAMS(user_params,   "1024",   "1048576", "30", "180", "5");
+CACHE_PARAMS(file_params,    "128",         "0", "30", "180", "5");
 
 #define CACHE_TABLE(cache, proto, params) \
     { cache, Parameter::PT_TABLE, params, nullptr, \
@@ -123,6 +128,9 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig*)
 
     else if ( v.is("idle_timeout") )
         fc->nominal_timeout = v.get_long();
+
+    else if ( v.is("cleanup_pct") )
+        fc->cleanup_pct = v.get_long();
 
     else
         return false;

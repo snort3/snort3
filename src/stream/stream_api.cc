@@ -171,7 +171,8 @@ void Stream::check_session_closed(Packet* p)
     if (flow->session_state & STREAM_STATE_CLOSED)
     {
         assert(flow_con);
-        flow_con->delete_flow(flow, PruneReason::CLOSED);
+        // FIXIT-L J prune reason was actually 'closed'
+        flow_con->delete_flow(flow, PruneReason::USER);
         p->flow = nullptr;
     }
 }

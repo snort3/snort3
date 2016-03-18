@@ -33,37 +33,19 @@
 
 #define SESSION_CACHE_FLAG_PURGING  0x01
 
-uint64_t PruneStats::get_total() const
-{
-    uint64_t total = 0;
-    for ( reason_t i = 0;
-          i < static_cast<reason_t>(PruneReason::MAX); ++i )
-    {
-        total += prunes[i];
-    }
-
-    return total;
-}
-
 //-------------------------------------------------------------------------
 // FlowCache stuff
 //-------------------------------------------------------------------------
 
-FlowCache::FlowCache (
-    const FlowConfig& cfg, uint32_t cleanup_count, uint32_t cleanup_percent) :
+FlowCache::FlowCache (const FlowConfig& cfg) :
     config(cfg), memcap(cfg.mem_cap)
 {
-    if (cleanup_percent)
-        cleanup_flows = config.max_sessions * cleanup_percent/100;
-
-    else
-        cleanup_flows = cleanup_count;
-
-    if ( cleanup_flows >= cfg.max_sessions )
-        cleanup_flows = cfg.max_sessions - 1;
-
-    if ( !cleanup_flows )
+    cleanup_flows = cfg.max_sessions * cfg.cleanup_pct / 100;
+    if ( cleanup_flows == 0 )
         cleanup_flows = 1;
+
+    assert(cleanup_flows <= cfg.max_sessions);
+    assert(cleanup_flows > 0);
 
     hash_table = new ZHash(config.max_sessions, sizeof(FlowKey));
     hash_table->set_keyops(FlowKey::hash, FlowKey::compare);
@@ -97,7 +79,7 @@ void FlowCache::push(Flow* flow)
     flow->key = (FlowKey*)key;
 }
 
-int FlowCache::get_count()
+unsigned FlowCache::get_count()
 {
     return hash_table ? hash_table->get_count() : 0;
 }
@@ -183,11 +165,11 @@ int FlowCache::remove(Flow* flow)
     return hash_table->remove(flow->key);
 }
 
-uint32_t FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
+unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
 {
     ActiveSuspendContext act_susp;
 
-    uint32_t pruned = 0;
+    unsigned pruned = 0;
     auto flow = static_cast<Flow*>(hash_table->first());
 
     while ( flow and pruned <= cleanup_flows )
@@ -225,16 +207,16 @@ uint32_t FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
     return pruned;
 }
 
-uint32_t FlowCache::prune_unis()
+unsigned FlowCache::prune_unis()
 {
     ActiveSuspendContext act_susp;
 
     // we may have many or few unis; need to find reasonable ratio
     // FIXIT-L max_uni should be based on typical ratios seen in perfmon
-    const uint32_t max_uni = (config.max_sessions >> 2) + 1;
+    const unsigned max_uni = (config.max_sessions >> 2) + 1;
 
     Flow* curr = uni_tail->prev;
-    uint32_t pruned = 0;
+    unsigned pruned = 0;
 
     while ( (uni_count > max_uni) && curr && (pruned < cleanup_flows) )
     {
@@ -251,15 +233,15 @@ uint32_t FlowCache::prune_unis()
     return pruned;
 }
 
-uint32_t FlowCache::prune_excess(const Flow* save_me)
+unsigned FlowCache::prune_excess(const Flow* save_me)
 {
     ActiveSuspendContext act_susp;
 
     auto max_cap = config.max_sessions - cleanup_flows;
     assert(max_cap > 0);
 
-    uint32_t pruned = 0;
-    uint32_t blocks = 0;
+    unsigned pruned = 0;
+    unsigned blocks = 0;
 
     while ( hash_table->get_count() > max_cap and hash_table->get_count() > blocks )
     {
@@ -303,9 +285,10 @@ bool FlowCache::prune_one(PruneReason reason)
     return true;
 }
 
-void FlowCache::timeout(uint32_t num_flows, time_t thetime)
+unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 {
-    uint32_t retired = 0;
+    // FIXIT-H J should Active be suspended here too?
+    unsigned retired = 0;
 
     auto flow = static_cast<Flow*>(hash_table->current());
 
@@ -325,15 +308,17 @@ void FlowCache::timeout(uint32_t num_flows, time_t thetime)
 
         flow = static_cast<Flow*>(hash_table->current());
     }
+
+    return retired;
 }
 
 // Remove all flows from the hash table.
-int FlowCache::purge()
+unsigned FlowCache::purge()
 {
     ActiveSuspendContext act_susp;
     FlagContext<decltype(flags)>(flags, SESSION_CACHE_FLAG_PURGING);
 
-    uint32_t retired = 0;
+    unsigned retired = 0;
 
     while ( auto flow = static_cast<Flow*>(hash_table->first()) )
     {

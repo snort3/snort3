@@ -25,9 +25,6 @@
 #include <cassert>
 
 #include "detection/detect.h"
-#include "flow/expect_cache.h"
-#include "flow/flow_cache.h"
-#include "flow/session.h"
 #include "managers/inspector_manager.h"
 #include "packet_io/active.h"
 #include "protocols/icmp4.h"
@@ -36,6 +33,11 @@
 #include "protocols/udp.h"
 #include "protocols/vlan.h"
 #include "sfip/sf_ip.h"
+
+#include "expect_cache.h"
+#include "flow_cache.h"
+#include "flow_config.h"
+#include "session.h"
 
 FlowControl::FlowControl()
 {
@@ -97,12 +99,6 @@ uint32_t FlowControl::max_flows(PktType proto)
     return 0;
 }
 
-PegCount FlowControl::get_prunes (PktType proto)
-{
-    FlowCache* cache = get_cache(proto);
-    return cache ? cache->get_prunes() : 0;
-}
-
 PegCount FlowControl::get_flows(PktType proto)
 {
     switch ( proto )
@@ -117,6 +113,18 @@ PegCount FlowControl::get_flows(PktType proto)
     }
 }
 
+PegCount FlowControl::get_total_prunes(PktType proto) const
+{
+    auto cache = get_cache(proto);
+    return cache ? cache->get_total_prunes() : 0;
+}
+
+PegCount FlowControl::get_prunes(PktType proto, PruneReason reason) const
+{
+    auto cache = get_cache(proto);
+    return cache ? cache->get_prunes(reason) : 0;
+}
+
 void FlowControl::clear_counts()
 {
     ip_count = icmp_count = 0;
@@ -126,22 +134,22 @@ void FlowControl::clear_counts()
     FlowCache* cache;
 
     if ( (cache = get_cache(PktType::IP)) )
-        cache->reset_prunes();
+        cache->reset_stats();
 
     if ( (cache = get_cache(PktType::ICMP)) )
-        cache->reset_prunes();
+        cache->reset_stats();
 
     if ( (cache = get_cache(PktType::TCP)) )
-        cache->reset_prunes();
+        cache->reset_stats();
 
     if ( (cache = get_cache(PktType::UDP)) )
-        cache->reset_prunes();
+        cache->reset_stats();
 
     if ( (cache = get_cache(PktType::PDU)) )
-        cache->reset_prunes();
+        cache->reset_stats();
 
     if ( (cache = get_cache(PktType::FILE)) )
-        cache->reset_prunes();
+        cache->reset_stats();
 }
 
 Memcap& FlowControl::get_memcap (PktType proto)
@@ -164,7 +172,22 @@ inline FlowCache* FlowControl::get_cache (PktType proto)
     case PktType::ICMP: return icmp_cache;
     case PktType::TCP:  return tcp_cache;
     case PktType::UDP:  return udp_cache;
-    case PktType::PDU: return user_cache;
+    case PktType::PDU:  return user_cache;
+    case PktType::FILE: return file_cache;
+    default:            return nullptr;
+    }
+}
+
+// FIXIT-L J duplication of non-const method above
+inline const FlowCache* FlowControl::get_cache (PktType proto) const
+{
+    switch ( proto )
+    {
+    case PktType::IP:   return ip_cache;
+    case PktType::ICMP: return icmp_cache;
+    case PktType::TCP:  return tcp_cache;
+    case PktType::UDP:  return udp_cache;
+    case PktType::PDU:  return user_cache;
     case PktType::FILE: return file_cache;
     default:            return nullptr;
     }
@@ -202,7 +225,8 @@ void FlowControl::delete_flow(const FlowKey* key)
     Flow* flow = cache->find(key);
 
     if ( flow )
-        cache->release(flow, PruneReason::HA_SYNC);
+        // FIXIT-L J prune reason was actually HA sync
+        cache->release(flow, PruneReason::USER);
 }
 
 void FlowControl::delete_flow(Flow* flow, PruneReason reason)
@@ -499,7 +523,7 @@ void FlowControl::init_ip(
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    ip_cache = new FlowCache(fc, 5, 0);
+    ip_cache = new FlowCache(fc);
 
     ip_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
@@ -546,7 +570,7 @@ void FlowControl::init_icmp(
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    icmp_cache = new FlowCache(fc, 5, 0);
+    icmp_cache = new FlowCache(fc);
 
     icmp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
@@ -596,7 +620,7 @@ void FlowControl::init_tcp(
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    tcp_cache = new FlowCache(fc, 5, 0);
+    tcp_cache = new FlowCache(fc);
 
     tcp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
@@ -643,7 +667,7 @@ void FlowControl::init_udp(
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    udp_cache = new FlowCache(fc, 5, 0);
+    udp_cache = new FlowCache(fc);
 
     udp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
@@ -690,7 +714,7 @@ void FlowControl::init_user(
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    user_cache = new FlowCache(fc, 5, 0);
+    user_cache = new FlowCache(fc);
 
     user_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
@@ -737,7 +761,7 @@ void FlowControl::init_file(
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    file_cache = new FlowCache(fc, 5, 0);
+    file_cache = new FlowCache(fc);
 
     file_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 

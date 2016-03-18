@@ -3,6 +3,7 @@ add_library (helpers STATIC
     chunk.h
     directory.cc
     directory.h
+    flag_context.h
     markup.cc
     markup.h
     process.cc
@@ -10,7 +11,6 @@ add_library (helpers STATIC
     ring.h
     ring_logic.h
     swapper.h
-    flag_context.h
 )
 
 target_link_libraries(helpers

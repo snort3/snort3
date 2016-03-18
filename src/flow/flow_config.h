@@ -29,6 +29,7 @@ struct FlowConfig
     unsigned long mem_cap = 0;
     unsigned pruning_timeout = 0;
     unsigned nominal_timeout = 0;
+    unsigned cleanup_pct = 0;
 };
 
 #endif

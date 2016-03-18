@@ -28,43 +28,17 @@
 #include <ctime>
 #include <type_traits>
 
-#include "flow/flow_config.h"
-#include "flow/memcap.h"
+#include "flow_config.h"
+#include "memcap.h"
+#include "prune_stats.h"
 
 class Flow;
 struct FlowKey;
 
-// FIXIT-L J we can probably fiddle with these breakdowns
-enum class PruneReason : uint8_t
-{
-    PURGE = 0,
-    TIMEOUT,
-    EXCESS,
-    UNI,
-    HA_SYNC,
-    CLOSED,
-    USER,
-    MAX
-};
-
-struct PruneStats
-{
-    using reason_t = std::underlying_type<PruneReason>::type;
-
-    uint32_t prunes[static_cast<reason_t>(PruneReason::MAX)] { };
-
-    uint64_t get_total() const;
-    void update(PruneReason reason)
-    { ++prunes[static_cast<reason_t>(reason)]; }
-};
-
 class FlowCache
 {
 public:
-    FlowCache(
-        const FlowConfig&,
-        uint32_t cleanup_flows,
-        uint32_t cleanup_percent);
+    FlowCache(const FlowConfig&);
 
     ~FlowCache();
 
@@ -75,22 +49,25 @@ public:
 
     int release(Flow*, PruneReason = PruneReason::USER);
 
-    uint32_t prune_unis();
-    uint32_t prune_stale(uint32_t thetime, const Flow* save_me);
-    uint32_t prune_excess(const Flow* save_me);
+    unsigned prune_unis();
+    unsigned prune_stale(uint32_t thetime, const Flow* save_me);
+    unsigned prune_excess(const Flow* save_me);
     bool prune_one(PruneReason);
-    void timeout(uint32_t num_flows, time_t cur_time);
+    unsigned timeout(unsigned num_flows, time_t cur_time);
 
-    int purge();
-    int get_count();
+    unsigned purge();
+    unsigned get_count();
 
-    uint32_t get_max_flows() const
+    unsigned get_max_flows() const
     { return config.max_sessions; }
 
-    uint64_t get_prunes() const
-    { return prune_stats.get_total(); }
+    PegCount get_total_prunes() const
+    { return prune_stats.get_total() - prune_stats.get(PruneReason::PURGE); }
 
-    void reset_prunes()
+    PegCount get_prunes(PruneReason reason) const
+    { return prune_stats.get(reason); }
+
+    void reset_stats()
     { prune_stats = PruneStats(); }
 
     void unlink_uni(Flow*);
@@ -103,8 +80,8 @@ private:
 
 private:
     const FlowConfig& config;
-    uint32_t cleanup_flows;
-    uint32_t uni_count;
+    unsigned cleanup_flows;
+    unsigned uni_count;
     uint32_t flags;
 
     Memcap memcap;

@@ -8,11 +8,11 @@ chunk.cc \
 chunk.h \
 directory.cc \
 directory.h \
+flag_context.h \
 markup.cc \
 markup.h \
 process.cc \
 process.h \
 ring.h \
 ring_logic.h \
-swapper.h \
-flag_context.h
+swapper.h

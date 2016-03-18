@@ -34,6 +34,7 @@
 
 class Flow;
 class FlowData;
+class FlowCache;
 struct FlowKey;
 struct Packet;
 struct sfip_t;
@@ -87,14 +88,18 @@ public:
 
     uint32_t max_flows(PktType);
 
-    PegCount get_prunes(PktType);
     PegCount get_flows(PktType);
+    PegCount get_total_prunes(PktType) const;
+    PegCount get_prunes(PktType, PruneReason) const;
+
     void clear_counts();
 
     class Memcap& get_memcap(PktType);
 
 private:
-    class FlowCache* get_cache(PktType);
+    FlowCache* get_cache(PktType);
+    const FlowCache* get_cache(PktType) const;
+
     void set_key(FlowKey*, Packet*);
 
     unsigned process(Flow*, Packet*);
