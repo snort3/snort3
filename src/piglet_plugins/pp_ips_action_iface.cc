@@ -19,7 +19,7 @@
 
 #include "pp_ips_action_iface.h"
 
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "framework/ips_action.h"
 #include "pp_packet_iface.h"

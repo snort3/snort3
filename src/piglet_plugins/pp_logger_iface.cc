@@ -19,7 +19,7 @@
 
 #include "pp_logger_iface.h"
 
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "framework/logger.h"
 #include "lua/lua_arg.h"

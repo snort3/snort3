@@ -20,7 +20,7 @@
 #include "pp_packet_iface.h"
 
 #include <string.h>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "lua/lua_arg.h"
 #include "lua/lua_table.h"

@@ -20,7 +20,7 @@
 #include "pp_flow_iface.h"
 
 #include <limits>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "flow/flow.h"
 #include "lua/lua_arg.h"

@@ -20,7 +20,7 @@
 #include "pp_ip_api_iface.h"
 
 #include <assert.h>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "lua/lua_arg.h"
 #include "protocols/ip.h"

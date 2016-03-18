@@ -23,7 +23,7 @@
 // methods and templates for the C++ / LuaJIT interface
 
 #include <string>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 namespace Lua
 {

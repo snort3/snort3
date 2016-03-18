@@ -19,7 +19,7 @@
 
 #include "pp_cursor_iface.h"
 
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "framework/cursor.h"
 #include "lua/lua_arg.h"

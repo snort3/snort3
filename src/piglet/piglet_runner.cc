@@ -21,7 +21,7 @@
 
 #include <string>
 #include <assert.h>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "lua/lua_table.h"
 #include "lua/lua_util.h"

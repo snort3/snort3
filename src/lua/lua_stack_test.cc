@@ -18,7 +18,7 @@
 // lua_stack_test.cc author Joel Cornett <jocornet@cisco.com>
 
 #include <string>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "catch/catch.hpp"
 

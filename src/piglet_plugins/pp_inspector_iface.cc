@@ -22,7 +22,7 @@
 #include <limits>
 #include <string>
 #include <assert.h>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "framework/inspector.h"
 #include "lua/lua_arg.h"

@@ -22,7 +22,7 @@
 
 #include <string>
 #include <type_traits>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 namespace Lua
 {

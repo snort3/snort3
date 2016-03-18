@@ -19,7 +19,7 @@
 
 #include "lua_ref.h"
 
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "lua.h"
 

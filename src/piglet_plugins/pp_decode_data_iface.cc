@@ -20,7 +20,7 @@
 #include "pp_decode_data_iface.h"
 
 #include <assert.h>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "framework/decode_data.h"
 #include "lua/lua_arg.h"

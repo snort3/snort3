@@ -26,7 +26,7 @@
 #include <mutex>
 #include <string>
 #include <sstream>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "plugin_manager.h"
 #include "main/snort_config.h"

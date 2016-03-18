@@ -45,20 +45,19 @@ AC_PROG_LIBTOOL
 AC_C_BIGENDIAN
 AC_C_INLINE
 
-CFLAGS="$CFLAGS -std=gnu99"
-CXXFLAGS="$CXXFLAGS -std=c++11"
-
-AX_CXX_COMPILE_STDCXX_11
-
-# g++ 4.7 passes the c++11 check but is not sufficient
-if test "x$CXX" = "xg++"; then
-    if `g++ -dumpversion | awk '{exit $1<4.8?0:1}'` ; then
+# g++ 4.7 will pass the c++11 check but is not sufficient
+if test "x$CXX" = "xg++" ; then
+    if `$CXX -dumpversion | awk '{exit $1<4.8?0:1}'` ; then
        echo
        echo "   ERROR:  g++ >= 4.8 is required"
        echo
        exit 1
     fi
 fi
+
+CFLAGS="-std=gnu99 $CFLAGS"
+
+AX_CXX_COMPILE_STDCXX_11
 
 LT_INIT
 
@@ -469,6 +468,12 @@ if test "x$enable_corefiles" = "xno"; then
     AC_DEFINE(NOCOREFILE, [1], [do not generate a core file on segfault etc.])
 fi
 
+AC_ARG_ENABLE(address-sanitizer,
+    AC_HELP_STRING([--enable-address-sanitizer],[enable AddressSanitizer support]),
+    [
+        ASAN_CCXFLAGS="-fsanitize=address -fno-omit-frame-pointer"
+    ])
+
 #--------------------------------------------------------------------------
 # C++11 threads
 #--------------------------------------------------------------------------
@@ -674,7 +679,7 @@ CPPFLAGS="${CPPFLAGS} ${LUAJIT_CFLAGS}"
 LDFLAGS="${LDFLAGS} ${LUAJIT_LDFLAGS}"
 
 AC_LANG_PUSH([C++])
-AC_CHECK_HEADERS([luajit-2.0/luajit.h], , [AC_MSG_ERROR("LuaJIT header not found.")])
+AC_CHECK_HEADERS([luajit.h], , [AC_MSG_ERROR("LuaJIT header not found.")])
 AC_CHECK_LIB(luajit-5.1, main, , [AC_MSG_ERROR("Linking against LuaJIT library failed.")])
 AC_LANG_POP([C++])
 
@@ -682,14 +687,23 @@ AC_LANG_POP([C++])
 # pcre
 #--------------------------------------------------------------------------
 
+AC_MSG_CHECKING([for libpcre pkg-config presence])
+PKG_CHECK_EXISTS([libpcre], [ have_libpcre_pkgconfig="yes" ], [ have_libpcre_pkgconfig="no" ])
+AC_MSG_RESULT(${have_libpcre_pkgconfig})
+
+if test "${have_libpcre_pkgconfig}" = "yes" ; then
+    PCRE_CFLAGS=`${PKG_CONFIG} --cflags libpcre`
+    PCRE_LDFLAGS=`${PKG_CONFIG} --libs-only-L libpcre`
+fi
+
 AC_ARG_WITH(pcre_includes,
     AC_HELP_STRING([--with-pcre-includes=DIR],[libpcre include directory]),
     [with_libpcre_includes="$withval"],[with_libpcre_includes="no"])
 
 if test "x$with_libpcre_includes" != "xno"; then
-    CPPFLAGS="${CPPFLAGS} -I${with_libpcre_includes}"
-else
-    CPPFLAGS="${CPPFLAGS} `pcre-config --cflags`"
+    PCRE_CFLAGS="${CPPFLAGS} -I${with_libpcre_includes}"
+elif test -z "$PCRE_CFLAGS"; then
+    PCRE_CFLAGS="${CPPFLAGS} `pcre-config --cflags`"
 fi
 
 AC_ARG_WITH(pcre_libraries,
@@ -697,10 +711,13 @@ AC_ARG_WITH(pcre_libraries,
     [with_libpcre_libraries="$withval"],[with_libpcre_libraries="no"])
 
 if test "x$with_libpcre_libraries" != "xno"; then
-    LDFLAGS="${LDFLAGS} -L${with_libpcre_libraries}"
-else
-    LDFLAGS="${LDFLAGS} `pcre-config --libs`"
+    PCRE_LDFLAGS="${LDFLAGS} -L${with_libpcre_libraries}"
+elif test -z "$PCRE_LDFLAGS"; then
+    PCRE_LDFLAGS="${LDFLAGS} `pcre-config --libs`"
 fi
+
+CPPFLAGS="${CPPFLAGS} ${PCRE_CFLAGS}"
+LDFLAGS="${LDFLAGS} ${PCRE_LDFLAGS}"
 
 # PCRE configuration (required)
 # Verify that we have the headers
@@ -1015,6 +1032,11 @@ AM_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir) -I$(top_srcdir)/src \
     -I$(top_srcdir)/src/network_inspectors'
 
 snort2lua_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir)/tools/snort2lua'
+
+if test -n "$ASAN_CCXFLAGS" ; then
+    CFLAGS="$ASAN_CCXFLAGS $CFLAGS"
+    CXXFLAGS="$ASAN_CCXFLAGS $CXXFLAGS"
+fi
 
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(snort2lua_CPPFLAGS)

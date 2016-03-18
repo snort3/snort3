@@ -21,7 +21,7 @@
 
 #include <string.h>
 
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "detection/signature.h"
 #include "events/event.h"

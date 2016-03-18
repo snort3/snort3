@@ -23,7 +23,7 @@
 #include <limits>
 #include <string>
 
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 // FIXIT-L: Do we really want to hardcode this?
 #define LUA_DIR_SEP "/"

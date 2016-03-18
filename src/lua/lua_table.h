@@ -21,7 +21,7 @@
 #define LUA_TABLE_H
 
 #include <vector>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "lua_stack.h"
 

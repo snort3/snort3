@@ -22,7 +22,7 @@
 #include <limits>
 #include <vector>
 #include <assert.h>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "framework/codec.h"
 #include "lua/lua_arg.h"

@@ -23,7 +23,7 @@
 
 #include <utility>
 #include <string.h>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 inline void l_end_lua_state(lua_State*& L_ptr)
 {

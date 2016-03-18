@@ -20,7 +20,7 @@
 #include "pp_stream_splitter_iface.h"
 
 #include <limits>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "lua/lua_arg.h"
 #include "lua/lua_stack.h"

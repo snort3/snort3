@@ -24,7 +24,7 @@
 #endif
 
 #include <string.h>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 extern "C" {
 #include <daq.h>

@@ -31,7 +31,7 @@
 #include <fnmatch.h>
 #include <grp.h>
 #include <limits.h>
-#include <luajit-2.0/luajit.h>
+#include <luajit.h>
 #include <netdb.h>
 #include <pcap.h>
 #include <pcre.h>

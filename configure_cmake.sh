@@ -35,6 +35,7 @@ Optional Features:
     --enable-linux-smp-stats Enable statistics reporting through proc
     --enable-debug-msgs      Enable debug printing options (bugreports and developers only)
     --enable-large-pcap      Enable support for pcaps larger than 2 GB
+    --enable-address-sanitizer  Enable address sanitizer support
     --enable-debug           Enable debugging options (bugreports and developers only)
     --enable-gdb             Enable gdb debugging information
     --enable-gprof-profile   Enable gprof profiling options (developers only)
@@ -225,6 +226,12 @@ while [ $# -ne 0 ]; do
             ;;
         --enable-large-pcap)
             append_cache_entry ENABLE_LARGE_PCAP    BOOL   true
+            ;;
+        --enable-address-sanitizer)
+            append_cache_entry ENABLE_ADDRESS_SANITIZER BOOL    true
+            ;;
+        --disable-address-sanitizer)
+            append_cache_entry ENABLE_ADDRESS_SANITIZER BOOL    false
             ;;
         --enable-shell)
             append_cache_entry ENABLE_SHELL    BOOL   true

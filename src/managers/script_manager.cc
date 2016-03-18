@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 #include <sys/stat.h>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "ips_manager.h"
 #include "plugin_manager.h"

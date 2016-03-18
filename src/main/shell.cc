@@ -22,7 +22,7 @@
 #include <assert.h>
 #include <string.h>
 #include <string>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 #include <stdexcept>
 
 #include "framework/module.h"

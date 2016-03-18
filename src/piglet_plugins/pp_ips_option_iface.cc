@@ -19,7 +19,7 @@
 
 #include "pp_ips_option_iface.h"
 
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "framework/ips_option.h"
 #include "lua/lua_stack.h"

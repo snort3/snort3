@@ -20,7 +20,7 @@
 #ifndef LUA_ARG_H
 #define LUA_ARG_H
 
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "lua_stack.h"
 

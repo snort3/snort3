@@ -40,7 +40,7 @@
 
 #include <string>
 #include <vector>
-#include <luajit-2.0/lua.hpp>
+#include <lua.hpp>
 
 #include "main/snort_types.h"
 #include "framework/value.h"
