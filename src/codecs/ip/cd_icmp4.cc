@@ -540,7 +540,6 @@ void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
 
     default:
         TextLog_Puts(log, "UNKNOWN");
-
         break;
     }
 }

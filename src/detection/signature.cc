@@ -331,12 +331,10 @@ void OtnLookupAdd(SFGHASH* otn_map, OptTreeNode* otn)
 
     case SFGHASH_NOMEM:
         FatalError("Failed to allocate memory for rule.\n");
-        break;
 
     default:
         FatalError("%s(%d): OtnLookupAdd() - unexpected return value "
             "from sfghash_add().\n", __FILE__, __LINE__);
-        break;
     }
 }
 

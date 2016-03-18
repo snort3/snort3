@@ -42,19 +42,15 @@ static inline char get_result_short(Piglet::Test::Result result)
     {
         case Piglet::Test::PASSED:
             return 'P';
-            break;
 
         case Piglet::Test::FAILED:
             return 'F';
-            break;
 
         case Piglet::Test::ERROR:
             return 'E';
-            break;
 
         default:
             return '?';
-            break;
     }
 }
 
@@ -64,19 +60,15 @@ static inline const char* get_result_long(Piglet::Test::Result result)
     {
         case Piglet::Test::PASSED:
             return "Passed";
-            break;
 
         case Piglet::Test::FAILED:
             return "Failed";
-            break;
 
         case Piglet::Test::ERROR:
             return "Error";
-            break;
 
         default:
             return "?";
-            break;
     }
 }
 

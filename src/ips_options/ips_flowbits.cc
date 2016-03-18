@@ -348,7 +348,7 @@ static inline int is_set_flowbits(
                 return 0;
         }
         return 1;
-        break;
+
     case FLOWBITS_OR:
         for (i = 0; i < num_ids; i++)
         {
@@ -356,7 +356,7 @@ static inline int is_set_flowbits(
                 return 1;
         }
         return 0;
-        break;
+
     case FLOWBITS_ALL:
         flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
         if ( flowbits_grp == NULL )
@@ -369,7 +369,7 @@ static inline int is_set_flowbits(
                 return 0;
         }
         return 1;
-        break;
+
     case FLOWBITS_ANY:
         flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
         if ( flowbits_grp == NULL )
@@ -381,7 +381,7 @@ static inline int is_set_flowbits(
                 return 1;
         }
         return 0;
-        break;
+
     default:
         return 0;
     }
@@ -584,8 +584,8 @@ static FLOWBITS_OBJECT* getFlowBitItem(char* flowbitName, FLOWBITS_OP* flowbits)
 
     if (!validateName(flowbitName))
     {
-        ParseAbort("Flowbits: flowbits name is limited to any alphanumeric string including %s"
-            , ALLOWED_SPECIAL_CHARS);
+        ParseAbort("%s: name is limited to any alphanumeric string including %s",
+            s_name, ALLOWED_SPECIAL_CHARS);
     }
 
     flowbits_item = (FLOWBITS_OBJECT*)sfghash_find(flowbits_hash, flowbitName);
@@ -652,7 +652,7 @@ static void processFlowbits(
         return;
     }
 
-    DebugFormat(DEBUG_FLOWBITS, "flowbits tag id parsing %s\n",flowbits_names);
+    DebugFormat(DEBUG_FLOWBITS, "%s tag id parsing %s\n", s_name, flowbits_names);
 
     flowbits_name = SnortStrdup(flowbits_names);
 
@@ -660,7 +660,7 @@ static void processFlowbits(
     {
         if (NULL != strchr(flowbits_name, '&'))
         {
-            ParseError("flowbits: flowbits tag id opcode '|' and '&' are used together.");
+            ParseError("%s: tag id opcode '|' and '&' are used together.", s_name);
             return;
         }
         toks = mSplit(flowbits_name, "|", 0, &num_toks, 0);
@@ -714,14 +714,14 @@ static void validateFlowbitsSyntax(FLOWBITS_OP* flowbits)
         if ((flowbits->eval == FLOWBITS_AND) && (flowbits->ids))
             break;
 
-        ParseError("flowbits: operation set uses syntax: flowbits:set,bit[&bit],[group].");
+        ParseError("%s: operation set uses syntax: flowbits:set,bit[&bit],[group].", s_name);
         return;
 
     case FLOWBITS_SETX:
         if ((flowbits->eval == FLOWBITS_AND)&&(flowbits->group) && (flowbits->ids) )
             break;
 
-        ParseError("flowbits: operation setx uses syntax: flowbits:setx,bit[&bit],group.");
+        ParseError("%s: operation setx uses syntax: flowbits:setx,bit[&bit],group.", s_name);
         return;
 
     case FLOWBITS_UNSET:
@@ -729,8 +729,8 @@ static void validateFlowbitsSyntax(FLOWBITS_OP* flowbits)
             ||((flowbits->eval == FLOWBITS_ALL) && (flowbits->group)))
             break;
 
-        ParseError("flowbits: operation unset uses syntax: flowbits:unset,bit[&bit] OR"
-            " flowbits:unset, all, group.");
+        ParseError("%s: operation unset uses syntax: flowbits:unset,bit[&bit] OR"
+            " flowbits:unset, all, group.", s_name);
         return;
 
     case FLOWBITS_TOGGLE:
@@ -738,8 +738,8 @@ static void validateFlowbitsSyntax(FLOWBITS_OP* flowbits)
             ||((flowbits->eval == FLOWBITS_ALL) && (flowbits->group)))
             break;
 
-        ParseError("flowbits: operation toggle uses syntax: flowbits:toggle,bit[&bit] OR"
-            " flowbits:toggle,all,group.");
+        ParseError("%s: operation toggle uses syntax: flowbits:toggle,bit[&bit] OR"
+            " flowbits:toggle,all,group.", s_name);
         return;
 
     case FLOWBITS_ISSET:
@@ -749,8 +749,9 @@ static void validateFlowbitsSyntax(FLOWBITS_OP* flowbits)
             (flowbits->group)))
             break;
 
-        ParseError("flowbits: operation isset uses syntax: flowbits:isset,bit[&bit] OR "
-            "flowbits:isset,bit[|bit] OR flowbits:isset,all,group OR flowbits:isset,any,group.");
+        ParseError("%s: operation isset uses syntax: flowbits:isset,bit[&bit] OR "
+            "flowbits:isset,bit[|bit] OR flowbits:isset,all,group OR flowbits:isset,any,group.",
+            s_name);
         return;
 
     case FLOWBITS_ISNOTSET:
@@ -760,25 +761,26 @@ static void validateFlowbitsSyntax(FLOWBITS_OP* flowbits)
             (flowbits->group)))
             break;
 
-        ParseError("flowbits: operation isnotset uses syntax: flowbits:isnotset,bit[&bit] OR "
-            "flowbits:isnotset,bit[|bit] OR flowbits:isnotset,all,group OR flowbits:isnotset,any,group.");
+        ParseError("%s: operation isnotset uses syntax: flowbits:isnotset,bit[&bit] OR "
+            "flowbits:isnotset,bit[|bit] OR flowbits:isnotset,all,group OR "
+            "flowbits:isnotset,any,group.", s_name);
         return;
 
     case FLOWBITS_RESET:
         if (flowbits->ids == NULL)
             break;
         ParseError(
-            "flowbits: operation unset uses syntax: flowbits:reset OR flowbits:reset, group.");
+            "%s: operation unset uses syntax: flowbits:reset OR flowbits:reset, group.", s_name);
         return;
 
     case FLOWBITS_NOALERT:
         if ((flowbits->ids == NULL) && (flowbits->group == NULL))
             break;
-        ParseError("flowbits: operation noalert uses syntax: flowbits:noalert.");
+        ParseError("%s: operation noalert uses syntax: flowbits:noalert.", s_name);
         return;
 
     default:
-        ParseError("flowbits: unknown opcode.");
+        ParseError("%s: unknown opcode.", s_name);
         return;
     }
 }
@@ -794,8 +796,8 @@ static FLOWBITS_GRP* getFlowBitGroup(char* groupName)
     if (!validateName(groupName))
     {
         ParseAbort(
-            "flowbits: flowbits group name is limited to any alphanumeric string including %s",
-            ALLOWED_SPECIAL_CHARS);
+            "%s: flowbits group name is limited to any alphanumeric string including %s",
+            s_name, ALLOWED_SPECIAL_CHARS);
     }
 
     flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, groupName);
@@ -820,20 +822,18 @@ static FLOWBITS_GRP* getFlowBitGroup(char* groupName)
 #ifdef DEBUG_MSGS
 static void printOutFlowbits(FLOWBITS_OP* flowbits)
 {
-    int i;
+    DebugFormat(DEBUG_FLOWBITS, "%s: type = %d\n", s_name, flowbits->type);
+    DebugFormat(DEBUG_FLOWBITS, "%s: name = %s\n", s_name, flowbits->name);
+    DebugFormat(DEBUG_FLOWBITS, "%s: eval = %d\n", s_name, flowbits->eval);
+    DebugFormat(DEBUG_FLOWBITS, "%s: num_ids = %d\n", s_name, flowbits->num_ids);
+    DebugFormat(DEBUG_FLOWBITS, "%s: grp_id = %d\n", s_name, flowbits->group_id);
+    DebugFormat(DEBUG_FLOWBITS, "%s: group_name = %s\n", s_name, flowbits->group);
 
-    DebugFormat(DEBUG_FLOWBITS,"flowbits: type = %d\n",flowbits->type);
-    DebugFormat(DEBUG_FLOWBITS,"flowbits: name = %s\n",flowbits->name);
-    DebugFormat(DEBUG_FLOWBITS,"flowbits: eval = %d\n",flowbits->eval);
-    DebugFormat(DEBUG_FLOWBITS,"flowbits: num_ids = %d\n",flowbits->num_ids);
-    DebugFormat(DEBUG_FLOWBITS,"flowbits: grp_id = %d\n",flowbits->group_id);
-    DebugFormat(DEBUG_FLOWBITS,"flowbits: group_name = %s\n",flowbits->group);
-    for (i = 0; i < flowbits->num_ids; i++)
+    for (int i = 0; i < flowbits->num_ids; i++)
     {
-        DebugFormat(DEBUG_FLOWBITS,"flowbits: value = %d\n",flowbits->ids[i]);
+        DebugFormat(DEBUG_FLOWBITS, "%s: value = %d\n", s_name, flowbits->ids[i]);
     }
 }
-
 #endif
 
 static void processFlowBitsWithGroup(char* flowbitsName, char* groupName, FLOWBITS_OP* flowbits)
@@ -870,11 +870,11 @@ static FLOWBITS_OP* flowbits_parse(const char* data)
 
     if (num_toks < 1)
     {
-        ParseAbort("parseFlowArgs: Must specify flowbits operation.");
+        ParseAbort("%s: must specify operation.", s_name);
     }
     else if (num_toks > 3)
     {
-        ParseAbort("parseFlowArgs: Too many arguments.");
+        ParseAbort("%s: too many arguments.", s_name);
     }
 
     typeName = toks[0];
@@ -907,7 +907,7 @@ static FLOWBITS_OP* flowbits_parse(const char* data)
     {
         if (num_toks > 1)
         {
-            ParseAbort("flowbits: Do not specify a flowbits tag id for the keyword 'noalert'.");
+            ParseAbort("%s: do not specify a tag id for the keyword 'noalert'.", s_name);
         }
 
         flowbits->type = FLOWBITS_NOALERT;
@@ -922,7 +922,7 @@ static FLOWBITS_OP* flowbits_parse(const char* data)
     {
         if (num_toks > 2)
         {
-            ParseAbort("flowbits: Too many arguments for the keyword 'reset'.");
+            ParseAbort("%s: too many arguments for the keyword 'reset'.", s_name);
         }
 
         if (num_toks == 2)
@@ -942,7 +942,7 @@ static FLOWBITS_OP* flowbits_parse(const char* data)
     }
     else
     {
-        ParseAbort("flowbits: Invalid token %s.", typeName);
+        ParseAbort("%s: invalid token %s.", s_name, typeName);
     }
 
     flowbits->name = SnortStrdup(typeName);
@@ -1035,14 +1035,14 @@ static void FlowBitsVerify(void)
 
         if ((fb->set > 0) && (fb->isset == 0))
         {
-            ParseWarning(WARN_FLOWBITS, "flowbits key '%s' is set but not checked.",
-                (char*)n->key);
+            ParseWarning(WARN_FLOWBITS, "%s key '%s' is set but not checked.",
+                s_name, (char*)n->key);
             unchecked++;
         }
         else if ((fb->isset > 0) && (fb->set == 0))
         {
-            ParseWarning(WARN_FLOWBITS, "flowbits key '%s' is checked but not ever set.",
-                (char*)n->key);
+            ParseWarning(WARN_FLOWBITS, "%s key '%s' is checked but not ever set.",
+                s_name, (char*)n->key);
             unset++;
         }
         else if ((fb->set == 0) && (fb->isset == 0))
@@ -1059,7 +1059,7 @@ static void FlowBitsVerify(void)
     if ( !num_flowbits )
         return;
 
-    LogLabel("flowbits");
+    LogLabel(s_name);
     LogCount("defined", num_flowbits);
     LogCount("not checked", unchecked);
     LogCount("not set", unset);

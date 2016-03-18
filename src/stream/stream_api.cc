@@ -65,17 +65,6 @@ Stream::Stream()
     xtradata_func_count = 0;
     extra_data_log = NULL;
     extra_data_config = NULL;
-
-    // FIXIT-L this is a hack around gnus crappy linker:
-    // libstream.a is linked before the other stream libs to ensure that
-    // the plugin symbols are located.  however, this causes the below paf
-    // functions to not be located.  the only alternative to this hack
-    // appears to be breaking up the libs further to avoid the circularity.
-    // not a bad requirement in theory, but in practice a bit restrictive.
-    // links just fine on osx w/o this hack!
-    typedef void (* ugh)();
-    if ( (ugh)paf_setup == (ugh)paf_clear || (ugh)paf_clear == (ugh)paf_check )
-        printf("ugh! this check failed to ensure that gnus links finds paf setup/clear/check\n");
 }
 
 Stream::~Stream() { }

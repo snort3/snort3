@@ -19,9 +19,10 @@
 // ips_regex.cc author Russ Combs <rucombs@cisco.com>
 // FIXIT-H add ! and anchor support like pcre and update retry
 
-#include <string.h>
+#include "ips_regex.h"
 
 #include <assert.h>
+#include <string.h>
 #include <string>
 
 #include <hs/hs_compile.h>

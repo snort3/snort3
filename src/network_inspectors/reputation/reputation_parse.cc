@@ -636,19 +636,14 @@ static char* GetListInfo(INFO info)
     {
     case DECISION_NULL:
         return nullptr;
-        break;
     case BLACKLISTED:
         return black_info;
-        break;
     case WHITELISTED_UNBLACK:
         return white_info;
-        break;
     case MONITORED:
         return monitor_info;
-        break;
     case WHITELISTED_TRUST:
         return white_info;
-        break;
     default:
         return nullptr;
     }

@@ -17,6 +17,8 @@
 //--------------------------------------------------------------------------
 // layer.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#include "layer.h"
+
 #include <netinet/in.h>
 #include <limits>
 #include "protocols/layer.h"

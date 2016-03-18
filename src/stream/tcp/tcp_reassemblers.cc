@@ -375,63 +375,48 @@ TcpReassembler* TcpReassemblerFactory::create(TcpSession* session, TcpTracker* t
         {
         case StreamPolicy::OS_FIRST:
             return new TcpReassemblerFirst(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_LAST:
             return new TcpReassemblerLast(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_LINUX:
             return new TcpReassemblerLinux(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_OLD_LINUX:
             return new TcpReassemblerOldLinux(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_BSD:
             return new TcpReassemblerBSD(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_MACOS:
             return new TcpReassemblerMacOS(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_SOLARIS:
             return new TcpReassemblerSolaris(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_IRIX:
             return new TcpReassemblerIrix(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_HPUX11:
             return new TcpReassemblerHpux11(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_HPUX10:
             return new TcpReassemblerHpux10(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_WINDOWS:
             return new TcpReassemblerWindows(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_WINDOWS2K3:
             return new TcpReassemblerWindows2K3(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_VISTA:
             return new TcpReassemblerVista(session, tracker, server);
-            break;
 
         case StreamPolicy::OS_PROXY:
             return new TcpReassemblerProxy(session, tracker, server);
-            break;
 
         default:
             return new TcpReassemblerBSD(session, tracker, server);
-            break;
         }
     }
 }

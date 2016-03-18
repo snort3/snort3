@@ -114,20 +114,11 @@ static uint32_t SSL_decode_version_v3(uint8_t major, uint8_t minor)
         /* Minor version */
         switch (minor)
         {
-        case 0:
-            return SSL_VER_SSLV3_FLAG;
-            break;
-        case 1:
-            return SSL_VER_TLS10_FLAG;
-            break;
-        case 2:
-            return SSL_VER_TLS11_FLAG;
-            break;
-        case 3:
-            return SSL_VER_TLS12_FLAG;
-            break;
-        default:
-            return SSL_BAD_VER_FLAG;
+        case 0: return SSL_VER_SSLV3_FLAG;
+        case 1: return SSL_VER_TLS10_FLAG;
+        case 2: return SSL_VER_TLS11_FLAG;
+        case 3: return SSL_VER_TLS12_FLAG;
+        default: return SSL_BAD_VER_FLAG;
         }
     }
     /* This is a special case. Technically, major == 0, minor == 2 is SSLv2.

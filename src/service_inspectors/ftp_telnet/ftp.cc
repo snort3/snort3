@@ -205,7 +205,6 @@ static int snort_ftp(Packet* p)
         {
         case FTPP_SI_PROTO_FTP:
             return SnortFTP((FTP_SESSION*)ft_ssn, p, iInspectMode);
-            break;
         }
     }
 

@@ -106,7 +106,6 @@ private:
         const CodecData&);
     void IPV6MiscTests(const DecodeData&, const CodecData&);
     void CheckIPV6Multicast(const ip::IP6Hdr* const, const CodecData&);
-    void CheckBadNextHeader(const ip::IP6Hdr* const, const CodecData&);
     bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr);
 };
 } // namespace

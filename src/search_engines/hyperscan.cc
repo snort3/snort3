@@ -18,6 +18,8 @@
 
 // hyperscan.cc author Russ Combs <rucombs@cisco.com>
 
+#include "hyperscan.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>

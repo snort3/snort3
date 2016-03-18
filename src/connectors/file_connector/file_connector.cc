@@ -288,9 +288,6 @@ static Connector* file_connector_tinit(ConnectorConfig* config)
     else if ( cfg->direction == Connector::CONN_RECEIVE )
         return file_connector_tinit_receive(filename,cfg);
 
-    else
-        return nullptr;
-
     return nullptr;
 }
 

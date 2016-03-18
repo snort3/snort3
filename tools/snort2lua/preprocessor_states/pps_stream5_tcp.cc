@@ -95,9 +95,9 @@ bool StreamTcp::parse_small_segments(std::istringstream& stream)
         table_api.add_deleted_comment("ignore_ports");
         return true;
 
-
     if (!stream.eof())
         return false;
+
     return true;
 }
 

@@ -36,9 +36,6 @@ public:
     Include(Converter& c) : ConversionState(c) { }
     virtual ~Include() { }
     virtual bool convert(std::istringstream& data);
-
-private:
-    bool convert_file(std::string file, std::string full_file_name);
 };
 } // namespace
 

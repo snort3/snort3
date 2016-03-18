@@ -72,12 +72,12 @@ bool StreamSize::convert(std::istringstream& data_stream)
         std::strtoul(size.c_str(), &end, 10);
         rule_api.add_option("stream_size", op + size);
     }
-    catch (const std::invalid_argument& e)
+    catch (const std::invalid_argument&)
     {
         rule_api.bad_rule(data_stream, "stream_size <size> '" + size + "' is too large.");
         rule_api.add_option("stream_size", op + size);
     }
-    catch (const std::out_of_range& e)
+    catch (const std::out_of_range&)
     {
         rule_api.bad_rule(data_stream, "stream_size <size> '" + size + "' is too large.");
         rule_api.add_option("stream_size", op + size);

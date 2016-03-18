@@ -283,7 +283,8 @@ TEST(ips_regex_option, opeq)
 {
     IpsOption* opt2 = get_option(" foo ");
     CHECK(opt2);
-    CHECK(*opt == *opt2);
+    // this is forced unequal for now
+    CHECK(*opt != *opt2);
 
     IpsApi* api = (IpsApi*)ips_regex;
     api->dtor(opt2);

@@ -280,7 +280,6 @@ static void* AC_MALLOC(int n, Acsm2MemoryType type)
             break;
         default:
             FatalError("%s(%d) Invalid memory type\n", __FILE__, __LINE__);
-            break;
         }
 
         acsm2_total_memory += n;

@@ -523,7 +523,6 @@ VarEntry* VarDefine(
             {
             case SFIP_ARG_ERR:
                 ParseAbort("the following is not allowed: %s.", value);
-                break;
 
             case SFIP_DUPLICATE:
                 ParseWarning(WARN_VARS, "Var '%s' redefined.", name);
@@ -533,11 +532,9 @@ VarEntry* VarDefine(
                 ParseAbort("negated IP ranges that are more general than "
                     "non-negated ranges are not allowed. Consider "
                     "inverting the logic in %s.", name);
-                break;
 
             case SFIP_NOT_ANY:
                 ParseAbort("!any is not allowed in %s", name);
-                break;
 
             default:
                 ParseAbort("failed to parse the IP address: %s.", value);

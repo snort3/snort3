@@ -178,7 +178,6 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet* p)
         {
         case FTPP_SI_PROTO_TELNET:
             return SnortTelnet(GlobalConf, (TELNET_SESSION*)ft_ssn, p, iInspectMode);
-            break;
         }
     }
 

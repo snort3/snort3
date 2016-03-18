@@ -401,7 +401,6 @@ static int ProcessDateFormat(FTP_DATE_FMT* dateFmt,
         default:
             /* Uh, shouldn't get this.  */
             return FTPP_INVALID_ARG;
-            break;
         }
     }
 

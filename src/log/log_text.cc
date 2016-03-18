@@ -986,14 +986,11 @@ void LogICMPHeader(TextLog* log, Packet* p)
         }
 
         LogICMPEmbeddedIP(log, p);
-
         break;
 
     case ICMP_SOURCE_QUENCH:
         TextLog_Puts(log, "SOURCE QUENCH");
-
         LogICMPEmbeddedIP(log, p);
-
         break;
 
     case ICMP_REDIRECT:
@@ -1133,9 +1130,8 @@ void LogICMPHeader(TextLog* log, Packet* p)
 
     default:
         TextLog_Puts(log, "UNKNOWN");
-
         break;
-    } /* switch */
+    }
 
     TextLog_NewLine(log);
 }

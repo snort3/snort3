@@ -709,15 +709,12 @@ static int validate_param(Packet* p,
         case FTPP_NON_DIGIT:
             /* Alert on non-digit */
             return FTPP_INVALID_PARAM;
-            break;
         case FTPP_INVALID_ARG:
             /* Alert on number > 255 */
             return FTPP_INVALID_PARAM;
-            break;
         case FTPP_MALFORMED_IP_PORT:
             /* Alert on malformed host-port */
             return FTPP_INVALID_PARAM;
-            break;
         }
 
         if ( ThisFmt->type == e_extd_host_port && !sfip_is_set(ipAddr) )
