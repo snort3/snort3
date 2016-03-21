@@ -372,6 +372,6 @@ StreamSplitter::Status SmtpSplitter::scan(
 bool smtp_is_data_end(Flow* ssn)
 {
     SmtpPafData* s = get_state(ssn, true);
-    return s->end_of_data;
+    return s ? s->end_of_data : false;
 }
 

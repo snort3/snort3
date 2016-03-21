@@ -166,7 +166,6 @@ static inline void set_server_state(Flow* ssn, PopExpectedResp state)
 {
     PopPafData* server_data = get_state(ssn, false);
 
-    // ERROR IF SERVER DATA DOES NOT EXIST!! SHOULD NOT BE POSSIBLE!!
     if (server_data)
     {
         reset_data_states(server_data);
@@ -411,6 +410,6 @@ StreamSplitter::Status PopSplitter::scan(
 bool pop_is_data_end(Flow* ssn)
 {
     PopPafData* s = get_state(ssn, false);
-    return s->end_of_data;
+    return s ? s->end_of_data : false;
 }
 

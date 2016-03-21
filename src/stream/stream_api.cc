@@ -475,7 +475,8 @@ void Stream::set_splitter(Flow* flow, bool to_server, StreamSplitter* ss)
 StreamSplitter* Stream::get_splitter(Flow* flow, bool to_server)
 {
     assert(flow && flow->session);
-    return flow->session->get_splitter(to_server);
+    StreamSplitter* ss = flow->session->get_splitter(to_server);
+    return ( ss and ss->is_paf() ) ? ss : nullptr;
 }
 
 bool Stream::is_paf_active(Flow* flow, bool to_server)
