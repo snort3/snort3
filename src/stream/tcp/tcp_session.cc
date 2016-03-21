@@ -134,12 +134,10 @@ TcpSession::TcpSession(Flow* flow) :
 TcpSession::~TcpSession(void)
 {
     if (tcp_init)
-    {
         clear_session(1);
 
-        delete client;
-        delete server;
-    }
+    delete client;
+    delete server;
 }
 
 void TcpSession::reset(void)

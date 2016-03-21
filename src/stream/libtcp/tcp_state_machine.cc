@@ -24,9 +24,8 @@
 
 TcpStateMachine::TcpStateMachine(void)
 {
-    TcpStreamTracker::TcpState s;
     // register a default handler for each state...
-    for ( s = TcpStreamTracker::TCP_LISTEN; s < TcpStreamTracker::TCP_MAX_STATES; s++ )
+    for ( auto s = TcpStreamTracker::TCP_LISTEN; s < TcpStreamTracker::TCP_MAX_STATES; s++ )
     {
         tcp_state_handlers[ s ] = nullptr;
         new TcpStateHandler(s, *this);
@@ -35,7 +34,8 @@ TcpStateMachine::TcpStateMachine(void)
 
 TcpStateMachine::~TcpStateMachine(void)
 {
-    // TODO Auto-generated destructor stub
+    for ( auto s = TcpStreamTracker::TCP_LISTEN; s < TcpStreamTracker::TCP_MAX_STATES; s++ )
+        delete tcp_state_handlers[ s ];
 }
 
 void TcpStateMachine::register_state_handler(TcpStreamTracker::TcpState state,
