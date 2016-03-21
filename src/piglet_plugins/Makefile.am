@@ -40,4 +40,3 @@ pp_test.cc
 libpiglet_plugins_a_SOURCES += $(plugin_list)
 libpiglet_plugins_a_SOURCES += $(interface_list)
 
-AM_CXXFLAGS = @AM_CXXFLAGS@

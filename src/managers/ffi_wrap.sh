@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 cat << EOF
 ffi = require("ffi")

@@ -27,9 +27,7 @@ else
 shlibdir = $(pkglibdir)/inspectors
 shlib_LTLIBRARIES = libftp_telnet.la
 libftp_telnet_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libftp_telnet_la_LDFLAGS = -export-dynamic -shared
+libftp_telnet_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libftp_telnet_la_SOURCES = $(file_list)
 endif
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

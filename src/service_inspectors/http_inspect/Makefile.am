@@ -29,9 +29,7 @@ libhttp_inspect_a_SOURCES = $(file_list)
 #shlibdir = $(pkglibdir)/inspectors
 #shlib_LTLIBRARIES = libhttp_inspect.la
 #libhttp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libhttp_inspect_la_LDFLAGS = -export-dynamic -shared
+#libhttp_inspect_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 #libhttp_inspect_la_SOURCES = $(file_list)
 #endif
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

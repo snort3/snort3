@@ -23,9 +23,6 @@ else
 shlibdir = $(pkglibdir)/inspectors
 shlib_LTLIBRARIES = libdnp3.la
 libdnp3_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libdnp3_la_LDFLAGS = -export-dynamic -shared
+libdnp3_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libdnp3_la_SOURCES = $(file_list)
 endif
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
-

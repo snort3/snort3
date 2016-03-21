@@ -58,16 +58,14 @@ mpselibdir = $(pkglibdir)/search_engines
 
 mpselib_LTLIBRARIES = libacsmx.la
 libacsmx_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libacsmx_la_LDFLAGS = -export-dynamic -shared
+libacsmx_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libacsmx_la_SOURCES = $(acsmx_sources)
 
 mpselib_LTLIBRARIES += libacsmx2.la
 libacsmx2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libacsmx2_la_LDFLAGS = -export-dynamic -shared
+libacsmx2_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libacsmx2_la_SOURCES = $(acsmx2_sources) acsmx2_api.cc
 endif
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 
 if BUILD_CPPUTESTS
 SUBDIRS = test

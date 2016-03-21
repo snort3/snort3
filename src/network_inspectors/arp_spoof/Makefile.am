@@ -11,9 +11,6 @@ else
 shlibdir = $(pkglibdir)/inspectors
 shlib_LTLIBRARIES = libarp_spoof.la
 libarp_spoof_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libarp_spoof_la_LDFLAGS = -export-dynamic -shared
+libarp_spoof_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libarp_spoof_la_SOURCES = $(file_list)
 endif
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
-

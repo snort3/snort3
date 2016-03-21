@@ -75,6 +75,7 @@ snort
 snort.pc
 src/framework/api_options.h
 src/framework/stamp-h2
+src/managers/snort_plugin.lua
 src/snort
 src/tags
 src/test/suite_decl.h

@@ -4,10 +4,7 @@ src \
 lua \
 tools \
 doc \
-daqs \
-m4
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
+daqs
 
 EXTRA_DIST = \
 snort.pc.in \
@@ -22,3 +19,6 @@ cppflags.out
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = snort.pc
+
+# Code coverage
+@CODE_COVERAGE_RULES@

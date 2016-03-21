@@ -19,7 +19,3 @@ EXTRA_DIST = \
 obfuscation.h \
 obfuscation.cc
 
-#liblog_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
-

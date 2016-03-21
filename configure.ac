@@ -63,6 +63,8 @@ LT_INIT
 
 PKG_PROG_PKG_CONFIG
 
+AX_CODE_COVERAGE
+
 #--------------------------------------------------------------------------
 # api options
 #--------------------------------------------------------------------------
@@ -701,9 +703,9 @@ AC_ARG_WITH(pcre_includes,
     [with_libpcre_includes="$withval"],[with_libpcre_includes="no"])
 
 if test "x$with_libpcre_includes" != "xno"; then
-    PCRE_CFLAGS="${CPPFLAGS} -I${with_libpcre_includes}"
-elif test -z "$PCRE_CFLAGS"; then
-    PCRE_CFLAGS="${CPPFLAGS} `pcre-config --cflags`"
+    PCRE_CFLAGS="-I${with_libpcre_includes}"
+elif test "${have_libpcre_pkgconfig}" = "no"; then
+    PCRE_CFLAGS="`pcre-config --cflags`"
 fi
 
 AC_ARG_WITH(pcre_libraries,
@@ -711,9 +713,9 @@ AC_ARG_WITH(pcre_libraries,
     [with_libpcre_libraries="$withval"],[with_libpcre_libraries="no"])
 
 if test "x$with_libpcre_libraries" != "xno"; then
-    PCRE_LDFLAGS="${LDFLAGS} -L${with_libpcre_libraries}"
-elif test -z "$PCRE_LDFLAGS"; then
-    PCRE_LDFLAGS="${LDFLAGS} `pcre-config --libs`"
+    PCRE_LDFLAGS="-L${with_libpcre_libraries}"
+elif test "${have_libpcre_pkgconfig}" = "no"; then
+    PCRE_LDFLAGS="`pcre-config --libs`"
 fi
 
 CPPFLAGS="${CPPFLAGS} ${PCRE_CFLAGS}"
@@ -1028,9 +1030,6 @@ AM_CONDITIONAL([HAVE_HYPERSCAN], [test "x$HS_HEADERS" = "xyes" -a "x$HS_LIB" = "
 
 AC_DEFINE_UNQUOTED([API_OPTIONS], ["$API_OPTIONS"], [plugin api related build options])
 
-AM_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir) -I$(top_srcdir)/src \
-    -I$(top_srcdir)/src/network_inspectors'
-
 snort2lua_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir)/tools/snort2lua'
 
 if test -n "$ASAN_CCXFLAGS" ; then
@@ -1038,11 +1037,25 @@ if test -n "$ASAN_CCXFLAGS" ; then
     CXXFLAGS="$ASAN_CCXFLAGS $CXXFLAGS"
 fi
 
-AC_SUBST(AM_CPPFLAGS)
-AC_SUBST(snort2lua_CPPFLAGS)
+if test "x${CODE_COVERAGE_ENABLED}" = "xyes" ; then
+    CFLAGS=`echo $CFLAGS | ${SED} 's/-O\w//g'`
+    CXXFLAGS=`echo $CXXFLAGS | ${SED} 's/-O\w//g'`
+fi
 
+# Global defaults for AM_* flags.  Can be overridden on a per-Makefile.am basis.
+AM_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir) -I$(top_srcdir)/src \
+    -I$(top_srcdir)/src/network_inspectors'
+AM_CPPFLAGS+=" ${CODE_COVERAGE_CPPFLAGS}"
+AM_CFLAGS="${CODE_COVERAGE_CFLAGS}"
+AM_CXXFLAGS="${CODE_COVERAGE_CXXFLAGS}"
+AM_LDFLAGS="${CODE_COVERAGE_LDFLAGS}"
+
+AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CFLAGS)
 AC_SUBST(AM_CXXFLAGS)
+AC_SUBST(AM_LDFLAGS)
+
+AC_SUBST(snort2lua_CPPFLAGS)
 
 AC_SUBST(CPPUTEST_CPPFLAGS)
 AC_SUBST(CPPUTEST_LDFLAGS)
@@ -1137,7 +1150,6 @@ src/utils/test/Makefile \
 lua/Makefile \
 doc/Makefile \
 daqs/Makefile \
-m4/Makefile \
 tools/Makefile \
 tools/u2boat/Makefile \
 tools/u2spewfoo/Makefile \
@@ -1169,4 +1181,9 @@ AC_MSG_RESULT([
     cppflags:       ${CPPFLAGS}
     ldflags:        ${LDFLAGS}
     libs:           ${LIBS}
+
+    am_cppflags:    ${AM_CPPFLAGS}
+    am_cflags:      ${AM_CFLAGS}
+    am_cxxflags:    ${AM_CXXFLAGS}
+    am_ldflags:     ${AM_LDFLAGS}
 ])

@@ -38,7 +38,7 @@ else
 shlibdir = $(pkglibdir)/inspectors
 shlib_LTLIBRARIES = libnhttp_inspect.la
 libnhttp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libnhttp_inspect_la_LDFLAGS = -export-dynamic -shared
+libnhttp_inspect_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libnhttp_inspect_la_SOURCES = $(file_list)
 endif
 
@@ -46,8 +46,6 @@ optlibdir = $(pkglibdir)/inspectors
 
 optlib_LTLIBRARIES = libnhttp_inspect_opt.la
 libnhttp_inspect_opt_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libnhttp_inspect_opt_la_LDFLAGS = -export-dynamic -shared
+libnhttp_inspect_opt_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libnhttp_inspect_opt_la_SOURCES = ips_nhttp.cc ips_nhttp.h
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

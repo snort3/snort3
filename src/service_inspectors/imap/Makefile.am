@@ -16,9 +16,7 @@ libimap_a_SOURCES = $(file_list)
 #shlibdir = $(pkglibdir)/inspectors
 #shlib_LTLIBRARIES = libimap.la
 #libimap_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libimap_la_LDFLAGS = -export-dynamic -shared
+#libimap_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 #libimap_la_SOURCES = $(file_list)
 #endif
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

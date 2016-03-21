@@ -19,9 +19,7 @@ else
 shlibdir = $(pkglibdir)/inspectors
 shlib_LTLIBRARIES = libgtp_inspect.la
 libgtp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libgtp_inspect_la_LDFLAGS = -export-dynamic -shared
+libgtp_inspect_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libgtp_inspect_la_SOURCES = $(file_list)
 endif
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

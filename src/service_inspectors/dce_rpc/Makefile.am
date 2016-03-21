@@ -31,8 +31,6 @@ else
 shlibdir = $(pkglibdir)/inspectors
 shlib_LTLIBRARIES = libdce_rpc.la
 libdce_rpc_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libdce_rpc_la_LDFLAGS = -export-dynamic -shared
+libdce_rpc_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libdce_rpc_la_SOURCES = $(file_list)
 endif
-
-AM_CXXFLAGS = @AM_CXXFLAGS@

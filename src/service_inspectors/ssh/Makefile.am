@@ -13,9 +13,7 @@ else
 shlibdir = $(pkglibdir)/inspectors
 shlib_LTLIBRARIES = libssh.la
 libssh_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libssh_la_LDFLAGS = -export-dynamic -shared
+libssh_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libssh_la_SOURCES = $(file_list)
 endif
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

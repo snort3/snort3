@@ -38,7 +38,7 @@ piglet/libpiglet.a \
 piglet_plugins/libpiglet_plugins.a
 endif
 
-snort_LDFLAGS = -export-dynamic
+snort_LDFLAGS = $(AM_LDFLAGS) -export-dynamic
 
 # order libs to avoid undefined symbols
 # from gnu linker

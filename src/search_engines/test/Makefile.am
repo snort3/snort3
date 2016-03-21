@@ -7,7 +7,7 @@ hyperscan_test
 
 TESTS = $(check_PROGRAMS)
 
-hyperscan_test_CPPFLAGS = @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
+hyperscan_test_CPPFLAGS = $(AM_CPPFLAGS) @CPPUTEST_CPPFLAGS@
 
 hyperscan_test_LDADD = \
 ../hyperscan.o \

@@ -6,7 +6,7 @@ tcp_normalizer_test
 
 TESTS = $(check_PROGRAMS)
 
-tcp_normalizer_test_CPPFLAGS = @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
+tcp_normalizer_test_CPPFLAGS = $(AM_CPPFLAGS) @CPPUTEST_CPPFLAGS@
 
 tcp_normalizer_test_LDADD = \
 ../tcp_normalizer.o \

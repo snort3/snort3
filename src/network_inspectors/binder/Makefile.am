@@ -13,9 +13,6 @@ libbinder_a_SOURCES = $(file_list)
 #shlibdir = $(pkglibdir)/inspectors
 #shlib_LTLIBRARIES = libbinder.la
 #libbinder_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libbinder_la_LDFLAGS = -export-dynamic -shared
+#libbinder_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 #libbinder_la_SOURCES = $(file_list)
 #endif
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
-

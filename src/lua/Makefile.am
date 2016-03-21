@@ -30,4 +30,3 @@ if BUILD_UNIT_TESTS
 liblua_a_SOURCES += lua_stack_test.cc
 endif
 
-AM_CXXFLAGS = @AM_CXXFLAGS@

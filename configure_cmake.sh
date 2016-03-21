@@ -36,6 +36,7 @@ Optional Features:
     --enable-debug-msgs      Enable debug printing options (bugreports and developers only)
     --enable-large-pcap      Enable support for pcaps larger than 2 GB
     --enable-address-sanitizer  Enable address sanitizer support
+    --enable-code-coverage   Whether to enable code coverage support
     --enable-debug           Enable debugging options (bugreports and developers only)
     --enable-gdb             Enable gdb debugging information
     --enable-gprof-profile   Enable gprof profiling options (developers only)
@@ -232,6 +233,12 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-address-sanitizer)
             append_cache_entry ENABLE_ADDRESS_SANITIZER BOOL    false
+            ;;
+        --enable-code-coverage)
+            append_cache_entry ENABLE_CODE_COVERAGE BOOL    true
+            ;;
+        --disable-code-coverage)
+            append_cache_entry ENABLE_CODE_COVERAGE BOOL    false
             ;;
         --enable-shell)
             append_cache_entry ENABLE_SHELL    BOOL   true

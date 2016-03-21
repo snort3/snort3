@@ -19,11 +19,8 @@ else
 shlibdir = $(pkglibdir)/inspectors
 shlib_LTLIBRARIES = libmodbus.la
 libmodbus_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libmodbus_la_LDFLAGS = -export-dynamic -shared
+libmodbus_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libmodbus_la_SOURCES = $(file_list)
 endif
 
-AM_CXXFLAGS = @AM_CXXFLAGS@
-
 EXTRA_DIST = dev_notes.txt
-

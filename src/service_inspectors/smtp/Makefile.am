@@ -22,9 +22,7 @@ libsmtp_a_SOURCES = $(file_list)
 #shlibdir = $(pkglibdir)/inspectors
 #shlib_LTLIBRARIES = libsmtp.la
 #libsmtp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libsmtp_la_LDFLAGS = -export-dynamic -shared
+#libsmtp_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 #libsmtp_la_SOURCES = $(file_list)
 #endif
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 
