@@ -20,6 +20,8 @@
 #include <string.h>
 #include <sys/types.h>
 
+#include "log/messages.h"
+
 #include "nhttp_uri_norm.h"
 #include "nhttp_module.h"
 
@@ -37,8 +39,11 @@ const Parameter NHttpModule::nhttp_params[] =
     { "ignore_unreserved", Parameter::PT_STRING, "(optional)", nullptr,
           "do not alert when the specified unreserved characters are percent-encoded in a URI."
           "Unreserved characters are 0-9, a-z, A-Z, period, underscore, tilde, and minus." },
+    { "percent_u", Parameter::PT_BOOL, nullptr, "false", "normalize %uNNNN and %UNNNN encodings" },
     { "utf8", Parameter::PT_BOOL, nullptr, "true",
           "normalize 2-byte and 3-byte UTF-8 characters to a single byte" },
+    { "utf8_bare_byte", Parameter::PT_BOOL, nullptr, "false",
+          "when doing UTF-8 character normalization include bytes that were not percent encoded" },
     { "iis_unicode", Parameter::PT_BOOL, nullptr, "false",
           "use IIS unicode codepoint mapping to normalize characters" },
     { "backslash_to_slash", Parameter::PT_BOOL, nullptr, "false",
@@ -91,9 +96,17 @@ bool NHttpModule::set(const char*, Value& val, SnortConfig*)
             params->uri_param.unreserved_char[*(ignore++)] = false;
         }
     }
+    else if (val.is("percent_u"))
+    {
+        params->uri_param.percent_u = val.get_bool();
+    }
     else if (val.is("utf8"))
     {
         params->uri_param.utf8 = val.get_bool();
+    }
+    else if (val.is("utf8_bare_byte"))
+    {
+        params->uri_param.utf8_bare_byte = val.get_bool();
     }
     else if (val.is("iis_unicode"))
     {
@@ -141,6 +154,16 @@ bool NHttpModule::set(const char*, Value& val, SnortConfig*)
     else
     {
         return false;
+    }
+    return true;
+}
+
+bool NHttpModule::end(const char*, int, SnortConfig*)
+{
+    if (!params->uri_param.utf8 && params->uri_param.utf8_bare_byte)
+    {
+        ParseWarning(WARN_CONF, "Meaningless to do bare byte when not doing UTF-8");
+        params->uri_param.utf8_bare_byte = false;
     }
     return true;
 }

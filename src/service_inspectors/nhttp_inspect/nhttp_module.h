@@ -42,7 +42,9 @@ public:
         UriParam();
         ~UriParam() { delete[] unicode_map; }
 
+        bool percent_u;
         bool utf8;
+        bool utf8_bare_byte;
         bool iis_unicode;
         uint8_t* unicode_map = nullptr;
         bool backslash_to_slash;
@@ -67,7 +69,7 @@ public:
     NHttpModule() : Module(NHTTP_NAME, NHTTP_HELP, nhttp_params) { }
     ~NHttpModule() { delete params; }
     bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override { return true; }
+    bool end(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
     unsigned get_gid() const override { return NHttpEnums::NHTTP_GID; }
     const RuleMap* get_rules() const override { return nhttp_events; }

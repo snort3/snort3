@@ -24,6 +24,7 @@
 #include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "hash/sfhashfcn.h"
+#include "log/messages.h"
 
 #include "nhttp_inspect.h"
 #include "nhttp_msg_head_shared.h"

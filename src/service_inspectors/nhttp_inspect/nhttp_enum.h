@@ -112,7 +112,7 @@ enum HeaderId { HEAD__NOT_COMPUTE=-14, HEAD__PROBLEMATIC=-12, HEAD__NOT_PRESENT=
 // All the infractions we might find while parsing and analyzing a message
 enum Infraction
 {
-    INF_NOT_USED_1 = 0,
+    INF_BARE_BYTE = 0,
     INF_HEAD_TOO_LONG,
     INF_BAD_REQ_LINE,
     INF_BAD_STAT_LINE,

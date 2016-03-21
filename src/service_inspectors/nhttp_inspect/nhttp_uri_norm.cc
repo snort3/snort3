@@ -139,9 +139,13 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
     {
         switch (uri_param.uri_char[input.start[k]])
         {
+        case CHAR_EIGHTBIT:
+            if (uri_param.utf8_bare_byte &&
+               (((input.start[k] & 0xE0) == 0xC0) || ((input.start[k] & 0xF0) == 0xE0)))
+                utf8_needed = true;
+            // Fall through
         case CHAR_NORMAL:
         case CHAR_PATH:
-        case CHAR_EIGHTBIT:
         case CHAR_SUBSTIT:
             out_buf[length++] = input.start[k];
             break;
@@ -152,7 +156,7 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
                 // %hh => hex value
                 const uint8_t hex_val = as_hex[input.start[k+1]] * 16 + as_hex[input.start[k+2]];
                 percent_encoded[length] = true;
-                // Test for start of two-byte (110xxxxx) or three-byte (1110xxxx) UTF-8
+                // Test for possible start of two-byte (110xxxxx) or three-byte (1110xxxx) UTF-8
                 if (((hex_val & 0xE0) == 0xC0) || ((hex_val & 0xF0) == 0xE0))
                     utf8_needed = true;
                 out_buf[length++] = hex_val;
@@ -204,16 +208,21 @@ int32_t UriNormalizer::norm_utf8_processing(const Field& input, uint8_t* out_buf
     int32_t length = 0;
     for (int32_t k=0; k < input.length; k++)
     {
-        if (percent_encoded[k])
+        if (percent_encoded[k] || uri_param.utf8_bare_byte)
         {
             // two-byte UTF-8: 110xxxxx 10xxxxxx
             if (((input.start[k] & 0xE0) == 0xC0) &&
                 (k+1 < input.length) &&
-                percent_encoded[k+1] &&
+                (percent_encoded[k+1] || uri_param.utf8_bare_byte) &&
                 ((input.start[k+1] & 0xC0) == 0x80))
             {
                 infractions += INF_URI_PERCENT_UTF8_2B;
                 events.create_event(EVENT_UTF_8);
+                if (!percent_encoded[k] || !percent_encoded[k+1])
+                {
+                    infractions += INF_BARE_BYTE;
+                    events.create_event(EVENT_BARE_BYTE);
+                }
                 const uint16_t utf8_val = ((input.start[k] & 0x1F) << 6) +
                                            (input.start[k+1] & 0x3F);
                 out_buf[length++] = reduce_to_eight_bits(utf8_val, uri_param, infractions, events);
@@ -222,13 +231,18 @@ int32_t UriNormalizer::norm_utf8_processing(const Field& input, uint8_t* out_buf
             // three-byte UTF-8: 1110xxxx 10xxxxxx 10xxxxxx
             else if (((input.start[k] & 0xF0) == 0xE0) &&
                 (k+2 < input.length) &&
-                percent_encoded[k+1] &&
+                (percent_encoded[k+1] || uri_param.utf8_bare_byte) &&
                 ((input.start[k+1] & 0xC0) == 0x80) &&
-                percent_encoded[k+2] &&
+                (percent_encoded[k+2] || uri_param.utf8_bare_byte) &&
                 ((input.start[k+2] & 0xC0) == 0x80))
             {
                 infractions += INF_URI_PERCENT_UTF8_3B;
                 events.create_event(EVENT_UTF_8);
+                if (!percent_encoded[k] || !percent_encoded[k+1] || !percent_encoded[k+2])
+                {
+                    infractions += INF_BARE_BYTE;
+                    events.create_event(EVENT_BARE_BYTE);
+                }
                 const uint16_t utf8_val = ((input.start[k] & 0x0F) << 12) +
                                           ((input.start[k+1] & 0x3F) << 6) +
                                            (input.start[k+2] & 0x3F);

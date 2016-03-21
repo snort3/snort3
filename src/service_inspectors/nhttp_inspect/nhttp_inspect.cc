@@ -132,32 +132,32 @@ const Field& NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Fl
     switch (session_data->section_type[source_id])
     {
     case SEC_REQUEST:
-        latest_section = new NHttpMsgRequest(data, dsize, session_data, source_id, buf_owner,
-            flow, params);
+        latest_section = new NHttpMsgRequest(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_STATUS:
-        latest_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner, flow,
-            params);
+        latest_section = new NHttpMsgStatus(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_HEADER:
-        latest_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner, flow,
-            params);
+        latest_section = new NHttpMsgHeader(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_BODY_CL:
-        latest_section = new NHttpMsgBodyCl(data, dsize, session_data, source_id, buf_owner, flow,
-            params);
+        latest_section = new NHttpMsgBodyCl(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_BODY_OLD:
-        latest_section = new NHttpMsgBodyOld(data, dsize, session_data, source_id, buf_owner, flow,
-            params);
+        latest_section = new NHttpMsgBodyOld(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_BODY_CHUNK:
-        latest_section = new NHttpMsgBodyChunk(data, dsize, session_data, source_id, buf_owner,
-            flow, params);
+        latest_section = new NHttpMsgBodyChunk(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_TRAILER:
-        latest_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner,
-            flow, params);
+        latest_section = new NHttpMsgTrailer(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     default:
         assert(false);
