@@ -468,3 +468,8 @@ bool HighAvailabilityManager::active()
     return (ha != nullptr);
 }
 
+// Called in the packet threads to determine whether or not HA is active
+bool HighAvailabilityManager::active()
+{
+    return (ha != nullptr);
+}

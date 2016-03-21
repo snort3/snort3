@@ -32,6 +32,7 @@
 #include "utils/bitop.h"
 #include "sfip/sfip_t.h"
 #include "flow/flow_key.h"
+#include "flow/ha.h"
 #include "framework/inspector.h"
 #include "framework/codec.h"
 
@@ -113,6 +114,8 @@ private:
     Inspector* handler;
     unsigned id;
 };
+
+class FlowHAState;
 
 struct LwState
 {
