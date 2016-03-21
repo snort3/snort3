@@ -7,6 +7,8 @@ ha.h \
 flow.h \
 flow_config.h \
 flow_key.h \
+ha.h \
+ha_module.h \
 memcap.h
 
 libflow_a_SOURCES = \
@@ -17,4 +19,5 @@ flow_cache.cc flow_cache.h \
 flow_control.cc flow_control.h \
 ha.cc ha.h \
 prune_stats.h \
+ha_module.cc ha_module.h \
 session.h

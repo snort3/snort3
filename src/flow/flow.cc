@@ -139,6 +139,7 @@ void Flow::restart(bool freeAppData)
 
     session_state = STREAM_STATE_NONE;
     expire_time = 0;
+    previous_ssn_state = ssn_state;
 }
 
 void Flow::clear(bool freeAppData)

@@ -20,8 +20,10 @@
 
 #include "side_channel_module.h"
 
+#include <assert.h>
+
 #include "main/snort_debug.h"
-#include "parser/parser.h"
+#include "log/messages.h"
 #include "side_channel.h"
 
 static const PegInfo sc_pegs[] =

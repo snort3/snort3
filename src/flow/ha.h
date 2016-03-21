@@ -21,34 +21,87 @@
 #define HA_H
 
 #include "flow.h"
-#include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "packet_io/sfdaq.h"
 #include "side_channel/side_channel.h"
 
 //-------------------------------------------------------------------------
 
+typedef uint16_t FlowHAClientHandle;
+
+class FlowHAState
+{
+public:
+    static const uint8_t CRITICAL = 0x20;
+    static const uint8_t MAJOR = 0x10;
+
+    static const uint8_t NEW = 0x01;
+    static const uint8_t MODIFIED = 0x02;
+    static const uint8_t DELETED = 0x04;
+    static const uint8_t STANDBY = 0x08;
+
+    void set_pending(FlowHAClientHandle);
+    bool check_and_clear_pending(FlowHAClientHandle);
+    void set_state(uint8_t state);
+    void set_state(uint8_t state, uint8_t priority);
+    void clr_state(uint8_t state);
+    void clr_state(uint8_t state, uint8_t priority);
+    bool critical();
+    bool major();
+    static void config_lifetime(timeval);
+    bool old_enough();
+    void set_next_update();
+    void initialize_update_time();
+
+private:
+    FlowHAState();
+
+    static const uint8_t initial_state = 0x00;
+    static const uint16_t none_pending = 0x0000;
+    static const uint8_t priority_mask = 0x30;
+    static const uint8_t status_mask = 0x0f;
+
+    static struct timeval min_session_lifetime;
+    uint8_t state;
+    uint16_t pending;
+    struct timeval next_update;
+};
+
+class FlowHAClient
+{
+public:
+private:
+};
+
+class Flow;
+
 class HighAvailability
 {
 public:
-    HighAvailability();
+    HighAvailability(PortBitSet*,bool);
     ~HighAvailability();
 
     void process(Flow*, const DAQ_PktHdr_t*);
 
 private:
     void receive_handler(SCMessage*);
-    SideChannel* sc;
+    SideChannel* sc = nullptr;
+    bool enabled = false;
 };
 
 class HighAvailabilityManager
 {
 public:
+    static void pre_config_init();
+    static bool instantiate(PortBitSet*,bool);
     static void thread_init();
     static void thread_term();
+    static bool active();
     static void process(Flow*, const DAQ_PktHdr_t*);
 private:
     HighAvailabilityManager() = delete;
+    static bool use_daq_channel;
+    static PortBitSet* ports;
 };
 #endif
 

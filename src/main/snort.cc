@@ -227,6 +227,7 @@ void Snort::init(int argc, char** argv)
 #endif
 
     SideChannelManager::pre_config_init();
+    HighAvailabilityManager::pre_config_init();
 
     ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_paths);

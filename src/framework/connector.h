@@ -24,9 +24,9 @@
 // threads, high-availability partners, and other threads.
 
 #include <vector>
+#include <string>
 
 #include "main/snort_types.h"
-#include "main/snort_config.h"
 #include "framework/base_api.h"
 
 // this is the current version of the api

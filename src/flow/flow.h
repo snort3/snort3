@@ -32,6 +32,7 @@
 #include "utils/bitop.h"
 #include "sfip/sfip_t.h"
 #include "flow/flow_key.h"
+#include "flow/ha.h"
 #include "framework/inspector.h"
 #include "framework/codec.h"
 
@@ -113,6 +114,8 @@ private:
     Inspector* handler;
     unsigned id;
 };
+
+class FlowHAState;
 
 struct LwState
 {
@@ -305,6 +308,8 @@ public:  // FIXIT-M privatize if possible
 
     FlowState flow_state;
 
+    FlowHAState* ha_state;
+
     // FIXIT-L can client and server ip and port be removed from flow?
     sfip_t client_ip; // FIXIT-L family and bits should be changed to uint16_t
     sfip_t server_ip; // or uint8_t to reduce sizeof from 24 to 20
@@ -328,6 +333,7 @@ public:  // FIXIT-M privatize if possible
 
 public:
     LwState ssn_state;
+    LwState previous_ssn_state;
 };
 
 #endif
