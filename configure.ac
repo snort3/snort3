@@ -1030,8 +1030,6 @@ AM_CONDITIONAL([HAVE_HYPERSCAN], [test "x$HS_HEADERS" = "xyes" -a "x$HS_LIB" = "
 
 AC_DEFINE_UNQUOTED([API_OPTIONS], ["$API_OPTIONS"], [plugin api related build options])
 
-snort2lua_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir)/tools/snort2lua'
-
 if test -n "$ASAN_CCXFLAGS" ; then
     CFLAGS="$ASAN_CCXFLAGS $CFLAGS"
     CXXFLAGS="$ASAN_CCXFLAGS $CXXFLAGS"
@@ -1043,12 +1041,15 @@ if test "x${CODE_COVERAGE_ENABLED}" = "xyes" ; then
 fi
 
 # Global defaults for AM_* flags.  Can be overridden on a per-Makefile.am basis.
-AM_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir) -I$(top_srcdir)/src \
-    -I$(top_srcdir)/src/network_inspectors'
-AM_CPPFLAGS+=" ${CODE_COVERAGE_CPPFLAGS}"
+AM_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/network_inspectors'
+AM_CPPFLAGS="${AM_CPPFLAGS} ${CODE_COVERAGE_CPPFLAGS}"
 AM_CFLAGS="${CODE_COVERAGE_CFLAGS}"
 AM_CXXFLAGS="${CODE_COVERAGE_CXXFLAGS}"
 AM_LDFLAGS="${CODE_COVERAGE_LDFLAGS}"
+
+# Special AM_CPPFLAGS for snort2lua.
+snort2lua_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir)/tools/snort2lua'
+snort2lua_CPPFLAGS="${snort2lua_CPPFLAGS} ${CODE_COVERAGE_CPPFLAGS}"
 
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CFLAGS)
