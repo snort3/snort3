@@ -90,10 +90,10 @@ StaticFlushBucket::StaticFlushBucket()
 
 uint16_t StaticFlushBucket::get_next()
 {
-    if ( ++idx >= RAND_FLUSH_POINTS )
-        idx = 0;
+    if ( idx >= RAND_FLUSH_POINTS )
+            idx = 0;
 
-    return flush_points[idx];
+    return flush_points[idx++];
 }
 
 RandomFlushBucket::RandomFlushBucket()
