@@ -320,7 +320,7 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_BAD_HEADER,                 "Format error in HTTP header" },
     { EVENT_CHUNK_OPTIONS,              "Chunk header options present" },
     { EVENT_URI_BAD_FORMAT,             "URI badly formatted" },
-    { EVENT_UNUSED,                     "Unused" },
+    { EVENT_UNKNOWN_PERCENT,            "Unrecognized type of percent encoding in URI" },
     { EVENT_BROKEN_CHUNK,               "HTTP chunk misformatted" },
     { EVENT_CHUNK_WHITESPACE,           "White space following chunk length" },
     { EVENT_GZIP_OVERRUN,               "Excessive gzip compression" },

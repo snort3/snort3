@@ -168,7 +168,8 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
                 out_buf[length++] = '%';
                 k += 1;
             }
-            else if ((k+5 < input.length) &&
+            else if ( uri_param.percent_u &&
+                     (k+5 < input.length) &&
                      ((input.start[k+1] == 'u') || (input.start[k+1] == 'U')) &&
                      (as_hex[input.start[k+2]] != -1) &&
                      (as_hex[input.start[k+3]] != -1) &&
@@ -176,15 +177,24 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
                      (as_hex[input.start[k+5]] != -1) )
             {
                 // %u encoding, this is nonstandard and likely to be malicious
-                out_buf[length++] = '\xFF';
+                infractions += INF_U_ENCODE;
+                events.create_event(EVENT_U_ENCODE);
+                percent_encoded[length] = true;
+                const uint16_t u_val = (as_hex[input.start[k+2]] << 12) |
+                                       (as_hex[input.start[k+3]] << 8)  |
+                                       (as_hex[input.start[k+4]] << 4)  |
+                                        as_hex[input.start[k+5]];
+                const uint8_t byte_val = reduce_to_eight_bits(u_val, uri_param, infractions, events);
+                if (((byte_val & 0xE0) == 0xC0) || ((byte_val & 0xF0) == 0xE0))
+                    utf8_needed = true;
+                out_buf[length++] = byte_val;
                 k += 5;
-                // FIXIT-H this is a stub feature. Needs an event, a config option, computation,
-                // and unicode map lookup.
-                // Values > 0xFF become 0xFF unless they are in the code map
             }
             else
             {
-                // don't recognize, pass through for now (FIXIT-H unfinished feature)
+                // don't recognize, pass it through
+                infractions += INF_UNKNOWN_PERCENT;
+                events.create_event(EVENT_UNKNOWN_PERCENT);
                 out_buf[length++] = '%';
             }
 
