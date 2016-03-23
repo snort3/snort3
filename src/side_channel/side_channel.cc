@@ -172,6 +172,8 @@ void SideChannelManager::thread_term()
 
     // First shutdown the connectors
     ConnectorManager::thread_term();
+
+    delete tls_maps;
 }
 
 // receive at most max_messages.  Zero indicates unlimited.
