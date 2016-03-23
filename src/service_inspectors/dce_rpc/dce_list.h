@@ -102,6 +102,18 @@ struct DCE2_Queue
     DCE2_QueueNode* prev;
 };
 
+typedef DCE2_ListDataFree DCE2_CStackDataFree;
+
+struct DCE2_CStack
+{
+    uint32_t num_nodes;
+    DCE2_CStackDataFree data_free;
+    int size;
+    void** stack;
+    int tail_idx;
+    int cur_idx;
+};
+
 /********************************************************************
  * Public function prototypes
  ********************************************************************/
@@ -122,6 +134,15 @@ static inline bool DCE2_QueueIsEmpty(DCE2_Queue*);
 void DCE2_QueueEmpty(DCE2_Queue*);
 void* DCE2_QueueFirst(DCE2_Queue*);
 void* DCE2_QueueNext(DCE2_Queue*);
+void DCE2_QueueDestroy(DCE2_Queue*);
+
+DCE2_CStack* DCE2_CStackNew(int, DCE2_CStackDataFree);
+DCE2_Ret DCE2_CStackPush(DCE2_CStack*, void*);
+void* DCE2_CStackPop(DCE2_CStack*);
+void* DCE2_CStackTop(DCE2_CStack*);
+static inline int DCE2_CStackIsEmpty(DCE2_CStack*);
+void DCE2_CStackEmpty(DCE2_CStack*);
+void DCE2_CStackDestroy(DCE2_CStack*);
 
 /********************************************************************
  * Function: DCE2_ListIsEmpty()
@@ -161,6 +182,22 @@ inline bool DCE2_QueueIsEmpty(DCE2_Queue* queue)
     if (queue == nullptr)
         return 1;
     if (queue->num_nodes == 0)
+        return 1;
+    return 0;
+}
+
+/********************************************************************
+ * Function: DCE2_CStackIsEmpty()
+ *
+ * Determines whether or not the stack has any items in it
+ * currently.
+ *
+ ********************************************************************/
+static inline int DCE2_CStackIsEmpty(DCE2_CStack* cstack)
+{
+    if (cstack == nullptr)
+        return 1;
+    if (cstack->num_nodes == 0)
         return 1;
     return 0;
 }

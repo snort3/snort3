@@ -70,6 +70,10 @@ from opnum established for fragmented request."
 from context id established for fragmented request."
 
 #define DCE2_MAX_XMIT_SIZE_FUZZ    500
+#define DCE2_MOCK_HDR_LEN__CO_CLI   (sizeof(DceRpcCoHdr) + sizeof(DceRpcCoRequest))
+#define DCE2_MOCK_HDR_LEN__CO_SRV   (sizeof(DceRpcCoHdr) + sizeof(DceRpcCoResponse))
+#define DCE2_CO__MIN_ALLOC_SIZE     50
+#define DCE2_LITTLE_ENDIAN 0x10
 
 #pragma pack(1)
 
@@ -267,6 +271,14 @@ enum DceRpcCoContDefResult
     DCERPC_CO_CONT_DEF_RESULT__USER_REJECTION,
     DCERPC_CO_CONT_DEF_RESULT__PROVIDER_REJECTION
 };
+
+enum DCE2_CoRpktType
+{
+    DCE2_CO_RPKT_TYPE__SEG,
+    DCE2_CO_RPKT_TYPE__FRAG,
+    DCE2_CO_RPKT_TYPE__ALL
+};
+
 inline uint8_t DceRpcCoVersMaj(const DceRpcCoHdr* co)
 {
     return co->pversion.major;
@@ -400,7 +412,9 @@ inline uint16_t DceRpcCoCtxId(const DceRpcCoHdr* co, const DceRpcCoRequest* cor)
 
 void DCE2_CoInitTracker(DCE2_CoTracker*);
 void DCE2_CoProcess(DCE2_SsnData*, DCE2_CoTracker*,
-    const uint8_t*, uint16_t, Packet* p);
+    const uint8_t*, uint16_t);
+void DCE2_CoInitRdata(uint8_t*, int);
+void DCE2_CoCleanTracker(DCE2_CoTracker*);
 
 #endif
 

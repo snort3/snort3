@@ -21,6 +21,7 @@
 #include "dce_common.h"
 #include "dce_tcp.h"
 #include "dce_smb.h"
+#include "dce_co.h"
 #include "framework/base_api.h"
 #include "framework/module.h"
 #include "flow/flow.h"
@@ -28,8 +29,15 @@
 #include "main/snort_debug.h"
 #include "detection/detect.h"
 #include "ips_options/extract.h"
+#include "protocols/packet_manager.h"
+#include "events/event_queue.h"
+#include "framework/codec.h"
+#include "main/snort.h"
+#include "framework/endianness.h"
 
 THREAD_LOCAL int dce2_detected = 0;
+THREAD_LOCAL DCE2_CStack* dce2_pkt_stack = nullptr;
+THREAD_LOCAL int dce2_inspector_instances = 0;
 
 static const char* dce2_get_policy_name(DCE2_Policy policy)
 {
@@ -163,19 +171,22 @@ static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
         Profile profile(dce2_smb_pstat_detect);
     }
 
-    // FIXIT - decide whether eventq push/pop is necessary once packet reassembly is supported
-    //SnortEventqPush();
+    SnortEventqPush();
     snort_detect(pkt);
-    //SnortEventqPop();
+    SnortEventqPop();
 
     dce2_detected = 1;
 }
 
 void DCE2_Detect(DCE2_SsnData* sd)
 {
-    Packet* top_pkt = sd->wire_pkt;
-    //FIXIT-M  Get packet from stack
-
+    Packet* top_pkt;
+    top_pkt = (Packet*)DCE2_CStackTop(dce2_pkt_stack);
+    if (top_pkt == nullptr)
+    {
+        DebugMessage(DEBUG_DCE_COMMON,"No packet on top of stack.\n");
+        return;
+    }
     DebugMessage(DEBUG_DCE_COMMON, "Detecting ------------------------------------------------\n");
     DebugMessage(DEBUG_DCE_COMMON, " Rule options:\n");
     DCE2_PrintRoptions(&sd->ropts);
@@ -222,6 +233,13 @@ DceEndianness::DceEndianness()
     stub_data_offset = DCE2_SENTINEL;
 }
 
+void DceEndianness::reset()
+{
+    hdr_byte_order = DCE2_SENTINEL;
+    data_byte_order = DCE2_SENTINEL;
+    stub_data_offset = DCE2_SENTINEL;
+}
+
 bool DceEndianness::get_offset_endianness(int32_t offset, int8_t& endian)
 {
     int byte_order;
@@ -260,6 +278,157 @@ bool DceEndianness::get_offset_endianness(int32_t offset, int8_t& endian)
     DebugFormat(DEBUG_DCE_COMMON, " Byte order: %s\n",
         endian == ENDIAN_LITTLE ? "little endian" : "big endian");
     return true;
+}
+
+static void dce_push_pkt_log(Packet* pkt,DCE2_SsnData* sd)
+{
+    if (sd->trans == DCE2_TRANS_TYPE__TCP)
+    {
+        Profile profile(dce2_tcp_pstat_log);
+    }
+    else
+    {
+        Profile profile(dce2_smb_pstat_log);
+    }
+
+    SnortEventqPush();
+    SnortEventqLog(pkt);
+    SnortEventqReset();
+    SnortEventqPop();
+}
+
+DCE2_Ret DCE2_PushPkt(Packet* p,DCE2_SsnData* sd)
+{
+    Packet* top_pkt;
+    top_pkt = (Packet*)DCE2_CStackTop(dce2_pkt_stack);
+
+    if (top_pkt != nullptr)
+    {
+        dce_push_pkt_log(top_pkt,sd);
+    }
+    if (DCE2_CStackPush(dce2_pkt_stack, (void*)p) != DCE2_RET__SUCCESS)
+        return DCE2_RET__ERROR;
+
+    return DCE2_RET__SUCCESS;
+}
+
+void DCE2_PopPkt(DCE2_SsnData* sd)
+{
+    Packet* pop_pkt = (Packet*)DCE2_CStackPop(dce2_pkt_stack);
+
+    if (sd->trans == DCE2_TRANS_TYPE__TCP)
+    {
+        Profile profile(dce2_tcp_pstat_log);
+    }
+    else
+    {
+        Profile profile(dce2_smb_pstat_log);
+    }
+
+    if (pop_pkt == nullptr)
+    {
+        DebugMessage(DEBUG_DCE_COMMON, "No packet to pop off stack.\n");
+        return;
+    }
+    SnortEventqPush();
+    SnortEventqLog(pop_pkt);
+    SnortEventqReset();
+    SnortEventqPop();
+}
+
+uint16_t DCE2_GetRpktMaxData(DCE2_SsnData* sd, DCE2_RpktType rtype)
+{
+    Packet* p = sd->wire_pkt;
+    uint16_t overhead = 0;
+
+    switch (rtype)
+    {
+    case DCE2_RPKT_TYPE__SMB_SEG:
+    case DCE2_RPKT_TYPE__SMB_TRANS:
+    case DCE2_RPKT_TYPE__SMB_CO_SEG:
+    case DCE2_RPKT_TYPE__SMB_CO_FRAG:
+    case DCE2_RPKT_TYPE__TCP_CO_SEG:
+        //FIXIT-M Add support for these
+        break;
+
+    case DCE2_RPKT_TYPE__TCP_CO_FRAG:
+        if (DCE2_SsnFromClient(p))
+            overhead += DCE2_MOCK_HDR_LEN__CO_CLI;
+        else
+            overhead += DCE2_MOCK_HDR_LEN__CO_SRV;
+        break;
+
+    default:
+        DebugFormat(DEBUG_DCE_COMMON,"Invalid reassembly packet type: %d\n",rtype);
+        return 0;
+    }
+    return (DCE2_REASSEMBLY_BUF_SIZE - overhead);
+}
+
+Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
+    const uint8_t* data, uint32_t data_len)
+{
+    Packet* rpkt;
+    DceEndianness* endianness;
+    uint16_t data_overhead = 0;
+
+    switch (rpkt_type)
+    {
+    case DCE2_RPKT_TYPE__SMB_SEG:
+    case DCE2_RPKT_TYPE__SMB_TRANS:
+    case DCE2_RPKT_TYPE__SMB_CO_SEG:
+    case DCE2_RPKT_TYPE__SMB_CO_FRAG:
+    case DCE2_RPKT_TYPE__TCP_CO_SEG:
+    case DCE2_RPKT_TYPE__UDP_CL_FRAG:
+    //FIXIT-M add support later
+
+    case DCE2_RPKT_TYPE__TCP_CO_FRAG:
+        rpkt = dce2_tcp_rpkt[rpkt_type - DCE2_TCP_RPKT_TYPE_START];
+        endianness = (DceEndianness*)rpkt->endianness;
+        rpkt->reset();
+        rpkt->endianness = (Endianness *)endianness;
+        ((DceEndianness *)rpkt->endianness)->reset();
+        rpkt->pkth = p->pkth;
+        rpkt->ptrs = p->ptrs;
+        rpkt->flow = p->flow;
+        rpkt->proto_bits = p->proto_bits;
+        rpkt->pseudo_type = PSEUDO_PKT_DCE_FRAG;
+        rpkt->packet_flags = p->packet_flags;
+        rpkt->packet_flags |= PKT_PSEUDO;
+        rpkt->user_policy_id = p->user_policy_id;
+
+        if (DCE2_SsnFromClient(p))
+        {
+            data_overhead = DCE2_MOCK_HDR_LEN__CO_CLI;
+            memset((void*)rpkt->data, 0, data_overhead);
+            DCE2_CoInitRdata((uint8_t*)rpkt->data, PKT_FROM_CLIENT);
+        }
+        else
+        {
+            data_overhead = DCE2_MOCK_HDR_LEN__CO_SRV;
+            memset((void*)rpkt->data, 0, data_overhead);
+            DCE2_CoInitRdata((uint8_t*)rpkt->data, PKT_FROM_SERVER);
+        }
+        break;
+
+    default:
+        DebugFormat(DEBUG_DCE_COMMON, "Invalid reassembly packet type: %d\n",rpkt_type);
+        return nullptr;
+    }
+
+    if ((data_overhead + data_len) > DCE2_REASSEMBLY_BUF_SIZE)
+        data_len -= (data_overhead + data_len) - DCE2_REASSEMBLY_BUF_SIZE;
+
+    if (SafeMemcpy((void*)(rpkt->data + data_overhead),
+        (void*)data, (size_t)data_len, (void*)rpkt->data,
+        (void*)((uint8_t*)rpkt->data + DCE2_REASSEMBLY_BUF_SIZE)) != SAFEMEM_SUCCESS)
+    {
+        DebugMessage(DEBUG_DCE_COMMON, "Failed to copy data into reassembly buffer.\n");
+        return nullptr;
+    }
+
+    rpkt->dsize = data_len + data_overhead;
+    return rpkt;
 }
 
 #ifdef BUILDING_SO

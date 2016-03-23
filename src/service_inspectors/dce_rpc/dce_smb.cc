@@ -24,8 +24,12 @@
 #include "dce_list.h"
 #include "main/snort_debug.h"
 #include "file_api/file_service.h"
+#include "utils/util.h"
+
+THREAD_LOCAL int dce2_smb_inspector_instances = 0;
 
 THREAD_LOCAL dce2SmbStats dce2_smb_stats;
+THREAD_LOCAL Packet* dce2_smb_rpkt[DCE2_SMB_RPKT_TYPE_MAX] = { NULL, NULL, NULL, NULL };
 
 THREAD_LOCAL ProfileStats dce2_smb_pstat_main;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_session;
@@ -65,6 +69,7 @@ static DCE2_SmbSsnData* set_new_dce2_smb_session(Packet* p)
 {
     Dce2SmbFlowData* fd = new Dce2SmbFlowData;
 
+    memset(&fd->dce2_smb_session,0,sizeof(DCE2_SmbSsnData));
     p->flow->set_application_data(fd);
     return(&fd->dce2_smb_session);
 }
@@ -247,6 +252,54 @@ static void dce2_smb_dtor(Inspector* p)
     delete p;
 }
 
+static void dce2_smb_thread_init()
+{
+    if (dce2_inspector_instances == 0)
+    {
+        dce2_pkt_stack = DCE2_CStackNew(DCE2_PKT_STACK__SIZE, nullptr);
+    }
+    if (dce2_smb_inspector_instances == 0)
+    {
+        for (int i=0; i < DCE2_SMB_RPKT_TYPE_MAX; i++)
+        {
+            Packet* p = (Packet*)SnortAlloc(sizeof(Packet));
+            p->data = (uint8_t*)SnortAlloc(DCE2_REASSEMBLY_BUF_SIZE);
+            p->dsize = DCE2_REASSEMBLY_BUF_SIZE;
+            dce2_smb_rpkt[i] = p;
+        }
+    }
+    dce2_smb_inspector_instances++;
+    dce2_inspector_instances++;
+}
+
+static void dce2_smb_thread_term()
+{
+    dce2_inspector_instances--;
+    dce2_smb_inspector_instances--;
+
+    if (dce2_smb_inspector_instances == 0)
+    {
+        for (int i=0; i<DCE2_SMB_RPKT_TYPE_MAX; i++)
+        {
+            if ( dce2_smb_rpkt[i] != nullptr )
+            {
+                Packet* p = dce2_smb_rpkt[i];
+                if (p->data)
+                {
+                    free((void *)p->data);
+                }
+                free(p);
+                dce2_smb_rpkt[i] = nullptr;
+            }
+        }
+    }
+    if (dce2_inspector_instances == 0)
+    {
+        DCE2_CStackDestroy(dce2_pkt_stack);
+        dce2_pkt_stack = nullptr;
+    }
+}
+
 const InspectApi dce2_smb_api =
 {
     {
@@ -267,8 +320,8 @@ const InspectApi dce2_smb_api =
     "dce_smb",
     dce2_smb_init,
     nullptr, // pterm
-    nullptr, // tinit
-    nullptr, // tterm
+    dce2_smb_thread_init, // tinit
+    dce2_smb_thread_term, // tterm
     dce2_smb_ctor,
     dce2_smb_dtor,
     nullptr, // ssn

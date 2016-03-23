@@ -22,6 +22,7 @@
 #define DCE_COMMON_H
 
 #include "dce_utils.h"
+#include "dce_list.h"
 #include "main/snort_types.h"
 #include "framework/module.h"
 #include "framework/inspector.h"
@@ -31,8 +32,12 @@
 extern const InspectApi dce2_smb_api;
 extern const InspectApi dce2_tcp_api;
 extern THREAD_LOCAL int dce2_detected;
+extern THREAD_LOCAL int dce2_inspector_instances;
+extern THREAD_LOCAL DCE2_CStack* dce2_pkt_stack;
 
-#define GID_DCE2 145
+#define GID_DCE2 133
+#define DCE2_PKT_STACK__SIZE  10
+#define DCE2_REASSEMBLY_BUF_SIZE 65535
 
 enum DCE2_Policy
 {
@@ -96,7 +101,7 @@ struct dce2CommonStats
 struct dce2CommonProtoConf
 {
     bool disable_defrag;
-    uint16_t max_frag_len;
+    int max_frag_len;
     DCE2_Policy policy;
 };
 
@@ -140,6 +145,19 @@ enum DceRpcProtoMinorVers
 {
     DCERPC_PROTO_MINOR_VERS__0 = 0,
     DCERPC_PROTO_MINOR_VERS__1 = 1
+};
+
+enum DCE2_RpktType
+{
+    DCE2_RPKT_TYPE__NULL = 0,
+    DCE2_RPKT_TYPE__SMB_SEG,
+    DCE2_RPKT_TYPE__SMB_TRANS,
+    DCE2_RPKT_TYPE__SMB_CO_SEG,
+    DCE2_RPKT_TYPE__SMB_CO_FRAG,
+    DCE2_RPKT_TYPE__TCP_CO_SEG,
+    DCE2_RPKT_TYPE__TCP_CO_FRAG,
+    DCE2_RPKT_TYPE__UDP_CL_FRAG,
+    DCE2_RPKT_TYPE__MAX
 };
 
 struct DCE2_Roptions
@@ -197,6 +215,7 @@ public:
 public:
     DceEndianness();
     virtual bool get_offset_endianness(int32_t offset, int8_t& endian);
+    void reset();
 };
 
 inline void DCE2_ResetRopts(DCE2_Roptions* ropts)
@@ -240,7 +259,21 @@ inline int DCE2_SsnNoInspect(DCE2_SsnData* sd)
 
 inline bool DCE2_GcDceDefrag(dce2CommonProtoConf* config)
 {
-    return config->disable_defrag;
+    return (config->disable_defrag ? false : true);
+}
+
+inline bool DCE2_GcMaxFrag(dce2CommonProtoConf* config)
+{
+    if (config->max_frag_len != DCE2_SENTINEL)
+        return true;
+    return false;
+}
+
+inline uint16_t DCE2_GcMaxFragLen(dce2CommonProtoConf* config)
+{
+    if (DCE2_GcMaxFrag(config))
+        return (uint16_t)config->max_frag_len;
+    return UINT16_MAX;
 }
 
 inline int DCE2_SsnFromServer(Packet* p)
@@ -268,6 +301,11 @@ bool dce2_set_common_config(Value&, dce2CommonProtoConf&);
 void print_dce2_common_config(dce2CommonProtoConf&);
 bool dce2_paf_abort(Flow*, DCE2_SsnData*);
 void DCE2_Detect(DCE2_SsnData*);
+Packet* DCE2_GetRpkt(Packet*, DCE2_RpktType,
+    const uint8_t*, uint32_t);
+DCE2_Ret DCE2_PushPkt(Packet*,DCE2_SsnData*);
+void DCE2_PopPkt(DCE2_SsnData*);
+uint16_t DCE2_GetRpktMaxData(DCE2_SsnData*, DCE2_RpktType);
 
 DCE2_SsnData* get_dce2_session_data(Packet*);
 

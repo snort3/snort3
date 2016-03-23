@@ -30,6 +30,7 @@
 
 #define DCE2_SMB_NAME "dce_smb"
 #define DCE2_SMB_HELP "dce over smb inspection"
+#define DCE2_SMB_RPKT_TYPE_MAX 4
 
 #define DCE2_SMB_BAD_NBSS_TYPE 2
 #define DCE2_SMB_BAD_TYPE 3
@@ -180,7 +181,7 @@ struct dce2SmbStats
 };
 
 extern THREAD_LOCAL dce2SmbStats dce2_smb_stats;
-
+extern THREAD_LOCAL Packet* dce2_smb_rpkt[DCE2_SMB_RPKT_TYPE_MAX];
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_main;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_session;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_new_session;
@@ -246,6 +247,43 @@ struct SmbNtHdr
     uint16_t smb_pid;               /* caller's process id */
     uint16_t smb_uid;               /* authenticated user id */
     uint16_t smb_mid;               /* multiplex id */
+};
+
+struct SmbWriteAndXReq   /* smb_wct = 12 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
+    uint8_t smb_reh2;        /* reserved (must be zero) */
+    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_fid;        /* file handle */
+    uint32_t smb_offset;     /* offset in file to begin write */
+    uint32_t smb_timeout;    /* number of milliseconds to wait for completion */
+    uint16_t smb_wmode;      /* write mode:
+                                bit0 - complete write before return (write through)
+                                bit1 - return smb_remaining (pipes/devices only)
+                                bit2 - use WriteRawNamedPipe (pipes only)
+                                bit3 - this is the start of a message (pipes only) */
+    uint16_t smb_countleft;  /* bytes remaining to write to satisfy user’s request */
+    uint16_t smb_dsize_high; /* high bytes of data size */
+    uint16_t smb_dsize;      /* number of data bytes in buffer (min value = 0) */
+    uint16_t smb_doff;       /* offset (from start of SMB hdr) to data bytes */
+    uint16_t smb_bcc;        /* total bytes (including pad bytes) following */
+};
+
+struct SmbReadAndXResp    /* smb_wct = 12 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
+    uint8_t smb_res2;        /* reserved (pad to word) */
+    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_remaining;  /* bytes remaining to be read (pipes/devices only) */
+    uint32_t smb_rsvd;       /* reserved */
+    uint16_t smb_dsize;      /* number of data bytes (minimum value = 0) */
+    uint16_t smb_doff;       /* offset (from start of SMB hdr) to data bytes */
+    uint16_t smb_dsize_high; /* high bytes of data size */
+    uint32_t smb_rsvd1;      /* reserved */
+    uint32_t smb_rsvd2;      /* reserved */
+    uint16_t smb_bcc;        /* total bytes (including pad bytes) following */
 };
 
 #pragma pack()
@@ -505,6 +543,12 @@ public:
     static unsigned flow_id;
     DCE2_SmbSsnData dce2_smb_session;
 };
+
+// Used for reassembled packets
+#define DCE2_MOCK_HDR_LEN__SMB_CLI \
+    (sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(SmbWriteAndXReq))
+#define DCE2_MOCK_HDR_LEN__SMB_SRV \
+    (sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(SmbReadAndXResp))
 
 DCE2_SmbSsnData* get_dce2_smb_session_data(Flow*);
 

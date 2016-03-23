@@ -19,6 +19,7 @@
 
 #include "dce_utils.h"
 #include "main/snort_debug.h"
+#include "utils/util.h"
 
 /********************************************************************
  * Function: DCE2_GetValue()
@@ -307,4 +308,128 @@ void DCE2_PrintPktData(const uint8_t*, const uint16_t)
 }
 
 #endif // DEBUG_MSGS
+
+DCE2_Buffer* DCE2_BufferNew(uint32_t initial_size, uint32_t min_add_size)
+{
+    DCE2_Buffer* buf = (DCE2_Buffer*)SnortAlloc(sizeof(DCE2_Buffer));
+
+    if (buf == nullptr)
+        return nullptr;
+
+    if (initial_size != 0)
+    {
+        buf->data = (uint8_t*)SnortAlloc(initial_size);
+        if (buf->data == nullptr)
+        {
+            free((void*)buf);
+            return nullptr;
+        }
+    }
+
+    buf->size = initial_size;
+    buf->len = 0;
+    buf->min_add_size = min_add_size;
+    buf->offset = 0;
+
+    return buf;
+}
+
+void* DCE2_ReAlloc(void* old_mem, uint32_t old_size, uint32_t new_size)
+{
+    void* new_mem;
+
+    if (old_mem == nullptr)
+    {
+        return nullptr;
+    }
+    else if (new_size < old_size)
+    {
+        DebugMessage(DEBUG_DCE_COMMON, "New size is less than old size.\n");
+        return nullptr;
+    }
+    else if (new_size == old_size)
+    {
+        return old_mem;
+    }
+
+    new_mem = SnortAlloc(new_size);
+    if (new_mem == nullptr)
+        return nullptr;
+
+    if (SafeMemcpy(new_mem, old_mem, old_size, new_mem,
+        (void*)((uint8_t*)new_mem + new_size)) != SAFEMEM_SUCCESS)
+    {
+        DebugMessage(DEBUG_DCE_COMMON, "Failed to copy old memory into new memory.\n");
+        free(new_mem);
+        return nullptr;
+    }
+
+    free(old_mem);
+
+    return new_mem;
+}
+
+DCE2_Ret DCE2_BufferAddData(DCE2_Buffer* buf, const uint8_t* data,
+    uint32_t data_len, uint32_t data_offset, DCE2_BufferMinAddFlag mflag)
+{
+    if ((buf == nullptr) || (data == nullptr))
+        return DCE2_RET__ERROR;
+
+    /* Return success for this since ultimately nothing _was_ added */
+    if (data_len == 0)
+        return DCE2_RET__SUCCESS;
+
+    if (buf->data == nullptr)
+    {
+        uint32_t size = data_offset + data_len;
+
+        if ((size < buf->min_add_size) && (mflag == DCE2_BUFFER_MIN_ADD_FLAG__USE))
+            size = buf->min_add_size;
+
+        buf->data = (uint8_t*)SnortAlloc(size);
+        if (buf->data == nullptr)
+            return DCE2_RET__ERROR;
+
+        buf->size = size;
+    }
+    else if ((data_offset + data_len) > buf->size)
+    {
+        uint8_t* tmp;
+        uint32_t new_size = data_offset + data_len;
+
+        if (((new_size - buf->size) < buf->min_add_size) && (mflag ==
+            DCE2_BUFFER_MIN_ADD_FLAG__USE))
+            new_size = buf->size + buf->min_add_size;
+
+        tmp = (uint8_t*)DCE2_ReAlloc(buf->data, buf->size, new_size);
+        if (tmp == nullptr)
+            return DCE2_RET__ERROR;
+
+        buf->data = tmp;
+        buf->size = new_size;
+    }
+
+    if (SafeMemcpy(buf->data + data_offset, data, data_len, buf->data,
+        buf->data + buf->size) != SAFEMEM_SUCCESS)
+    {
+        DebugMessage(DEBUG_DCE_COMMON, "Failed to copy data into buffer.\n");
+        return DCE2_RET__ERROR;
+    }
+
+    if ((data_offset + data_len) > buf->len)
+        buf->len = data_offset + data_len;
+
+    return DCE2_RET__SUCCESS;
+}
+
+void DCE2_BufferDestroy(DCE2_Buffer* buf)
+{
+    if (buf == nullptr)
+        return;
+
+    if (buf->data != nullptr)
+        free((void*)buf->data);
+
+    free((void*)buf);
+}
 

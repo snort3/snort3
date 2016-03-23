@@ -50,7 +50,7 @@ void EventQueueConfigFree(EventQueueConfig*);
 void SnortEventqNew(EventQueueConfig*);
 void SnortEventqFree();
 
-void SnortEventqReset(void);
+SO_PUBLIC void SnortEventqReset(void);
 void SnortEventqResetCounts(void);
 
 SO_PUBLIC int SnortEventqLog(struct Packet*);
