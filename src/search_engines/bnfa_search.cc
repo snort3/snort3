@@ -2093,7 +2093,7 @@ static void bnfaPrintInfoEx(bnfa_struct_t* p)
 
 void bnfaPrintInfo(bnfa_struct_t* p)
 {
-    bnfaPrintInfoEx(p);
+    bnfaPrint(p);
 }
 
 void bnfaPrintSummary(void)

@@ -40,15 +40,14 @@ public:
     AcsbMpse(SnortConfig*, bool use_gc, const MpseAgent* agent)
         : Mpse("ac_sparse_bands", use_gc)
     {
-        obj = acsmNew2(agent);
-        if ( obj ) acsmSelectFormat2(obj, ACF_SPARSEBANDS);
+        obj = acsmNew2(agent, ACF_SPARSE_BANDS);
     }
 
     ~AcsbMpse()
-    {
-        if (obj)
-            acsmFree2(obj);
-    }
+    { acsmFree2(obj); }
+
+    void set_opt(int) override
+    { acsm_enable_dfa(obj); }
 
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
@@ -58,9 +57,7 @@ public:
     }
 
     int prep_patterns(SnortConfig* sc) override
-    {
-        return acsmCompile2(sc, obj);
-    }
+    { return acsmCompile2(sc, obj); }
 
     int _search(
         const uint8_t* T, int n, MpseMatch match,
@@ -70,14 +67,10 @@ public:
     }
 
     int print_info() override
-    {
-        return acsmPrintDetailInfo2(obj);
-    }
+    { return acsmPrintDetailInfo2(obj); }
 
     int get_pattern_count() override
-    {
-        return acsmPatternCount2(obj);
-    }
+    { return acsmPatternCount2(obj); }
 };
 
 //-------------------------------------------------------------------------

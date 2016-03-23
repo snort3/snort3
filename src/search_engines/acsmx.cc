@@ -570,10 +570,11 @@ int acsmPrintDetailInfo(ACSM_STRUCT* acsm)
     return 0;
 }
 
-int acsmPrintSummaryInfo(void)
+int acsmPrintSummaryInfo()
 {
 #if 0
-      printf ("ACSMX-Max Memory: %d bytes, %d states\n", max_memory,
+    // FIXIT-L should output summary similar to acsmPrintSummaryInfo2()
+    printf ("ACSMX-Max Memory: %d bytes, %d states\n", max_memory,
         acsm->acsmMaxStates);
 #endif
 

@@ -46,10 +46,7 @@ public:
     { obj = acsmNew(agent); }
 
     ~AcMpse()
-    {
-        if (obj)
-            acsmFree(obj);
-    }
+    { acsmFree(obj); }
 
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
@@ -59,9 +56,7 @@ public:
     }
 
     int prep_patterns(SnortConfig* sc) override
-    {
-        return acsmCompile(sc, obj);
-    }
+    { return acsmCompile(sc, obj); }
 
     int _search(
         const uint8_t* T, int n, MpseMatch match,
@@ -71,14 +66,10 @@ public:
     }
 
     int print_info() override
-    {
-        return acsmPrintDetailInfo(obj);
-    }
+    { return acsmPrintDetailInfo(obj); }
 
     int get_pattern_count() override
-    {
-        return acsmPatternCount(obj);
-    }
+    { return acsmPatternCount(obj); }
 };
 
 //-------------------------------------------------------------------------

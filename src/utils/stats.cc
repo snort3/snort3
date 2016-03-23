@@ -106,12 +106,14 @@ void LogCount(const char* s, uint64_t c)
 
 void LogStat(const char* s, uint64_t n, uint64_t tot)
 {
-    LogMessage("%25.25s: " FMTu64("-12") "\t(%7.3f%%)\n", s, n, CalcPct(n, tot));
+    if ( n )
+        LogMessage("%25.25s: " FMTu64("-12") "\t(%7.3f%%)\n", s, n, CalcPct(n, tot));
 }
 
 void LogStat(const char* s, double d)
 {
-    LogMessage("%25.25s: %g\n", s, d);
+    if ( d )
+        LogMessage("%25.25s: %g\n", s, d);
 }
 
 //-------------------------------------------------------------------------

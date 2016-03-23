@@ -50,18 +50,16 @@ FastPatternConfig::FastPatternConfig()
 FastPatternConfig::~FastPatternConfig()
 { }
 
-int FastPatternConfig::set_detect_search_method(const char* method)
+bool FastPatternConfig::set_detect_search_method(const char* method)
 {
-    search_api = MpseManager::get_search_api(method);
+    const MpseApi* api = MpseManager::get_search_api(method);
 
-    if ( !search_api )
-    {
-        ParseError("invalid search-method '%s'", method);
-        return -1;
-    }
+    if ( !api )
+        return false;
 
+    search_api = api;
     trim = MpseManager::search_engine_trim(search_api);
-    return 0;
+    return true;
 }
 
 void FastPatternConfig::set_max_pattern_len(unsigned int max_len)

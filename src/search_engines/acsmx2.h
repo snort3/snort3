@@ -91,20 +91,7 @@ enum
     ACF_FULL,
     ACF_SPARSE,
     ACF_BANDED,
-    ACF_SPARSEBANDS,
-    ACF_FULLQ
-};
-
-/*
-*   User specified machine types
-*
-*   NFA  :
-*   DFA  :
-*/
-enum
-{
-    FSA_NFA,
-    FSA_DFA
+    ACF_SPARSE_BANDS,
 };
 
 /*
@@ -132,11 +119,12 @@ struct ACSM_STRUCT2
 
     int acsmNumTrans;
     int acsmAlphabetSize;
-    int acsmFSA;
     int numPatterns;
 
     int sizeofstate;
     int compress_states;
+
+    bool dfa;
 };
 
 /*
@@ -144,7 +132,7 @@ struct ACSM_STRUCT2
 */
 void acsmx2_init_xlatcase();
 
-ACSM_STRUCT2* acsmNew2(const MpseAgent*);
+ACSM_STRUCT2* acsmNew2(const MpseAgent*, int format);
 
 int acsmAddPattern2(
     ACSM_STRUCT2* p, const uint8_t* pat, unsigned n,
@@ -167,17 +155,10 @@ int acsmSearchSparseNFA(
 int acsmSearchSparseDFA_Full_All(
     ACSM_STRUCT2*, const uint8_t* Tx, int n, MpseMatch, void* context, int* current_state);
 
-void acsmFree2(ACSM_STRUCT2* acsm);
-int acsmPatternCount2(ACSM_STRUCT2* acsm);
+void acsmFree2(ACSM_STRUCT2*);
+int acsmPatternCount2(ACSM_STRUCT2*);
 void acsmCompressStates(ACSM_STRUCT2*, int);
-
-int acsmSelectFormat2(ACSM_STRUCT2*, int format);
-int acsmSelectFSA2(ACSM_STRUCT2*, int fsa);
-
-void acsmSetMaxSparseBandZeros2(ACSM_STRUCT2*, int n);
-void acsmSetMaxSparseElements2(ACSM_STRUCT2*, int n);
-int acsmSetAlphabetSize2(ACSM_STRUCT2*, int n);
-void acsmSetVerbose2(void);
+void acsm_enable_dfa(ACSM_STRUCT2*);
 
 void acsmPrintInfo2(ACSM_STRUCT2* p);
 

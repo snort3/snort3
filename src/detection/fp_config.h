@@ -118,7 +118,7 @@ public:
     int get_search_opt()
     { return search_opt; }
 
-    int set_detect_search_method(const char*);
+    bool set_detect_search_method(const char*);
     void set_max_pattern_len(unsigned);
 
     const struct MpseApi* get_search_api()

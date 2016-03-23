@@ -229,7 +229,7 @@ static const Parameter search_engine_params[] =
     { "split_any_any", Parameter::PT_BOOL, nullptr, "false",
       "evaluate any-any rules separately to save memory" },
 
-    { "search_optimize", Parameter::PT_BOOL, nullptr, "false",
+    { "search_optimize", Parameter::PT_BOOL, nullptr, "true",
       "tweak state machine construction for better performance" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -318,7 +318,7 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("search_method") )
     {
-        if ( fp->set_detect_search_method(v.get_string()) )
+        if ( !fp->set_detect_search_method(v.get_string()) )
             return false;
     }
     else if ( v.is("split_any_any") )

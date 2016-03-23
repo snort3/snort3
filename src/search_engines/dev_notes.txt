@@ -16,11 +16,13 @@ This code has has evolved through 4 major versions:
 Check the comments at the start of the above files for details on the
 implementation.
 
-Version 1 and 2 flavors are all DFAs.  Version 3 flavors are NFAs.  The
-TRIE based implementations were moved to extras.
+NFAs require much less memory than DFAs, but DFAs are faster.  Version 1 is
+a DFA.  Version 2 is either NFA or DFA and supports multiple storage
+formats.  Version 3 is NFA.  Version 2 also had a TRIE based implementation
+which was moved to extras.
 
-NFAs require much less memory than DFAs, but DFAs are faster.  The multiple
-DFA flavors try to reduce memory for transition storage by various schemes:
+The version 2 storage formats try to reduce memory for transition storage
+by various schemes:
 
 * full - an array of 256 transitions for each state indexed by event (byte)
 * sparse - a list of valid transitions (which must be searched)
@@ -52,6 +54,9 @@ evaluations.
 
 SearchTool makes it easy to use ac_bnfa.  This is used by http, pop, imap,
 and smtp.
+
+See "Optimizing Pattern Matching for Intrusion Detection" by Marc Norton.
+Available on https://snort.org/documents/.
 
 Reference - Efficient String matching: An Aid to Bibliographic Search
 Alfred V Aho and Margaret J Corasick, Bell Laboratories
