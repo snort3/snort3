@@ -46,6 +46,8 @@ public:
         bool utf8;
         bool utf8_bare_byte;
         bool iis_unicode;
+        std::string iis_unicode_map_file;
+        int iis_unicode_code_page;
         uint8_t* unicode_map = nullptr;
         bool backslash_to_slash;
         bool plus_to_space;

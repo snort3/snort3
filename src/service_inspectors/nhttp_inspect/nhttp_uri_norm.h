@@ -21,6 +21,7 @@
 #define NHTTP_URI_NORM_H
 
 #include <vector>
+#include <string>
 
 #include "nhttp_field.h"
 #include "nhttp_module.h"
@@ -43,6 +44,7 @@ public:
     static void classic_normalize(const Field& input, Field& result, uint8_t* buffer,
         const NHttpParaList::UriParam& uri_param);
     static void load_default_unicode_map(uint8_t map[65536]);
+    static void load_unicode_map(uint8_t map[65536], const char* filename, int code_page);
 
 private:
     static bool need_norm_path(const Field& uri_component,
@@ -68,6 +70,8 @@ private:
         NHttpEventGen& events);
     static uint8_t reduce_to_eight_bits(uint16_t value, const NHttpParaList::UriParam& uri_param,
         NHttpInfractions& infractions, NHttpEventGen& events);
+    static bool advance_to_code_page(FILE* file, int page_to_use);
+    static bool map_code_points(FILE* file, uint8_t* map);
 
     // An artifice used by the classic normalization methods to disable event generation
     class NHttpDummyEventGen : public NHttpEventGen

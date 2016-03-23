@@ -23,6 +23,8 @@
 #include <sstream>
 #include <string>
 
+#include "log/messages.h"
+
 #include "nhttp_enum.h"
 #include "nhttp_uri_norm.h"
 
@@ -271,6 +273,7 @@ int32_t UriNormalizer::norm_utf8_processing(const Field& input, uint8_t* out_buf
 uint8_t UriNormalizer::reduce_to_eight_bits(uint16_t value,
     const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions, NHttpEventGen& events)
 {
+    // FIXIT-M are values <= 0xFF subject to the unicode map?
     if (value <= 0xFF)
         return value;
     if (!uri_param.iis_unicode)
@@ -491,5 +494,114 @@ void UriNormalizer::load_default_unicode_map(uint8_t map[65536])
         const uint16_t ucode = strtol(token.c_str(), nullptr, 16);
         map[ucode] = strtol(token.c_str()+5, nullptr, 16);
     }
+}
+
+bool UriNormalizer::advance_to_code_page(FILE* file, int page_to_use)
+{
+    const char* WHITE_SPACE = " \t\n\r";
+    const int MAX_BUFFER = 7;
+
+    // Proceed line-by-line through the file until we find the desired code page number
+    char buffer[MAX_BUFFER];
+    while (fgets(buffer, MAX_BUFFER, file) != nullptr)
+    {
+        // Skip past the end of the line
+        if (buffer[strlen(buffer)-1] != '\n')
+        {
+            int skip_char;
+            while (((skip_char = fgetc(file)) != EOF) && (skip_char != '\n'));
+        }
+
+        // Code page number will always be first token on its line
+        char* unused;
+        const char* token = strtok_r(buffer, WHITE_SPACE, &unused);
+
+        // Skip empty lines, comments, and lines of code points
+        if ((token == nullptr) || (token[0] == '#') || strchr(token, ':'))
+            continue;
+
+        // We now have a code page number
+        char* end;
+        const int latest_page = strtol(token, &end, 10);
+        if (*end != '\0')
+            continue;
+
+        if (latest_page == page_to_use)
+        {
+            // The next line in the file will be the desired code page
+            return true;
+        }
+    }
+    // The requested code page is not in the file
+    return false;
+}
+
+bool UriNormalizer::map_code_points(FILE* file, uint8_t* map)
+{
+    // FIXIT-L file read error in middle of code points not recognized as error
+    uint8_t buffer[8];
+    for (bool first = true; true; first = false)
+    {
+        // Error if list of code points ends before it begins
+        if ((fgets((char*)buffer, 8, file) == nullptr) || (buffer[0] == '\n'))
+            return !first;
+
+        // expect HHHH:HH format
+        if ((strlen((char*)buffer) != 7) ||
+            (as_hex[buffer[0]] == -1)    ||
+            (as_hex[buffer[1]] == -1)    ||
+            (as_hex[buffer[2]] == -1)    ||
+            (as_hex[buffer[3]] == -1)    ||
+            (buffer[4] != ':')           ||
+            (as_hex[buffer[5]] == -1)    ||
+            (as_hex[buffer[6]] == -1))
+        {
+            return false;
+        }
+
+        const uint16_t code_point = (as_hex[buffer[0]] << 12) |
+                                    (as_hex[buffer[1]] << 8)  |
+                                    (as_hex[buffer[2]] << 4)  |
+                                     as_hex[buffer[3]];
+        const uint8_t ascii_map = (as_hex[buffer[5]] << 4) | as_hex[buffer[6]];
+
+        map[code_point] = ascii_map;
+
+        // Skip following space
+        const int next = fgetc(file);
+        if ((next == EOF) || (next == '\n'))
+            return true;
+        if (next != ' ')
+            return false;
+    }
+}
+
+void UriNormalizer::load_unicode_map(uint8_t map[65536], const char* filename, int code_page)
+{
+    memset(map, 0xFF, 65536);
+
+    FILE* file = fopen(filename, "r");
+    if (file == nullptr)
+    {
+        ParseError("Cannot open unicode map file %s", filename);
+        return;
+    }
+
+    // Advance file to the desired code page
+    if (!advance_to_code_page(file, code_page))
+    {
+        ParseError("Did not find code page %d in unicode map file %s", code_page, filename);
+        fclose(file);
+        return;
+    }
+
+    if (!map_code_points(file, map))
+    {
+        ParseError("Error while reading code page %d in unicode map file %s", code_page, filename);
+        fclose(file);
+        return;
+    }
+
+    fclose(file);
 }
 
