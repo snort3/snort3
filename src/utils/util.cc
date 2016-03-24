@@ -282,7 +282,7 @@ void CreatePidFile(pid_t pid)
             if (fcntl(lock_fd, F_SETLK, &lock) == -1)
             {
                 ClosePidFile();
-                ParseError("Failed to Lock PID File \"%s\" for PID \"%d\"\n",
+                ParseError("Failed to Lock PID File \"%s\" for PID \"%d\"",
                     snort_conf->pid_filename.c_str(), (int)pid);
                 return;
             }
@@ -354,7 +354,7 @@ void SetUidGid(int user_id, int group_id)
                 " support unprivileged operation.\n", DAQ_GetType());
 
         else if (setgid(group_id) < 0)
-            ParseError("Cannot set gid: %d\n", group_id);
+            ParseError("Cannot set gid: %d", group_id);
 
         else
             LogMessage("Set gid to %d\n", group_id);
@@ -367,7 +367,7 @@ void SetUidGid(int user_id, int group_id)
                 " support unprivileged operation.\n", DAQ_GetType());
 
         else if (setuid(user_id) < 0)
-            ParseError("Can not set uid: %d\n", user_id);
+            ParseError("Can not set uid: %d", user_id);
 
         else
             LogMessage("Set uid to %d\n", user_id);
@@ -481,13 +481,13 @@ char* read_infile(const char* key, const char* fname)
 
     if (fd < 0)
     {
-        ParseError("can't open %s = %s: %s\n", key, fname, get_error(errno));
+        ParseError("can't open %s = %s: %s", key, fname, get_error(errno));
         return nullptr;
     }
 
     if (fstat(fd, &buf) < 0)
     {
-        ParseError("can't stat %s: %s\n", fname, get_error(errno));
+        ParseError("can't stat %s: %s", fname, get_error(errno));
         return nullptr;
     }
 
@@ -497,14 +497,14 @@ char* read_infile(const char* key, const char* fname)
 
     if (cc < 0)
     {
-        ParseError("read %s: %s\n", fname, get_error(errno));
+        ParseError("read %s: %s", fname, get_error(errno));
         free(cp);
         return nullptr;
     }
 
     if (cc != buf.st_size)
     {
-        ParseError("short read %s (%d != %d)\n", fname, cc, (int)buf.st_size);
+        ParseError("short read %s (%d != %d)", fname, cc, (int)buf.st_size);
         free(cp);
         return nullptr;
     }
@@ -824,7 +824,7 @@ void SetChroot(std::string directory, std::string& logstore)
 
     if ( logstore.empty() )
     {
-        ParseError("Null log directory\n");
+        ParseError("Null log directory");
         return;
     }
 
@@ -837,7 +837,7 @@ void SetChroot(std::string directory, std::string& logstore)
     /* change to the directory */
     if (chdir(directory.c_str()) != 0)
     {
-        ParseError("SetChroot: Can not chdir to \"%s\": %s\n", directory.c_str(),
+        ParseError("SetChroot: Can not chdir to \"%s\": %s", directory.c_str(),
             get_error(errno));
         return;
     }
@@ -847,7 +847,7 @@ void SetChroot(std::string directory, std::string& logstore)
 
     if (absdir == NULL)
     {
-        ParseError("NULL Chroot found\n");
+        ParseError("NULL Chroot found");
         return;
     }
 
@@ -858,7 +858,7 @@ void SetChroot(std::string directory, std::string& logstore)
     /* make the chroot call */
     if (chroot(absdir) < 0)
     {
-        ParseError("Can not chroot to \"%s\": absolute: %s: %s\n",
+        ParseError("Can not chroot to \"%s\": absolute: %s: %s",
             directory.c_str(), absdir, get_error(errno));
         return;
     }
@@ -869,7 +869,7 @@ void SetChroot(std::string directory, std::string& logstore)
     /* change to "/" in the new directory */
     if (chdir("/") < 0)
     {
-        ParseError("Can not chdir to \"/\" after chroot: %s\n",
+        ParseError("Can not chdir to \"/\" after chroot: %s",
             get_error(errno));
         return;
     }

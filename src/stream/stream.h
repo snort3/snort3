@@ -48,24 +48,6 @@
 #define STREAM_CONFIG_IPS                      0x00000400
 #define STREAM_CONFIG_NO_ASYNC_REASSEMBLY      0x00000800
 
-// FIXIT-L some of this stuff can be better encapsulated
-
-struct StreamGlobalConfig
-{
-    uint32_t prune_log_max;
-    uint32_t flags;
-
-    StreamGlobalConfig();
-};
-
-struct StreamConfig
-{
-    class FlowControl* fc;
-    class Stream* stream;
-
-    struct StreamGlobalConfig* global_config;
-};
-
 // shared stream state
 extern THREAD_LOCAL class FlowControl* flow_con;
 extern const PegInfo base_pegs[];

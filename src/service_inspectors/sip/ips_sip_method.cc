@@ -175,13 +175,13 @@ bool SipMethodModule::set(const char*, Value& v, SnortConfig*)
 
         /*Only one method is allowed with !*/
         if (negated && (++num_tokens > 1))
-            ParseError("Only one method is allowed with ! for sip_method\n");
+            ParseError("Only one method is allowed with ! for sip_method");
 
         method = add_sip_method(tok);
 
         if(!method)
         {
-            ParseError("Failed to add a new method to sip_method\n");
+            ParseError("Failed to add a new method to sip_method");
             return false;
         }
 

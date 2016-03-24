@@ -101,7 +101,7 @@ static void ExpandBrackets(char **pii)
     // Brackets at the beginning have nothing to modify.
     if (bracket_index == *pii)
     {
-        ParseError("sd_pattern \"%s\" starts with curly brackets which have nothing to modify.\n", *pii);
+        ParseError("sd_pattern \"%s\" starts with curly brackets which have nothing to modify.", *pii);
     }
 
     // Check for various error cases. Total up the # of bytes needed in new pattern
@@ -120,18 +120,18 @@ static void ExpandBrackets(char **pii)
             (*(bracket_index-1) == '}') &&
             (*(bracket_index-2) != '\\') )
         {
-            ParseError("sd_pattern \"%s\" contains curly brackets which have nothing to modify.\n", *pii);
+            ParseError("sd_pattern \"%s\" contains curly brackets which have nothing to modify.", *pii);
         }
 
         // Get the number from inside the brackets
         repetitions = strtoul(bracket_index+1, &endptr, 10);
         if (*endptr != '}' && *endptr != '\0')
         {
-            ParseError("sd_pattern \"%s\" contains curly brackets with non-digits inside.\n", *pii);
+            ParseError("sd_pattern \"%s\" contains curly brackets with non-digits inside.", *pii);
         }
         else if (*endptr == '\0')
         {
-            ParseError("sd_pattern \"%s\" contains an unterminated curly bracket.\n", *pii);
+            ParseError("sd_pattern \"%s\" contains an unterminated curly bracket.", *pii);
         }
 
         // The brackets look OK. Increase the rep count.

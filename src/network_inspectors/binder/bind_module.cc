@@ -213,7 +213,7 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
     {
         if ( !work )
         {
-            ParseError("invalid %s[%d]\n", fqn, idx);
+            ParseError("invalid %s[%d]", fqn, idx);
             return true;
         }
 

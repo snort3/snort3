@@ -167,7 +167,7 @@ bool SipStatCodeModule::set(const char*, Value& v, SnortConfig*)
             if ((statCode > MAX_STAT_CODE) || ((statCode > NUM_OF_RESPONSE_TYPES - 1) &&
                 (statCode < MIN_STAT_CODE)))
             {
-                ParseError("Status code specified is not a 3 digit number or 1\n");
+                ParseError("Status code specified is not a 3 digit number or 1");
                 return false;
             }
             ssod.stat_codes[num_tokens] = (uint16_t)statCode;

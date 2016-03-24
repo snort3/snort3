@@ -47,7 +47,7 @@ public:
     { acsmFree2(obj); }
 
     void set_opt(int) override
-    { acsm_enable_dfa(obj); }
+    { obj->enable_dfa(); }
 
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
@@ -63,7 +63,10 @@ public:
         const uint8_t* T, int n, MpseMatch match,
         void* context, int* current_state) override
     {
-        return acsmSearchSparseDFA(obj, T, n, match, context, current_state);
+        if ( obj->dfa_enabled() )
+            return acsm_search_dfa_sparse(obj, T, n, match, context, current_state);
+
+        return acsm_search_nfa(obj, T, n, match, context, current_state);
     }
 
     int print_info() override

@@ -1096,9 +1096,6 @@ ACSM_STRUCT2* acsmNew2(const MpseAgent* agent, int format)
     return p;
 }
 
-void acsm_enable_dfa(ACSM_STRUCT2* acsm)
-{ acsm->dfa = true; }
-
 /*
 *   Add a pattern to the list of patterns for this state machine
 *
@@ -1358,7 +1355,7 @@ int acsmCompile2(
 /*
 *   Get the NextState from the NFA, all NFA storage formats use this
 */
-static inline acstate_t SparseGetNextStateNFA(acstate_t* ps, acstate_t state, unsigned input)
+static inline acstate_t get_next_state_nfa(acstate_t* ps, acstate_t state, unsigned input)
 {
     acstate_t fmt;
     acstate_t n;
@@ -1490,7 +1487,8 @@ static inline acstate_t SparseGetNextStateNFA(acstate_t* ps, acstate_t state, un
 /*
 *   Get the NextState from the DFA Next State Transition table
 *   Full and banded are supported separately, this is for
-*   sparse and sparse-bands
+*   sparse and sparse-bands.  But note that for optimization
+*   purposes, a given row may be full.
 */
 static inline acstate_t SparseGetNextStateDFA(
     acstate_t* ps, acstate_t, unsigned input)
@@ -1500,19 +1498,6 @@ static inline acstate_t SparseGetNextStateDFA(
 
     switch ( ps[0] )
     {
-    case  ACF_BANDED:
-    {
-        /* n=ps[2] : number of entries in the band
-           index=ps[3] : index of the 1st entry, sequential thereafter */
-
-        if ( input  <  ps[3]        )
-            return 0;
-        if ( input >= (unsigned)(ps[3]+ps[2]) )
-            return 0;
-
-        return ps[4+input-ps[3]];
-    }
-
     case ACF_FULL:
     {
         return ps[2+input];
@@ -1572,7 +1557,7 @@ static inline acstate_t SparseGetNextStateDFA(
 *
 *   Sparse & Sparse-Banded Matrix search
 */
-int acsmSearchSparseDFA(
+int acsm_search_dfa_sparse(
     ACSM_STRUCT2* acsm, const uint8_t* Tx, int n, MpseMatch match,
     void* context, int* current_state)
 {
@@ -1660,7 +1645,7 @@ void acsmx2_print_qinfo(void)
         state = ps[2u + sindex]; \
     }
 
-int acsmSearchSparseDFA_Full(
+int acsm_search_dfa_full(
     ACSM_STRUCT2* acsm, const uint8_t* Tx, int n, MpseMatch match,
     void* context, int* current_state
     )
@@ -1761,7 +1746,7 @@ int acsmSearchSparseDFA_Full(
         state = ps[2u + sindex]; \
     }
 
-int acsmSearchSparseDFA_Full_All(
+int acsm_search_dfa_full_all(
     ACSM_STRUCT2* acsm, const uint8_t* Tx, int n, MpseMatch match,
     void* context, int* current_state)
 {
@@ -1839,7 +1824,7 @@ int acsmSearchSparseDFA_Full_All(
 *   ps[2] = # elements in band
 *   ps[3] = index of 1st element
 */
-int acsmSearchSparseDFA_Banded(
+int acsm_search_dfa_banded(
     ACSM_STRUCT2* acsm, const uint8_t* Tx, int n, MpseMatch match,
     void* context, int* current_state)
 {
@@ -1911,12 +1896,9 @@ int acsmSearchSparseDFA_Banded(
     return nfound;
 }
 
-/*
-*   Search Text or Binary Data for Pattern matches
-*
-*   Sparse Storage Version
-*/
-int acsmSearchSparseNFA(
+// Search Text or Binary Data for Pattern matches
+
+int acsm_search_nfa(
     ACSM_STRUCT2* acsm, const uint8_t* Tx, int n, MpseMatch match,
     void* context, int* current_state)
 {
@@ -1947,7 +1929,7 @@ int acsmSearchSparseNFA(
 
         Tchar = xlatcase[ *T ];
 
-        while ( (nstate=SparseGetNextStateNFA(NextState[state],state,Tchar))==ACSM_FAIL_STATE2 )
+        while ( (nstate=get_next_state_nfa(NextState[state],state,Tchar))==ACSM_FAIL_STATE2 )
             state = FailState[state];
 
         state = nstate;
@@ -2293,31 +2275,21 @@ static int acsmSearch2(
     void* context, int* current_state)
 {
     if ( !acsm->dfa )
-        return acsmSearchSparseNFA(acsm, Tx, n, match, context, current_state);
+        return acsm_search_nfa(acsm, Tx, n, match, context, current_state);
 
     switch ( acsm->acsmFormat )
     {
     case ACF_FULL:
-        return acsmSearchSparseDFA_Full(acsm, Tx, n, match, context, current_state);
+        return acsm_search_dfa_full(acsm, Tx, n, match, context, current_state);
 
     case ACF_BANDED:
-        return acsmSearchSparseDFA_Banded(acsm, Tx, n, match, context, current_state);
+        return acsm_search_dfa_banded(acsm, Tx, n, match, context, current_state);
 
     case ACF_SPARSE:
     case ACF_SPARSE_BANDS:
-        return acsmSearchSparseDFA(acsm, Tx, n, match, context, current_state);
+        return acsm_search_dfa_sparse(acsm, Tx, n, match, context, current_state);
     }
     return 0;
-}
-
-static int acsmSearchAll2(
-    ACSM_STRUCT2* acsm, uint8_t* Tx, int n, MpseMatch match,
-    void* context, int* current_state)
-{
-    if ( acsm->acsmFormat == ACF_FULL )
-        return acsmSearchSparseDFA_Full_All(acsm, Tx, n, match, context, current_state);
-
-    return acsmSearch2(acsm, Tx, n, match, context, current_state);
 }
 
 /*

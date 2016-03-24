@@ -122,14 +122,14 @@ void SIP_ParseMethods(const char* cur_tokenp, uint32_t* methodsConfig, SIPMethod
         if (SIP_AddMethodToList(cur_tokenp,
             StandardMethods[i_method].methodFlag, pmethods) == NULL)
         {
-            ParseError("Failed to add SIP method: %s.\n", cur_tokenp);
+            ParseError("Failed to add SIP method: %s.", cur_tokenp);
         }
     }
     else
     {
         if (SIP_AddUserDefinedMethod(cur_tokenp, methodsConfig, pmethods) == NULL)
         {
-            ParseError("Failed to add user defined SIP method: %s.\n", cur_tokenp);
+            ParseError("Failed to add user defined SIP method: %s.", cur_tokenp);
         }
     }
 }

@@ -101,11 +101,10 @@ CodecManager::CodecApiWrapper& CodecManager::get_api_wrapper(const CodecApi* cd_
 void CodecManager::add_plugin(const CodecApi* api)
 {
     if (!api->ctor)
-        ParseError("CodecApi ctor() for Codec %s: ctor() must be implemented\n",
-            api->base.name);
+        ParseError("CodecApi ctor() for Codec %s: ctor() must be implemented", api->base.name);
+
     if (!api->dtor)
-        ParseError("CodecApi ctor() for Codec %s: ctor() must be implemented\n",
-            api->base.name);
+        ParseError("CodecApi ctor() for Codec %s: ctor() must be implemented", api->base.name);
 
     CodecApiWrapper wrap;
     wrap.api = api;
@@ -156,7 +155,7 @@ void CodecManager::instantiate(CodecApiWrapper& wrap, Module* m, SnortConfig*)
         const CodecApi* const cd_api = wrap.api;
 
         if (codec_id >= s_protocols.size())
-            ParseError("A maximum of 256 codecs can be registered\n");
+            ParseError("A maximum of 256 codecs can be registered");
 
         if (cd_api->pinit)
             cd_api->pinit();
@@ -235,7 +234,7 @@ void CodecManager::thread_init(SnortConfig* sc)
     }
 
     if (!grinder)
-        ParseError("Unable to find a Codec with data link type %d\n", daq_dlt);
+        ParseError("Unable to find a Codec with data link type %d", daq_dlt);
 
     if ( s_rand )
         rand_close(s_rand);
@@ -246,7 +245,7 @@ void CodecManager::thread_init(SnortConfig* sc)
     s_rand = rand_open();
 
     if ( !s_rand )
-        ParseError("rand_open() failed.\n");
+        ParseError("rand_open() failed.");
 
     rand_get(s_rand, s_id_pool.data(), s_id_pool.size());
 }

@@ -101,7 +101,7 @@ void config_set_var(SnortConfig* sc, const char* val)
             {
                 if (strncasecmp(tmp->name, val, equal_ptr - val) == 0)
                 {
-                    ParseError("Duplicate variable name: %s.\n", tmp->name);
+                    ParseError("Duplicate variable name: %s.", tmp->name);
                     free(node);
                     return;
                 }

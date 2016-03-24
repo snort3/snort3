@@ -594,7 +594,7 @@ static int fpFinishPortGroupRule(
 
             if ( !pg->mpse[pmd->pm_type] )
             {
-                ParseError("Failed to create pattern matcher for %d\n", pmd->pm_type);
+                ParseError("Failed to create pattern matcher for %d", pmd->pm_type);
                 return -1;
             }
             mpse_count++;
@@ -1493,7 +1493,7 @@ static void fpBuildServicePortGroups(
 
         if ( !pg )
         {
-            ParseError("*** failed to create and find a port group for '%s'\n",srvc);
+            ParseError("*** failed to create and find a port group for '%s'",srvc);
             continue;
         }
         int16_t id = FindProtocolReference(srvc);

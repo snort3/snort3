@@ -199,7 +199,7 @@ void EventManager::instantiate(
 
     if ( !p )
     {
-        ParseError("unknown logger %s\n", name);
+        ParseError("unknown logger %s", name);
         return;
     }
 

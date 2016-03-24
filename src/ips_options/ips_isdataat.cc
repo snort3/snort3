@@ -213,7 +213,7 @@ static void isdataat_parse(const char* data, IsDataAtData* idx)
 
         if (offset == endp)
         {
-            ParseError("unable to parse as byte value %s\n", toks[0]);
+            ParseError("unable to parse as byte value %s", toks[0]);
             return;
         }
 

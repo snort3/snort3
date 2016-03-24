@@ -125,6 +125,12 @@ struct ACSM_STRUCT2
     int compress_states;
 
     bool dfa;
+
+    void enable_dfa()
+    { dfa = true; }
+
+    bool dfa_enabled()
+    { return dfa; }
 };
 
 /*
@@ -140,25 +146,24 @@ int acsmAddPattern2(
 
 int acsmCompile2(struct SnortConfig*, ACSM_STRUCT2*);
 
-int acsmSearchSparseDFA_Full(
+int acsm_search_nfa(
     ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
-int acsmSearchSparseDFA_Banded(
+int acsm_search_dfa_sparse(
     ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
-int acsmSearchSparseDFA(
+int acsm_search_dfa_banded(
     ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
-int acsmSearchSparseNFA(
+int acsm_search_dfa_full(
     ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
-int acsmSearchSparseDFA_Full_All(
+int acsm_search_dfa_full_all(
     ACSM_STRUCT2*, const uint8_t* Tx, int n, MpseMatch, void* context, int* current_state);
 
 void acsmFree2(ACSM_STRUCT2*);
 int acsmPatternCount2(ACSM_STRUCT2*);
 void acsmCompressStates(ACSM_STRUCT2*, int);
-void acsm_enable_dfa(ACSM_STRUCT2*);
 
 void acsmPrintInfo2(ACSM_STRUCT2* p);
 

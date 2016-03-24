@@ -356,7 +356,7 @@ void SfSocketLogger::configure(RuleId& r)
     OptTreeNode* otn = OptTreeNode_Search(r.gid, r.sid);
 
     if ( !otn )
-        ParseError("Unable to find OptTreeNode for %u:%u\n", r.gid, r.sid);
+        ParseError("Unable to find OptTreeNode for %u:%u", r.gid, r.sid);
 
     else
         EventManager::add_output(&otn->outputFuncs, this);

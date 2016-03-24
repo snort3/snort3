@@ -49,7 +49,7 @@ public:
     void set_opt(int flag) override
     {
         acsmCompressStates(obj, flag);
-        acsm_enable_dfa(obj);
+        obj->enable_dfa();
     }
 
     int add_pattern(
@@ -66,14 +66,20 @@ public:
         const uint8_t* T, int n, MpseMatch match,
         void* context, int* current_state) override
     {
-        return acsmSearchSparseDFA_Full(obj, T, n, match, context, current_state);
+        if ( obj->dfa_enabled() )
+            return acsm_search_dfa_full(obj, T, n, match, context, current_state);
+
+        return acsm_search_nfa(obj, T, n, match, context, current_state);
     }
 
     int search_all(
         const uint8_t* T, int n, MpseMatch match,
         void* context, int* current_state) override
     {
-        return acsmSearchSparseDFA_Full_All(obj, T, n, match, context, current_state);
+        if ( !obj->dfa_enabled() )
+            return 0;  // nfa + all not supported
+
+        return acsm_search_dfa_full_all(obj, T, n, match, context, current_state);
     }
 
     int print_info() override

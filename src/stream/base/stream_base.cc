@@ -125,12 +125,6 @@ static inline bool is_eligible(Packet* p)
     return true;
 }
 
-StreamGlobalConfig::StreamGlobalConfig()
-{
-    flags = 0;
-    prune_log_max = 1048576;
-}
-
 //-------------------------------------------------------------------------
 // inspector stuff
 //-------------------------------------------------------------------------
