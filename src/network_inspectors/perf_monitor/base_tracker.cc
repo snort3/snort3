@@ -29,10 +29,8 @@
 
 using namespace std;
 
-static THREAD_LOCAL time_t cur_time;
-
 BaseTracker::BaseTracker(SFPERF* perf) : PerfTracker(perf,
-        perf->perf_flags & SFPERF_SUMMARY_BASE, perf->file ? BASE_FILE : nullptr)
+        perf->perf_flags & SFPERF_SUMMARY_BASE, perf->output == PERF_FILE ? BASE_FILE : nullptr)
 {
     csv_header.clear();
 
@@ -54,21 +52,19 @@ BaseTracker::BaseTracker(SFPERF* perf) : PerfTracker(perf,
 
 void BaseTracker::reset()
 {
-    if (fh)
+    if (fh && config->format == PERF_CSV)
     {
         fwrite(csv_header.c_str(), csv_header.length(), 1, fh);
         fflush(fh);
     }
 }
 
-void BaseTracker::update(Packet* p)
-{
-    cur_time = p->pkth->ts.tv_sec;
-}
-
 void BaseTracker::process(bool summary)
 {
     char buf[32]; // > log10(2^64 - 1)
+
+    if (!fh)
+        return;
 
     string statLine;
     statLine.clear();
@@ -81,20 +77,20 @@ void BaseTracker::process(bool summary)
         vector<unsigned> idxs = config->mod_peg_idxs.at(i);
         PegCount* pegs = m->get_counts();
 
-        for (auto& idx : idxs)
+        if (config->format == PERF_CSV)
         {
-            if (fh)
+            for (auto& idx : idxs)
             {
                 snprintf(buf, sizeof(buf), ",%" PRIu64, pegs[idx]);
                 statLine += buf;
             }
         }
-        if (config->perf_flags & SFPERF_CONSOLE)
-            m->show_interval_stats(idxs);
+        else if(config->format == PERF_TEXT)
+            m->show_interval_stats(idxs, fh);
         if (!summary)
             m->sum_stats();
     }
-    if (fh)
+    if (config->format == PERF_CSV)
     {
         statLine += "\n";
         fwrite(statLine.c_str(), statLine.length(), 1, fh);

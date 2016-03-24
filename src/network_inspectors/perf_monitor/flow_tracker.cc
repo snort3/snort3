@@ -27,7 +27,7 @@ THREAD_LOCAL FlowTracker* perf_flow;
 
 FlowTracker::FlowTracker(SFPERF* perf) : PerfTracker(perf,
         perf->perf_flags & SFPERF_SUMMARY_FLOW,
-        perf->flow_file ? FLOW_FILE : nullptr) { }
+        perf->output == PERF_FILE ? FLOW_FILE : nullptr) { }
 
 FlowTracker::~FlowTracker()
 {
@@ -81,6 +81,9 @@ void FlowTracker::reset()
         sfFlow.portUdpDst = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (SF_MAX_PORT+1));
         sfFlow.typeIcmp = (uint64_t*)SnortAlloc(sizeof(uint64_t) * 256);
 
+        if ( config->format == PERF_CSV )
+            LogFlowPerfHeader(fh);
+
         first = false;
     }
     else
@@ -116,8 +119,7 @@ void FlowTracker::process(bool summarize)
     if (summarize && !summary)
         return;
 
-    ProcessFlowStats(&sfFlow, fh,
-        config->perf_flags & SFPERF_CONSOLE);
+    ProcessFlowStats(&sfFlow, fh, config->format, cur_time);
 
     if ( !summary )
         reset();

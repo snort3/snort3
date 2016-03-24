@@ -28,6 +28,8 @@
 #include "main/snort_types.h"
 #include "sfip/sfip_t.h"
 
+#include <cstdio>
+
 #define LOG_DIV "--------------------------------------------------"
 
 #ifndef __GNUC__
@@ -55,6 +57,7 @@ SO_PUBLIC void ParseError(const char*, ...) __attribute__((format (printf, 1, 2)
 SO_PUBLIC NORETURN void ParseAbort(const char*, ...) __attribute__((format (printf, 1, 2)));
 
 SO_PUBLIC void LogMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
+SO_PUBLIC void LogMessage(FILE* fh, const char*, ...) __attribute__((format (printf, 2, 3)));
 SO_PUBLIC void WarningMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void ErrorMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 

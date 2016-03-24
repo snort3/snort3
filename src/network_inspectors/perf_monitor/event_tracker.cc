@@ -25,10 +25,19 @@
 
 THREAD_LOCAL EventTracker* perf_event;
 
+static std::string csv_header =
+    "#timestamp,qualified_events,non_qualified_events\n";
+
 void EventTracker::reset()
 {
     event_counts.NQEvents = 0;
     event_counts.QEvents  = 0;
+    event_counts.TotalEvents  = 0;
+    if (fh && config->format == PERF_CSV)
+    {
+        fwrite(csv_header.c_str(), csv_header.length(), 1, fh);
+        fflush(fh);
+    }
 }
 
 void EventTracker::process(bool summarize)
@@ -36,17 +45,24 @@ void EventTracker::process(bool summarize)
     if (summarize & !summary)
         return;
 
-    if (config->perf_flags & SFPERF_CONSOLE)
+    if (config->format == PERF_TEXT)
     {
-        LogLabel("Snort Setwise Event Stats");
-        LogCount("Total Events", event_counts.TotalEvents);
-        LogStat("Qualified Events", event_counts.QEvents, event_counts.TotalEvents);
-        LogStat("Non-Qualified Events", event_counts.NQEvents, event_counts.TotalEvents);
+        LogLabel("Snort Setwise Event Stats", fh);
+        LogCount("Total Events", event_counts.TotalEvents, fh);
+        LogStat("Qualified Events", event_counts.QEvents, event_counts.TotalEvents, fh);
+        LogStat("Non-Qualified Events", event_counts.NQEvents, event_counts.TotalEvents, fh);
 
-        event_counts.NQEvents    = 0;
-        event_counts.QEvents     = 0;
-        event_counts.TotalEvents = 0;
     }
+    else if (config->format == PERF_CSV)
+    {
+        fprintf(fh, "%ld,%" PRIu64 ",%" PRIu64 "\n",
+            (long)cur_time, event_counts.QEvents, event_counts.NQEvents);
+        fflush(fh);
+    }
+
+    event_counts.NQEvents    = 0;
+    event_counts.QEvents     = 0;
+    event_counts.TotalEvents = 0;
 }
 
 void EventTracker::UpdateNQEvents()

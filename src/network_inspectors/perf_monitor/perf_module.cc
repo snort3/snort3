@@ -56,37 +56,23 @@ static const Parameter s_params[] =
     { "flow_ports", Parameter::PT_INT, "0:", "1023",
       "maximum ports to track" },
 
-    { "reset", Parameter::PT_BOOL, nullptr, "true",
-      "reset (clear) statistics after each reporting interval" },
-
-#ifndef LINUX_SMP
-    { "max", Parameter::PT_BOOL, nullptr, "false",
-      "calculate theoretical maximum performance" },
-#endif
-
-    { "console", Parameter::PT_BOOL, nullptr, "false",
-      "output to console" },
-
     { "events", Parameter::PT_BOOL, nullptr, "false",
       "report on qualified vs non-qualified events" },
-
-    { "file", Parameter::PT_BOOL, nullptr, "false",
-      "output base stats to " BASE_FILE " instead of stdout" },
 
     { "flow", Parameter::PT_BOOL, nullptr, "false",
       "enable traffic statistics" },
 
-    { "flow_file", Parameter::PT_BOOL, nullptr, "false",
-      "output traffic statistics to a " FLOW_FILE " instead of stdout" },
-
     { "flow_ip", Parameter::PT_BOOL, nullptr, "false",
       "enable statistics on host pairs" },
 
-    { "flow_ip_file", Parameter::PT_BOOL, nullptr, "false",
-      "output host pair statistics to " FLIP_FILE " instead of stdout" },
+    { "output", Parameter::PT_ENUM, "file | console", "file",
+      "Output location for stats" },
 
     { "modules", Parameter::PT_LIST, module_params, nullptr,
       "gather statistics from the specified modules" },
+
+    { "format", Parameter::PT_ENUM, "csv | text", "csv",
+      "Output format for stats" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -127,53 +113,28 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     {
         config.flow_max_port_to_track = v.get_long();
     }
-    else if ( v.is("reset") )
-        config.base_reset = v.get_bool();
-
-#ifndef LINUX_SMP
-    else if ( v.is("max") )
+    else if ( v.is("output") )
     {
-        if ( v.get_bool() )
-            config.perf_flags |= SFPERF_MAX_BASE_STATS;
+        config.output = (PerfOutput)v.get_long();
     }
-#endif
-    else if ( v.is("console") )
+    else if ( v.is("format") )
     {
-        if ( v.get_bool() )
-            config.perf_flags |= SFPERF_CONSOLE;
+        config.format = (PerfFormat)v.get_long();
     }
     else if ( v.is("events") )
     {
         if ( v.get_bool() )
             config.perf_flags |= SFPERF_EVENT;
     }
-    else if ( v.is("file") )
-        config.file = v.get_bool();
     else if ( v.is("flow") )
     {
         if ( v.get_bool() )
             config.perf_flags |= SFPERF_FLOW;
     }
-    else if ( v.is("flow_file") )
-    {
-        if ( v.get_bool() )
-        {
-            config.perf_flags |= SFPERF_FLOW;
-            config.flow_file = true;
-        }
-    }
     else if ( v.is("flow_ip") )
     {
         if ( v.get_bool() )
             config.perf_flags |= SFPERF_FLOWIP;
-    }
-    else if ( v.is("flow_ip_file") )
-    {
-        if ( v.get_bool() )
-        {
-            config.perf_flags |= SFPERF_FLOWIP;
-            config.flowip_file = true;
-        }
     }
     else if ( v.is("name") )
     {
@@ -182,6 +143,9 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("pegs") )
     {
         mod_pegs = v.get_string();
+    }
+    else if ( v.is("modules") )
+    {
         return true;
     }
     else

@@ -145,7 +145,7 @@ public:
     { return false; }
 
     virtual void sum_stats();
-    virtual void show_interval_stats(IndexVec&);
+    virtual void show_interval_stats(IndexVec&, FILE*);
     virtual void show_stats();
     virtual void reset_stats();
 

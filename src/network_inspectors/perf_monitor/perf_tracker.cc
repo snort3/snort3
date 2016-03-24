@@ -102,11 +102,13 @@ void PerfTracker::open(bool append)
         if (!fh)
             ErrorMessage("perfmonitor: Cannot open stats file '%s'.", file_name);
     }
+    else
+        fh = stdout;
 }
 
 void PerfTracker::close()
 {
-    if (fh)
+    if (fh && fh != stdout)
     {
         fclose(fh);
         fh = nullptr;
@@ -294,7 +296,7 @@ static bool sfRotateFile(const char* old_file, FILE* old_fh,
 
 void PerfTracker::rotate()
 {
-    if (fh)
+    if (fh && fh != stdout)
     {
         bool ret = sfRotateFile(fname.c_str(), fh, config->max_file_size);
         if (ret != 0)
@@ -305,7 +307,7 @@ void PerfTracker::rotate()
 
 void PerfTracker::auto_rotate()
 {
-    if (fh && sfCheckFileSize(fh, config->max_file_size))
+    if (fh && fh != stdout && sfCheckFileSize(fh, config->max_file_size))
         rotate();
 }
 

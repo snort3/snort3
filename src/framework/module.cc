@@ -86,10 +86,10 @@ void Module::sum_stats()
     }
 }
 
-void Module::show_interval_stats(IndexVec& peg_idxs)
+void Module::show_interval_stats(IndexVec& peg_idxs, FILE* fh)
 {
     if ( num_counts > 0 )
-        ::show_stats(get_counts(), get_pegs(), peg_idxs, get_name());
+        ::show_stats(get_counts(), get_pegs(), peg_idxs, get_name(), fh);
 }
 
 void Module::show_stats()

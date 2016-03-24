@@ -75,21 +75,21 @@ double CalcPct(uint64_t cnt, uint64_t total)
 
 //-------------------------------------------------------------------------
 
-static inline void LogSeparator()
+static inline void LogSeparator(FILE* fh = stdout)
 {
-    LogMessage("%s\n", STATS_SEPARATOR);
+    LogMessage(fh, "%s\n", STATS_SEPARATOR);
 }
 
-void LogLabel(const char* s)
+void LogLabel(const char* s, FILE* fh)
 {
     if ( *s == ' ' )
     {
-        LogMessage("%s\n", s);
+        LogMessage(fh, "%s\n", s);
     }
     else
     {
-        LogSeparator();
-        LogMessage("%s\n", s);
+        LogSeparator(fh);
+        LogMessage(fh, "%s\n", s);
     }
 }
 
@@ -98,22 +98,22 @@ void LogValue(const char* s, const char* v)
     LogMessage("%25.25s: %s\n", s, v);
 }
 
-void LogCount(const char* s, uint64_t c)
+void LogCount(const char* s, uint64_t c, FILE* fh)
 {
     if ( c )
-        LogMessage("%25.25s: " STDu64 "\n", s, c);
+        LogMessage(fh, "%25.25s: " STDu64 "\n", s, c);
 }
 
-void LogStat(const char* s, uint64_t n, uint64_t tot)
+void LogStat(const char* s, uint64_t n, uint64_t tot, FILE* fh)
 {
     if ( n )
-        LogMessage("%25.25s: " FMTu64("-12") "\t(%7.3f%%)\n", s, n, CalcPct(n, tot));
+        LogMessage(fh, "%25.25s: " FMTu64("-12") "\t(%7.3f%%)\n", s, n, CalcPct(n, tot));
 }
 
-void LogStat(const char* s, double d)
+void LogStat(const char* s, double d, FILE* fh)
 {
     if ( d )
-        LogMessage("%25.25s: %g\n", s, d);
+        LogMessage(fh, "%25.25s: %g\n", s, d);
 }
 
 //-------------------------------------------------------------------------
@@ -351,18 +351,19 @@ void sum_stats(
 }
 
 static bool show_stat(
-    bool head, PegCount count, const char* name, const char* module_name)
+    bool head, PegCount count, const char* name, const char* module_name,
+    FILE* fh = stdout)
 {
     if ( !count )
         return head;
 
     if ( module_name && !head )
     {
-        LogLabel(module_name);
+        LogLabel(module_name, fh);
         head = true;
     }
 
-    LogCount(name, count);
+    LogCount(name, count, fh);
     return head;
 }
 
@@ -377,12 +378,12 @@ void show_stats(
 
 void show_stats(
     PegCount* pegs, const PegInfo* info,
-    IndexVec& peg_idxs, const char* module_name)
+    IndexVec& peg_idxs, const char* module_name, FILE* fh)
 {
     bool head = false;
 
     for ( auto& i : peg_idxs)
-        head = show_stat(head, pegs[i], info[i].name, module_name);
+        head = show_stat(head, pegs[i], info[i].name, module_name, fh);
 }
 
 void show_percent_stats(
@@ -404,7 +405,7 @@ void show_percent_stats(
             head = true;
         }
 
-        LogStat(s, c, pegs[0]);
+        LogStat(s, c, pegs[0], stdout);
     }
 }
 

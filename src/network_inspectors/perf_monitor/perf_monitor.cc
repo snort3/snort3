@@ -106,8 +106,6 @@ void PerfMonitor::show(SnortConfig*)
         config.perf_flags & SFPERF_SUMMARY_BASE ? " (SUMMARY)" : "");
     if (config.perf_flags & SFPERF_BASE)
     {
-        LogMessage("    Base Stats File:  %s\n",
-            config.file ? BASE_FILE : "INACTIVE");
         LogMessage("    Max Perf Stats:   %s\n",
             (config.perf_flags & SFPERF_MAX_BASE_STATS) ? "ACTIVE" : "INACTIVE");
     }
@@ -117,8 +115,6 @@ void PerfMonitor::show(SnortConfig*)
     if (config.perf_flags & SFPERF_FLOW)
     {
         LogMessage("    Max Flow Port:    %u\n", config.flow_max_port_to_track);
-        LogMessage("    Flow File:        %s\n",
-            config.flow_file ? FLOW_FILE : "INACTIVE");
     }
     LogMessage("  Event Stats:      %s%s\n",
         config.perf_flags & SFPERF_EVENT ? "ACTIVE" : "INACTIVE",
@@ -129,11 +125,25 @@ void PerfMonitor::show(SnortConfig*)
     if (config.perf_flags & SFPERF_FLOWIP)
     {
         LogMessage("    Flow IP Memcap:   %u\n", config.flowip_memcap);
-        LogMessage("    Flow IP File:     %s\n",
-            config.flowip_file ? FLIP_FILE : "INACTIVE");
     }
-    LogMessage("  Console Mode:     %s\n",
-        (config.perf_flags & SFPERF_CONSOLE) ? "ACTIVE" : "INACTIVE");
+    switch(config.output)
+    {
+        case PERF_CONSOLE:
+            LogMessage("    Output Location:  console\n");
+            break;
+        case PERF_FILE:
+            LogMessage("    Output Location:  file\n");
+            break;
+    }
+    switch(config.format)
+    {
+        case PERF_TEXT:
+            LogMessage("    Output Location:  text\n");
+            break;
+        case PERF_CSV:
+            LogMessage("    Output Location:  csv\n");
+            break;
+    }
 }
 
 // FIXIT-L perfmonitor should be logging to one file and writing record type and
@@ -226,7 +236,10 @@ void PerfMonitor::eval(Packet* p)
     if (p)
     {
         for (auto& tracker : *trackers)
+        {
             tracker->update(p);
+            tracker->update_time(p->pkth->ts.tv_sec);
+        }
     }
 
     if (!p || ((config.perf_flags & SFPERF_TIME_COUNT) && !p->is_rebuilt()))

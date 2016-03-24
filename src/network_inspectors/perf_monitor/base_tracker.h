@@ -29,7 +29,6 @@ public:
     BaseTracker(SFPERF* perf);
 
     void reset() override;
-    void update(Packet*) override;
     void process(bool) override;
 
 private:

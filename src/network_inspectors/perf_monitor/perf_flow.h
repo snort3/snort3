@@ -25,6 +25,7 @@
 #ifndef PERF_FLOW_H
 #define PERF_FLOW_H
 
+#include "perf_module.h"
 #include "main/snort_types.h"
 #include "hash/sfxhash.h"
 #include "sfip/sfip_t.h"
@@ -117,8 +118,9 @@ typedef struct _sfflow_stats
 **  Functions for the performance functions to call
 */
 void UpdateFlowStats(SFFLOW*, Packet*);
-void ProcessFlowStats(SFFLOW* sfFlow, FILE* fh, int console);
-void ProcessFlowIPStats(SFFLOW* sfFlow, FILE* fh, int console);
+//FIXIT-M the int should be perf flow - #include cycles
+void ProcessFlowStats(SFFLOW* sfFlow, FILE* fh, PerfFormat format, time_t);
+void ProcessFlowIPStats(SFFLOW* sfFlow, FILE* fh, PerfFormat format);
 void FreeFlowStats(SFFLOW* sfFlow);
 void LogFlowPerfHeader(FILE*);
 

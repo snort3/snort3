@@ -208,6 +208,18 @@ void LogMessage(const char* format,...)
     va_end(ap);
 }
 
+void LogMessage(FILE* fh, const char* format,...)
+{
+    if ( snort_conf && !SnortConfig::log_quiet() )
+    {
+        va_list ap;
+
+        va_start(ap, format);
+        vfprintf(fh, format, ap);
+        va_end(ap);
+    }
+}
+
 /*
  * Function: WarningMessage(const char *, ...)
  *

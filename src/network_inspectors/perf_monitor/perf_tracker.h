@@ -32,6 +32,7 @@ public:
                                     // the names of fields?
 
     virtual void update(Packet*) { }
+    virtual void update_time(time_t time) { cur_time = time; }
     virtual void process(bool /*summary*/) { } //FIXIT-M get rid of this step.
 
     virtual void open(bool append) final;
@@ -46,6 +47,7 @@ protected:
     bool summary;
     FILE* fh = nullptr;
     std::string fname;
+    time_t cur_time;
 
     PerfTracker(SFPERF*, bool summary, const char* tracker_fname);
 };

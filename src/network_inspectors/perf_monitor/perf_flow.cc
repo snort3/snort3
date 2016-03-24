@@ -48,12 +48,13 @@
 #include <string.h>
 
 #include "main/snort_types.h"
+#include "perf_module.h"
 #include "perf_monitor.h"
 #include "protocols/icmp4.h"
 #include "sfip/sf_ip.h"
 #include "utils/util.h"
 
-static void DisplayFlowStats(SFFLOW_STATS* sfFlowStats);
+static void DisplayFlowStats(SFFLOW_STATS* sfFlowStats, FILE*);
 static void WriteFlowStats(SFFLOW_STATS*, FILE*);
 
 typedef struct _sfSingleFlowStatsKey
@@ -197,13 +198,12 @@ void UpdateFlowStats(SFFLOW* sfFlow, Packet* p)
 /*
 *   Analyze/Calc Stats and Display them.
 */
-void ProcessFlowStats(SFFLOW* sfFlow, FILE* fh, int console)
+void ProcessFlowStats(SFFLOW* sfFlow, FILE* fh, PerfFormat format, time_t time)
 {
     static THREAD_LOCAL SFFLOW_STATS sfFlowStats;
     int i;
     double rate, srate, drate, totperc;
     uint64_t tot;
-    time_t clock;
 
     memset(&sfFlowStats, 0x00, sizeof(sfFlowStats));
 
@@ -353,68 +353,63 @@ void ProcessFlowStats(SFFLOW* sfFlow, FILE* fh, int console)
         }
     }
 
-    if (sfFlow->time)
-        clock = sfFlow->time;
-    else
-        time(&clock);
+    sfFlowStats.time = time;
 
-    sfFlowStats.time = clock;
+    if (format == PERF_TEXT)
+        DisplayFlowStats(&sfFlowStats, fh);
 
-    if (console)
-        DisplayFlowStats(&sfFlowStats);
-
-    if (fh)
+    else if (format == PERF_CSV)
         WriteFlowStats(&sfFlowStats, fh);
 }
 
-static void DisplayFlowStats(SFFLOW_STATS* sfFlowStats)
+static void DisplayFlowStats(SFFLOW_STATS* sfFlowStats, FILE* fh)
 {
     int i;
 
-    LogMessage("\n");
-    LogMessage("=========================================\n");
-    LogMessage("Protocol Byte Flows\n");
-    LogMessage("=========================================\n");
-    LogMessage("Protocol    %%Total\n");
-    LogMessage("------------------\n");
-    LogMessage("     TCP    %6.2f\n", sfFlowStats->trafficTCP);
-    LogMessage("     UDP    %6.2f\n", sfFlowStats->trafficUDP);
-    LogMessage("    ICMP    %6.2f\n", sfFlowStats->trafficICMP);
-    LogMessage("   Other    %6.2f\n", sfFlowStats->trafficOTHER);
+    LogMessage(fh, "\n");
+    LogMessage(fh, "=========================================\n");
+    LogMessage(fh, "Protocol Byte Flows\n");
+    LogMessage(fh, "=========================================\n");
+    LogMessage(fh, "Protocol    %%Total\n");
+    LogMessage(fh, "------------------\n");
+    LogMessage(fh, "     TCP    %6.2f\n", sfFlowStats->trafficTCP);
+    LogMessage(fh, "     UDP    %6.2f\n", sfFlowStats->trafficUDP);
+    LogMessage(fh, "    ICMP    %6.2f\n", sfFlowStats->trafficICMP);
+    LogMessage(fh, "   Other    %6.2f\n", sfFlowStats->trafficOTHER);
 
-    LogMessage("\n");
-    LogMessage("=========================================\n");
-    LogMessage("Packet Length Flows\n");
-    LogMessage("=========================================\n");
-    LogMessage("Bytes    %%Total\n");
-    LogMessage("---------------\n");
+    LogMessage(fh, "\n");
+    LogMessage(fh, "=========================================\n");
+    LogMessage(fh, "Packet Length Flows\n");
+    LogMessage(fh, "=========================================\n");
+    LogMessage(fh, "Bytes    %%Total\n");
+    LogMessage(fh, "---------------\n");
     for (i = 1; i < SF_MAX_PKT_LEN + 1; i++)
     {
         if (sfFlowStats->pktLenPercent[i] < 0.1)
             continue;
 
-        LogMessage(" %4d    %6.2f\n", i, sfFlowStats->pktLenPercent[i]);
+        LogMessage(fh, " %4d    %6.2f\n", i, sfFlowStats->pktLenPercent[i]);
     }
 
     if (sfFlowStats->pktLenPercent[SF_MAX_PKT_LEN + 1] >= 0.1)
-        LogMessage(">%4d %6.2f%%\n", SF_MAX_PKT_LEN, sfFlowStats->pktLenPercent[SF_MAX_PKT_LEN +
+        LogMessage(fh, ">%4d %6.2f%%\n", SF_MAX_PKT_LEN, sfFlowStats->pktLenPercent[SF_MAX_PKT_LEN +
             1]);
 
-    LogMessage("\n");
-    LogMessage("=========================================\n");
-    LogMessage("TCP Port Flows : %.2f%% of Total\n", sfFlowStats->trafficTCP);
-    LogMessage("=========================================\n");
+    LogMessage(fh, "\n");
+    LogMessage(fh, "=========================================\n");
+    LogMessage(fh, "TCP Port Flows : %.2f%% of Total\n", sfFlowStats->trafficTCP);
+    LogMessage(fh, "=========================================\n");
     if (sfFlowStats->portflowTCPCount || (sfFlowStats->portflowHighTCP >= 0.1))
     {
         if (sfFlowStats->portflowTCPCount)
         {
-            LogMessage("Port   %%Total     %%Src     %%Dst\n");
-            LogMessage("-------------------------------\n");
+            LogMessage(fh, "Port   %%Total     %%Src     %%Dst\n");
+            LogMessage(fh, "-------------------------------\n");
             for (i = 0; i <= SF_MAX_PORT; i++)
             {
                 if (sfFlowStats->portflowTCP.totperc[i])
                 {
-                    LogMessage("%4d   %6.2f   %6.2f   %6.2f\n",
+                    LogMessage(fh, "%4d   %6.2f   %6.2f   %6.2f\n",
                         i, sfFlowStats->portflowTCP.totperc[i],
                         sfFlowStats->portflowTCP.sport_rate[i],
                         sfFlowStats->portflowTCP.dport_rate[i]);
@@ -425,31 +420,31 @@ static void DisplayFlowStats(SFFLOW_STATS* sfFlowStats)
         if (sfFlowStats->portflowHighTCP >= 0.1)
         {
             if (sfFlowStats->portflowTCPCount)
-                LogMessage("\n");
+                LogMessage(fh, "\n");
 
-            LogMessage("High<->High: %.2f%%\n", sfFlowStats->portflowHighTCP);
+            LogMessage(fh, "High<->High: %.2f%%\n", sfFlowStats->portflowHighTCP);
         }
     }
     else
     {
-        LogMessage("N/A\n");
+        LogMessage(fh, "N/A\n");
     }
 
-    LogMessage("\n");
-    LogMessage("=========================================\n");
-    LogMessage("UDP Port Flows : %.2f%% of Total\n", sfFlowStats->trafficUDP);
-    LogMessage("=========================================\n");
+    LogMessage(fh, "\n");
+    LogMessage(fh, "=========================================\n");
+    LogMessage(fh, "UDP Port Flows : %.2f%% of Total\n", sfFlowStats->trafficUDP);
+    LogMessage(fh, "=========================================\n");
     if (sfFlowStats->portflowUDPCount || (sfFlowStats->portflowHighUDP >= 0.1))
     {
         if (sfFlowStats->portflowUDPCount)
         {
-            LogMessage("Port   %%Total     %%Src     %%Dst\n");
-            LogMessage("-------------------------------\n");
+            LogMessage(fh, "Port   %%Total     %%Src     %%Dst\n");
+            LogMessage(fh, "-------------------------------\n");
             for (i = 0; i <= SF_MAX_PORT; i++)
             {
                 if (sfFlowStats->portflowUDP.totperc[i])
                 {
-                    LogMessage("%4d   %6.2f   %6.2f   %6.2f\n",
+                    LogMessage(fh, "%4d   %6.2f   %6.2f   %6.2f\n",
                         i, sfFlowStats->portflowUDP.totperc[i],
                         sfFlowStats->portflowUDP.sport_rate[i],
                         sfFlowStats->portflowUDP.dport_rate[i]);
@@ -460,39 +455,39 @@ static void DisplayFlowStats(SFFLOW_STATS* sfFlowStats)
         if (sfFlowStats->portflowHighUDP >= 0.1)
         {
             if (sfFlowStats->portflowUDPCount)
-                LogMessage("\n");
+                LogMessage(fh, "\n");
 
-            LogMessage("High<->High: %.2f%%\n", sfFlowStats->portflowHighUDP);
+            LogMessage(fh, "High<->High: %.2f%%\n", sfFlowStats->portflowHighUDP);
         }
     }
     else
     {
-        LogMessage("N/A\n");
+        LogMessage(fh, "N/A\n");
     }
 
-    LogMessage("\n");
-    LogMessage("=========================================\n");
-    LogMessage("ICMP Type Flows : %.2f%% of Total\n", sfFlowStats->trafficICMP);
-    LogMessage("=========================================\n");
+    LogMessage(fh, "\n");
+    LogMessage(fh, "=========================================\n");
+    LogMessage(fh, "ICMP Type Flows : %.2f%% of Total\n", sfFlowStats->trafficICMP);
+    LogMessage(fh, "=========================================\n");
     if (sfFlowStats->flowICMPCount)
     {
-        LogMessage("Type     %%Total\n");
-        LogMessage("---------------\n");
+        LogMessage(fh, "Type     %%Total\n");
+        LogMessage(fh, "---------------\n");
         for (i = 0; i < 256; i++)
         {
             if (sfFlowStats->flowICMP.totperc[i])
             {
-                LogMessage(" %3d     %6.2f\n",
+                LogMessage(fh, " %3d     %6.2f\n",
                     i, sfFlowStats->flowICMP.totperc[i]);
             }
         }
     }
     else
     {
-        LogMessage("N/A\n");
+        LogMessage(fh, "N/A\n");
     }
 
-    LogMessage("\n");
+    LogMessage(fh, "\n");
 }
 
 static void WriteFlowStats(SFFLOW_STATS* sfFlowStats, FILE* fh)
@@ -502,7 +497,7 @@ static void WriteFlowStats(SFFLOW_STATS* sfFlowStats, FILE* fh)
     if (!fh)
         return;
 
-    fprintf(fh, "%u,", (uint32_t)sfFlowStats->time);
+    fprintf(fh, "%ld,", (long)sfFlowStats->time);
 
     fprintf(fh, "%.2f,%.2f,%.2f,%.2f,",
         sfFlowStats->trafficTCP,

@@ -67,7 +67,7 @@ sfSFSValue* FlowIPTracker::findFlowIPStats(const sfip_t* src_addr, const sfip_t*
 
 FlowIPTracker::FlowIPTracker(SFPERF* perf) : PerfTracker(perf,
         perf->perf_flags & SFPERF_SUMMARY_FLOWIP,
-        perf->flowip_file ? FLIP_FILE : nullptr)
+        perf->output == PERF_FILE ? FLIP_FILE : nullptr)
 { }
 
 FlowIPTracker::~FlowIPTracker()
@@ -140,10 +140,10 @@ void FlowIPTracker::DisplayFlowIPStats()
     SFXHASH_NODE* node;
     uint64_t total = 0;
 
-    LogMessage("\n");
-    LogMessage("\n");
-    LogMessage("IP Flows (%d unique IP pairs)\n", sfxhash_count(ipMap));
-    LogMessage("---------------\n");
+    LogMessage(fh, "\n");
+    LogMessage(fh, "\n");
+    LogMessage(fh, "IP Flows (%d unique IP pairs)\n", sfxhash_count(ipMap));
+    LogMessage(fh, "---------------\n");
     for (node = sfxhash_findfirst(ipMap); node; node = sfxhash_findnext(ipMap))
     {
         sfSFSKey* key;
@@ -155,13 +155,13 @@ void FlowIPTracker::DisplayFlowIPStats()
 
         sfip_raw_ntop(key->ipA.family, key->ipA.ip32, ipA, sizeof(ipA));
         sfip_raw_ntop(key->ipB.family, key->ipB.ip32, ipB, sizeof(ipB));
-        LogMessage("[%s <-> %s]: " STDu64 " bytes in " STDu64 " packets (%u, %u, %u)\n", ipA, ipB,
+        LogMessage(fh, "[%s <-> %s]: " STDu64 " bytes in " STDu64 " packets (%u, %u, %u)\n", ipA, ipB,
             stats->total_bytes, stats->total_packets,
             stats->stateChanges[SFS_STATE_TCP_ESTABLISHED],
             stats->stateChanges[SFS_STATE_TCP_CLOSED], stats->stateChanges[SFS_STATE_UDP_CREATED]);
         total += stats->total_packets;
     }
-    LogMessage("Classified " STDu64 " packets.\n", total);
+    LogMessage(fh, "Classified " STDu64 " packets.\n", total);
 }
 
 void FlowIPTracker::WriteFlowIPStats()
@@ -171,7 +171,7 @@ void FlowIPTracker::WriteFlowIPStats()
     if (!fh)
         return;
 
-    fprintf(fh, "%u,%u\n", (uint32_t)time(nullptr), sfxhash_count(ipMap));
+    fprintf(fh, "%ld,%u,", (unsigned long)cur_time, sfxhash_count(ipMap));
     for (node = sfxhash_findfirst(ipMap); node; node = sfxhash_findnext(ipMap))
     {
         sfSFSKey* key;
@@ -211,11 +211,11 @@ void FlowIPTracker::process(bool summarize)
     if (summarize && !summary)
         return;
 
-    if (config->perf_flags & SFPERF_CONSOLE)
-        DisplayFlowIPStats();
-
-    if (fh)
+    if (config->format == PERF_CSV)
         WriteFlowIPStats();
+
+    else if (config->format == PERF_TEXT)
+        DisplayFlowIPStats();
 
     if ( !summary )
         reset();
