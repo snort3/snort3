@@ -48,7 +48,7 @@ if(NOT VALID_PCRE_VERSION)
     unset(PCRE_FOUND CACHE)
     unset(PCRE_INCLUDE_DIR CACHE)
     unset(PCRE_LIBRARIES CACHE)
-    message(FATAL_ERROR
+    message(SEND_ERROR
         "\nERROR!  Libpcre library version >= 6.0 not found."
         " Get it from http://www.pcre.org\n\n"
     )

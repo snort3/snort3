@@ -70,7 +70,7 @@ if (NOT PCAP_LINKS_SOLO)
         set(PCAP_LIBRARIES ${_tmp}
             CACHE STRING "Libraries needed to link against libpcap" FORCE)
     else ()
-        message(FATAL_ERROR "Couldn't determine how to link against libpcap")
+        message(SEND_ERROR "Couldn't determine how to link against libpcap")
     endif ()
 endif ()
 

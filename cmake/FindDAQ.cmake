@@ -20,8 +20,6 @@ set (ERROR_MESSAGE
     also set the DAQ_DIR environment variablet to the daqs root installation directory\n\n"
 )
 
-
-
 find_path(DAQ_INCLUDE_DIR
     NAMES daq.h
     HINTS ENV DAQ_DIR
@@ -37,15 +35,15 @@ if (ENABLE_STATIC_DAQ)
         RESULT_VARIABLE result
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    
+
     # This will be false if the exit status was 0 and true if the binary was not found
     if (result)
-        message(FATAL_ERROR "
+        message(SEND_ERROR "
 
         ERROR!  cannot find the DAQs static libraries!  make sure the binary
         file `daq-modules-config` is in your path, or specific the daqs path 
         with the --with-daq-root=<dir>
-        
+
         ")
     endif()
 

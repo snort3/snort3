@@ -3,7 +3,7 @@ find_package(PkgConfig)
 pkg_check_modules(PC_HWLOC hwloc)
 
 if (NOT PC_HWLOC_FOUND)
-    message(FATAL_ERROR
+    message(SEND_ERROR
         "\n\tERROR!  hwloc library not found.\n"
         "\tGet it from https://www.open-mpi.org/projects/hwloc/\n"
     )

@@ -8,7 +8,7 @@ if ( LINUX )
     find_library(LIBRT rt)
 
     if ( NOT LIBRT )
-        message(FATAL_ERROR "librt required. Specicy it by user ")
+        message(SEND_ERROR "librt required.")
     endif()
 endif()
 
