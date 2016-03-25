@@ -16,9 +16,11 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_stream_session.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_stream_session.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Feb 18, 2016
 
+#include "log/messages.h"
+#include "main/snort_debug.h"
 #include "sfip/sf_ip.h"
 
 #include "tcp_stream_session.h"
@@ -30,6 +32,7 @@ const char* const flush_policy_names[] =
     "on-ack",
     "on-data"
 };
+#endif
 
 TcpStreamSession::TcpStreamSession(Flow* flow) : Session(flow)
 {
@@ -509,6 +512,4 @@ void TcpStreamSession::set_os_policy(void)
 void TcpStreamSession::clear_session(int)
 {
 }
-
-#endif
 

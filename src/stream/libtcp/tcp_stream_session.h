@@ -32,12 +32,6 @@
 #include "stream/tcp/tcp_event_logger.h"
 #include "tcp_stream_tracker.h"
 
-#if 0
-#include "tcp_state_machine.h"
-#include "stream_tcp.h"
-#include "tcp_defs.h"
-#endif
-
 #ifdef DEBUG
 extern const char* const flush_policy_names[];
 #endif
@@ -56,13 +50,6 @@ public:
     void cleanup(void) override;
     void set_splitter(bool, StreamSplitter*) override;
     StreamSplitter* get_splitter(bool) override;
-    void reset(void);
-    void start_proxy(void);
-    static void set_memcap(class Memcap&);
-    static void sinit(void);
-    static void sterm(void);
-    void print(void);
-
     bool is_sequenced(uint8_t /*dir*/) override;
     bool are_packets_missing(uint8_t /*dir*/) override;
     uint8_t get_reassembly_direction(void) override;
@@ -72,19 +59,13 @@ public:
     bool check_alerted(Packet*, uint32_t gid, uint32_t sid) override;
     int update_alert(Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
         uint32_t /*event_id*/, uint32_t /*event_second*/) override;
-#if 0
-    void restart(Packet*) override;
-    int process(Packet*) override;
-    void flush_client(Packet*) override;
-    void flush_server(Packet*) override;
-    void flush_talker(Packet*) override;
-    void flush_listener(Packet*) override;
 
-    void set_extra_data(Packet*, uint32_t /*flag*/) override;
-    void clear_extra_data(Packet*, uint32_t /*flag*/) override;
-
-#endif
-
+    void reset(void);
+    void start_proxy(void);
+    static void set_memcap(class Memcap&);
+    static void sinit(void);
+    static void sterm(void);
+    void print(void);
     void SetPacketHeaderFoo(const Packet* p);
     void GetPacketHeaderFoo(DAQ_PktHdr_t* pkth, uint32_t dir);
     void SwapPacketHeaderFoo(void);

@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_state_machine.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_state_machine.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 29, 2015
 
 #include "tcp_stream_tracker.h"
