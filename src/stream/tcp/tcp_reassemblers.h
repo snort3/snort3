@@ -28,7 +28,7 @@
 class TcpReassemblerFactory
 {
 public:
-    static TcpReassembler* create(TcpSession* session, TcpTracker* tracker,
+    static TcpReassembler* create(TcpSession* session, TcpStreamTracker* tracker,
         StreamPolicy os_policy, bool server);
 };
 

@@ -162,7 +162,7 @@ int SFRF_TestThreshold(
 
 void SFRF_ShowObjects(RateFilterConfig*);
 
-inline void EnableInternalEvent(RateFilterConfig* config, uint32_t sid)
+inline void enable_internal_event(RateFilterConfig* config, uint32_t sid)
 {
     if (config == NULL)
         return;
@@ -170,10 +170,10 @@ inline void EnableInternalEvent(RateFilterConfig* config, uint32_t sid)
     config->internal_event_mask |= (1 << sid);
 }
 
-inline bool InternalEventIsEnabled(RateFilterConfig* config, uint32_t sid)
+inline bool is_internal_event_enabled(RateFilterConfig* config, uint32_t sid)
 {
     if (config == NULL)
-        return 0;
+        return false;
 
     return (config->internal_event_mask & (1 << sid));
 }

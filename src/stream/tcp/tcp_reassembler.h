@@ -34,9 +34,7 @@
 #include "tcp_segment_node.h"
 
 class TcpSession;
-class TcpTracker;
-
-extern THREAD_LOCAL Packet* s5_pkt;
+class TcpStreamTracker;
 
 class TcpReassembler : public SegmentOverlapEditor
 {
@@ -110,8 +108,8 @@ public:
     void trace_segments(void);
 
 protected:
-    TcpReassembler(TcpSession* session, TcpTracker* tracker, StreamPolicy os_policy, bool server) :
-       server_side(server), tracker(tracker)
+    TcpReassembler(TcpSession* session, TcpStreamTracker* tracker,
+            StreamPolicy os_policy, bool server) : server_side(server), tracker(tracker)
     {
         this->session = session;
         set_tcp_reassembly_policy(os_policy);
@@ -151,8 +149,8 @@ protected:
     int purge_alerts(uint32_t /*flush_seq*/,  Flow* flow);
     void show_rebuilt_packet(Packet* pkt);
     uint32_t get_flush_data_len(TcpSegmentNode* ss, uint32_t to_seq, uint32_t flushBufSize);
-    int flush_data_segments(Packet* p, uint32_t toSeq,  uint8_t* flushbuf, const
-        uint8_t* flushbuf_end);
+    int flush_data_segments(Packet* p, uint32_t toSeq,  uint8_t* flushbuf,
+            const  uint8_t* flushbuf_end);
     void prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags);
     int _flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags);
     int flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags);
@@ -167,7 +165,7 @@ protected:
     int purge_to_seq(uint32_t flush_seq);
 
     bool server_side;
-    TcpTracker* tracker;
+    TcpStreamTracker* tracker;
     uint8_t ignore_dir;
     uint8_t packet_dir;
     uint32_t flush_count = 0; /* number of flushed queued segments */

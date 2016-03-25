@@ -40,18 +40,16 @@
 #define EVENT_DATA_AFTER_RST_RCVD       0x00004000
 #define EVENT_WINDOW_SLAM               0x00008000
 #define EVENT_NO_3WHS                   0x00010000
+#define EVENT_BAD_SEGMENT               0x00020000
+#define EVENT_EXCESSIVE_OVERLAP         0x00040000
+#define EVENT_MAX_SMALL_SEGS_EXCEEDED   0x00080000
 
 class TcpEventLogger
 {
 public:
-    TcpEventLogger(void) :
-        tcp_events(0)
-    {
-    }
+    TcpEventLogger(void) { }
 
-    ~TcpEventLogger(void)
-    {
-    }
+    ~TcpEventLogger(void) { }
 
     void clear_tcp_events(void)
     {
@@ -64,32 +62,11 @@ public:
     }
 
     void set_tcp_internal_syn_event(void);
-
-    void EventSynOnEst(void);
-    void EventExcessiveOverlap(void);
-    void EventBadTimestamp(void);
-    void EventWindowTooLarge(void);
-    void EventDataOnSyn(void);
-    void EventDataOnClosed(void);
-    void EventDataAfterReset(void);
-    void EventBadSegment(void);
-    void EventSessionHijackedClient(void);
-    void EventSessionHijackedServer(void);
-    void EventDataWithoutFlags(void);
-    void EventMaxSmallSegsExceeded(void);
-    void Event4whs(void);
-    void EventNoTimestamp(void);
-    void EventBadReset(void);
-    void EventBadFin(void);
-    void EventBadAck(void);
-    void EventDataAfterRstRcvd(void);
-    void EventInternal(uint32_t eventSid);
-    void EventWindowSlam(void);
-    void EventNo3whs(void);
     void log_tcp_events(void);
+    void log_internal_event(uint32_t eventSid);
 
 private:
-    uint32_t tcp_events;
+    uint32_t tcp_events = 0;
 };
 #endif
 

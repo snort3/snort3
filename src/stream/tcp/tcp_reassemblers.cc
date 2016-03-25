@@ -27,7 +27,7 @@
 class TcpReassemblerFirst : public TcpReassembler
 {
 public:
-    TcpReassemblerFirst(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerFirst(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_FIRST, server)
     { }
 
@@ -51,7 +51,7 @@ private:
 class TcpReassemblerLast : public TcpReassembler
 {
 public:
-    TcpReassemblerLast(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerLast(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_LAST, server)
     { }
 
@@ -75,7 +75,7 @@ private:
 class TcpReassemblerLinux : public TcpReassembler
 {
 public:
-    TcpReassemblerLinux(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerLinux(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_LINUX, server)
     { }
 
@@ -99,7 +99,7 @@ private:
 class TcpReassemblerOldLinux : public TcpReassembler
 {
 public:
-    TcpReassemblerOldLinux(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerOldLinux(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_OLD_LINUX, server)
     { }
 
@@ -123,7 +123,7 @@ private:
 class TcpReassemblerBSD : public TcpReassembler
 {
 public:
-    TcpReassemblerBSD(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerBSD(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_BSD, server)
     { }
 
@@ -147,7 +147,7 @@ private:
 class TcpReassemblerMacOS : public TcpReassembler
 {
 public:
-    TcpReassemblerMacOS(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerMacOS(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_MACOS, server)
     { }
 
@@ -171,7 +171,7 @@ private:
 class TcpReassemblerSolaris : public TcpReassembler
 {
 public:
-    TcpReassemblerSolaris(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerSolaris(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_SOLARIS, server)
     { }
 
@@ -195,7 +195,7 @@ private:
 class TcpReassemblerIrix : public TcpReassembler
 {
 public:
-    TcpReassemblerIrix(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerIrix(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_IRIX, server)
     { }
 
@@ -219,7 +219,7 @@ private:
 class TcpReassemblerHpux11 : public TcpReassembler
 {
 public:
-    TcpReassemblerHpux11(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerHpux11(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_HPUX11, server)
     { }
 
@@ -243,7 +243,7 @@ private:
 class TcpReassemblerHpux10 : public TcpReassembler
 {
 public:
-    TcpReassemblerHpux10(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerHpux10(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_HPUX10, server)
     { }
 
@@ -267,7 +267,7 @@ private:
 class TcpReassemblerWindows : public TcpReassembler
 {
 public:
-    TcpReassemblerWindows(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerWindows(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_WINDOWS, server)
     { }
 
@@ -291,7 +291,7 @@ private:
 class TcpReassemblerWindows2K3 : public TcpReassembler
 {
 public:
-    TcpReassemblerWindows2K3(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerWindows2K3(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_WINDOWS2K3, server)
     { }
 
@@ -315,7 +315,7 @@ private:
 class TcpReassemblerVista : public TcpReassembler
 {
 public:
-    TcpReassemblerVista(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerVista(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassembler(session, tracker, StreamPolicy::OS_VISTA, server)
     { }
 
@@ -339,7 +339,7 @@ private:
 class TcpReassemblerProxy : public TcpReassemblerFirst
 {
 public:
-    TcpReassemblerProxy(TcpSession* session, TcpTracker* tracker, bool server) :
+    TcpReassemblerProxy(TcpSession* session, TcpStreamTracker* tracker, bool server) :
         TcpReassemblerFirst(session, tracker, server)
     {
         tcp_ips_data = NORM_MODE_TEST;
@@ -362,7 +362,7 @@ private:
     }
 };
 
-TcpReassembler* TcpReassemblerFactory::create(TcpSession* session, TcpTracker* tracker,
+TcpReassembler* TcpReassemblerFactory::create(TcpSession* session, TcpStreamTracker* tracker,
     StreamPolicy os_policy, bool server)
 {
     NormMode tcp_ips_data = Normalize_GetMode(NORM_TCP_IPS);

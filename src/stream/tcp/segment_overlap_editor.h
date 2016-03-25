@@ -81,7 +81,8 @@ protected:
     virtual int insert_left_overlap(void) = 0;
     virtual void insert_right_overlap(void) = 0;
     virtual int insert_full_overlap(void) = 0;
-    virtual int add_reassembly_segment(TcpSegmentDescriptor&, int16_t, uint32_t, uint32_t, uint32_t, TcpSegmentNode*) = 0;
+    virtual int add_reassembly_segment(TcpSegmentDescriptor&, int16_t, uint32_t, uint32_t,
+        uint32_t, TcpSegmentNode*) = 0;
     virtual int dup_reassembly_segment(Packet*, TcpSegmentNode*, TcpSegmentNode**) = 0;
     virtual int delete_reassembly_segment(TcpSegmentNode*) = 0;
     virtual void print(void);

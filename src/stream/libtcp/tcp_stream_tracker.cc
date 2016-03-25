@@ -69,7 +69,7 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor&
             tcp_event = TCP_SYN_ACK_SENT_EVENT;
         else if ( tcph->is_rst() )
             tcp_event = TCP_RST_SENT_EVENT;
-        else if ( tcph->is_fin( ) )
+       else if ( tcph->is_fin( ) )
             tcp_event = TCP_FIN_SENT_EVENT;
         else if ( tcph->is_ack() || tcph->is_psh() )
         {
@@ -78,8 +78,8 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor&
             else
                 tcp_event = TCP_ACK_SENT_EVENT;
         }
-//        else if( tsd.get_data_len() > 0 )   // FIXIT - No flags set, how do we handle this?
-//            tcp_event = TCP_DATA_SEG_SENT_EVENT;
+        else if ( tsd.get_seg_len() > 0 )   // FIXIT - No flags set, how do we handle this?
+            tcp_event = TCP_DATA_SEG_SENT_EVENT;
         else
             tcp_event = TCP_ACK_SENT_EVENT;
     }
@@ -101,8 +101,8 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor&
             else
                 tcp_event = TCP_ACK_RECV_EVENT;
         }
-//       else if( tsd.get_data_len() > 0 )    // FIXIT - No flags set, how do we handle this?
-//             tcp_event = TCP_DATA_SEG_RECV_EVENT;
+        else if ( tsd.get_seg_len() > 0 )    // FIXIT - No flags set, how do we handle this?
+            tcp_event = TCP_DATA_SEG_RECV_EVENT;
         else
             tcp_event = TCP_ACK_RECV_EVENT;
     }
@@ -156,7 +156,5 @@ void TcpStreamTracker::cache_mac_address(TcpSegmentDescriptor& tsd, uint8_t dire
 
         mac_addr_valid = true;
     }
-
-    mac_addr_valid = true;
 }
 

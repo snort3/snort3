@@ -52,6 +52,7 @@
 #define STREAM_TCP_DATA_AFTER_RST_RCVD            18
 #define STREAM_TCP_WINDOW_SLAM                    19
 #define STREAM_TCP_NO_3WHS                        20
+#define STREAM_TCP_MAX_EVENTS                     32
 
 extern const PegInfo tcp_pegs[];
 
@@ -132,9 +133,7 @@ public:
     }
 
     TcpStreamConfig* get_data();
-
-    ProfileStats* get_profile(unsigned, const char*&, const char*&) const
-    override;
+    ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     void sum_stats() override;

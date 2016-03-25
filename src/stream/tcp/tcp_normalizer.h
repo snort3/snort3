@@ -68,7 +68,7 @@ public:
     static const PegInfo* get_normalization_pegs(void);
     static NormPegs get_normalization_counts(unsigned&);
 
-    void set_peer_tracker(TcpTracker* peer_tracker)
+    void set_peer_tracker(TcpStreamTracker* peer_tracker)
     {
         this->peer_tracker = peer_tracker;
     }
@@ -139,7 +139,7 @@ public:
     }
 
 protected:
-    TcpNormalizer(StreamPolicy, TcpSession*, TcpTracker*);
+    TcpNormalizer(StreamPolicy, TcpSession*, TcpStreamTracker*);
     virtual void trim_payload(TcpSegmentDescriptor&, uint32_t, NormMode, TcpPegCounts);
     virtual bool strip_tcp_timestamp(TcpSegmentDescriptor&, const tcp::TcpOption*, NormMode);
     virtual bool validate_rst_seq_geq(TcpSegmentDescriptor&);
@@ -153,8 +153,8 @@ protected:
 
     StreamPolicy os_policy;
     TcpSession* session = nullptr;
-    TcpTracker* tracker = nullptr;
-    TcpTracker* peer_tracker = nullptr;
+    TcpStreamTracker* tracker = nullptr;
+    TcpStreamTracker* peer_tracker = nullptr;
     bool tcp_ips_enabled;
     NormMode trim_syn;
     NormMode trim_rst;

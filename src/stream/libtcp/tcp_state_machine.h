@@ -22,6 +22,8 @@
 #ifndef TCP_STATE_MACHINE_H
 #define TCP_STATE_MACHINE_H
 
+#include <memory>
+
 #include "tcp_state_handler.h"
 #include "tcp_stream_tracker.h"
 #include "tcp_segment_descriptor.h"
@@ -33,7 +35,7 @@ public:
     virtual ~TcpStateMachine(void);
 
     virtual void register_state_handler(TcpStreamTracker::TcpState, TcpStateHandler&);
-    virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&, TcpStreamTracker&);
 
 private:
 

@@ -26,9 +26,8 @@
 #include "protocols/packet.h"
 #include "flow/memcap.h"
 
+#include "tcp_defs.h"
 #include "stream/libtcp/tcp_segment_descriptor.h"
-
-extern THREAD_LOCAL Memcap* tcp_memcap;
 
 //-----------------------------------------------------------------
 // we make a lot of TcpSegments so it is organized by member

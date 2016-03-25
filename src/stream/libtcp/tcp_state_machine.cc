@@ -20,15 +20,18 @@
 // Created on: Jul 29, 2015
 
 #include "tcp_stream_tracker.h"
+#include "tcp_stream_session.h"
 #include "tcp_state_machine.h"
 
 TcpStateMachine::TcpStateMachine(void)
 {
+    TcpStreamSession session(nullptr);
+
     // register a default handler for each state...
     for ( auto s = TcpStreamTracker::TCP_LISTEN; s < TcpStreamTracker::TCP_MAX_STATES; s++ )
     {
         tcp_state_handlers[ s ] = nullptr;
-        new TcpStateHandler(s, *this);
+        new TcpStateHandler(s, *this, session);
     }
 }
 
@@ -41,15 +44,30 @@ TcpStateMachine::~TcpStateMachine(void)
 void TcpStateMachine::register_state_handler(TcpStreamTracker::TcpState state,
     TcpStateHandler& handler)
 {
-    if ( tcp_state_handlers[ state ] != nullptr )
-        delete tcp_state_handlers[ state ];
-
+    delete tcp_state_handlers[ state ];
     tcp_state_handlers[ state ] = &handler;
 }
 
-bool TcpStateMachine::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateMachine::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& talker,
+    TcpStreamTracker& listener)
 {
-    tracker.set_tcp_event(tsd);
-    return tcp_state_handlers[ tracker.get_tcp_state( ) ]->eval(tsd, tracker);
+    TcpStreamTracker::TcpState tcp_state = talker.get_tcp_state( );
+
+    talker.set_tcp_event(tsd);
+    if ( tcp_state_handlers[ tcp_state ]->do_pre_sm_packet_actions(tsd) )
+    {
+        if ( tcp_state_handlers[ tcp_state ]->eval(tsd, talker) )
+        {
+            tcp_state = listener.get_tcp_state( );
+            listener.set_tcp_event(tsd);
+            tcp_state_handlers[ tcp_state ]->eval(tsd, listener);
+            tcp_state_handlers[ tcp_state ]->do_post_sm_packet_actions(tsd);
+            return true;
+        }
+
+        return false;
+    }
+
+    return false;
 }
 
