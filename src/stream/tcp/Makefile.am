@@ -55,6 +55,6 @@ tcp_state_time_wait.h \
 ips_stream_reassemble.cc \
 ips_stream_size.cc
 
-if BUILD_CPPUTESTS
-SUBDIRS = test
-endif
+#if BUILD_CPPUTESTS
+#SUBDIRS = test
+#endif
