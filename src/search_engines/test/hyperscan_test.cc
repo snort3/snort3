@@ -68,7 +68,7 @@ static unsigned parse_errors = 0;
 void ParseError(const char*, ...)
 { parse_errors++; }
 
-void LogCount(char const*, uint64_t)
+void LogCount(char const*, uint64_t, FILE*)
 { }
 
 static int match(

@@ -43,7 +43,7 @@ void show_stats(
 {
 }
 
-void show_stats( PegCount* , const PegInfo* , IndexVec& , const char*, FILE * )
+void show_stats( PegCount*, const PegInfo*, IndexVec&, const char*, FILE*)
 {
 }
 

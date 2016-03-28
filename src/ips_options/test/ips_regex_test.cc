@@ -87,7 +87,7 @@ FileVerdict FilePolicy::signature_lookup(Flow*, FileInfo*)
 MemoryContext::MemoryContext(MemoryTracker&) { }
 MemoryContext::~MemoryContext() { }
 
-void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) { }
+void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
 //-------------------------------------------------------------------------
 // helpers

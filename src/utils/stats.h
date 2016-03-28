@@ -114,24 +114,19 @@ extern const PegInfo proc_names[];
 
 SO_PUBLIC PegCount get_packet_number();
 
-SO_PUBLIC void LogLabel(const char*, FILE *fh = stdout);
+SO_PUBLIC void LogLabel(const char*, FILE* = stdout);
 SO_PUBLIC void LogValue(const char*, const char*);
-SO_PUBLIC void LogCount(const char*, uint64_t, FILE* fh = stdout);
+SO_PUBLIC void LogCount(const char*, uint64_t, FILE* = stdout);
 
-SO_PUBLIC void LogStat(const char*, uint64_t n, uint64_t tot, FILE* fh = stdout);
-SO_PUBLIC void LogStat(const char*, double, FILE* fh = stdout);
+SO_PUBLIC void LogStat(const char*, uint64_t n, uint64_t tot, FILE* = stdout);
+SO_PUBLIC void LogStat(const char*, double, FILE* = stdout);
 
 void get_daq_stats(DAQStats& daq_stats);
 
 void sum_stats(PegCount* sums, PegCount* counts, unsigned n);
-void show_stats(PegCount*, const PegInfo*, unsigned n,
-    const char* module_name = nullptr);
-void show_stats(
-    PegCount*, const PegInfo*,
-    IndexVec&, const char* module_name,
-    FILE *fh);
-void show_percent_stats(PegCount*, const char*[], unsigned n,
-    const char* module_name = nullptr);
+void show_stats(PegCount*, const PegInfo*, unsigned n, const char* module_name = nullptr);
+void show_stats( PegCount*, const PegInfo*, IndexVec&, const char* module_name, FILE*);
+void show_percent_stats(PegCount*, const char*[], unsigned n, const char* module_name = nullptr);
 
 void sum_stats(SimpleStats* sums, SimpleStats* counts);
 void show_stats(SimpleStats*, const char* module_name);
