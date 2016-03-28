@@ -1,3 +1,20 @@
+16/03/28 - build 193
+
+-- fix session parsing abort handling
+-- fix shutdown memory leaks
+-- fix building against LuaJIT using only pkg-config
+-- fix FreeBSD build
+-- perf_monitor config and format fixes
+-- cmake - check all dependencies before fatal error
+-- new_http_inspect unicode initialization bug fix
+-- new_http_inspect %u encoding and utf 8 bare byte
+-- continued tcp stream refactoring
+-- legacy search engine cleanup
+-- dcd2 port continued - add dce packet fragmentation
+-- add configure --enable-address-sanitizer
+-- add configure --enable-code-coverage
+-- memory manager updates
+
 16/03/18 - build 192
 
 -- use hwloc for CPU affinity
