@@ -138,10 +138,13 @@ bool TcpStateClosed::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
 
     trk.update_tracker_ack_recv(tsd);
 
-    if ( trk.is_rst_pkt_sent() )
-        session.tel.set_tcp_event(EVENT_DATA_AFTER_RESET);
-    else
-        session.tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
+    if( tsd.get_seg_len() > 0 )
+    {
+        if ( trk.is_rst_pkt_sent() )
+            session.tel.set_tcp_event(EVENT_DATA_AFTER_RESET);
+        else
+            session.tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
+    }
 
     return default_state_action(tsd, trk);
 }
