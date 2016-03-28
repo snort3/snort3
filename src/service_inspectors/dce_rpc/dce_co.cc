@@ -637,7 +637,7 @@ static void DCE2_CoCtxReq(DCE2_SsnData* sd, DCE2_CoTracker* cot, const DceRpcCoH
         DCE2_CoCtxIdNode* ctx_node;
 
         ctx_node = dce_co_process_ctx_id(sd,cot,co_hdr,policy,frag_ptr,frag_len);
-        if ((ctx_node == nullptr))
+        if (ctx_node == nullptr)
         {
             return;
         }
@@ -1241,7 +1241,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
  ********************************************************************/
 static void DCE2_CoReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoRpktType co_rtype)
 {
-    DceRpcCoHdr* co_hdr;
+    DceRpcCoHdr* co_hdr = nullptr;
     Packet* rpkt = dce_co_reassemble(sd,cot,co_rtype,&co_hdr);
     /* Push packet onto stack */
     if (DCE2_PushPkt(rpkt,sd) != DCE2_RET__SUCCESS)
