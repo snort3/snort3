@@ -26,8 +26,9 @@
 namespace memory
 {
 
-struct MemoryCap
+class MemoryCap
 {
+public:
     static bool free_space(size_t);
     static void update_allocations(size_t);
     static void update_deallocations(size_t);
@@ -35,8 +36,8 @@ struct MemoryCap
     // call from main thread before thread spawn
     static void calculate(unsigned num_threads);
 
-    // call from threads
-    static void tinit();
+private:
+    static size_t thread_cap;
 };
 
 } // namespace memory

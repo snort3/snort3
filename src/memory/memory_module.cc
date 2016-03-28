@@ -33,11 +33,11 @@
 
 static const Parameter s_params[] =
 {
-    { "enable", Parameter::PT_BOOL, nullptr, "false",
-        "allow memory management to limit memory consumption" },
-
     { "cap", Parameter::PT_INT, "0:", "0",
-        "set the per-packet-thread cap on memory (bytes)" },
+        "set the per-packet-thread cap on memory (bytes, 0 to disable)" },
+
+    { "soft", Parameter::PT_BOOL, nullptr, "false",
+        "always succeed in allocating memory, even if above the cap" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -52,11 +52,11 @@ MemoryModule::MemoryModule() :
 
 bool MemoryModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    if ( v.is("enable") )
-        sc->memory->enable = v.get_bool();
-
-    else if ( v.is("cap") )
+    if ( v.is("cap") )
         sc->memory->cap = v.get_long();
+
+    else if ( v.is("soft") )
+        sc->memory->soft = v.get_bool();
 
     else
         return false;

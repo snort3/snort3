@@ -26,10 +26,12 @@
 
 #include <cassert>
 
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "main/thread.h"
 #include "profiler/memory_profiler_active_context.h"
+
 #include "memory_config.h"
 #include "prune_handler.h"
 
@@ -57,9 +59,7 @@ struct Tracker
     constexpr Tracker() = default;
 };
 
-THREAD_LOCAL MemoryConfig s_config;
 THREAD_LOCAL Tracker s_tracker;
-const MemoryConfig* s_main_config = nullptr;
 
 // -----------------------------------------------------------------------------
 // helpers
@@ -71,15 +71,34 @@ inline bool free_space(size_t requested, size_t cap, Tracker& trk, Handler& hand
     assert(requested <= cap);
     const auto required = cap - requested;
 
-    // FIXIT-H J call handler repeatedly until unsuccessful or memory
-    // falls below 'required'
-    if ( trk.used() > required )
+    auto last_used = trk.used();
+    while ( last_used > required )
+    {
         handler();
 
-    return trk.used() <= required;
+        auto cur_used = trk.used();
+        if ( cur_used >= last_used )
+        {
+            // handler failed to free any space, or worse, used more space
+            return false;
+        }
+
+        last_used = cur_used;
+    }
+
+    return last_used <= required;
 }
 
+inline size_t calculate_threshold(size_t cap, size_t threshold)
+{ return cap * threshold / 100; }
+
 } // namespace
+
+// -----------------------------------------------------------------------------
+// per-thread configuration
+// -----------------------------------------------------------------------------
+
+size_t MemoryCap::thread_cap = 0;
 
 // -----------------------------------------------------------------------------
 // public interface
@@ -90,12 +109,11 @@ bool MemoryCap::free_space(size_t n)
     if ( !is_packet_thread() )
         return true;
 
-    const auto& config = s_config;
-
-    if ( !config.enable )
+    if ( !thread_cap )
         return true;
 
-    return memory::free_space(n, config.cap, s_tracker, prune_handler);
+    const auto& config = *snort_conf->memory;
+    return memory::free_space(n, thread_cap, s_tracker, prune_handler) || config.soft;
 }
 
 void MemoryCap::update_allocations(size_t n)
@@ -110,35 +128,23 @@ void MemoryCap::update_deallocations(size_t n)
     mp_active_context.update_deallocs(n);
 }
 
-// FIXIT-H J need to validate and print out warnings for configurations
-// that result in very low values for per-thread memory
 void MemoryCap::calculate(unsigned num_threads)
 {
-    if ( !snort_conf->memory->enable )
+    const MemoryConfig& config = *snort_conf->memory;
+
+    if ( !config.cap )
         return;
 
-    s_config.enable = snort_conf->memory->enable;
-    assert(snort_conf->memory->cap >= s_tracker.used());
+    // FIXIT-M J right now the cap is relative, so we never run out of room
+    // after startup, but this also means that the cap is not representative
+    // of total memory used
 
-    auto remaining = snort_conf->memory->cap - s_tracker.used();
-    auto per_thread_cap = remaining / num_threads;
+    thread_cap = config.cap / num_threads;
 
-    assert(per_thread_cap > 0);
+    if ( !thread_cap )
+        FatalError("per-thread memory cap is 0");
 
-    s_config.cap = per_thread_cap;
-
-    s_main_config = &s_config;
-
-    DebugFormat(DEBUG_MEMORY,
-        ("local memcap set: %zu startup cost, "
-        "%zu available (%zu per-thread)\n"),
-        s_tracker.used(), remaining, per_thread_cap, num_threads);
-}
-
-void MemoryCap::tinit()
-{
-    if ( s_main_config )
-        s_config = *s_main_config;
+    DebugFormat(DEBUG_MEMORY, "per-thread memory cap set to %zu", thread_cap);
 }
 
 } // namespace memory
@@ -150,26 +156,29 @@ namespace t_memory_cap
 
 struct MockTracker
 {
-    size_t result;
+    size_t result = 0;
     size_t used() const
     { return result; }
+
+    MockTracker(size_t r) : result { r } { }
+    MockTracker() = default;
 };
 
 struct HandlerSpy
 {
-    bool called = false;
-    size_t modify_tracker;
+    size_t calls = 0;
+    ssize_t modifier;
     MockTracker* tracker;
 
     void operator()()
     {
-        called = true;
-        if ( modify_tracker && tracker )
-            tracker->result = modify_tracker;
+        ++calls;
+        if ( modifier && tracker )
+            tracker->result += modifier;
     }
 
-    HandlerSpy(size_t n, MockTracker& trk) :
-        modify_tracker(n), tracker(&trk) { }
+    HandlerSpy(ssize_t n, MockTracker& trk) :
+        modifier(n), tracker(&trk) { }
 };
 
 } // namespace t_memory_cap
@@ -180,21 +189,29 @@ TEST_CASE( "memory cap free space", "[memory]" )
 
     SECTION( "no handler call required" )
     {
-        MockTracker tracker { 0 };
-        HandlerSpy handler { 1, tracker };
+        MockTracker tracker;
+        HandlerSpy handler { 0, tracker };
 
         CHECK( memory::free_space(1, 1024, tracker, handler) );
-        CHECK_FALSE( handler.called );
+        CHECK( handler.calls == 0 );
     }
 
-    SECTION( "handler frees enough space" )
+    SECTION( "handler frees enough space the first time" )
     {
         MockTracker tracker { 1024 };
-        HandlerSpy handler { 1023, tracker };
+        HandlerSpy handler { -5, tracker };
 
         CHECK( memory::free_space(1, 1024, tracker, handler) );
-        CHECK( handler.called );
-        CHECK( tracker.result == handler.modify_tracker );
+        CHECK( handler.calls == 1 );
+    }
+
+    SECTION( "handler needs to be called multiple times to free up space" )
+    {
+        MockTracker tracker { 1024 };
+        HandlerSpy handler { -1, tracker };
+
+        CHECK( memory::free_space(2, 1024, tracker, handler) );
+        CHECK( handler.calls == 2 );
     }
 
     SECTION( "handler fails to free enough space" )
@@ -203,8 +220,15 @@ TEST_CASE( "memory cap free space", "[memory]" )
         HandlerSpy handler { 0, tracker };
 
         CHECK_FALSE( memory::free_space(1, 1024, tracker, handler) );
-        CHECK( handler.called );
-        CHECK( tracker.result == 1024 );
+        CHECK( handler.calls == 1 );
+    }
+
+    SECTION( "handler actually uses more space" )
+    {
+        MockTracker tracker { 1024 };
+        HandlerSpy handler { 5, tracker };
+        CHECK_FALSE( memory::free_space(1, 1024, tracker, handler) );
+        CHECK( handler.calls == 1 );
     }
 }
 

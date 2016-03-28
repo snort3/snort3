@@ -53,8 +53,6 @@ Analyzer::Analyzer(const char* s)
 void Analyzer::operator()(unsigned id, Swapper* ps)
 {
     set_thread_type(STHREAD_TYPE_PACKET);
-    // needs to happen before any heap allocations
-    memory::MemoryCap::tinit();
 
     set_instance_id(id);
     ps->apply();
