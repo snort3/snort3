@@ -57,7 +57,7 @@ public:
     void set_extra_data(Packet*, uint32_t /*flag*/) override;
     void clear_extra_data(Packet*, uint32_t /*flag*/) override;
 
-    void cleanup_session(int freeApplicationData, Packet* p = nullptr);
+    void cleanup_session(int freeApplicationData, Packet* = nullptr) override;
 
     void update_perf_base_state(char newState) override;
     TcpStreamTracker::TcpState get_talker_state(void) override;
@@ -82,13 +82,13 @@ private:
     int process_tcp_data(TcpSegmentDescriptor&);
     void process_tcp_packet(TcpSegmentDescriptor&);
     void FinishServerInit(TcpSegmentDescriptor&);
-    void swap_trackers(void);
+    void swap_trackers();
 
     void NewTcpSessionOnSyn(TcpSegmentDescriptor&);
     void NewTcpSessionOnSynAck(TcpSegmentDescriptor&);
-    void set_os_policy(void);
+    void set_os_policy() override;
 
-    void clear_session(int freeApplicationData);
+    void clear_session(int freeApplicationData) override;
 
     int process_dis(Packet*);
     void update_on_3whs_complete(TcpSegmentDescriptor&);
