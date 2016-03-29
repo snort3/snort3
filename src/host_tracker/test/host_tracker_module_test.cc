@@ -20,11 +20,11 @@
 // unit tests for the host module APIs
 
 #include "host_tracker/host_tracker_module.h"
+#include "host_tracker/host_cache.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-#include "host_tracker/host_cache.h"
 #include "sfip/sf_ip.h"
 
 //  Fake AddProtocolReference to avoid bringing in a ton of dependencies.
