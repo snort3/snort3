@@ -2,7 +2,7 @@
 # initialization
 #--------------------------------------------------------------------------
 
-AC_INIT([snort_extra], [1.0.0-a3], [snort-team@sourcefire.com])
+AC_INIT([snort_extra], [1.0.0-a4], [snort-team@sourcefire.com])
 AC_PREREQ(2.69)
 
 AC_CONFIG_SRCDIR([config.h.in])
