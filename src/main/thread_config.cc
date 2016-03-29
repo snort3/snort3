@@ -140,24 +140,28 @@ void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
         return;
 
     TypeIdPair key { type, id };
-    hwloc_cpuset_t desired_cpuset;
+    hwloc_cpuset_t current_cpuset, desired_cpuset;
+    char* s;
 
     auto iter = thread_affinity.find(key);
     if (iter != thread_affinity.end())
         desired_cpuset = iter->second->cpuset;
     else
         desired_cpuset = process_cpuset;
-
-    char* s;
     hwloc_bitmap_list_asprintf(&s, desired_cpuset);
+
+    current_cpuset = hwloc_bitmap_alloc();
+    hwloc_get_cpubind(topology, current_cpuset, HWLOC_CPUBIND_THREAD);
+    if (!hwloc_bitmap_isequal(current_cpuset, desired_cpuset))
+        LogMessage("Binding thread %u (type %u) to %s.\n", id, type, s);
+    hwloc_bitmap_free(current_cpuset);
+
     if (hwloc_set_cpubind(topology, desired_cpuset, HWLOC_CPUBIND_THREAD))
     {
         FatalError("Failed to pin thread %u (type %u) to %s: %s (%d)\n",
                 id, type, s, get_error(errno), errno);
     }
-#ifndef REG_TEST
-    LogMessage("Bound thread %u (type %u) to %s.\n", id, type, s);
-#endif
+
     free(s);
 }
 
