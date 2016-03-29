@@ -217,7 +217,6 @@ static inline DCE2_CoSeg* DCE2_CoGetSegPtr(DCE2_SsnData* sd, DCE2_CoTracker* cot
  ********************************************************************/
 static DCE2_Ret DCE2_CoSetIface(DCE2_SsnData* sd, DCE2_CoTracker* cot, uint16_t ctx_id)
 {
-    DCE2_CoCtxIdNode* ctx_id_node;
 
     /* This should be set if we've gotten a Bind */
     if (cot->ctx_ids == nullptr)
@@ -230,8 +229,10 @@ static DCE2_Ret DCE2_CoSetIface(DCE2_SsnData* sd, DCE2_CoTracker* cot, uint16_t 
     {
         Profile profile(dce2_smb_pstat_co_ctx);
     }
+    //FIXIT-M Add HTTP, UDP cases when these are ported
+    //Same for all other instances of profiling
 
-    ctx_id_node = (DCE2_CoCtxIdNode*)DCE2_ListFind(cot->ctx_ids, (void*)(uintptr_t)ctx_id);
+    DCE2_CoCtxIdNode* ctx_id_node = (DCE2_CoCtxIdNode*)DCE2_ListFind(cot->ctx_ids, (void*)(uintptr_t)ctx_id);
     if (ctx_id_node == nullptr)  /* context id not found in list */
     {
         /* See if it's in the queue.  An easy evasion would be to stagger the writes
@@ -305,6 +306,7 @@ static inline dce2CommonStats* dce_get_proto_stats_ptr(DCE2_SsnData* sd)
     {
         return((dce2CommonStats*)&dce2_smb_stats);
     }
+    //FIXIT-M Add HTTP, UDP cases when these are ported
 }
 
 //FIXIT-L Revisit to check if early reassembly functionality is required
@@ -360,7 +362,8 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
          * over the SMB named pipe */
         if (!DCE2_SsnAutodetected(sd) && (sd->trans != DCE2_TRANS_TYPE__SMB))
         {
-            //FIXIT-M add segment check
+            //FIXIT-L PORT_IF_NEEDED segment check
+            //Same for all cases below
             dce_alert(GID_DCE2, DCE2_CO_FRAG_LEN_LT_HDR,dce_common_stats);
         }
 
@@ -371,7 +374,6 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
     {
         if (!DCE2_SsnAutodetected(sd) && (sd->trans != DCE2_TRANS_TYPE__SMB))
         {
-            //FIXIT-M add segment check
             dce_alert(GID_DCE2, DCE2_CO_BAD_MAJOR_VERSION,dce_common_stats);
         }
 
@@ -382,7 +384,6 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
     {
         if (!DCE2_SsnAutodetected(sd) && (sd->trans != DCE2_TRANS_TYPE__SMB))
         {
-            //FIXIT-M add segment check
             dce_alert(GID_DCE2, DCE2_CO_BAD_MINOR_VERSION,dce_common_stats);
         }
 
@@ -392,8 +393,6 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
     {
         if (!DCE2_SsnAutodetected(sd) && (sd->trans != DCE2_TRANS_TYPE__SMB))
         {
-            //FIXIT-M add segment check
-
             dce_alert(GID_DCE2, DCE2_CO_BAD_PDU_TYPE,dce_common_stats);
         }
 
@@ -404,7 +403,6 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
     {
         if (frag_len > cot->max_xmit_frag)
         {
-            //FIXIT-M add segment check
             dce_alert(GID_DCE2, DCE2_CO_FRAG_GT_MAX_XMIT_FRAG,dce_common_stats);
         }
         else if (!DceRpcCoLastFrag(co_hdr) && (pdu_type == DCERPC_PDU_TYPE__REQUEST)
@@ -416,7 +414,6 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
              * only if it is considerably less - have seen legitimate fragments that are just
              * slightly less the negotiated fragment size. */
 
-            //FIXIT-M add segment check
             dce_alert(GID_DCE2, DCE2_CO_FRAG_LT_MAX_XMIT_FRAG,dce_common_stats);
         }
 
@@ -1088,6 +1085,7 @@ static DCE2_RpktType DCE2_CoGetRpktType(DCE2_SsnData* sd, DCE2_BufType btype)
         break;
 
     case DCE2_TRANS_TYPE__TCP:
+        //FIXIT-M Add HTTP cases when it is ported
         switch (btype)
         {
         case DCE2_BUF_TYPE__SEG:
@@ -1122,9 +1120,10 @@ static DCE2_RpktType DCE2_CoGetRpktType(DCE2_SsnData* sd, DCE2_BufType btype)
 static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_CoRpktType co_rtype, DCE2_RpktType* rtype)
 {
+    DCE2_CoSeg* seg_buf = DCE2_CoGetSegPtr(sd, cot);
     DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(sd, &cot->frag_tracker);
-    const uint8_t* frag_data = nullptr;
-    uint32_t frag_len = 0;
+    const uint8_t* frag_data = nullptr, * seg_data = nullptr;
+    uint32_t frag_len = 0, seg_len = 0;
     Packet* rpkt = nullptr;
 
     *rtype = DCE2_RPKT_TYPE__NULL;
@@ -1132,9 +1131,27 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     switch (co_rtype)
     {
     case DCE2_CO_RPKT_TYPE__ALL:
-    case DCE2_CO_RPKT_TYPE__SEG:
+        if (!DCE2_BufferIsEmpty(frag_buf))
+        {
+            frag_data = DCE2_BufferData(frag_buf);
+            frag_len = DCE2_BufferLength(frag_buf);
+        }
 
-        //FIXIT-M add segmentation logic
+        if (!DCE2_BufferIsEmpty(seg_buf->buf))
+        {
+            seg_data = DCE2_BufferData(seg_buf->buf);
+            seg_len = DCE2_BufferLength(seg_buf->buf);
+        }
+
+        break;
+
+    case DCE2_CO_RPKT_TYPE__SEG:
+        if (!DCE2_BufferIsEmpty(seg_buf->buf))
+        {
+            seg_data = DCE2_BufferData(seg_buf->buf);
+            seg_len = DCE2_BufferLength(seg_buf->buf);
+        }
+
         break;
 
     case DCE2_CO_RPKT_TYPE__FRAG:
@@ -1151,13 +1168,36 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         return nullptr;
     }
 
-    //FIXIT-M Add logic to deal with segment buffer
+    /* Seg stub data will be added to end of frag data */
+    if ((frag_data != nullptr) && (seg_data != nullptr))
+    {
+        uint16_t hdr_size = sizeof(DceRpcCoHdr) + sizeof(DceRpcCoRequest);
+
+        /* Need to just extract the stub data from the seg buffer
+         * if there is enough data there */
+        //FIXIT-L PORT_IF_NEEDED seg len check
+        DceRpcCoHdr* co_hdr = (DceRpcCoHdr*)seg_data;
+
+        /* Don't use it if it's not a request and therefore doesn't
+         * belong with the frag data.  This is an insanity check -
+         * shouldn't have seg data that's not a request if there are
+         * frags queued up */
+        if (DceRpcCoPduType(co_hdr) != DCERPC_PDU_TYPE__REQUEST)
+        {
+            seg_data = nullptr;
+            seg_len = 0;
+        }
+        else
+        {
+            DCE2_MOVE(seg_data, seg_len, hdr_size);
+        }
+    }
 
     if (frag_data != nullptr)
         *rtype = DCE2_CoGetRpktType(sd, DCE2_BUF_TYPE__FRAG);
-    else
-        //FIXIT-M add seg buffer logic
-        return nullptr;
+    else if (seg_data != nullptr)
+        *rtype = DCE2_CoGetRpktType(sd, DCE2_BUF_TYPE__SEG);
+
     if (*rtype == DCE2_RPKT_TYPE__NULL)
         return nullptr;
 
@@ -1169,9 +1209,21 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly buffer.\n");
             return nullptr;
         }
-        //FIXIT-M add seg buffer logic
+        if (seg_data != nullptr)
+        {
+            /* If this fails, we'll still have the frag data */
+            DCE2_AddDataToRpkt(rpkt, seg_data, seg_len);
+        }
     }
-    //FIXIT-M add seg buffer logic
+    else if (seg_data != nullptr)
+    {
+        rpkt = DCE2_GetRpkt(sd->wire_pkt, *rtype, seg_data, seg_len);
+        if (rpkt == nullptr)
+        {
+            DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly packet.\n");
+            return nullptr;
+        }
+    }
 
     return rpkt;
 }
@@ -1205,7 +1257,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     {
     case DCE2_RPKT_TYPE__SMB_CO_FRAG:
     case DCE2_RPKT_TYPE__SMB_CO_SEG:
-        //FIXIT-M Add logic
+        //FIXIT-M Add this when SMB is ported
         return nullptr;
 
     case DCE2_RPKT_TYPE__TCP_CO_FRAG:
@@ -1219,7 +1271,14 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             else
                 dce_common_stats->co_srv_frag_reassembled++;
         }
-        //FIXIT-M add seg logic
+        else
+        {
+            if (DCE2_SsnFromClient(sd->wire_pkt))
+                dce_common_stats->co_cli_seg_reassembled++;
+            else
+                dce_common_stats->co_cli_seg_reassembled++;
+        }
+
         *co_hdr = (DceRpcCoHdr*)rpkt->data;
         cot->stub_data = rpkt->data + co_hdr_len;
         return rpkt;
@@ -1377,7 +1436,7 @@ static void DCE2_CoHandleFrag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(sd, &cot->frag_tracker);
     uint16_t max_frag_data;
 
-    // FIXIT-M add SMB max_frag_data
+    //FIXIT-M Add SMB max_frag_data when SMB is ported
 
     max_frag_data = DCE2_GetRpktMaxData(sd, DCE2_RPKT_TYPE__TCP_CO_FRAG);
 
@@ -1912,6 +1971,46 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 }
 
 /********************************************************************
+ * Function: DCE2_CoSegEarlyRequest()
+ *
+ * Used to set rule option data if we are doing an early
+ * reassembly on data in the segmentation buffer.  If we are
+ * taking directly from the segmentation buffer, none of the
+ * rule option data will be set since processing doesn't get to
+ * that point.  Only do if this is a Request PDU.
+ *
+ ********************************************************************/
+static DCE2_Ret DCE2_CoSegEarlyRequest(DCE2_CoTracker* cot,
+    const uint8_t* seg_ptr, uint32_t seg_len)
+{
+    uint16_t req_size = sizeof(DceRpcCoRequest);
+
+    if (seg_len < sizeof(DceRpcCoHdr))
+        return DCE2_RET__ERROR;
+
+    const DceRpcCoHdr* co_hdr = (DceRpcCoHdr*)seg_ptr;
+    DCE2_MOVE(seg_ptr, seg_len, sizeof(DceRpcCoHdr));
+
+    if (DceRpcCoPduType(co_hdr) != DCERPC_PDU_TYPE__REQUEST)
+        return DCE2_RET__ERROR;
+
+    const DceRpcCoRequest* rhdr = (DceRpcCoRequest*)seg_ptr;
+
+    /* Account for possible object uuid */
+    if (DceRpcCoObjectFlag(co_hdr))
+        req_size += sizeof(Uuid);
+
+    if (seg_len < req_size)
+        return DCE2_RET__ERROR;
+
+    cot->opnum = DceRpcCoOpnum(co_hdr, rhdr);
+    cot->ctx_id = DceRpcCoCtxId(co_hdr, rhdr);
+    cot->call_id = DceRpcCoCallId(co_hdr);
+
+    return DCE2_RET__SUCCESS;
+}
+
+/********************************************************************
  * Function: DCE2_CoEarlyReassemble()
  *
  * Checks to see if we should send a reassembly packet based on
@@ -1933,16 +2032,254 @@ static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
     if (!DCE2_BufferIsEmpty(frag_buf))
     {
         uint32_t bytes = DCE2_BufferLength(frag_buf);
-        //FIXIT-M Add seg buffer logic
+        uint32_t seg_bytes = 0;
+
+        if (!DCE2_BufferIsEmpty(cot->cli_seg.buf))
+        {
+            uint16_t hdr_size = sizeof(DceRpcCoHdr) + sizeof(DceRpcCoRequest);
+
+            //FIXIT-L PORT_IF_NEEDED header size check
+            DceRpcCoHdr* co_hdr = (DceRpcCoHdr*)DCE2_BufferData(cot->cli_seg.buf);
+
+            if (DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__REQUEST)
+            {
+                seg_bytes = DCE2_BufferLength(cot->cli_seg.buf) - hdr_size;
+
+                if ((UINT32_MAX - bytes) < seg_bytes)
+                    seg_bytes = UINT32_MAX - bytes;
+
+                bytes += seg_bytes;
+            }
+        }
 
         if (bytes >= DCE2_GcReassembleThreshold(sd))
         {
-            DebugMessage(DEBUG_DCE_COMMON, "Early reassemble - DCE/RPC fragments\n");
-            DCE2_CoReassemble(sd, cot, DCE2_CO_RPKT_TYPE__FRAG);
-            //FIXIT-M add seg buffer logic
+            if (seg_bytes == 0)
+            {
+                DebugMessage(DEBUG_DCE_COMMON, "Early reassemble - DCE/RPC fragments\n");
+                DCE2_CoReassemble(sd, cot, DCE2_CO_RPKT_TYPE__FRAG);
+            }
+            else
+            {
+                DebugMessage(DEBUG_DCE_COMMON,
+                    "Early reassemble - DCE/RPC fragments and segments\n");
+                DCE2_CoReassemble(sd, cot, DCE2_CO_RPKT_TYPE__ALL);
+            }
         }
     }
-    //FIXIT-M Add seg buffer logic
+    else if (!DCE2_BufferIsEmpty(cot->cli_seg.buf))
+    {
+        uint32_t bytes = DCE2_BufferLength(cot->cli_seg.buf);
+
+        if (bytes >= DCE2_GcReassembleThreshold(sd))
+        {
+            DCE2_Ret status;
+
+            DebugMessage(DEBUG_DCE_COMMON, "Early reassemble - DCE/RPC segments\n");
+
+            status = DCE2_CoSegEarlyRequest(cot, DCE2_BufferData(cot->cli_seg.buf), bytes);
+            if (status != DCE2_RET__SUCCESS)
+            {
+                DebugMessage(DEBUG_DCE_COMMON,
+                    "Not enough data in seg buffer to set rule option data.\n");
+                return;
+            }
+
+            DCE2_CoReassemble(sd, cot, DCE2_CO_RPKT_TYPE__SEG);
+        }
+    }
+}
+
+/********************************************************************
+ * Function: DCE2_CoGetSegRpkt()
+ *
+ * Gets and returns a reassembly packet based on a segmentation
+ * buffer.
+ *
+ ********************************************************************/
+static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
+    const uint8_t* data_ptr, uint32_t data_len)
+{
+    Packet* rpkt = nullptr;
+    //FIXIT-M Add smb_hdr_len when SMB is ported
+
+    if (sd->trans == DCE2_TRANS_TYPE__TCP)
+    {
+        Profile profile(dce2_tcp_pstat_co_reass);
+    }
+    else
+    {
+        Profile profile(dce2_smb_pstat_co_reass);
+    }
+
+    switch (sd->trans)
+    {
+    case DCE2_TRANS_TYPE__SMB:
+        //FIXIT-M Add when SMB is ported
+        break;
+
+    case DCE2_TRANS_TYPE__TCP:
+        //FIXIT-M Add HTTP cases when it is ported
+        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__TCP_CO_SEG,
+            data_ptr, data_len);
+        if (rpkt == nullptr)
+        {
+            DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly packet.\n");
+            return nullptr;
+        }
+
+        break;
+
+    default:
+        DebugFormat(DEBUG_DCE_COMMON, "Invalid transport type: %d\n", sd->trans);
+        break;
+    }
+
+    return rpkt;
+}
+
+/********************************************************************
+ * Function: DCE2_CoSegDecode()
+ *
+ * Creates a reassembled packet from the segmentation buffer and
+ * sends off to be decoded.  It's also detected on since the
+ * detection engine has yet to see this data.
+ *
+ ********************************************************************/
+static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* seg)
+{
+    const uint8_t* frag_ptr = nullptr;
+    uint16_t frag_len = 0;
+    dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
+    //FIXIT-M Add smb_hdr_len when SMB is ported
+
+    if (DCE2_SsnFromClient(sd->wire_pkt))
+        dce_common_stats->co_cli_seg_reassembled++;
+    else
+        dce_common_stats->co_srv_seg_reassembled++;
+
+    Packet* rpkt = DCE2_CoGetSegRpkt(sd, DCE2_BufferData(seg->buf), DCE2_BufferLength(seg->buf));
+
+    // FIXIT-M - don't toss data until success response to
+    // allow for retransmission of last segment of pdu. if
+    // we don't do it here 2 things break:
+    // (a) we can't alert on this packet; and
+    // (b) subsequent pdus aren't desegmented correctly.
+    DCE2_BufferEmpty(seg->buf);
+
+    if (rpkt == nullptr)
+        return;
+
+    /* Set the start of the connection oriented pdu to where it
+     * is in the reassembled packet */
+    switch (sd->trans)
+    {
+    case DCE2_TRANS_TYPE__SMB:
+        //FIXIT-M Add when SMB is ported
+        break;
+
+    case DCE2_TRANS_TYPE__TCP:
+        //FIXIT-M Add HTTP cases when it is ported
+        frag_ptr = rpkt->data;
+        frag_len = rpkt->dsize;
+        break;
+
+    default:
+        DebugFormat(DEBUG_DCE_COMMON, "Invalid transport type: %d\n",
+            sd->trans);
+        return;
+    }
+
+    //FIXIT-L PORT_IF_NEEDED
+    //Push packet on stack and call detect
+
+    /* All is good.  Decode the pdu */
+    DCE2_CoDecode(sd, cot, frag_ptr, frag_len);
+
+    DebugMessage(DEBUG_DCE_COMMON, "Reassembled CO segmented packet\n");
+    DCE2_PrintPktData(rpkt->data, rpkt->dsize);
+}
+
+DCE2_Ret DCE2_HandleSegmentation(DCE2_Buffer* seg_buf, const uint8_t* data_ptr,
+    uint16_t data_len, uint32_t need_len)
+{
+    uint32_t copy_len;
+    DCE2_Ret status;
+
+    //FIXIT-L PORT_IF_NEEDED data_used
+
+    if (seg_buf == nullptr)
+        return DCE2_RET__ERROR;
+
+    /* Don't need anything - call it desegmented.  Really return
+     * an error - this shouldn't happen */
+    if (need_len == 0)
+        return DCE2_RET__ERROR;
+
+    /* Already have enough data for need */
+    if (DCE2_BufferLength(seg_buf) >= need_len)
+        return DCE2_RET__SUCCESS;
+
+    /* No data and need length > 0 - must still be segmented */
+    if (data_len == 0)
+        return DCE2_RET__SEG;
+
+    /* Already know that need length is greater than buffer length */
+    copy_len = need_len - DCE2_BufferLength(seg_buf);
+    if (copy_len > data_len)
+        copy_len = data_len;
+
+    status = DCE2_BufferAddData(seg_buf, data_ptr, copy_len,
+        DCE2_BufferLength(seg_buf), DCE2_BUFFER_MIN_ADD_FLAG__USE);
+
+    if (status != DCE2_RET__SUCCESS)
+        return DCE2_RET__ERROR;
+
+    if (DCE2_BufferLength(seg_buf) == need_len)
+        return DCE2_RET__SUCCESS;
+
+    return DCE2_RET__SEG;
+}
+
+/********************************************************************
+ * Function: DCE2_CoHandleSegmentation()
+ *
+ * Wrapper around DCE2_HandleSegmentation() to allocate a new
+ * buffer object if necessary.
+ *
+ ********************************************************************/
+static DCE2_Ret DCE2_CoHandleSegmentation(DCE2_SsnData* sd, DCE2_CoSeg* seg,
+    const uint8_t* data_ptr, uint16_t data_len, uint16_t need_len)
+{
+    DCE2_Ret status;
+
+    if (sd->trans == DCE2_TRANS_TYPE__TCP)
+    {
+        Profile profile(dce2_tcp_pstat_co_seg);
+    }
+    else
+    {
+        Profile profile(dce2_smb_pstat_co_seg);
+    }
+
+    if (seg == nullptr)
+    {
+        return DCE2_RET__ERROR;
+    }
+
+    if (seg->buf == nullptr)
+    {
+        seg->buf = DCE2_BufferNew(need_len, DCE2_CO__MIN_ALLOC_SIZE);
+        if (seg->buf == nullptr)
+        {
+            return DCE2_RET__ERROR;
+        }
+    }
+
+    status = DCE2_HandleSegmentation(seg->buf,
+        data_ptr, data_len, need_len);
+
+    return status;
 }
 
 /********************************************************************
@@ -1960,65 +2297,75 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     const uint8_t* data_ptr, uint16_t data_len)
 {
     DCE2_CoSeg* seg = DCE2_CoGetSegPtr(sd, cot);
-    uint32_t num_frags = 0;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
 
     dce_common_stats->co_pdus++;
 
     co_reassembled = 0;
 
-    while (data_len > 0)
+    //FIXIT-L PORT_IF_NEEDED
+    //Loop to walk through multiple fragments in a packet
+
+    /* Fast track full fragments */
+    if (DCE2_BufferIsEmpty(seg->buf))
     {
-        num_frags++;
+        const uint8_t* frag_ptr = data_ptr;
+        uint16_t frag_len;
 
-        DebugFormat(DEBUG_DCE_COMMON, "DCE/RPC message number: %u\n", num_frags);
+        //FIXIT-L PORT_IF_NEEDED
+        //Not enough data left for a headerr
 
-        /* Fast track full fragments */
-        if (DCE2_BufferIsEmpty(seg->buf))
+        if (DCE2_CoHdrChecks(sd, cot, (DceRpcCoHdr*)data_ptr) != DCE2_RET__SUCCESS)
+            return;
+
+        frag_len = DceRpcCoFragLen((DceRpcCoHdr*)data_ptr);
+
+        /* Not enough data left for the pdu. */
+        if (data_len < frag_len)
         {
-            const uint8_t* frag_ptr = data_ptr;
-            uint16_t frag_len;
+            DebugFormat(DEBUG_DCE_COMMON,
+                "Not enough data in packet for fragment length: %u\n", frag_len);
 
-            /* Not enough data left for a header.  Buffer it and return */
-            if (data_len < sizeof(DceRpcCoHdr))
-            {
-                // FIXIT-M add logic for this case
-                break;
-            }
+            /* Set frag length so we don't have to check it again in seg code */
+            seg->frag_len = frag_len;
 
-            if (DCE2_CoHdrChecks(sd, cot, (DceRpcCoHdr*)data_ptr) != DCE2_RET__SUCCESS)
-                return;
-
-            frag_len = DceRpcCoFragLen((DceRpcCoHdr*)data_ptr);
-
-            /* Not enough data left for the pdu. */
-            if (data_len < frag_len)
-            {
-                // FIXIT-M add logic for this case
-                break;
-            }
-
-            DCE2_MOVE(data_ptr, data_len, frag_len);
-
-            /* Got a full DCE/RPC pdu */
-            DCE2_CoDecode(sd, cot, frag_ptr, frag_len);
-
-            /* If we're configured to do defragmentation only detect on first frag
-             * since we'll detect on reassembled */
-            if (!DCE2_GcDceDefrag((dce2CommonProtoConf*)sd->config) ||
-                ((num_frags == 1) && !co_reassembled))
-                DCE2_Detect(sd);
-
-            /* Reset if this is a last frag */
-            if (DceRpcCoLastFrag((DceRpcCoHdr*)frag_ptr))
-                num_frags = 0;
+            DCE2_CoHandleSegmentation(sd, seg, data_ptr, data_len, frag_len);
+            goto dce2_coprocess_exit;
         }
-        else  /* We've already buffered data */
+
+        /* Got a full DCE/RPC pdu */
+        DCE2_CoDecode(sd, cot, frag_ptr, frag_len);
+
+        //FIXIT-L PORT_IF_NEEDED
+        //Detect first frag and reset frag count, DCE_MOVE
+    }
+    else  /* We've already buffered data */
+    {
+        DebugFormat(DEBUG_DCE_COMMON, "Segmentation buffer has %u bytes\n",
+            DCE2_BufferLength(seg->buf));
+
+        //FIXIT-L PORT_IF_NEEDED
+        //Need more data to get header
+
+        /* Need more data for full pdu */
+        if (DCE2_BufferLength(seg->buf) < seg->frag_len)
         {
-            // FIXIT-M add logic for this case
+            DCE2_Ret status = DCE2_CoHandleSegmentation(sd, seg, data_ptr, data_len,
+                seg->frag_len);
+
+            /* Still not enough */
+            if (status != DCE2_RET__SUCCESS)
+                goto dce2_coprocess_exit;
         }
+
+        //FIXIT-L PORT_IF_NEEDED
+        //Reset frag count, DCE_MOVE, data_used
+
+        /* Got the full DCE/RPC pdu. Need to create new packet before decoding */
+        DCE2_CoSegDecode(sd, cot, seg);
     }
 
+dce2_coprocess_exit:
     if (DCE2_GcReassembleEarly(sd) && !co_reassembled)
         DCE2_CoEarlyReassemble(sd, cot);
 }

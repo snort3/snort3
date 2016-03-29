@@ -43,7 +43,7 @@ THREAD_LOCAL int dce2_tcp_inspector_instances = 0;
 //FIXIT-L Currently using separate buffers for segment and fragment reassembly
 //as in Snort2x code. Doesn't seem necessary for TCP but may be the case for
 //SMB/HTTP ..keeping logic consistent for now
-THREAD_LOCAL Packet* dce2_tcp_rpkt[DCE2_TCP_RPKT_TYPE_MAX] = { NULL, NULL };
+THREAD_LOCAL Packet* dce2_tcp_rpkt[DCE2_TCP_RPKT_TYPE_MAX] = { nullptr, nullptr };
 
 THREAD_LOCAL dce2TcpStats dce2_tcp_stats;
 
@@ -298,7 +298,7 @@ static void dce2_tcp_thread_term()
                 Packet* p = dce2_tcp_rpkt[i];
                 if (p->data)
                 {
-                    free((void *)p->data);
+                    free((void*)p->data);
                 }
                 delete p->endianness;
                 free(p);

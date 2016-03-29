@@ -306,7 +306,7 @@ Packet* DCE2_GetRpkt(Packet*, DCE2_RpktType,
 DCE2_Ret DCE2_PushPkt(Packet*,DCE2_SsnData*);
 void DCE2_PopPkt(DCE2_SsnData*);
 uint16_t DCE2_GetRpktMaxData(DCE2_SsnData*, DCE2_RpktType);
-
+DCE2_Ret DCE2_AddDataToRpkt(Packet*, const uint8_t*, uint32_t);
 DCE2_SsnData* get_dce2_session_data(Packet*);
 
 #endif

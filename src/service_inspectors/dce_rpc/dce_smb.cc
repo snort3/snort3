@@ -29,7 +29,8 @@
 THREAD_LOCAL int dce2_smb_inspector_instances = 0;
 
 THREAD_LOCAL dce2SmbStats dce2_smb_stats;
-THREAD_LOCAL Packet* dce2_smb_rpkt[DCE2_SMB_RPKT_TYPE_MAX] = { NULL, NULL, NULL, NULL };
+THREAD_LOCAL Packet* dce2_smb_rpkt[DCE2_SMB_RPKT_TYPE_MAX] = { nullptr, nullptr, nullptr,
+                                                               nullptr };
 
 THREAD_LOCAL ProfileStats dce2_smb_pstat_main;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_session;
@@ -286,7 +287,7 @@ static void dce2_smb_thread_term()
                 Packet* p = dce2_smb_rpkt[i];
                 if (p->data)
                 {
-                    free((void *)p->data);
+                    free((void*)p->data);
                 }
                 free(p);
                 dce2_smb_rpkt[i] = nullptr;

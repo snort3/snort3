@@ -22,4 +22,8 @@ ranges were temporarly replaced by a single port default.
 The Snort 2x global configuration is now rolled into server
 configuration.
 
-
+Note: Some logic related to DCE segmentation and packet stack seems
+unnecessary. It is assumed that the only case for which segmentation
+logic will come into play is if the fragment size is > MAX_PAF_MAX 
+resulting in a partial fragment being delivered to the inspector. All
+other logic has been removed with comment #PORT_IF_NEEDED.

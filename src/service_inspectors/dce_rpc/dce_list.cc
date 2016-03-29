@@ -104,21 +104,21 @@ DCE2_List* DCE2_ListNew(DCE2_ListType type, DCE2_ListKeyCompare kc,
  ********************************************************************/
 static void DCE2_ListInsertTail(DCE2_List* list, DCE2_ListNode* n)
 {
-    if ((list == NULL) || (n == NULL))
+    if ((list == nullptr) || (n == nullptr))
     {
         DebugMessage(DEBUG_DCE_COMMON, "List and/or list node passed in was NULL\n");
         return;
     }
 
-    if (list->tail == NULL)
+    if (list->tail == nullptr)
     {
         list->tail = list->head = n;
-        n->prev = n->next = NULL;
+        n->prev = n->next = nullptr;
     }
     else
     {
         n->prev = list->tail;
-        n->next = NULL;
+        n->next = nullptr;
         list->tail->next = n;
         list->tail = n;
     }
@@ -142,20 +142,20 @@ static void DCE2_ListInsertTail(DCE2_List* list, DCE2_ListNode* n)
  ********************************************************************/
 static void DCE2_ListInsertHead(DCE2_List* list, DCE2_ListNode* n)
 {
-    if ((list == NULL) || (n == NULL))
+    if ((list == nullptr) || (n == nullptr))
     {
         DebugMessage(DEBUG_DCE_COMMON, "List and/or list node passed in was NULL\n");
         return;
     }
 
-    if (list->head == NULL)
+    if (list->head == nullptr)
     {
         list->head = list->tail = n;
-        n->prev = n->next = NULL;
+        n->prev = n->next = nullptr;
     }
     else
     {
-        n->prev = NULL;
+        n->prev = nullptr;
         n->next = list->head;
         list->head->prev = n;
         list->head = n;
@@ -183,7 +183,7 @@ static void DCE2_ListInsertHead(DCE2_List* list, DCE2_ListNode* n)
  ********************************************************************/
 static void DCE2_ListInsertBefore(DCE2_List* list, DCE2_ListNode* insert, DCE2_ListNode* front)
 {
-    if ((list == NULL) || (insert == NULL) || (front == NULL))
+    if ((list == nullptr) || (insert == nullptr) || (front == nullptr))
     {
         DebugMessage(DEBUG_DCE_COMMON, "List, insert node and/or front node passed in was NULL\n");
         return;
@@ -678,7 +678,7 @@ void DCE2_QueueEmpty(DCE2_Queue* queue)
  ********************************************************************/
 void DCE2_QueueDestroy(DCE2_Queue* queue)
 {
-    if (queue == NULL)
+    if (queue == nullptr)
         return;
 
     DCE2_QueueEmpty(queue);
