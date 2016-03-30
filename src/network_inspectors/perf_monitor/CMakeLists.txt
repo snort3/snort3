@@ -10,6 +10,8 @@ endif(LINUX_SMP)
 add_library ( perf_monitor STATIC
     base_tracker.cc
     base_tracker.h
+    cpu_tracker.cc
+    cpu_tracker.h
     event_tracker.cc
     event_tracker.h
     flow_tracker.cc

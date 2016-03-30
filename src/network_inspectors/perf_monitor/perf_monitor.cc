@@ -50,6 +50,7 @@
 #include "utils/util.h"
 
 #include "base_tracker.h"
+#include "cpu_tracker.h"
 #include "flow_tracker.h"
 #include "flow_ip_tracker.h"
 #include "event_tracker.h"
@@ -119,6 +120,8 @@ void PerfMonitor::show(SnortConfig*)
     {
         LogMessage("    Flow IP Memcap:   %u\n", config.flowip_memcap);
     }
+    LogMessage("  CPU Stats:    %s\n",
+        config.perf_flags & PERF_CPU ? "ACTIVE" : "INACTIVE");
     switch(config.output)
     {
         case PERF_CONSOLE:
@@ -162,6 +165,9 @@ void PerfMonitor::tinit()
 
     if (config.perf_flags & PERF_EVENT)
         trackers->push_back(perf_event = new EventTracker(&config));
+
+    if (config.perf_flags & PERF_CPU )
+        trackers->push_back(new CPUTracker(&config));
 
     for (auto& tracker : *trackers)
         tracker->open(true);

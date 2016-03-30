@@ -41,6 +41,21 @@ static const Parameter module_params[] =
 
 static const Parameter s_params[] =
 {
+    { "base", Parameter::PT_BOOL, "nullptr", "true",
+      "enable base statistics" },
+
+    { "cpu", Parameter::PT_BOOL, "nullptr", "false",
+      "enable cpu statistics" },
+    
+    { "events", Parameter::PT_BOOL, nullptr, "false",
+      "report on qualified vs non-qualified events" },
+
+    { "flow", Parameter::PT_BOOL, nullptr, "false",
+      "enable traffic statistics" },
+
+    { "flow_ip", Parameter::PT_BOOL, nullptr, "false",
+      "enable statistics on host pairs" },
+
     { "packets", Parameter::PT_INT, "0:", "10000",
       "minimum packets to report" },
 
@@ -55,15 +70,6 @@ static const Parameter s_params[] =
 
     { "flow_ports", Parameter::PT_INT, "0:", "1023",
       "maximum ports to track" },
-
-    { "events", Parameter::PT_BOOL, nullptr, "false",
-      "report on qualified vs non-qualified events" },
-
-    { "flow", Parameter::PT_BOOL, nullptr, "false",
-      "enable traffic statistics" },
-
-    { "flow_ip", Parameter::PT_BOOL, nullptr, "false",
-      "enable statistics on host pairs" },
 
     { "output", Parameter::PT_ENUM, "file | console", "file",
       "Output location for stats" },
@@ -93,9 +99,38 @@ ProfileStats* PerfMonModule::get_profile() const
 
 bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("packets") )
-        config.pkt_cnt = v.get_long();
 
+    if ( v.is("base") )
+    {
+        if ( v.get_bool() )
+            config.perf_flags |= PERF_BASE;
+        else
+            config.perf_flags &= ~PERF_BASE; //Clear since true by default
+    }
+    else if ( v.is("cpu") )
+    {
+        if ( v.get_bool() )
+            config.perf_flags |= PERF_CPU;
+    }
+    else if ( v.is("flow") )
+    {
+        if ( v.get_bool() )
+            config.perf_flags |= PERF_FLOW;
+    }
+    else if ( v.is("flow_ip") )
+    {
+        if ( v.get_bool() )
+            config.perf_flags |= PERF_FLOWIP;
+    }
+    else if ( v.is("events") )
+    {
+        if ( v.get_bool() )
+            config.perf_flags |= PERF_EVENT;
+    }
+    else if ( v.is("packets") )
+    {
+        config.pkt_cnt = v.get_long();
+    }
     else if ( v.is("seconds") )
     {
         config.sample_interval = v.get_long();
@@ -120,21 +155,6 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("format") )
     {
         config.format = (PerfFormat)v.get_long();
-    }
-    else if ( v.is("events") )
-    {
-        if ( v.get_bool() )
-            config.perf_flags |= PERF_EVENT;
-    }
-    else if ( v.is("flow") )
-    {
-        if ( v.get_bool() )
-            config.perf_flags |= PERF_FLOW;
-    }
-    else if ( v.is("flow_ip") )
-    {
-        if ( v.get_bool() )
-            config.perf_flags |= PERF_FLOWIP;
     }
     else if ( v.is("name") )
     {
@@ -167,10 +187,8 @@ bool PerfMonModule::begin(const char* fqn, int, SnortConfig*)
         mod_pegs.clear();
     }
     else
-    {
         memset(&config, 0, sizeof(PerfConfig));
-        config.perf_flags |= PERF_BASE;
-    }
+
     return true;
 }
 
