@@ -96,6 +96,7 @@ inline bool free_space(size_t requested, size_t cap, Tracker& trk, Handler& hand
 // -----------------------------------------------------------------------------
 
 size_t MemoryCap::thread_cap = 0;
+size_t MemoryCap::preemptive_threshold = 0;
 
 // -----------------------------------------------------------------------------
 // public interface
@@ -125,6 +126,14 @@ void MemoryCap::update_deallocations(size_t n)
     mp_active_context.update_deallocs(n);
 }
 
+bool MemoryCap::over_threshold()
+{
+    if ( !preemptive_threshold )
+        return false;
+
+    return s_tracker.used() >= preemptive_threshold;
+}
+
 void MemoryCap::calculate(unsigned num_threads)
 {
     const MemoryConfig& config = *snort_conf->memory;
@@ -142,6 +151,13 @@ void MemoryCap::calculate(unsigned num_threads)
         FatalError("per-thread memory cap is 0");
 
     DebugFormat(DEBUG_MEMORY, "per-thread memory cap set to %zu", thread_cap);
+
+    if ( config.threshold )
+    {
+        preemptive_threshold = memory::calculate_threshold(thread_cap, config.threshold);
+        DebugFormat(DEBUG_MEMORY,
+            "per-thread pre-emptive action threshold set to %zu", preemptive_threshold);
+    }
 }
 
 } // namespace memory
