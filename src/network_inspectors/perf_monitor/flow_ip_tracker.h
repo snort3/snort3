@@ -22,48 +22,27 @@
 #define FLOW_IP_TRACKER_H
 
 #include "perf_tracker.h"
+#include "perf_flow.h"
 #include "hash/sfxhash.h"
-
-struct sfSFSKey
-{
-    sfip_t ipA;
-    sfip_t ipB;
-};
-
-struct sfBTStats
-{
-    uint64_t packets_AtoB;
-    uint64_t bytes_AtoB;
-    uint64_t packets_BtoA;
-    uint64_t bytes_BtoA;
-};
-
-struct sfSFSValue
-{
-    sfBTStats trafficStats[SFS_TYPE_MAX];
-    uint64_t total_packets;
-    uint64_t total_bytes;
-    uint32_t stateChanges[SFS_STATE_MAX];
-};
 
 class FlowIPTracker : public PerfTracker
 {
 public:
-    FlowIPTracker(SFPERF* perf);
+    FlowIPTracker(PerfConfig* perf);
     ~FlowIPTracker();
 
     void reset() override;
     void update(Packet*) override;
     void process(bool) override;
 
-    int updateState(const sfip_t* src_addr, const sfip_t* dst_addr, SFSState state);
+    int update_state(const sfip_t* src_addr, const sfip_t* dst_addr, FlowState);
 
 private:
     SFXHASH* ipMap;
 
-    sfSFSValue* findFlowIPStats(const sfip_t* src_addr, const sfip_t* dst_addr, int* swapped);
-    void WriteFlowIPStats();
-    void DisplayFlowIPStats();
+    FlowStateValue* find_stats(const sfip_t* src_addr, const sfip_t* dst_addr, int* swapped);
+    void write_stats();
+    void display_stats();
 };
 
 extern THREAD_LOCAL FlowIPTracker* perf_flow_ip;

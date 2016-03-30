@@ -25,46 +25,45 @@
 
 THREAD_LOCAL FlowTracker* perf_flow;
 
-FlowTracker::FlowTracker(SFPERF* perf) : PerfTracker(perf,
-        perf->perf_flags & SFPERF_SUMMARY_FLOW,
+FlowTracker::FlowTracker(PerfConfig* perf) : PerfTracker(perf,
         perf->output == PERF_FILE ? FLOW_FILE : nullptr) { }
 
 FlowTracker::~FlowTracker()
 {
-    if (sfFlow.pktLenCnt)
+    if (stats.pkt_len_cnt)
     {
-        free(sfFlow.pktLenCnt);
-        sfFlow.pktLenCnt = nullptr;
+        free(stats.pkt_len_cnt);
+        stats.pkt_len_cnt = nullptr;
     }
 
-    if (sfFlow.portTcpSrc)
+    if (stats.port_tcp_src)
     {
-        free(sfFlow.portTcpSrc);
-        sfFlow.portTcpSrc = nullptr;
+        free(stats.port_tcp_src);
+        stats.port_tcp_src = nullptr;
     }
 
-    if (sfFlow.portTcpDst)
+    if (stats.port_tcp_dst)
     {
-        free(sfFlow.portTcpDst);
-        sfFlow.portTcpDst = nullptr;
+        free(stats.port_tcp_dst);
+        stats.port_tcp_dst = nullptr;
     }
 
-    if (sfFlow.portUdpSrc)
+    if (stats.port_udp_src)
     {
-        free(sfFlow.portUdpSrc);
-        sfFlow.portUdpSrc = nullptr;
+        free(stats.port_udp_src);
+        stats.port_udp_src = nullptr;
     }
 
-    if (sfFlow.portUdpDst)
+    if (stats.port_udp_dst)
     {
-        free(sfFlow.portUdpDst);
-        sfFlow.portUdpDst = nullptr;
+        free(stats.port_udp_dst);
+        stats.port_udp_dst = nullptr;
     }
 
-    if (sfFlow.typeIcmp)
+    if (stats.type_icmp)
     {
-        free(sfFlow.typeIcmp);
-        sfFlow.typeIcmp = nullptr;
+        free(stats.type_icmp);
+        stats.type_icmp = nullptr;
     }
 }
 
@@ -74,54 +73,51 @@ void FlowTracker::reset()
 
     if (first)
     {
-        sfFlow.pktLenCnt = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (SF_MAX_PKT_LEN + 2));
-        sfFlow.portTcpSrc = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (SF_MAX_PORT+1));
-        sfFlow.portTcpDst = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (SF_MAX_PORT+1));
-        sfFlow.portUdpSrc = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (SF_MAX_PORT+1));
-        sfFlow.portUdpDst = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (SF_MAX_PORT+1));
-        sfFlow.typeIcmp = (uint64_t*)SnortAlloc(sizeof(uint64_t) * 256);
+        stats.pkt_len_cnt = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (MAX_PKT_LEN + 2));
+        stats.port_tcp_src = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (MAX_PORT+1));
+        stats.port_tcp_dst = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (MAX_PORT+1));
+        stats.port_udp_src = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (MAX_PORT+1));
+        stats.port_udp_dst = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (MAX_PORT+1));
+        stats.type_icmp = (uint64_t*)SnortAlloc(sizeof(uint64_t) * 256);
 
         if ( config->format == PERF_CSV )
-            LogFlowPerfHeader(fh);
+            log_flow_perf_header(fh);
 
         first = false;
     }
     else
     {
-        memset(sfFlow.pktLenCnt, 0, sizeof(uint64_t) * (SF_MAX_PKT_LEN + 2));
-        memset(sfFlow.portTcpSrc, 0, sizeof(uint64_t) * (SF_MAX_PORT+1));
-        memset(sfFlow.portTcpDst, 0, sizeof(uint64_t) * (SF_MAX_PORT+1));
-        memset(sfFlow.portUdpSrc, 0, sizeof(uint64_t) * (SF_MAX_PORT+1));
-        memset(sfFlow.portUdpDst, 0, sizeof(uint64_t) * (SF_MAX_PORT+1));
-        memset(sfFlow.typeIcmp, 0, sizeof(uint64_t) * 256);
+        memset(stats.pkt_len_cnt, 0, sizeof(uint64_t) * (MAX_PKT_LEN + 2));
+        memset(stats.port_tcp_src, 0, sizeof(uint64_t) * (MAX_PORT+1));
+        memset(stats.port_tcp_dst, 0, sizeof(uint64_t) * (MAX_PORT+1));
+        memset(stats.port_udp_src, 0, sizeof(uint64_t) * (MAX_PORT+1));
+        memset(stats.port_udp_dst, 0, sizeof(uint64_t) * (MAX_PORT+1));
+        memset(stats.type_icmp, 0, sizeof(uint64_t) * 256);
     }
 
-    sfFlow.pktTotal = 0;
-    sfFlow.byteTotal = 0;
+    stats.pkt_total = 0;
+    stats.byte_total = 0;
 
-    sfFlow.portTcpHigh=0;
-    sfFlow.portTcpTotal=0;
+    stats.port_tcp_high=0;
+    stats.port_tcp_total=0;
 
-    sfFlow.portUdpHigh=0;
-    sfFlow.portUdpTotal=0;
+    stats.port_udp_high=0;
+    stats.port_udp_total=0;
 
-    sfFlow.typeIcmpTotal = 0;
+    stats.type_icmp_total = 0;
 }
 
 void FlowTracker::update(Packet* p)
 {
     if (!p->is_rebuilt())
-        UpdateFlowStats(&sfFlow, p);
+        update_flow_stats(&stats, p);
 }
 
 void FlowTracker::process(bool summarize)
 {
-    if (summarize && !summary)
-        return;
+    process_flow_stats(&stats, fh, config->format, cur_time);
 
-    ProcessFlowStats(&sfFlow, fh, config->format, cur_time);
-
-    if ( !summary )
+    if (!(config->perf_flags & PERF_SUMMARY))
         reset();
 }
 

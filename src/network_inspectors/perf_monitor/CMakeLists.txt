@@ -1,8 +1,8 @@
 
 if( LINUX_SMP )
     set (PROCPIDSTATS_SOURCE
-        sfprocpidstats.cc 
-        sfprocpidstats.h
+        proc_pid_stats.cc 
+        proc_pid_stats.h
     )
 
 endif(LINUX_SMP)

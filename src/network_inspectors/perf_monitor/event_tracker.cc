@@ -42,9 +42,6 @@ void EventTracker::reset()
 
 void EventTracker::process(bool summarize)
 {
-    if (summarize & !summary)
-        return;
-
     if (config->format == PERF_TEXT)
     {
         LogLabel("Snort Setwise Event Stats", fh);
@@ -68,7 +65,7 @@ void EventTracker::process(bool summarize)
 void EventTracker::UpdateNQEvents()
 {
     if ((perfmon_config) &&
-        (perfmon_config->perf_flags & SFPERF_EVENT))
+        (perfmon_config->perf_flags & PERF_EVENT))
     {
         event_counts.NQEvents++;
         event_counts.TotalEvents++;
@@ -78,7 +75,7 @@ void EventTracker::UpdateNQEvents()
 void EventTracker::UpdateQEvents()
 {
     if ((perfmon_config) &&
-        (perfmon_config->perf_flags & SFPERF_EVENT))
+        (perfmon_config->perf_flags & PERF_EVENT))
     {
         event_counts.QEvents++;
         event_counts.TotalEvents++;

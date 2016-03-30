@@ -17,13 +17,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-** Dan Roelker <droelker@sourcefire.com>
+** Carter Waxman <cwaxman@cisco.com>
+** Based on work by Dan Roelker <droelker@sourcefire.com>
 **
 **  DESCRIPTION
 **    This file gets the correct CPU usage for SMP linux machines.
 **
 */
-#include "sfprocpidstats.h"
+#include "proc_pid_stats.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -53,14 +54,14 @@ typedef struct _USERSYS
     u_long idle;
 } USERSYS;
 
-static THREAD_LOCAL int giCPUs = 1;
+static THREAD_LOCAL int gnum_cpus = 1;
 
 static THREAD_LOCAL USERSYS* gpStatCPUs = nullptr;
 static THREAD_LOCAL USERSYS* gpStatCPUs_2 = nullptr;
 
 static THREAD_LOCAL FILE* proc_stat;
 
-static int GetProcStatCpu(USERSYS* pStatCPUs, int iCPUs)
+static int get_proc_stat_cpu(USERSYS* cpu_stats, int num_cpus)
 {
     int iRet;
     int iCtr;
@@ -77,7 +78,7 @@ static int GetProcStatCpu(USERSYS* pStatCPUs, int iCPUs)
     **
     **  But we do want to read it if there is only one CPU.
     */
-    if (iCPUs != 1)
+    if (num_cpus != 1)
     {
         if (!fgets(buf, sizeof(buf), proc_stat))
             return -1;
@@ -87,7 +88,7 @@ static int GetProcStatCpu(USERSYS* pStatCPUs, int iCPUs)
     **  Read the individual CPU usages.  This tells us where
     **  sniffing and snorting is occurring.
     */
-    for (iCtr = 0; iCtr < iCPUs; iCtr++)
+    for (iCtr = 0; iCtr < num_cpus; iCtr++)
     {
         if (!fgets(buf, sizeof(buf), proc_stat))
             return -1;
@@ -98,9 +99,9 @@ static int GetProcStatCpu(USERSYS* pStatCPUs, int iCPUs)
         if (iRet == EOF || iRet < 4)
             return -1;
 
-        pStatCPUs[iCtr].user = ulUser + ulNice;
-        pStatCPUs[iCtr].sys  = ulSys;
-        pStatCPUs[iCtr].idle = ulIdle;
+        cpu_stats[iCtr].user = ulUser + ulNice;
+        cpu_stats[iCtr].sys  = ulSys;
+        cpu_stats[iCtr].idle = ulIdle;
     }
 
     return 0;
@@ -109,7 +110,7 @@ static int GetProcStatCpu(USERSYS* pStatCPUs, int iCPUs)
 static int GetCpuNum(void)
 {
     int iRet;
-    int iCPUs = 0;
+    int num_cpus = 0;
     char acCpuName[10+1];
     char buf[256];
 
@@ -137,7 +138,7 @@ static int GetCpuNum(void)
             break;
         }
 
-        iCPUs++;
+        num_cpus++;
     }
 
     /*
@@ -145,13 +146,13 @@ static int GetCpuNum(void)
     **  the first CPU entry combines all CPUs.  This should be
     **  backward compatible with 2.2 not compiled with SMP support.
     */
-    if (iCPUs > 1)
-        iCPUs--;
+    if (num_cpus > 1)
+        num_cpus--;
 
-    return iCPUs;
+    return num_cpus;
 }
 
-int sfInitProcPidStats(SFPROCPIDSTATS* sfProcPidStats)
+int init_proc_pid_stats(ProcPIDStats* proc_pid_stats)
 {
     /* Do not re-allocate memory */
     if (gpStatCPUs)
@@ -163,31 +164,31 @@ int sfInitProcPidStats(SFPROCPIDSTATS* sfProcPidStats)
         FatalError("PERFMONITOR: Can't open %s.", PROC_STAT);
     }
 
-    giCPUs = GetCpuNum();
-    if (giCPUs <= 0)
+    gnum_cpus = GetCpuNum();
+    if (gnum_cpus <= 0)
     {
         FatalError("PERFMONITOR: Error reading CPUs from %s.",
             PROC_STAT);
     }
 
-    gpStatCPUs   = (USERSYS*)calloc(giCPUs, sizeof(USERSYS));
+    gpStatCPUs   = (USERSYS*)calloc(gnum_cpus, sizeof(USERSYS));
     if (!gpStatCPUs)
         FatalError("PERFMONITOR: Error allocating CPU mem.");
 
-    gpStatCPUs_2 = (USERSYS*)calloc(giCPUs, sizeof(USERSYS));
+    gpStatCPUs_2 = (USERSYS*)calloc(gnum_cpus, sizeof(USERSYS));
     if (!gpStatCPUs_2)
         FatalError("PERFMONITOR: Error allocating CPU mem.");
 
     /*
-    **  Allocate for sfProcPidStats CPUs
+    **  Allocate for proc_pid_stats CPUs
     */
-    sfProcPidStats->SysCPUs = (CPUSTAT*)calloc(giCPUs, sizeof(CPUSTAT));
-    if (!sfProcPidStats->SysCPUs)
+    proc_pid_stats->sys_cpus = (CPUStats*)calloc(gnum_cpus, sizeof(CPUStats));
+    if (!proc_pid_stats->sys_cpus)
         FatalError("PERFMONITOR: Error allocating SysCPU mem.");
 
-    sfProcPidStats->iCPUs = giCPUs;
+    proc_pid_stats->num_cpus = gnum_cpus;
 
-    if (GetProcStatCpu(gpStatCPUs, giCPUs))
+    if (get_proc_stat_cpu(gpStatCPUs, gnum_cpus))
         FatalError("PERFMONITOR: Error while reading '%s'.",
             PROC_STAT);
 
@@ -196,7 +197,7 @@ int sfInitProcPidStats(SFPROCPIDSTATS* sfProcPidStats)
     return 0;
 }
 
-void FreeProcPidStats(SFPROCPIDSTATS* sfProcPidStats)
+void free_proc_pid_stats(ProcPIDStats* proc_pid_stats)
 {
     if (gpStatCPUs)
     {
@@ -210,14 +211,14 @@ void FreeProcPidStats(SFPROCPIDSTATS* sfProcPidStats)
         gpStatCPUs_2 = nullptr;
     }
 
-    if (sfProcPidStats->SysCPUs)
+    if (proc_pid_stats->sys_cpus)
     {
-        free(sfProcPidStats->SysCPUs);
-        sfProcPidStats->SysCPUs = nullptr;
+        free(proc_pid_stats->sys_cpus);
+        proc_pid_stats->sys_cpus = nullptr;
     }
 }
 
-int sfProcessProcPidStats(SFPROCPIDSTATS* sfProcPidStats)
+int process_proc_pid_stats(ProcPIDStats* proc_pid_stats)
 {
     static THREAD_LOCAL int iError = 0;
     int iCtr;
@@ -235,7 +236,7 @@ int sfProcessProcPidStats(SFPROCPIDSTATS* sfProcPidStats)
         return -1;
     }
 
-    if (GetProcStatCpu(gpStatCPUs_2, giCPUs))
+    if (get_proc_stat_cpu(gpStatCPUs_2, gnum_cpus))
     {
         if (!iError)
         {
@@ -250,9 +251,9 @@ int sfProcessProcPidStats(SFPROCPIDSTATS* sfProcPidStats)
     fclose(proc_stat);
 
     /*
-    **  SysCPUs (The system's CPU usage, like top gives you)
+    **  sys_cpus (The system's CPU usage, like top gives you)
     */
-    for (iCtr = 0; iCtr < giCPUs; iCtr++)
+    for (iCtr = 0; iCtr < gnum_cpus; iCtr++)
     {
         ulCPUjiffies = (gpStatCPUs_2[iCtr].user - gpStatCPUs[iCtr].user) +
             (gpStatCPUs_2[iCtr].sys - gpStatCPUs[iCtr].sys) +
@@ -260,47 +261,47 @@ int sfProcessProcPidStats(SFPROCPIDSTATS* sfProcPidStats)
 
         if (gpStatCPUs_2[iCtr].user > gpStatCPUs[iCtr].user)
         {
-            sfProcPidStats->SysCPUs[iCtr].user = (((double)(gpStatCPUs_2[iCtr].user -
+            proc_pid_stats->sys_cpus[iCtr].user = (((double)(gpStatCPUs_2[iCtr].user -
                 gpStatCPUs[iCtr].user)) /
                 ulCPUjiffies) * 100.0;
-            if (sfProcPidStats->SysCPUs[iCtr].user < .01)
+            if (proc_pid_stats->sys_cpus[iCtr].user < .01)
             {
-                sfProcPidStats->SysCPUs[iCtr].user = 0;
+                proc_pid_stats->sys_cpus[iCtr].user = 0;
             }
         }
         else
         {
-            sfProcPidStats->SysCPUs[iCtr].user = 0;
+            proc_pid_stats->sys_cpus[iCtr].user = 0;
         }
 
         if (gpStatCPUs_2[iCtr].sys > gpStatCPUs[iCtr].sys)
         {
-            sfProcPidStats->SysCPUs[iCtr].sys = (((double)(gpStatCPUs_2[iCtr].sys -
+            proc_pid_stats->sys_cpus[iCtr].sys = (((double)(gpStatCPUs_2[iCtr].sys -
                 gpStatCPUs[iCtr].sys)) /
                 ulCPUjiffies) * 100.0;
-            if (sfProcPidStats->SysCPUs[iCtr].sys < .01)
+            if (proc_pid_stats->sys_cpus[iCtr].sys < .01)
             {
-                sfProcPidStats->SysCPUs[iCtr].sys = 0;
+                proc_pid_stats->sys_cpus[iCtr].sys = 0;
             }
         }
         else
         {
-            sfProcPidStats->SysCPUs[iCtr].sys = 0;
+            proc_pid_stats->sys_cpus[iCtr].sys = 0;
         }
 
         if (gpStatCPUs_2[iCtr].idle > gpStatCPUs[iCtr].idle)
         {
-            sfProcPidStats->SysCPUs[iCtr].idle = (((double)(gpStatCPUs_2[iCtr].idle -
+            proc_pid_stats->sys_cpus[iCtr].idle = (((double)(gpStatCPUs_2[iCtr].idle -
                 gpStatCPUs[iCtr].idle)) /
                 ulCPUjiffies) * 100.0;
-            if (sfProcPidStats->SysCPUs[iCtr].idle < .01)
+            if (proc_pid_stats->sys_cpus[iCtr].idle < .01)
             {
-                sfProcPidStats->SysCPUs[iCtr].idle = 0;
+                proc_pid_stats->sys_cpus[iCtr].idle = 0;
             }
         }
         else
         {
-            sfProcPidStats->SysCPUs[iCtr].idle = 0;
+            proc_pid_stats->sys_cpus[iCtr].idle = 0;
         }
 
         /*

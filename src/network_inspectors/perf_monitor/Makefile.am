@@ -3,7 +3,7 @@ noinst_LIBRARIES = libperf_monitor.a
 
 if BUILD_PROCPIDSTATS
 PROCPIDSTATS_SOURCE = \
-sfprocpidstats.cc sfprocpidstats.h
+proc_pid_stats.cc proc_pid_stats.h
 endif
 
 libperf_monitor_a_SOURCES = \

@@ -131,9 +131,9 @@ bool UdpSession::setup(Packet* p)
 
     SESSION_STATS_ADD(udpStats);
 
-    if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
+    if (perfmon_config && (perfmon_config->perf_flags & PERF_FLOWIP))
     {
-        perf_flow_ip->updateState(&flow->client_ip,
+        perf_flow_ip->update_state(&flow->client_ip,
             &flow->server_ip, SFS_STATE_UDP_CREATED);
     }
 

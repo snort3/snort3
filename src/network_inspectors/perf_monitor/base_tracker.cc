@@ -29,8 +29,8 @@
 
 using namespace std;
 
-BaseTracker::BaseTracker(SFPERF* perf) : PerfTracker(perf,
-        perf->perf_flags & SFPERF_SUMMARY_BASE, perf->output == PERF_FILE ? BASE_FILE : nullptr)
+BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf,
+    perf->output == PERF_FILE ? BASE_FILE : nullptr)
 {
     csv_header.clear();
 

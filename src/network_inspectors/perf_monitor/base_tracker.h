@@ -26,7 +26,7 @@
 class BaseTracker : public PerfTracker
 {
 public:
-    BaseTracker(SFPERF* perf);
+    BaseTracker(PerfConfig* perf);
 
     void reset() override;
     void process(bool) override;

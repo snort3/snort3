@@ -29,7 +29,7 @@
 #include "parser/parser.h"
 #include "utils/util.h"
 
-static inline bool sfCheckFileSize(FILE* fh, uint64_t max_file_size)
+static inline bool check_file_size(FILE* fh, uint64_t max_file_size)
 {
     int fd;
     struct stat file_stats;
@@ -45,10 +45,9 @@ static inline bool sfCheckFileSize(FILE* fh, uint64_t max_file_size)
     return false;
 }
 
-PerfTracker::PerfTracker(SFPERF* config, bool summary, const char* tracker_fname)
+PerfTracker::PerfTracker(PerfConfig* config, const char* tracker_fname)
 {
     this->config = config;
-    this->summary = summary;
 
     if (tracker_fname)
         get_instance_file(fname, tracker_fname);
@@ -117,7 +116,7 @@ void PerfTracker::close()
 
 //FIXIT-M: combine with fileRotate
 //FIXIT-M: refactor file naming foo to use std::string
-static bool sfRotateFile(const char* old_file, FILE* old_fh,
+static bool rotate_file(const char* old_file, FILE* old_fh,
     uint32_t max_file_size)
 {
     time_t ts;
@@ -298,7 +297,7 @@ void PerfTracker::rotate()
 {
     if (fh && fh != stdout)
     {
-        bool ret = sfRotateFile(fname.c_str(), fh, config->max_file_size);
+        bool ret = rotate_file(fname.c_str(), fh, config->max_file_size);
         if (ret != 0)
             return;
         open(false);
@@ -307,7 +306,7 @@ void PerfTracker::rotate()
 
 void PerfTracker::auto_rotate()
 {
-    if (fh && fh != stdout && sfCheckFileSize(fh, config->max_file_size))
+    if (fh && fh != stdout && check_file_size(fh, config->max_file_size))
         rotate();
 }
 

@@ -43,13 +43,12 @@ public:
     virtual ~PerfTracker();
 
 protected:
-    SFPERF* config;
-    bool summary;
+    PerfConfig* config;
     FILE* fh = nullptr;
     std::string fname;
     time_t cur_time;
 
-    PerfTracker(SFPERF*, bool summary, const char* tracker_fname);
+    PerfTracker(PerfConfig*, const char* tracker_fname);
 };
 #endif
 

@@ -26,9 +26,9 @@
 class FlowTracker : public PerfTracker
 {
 public:
-    SFFLOW sfFlow;
+    RawFlowStats stats;
 
-    FlowTracker(SFPERF* perf);
+    FlowTracker(PerfConfig* perf);
     ~FlowTracker();
 
     void reset() override;

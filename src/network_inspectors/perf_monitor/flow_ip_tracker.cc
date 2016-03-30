@@ -25,14 +25,20 @@
 #include "sfip/sf_ip.h"
 #include "utils/util.h"
 
+struct FlowStateKey
+{
+    sfip_t ipA;
+    sfip_t ipB;
+};
+
 THREAD_LOCAL FlowIPTracker* perf_flow_ip;
 
-sfSFSValue* FlowIPTracker::findFlowIPStats(const sfip_t* src_addr, const sfip_t* dst_addr,
+FlowStateValue* FlowIPTracker::find_stats(const sfip_t* src_addr, const sfip_t* dst_addr,
     int* swapped)
 {
     SFXHASH_NODE* node;
-    sfSFSKey key;
-    sfSFSValue* value;
+    FlowStateKey key;
+    FlowStateValue* value;
 
     if (sfip_lesser(src_addr, dst_addr))
     {
@@ -47,7 +53,7 @@ sfSFSValue* FlowIPTracker::findFlowIPStats(const sfip_t* src_addr, const sfip_t*
         *swapped = 1;
     }
 
-    value = (sfSFSValue*)sfxhash_find(ipMap, &key);
+    value = (FlowStateValue*)sfxhash_find(ipMap, &key);
     if (!value)
     {
         node = sfxhash_get_node(ipMap, &key);
@@ -58,15 +64,14 @@ sfSFSValue* FlowIPTracker::findFlowIPStats(const sfip_t* src_addr, const sfip_t*
                 );
             return nullptr;
         }
-        memset(node->data, 0, sizeof(sfSFSValue));
-        value = (sfSFSValue*)node->data;
+        memset(node->data, 0, sizeof(FlowStateValue));
+        value = (FlowStateValue*)node->data;
     }
 
     return value;
 }
 
-FlowIPTracker::FlowIPTracker(SFPERF* perf) : PerfTracker(perf,
-        perf->perf_flags & SFPERF_SUMMARY_FLOWIP,
+FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf,
         perf->output == PERF_FILE ? FLIP_FILE : nullptr)
 { }
 
@@ -85,7 +90,7 @@ void FlowIPTracker::reset()
 
     if (first)
     {
-        ipMap = sfxhash_new(1021, sizeof(sfSFSKey), sizeof(sfSFSValue),
+        ipMap = sfxhash_new(1021, sizeof(FlowStateKey), sizeof(FlowStateValue),
             perfmon_config->flowip_memcap, 1, nullptr, nullptr, 1);
         if (!ipMap)
             FatalError("Unable to allocate memory for FlowIP stats\n"); //FIXIT-H this should all
@@ -101,10 +106,9 @@ void FlowIPTracker::update(Packet* p)
 {
     if (p->has_ip() && !p->is_rebuilt())
     {
-        SFSType type = SFS_TYPE_OTHER;
-        sfSFSValue* value;
-        sfBTStats* stats;
+        FlowType type = SFS_TYPE_OTHER;
         int swapped;
+
         const sfip_t* src_addr = p->ptrs.ip_api.get_src();
         const sfip_t* dst_addr = p->ptrs.ip_api.get_dst();
         int len = p->pkth->caplen;
@@ -114,28 +118,28 @@ void FlowIPTracker::update(Packet* p)
         else if (p->ptrs.udph)
             type = SFS_TYPE_UDP;
 
-        value = findFlowIPStats(src_addr, dst_addr, &swapped);
+        FlowStateValue* value = find_stats(src_addr, dst_addr, &swapped);
         if (!value)
             return;
 
-        stats = &value->trafficStats[type];
+        TrafficStats* stats = &value->traffic_stats[type];
 
         if (!swapped)
         {
-            stats->packets_AtoB++;
-            stats->bytes_AtoB += len;
+            stats->packets_a_to_b++;
+            stats->bytes_a_to_b += len;
         }
         else
         {
-            stats->packets_BtoA++;
-            stats->bytes_BtoA += len;
+            stats->packets_b_to_a++;
+            stats->bytes_b_to_a += len;
         }
         value->total_packets++;
         value->total_bytes += len;
     }
 }
 
-void FlowIPTracker::DisplayFlowIPStats()
+void FlowIPTracker::display_stats()
 {
     SFXHASH_NODE* node;
     uint64_t total = 0;
@@ -146,25 +150,23 @@ void FlowIPTracker::DisplayFlowIPStats()
     LogMessage(fh, "---------------\n");
     for (node = sfxhash_findfirst(ipMap); node; node = sfxhash_findnext(ipMap))
     {
-        sfSFSKey* key;
-        sfSFSValue* stats;
         char ipA[41], ipB[41];
 
-        key = (sfSFSKey*)node->key;
-        stats = (sfSFSValue*)node->data;
+        FlowStateKey* key = (FlowStateKey*)node->key;
+        FlowStateValue* stats = (FlowStateValue*)node->data;
 
         sfip_raw_ntop(key->ipA.family, key->ipA.ip32, ipA, sizeof(ipA));
         sfip_raw_ntop(key->ipB.family, key->ipB.ip32, ipB, sizeof(ipB));
         LogMessage(fh, "[%s <-> %s]: " STDu64 " bytes in " STDu64 " packets (%u, %u, %u)\n", ipA, ipB,
             stats->total_bytes, stats->total_packets,
-            stats->stateChanges[SFS_STATE_TCP_ESTABLISHED],
-            stats->stateChanges[SFS_STATE_TCP_CLOSED], stats->stateChanges[SFS_STATE_UDP_CREATED]);
+            stats->state_changes[SFS_STATE_TCP_ESTABLISHED],
+            stats->state_changes[SFS_STATE_TCP_CLOSED], stats->state_changes[SFS_STATE_UDP_CREATED]);
         total += stats->total_packets;
     }
     LogMessage(fh, "Classified " STDu64 " packets.\n", total);
 }
 
-void FlowIPTracker::WriteFlowIPStats()
+void FlowIPTracker::write_stats()
 {
     SFXHASH_NODE* node;
 
@@ -174,33 +176,31 @@ void FlowIPTracker::WriteFlowIPStats()
     fprintf(fh, "%ld,%u,", (unsigned long)cur_time, sfxhash_count(ipMap));
     for (node = sfxhash_findfirst(ipMap); node; node = sfxhash_findnext(ipMap))
     {
-        sfSFSKey* key;
-        sfSFSValue* stats;
         char ipA[41], ipB[41];
 
-        key = (sfSFSKey*)node->key;
-        stats = (sfSFSValue*)node->data;
+        FlowStateKey* key = (FlowStateKey*)node->key;
+        FlowStateValue* stats = (FlowStateValue*)node->data;
 
         sfip_raw_ntop(key->ipA.family, key->ipA.ip32, ipA, sizeof(ipA));
         sfip_raw_ntop(key->ipB.family, key->ipB.ip32, ipB, sizeof(ipB));
         fprintf(fh, "%s,%s," CSVu64 CSVu64 CSVu64 CSVu64 CSVu64 CSVu64 CSVu64
             CSVu64 CSVu64 CSVu64 CSVu64 CSVu64 "%u,%u,%u\n",
             ipA, ipB,
-            stats->trafficStats[SFS_TYPE_TCP].packets_AtoB,
-            stats->trafficStats[SFS_TYPE_TCP].bytes_AtoB,
-            stats->trafficStats[SFS_TYPE_TCP].packets_BtoA,
-            stats->trafficStats[SFS_TYPE_TCP].bytes_BtoA,
-            stats->trafficStats[SFS_TYPE_UDP].packets_AtoB,
-            stats->trafficStats[SFS_TYPE_UDP].bytes_AtoB,
-            stats->trafficStats[SFS_TYPE_UDP].packets_BtoA,
-            stats->trafficStats[SFS_TYPE_UDP].bytes_BtoA,
-            stats->trafficStats[SFS_TYPE_OTHER].packets_AtoB,
-            stats->trafficStats[SFS_TYPE_OTHER].bytes_AtoB,
-            stats->trafficStats[SFS_TYPE_OTHER].packets_BtoA,
-            stats->trafficStats[SFS_TYPE_OTHER].bytes_BtoA,
-            stats->stateChanges[SFS_STATE_TCP_ESTABLISHED],
-            stats->stateChanges[SFS_STATE_TCP_CLOSED],
-            stats->stateChanges[SFS_STATE_UDP_CREATED]);
+            stats->traffic_stats[SFS_TYPE_TCP].packets_a_to_b,
+            stats->traffic_stats[SFS_TYPE_TCP].bytes_a_to_b,
+            stats->traffic_stats[SFS_TYPE_TCP].packets_b_to_a,
+            stats->traffic_stats[SFS_TYPE_TCP].bytes_b_to_a,
+            stats->traffic_stats[SFS_TYPE_UDP].packets_a_to_b,
+            stats->traffic_stats[SFS_TYPE_UDP].bytes_a_to_b,
+            stats->traffic_stats[SFS_TYPE_UDP].packets_b_to_a,
+            stats->traffic_stats[SFS_TYPE_UDP].bytes_b_to_a,
+            stats->traffic_stats[SFS_TYPE_OTHER].packets_a_to_b,
+            stats->traffic_stats[SFS_TYPE_OTHER].bytes_a_to_b,
+            stats->traffic_stats[SFS_TYPE_OTHER].packets_b_to_a,
+            stats->traffic_stats[SFS_TYPE_OTHER].bytes_b_to_a,
+            stats->state_changes[SFS_STATE_TCP_ESTABLISHED],
+            stats->state_changes[SFS_STATE_TCP_CLOSED],
+            stats->state_changes[SFS_STATE_UDP_CREATED]);
     }
 
     fflush(fh);
@@ -208,29 +208,25 @@ void FlowIPTracker::WriteFlowIPStats()
 
 void FlowIPTracker::process(bool summarize)
 {
-    if (summarize && !summary)
-        return;
-
     if (config->format == PERF_CSV)
-        WriteFlowIPStats();
+        write_stats();
 
     else if (config->format == PERF_TEXT)
-        DisplayFlowIPStats();
+        display_stats();
 
-    if ( !summary )
+    if ( !(config->perf_flags & PERF_SUMMARY) )
         reset();
 }
 
-int FlowIPTracker::updateState(const sfip_t* src_addr, const sfip_t* dst_addr, SFSState state)
+int FlowIPTracker::update_state(const sfip_t* src_addr, const sfip_t* dst_addr, FlowState state)
 {
-    sfSFSValue* value;
     int swapped;
 
-    value = findFlowIPStats(src_addr, dst_addr, &swapped);
+    FlowStateValue* value = find_stats(src_addr, dst_addr, &swapped);
     if (!value)
         return 1;
 
-    value->stateChanges[state]++;
+    value->state_changes[state]++;
 
     return 0;
 }

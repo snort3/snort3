@@ -263,8 +263,8 @@ void TcpSession::update_perf_base_state(char newState)
         if ( !( session_flags & SSNFLAG_COUNTED_ESTABLISH ) )
         {
             tcpStats.sessions_established++;
-            if ( perfmon_config && ( perfmon_config->perf_flags & SFPERF_FLOWIP ) )
-                perf_flow_ip->updateState(&flow->client_ip,
+            if ( perfmon_config && ( perfmon_config->perf_flags & PERF_FLOWIP ) )
+                perf_flow_ip->update_state(&flow->client_ip,
                     &flow->server_ip, SFS_STATE_TCP_ESTABLISHED);
 
             session_flags |= SSNFLAG_COUNTED_ESTABLISH;
@@ -288,8 +288,8 @@ void TcpSession::update_perf_base_state(char newState)
                 assert(tcpStats.sessions_established);
                 tcpStats.sessions_established--;
 
-                if (perfmon_config  && (perfmon_config->perf_flags & SFPERF_FLOWIP))
-                    perf_flow_ip->updateState(&flow->client_ip, &flow->server_ip,
+                if (perfmon_config  && (perfmon_config->perf_flags & PERF_FLOWIP))
+                    perf_flow_ip->update_state(&flow->client_ip, &flow->server_ip,
                         SFS_STATE_TCP_CLOSED);
             }
             else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
@@ -311,8 +311,8 @@ void TcpSession::update_perf_base_state(char newState)
             assert(tcpStats.sessions_established);
             tcpStats.sessions_established--;
 
-            if ( perfmon_config && ( perfmon_config->perf_flags & SFPERF_FLOWIP ) )
-                perf_flow_ip->updateState(&flow->client_ip,
+            if ( perfmon_config && ( perfmon_config->perf_flags & PERF_FLOWIP ) )
+                perf_flow_ip->update_state(&flow->client_ip,
                     &flow->server_ip, SFS_STATE_TCP_CLOSED);
         }
         else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )

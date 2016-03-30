@@ -31,98 +31,112 @@
 #include "sfip/sfip_t.h"
 #include "protocols/packet.h"
 
-#define SF_MAX_PKT_LEN  9000
-#define SF_MAX_PORT     UINT16_MAX
+#define MAX_PKT_LEN  9000
+#define MAX_PORT     UINT16_MAX
 
-typedef enum
+enum FlowType
 {
-    SFS_TYPE_TCP   = 0,
-    SFS_TYPE_UDP   = 1,
-    SFS_TYPE_OTHER = 2,
-    SFS_TYPE_MAX   = 3
-} SFSType;
+    SFS_TYPE_TCP = 0,
+    SFS_TYPE_UDP,
+    SFS_TYPE_OTHER,
+    SFS_TYPE_MAX
+};
 
-typedef enum
+enum FlowState
 {
     SFS_STATE_TCP_ESTABLISHED = 0,
-    SFS_STATE_TCP_CLOSED      = 1,
-    SFS_STATE_UDP_CREATED     = 2,
-    SFS_STATE_MAX             = 3
-} SFSState;
+    SFS_STATE_TCP_CLOSED,
+    SFS_STATE_UDP_CREATED,
+    SFS_STATE_MAX
+};
 
-typedef struct _portflow
+struct PortFlow
 {
-    double totperc[SF_MAX_PORT+1];
-    double sport_rate[SF_MAX_PORT+1];
-    double dport_rate[SF_MAX_PORT+1];
-} PORTFLOW;
+    double tot_perc[MAX_PORT+1];
+    double sport_rate[MAX_PORT+1];
+    double dport_rate[MAX_PORT+1];
+};
 
-typedef struct _icmpflow
+struct IcmpFlow
 {
-    double totperc[256];
+    double tot_perc[256];
     int display[256];
-} ICMPFLOW;
+};
 
 /* Raw flow statistics */
-typedef struct _sfflow
+struct RawFlowStats
 {
     time_t time;
-    uint64_t* pktLenCnt;
-    uint64_t pktTotal;
+    uint64_t* pkt_len_cnt;
+    uint64_t pkt_total;
 
-    uint64_t byteTotal;
+    uint64_t byte_total;
 
-    uint64_t* pktLenPercent;
+    uint64_t* pkt_len_percent;
 
-    uint64_t* portTcpSrc;
-    uint64_t* portTcpDst;
-    uint64_t* portUdpSrc;
-    uint64_t* portUdpDst;
+    uint64_t* port_tcp_src;
+    uint64_t* port_tcp_dst;
+    uint64_t* port_udp_src;
+    uint64_t* port_udp_dst;
 
-    uint64_t* typeIcmp;
+    uint64_t* type_icmp;
 
-    uint64_t portTcpHigh;
-    uint64_t portTcpTotal;
+    uint64_t port_tcp_high;
+    uint64_t port_tcp_total;
 
-    uint64_t portUdpHigh;
-    uint64_t portUdpTotal;
+    uint64_t port_udp_high;
+    uint64_t port_udp_total;
 
-    uint64_t typeIcmpTotal;
-}  SFFLOW;
+    uint64_t type_icmp_total;
+};
 
 /* Processed flow statistics */
-typedef struct _sfflow_stats
+struct FlowStats
 {
     time_t time;
-    double pktLenPercent[SF_MAX_PKT_LEN + 2];
-    int pktLenPercentCount;
+    double pkt_len_percent[MAX_PKT_LEN + 2];
+    int pkt_len_percent_count;
 
-    double trafficTCP;
-    double trafficUDP;
-    double trafficICMP;
-    double trafficOTHER;
+    double traffic_tcp;
+    double traffic_udp;
+    double traffic_icmp;
+    double traffic_other;
 
-    PORTFLOW portflowTCP;
-    double portflowHighTCP;
-    int portflowTCPCount;
+    PortFlow port_flow_tcp;
+    double port_flow_high_tcp;
+    int port_flow_tcp_count;
 
-    PORTFLOW portflowUDP;
-    double portflowHighUDP;
-    int portflowUDPCount;
+    PortFlow port_flow_udp;
+    double port_flow_high_udp;;
+    int port_flow_udp_count;
 
-    ICMPFLOW flowICMP;
-    int flowICMPCount;
-}  SFFLOW_STATS;
+    IcmpFlow flow_icmp;
+    int flow_icmp_count;
+};
+
+struct TrafficStats
+{
+    uint64_t packets_a_to_b;
+    uint64_t bytes_a_to_b;
+    uint64_t packets_b_to_a;
+    uint64_t bytes_b_to_a;
+};
+
+struct FlowStateValue
+{
+    TrafficStats traffic_stats[SFS_TYPE_MAX];
+    uint64_t total_packets;
+    uint64_t total_bytes;
+    uint32_t state_changes[SFS_STATE_MAX];
+};
 
 /*
 **  Functions for the performance functions to call
 */
-void UpdateFlowStats(SFFLOW*, Packet*);
-//FIXIT-M the int should be perf flow - #include cycles
-void ProcessFlowStats(SFFLOW* sfFlow, FILE* fh, PerfFormat format, time_t);
-void ProcessFlowIPStats(SFFLOW* sfFlow, FILE* fh, PerfFormat format);
-void FreeFlowStats(SFFLOW* sfFlow);
-void LogFlowPerfHeader(FILE*);
+void update_flow_stats(RawFlowStats*, Packet*);
+void process_flow_stats(RawFlowStats*, FILE*, PerfFormat, time_t);
+void free_flow_stats(RawFlowStats*);
+void log_flow_perf_header(FILE*);
 
 #endif
 

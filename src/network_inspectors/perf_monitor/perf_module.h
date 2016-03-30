@@ -42,25 +42,16 @@ enum PerfOutput
 };
 
 // Perf Flags
-#define SFPERF_BASE             0x00000001
-#define SFPERF_FLOW             0x00000002
-#define SFPERF_EVENT            0x00000004
-#define SFPERF_BASE_MAX         0x00000008
-#define SFPERF_CONSOLE          0x00000010
-#define SFPERF_PKTCNT           0x00000020
-#define SFPERF_FLOWIP           0x00000040
-#define SFPERF_TIME_COUNT       0x00000080
-#define SFPERF_MAX_BASE_STATS   0x00000100
+#define PERF_BASE           0x00000001
+#define PERF_FLOW           0x00000002
+#define PERF_EVENT          0x00000004
+#define PERF_BASE_MAX       0x00000008
+#define PERF_CONSOLE        0x00000010
+#define PERF_FLOWIP         0x00000020
+#define PERF_TIME_COUNT     0x00000040
+#define PERF_SUMMARY        0x00000080
 
-#define SFPERF_SUMMARY_BASE     0x00001000
-#define SFPERF_SUMMARY_FLOW     0x00002000
-#define SFPERF_SUMMARY_FLOWIP   0x00004000
-#define SFPERF_SUMMARY_EVENT    0x00008000
-#define SFPERF_SUMMARY \
-    (SFPERF_SUMMARY_BASE|SFPERF_SUMMARY_FLOW|SFPERF_SUMMARY_FLOWIP|SFPERF_SUMMARY_EVENT)
-
-/* The perfmonitor configuration */
-typedef struct _SFPERF
+struct PerfConfig
 {
 
     int perf_flags;
@@ -74,7 +65,7 @@ typedef struct _SFPERF
 
     std::vector<Module*> modules;
     std::vector<IndexVec> mod_peg_idxs;
-} SFPERF;
+};
 
 /* The Module Class for incorporation into Snort++ */
 class PerfMonModule : public Module
@@ -90,10 +81,10 @@ public:
     PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
 
-    void get_config(SFPERF&);
+    void get_config(PerfConfig&);
 
 private:
-    SFPERF config;
+    PerfConfig config;
 
      std::string mod_pegs;
      std::string mod_name;

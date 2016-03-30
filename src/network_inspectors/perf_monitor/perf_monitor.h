@@ -36,7 +36,7 @@
 
 
 //FIXIT-M: this shouldn't be needed outside of perfmon
-extern SFPERF* perfmon_config;
+extern PerfConfig* perfmon_config;
 extern THREAD_LOCAL bool perfmon_rotate_perf_file;
 
 void perf_monitor_idle_process();

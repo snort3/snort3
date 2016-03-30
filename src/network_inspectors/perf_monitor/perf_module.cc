@@ -74,6 +74,9 @@ static const Parameter s_params[] =
     { "format", Parameter::PT_ENUM, "csv | text", "csv",
       "Output format for stats" },
 
+    { "summary", Parameter::PT_BOOL, nullptr, "false",
+      "Output summary at shutdown" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -97,10 +100,7 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     {
         config.sample_interval = v.get_long();
         if ( config.sample_interval == 0 )
-        {
-            config.perf_flags |= SFPERF_SUMMARY;
-            config.perf_flags &= ~SFPERF_TIME_COUNT;
-        }
+            config.perf_flags |= PERF_SUMMARY;
     }
     else if ( v.is("flow_ip_memcap") )
     {
@@ -124,17 +124,17 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("events") )
     {
         if ( v.get_bool() )
-            config.perf_flags |= SFPERF_EVENT;
+            config.perf_flags |= PERF_EVENT;
     }
     else if ( v.is("flow") )
     {
         if ( v.get_bool() )
-            config.perf_flags |= SFPERF_FLOW;
+            config.perf_flags |= PERF_FLOW;
     }
     else if ( v.is("flow_ip") )
     {
         if ( v.get_bool() )
-            config.perf_flags |= SFPERF_FLOWIP;
+            config.perf_flags |= PERF_FLOWIP;
     }
     else if ( v.is("name") )
     {
@@ -143,6 +143,11 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("pegs") )
     {
         mod_pegs = v.get_string();
+    }
+    else if ( v.is("summary") )
+    {
+        if ( v.get_bool() )
+            config.perf_flags |= PERF_SUMMARY;
     }
     else if ( v.is("modules") )
     {
@@ -163,13 +168,13 @@ bool PerfMonModule::begin(const char* fqn, int, SnortConfig*)
     }
     else
     {
-        memset(&config, 0, sizeof(SFPERF));
-        config.perf_flags |= SFPERF_BASE | SFPERF_TIME_COUNT;
+        memset(&config, 0, sizeof(PerfConfig));
+        config.perf_flags |= PERF_BASE;
     }
     return true;
 }
 
-static bool add_module(SFPERF& config, Module *mod, std::string pegs)
+static bool add_module(PerfConfig& config, Module *mod, std::string pegs)
 {
     const PegInfo* peg_info;
     std::string tok;
@@ -228,7 +233,7 @@ bool PerfMonModule::end(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-void PerfMonModule::get_config(SFPERF& cfg)
+void PerfMonModule::get_config(PerfConfig& cfg)
 {
     cfg = config;
     memset(&config, 0, sizeof(config));

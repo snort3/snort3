@@ -17,13 +17,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-** Dan Roelker <droelker@sourcefire.com>
+** Carter Waxman <cwaxman@cisco.com>
+** Based on work by Dan Roelker <droelker@sourcefire.com>
 **
 **  DESCRIPTION
 **    This file gets the correct CPU usage for SMP Linux machines.
 */
-#ifndef SFPROCPIDSTATS_H
-#define SFPROCPIDSTATS_H
+#ifndef PROC_PID_STATS_H
+#define PROC_PID_STATS_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -31,29 +32,29 @@
 
 #ifdef LINUX_SMP
 
-typedef struct _CPUSTAT
+struct CPUStats
 {
     double user;
     double sys;
     double total;
     double idle;
-} CPUSTAT;
+};
 
-typedef struct _SFPROCPIDSTATS
+struct ProcPIDStats
 {
-    CPUSTAT* SysCPUs;
+    CPUStats* sys_cpus;
 
-    int iCPUs;
-} SFPROCPIDSTATS;
+    int num_cpus;
+};
 
 /* Init CPU usage processing */
-int sfInitProcPidStats(SFPROCPIDSTATS* sfProcPidStats);
+int init_proc_pid_stats(ProcPIDStats*);
 
 /* Fetch the CPU utilization numbers for process */
-int sfProcessProcPidStats(SFPROCPIDSTATS* sfProcPidStats);
+int process_proc_pid_stats(ProcPIDStats*);
 
 /* Free the statistics structure */
-void FreeProcPidStats(SFPROCPIDSTATS* sfProcPidStats);
+void free_proc_pid_stats(ProcPIDStats*);
 
 #endif
 

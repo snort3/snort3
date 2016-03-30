@@ -62,8 +62,8 @@ THREAD_LOCAL SimpleStats pmstats;
 THREAD_LOCAL ProfileStats perfmonStats;
 
 THREAD_LOCAL bool perfmon_rotate_perf_file = false;
-static SFPERF config;
-SFPERF* perfmon_config = &config;   //FIXIT-M remove this after flowip can be decoupled.
+static PerfConfig config;
+PerfConfig* perfmon_config = &config;   //FIXIT-M remove this after flowip can be decoupled.
 THREAD_LOCAL std::vector<PerfTracker*>* trackers;
 
 static bool ready_to_process(Packet* p);
@@ -101,28 +101,21 @@ void PerfMonitor::show(SnortConfig*)
     LogMessage("  Sample Time:      %d seconds\n", config.sample_interval);
     LogMessage("  Packet Count:     %d\n", config.pkt_cnt);
     LogMessage("  Max File Size:    " STDu64 "\n", config.max_file_size);
+    LogMessage("  Summary Mode:     %s\n",
+        config.perf_flags & PERF_SUMMARY ? "ACTIVE" : "INACTIVE");
     LogMessage("  Base Stats:       %s%s\n",
-        config.perf_flags & SFPERF_BASE ? "ACTIVE" : "INACTIVE",
-        config.perf_flags & SFPERF_SUMMARY_BASE ? " (SUMMARY)" : "");
-    if (config.perf_flags & SFPERF_BASE)
-    {
-        LogMessage("    Max Perf Stats:   %s\n",
-            (config.perf_flags & SFPERF_MAX_BASE_STATS) ? "ACTIVE" : "INACTIVE");
-    }
+        config.perf_flags & PERF_BASE ? "ACTIVE" : "INACTIVE");
     LogMessage("  Flow Stats:       %s%s\n",
-        config.perf_flags & SFPERF_FLOW ? "ACTIVE" : "INACTIVE",
-        config.perf_flags & SFPERF_SUMMARY_FLOW ? " (SUMMARY)" : "");
-    if (config.perf_flags & SFPERF_FLOW)
+        config.perf_flags & PERF_FLOW ? "ACTIVE" : "INACTIVE");
+    if (config.perf_flags & PERF_FLOW)
     {
         LogMessage("    Max Flow Port:    %u\n", config.flow_max_port_to_track);
     }
     LogMessage("  Event Stats:      %s%s\n",
-        config.perf_flags & SFPERF_EVENT ? "ACTIVE" : "INACTIVE",
-        config.perf_flags & SFPERF_SUMMARY_EVENT ? " (SUMMARY)" : "");
+        config.perf_flags & PERF_EVENT ? "ACTIVE" : "INACTIVE");
     LogMessage("  Flow IP Stats:    %s%s\n",
-        config.perf_flags & SFPERF_FLOWIP ? "ACTIVE" : "INACTIVE",
-        config.perf_flags & SFPERF_SUMMARY_FLOWIP ? " (SUMMARY)" : "");
-    if (config.perf_flags & SFPERF_FLOWIP)
+        config.perf_flags & PERF_FLOWIP ? "ACTIVE" : "INACTIVE");
+    if (config.perf_flags & PERF_FLOWIP)
     {
         LogMessage("    Flow IP Memcap:   %u\n", config.flowip_memcap);
     }
@@ -158,25 +151,20 @@ void PerfMonitor::tinit()
 {
     trackers = new std::vector<PerfTracker*>();
 
-    if (config.perf_flags & SFPERF_BASE)
+    if (config.perf_flags & PERF_BASE)
         trackers->push_back(new BaseTracker(&config));
 
-    if (config.perf_flags & SFPERF_FLOW)
+    if (config.perf_flags & PERF_FLOW)
         trackers->push_back(perf_flow = new FlowTracker(&config));
 
-    if (config.perf_flags & SFPERF_FLOWIP)
+    if (config.perf_flags & PERF_FLOWIP)
         trackers->push_back(perf_flow_ip = new FlowIPTracker(&config));
 
-    if (config.perf_flags & SFPERF_EVENT)
+    if (config.perf_flags & PERF_EVENT)
         trackers->push_back(perf_event = new EventTracker(&config));
 
     for (auto& tracker : *trackers)
         tracker->open(true);
-
-    //FIXIT-M: move this
-#ifdef LINUX_SMP
-    sfInitProcPidStats(&(sfBase.sfProcPidStats));
-#endif
 
     for (auto& tracker : *trackers)
         tracker->reset();
@@ -193,7 +181,8 @@ void PerfMonitor::tterm()
     while (!trackers->empty())
     {
         auto back = trackers->back();
-        back->process(true);
+        if ( config.perf_flags & PERF_SUMMARY )
+            back->process(true);
         back->close();
         delete back;
         trackers->pop_back();
@@ -204,27 +193,6 @@ void PerfMonitor::tterm()
 void PerfMonitor::eval(Packet* p)
 {
     Profile profile(perfmonStats);
-
-    static THREAD_LOCAL bool first = true;
-
-    if (first)
-    {
-        /*
-        //FIXIT-H: FIND A HOME FOR THIS
-        if (SnortConfig::read_mode())
-        {
-            perfBase->sfBase.pkt_stats.pkts_recv = pc.total_from_daq;
-            perfBase->sfBase.pkt_stats.pkts_drop = 0;
-        }
-        else
-        {
-            const DAQ_Stats_t* ps = DAQ_GetStats();
-            perfBase->sfBase.pkt_stats.pkts_recv = ps->hw_packets_received;
-            perfBase->sfBase.pkt_stats.pkts_drop = ps->hw_packets_dropped;
-        }
-        */
-        first = false;
-    }
 
     if (IsSetRotatePerfFileFlag())
     {
@@ -242,7 +210,7 @@ void PerfMonitor::eval(Packet* p)
         }
     }
 
-    if (!p || ((config.perf_flags & SFPERF_TIME_COUNT) && !p->is_rebuilt()))
+    if ( (!p || !p->is_rebuilt()) && !(config.perf_flags & PERF_SUMMARY) )
     {
         if (ready_to_process(p))
         {
