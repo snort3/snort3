@@ -419,7 +419,7 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
         else
         {
             stream.ignore_session(&mdataA->maddress, mdataA->mport, &mdataB->maddress,
-                mdataB->mport, p->type(), SipFlowData::flow_id, SSN_DIR_BOTH);
+                mdataB->mport, p->type(), SSN_DIR_BOTH, SipFlowData::flow_id);
         }
         sip_stats.ignoreChannels++;
         mdataA = mdataA->nextM;

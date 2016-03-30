@@ -217,7 +217,7 @@ static void PrintHostAttributeEntry(HostAttributeEntry* host)
     for (i=0, app = host->services; app; app = app->next,i++)
     {
         DebugFormat(DEBUG_ATTRIBUTE, "\tService #%d:\n", i);
-        DebugFormat(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %s\tPort: %s\tProtocol %s\n",
+        DebugFormat(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %d\tPort: %d\tProtocol %d\n",
             app->ipproto, app->port, app->protocol);
     }
     if (i==0)
@@ -227,12 +227,12 @@ static void PrintHostAttributeEntry(HostAttributeEntry* host)
     for (i=0, app = host->clients; app; app = app->next,i++)
     {
         DebugFormat(DEBUG_ATTRIBUTE, "\tClient #%d:\n", i);
-        DebugFormat(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %s\tProtocol %s\n",
+        DebugFormat(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %d\tProtocol %d\n",
             app->ipproto, app->protocol);
 
         if (app->fields & APPLICATION_ENTRY_PORT)
         {
-            DebugFormat(DEBUG_ATTRIBUTE, "\t\tPort: %s\n", app->port);
+            DebugFormat(DEBUG_ATTRIBUTE, "\t\tPort: %d\n", app->port);
         }
     }
     if (i==0)

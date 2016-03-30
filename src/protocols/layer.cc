@@ -20,7 +20,6 @@
 #include "layer.h"
 
 #include <netinet/in.h>
-#include <limits>
 #include "protocols/layer.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
@@ -238,9 +237,7 @@ bool set_inner_ip_api(const Packet* const p,
     if (curr_layer < 0 || curr_layer >= p->num_layers)
         return false;
 
-    const uint16_t proto = p->layers[curr_layer].prot_id;
-    const uint8_t ip_proto_max = std::numeric_limits<uint8_t>::max();
-    if ( (proto <= ip_proto_max) && is_ip6_extension((uint8_t)proto) )
+    if (is_ip6_extension(p->layers[curr_layer].prot_id))
     {
         const ip::IP6Extension* const ip6_ext =
             reinterpret_cast<const ip::IP6Extension*>(p->layers[curr_layer].start);

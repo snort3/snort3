@@ -32,6 +32,7 @@
 // other protos are added dynamically as used
 enum SnortProtocols
 {
+    //  The is_*_protocol functions depend on the order of these enums.
     SNORT_PROTO_IP = 1,
     SNORT_PROTO_ICMP,
     SNORT_PROTO_TCP,
@@ -48,7 +49,7 @@ inline bool is_builtin_protocol(int16_t proto)
 { return proto < SNORT_PROTO_MAX; }
 
 inline bool is_service_protocol(int16_t proto)
-{ return !is_network_protocol(proto); }
+{ return proto > SNORT_PROTO_UDP; }
 
 void InitializeProtocolReferenceTable(void);
 void FreeProtoocolReferenceTable(void);

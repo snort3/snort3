@@ -92,8 +92,11 @@ constexpr uint16_t ETHERTYPE_PPP = 0x880B;
 constexpr uint16_t ETHERTYPE_EAPOL = 0x888e;
 constexpr uint16_t ETHERTYPE_FPATH = 0x8903;
 
-inline bool is_ip6_extension(const uint8_t proto)
+inline bool is_ip6_extension(const uint16_t proto)
 {
+    if(proto > UINT8_MAX)
+        return false;
+
     switch (proto)
     {
     case IPPROTO_ID_HOPOPTS:

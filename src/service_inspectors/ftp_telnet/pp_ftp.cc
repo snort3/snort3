@@ -1090,8 +1090,8 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                 stream.ignore_session(
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
-                                    p->type(), FtpDataFlowData::flow_id,
-                                    SSN_DIR_BOTH);
+                                    p->type(), SSN_DIR_BOTH, 
+                                    FtpDataFlowData::flow_id);
                             }
                         }
                     }
@@ -1162,8 +1162,8 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                             stream.ignore_session(
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
-                                p->type(), FtpDataFlowData::flow_id,
-                                SSN_DIR_BOTH);
+                                p->type(), SSN_DIR_BOTH, 
+                                FtpDataFlowData::flow_id);
                         }
                     }
                 }
