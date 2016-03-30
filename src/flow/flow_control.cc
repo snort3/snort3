@@ -265,10 +265,10 @@ void FlowControl::prune_flows(PktType proto, const Packet* p)
 }
 
 // hole for memory manager/prune handler
-bool FlowControl::prune_one(PruneReason reason)
+bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
 {
     auto cache = get_cache(last_pkt_type);
-    return cache ? cache->prune_one(reason) : false;
+    return cache ? cache->prune_one(reason, do_cleanup) : false;
 }
 
 void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
@@ -294,6 +294,19 @@ void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
         file_cache->timeout(flowCount, cur_time);
 
     Active::resume();
+}
+
+void FlowControl::preemptive_cleanup(const Packet* p)
+{
+    if ( !memory::MemoryCap::over_threshold() )
+        return;
+
+    DebugFormat(DEBUG_FLOW, "doing preemptive cleanup for packet of type %d",
+            static_cast<int>(p->type()));
+
+    // FIXIT-H J we want to associate this prune with an appropriate prune reason
+    // FIXIT-L J do we want to accumulate preemptive prune counts?
+    prune_flows(p->type(), p);
 }
 
 //-------------------------------------------------------------------------
@@ -515,19 +528,6 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     }
 
     return news;
-}
-
-void FlowControl::preemptive_cleanup(const Packet* p)
-{
-    if ( !memory::MemoryCap::over_threshold() )
-        return;
-
-    DebugFormat(DEBUG_FLOW, "doing preemptive cleanup for packet of type %d",
-            static_cast<int>(p->type()));
-
-    // FIXIT-H J we want to associate this prune with an appropriate prune reason
-    // FIXIT-L J do we want to accumulate preemptive prune counts?
-    prune_flows(p->type(), p);
 }
 
 //-------------------------------------------------------------------------

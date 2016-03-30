@@ -70,7 +70,7 @@ public:
     void delete_flow(Flow*, PruneReason);
     void purge_flows(PktType);
     void prune_flows(PktType, const Packet*);
-    bool prune_one(PruneReason);
+    bool prune_one(PruneReason, bool do_cleanup);
     void timeout_flows(uint32_t flowCount, time_t cur_time);
 
     char expected_flow(Flow*, Packet*);

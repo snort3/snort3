@@ -47,12 +47,12 @@ public:
     Flow* find(const FlowKey*);
     Flow* get(const FlowKey*);
 
-    int release(Flow*, PruneReason = PruneReason::USER);
+    int release(Flow*, PruneReason = PruneReason::USER, bool do_cleanup = true);
 
     unsigned prune_unis();
     unsigned prune_stale(uint32_t thetime, const Flow* save_me);
     unsigned prune_excess(const Flow* save_me);
-    bool prune_one(PruneReason);
+    bool prune_one(PruneReason, bool do_cleanup);
     unsigned timeout(unsigned num_flows, time_t cur_time);
 
     unsigned purge();
