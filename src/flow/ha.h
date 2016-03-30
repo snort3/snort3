@@ -20,15 +20,26 @@
 #ifndef HA_H
 #define HA_H
 
-#include "flow.h"
+#include <values.h>
+
+//#include "flow.h"
 #include "main/snort_types.h"
 #include "packet_io/sfdaq.h"
 #include "side_channel/side_channel.h"
 
 //-------------------------------------------------------------------------
 
-typedef uint16_t FlowHAClientHandle;
+class Flow;
 
+// The FlowHAHandle is the dynamically allocated index used uniquely identify
+//   the client.  Used both in the API and HA messages.
+// Handle 0 is defined to be the primary session client.
+// NOTE: The type, masks, and count values must be in sync,
+typedef uint16_t FlowHAClientHandle;
+const FlowHAClientHandle session_ha_client = 0x0000;
+const uint8_t max_clients = 16;
+
+// Each active flow will have an associated FlowHAState instance.
 class FlowHAState
 {
 public:
@@ -39,6 +50,9 @@ public:
     static const uint8_t MODIFIED = 0x02;
     static const uint8_t DELETED = 0x04;
     static const uint8_t STANDBY = 0x08;
+
+    FlowHAState();
+    ~FlowHAState();
 
     void set_pending(FlowHAClientHandle);
     bool check_and_clear_pending(FlowHAClientHandle);
@@ -54,8 +68,6 @@ public:
     void initialize_update_time();
 
 private:
-    FlowHAState();
-
     static const uint8_t initial_state = 0x00;
     static const uint16_t none_pending = 0x0000;
     static const uint8_t priority_mask = 0x30;
@@ -67,21 +79,60 @@ private:
     struct timeval next_update;
 };
 
+struct __attribute__((__packed__)) HAMessageHeader
+{
+    uint8_t event;
+    uint8_t version;
+    uint16_t total_length;
+    uint8_t key_type;
+    uint8_t key_size;
+};
+
+struct __attribute__((__packed__)) HAClientHeader
+{
+    uint8_t client;
+    uint8_t length;
+};
+
+// Describe the message being produced or consumed.
+class HAMessage
+{
+public:
+    HAMessage();
+    ~HAMessage();
+
+private:
+    SCMessage* sc_msg;
+    uint8_t* cursor;
+};
+
+// A FlowHAClient subclass for each producer/consumer of flow HA data
 class FlowHAClient
 {
 public:
-private:
+    ~FlowHAClient();
+    virtual void consume(Flow*, HAMessage*) {};
+    virtual void produce_update(Flow*, HAMessage*) {};
+    virtual void produce_deletion(Flow*, HAMessage*) {};
+    virtual size_t get_message_size() {return 0;}
+    FlowHAClientHandle handle;  // Actual handle for the instance
+    static uint8_t s_handle_counter; // next handle to be assigned
+protected:
+    FlowHAClient(bool); // Arg == true for session client
 };
 
-class Flow;
-
+// HighAvailability is instantiated for each packet-thread.
+// FIXIT-M - make the SideChannel the THREAD_LOCAL element and collapse
+//  into HighAvailabilityManager
 class HighAvailability
 {
 public:
     HighAvailability(PortBitSet*,bool);
     ~HighAvailability();
 
-    void process(Flow*, const DAQ_PktHdr_t*);
+    void process_update(Flow*, const DAQ_PktHdr_t*);
+    void process_deletion(Flow*);
+    void process_receive();
 
 private:
     void receive_handler(SCMessage*);
@@ -89,15 +140,24 @@ private:
     bool enabled = false;
 };
 
+// Top level management of HighAvailability components.
 class HighAvailabilityManager
 {
 public:
+    // Prior to parsing configuration
     static void pre_config_init();
+    // Invoked by the module configuration parsing to create HA instance
     static bool instantiate(PortBitSet*,bool);
     static void thread_init();
     static void thread_term();
+    // true is we are configured and able to process
     static bool active();
-    static void process(Flow*, const DAQ_PktHdr_t*);
+    // Within the packet callback, analyze the packet and flow for potential update messages
+    static void process_update(Flow*, const DAQ_PktHdr_t*);
+    // Anytime a flow is deleted, potentially generate a deletion message
+    static void process_deletion(Flow*);
+    // Look for and dispatch receive messages.
+    static void process_receive();
 private:
     HighAvailabilityManager() = delete;
     static bool use_daq_channel;

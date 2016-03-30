@@ -3,7 +3,6 @@ noinst_LIBRARIES = libflow.a
 x_includedir = $(pkgincludedir)/flow
 
 x_include_HEADERS = \
-ha.h \
 flow.h \
 flow_config.h \
 flow_key.h \

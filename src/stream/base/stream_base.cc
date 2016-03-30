@@ -25,6 +25,7 @@
 #include <assert.h>
 
 #include "stream_module.h"
+#include "stream_ha.h"
 #include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
 #include "flow/flow_control.h"
@@ -161,6 +162,8 @@ void StreamBase::tinit()
     assert(!flow_con);
     flow_con = new FlowControl;
     InspectSsnFunc f;
+
+    StreamHAClient* ha_client = new StreamHAClient();
 
     if ( config->ip_cfg.max_sessions )
     {

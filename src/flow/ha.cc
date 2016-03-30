@@ -21,8 +21,9 @@
 
 #include <assert.h>
 #include <functional>
+#include <unordered_map>
 
-#include "flow.h"
+#include "flow_key.h"
 #include "ha_module.h"
 #include "main/snort_debug.h"
 #include "packet_io/sfdaq.h"
@@ -37,6 +38,17 @@ static THREAD_LOCAL HighAvailability* ha;
 PortBitSet* HighAvailabilityManager::ports = nullptr;
 bool HighAvailabilityManager::use_daq_channel = false;
 struct timeval FlowHAState::min_session_lifetime;
+uint8_t FlowHAClient::s_handle_counter = 0;
+
+typedef std::unordered_map<FlowHAClientHandle, FlowHAClient*> ClientMap;
+static THREAD_LOCAL ClientMap* client_map;
+static THREAD_LOCAL FlowHAClient* s_session_client;
+
+static inline bool is_ipv6_key(FlowKey* key)
+{
+    return (key->ip_l[0] || key->ip_l[1] || key->ip_l[2] != htonl(0xFFFF) ||
+            key->ip_h[0] || key->ip_h[1] || key->ip_h[2] != htonl(0xFFFF));
+}
 
 FlowHAState::FlowHAState()
 {
@@ -120,6 +132,23 @@ void FlowHAState::initialize_update_time()
     packet_gettimeofday(&next_update);
 }
 
+FlowHAClient::FlowHAClient(bool session_client)
+{
+    DebugMessage(DEBUG_HA,"FlowHAClient::FlowHAClient()\n");
+    if ( session_client )
+    {
+        handle = session_ha_client;
+        s_session_client = this;
+    }
+    else
+    {
+        assert(s_handle_counter != max_clients);
+        handle = (1 << s_handle_counter);
+        s_handle_counter += 1;
+    }
+}
+
+//static Calculate_
 HighAvailability::HighAvailability(PortBitSet* ports, bool)
 {
     SCPort port;
@@ -137,6 +166,8 @@ HighAvailability::HighAvailability(PortBitSet* ports, bool)
                 break;
             }
 
+    client_map = new ClientMap;
+
     // Only looking for side channel processing - FIXIT-H
 }
 
@@ -149,6 +180,8 @@ HighAvailability::~HighAvailability()
         sc->unregister_receive_handler();
         delete sc;
     }
+
+    delete client_map;
 }
 
 void HighAvailability::receive_handler(SCMessage* msg)
@@ -161,9 +194,9 @@ void HighAvailability::receive_handler(SCMessage* msg)
         msg->sc->discard_message(msg);
 }
 
-void HighAvailability::process(Flow*, const DAQ_PktHdr_t* pkthdr)
+void HighAvailability::process_update(Flow*, const DAQ_PktHdr_t* pkthdr)
 {
-    DebugMessage(DEBUG_HA,"HighAvailability::process()\n");
+    DebugMessage(DEBUG_HA,"HighAvailability::process_update()\n");
 
     const uint32_t msg_len = 21; // up to 20 digits + trailing null
 
@@ -174,8 +207,27 @@ void HighAvailability::process(Flow*, const DAQ_PktHdr_t* pkthdr)
     SCMessage* msg = sc->alloc_transmit_message(msg_len);
     snprintf((char*)msg->content, msg_len, "%20" PRIu64, (uint64_t)pkthdr->ts.tv_sec);
     sc->transmit_message(msg);
+}
 
-    sc->process(4);
+void HighAvailability::process_deletion(Flow*)
+{
+    DebugMessage(DEBUG_HA,"HighAvailability::process_deletion()\n");
+
+    static const char* content = "DELETE";
+    const uint32_t msg_len = strlen(content) + 1;
+
+    if ( !sc )
+        return;
+
+    SCMessage* msg = sc->alloc_transmit_message(msg_len);
+    snprintf((char*)msg->content, msg_len, "%s", content);
+    sc->transmit_message(msg);
+}
+
+void HighAvailability::process_receive()
+{
+    if ( sc != nullptr )
+        sc->process(0);
 }
 
 // Called by the configuration parsing activity in the main thread.
@@ -217,12 +269,23 @@ void HighAvailabilityManager::thread_term()
         delete ha;
 }
 
-// Called in the packet processing method in the packet thread.
-void HighAvailabilityManager::process(Flow* flow, const DAQ_PktHdr_t* pkthdr)
+void HighAvailabilityManager::process_update(Flow* flow, const DAQ_PktHdr_t* pkthdr)
 {
-    // don't invoke the processor if we aren't running.
     if( ha != nullptr )
-        ha->process(flow,pkthdr);
+        ha->process_update(flow,pkthdr);
+}
+
+// Deletion messages only contain session content
+void HighAvailabilityManager::process_deletion(Flow* flow)
+{
+    if( ha != nullptr )
+        ha->process_deletion(flow);
+}
+
+void HighAvailabilityManager::process_receive()
+{
+    if( ha != nullptr )
+        ha->process_receive();
 }
 
 // Called in the packet threads to determine whether or not HA is active

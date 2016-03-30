@@ -24,6 +24,7 @@
 
 #include "stream_udp.h"
 #include "udp_module.h"
+#include "udp_ha.h"
 #include "stream/udp/udp_session.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
@@ -111,6 +112,11 @@ static Session* udp_ssn(Flow* lws)
     return new UdpSession(lws);
 }
 
+static void udp_tinit()
+{
+    UdpHA* udp_ha = new UdpHA();
+}
+
 static Inspector* udp_ctor(Module* m)
 {
     StreamUdpModule* mod = (StreamUdpModule*)m;
@@ -142,7 +148,7 @@ static const InspectApi udp_api =
     nullptr, // service
     nullptr, // init
     nullptr, // term
-    nullptr, // tinit
+    udp_tinit, // tinit
     nullptr, // tterm
     udp_ctor,
     udp_dtor,

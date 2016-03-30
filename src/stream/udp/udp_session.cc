@@ -149,6 +149,7 @@ bool UdpSession::setup(Packet* p)
 void UdpSession::clear()
 {
     UdpSessionCleanup(flow);
+    HighAvailabilityManager::process_deletion(flow);
     flow->clear();
 }
 

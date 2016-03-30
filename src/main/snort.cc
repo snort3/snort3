@@ -814,7 +814,7 @@ DAQ_Verdict Snort::packet_callback(
 
     //FIXIT-H move this to the appropriate struct
     //perfBase->UpdateWireStats(pkthdr->caplen, Active::packet_was_dropped(), inject);
-    HighAvailabilityManager::process(s_packet->flow, pkthdr);
+    HighAvailabilityManager::process_update(s_packet->flow, pkthdr);
 
     Active::reset();
     PacketManager::encode_reset();
@@ -823,6 +823,8 @@ DAQ_Verdict Snort::packet_callback(
     {
         flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
     }
+
+    HighAvailabilityManager::process_receive();
 
     s_packet->pkth = nullptr;  // no longer avail upon sig segv
 
