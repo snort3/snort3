@@ -19,6 +19,23 @@
 
 #include "data/data_types/dt_option.h"
 
+Option::Option(std::string val, int d)
+{
+    this->depth = d;
+
+    if (val.front() == '$')
+    {
+        val.erase(val.begin());
+        this->value = std::string(val);
+        this->type = OptionType::VAR;
+    }
+    else
+    {
+        this->value = std::string(val);
+        this->type = OptionType::STRING;
+    }
+}
+
 Option::Option(std::string n, int val, int d)
 {
     this->name = n;
@@ -64,7 +81,9 @@ std::ostream& operator<<(std::ostream& out, const Option& o)
     for (int i = 0; i < o.depth; i++)
         whitespace += "    ";
 
-    out << whitespace << o.name << " = ";
+    out << whitespace;
+    if (o.name.size())
+        out << o.name << " = ";
 
     switch (o.type)
     {

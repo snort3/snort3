@@ -166,19 +166,6 @@ static const ConvertMap daemon_api =
 const ConvertMap* daemon_map = &daemon_api;
 
 /*************************************************
- *************  decode_data_link  ****************
- *************************************************/
-
-static const std::string decode_data_link = "decode_data_link";
-static const ConvertMap decode_data_link_api =
-{
-    decode_data_link,
-    config_true_no_opt_ctor<& decode_data_link, & daq>,
-};
-
-const ConvertMap* decode_data_link_map = &decode_data_link_api;
-
-/*************************************************
  *****************  dirty_pig  *******************
  *************************************************/
 
@@ -190,21 +177,6 @@ static const ConvertMap dirty_pig_api =
 };
 
 const ConvertMap* dirty_pig_map = &dirty_pig_api;
-
-/*************************************************
- *****************  disable_inline_init_failopen  *******************
- *************************************************/
-
-static const std::string disable_inline_init_failopen = "disable_inline_init_failopen";
-static const std::string enable_inline_init_failopen = "enable_inline_init_failopen";
-static const ConvertMap disable_inline_init_failopen_api =
-{
-    disable_inline_init_failopen,
-    config_false_no_opt_ctor<& disable_inline_init_failopen, & packets,
-    & enable_inline_init_failopen>,
-};
-
-const ConvertMap* disable_inline_init_failopen_map = &disable_inline_init_failopen_api;
 
 /*************************************************
  ***************  dump_chars_only  ***************

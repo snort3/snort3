@@ -517,5 +517,43 @@ static const ConvertMap so_rule_memcap_api =
     deleted_ctor<& so_rule_memcap>,
 };
 const ConvertMap* so_rule_memcap_map = &so_rule_memcap_api;
-} // namespace config
 
+/*************************************************
+ *****************  disable_inline_init_failopen  *******************
+ *************************************************/
+
+static const std::string disable_inline_init_failopen = "disable_inline_init_failopen";
+static const ConvertMap disable_inline_init_failopen_api =
+{
+    disable_inline_init_failopen,
+    deleted_ctor<& disable_inline_init_failopen>,
+};
+
+const ConvertMap* disable_inline_init_failopen_map = &disable_inline_init_failopen_api;
+
+/*************************************************
+ *****************  daq_mode  *******************
+ *************************************************/
+
+static const std::string daq_mode = "daq_mode";
+static const ConvertMap daq_mode_api =
+{
+    daq_mode,
+    deleted_ctor<& daq_mode>,
+};
+
+const ConvertMap* daq_mode_map = &daq_mode_api;
+
+/*************************************************
+ *************  decode_data_link  ****************
+ *************************************************/
+
+static const std::string decode_data_link = "decode_data_link";
+static const ConvertMap decode_data_link_api =
+{
+    decode_data_link,
+    deleted_ctor<& decode_data_link>,
+};
+
+const ConvertMap* decode_data_link_map = &decode_data_link_api;
+} // namespace config

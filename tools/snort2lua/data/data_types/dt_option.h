@@ -27,6 +27,7 @@
 class Option
 {
 public:
+    Option(std::string val, int depth);
     Option(std::string name, int val, int depth);
     Option(std::string name, bool val, int depth);
     Option(std::string name, std::string val, int depth);
