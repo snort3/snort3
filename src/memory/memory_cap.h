@@ -33,7 +33,7 @@ public:
     static void update_allocations(size_t);
     static void update_deallocations(size_t);
 
-    bool over_threshold();
+    static bool over_threshold();
 
     // call from main thread before thread spawn
     static void calculate(unsigned num_threads);

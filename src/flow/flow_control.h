@@ -69,7 +69,7 @@ public:
     void delete_flow(const FlowKey*);
     void delete_flow(Flow*, PruneReason);
     void purge_flows(PktType);
-    void prune_flows(PktType, Packet*);
+    void prune_flows(PktType, const Packet*);
     bool prune_one(PruneReason);
     void timeout_flows(uint32_t flowCount, time_t cur_time);
 
@@ -103,6 +103,7 @@ private:
     void set_key(FlowKey*, Packet*);
 
     unsigned process(Flow*, Packet*);
+    void preemptive_cleanup(const Packet*);
 
 private:
     FlowCache* ip_cache;
