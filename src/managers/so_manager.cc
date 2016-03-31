@@ -77,13 +77,27 @@ void SoManager::dump_plugins()
 //-------------------------------------------------------------------------
 
 // FIXIT-L eliminate this arbitrary limit on rule text size
+const unsigned window_bits = -8;
 const unsigned max_rule = 128000;
 static uint8_t so_buf[max_rule];
 
 static const uint8_t* compress(const string& text, unsigned& len)
 {
+    len = 0;
     const char* s = text.c_str();
     z_stream stream;
+
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    stream.opaque = Z_NULL;
+    stream.next_in = Z_NULL;
+
+    // v2 avoids the header and trailer
+    int ret = deflateInit2(
+        &stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, window_bits, 1, Z_DEFAULT_STRATEGY);
+
+    if ( ret != Z_OK )
+        return nullptr;
 
     stream.next_in = (Bytef*)s;
     stream.avail_in = text.size();
@@ -91,21 +105,15 @@ static const uint8_t* compress(const string& text, unsigned& len)
     stream.next_out = so_buf;
     stream.avail_out = max_rule;
 
-    stream.zalloc = nullptr;
-    stream.zfree = nullptr;
+    ret = deflate(&stream, Z_FINISH);
+    (void)deflateEnd(&stream);
 
-    stream.total_in = 0;
-    stream.total_out = 0;
-
-    len = 0;
-
-    if ( deflateInit(&stream, Z_DEFAULT_COMPRESSION) != Z_OK )
+    if ( ret != Z_STREAM_END )
         return nullptr;
 
-    if ( deflate(&stream, Z_FINISH) == Z_STREAM_END )
-        len= stream.total_out;
+    len= stream.total_out;
+    assert(stream.avail_out > 0);
 
-    deflateEnd(&stream);
     return so_buf;
 }
 
@@ -115,22 +123,30 @@ static const char* expand(const uint8_t* data, unsigned len)
 {
     z_stream stream;
 
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    stream.opaque = Z_NULL;
+    stream.next_in = Z_NULL;
+    stream.avail_in = 0;
+
+    if ( inflateInit2(&stream, window_bits) != Z_OK )
+        return nullptr;
+
     stream.next_in = (Bytef*)data;
     stream.avail_in = (uInt)len;
 
     stream.next_out = (Bytef*)so_buf;
     stream.avail_out = (uInt)(max_rule - 1);
 
-    stream.zalloc = nullptr;
-    stream.zfree = nullptr;
+    int ret = inflate(&stream, Z_FINISH);
+    (void)inflateEnd(&stream);
 
-    stream.total_in = 0;
-    stream.total_out = 0;
-
-    if ( inflateInit(&stream) != Z_OK )
+    // FIXIT-L full decompression still gets Z_BUF_ERROR ...
+    if ( ret != Z_STREAM_END and ret != Z_BUF_ERROR )
         return nullptr;
 
-    if ( inflate(&stream, Z_SYNC_FLUSH) != Z_STREAM_END )
+    // ... so we add this as a sanity check
+    if ( stream.avail_in or !stream.avail_out )
         return nullptr;
 
     assert(stream.total_out < max_rule);
@@ -146,11 +162,6 @@ static void strvrt(const string& text, string& data)
     unsigned len = 0;
     const uint8_t* d = compress(text, len);
 
-    // lose the zlib header
-    assert(len > 2 && d[0] == 0x78 && d[1] == 0x9C);
-    d += 2;
-    len -= 2;
-
     data.assign((char*)d, len);
 
     // generate xor key
@@ -159,6 +170,7 @@ static void strvrt(const string& text, string& data)
     // nonetheless this seems to work as good as the basic
     // C++ 11 default generator and uniform distribution
     uint8_t key = (uint8_t)(rand() >> 16);
+
     if ( !key )
         key = 0xA5;
 
@@ -179,9 +191,6 @@ static const char* revert(const uint8_t* data, unsigned len)
     for ( unsigned i = 0; i < len-1; i++ )
         s[i] ^= key;
 
-    // force the zlib header
-    s.insert(0, "\x78\x9C");
-
     return expand((uint8_t*)s.c_str(), s.size());
 }
 
@@ -201,9 +210,6 @@ const char* SoManager::get_so_options(const char* soid)
     const SoApi* api = get_so_api(soid);
 
     if ( !api )
-        return nullptr;
-
-    if ( !api->length )
         return nullptr;
 
     const char* rule = revert(api->rule, api->length);
@@ -295,6 +301,8 @@ static void get_var(const string& s, string& v)
     v = s.substr(pos, end-pos);
 }
 
+const unsigned hex_per_row = 16;
+
 void SoManager::rule_to_hex(const char*)
 {
     stringstream buffer;
@@ -310,18 +318,18 @@ void SoManager::rule_to_hex(const char*)
 
     cout << "const uint8_t rule_" << var;
     cout << "[] =" << endl;
-    cout << "{" << endl;
+    cout << "{" << endl << "   ";
     cout << hex << uppercase;
 
     for ( idx = 0; idx < data.size(); idx++ )
     {
-        if ( idx && !(idx % 12) )
-            cout << endl;
+        if ( idx && !(idx % hex_per_row) )
+            cout << endl << "   ";
 
         uint8_t u = data[idx];
-        cout << "0x" << setfill('0') << setw(2) << hex << (int)u << ", ";
+        cout << " 0x" << setfill('0') << setw(2) << hex << (int)u << ",";
     }
-    if ( idx % 16 )
+    if ( idx % hex_per_row )
         cout << endl;
 
     cout << dec;
@@ -344,16 +352,18 @@ void SoManager::rule_to_text(const char*)
 
     cout << "const uint8_t rule_" << var;
     cout << "[] =" << endl;
-    cout << "{" << endl;
+    cout << "{" << endl << "   ";
     cout << hex << uppercase;
 
-    for ( idx = 0; idx < len; idx++ )
+    for ( idx = 0; idx <= len; idx++ )
     {
-        if ( idx && !(idx % 12) )
-            cout << endl;
-        cout << "0x" << setfill('0') << setw(2) << (unsigned)data[idx] << ", ";
+        if ( idx && !(idx % hex_per_row) )
+            cout << endl << "   ";
+
+        unsigned byte = (idx == len) ? 0 : data[idx];
+        cout << " 0x" << setfill('0') << setw(2) << byte << ",";
     }
-    if ( idx % 16 )
+    if ( idx % hex_per_row )
         cout << endl;
 
     cout << dec;

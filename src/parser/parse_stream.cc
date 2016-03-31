@@ -33,6 +33,7 @@ using namespace std;
 #include "parse_rule.h"
 #include "detection/treenodes.h"
 #include "log/messages.h"
+#include "managers/ips_manager.h"
 
 static unsigned chars = 0, tokens = 0;
 static unsigned lines = 1, comments = 0;
@@ -541,9 +542,12 @@ static bool exec(
     {
         if ( rps.tbd )
             exec(FSM_END, tok, rps, sc);
-        const char* extra = parse_rule_close(sc, rps.rtn, rps.otn);
-        if ( extra )
+
+        if ( const char* extra = parse_rule_close(sc, rps.rtn, rps.otn) )
+        {
+            IpsManager::reset_options();
             parse_body(extra, rps, sc);
+        }
         else
         {
             rps.otn = nullptr;
