@@ -107,7 +107,7 @@ struct FlowStats
     int port_flow_tcp_count;
 
     PortFlow port_flow_udp;
-    double port_flow_high_udp;;
+    double port_flow_high_udp;
     int port_flow_udp_count;
 
     IcmpFlow flow_icmp;

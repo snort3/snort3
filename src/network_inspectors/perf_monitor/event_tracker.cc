@@ -40,7 +40,7 @@ void EventTracker::reset()
     }
 }
 
-void EventTracker::process(bool summarize)
+void EventTracker::process(bool)
 {
     if (config->format == PERF_TEXT)
     {

@@ -46,10 +46,9 @@ enum PerfOutput
 #define PERF_FLOW           0x00000002
 #define PERF_EVENT          0x00000004
 #define PERF_BASE_MAX       0x00000008
-#define PERF_CONSOLE        0x00000010
-#define PERF_FLOWIP         0x00000020
-#define PERF_TIME_COUNT     0x00000040
-#define PERF_SUMMARY        0x00000080
+#define PERF_FLOWIP         0x00000010
+#define PERF_TIME_COUNT     0x00000020
+#define PERF_SUMMARY        0x00000040
 
 struct PerfConfig
 {

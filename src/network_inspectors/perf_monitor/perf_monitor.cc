@@ -103,17 +103,17 @@ void PerfMonitor::show(SnortConfig*)
     LogMessage("  Max File Size:    " STDu64 "\n", config.max_file_size);
     LogMessage("  Summary Mode:     %s\n",
         config.perf_flags & PERF_SUMMARY ? "ACTIVE" : "INACTIVE");
-    LogMessage("  Base Stats:       %s%s\n",
+    LogMessage("  Base Stats:       %s\n",
         config.perf_flags & PERF_BASE ? "ACTIVE" : "INACTIVE");
-    LogMessage("  Flow Stats:       %s%s\n",
+    LogMessage("  Flow Stats:       %s\n",
         config.perf_flags & PERF_FLOW ? "ACTIVE" : "INACTIVE");
     if (config.perf_flags & PERF_FLOW)
     {
         LogMessage("    Max Flow Port:    %u\n", config.flow_max_port_to_track);
     }
-    LogMessage("  Event Stats:      %s%s\n",
+    LogMessage("  Event Stats:      %s\n",
         config.perf_flags & PERF_EVENT ? "ACTIVE" : "INACTIVE");
-    LogMessage("  Flow IP Stats:    %s%s\n",
+    LogMessage("  Flow IP Stats:    %s\n",
         config.perf_flags & PERF_FLOWIP ? "ACTIVE" : "INACTIVE");
     if (config.perf_flags & PERF_FLOWIP)
     {

@@ -113,7 +113,7 @@ void FlowTracker::update(Packet* p)
         update_flow_stats(&stats, p);
 }
 
-void FlowTracker::process(bool summarize)
+void FlowTracker::process(bool)
 {
     process_flow_stats(&stats, fh, config->format, cur_time);
 

@@ -206,7 +206,7 @@ void FlowIPTracker::write_stats()
     fflush(fh);
 }
 
-void FlowIPTracker::process(bool summarize)
+void FlowIPTracker::process(bool)
 {
     if (config->format == PERF_CSV)
         write_stats();
