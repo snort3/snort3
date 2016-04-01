@@ -68,6 +68,8 @@ bool PerfMonitor::convert(std::istringstream& data_stream)
     bool retval = true;
 
     table_api.open_table("perf_monitor");
+    retval |= table_api.add_option("base", true);
+    retval |= table_api.add_option("cpu", true);
 
     while (data_stream >> keyword)
     {
