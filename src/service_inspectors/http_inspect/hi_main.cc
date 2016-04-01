@@ -374,11 +374,11 @@ static inline int SetSiInput(HI_SI_INPUT* SiInput, Packet* p)
     {
         SiInput->pdir = HI_SI_NO_MODE;
     }
-    else if (p->packet_flags & PKT_FROM_SERVER)
+    else if (p->is_from_server())
     {
         SiInput->pdir = HI_SI_SERVER_MODE;
     }
-    else if (p->packet_flags & PKT_FROM_CLIENT)
+    else if (p->is_from_client())
     {
         SiInput->pdir = HI_SI_CLIENT_MODE;
     }

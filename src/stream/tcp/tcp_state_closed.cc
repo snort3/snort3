@@ -32,8 +32,8 @@
 #include "stream/libtcp/stream_tcp_unit_test.h"
 #endif
 
-TcpStateClosed::TcpStateClosed(TcpStateMachine& tsm, TcpSession& ssn) :
-    TcpStateHandler(TcpStreamTracker::TCP_CLOSED, tsm, ssn)
+TcpStateClosed::TcpStateClosed(TcpStateMachine& tsm) :
+    TcpStateHandler(TcpStreamTracker::TCP_CLOSED, tsm)
 {
 }
 
@@ -45,7 +45,7 @@ bool TcpStateClosed::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
 {
     auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
-    session.check_for_repeated_syn(tsd);
+    trk.session->check_for_repeated_syn(tsd);
 
     return default_state_action(tsd, trk);
 }
@@ -55,7 +55,7 @@ bool TcpStateClosed::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
     auto& trk = static_cast< TcpStreamTracker& >( tracker );
     Flow* flow = tsd.get_flow();
 
-    flow->set_expire(tsd.get_pkt(), session.config->session_timeout);
+    flow->set_expire(tsd.get_pkt(), trk.session->config->session_timeout);
 
     return default_state_action(tsd, trk);
 }
@@ -102,14 +102,14 @@ bool TcpStateClosed::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
     if ( flow->get_session_flags() & SSNFLAG_RESET )
     {
         if ( trk.is_rst_pkt_sent() )
-            session.tel.set_tcp_event(EVENT_DATA_AFTER_RESET);
+            trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RESET);
         else
-            session.tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
+            trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
     }
     else
-        session.tel.set_tcp_event(EVENT_DATA_ON_CLOSED);
+        trk.session->tel.set_tcp_event(EVENT_DATA_ON_CLOSED);
 
-    session.mark_packet_for_drop(tsd);
+    trk.session->mark_packet_for_drop(tsd);
 
     return default_state_action(tsd, trk);
 }
@@ -141,9 +141,9 @@ bool TcpStateClosed::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
     if( tsd.get_seg_len() > 0 )
     {
         if ( trk.is_rst_pkt_sent() )
-            session.tel.set_tcp_event(EVENT_DATA_AFTER_RESET);
+            trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RESET);
         else
-            session.tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
+            trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
     }
 
     return default_state_action(tsd, trk);
@@ -162,40 +162,40 @@ bool TcpStateClosed::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
 
     if ( trk.update_on_rst_recv(tsd) )
     {
-        session.update_session_on_rst(tsd, false);
-        session.update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
-        session.set_pkt_action_flag(ACTION_RST);
+        trk.session->update_session_on_rst(tsd, false);
+        trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
+        trk.session->set_pkt_action_flag(ACTION_RST);
     }
     else
     {
-        session.tel.set_tcp_event(EVENT_BAD_RST);
+        trk.session->tel.set_tcp_event(EVENT_BAD_RST);
     }
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateClosed::do_pre_sm_packet_actions(TcpSegmentDescriptor& tsd)
+bool TcpStateClosed::do_pre_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    return session.validate_packet_established_session(tsd);
+    return trk.session->validate_packet_established_session(tsd);
 }
 
-bool TcpStateClosed::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd)
+bool TcpStateClosed::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    session.update_paws_timestamps(tsd);
-    session.check_for_window_slam(tsd);
+    trk.session->update_paws_timestamps(tsd);
+    trk.session->check_for_window_slam(tsd);
 
     if ( tcp_event != TcpStreamTracker::TCP_FIN_RECV_EVENT )
     {
-        TcpStreamTracker::TcpState talker_state = session.get_talker_state();
+        TcpStreamTracker::TcpState talker_state = trk.session->get_talker_state();
         Flow* flow = tsd.get_flow();
 
         if ( ( talker_state == TcpStreamTracker::TCP_TIME_WAIT ) || !flow->two_way_traffic() )
         {
             // The last ACK is a part of the session. Delete the session after processing is
             // complete.
-            session.clear_session(false, true, false, tsd.get_pkt() );
+            trk.session->clear_session(false, true, false, tsd.get_pkt() );
             flow->session_state |= STREAM_STATE_CLOSED;
-            session.set_pkt_action_flag(ACTION_LWSSN_CLOSED);
+            trk.session->set_pkt_action_flag(ACTION_LWSSN_CLOSED);
         }
     }
 

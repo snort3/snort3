@@ -32,8 +32,8 @@
 #include "stream/libtcp/stream_tcp_unit_test.h"
 #endif
 
-TcpStateNone::TcpStateNone(TcpStateMachine& tsm, TcpSession& ssn) :
-    TcpStateHandler(TcpStreamTracker::TCP_STATE_NONE, tsm, ssn)
+TcpStateNone::TcpStateNone(TcpStateMachine& tsm) :
+    TcpStateHandler(TcpStreamTracker::TCP_STATE_NONE, tsm)
 {
 }
 
@@ -41,74 +41,66 @@ TcpStateNone::~TcpStateNone()
 {
 }
 
-bool TcpStateNone::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateNone::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     Flow* flow = tsd.get_flow();
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
     flow->ssn_state.direction = FROM_CLIENT;
 
     flow->session_state |= STREAM_STATE_SYN;
     trk.init_on_syn_sent(tsd);
-    session.init_new_tcp_session(tsd);
+    trk.session->init_new_tcp_session(tsd);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateNone::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateNone::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     // FIXIT - syn received on undefined client, figure this out and do the right thing
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateNone::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateNone::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     Flow* flow = tsd.get_flow();
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
-    if ( !session.config->require_3whs() || session.config->midstream_allowed(tsd.get_pkt() ) )
+    if ( !trk.session->config->require_3whs() || trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
         flow->session_state |= ( STREAM_STATE_SYN | STREAM_STATE_SYN_ACK );
         trk.init_on_synack_sent(tsd);
-        session.init_new_tcp_session(tsd);
-        trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
+        trk.session->init_new_tcp_session(tsd);
+        trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
     }
-    else if ( session.config->require_3whs() )
+    else if ( trk.session->config->require_3whs() )
     {
-        session.generate_no_3whs_event();
+        trk.session->generate_no_3whs_event();
         return false;
     }
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateNone::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateNone::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    if ( session.config->midstream_allowed(tsd.get_pkt() ) )
+    if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
         trk.init_on_synack_recv(tsd);
-        trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
+        trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
         if ( tsd.get_seg_len() > 0 )
-            session.handle_data_segment(tsd);
+            trk.session->handle_data_segment(tsd);
     }
-    else if ( session.config->require_3whs() )
+    else if ( trk.session->config->require_3whs() )
     {
-        session.generate_no_3whs_event();
+        trk.session->generate_no_3whs_event();
         return false;
     }
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateNone::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateNone::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    if ( session.config->midstream_allowed(tsd.get_pkt() ) && ( tsd.has_wscale() ||
+    if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) && ( tsd.has_wscale() ||
         ( tsd.get_seg_len() > 0 ) ) )
     {
         Flow* flow = tsd.get_flow();
@@ -118,23 +110,21 @@ bool TcpStateNone::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_SYN_ACK |
             STREAM_STATE_ESTABLISHED );
         trk.init_on_3whs_ack_sent(tsd);
-        session.init_new_tcp_session(tsd);
-        session.update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
+        trk.session->init_new_tcp_session(tsd);
+        trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     }
-    else if ( session.config->require_3whs() )
+    else if ( trk.session->config->require_3whs() )
     {
-        session.generate_no_3whs_event();
+        trk.session->generate_no_3whs_event();
         return false;
     }
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateNone::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateNone::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    if ( session.config->midstream_allowed(tsd.get_pkt() ) && ( tsd.has_wscale() ||
+    if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) && ( tsd.has_wscale() ||
         ( tsd.get_seg_len() > 0 ) ) )
     {
         Flow* flow = tsd.get_flow();
@@ -142,23 +132,21 @@ bool TcpStateNone::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker
         if ( !tsd.get_tcph()->is_rst() && ( flow->session_state & STREAM_STATE_SYN_ACK ) )
         {
             trk.init_on_3whs_ack_recv(tsd);
-            trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
+            trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
         }
     }
-    else if ( session.config->require_3whs() )
+    else if ( trk.session->config->require_3whs() )
     {
-        session.generate_no_3whs_event();
+        trk.session->generate_no_3whs_event();
         return false;
     }
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateNone::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateNone::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    if ( session.config->midstream_allowed(tsd.get_pkt() ) )
+    if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
         Flow* flow = tsd.get_flow();
 
@@ -166,25 +154,23 @@ bool TcpStateNone::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         flow->set_session_flags(SSNFLAG_MIDSTREAM);
 
         trk.init_on_data_seg_sent(tsd);
-        session.init_new_tcp_session(tsd);
+        trk.session->init_new_tcp_session(tsd);
 
         if ( flow->session_state & STREAM_STATE_ESTABLISHED )
-            session.update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
+            trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     }
-    else if ( session.config->require_3whs() )
+    else if ( trk.session->config->require_3whs() )
     {
-        session.generate_no_3whs_event();
+        trk.session->generate_no_3whs_event();
         return false;
     }
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateNone::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateNone::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    if ( session.config->midstream_allowed(tsd.get_pkt() ) )
+    if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
         Flow* flow = tsd.get_flow();
 
@@ -192,57 +178,51 @@ bool TcpStateNone::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         flow->set_session_flags(SSNFLAG_MIDSTREAM);
 
         trk.init_on_data_seg_recv(tsd);
-        trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
-        session.handle_data_segment(tsd);
+        trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+        trk.session->handle_data_segment(tsd);
     }
-    else if ( session.config->require_3whs() )
+    else if ( trk.session->config->require_3whs() )
     {
-        session.generate_no_3whs_event();
+        trk.session->generate_no_3whs_event();
         return false;
     }
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateNone::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateNone::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    if ( session.config->midstream_allowed(tsd.get_pkt() ) )
+    if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
         // FIXIT - handle this
     }
-    else if ( session.config->require_3whs() )
+    else if ( trk.session->config->require_3whs() )
     {
-        session.generate_no_3whs_event();
+        trk.session->generate_no_3whs_event();
         return false;
     }
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateNone::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateNone::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    if ( session.config->midstream_allowed(tsd.get_pkt() ) )
+    if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
         // FIXIT - handle this
     }
-    else if ( session.config->require_3whs() )
+    else if ( trk.session->config->require_3whs() )
     {
-        session.generate_no_3whs_event();
+        trk.session->generate_no_3whs_event();
         return false;
     }
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateNone::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateNone::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    if ( session.config->midstream_allowed(tsd.get_pkt() ) )
+    if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
         // FIXIT - handle this
     }
@@ -250,19 +230,17 @@ bool TcpStateNone::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateNone::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateNone::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     if ( trk.update_on_rst_recv(tsd) )
     {
-        session.update_session_on_rst(tsd, false);
-        session.update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
-        session.set_pkt_action_flag(ACTION_RST);
+        trk.session->update_session_on_rst(tsd, false);
+        trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
+        trk.session->set_pkt_action_flag(ACTION_RST);
     }
     else
     {
-        session.tel.set_tcp_event(EVENT_BAD_RST);
+        trk.session->tel.set_tcp_event(EVENT_BAD_RST);
     }
 
     return default_state_action(tsd, trk);

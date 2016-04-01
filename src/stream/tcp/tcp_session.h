@@ -35,9 +35,6 @@
 
 class TcpEventLogger;
 
-// FIXIT-L session tracking must be split from reassembly
-// into a separate module a la ip_session.cc and ip_defrag.cc
-// (of course defrag should also be cleaned up)
 class TcpSession : public TcpStreamSession
 {
 public:
@@ -93,7 +90,7 @@ private:
     void do_packet_analysis_post_checks(Packet*);
 
 
-    TcpStateMachine tsm;
+    TcpStateMachine* tsm;
 };
 
 #endif

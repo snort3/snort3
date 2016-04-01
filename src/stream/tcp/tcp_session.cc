@@ -84,44 +84,18 @@
 #include "tcp_module.h"
 #include "tcp_event_logger.h"
 #include "tcp_debug_trace.h"
-
-#include "tcp_state_none.h"
-#include "tcp_state_closed.h"
-#include "tcp_state_listen.h"
-#include "tcp_state_syn_sent.h"
-#include "tcp_state_syn_recv.h"
-#include "tcp_state_established.h"
-#include "tcp_state_close_wait.h"
-#include "tcp_state_closing.h"
-#include "tcp_state_fin_wait1.h"
-#include "tcp_state_fin_wait2.h"
-#include "tcp_state_last_ack.h"
-#include "tcp_state_time_wait.h"
-
 #include "tcp_normalizers.h"
 #include "tcp_reassemblers.h"
+#include "tcp_stream_state_machine.h"
 #include "tcp_session.h"
 
 DEBUG_WRAP(const char* t_name = NULL; const char* l_name = NULL; )
 
 TcpSession::TcpSession(Flow* flow) : TcpStreamSession(flow)
 {
-    client = new TcpTracker(true);
-    server = new TcpTracker(false);
-
-    // initialize stream tracker state machine...
-    new TcpStateNone(tsm, *this);
-    new TcpStateClosed(tsm, *this);
-    new TcpStateListen(tsm, *this);
-    new TcpStateSynSent(tsm, *this);
-    new TcpStateSynRecv(tsm, *this);
-    new TcpStateEstablished(tsm, *this);
-    new TcpStateFinWait1(tsm, *this);
-    new TcpStateFinWait2(tsm, *this);
-    new TcpStateClosing(tsm, *this);
-    new TcpStateCloseWait(tsm, *this);
-    new TcpStateLastAck(tsm, *this);
-    new TcpStateTimeWait(tsm, *this);
+    tsm = TcpStreamStateMachine::get_instance();
+    client = new TcpTracker(true, this);
+    server = new TcpTracker(false, this);
 }
 
 TcpSession::~TcpSession(void)
@@ -152,7 +126,7 @@ void TcpSession::restart(Packet* p)
 
     TcpStreamTracker* talker, * listener;
 
-    if (p->packet_flags & PKT_FROM_SERVER)
+    if (p->is_from_server())
     {
         talker = server;
         listener = client;
@@ -736,7 +710,7 @@ void TcpSession::check_for_session_hijack(TcpSegmentDescriptor& tsd)
 
             if ( t_hijack )
             {
-                if ( p->packet_flags & PKT_FROM_CLIENT )
+                if ( p->is_from_client() )
                     event_code |= EVENT_SESSION_HIJACK_CLIENT;
                 else
                     event_code |= EVENT_SESSION_HIJACK_SERVER;
@@ -744,7 +718,7 @@ void TcpSession::check_for_session_hijack(TcpSegmentDescriptor& tsd)
 
             if ( l_hijack )
             {
-                if ( p->packet_flags & PKT_FROM_CLIENT )
+                if ( p->is_from_client() )
                     event_code |= EVENT_SESSION_HIJACK_SERVER;
                 else
                     event_code |= EVENT_SESSION_HIJACK_CLIENT;
@@ -769,7 +743,7 @@ bool TcpSession::check_for_window_slam(TcpSegmentDescriptor& tsd)
         pkt_action_mask |= ACTION_BAD_PKT;
         return true;
     }
-    else if ((tsd.get_pkt()->packet_flags & PKT_FROM_CLIENT)
+    else if ((tsd.get_pkt()->is_from_client())
         && (tsd.get_seg_wnd() <= SLAM_MAX)
         && (tsd.get_seg_ack() == listener->get_iss() + 1)
         && !( tsd.get_tcph()->is_fin() | tsd.get_tcph()->is_rst() )
@@ -919,14 +893,14 @@ void TcpSession::flush_listener(Packet* p)
 
     /* figure out direction of this packet -- we should've already
      * looked at it, so the packet_flags are already set. */
-    if ( p->packet_flags & PKT_FROM_SERVER )
+    if ( p->is_from_server() )
     {
         DebugMessage(DEBUG_STREAM_STATE, "Flushing listener on packet from server\n");
         listener = client;
         /* dir of flush is the data from the opposite side */
         dir = PKT_FROM_SERVER;
     }
-    else if ( p->packet_flags & PKT_FROM_CLIENT )
+    else if ( p->is_from_client() )
     {
         DebugMessage(DEBUG_STREAM_STATE, "Flushing listener on packet from client\n");
         listener = server;
@@ -951,14 +925,14 @@ void TcpSession::flush_talker(Packet* p)
 
     /* figure out direction of this packet -- we should've already
      * looked at it, so the packet_flags are already set. */
-    if ( p->packet_flags & PKT_FROM_SERVER )
+    if ( p->is_from_server() )
     {
         DebugMessage(DEBUG_STREAM_STATE, "Flushing talker on packet from server\n");
         talker = server;
         /* dir of flush is the data from the opposite side */
         dir = PKT_FROM_CLIENT;
     }
-    else if ( p->packet_flags & PKT_FROM_CLIENT )
+    else if ( p->is_from_client() )
     {
         DebugMessage(DEBUG_STREAM_STATE, "Flushing talker on packet from client\n");
         talker = client;
@@ -1027,7 +1001,7 @@ void TcpSession::do_packet_analysis_post_checks(Packet* p)
 
         DebugFormat(DEBUG_STREAM_STATE,
             "Stream Ignoring packet from %d. Session marked as ignore\n",
-            p->packet_flags & PKT_FROM_SERVER ? "server" : "client");
+            p->is_from_server() ? "server" : "client");
     }
 }
 
@@ -1087,7 +1061,7 @@ bool TcpSession::do_packet_analysis_pre_checks(Packet* p, TcpSegmentDescriptor& 
     pkt_action_mask = ACTION_NOTHING;
     tel.clear_tcp_events();
     // process thru state machine...talker first
-    if (p->packet_flags & PKT_FROM_CLIENT)
+    if (p->is_from_client())
     {
         update_session_on_client_packet(tsd);
         DEBUG_WRAP(t_name = "Server"; l_name = "Client");
@@ -1159,7 +1133,7 @@ int TcpSession::process(Packet* p)
     {
         Profile profile(s5TcpStatePerfStats);
 
-        if ( tsm.eval(tsd, *talker, *listener) )
+        if ( tsm->eval(tsd, *talker, *listener) )
         {
             do_packet_analysis_post_checks(p);
             S5TraceTCP(p, flow, &tsd, 0);

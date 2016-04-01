@@ -197,9 +197,9 @@ void NHttpInspect::clear(Packet* p)
 
     if (session_data == nullptr)
         return;
-    assert((p->packet_flags & PKT_FROM_CLIENT) || (p->packet_flags & PKT_FROM_SERVER));
-    assert(!((p->packet_flags & PKT_FROM_CLIENT) && (p->packet_flags & PKT_FROM_SERVER)));
-    SourceId source_id = (p->packet_flags & PKT_FROM_CLIENT) ? SRC_CLIENT : SRC_SERVER;
+    assert((p->is_from_client()) || (p->is_from_server()));
+    assert(!((p->is_from_client()) && (p->is_from_server())));
+    SourceId source_id = (p->is_from_client()) ? SRC_CLIENT : SRC_SERVER;
 
     if (session_data->transaction[source_id] == nullptr)
         return;

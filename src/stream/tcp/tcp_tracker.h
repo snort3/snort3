@@ -50,11 +50,12 @@
 
 class TcpNormalizer;
 class TcpReassembler;
+class TcpSession;
 
 class TcpTracker : public TcpStreamTracker
 {
 public:
-    TcpTracker(bool);
+    TcpTracker(bool, TcpSession*);
     virtual ~TcpTracker(void);
 
     void init_tcp_state(void) override;

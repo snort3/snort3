@@ -55,7 +55,7 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor&
     bool talker;
     const tcp::TCPHdr* tcph = tsd.get_tcph();
 
-    if ( tsd.get_pkt()->packet_flags & PKT_FROM_CLIENT )
+    if ( tsd.get_pkt()->is_from_client() )
         talker = ( client_tracker ) ? true : false;
     else
         talker = ( client_tracker ) ? false : true;

@@ -999,7 +999,7 @@ void RpcDecode::eval(Packet* p)
     // If no 3 way, then the packet flags won't be set, so don't look at it
     // since we won't be able to determeine who's the client and who's the
     // server.
-    if ( !p->from_client() )
+    if ( !p->is_from_client() )
         return;
 
     RpcSsnData* rsdata = nullptr;

@@ -28,6 +28,8 @@ tcp_tracker.cc \
 tcp_tracker.h \
 tcp_session.cc \
 tcp_session.h \
+tcp_stream_state_machine.cc \
+tcp_stream_state_machine.h \
 tcp_state_closed.cc \
 tcp_state_close_wait.cc \
 tcp_state_closing.cc \

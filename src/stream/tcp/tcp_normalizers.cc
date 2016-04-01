@@ -23,6 +23,7 @@
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
 
+
 class TcpNormalizerFirst : public TcpNormalizer
 {
 public:
@@ -191,77 +192,6 @@ public:
     int handle_repeated_syn(TcpSegmentDescriptor&) override;
 };
 
-TcpNormalizer* TcpNormalizerFactory::create(TcpSession* session, StreamPolicy os_policy,
-    TcpStreamTracker* tracker, TcpStreamTracker* peer)
-{
-    TcpNormalizer* normalizer;
-
-    switch (os_policy)
-    {
-    case StreamPolicy::OS_FIRST:
-        normalizer = new TcpNormalizerFirst(session, tracker);
-        break;
-
-    case StreamPolicy::OS_LAST:
-        normalizer = new TcpNormalizerLast(session, tracker);
-        break;
-
-    case StreamPolicy::OS_LINUX:
-        normalizer = new TcpNormalizerLinux(session, tracker);
-        break;
-
-    case StreamPolicy::OS_OLD_LINUX:
-        normalizer = new TcpNormalizerOldLinux(session, tracker);
-        break;
-
-    case StreamPolicy::OS_BSD:
-        normalizer = new TcpNormalizerBSD(session, tracker);
-        break;
-
-    case StreamPolicy::OS_MACOS:
-        normalizer = new TcpNormalizerMacOS(session, tracker);
-        break;
-
-    case StreamPolicy::OS_SOLARIS:
-        normalizer = new TcpNormalizerSolaris(session, tracker);
-        break;
-
-    case StreamPolicy::OS_IRIX:
-        normalizer = new TcpNormalizerIrix(session, tracker);
-        break;
-
-    case StreamPolicy::OS_HPUX11:
-        normalizer = new TcpNormalizerHpux11(session, tracker);
-        break;
-
-    case StreamPolicy::OS_HPUX10:
-        normalizer = new TcpNormalizerHpux10(session, tracker);
-        break;
-
-    case StreamPolicy::OS_WINDOWS:
-        normalizer = new TcpNormalizerWindows(session, tracker);
-        break;
-
-    case StreamPolicy::OS_WINDOWS2K3:
-        normalizer = new TcpNormalizerWindows2K3(session, tracker);
-        break;
-
-    case StreamPolicy::OS_VISTA:
-        normalizer = new TcpNormalizerVista(session, tracker);
-        break;
-
-    case StreamPolicy::OS_PROXY:
-        normalizer = new TcpNormalizerProxy(session, tracker);
-        break;
-
-    default:
-        normalizer = new TcpNormalizerBSD(session, tracker);
-        break;
-    }
-
-    normalizer->set_peer_tracker(peer);
-    return normalizer;
-}
 
 static inline int handle_repeated_syn_mswin(TcpStreamTracker* talker, TcpStreamTracker* listener,
     TcpSegmentDescriptor& tsd, TcpSession* session)
@@ -526,5 +456,77 @@ int TcpNormalizerProxy::handle_paws(TcpSegmentDescriptor&)
 int TcpNormalizerProxy::handle_repeated_syn(TcpSegmentDescriptor&)
 {
     return ACTION_NOTHING;
+}
+
+TcpNormalizer* TcpNormalizerFactory::create(TcpSession* session, StreamPolicy os_policy,
+    TcpStreamTracker* tracker, TcpStreamTracker* peer)
+{
+    TcpNormalizer* normalizer;
+
+    switch (os_policy)
+    {
+    case StreamPolicy::OS_FIRST:
+        normalizer = new TcpNormalizerFirst(session, tracker);
+        break;
+
+    case StreamPolicy::OS_LAST:
+        normalizer = new TcpNormalizerLast(session, tracker);
+        break;
+
+    case StreamPolicy::OS_LINUX:
+        normalizer = new TcpNormalizerLinux(session, tracker);
+        break;
+
+    case StreamPolicy::OS_OLD_LINUX:
+        normalizer = new TcpNormalizerOldLinux(session, tracker);
+        break;
+
+    case StreamPolicy::OS_BSD:
+        normalizer = new TcpNormalizerBSD(session, tracker);
+        break;
+
+    case StreamPolicy::OS_MACOS:
+        normalizer = new TcpNormalizerMacOS(session, tracker);
+        break;
+
+    case StreamPolicy::OS_SOLARIS:
+        normalizer = new TcpNormalizerSolaris(session, tracker);
+        break;
+
+    case StreamPolicy::OS_IRIX:
+        normalizer = new TcpNormalizerIrix(session, tracker);
+        break;
+
+    case StreamPolicy::OS_HPUX11:
+        normalizer = new TcpNormalizerHpux11(session, tracker);
+        break;
+
+    case StreamPolicy::OS_HPUX10:
+        normalizer = new TcpNormalizerHpux10(session, tracker);
+        break;
+
+    case StreamPolicy::OS_WINDOWS:
+        normalizer = new TcpNormalizerWindows(session, tracker);
+        break;
+
+    case StreamPolicy::OS_WINDOWS2K3:
+        normalizer = new TcpNormalizerWindows2K3(session, tracker);
+        break;
+
+    case StreamPolicy::OS_VISTA:
+        normalizer = new TcpNormalizerVista(session, tracker);
+        break;
+
+    case StreamPolicy::OS_PROXY:
+        normalizer = new TcpNormalizerProxy(session, tracker);
+        break;
+
+    default:
+        normalizer = new TcpNormalizerBSD(session, tracker);
+        break;
+    }
+
+    normalizer->set_peer_tracker(peer);
+    return normalizer;
 }
 

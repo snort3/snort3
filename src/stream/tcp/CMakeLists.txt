@@ -48,6 +48,8 @@ add_library( stream_tcp STATIC
     tcp_state_syn_recv.h
     tcp_state_syn_sent.h
     tcp_state_time_wait.h 
+    tcp_stream_state_machine.cc
+    tcp_stream_state_machine.h
     ips_stream_reassemble.cc
     ips_stream_size.cc
 )

@@ -150,7 +150,7 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
     if (fcd->from_client)
     {
         {
-            if (!p->from_client() && p->from_server())
+            if (!p->is_from_client() && p->is_from_server())
             {
                 // No match on from_client
                 return DETECTION_OPTION_NO_MATCH;
@@ -162,7 +162,7 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
     if (fcd->from_server)
     {
         {
-            if (!p->from_server() && p->from_client())
+            if (!p->is_from_server() && p->is_from_client())
             {
                 // No match on from_server
                 return DETECTION_OPTION_NO_MATCH;

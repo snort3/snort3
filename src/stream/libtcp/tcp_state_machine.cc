@@ -48,14 +48,14 @@ bool TcpStateMachine::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& talker,
     TcpStreamTracker::TcpState tcp_state = talker.get_tcp_state( );
 
     talker.set_tcp_event(tsd);
-    if ( tcp_state_handlers[ tcp_state ]->do_pre_sm_packet_actions(tsd) )
+    if ( tcp_state_handlers[ tcp_state ]->do_pre_sm_packet_actions(tsd, talker) )
     {
         if ( tcp_state_handlers[ tcp_state ]->eval(tsd, talker) )
         {
             tcp_state = listener.get_tcp_state( );
             listener.set_tcp_event(tsd);
             tcp_state_handlers[ tcp_state ]->eval(tsd, listener);
-            tcp_state_handlers[ tcp_state ]->do_post_sm_packet_actions(tsd);
+            tcp_state_handlers[ tcp_state ]->do_post_sm_packet_actions(tsd, listener);
             return true;
         }
 

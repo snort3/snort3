@@ -380,7 +380,7 @@ void UserSession::update(Packet* p, Flow* flow)
 
     if ( !(flow->ssn_state.session_flags & SSNFLAG_ESTABLISHED) )
     {
-        if ( p->packet_flags & PKT_FROM_CLIENT )
+        if ( p->is_from_client() )
             flow->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
         else
             flow->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
@@ -400,7 +400,7 @@ void UserSession::update(Packet* p, Flow* flow)
 
 void UserSession::restart(Packet* p)
 {
-    bool c2s = p->packet_flags & PKT_FROM_CLIENT;
+    bool c2s = p->is_from_client();
     UserTracker& ut = c2s ? server : client;
     std::list<UserSegment*>::iterator it;
     ut.total = 0;
@@ -483,7 +483,7 @@ int UserSession::process(Packet* p)
 
     update(p, flow);
 
-    UserTracker& ut = p->from_client() ? server : client;
+    UserTracker& ut = p->is_from_client() ? server : client;
 
     if ( p->ptrs.decode_flags & DECODE_SOF or !ut.splitter )
         start(p, flow);

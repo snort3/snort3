@@ -29,7 +29,7 @@ class TcpSession;
 class TcpStateListen : public TcpStateHandler
 {
 public:
-    TcpStateListen(TcpStateMachine&, TcpSession&);
+    TcpStateListen(TcpStateMachine&);
     virtual ~TcpStateListen(void);
 
     bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;

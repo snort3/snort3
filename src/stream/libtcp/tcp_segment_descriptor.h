@@ -135,7 +135,7 @@ public:
 
     bool is_packet_from_server(void)
     {
-        return pkt->packet_flags & PKT_FROM_SERVER;
+        return pkt->is_from_server();
     }
 
     void slide_segment_in_rcv_window(int32_t offset)

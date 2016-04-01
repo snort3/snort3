@@ -113,7 +113,7 @@ inline void TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescriptor* tsd
     const char* cdir = "?", * sdir = "?";
     uint32_t txd = 0, rxd = 0;
 
-    if (p->packet_flags & PKT_FROM_SERVER)
+    if (p->is_from_server())
     {
         sdir = "SRV>";
         cdir = "CLI<";
@@ -121,7 +121,7 @@ inline void TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescriptor* tsd
         txd = srv->get_iss();
         rxd = srv->get_irs();
     }
-    else if ( p->packet_flags & PKT_FROM_CLIENT )
+    else if ( p->is_from_client() )
     {
         sdir = "SRV<";
         cdir = "CLI>";

@@ -26,10 +26,12 @@
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
 #include "tcp_reassemblers.h"
+#include "tcp_session.h"
 
-TcpTracker::TcpTracker(bool client) :
+TcpTracker::TcpTracker(bool client, TcpSession* ssn) :
     TcpStreamTracker(client)
 {
+    session = ssn;
 }
 
 TcpTracker::~TcpTracker(void)
@@ -74,10 +76,10 @@ void TcpTracker::init_flush_policy(void)
 {
     if ( splitter == nullptr )
         flush_policy = STREAM_FLPOLICY_IGNORE;
-    else if ( !normalizer->is_tcp_ips_enabled() )
-        flush_policy = STREAM_FLPOLICY_ON_ACK;
-    else
+    else if ( normalizer->is_tcp_ips_enabled() )
         flush_policy = STREAM_FLPOLICY_ON_DATA;
+    else
+        flush_policy = STREAM_FLPOLICY_ON_ACK;
 }
 
 void TcpTracker::set_splitter(StreamSplitter* ss)

@@ -32,8 +32,8 @@ using namespace std;
 #include "stream_tcp_unit_test.h"
 #endif
 
-TcpStateHandler::TcpStateHandler(TcpStreamTracker::TcpState state, TcpStateMachine& tsm,
-    TcpStreamSession& ssn) : tsm(&tsm), tcp_state(state), session(ssn)
+TcpStateHandler::TcpStateHandler(TcpStreamTracker::TcpState state, TcpStateMachine& tsm)
+    : tsm(&tsm), tcp_state(state)
 {
     tsm.register_state_handler(state, *this);
 }
@@ -49,12 +49,12 @@ TcpStateHandler::~TcpStateHandler()
     // TODO Auto-generated destructor stub
 }
 
-bool TcpStateHandler::do_pre_sm_packet_actions(TcpSegmentDescriptor&)
+bool TcpStateHandler::do_pre_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&)
 {
     return true;
 }
 
-bool TcpStateHandler::do_post_sm_packet_actions(TcpSegmentDescriptor&)
+bool TcpStateHandler::do_post_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&)
 {
     return true;
 }

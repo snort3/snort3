@@ -349,7 +349,7 @@ void TcpStreamSession::SetPacketHeaderFoo(const Packet* p)
         egress_index = p->pkth->egress_index;
         egress_group = p->pkth->egress_group;
     }
-    else if ( p->packet_flags & PKT_FROM_CLIENT )
+    else if ( p->is_from_client() )
     {
         ingress_index = p->pkth->ingress_index;
         ingress_group = p->pkth->ingress_group;

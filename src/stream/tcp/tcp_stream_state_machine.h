@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,31 +16,37 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_state_machine.h author davis mcpherson <davmcphe@@cisco.com>
-// Created on: Jul 29, 2015
+// tcp_stream_state_machine.h author davis mcpherson <davmcphe@@cisco.com>
+// Created on: Apr 1, 2016
 
-#ifndef TCP_STATE_MACHINE_H
-#define TCP_STATE_MACHINE_H
+#ifndef TCP_STREAM_STATE_MACHINE_H_
+#define TCP_STREAM_STATE_MACHINE_H_
 
-#include <memory>
+#include "stream/libtcp/tcp_state_machine.h"
 
-#include "tcp_state_handler.h"
-#include "tcp_stream_tracker.h"
-#include "tcp_segment_descriptor.h"
-
-class TcpStateMachine
+class TcpStreamStateMachine: public TcpStateMachine
 {
 public:
-    virtual ~TcpStateMachine(void);
+    virtual ~TcpStreamStateMachine();
 
-    virtual void register_state_handler(TcpStreamTracker::TcpState, TcpStateHandler&);
-    virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&, TcpStreamTracker&);
 
-protected:
-    TcpStateMachine(void);
+    static TcpStateMachine* get_instance( void )
+    {
+        static TcpStreamStateMachine* tsm = nullptr;
 
-    TcpStateHandler* tcp_state_handlers[ TcpStreamTracker::TCP_MAX_STATES ];
+        if( !tsm )
+        {
+            tsm = new TcpStreamStateMachine;
+            tsm->initialize_tsm();
+        }
+
+        return tsm;
+    }
+
+private:
+    TcpStreamStateMachine();
+    void initialize_tsm(void);
+
 };
-
 #endif
 

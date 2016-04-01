@@ -24,7 +24,6 @@
 
 #include "protocols/tcp.h"
 #include "tcp_segment_descriptor.h"
-#include "tcp_stream_session.h"
 #include "tcp_stream_tracker.h"
 
 class TcpStateMachine;
@@ -32,7 +31,7 @@ class TcpStateMachine;
 class TcpStateHandler
 {
 public:
-    TcpStateHandler(TcpStreamTracker::TcpState, TcpStateMachine&, TcpStreamSession&);
+    TcpStateHandler(TcpStreamTracker::TcpState, TcpStateMachine&);
     virtual ~TcpStateHandler();
 
     virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&);
@@ -62,8 +61,8 @@ public:
         this->tsm = tsm;
     }
 
-    virtual bool do_pre_sm_packet_actions(TcpSegmentDescriptor&);
-    virtual bool do_post_sm_packet_actions(TcpSegmentDescriptor&);
+    virtual bool do_pre_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool do_post_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&);
 
 protected:
     virtual bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
@@ -83,7 +82,6 @@ protected:
 
     const TcpStateMachine* tsm;
     TcpStreamTracker::TcpState tcp_state;
-    TcpStreamSession& session;
     TcpStreamTracker::TcpEvent tcp_event = TcpStreamTracker::TCP_MAX_EVENTS;
 };
 

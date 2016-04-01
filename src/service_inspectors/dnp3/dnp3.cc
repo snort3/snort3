@@ -176,7 +176,7 @@ static void process_dnp3(dnp3ProtoConf& config, Packet* p)
     p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
 
     /* Set reassembly direction */
-    if (p->packet_flags & PKT_FROM_CLIENT)
+    if (p->is_from_client())
         dnp3_sess->direction = DNP3_CLIENT;
     else
         dnp3_sess->direction = DNP3_SERVER;

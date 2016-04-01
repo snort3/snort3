@@ -112,8 +112,8 @@ static int InitServerConf(HTTPINSPECT_CONF* GlobalConf,
     **  session, so we can still assume that the initial packet is the client
     **  talking.
     */
-    iServerSip = (p->packet_flags & PKT_FROM_SERVER);
-    iServerDip = (p->packet_flags & PKT_FROM_CLIENT);
+    iServerSip = (p->is_from_server());
+    iServerDip = (p->is_from_client());
 
     /*
     **  We default to the no HTTP traffic case

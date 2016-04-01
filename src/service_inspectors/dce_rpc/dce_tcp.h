@@ -102,7 +102,7 @@ inline bool DCE2_TcpAutodetect(Packet* p)
 
         if ((DceRpcCoVersMaj(co_hdr) == DCERPC_PROTO_MAJOR_VERS__5)
             && (DceRpcCoVersMin(co_hdr) == DCERPC_PROTO_MINOR_VERS__0)
-            && ((p->from_client()
+            && ((p->is_from_client()
             && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND)
             || (DCE2_SsnFromServer(p)
             && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND_ACK))
@@ -111,7 +111,7 @@ inline bool DCE2_TcpAutodetect(Packet* p)
             return true;
         }
     }
-    else if ((*p->data == DCERPC_PROTO_MAJOR_VERS__5) && p->from_client())
+    else if ((*p->data == DCERPC_PROTO_MAJOR_VERS__5) && p->is_from_client())
     {
         return true;
     }

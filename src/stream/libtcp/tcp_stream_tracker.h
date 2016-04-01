@@ -46,6 +46,7 @@ extern const char* tcp_event_names[];
 
 class TcpNormalizer;
 class TcpReassembler;
+class TcpSession;
 
 class TcpStreamTracker
 {
@@ -371,7 +372,6 @@ public:
     bool rst_pkt_sent = false;
 
 // FIXIT - make these non-public
-
 public:
     uint32_t r_nxt_ack = 0; /* next expected ack from remote side */
     uint32_t r_win_base = 0; /* remote side window base sequence number
@@ -380,6 +380,7 @@ public:
     StreamSplitter* splitter = nullptr;
     TcpNormalizer* normalizer = nullptr;
     TcpReassembler* reassembler = nullptr;
+    TcpSession* session = nullptr;
 
     uint32_t small_seg_count = 0;
     uint8_t alert_count = 0;

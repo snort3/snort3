@@ -294,7 +294,7 @@ static int IMAP_Setup(Packet* p, IMAPData* ssn)
     int pkt_dir;
 
     /* Get the direction of the packet. */
-    if ( p->packet_flags & PKT_FROM_SERVER )
+    if ( p->is_from_server() )
         pkt_dir = IMAP_PKT_FROM_SERVER;
     else
         pkt_dir = IMAP_PKT_FROM_CLIENT;

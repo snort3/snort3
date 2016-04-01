@@ -305,7 +305,7 @@ int PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
         /*
         if(!(p->ptrs.tcph->th_flags & TH_RST) &&
            !(p->packet_flags & (PKT_STREAM_EST)) &&
-            (p->packet_flags & PKT_FROM_SERVER))
+            (p->is_from_server()))
         {
             return 1;
         }
@@ -333,7 +333,7 @@ int PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
     /*
     **  Check if the packet is reversed
     */
-    if ((p->packet_flags & PKT_FROM_SERVER))
+    if ((p->is_from_server()))
     {
         reverse_pkt = 1;
     }
@@ -822,7 +822,7 @@ int PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
         /*
         **  RST packet on unestablished streams
         */
-        else if ((p->packet_flags & PKT_FROM_SERVER) &&
+        else if ((p->is_from_server()) &&
             (p->ptrs.tcph && (p->ptrs.tcph->th_flags & TH_RST)) &&
             (!(p->packet_flags & PKT_STREAM_EST) ||
             (session_flags & SSNFLAG_MIDSTREAM)))
@@ -846,7 +846,7 @@ int PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
         **  That's why we use the sp, because that's the port that is
         **  open.
         */
-        else if ((p->packet_flags & PKT_FROM_SERVER) &&
+        else if ((p->is_from_server()) &&
             !(p->packet_flags & PKT_STREAM_EST))
         {
             if (scanned)

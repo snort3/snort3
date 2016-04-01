@@ -249,10 +249,10 @@ struct SO_PUBLIC Packet
         ptrs.reset();
     }
 
-    bool from_client()
+    bool is_from_client() const
     { return (packet_flags & PKT_FROM_CLIENT) != 0; }
 
-    bool from_server()
+    bool is_from_server() const
     { return (packet_flags & PKT_FROM_SERVER) != 0; }
 
     bool is_portscan()

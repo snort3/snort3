@@ -1208,7 +1208,7 @@ static inline bool fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
 
     if (proto_ordinal > 0)
     {
-        if (p->packet_flags & PKT_FROM_SERVER) /* to cli */
+        if (p->is_from_server()) /* to cli */
         {
             DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_server\n");
 
@@ -1216,7 +1216,7 @@ static inline bool fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
             file = snort_conf->sopgTable->get_port_group(proto, false, SNORT_PROTO_FILE);
         }
 
-        if (p->packet_flags & PKT_FROM_CLIENT) /* to srv */
+        if (p->is_from_client()) /* to srv */
         {
             DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_client\n");
 

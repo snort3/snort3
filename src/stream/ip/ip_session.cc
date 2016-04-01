@@ -96,7 +96,7 @@ static inline void UpdateSession(Packet* p, Flow* lws)
 
     if ( !(lws->ssn_state.session_flags & SSNFLAG_ESTABLISHED) )
     {
-        if ( p->packet_flags & PKT_FROM_CLIENT )
+        if ( p->is_from_client() )
         {
             DebugMessage(DEBUG_STREAM_STATE,
                 "Stream: Updating on packet from client\n");
