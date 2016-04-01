@@ -1,11 +1,6 @@
 
 noinst_LIBRARIES = libperf_monitor.a
 
-if BUILD_PROCPIDSTATS
-PROCPIDSTATS_SOURCE = \
-proc_pid_stats.cc proc_pid_stats.h
-endif
-
 libperf_monitor_a_SOURCES = \
 perf_monitor.cc perf_monitor.h \
 perf_module.cc perf_module.h \
@@ -16,5 +11,4 @@ flow_tracker.cc flow_tracker.h \
 flow_ip_tracker.cc flow_ip_tracker.h \
 event_tracker.cc event_tracker.h \
 perf_flow.cc perf_flow.h \
-$(PROCPIDSTATS_SOURCE)
 

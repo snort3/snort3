@@ -1,12 +1,3 @@
-
-if( LINUX_SMP )
-    set (PROCPIDSTATS_SOURCE
-        proc_pid_stats.cc 
-        proc_pid_stats.h
-    )
-
-endif(LINUX_SMP)
-
 add_library ( perf_monitor STATIC
     base_tracker.cc
     base_tracker.h
@@ -26,5 +17,4 @@ add_library ( perf_monitor STATIC
     perf_monitor.h
     perf_tracker.cc
     perf_tracker.h
-    ${PROCPIDSTATS_SOURCE}
 )

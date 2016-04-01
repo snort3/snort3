@@ -398,16 +398,6 @@ if test "x$enable_shell" = "xyes"; then
     AC_DEFINE(BUILD_SHELL, [1], [enable shell support])
 fi
 
-AC_ARG_ENABLE(linux-smp-stats,
-    AC_HELP_STRING([--enable-linux-smp-stats],[enable statistics reporting through proc]),
-    enable_linux_smp_stats="$enableval", enable_linux_smp_stats="no")
-
-AM_CONDITIONAL(BUILD_PROCPIDSTATS, test "x$enable_linux_smp_stats" = "xyes")
-
-if test "x$enable_linux_smp_stats" = "xyes"; then
-    AC_DEFINE(LINUX_SMP, [1], [enable proc stats])
-fi
-
 AC_ARG_ENABLE(large-pcap,
     AC_HELP_STRING([--enable-large-pcap],[enable support for pcaps larger than 2 GB]),
     enable_large_pcap="$enableval", enable_large_pcap="no")

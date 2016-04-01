@@ -180,12 +180,6 @@ while [ $# -ne 0 ]; do
         --enable-static-daq)
             append_cache_entry ENABLE_STATIC_DAQ    BOOL   true
             ;;
-        --disable-linux-smp-stats)
-            append_cache_entry ENABLE_LINUX_SMP_STATS    BOOL   false
-            ;;
-        --enable-linux-smp-stats)
-            append_cache_entry ENABLE_LINUX_SMP_STATS    BOOL   true
-            ;;
         --disable-pthread)
             append_cache_entry ENABLE_PTHREAD    BOOL   false
             ;;
