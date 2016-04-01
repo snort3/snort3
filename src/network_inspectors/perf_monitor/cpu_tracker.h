@@ -46,7 +46,6 @@ private:
     uint64_t last_st;
     
     void get_times(uint64_t& user, uint64_t& system, uint64_t& wall);
-    void delta(uint64_t &user, uint64_t &system, uint64_t &wall, uint64_t& idle);
 };
 
 #endif
