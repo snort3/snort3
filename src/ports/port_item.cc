@@ -85,9 +85,9 @@ void PortObjectItemPrint(PortObjectItem* poi, char* dstbuf, int bufsize)
         SnortSnprintfAppend(dstbuf, bufsize, "any");
 
     else if ( poi->one() )
-        SnortSnprintfAppend(dstbuf, bufsize, "%u", poi->lport);
+        SnortSnprintfAppend(dstbuf, bufsize, "%hu", poi->lport);
 
     else
-        SnortSnprintfAppend(dstbuf, bufsize, "%u:%u",poi->lport,poi->hport);
+        SnortSnprintfAppend(dstbuf, bufsize, "%hu:%hu",poi->lport,poi->hport);
 }
 

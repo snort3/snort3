@@ -595,7 +595,7 @@ void SFRF_ShowObjects(RateFilterConfig* config)
     SFGHASH* genHash;
     tSFRFSidNode* pSidnode;
     tSFRFConfigNode* cfgNode;
-    int gid;
+    unsigned int gid;
     SFGHASH_NODE* sidHashNode;
 
     for ( gid=0; gid < SFRF_MAX_GENID; gid++ )

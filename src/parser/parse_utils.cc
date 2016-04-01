@@ -118,7 +118,7 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
         }
     }
     if ( !ok )
-        ParseError("invalid byte code at %d", idx);
+        ParseError("invalid byte code at %u", idx);
 
     return ok;
 }

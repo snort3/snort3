@@ -65,7 +65,7 @@ bool FastPatternConfig::set_detect_search_method(const char* method)
 void FastPatternConfig::set_max_pattern_len(unsigned int max_len)
 {
     if (max_pattern_len != 0)
-        ParseWarning(WARN_CONF, "maximum pattern length redefined from %d to %d.\n",
+        ParseWarning(WARN_CONF, "maximum pattern length redefined from %d to %u.\n",
             max_pattern_len, max_len);
 
     max_pattern_len = max_len;

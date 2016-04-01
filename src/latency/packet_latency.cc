@@ -182,20 +182,20 @@ inline bool Impl<Clock>::fastpath()
 // static variables
 // -----------------------------------------------------------------------------
 
-static struct SnortConfigWrapper : ConfigWrapper
+static struct SnortConfigWrapper : public ConfigWrapper
 {
     const PacketLatencyConfig* operator->() const override
     { return &snort_conf->latency->packet_latency; }
 
 } config;
 
-static struct SnortEventHandler : EventHandler
+static struct SnortEventHandler : public EventHandler
 {
     void handle(const Event&) override
     { SnortEventqAdd(GID_LATENCY, LATENCY_EVENT_PACKET_FASTPATHED); }
 } event_handler;
 
-static struct SnortLogHandler : EventHandler
+static struct SnortLogHandler : public EventHandler
 {
     void handle(const Event& e) override
     {

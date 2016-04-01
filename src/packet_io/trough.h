@@ -65,7 +65,7 @@ private:
         std::string filter;
     };
 
-    static int get_pcaps(std::vector<struct PcapReadObject> &pol, std::vector<std::string> &pcap_queue);
+    static int get_pcaps(std::vector<struct PcapReadObject> &pol);
     static std::vector<struct PcapReadObject> pcap_object_list;
     static std::vector<std::string> pcap_queue;
     static std::vector<std::string>::const_iterator pcap_queue_iter;

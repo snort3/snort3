@@ -29,8 +29,7 @@
 
 #include "log/messages.h"
 
-int AddPiiPiece(SdTreeNode *node, char *new_pattern, SdOptionData *data);
-SdTreeNode* AddChild(SdTreeNode *node, SdOptionData *data, char *pattern);
+static SdTreeNode* AddChild(SdTreeNode *node, SdOptionData *data, char *pattern);
 
 
 SdOptionData::SdOptionData(std::string pattern, uint8_t threshold)
@@ -203,7 +202,7 @@ int AddPii(SdTreeNode *head, SdOptionData *data)
 }
 
 // Create a new tree node, and add it as a child to the current node.
-SdTreeNode * AddChild(SdTreeNode *node, SdOptionData *data, char *pattern)
+static SdTreeNode * AddChild(SdTreeNode *node, SdOptionData *data, char *pattern)
 {
     SdTreeNode * new_node = NULL;
 

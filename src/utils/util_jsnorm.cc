@@ -370,7 +370,7 @@ static const JSNorm javascript_norm[] =
     { Z6+ 0, ANY, Z0+ 0, Z0+ 0, ACT_NOP }
 };
 
-void UnescapeDecode(char*, uint16_t, char**, char**, uint16_t*, JSState*, uint8_t*);
+static void UnescapeDecode(char*, uint16_t, char**, char**, uint16_t*, JSState*, uint8_t*);
 
 void InitJSNormLookupTable(void)
 {
@@ -1027,7 +1027,7 @@ static int Unescape_scan_fsm(UnescapeState* s, int c, JSState* js)
     return(Unescape_exec(s, (ActionUnsc)m->action, c, js));
 }
 
-void UnescapeDecode(char* src, uint16_t srclen, char** ptr, char** dst, uint16_t* bytes_copied,
+static void UnescapeDecode(char* src, uint16_t srclen, char** ptr, char** dst, uint16_t* bytes_copied,
     JSState* js, uint8_t* iis_unicode_map)
 {
     int iRet;

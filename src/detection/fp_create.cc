@@ -513,7 +513,7 @@ bool set_fp_content(OptTreeNode* otn)
 
     if ( best.pmd and otn->proto == SNORT_PROTO_FILE and best.cat != CAT_SET_FILE )
     {
-        ParseWarning(WARN_RULES, "file rule %d:%d does not have file_data fast pattern",
+        ParseWarning(WARN_RULES, "file rule %u:%u does not have file_data fast pattern",
             otn->sigInfo.generator, otn->sigInfo.id);
 
         best.pmd->fp = 0;
@@ -524,7 +524,7 @@ bool set_fp_content(OptTreeNode* otn)
         return true;
 
     if ( content )
-        ParseWarning(WARN_RULES, "content based rule %d:%d has no fast pattern",
+        ParseWarning(WARN_RULES, "content based rule %u:%u has no fast pattern",
             otn->sigInfo.generator, otn->sigInfo.id);
 
     return false;

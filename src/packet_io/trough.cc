@@ -35,19 +35,7 @@ std::vector<std::string>::const_iterator Trough::pcap_queue_iter;
 long Trough::pcap_loop_count = 0;
 unsigned Trough::file_count = 0;
 
-/*****************************************************************
- * Function: GetPcaps()
- *
- * This function takes a list of pcap types and arguments from
- * the command line, parses them depending on type and puts them
- * in a user supplied queue. The pcap object list will contain
- * PcapReadObject structures.  The returned queue contains
- * strings representing paths to pcaps.
- *
- * returns -1 on error and 0 on success
- *
- ****************************************************************/
-int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol, std::vector<std::string> &pcap_queue)
+int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol)
 {
     for (const PcapReadObject &pro : pol)
     {
@@ -224,7 +212,7 @@ void Trough::setup(void)
 {
     if (!pcap_object_list.empty())
     {
-        if (get_pcaps(pcap_object_list, pcap_queue) == -1)
+        if (get_pcaps(pcap_object_list) == -1)
             FatalError("Error getting pcaps.\n");
 
         if (pcap_queue.empty())

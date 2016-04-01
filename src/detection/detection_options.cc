@@ -720,7 +720,6 @@ struct node_profile_stats
 static void detection_option_node_update_otn_stats(detection_option_tree_node_t* node,
     node_profile_stats* stats, uint64_t checks, uint64_t timeouts, uint64_t suspends)
 {
-    int i;
     node_profile_stats local_stats; /* cumulative stats for this node */
     node_profile_stats node_stats;  /* sum of all instances */
 
@@ -782,7 +781,7 @@ static void detection_option_node_update_otn_stats(detection_option_tree_node_t*
 
     if ( node->num_children )
     {
-        for ( i=0; i < node->num_children; ++i )
+        for ( int i=0; i < node->num_children; ++i )
             detection_option_node_update_otn_stats(node->children[i], &local_stats, checks,
                 timeouts, suspends);
     }

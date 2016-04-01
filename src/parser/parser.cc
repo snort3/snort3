@@ -613,7 +613,7 @@ void SetRuleStates(SnortConfig* sc)
 
         if (otn == NULL)
         {
-            ParseError("Rule state specified for invalid SID: %d GID: %d",
+            ParseError("Rule state specified for invalid SID: %u GID: %u",
                 rule_state->sid, rule_state->gid);
             return;
         }

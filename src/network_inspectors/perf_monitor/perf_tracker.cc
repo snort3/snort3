@@ -77,7 +77,7 @@ void PerfTracker::open(bool append)
                 if (chmod(file_name, mode) != 0)
                 {
                     WarningMessage("perfmonitor: Unable to change mode of "
-                        "stats file '%s' to mode:%d: %s.",
+                        "stats file '%s' to mode:%u: %s.",
                         file_name, mode, get_error(errno));
                 }
 

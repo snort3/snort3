@@ -149,7 +149,7 @@ void FileIdentifier::verify_magic_offset(FileMagicData* parent, FileMagicData* c
 {
     if ((parent) && (parent->content.size() + parent->offset > current->offset))
     {
-        ParseError("magic content at offset %d overlaps with offset %d.",
+        ParseError("magic content at offset %u overlaps with offset %u.",
             parent->offset, current->offset);
         return;
     }
@@ -278,7 +278,7 @@ void FileIdentifier::update_trie(IdentifierNode* start, IdentifierNode* append)
         if (append->type_id)
         {
             if (start->type_id)
-                ParseWarning(WARN_RULES, "Duplicated type definition '%d -> %d at offset %d",
+                ParseWarning(WARN_RULES, "Duplicated type definition '%u -> %u at offset %u",
                     start->type_id, append->type_id, append->offset);
             start->type_id = append->type_id;
         }
@@ -313,13 +313,13 @@ void FileIdentifier::insert_file_rule(FileMagicRule& rule)
 
     if (rule.id > FILE_ID_MAX)
     {
-        ParseError("file type: rule id %d larger than %d", rule.id, FILE_ID_MAX);
+        ParseError("file type: rule id %u larger than %d", rule.id, FILE_ID_MAX);
         return;
     }
 
     if (file_magic_rules[rule.id].id > 0)
     {
-        ParseError("file type: duplicated rule id %d defined", rule.id);
+        ParseError("file type: duplicated rule id %u defined", rule.id);
         return;
     }
 

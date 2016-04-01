@@ -50,7 +50,7 @@ private:
             length(command_default_len) { }
     };
 
-    const static int command_default_len = -1;
+    static const int command_default_len = -1;
     std::vector<Command> commands;
 
     bool parse_alt_max_cmd(std::istringstream& data_stream);

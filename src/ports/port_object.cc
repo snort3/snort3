@@ -762,7 +762,7 @@ void PortObjectPrintEx(PortObject* po,
     }
 
     SnortSnprintfAppend(po_print_buf, bufsize,
-        " Id:%d  Ports:%d Rules:%d\n {\n",
+        " Id:%d  Ports:%u Rules:%u\n {\n",
         po->id, po->item_list->count,po->rule_list->count);
 
     SnortSnprintfAppend(po_print_buf, bufsize, "  Ports [\n  ");

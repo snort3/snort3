@@ -48,7 +48,7 @@ struct GetProfileFunctor
     const std::string name;
 };
 
-struct GetProfileFromModule : GetProfileFunctor
+struct GetProfileFromModule : public GetProfileFunctor
 {
     GetProfileFromModule(std::string name, Module* m) :
         GetProfileFunctor(name), m(m) { }
@@ -71,7 +71,7 @@ struct GetProfileFromModule : GetProfileFunctor
     Module* m;
 };
 
-struct GetProfileFromFunction : GetProfileFunctor
+struct GetProfileFromFunction : public GetProfileFunctor
 {
     GetProfileFromFunction(std::string name, get_profile_stats_fn fn) :
         GetProfileFunctor(name), fn(fn) { }

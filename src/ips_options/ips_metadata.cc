@@ -115,8 +115,8 @@ static IpsOption* metadata_ctor(Module* p, OptTreeNode* otn)
 {
     MetadataModule* m = (MetadataModule*)p;
 
-    for ( auto p : m->services )
-        add_service_to_otn(m->snort_config, otn, p.c_str());
+    for ( auto service : m->services )
+        add_service_to_otn(m->snort_config, otn, service.c_str());
 
     return nullptr;
 }

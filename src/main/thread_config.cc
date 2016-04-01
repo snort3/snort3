@@ -34,7 +34,7 @@ static unsigned instance_max = 1;
 
 struct CpuSet
 {
-    CpuSet(hwloc_cpuset_t cpuset) : cpuset(cpuset) { }
+    CpuSet(hwloc_cpuset_t set) : cpuset(set) { }
     ~CpuSet()
     {
         if (cpuset)
@@ -152,7 +152,7 @@ void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
     hwloc_bitmap_list_asprintf(&s, desired_cpuset);
     if (hwloc_set_cpubind(topology, desired_cpuset, HWLOC_CPUBIND_THREAD))
     {
-        FatalError("Unable to pin thread %u (type %u) to %s: %s (%d)\n",
+        FatalError("Failed to pin thread %u (type %u) to %s: %s (%d)\n",
                 id, type, s, get_error(errno), errno);
     }
 #ifndef REG_TEST

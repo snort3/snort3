@@ -645,7 +645,7 @@ static char* GetListInfo(INFO info)
     case WHITELISTED_TRUST:
         return white_info;
     default:
-        return nullptr;
+        break;
     }
     return nullptr;
 }

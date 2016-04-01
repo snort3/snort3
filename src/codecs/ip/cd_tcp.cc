@@ -490,7 +490,7 @@ int TcpCodec::OptLenValidate(const tcp::TcpOption* const opt,
     const int expected_len)
 {
     // case for pointer arithmetic
-    const uint8_t* const opt_ptr = reinterpret_cast<const uint8_t* const>(opt);
+    const uint8_t* const opt_ptr = reinterpret_cast<const uint8_t*>(opt);
 
     if (expected_len > 1)
     {

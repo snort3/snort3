@@ -162,7 +162,7 @@ NORETURN void ParseAbort(const char* format, ...)
 
     // FIXIT-L Refer to ParseMessage above.
     if (file_name != NULL)
-        FatalError("%s(%d) %s\n", file_name, file_line, buf);
+        FatalError("%s(%u) %s\n", file_name, file_line, buf);
     else
         FatalError("%s\n", buf);
 }

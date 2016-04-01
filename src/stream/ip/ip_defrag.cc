@@ -870,7 +870,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
         if ((lyr.prot_id == ETHERTYPE_IPV6) || (lyr.prot_id == IPPROTO_ID_IPV6))
         {
             ip::IP6Hdr* const rawHdr =
-                const_cast<ip::IP6Hdr* const>(dpkt->ptrs.ip_api.get_ip6h());
+                const_cast<ip::IP6Hdr*>(dpkt->ptrs.ip_api.get_ip6h());
             rawHdr->ip6_next = ft->protocol;
         }
         else

@@ -30,7 +30,7 @@
 
 // `__thread` is a gnu extension that at present is slightly faster than
 // `thread_local` (possibly due to the lack of dynamic initialization)
-#if USE_THREAD_LOCAL
+#ifdef USE_THREAD_LOCAL
 #    define THREAD_LOCAL thread_local
 #else
 #    define THREAD_LOCAL __thread
