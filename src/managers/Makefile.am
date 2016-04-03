@@ -18,7 +18,8 @@ module_manager.cc module_manager.h \
 mpse_manager.cc mpse_manager.h \
 plugin_manager.cc plugin_manager.h \
 script_manager.cc script_manager.h \
-so_manager.cc so_manager.h
+so_manager.cc so_manager.h \
+lua_plugin_defs.h
 
 CLEANFILES = snort_plugin.lua
 
