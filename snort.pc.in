@@ -13,5 +13,5 @@ Description: Snort 3.0 Project
 URL: www.snort.org
 Version: @VERSION@
 Libs: -L${libdir} -lcurl @LDFLAGS@ @LIBS@
-Cflags: @CPPFLAGS@ -I${includedir}/snort
+Cflags: @CPPFLAGS@ -I${includedir}
 
