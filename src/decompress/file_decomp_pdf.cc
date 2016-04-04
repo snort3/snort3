@@ -1195,7 +1195,7 @@ TEST_CASE("File_Decomp_End_PDF-bad_type-error", "[file_decomp]")
     fd_session_p_t p_s;
 
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
-    p_s->Decomp_Type = FILE_COMPRESSION_TYPE_LZMA;
+    p_s->Decomp_State.PDF.Decomp_Type = FILE_COMPRESSION_TYPE_LZMA;
     p_s->Decomp_State.PDF.State = PDF_STATE_PROCESS_STREAM;
     REQUIRE(File_Decomp_End_PDF(p_s) == File_Decomp_Error);
 }
