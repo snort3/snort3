@@ -23,10 +23,15 @@
 #include "utils/stats.h"
 #include "utils/util.h"
 
+#define EVENT_FILE (PERF_NAME "_event.csv")
+
 THREAD_LOCAL EventTracker* perf_event;
 
 static std::string csv_header =
     "#timestamp,qualified_events,non_qualified_events\n";
+
+EventTracker::EventTracker(PerfConfig *perf) :
+    PerfTracker(perf, perf->output == PERF_FILE ? EVENT_FILE : nullptr) {}
 
 void EventTracker::reset()
 {

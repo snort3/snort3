@@ -23,6 +23,8 @@
 
 #include "utils/util.h"
 
+#define FLOW_FILE (PERF_NAME "_flow.csv")
+
 THREAD_LOCAL FlowTracker* perf_flow;
 
 FlowTracker::FlowTracker(PerfConfig* perf) : PerfTracker(perf,

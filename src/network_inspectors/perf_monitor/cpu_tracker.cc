@@ -25,6 +25,8 @@
 
 #include <sys/resource.h>
 
+#define CPU_FILE (PERF_NAME "_cpu.csv")
+
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
@@ -36,6 +38,10 @@ static inline uint64_t get_microseconds(struct timeval t)
 {
     return (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
 }
+
+
+CPUTracker::CPUTracker(PerfConfig *perf) :
+    PerfTracker(perf, perf->output == PERF_FILE ? CPU_FILE : nullptr){}
 
 void CPUTracker::get_clocks(struct rusage& usage, struct timeval& wall_time)
 {

@@ -36,8 +36,7 @@ struct PerfEventCounts
 class EventTracker : public PerfTracker
 {
 public:
-    EventTracker(PerfConfig* perf) :
-        PerfTracker(perf, perf->output == PERF_FILE ? EVENT_FILE : nullptr) { }
+    EventTracker(PerfConfig*);
     void reset() override;
     void process(bool) override;
 

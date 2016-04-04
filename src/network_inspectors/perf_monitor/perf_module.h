@@ -35,12 +35,6 @@
 #define PERF_FLOWIP     0x00000020
 #define PERF_SUMMARY    0x00000040
 
-#define BASE_FILE "perf_monitor.csv"
-#define FLOW_FILE "perf_monitor_flow.csv"
-#define FLIP_FILE "perf_monitor_flow_ip.csv"
-#define EVENT_FILE "perf_monitor_event.csv"
-#define CPU_FILE "perf_monitor_cpu.csv"
-
 #define ROLLOVER_THRESH     512
 #define MAX_PERF_FILE_SIZE  UINT64_MAX
 #define MIN_PERF_FILE_SIZE  4096

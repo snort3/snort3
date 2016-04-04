@@ -112,6 +112,11 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
         if ( v.get_bool() )
             config.perf_flags |= PERF_CPU;
     }
+    else if ( v.is("events") )
+    {
+        if ( v.get_bool() )
+            config.perf_flags |= PERF_EVENT;
+    }
     else if ( v.is("flow") )
     {
         if ( v.get_bool() )
@@ -121,11 +126,6 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     {
         if ( v.get_bool() )
             config.perf_flags |= PERF_FLOWIP;
-    }
-    else if ( v.is("events") )
-    {
-        if ( v.get_bool() )
-            config.perf_flags |= PERF_EVENT;
     }
     else if ( v.is("packets") )
     {

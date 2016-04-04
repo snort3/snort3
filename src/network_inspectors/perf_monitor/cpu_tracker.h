@@ -29,9 +29,7 @@
 class CPUTracker : public PerfTracker
 {
 public:
-    CPUTracker(PerfConfig *perf):
-        PerfTracker(perf, perf->output == PERF_FILE ? CPU_FILE : nullptr)
-    {}
+    CPUTracker(PerfConfig*);
     void reset() override;
     void process(bool) override;
 
