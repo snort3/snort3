@@ -26,8 +26,18 @@
 #define PERF_NAME "perf_monitor"
 #define PERF_HELP "performance monitoring and flow statistics collection"
 
-extern THREAD_LOCAL SimpleStats pmstats;
-extern THREAD_LOCAL ProfileStats perfmonStats;
+// Perf Flags
+#define PERF_BASE       0x00000001
+#define PERF_CPU        0x00000002
+#define PERF_FLOW       0x00000004
+#define PERF_EVENT      0x00000008
+#define PERF_BASE_MAX   0x00000010
+#define PERF_FLOWIP     0x00000020
+#define PERF_SUMMARY    0x00000040
+
+#define ROLLOVER_THRESH     512
+#define MAX_PERF_FILE_SIZE  UINT64_MAX
+#define MIN_PERF_FILE_SIZE  4096
 
 enum PerfFormat
 {
@@ -40,15 +50,6 @@ enum PerfOutput
     PERF_FILE,
     PERF_CONSOLE
 };
-
-// Perf Flags
-#define PERF_BASE           0x00000001
-#define PERF_FLOW           0x00000002
-#define PERF_EVENT          0x00000004
-#define PERF_BASE_MAX       0x00000008
-#define PERF_FLOWIP         0x00000010
-#define PERF_TIME_COUNT     0x00000020
-#define PERF_SUMMARY        0x00000040
 
 struct PerfConfig
 {
@@ -85,18 +86,12 @@ public:
 private:
     PerfConfig config;
 
-     std::string mod_pegs;
-     std::string mod_name;
+    std::string mod_pegs;
+    std::string mod_name;
 };
 
-#define BASE_FILE "perf_monitor.csv"
-#define FLOW_FILE "perf_monitor_flow.csv"
-#define FLIP_FILE "perf_monitor_flow_ip.csv"
-#define EVENT_FILE "perf_monitor_event.csv"
-
-#define ROLLOVER_THRESH     512
-#define MAX_PERF_FILE_SIZE  UINT64_MAX
-#define MIN_PERF_FILE_SIZE  4096
+extern THREAD_LOCAL SimpleStats pmstats;
+extern THREAD_LOCAL ProfileStats perfmonStats;
 
 #endif
 

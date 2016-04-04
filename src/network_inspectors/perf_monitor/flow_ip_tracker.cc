@@ -25,6 +25,8 @@
 #include "sfip/sf_ip.h"
 #include "utils/util.h"
 
+#define FLIP_FILE (PERF_NAME "_flow_ip.csv")
+
 struct FlowStateKey
 {
     sfip_t ipA;

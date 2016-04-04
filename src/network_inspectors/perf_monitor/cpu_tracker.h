@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2002-2013 Sourcefire, Inc.
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,47 +15,36 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-** Carter Waxman <cwaxman@cisco.com>
-** Based on work by Dan Roelker <droelker@sourcefire.com>
-**
-**  DESCRIPTION
-**    This file gets the correct CPU usage for SMP Linux machines.
-*/
-#ifndef PROC_PID_STATS_H
-#define PROC_PID_STATS_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+// cpu_tracker.h author Carter Waxman <cwaxman@cisco.com>
 
-#ifdef LINUX_SMP
+#ifndef CPU_TRACKER_H
+#define CPU_TRACKER_H
 
-struct CPUStats
+#include "perf_module.h"
+#include "perf_tracker.h"
+
+#include <sys/time.h>
+
+class CPUTracker : public PerfTracker
 {
-    double user;
-    double sys;
-    double total;
-    double idle;
+public:
+    CPUTracker(PerfConfig*);
+    void reset() override;
+    void process(bool) override;
+
+protected:
+    virtual void get_clocks(struct rusage&, struct timeval&);
+
+private:
+    //19 bits for microseconds
+    //45 bits for seconds (out to year 1116918)
+    uint64_t last_wt;
+    uint64_t last_ut;
+    uint64_t last_st;
+    
+    void get_times(uint64_t& user, uint64_t& system, uint64_t& wall);
 };
-
-struct ProcPIDStats
-{
-    CPUStats* sys_cpus;
-
-    int num_cpus;
-};
-
-/* Init CPU usage processing */
-int init_proc_pid_stats(ProcPIDStats*);
-
-/* Fetch the CPU utilization numbers for process */
-int process_proc_pid_stats(ProcPIDStats*);
-
-/* Free the statistics structure */
-void free_proc_pid_stats(ProcPIDStats*);
-
-#endif
 
 #endif
 

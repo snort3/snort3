@@ -27,6 +27,8 @@
 #include "managers/plugin_manager.h"
 #include "utils/stats.h"
 
+#define BASE_FILE (PERF_NAME ".csv")
+
 using namespace std;
 
 BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf,
