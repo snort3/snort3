@@ -40,7 +40,7 @@ struct MemoryStats
     void reset();
 
     operator bool() const
-    { return allocs || deallocs || allocated || deallocated; }
+    { return allocs || allocated; }
 
     bool operator==(const MemoryStats&) const;
     bool operator!=(const MemoryStats& rhs) const
