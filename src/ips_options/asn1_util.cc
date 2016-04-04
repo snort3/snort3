@@ -981,7 +981,7 @@ int asn1_print_types(ASN1_TYPE* asn1_type, void* user)
         printf("    ");
 
     printf("IDENT - asn1_class: %.2x | flag: %.2x | tag_type: %.2x | "
-        "tag_num: %d\n", asn1_type->ident.asn1_class, asn1_type->ident.flag,
+        "tag_num: %u\n", asn1_type->ident.asn1_class, asn1_type->ident.flag,
         asn1_type->ident.tag_type, asn1_type->ident.tag);
 
     for (iCtr = 0; iCtr < iTabs; iCtr++)
@@ -993,7 +993,7 @@ int asn1_print_types(ASN1_TYPE* asn1_type, void* user)
     for (iCtr = 0; iCtr < iTabs; iCtr++)
         printf("    ");
 
-    printf("DATA | data_len: %d | ", asn1_type->data_len);
+    printf("DATA | data_len: %u | ", asn1_type->data_len);
     if (asn1_type->data)
     {
         for (iCtr = 0; iCtr < asn1_type->data_len; iCtr++)

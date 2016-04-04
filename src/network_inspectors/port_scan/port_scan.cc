@@ -694,10 +694,10 @@ static void PrintIPPortSet(IP_PORT* p)
     {
         if ( pr->port_lo != 0)
         {
-            SnortSnprintfAppend(output_str, sizeof(output_str), "%d", pr->port_lo);
+            SnortSnprintfAppend(output_str, sizeof(output_str), "%u", pr->port_lo);
             if ( pr->port_hi != pr->port_lo )
             {
-                SnortSnprintfAppend(output_str, sizeof(output_str), "-%d", pr->port_hi);
+                SnortSnprintfAppend(output_str, sizeof(output_str), "-%u", pr->port_hi);
             }
             SnortSnprintfAppend(output_str, sizeof(output_str), " ");
         }

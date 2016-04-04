@@ -508,7 +508,7 @@ void FileContext::print()
 
     if (unused > 0)
     {
-        used = snprintf(cur, unused, "\nFile type: %s(%d)",
+        used = snprintf(cur, unused, "\nFile type: %s(%u)",
             file_config->file_type_name(file_type_id).c_str(), file_type_id);
         unused -= used;
         cur += used;

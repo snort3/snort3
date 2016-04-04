@@ -269,7 +269,7 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
             {
                 ParseWarning(WARN_HOSTS,
                     "AttributeTable insertion failed: %d Insufficient "
-                    "space in attribute table, only configured to store %d hosts\n",
+                    "space in attribute table, only configured to store %u hosts\n",
                     ret, SnortConfig::get_max_attribute_hosts());
                 sfat_insufficient_space_logged = true;
             }

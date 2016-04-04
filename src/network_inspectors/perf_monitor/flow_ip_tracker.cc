@@ -175,7 +175,7 @@ void FlowIPTracker::write_stats()
     if (!fh)
         return;
 
-    fprintf(fh, "%ld,%u,", (unsigned long)cur_time, sfxhash_count(ipMap));
+    fprintf(fh, "%lu,%u,", (unsigned long)cur_time, sfxhash_count(ipMap));
     for (node = sfxhash_findfirst(ipMap); node; node = sfxhash_findnext(ipMap))
     {
         char ipA[41], ipB[41];

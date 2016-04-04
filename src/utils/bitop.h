@@ -65,6 +65,9 @@ inline BitOp::BitOp(size_t len) :
 inline BitOp::~BitOp()
 { delete[] bit_buf; }
 
+inline uint8_t BitOp::mask(size_t bit) const
+{ return (uint8_t)(0x80 >> (bit & 7)); }
+
 // FIXIT-L J ops that don't need to be inlined can probably be but into a .cc file
 // Reset the bit buffer so that it can be reused
 inline void BitOp::reset()
@@ -93,9 +96,6 @@ inline void BitOp::clear(unsigned int bit)
 
 inline size_t BitOp::size() const
 { return buf_size << 3; }
-
-inline uint8_t BitOp::mask(size_t bit) const
-{ return (uint8_t)(0x80 >> (bit & 7)); }
 
 inline size_t BitOp::get_buf_size() const
 { return buf_size; }

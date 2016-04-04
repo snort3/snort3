@@ -209,14 +209,14 @@ static bool register_plugin(
 
     if ( api->size != sym->size )
     {
-        ParseWarning(WARN_PLUGINS, "%s: size mismatch; expected %d, got %d",
+        ParseWarning(WARN_PLUGINS, "%s: size mismatch; expected %u, got %u",
             api->name, sym->size, api->size);
         return false;
     }
 
     if ( api->api_version != sym->version )
     {
-        ParseWarning(WARN_PLUGINS, "%s: version mismatch; expected %d, got %d",
+        ParseWarning(WARN_PLUGINS, "%s: version mismatch; expected %u, got %u",
             api->name, sym->version, api->version);
         return false;
     }

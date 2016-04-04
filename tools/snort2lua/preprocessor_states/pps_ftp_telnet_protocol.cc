@@ -54,7 +54,7 @@ private:
             length(command_default_len) { }
     };
 
-    const static int command_default_len = -1;
+    static const int command_default_len = -1;
     static int ftpsever_binding_id;
     std::vector<Command> commands;
 

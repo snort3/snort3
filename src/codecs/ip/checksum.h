@@ -175,7 +175,7 @@ inline void add_ipv4_pseudoheader(const Pseudoheader* const ph4,
      * Otherwise they assume we are reading garbage values
      */
     const PsuedoheaderUnion* const ph4_u = reinterpret_cast
-        <const PsuedoheaderUnion* const>(ph4);
+        <const PsuedoheaderUnion*>(ph4);
     const uint16_t* const h = ph4_u->ph4_arr;
 
     /* ipv4 pseudo header must have 12 bytes */
@@ -195,7 +195,7 @@ inline void add_ipv6_pseudoheader(const Pseudoheader6* const ph6,
      * Otherwise they assume we are reading garbage values
      */
     const Psuedoheader6Union* const ph6_u = reinterpret_cast
-        <const Psuedoheader6Union* const>(ph6);
+        <const Psuedoheader6Union*>(ph6);
     const uint16_t* const h = ph6_u->ph6_arr;
 
     /* PseudoHeader must have 36 bytes */

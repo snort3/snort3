@@ -78,7 +78,7 @@ void TcpReassembler::trace_segments(void)
         else if (SEQ_GT(sx, tsn->seq))
             fprintf(stdout, " -%u", sx - tsn->seq);
 
-        fprintf(stdout, " %u", tsn->payload_size);
+        fprintf(stdout, " %hu", tsn->payload_size);
 
         segs++;
         bytes += tsn->payload_size;

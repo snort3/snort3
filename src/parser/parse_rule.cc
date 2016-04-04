@@ -1066,7 +1066,7 @@ static int mergeDuplicateOtn(
 
     if (otn_cur->proto != otn_new->proto)
     {
-        ParseError("GID %d SID %d in rule duplicates previous rule, with "
+        ParseError("GID %u SID %u in rule duplicates previous rule, with "
             "different protocol.",
             otn_new->sigInfo.generator, otn_new->sigInfo.id);
         return 0;
@@ -1076,7 +1076,7 @@ static int mergeDuplicateOtn(
 
     if ((rtn_cur != NULL) && (rtn_cur->type != rtn_new->type))
     {
-        ParseError("GID %d SID %d in rule duplicates previous rule, with "
+        ParseError("GID %u SID %u in rule duplicates previous rule, with "
             "different type.",
             otn_new->sigInfo.generator, otn_new->sigInfo.id);
         return 0;
@@ -1089,7 +1089,7 @@ static int mergeDuplicateOtn(
         deleteRtnFromOtn(otn_new);
 
         ParseWarning(WARN_RULES,
-            "%d:%d duplicates previous rule. Using revision %d.",
+            "%u:%u duplicates previous rule. Using revision %u.",
             otn_cur->sigInfo.generator, otn_cur->sigInfo.id, otn_cur->sigInfo.rev);
 
         /* Now free the OTN itself -- this function is also used
@@ -1128,14 +1128,14 @@ static int mergeDuplicateOtn(
         if (SnortConfig::conf_error_out())
         {
             ParseError(
-                "%d:%d:%d duplicates previous rule.",
+                "%u:%u:%u duplicates previous rule.",
                 otn_new->sigInfo.generator, otn_new->sigInfo.id, otn_new->sigInfo.rev);
             return 0;
         }
         else
         {
             ParseWarning(WARN_RULES,
-                "%d:%d duplicates previous rule. Using revision %d.",
+                "%u:%u duplicates previous rule. Using revision %u.",
                 otn_new->sigInfo.generator, otn_new->sigInfo.id, otn_new->sigInfo.rev);
         }
     }
@@ -1512,7 +1512,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
             ParseError("gid must set in builtin rules");
 
         if ( otn->num_detection_opts )
-            ParseError("%d:%d builtin rules do not support detection options",
+            ParseError("%u:%u builtin rules do not support detection options",
                 otn->sigInfo.generator, otn->sigInfo.id);
 
         otn->sigInfo.text_rule = false;

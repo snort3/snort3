@@ -156,7 +156,7 @@ const ip::IP6Frag* get_inner_ip6_frag(const Packet* const pkt)
                 return reinterpret_cast<const ip::IP6Frag*>(lyr->start);
 
             // Only check until current ip6h header
-            if (lyr->start == (const uint8_t* const)ip6h)
+            if (lyr->start == (const uint8_t*)ip6h)
                 return nullptr;
 
             lyr--;

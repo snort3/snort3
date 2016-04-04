@@ -83,7 +83,7 @@ void AuthCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    const AuthHdr* const ah = reinterpret_cast<const AuthHdr* const>(raw.data);
+    const AuthHdr* const ah = reinterpret_cast<const AuthHdr*>(raw.data);
 
     if (raw.len < MIN_AUTH_LEN)
     {

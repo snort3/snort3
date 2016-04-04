@@ -224,7 +224,7 @@ static int GetRecord(FILE* input, u2record* rec)
     items_read = fread(rec->data, sizeof(uint8_t), rec->length, input);
     if (items_read != rec->length)
     {
-        fprintf(stderr, "Error: incomplete record. %d of %u bytes read.\n",
+        fprintf(stderr, "Error: incomplete record. %u of %u bytes read.\n",
             items_read, rec->length);
         return FAILURE;
     }

@@ -42,11 +42,11 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
-const static uint16_t PPP_IP = 0x0021;       /* Internet Protocol */
-const static uint16_t PPP_IPV6 = 0x0057;        /* Internet Protocol v6 */
-const static uint16_t PPP_VJ_COMP = 0x002d;        /* VJ compressed TCP/IP */
-const static uint16_t PPP_VJ_UCOMP = 0x002f;        /* VJ uncompressed TCP/IP */
-const static uint16_t PPP_IPX = 0x002b;        /* Novell IPX Protocol */
+static const uint16_t PPP_IP = 0x0021;       /* Internet Protocol */
+static const uint16_t PPP_IPV6 = 0x0057;        /* Internet Protocol v6 */
+static const uint16_t PPP_VJ_COMP = 0x002d;        /* VJ compressed TCP/IP */
+static const uint16_t PPP_VJ_UCOMP = 0x002f;        /* VJ uncompressed TCP/IP */
+static const uint16_t PPP_IPX = 0x002b;        /* Novell IPX Protocol */
 } // namespace
 
 void PppEncap::get_protocol_ids(std::vector<uint16_t>& v)

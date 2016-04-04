@@ -658,7 +658,7 @@ static void _sub_table_print(dir_sub_table_t* sub, uint32_t level, dir_table_t* 
     for (index=0; index < sub->num_entries; index++)
     {
         if (sub->lengths[index] || sub->entries[index])
-            printf("%sIndex: %d, Length: %d, dataIndex: %d\n", label, index, sub->lengths[index],
+            printf("%sIndex: %d, Length: %d, dataIndex: %u\n", label, index, sub->lengths[index],
                 (uint32_t)sub->entries[index]);
 
         if ( !sub->lengths[index] && sub->entries[index] )

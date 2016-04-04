@@ -352,7 +352,7 @@ void PortObject2PrintPorts(PortObject2* po)
     }
 
     SnortSnprintfAppend(po_print_buf, bufsize,
-        " Id:%d  Ports:%d Rules:%d\n {\n Ports [",
+        " Id:%d  Ports:%u Rules:%u\n {\n Ports [",
         po->id, po->item_list->count, po->rule_hash->count);
 
     if ( PortObjectHasAny( (PortObject*)po) )
@@ -390,7 +390,7 @@ void PortObject2PrintEx(PortObject2* po,
     if ( po->name )
         SnortSnprintfAppend(po_print_buf, bufsize, "%s ",po->name);
 
-    SnortSnprintfAppend(po_print_buf, bufsize, " Id:%d  Ports:%d Rules:%d PortUsageCnt=%d\n {\n",
+    SnortSnprintfAppend(po_print_buf, bufsize, " Id:%d  Ports:%u Rules:%u PortUsageCnt=%d\n {\n",
         po->id, po->item_list->count, po->rule_hash->count, po->port_cnt);
 
     SnortSnprintfAppend(po_print_buf, bufsize, "  Ports [\n  ");

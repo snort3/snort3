@@ -98,7 +98,7 @@ NORETURN static void c2x(const char* s)
 
 NORETURN static void x2c(unsigned x)
 {
-    printf("0x%2.2X (%d) = '%c'\n", x, x, x);
+    printf("0x%2.2X (%u) = '%c'\n", x, x, static_cast<char>(x));
     exit(0);
 }
 

@@ -105,7 +105,7 @@ static inline int pgm_nak_detect(const RawData& raw)
     }
 
     const PgmHeader* const header =
-        reinterpret_cast<const PgmHeader* const>(raw.data);
+        reinterpret_cast<const PgmHeader*>(raw.data);
 
     if (8 != header->type)
         return PGM_NAK_ERR;

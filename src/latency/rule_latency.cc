@@ -279,14 +279,14 @@ inline void Impl<Clock, RuleTree>::handle(const Event& e)
 // static variables
 // -----------------------------------------------------------------------------
 
-static struct SnortConfigWrapper : ConfigWrapper
+static struct SnortConfigWrapper : public ConfigWrapper
 {
     const RuleLatencyConfig* operator->() const override
     { return &snort_conf->latency->rule_latency; }
 
 } config;
 
-static struct SnortEventHandler : EventHandler
+static struct SnortEventHandler : public EventHandler
 {
     void handle(const Event& e) override
     {
@@ -306,7 +306,7 @@ static struct SnortEventHandler : EventHandler
     }
 } event_handler;
 
-static struct SnortLogHandler : EventHandler
+static struct SnortLogHandler : public EventHandler
 {
     void handle(const Event& e) override
     {

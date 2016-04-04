@@ -192,9 +192,9 @@ int ipset_print(IPSET* ipc)
                 pr != 0;
                 pr=(PORTRANGE*)sflist_next(&cur_port) )
             {
-                printf("  %d", pr->port_lo);
+                printf("  %u", pr->port_lo);
                 if ( pr->port_hi != pr->port_lo )
-                    printf("-%d", pr->port_hi);
+                    printf("-%u", pr->port_hi);
             }
             printf("\n");
         }

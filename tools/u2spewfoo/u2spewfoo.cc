@@ -319,7 +319,7 @@ static void event_dump(u2record* record)
         "\tsensor id: %u\tevent id: %u\tevent second: %u\tevent microsecond: %u\n"
         "\tsig id: %u\tgen id: %u\trevision: %u\t classification: %u\n"
         "\tpriority: %u\tip source: %u.%u.%u.%u\tip destination: %u.%u.%u.%u\n"
-        "\tsrc port: %u\tdest port: %u\tprotocol: %u\timpact_flag: %u\tblocked: %u\n",
+        "\tsrc port: %hu\tdest port: %hu\tprotocol: %hhu\timpact_flag: %hhu\tblocked: %hhu\n",
         event.sensor_id, event.event_id,
         event.event_second, event.event_microsecond,
         event.signature_id, event.generator_id,
@@ -370,7 +370,7 @@ static void event6_dump(u2record* record)
 
     inet_ntop(AF_INET6, &event.ip_destination, ip6buf, INET6_ADDRSTRLEN);
     printf("ip destination: %s\n"
-        "\tsrc port: %u\tdest port: %u\tprotocol: %u\timpact_flag: %u\tblocked: %u\n",
+        "\tsrc port: %hu\tdest port: %hu\tprotocol: %hhu\timpact_flag: %hhu\tblocked: %hhu\n",
         ip6buf, event.sport_itype,
         event.dport_icode, event.protocol,
         event.impact_flag, event.blocked);
@@ -412,8 +412,8 @@ static void event2_dump(u2record* record)
         "\tsensor id: %u\tevent id: %u\tevent second: %u\tevent microsecond: %u\n"
         "\tsig id: %u\tgen id: %u\trevision: %u\t classification: %u\n"
         "\tpriority: %u\tip source: %u.%u.%u.%u\tip destination: %u.%u.%u.%u\n"
-        "\tsrc port: %u\tdest port: %u\tprotocol: %u\timpact_flag: %u\tblocked: %u\n"
-        "\tmpls label: %u\tvland id: %u\tpolicy id: %u\n",
+        "\tsrc port: %hu\tdest port: %hu\tprotocol: %hhu\timpact_flag: %hhu\tblocked: %hhu\n"
+        "\tmpls label: %u\tvland id: %hu\tpolicy id: %hu\n",
         event.sensor_id, event.event_id,
         event.event_second, event.event_microsecond,
         event.signature_id, event.generator_id,
@@ -473,8 +473,8 @@ static void event2_6_dump(u2record* record)
 
     inet_ntop(AF_INET6, &event.ip_destination, ip6buf, INET6_ADDRSTRLEN);
     printf("ip destination: %s\n"
-        "\tsrc port: %u\tdest port: %u\tprotocol: %u\timpact_flag: %u\tblocked: %u\n"
-        "\tmpls label: %u\tvland id: %u\tpolicy id: %u\n",
+        "\tsrc port: %hu\tdest port: %hu\tprotocol: %hhu\timpact_flag: %hhu\tblocked: %hhu\n"
+        "\tmpls label: %u\tvland id: %hu\tpolicy id: %hu\n",
         ip6buf, event.sport_itype,
         event.dport_icode, event.protocol,
         event.impact_flag, event.blocked,

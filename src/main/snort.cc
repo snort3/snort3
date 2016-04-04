@@ -212,7 +212,7 @@ static void show_source(const char* pcap)
         fprintf(stdout, "%s", "\n");
 
     fprintf(stdout,
-        "Reading network traffic from \"%s\" with snaplen = %d\n",
+        "Reading network traffic from \"%s\" with snaplen = %u\n",
         pcap, DAQ_GetSnapLen());
 }
 

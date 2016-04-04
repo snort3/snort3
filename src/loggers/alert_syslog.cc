@@ -230,7 +230,7 @@ static void AlertSyslog(
             if (event->sig_info->priority != 0)
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string),
-                    "[Priority: %d] ", event->sig_info->priority);
+                    "[Priority: %u] ", event->sig_info->priority);
             }
         }
 

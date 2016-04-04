@@ -243,10 +243,6 @@ static int IsHttpServerData(HI_SESSION* session, Packet* p, HttpSessionData* sd)
             return HI_SUCCESS;
         }
     }
-    else
-    {
-        return HI_SUCCESS;
-    }
 
     return HI_SUCCESS;
 }

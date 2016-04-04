@@ -214,7 +214,7 @@ int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF* ClientConf)
             if (((FTPBounce->ip.family == AF_INET) && (bits != 32)) ||
                 ((FTPBounce->ip.family == AF_INET6) && (bits != 128)))
             {
-                snprintf(bits_str, sizeof(bits_str), "/%u", bits);
+                snprintf(bits_str, sizeof(bits_str), "/%hhu", bits);
             }
             if (FTPBounce->porthi)
             {
@@ -265,7 +265,7 @@ int PrintFTPServerConf(FTP_SERVER_PROTO_CONF* ServerConf)
         while (FTPCmd != NULL)
         {
             memset(buf, 0, BUF_SIZE+1);
-            snprintf(buf, BUF_SIZE, "        %s { %d ",
+            snprintf(buf, BUF_SIZE, "        %s { %u ",
                 FTPCmd->cmd_name, FTPCmd->max_param_len);
 #ifdef PRINT_DEFAULT_CONFIGS
             if (FTPCmd->data_chan_cmd)

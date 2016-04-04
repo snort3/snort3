@@ -164,7 +164,7 @@ static void trace(const char* s, const char* fqn, Value& v)
     if ( v.get_type() == Value::VT_STR )
         printf("%s: %s = '%s'\n", s, fqn, v.get_string());
     else
-        printf("%s: %s = %lu\n", s, fqn, v.get_long());
+        printf("%s: %s = %ld\n", s, fqn, v.get_long());
 }
 
 static ModHook* get_hook(const char* s)
@@ -669,8 +669,8 @@ SO_PUBLIC bool open_table(const char* s, int idx)
 
     if ( strcmp(m->get_name(), s) )
     {
-        std::string fqn = s;
-        p = get_params(fqn, m->get_parameters(), idx);
+        std::string sfqn = s;
+        p = get_params(sfqn, m->get_parameters(), idx);
 
         if ( !p )
         {
@@ -912,9 +912,9 @@ void ModuleManager::show_module(const char* name)
 
         cout << endl << "Type: "  << mod_type(p->api) << endl;
 
-        if ( const Parameter* p = m->get_parameters() )
+        if ( const Parameter* params = m->get_parameters() )
         {
-            if ( p->type < Parameter::PT_MAX )
+            if ( params->type < Parameter::PT_MAX )
             {
                 cout << endl << "Configuration: " << endl << endl;
                 show_configs(name, true);
