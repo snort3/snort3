@@ -1,6 +1,8 @@
 add_library ( perf_monitor STATIC
     base_tracker.cc
     base_tracker.h
+    csv_formatter.cc
+    csv_formatter.h
     cpu_tracker.cc
     cpu_tracker.h
     event_tracker.cc

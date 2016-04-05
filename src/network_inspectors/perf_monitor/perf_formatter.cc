@@ -69,5 +69,3 @@ void PerfFormatter::clear()
         for(unsigned j = 0; j < types[i].size(); j++)
             types[i][j] = FT_UNSET;
 }
-
-
