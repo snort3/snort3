@@ -368,25 +368,6 @@ int PortObjectNormalize(PortObject* po)
 }
 
 /*
-*    Negate an entire PortObject
-*/
-int PortObjectNegate(PortObject* po)
-{
-    if ( PortObjectHasAny (po) )
-        return 0;  /* ANY =65K */
-
-    PortBitSet parray;
-    int nports = PortObjectBits(parray, po);
-
-    parray = ~parray;
-
-    sflist_free_all(po->item_list, free);
-    po->item_list = PortObjectItemListFromBits(parray, SFPO_MAX_PORTS);
-
-    return nports;
-}
-
-/*
    PortObjects should be normalized, prior to testing
 */
 int PortObjectEqual(PortObject* a, PortObject* b)
@@ -498,24 +479,6 @@ int PortObjectHasPort(PortObject* po, int port)
     return 0;
 }
 
-int PortObjectHasNot(PortObject* po)
-{
-    PortObjectItem* poi;
-    SF_LNODE* cursor;
-
-    if ( !po )
-        return 0;
-
-    for (poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
-        poi != 0;
-        poi=(PortObjectItem*)sflist_next(&cursor) )
-    {
-        if ( poi->negate )
-            return 1;
-    }
-    return 0;
-}
-
 void PortObjectToggle(PortObject* po)
 {
     PortObjectItem* poi;
@@ -575,34 +538,6 @@ int PortObjectHasAny(PortObject* po)
 }
 
 /*
- * This returns true if the object is an ANY port
- */
-int PortObjectIncludesPort(PortObject* po, int port)
-{
-    PortObjectItem* poi;
-    SF_LNODE* cursor;
-
-    if ( !po )
-        return 0;
-
-    for (poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
-        poi != 0;
-        poi=(PortObjectItem*)sflist_next(&cursor) )
-    {
-        if ( poi->any() )
-            return 1;
-
-        if ( (uint16_t)port >= poi->lport &&
-            (uint16_t)port <= poi->hport )
-            return 1;
-
-        if ( poi->negate )
-            return 1;
-    }
-    return 0;
-}
-
-/*
  *  Removes Ports in B from A ... A = A - B
  */
 int PortObjectRemovePorts(PortObject* a,  PortObject* b)
@@ -645,42 +580,6 @@ PortObject* PortObjectAppend(PortObject* poa, PortObject* pob)
 
         sflist_add_tail(poa->item_list,poia);
     }
-    return poa;
-}
-
-/* Dup and append rule list numbers from pob to poa */
-PortObject* PortObjectAppendPortObject(PortObject* poa, PortObject* pob)
-{
-    int* prid;
-    int* prid2;
-    SF_LNODE* lpos;
-
-    for ( prid = (int*)sflist_first(pob->rule_list,&lpos);
-        prid!= 0;
-        prid = (int*)sflist_next(&lpos) )
-    {
-        prid2 = (int*)calloc(1, sizeof(int));
-        if ( !prid2 )
-            return 0;
-        *prid2 = *prid;
-        sflist_add_tail(poa->rule_list,prid2);
-    }
-    return poa;
-}
-
-/*
- *  Append Ports and Rules from pob to poa
- */
-PortObject* PortObjectAppendEx(PortObject* poa, PortObject* pob)
-{
-    // LogMessage("PortObjectAppendEx: appending ports\n");
-    if ( !PortObjectAppend(poa, pob) )
-        return 0;
-
-    //LogMessage("PortObjectAppendEx: appending rules\n");
-    if ( !PortObjectAppendPortObject(poa, pob) )
-        return 0;
-
     return poa;
 }
 

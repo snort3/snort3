@@ -56,9 +56,6 @@ void fpDeleteFastPacketDetection(SnortConfig*);
 
 void fpShowEventStats(SnortConfig*);
 
-typedef int (* OtnWalkFcn)(int, struct RuleTreeNode*, struct OptTreeNode*);
-void fpWalkOtns(int, OtnWalkFcn);
-
 void fpDeletePortGroup(void*);
 
 bool set_fp_content(struct OptTreeNode*);
