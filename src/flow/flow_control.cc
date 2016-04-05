@@ -298,15 +298,15 @@ void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
 
 void FlowControl::preemptive_cleanup(const Packet* p)
 {
-    if ( !memory::MemoryCap::over_threshold() )
-        return;
-
     DebugFormat(DEBUG_FLOW, "doing preemptive cleanup for packet of type %d",
             static_cast<int>(p->type()));
 
-    // FIXIT-H J we want to associate this prune with an appropriate prune reason
-    // FIXIT-L J do we want to accumulate preemptive prune counts?
-    prune_flows(p->type(), p);
+    // FIXIT-L J is there a possibility of this looping forever?
+    while ( memory::MemoryCap::over_threshold() )
+    {
+        if ( !prune_one(PruneReason::PREEMPTIVE, true) )
+            break;
+    }
 }
 
 //-------------------------------------------------------------------------
