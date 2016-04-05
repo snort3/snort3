@@ -1370,52 +1370,6 @@ static int fpCreatePortGroups(
 }
 
 /*
- *  Scan the master otn lists and and pass
- *
- *
- *  enabled - if true requires otn to be enabled
- *  fcn - callback
- *  proto - IP,TCP,IDP,ICMP protocol flag
- *  otn   - OptTreeNode
- */
-void fpWalkOtns(int enabled, OtnWalkFcn fcn)
-{
-    RuleTreeNode* rtn;
-    SFGHASH_NODE* hashNode;
-    OptTreeNode* otn  = NULL;
-    PolicyId policyId = 0;
-
-    if (snort_conf == NULL)
-        return;
-
-    for (hashNode = sfghash_findfirst(snort_conf->otn_map);
-        hashNode;
-        hashNode = sfghash_findnext(snort_conf->otn_map))
-    {
-        otn = (OptTreeNode*)hashNode->data;
-        for ( policyId = 0;
-            policyId < otn->proto_node_num;
-            policyId++ )
-        {
-            rtn = getRtnFromOtn(otn);
-
-            /* There can be gaps in the list of rtns. */
-            if (rtn == NULL)
-                continue;
-
-            if ( is_network_protocol(rtn->proto) )
-            {
-                // do operation
-                if ( enabled && !otn->enabled )
-                    continue;
-
-                fcn(rtn->proto, rtn, otn);
-            }
-        }
-    }
-}
-
-/*
 * Build a Port Group for this service based on the list of otns. The final
 * port_group pointer is stored using the service name as the key.
 *

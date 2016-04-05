@@ -53,6 +53,7 @@ extern THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
 */
 int fpEvalPacket(Packet* p);
 
+struct RuleTreeNode;
 int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p);
 int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports);
 

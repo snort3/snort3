@@ -63,21 +63,16 @@ PortObject* PortObjectDup(PortObject*);
 PortObject* PortObjectDupPorts(PortObject*);
 
 int PortObjectNormalize(PortObject*);
-int PortObjectNegate(PortObject*);
 void PortObjectToggle(PortObject*);
 int PortObjectEqual(PortObject* poa, PortObject* bob);
 
 int PortObjectPortCount(PortObject*);
 int PortObjectHasPort(PortObject*, int port);
-int PortObjectHasNot(PortObject*);
 int PortObjectIsPureNot(PortObject*);
 int PortObjectHasAny(PortObject*);
-int PortObjectIncludesPort(PortObject*, int port);
 
 int PortObjectRemovePorts(PortObject* a,  PortObject* b);
 PortObject* PortObjectAppend(PortObject* poa, PortObject* pob);
-PortObject* PortObjectAppendPortObject(PortObject* poa, PortObject* pob);
-PortObject* PortObjectAppendEx(PortObject* poa, PortObject* pob);
 
 void PortObjectPrint(PortObject*);
 void PortObjectPrintPortsRaw(PortObject*);
