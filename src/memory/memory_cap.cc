@@ -89,6 +89,9 @@ inline bool free_space(size_t requested, size_t cap, Tracker& trk, Handler& hand
     return last_used <= required;
 }
 
+inline size_t calculate_threshold(size_t cap, size_t threshold)
+{ return cap * threshold / 100; }
+
 } // namespace
 
 // -----------------------------------------------------------------------------
