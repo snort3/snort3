@@ -25,8 +25,8 @@
 #include <string.h>
 #include <string>
 
-#include <hs/hs_compile.h>
-#include <hs/hs_runtime.h>
+#include <hs_compile.h>
+#include <hs_runtime.h>
 
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
