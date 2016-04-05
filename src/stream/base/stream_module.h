@@ -41,6 +41,8 @@ struct SnortConfig;
     PegCount proto ## _timeout_prunes; \
     PegCount proto ## _excess_prunes; \
     PegCount proto ## _uni_prunes; \
+    PegCount proto ## _preemptive_prunes; \
+    PegCount proto ## _memcap_prunes; \
     PegCount proto ## _user_prunes
 
 struct BaseStats

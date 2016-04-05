@@ -25,7 +25,7 @@
 
 #include "main/snort_types.h"
 #include "stream/stream_api.h"
-#include "normalize/norm.h"
+#include "network_inspectors/normalize/norm.h"
 #include "flow/session.h"
 
 #define STREAM_DEFAULT_SSN_TIMEOUT  30        /* seconds to timeout a session */

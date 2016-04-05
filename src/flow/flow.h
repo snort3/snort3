@@ -143,7 +143,7 @@ public:
     void init(PktType);
     void term();
 
-    void reset();
+    void reset(bool do_cleanup = true);
     void restart(bool freeAppData = true);
     void clear(bool freeAppData = true);
 

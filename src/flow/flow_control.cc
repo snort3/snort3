@@ -26,6 +26,7 @@
 
 #include "detection/detect.h"
 #include "managers/inspector_manager.h"
+#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
@@ -245,7 +246,7 @@ void FlowControl::purge_flows (PktType proto)
         cache->purge();
 }
 
-void FlowControl::prune_flows(PktType proto, Packet* p)
+void FlowControl::prune_flows(PktType proto, const Packet* p)
 {
     if ( !p )
         return;
@@ -256,18 +257,18 @@ void FlowControl::prune_flows(PktType proto, Packet* p)
         return;
 
     // smack the older timed out flows
-    if (!cache->prune_stale(p->pkth->ts.tv_sec, (Flow*)p->flow))
+    if ( !cache->prune_stale(p->pkth->ts.tv_sec, p->flow) )
     {
         // if no luck, try the memcap
-        cache->prune_excess((Flow*)p->flow);
+        cache->prune_excess(p->flow);
     }
 }
 
 // hole for memory manager/prune handler
-bool FlowControl::prune_one(PruneReason reason)
+bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
 {
     auto cache = get_cache(last_pkt_type);
-    return cache ? cache->prune_one(reason) : false;
+    return cache ? cache->prune_one(reason, do_cleanup) : false;
 }
 
 void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
@@ -293,6 +294,19 @@ void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
         file_cache->timeout(flowCount, cur_time);
 
     Active::resume();
+}
+
+void FlowControl::preemptive_cleanup(const Packet* p)
+{
+    DebugFormat(DEBUG_FLOW, "doing preemptive cleanup for packet of type %d",
+            static_cast<int>(p->type()));
+
+    // FIXIT-L J is there a possibility of this looping forever?
+    while ( memory::MemoryCap::over_threshold() )
+    {
+        if ( !prune_one(PruneReason::PREEMPTIVE, true) )
+            break;
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -450,6 +464,10 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     p->flow = flow;
     p->disable_inspect = flow->is_inspection_disabled();
 
+    last_pkt_type = p->type();
+
+    preemptive_cleanup(p);
+
     if ( flow->flow_state )
         set_policies(snort_conf, flow->policy_id);
 
@@ -467,6 +485,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
         ++news;
     }
+
     flow->set_direction(p);
 
     switch ( flow->flow_state )

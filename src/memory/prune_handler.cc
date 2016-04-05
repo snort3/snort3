@@ -31,7 +31,7 @@ void prune_handler()
 {
     // assert(flow_con);
     if ( flow_con )
-        flow_con->prune_one(PruneReason::USER);
+        flow_con->prune_one(PruneReason::MEMCAP, false);
 }
 
 } // namespace memory

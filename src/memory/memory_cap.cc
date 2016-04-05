@@ -33,6 +33,7 @@
 #include "profiler/memory_profiler_active_context.h"
 
 #include "memory_config.h"
+#include "memory_module.h"
 #include "prune_handler.h"
 
 #ifdef UNIT_TEST
@@ -49,6 +50,12 @@ struct Tracker
 {
     size_t allocated = 0;
     size_t deallocated = 0;
+
+    void allocate(size_t n)
+    { allocated += n; }
+
+    void deallocate(size_t n)
+    { deallocated += n; }
 
     size_t used() const
     {
@@ -68,26 +75,41 @@ THREAD_LOCAL Tracker s_tracker;
 template<typename Tracker, typename Handler>
 inline bool free_space(size_t requested, size_t cap, Tracker& trk, Handler& handler)
 {
-    assert(requested <= cap);
-    const auto required = cap - requested;
+    if ( requested > cap )
+    {
+        DebugFormat(
+            DEBUG_MEMORY,
+            "Requested memory (%zu bytes) > cap (%zu bytes)\n",
+            requested, cap);
 
-    auto last_used = trk.used();
-    while ( last_used > required )
+        return false;
+    }
+
+    auto used = trk.used();
+
+    if ( used + requested <= cap )
+        return true;
+
+    while ( used + requested > cap )
     {
         handler();
 
-        auto cur_used = trk.used();
-        if ( cur_used >= last_used )
+        // check if the handler freed any space
+        auto tmp = trk.used();
+        if ( tmp >= used )
         {
-            // handler failed to free any space, or worse, used more space
+            // nope
             return false;
         }
 
-        last_used = cur_used;
+        used = tmp;
     }
 
-    return last_used <= required;
+    return true;
 }
+
+inline size_t calculate_threshold(size_t cap, size_t threshold)
+{ return cap * threshold / 100; }
 
 } // namespace
 
@@ -96,6 +118,7 @@ inline bool free_space(size_t requested, size_t cap, Tracker& trk, Handler& hand
 // -----------------------------------------------------------------------------
 
 size_t MemoryCap::thread_cap = 0;
+size_t MemoryCap::preemptive_threshold = 0;
 
 // -----------------------------------------------------------------------------
 // public interface
@@ -115,14 +138,22 @@ bool MemoryCap::free_space(size_t n)
 
 void MemoryCap::update_allocations(size_t n)
 {
-    s_tracker.allocated += n;
+    s_tracker.allocate(n);
     mp_active_context.update_allocs(n);
 }
 
 void MemoryCap::update_deallocations(size_t n)
 {
-    s_tracker.deallocated += n;
+    s_tracker.deallocate(n);
     mp_active_context.update_deallocs(n);
+}
+
+bool MemoryCap::over_threshold()
+{
+    if ( !preemptive_threshold )
+        return false;
+
+    return s_tracker.used() >= preemptive_threshold;
 }
 
 void MemoryCap::calculate(unsigned num_threads)
@@ -141,7 +172,14 @@ void MemoryCap::calculate(unsigned num_threads)
     if ( !thread_cap )
         FatalError("per-thread memory cap is 0");
 
-    DebugFormat(DEBUG_MEMORY, "per-thread memory cap set to %zu", thread_cap);
+    DebugFormat(DEBUG_MEMORY, "per-thread memory cap set to %zu\n", thread_cap);
+
+    if ( config.threshold )
+    {
+        preemptive_threshold = memory::calculate_threshold(thread_cap, config.threshold);
+        DebugFormat(DEBUG_MEMORY,
+            "per-thread pre-emptive action threshold set to %zu\n", preemptive_threshold);
+    }
 }
 
 } // namespace memory

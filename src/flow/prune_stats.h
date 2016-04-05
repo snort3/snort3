@@ -34,6 +34,8 @@ enum class PruneReason : uint8_t
     TIMEOUT,
     EXCESS,
     UNI,
+    PREEMPTIVE,
+    MEMCAP,
     USER,
     MAX
 };

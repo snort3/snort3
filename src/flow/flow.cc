@@ -85,10 +85,16 @@ void Flow::term()
         delete bitop;
 }
 
-void Flow::reset()
+void Flow::reset(bool do_cleanup)
 {
     if ( session )
-        session->cleanup();
+    {
+        if ( do_cleanup )
+            session->cleanup();
+
+        else
+            session->clear();
+    }
 
     free_application_data();
 

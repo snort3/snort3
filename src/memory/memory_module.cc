@@ -39,6 +39,10 @@ static const Parameter s_params[] =
     { "soft", Parameter::PT_BOOL, nullptr, "false",
         "always succeed in allocating memory, even if above the cap" },
 
+    { "threshold", Parameter::PT_INT, "0:", "0",
+        "set the per-packet-thread threshold for preemptive cleanup actions "
+        "(percent, 0 to disable)" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -57,6 +61,9 @@ bool MemoryModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("soft") )
         sc->memory->soft = v.get_bool();
+
+    else if ( v.is("threshold") )
+        sc->memory->threshold = v.get_long();
 
     else
         return false;
