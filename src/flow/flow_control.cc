@@ -464,6 +464,8 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     p->flow = flow;
     p->disable_inspect = flow->is_inspection_disabled();
 
+    last_pkt_type = p->type();
+
     preemptive_cleanup(p);
 
     if ( flow->flow_state )

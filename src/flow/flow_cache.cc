@@ -272,6 +272,7 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
 
 bool FlowCache::prune_one(PruneReason reason, bool do_cleanup)
 {
+
     // so we don't prune the current flow (assume current == MRU)
     if ( hash_table->get_count() <= 1 )
         return false;
@@ -281,6 +282,15 @@ bool FlowCache::prune_one(PruneReason reason, bool do_cleanup)
 
     flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
     release(flow, reason, do_cleanup);
+
+#ifdef DEBUG_MSGS
+    const char* s =
+        (reason == PruneReason::MEMCAP) ? "memcap" :
+        (reason == PruneReason::PREEMPTIVE) ? "preemptive" :
+        "other";
+
+    DebugFormat(DEBUG_MEMORY, "prune one for reason %s\n", s);
+#endif
 
     return true;
 }
