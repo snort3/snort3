@@ -28,7 +28,11 @@ Rule::Rule() :  num_hdr_data(0),
 {
 }
 
-Rule::~Rule() { }
+Rule::~Rule()
+{
+    for (RuleOption* ro : options)
+        delete ro;
+}
 
 bool Rule::add_hdr_data(std::string data)
 {

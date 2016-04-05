@@ -59,6 +59,9 @@ Table::~Table()
     for ( Option* o : options)
         delete o;
 
+    for ( Variable* l: lists )
+        delete l;
+
     for ( Option* a : append_options)
         delete a;
 
