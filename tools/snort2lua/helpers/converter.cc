@@ -22,6 +22,8 @@
 #include "helpers/converter.h"
 #include "conversion_state.h"
 #include "data/data_types/dt_comment.h"
+#include "data/data_types/dt_rule.h"
+#include "data/data_types/dt_table.h"
 #include "helpers/s2l_util.h"
 #include "init_state.h"
 
@@ -132,6 +134,12 @@ int Converter::parse_include_file(std::string input_file)
         if (include_rules)
             rule_api.include_rule_file(input_file + ".rules");
     }
+
+    for (auto r : rules)
+        delete r;
+
+    for (auto t : tables)
+        delete t;
 
     return rc;
 }

@@ -32,6 +32,8 @@ RuleOption::RuleOption(std::string n, std::string v)
 
 RuleOption::~RuleOption()
 {
+    for (auto rso : sub_options)
+        delete rso;
 }
 
 bool RuleOption::add_suboption(std::string subopt_name)
