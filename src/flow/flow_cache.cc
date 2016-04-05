@@ -280,7 +280,7 @@ bool FlowCache::prune_one(PruneReason reason, bool do_cleanup)
     assert(flow);
 
     flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
-    release(flow, reason, false);
+    release(flow, reason, do_cleanup);
 
     return true;
 }
