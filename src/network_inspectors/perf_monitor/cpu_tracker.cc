@@ -31,11 +31,6 @@
 #include "catch/catch.hpp"
 #endif
 
-// FIXIT-H RUSAGE_THREAD is not available on os x
-#ifndef RUSAGE_THREAD
-#define RUSAGE_THREAD RUSAGE_SELF
-#endif
-
 static const std::string csv_header =
     "#timestamp,user,system,idle\n";
 
@@ -50,7 +45,20 @@ CPUTracker::CPUTracker(PerfConfig *perf) :
 
 void CPUTracker::get_clocks(struct rusage& usage, struct timeval& wall_time)
 {
+#ifdef __APPLE__
+    mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
+    thread_basic_info_t thi;
+    thread_basic_info_data_t thi_data;
+
+    thi = &thi_data;
+    thread_info(mach_thread_self(), THREAD_BASIC_INFO, (thread_info_t)thi, &count);
+    usage.rt_utime.tv_sec = thi->user_time.seconds;
+    usage.rt_utime.tv_usec = thi->user_time.microseconds;
+    usage.rt_stime.tv_sec = thi->system_time.seconds;
+    usage.rt_stime.tv_usec = thi->system_time.microseconds;
+#else
     getrusage(RUSAGE_THREAD, &usage);
+#endif
     gettimeofday(&wall_time, nullptr);
 }
 
@@ -158,15 +166,11 @@ TEST_CASE("Timeval to scalar", "[cpu_tracker]")
 
 TEST_CASE("csv", "[cpu_tracker]")
 {
-#if 0
-    char* fake_file;
-    size_t size;
     const char* cooked =
     "#timestamp,user,system,idle\n"
     "1234567890,23.0769,38.4615,38.4615\n";
 
-    // FIXIT-H open_memstream() is not available on os x
-    FILE *f = open_memstream(&fake_file, &size);
+    FILE* f = tmpfile();
 
     PerfConfig config;
     config.format = PERF_CSV;
@@ -181,17 +185,20 @@ TEST_CASE("csv", "[cpu_tracker]")
     tracker.wall.tv_usec = 5000000;
     tracker.process(false);
 
+    long int size = ftell(f);
+    char* fake_file = (char*) malloc(size + 1);
+    rewind(f);
+    fread(fake_file, size, 1, f);
+    fake_file[size] = '\0';
+
     CHECK(!strcmp(cooked, fake_file));
 
+    free(fake_file);
     //tracker destructor closes fh if not null
-#endif
 }
 
 TEST_CASE("text", "[cpu_tracker]")
 {
-#if 0
-    char* fake_file;
-    size_t size;
     const char* cooked =
     "--------------------------------------------------\n"
     "cpu usage\n"
@@ -199,8 +206,7 @@ TEST_CASE("text", "[cpu_tracker]")
     "                   System: 38.4615\n"
     "                     Idle: 38.4615\n";
 
-    // FIXIT-H open_memstream() is not available on os x
-    FILE *f = open_memstream(&fake_file, &size);
+    FILE* f = tmpfile();
 
     PerfConfig config;
     config.format = PERF_TEXT;
@@ -215,9 +221,15 @@ TEST_CASE("text", "[cpu_tracker]")
     tracker.wall.tv_usec = 5000000;
     tracker.process(false);
 
-    CHECK(!strcmp(cooked, fake_file));
+    long int size = ftell(f);
+    char* fake_file = (char*) malloc(size + 1);
+    rewind(f);
+    fread(fake_file, size, 1, f);
+    fake_file[size] = '\0';
 
+    CHECK(!strcmp(cooked, fake_file));
+    
+    free(fake_file);
     //tracker destructor closes fh if not null
-#endif
 }
 #endif
