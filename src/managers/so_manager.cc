@@ -141,11 +141,10 @@ static const char* expand(const uint8_t* data, unsigned len)
     int ret = inflate(&stream, Z_FINISH);
     (void)inflateEnd(&stream);
 
-    // FIXIT-L full decompression still gets Z_BUF_ERROR ...
-    if ( ret != Z_STREAM_END and ret != Z_BUF_ERROR )
+    if ( ret != Z_STREAM_END )
         return nullptr;
 
-    // ... so we add this as a sanity check
+    // sanity check
     if ( stream.avail_in or !stream.avail_out )
         return nullptr;
 
@@ -188,7 +187,7 @@ static const char* revert(const uint8_t* data, unsigned len)
     uint8_t key = data[--len];
     string s((char*)data, len);
 
-    for ( unsigned i = 0; i < len-1; i++ )
+    for ( unsigned i = 0; i < len; i++ )
         s[i] ^= key;
 
     return expand((uint8_t*)s.c_str(), s.size());

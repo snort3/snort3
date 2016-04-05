@@ -643,6 +643,10 @@ static void parse_body(const char* extra, RuleParseState& rps, struct SnortConfi
         ++tokens;
         const State* s = get_state(num, type, tok);
 
+#ifdef TRACER
+        printf("%d: %s = '%s' -> %s\n",
+            num, toks[type], tok.c_str(), acts[s->action]);
+#endif
         exec(s->action, tok, rps, sc);
 
         num = s->next;
