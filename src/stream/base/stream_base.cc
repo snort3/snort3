@@ -49,6 +49,8 @@ THREAD_LOCAL BaseStats stream_base_stats;
     { proto_str " timeout prunes", proto_str " sessions pruned due to timeout" }, \
     { proto_str " excess prunes", proto_str " sessions pruned due to excess" }, \
     { proto_str " uni prunes", proto_str " uni sessions pruned" }, \
+    { proto_str " preemptive prunes", proto_str " sessions pruned during preemptive pruning" }, \
+    { proto_str " memcap prunes", proto_str " sessions pruned due to memcap" }, \
     { proto_str " user prunes", proto_str " sessions pruned for other reasons" }
 
 #define SET_PROTO_COUNTS(proto, pkttype) \
@@ -60,6 +62,10 @@ THREAD_LOCAL BaseStats stream_base_stats;
         flow_con->get_prunes(PktType::pkttype, PruneReason::EXCESS), \
     stream_base_stats.proto ## _uni_prunes = \
         flow_con->get_prunes(PktType::pkttype, PruneReason::UNI), \
+    stream_base_stats.proto ## _preemptive_prunes = \
+        flow_con->get_prunes(PktType::pkttype, PruneReason::PREEMPTIVE), \
+    stream_base_stats.proto ## _memcap_prunes = \
+        flow_con->get_prunes(PktType::pkttype, PruneReason::MEMCAP), \
     stream_base_stats.proto ## _user_prunes = \
         flow_con->get_prunes(PktType::pkttype, PruneReason::USER)
 
