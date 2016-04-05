@@ -25,6 +25,11 @@
 
 #include <sys/resource.h>
 
+#ifdef __APPLE__
+#include <mach/mach_host.h>
+#include <mach/thread_act.h>
+#endif
+
 #define CPU_FILE (PERF_NAME "_cpu.csv")
 
 #ifdef UNIT_TEST
@@ -43,7 +48,8 @@ static inline uint64_t get_microseconds(struct timeval t)
 CPUTracker::CPUTracker(PerfConfig *perf) :
     PerfTracker(perf, perf->output == PERF_FILE ? CPU_FILE : nullptr){}
 
-void CPUTracker::get_clocks(struct rusage& usage, struct timeval& wall_time)
+void CPUTracker::get_clocks(struct timeval& user_time,
+    struct timeval& sys_time, struct timeval& wall_time)
 {
 #ifdef __APPLE__
     mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
@@ -52,26 +58,28 @@ void CPUTracker::get_clocks(struct rusage& usage, struct timeval& wall_time)
 
     thi = &thi_data;
     thread_info(mach_thread_self(), THREAD_BASIC_INFO, (thread_info_t)thi, &count);
-    usage.rt_utime.tv_sec = thi->user_time.seconds;
-    usage.rt_utime.tv_usec = thi->user_time.microseconds;
-    usage.rt_stime.tv_sec = thi->system_time.seconds;
-    usage.rt_stime.tv_usec = thi->system_time.microseconds;
+    user_time.tv_sec = thi->user_time.seconds;
+    user_time.tv_usec = thi->user_time.microseconds;
+    sys_time.tv_sec = thi->system_time.seconds;
+    sys_time.tv_usec = thi->system_time.microseconds;
 #else
+    struct rusage usage;
     getrusage(RUSAGE_THREAD, &usage);
+    user_time = usage.ru_utime;
+    sys_time = usage.ru_stime;
 #endif
     gettimeofday(&wall_time, nullptr);
 }
 
 void CPUTracker::get_times(uint64_t& user, uint64_t& system, uint64_t& wall)
 {
-    struct rusage usage;
-    struct timeval wall_time;
+    struct timeval user_tv, sys_tv, wall_tv;
 
-    get_clocks(usage, wall_time);
+    get_clocks(user_tv, sys_tv, wall_tv);
     
-    user = get_microseconds(usage.ru_utime);
-    system = get_microseconds(usage.ru_stime);
-    wall = get_microseconds(wall_time);
+    user = get_microseconds(user_tv);
+    system = get_microseconds(sys_tv);
+    wall = get_microseconds(wall_tv);
 }
 
 void CPUTracker::reset()
@@ -90,18 +98,18 @@ void CPUTracker::process(bool)
 
     get_times(user, system, wall);
 
-    idle = wall - user - system;
-    user -= last_ut;
-    system -= last_st;
-    wall -= last_wt;
+    auto delt_user = user - last_ut;
+    auto delt_system = system - last_st;
+    auto delt_wall = wall - last_wt;
+    auto delt_idle = delt_wall - delt_system - delt_user;
 
     last_ut = user;
     last_st = system;
     last_wt = wall;
 
-    double d_user = (double) user / wall * 100;
-    double d_system = (double) system / wall * 100;
-    double d_idle = (double) idle / wall * 100;
+    double d_user = (double) delt_user / delt_wall * 100;
+    double d_system = (double) delt_system / delt_wall * 100;
+    double d_idle = (double) delt_idle / delt_wall * 100;
     if ( config->format == PERF_TEXT )
     {
         LogLabel("cpu usage", fh);
@@ -112,7 +120,7 @@ void CPUTracker::process(bool)
     else if ( config->format == PERF_CSV )
     {
         fprintf(fh, CSVu64 "%g,%g,%g\n",
-            cur_time, d_user, d_system, d_idle);
+            (uint64_t)cur_time, d_user, d_system, d_idle);
     }
     fflush(fh);
 }
@@ -122,22 +130,24 @@ void CPUTracker::process(bool)
 class TestCPUTracker : public CPUTracker
 {
 public:
-    struct rusage usage;
-    struct timeval wall;
+    struct timeval user, sys, wall;
 
     TestCPUTracker(PerfConfig* perf, FILE* fh): CPUTracker(perf)
     {
         this->fh = fh;       
         cur_time = 1234567890;
-        memset(&usage, 0, sizeof(usage));
+        memset(&user, 0, sizeof(wall));
+        memset(&sys, 0, sizeof(wall));
         memset(&wall, 0, sizeof(wall));
     }
 
 protected:
-    void get_clocks(struct rusage& usage, struct timeval& wall) override
+    void get_clocks(struct timeval& user_time,
+        struct timeval& sys_time, struct timeval& wall_time)
     {
-        usage = this->usage;
-        wall = this->wall;
+        user_time = user;
+        sys_time = sys;
+        wall_time = wall;
     }
 
 };
@@ -168,6 +178,8 @@ TEST_CASE("csv", "[cpu_tracker]")
 {
     const char* cooked =
     "#timestamp,user,system,idle\n"
+    "1234567890,23.0769,38.4615,38.4615\n"
+    "1234567890,0,0,100\n"
     "1234567890,23.0769,38.4615,38.4615\n";
 
     FILE* f = tmpfile();
@@ -177,11 +189,21 @@ TEST_CASE("csv", "[cpu_tracker]")
     TestCPUTracker tracker(&config, f);
 
     tracker.reset();
-    tracker.usage.ru_utime.tv_sec = 2;
-    tracker.usage.ru_utime.tv_usec = 1000000;
-    tracker.usage.ru_stime.tv_sec = 3;
-    tracker.usage.ru_stime.tv_usec = 2000000;
+    tracker.user.tv_sec = 2;
+    tracker.user.tv_usec = 1000000;
+    tracker.sys.tv_sec = 3;
+    tracker.sys.tv_usec = 2000000;
     tracker.wall.tv_sec = 8;
+    tracker.wall.tv_usec = 5000000;
+    tracker.process(false);
+    tracker.wall.tv_sec = 9;
+    tracker.wall.tv_usec = 0;
+    tracker.process(false);
+    tracker.user.tv_sec = 4;
+    tracker.user.tv_usec = 2000000;
+    tracker.sys.tv_sec = 6;
+    tracker.sys.tv_usec = 4000000;
+    tracker.wall.tv_sec = 17;
     tracker.wall.tv_usec = 5000000;
     tracker.process(false);
 
@@ -213,10 +235,10 @@ TEST_CASE("text", "[cpu_tracker]")
     TestCPUTracker tracker(&config, f);
 
     tracker.reset();
-    tracker.usage.ru_utime.tv_sec = 2;
-    tracker.usage.ru_utime.tv_usec = 1000000;
-    tracker.usage.ru_stime.tv_sec = 3;
-    tracker.usage.ru_stime.tv_usec = 2000000;
+    tracker.user.tv_sec = 2;
+    tracker.user.tv_usec = 1000000;
+    tracker.sys.tv_sec = 3;
+    tracker.sys.tv_usec = 2000000;
     tracker.wall.tv_sec = 8;
     tracker.wall.tv_usec = 5000000;
     tracker.process(false);

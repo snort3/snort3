@@ -34,7 +34,8 @@ public:
     void process(bool) override;
 
 protected:
-    virtual void get_clocks(struct rusage&, struct timeval&);
+    virtual void get_clocks(struct timeval& user_time,
+        struct timeval& sys_time, struct timeval& wall_time);
 
 private:
     //19 bits for microseconds
