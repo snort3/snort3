@@ -53,7 +53,7 @@
 #endif
 
 #ifdef HAVE_HYPERSCAN
-#include <hs/hs_compile.h>
+#include <hs_compile.h>
 #endif
 
 #include <sys/types.h>

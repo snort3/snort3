@@ -986,12 +986,21 @@ fi
 # hyperscan (optional)
 #--------------------------------------------------------------------------
 
+AC_MSG_CHECKING([for hyperscan pkg-config presence])
+PKG_CHECK_EXISTS([libhs], [ have_hyperscan_pkgconfig="yes" ], [ have_hyperscan_pkgconfig="no" ])
+AC_MSG_RESULT(${have_hyperscan_pkgconfig})
+
+if test "${have_hyperscan_pkgconfig}" = "yes" ; then
+    HYPERSCAN_CFLAGS=`${PKG_CONFIG} --cflags libhs`
+    HYPERSCAN_LDFLAGS=`${PKG_CONFIG} --libs-only-L libhs`
+fi
+
 AC_ARG_WITH(hyperscan_includes,
     AC_HELP_STRING([--with-hyperscan-includes=DIR],[libhs include directory]),
     [with_hyperscan_includes="$withval"],[with_hyperscan_includes="no"])
 
 if test "x$with_hyperscan_includes" != "xno"; then
-    CPPFLAGS="${CPPFLAGS} -I${with_hyperscan_includes}"
+    HYPERSCAN_CFLAGS="-I${with_hyperscan_includes}"
 fi
 
 AC_ARG_WITH(hyperscan_libraries,
@@ -999,10 +1008,13 @@ AC_ARG_WITH(hyperscan_libraries,
     [with_hyperscan_libraries="$withval"],[with_hyperscan_libraries="no"])
 
 if test "x$with_hyperscan_libraries" != "xno"; then
-    LDFLAGS="${LDFLAGS} -L${with_hyperscan_libraries}"
+    HYPERSCAN_LDFLAGS="-L${with_hyperscan_libraries}"
 fi
 
-AC_CHECK_HEADERS(hs/hs.h, HS_HEADERS="yes", HS_HEADERS="no")
+CPPFLAGS="${CPPFLAGS} ${HYPERSCAN_CFLAGS}"
+LDFLAGS="${LDFLAGS} ${HYPERSCAN_LDFLAGS}"
+
+AC_CHECK_HEADERS(hs.h, HS_HEADERS="yes", HS_HEADERS="no")
 AC_CHECK_LIB(hs, hs_scan, HS_LIB="yes", HS_LIB="no")
 
 if test "x$HS_LIB" != "xno"; then

@@ -1,49 +1,15 @@
 
-# neither of these work ... :(
-#pkg_check_modules(HS QUIET libhs)
-#pkg_search_module(HS QUIET libhs)
-# (and they shouldn't muck with PKG_CONFIG_PATH)
-# so here we are ...
+find_package(PkgConfig)
+pkg_check_modules(PC_HYPERSCAN libhs)
 
-execute_process(
-    COMMAND pkg-config --cflags-only-I libhs
-    RESULT_VARIABLE result
-    OUTPUT_VARIABLE include_hints
-    ERROR_QUIET
-)
-
-if (result)
-    set(include_hints " ")
-else ()
-    # remove -I
-    string(STRIP ${include_hints} include_hints)
-    string(SUBSTRING ${include_hints} 2 -1 include_hints)
-
-    # remote trailing /hs
-    string(REGEX REPLACE "/hs$" "" include_hints ${include_hints})
-endif()
-
-execute_process(
-    COMMAND pkg-config --libs-only-L libhs
-    RESULT_VARIABLE result
-    OUTPUT_VARIABLE lib_hints
-    ERROR_QUIET
-)
-
-if (result)
-    set(lib_hints " ")
-else ()
-    # remove -L
-    string(STRIP ${lib_hints} lib_hints)
-    string(SUBSTRING ${lib_hints} 2 -1 lib_hints)
-endif()
-
-find_path (HS_INCLUDE_DIRS NAMES hs/hs_compile.h HINTS ${include_hints})
-
-find_library(HS_LIBRARIES NAMES hs HINTS ${lib_hints})
+# Use HS_INCLUDE_DIR and HS_LIBRARY_DIR from configure_cmake.sh as primary hints
+# and then package config information after that.
+find_path(HS_INCLUDE_DIRS hs_compile.h
+    HINTS ${HS_INCLUDE_DIR} ${PC_HYPERSCAN_INCLUDEDIR} ${PC_HYPERSCAN_INCLUDE_DIRS})
+find_library(HS_LIBRARIES NAMES hs
+    HINTS ${HS_LIBRARIES_DIR} ${PC_HYPERSCAN_LIBDIR} ${PC_HYPERSCAN_LIBRARY_DIRS})
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(HS REQUIRED_VARS HS_INCLUDE_DIRS HS_LIBRARIES)
+find_package_handle_standard_args(hs DEFAULT_MSG HS_LIBRARIES HS_INCLUDE_DIRS)
 
 mark_as_advanced(HS_INCLUDE_DIRS HS_LIBRARIES)
-

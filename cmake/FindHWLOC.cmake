@@ -9,15 +9,12 @@ if (NOT PC_HWLOC_FOUND)
     )
 endif()
 
-find_path(HWLOC_INCLUDE_DIR hwloc.h
+find_path(HWLOC_INCLUDE_DIRS hwloc.h
     HINTS ${PC_HWLOC_INCLUDEDIR} ${PC_HWLOC_INCLUDE_DIRS})
-find_library(HWLOC_LIBRARY NAMES hwloc
+find_library(HWLOC_LIBRARIES NAMES hwloc
     HINTS ${PC_HWLOC_LIBDIR} ${PC_HWLOC_LIBRARY_DIRS})
-
-set(HWLOC_LIBRARIES ${HWLOC_LIBRARY})
-set(HWLOC_INCLUDE_DIRS ${HWLOC_INCLUDE_DIR})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(hwloc DEFAULT_MSG HWLOC_LIBRARIES HWLOC_INCLUDE_DIRS)
 
-mark_as_advanced(HWLOC_INCLUDE_DIR HWLOC_LIBRARY)
+mark_as_advanced(HWLOC_INCLUDE_DIRS HWLOC_LIBRARIES)

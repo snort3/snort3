@@ -27,8 +27,8 @@
 #include <string>
 #include <vector>
 
-#include <hs/hs_compile.h>
-#include <hs/hs_runtime.h>
+#include <hs_compile.h>
+#include <hs_runtime.h>
 
 #include "framework/mpse.h"
 #include "log/messages.h"

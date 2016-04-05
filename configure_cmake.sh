@@ -53,19 +53,21 @@ Optional Packages:
     --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
     --with-sysroot=DIR Search for dependent libraries within DIR
                           (or the compiler's sysroot if not specified).
-    --with-pcap-includes=DIR    libpcap include directory
-    --with-pcap-libraries=DIR   libpcap library directory
-    --with-luajit-includes=DIR    luajit include directory
-    --with-luajit-libraries=DIR   luajit library directory
-    --with-pcre-includes=DIR    libpcre include directory
-    --with-pcre-libraries=DIR   libpcre library directory
-    --with-openssl-includes=DIR    openssl include directory
-    --with-openssl-library=LIB   openssl library library - NOT THE DIRECTORY
-    --with-crypto-library=LIB   openssl crypto library - NOT THE DIRECTORY
-    --with-dnet-includes=DIR       libdnet include directory
-    --with-dnet-libraries=DIR      libdnet library directory
-    --with-daq-includes=DIR        DAQ include directory
-    --with-daq-libraries=DIR       DAQ library directory
+    --with-pcap-includes=DIR        libpcap include directory
+    --with-pcap-libraries=DIR       libpcap library directory
+    --with-luajit-includes=DIR      luajit include directory
+    --with-luajit-libraries=DIR     luajit library directory
+    --with-pcre-includes=DIR        libpcre include directory
+    --with-pcre-libraries=DIR       libpcre library directory
+    --with-openssl-includes=DIR     openssl include directory
+    --with-openssl-library=LIB      openssl library library - NOT THE DIRECTORY
+    --with-crypto-library=LIB       openssl crypto library - NOT THE DIRECTORY
+    --with-dnet-includes=DIR        libdnet include directory
+    --with-dnet-libraries=DIR       libdnet library directory
+    --with-daq-includes=DIR         DAQ include directory
+    --with-daq-libraries=DIR        DAQ library directory
+    --with-hyperscan-includes=DIR   libhs include directory
+    --with-hyperscan-libraries=DIR  libhs library directory
 
 Some influential environment variables:
     SIGNAL_SNORT_RELOAD=<value>
@@ -310,6 +312,12 @@ while [ $# -ne 0 ]; do
 #        --with-intel-soft-cpm-libraries=*)
 #            append_cache_entry INTEL_SOFT_CPM_LIBRARIES_DIR PATH $optarg
 #            ;;
+        --with-hyperscan-includes=*)
+            append_cache_entry HS_INCLUDE_DIR PATH $optarg
+            ;;
+        --with-hyperscan-libraries=*)
+            append_cache_entry HS_LIBRARIES_DIR PATH $optarg
+            ;;
         --with-flex=*)
             append_cache_entry FLEX_EXECUTABLE PATH $optarg
             ;;
