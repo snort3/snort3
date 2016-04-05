@@ -33,7 +33,11 @@ Variable::Variable(std::string name)
     this->depth = 0;
 }
 
-Variable::~Variable() { }
+Variable::~Variable()
+{
+    for (VarData* v : vars)
+        delete v;
+}
 
 std::string Variable::get_value(DataApi* ld)
 {
