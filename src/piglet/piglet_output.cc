@@ -97,7 +97,7 @@ const struct Output unit_test_output =
     {
         printf(
             "%s:%c:piglet:(%s::%s):%d: %s\n",
-            t.chunk.filename.c_str(), get_result_short(t.result),
+            t.chunk->filename.c_str(), get_result_short(t.result),
             t.type.c_str(), t.name.c_str(), i, get_result_long(t.result)
         );
     }
@@ -139,7 +139,7 @@ const struct Output pretty_output =
     {
         printf(
             "%d) \x1b[34m%s::%s\x1b[0m: %s\n",
-            i, t.type.c_str(), t.name.c_str(), t.chunk.filename.c_str()
+            i, t.type.c_str(), t.name.c_str(), t.chunk->filename.c_str()
         );
     },
     [](const Test& t, unsigned) -> void
@@ -197,7 +197,7 @@ const struct Output verbose_output =
     {
         printf(
             "[%u] - %s::%s - %s\n",
-            i, t.type.c_str(), t.name.c_str(), t.chunk.filename.c_str()
+            i, t.type.c_str(), t.name.c_str(), t.chunk->filename.c_str()
         );
     },
 
