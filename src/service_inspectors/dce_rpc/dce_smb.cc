@@ -25,6 +25,7 @@
 #include "main/snort_debug.h"
 #include "file_api/file_service.h"
 #include "utils/util.h"
+#include "detection/detect.h"
 
 THREAD_LOCAL int dce2_smb_inspector_instances = 0;
 
@@ -51,6 +52,1014 @@ THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_file_detect;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_file_api;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_fingerprint;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_negotiate;
+
+/********************************************************************
+ * Enums
+ ********************************************************************/
+enum DCE2_SmbComError
+{
+    // No errors associated with the command
+    DCE2_SMB_COM_ERROR__COMMAND_OK          = 0x0000,
+
+    // An error was reported in the SMB response header
+    DCE2_SMB_COM_ERROR__STATUS_ERROR        = 0x0001,
+
+    // An invalid word count makes it unlikely any data accessed will be correct
+    // and if accessed the possibility of accessing out of bounds data
+    DCE2_SMB_COM_ERROR__INVALID_WORD_COUNT  = 0x0002,
+
+    // An invalid byte count just means the byte count is not right for
+    // the command processed.  The command can still be processed but
+    // the byte count should not be used.  In general, the byte count
+    // should not be used since Windows and Samba often times ignore it
+    DCE2_SMB_COM_ERROR__INVALID_BYTE_COUNT  = 0x0004,
+
+    // Not enough data to process command so don't try to access any
+    // of the command's header or data.
+    DCE2_SMB_COM_ERROR__BAD_LENGTH          = 0x0008
+};
+
+/********************************************************************
+ * Structures
+ ********************************************************************/
+struct DCE2_SmbComInfo
+{
+    int smb_type;   // SMB_TYPE__REQUEST or SMB_TYPE__RESPONSE
+    int cmd_error;  // mask of DCE2_SmbComError
+    uint8_t smb_com;
+    uint8_t word_count;
+    uint16_t byte_count;
+    uint16_t cmd_size;
+};
+
+/********************************************************************
+ * Global variables
+ ********************************************************************/
+typedef DCE2_Ret (* DCE2_SmbComFunc)(DCE2_SmbSsnData*, const SmbNtHdr*,
+    const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
+
+DCE2_SmbComFunc smb_com_funcs[SMB_MAX_NUM_COMS];
+uint8_t smb_wcts[SMB_MAX_NUM_COMS][2][32];
+uint16_t smb_bccs[SMB_MAX_NUM_COMS][2][2];
+DCE2_SmbComFunc smb_chain_funcs[DCE2_POLICY__MAX][SMB_ANDX_COM__MAX][SMB_MAX_NUM_COMS];
+bool smb_deprecated_coms[SMB_MAX_NUM_COMS];
+bool smb_unusual_coms[SMB_MAX_NUM_COMS];
+SmbAndXCom smb_chain_map[SMB_MAX_NUM_COMS];
+
+const char* smb_com_strings[SMB_MAX_NUM_COMS] =
+{
+    "Create Directory",            // 0x00
+    "Delete Directory",            // 0x01
+    "Open",                        // 0x02
+    "Create",                      // 0x03
+    "Close",                       // 0x04
+    "Flush",                       // 0x05
+    "Delete",                      // 0x06
+    "Rename",                      // 0x07
+    "Query Information",           // 0x08
+    "Set Information",             // 0x09
+    "Read",                        // 0x0A
+    "Write",                       // 0x0B
+    "Lock Byte Range",             // 0x0C
+    "Unlock Byte Range",           // 0x0D
+    "Create Temporary",            // 0x0E
+    "Create New",                  // 0x0F
+    "Check Directory",             // 0x10
+    "Process Exit",                // 0x11
+    "Seek",                        // 0x12
+    "Lock And Read",               // 0x13
+    "Write And Unlock",            // 0x14
+    "Unknown",                     // 0X15
+    "Unknown",                     // 0X16
+    "Unknown",                     // 0X17
+    "Unknown",                     // 0X18
+    "Unknown",                     // 0X19
+    "Read Raw",                    // 0x1A
+    "Read Mpx",                    // 0x1B
+    "Read Mpx Secondary",          // 0x1C
+    "Write Raw",                   // 0x1D
+    "Write Mpx",                   // 0x1E
+    "Write Mpx Secondary",         // 0x1F
+    "Write Complete",              // 0x20
+    "Query Server",                // 0x21
+    "Set Information2",            // 0x22
+    "Query Information2",          // 0x23
+    "Locking AndX",                // 0x24
+    "Transaction",                 // 0x25
+    "Transaction Secondary",       // 0x26
+    "Ioctl",                       // 0x27
+    "Ioctl Secondary",             // 0x28
+    "Copy",                        // 0x29
+    "Move",                        // 0x2A
+    "Echo",                        // 0x2B
+    "Write And Close",             // 0x2C
+    "Open AndX",                   // 0x2D
+    "Read AndX",                   // 0x2E
+    "Write AndX",                  // 0x2F
+    "New File Size",               // 0x30
+    "Close And Tree Disc",         // 0x31
+    "Transaction2",                // 0x32
+    "Transaction2 Secondary",      // 0x33
+    "Find Close2",                 // 0x34
+    "Find Notify Close",           // 0x35
+    "Unknown",                     // 0X36
+    "Unknown",                     // 0X37
+    "Unknown",                     // 0X38
+    "Unknown",                     // 0X39
+    "Unknown",                     // 0X3A
+    "Unknown",                     // 0X3B
+    "Unknown",                     // 0X3C
+    "Unknown",                     // 0X3D
+    "Unknown",                     // 0X3E
+    "Unknown",                     // 0X3F
+    "Unknown",                     // 0X40
+    "Unknown",                     // 0X41
+    "Unknown",                     // 0X42
+    "Unknown",                     // 0X43
+    "Unknown",                     // 0X44
+    "Unknown",                     // 0X45
+    "Unknown",                     // 0X46
+    "Unknown",                     // 0X47
+    "Unknown",                     // 0X48
+    "Unknown",                     // 0X49
+    "Unknown",                     // 0X4A
+    "Unknown",                     // 0X4B
+    "Unknown",                     // 0X4C
+    "Unknown",                     // 0X4D
+    "Unknown",                     // 0X4E
+    "Unknown",                     // 0X4F
+    "Unknown",                     // 0X50
+    "Unknown",                     // 0X51
+    "Unknown",                     // 0X52
+    "Unknown",                     // 0X53
+    "Unknown",                     // 0X54
+    "Unknown",                     // 0X55
+    "Unknown",                     // 0X56
+    "Unknown",                     // 0X57
+    "Unknown",                     // 0X58
+    "Unknown",                     // 0X59
+    "Unknown",                     // 0X5A
+    "Unknown",                     // 0X5B
+    "Unknown",                     // 0X5C
+    "Unknown",                     // 0X5D
+    "Unknown",                     // 0X5E
+    "Unknown",                     // 0X5F
+    "Unknown",                     // 0X60
+    "Unknown",                     // 0X61
+    "Unknown",                     // 0X62
+    "Unknown",                     // 0X63
+    "Unknown",                     // 0X64
+    "Unknown",                     // 0X65
+    "Unknown",                     // 0X66
+    "Unknown",                     // 0X67
+    "Unknown",                     // 0X68
+    "Unknown",                     // 0X69
+    "Unknown",                     // 0X6A
+    "Unknown",                     // 0X6B
+    "Unknown",                     // 0X6C
+    "Unknown",                     // 0X6D
+    "Unknown",                     // 0X6E
+    "Unknown",                     // 0X6F
+    "Tree Connect",                // 0x70
+    "Tree Disconnect",             // 0x71
+    "Negotiate",                   // 0x72
+    "Session Setup AndX",          // 0x73
+    "Logoff AndX",                 // 0x74
+    "Tree Connect AndX",           // 0x75
+    "Unknown",                     // 0X76
+    "Unknown",                     // 0X77
+    "Unknown",                     // 0X78
+    "Unknown",                     // 0X79
+    "Unknown",                     // 0X7A
+    "Unknown",                     // 0X7B
+    "Unknown",                     // 0X7C
+    "Unknown",                     // 0X7D
+    "Security Package AndX",       // 0x7E
+    "Unknown",                     // 0X7F
+    "Query Information Disk",      // 0x80
+    "Search",                      // 0x81
+    "Find",                        // 0x82
+    "Find Unique",                 // 0x83
+    "Find Close",                  // 0x84
+    "Unknown",                     // 0X85
+    "Unknown",                     // 0X86
+    "Unknown",                     // 0X87
+    "Unknown",                     // 0X88
+    "Unknown",                     // 0X89
+    "Unknown",                     // 0X8A
+    "Unknown",                     // 0X8B
+    "Unknown",                     // 0X8C
+    "Unknown",                     // 0X8D
+    "Unknown",                     // 0X8E
+    "Unknown",                     // 0X8F
+    "Unknown",                     // 0X90
+    "Unknown",                     // 0X91
+    "Unknown",                     // 0X92
+    "Unknown",                     // 0X93
+    "Unknown",                     // 0X94
+    "Unknown",                     // 0X95
+    "Unknown",                     // 0X96
+    "Unknown",                     // 0X97
+    "Unknown",                     // 0X98
+    "Unknown",                     // 0X99
+    "Unknown",                     // 0X9A
+    "Unknown",                     // 0X9B
+    "Unknown",                     // 0X9C
+    "Unknown",                     // 0X9D
+    "Unknown",                     // 0X9E
+    "Unknown",                     // 0X9F
+    "Nt Transact",                 // 0xA0
+    "Nt Transact Secondary",       // 0xA1
+    "Nt Create AndX",              // 0xA2
+    "Unknown",                     // 0XA3
+    "Nt Cancel",                   // 0xA4
+    "Nt Rename",                   // 0xA5
+    "Unknown",                     // 0XA6
+    "Unknown",                     // 0XA7
+    "Unknown",                     // 0XA8
+    "Unknown",                     // 0XA9
+    "Unknown",                     // 0XAA
+    "Unknown",                     // 0XAB
+    "Unknown",                     // 0XAC
+    "Unknown",                     // 0XAD
+    "Unknown",                     // 0XAE
+    "Unknown",                     // 0XAF
+    "Unknown",                     // 0XB0
+    "Unknown",                     // 0XB1
+    "Unknown",                     // 0XB2
+    "Unknown",                     // 0XB3
+    "Unknown",                     // 0XB4
+    "Unknown",                     // 0XB5
+    "Unknown",                     // 0XB6
+    "Unknown",                     // 0XB7
+    "Unknown",                     // 0XB8
+    "Unknown",                     // 0XB9
+    "Unknown",                     // 0XBA
+    "Unknown",                     // 0XBB
+    "Unknown",                     // 0XBC
+    "Unknown",                     // 0XBD
+    "Unknown",                     // 0XBE
+    "Unknown",                     // 0XBF
+    "Open Print File",             // 0xC0
+    "Write Print File",            // 0xC1
+    "Close Print File",            // 0xC2
+    "Get Print Queue",             // 0xC3
+    "Unknown",                     // 0XC4
+    "Unknown",                     // 0XC5
+    "Unknown",                     // 0XC6
+    "Unknown",                     // 0XC7
+    "Unknown",                     // 0XC8
+    "Unknown",                     // 0XC9
+    "Unknown",                     // 0XCA
+    "Unknown",                     // 0XCB
+    "Unknown",                     // 0XCC
+    "Unknown",                     // 0XCD
+    "Unknown",                     // 0XCE
+    "Unknown",                     // 0XCF
+    "Unknown",                     // 0XD0
+    "Unknown",                     // 0XD1
+    "Unknown",                     // 0XD2
+    "Unknown",                     // 0XD3
+    "Unknown",                     // 0XD4
+    "Unknown",                     // 0XD5
+    "Unknown",                     // 0XD6
+    "Unknown",                     // 0XD7
+    "Read Bulk",                   // 0xD8
+    "Write Bulk",                  // 0xD9
+    "Write Bulk Data",             // 0xDA
+    "Unknown",                     // 0XDB
+    "Unknown",                     // 0XDC
+    "Unknown",                     // 0XDD
+    "Unknown",                     // 0XDE
+    "Unknown",                     // 0XDF
+    "Unknown",                     // 0XE0
+    "Unknown",                     // 0XE1
+    "Unknown",                     // 0XE2
+    "Unknown",                     // 0XE3
+    "Unknown",                     // 0XE4
+    "Unknown",                     // 0XE5
+    "Unknown",                     // 0XE6
+    "Unknown",                     // 0XE7
+    "Unknown",                     // 0XE8
+    "Unknown",                     // 0XE9
+    "Unknown",                     // 0XEA
+    "Unknown",                     // 0XEB
+    "Unknown",                     // 0XEC
+    "Unknown",                     // 0XED
+    "Unknown",                     // 0XEE
+    "Unknown",                     // 0XEF
+    "Unknown",                     // 0XF0
+    "Unknown",                     // 0XF1
+    "Unknown",                     // 0XF2
+    "Unknown",                     // 0XF3
+    "Unknown",                     // 0XF4
+    "Unknown",                     // 0XF5
+    "Unknown",                     // 0XF6
+    "Unknown",                     // 0XF7
+    "Unknown",                     // 0XF8
+    "Unknown",                     // 0XF9
+    "Unknown",                     // 0XFA
+    "Unknown",                     // 0XFB
+    "Unknown",                     // 0XFC
+    "Unknown",                     // 0XFD
+    "Invalid",                     // 0xFE
+    "No AndX Command"              // 0xFF
+};
+
+/********************************************************************
+ * Private function prototypes
+ ********************************************************************/
+static inline int DCE2_SmbType(DCE2_SmbSsnData*);
+static inline bool DCE2_SmbIsRawData(DCE2_SmbSsnData*);
+static inline uint32_t* DCE2_SmbGetIgnorePtr(DCE2_SmbSsnData*);
+static inline DCE2_SmbDataState* DCE2_SmbGetDataState(DCE2_SmbSsnData*);
+static inline void DCE2_SmbSetValidWordCount(uint8_t, uint8_t, uint8_t);
+static inline bool DCE2_SmbIsValidWordCount(uint8_t, uint8_t, uint8_t);
+static inline void DCE2_SmbSetValidByteCount(uint8_t, uint8_t, uint16_t, uint16_t);
+static inline bool DCE2_SmbIsValidByteCount(uint8_t, uint8_t, uint16_t);
+static DCE2_Ret DCE2_SmbHdrChecks(DCE2_SmbSsnData*, const SmbNtHdr*);
+static uint32_t DCE2_IgnoreJunkData(const uint8_t*, uint16_t, uint32_t);
+static void DCE2_SmbCheckCommand(DCE2_SmbSsnData*,
+    const SmbNtHdr*, const uint8_t, const uint8_t*, uint32_t, DCE2_SmbComInfo*);
+static void DCE2_SmbProcessCommand(DCE2_SmbSsnData*, const SmbNtHdr*, const uint8_t*, uint32_t);
+static bool DCE2_SmbAutodetect(Packet* p);
+
+/********************************************************************
+ * Function: DCE2_SmbType()
+ *
+ * Purpose:
+ *  Since Windows and Samba don't seem to care or even look at the
+ *  actual flag in the SMB header, make the determination based on
+ *  whether from client or server.
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData * - session data structure that has the raw
+ *     packet and packet flags to make determination
+ *
+ * Returns:
+ *  SMB_TYPE__REQUEST if packet is from client
+ *  SMB_TYPE__RESPONSE if packet is from server
+ *
+ ********************************************************************/
+static inline int DCE2_SmbType(DCE2_SmbSsnData* ssd)
+{
+    if (DCE2_SsnFromClient(ssd->sd.wire_pkt))
+        return SMB_TYPE__REQUEST;
+    else
+        return SMB_TYPE__RESPONSE;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbIsRawData()
+ *
+ * Purpose:
+ *  To determine if the current state is such that a raw read or
+ *  write is expected.
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData * - Pointer to SMB session data.
+ *
+ * Returns:
+ *  bool -  True if expecting raw data.
+ *          False if not.
+ *
+ ********************************************************************/
+static inline bool DCE2_SmbIsRawData(DCE2_SmbSsnData* ssd)
+{
+    return (ssd->pdu_state == DCE2_SMB_PDU_STATE__RAW_DATA);
+}
+
+/********************************************************************
+ * Function: DCE2_SmbGetIgnorePtr()
+ *
+ * Returns a pointer to the bytes we are ignoring on client or
+ * server side.  Bytes are ignored if they are associated with
+ * data we are not interested in.
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData * - Pointer to SMB session data.
+ *
+ * Returns:
+ *  uint32_t *
+ *      Pointer to the client or server ignore bytes.
+ *
+ ********************************************************************/
+static inline uint32_t* DCE2_SmbGetIgnorePtr(DCE2_SmbSsnData* ssd)
+{
+    if (DCE2_SsnFromServer(ssd->sd.wire_pkt))
+        return &ssd->srv_ignore_bytes;
+    return &ssd->cli_ignore_bytes;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbGetDataState()
+ *
+ * Returns a pointer to the data state of client or server
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData * - Pointer to SMB session data.
+ *
+ * Returns:
+ *  DCE2_SmbDataState *
+ *      Pointer to the client or server data state.
+ *
+ ********************************************************************/
+static inline DCE2_SmbDataState* DCE2_SmbGetDataState(DCE2_SmbSsnData* ssd)
+{
+    if (DCE2_SsnFromServer(ssd->sd.wire_pkt))
+        return &ssd->srv_data_state;
+    return &ssd->cli_data_state;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbSetValidWordCount()
+ *
+ * Purpose:
+ *  Initializes global data for valid word counts for supported
+ *  SMB command requests and responses.
+ *
+ * Arguments:
+ *  uint8_t - the SMB command code
+ *  uint8_t - SMB_TYPE__REQUEST or SMB_TYPE__RESPONSE
+ *  uint8_t - the valid word count
+ *
+ * Returns: None
+ *
+ ********************************************************************/
+static inline void DCE2_SmbSetValidWordCount(uint8_t com,
+    uint8_t resp, uint8_t wct)
+{
+    smb_wcts[com][resp][wct/8] |= (1 << (wct % 8));
+}
+
+/********************************************************************
+ * Function: DCE2_SmbIsValidWordCount()
+ *
+ * Purpose:
+ *  Checks if a word count is valid for a given command request
+ *  or response.
+ *
+ * Arguments:
+ *  uint8_t - the SMB command code
+ *  uint8_t - SMB_TYPE__REQUEST or SMB_TYPE__RESPONSE
+ *  uint8_t - the word count to validate
+ *
+ * Returns:
+ *  bool - true if valid, false if not valid.
+ *
+ ********************************************************************/
+static inline bool DCE2_SmbIsValidWordCount(uint8_t com,
+    uint8_t resp, uint8_t wct)
+{
+    return (smb_wcts[com][resp][wct/8] & (1 << (wct % 8))) ? true : false;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbSetValidByteCount()
+ *
+ * Purpose:
+ *  Initializes global data for valid byte counts as a range for
+ *  supported SMB command requests and responses.
+ *  Since a byte count is 2 bytes, a 4 byte type is used to store
+ *  the range.  The maximum is in the most significant 2 bytes and
+ *  the minimum in the least significant 2 bytes.
+ *
+ * Arguments:
+ *  uint8_t - the SMB command code
+ *  uint8_t - SMB_TYPE__REQUEST or SMB_TYPE__RESPONSE
+ *  uint8_t - the minimum word count that is valid
+ *  uint8_t - the maximum word count that is valid
+ *
+ * Returns: None
+ *
+ ********************************************************************/
+static inline void DCE2_SmbSetValidByteCount(uint8_t com,
+    uint8_t resp, uint16_t min, uint16_t max)
+{
+    smb_bccs[com][resp][0] = min;
+    smb_bccs[com][resp][1] = max;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbIsValidByteCount()
+ *
+ * Purpose:
+ *  Checks if a byte count is valid for a given command request
+ *  or response.
+ *
+ * Arguments:
+ *  uint8_t - the SMB command code
+ *  uint8_t - SMB_TYPE__REQUEST or SMB_TYPE__RESPONSE
+ *  uint8_t - the byte count to validate
+ *
+ * Returns:
+ *  bool - true if valid, false if not valid.
+ *
+ ********************************************************************/
+static inline bool DCE2_SmbIsValidByteCount(uint8_t com,
+    uint8_t resp, uint16_t bcc)
+{
+    return ((bcc < smb_bccs[com][resp][0])
+           || (bcc > smb_bccs[com][resp][1])) ? false : true;
+}
+
+static inline uint8_t SmbCom(const SmbNtHdr* hdr)
+{
+    return hdr->smb_com;
+}
+
+static bool SmbStatusNtCodes(const SmbNtHdr* hdr)
+{
+    if (SmbNtohs(&hdr->smb_flg2) & SMB_FLG2__NT_CODES)
+        return true;
+    return false;
+}
+
+static inline uint32_t SmbNtStatus(const SmbNtHdr* hdr)
+{
+    return SmbNtohl(&hdr->smb_status.nt_status);
+}
+
+static inline uint8_t SmbStatusClass(const SmbNtHdr* hdr)
+{
+    return hdr->smb_status.smb_status.smb_class;
+}
+
+static inline uint16_t SmbStatusCode(const SmbNtHdr* hdr)
+{
+    return SmbNtohs(&hdr->smb_status.smb_status.smb_code);
+}
+
+static inline uint8_t SmbNtStatusSeverity(const SmbNtHdr* hdr)
+{
+    return (uint8_t)(SmbNtStatus(hdr) >> 30);
+}
+
+// This function is obviously deficient.  Need to do a lot more
+// testing, research and reading MS-CIFS, MS-SMB and MS-ERREF.
+static bool SmbError(const SmbNtHdr* hdr)
+{
+    if (SmbStatusNtCodes(hdr))
+    {
+        /* Nt status codes are being used.  First 2 bits indicate
+         * severity. */
+        switch (SmbNtStatusSeverity(hdr))
+        {
+        case SMB_NT_STATUS_SEVERITY__SUCCESS:
+        case SMB_NT_STATUS_SEVERITY__INFORMATIONAL:
+        case SMB_NT_STATUS_SEVERITY__WARNING:
+            return false;
+        case SMB_NT_STATUS_SEVERITY__ERROR:
+        default:
+            break;
+        }
+    }
+    else
+    {
+        switch (SmbStatusClass(hdr))
+        {
+        case SMB_ERROR_CLASS__SUCCESS:
+            return false;
+        case SMB_ERROR_CLASS__ERRDOS:
+            if (SmbStatusCode(hdr) == SMB_ERRDOS__MORE_DATA)
+                return false;
+            break;
+        case SMB_ERROR_CLASS__ERRSRV:
+        case SMB_ERROR_CLASS__ERRHRD:
+        case SMB_ERROR_CLASS__ERRCMD:
+        default:
+            break;
+        }
+    }
+
+    return true;
+}
+
+static bool SmbBrokenPipe(const SmbNtHdr* hdr)
+{
+    if (SmbStatusNtCodes(hdr))
+    {
+        uint32_t nt_status = SmbNtStatus(hdr);
+        if ((nt_status == SMB_NT_STATUS__PIPE_BROKEN)
+            || (nt_status == SMB_NT_STATUS__PIPE_DISCONNECTED))
+            return true;
+    }
+    else
+    {
+        if (SmbStatusClass(hdr) == SMB_ERROR_CLASS__ERRDOS)
+        {
+            uint16_t smb_status = SmbStatusCode(hdr);
+            if ((smb_status == SMB_ERRDOS__BAD_PIPE)
+                || (smb_status == SMB_ERRDOS__PIPE_NOT_CONNECTED))
+                return true;
+        }
+    }
+
+    return false;
+}
+
+/********************************************************************
+ * Function: DCE2_IgnoreJunkData()
+ *
+ * Purpose:
+ *   An evasion technique can be to put a bunch of junk data before
+ *   the actual SMB request and it seems the MS implementation has
+ *   no problem with it and seems to just ignore the data.  This
+ *   function attempts to move past all the junk to get to the
+ *   actual NetBIOS message request.
+ *
+ * Arguments:
+ *   const uint8_t *  - pointer to the current position in the data
+ *      being inspected
+ *   uint16_t  -  the amount of data left to look at
+ *   uint32_t  -  the amount of data to ignore if there doesn't seem
+ *      to be any junk data.  Just use the length as if the bad
+ *      NetBIOS header was good.
+ *
+ * Returns:
+ *    uint32_t - the amount of bytes to ignore as junk.
+ *
+ ********************************************************************/
+static uint32_t DCE2_IgnoreJunkData(const uint8_t* data_ptr, uint16_t data_len,
+    uint32_t assumed_nb_len)
+{
+    const uint8_t* tmp_ptr = data_ptr;
+    uint32_t ignore_bytes = 0;
+
+    /* Try to find \xffSMB and go back 8 bytes to beginning
+     * of what should be a Netbios header with type Session
+     * Message (\x00) - do appropriate buffer checks to make
+     * sure the index is in bounds. Ignore all intervening
+     * bytes */
+
+    while ((tmp_ptr + sizeof(uint32_t)) <= (data_ptr + data_len))
+    {
+        if ((SmbId((SmbNtHdr*)tmp_ptr) == DCE2_SMB_ID)
+            || (SmbId((SmbNtHdr*)tmp_ptr) == DCE2_SMB2_ID))
+        {
+            break;
+        }
+
+        tmp_ptr++;
+    }
+
+    if ((tmp_ptr + sizeof(uint32_t)) > (data_ptr + data_len))
+    {
+        ignore_bytes = data_len;
+    }
+    else
+    {
+        if ((tmp_ptr - sizeof(NbssHdr)) > data_ptr)
+            ignore_bytes = (tmp_ptr - data_ptr) - sizeof(NbssHdr);
+        else  /* Just ignore whatever the bad NB header had as a length */
+            ignore_bytes = assumed_nb_len;
+    }
+
+    return ignore_bytes;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbHdrChecks()
+ *
+ * Checks some relevant fields in the header to make sure they're
+ * sane.
+ * Side effects are potential alerts for anomolous behavior.
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData *
+ *      Pointer to the session data structure.
+ *  SmbNtHdr *
+ *      Pointer to the header struct layed over the packet data.
+ *
+ * Returns:
+ *  DCE2_Ret
+ *      DCE2_RET__IGNORE if we should continue processing, but
+ *          ignore data because of the error.
+ *      DCE2_RET__SUCCESS if we should continue processing.
+ *
+ ********************************************************************/
+static DCE2_Ret DCE2_SmbHdrChecks(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr)
+{
+    Packet* p = ssd->sd.wire_pkt;
+
+    if ((DCE2_SsnFromServer(p) && (SmbType(smb_hdr) == SMB_TYPE__REQUEST)) ||
+        (DCE2_SsnFromClient(p) && (SmbType(smb_hdr) == SMB_TYPE__RESPONSE)))
+    {
+        // FIXIT-M port segment check
+        // Same for all cases below
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+        // Continue looking at traffic.  Neither Windows nor Samba seem
+        // to care, or even look at this flag
+    }
+
+    if ((SmbId(smb_hdr) != DCE2_SMB_ID)
+        && (SmbId(smb_hdr) != DCE2_SMB2_ID))
+    {
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_ID, (dce2CommonStats*)&dce2_smb_stats);
+        return DCE2_RET__IGNORE;
+    }
+
+    return DCE2_RET__SUCCESS;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbGetMinByteCount()
+ *
+ * Purpose:
+ *  Returns the minimum byte count for the given command request
+ *  or response.
+ *
+ * Arguments:
+ *  uint8_t - the SMB command code
+ *  uint8_t - SMB_TYPE__REQUEST or SMB_TYPE__RESPONSE
+ *
+ * Returns:
+ *  uint16_t - the minimum byte count
+ *
+ ********************************************************************/
+static inline uint16_t DCE2_SmbGetMinByteCount(uint8_t com, uint8_t resp)
+{
+    return smb_bccs[com][resp][0];
+}
+
+/********************************************************************
+ * Function: DCE2_SmbCheckCommand()
+ *
+ * Purpose:
+ *  Checks basic validity of an SMB command.
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData * - pointer to session data structure
+ *  SmbNtHdr *        - pointer to the SMB header structure
+ *  int               - the SMB command code, i.e. SMB_COM_*
+ *  uint8_t *         - current pointer to data, i.e. the command
+ *  uint32_t          - the remaining length
+ *  DCE2_SmbComInfo * -
+ *      Populated structure for command processing
+ *
+ ********************************************************************/
+static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
+    const SmbNtHdr* smb_hdr, const uint8_t smb_com,
+    const uint8_t* nb_ptr, uint32_t nb_len, DCE2_SmbComInfo* com_info)
+{
+    // Check for server error response
+    if (com_info->smb_type == SMB_TYPE__RESPONSE)
+    {
+        const SmbEmptyCom* ec = (SmbEmptyCom*)nb_ptr;
+
+        // Verify there is enough data to do checks
+        if (nb_len < sizeof(SmbEmptyCom))
+        {
+            dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats);
+            com_info->cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
+            return;
+        }
+
+        // If word and byte counts are zero and there is an error
+        // the server didn't accept client request
+        if ((SmbEmptyComWct(ec) == 0)
+            && (SmbEmptyComBcc(ec) == 0) && SmbError(smb_hdr))
+        {
+            DebugFormat(DEBUG_DCE_SMB,
+                "Response error: 0x%08X\n", SmbNtStatus(smb_hdr));
+
+            // If broken pipe, clean up data associated with open named pipe
+            if (SmbBrokenPipe(smb_hdr))
+            {
+                DebugMessage(DEBUG_DCE_SMB,"Broken or disconnected pipe.\n");
+                // FIXIT-M uncomment once file tracking is ported
+                // DCE2_SmbRemoveFileTracker(ssd, ssd->cur_rtracker->ftracker);
+            }
+
+            com_info->cmd_error |= DCE2_SMB_COM_ERROR__STATUS_ERROR;
+            return;
+        }
+    }
+
+    // Set the header size to the minimum size the command can be
+    // without the byte count to make sure there is enough data to
+    // get the word count.
+    SmbAndXCom andx_com = smb_chain_map[smb_com];
+    int chk_com_size;
+    if (andx_com == SMB_ANDX_COM__NONE)
+        chk_com_size = sizeof(SmbCommon);
+    else
+        chk_com_size = sizeof(SmbAndXCommon);
+
+    // Verify there is enough data to do checks
+    if (nb_len < (uint32_t)chk_com_size)
+    {
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats);
+        com_info->cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
+        return;
+    }
+
+    const SmbCommon* sc = (SmbCommon*)nb_ptr;
+    com_info->word_count = SmbWct(sc);
+
+    // Make sure the word count is a valid one for the command.  If not
+    // testing shows an error will be returned.  And command structures
+    // won't lie on data correctly and out of bounds data accesses are possible.
+    if (!DCE2_SmbIsValidWordCount(smb_com, (uint8_t)com_info->smb_type, com_info->word_count))
+    {
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_WCT, (dce2CommonStats*)&dce2_smb_stats);
+        com_info->cmd_error |= DCE2_SMB_COM_ERROR__INVALID_WORD_COUNT;
+        return;
+    }
+
+    // This gets the size of the SMB command from word count through byte count
+    // using the advertised value in the word count field.
+    com_info->cmd_size = (uint16_t)SMB_COM_SIZE(com_info->word_count);
+    if (nb_len < com_info->cmd_size)
+    {
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats);
+        com_info->cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
+        return;
+    }
+
+    uint16_t smb_bcc = SmbBcc(nb_ptr, com_info->cmd_size);
+
+    // SMB_COM_NT_CREATE_ANDX is a special case.  Who know what's going
+    // on with the word count (see MS-CIFS and MS-SMB).  A 42 word count
+    // command seems to actually have 50 words, so who knows where the
+    // byte count is.  Just set to zero since it's not needed.
+    if ((smb_com == SMB_COM_NT_CREATE_ANDX)
+        && (com_info->smb_type == SMB_TYPE__RESPONSE))
+        smb_bcc = 0;
+
+    // If byte count is deemed invalid, alert but continue processing
+    switch (smb_com)
+    {
+    // Interim responses
+    case SMB_COM_TRANSACTION:
+    case SMB_COM_TRANSACTION2:
+    case SMB_COM_NT_TRANSACT:
+        // If word count is 0, byte count must be 0
+        if ((com_info->word_count == 0) && (com_info->smb_type == SMB_TYPE__RESPONSE))
+        {
+            if (smb_bcc != 0)
+            {
+                dce_alert(GID_DCE2, DCE2_SMB_BAD_BCC, (dce2CommonStats*)&dce2_smb_stats);
+                com_info->cmd_error |= DCE2_SMB_COM_ERROR__INVALID_BYTE_COUNT;
+            }
+            break;
+        }
+    // Fall through
+    default:
+        if (!DCE2_SmbIsValidByteCount(smb_com, (uint8_t)com_info->smb_type, smb_bcc))
+        {
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_BCC, (dce2CommonStats*)&dce2_smb_stats);
+            com_info->cmd_error |= DCE2_SMB_COM_ERROR__INVALID_BYTE_COUNT;
+        }
+        break;
+    }
+
+    // Move just past byte count field which is the end of the command
+    DCE2_MOVE(nb_ptr, nb_len, com_info->cmd_size);
+
+    // Validate that there is enough data to be able to process the command
+    if (nb_len < DCE2_SmbGetMinByteCount(smb_com, (uint8_t)com_info->smb_type))
+    {
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_BCC, (dce2CommonStats*)&dce2_smb_stats);
+        com_info->cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
+    }
+
+    // The byte count seems to be ignored by Windows and current Samba (3.5.4)
+    // as long as it is less than the amount of data left.  If more, an error
+    // is returned.
+    // !!!WARNING!!! the byte count should probably never be used.
+    if (smb_bcc > nb_len)
+    {
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_BCC, (dce2CommonStats*)&dce2_smb_stats);
+        // Large byte count doesn't seem to matter for early Samba
+        switch (DCE2_SsnGetPolicy(&ssd->sd))
+        {
+        case DCE2_POLICY__SAMBA_3_0_20:
+        case DCE2_POLICY__SAMBA_3_0_22:
+        case DCE2_POLICY__SAMBA_3_0_37:
+            break;
+        default:
+            com_info->cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
+            break;
+        }
+    }
+    else if ((smb_bcc == 0) && (SmbCom(smb_hdr) == SMB_COM_TRANSACTION)
+        && (DCE2_SmbType(ssd) == SMB_TYPE__REQUEST)
+        && (DCE2_SsnGetPolicy(&ssd->sd) == DCE2_POLICY__SAMBA))
+    {
+        // Current Samba errors on a zero byte count Transaction because it
+        // uses it to get the Name string and if zero Name will be NULL and
+        // it won't process it.
+        com_info->cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
+    }
+
+    com_info->byte_count = smb_bcc;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbProcessCommand()
+ *
+ * Purpose:
+ *  This is the main function for handling SMB commands and command
+ *  chaining.
+ *  It does an initial check of the command to determine validity
+ *  and gets basic information about the command.  Then it calls the
+ *  specific command function (setup in DCE2_SmbInitGlobals).
+ *  If there is command chaining, it will do the chaining foo to
+ *  get to the next command.
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData * - pointer to session data structure
+ *  SmbNtHdr *        - pointer to the SMB header structure
+ *  uint8_t *         - current pointer to data, i.e. the command
+ *  uint32_t          - the remaining length
+ *
+ * Returns: None
+ *
+ ********************************************************************/
+static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
+    const uint8_t* nb_ptr, uint32_t nb_len)
+{
+    uint8_t smb_com = SmbCom(smb_hdr);
+
+    while (nb_len > 0)
+    {
+        // Break out if command not supported
+        if (smb_com_funcs[smb_com] == NULL)
+            break;
+
+        if (smb_deprecated_coms[smb_com])
+        {
+            dce_alert(GID_DCE2, DCE2_SMB_DEPR_COMMAND_USED, (dce2CommonStats*)&dce2_smb_stats);
+        }
+
+        if (smb_unusual_coms[smb_com])
+        {
+            dce_alert(GID_DCE2, DCE2_SMB_UNUSUAL_COMMAND_USED, (dce2CommonStats*)&dce2_smb_stats);
+        }
+
+        DCE2_SmbComInfo com_info;
+        com_info.smb_type = DCE2_SmbType(ssd);
+        com_info.cmd_error = DCE2_SMB_COM_ERROR__COMMAND_OK;
+        com_info.word_count = 0;
+        com_info.smb_com = smb_com;
+        com_info.cmd_size = 0;
+        com_info.byte_count = 0;
+        DCE2_SmbCheckCommand(ssd, smb_hdr, smb_com, nb_ptr, nb_len, &com_info);
+
+        // FIXIT-M port the rest
+        return;
+    }
+}
+
+// Temporary command function placeholder, until all of them are ported
+DCE2_Ret DCE2_SmbComFuncPlaceholder(DCE2_SmbSsnData*, const SmbNtHdr*,
+    const DCE2_SmbComInfo*, const uint8_t*, uint32_t)
+{
+    return DCE2_RET__SUCCESS;
+}
+
+static bool DCE2_SmbAutodetect(Packet* p)
+{
+    if (p->dsize > (sizeof(NbssHdr) + sizeof(SmbNtHdr)))
+    {
+        NbssHdr* nb_hdr = (NbssHdr*)p->data;
+        SmbNtHdr* smb_hdr = (SmbNtHdr*)(p->data + sizeof(NbssHdr));
+
+        if ((SmbId(smb_hdr) != DCE2_SMB_ID)
+            && (SmbId(smb_hdr) != DCE2_SMB2_ID))
+        {
+            return false;
+        }
+
+        switch (NbssType(nb_hdr))
+        {
+        // FIXIT-L currently all ports are treated as autodetect.
+        // On port 139, there is always an initial Session Request / Session Positive/Negative
+        // response.
+        // These message types were added , to make sure port 139 is treated as smb.
+        // Remove once detect/autodetect supported.
+        case NBSS_SESSION_TYPE__REQUEST:
+            if (DCE2_SsnFromClient(p))
+                return true;
+            break;
+
+        case NBSS_SESSION_TYPE__POS_RESPONSE:
+        case NBSS_SESSION_TYPE__NEG_RESPONSE:
+            if (DCE2_SsnFromServer(p))
+                return true;
+            break;
+
+        case NBSS_SESSION_TYPE__MESSAGE:
+            return true;
+            break;
+        default:
+            break;
+        }
+    }
+
+    return false;
+}
 
 Dce2SmbFlowData::Dce2SmbFlowData() : FlowData(flow_id)
 {
@@ -156,6 +1165,1102 @@ static DCE2_SmbSsnData* dce2_handle_smb_session(Packet* p, dce2SmbProtoConf* con
     return dce2_smb_sess;
 }
 
+/********************************************************************
+ * Function: DCE2_NbssHdrChecks()
+ *
+ * Purpose:
+ *  Does validation of the NetBIOS header.  SMB will only run over
+ *  the Session Message type.  On port 139, there is always an
+ *  initial Session Request / Session Positive/Negative response
+ *  followed by the normal SMB conversation, i.e. Negotiate,
+ *  SessionSetupAndX, etc.
+ *  Side effects are potential alerts for anomolous behavior.
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData * - the session data structure.
+ *  const NbssHdr *   - pointer to the NetBIOS Session Service
+ *                      header structure.  Size is already validated.
+ *
+ * Returns:
+ *  DCE2_Ret  -  DCE2_RET__SUCCESS if all goes well and processing
+ *               should continue.
+ *               DCE2_RET__IGNORE if it's not something we need to
+ *               look at.
+ *               DCE2_RET__ERROR if an invalid NetBIOS Session
+ *               Service type is found.
+ *
+ ********************************************************************/
+static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
+{
+    Packet* p = ssd->sd.wire_pkt;
+
+    DebugMessage(DEBUG_DCE_SMB, "NetBIOS Session Service type: ");
+
+    switch (NbssType(nb_hdr))
+    {
+    case NBSS_SESSION_TYPE__MESSAGE:
+        /* Only want to look at session messages */
+        DebugMessage(DEBUG_DCE_SMB, "Session Message\n");
+
+        if (!DCE2_SmbIsRawData(ssd))
+        {
+            uint32_t nb_len = NbssLen(nb_hdr);
+
+            if (nb_len == 0)
+                return DCE2_RET__IGNORE;
+
+            if (nb_len < sizeof(SmbNtHdr))
+            {
+                DebugFormat(DEBUG_DCE_SMB, "NetBIOS SS len(%u) < SMB header len(%u).\n",
+                    sizeof(SmbNtHdr), sizeof(NbssHdr) + nb_len);
+
+                // FIXIT-M port segment check
+                // Same for all cases below
+                dce_alert(GID_DCE2, DCE2_SMB_NB_LT_SMBHDR, (dce2CommonStats*)&dce2_smb_stats);
+                return DCE2_RET__IGNORE;
+            }
+        }
+
+        return DCE2_RET__SUCCESS;
+
+    case NBSS_SESSION_TYPE__REQUEST:
+        DebugMessage(DEBUG_DCE_SMB, "Session Request\n");
+        if (DCE2_SsnFromServer(p))
+        {
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+        }
+
+        break;
+
+    case NBSS_SESSION_TYPE__POS_RESPONSE:
+    case NBSS_SESSION_TYPE__NEG_RESPONSE:
+    case NBSS_SESSION_TYPE__RETARGET_RESPONSE:
+        if (DCE2_SsnFromClient(p))
+        {
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+        }
+
+        break;
+
+    case NBSS_SESSION_TYPE__KEEP_ALIVE:
+        DebugMessage(DEBUG_DCE_SMB, "Session Keep Alive\n");
+        break;
+
+    default:
+        DebugFormat(DEBUG_DCE_SMB,
+            "Invalid Session Service type: 0x%02X\n", NbssType(nb_hdr));
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+
+        return DCE2_RET__ERROR;
+    }
+
+    return DCE2_RET__IGNORE;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbProcess()
+ *
+ * Purpose:
+ *  This is the main entry point for SMB processing.
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData * - the session data structure.
+ *
+ * Returns: None
+ *
+ ********************************************************************/
+void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
+{
+    DebugMessage(DEBUG_DCE_SMB, "Processing SMB packet.\n");
+    dce2_smb_stats.smb_pkts++;
+
+    const Packet* p = ssd->sd.wire_pkt;
+    const uint8_t* data_ptr = p->data;
+    uint16_t data_len = p->dsize;
+
+    /* Have to account for segmentation.  Even though stream will give
+     * us larger chunks, we might end up in the middle of something */
+    while (data_len > 0)
+    {
+        // We are ignoring an entire PDU or junk data so state should be NETBIOS_HEADER
+        // Note that it could be TCP segmented so ignore_bytes could be greater than
+        // the amount of data we have
+        uint32_t* ignore_bytes = DCE2_SmbGetIgnorePtr(ssd);
+        if (*ignore_bytes)
+        {
+            DebugFormat(DEBUG_DCE_SMB, "Ignoring %u bytes\n", *ignore_bytes);
+
+            if (data_len <= *ignore_bytes)
+            {
+                *ignore_bytes -= data_len;
+                return;
+            }
+            else
+            {
+                /* ignore bytes is less than UINT16_MAX */
+                DCE2_MOVE(data_ptr, data_len, (uint16_t)*ignore_bytes);
+                *ignore_bytes = 0;
+            }
+        }
+
+        DCE2_SmbDataState* data_state = DCE2_SmbGetDataState(ssd);
+        switch (*data_state)
+        {
+        // This state is to verify it's a NetBIOS Session Message packet
+        // and to get the length of the SMB PDU.  Also does the SMB junk
+        // data check.  If it's not a Session Message the data isn't
+        // processed since it won't be carrying SMB.
+        case DCE2_SMB_DATA_STATE__NETBIOS_HEADER:
+        {
+            uint32_t data_need = sizeof(NbssHdr);
+
+            // See if there is enough data to process the NetBIOS header
+            if (data_len < data_need)
+            {
+                DebugFormat(DEBUG_DCE_SMB, "Data len(%u) < NetBIOS SS header(%u). "
+                    "Queueing data.\n", data_len, data_need);
+
+                // FIXIT-M port segmentation code
+                return;
+            }
+
+            // Set the NetBIOS header structure
+            NbssHdr* nb_hdr = (NbssHdr*)data_ptr;
+            uint32_t nb_len = NbssLen(nb_hdr);
+
+            DebugFormat(DEBUG_DCE_SMB, "NetBIOS PDU length: %u\n", nb_len);
+
+            DCE2_Ret status = DCE2_NbssHdrChecks(ssd, nb_hdr);
+            if (status != DCE2_RET__SUCCESS)
+            {
+                DebugMessage(DEBUG_DCE_SMB, "Not a NetBIOS Session Message.\n");
+
+                if (status == DCE2_RET__IGNORE)
+                {
+                    DebugMessage(DEBUG_DCE_SMB, "Valid NetBIOS header "
+                        "type so ignoring NetBIOS length bytes.\n");
+                    *ignore_bytes = data_need + nb_len;
+                }
+                else      // nb_ret == DCE2_RET__ERROR, i.e. invalid NetBIOS type
+                {
+                    DebugMessage(DEBUG_DCE_SMB, "Not a valid NetBIOS "
+                        "header type so trying to find \\xffSMB to "
+                        "determine how many bytes to ignore.\n");
+                    *ignore_bytes = DCE2_IgnoreJunkData(data_ptr, data_len, data_need + nb_len);
+                }
+
+                dce2_smb_stats.smb_ignored_bytes += *ignore_bytes;
+                continue;
+            }
+
+            switch (ssd->pdu_state)
+            {
+            case DCE2_SMB_PDU_STATE__COMMAND:
+                *data_state = DCE2_SMB_DATA_STATE__SMB_HEADER;
+                break;
+            case DCE2_SMB_PDU_STATE__RAW_DATA:
+                *data_state = DCE2_SMB_DATA_STATE__NETBIOS_PDU;
+                // Continue here because of fall through below
+                continue;
+            default:
+                DebugFormat(DEBUG_DCE_SMB,"%s(%d) Invalid SMB PDU "
+                    "state: %d\n", __FILE__, __LINE__, ssd->pdu_state);
+                return;
+            }
+        }
+
+        // Fall through for DCE2_SMB_DATA_STATE__SMB_HEADER
+        // This is the normal progression without segmentation.
+
+        // This state is to do validation checks on the SMB header and
+        // more importantly verify it's data that needs to be inspected.
+        // If the TID in the SMB header is not referring to the IPC share
+        // there won't be any DCE/RPC traffic associated with it.
+        case DCE2_SMB_DATA_STATE__SMB_HEADER:
+        {
+            // FIXIT-M add segmentation code path, including seg_buf code to the entire state
+
+            uint32_t data_need = (sizeof(NbssHdr) + sizeof(SmbNtHdr));
+            // See if there is enough data to process the SMB header
+            if (data_len < data_need)
+            {
+                DebugFormat(DEBUG_DCE_SMB, "Data len (%u) < "
+                    "NetBIOS SS header + SMB header (%u). Queueing data.\n",
+                    data_len, data_need);
+
+                // FIXIT-M add segmentation code path
+                return;
+            }
+
+            // FIXIT-M add segmentation checks
+            SmbNtHdr* smb_hdr = (SmbNtHdr*)(data_ptr + sizeof(NbssHdr));
+
+            // FIXIT-L Don't support SMB2 yet
+            if (SmbId(smb_hdr) == DCE2_SMB2_ID)
+            {
+                ssd->sd.flags |= DCE2_SSN_FLAG__NO_INSPECT;
+                return;
+            }
+
+            // FIXIT-M port DCE2_SmbInspect
+
+            // Check the SMB header for anomolies
+            if (DCE2_SmbHdrChecks(ssd, smb_hdr) != DCE2_RET__SUCCESS)
+            {
+                DebugMessage(DEBUG_DCE_SMB, "Bad SMB header.\n");
+
+                *ignore_bytes = sizeof(NbssHdr) + NbssLen((NbssHdr*)data_ptr);
+
+                *data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+
+                dce2_smb_stats.smb_ignored_bytes += *ignore_bytes;
+                continue;
+            }
+
+            *data_state = DCE2_SMB_DATA_STATE__NETBIOS_PDU;
+        }
+
+        // Fall through
+
+        // This state ensures that we have the entire PDU before continuing
+        // to process.
+        case DCE2_SMB_DATA_STATE__NETBIOS_PDU:
+        {
+            uint32_t nb_len = NbssLen((NbssHdr*)data_ptr);
+            uint32_t data_need = sizeof(NbssHdr) + nb_len;
+
+            /* It's something we want to inspect so make sure we have the full NBSS packet */
+            if (data_len < data_need)
+            {
+                DebugFormat(DEBUG_DCE_SMB, "Data len(%u) < "
+                    "NetBIOS SS header + NetBIOS len(%u). "
+                    "Queueing data.\n", data_len, sizeof(NbssHdr) + nb_len);
+
+                // FIXIT-M add segmentation code
+
+                return;
+            }
+
+            // data_len >= data_need which means data_need <= UINT16_MAX
+            // So casts below of data_need to uint16_t are okay.
+
+            *data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+
+            const uint8_t* nb_ptr = data_ptr;
+            nb_len = data_need;
+            DCE2_MOVE(data_ptr, data_len, (uint16_t)data_need);
+
+            switch (ssd->pdu_state)
+            {
+            case DCE2_SMB_PDU_STATE__COMMAND:
+            {
+                SmbNtHdr* smb_hdr = (SmbNtHdr*)(nb_ptr + sizeof(NbssHdr));
+                DCE2_MOVE(nb_ptr, nb_len, (sizeof(NbssHdr) + sizeof(SmbNtHdr)));
+
+                //FIXIT-M port rtracker related code
+                DCE2_SmbProcessCommand(ssd, smb_hdr, nb_ptr, nb_len);
+                break;
+            }
+
+            case DCE2_SMB_PDU_STATE__RAW_DATA:
+                //FIXIT-M port raw state
+                break;
+            default:
+                DebugFormat(DEBUG_DCE_SMB, "%s(%d) Invalid SMB PDU "
+                    "state: %d\n", __FILE__, __LINE__, ssd->pdu_state);
+                return;
+            }
+            break;
+        }
+
+        default:
+            DebugFormat(DEBUG_DCE_SMB, "%s(%d) Invalid SMB Data "
+                "state: %d\n", __FILE__, __LINE__, *data_state);
+            return;
+        }
+    }
+}
+
+/********************************************************************
+ * Function: DCE2_SmbInitGlobals()
+ *
+ * Purpose:
+ *  Initializes global variables for SMB processing.
+ *  Sets up the functions and valid word and byte counts for SMB
+ *  commands.
+ *  Sets up AndX chain mappings and valid command chaining for
+ *  supported policies.
+ *
+ * Arguments: None
+ *
+ * Returns: None
+ *
+ ********************************************************************/
+void DCE2_SmbInitGlobals(void)
+{
+    memset(&smb_wcts, 0, sizeof(smb_wcts));
+    memset(&smb_bccs, 0, sizeof(smb_bccs));
+
+    // Sets up the function to call for the command and valid word and byte
+    // counts for the command.  Ensuring valid word and byte counts is very
+    // important to processing the command as it will assume the command is
+    // legitimate and can access data that is acutally there.  Note that
+    // commands with multiple word counts indicate a different command
+    // structure, however most, if not all just have an extended version
+    // of the structure for which the extended part isn't used.  If the
+    // extended part of a command structure needs to be used, be sure to
+    // check the word count in the command function before accessing data
+    // in the extended version of the command structure.
+    for (int com = 0; com < SMB_MAX_NUM_COMS; com++)
+    {
+        switch (com)
+        {
+        case SMB_COM_OPEN:
+            // FIXIT-M port DCE2_SmbOpen. Same for other smb_com_funcs
+            // smb_com_funcs[com] = DCE2_SmbOpen;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 2);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 7);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 2, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_CREATE:
+            //smb_com_funcs[com] = DCE2_SmbCreate;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 3);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 1);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 2, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_CLOSE:
+            //smb_com_funcs[com] = DCE2_SmbClose;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 3);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 0);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, 0);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_RENAME:
+            //smb_com_funcs[com] = DCE2_SmbRename;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 1);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 0);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 4, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_READ:
+            //smb_com_funcs[com] = DCE2_SmbRead;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 5);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 5);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, 0);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 3, UINT16_MAX);
+            break;
+        case SMB_COM_WRITE:
+            //smb_com_funcs[com] = DCE2_SmbWrite;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 5);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 1);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 3, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_CREATE_NEW:
+            // smb_com_funcs[com] = DCE2_SmbCreateNew;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 3);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 1);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 2, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_LOCK_AND_READ:
+            //smb_com_funcs[com] = DCE2_SmbLockAndRead;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 5);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 5);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, 0);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 3, UINT16_MAX);
+            break;
+        case SMB_COM_WRITE_AND_UNLOCK:
+            //smb_com_funcs[com] = DCE2_SmbWriteAndUnlock;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 5);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 1);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 3, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_READ_RAW:
+            //smb_com_funcs[com] = DCE2_SmbReadRaw;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 8);
+            // With optional OffsetHigh
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 10);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, 0);
+            // Response is raw data, i.e. without SMB
+            break;
+        case SMB_COM_WRITE_RAW:
+            //smb_com_funcs[com] = DCE2_SmbWriteRaw;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 12);
+            // With optional OffsetHigh
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 14);
+            // Interim server response
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 1);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_WRITE_COMPLETE:
+            // Final server response to SMB_COM_WRITE_RAW
+            //smb_com_funcs[com] = DCE2_SmbWriteComplete;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 1);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_TRANSACTION:
+            // smb_com_funcs[com] = DCE2_SmbTransaction;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            // Word count depends on setup count
+            //for (i = 14; i < 256; i++)
+            //    DCE2_SmbSetValidWordCount(com, SMB_TYPE__REQUEST, i);
+            // In reality, all subcommands of SMB_COM_TRANSACTION requests
+            // have a setup count of 2 words.
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 16);
+
+            // \PIPE\LANMAN
+            // Not something the preprocessor is looking at as it
+            // doesn't carry DCE/RPC but don't want to false positive
+            // on the preprocessor event.
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 14);
+
+            // Word count depends on setup count
+            //for (i = 10; i < 256; i++)
+            //    DCE2_SmbSetValidWordCount(com, SMB_TYPE__RESPONSE, i);
+            // In reality, all subcommands of SMB_COM_TRANSACTION responses
+            // have a setup count of 0 words.
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 10);
+
+            // Interim server response
+            // When client sends an incomplete transaction and needs to
+            // send TransactionSecondary requests to complete request.
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 0);
+
+            // Exception will be made for Interim responses when
+            // byte count is checked.
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, UINT16_MAX);
+            break;
+        case SMB_COM_TRANSACTION_SECONDARY:
+            //smb_com_funcs[com] = DCE2_SmbTransactionSecondary;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 8);
+            // Response is an SMB_COM_TRANSACTION
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, UINT16_MAX);
+            break;
+        case SMB_COM_WRITE_AND_CLOSE:
+            // smb_com_funcs[com] = DCE2_SmbWriteAndClose;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 6);
+            // For some reason MS-CIFS specifies a version of this command
+            // with 6 extra words (12 bytes) of reserved, i.e. useless data.
+            // Maybe had intentions of extending and defining the data at
+            // some point, but there is no documentation that I could find
+            // that does.
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 12);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 1);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 1, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_OPEN_ANDX:
+            //smb_com_funcs[com] = DCE2_SmbOpenAndX;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 15);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 15);
+            // Extended response
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 19);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 2, UINT16_MAX);
+            // MS-SMB says that Windows 2000, XP and Vista set this to
+            // some arbitrary value that is ignored on receipt.
+            //DCE2_SmbSetValidByteCount(com, SMB_TYPE__RESPONSE, 0, 0);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, UINT16_MAX);
+            break;
+        case SMB_COM_READ_ANDX:
+            // smb_com_funcs[com] = DCE2_SmbReadAndX;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 10);
+            // With optional OffsetHigh
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 12);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 12);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, 0);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, UINT16_MAX);
+            break;
+        case SMB_COM_WRITE_ANDX:
+            // smb_com_funcs[com] = DCE2_SmbWriteAndX;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 12);
+            // With optional OffsetHigh
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 14);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 6);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 1, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_TRANSACTION2:
+            //smb_com_funcs[com] = DCE2_SmbTransaction2;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            // Word count depends on setup count
+            //for (i = 14; i < 256; i++)
+            //    DCE2_SmbSetValidWordCount(com, SMB_TYPE__REQUEST, i);
+            // In reality, all subcommands of SMB_COM_TRANSACTION2
+            // requests have a setup count of 1 word.
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 15);
+
+            // Word count depends on setup count
+            //for (i = 10; i < 256; i++)
+            //    DCE2_SmbSetValidWordCount(com, SMB_TYPE__RESPONSE, i);
+            // In reality, all subcommands of SMB_COM_TRANSACTION2
+            // responses have a setup count of 0 or 1 word.
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 10);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 11);
+
+            // Interim server response
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 0);
+
+            // Exception will be made for Interim responses when
+            // byte count is checked.
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, UINT16_MAX);
+            break;
+        case SMB_COM_TRANSACTION2_SECONDARY:
+            //smb_com_funcs[com] = DCE2_SmbTransaction2Secondary;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 9);
+            // Response is an SMB_COM_TRANSACTION2
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, UINT16_MAX);
+            break;
+        case SMB_COM_TREE_CONNECT:
+            //smb_com_funcs[com] = DCE2_SmbTreeConnect;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = true;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 0);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 2);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 6, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_TREE_DISCONNECT:
+            //smb_com_funcs[com] = DCE2_SmbTreeDisconnect;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 0);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 0);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, 0);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_NEGOTIATE:
+            // Not doing anything with this command right now.
+            // smb_com_funcs[com] = DCE2_SmbNegotiate;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 0);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 1);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 13);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 17);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 2, UINT16_MAX);
+            // This can vary depending on dialect so just set wide.
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, UINT16_MAX);
+            break;
+        case SMB_COM_SESSION_SETUP_ANDX:
+            //smb_com_funcs[com] = DCE2_SmbSessionSetupAndX;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 10);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 12);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 13);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 3);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 4);
+
+            // These can vary so just set wide.
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, UINT16_MAX);
+            break;
+        case SMB_COM_LOGOFF_ANDX:
+            //smb_com_funcs[com] = DCE2_SmbLogoffAndX;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 2);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 2);
+            // Windows responds to a LogoffAndX => SessionSetupAndX with just a
+            // LogoffAndX and with the word count field containing 3, but only
+            // has 2 words
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 3);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, 0);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            break;
+        case SMB_COM_TREE_CONNECT_ANDX:
+            //smb_com_funcs[com] = DCE2_SmbTreeConnectAndX;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 4);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 2);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 3);
+            // Extended response
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 7);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 3, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 2, UINT16_MAX);
+            break;
+        case SMB_COM_NT_TRANSACT:
+            //smb_com_funcs[com] = DCE2_SmbNtTransact;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            // Word count depends on setup count
+            // In reality, all subcommands of SMB_COM_NT_TRANSACT
+            // requests have a setup count of 0 or 4 words.
+            //for (i = 19; i < 256; i++)
+            //    DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, i);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 19);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 23);
+
+            // Word count depends on setup count
+            // In reality, all subcommands of SMB_COM_NT_TRANSACT
+            // responses have a setup count of 0 or 1 word.
+            //for (i = 18; i < 256; i++)
+            //    DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, i);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 18);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 19);
+
+            // Interim server response
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 0);
+
+            // Exception will be made for Interim responses when
+            // byte count is checked.
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, UINT16_MAX);
+            break;
+        case SMB_COM_NT_TRANSACT_SECONDARY:
+            //smb_com_funcs[com] = DCE2_SmbNtTransactSecondary;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 18);
+            // Response is an SMB_COM_NT_TRANSACT
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, UINT16_MAX);
+            break;
+        case SMB_COM_NT_CREATE_ANDX:
+            //smb_com_funcs[com] = DCE2_SmbNtCreateAndX;
+            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 24);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 34);
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 26);
+            // Extended response - though there are actually 50 words
+            DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, 42);
+
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 2, UINT16_MAX);
+            // MS-SMB indicates that this field should be 0 but may be
+            // sent uninitialized so basically ignore it.
+            //DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, UINT16_MAX);
+            break;
+        default:
+            smb_com_funcs[com] = nullptr;
+            smb_deprecated_coms[com] = false;
+            smb_unusual_coms[com] = false;
+            // Just set to all valid since the specific command won't
+            // be processed.  Don't want to false positive on these.
+            for (int i = 0; i < 256; i++)
+            {
+                DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, (uint8_t)i);
+                DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__RESPONSE, (uint8_t)i);
+            }
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, UINT16_MAX);
+            DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, UINT16_MAX);
+            break;
+        }
+    }
+
+    // Maps commands for use in quickly determining if a command
+    // is chainable and what command it is.
+    for (int com = 0; com < SMB_MAX_NUM_COMS; com++)
+    {
+        switch (com)
+        {
+        case SMB_COM_SESSION_SETUP_ANDX:
+            smb_chain_map[com] = SMB_ANDX_COM__SESSION_SETUP_ANDX;
+            break;
+        case SMB_COM_LOGOFF_ANDX:
+            smb_chain_map[com] = SMB_ANDX_COM__LOGOFF_ANDX;
+            break;
+        case SMB_COM_TREE_CONNECT_ANDX:
+            smb_chain_map[com] = SMB_ANDX_COM__TREE_CONNECT_ANDX;
+            break;
+        case SMB_COM_OPEN_ANDX:
+            smb_chain_map[com] = SMB_ANDX_COM__OPEN_ANDX;
+            break;
+        case SMB_COM_NT_CREATE_ANDX:
+            smb_chain_map[com] = SMB_ANDX_COM__NT_CREATE_ANDX;
+            break;
+        case SMB_COM_WRITE_ANDX:
+            smb_chain_map[com] = SMB_ANDX_COM__WRITE_ANDX;
+            break;
+        case SMB_COM_READ_ANDX:
+            smb_chain_map[com] = SMB_ANDX_COM__READ_ANDX;
+            break;
+        default:
+            smb_chain_map[com] = SMB_ANDX_COM__NONE;
+            break;
+        }
+    }
+
+    // Sets up the valid command chaining combinations per policy
+    for (int policy = 0; policy < DCE2_POLICY__MAX; policy++)
+    {
+        for (int andx = SMB_ANDX_COM__NONE; andx < SMB_ANDX_COM__MAX; andx++)
+        {
+            /* com is the chained command or com2 */
+            for (int com = 0; com < SMB_MAX_NUM_COMS; com++)
+            {
+                DCE2_SmbComFunc com_func = nullptr;
+
+                switch (policy)
+                {
+                case DCE2_POLICY__WIN2000:
+                case DCE2_POLICY__WINXP:
+                case DCE2_POLICY__WINVISTA:
+                case DCE2_POLICY__WIN2003:
+                case DCE2_POLICY__WIN2008:
+                case DCE2_POLICY__WIN7:
+                    switch (andx)
+                    {
+                    case SMB_ANDX_COM__SESSION_SETUP_ANDX:
+                        switch (com)
+                        {
+                        case SMB_COM_TREE_CONNECT_ANDX:
+                        case SMB_COM_OPEN:
+                        case SMB_COM_OPEN_ANDX:
+                        case SMB_COM_CREATE:
+                        case SMB_COM_CREATE_NEW:
+                            com_func = smb_com_funcs[com];
+                            break;
+                        case SMB_COM_TRANSACTION:
+                            if (policy == DCE2_POLICY__WIN2000)
+                                com_func = smb_com_funcs[com];
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    case SMB_ANDX_COM__LOGOFF_ANDX:
+                        switch (com)
+                        {
+                        case SMB_COM_SESSION_SETUP_ANDX:
+                        case SMB_COM_TREE_CONNECT_ANDX:               // Only for responses
+                            com_func = smb_com_funcs[com];
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    case SMB_ANDX_COM__TREE_CONNECT_ANDX:
+                        switch (com)
+                        {
+                        case SMB_COM_OPEN:
+                        case SMB_COM_CREATE:
+                        case SMB_COM_CREATE_NEW:
+                            com_func = smb_com_funcs[com];
+                            break;
+                        case SMB_COM_TRANSACTION:
+                            if (policy == DCE2_POLICY__WIN2000)
+                                com_func = smb_com_funcs[com];
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    case SMB_ANDX_COM__OPEN_ANDX:
+                        break;
+                    case SMB_ANDX_COM__NT_CREATE_ANDX:
+                        switch (com)
+                        {
+                        case SMB_COM_READ_ANDX:              // Only for normal files
+                            com_func = smb_com_funcs[com];
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    case SMB_ANDX_COM__WRITE_ANDX:
+                        switch (com)
+                        {
+                        case SMB_COM_CLOSE:
+                        case SMB_COM_WRITE_ANDX:
+                        case SMB_COM_READ:
+                        case SMB_COM_READ_ANDX:
+                            com_func = smb_com_funcs[com];
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    case SMB_ANDX_COM__READ_ANDX:
+                        break;
+                    default:
+                        break;
+                    }
+                    break;
+                case DCE2_POLICY__SAMBA:
+                case DCE2_POLICY__SAMBA_3_0_37:
+                case DCE2_POLICY__SAMBA_3_0_22:
+                case DCE2_POLICY__SAMBA_3_0_20:
+                    switch (andx)
+                    {
+                    case SMB_ANDX_COM__SESSION_SETUP_ANDX:
+                        switch (com)
+                        {
+                        case SMB_COM_LOGOFF_ANDX:
+                        case SMB_COM_TREE_CONNECT:
+                        case SMB_COM_TREE_CONNECT_ANDX:
+                        case SMB_COM_TREE_DISCONNECT:
+                        case SMB_COM_OPEN_ANDX:
+                        case SMB_COM_NT_CREATE_ANDX:
+                        case SMB_COM_CLOSE:
+                        case SMB_COM_READ_ANDX:
+                            com_func = smb_com_funcs[com];
+                            break;
+                        case SMB_COM_WRITE:
+                            if ((policy == DCE2_POLICY__SAMBA_3_0_22)
+                                || (policy == DCE2_POLICY__SAMBA_3_0_20))
+                                com_func = smb_com_funcs[com];
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    case SMB_ANDX_COM__LOGOFF_ANDX:
+                        switch (com)
+                        {
+                        case SMB_COM_SESSION_SETUP_ANDX:
+                        case SMB_COM_TREE_DISCONNECT:
+                            com_func = smb_com_funcs[com];
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    case SMB_ANDX_COM__TREE_CONNECT_ANDX:
+                        switch (com)
+                        {
+                        case SMB_COM_SESSION_SETUP_ANDX:
+                        case SMB_COM_LOGOFF_ANDX:
+                        case SMB_COM_TREE_DISCONNECT:
+                        case SMB_COM_OPEN_ANDX:
+                        case SMB_COM_NT_CREATE_ANDX:
+                        case SMB_COM_CLOSE:
+                        case SMB_COM_WRITE:
+                        case SMB_COM_READ_ANDX:
+                            com_func = smb_com_funcs[com];
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    case SMB_ANDX_COM__OPEN_ANDX:
+                        switch (com)
+                        {
+                        case SMB_COM_SESSION_SETUP_ANDX:
+                        case SMB_COM_LOGOFF_ANDX:
+                        case SMB_COM_TREE_CONNECT:
+                        case SMB_COM_TREE_CONNECT_ANDX:
+                        case SMB_COM_TREE_DISCONNECT:
+                        case SMB_COM_OPEN_ANDX:
+                        case SMB_COM_NT_CREATE_ANDX:
+                        case SMB_COM_CLOSE:
+                        case SMB_COM_WRITE:
+                        case SMB_COM_READ_ANDX:
+                            com_func = smb_com_funcs[com];
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    case SMB_ANDX_COM__NT_CREATE_ANDX:
+                        switch (com)
+                        {
+                        case SMB_COM_SESSION_SETUP_ANDX:
+                        case SMB_COM_TREE_CONNECT:
+                        case SMB_COM_TREE_CONNECT_ANDX:
+                        case SMB_COM_OPEN_ANDX:
+                        case SMB_COM_NT_CREATE_ANDX:
+                        case SMB_COM_WRITE:
+                        case SMB_COM_READ_ANDX:
+                            com_func = smb_com_funcs[com];
+                            break;
+                        case SMB_COM_LOGOFF_ANDX:
+                        case SMB_COM_TREE_DISCONNECT:
+                        case SMB_COM_CLOSE:
+                            if ((policy == DCE2_POLICY__SAMBA)
+                                || (policy == DCE2_POLICY__SAMBA_3_0_37))
+                                com_func = smb_com_funcs[com];
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    case SMB_ANDX_COM__WRITE_ANDX:
+                        switch (com)
+                        {
+                        case SMB_COM_SESSION_SETUP_ANDX:
+                        case SMB_COM_LOGOFF_ANDX:
+                        case SMB_COM_TREE_CONNECT:
+                        case SMB_COM_TREE_CONNECT_ANDX:
+                        case SMB_COM_OPEN_ANDX:
+                        case SMB_COM_NT_CREATE_ANDX:
+                        case SMB_COM_CLOSE:
+                        case SMB_COM_WRITE:
+                        case SMB_COM_READ_ANDX:
+                        case SMB_COM_WRITE_ANDX:
+                            com_func = smb_com_funcs[com];
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    case SMB_ANDX_COM__READ_ANDX:
+                        switch (com)
+                        {
+                        case SMB_COM_SESSION_SETUP_ANDX:
+                        case SMB_COM_WRITE:
+                            com_func = smb_com_funcs[com];
+                            break;
+                        case SMB_COM_LOGOFF_ANDX:
+                        case SMB_COM_TREE_CONNECT:
+                        case SMB_COM_TREE_CONNECT_ANDX:
+                        case SMB_COM_TREE_DISCONNECT:
+                        case SMB_COM_OPEN_ANDX:
+                        case SMB_COM_NT_CREATE_ANDX:
+                        case SMB_COM_CLOSE:
+                        case SMB_COM_READ_ANDX:
+                            if ((policy == DCE2_POLICY__SAMBA)
+                                || (policy == DCE2_POLICY__SAMBA_3_0_37))
+                                com_func = smb_com_funcs[com];
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                    break;
+                default:
+                    break;
+                }
+
+                smb_chain_funcs[policy][andx][com] = com_func;
+            }
+        }
+    }
+}
+
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -211,14 +2316,33 @@ void Dce2Smb::eval(Packet* p)
     }
 
     dce2_smb_sess = dce2_handle_smb_session(p, &config);
-    if (!dce2_smb_sess)
+    if (dce2_smb_sess)
     {
-        return;
-    }
-    dce2_smb_stats.smb_pkts++;
+        //FIXIT-L evaluate moving pushpkt out of session pstats
+        if (DCE2_PushPkt(p,&dce2_smb_sess->sd) != DCE2_RET__SUCCESS)
+        {
+            DebugMessage(DEBUG_DCE_SMB, "Failed to push packet onto packet stack.\n");
+            return;
+        }
+        p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
+        dce2_detected = 0;
 
-    // FIXIT-L - when porting processing code also add DceEndianness allocation
-    // (see dce_tcp.cc eval)
+        p->endianness = (Endianness*)new DceEndianness();
+
+        DCE2_SmbProcess(dce2_smb_sess);
+
+        if (!dce2_detected)
+            DCE2_Detect(&dce2_smb_sess->sd);
+
+        DCE2_ResetRopts(&dce2_smb_sess->sd.ropts);
+        DCE2_PopPkt(&dce2_smb_sess->sd);
+
+        if (!DCE2_SsnAutodetected(&dce2_smb_sess->sd))
+            DisableInspection();
+
+        delete p->endianness;
+        p->endianness = nullptr;
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -238,6 +2362,7 @@ static void mod_dtor(Module* m)
 static void dce2_smb_init()
 {
     Dce2SmbFlowData::init();
+    DCE2_SmbInitGlobals();
 }
 
 static Inspector* dce2_smb_ctor(Module* m)

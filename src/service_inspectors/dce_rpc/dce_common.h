@@ -51,6 +51,7 @@ enum DCE2_Policy
     DCE2_POLICY__SAMBA_3_0_37,
     DCE2_POLICY__SAMBA_3_0_22,
     DCE2_POLICY__SAMBA_3_0_20,
+    DCE2_POLICY__MAX
 };
 
 struct dce2CommonStats
@@ -284,6 +285,14 @@ inline int DCE2_SsnFromServer(Packet* p)
 inline int DCE2_SsnFromClient(Packet* p)
 {
     return p->from_client();
+}
+
+inline DCE2_Policy DCE2_SsnGetPolicy(DCE2_SsnData* sd)
+{
+    if (DCE2_SsnFromClient(sd->wire_pkt))
+        return sd->server_policy;
+    else
+        return sd->client_policy;
 }
 
 inline DCE2_Policy DCE2_SsnGetServerPolicy(DCE2_SsnData* sd)
