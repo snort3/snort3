@@ -43,7 +43,7 @@ static inline bool load_chunk(lua_State* L, const Chunk& chunk)
 static bool setup_globals(lua_State* L, Test& t)
 {
     // Add script_dir env var
-    Lua::set_script_dir(L, SCRIPT_DIR_VARNAME, t.chunk.filename);
+    Lua::set_script_dir(L, SCRIPT_DIR_VARNAME, t.chunk->filename);
     return false;
 }
 
@@ -57,7 +57,7 @@ static bool configure_test(lua_State* L, Test& t)
         return true;
     }
 
-    if ( load_chunk(L, t.chunk) )
+    if ( load_chunk(L, *t.chunk) )
     {
         t.set_error("couldn't load test chunk");
         t.set_error(lua_tostring(L, -1));
@@ -133,7 +133,7 @@ void Runner::run(const struct Output& output, Test& t, unsigned i)
     }
 
     auto p = Manager::instantiate(
-        state, t.chunk.target, t.type, t.name, t.use_defaults);
+        state, t.chunk->target, t.type, t.name, t.use_defaults);
 
     // FIXIT-L: This injection is a hack so we can log the test header
     //          with all the parsed information filled in

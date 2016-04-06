@@ -80,7 +80,7 @@ struct Test
         ERROR
     };
 
-    const Chunk& chunk;
+    const Chunk* chunk;
     Timer timer;
 
     Result result = NA;
@@ -98,7 +98,7 @@ struct Test
         messages.push_back(s);
     }
 
-    Test(const Chunk& ch) : chunk { ch } { }
+    Test(const Chunk& ch) : chunk { &ch } { }
 };
 } // namespace Piglet
 
