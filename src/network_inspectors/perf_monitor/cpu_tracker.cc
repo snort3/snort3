@@ -94,7 +94,7 @@ void CPUTracker::reset()
 
 void CPUTracker::process(bool)
 {
-    uint64_t user, system, wall, idle;
+    uint64_t user, system, wall;
 
     get_times(user, system, wall);
 
