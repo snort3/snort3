@@ -23,6 +23,8 @@
 #include "utils/stats.h"
 #include "utils/util.h"
 
+#include "csv_formatter.h"
+
 #define EVENT_FILE (PERF_NAME "_event.csv")
 
 THREAD_LOCAL EventTracker* perf_event;
@@ -35,6 +37,8 @@ EventTracker::EventTracker(PerfConfig *perf) :
 
 void EventTracker::reset()
 {
+    CSVFormatter f;
+    f.write(nullptr, 0);
     event_counts.NQEvents = 0;
     event_counts.QEvents  = 0;
     event_counts.TotalEvents  = 0;

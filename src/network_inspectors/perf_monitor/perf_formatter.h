@@ -54,13 +54,13 @@ public:
     virtual ~PerfFormatter() {};
     virtual SectionRef register_section(std::string);
     virtual FieldRef register_field(SectionRef, std::string);
+    virtual void finalize_fields(FILE*) = 0;
     virtual void set_field(FieldRef, PegCount);
     virtual void set_field(FieldRef, double);
-    virtual void init_output(FILE*);
-    virtual void write(FILE*, time_t);
+    virtual void write(FILE*, time_t) = 0;
     virtual void clear();
 
-private:
+protected:
     std::vector<std::vector<FormatterType>> types;
     std::vector<std::vector<FormatterValue>> values;
 };

@@ -243,7 +243,7 @@ TEST_CASE("text", "[cpu_tracker]")
     tracker.wall.tv_usec = 5000000;
     tracker.process(false);
 
-    long int size = ftell(f);
+    auto size = ftell(f);
     char* fake_file = (char*) malloc(size + 1);
     rewind(f);
     fread(fake_file, size, 1, f);
