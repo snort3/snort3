@@ -21,4 +21,6 @@ add_library ( perf_monitor STATIC
     perf_monitor.h
     perf_tracker.cc
     perf_tracker.h
+    text_formatter.cc
+    text_formatter.h
 )
