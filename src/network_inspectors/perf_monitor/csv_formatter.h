@@ -27,12 +27,14 @@ class CSVFormatter : public PerfFormatter
 {
 public:
     CSVFormatter() {};
-    virtual ~CSVFormatter() {};
     virtual SectionRef register_section(std::string) override;
     virtual FieldRef register_field(SectionRef, std::string) override;
     virtual void init_output(FILE*) override;
     virtual void write(FILE*, time_t) override;
     virtual void clear() override;
+
+private:
+    std::string header;
 };
 #endif
 

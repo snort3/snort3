@@ -20,6 +20,10 @@
 
 #include "csv_formatter.h"
 
+#ifdef UNIT_TEST
+#include "catch/catch.hpp"
+#endif
+
 using namespace std;
 
 SectionRef CSVFormatter::register_section(string name)
@@ -37,16 +41,6 @@ void CSVFormatter::init_output(FILE* fh)
 
 }
 
-void CSVFormatter::set_field(FieldRef ref, PegCount val)
-{
-    return PerfFormatter::set_field(ref, val);
-}
-
-void CSVFormatter::set_field(FieldRef ref, double val)
-{
-    return PerfFormatter::set_field(ref, val);
-}
-
 void CSVFormatter::write(FILE* fh, time_t timestamp)
 {
 
@@ -61,10 +55,10 @@ void CSVFormatter::clear()
 
 TEST_CASE("header output", "[perf csv_formatter]")
 {
-    const char* cooked =
+    char* fake_file, cooked =
         "#timestamp,name.one,name.two,other.three,other.four\n";
 
-    CSVFormatter f();
+    CSVFormatter f;
     FILE* fh = tmpfile();
 
     SectionRef s = f.register_section("name");
@@ -75,6 +69,10 @@ TEST_CASE("header output", "[perf csv_formatter]")
     f.register_field(s, "four");
     f.init_output(fh);
 
+    auto size = tell(fh);
+    rewind(fh);
+
+    fread(
     fclose(fh);
 }
 

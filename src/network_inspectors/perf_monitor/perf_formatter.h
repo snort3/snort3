@@ -57,7 +57,7 @@ public:
     virtual void set_field(FieldRef, PegCount);
     virtual void set_field(FieldRef, double);
     virtual void init_output(FILE*);
-    virtual void write(FILE*);
+    virtual void write(FILE*, time_t);
     virtual void clear();
 
 private:
