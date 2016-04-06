@@ -22,50 +22,59 @@
 
 using namespace std;
 
-SectionRef PerfFormatter::register_section(string)
+void PerfFormatter::register_section(string)
 {
     types.push_back(vector<FormatterType>());
     values.push_back(vector<FormatterValue>());
-
-    return types.size() - 1;
+    last_section++;
 }
 
-FieldRef PerfFormatter::register_field(SectionRef section, string)
+void PerfFormatter::register_field(string)
 {
-    FieldRef ret;
     FormatterValue fv;
     fv.pc = 0;
 
-    values[section].push_back(fv);
-    types[section].push_back(FT_UNSET);
-    
-    ret.section = section;
-    ret.field = values[section].size() - 1;
-
-    return ret;
+    values[last_section].push_back(fv);
+    types[last_section].push_back(FT_UNSET);
 }
 
-void PerfFormatter::set_field(FieldRef ref, PegCount val)
+void PerfFormatter::set_field(unsigned section, unsigned field, PegCount val)
 {
     FormatterValue fv;
 
     fv.pc = val;
-    values[ref.section][ref.field] = fv;
-    types[ref.section][ref.field] = FT_PEG_COUNT;
+    values[section][field] = fv;
+    types[section][field] = FT_PEG_COUNT;
 }
 
-void PerfFormatter::set_field(FieldRef ref, double val)
+void PerfFormatter::set_field(unsigned section, unsigned field, double val)
 {
     FormatterValue fv;
 
     fv.d = val;
-    values[ref.section][ref.field] = fv;
-    types[ref.section][ref.field] = FT_DOUBLE;
+    values[section][field] = fv;
+    types[section][field] = FT_DOUBLE;
+}
+
+void PerfFormatter::set_field(unsigned section, unsigned field, const char* val)
+{
+    FormatterValue fv;
+
+    fv.s = val;
+    values[section][field] = fv;
+    types[section][field] = FT_STRING;
 }
 
 void PerfFormatter::clear()
 {
-    for(unsigned i = 0; i < types.size(); i++)
-        for(unsigned j = 0; j < types[i].size(); j++)
-            types[i][j] = FT_UNSET;
+    for( unsigned i = 0; i < types.size(); i++ )
+    {
+        for( unsigned j = 0; j < types[i].size(); j++ )
+        {
+            if( types[i][j] == FT_STRING )
+                values[i][j].s = nullptr;
+            else
+                types[i][j] = FT_UNSET;
+        }
+    }
 }

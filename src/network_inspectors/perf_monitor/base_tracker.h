@@ -30,9 +30,6 @@ public:
 
     void reset() override;
     void process(bool) override;
-
-private:
-    std::string csv_header;
 };
 
 #endif

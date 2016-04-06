@@ -29,18 +29,18 @@
 
 using namespace std;
 
-SectionRef CSVFormatter::register_section(string name)
+void CSVFormatter::register_section(string name)
 {
     section_names.push_back(name);
     field_names.push_back(vector<string>());
 
-    return PerfFormatter::register_section(name);
+    PerfFormatter::register_section(name);
 }
 
-FieldRef CSVFormatter::register_field(SectionRef section, string name)
+void CSVFormatter::register_field(string name)
 {
-    field_names[section].push_back(name);
-    return PerfFormatter::register_field(section, name);
+    field_names[last_section].push_back(name);
+    PerfFormatter::register_field(name);
 }
 
 void CSVFormatter::finalize_fields(FILE* fh)
@@ -78,6 +78,10 @@ void CSVFormatter::write(FILE* fh, time_t timestamp)
                 case FT_PEG_COUNT:
                     fprintf(fh, ",%" PRIu64, values[i][j].pc);
                     break;
+                case FT_STRING:
+                    fprintf(fh, ",%s", values[i][j].s ?
+                        values[i][j].s : "");
+                    break;
                 case FT_UNSET:
                     fputs(",0", fh);
                     break; 
@@ -93,26 +97,27 @@ void CSVFormatter::write(FILE* fh, time_t timestamp)
 TEST_CASE("csv output", "[CSVFormatter]")
 {
     const char* cooked =
-        "#timestamp,name.one,name.two,other.three,other.four\n"
-        "1234567890,0,1,2,34.5678\n"
-        "2345678901,0,0,0,0\n";
-    FieldRef fr[4];
+        "#timestamp,name.one,name.two,other.three,other.four,other.five\n"
+        "1234567890,0,1,2,34.5678,hellothere\n"
+        "2345678901,0,0,0,0,\n";
     
     FILE* fh = tmpfile();
     CSVFormatter f;
 
-    SectionRef s = f.register_section("name");
-    fr[0] = f.register_field(s, "one");
-    fr[1] = f.register_field(s, "two");
-    s = f.register_section("other");
-    fr[2] = f.register_field(s, "three");
-    fr[3] = f.register_field(s, "four");
+    f.register_section("name");
+    f.register_field("one");
+    f.register_field("two");
+    f.register_section("other");
+    f.register_field("three");
+    f.register_field("four");
+    f.register_field("five");
     f.finalize_fields(fh);
 
-    f.set_field(fr[0], (PegCount)0);
-    f.set_field(fr[1], (PegCount)1);
-    f.set_field(fr[2], (PegCount)2);
-    f.set_field(fr[3], 34.5678);
+    f.set_field(0, 0, (PegCount)0);
+    f.set_field(0, 1, (PegCount)1);
+    f.set_field(1, 0, (PegCount)2);
+    f.set_field(1, 1, 34.5678);
+    f.set_field(1, 2, "hellothere");
     f.write(fh, (time_t)1234567890);
 
     f.clear();

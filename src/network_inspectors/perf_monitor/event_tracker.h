@@ -21,16 +21,17 @@
 #ifndef EVENT_TRACKER_H
 #define EVENT_TRACKER_H
 
+#include "perf_formatter.h"
 #include "perf_module.h"
 #include "perf_tracker.h"
 
 /* Raw event counters */
 struct PerfEventCounts
 {
-    uint64_t NQEvents;
-    uint64_t QEvents;
+    uint64_t non_qualified_events;
+    uint64_t qualified_events;
 
-    uint64_t TotalEvents;
+    uint64_t total_events;
 };
 
 class EventTracker : public PerfTracker
@@ -40,8 +41,8 @@ public:
     void reset() override;
     void process(bool) override;
 
-    void UpdateNQEvents();
-    void UpdateQEvents();
+    void update_non_qualified_events();
+    void update_qualified_events();
 
 private:
     PerfEventCounts event_counts;

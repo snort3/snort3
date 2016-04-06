@@ -93,9 +93,9 @@ void LogLabel(const char* s, FILE* fh)
     }
 }
 
-void LogValue(const char* s, const char* v)
+void LogValue(const char* s, const char* v, FILE* fh)
 {
-    LogMessage("%25.25s: %s\n", s, v);
+    LogMessage(fh, "%25.25s: %s\n", s, v);
 }
 
 void LogCount(const char* s, uint64_t c, FILE* fh)

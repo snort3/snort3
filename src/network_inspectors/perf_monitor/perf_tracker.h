@@ -21,8 +21,11 @@
 #ifndef PERF_TRACKER_H
 #define PERF_TRACKER_H
 
-#include <cstdio>
+#include "perf_formatter.h"
 #include "perf_monitor.h"
+
+#include <cstdio>
+
 
 class PerfTracker
 {
@@ -47,6 +50,7 @@ protected:
     FILE* fh = nullptr;
     std::string fname;
     time_t cur_time;
+    PerfFormatter* formatter;
 
     PerfTracker(PerfConfig*, const char* tracker_fname);
 };

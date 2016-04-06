@@ -31,18 +31,17 @@
 
 using namespace std;
 
-SectionRef TextFormatter::register_section(string name)
+void TextFormatter::register_section(string name)
 {
     section_names.push_back(name);
     field_names.push_back(vector<string>());
-
-    return PerfFormatter::register_section(name);
+    PerfFormatter::register_section(name);
 }
 
-FieldRef TextFormatter::register_field(SectionRef section, string name)
+void TextFormatter::register_field(string name)
 {
-    field_names[section].push_back(name);
-    return PerfFormatter::register_field(section, name);
+    field_names[last_section].push_back(name);
+    PerfFormatter::register_field(name);
 }
 
 void TextFormatter::write(FILE* fh, time_t)
@@ -71,6 +70,17 @@ void TextFormatter::write(FILE* fh, time_t)
                     }
                     LogCount(field_names[i][j].c_str(), values[i][j].pc, fh);
                     break;
+                case FT_STRING:
+                    if( values[i][j].s )
+                    {
+                        if( !head )
+                        {
+                            LogLabel(section_names[i].c_str(), fh);
+                            head = true;
+                        }
+                        LogValue(field_names[i][j].c_str(), values[i][j].s, fh);
+                    }
+                    break;
                 case FT_UNSET:
                     break; 
             }
@@ -89,26 +99,26 @@ TEST_CASE("text output", "[TextFormatter]")
         "                      one: 1\n"
         "--------------------------------------------------\n"
         "other\n"
-        "                     four: 34.5678\n";
-
+        "                     four: 34.5678\n"
+        "                     five: hellothere\n";
         
-    FieldRef fr[4];
-    
     FILE* fh = tmpfile();
     TextFormatter f;
 
-    SectionRef s = f.register_section("name");
-    fr[0] = f.register_field(s, "one");
-    fr[1] = f.register_field(s, "two");
-    s = f.register_section("other");
-    fr[2] = f.register_field(s, "three");
-    fr[3] = f.register_field(s, "four");
+    f.register_section("name");
+    f.register_field("one");
+    f.register_field("two");
+    f.register_section("other");
+    f.register_field("three");
+    f.register_field("four");
+    f.register_field("five");
     f.finalize_fields(fh);
 
-    f.set_field(fr[0], (PegCount)1);
-    f.set_field(fr[1], (PegCount)0);
-    f.set_field(fr[2], (PegCount)0);
-    f.set_field(fr[3], 34.5678);
+    f.set_field(0, 0, (PegCount)1);
+    f.set_field(0, 1, (PegCount)0);
+    f.set_field(1, 0, (PegCount)0);
+    f.set_field(1, 1, 34.5678);
+    f.set_field(1, 2, "hellothere");
     f.write(fh, (time_t)1234567890);
 
     f.clear();

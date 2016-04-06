@@ -36,8 +36,12 @@
 #include "catch/catch.hpp"
 #endif
 
-static const std::string csv_header =
-    "#timestamp,user,system,idle\n";
+enum CPUFieldRef
+{
+    FR_USER = 0,
+    FR_SYSTEM,
+    FR_IDLE
+};
 
 static inline uint64_t get_microseconds(struct timeval t)
 {
@@ -46,7 +50,13 @@ static inline uint64_t get_microseconds(struct timeval t)
 
 
 CPUTracker::CPUTracker(PerfConfig *perf) :
-    PerfTracker(perf, perf->output == PERF_FILE ? CPU_FILE : nullptr){}
+    PerfTracker(perf, perf->output == PERF_FILE ? CPU_FILE : nullptr)
+{
+    formatter->register_section("cpu");
+    formatter->register_field("user");
+    formatter->register_field("system");
+    formatter->register_field("idle");    
+}
 
 void CPUTracker::get_clocks(struct timeval& user_time,
     struct timeval& sys_time, struct timeval& wall_time)
@@ -85,11 +95,7 @@ void CPUTracker::get_times(uint64_t& user, uint64_t& system, uint64_t& wall)
 void CPUTracker::reset()
 {
     get_times(last_ut, last_st, last_wt);
-    if (config->format == PERF_CSV)
-    {
-        fwrite(csv_header.c_str(), csv_header.length(), 1, fh);
-        fflush(fh);
-    }
+    formatter->finalize_fields(fh);
 }
 
 void CPUTracker::process(bool)
@@ -107,22 +113,12 @@ void CPUTracker::process(bool)
     last_st = system;
     last_wt = wall;
 
-    double d_user = (double) delt_user / delt_wall * 100;
-    double d_system = (double) delt_system / delt_wall * 100;
-    double d_idle = (double) delt_idle / delt_wall * 100;
-    if ( config->format == PERF_TEXT )
-    {
-        LogLabel("cpu usage", fh);
-        LogStat("User", d_user, fh);
-        LogStat("System", d_system, fh);
-        LogStat("Idle", d_idle, fh);
-    }
-    else if ( config->format == PERF_CSV )
-    {
-        fprintf(fh, CSVu64 "%g,%g,%g\n",
-            (uint64_t)cur_time, d_user, d_system, d_idle);
-    }
-    fflush(fh);
+    formatter->set_field(0, FR_USER, (double) delt_user / delt_wall * 100);
+    formatter->set_field(0, FR_SYSTEM, (double) delt_system / delt_wall * 100);
+    formatter->set_field(0, FR_IDLE, (double) delt_idle / delt_wall * 100);
+
+    formatter->write(fh, cur_time);
+    formatter->clear();
 }
 
 #ifdef UNIT_TEST
@@ -177,7 +173,7 @@ TEST_CASE("Timeval to scalar", "[cpu_tracker]")
 TEST_CASE("csv", "[cpu_tracker]")
 {
     const char* cooked =
-    "#timestamp,user,system,idle\n"
+    "#timestamp,cpu.user,cpu.system,cpu.idle\n"
     "1234567890,23.0769,38.4615,38.4615\n"
     "1234567890,0,0,100\n"
     "1234567890,23.0769,38.4615,38.4615\n";
@@ -223,10 +219,10 @@ TEST_CASE("text", "[cpu_tracker]")
 {
     const char* cooked =
     "--------------------------------------------------\n"
-    "cpu usage\n"
-    "                     User: 23.0769\n"
-    "                   System: 38.4615\n"
-    "                     Idle: 38.4615\n";
+    "cpu\n"
+    "                     user: 23.0769\n"
+    "                   system: 38.4615\n"
+    "                     idle: 38.4615\n";
 
     FILE* f = tmpfile();
 

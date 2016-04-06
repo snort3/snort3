@@ -23,71 +23,67 @@
 #include "utils/stats.h"
 #include "utils/util.h"
 
-#include "text_formatter.h"
-
 #define EVENT_FILE (PERF_NAME "_event.csv")
+
+enum EventFieldRef
+{
+    FR_TOTAL = 0,
+    FR_QUALIFIED,
+    FR_NON_QUALIFIED
+};
 
 THREAD_LOCAL EventTracker* perf_event;
 
-static std::string csv_header =
-    "#timestamp,qualified_events,non_qualified_events\n";
-
 EventTracker::EventTracker(PerfConfig *perf) :
-    PerfTracker(perf, perf->output == PERF_FILE ? EVENT_FILE : nullptr) {}
+    PerfTracker(perf, perf->output == PERF_FILE ? EVENT_FILE : nullptr)
+{
+    formatter->register_section("event_stats");
+    formatter->register_field("total");
+    formatter->register_field("qualified");
+    formatter->register_field("non_qualified");
+}
 
 void EventTracker::reset()
 {
-    TextFormatter f;
-    f.write(nullptr, 0);
-    event_counts.NQEvents = 0;
-    event_counts.QEvents  = 0;
-    event_counts.TotalEvents  = 0;
-    if (fh && config->format == PERF_CSV)
-    {
-        fwrite(csv_header.c_str(), csv_header.length(), 1, fh);
-        fflush(fh);
-    }
+    event_counts.non_qualified_events = 0;
+    event_counts.qualified_events  = 0;
+    event_counts.total_events  = 0;
+    
+    formatter->finalize_fields(fh);   
 }
 
 void EventTracker::process(bool)
 {
-    if (config->format == PERF_TEXT)
-    {
-        LogLabel("Snort Setwise Event Stats", fh);
-        LogCount("Total Events", event_counts.TotalEvents, fh);
-        LogStat("Qualified Events", event_counts.QEvents, event_counts.TotalEvents, fh);
-        LogStat("Non-Qualified Events", event_counts.NQEvents, event_counts.TotalEvents, fh);
+    formatter->set_field(0, FR_TOTAL, event_counts.total_events);
+    formatter->set_field(0, FR_QUALIFIED, event_counts.qualified_events);
+    formatter->set_field(0, FR_NON_QUALIFIED,
+        event_counts.non_qualified_events);
 
-    }
-    else if (config->format == PERF_CSV)
-    {
-        fprintf(fh, "%ld,%" PRIu64 ",%" PRIu64 "\n",
-            (long)cur_time, event_counts.QEvents, event_counts.NQEvents);
-        fflush(fh);
-    }
+    formatter->write(fh, cur_time);
+    formatter->clear();
 
-    event_counts.NQEvents    = 0;
-    event_counts.QEvents     = 0;
-    event_counts.TotalEvents = 0;
+    event_counts.non_qualified_events = 0;
+    event_counts.qualified_events = 0;
+    event_counts.total_events = 0;
 }
 
-void EventTracker::UpdateNQEvents()
+void EventTracker::update_non_qualified_events()
 {
     if ((perfmon_config) &&
         (perfmon_config->perf_flags & PERF_EVENT))
     {
-        event_counts.NQEvents++;
-        event_counts.TotalEvents++;
+        event_counts.non_qualified_events++;
+        event_counts.total_events++;
     }
 }
 
-void EventTracker::UpdateQEvents()
+void EventTracker::update_qualified_events()
 {
     if ((perfmon_config) &&
         (perfmon_config->perf_flags & PERF_EVENT))
     {
-        event_counts.QEvents++;
-        event_counts.TotalEvents++;
+        event_counts.qualified_events++;
+        event_counts.total_events++;
     }
 }
 

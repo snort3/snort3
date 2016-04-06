@@ -26,25 +26,19 @@
 #include <string>
 #include <vector>
 
-typedef unsigned SectionRef;
-
-struct FieldRef
-{
-    SectionRef section;
-    unsigned field;
-};
-
 union FormatterValue
 {
     PegCount pc;
     double d;
+    const char* s;
 };
 
 enum FormatterType : uint8_t
 {
     FT_UNSET,
     FT_PEG_COUNT,
-    FT_DOUBLE
+    FT_DOUBLE,
+    FT_STRING
 };
 
 class PerfFormatter
@@ -52,17 +46,19 @@ class PerfFormatter
 public:
     PerfFormatter() {};
     virtual ~PerfFormatter() {};
-    virtual SectionRef register_section(std::string);
-    virtual FieldRef register_field(SectionRef, std::string);
+    virtual void register_section(std::string);
+    virtual void register_field(std::string);
     virtual void finalize_fields(FILE*) = 0;
-    virtual void set_field(FieldRef, PegCount);
-    virtual void set_field(FieldRef, double);
+    virtual void set_field(unsigned, unsigned, PegCount);
+    virtual void set_field(unsigned, unsigned, double);
+    virtual void set_field(unsigned, unsigned, const char*);
     virtual void write(FILE*, time_t) = 0;
     virtual void clear();
 
 protected:
     std::vector<std::vector<FormatterType>> types;
     std::vector<std::vector<FormatterValue>> values;
+    unsigned last_section = -1;
 };
 #endif
 

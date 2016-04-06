@@ -75,7 +75,9 @@ FlowStateValue* FlowIPTracker::find_stats(const sfip_t* src_addr, const sfip_t* 
 
 FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf,
         perf->output == PERF_FILE ? FLIP_FILE : nullptr)
-{ }
+{
+
+}
 
 FlowIPTracker::~FlowIPTracker()
 {
@@ -210,11 +212,9 @@ void FlowIPTracker::write_stats()
 
 void FlowIPTracker::process(bool)
 {
-    if (config->format == PERF_CSV)
-        write_stats();
-
-    else if (config->format == PERF_TEXT)
-        display_stats();
+    
+    formatter->write(fh, cur_time);
+    formatter->clear();
 
     if ( !(config->perf_flags & PERF_SUMMARY) )
         reset();

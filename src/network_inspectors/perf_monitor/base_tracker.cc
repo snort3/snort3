@@ -34,69 +34,36 @@ using namespace std;
 BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf,
     perf->output == PERF_FILE ? BASE_FILE : nullptr)
 {
-    csv_header.clear();
-
-    csv_header += ("#timestamp");
     for (unsigned i = 0; i < config->modules.size(); i++)
     {
         Module *m = config->modules.at(i);
         vector<unsigned> peg_map = config->mod_peg_idxs.at(i);
+
+        formatter->register_section(m->get_name());
         for (auto& idx : peg_map)
-        {
-            csv_header += ",";
-            csv_header += m->get_name();
-            csv_header += ".";
-            csv_header += m->get_pegs()[idx].name;
-        }
+             formatter->register_field(m->get_pegs()[idx].name);
     }
-    csv_header += "\n";
 }
 
 void BaseTracker::reset()
 {
-    if (fh && config->format == PERF_CSV)
-    {
-        fwrite(csv_header.c_str(), csv_header.length(), 1, fh);
-        fflush(fh);
-    }
+    formatter->finalize_fields(fh);
 }
 
 void BaseTracker::process(bool summary)
 {
-    char buf[32]; // > log10(2^64 - 1)
-
-    if (!fh)
-        return;
-
-    string statLine;
-    statLine.clear();
-    snprintf(buf, sizeof(buf), "%ld", (long)cur_time);
-    statLine += buf;
-
     for (unsigned i = 0; i < config->modules.size(); i++)
     {
         Module* m = config->modules.at(i);
         vector<unsigned> idxs = config->mod_peg_idxs.at(i);
         PegCount* pegs = m->get_counts();
 
-        if (config->format == PERF_CSV)
-        {
-            for (auto& idx : idxs)
-            {
-                snprintf(buf, sizeof(buf), ",%" PRIu64, pegs[idx]);
-                statLine += buf;
-            }
-        }
-        else if(config->format == PERF_TEXT)
-            m->show_interval_stats(idxs, fh);
+        for (unsigned j = 0; j < idxs.size(); j++)
+            formatter->set_field(i, j, (PegCount)pegs[idxs[j]]);
         if (!summary)
             m->sum_stats();
     }
-    if (config->format == PERF_CSV)
-    {
-        statLine += "\n";
-        fwrite(statLine.c_str(), statLine.length(), 1, fh);
-        fflush(fh);
-    }
+    formatter->write(fh, cur_time);
+    formatter->clear();
 }
 

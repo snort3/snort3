@@ -27,8 +27,8 @@ class TextFormatter : public PerfFormatter
 {
 public:
     TextFormatter() : PerfFormatter() {};
-    SectionRef register_section(std::string) override;
-    FieldRef register_field(SectionRef, std::string) override;
+    void register_section(std::string) override;
+    void register_field(std::string) override;
     void finalize_fields(FILE*) override {};
     void write(FILE*, time_t) override;
 

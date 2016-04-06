@@ -21,7 +21,10 @@
 #include <sys/stat.h>
 
 #include "perf_tracker.h"
+
+#include "csv_formatter.h"
 #include "perf_module.h"
+#include "text_formatter.h"
 
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -51,10 +54,17 @@ PerfTracker::PerfTracker(PerfConfig* config, const char* tracker_fname)
 
     if (tracker_fname)
         get_instance_file(fname, tracker_fname);
+
+    if (config->format == PERF_CSV)
+        formatter = new CSVFormatter();
+
+    else if (config->format == PERF_TEXT)
+        formatter = new TextFormatter();
 }
 
 PerfTracker::~PerfTracker()
 {
+    delete formatter;
     close();
 }
 

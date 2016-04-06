@@ -473,13 +473,13 @@ static int rule_tree_match(
         {
             //  We have a qualified event from this tree
             pomd->pg->event_count++;
-            perf_event->UpdateQEvents();
+            perf_event->update_qualified_events();
         }
         else
         {
             // This means that the event is non-qualified.
             pomd->pg->match_count++;
-            perf_event->UpdateNQEvents();
+            perf_event->update_non_qualified_events();
         }
     }
 
@@ -1089,13 +1089,13 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
             {
                 // We have a qualified event from this tree
                 port_group->event_count++;
-                perf_event->UpdateQEvents();
+                perf_event->update_qualified_events();
             }
             else
             {
                 // This means that the event is non-qualified.
                 port_group->match_count++;
-                perf_event->UpdateNQEvents();
+                perf_event->update_non_qualified_events();
             }
             pc.slow_searches++;
         }
