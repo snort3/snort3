@@ -103,7 +103,7 @@ private:
     void set_key(FlowKey*, Packet*);
 
     unsigned process(Flow*, Packet*);
-    void preemptive_cleanup(const Packet*);
+    void preemptive_cleanup();
 
 private:
     FlowCache* ip_cache;

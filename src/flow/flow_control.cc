@@ -296,10 +296,10 @@ void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
     Active::resume();
 }
 
-void FlowControl::preemptive_cleanup(const Packet* p)
+void FlowControl::preemptive_cleanup()
 {
     DebugFormat(DEBUG_FLOW, "doing preemptive cleanup for packet of type %d",
-            static_cast<int>(p->type()));
+            last_pkt_type);
 
     // FIXIT-L J is there a possibility of this looping forever?
     while ( memory::MemoryCap::over_threshold() )
@@ -465,8 +465,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     p->disable_inspect = flow->is_inspection_disabled();
 
     last_pkt_type = p->type();
-
-    preemptive_cleanup(p);
+    preemptive_cleanup();
 
     if ( flow->flow_state )
         set_policies(snort_conf, flow->policy_id);
