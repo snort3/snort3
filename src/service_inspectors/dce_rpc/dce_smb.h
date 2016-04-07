@@ -663,52 +663,18 @@ inline uint8_t SmbEmptyComWct(const SmbEmptyCom* ec)
     return ec->smb_wct;
 }
 
-inline uint16_t SmbNtohs(const uint16_t* ptr)
-{
-    uint16_t value;
-
-    if (ptr == nullptr)
-        return 0;
-
-    value = *((uint8_t*)ptr) << 8 | *((uint8_t*)ptr + 1);
-
-#ifdef WORDS_BIGENDIAN
-    return ((value & 0xff00) >> 8) | ((value & 0x00ff) << 8);
-#else
-    return value;
-#endif
-}
-
-inline uint32_t SmbNtohl(const uint32_t* ptr)
-{
-    uint32_t value;
-
-    if (ptr == NULL)
-        return 0;
-
-    value = *((uint8_t*)ptr) << 24 | *((uint8_t*)ptr + 1) << 16 |
-        *((uint8_t*)ptr + 2) << 8  | *((uint8_t*)ptr + 3);
-
-#ifdef WORDS_BIGENDIAN
-    return ((value & 0xff000000) >> 24) | ((value & 0x00ff0000) >> 8)  |
-           ((value & 0x0000ff00) << 8)  | ((value & 0x000000ff) << 24);
-#else
-    return value;
-#endif
-}
-
 inline uint16_t SmbBcc(const uint8_t* ptr, uint16_t com_size)
 {
     /* com_size must be at least the size of the command encasing */
     if (com_size < sizeof(SmbEmptyCom))
         return 0;
 
-    return SmbNtohs((uint16_t*)(ptr + com_size - sizeof(uint16_t)));
+    return extract_16bits(ptr + com_size - sizeof(uint16_t));
 }
 
 inline uint16_t SmbEmptyComBcc(const SmbEmptyCom* ec)
 {
-    return SmbNtohs(&ec->smb_bcc);
+    return ntohs(ec->smb_bcc);
 }
 
 inline int SmbType(const SmbNtHdr* hdr)

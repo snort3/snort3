@@ -570,14 +570,14 @@ static inline uint8_t SmbCom(const SmbNtHdr* hdr)
 
 static bool SmbStatusNtCodes(const SmbNtHdr* hdr)
 {
-    if (SmbNtohs(&hdr->smb_flg2) & SMB_FLG2__NT_CODES)
+    if (ntohs(hdr->smb_flg2) & SMB_FLG2__NT_CODES)
         return true;
     return false;
 }
 
 static inline uint32_t SmbNtStatus(const SmbNtHdr* hdr)
 {
-    return SmbNtohl(&hdr->smb_status.nt_status);
+    return ntohl(hdr->smb_status.nt_status);
 }
 
 static inline uint8_t SmbStatusClass(const SmbNtHdr* hdr)
@@ -587,7 +587,7 @@ static inline uint8_t SmbStatusClass(const SmbNtHdr* hdr)
 
 static inline uint16_t SmbStatusCode(const SmbNtHdr* hdr)
 {
-    return SmbNtohs(&hdr->smb_status.smb_status.smb_code);
+    return ntohs(hdr->smb_status.smb_status.smb_code);
 }
 
 static inline uint8_t SmbNtStatusSeverity(const SmbNtHdr* hdr)
