@@ -182,8 +182,14 @@ bool EventQueueModule::set(const char*, Value& v, SnortConfig* sc)
 // search engine module
 //-------------------------------------------------------------------------
 
-static const char* get_search_methods()
-{ return PluginManager::get_available_plugins(PT_SEARCH_ENGINE); }
+class SearchMethodQuery : public RangeQuery
+{
+public:
+    const char* operator()() override
+    { return PluginManager::get_available_plugins(PT_SEARCH_ENGINE); }
+};
+
+static SearchMethodQuery get_search_methods;
 
 static const Parameter search_engine_params[] =
 {
@@ -223,7 +229,7 @@ static const Parameter search_engine_params[] =
     { "inspect_stream_inserts", Parameter::PT_BOOL, nullptr, "false",
       "inspect reassembled payload - disabling is good for performance, bad for detection" },
 
-    { "search_method", Parameter::PT_DYNAMIC, (void*)get_search_methods, "ac_bnfa",
+    { "search_method", Parameter::PT_DYNAMIC, (void*)&get_search_methods, "ac_bnfa",
       "set fast pattern algorithm - choose available search engine" },
 
     { "split_any_any", Parameter::PT_BOOL, nullptr, "false",

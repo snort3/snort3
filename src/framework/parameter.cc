@@ -372,7 +372,7 @@ bool Parameter::validate(Value& v) const
     case PT_ENUM:
         return valid_enum(v, (const char*)range);
     case PT_DYNAMIC:
-        return valid_select(v, ((RangeQuery)range)());
+        return valid_select(v, (*((RangeQuery*)range))());
 
     // address values
     case PT_MAC:
@@ -420,7 +420,7 @@ const char* Parameter::get_range() const
         return nullptr;
 
     case PT_DYNAMIC:
-        return ((RangeQuery)range)();
+        return (*((RangeQuery*)range))();
 
     default:
         break;
