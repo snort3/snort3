@@ -108,7 +108,6 @@ bool TcpStateEstablished::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTrac
     auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
     trk.update_tracker_ack_recv(tsd);
-
     session.handle_data_segment(tsd);
 
     return default_state_action(tsd, trk);

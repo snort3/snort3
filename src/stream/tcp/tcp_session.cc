@@ -814,43 +814,46 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
         flush_policy_names[talker->flush_policy],
         flush_policy_names[listener->flush_policy]);
 
-    // FIXIT - move this to normalizer base class, handle OS_PROXY in derived class
-    if (config->policy != StreamPolicy::OS_PROXY)
+    if ( TcpStreamTracker::TCP_CLOSED != talker->get_tcp_state() )
     {
-        /* check for valid seqeuence/retrans */
-        if (!listener->is_segment_seq_valid(tsd) )
-            return;
-
-        // these normalizations can't be done if we missed setup. and
-        // window is zero in one direction until we've seen both sides.
-        if (!(flow->get_session_flags() & SSNFLAG_MIDSTREAM) && flow->two_way_traffic())
+        // FIXIT - move this to normalizer base class, handle OS_PROXY in derived class
+        if (config->policy != StreamPolicy::OS_PROXY)
         {
-            // sender of syn w/mss limits payloads from peer since we store mss on
-            // sender side, use listener mss same reasoning for window size
-            TcpStreamTracker* st = listener;
+            /* check for valid seqeuence/retrans */
+            if (!listener->is_segment_seq_valid(tsd) )
+                return;
 
-            // trim to fit in window and mss as needed
-            st->normalizer->trim_win_payload(tsd, (st->r_win_base + st->get_snd_wnd() -
-                st->r_nxt_ack));
+            // these normalizations can't be done if we missed setup. and
+            // window is zero in one direction until we've seen both sides.
+            if (!(flow->get_session_flags() & SSNFLAG_MIDSTREAM) && flow->two_way_traffic())
+            {
+                // sender of syn w/mss limits payloads from peer since we store mss on
+                // sender side, use listener mss same reasoning for window size
+                TcpStreamTracker* st = listener;
 
-            if (st->get_mss())
-                st->normalizer->trim_mss_payload(tsd, st->get_mss());
+                // trim to fit in window and mss as needed
+                st->normalizer->trim_win_payload(tsd, (st->r_win_base + st->get_snd_wnd() -
+                        st->r_nxt_ack));
 
-            st->normalizer->ecn_stripper(tsd.get_pkt());
+                if (st->get_mss())
+                    st->normalizer->trim_mss_payload(tsd, st->get_mss());
+
+                st->normalizer->ecn_stripper(tsd.get_pkt());
+            }
         }
-    }
 
-    // dunno if this is RFC but fragroute testing expects it  for the record,
-    // I've seen FTP data sessions that send data packets with no tcp flags set
-    if ((tsd.get_tcph()->th_flags != 0)or (config->policy == StreamPolicy::OS_LINUX)
-        or (config->policy == StreamPolicy::OS_PROXY))
-    {
-        process_tcp_data(tsd);
-    }
-    else
-    {
-        tel.set_tcp_event(EVENT_DATA_WITHOUT_FLAGS);
-        listener->normalizer->packet_dropper(tsd, NORM_TCP_BLOCK);
+        // dunno if this is RFC but fragroute testing expects it  for the record,
+        // I've seen FTP data sessions that send data packets with no tcp flags set
+        if ((tsd.get_tcph()->th_flags != 0) or (config->policy == StreamPolicy::OS_LINUX)
+                or (config->policy == StreamPolicy::OS_PROXY))
+        {
+            process_tcp_data(tsd);
+        }
+        else
+        {
+            tel.set_tcp_event(EVENT_DATA_WITHOUT_FLAGS);
+            listener->normalizer->packet_dropper(tsd, NORM_TCP_BLOCK);
+        }
     }
 
     listener->reassembler->flush_on_data_policy(tsd.get_pkt());
