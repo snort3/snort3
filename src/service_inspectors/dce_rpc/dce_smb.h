@@ -122,6 +122,8 @@
 #define DCE2_SMB_EVASIVE_FILE_ATTRS_STR \
     "SMB - Client attempted to create or set a file's attributes to readonly/hidden/system."
 
+#define SMB_MAX_NUM_COMS   256
+
 struct dce2SmbStats
 {
 /*  FIXIT-M
@@ -212,6 +214,120 @@ extern THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_negotiate;
 #define DCE2_SMB_ID   0xff534d42  /* \xffSMB */
 #define DCE2_SMB2_ID  0xfe534d42  /* \xfeSMB */
 
+/* SMB command codes */
+#define SMB_COM_CREATE_DIRECTORY 0x00
+#define SMB_COM_DELETE_DIRECTORY 0x01
+#define SMB_COM_OPEN 0x02
+#define SMB_COM_CREATE 0x03
+#define SMB_COM_CLOSE 0x04
+#define SMB_COM_FLUSH 0x05
+#define SMB_COM_DELETE 0x06
+#define SMB_COM_RENAME 0x07
+#define SMB_COM_QUERY_INFORMATION 0x08
+#define SMB_COM_SET_INFORMATION 0x09
+#define SMB_COM_READ 0x0A
+#define SMB_COM_WRITE 0x0B
+#define SMB_COM_LOCK_BYTE_RANGE 0x0C
+#define SMB_COM_UNLOCK_BYTE_RANGE 0x0D
+#define SMB_COM_CREATE_TEMPORARY 0x0E
+#define SMB_COM_CREATE_NEW 0x0F
+#define SMB_COM_CHECK_DIRECTORY 0x10
+#define SMB_COM_PROCESS_EXIT 0x11
+#define SMB_COM_SEEK 0x12
+#define SMB_COM_LOCK_AND_READ 0x13
+#define SMB_COM_WRITE_AND_UNLOCK 0x14
+#define SMB_COM_READ_RAW 0x1A
+#define SMB_COM_READ_MPX 0x1B
+#define SMB_COM_READ_MPX_SECONDARY 0x1C
+#define SMB_COM_WRITE_RAW 0x1D
+#define SMB_COM_WRITE_MPX 0x1E
+#define SMB_COM_WRITE_MPX_SECONDARY 0x1F
+#define SMB_COM_WRITE_COMPLETE 0x20
+#define SMB_COM_QUERY_SERVER 0x21
+#define SMB_COM_SET_INFORMATION2 0x22
+#define SMB_COM_QUERY_INFORMATION2 0x23
+#define SMB_COM_LOCKING_ANDX 0x24
+#define SMB_COM_TRANSACTION 0x25
+#define SMB_COM_TRANSACTION_SECONDARY 0x26
+#define SMB_COM_IOCTL 0x27
+#define SMB_COM_IOCTL_SECONDARY 0x28
+#define SMB_COM_COPY 0x29
+#define SMB_COM_MOVE 0x2A
+#define SMB_COM_ECHO 0x2B
+#define SMB_COM_WRITE_AND_CLOSE 0x2C
+#define SMB_COM_OPEN_ANDX 0x2D
+#define SMB_COM_READ_ANDX 0x2E
+#define SMB_COM_WRITE_ANDX 0x2F
+#define SMB_COM_NEW_FILE_SIZE 0x30
+#define SMB_COM_CLOSE_AND_TREE_DISC 0x31
+#define SMB_COM_TRANSACTION2 0x32
+#define SMB_COM_TRANSACTION2_SECONDARY 0x33
+#define SMB_COM_FIND_CLOSE2 0x34
+#define SMB_COM_FIND_NOTIFY_CLOSE 0x35
+#define SMB_COM_TREE_CONNECT 0x70
+#define SMB_COM_TREE_DISCONNECT 0x71
+#define SMB_COM_NEGOTIATE 0x72
+#define SMB_COM_SESSION_SETUP_ANDX 0x73
+#define SMB_COM_LOGOFF_ANDX 0x74
+#define SMB_COM_TREE_CONNECT_ANDX 0x75
+#define SMB_COM_SECURITY_PACKAGE_ANDX 0x7E
+#define SMB_COM_QUERY_INFORMATION_DISK 0x80
+#define SMB_COM_SEARCH 0x81
+#define SMB_COM_FIND 0x82
+#define SMB_COM_FIND_UNIQUE 0x83
+#define SMB_COM_FIND_CLOSE 0x84
+#define SMB_COM_NT_TRANSACT 0xA0
+#define SMB_COM_NT_TRANSACT_SECONDARY 0xA1
+#define SMB_COM_NT_CREATE_ANDX 0xA2
+#define SMB_COM_NT_CANCEL 0xA4
+#define SMB_COM_NT_RENAME 0xA5
+#define SMB_COM_OPEN_PRINT_FILE 0xC0
+#define SMB_COM_WRITE_PRINT_FILE 0xC1
+#define SMB_COM_CLOSE_PRINT_FILE 0xC2
+#define SMB_COM_GET_PRINT_QUEUE 0xC3
+#define SMB_COM_READ_BULK 0xD8
+#define SMB_COM_WRITE_BULK 0xD9
+#define SMB_COM_WRITE_BULK_DATA 0xDA
+#define SMB_COM_INVALID 0xFE
+#define SMB_COM_NO_ANDX_COMMAND 0xFF
+
+/* Size of word count field + Word count * 2 bytes + Size of byte count field */
+#define SMB_COM_SIZE(wct)  (sizeof(uint8_t) + ((wct) * sizeof(uint16_t)) + sizeof(uint16_t))
+
+#define SMB_FLG__TYPE  0x80
+#define SMB_TYPE__REQUEST   0
+#define SMB_TYPE__RESPONSE  1
+
+#define SMB_FLG2__UNICODE      0x8000
+#define SMB_FLG2__NT_CODES     0x4000
+
+#define SMB_NT_STATUS_SEVERITY__SUCCESS        0
+#define SMB_NT_STATUS_SEVERITY__INFORMATIONAL  1
+#define SMB_NT_STATUS_SEVERITY__WARNING        2
+#define SMB_NT_STATUS_SEVERITY__ERROR          3
+
+#define SMB_NT_STATUS__SUCCESS                0x00000000
+#define SMB_NT_STATUS__INVALID_DEVICE_REQUEST 0xc0000010
+#define SMB_NT_STATUS__RANGE_NOT_LOCKED       0xc000007e
+#define SMB_NT_STATUS__PIPE_BROKEN            0xc000014b
+#define SMB_NT_STATUS__PIPE_DISCONNECTED      0xc00000b0
+
+#define SMB_ERROR_CLASS__SUCCESS  0x00
+#define SMB_ERROR_CLASS__ERRDOS   0x01
+#define SMB_ERROR_CLASS__ERRSRV   0x02
+#define SMB_ERROR_CLASS__ERRHRD   0x03
+#define SMB_ERROR_CLASS__ERRXOS   0x04
+#define SMB_ERROR_CLASS__ERRMX1   0xe1
+#define SMB_ERROR_CLASS__ERRMX2   0xe2
+#define SMB_ERROR_CLASS__ERRMX3   0xe3
+#define SMB_ERROR_CLASS__ERRCMD   0xff
+
+#define SMB_ERRSRV__INVALID_DEVICE      0x0007
+#define SMB_ERRDOS__NOT_LOCKED          0x009e
+#define SMB_ERRDOS__BAD_PIPE            0x00e6
+#define SMB_ERRDOS__PIPE_NOT_CONNECTED  0x00e9
+#define SMB_ERRDOS__MORE_DATA           0x00ea
+
 #pragma pack(1)
 
 /********************************************************************
@@ -286,6 +402,13 @@ struct SmbReadAndXResp    /* smb_wct = 12 */
     uint16_t smb_bcc;        /* total bytes (including pad bytes) following */
 };
 
+/* For server empty respones indicating client error or interim response */
+struct SmbEmptyCom
+{
+    uint8_t smb_wct;     /* value = 0 */
+    uint16_t smb_bcc;    /* value = 0 */
+};
+
 #pragma pack()
 enum DCE2_SmbSsnState
 {
@@ -313,6 +436,19 @@ enum DCE2_SmbFileDirection
     DCE2_SMB_FILE_DIRECTION__UNKNOWN = 0,
     DCE2_SMB_FILE_DIRECTION__UPLOAD,
     DCE2_SMB_FILE_DIRECTION__DOWNLOAD
+};
+
+enum SmbAndXCom
+{
+    SMB_ANDX_COM__NONE,
+    SMB_ANDX_COM__OPEN_ANDX,
+    SMB_ANDX_COM__READ_ANDX,
+    SMB_ANDX_COM__WRITE_ANDX,
+    SMB_ANDX_COM__TREE_CONNECT_ANDX,
+    SMB_ANDX_COM__SESSION_SETUP_ANDX,
+    SMB_ANDX_COM__LOGOFF_ANDX,
+    SMB_ANDX_COM__NT_CREATE_ANDX,
+    SMB_ANDX_COM__MAX
 };
 
 struct DCE2_SmbWriteAndXRaw
@@ -483,6 +619,28 @@ struct DCE2_SmbSsnData
     int64_t max_file_depth;
 };
 
+/********************************************************************
+ * Common fields to all commands
+ ********************************************************************/
+struct SmbCommon
+{
+    uint8_t smb_wct;
+};
+
+inline uint8_t SmbWct(const SmbCommon* hdr)
+{
+    return hdr->smb_wct;
+}
+
+/* Common fields to all AndX commands */
+struct SmbAndXCommon
+{
+    uint8_t smb_wct;
+    uint8_t smb_com2;      /* secondary (X) command, 0xFF = none */
+    uint8_t smb_reh2;      /* reserved (must be zero) */
+    uint16_t smb_off2;     /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+};
+
 inline uint32_t NbssLen(const NbssHdr* nb)
 {
     /* Treat first bit of flags as the upper byte to length */
@@ -500,33 +658,31 @@ inline uint32_t SmbId(const SmbNtHdr* hdr)
     return *idf << 24 | *(idf + 1) << 16 | *(idf + 2) << 8 | *(idf + 3);
 }
 
-inline bool DCE2_SmbAutodetect(Packet* p)
+inline uint8_t SmbEmptyComWct(const SmbEmptyCom* ec)
 {
-    if (p->dsize > (sizeof(NbssHdr) + sizeof(SmbNtHdr)))
-    {
-        NbssHdr* nb_hdr = (NbssHdr*)p->data;
+    return ec->smb_wct;
+}
 
-        switch (NbssType(nb_hdr))
-        {
-        case NBSS_SESSION_TYPE__MESSAGE:
-        {
-            SmbNtHdr* smb_hdr = (SmbNtHdr*)(p->data + sizeof(NbssHdr));
+inline uint16_t SmbBcc(const uint8_t* ptr, uint16_t com_size)
+{
+    /* com_size must be at least the size of the command encasing */
+    if (com_size < sizeof(SmbEmptyCom))
+        return 0;
 
-            if ((SmbId(smb_hdr) == DCE2_SMB_ID)
-                || (SmbId(smb_hdr) == DCE2_SMB2_ID))
-            {
-                return true;
-            }
-        }
+    return extract_16bits(ptr + com_size - sizeof(uint16_t));
+}
 
-        break;
+inline uint16_t SmbEmptyComBcc(const SmbEmptyCom* ec)
+{
+    return ntohs(ec->smb_bcc);
+}
 
-        default:
-            break;
-        }
-    }
+inline int SmbType(const SmbNtHdr* hdr)
+{
+    if (hdr->smb_flg & SMB_FLG__TYPE)
+        return SMB_TYPE__RESPONSE;
 
-    return false;
+    return SMB_TYPE__REQUEST;
 }
 
 class Dce2SmbFlowData : public FlowData
