@@ -676,7 +676,7 @@ inline uint16_t SmbNtohs(const uint16_t* ptr)
     return ((value & 0xff00) >> 8) | ((value & 0x00ff) << 8);
 #else
     return value;
-#endif  /* WORDS_BIGENDIAN */
+#endif
 }
 
 inline uint32_t SmbNtohl(const uint32_t* ptr)
@@ -694,7 +694,7 @@ inline uint32_t SmbNtohl(const uint32_t* ptr)
            ((value & 0x0000ff00) << 8)  | ((value & 0x000000ff) << 24);
 #else
     return value;
-#endif  /* WORDS_BIGENDIAN */
+#endif
 }
 
 inline uint16_t SmbBcc(const uint8_t* ptr, uint16_t com_size)

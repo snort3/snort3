@@ -380,7 +380,7 @@ static inline bool DCE2_SmbIsValidByteCount(uint8_t, uint8_t, uint16_t);
 static DCE2_Ret DCE2_SmbHdrChecks(DCE2_SmbSsnData*, const SmbNtHdr*);
 static uint32_t DCE2_IgnoreJunkData(const uint8_t*, uint16_t, uint32_t);
 static void DCE2_SmbCheckCommand(DCE2_SmbSsnData*,
-    const SmbNtHdr*, const uint8_t, const uint8_t*, uint32_t, DCE2_SmbComInfo*);
+    const SmbNtHdr*, const uint8_t, const uint8_t*, uint32_t, DCE2_SmbComInfo&);
 static void DCE2_SmbProcessCommand(DCE2_SmbSsnData*, const SmbNtHdr*, const uint8_t*, uint32_t);
 static bool DCE2_SmbAutodetect(Packet* p);
 
@@ -791,19 +791,21 @@ static inline uint16_t DCE2_SmbGetMinByteCount(uint8_t com, uint8_t resp)
  * Arguments:
  *  DCE2_SmbSsnData * - pointer to session data structure
  *  SmbNtHdr *        - pointer to the SMB header structure
- *  int               - the SMB command code, i.e. SMB_COM_*
+ *  uint8_t           - the SMB command code, i.e. SMB_COM_*
  *  uint8_t *         - current pointer to data, i.e. the command
  *  uint32_t          - the remaining length
- *  DCE2_SmbComInfo * -
+ *  DCE2_SmbComInfo & -
  *      Populated structure for command processing
+ *
+ * Returns: None
  *
  ********************************************************************/
 static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     const SmbNtHdr* smb_hdr, const uint8_t smb_com,
-    const uint8_t* nb_ptr, uint32_t nb_len, DCE2_SmbComInfo* com_info)
+    const uint8_t* nb_ptr, uint32_t nb_len, DCE2_SmbComInfo& com_info)
 {
     // Check for server error response
-    if (com_info->smb_type == SMB_TYPE__RESPONSE)
+    if (com_info.smb_type == SMB_TYPE__RESPONSE)
     {
         const SmbEmptyCom* ec = (SmbEmptyCom*)nb_ptr;
 
@@ -811,7 +813,7 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
         if (nb_len < sizeof(SmbEmptyCom))
         {
             dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats);
-            com_info->cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
+            com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
             return;
         }
 
@@ -831,7 +833,7 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
                 // DCE2_SmbRemoveFileTracker(ssd, ssd->cur_rtracker->ftracker);
             }
 
-            com_info->cmd_error |= DCE2_SMB_COM_ERROR__STATUS_ERROR;
+            com_info.cmd_error |= DCE2_SMB_COM_ERROR__STATUS_ERROR;
             return;
         }
     }
@@ -850,41 +852,41 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     if (nb_len < (uint32_t)chk_com_size)
     {
         dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats);
-        com_info->cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
+        com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
         return;
     }
 
     const SmbCommon* sc = (SmbCommon*)nb_ptr;
-    com_info->word_count = SmbWct(sc);
+    com_info.word_count = SmbWct(sc);
 
     // Make sure the word count is a valid one for the command.  If not
     // testing shows an error will be returned.  And command structures
     // won't lie on data correctly and out of bounds data accesses are possible.
-    if (!DCE2_SmbIsValidWordCount(smb_com, (uint8_t)com_info->smb_type, com_info->word_count))
+    if (!DCE2_SmbIsValidWordCount(smb_com, (uint8_t)com_info.smb_type, com_info.word_count))
     {
         dce_alert(GID_DCE2, DCE2_SMB_BAD_WCT, (dce2CommonStats*)&dce2_smb_stats);
-        com_info->cmd_error |= DCE2_SMB_COM_ERROR__INVALID_WORD_COUNT;
+        com_info.cmd_error |= DCE2_SMB_COM_ERROR__INVALID_WORD_COUNT;
         return;
     }
 
     // This gets the size of the SMB command from word count through byte count
     // using the advertised value in the word count field.
-    com_info->cmd_size = (uint16_t)SMB_COM_SIZE(com_info->word_count);
-    if (nb_len < com_info->cmd_size)
+    com_info.cmd_size = (uint16_t)SMB_COM_SIZE(com_info.word_count);
+    if (nb_len < com_info.cmd_size)
     {
         dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats);
-        com_info->cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
+        com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
         return;
     }
 
-    uint16_t smb_bcc = SmbBcc(nb_ptr, com_info->cmd_size);
+    uint16_t smb_bcc = SmbBcc(nb_ptr, com_info.cmd_size);
 
     // SMB_COM_NT_CREATE_ANDX is a special case.  Who know what's going
     // on with the word count (see MS-CIFS and MS-SMB).  A 42 word count
     // command seems to actually have 50 words, so who knows where the
     // byte count is.  Just set to zero since it's not needed.
     if ((smb_com == SMB_COM_NT_CREATE_ANDX)
-        && (com_info->smb_type == SMB_TYPE__RESPONSE))
+        && (com_info.smb_type == SMB_TYPE__RESPONSE))
         smb_bcc = 0;
 
     // If byte count is deemed invalid, alert but continue processing
@@ -895,33 +897,33 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     case SMB_COM_TRANSACTION2:
     case SMB_COM_NT_TRANSACT:
         // If word count is 0, byte count must be 0
-        if ((com_info->word_count == 0) && (com_info->smb_type == SMB_TYPE__RESPONSE))
+        if ((com_info.word_count == 0) && (com_info.smb_type == SMB_TYPE__RESPONSE))
         {
             if (smb_bcc != 0)
             {
                 dce_alert(GID_DCE2, DCE2_SMB_BAD_BCC, (dce2CommonStats*)&dce2_smb_stats);
-                com_info->cmd_error |= DCE2_SMB_COM_ERROR__INVALID_BYTE_COUNT;
+                com_info.cmd_error |= DCE2_SMB_COM_ERROR__INVALID_BYTE_COUNT;
             }
             break;
         }
     // Fall through
     default:
-        if (!DCE2_SmbIsValidByteCount(smb_com, (uint8_t)com_info->smb_type, smb_bcc))
+        if (!DCE2_SmbIsValidByteCount(smb_com, (uint8_t)com_info.smb_type, smb_bcc))
         {
             dce_alert(GID_DCE2, DCE2_SMB_BAD_BCC, (dce2CommonStats*)&dce2_smb_stats);
-            com_info->cmd_error |= DCE2_SMB_COM_ERROR__INVALID_BYTE_COUNT;
+            com_info.cmd_error |= DCE2_SMB_COM_ERROR__INVALID_BYTE_COUNT;
         }
         break;
     }
 
     // Move just past byte count field which is the end of the command
-    DCE2_MOVE(nb_ptr, nb_len, com_info->cmd_size);
+    DCE2_MOVE(nb_ptr, nb_len, com_info.cmd_size);
 
     // Validate that there is enough data to be able to process the command
-    if (nb_len < DCE2_SmbGetMinByteCount(smb_com, (uint8_t)com_info->smb_type))
+    if (nb_len < DCE2_SmbGetMinByteCount(smb_com, (uint8_t)com_info.smb_type))
     {
         dce_alert(GID_DCE2, DCE2_SMB_NB_LT_BCC, (dce2CommonStats*)&dce2_smb_stats);
-        com_info->cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
+        com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
     }
 
     // The byte count seems to be ignored by Windows and current Samba (3.5.4)
@@ -939,7 +941,7 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
         case DCE2_POLICY__SAMBA_3_0_37:
             break;
         default:
-            com_info->cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
+            com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
             break;
         }
     }
@@ -950,10 +952,10 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
         // Current Samba errors on a zero byte count Transaction because it
         // uses it to get the Name string and if zero Name will be NULL and
         // it won't process it.
-        com_info->cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
+        com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
     }
 
-    com_info->byte_count = smb_bcc;
+    com_info.byte_count = smb_bcc;
 }
 
 /********************************************************************
@@ -1005,7 +1007,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         com_info.smb_com = smb_com;
         com_info.cmd_size = 0;
         com_info.byte_count = 0;
-        DCE2_SmbCheckCommand(ssd, smb_hdr, smb_com, nb_ptr, nb_len, &com_info);
+        DCE2_SmbCheckCommand(ssd, smb_hdr, smb_com, nb_ptr, nb_len, com_info);
 
         // FIXIT-M port the rest
         return;
@@ -1496,7 +1498,7 @@ void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
  * Returns: None
  *
  ********************************************************************/
-void DCE2_SmbInitGlobals(void)
+void DCE2_SmbInitGlobals()
 {
     memset(&smb_wcts, 0, sizeof(smb_wcts));
     memset(&smb_bccs, 0, sizeof(smb_bccs));
