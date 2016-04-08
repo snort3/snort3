@@ -40,6 +40,7 @@ NHttpMsgHeadShared::~NHttpMsgHeadShared()
         NormalizedHeader* temp_ptr = list_ptr;
         list_ptr = list_ptr->next;
         temp_ptr->norm.delete_buffer();
+        delete temp_ptr;
     }
     if (classic_raw_header_alloc)
         classic_raw_header.delete_buffer();
