@@ -28,17 +28,13 @@
 // # | #: | :# | #:#
 // where # is any valid pos|neg dec|hex|octal number
 
+#include <functional>
 #include "main/snort_types.h"
-
-class RangeQuery
-{
-public:
-    virtual ~RangeQuery() { }
-    virtual const char* operator()() = 0;
-};
 
 struct SO_PUBLIC Parameter
 {
+    using RangeQuery = std::function<const char*()>;
+
     enum Type
     {
         PT_TABLE,      // range is Parameter*, no default

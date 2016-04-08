@@ -182,14 +182,8 @@ bool EventQueueModule::set(const char*, Value& v, SnortConfig* sc)
 // search engine module
 //-------------------------------------------------------------------------
 
-class SearchMethodQuery : public RangeQuery
-{
-public:
-    const char* operator()() override
-    { return PluginManager::get_available_plugins(PT_SEARCH_ENGINE); }
-};
-
-static SearchMethodQuery get_search_methods;
+function<const char*()> get_search_methods = []()
+{ return PluginManager::get_available_plugins(PT_SEARCH_ENGINE); };
 
 static const Parameter search_engine_params[] =
 {
