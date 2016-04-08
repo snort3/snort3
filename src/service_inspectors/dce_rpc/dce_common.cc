@@ -172,7 +172,7 @@ static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
     }
     //FIXIT-M Add HTTP, UDP cases when these are ported
     //Same for all other instances of profiling
-    
+
     SnortEventqPush();
     snort_detect(pkt);
     SnortEventqPop();
@@ -292,7 +292,7 @@ static void dce_push_pkt_log(Packet* pkt,DCE2_SsnData* sd)
     {
         Profile profile(dce2_smb_pstat_log);
     }
-    
+
     SnortEventqPush();
     SnortEventqLog(pkt);
     SnortEventqReset();
@@ -328,7 +328,7 @@ void DCE2_PopPkt(DCE2_SsnData* sd)
     {
         Profile profile(dce2_smb_pstat_log);
     }
-    
+
     if (pop_pkt == nullptr)
     {
         DebugMessage(DEBUG_DCE_COMMON, "No packet to pop off stack.\n");
@@ -384,9 +384,9 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
     case DCE2_RPKT_TYPE__SMB_CO_SEG:
     case DCE2_RPKT_TYPE__SMB_CO_FRAG:
     case DCE2_RPKT_TYPE__UDP_CL_FRAG:
-    //FIXIT-M add support when SMB, UDP are ported
-        break;
-        
+        //FIXIT-M add support when SMB, UDP are ported
+        return nullptr;
+
     case DCE2_RPKT_TYPE__TCP_CO_SEG:
     case DCE2_RPKT_TYPE__TCP_CO_FRAG:
         rpkt = dce2_tcp_rpkt[rpkt_type - DCE2_TCP_RPKT_TYPE_START];
@@ -445,7 +445,6 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
 
 DCE2_Ret DCE2_AddDataToRpkt(Packet* rpkt, const uint8_t* data, uint32_t data_len)
 {
-
     if ((rpkt == nullptr) || (data == nullptr) || (data_len == 0))
         return DCE2_RET__ERROR;
 
