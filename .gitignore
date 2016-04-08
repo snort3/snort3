@@ -90,4 +90,7 @@ GTAGS
 GRTAGS
 GPATH
 HTML
-
+# These are related to the build-scripts
+alt/
+install/
+build.env
