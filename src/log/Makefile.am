@@ -14,8 +14,3 @@ log_text.cc \
 log_text.h \
 messages.cc \
 text_log.cc
-
-EXTRA_DIST = \
-obfuscation.h \
-obfuscation.cc
-

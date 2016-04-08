@@ -2,7 +2,6 @@
 
 set (LOG_INCLUDES
     messages.h
-#   obfuscation.h
     text_log.h
 )
 
@@ -13,7 +12,6 @@ add_library ( log STATIC
     log_text.cc
     log_text.h
     messages.cc
-#   obfuscation.cc
     text_log.cc
 )
 
