@@ -31,7 +31,6 @@
 #include "flow/session.h"
 #include "framework/inspector.h"
 #include "detection/detection_util.h"
-#include "log/obfuscation.h"
 #include "log/messages.h"
 #include "packet_io/active.h"
 #include "target_based/snort_protocols.h"

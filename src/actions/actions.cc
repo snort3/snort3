@@ -25,7 +25,6 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "utils/util.h"
-#include "log/obfuscation.h"
 #include "stream/stream_api.h"
 #include "packet_io/active.h"
 #include "detection/signature.h"

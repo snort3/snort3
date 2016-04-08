@@ -34,7 +34,6 @@
 
 #include "log.h"
 #include "text_log.h"
-#include "obfuscation.h"
 
 #include "detection/rules.h"
 #include "detection/treenodes.h"
@@ -1376,45 +1375,6 @@ void LogDiv(TextLog* log)
     TextLog_Print(log, "%s\n", SEPARATOR);
 }
 
-#ifdef BUILD_OBFUSCATION
-static int LogObfuscatedData(TextLog* log, Packet* p)
-{
-    uint8_t* payload = NULL;
-    uint16_t payload_len = 0;
-
-    if (obApi->getObfuscatedPayload(p, &payload,
-        (uint16_t*)&payload_len) != OB_RET_SUCCESS)
-    {
-        return -1;
-    }
-
-    LogDiv(log);
-
-    /* dump the application layer data */
-    if (SnortConfig::output_app_data() && !SnortConfig::verbose_byte_dump())
-    {
-        if (SnortConfig::output_char_data())
-            LogCharData(log, (const char*)payload, payload_len);
-        else
-            LogNetData(log, payload, payload_len, p);
-    }
-    else if (SnortConfig::verbose_byte_dump())
-    {
-        uint8_t buf[UINT16_MAX];
-        uint16_t dlen = p->data - p->pkt;
-
-        SafeMemcpy(buf, p->pkt, dlen, buf, buf + sizeof(buf));
-        SafeMemcpy(buf + dlen, payload, payload_len,
-            buf, buf + sizeof(buf));
-
-        LogNetData(log, buf, dlen + payload_len, p);
-    }
-
-    free(payload);
-    return 0;
-}
-#endif
-
 /*--------------------------------------------------------------------
  * Function: LogIPPkt(TextLog*, int, Packet *)
  *
@@ -1506,14 +1466,6 @@ void LogIPPkt(TextLog* log, Packet* p)
 
 void LogPayload(TextLog* log, Packet* p)
 {
-#ifdef BUILD_OBFUSCATION
-    if ((p->dsize > 0) && obApi->payloadObfuscationRequired(p)
-        && (LogObfuscatedData(log, p) == 0))
-    {
-        return;
-    }
-#endif
-
     /* dump the application layer data */
     if (SnortConfig::output_app_data() && !SnortConfig::verbose_byte_dump())
     {

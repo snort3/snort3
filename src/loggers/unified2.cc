@@ -55,7 +55,6 @@
 #include "events/event.h"
 #include "utils/util.h"
 #include "utils/snort_bounds.h"
-#include "log/obfuscation.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "stream/stream_api.h"
@@ -130,11 +129,6 @@ static void Unified2Write(uint8_t*, uint32_t, Unified2Config*);
 
 static void _AlertIP4_v2(Packet*, const char*, Unified2Config*, Event*);
 static void _AlertIP6_v2(Packet*, const char*, Unified2Config*, Event*);
-
-#ifdef BUILD_OBFUSCATION
-static ObRet Unified2LogObfuscationCallback(const DAQ_PktHdr_t* pkth,
-    const uint8_t* packet_data, ob_size_t length, ob_char_t ob_char, void* userdata);
-#endif
 
 static void AlertExtraData(Flow*, void* data, LogFunction* log_funcs, uint32_t max_count, uint32_t
     xtradata_mask, uint32_t event_id, uint32_t event_second);
@@ -560,27 +554,6 @@ static void _Unified2LogPacketAlert(
         logheader.event_second = 0;
     }
 
-#ifdef BUILD_OBFUSCATION
-    if ( p and p->pkth and obApi->payloadObfuscationRequired(p) )
-    {
-        Unified2LogCallbackData unifiedData;
-
-        unifiedData.logheader = &logheader;
-        unifiedData.config = config;
-        unifiedData.event = event;
-        unifiedData.num_bytes = 0;
-
-        if (obApi->obfuscatePacket(p, Unified2LogObfuscationCallback,
-            (void*)&unifiedData) == OB_RET_SUCCESS)
-        {
-            /* Write the last record */
-            if (unifiedData.num_bytes != 0)
-                Unified2Write(write_pkt_buffer, unifiedData.num_bytes, config);
-            return;
-        }
-    }
-#endif
-
     if ( p and p->pkth )
     {
         logheader.packet_second = htonl((uint32_t)p->pkth->ts.tv_sec);
@@ -635,97 +608,6 @@ static void _Unified2LogPacketAlert(
 
     Unified2Write(write_pkt_buffer, write_len, config);
 }
-
-#ifdef BUILD_OBFUSCATION
-static ObRet Unified2LogObfuscationCallback(const DAQ_PktHdr_t* pkth,
-    const uint8_t* packet_data, ob_size_t length,
-    ob_char_t ob_char, void* userdata)
-{
-    Unified2LogCallbackData* unifiedData = (Unified2LogCallbackData*)userdata;
-
-    if (userdata == NULL)
-        return OB_RET_ERROR;
-
-    if (pkth != NULL)
-    {
-        Serial_Unified2_Header hdr;
-        uint32_t record_len = (pkth->caplen + sizeof(Serial_Unified2_Header)
-            + (sizeof(Serial_Unified2Packet) - 4));
-
-        /* Write the last buffer if present.  Want to write an entire record
-         * at a time in case of failures, we don't corrupt the log file. */
-        if (unifiedData->num_bytes != 0)
-            Unified2Write(write_pkt_buffer, unifiedData->num_bytes, unifiedData->config);
-
-        if ((write_pkt_buffer + record_len) > write_pkt_end)
-        {
-            ErrorMessage("%s(%d) Too much data. Not writing unified2 event.\n",
-                __FILE__, __LINE__);
-            return OB_RET_ERROR;
-        }
-
-        if ( unifiedData->config->limit &&
-            (u2.current + record_len) > unifiedData->config->limit )
-            Unified2RotateFile(unifiedData->config);
-
-        hdr.type = htonl(UNIFIED2_PACKET);
-        hdr.length = htonl((sizeof(Serial_Unified2Packet) - 4) + pkth->caplen);
-
-        /* Event data will already be set */
-
-        unifiedData->logheader->packet_second = htonl((uint32_t)pkth->ts.tv_sec);
-        unifiedData->logheader->packet_microsecond = htonl((uint32_t)pkth->ts.tv_usec);
-        unifiedData->logheader->packet_length = htonl(pkth->caplen);
-
-        if (SafeMemcpy(write_pkt_buffer, &hdr, sizeof(Serial_Unified2_Header),
-            write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-        {
-            ErrorMessage("%s(%d) Failed to copy Serial_Unified2_Header. "
-                "Not writing unified2 event.\n", __FILE__, __LINE__);
-            return OB_RET_ERROR;
-        }
-
-        if (SafeMemcpy(write_pkt_buffer + sizeof(Serial_Unified2_Header),
-            unifiedData->logheader, sizeof(Serial_Unified2Packet) - 4,
-            write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-        {
-            ErrorMessage("%s(%d) Failed to copy Serial_Unified2Packet. "
-                "Not writing unified2 event.\n", __FILE__, __LINE__);
-            return OB_RET_ERROR;
-        }
-
-        /* Reset this for the new record */
-        unifiedData->num_bytes = (record_len - pkth->caplen);
-    }
-
-    if (packet_data != NULL)
-    {
-        if (SafeMemcpy(write_pkt_buffer + unifiedData->num_bytes,
-            packet_data, (size_t)length,
-            write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-        {
-            ErrorMessage("%s(%d) Failed to copy packet data "
-                "Not writing unified2 event.\n", __FILE__, __LINE__);
-            return OB_RET_ERROR;
-        }
-    }
-    else
-    {
-        if (SafeMemset(write_pkt_buffer + unifiedData->num_bytes,
-            (uint8_t)ob_char, (size_t)length,
-            write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-        {
-            ErrorMessage("%s(%d) Failed to obfuscate packet data "
-                "Not writing unified2 event.\n", __FILE__, __LINE__);
-            return OB_RET_ERROR;
-        }
-    }
-
-    unifiedData->num_bytes += length;
-
-    return OB_RET_SUCCESS;
-}
-#endif
 
 /******************************************************************************
  * Function: Unified2Write()
