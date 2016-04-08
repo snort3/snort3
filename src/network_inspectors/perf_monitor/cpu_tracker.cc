@@ -40,7 +40,7 @@ enum CPUFieldRef
 {
     FR_USER = 0,
     FR_SYSTEM,
-    FR_IDLE
+    FR_WALL
 };
 
 static inline uint64_t get_microseconds(struct timeval t)
@@ -55,7 +55,7 @@ CPUTracker::CPUTracker(PerfConfig *perf) :
     formatter->register_section("cpu");
     formatter->register_field("user");
     formatter->register_field("system");
-    formatter->register_field("idle");    
+    formatter->register_field("wall");    
 }
 
 void CPUTracker::get_clocks(struct timeval& user_time,
@@ -104,18 +104,14 @@ void CPUTracker::process(bool)
 
     get_times(user, system, wall);
 
-    auto delt_user = user - last_ut;
-    auto delt_system = system - last_st;
-    auto delt_wall = wall - last_wt;
-    auto delt_idle = delt_wall - delt_system - delt_user;
+    formatter->set_field(0, FR_USER, user - last_ut);
+    formatter->set_field(0, FR_SYSTEM, system - last_st);
+    formatter->set_field(0, FR_WALL, wall - last_wt);
 
     last_ut = user;
     last_st = system;
     last_wt = wall;
 
-    formatter->set_field(0, FR_USER, (double) delt_user / delt_wall * 100);
-    formatter->set_field(0, FR_SYSTEM, (double) delt_system / delt_wall * 100);
-    formatter->set_field(0, FR_IDLE, (double) delt_idle / delt_wall * 100);
 
     formatter->write(fh, cur_time);
     formatter->clear();
@@ -173,10 +169,10 @@ TEST_CASE("Timeval to scalar", "[cpu_tracker]")
 TEST_CASE("csv", "[cpu_tracker]")
 {
     const char* cooked =
-    "#timestamp,cpu.user,cpu.system,cpu.idle\n"
-    "1234567890,23.0769,38.4615,38.4615\n"
-    "1234567890,0,0,100\n"
-    "1234567890,23.0769,38.4615,38.4615\n";
+    "#timestamp,cpu.user,cpu.system,cpu.wall\n"
+    "1234567890,2100000,3200000,8500000\n"
+    "1234567890,0,0,500000\n"
+    "1234567890,2100000,3200000,8500000\n";
 
     FILE* f = tmpfile();
 
@@ -186,21 +182,21 @@ TEST_CASE("csv", "[cpu_tracker]")
 
     tracker.reset();
     tracker.user.tv_sec = 2;
-    tracker.user.tv_usec = 1000000;
+    tracker.user.tv_usec = 100000;
     tracker.sys.tv_sec = 3;
-    tracker.sys.tv_usec = 2000000;
+    tracker.sys.tv_usec = 200000;
     tracker.wall.tv_sec = 8;
-    tracker.wall.tv_usec = 5000000;
+    tracker.wall.tv_usec = 500000;
     tracker.process(false);
     tracker.wall.tv_sec = 9;
     tracker.wall.tv_usec = 0;
     tracker.process(false);
     tracker.user.tv_sec = 4;
-    tracker.user.tv_usec = 2000000;
+    tracker.user.tv_usec = 200000;
     tracker.sys.tv_sec = 6;
-    tracker.sys.tv_usec = 4000000;
+    tracker.sys.tv_usec = 400000;
     tracker.wall.tv_sec = 17;
-    tracker.wall.tv_usec = 5000000;
+    tracker.wall.tv_usec = 500000;
     tracker.process(false);
 
     long int size = ftell(f);
@@ -220,9 +216,9 @@ TEST_CASE("text", "[cpu_tracker]")
     const char* cooked =
     "--------------------------------------------------\n"
     "cpu\n"
-    "                     user: 23.0769\n"
-    "                   system: 38.4615\n"
-    "                     idle: 38.4615\n";
+    "                     user: 2100000\n"
+    "                   system: 3200000\n"
+    "                     wall: 8500000\n";
 
     FILE* f = tmpfile();
 
@@ -232,11 +228,11 @@ TEST_CASE("text", "[cpu_tracker]")
 
     tracker.reset();
     tracker.user.tv_sec = 2;
-    tracker.user.tv_usec = 1000000;
+    tracker.user.tv_usec = 100000;
     tracker.sys.tv_sec = 3;
-    tracker.sys.tv_usec = 2000000;
+    tracker.sys.tv_usec = 200000;
     tracker.wall.tv_sec = 8;
-    tracker.wall.tv_usec = 5000000;
+    tracker.wall.tv_usec = 500000;
     tracker.process(false);
 
     auto size = ftell(f);

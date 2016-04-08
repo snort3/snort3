@@ -26,14 +26,11 @@
 
 #include <vector>
 #include "perf_module.h"
-#include "perf_flow.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/thread.h"
 #include "protocols/packet.h"
 #include "utils/stats.h"
-
-
 
 //FIXIT-M: this shouldn't be needed outside of perfmon
 extern PerfConfig* perfmon_config;

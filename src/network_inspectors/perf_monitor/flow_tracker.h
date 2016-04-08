@@ -23,19 +23,36 @@
 
 #include "perf_tracker.h"
 
+struct FlowProto
+{
+    std::vector<PegCount> src;
+    std::vector<PegCount> dst;
+    PegCount high;
+};
+
 class FlowTracker : public PerfTracker
 {
 public:
-    RawFlowStats stats;
-
     FlowTracker(PerfConfig* perf);
-    ~FlowTracker();
 
     void reset() override;
     void update(Packet*) override;
     void process(bool) override;
+
+private:
+    PegCount byte_total = 0;
+
+    std::vector<PegCount> pkt_len_cnt;
+    PegCount pkt_len_oversize_cnt = 0;
+
+    FlowProto udp;
+    FlowProto tcp;
+
+    std::vector<PegCount> type_icmp;
+
+    void update_transport_flows(int sport, int dport,
+        FlowProto& proto, int len);
 };
 
-extern THREAD_LOCAL FlowTracker* perf_flow;
 #endif
 

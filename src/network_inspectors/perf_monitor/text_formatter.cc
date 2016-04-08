@@ -62,6 +62,7 @@ void TextFormatter::write(FILE* fh, time_t)
                     }
                     LogStat(field_names[i][j].c_str(), values[i][j].d, fh);
                     break;
+
                 case FT_PEG_COUNT:
                     if( !head && values[i][j].pc != 0 )
                     {
@@ -70,6 +71,7 @@ void TextFormatter::write(FILE* fh, time_t)
                     }
                     LogCount(field_names[i][j].c_str(), values[i][j].pc, fh);
                     break;
+
                 case FT_STRING:
                     if( values[i][j].s )
                     {
@@ -81,6 +83,27 @@ void TextFormatter::write(FILE* fh, time_t)
                         LogValue(field_names[i][j].c_str(), values[i][j].s, fh);
                     }
                     break;
+
+                case FT_IDX_PEG_COUNT:
+                {
+                    vector<PegCount>* vals = values[i][j].ipc;
+                    for( unsigned k = 0; k < vals->size(); k++ )
+                    {
+                        if( !vals->at(k) )
+                            continue;
+
+                        if( !head )
+                        {
+                            LogLabel(section_names[i].c_str(), fh);
+                            head = true;
+                        }
+                        std::ostringstream ss;
+                        ss << field_names[i][j] << "." << k;
+                        LogCount(ss.str().c_str(), vals->at(k), fh);
+                    }
+                    break;
+                }
+
                 case FT_UNSET:
                     break; 
             }
@@ -100,7 +123,13 @@ TEST_CASE("text output", "[TextFormatter]")
         "--------------------------------------------------\n"
         "other\n"
         "                     four: 34.5678\n"
-        "                     five: hellothere\n";
+        "--------------------------------------------------\n"
+        "str\n"
+        "                     five: hellothere\n"
+        "--------------------------------------------------\n"
+        "vec\n"
+        "                 vector.0: 50\n"
+        "                 vector.2: 70\n";
         
     FILE* fh = tmpfile();
     TextFormatter f;
@@ -111,14 +140,24 @@ TEST_CASE("text output", "[TextFormatter]")
     f.register_section("other");
     f.register_field("three");
     f.register_field("four");
+    f.register_section("str");
     f.register_field("five");
+    f.register_section("vec");
+    f.register_field("vector");
     f.finalize_fields(fh);
 
     f.set_field(0, 0, (PegCount)1);
     f.set_field(0, 1, (PegCount)0);
     f.set_field(1, 0, (PegCount)0);
     f.set_field(1, 1, 34.5678);
-    f.set_field(1, 2, "hellothere");
+    f.set_field(2, 0, "hellothere");
+
+    std::vector<PegCount> kvp;
+    kvp.push_back(50);
+    kvp.push_back(0);
+    kvp.push_back(70);
+    f.set_field(3, 0, &kvp);
+    
     f.write(fh, (time_t)1234567890);
 
     f.clear();

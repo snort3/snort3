@@ -68,7 +68,7 @@ static const Parameter s_params[] =
     { "max_file_size", Parameter::PT_INT, "4096:", "1073741824",
       "files will be rolled over if they exceed this size" },
 
-    { "flow_ports", Parameter::PT_INT, "0:", "1023",
+    { "flow_ports", Parameter::PT_INT, "0:65535", "1023",
       "maximum ports to track" },
 
     { "output", Parameter::PT_ENUM, "file | console", "file",

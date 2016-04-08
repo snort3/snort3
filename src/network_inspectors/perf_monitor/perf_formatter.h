@@ -31,6 +31,7 @@ union FormatterValue
     PegCount pc;
     double d;
     const char* s;
+    std::vector<PegCount>* ipc;
 };
 
 enum FormatterType : uint8_t
@@ -38,7 +39,8 @@ enum FormatterType : uint8_t
     FT_UNSET,
     FT_PEG_COUNT,
     FT_DOUBLE,
-    FT_STRING
+    FT_STRING,
+    FT_IDX_PEG_COUNT
 };
 
 class PerfFormatter
@@ -52,6 +54,7 @@ public:
     virtual void set_field(unsigned, unsigned, PegCount);
     virtual void set_field(unsigned, unsigned, double);
     virtual void set_field(unsigned, unsigned, const char*);
+    virtual void set_field(unsigned, unsigned, std::vector<PegCount>*);
     virtual void write(FILE*, time_t) = 0;
     virtual void clear();
 

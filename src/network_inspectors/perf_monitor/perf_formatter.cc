@@ -65,6 +65,16 @@ void PerfFormatter::set_field(unsigned section, unsigned field, const char* val)
     types[section][field] = FT_STRING;
 }
 
+void PerfFormatter::set_field(unsigned section, unsigned field,
+    vector<PegCount>* val)
+{
+    FormatterValue fv;
+
+    fv.ipc = val;
+    values[section][field] = fv;
+    types[section][field] = FT_IDX_PEG_COUNT;
+}
+
 void PerfFormatter::clear()
 {
     for( unsigned i = 0; i < types.size(); i++ )

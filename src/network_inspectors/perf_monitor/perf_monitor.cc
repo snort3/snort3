@@ -158,7 +158,7 @@ void PerfMonitor::tinit()
         trackers->push_back(new BaseTracker(&config));
 
     if (config.perf_flags & PERF_FLOW)
-        trackers->push_back(perf_flow = new FlowTracker(&config));
+        trackers->push_back(new FlowTracker(&config));
 
     if (config.perf_flags & PERF_FLOWIP)
         trackers->push_back(perf_flow_ip = new FlowIPTracker(&config));
@@ -180,7 +180,6 @@ void PerfMonitor::tinit()
 
 void PerfMonitor::tterm()
 {
-    perf_flow = nullptr;
     perf_flow_ip = nullptr;
     perf_event = nullptr;
 

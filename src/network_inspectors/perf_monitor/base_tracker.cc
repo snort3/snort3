@@ -55,7 +55,7 @@ void BaseTracker::process(bool summary)
     for (unsigned i = 0; i < config->modules.size(); i++)
     {
         Module* m = config->modules.at(i);
-        vector<unsigned> idxs = config->mod_peg_idxs.at(i);
+        vector<unsigned> idxs = config->mod_peg_idxs[i];
         PegCount* pegs = m->get_counts();
 
         for (unsigned j = 0; j < idxs.size(); j++)
