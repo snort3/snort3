@@ -1,3 +1,21 @@
+16/04/08 - build 194
+
+-- added iterative pruning for out of memory condition
+-- added preemptive pruning to memory manager
+-- dce segmentation changes
+-- dce smb header checks port - non segmented packets
+-- added thread timing stats to perf_monitor
+-- fixed so rule input / output
+-- fixed protocol numbering issues
+-- fixed 129:18
+-- update extra version to alpha 4 - thanks to Henry Luciano
+   <cuncator@mote.org> for reporting the issue
+-- remove legacy/unused obfuscation api
+-- fixed clang, gcc, and icc, build warnings
+-- fixed static analysis issues
+-- fixed memory leaks (more to go)
+-- clean up hyperscan pkg-config and cmake logic
+
 16/03/28 - build 193
 
 -- fix session parsing abort handling
