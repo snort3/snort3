@@ -39,7 +39,7 @@ struct SO_PUBLIC Parameter
     {
         PT_TABLE,      // range is Parameter*, no default
         PT_LIST,       // range is Parameter*, no default
-        PT_DYNAMIC,    // range is RangeQuery* functor
+        PT_DYNAMIC,    // range is RangeQuery*
         PT_BOOL,       // if you are reading this, get more coffee
         PT_INT,        // signed 64 bits or less determined by range
         PT_REAL,       // double

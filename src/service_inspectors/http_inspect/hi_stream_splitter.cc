@@ -752,13 +752,11 @@ static inline StreamSplitter::Status hi_exec(Hi5State* s, Action a, int c)
         break;
     case ACT_LNB:
         s->flags |= HIF_LEN;
-        DebugFormat(DEBUG_STREAM_PAF,
-            "%s: lnb=%u\n", __FUNCTION__, s->len);
+        DebugFormat(DEBUG_STREAM_PAF, "%s: lnb=%u\n", __func__, s->len);
         break;
     case ACT_LNC:
         s->flags |= HIF_LEN;
-        DebugFormat(DEBUG_STREAM_PAF,
-            "%s: lnc=%u\n", __FUNCTION__, s->len);
+        DebugFormat(DEBUG_STREAM_PAF, "%s: lnc=%u\n", __func__, s->len);
         if ( s->len )
             return StreamSplitter::SKIP;
         s->flags &= ~HIF_NOF;
@@ -809,8 +807,7 @@ static void hi_pipe_push(Hi5State* s_req, Flow* ssn)
     uint32_t nreq = s_req->pipe & 0xFF;
     uint32_t pipe = s_req->pipe >> 8;
 
-    DebugFormat(DEBUG_STREAM_PAF,
-        "%s: nreq=%d, pipe=0x%X\n", __FUNCTION__, nreq, pipe);
+    DebugFormat(DEBUG_STREAM_PAF, "%s: nreq=%d, pipe=0x%X\n", __func__, nreq, pipe);
 
     if ( nreq == MAX_PIPELINE )
     {
@@ -838,8 +835,7 @@ static void hi_pipe_pop(Hi5State* s_rsp, Flow* ssn)
     uint32_t nreq = s_req->pipe & 0xFF;
     uint32_t pipe = s_req->pipe >> 8;
 
-    DebugFormat(DEBUG_STREAM_PAF,
-        "%s: nreq=%d, pipe=0x%X\n", __FUNCTION__, nreq, pipe);
+    DebugFormat(DEBUG_STREAM_PAF, "%s: nreq=%d, pipe=0x%X\n", __func__, nreq, pipe);
 
     // FIXIT-L valgrind: Conditional jump or move depends on uninitialised value(s)
     if ( nreq == 0 || nreq == PIPELINE_RUPTURED )
@@ -895,7 +891,7 @@ static StreamSplitter::Status hi_scan_fsm(Hi5State* s, int c)
     get_state(s->fsm, after, sizeof(after));
     DebugFormat(DEBUG_STREAM_PAF,
         "%s: %s(%u)[0x%2X, '%c'] -> %d,%s(%u)\n",
-        __FUNCTION__, before, prev, c, isgraph(c) ? c : '.',
+        __func__, before, prev, c, isgraph(c) ? c : '.',
         cell->action, after, s->fsm);
 #endif
 
@@ -906,8 +902,7 @@ static StreamSplitter::Status hi_scan_fsm(Hi5State* s, int c)
 
 static StreamSplitter::Status hi_eoh(Hi5State* s, Flow* ssn)
 {
-    DebugFormat(DEBUG_STREAM_PAF,
-        "%s: flags=0x%X, len=%u\n", __FUNCTION__, s->flags, s->len);
+    DebugFormat(DEBUG_STREAM_PAF, "%s: flags=0x%X, len=%u\n", __func__, s->flags, s->len);
 
     if ( (s->flags & HIF_REQ) )
         hi_pipe_push(s, ssn);
@@ -959,7 +954,7 @@ static inline StreamSplitter::Status hi_scan_msg(
 {
     StreamSplitter::Status paf = StreamSplitter::SEARCH;
     DebugFormat(DEBUG_STREAM_PAF,
-        "%s[%d]: 0x%2X, '%c'\n", __FUNCTION__, s->msg, c, isgraph(c) ? c : '.');
+        "%s[%d]: 0x%2X, '%c'\n", __func__, s->msg, c, isgraph(c) ? c : '.');
 
     if ( c == '\r' )
     {
@@ -1055,8 +1050,7 @@ static void hi_reset(Hi5State* s, uint32_t flags)
     }
     s->flags = 0;
 
-    DebugFormat(DEBUG_STREAM_PAF,
-        "%s: fsm=%u, flags=0x%X\n", __FUNCTION__, s->fsm, s->flags);
+    DebugFormat(DEBUG_STREAM_PAF, "%s: fsm=%u, flags=0x%X\n", __func__, s->fsm, s->flags);
 }
 
 //--------------------------------------------------------------------
@@ -1085,7 +1079,7 @@ StreamSplitter::Status HttpSplitter::scan(
     uint32_t n = 0;
     *fp = 0;
 
-    DebugFormat(DEBUG_STREAM_PAF, "%s: len=%u\n", __FUNCTION__, len);
+    DebugFormat(DEBUG_STREAM_PAF, "%s: len=%u\n", __func__, len);
 
     if ( hip->flags & HIF_ERR )
     {
@@ -1126,8 +1120,7 @@ StreamSplitter::Status HttpSplitter::scan(
             break;
         }
     }
-    DebugFormat(DEBUG_STREAM_PAF,
-        "%s: paf=%d, rfp=%u\n", __FUNCTION__, paf, *fp);
+    DebugFormat(DEBUG_STREAM_PAF, "%s: paf=%d, rfp=%u\n", __func__, paf, *fp);
 
     hi_paf_calls++;
     hi_paf_bytes += n;
@@ -1141,8 +1134,7 @@ StreamSplitter::Status HttpSplitter::scan(
 
 bool hi_paf_init(uint32_t cap)
 {
-    DebugFormat(DEBUG_STREAM_PAF,
-        "%s: cap=%u\n",  __FUNCTION__, cap);
+    DebugFormat(DEBUG_STREAM_PAF, "%s: cap=%u\n",  __func__, cap);
 
     hi_cap = cap;
 
@@ -1160,8 +1152,7 @@ void hi_paf_term(void)
 {
     free(hi_fsm);
     DebugFormat(DEBUG_STREAM_PAF,
-        "%s: calls=%u, bytes=%u\n",  __FUNCTION__,
-        hi_paf_calls, hi_paf_bytes);
+        "%s: calls=%u, bytes=%u\n",  __func__, hi_paf_calls, hi_paf_bytes);
 
     hi_fsm = NULL;
     hi_fsm_size = 0;

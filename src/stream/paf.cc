@@ -77,7 +77,7 @@ static uint32_t paf_flush (
 
     DebugFormat(DEBUG_STREAM_PAF,
         "%s: type=%d, fpt=%u, len=%u, tot=%u\n",
-        __FUNCTION__, ft, ps->fpt, s5_len, ps->tot);
+        __func__, ft, ps->fpt, s5_len, ps->tot);
 
     switch ( ft )
     {
@@ -173,7 +173,7 @@ static inline bool paf_eval (
 {
     DebugFormat(DEBUG_STREAM_PAF,
         "%s: paf=%d, idx=%u, len=%u, fpt=%u\n",
-        __FUNCTION__, ps->paf, s5_idx, s5_len, ps->fpt);
+        __func__, ps->paf, s5_idx, s5_len, ps->fpt);
 
     uint16_t fuzz = 0; // FIXIT-L PAF add a little zippedy-do-dah
 
@@ -274,7 +274,7 @@ int32_t paf_check (
 {
     DebugFormat(DEBUG_STREAM_PAF,
         "%s: len=%u, amt=%u, seq=%u, cur=%u, pos=%u, fpt=%u, tot=%u, paf=%d\n",
-        __FUNCTION__, len, total, seq, ps->seq, ps->pos, ps->fpt, ps->tot, ps->paf);
+        __func__, len, total, seq, ps->seq, ps->pos, ps->fpt, ps->tot, ps->paf);
 
     if ( !paf_initialized(ps) )
     {

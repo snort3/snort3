@@ -81,8 +81,7 @@ static int sock_setup(SockImpl* impl)
 
     if ( (impl->sock_c = socket(PF_INET, SOCK_STREAM, 0)) == -1 )
     {
-        DPE(impl->error, "%s: can't create listener socket (%s)\n",
-            __FUNCTION__, strerror(errno));
+        DPE(impl->error, "%s: can't create listener socket (%s)\n", __func__, strerror(errno));
         return -1;
     }
 
@@ -92,15 +91,13 @@ static int sock_setup(SockImpl* impl)
 
     if ( bind(impl->sock_c, (struct sockaddr*)&sin, sizeof(sin)) == -1 )
     {
-        DPE(impl->error, "%s: can't bind listener socket (%s)\n",
-            __FUNCTION__, strerror(errno));
+        DPE(impl->error, "%s: can't bind listener socket (%s)\n", __func__, strerror(errno));
         return -1;
     }
 
     if ( listen(impl->sock_c, 2) == -1 )
     {
-        DPE(impl->error, "%s: can't listen on socket (%s)\n",
-            __FUNCTION__, strerror(errno));
+        DPE(impl->error, "%s: can't listen on socket (%s)\n", __func__, strerror(errno));
         return -1;
     }
     return 0;
@@ -128,8 +125,7 @@ static int sock_recv(SockImpl* impl, int* sock)
     {
         if (errno != EINTR)
         {
-            DPE(impl->error, "%s: can't recv from socket (%s)\n",
-                __FUNCTION__, strerror(errno));
+            DPE(impl->error, "%s: can't recv from socket (%s)\n", __func__, strerror(errno));
             impl->pci.flags = DAQ_USR_FLAG_END_FLOW;
             *sock = -1;
         }
@@ -154,8 +150,7 @@ static int sock_send(
     }
     if ( n == -1 )
     {
-        DPE(impl->error, "%s: can't send on socket (%s)\n",
-            __FUNCTION__, strerror(errno));
+        DPE(impl->error, "%s: can't send on socket (%s)\n", __func__, strerror(errno));
         return -1;
     }
     return 0;
@@ -169,8 +164,7 @@ static int sock_accept(SockImpl* impl, int* sock, struct sockaddr_in* psin)
 
     if ( *sock == -1 )
     {
-        DPE(impl->error, "%s: can't accept incoming connection (%s)\n",
-            __FUNCTION__, strerror(errno));
+        DPE(impl->error, "%s: can't accept incoming connection (%s)\n", __func__, strerror(errno));
         return -1;
     }
     banner = impl->use_a ? "client\n" : "server\n";
@@ -326,9 +320,8 @@ static int socket_daq_config (
     {
         if ( !entry->value || !*entry->value )
         {
-            snprintf(errBuf, errMax,
-                "%s: variable needs value (%s)\n", __FUNCTION__, entry->key);
-                return DAQ_ERROR;
+            snprintf(errBuf, errMax, "%s: variable needs value (%s)\n", __func__, entry->key);
+            return DAQ_ERROR;
         }
         else if ( !strcmp(entry->key, "port") )
         {
@@ -337,8 +330,7 @@ static int socket_daq_config (
 
             if ( *end || impl->port <= 0 || impl->port > 65535 )
             {
-                snprintf(errBuf, errMax, "%s: bad port (%s)\n",
-                    __FUNCTION__, entry->value);
+                snprintf(errBuf, errMax, "%s: bad port (%s)\n", __func__, entry->value);
                 return DAQ_ERROR;
             }
         }
@@ -351,17 +343,15 @@ static int socket_daq_config (
                 impl->pci.ip_proto = IPPROTO_UDP;
             else
             {
-                snprintf(errBuf, errMax, "%s: bad proto (%s)\n",
-                    __FUNCTION__, entry->value);
+                snprintf(errBuf, errMax, "%s: bad proto (%s)\n", __func__, entry->value);
                 return DAQ_ERROR;
             }
         }
         else
         {
             snprintf(errBuf, errMax,
-                "%s: unsupported variable (%s=%s)\n",
-                    __FUNCTION__, entry->key, entry->value);
-                return DAQ_ERROR;
+                "%s: unsupported variable (%s=%s)\n", __func__, entry->key, entry->value);
+            return DAQ_ERROR;
         }
     }
     if ( !impl->pci.ip_proto )
@@ -400,8 +390,7 @@ static int socket_daq_initialize (
 
     if ( !impl )
     {
-        snprintf(errBuf, errMax, "%s: failed to allocate the ipfw context!",
-            __FUNCTION__);
+        snprintf(errBuf, errMax, "%s: failed to allocate the ipfw context!", __func__);
         return DAQ_ERROR_NOMEM;
     }
 
@@ -414,8 +403,7 @@ static int socket_daq_initialize (
 
     if ( !impl->buf )
     {
-        snprintf(errBuf, errMax, "%s: failed to allocate the ipfw buffer!",
-            __FUNCTION__);
+        snprintf(errBuf, errMax, "%s: failed to allocate the ipfw buffer!", __func__);
         socket_daq_shutdown(impl);
         return DAQ_ERROR_NOMEM;
     }
