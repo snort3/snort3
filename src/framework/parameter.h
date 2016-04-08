@@ -28,17 +28,18 @@
 // # | #: | :# | #:#
 // where # is any valid pos|neg dec|hex|octal number
 
+#include <functional>
 #include "main/snort_types.h"
 
 struct SO_PUBLIC Parameter
 {
-    typedef const char* (*RangeQuery)();
+    using RangeQuery = std::function<const char*()>;
 
     enum Type
     {
         PT_TABLE,      // range is Parameter*, no default
         PT_LIST,       // range is Parameter*, no default
-        PT_DYNAMIC,    // range is RangeQuery function ptr
+        PT_DYNAMIC,    // range is RangeQuery* functor
         PT_BOOL,       // if you are reading this, get more coffee
         PT_INT,        // signed 64 bits or less determined by range
         PT_REAL,       // double
@@ -58,7 +59,7 @@ struct SO_PUBLIC Parameter
     };
     const char* name;
     Type type;
-    const void* range;  // nullptr|const char*|RangeQuery|const Parameter*
+    const void* range;  // nullptr|const char*|RangeQuery*|const Parameter*
     const char* deflt;
     const char* help;
 
