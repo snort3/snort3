@@ -254,7 +254,6 @@ bool PerfMonModule::end(const char* fqn, int idx, SnortConfig*)
 void PerfMonModule::get_config(PerfConfig& cfg)
 {
     cfg = config;
-    memset(&config, 0, sizeof(config));
 }
 
 const PegInfo* PerfMonModule::get_pegs() const

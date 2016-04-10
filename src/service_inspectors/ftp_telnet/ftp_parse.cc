@@ -53,7 +53,7 @@
 #include "utils/sfsnprintfappend.h"
 #include "sfip/sf_ip.h"
 
-#define CONF_SEPARATORS " "
+#define CONF_SEPARATORS " \n"
 
 #define ALLOW_BOUNCE      "bounce_to"
 #define CMD_VALIDITY      "cmd_validity"

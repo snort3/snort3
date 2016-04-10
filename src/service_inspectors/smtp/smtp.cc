@@ -188,10 +188,13 @@ SmtpFlowData::SmtpFlowData() : FlowData(flow_id)
 
 SmtpFlowData::~SmtpFlowData()
 {
-    if (session.mime_ssn)
+    if ( session.mime_ssn )
         delete session.mime_ssn;
 
-    if(smtpstats.conc_sessions)
+    if ( session.auth_name )
+        free(session.auth_name);
+
+    if ( smtpstats.conc_sessions )
         smtpstats.conc_sessions--;
 }
 
