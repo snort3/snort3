@@ -192,7 +192,7 @@ bool PerfMonModule::begin(const char* fqn, int, SnortConfig*)
     return true;
 }
 
-static bool add_module(PerfConfig& config, Module *mod, std::string pegs)
+static bool add_module(PerfConfig& config, Module *mod, std::string& pegs)
 {
     const PegInfo* peg_info;
     std::string tok;
@@ -236,9 +236,11 @@ bool PerfMonModule::end(const char* fqn, int idx, SnortConfig*)
         if ( !config.modules.size() )
         {
             auto modules = ModuleManager::get_all_modules();
+            std::string empty;
+
             for ( auto& mod : modules )
             {
-                if ( !add_module(config, mod, std::string()) )
+                if ( !add_module(config, mod, empty) )
                     return false;
             }
         }
