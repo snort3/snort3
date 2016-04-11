@@ -19,9 +19,23 @@ The general data flow is:
 
 4. Switch to another log file for the next cycle.
 
-The type of statistics collection/processing/logging is controlled via configuration.
+The type of statistics collection/processing/logging is controlled via
+configuration.
 
 perf_monitor is implemented as a network_inspector to give it access to the
 per-packet processing mechanism.  It doesn't perform inspection in the
 broad sense, but rather collects and logs information.
 
+Statistics gathering is performed by the PerfTracker classes.
+Each class acts a seperate module for gathering the different forms of
+statistics. The PerfTracker classes pass their data into one of formatter
+classes, which in turn format the data for output to console or to disk.
+
+Currently output formats are:
+
+1. Human-readable text
+
+2. CSV
+
+Support for a FlatBuffers-based ouput format has been planned for future
+releases.
