@@ -1740,9 +1740,9 @@ const u_char* extract_http_cookie(const u_char* p, const u_char* end, HEADER_PTR
             header_ptr->header.uri_end = p;
             return p;
         }
-        header_field_ptr->cookie->next = extra_cookie;
+        extra_cookie->next = header_ptr->cookie.next;
+        header_ptr->cookie.next = extra_cookie;
         header_field_ptr->cookie = extra_cookie;
-        /* extra_cookie->next = NULL; */ /* removed, since calloc NULLs this. */
     }
     else
     {
@@ -2733,6 +2733,7 @@ static int StatelessInspection(Packet* p, HI_SESSION* session, HttpSessionData* 
     }
 
     Client = &session->client;
+    CLR_HEADER(Client);
 
     memset(&uri_ptr, 0x00, sizeof(URI_PTR));
     memset(&post_ptr, 0x00, sizeof(URI_PTR));

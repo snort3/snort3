@@ -150,7 +150,6 @@ void ftpp_ui_config_reset_ftp_cmd_format(FTP_PARAM_FMT* ThisFmt)
         free (ThisFmt->format.literal);
     }
 
-    memset(ThisFmt, 0, sizeof(FTP_PARAM_FMT));
     free(ThisFmt);
 }
 
