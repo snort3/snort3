@@ -34,49 +34,19 @@
 #define MAX_WAIT  300
 #define MAX_PRUNE   5
 
-//-------------------------------------------------------------------------
-// data structs
-// -- key has IP address and port pairs; one port must be zero (wild card)
-//    forming a 3-tuple
-// -- node struct is stored in hash table by key
-// -- each node struct has one or more list structs linked together
-// -- each list struct has a list of flow data
-// -- when a new expect is added, a new list struct is created if a new
-//    node is created or the last list struct of an existing node already
-//    has the same preproc id in the flow data list
-// -- when a new expect is added, the last list struct is used if the
-//    given preproc id is not already in the flow data list
-// -- nodes are preallocated and stored in hash table; if there is no node
-//    available when an expect is added, LRU nodes are pruned
-// -- list structs are also preallocated and stored in free list; if there
-//    is no list struct available when an expect is added, LRU nodes are
-//    pruned freeing up both nodes and list structs
-// -- the number of list structs per node is capped at MAX_LIST; once
-//    reached, requests to add new expects requiring new list structs fail
-// -- the number of data structs per list struct is not capped
-// -- example:  ftp preproc adds a new 3-tuple twice for 2 expected data
-//    channels -> new node with 2 list structs linked to it
-// -- example:  ftp preproc adds a new 3-tuple once and then another
-//    preproc expects the same 3-tuple -> new node with one list struct
-//    is created for ftp and the next request goes in that same list
-//    struct
-// -- new list structs are appended to node's list struct chain
-// -- matching expected sessions are pulled off from the head of the node's
-//    list struct chain
-//
-// FIXIT-M expiration is by node struct but should be by list struct, ie
-//    individual sessions, not all sessions to a given 3-tuple
-//    (this would make pruning a little harder unless we add linkage
-//    a la FlowCache)
-//-------------------------------------------------------------------------
-
 struct ExpectFlow
 {
     struct ExpectFlow* next;
     FlowData* data;
 
+    ~ExpectFlow();
     void clear();
 };
+
+ExpectFlow::~ExpectFlow()
+{
+    clear();
+}
 
 void ExpectFlow::clear()
 {
@@ -184,7 +154,7 @@ inline ExpectNode* ExpectCache::get_node(ExpectKey& key, bool& init)
 {
     ExpectNode* node;
 
-    if ( !list )
+    if ( !free_list )
         node = nullptr;
     else
         node = (ExpectNode*)hash_table->get(&key);
@@ -203,7 +173,7 @@ inline ExpectNode* ExpectCache::get_node(ExpectKey& key, bool& init)
             ++overflows;
             return nullptr;
         }
-        else if ( !list )
+        else if ( !free_list )
         {
             assert(false);
             ++overflows;
@@ -213,12 +183,11 @@ inline ExpectNode* ExpectCache::get_node(ExpectKey& key, bool& init)
     return node;
 }
 
-inline ExpectFlow* ExpectCache::get_flow(
-    ExpectNode* node, unsigned flow_id, int16_t appId)
+inline ExpectFlow* ExpectCache::get_flow(ExpectNode* node, unsigned flow_id, int16_t appId)
 {
     if ( packet_time() > node->expires )
     {
-        node->clear(list);
+        node->clear(free_list);
         node->appId = appId;
         ++prunes;
     }
@@ -248,8 +217,7 @@ inline ExpectFlow* ExpectCache::get_flow(
     return last;
 }
 
-inline bool ExpectCache::set_data(
-    ExpectNode* node, ExpectFlow*& last, FlowData* fd)
+inline bool ExpectCache::set_data(ExpectNode* node, ExpectFlow*& last, FlowData* fd)
 {
     if ( !last )
     {
@@ -259,8 +227,8 @@ inline bool ExpectCache::set_data(
             ++overflows;
             return false;
         }
-        last = list;
-        list = list->next;
+        last = free_list;
+        free_list = free_list->next;
 
         if ( !node->tail )
             node->head = last;
@@ -272,8 +240,14 @@ inline bool ExpectCache::set_data(
 
         node->count++;
     }
-    fd = last->data;
-    last->data = fd;
+    if (last->data)
+    {
+        FlowData* prev_fd;
+        for (prev_fd = last->data; prev_fd && prev_fd->next; prev_fd = prev_fd->next);
+        prev_fd->next = fd;
+    }
+    else
+        last->data = fd;
 
     return true;
 }
@@ -295,14 +269,14 @@ ExpectCache::ExpectCache (uint32_t max)
     max *= MAX_LIST;
 
     pool = new ExpectFlow[max];
-    list = nullptr;
+    free_list = nullptr;
 
     for ( unsigned i = 0; i < max; ++i )
     {
         ExpectFlow* p = pool + i;
         p->data = nullptr;
-        p->next = list;
-        list = p;
+        p->next = free_list;
+        free_list = p;
     }
     memset(&zeroed, 0, sizeof(zeroed));
 
@@ -333,14 +307,6 @@ ExpectCache::~ExpectCache ()
  * Each session can be assigned only one AppId. When new appId mismatches
  * existing appId, new appId and associated data is not stored.
  *
- * @param cliIP - client IP address. All preprocessors must have consistent
- * view of client side of a session.  @param cliPort - client port number
- * @param srvIP - server IP address. All preprocessors must have consisten view
- * of server side of a session.  @param srcPort - server port number @param
- * protocol - IPPROTO_TCP or IPPROTO_UDP.  @param direction - direction of
- * session. Assumed that direction value for session being expected or expected
- * will remain same across different calls to this function.  @param expiry -
- * session expiry in seconds.
  */
 int ExpectCache::add_flow(
     const sfip_t *cliIP, uint16_t cliPort,
@@ -423,6 +389,8 @@ bool ExpectCache::is_expected(Packet* p)
         if ( !node )
             return false;
     }
+    // FIXIT-M - X This should also include a lookup in the table for entries where both 
+    // src and dst ports are known.
     if ( !node->head || (p->pkth->ts.tv_sec > node->expires) )
     {
         hash_table->remove();
@@ -461,16 +429,15 @@ char ExpectCache::process_expected(Packet* p, Flow* lws)
 
     FlowData* fd = head->data;
 
-    while ( fd )
+    while ((fd = head->data))
     {
+        head->data = fd->next;
         lws->set_application_data(fd);
         ++realized;
-
         fd->handle_expected(p);
-        fd = fd->next;
     }
-    head->next = list;
-    list = head;
+    head->next = free_list;
+    free_list = head;
 
     /* If this is 0, we're ignoring, otherwise setting id of new session */
     if ( !node->appId )
