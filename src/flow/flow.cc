@@ -35,7 +35,9 @@ unsigned FlowData:: flow_id = 0;
 FlowData::FlowData(unsigned u, Inspector* ph)
 {
     assert(u > 0);
-    id = u;  handler = ph;
+    id = u;
+    handler = ph;
+    prev = next = nullptr;
     if ( handler )
         handler->add_ref();
 }
