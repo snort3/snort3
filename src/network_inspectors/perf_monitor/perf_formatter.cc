@@ -47,15 +47,6 @@ void PerfFormatter::set_field(unsigned section, unsigned field, PegCount val)
     types[section][field] = FT_PEG_COUNT;
 }
 
-void PerfFormatter::set_field(unsigned section, unsigned field, double val)
-{
-    FormatterValue fv;
-
-    fv.d = val;
-    values[section][field] = fv;
-    types[section][field] = FT_DOUBLE;
-}
-
 void PerfFormatter::set_field(unsigned section, unsigned field, const char* val)
 {
     FormatterValue fv;

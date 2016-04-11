@@ -72,10 +72,6 @@ void CSVFormatter::write(FILE* fh, time_t timestamp)
         {
             switch( types[i][j] )
             {
-                case FT_DOUBLE:
-                    fprintf(fh, ",%g", values[i][j].d);
-                    break;
-
                 case FT_PEG_COUNT:
                     fprintf(fh, ",%" PRIu64, values[i][j].pc);
                     break;
@@ -117,9 +113,9 @@ void CSVFormatter::write(FILE* fh, time_t timestamp)
 TEST_CASE("csv output", "[CSVFormatter]")
 {
     const char* cooked =
-        "#timestamp,name.one,name.two,other.three,other.four,other.five,other.kvp\n"
-        "1234567890,0,1,2,34.5678,hellothere,3,50,60,70\n"
-        "2345678901,0,0,0,0,,0\n";
+        "#timestamp,name.one,name.two,other.three,other.five,other.kvp\n"
+        "1234567890,0,1,2,hellothere,3,50,60,70\n"
+        "2345678901,0,0,0,,0\n";
     
     FILE* fh = tmpfile();
     CSVFormatter f;
@@ -129,7 +125,6 @@ TEST_CASE("csv output", "[CSVFormatter]")
     f.register_field("two");
     f.register_section("other");
     f.register_field("three");
-    f.register_field("four");
     f.register_field("five");
     f.register_field("kvp");
     f.finalize_fields(fh);
@@ -137,14 +132,13 @@ TEST_CASE("csv output", "[CSVFormatter]")
     f.set_field(0, 0, (PegCount)0);
     f.set_field(0, 1, (PegCount)1);
     f.set_field(1, 0, (PegCount)2);
-    f.set_field(1, 1, 34.5678);
-    f.set_field(1, 2, "hellothere");
+    f.set_field(1, 1, "hellothere");
     
     std::vector<PegCount> kvp;
     kvp.push_back(50);
     kvp.push_back(60);
     kvp.push_back(70);
-    f.set_field(1, 3, &kvp);
+    f.set_field(1, 2, &kvp);
 
     f.write(fh, (time_t)1234567890);
 

@@ -54,15 +54,6 @@ void TextFormatter::write(FILE* fh, time_t)
         {
             switch( types[i][j] )
             {
-                case FT_DOUBLE:
-                    if( !head && values[i][j].d != 0 )
-                    {
-                        LogLabel(section_names[i].c_str(), fh);
-                        head = true;
-                    }
-                    LogStat(field_names[i][j].c_str(), values[i][j].d, fh);
-                    break;
-
                 case FT_PEG_COUNT:
                     if( !head && values[i][j].pc != 0 )
                     {
@@ -121,9 +112,6 @@ TEST_CASE("text output", "[TextFormatter]")
         "name\n"
         "                      one: 1\n"
         "--------------------------------------------------\n"
-        "other\n"
-        "                     four: 34.5678\n"
-        "--------------------------------------------------\n"
         "str\n"
         "                     five: hellothere\n"
         "--------------------------------------------------\n"
@@ -139,7 +127,6 @@ TEST_CASE("text output", "[TextFormatter]")
     f.register_field("two");
     f.register_section("other");
     f.register_field("three");
-    f.register_field("four");
     f.register_section("str");
     f.register_field("five");
     f.register_section("vec");
@@ -149,7 +136,6 @@ TEST_CASE("text output", "[TextFormatter]")
     f.set_field(0, 0, (PegCount)1);
     f.set_field(0, 1, (PegCount)0);
     f.set_field(1, 0, (PegCount)0);
-    f.set_field(1, 1, 34.5678);
     f.set_field(2, 0, "hellothere");
 
     std::vector<PegCount> kvp;
