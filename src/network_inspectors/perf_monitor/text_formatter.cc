@@ -31,18 +31,6 @@
 
 using namespace std;
 
-void TextFormatter::register_section(string name)
-{
-    section_names.push_back(name);
-    field_names.push_back(vector<string>());
-    PerfFormatter::register_section(name);
-}
-
-void TextFormatter::register_field_name(string name)
-{
-    field_names[last_section].push_back(name);
-}
-
 void TextFormatter::write(FILE* fh, time_t)
 {
     for( unsigned i = 0; i < values.size(); i++ )

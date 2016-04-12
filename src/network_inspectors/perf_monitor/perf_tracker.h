@@ -21,11 +21,10 @@
 #ifndef PERF_TRACKER_H
 #define PERF_TRACKER_H
 
-#include "perf_formatter.h"
-#include "perf_monitor.h"
-
 #include <cstdio>
 
+#include "perf_formatter.h"
+#include "perf_monitor.h"
 
 class PerfTracker
 {

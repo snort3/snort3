@@ -45,19 +45,44 @@ class PerfFormatter
 public:
     PerfFormatter() {};
     virtual ~PerfFormatter() {};
+
     virtual void register_section(std::string);
     virtual void register_field(std::string, PegCount*);
     virtual void register_field(std::string, const char*);
     virtual void register_field(std::string, std::vector<PegCount>*);
-    virtual void finalize_fields(FILE*) = 0;
+    virtual void finalize_fields(FILE*) {};
     virtual void write(FILE*, time_t) = 0;
 
 protected:
     std::vector<std::vector<FormatterType>> types;
     std::vector<std::vector<FormatterValue>> values;
-    unsigned last_section = -1;
 
-    virtual void register_field_name(std::string) {};
+    std::vector<std::string> section_names;
+    std::vector<std::vector<std::string>> field_names;
+
+    unsigned last_section = -1;
 };
+
+#ifdef UNIT_TEST
+#include <map>
+
+class MockFormatter : public PerfFormatter
+{
+public:
+    std::map<std::string, FormatterValue> public_values;
+
+    MockFormatter() : PerfFormatter() {};
+
+    void write(FILE*, time_t) override
+    {
+        for( unsigned i = 0; i < values.size(); i++ )
+            for( unsigned j = 0; j < values[i].size(); j++ )
+                public_values.insert(std::pair<std::string, FormatterValue>(
+                    section_names[i] + "." + field_names[i][j],
+                    values[i][j]));
+   };
+};
+#endif
+
 #endif
 

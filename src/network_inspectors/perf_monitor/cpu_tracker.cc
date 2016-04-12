@@ -113,10 +113,11 @@ class TestCPUTracker : public CPUTracker
 {
 public:
     struct timeval user, sys, wall;
+    PerfFormatter* output;
 
-    TestCPUTracker(PerfConfig* perf, FILE* fh): CPUTracker(perf)
+    TestCPUTracker(PerfConfig* perf) : CPUTracker(perf)
     {
-        this->fh = fh;       
+        output = formatter;
         cur_time = 1234567890;
         memset(&user, 0, sizeof(wall));
         memset(&sys, 0, sizeof(wall));
@@ -134,7 +135,7 @@ protected:
 
 };
 
-TEST_CASE("Timeval to scalar", "[cpu_tracker]")
+TEST_CASE("timeval to scalar", "[cpu_tracker]")
 {
     struct timeval t, t2;
 
@@ -156,19 +157,20 @@ TEST_CASE("Timeval to scalar", "[cpu_tracker]")
     CHECK(t2.tv_usec == t.tv_usec);
 }
 
-TEST_CASE("csv", "[cpu_tracker]")
+TEST_CASE("process and output", "[cpu_tracker]")
 {
-    const char* cooked =
-    "#timestamp,cpu.user,cpu.system,cpu.wall\n"
-    "1234567890,2100000,3200000,8500000\n"
-    "1234567890,0,0,500000\n"
-    "1234567890,2100000,3200000,8500000\n";
+    const unsigned u_idx = 0, s_idx = 1, w_idx = 2;
+    unsigned pass = 0;
 
-    FILE* f = tmpfile();
+    PegCount expected[3][3] = {
+        {2100000, 3200000, 8500000},
+        {0, 0, 500000},
+        {2100000, 3200000, 8500000}};
 
     PerfConfig config;
-    config.format = PERF_CSV;
-    TestCPUTracker tracker(&config, f);
+    config.format = PERF_MOCK;
+    TestCPUTracker tracker(&config);
+    MockFormatter *formatter = (MockFormatter*)tracker.output;
 
     tracker.reset();
     tracker.user.tv_sec = 2;
@@ -178,9 +180,17 @@ TEST_CASE("csv", "[cpu_tracker]")
     tracker.wall.tv_sec = 8;
     tracker.wall.tv_usec = 500000;
     tracker.process(false);
+    CHECK(*formatter->public_values["cpu.user"].pc == expected[pass][u_idx]);
+    CHECK(*formatter->public_values["cpu.system"].pc == expected[pass][s_idx]);
+    CHECK(*formatter->public_values["cpu.wall"].pc == expected[pass++][w_idx]);
+
     tracker.wall.tv_sec = 9;
     tracker.wall.tv_usec = 0;
     tracker.process(false);
+    CHECK(*formatter->public_values["cpu.user"].pc == expected[pass][u_idx]);
+    CHECK(*formatter->public_values["cpu.system"].pc == expected[pass][s_idx]);
+    CHECK(*formatter->public_values["cpu.wall"].pc == expected[pass++][w_idx]);
+
     tracker.user.tv_sec = 4;
     tracker.user.tv_usec = 200000;
     tracker.sys.tv_sec = 6;
@@ -188,52 +198,9 @@ TEST_CASE("csv", "[cpu_tracker]")
     tracker.wall.tv_sec = 17;
     tracker.wall.tv_usec = 500000;
     tracker.process(false);
-
-    long int size = ftell(f);
-    char* fake_file = (char*) malloc(size + 1);
-    rewind(f);
-    fread(fake_file, size, 1, f);
-    fake_file[size] = '\0';
-
-    CHECK(!strcmp(cooked, fake_file));
-
-    free(fake_file);
-    //tracker destructor closes fh if not null
+    CHECK(*formatter->public_values["cpu.user"].pc == expected[pass][u_idx]);
+    CHECK(*formatter->public_values["cpu.system"].pc == expected[pass][s_idx]);
+    CHECK(*formatter->public_values["cpu.wall"].pc == expected[pass++][w_idx]);
 }
 
-TEST_CASE("text", "[cpu_tracker]")
-{
-    const char* cooked =
-    "--------------------------------------------------\n"
-    "cpu\n"
-    "                     user: 2100000\n"
-    "                   system: 3200000\n"
-    "                     wall: 8500000\n";
-
-    FILE* f = tmpfile();
-
-    PerfConfig config;
-    config.format = PERF_TEXT;
-    TestCPUTracker tracker(&config, f);
-
-    tracker.reset();
-    tracker.user.tv_sec = 2;
-    tracker.user.tv_usec = 100000;
-    tracker.sys.tv_sec = 3;
-    tracker.sys.tv_usec = 200000;
-    tracker.wall.tv_sec = 8;
-    tracker.wall.tv_usec = 500000;
-    tracker.process(false);
-
-    auto size = ftell(f);
-    char* fake_file = (char*) malloc(size + 1);
-    rewind(f);
-    fread(fake_file, size, 1, f);
-    fake_file[size] = '\0';
-
-    CHECK(!strcmp(cooked, fake_file));
-    
-    free(fake_file);
-    //tracker destructor closes fh if not null
-}
 #endif

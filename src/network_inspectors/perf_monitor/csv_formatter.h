@@ -27,14 +27,8 @@ class CSVFormatter : public PerfFormatter
 {
 public:
     CSVFormatter() : PerfFormatter() {};
-    void register_section(std::string) override;
-    void register_field_name(std::string) override;
     void finalize_fields(FILE*) override;
     void write(FILE*, time_t) override;
-
-private:
-    std::vector<std::string> section_names;
-    std::vector<std::vector<std::string>> field_names;
 };
 
 #endif

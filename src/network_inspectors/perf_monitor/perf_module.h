@@ -42,7 +42,12 @@
 enum PerfFormat
 {
     PERF_CSV,
-    PERF_TEXT
+    PERF_TEXT,
+
+#ifdef UNIT_TEST
+    PERF_MOCK
+#endif
+
 };
 
 enum PerfOutput

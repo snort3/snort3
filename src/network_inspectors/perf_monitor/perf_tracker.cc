@@ -55,11 +55,14 @@ PerfTracker::PerfTracker(PerfConfig* config, const char* tracker_fname)
     if (tracker_fname)
         get_instance_file(fname, tracker_fname);
 
-    if (config->format == PERF_CSV)
-        formatter = new CSVFormatter();
-
-    else if (config->format == PERF_TEXT)
-        formatter = new TextFormatter();
+    switch (config->format)
+    {
+        case PERF_CSV: formatter = new CSVFormatter(); break;
+        case PERF_TEXT: formatter = new TextFormatter(); break;
+#ifdef UNIT_TEST
+        case PERF_MOCK: formatter = new MockFormatter(); break;
+#endif
+    }
 }
 
 PerfTracker::~PerfTracker()

@@ -29,19 +29,6 @@
 
 using namespace std;
 
-void CSVFormatter::register_section(string name)
-{
-    section_names.push_back(name);
-    field_names.push_back(vector<string>());
-
-    PerfFormatter::register_section(name);
-}
-
-void CSVFormatter::register_field_name(string name)
-{
-    field_names[last_section].push_back(name);
-}
-
 void CSVFormatter::finalize_fields(FILE* fh)
 {
     string header = "#timestamp";
