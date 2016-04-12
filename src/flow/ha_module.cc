@@ -89,7 +89,6 @@ bool HighAvailabilityModule::set(const char* fqn, Value& v, SnortConfig*)
             config.ports = new PortBitSet;
         v.get_bits(*(config.ports) );
     }
-
     else
         return false;
 
@@ -116,7 +115,7 @@ bool HighAvailabilityModule::end(const char* fqn, int idx, SnortConfig*)
     UNUSED(fqn);
 #endif
 
-    if( config.enabled && !HighAvailabilityManager::instantiate(config.ports,config.daq_channel) )
+    if ( config.enabled && !HighAvailabilityManager::instantiate(config.ports,config.daq_channel) )
     {
         ParseWarning(WARN_CONF, "Illegal HighAvailability configuration");
         return false;

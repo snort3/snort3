@@ -19,15 +19,22 @@
 
 #include "udp_ha.h"
 
+#include "main/snort_debug.h"
+
 void UdpHA::delete_session(Flow*)
 {
+    DebugMessage(DEBUG_STREAM,"UdpHA::delete_session)\n");
 }
 
 void UdpHA::create_session(Flow*)
 {
+    DebugMessage(DEBUG_STREAM,"UdpHA::create_session)\n");
 }
 
-void UdpHA::deactivate_session(Flow*)
+UdpHA* UdpHAManager::udp_ha;
+
+void UdpHAManager::tinit()
 {
+    udp_ha = new UdpHA();
 }
 

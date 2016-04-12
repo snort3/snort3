@@ -114,7 +114,7 @@ static Session* udp_ssn(Flow* lws)
 
 static void udp_tinit()
 {
-    UdpHA* udp_ha = new UdpHA();
+    UdpHAManager::tinit();
 }
 
 static Inspector* udp_ctor(Module* m)

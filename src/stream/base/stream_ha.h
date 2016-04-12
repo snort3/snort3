@@ -29,12 +29,12 @@
 class StreamHAClient : public FlowHAClient
 {
 public:
-    StreamHAClient() : FlowHAClient(true) {}
+    StreamHAClient() : FlowHAClient(true) { }
     void consume(Flow*, HAMessage*);
-    void produce_update(Flow*, HAMessage*);
-    void produce_deletion(Flow*, HAMessage*);
+    void produce(Flow*, HAMessage*);
     size_t get_message_size()
     { return sizeof(LwState); }
+
 private:
 };
 
@@ -42,11 +42,21 @@ class ProtocolHA
 {
 public:
     ProtocolHA();
-    virtual void delete_session(Flow*) {}
-    virtual void create_session(Flow*) {}
-    virtual void deactivate_session(Flow*) {}
+    virtual void delete_session(Flow*) { }
+    virtual void create_session(Flow*) { }
+    virtual void deactivate_session(Flow*) { }
+    virtual void process_deletion(Flow*);
+
 private:
 };
 
+class StreamHAManager
+{
+public:
+    static void tinit();
+    static void process_deletion(Flow*);
+
+    static StreamHAClient* ha_client;
+};
 #endif
 

@@ -74,6 +74,7 @@ public:
     bool transmit_message(SCMessage* msg);
     void set_message_port(SCMessage* msg, SCPort port);
     void set_default_port(SCPort port);
+    Connector::Direction get_direction();
 
     Connector* connector_receive;
     Connector* connector_transmit;

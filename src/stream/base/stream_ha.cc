@@ -19,20 +19,46 @@
 
 #include "stream_ha.h"
 
+#include "main/snort_debug.h"
+
+struct LwState;
+typedef LwState SessionHAContent;
+
 void StreamHAClient::consume(Flow*, HAMessage*)
 {
+    DebugMessage(DEBUG_STREAM,"StreamHAClient::consume()\n");
 }
 
-void StreamHAClient::produce_update(Flow*, HAMessage*)
+void StreamHAClient::produce(Flow* flow, HAMessage* msg)
 {
-}
-
-void StreamHAClient::produce_deletion(Flow*, HAMessage*)
-{
+    DebugMessage(DEBUG_STREAM,"StreamHAClient::produce()\n");
+    // Check for buffer overflows
+    if ( (int)(msg->cursor - msg->content()) < (int)(msg->content_length() -
+        sizeof(SessionHAContent)) )
+    {
+        memcpy(msg->cursor,&(flow->ssn_state),sizeof(SessionHAContent));
+        msg->cursor += sizeof(SessionHAContent);
+    }
 }
 
 ProtocolHA::ProtocolHA()
 {
-    int a = 0;
+    DebugMessage(DEBUG_STREAM,"ProtocolHA::ProtocolHA()\n");
+}
+
+void ProtocolHA::process_deletion(Flow* flow)
+{
+    HighAvailabilityManager::process_deletion(flow);
+}
+
+StreamHAClient* StreamHAManager::ha_client;
+
+void StreamHAManager::tinit()
+{
+    ha_client = new StreamHAClient();
+}
+
+void StreamHAManager::process_deletion(Flow*)
+{
 }
 

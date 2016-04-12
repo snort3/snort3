@@ -8,4 +8,7 @@ file_connector.cc \
 file_connector.h \
 file_connector_config.h
 
+if BUILD_UNIT_TESTS
+SUBDIRS = test
+endif
 

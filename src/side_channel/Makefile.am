@@ -7,3 +7,7 @@ side_channel_module.h \
 side_channel.cc \
 side_channel.h
 
+if BUILD_UNIT_TESTS
+SUBDIRS = test
+endif
+

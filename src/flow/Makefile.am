@@ -20,3 +20,10 @@ ha.cc ha.h \
 prune_stats.h \
 ha_module.cc ha_module.h \
 session.h
+
+AM_CXXFLAGS = @AM_CXXFLAGS@
+
+if BUILD_UNIT_TESTS
+SUBDIRS = test
+endif
+

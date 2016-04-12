@@ -37,31 +37,40 @@ class Flow;
 // NOTE: The type, masks, and count values must be in sync,
 typedef uint16_t FlowHAClientHandle;
 const FlowHAClientHandle session_ha_client = 0x0000;
+const FlowHAClientHandle all_clients = 0xffff;
 const uint8_t max_clients = 16;
+
+enum HAEvent
+{
+    ha_delete_event = 1,
+    ha_update_event = 2
+};
 
 // Each active flow will have an associated FlowHAState instance.
 class FlowHAState
 {
 public:
-    static const uint8_t CRITICAL = 0x20;
-    static const uint8_t MAJOR = 0x10;
+    static const uint8_t critical = 0x20;
+    static const uint8_t major = 0x10;
 
-    static const uint8_t NEW = 0x01;
-    static const uint8_t MODIFIED = 0x02;
-    static const uint8_t DELETED = 0x04;
-    static const uint8_t STANDBY = 0x08;
+    static const uint8_t created = 0x01;
+    static const uint8_t modified = 0x02;
+    static const uint8_t deleted = 0x04;
+    static const uint8_t standby = 0x08;
 
     FlowHAState();
     ~FlowHAState();
 
     void set_pending(FlowHAClientHandle);
-    bool check_and_clear_pending(FlowHAClientHandle);
-    void set_state(uint8_t state);
-    void set_state(uint8_t state, uint8_t priority);
-    void clr_state(uint8_t state);
-    void clr_state(uint8_t state, uint8_t priority);
-    bool critical();
-    bool major();
+    void clear_pending(FlowHAClientHandle);
+    bool check_pending(FlowHAClientHandle);
+    void set(uint8_t state);
+    void set(uint8_t state, uint8_t priority);
+    void clear(uint8_t state);
+    void clear(uint8_t state, uint8_t priority);
+    bool check(uint8_t state);
+    bool is_critical();
+    bool is_major();
     static void config_lifetime(timeval);
     bool old_enough();
     void set_next_update();
@@ -85,7 +94,6 @@ struct __attribute__((__packed__)) HAMessageHeader
     uint8_t version;
     uint16_t total_length;
     uint8_t key_type;
-    uint8_t key_size;
 };
 
 struct __attribute__((__packed__)) HAClientHeader
@@ -98,25 +106,31 @@ struct __attribute__((__packed__)) HAClientHeader
 class HAMessage
 {
 public:
-    HAMessage();
-    ~HAMessage();
+    HAMessage(SCMessage* msg)
+    { sc_msg = msg; }
+    ~HAMessage() { }
+
+    uint8_t* content()
+    { return sc_msg->content; }
+    uint16_t content_length()
+    { return sc_msg->content_length; }
+    uint8_t* cursor;
 
 private:
     SCMessage* sc_msg;
-    uint8_t* cursor;
 };
 
 // A FlowHAClient subclass for each producer/consumer of flow HA data
 class FlowHAClient
 {
 public:
-    ~FlowHAClient();
-    virtual void consume(Flow*, HAMessage*) {};
-    virtual void produce_update(Flow*, HAMessage*) {};
-    virtual void produce_deletion(Flow*, HAMessage*) {};
-    virtual size_t get_message_size() {return 0;}
+    virtual ~FlowHAClient() { }
+    virtual void consume(Flow*, HAMessage*) { }
+    virtual void produce(Flow*, HAMessage*) { }
+    virtual size_t get_message_size() { return 0; }
     FlowHAClientHandle handle;  // Actual handle for the instance
     static uint8_t s_handle_counter; // next handle to be assigned
+
 protected:
     FlowHAClient(bool); // Arg == true for session client
 };
@@ -158,6 +172,7 @@ public:
     static void process_deletion(Flow*);
     // Look for and dispatch receive messages.
     static void process_receive();
+
 private:
     HighAvailabilityManager() = delete;
     static bool use_daq_channel;

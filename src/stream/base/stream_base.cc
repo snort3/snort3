@@ -163,7 +163,7 @@ void StreamBase::tinit()
     flow_con = new FlowControl;
     InspectSsnFunc f;
 
-    StreamHAClient* ha_client = new StreamHAClient();
+    StreamHAManager::tinit();
 
     if ( config->ip_cfg.max_sessions )
     {
