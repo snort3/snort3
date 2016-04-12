@@ -17,57 +17,37 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "snort_config.h"
+#include "snort.h"
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 
-#include <mutex>
-#include <string>
-#include <thread>
-
 #include <assert.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/select.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <setjmp.h>
-#include <sys/stat.h>
-#include <time.h>
-#include <syslog.h>
 #include <ctype.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include <fcntl.h>
 #include <netdb.h>
+#include <string.h>
+#include <syslog.h>
+#include <time.h>
+#include <unistd.h>
 
 #ifdef HAVE_MALLOC_TRIM
 #include <malloc.h>
 #endif
 
-#if !defined(CATCH_SEGV)
-# include <sys/resource.h>
-#endif
+#include <netinet/in.h>
+#include <sys/stat.h>
 
-#include "control/idle_processing.h"
 #include "detection/detect.h"
 #include "detection/detection_util.h"
 #include "detection/fp_config.h"
-#include "detection/fp_create.h"
 #include "detection/fp_detect.h"
 #include "detection/tag.h"
-#include "events/event_queue.h"
 #include "file_api/file_service.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
-#include "flow/flow.h"
 #include "flow/flow_control.h"
 #include "flow/ha.h"
 #include "framework/mpse.h"
@@ -78,7 +58,6 @@
 #include "latency/rule_latency.h"
 #include "managers/action_manager.h"
 #include "managers/codec_manager.h"
-#include "managers/connector_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/ips_manager.h"
 #include "managers/event_manager.h"
@@ -86,13 +65,12 @@
 #include "managers/mpse_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
-#include "network_inspectors/perf_monitor/perf_monitor.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
 #include "packet_io/trough.h"
 #include "parser/cmd_line.h"
-#include "parser/config_file.h"
 #include "parser/parser.h"
+#include "perf_monitor/perf_monitor.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"
@@ -108,8 +86,8 @@
 #include "piglet/piglet_manager.h"
 #endif
 
-#include "main.h"
 #include "build.h"
+#include "main.h"
 #include "snort_config.h"
 #include "snort_debug.h"
 #include "thread_config.h"
