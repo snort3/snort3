@@ -27,7 +27,7 @@ struct FlowProto
 {
     std::vector<PegCount> src;
     std::vector<PegCount> dst;
-    PegCount high;
+    PegCount high = 0;
 };
 
 class FlowTracker : public PerfTracker

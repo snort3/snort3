@@ -47,9 +47,6 @@ static const Parameter s_params[] =
     { "cpu", Parameter::PT_BOOL, "nullptr", "false",
       "enable cpu statistics" },
     
-    { "events", Parameter::PT_BOOL, nullptr, "false",
-      "report on qualified vs non-qualified events" },
-
     { "flow", Parameter::PT_BOOL, nullptr, "false",
       "enable traffic statistics" },
 
@@ -111,11 +108,6 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     {
         if ( v.get_bool() )
             config.perf_flags |= PERF_CPU;
-    }
-    else if ( v.is("events") )
-    {
-        if ( v.get_bool() )
-            config.perf_flags |= PERF_EVENT;
     }
     else if ( v.is("flow") )
     {

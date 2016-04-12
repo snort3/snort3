@@ -23,10 +23,10 @@
 #include "utils/stats.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
-
 #include <cstdio>
 #include <cstring>
+
+#include "catch/catch.hpp"
 #endif
 
 using namespace std;

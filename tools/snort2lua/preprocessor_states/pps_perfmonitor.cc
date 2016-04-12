@@ -82,7 +82,7 @@ bool PerfMonitor::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("max");
 
         else if (!keyword.compare("events"))
-            tmpval = table_api.add_option("events", true);
+            table_api.add_deleted_comment("events");
 
         else if (!keyword.compare("console"))
         {
