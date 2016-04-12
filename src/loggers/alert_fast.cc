@@ -208,7 +208,7 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
 
         if (SnortConfig::alert_interface())
         {
-            TextLog_Print(fast_log, " <%s> ", PRINT_INTERFACE(DAQ_GetInterfaceSpec()));
+            TextLog_Print(fast_log, " <%s> ", PRINT_INTERFACE(SFDAQ::get_interface_spec()));
         }
 
         if ( msg )

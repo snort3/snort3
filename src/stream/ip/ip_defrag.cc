@@ -87,6 +87,7 @@
 #include "protocols/layer.h"
 #include "protocols/ipv4_options.h"
 #include "protocols/packet_manager.h"
+#include "main/snort.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
 #include "time/timersub.h"
@@ -1076,7 +1077,7 @@ void Defrag::tinit()
         defrag_pkts[i] = nullptr;
 
     defrag_pkts[0] = PacketManager::encode_new();
-    pkt_snaplen = DAQ_GetSnapLen();
+    pkt_snaplen = SFDAQ::get_snap_len();
 }
 
 void Defrag::tterm()

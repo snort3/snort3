@@ -40,17 +40,18 @@ static THREAD_LOCAL PacketCallback main_func = Snort::packet_callback;
 // analyzer
 //-------------------------------------------------------------------------
 
-Analyzer::Analyzer(const char* s)
+Analyzer::Analyzer(unsigned i, const char* s)
 {
     done = false;
     count = 0;
+    id = i;
     source = s;
     command = AC_NONE;
     swap = nullptr;
-    daqh = nullptr;
+    daq_instance = nullptr;
 }
 
-void Analyzer::operator()(unsigned id, Swapper* ps)
+void Analyzer::operator()(Swapper* ps)
 {
     set_thread_type(STHREAD_TYPE_PACKET);
 
@@ -58,7 +59,7 @@ void Analyzer::operator()(unsigned id, Swapper* ps)
     ps->apply();
 
     Snort::thread_init(source);
-    daqh = DAQ_GetHandle();
+    daq_instance = SFDAQ::get_local_instance();
 
     analyze();
 
@@ -74,7 +75,7 @@ bool Analyzer::execute(AnalyzerCommand ac)
         return false;
 
     if ( ac == AC_STOP )
-        DAQ_BreakLoop(-1, daqh);
+        daq_instance->break_loop(-1);
 
     // FIXIT-L executing a command while paused
     // will cause a resume
@@ -138,7 +139,7 @@ void Analyzer::analyze()
             if ( command == AC_PAUSE )
                 continue;
         }
-        if ( DAQ_Acquire(0, main_func, NULL) )
+        if ( daq_instance->acquire(0, main_func) )
             break;
 
         // FIXIT-L acquire(0) won't return until no packets, signal, etc.

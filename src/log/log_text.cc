@@ -41,12 +41,12 @@
 #include "detection/detection_util.h"
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
-#include "utils/snort_bounds.h"
-#include "utils/util.h"
-#include "utils/util_net.h"
 #include "packet_io/sfdaq.h"
 #include "service_inspectors/http_inspect/hi_main.h"  // FIXIT bad dependency
 #include "sfip/sf_ip.h"
+#include "utils/snort_bounds.h"
+#include "utils/util.h"
+#include "utils/util_net.h"
 
 #include "protocols/packet.h"
 #include "protocols/layer.h"
@@ -170,7 +170,7 @@ static void LogGREHeader(TextLog* log, Packet* p)
  */
 void Log2ndHeader(TextLog* log, Packet* p)
 {
-    switch (DAQ_GetBaseProtocol())
+    switch (SFDAQ::get_base_protocol())
     {
     case DLT_EN10MB:            /* Ethernet */
         if (p && (p->num_layers > 0))
@@ -181,7 +181,7 @@ void Log2ndHeader(TextLog* log, Packet* p)
         {
             // FIXIT-L should only be output once!
             ErrorMessage("Datalink %i type 2nd layer display is not "
-                "supported\n", DAQ_GetBaseProtocol());
+                "supported\n", SFDAQ::get_base_protocol());
         }
     }
 }

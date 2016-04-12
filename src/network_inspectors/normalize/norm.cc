@@ -166,7 +166,7 @@ static inline NormMode get_norm_mode(const NormalizerConfig* const c, const Pack
 { 
     NormMode mode = c->norm_mode;
 
-    if ( DAQ_GetInterfaceMode(p->pkth) != DAQ_MODE_INLINE )
+    if ( !SFDAQ::forwarding_packet(p->pkth) )
         mode = NORM_MODE_TEST;
 
     return mode;

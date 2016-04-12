@@ -42,16 +42,17 @@
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "memory/memory_module.h"
+#include "packet_io/sfdaq_module.h"
 #include "parser/config_file.h"
 #include "parser/parse_conf.h"
 #include "parser/parse_ip.h"
 #include "parser/parser.h"
 #include "profiler/profiler.h"
 #include "search_engines/pat_stats.h"
+#include "side_channel/side_channel_module.h"
 #include "sfip/sf_ip.h"
 #include "target_based/sftarget_data.h"
 #include "target_based/snort_protocols.h"
-#include "side_channel/side_channel_module.h"
 
 using namespace std;
 
@@ -846,9 +847,6 @@ static const Parameter packets_params[] =
     { "bpf_file", Parameter::PT_STRING, nullptr, nullptr,
       "file with BPF to select traffic for Snort" },
 
-    { "enable_inline_init_failopen", Parameter::PT_BOOL, nullptr, "true",
-      "whether to pass traffic during later stage of initialization to avoid drops" },
-
     { "limit", Parameter::PT_INT, "0:", "0",
       "maximum number of packets to process before stopping (0 is unlimited)" },
 
@@ -879,9 +877,6 @@ bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("bpf_file") )
         sc->bpf_file = v.get_string();
 
-    else if ( v.is("enable_inline_init_failopen") )
-        v.update_mask(sc->run_flags, RUN_FLAG__DISABLE_FAILOPEN, true);
-
     else if ( v.is("limit") )
         sc->pkt_cnt = v.get_long();
 
@@ -897,95 +892,6 @@ bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
     return true;
 }
 
-//-------------------------------------------------------------------------
-// daq module
-//-------------------------------------------------------------------------
-
-static const Parameter daq_params[] =
-{
-    // FIXIT-L should be a list?
-    { "dir", Parameter::PT_STRING, nullptr, nullptr,
-      "directory where to search for DAQ plugins" },
-
-    { "mode", Parameter::PT_SELECT, "passive | inline | read-file", nullptr,
-      "set mode of operation" },
-
-    { "no_promisc", Parameter::PT_BOOL, nullptr, "false",
-      "whether to put DAQ device into promiscuous mode" },
-
-    // FIXIT-L no default; causes
-    // ERROR: setting DAQ to pcap but pcap already selected.
-    { "type", Parameter::PT_STRING, nullptr, nullptr,
-      "select type of DAQ" },
-
-    // FIXIT-L should be a list?
-    { "vars", Parameter::PT_STRING, nullptr, nullptr,
-      "comma separated list of name=value DAQ-specific parameters" },
-
-    { "snaplen", Parameter::PT_INT, "0:65535", "deflt",
-      "set snap length (same as -P)" },
-
-    { "decode_data_link", Parameter::PT_BOOL, nullptr, "false",
-      "display the second layer header info" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-#define daq_help \
-    "configure packet acquisition interface"
-
-class DaqModule : public Module
-{
-public:
-    DaqModule() : Module("daq", daq_help, daq_params) { }
-    bool set(const char*, Value&, SnortConfig*) override;
-    const PegInfo* get_pegs() const override { return daq_names; }
-    PegCount* get_counts() const override;
-};
-
-bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
-{
-    if ( v.is("dir") )
-        ConfigDaqDir(sc, v.get_string());
-
-    else if ( v.is("mode") )
-        ConfigDaqMode(sc, v.get_string());
-
-    else if ( v.is("no_promisc") )
-        v.update_mask(sc->run_flags, RUN_FLAG__NO_PROMISCUOUS);
-
-    else if ( v.is("type") )
-        ConfigDaqType(sc, v.get_string());
-
-    else if ( v.is("vars") )
-    {
-        string tok;
-        v.set_first_token();
-
-        while ( v.get_next_csv_token(tok) )
-            ConfigDaqVar(sc, tok.c_str());
-    }
-    else if ( v.is("decode_data_link") )
-    {
-        if ( v.get_bool() )
-            ConfigDecodeDataLink(sc, "");
-    }
-    else if ( v.is("snaplen") )
-        sc->pkt_snaplen = v.get_long();
-
-    else
-        return false;
-
-    return true;
-}
-
-PegCount* DaqModule::get_counts() const
-{
-    static THREAD_LOCAL DAQStats ds;
-
-    get_daq_stats(ds);
-    return (PegCount*) &ds;
-}
 
 //-------------------------------------------------------------------------
 // attribute_table module
@@ -2154,17 +2060,17 @@ void module_init()
     ModuleManager::add_module(get_snort_module());
 
     // these modules are not policy specific
-    ModuleManager::add_module(new MemoryModule);
     ModuleManager::add_module(new ClassificationsModule);
-    ModuleManager::add_module(new DaqModule);
+    ModuleManager::add_module(new CodecModule);
     ModuleManager::add_module(new DetectionModule);
+    ModuleManager::add_module(new MemoryModule);
     ModuleManager::add_module(new PacketsModule);
     ModuleManager::add_module(new ProcessModule);
     ModuleManager::add_module(new ProfilerModule);
     ModuleManager::add_module(new ReferencesModule);
     ModuleManager::add_module(new RuleStateModule);
     ModuleManager::add_module(new SearchEngineModule);
-    ModuleManager::add_module(new CodecModule);
+    ModuleManager::add_module(new SFDAQModule);
 
     // these could but prolly shouldn't be policy specific
     // or should be broken into policy and non-policy parts

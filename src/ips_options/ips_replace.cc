@@ -63,7 +63,7 @@ static bool replace_ok()
     if ( !SnortConfig::inline_mode() )
         return false;
 
-    if ( !DAQ_CanReplace() )
+    if ( !SFDAQ::can_replace() )
     {
         if ( !warned )
         {

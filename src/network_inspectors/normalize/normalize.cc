@@ -272,10 +272,10 @@ static void no_dtor(Inspector* p)
 
 static void no_tinit()
 {
-    if ( DAQ_CanReplace() )
+    if ( SFDAQ::can_replace() )
         t_flags = NORM_ALL;
 
-    if ( !DAQ_CanInject() )
+    if ( !SFDAQ::can_inject() )
         t_flags &= ~NORM_IP4_TRIM;
 }
 

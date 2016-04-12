@@ -922,7 +922,7 @@ void U2Logger::open()
         FatalError("%s(%d) Failed to copy unified2 file name\n",
             __FILE__, __LINE__);
     }
-    u2.base_proto = htonl(DAQ_GetBaseProtocol());
+    u2.base_proto = htonl(SFDAQ::get_base_protocol());
 
     Unified2InitFile(&config);
 

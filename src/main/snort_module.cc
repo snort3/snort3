@@ -41,6 +41,7 @@ using namespace std;
 #include "framework/parameter.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
+#include "packet_io/sfdaq_config.h"
 #include "parser/config_file.h"
 #include "parser/parser.h"
 #include "parser/parse_utils.h"
@@ -293,7 +294,7 @@ static const Parameter s_params[] =
     { "--dump-defaults", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output module defaults in Lua format" },
 
-    { "--dump-version", Parameter::PT_STRING, "(optional)", nullptr,
+    { "--dump-version", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output the version, the whole version, and only the version" },
 
     { "--enable-inline-test", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -515,11 +516,21 @@ public:
     { return snort_cmds; }
 #endif
 
+    bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
     const PegInfo* get_pegs() const override { return proc_names; }
     PegCount* get_counts() const override { return (PegCount*) &proc_stats; }
     bool global_stats() const override { return true; }
+private:
+    int instance_id;
 };
+
+bool SnortModule::begin(const char* fqn, int, SnortConfig*)
+{
+    if (!strcmp(fqn, "snort"))
+        instance_id = -1;
+    return true;
+}
 
 bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 {
@@ -560,7 +571,13 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__STATIC_HASH;
 
     else if ( v.is("-i") )
-        Trough::add_source(Trough::SOURCE_LIST, v.get_string());
+    {
+        instance_id++;
+        if (instance_id > 0)
+            sc->daq_config->set_input_spec(v.get_string(), instance_id);
+        else
+            sc->daq_config->set_input_spec(v.get_string());
+    }
 
 #ifdef BUILD_SHELL
     else if ( v.is("-j") )
@@ -609,7 +626,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         config_set_var(sc, v.get_string());
 
     else if ( v.is("-s") )
-        sc->pkt_snaplen = v.get_long();
+        sc->daq_config->set_mru_size(v.get_long());
 
     else if ( v.is("-T") )
         sc->run_flags |= RUN_FLAG__TEST;
@@ -624,13 +641,13 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigSetUid(sc, v.get_string());
 
     else if ( v.is("-V") )
-        help_version(sc, v.get_string());
+        help_version(sc);
 
     else if ( v.is("-v") )
         ConfigVerbose(sc, v.get_string());
 
     else if ( v.is("-W") )
-        list_interfaces(sc, v.get_string());
+        list_interfaces(sc);
 
 #if defined(DLT_IEEE802_11)
     else if ( v.is("-w") )
@@ -662,19 +679,21 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigCreatePidFile(sc, v.get_string());
 
     else if ( v.is("--daq") )
-        ConfigDaqType(sc, v.get_string());
+        sc->daq_config->set_module_name(v.get_string());
 
     else if ( v.is("--daq-dir") )
-        ConfigDaqDir(sc, v.get_string());
+        sc->daq_config->add_module_dir(v.get_string());
 
     else if ( v.is("--daq-list") )
-        list_daqs(sc, v.get_string());
-
-    else if ( v.is("--daq-mode") )
-        ConfigDaqMode(sc, v.get_string());
+        list_daqs(sc);
 
     else if ( v.is("--daq-var") )
-        ConfigDaqVar(sc, v.get_string());
+    {
+        if (instance_id < 0)
+            sc->daq_config->set_variable(v.get_string());
+        else
+            sc->daq_config->set_variable(v.get_string(), instance_id);
+    }
 
     else if ( v.is("--dirty-pig") )
         ConfigDirtyPig(sc, v.get_string());
@@ -689,7 +708,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         dump_defaults(sc, v.get_string());
 
     else if ( v.is("--dump-version") )
-        dump_version(sc, v.get_string());
+        dump_version(sc);
 
     else if ( v.is("--enable-inline-test") )
         sc->run_flags |= RUN_FLAG__INLINE_TEST;
@@ -820,7 +839,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->pkt_skip = v.get_long();
 
     else if ( v.is("--snaplen") )
-        sc->pkt_snaplen = v.get_long();
+        sc->daq_config->set_mru_size(v.get_long());
 
     else if ( v.is("--stdin-rules") )
         sc->stdin_rules = true;
@@ -836,7 +855,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         catch_set_filter(v.get_string());
 #endif
     else if ( v.is("--version") )
-        help_version(sc, v.get_string());
+        help_version(sc);
 
     else if ( v.is("--warn-all") )
         sc->warning_flags = 0xFFFFFFFF;

@@ -19,22 +19,16 @@
 
 // active.c author Russ Combs <rcombs@sourcefire.com>
 
-#include "active.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "main/snort_config.h"
-#include "utils/dnet_header.h"
-#include "stream/stream_api.h"
-#include "framework/codec.h"
+#include "active.h"
+
 #include "managers/action_manager.h"
-#include "protocols/packet_manager.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/tcp.h"
-#include "protocols/protocol_ids.h"
-#include "parser/parser.h"
+#include "utils/dnet_header.h"
 
 #define MAX_ATTEMPTS 20
 
@@ -58,7 +52,7 @@ typedef int (* send_t) (
 
 static THREAD_LOCAL eth_t* s_link = NULL;
 static THREAD_LOCAL ip_t* s_ipnet = NULL;
-static THREAD_LOCAL send_t s_send = DAQ_Inject;
+static THREAD_LOCAL send_t s_send = SFDAQ::inject;
 
 //--------------------------------------------------------------------
 // helpers
@@ -82,7 +76,7 @@ int Active::send_ip(
 static inline EncodeFlags GetFlags(void)
 {
     EncodeFlags flags = ENC_FLAG_ID;
-    if ( DAQ_RawInjection() || s_ipnet )
+    if ( SFDAQ::can_inject_raw() || s_ipnet )
         flags |= ENC_FLAG_RAW;
     return flags;
 }
@@ -165,7 +159,7 @@ bool Active::init(SnortConfig* sc)
     if ( s_enabled && !s_attempts )
         s_attempts = 1;
 
-    if ( s_enabled && (!DAQ_CanInject() || !sc->respond_device.empty()) )
+    if ( s_enabled && (!SFDAQ::can_inject() || !sc->respond_device.empty()) )
     {
         if ( SnortConfig::read_mode() || !open(sc->respond_device.c_str()) )
         {
@@ -376,7 +370,7 @@ void Active::update_status(const Packet* p, bool force)
     {
         if ( SnortConfig::inline_mode() )
         {
-            if ( DAQ_GetInterfaceMode(p->pkth) != DAQ_MODE_INLINE )
+            if ( !SFDAQ::forwarding_packet(p->pkth) )
                 active_status = AST_WOULD;
         }
         else if ( SnortConfig::inline_test_mode() )
@@ -394,7 +388,7 @@ void Active::daq_update_status(const Packet* p)
     }
     else if ( active_status != AST_FORCE )
     {
-        if ( DAQ_GetInterfaceMode(p->pkth) != DAQ_MODE_INLINE )
+        if ( !SFDAQ::forwarding_packet(p->pkth) )
             active_status = AST_WOULD;
     }
 }

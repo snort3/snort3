@@ -80,7 +80,6 @@ static Swapper* swapper = NULL;
 static int exit_logged = 0;
 static int main_exit_code = 0;
 static bool paused = false;
-static bool unknown_source = false;
 
 static bool pause_enabled = false;
 #ifdef BUILD_SHELL
@@ -241,21 +240,25 @@ public:
 
     void set_index(unsigned index) { idx = index; }
 
-    void start(const char*, Swapper*);
+    void start(const char* source, Swapper*);
     void stop();
 
     void execute(AnalyzerCommand);
     void swap(Swapper*);
+
+    bool has_started() { return starts > 0; }
 private:
     std::thread* athread;
     unsigned idx;
+    unsigned starts = 0;
 };
 
 void Pig::start(const char* source, Swapper* ps)
 {
     LogMessage("++ [%u] %s\n", idx, source);
-    analyzer = new Analyzer(source);
-    athread = new std::thread(std::ref(*analyzer), idx, ps);
+    analyzer = new Analyzer(idx, source);
+    athread = new std::thread(std::ref(*analyzer), ps);
+    starts++;
 }
 
 void Pig::stop()
@@ -711,16 +714,19 @@ static bool just_validate()
     if ( SnortConfig::test_mode() )
         return true;
 
-    // pcap requires a source; as a convenience, if none given
-    // just validate instead of erroring out
-    if ( !Trough::get_queue_size() and strcmp(DAQ_GetType(), "pcap") )
-        unknown_source = true;
-
     if ( use_shell(snort_conf) )
         return false;
 
-    if ( !Trough::get_queue_size() and !strcmp(DAQ_GetType(), "pcap") )
-        return true;
+    /* FIXIT-L X This should really check if the DAQ module was unset as it could be explicitly
+        set to the default value */
+    if ( !strcmp(SFDAQ::get_type(), SFDAQ::default_type()) )
+    {
+        if ( SnortConfig::read_mode() && !Trough::get_queue_size() )
+            return true;
+
+        if ( !SnortConfig::read_mode() && !SFDAQ::get_input_spec(snort_conf, 0) )
+            return true;
+    }
 
     return false;
 }
@@ -781,7 +787,7 @@ static bool set_mode()
 
 static inline bool dont_stop()
 {
-    if ( paused or unknown_source or Trough::has_next() )
+    if ( paused || Trough::has_next() )
         return true;
 
     if ( pause_enabled )
@@ -799,37 +805,47 @@ static const char* get_source()
     if ( Trough::has_next() )
         return Trough::get_next();
 
-    if ( unknown_source )
-    {
-        unknown_source = false;
-        return "";
-    }
     return nullptr;
 }
 
 static void main_loop()
 {
-    unsigned idx = max_pigs, swine = 0;
+    unsigned idx = max_pigs, unborn_pigs = 0, swine = 0;
+
     init_main_thread_sig();
 
-    while ( !exit_logged and (swine or dont_stop()) )
+    if (!SnortConfig::read_mode())
+        unborn_pigs = max_pigs;
+
+    while (!exit_logged && (swine || unborn_pigs || dont_stop()))
     {
         if ( ++idx >= max_pigs )
             idx = 0;
 
-        if ( !paused )
+        if (!paused)
         {
             Pig& pig = pigs[idx];
 
-            if ( pig.analyzer )
+            if (pig.analyzer)
             {
-                if ( pig.analyzer->is_done() )
+                if (pig.analyzer->is_done())
                 {
                     pig.stop();
                     --swine;
                 }
             }
-            else if ( const char* src = get_source() )
+            else if (!SnortConfig::read_mode())
+            {
+                if (!pig.has_started() && unborn_pigs)
+                {
+                    Swapper* swapper = new Swapper(snort_conf, SFAT_GetConfig());
+                    pig.start(SFDAQ::get_input_spec(snort_conf, idx), swapper);
+                    unborn_pigs--;
+                    ++swine;
+                    continue;
+                }
+            }
+            else if (const char* src = get_source())
             {
                 Swapper* swapper = new Swapper(snort_conf, SFAT_GetConfig());
                 pig.start(src, swapper);

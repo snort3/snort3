@@ -35,31 +35,18 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "tag.h"
-#include "pcrm.h"
-#include "fp_create.h"
-#include "fp_detect.h"
-#include "signature.h"
-#include "detection_util.h"
 #include "detection_defines.h"
+#include "fp_detect.h"
+#include "tag.h"
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
-#include "main/analyzer.h"
-#include "utils/util.h"
-#include "ports/port_object.h"
-#include "filters/sfthreshold.h"
-#include "events/event_wrapper.h"
-#include "events/event_queue.h"
 #include "latency/packet_latency.h"
-#include "profiler/profiler.h"
-#include "stream/stream_api.h"
-#include "packet_io/active.h"
-#include "managers/inspector_manager.h"
 #include "managers/event_manager.h"
-#include "protocols/ip.h"
+#include "managers/inspector_manager.h"
+#include "packet_io/active.h"
+#include "ports/port_object.h"
+#include "profiler/profiler_defs.h"
 #include "sfip/sf_ipvar.h"
+#include "utils/stats.h"
 
 #define CHECK_SRC_IP         0x01
 #define CHECK_DST_IP         0x02

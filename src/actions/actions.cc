@@ -22,15 +22,10 @@
 #include "config.h"
 #endif
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "utils/util.h"
-#include "stream/stream_api.h"
-#include "packet_io/active.h"
-#include "detection/signature.h"
 #include "detection/detect.h"
-#include "detection/detection_util.h"
 #include "detection/tag.h"
+#include "packet_io/active.h"
+#include "utils/stats.h"
 
 static void pass()
 {

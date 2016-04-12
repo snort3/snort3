@@ -192,9 +192,8 @@ static void show_source(const char* pcap)
     else
         fprintf(stdout, "%s", "\n");
 
-    fprintf(stdout,
-        "Reading network traffic from \"%s\" with snaplen = %u\n",
-        pcap, DAQ_GetSnapLen());
+    fprintf(stdout, "Reading network traffic from \"%s\" with snaplen = %u\n",
+        pcap, SFDAQ::get_snap_len());
 }
 
 //-------------------------------------------------------------------------
@@ -461,7 +460,7 @@ void Snort::setup(int argc, char* argv[])
     init(argc, argv);
 
     LogMessage("%s\n", LOG_DIV);
-    DAQ_Init(snort_conf);
+    SFDAQ::init(snort_conf);
 
     if ( SnortConfig::daemon_mode() )
         daemonize();
@@ -478,7 +477,7 @@ void Snort::setup(int argc, char* argv[])
 
 void Snort::cleanup()
 {
-    DAQ_Term();
+    SFDAQ::term();
 
     if ( !SnortConfig::test_mode() )  // FIXIT-M ideally the check is in one place
         PrintStatistics();
@@ -582,13 +581,6 @@ void Snort::capture_packet()
     }
 }
 
-DAQ_Verdict Snort::fail_open(
-    void*, const DAQ_PktHdr_t*, const uint8_t*)
-{
-    aux_counts.total_fail_open++;
-    return DAQ_VERDICT_PASS;
-}
-
 void Snort::thread_idle()
 {
     if ( flow_con )
@@ -609,8 +601,11 @@ void Snort::thread_init(const char* intf)
     snort_conf->thread_config->implement_thread_affinity(STHREAD_TYPE_PACKET, get_instance_id());
 
     // FIXIT-M the start-up sequence is a little off due to dropping privs
-    if ( !DAQ_New(snort_conf, intf) )
-        DAQ_Start();
+    SFDAQInstance *daq_instance = new SFDAQInstance(intf);
+    SFDAQ::set_local_instance(daq_instance);
+    // FIXIT-M X Should check return value from start() and bail on failure
+    if (daq_instance->configure(snort_conf))
+        daq_instance->start();
 
     s_packet = PacketManager::encode_new(false);
     CodecManager::thread_init(snort_conf);
@@ -657,10 +652,11 @@ void Snort::thread_term()
         s_packet = nullptr;
     }
 
-    if ( DAQ_WasStarted() )
-        DAQ_Stop();
-
-    DAQ_Delete();
+    SFDAQInstance *daq_instance = SFDAQ::get_local_instance();
+    if ( daq_instance->was_started() )
+        daq_instance->stop();
+    SFDAQ::set_local_instance(nullptr);
+    delete daq_instance;
 
     PacketLatency::tterm();
     RuleLatency::tterm();
@@ -757,7 +753,7 @@ static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
     {
         // we never increase, only trim, but
         // daq doesn't support resizing wire packet
-        if ( !DAQ_Inject(s_packet->pkth, 0, s_packet->pkt, s_packet->pkth->pktlen) )
+        if ( !SFDAQ::inject(s_packet->pkth, 0, s_packet->pkt, s_packet->pkth->pktlen) )
         {
             inject = 1;
             verdict = DAQ_VERDICT_BLOCK;
@@ -830,10 +826,10 @@ DAQ_Verdict Snort::packet_callback(
     s_packet->pkth = nullptr;  // no longer avail upon sig segv
 
     if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
-        DAQ_BreakLoop(-1);
+        SFDAQ::break_loop(-1);
 
     else if ( break_time() )
-        DAQ_BreakLoop(0);
+        SFDAQ::break_loop(0);
 
     return verdict;
 }

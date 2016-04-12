@@ -44,9 +44,10 @@
 
 enum RunFlag
 {
-    RUN_FLAG__READ                = 0x00000001,     /* -r --pcap-dir, etc. */
+    RUN_FLAG__READ                = 0x00000001,     /* -r, --pcap-list, --pcap-file, --pcap-dir */
     RUN_FLAG__DAEMON              = 0x00000002,     /* -D */
     RUN_FLAG__NO_PROMISCUOUS      = 0x00000004,     /* -p */
+    /* UNUSED                       0x00000008 */
 
     RUN_FLAG__INLINE              = 0x00000010,     /* -Q */
     RUN_FLAG__STATIC_HASH         = 0x00000020,     /* -H */
@@ -63,7 +64,7 @@ enum RunFlag
     RUN_FLAG__INLINE_TEST         = 0x00004000,     /* --enable-inline-test*/
     RUN_FLAG__PCAP_SHOW           = 0x00008000,
 
-    RUN_FLAG__DISABLE_FAILOPEN    = 0x00010000,     /* --disable-inline-init-failopen */
+    /* UNUSED                       0x00010000 */
     RUN_FLAG__PAUSE               = 0x00020000,     // --pause
     RUN_FLAG__NO_PCRE             = 0x00040000,
     /* If stream is configured, the STATEFUL flag is set.  This is
@@ -123,6 +124,7 @@ struct SFXHASH;
 struct ProfilerConfig;
 struct MemoryConfig;
 struct LatencyConfig;
+struct SFDAQConfig;
 class ThreadConfig;
 
 SO_PUBLIC extern THREAD_LOCAL struct SnortConfig* snort_conf;
@@ -177,11 +179,7 @@ public:
 
     //------------------------------------------------------
     // daq stuff
-    std::string daq_type;
-    std::string daq_mode;
-
-    void* daq_vars = nullptr;
-    void* daq_dirs = nullptr;
+    SFDAQConfig* daq_config;
 
     //------------------------------------------------------
     // detection module stuff
@@ -222,7 +220,6 @@ public:
     uint8_t num_layers = 0;
     uint8_t max_ip6_extensions = 0;
     uint8_t max_ip_layers = 0;
-    int pkt_snaplen = -1;
 
     //------------------------------------------------------
     // active stuff
@@ -500,9 +497,6 @@ public:
     { return snort_conf->output_flags & OUTPUT_FLAG__SHOW_WIFI_MGMT; }
 
     // run flags
-    static bool disable_inline_fail_open()
-    { return snort_conf->run_flags & RUN_FLAG__DISABLE_FAILOPEN; }
-
     static bool no_lock_pid_file()
     { return snort_conf->run_flags & RUN_FLAG__NO_LOCK_PID_FILE; }
 
