@@ -11,3 +11,7 @@ if BUILD_UNIT_TESTS
 SUBDIRS = test
 endif
 
+if BUILD_UNIT_TESTS
+SUBDIRS = test
+endif
+

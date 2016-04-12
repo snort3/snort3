@@ -111,12 +111,12 @@ bool FlowHAState::check(uint8_t state_mask)
 
 bool FlowHAState::is_critical()
 {
-    return ((state & CRITICAL) != 0);
+    return ((state & critical) != 0);
 }
 
 bool FlowHAState::is_major()
 {
-    return ((state & MAJOR) != 0);
+    return ((state & major) != 0);
 }
 
 void FlowHAState::config_lifetime(struct timeval min_lifetime)

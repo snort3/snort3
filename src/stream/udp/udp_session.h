@@ -21,12 +21,7 @@
 #define UDP_SESSION_H
 
 #include <sys/time.h>
-#include "flow/ha.h"
 #include "flow/session.h"
-
-class UdpHAClient : public FlowHAClient
-{
-};
 
 class UdpSession : public Session
 {

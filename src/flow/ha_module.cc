@@ -89,7 +89,6 @@ bool HighAvailabilityModule::set(const char* fqn, Value& v, SnortConfig*)
             config.ports = new PortBitSet;
         v.get_bits(*(config.ports) );
     }
-
     else
         return false;
 
