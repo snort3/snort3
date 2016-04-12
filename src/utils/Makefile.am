@@ -23,7 +23,6 @@ sfmemcap.cc \
 sfsnprintfappend.cc sfsnprintfappend.h \
 snort_bounds.h \
 stats.cc \
-strvec.cc strvec.h \
 util.cc \
 util_jsnorm.cc util_jsnorm.h \
 util_math.cc util_math.h \
