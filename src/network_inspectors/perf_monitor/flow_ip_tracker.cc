@@ -26,28 +26,6 @@
 
 #define FLIP_FILE (PERF_NAME "_flow_ip.csv")
 
-enum FlowIpRef
-{
-    FR_REMAIN = 0,
-    FR_IP_A,
-    FR_IP_B,
-    FR_TCP_PACKS_A_B,
-    FR_TCP_BYTES_A_B,
-    FR_TCP_PACKS_B_A,
-    FR_TCP_BYTES_B_A,
-    FR_UDP_PACKS_A_B,
-    FR_UDP_BYTES_A_B,
-    FR_UDP_PACKS_B_A,
-    FR_UDP_BYTES_B_A,
-    FR_OTHER_PACKS_A_B,
-    FR_OTHER_BYTES_A_B,
-    FR_OTHER_PACKS_B_A,
-    FR_OTHER_BYTES_B_A,
-    FR_TCP_EST,
-    FR_TCP_CLOSED,
-    FR_UDP_CREATED
-};
-
 struct FlowStateKey
 {
     sfip_t ipA;
@@ -98,24 +76,39 @@ FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf,
         perf->output == PERF_FILE ? FLIP_FILE : nullptr)
 {
     formatter->register_section("flow_ip");
-    formatter->register_field("remaining");
-    formatter->register_field("ip_a");
-    formatter->register_field("ip_b");
-    formatter->register_field("tcp_packets_a_b");
-    formatter->register_field("tcp_bytes_a_b");
-    formatter->register_field("tcp_packets_b_a");
-    formatter->register_field("tcp_bytes_b_a");
-    formatter->register_field("udp_packets_a_b");
-    formatter->register_field("udp_bytes_a_b");
-    formatter->register_field("udp_packets_b_a");
-    formatter->register_field("udp_bytes_b_a");
-    formatter->register_field("other_packets_a_b");
-    formatter->register_field("other_bytes_a_b");
-    formatter->register_field("other_packets_b_a");
-    formatter->register_field("other_bytes_b_a");
-    formatter->register_field("tcp_established");
-    formatter->register_field("tcp_closed");
-    formatter->register_field("udp_created");
+    formatter->register_field("ip_a", ip_a);
+    formatter->register_field("ip_b", ip_b);
+    formatter->register_field("tcp_packets_a_b",
+        &stats.traffic_stats[SFS_TYPE_TCP].packets_a_to_b);
+    formatter->register_field("tcp_bytes_a_b",
+        &stats.traffic_stats[SFS_TYPE_TCP].bytes_a_to_b);
+    formatter->register_field("tcp_packets_b_a",
+        &stats.traffic_stats[SFS_TYPE_TCP].packets_b_to_a);
+    formatter->register_field("tcp_bytes_b_a",
+        &stats.traffic_stats[SFS_TYPE_TCP].bytes_b_to_a);
+    formatter->register_field("udp_packets_a_b",
+        &stats.traffic_stats[SFS_TYPE_UDP].packets_a_to_b);
+    formatter->register_field("udp_bytes_a_b",
+        &stats.traffic_stats[SFS_TYPE_UDP].bytes_a_to_b);
+    formatter->register_field("udp_packets_b_a",
+        &stats.traffic_stats[SFS_TYPE_UDP].packets_b_to_a);
+    formatter->register_field("udp_bytes_b_a",
+        &stats.traffic_stats[SFS_TYPE_UDP].bytes_b_to_a);
+    formatter->register_field("other_packets_a_b",
+        &stats.traffic_stats[SFS_TYPE_OTHER].packets_a_to_b);
+    formatter->register_field("other_bytes_a_b",
+        &stats.traffic_stats[SFS_TYPE_OTHER].bytes_a_to_b);
+    formatter->register_field("other_packets_b_a",
+        &stats.traffic_stats[SFS_TYPE_OTHER].packets_b_to_a);
+    formatter->register_field("other_bytes_b_a",
+        &stats.traffic_stats[SFS_TYPE_OTHER].bytes_b_to_a);
+    formatter->register_field("tcp_established", (PegCount*)
+        &stats.state_changes[SFS_STATE_TCP_ESTABLISHED]);
+    formatter->register_field("tcp_closed", (PegCount*)
+        &stats.state_changes[SFS_STATE_TCP_CLOSED]);
+    formatter->register_field("udp_created", (PegCount*)
+        &stats.state_changes[SFS_STATE_UDP_CREATED]);
+
 }
 
 FlowIPTracker::~FlowIPTracker()
@@ -184,53 +177,16 @@ void FlowIPTracker::update(Packet* p)
 
 void FlowIPTracker::process(bool)
 {
-    PegCount remaining = sfxhash_count(ipMap) - 1;
-
     for (auto node = sfxhash_findfirst(ipMap); node; node = sfxhash_findnext(ipMap))
     {
-        char ip_a[41], ip_b[41];
-
         FlowStateKey* key = (FlowStateKey*)node->key;
-        FlowStateValue* stats = (FlowStateValue*)node->data;
+        FlowStateValue* cur_stats = (FlowStateValue*)node->data;
 
         sfip_raw_ntop(key->ipA.family, key->ipA.ip32, ip_a, sizeof(ip_a));
         sfip_raw_ntop(key->ipB.family, key->ipB.ip32, ip_b, sizeof(ip_b));
-        formatter->set_field(0, FR_REMAIN, remaining--);
-        formatter->set_field(0, FR_IP_A, ip_a);
-        formatter->set_field(0, FR_IP_B, ip_b);
-        formatter->set_field(0, FR_TCP_PACKS_A_B,
-            stats->traffic_stats[SFS_TYPE_TCP].packets_a_to_b);
-        formatter->set_field(0, FR_TCP_BYTES_A_B,
-            stats->traffic_stats[SFS_TYPE_TCP].bytes_a_to_b);
-        formatter->set_field(0, FR_TCP_PACKS_B_A,
-            stats->traffic_stats[SFS_TYPE_TCP].packets_b_to_a);
-        formatter->set_field(0, FR_TCP_BYTES_B_A,
-            stats->traffic_stats[SFS_TYPE_TCP].bytes_b_to_a);
-        formatter->set_field(0, FR_UDP_PACKS_A_B,
-            stats->traffic_stats[SFS_TYPE_UDP].packets_a_to_b);
-        formatter->set_field(0, FR_UDP_BYTES_A_B,
-            stats->traffic_stats[SFS_TYPE_UDP].bytes_a_to_b);
-        formatter->set_field(0, FR_UDP_PACKS_B_A,
-            stats->traffic_stats[SFS_TYPE_UDP].packets_b_to_a);
-        formatter->set_field(0, FR_UDP_BYTES_B_A,
-            stats->traffic_stats[SFS_TYPE_UDP].bytes_b_to_a);
-        formatter->set_field(0, FR_OTHER_PACKS_A_B,
-            stats->traffic_stats[SFS_TYPE_OTHER].packets_a_to_b);
-        formatter->set_field(0, FR_OTHER_BYTES_A_B,
-            stats->traffic_stats[SFS_TYPE_OTHER].bytes_a_to_b);
-        formatter->set_field(0, FR_OTHER_PACKS_B_A,
-            stats->traffic_stats[SFS_TYPE_OTHER].packets_b_to_a);
-        formatter->set_field(0, FR_OTHER_BYTES_B_A,
-            stats->traffic_stats[SFS_TYPE_OTHER].bytes_b_to_a);
-        formatter->set_field(0, FR_TCP_EST,
-            (PegCount) stats->state_changes[SFS_STATE_TCP_ESTABLISHED]);
-        formatter->set_field(0, FR_TCP_CLOSED,
-            (PegCount) stats->state_changes[SFS_STATE_TCP_CLOSED]);
-        formatter->set_field(0, FR_UDP_CREATED,
-            (PegCount) stats->state_changes[SFS_STATE_UDP_CREATED]);
-        
+        memcpy(&stats, cur_stats, sizeof(stats));
+
         formatter->write(fh, cur_time);
-        formatter->clear();
     }
 
     if ( !(config->perf_flags & PERF_SUMMARY) )

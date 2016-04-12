@@ -36,26 +36,18 @@
 #include "catch/catch.hpp"
 #endif
 
-enum CPUFieldRef
-{
-    FR_USER = 0,
-    FR_SYSTEM,
-    FR_WALL
-};
-
 static inline uint64_t get_microseconds(struct timeval t)
 {
     return (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
 }
 
-
 CPUTracker::CPUTracker(PerfConfig *perf) :
     PerfTracker(perf, perf->output == PERF_FILE ? CPU_FILE : nullptr)
 {
     formatter->register_section("cpu");
-    formatter->register_field("user");
-    formatter->register_field("system");
-    formatter->register_field("wall");    
+    formatter->register_field("user", &user_stat);
+    formatter->register_field("system", &system_stat);
+    formatter->register_field("wall", &wall_stat);
 }
 
 void CPUTracker::get_clocks(struct timeval& user_time,
@@ -104,17 +96,15 @@ void CPUTracker::process(bool)
 
     get_times(user, system, wall);
 
-    formatter->set_field(0, FR_USER, user - last_ut);
-    formatter->set_field(0, FR_SYSTEM, system - last_st);
-    formatter->set_field(0, FR_WALL, wall - last_wt);
+    user_stat = user - last_ut;
+    system_stat = system - last_st;
+    wall_stat = wall - last_wt;
 
     last_ut = user;
     last_st = system;
     last_wt = wall;
 
-
     formatter->write(fh, cur_time);
-    formatter->clear();
 }
 
 #ifdef UNIT_TEST

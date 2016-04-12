@@ -25,46 +25,30 @@
 
 #define EVENT_FILE (PERF_NAME "_event.csv")
 
-enum EventFieldRef
-{
-    FR_TOTAL = 0,
-    FR_QUALIFIED,
-    FR_NON_QUALIFIED
-};
-
 THREAD_LOCAL EventTracker* perf_event;
 
 EventTracker::EventTracker(PerfConfig *perf) :
     PerfTracker(perf, perf->output == PERF_FILE ? EVENT_FILE : nullptr)
 {
     formatter->register_section("event_stats");
-    formatter->register_field("total");
-    formatter->register_field("qualified");
-    formatter->register_field("non_qualified");
+    formatter->register_field("qualified", &qualified_events);
+    formatter->register_field("non_qualified", &non_qualified_events);
 }
 
 void EventTracker::reset()
 {
-    event_counts.non_qualified_events = 0;
-    event_counts.qualified_events  = 0;
-    event_counts.total_events  = 0;
+    non_qualified_events = 0;
+    qualified_events  = 0;
     
     formatter->finalize_fields(fh);   
 }
 
 void EventTracker::process(bool)
 {
-    formatter->set_field(0, FR_TOTAL, event_counts.total_events);
-    formatter->set_field(0, FR_QUALIFIED, event_counts.qualified_events);
-    formatter->set_field(0, FR_NON_QUALIFIED,
-        event_counts.non_qualified_events);
-
     formatter->write(fh, cur_time);
-    formatter->clear();
 
-    event_counts.non_qualified_events = 0;
-    event_counts.qualified_events = 0;
-    event_counts.total_events = 0;
+    non_qualified_events = 0;
+    qualified_events = 0;
 }
 
 void EventTracker::update_non_qualified_events()
@@ -72,8 +56,7 @@ void EventTracker::update_non_qualified_events()
     if ((perfmon_config) &&
         (perfmon_config->perf_flags & PERF_EVENT))
     {
-        event_counts.non_qualified_events++;
-        event_counts.total_events++;
+        non_qualified_events++;
     }
 }
 
@@ -82,8 +65,7 @@ void EventTracker::update_qualified_events()
     if ((perfmon_config) &&
         (perfmon_config->perf_flags & PERF_EVENT))
     {
-        event_counts.qualified_events++;
-        event_counts.total_events++;
+        qualified_events++;
     }
 }
 

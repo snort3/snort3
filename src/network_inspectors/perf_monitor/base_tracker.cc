@@ -21,11 +21,8 @@
 #include "base_tracker.h"
 #include "perf_module.h"
 
-#include "framework/counts.h"
 #include "framework/module.h"
 #include "managers/module_manager.h"
-#include "managers/plugin_manager.h"
-#include "utils/stats.h"
 
 #define BASE_FILE (PERF_NAME ".csv")
 
@@ -41,7 +38,8 @@ BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf,
 
         formatter->register_section(m->get_name());
         for (auto& idx : peg_map)
-             formatter->register_field(m->get_pegs()[idx].name);
+             formatter->register_field(m->get_pegs()[idx].name,
+                &(m->get_counts()[idx]));
     }
 }
 
@@ -52,18 +50,10 @@ void BaseTracker::reset()
 
 void BaseTracker::process(bool summary)
 {
-    for (unsigned i = 0; i < config->modules.size(); i++)
-    {
-        Module* m = config->modules.at(i);
-        vector<unsigned> idxs = config->mod_peg_idxs[i];
-        PegCount* pegs = m->get_counts();
-
-        for (unsigned j = 0; j < idxs.size(); j++)
-            formatter->set_field(i, j, (PegCount)pegs[idxs[j]]);
-        if (!summary)
-            m->sum_stats();
-    }
     formatter->write(fh, cur_time);
-    formatter->clear();
+
+    for (unsigned i = 0; i < config->modules.size(); i++)
+        if (!summary)
+            config->modules.at(i)->sum_stats();
 }
 

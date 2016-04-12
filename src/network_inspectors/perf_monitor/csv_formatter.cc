@@ -37,10 +37,9 @@ void CSVFormatter::register_section(string name)
     PerfFormatter::register_section(name);
 }
 
-void CSVFormatter::register_field(string name)
+void CSVFormatter::register_field_name(string name)
 {
     field_names[last_section].push_back(name);
-    PerfFormatter::register_field(name);
 }
 
 void CSVFormatter::finalize_fields(FILE* fh)
@@ -73,7 +72,7 @@ void CSVFormatter::write(FILE* fh, time_t timestamp)
             switch( types[i][j] )
             {
                 case FT_PEG_COUNT:
-                    fprintf(fh, ",%" PRIu64, values[i][j].pc);
+                    fprintf(fh, ",%" PRIu64, *values[i][j].pc);
                     break;
 
                 case FT_STRING:
@@ -97,10 +96,6 @@ void CSVFormatter::write(FILE* fh, time_t timestamp)
                     fprintf(fh, ",%" PRIu64 "%s", size, ss.str().c_str());
                     break;
                 }
-
-                case FT_UNSET:
-                    fputs(",0", fh);
-                    break; 
             }
         }
     }
@@ -112,6 +107,10 @@ void CSVFormatter::write(FILE* fh, time_t timestamp)
 
 TEST_CASE("csv output", "[CSVFormatter]")
 {
+    PegCount one = 0, two = 1, three = 2;
+    char five[32] = "hellothere";
+    std::vector<PegCount> kvp;
+
     const char* cooked =
         "#timestamp,name.one,name.two,other.three,other.five,other.kvp\n"
         "1234567890,0,1,2,hellothere,3,50,60,70\n"
@@ -121,28 +120,24 @@ TEST_CASE("csv output", "[CSVFormatter]")
     CSVFormatter f;
 
     f.register_section("name");
-    f.register_field("one");
-    f.register_field("two");
+    f.register_field("one", &one);
+    f.register_field("two", &two);
     f.register_section("other");
-    f.register_field("three");
-    f.register_field("five");
-    f.register_field("kvp");
+    f.register_field("three", &three);
+    f.register_field("five", five);
+    f.register_field("kvp", &kvp);
     f.finalize_fields(fh);
 
-    f.set_field(0, 0, (PegCount)0);
-    f.set_field(0, 1, (PegCount)1);
-    f.set_field(1, 0, (PegCount)2);
-    f.set_field(1, 1, "hellothere");
-    
-    std::vector<PegCount> kvp;
     kvp.push_back(50);
     kvp.push_back(60);
     kvp.push_back(70);
-    f.set_field(1, 2, &kvp);
 
     f.write(fh, (time_t)1234567890);
 
-    f.clear();
+    two = 0;
+    three = 0;
+    five[0] = '\0';
+    kvp.clear();
     f.write(fh, (time_t)2345678901);
 
     auto size = ftell(fh);

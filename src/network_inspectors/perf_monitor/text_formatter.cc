@@ -38,10 +38,9 @@ void TextFormatter::register_section(string name)
     PerfFormatter::register_section(name);
 }
 
-void TextFormatter::register_field(string name)
+void TextFormatter::register_field_name(string name)
 {
     field_names[last_section].push_back(name);
-    PerfFormatter::register_field(name);
 }
 
 void TextFormatter::write(FILE* fh, time_t)
@@ -55,16 +54,16 @@ void TextFormatter::write(FILE* fh, time_t)
             switch( types[i][j] )
             {
                 case FT_PEG_COUNT:
-                    if( !head && values[i][j].pc != 0 )
+                    if( !head && *values[i][j].pc != 0 )
                     {
                         LogLabel(section_names[i].c_str(), fh);
                         head = true;
                     }
-                    LogCount(field_names[i][j].c_str(), values[i][j].pc, fh);
+                    LogCount(field_names[i][j].c_str(), *values[i][j].pc, fh);
                     break;
 
                 case FT_STRING:
-                    if( values[i][j].s )
+                    if( *values[i][j].s )
                     {
                         if( !head )
                         {
@@ -94,9 +93,6 @@ void TextFormatter::write(FILE* fh, time_t)
                     }
                     break;
                 }
-
-                case FT_UNSET:
-                    break; 
             }
         }
     }
@@ -107,6 +103,10 @@ void TextFormatter::write(FILE* fh, time_t)
 
 TEST_CASE("text output", "[TextFormatter]")
 {
+    PegCount one = 1, two = 0, three = 0;
+    char five[32] = "hellothere";
+    vector<PegCount> kvp;
+
     const char* cooked =
         "--------------------------------------------------\n"
         "name\n"
@@ -123,30 +123,25 @@ TEST_CASE("text output", "[TextFormatter]")
     TextFormatter f;
 
     f.register_section("name");
-    f.register_field("one");
-    f.register_field("two");
+    f.register_field("one", &one);
+    f.register_field("two", &two);
     f.register_section("other");
-    f.register_field("three");
+    f.register_field("three", &three);
     f.register_section("str");
-    f.register_field("five");
+    f.register_field("five", five);
     f.register_section("vec");
-    f.register_field("vector");
+    f.register_field("vector", &kvp);
     f.finalize_fields(fh);
 
-    f.set_field(0, 0, (PegCount)1);
-    f.set_field(0, 1, (PegCount)0);
-    f.set_field(1, 0, (PegCount)0);
-    f.set_field(2, 0, "hellothere");
-
-    std::vector<PegCount> kvp;
     kvp.push_back(50);
     kvp.push_back(0);
     kvp.push_back(70);
-    f.set_field(3, 0, &kvp);
     
     f.write(fh, (time_t)1234567890);
 
-    f.clear();
+    one = 0;
+    five[0] = '\0';
+    kvp.clear();
     f.write(fh, (time_t)2345678901);
 
     auto size = ftell(fh);

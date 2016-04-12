@@ -29,53 +29,35 @@ void PerfFormatter::register_section(string)
     last_section++;
 }
 
-void PerfFormatter::register_field(string)
+void PerfFormatter::register_field(string name, PegCount* val)
 {
     FormatterValue fv;
-    fv.pc = 0;
+    fv.pc = val;
 
     values[last_section].push_back(fv);
-    types[last_section].push_back(FT_UNSET);
+    types[last_section].push_back(FT_PEG_COUNT);
+
+    register_field_name(name);
 }
 
-void PerfFormatter::set_field(unsigned section, unsigned field, PegCount val)
+void PerfFormatter::register_field(string name, const char* val)
 {
     FormatterValue fv;
-
-    fv.pc = val;
-    values[section][field] = fv;
-    types[section][field] = FT_PEG_COUNT;
-}
-
-void PerfFormatter::set_field(unsigned section, unsigned field, const char* val)
-{
-    FormatterValue fv;
-
     fv.s = val;
-    values[section][field] = fv;
-    types[section][field] = FT_STRING;
+
+    values[last_section].push_back(fv);
+    types[last_section].push_back(FT_STRING);
+
+    register_field_name(name);
 }
 
-void PerfFormatter::set_field(unsigned section, unsigned field,
-    vector<PegCount>* val)
+void PerfFormatter::register_field(string name, vector<PegCount>* val)
 {
     FormatterValue fv;
-
     fv.ipc = val;
-    values[section][field] = fv;
-    types[section][field] = FT_IDX_PEG_COUNT;
-}
 
-void PerfFormatter::clear()
-{
-    for( unsigned i = 0; i < types.size(); i++ )
-    {
-        for( unsigned j = 0; j < types[i].size(); j++ )
-        {
-            if( types[i][j] == FT_STRING )
-                values[i][j].s = nullptr;
-            else
-                types[i][j] = FT_UNSET;
-        }
-    }
+    values[last_section].push_back(fv);
+    types[last_section].push_back(FT_IDX_PEG_COUNT);
+
+    register_field_name(name);
 }

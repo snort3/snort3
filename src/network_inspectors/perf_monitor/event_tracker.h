@@ -25,15 +25,6 @@
 #include "perf_module.h"
 #include "perf_tracker.h"
 
-/* Raw event counters */
-struct PerfEventCounts
-{
-    uint64_t non_qualified_events;
-    uint64_t qualified_events;
-
-    uint64_t total_events;
-};
-
 class EventTracker : public PerfTracker
 {
 public:
@@ -45,7 +36,8 @@ public:
     void update_qualified_events();
 
 private:
-    PerfEventCounts event_counts;
+    uint64_t non_qualified_events;
+    uint64_t qualified_events;
 };
 
 extern THREAD_LOCAL EventTracker* perf_event;

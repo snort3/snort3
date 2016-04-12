@@ -69,7 +69,9 @@ public:
     int update_state(const sfip_t* src_addr, const sfip_t* dst_addr, FlowState);
 
 private:
+    FlowStateValue stats;
     SFXHASH* ipMap;
+    char ip_a[41], ip_b[41];
 
     FlowStateValue* find_stats(const sfip_t* src_addr, const sfip_t* dst_addr, int* swapped);
     void write_stats();

@@ -28,33 +28,6 @@
 
 #define MAX_PKT_LEN  9000
 
-enum FlowSecRef
-{
-    SR_FLOW,
-    SR_TCP,
-    SR_UDP,
-    SR_ICMP
-};
-
-enum FlowFieldRef
-{
-    FR_BYTE_TOTAL = 0,
-    FR_PKT_LEN_CNT,
-    FR_PKT_LEN_OVER,
-};
-
-enum FlowProtoFieldRef
-{
-    FR_SRC_BYTES = 0,
-    FR_DST_BYTES,
-    FR_HIGH_BYTES,
-};
-
-enum FlowIcmpFieldRef
-{
-    FR_ICMP_TYPE_BYTES = 0
-};
-
 FlowTracker::FlowTracker(PerfConfig* perf) : PerfTracker(perf,
         perf->output == PERF_FILE ? FLOW_FILE : nullptr)
 {
@@ -66,22 +39,22 @@ FlowTracker::FlowTracker(PerfConfig* perf) : PerfTracker(perf,
     type_icmp.resize( (1 << sizeof(icmp::IcmpType)) + 1, 0 );
 
     formatter->register_section("flow");
-    formatter->register_field("byte_total");
-    formatter->register_field("packets_by_bytes");
-    formatter->register_field("oversized_packets");
+    formatter->register_field("byte_total", &byte_total);
+    formatter->register_field("packets_by_bytes", &pkt_len_cnt);
+    formatter->register_field("oversized_packets", &pkt_len_oversize_cnt);
 
     formatter->register_section("flow_tcp");
-    formatter->register_field("bytes_by_source");
-    formatter->register_field("bytes_by_dest");
-    formatter->register_field("high_port_bytes");
+    formatter->register_field("bytes_by_source", &tcp.src);
+    formatter->register_field("bytes_by_dest", &tcp.dst);
+    formatter->register_field("high_port_bytes", &tcp.high);
 
     formatter->register_section("flow_udp");
-    formatter->register_field("bytes_by_source");
-    formatter->register_field("bytes_by_dest");
-    formatter->register_field("high_port_bytes");
+    formatter->register_field("bytes_by_source", &udp.src);
+    formatter->register_field("bytes_by_dest", &udp.dst);
+    formatter->register_field("high_port_bytes", &udp.high);
 
     formatter->register_section("flow_icmp");
-    formatter->register_field("bytes_by_type");
+    formatter->register_field("bytes_by_type", &type_icmp);
 }
 
 void FlowTracker::reset()
@@ -117,22 +90,7 @@ void FlowTracker::update(Packet* p)
 
 void FlowTracker::process(bool)
 {
-    formatter->set_field(SR_FLOW, FR_BYTE_TOTAL, byte_total);
-    formatter->set_field(SR_FLOW, FR_PKT_LEN_CNT, &pkt_len_cnt);
-    formatter->set_field(SR_FLOW, FR_PKT_LEN_OVER, pkt_len_oversize_cnt);
-
-    formatter->set_field(SR_TCP, FR_SRC_BYTES, &tcp.src);
-    formatter->set_field(SR_TCP, FR_DST_BYTES, &tcp.dst);
-    formatter->set_field(SR_TCP, FR_HIGH_BYTES, tcp.high);
-    
-    formatter->set_field(SR_UDP, FR_SRC_BYTES, &udp.src);
-    formatter->set_field(SR_UDP, FR_DST_BYTES, &udp.dst);
-    formatter->set_field(SR_UDP, FR_HIGH_BYTES, udp.high);
-
-    formatter->set_field(SR_ICMP, FR_ICMP_TYPE_BYTES, &type_icmp);
-
     formatter->write(fh, cur_time);
-    formatter->clear();
 
     byte_total = 0;
 
