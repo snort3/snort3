@@ -360,6 +360,17 @@ bool RuleLatency::suspended()
     return false;
 }
 
+void RuleLatency::tterm()
+{
+    using rule_latency::impl;
+
+    if ( impl )
+    {
+        delete impl;
+        impl = nullptr;
+    }
+}
+
 // -----------------------------------------------------------------------------
 // unit tests
 // -----------------------------------------------------------------------------

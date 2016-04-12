@@ -248,6 +248,17 @@ bool PacketLatency::fastpath()
     return false;
 }
 
+void PacketLatency::tterm()
+{
+    using packet_latency::impl;
+
+    if ( impl )
+    {
+        delete impl;
+        impl = nullptr;
+    }
+}
+
 // -----------------------------------------------------------------------------
 // unit tests
 // -----------------------------------------------------------------------------

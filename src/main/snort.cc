@@ -23,13 +23,9 @@
 # include "config.h"
 #endif
 
-#ifdef HAVE_MALLOC_TRIM
-#include <malloc.h>
-#endif
-
 #include <mutex>
 #include <string>
-using namespace std;
+#include <thread>
 
 #include <assert.h>
 #include <sys/types.h>
@@ -51,67 +47,74 @@ using namespace std;
 #include <netinet/in.h>
 #include <netdb.h>
 
+#ifdef HAVE_MALLOC_TRIM
+#include <malloc.h>
+#endif
+
 #if !defined(CATCH_SEGV)
 # include <sys/resource.h>
 #endif
 
-#include <thread>
+#include "control/idle_processing.h"
+#include "detection/detect.h"
+#include "detection/detection_util.h"
+#include "detection/fp_config.h"
+#include "detection/fp_create.h"
+#include "detection/fp_detect.h"
+#include "detection/tag.h"
+#include "events/event_queue.h"
+#include "file_api/file_service.h"
+#include "filters/detection_filter.h"
+#include "filters/rate_filter.h"
+#include "filters/sfthreshold.h"
+#include "flow/flow.h"
+#include "flow/flow_control.h"
+#include "flow/ha.h"
+#include "framework/mpse.h"
+#include "helpers/process.h"
+#include "host_tracker/host_cache.h"
+#include "ips_options/ips_flowbits.h"
+#include "latency/packet_latency.h"
+#include "latency/rule_latency.h"
+#include "managers/action_manager.h"
+#include "managers/codec_manager.h"
+#include "managers/connector_manager.h"
+#include "managers/inspector_manager.h"
+#include "managers/ips_manager.h"
+#include "managers/event_manager.h"
+#include "managers/module_manager.h"
+#include "managers/mpse_manager.h"
+#include "managers/plugin_manager.h"
+#include "managers/script_manager.h"
+#include "network_inspectors/perf_monitor/perf_monitor.h"
+#include "packet_io/sfdaq.h"
+#include "packet_io/active.h"
+#include "packet_io/trough.h"
+#include "parser/cmd_line.h"
+#include "parser/config_file.h"
+#include "parser/parser.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
+#include "protocols/packet_manager.h"
+#include "side_channel/side_channel.h"
+#include "stream/stream.h"
+#include "target_based/sftarget_reader.h"
+#include "time/packet_time.h"
+#include "time/periodic.h"
+#include "utils/util.h"
+
+#ifdef PIGLET
+#include "piglet/piglet.h"
+#include "piglet/piglet_manager.h"
+#endif
 
 #include "main.h"
 #include "build.h"
 #include "snort_config.h"
 #include "snort_debug.h"
 #include "thread_config.h"
-#include "helpers/process.h"
-#include "protocols/packet.h"
-#include "protocols/packet_manager.h"
-#include "packet_io/sfdaq.h"
-#include "packet_io/active.h"
-#include "packet_io/trough.h"
-#include "utils/util.h"
-#include "parser/parser.h"
-#include "parser/config_file.h"
-#include "parser/cmd_line.h"
-#include "detection/tag.h"
-#include "detection/detect.h"
-#include "detection/fp_config.h"
-#include "detection/fp_create.h"
-#include "detection/fp_detect.h"
-#include "detection/detection_util.h"
-#include "filters/sfthreshold.h"
-#include "filters/rate_filter.h"
-#include "filters/detection_filter.h"
-#include "time/packet_time.h"
-#include "profiler/profiler.h"
-#include "time/periodic.h"
-#include "ips_options/ips_flowbits.h"
-#include "events/event_queue.h"
-#include "framework/mpse.h"
-#include "managers/module_manager.h"
-#include "managers/plugin_manager.h"
-#include "managers/script_manager.h"
-#include "managers/event_manager.h"
-#include "managers/inspector_manager.h"
-#include "managers/ips_manager.h"
-#include "managers/mpse_manager.h"
-#include "managers/codec_manager.h"
-#include "managers/action_manager.h"
-#include "managers/connector_manager.h"
-#include "control/idle_processing.h"
-#include "file_api/file_service.h"
-#include "flow/flow_control.h"
-#include "flow/flow.h"
-#include "flow/ha.h"
-#include "stream/stream.h"
-#include "target_based/sftarget_reader.h"
-#include "host_tracker/host_cache.h"
-#include "perf_monitor/perf_monitor.h"
-#include "side_channel/side_channel.h"
 
-#ifdef PIGLET
-#include "piglet/piglet.h"
-#include "piglet/piglet_manager.h"
-#endif
+using namespace std;
 
 //-------------------------------------------------------------------------
 
@@ -680,6 +683,9 @@ void Snort::thread_term()
         DAQ_Stop();
 
     DAQ_Delete();
+
+    PacketLatency::tterm();
+    RuleLatency::tterm();
 
     Profiler::consolidate_stats();
 

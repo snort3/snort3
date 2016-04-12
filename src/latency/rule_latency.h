@@ -30,6 +30,8 @@ public:
     static void pop();
     static bool suspended();
 
+    static void tterm();
+
     class Context
     {
     public:

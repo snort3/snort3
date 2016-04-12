@@ -32,6 +32,8 @@ public:
     static void pop(const Packet*);
     static bool fastpath();
 
+    static void tterm();
+
     class Context
     {
     public:
