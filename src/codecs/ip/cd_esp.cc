@@ -71,7 +71,7 @@ public:
     EspCodec() : Codec(CD_ESP_NAME) { }
     ~EspCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
@@ -81,8 +81,8 @@ constexpr uint32_t ESP_AUTH_DATA_LEN = 12;
 constexpr uint32_t ESP_TRAILER_LEN = 2;
 } // anonymous namespace
 
-void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(IPPROTO_ID_ESP); }
+void EspCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::ESP); }
 
 /*
  * Attempt to decode Encapsulated Security Payload.
@@ -95,6 +95,7 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     const uint8_t* esp_payload;
     uint8_t pad_length;
+    uint8_t ip_proto;
 
     if (!SnortConfig::esp_decoding())
         return false;
@@ -119,7 +120,8 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     codec.lyr_len = ESP_HEADER_LEN;
     esp_payload = raw.data + ESP_HEADER_LEN;
     pad_length = *(esp_payload + guessed_len);
-    codec.next_prot_id = *(esp_payload + guessed_len + 1);
+    ip_proto = *(esp_payload + guessed_len + 1);
+    codec.next_prot_id = (ProtocolId)ip_proto;
 
     // must be called AFTER setting next_prot_id
     if (snort.ip_api.is_ip6())
@@ -130,9 +132,9 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             return false;
         }
 
-        CheckIPv6ExtensionOrder(codec, IPPROTO_ID_ESP);
+        CheckIPv6ExtensionOrder(codec, IpProtocol::ESP);
         codec.proto_bits |= PROTO_BIT__IP6_EXT;
-        codec.ip6_csum_proto = codec.next_prot_id;
+        codec.ip6_csum_proto = (IpProtocol)ip_proto;
         codec.ip6_extension_count++;
     }
 
@@ -149,7 +151,7 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     {
         snort.decode_flags |= DECODE_PKT_TRUST;
         codec.lyr_len = ESP_HEADER_LEN;  // we want data to begin at (pkt + ESP_HEADER_LEN)
-        codec.next_prot_id = FINISHED_DECODE;
+        codec.next_prot_id = ProtocolId::FINISHED_DECODE;
         return true;
     }
 
@@ -159,9 +161,12 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
        decoder stage to silently ignore invalid headers. */
 
     // highest valid protocol id == 255.
-    if (codec.next_prot_id > 0xFF)
+
+    //  FIXIT-M -- The next_prot_id will never be > 0xFF since it came from
+    //             a uint8_t originally...
+    if (to_utype(codec.next_prot_id) > 0xFF)
     {
-        codec.next_prot_id = FINISHED_DECODE;
+        codec.next_prot_id = ProtocolId::FINISHED_DECODE;
         snort.decode_flags |= DECODE_PKT_TRUST;
     }
     else

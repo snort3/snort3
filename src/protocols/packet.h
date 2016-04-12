@@ -134,7 +134,7 @@ struct SO_PUBLIC Packet
     uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
 
     uint8_t num_layers;         /* index into layers for next encap */
-    uint8_t ip_proto_next;      /* the protocol ID after IP and all IP6 extension */
+    IpProtocol ip_proto_next;      /* the protocol ID after IP and all IP6 extension */
     bool disable_inspect;
     class Endianness* endianness;
 
@@ -157,7 +157,7 @@ struct SO_PUBLIC Packet
     // for correlating configuration with event output
     uint16_t user_policy_id;
 
-    uint8_t ps_proto;  // Used for portscan and unified2 logging
+    IpProtocol ps_proto;  // Used for portscan and unified2 logging
 
     // IP_MAXPACKET is the minimum allowable max_dsize
     // there is no requirement that all data fit into an IP datagram
@@ -220,7 +220,7 @@ struct SO_PUBLIC Packet
      *     eth::ip4::udp::teredo::ip6::hop_opts::ipv6_routing::tcp
      * this function return 6 == IPPROTO_TCP == IPPROTO_ID_TCP
      */
-    inline uint8_t get_ip_proto_next() const
+    inline IpProtocol get_ip_proto_next() const
     { return ip_proto_next; }
 
     /* Similar to above. However, this function
@@ -241,7 +241,7 @@ struct SO_PUBLIC Packet
      *    ....
      * }
      */
-    bool get_ip_proto_next(uint8_t& lyr, uint8_t& proto) const;
+    bool get_ip_proto_next(uint8_t& lyr, IpProtocol& proto) const;
 
     inline void reset()
     {

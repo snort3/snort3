@@ -204,7 +204,7 @@ public:
     // Get pointer to application data for a flow based on the lookup tuples for cases where
     // Snort does not have an active packet that is relevant.
     static FlowData* get_application_data_from_ip_port(
-        uint8_t type, uint8_t proto,
+        PktType type, IpProtocol proto,
         const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flow_id);
 
@@ -223,7 +223,7 @@ public:
     // Get pointer to a session flow instance for a flow based on the lookup tuples for
     // cases where Snort does not have an active packet that is relevant.
      static Flow* get_session_ptr_from_ip_port(
-        uint8_t type, uint8_t proto,
+        PktType type, IpProtocol proto,
         const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 

@@ -32,6 +32,7 @@
 #include "framework/base_api.h"
 
 // unfortunately necessary due to use of Ipapi in struct
+#include "protocols/protocol_ids.h"
 #include "protocols/ip.h"
 #include "protocols/mpls.h"  // FIXIT-M remove MPLS from Convenience pointers
 #include "protocols/layer.h"
@@ -121,7 +122,7 @@ constexpr uint16_t CODEC_IPOPT_FLAGS = (CODEC_IPOPT_RR_SEEN |
 struct CodecData
 {
     /* This section will get reset before every decode() function call */
-    uint16_t next_prot_id;      /* protocol type of the next layer */
+    ProtocolId next_prot_id;      /* protocol type of the next layer */
     uint16_t lyr_len;           /* The length of the valid part layer */
     uint16_t invalid_bytes;     /* the length of the INVALID part of this layer */
 
@@ -136,9 +137,9 @@ struct CodecData
     /*  The following values have junk values after initialization */
     uint8_t ip6_extension_count; /* initialized in cd_ipv6.cc */
     uint8_t curr_ip6_extension;  /* initialized in cd_ipv6.cc */
-    uint8_t ip6_csum_proto;      /* initalized in cd_ipv6.cc.  Used for IPv6 checksums */
+    IpProtocol ip6_csum_proto;      /* initalized in cd_ipv6.cc.  Used for IPv6 checksums */
 
-    CodecData(uint16_t init_prot) : next_prot_id(init_prot), lyr_len(0),
+    CodecData(ProtocolId init_prot) : next_prot_id(init_prot), lyr_len(0),
         invalid_bytes(0), proto_bits(0), codec_flags(0), ip_layer_cnt(0)
     { }
 
@@ -176,18 +177,18 @@ struct SO_PUBLIC EncState
     const ip::IpApi& ip_api; /* IP related information. Good for checksums */
     EncodeFlags flags;
     const uint16_t dsize; /* for non-inline, TCP sequence numbers */
-    uint16_t next_ethertype; /*  set the next encoder 'proto' field to this value. */
-    uint8_t next_proto; /*  set the next encoder 'proto' field to this value. */
+    ProtocolId next_ethertype; /*  set the next encoder 'proto' field to this value. */
+    IpProtocol next_proto; /*  set the next encoder 'proto' field to this value. */
     const uint8_t ttl;
 
-    EncState(const ip::IpApi& api, EncodeFlags f, uint8_t pr,
+    EncState(const ip::IpApi& api, EncodeFlags f, IpProtocol pr,
         uint8_t t, uint16_t data_size);
 
     inline bool next_proto_set() const
-    { return (next_proto != ENC_PROTO_UNSET); }
+    { return (next_proto != IpProtocol::PROTO_NOT_SET); }
 
     inline bool ethertype_set() const
-    { return next_ethertype != 0; }
+    { return next_ethertype != ProtocolId::ETHERTYPE_NOT_SET; }
 
     inline bool forward() const
     { return flags & ENC_FLAG_FWD; }
@@ -263,7 +264,7 @@ public:
                                                        // c++11
     { }
     // Register the code's protocol ID's and Ethertypes
-    virtual void get_protocol_ids(std::vector<uint16_t>&)  // FIXIT-M return a vector ==
+    virtual void get_protocol_ids(std::vector<ProtocolId>&)  // FIXIT-M return a vector ==
                                                            // efficient in c++11
     { }
 
@@ -359,7 +360,7 @@ protected:
     // Check the Hop and DST IPv6 extension
     bool CheckIPV6HopOptions(const RawData&, CodecData&);
     // NOTE:: data.next_prot_id MUST be set before calling this!!
-    void CheckIPv6ExtensionOrder(CodecData&, const uint8_t proto);
+    void CheckIPv6ExtensionOrder(CodecData&, const IpProtocol);
 
 private:
     const char* name;

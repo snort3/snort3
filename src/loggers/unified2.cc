@@ -264,11 +264,11 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, Event* 
 
             if (p->is_portscan())
             {
-                alertdata.protocol = p->ps_proto;
+                alertdata.ip_proto = p->ps_proto;
             }
             else
             {
-                alertdata.protocol = p->get_ip_proto_next();
+                alertdata.ip_proto = p->get_ip_proto_next();
 
                 if ( p->type() == PktType::ICMP)
                 {
@@ -358,11 +358,11 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, Event* 
 
             if (p->is_portscan())
             {
-                alertdata.protocol = p->ps_proto;
+                alertdata.ip_proto = p->ps_proto;
             }
             else
             {
-                alertdata.protocol = p->get_ip_proto_next();
+                alertdata.ip_proto = p->get_ip_proto_next();
 
                 if ( p->type() == PktType::ICMP)
                 {

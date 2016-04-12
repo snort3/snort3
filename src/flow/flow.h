@@ -208,7 +208,7 @@ public:
     { return (ssn_state.session_flags & SSNFLAG_PROXIED) != 0; }
 
     bool is_stream()
-    { return (unsigned)protocol & (unsigned)PktType::STREAM; }
+    { return to_utype(pkt_type) & to_utype(PktType::STREAM); }
 
     void block()
     { ssn_state.session_flags |= SSNFLAG_BLOCK; }
@@ -286,7 +286,7 @@ public:  // FIXIT-M privatize if possible
     class Session* session;
     class BitOp* bitop;
     uint8_t ip_proto; // FIXIT-M  -- do we need both of these?
-    PktType protocol; // ^^
+    PktType pkt_type; // ^^
 
     // these fields are always set; not zeroed
     Flow* prev, * next;

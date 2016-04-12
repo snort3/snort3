@@ -41,7 +41,7 @@ static const luaL_Reg methods[] =
 
             uint32_t efl_hi = args[1].opt_size();
             uint32_t efl_lo = args[2].opt_size();
-            uint8_t next_proto = args[3].opt_size();
+            IpProtocol next_proto = (IpProtocol)args[3].opt_size();
             uint8_t ttl = args[4].opt_size();
             uint16_t dsize = args[5].opt_int();
 

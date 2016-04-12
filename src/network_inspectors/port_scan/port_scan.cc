@@ -69,7 +69,6 @@
 #include "detection/detect.h"
 
 #define PROTO_BUFFER_SIZE 256
-#define IPPROTO_PS 0xFF
 
 static THREAD_LOCAL Packet* g_tmp_pkt = NULL;
 static THREAD_LOCAL FILE* g_logfile = NULL;
@@ -357,16 +356,16 @@ static int MakePortscanPkt(PS_PKT* ps_pkt, PS_PROTO* proto, int proto_type,
     switch (proto_type)
     {
     case PS_PROTO_TCP:
-        g_tmp_pkt->ps_proto = IPPROTO_TCP;
+        g_tmp_pkt->ps_proto = IpProtocol::TCP;
         break;
     case PS_PROTO_UDP:
-        g_tmp_pkt->ps_proto = IPPROTO_UDP;
+        g_tmp_pkt->ps_proto = IpProtocol::UDP;
         break;
     case PS_PROTO_ICMP:
-        g_tmp_pkt->ps_proto = IPPROTO_ICMP;
+        g_tmp_pkt->ps_proto = IpProtocol::ICMPV4;
         break;
     case PS_PROTO_IP:
-        g_tmp_pkt->ps_proto = IPPROTO_IP;
+        g_tmp_pkt->ps_proto = IpProtocol::IP;
         break;
     case PS_PROTO_OPEN_PORT:
         g_tmp_pkt->ps_proto = p->get_ip_proto_next();
@@ -377,12 +376,12 @@ static int MakePortscanPkt(PS_PKT* ps_pkt, PS_PROTO* proto, int proto_type,
 
     if (g_tmp_pkt->is_ip4())
     {
-        ((IP4Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip4h())->set_proto(IPPROTO_PS);
+        ((IP4Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip4h())->set_proto(IpProtocol::PORT_SCAN);
     }
     else
     {
         // since ip_api.is_ip() && !ip4h, this is automatically ip6h
-        ((ip::IP6Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip6h())->set_proto(IPPROTO_PS);
+        ((ip::IP6Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip6h())->set_proto(IpProtocol::PORT_SCAN);
     }
 
     switch (proto_type)

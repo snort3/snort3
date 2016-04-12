@@ -25,6 +25,7 @@
 
 #include "main/snort_types.h"
 #include "hash/sfhashfcn.h"
+#include "framework/decode_data.h"
 #include "sfip/sfip_t.h"
 
 struct FlowKey
@@ -34,20 +35,20 @@ struct FlowKey
     uint16_t   port_l;  /* Low Port - 0 if ICMP */
     uint16_t   port_h;  /* High Port - 0 if ICMP */
     uint16_t   vlan_tag;
-    uint8_t    protocol;
+    PktType    pkt_type;
     uint8_t    version;
     uint32_t   mplsLabel;
     uint16_t   addressSpaceId;
     uint16_t   addressSpaceIdPad1;
 
     void init(
-        uint8_t type, uint8_t proto,
+        PktType, IpProtocol,
         const sfip_t *srcIP, uint16_t srcPort,
         const sfip_t *dstIP, uint16_t dstPort,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     void init(
-        uint8_t type, uint8_t proto,
+        PktType, IpProtocol,
         const sfip_t *srcIP, const sfip_t *dstIP,
         uint32_t id, uint16_t vlanId,
         uint32_t mplsId, uint16_t addrSpaceId);
@@ -62,13 +63,13 @@ struct FlowKey
 
 private:
     void init4(
-        uint8_t proto,
+        IpProtocol,
         const sfip_t *srcIP, uint16_t srcPort,
         const sfip_t *dstIP, uint16_t dstPort,
         uint32_t mplsId, bool order = true);
 
     void init6(
-        uint8_t proto,
+        IpProtocol,
         const sfip_t *srcIP, uint16_t srcPort,
         const sfip_t *dstIP, uint16_t dstPort,
         uint32_t mplsId, bool order = true);

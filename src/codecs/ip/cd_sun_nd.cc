@@ -36,16 +36,15 @@ public:
     SunNdCodec() : Codec(CD_SUN_ND_NAME) { }
     ~SunNdCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
-const uint16_t IPPROTO_ID_SUN_ND = 77;
 } // namespace
 
-void SunNdCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void SunNdCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(IPPROTO_ID_SUN_ND);
+    v.push_back(ProtocolId::SUN_ND);
 }
 
 bool SunNdCodec::decode(const RawData&, CodecData& codec, DecodeData&)

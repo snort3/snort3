@@ -49,7 +49,7 @@ TcpStreamSession::~TcpStreamSession(void)
 
 void TcpStreamSession::init_new_tcp_session(TcpSegmentDescriptor& tsd)
 {
-    flow->protocol = tsd.get_pkt()->type();
+    flow->pkt_type = tsd.get_pkt()->type();
 
     /* New session, previous was marked as reset.  Clear the reset flag. */
     flow->clear_session_flags(SSNFLAG_RESET);

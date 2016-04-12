@@ -61,7 +61,7 @@ uint8_t Packet::ip_proto_next() const
 
 #endif
 
-bool Packet::get_ip_proto_next(uint8_t& lyr, uint8_t& proto) const
+bool Packet::get_ip_proto_next(uint8_t& lyr, IpProtocol& proto) const
 {
     if (lyr > num_layers)
         return false;
@@ -70,22 +70,22 @@ bool Packet::get_ip_proto_next(uint8_t& lyr, uint8_t& proto) const
     {
         switch (layers[lyr].prot_id)
         {
-        case IPPROTO_ID_IPV6:
-        case ETHERTYPE_IPV6:
+        case ProtocolId::IPV6:
+        case ProtocolId::ETHERTYPE_IPV6:
             // move past this IP layer and any IPv6 extensions.
             while ( ((lyr + 1) < num_layers) && is_ip6_extension(layers[lyr+1].prot_id) )
                 ++lyr;
 
-            if ( (layers[lyr].prot_id == IPPROTO_ID_IPV6) || (layers[lyr].prot_id ==
-                ETHERTYPE_IPV6) )
+            if ( (layers[lyr].prot_id == ProtocolId::IPV6) || (layers[lyr].prot_id ==
+                ProtocolId::ETHERTYPE_IPV6) )
                 proto =  reinterpret_cast<const ip::IP6Hdr*>(layers[lyr++].start)->next();
             else
                 proto =  reinterpret_cast<const ip::IP6Extension*>(layers[lyr++].start)->ip6e_nxt;
 
             return true;
 
-        case ETHERTYPE_IPV4:
-        case IPPROTO_ID_IPIP:
+        case ProtocolId::ETHERTYPE_IPV4:
+        case ProtocolId::IPIP:
             proto = reinterpret_cast<const ip::IP4Hdr*>(layers[lyr++].start)->proto();
             return true;
 

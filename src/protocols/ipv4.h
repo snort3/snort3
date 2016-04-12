@@ -56,7 +56,7 @@ struct IP4Hdr
     uint16_t ip_id;        /* identification  */
     uint16_t ip_off;       /* fragment offset */
     uint8_t ip_ttl;        /* time to live field */
-    uint8_t ip_proto;      /* datagram protocol */
+    IpProtocol ip_proto;      /* datagram protocol */
     uint16_t ip_csum;      /* checksum */
     uint32_t ip_src;  /* source IP */
     uint32_t ip_dst;  /* dest IP */
@@ -77,7 +77,7 @@ struct IP4Hdr
     inline uint8_t ttl() const
     { return ip_ttl; }
 
-    inline uint8_t proto() const
+    inline IpProtocol proto() const
     { return ip_proto; }
 
     inline uint16_t off_w_flags() const
@@ -137,7 +137,7 @@ struct IP4Hdr
     inline void set_hlen(uint8_t value)
     { ip_verhl = (ip_verhl & 0xf0) | (value & 0x0f); }
 
-    inline void set_proto(uint8_t prot)
+    inline void set_proto(IpProtocol prot)
     { ip_proto = prot; }
 
     inline void set_ip_len(uint16_t new_len)

@@ -283,7 +283,7 @@ struct SnortActionRequest
     uint32_t dest_ip;
     uint16_t sport;
     uint16_t dport;
-    uint8_t protocol;
+    IpProtocol ip_proto;
 };
 
 static void load_sar(Packet* packet, Event* event, SnortActionRequest& sar)
@@ -311,7 +311,7 @@ static void load_sar(Packet* packet, Event* event, SnortActionRequest& sar)
     //   and only 1st 8 used for ip4
     sar.src_ip =  ntohl(packet->ptrs.ip_api.get_src()->ip32[0]);
     sar.dest_ip = ntohl(packet->ptrs.ip_api.get_dst()->ip32[0]);
-    sar.protocol = packet->get_ip_proto_next();
+    sar.ip_proto = packet->get_ip_proto_next();
 
     if (packet->is_tcp() || packet->is_udp())
     {

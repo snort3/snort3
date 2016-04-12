@@ -36,7 +36,7 @@
 //-------------------------------------------------------------------------
 
 inline void FlowKey::init4(
-    uint8_t proto,
+    IpProtocol ip_proto,
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
     uint32_t mplsId, bool order)
@@ -44,7 +44,7 @@ inline void FlowKey::init4(
     const uint32_t* src;
     const uint32_t* dst;
 
-    if ( proto ==  IPPROTO_ICMP )
+    if ( ip_proto ==  IpProtocol::ICMPV4 )
     {
         if (srcPort == ICMP_ECHOREPLY)
         {
@@ -98,7 +98,7 @@ inline void FlowKey::init4(
 }
 
 inline void FlowKey::init6(
-    uint8_t proto,
+    IpProtocol ip_proto,
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
     uint32_t mplsId, bool order)
@@ -106,7 +106,7 @@ inline void FlowKey::init6(
     const sfip_t* src;
     const sfip_t* dst;
 
-    if ( proto == IPPROTO_ICMP )
+    if ( ip_proto == IpProtocol::ICMPV4 )
     {
         if (srcPort == ICMP_ECHOREPLY)
         {
@@ -120,7 +120,7 @@ inline void FlowKey::init6(
             dstPort = 0;
         }
     }
-    else if ( proto == IPPROTO_ICMPV6 )
+    else if ( ip_proto == IpProtocol::ICMPV6 )
     {
         if (srcPort == icmp::Icmp6Types::ECHO_REPLY)
         {
@@ -200,7 +200,7 @@ void FlowKey::init_mpls(uint32_t mplsId)
 }
 
 void FlowKey::init(
-    uint8_t type, uint8_t proto,
+    PktType type, IpProtocol ip_proto,
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
     uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId)
@@ -213,22 +213,22 @@ void FlowKey::init(
     if (srcIP->is_ip4())
     {
         version = 4;
-        init4(proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+        init4(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
     }
     else
     {
         version = 6;
-        init6(proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+        init6(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
     }
 
-    protocol = type;
+    pkt_type = type;
 
     init_vlan(vlanId);
     init_address_space(addrSpaceId);
 }
 
 void FlowKey::init(
-    uint8_t type, uint8_t proto,
+    PktType type, IpProtocol ip_proto,
     const sfip_t *srcIP, const sfip_t *dstIP,
     uint32_t id, uint16_t vlanId,
     uint32_t mplsId, uint16_t addrSpaceId)
@@ -241,14 +241,14 @@ void FlowKey::init(
     if (srcIP->is_ip4())
     {
         version = 4;
-        init4(proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        init4(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
     }
     else
     {
         version = 6;
-        init6(proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        init6(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
     }
-    protocol = type;
+    pkt_type = type;
 
     init_vlan(vlanId);
     init_address_space(addrSpaceId);

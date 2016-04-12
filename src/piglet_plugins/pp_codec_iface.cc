@@ -81,7 +81,7 @@ static const luaL_Reg methods[] =
         {
             auto& self = CodecIface.get(L);
 
-            std::vector<uint16_t> ret;
+            std::vector<ProtocolId> ret;
             self.get_protocol_ids(ret);
 
             lua_newtable(L);

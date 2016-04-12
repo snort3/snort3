@@ -70,7 +70,7 @@ static void UdpSessionCleanup(Flow* lwssn)
 static int ProcessUdp(
     Flow* lwssn, Packet* p, StreamUdpConfig*, SFXHASH_NODE*)
 {
-    assert(lwssn->protocol == PktType::UDP);
+    assert(lwssn->pkt_type == PktType::UDP);
 
     if ( stream.blocked_session(lwssn, p) )
         return 0;
@@ -123,7 +123,7 @@ bool UdpSession::setup(Packet* p)
     ssn_time.tv_usec = p->pkth->ts.tv_usec;
     flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
 
-    flow->protocol = p->type();
+    flow->pkt_type = p->type();
     flow->ssn_state.direction = FROM_CLIENT;
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);

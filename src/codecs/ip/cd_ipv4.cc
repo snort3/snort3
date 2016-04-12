@@ -111,7 +111,7 @@ public:
     Ipv4Codec() : Codec(CD_IPV4_NAME) { }
     ~Ipv4Codec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
@@ -134,10 +134,10 @@ static THREAD_LOCAL std::array<uint16_t, IP_ID_COUNT> s_id_pool {
 };
 }  // namespace
 
-void Ipv4Codec::get_protocol_ids(std::vector<uint16_t>& v)
+void Ipv4Codec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ETHERTYPE_IPV4);
-    v.push_back(IPPROTO_ID_IPIP);
+    v.push_back(ProtocolId::ETHERTYPE_IPV4);
+    v.push_back(ProtocolId::IPIP);
 }
 
 bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
@@ -321,12 +321,12 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
      * or if it is, its a UDP packet and offset is 0 */
     if (!(snort.decode_flags & DECODE_FRAG) /*||
         ((frag_off == 0) &&  // FIXIT-M this forces flow to udp instead of ip
-         (iph->proto() == IPPROTO_UDP))*/)
+         (iph->proto() == IpProtocol::UDP))*/)
     {
-        if (iph->proto() >= MIN_UNASSIGNED_IP_PROTO)
+        if (to_utype(iph->proto()) >= to_utype(ProtocolId::MIN_UNASSIGNED_IP_PROTO))
             codec_event(codec, DECODE_IP_UNASSIGNED_PROTO);
         else
-            codec.next_prot_id = iph->proto();
+            codec.next_prot_id = (ProtocolId)iph->proto();
     }
 
     return true;
@@ -666,8 +666,8 @@ bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
      * cycles and use the literal header size for checksum */
     ip4h_out->ip_csum = checksum::ip_cksum((uint16_t*)ip4h_out, ip::IP4_HEADER_LEN);
 
-    enc.next_proto = IPPROTO_ID_IPIP;
-    enc.next_ethertype = ETHERTYPE_IPV4;
+    enc.next_proto = IpProtocol::IPIP;
+    enc.next_ethertype = ProtocolId::ETHERTYPE_IPV4;
     return true;
 }
 

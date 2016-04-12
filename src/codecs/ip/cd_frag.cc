@@ -44,7 +44,7 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
 };
 } // namespace
 
@@ -99,7 +99,7 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
     codec.ip6_extension_count++;
 
     // must be called AFTER setting next_prot_id
-    CheckIPv6ExtensionOrder(codec, IPPROTO_ID_FRAGMENT);
+    CheckIPv6ExtensionOrder(codec, IpProtocol::FRAGMENT);
 
     // Since the Frag layer is removed from rebuilt packets, ensure
     // the next layer is correctly order now.
@@ -113,18 +113,18 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
            value may differ from that of the offset zero frag,
            but only the Next Header of the original frag is used. */
         // check DecodeIP(); we handle frags the same way here
-        codec.next_prot_id = FINISHED_DECODE;
+        codec.next_prot_id = ProtocolId::FINISHED_DECODE;
     }
     else
     {
-        codec.next_prot_id = ip6frag_hdr->ip6f_nxt;
+        codec.next_prot_id = (ProtocolId)ip6frag_hdr->ip6f_nxt;
     }
 
     return true;
 }
 
-void Ipv6FragCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(IPPROTO_ID_FRAGMENT); }
+void Ipv6FragCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::FRAGMENT); }
 
 void Ipv6FragCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t /*lyr_len*/)

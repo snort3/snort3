@@ -41,12 +41,12 @@ public:
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
 };
 
 struct IP6Route
 {
-    uint8_t ip6rte_nxt;
+    IpProtocol ip6rte_nxt;
     uint8_t ip6rte_len;
     uint8_t ip6rte_type;
     uint8_t ip6rte_seg_left;
@@ -68,8 +68,8 @@ struct IP6Route0
 #endif
 } // namespace
 
-void Ipv6RoutingCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(IPPROTO_ID_ROUTING); }
+void Ipv6RoutingCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::ROUTING); }
 
 bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
@@ -97,10 +97,10 @@ bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if (rte->ip6rte_type == 0)
         codec_event(codec, DECODE_IPV6_ROUTE_ZERO);
 
-    if (rte->ip6rte_nxt == IPPROTO_ID_HOPOPTS)
+    if (rte->ip6rte_nxt == IpProtocol::HOPOPTS)
         codec_event(codec, DECODE_IPV6_ROUTE_AND_HOPBYHOP);
 
-    if (rte->ip6rte_nxt == IPPROTO_ID_ROUTING)
+    if (rte->ip6rte_nxt == IpProtocol::ROUTING)
         codec_event(codec, DECODE_IPV6_TWO_ROUTE_HEADERS);
 
     codec.lyr_len = ip::MIN_EXT_LEN + (rte->ip6rte_len << 3);
@@ -112,11 +112,11 @@ bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     codec.proto_bits |= PROTO_BIT__IP6_EXT; // check ip proto rules against this layer
     codec.ip6_extension_count++;
-    codec.next_prot_id = rte->ip6rte_nxt;
+    codec.next_prot_id = (ProtocolId)rte->ip6rte_nxt;
     codec.ip6_csum_proto = rte->ip6rte_nxt;
 
     // must be called AFTER setting next_prot_id
-    CheckIPv6ExtensionOrder(codec, IPPROTO_ID_ROUTING);
+    CheckIPv6ExtensionOrder(codec, IpProtocol::ROUTING);
     return true;
 }
 

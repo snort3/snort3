@@ -60,7 +60,7 @@ public:
     GtpCodec() : Codec(CD_GTP_NAME) { }
     ~GtpCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
         EncState&, Buffer&) override;
@@ -80,9 +80,9 @@ static const uint32_t GTP_MIN_LEN = 8;
 static const uint32_t GTP_V0_HEADER_LEN = 20;
 static const uint32_t GTP_V1_HEADER_LEN = 12;
 
-void GtpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void GtpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(PROTO_GTP);
+    v.push_back(ProtocolId::GTP);
 }
 
 bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
@@ -204,9 +204,9 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
 
         ip_ver = *(raw.data + len) & 0xF0;
         if (ip_ver == 0x40)
-            codec.next_prot_id = IPPROTO_ID_IPIP;
+            codec.next_prot_id = ProtocolId::IPIP;
         else if (ip_ver == 0x60)
-            codec.next_prot_id = IPPROTO_ID_IPV6;
+            codec.next_prot_id = ProtocolId::IPV6;
     }
 
     return true;

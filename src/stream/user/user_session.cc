@@ -315,7 +315,7 @@ void UserSession::start(Packet* p, Flow* flow)
     }
 
     {
-        flow->protocol = p->type();
+        flow->pkt_type = p->type();
 
         if (flow->ssn_state.session_flags & SSNFLAG_RESET)
             flow->ssn_state.session_flags &= ~SSNFLAG_RESET;

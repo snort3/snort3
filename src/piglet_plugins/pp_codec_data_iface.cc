@@ -64,13 +64,20 @@ static const luaL_Reg methods[] =
         {
             Lua::Args args(L);
 
-            auto& self = CodecDataIface.create(L, 0);
+            auto& self = CodecDataIface.create(L, ProtocolId::ETHERTYPE_NOT_SET);
             memset(&self, 0, sizeof(self));
 
             if ( args[1].is_table() )
                 args[1].check_table(set_fields, self);
             else if ( args[1].is_size() )
-                self.next_prot_id = args[1].check_size();
+            {
+                //  FIXIT-L: Can check_size limit size to short?
+                unsigned int tmp = args[1].check_size();
+                if(tmp > UINT16_MAX)
+                    self.next_prot_id = ProtocolId::ETHERTYPE_NOT_SET;
+                else
+                    self.next_prot_id = (ProtocolId)args[1].check_size();
+            }
 
             return 1;
         }

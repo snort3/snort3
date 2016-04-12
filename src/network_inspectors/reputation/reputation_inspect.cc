@@ -264,7 +264,7 @@ static IPdecision ReputationDecision(ReputationConfig* config, Packet* p)
 
     ip::IpApi tmp_api = p->ptrs.ip_api;
     int8_t num_layer = 0;
-    uint8_t tmp_next = p->get_ip_proto_next();
+    IpProtocol tmp_next = p->get_ip_proto_next();
     bool outer_layer_only = (config->nestedIP == OUTER)? true: false;
     bool outer_layer = false;
 

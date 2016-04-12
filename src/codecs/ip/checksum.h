@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <cstddef>
 
+#include <protocols/protocol_ids.h>
+
 namespace checksum
 {
 struct Pseudoheader6
@@ -31,7 +33,7 @@ struct Pseudoheader6
     uint32_t sip[4];
     uint32_t dip[4];
     uint8_t zero;
-    uint8_t protocol;
+    IpProtocol protocol;
     uint16_t len;
 };
 
@@ -40,7 +42,7 @@ struct Pseudoheader
     uint32_t sip;
     uint32_t dip;
     uint8_t zero;
-    uint8_t protocol;
+    IpProtocol protocol;
     uint16_t len;
 };
 

@@ -38,7 +38,7 @@ public:
     ~Ipv6NoNextCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
 };
 } // namespace
 
@@ -64,8 +64,8 @@ bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-void Ipv6NoNextCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(IPPROTO_ID_NONEXT); }
+void Ipv6NoNextCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::NONEXT); }
 
 //-------------------------------------------------------------------------
 // api

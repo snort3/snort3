@@ -50,7 +50,7 @@ static THREAD_LOCAL ProfileStats ipProtoPerfStats;
 
 typedef struct _IpProtoData
 {
-    uint8_t protocol;
+    IpProtocol protocol;
     uint8_t comparison_flag;
 } IpProtoData;
 
@@ -82,7 +82,7 @@ uint32_t IpProtoOption::hash() const
     uint32_t a,b,c;
     const IpProtoData* data = &config;
 
-    a = data->protocol;
+    a = to_utype(data->protocol);
     b = data->comparison_flag;
     c = 0;
 
@@ -122,7 +122,7 @@ int IpProtoOption::eval(Cursor&, Packet* p)
         return DETECTION_OPTION_NO_MATCH;
     }
 
-    const uint8_t ip_proto = p->get_ip_proto_next();
+    const IpProtocol ip_proto = p->get_ip_proto_next();
 
     switch (ipd->comparison_flag)
     {
@@ -203,16 +203,15 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
             return;
         }
 
-        ds_ptr->protocol = (uint8_t)ip_proto;
+        ds_ptr->protocol = (IpProtocol)ip_proto;
     }
     else
     {
         struct protoent* pt = getprotobyname(data);  // main thread only
 
-        if (pt != NULL)
+        if (pt != NULL || pt->p_proto >= NUM_IP_PROTOS)
         {
-            /* p_proto should be a number less than 256 */
-            ds_ptr->protocol = (uint8_t)pt->p_proto;
+            ds_ptr->protocol = (IpProtocol)pt->p_proto;
         }
         else
         {

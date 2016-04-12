@@ -109,7 +109,7 @@ bool Binding::check_addr(const Flow* flow) const
 
 bool Binding::check_proto(const Flow* flow) const
 {
-    if ( when.protos & (unsigned)flow->protocol )
+    if ( when.protos & (unsigned)flow->pkt_type )
         return true;
 
     return false;
@@ -319,7 +319,7 @@ void Stuff::apply_session(Flow* flow, const HostAttributeEntry* host)
         return;
     }
 
-    switch ( flow->protocol )
+    switch ( flow->pkt_type )
     {
     case PktType::IP:
         set_session(flow, INS_IP);

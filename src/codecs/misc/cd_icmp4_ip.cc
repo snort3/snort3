@@ -44,14 +44,14 @@ public:
     Icmp4IpCodec() : Codec(ICMP4_IP_NAME) { }
     ~Icmp4IpCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 } // namespace
 
-void Icmp4IpCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(PROTO_IP_EMBEDDED_IN_ICMP4); }
+void Icmp4IpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::IP_EMBEDDED_IN_ICMP4); }
 
 bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
@@ -110,15 +110,15 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
 
     switch (ip4h->proto())
     {
-    case IPPROTO_TCP:     /* decode the interesting part of the header */
+    case IpProtocol::TCP:     /* decode the interesting part of the header */
         codec.proto_bits |= PROTO_BIT__TCP_EMBED_ICMP;
         break;
 
-    case IPPROTO_UDP:
+    case IpProtocol::UDP:
         codec.proto_bits |= PROTO_BIT__UDP_EMBED_ICMP;
         break;
 
-    case IPPROTO_ICMP:
+    case IpProtocol::ICMPV4:
         codec.proto_bits |= PROTO_BIT__ICMP_EMBED_ICMP;
         break;
     default:
@@ -220,7 +220,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     /*  EMBEDDED PROTOCOL */
     switch (ip4h->proto())
     {
-    case IPPROTO_TCP:     /* decode the interesting part of the header */
+    case IpProtocol::TCP:     /* decode the interesting part of the header */
     {
         const tcp::TCPHdr* tcph = reinterpret_cast<const tcp::TCPHdr*>
             (raw_pkt + hlen);
@@ -234,7 +234,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         break;
     }
 
-    case IPPROTO_UDP:
+    case IpProtocol::UDP:
     {
         const udp::UDPHdr* udph = reinterpret_cast<const udp::UDPHdr*>
             (raw_pkt + hlen);
@@ -245,7 +245,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         break;
     }
 
-    case IPPROTO_ICMP:
+    case IpProtocol::ICMPV4:
     {
         const icmp::ICMPHdr* icmph = reinterpret_cast<const icmp::ICMPHdr*>
             (raw_pkt + hlen);

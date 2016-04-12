@@ -53,7 +53,7 @@ public:
     ~IgmpCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
 };
 } // namespace
 
@@ -84,9 +84,9 @@ bool IgmpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     return true;
 }
 
-void IgmpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void IgmpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(IPPROTO_IGMP);
+    v.push_back(ProtocolId::IGMP);
 }
 
 //-------------------------------------------------------------------------

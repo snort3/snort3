@@ -51,16 +51,16 @@ public:
     ArpCodec() : Codec(CD_ARP_NAME) { }
     ~ArpCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 };
 } // anonymous namespace
 
-void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void ArpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ETHERTYPE_ARP);
-    v.push_back(ETHERTYPE_REVARP);
+    v.push_back(ProtocolId::ETHERTYPE_ARP);
+    v.push_back(ProtocolId::ETHERTYPE_REVARP);
 }
 
 bool ArpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
