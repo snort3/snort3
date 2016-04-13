@@ -55,7 +55,6 @@ public:
     virtual void close() final;
     virtual void rotate() final;
     virtual void auto_rotate() final;
-    virtual void write() final;
 
     virtual ~PerfTracker();
 
@@ -64,6 +63,7 @@ protected:
     PerfFormatter* formatter;
 
     PerfTracker(PerfConfig*, const char* tracker_fname);
+    virtual void write() final;
 
 private:
     std::string fname;
