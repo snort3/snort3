@@ -64,6 +64,8 @@ void NHttpMsgStatus::parse_start_line()
 
     if ((start_line.length > first_end + 4) && !is_sp_tab[start_line.start[first_end + 4]])
     {
+        // FIXIT-M This should not be fatal. HI supports something like "HTTP/1.1 200\\OK\r\n" as
+        // seen in a status line test.
         infractions += INF_BAD_STAT_LINE;
         events.create_event(EVENT_LOSS_OF_SYNC);
         return;
