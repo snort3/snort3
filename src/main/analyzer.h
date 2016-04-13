@@ -38,13 +38,14 @@ enum AnalyzerCommand
 };
 
 class Swapper;
+class SFDAQInstance;
 
 class Analyzer
 {
 public:
-    Analyzer(const char* source);
+    Analyzer(unsigned id, const char* source);
 
-    void operator()(unsigned, Swapper*);
+    void operator()(Swapper*);
 
     bool is_done() { return done; }
     uint64_t get_count() { return count; }
@@ -61,12 +62,13 @@ private:
     bool handle(AnalyzerCommand);
 
 private:
+    volatile AnalyzerCommand command;
     bool done;
     uint64_t count;
+    unsigned id;
     const char* source;
-    volatile AnalyzerCommand command;
     Swapper* swap;
-    void* daqh;
+    SFDAQInstance* daq_instance;
 };
 
 #endif

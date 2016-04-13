@@ -185,7 +185,7 @@ void FullLogger::alert(Packet* p, const char* msg, Event* event)
 
         if (SnortConfig::alert_interface())
         {
-            const char* iface = PRINT_INTERFACE(DAQ_GetInterfaceSpec());
+            const char* iface = PRINT_INTERFACE(SFDAQ::get_interface_spec());
             TextLog_Print(full_log, " <%s> ", iface);
         }
 

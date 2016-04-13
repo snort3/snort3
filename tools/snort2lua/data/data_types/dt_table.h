@@ -39,6 +39,7 @@ public:
     bool has_differences();
     Table* open_table();
     Table* open_table(std::string);
+    bool add_option(std::string val);
     bool add_option(std::string, int val);
     bool add_option(std::string, bool val);
     bool add_option(std::string, std::string val);

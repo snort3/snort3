@@ -115,6 +115,20 @@ void TableApi::close_table()
     }
 }
 
+bool TableApi::add_option(const std::string val)
+{
+    if (open_tables.size() == 0)
+    {
+        DataApi::developer_error("Must open table before adding an option!!: "
+            "<anonymous> = " + val);
+        return false;
+    }
+
+    Table* t = open_tables.top();
+    t->add_option(val);
+    return true;
+}
+
 bool TableApi::add_option(const std::string option_name, const std::string val)
 {
     if (open_tables.size() == 0)
@@ -159,6 +173,9 @@ bool TableApi::add_option(const std::string option_name, const bool val)
 
 // compilers are fickle and dangerous creatures.  Ensure a literal gets
 // sent here rather to become a bool
+bool TableApi::add_option(const char* const v)
+{ return add_option(std::string(v)); }
+
 bool TableApi::add_option(const std::string name, const char* const v)
 { return add_option(name, std::string(v)); }
 

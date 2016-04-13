@@ -99,6 +99,13 @@ Table* Table::open_table(std::string table_name)
     return t;
 }
 
+bool Table::add_option(std::string value)
+{
+    Option* o = new Option(value, depth + 1);
+    options.push_back(o);
+    return true;
+}
+
 bool Table::add_option(std::string opt_name, int value)
 {
     if (has_option(opt_name, value))

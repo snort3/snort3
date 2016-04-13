@@ -349,28 +349,24 @@ void SetUidGid(int user_id, int group_id)
 {
     if ((group_id != -1) && (getgid() != (gid_t)group_id))
     {
-        if ( !DAQ_Unprivileged() )
-            ParseError("cannot set uid and gid - %s DAQ does not"
-                " support unprivileged operation.\n", DAQ_GetType());
-
+        if (!SFDAQ::unprivileged())
+            ParseError("Cannot set GID - %s DAQ does not support unprivileged operation.\n",
+                    SFDAQ::get_type());
         else if (setgid(group_id) < 0)
-            ParseError("Cannot set gid: %d", group_id);
-
+            ParseError("Cannot set GID: %d", group_id);
         else
-            LogMessage("Set gid to %d\n", group_id);
+            LogMessage("Set GID to %d\n", group_id);
     }
 
     if ((user_id != -1) && (getuid() != (uid_t)user_id))
     {
-        if ( !DAQ_Unprivileged() )
-            ParseError("cannot set uid and gid - %s DAQ does not"
-                " support unprivileged operation.\n", DAQ_GetType());
-
+        if (!SFDAQ::unprivileged())
+            ParseError("Cannot set UID - %s DAQ does not support unprivileged operation.\n",
+                    SFDAQ::get_type());
         else if (setuid(user_id) < 0)
-            ParseError("Can not set uid: %d", user_id);
-
+            ParseError("Cannot set UID: %d", user_id);
         else
-            LogMessage("Set uid to %d\n", user_id);
+            LogMessage("Set UID to %d\n", user_id);
     }
 }
 

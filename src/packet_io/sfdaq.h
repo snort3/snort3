@@ -17,72 +17,78 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// sfdaq.h author Russ Combs <rcombs@sourcefire.com>
+// sfdaq.h author Michael Altizer <mialtize@cisco.com>
 
 #ifndef SFDAQ_H
 #define SFDAQ_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <stdio.h>
-
 extern "C" {
 #include <daq.h>
 }
-#include "main/snort_types.h"
 
-#define PKT_TIMEOUT  1000  // ms, worst daq resolution is 1 sec
+#include <string>
 
 struct SnortConfig;
 
-void DAQ_Load(const SnortConfig*);
-void DAQ_Unload(void);
+class SFDAQInstance
+{
+public:
+    SFDAQInstance(const char* intf);
+    ~SFDAQInstance();
+    bool configure(const SnortConfig*);
+    void abort();
+    const char* get_interface_spec();
+    int get_base_protocol();
+    bool can_inject();
+    bool can_inject_raw();
+    bool can_replace();
+    bool can_start_unprivileged();
+    bool can_whitelist();
+    bool start();
+    bool was_started();
+    bool stop();
+    void set_metacallback(DAQ_Meta_Func_t);
+    int acquire(int max, DAQ_Analysis_Func_t);
+    int inject(const DAQ_PktHdr_t*, int rev, const uint8_t* buf, uint32_t len);
+    bool break_loop(int error);
+    const DAQ_Stats_t* get_stats();
+    int modify_flow_opaque(const DAQ_PktHdr_t*, uint32_t opaque);
+private:
+    bool set_filter(const char*);
+    std::string interface_spec;
+    DAQ_Meta_Func_t daq_meta_callback;
+    void* daq_hand;
+    int daq_dlt;
+    int s_error;
+    DAQ_Stats_t daq_stats;
+};
 
-void DAQ_Init(const SnortConfig*);
-void DAQ_Term(void);
-void DAQ_Abort(void);
-
-int DAQ_PrintTypes(FILE*);
-const char* DAQ_GetType(void);
-
-int DAQ_Unprivileged(void);
-int DAQ_UnprivilegedStart(void);
-int DAQ_CanReplace(void);
-int DAQ_CanInject(void);
-int DAQ_CanWhitelist(void);
-int DAQ_RawInjection(void);
-
-SO_PUBLIC const char* DAQ_GetInterfaceSpec(void);
-SO_PUBLIC uint32_t DAQ_GetSnapLen(void);
-SO_PUBLIC int DAQ_GetBaseProtocol(void);
-int DAQ_SetFilter(const char*);
-
-// total stats are accumulated when daq is deleted
-int DAQ_New(const SnortConfig*, const char* intf);
-int DAQ_Delete(void);
-
-int DAQ_Start(void);
-int DAQ_WasStarted(void);
-int DAQ_Stop(void);
-
-// FIXIT-L some stuff may be inlined once encapsulations are straight
-// (but only where performance justifies exposing implementation!)
-int DAQ_Acquire(int max, DAQ_Analysis_Func_t, uint8_t* user);
-int DAQ_Inject(const DAQ_PktHdr_t*, int rev, const uint8_t* buf, uint32_t len);
-
-void* DAQ_GetHandle();
-int DAQ_BreakLoop(int error, void* handle = nullptr);
-
-void DAQ_Set_MetaCallback(DAQ_Meta_Func_t meta_callback);
-SO_PUBLIC DAQ_Mode DAQ_GetInterfaceMode(const DAQ_PktHdr_t* h);
-
-int DAQ_ModifyFlowOpaque(const void* h, uint32_t opaque);
-
-// returns total stats if no daq else current stats
-// returns statically allocated stats - don't free
-const DAQ_Stats_t* DAQ_GetStats(void);
+class SFDAQ
+{
+public:
+    static void load(const SnortConfig*);
+    static void unload();
+    static void print_types(std::ostream&);
+    static void init(const SnortConfig*);
+    static void term();
+    static bool forwarding_packet(const DAQ_PktHdr_t*);
+    static const char* get_type();
+    static uint32_t get_snap_len();
+    static bool unprivileged();
+    static const char* get_input_spec(const SnortConfig*, unsigned instance_id);
+    static const char* default_type();
+    // FIXIT-M: X Temporary thread-local instance helpers to be removed when no longer needed
+    static void set_local_instance(SFDAQInstance*);
+    static SFDAQInstance* get_local_instance();
+    static const char* get_interface_spec();
+    static int get_base_protocol();
+    static bool can_inject();
+    static bool can_inject_raw();
+    static bool can_replace();
+    static int inject(const DAQ_PktHdr_t*, int rev, const uint8_t* buf, uint32_t len);
+    static bool break_loop(int error);
+    static const DAQ_Stats_t* get_stats();
+};
 
 #endif
 

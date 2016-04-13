@@ -414,7 +414,7 @@ bool PacketManager::encode(const Packet* p,
     else
         ttl = 0;
 
-    if ( DAQ_GetInterfaceMode(p->pkth) == DAQ_MODE_INLINE )
+    if ( SFDAQ::forwarding_packet(p->pkth) )
         flags |= ENC_FLAG_INLINE;
 
     ip::IpApi tmp_api;

@@ -35,11 +35,13 @@ public:
     ConfigStringOption(Converter& c,
         const std::string* snort_opt,
         const std::string* table,
-        const std::string* lua_opt) :
+        const std::string* lua_opt,
+        bool string_array) :
         ConversionState(c),
         snort_option(snort_opt),
         lua_table(table),
-        lua_option(lua_opt)
+        lua_option(lua_opt),
+        use_string_array(string_array)
     {
     }
 
@@ -70,11 +72,25 @@ public:
         {
             table_api.add_diff_option_comment("config " + *snort_option +
                 ":", *lua_option);
-            table_api.add_option(*lua_option, arg_s);
+            if (use_string_array)
+            {
+                table_api.open_table(*lua_option);
+                table_api.add_option(arg_s);
+                table_api.close_table();
+            }
+            else
+                table_api.add_option(*lua_option, arg_s);
         }
         else
         {
-            table_api.add_option(*snort_option, arg_s);
+            if (use_string_array)
+            {
+                table_api.open_table(*snort_option);
+                table_api.add_option(arg_s);
+                table_api.close_table();
+            }
+            else
+                table_api.add_option(*snort_option, arg_s);
         }
 
         table_api.close_table();
@@ -86,17 +102,20 @@ private:
     const std::string* snort_option;
     const std::string* lua_table;
     const std::string* lua_option;
+    bool use_string_array;
 };
 
 template<const std::string* snort_option,
 const std::string* lua_table,
-const std::string* lua_option = nullptr>
+const std::string* lua_option = nullptr,
+bool use_string_array = false>
 static ConversionState* config_string_ctor(Converter& c)
 {
     return new ConfigStringOption(c,
         snort_option,
         lua_table,
-        lua_option);
+        lua_option,
+        use_string_array);
 }
 } // namespace
 
@@ -143,11 +162,11 @@ const ConvertMap* chroot_map = &chroot_api;
  *********************  daq  *********************
  *************************************************/
 
-static const std::string type = "type";
+static const std::string module = "module";
 static const ConvertMap daq_api =
 {
     daq,
-    config_string_ctor<& daq, & daq, & type>,
+    config_string_ctor<& daq, & daq, & module>,
 };
 
 const ConvertMap* daq_map = &daq_api;
@@ -157,38 +176,25 @@ const ConvertMap* daq_map = &daq_api;
  *************************************************/
 
 static const std::string daq_dir = "daq_dir";
-static const std::string dir = "dir";
+static const std::string module_dirs = "module_dirs";
 static const ConvertMap daq_dir_api =
 {
     daq_dir,
-    config_string_ctor<& daq_dir, & daq, & dir>,
+    config_string_ctor<& daq_dir, & daq, & module_dirs, true>,
 };
 
 const ConvertMap* daq_dir_map = &daq_dir_api;
-
-/*************************************************
- *******************  daq_mode  *******************
- *************************************************/
-
-static const std::string daq_mode = "daq_mode";
-static const ConvertMap daq_mode_api =
-{
-    daq_mode,
-    config_string_ctor<& daq_mode, & daq, & mode>,
-};
-
-const ConvertMap* daq_mode_map = &daq_mode_api;
 
 /*************************************************
  *******************  daq_var  *******************
  *************************************************/
 
 static const std::string daq_var = "daq_var";
-static const std::string var = "vars";
+static const std::string variables = "variables";
 static const ConvertMap daq_var_api =
 {
     daq_var,
-    config_string_ctor<& daq_var, & daq, & var>,
+    config_string_ctor<& daq_var, & daq, & variables, true>,
 };
 
 const ConvertMap* daq_var_map = &daq_var_api;

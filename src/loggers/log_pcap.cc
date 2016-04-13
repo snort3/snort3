@@ -197,7 +197,7 @@ static void TcpdumpInitLogFile(LtdConfig*, bool no_timestamp)
 
     get_instance_file(file, filename.c_str());
 
-    int dlt = DAQ_GetBaseProtocol();
+    int dlt = SFDAQ::get_base_protocol();
 
     // convert these flavors of raw to the generic
     // for compatibility with libpcap 1.0.0
@@ -205,7 +205,7 @@ static void TcpdumpInitLogFile(LtdConfig*, bool no_timestamp)
         dlt = DLT_RAW;
 
     pcap_t* pcap;
-    pcap = pcap_open_dead(dlt, DAQ_GetSnapLen());
+    pcap = pcap_open_dead(dlt, SFDAQ::get_snap_len());
 
     if ( !pcap )
         FatalError("%s: can't get pcap context\n", S_NAME);

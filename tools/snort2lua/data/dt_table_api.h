@@ -87,7 +87,11 @@ public:
  * NOTE:  if val is a string/char* and starts with a '$', Snort2lua assumes that val
  *        is a Snort/Lua variable. Therefore, if val starts with $, Snort2Lua will not
  *        place quotes around the string
+ * The add_option variants without an option name are used to add "anonymous" options
+ * for the purpose of creating arrays.
  */
+    bool add_option(const std::string val);
+    bool add_option(const char* const v);
     bool add_option(const std::string opt_name, const std::string val);
     bool add_option(const std::string opt_name, const int val);
     bool add_option(const std::string opt_name, const bool val);

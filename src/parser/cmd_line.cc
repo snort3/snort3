@@ -160,7 +160,7 @@ SnortConfig* parse_cmd_line(int argc, char* argv[])
     const char* key, * val;
     unsigned c = 0;
 
-    sm->begin(nullptr, 0, sc);
+    sm->begin("snort", 0, sc);
 
     // get special options first
     while ( al.get_arg(key, val) )

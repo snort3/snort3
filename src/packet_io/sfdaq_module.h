@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2009-2013 Sourcefire, Inc.
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,22 +15,34 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// strvec.h author Russ Combs <rcombs@sourcefire.com>
 
-#ifndef STRVEC_H
-#define STRVEC_H
+// sfdaq_module.h author Michael Altizer <mialtize@cisco.com>
 
-// Vanilla string vector implementation
-// FIXIT-L: Replace with an STL vector?
+#ifndef SFDAQ_MODULE_H
+#define SFDAQ_MODULE_H
 
-void* StringVector_New(void);
-void StringVector_Delete(void*);
+#include "framework/module.h"
 
-int StringVector_Add(void*, const char*);
-char* StringVector_Get(void*, unsigned index);
+struct SnortConfig;
+struct SFDAQConfig;
+struct SFDAQInstanceConfig;
 
-int StringVector_AddVector(void* dst, void* src);
-const char** StringVector_GetVector(void*);
+class SFDAQModule : public Module
+{
+public:
+    SFDAQModule();
+    ~SFDAQModule();
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
+
+    const PegInfo* get_pegs() const override;
+    PegCount* get_counts() const override;
+private:
+    SFDAQConfig* config;
+    SFDAQInstanceConfig* instance_config;
+    int instance_id;
+};
 
 #endif
-

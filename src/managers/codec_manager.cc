@@ -207,7 +207,7 @@ void CodecManager::thread_init(SnortConfig* sc)
         if (wrap.api->tinit)
             wrap.api->tinit();
 
-    int daq_dlt = DAQ_GetBaseProtocol();
+    int daq_dlt = SFDAQ::get_base_protocol();
     for (int i = 0; s_protocols[i] != 0; i++)
     {
         Codec* cd = s_protocols[i];

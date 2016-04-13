@@ -75,7 +75,6 @@ struct AuxCount
 {
     PegCount internal_blacklist;
     PegCount internal_whitelist;
-    PegCount total_fail_open;
     PegCount idle;
 };
 
@@ -100,7 +99,6 @@ struct DAQStats
     PegCount internal_blacklist;
     PegCount internal_whitelist;
     PegCount skipped;
-    PegCount fail_open;
     PegCount idle;
 };
 

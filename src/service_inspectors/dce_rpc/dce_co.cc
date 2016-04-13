@@ -2200,7 +2200,7 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
     DCE2_PrintPktData(rpkt->data, rpkt->dsize);
 }
 
-DCE2_Ret DCE2_HandleSegmentation(DCE2_Buffer* seg_buf, const uint8_t* data_ptr,
+static DCE2_Ret DCE2_HandleSegmentation(DCE2_Buffer* seg_buf, const uint8_t* data_ptr,
     uint16_t data_len, uint32_t need_len)
 {
     uint32_t copy_len;

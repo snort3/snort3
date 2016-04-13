@@ -237,7 +237,7 @@ static void AlertSyslog(
         if (SnortConfig::alert_interface())
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                "<%s> ", PRINT_INTERFACE(DAQ_GetInterfaceSpec()));
+                "<%s> ", PRINT_INTERFACE(SFDAQ::get_interface_spec()));
         }
     }
     if ((p != NULL) && p->ptrs.ip_api.is_ip())

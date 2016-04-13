@@ -38,8 +38,6 @@ ADD_LIBRARY( utils STATIC
     sfmemcap.cc 
     sfsnprintfappend.cc 
     sfsnprintfappend.h
-    strvec.cc 
-    strvec.h
     stats.cc
     util.cc
     util_jsnorm.cc 

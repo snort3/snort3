@@ -182,7 +182,6 @@ const PegInfo daq_names[] =
     { "internal blacklist", "packets blacklisted internally due to lack of DAQ support" },
     { "internal whitelist", "packets whitelisted internally due to lack of DAQ support" },
     { "skipped", "packets skipped at startup" },
-    { "fail open", "packets passed during initialization" },
     { "idle", "attempts to acquire from DAQ without available packets" },
     { nullptr, nullptr }
 };
@@ -227,7 +226,7 @@ const PegInfo proc_names[] =
 void pc_sum()
 {
     // must sum explicitly; can't zero; daq stats are cuumulative ...
-    const DAQ_Stats_t* daq_stats = DAQ_GetStats();
+    const DAQ_Stats_t* daq_stats = SFDAQ::get_stats();
 
     g_daq_stats.hw_packets_received += daq_stats->hw_packets_received;
     g_daq_stats.hw_packets_dropped += daq_stats->hw_packets_dropped;
@@ -274,7 +273,6 @@ void get_daq_stats(DAQStats& daq_stats)
     daq_stats.internal_blacklist = gaux.internal_blacklist;
     daq_stats.internal_whitelist = gaux.internal_whitelist;
     daq_stats.skipped = snort_conf->pkt_skip;
-    daq_stats.fail_open = gaux.total_fail_open;
     daq_stats.idle = gaux.idle;
 }
 
