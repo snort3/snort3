@@ -39,6 +39,9 @@ public:
     void update(Packet*) override;
     void process(bool) override;
 
+protected:
+    virtual void clear();
+
 private:
     PegCount byte_total = 0;
 
