@@ -20,3 +20,4 @@ can be freed (via garbage collection) after a reload.
 There are many flags that may be set on a flow to indicate session tracking
 state, disposition, etc.
 
+HighAvailability (ha.cc, ha.h) serves to synchronize session state between high availabity partners.

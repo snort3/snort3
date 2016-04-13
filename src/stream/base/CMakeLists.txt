@@ -1,5 +1,7 @@
 
 add_library( stream_base STATIC
+    stream_ha.cc
+    stream_ha.h
     stream_base.cc
     stream_module.cc
     stream_module.h
