@@ -104,7 +104,7 @@ void CPUTracker::process(bool)
     last_st = system;
     last_wt = wall;
 
-    formatter->write(fh, cur_time);
+    write();
 }
 
 #ifdef UNIT_TEST
@@ -118,7 +118,6 @@ public:
     TestCPUTracker(PerfConfig* perf) : CPUTracker(perf)
     {
         output = formatter;
-        cur_time = 1234567890;
         memset(&user, 0, sizeof(wall));
         memset(&sys, 0, sizeof(wall));
         memset(&wall, 0, sizeof(wall));

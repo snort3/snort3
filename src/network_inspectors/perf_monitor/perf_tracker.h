@@ -34,6 +34,8 @@
 // process(bool) - summarize data and report. This is called after the
 // reporting thresholds have been reached.
 //
+// write() - tell the configured PerfFormatter to output the current stats
+//
 
 #include <cstdio>
 
@@ -53,17 +55,20 @@ public:
     virtual void close() final;
     virtual void rotate() final;
     virtual void auto_rotate() final;
+    virtual void write() final;
 
     virtual ~PerfTracker();
 
 protected:
     PerfConfig* config;
-    FILE* fh = nullptr;
-    std::string fname;
-    time_t cur_time;
     PerfFormatter* formatter;
 
     PerfTracker(PerfConfig*, const char* tracker_fname);
+
+private:
+    std::string fname;
+    FILE* fh = nullptr;
+    time_t cur_time;
 };
 #endif
 

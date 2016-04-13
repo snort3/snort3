@@ -185,7 +185,7 @@ void FlowIPTracker::process(bool)
         sfip_raw_ntop(key->ipB.family, key->ipB.ip32, ip_b, sizeof(ip_b));
         memcpy(&stats, cur_stats, sizeof(stats));
 
-        formatter->write(fh, cur_time);
+        write();
     }
 
     if ( !(config->perf_flags & PERF_SUMMARY) )

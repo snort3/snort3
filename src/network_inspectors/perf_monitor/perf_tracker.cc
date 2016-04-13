@@ -325,3 +325,7 @@ void PerfTracker::auto_rotate()
         rotate();
 }
 
+void PerfTracker::write()
+{
+    formatter->write(fh, cur_time);
+}

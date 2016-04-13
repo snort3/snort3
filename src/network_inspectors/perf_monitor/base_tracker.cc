@@ -49,7 +49,7 @@ BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf,
 
 void BaseTracker::process(bool summary)
 {
-    formatter->write(fh, cur_time);
+    write();
 
     for (unsigned i = 0; i < config->modules.size(); i++)
         if (!summary)

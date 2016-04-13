@@ -91,7 +91,7 @@ void FlowTracker::update(Packet* p)
 
 void FlowTracker::process(bool)
 {
-    formatter->write(fh, cur_time);
+    write();
     clear();
 }
 
