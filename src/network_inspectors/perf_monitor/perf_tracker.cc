@@ -116,6 +116,8 @@ void PerfTracker::open(bool append)
     }
     else
         fh = stdout;
+
+    formatter->init_output(fh);
 }
 
 void PerfTracker::close()

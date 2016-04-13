@@ -108,7 +108,7 @@ FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf,
         &stats.state_changes[SFS_STATE_TCP_CLOSED]);
     formatter->register_field("udp_created", (PegCount*)
         &stats.state_changes[SFS_STATE_UDP_CREATED]);
-
+    formatter->finalize_fields();
 }
 
 FlowIPTracker::~FlowIPTracker()
@@ -131,7 +131,6 @@ void FlowIPTracker::reset()
         if (!ipMap)
             FatalError("Unable to allocate memory for FlowIP stats\n"); //FIXIT-H this should all
                                                                         // occur at thread init
-        formatter->finalize_fields(fh);
         first = false;
     }
     else

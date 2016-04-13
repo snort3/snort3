@@ -48,6 +48,7 @@ CPUTracker::CPUTracker(PerfConfig *perf) :
     formatter->register_field("user", &user_stat);
     formatter->register_field("system", &system_stat);
     formatter->register_field("wall", &wall_stat);
+    formatter->finalize_fields();
 }
 
 void CPUTracker::get_clocks(struct timeval& user_time,
@@ -87,7 +88,6 @@ void CPUTracker::get_times(uint64_t& user, uint64_t& system, uint64_t& wall)
 void CPUTracker::reset()
 {
     get_times(last_ut, last_st, last_wt);
-    formatter->finalize_fields(fh);
 }
 
 void CPUTracker::process(bool)

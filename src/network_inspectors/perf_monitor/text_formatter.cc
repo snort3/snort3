@@ -119,7 +119,8 @@ TEST_CASE("text output", "[TextFormatter]")
     f.register_field("five", five);
     f.register_section("vec");
     f.register_field("vector", &kvp);
-    f.finalize_fields(fh);
+    f.finalize_fields();
+    f.init_output(fh);
 
     kvp.push_back(50);
     kvp.push_back(0);

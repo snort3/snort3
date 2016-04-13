@@ -27,8 +27,12 @@ class CSVFormatter : public PerfFormatter
 {
 public:
     CSVFormatter() : PerfFormatter() {};
-    void finalize_fields(FILE*) override;
+    void finalize_fields() override;
+    void init_output(FILE*) override;
     void write(FILE*, time_t) override;
+
+private:
+    std::string header;
 };
 
 #endif

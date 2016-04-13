@@ -44,11 +44,7 @@ BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf,
              formatter->register_field(m->get_pegs()[idx].name,
                 &(m->get_counts()[idx]));
     }
-}
-
-void BaseTracker::reset()
-{
-    formatter->finalize_fields(fh);
+    formatter->finalize_fields();
 }
 
 void BaseTracker::process(bool summary)

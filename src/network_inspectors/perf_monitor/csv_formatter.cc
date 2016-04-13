@@ -29,9 +29,9 @@
 
 using namespace std;
 
-void CSVFormatter::finalize_fields(FILE* fh)
+void CSVFormatter::finalize_fields()
 {
-    string header = "#timestamp";
+    header = "#timestamp";
 
     for( unsigned i = 0; i < section_names.size(); i++ )
     {
@@ -43,7 +43,10 @@ void CSVFormatter::finalize_fields(FILE* fh)
     header += "\n";
     section_names.clear();
     field_names.clear();
+}
 
+void CSVFormatter::init_output(FILE* fh)
+{
     fwrite(header.c_str(), header.size(), 1, fh);
     fflush(fh);
 }
@@ -113,7 +116,8 @@ TEST_CASE("csv output", "[CSVFormatter]")
     f.register_field("three", &three);
     f.register_field("five", five);
     f.register_field("kvp", &kvp);
-    f.finalize_fields(fh);
+    f.finalize_fields();
+    f.init_output(fh);
 
     kvp.push_back(50);
     kvp.push_back(60);

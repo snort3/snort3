@@ -35,7 +35,6 @@ class FlowTracker : public PerfTracker
 public:
     FlowTracker(PerfConfig* perf);
 
-    void reset() override;
     void update(Packet*) override;
     void process(bool) override;
 

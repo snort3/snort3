@@ -61,11 +61,8 @@ FlowTracker::FlowTracker(PerfConfig* perf) : PerfTracker(perf,
 
     formatter->register_section("flow_icmp");
     formatter->register_field("bytes_by_type", &type_icmp);
-}
 
-void FlowTracker::reset()
-{
-    formatter->finalize_fields(fh);
+    formatter->finalize_fields();
 }
 
 void FlowTracker::update(Packet* p)

@@ -32,12 +32,15 @@
 //    as they cannot be updated. Data will be pulled from these pointers when
 //    writes occur.
 //
-// 3. Call finalize_fields to complete section and field registration. This is
-//    where any metadata needed will be sent to the provided output.
+// 3. Call finalize_fields to complete section and field registration. This can
+//    only be called once per instance.
 //
 // 4. Set the values desired for fields.
 //
 // 5. Call write to output the current values in each field.
+//
+// init_output should be implemented where metadata needs to be written on
+// ouput open.
 //
 
 #include <framework/counts.h>
@@ -69,7 +72,8 @@ public:
     virtual void register_field(std::string, PegCount*);
     virtual void register_field(std::string, const char*);
     virtual void register_field(std::string, std::vector<PegCount>*);
-    virtual void finalize_fields(FILE*) {};
+    virtual void finalize_fields() {};
+    virtual void init_output(FILE*) {};
     virtual void write(FILE*, time_t) = 0;
 
 protected:
