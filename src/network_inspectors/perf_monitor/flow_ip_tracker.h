@@ -22,8 +22,39 @@
 #define FLOW_IP_TRACKER_H
 
 #include "perf_tracker.h"
-#include "perf_flow.h"
 #include "hash/sfxhash.h"
+
+enum FlowState
+{
+    SFS_STATE_TCP_ESTABLISHED = 0,
+    SFS_STATE_TCP_CLOSED,
+    SFS_STATE_UDP_CREATED,
+    SFS_STATE_MAX
+};
+
+enum FlowType
+{
+    SFS_TYPE_TCP = 0,
+    SFS_TYPE_UDP,
+    SFS_TYPE_OTHER,
+    SFS_TYPE_MAX
+};
+
+struct TrafficStats
+{
+    uint64_t packets_a_to_b;
+    uint64_t bytes_a_to_b;
+    uint64_t packets_b_to_a;
+    uint64_t bytes_b_to_a;
+};
+
+struct FlowStateValue
+{
+    TrafficStats traffic_stats[SFS_TYPE_MAX];
+    uint64_t total_packets;
+    uint64_t total_bytes;
+    uint32_t state_changes[SFS_STATE_MAX];
+};
 
 class FlowIPTracker : public PerfTracker
 {
@@ -38,7 +69,9 @@ public:
     int update_state(const sfip_t* src_addr, const sfip_t* dst_addr, FlowState);
 
 private:
+    FlowStateValue stats;
     SFXHASH* ipMap;
+    char ip_a[41], ip_b[41];
 
     FlowStateValue* find_stats(const sfip_t* src_addr, const sfip_t* dst_addr, int* swapped);
     void write_stats();

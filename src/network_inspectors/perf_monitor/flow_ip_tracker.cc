@@ -19,7 +19,6 @@
 // flow_ip_tracker.cc author Carter Waxman <cwaxman@cisco.com>
 
 #include "flow_ip_tracker.h"
-#include "perf_flow.h"
 #include "perf_module.h"
 
 #include "sfip/sf_ip.h"
@@ -75,7 +74,42 @@ FlowStateValue* FlowIPTracker::find_stats(const sfip_t* src_addr, const sfip_t* 
 
 FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf,
         perf->output == PERF_FILE ? FLIP_FILE : nullptr)
-{ }
+{
+    formatter->register_section("flow_ip");
+    formatter->register_field("ip_a", ip_a);
+    formatter->register_field("ip_b", ip_b);
+    formatter->register_field("tcp_packets_a_b",
+        &stats.traffic_stats[SFS_TYPE_TCP].packets_a_to_b);
+    formatter->register_field("tcp_bytes_a_b",
+        &stats.traffic_stats[SFS_TYPE_TCP].bytes_a_to_b);
+    formatter->register_field("tcp_packets_b_a",
+        &stats.traffic_stats[SFS_TYPE_TCP].packets_b_to_a);
+    formatter->register_field("tcp_bytes_b_a",
+        &stats.traffic_stats[SFS_TYPE_TCP].bytes_b_to_a);
+    formatter->register_field("udp_packets_a_b",
+        &stats.traffic_stats[SFS_TYPE_UDP].packets_a_to_b);
+    formatter->register_field("udp_bytes_a_b",
+        &stats.traffic_stats[SFS_TYPE_UDP].bytes_a_to_b);
+    formatter->register_field("udp_packets_b_a",
+        &stats.traffic_stats[SFS_TYPE_UDP].packets_b_to_a);
+    formatter->register_field("udp_bytes_b_a",
+        &stats.traffic_stats[SFS_TYPE_UDP].bytes_b_to_a);
+    formatter->register_field("other_packets_a_b",
+        &stats.traffic_stats[SFS_TYPE_OTHER].packets_a_to_b);
+    formatter->register_field("other_bytes_a_b",
+        &stats.traffic_stats[SFS_TYPE_OTHER].bytes_a_to_b);
+    formatter->register_field("other_packets_b_a",
+        &stats.traffic_stats[SFS_TYPE_OTHER].packets_b_to_a);
+    formatter->register_field("other_bytes_b_a",
+        &stats.traffic_stats[SFS_TYPE_OTHER].bytes_b_to_a);
+    formatter->register_field("tcp_established", (PegCount*)
+        &stats.state_changes[SFS_STATE_TCP_ESTABLISHED]);
+    formatter->register_field("tcp_closed", (PegCount*)
+        &stats.state_changes[SFS_STATE_TCP_CLOSED]);
+    formatter->register_field("udp_created", (PegCount*)
+        &stats.state_changes[SFS_STATE_UDP_CREATED]);
+    formatter->finalize_fields();
+}
 
 FlowIPTracker::~FlowIPTracker()
 {
@@ -97,7 +131,6 @@ void FlowIPTracker::reset()
         if (!ipMap)
             FatalError("Unable to allocate memory for FlowIP stats\n"); //FIXIT-H this should all
                                                                         // occur at thread init
-
         first = false;
     }
     else
@@ -141,80 +174,19 @@ void FlowIPTracker::update(Packet* p)
     }
 }
 
-void FlowIPTracker::display_stats()
-{
-    SFXHASH_NODE* node;
-    uint64_t total = 0;
-
-    LogMessage(fh, "\n");
-    LogMessage(fh, "\n");
-    LogMessage(fh, "IP Flows (%d unique IP pairs)\n", sfxhash_count(ipMap));
-    LogMessage(fh, "---------------\n");
-    for (node = sfxhash_findfirst(ipMap); node; node = sfxhash_findnext(ipMap))
-    {
-        char ipA[41], ipB[41];
-
-        FlowStateKey* key = (FlowStateKey*)node->key;
-        FlowStateValue* stats = (FlowStateValue*)node->data;
-
-        sfip_raw_ntop(key->ipA.family, key->ipA.ip32, ipA, sizeof(ipA));
-        sfip_raw_ntop(key->ipB.family, key->ipB.ip32, ipB, sizeof(ipB));
-        LogMessage(fh, "[%s <-> %s]: " STDu64 " bytes in " STDu64 " packets (%u, %u, %u)\n", ipA, ipB,
-            stats->total_bytes, stats->total_packets,
-            stats->state_changes[SFS_STATE_TCP_ESTABLISHED],
-            stats->state_changes[SFS_STATE_TCP_CLOSED], stats->state_changes[SFS_STATE_UDP_CREATED]);
-        total += stats->total_packets;
-    }
-    LogMessage(fh, "Classified " STDu64 " packets.\n", total);
-}
-
-void FlowIPTracker::write_stats()
-{
-    SFXHASH_NODE* node;
-
-    if (!fh)
-        return;
-
-    fprintf(fh, "%lu,%u,", (unsigned long)cur_time, sfxhash_count(ipMap));
-    for (node = sfxhash_findfirst(ipMap); node; node = sfxhash_findnext(ipMap))
-    {
-        char ipA[41], ipB[41];
-
-        FlowStateKey* key = (FlowStateKey*)node->key;
-        FlowStateValue* stats = (FlowStateValue*)node->data;
-
-        sfip_raw_ntop(key->ipA.family, key->ipA.ip32, ipA, sizeof(ipA));
-        sfip_raw_ntop(key->ipB.family, key->ipB.ip32, ipB, sizeof(ipB));
-        fprintf(fh, "%s,%s," CSVu64 CSVu64 CSVu64 CSVu64 CSVu64 CSVu64 CSVu64
-            CSVu64 CSVu64 CSVu64 CSVu64 CSVu64 "%u,%u,%u\n",
-            ipA, ipB,
-            stats->traffic_stats[SFS_TYPE_TCP].packets_a_to_b,
-            stats->traffic_stats[SFS_TYPE_TCP].bytes_a_to_b,
-            stats->traffic_stats[SFS_TYPE_TCP].packets_b_to_a,
-            stats->traffic_stats[SFS_TYPE_TCP].bytes_b_to_a,
-            stats->traffic_stats[SFS_TYPE_UDP].packets_a_to_b,
-            stats->traffic_stats[SFS_TYPE_UDP].bytes_a_to_b,
-            stats->traffic_stats[SFS_TYPE_UDP].packets_b_to_a,
-            stats->traffic_stats[SFS_TYPE_UDP].bytes_b_to_a,
-            stats->traffic_stats[SFS_TYPE_OTHER].packets_a_to_b,
-            stats->traffic_stats[SFS_TYPE_OTHER].bytes_a_to_b,
-            stats->traffic_stats[SFS_TYPE_OTHER].packets_b_to_a,
-            stats->traffic_stats[SFS_TYPE_OTHER].bytes_b_to_a,
-            stats->state_changes[SFS_STATE_TCP_ESTABLISHED],
-            stats->state_changes[SFS_STATE_TCP_CLOSED],
-            stats->state_changes[SFS_STATE_UDP_CREATED]);
-    }
-
-    fflush(fh);
-}
-
 void FlowIPTracker::process(bool)
 {
-    if (config->format == PERF_CSV)
-        write_stats();
+    for (auto node = sfxhash_findfirst(ipMap); node; node = sfxhash_findnext(ipMap))
+    {
+        FlowStateKey* key = (FlowStateKey*)node->key;
+        FlowStateValue* cur_stats = (FlowStateValue*)node->data;
 
-    else if (config->format == PERF_TEXT)
-        display_stats();
+        sfip_raw_ntop(key->ipA.family, key->ipA.ip32, ip_a, sizeof(ip_a));
+        sfip_raw_ntop(key->ipB.family, key->ipB.ip32, ip_b, sizeof(ip_b));
+        memcpy(&stats, cur_stats, sizeof(stats));
+
+        write();
+    }
 
     if ( !(config->perf_flags & PERF_SUMMARY) )
         reset();

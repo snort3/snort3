@@ -53,7 +53,6 @@
 #include "cpu_tracker.h"
 #include "flow_tracker.h"
 #include "flow_ip_tracker.h"
-#include "event_tracker.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
@@ -134,10 +133,12 @@ void PerfMonitor::show(SnortConfig*)
     switch(config.format)
     {
         case PERF_TEXT:
-            LogMessage("    Output Location:  text\n");
+            LogMessage("    Output Format:  text\n");
             break;
         case PERF_CSV:
-            LogMessage("    Output Location:  csv\n");
+            LogMessage("    Output Format:  csv\n");
+            break;
+        case PERF_MOCK:
             break;
     }
 }
@@ -158,13 +159,10 @@ void PerfMonitor::tinit()
         trackers->push_back(new BaseTracker(&config));
 
     if (config.perf_flags & PERF_FLOW)
-        trackers->push_back(perf_flow = new FlowTracker(&config));
+        trackers->push_back(new FlowTracker(&config));
 
     if (config.perf_flags & PERF_FLOWIP)
         trackers->push_back(perf_flow_ip = new FlowIPTracker(&config));
-
-    if (config.perf_flags & PERF_EVENT)
-        trackers->push_back(perf_event = new EventTracker(&config));
 
     if (config.perf_flags & PERF_CPU )
         trackers->push_back(new CPUTracker(&config));
@@ -180,9 +178,7 @@ void PerfMonitor::tinit()
 
 void PerfMonitor::tterm()
 {
-    perf_flow = nullptr;
     perf_flow_ip = nullptr;
-    perf_event = nullptr;
 
     while (!trackers->empty())
     {

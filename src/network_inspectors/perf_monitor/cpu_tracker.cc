@@ -36,17 +36,20 @@
 #include "catch/catch.hpp"
 #endif
 
-static const std::string csv_header =
-    "#timestamp,user,system,idle\n";
-
 static inline uint64_t get_microseconds(struct timeval t)
 {
     return (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
 }
 
-
 CPUTracker::CPUTracker(PerfConfig *perf) :
-    PerfTracker(perf, perf->output == PERF_FILE ? CPU_FILE : nullptr){}
+    PerfTracker(perf, perf->output == PERF_FILE ? CPU_FILE : nullptr)
+{
+    formatter->register_section("cpu");
+    formatter->register_field("user", &user_stat);
+    formatter->register_field("system", &system_stat);
+    formatter->register_field("wall", &wall_stat);
+    formatter->finalize_fields();
+}
 
 void CPUTracker::get_clocks(struct timeval& user_time,
     struct timeval& sys_time, struct timeval& wall_time)
@@ -85,11 +88,6 @@ void CPUTracker::get_times(uint64_t& user, uint64_t& system, uint64_t& wall)
 void CPUTracker::reset()
 {
     get_times(last_ut, last_st, last_wt);
-    if (config->format == PERF_CSV)
-    {
-        fwrite(csv_header.c_str(), csv_header.length(), 1, fh);
-        fflush(fh);
-    }
 }
 
 void CPUTracker::process(bool)
@@ -98,31 +96,15 @@ void CPUTracker::process(bool)
 
     get_times(user, system, wall);
 
-    auto delt_user = user - last_ut;
-    auto delt_system = system - last_st;
-    auto delt_wall = wall - last_wt;
-    auto delt_idle = delt_wall - delt_system - delt_user;
+    user_stat = user - last_ut;
+    system_stat = system - last_st;
+    wall_stat = wall - last_wt;
 
     last_ut = user;
     last_st = system;
     last_wt = wall;
 
-    double d_user = (double) delt_user / delt_wall * 100;
-    double d_system = (double) delt_system / delt_wall * 100;
-    double d_idle = (double) delt_idle / delt_wall * 100;
-    if ( config->format == PERF_TEXT )
-    {
-        LogLabel("cpu usage", fh);
-        LogStat("User", d_user, fh);
-        LogStat("System", d_system, fh);
-        LogStat("Idle", d_idle, fh);
-    }
-    else if ( config->format == PERF_CSV )
-    {
-        fprintf(fh, CSVu64 "%g,%g,%g\n",
-            (uint64_t)cur_time, d_user, d_system, d_idle);
-    }
-    fflush(fh);
+    write();
 }
 
 #ifdef UNIT_TEST
@@ -131,11 +113,11 @@ class TestCPUTracker : public CPUTracker
 {
 public:
     struct timeval user, sys, wall;
+    PerfFormatter* output;
 
-    TestCPUTracker(PerfConfig* perf, FILE* fh): CPUTracker(perf)
+    TestCPUTracker(PerfConfig* perf) : CPUTracker(perf)
     {
-        this->fh = fh;       
-        cur_time = 1234567890;
+        output = formatter;
         memset(&user, 0, sizeof(wall));
         memset(&sys, 0, sizeof(wall));
         memset(&wall, 0, sizeof(wall));
@@ -152,7 +134,7 @@ protected:
 
 };
 
-TEST_CASE("Timeval to scalar", "[cpu_tracker]")
+TEST_CASE("timeval to scalar", "[cpu_tracker]")
 {
     struct timeval t, t2;
 
@@ -174,84 +156,50 @@ TEST_CASE("Timeval to scalar", "[cpu_tracker]")
     CHECK(t2.tv_usec == t.tv_usec);
 }
 
-TEST_CASE("csv", "[cpu_tracker]")
+TEST_CASE("process and output", "[cpu_tracker]")
 {
-    const char* cooked =
-    "#timestamp,user,system,idle\n"
-    "1234567890,23.0769,38.4615,38.4615\n"
-    "1234567890,0,0,100\n"
-    "1234567890,23.0769,38.4615,38.4615\n";
+    const unsigned u_idx = 0, s_idx = 1, w_idx = 2;
+    unsigned pass = 0;
 
-    FILE* f = tmpfile();
+    PegCount expected[3][3] = {
+        {2100000, 3200000, 8500000},
+        {0, 0, 500000},
+        {2100000, 3200000, 8500000}};
 
     PerfConfig config;
-    config.format = PERF_CSV;
-    TestCPUTracker tracker(&config, f);
+    config.format = PERF_MOCK;
+    TestCPUTracker tracker(&config);
+    MockFormatter *formatter = (MockFormatter*)tracker.output;
 
     tracker.reset();
     tracker.user.tv_sec = 2;
-    tracker.user.tv_usec = 1000000;
+    tracker.user.tv_usec = 100000;
     tracker.sys.tv_sec = 3;
-    tracker.sys.tv_usec = 2000000;
+    tracker.sys.tv_usec = 200000;
     tracker.wall.tv_sec = 8;
-    tracker.wall.tv_usec = 5000000;
+    tracker.wall.tv_usec = 500000;
     tracker.process(false);
+    CHECK(*formatter->public_values["cpu.user"].pc == expected[pass][u_idx]);
+    CHECK(*formatter->public_values["cpu.system"].pc == expected[pass][s_idx]);
+    CHECK(*formatter->public_values["cpu.wall"].pc == expected[pass++][w_idx]);
+
     tracker.wall.tv_sec = 9;
     tracker.wall.tv_usec = 0;
     tracker.process(false);
+    CHECK(*formatter->public_values["cpu.user"].pc == expected[pass][u_idx]);
+    CHECK(*formatter->public_values["cpu.system"].pc == expected[pass][s_idx]);
+    CHECK(*formatter->public_values["cpu.wall"].pc == expected[pass++][w_idx]);
+
     tracker.user.tv_sec = 4;
-    tracker.user.tv_usec = 2000000;
+    tracker.user.tv_usec = 200000;
     tracker.sys.tv_sec = 6;
-    tracker.sys.tv_usec = 4000000;
+    tracker.sys.tv_usec = 400000;
     tracker.wall.tv_sec = 17;
-    tracker.wall.tv_usec = 5000000;
+    tracker.wall.tv_usec = 500000;
     tracker.process(false);
-
-    long int size = ftell(f);
-    char* fake_file = (char*) malloc(size + 1);
-    rewind(f);
-    fread(fake_file, size, 1, f);
-    fake_file[size] = '\0';
-
-    CHECK(!strcmp(cooked, fake_file));
-
-    free(fake_file);
-    //tracker destructor closes fh if not null
+    CHECK(*formatter->public_values["cpu.user"].pc == expected[pass][u_idx]);
+    CHECK(*formatter->public_values["cpu.system"].pc == expected[pass][s_idx]);
+    CHECK(*formatter->public_values["cpu.wall"].pc == expected[pass++][w_idx]);
 }
 
-TEST_CASE("text", "[cpu_tracker]")
-{
-    const char* cooked =
-    "--------------------------------------------------\n"
-    "cpu usage\n"
-    "                     User: 23.0769\n"
-    "                   System: 38.4615\n"
-    "                     Idle: 38.4615\n";
-
-    FILE* f = tmpfile();
-
-    PerfConfig config;
-    config.format = PERF_TEXT;
-    TestCPUTracker tracker(&config, f);
-
-    tracker.reset();
-    tracker.user.tv_sec = 2;
-    tracker.user.tv_usec = 1000000;
-    tracker.sys.tv_sec = 3;
-    tracker.sys.tv_usec = 2000000;
-    tracker.wall.tv_sec = 8;
-    tracker.wall.tv_usec = 5000000;
-    tracker.process(false);
-
-    long int size = ftell(f);
-    char* fake_file = (char*) malloc(size + 1);
-    rewind(f);
-    fread(fake_file, size, 1, f);
-    fake_file[size] = '\0';
-
-    CHECK(!strcmp(cooked, fake_file));
-    
-    free(fake_file);
-    //tracker destructor closes fh if not null
-}
 #endif

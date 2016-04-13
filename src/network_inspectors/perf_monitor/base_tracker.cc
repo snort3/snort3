@@ -21,11 +21,11 @@
 #include "base_tracker.h"
 #include "perf_module.h"
 
-#include "framework/counts.h"
 #include "framework/module.h"
-#include "managers/module_manager.h"
-#include "managers/plugin_manager.h"
-#include "utils/stats.h"
+
+#ifdef UNIT_TEST
+#include <catch/catch.hpp>
+#endif
 
 #define BASE_FILE (PERF_NAME ".csv")
 
@@ -34,69 +34,100 @@ using namespace std;
 BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf,
     perf->output == PERF_FILE ? BASE_FILE : nullptr)
 {
-    csv_header.clear();
-
-    csv_header += ("#timestamp");
     for (unsigned i = 0; i < config->modules.size(); i++)
     {
         Module *m = config->modules.at(i);
         vector<unsigned> peg_map = config->mod_peg_idxs.at(i);
-        for (auto& idx : peg_map)
-        {
-            csv_header += ",";
-            csv_header += m->get_name();
-            csv_header += ".";
-            csv_header += m->get_pegs()[idx].name;
-        }
-    }
-    csv_header += "\n";
-}
 
-void BaseTracker::reset()
-{
-    if (fh && config->format == PERF_CSV)
-    {
-        fwrite(csv_header.c_str(), csv_header.length(), 1, fh);
-        fflush(fh);
+        formatter->register_section(m->get_name());
+        for (auto& idx : peg_map)
+             formatter->register_field(m->get_pegs()[idx].name,
+                &(m->get_counts()[idx]));
     }
+    formatter->finalize_fields();
 }
 
 void BaseTracker::process(bool summary)
 {
-    char buf[32]; // > log10(2^64 - 1)
-
-    if (!fh)
-        return;
-
-    string statLine;
-    statLine.clear();
-    snprintf(buf, sizeof(buf), "%ld", (long)cur_time);
-    statLine += buf;
+    write();
 
     for (unsigned i = 0; i < config->modules.size(); i++)
-    {
-        Module* m = config->modules.at(i);
-        vector<unsigned> idxs = config->mod_peg_idxs.at(i);
-        PegCount* pegs = m->get_counts();
-
-        if (config->format == PERF_CSV)
-        {
-            for (auto& idx : idxs)
-            {
-                snprintf(buf, sizeof(buf), ",%" PRIu64, pegs[idx]);
-                statLine += buf;
-            }
-        }
-        else if(config->format == PERF_TEXT)
-            m->show_interval_stats(idxs, fh);
         if (!summary)
-            m->sum_stats();
-    }
-    if (config->format == PERF_CSV)
-    {
-        statLine += "\n";
-        fwrite(statLine.c_str(), statLine.length(), 1, fh);
-        fflush(fh);
-    }
+            config->modules.at(i)->sum_stats();
 }
 
+#ifdef UNIT_TEST
+
+class MockModule : public Module
+{
+public:
+    MockModule() : Module("mockery", "mockery")
+    {
+        counts = (PegCount*)malloc(5 * sizeof(PegCount));
+        for( unsigned i = 0; i < 5; i++ )
+            counts[i] = i;
+    };
+
+    ~MockModule() { free(counts); };
+
+    const PegInfo* get_pegs() const override { return pegs; };
+
+    PegCount* get_counts() const override { return counts; };
+
+    void sum_stats() override {};
+
+    void real_sum_stats() { Module::sum_stats(); };
+    
+private:
+    PegCount* counts;
+    PegInfo pegs[5] = {
+        {"zero", ""},
+        {"one", ""},
+        {"two", ""},
+        {"three", ""},
+        {"four", ""}};
+};
+
+class MockBaseTracker : public BaseTracker
+{
+public:
+    PerfFormatter* output;
+
+    MockBaseTracker(PerfConfig* config) : BaseTracker(config)
+    { output = formatter; };
+};
+
+TEST_CASE("module stats", "[BaseTracker]")
+{
+    unsigned pass = 0;
+    PegCount expected[2][5] = {
+        {0, 2, 4},
+        {0, 0, 0}};
+
+    PerfConfig config;
+    config.format = PERF_MOCK;
+
+    MockModule mod;
+    config.modules.push_back(&mod);
+    config.mod_peg_idxs.push_back(IndexVec());
+    config.mod_peg_idxs[0].push_back(0);
+    config.mod_peg_idxs[0].push_back(2);
+    config.mod_peg_idxs[0].push_back(4);
+
+    MockBaseTracker tracker(&config);
+    MockFormatter *formatter = (MockFormatter*)tracker.output;
+
+    tracker.reset();
+    tracker.process(false);
+    CHECK(*formatter->public_values["mockery.zero"].pc == expected[pass][0]);
+    CHECK(*formatter->public_values["mockery.two"].pc == expected[pass][1]);
+    CHECK(*formatter->public_values["mockery.four"].pc == expected[pass++][2]);
+    mod.real_sum_stats();
+
+    tracker.process(false);
+    CHECK(*formatter->public_values["mockery.zero"].pc == expected[pass][0]);
+    CHECK(*formatter->public_values["mockery.two"].pc == expected[pass][1]);
+    CHECK(*formatter->public_values["mockery.four"].pc == expected[pass++][2]);
+    mod.real_sum_stats();
+}
+#endif

@@ -246,6 +246,8 @@ const PegInfo mpse_pegs[] =
     { "total flushed", "fast pattern matches discarded due to overflow" },
     { "total inserts", "total fast pattern hits" },
     { "total unique", "total unique fast pattern hits" },
+    { "non-qualified events", "total non-qualified events" },
+    { "qualified events", "total qualified events" },
     { nullptr, nullptr }
 };
 

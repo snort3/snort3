@@ -32,6 +32,8 @@ struct PatMatQStat
     PegCount tot_inq_flush;
     PegCount tot_inq_inserts;
     PegCount tot_inq_uinserts;
+    PegCount non_qualified_events;
+    PegCount qualified_events;
 };
 
 SO_PUBLIC extern THREAD_LOCAL PatMatQStat pmqs;

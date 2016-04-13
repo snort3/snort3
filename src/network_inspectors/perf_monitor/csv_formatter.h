@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,24 +16,24 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// perf_monitor_test.cc author Carter Waxman <cwaxman@cisco.com>
-// unit test main
+// csv_formatter.h author Carter Waxman <cwaxman@cisco.com>
 
-#include <CppUTest/CommandLineTestRunner.h>
-#include <CppUTest/TestHarness.h>
+#ifndef CSV_FORMATTER_H
+#define CSV_FORMATTER_H
 
-#include "../perf_monitor.h"
+#include "perf_formatter.h"
 
-TEST_GROUP(perf_monitor_config)
+class CSVFormatter : public PerfFormatter
 {
+public:
+    CSVFormatter() : PerfFormatter() {};
+    void finalize_fields() override;
+    void init_output(FILE*) override;
+    void write(FILE*, time_t) override;
+
+private:
+    std::string header;
 };
 
-TEST(perf_monitor_config, packets)
-{
-}
-
-int main(int argc, char** argv)
-{
-    return CommandLineTestRunner::RunAllTests(argc, argv);
-}
+#endif
 

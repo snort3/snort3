@@ -21,105 +21,342 @@
 #include "flow_tracker.h"
 #include "perf_module.h"
 
+#include "protocols/icmp4.h"
+#include "protocols/tcp.h"
+#include "protocols/udp.h"
 #include "utils/util.h"
+
+#ifdef UNIT_TEST
+#include <catch/catch.hpp>
+#endif
 
 #define FLOW_FILE (PERF_NAME "_flow.csv")
 
-THREAD_LOCAL FlowTracker* perf_flow;
+#define MAX_PKT_LEN  9000
 
 FlowTracker::FlowTracker(PerfConfig* perf) : PerfTracker(perf,
-        perf->output == PERF_FILE ? FLOW_FILE : nullptr) { }
-
-FlowTracker::~FlowTracker()
+        perf->output == PERF_FILE ? FLOW_FILE : nullptr)
 {
-    if (stats.pkt_len_cnt)
-    {
-        free(stats.pkt_len_cnt);
-        stats.pkt_len_cnt = nullptr;
-    }
+    pkt_len_cnt.resize( MAX_PKT_LEN + 1 );
+    tcp.src.resize( config->flow_max_port_to_track + 1, 0 );
+    tcp.dst.resize( config->flow_max_port_to_track + 1, 0 );
+    udp.src.resize( config->flow_max_port_to_track + 1, 0 );
+    udp.dst.resize( config->flow_max_port_to_track + 1, 0 );
+    type_icmp.resize( UINT8_MAX + 1, 0 );
 
-    if (stats.port_tcp_src)
-    {
-        free(stats.port_tcp_src);
-        stats.port_tcp_src = nullptr;
-    }
+    formatter->register_section("flow");
+    formatter->register_field("byte_total", &byte_total);
+    formatter->register_field("packets_by_bytes", &pkt_len_cnt);
+    formatter->register_field("oversized_packets", &pkt_len_oversize_cnt);
 
-    if (stats.port_tcp_dst)
-    {
-        free(stats.port_tcp_dst);
-        stats.port_tcp_dst = nullptr;
-    }
+    formatter->register_section("flow_tcp");
+    formatter->register_field("bytes_by_source", &tcp.src);
+    formatter->register_field("bytes_by_dest", &tcp.dst);
+    formatter->register_field("high_port_bytes", &tcp.high);
 
-    if (stats.port_udp_src)
-    {
-        free(stats.port_udp_src);
-        stats.port_udp_src = nullptr;
-    }
+    formatter->register_section("flow_udp");
+    formatter->register_field("bytes_by_source", &udp.src);
+    formatter->register_field("bytes_by_dest", &udp.dst);
+    formatter->register_field("high_port_bytes", &udp.high);
 
-    if (stats.port_udp_dst)
-    {
-        free(stats.port_udp_dst);
-        stats.port_udp_dst = nullptr;
-    }
+    formatter->register_section("flow_icmp");
+    formatter->register_field("bytes_by_type", &type_icmp);
 
-    if (stats.type_icmp)
-    {
-        free(stats.type_icmp);
-        stats.type_icmp = nullptr;
-    }
-}
-
-void FlowTracker::reset()
-{
-    static THREAD_LOCAL bool first = true;
-
-    if (first)
-    {
-        stats.pkt_len_cnt = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (MAX_PKT_LEN + 2));
-        stats.port_tcp_src = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (MAX_PORT+1));
-        stats.port_tcp_dst = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (MAX_PORT+1));
-        stats.port_udp_src = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (MAX_PORT+1));
-        stats.port_udp_dst = (uint64_t*)SnortAlloc(sizeof(uint64_t) * (MAX_PORT+1));
-        stats.type_icmp = (uint64_t*)SnortAlloc(sizeof(uint64_t) * 256);
-
-        if ( config->format == PERF_CSV )
-            log_flow_perf_header(fh);
-
-        first = false;
-    }
-    else
-    {
-        memset(stats.pkt_len_cnt, 0, sizeof(uint64_t) * (MAX_PKT_LEN + 2));
-        memset(stats.port_tcp_src, 0, sizeof(uint64_t) * (MAX_PORT+1));
-        memset(stats.port_tcp_dst, 0, sizeof(uint64_t) * (MAX_PORT+1));
-        memset(stats.port_udp_src, 0, sizeof(uint64_t) * (MAX_PORT+1));
-        memset(stats.port_udp_dst, 0, sizeof(uint64_t) * (MAX_PORT+1));
-        memset(stats.type_icmp, 0, sizeof(uint64_t) * 256);
-    }
-
-    stats.pkt_total = 0;
-    stats.byte_total = 0;
-
-    stats.port_tcp_high=0;
-    stats.port_tcp_total=0;
-
-    stats.port_udp_high=0;
-    stats.port_udp_total=0;
-
-    stats.type_icmp_total = 0;
+    formatter->finalize_fields();
 }
 
 void FlowTracker::update(Packet* p)
 {
     if (!p->is_rebuilt())
-        update_flow_stats(&stats, p);
+    {
+        auto len = p->pkth->caplen;
+
+        if (p->ptrs.tcph)
+            update_transport_flows(p->ptrs.sp, p->ptrs.dp, tcp, len);
+        
+        else if (p->ptrs.udph)
+            update_transport_flows(p->ptrs.sp, p->ptrs.dp, udp, len);
+
+        else if (p->ptrs.icmph)
+            type_icmp[p->ptrs.icmph->type] += len;
+
+        if (len <= MAX_PKT_LEN)
+            pkt_len_cnt[len]++;
+        else
+            pkt_len_oversize_cnt++;
+
+        byte_total += len;
+    }
 }
 
 void FlowTracker::process(bool)
 {
-    process_flow_stats(&stats, fh, config->format, cur_time);
-
-    if (!(config->perf_flags & PERF_SUMMARY))
-        reset();
+    write();
+    clear();
 }
 
+void FlowTracker::clear()
+{
+    byte_total = 0;
+
+    memset(&pkt_len_cnt[0], 0, pkt_len_cnt.size() * sizeof(PegCount));
+    pkt_len_oversize_cnt = 0;
+
+    memset(&tcp.src[0], 0, tcp.src.size() * sizeof(PegCount));
+    memset(&tcp.dst[0], 0, tcp.dst.size() * sizeof(PegCount));
+    tcp.high = 0;
+
+    memset(&udp.src[0], 0, udp.src.size() * sizeof(PegCount));
+    memset(&udp.dst[0], 0, udp.dst.size() * sizeof(PegCount));
+    udp.high = 0;
+    
+    memset(&type_icmp[0], 0, type_icmp.size() * sizeof(PegCount));
+}
+
+void FlowTracker::update_transport_flows(int sport, int dport,
+    FlowProto& proto, int len)
+{
+    if (sport <= config->flow_max_port_to_track &&
+        dport > config->flow_max_port_to_track)
+    {
+        proto.src[sport] += len;
+    }
+
+    else if (dport <= config->flow_max_port_to_track &&
+        sport > config->flow_max_port_to_track)
+    {
+        proto.dst[dport] += len;
+    }
+
+    else if (sport <= config->flow_max_port_to_track &&
+        dport <= config->flow_max_port_to_track)
+    {
+        proto.src[sport] += len;
+        proto.dst[dport] += len;
+    }
+
+    else
+    {
+        proto.high += len;
+    }
+}
+
+#ifdef UNIT_TEST
+class MockFlowTracker : public FlowTracker
+{
+public:
+    PerfFormatter* output;
+
+    MockFlowTracker(PerfConfig* config) : FlowTracker(config)
+    { output = formatter; };
+
+    void clear() override {};
+
+    void real_clear() { FlowTracker::clear(); };
+};
+
+TEST_CASE("no protocol", "[FlowTracker]")
+{
+    Packet p;
+    DAQ_PktHdr_t pkth;
+    uint32_t* len_ptr = (uint32_t*) &pkth.caplen;
+
+    PerfConfig config;
+    config.format = PERF_MOCK;
+    config.flow_max_port_to_track = 1024;
+
+    MockFlowTracker tracker(&config);
+    MockFormatter *f = (MockFormatter*)tracker.output;
+
+    tracker.reset();
+
+    p.packet_flags = 0;
+    p.ptrs.tcph = nullptr;
+    p.ptrs.udph = nullptr;
+    p.ptrs.icmph = nullptr;
+    p.pkth = &pkth;
+
+    *len_ptr = 127;
+    tracker.update(&p);
+
+    *len_ptr = 256;
+    tracker.update(&p);
+    tracker.update(&p);
+
+    *len_ptr = 32000;
+    tracker.update(&p);
+
+    tracker.process(false);
+    CHECK( *f->public_values["flow.byte_total"].pc == 32639 );
+    CHECK( f->public_values["flow.packets_by_bytes"].ipc->at(123) == 0 );
+    CHECK( f->public_values["flow.packets_by_bytes"].ipc->at(127) == 1 );
+    CHECK( f->public_values["flow.packets_by_bytes"].ipc->at(256) == 2 );
+    CHECK( *f->public_values["flow.oversized_packets"].pc == 1 );
+
+    tracker.real_clear();
+    CHECK( *f->public_values["flow.byte_total"].pc == 0);
+    CHECK( f->public_values["flow.packets_by_bytes"].ipc->at(123) == 0 );
+    CHECK( f->public_values["flow.packets_by_bytes"].ipc->at(127) == 0 );
+    CHECK( f->public_values["flow.packets_by_bytes"].ipc->at(256) == 0 );
+    CHECK( *f->public_values["flow.oversized_packets"].pc == 0 );
+}
+
+TEST_CASE("icmp", "[FlowTracker]")
+{
+    Packet p;
+    DAQ_PktHdr_t pkth;
+    icmp::ICMPHdr icmp;
+    uint32_t* len_ptr = (uint32_t*) &pkth.caplen;
+    uint8_t* type_ptr = (uint8_t*) &icmp.type;
+
+    PerfConfig config;
+    config.format = PERF_MOCK;
+    config.flow_max_port_to_track = 1024;
+
+    MockFlowTracker tracker(&config);
+    MockFormatter *f = (MockFormatter*)tracker.output;
+
+    tracker.reset();
+
+    p.packet_flags = 0;
+    p.ptrs.tcph = nullptr;
+    p.ptrs.udph = nullptr;
+    p.ptrs.icmph = &icmp;
+    p.pkth = &pkth;
+
+    *len_ptr = 127;
+    *type_ptr = 3;
+    tracker.update(&p);
+
+    *len_ptr = 256;
+    *type_ptr = 9;
+    tracker.update(&p);
+    tracker.update(&p);
+
+    *len_ptr = 32000;
+    *type_ptr = 127;
+    tracker.update(&p);
+
+    tracker.process(false);
+    CHECK( f->public_values["flow_icmp.bytes_by_type"].ipc->at(3) == 127 );
+    CHECK( f->public_values["flow_icmp.bytes_by_type"].ipc->at(9) == 512 );
+    CHECK( f->public_values["flow_icmp.bytes_by_type"].ipc->at(127) == 32000 );
+
+    tracker.real_clear();
+    CHECK( f->public_values["flow_icmp.bytes_by_type"].ipc->at(3) == 0 );
+    CHECK( f->public_values["flow_icmp.bytes_by_type"].ipc->at(9) == 0 );
+    CHECK( f->public_values["flow_icmp.bytes_by_type"].ipc->at(127) == 0 );
+}
+
+TEST_CASE("tcp", "[FlowTracker]")
+{
+    Packet p;
+    DAQ_PktHdr_t pkth;
+    tcp::TCPHdr tcp;
+    uint32_t* len_ptr = (uint32_t*) &pkth.caplen;
+
+    PerfConfig config;
+    config.format = PERF_MOCK;
+    config.flow_max_port_to_track = 1024;
+
+    MockFlowTracker tracker(&config);
+    MockFormatter *f = (MockFormatter*)tracker.output;
+
+    p.packet_flags = 0;
+    p.ptrs.tcph = &tcp;
+    p.ptrs.udph = nullptr;
+    p.ptrs.icmph = nullptr;
+    p.pkth = &pkth;
+
+    tracker.reset();
+
+    *len_ptr = 127;
+    p.ptrs.sp = 1024;
+    p.ptrs.dp = 1025;
+    tracker.update(&p);
+
+    *len_ptr = 256;
+    p.ptrs.dp = 1024;
+    p.ptrs.sp = 1025;
+    tracker.update(&p);
+    tracker.update(&p);
+
+    *len_ptr = 512;
+    p.ptrs.dp = 1024;
+    p.ptrs.sp = 1024;
+    tracker.update(&p);
+    tracker.update(&p);
+    tracker.update(&p);
+
+    *len_ptr = 32000;
+    p.ptrs.dp = 1025;
+    p.ptrs.sp = 1025;
+    tracker.update(&p);
+
+    tracker.process(false);
+    CHECK( f->public_values["flow_tcp.bytes_by_source"].ipc->at(1024) == 1663 );
+    CHECK( f->public_values["flow_tcp.bytes_by_dest"].ipc->at(1024) == 2048 );
+    CHECK( *f->public_values["flow_tcp.high_port_bytes"].pc == 32000 );
+
+    tracker.real_clear();
+    CHECK( f->public_values["flow_tcp.bytes_by_source"].ipc->at(1024) == 0 );
+    CHECK( f->public_values["flow_tcp.bytes_by_dest"].ipc->at(1024) == 0 );
+    CHECK( *f->public_values["flow_tcp.high_port_bytes"].pc == 0 );
+}
+
+TEST_CASE("udp", "[FlowTracker]")
+{
+    Packet p;
+    DAQ_PktHdr_t pkth;
+    udp::UDPHdr udp;
+    uint32_t* len_ptr = (uint32_t*) &pkth.caplen;
+
+    PerfConfig config;
+    config.format = PERF_MOCK;
+    config.flow_max_port_to_track = 1024;
+
+    MockFlowTracker tracker(&config);
+    MockFormatter *f = (MockFormatter*)tracker.output;
+
+    p.packet_flags = 0;
+    p.ptrs.tcph = nullptr;
+    p.ptrs.udph = &udp;
+    p.ptrs.icmph = nullptr;
+    p.pkth = &pkth;
+
+    tracker.reset();
+
+    *len_ptr = 127;
+    p.ptrs.sp = 1024;
+    p.ptrs.dp = 1025;
+    tracker.update(&p);
+
+    *len_ptr = 256;
+    p.ptrs.dp = 1024;
+    p.ptrs.sp = 1025;
+    tracker.update(&p);
+    tracker.update(&p);
+
+    *len_ptr = 512;
+    p.ptrs.dp = 1024;
+    p.ptrs.sp = 1024;
+    tracker.update(&p);
+    tracker.update(&p);
+    tracker.update(&p);
+
+    *len_ptr = 32000;
+    p.ptrs.dp = 1025;
+    p.ptrs.sp = 1025;
+    tracker.update(&p);
+
+    tracker.process(false);
+    CHECK( f->public_values["flow_udp.bytes_by_source"].ipc->at(1024) == 1663 );
+    CHECK( f->public_values["flow_udp.bytes_by_dest"].ipc->at(1024) == 2048 );
+    CHECK( *f->public_values["flow_udp.high_port_bytes"].pc == 32000 );
+
+    tracker.real_clear();
+    CHECK( f->public_values["flow_udp.bytes_by_source"].ipc->at(1024) == 0 );
+    CHECK( f->public_values["flow_udp.bytes_by_dest"].ipc->at(1024) == 0 );
+    CHECK( *f->public_values["flow_udp.high_port_bytes"].pc == 0 );
+}
+#endif

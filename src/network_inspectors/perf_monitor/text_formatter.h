@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,37 +16,19 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// event_tracker.h author Carter Waxman <cwaxman@cisco.com>
+// text_formatter.h author Carter Waxman <cwaxman@cisco.com>
 
-#ifndef EVENT_TRACKER_H
-#define EVENT_TRACKER_H
+#ifndef TEXT_FORMATTER_H
+#define TEXT_FORMATTER_H
 
-#include "perf_module.h"
-#include "perf_tracker.h"
+#include "perf_formatter.h"
 
-/* Raw event counters */
-struct PerfEventCounts
-{
-    uint64_t NQEvents;
-    uint64_t QEvents;
-
-    uint64_t TotalEvents;
-};
-
-class EventTracker : public PerfTracker
+class TextFormatter : public PerfFormatter
 {
 public:
-    EventTracker(PerfConfig*);
-    void reset() override;
-    void process(bool) override;
-
-    void UpdateNQEvents();
-    void UpdateQEvents();
-
-private:
-    PerfEventCounts event_counts;
+    TextFormatter() : PerfFormatter() {};
+    void write(FILE*, time_t) override;
 };
 
-extern THREAD_LOCAL EventTracker* perf_event;
 #endif
 
