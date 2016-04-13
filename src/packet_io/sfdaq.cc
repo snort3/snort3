@@ -61,7 +61,9 @@ static bool loaded = false;
 // specific for each thread / instance
 static THREAD_LOCAL SFDAQInstance *local_instance = nullptr;
 
-//--------------------------------------------------------------------
+/*
+ * SFDAQ
+ */
 
 void SFDAQ::load(const SnortConfig* sc)
 {
@@ -200,7 +202,9 @@ bool SFDAQ::unprivileged()
     return !(daq_get_type(daq_mod) & DAQ_TYPE_NO_UNPRIV);
 }
 
-//--------------------------------------------------------------------
+/*
+ * SFDAQ local instance wrappers (to be removed)
+ */
 
 void SFDAQ::set_local_instance(SFDAQInstance* sdi)
 {
@@ -272,9 +276,9 @@ const char* SFDAQ::default_type()
     return DAQ_DEFAULT;
 }
 
-//--------------------------------------------------------------------
-//--------------------------------------------------------------------
-//--------------------------------------------------------------------
+/*
+ * SFDAQInstance
+ */
 
 SFDAQInstance::SFDAQInstance(const char* intf)
 {

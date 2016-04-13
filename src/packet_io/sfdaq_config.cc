@@ -24,7 +24,6 @@ using namespace std;
 
 static const unsigned DEFAULT_PKT_TIMEOUT = 1000;    // ms, worst daq resolution is 1 sec
 
-
 static pair<string, string> parse_variable(const char* varkvp)
 {
     string key = varkvp;
@@ -62,7 +61,6 @@ void SFDAQInstanceConfig::set_variable(const char* varkvp)
 {
     variables.push_back(parse_variable(varkvp));
 }
-
 
 /*
  * SFDAQConfig
