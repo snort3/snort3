@@ -75,12 +75,10 @@ void FlowTracker::update(Packet* p)
         auto len = p->pkth->caplen;
 
         if (p->ptrs.tcph)
-            update_transport_flows(p->ptrs.sp, p->ptrs.dp,
-                tcp, len);
+            update_transport_flows(p->ptrs.sp, p->ptrs.dp, tcp, len);
         
         else if (p->ptrs.udph)
-            update_transport_flows(p->ptrs.sp, p->ptrs.dp,
-                udp, len);
+            update_transport_flows(p->ptrs.sp, p->ptrs.dp, udp, len);
 
         else if (p->ptrs.icmph)
             type_icmp[p->ptrs.icmph->type] += len;

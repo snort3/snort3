@@ -18,6 +18,9 @@
 
 // perf_tracker.h author Carter Waxman <cwaxman@cisco.com>
 
+#ifndef PERF_TRACKER_H
+#define PERF_TRACKER_H
+
 //
 // This class defines the data gathering layer of perfmon. PerfMonitor will
 // create an instance of each configued class for each packet processing
@@ -31,9 +34,6 @@
 // process(bool) - summarize data and report. This is called after the
 // reporting thresholds have been reached.
 //
-
-#ifndef PERF_TRACKER_H
-#define PERF_TRACKER_H
 
 #include <cstdio>
 

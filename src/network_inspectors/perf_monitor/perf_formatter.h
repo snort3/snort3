@@ -18,6 +18,9 @@
 
 // perf_formatter.h author Carter Waxman <cwaxman@cisco.com>
 
+#ifndef PERF_FORMATTER_H
+#define PERF_FORMATTER_H
+
 //
 // PerfFormatter provides an API for PerfTrackers to use for reporting data.
 // The basic flow from the perspective of a PerfTracker is:
@@ -36,9 +39,6 @@
 //
 // 5. Call write to output the current values in each field.
 //
-
-#ifndef PERF_FORMATTER_H
-#define PERF_FORMATTER_H
 
 #include <framework/counts.h>
 
