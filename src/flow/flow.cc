@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include "flow/ha.h"
 #include "flow/session.h"
 #include "ips_options/ips_flowbits.h"
 #include "utils/bitop.h"
