@@ -18,6 +18,25 @@
 
 // perf_formatter.h author Carter Waxman <cwaxman@cisco.com>
 
+//
+// PerfFormatter provides an API for PerfTrackers to use for reporting data.
+// The basic flow from the perspective of a PerfTracker is:
+// 
+// 1. Call register_section to create a section of stats
+//
+// 2. Call register_field to insert a field into the most recently created
+//    section. Fields should always be pointers to stable locations in memory,
+//    as they cannot be updated. Data will be pulled from these pointers when
+//    writes occur.
+//
+// 3. Call finalize_fields to complete section and field registration. This is
+//    where any metadata needed will be sent to the provided output.
+//
+// 4. Set the values desired for fields.
+//
+// 5. Call write to output the current values in each field.
+//
+
 #ifndef PERF_FORMATTER_H
 #define PERF_FORMATTER_H
 

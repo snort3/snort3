@@ -18,6 +18,20 @@
 
 // perf_tracker.h author Carter Waxman <cwaxman@cisco.com>
 
+//
+// This class defines the data gathering layer of perfmon. PerfMonitor will
+// create an instance of each configued class for each packet processing
+// thread. Subclasses of PerfTrackers should implement or call the following
+// methods, leaving the others for internal use by PerfMonitor:
+// 
+// reset() - perform initialization after the output handle has been opened.
+//
+// update(Packet*) - update statistics basied on the current packet.
+//
+// process(bool) - summarize data and report. This is called after the
+// reporting thresholds have been reached.
+//
+
 #ifndef PERF_TRACKER_H
 #define PERF_TRACKER_H
 
@@ -29,14 +43,12 @@
 class PerfTracker
 {
 public:
-    virtual void reset() { }
-    virtual void show() { }         // FIXIT-L would it be better to let perfmon do this if it knows
-                                    // the names of fields?
+    virtual void reset() {}
 
-    virtual void update(Packet*) { }
-    virtual void update_time(time_t time) { cur_time = time; }
-    virtual void process(bool /*summary*/) { } //FIXIT-M get rid of this step.
+    virtual void update(Packet*) {};
+    virtual void process(bool /*summary*/) {}; //FIXIT-M get rid of this step.
 
+    virtual void update_time(time_t time) final { cur_time = time; };
     virtual void open(bool append) final;
     virtual void close() final;
     virtual void rotate() final;
@@ -52,6 +64,9 @@ protected:
     PerfFormatter* formatter;
 
     PerfTracker(PerfConfig*, const char* tracker_fname);
+
+private:
+    
 };
 #endif
 
