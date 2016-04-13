@@ -64,9 +64,6 @@ protected:
     PerfFormatter* formatter;
 
     PerfTracker(PerfConfig*, const char* tracker_fname);
-
-private:
-    
 };
 #endif
 
