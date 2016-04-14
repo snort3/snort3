@@ -18,9 +18,9 @@
 
 // csv_formatter.cc author Carter Waxman <cwaxman@cisco.com>
 
-#include <sstream>
-
 #include "csv_formatter.h"
+
+#include <sstream>
 
 #ifdef UNIT_TEST
 #include <cstdio>
