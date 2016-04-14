@@ -18,6 +18,8 @@
 
 // text_formatter.cc author Carter Waxman <cwaxman@cisco.com>
 
+#include <sstream>
+
 #include "text_formatter.h"
 
 #include "utils/stats.h"

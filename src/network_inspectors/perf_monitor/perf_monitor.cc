@@ -138,8 +138,10 @@ void PerfMonitor::show(SnortConfig*)
         case PERF_CSV:
             LogMessage("    Output Format:  csv\n");
             break;
+#ifdef UNIT_TEST
         case PERF_MOCK:
             break;
+#endif
     }
 }
 
