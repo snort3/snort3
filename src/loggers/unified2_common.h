@@ -201,7 +201,7 @@ typedef struct _Serial_Unified2IDSEvent_legacy
     uint32_t ip_destination;
     uint16_t sport_itype;
     uint16_t dport_icode;
-    uint8_t protocol;
+    IpProtocol ip_proto;
     uint8_t impact_flag; // sets packet_action
     uint8_t impact;
     uint8_t blocked;
@@ -223,7 +223,7 @@ typedef struct _Serial_Unified2IDSEventIPv6_legacy
     struct in6_addr ip_destination;
     uint16_t sport_itype;
     uint16_t dport_icode;
-    uint8_t protocol;
+    IpProtocol ip_proto;
     uint8_t impact_flag;
     uint8_t impact;
     uint8_t blocked;

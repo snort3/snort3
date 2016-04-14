@@ -44,7 +44,6 @@ constexpr auto to_utype(En t) -> typename std::underlying_type<En>::type
     return static_cast<typename std::underlying_type<En>::type>(t);
 }
 
-
 using ProtocolIndex = uint8_t;
 
 /*
@@ -207,16 +206,21 @@ constexpr uint16_t ETHERTYPE_EAPOL = 0x888e;
 constexpr uint16_t ETHERTYPE_FPATH = 0x8903;
 #endif
 
+inline bool is_ip_protocol(ProtocolId prot_id)
+{
+    return to_utype(prot_id) <= UINT8_MAX;
+}
+
 inline IpProtocol convert_protocolid_to_ipprotocol(const ProtocolId prot_id)
 {
-    assert(to_utype(prot_id) <= UINT8_MAX);
+    assert(is_ip_protocol(prot_id));
 
     return IpProtocol(prot_id);
 }
 
 inline bool is_ip6_extension(const ProtocolId prot_id)
 {
-    if(to_utype(prot_id) > UINT8_MAX)
+    if(!is_ip_protocol(prot_id))
         return false;
 
     switch (prot_id)

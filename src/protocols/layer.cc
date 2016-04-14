@@ -282,7 +282,8 @@ bool set_inner_ip_api(const Packet* const p,
             break;
 
         default:
-            next_ip_proto = convert_protocolid_to_ipprotocol(lyr.prot_id);
+            if(is_ip_protocol(lyr.prot_id))
+                next_ip_proto = convert_protocolid_to_ipprotocol(lyr.prot_id);
         }
     }
     while (--curr_layer >= 0);

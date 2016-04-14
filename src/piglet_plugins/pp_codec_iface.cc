@@ -84,8 +84,15 @@ static const luaL_Reg methods[] =
             std::vector<ProtocolId> ret;
             self.get_protocol_ids(ret);
 
+            //  Convert ProtocolId vector to uint16_t vector to make
+            //  Lua templates happy.
+            //  FIXIT-L:  Add support for ProtocolId in Lua code.
+            std::vector<uint16_t> tmp;
+            for(auto a: ret)
+                tmp.push_back(to_utype(a));
+
             lua_newtable(L);
-            Lua::fill_table_from_vector(L, lua_gettop(L), ret);
+            Lua::fill_table_from_vector(L, lua_gettop(L), tmp);
 
             return 1;
         }
