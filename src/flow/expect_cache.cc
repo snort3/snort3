@@ -427,7 +427,7 @@ char ExpectCache::process_expected(Packet* p, Flow* lws)
     ExpectFlow* head = node->head;
     node->head = head->next;
 
-    FlowData* fd = head->data;
+    FlowData* fd;
 
     while ((fd = head->data))
     {
