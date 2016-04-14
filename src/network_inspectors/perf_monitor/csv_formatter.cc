@@ -20,6 +20,8 @@
 
 #include "csv_formatter.h"
 
+#include <sstream>
+
 #ifdef UNIT_TEST
 #include <cstdio>
 #include <cstring>

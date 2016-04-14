@@ -20,6 +20,8 @@
 
 #include "text_formatter.h"
 
+#include <sstream>
+
 #include "utils/stats.h"
 
 #ifdef UNIT_TEST
