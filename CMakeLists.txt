@@ -36,8 +36,10 @@ include_directories (${PROJECT_BINARY_DIR})
 include_directories (${PROJECT_SOURCE_DIR})
 
 if (BUILD_UNIT_TESTS)
-    pkg_check_modules(CPPUTEST REQUIRED cpputest)
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
+    pkg_check_modules (CPPUTEST REQUIRED cpputest)
+    add_custom_target (check COMMAND ${CMAKE_CTEST_COMMAND})
+    add_dependencies (check snort)
+    add_test (catch_tests ${CMAKE_CURRENT_BINARY_DIR}/src/snort --catch-test all)
 endif (BUILD_UNIT_TESTS)
 
 add_subdirectory (src)
