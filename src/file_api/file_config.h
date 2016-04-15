@@ -40,7 +40,6 @@
 class FileConfig
 {
 public:
-    void print_file_rule(FileMagicRule&);
     FileMagicRule* get_rule_from_id(uint32_t);
     void process_file_rule(FileMagicRule&);
     void process_file_policy_rule(FileRule&);
