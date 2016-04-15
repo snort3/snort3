@@ -224,8 +224,10 @@ void TcpSession::clear_session(int freeApplicationData)
     if ( freeApplicationData == 2 )
         flow->restart(true);
     else
+    {
         flow->clear(freeApplicationData);
-
+        config = nullptr;
+    }
     // generate event for rate filtering
     tel.log_internal_event(INTERNAL_EVENT_SESSION_DEL);
 
@@ -580,9 +582,11 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
     if ( ( listener->get_tcp_state() == TcpStreamTracker::TCP_CLOSED )
         || ( talker->get_tcp_state() == TcpStreamTracker::TCP_CLOSED ) )
     {
-        /* Listener previously issued a reset Talker is re-SYN-ing */
+        // Listener previously issued a reset Talker is re-SYN-ing
+        DebugMessage(DEBUG_STREAM_STATE, "Got SYN pkt on reset ssn, re-SYN-ing\n");
+
         // FIXIT-L this leads to bogus 129:20
-        cleanup_session(1);
+        cleanup_session(2);
 
         if ( tcph->is_rst() )
         {
@@ -632,8 +636,6 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
             flow->update_session_flags(SSNFLAG_SEEN_SERVER);
         }
     }
-
-    DebugMessage(DEBUG_STREAM_STATE, "Got SYN pkt on reset ssn, re-SYN-ing\n");
 
     return true;
 }
@@ -1079,14 +1081,14 @@ void TcpSession::cleanup_session_if_expired(Packet* p)
         {
             /* If this one has been reset, delete the TCP
              * portion, and start a new. */
-            cleanup_session(1);
+            cleanup_session(2);
         }
         else
         {
             DebugMessage(DEBUG_STREAM_STATE, "Stream TCP session timedout!\n");
 
             /* Not reset, simply time'd out.  Clean it up */
-            cleanup_session(1);
+            cleanup_session(2);
         }
         tcpStats.timeouts++;
     }
@@ -1096,14 +1098,6 @@ bool TcpSession::do_packet_analysis_pre_checks(Packet* p, TcpSegmentDescriptor& 
 {
     if ( !is_flow_handling_packets(p) )
         return false;
-
-    // FIXIT - need to do something here to handle check for need to swap trackers??
-
-    if (config == nullptr )
-        config = get_tcp_cfg(flow->ssn_server);
-
-    if( !tcp_init )
-        set_os_policy( );
 
     // Check if the session is expired. Should be done before we do something with
     // the packet...Insert a packet, or handle state change SYN, FIN, RST, etc.
@@ -1152,16 +1146,28 @@ int TcpSession::process(Packet* p)
 {
     Profile profile(s5TcpPerfStats);
 
-    DEBUG_WRAP(
+    DEBUG_WRAP
+    (
         char flagbuf[9];
         CreateTCPFlagString(p->ptrs.tcph, flagbuf);
         DebugFormat((DEBUG_STREAM|DEBUG_STREAM_STATE),
         "Got TCP Packet 0x%X:%d ->  0x%X:%d %s\nseq: 0x%X   ack:0x%X  dsize: %u\n",
         p->ptrs.ip_api.get_src(), p->ptrs.sp, p->ptrs.ip_api.get_dst(), p->ptrs.dp, flagbuf,
         p->ptrs.tcph->seq(), p->ptrs.tcph->ack(), p->dsize);
-        );
+    );
+
+    assert(flow->ssn_server);
+
+    // FIXIT - need to do something here to handle check for need to swap trackers??
+
+    if ( !config )
+        config = get_tcp_cfg(flow->ssn_server);
+
+    if( !tcp_init )
+        set_os_policy( );
 
     TcpSegmentDescriptor tsd(flow, p, tel);
+
     if ( !do_packet_analysis_pre_checks(p, tsd) )
         return ACTION_NOTHING;
 
