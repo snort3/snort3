@@ -38,24 +38,6 @@
 #include "file_identifier.h"
 #include "parser/parse_utils.h"
 
-void FileConfig::print_file_rule(FileMagicRule& rule)
-{
-   std::cout << "File type is: " << rule.type << '\n';
-   std::cout << "File category is: " << rule.category << '\n';
-   std::cout << "File id is: " << rule.id << '\n';
-   std::cout << "File msg is: " << rule.message << '\n';
-   std::cout << "File rev is: " << rule.rev << '\n';
-   std::cout << "File version is: " << rule.version << '\n';
-   std::cout << "Number of magics is: " << rule.file_magics.size() << '\n';
-   for (FileMagics::iterator magic = rule.file_magics.begin();
-           magic != rule.file_magics.end(); magic++)
-   {
-       std::cout << "magic content: " << '"' << magic->content_str << '"' << ", ";
-       std::cout <<"offset: " << magic->offset << "; ";
-   }
-   std::cout << '\n';
-}
-
 bool FileConfig::process_file_magic(FileMagicData &magic)
 {
     bool negated = false;
