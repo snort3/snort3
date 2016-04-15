@@ -200,28 +200,3 @@ endif()
 set_if_true (HAS_CXX11_FUNC HAVE___FUNCTION__)
 check_library_exists (pcap pcap_lib_version "${PCAP_LIBRARIES}" HAVE_PCAP_LIB_VERSION)
 check_library_exists (pcap pcap_lex_destroy "${PCAP_LIBRARIES}" HAVE_PCAP_LEX_DESTROY)
-
-set (CMAKE_REQUIRED_FLAGS ${CXX11_COMPILER_FLAGS})
-set (CMAKE_REQUIRED_INCLUDES ${DAQ_INCLUDE_DIR})
-set (CMAKE_REQUIRED_LIBRARIES ${DAQ_LIBRARIES})
-
-
-set (CMAKE_REQUIRED_FLAGS)
-set (CMAKE_REQUIRED_INCLUDES)
-set (CMAKE_REQUIRED_LIBRARIES)
-
-
-###############################################################################
-###############################################################################
-#
-#   Finally, create the config.h file
-
-
-configure_file (
-    "${PROJECT_SOURCE_DIR}/config.cmake.h.in"
-    "${PROJECT_BINARY_DIR}/config.h"
-    )
-
-add_definitions( -DHAVE_CONFIG_H )
-#set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${PROJECT_SOURCE_DIR}/config.h")
-

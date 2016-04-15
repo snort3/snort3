@@ -36,3 +36,4 @@ install(FILES ${HASH_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/hash"
 )
 
+add_subdirectory ( test )
