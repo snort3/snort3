@@ -63,8 +63,8 @@ static inline bool is_ip6_key(const FlowKey* key)
 
 FlowHAState::FlowHAState()
 {
-    state = initial_state;
-    pending = none_pending;
+    state = INITIAL_STATE;
+    pending = NONE_PENDING;
 }
 
 void FlowHAState::set_pending(FlowHAClientHandle handle)
@@ -84,24 +84,24 @@ void FlowHAState::clear_pending(FlowHAClientHandle handle)
 
 void FlowHAState::set(uint8_t new_state)
 {
-    state |= (new_state & status_mask);
+    state |= (new_state & STATUS_MASK);
 }
 
 void FlowHAState::set(uint8_t new_state, uint8_t new_priority)
 {
-    state |= (new_state & status_mask);
-    state |= (new_priority & priority_mask);
+    state |= (new_state & STATUS_MASK);
+    state |= (new_priority & PRIORITY_MASK);
 }
 
 void FlowHAState::clear(uint8_t old_state)
 {
-    state &= ~(old_state & status_mask);
+    state &= ~(old_state & STATUS_MASK);
 }
 
 void FlowHAState::clear(uint8_t old_state, uint8_t old_priority)
 {
-    state &= ~(old_state & status_mask);
-    state &= ~(old_priority & priority_mask);
+    state &= ~(old_state & STATUS_MASK);
+    state &= ~(old_priority & PRIORITY_MASK);
 }
 
 bool FlowHAState::check(uint8_t state_mask)
@@ -111,12 +111,12 @@ bool FlowHAState::check(uint8_t state_mask)
 
 bool FlowHAState::is_critical()
 {
-    return ((state & critical) != 0);
+    return ((state & CRITICAL) != 0);
 }
 
 bool FlowHAState::is_major()
 {
-    return ((state & major) != 0);
+    return ((state & MAJOR) != 0);
 }
 
 void FlowHAState::config_lifetime(struct timeval min_lifetime)
@@ -156,12 +156,12 @@ FlowHAClient::FlowHAClient(bool session_client)
     DebugMessage(DEBUG_HA,"FlowHAClient::FlowHAClient()\n");
     if ( session_client )
     {
-        handle = session_ha_client;
+        handle = SESSION_HA_CLIENT;
         s_session_client = this;
     }
     else
     {
-        assert(s_handle_counter != max_clients);
+        assert(s_handle_counter != MAX_CLIENTS);
         handle = (1 << s_handle_counter);
         s_handle_counter += 1;
     }
@@ -361,7 +361,7 @@ void HighAvailability::process_update(Flow* flow, const DAQ_PktHdr_t* pkthdr)
     assert(sc_msg);
     HAMessage ha_msg(sc_msg);
 
-    write_msg_header(flow, ha_update_event, content_len, &ha_msg);
+    write_msg_header(flow, HA_UPDATE_EVENT, content_len, &ha_msg);
     write_update_msg_content(flow, &ha_msg);
     sc->transmit_message(sc_msg);
 }
@@ -372,9 +372,9 @@ void HighAvailability::process_deletion(Flow* flow)
 
     // No need to send message if we already have, we are in standby, or
     // we have just been created and haven't yet sent an update
-    if ( flow->ha_state->check(FlowHAState::created |
-        FlowHAState::deleted |
-        FlowHAState::standby))
+    if ( flow->ha_state->check(FlowHAState::CREATED |
+        FlowHAState::DELETED |
+        FlowHAState::STANDBY))
         return;
 
     // Deletion messages only use the side channel
@@ -386,11 +386,11 @@ void HighAvailability::process_deletion(Flow* flow)
     HAMessage ha_msg(sc_msg);
 
     // No content, only header+key
-    write_msg_header(flow, ha_delete_event, 0, &ha_msg);
+    write_msg_header(flow, HA_DELETE_EVENT, 0, &ha_msg);
 
     sc->transmit_message(sc_msg);
 
-    flow->ha_state->set(FlowHAState::deleted);
+    flow->ha_state->set(FlowHAState::DELETED);
 }
 
 void HighAvailability::process_receive()

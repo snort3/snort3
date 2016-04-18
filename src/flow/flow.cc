@@ -63,7 +63,8 @@ void Flow::init(PktType proto)
 
     // FIXIT-M getFlowbitSizeInBytes() should be attribute of ??? (or eliminate)
     bitop = new BitOp(getFlowbitSizeInBytes());
-    ha_state = new FlowHAState;
+    if ( HighAvailabilityManager::active() )
+        ha_state = new FlowHAState;
 }
 
 void Flow::term()

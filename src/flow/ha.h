@@ -36,27 +36,27 @@ class Flow;
 // Handle 0 is defined to be the primary session client.
 // NOTE: The type, masks, and count values must be in sync,
 typedef uint16_t FlowHAClientHandle;
-const FlowHAClientHandle session_ha_client = 0x0000;
-const FlowHAClientHandle all_clients = 0xffff;
-const uint8_t max_clients = 16;
+const FlowHAClientHandle SESSION_HA_CLIENT = 0x0000;
+const FlowHAClientHandle ALL_CLIENTS = 0xffff;
+const uint8_t MAX_CLIENTS = 16;
 
 enum HAEvent
 {
-    ha_delete_event = 1,
-    ha_update_event = 2
+    HA_DELETE_EVENT = 1,
+    HA_UPDATE_EVENT = 2
 };
 
 // Each active flow will have an associated FlowHAState instance.
 class FlowHAState
 {
 public:
-    static const uint8_t critical = 0x20;
-    static const uint8_t major = 0x10;
+    static const uint8_t CRITICAL = 0x20;
+    static const uint8_t MAJOR = 0x10;
 
-    static const uint8_t created = 0x01;
-    static const uint8_t modified = 0x02;
-    static const uint8_t deleted = 0x04;
-    static const uint8_t standby = 0x08;
+    static const uint8_t CREATED = 0x01;
+    static const uint8_t MODIFIED = 0x02;
+    static const uint8_t DELETED = 0x04;
+    static const uint8_t STANDBY = 0x08;
 
     FlowHAState();
     ~FlowHAState() {}
@@ -77,10 +77,10 @@ public:
     void initialize_update_time();
 
 private:
-    static const uint8_t initial_state = 0x00;
-    static const uint16_t none_pending = 0x0000;
-    static const uint8_t priority_mask = 0x30;
-    static const uint8_t status_mask = 0x0f;
+    static const uint8_t INITIAL_STATE = 0x00;
+    static const uint16_t NONE_PENDING = 0x0000;
+    static const uint8_t PRIORITY_MASK = 0x30;
+    static const uint8_t STATUS_MASK = 0x0f;
 
     static struct timeval min_session_lifetime;
     uint8_t state;

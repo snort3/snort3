@@ -3,8 +3,8 @@ set (FLOW_INCLUDES
     flow_config.h
     flow_key.h
     ha.h
-    memcap.h
     ha_module.h
+    memcap.h
 )
 
 add_library (flow STATIC
@@ -18,9 +18,9 @@ add_library (flow STATIC
     flow_control.h
     flow_key.cc
     ha.cc
+    ha_module.cc
     prune_stats.h
     session.h
-    ha_module.cc
 )
 
 set_default_visibility_compile_flag(flow)

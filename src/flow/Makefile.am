@@ -17,8 +17,8 @@ flow_key.cc \
 flow_cache.cc flow_cache.h \
 flow_control.cc flow_control.h \
 ha.cc ha.h \
-prune_stats.h \
 ha_module.cc ha_module.h \
+prune_stats.h \
 session.h
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

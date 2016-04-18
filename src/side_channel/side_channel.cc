@@ -299,8 +299,11 @@ bool SideChannel::transmit_message(SCMessage* msg)
 
 Connector::Direction SideChannel::get_direction()
 {
-    if ( connector_receive && connector_transmit ) return Connector::CONN_DUPLEX;
-    if ( connector_receive && !connector_transmit ) return Connector::CONN_RECEIVE;
-    if ( !connector_receive && connector_transmit ) return Connector::CONN_TRANSMIT;
+    if ( connector_receive && connector_transmit )
+        return Connector::CONN_DUPLEX;
+    if ( connector_receive && !connector_transmit )
+        return Connector::CONN_RECEIVE;
+    if ( !connector_receive && connector_transmit )
+        return Connector::CONN_TRANSMIT;
     return Connector::CONN_UNDEFINED;
 }

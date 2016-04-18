@@ -23,12 +23,12 @@
 
 void UdpHA::delete_session(Flow*)
 {
-    DebugMessage(DEBUG_STREAM,"UdpHA::delete_session)\n");
+    DebugMessage(DEBUG_HA,"UdpHA::delete_session)\n");
 }
 
 void UdpHA::create_session(Flow*)
 {
-    DebugMessage(DEBUG_STREAM,"UdpHA::create_session)\n");
+    DebugMessage(DEBUG_HA,"UdpHA::create_session)\n");
 }
 
 UdpHA* UdpHAManager::udp_ha;
