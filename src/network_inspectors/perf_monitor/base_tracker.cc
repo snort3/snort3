@@ -85,7 +85,8 @@ private:
         {"one", ""},
         {"two", ""},
         {"three", ""},
-        {"four", ""}};
+        {"four", ""}
+        {nullptr, nullptr}};
 };
 
 class MockBaseTracker : public BaseTracker
