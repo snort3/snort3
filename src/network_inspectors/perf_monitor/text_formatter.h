@@ -26,7 +26,7 @@
 class TextFormatter : public PerfFormatter
 {
 public:
-    TextFormatter() : PerfFormatter() {};
+    TextFormatter() : PerfFormatter() {}
     void write(FILE*, time_t) override;
 };
 
