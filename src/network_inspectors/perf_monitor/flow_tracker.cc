@@ -148,11 +148,11 @@ public:
     PerfFormatter* output;
 
     MockFlowTracker(PerfConfig* config) : FlowTracker(config)
-    { output = formatter; };
+    { output = formatter; }
 
-    void clear() override {};
+    void clear() override {}
 
-    void real_clear() { FlowTracker::clear(); };
+    void real_clear() { FlowTracker::clear(); }
 };
 
 TEST_CASE("no protocol", "[FlowTracker]")

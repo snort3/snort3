@@ -66,17 +66,17 @@ public:
         counts = (PegCount*)malloc(5 * sizeof(PegCount));
         for( unsigned i = 0; i < 5; i++ )
             counts[i] = i;
-    };
+    }
 
-    ~MockModule() { free(counts); };
+    ~MockModule() { free(counts); }
 
-    const PegInfo* get_pegs() const override { return pegs; };
+    const PegInfo* get_pegs() const override { return pegs; }
 
-    PegCount* get_counts() const override { return counts; };
+    PegCount* get_counts() const override { return counts; }
 
-    void sum_stats() override {};
+    void sum_stats() override {}
 
-    void real_sum_stats() { Module::sum_stats(); };
+    void real_sum_stats() { Module::sum_stats(); }
     
 private:
     PegCount* counts;
@@ -95,7 +95,7 @@ public:
     PerfFormatter* output;
 
     MockBaseTracker(PerfConfig* config) : BaseTracker(config)
-    { output = formatter; };
+    { output = formatter; }
 };
 
 TEST_CASE("module stats", "[BaseTracker]")
