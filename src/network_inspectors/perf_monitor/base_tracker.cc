@@ -80,12 +80,13 @@ public:
     
 private:
     PegCount* counts;
-    PegInfo pegs[5] = {
+    PegInfo pegs[6] = {
         {"zero", ""},
         {"one", ""},
         {"two", ""},
         {"three", ""},
-        {"four", ""}};
+        {"four", ""},
+        {nullptr, nullptr}};
 };
 
 class MockBaseTracker : public BaseTracker
