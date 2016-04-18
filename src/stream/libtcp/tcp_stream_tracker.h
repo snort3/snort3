@@ -324,6 +324,7 @@ public:
     virtual void init_flush_policy(void) =  0;
     virtual void set_splitter(StreamSplitter* ss) =  0;
     virtual void set_splitter(const Flow* flow) =  0;
+    virtual void reset_splitter( void ) = 0;
 
     virtual void init_on_syn_sent(TcpSegmentDescriptor&) =  0;
     virtual void init_on_syn_recv(TcpSegmentDescriptor&) =  0;

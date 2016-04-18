@@ -62,6 +62,7 @@ public:
     void init_flush_policy(void) override;
     void set_splitter(StreamSplitter* ss) override;
     void set_splitter(const Flow* flow) override;
+    void reset_splitter( void ) override;
 
     void init_on_syn_sent(TcpSegmentDescriptor&) override;
     void init_on_syn_recv(TcpSegmentDescriptor&) override;

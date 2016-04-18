@@ -422,6 +422,7 @@ bool TcpStreamSession::setup(Packet*)
     ingress_index = egress_index = 0;
     ingress_group = egress_group = 0;
     daq_flags = address_space_id = 0;
+    config = nullptr;
 
     return true;
 }

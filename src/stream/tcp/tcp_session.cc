@@ -198,8 +198,6 @@ void TcpSession::clear_session(int freeApplicationData)
     else if (flow->get_session_flags() & SSNFLAG_TIMEDOUT)
         tcpStats.timeouts++;
 
-    set_splitter(true, nullptr);
-    set_splitter(false, nullptr);
 
     DebugFormat(DEBUG_STREAM_STATE, "In TcpSessionClear, %lu bytes in use\n", tcp_memcap->used());
 
@@ -217,17 +215,25 @@ void TcpSession::clear_session(int freeApplicationData)
         server->reassembler->purge_segment_list();
     }
 
-    paf_clear(&client->paf_state);
-    paf_clear(&server->paf_state);
 
     // update light-weight state
     if ( freeApplicationData == 2 )
+    {
         flow->restart(true);
+
+        // FIXIT - do we need to reset PAF here too?
+        client->reset_splitter();
+        server->reset_splitter();
+    }
     else
     {
         flow->clear(freeApplicationData);
-        config = nullptr;
+        paf_clear(&client->paf_state);
+        paf_clear(&server->paf_state);
+        set_splitter(true, nullptr);
+        set_splitter(false, nullptr);
     }
+
     // generate event for rate filtering
     tel.log_internal_event(INTERNAL_EVENT_SESSION_DEL);
 

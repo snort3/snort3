@@ -103,6 +103,12 @@ void TcpTracker::set_splitter(const Flow* flow)
         set_splitter(new AtomSplitter(!client_tracker) );
 }
 
+void TcpTracker::reset_splitter( void )
+{
+    if ( splitter )
+        splitter->reset();
+}
+
 void TcpTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
 {
     Profile profile(s5TcpNewSessPerfStats);
