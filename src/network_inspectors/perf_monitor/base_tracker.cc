@@ -85,7 +85,7 @@ private:
         {"one", ""},
         {"two", ""},
         {"three", ""},
-        {"four", ""}
+        {"four", ""},
         {nullptr, nullptr}};
 };
 
