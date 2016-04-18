@@ -221,7 +221,8 @@ void TcpSession::clear_session(int freeApplicationData)
     {
         flow->restart(true);
 
-        // FIXIT - do we need to reset PAF here too?
+        paf_reset(&client->paf_state);
+        paf_reset(&server->paf_state);
         client->reset_splitter();
         server->reset_splitter();
     }
