@@ -411,6 +411,7 @@ void Snort::term()
         snort_conf = NULL;
     }
     CleanupProtoNames();
+    SideChannelManager::term();
     ModuleManager::term();
     PluginManager::release_plugins();
 }
@@ -644,8 +645,8 @@ void Snort::thread_term()
     IpsManager::clear_options();
     EventManager::close_outputs();
     CodecManager::thread_term();
-    SideChannelManager::thread_term();
     HighAvailabilityManager::thread_term();
+    SideChannelManager::thread_term();
 
     if ( s_packet )
     {

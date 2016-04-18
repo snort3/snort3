@@ -87,6 +87,9 @@ void Flow::term()
 
     if ( bitop )
         delete bitop;
+
+    if ( ha_state )
+        delete ha_state;
 }
 
 void Flow::reset(bool do_cleanup)

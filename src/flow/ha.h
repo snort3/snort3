@@ -59,7 +59,7 @@ public:
     static const uint8_t standby = 0x08;
 
     FlowHAState();
-    ~FlowHAState();
+    ~FlowHAState() {}
 
     void set_pending(FlowHAClientHandle);
     void clear_pending(FlowHAClientHandle);

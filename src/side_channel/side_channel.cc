@@ -31,6 +31,7 @@
 #include <time.h>
 #include <thread>
 #include <vector>
+#include <utility>
 
 #include "main/snort_debug.h"
 #include "managers/connector_manager.h"
@@ -106,7 +107,8 @@ void SideChannelManager::instantiate(const SCConnectors* connectors, const PortB
     scm->connectors = *connectors;
     scm->ports = *ports;
 
-    s_maps.push_back(scm);
+    // convert to rvalue for move to vector
+    s_maps.push_back(std::move(scm));
 }
 
 // Initialize state to be ready to accept configuration
@@ -158,7 +160,7 @@ void SideChannelManager::thread_init()
         }
 
         /* Save the thread specific map */
-        map_list->push_back(map);
+        map_list->push_back(std::move(map));
     }
 
     /* Finally, save the thread-specific list */
@@ -173,7 +175,21 @@ void SideChannelManager::thread_term()
     // First shutdown the connectors
     ConnectorManager::thread_term();
 
+    for ( auto& map : *tls_maps )
+    {
+        delete map->sc;
+        delete map;
+    }
+
     delete tls_maps;
+}
+
+void SideChannelManager::term()
+{
+    for ( auto& scm : s_maps )
+        delete scm;
+
+    s_maps.clear();
 }
 
 // receive at most max_messages.  Zero indicates unlimited.

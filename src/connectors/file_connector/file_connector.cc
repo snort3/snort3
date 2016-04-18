@@ -297,6 +297,7 @@ static void file_connector_tterm(Connector* connector)
     FileConnector* file_connector = (FileConnector*)connector;
 
     file_connector->file.close();
+    delete file_connector;
 }
 
 static ConnectorCommon* file_connector_ctor(Module* m)

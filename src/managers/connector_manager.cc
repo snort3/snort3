@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <list>
 #include <unordered_map>
+#include <utility>
 
 #include "framework/connector.h"
 #include "main/snort_config.h"
@@ -81,6 +82,11 @@ void ConnectorManager::release_plugins()
         if ( sc.api->dtor )
             sc.api->dtor(sc.connector_common);
 
+        for ( auto& conn : sc.connectors )
+            delete conn.second;
+
+        sc.connectors.clear();
+
         if ( sc.api->pterm )
             sc.api->pterm();
     }
@@ -123,7 +129,7 @@ void ConnectorManager::thread_init()
                 assert(conn.second->thread_connectors.count(tid) == 0);
 
                 Connector* connector = sc.api->tinit(&conn.second->config);
-                std::pair<pid_t, Connector*> element (tid, connector);
+                std::pair<pid_t, Connector*> element (tid, std::move(connector));
                 conn.second->thread_connectors.insert(element);
             }
         }
@@ -148,6 +154,8 @@ void ConnectorManager::thread_term()
                 assert(conn.second->thread_connectors.count(tid) != 0);
 
                 sc.api->tterm(conn.second->thread_connectors[tid]);
+
+                conn.second->thread_connectors.clear();
             }
         }
     }
@@ -173,7 +181,7 @@ void ConnectorManager::instantiate(const ConnectorApi* api, Module* mod, SnortCo
 
         ConnectorElem* connector_elem = new ConnectorElem;
         connector_elem->config = cfg;
-        std::pair<std::string, ConnectorElem*> element (cfg.connector_name, connector_elem);
+        std::pair<std::string, ConnectorElem*> element (cfg.connector_name, std::move(connector_elem));
         c.connectors.insert(element);
     }
 

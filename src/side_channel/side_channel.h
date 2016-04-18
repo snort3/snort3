@@ -101,6 +101,9 @@ public:
     // Per packet thread shutdown.
     static void thread_term();
 
+    // Overall shutdown.
+    static void term();
+
     // if configured, returns the SideChannel object associated with the specified port number.
     // Else return nullptr if none is configured.
     static SideChannel* get_side_channel(SCPort);
