@@ -42,6 +42,7 @@
 #include "main/snort_config.h"
 #include "hash/hashes.h"
 #include "utils/util.h"
+#include "utils/stats.h"
 
 FileMemPool* file_mempool = nullptr;
 File_Capture_Stats file_capture_stats;
@@ -173,7 +174,7 @@ inline FileCaptureState FileCapture::save_to_file_buffer(FileMemPool* file_mempo
     if ( data_size + (int64_t)file_size > max_size)
     {
         FILE_DEBUG_MSGS("Exceeding max file capture size!\n");
-        file_capture_stats.file_size_exceeded++;
+        file_capture_stats.file_size_max++;
         capture_state = FILE_CAPTURE_MAX;
         return FILE_CAPTURE_MAX;
     }
@@ -524,14 +525,10 @@ void FileCapture::print_mem_usage(void)
 {
     if (file_mempool)
     {
-        LogMessage("Maximum buffers can allocate:      " FMTu64("-10") " \n",
-            file_mempool->total);
-        LogMessage("Number of buffers in use:          " FMTu64("-10") " \n",
-            file_mempool_allocated(file_mempool));
-        LogMessage("Number of buffers in free list:    " FMTu64("-10") " \n",
-            file_mempool_freed(file_mempool));
-        LogMessage("Number of buffers in release list: " FMTu64("-10") " \n",
-            file_mempool_released(file_mempool));
+        LogCount("Max buffers can allocate", file_mempool->total);
+        LogCount("Buffers in use", file_mempool_allocated(file_mempool));
+        LogCount("Buffers in free list", file_mempool_freed(file_mempool));
+        LogCount("Buffers in release list", file_mempool_released(file_mempool));
     }
 }
 

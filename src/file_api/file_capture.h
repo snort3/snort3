@@ -113,7 +113,6 @@ typedef struct _File_Capture_Stats
     uint64_t file_memcap_failures_total;
     uint64_t file_memcap_failures_reserve; /*This happens during reserve*/
     uint64_t file_reserve_failures;        /*This happens during reserve*/
-    uint64_t file_size_exceeded;
     uint64_t file_size_min;                /*This happens during reserve*/
     uint64_t file_size_max;                /*This happens during reserve*/
     uint64_t file_within_packet;
