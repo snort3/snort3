@@ -8,5 +8,5 @@ TESTS = $(check_PROGRAMS)
 
 file_connector_test_CPPFLAGS = @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
 
-file_connector_test_LDADD = ../../../framework/libframework.a @CPPUTEST_LDFLAGS@
+file_connector_test_LDADD = ../libfile_connector.a ../../../framework/libframework.a @CPPUTEST_LDFLAGS@
 

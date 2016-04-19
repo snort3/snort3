@@ -22,8 +22,12 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-#include "../side_channel.cc"
+#include "../side_channel.h"
+
 #include "../../log/messages.h"
+#include "../main/snort_debug.h"
+#include "../managers/connector_manager.h"
+#include "../side_channel_module.h"
 
 class TestConnector : public Connector
 {

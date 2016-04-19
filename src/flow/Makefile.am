@@ -19,7 +19,6 @@ flow_control.cc flow_control.h \
 ha.cc ha.h \
 ha_module.cc ha_module.h \
 prune_stats.h \
-ha_module.cc ha_module.h \
 session.h
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

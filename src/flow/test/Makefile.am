@@ -8,5 +8,5 @@ TESTS = $(check_PROGRAMS)
 
 ha_test_CPPFLAGS = @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
 
-ha_test_LDADD = @CPPUTEST_LDFLAGS@
+ha_test_LDADD = ../libflow.a @CPPUTEST_LDFLAGS@
 

@@ -22,7 +22,10 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-#include "../ha.cc"
+#include "../ha.h"
+
+#include "../flow.h"
+#include "../../main/snort_debug.h"
 
 #define MSG_SIZE 100
 
@@ -116,10 +119,9 @@ TEST(high_availability_manager_test, init_term)
 {
     HighAvailabilityManager::pre_config_init();
     HighAvailabilityManager::thread_init();
-    CHECK(ha == nullptr);
     CHECK(HighAvailabilityManager::active()==false);
     HighAvailabilityManager::thread_term();
-    CHECK(ha == nullptr);
+    CHECK(HighAvailabilityManager::active()==false);
 }
 
 TEST(high_availability_manager_test, inst_init_term)
@@ -129,10 +131,9 @@ TEST(high_availability_manager_test, inst_init_term)
     port_set.set(1);
     HighAvailabilityManager::instantiate(&port_set, false);
     HighAvailabilityManager::thread_init();
-    CHECK(ha != nullptr);
     CHECK(HighAvailabilityManager::active()==true);
     HighAvailabilityManager::thread_term();
-    CHECK(ha == nullptr);
+    CHECK(HighAvailabilityManager::active()==false);
 }
 
 TEST(high_availability_manager_test, inst_init_deletion_term)
@@ -142,11 +143,11 @@ TEST(high_availability_manager_test, inst_init_deletion_term)
     port_set.set(1);
     HighAvailabilityManager::instantiate(&port_set, false);
     HighAvailabilityManager::thread_init();
-    CHECK(ha != nullptr);
+    CHECK(HighAvailabilityManager::active()==true);
     HighAvailabilityManager::process_receive();
     HighAvailabilityManager::process_deletion(&s_flow);
     HighAvailabilityManager::thread_term();
-    CHECK(ha == nullptr);
+    CHECK(HighAvailabilityManager::active()==false);
 }
 
 TEST(high_availability_manager_test, inst_init_update_term)
@@ -156,11 +157,11 @@ TEST(high_availability_manager_test, inst_init_update_term)
     port_set.set(1);
     HighAvailabilityManager::instantiate(&port_set, false);
     HighAvailabilityManager::thread_init();
-    CHECK(ha != nullptr);
+    CHECK(HighAvailabilityManager::active()==true);
     HighAvailabilityManager::process_update(&s_flow, &s_pkthdr);
     HighAvailabilityManager::process_receive();
     HighAvailabilityManager::thread_term();
-    CHECK(ha == nullptr);
+    CHECK(HighAvailabilityManager::active()==false);
 }
 
 TEST_GROUP(high_availability_test)

@@ -5,7 +5,6 @@ set (FLOW_INCLUDES
     ha.h
     ha_module.h
     memcap.h
-    ha_module.h
 )
 
 add_library (flow STATIC
@@ -22,7 +21,6 @@ add_library (flow STATIC
     ha_module.cc
     prune_stats.h
     session.h
-    ha_module.cc
 )
 
 set_default_visibility_compile_flag(flow)

@@ -22,7 +22,6 @@
 
 #include <values.h>
 
-//#include "flow.h"
 #include "main/snort_types.h"
 #include "packet_io/sfdaq.h"
 #include "side_channel/side_channel.h"
