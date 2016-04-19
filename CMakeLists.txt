@@ -29,8 +29,10 @@ configure_file (
 
 add_definitions( -DHAVE_CONFIG_H )
 
-set (CMAKE_CXX_STANDARD 11)
-set (CMAKE_CXX_STANDARD_REQUIRED ON)
+# CMAKE_CXX_* properties aren't supported in 2.x :(
+# set (CMAKE_CXX_STANDARD 11)
+# set (CMAKE_CXX_STANDARD_REQUIRED ON)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS}")
 
 include_directories (${PROJECT_BINARY_DIR})
 include_directories (${PROJECT_SOURCE_DIR})
