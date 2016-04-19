@@ -42,16 +42,16 @@ public:
         UriParam();
         ~UriParam() { delete[] unicode_map; }
 
-        bool percent_u;
-        bool utf8;
-        bool utf8_bare_byte;
-        bool iis_unicode;
+        bool percent_u = false;
+        bool utf8 = true;
+        bool utf8_bare_byte = false;
+        bool iis_unicode = false;
         std::string iis_unicode_map_file;
-        int iis_unicode_code_page;
+        int iis_unicode_code_page = 1252;
         uint8_t* unicode_map = nullptr;
-        bool backslash_to_slash;
-        bool plus_to_space;
-        bool simplify_path;
+        bool backslash_to_slash = false;
+        bool plus_to_space = true;
+        bool simplify_path = true;
         std::bitset<256> bad_characters;
         std::bitset<256> unreserved_char;
         NHttpEnums::CharAction uri_char[256];
