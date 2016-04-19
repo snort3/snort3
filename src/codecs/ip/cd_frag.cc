@@ -98,8 +98,16 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
     codec.proto_bits |= PROTO_BIT__IP6_EXT;
     codec.ip6_extension_count++;
 
+    // FIXIT-H: The comment says to call it after setting next_prot_id,
+    //          but it looks like it's called (twice) before setting it.
+
     // must be called AFTER setting next_prot_id
     CheckIPv6ExtensionOrder(codec, IpProtocol::FRAGMENT);
+
+    //   FIXIT-H:
+    //   This breaks the tests/ips/normalize/ip6/would_opts_nop test because
+    //   ip6frag_hdr->ip6f_nxt is set to FINISHED_DECODE here.
+    //   (or maybe the test has the wrong expected data).
 
     // Since the Frag layer is removed from rebuilt packets, ensure
     // the next layer is correctly order now.

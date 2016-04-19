@@ -39,7 +39,7 @@
 
 //  Convert enum to a value cast to the enum's underlying type.
 template<typename En>
-constexpr auto to_utype(En t) -> typename std::underlying_type<En>::type
+constexpr auto to_utype(En t)->typename std::underlying_type<En>::type
 {
     return static_cast<typename std::underlying_type<En>::type>(t);
 }
@@ -79,10 +79,9 @@ enum class IpProtocol : std::uint8_t
     MIN_UNASSIGNED_IP_PROTO = 143,
 
     RESERVED = 255,       // == 0xFF
-    PORT_SCAN = 255, 
+    PORT_SCAN = 255,
     PROTO_NOT_SET = 255,  // Indicates protocol has not been set.
 };
-
 
 //  Values up to 255 MUST be identical to those in IpProtocol.
 enum class ProtocolId : std::uint16_t
@@ -114,7 +113,7 @@ enum class ProtocolId : std::uint16_t
     MIN_UNASSIGNED_IP_PROTO = 143,
 
     RESERVED = 255,       // == 0xFF
-    PORT_SCAN = 255, 
+    PORT_SCAN = 255,
     PROTO_NOT_SET = 255,  // Indicates protocol has not been set.
 
     /*
@@ -153,58 +152,8 @@ enum class ProtocolId : std::uint16_t
     ETHERTYPE_FPATH = 0x8903,
 };
 
-static const auto max_protocol_id = std::numeric_limits<std::underlying_type<ProtocolId>::type>::max();
-
-#if 0
-constexpr uint16_t IPPROTO_ID_HOPOPTS = 0;
-constexpr uint16_t IPPROTO_ID_ICMPV4 = 1;
-constexpr uint16_t IPPROTO_ID_IPIP = 4;
-constexpr uint16_t IPPROTO_ID_TCP = 6;
-constexpr uint16_t IPPROTO_ID_UDP = 17;
-constexpr uint16_t IPPROTO_ID_IPV6 = 41;
-constexpr uint16_t IPPROTO_ID_ROUTING = 43;
-constexpr uint16_t IPPROTO_ID_FRAGMENT = 44;
-constexpr uint16_t IPPROTO_ID_GRE = 47;
-constexpr uint16_t IPPROTO_ID_ESP = 50;
-constexpr uint16_t IPPROTO_ID_AUTH = 51; // RFC 4302
-constexpr uint16_t IPPROTO_ID_MOBILITY = 55;
-constexpr uint16_t IPPROTO_ID_ICMPV6 = 58;
-constexpr uint16_t IPPROTO_ID_NONEXT = 59;
-constexpr uint16_t IPPROTO_ID_DSTOPTS = 60;
-constexpr uint16_t IPPROTO_ID_RESERVED = 255; // == 0xFF
-
-constexpr uint16_t MIN_UNASSIGNED_IP_PROTO = 143;
-
-/*
- *  Undefined Protocol!
- */
-constexpr uint16_t FINISHED_DECODE = 0x0100;  // Indicates Codecs have succesfully decoded packet
-constexpr uint16_t PROTO_TEREDO = 0x0101;
-constexpr uint16_t PROTO_GTP = 0x0102;
-constexpr uint16_t PROTO_IP_EMBEDDED_IN_ICMP4 = 0x0103;
-constexpr uint16_t PROTO_IP_EMBEDDED_IN_ICMP6 = 0x0104;
-constexpr uint16_t PROTO_ETHERNET_802_3 = 0x0105;
-constexpr uint16_t PROTO_ETHERNET_802_11 = 0x0106;
-constexpr uint16_t PROTO_ETHERNET_LLC = 0x0107;
-
-/*
- * Below is a partial list of ethertypes.
- *  Defined at:
- *
- *  Defined at:
- * http://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
- */
-constexpr uint16_t ETHERTYPE_TRANS_ETHER_BRIDGING = 0x6558;
-constexpr uint16_t ETHERTYPE_IPV4 = 0x0800;
-constexpr uint16_t ETHERTYPE_REVARP = 0x8035;
-constexpr uint16_t ETHERTYPE_ARP = 0x0806;
-constexpr uint16_t ETHERTYPE_8021Q = 0x8100;
-constexpr uint16_t ETHERTYPE_IPX = 0x8137;
-constexpr uint16_t ETHERTYPE_IPV6 = 0x86dd;
-constexpr uint16_t ETHERTYPE_PPP = 0x880B;
-constexpr uint16_t ETHERTYPE_EAPOL = 0x888e;
-constexpr uint16_t ETHERTYPE_FPATH = 0x8903;
-#endif
+static const auto max_protocol_id =
+    std::numeric_limits<std::underlying_type<ProtocolId>::type>::max();
 
 inline bool is_ip_protocol(ProtocolId prot_id)
 {
@@ -220,7 +169,7 @@ inline IpProtocol convert_protocolid_to_ipprotocol(const ProtocolId prot_id)
 
 inline bool is_ip6_extension(const ProtocolId prot_id)
 {
-    if(!is_ip_protocol(prot_id))
+    if (!is_ip_protocol(prot_id))
         return false;
 
     switch (prot_id)

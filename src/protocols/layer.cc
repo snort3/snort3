@@ -94,7 +94,8 @@ const arp::EtherARP* get_arp_layer(const Packet* const p)
     const Layer* lyr = p->layers;
 
     return reinterpret_cast<const arp::EtherARP*>(
-        find_inner_layer(lyr, num_layers, ProtocolId::ETHERTYPE_ARP, ProtocolId::ETHERTYPE_REVARP));
+        find_inner_layer(lyr, num_layers, ProtocolId::ETHERTYPE_ARP, 
+            ProtocolId::ETHERTYPE_REVARP));
 }
 
 const gre::GREHdr* get_gre_layer(const Packet* const p)
@@ -347,6 +348,8 @@ bool set_outer_ip_api(const Packet* const p,
                 reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
             api.set(ip4h);
             curr_layer++;
+            if(curr_layer >= num_layers)
+                return false;
             return true;
         }
         case ProtocolId::ETHERTYPE_IPV6:
@@ -356,6 +359,8 @@ bool set_outer_ip_api(const Packet* const p,
                 reinterpret_cast<const ip::IP6Hdr*>(lyr.start);
             api.set(ip6h);
             curr_layer++;
+            if(curr_layer >= num_layers)
+                return false;
             return true;
         }
         default:

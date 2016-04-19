@@ -136,17 +136,17 @@ struct IP6Hdr
     {
         switch (ip6_next)
         {
-            case IpProtocol::NONEXT:
-            case IpProtocol::TCP:
-            case IpProtocol::UDP:
-            case IpProtocol::ICMPV6:
-            case IpProtocol::HOPOPTS:
-            case IpProtocol::DSTOPTS:
-            case IpProtocol::ROUTING:
-            case IpProtocol::FRAGMENT:
-                return true;
-            default:
-                break;
+        case IpProtocol::NONEXT:
+        case IpProtocol::TCP:
+        case IpProtocol::UDP:
+        case IpProtocol::ICMPV6:
+        case IpProtocol::HOPOPTS:
+        case IpProtocol::DSTOPTS:
+        case IpProtocol::ROUTING:
+        case IpProtocol::FRAGMENT:
+            return true;
+        default:
+            break;
         }
         return false;
     }
@@ -165,7 +165,6 @@ struct IP6Hdr
 
     inline uint16_t raw_len() const
     { return ip6_payload_len; }
-
 };
 
 enum class HopByHopOptions : uint8_t
@@ -248,11 +247,11 @@ inline int IPV6IdExtensionOrder(const ProtocolId prot_id)
     default:                   return IPV6_ORDER_MAX;
     }
 }
+
 inline int IPV6ExtensionOrder(const IpProtocol ip_proto)
 {
     return IPV6IdExtensionOrder((ProtocolId)ip_proto);
 }
-
 } // namespace ipv6
 
 #endif

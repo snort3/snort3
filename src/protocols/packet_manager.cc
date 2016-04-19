@@ -249,7 +249,8 @@ void PacketManager::decode(
             }
             else
             {
-                p->ip_proto_next = convert_protocolid_to_ipprotocol(codec_data.next_prot_id);
+                if(codec_data.next_prot_id != ProtocolId::FINISHED_DECODE)
+                    p->ip_proto_next = convert_protocolid_to_ipprotocol(codec_data.next_prot_id);
             }
         }
 
@@ -311,7 +312,8 @@ void PacketManager::decode(
         }
         else
         {
-            if ( (p->num_layers > 0) && (p->layers[p->num_layers-1].prot_id == ProtocolId::TEREDO) &&
+            if ( (p->num_layers > 0) && 
+                (p->layers[p->num_layers-1].prot_id == ProtocolId::TEREDO) &&
                 (prev_prot_id == ProtocolId::IPV6) )
             {
                 pop_teredo(p, raw);
@@ -433,7 +435,8 @@ bool PacketManager::encode(const Packet* p,
         for (int i = outer_layer; i > inner_layer; --i)
         {
             const Layer& l = lyrs[i];
-            ProtocolIndex mapped_prot = i ? CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
+            ProtocolIndex mapped_prot = 
+                i ? CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
             if (!CodecManager::s_protocols[mapped_prot]->encode(l.start, l.length, enc, buf))
             {
                 return false;
@@ -449,7 +452,8 @@ bool PacketManager::encode(const Packet* p,
     for (int i = outer_layer; i >= 0; --i)
     {
         const Layer& l = lyrs[i];
-        ProtocolIndex mapped_prot = i ? CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
+        ProtocolIndex mapped_prot = 
+            i ? CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
 
         if (!CodecManager::s_protocols[mapped_prot]->encode(l.start, l.length, enc, buf))
         {
@@ -763,7 +767,8 @@ int PacketManager::encode_format(
 
         // NOTE: this must always go from outer to inner
         //       to ensure a valid ip header
-        ProtocolIndex mapped_prot = i ? CodecManager::s_proto_map[to_utype(lyr->prot_id)] : CodecManager::grinder;
+        ProtocolIndex mapped_prot = 
+            i ? CodecManager::s_proto_map[to_utype(lyr->prot_id)] : CodecManager::grinder;
 
         CodecManager::s_protocols[mapped_prot]->format(
             reverse, const_cast<uint8_t*>(lyr->start), c->ptrs);

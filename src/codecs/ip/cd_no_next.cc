@@ -44,7 +44,7 @@ public:
 
 bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    // No need ot check IPv6 extension order since this is automatically
+    // No need to check IPv6 extension order since this is automatically
     // the last extension.
     if (raw.len < ip::MIN_EXT_LEN)
         return false;
@@ -55,7 +55,10 @@ bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-    // The size of this packets data should be zero.  So, set this layer's
+    // FIXIT-M: What if the packet's data is non-zero?  See allpcaps3.pcap
+    //          Should this be logged as an event?
+
+    // The size of this packet's data should be zero.  So, set this layer's
     // length and the packet's remaining length to the same number.
     const_cast<uint32_t&>(raw.len) = ip::MIN_EXT_LEN;
     codec.lyr_len = ip::MIN_EXT_LEN;
