@@ -28,6 +28,8 @@ extern "C" {
 
 #include <string>
 
+#include "main/snort_types.h"
+
 struct SnortConfig;
 
 class SFDAQInstance
@@ -73,15 +75,15 @@ public:
     static void term();
     static bool forwarding_packet(const DAQ_PktHdr_t*);
     static const char* get_type();
-    static uint32_t get_snap_len();
+    SO_PUBLIC static uint32_t get_snap_len();
     static bool unprivileged();
     static const char* get_input_spec(const SnortConfig*, unsigned instance_id);
     static const char* default_type();
     // FIXIT-M: X Temporary thread-local instance helpers to be removed when no longer needed
     static void set_local_instance(SFDAQInstance*);
     static SFDAQInstance* get_local_instance();
-    static const char* get_interface_spec();
-    static int get_base_protocol();
+    SO_PUBLIC static const char* get_interface_spec();
+    SO_PUBLIC static int get_base_protocol();
     static bool can_inject();
     static bool can_inject_raw();
     static bool can_replace();
