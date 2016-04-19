@@ -111,12 +111,12 @@ bool FlowHAState::check(uint8_t state_mask)
 
 bool FlowHAState::is_critical()
 {
-    return ((state & critical) != 0);
+    return ((state & CRITICAL) != 0);
 }
 
 bool FlowHAState::is_major()
 {
-    return ((state & major) != 0);
+    return ((state & MAJOR) != 0);
 }
 
 void FlowHAState::config_lifetime(struct timeval min_lifetime)
@@ -460,12 +460,6 @@ void HighAvailabilityManager::process_receive()
 {
     if ( ha != nullptr )
         ha->process_receive();
-}
-
-// Called in the packet threads to determine whether or not HA is active
-bool HighAvailabilityManager::active()
-{
-    return (ha != nullptr);
 }
 
 // Called in the packet threads to determine whether or not HA is active

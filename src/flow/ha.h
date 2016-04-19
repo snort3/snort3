@@ -45,18 +45,12 @@ enum HAEvent
     HA_UPDATE_EVENT = 2
 };
 
-enum HAEvent
-{
-    ha_delete_event = 1,
-    ha_update_event = 2
-};
-
 // Each active flow will have an associated FlowHAState instance.
 class FlowHAState
 {
 public:
-    static const uint8_t critical = 0x20;
-    static const uint8_t major = 0x10;
+    static const uint8_t CRITICAL = 0x20;
+    static const uint8_t MAJOR = 0x10;
 
     static const uint8_t CREATED = 0x01;
     static const uint8_t MODIFIED = 0x02;
