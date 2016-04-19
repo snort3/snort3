@@ -137,9 +137,12 @@ endmacro ()
 
 
 #anything following testname is assumed to be a link dependency
-macro(add_cpputest testname)
-    add_executable(${testname} ${testname}.cc)
-    target_link_libraries(${testname} ${ARGN} ${CPPUTEST_LIBRARIES})
-    add_test(${testname} ${testname})
-    add_dependencies(check ${testname})
-endmacro(add_cpputest)
+macro (add_cpputest testname)
+    if (BUILD_UNIT_TESTS)
+        add_executable (${testname} EXCLUDE_FROM_ALL ${testname}.cc)
+        target_include_directories (${testname} PRIVATE ${CPPUTEST_INCLUDE_DIRS})
+        target_link_libraries (${testname} ${ARGN} ${CPPUTEST_LIBRARIES})
+        add_test (${testname} ${testname})
+        add_dependencies ( check ${testname} )
+    endif (BUILD_UNIT_TESTS)
+endmacro (add_cpputest)

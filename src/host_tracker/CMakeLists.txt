@@ -1,4 +1,3 @@
-
 add_library( host_tracker STATIC
     host_cache.cc
     host_cache.h
@@ -9,3 +8,5 @@ add_library( host_tracker STATIC
     host_tracker.cc
     host_tracker.h
 )
+
+add_subdirectory ( test )

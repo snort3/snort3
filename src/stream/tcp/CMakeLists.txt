@@ -1,4 +1,3 @@
-
 add_library( stream_tcp STATIC
     stream_tcp.cc
     stream_tcp.h
@@ -52,3 +51,5 @@ add_library( stream_tcp STATIC
     ips_stream_reassemble.cc
     ips_stream_size.cc
 )
+
+add_subdirectory ( test )

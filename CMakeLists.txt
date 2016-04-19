@@ -1,14 +1,17 @@
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required (VERSION 2.8.11)
 project (snort CXX C)
 
-set (SNORT_VERSION_MAJOR 3)
-set (SNORT_VERSION_MINOR 0)
-set (SNORT_VERSION_BUILD 0-a4)
-set (VERSION "${SNORT_VERSION_MAJOR}.${SNORT_VERSION_MINOR}.${SNORT_VERSION_BUILD}")
+set (VERSION_MAJOR 3)
+set (VERSION_MINOR 0)
+set (VERSION_BUILD 0)
+set (VERSION_RELEASE a4)
+set (VERSION
+    "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_BUILD}-${VERSION_RELEASE}")
 
-# ensure cmake will look in the cmake directory for configuration files
-set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
-set (INCLUDE_INSTALL_PATH "include/${CMAKE_PROJECT_NAME}")
+set (INCLUDE_SUFFIX "${CMAKE_PROJECT_NAME}")
+set (INCLUDE_INSTALL_PATH "include/${INCLUDE_SUFFIX}")
+
+set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include (cmake/macros.cmake)
 include (cmake/create_options.cmake)
@@ -17,14 +20,27 @@ include (cmake/platforms.cmake)
 include (cmake/configure_options.cmake)
 include (cmake/CheckCXX11Features.cmake)
 #include (cmake/compiler_features.cmake)
-# FIXIT-L creation of the config.h file should live here, instead of in sanity_checks
 include (cmake/sanity_checks.cmake)
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS}") # c++11 flag
+configure_file (
+    "${PROJECT_SOURCE_DIR}/config.cmake.h.in"
+    "${PROJECT_BINARY_DIR}/config.h"
+    )
 
-# include this directory for the config.h file. created in sanityChecks.cmake
-include_directories(${PROJECT_BINARY_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+add_definitions( -DHAVE_CONFIG_H )
+
+set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include_directories (${PROJECT_BINARY_DIR})
+include_directories (${PROJECT_SOURCE_DIR})
+
+if (BUILD_UNIT_TESTS)
+    pkg_check_modules (CPPUTEST REQUIRED cpputest)
+    add_custom_target (check COMMAND ${CMAKE_CTEST_COMMAND})
+    add_dependencies (check snort)
+    add_test (catch_tests ${CMAKE_CURRENT_BINARY_DIR}/src/snort --catch-test all)
+endif (BUILD_UNIT_TESTS)
 
 add_subdirectory (src)
 add_subdirectory (tools)
@@ -32,7 +48,7 @@ add_subdirectory (lua)
 add_subdirectory (doc)
 add_subdirectory (daqs)
 
-# Miscelaneous stuff.  Does NOT directly effect snort's building environment
+# Miscellaneous stuff.  Does NOT directly effect snort's building environment
 include (cmake/packaging_data.cmake)
 include (cmake/create_pkg_config.cmake)
 
@@ -44,27 +60,3 @@ configure_file(
 
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-
-# Test plugins in the 'Extra' directory!!
-if (BUILD_EXTRA_PLUGINS)
-    if (${CMAKE_GENERATOR} MATCHES "Make")
-        if (0)   #the extra directory is not distributed in the main tarball
-            add_subdirectory(extra)
-        endif()
-    endif()
-endif (BUILD_EXTRA_PLUGINS)
-
-# directories named "test" are expected to contain cpputests
-if(BUILD_UNIT_TESTS)
-    pkg_check_modules(CPPUTEST REQUIRED cpputest)
-    include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CPPUTEST_INCLUDE_DIRS})
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
-
-    file(GLOB_RECURSE unit_tests RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "CMakeLists.txt")
-    foreach (unit_test ${unit_tests})
-        if(${unit_test} MATCHES  ".*/test/CMakeLists.txt")
-            string(REGEX REPLACE "(.*/test)/CMakeLists.txt" "\\1" test_path ${unit_test})
-            add_subdirectory(${test_path} EXCLUDE_FROM_ALL)
-        endif()
-    endforeach()
-endif (BUILD_UNIT_TESTS)
