@@ -73,6 +73,7 @@ AX_CODE_COVERAGE
 # string to ensure issues are caught when loading:
 
 API_OPTIONS=""
+CPPDEFS=""
 
 # presently such cases were eliminated.  however, if any arise, add a
 # statement like the following after the associated AC_DEFINE() statement:
@@ -133,6 +134,7 @@ AM_CONDITIONAL(MAKE_TEXT_DOC, [test "x$have_w3m" = "xyes" -a "x$have_asciidoc" =
 AC_MSG_CHECKING(for sparc)
 if eval "echo $host_cpu|grep -i sparc >/dev/null"; then
     AC_DEFINE([WORDS_MUSTALIGN],[1],[Define if words must align])
+    CPPDEFS="$CPPDEFS -DWORDS_MUSTALIGN"
     AC_MSG_RESULT(yes)
 
     # gcc, sparc and optimization not so good
@@ -396,6 +398,7 @@ AC_ARG_ENABLE(shell,
 
 if test "x$enable_shell" = "xyes"; then
     AC_DEFINE(BUILD_SHELL, [1], [enable shell support])
+    CPPDEFS="$CPPDEFS -DBUILD_SHELL"
 fi
 
 AC_ARG_ENABLE(large-pcap,
@@ -416,6 +419,7 @@ AM_CONDITIONAL(DEBUG_MSGS, test "x$enable_debug_msgs" = "xyes")
 if test "x$enable_debug_msgs" = "xyes"; then
     CPPFLAGS="$CPPFLAGS -DDEBUG_MSGS"
     AC_DEFINE(DEBUG_MSGS, [1], [enable debug messages])
+    CPPDEFS="$CPPDEFS -DDEBUG_MSGS"
 fi
 
 AC_ARG_ENABLE(debug,
@@ -425,6 +429,7 @@ AC_ARG_ENABLE(debug,
 if test "x$enable_debug" = "xyes"; then
     CPPFLAGS="$CPPFLAGS -g -DDEBUG"
     AC_DEFINE(DEBUG, [1], [enable debug build])
+    CPPDEFS="$CPPDEFS -DDEBUG"
 else
     # disable assert()ions
     AC_DEFINE(NDEBUG, [1], [disable assertions])
@@ -458,6 +463,7 @@ AC_ARG_ENABLE(corefiles,
 
 if test "x$enable_corefiles" = "xno"; then
     AC_DEFINE(NOCOREFILE, [1], [do not generate a core file on segfault etc.])
+    CPPDEFS="$CPPDEFS -DNOCOREFILE"
 fi
 
 AC_ARG_ENABLE(address-sanitizer,
@@ -528,6 +534,9 @@ if test "x$enable_unit_tests" = "xyes"; then
     fi
 
     AC_DEFINE(UNIT_TEST, [1], [enable unit tests in build])
+    # FIXIT-H: we shouldn't be putting conditionals on UNIT_TEST in header files,
+    # but they are there.
+    CPPDEFS="$CPPDEFS -DUNIT_TEST"
 fi
 
 AM_CONDITIONAL(BUILD_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
@@ -543,6 +552,7 @@ AC_ARG_ENABLE(piglet,
 
 if test "x$enable_piglet" = "xyes"; then
     AC_DEFINE(PIGLET, [1], [enable piglet test harness in build])
+    CPPDEFS="$CPPDEFS -DPIGLET"
 fi
 
 AM_CONDITIONAL(BUILD_PIGLET, test "x$enable_piglet" = "xyes")
@@ -916,6 +926,7 @@ if test "x$LZMA_LIB" != "xno"; then
     if test "x$LZMA_HEADERS" != "xno"; then
         AC_DEFINE([HAVE_LZMA],[1],[can build lzma code])
         LIBS="${LIBS} -llzma"
+        CPPDEFS="$CPPDEFS -DHAVE_LZMA"
     fi
 fi
 
@@ -1062,6 +1073,9 @@ AC_SUBST(snort2lua_CPPFLAGS)
 
 AC_SUBST(CPPUTEST_CPPFLAGS)
 AC_SUBST(CPPUTEST_LDFLAGS)
+
+# for pkgconfig exports
+AC_SUBST(CPPDEFS)
 
 AC_CONFIG_FILES([ \
 snort.pc \
