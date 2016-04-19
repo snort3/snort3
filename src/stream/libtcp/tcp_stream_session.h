@@ -71,7 +71,7 @@ public:
     void SwapPacketHeaderFoo(void);
 
     virtual void update_perf_base_state(char) { }
-    virtual void cleanup_session(int freeApplicationData, Packet* p = nullptr);
+    virtual void cleanup_session(bool freeAppData, Packet* p = nullptr);
 
     // FIXIT - these 2 function names convey no meaning afaict... figure out
     // why are they called and name appropriately...
@@ -148,7 +148,7 @@ public:
 
 protected:
     virtual void set_os_policy(void);
-    virtual void clear_session(int freeApplicationData);
+    virtual void clear_session(bool freeAppData);
 
     TcpStreamTracker* talker = nullptr;
     TcpStreamTracker* listener = nullptr;

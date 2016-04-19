@@ -127,7 +127,7 @@ TcpSession::TcpSession(Flow* flow) : TcpStreamSession(flow)
 TcpSession::~TcpSession(void)
 {
     if (tcp_init)
-        clear_session(1);
+        clear_session(true);
 
     delete client;
     delete server;
@@ -136,6 +136,9 @@ TcpSession::~TcpSession(void)
 bool TcpSession::setup(Packet* p)
 {
     TcpStreamSession::setup(p);
+
+    client->init_toolbox();
+    server->init_toolbox();
 
     SESSION_STATS_ADD(tcpStats);
     return true;
@@ -181,7 +184,7 @@ void TcpSession::restart(Packet* p)
 // make sense of the code in this file.
 //-------------------------------------------------------------------------
 
-void TcpSession::clear_session(int freeApplicationData)
+void TcpSession::clear_session(bool freeAppData)
 {
     // update stats
     if ( tcp_init )
@@ -197,7 +200,6 @@ void TcpSession::clear_session(int freeApplicationData)
         tcpStats.prunes++;
     else if (flow->get_session_flags() & SSNFLAG_TIMEDOUT)
         tcpStats.timeouts++;
-
 
     DebugFormat(DEBUG_STREAM_STATE, "In TcpSessionClear, %lu bytes in use\n", tcp_memcap->used());
 
@@ -215,25 +217,11 @@ void TcpSession::clear_session(int freeApplicationData)
         server->reassembler->purge_segment_list();
     }
 
-
-    // update light-weight state
-    if ( freeApplicationData == 2 )
-    {
-        flow->restart(true);
-
-        paf_reset(&client->paf_state);
-        paf_reset(&server->paf_state);
-        client->reset_splitter();
-        server->reset_splitter();
-    }
-    else
-    {
-        flow->clear(freeApplicationData);
-        paf_clear(&client->paf_state);
-        paf_clear(&server->paf_state);
-        set_splitter(true, nullptr);
-        set_splitter(false, nullptr);
-    }
+    flow->clear(freeAppData);
+    paf_clear(&client->paf_state);
+    paf_clear(&server->paf_state);
+    set_splitter(true, nullptr);
+    set_splitter(false, nullptr);
 
     // generate event for rate filtering
     tel.log_internal_event(INTERNAL_EVENT_SESSION_DEL);
@@ -243,16 +231,14 @@ void TcpSession::clear_session(int freeApplicationData)
     lws_init = tcp_init = false;
 }
 
-void TcpSession::cleanup_session(int freeApplicationData, Packet* p)
+void TcpSession::cleanup_session(bool freeAppData, Packet* p)
 {
-    // FIXIT - this function does both client & server sides...refactor to do one and
-    // call for each
     if ( client->reassembler != nullptr )
         client->reassembler->flush_queued_segments(flow, true, p);
     if ( server->reassembler != nullptr )
         server->reassembler->flush_queued_segments(flow, true, p);
 
-    clear_session(freeApplicationData);
+    clear_session(freeAppData);
 }
 
 void TcpSession::update_perf_base_state(char newState)
@@ -593,7 +579,7 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
         DebugMessage(DEBUG_STREAM_STATE, "Got SYN pkt on reset ssn, re-SYN-ing\n");
 
         // FIXIT-L this leads to bogus 129:20
-        cleanup_session(2);
+        cleanup_session(true);
 
         if ( tcph->is_rst() )
         {
@@ -1088,14 +1074,14 @@ void TcpSession::cleanup_session_if_expired(Packet* p)
         {
             /* If this one has been reset, delete the TCP
              * portion, and start a new. */
-            cleanup_session(2);
+            cleanup_session(true);
         }
         else
         {
             DebugMessage(DEBUG_STREAM_STATE, "Stream TCP session timedout!\n");
 
             /* Not reset, simply time'd out.  Clean it up */
-            cleanup_session(2);
+            cleanup_session(true);
         }
         tcpStats.timeouts++;
     }

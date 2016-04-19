@@ -319,7 +319,9 @@ public:
         return rst_pkt_sent;
     }
 
-    virtual void init_tracker(void) =  0;
+    virtual void init_tcp_state(void) =  0;
+    virtual void init_toolbox(void) = 0;
+
     virtual void print(void) =  0;
     virtual void init_flush_policy(void) =  0;
     virtual void set_splitter(StreamSplitter* ss) =  0;
