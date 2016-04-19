@@ -1,0 +1,9 @@
+AM_CPPFLAGS = @SNORT3_CFLAGS@
+AM_CXXFLAGS = @SNORT3_CFLAGS@ -std=c++11
+
+<%= @project.libname %>libdir = $(pkglibdir)/<%= @project.dirname %>
+
+<%= @project.libname %>lib_LTLIBRARIES = lib<%= @project.libname %>.la
+lib<%= @project.libname %>_la_CXXFLAGS = $(AM_CXXFLAGS)
+lib<%= @project.libname %>_la_LDFLAGS = -export-dynamic -shared
+lib<%= @project.libname %>_la_SOURCES =<% for source in @project.sources %> <%= source %><% end %>

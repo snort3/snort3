@@ -1,0 +1,7 @@
+add_subdirectory ( codecs )
+add_subdirectory ( daqs )
+add_subdirectory ( inspectors )
+add_subdirectory ( ips_options )
+add_subdirectory ( loggers )
+add_subdirectory ( search_engines )
+add_subdirectory ( so_rules )

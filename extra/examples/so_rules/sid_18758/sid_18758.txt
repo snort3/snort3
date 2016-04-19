@@ -1,0 +1,17 @@
+alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS
+(
+    msg:"FILE-IDENTIFY Microsoft Windows Visual Basic script file download request";
+    metadata:service http;
+    reference:url,en.wikipedia.org/wiki/Vbs;
+    classtype:misc-activity;
+    sid:18758;
+    rev:8;
+    soid:3|18758;
+# everything above appears in stub
+# the following detection options are not in protected stub
+    flow:to_server,established;
+    http_uri;
+    content:".vbs", nocase;
+    pcre:"/\x2evbs([\?\x5c\x2f]|$)/smi";
+    so:eval;
+)
