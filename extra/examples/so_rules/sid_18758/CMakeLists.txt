@@ -15,6 +15,7 @@ pkg_search_module ( SNORT3 REQUIRED snort>=3 )
 add_library (
     sid_18758 SHARED
     sid_18758.cc
+    sid_18758.h
 )
 
 set_target_properties (

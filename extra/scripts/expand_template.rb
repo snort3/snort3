@@ -23,13 +23,15 @@ class Automake < Build
 end
 
 class Project
-  attr_reader :name, :libname, :dirname, :sources
+  attr_reader :name, :libname, :dirname, :sources, :scripts, :language
 
-  def initialize(name, libname, dirname, sources)
+  def initialize(name, libname, dirname, sources, scripts, language)
     @name = name
     @libname = libname
     @dirname = dirname
     @sources = sources
+    @scripts = scripts
+    @language = language
   end
 end
 
@@ -97,13 +99,42 @@ def main
 
   project_name = File.basename project_dir
   project_dirname = File.basename File.dirname project_dir
-  project_sources = Dir[File.join(project_dir, "*.cc")].collect do |path|
+
+  project_c_sources = Dir[File.join(project_dir, "*.c")].collect do |path|
     File.basename path
+  end
+
+  project_cxx_sources = Dir[File.join(project_dir, "*.cc")].collect do |path|
+    File.basename path
+  end
+
+  project_header_sources = Dir[File.join(project_dir, "*.h")].collect do |path|
+    File.basename path
+  end
+
+  project_sources = (project_c_sources + project_cxx_sources + project_header_sources).sort
+
+  project_scripts = Dir[File.join(project_dir, "*.lua")].collect do |path|
+    File.basename path
+  end.sort
+
+  if !project_cxx_sources.empty?
+    project_language = "CXX"
+  elsif !project_c_sources.empty?
+    project_language = "C"
+  else
+    project_language = nil
   end
 
   cmake = CMake.new
   generate = Generate.new true, true
-  project = Project.new project_name, project_name, project_dirname, project_sources
+  project = Project.new project_name,
+    project_name,
+    project_dirname,
+    project_sources,
+    project_scripts,
+    project_language
+
   build = Build.new({cmake: cmake}, project, generate)
 
   File.open(template_path) do |f|

@@ -20,19 +20,14 @@ boilerplate=(
 
 [[ -n $DRY_RUN ]] && ECHO=echo || ECHO=
 
-for item in $(find $RECURSE -name '*.cc'); do
-  item_dirpath=$(dirname $item)
-  item_dir=${item_dirpath##*/}
-  item_base=${item##*/}
-
-  if [[ $item_dir != ${item_base%.cc} ]]; then
-    continue
-  fi
+for project_dir in $(find $RECURSE -type d -mindepth 3); do
+  project_base=${project_dir##*/}
 
   for template in "${boilerplate[@]}"; do
-    base=${template##*/}
+    template_base=${template##*/}
+
     [[ -n $DRY_RUN ]] && \
-      echo $EXPAND $template $item_dirpath '>' $item_dirpath/${base%.erb} || \
-      $EXPAND $template $item_dirpath > $item_dirpath/${base%.erb}
+      echo $EXPAND $template $project_dir '>' $project_dir/${template_base%.erb} || \
+      $EXPAND $template $project_dir > $project_dir/${template_base%.erb}
   done
 done

@@ -1,8 +1,9 @@
-% if @generate.project_boilerplate
+%if @generate.project_boilerplate
 cmake_minimum_required ( VERSION <%= @cmake.version %> )
-project ( <%= @project.name %> CXX )
+project ( <%= @project.name %><% if @project.language == "CXX" %> CXX<% elsif @project.language == "C" %> C<% end %> )
 %end
-% if @generate.platform_boilerplate
+%if !@project.sources.empty?
+%if @generate.platform_boilerplate
 
 if ( APPLE )
     set ( CMAKE_MACOSX_RPATH OFF )
@@ -11,17 +12,18 @@ if ( APPLE )
         "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup"
     )
 endif ( APPLE )
-% end
+%end
 
 include ( FindPkgConfig )
 pkg_search_module ( SNORT3 REQUIRED snort>=3 )
 
 add_library (
     <%= @project.libname %> SHARED
-% for source in @project.sources
+%for source in @project.sources
     <%= source %>
-% end
+%end
 )
+%if @project.language == "CXX"
 
 set_target_properties (
     <%= @project.libname %>
@@ -29,6 +31,7 @@ set_target_properties (
         CXX_STANDARD 11
         CXX_STANDARD_REQUIRED ON
 )
+%end
 
 target_include_directories (
     <%= @project.libname %> PUBLIC
@@ -39,3 +42,11 @@ install (
     TARGETS <%= @project.libname %>
     LIBRARY DESTINATION "lib/${CMAKE_PROJECT_NAME}/<%= @project.dirname %>"
 )
+%end
+%if !@project.scripts.empty?
+
+install (
+    FILES<% for script in @project.scripts %> <%= script %><% end %>
+    DESTINATION "lib/${CMAKE_PROJECT_NAME}/<%= @project.dirname %>"
+)
+%end

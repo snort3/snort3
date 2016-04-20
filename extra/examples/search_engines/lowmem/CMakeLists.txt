@@ -16,6 +16,7 @@ add_library (
     lowmem SHARED
     lowmem.cc
     sfksearch.cc
+    sfksearch.h
     trie_api.cc
 )
 
