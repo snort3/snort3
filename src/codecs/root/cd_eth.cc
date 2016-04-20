@@ -178,7 +178,7 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
             return false;
 
         eth::EtherHdr* ho = reinterpret_cast<eth::EtherHdr*>(buf.data());
-        ho->ether_type = enc.ethertype_set() ? ntohs(to_utype(enc.next_ethertype)) : hi->ether_type;
+        ho->ether_type = enc.ethertype_set() ? htons(to_utype(enc.next_ethertype)) : hi->ether_type;
 
         uint8_t* dst_mac = PacketManager::encode_get_dst_mac();
 

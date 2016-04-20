@@ -117,7 +117,7 @@ enum class ProtocolId : std::uint16_t
     PROTO_NOT_SET = 255,  // Indicates protocol has not been set.
 
     /*
-     *  Undefined Protocol!
+     *  Undefined Protocols!
      */
     FINISHED_DECODE = 0x0100,  // Indicates Codecs have succesfully decoded packet
     TEREDO = 0x0101,

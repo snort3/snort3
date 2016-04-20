@@ -69,8 +69,6 @@ struct FragTracker
 
     int ordinal;
 
-    // FIXIT-M: Why do we have this ipprotocol?  Is this ProtocolId?
-    int ipprotocol;
     int application_protocol;
     uint32_t frag_policy;
 
