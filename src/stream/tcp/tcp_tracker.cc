@@ -39,7 +39,7 @@ TcpTracker::~TcpTracker(void)
     delete reassembler;
 }
 
-void TcpTracker::init_tracker(void)
+void TcpTracker::init_tcp_state(void )
 {
     tcp_state = ( client_tracker ) ?
         TcpStreamTracker::TCP_STATE_NONE : TcpStreamTracker::TCP_LISTEN;
@@ -54,7 +54,10 @@ void TcpTracker::init_tracker(void)
     memset(&mac_addr, 0, sizeof(mac_addr));
     mac_addr_valid = false;
     rst_pkt_sent = false;
+}
 
+void TcpTracker::init_toolbox(void)
+{
     delete splitter;
     splitter = nullptr;
     delete normalizer;
@@ -101,6 +104,12 @@ void TcpTracker::set_splitter(const Flow* flow)
         set_splitter(ins->get_splitter(!client_tracker) );
     else
         set_splitter(new AtomSplitter(!client_tracker) );
+}
+
+void TcpTracker::reset_splitter( void )
+{
+    if ( splitter )
+        splitter->reset();
 }
 
 void TcpTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)

@@ -405,7 +405,7 @@ void TcpStreamSession::SwapPacketHeaderFoo(void)
 void TcpStreamSession::reset(void)
 {
     if (tcp_init)
-        clear_session(2);
+        clear_session(true);
 }
 
 bool TcpStreamSession::setup(Packet*)
@@ -413,8 +413,8 @@ bool TcpStreamSession::setup(Packet*)
     // FIXIT-L this it should not be necessary to reset here
     reset();
 
-    client->init_tracker( );
-    server->init_tracker( );
+    client->init_tcp_state();
+    server->init_tcp_state();
     lws_init = tcp_init = false;
     no_3whs = false;
     pkt_action_mask = ACTION_NOTHING;
@@ -422,6 +422,7 @@ bool TcpStreamSession::setup(Packet*)
     ingress_index = egress_index = 0;
     ingress_group = egress_group = 0;
     daq_flags = address_space_id = 0;
+    config = nullptr;
 
     return true;
 }
@@ -429,14 +430,15 @@ bool TcpStreamSession::setup(Packet*)
 void TcpStreamSession::cleanup(void)
 {
     // this flushes data and then calls TcpSessionClear()
-    cleanup_session(1);
+    cleanup_session( true );
+
 }
 
 void TcpStreamSession::clear(void)
 {
     if ( tcp_init )
         // this does NOT flush data
-        clear_session(1);
+        clear_session( true );
 }
 
 void TcpStreamSession::set_splitter(bool to_server, StreamSplitter* ss)
@@ -501,7 +503,11 @@ void TcpStreamSession::print(void)
     server->print();
 }
 
-void TcpStreamSession::cleanup_session(int, Packet*)
+void TcpStreamSession::clear_session(bool freeAppData)
+{
+}
+
+void TcpStreamSession::cleanup_session(bool freeAppData, Packet* p)
 {
 }
 
@@ -509,7 +515,4 @@ void TcpStreamSession::set_os_policy(void)
 {
 }
 
-void TcpStreamSession::clear_session(int)
-{
-}
 

@@ -57,11 +57,12 @@ public:
     TcpTracker(bool);
     virtual ~TcpTracker(void);
 
-    void init_tracker(void) override;
+    void init_tcp_state(void) override;
     void print(void) override;
     void init_flush_policy(void) override;
     void set_splitter(StreamSplitter* ss) override;
     void set_splitter(const Flow* flow) override;
+    void reset_splitter( void ) override;
 
     void init_on_syn_sent(TcpSegmentDescriptor&) override;
     void init_on_syn_recv(TcpSegmentDescriptor&) override;
@@ -83,6 +84,9 @@ public:
     bool update_on_fin_sent(TcpSegmentDescriptor& tsd) override;
     bool is_segment_seq_valid(TcpSegmentDescriptor& tsd) override;
     void flush_data_on_fin_recv(TcpSegmentDescriptor& tsd) override;
+
+    void init_toolbox(void);
+
 };
 
 #endif

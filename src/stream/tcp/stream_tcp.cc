@@ -58,8 +58,7 @@ StreamTcp::StreamTcp (TcpStreamConfig* c)
 
 StreamTcp::~StreamTcp()
 {
-    // FIXIT-H this leaks but segfaults if undeleted
-    //delete config;
+    delete config;
 }
 
 void StreamTcp::show(SnortConfig*)
