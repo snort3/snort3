@@ -503,11 +503,11 @@ void TcpStreamSession::print(void)
     server->print();
 }
 
-void TcpStreamSession::clear_session(bool freeAppData)
+void TcpStreamSession::clear_session(bool)
 {
 }
 
-void TcpStreamSession::cleanup_session(bool freeAppData, Packet* p)
+void TcpStreamSession::cleanup_session(bool , Packet*)
 {
 }
 
