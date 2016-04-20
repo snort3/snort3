@@ -1,4 +1,3 @@
-
 find_package(Threads REQUIRED)
 
 # FIXIT-M  remove.
@@ -61,3 +60,5 @@ target_link_libraries(utils
 install (FILES ${UTIL_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/utils"
 )
+
+add_subdirectory ( test )
