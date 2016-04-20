@@ -36,10 +36,16 @@ static const uint8_t ha_message_version = 3;
 
 // define message size and content constants.
 static const uint8_t key_size_ip6 = sizeof(FlowKey);
+// ip4 key is smaller by 2*(ip6-addr-size - ip4-addr-size) or 2*(16 - 4) = 24
 static const uint8_t key_size_ip4 = sizeof(FlowKey)-24;
 
-static const uint8_t key_type_ip6 = 1;
-static const uint8_t key_type_ip4 = 2;
+static const int ONE_MILLION = 1000000;
+
+enum
+{
+    key_type_ip6 = 1,
+    key_type_ip4 = 2
+};
 
 typedef std::unordered_map<FlowHAClientHandle, FlowHAClient*> ClientMap;
 
@@ -138,9 +144,9 @@ bool FlowHAState::old_enough()
 void FlowHAState::set_next_update()
 {
     next_update.tv_usec += min_session_lifetime.tv_usec;
-    if (next_update.tv_usec > 1000000)
+    if (next_update.tv_usec > ONE_MILLION)
     {
-        next_update.tv_usec -= 1000000;
+        next_update.tv_usec -= ONE_MILLION;
         next_update.tv_sec++;
     }
     next_update.tv_sec += min_session_lifetime.tv_sec;
@@ -396,7 +402,7 @@ void HighAvailability::process_deletion(Flow* flow)
 void HighAvailability::process_receive()
 {
     if ( sc != nullptr )
-        sc->process(0);
+        sc->process(DISPATCH_ALL_RECEIVE);
 }
 
 // Called by the configuration parsing activity in the main thread.

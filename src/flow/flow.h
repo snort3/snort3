@@ -114,8 +114,6 @@ private:
     unsigned id;
 };
 
-class FlowHAState;
-
 struct LwState
 {
     uint32_t session_flags;
