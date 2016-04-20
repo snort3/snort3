@@ -5,7 +5,7 @@ libdir=@libdir@
 includedir=@includedir@
 datarootdir=@datarootdir@
 datadir=@datadir@
-mandir=@infodir@
+mandir=@mandir@
 infodir=@infodir@
 
 Name: Snort++
@@ -13,4 +13,4 @@ Description: Snort 3.0 Project
 URL: www.snort.org
 Version: @VERSION@
 Libs: -L${libdir}/snort
-Cflags: @CPPDEFS@ -I${includedir}/snort
+Cflags: -I${includedir}/snort
