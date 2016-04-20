@@ -85,7 +85,7 @@ public:
     bool is_segment_seq_valid(TcpSegmentDescriptor& tsd) override;
     void flush_data_on_fin_recv(TcpSegmentDescriptor& tsd) override;
 
-    void init_toolbox(void);
+    void init_toolbox(void) override;
 
 };
 
