@@ -40,7 +40,6 @@
 
 #include <string>
 #include <vector>
-#include <lua.hpp>
 
 #include "main/snort_types.h"
 #include "framework/value.h"
@@ -48,10 +47,12 @@
 #include "framework/counts.h"
 #include "utils/stats.h"
 
+using LuaCFunction = int(*)(struct lua_State*);
+
 struct Command
 {
     const char* name;
-    lua_CFunction func;
+    LuaCFunction func;
     const Parameter* params;
     const char* help;
 
