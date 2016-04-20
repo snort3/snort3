@@ -210,7 +210,8 @@ void LogMessage(const char* format,...)
 
 void LogMessage(FILE* fh, const char* format,...)
 {
-    if ( snort_conf && !SnortConfig::log_quiet() )
+    if ( snort_conf &&
+        ( !SnortConfig::log_quiet() || fh != stdout ))
     {
         va_list ap;
 
