@@ -1,5 +1,6 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2002-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,39 +16,12 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// packet_capture.h author Carter Waxman <cwaxman@cisco.com>
 
-#include "network_inspectors.h"
+#ifndef PACKET_CAPTURE_H
+#define PACKET_CAPTURE_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "capture_module.h"
+
 #endif
-#include "framework/inspector.h"
-
-extern const BaseApi* nin_binder;
-extern const BaseApi* nin_normalize;
-extern const BaseApi* nin_packet_capture;
-extern const BaseApi* nin_perf_monitor;
-extern const BaseApi* nin_port_scan_global;
-extern const BaseApi* nin_port_scan;
-extern const BaseApi* nin_reputation;
-
-#ifdef STATIC_INSPECTORS
-extern const BaseApi* nin_arp_spoof;
-#endif
-
-const BaseApi* network_inspectors[] =
-{
-    nin_binder,
-    nin_normalize,
-    nin_packet_capture,
-    nin_perf_monitor,
-    nin_port_scan_global,
-    nin_port_scan,
-    nin_reputation,
-
-#ifdef STATIC_INSPECTORS
-    nin_arp_spoof,
-#endif
-    nullptr
-};
 

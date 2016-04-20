@@ -16,38 +16,41 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "network_inspectors.h"
+// capture_module.cc author Carter Waxman <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include "framework/inspector.h"
+#include "capture_module.h"
 
-extern const BaseApi* nin_binder;
-extern const BaseApi* nin_normalize;
-extern const BaseApi* nin_packet_capture;
-extern const BaseApi* nin_perf_monitor;
-extern const BaseApi* nin_port_scan_global;
-extern const BaseApi* nin_port_scan;
-extern const BaseApi* nin_reputation;
+#include "profiler/profiler.h"
+#include "utils/util.h"
 
-#ifdef STATIC_INSPECTORS
-extern const BaseApi* nin_arp_spoof;
-#endif
+THREAD_LOCAL SimpleStats cap_count_stats;
+THREAD_LOCAL ProfileStats cap_prof_stats;
 
-const BaseApi* network_inspectors[] =
+static const Parameter s_params[] =
 {
-    nin_binder,
-    nin_normalize,
-    nin_packet_capture,
-    nin_perf_monitor,
-    nin_port_scan_global,
-    nin_port_scan,
-    nin_reputation,
-
-#ifdef STATIC_INSPECTORS
-    nin_arp_spoof,
-#endif
-    nullptr
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
+
+CaptureModule::CaptureModule() :
+    Module(CAPTURE_NAME, CAPTURE_HELP, s_params)
+{ }
+
+ProfileStats* CaptureModule::get_profile() const
+{ return &cap_prof_stats; }
+
+bool CaptureModule::set(const char*, Value& v, SnortConfig*)
+{
+    return true;
+}
+
+void CaptureModule::get_config(CaptureConfig& cfg)
+{
+    cfg = config;
+}
+
+const PegInfo* CaptureModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* CaptureModule::get_counts() const
+{ return (PegCount*)&cap_count_stats; }
 

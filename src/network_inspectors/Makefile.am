@@ -17,6 +17,7 @@ SUBDIRS = \
 arp_spoof \
 binder \
 normalize \
+packet_capture \
 perf_monitor \
 port_scan \
 reputation

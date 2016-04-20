@@ -18,6 +18,8 @@ as it processes each valid packet.
 normalize - A collection of IP/ICMP/TCP and potentially UDP frame level
 normalizations.
 
+packet_capture - A tool for dumping the wire packets that Snort receives.
+
 This entire set of inspectors is instantiated as a group via
 network_inspectors.cc
 
