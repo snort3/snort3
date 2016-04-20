@@ -528,8 +528,6 @@ if test "x$enable_unit_tests" = "xyes"; then
     fi
 
     AC_DEFINE(UNIT_TEST, [1], [enable unit tests in build])
-    # FIXIT-H: we shouldn't be putting conditionals on UNIT_TEST in header files,
-    # but they are there.
 fi
 
 AM_CONDITIONAL(BUILD_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
