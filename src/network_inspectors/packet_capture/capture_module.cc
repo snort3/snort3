@@ -46,8 +46,8 @@ static const Parameter s_capture[] =
 
 static const Command cap_cmds[] = 
 {
-    { "capture_enable", enable, s_capture, "dump raw packets"},
-    { "capture_disable", disable, nullptr, "stop packet dump"},
+    { "enable", enable, s_capture, "dump raw packets"},
+    { "disable", disable, nullptr, "stop packet dump"},
     { nullptr, nullptr, nullptr, nullptr }
 };
 
@@ -66,7 +66,7 @@ static int disable(lua_State*)
     return 0;
 }
 
-CaptureModule::CaptureModule() : Module(CAPTURE_NAME, CAPTURE_HELP, nullptr){ }
+CaptureModule::CaptureModule() : Module(CAPTURE_NAME, CAPTURE_HELP){ }
 
 const Command* CaptureModule::get_commands() const
 { return cap_cmds; }
