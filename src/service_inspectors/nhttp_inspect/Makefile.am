@@ -49,3 +49,7 @@ libnhttp_inspect_opt_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libnhttp_inspect_opt_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libnhttp_inspect_opt_la_SOURCES = ips_nhttp.cc ips_nhttp.h
 
+if BUILD_CPPUTESTS
+SUBDIRS = test
+endif
+

@@ -66,3 +66,4 @@ endif(STATIC_INSPECTORS)
 
 add_shared_library(nhttp_inspect_opt inspectors ips_nhttp.cc ips_nhttp.h)
 
+add_subdirectory ( test )

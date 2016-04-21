@@ -1,0 +1,2 @@
+add_cpputest(nhttp_uri_norm_test nhttp_inspect framework)
+
