@@ -44,12 +44,9 @@ TEST_GROUP(file_connector_msg_handle)
 
 TEST(file_connector_msg_handle, test)
 {
-    FileConnectorMsgHandle* handle = nullptr;
-    handle = new FileConnectorMsgHandle(12);
-    CHECK(handle != nullptr);
-    CHECK(handle->connector_msg.length == 12);
-    CHECK(handle->connector_msg.data != nullptr);
-    delete handle;
+    FileConnectorMsgHandle handle(12);
+    CHECK(handle.connector_msg.length == 12);
+    CHECK(handle.connector_msg.data != nullptr);
 }
 
 int main(int argc, char** argv)
