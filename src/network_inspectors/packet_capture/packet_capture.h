@@ -23,5 +23,8 @@
 
 #include "capture_module.h"
 
+void packet_capture_enable(string);
+void packet_capture_disable();
+
 #endif
 
