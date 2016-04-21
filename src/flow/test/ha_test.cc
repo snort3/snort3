@@ -22,10 +22,10 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-#include "../ha.h"
+#include "flow/ha.h"
 
-#include "../flow.h"
-#include "../../main/snort_debug.h"
+#include "flow/flow.h"
+#include "main/snort_debug.h"
 
 #define MSG_SIZE 100
 
@@ -36,8 +36,11 @@ public:
     ~StreamHAClient() { }
     void consume(Flow*, HAMessage*) { }
     void produce(Flow*, HAMessage* msg)
-    { for ( uint8_t i=0; i<10; i++,*(msg->cursor)++=i); }
-    size_t get_message_size() { return sizeof(10); }
+    {
+        for ( uint8_t i=0; i<10; i++ )
+            *(msg->cursor)++ = i;
+    }
+    size_t get_message_size() { return 10; }
 
 private:
 };
@@ -49,11 +52,9 @@ static SCMessage s_sc_message;
 static Flow s_flow;
 static DAQ_PktHdr_t s_pkthdr;
 
-void LogMessage(const char* format,...)
-{ UNUSED(format); }
+void LogMessage(const char*,...) { }
 
-void Debug::print(const char* file, int line, uint64_t dbg, const char* fmt, ...)
-{ UNUSED(file);  UNUSED(line); UNUSED(dbg); UNUSED(fmt); }
+void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 
 void packet_gettimeofday(struct timeval* tv)
 { *tv = s_time; }

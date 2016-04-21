@@ -22,12 +22,12 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-#include "../side_channel.h"
+#include "side_channel/side_channel.h"
+#include "side_channel/side_channel_module.h"
 
-#include "../../log/messages.h"
-#include "../main/snort_debug.h"
-#include "../managers/connector_manager.h"
-#include "../side_channel_module.h"
+#include "log/messages.h"
+#include "main/snort_debug.h"
+#include "managers/connector_manager.h"
 
 class TestConnector : public Connector
 {
@@ -50,11 +50,9 @@ void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) { }
 
-void ParseWarning(WarningGroup wg, const char* format, ...)
-{ UNUSED(wg); UNUSED(format); }
+void ParseWarning(WarningGroup, const char*, ...) { }
 
-void Debug::print(const char* file, int line, uint64_t dbg, const char* fmt, ...)
-{ UNUSED(file);  UNUSED(line); UNUSED(dbg); UNUSED(fmt); }
+void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 
 TEST_GROUP(side_channel)
 {

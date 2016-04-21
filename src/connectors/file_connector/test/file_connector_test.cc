@@ -22,10 +22,10 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-#include "../file_connector.h"
-#include "../file_connector_module.h"
+#include "connectors/file_connector/file_connector.h"
+#include "connectors/file_connector/file_connector_module.h"
 
-#include "../../../main/snort_debug.h"
+#include "main/snort_debug.h"
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 
@@ -36,8 +36,7 @@ void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 const char* get_instance_file(std::string& file, const char* name)
 { UNUSED(file); UNUSED(name); return "filename"; }
 
-void Debug::print(const char* file, int line, uint64_t dbg, const char* fmt, ...)
-{ UNUSED(file);  UNUSED(line); UNUSED(dbg); UNUSED(fmt); }
+void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 
 TEST_GROUP(file_connector_msg_handle)
 {

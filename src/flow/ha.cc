@@ -39,7 +39,7 @@ static const uint8_t key_size_ip6 = sizeof(FlowKey);
 // ip4 key is smaller by 2*(ip6-addr-size - ip4-addr-size) or 2*(16 - 4) = 24
 static const uint8_t key_size_ip4 = sizeof(FlowKey)-24;
 
-static const int ONE_MILLION = 1000000;
+static const suseconds_t USEC_PER_SEC = 1000000;
 
 enum
 {
@@ -144,9 +144,9 @@ bool FlowHAState::old_enough()
 void FlowHAState::set_next_update()
 {
     next_update.tv_usec += min_session_lifetime.tv_usec;
-    if (next_update.tv_usec > ONE_MILLION)
+    if (next_update.tv_usec > USEC_PER_SEC)
     {
-        next_update.tv_usec -= ONE_MILLION;
+        next_update.tv_usec -= USEC_PER_SEC;
         next_update.tv_sec++;
     }
     next_update.tv_sec += min_session_lifetime.tv_sec;
