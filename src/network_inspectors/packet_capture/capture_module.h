@@ -49,7 +49,13 @@ private:
     CaptureConfig config;
 };
 
-extern THREAD_LOCAL SimpleStats cap_count_stats;
+struct CaptureStats
+{
+    PegCount checked;
+    PegCount matched;
+};
+
+extern THREAD_LOCAL CaptureStats cap_count_stats;
 extern THREAD_LOCAL ProfileStats cap_prof_stats;
 
 #endif

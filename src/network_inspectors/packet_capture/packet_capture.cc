@@ -106,9 +106,15 @@ void PacketCapture::eval(Packet* p)
     {
         if ( !capture_initialized() )
             capture_init();
+        
         if ( !bpf.bf_insns || sfbpf_filter(bpf.bf_insns, p->pkt,
                 p->pkth->caplen, p->pkth->pktlen) )
+        {
             write_packet(p);
+            cap_count_stats.matched++;
+        }
+
+        cap_count_stats.checked++;
     }
     else if ( capture_initialized() )
         capture_term();
@@ -439,6 +445,8 @@ TEST_CASE("bpf filter", "[PacketCapture]")
 
     CaptureModule mod;
     MockPacketCapture cap(&mod);
+
+    mod.sum_stats();
     
     packet_capture_enable("ip host 10.82.240.82");
     packet_capture_enable(""); //Test double-enable guard
@@ -457,6 +465,9 @@ TEST_CASE("bpf filter", "[PacketCapture]")
     cap.write_packet_called = false;
     cap.eval(&p);
     CHECK ( cap.write_packet_called );
+
+    CHECK ( cap_count_stats.checked == 3 );
+    CHECK ( cap_count_stats.matched == 2 );
 
     fseek(cap.fh, 0, SEEK_SET);
     auto pcap = pcap_fopen_offline(cap.fh, nullptr);

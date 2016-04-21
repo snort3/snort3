@@ -23,7 +23,14 @@
 #include "profiler/profiler.h"
 #include "utils/util.h"
 
-THREAD_LOCAL SimpleStats cap_count_stats;
+const PegInfo cap_names[] =
+{
+    { "processed", "packets processed against filter" },
+    { "captured", "packets matching dumped after matching filter" },
+    { nullptr, nullptr }
+};
+
+THREAD_LOCAL CaptureStats cap_count_stats;
 THREAD_LOCAL ProfileStats cap_prof_stats;
 
 static const Parameter s_params[] =
@@ -49,7 +56,7 @@ void CaptureModule::get_config(CaptureConfig& cfg)
 }
 
 const PegInfo* CaptureModule::get_pegs() const
-{ return simple_pegs; }
+{ return cap_names; }
 
 PegCount* CaptureModule::get_counts() const
 { return (PegCount*)&cap_count_stats; }
