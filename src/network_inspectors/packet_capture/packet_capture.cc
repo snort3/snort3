@@ -171,6 +171,7 @@ void PacketCapture::write_packet(Packet* p)
     pkth.len = p->pkth->pktlen;
     pkth.ts = p->pkth->ts;
     pcap_dump((unsigned char*)dumper, &pkth, p->pkt);
+    pcap_dump_flush(dumper);
 }
 
 //-------------------------------------------------------------------------

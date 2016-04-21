@@ -38,7 +38,7 @@ CaptureModule::CaptureModule() :
 ProfileStats* CaptureModule::get_profile() const
 { return &cap_prof_stats; }
 
-bool CaptureModule::set(const char*, Value& v, SnortConfig*)
+bool CaptureModule::set(const char*, Value&, SnortConfig*)
 {
     return true;
 }
