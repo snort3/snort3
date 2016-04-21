@@ -295,6 +295,40 @@ inline DCE2_Policy DCE2_SsnGetPolicy(DCE2_SsnData* sd)
         return sd->client_policy;
 }
 
+/********************************************************************
+ * Function: DCE2_SsnIsWindowsPolicy()
+ *
+ * Purpose:
+ *  Convenience function to determine if policy traffic is going to
+ *  is a Windows one.
+ *
+ * Arguments:
+ *  DCE2_SsnData * - pointer to session data
+ *
+ * Returns:
+ *  bool  -  true if Samba, false if not
+ *
+ ********************************************************************/
+inline bool DCE2_SsnIsWindowsPolicy(DCE2_SsnData* sd)
+{
+    DCE2_Policy policy = DCE2_SsnGetPolicy(sd);
+
+    switch (policy)
+    {
+    case DCE2_POLICY__WIN2000:
+    case DCE2_POLICY__WINXP:
+    case DCE2_POLICY__WINVISTA:
+    case DCE2_POLICY__WIN2003:
+    case DCE2_POLICY__WIN2008:
+    case DCE2_POLICY__WIN7:
+        return true;
+    default:
+        break;
+    }
+
+    return false;
+}
+
 inline DCE2_Policy DCE2_SsnGetServerPolicy(DCE2_SsnData* sd)
 {
     return sd->server_policy;

@@ -503,6 +503,72 @@ void* DCE2_ListFind(DCE2_List* list, void* key)
 }
 
 /********************************************************************
+ * Function: DCE2_ListFindKey()
+ *
+ * Trys to find a node in the list using key passed in.  If list
+ * is splayed, found node is moved to front of list.  Returns
+ * whether or not the key is associated with a node in the list.
+ *
+ * Arguments:
+ *  DCE2_List *
+ *      A pointer to the list object.
+ *  void *
+ *      Pointer to a key.
+ *
+ * Returns:
+ *  DCE2_Ret
+ *      DCE2_RET__SUCCESS if the key is found.
+ *      DCE2_RET__ERROR if the key is not found.
+ *
+ ********************************************************************/
+DCE2_Ret DCE2_ListFindKey(DCE2_List* list, void* key)
+{
+    DCE2_ListNode* n;
+
+    if (list == nullptr)
+        return DCE2_RET__ERROR;
+
+    for (n = list->head; n != nullptr; n = n->next)
+    {
+        int comp = list->compare(key, n->key);
+        if (comp == 0)
+        {
+            /* Found it, break out */
+            break;
+        }
+        else if ((comp < 0) && (list->type == DCE2_LIST_TYPE__SORTED))
+        {
+            /* Don't look any more if the list is sorted */
+            return DCE2_RET__ERROR;
+        }
+    }
+
+    if (n != nullptr)
+    {
+        /* If list is splayed, move found node to front of list */
+        if ((list->type == DCE2_LIST_TYPE__SPLAYED) &&
+            (n != list->head))
+        {
+            n->prev->next = n->next;
+
+            if (n->next != nullptr)
+                n->next->prev = n->prev;
+            else  /* it's the tail */
+                list->tail = n->prev;
+
+            n->prev = nullptr;
+            n->next = list->head;
+            list->head->prev = n;
+            list->head = n;
+        }
+
+        return DCE2_RET__SUCCESS;
+    }
+
+    return DCE2_RET__ERROR;
+}
+
+/********************************************************************
  * Function: DCE2_QueueNew()
  *
  * Creates and initializes a new queue object.
@@ -755,6 +821,52 @@ void* DCE2_QueueNext(DCE2_Queue* queue)
     }
 
     return nullptr;
+}
+
+/********************************************************************
+ * Function: DCE2_QueueRemoveCurrent()
+ *
+ * Removes the current node pointed to in the queue.  This is set
+ * when a call to DCE2_QueueFirst or DCE2_QueueNext is called.  For
+ * either of these if data is returned and the user want to remove
+ * that data from the queue, this function should be called.
+ * Sets a next pointer, so a next call to DCE2_QueueNext will point
+ * to the node after the deleted one.
+ *
+ * Arguments:
+ *  DCE2_Queue *
+ *      A pointer to the list object.
+ *
+ * Returns: None
+ *
+ ********************************************************************/
+void DCE2_QueueRemoveCurrent(DCE2_Queue* queue)
+{
+    if (queue == nullptr)
+        return;
+
+    if (queue->current == nullptr)
+        return;
+
+    queue->next = queue->current->next;
+    queue->prev = queue->current->prev;
+
+    if (queue->current == queue->head)
+        queue->head = queue->current->next;
+    if (queue->current == queue->tail)
+        queue->tail = queue->current->prev;
+    if (queue->current->prev != nullptr)
+        queue->current->prev->next = queue->current->next;
+    if (queue->current->next != nullptr)
+        queue->current->next->prev = queue->current->prev;
+
+    if (queue->data_free != nullptr)
+        queue->data_free(queue->current->data);
+
+    free((void*)queue->current);
+    queue->current = nullptr;
+
+    queue->num_nodes--;
 }
 
 /********************************************************************
