@@ -78,7 +78,7 @@ public:
 protected:
     virtual void capture_init();
     virtual void capture_term();
-    virtual FILE*  open_file();
+    virtual FILE* open_file();
     virtual void write_packet(Packet* p);
 
 private:
@@ -129,6 +129,7 @@ void PacketCapture::capture_init()
     {
         WarningMessage("Unable to validate BPF filter\n");
         disable();
+        capture_term();
         return;
     }
 
@@ -137,6 +138,7 @@ void PacketCapture::capture_init()
     {
         WarningMessage("Could not open dump file\n");
         disable();
+        capture_term();
         return;
     }
 
@@ -144,7 +146,7 @@ void PacketCapture::capture_init()
     dumper = pcap_dump_fopen(pcap, fh);
     if ( !dumper )
     {
-        WarningMessage("Could not open dump file\n");
+        WarningMessage("Could not initialize dump file\n");
         disable();
         capture_term();
     }
@@ -261,7 +263,7 @@ protected:
 
     void write_packet(Packet* p) override
     {
-        if ( p )
+        if ( p && p->pkt )
             PacketCapture::write_packet(p);
         write_packet_called = true;
     }
