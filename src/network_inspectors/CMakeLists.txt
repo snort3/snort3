@@ -10,6 +10,7 @@ add_subdirectory(reputation)
 if(STATIC_INSPECTORS)
     set(STATIC_INSPECTOR_LIBS
         arp_spoof
+        packet_capture
     )
 endif()
 

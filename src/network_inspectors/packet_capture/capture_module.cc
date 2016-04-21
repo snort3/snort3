@@ -16,12 +16,18 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// capture_module.cc author Carter Waxman <rucombs@cisco.com>
+// capture_module.cc author Carter Waxman <cwaxman@cisco.com>
 
 #include "capture_module.h"
 
+#include "packet_capture.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
+
+using namespace std;
+
+static int enable(lua_State*);
+static int disable(lua_State*);
 
 const PegInfo cap_names[] =
 {
@@ -30,30 +36,46 @@ const PegInfo cap_names[] =
     { nullptr, nullptr }
 };
 
-THREAD_LOCAL CaptureStats cap_count_stats;
-THREAD_LOCAL ProfileStats cap_prof_stats;
-
-static const Parameter s_params[] =
+static const Parameter s_capture[] =
 {
+    { "filter", Parameter::PT_STRING, nullptr, nullptr,
+      "bpf filter to use for packet dump" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-CaptureModule::CaptureModule() :
-    Module(CAPTURE_NAME, CAPTURE_HELP, s_params)
-{ }
+static const Command cap_cmds[] = 
+{
+    { "capture_enable", enable, s_capture, "dump raw packets"},
+    { "capture_disable", disable, nullptr, "stop packet dump"},
+    { nullptr, nullptr, nullptr, nullptr }
+};
+
+THREAD_LOCAL CaptureStats cap_count_stats;
+THREAD_LOCAL ProfileStats cap_prof_stats;
+
+static int enable(lua_State* L)
+{
+    packet_capture_enable(lua_tostring(L, 1));
+    return 0;
+}
+
+static int disable(lua_State*)
+{
+    packet_capture_disable();
+    return 0;
+}
+
+CaptureModule::CaptureModule() : Module(CAPTURE_NAME, CAPTURE_HELP, nullptr){ }
+
+const Command* CaptureModule::get_commands() const
+{ return cap_cmds; }
 
 ProfileStats* CaptureModule::get_profile() const
 { return &cap_prof_stats; }
 
-bool CaptureModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
-
 void CaptureModule::get_config(CaptureConfig& cfg)
-{
-    cfg = config;
-}
+{ cfg = config; }
 
 const PegInfo* CaptureModule::get_pegs() const
 { return cap_names; }

@@ -66,14 +66,6 @@ static const Parameter s_reload[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter s_capture[] =
-{
-    { "filter", Parameter::PT_STRING, nullptr, nullptr,
-      "bpf filter to use for packet dump" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const Command snort_cmds[] =
 {
     { "show_plugins", main_dump_plugins, nullptr, "show available plugins" },
@@ -81,8 +73,6 @@ static const Command snort_cmds[] =
     { "rotate_stats", main_rotate_stats, nullptr, "roll perfmonitor log files" },
     { "reload_config", main_reload_config, s_reload, "load new configuration" },
     { "reload_hosts", main_reload_hosts, s_reload, "load a new hosts table" },
-    { "capture_enable", main_capture_enable, s_capture, "dump raw packets"},
-    { "capture_disable", main_capture_disable, nullptr, "stop packet dump"},
 
     // FIXIT-M rewrite trough to permit updates on the fly
     //{ "process", main_process, nullptr, "process given pcap" },

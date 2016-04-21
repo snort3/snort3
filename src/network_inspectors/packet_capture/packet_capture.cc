@@ -53,12 +53,12 @@ static THREAD_LOCAL struct sfbpf_program bpf;
 static inline bool capture_initialized()
 { return dumper != nullptr; }
 
-static inline FILE* open_file(const char* name, bool tmp = false)
+static inline FILE* open_file(const char* name)
 {
-    if ( tmp )
-        return tmpfile();
-    else
+    if ( name )
         return fopen(name, "wb+");
+
+    return tmpfile();
 }
 
 void packet_capture_enable(string f)
@@ -191,14 +191,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Inspector* pc_ctor(Module* m)
-{
-    static THREAD_LOCAL unsigned s_init = true;
-
-    if ( !s_init )
-        return nullptr;
-
-    return new PacketCapture((CaptureModule*)m);
-}
+{ return new PacketCapture((CaptureModule*)m); }
 
 static void pc_dtor(Inspector* p)
 { delete p; }
@@ -231,7 +224,12 @@ static const InspectApi pc_api =
     nullptr  // reset
 };
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] = 
+{ &pc_api.base };
+#else
 const BaseApi* nin_packet_capture = &pc_api.base;
+#endif
 
 #ifdef UNIT_TEST
 Packet* init_null_packet()
@@ -258,7 +256,7 @@ public:
 protected:
     FILE* open_file() override
     {
-        return fh = ::open_file(nullptr, true);
+        return fh = ::open_file(nullptr);
     }
 
     void write_packet(Packet* p) override

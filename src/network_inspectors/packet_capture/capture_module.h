@@ -18,30 +18,25 @@
 
 // capture_module.h author Carter Waxman <cwaxman@cisco.com>
 
-#ifndef PERF_MODULE_H
-#define PERF_MODULE_H
+#ifndef CAPTURE_MODULE_H
+#define CAPTURE_MODULE_H
 
 #include "framework/module.h"
 
 #define CAPTURE_NAME "packet_capture"
 #define CAPTURE_HELP "raw packet dumping facility"
 
-struct CaptureConfig
-{
-    std::string filter;
-};
+struct CaptureConfig{};
 
-/* The Module Class for incorporation into Snort++ */
 class CaptureModule : public Module
 {
 public:
     CaptureModule();
 
-    bool set(const char*, Value&, SnortConfig*) override;
-
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
+    const Command* get_commands() const override;
 
     void get_config(CaptureConfig&);
 

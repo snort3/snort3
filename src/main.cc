@@ -54,7 +54,6 @@ using namespace std;
 #include "memory/memory_cap.h"
 #include "utils/util.h"
 #include "parser/parser.h"
-#include "packet_capture/packet_capture.h"
 #include "packet_io/trough.h"
 #include "packet_io/intf.h"
 #include "packet_io/sfdaq.h"
@@ -433,21 +432,6 @@ int main_dump_plugins(lua_State*)
     PluginManager::dump_plugins();
     return 0;
 }
-
-int main_capture_enable(lua_State* L)
-{
-    packet_capture_enable(lua_tostring(L, 1));
-    request.respond("== enabling\n");
-    return 0;
-}
-
-int main_capture_disable(lua_State*)
-{
-    packet_capture_disable();
-    request.respond("== disabling\n");
-    return 0;
-}
-
 #endif
 
 int main_quit(lua_State*)
