@@ -390,7 +390,6 @@ static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData*,
     const SmbNtHdr*);
 static void DCE2_SmbCleanTransactionTracker(DCE2_SmbTransactionTracker*);
 static void DCE2_SmbCleanRequestTracker(DCE2_SmbRequestTracker*);
-static void DCE2_SmbRemoveRequestTracker(DCE2_SmbSsnData*, DCE2_SmbRequestTracker*);
 
 /********************************************************************
  * Function: DCE2_SmbType()
@@ -972,44 +971,6 @@ static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData* ssd,
     }
 
     return ret_rtracker;
-}
-
-static void DCE2_SmbRemoveRequestTracker(DCE2_SmbSsnData* ssd,
-    DCE2_SmbRequestTracker* rtracker)
-{
-    Profile profile(dce2_smb_pstat_smb_req);
-
-    if ((ssd == nullptr) || (rtracker == nullptr))
-    {
-        return;
-    }
-
-    DebugFormat(DEBUG_DCE_SMB, "Removing request tracker => "
-        "Uid: %u, Tid: %u, Pid: %u, Mid: %u ... ",
-        rtracker->uid, rtracker->tid, rtracker->pid, rtracker->mid);
-
-    if (rtracker == &ssd->rtracker)
-    {
-        DebugMessage(DEBUG_DCE_SMB,"Removed\n");
-        DCE2_SmbCleanRequestTracker(&ssd->rtracker);
-        ssd->outstanding_requests--;
-        return;
-    }
-    DCE2_SmbRequestTracker* tmp_node;
-    for (tmp_node = (DCE2_SmbRequestTracker*)DCE2_QueueFirst(ssd->rtrackers);
-        tmp_node != nullptr;
-        tmp_node = (DCE2_SmbRequestTracker*)DCE2_QueueNext(ssd->rtrackers))
-    {
-        if (tmp_node == (void*)rtracker)
-        {
-            DebugMessage(DEBUG_DCE_SMB, "Removed.\n");
-            DCE2_QueueRemoveCurrent(ssd->rtrackers);
-            ssd->outstanding_requests--;
-            return;
-        }
-    }
-
-    DebugMessage(DEBUG_DCE_SMB, "Not removed.\n");
 }
 
 static DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
