@@ -96,7 +96,8 @@ void PacketCapture::eval(Packet* p)
     {
         if ( !capture_initialized() )
             capture_init();
-        if ( sfbpf_filter(bpf.bf_insns, p->pkt, p->pkth->caplen, p->pkth->pktlen) )
+        if ( !bpf.bf_insns || sfbpf_filter(bpf.bf_insns, p->pkt,
+                p->pkth->caplen, p->pkth->pktlen) )
             write_packet(p);
     }
     else if ( capture_initialized() )
@@ -107,7 +108,7 @@ void PacketCapture::enable(string filter)
 {
     if ( enabled == true )
     {
-        WarningMessage("Previous capture must be stopped before a new one can begin\n");
+        WarningMessage("Conflicting packet capture already in progress.\n");
         return;
     }
     this->filter = filter;
@@ -117,19 +118,20 @@ void PacketCapture::enable(string filter)
 void PacketCapture::disable()
 {
     enabled = false;
+    LogMessage("Packet capture disabled\n");
 }
 
 void PacketCapture::capture_init()
 {
     if ( sfbpf_compile(SNAP_LEN, DLT_EN10MB, &bpf, filter.c_str(), 1, 0) < 0 )
     {
-        WarningMessage("Unable to compile BPF filter. Disabling packet capture.\n");
+        WarningMessage("Unable to compile BPF filter\n");
         disable();
         return;
     }
     if ( !sfbpf_validate(bpf.bf_insns, bpf.bf_len) )
     {
-        WarningMessage("Unable to validate BPF filter. Disabling packet capture.\n");
+        WarningMessage("Unable to validate BPF filter\n");
         disable();
         return;
     }
@@ -137,7 +139,7 @@ void PacketCapture::capture_init()
     open_file();
     if ( !fh )
     {
-        WarningMessage("Could not open dump file. Disabling packet capture.\n");
+        WarningMessage("Could not open dump file\n");
         disable();
         return;
     }
@@ -146,7 +148,7 @@ void PacketCapture::capture_init()
     dumper = pcap_dump_fopen(pcap, fh);
     if ( !dumper )
     {
-        WarningMessage("Could not open dump file. Disabling packet capture.\n");
+        WarningMessage("Could not open dump file\n");
         disable();
         capture_term();
     }
@@ -247,8 +249,17 @@ const BaseApi* nin_packet_capture = &pc_api.base;
 class MockPacketCapture : public PacketCapture
 {
 public:
+    Packet null_packet;
+    DAQ_PktHdr_t null_hdr;
     bool write_packet_called = false;
-    MockPacketCapture(CaptureModule* m) : PacketCapture(m) {};
+
+    MockPacketCapture(CaptureModule* m) : PacketCapture(m)
+    {
+        null_packet.pkt = nullptr;
+        null_packet.pkth = &null_hdr;
+        null_hdr.caplen = 0;
+        null_hdr.pktlen = 0;
+    };
     
 protected:
     void open_file() override
@@ -265,23 +276,24 @@ protected:
     };
 };
 
+
 TEST_CASE("toggle", "[PacketCapture]")
 {
     auto mod = (CaptureModule*)mod_ctor();
     MockPacketCapture cap(mod);
     
     cap.write_packet_called = false;
-    cap.eval(nullptr);
+    cap.eval(&cap.null_packet);
     CHECK ( !cap.write_packet_called );
 
     cap.write_packet_called = false;
     cap.enable("");
-    cap.eval(nullptr);
+    cap.eval(&cap.null_packet);
     CHECK ( cap.write_packet_called );
     
     cap.write_packet_called = false;
     cap.disable();
-    cap.eval(nullptr);
+    cap.eval(&cap.null_packet);
     CHECK ( !cap.write_packet_called );
 
     mod_dtor(mod);
@@ -294,19 +306,19 @@ TEST_CASE("lazy init", "[PacketCapture]")
     
     CHECK ( !capture_initialized() );
 
-    cap.eval(nullptr);
+    cap.eval(&cap.null_packet);
     CHECK ( !capture_initialized() );
 
     cap.enable("");
     CHECK ( !capture_initialized() );
 
-    cap.eval(nullptr);
+    cap.eval(&cap.null_packet);
     CHECK ( capture_initialized() );
 
     cap.disable();
     CHECK ( capture_initialized() );
 
-    cap.eval(nullptr);
+    cap.eval(&cap.null_packet);
     CHECK ( !capture_initialized() );
 }
 
@@ -316,7 +328,7 @@ TEST_CASE("pcap init", "[PacketCapture]")
     MockPacketCapture cap(&mod);
     
     cap.enable("");
-    cap.eval(nullptr);
+    cap.eval(&cap.null_packet);
 
     fseek(fh, 0, SEEK_SET);
     auto pcap = pcap_fopen_offline(fh, nullptr);
@@ -326,7 +338,7 @@ TEST_CASE("pcap init", "[PacketCapture]")
     free(pcap);
 
     cap.disable();
-    cap.eval(nullptr);
+    cap.eval(&cap.null_packet);
 }
 
 TEST_CASE("write packet", "[PacketCapture]")
@@ -359,7 +371,7 @@ TEST_CASE("write packet", "[PacketCapture]")
     free(pcap);
 
     cap.disable();
-    cap.eval(nullptr);
+    cap.eval(&cap.null_packet);
 }
 
 TEST_CASE("bad filter", "[PacketCapture]")
@@ -368,7 +380,7 @@ TEST_CASE("bad filter", "[PacketCapture]")
     MockPacketCapture cap(&mod);
 
     cap.enable("this is garbage");
-    cap.eval(nullptr);
+    cap.eval(&cap.null_packet);
     CHECK ( !capture_initialized() );
 }
 
@@ -404,7 +416,7 @@ TEST_CASE("bpf filter", "[PacketCapture]")
     MockPacketCapture cap(&mod);
     
     cap.enable("ip host 10.82.240.82");
-    cap.enable(""); //Test double-enable guard. Above filter will work if guard works.
+    cap.enable(""); //Test double-enable guard
 
     p.pkt = match;
     cap.write_packet_called = false;
@@ -435,6 +447,6 @@ TEST_CASE("bpf filter", "[PacketCapture]")
     free(pcap);
 
     cap.disable();
-    cap.eval(nullptr);
+    cap.eval(&cap.null_packet);
 }
 #endif
