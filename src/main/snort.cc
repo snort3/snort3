@@ -227,6 +227,7 @@ void Snort::init(int argc, char** argv)
 #endif
 
     SideChannelManager::pre_config_init();
+    HighAvailabilityManager::pre_config_init();
 
     ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_paths);
@@ -410,6 +411,7 @@ void Snort::term()
         snort_conf = NULL;
     }
     CleanupProtoNames();
+    SideChannelManager::term();
     ModuleManager::term();
     PluginManager::release_plugins();
 }
@@ -643,8 +645,8 @@ void Snort::thread_term()
     IpsManager::clear_options();
     EventManager::close_outputs();
     CodecManager::thread_term();
-    SideChannelManager::thread_term();
     HighAvailabilityManager::thread_term();
+    SideChannelManager::thread_term();
 
     if ( s_packet )
     {
@@ -813,7 +815,7 @@ DAQ_Verdict Snort::packet_callback(
 
     //FIXIT-H move this to the appropriate struct
     //perfBase->UpdateWireStats(pkthdr->caplen, Active::packet_was_dropped(), inject);
-    HighAvailabilityManager::process(s_packet->flow, pkthdr);
+    HighAvailabilityManager::process_update(s_packet->flow, pkthdr);
 
     Active::reset();
     PacketManager::encode_reset();
@@ -822,6 +824,8 @@ DAQ_Verdict Snort::packet_callback(
     {
         flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
     }
+
+    HighAvailabilityManager::process_receive();
 
     s_packet->pkth = nullptr;  // no longer avail upon sig segv
 

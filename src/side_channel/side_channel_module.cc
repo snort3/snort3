@@ -20,8 +20,11 @@
 
 #include "side_channel_module.h"
 
+#include <assert.h>
+#include <utility>
+
 #include "main/snort_debug.h"
-#include "parser/parser.h"
+#include "log/messages.h"
 #include "side_channel.h"
 
 static const PegInfo sc_pegs[] =
@@ -109,7 +112,7 @@ bool SideChannelModule::set(const char* fqn, Value& v, SnortConfig*)
     assert(config);
 
     if ( v.is("connector") )
-        config->connectors.push_back(v.get_string());
+        config->connectors.push_back(std::move(v.get_string()));
 
     else if ( v.is("ports") )
     {
@@ -161,6 +164,7 @@ bool SideChannelModule::end(const char* fqn, int idx, SnortConfig*)
     // to the side channel connector(s).
     SideChannelManager::instantiate(&config->connectors, config->ports);
 
+    delete config->ports;
     delete config;
     config = nullptr;
 

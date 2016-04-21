@@ -27,6 +27,7 @@
 #include "framework/connector.h"
 
 #define MAXIMUM_SC_MESSAGE_CONTENT 1024
+#define DISPATCH_ALL_RECEIVE 0
 
 class SideChannel;
 
@@ -74,6 +75,7 @@ public:
     bool transmit_message(SCMessage* msg);
     void set_message_port(SCMessage* msg, SCPort port);
     void set_default_port(SCPort port);
+    Connector::Direction get_direction();
 
     Connector* connector_receive;
     Connector* connector_transmit;
@@ -99,6 +101,9 @@ public:
 
     // Per packet thread shutdown.
     static void thread_term();
+
+    // Overall shutdown.
+    static void term();
 
     // if configured, returns the SideChannel object associated with the specified port number.
     // Else return nullptr if none is configured.

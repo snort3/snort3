@@ -20,3 +20,16 @@ can be freed (via garbage collection) after a reload.
 There are many flags that may be set on a flow to indicate session tracking
 state, disposition, etc.
 
+HighAvailability (ha.cc, ha.h) serves to synchronize session state between high
+availabity partners.  HighAvailability uses Side Channel Connectors to transmit
+and receive messages.  The HA side channel must be full duplex (both a
+transmit and receive connector).  The primary purpose is to exchange session
+state with the goal of keeping the session caches in sync.  But other clients
+may also subscribe to the HA service to exchange additional session data.  Each
+client uses the FlowHAClient class to subscribe to the service.
+
+The HA subsystem exchanges two high level message types:
+  - DELETE: Indicate to the partner that a session has neen removed.  No
+addition HA client status will be exchanged.
+  - UPDATE: Indicate all other state changes.  The message always includes
+the session state and optionally may include state from other HA clients.

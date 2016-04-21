@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include "flow/ha.h"
 #include "flow/session.h"
 #include "ips_options/ips_flowbits.h"
 #include "utils/bitop.h"
@@ -62,6 +63,8 @@ void Flow::init(PktType proto)
 
     // FIXIT-M getFlowbitSizeInBytes() should be attribute of ??? (or eliminate)
     bitop = new BitOp(getFlowbitSizeInBytes());
+    if ( HighAvailabilityManager::active() )
+        ha_state = new FlowHAState;
 }
 
 void Flow::term()
@@ -85,6 +88,9 @@ void Flow::term()
 
     if ( bitop )
         delete bitop;
+
+    if ( ha_state )
+        delete ha_state;
 }
 
 void Flow::reset(bool do_cleanup)
@@ -139,6 +145,7 @@ void Flow::restart(bool freeAppData)
 
     session_state = STREAM_STATE_NONE;
     expire_time = 0;
+    previous_ssn_state = ssn_state;
 }
 
 void Flow::clear(bool freeAppData)

@@ -25,6 +25,7 @@
 
 #include "stream_udp.h"
 #include "udp_module.h"
+#include "udp_ha.h"
 
 #include "stream/stream.h"
 #include "main/snort_types.h"
@@ -149,6 +150,7 @@ bool UdpSession::setup(Packet* p)
 void UdpSession::clear()
 {
     UdpSessionCleanup(flow);
+    UdpHAManager::process_deletion(flow);
     flow->clear();
 }
 

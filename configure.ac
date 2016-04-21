@@ -1080,6 +1080,7 @@ src/events/Makefile \
 src/file_api/Makefile \
 src/filters/Makefile \
 src/flow/Makefile \
+src/flow/test/Makefile \
 src/framework/Makefile \
 src/hash/Makefile \
 src/hash/test/Makefile \
@@ -1140,8 +1141,10 @@ src/search_engines/Makefile \
 src/search_engines/test/Makefile \
 src/sfip/Makefile \
 src/side_channel/Makefile \
+src/side_channel/test/Makefile \
 src/connectors/Makefile \
 src/connectors/file_connector/Makefile \
+src/connectors/file_connector/test/Makefile \
 src/sfrt/Makefile \
 src/target_based/Makefile \
 src/host_tracker/Makefile \

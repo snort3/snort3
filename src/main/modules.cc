@@ -34,6 +34,7 @@
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
 #include "filters/sfthd.h"
+#include "flow/ha_module.h"
 #include "filters/sfthreshold.h"
 #include "framework/module.h"
 #include "host_tracker/host_tracker_module.h"
@@ -2087,6 +2088,7 @@ void module_init()
     ModuleManager::add_module(new LatencyModule);
 
     ModuleManager::add_module(new SideChannelModule);
+    ModuleManager::add_module(new HighAvailabilityModule);
 
     // these modules should be in ips policy
     ModuleManager::add_module(new EventFilterModule);
