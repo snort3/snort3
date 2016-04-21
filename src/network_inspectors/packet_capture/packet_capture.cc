@@ -134,14 +134,6 @@ void PacketCapture::capture_init()
     }
 
     FILE* fh = open_file();
-    if ( !fh )
-    {
-        WarningMessage("Could not open dump file\n");
-        disable();
-        capture_term();
-        return;
-    }
-
     pcap = pcap_open_dead(DLT_EN10MB, SNAP_LEN);
     dumper = pcap_dump_fopen(pcap, fh);
     if ( !dumper )
@@ -238,22 +230,26 @@ static const InspectApi pc_api =
 const BaseApi* nin_packet_capture = &pc_api.base;
 
 #ifdef UNIT_TEST
+Packet* init_null_packet()
+{
+    static Packet p;
+    static DAQ_PktHdr_t h;
+
+    p.pkt = nullptr;
+    p.pkth = &h;
+    h.caplen = 0;
+    h.pktlen = 0;
+
+    return &p;
+}
 
 class MockPacketCapture : public PacketCapture
 {
 public:
-    Packet null_packet;
-    DAQ_PktHdr_t null_hdr;
     bool write_packet_called = false;
     FILE* fh = nullptr;
 
-    MockPacketCapture(CaptureModule* m) : PacketCapture(m)
-    {
-        null_packet.pkt = nullptr;
-        null_packet.pkth = &null_hdr;
-        null_hdr.caplen = 0;
-        null_hdr.pktlen = 0;
-    }
+    MockPacketCapture(CaptureModule* m) : PacketCapture(m) {}
     
 protected:
     FILE* open_file() override
@@ -272,56 +268,63 @@ protected:
 
 TEST_CASE("toggle", "[PacketCapture]")
 {
-    auto mod = (CaptureModule*)mod_ctor();
-    MockPacketCapture cap(mod);
+    auto null_packet = init_null_packet();
+
+    CaptureModule mod;
+    MockPacketCapture cap(&mod);
     
     cap.write_packet_called = false;
-    cap.eval(&cap.null_packet);
+    cap.eval(null_packet);
     CHECK ( !cap.write_packet_called );
 
     cap.write_packet_called = false;
     cap.enable("");
-    cap.eval(&cap.null_packet);
+    cap.eval(null_packet);
     CHECK ( cap.write_packet_called );
     
     cap.write_packet_called = false;
     cap.disable();
-    cap.eval(&cap.null_packet);
+    cap.eval(null_packet);
     CHECK ( !cap.write_packet_called );
-
-    mod_dtor(mod);
 }
 
 TEST_CASE("lazy init", "[PacketCapture]")
 {
-    CaptureModule mod;
-    MockPacketCapture cap(&mod);
+    auto null_packet = init_null_packet();
+
+    auto mod = (CaptureModule*)mod_ctor();
+    auto cap = (PacketCapture*)pc_ctor(mod);
     
     CHECK ( !capture_initialized() );
 
-    cap.eval(&cap.null_packet);
+    cap->eval(null_packet);
     CHECK ( !capture_initialized() );
 
-    cap.enable("");
+    cap->enable("");
     CHECK ( !capture_initialized() );
 
-    cap.eval(&cap.null_packet);
+    cap->eval(null_packet);
     CHECK ( capture_initialized() );
 
-    cap.disable();
+    cap->disable();
     CHECK ( capture_initialized() );
 
-    cap.eval(&cap.null_packet);
+    cap->eval(null_packet);
     CHECK ( !capture_initialized() );
+
+    pc_dtor(cap);
+    mod_dtor(mod);
 }
 
 TEST_CASE("pcap init", "[PacketCapture]")
 {
+    auto null_packet = init_null_packet();
+
     CaptureModule mod;
     MockPacketCapture cap(&mod);
     
     cap.enable("");
-    cap.eval(&cap.null_packet);
+    cap.eval(null_packet);
 
     fseek(cap.fh, 0, SEEK_SET);
     auto pcap = pcap_fopen_offline(cap.fh, nullptr);
@@ -331,11 +334,13 @@ TEST_CASE("pcap init", "[PacketCapture]")
     free(pcap);
 
     cap.disable();
-    cap.eval(&cap.null_packet);
+    cap.eval(null_packet);
 }
 
 TEST_CASE("write packet", "[PacketCapture]")
 {
+    auto null_packet = init_null_packet();
+
     const uint8_t cooked[] = "AbCdEfGhIjKlMnOpQrStUvWxYz";
     struct pcap_pkthdr hdr;
 
@@ -364,21 +369,50 @@ TEST_CASE("write packet", "[PacketCapture]")
     free(pcap);
 
     cap.disable();
-    cap.eval(&cap.null_packet);
+    cap.eval(null_packet);
 }
 
 TEST_CASE("bad filter", "[PacketCapture]")
 {
+    auto null_packet = init_null_packet();
+
     CaptureModule mod;
     MockPacketCapture cap(&mod);
 
     cap.enable("this is garbage");
-    cap.eval(&cap.null_packet);
+    cap.eval(null_packet);
+    CHECK ( !capture_initialized() );
+
+    cap.enable(
+    "port 0 "
+    "port 1 "
+    "port 2 "
+    "port 3 "
+    "port 4 "
+    "port 5 "
+    "port 6 "
+    "port 7 "
+    "port 8 "
+    "port 9 "
+    "port 10 "
+    "port 11 "
+    "port 12 "
+    "port 13 "
+    "port 14 "
+    "port 15 "
+    "port 16 "
+    "port 17 "
+    "port 18 "
+    "port 19 "
+    );
+    cap.eval(null_packet);
     CHECK ( !capture_initialized() );
 }
 
 TEST_CASE("bpf filter", "[PacketCapture]")
 {
+    auto null_packet = init_null_packet();
+
     const uint8_t match[] =
         //ethernet
         "\xfc\x4d\xd4\x3d\xdc\xb8\x3c\x08\xf6\x2d\x6d\xbf\x08\x00"
@@ -440,6 +474,6 @@ TEST_CASE("bpf filter", "[PacketCapture]")
     free(pcap);
 
     cap.disable();
-    cap.eval(&cap.null_packet);
+    cap.eval(null_packet);
 }
 #endif
