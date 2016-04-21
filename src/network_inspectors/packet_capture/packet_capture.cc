@@ -25,6 +25,7 @@
 #include "capture_module.h"
 
 #include <pcap/pcap.h>
+#include <sfbpf.h>
 #include <string>
 
 #include "framework/inspector.h"
@@ -38,13 +39,17 @@
 #endif
 
 #define FILE_NAME "packet_capture.pcap"
+#define SNAP_LEN 65535
 
 using namespace std;
 
 static THREAD_LOCAL FILE* fh = nullptr;
 static THREAD_LOCAL pcap_t* pcap = nullptr;
 static THREAD_LOCAL pcap_dumper_t* dumper = nullptr;
-static THREAD_LOCAL struct bpf_program bpf;
+static THREAD_LOCAL struct sfbpf_program bpf;
+
+static inline bool capture_initialized()
+{ return dumper != nullptr; }
 
 static void open_file(const char* name, bool tmp = false)
 {
@@ -57,6 +62,7 @@ static void open_file(const char* name, bool tmp = false)
     }
 }
 
+
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -68,51 +74,82 @@ public:
 
     
     void eval(Packet*) override;
-    void tterm() override { close_file(); };
+    void tterm() override { capture_term(); };
 
     virtual void enable(string);
     virtual void disable();
 
 protected:
+    virtual void capture_init();
     virtual void open_file();
     virtual void write_packet(Packet* p);
-    virtual void close_file();
+    virtual void capture_term();
 
 private:
     bool enabled = false;
-    string bpf_expr;
-
-    void init_capture();
+    string filter = "";
 };
 
 void PacketCapture::eval(Packet* p)
 {
     if ( enabled )
     {
-        if ( !fh )
-        {
-            open_file();
-            init_capture();
-        }
-
-        write_packet(p);
+        if ( !capture_initialized() )
+            capture_init();
+        if ( sfbpf_filter(bpf.bf_insns, p->pkt, p->pkth->caplen, p->pkth->pktlen) )
+            write_packet(p);
     }
-    else
-    {
-        if ( fh )
-            close_file();
-    }
+    else if ( capture_initialized() )
+        capture_term();
 }
 
 void PacketCapture::enable(string filter)
 {
-    bpf_expr = filter;
+    if ( enabled == true )
+    {
+        WarningMessage("Previous capture must be stopped before a new one can begin\n");
+        return;
+    }
+    this->filter = filter;
     enabled = true;
 }
 
 void PacketCapture::disable()
 {
     enabled = false;
+}
+
+void PacketCapture::capture_init()
+{
+    if ( sfbpf_compile(SNAP_LEN, DLT_EN10MB, &bpf, filter.c_str(), 1, 0) < 0 )
+    {
+        WarningMessage("Unable to compile BPF filter. Disabling packet capture.\n");
+        disable();
+        return;
+    }
+    if ( !sfbpf_validate(bpf.bf_insns, bpf.bf_len) )
+    {
+        WarningMessage("Unable to validate BPF filter. Disabling packet capture.\n");
+        disable();
+        return;
+    }
+
+    open_file();
+    if ( !fh )
+    {
+        WarningMessage("Could not open dump file. Disabling packet capture.\n");
+        disable();
+        return;
+    }
+
+    pcap = pcap_open_dead(DLT_EN10MB, SNAP_LEN);
+    dumper = pcap_dump_fopen(pcap, fh);
+    if ( !dumper )
+    {
+        WarningMessage("Could not open dump file. Disabling packet capture.\n");
+        disable();
+        capture_term();
+    }
 }
 
 void PacketCapture::open_file()
@@ -123,38 +160,7 @@ void PacketCapture::open_file()
     ::open_file(fname.c_str());
 }
 
-void PacketCapture::init_capture()
-{
-    bool error = false;
-
-    pcap = pcap_open_dead(DLT_RAW, 65535);
-    dumper = pcap_dump_fopen(pcap, fh);
-
-    if ( pcap_compile(pcap, &bpf, bpf_expr.c_str(), 1, 0) == -1 )
-    {
-        ErrorMessage("Could not compile bpf filter.");
-        error = true;
-    }
-    else if ( pcap_setfilter(pcap, &bpf) == -1 )
-    {
-        ErrorMessage("Could not install bpf filter.");
-        error = true;
-    }
-    else if ( !dumper )
-    {
-        ErrorMessage("Could not open dump file.");
-        error = true;
-    }
-
-    if ( error )
-    {
-        ErrorMessage("Disabling packet capture.");
-        disable();
-        close_file();
-    }
-}
-
-void PacketCapture::close_file()
+void PacketCapture::capture_term()
 {
     if ( dumper )
     {
@@ -171,6 +177,7 @@ void PacketCapture::close_file()
         fclose(fh);
         fh = nullptr;
     }
+    sfbpf_freecode(&bpf);
 }
 
 void PacketCapture::write_packet(Packet* p)
@@ -260,45 +267,47 @@ protected:
 
 TEST_CASE("toggle", "[PacketCapture]")
 {
-    CaptureModule mod;
-    MockPacketCapture cap(&mod);
+    auto mod = (CaptureModule*)mod_ctor();
+    MockPacketCapture cap(mod);
     
     cap.write_packet_called = false;
     cap.eval(nullptr);
-    CHECK( !cap.write_packet_called );
+    CHECK ( !cap.write_packet_called );
 
     cap.write_packet_called = false;
     cap.enable("");
     cap.eval(nullptr);
-    CHECK( cap.write_packet_called );
+    CHECK ( cap.write_packet_called );
     
     cap.write_packet_called = false;
     cap.disable();
     cap.eval(nullptr);
-    CHECK( !cap.write_packet_called );
+    CHECK ( !cap.write_packet_called );
+
+    mod_dtor(mod);
 }
 
-TEST_CASE("lazy file handling", "[PacketCapture]")
+TEST_CASE("lazy init", "[PacketCapture]")
 {
     CaptureModule mod;
     MockPacketCapture cap(&mod);
     
-    CHECK( !fh );
+    CHECK ( !capture_initialized() );
 
     cap.eval(nullptr);
-    CHECK( !fh );
+    CHECK ( !capture_initialized() );
 
     cap.enable("");
-    CHECK( !fh );
+    CHECK ( !capture_initialized() );
 
     cap.eval(nullptr);
-    CHECK( fh );
+    CHECK ( capture_initialized() );
 
     cap.disable();
-    CHECK( fh );
+    CHECK ( capture_initialized() );
 
     cap.eval(nullptr);
-    CHECK( !fh );
+    CHECK ( !capture_initialized() );
 }
 
 TEST_CASE("pcap init", "[PacketCapture]")
@@ -312,7 +321,7 @@ TEST_CASE("pcap init", "[PacketCapture]")
     fseek(fh, 0, SEEK_SET);
     auto pcap = pcap_fopen_offline(fh, nullptr);
 
-    CHECK( pcap );
+    CHECK ( pcap );
 
     free(pcap);
 
@@ -344,13 +353,23 @@ TEST_CASE("write packet", "[PacketCapture]")
     auto pcap = pcap_fopen_offline(fh, nullptr);
     auto packet = pcap_next(pcap, &hdr);
 
-    REQUIRE( packet );
-    CHECK( !memcmp(cooked, packet, fmax(hdr.caplen, sizeof(cooked))) );
+    REQUIRE ( packet );
+    CHECK ( !memcmp(cooked, packet, fmax(hdr.caplen, sizeof(cooked))) );
 
     free(pcap);
 
     cap.disable();
     cap.eval(nullptr);
+}
+
+TEST_CASE("bad filter", "[PacketCapture]")
+{
+    CaptureModule mod;
+    MockPacketCapture cap(&mod);
+
+    cap.enable("this is garbage");
+    cap.eval(nullptr);
+    CHECK ( !capture_initialized() );
 }
 
 TEST_CASE("bpf filter", "[PacketCapture]")
@@ -385,23 +404,33 @@ TEST_CASE("bpf filter", "[PacketCapture]")
     MockPacketCapture cap(&mod);
     
     cap.enable("ip host 10.82.240.82");
+    cap.enable(""); //Test double-enable guard. Above filter will work if guard works.
+
     p.pkt = match;
+    cap.write_packet_called = false;
     cap.eval(&p);
+    CHECK ( cap.write_packet_called );
+
     p.pkt = non_match;
+    cap.write_packet_called = false;
     cap.eval(&p);
+    CHECK ( !cap.write_packet_called );
+
     p.pkt = match;
+    cap.write_packet_called = false;
     cap.eval(&p);
+    CHECK ( cap.write_packet_called );
 
     fseek(fh, 0, SEEK_SET);
     auto pcap = pcap_fopen_offline(fh, nullptr);
 
     auto packet = pcap_next(pcap, &hdr);
-    REQUIRE( packet );
-    CHECK( !memcmp(match, packet, fmax(hdr.caplen, sizeof(match))) );
+    REQUIRE ( packet );
+    CHECK ( !memcmp(match, packet, fmax(hdr.caplen, sizeof(match))) );
 
     packet = pcap_next(pcap, &hdr);
-    REQUIRE( packet );
-    CHECK( !memcmp(match, packet, fmax(hdr.caplen, sizeof(match))) );
+    REQUIRE ( packet );
+    CHECK ( !memcmp(match, packet, fmax(hdr.caplen, sizeof(match))) );
 
     free(pcap);
 
