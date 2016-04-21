@@ -437,13 +437,14 @@ int main_dump_plugins(lua_State*)
 int main_capture_enable(lua_State* L)
 {
     packet_capture_enable(lua_tostring(L, 1));
+    request.respond("== enabling\n");
     return 0;
 }
 
 int main_capture_disable(lua_State*)
 {
     packet_capture_disable();
-    request.respond("== disabling");
+    request.respond("== disabling\n");
     return 0;
 }
 
