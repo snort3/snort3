@@ -156,19 +156,32 @@ bool MemoryCap::over_threshold()
     return s_tracker.used() >= preemptive_threshold;
 }
 
+// FIXIT-L J This should not be called while the packet threads are
+// running. once reload is implemented for the memory manager,
+// the configuration model will need to be updated
 void MemoryCap::calculate(unsigned num_threads)
 {
     const MemoryConfig& config = *snort_conf->memory;
 
+    assert(!is_packet_thread());
+
     if ( !config.cap )
+    {
+        thread_cap = preemptive_threshold = 0;
         return;
+    }
 
-    // FIXIT-M J right now the cap is relative, so we never run out of room
-    // after startup, but this also means that the cap is not representative
-    // of total memory used
+    auto main_thread_used = s_tracker.used();
 
-    thread_cap = config.cap / num_threads;
+    if ( main_thread_used > config.cap )
+        FatalError("main thread memory usage (%zu) is greater than cap", main_thread_used);
 
+    auto real_cap = config.cap - main_thread_used;
+
+    thread_cap = real_cap / num_threads;
+
+    // FIXIT-M J we probably want to add some fixed overhead to allow the packet threads to
+    // startup and preallocate flows and whatnot
     if ( !thread_cap )
         FatalError("per-thread memory cap is 0");
 
@@ -180,6 +193,20 @@ void MemoryCap::calculate(unsigned num_threads)
         DebugFormat(DEBUG_MEMORY,
             "per-thread pre-emptive action threshold set to %zu\n", preemptive_threshold);
     }
+}
+
+void MemoryCap::print()
+{
+    const MemoryConfig& config = *snort_conf->memory;
+
+    LogMessage("memory configuration\n");
+    LogMessage("    global cap: %zu\n", config.cap);
+    LogMessage("    global preemptive threshold percent: %zu\n", config.threshold);
+    LogMessage("    cap type: %s\n", config.soft? "soft" : "hard");
+    LogMessage("    thread cap: %zu\n", thread_cap);
+    LogMessage("    preemptive threshold: %zu\n", preemptive_threshold);
+    LogMessage("    main thread usage: %zu\n", s_tracker.used());
+    LogMessage("\n");
 }
 
 } // namespace memory

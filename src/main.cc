@@ -876,6 +876,8 @@ static void snort_main()
     }
 
     memory::MemoryCap::calculate(max_pigs);
+    if ( SnortConfig::log_verbose() )
+        memory::MemoryCap::print();
 
     main_loop();
 
