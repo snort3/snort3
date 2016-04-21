@@ -35,8 +35,11 @@ public:
 
     static bool over_threshold();
 
-    // call from main thread before thread spawn
+    // call from main thread
     static void calculate(unsigned num_threads);
+
+    // call from main thread
+    static void print();
 
 private:
     static size_t thread_cap;
