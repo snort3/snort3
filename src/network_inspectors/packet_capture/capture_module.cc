@@ -41,7 +41,7 @@ static const Parameter s_capture[] =
     { "enable", Parameter::PT_BOOL, nullptr, "false",
       "initially enable packet dumping" },
 
-    { "filter", Parameter::PT_STRING, nullptr, "",
+    { "filter", Parameter::PT_STRING, nullptr, nullptr,
       "bpf filter to use for packet dump" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
