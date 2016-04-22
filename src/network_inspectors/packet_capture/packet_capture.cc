@@ -53,14 +53,6 @@ static THREAD_LOCAL struct sfbpf_program bpf;
 static inline bool capture_initialized()
 { return dumper != nullptr; }
 
-static inline FILE* open_file(const char* name)
-{
-    if ( name )
-        return fopen(name, "wb+");
-
-    return tmpfile();
-}
-
 void packet_capture_enable(string f)
 {
     if ( enabled == true )
@@ -94,10 +86,8 @@ public:
 protected:
     virtual void capture_init();
     virtual void capture_term();
-    virtual FILE* open_file();
+    virtual pcap_dumper_t* open_dump(pcap_t*, const char*);
     virtual void write_packet(Packet* p);
-
-private:
 };
 
 void PacketCapture::eval(Packet* p)
@@ -122,44 +112,39 @@ void PacketCapture::eval(Packet* p)
 
 void PacketCapture::capture_init()
 {
-    if ( sfbpf_compile(SNAP_LEN, DLT_EN10MB, &bpf, filter.c_str(), 1, 0) < 0 )
+    if ( sfbpf_compile(SNAP_LEN, DLT_EN10MB, &bpf, filter.c_str(), 1, 0) >= 0 )
     {
+        if ( sfbpf_validate(bpf.bf_insns, bpf.bf_len) )
+        {
+            string fname;
+            get_instance_file(fname, FILE_NAME);
+
+            pcap = pcap_open_dead(DLT_EN10MB, SNAP_LEN);
+            dumper = open_dump(pcap, fname.c_str());
+
+            if ( dumper )
+                return;
+            else
+                WarningMessage("Could not initialize dump file\n");
+        }
+        else
+            WarningMessage("Unable to validate BPF filter\n");
+    }
+    else
         WarningMessage("Unable to compile BPF filter\n");
-        packet_capture_disable();
-        return;
-    }
-    if ( !sfbpf_validate(bpf.bf_insns, bpf.bf_len) )
-    {
-        WarningMessage("Unable to validate BPF filter\n");
-        packet_capture_disable();
-        capture_term();
-        return;
-    }
 
-    FILE* fh = open_file();
-    pcap = pcap_open_dead(DLT_EN10MB, SNAP_LEN);
-    dumper = pcap_dump_fopen(pcap, fh);
-    if ( !dumper )
-    {
-        WarningMessage("Could not initialize dump file\n");
-        packet_capture_disable();
-        capture_term();
-    }
+    packet_capture_disable();
+    capture_term();
 }
 
-FILE* PacketCapture::open_file()
-{
-    string fname;
-
-    get_instance_file(fname, FILE_NAME);
-    return ::open_file(fname.c_str());
-}
+pcap_dumper_t* PacketCapture::open_dump(pcap_t* pcap, const char* fname)
+{ return pcap_dump_open(pcap, fname); }
 
 void PacketCapture::capture_term()
 {
     if ( dumper )
     {
-        pcap_dump_close(dumper); //this closes open file handle
+        pcap_dump_close(dumper);
         dumper = nullptr;
     }
     if ( pcap )
@@ -172,11 +157,8 @@ void PacketCapture::capture_term()
 
 void PacketCapture::write_packet(Packet* p)
 {
-    struct pcap_pkthdr pkth;
-    pkth.caplen = p->pkth->caplen;
-    pkth.len = p->pkth->pktlen;
-    pkth.ts = p->pkth->ts;
-    pcap_dump((unsigned char*)dumper, &pkth, p->pkt);
+    //DAQ_PktHdr_t is compatible with pcap_pkthdr
+    pcap_dump((unsigned char*)dumper, (pcap_pkthdr*)p->pkth, p->pkt);
     pcap_dump_flush(dumper);
 }
 
@@ -249,21 +231,24 @@ class MockPacketCapture : public PacketCapture
 {
 public:
     bool write_packet_called = false;
-    FILE* fh = nullptr;
+    vector<Packet*> pcap;
 
     MockPacketCapture(CaptureModule* m) : PacketCapture(m) {}
     
 protected:
-    FILE* open_file() override
-    {
-        return fh = ::open_file(nullptr);
-    }
+    pcap_dumper_t* open_dump(pcap_t*, const char*) override
+    { return (pcap_dumper_t*)1; }
 
     void write_packet(Packet* p) override
     {
-        if ( p && p->pkt )
-            PacketCapture::write_packet(p);
+        pcap.push_back(p);
         write_packet_called = true;
+    }
+
+    void capture_term() override
+    {
+        dumper = nullptr;
+        PacketCapture::capture_term();
     }
 };
 
@@ -318,28 +303,7 @@ TEST_CASE("lazy init", "[PacketCapture]")
     mod_dtor(mod);
 }
 
-TEST_CASE("pcap init", "[PacketCapture]")
-{
-    auto null_packet = init_null_packet();
-
-    CaptureModule mod;
-    MockPacketCapture cap(&mod);
-    
-    packet_capture_enable("");
-    cap.eval(null_packet);
-
-    fseek(cap.fh, 0, SEEK_SET);
-    auto pcap = pcap_fopen_offline(cap.fh, nullptr);
-
-    CHECK ( pcap );
-
-    free(pcap);
-
-    packet_capture_disable();
-    cap.eval(null_packet);
-}
-
-TEST_CASE("write packet", "[PacketCapture]")
+TEST_CASE("blank filter", "[PacketCapture]")
 {
     auto null_packet = init_null_packet();
 
@@ -361,14 +325,8 @@ TEST_CASE("write packet", "[PacketCapture]")
     packet_capture_enable("");
     cap.eval(&p);
 
-    fseek(cap.fh, 0, SEEK_SET);
-    auto pcap = pcap_fopen_offline(cap.fh, nullptr);
-    auto packet = pcap_next(pcap, &hdr);
-
-    REQUIRE ( packet );
-    CHECK ( !memcmp(cooked, packet, fmax(hdr.caplen, sizeof(cooked))) );
-
-    free(pcap);
+    REQUIRE ( cap.pcap.size() );
+    CHECK ( cap.pcap[0] == &p );
 
     packet_capture_disable();
     cap.eval(null_packet);
@@ -433,9 +391,14 @@ TEST_CASE("bpf filter", "[PacketCapture]")
 
     struct pcap_pkthdr hdr;
 
-    Packet p;
+    Packet p_match, p_non_match;
     DAQ_PktHdr_t daq_hdr;
-    p.pkth = &daq_hdr;
+
+    p_match.pkth = &daq_hdr;
+    p_non_match.pkth = &daq_hdr;
+
+    p_match.pkt = match;
+    p_non_match.pkt = non_match;
 
     daq_hdr.caplen = sizeof(match);
     daq_hdr.pktlen = sizeof(match);
@@ -444,41 +407,31 @@ TEST_CASE("bpf filter", "[PacketCapture]")
     CaptureModule mod;
     MockPacketCapture cap(&mod);
 
-    mod.sum_stats();
+    cap_count_stats.checked = 0;
+    cap_count_stats.matched = 0;
     
     packet_capture_enable("ip host 10.82.240.82");
     packet_capture_enable(""); //Test double-enable guard
 
-    p.pkt = match;
     cap.write_packet_called = false;
-    cap.eval(&p);
+    cap.eval(&p_match);
     CHECK ( cap.write_packet_called );
 
-    p.pkt = non_match;
     cap.write_packet_called = false;
-    cap.eval(&p);
+    cap.eval(&p_non_match);
     CHECK ( !cap.write_packet_called );
 
-    p.pkt = match;
     cap.write_packet_called = false;
-    cap.eval(&p);
+    cap.eval(&p_match);
     CHECK ( cap.write_packet_called );
 
     CHECK ( cap_count_stats.checked == 3 );
     CHECK ( cap_count_stats.matched == 2 );
 
-    fseek(cap.fh, 0, SEEK_SET);
-    auto pcap = pcap_fopen_offline(cap.fh, nullptr);
-
-    auto packet = pcap_next(pcap, &hdr);
-    REQUIRE ( packet );
-    CHECK ( !memcmp(match, packet, fmax(hdr.caplen, sizeof(match))) );
-
-    packet = pcap_next(pcap, &hdr);
-    REQUIRE ( packet );
-    CHECK ( !memcmp(match, packet, fmax(hdr.caplen, sizeof(match))) );
-
-    free(pcap);
+    REQUIRE ( cap.pcap.size() >= 2 );
+    CHECK ( cap.pcap.size() == 2 );
+    CHECK ( cap.pcap[0] == &p_match );
+    CHECK ( cap.pcap[1] == &p_match );
 
     packet_capture_disable();
     cap.eval(null_packet);
