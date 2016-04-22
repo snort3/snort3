@@ -39,12 +39,41 @@ class TestConnector : public Connector
     Direction get_connector_direction() { return CONN_UNDEFINED; }
 };
 
+class ReceiveConnector : public Connector
+{
+    ConnectorMsgHandle* alloc_message(const uint32_t, const uint8_t**) { return nullptr; }
+    void discard_message(ConnectorMsgHandle*) { }
+    bool transmit_message(ConnectorMsgHandle*) { return true; }
+    ConnectorMsgHandle* receive_message(bool) { return nullptr; }
+    ConnectorMsg* get_connector_msg(ConnectorMsgHandle*) { return nullptr; }
+    Direction get_connector_direction() { return CONN_RECEIVE; }
+};
+
+class TransmitConnector : public Connector
+{
+    ConnectorMsgHandle* alloc_message(const uint32_t, const uint8_t**) { return nullptr; }
+    void discard_message(ConnectorMsgHandle*) { }
+    bool transmit_message(ConnectorMsgHandle*) { return true; }
+    ConnectorMsgHandle* receive_message(bool) { return nullptr; }
+    ConnectorMsg* get_connector_msg(ConnectorMsgHandle*) { return nullptr; }
+    Direction get_connector_direction() { return CONN_TRANSMIT; }
+};
+
 void ConnectorManager::thread_init() { }
 
 void ConnectorManager::thread_term() { }
 
 Connector* ConnectorManager::get_connector(const std::string connector_name)
-{ UNUSED(connector_name); return new TestConnector(); }
+{
+    if ( connector_name == "U" )
+        return new TestConnector();
+    else if ( connector_name == "R" )
+        return new ReceiveConnector();
+    else if ( connector_name == "T" )
+        return new TransmitConnector();
+    else
+        return nullptr;
+}
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 
@@ -56,6 +85,13 @@ void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 
 TEST_GROUP(side_channel)
 {
+    void setup()
+    {
+    }
+
+    void teardown()
+    {
+    }
 };
 
 TEST(side_channel, test)

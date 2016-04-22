@@ -205,6 +205,7 @@ static uint8_t write_flow_key(Flow* flow, HAMessage* msg)
     }
 }
 
+#ifdef FUTURE
 // Regardless of the message cursor, extract the key and
 // return the key length.  Position the cursor just after the key.
 static uint8_t read_flow_key(FlowKey* key, HAMessage* msg)
@@ -239,6 +240,7 @@ static uint8_t read_flow_key(FlowKey* key, HAMessage* msg)
     else
         return 0;
 }
+#endif
 
 static inline uint8_t key_size(Flow* flow)
 {
@@ -357,6 +359,7 @@ void HighAvailability::process_update(Flow* flow, const DAQ_PktHdr_t* pkthdr)
     DebugMessage(DEBUG_HA,"HighAvailability::process_update()\n");
 
     // Only looking for side channel processing - FIXIT-H
+    UNUSED(pkthdr); // until we add DAQ communications channel
     if ( !sc || !flow )
         return;
 

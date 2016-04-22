@@ -42,6 +42,7 @@ class ProtocolHA
 {
 public:
     ProtocolHA();
+    virtual ~ProtocolHA() { }
     virtual void delete_session(Flow*) { }
     virtual void create_session(Flow*) { }
     virtual void deactivate_session(Flow*) { }
@@ -54,6 +55,7 @@ class StreamHAManager
 {
 public:
     static void tinit();
+    static void tterm();
     static void process_deletion(Flow*);
 
     static StreamHAClient* ha_client;

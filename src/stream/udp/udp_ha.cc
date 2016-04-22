@@ -38,3 +38,8 @@ void UdpHAManager::tinit()
     udp_ha = new UdpHA();
 }
 
+void UdpHAManager::tterm()
+{
+    delete udp_ha;
+}
+

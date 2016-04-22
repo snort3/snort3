@@ -34,7 +34,6 @@
 struct SideChannelConfig
 {
     PortBitSet* ports = nullptr;
-    Connector::Direction direction = Connector::CONN_UNDEFINED;
     SCConnectors connectors;
 };
 
