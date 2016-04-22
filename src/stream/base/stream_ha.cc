@@ -57,6 +57,11 @@ void StreamHAManager::tinit()
     ha_client = new StreamHAClient();
 }
 
+void StreamHAManager::tterm()
+{
+    delete ha_client;
+}
+
 void StreamHAManager::process_deletion(Flow*)
 {
 }

@@ -43,6 +43,7 @@ public:
     static void process_deletion(Flow* flow)
     { udp_ha->process_deletion(flow); }
     static void tinit();
+    static void tterm();
     static UdpHA* udp_ha;
 };
 #endif

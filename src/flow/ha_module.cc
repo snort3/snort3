@@ -113,6 +113,7 @@ bool HighAvailabilityModule::end(const char* fqn, int idx, SnortConfig*)
     DebugFormat(DEBUG_HA,"HighAvailabilityModule::end(): %s %d\n", fqn, idx);
 #else
     UNUSED(fqn);
+    UNUSED(idx);
 #endif
 
     if ( config.enabled && !HighAvailabilityManager::instantiate(config.ports,config.daq_channel) )

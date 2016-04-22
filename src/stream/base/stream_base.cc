@@ -221,6 +221,8 @@ void StreamBase::tterm()
     flow_con->purge_flows(PktType::UDP);
     flow_con->purge_flows(PktType::PDU);
     flow_con->purge_flows(PktType::FILE);
+
+    StreamHAManager::tterm();
 }
 
 void StreamBase::show(SnortConfig*)

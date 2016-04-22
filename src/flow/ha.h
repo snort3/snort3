@@ -20,8 +20,6 @@
 #ifndef HA_H
 #define HA_H
 
-#include <values.h>
-
 #include "main/snort_types.h"
 #include "packet_io/sfdaq.h"
 #include "side_channel/side_channel.h"
@@ -150,7 +148,6 @@ public:
 private:
     void receive_handler(SCMessage*);
     SideChannel* sc = nullptr;
-    bool enabled = false;
 };
 
 // Top level management of HighAvailability components.

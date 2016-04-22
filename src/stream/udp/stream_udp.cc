@@ -117,6 +117,11 @@ static void udp_tinit()
     UdpHAManager::tinit();
 }
 
+static void udp_tterm()
+{
+    UdpHAManager::tterm();
+}
+
 static Inspector* udp_ctor(Module* m)
 {
     StreamUdpModule* mod = (StreamUdpModule*)m;
@@ -149,7 +154,7 @@ static const InspectApi udp_api =
     nullptr, // init
     nullptr, // term
     udp_tinit, // tinit
-    nullptr, // tterm
+    udp_tterm, // tterm
     udp_ctor,
     udp_dtor,
     udp_ssn,
