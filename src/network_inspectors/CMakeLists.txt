@@ -2,6 +2,7 @@
 add_subdirectory(arp_spoof)
 add_subdirectory(binder)
 add_subdirectory(normalize)
+add_subdirectory(packet_capture)
 add_subdirectory(perf_monitor)
 add_subdirectory(port_scan)
 add_subdirectory(reputation)
@@ -9,6 +10,7 @@ add_subdirectory(reputation)
 if(STATIC_INSPECTORS)
     set(STATIC_INSPECTOR_LIBS
         arp_spoof
+        packet_capture
     )
 endif()
 
@@ -19,10 +21,11 @@ add_library( network_inspectors STATIC
 
 target_link_libraries( network_inspectors
     ${STATIC_INSPECTOR_LIBS}
-    port_scan
     binder
-    perf_monitor
     normalize
+    packet_capture
+    perf_monitor
+    port_scan
     reputation 
     stream_tcp
 )

@@ -432,7 +432,6 @@ int main_dump_plugins(lua_State*)
     PluginManager::dump_plugins();
     return 0;
 }
-
 #endif
 
 int main_quit(lua_State*)
