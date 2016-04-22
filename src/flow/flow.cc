@@ -133,9 +133,9 @@ void Flow::reset(bool do_cleanup)
     bitop->reset();
 }
 
-void Flow::restart(bool freeAppData)
+void Flow::restart(bool free_flow_data)
 {
-    if ( freeAppData )
+    if ( free_flow_data )
         free_application_data();
 
     bitop->reset();
@@ -148,9 +148,9 @@ void Flow::restart(bool freeAppData)
     previous_ssn_state = ssn_state;
 }
 
-void Flow::clear(bool freeAppData)
+void Flow::clear(bool free_flow_data)
 {
-    restart(freeAppData);
+    restart(free_flow_data);
     set_state(SETUP);
 
     if ( ssn_client )

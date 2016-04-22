@@ -405,7 +405,7 @@ void TcpStreamSession::SwapPacketHeaderFoo(void)
 void TcpStreamSession::reset(void)
 {
     if (tcp_init)
-        clear_session(true);
+        clear_session(true, false, false );
 }
 
 bool TcpStreamSession::setup(Packet*)
@@ -429,16 +429,14 @@ bool TcpStreamSession::setup(Packet*)
 
 void TcpStreamSession::cleanup(void)
 {
-    // this flushes data and then calls TcpSessionClear()
-    cleanup_session( true );
-
+    clear_session( true, true, false );
 }
 
 void TcpStreamSession::clear(void)
 {
     if ( tcp_init )
         // this does NOT flush data
-        clear_session( true );
+        clear_session( true, false, false );
 }
 
 void TcpStreamSession::set_splitter(bool to_server, StreamSplitter* ss)
@@ -501,18 +499,6 @@ void TcpStreamSession::print(void)
     client->print();
     LogMessage("Server Tracker:\n");
     server->print();
-}
-
-void TcpStreamSession::clear_session(bool)
-{
-}
-
-void TcpStreamSession::cleanup_session(bool , Packet*)
-{
-}
-
-void TcpStreamSession::set_os_policy(void)
-{
 }
 
 

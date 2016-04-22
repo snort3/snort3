@@ -144,8 +144,8 @@ public:
     void term();
 
     void reset(bool do_cleanup = true);
-    void restart(bool freeAppData = true);
-    void clear(bool freeAppData = true);
+    void restart(bool free_flow_data = true);
+    void clear(bool free_flow_data = true);
 
     int set_application_data(FlowData*);
     FlowData* get_application_data(uint32_t proto);
