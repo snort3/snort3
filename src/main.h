@@ -43,8 +43,6 @@ int main_help(lua_State* = nullptr);
 #ifdef BUILD_SHELL
 int main_dump_plugins(lua_State* = nullptr);
 int main_detach(lua_State* = nullptr);
-int main_capture_enable(lua_State* = nullptr);
-int main_capture_disable(lua_State* = nullptr);
 #endif
 
 #endif
