@@ -277,19 +277,10 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Inspector* pm_ctor(Module* m)
-{
-    static THREAD_LOCAL unsigned s_init = true;
-
-    if ( !s_init )
-        return nullptr;
-
-    return new PerfMonitor((PerfMonModule*)m);
-}
+{ return new PerfMonitor((PerfMonModule*)m); }
 
 static void pm_dtor(Inspector* p)
-{
-    delete p;
-}
+{ delete p; }
 
 static const InspectApi pm_api =
 {
