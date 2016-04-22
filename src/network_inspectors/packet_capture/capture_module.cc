@@ -73,7 +73,7 @@ static int disable(lua_State*)
 
 CaptureModule::CaptureModule() :
     Module(CAPTURE_NAME, CAPTURE_HELP, s_capture)
-{ memset(&config, 0, sizeof(config)); }
+{ config.enabled = false; }
 
 bool CaptureModule::set(const char*, Value& v, SnortConfig*)
 {
