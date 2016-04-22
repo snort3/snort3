@@ -8,6 +8,7 @@ main.h
 if STATIC_INSPECTORS
 lib_list = \
 network_inspectors/arp_spoof/libarp_spoof.a \
+network_inspectors/packet_capture/libpacket_capture.a \
 service_inspectors/back_orifice/libback_orifice.a \
 service_inspectors/dce_rpc/libdce_rpc.a \
 service_inspectors/dnp3/libdnp3.a \

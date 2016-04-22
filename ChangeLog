@@ -1,3 +1,17 @@
+16/04/22 - build 195
+
+-- added packet_capture module
+-- initial high availability for UDP
+-- changed memory_manager to use absolute instead of relative cap
+-- cmake and pkgconfig fixes
+-- updated catch headers to v1.4.0
+-- fix stream_tcp config leak
+-- added file capture stats
+-- static analysis updates
+-- DAQ interface refactoring
+-- perf_monitor refactoring
+-- unicode map file for new_http_inspect
+
 16/04/08 - build 194
 
 -- added iterative pruning for out of memory condition

@@ -25,7 +25,6 @@
 
 extern const BaseApi* nin_binder;
 extern const BaseApi* nin_normalize;
-extern const BaseApi* nin_packet_capture;
 extern const BaseApi* nin_perf_monitor;
 extern const BaseApi* nin_port_scan_global;
 extern const BaseApi* nin_port_scan;
@@ -33,13 +32,13 @@ extern const BaseApi* nin_reputation;
 
 #ifdef STATIC_INSPECTORS
 extern const BaseApi* nin_arp_spoof;
+extern const BaseApi* nin_packet_capture;
 #endif
 
 const BaseApi* network_inspectors[] =
 {
     nin_binder,
     nin_normalize,
-    nin_packet_capture,
     nin_perf_monitor,
     nin_port_scan_global,
     nin_port_scan,
@@ -47,6 +46,7 @@ const BaseApi* network_inspectors[] =
 
 #ifdef STATIC_INSPECTORS
     nin_arp_spoof,
+    nin_packet_capture,
 #endif
     nullptr
 };
