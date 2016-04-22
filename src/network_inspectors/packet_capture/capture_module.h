@@ -26,7 +26,17 @@
 #define CAPTURE_NAME "packet_capture"
 #define CAPTURE_HELP "raw packet dumping facility"
 
-struct CaptureConfig{};
+struct CaptureConfig
+{
+    bool enabled;
+    std::string filter;    
+};
+
+struct CaptureStats
+{
+    PegCount checked;
+    PegCount matched;
+};
 
 class CaptureModule : public Module
 {
@@ -37,17 +47,12 @@ public:
     PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
     const Command* get_commands() const override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
     void get_config(CaptureConfig&);
 
 private:
     CaptureConfig config;
-};
-
-struct CaptureStats
-{
-    PegCount checked;
-    PegCount matched;
 };
 
 extern THREAD_LOCAL CaptureStats cap_count_stats;

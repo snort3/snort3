@@ -43,8 +43,7 @@
 
 using namespace std;
 
-static bool enabled = false;
-static string filter = "";
+static CaptureConfig config;
 
 static THREAD_LOCAL pcap_t* pcap = nullptr;
 static THREAD_LOCAL pcap_dumper_t* dumper = nullptr;
@@ -55,10 +54,10 @@ static inline bool capture_initialized()
 
 void packet_capture_enable(string f)
 {
-    if ( !enabled )
+    if ( !config.enabled )
     {
-        filter = f;
-        enabled = true;
+        config.filter = f;
+        config.enabled = true;
     }
     else
         WarningMessage("Conflicting packet capture already in progress.\n");
@@ -66,7 +65,7 @@ void packet_capture_enable(string f)
 
 void packet_capture_disable()
 {
-    enabled = false;
+    config.enabled = false;
     LogMessage("Packet capture disabled\n");
 }
 
@@ -77,7 +76,7 @@ void packet_capture_disable()
 class PacketCapture : public Inspector
 {
 public:
-    PacketCapture(CaptureModule*) {};
+    PacketCapture(CaptureModule*);
     
     void eval(Packet*) override;
     void tterm() override { capture_term(); };
@@ -89,9 +88,12 @@ protected:
     virtual void write_packet(Packet* p);
 };
 
+PacketCapture::PacketCapture(CaptureModule* m)
+{ m->get_config(config); }
+
 void PacketCapture::eval(Packet* p)
 {
-    if ( enabled )
+    if ( config.enabled )
     {
         if ( !capture_initialized() )
             if ( !capture_init() )
@@ -112,7 +114,8 @@ void PacketCapture::eval(Packet* p)
 
 bool PacketCapture::capture_init()
 {
-    if ( sfbpf_compile(SNAP_LEN, DLT_EN10MB, &bpf, filter.c_str(), 1, 0) >= 0 )
+    if ( sfbpf_compile(SNAP_LEN, DLT_EN10MB, &bpf,
+        config.filter.c_str(), 1, 0) >= 0 )
     {
         if ( sfbpf_validate(bpf.bf_insns, bpf.bf_len) )
         {

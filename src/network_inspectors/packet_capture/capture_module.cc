@@ -38,7 +38,10 @@ const PegInfo cap_names[] =
 
 static const Parameter s_capture[] =
 {
-    { "filter", Parameter::PT_STRING, nullptr, nullptr,
+    { "enable", Parameter::PT_BOOL, nullptr, "false",
+      "initially enable packet dumping" },
+
+    { "filter", Parameter::PT_STRING, nullptr, "",
       "bpf filter to use for packet dump" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -46,7 +49,7 @@ static const Parameter s_capture[] =
 
 static const Command cap_cmds[] = 
 {
-    { "enable", enable, s_capture, "dump raw packets"},
+    { "enable", enable, &s_capture[1], "dump raw packets"},
     { "disable", disable, nullptr, "stop packet dump"},
     { nullptr, nullptr, nullptr, nullptr }
 };
@@ -66,7 +69,23 @@ static int disable(lua_State*)
     return 0;
 }
 
-CaptureModule::CaptureModule() : Module(CAPTURE_NAME, CAPTURE_HELP){ }
+CaptureModule::CaptureModule() :
+    Module(CAPTURE_NAME, CAPTURE_HELP, s_capture)
+{ memset(&config, 0, sizeof(config)); }
+
+bool CaptureModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("enable") )
+        config.enabled = v.get_bool();
+
+    else if ( v.is("filter") )
+        config.filter = v.get_string();
+
+    else
+        return false;
+
+    return true;
+}
 
 const Command* CaptureModule::get_commands() const
 { return cap_cmds; }
