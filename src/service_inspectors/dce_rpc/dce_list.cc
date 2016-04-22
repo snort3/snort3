@@ -852,9 +852,9 @@ void DCE2_QueueRemoveCurrent(DCE2_Queue* queue)
     queue->prev = queue->current->prev;
 
     if (queue->current == queue->head)
-        queue->head = queue->current->next;
+        queue->head = queue->next;
     if (queue->current == queue->tail)
-        queue->tail = queue->current->prev;
+        queue->tail = queue->prev;
     if (queue->current->prev != nullptr)
         queue->current->prev->next = queue->current->next;
     if (queue->current->next != nullptr)

@@ -602,7 +602,6 @@ static inline uint8_t SmbNtStatusSeverity(const SmbNtHdr* hdr)
     return (uint8_t)(SmbNtStatus(hdr) >> 30);
 }
 
-// PidHigh doesn't seem to matter ever
 static inline uint16_t SmbPid(const SmbNtHdr* hdr)
 {
     return ntohs(hdr->smb_pid);
@@ -1604,7 +1603,7 @@ void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
     if (ssd == nullptr)
         return;
 
-    // XXX This tries to account for the situation where we never knew the file
+    // FIXIT This tries to account for the situation where we never knew the file
     // size and the TCP session was shutdown before an SMB_COM_CLOSE on the file.
     // Possibly need to add callback to fileAPI since it may have already
     // released it's resources.
