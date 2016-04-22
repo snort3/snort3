@@ -55,13 +55,13 @@ static inline bool capture_initialized()
 
 void packet_capture_enable(string f)
 {
-    if ( enabled == true )
+    if ( !enabled )
     {
-        WarningMessage("Conflicting packet capture already in progress.\n");
-        return;
+        filter = f;
+        enabled = true;
     }
-    filter = f;
-    enabled = true;
+    else
+        WarningMessage("Conflicting packet capture already in progress.\n");
 }
 
 void packet_capture_disable()
@@ -78,13 +78,12 @@ class PacketCapture : public Inspector
 {
 public:
     PacketCapture(CaptureModule*) {};
-
     
     void eval(Packet*) override;
     void tterm() override { capture_term(); };
 
 protected:
-    virtual void capture_init();
+    virtual bool capture_init();
     virtual void capture_term();
     virtual pcap_dumper_t* open_dump(pcap_t*, const char*);
     virtual void write_packet(Packet* p);
@@ -95,7 +94,8 @@ void PacketCapture::eval(Packet* p)
     if ( enabled )
     {
         if ( !capture_initialized() )
-            capture_init();
+            if ( !capture_init() )
+                return;
         
         if ( !bpf.bf_insns || sfbpf_filter(bpf.bf_insns, p->pkt,
                 p->pkth->caplen, p->pkth->pktlen) )
@@ -110,7 +110,7 @@ void PacketCapture::eval(Packet* p)
         capture_term();
 }
 
-void PacketCapture::capture_init()
+bool PacketCapture::capture_init()
 {
     if ( sfbpf_compile(SNAP_LEN, DLT_EN10MB, &bpf, filter.c_str(), 1, 0) >= 0 )
     {
@@ -123,7 +123,7 @@ void PacketCapture::capture_init()
             dumper = open_dump(pcap, fname.c_str());
 
             if ( dumper )
-                return;
+                return true;
             else
                 WarningMessage("Could not initialize dump file\n");
         }
@@ -135,6 +135,7 @@ void PacketCapture::capture_init()
 
     packet_capture_disable();
     capture_term();
+    return false;
 }
 
 pcap_dumper_t* PacketCapture::open_dump(pcap_t* pcap, const char* fname)
