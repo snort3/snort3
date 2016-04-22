@@ -20,6 +20,8 @@
 
 #include "capture_module.h"
 
+#include <lua.hpp>
+
 #include "packet_capture.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
