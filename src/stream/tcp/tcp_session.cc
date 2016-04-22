@@ -186,6 +186,20 @@ void TcpSession::restart(Packet* p)
 
 void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p)
 {
+    if ( tcp_init )
+        tcpStats.released++;
+    else if ( lws_init )
+        tcpStats.no_pickups++;
+    else
+        return;
+
+    if (flow->get_session_flags() & SSNFLAG_PRUNED)
+        tcpStats.prunes++;
+    else if (flow->get_session_flags() & SSNFLAG_TIMEDOUT)
+        tcpStats.timeouts++;
+
+    update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
+
     if ( client->reassembler )
     {
         if( flush_segments )
@@ -200,39 +214,27 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
         server->reassembler->purge_segment_list();
     }
 
-    if ( tcp_init )
-        tcpStats.released++;
-    else if ( lws_init )
-        tcpStats.no_pickups++;
-    else
-        return;
-
-    update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
-
-    if (flow->get_session_flags() & SSNFLAG_PRUNED)
-        tcpStats.prunes++;
-    else if (flow->get_session_flags() & SSNFLAG_TIMEDOUT)
-        tcpStats.timeouts++;
-
     if( restart )
     {
         flow->restart(free_flow_data);
         paf_reset(&client->paf_state);
         paf_reset(&server->paf_state);
+
     }
     else
     {
         flow->clear(free_flow_data);
         paf_clear(&client->paf_state);
         paf_clear(&server->paf_state);
-        set_splitter(true, nullptr);
-        set_splitter(false, nullptr);
     }
 
-    // generate event for rate filtering
+    set_splitter(true, nullptr);
+    set_splitter(false, nullptr);
+
     tel.log_internal_event(INTERNAL_EVENT_SESSION_DEL);
 
-    lws_init = tcp_init = false;
+    lws_init = false;
+    tcp_init = false;
 }
 
 void TcpSession::update_perf_base_state(char newState)
