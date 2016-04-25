@@ -51,7 +51,7 @@ bool NullCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
         return false;
 
     data.lyr_len = NULL_HDRLEN;
-    data.next_prot_id = ETHERTYPE_IPV4;
+    data.next_prot_id = ProtocolId::ETHERTYPE_IPV4;
     return true;
 }
 

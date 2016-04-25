@@ -40,16 +40,16 @@ public:
     PimCodec() : Codec(CD_PIM_NAME) { }
     ~PimCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 const uint16_t IPPROTO_ID_PIM = 103;
 } // namespace
 
-void PimCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void PimCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(IPPROTO_ID_PIM);
+    v.push_back(static_cast<ProtocolId>(IPPROTO_ID_PIM));
 }
 
 bool PimCodec::decode(const RawData&, CodecData& codec, DecodeData&)

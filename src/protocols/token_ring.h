@@ -21,6 +21,8 @@
 #define PROTOCOLS_TOKEN_RING_H
 
 #include <cstdint>
+#include <arpa/inet.h>
+#include "protocols/protocol_ids.h"
 
 namespace token_ring
 {
@@ -30,7 +32,16 @@ struct Trh_llc
     uint8_t dsap;
     uint8_t ssap;
     uint8_t protid[3];
-    uint16_t ethertype;
+    uint16_t ether_type;
+
+    /* return data in byte order */
+    inline ProtocolId ethertype() const
+    { return (ProtocolId)ntohs(ether_type); }
+
+    /* return data in network order */
+    inline uint16_t raw_ethertype() const
+    { return ether_type; }
+
 };
 
 /* RIF structure
