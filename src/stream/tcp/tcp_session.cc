@@ -186,20 +186,6 @@ void TcpSession::restart(Packet* p)
 
 void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p)
 {
-    if ( tcp_init )
-        tcpStats.released++;
-    else if ( lws_init )
-        tcpStats.no_pickups++;
-    else
-        return;
-
-    if (flow->get_session_flags() & SSNFLAG_PRUNED)
-        tcpStats.prunes++;
-    else if (flow->get_session_flags() & SSNFLAG_TIMEDOUT)
-        tcpStats.timeouts++;
-
-    update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
-
     if ( client->reassembler )
     {
         if( flush_segments )
@@ -213,6 +199,20 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
             server->reassembler->flush_queued_segments(flow, true, p);
         server->reassembler->purge_segment_list();
     }
+
+    if ( tcp_init )
+        tcpStats.released++;
+    else if ( lws_init )
+        tcpStats.no_pickups++;
+    else
+        return;
+
+    if (flow->get_session_flags() & SSNFLAG_PRUNED)
+        tcpStats.prunes++;
+    else if (flow->get_session_flags() & SSNFLAG_TIMEDOUT)
+        tcpStats.timeouts++;
+
+    update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
 
     if( restart )
     {
