@@ -1,0 +1,110 @@
+Snort++ Extras
+
+Snort++ is all about plugins.  It has over 200 by default and makes it easy
+to add more in C++ or LuaJIT.  This file will walk you through building and
+running a set of extra example plugins.  If you haven't installed and
+verified Snort++, you will need to do that first.  We will cover the
+following topics:
+
+* Overview
+* Download
+* Build Extras
+* Run Extras
+* Next Steps
+
+OVERVIEW
+
+The following things are pluggable in Snort++:
+
+* codec - decode and encode support for a given protocol
+* data - additional configuration for inspectors
+* inspector - replaces Snort preprocessors
+* ips_option - IPS rule option like content and byte_test
+* ips_action - IPS rule action like alert and block
+* search_engine - fast pattern matcher
+* logger - event handers
+* SO rules - dynamic rules
+
+DOWNLOAD
+
+There are two extra tarballs, one for autotools and one for cmake:
+
+    snort_extra-1.0.0-a1-130-auto.tar.gz
+    snort_extra-1.0.0-a1-130-cmake.tar.gz
+
+If you cloned from github, you have already have everything.
+
+BUILD EXTRAS
+
+Follow these steps:
+
+1.  Set up source directory:
+
+* If you are using a github clone:
+
+    cd extra/
+
+* Otherwise do this:
+
+    tar zxf extra-tarball
+    cd snort_extra-1.0.0*
+
+2.  Setup install path using pkgconfig (same as for snort):
+
+    export PKG_CONFIG_PATH=$my_path/lib/pkgconfig
+
+3.  Compile and install:
+
+* To build with autotools, simply do the usual from the top level directory:
+
+    ./configure --prefix=$my_path
+    make
+    make install
+
+* To build with cmake and make:
+
+    mkdir -p build
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX=$my_path ..
+    make
+    make install
+
+Note:
+
+* If you are using autotools with a github clone, first do autoreconf -isvf.
+* cmake --help will list any available generators, such as Xcode.  Feel
+  free to use one, however help with those will be provided separately.
+* each individual plugin directory is a standalone cmake project, and does
+  not depend on any other part of the extra/ build tree
+
+RUN EXTRAS
+
+In the following, replace a.pcap with your favorite.
+
+* The following demonstrates a C++ logger and a LuaJIT logger:
+
+    $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
+        -r a.pcap --plugin-path $my_path/lib/snort_extra -A alert_ex
+
+    $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
+        -r a.pcap --script-path $my_path/lib/snort_extra -A lualert
+
+You can edit $my_path/lib/snort_extra/loggers/alert.lua to tweak the output
+format and rerun the above command to try it out.
+
+* The last example demonstrates a LuaJIT rule option called find.  The rule,
+  supplied on stdin, uses the Lua [[ multiline string ]] delimiters to avoid
+  shell escape issues:
+
+    echo 'alert tcp any any -> any 80 ( sid:1; msg:"test"; http_method; find:"pat = [[GET]]"; )' | \
+        $my_path/bin/snort -c $my_path/etc/snort/snort.lua -r a.pcap \
+            -A cmg --script-path $my_path/lib/snort_extra --stdin-rules
+
+NEXT STEPS o")~
+
+There is no design guide yet but you can develop your own plugins in C++ by
+using the examples as a starting point.  In addition, IPS options and
+loggers can also be written in LuaJIT.  The API may change going forward,
+but you are encouraged to roll your own now and let us know how it goes so
+we can incorporate any suggestions in the final design.
+
