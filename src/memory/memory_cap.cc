@@ -174,7 +174,7 @@ void MemoryCap::calculate(unsigned num_threads)
     auto main_thread_used = s_tracker.used();
 
     if ( main_thread_used > config.cap )
-        FatalError("main thread memory usage (%zu) is greater than cap", main_thread_used);
+        FatalError("main thread memory usage (%zu) is greater than cap\n", main_thread_used);
 
     auto real_cap = config.cap - main_thread_used;
 
