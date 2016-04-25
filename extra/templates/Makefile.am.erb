@@ -13,10 +13,14 @@ lib<%= @project.libname %>_la_CXXFLAGS = $(AM_CXXFLAGS)
 %else
 lib<%= @project.libname %>_la_CFLAGS   = $(AM_CFLAGS)
 %end
-lib<%= @project.libname %>_la_LDFLAGS  = -export-dynamic -shared
+lib<%= @project.libname %>_la_LDFLAGS  = -export-dynamic -shared -avoid-version
 lib<%= @project.libname %>_la_SOURCES  =<% for source in @project.sources %> <%= source %><% end %>
 %end
 %if !@project.scripts.empty?
 
 dist_<%= @project.libname %>lib_SCRIPTS =<% for script in @project.scripts %> <%= script %><% end %>
+%end
+% if !@project.miscs.empty?
+
+EXTRA_DIST =<% for misc in @project.miscs %> <%= misc %><% end %>
 %end

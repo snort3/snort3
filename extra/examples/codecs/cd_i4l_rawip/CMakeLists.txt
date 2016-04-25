@@ -1,4 +1,4 @@
-cmake_minimum_required ( VERSION 3.5.2 )
+cmake_minimum_required ( VERSION 2.8.11 )
 project ( cd_i4l_rawip CXX )
 
 if ( APPLE )
@@ -17,12 +17,7 @@ add_library (
     cd_i4l_rawip.cc
 )
 
-set_target_properties (
-    cd_i4l_rawip
-    PROPERTIES
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED ON
-)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 target_include_directories (
     cd_i4l_rawip PUBLIC

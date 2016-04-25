@@ -1,5 +1,5 @@
 %if @generate.project_boilerplate
-cmake_minimum_required ( VERSION <%= @cmake.version %> )
+cmake_minimum_required ( VERSION 2.8.11 )
 project ( <%= @project.name %><% if @project.language == "CXX" %> CXX<% elsif @project.language == "C" %> C<% end %> )
 %end
 %if !@project.sources.empty?
@@ -25,12 +25,7 @@ add_library (
 )
 %if @project.language == "CXX"
 
-set_target_properties (
-    <%= @project.libname %>
-    PROPERTIES
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED ON
-)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 %end
 
 target_include_directories (

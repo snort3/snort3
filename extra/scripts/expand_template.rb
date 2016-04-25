@@ -23,14 +23,15 @@ class Automake < Build
 end
 
 class Project
-  attr_reader :name, :libname, :dirname, :sources, :scripts, :language
+  attr_reader :name, :libname, :dirname, :sources, :scripts, :miscs, :language
 
-  def initialize(name, libname, dirname, sources, scripts, language)
+  def initialize(name, libname, dirname, sources, scripts, miscs, language)
     @name = name
     @libname = libname
     @dirname = dirname
     @sources = sources
     @scripts = scripts
+    @miscs = miscs
     @language = language
   end
 end
@@ -118,6 +119,12 @@ def main
     File.basename path
   end.sort
 
+  project_miscs = Dir[File.join(project_dir, "*.txt")].collect do |path|
+    File.basename path
+  end.select do |name|
+    !["CMakeLists.txt"].include?(name)
+  end.sort
+
   if !project_cxx_sources.empty?
     project_language = "CXX"
   elsif !project_c_sources.empty?
@@ -133,6 +140,7 @@ def main
     project_dirname,
     project_sources,
     project_scripts,
+    project_miscs,
     project_language
 
   build = Build.new({cmake: cmake}, project, generate)
