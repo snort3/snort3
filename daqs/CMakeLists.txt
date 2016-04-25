@@ -1,21 +1,32 @@
+macro ( add_daq_module libname )
+    set ( sources ${ARGN} )
+    add_library ( ${libname} MODULE ${sources} )
+    set_target_properties (
+        ${libname}
+        PROPERTIES
+            COMPILE_FLAGS "-DBUILDING_SO"
+            C_STANDARD 99
+    )
 
-set (DAQS_INCLUDES
-    daq_user.h
-)
+    install (
+        TARGETS ${libname}
+        LIBRARY
+        DESTINATION "lib/${CMAKE_PROJECT_NAME}/daqs"
+    )
+endmacro ( add_daq_module )
 
-set(EXTERNAL_INCLUDES
+set ( DAQS_INCLUDES daq_user.h )
+set(
+    EXTERNAL_INCLUDES
     ${DAQ_INCLUDE_DIR}
     ${PCAP_INCLUDE_DIR}
     ${DNET_INCLUDE_DIR}
 )
 
-include_directories(AFTER ${EXTERNAL_INCLUDES})
+include_directories ( AFTER ${EXTERNAL_INCLUDES} )
 
-add_shared_library(daq_file daqs daq_file.c daq_user.h)
-add_shared_library(daq_hext daqs daq_hext.c daq_user.h)
-
-set_property(TARGET daq_file PROPERTY C_STANDARD 99)
-set_property(TARGET daq_hext PROPERTY C_STANDARD 99)
+add_daq_module ( daq_file daq_file.c )
+add_daq_module ( daq_hext daq_hext.c )
 
 install (FILES ${DAQS_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/daqs"
