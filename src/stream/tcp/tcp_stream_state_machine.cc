@@ -36,16 +36,6 @@
 
 TcpStreamStateMachine::TcpStreamStateMachine()
 {
-    // TODO Auto-generated destructor stub
-}
-
-TcpStreamStateMachine::~TcpStreamStateMachine()
-{
-    // TODO Auto-generated destructor stub
-}
-
-void TcpStreamStateMachine::initialize_tsm(void)
-{
     // initialize stream tracker state machine with handler for each state...
     new TcpStateNone(*this);
     new TcpStateClosed(*this);
@@ -61,3 +51,7 @@ void TcpStreamStateMachine::initialize_tsm(void)
     new TcpStateTimeWait(*this);
 }
 
+TcpStreamStateMachine::~TcpStreamStateMachine()
+{
+    // base class dtor deletes all the state handlers...
+}

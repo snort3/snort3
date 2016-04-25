@@ -32,15 +32,8 @@ public:
 
     static TcpStateMachine* get_instance( void )
     {
-        static TcpStreamStateMachine* tsm = nullptr;
-
-        if( !tsm )
-        {
-            tsm = new TcpStreamStateMachine;
-            tsm->initialize_tsm();
-        }
-
-        return tsm;
+        static TcpStreamStateMachine tsm;
+        return &tsm;
     }
 
 private:
