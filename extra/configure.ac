@@ -1,4 +1,4 @@
-AC_INIT([snort_extra], [1.0.0-a4], [me@example.com])
+AC_INIT([snort_extra], [1.0.0-a4], [snort-team@cisco.com])
 AC_PREREQ(2.69)
 
 AM_INIT_AUTOMAKE([foreign])
