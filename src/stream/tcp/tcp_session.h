@@ -54,12 +54,12 @@ public:
     void flush_talker(Packet*) override;
     void flush_listener(Packet*) override;
 
+    virtual void clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p = nullptr) override;
+
     void set_extra_data(Packet*, uint32_t /*flag*/) override;
     void clear_extra_data(Packet*, uint32_t /*flag*/) override;
 
-    void cleanup_session(bool freeAppData, Packet* = nullptr) override;
-
-    void update_perf_base_state(char newState) override;
+    void update_perf_base_state(char new_state) override;
     TcpStreamTracker::TcpState get_talker_state(void) override;
     TcpStreamTracker::TcpState get_listener_state(void) override;
     void update_timestamp_tracking(TcpSegmentDescriptor&) override;
@@ -77,24 +77,21 @@ public:
     bool validate_packet_established_session(TcpSegmentDescriptor&) override;
 
 private:
+    void set_os_policy() override;
     bool flow_exceeds_config_thresholds(TcpSegmentDescriptor&);
     void process_tcp_stream(TcpSegmentDescriptor&);
     int process_tcp_data(TcpSegmentDescriptor&);
     void process_tcp_packet(TcpSegmentDescriptor&);
     void swap_trackers();
-
     void NewTcpSessionOnSyn(TcpSegmentDescriptor&);
     void NewTcpSessionOnSynAck(TcpSegmentDescriptor&);
-    void set_os_policy() override;
-
-    void clear_session(bool freeAppData) override;
-
     int process_dis(Packet*);
     void update_on_3whs_complete(TcpSegmentDescriptor&);
-    bool is_flow_handling_packets(Packet* p);
-    void cleanup_session_if_expired(Packet* p);
-    bool do_packet_analysis_pre_checks(Packet* p, TcpSegmentDescriptor& tsd);
-    void do_packet_analysis_post_checks(Packet* p);
+    bool is_flow_handling_packets(Packet*);
+    void cleanup_session_if_expired(Packet*);
+    bool do_packet_analysis_pre_checks(Packet*, TcpSegmentDescriptor&);
+    void do_packet_analysis_post_checks(Packet*);
+
 
     TcpStateMachine tsm;
 };

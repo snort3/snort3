@@ -127,7 +127,7 @@ TcpSession::TcpSession(Flow* flow) : TcpStreamSession(flow)
 TcpSession::~TcpSession(void)
 {
     if (tcp_init)
-        clear_session(true);
+        clear_session(true, false, false);
 
     delete client;
     delete server;
@@ -184,9 +184,8 @@ void TcpSession::restart(Packet* p)
 // make sense of the code in this file.
 //-------------------------------------------------------------------------
 
-void TcpSession::clear_session(bool freeAppData)
+void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p)
 {
-    // update stats
     if ( tcp_init )
         tcpStats.released++;
     else if ( lws_init )
@@ -194,51 +193,48 @@ void TcpSession::clear_session(bool freeAppData)
     else
         return;
 
-    update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
-
     if (flow->get_session_flags() & SSNFLAG_PRUNED)
         tcpStats.prunes++;
     else if (flow->get_session_flags() & SSNFLAG_TIMEDOUT)
         tcpStats.timeouts++;
 
-    DebugFormat(DEBUG_STREAM_STATE, "In TcpSessionClear, %lu bytes in use\n", tcp_memcap->used());
+    update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
 
     if ( client->reassembler )
     {
-        DebugFormat(DEBUG_STREAM_STATE, "client has %d segs queued, freeing all.\n",
-            client->reassembler->get_seg_count());
+        if( flush_segments )
+            client->reassembler->flush_queued_segments(flow, true, p);
         client->reassembler->purge_segment_list();
     }
 
     if ( server->reassembler )
     {
-        DebugFormat(DEBUG_STREAM_STATE, "server has %d segs queued, freeing all\n",
-            server->reassembler->get_seg_count());
+        if( flush_segments )
+            server->reassembler->flush_queued_segments(flow, true, p);
         server->reassembler->purge_segment_list();
     }
 
-    flow->clear(freeAppData);
-    paf_clear(&client->paf_state);
-    paf_clear(&server->paf_state);
+    if( restart )
+    {
+        flow->restart(free_flow_data);
+        paf_reset(&client->paf_state);
+        paf_reset(&server->paf_state);
+
+    }
+    else
+    {
+        flow->clear(free_flow_data);
+        paf_clear(&client->paf_state);
+        paf_clear(&server->paf_state);
+    }
+
     set_splitter(true, nullptr);
     set_splitter(false, nullptr);
 
-    // generate event for rate filtering
     tel.log_internal_event(INTERNAL_EVENT_SESSION_DEL);
 
-    DebugFormat(DEBUG_STREAM_STATE, "After cleaning, %lu bytes in use\n", tcp_memcap->used());
-
-    lws_init = tcp_init = false;
-}
-
-void TcpSession::cleanup_session(bool freeAppData, Packet* p)
-{
-    if ( client->reassembler != nullptr )
-        client->reassembler->flush_queued_segments(flow, true, p);
-    if ( server->reassembler != nullptr )
-        server->reassembler->flush_queued_segments(flow, true, p);
-
-    clear_session(freeAppData);
+    lws_init = false;
+    tcp_init = false;
 }
 
 void TcpSession::update_perf_base_state(char newState)
@@ -327,7 +323,7 @@ void TcpSession::update_perf_base_state(char newState)
 
 bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
 {
-    if (listener->flush_policy == STREAM_FLPOLICY_IGNORE)
+    if ( listener->flush_policy == STREAM_FLPOLICY_IGNORE )
     {
         DebugMessage(DEBUG_STREAM_STATE, "Ignoring segment due to IGNORE flush_policy\n");
         return true;
@@ -336,8 +332,8 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
     if ( ( config->flags & STREAM_CONFIG_NO_ASYNC_REASSEMBLY ) && !flow->two_way_traffic() )
         return true;
 
-    if ( config->max_consec_small_segs && ( tsd.get_seg_len() <
-        config->max_consec_small_seg_size ) )
+    if ( config->max_consec_small_segs
+            && ( tsd.get_seg_len() < config->max_consec_small_seg_size ) )
     {
         listener->small_seg_count++;
 
@@ -579,7 +575,7 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
         DebugMessage(DEBUG_STREAM_STATE, "Got SYN pkt on reset ssn, re-SYN-ing\n");
 
         // FIXIT-L this leads to bogus 129:20
-        cleanup_session(true);
+        clear_session( true, true, true, tsd.get_pkt() );
 
         if ( tcph->is_rst() )
         {
@@ -1069,20 +1065,12 @@ void TcpSession::cleanup_session_if_expired(Packet* p)
     // the packet...Insert a packet, or handle state change SYN, FIN, RST, etc.
     if (stream.expired_session(flow, p))
     {
-        /* Session is timed out */
+        /* Session is timed out, if also reset then restart, otherwise clear */
         if (flow->get_session_flags() & SSNFLAG_RESET)
-        {
-            /* If this one has been reset, delete the TCP
-             * portion, and start a new. */
-            cleanup_session(true);
-        }
+            clear_session(true, true, true, p);
         else
-        {
-            DebugMessage(DEBUG_STREAM_STATE, "Stream TCP session timedout!\n");
+            clear_session(true, true, false, p);
 
-            /* Not reset, simply time'd out.  Clean it up */
-            cleanup_session(true);
-        }
         tcpStats.timeouts++;
     }
 }

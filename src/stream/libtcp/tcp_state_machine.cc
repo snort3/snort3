@@ -25,14 +25,8 @@
 
 TcpStateMachine::TcpStateMachine(void)
 {
-    TcpStreamSession session(nullptr);
-
-    // register a default handler for each state...
     for ( auto s = TcpStreamTracker::TCP_LISTEN; s < TcpStreamTracker::TCP_MAX_STATES; s++ )
-    {
         tcp_state_handlers[ s ] = nullptr;
-        new TcpStateHandler(s, *this, session);
-    }
 }
 
 TcpStateMachine::~TcpStateMachine(void)
