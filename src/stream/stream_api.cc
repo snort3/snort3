@@ -560,7 +560,7 @@ static void active_response(Packet* p, Flow* lwssn)
 {
     uint8_t max = snort_conf->max_responses;
 
-    if ( p->packet_flags & PKT_FROM_CLIENT )
+    if ( p->is_from_client() )
         lwssn->session_state |= STREAM_STATE_DROP_CLIENT;
     else
         lwssn->session_state |= STREAM_STATE_DROP_SERVER;
@@ -587,15 +587,15 @@ bool Stream::blocked_session(Flow* flow, Packet* p)
         return false;
 
     if (
-        ((p->packet_flags & PKT_FROM_SERVER) &&
+        ((p->is_from_server()) &&
         (flow->ssn_state.session_flags & SSNFLAG_DROP_SERVER)) ||
 
-        ((p->packet_flags & PKT_FROM_CLIENT) &&
+        ((p->is_from_client()) &&
         (flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT)) )
     {
         DebugFormat(DEBUG_STREAM_STATE,
             "Blocking %s packet as session was blocked\n",
-            p->packet_flags & PKT_FROM_SERVER ?  "server" : "client");
+            p->is_from_server() ?  "server" : "client");
 
         DisableDetect();
         Active::drop_packet(p);
@@ -607,14 +607,14 @@ bool Stream::blocked_session(Flow* flow, Packet* p)
 
 bool Stream::ignored_session(Flow* flow, Packet* p)
 {
-    if (((p->packet_flags & PKT_FROM_SERVER) &&
+    if (((p->is_from_server()) &&
         (flow->ssn_state.ignore_direction & SSN_DIR_FROM_CLIENT)) ||
-        ((p->packet_flags & PKT_FROM_CLIENT) &&
+        ((p->is_from_client()) &&
         (flow->ssn_state.ignore_direction & SSN_DIR_FROM_SERVER)) )
     {
         DebugFormat(DEBUG_STREAM_STATE,
             "Stream Ignoring packet from %d. Session marked as ignore\n",
-            p->packet_flags & PKT_FROM_CLIENT ? "sender" : "responder");
+            p->is_from_client() ? "sender" : "responder");
 
         DisableInspection();
         return true;

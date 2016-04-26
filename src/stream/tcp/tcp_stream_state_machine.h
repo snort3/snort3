@@ -16,31 +16,30 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_state_machine.h author davis mcpherson <davmcphe@@cisco.com>
-// Created on: Jul 29, 2015
+// tcp_stream_state_machine.h author davis mcpherson <davmcphe@@cisco.com>
+// Created on: Apr 1, 2016
 
-#ifndef TCP_STATE_MACHINE_H
-#define TCP_STATE_MACHINE_H
+#ifndef TCP_STREAM_STATE_MACHINE_H_
+#define TCP_STREAM_STATE_MACHINE_H_
 
-#include <memory>
+#include "stream/libtcp/tcp_state_machine.h"
 
-#include "tcp_state_handler.h"
-#include "tcp_stream_tracker.h"
-#include "tcp_segment_descriptor.h"
-
-class TcpStateMachine
+class TcpStreamStateMachine: public TcpStateMachine
 {
 public:
-    virtual ~TcpStateMachine(void);
+    virtual ~TcpStreamStateMachine();
 
-    virtual void register_state_handler(TcpStreamTracker::TcpState, TcpStateHandler&);
-    virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&, TcpStreamTracker&);
 
-protected:
-    TcpStateMachine(void);
+    static TcpStateMachine* get_instance( void )
+    {
+        static TcpStreamStateMachine tsm;
+        return &tsm;
+    }
 
-    TcpStateHandler* tcp_state_handlers[ TcpStreamTracker::TCP_MAX_STATES ];
+private:
+    TcpStreamStateMachine();
+    void initialize_tsm(void);
+
 };
-
 #endif
 

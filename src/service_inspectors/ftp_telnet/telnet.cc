@@ -139,11 +139,11 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet* p)
                 }
                 else
                 {
-                    if ( p->packet_flags & PKT_FROM_SERVER )
+                    if ( p->is_from_server() )
                     {
                         iInspectMode = FTPP_SI_SERVER_MODE;
                     }
-                    else if ( p->packet_flags & PKT_FROM_CLIENT )
+                    else if ( p->is_from_client() )
                     {
                         iInspectMode = FTPP_SI_CLIENT_MODE;
                     }

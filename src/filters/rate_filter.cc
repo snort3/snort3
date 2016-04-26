@@ -147,7 +147,7 @@ int RateFilter_Test(
     {
         // at present stream connection events are the only internal
         // events and these require: src -> client, dst -> server.
-        if ( p->packet_flags & PKT_FROM_SERVER )
+        if ( p->is_from_server() )
         {
             return SFRF_TestThreshold(
                 snort_conf->rate_filter_config, gid, sid, dip, sip,

@@ -197,10 +197,10 @@ static inline uint32_t SSLPP_process_alert(
 
     /* Need to negate the application flags from the opposing side. */
 
-    if (packet->packet_flags & PKT_FROM_CLIENT)
+    if (packet->is_from_client())
         return ssn_flags & ~SSL_SAPP_FLAG;
 
-    else if (packet->packet_flags & PKT_FROM_SERVER)
+    else if (packet->is_from_server())
         return ssn_flags & ~SSL_CAPP_FLAG;
 
     return ssn_flags;
@@ -317,7 +317,7 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 
     SSL_CLEAR_TEMPORARY_FLAGS(sd->ssn_flags);
 
-    uint8_t dir = (p->packet_flags & PKT_FROM_SERVER) ? 1 : 0;
+    uint8_t dir = (p->is_from_server()) ? 1 : 0;
     uint8_t index = (p->packet_flags & PKT_REBUILT_STREAM) ? 2 : 0;
 
     uint8_t heartbleed_type = 0;

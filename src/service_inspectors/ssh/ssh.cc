@@ -190,7 +190,7 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
     uint32_t search_dir_keyinit;
 
     // Get the direction of the packet.
-    if ( p->packet_flags & PKT_FROM_SERVER )
+    if ( p->is_from_server() )
     {
         direction = SSH_DIR_FROM_SERVER;
         search_dir_ver = SSH_FLG_SERV_IDSTRING_SEEN;

@@ -1049,7 +1049,7 @@ static void snort_dns(Packet* p)
     }
 
     // Get the direction of the packet.
-    bool from_server = ( (p->packet_flags & PKT_FROM_SERVER ) ? true : false );
+    bool from_server = ( (p->is_from_server() ) ? true : false );
 
 
     // Attempt to get a previously allocated DNS block.

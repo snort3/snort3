@@ -29,7 +29,7 @@ class TcpSession;
 class TcpStateSynRecv : public TcpStateHandler
 {
 public:
-    TcpStateSynRecv(TcpStateMachine&, TcpSession&);
+    TcpStateSynRecv(TcpStateMachine&);
     virtual ~TcpStateSynRecv(void);
 
     bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
@@ -45,7 +45,7 @@ public:
     bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
 
-    bool do_post_sm_packet_actions(TcpSegmentDescriptor&) override;
+    bool do_post_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&) override;
 };
 
 #endif

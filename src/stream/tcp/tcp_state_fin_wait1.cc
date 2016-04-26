@@ -32,8 +32,8 @@ using namespace std;
 #include "catch/catch.hpp"
 #endif
 
-TcpStateFinWait1::TcpStateFinWait1(TcpStateMachine& tsm, TcpSession& ssn) :
-    TcpStateHandler(TcpStreamTracker::TCP_FIN_WAIT1, tsm, ssn)
+TcpStateFinWait1::TcpStateFinWait1(TcpStateMachine& tsm) :
+    TcpStateHandler(TcpStreamTracker::TCP_FIN_WAIT1, tsm)
 {
 }
 
@@ -41,97 +41,78 @@ TcpStateFinWait1::~TcpStateFinWait1()
 {
 }
 
-bool TcpStateFinWait1::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateFinWait1::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    session.check_for_repeated_syn(tsd);
+    trk.session->check_for_repeated_syn(tsd);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateFinWait1::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateFinWait1::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    trk.normalizer->ecn_tracker(tsd.get_tcph(), session.config->require_3whs() );
+    trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
     if ( tsd.get_seg_len() )
-        session.handle_data_on_syn(tsd);
+        trk.session->handle_data_on_syn(tsd);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateFinWait1::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateFinWait1::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateFinWait1::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateFinWait1::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     if ( tsd.get_seg_len() )
-        session.handle_data_on_syn(tsd);
+        trk.session->handle_data_on_syn(tsd);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateFinWait1::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateFinWait1::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     trk.update_tracker_ack_sent(tsd);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateFinWait1::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateFinWait1::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     trk.update_tracker_ack_recv(tsd);
     check_for_window_slam(tsd, trk);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateFinWait1::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateFinWait1::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     trk.update_tracker_ack_sent(tsd);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateFinWait1::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateFinWait1::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     trk.update_tracker_ack_recv(tsd);
     if ( check_for_window_slam(tsd, trk) )
     {
         if ( tsd.get_seg_len() > 0 )
-            session.handle_data_segment(tsd);
+            trk.session->handle_data_segment(tsd);
     }
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateFinWait1::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateFinWait1::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     trk.update_tracker_ack_sent(tsd);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateFinWait1::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateFinWait1::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
     Flow* flow = tsd.get_flow();
 
     trk.update_tracker_ack_recv(tsd);
@@ -141,7 +122,7 @@ bool TcpStateFinWait1::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tra
     {
         //session.handle_fin_recv_in_fw1(tsd);
         if ( tsd.get_seg_len() > 0 )
-            session.handle_data_segment(tsd);
+            trk.session->handle_data_segment(tsd);
 
         if ( !flow->two_way_traffic() )
             trk.set_tf_flags(TF_FORCE_FLUSH);
@@ -152,31 +133,27 @@ bool TcpStateFinWait1::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tra
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateFinWait1::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateFinWait1::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateFinWait1::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateFinWait1::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     if ( trk.update_on_rst_recv(tsd) )
     {
-        session.update_session_on_rst(tsd, true);
-        session.update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
-        session.set_pkt_action_flag(ACTION_RST);
+        trk.session->update_session_on_rst(tsd, true);
+        trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
+        trk.session->set_pkt_action_flag(ACTION_RST);
     }
     else
     {
-        session.tel.set_tcp_event(EVENT_BAD_RST);
+        trk.session->tel.set_tcp_event(EVENT_BAD_RST);
     }
 
     // FIXIT - might be good to create alert specific to RST with data
     if ( tsd.get_seg_len() > 0 )
-        session.tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
+        trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
 
     return default_state_action(tsd, trk);
 }
@@ -191,12 +168,12 @@ bool TcpStateFinWait1::check_for_window_slam(TcpSegmentDescriptor& tsd, TcpStrea
         if ( (trk.normalizer->get_os_policy() == StreamPolicy::OS_WINDOWS)
             && (tsd.get_seg_wnd() == 0))
         {
-            session.tel.set_tcp_event(EVENT_WINDOW_SLAM);
+            trk.session->tel.set_tcp_event(EVENT_WINDOW_SLAM);
             inc_tcp_discards();
 
             if (trk.normalizer->packet_dropper(tsd, NORM_TCP_BLOCK))
             {
-                session.set_pkt_action_flag(ACTION_BAD_PKT);
+                trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
                 return false;
             }
         }
@@ -207,15 +184,15 @@ bool TcpStateFinWait1::check_for_window_slam(TcpSegmentDescriptor& tsd, TcpStrea
     return true;
 }
 
-bool TcpStateFinWait1::do_pre_sm_packet_actions(TcpSegmentDescriptor& tsd)
+bool TcpStateFinWait1::do_pre_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    return session.validate_packet_established_session(tsd);
+    return trk.session->validate_packet_established_session(tsd);
 }
 
-bool TcpStateFinWait1::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd)
+bool TcpStateFinWait1::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    session.update_paws_timestamps(tsd);
-    session.check_for_window_slam(tsd);
+    trk.session->update_paws_timestamps(tsd);
+    trk.session->check_for_window_slam(tsd);
     return true;
 }
 

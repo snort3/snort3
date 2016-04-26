@@ -83,9 +83,9 @@ static void ff_dir(Args& a)
 {
     const char* dir;
 
-    if ( a.pkt->packet_flags & PKT_FROM_CLIENT )
+    if ( a.pkt->is_from_client() )
         dir = "C2S";
-    else if ( a.pkt->packet_flags & PKT_FROM_SERVER )
+    else if ( a.pkt->is_from_server() )
         dir = "S2C";
     else
         dir = "UNK";

@@ -149,7 +149,7 @@ void ReactAction::exec(Packet* p)
 
 void ReactAction::send(Packet* p)
 {
-    EncodeFlags df = (p->packet_flags & PKT_FROM_SERVER) ? ENC_FLAG_FWD : 0;
+    EncodeFlags df = (p->is_from_server()) ? ENC_FLAG_FWD : 0;
     EncodeFlags sent = config->buf_len;
 
     if ( p->packet_flags & PKT_STREAM_EST )

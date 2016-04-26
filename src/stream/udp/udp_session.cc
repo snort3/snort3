@@ -80,7 +80,7 @@ static int ProcessUdp(
         return 0;
 
     /* if both seen, mark established */
-    if (p->packet_flags & PKT_FROM_SERVER)
+    if (p->is_from_server())
     {
         DebugMessage(DEBUG_STREAM_STATE,
             "Stream: Updating on packet from responder\n");

@@ -164,7 +164,7 @@ void SFRF_ShowObjects(RateFilterConfig*);
 
 inline void enable_internal_event(RateFilterConfig* config, uint32_t sid)
 {
-    if (config == NULL)
+    if (config == nullptr)
         return;
 
     config->internal_event_mask |= (1 << sid);
@@ -172,7 +172,7 @@ inline void enable_internal_event(RateFilterConfig* config, uint32_t sid)
 
 inline bool is_internal_event_enabled(RateFilterConfig* config, uint32_t sid)
 {
-    if (config == NULL)
+    if (config == nullptr)
         return false;
 
     return (config->internal_event_mask & (1 << sid));

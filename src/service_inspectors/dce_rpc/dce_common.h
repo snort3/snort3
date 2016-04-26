@@ -279,12 +279,12 @@ inline uint16_t DCE2_GcMaxFragLen(dce2CommonProtoConf* config)
 
 inline int DCE2_SsnFromServer(Packet* p)
 {
-    return p->from_server();
+    return p->is_from_server();
 }
 
 inline int DCE2_SsnFromClient(Packet* p)
 {
-    return p->from_client();
+    return p->is_from_client();
 }
 
 inline DCE2_Policy DCE2_SsnGetPolicy(DCE2_SsnData* sd)

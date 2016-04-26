@@ -383,7 +383,7 @@ static inline uint8_t GetTTL(const Packet* const p, bool forward)
     if ( !p->flow )
         return 0;
 
-    if ( p->packet_flags & PKT_FROM_CLIENT )
+    if ( p->is_from_client() )
         dir = forward ? FROM_CLIENT : FROM_SERVER;
     else
         dir = forward ? FROM_SERVER : FROM_CLIENT;

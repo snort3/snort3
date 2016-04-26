@@ -32,8 +32,8 @@ using namespace std;
 #include "catch/catch.hpp"
 #endif
 
-TcpStateSynSent::TcpStateSynSent(TcpStateMachine& tsm, TcpSession& ssn) :
-    TcpStateHandler(TcpStreamTracker::TCP_SYN_SENT, tsm, ssn)
+TcpStateSynSent::TcpStateSynSent(TcpStateMachine& tsm) :
+    TcpStateHandler(TcpStreamTracker::TCP_SYN_SENT, tsm)
 {
 }
 
@@ -41,143 +41,121 @@ TcpStateSynSent::~TcpStateSynSent()
 {
 }
 
-bool TcpStateSynSent::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateSynSent::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    session.check_for_repeated_syn(tsd);
+    trk.session->check_for_repeated_syn(tsd);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateSynSent::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateSynSent::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     trk.finish_client_init(tsd);
     if ( tsd.get_seg_len() )
-        session.handle_data_on_syn(tsd);
+        trk.session->handle_data_on_syn(tsd);
     trk.set_tcp_state(TcpStreamTracker::TCP_SYN_RECV);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateSynSent::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateSynSent::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateSynSent::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateSynSent::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     if ( trk.update_on_3whs_ack(tsd) )
     {
-        session.update_timestamp_tracking(tsd);
+        trk.session->update_timestamp_tracking(tsd);
         if ( tsd.get_seg_len() )
-            session.handle_data_on_syn(tsd);
+            trk.session->handle_data_on_syn(tsd);
     }
     else
-        session.set_pkt_action_flag(ACTION_BAD_PKT);
+        trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateSynSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateSynSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     Flow* flow = tsd.get_flow();
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
     // FIXIT - verify ack being sent is valid...
     trk.update_tracker_ack_sent(tsd);
     flow->set_session_flags(SSNFLAG_ESTABLISHED);
     flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
-    session.update_timestamp_tracking(tsd);
-    session.update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
+    trk.session->update_timestamp_tracking(tsd);
+    trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateSynSent::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateSynSent::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     if ( tsd.get_seg_len() > 0 )
-        session.handle_data_segment(tsd);
+        trk.session->handle_data_segment(tsd);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateSynSent::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateSynSent::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     Flow* flow = tsd.get_flow();
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
 
     // FIXIT - verify ack being sent is valid...
     trk.update_tracker_ack_sent(tsd);
     flow->set_session_flags(SSNFLAG_ESTABLISHED);
     flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
-    session.update_timestamp_tracking(tsd);
-    session.update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
+    trk.session->update_timestamp_tracking(tsd);
+    trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateSynSent::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateSynSent::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    session.handle_data_segment(tsd);
+    trk.session->handle_data_segment(tsd);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateSynSent::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateSynSent::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateSynSent::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateSynSent::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     if ( tsd.get_seg_len() > 0 )
-        session.handle_data_segment(tsd);
+        trk.session->handle_data_segment(tsd);
 
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateSynSent::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateSynSent::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateSynSent::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateSynSent::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     if ( trk.update_on_rst_recv(tsd) )
     {
-        session.update_session_on_rst(tsd, false);
-        session.update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
-        session.set_pkt_action_flag(ACTION_RST);
+        trk.session->update_session_on_rst(tsd, false);
+        trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
+        trk.session->set_pkt_action_flag(ACTION_RST);
     }
     else
     {
-        session.tel.set_tcp_event(EVENT_BAD_RST);
+        trk.session->tel.set_tcp_event(EVENT_BAD_RST);
     }
 
     // FIXIT - might be good to create alert specific to RST with data
     if ( tsd.get_seg_len() > 0 )
-        session.tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
+        trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
 
     return default_state_action(tsd, trk);
 }

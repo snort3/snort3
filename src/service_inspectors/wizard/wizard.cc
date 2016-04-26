@@ -188,7 +188,7 @@ void Wizard::eval(Packet* p)
         return;
 
     Wand wand;
-    reset(wand, false, p->packet_flags & PKT_FROM_CLIENT);
+    reset(wand, false, p->is_from_client());
 
     if ( cast_spell(wand, p->flow, p->data, p->dsize) )
         ++tstats.udp_hits;

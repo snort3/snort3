@@ -429,7 +429,7 @@ bool ModbusDecode(Packet* p)
 
     /* Read the Modbus payload and check lengths against the expected length for
        each function. */
-    if (p->packet_flags & PKT_FROM_CLIENT)
+    if (p->is_from_client())
         ModbusCheckRequestLengths(&mfd->ssn_data, p);
     else
         ModbusCheckResponseLengths(&mfd->ssn_data, p);

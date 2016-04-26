@@ -623,7 +623,7 @@ void TcpReassembler::prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags)
     else
     {
         // reverse
-        if (p->packet_flags & PKT_FROM_CLIENT)
+        if (p->is_from_client())
             s5_pkt->packet_flags |= PKT_FROM_SERVER;
         else
             s5_pkt->packet_flags |= PKT_FROM_CLIENT;
@@ -919,9 +919,9 @@ uint32_t TcpReassembler::get_reverse_packet_dir(const Packet* p)
      * is the ACK from the talker and we're flushing packets
      * that actually came from the listener.
      */
-    if ( p->packet_flags & PKT_FROM_SERVER )
+    if ( p->is_from_server() )
         return PKT_FROM_CLIENT;
-    else if ( p->packet_flags & PKT_FROM_CLIENT )
+    else if ( p->is_from_client() )
         return PKT_FROM_SERVER;
 
     return 0;
@@ -929,9 +929,9 @@ uint32_t TcpReassembler::get_reverse_packet_dir(const Packet* p)
 
 uint32_t TcpReassembler::get_forward_packet_dir(const Packet* p)
 {
-    if ( p->packet_flags & PKT_FROM_SERVER )
+    if ( p->is_from_server() )
         return PKT_FROM_SERVER;
-    else if ( p->packet_flags & PKT_FROM_CLIENT )
+    else if ( p->is_from_client() )
         return PKT_FROM_CLIENT;
 
     return 0;

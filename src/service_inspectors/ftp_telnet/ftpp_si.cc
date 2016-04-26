@@ -223,8 +223,8 @@ static int FTPInitConf(
      * session, so we can still assume that the initial packet is the client
      * talking.
      */
-    iServerDip = (p->packet_flags & PKT_FROM_CLIENT);
-    iServerSip = (p->packet_flags & PKT_FROM_SERVER);
+    iServerDip = (p->is_from_client());
+    iServerSip = (p->is_from_server());
 
     /*
      * We default to the no FTP traffic case
@@ -501,11 +501,11 @@ int SetSiInput(FTPP_SI_INPUT* SiInput, Packet* p)
     {
         SiInput->pdir = FTPP_SI_NO_MODE;
     }
-    else if (p->packet_flags & PKT_FROM_SERVER)
+    else if (p->is_from_server())
     {
         SiInput->pdir = FTPP_SI_SERVER_MODE;
     }
-    else if (p->packet_flags & PKT_FROM_CLIENT)
+    else if (p->is_from_client())
     {
         SiInput->pdir = FTPP_SI_CLIENT_MODE;
     }

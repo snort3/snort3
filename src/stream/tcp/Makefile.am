@@ -2,10 +2,12 @@
 noinst_LIBRARIES = libstream_tcp.a
 
 libstream_tcp_a_SOURCES = \
-stream_tcp.cc \
-stream_tcp.h \
+ips_stream_reassemble.cc \
+ips_stream_size.cc \
 segment_overlap_editor.h \
 segment_overlap_editor.cc \
+stream_tcp.cc \
+stream_tcp.h \
 tcp_module.cc \
 tcp_module.h \
 tcp_debug_trace.h \
@@ -52,8 +54,8 @@ tcp_state_none.h \
 tcp_state_syn_recv.h \
 tcp_state_syn_sent.h \
 tcp_state_time_wait.h \
-ips_stream_reassemble.cc \
-ips_stream_size.cc
+tcp_stream_state_machine.cc \
+tcp_stream_state_machine.h
 
 #if BUILD_CPPUTESTS
 #SUBDIRS = test
