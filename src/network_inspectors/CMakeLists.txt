@@ -23,7 +23,6 @@ target_link_libraries( network_inspectors
     ${STATIC_INSPECTOR_LIBS}
     binder
     normalize
-    packet_capture
     perf_monitor
     port_scan
     reputation 
