@@ -45,7 +45,7 @@ public:
 
 bool Raw6Codec::decode(const RawData&, CodecData& data, DecodeData&)
 {
-    data.next_prot_id = ETHERTYPE_IPV6;
+    data.next_prot_id = ProtocolId::ETHERTYPE_IPV6;
     return true;
 }
 

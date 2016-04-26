@@ -55,7 +55,7 @@ public:
     ~EapolCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
 
 private:
     void DecodeEAP(const RawData&, const CodecData&);
@@ -63,8 +63,8 @@ private:
 };
 } // namespace
 
-void EapolCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(ETHERTYPE_EAPOL); }
+void EapolCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::ETHERTYPE_EAPOL); }
 
 void EapolCodec::DecodeEAP(const RawData& raw, const CodecData& codec)
 {

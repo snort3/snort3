@@ -208,12 +208,12 @@ bool PflogCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     switch (af)
     {
     case AF_INET:       /* IPv4 */
-        codec.next_prot_id = ETHERTYPE_IPV4;
+        codec.next_prot_id = ProtocolId::ETHERTYPE_IPV4;
         break;
 
 #if defined(AF_INET6)
     case AF_INET6:      /* IPv6 */
-        codec.next_prot_id = ETHERTYPE_IPV6;
+        codec.next_prot_id = ProtocolId::ETHERTYPE_IPV6;
         break;
 #endif
 
