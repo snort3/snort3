@@ -23,7 +23,6 @@
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
 
-
 class TcpNormalizerFirst : public TcpNormalizer
 {
 public:

@@ -1,8 +1,10 @@
 add_library( stream_tcp STATIC
-    stream_tcp.cc
-    stream_tcp.h
+    ips_stream_reassemble.cc
+    ips_stream_size.cc
     segment_overlap_editor.h
     segment_overlap_editor.cc
+    stream_tcp.cc
+    stream_tcp.h
     tcp_module.cc
     tcp_module.h
     tcp_defs.h
@@ -50,8 +52,6 @@ add_library( stream_tcp STATIC
     tcp_state_time_wait.h 
     tcp_stream_state_machine.cc
     tcp_stream_state_machine.h
-    ips_stream_reassemble.cc
-    ips_stream_size.cc
 )
 
 add_subdirectory ( test )
