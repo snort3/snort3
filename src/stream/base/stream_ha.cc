@@ -23,12 +23,13 @@
 
 typedef LwState SessionHAContent;
 
-void StreamHAClient::consume(Flow*, HAMessage*)
+bool StreamHAClient::consume(Flow*, HAMessage*)
 {
     DebugMessage(DEBUG_HA,"StreamHAClient::consume()\n");
+    return true;
 }
 
-void StreamHAClient::produce(Flow* flow, HAMessage* msg)
+bool StreamHAClient::produce(Flow* flow, HAMessage* msg)
 {
     DebugMessage(DEBUG_HA,"StreamHAClient::produce()\n");
     // Check for buffer overflows
@@ -37,7 +38,10 @@ void StreamHAClient::produce(Flow* flow, HAMessage* msg)
     {
         memcpy(msg->cursor,&(flow->ssn_state),sizeof(SessionHAContent));
         msg->cursor += sizeof(SessionHAContent);
+        return true;
     }
+    else
+        return false;
 }
 
 ProtocolHA::ProtocolHA()

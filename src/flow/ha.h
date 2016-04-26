@@ -122,8 +122,8 @@ class FlowHAClient
 {
 public:
     virtual ~FlowHAClient() { }
-    virtual void consume(Flow*, HAMessage*) { }
-    virtual void produce(Flow*, HAMessage*) { }
+    virtual bool consume(Flow*, HAMessage*) { return false; }
+    virtual bool produce(Flow*, HAMessage*) { return false; }
     virtual size_t get_message_size() { return 0; }
     FlowHAClientHandle handle;  // Actual handle for the instance
     static uint8_t s_handle_counter; // next handle to be assigned

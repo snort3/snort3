@@ -33,7 +33,7 @@ public:
 
     bool text_format;
 
-    typedef std::vector<FileConnectorConfig> FileConnectorConfigSet;
+    typedef std::vector<FileConnectorConfig*> FileConnectorConfigSet;
 };
 
 #endif

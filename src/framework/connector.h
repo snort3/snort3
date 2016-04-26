@@ -81,7 +81,7 @@ protected:
 class ConnectorConfig
 {
 public:
-    typedef std::vector<ConnectorConfig> ConfigSet;
+    typedef std::vector<ConnectorConfig*> ConfigSet;
     Connector::Direction direction;
     std::string connector_name;
     std::string name;
@@ -90,7 +90,7 @@ public:
 class SO_PUBLIC ConnectorCommon
 {
 public:
-    ConnectorConfig::ConfigSet config_set;
+    ConnectorConfig::ConfigSet* config_set;
 };
 
 typedef ConnectorCommon* (* ConnectorNewFunc)(Module*);

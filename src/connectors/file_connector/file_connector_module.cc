@@ -57,6 +57,7 @@ FileConnectorModule::FileConnectorModule() :
 {
     DebugMessage(DEBUG_CONNECTORS,"FileConnectorModule::FileConnectorModule()\n");
     config = nullptr;
+    config_set = new FileConnectorConfig::FileConnectorConfigSet;
 }
 
 FileConnectorModule::~FileConnectorModule()
@@ -64,7 +65,8 @@ FileConnectorModule::~FileConnectorModule()
     DebugMessage(DEBUG_CONNECTORS,"FileConnectorModule::~FileConnectorModule()\n");
     if ( config )
         delete config;
-    config_set.clear();
+    if ( config_set )
+        delete config_set;
 }
 
 ProfileStats* FileConnectorModule::get_profile() const
@@ -116,11 +118,13 @@ bool FileConnectorModule::set(const char* fqn, Value& v, SnortConfig*)
 }
 
 // clear my working config and hand-over the compiled list to the caller
-FileConnectorConfig::FileConnectorConfigSet FileConnectorModule::get_and_clear_config()
+FileConnectorConfig::FileConnectorConfigSet* FileConnectorModule::get_and_clear_config()
 {
     DebugMessage(DEBUG_CONNECTORS,"FileConnectorModule::get_and_clear_config()\n");
+    FileConnectorConfig::FileConnectorConfigSet* temp_config = config_set;
     config = nullptr;
-    return config_set;
+    config_set = nullptr;
+    return temp_config;
 }
 
 bool FileConnectorModule::begin(const char* fqn, int idx, SnortConfig*)
@@ -148,8 +152,7 @@ bool FileConnectorModule::end(const char* fqn, int idx, SnortConfig*)
 
     if (idx != 0)
     {
-        config_set.push_back(*config);
-        delete config;
+        config_set->push_back(config);
         config = nullptr;
     }
 

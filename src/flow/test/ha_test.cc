@@ -26,6 +26,7 @@
 
 #include "flow/flow.h"
 #include "main/snort_debug.h"
+#include "stream/stream_api.h"
 
 #define MSG_SIZE 100
 
@@ -34,11 +35,12 @@ class StreamHAClient : public FlowHAClient
 public:
     StreamHAClient() : FlowHAClient(true) { }
     ~StreamHAClient() { }
-    void consume(Flow*, HAMessage*) { }
-    void produce(Flow*, HAMessage* msg)
+    bool consume(Flow*, HAMessage*) { return true; }
+    bool produce(Flow*, HAMessage* msg)
     {
         for ( uint8_t i=0; i<10; i++ )
             *(msg->cursor)++ = i;
+        return true;
     }
     size_t get_message_size() { return 10; }
 
@@ -51,6 +53,10 @@ static SideChannel s_side_channel;
 static SCMessage s_sc_message;
 static Flow s_flow;
 static DAQ_PktHdr_t s_pkthdr;
+
+Flow*  Stream::get_session(const FlowKey*) { return &s_flow; }
+
+void Stream::delete_session(const FlowKey*) { }
 
 void LogMessage(const char*,...) { }
 

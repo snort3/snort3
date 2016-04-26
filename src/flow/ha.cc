@@ -30,21 +30,22 @@
 #include "packet_io/sfdaq.h"
 #include "profiler/profiler.h"
 #include "side_channel/side_channel.h"
+#include "stream/stream_api.h"
 #include "time/packet_time.h"
 
-static const uint8_t ha_message_version = 3;
+static const uint8_t HA_MESSAGE_VERSION = 3;
 
 // define message size and content constants.
-static const uint8_t key_size_ip6 = sizeof(FlowKey);
+static const uint8_t KEY_SIZE_IP6 = sizeof(FlowKey);
 // ip4 key is smaller by 2*(ip6-addr-size - ip4-addr-size) or 2*(16 - 4) = 24
-static const uint8_t key_size_ip4 = sizeof(FlowKey)-24;
+static const uint8_t KEY_SIZE_IP4 = sizeof(FlowKey)-24;
 
 static const suseconds_t USEC_PER_SEC = 1000000;
 
 enum
 {
-    key_type_ip6 = 1,
-    key_type_ip4 = 2
+    KEY_TYPE_IP6 = 1,
+    KEY_TYPE_IP4 = 2
 };
 
 typedef std::unordered_map<FlowHAClientHandle, FlowHAClient*> ClientMap;
@@ -186,26 +187,25 @@ static uint8_t write_flow_key(Flow* flow, HAMessage* msg)
 
     if (is_ip6_key(flow->key) )
     {
-        hdr->key_type = key_type_ip6;
-        memcpy(msg->cursor, key, key_size_ip6);
-        msg->cursor = (uint8_t*)hdr + key_size_ip6;
-        return key_size_ip6;
+        hdr->key_type = KEY_TYPE_IP6;
+        memcpy(msg->cursor, key, KEY_SIZE_IP6);
+        msg->cursor = (uint8_t*)hdr + KEY_SIZE_IP6;
+        return KEY_SIZE_IP6;
     }
     else
     {
-        hdr->key_type = key_type_ip4;
+        hdr->key_type = KEY_TYPE_IP4;
         memcpy(msg->cursor, &key->ip_l[3], sizeof(key->ip_l[3]));
         msg->cursor += sizeof(key->ip_l[3]);
         memcpy(msg->cursor, &key->ip_h[3], sizeof(key->ip_h[3]));
         msg->cursor += sizeof(key->ip_h[3]);
-        memcpy(msg->cursor, ((uint8_t*)key) + 32, key_size_ip4 - 8);
-        msg->cursor += key_size_ip4 - 8;
+        memcpy(msg->cursor, ((uint8_t*)key) + 32, KEY_SIZE_IP4 - 8);
+        msg->cursor += KEY_SIZE_IP4 - 8;
 
-        return key_size_ip4;
+        return KEY_SIZE_IP4;
     }
 }
 
-#ifdef FUTURE
 // Regardless of the message cursor, extract the key and
 // return the key length.  Position the cursor just after the key.
 static uint8_t read_flow_key(FlowKey* key, HAMessage* msg)
@@ -214,13 +214,13 @@ static uint8_t read_flow_key(FlowKey* key, HAMessage* msg)
     HAMessageHeader* hdr = (HAMessageHeader*)msg->content();
     msg->cursor = (uint8_t*)hdr + sizeof(HAMessageHeader);
 
-    if ( hdr->key_type == key_type_ip6 )
+    if ( hdr->key_type == KEY_TYPE_IP6 )
     {
-        memcpy(key, msg->cursor, key_size_ip6);
-        msg->cursor += key_size_ip6;
-        return key_size_ip6;
+        memcpy(key, msg->cursor, KEY_SIZE_IP6);
+        msg->cursor += KEY_SIZE_IP6;
+        return KEY_SIZE_IP6;
     }
-    else if ( hdr->key_type == key_type_ip4 )
+    else if ( hdr->key_type == KEY_TYPE_IP4 )
     {
         /* Lower IPv4 address */
         memcpy(&key->ip_l[3], msg->cursor, sizeof(key->ip_l[3]));
@@ -233,19 +233,18 @@ static uint8_t read_flow_key(FlowKey* key, HAMessage* msg)
         key->ip_h[2] = htonl(0xFFFF);
         msg->cursor += sizeof(key->ip_h[3]);
         /* The remainder of the key */
-        memcpy(((uint8_t*)key) + 32, msg->cursor, key_size_ip4 - 8);
-        msg->cursor += key_size_ip4 - 8;
-        return key_size_ip4;
+        memcpy(((uint8_t*)key) + 32, msg->cursor, KEY_SIZE_IP4 - 8);
+        msg->cursor += KEY_SIZE_IP4 - 8;
+        return KEY_SIZE_IP4;
     }
     else
         return 0;
 }
-#endif
 
 static inline uint8_t key_size(Flow* flow)
 {
     assert(flow->key);
-    return is_ip6_key(flow->key) ? key_size_ip6 : key_size_ip4;
+    return is_ip6_key(flow->key) ? KEY_SIZE_IP6 : KEY_SIZE_IP4;
 }
 
 static uint16_t calculate_msg_header_length(Flow* flow)
@@ -279,7 +278,7 @@ static void write_msg_header(Flow* flow, HAEvent event, uint16_t content_length,
 {
     HAMessageHeader* hdr = (HAMessageHeader*)msg->content();
     hdr->event = (uint8_t)event;
-    hdr->version = ha_message_version;
+    hdr->version = HA_MESSAGE_VERSION;
     hdr->total_length = content_length;
     write_flow_key(flow, msg);  // set cursor to just beyond key
 }
@@ -296,6 +295,51 @@ static void write_update_msg_content(Flow* flow, HAMessage* msg)
         FlowHAClientHandle handle = 1<<i;
         if ( flow->ha_state->check_pending(handle) )
             client_map->find(handle)->second->produce(flow,msg);
+    }
+}
+
+static void consume_receive_delete_message(HAMessage* msg)
+{
+    FlowKey key;
+    (void)read_flow_key(&key, msg);
+    stream.delete_session(&key);
+}
+
+static void consume_receive_update_message(HAMessage* msg)
+{
+    FlowKey key;
+    (void)read_flow_key(&key, msg);
+    // flow will be nullptr if/when the session does not exist in the caches
+    Flow* flow = stream.get_session(&key);
+
+    assert(s_session_client);
+
+    // Update messages MUST include the session client component
+    if ( !s_session_client->consume(flow,msg) )
+        return;
+}
+
+static void consume_receive_message(HAMessage* msg)
+{
+    HAMessageHeader* hdr = (HAMessageHeader*)msg->content();
+
+    if ( hdr->version != HA_MESSAGE_VERSION)
+        return;
+
+    switch ( hdr->event )
+    {
+        case HA_DELETE_EVENT:
+        {
+            consume_receive_delete_message(msg);
+            break;
+        }
+        case HA_UPDATE_EVENT:
+        {
+            consume_receive_update_message(msg);
+            break;
+        }
+        default:
+            break;
     }
 }
 
@@ -344,14 +388,20 @@ HighAvailability::~HighAvailability()
     delete client_map;
 }
 
-void HighAvailability::receive_handler(SCMessage* msg)
+void HighAvailability::receive_handler(SCMessage* sc_msg)
 {
-    assert(msg);
+    assert(sc_msg);
 
     DebugFormat(DEBUG_HA,"HighAvailability::receive_handler: port: %d, length: %d\n",
-        msg->hdr->port, msg->content_length);
-    if ( msg->sc )
-        msg->sc->discard_message(msg);
+        sc_msg->hdr->port, sc_msg->content_length);
+
+    // SC received messages must have reference back to SideChannel object
+    assert(sc_msg->sc);
+
+    HAMessage ha_msg(sc_msg);
+    consume_receive_message(&ha_msg);
+
+    sc_msg->sc->discard_message(sc_msg);
 }
 
 void HighAvailability::process_update(Flow* flow, const DAQ_PktHdr_t* pkthdr)

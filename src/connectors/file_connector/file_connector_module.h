@@ -38,7 +38,7 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
-    FileConnectorConfig::FileConnectorConfigSet get_and_clear_config();
+    FileConnectorConfig::FileConnectorConfigSet* get_and_clear_config();
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
@@ -46,7 +46,7 @@ public:
     ProfileStats* get_profile() const override;
 
 private:
-    FileConnectorConfig::FileConnectorConfigSet config_set;
+    FileConnectorConfig::FileConnectorConfigSet* config_set;
     FileConnectorConfig* config;
 };
 

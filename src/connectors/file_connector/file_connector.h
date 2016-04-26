@@ -55,8 +55,8 @@ public:
 class FileConnectorCommon : public ConnectorCommon
 {
 public:
-    FileConnectorCommon(FileConnectorConfig::FileConnectorConfigSet);
-//    FileConnectorConfig::FileConnectorConfigSet* config_set;
+    FileConnectorCommon(FileConnectorConfig::FileConnectorConfigSet*);
+    ~FileConnectorCommon();
 };
 
 class FileConnector : public Connector

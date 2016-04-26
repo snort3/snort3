@@ -56,14 +56,18 @@ FileConnectorMsgHandle::~FileConnectorMsgHandle()
     delete[] connector_msg.data;
 }
 
-FileConnectorCommon::FileConnectorCommon(FileConnectorConfig::FileConnectorConfigSet conf)
+FileConnectorCommon::FileConnectorCommon(FileConnectorConfig::FileConnectorConfigSet* conf)
 {
-    config_set.clear();
+    config_set = (ConnectorConfig::ConfigSet*)conf;
+}
 
-    for ( auto cfg : conf )
-    {
-        config_set.push_back(cfg);
-    }
+FileConnectorCommon::~FileConnectorCommon()
+{
+    for ( auto conf : *config_set )
+        delete conf;
+
+    config_set->clear();
+    delete config_set;
 }
 
 FileConnector::FileConnector(FileConnectorConfig* file_connector_config)
@@ -90,7 +94,8 @@ ConnectorMsgHandle* FileConnector::alloc_message(const uint32_t length, const ui
 void FileConnector::discard_message(ConnectorMsgHandle* msg)
 {
     DebugMessage(DEBUG_CONNECTORS,"FileConnector::discard_message()\n");
-    delete msg;
+    FileConnectorMsgHandle* fmsg = (FileConnectorMsgHandle*)msg;
+    delete fmsg;
 }
 
 bool FileConnector::transmit_message(ConnectorMsgHandle* msg)
@@ -122,6 +127,8 @@ bool FileConnector::transmit_message(ConnectorMsgHandle* msg)
         file.write( (const char*)&fc_hdr, sizeof(fc_hdr) );
         file.write( (const char*)fmsg->connector_msg.data, fmsg->connector_msg.length);
     }
+
+    delete fmsg;
 
     return true;
 }
@@ -310,10 +317,11 @@ static ConnectorCommon* file_connector_ctor(Module* m)
     return file_connector_common;
 }
 
-static void file_connector_dtor(ConnectorCommon* p)
+static void file_connector_dtor(ConnectorCommon* c)
 {
     DebugMessage(DEBUG_CONNECTORS,"file_connector:file_connector_dtor(ConnectorCommon*)\n");
-    delete p;
+    FileConnectorCommon* fc = (FileConnectorCommon*)c;
+    delete fc;
 }
 
 const ConnectorApi file_connector_api =
