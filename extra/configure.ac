@@ -17,38 +17,38 @@ AC_SUBST([SNORT3_CFLAGS])
 
 AC_CONFIG_FILES([
 Makefile \
-examples/Makefile \
-examples/codecs/Makefile \
-examples/codecs/cd_eapol/Makefile \
-examples/codecs/cd_i4l_rawip/Makefile \
-examples/codecs/cd_linux_sll/Makefile \
-examples/codecs/cd_null/Makefile \
-examples/codecs/cd_pflog/Makefile \
-examples/codecs/cd_pim/Makefile \
-examples/codecs/cd_ppp/Makefile \
-examples/codecs/cd_raw4/Makefile \
-examples/codecs/cd_raw6/Makefile \
-examples/codecs/cd_slip/Makefile \
-examples/codecs/cd_token_ring/Makefile \
-examples/codecs/cd_wlan/Makefile \
-examples/daqs/Makefile \
-examples/daqs/daq_socket/Makefile \
-examples/inspectors/Makefile \
-examples/inspectors/data_log/Makefile \
-examples/inspectors/dpx/Makefile \
-examples/ips_options/Makefile \
-examples/ips_options/find/Makefile \
-examples/ips_options/ips_pkt_num/Makefile \
-examples/ips_options/ips_urg/Makefile \
-examples/loggers/Makefile \
-examples/loggers/alert_ex/Makefile \
-examples/loggers/alert_lua/Makefile \
-examples/loggers/alert_unixsock/Makefile \
-examples/loggers/log_null/Makefile \
-examples/search_engines/Makefile \
-examples/search_engines/lowmem/Makefile \
-examples/so_rules/Makefile \
-examples/so_rules/sid_18758/Makefile
+src/Makefile \
+src/codecs/Makefile \
+src/codecs/cd_eapol/Makefile \
+src/codecs/cd_i4l_rawip/Makefile \
+src/codecs/cd_linux_sll/Makefile \
+src/codecs/cd_null/Makefile \
+src/codecs/cd_pflog/Makefile \
+src/codecs/cd_pim/Makefile \
+src/codecs/cd_ppp/Makefile \
+src/codecs/cd_raw4/Makefile \
+src/codecs/cd_raw6/Makefile \
+src/codecs/cd_slip/Makefile \
+src/codecs/cd_token_ring/Makefile \
+src/codecs/cd_wlan/Makefile \
+src/daqs/Makefile \
+src/daqs/daq_socket/Makefile \
+src/inspectors/Makefile \
+src/inspectors/data_log/Makefile \
+src/inspectors/dpx/Makefile \
+src/ips_options/Makefile \
+src/ips_options/find/Makefile \
+src/ips_options/ips_pkt_num/Makefile \
+src/ips_options/ips_urg/Makefile \
+src/loggers/Makefile \
+src/loggers/alert_ex/Makefile \
+src/loggers/alert_lua/Makefile \
+src/loggers/alert_unixsock/Makefile \
+src/loggers/log_null/Makefile \
+src/search_engines/Makefile \
+src/search_engines/lowmem/Makefile \
+src/so_rules/Makefile \
+src/so_rules/sid_18758/Makefile
 ])
 
 AC_OUTPUT
