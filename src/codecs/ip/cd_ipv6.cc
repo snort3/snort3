@@ -91,7 +91,7 @@ public:
     Ipv6Codec() : Codec(CD_IPV6_NAME) { }
     ~Ipv6Codec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
         EncState&, Buffer&) override;
@@ -114,10 +114,10 @@ private:
  *************************   CLASS FUNCTIONS ************************
  ********************************************************************/
 
-void Ipv6Codec::get_protocol_ids(std::vector<uint16_t>& v)
+void Ipv6Codec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ETHERTYPE_IPV6);
-    v.push_back(IPPROTO_ID_IPV6);
+    v.push_back(ProtocolId::ETHERTYPE_IPV6);
+    v.push_back(ProtocolId::IPV6);
 }
 
 bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
@@ -199,7 +199,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     const_cast<uint32_t&>(raw.len) = ip6h->len() + ip::IP6_HEADER_LEN;
     snort.set_pkt_type(PktType::IP);
-    codec.next_prot_id = ip6h->next();
+    codec.next_prot_id = (ProtocolId)ip6h->next();
     codec.lyr_len = ip::IP6_HEADER_LEN;
     codec.curr_ip6_extension = 0;
     codec.ip6_extension_count = 0;
@@ -215,7 +215,7 @@ void Ipv6Codec::IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
     const CodecData& codec)
 {
     /* Only check for IPv6 over IPv4 */
-    if (snort.ip_api.is_ip4() && snort.ip_api.get_ip4h()->proto() == IPPROTO_ID_IPV6)
+    if (snort.ip_api.is_ip4() && snort.ip_api.get_ip4h()->proto() == IpProtocol::IPV6)
     {
         uint32_t isatap_interface_id = ntohl(ip6h->ip6_src.u6_addr32[2]) & 0xFCFFFFFF;
 
@@ -589,8 +589,8 @@ bool Ipv6Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     ipvh_out->ip6_vtf = htonl(ntohl(hi->ip6_vtf) & 0xFFF00000);
     ipvh_out->ip6_payload_len = htons(buf.size() - sizeof(ip::IP6Hdr));
 
-    enc.next_proto = IPPROTO_ID_IPV6;
-    enc.next_ethertype = ETHERTYPE_IPV6;
+    enc.next_proto = IpProtocol::IPV6;
+    enc.next_ethertype = ProtocolId::ETHERTYPE_IPV6;
     return true;
 }
 

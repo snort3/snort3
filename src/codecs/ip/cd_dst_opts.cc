@@ -38,13 +38,13 @@ public:
     Ipv6DSTOptsCodec() : Codec(CD_DSTOPTS_NAME) { }
     ~Ipv6DSTOptsCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 struct IP6Dest
 {
-    uint8_t ip6dest_nxt;
+    IpProtocol ip6dest_nxt;
     uint8_t ip6dest_len;
     /* options follow */
     uint8_t ip6dest_pad[6];
@@ -64,7 +64,7 @@ bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
         codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
 
-    if (dsthdr->ip6dest_nxt == IPPROTO_ROUTING)
+    if (dsthdr->ip6dest_nxt == IpProtocol::ROUTING)
         codec_event(codec, DECODE_IPV6_DSTOPTS_WITH_ROUTING);
 
     codec.lyr_len = sizeof(IP6Dest) + (dsthdr->ip6dest_len << 3);
@@ -77,19 +77,19 @@ bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     codec.proto_bits |= PROTO_BIT__IP6_EXT;
     codec.ip6_extension_count++;
-    codec.next_prot_id = dsthdr->ip6dest_nxt;
+    codec.next_prot_id = (ProtocolId)dsthdr->ip6dest_nxt;
     codec.ip6_csum_proto = dsthdr->ip6dest_nxt;
 
     // must be called AFTER setting next_prot_id
-    CheckIPv6ExtensionOrder(codec, IPPROTO_ID_DSTOPTS);
+    CheckIPv6ExtensionOrder(codec, IpProtocol::DSTOPTS);
 
     if ( CheckIPV6HopOptions(raw, codec))
         return true;
     return false;
 }
 
-void Ipv6DSTOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(IPPROTO_ID_DSTOPTS); }
+void Ipv6DSTOptsCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::DSTOPTS); }
 
 //-------------------------------------------------------------------------
 // api

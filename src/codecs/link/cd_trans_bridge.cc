@@ -39,13 +39,13 @@ public:
     TransbridgeCodec() : Codec(CD_TRANSBRIDGE_NAME) { }
     ~TransbridgeCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 } // anonymous namespace
 
-void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(ETHERTYPE_TRANS_ETHER_BRIDGING); }
+void TransbridgeCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::ETHERTYPE_TRANS_ETHER_BRIDGING); }
 
 bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
@@ -63,7 +63,7 @@ bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     codec.proto_bits |= PROTO_BIT__ETH;
     codec.lyr_len = eth::ETH_HEADER_LEN;
-    codec.next_prot_id = ntohs(eh->ether_type);
+    codec.next_prot_id = eh->ethertype();
     return true;
 }
 

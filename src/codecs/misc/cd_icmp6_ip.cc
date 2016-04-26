@@ -45,13 +45,13 @@ public:
     Icmp6IpCodec() : Codec(ICMP6_IP_NAME) { }
     ~Icmp6IpCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 } // namespace
 
-void Icmp6IpCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(PROTO_IP_EMBEDDED_IN_ICMP6); }
+void Icmp6IpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::IP_EMBEDDED_IN_ICMP6); }
 
 bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
@@ -97,15 +97,16 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     // FIXIT-L   Will fail to decode Ipv6 options
     switch (ip6h->next())
     {
-    case IPPROTO_TCP:     /* decode the interesting part of the header */
+    case IpProtocol::TCP:     /* decode the interesting part of the header */
         codec.proto_bits |= PROTO_BIT__TCP_EMBED_ICMP;
         break;
 
-    case IPPROTO_UDP:
+    case IpProtocol::UDP:
         codec.proto_bits |= PROTO_BIT__UDP_EMBED_ICMP;
         break;
 
-    case IPPROTO_ICMP:
+    //  FIXIT-M: Do we need to handle ICMPV6 here?
+    case IpProtocol::ICMPV4:
         codec.proto_bits |= PROTO_BIT__ICMP_EMBED_ICMP;
         break;
     default:

@@ -63,7 +63,7 @@ public:
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
@@ -74,8 +74,8 @@ public:
 void WlanCodec::get_data_link_type(std::vector<int>& v)
 { v.push_back(DLT_IEEE802_11); }
 
-void WlanCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(PROTO_ETHERNET_802_11); }
+void WlanCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::ETHERNET_802_11); }
 
 bool WlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
@@ -123,7 +123,7 @@ bool WlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     case WLAN_TYPE_DATA_DATA:
     {
         codec.lyr_len = IEEE802_11_DATA_HDR_LEN;
-        codec.next_prot_id = PROTO_ETHERNET_LLC;
+        codec.next_prot_id = ProtocolId::ETHERNET_LLC;
 
         break;
     }

@@ -319,14 +319,14 @@ static void event_dump(u2record* record)
         "\tsensor id: %u\tevent id: %u\tevent second: %u\tevent microsecond: %u\n"
         "\tsig id: %u\tgen id: %u\trevision: %u\t classification: %u\n"
         "\tpriority: %u\tip source: %u.%u.%u.%u\tip destination: %u.%u.%u.%u\n"
-        "\tsrc port: %hu\tdest port: %hu\tprotocol: %hhu\timpact_flag: %hhu\tblocked: %hhu\n",
+        "\tsrc port: %hu\tdest port: %hu\tip_proto: %hhu\timpact_flag: %hhu\tblocked: %hhu\n",
         event.sensor_id, event.event_id,
         event.event_second, event.event_microsecond,
         event.signature_id, event.generator_id,
         event.signature_revision, event.classification_id,
         event.priority_id, TO_IP(event.ip_source),
         TO_IP(event.ip_destination), event.sport_itype,
-        event.dport_icode, event.protocol,
+        event.dport_icode, event.ip_proto,
         event.impact_flag, event.blocked);
 }
 
@@ -370,9 +370,9 @@ static void event6_dump(u2record* record)
 
     inet_ntop(AF_INET6, &event.ip_destination, ip6buf, INET6_ADDRSTRLEN);
     printf("ip destination: %s\n"
-        "\tsrc port: %hu\tdest port: %hu\tprotocol: %hhu\timpact_flag: %hhu\tblocked: %hhu\n",
+        "\tsrc port: %hu\tdest port: %hu\tip_proto: %hhu\timpact_flag: %hhu\tblocked: %hhu\n",
         ip6buf, event.sport_itype,
-        event.dport_icode, event.protocol,
+        event.dport_icode, event.ip_proto,
         event.impact_flag, event.blocked);
 }
 
@@ -412,7 +412,7 @@ static void event2_dump(u2record* record)
         "\tsensor id: %u\tevent id: %u\tevent second: %u\tevent microsecond: %u\n"
         "\tsig id: %u\tgen id: %u\trevision: %u\t classification: %u\n"
         "\tpriority: %u\tip source: %u.%u.%u.%u\tip destination: %u.%u.%u.%u\n"
-        "\tsrc port: %hu\tdest port: %hu\tprotocol: %hhu\timpact_flag: %hhu\tblocked: %hhu\n"
+        "\tsrc port: %hu\tdest port: %hu\tip_proto: %hhu\timpact_flag: %hhu\tblocked: %hhu\n"
         "\tmpls label: %u\tvland id: %hu\tpolicy id: %hu\n",
         event.sensor_id, event.event_id,
         event.event_second, event.event_microsecond,
@@ -420,7 +420,7 @@ static void event2_dump(u2record* record)
         event.signature_revision, event.classification_id,
         event.priority_id, TO_IP(event.ip_source),
         TO_IP(event.ip_destination), event.sport_itype,
-        event.dport_icode, event.protocol,
+        event.dport_icode, event.ip_proto,
         event.impact_flag, event.blocked,
         event.mpls_label, event.vlanId, event.pad2);
 }
@@ -473,10 +473,10 @@ static void event2_6_dump(u2record* record)
 
     inet_ntop(AF_INET6, &event.ip_destination, ip6buf, INET6_ADDRSTRLEN);
     printf("ip destination: %s\n"
-        "\tsrc port: %hu\tdest port: %hu\tprotocol: %hhu\timpact_flag: %hhu\tblocked: %hhu\n"
+        "\tsrc port: %hu\tdest port: %hu\tip_proto: %hhu\timpact_flag: %hhu\tblocked: %hhu\n"
         "\tmpls label: %u\tvland id: %hu\tpolicy id: %hu\n",
         ip6buf, event.sport_itype,
-        event.dport_icode, event.protocol,
+        event.dport_icode, event.ip_proto,
         event.impact_flag, event.blocked,
         event.mpls_label, event.vlanId,event.pad2);
 }

@@ -114,7 +114,7 @@ uint8_t IpApi::ttl() const
  * variable hold the first non-ip and non-ipv6 extension protocols,
  * while proto() returns the next or proto() field of the raw IP
  * header */
-uint8_t IpApi::proto() const
+IpProtocol IpApi::proto() const
 {
     switch ( type )
     {
@@ -122,7 +122,7 @@ uint8_t IpApi::proto() const
     case IAT_6: return ((IP6Hdr*)iph)->next();
     default: break;
     }
-    return 0xFF;
+    return IpProtocol::PROTO_NOT_SET;
 }
 
 // header length field: datagram/payload-only length for 4/6

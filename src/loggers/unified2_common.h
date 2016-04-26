@@ -31,6 +31,8 @@
 #endif
 #include <netinet/in.h>
 
+#include <protocols/protocol_ids.h>
+
 // SNORT DEFINES
 // Long time ago...
 #define UNIFIED2_EVENT               1
@@ -69,7 +71,7 @@ struct Unified2IDSEvent
     uint32_t ip_destination;
     uint16_t sport_itype;
     uint16_t dport_icode;
-    uint8_t protocol;
+    IpProtocol ip_proto;
     uint8_t impact_flag; // overloads packet_action
     uint8_t impact;
     uint8_t blocked;
@@ -94,7 +96,7 @@ typedef struct _Unified2IDSEventIPv6
     struct in6_addr ip_destination;
     uint16_t sport_itype;
     uint16_t dport_icode;
-    uint8_t protocol;
+    IpProtocol ip_proto;
     uint8_t impact_flag;
     uint8_t impact;
     uint8_t blocked;
@@ -199,7 +201,7 @@ typedef struct _Serial_Unified2IDSEvent_legacy
     uint32_t ip_destination;
     uint16_t sport_itype;
     uint16_t dport_icode;
-    uint8_t protocol;
+    IpProtocol ip_proto;
     uint8_t impact_flag; // sets packet_action
     uint8_t impact;
     uint8_t blocked;
@@ -221,7 +223,7 @@ typedef struct _Serial_Unified2IDSEventIPv6_legacy
     struct in6_addr ip_destination;
     uint16_t sport_itype;
     uint16_t dport_icode;
-    uint8_t protocol;
+    IpProtocol ip_proto;
     uint8_t impact_flag;
     uint8_t impact;
     uint8_t blocked;

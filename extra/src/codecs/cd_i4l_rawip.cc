@@ -61,7 +61,7 @@ bool I4LRawIpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
 
     codec.lyr_len = 2;
-    codec.next_prot_id = ETHERTYPE_IPV4;
+    codec.next_prot_id = ProtocolId::ETHERTYPE_IPV4;
     return true;
 }
 

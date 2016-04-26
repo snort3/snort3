@@ -64,7 +64,7 @@ bool PPPCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         codec.lyr_len = 2;
     }
 
-    codec.next_prot_id = ETHERTYPE_PPP;
+    codec.next_prot_id = ProtocolId::ETHERTYPE_PPP;
     return true;
 }
 

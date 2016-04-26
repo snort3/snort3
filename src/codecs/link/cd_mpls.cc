@@ -126,7 +126,7 @@ public:
     MplsCodec() : Codec(CD_MPLS_NAME) { }
     ~MplsCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 
@@ -134,17 +134,15 @@ private:
     int checkMplsHdr(const CodecData&, uint32_t label, uint8_t bos);
 };
 
-constexpr uint16_t ETHERTYPE_MPLS_UNICAST = 0x8847;
-constexpr uint16_t ETHERTYPE_MPLS_MULTICAST = 0x8848;
 constexpr int MPLS_HEADER_LEN = 4;
 constexpr int NUM_RESERVED_LABELS = 16;
 constexpr int MPLS_PAYLOADTYPE_ERROR = -1;
 } // namespace
 
-void MplsCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void MplsCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ETHERTYPE_MPLS_UNICAST);
-    v.push_back(ETHERTYPE_MPLS_MULTICAST);
+    v.push_back(ProtocolId::ETHERTYPE_MPLS_UNICAST);
+    v.push_back(ProtocolId::ETHERTYPE_MPLS_MULTICAST);
 }
 
 bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
@@ -217,15 +215,15 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     switch (iRet)
     {
     case MPLS_PAYLOADTYPE_IPV4:
-        codec.next_prot_id = ETHERTYPE_IPV4;
+        codec.next_prot_id = ProtocolId::ETHERTYPE_IPV4;
         break;
 
     case MPLS_PAYLOADTYPE_IPV6:
-        codec.next_prot_id = ETHERTYPE_IPV6;
+        codec.next_prot_id = ProtocolId::ETHERTYPE_IPV6;
         break;
 
     case MPLS_PAYLOADTYPE_ETHERNET:
-        codec.next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
+        codec.next_prot_id = ProtocolId::ETHERTYPE_TRANS_ETHER_BRIDGING;
         break;
 
     default:

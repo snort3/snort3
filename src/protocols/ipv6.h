@@ -69,7 +69,7 @@ struct IP6Hdr
     uint32_t ip6_vtf;               /* 4 bits version, 8 bits TC,len
                                         20 bits flow-ID */
     uint16_t ip6_payload_len;               /* payload length */
-    uint8_t ip6_next;                 /* next header */
+    IpProtocol ip6_next;                 /* next header */
     uint8_t ip6_hoplim;                /* hop limit */
 
     snort_in6_addr ip6_src;      /* source address */
@@ -79,10 +79,10 @@ struct IP6Hdr
     { return ntohs(ip6_payload_len); }
 
     /* Same function as ipv4 */
-    inline uint8_t proto() const
+    inline IpProtocol proto() const
     { return ip6_next; }
 
-    inline uint8_t next() const
+    inline IpProtocol next() const
     { return ip6_next; }
 
     inline uint8_t hop_lim() const
@@ -136,17 +136,17 @@ struct IP6Hdr
     {
         switch (ip6_next)
         {
-            case IPPROTO_NONE:
-            case IPPROTO_TCP:
-            case IPPROTO_UDP:
-            case IPPROTO_ICMPV6:
-            case IPPROTO_HOPOPTS:
-            case IPPROTO_DSTOPTS:
-            case IPPROTO_ROUTING:
-            case IPPROTO_FRAGMENT:
-                return true;
-            default:
-                break;
+        case IpProtocol::NONEXT:
+        case IpProtocol::TCP:
+        case IpProtocol::UDP:
+        case IpProtocol::ICMPV6:
+        case IpProtocol::HOPOPTS:
+        case IpProtocol::DSTOPTS:
+        case IpProtocol::ROUTING:
+        case IpProtocol::FRAGMENT:
+            return true;
+        default:
+            break;
         }
         return false;
     }
@@ -155,7 +155,7 @@ struct IP6Hdr
     inline void set_len(uint16_t new_len)
     { ip6_payload_len = htons(new_len); }
 
-    inline void set_proto(uint8_t prot)
+    inline void set_proto(IpProtocol prot)
     { ip6_next = prot; }
 
     inline void set_raw_len(uint16_t new_len)
@@ -165,7 +165,6 @@ struct IP6Hdr
 
     inline uint16_t raw_len() const
     { return ip6_payload_len; }
-
 };
 
 enum class HopByHopOptions : uint8_t
@@ -191,7 +190,7 @@ struct IP6Option
 /* Generic Extension Header */
 struct IP6Extension
 {
-    uint8_t ip6e_nxt;
+    IpProtocol ip6e_nxt;
     uint8_t ip6e_len;
     /* options follow */
     uint8_t ip6e_pad[6];
@@ -200,12 +199,12 @@ struct IP6Extension
 /* Fragment header */
 struct IP6Frag
 {
-    uint8_t ip6f_nxt;       /* next header */
+    IpProtocol ip6f_nxt;       /* next header */
     uint8_t ip6f_reserved;      /* reserved field */
     uint16_t ip6f_offlg;    /* offset, reserved, and flag */
     uint32_t ip6f_ident;    /* identification */
 
-    inline uint8_t next() const
+    inline IpProtocol next() const
     { return ip6f_nxt; }
 
     inline uint16_t off_w_flags() const
@@ -235,18 +234,23 @@ struct IP6Frag
 
 // Reflects the recomended IPv6 order in RFC 2460 4.1
 constexpr int IPV6_ORDER_MAX = 7;
-inline int IPV6ExtensionOrder(uint8_t type)
+inline int IPV6IdExtensionOrder(const ProtocolId prot_id)
 {
-    switch (type)
+    switch (prot_id)
     {
-    case IPPROTO_ID_HOPOPTS:   return 1;
-    case IPPROTO_ID_DSTOPTS:   return 2;
-    case IPPROTO_ID_ROUTING:   return 3;
-    case IPPROTO_ID_FRAGMENT:  return 4;
-    case IPPROTO_ID_AUTH:      return 5;
-    case IPPROTO_ID_ESP:       return 6;
+    case ProtocolId::HOPOPTS:   return 1;
+    case ProtocolId::DSTOPTS:   return 2;
+    case ProtocolId::ROUTING:   return 3;
+    case ProtocolId::FRAGMENT:  return 4;
+    case ProtocolId::AUTH:      return 5;
+    case ProtocolId::ESP:       return 6;
     default:                   return IPV6_ORDER_MAX;
     }
+}
+
+inline int IPV6ExtensionOrder(const IpProtocol ip_proto)
+{
+    return IPV6IdExtensionOrder((ProtocolId)ip_proto);
 }
 } // namespace ipv6
 

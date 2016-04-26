@@ -646,7 +646,7 @@ int drop_all_fragments(
     Packet* p
     )
 {
-    if ( !p->flow || p->flow->protocol != PktType::IP )
+    if ( !p->flow || p->flow->pkt_type != PktType::IP )
         return -1;
 
     FragTracker* ft = &((IpSession*)p->flow->session)->tracker;
@@ -868,18 +868,19 @@ static void FragRebuild(FragTracker* ft, Packet* p)
 
         const Layer& lyr = dpkt->layers[dpkt->num_layers-1];
 
-        if ((lyr.prot_id == ETHERTYPE_IPV6) || (lyr.prot_id == IPPROTO_ID_IPV6))
+        if ((lyr.prot_id == ProtocolId::ETHERTYPE_IPV6) || (lyr.prot_id == ProtocolId::IPV6))
         {
             ip::IP6Hdr* const rawHdr =
                 const_cast<ip::IP6Hdr*>(dpkt->ptrs.ip_api.get_ip6h());
-            rawHdr->ip6_next = ft->protocol;
+                const_cast<ip::IP6Hdr*>(dpkt->ptrs.ip_api.get_ip6h());
+            rawHdr->ip6_next = ft->ip_proto;
         }
         else
         {
             ip::IP6Extension* const ip6_ext = const_cast<ip::IP6Extension*>(
                 reinterpret_cast<const ip::IP6Extension*>(lyr.start));
 
-            ip6_ext->ip6e_nxt = ft->protocol;
+            ip6_ext->ip6e_nxt = ft->ip_proto;
         }
 
         dpkt->dsize = (uint16_t)ft->calculated_size;
@@ -1139,7 +1140,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
      */
     //  FIXIT-M  Since we no longer let UDP through, does this detection still work?
     if ((frag_offset != 0)) /* ||
-        ((p->get_ip_proto_next() != IPPROTO_UDP) && (p->ptrs.decode_flags & DECODE_MF))) */
+        ((p->get_ip_proto_next() != IpProtocol::UDP) && (p->ptrs.decode_flags & DECODE_MF))) */
     {
         DisableDetect();
     }
@@ -1280,7 +1281,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
             FragRebuild(ft, p);
 
             if (frag_offset != 0 ||
-                (p->get_ip_proto_next() != IPPROTO_UDP && ft->frag_flags & FRAG_REBUILT))
+                (p->get_ip_proto_next() != IpProtocol::UDP && ft->frag_flags & FRAG_REBUILT))
             {
                 // Need to reset some things here because the rebuilt packet
                 // will have reset the do_detect flag when it hits Inspect.
@@ -1346,9 +1347,9 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     if (p->is_ip6() && (net_frag_offset == 0))
     {
         const ip::IP6Frag* const fragHdr = layer::get_inner_ip6_frag();
-        if (ft->protocol != fragHdr->ip6f_nxt)
+        if (ft->ip_proto != fragHdr->ip6f_nxt)
         {
-            ft->protocol = fragHdr->ip6f_nxt;
+            ft->ip_proto = fragHdr->ip6f_nxt;
         }
     }
 
@@ -2069,7 +2070,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     if ( p->is_ip4() )
     {
         const ip::IP4Hdr* const ip4h = p->ptrs.ip_api.get_ip4h();
-        ft->protocol = ip4h->proto();
+        ft->ip_proto = ip4h->proto();
         frag_off = ip4h->off();
     }
     else /* IPv6 */
@@ -2079,7 +2080,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
         frag_off = fragHdr->off();
 
         if (frag_off == 0)
-            ft->protocol = fragHdr->ip6f_nxt;
+            ft->ip_proto = fragHdr->ip6f_nxt;
     }
 
     ft->ttl = p->ptrs.ip_api.ttl(); /* store the first ttl we got */

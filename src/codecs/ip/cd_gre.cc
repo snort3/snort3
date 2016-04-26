@@ -61,7 +61,7 @@ public:
     GreCodec() : Codec(CD_GRE_NAME) { }
     ~GreCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
@@ -88,8 +88,8 @@ static const uint32_t GRE_V1_ACK_LEN = 4;
 #define GRE_FLAGS(x)   (x->version & 0xF8)
 } // anonymous namespace
 
-void GreCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(IPPROTO_ID_GRE); }
+void GreCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::GRE); }
 
 /*
  * see RFCs 1701, 2784 and 2637
@@ -175,7 +175,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         }
 
         /* protocol must be 0x880B - PPP */
-        if (greh->proto() != ETHERTYPE_PPP)
+        if (greh->proto() != ProtocolId::ETHERTYPE_PPP)
         {
             codec_event(codec, DECODE_GRE_V1_INVALID_HEADER);
             return false;

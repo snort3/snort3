@@ -40,14 +40,14 @@ public:
     TeredoCodec() : Codec(CD_TEREDO_NAME) { }
     ~TeredoCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 } // anonymous namespace
 
-void TeredoCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void TeredoCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(PROTO_TEREDO);
+    v.push_back(ProtocolId::TEREDO);
 }
 
 bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
@@ -95,7 +95,7 @@ bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
         if ( (!teredo::is_teredo_port(snort.sp)) && (!teredo::is_teredo_port(snort.dp)) )
             codec.codec_flags |= CODEC_ENCAP_LAYER;
 
-        codec.next_prot_id = IPPROTO_IPV6;
+        codec.next_prot_id = ProtocolId::IPV6;
         codec.codec_flags |= CODEC_NON_IP_TUNNEL;
         return true;
     }

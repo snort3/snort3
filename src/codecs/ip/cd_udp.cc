@@ -142,7 +142,7 @@ public:
     UdpCodec() : Codec(CD_UDP_NAME) { }
     ~UdpCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
@@ -158,9 +158,9 @@ private:
 };
 } // anonymous namespace
 
-void UdpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void UdpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(IPPROTO_ID_UDP);
+    v.push_back(ProtocolId::UDP);
 }
 
 bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
@@ -307,13 +307,13 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         (SnortConfig::is_gtp_port(src_port)||SnortConfig::is_gtp_port(dst_port)))
     {
         if ( !(snort.decode_flags & DECODE_FRAG) )
-            codec.next_prot_id = PROTO_GTP;
+            codec.next_prot_id = ProtocolId::GTP;
     }
     else if (teredo::is_teredo_port(src_port) ||
         teredo::is_teredo_port(dst_port) ||
         SnortConfig::deep_teredo_inspection())
     {
-        codec.next_prot_id = PROTO_TEREDO;
+        codec.next_prot_id = ProtocolId::TEREDO;
     }
 
     return true;
@@ -379,7 +379,7 @@ bool UdpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         ps.sip = ip4h->get_src();
         ps.dip = ip4h->get_dst();
         ps.zero = 0;
-        ps.protocol = IPPROTO_ID_UDP;
+        ps.protocol = IpProtocol::UDP;
         ps.len = udph_out->uh_len;
         udph_out->uh_chk = checksum::udp_cksum((uint16_t*)udph_out, len, &ps);
     }
@@ -390,13 +390,13 @@ bool UdpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         memcpy(ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
         memcpy(ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
         ps6.zero = 0;
-        ps6.protocol = IPPROTO_ID_UDP;
+        ps6.protocol = IpProtocol::UDP;
         ps6.len = udph_out->uh_len;
         udph_out->uh_chk = checksum::udp_cksum((uint16_t*)udph_out, len, &ps6);
     }
 
-    enc.next_proto = IPPROTO_ID_UDP;
-    enc.next_ethertype = 0;
+    enc.next_proto = IpProtocol::UDP;
+    enc.next_ethertype = ProtocolId::ETHERTYPE_NOT_SET;
     return true;
 }
 
@@ -419,7 +419,7 @@ void UdpCodec::update(const ip::IpApi& ip_api, const EncodeFlags flags,
             ps.sip = ip4h->get_src();
             ps.dip = ip4h->get_dst();
             ps.zero = 0;
-            ps.protocol = IPPROTO_ID_UDP;
+            ps.protocol = IpProtocol::UDP;
             ps.len = htons((uint16_t)updated_len);
             h->uh_chk = checksum::udp_cksum((uint16_t*)h, updated_len, &ps);
         }
@@ -430,7 +430,7 @@ void UdpCodec::update(const ip::IpApi& ip_api, const EncodeFlags flags,
             memcpy(ps6.sip, ip6h->ip6_src.u6_addr32, sizeof(ps6.sip));
             memcpy(ps6.dip, ip6h->ip6_dst.u6_addr32, sizeof(ps6.dip));
             ps6.zero = 0;
-            ps6.protocol = IPPROTO_ID_UDP;
+            ps6.protocol = IpProtocol::UDP;
             ps6.len = htons((uint16_t)updated_len);
             h->uh_chk = checksum::udp_cksum((uint16_t*)h, updated_len, &ps6);
         }

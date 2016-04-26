@@ -50,7 +50,7 @@ std::array<Codec*, UINT8_MAX> CodecManager::s_protocols {
     { 0 }
 };
 
-THREAD_LOCAL uint16_t CodecManager::grinder_id = 0;
+THREAD_LOCAL ProtocolId CodecManager::grinder_id = ProtocolId::ETHERTYPE_NOT_SET;
 THREAD_LOCAL uint8_t CodecManager::grinder = 0;
 THREAD_LOCAL uint8_t CodecManager::max_layers = DEFAULT_LAYERMAX;
 
@@ -151,7 +151,7 @@ void CodecManager::instantiate(CodecApiWrapper& wrap, Module* m, SnortConfig*)
 
     if (!wrap.init)
     {
-        std::vector<uint16_t> ids;
+        std::vector<ProtocolId> ids;
         const CodecApi* const cd_api = wrap.api;
 
         if (codec_id >= s_protocols.size())
@@ -164,13 +164,13 @@ void CodecManager::instantiate(CodecApiWrapper& wrap, Module* m, SnortConfig*)
         cd->get_protocol_ids(ids);
         for (auto id : ids)
         {
-            if (s_proto_map[id] != 0)
+            if (s_proto_map[to_utype(id)] != 0)
                 ParseError("The Codecs %s and %s have both been registered "
                     "for protocol_id %d. Codec %s will be used\n",
-                    s_protocols[s_proto_map[id]]->get_name(), cd->get_name(),
+                    s_protocols[s_proto_map[to_utype(id)]]->get_name(), cd->get_name(),
                     id, cd->get_name());
 
-            s_proto_map[id] = (decltype(s_proto_map[id]))codec_id; // future proofing
+            s_proto_map[to_utype(id)] = (decltype(s_proto_map[to_utype(id)]))codec_id; // future proofing
         }
 
         wrap.init = true;
@@ -224,10 +224,10 @@ void CodecManager::thread_init(SnortConfig* sc)
                         s_protocols[grinder]->get_name(), cd->get_name(),
                         cd->get_name());
 
-                std::vector<uint16_t> ids;
+                std::vector<ProtocolId> ids;
                 s_protocols[i]->get_protocol_ids(ids);
 
-                grinder_id = ( ids.size() > 0 ) ? ids[0] : FINISHED_DECODE;
+                grinder_id = ( ids.size() > 0 ) ? ids[0] : ProtocolId::FINISHED_DECODE;
                 grinder = (uint8_t)i;
             }
         }

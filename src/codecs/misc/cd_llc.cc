@@ -42,7 +42,7 @@ public:
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
 };
 
 struct EthLlc
@@ -57,15 +57,15 @@ struct EthLlcOther
     uint8_t org_code[3];
     uint8_t proto_id[2];
 
-    uint16_t proto() const
+    ProtocolId proto() const
     {
 #ifdef __GNUC__
         // fixing the type_punned pointer problem
         const uint8_t* tmp1 = &proto_id[0];
         const uint16_t* const tmp2 = reinterpret_cast<const uint16_t*>(tmp1);
-        return ntohs(*tmp2);
+        return (ProtocolId)ntohs(*tmp2);
 #else
-        return ntohs(*((uint16_t*)(&proto_id[0])));
+        return (ProtocolId)ntohs(*((uint16_t*)(&proto_id[0])));
 #endif
     }
 };
@@ -81,8 +81,8 @@ struct EthLlcOther
 #define ETH_ORG_CODE_CDP  0x00000c    /* Cisco Discovery Proto */
 } // namespace
 
-void LlcCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(PROTO_ETHERNET_LLC); }
+void LlcCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::ETHERNET_LLC); }
 
 bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
@@ -132,7 +132,7 @@ void LlcCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         ehllc->ssap == ETH_SSAP_IP)
     {
         const EthLlcOther* other = reinterpret_cast<const EthLlcOther*>(raw_pkt + sizeof(EthLlc));
-        const uint16_t proto = other->proto();
+        const ProtocolId proto = other->proto();
 
         TextLog_Print(text_log, " ORG:0x%02X%02X%02X PROTO:0x%04X",
             other->org_code[0], other->org_code[1], other->org_code[2],

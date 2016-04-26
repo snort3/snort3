@@ -45,7 +45,7 @@ public:
 
 bool Raw4Codec::decode(const RawData&, CodecData& data, DecodeData&)
 {
-    data.next_prot_id = ETHERTYPE_IPV4;
+    data.next_prot_id = ProtocolId::ETHERTYPE_IPV4;
     return true;
 }
 

@@ -16,3 +16,13 @@ necessarily represent a wire packet.
 
 * proto_bits indicates the protocols present in the packet.
 
+Protocol Types:
+
+* IpProtocol represents the standard protocol numbers as defined by IANA.
+
+* ProtocolId is a superset of IpProtocol that also includes ethertype
+and 'undefined protocol' values.
+
+* ProtocolIndex is an ordinal value that acts as an index into s_protocols
+and s_stats.
+

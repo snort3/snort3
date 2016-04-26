@@ -108,7 +108,7 @@ public:
     Icmp4Codec() : Codec(CD_ICMP4_NAME) { }
     ~Icmp4Codec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
@@ -121,8 +121,8 @@ private:
 };
 } // namespace
 
-void Icmp4Codec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(IPPROTO_ID_ICMPV4); }
+void Icmp4Codec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::ICMPV4); }
 
 bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 {
@@ -222,7 +222,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
     case icmp::IcmpType::PARAMETERPROB:
         /* account for extra 4 bytes in header */
         len += 4;
-        codec.next_prot_id = PROTO_IP_EMBEDDED_IN_ICMP4;
+        codec.next_prot_id = ProtocolId::IP_EMBEDDED_IN_ICMP4;
         break;
 
     default:

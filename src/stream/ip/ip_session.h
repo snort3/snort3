@@ -35,7 +35,7 @@ struct FragEngine;
 /* tracker for a fragmented packet set */
 struct FragTracker
 {
-    uint8_t protocol;      /* IP protocol */
+    IpProtocol ip_proto;      /* IP protocol */
 
     uint8_t ttl;           /* ttl used to detect evasions */
     uint8_t alerted;
@@ -68,7 +68,7 @@ struct FragTracker
     FragEngine* engine;
 
     int ordinal;
-    int ipprotocol;
+
     int application_protocol;
     uint32_t frag_policy;
 

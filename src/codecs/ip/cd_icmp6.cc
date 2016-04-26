@@ -98,7 +98,7 @@ public:
     Icmp6Codec() : Codec(CD_ICMP6_NAME) { }
     ~Icmp6Codec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
@@ -107,8 +107,8 @@ public:
 };
 } // anonymous namespace
 
-void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(IPPROTO_ID_ICMPV6); }
+void Icmp6Codec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::ICMPV6); }
 
 bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
@@ -182,7 +182,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                 codec_event(codec, DECODE_ICMPV6_TOO_BIG_BAD_MTU);
 
             len = icmp::ICMP6_HEADER_NORMAL_LEN;
-            codec.next_prot_id = PROTO_IP_EMBEDDED_IN_ICMP6;
+            codec.next_prot_id = ProtocolId::IP_EMBEDDED_IN_ICMP6;
         }
         else
         {
@@ -205,7 +205,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                     codec_event(codec, DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE);
             }
             len = icmp::ICMP6_HEADER_NORMAL_LEN;
-            codec.next_prot_id = PROTO_IP_EMBEDDED_IN_ICMP6;
+            codec.next_prot_id = ProtocolId::IP_EMBEDDED_IN_ICMP6;
         }
         else
         {
@@ -354,7 +354,7 @@ void Icmp6Codec::update(const ip::IpApi& api, const EncodeFlags flags,
         memcpy(ps6.sip, api.get_src()->ip32, sizeof(ps6.sip));
         memcpy(ps6.dip, api.get_dst()->ip32, sizeof(ps6.dip));
         ps6.zero = 0;
-        ps6.protocol = IPPROTO_ICMPV6;
+        ps6.protocol = IpProtocol::ICMPV6;
         ps6.len = htons((uint16_t)updated_len);
         h->cksum = checksum::icmp_cksum((uint16_t*)h, updated_len, &ps6);
     }

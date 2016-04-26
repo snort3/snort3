@@ -22,12 +22,12 @@
 #include "codecs/codec_module.h"
 #include "protocols/ipv6.h"
 
-EncState::EncState(const ip::IpApi& api, EncodeFlags f, uint8_t pr,
+EncState::EncState(const ip::IpApi& api, EncodeFlags f, IpProtocol pr,
     uint8_t t, uint16_t data_size) :
     ip_api(api),
     flags(f),
     dsize(data_size),
-    next_ethertype(0),
+    next_ethertype(ProtocolId::ETHERTYPE_NOT_SET),
     next_proto(pr),
     ttl(t)
 { }
@@ -138,20 +138,20 @@ bool Codec::CheckIPV6HopOptions(const RawData& raw, CodecData& codec)
     return true;
 }
 
-void Codec::CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto)
+void Codec::CheckIPv6ExtensionOrder(CodecData& codec, const IpProtocol ip_proto)
 {
-    const uint8_t current_order = ip::IPV6ExtensionOrder(proto);
+    const uint8_t current_order = ip::IPV6ExtensionOrder(ip_proto);
 
     if (current_order <= codec.curr_ip6_extension)
     {
-        const uint8_t next_order = ip::IPV6ExtensionOrder(codec.next_prot_id);
+        const uint8_t next_order = ip::IPV6IdExtensionOrder(codec.next_prot_id);
 
         /* A second "Destination Options" header is allowed iff:
            1) A routing header was already seen, and
            2) The second destination header is the last one before the upper layer.
         */
         if ( !((codec.codec_flags & CODEC_ROUTING_SEEN) and
-            (proto == IPPROTO_ID_DSTOPTS) and
+            (ip_proto == IpProtocol::DSTOPTS) and
             (next_order == ip::IPV6_ORDER_MAX)) )
         {
             if ( !(codec.codec_flags & CODEC_IP6_EXT_OOO) )
@@ -166,7 +166,7 @@ void Codec::CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto)
         codec.curr_ip6_extension = current_order;
     }
 
-    if (proto == IPPROTO_ID_ROUTING)
+    if (ip_proto == IpProtocol::ROUTING)
         codec.codec_flags |= CODEC_ROUTING_SEEN;
 }
 

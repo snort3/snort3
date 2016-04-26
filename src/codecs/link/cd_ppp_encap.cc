@@ -38,7 +38,7 @@ public:
     PppEncap() : Codec(CD_PPPENCAP_NAME) { }
     ~PppEncap() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
@@ -49,8 +49,8 @@ static const uint16_t PPP_VJ_UCOMP = 0x002f;        /* VJ uncompressed TCP/IP */
 static const uint16_t PPP_IPX = 0x002b;        /* Novell IPX Protocol */
 } // namespace
 
-void PppEncap::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(ETHERTYPE_PPP); }
+void PppEncap::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::ETHERTYPE_PPP); }
 
 bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
@@ -102,19 +102,19 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
             return false;
         }
 
-        ((IP4Hdr*)(raw.data + codec.lyr_len))->set_proto(IPPROTO_TCP);
+        ((IP4Hdr*)(raw.data + codec.lyr_len))->set_proto(IpProtocol::TCP);
     /* fall through */
 
     case PPP_IP:
-        codec.next_prot_id = ETHERTYPE_IPV4;
+        codec.next_prot_id = ProtocolId::ETHERTYPE_IPV4;
         break;
 
     case PPP_IPV6:
-        codec.next_prot_id = ETHERTYPE_IPV6;
+        codec.next_prot_id = ProtocolId::ETHERTYPE_IPV6;
         break;
 
     case PPP_IPX:
-        codec.next_prot_id = ETHERTYPE_IPX;
+        codec.next_prot_id = ProtocolId::ETHERTYPE_IPX;
         break;
 
     default:

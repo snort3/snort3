@@ -57,7 +57,7 @@ public:
     EthCodec() : Codec(CD_ETH_NAME) { }
     ~EthCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
     void get_data_link_type(std::vector<int>&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -80,9 +80,9 @@ void EthCodec::get_data_link_type(std::vector<int>& v)
     v.push_back(DLT_EN10MB);
 }
 
-void EthCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void EthCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(PROTO_ETHERNET_802_3);
+    v.push_back(ProtocolId::ETHERNET_802_3);
 }
 
 bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
@@ -96,14 +96,14 @@ bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     /* lay the ethernet structure over the packet data */
     const eth::EtherHdr* eh = reinterpret_cast<const eth::EtherHdr*>(raw.data);
 
-    uint16_t next_prot = eh->ethertype();
-    if ( next_prot <= eth::MIN_ETHERTYPE )
+    ProtocolId next_prot = eh->ethertype();
+    if ( to_utype(next_prot) <= to_utype(ProtocolId::ETHERTYPE_MINIMUM) )
     {
-        codec.next_prot_id = PROTO_ETHERNET_LLC;
+        codec.next_prot_id = ProtocolId::ETHERNET_LLC;
         codec.lyr_len = eth::ETH_HEADER_LEN;
         codec.proto_bits |= PROTO_BIT__ETH;
     }
-    else if ( next_prot == ETHERTYPE_FPATH )
+    else if ( next_prot == ProtocolId::ETHERTYPE_FPATH )
     {
         /*  If this is FabricPath, the first 16 bytes are FabricPath data
          *  rather than Ethernet data.  So, set the length to zero and
@@ -138,12 +138,12 @@ void EthCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
         eh->ether_dst[4], eh->ether_dst[5]);
 
-    const uint16_t prot = ntohs(eh->ether_type);
+    const ProtocolId prot_id = eh->ethertype();
 
-    if (prot <= eth::MIN_ETHERTYPE)
-        TextLog_Print(text_log, "  len:0x%04X", prot);
+    if (to_utype(prot_id) <= to_utype(ProtocolId::ETHERTYPE_MINIMUM))
+        TextLog_Print(text_log, "  len:0x%04X", prot_id);
     else
-        TextLog_Print(text_log, "  type:0x%04X", prot);
+        TextLog_Print(text_log, "  type:0x%04X", prot_id);
 }
 
 //-------------------------------------------------------------------------
@@ -155,7 +155,7 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 {
     const eth::EtherHdr* hi = reinterpret_cast<const eth::EtherHdr*>(raw_in);
 
-    if (hi->ethertype() == ETHERTYPE_FPATH)
+    if (hi->ethertype() == ProtocolId::ETHERTYPE_FPATH)
         return true;
 
     // not raw ip -> encode layer 2
@@ -178,7 +178,7 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
             return false;
 
         eth::EtherHdr* ho = reinterpret_cast<eth::EtherHdr*>(buf.data());
-        ho->ether_type = enc.ethertype_set() ? ntohs(enc.next_ethertype) : hi->ether_type;
+        ho->ether_type = enc.ethertype_set() ? htons(to_utype(enc.next_ethertype)) : hi->ether_type;
 
         uint8_t* dst_mac = PacketManager::encode_get_dst_mac();
 
@@ -202,8 +202,8 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         }
     }
 
-    enc.next_ethertype = 0;
-    enc.next_proto = ENC_PROTO_UNSET;
+    enc.next_ethertype = ProtocolId::ETHERTYPE_NOT_SET;
+    enc.next_proto = IpProtocol::PROTO_NOT_SET;
     return true;
 }
 
@@ -212,7 +212,7 @@ void EthCodec::format(bool reverse, uint8_t* raw_pkt, DecodeData&)
     eth::EtherHdr* ch = reinterpret_cast<eth::EtherHdr*>(raw_pkt);
 
     // If the ethertype is FabricPath, then this is not Ethernet Data.
-    if ( reverse &&  (ch->ethertype() != ETHERTYPE_FPATH) )
+    if ( reverse &&  (ch->ethertype() != ProtocolId::ETHERTYPE_FPATH) )
     {
         uint8_t tmp_addr[6];
 
@@ -227,7 +227,7 @@ void EthCodec::update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
 {
     const eth::EtherHdr* const eth = reinterpret_cast<eth::EtherHdr*>(raw_pkt);
 
-    if ( eth->ethertype() != ETHERTYPE_FPATH )
+    if ( eth->ethertype() != ProtocolId::ETHERTYPE_FPATH )
         updated_len += lyr_len;
 }
 

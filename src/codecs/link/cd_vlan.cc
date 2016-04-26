@@ -58,7 +58,7 @@ public:
     VlanCodec() : Codec(CD_VLAN_NAME) { }
     ~VlanCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
@@ -66,9 +66,9 @@ public:
 constexpr unsigned int ETHERNET_MAX_LEN_ENCAP = 1518;    /* 802.3 (+LLC) or ether II ? */
 } // namespace
 
-void VlanCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void VlanCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ETHERTYPE_8021Q);
+    v.push_back(ProtocolId::ETHERTYPE_8021Q);
 }
 
 bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
@@ -88,9 +88,9 @@ bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
      * http://www.geocities.com/billalexander/ethernet.html
      */
     if (proto <= ETHERNET_MAX_LEN_ENCAP)
-        codec.next_prot_id = PROTO_ETHERNET_LLC;
+        codec.next_prot_id = ProtocolId::ETHERNET_LLC;
     else
-        codec.next_prot_id = proto;
+        codec.next_prot_id = (ProtocolId)proto;
 
     // Vlan IDs 0 and 4095 are reserved.
     const uint16_t vid = vh->vid();

@@ -49,7 +49,7 @@ public:
     Erspan3Codec() : Codec(CD_ERSPAN3_NAME) { }
     ~Erspan3Codec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
@@ -76,11 +76,10 @@ struct ERSpanType3Hdr
     { return ntohs(time_stamp); }
 };
 
-constexpr uint16_t ETHERTYPE_ERSPAN_TYPE3 = 0x22eb;
 } // anonymous namespace
 
-void Erspan3Codec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(ETHERTYPE_ERSPAN_TYPE3); }
+void Erspan3Codec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::ETHERTYPE_ERSPAN_TYPE3); }
 
 bool Erspan3Codec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
@@ -100,7 +99,7 @@ bool Erspan3Codec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-    codec.next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
+    codec.next_prot_id = ProtocolId::ETHERTYPE_TRANS_ETHER_BRIDGING;
     codec.lyr_len = sizeof(ERSpanType3Hdr);
     return true;
 }

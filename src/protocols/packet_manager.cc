@@ -87,7 +87,7 @@ static THREAD_LOCAL uint8_t* dst_mac = nullptr;
 //-------------------------------------------------------------------------
 
 static inline void push_layer(Packet* p,
-    uint16_t prot_id,
+    ProtocolId prot_id,
     const uint8_t* hdr_start,
     uint32_t len)
 {
@@ -105,7 +105,7 @@ void PacketManager::pop_teredo(Packet* p, RawData& raw)
     if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_TEREDO) )
         Active::clear_tunnel_bypass();
 
-    const uint8_t mapped_prot = CodecManager::s_proto_map[PROTO_TEREDO];
+    const ProtocolIndex mapped_prot = CodecManager::s_proto_map[to_utype(ProtocolId::TEREDO)];
     s_stats[mapped_prot + stat_offset]--;
     p->num_layers--;
 
@@ -189,11 +189,11 @@ void PacketManager::decode(
 
     DecodeData unsure_encap_ptrs;
 
-    uint8_t mapped_prot = CodecManager::grinder;
-    uint16_t prev_prot_id = CodecManager::grinder_id;
+    ProtocolIndex mapped_prot = CodecManager::grinder;
+    ProtocolId prev_prot_id = CodecManager::grinder_id;
 
     RawData raw(pkthdr, pkt);
-    CodecData codec_data(FINISHED_DECODE);
+    CodecData codec_data(ProtocolId::FINISHED_DECODE);
 
     if ( cooked )
         codec_data.codec_flags |= CODEC_STREAM_REBUILT;
@@ -236,7 +236,7 @@ void PacketManager::decode(
             // FIXIT-M refactor when ip_proto's become an array
             if ( p->is_fragment() )
             {
-                if ( prev_prot_id == IPPROTO_ID_FRAGMENT )
+                if ( prev_prot_id == ProtocolId::FRAGMENT )
                 {
                     const ip::IP6Frag* const fragh =
                         reinterpret_cast<const ip::IP6Frag*>(raw.data);
@@ -249,7 +249,8 @@ void PacketManager::decode(
             }
             else
             {
-                p->ip_proto_next = (uint8_t)codec_data.next_prot_id;
+                if(codec_data.next_prot_id != ProtocolId::FINISHED_DECODE)
+                    p->ip_proto_next = convert_protocolid_to_ipprotocol(codec_data.next_prot_id);
             }
         }
 
@@ -262,7 +263,7 @@ void PacketManager::decode(
 
         // internal statistics and record keeping
         s_stats[mapped_prot + stat_offset]++; // add correct decode for previous layer
-        mapped_prot = CodecManager::s_proto_map[codec_data.next_prot_id];
+        mapped_prot = CodecManager::s_proto_map[to_utype(codec_data.next_prot_id)];
         prev_prot_id = codec_data.next_prot_id;
 
         // set for next call
@@ -271,7 +272,7 @@ void PacketManager::decode(
         raw.len -= curr_lyr_len;
         raw.data += curr_lyr_len;
         p->proto_bits |= codec_data.proto_bits;
-        codec_data.next_prot_id = FINISHED_DECODE;
+        codec_data.next_prot_id = ProtocolId::FINISHED_DECODE;
         codec_data.lyr_len = 0;
         codec_data.invalid_bytes = 0;
         codec_data.proto_bits = 0;
@@ -285,7 +286,7 @@ void PacketManager::decode(
     s_stats[mapped_prot + stat_offset]++;
 
     // if the final protocol ID is not the default codec, a Codec failed
-    if (prev_prot_id != FINISHED_DECODE)
+    if (prev_prot_id != ProtocolId::FINISHED_DECODE)
     {
         if (codec_data.codec_flags & CODEC_UNSURE_ENCAP)
         {
@@ -293,30 +294,33 @@ void PacketManager::decode(
 
             switch (p->layers[p->num_layers-1].prot_id)
             {
-            case IPPROTO_ID_ESP:
+            case ProtocolId::ESP:
                 // Hardcoding ESP because we trust iff the layer
                 // immediately preceding the fail is ESP.
                 p->ptrs.decode_flags |= DECODE_PKT_TRUST;
                 break;
 
-            case PROTO_TEREDO:
+            case ProtocolId::TEREDO:
                 // if we just decoded teredo and the next
                 // layer fails, we made a mistake. Therefore,
                 // remove this bit.
                 pop_teredo(p, raw);
                 break;
+            default:
+                ;
             } /* switch */
         }
         else
         {
-            if ( (p->num_layers > 0) && (p->layers[p->num_layers-1].prot_id == PROTO_TEREDO) &&
-                (prev_prot_id == IPPROTO_IPV6) )
+            if ( (p->num_layers > 0) && 
+                (p->layers[p->num_layers-1].prot_id == ProtocolId::TEREDO) &&
+                (prev_prot_id == ProtocolId::IPV6) )
             {
                 pop_teredo(p, raw);
             }
 
             // if the codec exists, it failed
-            if (CodecManager::s_proto_map[prev_prot_id])
+            if (CodecManager::s_proto_map[to_utype(prev_prot_id)])
             {
                 s_stats[discards]++;
             }
@@ -324,8 +328,8 @@ void PacketManager::decode(
             {
                 s_stats[other_codecs]++;
 
-                if ( (MIN_UNASSIGNED_IP_PROTO <= prev_prot_id) &&
-                    (prev_prot_id <= std::numeric_limits<uint8_t>::max()) &&
+                if ( (to_utype(ProtocolId::MIN_UNASSIGNED_IP_PROTO) <= to_utype(prev_prot_id)) &&
+                    (to_utype(prev_prot_id) <= std::numeric_limits<uint8_t>::max()) &&
                     !(codec_data.codec_flags & CODEC_STREAM_REBUILT) )
                 {
                     SnortEventqAdd(GID_DECODE, DECODE_IP_UNASSIGNED_PROTO);
@@ -402,7 +406,7 @@ static inline uint8_t GetTTL(const Packet* const p, bool forward)
 bool PacketManager::encode(const Packet* p,
     EncodeFlags flags,
     uint8_t lyr_start,
-    uint8_t next_prot,
+    IpProtocol next_prot,
     Buffer& buf)
 {
     if ( encode_pkt )
@@ -431,7 +435,8 @@ bool PacketManager::encode(const Packet* p,
         for (int i = outer_layer; i > inner_layer; --i)
         {
             const Layer& l = lyrs[i];
-            uint8_t mapped_prot = i ? CodecManager::s_proto_map[l.prot_id] : CodecManager::grinder;
+            ProtocolIndex mapped_prot = 
+                i ? CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
             if (!CodecManager::s_protocols[mapped_prot]->encode(l.start, l.length, enc, buf))
             {
                 return false;
@@ -447,7 +452,8 @@ bool PacketManager::encode(const Packet* p,
     for (int i = outer_layer; i >= 0; --i)
     {
         const Layer& l = lyrs[i];
-        uint8_t mapped_prot = i ? CodecManager::s_proto_map[l.prot_id] : CodecManager::grinder;
+        ProtocolIndex mapped_prot = 
+            i ? CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
 
         if (!CodecManager::s_protocols[mapped_prot]->encode(l.start, l.length, enc, buf))
         {
@@ -496,7 +502,7 @@ const uint8_t* PacketManager::encode_response(
     }
 
     // FIXIT-M  -- check flags if we should skip something
-    if (encode(p, flags, p->num_layers-1, ENC_PROTO_UNSET, buf))
+    if (encode(p, flags, p->num_layers-1, IpProtocol::PROTO_NOT_SET, buf))
     {
         len = buf.size();
         return buf.data() + buf.off;
@@ -561,7 +567,7 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
 
         icmph->csum = checksum::icmp_cksum((uint16_t*)buf.data(), buf.size());
 
-        if (encode(p, flags, inner_ip_index, IPPROTO_ID_ICMPV4, buf))
+        if (encode(p, flags, inner_ip_index, IpProtocol::ICMPV4, buf))
         {
             len = buf.size();
             return buf.data() + buf.off;
@@ -620,12 +626,12 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
         memcpy(ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
         memcpy(ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
         ps6.zero = 0;
-        ps6.protocol = IPPROTO_ICMPV6;
+        ps6.protocol = IpProtocol::ICMPV6;
         ps6.len = htons((uint16_t)(ip_len));
 
         icmph->csum = checksum::icmp_cksum((uint16_t*)buf.data(), ip_len, &ps6);
 
-        if (encode(p, flags, inner_ip_index, IPPROTO_ICMPV6, buf))
+        if (encode(p, flags, inner_ip_index, IpProtocol::ICMPV6, buf))
         {
             len = buf.size();
             return buf.data() + buf.off;
@@ -761,7 +767,8 @@ int PacketManager::encode_format(
 
         // NOTE: this must always go from outer to inner
         //       to ensure a valid ip header
-        uint8_t mapped_prot = i ? CodecManager::s_proto_map[lyr->prot_id] : CodecManager::grinder;
+        ProtocolIndex mapped_prot = 
+            i ? CodecManager::s_proto_map[to_utype(lyr->prot_id)] : CodecManager::grinder;
 
         CodecManager::s_protocols[mapped_prot]->format(
             reverse, const_cast<uint8_t*>(lyr->start), c->ptrs);
@@ -828,8 +835,8 @@ void PacketManager::encode_update(Packet* p)
         for (int i = outer_layer; i > inner_layer; --i)
         {
             const Layer& l = lyr[i];
-            uint8_t mapped_prot = i ?
-                CodecManager::s_proto_map[l.prot_id] : CodecManager::grinder;
+            ProtocolIndex mapped_prot = i ?
+                CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
 
             CodecManager::s_protocols[mapped_prot]->update(
                 tmp_api, flags, const_cast<uint8_t*>(l.start), l.length, len);
@@ -842,7 +849,7 @@ void PacketManager::encode_update(Packet* p)
     for (int i = outer_layer; i >= 0; --i)
     {
         const Layer& l = lyr[i];
-        uint8_t mapped_prot = CodecManager::s_proto_map[l.prot_id];
+        ProtocolIndex mapped_prot = CodecManager::s_proto_map[to_utype(l.prot_id)];
         CodecManager::s_protocols[mapped_prot]->update(
             tmp_api, flags, const_cast<uint8_t*>(l.start), l.length, len);
     }
@@ -891,7 +898,7 @@ void PacketManager::dump_stats()
 
     // zero out the default codecs
     g_stats[3] = 0;
-    g_stats[CodecManager::s_proto_map[FINISHED_DECODE] + stat_offset] = 0;
+    g_stats[CodecManager::s_proto_map[to_utype(ProtocolId::FINISHED_DECODE)] + stat_offset] = 0;
 
     for (unsigned int i = 0; i < stat_names.size(); i++)
         pkt_names.push_back(stat_names[i]);
@@ -913,11 +920,11 @@ void PacketManager::accumulate()
     // mutex is automatically unlocked
 }
 
-const char* PacketManager::get_proto_name(uint16_t protocol)
-{ return CodecManager::s_protocols[CodecManager::s_proto_map[protocol]]->get_name(); }
+const char* PacketManager::get_proto_name(ProtocolId protocol)
+{ return CodecManager::s_protocols[CodecManager::s_proto_map[to_utype(protocol)]]->get_name(); }
 
-const char* PacketManager::get_proto_name(uint8_t protocol)
-{ return CodecManager::s_protocols[CodecManager::s_proto_map[protocol]]->get_name(); }
+const char* PacketManager::get_proto_name(IpProtocol protocol)
+{ return CodecManager::s_protocols[CodecManager::s_proto_map[to_utype(protocol)]]->get_name(); }
 
 void PacketManager::log_protocols(TextLog* const text_log,
     const Packet* const p)
@@ -935,18 +942,16 @@ void PacketManager::log_protocols(TextLog* const text_log,
 
         for (int i = 1; i < num_layers; i++)
         {
-            const uint16_t protocol = lyr[i].prot_id;
+            const auto protocol = to_utype(lyr[i].prot_id);
             const uint8_t codec_offset =  CodecManager::s_proto_map[protocol];
             cd = CodecManager::s_protocols[codec_offset];
 
             TextLog_NewLine(text_log);
             TextLog_Print(text_log, "%-.*s", 6, cd->get_name());
 
-            // don't print the type if this is a custom type.  Look
-            // in protocol_ids.h for more details.
             if (protocol <= 0xFF)
                 TextLog_Print(text_log, "(0x%02x)", protocol);
-            else if (protocol >= eth::MIN_ETHERTYPE)
+            else
                 TextLog_Print(text_log, "(0x%04x)", protocol);
 
             TextLog_Puts(text_log, ":  ");

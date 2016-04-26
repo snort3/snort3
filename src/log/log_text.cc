@@ -392,7 +392,7 @@ void LogIPHeader(TextLog* log, Packet* p)
             (is_ip6 ? layer::get_inner_ip6_frag() : nullptr);
 
         TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-            protocol_names[p->get_ip_proto_next()],
+            protocol_names[to_utype(p->get_ip_proto_next())],
             ip6h->hop_lim(),
             ip6h->tos(),
             (ip6_frag ? ip6_frag->id() : 0),
@@ -417,7 +417,7 @@ void LogIPHeader(TextLog* log, Packet* p)
     else
     {
         TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-            protocol_names[ip4h->proto()],
+            protocol_names[to_utype(ip4h->proto())],
             ip4h->ttl(),
             ip4h->tos(),
             ip4h->id(),
@@ -1266,8 +1266,8 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
     const uint8_t* pb = data;
     const uint8_t* end = data + len;
 
-    const uint8_t ipv4_id = PacketManager::proto_id(IPPROTO_ID_IPIP);
-    const uint8_t ipv6_id = PacketManager::proto_id(IPPROTO_ID_IPV6);
+    const ProtocolIndex ipv4_idx = PacketManager::proto_idx(ProtocolId::IPIP);
+    const ProtocolIndex ipv6_idx = PacketManager::proto_idx(ProtocolId::IPV6);
 
     int offset = 0;
     char conv[] = "0123456789ABCDEF";   /* xlation lookup table */
@@ -1283,13 +1283,13 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
     if (p && SnortConfig::obfuscate() )
     {
         int num_layers =  p->num_layers;
-        uint8_t lyr_proto = 0;
+        ProtocolIndex lyr_idx = 0;
 
         for ( i = 0; i < num_layers; i++ )
         {
-            lyr_proto = PacketManager::proto_id(p->layers[i].prot_id);
+            lyr_idx = PacketManager::proto_idx(p->layers[i].prot_id);
 
-            if ( lyr_proto == ipv4_id || lyr_proto == ipv6_id)
+            if ( lyr_idx == ipv4_idx || lyr_idx == ipv6_idx)
             {
                 if (p->layers[i].length && p->layers[i].start)
                     break;
@@ -1301,7 +1301,7 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
         if (ip_start > 0 )
         {
             ip_ob_start = ip_start + 10;
-            if (lyr_proto == ipv4_id)
+            if (lyr_idx == ipv4_idx)
                 ip_ob_end = ip_ob_start + 2 + 2*(sizeof(struct in_addr));
             else
                 ip_ob_end = ip_ob_start + 2 + 2*(sizeof(struct in6_addr));
@@ -1400,7 +1400,7 @@ void LogIPPkt(TextLog* log, Packet* p)
         // FIXIT-L --> log everything in order!!
         ip::IpApi tmp_api = p->ptrs.ip_api;
         int8_t num_layer = 0;
-        uint8_t tmp_next = p->get_ip_proto_next();
+        IpProtocol tmp_next = p->get_ip_proto_next();
         bool first = true;
 
         while (layer::set_outer_ip_api(p, p->ptrs.ip_api, p->ip_proto_next, num_layer) &&

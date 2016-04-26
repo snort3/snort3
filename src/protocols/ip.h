@@ -123,7 +123,7 @@ public:
 
     uint16_t tos() const;
     uint8_t ttl() const;
-    uint8_t proto() const;
+    IpProtocol proto() const;
     uint16_t raw_len() const;
     uint8_t hlen() const;
     uint8_t ver() const;

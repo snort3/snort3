@@ -256,7 +256,7 @@ bool PPPoECodec::decode(const RawData& raw,
     }
 
     codec.lyr_len = PPPOE_HEADER_LEN;
-    codec.next_prot_id = ETHERTYPE_PPP;
+    codec.next_prot_id = ProtocolId::ETHERTYPE_PPP;
     return true;
 }
 
@@ -285,9 +285,6 @@ bool PPPoECodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
 
 namespace
 {
-const uint16_t ETHERNET_TYPE_PPPoE_DISC =  0x8863; /* discovery stage */
-const uint16_t ETHERNET_TYPE_PPPoE_SESS =  0x8864; /* session stage */
-
 #define CD_PPPOEPKT_DISC_NAME "pppoe_disc"
 #define CD_PPPOEPKT_DISC_HELP "support for point-to-point discovery"
 
@@ -301,8 +298,8 @@ public:
     PPPoEDiscCodec() : PPPoECodec(CD_PPPOEPKT_DISC_NAME, PppoepktType::DISCOVERY) { }
     ~PPPoEDiscCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override
-    { v.push_back(ETHERNET_TYPE_PPPoE_DISC); }
+    void get_protocol_ids(std::vector<ProtocolId>& v) override
+    { v.push_back(ProtocolId::ETHERTYPE_PPPOE_DISC); }
 };
 
 class PPPoESessCodec : public PPPoECodec
@@ -311,8 +308,8 @@ public:
     PPPoESessCodec() : PPPoECodec(CD_PPPOEPKT_SESS_NAME, PppoepktType::SESSION) { }
     ~PPPoESessCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override
-    { v.push_back(ETHERNET_TYPE_PPPoE_SESS); }
+    void get_protocol_ids(std::vector<ProtocolId>& v) override
+    { v.push_back(ProtocolId::ETHERTYPE_PPPOE_SESS); }
 };
 } // namespace
 

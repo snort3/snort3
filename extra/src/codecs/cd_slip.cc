@@ -55,7 +55,7 @@ bool SlipCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     // set the fields which will be sent back to the packet manager
     codec.lyr_len = SLIP_HEADER_LEN;
-    codec.next_prot_id = ETHERTYPE_IPV4;
+    codec.next_prot_id = ProtocolId::ETHERTYPE_IPV4;
     return true;
 }
 

@@ -30,7 +30,7 @@ static void set_fields(lua_State* L, int tindex, CodecData& self)
 {
     Lua::Table table(L, tindex);
 
-    table.get_field("next_prot_id", self.next_prot_id);
+    table.get_field("next_prot_id", reinterpret_cast<uint16_t&>(self.next_prot_id));
     table.get_field("lyr_len", self.lyr_len);
     table.get_field("invalid_bytes", self.invalid_bytes);
     table.get_field("proto_bits", self.proto_bits);
@@ -38,14 +38,14 @@ static void set_fields(lua_State* L, int tindex, CodecData& self)
     table.get_field("ip_layer_cnt", self.ip_layer_cnt);
     table.get_field("ip6_extension_count", self.ip6_extension_count);
     table.get_field("curr_ip6_extension", self.curr_ip6_extension);
-    table.get_field("ip6_csum_proto", self.ip6_csum_proto);
+    table.get_field("ip6_csum_proto", reinterpret_cast<uint8_t&>(self.ip6_csum_proto));
 }
 
 static void get_fields(lua_State* L, int tindex, CodecData& self)
 {
     Lua::Table table(L, tindex);
 
-    table.set_field("next_prot_id", self.next_prot_id);
+    table.set_field("next_prot_id", static_cast<uint16_t>(self.next_prot_id));
     table.set_field("lyr_len", self.lyr_len);
     table.set_field("invalid_bytes", self.invalid_bytes);
     table.set_field("proto_bits", self.proto_bits);
@@ -53,7 +53,7 @@ static void get_fields(lua_State* L, int tindex, CodecData& self)
     table.set_field("ip_layer_cnt", self.ip_layer_cnt);
     table.set_field("ip6_extension_count", self.ip6_extension_count);
     table.set_field("curr_ip6_extension", self.curr_ip6_extension);
-    table.set_field("ip6_csum_proto", self.ip6_csum_proto);
+    table.set_field("ip6_csum_proto", static_cast<uint8_t>(self.ip6_csum_proto));
 }
 
 static const luaL_Reg methods[] =
@@ -64,13 +64,20 @@ static const luaL_Reg methods[] =
         {
             Lua::Args args(L);
 
-            auto& self = CodecDataIface.create(L, 0);
+            auto& self = CodecDataIface.create(L, ProtocolId::ETHERTYPE_NOT_SET);
             memset(&self, 0, sizeof(self));
 
             if ( args[1].is_table() )
                 args[1].check_table(set_fields, self);
             else if ( args[1].is_size() )
-                self.next_prot_id = args[1].check_size();
+            {
+                //  FIXIT-L: Can check_size limit size to short?
+                unsigned int tmp = args[1].check_size();
+                if(tmp > UINT16_MAX)
+                    self.next_prot_id = ProtocolId::ETHERTYPE_NOT_SET;
+                else
+                    self.next_prot_id = (ProtocolId)args[1].check_size();
+            }
 
             return 1;
         }

@@ -59,14 +59,14 @@ public:
     AuthCodec() : Codec(CD_AUTH_NAME) { }
     ~AuthCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 /*  Valid for both IPv4 and IPv6 */
 struct AuthHdr
 {
-    uint8_t next;
+    IpProtocol next;
     uint8_t len;
     uint16_t rsv;   /* reserved */
     uint32_t spi;   /* Security Parameters Index */
@@ -78,8 +78,8 @@ constexpr uint8_t MIN_AUTH_LEN = 16; // this is in minimum number of bytes ...
 // no relatino to the AuthHdr.len field.
 } // anonymous namespace
 
-void AuthCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(IPPROTO_ID_AUTH); }
+void AuthCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::AUTH); }
 
 bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
@@ -101,7 +101,7 @@ bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    codec.next_prot_id = ah->next;
+    codec.next_prot_id = (ProtocolId)ah->next;
 
     // must be called AFTER setting next_prot_id
     if (snort.ip_api.is_ip6())
@@ -112,7 +112,7 @@ bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             return false;
         }
 
-        CheckIPv6ExtensionOrder(codec, IPPROTO_ID_AUTH);
+        CheckIPv6ExtensionOrder(codec, IpProtocol::AUTH);
         codec.proto_bits |= PROTO_BIT__IP6_EXT;
         codec.ip6_csum_proto = ah->next;
         codec.ip6_extension_count++;

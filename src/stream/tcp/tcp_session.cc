@@ -1011,7 +1011,7 @@ bool TcpSession::is_flow_handling_packets(Packet* p)
     bool flow_ready = true;
 
     // FIXIT-L can't get here without protocol being set to TCP, is this really needed??
-    if (flow->protocol != PktType::TCP)
+    if (flow->pkt_type != PktType::TCP)
     {
         DebugMessage(DEBUG_STREAM_STATE, "Lightweight session not TCP on TCP packet\n");
         flow_ready = false;

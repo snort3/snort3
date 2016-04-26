@@ -48,7 +48,7 @@ public:
     FabricPathCodec() : Codec(CD_FABRICPATH_NAME) { }
     ~FabricPathCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
         EncState&, Buffer&) override;
@@ -66,8 +66,8 @@ struct FPathHdr
 constexpr uint8_t FABRICPATH_HEADER_LEN = 16;
 } // anonymous namespace
 
-void FabricPathCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(ETHERTYPE_FPATH); }
+void FabricPathCodec::get_protocol_ids(std::vector<ProtocolId>& v)
+{ v.push_back(ProtocolId::ETHERTYPE_FPATH); }
 
 bool FabricPathCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
@@ -77,7 +77,7 @@ bool FabricPathCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-    codec.next_prot_id = PROTO_ETHERNET_802_3;
+    codec.next_prot_id = ProtocolId::ETHERNET_802_3;
     codec.lyr_len = FABRICPATH_HEADER_LEN;
     return true;
 }

@@ -123,11 +123,11 @@ public:
     // print codec information.  MUST be called after thread_term.
     static void dump_stats();
 
-    // Get the name of the given protocol
-    static const char* get_proto_name(uint16_t protocol);
+    // Get the name of the given protocol ID
+    static const char* get_proto_name(ProtocolId);
 
-    // Get the name of the given protocol
-    static const char* get_proto_name(uint8_t protocol);
+    // Get the name of the given IP protocol
+    static const char* get_proto_name(IpProtocol);
 
     // print this packets information, layer by layer
     static void log_protocols(TextLog* const, const Packet* const);
@@ -140,11 +140,11 @@ public:
     { return CodecManager::s_protocols.size(); }
 
     /* If a proto was registered in a Codec's get_protocol_ids() function,
-     * this function will return the 'ID' of the Codec to which the proto belongs.
+     * this function will return the 'ProtocolIndex' of the Codec to which the proto belongs.
      * If none of the loaded Codecs registered that proto, this function will
      * return zero. */
-    static uint8_t proto_id(uint16_t proto)
-    { return CodecManager::s_proto_map[proto]; }
+    static ProtocolIndex proto_idx(ProtocolId prot_id)
+    { return CodecManager::s_proto_map[to_utype(prot_id)]; }
 
 private:
     // The only time we should accumulate is when CodecManager tells us too
@@ -153,7 +153,7 @@ private:
     static void pop_teredo(Packet*, RawData&);
 
     static bool encode(const Packet* p, EncodeFlags,
-        uint8_t lyr_start, uint8_t next_prot, Buffer& buf);
+        uint8_t lyr_start, IpProtocol next_prot, Buffer& buf);
 
     // constant offsets into the s_stats array.  Notice the stat_offset
     // constant which is used when adding a protocol specific codec

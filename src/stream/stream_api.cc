@@ -87,7 +87,7 @@ void Stream::delete_session(const FlowKey* key)
 //-------------------------------------------------------------------------
 
 Flow* Stream::get_session_ptr_from_ip_port(
-    uint8_t type, uint8_t proto,
+    PktType type, IpProtocol proto,
     const sfip_t* srcIP, uint16_t srcPort,
     const sfip_t* dstIP, uint16_t dstPort,
     uint16_t vlan, uint32_t mplsId, uint16_t addressSpaceId)
@@ -105,7 +105,7 @@ void Stream::populate_session_key(Packet* p, FlowKey* key)
         return;
 
     key->init(
-        (uint8_t)p->type(), p->get_ip_proto_next(),
+        p->type(), p->get_ip_proto_next(),
         p->ptrs.ip_api.get_src(), p->ptrs.sp,
         p->ptrs.ip_api.get_dst(), p->ptrs.dp,
         // if the vlan protocol bit is defined, vlan layer gauranteed to exist
@@ -138,7 +138,7 @@ FlowData* Stream::get_application_data_from_key(
 }
 
 FlowData* Stream::get_application_data_from_ip_port(
-    uint8_t type, uint8_t proto,
+    PktType type, IpProtocol proto,
     const sfip_t* srcIP, uint16_t srcPort,
     const sfip_t* dstIP, uint16_t dstPort,
     uint16_t vlan, uint32_t mplsId,
@@ -228,7 +228,7 @@ void Stream::stop_inspection(
     }
 
     /* Flush any queued data on the client and/or server */
-    if (flow->protocol == PktType::TCP)
+    if (flow->pkt_type == PktType::TCP)
     {
         if (flow->ssn_state.ignore_direction & SSN_DIR_FROM_CLIENT)
             flow->session->flush_client(p);
@@ -661,7 +661,7 @@ bool Stream::expired_session(Flow* flow, Packet* p)
 /* This should preferably only be called when ipprotocol is 0. */
 void Stream::set_ip_protocol(Flow* flow)
 {
-    switch (flow->protocol)
+    switch (flow->pkt_type)
     {
     case PktType::TCP:
         flow->ssn_state.ipprotocol = SNORT_PROTO_TCP;

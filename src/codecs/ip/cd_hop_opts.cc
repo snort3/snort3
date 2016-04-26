@@ -38,13 +38,13 @@ public:
     Ipv6HopOptsCodec() : Codec(CD_HOPOPTS_NAME) { }
     ~Ipv6HopOptsCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 struct IP6HopByHop
 {
-    uint8_t ip6hbh_nxt;
+    IpProtocol ip6hbh_nxt;
     uint8_t ip6hbh_len;
     /* options follow */
     uint8_t ip6hbh_pad[6];
@@ -78,22 +78,22 @@ bool Ipv6HopOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-    codec.next_prot_id = (uint16_t)hbh_hdr->ip6hbh_nxt;
+    codec.next_prot_id = (ProtocolId)hbh_hdr->ip6hbh_nxt;
     codec.ip6_csum_proto = hbh_hdr->ip6hbh_nxt;
     codec.ip6_extension_count++;
     codec.proto_bits |= PROTO_BIT__IP6_EXT;
 
     // must be called AFTER setting next_prot_id
-    CheckIPv6ExtensionOrder(codec, IPPROTO_ID_HOPOPTS);
+    CheckIPv6ExtensionOrder(codec, IpProtocol::HOPOPTS);
     if ( CheckIPV6HopOptions(raw, codec))
         return true;
 
     return false;
 }
 
-void Ipv6HopOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void Ipv6HopOptsCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(IPPROTO_ID_HOPOPTS);
+    v.push_back(ProtocolId::HOPOPTS);
 }
 
 //-------------------------------------------------------------------------

@@ -21,6 +21,7 @@
 #define PROTOCOLS_ETH_H
 
 #include <arpa/inet.h>
+#include "protocols/protocol_ids.h"
 
 #define ETHERNET_HEADER_LEN 14
 #define ETHERNET_MTU        1500
@@ -29,7 +30,6 @@ namespace eth
 {
 constexpr uint16_t MTU_LEN = 1500;
 constexpr uint16_t MAX_FRAME_LENGTH = 1500;
-constexpr uint16_t MIN_ETHERTYPE = 1536;
 constexpr uint16_t ETH_HEADER_LEN = 14;
 
 struct EtherHdr
@@ -39,8 +39,8 @@ struct EtherHdr
     uint16_t ether_type;
 
     /* return data in byte order */
-    inline uint16_t ethertype() const
-    { return ntohs(ether_type); }
+    inline ProtocolId ethertype() const
+    { return (ProtocolId)ntohs(ether_type); }
 
     /* return data in network order */
     inline uint16_t raw_ethertype() const

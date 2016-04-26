@@ -54,10 +54,9 @@ public:
     ~PgmCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
 };
 
-static const uint16_t IPPROTO_ID_PGM = 113;
 static const int PGM_NAK_ERR = -1;
 static const int PGM_NAK_OK = 0;
 static const int PGM_NAK_VULN = 1;
@@ -148,9 +147,9 @@ bool PgmCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-void PgmCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void PgmCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(IPPROTO_ID_PGM);
+    v.push_back(ProtocolId::PGM);
 }
 
 //-------------------------------------------------------------------------

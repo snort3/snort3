@@ -110,7 +110,7 @@ public:
 
     ~TcpCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void get_protocol_ids(std::vector<ProtocolId>& v) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
@@ -134,9 +134,9 @@ private:
 static sfip_var_t* SynToMulticastDstIp = NULL;
 } // namespace
 
-void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void TcpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(IPPROTO_ID_TCP);
+    v.push_back(ProtocolId::TCP);
 }
 
 bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
@@ -642,7 +642,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     }
 
     // in case of ip6 extension headers, this gets next correct
-    enc.next_proto = IPPROTO_ID_TCP;
+    enc.next_proto = IpProtocol::TCP;
     tcph_out->th_sum = 0;
     const ip::IpApi& ip_api = enc.ip_api;
 
@@ -655,7 +655,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         ps.sip = ip4h->get_src();
         ps.dip = ip4h->get_dst();
         ps.zero = 0;
-        ps.protocol = IPPROTO_ID_TCP;
+        ps.protocol = IpProtocol::TCP;
         ps.len = htons((uint16_t)len);
         tcph_out->th_sum = checksum::tcp_cksum((uint16_t*)tcph_out, len, &ps);
     }
@@ -668,7 +668,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         memcpy(&ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
         memcpy(&ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
         ps6.zero = 0;
-        ps6.protocol = IPPROTO_ID_TCP;
+        ps6.protocol = IpProtocol::TCP;
         ps6.len = htons((uint16_t)len);
         tcph_out->th_sum = checksum::tcp_cksum((uint16_t*)tcph_out, len, &ps6);
     }
@@ -694,7 +694,7 @@ void TcpCodec::update(const ip::IpApi& api, const EncodeFlags flags, uint8_t* ra
             ps.sip = ip4h->get_src();
             ps.dip = ip4h->get_dst();
             ps.zero = 0;
-            ps.protocol = IPPROTO_TCP;
+            ps.protocol = IpProtocol::TCP;
             ps.len = htons((uint16_t)updated_len);
             h->th_sum = checksum::tcp_cksum((uint16_t*)h, updated_len, &ps);
         }
@@ -705,7 +705,7 @@ void TcpCodec::update(const ip::IpApi& api, const EncodeFlags flags, uint8_t* ra
             memcpy(ps6.sip, ip6h->get_src()->u6_addr32, sizeof(ps6.sip));
             memcpy(ps6.dip, ip6h->get_dst()->u6_addr32, sizeof(ps6.dip));
             ps6.zero = 0;
-            ps6.protocol = IPPROTO_TCP;
+            ps6.protocol = IpProtocol::TCP;
             ps6.len = htons((uint16_t)updated_len);
             h->th_sum = checksum::tcp_cksum((uint16_t*)h, updated_len, &ps6);
         }

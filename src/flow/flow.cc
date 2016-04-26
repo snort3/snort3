@@ -57,9 +57,9 @@ Flow::Flow()
 Flow::~Flow()
 { }
 
-void Flow::init(PktType proto)
+void Flow::init(PktType type)
 {
-    protocol = proto;
+    pkt_type = type;
 
     // FIXIT-M getFlowbitSizeInBytes() should be attribute of ??? (or eliminate)
     bitop = new BitOp(getFlowbitSizeInBytes());

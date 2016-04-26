@@ -238,6 +238,8 @@ void pc_sum()
         g_daq_stats.verdicts[i] += daq_stats->verdicts[i];
 
     sum_stats((PegCount*)&gaux, (PegCount*)&aux_counts, sizeof(aux_counts)/sizeof(PegCount));
+
+    //  FIXIT-H:  Why do we set gaux in sum_stats then zero it here?
     memset(&gaux, 0, sizeof(gaux));
 }
 

@@ -37,14 +37,14 @@ public:
     MobilityCodec() : Codec(CD_MOBILE_NAME) { }
     ~MobilityCodec() { }
 
-    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 } // namespace
 
-void MobilityCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void MobilityCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(IPPROTO_ID_MOBILITY);
+    v.push_back(ProtocolId::MOBILITY);
 }
 
 bool MobilityCodec::decode(const RawData&, CodecData& codec, DecodeData&)
