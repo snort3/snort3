@@ -872,7 +872,6 @@ static void FragRebuild(FragTracker* ft, Packet* p)
         {
             ip::IP6Hdr* const rawHdr =
                 const_cast<ip::IP6Hdr*>(dpkt->ptrs.ip_api.get_ip6h());
-                const_cast<ip::IP6Hdr*>(dpkt->ptrs.ip_api.get_ip6h());
             rawHdr->ip6_next = ft->ip_proto;
         }
         else

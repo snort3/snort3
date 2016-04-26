@@ -168,7 +168,7 @@ void CodecManager::instantiate(CodecApiWrapper& wrap, Module* m, SnortConfig*)
                 ParseError("The Codecs %s and %s have both been registered "
                     "for protocol_id %d. Codec %s will be used\n",
                     s_protocols[s_proto_map[to_utype(id)]]->get_name(), cd->get_name(),
-                    id, cd->get_name());
+                    to_utype(id), cd->get_name());
 
             s_proto_map[to_utype(id)] = (decltype(s_proto_map[to_utype(id)]))codec_id; // future proofing
         }
