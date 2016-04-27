@@ -48,11 +48,11 @@ static THREAD_LOCAL ProfileStats ipProtoPerfStats;
 #define IP_PROTO__GREATER_THAN  2
 #define IP_PROTO__LESS_THAN     3
 
-typedef struct _IpProtoData
+struct IpProtoData
 {
     IpProtocol protocol;
     uint8_t comparison_flag;
-} IpProtoData;
+};
 
 class IpProtoOption : public IpsOption
 {
@@ -209,14 +209,13 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
     {
         struct protoent* pt = getprotobyname(data);  // main thread only
 
-        if (pt != NULL || pt->p_proto >= NUM_IP_PROTOS)
+        if ( pt and pt->p_proto < NUM_IP_PROTOS )
         {
             ds_ptr->protocol = (IpProtocol)pt->p_proto;
         }
         else
         {
-            ParseError("invalid protocol name for \"ip_proto\" "
-                "rule option: '%s'.", data);
+            ParseError("invalid protocol name for \"ip_proto\" rule option: '%s'.", data);
             return;
         }
     }
