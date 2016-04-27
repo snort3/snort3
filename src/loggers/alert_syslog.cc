@@ -251,7 +251,7 @@ static void AlertSyslog(
         else
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                "{%d} ", to_utype(ip_proto));
+                "{%d} ", static_cast<uint8_t>(ip_proto));
         }
 
         if ((p->ptrs.decode_flags & DECODE_FRAG)

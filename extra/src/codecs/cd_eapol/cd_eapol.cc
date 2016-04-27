@@ -140,13 +140,8 @@ static const CodecApi eapol_api =
     dtor, // dtor
 };
 
-#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &eapol_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_eapol = &eapol_api.base;
-#endif
-

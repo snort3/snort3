@@ -49,9 +49,8 @@ Follow these steps:
     tar zxf extra-tarball
     cd snort_extra-1.0.0*
 
-2.  Setup install path (same as for snort):
+2.  Setup install path using pkgconfig (same as for snort):
 
-    export my_path=/path/to/snorty
     export PKG_CONFIG_PATH=$my_path/lib/pkgconfig
 
 3.  Compile and install:
@@ -59,21 +58,24 @@ Follow these steps:
 * To build with autotools, simply do the usual from the top level directory:
 
     ./configure --prefix=$my_path
-    make -j 8 install
+    make
+    make install
 
-* To build with cmake and make, run configure_cmake.sh.  It will automatically create and populate a new subdirectory named 'build'.
+* To build with cmake and make:
 
-    ./configure_cmake.sh --prefix=$my_path
+    mkdir -p build
     cd build
-    make -j 8 install
+    cmake -DCMAKE_INSTALL_PREFIX=$my_path ..
+    make
+    make install
 
 Note:
 
 * If you are using autotools with a github clone, first do autoreconf -isvf.
-* If you are familiar with cmake, you can run cmake/ccmake instead of
-  configure_cmake.sh.
 * cmake --help will list any available generators, such as Xcode.  Feel
   free to use one, however help with those will be provided separately.
+* each individual plugin directory is a standalone cmake project, and does
+  not depend on any other part of the extra/ build tree
 
 RUN EXTRAS
 

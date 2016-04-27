@@ -59,7 +59,7 @@ bool LinuxSllCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
     const linux_sll::SLLHdr* const sllh = reinterpret_cast<const linux_sll::SLLHdr*>(raw.data);
 
     /* grab out the network type */
-    data.next_prot_id = (ProtocolId)ntohs(sllh->sll_protocol);
+    data.next_prot_id = static_cast<ProtocolId>(ntohs(sllh->sll_protocol));
     data.lyr_len = linux_sll::SLL_HDR_LEN;
     return true;
 }
