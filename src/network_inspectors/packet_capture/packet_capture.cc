@@ -324,7 +324,6 @@ TEST_CASE("blank filter", "[PacketCapture]")
 
     daq_hdr.caplen = sizeof(cooked);
     daq_hdr.pktlen = sizeof(cooked);
-    time_t ts = time(nullptr);
 
     CaptureModule mod;
     MockPacketCapture cap(&mod);
@@ -409,7 +408,6 @@ TEST_CASE("bpf filter", "[PacketCapture]")
 
     daq_hdr.caplen = sizeof(match);
     daq_hdr.pktlen = sizeof(match);
-    time_t ts = time(nullptr);
 
     CaptureModule mod;
     MockPacketCapture cap(&mod);
