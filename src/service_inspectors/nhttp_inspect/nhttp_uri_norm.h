@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 
+#include "nhttp_enum.h"
 #include "nhttp_field.h"
 #include "nhttp_module.h"
 #include "nhttp_infractions.h"
@@ -56,10 +57,14 @@ private:
         NHttpEventGen& events);
     static int32_t norm_percent_processing(const Field& input, uint8_t* out_buf,
         const NHttpParaList::UriParam& uri_param, bool& utf8_needed,
-        std::vector<bool>& percent_encoded, NHttpInfractions& infractions, NHttpEventGen& events);
+        std::vector<bool>& percent_encoded, bool& double_decoding_needed,
+        NHttpInfractions& infractions, NHttpEventGen& events);
     static int32_t norm_utf8_processing(const Field& input, uint8_t* out_buf,
         const NHttpParaList::UriParam& uri_param, const std::vector<bool>& percent_encoded,
-        NHttpInfractions& infractions, NHttpEventGen& events);
+        bool& double_decoding_needed, NHttpInfractions& infractions, NHttpEventGen& events);
+    static int32_t norm_double_decode(const Field& input, uint8_t* out_buf,
+        const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions,
+        NHttpEventGen& events);
     static void norm_substitute(uint8_t* buf, int32_t length,
         const NHttpParaList::UriParam& uri_param,  NHttpInfractions& infractions,
         NHttpEventGen& events);
@@ -73,12 +78,48 @@ private:
     static bool advance_to_code_page(FILE* file, int page_to_use);
     static bool map_code_points(FILE* file, uint8_t* map);
 
+    static inline bool is_percent_encoding(const Field& input, int32_t index);
+    static inline uint8_t extract_percent_encoding(const Field& input, int32_t index);
+    static inline bool is_u_encoding(const Field& input, int32_t index);
+    static inline uint16_t extract_u_encoding(const Field& input, int32_t index);
+
     // An artifice used by the classic normalization methods to disable event generation
     class NHttpDummyEventGen : public NHttpEventGen
     {
         void create_event(NHttpEnums::EventSid) override {}
     };
 };
+
+bool UriNormalizer::is_percent_encoding(const Field& input, int32_t index)
+{
+    return (index+2 < input.length) &&
+           (NHttpEnums::as_hex[input.start[index+1]] != -1) &&
+           (NHttpEnums::as_hex[input.start[index+2]] != -1);
+}
+
+uint8_t UriNormalizer::extract_percent_encoding(const Field& input, int32_t index)
+{
+    return NHttpEnums::as_hex[input.start[index+1]] << 4 |
+           NHttpEnums::as_hex[input.start[index+2]];
+}
+
+bool UriNormalizer::is_u_encoding(const Field& input, int32_t index)
+{
+    return (index+5 < input.length) &&
+           ((input.start[index+1] == 'u') || (input.start[index+1] == 'U')) &&
+           (NHttpEnums::as_hex[input.start[index+2]] != -1) &&
+           (NHttpEnums::as_hex[input.start[index+3]] != -1) &&
+           (NHttpEnums::as_hex[input.start[index+4]] != -1) &&
+           (NHttpEnums::as_hex[input.start[index+5]] != -1);
+}
+
+uint16_t UriNormalizer::extract_u_encoding(const Field& input, int32_t index)
+{
+    return (NHttpEnums::as_hex[input.start[index+2]] << 12) |
+           (NHttpEnums::as_hex[input.start[index+3]] << 8)  |
+           (NHttpEnums::as_hex[input.start[index+4]] << 4)  |
+            NHttpEnums::as_hex[input.start[index+5]];
+}
 
 #endif
 
