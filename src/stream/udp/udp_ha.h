@@ -44,7 +44,7 @@ public:
     { udp_ha->process_deletion(flow); }
     static void tinit();
     static void tterm();
-    static UdpHA* udp_ha;
+    static THREAD_LOCAL UdpHA* udp_ha;
 };
 #endif
 

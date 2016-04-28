@@ -34,7 +34,7 @@
 // One ConnectorElem for each Connector within the ConnectorCommon configuration
 struct ConnectorElem
 {
-    ConnectorConfig config;
+    ConnectorConfig* config;
     std::unordered_map<pid_t, Connector*> thread_connectors;
 };
 
@@ -128,7 +128,7 @@ void ConnectorManager::thread_init()
                 /* There must NOT be a connector for this thread present. */
                 assert(conn.second->thread_connectors.count(tid) == 0);
 
-                Connector* connector = sc.api->tinit(&conn.second->config);
+                Connector* connector = sc.api->tinit(conn.second->config);
                 std::pair<pid_t, Connector*> element (tid, std::move(connector));
                 conn.second->thread_connectors.insert(element);
             }
@@ -171,17 +171,17 @@ void ConnectorManager::instantiate(const ConnectorApi* api, Module* mod, SnortCo
     assert(connector_common);
 
     c.connector_common = connector_common;
-    ConnectorConfig::ConfigSet config_set = connector_common->config_set;
+    ConnectorConfig::ConfigSet* config_set = connector_common->config_set;
 
     // iterate through the config_set and create the connector entries
-    for ( auto cfg : config_set )
+    for ( auto cfg : *config_set )
     {
         DebugFormat(DEBUG_SIDE_CHANNEL,"ConnectorManager::instantiate(): %s\n",
-            cfg.connector_name.c_str());
+            cfg->connector_name.c_str());
 
         ConnectorElem* connector_elem = new ConnectorElem;
-        connector_elem->config = cfg;
-        std::pair<std::string, ConnectorElem*> element (cfg.connector_name, std::move(connector_elem));
+        connector_elem->config = &*cfg;
+        std::pair<std::string, ConnectorElem*> element (cfg->connector_name, std::move(connector_elem));
         c.connectors.insert(element);
     }
 

@@ -273,6 +273,7 @@ bool SideChannel::discard_message(SCMessage* msg)
     assert(msg->handle);
 
     msg->connector->discard_message (msg->handle);
+    delete msg;
     return true;
 }
 
@@ -290,6 +291,7 @@ bool SideChannel::transmit_message(SCMessage* msg)
         msg->hdr->sequence = sequence++;
 
         return_value = connector_transmit->transmit_message(msg->handle);
+        delete msg;
     }
 
     DebugFormat(DEBUG_SIDE_CHANNEL,"SideChannelManager::transmit_message(): return: %d\n",

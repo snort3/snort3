@@ -30,8 +30,8 @@ class StreamHAClient : public FlowHAClient
 {
 public:
     StreamHAClient() : FlowHAClient(true) { }
-    void consume(Flow*, HAMessage*);
-    void produce(Flow*, HAMessage*);
+    bool consume(Flow*, HAMessage*);
+    bool produce(Flow*, HAMessage*);
     size_t get_message_size()
     { return sizeof(LwState); }
 
@@ -58,7 +58,7 @@ public:
     static void tterm();
     static void process_deletion(Flow*);
 
-    static StreamHAClient* ha_client;
+    static THREAD_LOCAL StreamHAClient* ha_client;
 };
 #endif
 
