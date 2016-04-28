@@ -194,13 +194,8 @@ static const CodecApi wlan_api =
     dtor,
 };
 
-#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &wlan_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_wlan = &wlan_api.base;
-#endif
-

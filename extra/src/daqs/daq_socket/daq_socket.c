@@ -566,11 +566,7 @@ static int socket_daq_set_filter (void* handle, const char* filter)
 
 //-------------------------------------------------------------------------
 
-#ifdef BUILDING_SO
 DAQ_SO_PUBLIC DAQ_Module_t DAQ_MODULE_DATA =
-#else
-DAQ_Module_t socket_daq_module_data =
-#endif
 {
     .api_version = DAQ_API_VERSION,
     .module_version = DAQ_MOD_VERSION,
@@ -598,4 +594,3 @@ DAQ_Module_t socket_daq_module_data =
     .hup_apply = NULL,
     .hup_post = NULL,
 };
-

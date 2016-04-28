@@ -100,13 +100,8 @@ static const CodecApi ppp_api =
     dtor,
 };
 
-#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &ppp_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_ppp = &ppp_api.base;
-#endif
-

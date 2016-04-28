@@ -87,13 +87,8 @@ static const CodecApi raw4_api =
     dtor, // dtor
 };
 
-#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &raw4_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_raw4 = &raw4_api.base;
-#endif
-

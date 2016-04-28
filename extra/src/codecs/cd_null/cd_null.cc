@@ -90,13 +90,8 @@ static const CodecApi null_api =
     dtor, // dtor
 };
 
-#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &null_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_null = &null_api.base;
-#endif
-

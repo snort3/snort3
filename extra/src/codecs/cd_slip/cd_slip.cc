@@ -91,13 +91,8 @@ static const CodecApi slip_api =
     dtor
 };
 
-#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &slip_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_slip = &slip_api.base;
-#endif
-
