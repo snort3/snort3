@@ -261,13 +261,8 @@ static const CodecApi pflog_api =
     dtor,
 };
 
-#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &pflog_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_pflog = &pflog_api.base;
-#endif
-

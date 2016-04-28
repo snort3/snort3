@@ -3,17 +3,20 @@
 
 %if @project.language == "CXX"
 AM_CXXFLAGS = @SNORT3_CFLAGS@ -std=c++11
-%else
-AM_CFLAGS   = @SNORT3_CFLAGS@
+%elsif @project.language == "C"
+AM_CFLAGS   = @SNORT3_CFLAGS@ -std=gnu99
 %end
 
 <%= @project.libname %>lib_LTLIBRARIES = lib<%= @project.libname %>.la
 %if @project.language == "CXX"
 lib<%= @project.libname %>_la_CXXFLAGS = $(AM_CXXFLAGS)
-%else
+%elsif @project.language == "C"
 lib<%= @project.libname %>_la_CFLAGS   = $(AM_CFLAGS)
 %end
 lib<%= @project.libname %>_la_LDFLAGS  = -export-dynamic -shared -avoid-version
+%if @project.language == "C"
+lib<%= @project.libname %>_la_LDFLAGS += -module
+%end
 lib<%= @project.libname %>_la_SOURCES  =<% for source in @project.sources %> <%= source %><% end %>
 %end
 %if !@project.scripts.empty?

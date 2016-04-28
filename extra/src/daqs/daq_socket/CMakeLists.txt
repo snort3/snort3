@@ -4,8 +4,8 @@ project ( daq_socket C )
 if ( APPLE )
     set ( CMAKE_MACOSX_RPATH OFF )
     set (
-        CMAKE_SHARED_LINKER_FLAGS
-        "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup"
+        CMAKE_MODULE_LINKER_FLAGS
+        "${CMAKE_MODULE_LINKER_FLAGS} -undefined dynamic_lookup"
     )
 endif ( APPLE )
 
@@ -13,9 +13,11 @@ include ( FindPkgConfig )
 pkg_search_module ( SNORT3 REQUIRED snort>=3 )
 
 add_library (
-    daq_socket SHARED
+    daq_socket MODULE
     daq_socket.c
 )
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
 
 target_include_directories (
     daq_socket PUBLIC

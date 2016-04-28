@@ -8,8 +8,13 @@ project ( <%= @project.name %><% if @project.language == "CXX" %> CXX<% elsif @p
 if ( APPLE )
     set ( CMAKE_MACOSX_RPATH OFF )
     set (
+%if @project.language == "CXX"
         CMAKE_SHARED_LINKER_FLAGS
         "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup"
+%elsif @project.language == "C"
+        CMAKE_MODULE_LINKER_FLAGS
+        "${CMAKE_MODULE_LINKER_FLAGS} -undefined dynamic_lookup"
+%end
     )
 endif ( APPLE )
 %end
@@ -18,7 +23,11 @@ include ( FindPkgConfig )
 pkg_search_module ( SNORT3 REQUIRED snort>=3 )
 
 add_library (
+%if @project.language == "CXX"
     <%= @project.libname %> SHARED
+%elsif @project.language == "C"
+    <%= @project.libname %> MODULE
+%end
 %for source in @project.sources
     <%= source %>
 %end
@@ -26,6 +35,10 @@ add_library (
 %if @project.language == "CXX"
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+%end
+%if @project.language == "C"
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
 %end
 
 target_include_directories (
