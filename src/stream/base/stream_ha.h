@@ -58,7 +58,7 @@ public:
     static void tterm();
     static void process_deletion(Flow*);
 
-    static StreamHAClient* ha_client;
+    static THREAD_LOCAL StreamHAClient* ha_client;
 };
 #endif
 

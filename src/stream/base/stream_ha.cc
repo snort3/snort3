@@ -19,6 +19,8 @@
 
 #include "stream_ha.h"
 
+#include <thread>
+
 #include "main/snort_debug.h"
 
 typedef LwState SessionHAContent;
@@ -54,7 +56,7 @@ void ProtocolHA::process_deletion(Flow* flow)
     HighAvailabilityManager::process_deletion(flow);
 }
 
-StreamHAClient* StreamHAManager::ha_client;
+THREAD_LOCAL StreamHAClient* StreamHAManager::ha_client;
 
 void StreamHAManager::tinit()
 {

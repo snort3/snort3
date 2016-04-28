@@ -31,7 +31,7 @@ void UdpHA::create_session(Flow*)
     DebugMessage(DEBUG_HA,"UdpHA::create_session)\n");
 }
 
-UdpHA* UdpHAManager::udp_ha;
+THREAD_LOCAL UdpHA* UdpHAManager::udp_ha;
 
 void UdpHAManager::tinit()
 {
