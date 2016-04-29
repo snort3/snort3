@@ -34,6 +34,9 @@ add_definitions( -DHAVE_CONFIG_H )
 # set (CMAKE_CXX_STANDARD_REQUIRED ON)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS}")
 
+# FIXIT - there is probably a better way to do this
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
+
 include_directories (${PROJECT_BINARY_DIR})
 include_directories (${PROJECT_SOURCE_DIR})
 

@@ -1,6 +1,3 @@
-add_custom_target( dist
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target package_source
-)
 
 set (AUTOTOOL_FILES "autom4te.cache;m4;configure.ac;Makefile.am")
 
