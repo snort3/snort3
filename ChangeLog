@@ -1,3 +1,12 @@
+16/04/29 - build 196
+
+-- overhaul cmake foo
+-- update extras to better serve as examples
+-- cleanup use of protocol numbers and identifiers
+-- continued stream_tcp refactoring
+-- continued dce2 port
+-- more static analysis memory leak fixes
+
 16/04/22 - build 195
 
 -- added packet_capture module
