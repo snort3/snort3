@@ -28,8 +28,11 @@
 
 void ParseWarning(WarningGroup, const char*, ...) {}
 void ParseError(const char*, ...) {}
-void show_stats(unsigned long*, PegInfo const*, unsigned int, char const*) {}
-void show_stats(unsigned long*, PegInfo const*, std::vector<unsigned int, std::allocator<unsigned int> >&, char const*, _IO_FILE*) {}
+
+void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats( PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
+void show_stats(SimpleStats*, const char*) { }
+
 void Value::get_bits(std::bitset<256ul>&) const {}
 int SnortEventqAdd(unsigned int, unsigned int, RuleType) { return 0; }
 

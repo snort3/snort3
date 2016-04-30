@@ -15,9 +15,6 @@ add_library ( log STATIC
     text_log.cc
 )
 
-set_default_visibility_compile_flag(log)
-
-
 install(FILES ${LOG_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/log"
 )

@@ -13,6 +13,9 @@ AX_CXX_COMPILE_STDCXX_11
 
 PKG_CHECK_MODULES([SNORT3], [snort >= 3])
 
+# pkg magic doesn't work for custom vars
+CPPFLAGS="`pkg-config --variable=daq_cppflags snort` $(CPPFLAGS)"
+
 AC_SUBST([SNORT3_CFLAGS])
 
 AC_CONFIG_FILES([

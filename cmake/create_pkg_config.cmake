@@ -12,6 +12,8 @@ set(datadir "\${datarootdir}")
 set(mandir "\${datarootdir}/man")
 set(infodir "\${datarootdir}/info")
 
+set(DAQ_CPPFLAGS "-I${DAQ_INCLUDE_DIR}")
+
 # create & install pkgconfig file
 
 configure_file(

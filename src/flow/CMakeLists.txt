@@ -23,8 +23,6 @@ add_library (flow STATIC
     session.h
 )
 
-set_default_visibility_compile_flag(flow)
-
 target_link_libraries(flow
     protocols
 )

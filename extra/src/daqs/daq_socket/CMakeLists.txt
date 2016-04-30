@@ -17,7 +17,13 @@ add_library (
     daq_socket.c
 )
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
+execute_process(
+    COMMAND pkg-config --variable=daq_cppflags snort
+    OUTPUT_VARIABLE DAQ_CPPFLAGS
+)
+
+string(REGEX REPLACE "[\r\n]" " " DAQ_CPPFLAGS "${DAQ_CPPFLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 ${DAQ_CPPFLAGS}")
 
 target_include_directories (
     daq_socket PUBLIC

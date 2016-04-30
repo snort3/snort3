@@ -811,7 +811,8 @@ AC_ARG_WITH(daq_includes,
     [with_daq_includes="$withval"],[with_daq_includes="no"])
 
 if test "x$with_daq_includes" != "xno"; then
-    CPPFLAGS="${CPPFLAGS} -I${with_daq_includes}"
+    DAQ_CPPFLAGS="-I${with_daq_includes}"
+    CPPFLAGS="${CPPFLAGS} ${DAQ_CPPFLAGS}"
 fi
 
 AC_ARG_WITH(daq_libraries,
@@ -1059,6 +1060,7 @@ AC_SUBST(AM_CXXFLAGS)
 AC_SUBST(AM_LDFLAGS)
 
 AC_SUBST(snort2lua_CPPFLAGS)
+AC_SUBST(DAQ_CPPFLAGS)
 
 AC_SUBST(CPPUTEST_CPPFLAGS)
 AC_SUBST(CPPUTEST_LDFLAGS)

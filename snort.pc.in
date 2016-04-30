@@ -7,6 +7,7 @@ datarootdir=@datarootdir@
 datadir=@datadir@
 mandir=@mandir@
 infodir=@infodir@
+daq_cppflags=@DAQ_CPPFLAGS@
 
 Name: Snort++
 Description: Snort 3.0 Project
@@ -14,3 +15,4 @@ URL: www.snort.org
 Version: @VERSION@
 Libs: -L${libdir}/snort
 Cflags: -I${includedir}/snort
+
