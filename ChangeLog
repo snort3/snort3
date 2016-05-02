@@ -1,3 +1,8 @@
+16/05/02 - build 197
+
+-- fix build of extras
+-- fix unit tests
+
 16/04/29 - build 196
 
 -- overhaul cmake foo
