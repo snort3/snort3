@@ -287,26 +287,28 @@ TEST_CASE("lazy init", "[PacketCapture]")
     auto null_packet = init_null_packet();
 
     auto mod = (CaptureModule*)mod_ctor();
-    auto cap = (PacketCapture*)pc_ctor(mod);
+    auto real_cap = (PacketCapture*)pc_ctor(mod);
     
     CHECK ( !capture_initialized() );
 
-    cap->eval(null_packet);
+    real_cap->eval(null_packet);
     CHECK ( !capture_initialized() );
+
+    pc_dtor(real_cap);
+    MockPacketCapture cap(mod);
 
     packet_capture_enable("");
     CHECK ( !capture_initialized() );
 
-    cap->eval(null_packet);
+    cap.eval(null_packet);
     CHECK ( capture_initialized() );
 
     packet_capture_disable();
     CHECK ( capture_initialized() );
 
-    cap->eval(null_packet);
+    cap.eval(null_packet);
     CHECK ( !capture_initialized() );
 
-    pc_dtor(cap);
     mod_dtor(mod);
 }
 
