@@ -50,6 +50,8 @@ const Parameter NHttpModule::nhttp_params[] =
           "file containing code points for IIS unicode." },
     { "iis_unicode_code_page", Parameter::PT_INT, "0:65535", "1252",
           "code page to use from the IIS unicode map file" },
+    { "iis_double_decode", Parameter::PT_BOOL, nullptr, "false",
+          "perform double decoding of percent encodings to normalize characters" },
     { "backslash_to_slash", Parameter::PT_BOOL, nullptr, "false",
           "replace \\ with / when normalizing URIs" },
     { "plus_to_space", Parameter::PT_BOOL, nullptr, "true",
@@ -123,6 +125,10 @@ bool NHttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("iis_unicode_code_page"))
     {
         params->uri_param.iis_unicode_code_page = val.get_long();
+    }
+    else if (val.is("iis_double_decode"))
+    {
+        params->uri_param.iis_double_decode = val.get_bool();
     }
     else if (val.is("backslash_to_slash"))
     {

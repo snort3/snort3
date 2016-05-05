@@ -121,20 +121,27 @@ int32_t UriNormalizer::norm_char_clean(const Field& input, uint8_t* out_buf,
     const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions, NHttpEventGen& events)
 {
     bool utf8_needed = false;
+    bool double_decoding_needed = false;
     std::vector<bool> percent_encoded(input.length, false);
     int32_t length = norm_percent_processing(input, out_buf, uri_param, utf8_needed,
-        percent_encoded, infractions, events);
+        percent_encoded, double_decoding_needed, infractions, events);
     if (uri_param.utf8 && utf8_needed)
     {
         length = norm_utf8_processing(Field(length, out_buf), out_buf, uri_param, percent_encoded,
-            infractions, events);
+            double_decoding_needed, infractions, events);
+    }
+    if (uri_param.iis_double_decode && double_decoding_needed)
+    {
+        length = norm_double_decode(Field(length, out_buf), out_buf, uri_param, infractions,
+            events);
     }
     return length;
 }
 
 int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_buf,
     const NHttpParaList::UriParam& uri_param, bool& utf8_needed,
-    std::vector<bool>& percent_encoded, NHttpInfractions& infractions, NHttpEventGen& events)
+    std::vector<bool>& percent_encoded, bool& double_decoding_needed,
+    NHttpInfractions& infractions, NHttpEventGen& events)
 {
     int32_t length = 0;
     for (int32_t k = 0; k < input.length; k++)
@@ -152,43 +159,38 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
             out_buf[length++] = input.start[k];
             break;
         case CHAR_PERCENT:
-            if ((k+2 < input.length) && (as_hex[input.start[k+1]] != -1) &&
-                (as_hex[input.start[k+2]] != -1))
+            if (is_percent_encoding(input, k))
             {
                 // %hh => hex value
-                const uint8_t hex_val = as_hex[input.start[k+1]] * 16 + as_hex[input.start[k+2]];
+                const uint8_t hex_val = extract_percent_encoding(input, k);
                 percent_encoded[length] = true;
                 // Test for possible start of two-byte (110xxxxx) or three-byte (1110xxxx) UTF-8
                 if (((hex_val & 0xE0) == 0xC0) || ((hex_val & 0xF0) == 0xE0))
                     utf8_needed = true;
+                if (hex_val == '%')
+                    double_decoding_needed = true;
                 out_buf[length++] = hex_val;
                 k += 2;
             }
             else if ((k+1 < input.length) && (input.start[k+1] == '%'))
             {
                 // %% => %
+                double_decoding_needed = true;
                 out_buf[length++] = '%';
                 k += 1;
             }
-            else if ( uri_param.percent_u &&
-                     (k+5 < input.length) &&
-                     ((input.start[k+1] == 'u') || (input.start[k+1] == 'U')) &&
-                     (as_hex[input.start[k+2]] != -1) &&
-                     (as_hex[input.start[k+3]] != -1) &&
-                     (as_hex[input.start[k+4]] != -1) &&
-                     (as_hex[input.start[k+5]] != -1) )
+            else if (uri_param.percent_u && is_u_encoding(input, k))
             {
                 // %u encoding, this is nonstandard and likely to be malicious
                 infractions += INF_U_ENCODE;
                 events.create_event(EVENT_U_ENCODE);
                 percent_encoded[length] = true;
-                const uint16_t u_val = (as_hex[input.start[k+2]] << 12) |
-                                       (as_hex[input.start[k+3]] << 8)  |
-                                       (as_hex[input.start[k+4]] << 4)  |
-                                        as_hex[input.start[k+5]];
-                const uint8_t byte_val = reduce_to_eight_bits(u_val, uri_param, infractions, events);
+                const uint8_t byte_val = reduce_to_eight_bits(extract_u_encoding(input, k),
+                    uri_param, infractions, events);
                 if (((byte_val & 0xE0) == 0xC0) || ((byte_val & 0xF0) == 0xE0))
                     utf8_needed = true;
+                if (byte_val == '%')
+                    double_decoding_needed = true;
                 out_buf[length++] = byte_val;
                 k += 5;
             }
@@ -197,6 +199,7 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
                 // don't recognize, pass it through
                 infractions += INF_UNKNOWN_PERCENT;
                 events.create_event(EVENT_UNKNOWN_PERCENT);
+                double_decoding_needed = true;
                 out_buf[length++] = '%';
             }
 
@@ -215,7 +218,7 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
 
 int32_t UriNormalizer::norm_utf8_processing(const Field& input, uint8_t* out_buf,
     const NHttpParaList::UriParam& uri_param, const std::vector<bool>& percent_encoded,
-    NHttpInfractions& infractions, NHttpEventGen& events)
+    bool& double_decoding_needed, NHttpInfractions& infractions, NHttpEventGen& events)
 {
     int32_t length = 0;
     for (int32_t k=0; k < input.length; k++)
@@ -237,7 +240,11 @@ int32_t UriNormalizer::norm_utf8_processing(const Field& input, uint8_t* out_buf
                 }
                 const uint16_t utf8_val = ((input.start[k] & 0x1F) << 6) +
                                            (input.start[k+1] & 0x3F);
-                out_buf[length++] = reduce_to_eight_bits(utf8_val, uri_param, infractions, events);
+                const uint8_t val8 = reduce_to_eight_bits(utf8_val, uri_param, infractions,
+                    events);
+                if (val8 == '%')
+                    double_decoding_needed = true;
+                out_buf[length++] = val8;
                 k += 1;
             }
             // three-byte UTF-8: 1110xxxx 10xxxxxx 10xxxxxx
@@ -258,7 +265,11 @@ int32_t UriNormalizer::norm_utf8_processing(const Field& input, uint8_t* out_buf
                 const uint16_t utf8_val = ((input.start[k] & 0x0F) << 12) +
                                           ((input.start[k+1] & 0x3F) << 6) +
                                            (input.start[k+2] & 0x3F);
-                out_buf[length++] = reduce_to_eight_bits(utf8_val, uri_param, infractions, events);
+                const uint8_t val8 = reduce_to_eight_bits(utf8_val, uri_param, infractions,
+                    events);
+                if (val8 == '%')
+                    double_decoding_needed = true;
+                out_buf[length++] = val8;
                 k += 2;
             }
             else
@@ -266,6 +277,44 @@ int32_t UriNormalizer::norm_utf8_processing(const Field& input, uint8_t* out_buf
         }
         else
             out_buf[length++] = input.start[k];
+    }
+    return length;
+}
+
+int32_t UriNormalizer::norm_double_decode(const Field& input, uint8_t* out_buf,
+    const NHttpParaList::UriParam& uri_param, NHttpInfractions& infractions,
+    NHttpEventGen& events)
+{
+    // Double decoding is limited to %hh and %u encoding cases
+    int32_t length = 0;
+    for (int32_t k = 0; k < input.length; k++)
+    {
+        if (input.start[k] != '%')
+            out_buf[length++] = input.start[k];
+        else
+        {
+            if (is_percent_encoding(input, k))
+            {
+                infractions += INF_DOUBLE_DECODE;
+                events.create_event(EVENT_DOUBLE_DECODE);
+                out_buf[length++] = extract_percent_encoding(input, k);
+                k += 2;
+            }
+            else if (uri_param.percent_u && is_u_encoding(input, k))
+            {
+                infractions += INF_DOUBLE_DECODE;
+                events.create_event(EVENT_DOUBLE_DECODE);
+                infractions += INF_U_ENCODE;
+                events.create_event(EVENT_U_ENCODE);
+                out_buf[length++] = reduce_to_eight_bits(extract_u_encoding(input, k), uri_param,
+                    infractions, events);
+                k += 5;
+            }
+            else
+            {
+                out_buf[length++] = '%';
+            }
+        }
     }
     return length;
 }
