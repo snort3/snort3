@@ -96,6 +96,10 @@
 /* enable ha capable build */
 #cmakedefine SHELL 1
 
+/* large pcap options */
+#cmakedefine _LARGEFILE_SOURCE 1
+#cmakedefine _FILE_OFFSET_BITS @_FILE_OFFSET_BITS@
+
 
 
 /* platforms */
