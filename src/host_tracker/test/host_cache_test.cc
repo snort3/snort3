@@ -165,7 +165,7 @@ int main(int argc, char** argv)
     //  deallocated. This pre-allocates the map so that initial
     //  allocation is done prior to starting the tests.  The same
     //  is true for the list used when adding a service.
-    HostTracker *ht = new HostTracker;
+    HostTracker* ht = new HostTracker;
     host_cache_add_host_tracker(ht);
     host_cache_add_service(ip_addr1, proto1, port1, "udp");
 
