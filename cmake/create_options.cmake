@@ -16,7 +16,6 @@ option ( ENABLE_STATIC_DAQ "link static DAQ modules" ON )
 
 # features
 option ( ENABLE_SHELL "enable shell support" OFF )
-option ( ENABLE_SIDE_CHANNEL "enable the side channel library" OFF )
 option ( ENABLE_UNIT_TESTS "enable unit tests" OFF )
 option ( ENABLE_PIGLET "enable piglet test harness" OFF )
 

@@ -4,7 +4,6 @@
 # features
 
 set ( SHELL ${ENABLE_SHELL} )
-set ( SIDE_CHANNEL ${ENABLE_SIDE_CHANNEL} )
 set ( UNIT_TEST ${ENABLE_UNIT_TESTS} )
 set ( PIGLET ${ENABLE_PIGLET} )
 
