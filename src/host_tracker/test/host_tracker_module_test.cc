@@ -69,8 +69,8 @@ TEST_GROUP(host_tracker_module)
         Parameter proto_param = {"proto", Parameter::PT_ENUM, "tcp | udp", "tcp", "ip proto"};
         Parameter port_param = {"port", Parameter::PT_PORT, nullptr, nullptr, "port num"};
         HostTrackerModule module;
-        const PegInfo *ht_pegs = module.get_pegs();
-        const PegCount *ht_stats = module.get_counts();
+        const PegInfo* ht_pegs = module.get_pegs();
+        const PegCount* ht_stats = module.get_counts();
 
         CHECK(!strcmp(ht_pegs[0].name, "service adds"));
         CHECK(!strcmp(ht_pegs[1].name, "service finds"));
@@ -161,6 +161,17 @@ TEST(host_tracker_module, host_tracker_module_test_stats)
 
 int main(int argc, char** argv)
 {
+    //  This is necessary to prevent the cpputest memory leak
+    //  detection from thinking there's a memory leak in the map
+    //  object contained within the global host_cache.  The map
+    //  must have some data allocated when it is first created
+    //  that doesn't go away until the global map object is
+    //  deallocated. This pre-allocates the map so that initial
+    //  allocation is done prior to starting the tests.
+    HostTracker* ht = new HostTracker;
+    host_cache_add_host_tracker(ht);
+    host_cache.clear();
+
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
 
