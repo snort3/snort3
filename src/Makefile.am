@@ -33,7 +33,7 @@ if BUILD_UNIT_TESTS
 test_list = catch/libcatch_tests.a
 endif
 
-if BUILD_PIGLET
+if ENABLE_PIGLET
 pig_list = \
 piglet/libpiglet.a \
 piglet_plugins/libpiglet_plugins.a
@@ -154,6 +154,6 @@ if BUILD_UNIT_TESTS
 SUBDIRS += catch
 endif
 
-if BUILD_PIGLET
+if ENABLE_PIGLET
 SUBDIRS += piglet piglet_plugins
 endif

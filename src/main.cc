@@ -32,7 +32,7 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
 #include <sys/socket.h>
 #include <netinet/in.h>
 #endif
@@ -82,7 +82,7 @@ static int main_exit_code = 0;
 static bool paused = false;
 
 static bool pause_enabled = false;
-#ifdef BUILD_SHELL
+#ifdef SHELL
 static bool shell_enabled = false;
 #endif
 
@@ -95,7 +95,7 @@ const char* get_prompt()
 
 static bool use_shell(SnortConfig* sc)
 {
-#ifdef BUILD_SHELL
+#ifdef SHELL
     return ( sc->run_flags & RUN_FLAG__SHELL );
 #else
     UNUSED(sc);
@@ -418,7 +418,7 @@ int main_resume(lua_State*)
     return 0;
 }
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
 int main_detach(lua_State*)
 {
     shell_enabled = false;
@@ -526,7 +526,7 @@ static bool house_keeping()
 // socket foo
 //-------------------------------------------------------------------------
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
 // FIXIT-M make these non-blocking
 // FIXIT-M allow at least 2 remote controls
 // FIXIT-M bind to configured ip including INADDR_ANY
@@ -690,7 +690,7 @@ static bool check_response()
 
 static void service_check()
 {
-#ifdef BUILD_SHELL
+#ifdef SHELL
     if ( service_users() )
         return;
 #endif
@@ -771,7 +771,7 @@ static bool set_mode()
     else
         LogMessage("Commencing packet processing\n");
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
     if ( use_shell(snort_conf) )
     {
         LogMessage("Entering command shell\n");
@@ -858,7 +858,7 @@ static void main_loop()
 
 static void snort_main()
 {
-#ifdef BUILD_SHELL
+#ifdef SHELL
     socket_init();
 #endif
     TimeStart();
@@ -890,7 +890,7 @@ static void snort_main()
     pigs = nullptr;
 
     TimeStop();
-#ifdef BUILD_SHELL
+#ifdef SHELL
     socket_term();
 #endif
 }

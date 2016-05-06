@@ -310,8 +310,8 @@ Here is a minimal example of a piglet test script for the IPv4 Codec plugin:
         end
     }
 
-To run snort in piglet mode, first build snort with the BUILD_PIGLET option turned on
-(pass the flag -DBUILD_PIGLET:BOOL=ON in cmake).
+To run snort in piglet mode, first build snort with the ENABLE_PIGLET option turned on
+(pass the flag -DENABLE_PIGLET:BOOL=ON in cmake).
 
 Then, run the following command:
 

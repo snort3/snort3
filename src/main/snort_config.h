@@ -74,7 +74,7 @@ enum RunFlag
     RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x00100000,     /* --treat-drop-as-ignore */
     RUN_FLAG__PCAP_RELOAD         = 0x00200000,     /* --pcap-reload */
     RUN_FLAG__TEST                = 0x00400000,     /* -T */
-#ifdef BUILD_SHELL
+#ifdef SHELL
     RUN_FLAG__SHELL               = 0x00800000,     /* --shell */
 #endif
 #ifdef PIGLET

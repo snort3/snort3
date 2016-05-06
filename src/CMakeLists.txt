@@ -64,15 +64,16 @@ if (STATIC_CODECS)
 endif()
 
 if (BUILD_UNIT_TESTS)
+    enable_testing()
     set( UNIT_TESTS_LIBRARIES catch_tests)
     add_subdirectory(catch)
 endif (BUILD_UNIT_TESTS)
 
-if (BUILD_PIGLET)
-    set(PIGLET_LIBRARIES piglet piglet_plugins)
-    add_subdirectory(piglet)
-    add_subdirectory(piglet_plugins)
-endif (BUILD_PIGLET)
+if ( ENABLE_PIGLET )
+    set ( PIGLET_LIBRARIES piglet piglet_plugins )
+    add_subdirectory ( piglet )
+    add_subdirectory ( piglet_plugins )
+endif ( ENABLE_PIGLET )
 
 #  The main Snort executableRA
 add_executable( snort

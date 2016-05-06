@@ -57,7 +57,7 @@ using namespace std;
 // commands
 //-------------------------------------------------------------------------
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
 static const Parameter s_reload[] =
 {
     { "filename", Parameter::PT_STRING, nullptr, nullptr,
@@ -170,7 +170,7 @@ static const Parameter s_params[] =
     { "-i", Parameter::PT_STRING, nullptr, nullptr,
       "<iface>... list of interfaces" },
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
     { "-j", Parameter::PT_PORT, nullptr, nullptr,
       "<port> to listen for telnet connections" },
 #endif
@@ -417,7 +417,7 @@ static const Parameter s_params[] =
     { "--script-path", Parameter::PT_STRING, nullptr, nullptr,
       "<path> to a luajit script or directory containing luajit scripts" },
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
     { "--shell", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable the interactive command line", },
 #endif
@@ -497,7 +497,7 @@ static const Parameter s_params[] =
 
 #define s_name "snort"
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
 #define s_help \
     "command line configuration and shell commands"
 #else
@@ -511,7 +511,7 @@ public:
     SnortModule() : Module(s_name, s_help, s_params)
     { }
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
     const Command* get_commands() const override
     { return snort_cmds; }
 #endif
@@ -579,7 +579,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
             sc->daq_config->set_input_spec(v.get_string());
     }
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
     else if ( v.is("-j") )
         sc->remote_control = v.get_long();
 #endif
@@ -822,7 +822,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--script-path") )
         ConfigScriptPaths(sc, v.get_string());
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
     else if ( v.is("--shell") )
         sc->run_flags |= RUN_FLAG__SHELL;
 #endif

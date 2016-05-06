@@ -1,46 +1,64 @@
-
-
-#  All of the possible user options.  All of these optinos will show up
+#  All of the possible user options.  All of these options will show up
 #  in the CACHE.  If you'd like to change one of these values,
-#  use `ccmamke ${PATH_TO_SOURCE}`.
+#  use `ccmake ${PATH_TO_SOURCE}`.
+#  Alternatively, you can pass them to cmake on the command line using
+#  the '-D' flag:
+#      cmake -DENABLE_FOO=ON -DCMAKE_INSTALL_PREFIX=/my/install/path $cmake_src_path
 
+# static/dynamic switches
+option ( STATIC_CODECS "include codecs in binary" ON )
+option ( STATIC_INSPECTORS "include inspectors in binary" ON )
+option ( STATIC_LOGGERS "include loggers in binary" ON )
+option ( STATIC_IPS_ACTIONS "include ips actions in binary" ON )
+option ( STATIC_IPS_OPTIONS "include ips options in binary" ON )
+option ( STATIC_SEARCH_ENGINES "include search engines in binary" ON )
+option ( ENABLE_STATIC_DAQ "link static DAQ modules" ON )
 
-option (STATIC_CODECS "include decoders in binary?" ON)
-option (STATIC_INSPECTORS "include inspectors in binary" ON)
-option (STATIC_LOGGERS "include loggers in binary" ON)
-option (STATIC_IPS_ACTIONS "include internal ips actions in binary" ON)
-option (STATIC_IPS_OPTIONS "include ips options in binary" ON)
-option (STATIC_SEARCH_ENGINES "include search engines in binary" ON)
-option (ENABLE_STATIC_DAQ "Link static DAQ modules" ON)
-option (ENABLE_PTHREAD "Disable pthread support" ON)
-option (ENABLE_DEBUG_MSGS "Enable debug printing options (bugreports and developers only)" OFF)
-option (ENABLE_DEBUG "Enable debugging options (bugreports and developers only)" OFF)
-option (ENABLE_GDB "Enable gdb debugging information" OFF)
-option (ENABLE_PROFILE "Enable profiling options (developers only)" OFF)
-option (ENABLE_SHELL "enable shell support" OFF)
-option (ENABLE_COREFILES "Prevent Snort from generating core files" ON)
-option (ENABLE_INTEL_SOFT_CPM "Enable Intel Soft CPM support" OFF)
-option (ENABLE_LARGE_PCAP "Enable support for pcaps larger than 2 GB" OFF)
-option (ENABLE_ADDRESS_SANITIZER "enable address sanitizer support" OFF)
-option (ENABLE_CODE_COVERAGE "Whether to enable code coverage support" OFF)
-option (BUILD_SHELL "Build the command line shell" OFF)
-option (BUILD_SIDE_CHANNEL "Build the side channel library" OFF)
-option (BUILD_UNIT_TESTS "Build Snort++ unit tests" OFF)
-option (BUILD_PIGLET "Build Piglet test harness" OFF)
-option (BUILD_EXTRA_PLUGINS "Build and test the plugins in the extra directory" OFF)
-option (MAKE_HTML_DOC "Create the HTML documentation" ON)
-option (MAKE_PDF_DOC "Create the PDF documentation" ON)
-option (MAKE_TEXT_DOC "Create the text documentation" ON)
+# features
+option ( ENABLE_SHELL "enable shell support" OFF )
+option ( BUILD_SIDE_CHANNEL "Build the side channel library" OFF )
+option ( BUILD_UNIT_TESTS "Build Snort++ unit tests" OFF )
+option ( ENABLE_PIGLET "enable piglet test harness" OFF )
 
-option (STATIC_PIGLETS "include piglet plugins in binary" ON)
-option (BUILD_PIGLET "Build Piglet test harness" OFF)
+option ( ENABLE_PTHREAD "enable pthread support" ON )
+option ( ENABLE_COREFILES "Prevent Snort from generating core files" ON )
+option ( ENABLE_INTEL_SOFT_CPM "Enable Intel Soft CPM support" OFF )
+option ( ENABLE_LARGE_PCAP "Enable support for pcaps larger than 2 GB" OFF )
 
-set (SIGNAL_SNORT_RELOAD "" CACHE STRING "set the SIGNAL_SNORT_RELOAD value.  THIS NUMBER MUST BE AN INTEGER!!")
-set (SIGNAL_SNORT_DUMP_STATS "" CACHE STRING "set the SIGNAL_SNORT_DUMP_STATS value. THIS NUMBER MUST BE AN INTEGER!!")
-set (SIGNAL_SNORT_ROTATE_STATS "" CACHE STRING "set the SIGNAL_SNORT_ROTATE_STATS value. THIS NUMBER MUST BE AN INTEGER!!")
-set (SIGNAL_SNORT_READ_ATTR_TBL "" CACHE STRING "set the SIGNAL_SNORT_READ_ATTR_TBL value. THIS NUMBER MUST BE AN INTEGER!!")
+# documentation
+option ( MAKE_HTML_DOC "Create the HTML documentation" ON )
+option ( MAKE_PDF_DOC "Create the PDF documentation" ON )
+option ( MAKE_TEXT_DOC "Create the text documentation" ON )
 
+# debugging
+option ( ENABLE_DEBUG_MSGS "Enable debug printing options (bugreports and developers only)" OFF )
+option ( ENABLE_DEBUG "Enable debugging options (bugreports and developers only)" OFF )
+option ( ENABLE_GDB "Enable gdb debugging information" OFF )
+option ( ENABLE_PROFILE "Enable profiling options (developers only)" OFF )
+option ( ENABLE_ADDRESS_SANITIZER "enable address sanitizer support" OFF )
+option ( ENABLE_CODE_COVERAGE "Whether to enable code coverage support" OFF )
+
+# signals
+set (
+    SIGNAL_SNORT_RELOAD "SIGHUP"
+    CACHE STRING "set the SNORT_RELOAD signal (must be a valid integer or signal name)"
+)
+
+set (
+    SIGNAL_SNORT_DUMP_STATS "SIGUSR1"
+    CACHE STRING "set the SNORT_DUMP_STATS signal (must be a valid integer or signal name)"
+)
+
+set (
+    SIGNAL_SNORT_ROTATE_STATS "SIGUSR2"
+    CACHE STRING "set the SNORT_ROTATE_STATS signal (must be a valid integer or signal name)"
+)
+
+set (
+    SIGNAL_SNORT_READ_ATTR_TBL "SIGURG"
+    CACHE STRING "set the SNORT_READ_ATTR_TBL signal (must be a valid integer or signal name)"
+)
 
 #Setting default directories...appended to INSTALL_PREFIX unless a full path is provided
-set (SNORT_DATA_DIR share/doc/${CMAKE_PROJECT_NAME})
+set ( SNORT_DATA_DIR share/doc/${CMAKE_PROJECT_NAME} )
 
