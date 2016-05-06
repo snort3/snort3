@@ -23,7 +23,7 @@ session.h
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 
-if BUILD_UNIT_TESTS
+if ENABLE_UNIT_TESTS
 SUBDIRS = test
 endif
 

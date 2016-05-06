@@ -1,5 +1,5 @@
 
-if ( BUILD_UNIT_TESTS )
+if ( ENABLE_UNIT_TESTS )
 
 find_package(CHECK REQUIRED)
 include_directories(AFTER ${CHECK_INCLUDE_DIR})

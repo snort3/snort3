@@ -63,11 +63,11 @@ if (STATIC_CODECS)
     )
 endif()
 
-if (BUILD_UNIT_TESTS)
+if (ENABLE_UNIT_TESTS)
     enable_testing()
     set( UNIT_TESTS_LIBRARIES catch_tests)
     add_subdirectory(catch)
-endif (BUILD_UNIT_TESTS)
+endif (ENABLE_UNIT_TESTS)
 
 if ( ENABLE_PIGLET )
     set ( PIGLET_LIBRARIES piglet piglet_plugins )

@@ -1,5 +1,5 @@
 
-if ( BUILD_UNIT_TESTS )
+if ( ENABLE_UNIT_TESTS )
     set(TEST_FILES lua_stack_test.cc)
 endif()
 

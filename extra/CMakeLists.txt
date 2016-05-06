@@ -25,3 +25,10 @@ set (CPACK_SOURCE_GENERATOR TGZ)
 
 include(CPack)
 
+# hacks for the DAQ
+execute_process (
+    COMMAND pkg-config --variable=daq_cppflags snort
+    OUTPUT_VARIABLE DAQ_CPPFLAGS
+)
+
+string ( REGEX REPLACE "[\r\n]" " " DAQ_CPPFLAGS "${DAQ_CPPFLAGS}" )

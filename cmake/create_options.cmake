@@ -16,8 +16,8 @@ option ( ENABLE_STATIC_DAQ "link static DAQ modules" ON )
 
 # features
 option ( ENABLE_SHELL "enable shell support" OFF )
-option ( BUILD_SIDE_CHANNEL "Build the side channel library" OFF )
-option ( BUILD_UNIT_TESTS "Build Snort++ unit tests" OFF )
+option ( ENABLE_SIDE_CHANNEL "enable the side channel library" OFF )
+option ( ENABLE_UNIT_TESTS "enable unit tests" OFF )
 option ( ENABLE_PIGLET "enable piglet test harness" OFF )
 
 option ( ENABLE_PTHREAD "enable pthread support" ON )

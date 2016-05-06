@@ -236,10 +236,10 @@ while [ $# -ne 0 ]; do
             append_cache_entry ENABLE_SHELL    BOOL   false
             ;;
         --disable-unit-tests)
-            append_cache_entry BUILD_UNIT_TESTS    BOOL   false
+            append_cache_entry ENABLE_UNIT_TESTS    BOOL   false
             ;;
         --enable-unit-tests)
-            append_cache_entry BUILD_UNIT_TESTS    BOOL   true
+            append_cache_entry ENABLE_UNIT_TESTS    BOOL   true
             ;;
         --disable-piglet)
             append_cache_entry ENABLE_PIGLET    BOOL   false

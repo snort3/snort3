@@ -15,7 +15,7 @@ sf_ipvar.cc \
 sf_vartable.cc \
 sf_vartable.h
 
-if BUILD_UNIT_TESTS
+if ENABLE_UNIT_TESTS
 libsfip_a_SOURCES += sfip_test.cc
 endif
 

@@ -17,7 +17,7 @@ sfrf.cc \
 sfthd.cc \
 sfthd.h
 
-if BUILD_UNIT_TESTS
+if ENABLE_UNIT_TESTS
 libfilter_a_SOURCES += \
 sfrf_test.cc \
 sfthd_test.cc

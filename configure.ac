@@ -57,7 +57,7 @@ fi
 
 CFLAGS="-std=gnu99 $CFLAGS"
 
-AX_CXX_COMPILE_STDCXX_11
+AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 
 LT_INIT
 
@@ -520,7 +520,7 @@ if test "x$enable_unit_tests" = "xyes"; then
     AC_DEFINE(UNIT_TEST, [1], [enable unit tests in build])
 fi
 
-AM_CONDITIONAL(BUILD_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
+AM_CONDITIONAL(ENABLE_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
 AM_CONDITIONAL(BUILD_CPPUTESTS, test "x$have_cpputest_pc" = "xyes")
 
 #--------------------------------------------------------------------------

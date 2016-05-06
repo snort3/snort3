@@ -29,7 +29,7 @@ codecs/root/libroot_codecs.a \
 codecs/link/liblink_codecs.a
 endif
 
-if BUILD_UNIT_TESTS
+if ENABLE_UNIT_TESTS
 test_list = catch/libcatch_tests.a
 endif
 
@@ -150,7 +150,7 @@ time \
 profiler \
 utils
 
-if BUILD_UNIT_TESTS
+if ENABLE_UNIT_TESTS
 SUBDIRS += catch
 endif
 

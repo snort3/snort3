@@ -56,7 +56,7 @@ macro (add_shared_library libname install_path)
         install (TARGETS ${libname}
             LIBRARY DESTINATION "lib/${CMAKE_PROJECT_NAME}/${install_path}"
         )
-    
+
     else (${num_extra_args} GREATER 0)
 
         message (STATUS "add_static_library requires at least one source file!")
@@ -127,7 +127,7 @@ macro (append_to_cache_variable cache_var)
     get_property(cache_value CACHE ${cache_var} PROPERTY VALUE)
     get_property(cache_type CACHE ${cache_var} PROPERTY TYPE)
     get_property(cache_help_string CACHE ${cache_var} PROPERTY HELPSTRING)
-    
+
     set (tmp ${cache_value} ${ARGN})
     set(${cache_var} "${tmp}" CACHE ${cache_type} " ${cache_help_string}")
 
@@ -138,11 +138,11 @@ endmacro ()
 
 #anything following testname is assumed to be a link dependency
 macro (add_cpputest testname)
-    if (BUILD_UNIT_TESTS)
+    if ( ENABLE_UNIT_TESTS )
         add_executable (${testname} EXCLUDE_FROM_ALL ${testname}.cc)
         target_include_directories (${testname} PRIVATE ${CPPUTEST_INCLUDE_DIRS})
         target_link_libraries (${testname} ${CPPUTEST_LIBRARIES} ${ARGN})
         add_test (${testname} ${testname})
         add_dependencies ( check ${testname} )
-    endif (BUILD_UNIT_TESTS)
+    endif ( ENABLE_UNIT_TESTS )
 endmacro (add_cpputest)

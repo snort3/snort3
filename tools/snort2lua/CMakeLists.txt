@@ -9,7 +9,7 @@ add_subdirectory(config_states)
 add_subdirectory(rule_states)
 add_subdirectory(helpers)
 
-if (BUILD_UNIT_TESTS)
+if (ENABLE_UNIT_TESTS)
 if (0)
     add_subdirectory(tests)
 endif()

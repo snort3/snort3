@@ -8,7 +8,7 @@ file_connector_config.h \
 file_connector_module.cc \
 file_connector_module.h
 
-if BUILD_UNIT_TESTS
+if ENABLE_UNIT_TESTS
 SUBDIRS = test
 endif
 

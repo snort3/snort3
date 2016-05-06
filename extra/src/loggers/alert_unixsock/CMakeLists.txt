@@ -17,13 +17,10 @@ add_library (
     alert_unixsock.cc
 )
 
-execute_process(
-    COMMAND pkg-config --variable=daq_cppflags snort
-    OUTPUT_VARIABLE DAQ_CPPFLAGS
-)
-
-string(REGEX REPLACE "[\r\n]" " " DAQ_CPPFLAGS "${DAQ_CPPFLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ${DAQ_CPPFLAGS}")
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+if ( DAQ_CPPFLAGS )
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DAQ_CPPFLAGS}" )
+endif ( DAQ_CPPFLAGS )
 
 target_include_directories (
     alert_unixsock PUBLIC

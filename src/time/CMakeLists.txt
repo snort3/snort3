@@ -6,9 +6,9 @@ set ( TIME_INTERNAL_SOURCES
     timersub.h
     )
 
-if ( BUILD_UNIT_TESTS )
+if ( ENABLE_UNIT_TESTS )
     list ( APPEND TIME_INTERNAL_SOURCES stopwatch_test.cc )
-endif ( BUILD_UNIT_TESTS )
+endif ( ENABLE_UNIT_TESTS )
 
 set ( TIME_INCLUDES
     cpuclock.h
