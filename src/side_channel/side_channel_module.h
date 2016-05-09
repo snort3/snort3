@@ -55,10 +55,6 @@ public:
 
     ProfileStats* get_profile() const override;
 
-#ifdef BUILD_SC_SHELL
-    const Command* get_commands() const override;
-#endif
-
 private:
     SideChannelConfig* config = nullptr;
 };

@@ -108,13 +108,6 @@ check_type_size("size_t" SIZE_T)
 check_type_size("ssize_t" SSIZE_T)
 check_type_size("mode_t" MODE_T)
 
-set_if_false(UID_T uid_t)
-set_if_false(PID_T pid_t)
-set_if_false(SIZE_T size_t)
-set_if_false(SSIZE_T ssize_t)
-set_if_false(MODE_T mode_t)
-
-
 # vvvvvvvvv  INLINE TEST vvvvvvvvv
 
 # Taken and edited from www.cmake.org/wiki/CMakeTestInline
@@ -197,6 +190,7 @@ if (DEFINED LIBLZMA_LIBRARIES)
     check_library_exists (${LIBLZMA_LIBRARIES} lzma_code "" HAVE_LZMA)
 endif()
 
-set_if_true (HAS_CXX11_FUNC HAVE___FUNCTION__)
+# FIXIT-L J is this necessary?
+set ( HAVE___FUNCTION__ HAS_CXX11_FUNC )
 check_library_exists (pcap pcap_lib_version "${PCAP_LIBRARIES}" HAVE_PCAP_LIB_VERSION)
 check_library_exists (pcap pcap_lex_destroy "${PCAP_LIBRARIES}" HAVE_PCAP_LEX_DESTROY)
