@@ -32,3 +32,6 @@ execute_process (
 )
 
 string ( REGEX REPLACE "[\r\n]" " " DAQ_CPPFLAGS "${DAQ_CPPFLAGS}" )
+
+set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${DAQ_CPPFLAGS}" )
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DAQ_CPPFLAGS}" )

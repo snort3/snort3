@@ -35,16 +35,10 @@ add_library (
 %if @project.language == "CXX"
 
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
-if ( DAQ_CPPFLAGS )
-    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DAQ_CPPFLAGS}" )
-endif ( DAQ_CPPFLAGS )
 %end
 %if @project.language == "C"
 
 set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99" )
-if ( DAQ_CPPFLAGS )
-    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DAQ_CPPFLAGS}" )
-endif ( DAQ_CPPFLAGS )
 %end
 
 target_include_directories (
