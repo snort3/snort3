@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// file_config.h author Hui Cao <huica@cisco.com>
+// file_module.h author Hui Cao <huica@cisco.com>
 
 #ifndef FILE_MODULE_H
 #define FILE_MODULE_H

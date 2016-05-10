@@ -73,7 +73,6 @@ stream/udp/libstream_udp.a \
 stream/user/libstream_user.a \
 stream/file/libstream_file.a \
 stream/libstream_paf.a \
-file_api/libfile_api.a \
 mime/libmime.a \
 service_inspectors/http_inspect/libhttp_inspect.a \
 $(pig_list) \
@@ -90,6 +89,7 @@ control/libcontrol.a \
 filters/libfilter.a \
 detection/libdetection.a \
 framework/libframework.a \
+file_api/libfile_api.a \
 time/libtime.a \
 latency/liblatency.a \
 profiler/libprofiler.a \
