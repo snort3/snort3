@@ -40,9 +40,9 @@ install (FILES ${FRAMEWORK_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/api_options.h
     DESTINATION "${INCLUDE_INSTALL_PATH}/framework"
 )
 
-if ( BUILD_UNIT_TESTS )
+if ( ENABLE_UNIT_TESTS )
     target_link_libraries ( framework catch_tests )
-endif ( BUILD_UNIT_TESTS )
+endif ( ENABLE_UNIT_TESTS )
 
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/api_options.h

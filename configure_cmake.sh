@@ -29,7 +29,6 @@ Optional Features:
     --disable-static-ips-options    do not include ips options in binary
     --disable-static-search-engines    do not include search engines in binary
     --disable-static-codecs    do not include codecs in binary
-    --disable-static-piglets   do not include piglets in binary
     --enable-valgrind        Only use if you are testing with valgrind.
     --enable-shell           enable command line shell support
     --enable-linux-smp-stats Enable statistics reporting through proc
@@ -170,12 +169,6 @@ while [ $# -ne 0 ]; do
         --enable-static-search-engines)
             append_cache_entry STATIC_SEARCH_ENGINES       BOOL   true
             ;;
-        --disable-static-piglets)
-            append_cache_entry STATIC_PIGLETS       BOOL   false
-            ;;
-        --enable-static-piglets)
-            append_cache_entry STATIC_PIGLETS       BOOL   true
-            ;;
         --disable-static-daq)
             append_cache_entry ENABLE_STATIC_DAQ    BOOL   false
             ;;
@@ -243,16 +236,16 @@ while [ $# -ne 0 ]; do
             append_cache_entry ENABLE_SHELL    BOOL   false
             ;;
         --disable-unit-tests)
-            append_cache_entry BUILD_UNIT_TESTS    BOOL   false
+            append_cache_entry ENABLE_UNIT_TESTS    BOOL   false
             ;;
         --enable-unit-tests)
-            append_cache_entry BUILD_UNIT_TESTS    BOOL   true
+            append_cache_entry ENABLE_UNIT_TESTS    BOOL   true
             ;;
         --disable-piglet)
-            append_cache_entry BUILD_PIGLET    BOOL   false
+            append_cache_entry ENABLE_PIGLET    BOOL   false
             ;;
         --enable-piglet)
-            append_cache_entry BUILD_PIGLET    BOOL   true
+            append_cache_entry ENABLE_PIGLET    BOOL   true
             ;;
         --disable-html-docs)
             append_cache_entry MAKE_HTML_DOC    BOOL   false

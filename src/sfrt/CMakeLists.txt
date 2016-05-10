@@ -8,7 +8,7 @@ set ( SFRT_INCLUDES
     sfrt_flat_dir.h
 )
 
-if ( BUILD_UNIT_TESTS )
+if ( ENABLE_UNIT_TESTS )
     set(TEST_FILES sfrt_test.cc)
 endif()
 

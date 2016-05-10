@@ -16,7 +16,7 @@ sfrt_dir.cc \
 sfrt_flat.cc \
 sfrt_flat_dir.cc
 
-if BUILD_UNIT_TESTS
+if ENABLE_UNIT_TESTS
 libsfrt_a_SOURCES += sfrt_test.cc
 endif
 

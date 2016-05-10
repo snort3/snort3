@@ -40,7 +40,7 @@ int main_resume(lua_State* = nullptr);
 int main_quit(lua_State* = nullptr);
 int main_help(lua_State* = nullptr);
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
 int main_dump_plugins(lua_State* = nullptr);
 int main_detach(lua_State* = nullptr);
 #endif

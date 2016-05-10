@@ -7,7 +7,7 @@ side_channel.h \
 side_channel_module.cc \
 side_channel_module.h
 
-if BUILD_UNIT_TESTS
+if ENABLE_UNIT_TESTS
 SUBDIRS = test
 endif
 

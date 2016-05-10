@@ -57,7 +57,7 @@ fi
 
 CFLAGS="-std=gnu99 $CFLAGS"
 
-AX_CXX_COMPILE_STDCXX_11
+AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 
 LT_INIT
 
@@ -380,22 +380,12 @@ if test "x$static_codecs" = "xyes"; then
     AC_DEFINE(STATIC_CODECS, [1], [include internal decoders in binary])
 fi
 
-AC_ARG_ENABLE(static-piglets,
-  AC_HELP_STRING([--disable-static-piglets],[do not include piglets in binary]),
-  static_piglets="$enableval", static_piglets="yes")
-
-AM_CONDITIONAL(STATIC_PIGLETS, [test "x$static_piglets" = "xyes"])
-
-if test "x$static_piglets" = "xyes"; then
-    AC_DEFINE(STATIC_PIGLETS, [1], [include internal piglets in binary])
-fi
-
 AC_ARG_ENABLE(shell,
     AC_HELP_STRING([--enable-shell],[enable command line shell support]),
     enable_shell="$enableval", enable_shell="no")
 
 if test "x$enable_shell" = "xyes"; then
-    AC_DEFINE(BUILD_SHELL, [1], [enable shell support])
+    AC_DEFINE(SHELL, [1], [enable shell support])
 fi
 
 AC_ARG_ENABLE(large-pcap,
@@ -530,7 +520,7 @@ if test "x$enable_unit_tests" = "xyes"; then
     AC_DEFINE(UNIT_TEST, [1], [enable unit tests in build])
 fi
 
-AM_CONDITIONAL(BUILD_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
+AM_CONDITIONAL(ENABLE_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
 AM_CONDITIONAL(BUILD_CPPUTESTS, test "x$have_cpputest_pc" = "xyes")
 
 #--------------------------------------------------------------------------
@@ -545,7 +535,7 @@ if test "x$enable_piglet" = "xyes"; then
     AC_DEFINE(PIGLET, [1], [enable piglet test harness in build])
 fi
 
-AM_CONDITIONAL(BUILD_PIGLET, test "x$enable_piglet" = "xyes")
+AM_CONDITIONAL(ENABLE_PIGLET, test "x$enable_piglet" = "xyes")
 
 #--------------------------------------------------------------------------
 # pcap

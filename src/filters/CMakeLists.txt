@@ -3,7 +3,7 @@ set (FILTER_INCLUDES
     sfrf.h 
 )
 
-if ( BUILD_UNIT_TESTS )
+if ( ENABLE_UNIT_TESTS )
     set(TEST_FILES
         sfrf_test.cc
         sfthd_test.cc

@@ -394,7 +394,7 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     if (cmd_line->run_flags & RUN_FLAG__PROCESS_ALL_EVENTS)
         event_queue_config->process_all_events = 1;
 
-#ifdef BUILD_SHELL
+#ifdef SHELL
     if ( cmd_line->remote_control )
         remote_control = cmd_line->remote_control;
 #endif

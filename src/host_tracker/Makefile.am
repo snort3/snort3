@@ -11,7 +11,7 @@ host_tracker_module.h \
 host_tracker.cc \
 host_tracker.h
 
-if BUILD_UNIT_TESTS
+if ENABLE_UNIT_TESTS
 SUBDIRS = test
 endif
 

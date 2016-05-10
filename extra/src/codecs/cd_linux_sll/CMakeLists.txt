@@ -17,13 +17,7 @@ add_library (
     cd_linux_sll.cc
 )
 
-execute_process(
-    COMMAND pkg-config --variable=daq_cppflags snort
-    OUTPUT_VARIABLE DAQ_CPPFLAGS
-)
-
-string(REGEX REPLACE "[\r\n]" " " DAQ_CPPFLAGS "${DAQ_CPPFLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ${DAQ_CPPFLAGS}")
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
 
 target_include_directories (
     cd_linux_sll PUBLIC

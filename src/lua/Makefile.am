@@ -26,7 +26,7 @@ lua_arg.h \
 lua_stack.h \
 lua_test_common.h
 
-if BUILD_UNIT_TESTS
+if ENABLE_UNIT_TESTS
 liblua_a_SOURCES += lua_stack_test.cc
 endif
 
