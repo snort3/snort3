@@ -30,6 +30,7 @@
 
 #include "codecs/codec_module.h"
 #include "detection/fp_config.h"
+#include "file_api/file_module.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"

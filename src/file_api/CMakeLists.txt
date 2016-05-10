@@ -16,6 +16,8 @@ add_library ( file_api STATIC
     file_lib.h 
     file_mempool.cc
     file_mempool.h
+    file_module.cc
+    file_module.h
     file_policy.cc 
     file_policy.h
     file_resume_block.cc 
