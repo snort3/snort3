@@ -106,7 +106,6 @@ target_link_libraries( snort
     stream_user
     stream_file
     stream_paf
-    file_api
     mime
     http_inspect
     imap
@@ -130,6 +129,7 @@ target_link_libraries( snort
     filter
     detection
     framework
+    file_api
     time
     latency
     profiler

@@ -34,8 +34,6 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 
-#include "file_lib.h"
-#include "file_identifier.h"
 #include "parser/parse_utils.h"
 
 bool FileConfig::process_file_magic(FileMagicData &magic)

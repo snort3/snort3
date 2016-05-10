@@ -26,7 +26,7 @@
 
 #include "file_lib.h"
 #include "file_identifier.h"
-#include "file_api/file_policy.h"
+#include "file_policy.h"
 
 #define DEFAULT_FILE_TYPE_DEPTH 1460
 #define DEFAULT_FILE_SIGNATURE_DEPTH 10485760 /*10 Mbytes*/
