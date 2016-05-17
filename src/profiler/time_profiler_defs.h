@@ -44,6 +44,7 @@ struct SO_PUBLIC TimeProfilerStats
 {
     hr_duration elapsed;
     uint64_t checks;
+    mutable unsigned int ref_count;
 
     void update(hr_duration delta)
     { elapsed += delta; ++checks; }
@@ -54,11 +55,18 @@ struct SO_PUBLIC TimeProfilerStats
     operator bool() const
     { return ( elapsed > 0_ticks ) || checks; }
 
+    // reentrancy control
+    bool enter() const { return ref_count++ == 0; }
+    bool exit() const { return --ref_count == 0; }
+
     constexpr TimeProfilerStats() :
-        elapsed(0_ticks), checks(0) { }
+        TimeProfilerStats(0_ticks, 0, 0) { }
 
     constexpr TimeProfilerStats(hr_duration elapsed, uint64_t checks) :
-        elapsed(elapsed), checks(checks) { }
+        TimeProfilerStats(elapsed, checks, 0) { }
+
+    constexpr TimeProfilerStats(hr_duration elapsed, uint64_t checks, unsigned int ref_count) :
+        elapsed(elapsed), checks(checks), ref_count(ref_count) { }
 };
 
 inline bool operator==(const TimeProfilerStats& lhs, const TimeProfilerStats& rhs)
@@ -74,67 +82,39 @@ inline TimeProfilerStats& operator+=(TimeProfilerStats& lhs, const TimeProfilerS
     return lhs;
 }
 
-class TimeContextBase
-{
-public:
-    TimeContextBase() :
-        finished(false)
-    { start(); }
-
-    TimeContextBase(const TimeContextBase&) = delete;
-    TimeContextBase& operator=(const TimeContextBase&) = delete;
-
-    void start()
-    { sw.start(); }
-
-    void pause()
-    { sw.stop(); }
-
-    bool active() const
-    { return sw.active(); }
-
-protected:
-    Stopwatch<hr_clock> sw;
-    bool finished;
-};
-
-class TimeContext : public TimeContextBase
+class TimeContext
 {
 public:
     TimeContext(TimeProfilerStats& stats) :
-        TimeContextBase(), stats(stats) { }
+        stats(stats)
+    {
+        if ( stats.enter() )
+            sw.start();
+    }
 
     ~TimeContext()
     { stop(); }
 
+    // Use this for finer grained control of the TimeContext "lifetime"
     void stop()
     {
-        if ( finished )
-            return;
+        if ( stopped_once )
+            return; // stop() should only be executed once per context
 
-        finished = true;
-        stats.update(sw.get());
+        stopped_once = true;
+
+        // don't bother updating time if context is reentrant
+        if ( stats.exit() )
+            stats.update(sw.get());
     }
+
+    bool active() const
+    { return !stopped_once; }
 
 private:
     TimeProfilerStats& stats;
-};
-
-class TimePause
-{
-public:
-    TimePause(TimeContextBase& ctx) :
-        ctx(ctx)
-    { ctx.pause(); }
-
-    TimePause(const TimePause&) = delete;
-    TimePause& operator=(const TimePause&) = delete;
-
-    ~TimePause()
-    { ctx.start(); }
-
-private:
-    TimeContextBase& ctx;
+    Stopwatch<hr_clock> sw;
+    bool stopped_once = false;
 };
 
 class TimeExclude

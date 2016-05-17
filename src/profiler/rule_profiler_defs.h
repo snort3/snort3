@@ -44,19 +44,45 @@ struct RuleProfilerConfig
     unsigned count = 0;
 };
 
-class RuleContext : public TimeContextBase
+class RuleContext
 {
 public:
     RuleContext(dot_node_state_t& stats) :
-        TimeContextBase(), stats(stats) { }
+        stats(stats)
+    { start(); }
 
     ~RuleContext()
     { stop(); }
 
+    void start()
+    { sw.start(); }
+
+    void pause()
+    { sw.stop(); }
+
     void stop(bool = false);
+
+    bool active() const
+    { return sw.active(); }
 
 private:
     dot_node_state_t& stats;
+    Stopwatch<hr_clock> sw;
+    bool finished = false;
+};
+
+class RulePause
+{
+public:
+    RulePause(RuleContext& ctx) :
+        ctx(ctx)
+    { ctx.pause(); }
+
+    ~RulePause()
+    { ctx.start(); }
+
+private:
+    RuleContext& ctx;
 };
 
 #endif

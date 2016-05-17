@@ -48,8 +48,8 @@ static const StatsTable::Field fields[] =
     { "#", 5, ' ', 0, std::ios_base::left },
     { "module", 24, ' ', 0, std::ios_base::fmtflags() },
     { "layer", 6, ' ', 0, std::ios_base::fmtflags() },
-    { "checks", 7, ' ', 0, std::ios_base::fmtflags() },
-    { "time (us)", 10, ' ', 0, std::ios_base::fmtflags() },
+    { "checks", 10, ' ', 0, std::ios_base::fmtflags() },
+    { "time(us)", 11, ' ', 0, std::ios_base::fmtflags() },
     { "avg/check", 11, ' ', 1, std::ios_base::fmtflags() },
     { "%/caller", 10, ' ', 2, std::ios_base::fmtflags() },
     { "%/total", 9, ' ', 2, std::ios_base::fmtflags() },
@@ -465,79 +465,71 @@ TEST_CASE( "time profiler sorting", "[profiler][time_profiler]" )
     }
 }
 
-TEST_CASE( "time profiler time context base", "[profiler][time_profiler]" )
-{
-    TimeContextBase ctx;
-
-    SECTION( "start called on instantiation" )
-    {
-        CHECK( ctx.active() );
-    }
-
-    SECTION( "time can be started and paused and restarted" )
-    {
-        REQUIRE( ctx.active() );
-
-        ctx.pause();
-        CHECK_FALSE( ctx.active() );
-
-        ctx.start();
-        CHECK( ctx.active() );
-    }
-}
-
 TEST_CASE( "time profiler time context", "[profiler][time_profiler]" )
 {
     TimeProfilerStats stats;
     REQUIRE_FALSE( stats );
 
-    SECTION( "automatically updates stats" )
+    SECTION( "lifetime" )
     {
         {
             TimeContext ctx(stats);
-            avoid_optimization();
+            CHECK( ctx.active() );
+            CHECK( stats.ref_count == 1 );
         }
 
-        INFO( "elapsed: " << stats.elapsed.count() );
-        CHECK( stats.elapsed > 0_ticks );
-        CHECK( stats.checks == 1 );
+        CHECK( stats.ref_count == 0 );
     }
 
-    SECTION( "explicitly calling stop updates stats ONCE" )
+    SECTION( "manually managed lifetime" )
     {
-        TimeProfilerStats save;
-
         {
             TimeContext ctx(stats);
-            avoid_optimization();
+            CHECK( ctx.active() );
+            CHECK( stats.ref_count == 1 );
             ctx.stop();
-
-            INFO( "elapsed: " << stats.elapsed.count() );
-            CHECK( stats.elapsed > 0_ticks );
-            CHECK( stats.checks == 1 );
-            save = stats;
+            CHECK_FALSE( ctx.active() );
+            CHECK( stats.ref_count == 0 );
         }
 
-        CHECK( stats == save );
+        CHECK( stats.ref_count == 0 );
     }
-}
 
-TEST_CASE( "time pause", "[profiler][time_profiler]" )
-{
-    TimeContextBase ctx;
-
+    SECTION( "updates stats" )
     {
-        TimePause pause(ctx);
-        CHECK_FALSE( ctx.active() );
+        TimeContext ctx(stats);
+        avoid_optimization();
+        ctx.stop();
+
+        CHECK( stats );
     }
 
-    CHECK( ctx.active() );
+    SECTION( "reentrance" )
+    {
+        {
+            TimeContext ctx1(stats);
+
+            CHECK( stats.ref_count == 1 );
+
+            {
+                TimeContext ctx2(stats);
+
+                CHECK( stats.ref_count == 2 );
+            }
+
+            CHECK( stats.ref_count == 1 );
+        }
+
+        CHECK( stats.ref_count == 0 ); // ref_count restored
+        CHECK( stats.checks == 1 ); // only updated once
+    }
 }
 
 TEST_CASE( "time context exclude", "[profiler][time_profiler]" )
 {
     // NOTE: this test *may* fail if the time it takes to execute the exclude context is 0_ticks (unlikely)
     TimeProfilerStats stats = { hr_duration::max(), 0 };
+
     {
         TimeExclude exclude(stats);
         avoid_optimization();

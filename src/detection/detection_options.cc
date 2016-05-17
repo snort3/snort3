@@ -443,7 +443,7 @@ int detection_option_node_evaluate(
 
             // Don't include RTN time
             {
-                TimePause profile_pause(profile);
+                RulePause pause(profile);
                 eval_rtn_result = fpEvalRTN(getRuntimeRtnFromOtn(otn), p,
                     check_ports);
             }
@@ -558,7 +558,7 @@ int detection_option_node_evaluate(
         }
 
         {
-            TimePause profile_pause(profile);
+            RulePause pause(profile);
             // Passed, check the children.
             if ( node->num_children )
             {

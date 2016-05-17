@@ -736,5 +736,17 @@ TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
     }
 }
 
+TEST_CASE( "rule pause", "[profiler][rule_profiler]" )
+{
+    dot_node_state_t stats;
+    RuleContext ctx(stats);
+
+    {
+        RulePause pause(ctx);
+        CHECK_FALSE( ctx.active() );
+    }
+
+    CHECK( ctx.active() );
+}
 
 #endif
