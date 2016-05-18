@@ -24,6 +24,8 @@
 #ifndef OBFUSCATOR_H
 #define OBFUSCATOR_H
 
+#include <stddef.h>
+#include <stdint.h>
 #include <set>
 
 struct ObfuscatorBlock
