@@ -22,6 +22,7 @@
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"
 #include "protocols/protocol_ids.h"
+#include "log/obfuscator.h"
 
 #if 0
 uint8_t Packet::ip_proto_next() const
@@ -181,4 +182,13 @@ const char* Packet::get_pseudo_type() const
     default: break;
     }
     return "other";
+}
+
+void Packet::reset()
+{
+    if (obfuscator)
+        delete obfuscator;
+
+    memset(this, 0, offsetof(Packet, pkth));
+    ptrs.reset();
 }

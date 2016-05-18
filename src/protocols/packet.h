@@ -244,11 +244,7 @@ struct SO_PUBLIC Packet
      */
     bool get_ip_proto_next(uint8_t& lyr, IpProtocol& proto) const;
 
-    inline void reset()
-    {
-        memset(this, 0, offsetof(Packet, pkth));
-        ptrs.reset();
-    }
+    void reset();
 
     bool is_from_client() const
     { return (packet_flags & PKT_FROM_CLIENT) != 0; }
