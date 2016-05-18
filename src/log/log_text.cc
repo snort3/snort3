@@ -34,6 +34,7 @@
 
 #include "log.h"
 #include "text_log.h"
+#include "obfuscator.h"
 
 #include "detection/rules.h"
 #include "detection/treenodes.h"
@@ -1485,16 +1486,29 @@ void LogPayload(TextLog* log, Packet* p)
         }
         else
         {
-            LogNetData(log, p->data, p->dsize, p);
-            if (!IsJSNormData(p->flow))
+            if ( p->obfuscator )
             {
-                TextLog_Print(log, "%s\n", "Normalized JavaScript for this packet");
-                LogNetData(log, g_file_data.data, g_file_data.len, p);
+                // FIXIT-P: Avoid string copy
+                std::string buf(p->data, p->data + p->dsize);
+
+                for ( const auto& b : *p->obfuscator )
+                    buf.replace(b.offset, b.length, b.length, '.');
+
+                LogNetData(log, (const uint8_t*)buf.c_str(), p->dsize, p);
             }
-            else if (!IsGzipData(p->flow))
+            else
             {
-                TextLog_Print(log, "%s\n", "Decompressed Data for this packet");
-                LogNetData(log, g_file_data.data, g_file_data.len, p);
+                LogNetData(log, p->data, p->dsize, p);
+                if (!IsJSNormData(p->flow))
+                {
+                    TextLog_Print(log, "%s\n", "Normalized JavaScript for this packet");
+                    LogNetData(log, g_file_data.data, g_file_data.len, p);
+                }
+                else if (!IsGzipData(p->flow))
+                {
+                    TextLog_Print(log, "%s\n", "Decompressed Data for this packet");
+                    LogNetData(log, g_file_data.data, g_file_data.len, p);
+                }
             }
         }
     }

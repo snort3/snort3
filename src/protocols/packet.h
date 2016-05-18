@@ -137,6 +137,7 @@ struct SO_PUBLIC Packet
     IpProtocol ip_proto_next;      /* the protocol ID after IP and all IP6 extension */
     bool disable_inspect;
     class Endianness* endianness;
+    class Obfuscator* obfuscator;
 
     // nothing after this point is zeroed ...
 

@@ -35,6 +35,7 @@
 #include "parser/parser.h"
 #include "profiler/profiler.h"
 #include "sd_pattern_match.h"
+#include "log/obfuscator.h"
 
 #define s_name "sd_pattern"
 #define s_help "rule option for detecting sensitive data"
@@ -63,7 +64,7 @@ public:
     int eval(Cursor&, Packet* p) override;
 
 private:
-    unsigned SdSearch(const uint8_t* buf, uint16_t buflen);
+    unsigned SdSearch(Cursor&, Packet*);
 
     const SdPatternConfig config;
     SdOptionData* sd_data;
@@ -105,14 +106,17 @@ bool SdPatternOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-unsigned SdPatternOption::SdSearch(const uint8_t* buf, uint16_t buflen)
+unsigned SdPatternOption::SdSearch(Cursor& c, Packet* p)
 {
-    unsigned count = 0;
-    const uint8_t* end = buf + buflen;
+    const uint8_t* const start = c.buffer();
+    const uint8_t* buf = c.start();
+    uint16_t buflen = c.length();
+    const uint8_t* const end = buf + buflen;
 
     SdSessionData ssn;
     memset(&ssn, 0, sizeof(ssn));
 
+    unsigned count = 0;
     while (buf < end && count < config.threshold)
     {
         SdTreeNode* matched_node;
@@ -121,6 +125,12 @@ unsigned SdPatternOption::SdSearch(const uint8_t* buf, uint16_t buflen)
         matched_node = FindPii(sd_context->head_node, buf, &match_len, buflen, &ssn);
         if ( matched_node )
         {
+            if ( !p->obfuscator )
+                p->obfuscator = new Obfuscator();
+
+            uint32_t off = buf - start;
+            p->obfuscator->push(off, match_len);
+
             buf += match_len;
             buflen -= match_len;
             count++;
@@ -135,11 +145,11 @@ unsigned SdPatternOption::SdSearch(const uint8_t* buf, uint16_t buflen)
     return count;
 }
 
-int SdPatternOption::eval(Cursor& c, Packet*)
+int SdPatternOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(sd_pattern_perf_stats);
 
-    unsigned matches = SdSearch(c.start(), c.length());
+    unsigned matches = SdSearch(c, p);
     if ( matches >= config.threshold )
         return DETECTION_OPTION_MATCH;
 

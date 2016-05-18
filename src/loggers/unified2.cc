@@ -61,6 +61,7 @@
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
 #include "protocols/icmp4.h"
+#include "log/obfuscator.h"
 
 using namespace std;
 
@@ -595,14 +596,25 @@ static void _Unified2LogPacketAlert(
 
     if (pkt_length != 0)
     {
-        if (SafeMemcpy(write_pkt_buffer + sizeof(Serial_Unified2_Header) +
-            sizeof(Serial_Unified2Packet) - 4,
-            p->is_data() ? p->data : p->pkt, pkt_length,
+        uint8_t *start = write_pkt_buffer + sizeof(Serial_Unified2_Header) + sizeof(Serial_Unified2Packet) - 4;
+
+        if (SafeMemcpy(start, p->is_data() ? p->data : p->pkt, pkt_length,
             write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
         {
             ErrorMessage("%s(%d) Failed to copy packet data. "
                 "Not writing unified2 event.\n", __FILE__, __LINE__);
             return;
+        }
+
+        if ( p->obfuscator )
+        {
+            off_t off = p->data - p->pkt;
+
+            if ( !p->is_data() )
+                off = 0;
+
+            for ( const auto& b : *p->obfuscator )
+                memset(&start[ off + b.offset ], '.', b.length);
         }
     }
 

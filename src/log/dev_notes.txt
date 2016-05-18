@@ -6,8 +6,14 @@ Text output logging facilities are located here:
 
 * messages - provides Dumper class and message logging facilities.
 
-* obfuscation - provides an API for logging packets w/o revealing things
-  like IP addresses.
+* obfuscator - provides an API for logging packets w/o revealing sensitive
+  data.
+
+  class Obfuscator is implemented with a std::set to provide in order
+  access for pottentialy out-of-order insertions.
+  
+  This current version does not provide merging of overlapping regions or
+  contigous regions. A future version would provide these capabilites.
 
 * text_log - provides a class like implementation (TextLog) for multiple
   instances of text-based log files.
