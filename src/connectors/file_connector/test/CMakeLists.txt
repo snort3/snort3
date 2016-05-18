@@ -1,2 +1,3 @@
 add_cpputest(file_connector_test file_connector))
+add_cpputest(file_connector_module_test file_connector_module))
 

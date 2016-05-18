@@ -1,2 +1,3 @@
 add_cpputest(side_channel_test side_channel)
+add_cpputest(side_channel_module_test side_channel_module)
 

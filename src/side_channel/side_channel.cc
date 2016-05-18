@@ -79,6 +79,9 @@ SideChannel::SideChannel()
     DebugMessage(DEBUG_SIDE_CHANNEL,"SideChannel::SideChannel()\n");
     sequence = 0;
     default_port = 0;
+    connector_receive = nullptr;
+    connector_transmit = nullptr;
+    receive_handler = nullptr;
 }
 
 SideChannel::~SideChannel()
@@ -88,8 +91,9 @@ SideChannel::~SideChannel()
 
 void SideChannel::set_message_port(SCMessage* msg, SCPort port)
 {
-    if ( msg != nullptr )
-        msg->hdr->port = port;
+    assert ( msg );
+    assert ( msg->hdr );
+    msg->hdr->port = port;
 }
 
 void SideChannel::set_default_port(SCPort port)
@@ -107,8 +111,7 @@ void SideChannelManager::instantiate(const SCConnectors* connectors, const PortB
     scm->connectors = *connectors;
     scm->ports = *ports;
 
-    // convert to rvalue for move to vector
-    s_maps.push_back(std::move(scm));
+    s_maps.push_back(scm);
 }
 
 // Initialize state to be ready to accept configuration
@@ -160,7 +163,7 @@ void SideChannelManager::thread_init()
         }
 
         /* Save the thread specific map */
-        map_list->push_back(std::move(map));
+        map_list->push_back(map);
     }
 
     /* Finally, save the thread-specific list */
