@@ -93,6 +93,12 @@ TEST(file_connector_module, test)
     CHECK(config.connector_name == "rx");
     CHECK(config.direction == Connector::CONN_RECEIVE);
     CHECK(config.text_format == false);
+
+    for ( auto conf : *config_set )
+        delete conf;
+
+    config_set->clear();
+    delete config_set;
 }
 
 int main(int argc, char** argv)
