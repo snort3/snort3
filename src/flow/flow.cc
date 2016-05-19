@@ -131,6 +131,9 @@ void Flow::reset(bool do_cleanup)
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
 
     bitop->reset();
+
+    if ( ha_state )
+        ha_state->reset();
 }
 
 void Flow::restart(bool free_flow_data)

@@ -72,6 +72,7 @@ public:
     bool old_enough();
     void set_next_update();
     void initialize_update_time();
+    void reset();
 
 private:
     static const uint8_t INITIAL_STATE = 0x00;

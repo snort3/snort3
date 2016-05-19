@@ -285,6 +285,7 @@ public:  // FIXIT-M privatize if possible
     const FlowKey* key;
     class Session* session;
     class BitOp* bitop;
+    class FlowHAState* ha_state;
     uint8_t ip_proto; // FIXIT-M  -- do we need both of these?
     PktType pkt_type; // ^^
 
@@ -304,8 +305,6 @@ public:  // FIXIT-M privatize if possible
     unsigned policy_id;
 
     FlowState flow_state;
-
-    class FlowHAState* ha_state;
 
     // FIXIT-L can client and server ip and port be removed from flow?
     sfip_t client_ip; // FIXIT-L family and bits should be changed to uint16_t

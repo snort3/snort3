@@ -158,6 +158,12 @@ void FlowHAState::initialize_update_time()
     packet_gettimeofday(&next_update);
 }
 
+void FlowHAState::reset()
+{
+    state = INITIAL_STATE;
+    pending = NONE_PENDING;
+}
+
 FlowHAClient::FlowHAClient(bool session_client)
 {
     DebugMessage(DEBUG_HA,"FlowHAClient::FlowHAClient()\n");
