@@ -125,7 +125,12 @@ constexpr uint8_t DEFAULT_LAYERMAX = 40;
 // payload data only, no headers.
 struct SO_PUBLIC Packet
 {
+    Packet(bool packet_data = true);
+    ~Packet();
+
     class Flow* flow;   /* for session tracking */
+    class Endianness* endianness;
+    class Obfuscator* obfuscator;
 
     uint32_t packet_flags;      /* special flags for the packet */
     uint32_t xtradata_mask;
@@ -134,11 +139,9 @@ struct SO_PUBLIC Packet
     uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
 
     uint8_t num_layers;         /* index into layers for next encap */
+    // FIXIT-M: Consider moving ip_proto_next below `pkth`.
     IpProtocol ip_proto_next;      /* the protocol ID after IP and all IP6 extension */
     bool disable_inspect;
-    class Endianness* endianness;
-    class Obfuscator* obfuscator;
-
     // nothing after this point is zeroed ...
 
     // Everything beyond this point is set by PacketManager::decode()
@@ -272,6 +275,9 @@ struct SO_PUBLIC Packet
 
     void set_application_protocol(int16_t ap)
     { if ( flow ) flow->ssn_state.application_protocol = ap; }
+
+private:
+    bool allocated;
 };
 
 /* Macros to deal with sequence numbers - p810 TCP Illustrated vol 2 */

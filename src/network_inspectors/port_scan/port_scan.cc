@@ -875,7 +875,7 @@ bool PortScan::configure(SnortConfig* sc)
 
 void PortScan::tinit()
 {
-    g_tmp_pkt = PacketManager::encode_new();
+    g_tmp_pkt = new Packet;
     ps_init_hash(config->common->memcap);
 
     if ( !config->logfile )
@@ -900,8 +900,8 @@ void PortScan::tterm()
         g_logfile = nullptr;
     }
     ps_cleanup();
-    PacketManager::encode_delete(g_tmp_pkt);
-    g_tmp_pkt = NULL;
+    delete g_tmp_pkt;
+    g_tmp_pkt = nullptr;
 }
 
 void PortScan::show(SnortConfig*)

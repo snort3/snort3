@@ -22,6 +22,7 @@
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
+#include <string.h>
 
 TEST_GROUP(ObfuscatorTests)
 {

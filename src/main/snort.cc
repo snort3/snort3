@@ -609,7 +609,7 @@ void Snort::thread_init(const char* intf)
     if (daq_instance->configure(snort_conf))
         daq_instance->start();
 
-    s_packet = PacketManager::encode_new(false);
+    s_packet = new Packet(false);
     CodecManager::thread_init(snort_conf);
 
     // this depends on instantiated daq capabilities
@@ -650,7 +650,7 @@ void Snort::thread_term()
 
     if ( s_packet )
     {
-        PacketManager::encode_delete(s_packet);
+        delete s_packet;
         s_packet = nullptr;
     }
 

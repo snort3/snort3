@@ -749,7 +749,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
 // XXX NOT YET IMPLEMENTED - debugging
 
     if (!defrag_pkts[encap_frag_cnt])
-        defrag_pkts[encap_frag_cnt] = PacketManager::encode_new();
+        defrag_pkts[encap_frag_cnt] = new Packet();
 
     dpkt = defrag_pkts[encap_frag_cnt];
 
@@ -1076,7 +1076,7 @@ void Defrag::tinit()
     for (int i = 1; i < layers; i++)
         defrag_pkts[i] = nullptr;
 
-    defrag_pkts[0] = PacketManager::encode_new();
+    defrag_pkts[0] = new Packet();
     pkt_snaplen = SFDAQ::get_snap_len();
 }
 
@@ -1086,7 +1086,7 @@ void Defrag::tterm()
     {
         if (defrag_pkts[i] != nullptr)
         {
-            PacketManager::encode_delete(defrag_pkts[i]);
+            delete defrag_pkts[i];
             defrag_pkts[i] = nullptr;
         }
     }

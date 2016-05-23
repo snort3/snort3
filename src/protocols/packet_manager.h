@@ -57,12 +57,6 @@ public:
     // decode this packet and set all relevent packet fields.
     static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*, bool cooked = false);
 
-    // allocate a Packet for later formatting (cloning)
-    static Packet* encode_new(bool allocate_packet_data = true);
-
-    // release the allocated Packet
-    static void encode_delete(Packet*);
-
     // when encoding, rather than copy the destination MAC address from the
     // inbound packet, manually set the MAC address.
     static void encode_set_dst_mac(uint8_t*);

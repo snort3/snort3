@@ -223,7 +223,7 @@ const BaseApi* nin_packet_capture = &pc_api.base;
 #ifdef UNIT_TEST
 Packet* init_null_packet()
 {
-    static Packet p;
+    static Packet p(false);
     static DAQ_PktHdr_t h;
 
     p.pkt = nullptr;
@@ -319,7 +319,7 @@ TEST_CASE("blank filter", "[PacketCapture]")
     const uint8_t cooked[] = "AbCdEfGhIjKlMnOpQrStUvWxYz";
     struct pcap_pkthdr hdr;
 
-    Packet p;
+    Packet p(false);
     DAQ_PktHdr_t daq_hdr;
     p.pkt = cooked;
     p.pkth = &daq_hdr;
@@ -397,9 +397,7 @@ TEST_CASE("bpf filter", "[PacketCapture]")
         "\x45\x00\x00\x14\x96\x22\x40\x00\x39\x06\xb1\xeb\x0b\x52\xf0\x52"
         "\x0a\x96";
 
-    struct pcap_pkthdr hdr;
-
-    Packet p_match, p_non_match;
+    Packet p_match(false), p_non_match(false);
     DAQ_PktHdr_t daq_hdr;
 
     p_match.pkth = &daq_hdr;

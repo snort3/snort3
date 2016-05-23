@@ -140,8 +140,7 @@ void UserTracker::term()
 
 void UserTracker::detect(const Packet* p, const StreamBuffer* sb, uint32_t flags)
 {
-    Packet up;
-    up.reset();
+    Packet up(false);
 
     up.pkth = p->pkth;
     up.ptrs = p->ptrs;

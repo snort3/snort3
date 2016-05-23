@@ -792,8 +792,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
         return;
 
     // FIXIT-L -- Allocating a new Packet here is ridiculously excessive.
-    Packet* orig_p = PacketManager::encode_new();
-    orig_p->reset();
+    Packet* orig_p = new Packet;
     Packet& op = *orig_p;
 
     if (!layer::set_api_ip_embed_icmp(p, op.ptrs.ip_api))
@@ -876,7 +875,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
         TextLog_Puts(log, "** END OF DUMP");
     }
 
-    PacketManager::encode_delete(orig_p);
+    delete orig_p;
 }
 
 /*--------------------------------------------------------------------

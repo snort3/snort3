@@ -158,8 +158,7 @@ public:
 TEST_CASE("no protocol", "[FlowTracker]")
 {
     Packet p;
-    DAQ_PktHdr_t pkth;
-    uint32_t* len_ptr = (uint32_t*) &pkth.caplen;
+    uint32_t* len_ptr = (uint32_t*) &p.pkth->caplen;
 
     PerfConfig config;
     config.format = PERF_MOCK;
@@ -174,7 +173,6 @@ TEST_CASE("no protocol", "[FlowTracker]")
     p.ptrs.tcph = nullptr;
     p.ptrs.udph = nullptr;
     p.ptrs.icmph = nullptr;
-    p.pkth = &pkth;
 
     *len_ptr = 127;
     tracker.update(&p);
@@ -204,9 +202,8 @@ TEST_CASE("no protocol", "[FlowTracker]")
 TEST_CASE("icmp", "[FlowTracker]")
 {
     Packet p;
-    DAQ_PktHdr_t pkth;
     icmp::ICMPHdr icmp;
-    uint32_t* len_ptr = (uint32_t*) &pkth.caplen;
+    uint32_t* len_ptr = (uint32_t*) &p.pkth->caplen;
     uint8_t* type_ptr = (uint8_t*) &icmp.type;
 
     PerfConfig config;
@@ -222,7 +219,6 @@ TEST_CASE("icmp", "[FlowTracker]")
     p.ptrs.tcph = nullptr;
     p.ptrs.udph = nullptr;
     p.ptrs.icmph = &icmp;
-    p.pkth = &pkth;
 
     *len_ptr = 127;
     *type_ptr = 3;
@@ -251,9 +247,8 @@ TEST_CASE("icmp", "[FlowTracker]")
 TEST_CASE("tcp", "[FlowTracker]")
 {
     Packet p;
-    DAQ_PktHdr_t pkth;
     tcp::TCPHdr tcp;
-    uint32_t* len_ptr = (uint32_t*) &pkth.caplen;
+    uint32_t* len_ptr = (uint32_t*) &p.pkth->caplen;
 
     PerfConfig config;
     config.format = PERF_MOCK;
@@ -266,7 +261,6 @@ TEST_CASE("tcp", "[FlowTracker]")
     p.ptrs.tcph = &tcp;
     p.ptrs.udph = nullptr;
     p.ptrs.icmph = nullptr;
-    p.pkth = &pkth;
 
     tracker.reset();
 
@@ -307,9 +301,8 @@ TEST_CASE("tcp", "[FlowTracker]")
 TEST_CASE("udp", "[FlowTracker]")
 {
     Packet p;
-    DAQ_PktHdr_t pkth;
     udp::UDPHdr udp;
-    uint32_t* len_ptr = (uint32_t*) &pkth.caplen;
+    uint32_t* len_ptr = (uint32_t*) &p.pkth->caplen;
 
     PerfConfig config;
     config.format = PERF_MOCK;
@@ -322,7 +315,6 @@ TEST_CASE("udp", "[FlowTracker]")
     p.ptrs.tcph = nullptr;
     p.ptrs.udph = &udp;
     p.ptrs.icmph = nullptr;
-    p.pkth = &pkth;
 
     tracker.reset();
 

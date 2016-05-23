@@ -119,52 +119,6 @@ void PacketManager::pop_teredo(Packet* p, RawData& raw)
 // Initialization and setup
 //-------------------------------------------------------------------------
 
-Packet* PacketManager::encode_new(bool packet_data)
-{
-    Packet* p = (Packet*)SnortAlloc(sizeof(*p));
-    Layer* lyr = new Layer[CodecManager::max_layers];
-
-    if ( !p || !lyr)
-        FatalError("encode_new() => Failed to allocate packet\n");
-
-    if (!packet_data)
-    {
-        p->pkt = nullptr;
-        p->pkth = nullptr;
-    }
-    else
-    {
-        uint8_t* b = (uint8_t*)SnortAlloc(sizeof(*p->pkth) + Codec::PKT_MAX + SPARC_TWIDDLE);
-
-        if (!b)
-            FatalError("encode_new() => Failed to allocate packet\n");
-
-        p->pkth = (DAQ_PktHdr_t*)b;
-        b += sizeof(*p->pkth);
-        b += SPARC_TWIDDLE;
-        p->pkt = b;
-    }
-
-    p->layers = lyr;
-    return p;
-}
-
-void PacketManager::encode_delete(Packet* p)
-{
-    if (p)
-    {
-        if (p->pkth)
-            free((void*)p->pkth);
-
-        if (p->layers)
-            delete[] p->layers;
-
-        p->pkth = nullptr;
-        p->layers = nullptr;
-        free(p);
-    }
-}
-
 // Assertions required for this code to work
 
 //  Look below inside main decode() loop for these static_asserts
@@ -202,7 +156,6 @@ void PacketManager::decode(
     p->reset();
     p->pkth = pkthdr;
     p->pkt = pkt;
-    p->ptrs.reset();
     layer::set_packet_pointer(p);
 
     s_stats[total_processed]++;

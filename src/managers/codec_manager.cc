@@ -297,6 +297,5 @@ CodecWrapper* CodecManager::instantiate(const char* name, Module* m, SnortConfig
 
     return new CodecWrapper(api, p);
 }
-
 #endif
 

@@ -470,7 +470,7 @@ void TcpStreamSession::set_memcap(Memcap& mc)
 
 void TcpStreamSession::sinit(void)
 {
-    s5_pkt = PacketManager::encode_new();
+    s5_pkt = new Packet();
     //AtomSplitter::init();  // FIXIT-L PAF implement
 }
 
@@ -478,7 +478,7 @@ void TcpStreamSession::sterm(void)
 {
     if (s5_pkt)
     {
-        PacketManager::encode_delete(s5_pkt);
+        delete s5_pkt;
         s5_pkt = nullptr;
     }
 }

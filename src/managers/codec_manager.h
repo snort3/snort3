@@ -95,6 +95,9 @@ public:
     static CodecWrapper* instantiate(const char*, Module*, SnortConfig*);
 #endif
 
+    static uint8_t get_max_layers()
+    { return max_layers; }
+
 private:
     struct CodecApiWrapper;
 
