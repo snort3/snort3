@@ -72,12 +72,14 @@ SFDAQModule::~SFDAQModule()
 {
 }
 
-bool SFDAQModule::begin(const char* fqn, int, SnortConfig*)
+bool SFDAQModule::begin(const char* fqn, int idx, SnortConfig*)
 {
     if (!strcmp(fqn, "daq"))
         config = new SFDAQConfig();
     else if (!strcmp(fqn, "daq.instances"))
     {
+        if (idx == 0)
+            return true;
         instance_config = new SFDAQInstanceConfig();
         instance_id = -1;
     }
@@ -127,10 +129,12 @@ bool SFDAQModule::set(const char* fqn, Value& v, SnortConfig* sc)
     return true;
 }
 
-bool SFDAQModule::end(const char* fqn, int, SnortConfig* sc)
+bool SFDAQModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
     if (!strcmp(fqn, "daq.instances"))
     {
+        if (idx == 0)
+            return true;
         if (instance_id < 0)
         {
             ParseError("%s - no DAQ instance ID specified", fqn);
