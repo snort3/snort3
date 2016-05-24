@@ -39,9 +39,9 @@ std::vector<std::string>& split(const std::string& s, char delim, std::vector<st
 // Search through the vector for the map which matches keyword
 
 Table* find_table(const std::vector<Table*>& vec, const std::string& name);
-const ConvertMap* find_map(const std::vector<const ConvertMap*>&, const std::string& keyword);
+const ConvertMap* find_map(const std::vector<const ConvertMap*>&, const std::string& keyword, bool strict_case = true);
 const std::unique_ptr<const ConvertMap>& find_map(
-    const std::vector<std::unique_ptr<const ConvertMap> >&, const std::string& keyword);
+    const std::vector<std::unique_ptr<const ConvertMap> >&, const std::string& keyword, bool strict_case = true);
 
 // trim from begining
 std::string& ltrim(std::string& s);

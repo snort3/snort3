@@ -44,7 +44,7 @@ bool Preprocessor::convert(std::istringstream& data_stream)
 
     if (util::get_string(data_stream, keyword, ":"))
     {
-        const ConvertMap* map = util::find_map(preprocessors::preprocessor_api, keyword);
+        const ConvertMap* map = util::find_map(preprocessors::preprocessor_api, keyword, false);
         if (map)
         {
             cv.set_state(map->ctor(cv));
