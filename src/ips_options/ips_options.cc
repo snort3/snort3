@@ -53,6 +53,7 @@ extern const BaseApi* ips_base64_decode;
 extern const BaseApi* ips_byte_jump;
 extern const BaseApi* ips_byte_test;
 extern const BaseApi* ips_cvs;
+extern const BaseApi* ips_file_type;
 extern const BaseApi* ips_flags;
 extern const BaseApi* ips_fragbits;
 extern const BaseApi* ips_fragoffset;
@@ -124,6 +125,7 @@ const BaseApi* ips_options[] =
     ips_byte_jump,
     ips_byte_test,
     ips_cvs,
+    ips_file_type,
     ips_flags,
     ips_fragbits,
     ips_fragoffset,

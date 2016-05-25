@@ -432,6 +432,8 @@ void FileCapture::release_file()
         fileblock = fileblock->next;
         file_capture_stats.file_buffers_released_total++;
     }
+
+    head = last = nullptr;
 }
 
 /*

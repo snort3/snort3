@@ -11,6 +11,7 @@ SET( PLUGIN_LIST
     ips_byte_test.cc
     ips_byte_jump.cc
     ips_cvs.cc
+    ips_file_type.cc
     ips_flags.cc
     ips_fragbits.cc
     ips_fragoffset.cc
@@ -100,6 +101,7 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_byte_test ips_options ips_byte_test.cc)
     add_shared_library(ips_byte_jump ips_options ips_byte_jump.cc)
     add_shared_library(ips_cvs ips_options ips_cvs.cc)
+    add_shared_library(ips_file_type ips_options ips_file_type.cc)
     add_shared_library(ips_flags ips_options ips_flags.cc)
     add_shared_library(ips_fragbits ips_options ips_fragbits.cc)
     add_shared_library(ips_fragoffset ips_options ips_fragoffset.cc)

@@ -10,6 +10,7 @@ ips_base64.cc \
 ips_byte_test.cc \
 ips_byte_jump.cc \
 ips_cvs.cc \
+ips_file_type.cc \
 ips_flags.cc \
 ips_fragbits.cc \
 ips_fragoffset.cc \
@@ -111,6 +112,11 @@ optlib_LTLIBRARIES += libips_cvs.la
 libips_cvs_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_cvs_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libips_cvs_la_SOURCES = ips_cvs.cc
+
+optlib_LTLIBRARIES += libips_file_type.la
+libips_file_type_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libips_file_type_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
+libips_file_type_la_SOURCES = ips_file_type.cc
 
 optlib_LTLIBRARIES += libips_dsize.la
 libips_dsize_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
