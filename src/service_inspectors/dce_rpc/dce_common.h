@@ -329,9 +329,73 @@ inline bool DCE2_SsnIsWindowsPolicy(DCE2_SsnData* sd)
     return false;
 }
 
+/********************************************************************
+ * Function: DCE2_SsnIsSambaPolicy()
+ *
+ * Purpose:
+ *  Convenience function to determine if policy traffic is going to
+ *  is a Samba one.
+ *
+ * Arguments:
+ *  DCE2_SsnData * - pointer to session data
+ *
+ * Returns:
+ *  bool  -  true if Samba, false if not
+ *
+ ********************************************************************/
+inline bool DCE2_SsnIsSambaPolicy(DCE2_SsnData* sd)
+{
+    DCE2_Policy policy = DCE2_SsnGetPolicy(sd);
+
+    switch (policy)
+    {
+    case DCE2_POLICY__SAMBA:
+    case DCE2_POLICY__SAMBA_3_0_37:
+    case DCE2_POLICY__SAMBA_3_0_22:
+    case DCE2_POLICY__SAMBA_3_0_20:
+        return true;
+    default:
+        break;
+    }
+
+    return false;
+}
+
 inline DCE2_Policy DCE2_SsnGetServerPolicy(DCE2_SsnData* sd)
 {
     return sd->server_policy;
+}
+
+/********************************************************************
+ * Function: DCE2_SsnIsServerSambaPolicy()
+ *
+ * Purpose:
+ *  Convenience function to determine if server policy is a
+ *  Samba one.
+ *
+ * Arguments:
+ *  DCE2_SsnData * - pointer to session data
+ *
+ * Returns:
+ *  bool  -  true if Samba, false if not
+ *
+ ********************************************************************/
+inline bool DCE2_SsnIsServerSambaPolicy(DCE2_SsnData* sd)
+{
+    DCE2_Policy policy = DCE2_SsnGetServerPolicy(sd);
+
+    switch (policy)
+    {
+    case DCE2_POLICY__SAMBA:
+    case DCE2_POLICY__SAMBA_3_0_37:
+    case DCE2_POLICY__SAMBA_3_0_22:
+    case DCE2_POLICY__SAMBA_3_0_20:
+        return true;
+    default:
+        break;
+    }
+
+    return false;
 }
 
 inline void dce_alert(uint32_t gid, uint32_t sid, dce2CommonStats* stats)

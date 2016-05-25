@@ -124,6 +124,42 @@
 
 #define SMB_MAX_NUM_COMS   256
 
+#define SMB_FILE_TYPE_DISK               0x0000
+#define SMB_FILE_TYPE_BYTE_MODE_PIPE     0x0001
+#define SMB_FILE_TYPE_MESSAGE_MODE_PIPE  0x0002
+#define SMB_FILE_TYPE_PRINTER            0x0003
+#define SMB_FILE_TYPE_COMMON_DEVICE      0x0004
+
+#define SMB_FILE_ATTRIBUTE_NORMAL       0x0000
+#define SMB_FILE_ATTRIBUTE_READONLY     0x0001
+#define SMB_FILE_ATTRIBUTE_HIDDEN       0x0002
+#define SMB_FILE_ATTRIBUTE_SYSTEM       0x0004
+#define SMB_FILE_ATTRIBUTE_VOLUME       0x0008
+#define SMB_FILE_ATTRIBUTE_DIRECTORY    0x0010
+#define SMB_FILE_ATTRIBUTE_ARCHIVE      0x0020
+#define SMB_SEARCH_ATTRIBUTE_READONLY   0x0100
+#define SMB_SEARCH_ATTRIBUTE_HIDDEN     0x0200
+#define SMB_SEARCH_ATTRIBUTE_SYSTEM     0x0400
+#define SMB_SEARCH_ATTRIBUTE_DIRECTORY  0x1000
+#define SMB_SEARCH_ATTRIBUTE_ARCHIVE    0x2000
+#define SMB_FILE_ATTRIBUTE_OTHER        0xC8C0   // Reserved
+
+#define SMB_EXT_FILE_ATTR_READONLY    0x00000001
+#define SMB_EXT_FILE_ATTR_HIDDEN      0x00000002
+#define SMB_EXT_FILE_ATTR_SYSTEM      0x00000004
+#define SMB_EXT_FILE_ATTR_DIRECTORY   0x00000010
+#define SMB_EXT_FILE_ATTR_ARCHIVE     0x00000020
+#define SMB_EXT_FILE_ATTR_NORMAL      0x00000080
+#define SMB_EXT_FILE_ATTR_TEMPORARY   0x00000100
+#define SMB_EXT_FILE_ATTR_COMPRESSED  0x00000800
+#define SMB_EXT_FILE_POSIX_SEMANTICS  0x01000000
+#define SMB_EXT_FILE_BACKUP_SEMANTICS 0x02000000
+#define SMB_EXT_FILE_DELETE_ON_CLOSE  0x04000000
+#define SMB_EXT_FILE_SEQUENTIAL_SCAN  0x08000000
+#define SMB_EXT_FILE_RANDOM_ACCESS    0x10000000
+#define SMB_EXT_FILE_NO_BUFFERING     0x20000000
+#define SMB_EXT_FILE_WRITE_THROUGH    0x80000000
+
 struct dce2SmbStats
 {
 /*  FIXIT-M
@@ -213,6 +249,10 @@ extern THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_negotiate;
 
 #define DCE2_SMB_ID   0xff534d42  /* \xffSMB */
 #define DCE2_SMB2_ID  0xfe534d42  /* \xfeSMB */
+
+// MS-FSCC Section 2.1.5 - Pathname
+#define DCE2_SMB_MAX_PATH_LEN  32760
+#define DCE2_SMB_MAX_COMP_LEN    255
 
 /* SMB command codes */
 #define SMB_COM_CREATE_DIRECTORY 0x00
@@ -365,43 +405,6 @@ struct SmbNtHdr
     uint16_t smb_mid;               /* multiplex id */
 };
 
-struct SmbWriteAndXReq   /* smb_wct = 12 */
-{
-    uint8_t smb_wct;         /* count of 16-bit words that follow */
-    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
-    uint8_t smb_reh2;        /* reserved (must be zero) */
-    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
-    uint16_t smb_fid;        /* file handle */
-    uint32_t smb_offset;     /* offset in file to begin write */
-    uint32_t smb_timeout;    /* number of milliseconds to wait for completion */
-    uint16_t smb_wmode;      /* write mode:
-                                bit0 - complete write before return (write through)
-                                bit1 - return smb_remaining (pipes/devices only)
-                                bit2 - use WriteRawNamedPipe (pipes only)
-                                bit3 - this is the start of a message (pipes only) */
-    uint16_t smb_countleft;  /* bytes remaining to write to satisfy user’s request */
-    uint16_t smb_dsize_high; /* high bytes of data size */
-    uint16_t smb_dsize;      /* number of data bytes in buffer (min value = 0) */
-    uint16_t smb_doff;       /* offset (from start of SMB hdr) to data bytes */
-    uint16_t smb_bcc;        /* total bytes (including pad bytes) following */
-};
-
-struct SmbReadAndXResp    /* smb_wct = 12 */
-{
-    uint8_t smb_wct;         /* count of 16-bit words that follow */
-    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
-    uint8_t smb_res2;        /* reserved (pad to word) */
-    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
-    uint16_t smb_remaining;  /* bytes remaining to be read (pipes/devices only) */
-    uint32_t smb_rsvd;       /* reserved */
-    uint16_t smb_dsize;      /* number of data bytes (minimum value = 0) */
-    uint16_t smb_doff;       /* offset (from start of SMB hdr) to data bytes */
-    uint16_t smb_dsize_high; /* high bytes of data size */
-    uint32_t smb_rsvd1;      /* reserved */
-    uint32_t smb_rsvd2;      /* reserved */
-    uint16_t smb_bcc;        /* total bytes (including pad bytes) following */
-};
-
 /* For server empty respones indicating client error or interim response */
 struct SmbEmptyCom
 {
@@ -409,7 +412,6 @@ struct SmbEmptyCom
     uint16_t smb_bcc;    /* value = 0 */
 };
 
-#pragma pack()
 enum DCE2_SmbSsnState
 {
     DCE2_SMB_SSN_STATE__START         = 0x00,
@@ -449,6 +451,96 @@ enum SmbAndXCom
     SMB_ANDX_COM__LOGOFF_ANDX,
     SMB_ANDX_COM__NT_CREATE_ANDX,
     SMB_ANDX_COM__MAX
+};
+
+enum SmbTransactionSubcommand
+{
+    TRANS_UNKNOWN_0000             = 0x0000,
+    TRANS_SET_NMPIPE_STATE         = 0x0001,
+    TRANS_UNKNOWN_0002             = 0x0002,
+    TRANS_UNKNOWN_0003             = 0x0003,
+    TRANS_UNKNOWN_0004             = 0x0004,
+    TRANS_UNKNOWN_0005             = 0x0005,
+    TRANS_UNKNOWN_0006             = 0x0006,
+    TRANS_UNKNOWN_0007             = 0x0007,
+    TRANS_UNKNOWN_0008             = 0x0008,
+    TRANS_UNKNOWN_0009             = 0x0009,
+    TRANS_UNKNOWN_000A             = 0x000A,
+    TRANS_UNKNOWN_000B             = 0x000B,
+    TRANS_UNKNOWN_000C             = 0x000C,
+    TRANS_UNKNOWN_000D             = 0x000D,
+    TRANS_UNKNOWN_000E             = 0x000E,
+    TRANS_UNKNOWN_000F             = 0x000F,
+    TRANS_UNKNOWN_0010             = 0x0010,
+    TRANS_RAW_READ_NMPIPE          = 0x0011,
+    TRANS_UNKNOWN_0012             = 0x0012,
+    TRANS_UNKNOWN_0013             = 0x0013,
+    TRANS_UNKNOWN_0014             = 0x0014,
+    TRANS_UNKNOWN_0015             = 0x0015,
+    TRANS_UNKNOWN_0016             = 0x0016,
+    TRANS_UNKNOWN_0017             = 0x0017,
+    TRANS_UNKNOWN_0018             = 0x0018,
+    TRANS_UNKNOWN_0019             = 0x0019,
+    TRANS_UNKNOWN_001A             = 0x001A,
+    TRANS_UNKNOWN_001B             = 0x001B,
+    TRANS_UNKNOWN_001C             = 0x001C,
+    TRANS_UNKNOWN_001D             = 0x001D,
+    TRANS_UNKNOWN_001E             = 0x001E,
+    TRANS_UNKNOWN_001F             = 0x001F,
+    TRANS_UNKNOWN_0020             = 0x0020,
+    TRANS_QUERY_NMPIPE_STATE       = 0x0021,
+    TRANS_QUERY_NMPIPE_INFO        = 0x0022,
+    TRANS_PEEK_NMPIPE              = 0x0023,
+    TRANS_UNKNOWN_0024             = 0x0024,
+    TRANS_UNKNOWN_0025             = 0x0025,
+    TRANS_TRANSACT_NMPIPE          = 0x0026,
+    TRANS_UNKNOWN_0027             = 0x0027,
+    TRANS_UNKNOWN_0028             = 0x0028,
+    TRANS_UNKNOWN_0029             = 0x0029,
+    TRANS_UNKNOWN_002A             = 0x002A,
+    TRANS_UNKNOWN_002B             = 0x002B,
+    TRANS_UNKNOWN_002C             = 0x002C,
+    TRANS_UNKNOWN_002D             = 0x002D,
+    TRANS_UNKNOWN_002E             = 0x002E,
+    TRANS_UNKNOWN_002F             = 0x002F,
+    TRANS_UNKNOWN_0030             = 0x0030,
+    TRANS_RAW_WRITE_NMPIPE         = 0x0031,
+    TRANS_UNKNOWN_0032             = 0x0032,
+    TRANS_UNKNOWN_0033             = 0x0033,
+    TRANS_UNKNOWN_0034             = 0x0034,
+    TRANS_UNKNOWN_0035             = 0x0035,
+    TRANS_READ_NMPIPE              = 0x0036,
+    TRANS_WRITE_NMPIPE             = 0x0037,
+    TRANS_UNKNOWN_0038             = 0x0038,
+    TRANS_UNKNOWN_0039             = 0x0039,
+    TRANS_UNKNOWN_003A             = 0x003A,
+    TRANS_UNKNOWN_003B             = 0x003B,
+    TRANS_UNKNOWN_003C             = 0x003C,
+    TRANS_UNKNOWN_003D             = 0x003D,
+    TRANS_UNKNOWN_003E             = 0x003E,
+    TRANS_UNKNOWN_003F             = 0x003F,
+    TRANS_UNKNOWN_0040             = 0x0040,
+    TRANS_UNKNOWN_0041             = 0x0041,
+    TRANS_UNKNOWN_0042             = 0x0042,
+    TRANS_UNKNOWN_0043             = 0x0043,
+    TRANS_UNKNOWN_0044             = 0x0044,
+    TRANS_UNKNOWN_0045             = 0x0045,
+    TRANS_UNKNOWN_0046             = 0x0046,
+    TRANS_UNKNOWN_0047             = 0x0047,
+    TRANS_UNKNOWN_0048             = 0x0048,
+    TRANS_UNKNOWN_0049             = 0x0049,
+    TRANS_UNKNOWN_004A             = 0x004A,
+    TRANS_UNKNOWN_004B             = 0x004B,
+    TRANS_UNKNOWN_004C             = 0x004C,
+    TRANS_UNKNOWN_004D             = 0x004D,
+    TRANS_UNKNOWN_004E             = 0x004E,
+    TRANS_UNKNOWN_004F             = 0x004F,
+    TRANS_UNKNOWN_0050             = 0x0050,
+    TRANS_UNKNOWN_0051             = 0x0051,
+    TRANS_UNKNOWN_0052             = 0x0052,
+    TRANS_WAIT_NMPIPE              = 0x0053,
+    TRANS_CALL_NMPIPE              = 0x0054,
+    TRANS_SUBCOM_MAX               = 0x0055
 };
 
 struct DCE2_SmbWriteAndXRaw
@@ -566,6 +658,8 @@ struct DCE2_SmbRequestTracker
     bool is_ipc;
 };
 
+#pragma pack()
+
 struct DCE2_SmbSsnData
 {
     DCE2_SsnData sd;  // This member must be first
@@ -620,6 +714,12 @@ struct DCE2_SmbSsnData
 };
 
 /********************************************************************
+ * Structures and inline accessor functions
+ ********************************************************************/
+/* Pack the structs since we'll be laying them on top of packet data */
+#pragma pack(1)
+
+/********************************************************************
  * Common fields to all commands
  ********************************************************************/
 struct SmbCommon
@@ -669,12 +769,12 @@ inline uint16_t SmbBcc(const uint8_t* ptr, uint16_t com_size)
     if (com_size < sizeof(SmbEmptyCom))
         return 0;
 
-    return extract_16bits(ptr + com_size - sizeof(uint16_t));
+    return alignedNtohs((uint16_t*)(ptr + com_size - sizeof(uint16_t)));
 }
 
 inline uint16_t SmbEmptyComBcc(const SmbEmptyCom* ec)
 {
-    return ntohs(ec->smb_bcc);
+    return alignedNtohs(&ec->smb_bcc);
 }
 
 inline int SmbType(const SmbNtHdr* hdr)
@@ -684,6 +784,1038 @@ inline int SmbType(const SmbNtHdr* hdr)
 
     return SMB_TYPE__REQUEST;
 }
+
+inline uint8_t SmbAndXCom2(const SmbAndXCommon* andx)
+{
+    return andx->smb_com2;
+}
+
+inline uint16_t SmbAndXOff2(const SmbAndXCommon* andx)
+{
+    return alignedNtohs(&andx->smb_off2);
+}
+
+/* SMB formats (smb_fmt) Dialect, Pathname and ASCII are all
+ * NULL terminated ASCII strings unless Unicode is specified
+ * in the NT LM 1.0 SMB header in which case they are NULL
+ * terminated unicode strings
+ */
+#define SMB_FMT__DATA_BLOCK  1
+#define SMB_FMT__DIALECT     2
+#define SMB_FMT__ASCII       4
+
+inline bool SmbFmtDataBlock(const uint8_t fmt)
+{
+    return fmt == SMB_FMT__DATA_BLOCK ? true : false;
+}
+
+inline bool SmbFmtDialect(const uint8_t fmt)
+{
+    return fmt == SMB_FMT__DIALECT ? true : false;
+}
+
+inline bool SmbFmtAscii(const uint8_t fmt)
+{
+    return fmt == SMB_FMT__ASCII ? true : false;
+}
+
+/********************************************************************
+ * SMB_COM_OPEN
+ ********************************************************************/
+struct SmbOpenReq   /* smb_wct = 2 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_mode;    /* r/w/share */
+    uint16_t smb_attr;    /* attribute */
+    uint16_t smb_bcc;     /* min = 2 */
+};
+
+struct SmbOpenResp   /* smb_wct = 7 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_fid;     /* file handle */
+    uint16_t smb_attr;    /* attribute */
+    uint32_t smb_time;    /* time1 low */
+    uint32_t smb_file_size;   /* file size low */
+    uint16_t smb_access;  /* access allowed */
+    uint16_t smb_bcc;     /* must be 0 */
+};
+
+#define SMB_OPEN_ACCESS_MODE__READ        0x0000
+#define SMB_OPEN_ACCESS_MODE__WRITE       0x0001
+#define SMB_OPEN_ACCESS_MODE__READ_WRITE  0x0002
+#define SMB_OPEN_ACCESS_MODE__EXECUTE     0x0003
+
+inline uint16_t SmbOpenRespFid(const SmbOpenResp* resp)
+{
+    return alignedNtohs(&resp->smb_fid);
+}
+
+inline uint32_t SmbOpenRespFileSize(const SmbOpenResp* resp)
+{
+    return extract_32bits((uint8_t*)&resp->smb_file_size);
+}
+
+inline uint16_t SmbOpenRespFileAttrs(const SmbOpenResp* resp)
+{
+    return alignedNtohs(&resp->smb_attr);
+}
+
+inline bool SmbFileAttrsDirectory(const uint16_t file_attrs)
+{
+    if (file_attrs & SMB_FILE_ATTRIBUTE_DIRECTORY)
+        return true;
+    return false;
+}
+
+inline uint16_t SmbOpenRespAccessMode(const SmbOpenResp* resp)
+{
+    return alignedNtohs(&resp->smb_access);
+}
+
+inline bool SmbOpenForWriting(const uint16_t access_mode)
+{
+    return access_mode == SMB_OPEN_ACCESS_MODE__WRITE;
+}
+
+/********************************************************************
+ * SMB_COM_CREATE
+ ********************************************************************/
+struct SmbCreateReq   /* smb_wct = 3 */
+{
+    uint8_t smb_wct;
+    uint16_t smb_file_attrs;
+    uint32_t smb_creation_time;
+    uint16_t smb_bcc;
+};
+
+struct SmbCreateResp   /* smb_wct = 1 */
+{
+    uint8_t smb_wct;
+    uint16_t smb_fid;
+    uint16_t smb_bcc;
+};
+
+inline uint16_t SmbCreateReqFileAttrs(const SmbCreateReq* req)
+{
+    return alignedNtohs(&req->smb_file_attrs);
+}
+
+inline bool SmbAttrDirectory(const uint16_t file_attrs)
+{
+    if (file_attrs & SMB_FILE_ATTRIBUTE_DIRECTORY)
+        return true;
+    return false;
+}
+
+inline bool SmbAttrHidden(const uint16_t file_attrs)
+{
+    if (file_attrs & SMB_FILE_ATTRIBUTE_HIDDEN)
+        return true;
+    return false;
+}
+
+inline bool SmbAttrSystem(const uint16_t file_attrs)
+{
+    if (file_attrs & SMB_FILE_ATTRIBUTE_SYSTEM)
+        return true;
+    return false;
+}
+
+inline uint16_t SmbCreateRespFid(const SmbCreateResp* resp)
+{
+    return alignedNtohs(&resp->smb_fid);
+}
+
+/********************************************************************
+ * SMB_COM_CLOSE
+ ********************************************************************/
+struct SmbCloseReq   /* smb_wct = 3 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_fid;     /* file handle */
+    uint16_t smb_tlow;    /* time low */
+    uint16_t smb_thigh;   /* time high */
+    uint16_t smb_bcc;     /* must be 0 */
+};
+
+struct SmbCloseResp   /* smb_wct = 0 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_bcc;     /* must be 0 */
+};
+
+inline uint16_t SmbCloseReqFid(const SmbCloseReq* req)
+{
+    return alignedNtohs(&req->smb_fid);
+}
+
+/********************************************************************
+ * SMB_COM_READ
+ ********************************************************************/
+struct SmbReadReq   /* smb_wct = 5 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_fid;     /* file handle */
+    uint16_t smb_cnt;     /* count of bytes */
+    uint32_t smb_off;     /* offset */
+    uint16_t smb_left;    /* count left */
+    uint16_t smb_bcc;     /* must be 0 */
+};
+
+struct SmbReadResp   /* smb_wct = 5 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_cnt;     /* count */
+    uint16_t smb_res[4];  /* reserved (MBZ) */
+    uint16_t smb_bcc;     /* length of data + 3 */
+};
+
+inline uint16_t SmbReadReqFid(const SmbReadReq* req)
+{
+    return alignedNtohs(&req->smb_fid);
+}
+
+inline uint32_t SmbReadReqOffset(const SmbReadReq* req)
+{
+    return alignedNtohl(&req->smb_off);
+}
+
+inline uint16_t SmbReadRespCount(const SmbReadResp* resp)
+{
+    return alignedNtohs(&resp->smb_cnt);
+}
+
+/********************************************************************
+ * SMB_COM_WRITE
+ ********************************************************************/
+struct SmbWriteReq   /* smb_wct = 5 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_fid;     /* file handle */
+    uint16_t smb_cnt;     /* count of bytes */
+    uint32_t smb_offset;  /* file offset in bytes */
+    uint16_t smb_left;    /* count left */
+    uint16_t smb_bcc;     /* length of data + 3 */
+};
+
+struct SmbWriteResp   /* smb_wct = 1 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_cnt;     /* count */
+    uint16_t smb_bcc;     /* must be 0 */
+};
+
+inline uint16_t SmbWriteReqFid(const SmbWriteReq* req)
+{
+    return alignedNtohs(&req->smb_fid);
+}
+
+inline uint16_t SmbWriteReqCount(const SmbWriteReq* req)
+{
+    return alignedNtohs(&req->smb_cnt);
+}
+
+inline uint32_t SmbWriteReqOffset(const SmbWriteReq* req)
+{
+    return alignedNtohl(&req->smb_offset);
+}
+
+inline uint16_t SmbWriteRespCount(const SmbWriteResp* resp)
+{
+    return alignedNtohs(&resp->smb_cnt);
+}
+
+/********************************************************************
+ * SMB_COM_CREATE_NEW
+ ********************************************************************/
+struct SmbCreateNewReq   /* smb_wct = 3 */
+{
+    uint8_t smb_wct;
+    uint16_t smb_file_attrs;
+    uint32_t smb_creation_time;
+    uint16_t smb_bcc;
+};
+
+struct SmbCreateNewResp   /* smb_wct = 1 */
+{
+    uint8_t smb_wct;
+    uint16_t smb_fid;
+    uint16_t smb_bcc;
+};
+
+inline uint16_t SmbCreateNewReqFileAttrs(const SmbCreateNewReq* req)
+{
+    return alignedNtohs(&req->smb_file_attrs);
+}
+
+inline uint16_t SmbCreateNewRespFid(const SmbCreateNewResp* resp)
+{
+    return alignedNtohs(&resp->smb_fid);
+}
+
+/********************************************************************
+ * SMB_COM_LOCK_AND_READ
+ ********************************************************************/
+struct SmbLockAndReadReq   /* smb_wct = 5 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_fid;
+    uint16_t smb_cnt;
+    uint32_t smb_read_offset;
+    uint16_t smb_remaining;
+    uint16_t smb_bcc;     /* must be 0 */
+};
+
+struct SmbLockAndReadResp   /* smb_wct = 5 */
+{
+    uint8_t smb_wct;
+    uint16_t smb_cnt;
+    uint16_t reserved[4];
+    uint16_t smb_bcc;
+};
+
+inline uint16_t SmbLockAndReadReqFid(const SmbLockAndReadReq* req)
+{
+    return alignedNtohs(&req->smb_fid);
+}
+
+inline uint32_t SmbLockAndReadReqOffset(const SmbLockAndReadReq* req)
+{
+    return alignedNtohl(&req->smb_read_offset);
+}
+
+inline uint16_t SmbLockAndReadRespCount(const SmbLockAndReadResp* resp)
+{
+    return alignedNtohs(&resp->smb_cnt);
+}
+
+/********************************************************************
+ * SMB_COM_WRITE_AND_UNLOCK
+ ********************************************************************/
+struct SmbWriteAndUnlockReq
+{
+    uint8_t smb_wct;
+    uint16_t smb_fid;
+    uint16_t smb_cnt;
+    uint32_t smb_write_offset;
+    uint16_t smb_estimate_of_remaining;
+    uint16_t smb_bcc;
+};
+
+struct SmbWriteAndUnlockResp   /* smb_wct = 1 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_cnt;     /* count */
+    uint16_t smb_bcc;     /* must be 0 */
+};
+
+inline uint16_t SmbWriteAndUnlockReqFid(const SmbWriteAndUnlockReq* req)
+{
+    return alignedNtohs(&req->smb_fid);
+}
+
+inline uint16_t SmbWriteAndUnlockReqCount(const SmbWriteAndUnlockReq* req)
+{
+    return alignedNtohs(&req->smb_cnt);
+}
+
+inline uint32_t SmbWriteAndUnlockReqOffset(const SmbWriteAndUnlockReq* req)
+{
+    return alignedNtohl(&req->smb_write_offset);
+}
+
+/********************************************************************
+ * SMB_COM_OPEN_ANDX
+ ********************************************************************/
+struct SmbOpenAndXReq   /* smb_wct = 15 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
+    uint8_t smb_reh2;        /* reserved (must be zero) */
+    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_flags;      /* additional information:
+                                bit 0 - if set, return additional information
+                                bit 1 - if set, set single user total file lock (if only access)
+                                bit 2 - if set, the server should notify the consumer on any
+                                        action which can modify the file (delete, setattrib,
+                                        rename, etc.). if not set, the server need only notify
+                                        the consumer on another open request. This bit only has
+                                        meaning if bit 1 is set. */
+    uint16_t smb_mode;       /* file open mode */
+    uint16_t smb_sattr;      /* search attributes */
+    uint16_t smb_attr;       /* file attributes (for create) */
+    uint32_t smb_time;       /* create time */
+    uint16_t smb_ofun;       /* open function */
+    uint32_t smb_size;       /* bytes to reserve on "create" or "truncate" */
+    uint32_t smb_timeout;    /* max milliseconds to wait for resource to open */
+    uint32_t smb_rsvd;       /* reserved (must be zero) */
+    uint16_t smb_bcc;        /* minimum value = 1 */
+};
+
+struct SmbOpenAndXResp   /* smb_wct = 15 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
+    uint8_t smb_res2;        /* reserved (pad to word) */
+    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_fid;        /* file handle */
+    uint16_t smb_attribute;  /* attributes of file or device */
+    uint32_t smb_time;       /* last modification time */
+    uint32_t smb_size;       /* current file size */
+    uint16_t smb_access;     /* access permissions actually allowed */
+    uint16_t smb_type;       /* file type */
+    uint16_t smb_state;      /* state of IPC device (e.g. pipe) */
+    uint16_t smb_action;     /* action taken */
+    uint32_t smb_fileid;     /* server unique file id */
+    uint16_t smb_rsvd;       /* reserved */
+    uint16_t smb_bcc;        /* value = 0 */
+};
+
+inline uint32_t SmbOpenAndXReqAllocSize(const SmbOpenAndXReq* req)
+{
+    return alignedNtohl(&req->smb_size);
+}
+
+inline uint16_t SmbOpenAndXReqFileAttrs(const SmbOpenAndXReq* req)
+{
+    return alignedNtohs(&req->smb_attr);
+}
+
+inline uint16_t SmbOpenAndXRespFid(const SmbOpenAndXResp* resp)
+{
+    return alignedNtohs(&resp->smb_fid);
+}
+
+inline uint16_t SmbOpenAndXRespFileAttrs(const SmbOpenAndXResp* resp)
+{
+    return alignedNtohs(&resp->smb_attribute);
+}
+
+inline uint32_t SmbOpenAndXRespFileSize(const SmbOpenAndXResp* resp)
+{
+    return alignedNtohl(&resp->smb_size);
+}
+
+inline uint16_t SmbOpenAndXRespResourceType(const SmbOpenAndXResp* resp)
+{
+    return alignedNtohs(&resp->smb_type);
+}
+
+#define SMB_OPEN_RESULT__EXISTED    0x0001
+#define SMB_OPEN_RESULT__CREATED    0x0002
+#define SMB_OPEN_RESULT__TRUNCATED  0x0003
+
+inline uint16_t SmbOpenAndXRespOpenResults(const SmbOpenAndXResp* resp)
+{
+    return alignedNtohs(&resp->smb_action);
+}
+
+inline bool SmbOpenResultRead(const uint16_t open_results)
+{
+    return ((open_results & 0x00FF) == SMB_OPEN_RESULT__EXISTED);
+}
+
+inline bool SmbResourceTypeDisk(const uint16_t resource_type)
+{
+    return resource_type == SMB_FILE_TYPE_DISK;
+}
+
+/********************************************************************
+ * SMB_COM_READ_ANDX
+ ********************************************************************/
+struct SmbReadAndXReq   /* smb_wct = 10 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
+    uint8_t smb_reh2;        /* reserved (must be zero) */
+    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_fid;        /* file handle */
+    uint32_t smb_offset;     /* offset in file to begin read */
+    uint16_t smb_maxcnt;     /* max number of bytes to return */
+    uint16_t smb_mincnt;     /* min number of bytes to return */
+    uint32_t smb_timeout;    /* number of milliseconds to wait for completion */
+    uint16_t smb_countleft;  /* bytes remaining to satisfy user’s request */
+    uint16_t smb_bcc;        /* value = 0 */
+};
+
+struct SmbReadAndXExtReq   /* smb_wct = 12 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
+    uint8_t smb_reh2;        /* reserved (must be zero) */
+    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_fid;        /* file handle */
+    uint32_t smb_offset;     /* low offset in file to begin read */
+    uint16_t smb_maxcnt;     /* max number of bytes to return */
+    uint16_t smb_mincnt;     /* min number of bytes to return */
+    uint32_t smb_timeout;    /* number of milliseconds to wait for completion */
+    uint16_t smb_countleft;  /* bytes remaining to satisfy user’s request */
+    uint32_t smb_off_high;   /* high offset in file to begin read */
+    uint16_t smb_bcc;        /* value = 0 */
+};
+
+struct SmbReadAndXResp    /* smb_wct = 12 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
+    uint8_t smb_res2;        /* reserved (pad to word) */
+    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_remaining;  /* bytes remaining to be read (pipes/devices only) */
+    uint32_t smb_rsvd;       /* reserved */
+    uint16_t smb_dsize;      /* number of data bytes (minimum value = 0) */
+    uint16_t smb_doff;       /* offset (from start of SMB hdr) to data bytes */
+    uint16_t smb_dsize_high; /* high bytes of data size */
+    uint32_t smb_rsvd1;      /* reserved */
+    uint32_t smb_rsvd2;      /* reserved */
+    uint16_t smb_bcc;        /* total bytes (including pad bytes) following */
+};
+
+inline uint16_t SmbReadAndXReqFid(const SmbReadAndXReq* req)
+{
+    return alignedNtohs(&req->smb_fid);
+}
+
+inline uint64_t SmbReadAndXReqOffset(const SmbReadAndXExtReq* req)
+{
+    if (req->smb_wct == 10)
+        return (uint64_t)alignedNtohl(&req->smb_offset);
+    return (uint64_t)alignedNtohl(&req->smb_off_high) << 32 | (uint64_t)alignedNtohl(
+        &req->smb_offset);
+}
+
+inline uint16_t SmbReadAndXRespDataOff(const SmbReadAndXResp* req)
+{
+    return alignedNtohs(&req->smb_doff);
+}
+
+inline uint32_t SmbReadAndXRespDataCnt(const SmbReadAndXResp* resp)
+{
+    return (uint32_t)alignedNtohs(&resp->smb_dsize_high) << 16 | (uint32_t)alignedNtohs(
+        &resp->smb_dsize);
+}
+
+/********************************************************************
+ * SMB_COM_WRITE_ANDX
+ ********************************************************************/
+struct SmbWriteAndXReq   /* smb_wct = 12 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
+    uint8_t smb_reh2;        /* reserved (must be zero) */
+    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_fid;        /* file handle */
+    uint32_t smb_offset;     /* offset in file to begin write */
+    uint32_t smb_timeout;    /* number of milliseconds to wait for completion */
+    uint16_t smb_wmode;      /* write mode:
+                                bit0 - complete write before return (write through)
+                                bit1 - return smb_remaining (pipes/devices only)
+                                bit2 - use WriteRawNamedPipe (pipes only)
+                                bit3 - this is the start of a message (pipes only) */
+    uint16_t smb_countleft;  /* bytes remaining to write to satisfy user’s request */
+    uint16_t smb_dsize_high; /* high bytes of data size */
+    uint16_t smb_dsize;      /* number of data bytes in buffer (min value = 0) */
+    uint16_t smb_doff;       /* offset (from start of SMB hdr) to data bytes */
+    uint16_t smb_bcc;        /* total bytes (including pad bytes) following */
+};
+
+struct SmbWriteAndXExtReq   /* smb_wct = 14 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
+    uint8_t smb_reh2;        /* reserved (must be zero) */
+    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_fid;        /* file handle */
+    uint32_t smb_offset;     /* low offset in file to begin write */
+    uint32_t smb_timeout;    /* number of milliseconds to wait for completion */
+    uint16_t smb_wmode;      /* write mode:
+                                bit0 - complete write before return (write through)
+                                bit1 - return smb_remaining (pipes/devices only)
+                                bit2 - use WriteRawNamedPipe (pipes only)
+                                bit3 - this is the start of a message (pipes only) */
+    uint16_t smb_countleft;  /* bytes remaining to write to satisfy user’s request */
+    uint16_t smb_dsize_high; /* high bytes of data size */
+    uint16_t smb_dsize;      /* number of data bytes in buffer (min value = 0) */
+    uint16_t smb_doff;       /* offset (from start of SMB hdr) to data bytes */
+    uint32_t smb_off_high;   /* high offset in file to begin write */
+    uint16_t smb_bcc;        /* total bytes (including pad bytes) following */
+};
+
+struct SmbWriteAndXResp   /* smb_wct = 6 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
+    uint8_t smb_res2;        /* reserved (pad to word) */
+    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_count;      /* number of bytes written */
+    uint16_t smb_remaining;  /* bytes remaining to be read (pipes/devices only) */
+    uint16_t smb_count_high; /* high order bytes of data count */
+    uint16_t smb_rsvd;       /* reserved */
+    uint16_t smb_bcc;        /* value = 0 */
+};
+
+inline uint16_t SmbWriteAndXReqFid(const SmbWriteAndXReq* req)
+{
+    return alignedNtohs(&req->smb_fid);
+}
+
+inline uint16_t SmbWriteAndXReqDataOff(const SmbWriteAndXReq* req)
+{
+    return alignedNtohs(&req->smb_doff);
+}
+
+inline uint16_t SmbWriteAndXReqRemaining(const SmbWriteAndXReq* req)
+{
+    return alignedNtohs(&req->smb_countleft);
+}
+
+inline uint64_t SmbWriteAndXReqOffset(const SmbWriteAndXExtReq* req)
+{
+    if (req->smb_wct == 12)
+        return (uint64_t)alignedNtohl(&req->smb_offset);
+    return (uint64_t)alignedNtohl(&req->smb_off_high) << 32 | (uint64_t)alignedNtohl(
+        &req->smb_offset);
+}
+
+inline uint32_t SmbWriteAndXReqDataCnt(const SmbWriteAndXReq* req)
+{
+    return (uint32_t)alignedNtohs(&req->smb_dsize_high) << 16 | (uint32_t)alignedNtohs(
+        &req->smb_dsize);
+}
+
+inline uint16_t SmbWriteAndXReqWriteMode(const SmbWriteAndXReq* req)
+{
+    return alignedNtohs(&req->smb_wmode);
+}
+
+inline bool SmbWriteAndXReqStartRaw(const SmbWriteAndXReq* req)
+{
+    return ((alignedNtohs(&req->smb_wmode) & 0x000c) == 0x000c) ? true : false;
+}
+
+inline bool SmbWriteAndXReqRaw(const SmbWriteAndXReq* req)
+{
+    return ((alignedNtohs(&req->smb_wmode) & 0x000c) == 0x0004) ? true : false;
+}
+
+inline uint16_t SmbWriteAndXRespCnt(const SmbWriteAndXResp* resp)
+{
+    return alignedNtohs(&resp->smb_count);
+}
+
+/********************************************************************
+ * SMB_COM_SESSION_SETUP_ANDX
+ ********************************************************************/
+struct SmbLm10_SessionSetupAndXReq   /* smb_wct = 10 */
+{
+    uint8_t smb_wct;       /* count of 16-bit words that follow */
+    uint8_t smb_com2;      /* secondary (X) command, 0xFF = none */
+    uint8_t smb_reh2;      /* reserved (must be zero) */
+    uint16_t smb_off2;     /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_bufsize;  /* the consumers max buffer size */
+    uint16_t smb_mpxmax;   /* actual maximum multiplexed pending requests */
+    uint16_t smb_vc_num;   /* 0 = first (only), non zero - additional VC number */
+    uint32_t smb_sesskey;  /* Session Key (valid only if smb_vc_num != 0) */
+    uint16_t smb_apasslen; /* size of account password (smb_apasswd) */
+    uint32_t smb_rsvd;     /* reserved */
+    uint16_t smb_bcc;      /* minimum value = 0 */
+};
+
+inline uint16_t SmbSessionSetupAndXReqMaxMultiplex(const SmbLm10_SessionSetupAndXReq* req)
+{
+    return alignedNtohs(&req->smb_mpxmax);
+}
+
+/********************************************************************
+ * SMB_COM_NEGOTIATE
+ ********************************************************************/
+/* This is the Lanman response */
+struct SmbLm10_NegotiateProtocolResp   /* smb_wct = 13 */
+{
+    uint8_t smb_wct;        /* count of 16-bit words that follow */
+    uint16_t smb_index;     /* index identifying dialect selected */
+    uint16_t smb_secmode;   /* security mode:
+                               bit 0, 1 = User level, 0 = Share level
+                               bit 1, 1 = encrypt passwords, 0 = do not encrypt passwords */
+    uint16_t smb_maxxmt;    /* max transmit buffer size server supports, 1K min */
+    uint16_t smb_maxmux;    /* max pending multiplexed requests server supports */
+    uint16_t smb_maxvcs;    /* max VCs per server/consumer session supported */
+    uint16_t smb_blkmode;   /* block read/write mode support:
+                               bit 0, Read Block Raw supported (65535 bytes max)
+                               bit 1, Write Block Raw supported (65535 bytes max) */
+    uint32_t smb_sesskey;   /* Session Key (unique token identifying session) */
+    uint16_t smb_srv_time;  /* server's current time (hhhhh mmmmmm xxxxx) */
+    uint16_t smb_srv_tzone; /* server's current data (yyyyyyy mmmm ddddd) */
+    uint32_t smb_rsvd;      /* reserved */
+    uint16_t smb_bcc;       /* value = (size of smb_cryptkey) */
+};
+
+/* This is the NT response */
+struct SmbNt_NegotiateProtocolResp     /* smb_wct = 17 */
+{
+    uint8_t smb_wct;            /* count of 16-bit words that follow */
+    uint16_t smb_index;         /* index identifying dialect selected */
+    uint8_t smb_secmode;        /* security mode:
+                                   bit 0, 1 = User level, 0 = Share level
+                                   bit 1, 1 = encrypt passwords, 0 = do not encrypt passwords */
+    uint16_t smb_maxmux;        /* max pending multiplexed requests server supports */
+    uint16_t smb_maxvcs;        /* max VCs per server/consumer session supported */
+    uint32_t smb_maxbuf;        /* maximum buffer size supported */
+    uint32_t smb_maxraw;        /* maximum raw buffer size supported */
+    uint32_t smb_sesskey;       /* Session Key (unique token identifying session) */
+    uint32_t smb_cap;           /* capabilities */
+    struct
+    {
+        uint32_t low_time;
+        int32_t high_time;
+    } smb_srv_time;             /* server time */
+    uint16_t smb_srv_tzone;     /* server's current data (yyyyyyy mmmm ddddd) */
+    uint8_t smb_challenge_len;  /* Challenge length */
+    uint16_t smb_bcc;           /* value = (size of smb_cryptkey) */
+};
+
+inline uint16_t SmbLm_NegotiateRespMaxMultiplex(const SmbLm10_NegotiateProtocolResp* resp)
+{
+    return alignedNtohs(&resp->smb_maxmux);
+}
+
+inline uint16_t SmbNt_NegotiateRespMaxMultiplex(const SmbNt_NegotiateProtocolResp* resp)
+{
+    return alignedNtohs(&resp->smb_maxmux);
+}
+
+/*********************************************************************
+ * SMB_COM_TREE_CONNECT_ANDX
+ *********************************************************************/
+struct SmbTreeConnectAndXReq   /* smb_wct = 4 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
+    uint8_t smb_reh2;        /* reserved (must be zero) */
+    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_flags;      /* additional information:
+                                bit 0 - if set, disconnect TID in current smb_tid */
+    uint16_t smb_spasslen;   /* length of smb_spasswd */
+    uint16_t smb_bcc;        /* minimum value = 3 */
+};
+
+inline uint16_t SmbTreeConnectAndXReqPassLen(const SmbTreeConnectAndXReq* req)
+{
+    return alignedNtohs(&req->smb_spasslen);
+}
+
+/********************************************************************
+ * SMB_COM_NT_TRANSACT
+ ********************************************************************/
+#define SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY     0x00000004
+
+/********************************************************************
+ * SMB_COM_NT_CREATE_ANDX
+ ********************************************************************/
+#define SMB_CREATE_DISPOSITSION__FILE_SUPERCEDE      0x00000000
+#define SMB_CREATE_DISPOSITSION__FILE_OPEN           0x00000001
+#define SMB_CREATE_DISPOSITSION__FILE_CREATE         0x00000002
+#define SMB_CREATE_DISPOSITSION__FILE_OPEN_IF        0x00000003
+#define SMB_CREATE_DISPOSITSION__FILE_OVERWRITE      0x00000004
+#define SMB_CREATE_DISPOSITSION__FILE_OVERWRITE_IF   0x00000005
+
+struct SmbNtCreateAndXReq   /* smb_wct = 24 */
+{
+    uint8_t smb_wct;            /* count of 16-bit words that follow */
+    uint8_t smb_com2;           /* secondary (X) command, 0xFF = none */
+    uint8_t smb_res2;           /* reserved (pad to word) */
+    uint16_t smb_off2;          /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint8_t smb_res;            /* reserved */
+    uint16_t smb_name_len;      /* length of name of file */
+    uint32_t smb_flags;         /* flags */
+    uint32_t smb_root_fid;      /* fid for previously opened directory */
+    uint32_t smb_access;        /* specifies the type of file access */
+    uint64_t smb_alloc_size;    /* initial allocation size of the file */
+    uint32_t smb_file_attrs;    /* specifies the file attributes for the file */
+    uint32_t smb_share_access;  /* the type of share access */
+    uint32_t smb_create_disp;   /* actions to take if file does or does not exist */
+    uint32_t smb_create_opts;   /* options used when creating or opening file */
+    uint32_t smb_impersonation_level;  /* security impersonation level */
+    uint8_t smb_security_flags;   /* security flags */
+    uint16_t smb_bcc;           /* byte count */
+};
+
+struct SmbNtCreateAndXResp    /* smb_wct = 34 */
+{
+    uint8_t smb_wct;
+    uint8_t smb_com2;
+    uint8_t smb_res2;
+    uint16_t smb_off2;
+    uint8_t smb_oplock_level;
+    uint16_t smb_fid;
+    uint32_t smb_create_disposition;
+    uint64_t smb_creation_time;
+    uint64_t smb_last_access_time;
+    uint64_t smb_last_write_time;
+    uint64_t smb_change_time;
+    uint32_t smb_file_attrs;
+    uint64_t smb_alloc_size;
+    uint64_t smb_eof;
+    uint16_t smb_resource_type;
+    uint16_t smb_nm_pipe_state;
+    uint8_t smb_directory;
+    uint16_t smb_bcc;
+};
+
+// Word count is always set to 42 though there are actually 50 words
+struct SmbNtCreateAndXExtResp    /* smb_wct = 42 */
+{
+    uint8_t smb_wct;
+    uint8_t smb_com2;
+    uint8_t smb_res2;
+    uint16_t smb_off2;
+    uint8_t smb_oplock_level;
+    uint16_t smb_fid;
+    uint32_t smb_create_disposition;
+    uint64_t smb_creation_time;
+    uint64_t smb_last_access_time;
+    uint64_t smb_last_write_time;
+    uint64_t smb_change_time;
+    uint32_t smb_file_attrs;
+    uint64_t smb_alloc_size;
+    uint64_t smb_eof;
+    uint16_t smb_resource_type;
+    uint16_t smb_nm_pipe_state;
+    uint8_t smb_directory;
+    uint8_t smb_volume_guid[16];
+    uint64_t smb_fileid;
+    uint32_t smb_max_access_rights;
+    uint32_t smb_guest_access_rights;
+    uint16_t smb_bcc;
+};
+
+inline uint16_t SmbNtCreateAndXReqFileNameLen(const SmbNtCreateAndXReq* req)
+{
+    return alignedNtohs(&req->smb_name_len);
+}
+
+inline uint32_t SmbNtCreateAndXReqCreateDisposition(const SmbNtCreateAndXReq* req)
+{
+    return alignedNtohl(&req->smb_create_disp);
+}
+
+inline bool SmbCreateDispositionRead(const uint32_t create_disposition)
+{
+    return (create_disposition == SMB_CREATE_DISPOSITSION__FILE_OPEN)
+           || (create_disposition > SMB_CREATE_DISPOSITSION__FILE_OVERWRITE_IF);
+}
+
+inline uint64_t SmbNtCreateAndXReqAllocSize(const SmbNtCreateAndXReq* req)
+{
+    return alignedNtohq(&req->smb_alloc_size);
+}
+
+inline bool SmbNtCreateAndXReqSequentialOnly(const SmbNtCreateAndXReq* req)
+{
+    return (alignedNtohl(&req->smb_create_opts) & SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY);
+}
+
+inline uint32_t SmbNtCreateAndXReqFileAttrs(const SmbNtCreateAndXReq* req)
+{
+    return alignedNtohl(&req->smb_file_attrs);
+}
+
+inline uint16_t SmbNtCreateAndXRespFid(const SmbNtCreateAndXResp* resp)
+{
+    return alignedNtohs(&resp->smb_fid);
+}
+
+inline uint32_t SmbNtCreateAndXRespCreateDisposition(const SmbNtCreateAndXResp* resp)
+{
+    return alignedNtohl(&resp->smb_create_disposition);
+}
+
+inline bool SmbNtCreateAndXRespDirectory(const SmbNtCreateAndXResp* resp)
+{
+    return (resp->smb_directory ? true : false);
+}
+
+inline uint16_t SmbNtCreateAndXRespResourceType(const SmbNtCreateAndXResp* resp)
+{
+    return alignedNtohs(&resp->smb_resource_type);
+}
+
+inline uint64_t SmbNtCreateAndXRespEndOfFile(const SmbNtCreateAndXResp* resp)
+{
+    return alignedNtohq(&resp->smb_eof);
+}
+
+/********************************************************************
+ * SMB_COM_TRANSACTION
+ ********************************************************************/
+struct SmbTransactionReq   /* smb_wct = 14 + value of smb_suwcnt */
+{
+    /* Note all subcommands use a setup count of 2 */
+    uint8_t smb_wct;       /* count of 16-bit words that follow */
+    uint16_t smb_tpscnt;   /* total number of parameter bytes being sent */
+    uint16_t smb_tdscnt;   /* total number of data bytes being sent */
+    uint16_t smb_mprcnt;   /* max number of parameter bytes to return */
+    uint16_t smb_mdrcnt;   /* max number of data bytes to return */
+    uint8_t smb_msrcnt;    /* max number of setup words to return */
+    uint8_t smb_rsvd;      /* reserved (pad above to word) */
+    uint16_t smb_flags;    /* additional information:
+                              bit 0 - if set, also disconnect TID in smb_tid
+                              bit 1 - if set, transaction is one way (no final response) */
+    uint32_t smb_timeout;  /* number of milliseconds to wait for completion */
+    uint16_t smb_rsvd1;    /* reserved */
+    uint16_t smb_pscnt;    /* number of parameter bytes being sent this buffer */
+    uint16_t smb_psoff;    /* offset (from start of SMB hdr) to parameter bytes */
+    uint16_t smb_dscnt;    /* number of data bytes being sent this buffer */
+    uint16_t smb_dsoff;    /* offset (from start of SMB hdr) to data bytes */
+    uint8_t smb_suwcnt;    /* set up word count */
+    uint8_t smb_rsvd2;     /* reserved (pad above to word) */
+    uint16_t smb_setup1;   /* function (see below)
+                                TRANS_SET_NM_PIPE_STATE   = 0x0001
+                                TRANS_RAW_READ_NMPIPE     = 0x0011
+                                TRANS_QUERY_NMPIPE_STATE  = 0x0021
+                                TRANS_QUERY_NMPIPE_INFO   = 0x0022
+                                TRANS_PEEK_NMPIPE         = 0x0023
+                                TRANS_TRANSACT_NMPIPE     = 0x0026
+                                TRANS_RAW_WRITE_NMPIPE    = 0x0031
+                                TRANS_READ_NMPIPE         = 0x0036
+                                TRANS_WRITE_NMPIPE        = 0x0037
+                                TRANS_WAIT_NMPIPE         = 0x0053
+                                TRANS_CALL_NMPIPE         = 0x0054  */
+    uint16_t smb_setup2;   /* FID (handle) of pipe (if needed), or priority */
+    uint16_t smb_bcc;      /* total bytes (including pad bytes) following */
+};
+
+struct SmbTransactionInterimResp    /* smb_wct = 0 */
+{
+    uint8_t smb_wct;        /* count of 16-bit words that follow */
+    uint16_t smb_bcc;       /* must be 0 */
+};
+
+struct SmbTransactionResp   /* smb_wct = 10 + value of smb_suwcnt */
+{
+    /* Note all subcommands use a setup count of 0 */
+    uint8_t smb_wct;       /* count of 16-bit words that follow */
+    uint16_t smb_tprcnt;   /* total number of parameter bytes being returned */
+    uint16_t smb_tdrcnt;   /* total number of data bytes being returned */
+    uint16_t smb_rsvd;     /* reserved */
+    uint16_t smb_prcnt;    /* number of parameter bytes being returned this buf */
+    uint16_t smb_proff;    /* offset (from start of SMB hdr) to parameter bytes */
+    uint16_t smb_prdisp;   /* byte displacement for these parameter bytes */
+    uint16_t smb_drcnt;    /* number of data bytes being returned this buffer */
+    uint16_t smb_droff;    /* offset (from start of SMB hdr) to data bytes */
+    uint16_t smb_drdisp;   /* byte displacement for these data bytes */
+    uint8_t smb_suwcnt;    /* set up return word count */
+    uint8_t smb_rsvd1;     /* reserved (pad above to word) */
+    uint16_t smb_bcc;      /* total bytes (including pad bytes) following */
+};
+
+inline uint16_t SmbTransactionReqSubCom(const SmbTransactionReq* req)
+{
+    return alignedNtohs(&req->smb_setup1);
+}
+
+inline uint16_t SmbTransactionReqFid(const SmbTransactionReq* req)
+{
+    return alignedNtohs(&req->smb_setup2);
+}
+
+inline bool SmbTransactionReqDisconnectTid(const SmbTransactionReq* req)
+{
+    return alignedNtohs(&req->smb_flags) & 0x0001 ? true : false;
+}
+
+inline bool SmbTransactionReqOneWay(const SmbTransactionReq* req)
+{
+    return alignedNtohs(&req->smb_flags) & 0x0002 ? true : false;
+}
+
+inline uint8_t SmbTransactionReqSetupCnt(const SmbTransactionReq* req)
+{
+    return req->smb_suwcnt;
+}
+
+inline uint16_t SmbTransactionReqTotalDataCnt(const SmbTransactionReq* req)
+{
+    return alignedNtohs(&req->smb_tdscnt);
+}
+
+inline uint16_t SmbTransactionReqDataCnt(const SmbTransactionReq* req)
+{
+    return alignedNtohs(&req->smb_dscnt);
+}
+
+inline uint16_t SmbTransactionReqDataOff(const SmbTransactionReq* req)
+{
+    return alignedNtohs(&req->smb_dsoff);
+}
+
+inline uint16_t SmbTransactionReqTotalParamCnt(const SmbTransactionReq* req)
+{
+    return alignedNtohs(&req->smb_tpscnt);
+}
+
+inline uint16_t SmbTransactionReqParamCnt(const SmbTransactionReq* req)
+{
+    return alignedNtohs(&req->smb_pscnt);
+}
+
+inline uint16_t SmbTransactionReqParamOff(const SmbTransactionReq* req)
+{
+    return alignedNtohs(&req->smb_psoff);
+}
+
+inline uint16_t SmbTransactionRespTotalDataCnt(const SmbTransactionResp* resp)
+{
+    return alignedNtohs(&resp->smb_tdrcnt);
+}
+
+inline uint16_t SmbTransactionRespDataCnt(const SmbTransactionResp* resp)
+{
+    return alignedNtohs(&resp->smb_drcnt);
+}
+
+inline uint16_t SmbTransactionRespDataOff(const SmbTransactionResp* resp)
+{
+    return alignedNtohs(&resp->smb_droff);
+}
+
+inline uint16_t SmbTransactionRespDataDisp(const SmbTransactionResp* resp)
+{
+    return alignedNtohs(&resp->smb_drdisp);
+}
+
+inline uint16_t SmbTransactionRespTotalParamCnt(const SmbTransactionResp* resp)
+{
+    return alignedNtohs(&resp->smb_tprcnt);
+}
+
+inline uint16_t SmbTransactionRespParamCnt(const SmbTransactionResp* resp)
+{
+    return alignedNtohs(&resp->smb_prcnt);
+}
+
+inline uint16_t SmbTransactionRespParamOff(const SmbTransactionResp* resp)
+{
+    return alignedNtohs(&resp->smb_proff);
+}
+
+inline uint16_t SmbTransactionRespParamDisp(const SmbTransactionResp* resp)
+{
+    return alignedNtohs(&resp->smb_prdisp);
+}
+
+// Flags for TRANS_SET_NMPIPE_STATE parameters
+#define PIPE_STATE_NON_BLOCKING  0x8000
+#define PIPE_STATE_MESSAGE_MODE  0x0100
+
+#pragma pack()
+
+struct DCE2_SmbFsm
+{
+    char input;
+    int next_state;
+    int fail_state;
+};
 
 class Dce2SmbFlowData : public FlowData
 {

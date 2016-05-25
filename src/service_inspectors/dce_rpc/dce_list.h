@@ -127,6 +127,8 @@ void DCE2_ListEmpty(DCE2_List*);
 void DCE2_ListDestroy(DCE2_List*);
 void* DCE2_ListFind(DCE2_List*, void*);
 DCE2_Ret DCE2_ListFindKey(DCE2_List*, void*);
+DCE2_Ret DCE2_ListRemove(DCE2_List*, void*);
+void DCE2_ListRemoveCurrent(DCE2_List*);
 
 DCE2_Queue* DCE2_QueueNew(DCE2_QueueDataFree);
 DCE2_Ret DCE2_QueueEnqueue(DCE2_Queue*, void*);
@@ -137,6 +139,7 @@ void* DCE2_QueueFirst(DCE2_Queue*);
 void* DCE2_QueueNext(DCE2_Queue*);
 void DCE2_QueueDestroy(DCE2_Queue*);
 void DCE2_QueueRemoveCurrent(DCE2_Queue*);
+void* DCE2_QueueLast(DCE2_Queue*);
 
 DCE2_CStack* DCE2_CStackNew(int, DCE2_CStackDataFree);
 DCE2_Ret DCE2_CStackPush(DCE2_CStack*, void*);

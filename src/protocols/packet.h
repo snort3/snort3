@@ -315,5 +315,74 @@ inline uint32_t extract_32bits(const uint8_t* p)
 { return ntohl(*(uint32_t*)p); }
 
 #endif
+
+inline uint16_t alignedNtohs(const uint16_t* ptr)
+{
+    uint16_t value;
+
+    if (ptr == nullptr)
+        return 0;
+
+#ifdef WORDS_MUSTALIGN
+    value = *((uint8_t*)ptr) << 8 | *((uint8_t*)ptr + 1);
+#else
+    value = *ptr;
+#endif
+
+#ifdef WORDS_BIGENDIAN
+    return ((value & 0xff00) >> 8) | ((value & 0x00ff) << 8);
+#else
+    return value;
+#endif  /* WORDS_BIGENDIAN */
+}
+
+inline uint32_t alignedNtohl(const uint32_t* ptr)
+{
+    uint32_t value;
+
+    if (ptr == nullptr)
+        return 0;
+
+#ifdef WORDS_MUSTALIGN
+    value = *((uint8_t*)ptr) << 24 | *((uint8_t*)ptr + 1) << 16 |
+        *((uint8_t*)ptr + 2) << 8  | *((uint8_t*)ptr + 3);
+#else
+    value = *ptr;
+#endif  /* WORDS_MUSTALIGN */
+
+#ifdef WORDS_BIGENDIAN
+    return ((value & 0xff000000) >> 24) | ((value & 0x00ff0000) >> 8)  |
+           ((value & 0x0000ff00) << 8)  | ((value & 0x000000ff) << 24);
+#else
+    return value;
+#endif  /* WORDS_BIGENDIAN */
+}
+
+inline uint64_t alignedNtohq(const uint64_t* ptr)
+{
+    uint64_t value;
+
+    if (ptr == NULL)
+        return 0;
+
+#ifdef WORDS_MUSTALIGN
+    value = *((uint8_t*)ptr) << 56 | *((uint8_t*)ptr + 1) << 48 |
+        *((uint8_t*)ptr + 2) << 40 | *((uint8_t*)ptr + 3) << 32 |
+        *((uint8_t*)ptr + 4) << 24 | *((uint8_t*)ptr + 5) << 16 |
+        *((uint8_t*)ptr + 6) << 8  | *((uint8_t*)ptr + 7);
+#else
+    value = *ptr;
+#endif  /* WORDS_MUSTALIGN */
+
+#ifdef WORDS_BIGENDIAN
+    return ((value & 0xff00000000000000) >> 56) | ((value & 0x00ff000000000000) >> 40) |
+           ((value & 0x0000ff0000000000) >> 24) | ((value & 0x000000ff00000000) >> 8)  |
+           ((value & 0x00000000ff000000) << 8)  | ((value & 0x0000000000ff0000) << 24) |
+           ((value & 0x000000000000ff00) << 40) | ((value & 0x00000000000000ff) << 56);
+#else
+    return value;
+#endif  /* WORDS_BIGENDIAN */
+}
+
 #endif
 

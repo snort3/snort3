@@ -91,5 +91,41 @@ private:
 
 void print_dce2_smb_conf(dce2SmbProtoConf& config);
 
+inline bool DCE2_ScSmbFileInspection(const dce2SmbProtoConf* sc)
+{
+    if (sc == nullptr)
+        return false;
+    return ((sc->smb_file_inspection == DCE2_SMB_FILE_INSPECTION_ON)
+           || (sc->smb_file_inspection == DCE2_SMB_FILE_INSPECTION_ONLY));
+}
+
+inline bool DCE2_ScSmbFileInspectionOnly(const dce2SmbProtoConf* sc)
+{
+    if (sc == nullptr)
+        return false;
+    return sc->smb_file_inspection == DCE2_SMB_FILE_INSPECTION_ONLY;
+}
+
+inline int64_t DCE2_ScSmbFileDepth(const dce2SmbProtoConf* sc)
+{
+    if (!DCE2_ScSmbFileInspection(sc))
+        return -1;
+    return sc->smb_file_depth;
+}
+
+inline uint8_t DCE2_ScSmbMaxChain(const dce2SmbProtoConf* sc)
+{
+    if (sc == nullptr)
+        return 0;
+    return sc->smb_max_chain;
+}
+
+inline DCE2_List* DCE2_ScSmbInvalidShares(const dce2SmbProtoConf* sc)
+{
+    if (sc == nullptr)
+        return nullptr;
+    return sc->smb_invalid_shares;
+}
+
 #endif
 

@@ -569,6 +569,124 @@ DCE2_Ret DCE2_ListFindKey(DCE2_List* list, void* key)
 }
 
 /********************************************************************
+ * Function: DCE2_ListRemove()
+ *
+ * Removes the node in the list with the specified key.  If
+ * data free and key free functions were given with the creation
+ * of the list object, they are called with the data and key
+ * respectively.
+ *
+ * Arguments:
+ *  DCE2_List *
+ *      A pointer to the list object.
+ *  void *
+ *      Pointer to a key.
+ *
+ * Returns:
+ *  DCE2_Ret
+ *      DCE2_RET__ERROR if a node in the list with the specified
+ *          key cannot be found or the list object passed in is NULL.
+ *      DCE2_RET__SUCCESS if the node is successfully removed from
+ *          the list.
+ *
+ ********************************************************************/
+DCE2_Ret DCE2_ListRemove(DCE2_List* list, void* key)
+{
+    DCE2_ListNode* n;
+
+    if (list == nullptr)
+        return DCE2_RET__ERROR;
+
+    for (n = list->head; n != nullptr; n = n->next)
+    {
+        int comp = list->compare(key, n->key);
+        if (comp == 0)
+        {
+            /* Found it */
+            break;
+        }
+        else if ((comp < 0) && (list->type == DCE2_LIST_TYPE__SORTED))
+        {
+            /* Won't find it after this since the list is sorted */
+            return DCE2_RET__ERROR;
+        }
+    }
+
+    if (n == nullptr)
+        return DCE2_RET__ERROR;
+
+    if (n == list->head)
+        list->head = n->next;
+    if (n == list->tail)
+        list->tail = n->prev;
+    if (n->prev != nullptr)
+        n->prev->next = n->next;
+    if (n->next != nullptr)
+        n->next->prev = n->prev;
+
+    if (list->key_free != nullptr)
+        list->key_free(n->key);
+
+    if (list->data_free != nullptr)
+        list->data_free(n->data);
+
+    free((void*)n);
+
+    list->num_nodes--;
+
+    return DCE2_RET__SUCCESS;
+}
+
+/********************************************************************
+ * Function: DCE2_ListRemoveCurrent()
+ *
+ * Removes the current node pointed to in the list.  This is set
+ * when a call to DCE2_ListFirst or DCE2_ListNext is called.  For
+ * either of these if data is returned and the user want to remove
+ * that data from the list, this function should be called.
+ * Sets a next pointer, so a next call to DCE2_ListNext will point
+ * to the node after the deleted one.
+ *
+ * Arguments:
+ *  DCE2_List *
+ *      A pointer to the list object.
+ *
+ * Returns: None
+ *
+ ********************************************************************/
+void DCE2_ListRemoveCurrent(DCE2_List* list)
+{
+    if (list == nullptr)
+        return;
+
+    if (list->current == nullptr)
+        return;
+
+    list->next = list->current->next;
+    list->prev = list->current->prev;
+
+    if (list->current == list->head)
+        list->head = list->current->next;
+    if (list->current == list->tail)
+        list->tail = list->current->prev;
+    if (list->current->prev != nullptr)
+        list->current->prev->next = list->current->next;
+    if (list->current->next != nullptr)
+        list->current->next->prev = list->current->prev;
+
+    if (list->key_free != nullptr)
+        list->key_free(list->current->key);
+
+    if (list->data_free != nullptr)
+        list->data_free(list->current->data);
+
+    free((void*)list->current);
+    list->current = nullptr;
+
+    list->num_nodes--;
+}
+
+/********************************************************************
  * Function: DCE2_QueueNew()
  *
  * Creates and initializes a new queue object.
@@ -867,6 +985,38 @@ void DCE2_QueueRemoveCurrent(DCE2_Queue* queue)
     queue->current = nullptr;
 
     queue->num_nodes--;
+}
+
+/********************************************************************
+ * Function: DCE2_QueueLast()
+ *
+ * Returns a pointer to the data of the last node in the queue.
+ * Sets a current pointer to the last node in the queue for
+ * iterating over the queue backwards.
+ *
+ * Arguments:
+ *  DCE2_Queue *
+ *      A pointer to the queue object.
+ *
+ * Returns:
+ *  void *
+ *      The data in the last node in the queue.
+ *      NULL if the queue object passed in is NULL, or there are
+ *          no items in the queue.
+ *
+ ********************************************************************/
+void* DCE2_QueueLast(DCE2_Queue* queue)
+{
+    if (queue == nullptr)
+        return nullptr;
+
+    queue->current = queue->tail;
+    queue->prev = nullptr;
+
+    if (queue->current != nullptr)
+        return queue->current->data;
+
+    return nullptr;
 }
 
 /********************************************************************

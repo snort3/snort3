@@ -482,7 +482,7 @@ void print_dce2_smb_conf(dce2SmbProtoConf& config)
 
     if (config.smb_max_compound == 0)
         LogMessage("    Maximum SMB compounded requests: Unlimited\n");
-    else if (config.smb_max_chain == 1)
+    else if (config.smb_max_compound == 1)
         LogMessage("    Maximum SMB compounded requests: No compounding allowed\n");
     else
         LogMessage("    Maximum SMB compounded requests: %u\n", config.smb_max_compound);
