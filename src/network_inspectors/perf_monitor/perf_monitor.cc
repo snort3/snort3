@@ -86,7 +86,7 @@ public:
     void tterm() override;
 };
 
-static THREAD_LOCAL PerfMonitor* this_perf_monitor;
+static THREAD_LOCAL PerfMonitor* this_perf_monitor = nullptr;
 
 PerfMonitor::PerfMonitor(PerfMonModule* mod)
 {
