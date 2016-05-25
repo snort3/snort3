@@ -315,7 +315,7 @@ const BaseApi* nin_perf_monitor = &pm_api.base;
 #ifdef UNIT_TEST
 TEST_CASE("Process timing logic", "[perfmon]")
 {
-    Packet p;
+    Packet p(false);
     DAQ_PktHdr_t pkth;
     p.pkth = &pkth;
 

@@ -75,7 +75,7 @@ static DAQ_PktHdr_t* initDaqHdr( )
 
 static Packet* init_packet(Flow* flow, uint32_t talker)
 {
-    Packet* pkt = new Packet;
+    Packet* pkt = new Packet(false);
 
     pkt->flow = flow;
     pkt->packet_flags = talker;
