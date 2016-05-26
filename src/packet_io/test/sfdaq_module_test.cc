@@ -1,4 +1,22 @@
+//--------------------------------------------------------------------------
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
+// sfdaq_module_test.cc author Michael Altizer <mialtize@cisco.com>
 
 // -----------------------------------------------------------------------------
 // unit tests
@@ -38,10 +56,10 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
     Value no_promisc(true);
     CHECK(sfdm.set("daq.no_promisc", no_promisc, &sc));
 
-    CHECK(sfdm.begin("daq.instances", 0, &sc));
-    CHECK_FALSE(sfdm.end("daq.instances", 0, &sc));
+    CHECK(sfdm.begin("daq.instances", 1, &sc));
+    CHECK_FALSE(sfdm.end("daq.instances", 1, &sc));
 
-    CHECK(sfdm.begin("daq.instances", 0, &sc));
+    CHECK(sfdm.begin("daq.instances", 1, &sc));
 
     Value instance_id(static_cast<double>(5));
     CHECK(sfdm.set("daq.instances.id", instance_id, &sc));
@@ -54,7 +72,7 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
     CHECK(sfdm.set("daq.instances.variables", instance_var1, &sc));
     CHECK(sfdm.set("daq.instances.variables", instance_var2, &sc));
 
-    CHECK(sfdm.end("daq.instances", 0, &sc));
+    CHECK(sfdm.end("daq.instances", 1, &sc));
 
     CHECK(sfdm.end("daq", 0, &sc));
 
