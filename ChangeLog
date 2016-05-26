@@ -1,3 +1,14 @@
+16/05/27 - build 198
+
+-- add double-decoding to new_http_inspect
+-- add obfuscation support for cmg and unified2
+-- cleanup compiler warnings and memory leaks
+-- fixup cmake builds
+-- update file processing configuration
+-- prevent profiler double counting on recursion
+-- additional unit tests for high availability
+-- fix multi-DAQ instance configuration
+
 16/05/02 - build 197
 
 -- fix build of extras
