@@ -119,11 +119,6 @@ static inline uint16_t DCE2_ComInfoCommandSize(const DCE2_SmbComInfo* com_info)
     return com_info->cmd_size;
 }
 
-static inline bool DCE2_ComInfoIsCommandOK(const DCE2_SmbComInfo* com_info)
-{
-    return (com_info->cmd_error == DCE2_SMB_COM_ERROR__COMMAND_OK) ? true : false;
-}
-
 static inline bool DCE2_ComInfoIsStatusError(const DCE2_SmbComInfo* com_info)
 {
     return (com_info->cmd_error & DCE2_SMB_COM_ERROR__STATUS_ERROR) ? true : false;
@@ -132,11 +127,6 @@ static inline bool DCE2_ComInfoIsStatusError(const DCE2_SmbComInfo* com_info)
 static inline bool DCE2_ComInfoIsInvalidWordCount(const DCE2_SmbComInfo* com_info)
 {
     return (com_info->cmd_error & DCE2_SMB_COM_ERROR__INVALID_WORD_COUNT) ? true : false;
-}
-
-static inline bool DCE2_ComInfoIsInvalidByteCount(const DCE2_SmbComInfo* com_info)
-{
-    return (com_info->cmd_error & DCE2_SMB_COM_ERROR__INVALID_BYTE_COUNT) ? true : false;
 }
 
 static inline bool DCE2_ComInfoIsBadLength(const DCE2_SmbComInfo* com_info)
