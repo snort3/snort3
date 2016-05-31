@@ -17,9 +17,9 @@
 //--------------------------------------------------------------------------
 // nhttp_msg_header.cc author Tom Peters <thopeter@cisco.com>
 
-#include <string.h>
+#include <cstring>
+#include <cstdio>
 #include <sys/types.h>
-#include <stdio.h>
 
 #include "utils/util.h"
 #include "detection/detection_util.h"
@@ -27,6 +27,7 @@
 #include "file_api/file_flows.h"
 
 #include "nhttp_api.h"
+#include "nhttp_normalizers.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_header.h"
 
@@ -44,14 +45,19 @@ void NHttpMsgHeader::update_flow()
 {
     session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 
-    // FIXIT-L put this test here for now. May want to integrate into the following code and
-    // do more careful checks for inappropriate Content-Length.
     if (get_header_count(HEAD_CONTENT_LENGTH) > 1)
+    {
+        infractions += INF_MULTIPLE_CONTLEN;
         events.create_event(EVENT_MULTIPLE_CONTLEN);
+    }
+    if ((get_header_count(HEAD_CONTENT_LENGTH) > 0) &&
+        (get_header_count(HEAD_TRANSFER_ENCODING) > 0))
+    {
+        infractions += INF_BOTH_CL_AND_TE;
+        events.create_event(EVENT_BOTH_CL_AND_TE);
+    }
 
     // The following logic to determine body type is by no means the last word on this topic.
-    // FIXIT-H need to distinguish methods such as POST that should have a body from those that
-    // should not.
     if (tcp_close)
     {
         session_data->half_reset(source_id);
@@ -62,9 +68,21 @@ void NHttpMsgHeader::update_flow()
     if ((source_id == SRC_SERVER) && ((status_code_num <= 199) || (status_code_num == 204) ||
         (status_code_num == 304)))
     {
-        // No body allowed by RFC for these response codes
-        // FIXIT-M inspect for Content-Length and Transfer-Encoding headers which should not be
-        // present
+        // No body allowed by RFC for these response codes. The message is over regardless of the
+        // headers.
+        if (get_header_count(HEAD_TRANSFER_ENCODING) > 0)
+        {
+            infractions += INF_BAD_CODE_BODY_HEADER;
+            events.create_event(EVENT_BAD_CODE_BODY_HEADER);
+        }
+        if (get_header_count(HEAD_CONTENT_LENGTH) > 0)
+        {
+            if (norm_decimal_integer(get_header_value_norm(HEAD_CONTENT_LENGTH)) > 0)
+            {
+                infractions += INF_BAD_CODE_BODY_HEADER;
+                events.create_event(EVENT_BAD_CODE_BODY_HEADER);
+            }
+        }
         session_data->half_reset(SRC_SERVER);
         return;
     }
@@ -78,22 +96,31 @@ void NHttpMsgHeader::update_flow()
     }
 
     // If there is a Transfer-Encoding header, see if the last of the encoded values is "chunked".
-    // FIXIT-L do something with Transfer-Encoding header with chunked present but not last.
-    // FIXIT-L do something with Transfer-Encoding header present but no chunked at all.
     if (get_header_value_norm(HEAD_TRANSFER_ENCODING).length > 0)
     {
+        if (chunked_before_end(get_header_value_norm(HEAD_TRANSFER_ENCODING)))
+        {
+            infractions += INF_CHUNKED_BEFORE_END;
+            events.create_event(EVENT_CHUNKED_BEFORE_END);
+        }
         if (norm_last_token_code(get_header_value_norm(HEAD_TRANSFER_ENCODING),
             NHttpMsgHeadShared::trans_code_list) == TRANSCODE_CHUNKED)
         {
-            // FIXIT-M inspect for Content-Length header which should not be present
             // Chunked body
             session_data->type_expected[source_id] = SEC_BODY_CHUNK;
             prepare_body();
             return;
         }
+        else
+        {
+            infractions += INF_FINAL_NOT_CHUNKED;
+            events.create_event(EVENT_FINAL_NOT_CHUNKED);
+        }
     }
 
-    if (get_header_value_norm(HEAD_CONTENT_LENGTH).length > 0)
+    // else because Transfer-Encoding header negates Content-Length header even if something was
+    // wrong with Transfer-Encoding header.
+    else if (get_header_value_norm(HEAD_CONTENT_LENGTH).length > 0)
     {
         const int64_t content_length =
             norm_decimal_integer(get_header_value_norm(HEAD_CONTENT_LENGTH));

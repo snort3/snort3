@@ -89,3 +89,16 @@ int32_t norm_last_token_code(const Field& input, const StrCode table[])
     return str_to_code(last_start, last_length, table);
 }
 
+// Given a comma-separated list of words, does "chunked" appear before the last word
+bool chunked_before_end(const Field& input)
+{
+    for (int k=0; k < (input.length - 7); k++)
+    {
+        if (((k == 0) || (input.start[k-1] == ',')) && !memcmp(input.start+k, "chunked,", 8))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+

@@ -38,6 +38,7 @@ NormFunc norm_remove_lws;
 // Other normalization-related utilities
 int64_t norm_decimal_integer(const Field& input);
 int32_t norm_last_token_code(const Field& input, const StrCode table[]);
+bool chunked_before_end(const Field& input);
 
 #endif
 

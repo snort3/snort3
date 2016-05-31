@@ -327,6 +327,11 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_GZIP_FAILURE,               "Gzip decompression failed" },
     { EVENT_ZERO_NINE_CONTINUE,         "HTTP 0.9 requested followed by another request" },
     { EVENT_ZERO_NINE_NOT_FIRST,        "HTTP 0.9 request following a normal request" },
+    { EVENT_BOTH_CL_AND_TE,             "Message has both Content-Length and Transfer-Encoding" },
+    { EVENT_BAD_CODE_BODY_HEADER,       "Status code implying no body combined with Transfer-"
+                                            "Encoding or nonzero Content-Length" },
+    { EVENT_FINAL_NOT_CHUNKED,          "Transfer-Encoding did not end with chunked" },
+    { EVENT_CHUNKED_BEFORE_END,         "Transfer-Encoding with chunked not at end" },
     { 0, nullptr }
 };
 

@@ -2,7 +2,8 @@
 AM_DEFAULT_SOURCE_EXT = .cc
 
 check_PROGRAMS = \
-nhttp_uri_norm_test
+nhttp_uri_norm_test \
+nhttp_normalizers_test
 
 TESTS = $(check_PROGRAMS)
 
@@ -17,5 +18,11 @@ nhttp_uri_norm_test_LDADD = \
 ../nhttp_field.o \
 ../nhttp_tables.o \
 ../../../framework/module.o \
+@CPPUTEST_LDFLAGS@
+
+nhttp_normalizers_test_CPPFLAGS = $(AM_CPPFLAGS) @CPPUTEST_CPPFLAGS@
+nhttp_normalizers_test_LDADD = \
+../nhttp_normalizers.o \
+../nhttp_field.o \
 @CPPUTEST_LDFLAGS@
 
