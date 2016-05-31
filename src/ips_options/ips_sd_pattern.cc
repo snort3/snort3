@@ -67,20 +67,18 @@ private:
     unsigned SdSearch(Cursor&, Packet*);
 
     const SdPatternConfig config;
-    SdOptionData* sd_data;
-    SdContext* sd_context;
+    SdOptionData* opt;
 };
 
 SdPatternOption::SdPatternOption(const SdPatternConfig& c) :
     IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE), config(c)
 {
-    sd_data = new SdOptionData(config.pii, config.threshold);
-    sd_context = new SdContext(sd_data);
+    opt = new SdOptionData(config.pii);
 }
 
 SdPatternOption::~SdPatternOption()
 {
-    delete(sd_context);
+    delete opt;
 }
 
 uint32_t SdPatternOption::hash() const
@@ -113,17 +111,12 @@ unsigned SdPatternOption::SdSearch(Cursor& c, Packet* p)
     uint16_t buflen = c.length();
     const uint8_t* const end = buf + buflen;
 
-    SdSessionData ssn;
-    memset(&ssn, 0, sizeof(ssn));
-
     unsigned count = 0;
     while (buf < end && count < config.threshold)
     {
-        SdTreeNode* matched_node;
         uint16_t match_len = 0;
 
-        matched_node = FindPii(sd_context->head_node, buf, &match_len, buflen, &ssn);
-        if ( matched_node )
+        if ( opt->match(buf, &match_len, buflen) )
         {
             if ( !p->obfuscator )
                 p->obfuscator = new Obfuscator();

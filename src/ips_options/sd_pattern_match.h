@@ -25,70 +25,23 @@
 #include <iostream>
 #include <stdint.h>
 
-#define SD_SOCIAL_PATTERN          "\\d{3}-\\d{2}-\\d{4}"
-#define SD_SOCIAL_NODASHES_PATTERN "\\d{9}"
-#define SD_CREDIT_PATTERN_ALL      "\\d{4} ?-?\\d{4} ?-?\\d{2} ?-?\\d{2} ?-?\\d{3}\\d?"
+#define SD_SOCIAL_PATTERN          "\\b\\d{3}-\\d{2}-\\d{4}\\b"
+#define SD_SOCIAL_NODASHES_PATTERN "\\b\\d{9}\\b"
+#define SD_CREDIT_PATTERN_ALL      "\\b\\d{4} ?-?\\d{4} ?-?\\d{2} ?-?\\d{2} ?-?\\d{3}\\d?\\b"
 
-struct SdOptionData
+class SdOptionData
 {
-    char *pii;
-    uint32_t counter_index;
-    int (*validate_func)(const uint8_t* buf, uint32_t buflen);
-    uint8_t count;
-    uint8_t match_success;
+public:
+    SdOptionData(std::string pattern);
+    ~SdOptionData(void)
+    { free(pattern); }
+    void ExpandBrackets(void);
+    bool match(const uint8_t* const buf, uint16_t* const buf_index, uint16_t buflen);
 
-    SdOptionData(std::string pattern, uint8_t threshold);
-
-    ~SdOptionData()
-    {
-        free(pii);
-        pii = nullptr;
-        validate_func = nullptr;
-    }
-};
-
-struct SdTreeNode
-{
+private:
     char* pattern;
-    uint16_t num_children;
-    uint16_t num_option_data;
-    SdTreeNode** children;
-    SdOptionData** option_data_list;
+    int (*validate)(const uint8_t* buf, uint32_t buflen) = nullptr;
 };
-
-int FreePiiTree(SdTreeNode *node);
-
-struct SdContext
-{
-    SdTreeNode *head_node;
-    uint32_t num_patterns;
-
-    SdContext(SdOptionData*);
-
-    ~SdContext()
-    {
-        FreePiiTree(head_node);
-    }
-};
-
-struct SdSessionData
-{
-    SdTreeNode *part_match_node;
-    uint16_t part_match_index;
-    uint32_t num_patterns;
-    uint32_t global_counter;
-    uint8_t *counters;
-};
-
-int AddPii(SdTreeNode *head, SdOptionData *data);
-
-
-SdTreeNode * FindPiiRecursively(SdTreeNode *node, const uint8_t *buf, uint16_t *buf_index,
-        uint16_t buflen, uint16_t *partial_index, SdTreeNode **partial_node);
-
-SdTreeNode * FindPii(const SdTreeNode *head, const uint8_t *buf, uint16_t *buf_index,
-        uint16_t buflen, SdSessionData *session);
 
 #endif
-
 
