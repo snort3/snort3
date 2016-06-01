@@ -6,6 +6,7 @@ find_package(DAQ REQUIRED)
 find_package(DNET REQUIRED)
 find_package(PCAP REQUIRED)
 find_package(PCRE REQUIRED)
+find_package(SFBPF REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(HWLOC REQUIRED)
 
