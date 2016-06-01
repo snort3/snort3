@@ -147,8 +147,8 @@ struct RateFilterConfig
 /*
  * Prototypes
  */
-void SFRF_Delete(void);
-void SFRF_Flush(void);
+void SFRF_Delete();
+void SFRF_Flush();
 int SFRF_ConfigAdd(struct SnortConfig*, RateFilterConfig*, tSFRFConfigNode*);
 
 int SFRF_TestThreshold(

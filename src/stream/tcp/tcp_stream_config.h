@@ -30,9 +30,9 @@
 class TcpStreamConfig
 {
 public:
-    TcpStreamConfig(void);
+    TcpStreamConfig();
 
-    bool require_3whs(void)
+    bool require_3whs()
     {
         return hs_timeout >= 0;
     }
@@ -46,7 +46,7 @@ public:
     }
 
     int verify_config(SnortConfig*);
-    void show_config(void);
+    void show_config();
     static void show_config(TcpStreamConfig*);
 
     StreamPolicy policy = StreamPolicy::OS_DEFAULT;

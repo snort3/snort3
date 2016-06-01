@@ -29,11 +29,13 @@
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
 #include "stream/paf.h"
-#include "perf_monitor/perf_monitor.h"
+
 #include "flow/flow_control.h"
-#include "sfip/sf_ip.h"
-#include "profiler/profiler.h"
 #include "main/snort.h"
+#include "perf_monitor/perf_monitor.h"
+#include "profiler/profiler.h"
+#include "sfip/sf_ip.h"
+#include "utils/util.h"
 
 THREAD_LOCAL ProfileStats user_perf_stats;
 
@@ -53,10 +55,7 @@ THREAD_LOCAL ProfileStats user_perf_stats;
 UserSegment* UserSegment::init(const uint8_t* p, unsigned n)
 {
     unsigned bucket = (n > BUCKET) ? n : BUCKET;
-    UserSegment* us = (UserSegment*)malloc(sizeof(*us)+bucket-1);
-
-    if ( !us )
-        return nullptr;
+    UserSegment* us = (UserSegment*)snort_alloc(sizeof(*us)+bucket-1);
 
     us->len = 0;
     us->offset = 0;
@@ -68,7 +67,7 @@ UserSegment* UserSegment::init(const uint8_t* p, unsigned n)
 
 void UserSegment::term(UserSegment* us)
 {
-    free(us);
+    snort_free(us);
 }
 
 unsigned UserSegment::avail()
@@ -347,7 +346,7 @@ void UserSession::start(Packet* p, Flow* flow)
             flow->ssn_state.session_flags |= SSNFLAG_CLIENT_SWAPPED;
         }
 #if 0
-        // FIXIT-L TBD
+        // FIXIT-M implement stream_user perf stats
         //flow->set_expire(p, dstPolicy->session_timeout);
 
         // add user flavor to perf stats?
@@ -467,7 +466,7 @@ int UserSession::process(Packet* p)
     if ( stream.expired_session(flow, p) )
     {
         flow->restart();
-        // FIXIT count user session timeouts here
+        // FIXIT-M count user session timeouts here
 
 #ifdef ENABLE_EXPECTED_USER
         if ( flow_con->expected_session(flow, p))
@@ -498,7 +497,7 @@ int UserSession::process(Packet* p)
 
 //-------------------------------------------------------------------------
 // UserSession methods
-// FIXIT-L these are TBD after tcp is updated
+// FIXIT-M these are TBD after tcp is updated
 // some will be deleted, some refactored, some implemented
 //-------------------------------------------------------------------------
 

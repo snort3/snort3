@@ -47,7 +47,7 @@ private:
     PegCount user_stat;
     PegCount system_stat;
     PegCount wall_stat;
-    
+
     void get_times(uint64_t& user, uint64_t& system, uint64_t& wall);
 };
 

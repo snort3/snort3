@@ -28,7 +28,7 @@
 *
 *  The PortVar table used to store and lookup Named PortObjects
 */
-PortVarTable* PortVarTableCreate(void)
+PortVarTable* PortVarTableCreate()
 {
     PortObject* po;
     SFGHASH* h;

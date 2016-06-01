@@ -57,13 +57,13 @@ bool FileService::file_capture_enabled = false;
 bool FileService::file_processing_initiated = false;
 FileBlock* FileService::file_block = nullptr;
 
-void FileService::init(void)
+void FileService::init()
 {
     MimeSession::init();
     FileFlows::init();
 }
 
-void FileService::post_init(void)
+void FileService::post_init()
 {
     FileConfig& file_config = snort_conf->file_config;
 
@@ -76,7 +76,7 @@ void FileService::post_init(void)
             file_config.capture_block_size);
 }
 
-void FileService::close(void)
+void FileService::close()
 {
     if (file_block)
         delete file_block;
@@ -85,7 +85,7 @@ void FileService::close(void)
     FileCapture::exit();
 }
 
-void FileService::start_file_processing(void)
+void FileService::start_file_processing()
 {
     if (!file_processing_initiated)
     {
@@ -139,7 +139,7 @@ bool FileService::is_file_service_enabled()
 /* Get maximal file depth based on configuration
  * This function must be called after all file services are configured/enabled.
  */
-int64_t FileService::get_max_file_depth(void)
+int64_t FileService::get_max_file_depth()
 {
     FileConfig& file_config =  snort_conf->file_config;
 

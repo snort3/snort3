@@ -33,8 +33,7 @@
 struct Packet;
 struct OptTreeNode;
 
-// FIXIT-L: Convert to a scoped enum
-enum RuleType
+enum RuleType  // FIXIT-L convert to a scoped enum
 {
     RULE_TYPE__NONE = 0,
     RULE_TYPE__LOG,
@@ -46,7 +45,7 @@ enum RuleType
     RULE_TYPE__MAX
 };
 
-// FIXIT-L: Could be static methods of class enclosing RuleType enum
+// FIXIT-L these functions could be static methods of class enclosing RuleType enum
 const char* get_action_string(RuleType);
 RuleType get_action_type(const char*);
 

@@ -17,6 +17,9 @@
 //--------------------------------------------------------------------------
 // config_api.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#ifndef CONFIG_API_H
+#define CONFIG_API_H
+
 #include "config_states/config_api.h"
 
 namespace config
@@ -253,14 +256,5 @@ const std::vector<const ConvertMap*> config_api =
 };
 } // namespace config
 
-#if 0
-
-FIXIT-L Add this configuration options when we start supporting them in Snort++
-UNSUPPORTED OPTIONS-- these will all be included at a later date.
-
-./src/parser.h : #define CONFIG_OPT__POLICY                          "policy_id"
-./src/parser.h : # define CONFIG_OPT__SIDE_CHANNEL                    "sidechannel"
-./src/parser.h : #define CONFIG_OPT__PROTECTED_CONTENT               "protected_content"
-./src/parser.h : #define CONFIG_OPT__NAP_POLICY_MODE                 "na_policy_mode"
 #endif
 

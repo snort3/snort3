@@ -223,7 +223,7 @@ static char* POParserName(POParser* pop)
 
     DebugFormat(DEBUG_PORTLISTS,">>> POParserName : %s\n",pop->token);
 
-    return SnortStrdup(pop->token);
+    return snort_strdup(pop->token);
 }
 
 /*
@@ -289,7 +289,7 @@ static PortObject* _POParseVar(POParser* pop)
     }
 
     pox = PortVarTableFind(pop->pvTable, name);
-    free(name);
+    snort_free(name);
 
     if (!pox)
     {
@@ -379,10 +379,10 @@ static PortObject* _POParsePort(POParser* pop)
     return po;
 }
 
-// FIXIT-L this creates 1 PortObject per port in the list
-// and then consolidates into one PortObject; it should
-// just create a single PortObject and put each port into
-// appropriate PortItems
+// FIXIT-L _POParseString creates 1 PortObject per port in the list and
+// then consolidates into one PortObject; it should just create a single
+// PortObject and put each port into appropriate PortItems
+
 static PortObject* _POParseString(POParser* pop)
 {
     PortObject* po;
@@ -440,7 +440,7 @@ static PortObject* _POParseString(POParser* pop)
 
             /* Recurse */
             potmp = _POParseString(&local_pop);
-            free(tok);
+            snort_free(tok);
 
             if (!potmp)
             {
@@ -563,9 +563,9 @@ PortObject* PortObjectParseString(PortVarTable* pvTable, POParser* pop,
     else
     {
         if ( name )
-            po->name = SnortStrdup(name);
+            po->name = snort_strdup(name);
         else
-            po->name = SnortStrdup("noname");
+            po->name = snort_strdup("noname");
     }
 
     // LogMessage("PortObjectParseString: po->name=%s\n",po->name);

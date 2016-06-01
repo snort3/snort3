@@ -43,7 +43,7 @@ Clock::time_point Clock::time;
 
 } // namespace t_stopwatch
 
-// FIXIT-L J we can use a customized template for Clock to create a more deterministic unit test
+// FIXIT-L we can use a customized template for Clock to create a more deterministic unit test
 TEST_CASE( "stopwatch", "[time][stopwatch]" )
 {
     using namespace t_stopwatch;

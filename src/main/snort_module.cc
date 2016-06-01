@@ -132,7 +132,7 @@ static const Parameter s_params[] =
     { "-?", Parameter::PT_STRING, "(optional)", nullptr,
       "<option prefix> output matching command line option quick help (same as --help-options)" },
 
-    // FIXIT should use PluginManager::get_available_plugins(PT_LOGGER)
+    // FIXIT-M should use PluginManager::get_available_plugins(PT_LOGGER)
     // but plugins not yet loaded upon set
     { "-A", Parameter::PT_STRING, nullptr, nullptr,
       "<mode> set alert mode: none, cmg, or alert_*" },

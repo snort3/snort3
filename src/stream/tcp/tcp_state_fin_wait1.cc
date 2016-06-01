@@ -151,7 +151,7 @@ bool TcpStateFinWait1::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
         trk.session->tel.set_tcp_event(EVENT_BAD_RST);
     }
 
-    // FIXIT - might be good to create alert specific to RST with data
+    // FIXIT-L might be good to create alert specific to RST with data
     if ( tsd.get_seg_len() > 0 )
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
 

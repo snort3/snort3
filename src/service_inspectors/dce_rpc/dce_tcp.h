@@ -34,7 +34,7 @@
 
 struct dce2TcpStats
 {
-/*  FIXIT-M
+/*  FIXIT-M add array based peg counts
     PegCount sessions_autodetected;
 #ifdef DEBUG
     PegCount autoports[65535][DCE2_TRANS_TYPE__MAX];

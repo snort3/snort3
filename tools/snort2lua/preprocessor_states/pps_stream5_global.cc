@@ -62,6 +62,9 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         else if (!keyword.compare("enable_ha"))
             table_api.add_unsupported_comment("enable_ha");
 
+        else if (!keyword.compare("memcap"))
+            table_api.add_deleted_comment("memcap");
+
         else if (!keyword.compare("no_midstream_drop_alerts"))
             table_api.add_deleted_comment("no_midstream_drop_alerts");
 
@@ -108,12 +111,6 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             table_api.open_table("tcp_cache");
             table_api.add_diff_option_comment("tcp_cache_pruning_timeout", "idle_timeout");
             tmpval = parse_int_option("idle_timeout", arg_stream, false);
-            table_api.close_table();
-        }
-        else if (!keyword.compare("memcap"))
-        {
-            table_api.open_table("tcp_cache");
-            tmpval = parse_int_option("memcap", arg_stream, false);
             table_api.close_table();
         }
         else if (!keyword.compare("max_udp"))

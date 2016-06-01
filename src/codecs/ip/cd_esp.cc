@@ -138,7 +138,7 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         codec.ip6_extension_count++;
     }
 
-    // FIXIT-L:  Leftover from Snort. Do we really want thsi?
+    // FIXIT-L shouldn't this be raw.len = guessed_len ?
     const_cast<uint32_t&>(raw.len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
 
     /* Adjust the packet length to account for the padding.
@@ -162,8 +162,8 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     // highest valid protocol id == 255.
 
-    //  FIXIT-M -- The next_prot_id will never be > 0xFF since it came from
-    //             a uint8_t originally...
+    //  FIXIT-L the next_prot_id will never be > 0xFF since it came from
+    //  a uint8_t originally...
     if (to_utype(codec.next_prot_id) > 0xFF)
     {
         codec.next_prot_id = ProtocolId::FINISHED_DECODE;

@@ -46,7 +46,7 @@ sfip_var_t* sfip_var_from_string(const char* addr)
 
     DebugFormat(DEBUG_CONFIGRULES,"Got address string: %s\n", addr);
 
-    ret = (sfip_var_t*)SnortAlloc(sizeof(sfip_var_t));
+    ret = (sfip_var_t*)snort_calloc(sizeof(sfip_var_t));
 
     if ((ret_code = sfvt_add_to_var(ip_vartable, ret, addr)) != SFIP_SUCCESS)
     {

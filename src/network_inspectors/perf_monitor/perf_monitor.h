@@ -32,24 +32,23 @@
 #include "protocols/packet.h"
 #include "utils/stats.h"
 
-//FIXIT-M: this shouldn't be needed outside of perfmon
-extern PerfConfig* perfmon_config;
+extern PerfConfig* perfmon_config;  // FIXIT-M shouldn't be needed externally
 extern THREAD_LOCAL bool perfmon_rotate_perf_file;
 
 void perf_monitor_idle_process();
 
 /* functions to set & get the RotatePerfFileFlag */
-inline void SetRotatePerfFileFlag(void)
+inline void SetRotatePerfFileFlag()
 {
     perfmon_rotate_perf_file = true;
 }
 
-inline bool IsSetRotatePerfFileFlag(void)
+inline bool IsSetRotatePerfFileFlag()
 {
     return perfmon_rotate_perf_file;
 }
 
-inline void ClearRotatePerfFileFlag(void)
+inline void ClearRotatePerfFileFlag()
 {
     perfmon_rotate_perf_file = false;
 }

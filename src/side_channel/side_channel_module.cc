@@ -77,7 +77,7 @@ static bool validate_config(SideChannelConfig* config)
     }
 
     // FOR NOW (simplicity) we will enforce ONE port per connector channel
-    // FIXIT-L - expand functionality as necessary
+    // FIXIT-L expand functionality as necessary
     if ( config->ports->count() > 1 )
     {
         ParseWarning(WARN_CONF, "Illegal SideChannel configuration: one port allowed");

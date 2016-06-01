@@ -68,7 +68,7 @@ IpsOptionPiglet::~IpsOptionPiglet()
     if ( wrapper )
         delete wrapper;
 
-    // FIXIT-M: Is it okay for OTN to be arbitrary?
+    // FIXIT-M is it okay for OTN to be arbitrary?
     if ( otn )
         delete otn;
 }

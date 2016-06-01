@@ -143,7 +143,7 @@ bool SfSocketModule::end(const char* fqn, int, SnortConfig*)
 //-------------------------------------------------------------------------
 // socket stuff
 
-static int AlertSFSocket_Connect(void)
+static int AlertSFSocket_Connect()
 {
     /* check sock value */
     if (context.sock == -1)
@@ -242,7 +242,7 @@ static void send_sar(uint8_t* data, unsigned len)
 // sig stuff
 
 /* search for an OptTreeNode by sid in specific policy*/
-// FIXIT-L wow - this should be encapsulated somewhere ...
+// FIXIT-L wow - OptTreeNode_Search should be encapsulated somewhere ...
 // (actually, the whole reason for doing this needs to be rethought)
 static OptTreeNode* OptTreeNode_Search(uint32_t, uint32_t sid)
 {

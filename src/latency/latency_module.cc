@@ -43,7 +43,6 @@ static const Parameter s_packet_params[] =
     { "fastpath", Parameter::PT_BOOL, nullptr, "false",
         "fastpath expensive packets (max_time exceeded)" },
 
-    // FIXIT-L J what is the most intuitive default action?
     { "action", Parameter::PT_ENUM, "none | alert | log | alert_and_log", "alert_and_log",
         "event action if packet times out and is fastpathed" },
 
@@ -60,14 +59,12 @@ static const Parameter s_rule_params[] =
     { "suspend", Parameter::PT_BOOL, nullptr, "false",
         "temporarily suspend expensive rules" },
 
-    // FIXIT-L J what is a sensible default for this?
     { "suspend_threshold", Parameter::PT_INT, "1:", "5",
         "set threshold for number of timeouts before suspending a rule" },
 
     { "max_suspend_time", Parameter::PT_INT, "0:", "30000",
         "set max time for suspending a rule (ms, 0 means permanently disable rule)" },
 
-    // FIXIT-L J what is the most intuitive default action?
     { "action", Parameter::PT_ENUM, "none | alert | log | alert_and_log", "alert_and_log",
         "event action for rule latency enable and suspend events" },
 

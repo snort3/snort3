@@ -41,9 +41,9 @@ static SFIP_RET sfvar_list_compare(sfip_node_t*, sfip_node_t*);
 static inline void sfip_node_free(sfip_node_t*);
 static inline void sfip_node_freelist(sfip_node_t*);
 
-static inline sfip_var_t* _alloc_var(void)
+static inline sfip_var_t* _alloc_var()
 {
-    return (sfip_var_t*)calloc(1, sizeof(sfip_var_t));
+    return (sfip_var_t*)snort_calloc(sizeof(sfip_var_t));
 }
 
 void sfvar_free(sfip_var_t* var)
@@ -52,10 +52,10 @@ void sfvar_free(sfip_var_t* var)
         return;
 
     if (var->name)
-        free(var->name);
+        snort_free(var->name);
 
     if (var->value)
-        free(var->value);
+        snort_free(var->value);
 
     if (var->mode == SFIP_LIST)
     {
@@ -67,12 +67,14 @@ void sfvar_free(sfip_var_t* var)
         // XXX
     }
 
-    free(var);
+    snort_free(var);
 }
 
 /* Allocaties and returns an IP node described by 'str' */
 static sfip_node_t* sfipnode_alloc(const char* str, SFIP_RET* status)
 {
+    // FIXIT-L rename variables from ret to something with more descriptive
+    // this code smell that afflicts 55 source files and all should be fixed
     sfip_node_t* ret;
 
     if (!str)
@@ -82,12 +84,7 @@ static sfip_node_t* sfipnode_alloc(const char* str, SFIP_RET* status)
         return NULL;
     }
 
-    if ( (ret = (sfip_node_t*)calloc(1, sizeof(sfip_node_t))) == NULL )
-    {
-        if (status)
-            *status = SFIP_ALLOC_ERR;
-        return NULL;
-    }
+    ret = (sfip_node_t*)snort_calloc(sizeof(sfip_node_t));
 
     /* Check if this string starts with a '!', if so,
      * then the node needs to be negated */
@@ -105,7 +102,7 @@ static sfip_node_t* sfipnode_alloc(const char* str, SFIP_RET* status)
         {
             if (status)
                 *status = SFIP_ARG_ERR;
-            free(ret);
+            snort_free(ret);
             return NULL;
         }
 
@@ -117,7 +114,7 @@ static sfip_node_t* sfipnode_alloc(const char* str, SFIP_RET* status)
             if (status)
                 *status = SFIP_ALLOC_ERR;
 
-            free(ret);
+            snort_free(ret);
             return NULL;
         }
 
@@ -129,7 +126,7 @@ static sfip_node_t* sfipnode_alloc(const char* str, SFIP_RET* status)
         {
             if (status)
                 *status = SFIP_FAILURE;
-            free(ret);
+            snort_free(ret);
             return NULL;
         }
 #endif
@@ -139,7 +136,7 @@ static sfip_node_t* sfipnode_alloc(const char* str, SFIP_RET* status)
         /* Failed to parse this string, so free and return */
         if (status)
             *status = SFIP_INET_PARSE_ERR;
-        free(ret);
+        snort_free(ret);
         return NULL;
     }
 
@@ -148,8 +145,8 @@ static sfip_node_t* sfipnode_alloc(const char* str, SFIP_RET* status)
     {
         if (status)
             *status = SFIP_NOT_ANY;
-        free(ret->ip);
-        free(ret);
+        snort_free(ret->ip);
+        snort_free(ret);
         return NULL;
     }
 
@@ -164,7 +161,7 @@ static inline void sfip_node_free(sfip_node_t* node)
     if ( node->ip )
         sfip_free(node->ip);
 
-    free(node);
+    snort_free(node);
 }
 
 static inline void sfip_node_freelist(sfip_node_t* root)
@@ -191,17 +188,8 @@ static inline sfip_node_t* _sfvar_deep_copy_list(const sfip_node_t* idx)
     {
         prev = temp;
 
-        if ( (temp = (sfip_node_t*)calloc(1, sizeof(sfip_node_t))) == NULL )
-        {
-            sfip_node_freelist(ret);
-            return NULL;
-        }
-        if ( (temp->ip = (sfip_t*)calloc(1, sizeof(sfip_t))) == NULL )
-        {
-            sfip_node_freelist(ret);
-            free(temp);
-            return NULL;
-        }
+        temp = (sfip_node_t*)snort_calloc(sizeof(sfip_node_t));
+        temp->ip = (sfip_t*)snort_calloc(sizeof(sfip_t));
 
         temp->flags = idx->flags;
         temp->addr_flags = idx->addr_flags;
@@ -226,7 +214,7 @@ static sfip_var_t* sfvar_deep_copy(const sfip_var_t* var)
     if (!var)
         return NULL;
 
-    ret = (sfip_var_t*)SnortAlloc(sizeof(sfip_var_t));
+    ret = (sfip_var_t*)snort_calloc(sizeof(sfip_var_t));
 
     ret->mode = var->mode;
     ret->head = _sfvar_deep_copy_list(var->head);
@@ -256,7 +244,7 @@ static SFIP_RET sfvar_add(sfip_var_t* dst, sfip_var_t* src)
     dst->head = copiedvar->head;
     dst->neg_head = copiedvar->neg_head;
 
-    free(copiedvar);
+    snort_free(copiedvar);
 
     if (dst->head)
     {
@@ -363,7 +351,7 @@ sfip_var_t* sfvar_create_alias(const sfip_var_t* alias_from, const char* alias_t
     if (ret == NULL)
         return NULL;
 
-    ret->name = SnortStrdup(alias_to);
+    ret->name = snort_strdup(alias_to);
     ret->id = alias_from->id;
 
     return ret;
@@ -407,7 +395,7 @@ static SFIP_RET sfvar_list_compare(sfip_node_t* list1, sfip_node_t* list2)
      * node-for-node won't work */
 
     /* Lists are of equal size */
-    usage = (char*)SnortAlloc(total1);
+    usage = (char*)snort_calloc(total1);
 
     for (tmp = list1; tmp != NULL; tmp = tmp->next)
     {
@@ -426,12 +414,12 @@ static SFIP_RET sfvar_list_compare(sfip_node_t* list1, sfip_node_t* list2)
 
         if (!match)
         {
-            free(usage);
+            snort_free(usage);
             return SFIP_FAILURE;
         }
     }
 
-    free(usage);
+    snort_free(usage);
     return SFIP_EQUAL;
 }
 
@@ -560,7 +548,7 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
             if ((end = _find_end_token(str)) == NULL)
             {
                 /* No trailing bracket found */
-                free(tok);
+                snort_free(tok);
                 return SFIP_UNMATCHED_BRACKET;
             }
 
@@ -570,12 +558,12 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
             if ((ret = sfvar_parse_iplist(table, var, list_tok,
                     negation ^ neg_ip)) != SFIP_SUCCESS)
             {
-                free(list_tok);
-                free(tok);
+                snort_free(list_tok);
+                snort_free(tok);
                 return ret;
             }
 
-            free(list_tok);
+            snort_free(list_tok);
         }
         else if (*str == '$')
         {
@@ -584,7 +572,7 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
 
             if ((tmp_var = sfvt_lookup_var(table, tok)) == NULL)
             {
-                free(tok);
+                snort_free(tok);
                 return SFIP_LOOKUP_FAILURE;
             }
 
@@ -595,7 +583,7 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
                 /* Check for a negated "any" */
                 if (copy_var->head && copy_var->head->flags & SFIP_ANY)
                 {
-                    free(tok);
+                    snort_free(tok);
                     sfvar_free(copy_var);
                     return SFIP_NOT_ANY;
                 }
@@ -603,7 +591,7 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
                 /* Check if this is a negated, zero'ed IP (equivalent of a "!any") */
                 if (copy_var->head && !sfip_is_set(copy_var->head->ip))
                 {
-                    free(tok);
+                    snort_free(tok);
                     sfvar_free(copy_var);
                     return SFIP_NOT_ANY;
                 }
@@ -620,11 +608,11 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
              * invalid extra closing bracket */
             if (!(*(str+1)))
             {
-                free(tok);
+                snort_free(tok);
                 return SFIP_SUCCESS;
             }
 
-            free(tok);
+            snort_free(tok);
             return SFIP_UNMATCHED_BRACKET;
         }
         else
@@ -638,7 +626,7 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
             /* Check for a negated "any" */
             if (negation ^ neg_ip && !strcasecmp(tok, "any"))
             {
-                free(tok);
+                snort_free(tok);
                 return SFIP_NOT_ANY;
             }
 
@@ -646,7 +634,7 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
                Allocate new node for this string and add it to "ret" */
             if ((node = sfipnode_alloc(tok, &ret)) == NULL)
             {
-                free(tok);
+                snort_free(tok);
                 return ret;
             }
 
@@ -659,7 +647,7 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
             if (!sfip_is_set(node->ip) && (node->flags & SFIP_NEGATED))
             {
                 sfip_node_free(node);
-                free(tok);
+                snort_free(tok);
                 return SFIP_NOT_ANY;
             }
 
@@ -667,12 +655,12 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
 
             if (ret != SFIP_SUCCESS )
             {
-                free(tok);
+                snort_free(tok);
                 return ret;
             }
         }
 
-        free(tok);
+        snort_free(tok);
         if (*end)
             str = end + 1;
         else
@@ -787,7 +775,7 @@ sfip_var_t* sfvar_alloc(vartable_t* table, const char* variable, SFIP_RET* statu
     /* See if this is just an alias */
     tmp = SnortStrndup(str, end - str);
     tmpvar = sfvt_lookup_var(table, tmp);
-    free(tmp);
+    snort_free(tmp);
     if (tmpvar != NULL)
     {
         sfip_var_t* aliased = sfvar_create_alias(tmpvar, ret->name);

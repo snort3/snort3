@@ -379,7 +379,9 @@ static const Parameter s_params[] =
     { "separator", Parameter::PT_STRING, nullptr, ", ",
       "separate fields with this character sequence" },
 
-    // FIXIT-M provide PT_UNITS that converts to multiplier automatically
+    // FIXIT-L provide PT_UNITS that converts to multiplier automatically
+    // or just delete these and provide KB = 1024, MB = 1024*KB, etc. in
+    // snort_defaults.lua
     { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
       "bytes | KB | MB | GB" },
 
@@ -513,7 +515,7 @@ void CsvLogger::alert(Packet* p, const char* msg, Event* event)
         if ( first )
             first = false;
         else
-            // FIXIT-M: Need to check csv_log for nullptr
+            // FIXIT-M need to check csv_log for nullptr
             TextLog_Puts(csv_log, sep.c_str());
 
         f(a);

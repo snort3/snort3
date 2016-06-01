@@ -32,10 +32,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifdef HAVE_MALLOC_TRIM
-#include <malloc.h>
-#endif
-
 #include <netinet/in.h>
 #include <sys/stat.h>
 
@@ -297,8 +293,7 @@ void Snort::init(int argc, char** argv)
     /* Finish up the pcap list and put in the queues */
     Trough::setup();
 
-    // FIXIT-L stuff like this that is also done in snort_config.cc::VerifyReload()
-    // should be refactored
+    // FIXIT-L refactor stuff done here and in snort_config.cc::VerifyReload()
     if ( snort_conf->bpf_filter.empty() && !snort_conf->bpf_file.empty() )
         snort_conf->bpf_filter = read_infile("bpf_file", snort_conf->bpf_file.c_str());
 
@@ -564,7 +559,7 @@ void Snort::capture_packet()
 {
     if ( snort_main_thread_pid == gettid() )
     {
-        // FIXIT-L.  main thread crashed.  Do anything?
+        // FIXIT-L main thread crashed.  Do anything?
     }
     else
     {
@@ -813,7 +808,7 @@ DAQ_Verdict Snort::packet_callback(
     int inject = 0;
     verdict = update_verdict(verdict, inject);
 
-    //FIXIT-H move this to the appropriate struct
+    // FIXIT-H move this to the appropriate struct
     //perfBase->UpdateWireStats(pkthdr->caplen, Active::packet_was_dropped(), inject);
     HighAvailabilityManager::process_update(s_packet->flow, pkthdr);
 

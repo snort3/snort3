@@ -59,7 +59,7 @@ struct dot_node_state_t
         char flowbit_failed;
     } last_check;
 
-    // FIXIT-L J perf profiler stuff should be factored of the node state struct
+    // FIXIT-L perf profiler stuff should be factored of the node state struct
     hr_duration elapsed;
     hr_duration elapsed_match;
     hr_duration elapsed_no_match;
@@ -69,7 +69,7 @@ struct dot_node_state_t
     unsigned latency_timeouts;
     unsigned latency_suspends;
 
-    // FIXIT-L J perf profiler stuff should be factored of the node state struct
+    // FIXIT-L perf profiler stuff should be factored of the node state struct
     void update(hr_duration delta, bool match)
     {
         elapsed += delta;;

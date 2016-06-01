@@ -147,7 +147,7 @@ int SessionOption::eval(Cursor&, Packet* p)
     if ( p->is_fragment() )
         return DETECTION_OPTION_MATCH;
 
-    // FIXIT-M should wrap file open/close in a class to ensure cleanup
+    // FIXIT-L should wrap file open/close in a class to ensure cleanup
     {
         FILE* session = OpenSessionFile(p);
         if ( !session )

@@ -38,6 +38,9 @@ void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 
+char* snort_strdup(const char* s)
+{ return strdup(s); }
+
 TEST_GROUP(file_connector_module)
 {
     void setup()

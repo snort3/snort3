@@ -208,7 +208,7 @@ void Trough::set_filter(const char *f)
         pcap_filter.erase();
 }
 
-void Trough::setup(void)
+void Trough::setup()
 {
     if (!pcap_object_list.empty())
     {
@@ -217,7 +217,7 @@ void Trough::setup(void)
 
         if (pcap_queue.empty())
             FatalError("No pcaps found.\n");
-        
+
         /* free pcap list used to get params */
         pcap_object_list.clear();
 
@@ -226,13 +226,13 @@ void Trough::setup(void)
     pcap_filter.clear();
 }
 
-void Trough::cleanup(void)
+void Trough::cleanup()
 {
     /* clean up pcap queues */
     pcap_queue.clear();
 }
 
-const char* Trough::get_next(void)
+const char* Trough::get_next()
 {
     const char* pcap = NULL;
 
@@ -253,7 +253,7 @@ const char* Trough::get_next(void)
     return pcap;
 }
 
-bool Trough::has_next(void)
+bool Trough::has_next()
 {
     return (!pcap_queue.empty() && pcap_queue_iter != pcap_queue.cend());
 }

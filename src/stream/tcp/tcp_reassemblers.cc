@@ -32,17 +32,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_keep_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_new( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os5( );
     }
@@ -56,17 +56,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_keep_last( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_existing( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os4( );
     }
@@ -80,17 +80,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_keep_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_existing( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os2( );
     }
@@ -104,17 +104,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_keep_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_existing( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os4( );
     }
@@ -128,17 +128,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_keep_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_existing( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os1( );
     }
@@ -152,17 +152,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_keep_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_existing( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os1( );
     }
@@ -176,17 +176,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_trim_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_new( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os3( );
     }
@@ -200,17 +200,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_keep_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_existing( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os2( );
     }
@@ -224,17 +224,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_trim_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_new( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os3( );
     }
@@ -248,17 +248,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_keep_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_existing( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os2( );
     }
@@ -272,17 +272,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_keep_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_existing( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os1( );
     }
@@ -296,17 +296,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_keep_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_existing( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os1( );
     }
@@ -320,17 +320,17 @@ public:
     { }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_keep_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_new( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os5 ( );
     }
@@ -346,17 +346,17 @@ public:
     }
 
 private:
-    int insert_left_overlap(void) override
+    int insert_left_overlap() override
     {
         return left_overlap_keep_first( );
     }
 
-    void insert_right_overlap(void) override
+    void insert_right_overlap() override
     {
         right_overlap_truncate_new( );
     }
 
-    int insert_full_overlap(void) override
+    int insert_full_overlap() override
     {
         return full_right_overlap_os5( );
     }

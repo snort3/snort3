@@ -17,8 +17,8 @@
 //--------------------------------------------------------------------------
 // packet_manager.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef PROTOCOLS_PACKET_MANAGER_H
-#define PROTOCOLS_PACKET_MANAGER_H
+#ifndef PACKET_MANAGER_H
+#define PACKET_MANAGER_H
 
 // PacketManager provides decode and encode services by leveraging Codecs.
 
@@ -26,7 +26,7 @@
 #include <list>
 
 #include "main/snort_types.h"
-#include "protocols/packet.h" // FIXIT-L remove
+#include "protocols/packet.h"
 #include "framework/counts.h"
 #include "framework/codec.h"
 #include "managers/codec_manager.h"
@@ -49,8 +49,9 @@ enum class UnreachResponse
     FWD,
 };
 
-// FIXIT-M --  Roll the PacketManager and 'layer' namespace into
-//                  the Packet struct
+// FIXIT-M roll the PacketManager and 'layer' namespace into the Packet
+// struct
+
 class SO_PUBLIC PacketManager
 {
 public:
@@ -80,12 +81,12 @@ public:
 
     // format packet for detection.  Original ttl is always used.  orig is
     // the wire pkt; clone was obtained with New()
-    static int encode_format( EncodeFlags f, const Packet* orig, Packet*
-            clone, PseudoPacketType type, const DAQ_PktHdr_t* = nullptr,
-            uint32_t opaque = 0);
+    static int encode_format(
+        EncodeFlags, const Packet* orig, Packet* clone,
+        PseudoPacketType, const DAQ_PktHdr_t* = nullptr, uint32_t opaque = 0);
 
     static int format_tcp(
-        EncodeFlags f, const Packet* orig, Packet* clone, PseudoPacketType type,
+        EncodeFlags, const Packet* orig, Packet* clone, PseudoPacketType,
         const DAQ_PktHdr_t* = nullptr, uint32_t opaque = 0);
 
     // Send a TCP response.  TcpResponse params determined the type
@@ -96,13 +97,13 @@ public:
         const uint8_t* const payload = nullptr, uint32_t payload_len = 0);
 
     // Send an ICMP unreachable response!
-    static const uint8_t* encode_reject(UnreachResponse type,
-        EncodeFlags flags, const Packet* p, uint32_t& len);
+    static const uint8_t* encode_reject(
+        UnreachResponse, EncodeFlags, const Packet*, uint32_t& len);
 
     /* codec support and statistics */
 
     // get the number of packets which have been rebuilt by this thread
-    static PegCount get_rebuilt_packet_count(void);
+    static PegCount get_rebuilt_packet_count();
 
     // set the packet to be encoded.
     static void encode_set_pkt(Packet* p);
@@ -111,7 +112,7 @@ public:
     static uint16_t encode_get_max_payload(const Packet*);
 
     // reset the current 'clone' packet
-    static void encode_reset(void)
+    static void encode_reset()
     { encode_set_pkt(NULL); }
 
     // print codec information.  MUST be called after thread_term.
@@ -146,7 +147,7 @@ private:
     static void accumulate();
     static void pop_teredo(Packet*, RawData&);
 
-    static bool encode(const Packet* p, EncodeFlags,
+    static bool encode(const Packet*, EncodeFlags,
         uint8_t lyr_start, IpProtocol next_prot, Buffer& buf);
 
     // constant offsets into the s_stats array.  Notice the stat_offset

@@ -45,7 +45,7 @@ public:
     void restart(Packet* p) override;
     int process(Packet*) override;
 
-    void flush(void) override;
+    void flush() override;
     void flush_client(Packet*) override;
     void flush_server(Packet*) override;
     void flush_talker(Packet*) override;
@@ -57,8 +57,8 @@ public:
     void clear_extra_data(Packet*, uint32_t /*flag*/) override;
 
     void update_perf_base_state(char new_state) override;
-    TcpStreamTracker::TcpState get_talker_state(void) override;
-    TcpStreamTracker::TcpState get_listener_state(void) override;
+    TcpStreamTracker::TcpState get_talker_state() override;
+    TcpStreamTracker::TcpState get_listener_state() override;
     void update_timestamp_tracking(TcpSegmentDescriptor&) override;
     void update_session_on_rst(TcpSegmentDescriptor&, bool) override;
     bool handle_syn_on_reset_session(TcpSegmentDescriptor&) override;

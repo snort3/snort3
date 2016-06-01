@@ -42,7 +42,7 @@ public:
 
     size_t size() const;
 
-    // FIXIT-L J add operator overloads for [], &=, |=, etc
+    // FIXIT-L add operator overloads for [], &=, |=, etc
     size_t get_buf_size() const;
     uint8_t& get_buf_element(size_t);
     const uint8_t& get_buf_element(size_t) const;
@@ -68,7 +68,7 @@ inline BitOp::~BitOp()
 inline uint8_t BitOp::mask(size_t bit) const
 { return (uint8_t)(0x80 >> (bit & 7)); }
 
-// FIXIT-L J ops that don't need to be inlined can probably be but into a .cc file
+// FIXIT-L ops that don't need to be inlined can probably be put into a .cc file
 // Reset the bit buffer so that it can be reused
 inline void BitOp::reset()
 { memset(bit_buf, 0, buf_size); }

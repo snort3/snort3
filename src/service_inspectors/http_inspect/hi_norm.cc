@@ -42,7 +42,6 @@
 #include <sys/types.h>
 
 #include "detection/detection_util.h"
-#include "utils/xmalloc.h"
 
 #include "hi_client_norm.h"
 #include "hi_server_norm.h"

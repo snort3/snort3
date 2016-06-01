@@ -59,8 +59,10 @@ struct VarEntry
 
 VarEntry* VarDefine(SnortConfig*, const char* name, const char* value);
 int PortVarDefine(SnortConfig*, const char* name, const char* s);
-void ParseIpVar(SnortConfig*, const char* name, const char* s);  // FIXIT-L actually in
-                                                                    // parse_conf.cc
+
+// FIXIT-L put ParseIpVar() definition and declaration in matching files
+void ParseIpVar(SnortConfig*, const char* name, const char* s);
+
 VarEntry* VarAlloc();
 void DeleteVars(VarEntry* var_table);
 void AddVarToTable(SnortConfig*, const char*, const char*);

@@ -420,7 +420,7 @@ static int ProcessIP(
             }
             else
             {
-                rtn->sip = (sfip_var_t*)SnortAlloc(sizeof(sfip_var_t));
+                rtn->sip = (sfip_var_t*)snort_calloc(sizeof(sfip_var_t));
                 ret = sfvt_add_to_var(ip_vartable, rtn->sip, addr);
             }
         }
@@ -479,7 +479,7 @@ static int ProcessIP(
             }
             else
             {
-                rtn->dip = (sfip_var_t*)SnortAlloc(sizeof(sfip_var_t));
+                rtn->dip = (sfip_var_t*)snort_calloc(sizeof(sfip_var_t));
                 ret = sfvt_add_to_var(ip_vartable, rtn->dip, addr);
             }
         }
@@ -827,8 +827,7 @@ static void AddRuleFuncToList(
     idx = rtn->rule_func;
     if (idx == NULL)
     {
-        rtn->rule_func = (RuleFpList*)SnortAlloc(sizeof(RuleFpList));
-
+        rtn->rule_func = (RuleFpList*)snort_calloc(sizeof(RuleFpList));
         rtn->rule_func->RuleHeadFunc = rfunc;
     }
     else
@@ -836,7 +835,7 @@ static void AddRuleFuncToList(
         while (idx->next != NULL)
             idx = idx->next;
 
-        idx->next = (RuleFpList*)SnortAlloc(sizeof(RuleFpList));
+        idx->next = (RuleFpList*)snort_calloc(sizeof(RuleFpList));
         idx = idx->next;
         idx->RuleHeadFunc = rfunc;
     }
@@ -1018,7 +1017,7 @@ static RuleTreeNode* ProcessHeadNode(
         DebugMessage(DEBUG_CONFIGRULES,"Building New Chain head node\n");
         head_count++;
 
-        rtn = (RuleTreeNode*)SnortAlloc(sizeof(RuleTreeNode));
+        rtn = (RuleTreeNode*)snort_calloc(sizeof(RuleTreeNode));
         rtn->otnRefCount++;
 
         /* copy the prototype header info into the new header block */
@@ -1161,8 +1160,8 @@ static void finalize_content(OptFpList* ofl)
         return;
 
     if ( pmd->negated )
-        pmd->last_check = (PmdLastCheck*)SnortAlloc(
-            ThreadConfig::get_instance_max() * sizeof(*pmd->last_check));
+        pmd->last_check = (PmdLastCheck*)snort_calloc(
+            ThreadConfig::get_instance_max(), sizeof(*pmd->last_check));
 }
 
 bool is_fast_pattern_only(OptFpList* ofl)
@@ -1420,8 +1419,8 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
         parse_rule_nets(sc, "any", false, rtn);
         parse_rule_ports(sc, "any", false, rtn);
     }
-    OptTreeNode* otn = (OptTreeNode*)SnortAlloc(sizeof(OptTreeNode));
-    otn->state = (OtnState*)SnortAlloc(sizeof(OtnState)*ThreadConfig::get_instance_max());
+    OptTreeNode* otn = (OptTreeNode*)snort_calloc(sizeof(OptTreeNode));
+    otn->state = (OtnState*)snort_calloc(ThreadConfig::get_instance_max(), sizeof(OtnState));
 
     if ( !stub )
         otn->sigInfo.generator = GENERATOR_SNORT_ENGINE;
@@ -1460,7 +1459,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
             ParseError("SO rule %s not loaded.", otn->soid);
         else
         {
-            // FIXIT-L gid may be overwritten here
+            // FIXIT-L gid may be overwritten when set to 3 upon close
             otn->sigInfo.generator = GENERATOR_SNORT_SHARED;
             entered = true;
             return so_opts;
@@ -1493,9 +1492,10 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     otn_count++;
     rule_count++;
 
-    // FIXIT-L need more reliable way of knowing type of rule instead of hard
-    // coding these gids
-    // do GIDs actually matter anymore (w/o conflict with builtins)?
+    // FIXIT-L need more reliable way of knowing type of rule instead of
+    // hard coding these gids do GIDs actually matter anymore (w/o conflict
+    // with builtins)?
+
     if ( otn->sigInfo.generator == GENERATOR_SNORT_ENGINE )
     {
         otn->sigInfo.text_rule = true;

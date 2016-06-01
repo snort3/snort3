@@ -23,12 +23,6 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_MALLOC_TRIM
-#include <malloc.h>
-#endif
-
-#include "thread_config.h"
-
 #include "detection/fp_config.h"
 #include "detection/fp_create.h"
 #include "filters/detection_filter.h"
@@ -48,6 +42,7 @@
 #include "parser/vars.h"
 #include "profiler/profiler.h"
 #include "sfip/sf_ip.h"
+#include "thread_config.h"
 #include "target_based/sftarget_reader.h"
 
 #ifdef HAVE_HYPERSCAN
@@ -68,7 +63,7 @@ static void FreeRuleStateList(RuleState* head)
     {
         RuleState* tmp = head;
         head = head->next;
-        free(tmp);
+        snort_free(tmp);
     }
 }
 
@@ -80,12 +75,12 @@ static void FreeClassifications(ClassType* head)
         head = head->next;
 
         if ( tmp->name )
-            free(tmp->name);
+            snort_free(tmp->name);
 
         if ( tmp->type )
-            free(tmp->type);
+            snort_free(tmp->type);
 
-        free(tmp);
+        snort_free(tmp);
     }
 }
 
@@ -97,12 +92,12 @@ static void FreeReferences(ReferenceSystemNode* head)
         head = head->next;
 
         if ( tmp->name )
-            free(tmp->name);
+            snort_free(tmp->name);
 
         if ( tmp->url )
-            free(tmp->url);
+            snort_free(tmp->url);
 
-        free(tmp);
+        snort_free(tmp);
     }
 }
 
@@ -163,18 +158,14 @@ SnortConfig::SnortConfig()
     mpls_stack_depth = DEFAULT_LABELCHAIN_LENGTH;
 
     daq_config = new SFDAQConfig();
-
     InspectorManager::new_config(this);
 
     num_slots = ThreadConfig::get_instance_max();
-    state = (SnortState*)SnortAlloc(sizeof(SnortState)*num_slots);
+    state = (SnortState*)snort_calloc(num_slots, sizeof(SnortState));
 
     profiler = new ProfilerConfig;
-
     latency = new LatencyConfig();
-
     memory = new MemoryConfig();
-
     policy_map = new PolicyMap;
 
     set_inspection_policy(get_inspection_policy());
@@ -215,7 +206,7 @@ SnortConfig::~SnortConfig()
     fpDeleteFastPacketDetection(this);
 
     if (eth_dst )
-        free(eth_dst);
+        snort_free(eth_dst);
 
     if ( var_list )
         FreeVarList(var_list);
@@ -232,7 +223,7 @@ SnortConfig::~SnortConfig()
     delete policy_map;
     InspectorManager::delete_config(this);
 
-    free(state);
+    snort_free(state);
 
     delete thread_config;
 
@@ -403,9 +394,9 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     // FIXIT-M should cmd_line use the same var list / table?
     var_list = NULL;
 
-    free(state);
+    snort_free(state);
     num_slots = ThreadConfig::get_instance_max();
-    state = (SnortState*)SnortAlloc(sizeof(SnortState)*num_slots);
+    state = (SnortState*)snort_calloc(num_slots, sizeof(SnortState));
 }
 
 bool SnortConfig::verify()

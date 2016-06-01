@@ -38,7 +38,7 @@ TcpStateHandler::TcpStateHandler(TcpStreamTracker::TcpState state, TcpStateMachi
     tsm.register_state_handler(state, *this);
 }
 
-//TcpStateHandler::TcpStateHandler(void) :
+//TcpStateHandler::TcpStateHandler() :
 //    tsm(nullptr), tcp_state(TcpStreamTracker::TCP_CLOSED), session(*(new
 // TcpStreamSession(nullptr)))
 //{
@@ -195,7 +195,7 @@ bool TcpStateHandler::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trac
     return default_state_action(tsd, tracker);
 }
 
-// FIXIT - get the unit test working again
+// FIXIT-H get the unit test working again
 #ifdef UNIT_TEST_FOO
 
 SCENARIO("TCP State Handler Base Class", "[state_handlers][stream_tcp]")

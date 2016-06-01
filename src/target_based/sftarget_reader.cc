@@ -92,7 +92,7 @@ static bool sfat_grammar_error_printed = false;
 static bool sfat_insufficient_space_logged = false;
 
 /*****TODO: cleanup to use config directive *******/
-uint32_t SFAT_NumberOfHosts(void)
+uint32_t SFAT_NumberOfHosts()
 {
     if ( curr_cfg && curr_cfg->lookupTable )
     {
@@ -105,17 +105,17 @@ uint32_t SFAT_NumberOfHosts(void)
 static void FreeApplicationEntry(ApplicationEntry* app)
 {
     DebugFormat(DEBUG_ATTRIBUTE, "Freeing ApplicationEntry: 0x%x\n", app);
-    free(app);
+    snort_free(app);
 }
 
-ApplicationEntry* SFAT_CreateApplicationEntry(void)
+ApplicationEntry* SFAT_CreateApplicationEntry()
 {
-    return (ApplicationEntry*)SnortAlloc(sizeof(ApplicationEntry));
+    return (ApplicationEntry*)snort_calloc(sizeof(ApplicationEntry));
 }
 
-HostAttributeEntry* SFAT_CreateHostEntry(void)
+HostAttributeEntry* SFAT_CreateHostEntry()
 {
-    return (HostAttributeEntry*)SnortAlloc(sizeof(HostAttributeEntry));
+    return (HostAttributeEntry*)snort_calloc(sizeof(HostAttributeEntry));
 }
 
 void FreeHostEntry(HostAttributeEntry* host)
@@ -153,7 +153,7 @@ void FreeHostEntry(HostAttributeEntry* host)
         while (app);
     }
 
-    free(host);
+    snort_free(host);
 }
 
 static void AppendApplicationData(ApplicationEntry** list, ApplicationEntry* app)
@@ -314,7 +314,7 @@ HostAttributeEntry* SFAT_LookupHostEntryByDst(Packet* p)
     return SFAT_LookupHostEntryByIP(p->ptrs.ip_api.get_dst());
 }
 
-void SFAT_Cleanup(void)
+void SFAT_Cleanup()
 {
     delete curr_cfg;
     delete next_cfg;
@@ -376,7 +376,7 @@ void SFAT_UpdateApplicationProtocol(sfip_t* ipAddr, uint16_t port, uint16_t prot
         if (sfrt_num_entries(curr_cfg->lookupTable) >= SnortConfig::get_max_attribute_hosts())
             return;
 
-        host_entry = (HostAttributeEntry*)SnortAlloc(sizeof(*host_entry));
+        host_entry = (HostAttributeEntry*)snort_calloc(sizeof(*host_entry));
         sfip_set_ip(&host_entry->ipAddr, ipAddr);
 
         if ((rval = sfrt_insert(ipAddr, (unsigned char)ipAddr->bits, host_entry,
@@ -403,7 +403,7 @@ void SFAT_UpdateApplicationProtocol(sfip_t* ipAddr, uint16_t port, uint16_t prot
         if ( service_count >= SnortConfig::get_max_services_per_host() )
             return;
 
-        service = (ApplicationEntry*)SnortAlloc(sizeof(*service));
+        service = (ApplicationEntry*)snort_calloc(sizeof(*service));
         service->port = port;
         service->ipproto = protocol;
         service->next = host_entry->services;

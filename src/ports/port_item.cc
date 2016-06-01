@@ -27,10 +27,9 @@
 /*
  * Create a new PortObjectItem
  */
-PortObjectItem* PortObjectItemNew(void)
+PortObjectItem* PortObjectItemNew()
 {
-    PortObjectItem* poi = (PortObjectItem*)SnortAlloc(sizeof(PortObjectItem));
-
+    PortObjectItem* poi = (PortObjectItem*)snort_calloc(sizeof(PortObjectItem));
     return poi;
 }
 
@@ -40,7 +39,7 @@ PortObjectItem* PortObjectItemNew(void)
 void PortObjectItemFree(PortObjectItem* poi)
 {
     if (poi)
-        free(poi);
+        snort_free(poi);
 }
 
 /*

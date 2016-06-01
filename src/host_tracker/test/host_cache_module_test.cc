@@ -39,12 +39,13 @@ int16_t AddProtocolReference(const char* protocol)
 
 //  Fake show_stats to avoid bringing in a ton of dependencies.
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*)
-{
-}
+{ }
 
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*)
-{
-}
+{ }
+
+char* snort_strdup(const char* s)
+{ return strdup(s); }
 
 #define FRAG_POLICY 33
 #define STREAM_POLICY 100
@@ -52,15 +53,7 @@ void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*)
 sfip_t expected_addr;
 
 TEST_GROUP(host_cache_module)
-{
-    void setup()
-    {
-    }
-
-    void teardown()
-    {
-    }
-};
+{ };
 
 //  Test that HostCacheModule sets up host_cache size based on config.
 TEST(host_cache_module, host_cache_module_test_values)

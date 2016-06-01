@@ -39,9 +39,9 @@
 #include "sfip/sf_ipvar.h"
 #include "utils/util.h"
 
-vartable_t* sfvt_alloc_table(void)
+vartable_t* sfvt_alloc_table()
 {
-    vartable_t* table = (vartable_t*)SnortAlloc(sizeof(vartable_t));
+    vartable_t* table = (vartable_t*)snort_calloc(sizeof(vartable_t));
 
     /* ID for recognition of variables with different name, but same content
      * Start at 1, so a value of zero indicates not set.
@@ -80,7 +80,7 @@ static char* sfvt_expand_value(vartable_t* table, const char* value)
 
     /* Start by allocating the length of the value */
     retsize = strlen(value) + 1;
-    ret = (char*)SnortAlloc(retsize);
+    ret = (char*)snort_calloc(retsize);
 
     ptr = tmp;
     end = tmp + strlen(tmp);
@@ -129,7 +129,7 @@ static char* sfvt_expand_value(vartable_t* table, const char* value)
                 goto sfvt_expand_value_error;
 
             ipvar = sfvt_lookup_var(table, vartmp);
-            free(vartmp);
+            snort_free(vartmp);
             if (ipvar == NULL)
                 goto sfvt_expand_value_error;
 
@@ -140,10 +140,10 @@ static char* sfvt_expand_value(vartable_t* table, const char* value)
                     char* tmpalloc;
 
                     retsize = retlen + strlen(ipvar->value) + (end - ptr) + 1;
-                    tmpalloc = (char*)SnortAlloc(retsize);
+                    tmpalloc = (char*)snort_alloc(retsize);
                     memcpy(tmpalloc, ret, retlen);
-                    memcpy(tmpalloc + retlen, ipvar->value, strlen(ipvar->value));
-                    free(ret);
+                    strcpy(tmpalloc + retlen, ipvar->value);
+                    snort_free(ret);
                     retlen += strlen(ipvar->value);
                     ret = tmpalloc;
                 }
@@ -164,13 +164,13 @@ static char* sfvt_expand_value(vartable_t* table, const char* value)
         ptr++;
     }
 
-    free(tmp);
+    snort_free(tmp);
 
     if ((retlen + 1) < retsize)
     {
-        char* tmpalloc = (char*)SnortAlloc(retlen + 1);
+        char* tmpalloc = (char*)snort_calloc(retlen + 1);
         memcpy(tmpalloc, ret, retlen);
-        free(ret);
+        snort_free(ret);
         ret = tmpalloc;
     }
 
@@ -178,8 +178,8 @@ static char* sfvt_expand_value(vartable_t* table, const char* value)
     return ret;
 
 sfvt_expand_value_error:
-    free(ret);
-    free(tmp);
+    snort_free(ret);
+    snort_free(tmp);
     return NULL;
 }
 
@@ -196,18 +196,13 @@ SFIP_RET sfvt_define(vartable_t* table, const char* name, const char* value)
         return SFIP_ARG_ERR;
 
     len = strlen(name) + strlen(value) + 2;
-
-    if ((buf = (char*)malloc(len)) == NULL)
-    {
-        return SFIP_FAILURE;
-    }
-
+    buf = (char*)snort_alloc(len);
     SnortSnprintf(buf, len, "%s %s", name, value);
 
     ret = sfvt_add_str(table, buf, &ipret);
     if ((ret == SFIP_SUCCESS) || (ret == SFIP_DUPLICATE))
         ipret->value = sfvt_expand_value(table, value);
-    free(buf);
+    snort_free(buf);
     return ret;
 }
 
@@ -358,7 +353,7 @@ void sfvt_free_table(vartable_t* table)
         sfvar_free(p);
         p = tmp;
     }
-    free(table);
+    snort_free(table);
 }
 
 /* Prints a table's contents */

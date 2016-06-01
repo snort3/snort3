@@ -42,7 +42,7 @@
 #include "parser/parser.h"
 
 #include "codecs/codec_module.h"
-#include "codecs/ip/checksum.h" /* FIXIT */
+#include "codecs/ip/checksum.h"
 #include "utils/stats.h"
 #include "log/text_log.h"
 #include "main/snort_debug.h"
@@ -265,7 +265,7 @@ void PacketManager::decode(
         }
         else
         {
-            if ( (p->num_layers > 0) && 
+            if ( (p->num_layers > 0) &&
                 (p->layers[p->num_layers-1].prot_id == ProtocolId::TEREDO) &&
                 (prev_prot_id == ProtocolId::IPV6) )
             {
@@ -388,7 +388,7 @@ bool PacketManager::encode(const Packet* p,
         for (int i = outer_layer; i > inner_layer; --i)
         {
             const Layer& l = lyrs[i];
-            ProtocolIndex mapped_prot = 
+            ProtocolIndex mapped_prot =
                 i ? CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
             if (!CodecManager::s_protocols[mapped_prot]->encode(l.start, l.length, enc, buf))
             {
@@ -405,7 +405,7 @@ bool PacketManager::encode(const Packet* p,
     for (int i = outer_layer; i >= 0; --i)
     {
         const Layer& l = lyrs[i];
-        ProtocolIndex mapped_prot = 
+        ProtocolIndex mapped_prot =
             i ? CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
 
         if (!CodecManager::s_protocols[mapped_prot]->encode(l.start, l.length, enc, buf))
@@ -454,7 +454,7 @@ const uint8_t* PacketManager::encode_response(
         break;
     }
 
-    // FIXIT-M  -- check flags if we should skip something
+    // FIXIT-M check flags if we should skip something
     if (encode(p, flags, p->num_layers-1, IpProtocol::PROTO_NOT_SET, buf))
     {
         len = buf.size();
@@ -472,7 +472,7 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
 
     if (p->is_ip4())
     {
-        // FIXIT-M  -- check flags if we should skip something
+        // FIXIT-M check flags if we should skip something
         const int inner_ip_index = layer::get_inner_ip_lyr_index(p);
         assert(inner_ip_index >= 0);
         assert(inner_ip_index+1 < p->num_layers);
@@ -531,13 +531,13 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
     }
     else if (p->is_ip6())
     {
-        // FIXIT-M  -- check flags if we should skip ip6_options
+        // FIXIT-M check flags if we should skip ip6_options
         const int inner_ip_index = layer::get_inner_ip_lyr_index(p);
         assert(inner_ip_index >= 0);
         assert(inner_ip_index+1 < p->num_layers);
 
-        // FIXIT-L: copy up to minimum MTU worth of data
-        // FIXIT-L  check if we have the full 8 bytes of data.
+        // FIXIT-L copy up to minimum MTU worth of data
+        // FIXIT-L check if we have the full 8 bytes of data.
         if (!buf.allocate(icmp::ICMP_UNREACH_DATA_LEN))
             return nullptr;
         memcpy(buf.data(), p->layers[inner_ip_index+1].start, icmp::ICMP_UNREACH_DATA_LEN);
@@ -667,8 +667,7 @@ int PacketManager::encode_format(
     {
         num_layers = layer::get_inner_ip_lyr_index(p) + 1;
 
-        // FIXIT-L:  is this an extraneous check?
-        if (num_layers == 0)
+        if (num_layers == 0) // FIXIT-L is this an extraneous check?
             return -1;
     }
     else if ( f & ENC_FLAG_DEF )
@@ -720,7 +719,7 @@ int PacketManager::encode_format(
 
         // NOTE: this must always go from outer to inner
         //       to ensure a valid ip header
-        ProtocolIndex mapped_prot = 
+        ProtocolIndex mapped_prot =
             i ? CodecManager::s_proto_map[to_utype(lyr->prot_id)] : CodecManager::grinder;
 
         CodecManager::s_protocols[mapped_prot]->format(
@@ -830,7 +829,7 @@ void PacketManager::encode_set_dst_mac(uint8_t* mac)
 uint8_t* PacketManager::encode_get_dst_mac()
 { return dst_mac; }
 
-uint64_t PacketManager::get_rebuilt_packet_count(void)
+uint64_t PacketManager::get_rebuilt_packet_count()
 { return total_rebuilt_pkts; }
 
 void PacketManager::encode_set_pkt(Packet* p)

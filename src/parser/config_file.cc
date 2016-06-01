@@ -271,7 +271,7 @@ void ConfigDstMac(SnortConfig* sc, const char* s)
         ParseError("format check failed: %s,  Use format like 12:34:56:78:90:1a", s);
         return;
     }
-    sc->eth_dst = (uint8_t*)SnortAlloc (sizeof(dst.data));
+    sc->eth_dst = (uint8_t*)snort_calloc(sizeof(dst.data));
     memcpy(sc->eth_dst, dst.data, sizeof(dst.data));
 }
 
@@ -479,7 +479,7 @@ void ConfigTunnelVerdicts(SnortConfig* sc, const char* args)
 {
     char* tmp, * tok;
 
-    tmp = SnortStrdup(args);
+    tmp = snort_strdup(args);
     char* lasts = { 0 };
     tok = strtok_r(tmp, " ,", &lasts);
 
@@ -505,7 +505,7 @@ void ConfigTunnelVerdicts(SnortConfig* sc, const char* args)
 
         tok = strtok_r(NULL, " ,", &lasts);
     }
-    free(tmp);
+    snort_free(tmp);
 }
 
 void ConfigPluginPath(SnortConfig* sc, const char* args)

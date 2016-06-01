@@ -86,7 +86,7 @@ static void mod_dtor(Module* m)
 static IpsOption* msg_ctor(Module* p, OptTreeNode* otn)
 {
     MsgModule* m = (MsgModule*)p;
-    otn->sigInfo.message = SnortStrdup(m->msg.c_str());
+    otn->sigInfo.message = snort_strdup(m->msg.c_str());
     return nullptr;
 }
 

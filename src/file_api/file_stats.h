@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// FIXIT-L This will be refactored soon
+// FIXIT-M This will be refactored soon
 
 #include "target_based/snort_protocols.h"
 #include "target_based/sftarget_reader.h"

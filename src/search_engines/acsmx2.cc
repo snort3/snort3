@@ -165,7 +165,7 @@ struct acsm_summary_t
 
 static acsm_summary_t summary;
 
-void acsm_init_summary(void)
+void acsm_init_summary()
 {
     summary.num_states = 0;
     summary.num_transitions = 0;
@@ -252,66 +252,56 @@ enum Acsm2MemoryType
 */
 static void* AC_MALLOC(int n, Acsm2MemoryType type)
 {
-    void* p = calloc(1, n);
+    void* p = snort_calloc(n);
 
-    if (p != NULL)
+    switch (type)
     {
-        switch (type)
-        {
-        case ACSM2_MEMORY_TYPE__PATTERN:
-            acsm2_pattern_memory += n;
-            break;
-        case ACSM2_MEMORY_TYPE__MATCHLIST:
-            acsm2_matchlist_memory += n;
-            break;
-        case ACSM2_MEMORY_TYPE__TRANSTABLE:
-            acsm2_transtable_memory += n;
-            break;
-        case ACSM2_MEMORY_TYPE__FAILSTATE:
-            acsm2_failstate_memory += n;
-            break;
-        case ACSM2_MEMORY_TYPE__NONE:
-            break;
-        default:
-            FatalError("%s(%d) Invalid memory type\n", __FILE__, __LINE__);
-        }
-
-        acsm2_total_memory += n;
+    case ACSM2_MEMORY_TYPE__PATTERN:
+        acsm2_pattern_memory += n;
+        break;
+    case ACSM2_MEMORY_TYPE__MATCHLIST:
+        acsm2_matchlist_memory += n;
+        break;
+    case ACSM2_MEMORY_TYPE__TRANSTABLE:
+        acsm2_transtable_memory += n;
+        break;
+    case ACSM2_MEMORY_TYPE__FAILSTATE:
+        acsm2_failstate_memory += n;
+        break;
+    case ACSM2_MEMORY_TYPE__NONE:
+        break;
+    default:
+        FatalError("%s(%d) Invalid memory type\n", __FILE__, __LINE__);
     }
+    acsm2_total_memory += n;
 
     return p;
 }
 
 static void* AC_MALLOC_DFA(int n, int sizeofstate)
 {
-    void* p = calloc(1, n);
+    void* p = snort_calloc(n);
 
-    if (p != NULL)
+    switch (sizeofstate)
     {
-        switch (sizeofstate)
-        {
-        case 1:
-            acsm2_dfa1_memory += n;
-            break;
-        case 2:
-            acsm2_dfa2_memory += n;
-            break;
-        case 4:
-        default:
-            acsm2_dfa4_memory += n;
-            break;
-        }
-
-        acsm2_dfa_memory += n;
-        acsm2_total_memory += n;
+    case 1:
+        acsm2_dfa1_memory += n;
+        break;
+    case 2:
+        acsm2_dfa2_memory += n;
+        break;
+    case 4:
+    default:
+        acsm2_dfa4_memory += n;
+        break;
     }
+
+    acsm2_dfa_memory += n;
+    acsm2_total_memory += n;
 
     return p;
 }
 
-/*
-*
-*/
 static void AC_FREE(void* p, int n, Acsm2MemoryType type)
 {
     if (p != NULL)
@@ -336,7 +326,7 @@ static void AC_FREE(void* p, int n, Acsm2MemoryType type)
         }
 
         acsm2_total_memory -= n;
-        free(p);
+        snort_free(p);
     }
 }
 
@@ -360,7 +350,7 @@ static void AC_FREE_DFA(void* p, int n, int sizeofstate)
 
         acsm2_dfa_memory -= n;
         acsm2_total_memory -= n;
-        free(p);
+        snort_free(p);
     }
 }
 
@@ -497,7 +487,7 @@ static int List_FreeList( trans_node_t * t )
   while( t )
   {
        p = t->next;
-       free(t);
+       snort_free(t);
        t = p;
        acsm2_total_memory -= sizeof(trans_node_t);
        tcnt++;
@@ -549,13 +539,10 @@ static ACSM_PATTERN2* CopyMatchListEntry(ACSM_PATTERN2* px)
 {
     ACSM_PATTERN2* p;
 
-    p = (ACSM_PATTERN2*)AC_MALLOC(sizeof (ACSM_PATTERN2),
-        ACSM2_MEMORY_TYPE__MATCHLIST);
-    MEMASSERT (p, "CopyMatchListEntry");
+    p = (ACSM_PATTERN2*)AC_MALLOC(sizeof (ACSM_PATTERN2), ACSM2_MEMORY_TYPE__MATCHLIST);
+    MEMASSERT(p, "CopyMatchListEntry");
 
-    memcpy (p, px, sizeof (ACSM_PATTERN2));
-
-    p->next = 0;
+    memcpy(p, px, sizeof (ACSM_PATTERN2));
 
     return p;
 }
@@ -589,13 +576,10 @@ static void AddMatchListEntry(ACSM_STRUCT2* acsm, int state, ACSM_PATTERN2* px)
 {
     ACSM_PATTERN2* p;
 
-    p = (ACSM_PATTERN2*)AC_MALLOC(sizeof (ACSM_PATTERN2),
-        ACSM2_MEMORY_TYPE__MATCHLIST);
+    p = (ACSM_PATTERN2*)AC_MALLOC(sizeof (ACSM_PATTERN2), ACSM2_MEMORY_TYPE__MATCHLIST);
+    MEMASSERT(p, "AddMatchListEntry");
 
-    MEMASSERT (p, "AddMatchListEntry");
-
-    memcpy (p, px, sizeof (ACSM_PATTERN2));
-
+    memcpy(p, px, sizeof (ACSM_PATTERN2));
     p->next = acsm->acsmMatchList[state];
 
     acsm->acsmMatchList[state] = p;
@@ -1077,12 +1061,10 @@ static int Conv_Full_DFA_To_SparseBands(ACSM_STRUCT2* acsm)
 ACSM_STRUCT2* acsmNew2(const MpseAgent* agent, int format)
 {
     ACSM_STRUCT2* p = (ACSM_STRUCT2*)AC_MALLOC(sizeof (ACSM_STRUCT2), ACSM2_MEMORY_TYPE__NONE);
-    MEMASSERT (p, "acsmNew");
+    MEMASSERT(p, "acsmNew");
 
     if (p)
     {
-        memset (p, 0, sizeof (ACSM_STRUCT2));
-
         p->agent = agent;
         p->acsmFormat = format;
 
@@ -1108,19 +1090,19 @@ int acsmAddPattern2(
 
     plist = (ACSM_PATTERN2*)
         AC_MALLOC(sizeof (ACSM_PATTERN2), ACSM2_MEMORY_TYPE__PATTERN);
-    MEMASSERT (plist, "acsmAddPattern");
+    MEMASSERT(plist, "acsmAddPattern");
 
     plist->patrn =
         (uint8_t*)AC_MALLOC(n, ACSM2_MEMORY_TYPE__PATTERN);
-    MEMASSERT (plist->patrn, "acsmAddPattern");
+    MEMASSERT(plist->patrn, "acsmAddPattern");
 
     ConvertCaseEx(plist->patrn, pat, n);
 
     plist->casepatrn =
         (uint8_t*)AC_MALLOC(n, ACSM2_MEMORY_TYPE__PATTERN);
-    MEMASSERT (plist->casepatrn, "acsmAddPattern");
+    MEMASSERT(plist->casepatrn, "acsmAddPattern");
 
-    memcpy (plist->casepatrn, pat, n);
+    memcpy(plist->casepatrn, pat, n);
 
     plist->n = n;
     plist->nocase = nocase;
@@ -1608,7 +1590,7 @@ int acsm_search_dfa_sparse(
     return nfound;
 }
 
-void acsmx2_print_qinfo(void)
+void acsmx2_print_qinfo()
 {
 }
 
@@ -2112,7 +2094,7 @@ int acsmPrintDetailInfo2(ACSM_STRUCT2* acsm)
  *   Combined with accrued stats, we get an average picture of things.
  */
 
-int acsmPrintSummaryInfo2(void)
+int acsmPrintSummaryInfo2()
 {
     const char* sf[]=
     {

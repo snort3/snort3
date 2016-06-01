@@ -86,7 +86,7 @@ static void mod_dtor(Module* m)
 static IpsOption* soid_ctor(Module* p, OptTreeNode* otn)
 {
     SoidModule* m = (SoidModule*)p;
-    otn->soid = SnortStrdup(m->soid.c_str());
+    otn->soid = snort_strdup(m->soid.c_str());
     return nullptr;
 }
 

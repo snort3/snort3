@@ -65,8 +65,8 @@ struct IntelPm
     struct _IntelPmHandles* handles;
 };
 
-void IntelPmStartInstance(void);
-void IntelPmStopInstance(void);
+void IntelPmStartInstance();
+void IntelPmStopInstance();
 
 void* IntelPmNew(SnortConfig*, const MpseAgent*);
 
@@ -86,14 +86,14 @@ int IntelPmFinishGroup(SnortConfig*, IntelPm*);
 
 void IntelPmCompile(SnortConfig*);
 void IntelPmActivate(SnortConfig*);
-void IntelPmDeactivate(void);
+void IntelPmDeactivate();
 
 int IntelPmSearch(IntelPm*, uint8_t* buffer, int buffer_len, MpseMatch, void* context);
 
 int IntelGetPatternCount(IntelPm*);
 int IntelPmPrintInfo(IntelPm*);
 void IntelPmPrintSummary(SnortConfig*);
-void IntelPmPrintBufferStats(void);
+void IntelPmPrintBufferStats();
 int IntelPmRelease(struct _IntelPmHandles*);
 
 #endif

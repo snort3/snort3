@@ -180,12 +180,12 @@ public:
         return ssn_state.session_flags &= ~flags;
     }
 
-    uint32_t get_session_flags(void)
+    uint32_t get_session_flags()
     {
         return ssn_state.session_flags;
     }
 
-    int get_ignore_direction(void)
+    int get_ignore_direction()
     {
         return ssn_state.ignore_direction;
     }
@@ -286,7 +286,7 @@ public:  // FIXIT-M privatize if possible
     class Session* session;
     class BitOp* bitop;
     class FlowHAState* ha_state;
-    uint8_t ip_proto; // FIXIT-M  -- do we need both of these?
+    uint8_t ip_proto; // FIXIT-M do we need both of these?
     PktType pkt_type; // ^^
 
     // these fields are always set; not zeroed
@@ -306,7 +306,6 @@ public:  // FIXIT-M privatize if possible
 
     FlowState flow_state;
 
-    // FIXIT-L can client and server ip and port be removed from flow?
     sfip_t client_ip; // FIXIT-L family and bits should be changed to uint16_t
     sfip_t server_ip; // or uint8_t to reduce sizeof from 24 to 20
 

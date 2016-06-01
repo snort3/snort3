@@ -91,7 +91,7 @@ struct View
 
     double pct_caller() const
     {
-        // FIXIT-L J really, we should assert(!called) for root view
+        // FIXIT-L really, we should assert(!called) for root view
         if ( caller_stats )
             return pct_of(*caller_stats);
 

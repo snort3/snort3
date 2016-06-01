@@ -27,7 +27,6 @@
 
 #include <stdarg.h> /* For variadic */
 #include <stdio.h>
-#include <string.h> /* For memset   */
 
 #include "main/snort_types.h"
 
@@ -67,7 +66,7 @@ static TABLE_PTR _sub_table_flat_new(dir_table_flat_t* root, uint32_t dimension,
     }
 
     /* Set up the initial prefilled "sub table" */
-    sub_ptr = segment_malloc(sizeof(dir_sub_table_flat_t));
+    sub_ptr = segment_snort_alloc(sizeof(dir_sub_table_flat_t));
 
     if (!sub_ptr)
     {
@@ -88,7 +87,7 @@ static TABLE_PTR _sub_table_flat_new(dir_table_flat_t* root, uint32_t dimension,
      * information if "RT_FAVOR_SPECIFIC" insertions are being performed. */
     sub->num_entries = len;
 
-    sub->entries = segment_malloc(sizeof(DIR_Entry) * sub->num_entries);
+    sub->entries = segment_snort_alloc(sizeof(DIR_Entry) * sub->num_entries);
 
     if (!sub->entries)
     {
@@ -123,7 +122,7 @@ TABLE_PTR sfrt_dir_flat_new(uint32_t mem_cap, int count,...)
     dir_table_flat_t* table;
     uint8_t* base;
 
-    table_ptr = segment_malloc(sizeof(dir_table_flat_t));
+    table_ptr = segment_snort_alloc(sizeof(dir_table_flat_t));
 
     if (!table_ptr)
     {

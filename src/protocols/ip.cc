@@ -277,7 +277,8 @@ static bool is_loopback(const snort_in6_addr* const ip)
         return false;
 
     /* Check if the 3rd 32-bit int is zero */
-    if ( p[2] == 0 ) {
+    if ( p[2] == 0 )
+    {
         /* ::7F00:0/104 is ipv4 compatible ipv6 */
         /* ::1 is the IPv6 loopback */
         return ( (ip->u6_addr8[12] == 0x7F) || (ntohl(p[3]) == 0x1) );

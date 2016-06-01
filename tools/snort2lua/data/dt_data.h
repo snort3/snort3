@@ -28,27 +28,22 @@
 #include "data/dt_table_api.h"
 #include "data/dt_rule_api.h"
 
-// FIXIT:  Change name to data_api
-// FIXIT:  Remove all unecessary includes
-// FIXIT:  set_default_print name should be change to print_all
+// FIXIT-L change name to data_api
+// FIXIT-L remove all unecessary includes
+// FIXIT-L set_default_print name should be change to print_all
 
-/*
- *
- * As a heads up to whoever reads this file.  This one API is
- * really three distinct API's rolled into one.  One API for rules,
- * one api for misc data (variables, includes, etcs), one api
- * for creating tables. Hoever, the reason they are
- * together is becasue this class is not static, and I did not
- * want to be pass three pointers to the three API's when
- * creating new convesion states.  There are comments in
- * in all caps which show the seperate the sections.
- *
- * The first section of this file is really DataApi creation
- * and initialization, and adding miscelaneous objects
- * to the DataApi data.  The second section is for creating
- * tables and their options.  The third section is for
- * creating rules.
- */
+// As a heads up to whoever reads this file.  This one API is really three
+// distinct API's rolled into one.  One API for rules, one api for misc
+// data (variables, includes, etcs), one api for creating tables. Hoever,
+// the reason they are together is becasue this class is not static, and I
+// did not want to be pass three pointers to the three API's when creating
+// new convesion states.  There are comments in in all caps which show the
+// seperate the sections.
+
+// The first section of this file is really DataApi creation and
+// initialization, and adding miscelaneous objects to the DataApi data.
+// The second section is for creating tables and their options.  The third
+// section is for creating rules.
 
 class Include;
 class Variable;

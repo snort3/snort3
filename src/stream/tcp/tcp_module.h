@@ -93,7 +93,6 @@ struct TcpStats
     PegCount s5tcp1;
     PegCount s5tcp2;
     PegCount mem_in_use;
-    PegCount faults;
     PegCount sessions_initializing;
     PegCount sessions_established;
     PegCount sessions_closing;

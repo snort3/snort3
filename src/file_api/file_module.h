@@ -69,7 +69,7 @@ static const Parameter file_rule_params[] =
 // File policy
 static const Parameter file_when_params[] =
 {
-    // FIXIT when.policy_id should be an arbitrary string auto converted
+    // FIXIT-M when.policy_id should be an arbitrary string auto converted
     // into index for binder matching and lookups
     { "file_type_id", Parameter::PT_INT, "0:", "0",
       "unique ID for file type in file magic rule" },

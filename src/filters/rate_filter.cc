@@ -43,12 +43,10 @@
 
 //static int _printThresholdContext(RateFilterConfig*);
 
-RateFilterConfig* RateFilter_ConfigNew(void)
+RateFilterConfig* RateFilter_ConfigNew()
 {
-    RateFilterConfig* rf_config = (RateFilterConfig*)SnortAlloc(sizeof(*rf_config));
-
+    RateFilterConfig* rf_config = (RateFilterConfig*)snort_calloc(sizeof(*rf_config));
     rf_config->memcap = 1024 * 1024;
-
     return rf_config;
 }
 
@@ -66,10 +64,10 @@ void RateFilter_ConfigFree(RateFilterConfig* config)
             sfghash_delete(config->genHash[i]);
     }
 
-    free(config);
+    snort_free(config);
 }
 
-void RateFilter_Cleanup(void)
+void RateFilter_Cleanup()
 {
     SFRF_Delete();
 }
@@ -161,7 +159,7 @@ int RateFilter_Test(
 }
 
 /* empty out active entries */
-void RateFilter_ResetActive(void)
+void RateFilter_ResetActive()
 {
     SFRF_Flush();
 }

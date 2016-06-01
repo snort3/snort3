@@ -89,7 +89,7 @@ char** protocol_names = NULL;
 #define SNORT_VERSION_STRLEN sizeof(SNORT_VERSION_STRING)
 char __snort_version_string[SNORT_VERSION_STRLEN];
 
-void StoreSnortInfoStrings(void)
+void StoreSnortInfoStrings()
 {
     strncpy(__snort_version_string, SNORT_VERSION_STRING,
         sizeof(__snort_version_string));
@@ -109,7 +109,7 @@ void StoreSnortInfoStrings(void)
  * Returns: 0 all the time
  *
  ****************************************************************************/
-int DisplayBanner(void)
+int DisplayBanner()
 {
     const char* info = getenv("HOSTTYPE");
 
@@ -320,7 +320,7 @@ void CreatePidFile(pid_t pid)
  * Returns: void function
  *
  ****************************************************************************/
-void ClosePidFile(void)
+void ClosePidFile()
 {
     if (pid_file)
     {
@@ -391,14 +391,12 @@ void InitGroups(int user_id, int group_id)
         if (pw != NULL)
         {
             /* getpwuid and initgroups may use the same static buffers */
-            char* username = SnortStrdup(pw->pw_name);
+            char* username = snort_strdup(pw->pw_name);
 
             if (initgroups(username, group_id) < 0)
-            {
                 ParseError("Can not initgroups(%s,%d)", username, group_id);
-            }
 
-            free(username);
+            snort_free(username);
         }
 
         /** Just to be on the safe side... **/
@@ -409,37 +407,33 @@ void InitGroups(int user_id, int group_id)
 
 //-------------------------------------------------------------------------
 
-// FIXIT-L  This is a duplicate of PacketManager::get_proto_name().0
-void InitProtoNames(void)
+// FIXIT-L this is a duplicate of PacketManager::get_proto_name()
+void InitProtoNames()
 {
-    int i;
+    if ( !protocol_names )
+        protocol_names = (char**)snort_calloc(NUM_IP_PROTOS, sizeof(char*));
 
-    if (protocol_names == NULL)
-        protocol_names = (char**)SnortAlloc(sizeof(char*) * NUM_IP_PROTOS);
-
-    for (i = 0; i < NUM_IP_PROTOS; i++)
+    for ( int i = 0; i < NUM_IP_PROTOS; i++ )
     {
         struct protoent* pt = getprotobynumber(i);  // main thread only
 
         if (pt != NULL)
         {
-            size_t j;
+            protocol_names[i] = snort_strdup(pt->p_name);
 
-            protocol_names[i] = SnortStrdup(pt->p_name);
-            for (j = 0; j < strlen(protocol_names[i]); j++)
+            for ( size_t j = 0; j < strlen(protocol_names[i]); j++ )
                 protocol_names[i][j] = toupper(protocol_names[i][j]);
         }
         else
         {
             char protoname[10];
-
             SnortSnprintf(protoname, sizeof(protoname), "PROTO:%03d", i);
-            protocol_names[i] = SnortStrdup(protoname);
+            protocol_names[i] = snort_strdup(protoname);
         }
     }
 }
 
-void CleanupProtoNames(void)
+void CleanupProtoNames()
 {
     if (protocol_names != NULL)
     {
@@ -448,10 +442,10 @@ void CleanupProtoNames(void)
         for (i = 0; i < NUM_IP_PROTOS; i++)
         {
             if (protocol_names[i] != NULL)
-                free(protocol_names[i]);
+                snort_free(protocol_names[i]);
         }
 
-        free(protocol_names);
+        snort_free(protocol_names);
         protocol_names = NULL;
     }
 }
@@ -487,21 +481,21 @@ char* read_infile(const char* key, const char* fname)
         return nullptr;
     }
 
-    cp = (char*)SnortAlloc(((u_int)buf.st_size + 1) * sizeof(char));
+    cp = (char*)snort_calloc(((u_int)buf.st_size + 1), sizeof(char));
 
     cc = read(fd, cp, (int)buf.st_size);
 
     if (cc < 0)
     {
         ParseError("read %s: %s", fname, get_error(errno));
-        free(cp);
+        snort_free(cp);
         return nullptr;
     }
 
     if (cc != buf.st_size)
     {
         ParseError("short read %s (%d != %d)", fname, cc, (int)buf.st_size);
-        free(cp);
+        snort_free(cp);
         return nullptr;
     }
 
@@ -656,14 +650,14 @@ int SnortStrncpy(char* dst, const char* src, size_t dst_size)
 
 char* SnortStrndup(const char* src, size_t dst_size)
 {
-    char* ret = (char*)SnortAlloc(dst_size + 1);
+    char* ret = (char*)snort_calloc(dst_size + 1);
     int ret_val;
 
     ret_val = SnortStrncpy(ret, src, dst_size + 1);
 
     if (ret_val == SNORT_STRNCPY_ERROR)
     {
-        free(ret);
+        snort_free(ret);
         return NULL;
     }
 
@@ -695,17 +689,13 @@ int SnortStrnlen(const char* buf, int buf_size)
     return i;
 }
 
-char* SnortStrdup(const char* str)
+char* snort_strdup(const char* str)
 {
     assert(str);
-    char* copy = strdup(str);
-
-    if ( !copy )
-    {
-        FatalError("Unable to duplicate string: %s\n", str);
-    }
-
-    return copy;
+    size_t n = strlen(str) + 1;
+    char* p = (char*)snort_alloc(n);
+    memcpy(p, str, n);
+    return p;
 }
 
 /*
@@ -897,7 +887,7 @@ void SetChroot(std::string directory, std::string& logstore)
  * Return a ptr to the absolute pathname of snort.  This memory must
  * be copied to another region if you wish to save it for later use.
  */
-char* CurrentWorkingDir(void)
+char* CurrentWorkingDir()
 {
     static THREAD_LOCAL char buf[PATH_MAX_UTIL + 1];
 
@@ -924,17 +914,12 @@ char* GetAbsolutePath(const char* dir)
         return NULL;
     }
 
-    savedir = strdup(CurrentWorkingDir());
-
-    if (savedir == NULL)
-    {
-        return NULL;
-    }
+    savedir = snort_strdup(CurrentWorkingDir());
 
     if (chdir(dir) < 0)
     {
         LogMessage("Can't change to directory: %s\n", dir);
-        free(savedir);
+        snort_free(savedir);
         return NULL;
     }
 
@@ -943,7 +928,7 @@ char* GetAbsolutePath(const char* dir)
     if (dirp == NULL)
     {
         LogMessage("Unable to access current directory\n");
-        free(savedir);
+        snort_free(savedir);
         return NULL;
     }
     else
@@ -955,16 +940,16 @@ char* GetAbsolutePath(const char* dir)
     if (chdir(savedir) < 0)
     {
         LogMessage("Can't change back to directory: %s\n", dir);
-        free(savedir);
+        snort_free(savedir);
         return NULL;
     }
 
-    free(savedir);
+    snort_free(savedir);
     return (char*)buf;
 }
 
 #if defined(NOCOREFILE)
-void SetNoCores(void)
+void SetNoCores()
 {
     struct rlimit rlim;
 

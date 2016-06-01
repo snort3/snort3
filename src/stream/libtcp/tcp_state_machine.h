@@ -31,13 +31,13 @@
 class TcpStateMachine
 {
 public:
-    virtual ~TcpStateMachine(void);
+    virtual ~TcpStateMachine();
 
     virtual void register_state_handler(TcpStreamTracker::TcpState, TcpStateHandler&);
     virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&, TcpStreamTracker&);
 
 protected:
-    TcpStateMachine(void);
+    TcpStateMachine();
 
     TcpStateHandler* tcp_state_handlers[ TcpStreamTracker::TCP_MAX_STATES ];
 };

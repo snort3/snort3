@@ -190,7 +190,7 @@ int string_extract(int bytes_to_grab, int base, const uint8_t* ptr,
 #ifdef TEST_BYTE_EXTRACT
 #include <stdio.h>
 
-void test_extract(void)
+void test_extract()
 {
     int i;
     uint32_t ret;
@@ -306,7 +306,7 @@ void test_extract(void)
     }
 }
 
-void test_string(void)
+void test_string()
 {
     char* stringdata = "21212312412";
     int datalen = strlen(stringdata);
@@ -349,7 +349,7 @@ void test_string(void)
     }
 }
 
-int main(void)
+int main()
 {
     test_extract();
     test_string();

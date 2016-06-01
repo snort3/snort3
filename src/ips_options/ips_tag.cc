@@ -84,7 +84,7 @@ TagData* TagModule::get_data()
 bool TagModule::begin(const char*, int, SnortConfig*)
 {
     if ( !tag )
-        tag = (TagData*)SnortAlloc(sizeof(*tag));
+        tag = (TagData*)snort_calloc(sizeof(*tag));
 
     return true;
 }
@@ -103,7 +103,6 @@ bool TagModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~") )
     {
-        // FIXIT-M -- confusing
         switch (v.get_long())
         {
         case 0:

@@ -79,7 +79,7 @@ public:
     static bool unprivileged();
     static const char* get_input_spec(const SnortConfig*, unsigned instance_id);
     static const char* default_type();
-    // FIXIT-M: X Temporary thread-local instance helpers to be removed when no longer needed
+    // FIXIT-M X Temporary thread-local instance helpers to be removed when no longer needed
     static void set_local_instance(SFDAQInstance*);
     static SFDAQInstance* get_local_instance();
     SO_PUBLIC static const char* get_interface_spec();

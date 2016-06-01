@@ -92,6 +92,9 @@ MemoryContext::~MemoryContext() { }
 
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
+char* snort_strdup(const char* s)
+{ return strdup(s); }
+
 //-------------------------------------------------------------------------
 // helpers
 //-------------------------------------------------------------------------

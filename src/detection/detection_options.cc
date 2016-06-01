@@ -118,7 +118,7 @@ static int detection_hash_free_func(void* option_key, void*)
     return 0;
 }
 
-static SFXHASH* DetectionHashTableNew(void)
+static SFXHASH* DetectionHashTableNew()
 {
     SFXHASH* doht = sfxhash_new(HASH_RULE_OPTIONS,
         sizeof(detection_option_key_t),
@@ -269,7 +269,7 @@ void DetectionTreeHashTableFree(SFXHASH* dtht)
         sfxhash_delete(dtht);
 }
 
-static SFXHASH* DetectionTreeHashTableNew(void)
+static SFXHASH* DetectionTreeHashTableNew()
 {
     SFXHASH* dtht = sfxhash_new(
         HASH_RULE_TREE,
@@ -708,7 +708,7 @@ int detection_option_node_evaluate(
 
 struct node_profile_stats
 {
-    // FIXIT-L J duplicated from dot_node_state_t and OtnState
+    // FIXIT-L duplicated from dot_node_state_t and OtnState
     hr_duration elapsed;
     hr_duration elapsed_match;
     hr_duration elapsed_no_match;
@@ -761,8 +761,7 @@ static void detection_option_node_update_otn_stats(detection_option_tree_node_t*
     if ( node->option_type == RULE_OPTION_TYPE_LEAF_NODE )
     {
         // Update stats for this otn
-        // FIXIT-L J this should either be called from the packet threads at exit
-        // or *all* the states should get totalled by the main thread
+        // FIXIT-L call from packet threads at exit or total *all* states by main thread
         // Right now, it looks like we're missing out on some stats although it's possible
         // that this is "corrected" in the profiler code
         auto* otn = (OptTreeNode*)node->option_data;
@@ -817,7 +816,7 @@ void detection_option_tree_update_otn_stats(SFXHASH* doth)
 detection_option_tree_root_t* new_root()
 {
     detection_option_tree_root_t* p = (detection_option_tree_root_t*)
-        SnortAlloc(sizeof(detection_option_tree_root_t));
+        snort_calloc(sizeof(detection_option_tree_root_t));
 
     p->latency_state = new RuleLatencyState[ThreadConfig::get_instance_max()]();
 
@@ -832,10 +831,10 @@ void free_detection_option_root(void** existing_tree)
         return;
 
     root = (detection_option_tree_root_t*)*existing_tree;
-    free(root->children);
+    snort_free(root->children);
 
     delete[] root->latency_state;
-    free(root);
+    snort_free(root);
     *existing_tree = NULL;
 }
 
@@ -843,13 +842,13 @@ detection_option_tree_node_t* new_node(
     option_type_t type, void* data)
 {
     detection_option_tree_node_t* p =
-        (detection_option_tree_node_t*)SnortAlloc(sizeof(*p));
+        (detection_option_tree_node_t*)snort_calloc(sizeof(*p));
 
     p->option_type = type;
     p->option_data = data;
 
     p->state = (dot_node_state_t*)
-        SnortAlloc(sizeof(*p->state) * ThreadConfig::get_instance_max());
+        snort_calloc(ThreadConfig::get_instance_max(), sizeof(*p->state));
 
     return p;
 }
@@ -861,8 +860,8 @@ void free_detection_option_tree(detection_option_tree_node_t* node)
     {
         free_detection_option_tree(node->children[i]);
     }
-    free(node->children);
-    free(node->state);
-    free(node);
+    snort_free(node->children);
+    snort_free(node->state);
+    snort_free(node);
 }
 

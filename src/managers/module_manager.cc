@@ -353,8 +353,7 @@ static const Parameter* get_params(
             const Parameter* tmp_p =
                 reinterpret_cast<const Parameter*>(p->range);
 
-            // FIXIT -- this will fail if we are opening a
-            // a list with only one Parameter
+            // FIXIT-L this will fail if we are opening a a list with only one Parameter
             if ( tmp_p[0].name && !tmp_p[1].name )
                 return tmp_p;
         }
@@ -365,21 +364,18 @@ static const Parameter* get_params(
     return get_params(new_fqn, p, idx);
 }
 
-// FIXIT-M vars may have been defined on command line
-// that mechanism will be replaced with pulling a Lua
-// chunk from the command line and stuffing into L
-// before setting configs; that will overwrite
+// FIXIT-M vars may have been defined on command line. that mechanism will
+// be replaced with pulling a Lua chunk from the command line and stuffing
+// into L before setting configs; that will overwrite
 //
-// FIXIT-M should only need one table with
-// dynamically typed vars
+// FIXIT-M should only need one table with dynamically typed vars
 //
-// FIXIT-M this is a hack to tell vars by naming
-// convention; with one table this is obviated
-// but if multiple tables are kept might want
-// to change these to a module with parameters
 //
-// FIXIT-L presently no way to catch errors like:
-//     EXTERNAL_NET = not HOME_NET
+// FIXIT-M this is a hack to tell vars by naming convention; with one table
+// this is obviated but if multiple tables are kept might want to change
+// these to a module with parameters
+//
+// FIXIT-L presently no way to catch errors like EXTERNAL_NET = not HOME_NET
 // which becomes a bool var and is ignored.
 static bool set_var(const char* fqn, Value& val)
 {
@@ -465,9 +461,8 @@ static bool set_value(const char* fqn, Value& v)
 
     if ( !p )
     {
-        // FIXIT-L handle things like x = { 1 }
-        // where x is a table not a list and 1 should be
-        // considered a key not a value; ideally say
+        // FIXIT-L handle things like x = { 1 } where x is a table not a
+        // list and 1 should be considered a key not a value; ideally say
         // can't find x.1 instead of just can't find x
         ParseError("can't find %s", fqn);
         ++s_errors;

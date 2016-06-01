@@ -222,7 +222,7 @@ static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
     return 1;
 }
 
-void init_signals(void)
+void init_signals()
 {
 #if defined(LINUX) || defined(FREEBSD) || defined(OPENBSD) || \
     defined(SOLARIS) || defined(BSD) || defined(MACOS)

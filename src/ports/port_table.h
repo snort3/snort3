@@ -79,7 +79,7 @@ struct PortTable
     int non_opt_merges;
 };
 
-PortTable* PortTableNew(void);
+PortTable* PortTableNew();
 void PortTableFree(PortTable* p);
 
 PortObject* PortTableFindInputPortObjectPorts(PortTable* pt, PortObject* po);

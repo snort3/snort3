@@ -56,7 +56,7 @@ bool TcpStateNone::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateNone::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    // FIXIT - syn received on undefined client, figure this out and do the right thing
+    // FIXIT-H syn received on undefined client, figure this out and do the right thing
     return default_state_action(tsd, trk);
 }
 
@@ -105,8 +105,8 @@ bool TcpStateNone::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     {
         Flow* flow = tsd.get_flow();
 
-        /* FIXIT: do we need to verify the ACK field is >= the seq of the SYN-ACK?
-                   3-way Handshake complete, create TCP session */
+        // FIXIT-H do we need to verify the ACK field is >= the seq of the SYN-ACK?
+        // 3-way Handshake complete, create TCP session
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_SYN_ACK |
             STREAM_STATE_ESTABLISHED );
         trk.init_on_3whs_ack_sent(tsd);
@@ -194,7 +194,7 @@ bool TcpStateNone::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
-        // FIXIT - handle this
+        // FIXIT-H handle FIN on midstream
     }
     else if ( trk.session->config->require_3whs() )
     {
@@ -209,7 +209,7 @@ bool TcpStateNone::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
-        // FIXIT - handle this
+        // FIXIT-H handle FIN on midstream
     }
     else if ( trk.session->config->require_3whs() )
     {
@@ -224,7 +224,7 @@ bool TcpStateNone::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
-        // FIXIT - handle this
+        // FIXIT-H handle RST on midstream
     }
 
     return default_state_action(tsd, trk);
@@ -246,7 +246,7 @@ bool TcpStateNone::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     return default_state_action(tsd, trk);
 }
 
-#ifdef FOO  // FIXIT - UNIT_TEST need work!!
+#ifdef FOO  // FIXIT-H UNIT_TEST need work
 #include "tcp_normalizers.h"
 #include "tcp_reassemblers.h"
 

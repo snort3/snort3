@@ -99,7 +99,7 @@ bool PopModule::set(const char*, Value& v, SnortConfig*)
             {
                 decode_depth = decode_depth - 4;
             }
-            ParseWarning(WARN_CONF, 
+            ParseWarning(WARN_CONF,
                 "POP: 'b64_decode_depth' is not a multiple of 4. "
                 "Rounding up to the next multiple of 4. "
                 "The new 'b64_decode_depth' is %d.\n",

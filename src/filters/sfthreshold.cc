@@ -57,10 +57,10 @@ static THREAD_LOCAL int thd_answer = 0;  // per packet
 
 typedef enum { PRINT_GLOBAL, PRINT_LOCAL, PRINT_SUPPRESS } PrintFormat;
 
-ThresholdConfig* ThresholdConfigNew(void)
+ThresholdConfig* ThresholdConfigNew()
 {
     ThresholdConfig* tc =
-        (ThresholdConfig*)SnortAlloc(sizeof(ThresholdConfig));
+        (ThresholdConfig*)snort_calloc(sizeof(ThresholdConfig));
 
     /* sfthd_objs_new will handle fatal */
     tc->thd_objs = sfthd_objs_new();
@@ -81,7 +81,7 @@ void ThresholdConfigFree(ThresholdConfig* tc)
         tc->thd_objs = NULL;
     }
 
-    free(tc);
+    snort_free(tc);
 }
 
 // prnMode = 0: init output format
@@ -256,7 +256,7 @@ static int print_thd_local(ThresholdObjects* thd_objs, PrintFormat type, unsigne
 void print_thresholding(ThresholdConfig*, unsigned)
 { }
 
-void sfthreshold_free(void)
+void sfthreshold_free()
 {
     if (thd_runtime != NULL)
         sfthd_free(thd_runtime);
@@ -337,13 +337,13 @@ int sfthreshold_test(
  * sfthreshold_test will indeed try to alter the thresholding system
  *
  */
-void sfthreshold_reset(void)
+void sfthreshold_reset()
 {
     thd_checked = 0;
 }
 
 /* empty out active entries */
-void sfthreshold_reset_active(void)
+void sfthreshold_reset_active()
 {
     if (thd_runtime == NULL)
         return;

@@ -1090,7 +1090,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                 stream.ignore_session(
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
-                                    p->type(), SSN_DIR_BOTH, 
+                                    p->type(), SSN_DIR_BOTH,
                                     FtpDataFlowData::flow_id);
                             }
                         }
@@ -1162,7 +1162,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                             stream.ignore_session(
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
-                                p->type(), SSN_DIR_BOTH, 
+                                p->type(), SSN_DIR_BOTH,
                                 FtpDataFlowData::flow_id);
                         }
                     }
@@ -1727,7 +1727,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                          * FTP_DATA_SESSION for tracking. */
                         if (ftpssn->filename)
                         {
-                            free(ftpssn->filename);
+                            snort_free(ftpssn->filename);
                             ftpssn->filename = NULL;
                             ftpssn->file_xfer_info = FTPP_FILE_IGNORE;
                         }
@@ -1738,13 +1738,10 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                         if (((req->param_begin != NULL) && (req->param_size > 0))
                             && (CmdConf->file_get_cmd || CmdConf->file_put_cmd))
                         {
-                            ftpssn->filename = (char*)malloc(req->param_size+1);
-                            if (ftpssn->filename)
-                            {
-                                memcpy(ftpssn->filename, req->param_begin, req->param_size);
-                                ftpssn->filename[req->param_size] = '\0';
-                                ftpssn->file_xfer_info = req->param_size;
-                            }
+                            ftpssn->filename = (char*)snort_alloc(req->param_size+1);
+                            memcpy(ftpssn->filename, req->param_begin, req->param_size);
+                            ftpssn->filename[req->param_size] = '\0';
+                            ftpssn->file_xfer_info = req->param_size;
 
                             // 0 for Download, 1 for Upload
                             ftpssn->data_xfer_dir = CmdConf->file_get_cmd ? false : true;

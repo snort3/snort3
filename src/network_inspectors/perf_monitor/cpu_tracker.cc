@@ -79,7 +79,7 @@ void CPUTracker::get_times(uint64_t& user, uint64_t& system, uint64_t& wall)
     struct timeval user_tv, sys_tv, wall_tv;
 
     get_clocks(user_tv, sys_tv, wall_tv);
-    
+
     user = get_microseconds(user_tv);
     system = get_microseconds(sys_tv);
     wall = get_microseconds(wall_tv);

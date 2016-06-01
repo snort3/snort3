@@ -32,6 +32,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,17 +44,18 @@
 #include "main/thread.h"
 #include "sfksearch.h"
 #include "utils/snort_bounds.h"
+#include "utils/util.h"
 
 static void KTrieFree(KTRIENODE* n);
 
 static unsigned int mtot = 0;
 
-unsigned int KTrieMemUsed(void)
+unsigned int KTrieMemUsed()
 {
     return mtot;
 }
 
-void KTrieInitMemUsed(void)
+void KTrieInitMemUsed()
 {
     mtot = 0;
 }
@@ -63,16 +65,9 @@ void KTrieInitMemUsed(void)
 */
 static void* KTRIE_MALLOC(int n)
 {
-    void* p;
-
-    if (n < 1)
-        return NULL;
-
-    p = calloc(1, n);
-
-    if (p)
-        mtot += n;
-
+    assert(n > 0);
+    void* p = snort_calloc(n);
+    mtot += n;
     return p;
 }
 
@@ -84,7 +79,7 @@ static void KTRIE_FREE(void* p)
     if (p == NULL)
         return;
 
-    free(p);
+    snort_free(p);
 }
 
 /*
@@ -100,7 +95,7 @@ static uint8_t xlatcase[256];
 /*
 *
 */
-void KTrie_init_xlatcase(void)
+void KTrie_init_xlatcase()
 {
     for (int i=0; i<256; i++)
     {
@@ -125,14 +120,9 @@ static inline void ConvertCaseEx(uint8_t* d, const uint8_t* s, int m)
 */
 KTRIE_STRUCT* KTrieNew(int method, const MpseAgent* agent)
 {
-    KTRIE_STRUCT* ts = (KTRIE_STRUCT*)KTRIE_MALLOC(sizeof(KTRIE_STRUCT) );
+    KTRIE_STRUCT* ts = (KTRIE_STRUCT*)KTRIE_MALLOC(sizeof(*ts));
 
-    if ( !ts )
-        return 0;
-
-    memset(ts, 0, sizeof(KTRIE_STRUCT));
-
-    ts->memory = sizeof(KTRIE_STRUCT);
+    ts->memory = sizeof(*ts);
     ts->nchars = 0;
     ts->npats  = 0;
     ts->end_states = 0;
@@ -213,37 +203,21 @@ static void KTrieFree(KTRIENODE* n)
 */
 static KTRIEPATTERN* KTrieNewPattern(const uint8_t* P, unsigned n)
 {
-    KTRIEPATTERN* p;
-    int ret;
-
     if (n < 1)
         return NULL;
 
-    p = (KTRIEPATTERN*)KTRIE_MALLOC(sizeof(KTRIEPATTERN) );
-
-    if (p == NULL)
-        return NULL;
+    KTRIEPATTERN* p = (KTRIEPATTERN*)KTRIE_MALLOC(sizeof(*p));
 
     /* Save as a nocase string */
     p->P = (uint8_t*)KTRIE_MALLOC(n);
-    if ( !p->P )
-    {
-        KTRIE_FREE(p);
-        return NULL;
-    }
 
     ConvertCaseEx(p->P, P, n);
 
     /* Save Case specific version */
     p->Pcase = (uint8_t*)KTRIE_MALLOC(n);
-    if ( !p->Pcase )
-    {
-        KTRIE_FREE(p->P);
-        KTRIE_FREE(p);
-        return NULL;
-    }
 
-    ret = SafeMemcpy(p->Pcase, P, n, p->Pcase, p->Pcase + n);
+    int ret = SafeMemcpy(p->Pcase, P, n, p->Pcase, p->Pcase + n);
+
     if (ret != SAFEMEM_SUCCESS)
     {
         KTRIE_FREE(p->Pcase);
@@ -302,15 +276,8 @@ int KTrieAddPattern(
 */
 static KTRIENODE* KTrieCreateNode(KTRIE_STRUCT* ts)
 {
-    KTRIENODE* t=(KTRIENODE*)KTRIE_MALLOC(sizeof(KTRIENODE) );
-
-    if (!t)
-        return 0;
-
-    memset(t,0,sizeof(KTRIENODE));
-
-    ts->memory += sizeof(KTRIENODE);
-
+    KTRIENODE* t = (KTRIENODE*)KTRIE_MALLOC(sizeof(*t));
+    ts->memory += sizeof(*t);
     return t;
 }
 
@@ -596,7 +563,7 @@ int KTrieCompile(SnortConfig* sc, KTRIE_STRUCT* ts)
     return 0;
 }
 
-void sfksearch_print_qinfo(void)
+void sfksearch_print_qinfo()
 {
 }
 

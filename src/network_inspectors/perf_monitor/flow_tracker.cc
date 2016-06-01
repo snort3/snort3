@@ -27,7 +27,7 @@
 #include "utils/util.h"
 
 #ifdef UNIT_TEST
-#include <catch/catch.hpp>
+#include "catch/catch.hpp"
 #endif
 
 #define FLOW_FILE (PERF_NAME "_flow.csv")
@@ -73,7 +73,7 @@ void FlowTracker::update(Packet* p)
 
         if (p->ptrs.tcph)
             update_transport_flows(p->ptrs.sp, p->ptrs.dp, tcp, len);
-        
+
         else if (p->ptrs.udph)
             update_transport_flows(p->ptrs.sp, p->ptrs.dp, udp, len);
 
@@ -109,7 +109,7 @@ void FlowTracker::clear()
     memset(&udp.src[0], 0, udp.src.size() * sizeof(PegCount));
     memset(&udp.dst[0], 0, udp.dst.size() * sizeof(PegCount));
     udp.high = 0;
-    
+
     memset(&type_icmp[0], 0, type_icmp.size() * sizeof(PegCount));
 }
 

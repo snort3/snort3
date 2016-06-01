@@ -113,7 +113,7 @@ public:
     bool fastpath();
 
 private:
-    // FIXIT-H J use custom struct instead of std::pair for better semantics
+    // FIXIT-L use custom struct instead of std::pair for better semantics
     // std::vector<std::pair<LatencyTimer<Clock>, bool>> contexts;
     std::vector<PacketTimer<Clock>> timers;
     const ConfigWrapper& config;
@@ -303,7 +303,7 @@ hr_time MockClock::t = hr_time(0_ticks);
 
 TEST_CASE ( "packet latency impl", "[latency]" )
 {
-    // FIXIT-H J need to add checks for events
+    // FIXIT-L need to add checks for events
 
     using namespace t_packet_latency;
 

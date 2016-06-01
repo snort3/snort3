@@ -44,23 +44,22 @@
 /*
     Create a new PortObject
 */
-PortObject* PortObjectNew(void)
+PortObject* PortObjectNew()
 {
-    PortObject* po = (PortObject*)SnortAlloc(sizeof(PortObject));
-
+    PortObject* po = (PortObject*)snort_calloc(sizeof(PortObject));
     po->item_list =(SF_LIST*)sflist_new();
 
     if ( !po->item_list )
     {
-        free(po);
+        snort_free(po);
         return 0;
     }
 
     po->rule_list =(SF_LIST*)sflist_new();
     if ( !po->rule_list )
     {
-        sflist_free_all(po->item_list, free);
-        free(po);
+        sflist_free_all(po->item_list, snort_free);
+        snort_free(po);
         return 0;
     }
 
@@ -81,18 +80,20 @@ void PortObjectFree(void* pvoid)
         return;
 
     if ( po->name )
-        free (po->name);
+        snort_free(po->name);
+
     if ( po->item_list)
-        sflist_free_all(po->item_list, free);
+        sflist_free_all(po->item_list, snort_free);
+
     if ( po->rule_list)
-        sflist_free_all(po->rule_list, free);
+        sflist_free_all(po->rule_list, snort_free);
 
     if (po->data && po->data_free)
     {
         po->data_free(po->data);
     }
 
-    free(po);
+    snort_free(po);
 }
 
 /*
@@ -108,13 +109,10 @@ int PortObjectSetName(PortObject* po, const char* name)
 
     /* free the old name */
     if (po->name)
-        free(po->name);
+        snort_free(po->name);
 
     /* alloc a new name */
-    po->name = SnortStrdup(name);
-    if ( !po->name )
-        return -1;
-
+    po->name = snort_strdup(name);
     return 0;
 }
 
@@ -140,7 +138,7 @@ int PortObjectAddItem(PortObject* po, PortObjectItem* poi, int* errflag)
         if ((p->lport == poi->lport) && (p->hport == poi->hport))
         {
             if (errflag)
-                *errflag = 9; // FIXIT why return poparser code here? POPERR_DUPLICATE_ENTRY;
+                *errflag = 9; // FIXIT-L why return poparser code here? POPERR_DUPLICATE_ENTRY;
             return -1; /* -1 chosen for consistency with sflist_add_tail */
         }
     }
@@ -207,12 +205,7 @@ int PortObjectAddRule(PortObject* po, int rule)
         return -1;
 
     /* Add rule index to rule list */
-    pruleid = (int*)calloc(1,sizeof(int));
-    if ( !pruleid )
-    {
-        return -1;
-    }
-
+    pruleid = (int*)snort_calloc(sizeof(int));
     *pruleid = rule;
 
     sflist_add_tail(po->rule_list, pruleid);
@@ -223,10 +216,7 @@ int PortObjectAddRule(PortObject* po, int rule)
 int PortObjectAddPortAny(PortObject* po)
 {
     if (!po->name)
-        po->name = strdup("any");
-
-    if (!po->name)
-        return -1;
+        po->name = snort_strdup("any");
 
     return PortObjectAddRange(po, 0, SFPO_MAX_PORTS-1, 0);
 }
@@ -249,15 +239,9 @@ PortObject* PortObjectDup(PortObject* po)
 
     /* Dup the Name */
     if ( po->name )
-        ponew->name = strdup(po->name);
+        ponew->name = snort_strdup(po->name);
     else
-        ponew->name = strdup("dup");
-
-    if ( !ponew->name )
-    {
-        free(ponew);
-        return NULL;
-    }
+        ponew->name = snort_strdup("dup");
 
     /* Dup the Item List */
     if ( po->item_list )
@@ -269,8 +253,8 @@ PortObject* PortObjectDup(PortObject* po)
             poinew = PortObjectItemDup(poi);
             if (!poinew)
             {
-                free(ponew->name);
-                free(ponew);
+                snort_free(ponew->name);
+                snort_free(ponew);
                 return 0;
             }
 
@@ -285,14 +269,7 @@ PortObject* PortObjectDup(PortObject* po)
             prid != 0;
             prid  = (int*)sflist_next(&lpos) )
         {
-            prule = (int*)calloc(1,sizeof(int));
-            if (!prule)
-            {
-                free(poinew);
-                free(ponew->name);
-                free(ponew);
-                return NULL;
-            }
+            prule = (int*)snort_calloc(sizeof(int));
             *prule = *prid;
             sflist_add_tail(ponew->rule_list,prule);
         }
@@ -317,15 +294,9 @@ PortObject* PortObjectDupPorts(PortObject* po)
 
     /* Dup the Name */
     if ( po->name )
-        ponew->name = strdup(po->name);
+        ponew->name = snort_strdup(po->name);
     else
-        ponew->name = strdup("dup");
-
-    if ( !ponew->name )
-    {
-        free(ponew);
-        return NULL;
-    }
+        ponew->name = snort_strdup("dup");
 
     /* Dup the Item List */
     if ( po->item_list )
@@ -337,7 +308,7 @@ PortObject* PortObjectDupPorts(PortObject* po)
             poinew = PortObjectItemDup(poi);
             if (!poinew)
             {
-                free(ponew);
+                snort_free(ponew);
                 return NULL;
             }
             PortObjectAddItem(ponew, poinew, NULL);
@@ -361,7 +332,7 @@ int PortObjectNormalize(PortObject* po)
     PortBitSet parray;
     int nports = PortObjectBits(parray, po);
 
-    sflist_free_all(po->item_list, free);
+    sflist_free_all(po->item_list, snort_free);
     po->item_list = PortObjectItemListFromBits(parray, SFPO_MAX_PORTS);
 
     return nports;
@@ -550,7 +521,7 @@ int PortObjectRemovePorts(PortObject* a,  PortObject* b)
     pA &= ~pB;
 
     /* Release the old port list */
-    sflist_free_all(a->item_list, free);
+    sflist_free_all(a->item_list, snort_free);
 
     /* Replace the old PortObject list */
     a->item_list = PortObjectItemListFromBits(pA, SFPO_MAX_PORTS);
@@ -605,8 +576,7 @@ void PortObjectPrintPortsRaw(PortObject* po)
      *       1potential_negation) + surrounding_whitespace + brackets + NULL */
 
     bufsize = po->item_list->count * (30 + 1 + 1) + 5;
-    buf = (char*)SnortAlloc(bufsize);
-
+    buf = (char*)snort_calloc(bufsize);
     SnortSnprintfAppend(buf, bufsize, " [");
 
     for (poi=(PortObjectItem*)sflist_first(po->item_list, &pos);
@@ -620,7 +590,7 @@ void PortObjectPrintPortsRaw(PortObject* po)
 
     LogMessage("%s", buf);
 
-    free(buf);
+    snort_free(buf);
 }
 
 /*
@@ -708,6 +678,6 @@ void PortObjectPrintEx(PortObject* po,
     SnortSnprintfAppend(po_print_buf, bufsize, "  ]\n }\n");
 
     LogMessage("%s", po_print_buf);
-    free(rlist);
+    snort_free(rlist);
 }
 

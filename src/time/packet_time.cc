@@ -48,12 +48,12 @@ void packet_time_update(const struct timeval* cur_tv)
     s_recent_packet = *cur_tv;
 }
 
-uint32_t packet_first_time(void)
+uint32_t packet_first_time()
 {
     return s_first_packet;
 }
 
-time_t packet_time(void)
+time_t packet_time()
 {
     return s_recent_packet.tv_sec;
 }

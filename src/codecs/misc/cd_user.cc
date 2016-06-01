@@ -47,7 +47,7 @@ void UserCodec::get_data_link_type(std::vector<int>& v)
 
 static void set_ip(const DAQ_UsrHdr_t* pci, CodecData& codec, DecodeData& snort)
 {
-    // FIXIT support ip6
+    // FIXIT-M support ip6
     sfip_t sip, dip;
     sfip_set_raw(&sip, &pci->src_addr, AF_INET);
     sfip_set_raw(&dip, &pci->dst_addr, AF_INET);

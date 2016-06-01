@@ -118,7 +118,7 @@ TEST_GROUP(side_channel)
 {
     void setup()
     {
-        // FIXIT-H - Workaround for issue with CppUTest memory leak detection
+        // FIXIT-L workaround for issue with CppUTest memory leak detection
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         SideChannelManager::pre_config_init();
 

@@ -33,49 +33,15 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "xmalloc.h"
-
-//#define MEMASSERT(p) if(!p){printf("KMAP-No Memory: File: %s
-// Line:%d\n",__FILE__,__LINE__);exit(0);}
-#define MEMASSERT(p)
-
-/*
-*
-*/
-static void* s_malloc(int n)
-{
-    void* p;
-
-    p = xmalloc(n);
-
-    MEMASSERT(p);
-
-    return p;
-}
-
-/*
-*
-*/
-static void s_free(void* p)
-{
-    if ( p )
-        xfree(p);
-}
+#include "utils/util.h"
 
 /*
 *
 */
 KMAP* KMapNew(KMapUserFreeFunc userfree)
 {
-    KMAP* km = (KMAP*)s_malloc(sizeof(KMAP) );
-
-    if ( !km )
-        return 0;
-
-    memset(km, 0, sizeof(KMAP));
-
+    KMAP* km = (KMAP*)snort_calloc(sizeof(KMAP));
     km->userfree = userfree;
-
     return km;
 }
 
@@ -98,7 +64,7 @@ static int KMapFreeNodeList(KMAP* km)
     {
         if ( k->key )
         {
-            s_free(k->key);
+            snort_free(k->key);
         }
         if ( km->userfree && k->userdata )
         {
@@ -106,7 +72,7 @@ static int KMapFreeNodeList(KMAP* km)
         }
         kold = k;
         k = k->next;
-        s_free(kold);
+        snort_free(kold);
     }
 
     return 0;
@@ -127,7 +93,7 @@ static void KMapFreeNode(KMAP* km, KMAPNODE* r)
         KMapFreeNode(km, r->child);
     }
 
-    s_free(r);
+    snort_free(r);
 }
 
 /*
@@ -152,7 +118,7 @@ void KMapDelete(KMAP* km)
     /* Free the node list */
     KMapFreeNodeList(km);
 
-    s_free(km);
+    snort_free(km);
 }
 
 /*
@@ -165,18 +131,8 @@ static KEYNODE* KMapAddKeyNode(KMAP* km,void* key, int n, void* userdata)
     if (n <= 0)
         return 0;
 
-    knode = (KEYNODE*)s_malloc(sizeof(KEYNODE) );
-    if (!knode)
-        return 0;
-
-    memset(knode, 0, sizeof(KEYNODE) );
-
-    knode->key = (unsigned char*)s_malloc(n); // Alloc the key space
-    if ( !knode->key )
-    {
-        free(knode);
-        return 0;
-    }
+    knode = (KEYNODE*)snort_calloc(sizeof(KEYNODE));
+    knode->key = (unsigned char*)snort_calloc(n); // Alloc the key space
 
     memcpy(knode->key,key,n); // Copy the key
     knode->nkey     = n;
@@ -200,15 +156,8 @@ static KEYNODE* KMapAddKeyNode(KMAP* km,void* key, int n, void* userdata)
 */
 static KMAPNODE* KMapCreateNode(KMAP* km)
 {
-    KMAPNODE* mn=(KMAPNODE*)s_malloc(sizeof(KMAPNODE) );
-
-    if (!mn)
-        return NULL;
-
-    memset(mn,0,sizeof(KMAPNODE));
-
+    KMAPNODE* mn=(KMAPNODE*)snort_calloc(sizeof(KMAPNODE));
     km->nchars++;
-
     return mn;
 }
 
@@ -527,7 +476,7 @@ int main(int argc, char** argv)
     for (i=1; i<=n; i++)
     {
         SnortSnprintf(str, sizeof(str), "KeyWord%d",i);
-        KMapAdd(km, str, 0 /* strlen(str) */, strupr(SnortStrdup(str)) );
+        KMapAdd(km, str, 0 /* strlen(str) */, strupr(snort_strdup(str)) );
         printf("Adding Key=%s\n",str);
     }
     printf("xmem: %u bytes, %d chars\n",xmalloc_bytes(),km->nchars);

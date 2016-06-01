@@ -92,35 +92,21 @@ THREAD_LOCAL OTNX_MATCH_DATA t_omd;
 void otnx_match_data_init(int num_rule_types)
 {
     t_omd.iMatchInfoArraySize = num_rule_types;
-    t_omd.matchInfo = (MATCH_INFO*)SnortAlloc(num_rule_types * sizeof(MATCH_INFO));
+    t_omd.matchInfo = (MATCH_INFO*)snort_calloc(num_rule_types, sizeof(MATCH_INFO));
 }
 
 void otnx_match_data_term()
 {
     if ( t_omd.matchInfo )
-        free(t_omd.matchInfo);
+        snort_free(t_omd.matchInfo);
 
     t_omd.matchInfo = nullptr;
 }
 
-/*
-**
-**  NAME
-**    InitMatchInfo::
-**
-**  DESCRIPTION
-**    Initialize the OTNX_MATCH_DATA structure.  We do this for
-**    every packet so calloc is not used as this would zero the
-**    whole space and this only sets the necessary counters to
-**    zero, and saves us time.
-**
-**  FORMAL INPUTS
-**    OTNX_MATCH_DATA * - pointer to structure to init.
-**
-**  FORMAL OUTPUT
-**    None
-**
-*/
+// Initialize the OTNX_MATCH_DATA structure.  We do this for
+// every packet so this only sets the necessary counters to
+// zero which saves us time.
+
 static inline void InitMatchInfo(OTNX_MATCH_DATA* o)
 {
     int i = 0;
@@ -376,7 +362,7 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
     if ( !rtn )
         return 0;
 
-    // FIXIT: maybe add a port test here ...
+    // FIXIT-L maybe add a port test here ...
 
     DebugFormat(DEBUG_DETECT, "[*] Rule Head %p\n", rtn);
 
@@ -1046,8 +1032,6 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
 
     if ( do_detect_content )
     {
-        // FIXIT-L sdf etc. ran here
-
         if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
             if ( fp_search(port_group, p, check_ports, type, omd) )
                 return 0;
@@ -1055,10 +1039,10 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
 
     do
     {
-        // FIXIT-L restrict to non-data packets?  (non-data includes
-        // defrags).  strictly speaking, nfp (no fast pattern) rules are
-        // not the same as nc (no content).  since these rules may have
-        // content, they must be run against all packets.
+        // FIXIT-L restrict no-fast-pattern to non-data packets?  (non-data includes
+        // defrags).  strictly speaking, nfp (no fast pattern) rules are not the same
+        // as nc (no content).  since these rules may have content, they must be run
+        // against all packets.
         //if ( p->is_data() )
         //    break;
 

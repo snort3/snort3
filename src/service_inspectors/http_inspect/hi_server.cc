@@ -87,7 +87,7 @@ static THREAD_LOCAL uint8_t dechunk_buffer[65535];
             COOKIE_PTR* cookie = Server->response.cookie.next; \
             do { \
                 Server->response.cookie.next = Server->response.cookie.next->next; \
-                free(cookie); \
+                snort_free(cookie); \
                 cookie = Server->response.cookie.next; \
             } while (cookie); \
         } \
@@ -880,22 +880,19 @@ static void SetGzipBuffers(HttpSessionData* hsd, HI_SESSION* session)
         && (session != NULL) && (session->server_conf != NULL)
         && (session->global_conf != NULL) && session->server_conf->extract_gzip)
     {
-        hsd->decomp_state = (DECOMPRESS_STATE*)calloc(1, sizeof(*hsd->decomp_state));
+        hsd->decomp_state = (DECOMPRESS_STATE*)snort_calloc(sizeof(*hsd->decomp_state));
 
-        if ( hsd->decomp_state )
+        if (session->server_conf->unlimited_decompress)
         {
-            if (session->server_conf->unlimited_decompress)
-            {
-                hsd->decomp_state->compr_depth = MAX_GZIP_DEPTH;
-                hsd->decomp_state->decompr_depth = MAX_GZIP_DEPTH;
-            }
-            else
-            {
-                hsd->decomp_state->compr_depth = session->global_conf->compr_depth;
-                hsd->decomp_state->decompr_depth = session->global_conf->decompr_depth;
-            }
-            hsd->decomp_state->inflate_init = 0;
+            hsd->decomp_state->compr_depth = MAX_GZIP_DEPTH;
+            hsd->decomp_state->decompr_depth = MAX_GZIP_DEPTH;
         }
+        else
+        {
+            hsd->decomp_state->compr_depth = session->global_conf->compr_depth;
+            hsd->decomp_state->decompr_depth = session->global_conf->decompr_depth;
+        }
+        hsd->decomp_state->inflate_init = 0;
     }
 }
 

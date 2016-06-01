@@ -159,7 +159,7 @@ static void SFRF_New(unsigned nbytes)
         1);       /* Recycle nodes ?*/
 }
 
-void SFRF_Delete(void)
+void SFRF_Delete()
 {
     if ( !rf_hash )
         return;
@@ -168,7 +168,7 @@ void SFRF_Delete(void)
     rf_hash = NULL;
 }
 
-void SFRF_Flush(void)
+void SFRF_Flush()
 {
     if ( rf_hash )
         sfxhash_make_empty(rf_hash);
@@ -186,7 +186,7 @@ static void SFRF_ConfigNodeFree(void* item)
         sfvar_free(node->applyTo);
     }
 
-    free(node);
+    snort_free(node);
 }
 
 /* free tSFRFSidNode and related buffers.
@@ -198,7 +198,7 @@ static void SFRF_SidNodeFree(void* item)
 {
     tSFRFSidNode* pSidnode = (tSFRFSidNode*)item;
     sflist_free_all(pSidnode->configNodeList, SFRF_ConfigNodeFree);
-    free(pSidnode);
+    snort_free(pSidnode);
 }
 
 /*  Add a permanent threshold object to the threshold table. Multiple
@@ -287,9 +287,7 @@ int SFRF_ConfigAdd(
     if ( !pSidNode )
     {
         /* Create the pSidNode hash node data */
-        pSidNode = (tSFRFSidNode*)calloc(1,sizeof(tSFRFSidNode));
-        if ( !pSidNode )
-            return -3;
+        pSidNode = (tSFRFSidNode*)snort_calloc(sizeof(tSFRFSidNode));
 
         pSidNode->gid = cfgNode->gid;
         pSidNode->sid = cfgNode->sid;
@@ -297,7 +295,7 @@ int SFRF_ConfigAdd(
 
         if ( !pSidNode->configNodeList )
         {
-            free(pSidNode);
+            snort_free(pSidNode);
             return -4;
         }
 
@@ -306,20 +304,13 @@ int SFRF_ConfigAdd(
         if ( hstatus )
         {
             sflist_free(pSidNode->configNodeList);
-            free(pSidNode);
+            snort_free(pSidNode);
             return -5;
         }
     }
 
     /* Create a tSFRFConfigNode for this tSFRFSidNode (Object) */
-    pNewConfigNode = (tSFRFConfigNode*)calloc(1,sizeof(tSFRFConfigNode));
-    if ( !pNewConfigNode )
-    {
-        sflist_free(pSidNode->configNodeList);
-        free(pSidNode);
-        return -6;
-    }
-
+    pNewConfigNode = (tSFRFConfigNode*)snort_calloc(sizeof(tSFRFConfigNode));
     *pNewConfigNode = *cfgNode;
 
     rf_config->count++;
@@ -329,9 +320,9 @@ int SFRF_ConfigAdd(
     if ( pNewConfigNode->tid == 0 )
     {
         // tid overflow. rare but possible
-        free(pNewConfigNode);
+        snort_free(pNewConfigNode);
         sflist_free(pSidNode->configNodeList);
-        free(pSidNode);
+        snort_free(pSidNode);
         return -6;
     }
 
@@ -833,7 +824,7 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(
 }
 
 #ifdef UNIT_TEST
-// FIXIT-L see sfip/sf_ip.cc
+// FIXIT-L Catch issue; see sfip/sf_ip.cc
 #include "sfrf_test.cc"
 #endif
 

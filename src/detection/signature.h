@@ -94,13 +94,13 @@ struct SigInfo
     ClassType* classType;
     uint32_t priority;
     char* message;
-    ReferenceNode* refs;  // FIXIT-L delete this - stored but not used
+    ReferenceNode* refs;  // FIXIT-H delete this - stored but not used
     bool text_rule;
     unsigned int num_services;
     ServiceInfo* services;
 };
 
-SFGHASH* OtnLookupNew(void);
+SFGHASH* OtnLookupNew();
 void OtnLookupAdd(SFGHASH*, OptTreeNode*);
 OptTreeNode* OtnLookup(SFGHASH*, uint32_t gid, uint32_t sid);
 void OtnLookupFree(SFGHASH*);

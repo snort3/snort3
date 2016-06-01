@@ -320,7 +320,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     /* if this packet isn't a fragment
      * or if it is, its a UDP packet and offset is 0 */
     if (!(snort.decode_flags & DECODE_FRAG) /*||
-        ((frag_off == 0) &&  // FIXIT-M this forces flow to udp instead of ip
+        ((frag_off == 0) &&  // FIXIT-H this forces flow to udp instead of ip
          (iph->proto() == IpProtocol::UDP))*/)
     {
         if (to_utype(iph->proto()) >= to_utype(ProtocolId::MIN_UNASSIGNED_IP_PROTO))
@@ -543,7 +543,7 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 {
     const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw_pkt);
 
-    // FIXIT-L  -->  This does NOT obfuscate correctly
+    // FIXIT-H this does NOT obfuscate correctly
     if (SnortConfig::obfuscate())
     {
         TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");
@@ -740,8 +740,7 @@ static void ipv4_codec_ginit()
         "224.32.0.0/11,224.64.0.0/10,224.128.0.0/9,225.0.0.0/8,226.0.0.0/7,"
         "228.0.0.0/6,234.0.0.0/7,236.0.0.0/7,238.0.0.0/8]");
 
-    if ( MulticastReservedIp == nullptr )
-        FatalError("Could not initialize IPv4 MulticastReservedIp\n");
+    assert(MulticastReservedIp);
 }
 
 static void ipv4_codec_gterm()

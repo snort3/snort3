@@ -22,14 +22,15 @@
 #define SFLSQ_H
 
 // Simple LIST, STACK, QUEUE DICTIONARY (LIST BASED) interface
-// All of these functions are based on lists, which use
-// the standard malloc.
+// All of these functions are based on lists.
 // Use STL containers instead of these if possible.
 
-// FIXIT-L: If we're going to keep this interface around
-//          (instead of using STL data structures)
-//          it would make sense to template the interfaces
-//          instead of using a void* for data
+// FIXIT-L if we're going to keep sflsq around (instead of using STL data
+// structures) it would make sense to template the interfaces instead of
+// using a void* for data
+
+// FIXIT-M but we are going to delete sflsq and use STL instead
+
 // Note that NODE_DATA can be redefined with the typedef below
 typedef void* NODE_DATA;
 
@@ -71,7 +72,7 @@ typedef sf_list SF_LIST;
 // -----------------------------------------------------------------------------
 // Linked List Interface
 // -----------------------------------------------------------------------------
-SF_LIST* sflist_new(void);
+SF_LIST* sflist_new();
 void sflist_init(SF_LIST*);
 int sflist_add_tail(SF_LIST*, NODE_DATA);
 int sflist_add_head(SF_LIST*, NODE_DATA);
@@ -90,7 +91,7 @@ void sflist_static_free_all(SF_LIST*, void (* nfree)(void*));
 // -----------------------------------------------------------------------------
 //  Queue Interface ( FIFO - First in, First out )
 // -----------------------------------------------------------------------------
-SF_QUEUE* sfqueue_new(void);
+SF_QUEUE* sfqueue_new();
 int sfqueue_add(SF_QUEUE*, NODE_DATA);
 NODE_DATA sfqueue_remove(SF_QUEUE*);
 int sfqueue_count(SF_QUEUE*);

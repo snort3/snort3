@@ -32,7 +32,7 @@ namespace Piglet
 {
 int main()
 {
-    // FIXIT-M: Allow user selection of output/result functions
+    // FIXIT-M allow user selection of output/result functions
     if ( Runner::run_all(verbose_output) )
         return 0;
 

@@ -128,9 +128,11 @@ void FlowIPTracker::reset()
     {
         ipMap = sfxhash_new(1021, sizeof(FlowStateKey), sizeof(FlowStateValue),
             perfmon_config->flowip_memcap, 1, nullptr, nullptr, 1);
+
         if (!ipMap)
-            FatalError("Unable to allocate memory for FlowIP stats\n"); //FIXIT-H this should all
-                                                                        // occur at thread init
+            // FIXIT-M FlowIp allocations should all occur at thread init
+            FatalError("Unable to allocate memory for FlowIP stats\n");
+
         first = false;
     }
     else

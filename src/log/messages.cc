@@ -88,8 +88,8 @@ void ParseMessage(const char* format, ...)
     unsigned file_line;
     get_parse_location(file_name, file_line);
 
-   // FIXIT-L Plz how can same format filename/linenum as ParseWarning
-   if (file_name != NULL)
+   // FIXIT-L use same format filename/linenum as ParseWarning ( %s(%d) vs $s:%d )
+   if ( file_name )
         LogMessage("%s(%d) %s\n", file_name, file_line, buf);
     else
         LogMessage("%s\n", buf);
@@ -161,7 +161,7 @@ NORETURN void ParseAbort(const char* format, ...)
     get_parse_location(file_name, file_line);
 
     // FIXIT-L Refer to ParseMessage above.
-    if (file_name != NULL)
+    if ( file_name )
         FatalError("%s(%u) %s\n", file_name, file_line, buf);
     else
         FatalError("%s\n", buf);

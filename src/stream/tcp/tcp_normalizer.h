@@ -65,7 +65,7 @@ public:
     virtual int handle_repeated_syn(TcpSegmentDescriptor&) = 0;
     virtual uint16_t set_urg_offset(const tcp::TCPHdr* tcph, uint16_t dsize);
 
-    static const PegInfo* get_normalization_pegs(void);
+    static const PegInfo* get_normalization_pegs();
     static NormPegs get_normalization_counts(unsigned&);
 
     void set_peer_tracker(TcpStreamTracker* peer_tracker)
@@ -128,12 +128,12 @@ public:
         return tcp_ips_enabled;
     }
 
-    bool handling_timestamps(void) const
+    bool handling_timestamps() const
     {
         return tcp_ts_flags != TF_NONE;
     }
 
-    uint32_t get_timestamp_flags(void)
+    uint32_t get_timestamp_flags()
     {
         return tcp_ts_flags;
     }

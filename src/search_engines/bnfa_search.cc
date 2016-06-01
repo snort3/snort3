@@ -193,14 +193,12 @@ static void* bnfa_alloc(int n, int* m)
 {
     if ( !n )
         return nullptr;
-    void* p = calloc(1,n);
-    if ( p )
-    {
-        if (m)
-        {
-            m[0] += n;
-        }
-    }
+
+    void* p = snort_calloc(n);
+
+    if (m)
+        m[0] += n;
+
     return p;
 }
 
@@ -208,7 +206,7 @@ static void bnfa_free(void* p, int n, int* m)
 {
     if ( p )
     {
-        free(p);
+        snort_free(p);
         if (m)
         {
             m[0] -= n;
@@ -1291,7 +1289,7 @@ void bnfaFree(bnfa_struct_t* bnfa)
         bnfa->nextstate_memory);
     BNFA_FREE(bnfa->bnfaTransList,(2*bnfa->bnfaNumStates+bnfa->bnfaNumTrans)*sizeof(bnfa_state_t*),
         bnfa->nextstate_memory);
-    free(bnfa);   /* cannot update memory tracker when deleting bnfa so just 'free' it !*/
+    snort_free(bnfa);   /* cannot update memory tracker when deleting bnfa so just 'free' it !*/
 }
 
 /*
@@ -2096,12 +2094,12 @@ void bnfaPrintInfo(bnfa_struct_t* p)
     bnfaPrint(p);
 }
 
-void bnfaPrintSummary(void)
+void bnfaPrintSummary()
 {
     bnfaPrintInfoEx(&summary);
 }
 
-void bnfaInitSummary(void)
+void bnfaInitSummary()
 {
     summary_cnt=0;
     memset(&summary,0,sizeof(bnfa_struct_t));

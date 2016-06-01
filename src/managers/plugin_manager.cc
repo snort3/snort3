@@ -165,8 +165,7 @@ struct RefCount
 
     RefCount() { count = 0; }
 
-    // FIXIT-L fails on fatal error
-    //~RefCount() { assert(!count); };
+    //~RefCount() { assert(!count); }; // FIXIT-L fails on fatal error
 };
 
 typedef map<void*, RefCount> RefMap;

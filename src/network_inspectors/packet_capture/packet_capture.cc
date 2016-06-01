@@ -77,7 +77,7 @@ class PacketCapture : public Inspector
 {
 public:
     PacketCapture(CaptureModule*);
-    
+
     void eval(Packet*) override;
     void tterm() override { capture_term(); };
 
@@ -98,7 +98,7 @@ void PacketCapture::eval(Packet* p)
         if ( !capture_initialized() )
             if ( !capture_init() )
                 return;
-        
+
         if ( !bpf.bf_insns || sfbpf_filter(bpf.bf_insns, p->pkt,
                 p->pkth->caplen, p->pkth->pktlen) )
         {
@@ -211,7 +211,7 @@ static const InspectApi pc_api =
 };
 
 #ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] = 
+SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &pc_api.base,
     nullptr
@@ -241,7 +241,7 @@ public:
     vector<Packet*> pcap;
 
     MockPacketCapture(CaptureModule* m) : PacketCapture(m) {}
-    
+
 protected:
     pcap_dumper_t* open_dump(pcap_t*, const char*) override
     { return (pcap_dumper_t*)1; }
@@ -266,7 +266,7 @@ TEST_CASE("toggle", "[PacketCapture]")
 
     CaptureModule mod;
     MockPacketCapture cap(&mod);
-    
+
     cap.write_packet_called = false;
     cap.eval(null_packet);
     CHECK ( !cap.write_packet_called );
@@ -275,7 +275,7 @@ TEST_CASE("toggle", "[PacketCapture]")
     packet_capture_enable("");
     cap.eval(null_packet);
     CHECK ( cap.write_packet_called );
-    
+
     cap.write_packet_called = false;
     packet_capture_disable();
     cap.eval(null_packet);
@@ -288,7 +288,7 @@ TEST_CASE("lazy init", "[PacketCapture]")
 
     auto mod = (CaptureModule*)mod_ctor();
     auto real_cap = (PacketCapture*)pc_ctor(mod);
-    
+
     CHECK ( !capture_initialized() );
 
     real_cap->eval(null_packet);
@@ -329,7 +329,7 @@ TEST_CASE("blank filter", "[PacketCapture]")
 
     CaptureModule mod;
     MockPacketCapture cap(&mod);
-    
+
     packet_capture_enable("");
     cap.eval(&p);
 
@@ -414,7 +414,7 @@ TEST_CASE("bpf filter", "[PacketCapture]")
 
     cap_count_stats.checked = 0;
     cap_count_stats.matched = 0;
-    
+
     packet_capture_enable("ip host 10.82.240.82");
     packet_capture_enable(""); //Test double-enable guard
 

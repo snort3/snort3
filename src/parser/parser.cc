@@ -95,7 +95,7 @@ void parser_append_rules(const char* s)
 // private / implementation methods
 //-------------------------------------------------------------------------
 
-void parser_init(void)
+void parser_init()
 {
     parse_rule_init();
 
@@ -311,13 +311,13 @@ static void DefineIfaceVar(SnortConfig* sc, char* iname, uint8_t* network, uint8
  ****************************************************************************/
 static void DefineAllIfaceVars(SnortConfig* sc)
 {
+
     // FIXIT-L don't come back here on reload unless we are going to find
-    // new ifaces.
-    /* Cache retrieved devs so if user is running with dropped privs and
-     * does a reload, we can use previous values */
+    // new ifaces.  Cache retrieved devs so if user is running with dropped
+    // privs and does a reload, we can use previous values 
     static int num_vars = 0;
-    /* Should be more than enough to cover the number of
-     * interfaces on a machine */
+
+    // should be more than enough to cover the number of interfaces on a machine
     static iface_var_t iface_vars[IFACE_VARS_MAX];
 
     if (num_vars > 0)
@@ -575,7 +575,7 @@ void FreeRuleTreeNode(RuleTreeNode* rtn)
     {
         tmp = idx;
         idx = idx->next;
-        free(tmp);
+        snort_free(tmp);
     }
 }
 
@@ -590,7 +590,7 @@ void DestroyRuleTreeNode(RuleTreeNode* rtn)
 
     FreeRuleTreeNode(rtn);
 
-    free(rtn);
+    snort_free(rtn);
 }
 
 /****************************************************************************
@@ -688,7 +688,7 @@ ListHead* CreateRuleType(SnortConfig* sc, const char* name, RuleType mode)
     if (sc == NULL)
         return NULL;
 
-    node = (RuleListNode*)SnortAlloc(sizeof(RuleListNode));
+    node = (RuleListNode*)snort_calloc(sizeof(RuleListNode));
 
     /* If this is the first rule list node, then we need to
      * create a new list. */
@@ -706,7 +706,7 @@ ListHead* CreateRuleType(SnortConfig* sc, const char* name, RuleType mode)
             /* We do not allow multiple rules types with the same name. */
             if (strcasecmp(tmp->name, name) == 0)
             {
-                free(node);
+                snort_free(node);
                 return NULL;
             }
 
@@ -719,10 +719,10 @@ ListHead* CreateRuleType(SnortConfig* sc, const char* name, RuleType mode)
         last->next = node;
     }
 
-    node->RuleList = (ListHead*)SnortAlloc(sizeof(ListHead));
+    node->RuleList = (ListHead*)snort_calloc(sizeof(ListHead));
     node->RuleList->ruleListNode = node;
     node->mode = mode;
-    node->name = SnortStrdup(name);
+    node->name = snort_strdup(name);
     node->evalIndex = evalIndex;
 
     sc->evalOrder[node->mode] =  evalIndex;
@@ -743,12 +743,12 @@ void FreeRuleLists(SnortConfig* sc)
         node = node->next;
 
         FreeOutputLists(tmp->RuleList);
-        free(tmp->RuleList);
+        snort_free(tmp->RuleList);
 
         if (tmp->name)
-            free(tmp->name);
+            snort_free(tmp->name);
 
-        free(tmp);
+        snort_free(tmp);
     }
 
     sc->rule_lists = NULL;
@@ -878,15 +878,16 @@ int addRtnToOtn(
         /* realloc the list, initialize missing elements to 0 and add
          * policyId */
         unsigned int numNodes = (policyId + 1);
-        RuleTreeNode** tmpNodeArray = (RuleTreeNode**)SnortAlloc(sizeof(RuleTreeNode*) * numNodes);
+        RuleTreeNode** tmpNodeArray =
+            (RuleTreeNode**)snort_calloc(numNodes, sizeof(RuleTreeNode*));
 
         /* copy original contents, the remaining elements are already
-         * zeroed out by snortAlloc */
+         * zeroed out by snort_calloc */
         if (otn->proto_nodes)
         {
             memcpy(tmpNodeArray, otn->proto_nodes,
                 sizeof(RuleTreeNode*) * otn->proto_node_num);
-            free(otn->proto_nodes);
+            snort_free(otn->proto_nodes);
         }
 
         otn->proto_node_num = numNodes;

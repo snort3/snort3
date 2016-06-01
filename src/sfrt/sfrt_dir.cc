@@ -36,7 +36,9 @@
 #include <stdarg.h> /* For variadic */
 #include <stdio.h>
 #include <string.h> /* For memset   */
+
 #include "main/snort_types.h"
+#include "utils/util.h"
 
 typedef struct
 {
@@ -65,12 +67,7 @@ static dir_sub_table_t* _sub_table_new(dir_table_t* root, uint32_t dimension,
     }
 
     /* Set up the initial prefilled "sub table" */
-    sub = (dir_sub_table_t*)malloc(sizeof(dir_sub_table_t));
-
-    if (!sub)
-    {
-        return NULL;
-    }
+    sub = (dir_sub_table_t*)snort_alloc(sizeof(dir_sub_table_t));
 
     /* This keeps the width readily available rather than recalculating it
      * from the number of entries during an insert or lookup */
@@ -78,27 +75,13 @@ static dir_sub_table_t* _sub_table_new(dir_table_t* root, uint32_t dimension,
 
     /* need 2^sub->width entries */
     sub->num_entries = len;
-
-    sub->entries = (word*)malloc(sizeof(word) * sub->num_entries);
-
-    if (!sub->entries)
-    {
-        free(sub);
-        return NULL;
-    }
+    sub->entries = (word*)snort_alloc(sizeof(word) * sub->num_entries);
 
     /* A "length" needs to be stored with each entry above.  The length refers
      * to how specific the insertion that set the entry was.  It is necessary
      * so that the entry is not overwritten by less general routing
      * information if "RT_FAVOR_SPECIFIC" insertions are being performed. */
-    sub->lengths = (uint8_t*)malloc(sub->num_entries);
-
-    if (!sub->lengths)
-    {
-        free(sub->entries);
-        free(sub);
-        return NULL;
-    }
+    sub->lengths = (uint8_t*)snort_alloc(sub->num_entries);
 
     /* Can't use memset here since prefill is multibyte */
     for (index = 0; index < sub->num_entries; index++)
@@ -129,23 +112,10 @@ dir_table_t* sfrt_dir_new(uint32_t mem_cap, int count,...)
     uint32_t val;
     int index;
 
-    dir_table_t* table = (dir_table_t*)malloc(sizeof(dir_table_t));
-
-    if (!table)
-    {
-        return NULL;
-    }
+    dir_table_t* table = (dir_table_t*)snort_alloc(sizeof(dir_table_t));
 
     table->allocated = 0;
-
-    table->dimensions = (int*)malloc(sizeof(int)*count);
-
-    if (!table->dimensions)
-    {
-        free(table);
-        return NULL;
-    }
-
+    table->dimensions = (int*)snort_alloc(sizeof(int)*count);
     table->dim_size = count;
 
     va_start(ap, count);
@@ -166,8 +136,8 @@ dir_table_t* sfrt_dir_new(uint32_t mem_cap, int count,...)
 
     if (!table->sub_table)
     {
-        free(table->dimensions);
-        free(table);
+        snort_free(table->dimensions);
+        snort_free(table);
         return NULL;
     }
 
@@ -198,7 +168,7 @@ static void _sub_table_free(uint32_t* allocated, dir_sub_table_t* sub)
         /* This probably does not need to be checked
          * since if it was not allocated, we would have errored out
          * in _sub_table_new */
-        free(sub->entries);
+        snort_free(sub->entries);
 
         *allocated -= sizeof(word) * sub->num_entries;
     }
@@ -208,12 +178,12 @@ static void _sub_table_free(uint32_t* allocated, dir_sub_table_t* sub)
         /* This probably does not need to be checked
          * since if it was not allocated, we would have errored out
          * in _sub_table_new */
-        free(sub->lengths);
+        snort_free(sub->lengths);
 
         *allocated -= sub->num_entries;
     }
 
-    free(sub);
+    snort_free(sub);
 
     *allocated -= sizeof(dir_sub_table_t);
 }
@@ -235,10 +205,10 @@ void sfrt_dir_free(void* tbl)
 
     if (table->dimensions)
     {
-        free(table->dimensions);
+        snort_free(table->dimensions);
     }
 
-    free(table);
+    snort_free(table);
 }
 
 static inline void _dir_fill_all(uint32_t* allocated, uint32_t index, uint32_t fill,

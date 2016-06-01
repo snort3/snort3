@@ -30,10 +30,10 @@
 
 static THREAD_LOCAL SFXHASH* detection_filter_hash = NULL;
 
-DetectionFilterConfig* DetectionFilterConfigNew(void)
+DetectionFilterConfig* DetectionFilterConfigNew()
 {
     DetectionFilterConfig* df =
-        (DetectionFilterConfig*)SnortAlloc(sizeof(DetectionFilterConfig));
+        (DetectionFilterConfig*)snort_calloc(sizeof(DetectionFilterConfig));
 
     df->memcap = 1024 * 1024;
     df->enabled = 1;
@@ -46,7 +46,7 @@ void DetectionFilterConfigFree(DetectionFilterConfig* config)
     if (config == NULL)
         return;
 
-    free(config);
+    snort_free(config);
 }
 
 void detection_filter_print_config(DetectionFilterConfig*)
@@ -65,7 +65,7 @@ int detection_filter_test(
 }
 
 /* empty out active entries */
-void detection_filter_reset_active(void)
+void detection_filter_reset_active()
 {
     if (detection_filter_hash == NULL)
         return;

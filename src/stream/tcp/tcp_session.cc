@@ -72,7 +72,6 @@
 #include "stream/stream_splitter.h"
 #include "flow/flow_control.h"
 #include "flow/session.h"
-#include "flow/memcap.h"
 #include "profiler/profiler.h"
 #include "file_api/file_api.h"
 #include "normalize/normalize.h"
@@ -98,7 +97,7 @@ TcpSession::TcpSession(Flow* flow) : TcpStreamSession(flow)
     server = new TcpTracker(false, this);
 }
 
-TcpSession::~TcpSession(void)
+TcpSession::~TcpSession()
 {
     if (tcp_init)
         clear_session(true, false, false);
@@ -118,7 +117,7 @@ bool TcpSession::setup(Packet* p)
     return true;
 }
 
-// FIXIT - once TcpReassembler interface is abstract class move this to base class
+// FIXIT-M once TcpReassembler interface is abstract class move this to base class
 void TcpSession::restart(Packet* p)
 {
     // sanity check since this is called externally
@@ -292,7 +291,6 @@ void TcpSession::update_perf_base_state(char newState)
     }
 
     flow->update_session_flags(session_flags);
-    tcpStats.mem_in_use = tcp_memcap->used();
 }
 
 bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
@@ -455,7 +453,7 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
     return STREAM_UNALIGNED;
 }
 
-void TcpSession::set_os_policy(void)
+void TcpSession::set_os_policy()
 {
     StreamPolicy client_os_policy = flow->ssn_policy ?
         static_cast<StreamPolicy>( flow->ssn_policy ) : config->policy;
@@ -475,8 +473,8 @@ void TcpSession::set_os_policy(void)
         server->reassembler = TcpReassemblerFactory::create(this, server, server_os_policy, true);
 }
 
-// FIXIT - check for need to swap client/server is ifdef'ed out...
-void TcpSession::swap_trackers(void)
+// FIXIT-H this is no longer called (but should be)
+void TcpSession::swap_trackers()
 {
     uint32_t session_flags = flow->get_session_flags( );
     if ( ( session_flags & SSNFLAG_CLIENT_SWAP ) && !( session_flags & SSNFLAG_CLIENT_SWAPPED ) )
@@ -548,21 +546,18 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
         // Listener previously issued a reset Talker is re-SYN-ing
         DebugMessage(DEBUG_STREAM_STATE, "Got SYN pkt on reset ssn, re-SYN-ing\n");
 
-        // FIXIT-L this leads to bogus 129:20
+        // FIXIT-M this leads to bogus 129:20
         clear_session( true, true, true, tsd.get_pkt() );
 
         if ( tcph->is_rst() )
         {
-            /* FIXIT-M  In inline mode, only one of the normalizations
-             *           can occur.  If the first normalization
-             *           fires, there is nothing for the second normalization
-             *           to do.  However, in inline-test mode, since
-             *           nothing is actually normalized, both of the
-             *           following functions report that they 'would'
-             *           normalize. i.e., both functions increment their
-             *           count even though only one function can ever
-             *           perform a normalization.
-             */
+            // FIXIT-M  In inline mode, only one of the normalizations can
+            // occur.  If the first normalization fires, there is nothing
+            // for the second normalization to do.  However, in inline-test
+            // mode, since nothing is actually normalized, both of the
+            // following functions report that they 'would' normalize.
+            // i.e., both functions increment their count even though only
+            // one function can ever perform a normalization.
 
             /* Got SYN/RST.  We're done. */
             listener->normalizer->trim_syn_payload(tsd);
@@ -781,7 +776,7 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
 
     if ( TcpStreamTracker::TCP_CLOSED != talker->get_tcp_state() )
     {
-        // FIXIT - move this to normalizer base class, handle OS_PROXY in derived class
+        // FIXIT-M move this to normalizer base class, handle OS_PROXY in derived class
         if (config->policy != StreamPolicy::OS_PROXY)
         {
             /* check for valid seqeuence/retrans */
@@ -824,12 +819,12 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
     listener->reassembler->flush_on_data_policy(tsd.get_pkt());
 }
 
-TcpStreamTracker::TcpState TcpSession::get_talker_state(void)
+TcpStreamTracker::TcpState TcpSession::get_talker_state()
 {
     return talker->get_tcp_state();
 }
 
-TcpStreamTracker::TcpState TcpSession::get_listener_state(void)
+TcpStreamTracker::TcpState TcpSession::get_listener_state()
 {
     return listener->get_tcp_state();
 }
@@ -1005,7 +1000,7 @@ void TcpSession::do_packet_analysis_post_checks(Packet* p)
     }
 }
 
-// FIXIT - can flow do these checks before calling stream tcp?
+// FIXIT-M can flow do these checks before calling stream tcp?
 bool TcpSession::is_flow_handling_packets(Packet* p)
 {
     bool flow_ready = true;
@@ -1113,7 +1108,7 @@ int TcpSession::process(Packet* p)
 
     assert(flow->ssn_server);
 
-    // FIXIT - need to do something here to handle check for need to swap trackers??
+    // FIXIT-H need to do something here to handle check for need to swap trackers??
 
     if ( !config )
         config = get_tcp_cfg(flow->ssn_server);
@@ -1159,7 +1154,7 @@ int TcpSession::process(Packet* p)
     return ACTION_NOTHING;
 }
 
-void TcpSession::flush(void)
+void TcpSession::flush()
 {
     if ( ( server->reassembler->is_segment_pending_flush() ) ||
         (client->reassembler->is_segment_pending_flush() ) )

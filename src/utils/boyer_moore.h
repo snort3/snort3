@@ -25,7 +25,7 @@
 
 #include "main/snort_types.h"
 
-// FIXIT-M: No associated resource destructor for make_skip & make_shift :(
+// FIXIT-M no associated resource destructor for make_skip & make_shift :(
 SO_PUBLIC int* make_skip(const char*, int);
 SO_PUBLIC int* make_shift(const char*, int);
 

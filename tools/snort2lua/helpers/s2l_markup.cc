@@ -64,8 +64,8 @@ const string& Markup::emphasis(const string& s)
 const string& Markup::escape(const char* const c)
 { return escape(string(c)); }
 
-// FIXIT-L: some asciidoc charachters need to be escaped.
-//        This function should escape all of those characters
+// FIXIT-L some asciidoc characters need to be escaped.
+// This function should escape all of those characters
 const string& Markup::escape(const string& s)
 {
     static string m;

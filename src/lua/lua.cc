@@ -67,7 +67,7 @@ ManageStack::~ManageStack()
 }
 
 #ifdef UNIT_TEST
-// FIXIT-L see sfip/sf_ip.cc
+// FIXIT-L Catch issue; see sfip/sf_ip.cc
 #include "lua_stack_test.cc"
 #endif
 

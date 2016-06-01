@@ -44,7 +44,7 @@ struct CpuSet
     hwloc_cpuset_t cpuset;
 };
 
-bool ThreadConfig::init(void)
+bool ThreadConfig::init()
 {
     if (hwloc_topology_init(&topology))
         return false;
@@ -76,7 +76,7 @@ void ThreadConfig::set_instance_max(unsigned max)
     }
 }
 
-unsigned ThreadConfig::get_instance_max(void)
+unsigned ThreadConfig::get_instance_max()
 {
     return instance_max;
 }
@@ -98,7 +98,7 @@ void ThreadConfig::destroy_cpuset(CpuSet *cpuset)
     delete cpuset;
 }
 
-void ThreadConfig::term(void)
+void ThreadConfig::term()
 {
     if (topology)
     {
@@ -113,7 +113,7 @@ void ThreadConfig::term(void)
     topology_support = nullptr;
 }
 
-ThreadConfig::~ThreadConfig(void)
+ThreadConfig::~ThreadConfig()
 {
     for (auto iter = thread_affinity.begin(); iter != thread_affinity.end(); iter++)
         delete iter->second;

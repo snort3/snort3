@@ -578,10 +578,7 @@ static SIP_DialogData* SIP_addDialog(SIPMsg* sipMsg, SIP_DialogData* currDialog,
         sipMsg->status_code);
 
     sip_stats.dialogs++;
-
-    dialog = (SIP_DialogData*)calloc(1, sizeof(SIP_DialogData));
-    if (NULL == dialog)
-        return NULL;
+    dialog = (SIP_DialogData*)snort_calloc(sizeof(SIP_DialogData));
 
     // Add to the head
     dialog->nextD = currDialog;
@@ -642,7 +639,7 @@ static int SIP_deleteDialog(SIP_DialogData* currDialog, SIP_DialogList* dList)
             currDialog->nextD->prevD = currDialog->prevD;
     }
     sip_freeMediaList(currDialog->mediaSessions);
-    free(currDialog);
+    snort_free(currDialog);
     if ( dList->num_dialogs > 0)
         dList->num_dialogs--;
     return true;
@@ -801,7 +798,7 @@ void sip_freeDialogs(SIP_DialogList* list)
             curNode->dlgID.toTagHash,curNode->state);
         nextNode = curNode->nextD;
         sip_freeMediaList(curNode->mediaSessions);
-        free(curNode);
+        snort_free(curNode);
         curNode = nextNode;
     }
 }

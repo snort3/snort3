@@ -1132,7 +1132,7 @@ static DCE2_Ret DCE2_SmbInitFileTracker(DCE2_SmbSsnData* ssd,
     ftracker->file_name = nullptr;
     if (is_ipc)
     {
-        DCE2_CoTracker* co_tracker = (DCE2_CoTracker*)SnortAlloc(sizeof(DCE2_CoTracker));
+        DCE2_CoTracker* co_tracker = (DCE2_CoTracker*)snort_calloc(sizeof(DCE2_CoTracker));
         if (co_tracker == nullptr)
             return DCE2_RET__ERROR;
         DCE2_CoInitTracker(co_tracker);
@@ -1188,7 +1188,7 @@ static DCE2_SmbFileTracker* DCE2_SmbNewFileTracker(DCE2_SmbSsnData* ssd,
     }
     else
     {
-        ftracker = (DCE2_SmbFileTracker*)SnortAlloc(sizeof(DCE2_SmbFileTracker));
+        ftracker = (DCE2_SmbFileTracker*)snort_calloc(sizeof(DCE2_SmbFileTracker));
 
         if (ftracker == nullptr)
         {
@@ -1199,7 +1199,7 @@ static DCE2_SmbFileTracker* DCE2_SmbNewFileTracker(DCE2_SmbSsnData* ssd,
             DCE2_RET__SUCCESS)
         {
             DCE2_SmbCleanFileTracker(ftracker);
-            free((void*)ftracker);
+            snort_free((void*)ftracker);
             return nullptr;
         }
 
@@ -1382,7 +1382,7 @@ static void DCE2_SmbCleanFileTracker(DCE2_SmbFileTracker* ftracker)
     ftracker->fid = DCE2_SENTINEL;
     if (ftracker->file_name != nullptr)
     {
-        free((void*)ftracker->file_name);
+        snort_free((void*)ftracker->file_name);
         ftracker->file_name = nullptr;
     }
 
@@ -1394,14 +1394,14 @@ static void DCE2_SmbCleanFileTracker(DCE2_SmbFileTracker* ftracker)
         if (ftracker->fp_writex_raw != nullptr)
         {
             DCE2_BufferDestroy(ftracker->fp_writex_raw->buf);
-            free((void*)ftracker->fp_writex_raw);
+            snort_free((void*)ftracker->fp_writex_raw);
             ftracker->fp_writex_raw = nullptr;
         }
 
         if (ftracker->fp_co_tracker != nullptr)
         {
             DCE2_CoCleanTracker(ftracker->fp_co_tracker);
-            free((void*)ftracker->fp_co_tracker);
+            snort_free((void*)ftracker->fp_co_tracker);
             ftracker->fp_co_tracker = nullptr;
         }
     }
@@ -1556,7 +1556,7 @@ static void DCE2_SmbFileTrackerDataFree(void* data)
         ftracker->uid, ftracker->tid, ftracker->fid);
 
     DCE2_SmbCleanFileTracker(ftracker);
-    free((void*)ftracker);
+    snort_free((void*)ftracker);
 }
 
 /********************************************************************
@@ -1567,7 +1567,7 @@ static void DCE2_SmbFileTrackerDataFree(void* data)
 static void DCE2_SmbCleanSessionFileTracker(DCE2_SmbSsnData* ssd, DCE2_SmbFileTracker* ftracker)
 {
     DCE2_SmbCleanFileTracker(ftracker);
-    free((void*)ftracker);
+    snort_free((void*)ftracker);
     if (ssd->fapi_ftracker == ftracker)
         ssd->fapi_ftracker = nullptr;
 }
@@ -1615,7 +1615,7 @@ static void DCE2_SmbCleanRequestTracker(DCE2_SmbRequestTracker* rtracker)
 
     if (rtracker->file_name != nullptr)
     {
-        free((void*)rtracker->file_name);
+        snort_free((void*)rtracker->file_name);
         rtracker->file_name = nullptr;
     }
 }
@@ -1694,6 +1694,7 @@ static DCE2_SmbFileTracker* DCE2_SmbDequeueTmpFileTracker(DCE2_SmbSsnData* ssd,
         "and binding to fid: 0x%04X\n", fid);
 
     DCE2_SmbFileTracker* ftracker = (DCE2_SmbFileTracker*)DCE2_QueueDequeue(rtracker->ft_queue);
+
     if (ftracker == nullptr)
     {
         return nullptr;
@@ -1702,7 +1703,7 @@ static DCE2_SmbFileTracker* DCE2_SmbDequeueTmpFileTracker(DCE2_SmbSsnData* ssd,
     if (ssd->ftracker.fid == DCE2_SENTINEL)
     {
         memcpy(&ssd->ftracker, ftracker, sizeof(DCE2_SmbFileTracker));
-        free((void*)ftracker);
+        snort_free((void*)ftracker);
         if (ssd->fapi_ftracker == ftracker)
             ssd->fapi_ftracker = &ssd->ftracker;
         ftracker = &ssd->ftracker;
@@ -1748,7 +1749,7 @@ static void DCE2_SmbRequestTrackerDataFree(void* data)
         rtracker->uid, rtracker->tid, rtracker->pid, rtracker->mid);
 
     DCE2_SmbCleanRequestTracker(rtracker);
-    free((void*)rtracker);
+    snort_free((void*)rtracker);
 }
 
 static DCE2_Ret DCE2_SmbFindTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
@@ -2048,7 +2049,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
             }
         }
 
-        rtracker = (DCE2_SmbRequestTracker*)SnortAlloc(sizeof(DCE2_SmbRequestTracker));
+        rtracker = (DCE2_SmbRequestTracker*)snort_calloc(sizeof(DCE2_SmbRequestTracker));
         if (rtracker == nullptr)
         {
             return nullptr;
@@ -2056,7 +2057,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
 
         if (DCE2_QueueEnqueue(ssd->rtrackers, (void*)rtracker) != DCE2_RET__SUCCESS)
         {
-            free((void*)rtracker);
+            snort_free((void*)rtracker);
             return nullptr;
         }
     }
@@ -2265,7 +2266,7 @@ static char* DCE2_SmbGetString(const uint8_t* data,
         || (i > DCE2_SMB_MAX_PATH_LEN))
         return nullptr;
 
-    str = (char*)SnortAlloc(((i-j)>>(inc-1))+1);
+    str = (char*)snort_calloc(((i-j)>>(inc-1))+1);
     if (str == nullptr)
         return nullptr;
 
@@ -4305,7 +4306,7 @@ static void DCE2_SmbQueueTmpFileTracker(DCE2_SmbSsnData* ssd,
         "with Uid: %u, Tid: %u\n", uid, tid);
 
     DCE2_SmbFileTracker* ftracker = (DCE2_SmbFileTracker*)
-        SnortAlloc(sizeof(DCE2_SmbFileTracker));
+        snort_calloc(sizeof(DCE2_SmbFileTracker));
 
     if (ftracker == nullptr)
     {
@@ -4317,7 +4318,7 @@ static void DCE2_SmbQueueTmpFileTracker(DCE2_SmbSsnData* ssd,
         DCE2_RET__SUCCESS)
     {
         DCE2_SmbCleanFileTracker(ftracker);
-        free((void*)ftracker);
+        snort_free((void*)ftracker);
         return;
     }
 
@@ -5223,7 +5224,7 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
             if (ftracker->fp_writex_raw == nullptr)
             {
                 ftracker->fp_writex_raw = (DCE2_SmbWriteAndXRaw*)
-                    SnortAlloc(sizeof(DCE2_SmbWriteAndXRaw));
+                    snort_calloc(sizeof(DCE2_SmbWriteAndXRaw));
                 if (ftracker->fp_writex_raw == nullptr)
                     return DCE2_RET__ERROR;
 
@@ -6737,8 +6738,8 @@ static void dce2_smb_thread_init()
     {
         for (int i=0; i < DCE2_SMB_RPKT_TYPE_MAX; i++)
         {
-            Packet* p = (Packet*)SnortAlloc(sizeof(Packet));
-            p->data = (uint8_t*)SnortAlloc(DCE2_REASSEMBLY_BUF_SIZE);
+            Packet* p = (Packet*)snort_calloc(sizeof(Packet));
+            p->data = (uint8_t*)snort_calloc(DCE2_REASSEMBLY_BUF_SIZE);
             p->dsize = DCE2_REASSEMBLY_BUF_SIZE;
             dce2_smb_rpkt[i] = p;
         }
@@ -6761,9 +6762,9 @@ static void dce2_smb_thread_term()
                 Packet* p = dce2_smb_rpkt[i];
                 if (p->data)
                 {
-                    free((void*)p->data);
+                    snort_free((void*)p->data);
                 }
-                free(p);
+                snort_free(p);
                 dce2_smb_rpkt[i] = nullptr;
             }
         }

@@ -95,8 +95,7 @@ static BasePlugin* instantiate(
 
     Module* m;
     if ( key == PT_IPS_OPTION || use_defaults )
-        // FIXIT-M: this is just a workaround.
-        // Need to be able to get parsed rule module
+        // FIXIT-L this is just a workaround, need to be able to get parsed rule module
         m = ModuleManager::get_default_module(name.c_str(), snort_conf);
     else
         m = ModuleManager::get_module(name.c_str());
@@ -119,7 +118,7 @@ void Manager::init()
     plugins.clear();
 }
 
-// FIXIT-M: Deal with case where 2 plugins have the same target (version priority?)
+// FIXIT-M deal with case where 2 plugins have the same target (version priority?)
 void Manager::add_plugin(Api* api)
 { plugins[api->target] = api; }
 

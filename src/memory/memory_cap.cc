@@ -156,9 +156,10 @@ bool MemoryCap::over_threshold()
     return s_tracker.used() >= preemptive_threshold;
 }
 
-// FIXIT-L J This should not be called while the packet threads are
-// running. once reload is implemented for the memory manager,
-// the configuration model will need to be updated
+// FIXIT-L this should not be called while the packet threads are running.
+// once reload is implemented for the memory manager, the configuration
+// model will need to be updated
+
 void MemoryCap::calculate(unsigned num_threads)
 {
     const MemoryConfig& config = *snort_conf->memory;
@@ -180,7 +181,7 @@ void MemoryCap::calculate(unsigned num_threads)
 
     thread_cap = real_cap / num_threads;
 
-    // FIXIT-M J we probably want to add some fixed overhead to allow the packet threads to
+    // FIXIT-M we probably want to add some fixed overhead to allow the packet threads to
     // startup and preallocate flows and whatnot
     if ( !thread_cap )
         FatalError("per-thread memory cap is 0");

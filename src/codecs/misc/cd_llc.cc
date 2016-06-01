@@ -88,7 +88,7 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if (raw.len < sizeof(EthLlc))
     {
-        // FIXIT-L - Need a better alert
+        // FIXIT-L need a better alert for llc len
         codec_event(codec, DECODE_BAD_VLAN_ETHLLC);
         return false;
     }

@@ -39,8 +39,7 @@ static const char* const statext[] =
 
 static const char* const flushxt[] = { "IGN", "FPR", "PRE", "PRO", "PAF" };
 
-// FIXIT-L this should not be thread specific
-static THREAD_LOCAL int s5_trace_enabled = -1;
+static THREAD_LOCAL int s5_trace_enabled = -1;  // FIXIT-L should not be thread specific
 
 inline void TraceEvent(const Packet* p, TcpSegmentDescriptor*, uint32_t txd, uint32_t rxd)
 {
@@ -58,7 +57,7 @@ inline void TraceEvent(const Packet* p, TcpSegmentDescriptor*, uint32_t txd, uin
 
     // force relative ack to zero if not conveyed
     if (flags[1] != 'A')
-        rxd = h->ack();   // FIXIT - SYN's seen with ack > 0 and ACK flag not set...
+        rxd = h->ack();   // FIXIT-L SYN's seen with ack > 0 and ACK flag not set...
 
     if (p->packet_flags & PKT_STREAM_ORDER_OK)
         order = " (ins)";

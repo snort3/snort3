@@ -49,7 +49,7 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
     CHECK(sfdm.set("daq.variables", var1, &sc));
     CHECK(sfdm.set("daq.variables", var2, &sc));
     CHECK(sfdm.set("daq.variables", var3, &sc));
-    
+
     Value snaplen(static_cast<double>(6666));
     CHECK(sfdm.set("daq.snaplen", snaplen, &sc));
 
@@ -73,7 +73,6 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
     CHECK(sfdm.set("daq.instances.variables", instance_var2, &sc));
 
     CHECK(sfdm.end("daq.instances", 1, &sc));
-
     CHECK(sfdm.end("daq", 0, &sc));
 
     /* Validate the configuration */
@@ -156,3 +155,4 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
 }
 
 #endif
+

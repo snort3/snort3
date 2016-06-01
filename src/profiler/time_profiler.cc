@@ -290,7 +290,7 @@ TEST_CASE( "profiler tree builder", "[profiler][profiler_tree_builder]" )
 
 TEST_CASE( "profiler printer", "[profiler][profiler_printer]" )
 {
-    // FIXIT-L J currently, we are using LogMessage as ProfilerPrinter output, this makes
+    // FIXIT-L currently, we are using LogMessage as ProfilerPrinter output, this makes
     // unit-testing output infeasible
     // CHECK( false );
 }

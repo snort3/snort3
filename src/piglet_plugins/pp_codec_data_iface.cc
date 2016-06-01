@@ -71,7 +71,7 @@ static const luaL_Reg methods[] =
                 args[1].check_table(set_fields, self);
             else if ( args[1].is_size() )
             {
-                //  FIXIT-L: Can check_size limit size to short?
+                //  FIXIT-L can check_size limit size to short?
                 unsigned int tmp = args[1].check_size();
                 if(tmp > UINT16_MAX)
                     self.next_prot_id = ProtocolId::ETHERTYPE_NOT_SET;

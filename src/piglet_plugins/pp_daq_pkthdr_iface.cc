@@ -49,7 +49,7 @@ static void set_fields(lua_State* L, int tindex, struct _daq_pkthdr& self)
     table.get_field("flow_id", self.flow_id);
     table.get_field("address_space_id", self.address_space_id);
 
-    // FIXIT-L: Do we want to be able to set the priv_ptr field?
+    // FIXIT-L do we want to be able to set the priv_ptr field?
 }
 
 static void get_fields(lua_State* L, int tindex, struct _daq_pkthdr& self)

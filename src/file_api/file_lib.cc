@@ -187,7 +187,7 @@ FileContext::FileContext ()
 FileContext::~FileContext ()
 {
     if (file_signature_context)
-        free(file_signature_context);
+        snort_free(file_signature_context);
     if(file_capture)
         stop_file_capture();
 }
@@ -282,18 +282,18 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
     switch (position)
     {
     case SNORT_FILE_START:
-        file_signature_context = SnortAlloc(sizeof(SHA256_CTX));
+        file_signature_context = snort_calloc(sizeof(SHA256_CTX));
         SHA256_Init((SHA256_CTX*)file_signature_context);
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
         break;
     case SNORT_FILE_MIDDLE:
         if (!file_signature_context)
-            file_signature_context = SnortAlloc(sizeof(SHA256_CTX));
+            file_signature_context = snort_calloc(sizeof(SHA256_CTX));
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
         break;
     case SNORT_FILE_END:
         if (!file_signature_context)
-            file_signature_context = SnortAlloc(sizeof(SHA256_CTX));
+            file_signature_context = snort_calloc(sizeof(SHA256_CTX));
         if (processed_bytes == 0)
             SHA256_Init((SHA256_CTX*)file_signature_context);
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
@@ -302,7 +302,7 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
         file_state.sig_state = FILE_SIG_DONE;
         break;
     case SNORT_FILE_FULL:
-        file_signature_context = SnortAlloc(sizeof (SHA256_CTX));
+        file_signature_context = snort_calloc(sizeof (SHA256_CTX));
         SHA256_Init((SHA256_CTX*)file_signature_context);
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
         sha256 = new uint8_t[SHA256_HASH_SIZE];

@@ -65,7 +65,7 @@ FileConnectorConfig::FileConnectorConfigSet* FileConnectorModule::get_and_clear_
 
     return config_set;
 }
-    
+
 FileConnectorModule::~FileConnectorModule() { }
 
 ProfileStats* FileConnectorModule::get_profile() const { return nullptr; }
@@ -85,7 +85,7 @@ TEST_GROUP(file_connector)
 {
     void setup()
     {
-        // FIXIT-H - Workaround for CppUTest mem leak detector issue
+        // FIXIT-L workaround for CppUTest mem leak detector issue
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         fc_api = (ConnectorApi*)file_connector;
         connector_tx_text_config.direction = Connector::CONN_TRANSMIT;
@@ -135,7 +135,7 @@ TEST_GROUP(file_connector_tinit_tterm)
 {
     void setup()
     {
-        // FIXIT-H - Workaround for CppUTest mem leak detector issue
+        // FIXIT-L workaround for CppUTest mem leak detector issue
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         fc_api = (ConnectorApi*)file_connector;
         connector_tx_text_config.direction = Connector::CONN_TRANSMIT;
@@ -202,7 +202,7 @@ TEST_GROUP(file_connector_text)
 {
     void setup()
     {
-        // FIXIT-H - Workaround for CppUTest mem leak detector issue
+        // FIXIT-L workaround for CppUTest mem leak detector issue
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         fc_api = (ConnectorApi*)file_connector;
         connector_tx_text_config.direction = Connector::CONN_TRANSMIT;
@@ -268,7 +268,7 @@ TEST_GROUP(file_connector_binary)
 {
     void setup()
     {
-        // FIXIT-H - Workaround for CppUTest mem leak detector issue
+        // FIXIT-L workaround for CppUTest mem leak detector issue
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         fc_api = (ConnectorApi*)file_connector;
         connector_tx_binary_config.direction = Connector::CONN_TRANSMIT;

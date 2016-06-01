@@ -38,14 +38,14 @@ int16_t AddProtocolReference(const char* protocol)
 }
 
 //  Fake show_stats to avoid bringing in a ton of dependencies.
-void show_stats(
-    PegCount* , const PegInfo* , unsigned , const char* )
-{
-}
+void show_stats(PegCount*, const PegInfo*, unsigned, const char*)
+{ }
 
-void show_stats( PegCount*, const PegInfo*, IndexVec&, const char*, FILE*)
-{
-}
+void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*)
+{ }
+
+char* snort_strdup(const char* s)
+{ return strdup(s); }
 
 #define FRAG_POLICY 33
 #define STREAM_POLICY 100
@@ -147,7 +147,7 @@ TEST(host_tracker_module, host_tracker_module_test_stats)
     ret = ht->find_service(1, 2112, app);
     CHECK(ret == true);
     CHECK(app.protocol == 3);
-    CHECK(app.ipproto == 1); 
+    CHECK(app.ipproto == 1);
     CHECK(app.port == 2112);
 
     ret = ht->remove_service(1, 2112);

@@ -63,7 +63,7 @@ THREAD_LOCAL ProfileStats perfmonStats;
 
 THREAD_LOCAL bool perfmon_rotate_perf_file = false;
 static PerfConfig config;
-PerfConfig* perfmon_config = &config;   //FIXIT-M remove this after flowip can be decoupled.
+PerfConfig* perfmon_config = &config;   // FIXIT-M remove this after flowip can be decoupled.
 THREAD_LOCAL std::vector<PerfTracker*>* trackers;
 
 static bool ready_to_process(Packet* p);
@@ -145,9 +145,10 @@ void PerfMonitor::show(SnortConfig*)
     }
 }
 
-// FIXIT-L perfmonitor should be logging to one file and writing record type and
-// version fields immediately after timestamp like
-// seconds, usec, type, version#, data1, data2, ...
+// FIXIT-L perfmonitor should be logging to one file and writing record
+// type and version fields immediately after timestamp like seconds, usec,
+// type, version#, data1, data2, ...
+
 bool PerfMonitor::configure(SnortConfig*)
 {
     return true;

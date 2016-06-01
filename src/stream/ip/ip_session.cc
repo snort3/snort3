@@ -39,7 +39,6 @@ const PegInfo ip_pegs[] =
     { "max frags", "max fragments" },
     { "reassembled", "reassembled datagrams" },
     { "discards", "fragments discarded" },
-    { "memory faults", "memory faults" },
     { "frag timeouts", "datagrams abandoned" },
     { "overlaps", "overlapping fragments" },
     { "anomalies", "anomalies detected" },

@@ -77,7 +77,7 @@ static inline void file_mempool_free_pools(FileMemPool* mempool)
 
     if (mempool->datapool != NULL)
     {
-        free(mempool->datapool);
+        snort_free(mempool->datapool);
         mempool->datapool = NULL;
     }
 
@@ -108,17 +108,8 @@ int file_mempool_init(FileMemPool* mempool, uint64_t num_objects, size_t obj_siz
 
     mempool->obj_size = obj_size;
 
-    /* this is the basis pool that represents all the *data pointers
-     * in the list
-     */
-    mempool->datapool = (void**)SnortAlloc(num_objects * obj_size);
-    if (mempool->datapool == NULL)
-    {
-        ErrorMessage("%s(%d) file_mempool_init(): Failed to init datapool\n",
-            __FILE__, __LINE__);
-        file_mempool_free_pools(mempool);
-        return FILE_MEM_FAIL;
-    }
+    // this is the basis pool that represents all the *data pointers in the list
+    mempool->datapool = (void**)snort_calloc(num_objects, obj_size);
 
     /* sets up the memory list */
     mempool->free_list = cbuffer_init(num_objects);

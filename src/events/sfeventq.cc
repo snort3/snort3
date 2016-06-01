@@ -77,11 +77,11 @@ SF_EVENTQ* sfeventq_new(int max_nodes, int log_nodes, int event_size)
     if ((max_nodes <= 0) || (log_nodes <= 0) || (event_size <= 0))
         return NULL;
 
-    eq = (SF_EVENTQ*)SnortAlloc(sizeof(SF_EVENTQ));
+    eq = (SF_EVENTQ*)snort_calloc(sizeof(SF_EVENTQ));
 
     /* Initialize the memory for the nodes that we are going to use. */
-    eq->node_mem = (SF_EVENTQ_NODE*)SnortAlloc(sizeof(SF_EVENTQ_NODE) * max_nodes);
-    eq->event_mem = (char*)SnortAlloc(event_size * (max_nodes + 1));
+    eq->node_mem = (SF_EVENTQ_NODE*)snort_calloc(max_nodes, sizeof(SF_EVENTQ_NODE));
+    eq->event_mem = (char*)snort_calloc(max_nodes + 1, event_size);
 
     eq->max_nodes = max_nodes;
     eq->log_nodes = log_nodes;
@@ -167,17 +167,17 @@ void sfeventq_free(SF_EVENTQ* eq)
     /* Free the memory for the nodes that were in use. */
     if (eq->node_mem != NULL)
     {
-        free(eq->node_mem);
+        snort_free(eq->node_mem);
         eq->node_mem = NULL;
     }
 
     if (eq->event_mem != NULL)
     {
-        free(eq->event_mem);
+        snort_free(eq->event_mem);
         eq->event_mem = NULL;
     }
 
-    free(eq);
+    snort_free(eq);
 }
 
 /*

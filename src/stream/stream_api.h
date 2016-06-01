@@ -112,13 +112,13 @@ public:
     // packet_flags field of the Packet struct to indicate the direction determined.
     static uint32_t get_packet_direction(Packet*);
 
-    // Sets the stream session into proxy mode.  FIXIT-L method name is misleading
-    static void proxy_started(Flow*, unsigned dir);
+    // Sets the stream session into proxy mode.
+    static void proxy_started(Flow*, unsigned dir);  // FIXIT-L method name is misleading
 
     // Stop inspection on a flow for up to count bytes (-1 to ignore for life or until resume).
     // If response flag is set, automatically resume inspection up to count bytes when a data
     // packet in the other direction is seen.  Also marks the packet to be ignored
-    // FIXIT: method does not currently support the bytes/response parameters
+    // FIXIT-L stop_inspection() does not currently support the bytes/response parameters
     static void stop_inspection(Flow*, Packet*, char dir, int32_t bytes, int rspFlag);
 
     // Adds entry to the expected session cache with a flow key generated from the network
@@ -129,7 +129,7 @@ public:
         PktType, char dir, uint32_t ppId);
 
     // Resume inspection for flow.
-    // FIXIT-L does this just work for a flow that has been stop by call to stop_inspection??
+    // FIXIT-L does resume work only for a flow that has been stopped by call to stop_inspection?
     static void resume_inspection(Flow*, char dir);
 
     // Set Active status to force drop the current packet and set flow state to drop
@@ -140,7 +140,7 @@ public:
     // subsequent packets received on this flow are dropped.
     static void drop_session(const Packet*);
 
-    // FIXIT-L flush_request & flush response are misnomers in ips mode and may be used incorrectly.
+    // FIXIT-L flush_request() / flush_response() are misnomers in ips mode and may cause errors
 
     // Flush queued data on the listener side of a stream flow.  The listener is the side of the
     // connection the packet is destined, so if the Packet is from the client, then the

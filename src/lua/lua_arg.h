@@ -75,7 +75,7 @@ private:
         inline bool is_function()
         { return exists() && lua_isfunction(L, index); }
 
-        // FIXIT-L: We *may* need to insert checks for userdata, pointers, etc here
+        // FIXIT-L we *may* need to insert checks for userdata, pointers, etc here
 
         inline bool is_int()
         { return is<int>(); }

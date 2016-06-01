@@ -118,12 +118,9 @@ TextLog* TextLog_Init(
     if ( maxFile < maxBuf )
         maxFile = maxBuf;
 
-    txt = (TextLog*)malloc(sizeof(TextLog)+maxBuf);
+    txt = (TextLog*)snort_alloc(sizeof(TextLog)+maxBuf);
 
-    if ( !txt )
-        FatalError("Unable to allocate a TextLog(%u)\n", maxBuf);
-
-    txt->name = name ? SnortStrdup(name) : NULL;
+    txt->name = name ? snort_strdup(name) : NULL;
     txt->file = TextLog_Open(txt->name);
     txt->size = TextLog_Size(txt->file);
     txt->last = time(NULL);
@@ -148,8 +145,8 @@ void TextLog_Term(TextLog* const txt)
     TextLog_Close(txt->file);
 
     if ( txt->name )
-        free(txt->name);
-    free(txt);
+        snort_free(txt->name);
+    snort_free(txt);
 }
 
 /*-------------------------------------------------------------------

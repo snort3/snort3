@@ -7,8 +7,7 @@ flow.h \
 flow_config.h \
 flow_key.h \
 ha.h \
-ha_module.h \
-memcap.h
+ha_module.h
 
 libflow_a_SOURCES = \
 expect_cache.cc expect_cache.h \

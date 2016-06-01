@@ -77,7 +77,7 @@ DCE2_List* DCE2_ListNew(DCE2_ListType type, DCE2_ListKeyCompare kc,
     if (kc == nullptr)
         return nullptr;
 
-    list = (DCE2_List*)SnortAlloc(sizeof(DCE2_List));
+    list = (DCE2_List*)snort_calloc(sizeof(DCE2_List));
 
     list->type = type;
     list->compare = kc;
@@ -260,7 +260,7 @@ DCE2_Ret DCE2_ListInsert(DCE2_List* list, void* key, void* data)
         dup_check = 1;
     }
 
-    n = (DCE2_ListNode*)SnortAlloc(sizeof(DCE2_ListNode));
+    n = (DCE2_ListNode*)snort_calloc(sizeof(DCE2_ListNode));
 
     n->key = key;
     n->data = data;
@@ -406,7 +406,7 @@ void DCE2_ListEmpty(DCE2_List* list)
         if (list->key_free != nullptr)
             list->key_free(n->key);
 
-        free((void*)n);
+        snort_free((void*)n);
         n = tmp;
     }
 
@@ -432,7 +432,7 @@ void DCE2_ListDestroy(DCE2_List* list)
         return;
 
     DCE2_ListEmpty(list);
-    free(list);
+    snort_free(list);
 }
 
 /********************************************************************
@@ -630,7 +630,7 @@ DCE2_Ret DCE2_ListRemove(DCE2_List* list, void* key)
     if (list->data_free != nullptr)
         list->data_free(n->data);
 
-    free((void*)n);
+    snort_free((void*)n);
 
     list->num_nodes--;
 
@@ -680,7 +680,7 @@ void DCE2_ListRemoveCurrent(DCE2_List* list)
     if (list->data_free != nullptr)
         list->data_free(list->current->data);
 
-    free((void*)list->current);
+    snort_free((void*)list->current);
     list->current = nullptr;
 
     list->num_nodes--;
@@ -706,7 +706,7 @@ DCE2_Queue* DCE2_QueueNew(DCE2_QueueDataFree df)
 {
     DCE2_Queue* queue;
 
-    queue = (DCE2_Queue*)SnortAlloc(sizeof(DCE2_Queue));
+    queue = (DCE2_Queue*)snort_calloc(sizeof(DCE2_Queue));
     queue->data_free = df;
 
     return queue;
@@ -737,8 +737,7 @@ DCE2_Ret DCE2_QueueEnqueue(DCE2_Queue* queue, void* data)
     if (queue == nullptr)
         return DCE2_RET__ERROR;
 
-    n = (DCE2_QueueNode*)SnortAlloc(sizeof(DCE2_QueueNode));
-
+    n = (DCE2_QueueNode*)snort_calloc(sizeof(DCE2_QueueNode));
     n->data = data;
 
     if (queue->tail == nullptr)
@@ -800,7 +799,7 @@ void* DCE2_QueueDequeue(DCE2_Queue* queue)
             queue->head = queue->head->next;
         }
 
-        free((void*)n);
+        snort_free((void*)n);
 
         queue->num_nodes--;
 
@@ -840,7 +839,7 @@ void DCE2_QueueEmpty(DCE2_Queue* queue)
         if (queue->data_free != nullptr)
             queue->data_free(n->data);
 
-        free((void*)n);
+        snort_free((void*)n);
         n = tmp;
     }
 
@@ -866,7 +865,7 @@ void DCE2_QueueDestroy(DCE2_Queue* queue)
         return;
 
     DCE2_QueueEmpty(queue);
-    free((void*)queue);
+    snort_free((void*)queue);
 }
 
 /********************************************************************
@@ -981,7 +980,7 @@ void DCE2_QueueRemoveCurrent(DCE2_Queue* queue)
     if (queue->data_free != nullptr)
         queue->data_free(queue->current->data);
 
-    free((void*)queue->current);
+    snort_free((void*)queue->current);
     queue->current = nullptr;
 
     queue->num_nodes--;
@@ -1050,11 +1049,9 @@ DCE2_CStack* DCE2_CStackNew(int size, DCE2_CStackDataFree df)
     if (size <= 0)
         return nullptr;
 
-    cstack = (DCE2_CStack*)SnortAlloc(sizeof(DCE2_CStack));
-
+    cstack = (DCE2_CStack*)snort_calloc(sizeof(DCE2_CStack));
     cstack->data_free = df;
-
-    cstack->stack = (void**)SnortAlloc(size * sizeof(void*));
+    cstack->stack = (void**)snort_calloc(size, sizeof(void*));
 
     cstack->size = size;
     cstack->tail_idx = DCE2_SENTINEL;
@@ -1221,7 +1218,7 @@ void DCE2_CStackDestroy(DCE2_CStack* cstack)
         return;
 
     DCE2_CStackEmpty(cstack);
-    free((void*)cstack->stack);
-    free((void*)cstack);
+    snort_free((void*)cstack->stack);
+    snort_free((void*)cstack);
 }
 

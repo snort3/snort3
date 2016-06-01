@@ -82,7 +82,7 @@ FileIdentifier::~FileIdentifier()
     for (IDMemoryBlocks::iterator idMem = idMemoryBlocks.begin();
             idMem != idMemoryBlocks.end(); idMem++)
     {
-        free(idMem->mem);
+        snort_free(idMem->mem);
     }
 
     if (identifier_merge_hash != NULL)
@@ -95,7 +95,7 @@ void* FileIdentifier::calloc_mem(size_t size)
 {
     void* ret;
     IDMemoryBlock memblock;
-    ret = SnortAlloc(size);
+    ret = snort_calloc(size);
     memory_used += size;
     /*For memory management*/
     memblock.mem = ret;

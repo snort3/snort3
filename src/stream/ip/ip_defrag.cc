@@ -105,9 +105,6 @@
 #define FRAG_NO_BSD_VULN    0x00000010
 #define FRAG_DROP_FRAGMENTS 0x00000020
 
-/* default 4MB memcap */
-#define FRAG_MEMCAP   4194304
-
 /* return values for CheckTimeout() */
 #define FRAG_TIME_OK            0
 #define FRAG_TIMEOUT            1
@@ -555,7 +552,7 @@ static int FragHandleIPOptions(FragTracker* ft,
             else
             {
                 /* Allocate and copy in the options */
-                ft->ip_options_data = (uint8_t*)SnortAlloc(ip_options_len);
+                ft->ip_options_data = (uint8_t*)snort_calloc(ip_options_len);
                 memcpy(ft->ip_options_data, p->ptrs.ip_api.get_ip_opt_data(), ip_options_len);
                 ft->ip_options_len = ip_options_len;
             }
@@ -967,10 +964,10 @@ static void delete_frag(Fragment* frag)
     /*
      * delete the fragment either in prealloc or dynamic mode
      */
-    free(frag->fptr);
+    snort_free(frag->fptr);
     mem_in_use -= frag->flen;
 
-    free(frag);
+    snort_free(frag);
     mem_in_use -= sizeof(Fragment);
 
     ip_stats.mem_in_use = mem_in_use;
@@ -1040,7 +1037,7 @@ static void delete_tracker(FragTracker* ft)
     ft->fraglist = NULL;
     if (ft->ip_options_data)
     {
-        free(ft->ip_options_data);
+        snort_free(ft->ip_options_data);
         ft->ip_options_data = NULL;
     }
 
@@ -1063,8 +1060,7 @@ Defrag::Defrag(FragEngine& e) : engine(e), layers(DEFAULT_LAYERMAX) { }
 
 bool Defrag::configure(SnortConfig* sc)
 {
-    // FIXIT-L kinda squiffy ... set for each instance
-    // (but to same value) ... move to tinit() ?
+    // FIXIT-L kinda squiffy ... set for each instance (but to same value) ... move to tinit() ?
     layers = sc->get_num_layers();
     return true;
 }
@@ -1137,7 +1133,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
      *    Disable Inspection since we'll look at the payload in
      *    a rebuilt packet later.  So don't process it further.
      */
-    //  FIXIT-M  Since we no longer let UDP through, does this detection still work?
+    //  FIXIT-M since we no longer let UDP through, does this detection still work?
     if ((frag_offset != 0)) /* ||
         ((p->get_ip_proto_next() != IpProtocol::UDP) && (p->ptrs.decode_flags & DECODE_MF))) */
     {
@@ -1617,7 +1613,7 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                      * offset by + (frag_offset + len) and
                      * size by - (frag_offset + len - left->offset).
                      */
-                    ret = dup_frag_node(p, ft, left, &right);
+                    ret = dup_frag_node(ft, left, &right);
                     if (ret != FRAG_INSERT_OK)
                     {
                         /* Some warning here,
@@ -1915,7 +1911,7 @@ left_overlap_last:
                      */
                     checkTinyFragments(fe, p, len-slide-trunc);
 
-                    ret = add_frag_node(ft, p, fe, fragStart, fragLength, 0, len,
+                    ret = add_frag_node(ft, fe, fragStart, fragLength, 0, len,
                         slide, trunc, frag_offset, left, &newfrag);
                     if (ret != FRAG_INSERT_OK)
                     {
@@ -2013,7 +2009,7 @@ right_overlap_last:
 
     if (addthis)
     {
-        ret = add_frag_node(ft, p, fe, fragStart, fragLength, lastfrag, len,
+        ret = add_frag_node(ft, fe, fragStart, fragLength, lastfrag, len,
             slide, trunc, frag_offset, left, &newfrag);
     }
     else
@@ -2102,15 +2098,10 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
      * get our first fragment storage struct
      */
     {
-        if (mem_in_use > FRAG_MEMCAP)
-        {
-            flow_con->prune_flows(PktType::IP, p);
-        }
-
-        f = (Fragment*)SnortAlloc(sizeof(Fragment));
+        f = (Fragment*)snort_calloc(sizeof(Fragment));
         mem_in_use += sizeof(Fragment);
 
-        f->fptr = (uint8_t*)SnortAlloc(fragLength);
+        f->fptr = (uint8_t*)snort_calloc(fragLength);
         mem_in_use += fragLength;
 
         ip_stats.mem_in_use = mem_in_use;
@@ -2195,8 +2186,8 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
  * @retval FRAG_INSERT_FAILED Memory problem, insertion failed
  * @retval FRAG_INSERT_OK All okay
  */
-int Defrag::add_frag_node(FragTracker* ft,
-    Packet* p,
+int Defrag::add_frag_node(
+    FragTracker* ft,
     FragEngine*,
     const uint8_t* fragStart,
     int16_t fragLength,
@@ -2245,21 +2236,16 @@ int Defrag::add_frag_node(FragTracker* ft,
      * grab/generate a new frag node
      */
     {
-        if (mem_in_use > FRAG_MEMCAP)
-        {
-            flow_con->prune_flows(PktType::IP, p);
-        }
-
         /*
          * build a frag struct to track this particular fragment
          */
-        newfrag = (Fragment*)SnortAlloc(sizeof(Fragment));
+        newfrag = (Fragment*)snort_calloc(sizeof(Fragment));
         mem_in_use += sizeof(Fragment);
 
         /*
          * allocate some space to hold the actual data
          */
-        newfrag->fptr = (uint8_t*)SnortAlloc(fragLength);
+        newfrag->fptr = (uint8_t*)snort_calloc(fragLength);
         mem_in_use += fragLength;
 
         ip_stats.mem_in_use = mem_in_use;
@@ -2321,7 +2307,6 @@ int Defrag::add_frag_node(FragTracker* ft,
  * @retval FRAG_INSERT_OK All okay
  */
 int Defrag::dup_frag_node(
-    Packet* p,
     FragTracker* ft,
     Fragment* left,
     Fragment** retFrag)
@@ -2332,21 +2317,16 @@ int Defrag::dup_frag_node(
      * grab/generate a new frag node
      */
     {
-        if (mem_in_use > FRAG_MEMCAP)
-        {
-            flow_con->prune_flows(PktType::IP, p);
-        }
-
         /*
          * build a frag struct to track this particular fragment
          */
-        newfrag = (Fragment*)SnortAlloc(sizeof(Fragment));
+        newfrag = (Fragment*)snort_calloc(sizeof(Fragment));
         mem_in_use += sizeof(Fragment);
 
         /*
          * allocate some space to hold the actual data
          */
-        newfrag->fptr = (uint8_t*)SnortAlloc(left->flen);
+        newfrag->fptr = (uint8_t*)snort_calloc(left->flen);
         mem_in_use += left->flen;
 
         ip_stats.mem_in_use = mem_in_use;

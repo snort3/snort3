@@ -76,3 +76,4 @@ uint32_t GenerateSnortEvent(Packet* p, uint32_t gid, uint32_t sid)
 
     return 0;  //otn->event_data.event_id; // FIXIT-M EVENT
 }
+

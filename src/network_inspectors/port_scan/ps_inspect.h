@@ -95,8 +95,8 @@ private:
     PsData* global;
 };
 
-void ps_cleanup(void);
-void ps_reset(void);
+void ps_cleanup();
+void ps_reset();
 
 int ps_detect(PS_PKT* p);
 void ps_tracker_print(PS_TRACKER* tracker);

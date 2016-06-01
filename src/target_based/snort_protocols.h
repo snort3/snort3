@@ -51,8 +51,8 @@ inline bool is_builtin_protocol(int16_t proto)
 inline bool is_service_protocol(int16_t proto)
 { return proto > SNORT_PROTO_UDP; }
 
-void InitializeProtocolReferenceTable(void);
-void FreeProtoocolReferenceTable(void);
+void InitializeProtocolReferenceTable();
+void FreeProtoocolReferenceTable();
 
 int16_t get_protocol_count();
 

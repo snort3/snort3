@@ -35,7 +35,7 @@
 
 typedef SFGHASH PortVarTable;
 
-PortVarTable* PortVarTableCreate(void);
+PortVarTable* PortVarTableCreate();
 int PortVarTableFree(PortVarTable* pvt);
 int PortVarTableAdd(PortVarTable* pvt, PortObject* po);
 PortObject* PortVarTableFind(PortVarTable* pvt, const char* name);

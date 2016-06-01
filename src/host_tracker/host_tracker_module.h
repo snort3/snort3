@@ -23,9 +23,9 @@
 
 //  Loads host configuration data.
 
-//  FIXIT-M - Temporarily create new HostTracker module to test new
-//            HostTracker object.  May eventually replace old Hosts
-//            module with this one.
+// FIXIT-H temporarily create new HostTracker module to test new
+// HostTracker object.  May eventually replace old Hosts module with this
+// one.
 
 #include "framework/module.h"
 #include "host_tracker/host_tracker.h"

@@ -155,7 +155,7 @@ static inline unsigned int IntelPmProcessQueue(
     return 0;
 }
 
-void IntelPmStartInstance(void)
+void IntelPmStartInstance()
 {
     Cpa16U nInstances;
     CpaInstanceHandle instanceHandle;
@@ -169,19 +169,21 @@ void IntelPmStartInstance(void)
     if (status != CPA_STATUS_SUCCESS)
         FatalError("cpaPmGetNumInstances() failed: %s\n", GetCpaStatusStr(status));
 
-    pHandles = (CpaInstanceHandle*)SnortAlloc(nInstances * sizeof(CpaInstanceHandle));
+    pHandles = (CpaInstanceHandle*)snort_calloc(nInstances, sizeof(CpaInstanceHandle));
     status = cpaPmGetInstances(nInstances, pHandles);
+
     if (status != CPA_STATUS_SUCCESS)
         FatalError("cpaPmGetInstances() failed: %s\n", GetCpaStatusStr(status));
 
     instanceHandle = pHandles[0];
     status = cpaPmStartInstance(instanceHandle);
+
     if (status != CPA_STATUS_SUCCESS)
         FatalError("cpaPmStartInstance() failed: %s\n", GetCpaStatusStr(status));
 
     /* Not sure if this frees everything except the first handle - taken
      * from intel code */
-    free(pHandles);
+    snort_free(pHandles);
 
     ipm_instance = instanceHandle;
 }
@@ -190,17 +192,17 @@ void* IntelPmNew(
     SnortConfig* sc, const MpseAgent* agent)
 {
     CpaStatus status;
-    IntelPm* ipm = (IntelPm*)SnortAlloc(sizeof(IntelPm));
+    IntelPm* ipm = (IntelPm*)snort_calloc(sizeof(IntelPm));
 
     if (sc->ipm_handles == NULL)
     {
         CpaPmPdbPatternSetHandle patternSetHandle;
-
         status = cpaPmPdbCreatePatternSet(ipm_instance, 0, &patternSetHandle);
+
         if (status != CPA_STATUS_SUCCESS)
             FatalError("cpaPmPdbCreatePatternSet() failed: %s\n", GetCpaStatusStr(status));
 
-        sc->ipm_handles = (IntelPmHandles*)SnortAlloc(sizeof(IntelPmHandles));
+        sc->ipm_handles = (IntelPmHandles*)snort_calloc(sizeof(IntelPmHandles));
         sc->ipm_handles->psh = patternSetHandle;
         sc->ipm_handles->pdbh = NULL;
         sc->ipm_handles->pgids = 1;
@@ -211,7 +213,7 @@ void* IntelPmNew(
     }
 
     ipm->uagent = agent;
-    ipm->match_queue = SnortAlloc(sizeof(IntelPmMatchQueue));
+    ipm->match_queue = snort_calloc(sizeof(IntelPmMatchQueue));
 
     ipm->handles = sc->ipm_handles;
     sc->ipm_handles->refs++;
@@ -229,12 +231,12 @@ void IntelPmDelete(IntelPm* ipm)
     if (ipm->sessionCtx != NULL)
     {
         cpaPmReleaseSessionCtx(ipm_instance, ipm->sessionCtx);
-        free(ipm->sessionCtx);
+        snort_free(ipm->sessionCtx);
         ipm->sessionCtx = NULL;
     }
 
     if (ipm->match_queue != NULL)
-        free(ipm->match_queue);
+        snort_free(ipm->match_queue);
 
     for (i = 0; i < ipm->pattern_array_len; i++)
     {
@@ -243,9 +245,9 @@ void IntelPmDelete(IntelPm* ipm)
             ipm->agent->user_free(pat->user_data);
     }
 
-    free(ipm->pattern_array);
+    snort_free(ipm->pattern_array);
     IntelPmRelease(ipm->handles);
-    free(ipm);
+    snort_free(ipm);
 }
 
 int IntelPmRelease(IntelPmHandles* handles)
@@ -285,9 +287,9 @@ int IntelPmRelease(IntelPmHandles* handles)
             FatalError("cpaPmPdbRelease() failed: %s\n", GetCpaStatusStr(status));
     }
 
-    free(handles->ipms);
-    free(handles->pm_mtchs);
-    free(handles);
+    snort_free(handles->ipms);
+    snort_free(handles->pm_mtchs);
+    snort_free(handles);
 
     return 0;
 }
@@ -328,16 +330,16 @@ int IntelPmAddPattern(
 
     if (ipm->pattern_array == NULL)
     {
-        ipm->pattern_array = (IntelPmPattern*)SnortAlloc(
-            sizeof(IntelPmPattern) * PATTERN_ARRAY_ALLOC_SIZE);
+        ipm->pattern_array = (IntelPmPattern*)
+            snort_calloc(PATTERN_ARRAY_ALLOC_SIZE, sizeof(IntelPmPattern));
         ipm->pattern_array_len = PATTERN_ARRAY_ALLOC_SIZE;
     }
     else if (ipm->patternIds >= ipm->pattern_array_len)
     {
-        IntelPmPattern* tmp = (IntelPmPattern*)SnortAlloc(
-            sizeof(IntelPmPattern) * (ipm->patternIds + PATTERN_ARRAY_ALLOC_SIZE));
+        IntelPmPattern* tmp = (IntelPmPattern*)
+            snort_calloc(ipm->patternIds + PATTERN_ARRAY_ALLOC_SIZE, sizeof(IntelPmPattern));
         memcpy((void*)tmp, ipm->pattern_array, ipm->patternIds * sizeof(IntelPmPattern));
-        free(ipm->pattern_array);
+        snort_free(ipm->pattern_array);
         ipm->pattern_array = tmp;
         ipm->pattern_array_len = ipm->patternIds + PATTERN_ARRAY_ALLOC_SIZE;
     }
@@ -346,7 +348,7 @@ int IntelPmAddPattern(
     ipp->user_data = user;
     ipp->rule_option_tree = NULL;
     ipp->neg_list = NULL;
-    //ipp->pattern = (uint8_t *)SnortAlloc(pat_len);
+    //ipp->pattern = (uint8_t *)snort_calloc(pat_len);
     //memcpy(ipp->pattern, pat, pat_len);
     ipp->pattern = NULL;
     ipp->pattern_len = pat_len;
@@ -380,7 +382,7 @@ int IntelPmFinishGroup(
     if (status != CPA_STATUS_SUCCESS)
         FatalError("cpaPmSessionCtxGetSize() failed: %s\n", GetCpaStatusStr(status));
 
-    pMemory = (Cpa8U*)SnortAlloc(sessionCtxSize);
+    pMemory = (Cpa8U*)snort_calloc(sessionCtxSize);
     status = cpaPmCreateSessionCtx(ipm_instance, &sessionProperty,
         pMemory, &ipm->sessionCtx);
     if (status != CPA_STATUS_SUCCESS)
@@ -388,16 +390,16 @@ int IntelPmFinishGroup(
 
     if (sc->ipm_handles->ipms == NULL)
     {
-        sc->ipm_handles->ipms = (IntelPm**)SnortAlloc(
-            sizeof(IntelPm*) * GROUP_ARRAY_ALLOC_SIZE);
+        sc->ipm_handles->ipms = (IntelPm**)
+            snort_calloc(GROUP_ARRAY_ALLOC_SIZE, sizeof(IntelPm*));
         sc->ipm_handles->ipms_len = GROUP_ARRAY_ALLOC_SIZE;
     }
     else if (ipm->patternGroupId >= sc->ipm_handles->ipms_len)
     {
-        IntelPm** tmp = (IntelPm**)SnortAlloc(
-            sizeof(IntelPm*) * (ipm->patternGroupId + GROUP_ARRAY_ALLOC_SIZE));
+        IntelPm** tmp = (IntelPm**)
+            snort_calloc(ipm->patternGroupId + GROUP_ARRAY_ALLOC_SIZE, sizeof(IntelPm*));
         memcpy((void*)tmp, sc->ipm_handles->ipms, sc->ipm_handles->ipms_len * sizeof(IntelPm*));
-        free(sc->ipm_handles->ipms);
+        snort_free(sc->ipm_handles->ipms);
         sc->ipm_handles->ipms = tmp;
         sc->ipm_handles->ipms_len = ipm->patternGroupId + GROUP_ARRAY_ALLOC_SIZE;
     }
@@ -433,8 +435,8 @@ void IntelPmCompile(SnortConfig* sc)
         /* Hack because the last match state is returned instead of the
          * number of match states */
         numMatchStates += 1;
-        sc->ipm_handles->pm_mtchs = (IntelPmMatchState*)SnortAlloc(numMatchStates *
-            sizeof(IntelPmMatchState));
+        sc->ipm_handles->pm_mtchs = (IntelPmMatchState*)
+            snort_calloc(numMatchStates, sizeof(IntelPmMatchState));
         sc->ipm_handles->pm_mtchs_len = numMatchStates;
 
         for (patternGroup = 1; patternGroup < sc->ipm_handles->pgids; patternGroup++)
@@ -617,7 +619,7 @@ void IntelPmPrintSummary(SnortConfig* sc)
 
 #if 0
 /* XXX Temporary because Intel wants some stats on buffer sizes */
-void IntelPmPrintBufferStats(void)
+void IntelPmPrintBufferStats()
 {
     int i;
 
@@ -639,7 +641,7 @@ void IntelPmPrintBufferStats(void)
 
 #endif
 
-void IntelPmStopInstance(void)
+void IntelPmStopInstance()
 {
     if (ipm_instance != NULL)
     {

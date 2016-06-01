@@ -28,6 +28,7 @@
 #include <ctype.h>
 
 #include "log/messages.h"
+#include "utils/util.h"
 
 SdOptionData::SdOptionData(std::string pattern_)
 {
@@ -43,15 +44,11 @@ SdOptionData::SdOptionData(std::string pattern_)
     else if (pattern_ == "us_social_nodashes")
         pattern_ = SD_SOCIAL_NODASHES_PATTERN;
 
-    pattern = strdup(pattern_.c_str());
-    if (!pattern)
-    {
-        FatalError("Failed to copy sd_pattern");
-    }
+    pattern = snort_strdup(pattern_.c_str());
     ExpandBrackets();
 }
 
-void SdOptionData::ExpandBrackets(void)
+void SdOptionData::ExpandBrackets()
 {
     char* bracket_index, * new_pii, * endptr, * pii_position;
     unsigned long int new_pii_size, repetitions, total_reps = 0;
@@ -80,6 +77,7 @@ void SdOptionData::ExpandBrackets(void)
             ParseError("sd_pattern \"%s\" contains curly brackets which have nothing to modify.", pattern);
 
         repetitions = strtoul(bracket_index+1, &endptr, 10);
+
         if ( *endptr != '}' && *endptr != '\0' )
             ParseError("sd_pattern \"%s\" contains curly brackets with non-digits inside.", pattern);
 
@@ -100,11 +98,10 @@ void SdOptionData::ExpandBrackets(void)
         return;
 
     new_pii_size = (strlen(pattern) + total_reps - 2 * num_brackets + 1);
-    new_pii = (char*) calloc(new_pii_size, sizeof(*new_pii));
-    if ( !new_pii )
-        FatalError("Failed to allocate memory for sd_pattern rule option\n");
+    new_pii = (char*)snort_calloc(new_pii_size, sizeof(*new_pii));
 
     pii_position = pattern;
+
     while (*pii_position != '\0')
     {
         char repeated_section[3] = {'\0'};
@@ -130,7 +127,7 @@ void SdOptionData::ExpandBrackets(void)
             strncat(new_pii, repeated_section, 2);
     }
 
-    free(pattern);
+    snort_free(pattern);
     pattern = new_pii;
 }
 

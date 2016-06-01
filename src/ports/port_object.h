@@ -34,8 +34,8 @@ struct PortObjectItem;
 
 struct PortObject
 {
-    // FIXIT convert char* to C++ string
-    char* name;                 /* user name - always use strdup or malloc for this*/
+    // FIXIT-L convert char* to C++ string
+    char* name;                 /* user name */
     int id;                     /* internal tracking - compiling sets this value */
 
     SF_LIST* item_list;         /* list of port and port-range items */

@@ -29,7 +29,6 @@
 #include <type_traits>
 
 #include "flow_config.h"
-#include "memcap.h"
 #include "prune_stats.h"
 
 class Flow;
@@ -72,8 +71,6 @@ public:
 
     void unlink_uni(Flow*);
 
-    Memcap& get_memcap() { return memcap; }
-
 private:
     void link_uni(Flow*);
     int remove(Flow*);
@@ -83,8 +80,6 @@ private:
     unsigned cleanup_flows;
     unsigned uni_count;
     uint32_t flags;
-
-    Memcap memcap;
 
     class ZHash* hash_table;
     Flow* uni_head, * uni_tail;

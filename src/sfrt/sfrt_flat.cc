@@ -43,7 +43,7 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
     uint8_t* base;
     long data_size_max = 1;
 
-    table_ptr = segment_malloc(sizeof(table_flat_t));
+    table_ptr = segment_snort_alloc(sizeof(table_flat_t));
 
 #if 0
     /*The first allocation always return 0*/
@@ -83,7 +83,7 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
     else
         table->max_size = data_size_max;
 
-    table->data = (INFO)segment_calloc(sizeof(INFO) * table->max_size, 1);
+    table->data = (INFO)segment_snort_calloc(sizeof(INFO) * table->max_size, 1);
 
     if (!table->data)
     {

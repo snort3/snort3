@@ -177,13 +177,13 @@ private:
 FlowBitsOption::~FlowBitsOption()
 {
     if (config->ids)
-        free(config->ids);
+        snort_free(config->ids);
     if (config->name)
-        free(config->name);
+        snort_free(config->name);
     if (config->group)
-        free(config->group);
+        snort_free(config->group);
 
-    free(config);
+    snort_free(config);
 }
 
 uint32_t FlowBitsOption::hash() const
@@ -515,7 +515,7 @@ static uint16_t flowbits_count = 0;
 static uint16_t flowbits_grp_count = 0;
 static int flowbits_toggle = 1;
 
-// FIXIT-L consider allocating flowbits on session on demand instead of
+// FIXIT-P consider allocating flowbits on session on demand instead of
 // preallocating.
 
 unsigned int getFlowbitSize()
@@ -528,7 +528,7 @@ unsigned int getFlowbitSizeInBytes()
     return flowbits_count ? (flowbits_count + 7) >> 3 : 1;
 }
 
-void FlowbitResetCounts(void)
+void FlowbitResetCounts()
 {
     SFGHASH_NODE* n;
     FLOWBITS_OBJECT* fb;
@@ -592,7 +592,7 @@ static FLOWBITS_OBJECT* getFlowBitItem(char* flowbitName, FLOWBITS_OP* flowbits)
 
     if (flowbits_item == NULL)
     {
-        flowbits_item = (FLOWBITS_OBJECT*)SnortAlloc(sizeof(FLOWBITS_OBJECT));
+        flowbits_item = (FLOWBITS_OBJECT*)snort_calloc(sizeof(FLOWBITS_OBJECT));
 
         if (sfqueue_count(flowbits_bit_queue) > 0)
         {
@@ -654,7 +654,7 @@ static void processFlowbits(
 
     DebugFormat(DEBUG_FLOWBITS, "%s tag id parsing %s\n", s_name, flowbits_names);
 
-    flowbits_name = SnortStrdup(flowbits_names);
+    flowbits_name = snort_strdup(flowbits_names);
 
     if (NULL != strchr(flowbits_name, '|'))
     {
@@ -664,7 +664,7 @@ static void processFlowbits(
             return;
         }
         toks = mSplit(flowbits_name, "|", 0, &num_toks, 0);
-        flowbits->ids = (uint16_t*)SnortAlloc(num_toks*sizeof(*(flowbits->ids)));
+        flowbits->ids = (uint16_t*)snort_calloc(num_toks, sizeof(*(flowbits->ids)));
         flowbits->num_ids = num_toks;
         for (i = 0; i < num_toks; i++)
         {
@@ -677,7 +677,7 @@ static void processFlowbits(
     else if (NULL != strchr(flowbits_name, '&'))
     {
         toks = mSplit(flowbits_name, "&", 0, &num_toks, 0);
-        flowbits->ids = (uint16_t*)SnortAlloc(num_toks*sizeof(*(flowbits->ids)));
+        flowbits->ids = (uint16_t*)snort_calloc(num_toks, sizeof(*(flowbits->ids)));
         flowbits->num_ids = num_toks;
         for (i = 0; i < num_toks; i++)
         {
@@ -698,12 +698,12 @@ static void processFlowbits(
     else
     {
         flowbits_item = getFlowBitItem(flowbits_name, flowbits);
-        flowbits->ids = (uint16_t*)SnortAlloc(sizeof(*(flowbits->ids)));
+        flowbits->ids = (uint16_t*)snort_calloc(sizeof(*(flowbits->ids)));
         flowbits->num_ids = 1;
         flowbits->ids[0] = flowbits_item->id;
     }
 
-    free(flowbits_name);
+    snort_free(flowbits_name);
 }
 
 static void validateFlowbitsSyntax(FLOWBITS_OP* flowbits)
@@ -805,7 +805,7 @@ static FLOWBITS_GRP* getFlowBitGroup(char* groupName)
     if ( !flowbits_grp )
     {
         // new group defined, add (bitop set later once we know size)
-        flowbits_grp = (FLOWBITS_GRP*)SnortAlloc(sizeof(*flowbits_grp));
+        flowbits_grp = (FLOWBITS_GRP*)snort_calloc(sizeof(*flowbits_grp));
         hstatus = sfghash_add(flowbits_grp_hash, groupName, flowbits_grp);
 
         if (hstatus != SFGHASH_OK)
@@ -813,7 +813,7 @@ static FLOWBITS_GRP* getFlowBitGroup(char* groupName)
 
         flowbits_grp_count++;
         flowbits_grp->group_id = flowbits_grp_count;
-        flowbits_grp->name = SnortStrdup(groupName);
+        flowbits_grp->name = snort_strdup(groupName);
     }
 
     return flowbits_grp;
@@ -845,7 +845,7 @@ static void processFlowBitsWithGroup(char* flowbitsName, char* groupName, FLOWBI
 
     if (groupName && !(flowbits->group))
     {
-        flowbits->group = SnortStrdup(groupName);
+        flowbits->group = snort_strdup(groupName);
         flowbits->group_id = flowbits_grp->group_id;
     }
     validateFlowbitsSyntax(flowbits);
@@ -864,7 +864,7 @@ static FLOWBITS_OP* flowbits_parse(const char* data)
     char* flowbitsName = NULL;
     FLOWBITS_GRP* flowbits_grp;
 
-    FLOWBITS_OP* flowbits = (FLOWBITS_OP*)SnortAlloc(sizeof(*flowbits));
+    FLOWBITS_OP* flowbits = (FLOWBITS_OP*)snort_calloc(sizeof(*flowbits));
 
     toks = mSplit(data, ",", 0, &num_toks, 0);
 
@@ -911,9 +911,9 @@ static FLOWBITS_OP* flowbits_parse(const char* data)
         }
 
         flowbits->type = FLOWBITS_NOALERT;
-        flowbits->ids   = NULL;
-        flowbits->num_ids  = 0;
-        flowbits->name  = SnortStrdup(typeName);
+        flowbits->ids = NULL;
+        flowbits->num_ids = 0;
+        flowbits->name = snort_strdup(typeName);
 
         mSplitFree(&toks, num_toks);
         return flowbits;
@@ -928,15 +928,15 @@ static FLOWBITS_OP* flowbits_parse(const char* data)
         if (num_toks == 2)
         {
             /*Save the group name*/
-            groupName = SnortStrdup(toks[1]);
+            groupName = snort_strdup(toks[1]);
             flowbits_grp = getFlowBitGroup(groupName);
             flowbits->group = groupName;
             flowbits->group_id = flowbits_grp->group_id;
         }
         flowbits->type = FLOWBITS_RESET;
-        flowbits->ids   = NULL;
-        flowbits->num_ids   = 0;
-        flowbits->name  = SnortStrdup(typeName);
+        flowbits->ids = NULL;
+        flowbits->num_ids = 0;
+        flowbits->name = snort_strdup(typeName);
         mSplitFree(&toks, num_toks);
         return flowbits;
     }
@@ -945,7 +945,7 @@ static FLOWBITS_OP* flowbits_parse(const char* data)
         ParseAbort("%s: invalid token %s.", s_name, typeName);
     }
 
-    flowbits->name = SnortStrdup(typeName);
+    flowbits->name = snort_strdup(typeName);
     /*
      **  Let's parse the flowbits name
      */
@@ -1005,7 +1005,7 @@ static void init_groups()
     }
 }
 
-static void FlowBitsVerify(void)
+static void FlowBitsVerify()
 {
     SFGHASH_NODE* n;
     FLOWBITS_OBJECT* fb;
@@ -1068,7 +1068,7 @@ static void FlowBitsVerify(void)
 static void FlowItemFree(void* d)
 {
     FLOWBITS_OBJECT* data = (FLOWBITS_OBJECT*)d;
-    free(data);
+    snort_free(data);
 }
 
 static void FlowBitsGrpFree(void* d)
@@ -1077,8 +1077,8 @@ static void FlowBitsGrpFree(void* d)
     if(data->GrpBitOp)
         delete data->GrpBitOp;
     if (data->name)
-        free(data->name);
-    free(data);
+        snort_free(data->name);
+    snort_free(data);
 }
 
 //-------------------------------------------------------------------------
@@ -1226,8 +1226,8 @@ char* group_name =  ((FLOWBITS_OP*)idx_dup)->group;
 if (flowbits->group)
 {
     if (group_name && strcmp(group_name, flowbits->group))
-        free(group_name);
-    ((FLOWBITS_OP*)idx_dup)->group = SnortStrdup(flowbits->group);
+        snort_free(group_name);
+    ((FLOWBITS_OP*)idx_dup)->group = snort_strdup(flowbits->group);
 }
 // ... then delete current and use original
 #endif

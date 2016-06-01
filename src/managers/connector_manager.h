@@ -35,8 +35,8 @@ class ConnectorManager
 {
 public:
     static void add_plugin(const ConnectorApi* api);
-    static void dump_plugins(void);
-    static void release_plugins(void);
+    static void dump_plugins();
+    static void release_plugins();
 
     static void instantiate(const ConnectorApi*, Module*, SnortConfig*);
 

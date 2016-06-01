@@ -42,11 +42,11 @@ struct Packet;
 /* main Functions, called by Snort shutdown */
 void SFAT_Init();
 void SFAT_Start();
-void SFAT_Cleanup(void);
+void SFAT_Cleanup();
 void FreeHostEntry(HostAttributeEntry* host);
 
 /* status functions */
-uint32_t SFAT_NumberOfHosts(void);
+uint32_t SFAT_NumberOfHosts();
 
 /* API Lookup functions, to be called by Stream & Frag */
 HostAttributeEntry* SFAT_LookupHostEntryByIP(const sfip_t* ipAddr);

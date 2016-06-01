@@ -85,7 +85,7 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
 
     os << "latency: ";
 
-    if ( e.type == Event::EVENT_ENABLED ) 
+    if ( e.type == Event::EVENT_ENABLED )
         os << "rule tree enabled: ";
 
     else
@@ -99,7 +99,8 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
         os << duration_cast<microseconds>(e.elapsed).count() << " usec, ";
     }
 
-    // FIXIT-L J seeing the address of the dot root is not particularly helpful
+    // FIXIT-L clean up rule latency logging; delete or make useful
+    // seeing the address of the dot root is not particularly helpful
     // except during debugging (ported from legacy ppm)
     os << "[" << e.root << "]";
 
@@ -149,7 +150,7 @@ struct DefaultRuleInterface
             for ( int i = 0; i < root.num_children; ++i )
             {
                 auto& child_state = root.children[i]->state[get_instance_id()];
-                // FIXIT-L J rename to something like latency_timeout_count
+                // FIXIT-L rename to something like latency_timeout_count
                 ++child_state.latency_timeouts;
                 ++child_state.latency_suspends;
             }
@@ -161,7 +162,7 @@ struct DefaultRuleInterface
         {
             for ( int i = 0; i < root.num_children; ++i )
             {
-                // FIXIT-L J rename to something like latency_timeout_count
+                // FIXIT-L rename to something like latency_timeout_count
                 ++root.children[i]->state[get_instance_id()].latency_timeouts;
             }
         }
@@ -203,7 +204,7 @@ inline bool Impl<Clock, RuleTree>::push(detection_option_tree_root_t* root)
 {
     assert(root);
 
-    // FIXIT-L J rule timer is pushed even if rule is not enabled (no visible side-effects)
+    // FIXIT-L rule timer is pushed even if rule is not enabled (no visible side-effects)
     timers.emplace_back(config->max_time, root);
 
     if ( config->allow_reenable() )

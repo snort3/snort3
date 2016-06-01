@@ -30,7 +30,7 @@ class TcpStateListen : public TcpStateHandler
 {
 public:
     TcpStateListen(TcpStateMachine&);
-    virtual ~TcpStateListen(void);
+    virtual ~TcpStateListen();
 
     bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;

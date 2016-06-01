@@ -60,7 +60,7 @@ char* inet_ntoax(const sfip_t* ip)
 }
 
 #ifdef TEST_UTIL_NET
-int main(void)
+int main()
 {
     uint32_t ip1 = htonl(0xFF00FF00);
     uint32_t ip2 = htonl(0xFFAAFFAA);

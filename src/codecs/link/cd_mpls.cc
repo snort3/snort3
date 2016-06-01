@@ -319,9 +319,9 @@ int MplsCodec::checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
 void MplsCodec::log(TextLog* const /*text_log*/, const uint8_t* /*raw_pkt*/,
     const uint16_t /*lyr_len*/)
 {
-    // FIXIT-L  MPLS needs to be updated throughout Snort++
-//    TextLog_Print(text_log,"label:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
-//        p->ptrs.mplsHdr.label, p->ptrs.mplsHdr.exp, p->ptrs.mplsHdr.bos, p->ptrs.mplsHdr.ttl);
+// FIXIT-L  MPLS needs to be updated throughout Snort++
+//  TextLog_Print(text_log,"label:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
+//      p->ptrs.mplsHdr.label, p->ptrs.mplsHdr.exp, p->ptrs.mplsHdr.bos, p->ptrs.mplsHdr.ttl);
 }
 
 //-------------------------------------------------------------------------

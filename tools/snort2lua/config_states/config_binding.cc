@@ -187,8 +187,7 @@ bool Binding::convert(std::istringstream& data_stream)
             bind_cv.get_table_api().open_top_level_table("ips");
             bind_cv.get_table_api().close_table();
 
-//            file = file + ".lua";  FIXIT-L  the file names should contain their original
-// variables
+            //file = file + ".lua";  FIXIT-L file names should contain their original variables
             file = full_path + ".lua";
 
             if (bind_cv.convert(full_path, file, file, full_path + ".rej") < 0)

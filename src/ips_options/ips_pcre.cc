@@ -70,6 +70,7 @@ struct PcreData
 {
     pcre* re;           /* compiled regex */
     pcre_extra* pe;     /* studied regex foo */
+    bool free_pe;
     int options;        /* sp_pcre specfic options (relative & inverse) */
     char* expression;
 };
@@ -175,7 +176,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
         return;
     }
 
-    free_me = SnortStrdup(data);
+    free_me = snort_strdup(data);
     re = free_me;
 
     /* get rid of starting and ending whitespace */
@@ -218,7 +219,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     else if (*re != delimit)
         goto syntax;
 
-    pcre_data->expression = SnortStrdup(re);
+    pcre_data->expression = snort_strdup(re);
 
     /* find ending delimiter, trim delimit chars */
     opts = strrchr(re, delimit);
@@ -315,7 +316,9 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
             ((SnortConfig::get_pcre_match_limit() != -1) ||
              (SnortConfig::get_pcre_match_limit_recursion() != -1)))
         {
-            pcre_data->pe = (pcre_extra*)SnortAlloc(sizeof(pcre_extra));
+            pcre_data->pe = (pcre_extra*)snort_calloc(sizeof(pcre_extra));
+            pcre_data->free_pe = true;
+
             if (SnortConfig::get_pcre_match_limit() != -1)
             {
                 pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT;
@@ -342,15 +345,15 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     pcre_capture(pcre_data->re, pcre_data->pe);
     pcre_check_anchored(pcre_data);
 
-    free(free_me);
+    snort_free(free_me);
     return;
 
 syntax:
-    free(free_me);
+    snort_free(free_me);
 
     // ensure integrity from parse error to fatal error
     if ( !pcre_data->expression )
-        pcre_data->expression = SnortStrdup("");
+        pcre_data->expression = snort_strdup("");
 
     ParseError("unable to parse pcre %s", data);
 }
@@ -486,16 +489,21 @@ PcreOption::~PcreOption()
     if ( !config )
         return;
 
-    if (config->expression)
-        free(config->expression);
+    if ( config->expression )
+        snort_free(config->expression);
 
-    if (config->pe)
-        pcre_release(config->pe);
+    if ( config->pe )
+    {
+        if ( config->free_pe )
+            snort_free(config->pe);
+        else
+            pcre_release(config->pe);
+    }
 
-    if (config->re)
-        free(config->re);
+    if ( config->re )
+        free(config->re);  // external allocation
 
-    free(config);
+    snort_free(config);
 }
 
 uint32_t PcreOption::hash() const
@@ -636,7 +644,7 @@ void pcre_setup(SnortConfig* sc)
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
         SnortState* ss = sc->state + i;
-        ss->pcre_ovector = (int*)SnortAlloc(s_ovector_max*sizeof(int));
+        ss->pcre_ovector = (int*)snort_calloc(s_ovector_max, sizeof(int));
     }
 }
 
@@ -647,7 +655,7 @@ void pcre_cleanup(SnortConfig* sc)
         SnortState* ss = sc->state + i;
 
         if ( ss->pcre_ovector )
-            free(ss->pcre_ovector);
+            snort_free(ss->pcre_ovector);
 
         ss->pcre_ovector = nullptr;
     }
@@ -698,7 +706,7 @@ PcreData* PcreModule::get_data()
 
 bool PcreModule::begin(const char*, int, SnortConfig*)
 {
-    data = (PcreData*)SnortAlloc(sizeof(*data));
+    data = (PcreData*)snort_calloc(sizeof(*data));
     return true;
 }
 

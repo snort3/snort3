@@ -80,7 +80,7 @@ struct IPSET
    For a single IPAddress the implied Mask is 32 bits,or
    255.255.255.255, or 0xffffffff, or -1.
 */
-IPSET* ipset_new(void);
+IPSET* ipset_new();
 int ipset_add(IPSET* ipset, sfip_t* ip, void* port, int notflag);
 int ipset_contains(IPSET* ipset, const sfip_t* ip, void* port);
 IPSET* ipset_copy(IPSET* ipset);

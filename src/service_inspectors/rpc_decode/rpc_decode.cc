@@ -614,7 +614,7 @@ static inline void* RpcAlloc(uint32_t size)
     }
 
     rpc_memory += size;
-    return SnortAlloc(size);
+    return snort_calloc(size);
 }
 
 static inline void RpcFree(void* data, uint32_t size)
@@ -627,7 +627,7 @@ static inline void RpcFree(void* data, uint32_t size)
     else
         rpc_memory -= size;
 
-    free(data);
+    snort_free(data);
 }
 
 static inline void RpcSsnSetInactive(RpcSsnData* rsdata, Packet*)

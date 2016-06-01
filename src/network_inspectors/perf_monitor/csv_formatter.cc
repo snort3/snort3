@@ -27,6 +27,7 @@
 #include <cstring>
 
 #include "catch/catch.hpp"
+#include "utils/util.h"
 #endif
 
 using namespace std;
@@ -107,7 +108,7 @@ TEST_CASE("csv output", "[CSVFormatter]")
         "#timestamp,name.one,name.two,other.three,other.five,other.kvp\n"
         "1234567890,0,1,2,hellothere,3,50,60,70\n"
         "2345678901,0,0,0,,0\n";
-    
+
     FILE* fh = tmpfile();
     CSVFormatter f;
 
@@ -134,15 +135,15 @@ TEST_CASE("csv output", "[CSVFormatter]")
     f.write(fh, (time_t)2345678901);
 
     auto size = ftell(fh);
-    char* fake_file = (char*) malloc(size + 1);
+    char* fake_file = (char*)snort_alloc(size + 1);
 
     rewind(fh);
     fread(fake_file, size, 1, fh);
     fake_file[size] = '\0';
-    
+
     CHECK( !strcmp(cooked, fake_file) );
 
-    free(fake_file);
+    snort_free(fake_file);
     fclose(fh);
 }
 

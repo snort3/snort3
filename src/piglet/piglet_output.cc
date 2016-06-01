@@ -103,8 +103,7 @@ const struct Output unit_test_output =
     }
 };
 
-// FIXIT-L: Don't want to include this
-const struct Output pretty_output =
+const struct Output pretty_output =  // FIXIT-L don't want to include this
 {
     [](const std::vector<Chunk>&) -> void
     {

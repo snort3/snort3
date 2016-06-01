@@ -24,8 +24,9 @@
 #include <string.h>
 
 #include "catch/catch.hpp"
-
 #include "main/snort_types.h"
+#include "utils/util.h"
+
 #include "sfrt/sfrt.h"
 #include "sfip/sf_ip.h"
 
@@ -91,15 +92,15 @@ static void test_sfrt_remove_after_insert()
 
             sfip_pton(ip_entry->ip_str, &ip);
 
-            ip2_str = strdup(ip_entry->ip_str);
-            assert(ip2_str != NULL);
+            ip2_str = snort_strdup(ip_entry->ip_str);
             p = strchr(ip2_str, '/');
+
             if (p)
             {
                 *p = 0;
             }
             sfip_pton(ip2_str, &ip2);
-            free(ip2_str);
+            snort_free(ip2_str);
         }
 
         if ( s_debug )
@@ -182,15 +183,15 @@ static void test_sfrt_remove_after_insert_all()
 
             sfip_pton(ip_entry->ip_str, &ip);
 
-            ip2_str = strdup(ip_entry->ip_str);
-            assert(ip2_str != NULL);
+            ip2_str = snort_strdup(ip_entry->ip_str);
             p = strchr(ip2_str, '/');
+
             if (p)
             {
                 *p = 0;
             }
             sfip_pton(ip2_str, &ip2);
-            free(ip2_str);
+            snort_free(ip2_str);
         }
 
         CHECK(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) ==

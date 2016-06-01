@@ -20,7 +20,7 @@
 #ifndef SFMEMCAP_H
 #define SFMEMCAP_H
 
-// malloc and free wrappers that enforce a memory cap
+// _alloc and _free wrappers that enforce a memory cap
 
 struct MEMCAP
 {
@@ -29,14 +29,14 @@ struct MEMCAP
     int nblocks;
 };
 
-// FIXIT-L: Could be refactored as a class
+// FIXIT-L could be refactored as a class but should be deleted
 void sfmemcap_init(MEMCAP* mc, unsigned long nbytes);
 MEMCAP* sfmemcap_new(unsigned nbytes);
 void sfmemcap_delete(MEMCAP* mc);
 void* sfmemcap_alloc(MEMCAP* mc, unsigned long nbytes);
 void sfmemcap_showmem(MEMCAP* mc);
 void sfmemcap_free(MEMCAP* mc, void* memory);
-char* sfmemcap_strdup(MEMCAP* mc, const char* str);
+char* sfmemcap_SnortStrdup(MEMCAP* mc, const char* str);
 void* sfmemcap_dupmem(MEMCAP* mc, void* src, unsigned long n);
 
 #endif

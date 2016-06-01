@@ -26,10 +26,10 @@
 
 #include "framework/counts.h"
 
-// FIXIT-L J we can probably fiddle with these breakdowns
+// FIXIT-L we can probably fiddle with these breakdowns
 enum class PruneReason : uint8_t
 {
-    // FIXIT-L J do we want to count purges?
+    // FIXIT-L do we want to count purges?  yes
     PURGE = 0,
     TIMEOUT,
     EXCESS,

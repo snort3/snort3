@@ -86,12 +86,11 @@ void FileCapture::init_mempool(int64_t max_file_mem, int64_t block_len)
 
     int max_files = max_file_mem_in_bytes / block_size;
 
-    file_mempool = (FileMemPool*)SnortAlloc(sizeof(FileMemPool));
+    file_mempool = (FileMemPool*)snort_calloc(sizeof(FileMemPool));
 
-    if ((!file_mempool)||
-        (file_mempool_init(file_mempool, max_files, block_size) != 0))
+    if ( file_mempool_init(file_mempool, max_files, block_size) != 0 )
     {
-        FatalError("File capture: Could not allocate file buffer mempool.\n");
+        FatalError("File capture: Could not initialize file buffer mempool.\n");
     }
 }
 
@@ -523,7 +522,7 @@ void FileCapture::store_file(FileContext* file)
 }
 
 /*Log file capture mempool usage*/
-void FileCapture::print_mem_usage(void)
+void FileCapture::print_mem_usage()
 {
     if (file_mempool)
     {
@@ -538,11 +537,11 @@ void FileCapture::print_mem_usage(void)
  *  Release all file capture memory etc,
  *  this must be called when snort exits
  */
-void FileCapture::exit(void)
+void FileCapture::exit()
 {
     if (file_mempool_destroy(file_mempool) == 0)
     {
-        free(file_mempool);
+        snort_free(file_mempool);
         file_mempool = nullptr;
     }
 }

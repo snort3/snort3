@@ -31,8 +31,7 @@
 #include "main/snort_types.h"
 #include "circular_buffer.h"
 
-// FIXIT-L use bool or enum
-#define FILE_MEM_SUCCESS   0
+#define FILE_MEM_SUCCESS    0  // FIXIT-L use bool
 #define FILE_MEM_FAIL      -1
 
 typedef struct _FileMemPool

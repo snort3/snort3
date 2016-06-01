@@ -135,7 +135,7 @@ static void DCE2_OpnumFreeMask(DCE2_Opnum* opnum)
 {
     if (opnum->mask != nullptr)
     {
-        free((void*)opnum->mask);
+        snort_free((void*)opnum->mask);
         opnum->mask = nullptr;
         opnum->mask_size = 0;
     }
@@ -325,12 +325,7 @@ static DCE2_Ret DCE2_OpnumParse(char* args, DCE2_Opnum* opnum)
     {
         int opnum_range = opnum->opnum_hi - opnum->opnum_lo;
         opnum->mask_size = (opnum_range / 8) + 1;
-        opnum->mask = (uint8_t*)SnortAlloc(opnum->mask_size);
-
-        if (opnum->mask == nullptr)
-        {
-            return DCE2_RET__ERROR;
-        }
+        opnum->mask = (uint8_t*)snort_calloc(opnum->mask_size);
 
         /* Set the opnum bits in our reduced size opnum mask */
         for (i = (unsigned int)opnum->opnum_lo; i <= (unsigned int)opnum->opnum_hi; i++)
@@ -499,9 +494,9 @@ bool Dce2OpnumModule::set(const char*, Value& v, SnortConfig*)
         if ( tok[tok.length()-1] == '"' )
             tok.erase(tok.length()-1, 1);
 
-        char* s = SnortStrdup(tok.c_str());
+        char* s = snort_strdup(tok.c_str());
         DCE2_Ret status = DCE2_OpnumParse(s, &opnum);
-        free(s);
+        snort_free(s);
 
         if (status == DCE2_RET__SUCCESS)
             return true;

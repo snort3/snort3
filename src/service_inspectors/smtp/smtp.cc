@@ -192,7 +192,7 @@ SmtpFlowData::~SmtpFlowData()
         delete session.mime_ssn;
 
     if ( session.auth_name )
-        free(session.auth_name);
+        snort_free(session.auth_name);
 
     if ( smtpstats.conc_sessions )
         smtpstats.conc_sessions--;
@@ -239,19 +239,16 @@ static void SMTP_InitCmds(SMTP_PROTO_CONF* config)
     if (config == NULL)
         return;
 
-    config->cmd_config = (SMTPCmdConfig*)SnortAlloc(CMD_LAST * sizeof(*config->cmd_config));
-    config->cmds = (SMTPToken*)SnortAlloc((CMD_LAST + 1) * sizeof(*config->cmds));
+    config->cmd_config = (SMTPCmdConfig*)snort_calloc(CMD_LAST, sizeof(*config->cmd_config));
+    config->cmds = (SMTPToken*)snort_calloc((CMD_LAST + 1), sizeof(*config->cmds));
 
     for (const SMTPToken* tmp = &smtp_known_cmds[0]; tmp->name != NULL; tmp++)
     {
         SMTPToken* tok = config->cmds + tmp->search_id;
         tok->name_len = tmp->name_len;
         tok->search_id = tmp->search_id;
-        tok->name = SnortStrdup(tmp->name);
+        tok->name = snort_strdup(tmp->name);
         tok->type = tmp->type;
-
-        if (config->cmds[tmp->search_id].name == NULL)
-            FatalError("Could not allocate memory for SMTP Command structure.\n");
     }
 
     config->num_cmds = CMD_LAST;
@@ -260,16 +257,16 @@ static void SMTP_InitCmds(SMTP_PROTO_CONF* config)
 static void SMTP_TermCmds(SMTP_PROTO_CONF* config)
 {
     for ( int i = 0; i <= config->num_cmds; ++i )
-        free((char*)config->cmds[i].name);
+        snort_free((char*)config->cmds[i].name);
 
-    free(config->cmds);
-    free(config->cmd_config);
+    snort_free(config->cmds);
+    snort_free(config->cmd_config);
 }
 
 static void SMTP_CommandSearchInit(SMTP_PROTO_CONF* config)
 {
     config->cmd_search_mpse = new SearchTool();
-    config->cmd_search = (SMTPSearch*)SnortAlloc(config->num_cmds * sizeof(*config->cmd_search));
+    config->cmd_search = (SMTPSearch*)snort_calloc(config->num_cmds, sizeof(*config->cmd_search));
 
     for ( const SMTPToken* tmp = config->cmds; tmp->name != NULL; tmp++ )
     {
@@ -283,18 +280,15 @@ static void SMTP_CommandSearchInit(SMTP_PROTO_CONF* config)
 
 static void SMTP_CommandSearchTerm(SMTP_PROTO_CONF* config)
 {
-    free(config->cmd_search);
+    snort_free(config->cmd_search);
     delete config->cmd_search_mpse;
 }
 
-static void SMTP_ResponseSearchInit(void)
+static void SMTP_ResponseSearchInit()
 {
     const SMTPToken* tmp;
     smtp_resp_search_mpse = new SearchTool();
-    if (smtp_resp_search_mpse == NULL)
-    {
-        FatalError("Could not allocate memory for SMTP Response search.\n");
-    }
+
     for (tmp = &smtp_resps[0]; tmp->name != NULL; tmp++)
     {
         smtp_resp_search[tmp->search_id].name = (char *)tmp->name;
@@ -304,7 +298,7 @@ static void SMTP_ResponseSearchInit(void)
     smtp_resp_search_mpse->prep();
 }
 
-static void SMTP_SearchFree(void)
+static void SMTP_SearchFree()
 {
     if (smtp_resp_search_mpse != NULL)
         delete smtp_resp_search_mpse;
@@ -319,8 +313,8 @@ static int AddCmd(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum typ
 
     /* allocate enough memory for new commmand - alloc one extra for NULL entry */
     // FIXIT-L this constant reallocation is not necessary; use vector
-    cmds = (SMTPToken*)SnortAlloc((config->num_cmds + 1) * sizeof(*cmds));
-    cmd_config = (SMTPCmdConfig*)SnortAlloc(config->num_cmds * sizeof(*cmd_config));
+    cmds = (SMTPToken*)snort_calloc(config->num_cmds + 1, sizeof(*cmds));
+    cmd_config = (SMTPCmdConfig*)snort_calloc(config->num_cmds, sizeof(*cmd_config));
 
     /* copy existing commands into newly allocated memory */
     int ret = SafeMemcpy(cmds, config->cmds, (config->num_cmds - 1) * sizeof(*cmds),
@@ -339,7 +333,7 @@ static int AddCmd(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum typ
      * will probably be done by a calling function */
 
     SMTPToken* tok = cmds + config->num_cmds - 1;
-    tok->name = SnortStrdup(name);
+    tok->name = snort_strdup(name);
     tok->name_len = strlen(name);
     tok->search_id = config->num_cmds - 1;
 
@@ -348,10 +342,10 @@ static int AddCmd(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum typ
 
     /* free global memory structures */
     if ( config->cmds )
-        free(config->cmds);
+        snort_free(config->cmds);
 
     if ( config->cmd_config )
-        free(config->cmd_config);
+        snort_free(config->cmd_config);
 
     /* set globals to new memory */
     config->cmds = cmds;
@@ -646,12 +640,9 @@ static bool SMTP_IsAuthChanged(SMTPData* smtp_ssn, const uint8_t* start_ptr, con
             auth_changed = true;
     }
     else
-        smtp_ssn->auth_name = (SMTPAuthName*)calloc(1, sizeof(*(smtp_ssn->auth_name)));
+        smtp_ssn->auth_name = (SMTPAuthName*)snort_calloc(sizeof(*(smtp_ssn->auth_name)));
 
     /* save the current authentication mechanism*/
-    if (!smtp_ssn->auth_name)
-        return auth_changed;
-
     if (auth_changed || (!smtp_ssn->auth_name->length))
     {
         memcpy(smtp_ssn->auth_name->name, start, length);
@@ -696,10 +687,11 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
         alert_long_command_line = 1;
     }
 
-    /* FIXIT If the end of line marker coincides with the end of data we can't be
-     * sure that we got a command and not a substring which we could tell through
-     * inspection of the next packet. Maybe a command pending state where the first
-     * char in the next packet is checked for a space and end of line marker */
+    // FIXIT-M if the end of line marker coincides with the end of data we
+    // can't be sure that we got a command and not a substring which we
+    // could tell through inspection of the next packet. Maybe a command
+    // pending state where the first char in the next packet is checked for
+    // a space and end of line marker
 
     /* do not confine since there could be space chars before command */
     smtp_current_search = &config->cmd_search[0];

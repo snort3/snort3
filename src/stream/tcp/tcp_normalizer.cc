@@ -229,7 +229,7 @@ bool TcpNormalizer::validate_rst_seq_geq(TcpSegmentDescriptor& tsd)
         tsd.get_end_seq(), tracker->r_win_base, tsd.get_seg_seq(), tracker->r_nxt_ack +
         get_stream_window(tsd));
 
-    // FIXIT - check for r_win_base == 0 is hack for uninitialized r_win_base, fix this
+    // FIXIT-H check for r_win_base == 0 is hack for uninitialized r_win_base, fix this
     if ( ( tracker->r_nxt_ack == 0 ) || SEQ_GEQ(tsd.get_seg_seq(), tracker->r_nxt_ack) )
     {
         DebugMessage(DEBUG_STREAM_STATE, "rst is valid seq (>= next seq)!\n");
@@ -247,7 +247,7 @@ bool TcpNormalizer::validate_rst_end_seq_geq(TcpSegmentDescriptor& tsd)
         tsd.get_end_seq(), tracker->r_win_base, tsd.get_seg_seq(), tracker->r_nxt_ack +
         get_stream_window(tsd));
 
-    // FIXIT - check for r_win_base == 0 is hack for uninitialized r_win_base, fix this
+    // FIXIT-H check for r_win_base == 0 is hack for uninitialized r_win_base, fix this
     if ( tracker->r_win_base == 0 )
         return true;
 
@@ -272,7 +272,7 @@ bool TcpNormalizer::validate_rst_seq_eq(TcpSegmentDescriptor& tsd)
         tsd.get_end_seq(), tracker->r_win_base, tsd.get_seg_seq(), tracker->r_nxt_ack +
         get_stream_window(tsd));
 
-    // FIXIT - check for r_nxt_ack == 0 is hack for uninitialized r_nxt_ack, fix this
+    // FIXIT-H check for r_nxt_ack == 0 is hack for uninitialized r_nxt_ack, fix this
     if ( ( tracker->r_nxt_ack == 0 ) || SEQ_EQ(tsd.get_seg_seq(), tracker->r_nxt_ack) )
     {
         DebugMessage(DEBUG_STREAM_STATE, "rst is valid seq (next seq)!\n");

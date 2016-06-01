@@ -38,7 +38,7 @@ bool TcpStateListen::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( trk.session->config->require_3whs() || tsd.has_wscale() || ( tsd.get_seg_len() > 0 ) )
     {
-        // FIXIT - do we need this check? only server goes into Listen state...
+        // FIXIT-L do we need this check? only server goes into Listen state...
         if ( tsd.get_pkt()->is_from_server() )
             trk.session->tel.set_tcp_event(EVENT_4WHS);
     }
@@ -102,8 +102,8 @@ bool TcpStateListen::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     {
         Flow* flow = tsd.get_flow();
 
-        /* FIXIT: do we need to verify the ACK field is >= the seq of the SYN-ACK?
-                   3-way Handshake complete, create TCP session */
+        // FIXIT-H do we need to verify the ACK field is >= the seq of the SYN-ACK?
+        // 3-way Handshake complete, create TCP session
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_SYN_ACK |
             STREAM_STATE_ESTABLISHED );
         trk.init_on_3whs_ack_sent(tsd);
@@ -204,7 +204,7 @@ bool TcpStateListen::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
-        // FIXIT - handle this
+        // FIXIT-L handle FIN on midstream
     }
     else if ( trk.session->config->require_3whs() )
     {

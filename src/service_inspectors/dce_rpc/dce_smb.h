@@ -162,7 +162,7 @@
 
 struct dce2SmbStats
 {
-/*  FIXIT-M
+/*  FIXIT-M add array based peg counts
     PegCount sessions_autodetected;
 #ifdef DEBUG
     PegCount autoports[65535][DCE2_TRANS_TYPE__MAX];
@@ -206,7 +206,7 @@ struct dce2SmbStats
     PegCount smb_cli_seg_reassembled;
     PegCount smb_srv_seg_reassembled;
     PegCount smb_max_outstanding_requests;
-    //  FIXIT-M
+    //  FIXIT-M more peg count foo
     /*uint64_t smb_com_stats[2][SMB_MAX_NUM_COMS];
     uint64_t smb_chained_stats[2][SMB_ANDX_COM__MAX][SMB_MAX_NUM_COMS];
     // The +1 is for codes beyond the range of the highest valid subcommand code

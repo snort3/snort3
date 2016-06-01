@@ -212,7 +212,7 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
     if ( hs_compile_multi(&pats[0], &flags[0], &ids[0], pvector.size(), HS_MODE_BLOCK,
             nullptr, &hs_db, &err) or !hs_db )
     {
-        // FIXIT emit data from err
+        // FIXIT-L emit data from err
         ParseError("can't compile pattern database '%s'", "hs_compile_multi");
         hs_free_compile_error(err);
         return -1;

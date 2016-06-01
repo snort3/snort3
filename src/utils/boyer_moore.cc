@@ -98,7 +98,7 @@ int main()
 int* make_skip(const char* ptrn, int plen)
 {
     int i;
-    int* skip = (int*)SnortAlloc(256* sizeof(int));
+    int* skip = (int*)snort_calloc(256, sizeof(int));
 
     for ( i = 0; i < 256; i++ )
         skip[i] = plen + 1;
@@ -125,7 +125,7 @@ int* make_skip(const char* ptrn, int plen)
  ****************************************************************/
 int* make_shift(const char* ptrn, int plen)
 {
-    int* shift = (int*)SnortAlloc(plen * sizeof(int));
+    int* shift = (int*)snort_calloc(plen, sizeof(int));
     int* sptr = shift + plen - 1;
     const char* pptr = ptrn + plen - 1;
     char c;

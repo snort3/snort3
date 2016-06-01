@@ -123,7 +123,7 @@ static void get_alert_pkt(
 {
     DebugMessage(DEBUG_LOG, "Logging Alert data!\n");
 
-    // FIXIT-L ugh ...
+    // FIXIT-L minimize or eliminate memset
     memset((char*)&us.alert,0,sizeof(us.alert));
 
     us.alert.gid = event->sig_info->generator;
@@ -146,7 +146,7 @@ static void get_alert_pkt(
 
     if (msg)
     {
-        // FIXIT-L ugh ...
+        // FIXIT-L avoid memmove?
         memmove( (void*)us.alert.alertmsg, (const void*)msg,
             strlen(msg)>ALERTMSG_LENGTH-1 ? ALERTMSG_LENGTH - 1 : strlen(msg));
     }
@@ -199,7 +199,7 @@ static void get_alert_pkt(
 
 //-------------------------------------------------------------------------
 
-static void OpenAlertSock(void)
+static void OpenAlertSock()
 {
     std::string name;
     get_instance_file(name, UNSOCK_FILE);

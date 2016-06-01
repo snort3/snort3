@@ -31,7 +31,7 @@
 // interface stuff
 //------------------------------------------------------------------------------
 
-void PrintAllInterfaces(void)
+void PrintAllInterfaces()
 {
     char errorbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t* alldevs;

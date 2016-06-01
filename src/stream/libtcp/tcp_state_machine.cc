@@ -23,13 +23,13 @@
 #include "tcp_stream_session.h"
 #include "tcp_state_machine.h"
 
-TcpStateMachine::TcpStateMachine(void)
+TcpStateMachine::TcpStateMachine()
 {
     for ( auto s = TcpStreamTracker::TCP_LISTEN; s < TcpStreamTracker::TCP_MAX_STATES; s++ )
         tcp_state_handlers[ s ] = nullptr;
 }
 
-TcpStateMachine::~TcpStateMachine(void)
+TcpStateMachine::~TcpStateMachine()
 {
     for ( auto s = TcpStreamTracker::TCP_LISTEN; s < TcpStreamTracker::TCP_MAX_STATES; s++ )
         delete tcp_state_handlers[ s ];

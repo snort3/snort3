@@ -24,7 +24,6 @@
 
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
-#include "flow/memcap.h"
 
 #include "tcp_defs.h"
 #include "stream/libtcp/tcp_segment_descriptor.h"
@@ -44,12 +43,8 @@ public:
     static TcpSegmentNode* init(TcpSegmentDescriptor& tsd);
     static TcpSegmentNode* init(TcpSegmentNode& tsn);
     static TcpSegmentNode* init(const struct timeval&, const uint8_t*, unsigned);
-    static bool needs_pruning(void)
-    {
-        return tcp_memcap->at_max();
-    }
 
-    void term(void);
+    void term();
     bool is_retransmit(const uint8_t*, uint16_t size, uint32_t);
 
     TcpSegmentNode* prev;
@@ -70,12 +65,12 @@ public:
 class TcpSegmentList
 {
 public:
-    TcpSegmentList(void) :
+    TcpSegmentList() :
         head(nullptr), tail(nullptr), next(nullptr), count(0)
     {
     }
 
-    ~TcpSegmentList(void)
+    ~TcpSegmentList()
     {
         clear( );
     }
@@ -91,7 +86,7 @@ public:
 
     uint32_t count;
 
-    uint32_t clear(void)
+    uint32_t clear()
     {
         TcpSegmentNode* dump_me;
         int i = 0;

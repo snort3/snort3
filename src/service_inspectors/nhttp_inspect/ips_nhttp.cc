@@ -742,8 +742,10 @@ static const IpsApi version_api =
 //-------------------------------------------------------------------------
 
 // FIXIT-M add match_unknown option to look at HEAD__UNKNOWN.
-// FIXIT-M if http_header is the fast pattern buffer and the content to be matched appears in the
-// normalized field but not in the raw field detection will fail.
+
+// FIXIT-M if http_header is the fast pattern buffer and the content to be
+// matched appears in the normalized field but not in the raw field
+// detection will fail.
 
 static const Parameter http_header_params[] =
 {

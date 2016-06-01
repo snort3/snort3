@@ -50,7 +50,7 @@ LoggerPiglet::LoggerPiglet(
     Lua::State& state, std::string target, Module* m, SnortConfig* sc) :
     BasePlugin(state, target, m, sc)
 {
-    // FIXIT-M: Does Logger need module?
+    // FIXIT-M does Logger need module?
     if ( module )
         wrapper = EventManager::instantiate(target.c_str(), m, sc);
 }

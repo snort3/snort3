@@ -93,8 +93,7 @@ void AtomSplitter::update()
 }
 
 #if 0
-// FIXIT-M this should be part of a new splitter
-static inline int CheckFlushCoercion(
+static inline int CheckFlushCoercion(  // FIXIT-M this should be part of a new splitter
     Packet* p, FlushMgr* fm, uint16_t flush_factor
     )
 {

@@ -120,12 +120,12 @@ void LogStat(const char* s, double d, FILE* fh)
 
 static struct timeval starttime, endtime;
 
-void TimeStart(void)
+void TimeStart()
 {
     gettimeofday(&starttime, NULL);
 }
 
-void TimeStop(void)
+void TimeStop()
 {
     gettimeofday(&endtime, NULL);
 }
@@ -160,7 +160,7 @@ static void timing_stats()
 }
 
 //-------------------------------------------------------------------------
-// FIXIT-L need better encapsulation of these counts by their modules
+// FIXIT-L need better encapsulation of these daq counts by their modules
 
 const PegInfo daq_names[] =
 {
@@ -239,7 +239,7 @@ void pc_sum()
 
     sum_stats((PegCount*)&gaux, (PegCount*)&aux_counts, sizeof(aux_counts)/sizeof(PegCount));
 
-    //  FIXIT-H:  Why do we set gaux in sum_stats then zero it here?
+    //  FIXIT-H why do we set gaux in sum_stats then zero it here?
     memset(&gaux, 0, sizeof(gaux));
 }
 
@@ -315,7 +315,7 @@ void DropStats()
 
 //-------------------------------------------------------------------------
 
-void PrintStatistics(void)
+void PrintStatistics()
 {
     DropStats();
     timing_stats();
@@ -325,7 +325,7 @@ void PrintStatistics(void)
     print_thresholding(snort_conf->threshold_config, 1);
 
     {
-        // FIXIT-L J can do flag saving with RAII (much cleaner)
+        // FIXIT-L can do flag saving with RAII (much cleaner)
         int save_quiet_flag = snort_conf->logging_flags & LOGGING_FLAG__QUIET;
 
         snort_conf->logging_flags &= ~LOGGING_FLAG__QUIET;

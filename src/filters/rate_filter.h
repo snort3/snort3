@@ -30,16 +30,16 @@ struct tSFRFConfigNode;
 struct Packet;
 struct OptTreeNode;
 
-RateFilterConfig* RateFilter_ConfigNew(void);
+RateFilterConfig* RateFilter_ConfigNew();
 void RateFilter_ConfigFree(RateFilterConfig*);
-void RateFilter_Cleanup(void);
+void RateFilter_Cleanup();
 
 struct SnortConfig;
 int RateFilter_Create(SnortConfig* sc, RateFilterConfig*, tSFRFConfigNode*);
 void RateFilter_PrintConfig(RateFilterConfig*);
 
 int RateFilter_Test(const OptTreeNode*, Packet*);
-void RateFilter_ResetActive(void);
+void RateFilter_ResetActive();
 
 #endif
 

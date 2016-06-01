@@ -37,7 +37,7 @@
 
 typedef std::vector<unsigned> IndexVec;
 
-// FIXIT-L: split this out into appropriate modules
+// FIXIT-L split this out into appropriate modules
 struct PacketCount
 {
     PegCount total_from_daq;
@@ -134,8 +134,8 @@ void DropStats();
 void pc_sum();
 void pc_accum();
 void PrintStatistics();
-void TimeStart(void);
-void TimeStop(void);
+void TimeStart();
+void TimeStop();
 
 #endif
 

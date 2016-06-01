@@ -47,6 +47,8 @@ struct SFGHASH_NODE
     void* data;       /* The users data, this is never copied! */
 };
 
+typedef void (* SfgHashFree)(void*);
+
 struct SFGHASH
 {
     SFHASHFCN* sfhashfcn;
@@ -58,7 +60,7 @@ struct SFGHASH
 
     unsigned count;       /* total # nodes in table */
 
-    void (* userfree)(void*);
+    SfgHashFree userfree;
 
     int crow;             /* findfirst/next row in table */
     SFGHASH_NODE* cnode;  /* findfirst/next node ptr */
@@ -66,7 +68,7 @@ struct SFGHASH
     int splay;
 };
 
-SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, void (* userfree)(void* p) );
+SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, SfgHashFree);
 
 void sfghash_delete(SFGHASH*);
 int sfghash_add(SFGHASH*, const void* const key, void* const data);

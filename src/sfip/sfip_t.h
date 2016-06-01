@@ -70,7 +70,7 @@ struct sfip_t
 #ifdef inet_ntoa
 #undef inet_ntoa
 #endif
-
+// FIXIT-H replace all inet_ntoa() with sfip_to_str() and delete redef
 SO_PUBLIC char* sfip_to_str(const sfip_t*);
 #define sfip_ntoa(x) sfip_to_str(x)
 #define inet_ntoa sfip_ntoa

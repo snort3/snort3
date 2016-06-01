@@ -37,8 +37,9 @@
 #endif
 #include <unistd.h>
 
-// FIXIT-L: Change dependent return types to bool and git rid of these
-#define SAFEMEM_ERROR 0
+// FIXIT-M replace Safe*() with safe c and delete this stuff
+
+#define SAFEMEM_ERROR 0  // FIXIT-L get rid of these
 #define SAFEMEM_SUCCESS 1
 
 #ifdef DEBUG
@@ -52,7 +53,7 @@
 
 // Check to make sure that p is less than or equal to the ptr range
 // returns 1 if in bounds, 0 otherwise
-// FIXIT-L: Change return type to bool
+// FIXIT-L change return type to bool
 inline int inBounds(const void* start, const void* end, const void* p)
 {
     const uint8_t* pstart = (uint8_t*)start;
@@ -64,7 +65,7 @@ inline int inBounds(const void* start, const void* end, const void* p)
     return 0;
 }
 
-// FIXIT-L: Change return type to bool
+// FIXIT-L change return type to bool
 inline int SafeMemCheck(const void* dst, size_t n,
     const void* start, const void* end)
 {
@@ -89,7 +90,7 @@ inline int SafeMemCheck(const void* dst, size_t n,
 }
 
 // returns SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
-// FIXIT-L: Change return type to bool
+// FIXIT-L change return type to bool
 inline int SafeMemcpy(
     void* dst, const void* src, size_t n, const void* start, const void* end)
 {
@@ -105,7 +106,7 @@ inline int SafeMemcpy(
 
 // dst and src can be in the same buffer
 // returns SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
-// FIXIT-L: Change return type to bool
+// FIXIT-L change return type to bool
 inline int SafeMemmove(
     void* dst, const void* src, size_t n, const void* start, const void* end)
 {
@@ -119,7 +120,7 @@ inline int SafeMemmove(
 
 // dst and src can be in the same buffer
 // returns SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
-// FIXIT-L: Change return type to bool
+// FIXIT-L change return type to bool
 inline int SafeBoundsMemmove(
     void* dst, const void* src, size_t n, const void* start, const void* end)
 {
@@ -153,7 +154,7 @@ inline int SafeBoundsMemmove(
 }
 
 // returns SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
-// FIXIT-L: Change return type to bool
+// FIXIT-L change return type to bool
 inline int SafeMemset(
     void* dst, uint8_t c, size_t n, const void* start, const void* end)
 {
@@ -164,7 +165,7 @@ inline int SafeMemset(
 }
 
 // returns 0 on failure, 1 on success
-// FIXIT-L: Change return type to bool
+// FIXIT-L change return type to bool
 inline int SafeWrite(uint8_t* start, uint8_t* end, uint8_t* dst, uint8_t* src)
 {
     if (!inBounds(start, end, dst))
@@ -177,7 +178,7 @@ inline int SafeWrite(uint8_t* start, uint8_t* end, uint8_t* dst, uint8_t* src)
 }
 
 // returns 0 on failure, 1 on success
-// FIXIT-L: Change return type to bool
+// FIXIT-L change return type to bool
 inline int SafeRead(uint8_t* start, uint8_t* end, uint8_t* src, uint8_t* read)
 {
     if (!inBounds(start,end, src))

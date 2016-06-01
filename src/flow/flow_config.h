@@ -26,7 +26,6 @@
 struct FlowConfig
 {
     unsigned max_sessions = 0;
-    unsigned long mem_cap = 0;
     unsigned pruning_timeout = 0;
     unsigned nominal_timeout = 0;
     unsigned cleanup_pct = 0;

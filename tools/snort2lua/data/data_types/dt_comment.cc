@@ -132,7 +132,7 @@ std::ostream& operator<<(std::ostream& out, const Comments& c)
         {
             std::size_t substr_len = max_line_length;
 
-            // determine the first space before 80 charachters
+            // determine the first space before 80 characters
             // if there are no spaces, print the entire string
             if (substr_len < str.size())
             {

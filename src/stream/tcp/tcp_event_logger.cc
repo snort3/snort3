@@ -98,7 +98,7 @@ void TcpEventLogger::log_internal_event(uint32_t eventSid)
     }
 }
 
-void TcpEventLogger::log_tcp_events(void)
+void TcpEventLogger::log_tcp_events()
 {
     while ( tcp_events )
     {

@@ -111,7 +111,7 @@ int acsmPatternCount(ACSM_STRUCT* acsm);
 
 int acsmPrintDetailInfo(ACSM_STRUCT*);
 
-int acsmPrintSummaryInfo(void);
+int acsmPrintSummaryInfo();
 
 #endif
 

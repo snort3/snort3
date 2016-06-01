@@ -365,17 +365,13 @@ MailLogState::MailLogState(MailLogConfig* conf)
         || conf->log_mailfrom || conf->log_rcptto))
     {
         uint32_t bufsz = (2* MAX_EMAIL) + MAX_FILE + conf->email_hdrs_log_depth;
-        buf = (uint8_t*)SnortAlloc(bufsz);
+        buf = (uint8_t*)snort_calloc(bufsz);
 
-        if (buf != NULL)
-        {
-            log_depth = conf->email_hdrs_log_depth;
-            recipients = buf;
-            senders = buf + MAX_EMAIL;
-            filenames = buf + (2*MAX_EMAIL);
-            emailHdrs = buf + (2*MAX_EMAIL) + MAX_FILE;
-
-        }
+        log_depth = conf->email_hdrs_log_depth;
+        recipients = buf;
+        senders = buf + MAX_EMAIL;
+        filenames = buf + (2*MAX_EMAIL);
+        emailHdrs = buf + (2*MAX_EMAIL) + MAX_FILE;
     }
 
     rcpts_logged = 0;
@@ -388,5 +384,5 @@ MailLogState::MailLogState(MailLogConfig* conf)
 MailLogState::~MailLogState()
 {
     if (buf != NULL)
-        free(buf);
+        snort_free(buf);
 }

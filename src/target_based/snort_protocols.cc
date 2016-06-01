@@ -103,15 +103,14 @@ int16_t AddProtocolReference(const char* protocol)
 
     id_map.push_back(protocol);
 
-    reference = (SFTargetProtocolReference*)SnortAlloc(sizeof(SFTargetProtocolReference));
+    reference = (SFTargetProtocolReference*)snort_calloc(sizeof(SFTargetProtocolReference));
     reference->ordinal = protocol_number++;
     SnortStrncpy(reference->name, protocol, SFAT_BUFSZ);
 
     sfghash_add(proto_reference_table, reference->name, reference);
 
     DebugFormat(DEBUG_ATTRIBUTE,
-        "Added Protocol Reference for %s as %d\n",
-        protocol, reference->ordinal);
+        "Added Protocol Reference for %s as %d\n", protocol, reference->ordinal);
 
     return reference->ordinal;
 }
@@ -131,18 +130,13 @@ int16_t FindProtocolReference(const char* protocol)
     return SFTARGET_UNKNOWN_PROTOCOL;
 }
 
-void InitializeProtocolReferenceTable(void)
+void InitializeProtocolReferenceTable()
 {
     /* If already initialized, we're done */
     if (proto_reference_table)
         return;
 
-    proto_reference_table = sfghash_new(65, 0, 1, free);
-
-    if (!proto_reference_table)
-    {
-        FatalError("Failed to Initialize Target-Based Protocol Reference Table\n");
-    }
+    proto_reference_table = sfghash_new(65, 0, 1, snort_free);
 
     bool ok;
 
@@ -159,7 +153,7 @@ void InitializeProtocolReferenceTable(void)
         FatalError("standard protocol reference mismatch");
 }
 
-void FreeProtoocolReferenceTable(void)
+void FreeProtoocolReferenceTable()
 {
     sfghash_delete(proto_reference_table);
     proto_reference_table = NULL;

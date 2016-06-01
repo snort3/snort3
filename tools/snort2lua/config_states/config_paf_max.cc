@@ -43,9 +43,9 @@ bool PafMax::convert(std::istringstream& data_stream)
 
     if (data_stream >> val)
     {
-// FIXIT-H - this is a hack to ensure max_pdu is in
-//              every configuratino file and does not
-//              overwrite the stream_tcp table
+        // FIXIT-H this is a hack to ensure max_pdu is in every configuration
+        // file and does not overwrite the stream_tcp table
+
 #if 0
         table_api.open_table("stream_tcp");
 

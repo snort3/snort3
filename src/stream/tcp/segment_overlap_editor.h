@@ -35,12 +35,12 @@ class SegmentOverlapEditor
 {
 protected:
 
-    SegmentOverlapEditor(void)
+    SegmentOverlapEditor()
     {
         tcp_ips_data = Normalize_GetMode(NORM_TCP_IPS);
     }
 
-    virtual ~SegmentOverlapEditor(void) { }
+    virtual ~SegmentOverlapEditor() { }
 
     void init_soe(TcpSegmentDescriptor& tsd, TcpSegmentNode* left, TcpSegmentNode* right)
     {
@@ -59,33 +59,33 @@ protected:
         keep_segment = true;
     }
 
-    int eval_left(void);
-    int eval_right(void);
+    int eval_left();
+    int eval_right();
 
-    virtual bool is_segment_retransmit(void);
-    virtual void drop_old_segment(void);
-    virtual int generate_bad_segment_event(void);
+    virtual bool is_segment_retransmit();
+    virtual void drop_old_segment();
+    virtual int generate_bad_segment_event();
 
-    virtual int left_overlap_keep_first(void);
-    virtual int left_overlap_trim_first(void);
-    virtual int left_overlap_keep_last(void);
-    virtual void right_overlap_truncate_existing(void);
-    virtual void right_overlap_truncate_new(void);
-    virtual int full_right_overlap_truncate_new(void);
-    virtual int full_right_overlap_os1(void);
-    virtual int full_right_overlap_os2(void);
-    virtual int full_right_overlap_os3(void);
-    virtual int full_right_overlap_os4(void);
-    virtual int full_right_overlap_os5(void);
+    virtual int left_overlap_keep_first();
+    virtual int left_overlap_trim_first();
+    virtual int left_overlap_keep_last();
+    virtual void right_overlap_truncate_existing();
+    virtual void right_overlap_truncate_new();
+    virtual int full_right_overlap_truncate_new();
+    virtual int full_right_overlap_os1();
+    virtual int full_right_overlap_os2();
+    virtual int full_right_overlap_os3();
+    virtual int full_right_overlap_os4();
+    virtual int full_right_overlap_os5();
 
-    virtual int insert_left_overlap(void) = 0;
-    virtual void insert_right_overlap(void) = 0;
-    virtual int insert_full_overlap(void) = 0;
+    virtual int insert_left_overlap() = 0;
+    virtual void insert_right_overlap() = 0;
+    virtual int insert_full_overlap() = 0;
     virtual int add_reassembly_segment(TcpSegmentDescriptor&, int16_t, uint32_t, uint32_t,
         uint32_t, TcpSegmentNode*) = 0;
-    virtual int dup_reassembly_segment(Packet*, TcpSegmentNode*, TcpSegmentNode**) = 0;
+    virtual int dup_reassembly_segment(TcpSegmentNode*, TcpSegmentNode**) = 0;
     virtual int delete_reassembly_segment(TcpSegmentNode*) = 0;
-    virtual void print(void);
+    virtual void print();
 
     TcpSession* session = nullptr;
     ReassemblyPolicy reassembly_policy = ReassemblyPolicy::OS_DEFAULT;

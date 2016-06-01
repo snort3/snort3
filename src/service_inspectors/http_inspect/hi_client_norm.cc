@@ -138,7 +138,7 @@ int hi_split_header_cookie(
         cookie = cookie->next;
         if (last_cookie && (last_cookie != first_cookie))
         {
-            free(last_cookie);
+            snort_free(last_cookie);
         }
         last_cookie = cookie;
         if (!cookie)
@@ -307,10 +307,12 @@ int hi_client_norm(HI_SESSION* session)
     if (ClientReq->header_norm && session->server_conf->normalize_headers)
     {
         session->norm_flags &= ~HI_BODY;
-        // FIXIT-M the usefulness  of this one size fits all normalization is questionable.
-        // A specific issue is that a header such as "Referer: http://www.foo.com/home" will
-        // trigger multislash
+
+        // FIXIT-M the usefulness of this one size fits all normalization
+        // is questionable.  A specific issue is that a header such as
+        // "Referer: http://www.foo.com/home" will trigger multislash
         // normalization and alert.
+
         iRet = hi_norm_uri(session, HeaderBuf, &iHeaderBufSize,
             RawHeaderBuf, iRawHeaderBufSize, &encodeType);
         if (iRet == HI_NONFATAL_ERR)

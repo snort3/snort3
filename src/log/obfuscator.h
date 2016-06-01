@@ -18,9 +18,6 @@
 
 // obfuscate.h author Victor Roemer <viroemer@cisco.com>
 
-// FIXIT-P: Merge overlapping blocks 
-// FIXIT-P: Merge touching blocks 
-
 #ifndef OBFUSCATOR_H
 #define OBFUSCATOR_H
 
@@ -31,12 +28,12 @@
 struct ObfuscatorBlock
 {
     // Only used by `class Obfuscator`
-    ObfuscatorBlock(uint32_t off, uint32_t len) 
+    ObfuscatorBlock(uint32_t off, uint32_t len)
         : offset(off), length(len)
     { }
 
-    // Used for iterations 
-    ObfuscatorBlock() 
+    // Used for iterations
+    ObfuscatorBlock()
     { }
 
     uint32_t offset;

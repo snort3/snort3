@@ -65,7 +65,7 @@ void TcpReassembler::set_tcp_reassembly_policy(StreamPolicy os_policy)
     reassembly_policy = stream_reassembly_policy_map[ static_cast<int>( os_policy ) ];
 }
 
-void TcpReassembler::trace_segments(void)
+void TcpReassembler::trace_segments()
 {
     TcpSegmentNode* tsn = seglist.head;
     uint32_t sx = tracker->r_win_base;
@@ -90,7 +90,7 @@ void TcpReassembler::trace_segments(void)
     assert(seg_bytes_logical == bytes);
 }
 
-bool TcpReassembler::is_segment_pending_flush(void)
+bool TcpReassembler::is_segment_pending_flush()
 {
     return ( get_pending_segment_count(1) > 0 );
 }
@@ -119,7 +119,7 @@ uint32_t TcpReassembler::get_pending_segment_count(unsigned max)
     return n;
 }
 
-bool TcpReassembler::flush_data_ready(void)
+bool TcpReassembler::flush_data_ready()
 {
     // needed by stream_reassemble:action disable; can fire on rebuilt
     // packets, yanking the splitter out from under us :(
@@ -129,7 +129,7 @@ bool TcpReassembler::flush_data_ready(void)
     if (tracker->flush_policy == STREAM_FLPOLICY_ON_DATA || tracker->splitter->is_paf())
         return ( is_segment_pending_flush( ) );
 
-    return ( get_pending_segment_count(2) > 1 );    // FIXIT-L return false?
+    return ( get_pending_segment_count(2) > 1 );  // FIXIT-L return false?
 }
 
 int TcpReassembler::delete_reassembly_segment(TcpSegmentNode* tsn)
@@ -250,20 +250,12 @@ int TcpReassembler::add_reassembly_segment(TcpSegmentDescriptor& tsd, int16_t le
 
     // FIXIT-L don't allocate overlapped part
     tsn = TcpSegmentNode::init(tsd);
-    if ( !tsn )
-        return STREAM_INSERT_FAILED;
-    else if ( TcpSegmentNode::needs_pruning() )
-    {
-        tcpStats.faults++;
-        flow_con->prune_flows(PktType::TCP, tsd.get_pkt() );
-    }
-
     tsn->payload = tsn->data + slide;
     tsn->payload_size = (uint16_t)newSize;
     tsn->seq = seq;
     tsn->ts = tsd.get_ts();
 
-    // FIXIT - The urgent ptr handling is broken... urg_offset is set here but currently
+    // FIXIT-M the urgent ptr handling is broken... urg_offset is set here but currently
     // not actually referenced anywhere else.  In 2.9.7 the FlushStream function did reference
     // this field but that code has been lost... urg ptr handling needs to be reviewed and fixed
     tsn->urg_offset = tracker->normalizer->set_urg_offset(tsd.get_tcph(), tsd.get_seg_len() );
@@ -282,18 +274,9 @@ int TcpReassembler::add_reassembly_segment(TcpSegmentDescriptor& tsd, int16_t le
     return STREAM_INSERT_OK;
 }
 
-int TcpReassembler::dup_reassembly_segment(Packet* p, TcpSegmentNode* left,
-    TcpSegmentNode** retSeg)
+int TcpReassembler::dup_reassembly_segment(TcpSegmentNode* left, TcpSegmentNode** retSeg)
 {
     TcpSegmentNode* tsn = TcpSegmentNode::init(*left);
-    if ( !tsn )
-        return STREAM_INSERT_FAILED;
-    if ( TcpSegmentNode::needs_pruning() )
-    {
-        tcpStats.faults++;
-        flow_con->prune_flows(PktType::TCP, p);
-    }
-
     tcpStats.segs_split++;
 
     // twiddle the values for overlaps
@@ -434,7 +417,7 @@ int TcpReassembler::purge_to_seq(uint32_t flush_seq)
 // part of a segment
 // * FIXIT-L need flag to mark any reassembled packets that have a gap
 //   (if we reassemble such)
-int TcpReassembler::purge_flushed_ackd(void)
+int TcpReassembler::purge_flushed_ackd()
 {
     TcpSegmentNode* tsn = seglist.head;
     uint32_t seq;
@@ -539,7 +522,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq, uint8_t* flus
         bytes_flushed += bytes_to_copy;
 
         if ( bytes_to_copy < tsn->payload_size
-            && dup_reassembly_segment(nullptr, tsn, &sr) == STREAM_INSERT_OK )
+            && dup_reassembly_segment(tsn, &sr) == STREAM_INSERT_OK )
         {
             tsn->payload_size = bytes_to_copy;
             sr->seq += bytes_to_copy;
@@ -709,7 +692,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             else
                 s5_pkt->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST );
 
-            // FIXIT - this came with merge should it be here?
+            // FIXIT-H this came with merge should it be here? YES
             //s5_pkt->application_protocol_ordinal =
             //    p->application_protocol_ordinal;
 
@@ -731,7 +714,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         if ( tracker->splitter )
             tracker->splitter->update();
 
-        // FIXIT - abort should be by PAF callback only since recovery may be
+        // FIXIT-L abort should be by PAF callback only since recovery may be
         // possible in some cases
         if ( tracker->get_tf_flags() & TF_MISSING_PKT )
         {
@@ -799,10 +782,11 @@ int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
     return _flush_to_seq(bytes, p, pkt_flags);
 }
 
-// FIXIT - the seq number math in the following 2 funcs does not handle wrapping
-// get the footprint for the current seglist, the difference between our
-// base sequence and the last ack'd sequence we received
-uint32_t TcpReassembler::get_q_footprint(void)
+// FIXIT-H the seq number math in the following 2 funcs does not handle
+// wrapping get the footprint for the current seglist, the difference
+// between our base sequence and the last ack'd sequence we received
+
+uint32_t TcpReassembler::get_q_footprint()
 {
     int32_t fp;
 
@@ -817,10 +801,10 @@ uint32_t TcpReassembler::get_q_footprint(void)
     return fp;
 }
 
-// FIXIT-L get_q_sequenced() performance could possibly be
+// FIXIT-P get_q_sequenced() performance could possibly be
 // boosted by tracking sequenced bytes as seglist is updated
 // to avoid the while loop, etc. below.
-uint32_t TcpReassembler::get_q_sequenced(void)
+uint32_t TcpReassembler::get_q_sequenced()
 {
     int32_t len;
     TcpSegmentNode* tsn = tracker ? seglist.head : nullptr;
@@ -985,7 +969,7 @@ uint32_t TcpReassembler::flush_pdu_ips(uint32_t* flags)
     return -1;
 }
 
-void TcpReassembler::fallback(void)
+void TcpReassembler::fallback()
 {
     bool c2s = tracker->splitter->to_server();
 
@@ -1194,7 +1178,7 @@ int TcpReassembler::flush_on_ack_policy(Packet* p)
     return flushed;
 }
 
-void TcpReassembler::purge_segment_list(void)
+void TcpReassembler::purge_segment_list()
 {
     seglist.clear( );
     seg_count = 0;

@@ -39,14 +39,14 @@ struct DetectionFilterConfig
     int enabled;
 };
 
-DetectionFilterConfig* DetectionFilterConfigNew(void);
+DetectionFilterConfig* DetectionFilterConfigNew();
 void DetectionFilterConfigFree(DetectionFilterConfig*);
 
 void detection_filter_init(DetectionFilterConfig*);
-void detection_filter_term(void);
+void detection_filter_term();
 
 void detection_filter_print_config(DetectionFilterConfig*);
-void detection_filter_reset_active(void);
+void detection_filter_reset_active();
 
 int detection_filter_test(void*, const sfip_t* sip, const sfip_t* dip, long curtime);
 void* detection_filter_create(DetectionFilterConfig*, THDX_STRUCT*);

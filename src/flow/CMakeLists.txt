@@ -4,7 +4,6 @@ set (FLOW_INCLUDES
     flow_key.h
     ha.h
     ha_module.h
-    memcap.h
 )
 
 add_library (flow STATIC

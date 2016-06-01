@@ -58,26 +58,25 @@ struct SnortConfig;
 struct IpStats
 {
     SESSION_STATS;
-    PegCount total;             //total_ipfragmented_packets
-    PegCount current;           //iCurrentFrags
-    PegCount max_frags;         //iMaxFrags
-    PegCount reassembles;       //total_ipreassembled_packets / iFragFlushes
+    PegCount total;             // total_ipfragmented_packets
+    PegCount current;           // iCurrentFrags
+    PegCount max_frags;         // iMaxFrags
+    PegCount reassembles;       // total_ipreassembled_packets / iFragFlushes
     PegCount discards;
-    PegCount frag_prunes;       //FIXIT-M: this isn't used. iFragFaults
-    PegCount frag_timeouts;     //iFragTimeouts
+    PegCount frag_timeouts;     // iFragTimeouts
     PegCount overlaps;
     PegCount anomalies;
     PegCount alerts;
     PegCount drops;
-    PegCount trackers_created;  //iFragCreates
+    PegCount trackers_created;  // iFragCreates
     PegCount trackers_released;
-    PegCount trackers_cleared;  //iFragDeletes - delete meant dump the frag list
-    PegCount trackers_completed;//iFragComplete
-    PegCount nodes_created;     //iFragInserts tracked a similar stat (# calls to insert)
+    PegCount trackers_cleared;  // iFragDeletes - delete meant dump the frag list
+    PegCount trackers_completed;// iFragComplete
+    PegCount nodes_created;     // iFragInserts tracked a similar stat (# calls to insert)
     PegCount nodes_released;
-    PegCount mem_in_use;        //frag_mem_in_use
-    PegCount reassembled_bytes; //total_ipreassembled_bytes
-    PegCount fragmented_bytes;  //total_ipfragmented_bytes
+    PegCount mem_in_use;        // frag_mem_in_use
+    PegCount reassembled_bytes; // total_ipreassembled_bytes
+    PegCount fragmented_bytes;  // total_ipfragmented_bytes
 };
 
 extern const PegInfo ip_pegs[];

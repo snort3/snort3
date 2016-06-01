@@ -83,7 +83,7 @@
 const u_char* proxy_start = NULL;
 const u_char* proxy_end = NULL;
 
-// FIXIT-L for 2.9.7 code not yet ported in
+// FIXIT-H for 2.9.7 code not yet ported in
 /*static const char *g_field_names[] =
 {
     HEADER_NAME__COOKIE,
@@ -1725,7 +1725,8 @@ static inline int hi_client_extract_uri(
     return iRet;
 }
 
-const u_char* extract_http_cookie(const u_char* p, const u_char* end, HEADER_PTR* header_ptr,
+const u_char* extract_http_cookie(
+    const u_char* p, const u_char* end, HEADER_PTR* header_ptr,
     HEADER_FIELD_PTR* header_field_ptr)
 {
     const u_char* crlf;
@@ -1733,13 +1734,7 @@ const u_char* extract_http_cookie(const u_char* p, const u_char* end, HEADER_PTR
     if (header_ptr->cookie.cookie)
     {
         /* unusal, multiple cookies... alloc new cookie pointer */
-        COOKIE_PTR* extra_cookie = (COOKIE_PTR*)calloc(1, sizeof(*extra_cookie));
-        if (!extra_cookie)
-        {
-            /* Failure to allocate, stop where we are... */
-            header_ptr->header.uri_end = p;
-            return p;
-        }
+        COOKIE_PTR* extra_cookie = (COOKIE_PTR*)snort_calloc(sizeof(*extra_cookie));
         extra_cookie->next = header_ptr->cookie.next;
         header_ptr->cookie.next = extra_cookie;
         header_field_ptr->cookie = extra_cookie;
@@ -1855,7 +1850,7 @@ static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, cons
                 port = (u_char*)SnortStrnStr((const char*)start_ptr, (cur_ptr - start_ptr), ":");
                 if (port)
                 {
-                    free(ipAddr);
+                    snort_free(ipAddr);
                     ipAddr = SnortStrndup((const char*)start_ptr, port - start_ptr);
                     if ( !ipAddr)
                     {
@@ -1873,7 +1868,7 @@ static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, cons
                 else if ((status != SFIP_ARG_ERR) && (status !=SFIP_ALLOC_ERR))
                 {
                     hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_INVALID_TRUEIP);
-                    free(ipAddr);
+                    snort_free(ipAddr);
                     return p;
                 }
             }
@@ -1886,7 +1881,7 @@ static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, cons
                     (hdrs_args->new_precedence >= hdrs_args->top_precedence) )
                 {
                     sfip_free(tmp);
-                    free(ipAddr);
+                    snort_free(ipAddr);
                     return( p );
                 }
 
@@ -1915,7 +1910,7 @@ static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, cons
             }
             else
                 *true_ip = tmp;
-            free(ipAddr);
+            snort_free(ipAddr);
         }
     }
     else
@@ -2344,10 +2339,8 @@ static inline const u_char* extractHeaderFieldValues(HI_SESSION* session,
             else
             {
                 hdrs_args->hst_name_hdr = 1;
-                if ( hsd && !(hdrs_args->strm_ins) /*&& (ServerConf->log_hostname)*/)  // FIXIT-L
-                                                                                       // move back
-                                                                                       // to
-                                                                                       // ServerConf?
+                // FIXIT-L move back to ServerConf?
+                if ( hsd && !(hdrs_args->strm_ins) /*&& (ServerConf->log_hostname)*/)
                 {
                     if (!SetLogBuffers(hsd))
                     {
@@ -2632,7 +2625,7 @@ static inline const u_char* hi_client_extract_header(
             COOKIE_PTR* cookie = Client->request.cookie.next; \
             do { \
                 Client->request.cookie.next = Client->request.cookie.next->next; \
-                free(cookie); \
+                snort_free(cookie); \
                 cookie = Client->request.cookie.next; \
             } while (cookie); \
         } \

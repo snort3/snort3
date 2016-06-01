@@ -46,10 +46,7 @@ SFHASHFCN* sfhashfcn_new(int m)
         one = 0;
     }
 
-    p = (SFHASHFCN*)SnortAlloc(sizeof(*p));
-
-    if ( !p )
-        return 0;
+    p = (SFHASHFCN*)snort_calloc(sizeof(*p));
 
     if ( SnortConfig::static_hash() )
     {
@@ -74,7 +71,7 @@ void sfhashfcn_free(SFHASHFCN* p)
 {
     if ( p )
     {
-        free(p);
+        snort_free(p);
     }
 }
 

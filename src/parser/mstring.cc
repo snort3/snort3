@@ -158,14 +158,8 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
      * one tok */
     if ((cur_tok + 1) == (size_t)max_toks)
     {
-        retstr = (char**)SnortAlloc(sizeof(char*));
+        retstr = (char**)snort_calloc(sizeof(char*));
         retstr[cur_tok] = SnortStrndup(&str[i], strlen(str) - i);
-        if (retstr[cur_tok] == NULL)
-        {
-            mSplitFree(&retstr, cur_tok + 1);
-            return NULL;
-        }
-
         *num_toks = cur_tok + 1;
         return retstr;
     }
@@ -235,7 +229,7 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
 
                 if (toks != toks_alloc)
                 {
-                    retstr = (char**)SnortAlloc(sizeof(char*) * cur_tok);
+                    retstr = (char**)snort_calloc(cur_tok, sizeof(char*));
                     memcpy(retstr, toks, (sizeof(char*) * cur_tok));
                 }
                 else
@@ -264,12 +258,12 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
                 else
                     toks_buf_size = cur_tok + toks_buf_size_increment;
 
-                toks_alloc = (char**)SnortAlloc(sizeof(char*) * toks_buf_size);
+                toks_alloc = (char**)snort_calloc(toks_buf_size, sizeof(char*));
                 memcpy(toks_alloc, tmp, (sizeof(char*) * cur_tok));
                 toks = toks_alloc;
 
                 if (tmp != toks_buf)
-                    free(tmp);
+                    snort_free(tmp);
             }
 
             if ((max_toks != 0) && ((cur_tok + 1) == (size_t)max_toks))
@@ -280,7 +274,7 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
                 /* Already got a ret string */
                 if (toks != toks_alloc)
                 {
-                    retstr = (char**)SnortAlloc(sizeof(char*) * (cur_tok + 1));
+                    retstr = (char**)snort_calloc(cur_tok + 1, sizeof(char*));
                     memcpy(retstr, toks, (sizeof(char*) * (cur_tok + 1)));
                 }
                 else
@@ -318,10 +312,10 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
     if (escaped)
     {
         for (i = 0; i < cur_tok; i++)
-            free(toks[i]);
+            snort_free(toks[i]);
 
         if (toks == toks_alloc)
-            free(toks_alloc);
+            snort_free(toks_alloc);
 
         return NULL;
     }
@@ -337,7 +331,7 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
      * one more tok.  Unescape escaped sepatator charactors */
     if (toks != toks_alloc)
     {
-        retstr = (char**)SnortAlloc(sizeof(char*) * (cur_tok + 1));
+        retstr = (char**)snort_calloc(cur_tok + 1, sizeof(char*));
         memcpy(retstr, toks, (sizeof(char*) * (cur_tok + 1)));
     }
     else
@@ -353,9 +347,8 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
     return retstr;
 }
 
-/* Will not return NULL.  SnortAlloc will fatal if it fails */
-static char* mSplitAddTok(const char* str, const int len, const char* sep_chars, const char
-    meta_char)
+static char* mSplitAddTok(
+    const char* str, const int len, const char* sep_chars, const char meta_char)
 {
     size_t i, j, k;
     char* tok;
@@ -396,7 +389,8 @@ static char* mSplitAddTok(const char* str, const int len, const char* sep_chars,
     }
 
     /* Allocate it and fill it in */
-    tok = (char*)SnortAlloc(tok_len + 1);
+    tok = (char*)snort_calloc(tok_len + 1);
+
     for (i = 0, k = 0; (int)i < len; i++)
     {
         if (!got_meta)
@@ -458,12 +452,12 @@ void mSplitFree(char*** pbuf, int num_toks)
     {
         if ( buf[i] != NULL )
         {
-            free(buf[i]);
+            snort_free(buf[i]);
             buf[i] = NULL;
         }
     }
 
-    free(buf);
+    snort_free(buf);
     *pbuf = NULL;
 }
 

@@ -123,7 +123,7 @@ int getApplicationProtocolId(const HostAttributeEntry* host_entry,
         }
     }
 
-    /* FIXIT: client? doesn't make much sense in terms of specific port */
+    /* FIXIT-H client? doesn't make much sense in terms of specific port */
 
     return 0;
 }

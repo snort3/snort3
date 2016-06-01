@@ -25,8 +25,6 @@
 #include "framework/counts.h"
 #include "detection/detect.h"
 #include "normalize/normalize.h"
-#include "flow/memcap.h"
-
 #include "stream/stream_api.h"
 
 #include "segment_overlap_editor.h"
@@ -42,11 +40,11 @@ public:
     virtual ~TcpReassembler() { }
 
     virtual int queue_packet_for_reassembly(TcpSegmentDescriptor&);
-    virtual void purge_segment_list(void);
+    virtual void purge_segment_list();
     virtual int flush_stream(Packet* p, uint32_t dir);
-    virtual int purge_flushed_ackd(void);
+    virtual int purge_flushed_ackd();
     virtual void flush_queued_segments(Flow* flow, bool clear, Packet* p = nullptr);
-    virtual bool is_segment_pending_flush(void);
+    virtual bool is_segment_pending_flush();
     virtual int flush_on_data_policy(Packet*);
     virtual int flush_on_ack_policy(Packet*);
     void set_seglist_base_seq(uint32_t seglist_base_seq)
@@ -105,7 +103,7 @@ public:
         return reassembly_policy;
     }
 
-    void trace_segments(void);
+    void trace_segments();
 
 protected:
     TcpReassembler(TcpSession* session, TcpStreamTracker* tracker,
@@ -132,7 +130,7 @@ protected:
 
     int add_reassembly_segment(TcpSegmentDescriptor&, int16_t len, uint32_t slide, uint32_t trunc,
         uint32_t seq, TcpSegmentNode* left) override;
-    int dup_reassembly_segment(Packet* p, TcpSegmentNode* left, TcpSegmentNode** retSeg) override;
+    int dup_reassembly_segment(TcpSegmentNode* left, TcpSegmentNode** retSeg) override;
     int delete_reassembly_segment(TcpSegmentNode* seg) override;
 
     virtual void insert_segment_in_empty_seglist(TcpSegmentDescriptor&);
@@ -141,7 +139,7 @@ protected:
     void set_tcp_reassembly_policy(StreamPolicy os_policy);
     virtual uint32_t get_pending_segment_count(unsigned max);
 
-    bool flush_data_ready(void);
+    bool flush_data_ready();
     int trim_delete_reassembly_segment(TcpSegmentNode* seg, uint32_t flush_seq);
     void queue_reassembly_segment(TcpSegmentNode* prev, TcpSegmentNode* ss);
     void init_overlap_editor(TcpSegmentDescriptor&);
@@ -154,13 +152,13 @@ protected:
     void prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags);
     int _flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags);
     int flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags);
-    uint32_t get_q_footprint(void);
-    uint32_t get_q_sequenced(void);
+    uint32_t get_q_footprint();
+    uint32_t get_q_sequenced();
     void final_flush(Packet* p, PegCount& peg, uint32_t dir);
     uint32_t get_reverse_packet_dir(const Packet* p);
     uint32_t get_forward_packet_dir(const Packet* p);
     uint32_t flush_pdu_ips(uint32_t* flags);
-    void fallback(void);
+    void fallback();
     uint32_t flush_pdu_ackd(uint32_t* flags);
     int purge_to_seq(uint32_t flush_seq);
 

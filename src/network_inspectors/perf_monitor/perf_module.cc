@@ -46,7 +46,7 @@ static const Parameter s_params[] =
 
     { "cpu", Parameter::PT_BOOL, "nullptr", "false",
       "enable cpu statistics" },
-    
+
     { "flow", Parameter::PT_BOOL, nullptr, "false",
       "enable traffic statistics" },
 

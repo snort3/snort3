@@ -50,15 +50,14 @@ private:
     int insert(Packet*, FragTracker*, FragEngine*);
     int new_tracker(Packet* p, FragTracker*);
 
-    int add_frag_node(
-        // FIXIT-L too many args
-        FragTracker* ft, Packet*, FragEngine*,
+    int add_frag_node(  // FIXIT-L too many args
+        FragTracker* ft, FragEngine*,
         const uint8_t* fragStart, int16_t fragLength,
         char lastfrag, int16_t len,
         uint16_t slide, uint16_t trunc, uint16_t frag_offset,
         Fragment* left, Fragment** retFrag);
 
-    int dup_frag_node(Packet*, FragTracker*, Fragment* left, Fragment** retFrag);
+    int dup_frag_node(FragTracker*, Fragment* left, Fragment** retFrag);
     int expire(Packet*, FragTracker*, FragEngine*);
 
 private:

@@ -199,7 +199,7 @@ static void Unified2InitFile(Unified2Config* config)
         fname_ptr = u2.filepath;
     }
 
-    // FIXIT-L should use open() instead of fopen()
+    // FIXIT-P should use open() instead of fopen()
     if ((u2.stream = fopen(fname_ptr, "wb")) == NULL)
     {
         FatalError("%s(%d) Could not open %s: %s\n",
@@ -953,7 +953,7 @@ void U2Logger::alert(Packet* p, const char* msg, Event* event)
     {
         _AlertIP6_v2(p, msg, &config, event);
 
-        // FIXIT-L delete ip6 extra data; support ip6 normally
+        // FIXIT-M delete ip6 extra data; support ip6 normally
         if (SnortConfig::get_log_ip6_extra() && p->ptrs.ip_api.is_ip6())
         {
             const sfip_t* ip = p->ptrs.ip_api.get_src();
@@ -994,7 +994,7 @@ void U2Logger::log(Packet* p, const char* msg, Event* event)
         {
             DebugMessage(DEBUG_LOG,
                 "[*] Reassembled packet, dumping stream packets\n");
-            // FIXIT-L replace with reassembled stream data and 
+            // FIXIT-H replace with reassembled stream data and
             // optionally the first captured packet
             //_Unified2LogStreamAlert(p, msg, &config, event);
         }

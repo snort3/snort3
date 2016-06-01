@@ -58,11 +58,10 @@
    For a single IPAddress the implied Mask is 32 bits,or 255.255.255.255, or 0xffffffff, or -1.
 
 */
-IPSET* ipset_new(void)
+IPSET* ipset_new()
 {
-    IPSET* p = (IPSET*)SnortAlloc(sizeof(IPSET));
+    IPSET* p = (IPSET*)snort_calloc(sizeof(IPSET));
     sflist_init(&p->ip_list);
-
     return p;
 }
 
@@ -90,11 +89,11 @@ void ipset_free(IPSET* ipc)
 
         while ( p )
         {
-            sflist_static_free_all(&p->portset.port_list, free);
+            sflist_static_free_all(&p->portset.port_list, snort_free);
             p = (IP_PORT*)sflist_next(&cursor);
         }
-        sflist_static_free_all(&ipc->ip_list, free);
-        free(ipc);
+        sflist_static_free_all(&ipc->ip_list, snort_free);
+        snort_free(ipc);
     }
 }
 
@@ -105,9 +104,7 @@ int ipset_add(IPSET* ipset, sfip_t* ip, void* vport, int notflag)
 
     {
         PORTSET* portset = (PORTSET*)vport;
-        IP_PORT* p = (IP_PORT*)calloc(1,sizeof(IP_PORT) );
-        if (!p)
-            return -1;
+        IP_PORT* p = (IP_PORT*)snort_calloc(sizeof(IP_PORT));
 
         sfip_set_ip(&p->ip, ip);
         p->portset = *portset;
@@ -214,9 +211,7 @@ static int portset_add(PORTSET* portset, unsigned port_lo, unsigned port_hi)
     if ( !portset )
         return -1;
 
-    p = (PORTRANGE*)calloc(1,sizeof(PORTRANGE) );
-    if (!p)
-        return -1;
+    p = (PORTRANGE*)snort_calloc(sizeof(PORTRANGE));
 
     p->port_lo = port_lo;
     p->port_hi = port_hi;
@@ -234,7 +229,7 @@ static int port_parse(char* portstr, PORTSET* portset)
     char* port_end;
     char* port2;
 
-    port_begin = SnortStrdup(portstr);
+    port_begin = snort_strdup(portstr);
 
     port1 = port_begin;
     port2 = strstr(port_begin, "-");
@@ -242,7 +237,7 @@ static int port_parse(char* portstr, PORTSET* portset)
     {
         if (*port1 == '\0')
         {
-            free(port_begin);
+            snort_free(port_begin);
             return -1;
         }
 
@@ -255,7 +250,7 @@ static int port_parse(char* portstr, PORTSET* portset)
         port_lo = strtoul(port1, &port_end, 10);
         if (port_end == port1)
         {
-            free(port_begin);
+            snort_free(port_begin);
             return -2;
         }
 
@@ -264,7 +259,7 @@ static int port_parse(char* portstr, PORTSET* portset)
             port_hi = strtoul(port2, &port_end, 10);
             if (port_end == port2)
             {
-                free(port_begin);
+                snort_free(port_begin);
                 return -3;
             }
         }
@@ -276,7 +271,7 @@ static int port_parse(char* portstr, PORTSET* portset)
         /* check to see if port is out of range */
         if ( port_hi > MAXPORTS-1 || port_lo > MAXPORTS-1)
         {
-            free(port_begin);
+            snort_free(port_begin);
             return -4;
         }
 
@@ -293,7 +288,7 @@ static int port_parse(char* portstr, PORTSET* portset)
         portset_add(portset, port_lo, port_hi);
     }
 
-    free(port_begin);
+    snort_free(port_begin);
 
     return 0;
 }
@@ -392,11 +387,7 @@ int ipset_parse(IPSET* ipset, const char* ipstr)
     sfip_t ip;
     PORTSET portset;
 
-    copy = strdup(ipstr);
-
-    if (!copy)
-        return -2;
-
+    copy = snort_strdup(ipstr);
     startIP = copy;
 
     if (*startIP == '!')
@@ -425,13 +416,13 @@ int ipset_parse(IPSET* ipset, const char* ipstr)
 
         if (ip_parse(startIP, &ip, &item_not_flag, &portset, &endIP) != 0)
         {
-            free(copy);
+            snort_free(copy);
             return -5;
         }
 
         if (ipset_add(ipset, &ip, &portset, (item_not_flag ^ set_not_flag)) != 0)
         {
-            free(copy);
+            snort_free(copy);
             return -6;
         }
 
@@ -445,7 +436,7 @@ int ipset_parse(IPSET* ipset, const char* ipstr)
         startIP = endIP;
     }
 
-    free(copy);
+    snort_free(copy);
 
     if (!parse_count)
         return -7;
@@ -466,7 +457,7 @@ int ipset_parse(IPSET* ipset, const char* ipstr)
 
 #include "sflsq.c"
 
-void test_ip4_parsing(void)
+void test_ip4_parsing()
 {
     unsigned host, mask, not_flag;
     PORTSET portset;
@@ -519,7 +510,7 @@ void test_ip4_parsing(void)
     }
 }
 
-void test_ip4set_parsing(void)
+void test_ip4set_parsing()
 {
     char** curip;
     int ret;
@@ -558,7 +549,7 @@ void test_ip4set_parsing(void)
 }
 
 //  -----------------------------
-void test_ip(void)
+void test_ip()
 {
     int i,k;
     IPADDRESS* ipa[MAXIP];
@@ -612,7 +603,7 @@ void test_ip(void)
 }
 
 //  -----------------------------
-void test_ipset(void)
+void test_ipset()
 {
     int i,k;
     IPSET* ipset, * ipset6;

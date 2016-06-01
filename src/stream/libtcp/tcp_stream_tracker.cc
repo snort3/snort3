@@ -60,6 +60,7 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor&
     else
         talker = ( client_tracker ) ? false : true;
 
+    // FIXIT-P would a lookup table help perf?  the code would be a little cleaner too.
     if ( talker )
     {
         // talker events
@@ -78,7 +79,7 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor&
             else
                 tcp_event = TCP_ACK_SENT_EVENT;
         }
-        else if ( tsd.get_seg_len() > 0 )   // FIXIT - No flags set, how do we handle this?
+        else if ( tsd.get_seg_len() > 0 )   // FIXIT-H no flags set, how do we handle this?
             tcp_event = TCP_DATA_SEG_SENT_EVENT;
         else
             tcp_event = TCP_ACK_SENT_EVENT;
@@ -101,7 +102,7 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor&
             else
                 tcp_event = TCP_ACK_RECV_EVENT;
         }
-        else if ( tsd.get_seg_len() > 0 )    // FIXIT - No flags set, how do we handle this?
+        else if ( tsd.get_seg_len() > 0 )    // FIXIT-H no flags set, how do we handle this?
             tcp_event = TCP_DATA_SEG_RECV_EVENT;
         else
             tcp_event = TCP_ACK_RECV_EVENT;

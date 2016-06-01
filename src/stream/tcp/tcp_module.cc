@@ -68,7 +68,6 @@ const PegInfo tcp_pegs[] =
     { "client cleanups", "number of times data from server was flushed when session released" },
     { "server cleanups", "number of times data from client was flushed when session released" },
     { "memory", "current memory in use" },
-    { "faults", "number of times a new segment triggered a prune" },
     { "initializing", "number of sessions currently initializing" },
     { "established", "number of sessions currently established" },
     { "closing", "number of sessions currently closing" },
@@ -368,7 +367,7 @@ PegCount* StreamTcpModule::get_counts() const
 
 void StreamTcpModule::sum_stats()
 {
-    //FIXIT-M is there a way this can be derived from other pegs?
+    // FIXIT-L is there a way these session pegs can be derived from other pegs?
     PegCount init = tcpStats.sessions_initializing;
     PegCount est = tcpStats.sessions_established;
     PegCount closing = tcpStats.sessions_closing;

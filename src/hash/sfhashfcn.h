@@ -60,7 +60,7 @@ struct SFHASHFCN
     unsigned seed;
     unsigned scale;
     unsigned hardener;
-    // FIXIT-L use types for these callbacks
+    // FIXIT-H use types for these callbacks
     unsigned (* hash_fcn)(SFHASHFCN*, unsigned char* d, int n);
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n);
 };
@@ -72,7 +72,7 @@ unsigned sfhashfcn_hash(SFHASHFCN*, unsigned char* d, int n);
 
 int sfhashfcn_set_keyops(
     SFHASHFCN*,
-    // FIXIT-L use types for these callbacks
+    // FIXIT-H use types for these callbacks
     unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n) );
 

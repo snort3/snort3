@@ -54,7 +54,7 @@ std::map <std::string, std::vector<uint16_t> > default_ports
     }
 };
 
-// FIXIT - change to full range - 1025:
+// FIXIT-M change to full range - 1025:
 std::map <std::string, std::vector<uint16_t> > autodetect_default_ports
 {
     { "smb", { 1025 }
@@ -226,7 +226,7 @@ void DcerpcServer::add_default_ports(std::string type,  std::map<std::string,Bin
     }
 }
 
-// FIXIT - for now add autodetect ports to binder just like regular detect port.
+// FIXIT-M for now add autodetect ports to binder just like regular detect port.
 // Change autodetect ports to full range once they are supported
 void DcerpcServer::add_default_autodetect_ports(std::string type,  std::map<std::string,
     Binder*> bind)
@@ -620,7 +620,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
 
     for (auto type : transport)
     {
-        bind[type]->set_when_proto("tcp"); // FIXIT - once dce_udp is ported
+        bind[type]->set_when_proto("tcp"); // FIXIT-M once dce_udp is ported
         bind[type]->set_use_type("dce_" + type);
     }
 
@@ -687,7 +687,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
         }
         else if (!keyword.compare("no_autodetect_http_proxy_ports"))
         {
-            // FIXIT - add once http transport is supported
+            // FIXIT-M add once http transport is supported
         }
         else if (!keyword.compare("smb_invalid_shares"))
         {

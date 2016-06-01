@@ -32,7 +32,7 @@
 #include "stream/stream_splitter.h"
 
 bool hi_paf_init(uint32_t cap);
-void hi_paf_term(void);
+void hi_paf_term();
 
 bool hi_paf_simple_request(Flow*);
 

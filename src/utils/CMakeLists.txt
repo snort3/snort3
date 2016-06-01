@@ -49,8 +49,6 @@ ADD_LIBRARY( utils STATIC
     util_utf.h
     util_unfold.cc 
     util_unfold.h
-    xmalloc.cc
-    xmalloc.h
 )
 
 target_link_libraries(utils

@@ -134,7 +134,7 @@ protected:
 };
 
 // HighAvailability is instantiated for each packet-thread.
-// FIXIT-M - make the SideChannel the THREAD_LOCAL element and collapse
+// FIXIT-M make the SideChannel the THREAD_LOCAL element and collapse
 //  into HighAvailabilityManager
 class HighAvailability
 {

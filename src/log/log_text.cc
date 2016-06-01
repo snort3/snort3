@@ -43,7 +43,10 @@
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
 #include "packet_io/sfdaq.h"
-#include "service_inspectors/http_inspect/hi_main.h"  // FIXIT bad dependency
+
+// should be able to delete this when we cutover to NHI
+#include "service_inspectors/http_inspect/hi_main.h"  // FIXIT-H bad dependency for Is*Data()
+
 #include "sfip/sf_ip.h"
 #include "utils/snort_bounds.h"
 #include "utils/util.h"
@@ -1253,8 +1256,7 @@ static void LogCharData(TextLog* log, const char* data, int len)
 static const char SEPARATOR[] =
           "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -";
 
-// FIXIT-L expecting complaints because this isn't 16  :(
-#define BYTES_PER_FRAME 20
+#define BYTES_PER_FRAME 20  // FIXIT-L make configurable
 /* middle:"41 02 43 04 45 06 47 08 49 0A 4B 0C 4D 0E 4F 0F 01 02 03 04  A.C.E.G.I.K.M.O....."
    at end:"41 02 43 04 45 06 47 08                                      A.C.E.G."*/
 
@@ -1397,7 +1399,7 @@ void LogIPPkt(TextLog* log, Packet* p)
         if ( p->proto_bits & PROTO_BIT__MPLS )
             LogMPLSHeader(log, p);
 
-        // FIXIT-L --> log everything in order!!
+        // FIXIT-L log all layers in order
         ip::IpApi tmp_api = p->ptrs.ip_api;
         int8_t num_layer = 0;
         IpProtocol tmp_next = p->get_ip_proto_next();
@@ -1447,7 +1449,7 @@ void LogIPPkt(TextLog* log, Packet* p)
             break;
 
         case PktType::ICMP:
-            // FIXIT-L   log accurate ICMP6 data.
+            // FIXIT-L log accurate ICMP6 data.
             if (p->is_ip6())
                 break;
 
@@ -1487,7 +1489,7 @@ void LogPayload(TextLog* log, Packet* p)
         {
             if ( p->obfuscator )
             {
-                // FIXIT-P: Avoid string copy
+                // FIXIT-P avoid string copy
                 std::string buf(p->data, p->data + p->dsize);
 
                 for ( const auto& b : *p->obfuscator )

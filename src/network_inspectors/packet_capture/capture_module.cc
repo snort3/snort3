@@ -49,7 +49,7 @@ static const Parameter s_capture[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Command cap_cmds[] = 
+static const Command cap_cmds[] =
 {
     { "enable", enable, &s_capture[1], "dump raw packets"},
     { "disable", disable, nullptr, "stop packet dump"},

@@ -54,13 +54,8 @@
 
 static SFGHASH* alloc_srvmap()
 {
-    SFGHASH* p = sfghash_new(1000, 0, 0,
-        /*nodes are lists,free them in sfghash_delete*/
-        (void (*)(void*))sflist_free);
-
-    if ( !p )
-        FatalError("could not allocate a service rule map - no memory?\n");
-
+    // nodes are lists,free them in sfghash_delete
+    SFGHASH* p = sfghash_new(1000, 0, 0, (void (*)(void*))sflist_free);
     return p;
 }
 
@@ -72,7 +67,7 @@ static void free_srvmap(SFGHASH* table)
 
 srmm_table_t* ServiceMapNew()
 {
-    srmm_table_t* table = (srmm_table_t*)SnortAlloc(sizeof(srmm_table_t));
+    srmm_table_t* table = (srmm_table_t*)snort_calloc(sizeof(srmm_table_t));
 
     for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
     {
@@ -97,7 +92,7 @@ void ServiceMapFree(srmm_table_t* table)
             free_srvmap(table->to_cli[i]);
     }
 
-    free(table);
+    snort_free(table);
 }
 
 //-------------------------------------------------------------------------
@@ -106,15 +101,8 @@ void ServiceMapFree(srmm_table_t* table)
 
 static SFGHASH* alloc_spgmm()
 {
-    SFGHASH* p = sfghash_new(
-     1000,  /* # rows in table */
-        0, /* size: of key 0 = ascii, >0 = fixed size */
-        0, /* bool:user keys,  if true just store this pointer, don't copy the key */
-        fpDeletePortGroup);
-
-    if ( !p )
-        FatalError("could not allocate a service port_group map : no memory?\n");
-
+    // 1000 rows, ascii key
+    SFGHASH* p = sfghash_new(1000, 0, 0, fpDeletePortGroup);
     return p;
 }
 
@@ -128,7 +116,7 @@ static void free_spgmm(SFGHASH* table)
 
 srmm_table_t* ServicePortGroupMapNew()
 {
-    srmm_table_t* table = (srmm_table_t*)SnortAlloc(sizeof(srmm_table_t));
+    srmm_table_t* table = (srmm_table_t*)snort_calloc(sizeof(srmm_table_t));
 
     for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
     {
@@ -153,7 +141,7 @@ void ServicePortGroupMapFree(srmm_table_t* table)
             free_spgmm(table->to_cli[i]);
     }
 
-    free(table);
+    snort_free(table);
 }
 
 //-------------------------------------------------------------------------

@@ -175,7 +175,7 @@ MpseWrapper* MpseManager::instantiate(const char* name, Module* m, SnortConfig* 
     if ( !api || !api->ctor )
         return nullptr;
 
-    // FIXIT-M: Is use_gc = false correct?
+    // FIXIT-M is use_gc = false correct?
     auto p = api->ctor(sc, m, false, nullptr);
     if ( !p )
         return nullptr;

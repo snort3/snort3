@@ -72,18 +72,15 @@ static int max_memory = 0;
 
 static void* AC_MALLOC(int n)
 {
-    void* p = calloc (1,n);
-
-    if (p)
-        max_memory += n;
-
+    void* p = snort_calloc(n);
+    max_memory += n;
     return p;
 }
 
 static void AC_FREE(void* p)
 {
     if (p)
-        free (p);
+        snort_free(p);
 }
 
 /*
@@ -121,9 +118,9 @@ static inline void ConvertCaseEx(uint8_t* d, const uint8_t* s, int m)
 static ACSM_PATTERN* CopyMatchListEntry(ACSM_PATTERN* px)
 {
     ACSM_PATTERN* p;
-    p = (ACSM_PATTERN*)AC_MALLOC (sizeof (ACSM_PATTERN));
-    MEMASSERT (p, "CopyMatchListEntry");
-    memcpy (p, px, sizeof (ACSM_PATTERN));
+    p = (ACSM_PATTERN*)AC_MALLOC(sizeof(ACSM_PATTERN));
+    MEMASSERT(p, "CopyMatchListEntry");
+    memcpy(p, px, sizeof (ACSM_PATTERN));
     px->udata->ref_count++;
     p->next = 0;
     return p;
@@ -136,9 +133,9 @@ static ACSM_PATTERN* CopyMatchListEntry(ACSM_PATTERN* px)
 static void AddMatchListEntry(ACSM_STRUCT* acsm, int state, ACSM_PATTERN* px)
 {
     ACSM_PATTERN* p;
-    p = (ACSM_PATTERN*)AC_MALLOC (sizeof (ACSM_PATTERN));
-    MEMASSERT (p, "AddMatchListEntry");
-    memcpy (p, px, sizeof (ACSM_PATTERN));
+    p = (ACSM_PATTERN*)AC_MALLOC(sizeof(ACSM_PATTERN));
+    MEMASSERT(p, "AddMatchListEntry");
+    memcpy(p, px, sizeof (ACSM_PATTERN));
     p->next = acsm->acsmStateTable[state].MatchList;
     acsm->acsmStateTable[state].MatchList = p;
 }
@@ -237,12 +234,6 @@ static void Build_NFA(ACSM_STRUCT* acsm)
                     mlist  = mlist->next)
                 {
                     px = CopyMatchListEntry (mlist);
-
-                    if ( !px )
-                    {
-                        FatalError("*** Out of memory Initializing Aho Corasick in acsmx.c ****");
-                    }
-
                     /* Insert at front of MatchList */
                     px->next = acsm->acsmStateTable[s].MatchList;
                     acsm->acsmStateTable[s].MatchList = px;
@@ -293,11 +284,10 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT* acsm)
 ACSM_STRUCT* acsmNew(const MpseAgent* agent)
 {
     ACSM_STRUCT* p = (ACSM_STRUCT*)AC_MALLOC (sizeof (ACSM_STRUCT));
-    MEMASSERT (p, "acsmNew");
+    MEMASSERT(p, "acsmNew");
 
     if (p)
     {
-        memset (p, 0, sizeof (ACSM_STRUCT));
         p->agent = agent;
     }
     return p;
@@ -312,14 +302,14 @@ int acsmAddPattern(
 {
     ACSM_PATTERN* plist;
     plist = (ACSM_PATTERN*)AC_MALLOC (sizeof (ACSM_PATTERN));
-    MEMASSERT (plist, "acsmAddPattern");
+    MEMASSERT(plist, "acsmAddPattern");
     plist->patrn = (uint8_t*)AC_MALLOC (n);
     ConvertCaseEx (plist->patrn, pat, n);
     plist->casepatrn = (uint8_t*)AC_MALLOC (n);
-    memcpy (plist->casepatrn, pat, n);
+    memcpy(plist->casepatrn, pat, n);
 
     plist->udata = (ACSM_USERDATA*)AC_MALLOC(sizeof(ACSM_USERDATA));
-    MEMASSERT (plist->udata, "acsmAddPattern");
+    MEMASSERT(plist->udata, "acsmAddPattern");
     plist->udata->ref_count = 1;
     plist->udata->id = user;
 
@@ -380,11 +370,8 @@ static inline int _acsmCompile(ACSM_STRUCT* acsm)
         acsm->acsmMaxStates += plist->n;
     }
     acsm->acsmStateTable =
-        (ACSM_STATETABLE*)AC_MALLOC (sizeof (ACSM_STATETABLE) *
-        acsm->acsmMaxStates);
-    MEMASSERT (acsm->acsmStateTable, "_acsmCompile");
-    memset (acsm->acsmStateTable, 0,
-        sizeof (ACSM_STATETABLE) * acsm->acsmMaxStates);
+        (ACSM_STATETABLE*)AC_MALLOC (sizeof (ACSM_STATETABLE) * acsm->acsmMaxStates);
+    MEMASSERT(acsm->acsmStateTable, "_acsmCompile");
 
     /* Initialize state zero as a branch */
     acsm->acsmNumStates = 0;

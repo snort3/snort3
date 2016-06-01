@@ -60,7 +60,7 @@ static const luaL_Reg methods[] =
 
             auto& self = BufferIface.create(L, get_mutable_data(*rb), rb->size());
             // Save a reference to the RawBuffer
-            // FIXIT-M: Integrate this into the interface code so we don't
+            // FIXIT-M integrate add_ref() into the interface code so we don't
             // have to do this explicitly
             Lua::add_ref(L, &self, "data", idx);
 

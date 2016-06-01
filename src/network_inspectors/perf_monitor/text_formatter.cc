@@ -29,6 +29,7 @@
 #include <cstring>
 
 #include "catch/catch.hpp"
+#include "utils/util.h"
 #endif
 
 using namespace std;
@@ -108,7 +109,7 @@ TEST_CASE("text output", "[TextFormatter]")
         "vec\n"
         "                 vector.0: 50\n"
         "                 vector.2: 70\n";
-        
+
     FILE* fh = tmpfile();
     TextFormatter f;
 
@@ -127,7 +128,7 @@ TEST_CASE("text output", "[TextFormatter]")
     kvp.push_back(50);
     kvp.push_back(0);
     kvp.push_back(70);
-    
+
     f.write(fh, (time_t)1234567890);
 
     one = 0;
@@ -136,15 +137,15 @@ TEST_CASE("text output", "[TextFormatter]")
     f.write(fh, (time_t)2345678901);
 
     auto size = ftell(fh);
-    char* fake_file = (char*) malloc(size + 1);
+    char* fake_file = (char*)snort_alloc(size + 1);
 
     rewind(fh);
     fread(fake_file, size, 1, fh);
     fake_file[size] = '\0';
-    
+
     CHECK( !strcmp(cooked, fake_file) );
 
-    free(fake_file);
+    snort_free(fake_file);
     fclose(fh);
 }
 

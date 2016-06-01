@@ -24,7 +24,7 @@
 #include "flow/flow.h"
 #include "gtp_parser.h"
 
-// FIXIT-H why store per packet on flow?
+// FIXIT-M why store per packet on flow?
 struct GTP_Roptions
 {
     uint8_t gtp_type;

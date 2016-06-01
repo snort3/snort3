@@ -52,13 +52,8 @@ void sfmemcap_init(MEMCAP* mc, unsigned long nbytes)
 */
 MEMCAP* sfmemcap_new(unsigned nbytes)
 {
-    MEMCAP* mc;
-
-    mc = (MEMCAP*)calloc(1,sizeof(MEMCAP));
-
-    if ( mc )
-        sfmemcap_init(mc, nbytes);
-
+    MEMCAP* mc = (MEMCAP*)snort_calloc(sizeof(MEMCAP));
+    sfmemcap_init(mc, nbytes);
     return mc;
 }
 
@@ -68,7 +63,7 @@ MEMCAP* sfmemcap_new(unsigned nbytes)
 void sfmemcap_delete(MEMCAP* p)
 {
     if (p)
-        free(p);
+        snort_free(p);
 }
 
 /*
@@ -89,18 +84,12 @@ void* sfmemcap_alloc(MEMCAP* mc, unsigned long nbytes)
         /* Check if we've maxed out our memory - if we are tracking memory */
         if ( (mc->memused + nbytes) > mc->memcap )
         {
-            return 0;
+            return nullptr;
         }
     }
 
-    //data = (long *) malloc( nbytes );
-    data = (long*)SnortAlloc(nbytes);
-
-    if ( data == NULL )
-    {
-        return 0;
-    }
-
+    //data = (long*)snort_alloc( nbytes );
+    data = (long*)snort_calloc(nbytes);
     *data++ = (long)nbytes;
 
     mc->memused += nbytes;
@@ -121,7 +110,7 @@ void sfmemcap_free(MEMCAP* mc, void* p)
     mc->memused -= (unsigned)(*q);
     mc->nblocks--;
 
-    free(q);
+    snort_free(q);
 }
 
 /*
@@ -137,7 +126,7 @@ void sfmemcap_showmem(MEMCAP* mc)
 /*
 *  String Dup Some memory.
 */
-char* sfmemcap_strdup(MEMCAP* mc, const char* str)
+char* sfmemcap_SnortStrdup(MEMCAP* mc, const char* str)
 {
     char* data = NULL;
     int data_size;

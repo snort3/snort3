@@ -29,7 +29,6 @@
 #include "lua/lua_table.h"
 #include "pp_raw_buffer_iface.h"
 
-// FIXIT-H: Should be its own object
 static struct SigInfo* create_sig_info()
 {
     auto si = new SigInfo;
@@ -45,8 +44,7 @@ static void set_fields(lua_State* L, int tindex, Event& self)
     table.get_field("event_reference", self.event_reference);
 
     const char* s = nullptr;
-    // FIXIT-L: Shouldn't need both conditions
-    if ( table.get_field("alt_msg", s) && s )
+    if ( table.get_field("alt_msg", s) && s )  // FIXIT-L shouldn't need both conditions
     {
         self.alt_msg = RawBufferIface.create(L, s).c_str();
         Lua::add_ref(L, &self, "alt_msg", lua_gettop(L));
@@ -74,7 +72,7 @@ static const luaL_Reg methods[] =
             Lua::Args args(L);
 
             auto& self = EventIface.create(L);
-            // FIXIT-M: This should be a separate object
+            // FIXIT-M SigInfo should be a separate object
             // (to make resource tracking more uniform)
             self.sig_info = create_sig_info();
 
@@ -85,7 +83,7 @@ static const luaL_Reg methods[] =
     },
     {
         "get",
-        // FIXIT-L: add support for getting strings
+        // FIXIT-L add support for getting strings
         [](lua_State* L)
         {
             auto& self = EventIface.get(L);
@@ -117,7 +115,7 @@ static const luaL_Reg methods[] =
     },
     {
         "set",
-        // FIXIT-L: add support for setting strings
+        // FIXIT-L add support for setting strings
         [](lua_State* L)
         {
             auto& self = EventIface.get(L);

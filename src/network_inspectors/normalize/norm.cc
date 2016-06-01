@@ -163,7 +163,7 @@ static int Norm_Eth(Packet* p, uint8_t layer, int changes)
 #define ETH_MIN_LEN 60
 
 static inline NormMode get_norm_mode(const NormalizerConfig* const c, const Packet * const p)
-{ 
+{
     NormMode mode = c->norm_mode;
 
     if ( !SFDAQ::forwarding_packet(p->pkth) )

@@ -178,9 +178,9 @@ SmtpModule::~SmtpModule()
         if ( config->cmds )
         {
             for ( SMTPToken* tmp = config->cmds; tmp->name; tmp++)
-                free((char *)tmp->name);
+                snort_free((char *)tmp->name);
 
-            free(config->cmds);
+            snort_free(config->cmds);
         }
         delete config;
     }

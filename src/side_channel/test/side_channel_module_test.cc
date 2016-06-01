@@ -58,16 +58,11 @@ void ParseWarning(WarningGroup, const char*, ...) { }
 
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 
-TEST_GROUP(side_channel_module)
-{
-    void setup()
-    {
-    }
+char* snort_strdup(const char* s)
+{ return strdup(s); }
 
-    void teardown()
-    {
-    }
-};
+TEST_GROUP(side_channel_module)
+{ };
 
 TEST(side_channel_module, test_connector_module_valid)
 {
@@ -82,7 +77,7 @@ TEST(side_channel_module, test_connector_module_valid)
     ports_val.set(&ports_param);
     connector_t_val.set(&connector_param);
     connector_r_val.set(&connector_param);
- 
+
     module.begin("side_channel", 0, nullptr);
     module.begin("side_channel", 1, nullptr);
     module.begin("side_channel.connectors", 0, nullptr);

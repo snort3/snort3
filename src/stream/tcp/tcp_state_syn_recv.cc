@@ -69,7 +69,7 @@ bool TcpStateSynRecv::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 {
     Flow* flow = tsd.get_flow();
 
-    // FIXIT - verify ack being sent is valid...
+    // FIXIT-H verify ack being sent is valid...
     trk.finish_server_init(tsd);
     trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
     flow->session_state |= STREAM_STATE_SYN_ACK;
@@ -201,7 +201,7 @@ bool TcpStateSynRecv::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.session->tel.set_tcp_event(EVENT_BAD_RST);
     }
 
-    // FIXIT - might be good to create alert specific to RST with data
+    // FIXIT-L might be good to create alert specific to RST with data
     if ( tsd.get_seg_len() > 0 )
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
 

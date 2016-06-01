@@ -213,18 +213,18 @@ int GetHttpGzipData(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
 int GetHttpJSNormData(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
 int GetHttpUriData(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
 int GetHttpHostnameData(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
-void HI_SearchInit(void);
-void HI_SearchFree(void);
+void HI_SearchInit();
+void HI_SearchFree();
 int HI_SearchStrFound(void*, void*, int, void*, void*);
 int IsJSNormData(Flow* flow);
 int IsGzipData(Flow* flow);
 
-inline void ClearHttpBuffers(void)
+inline void ClearHttpBuffers()
 {
     http_mask = 0;
 }
 
-inline uint32_t GetHttpBufferMask(void)
+inline uint32_t GetHttpBufferMask()
 {
     return http_mask;
 }
@@ -283,10 +283,7 @@ inline int SetLogBuffers(HttpSessionData* hsd)
 
     if (hsd->log_state == NULL)
     {
-        hsd->log_state = (HTTP_LOG_STATE*)calloc(1, sizeof(HTTP_LOG_STATE));
-
-        if ( !hsd->log_state )
-            iRet = -1;
+        hsd->log_state = (HTTP_LOG_STATE*)snort_calloc(sizeof(HTTP_LOG_STATE));
     }
     return iRet;
 }

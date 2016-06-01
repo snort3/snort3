@@ -98,7 +98,7 @@ void EventTrace_Log(const Packet* p, const OptTreeNode* otn, int action)
     nEvents++;
 }
 
-void EventTrace_Init(void)
+void EventTrace_Init()
 {
     if ( snort_conf->event_trace_max > 0 )
     {
@@ -112,7 +112,7 @@ void EventTrace_Init(void)
     }
 }
 
-void EventTrace_Term(void)
+void EventTrace_Term()
 {
     if ( tlog )
     {

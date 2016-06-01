@@ -19,12 +19,12 @@
 // tcp_segment.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Sep 21, 2015
 
-#include <stream/tcp/tcp_segment_node.h>
+#include "tcp_segment_node.h"
+
 #include "flow/flow_control.h"
 #include "protocols/packet.h"
+#include "utils/util.h"
 #include "tcp_module.h"
-
-THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 
 TcpSegmentNode::TcpSegmentNode() :
     prev(nullptr), next(nullptr), tv({ 0, 0 }), ts(0), seq(0), orig_dsize(0),
@@ -52,31 +52,22 @@ TcpSegmentNode* TcpSegmentNode::init(TcpSegmentNode& tsn)
 
 TcpSegmentNode* TcpSegmentNode::init(const struct timeval& tv, const uint8_t* data, unsigned dsize)
 {
-    TcpSegmentNode* ss;
-
-    tcp_memcap->alloc(dsize);
-    ss = new TcpSegmentNode;
-    if ( !ss )
-    {
-        tcp_memcap->dealloc(dsize);
-        return nullptr;
-    }
-
-    ss->data = ( uint8_t* )malloc(dsize);
+    TcpSegmentNode* ss = new TcpSegmentNode;
+    ss->data = ( uint8_t* )snort_alloc(dsize);
     ss->payload = ss->data;
     ss->tv = tv;
     memcpy(ss->payload, data, dsize);
     ss->orig_dsize = dsize;
     ss->payload_size = ss->orig_dsize;
-
+    tcpStats.mem_in_use += dsize;
     return ss;
 }
 
-void TcpSegmentNode::term(void)
+void TcpSegmentNode::term()
 {
-    tcp_memcap->dealloc(orig_dsize);
-    free(data);
+    snort_free(data);
     tcpStats.segs_released++;
+    tcpStats.mem_in_use -= orig_dsize;
     delete this;
 }
 

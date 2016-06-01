@@ -129,8 +129,8 @@ void PerfTracker::close()
     }
 }
 
-//FIXIT-M: combine with fileRotate
-//FIXIT-M: refactor file naming foo to use std::string
+// FIXIT-M combine with fileRotate
+// FIXIT-M refactor file naming foo to use std::string
 static bool rotate_file(const char* old_file, FILE* old_fh,
     uint32_t max_file_size)
 {

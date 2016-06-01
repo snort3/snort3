@@ -24,7 +24,7 @@
 // this provides a set of flags that can be set by environment variable to
 // turn on the output of specific debug messages.
 //
-// FIXIT-L this needs to be replaced with a module facility.
+// FIXIT-M debug flags needs to be replaced with a module facility.
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -51,7 +51,7 @@
 #define DEBUG_FLOWBITS        0x0000000000000400LL
 #define DEBUG_FILE            0x0000000000000800LL
 #define DEBUG_MEMORY          0x0000000000001000LL
-// FIXIT-L J latency doesn't use any debug messages
+// FIXIT-L latency doesn't use any debug messages
 #define DEBUG_LATENCY         0x0000000000002000LL
 #define DEBUG_SIDE_CHANNEL    0x0000000000004000LL
 #define DEBUG_CONNECTORS      0x0000000000008000LL
@@ -120,7 +120,7 @@ private:
 
 #else
 #define DebugFormat(dbg, fmt, ...)
-#define DebugFormatNoFileLine(dbg, fmt, ...) 
+#define DebugFormatNoFileLine(dbg, fmt, ...)
 #define DebugMessage(dbg, msg)
 #define DEBUG_WRAP(code)
 #endif

@@ -95,11 +95,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "utils/util.h"
+
 #include "sfxhash.h"
 #include "sfprimetable.h"
 #include "sfhashfcn.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 
 /*
  * Implements SFXHASH as specialized hash container
@@ -194,29 +196,19 @@ SFXHASH* sfxhash_new(int nrows, int keysize, int datasize, unsigned long maxmem,
     }
 
     /* Allocate the table structure from general memory */
-    h = (SFXHASH*)calloc(1, sizeof(SFXHASH));
-    if ( !h )
-    {
-        return 0;
-    }
+    h = (SFXHASH*)snort_calloc(sizeof(SFXHASH));
 
     /* this has a default hashing function */
     h->sfhashfcn = sfhashfcn_new(nrows);
-
-    if ( !h->sfhashfcn )
-    {
-        free(h);
-        return 0;
-    }
-
     sfmemcap_init(&h->mc, maxmem);
 
     /* Allocate the array of node ptrs */
     h->table = (SFXHASH_NODE**)s_alloc(h, sizeof(SFXHASH_NODE*) * nrows);
+
     if ( !h->table )
     {
-        free(h->sfhashfcn);
-        free(h);
+        snort_free(h->sfhashfcn);
+        snort_free(h);
         return 0;
     }
 
@@ -358,7 +350,7 @@ void sfxhash_delete(SFXHASH* h)
 
     sfxhash_delete_free_list(h);
 
-    free(h);   /* free the table from general memory */
+    snort_free(h);   /* free the table from general memory */
 }
 
 /*!

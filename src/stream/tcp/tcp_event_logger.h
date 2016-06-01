@@ -47,11 +47,11 @@
 class TcpEventLogger
 {
 public:
-    TcpEventLogger(void) { }
+    TcpEventLogger() { }
 
-    ~TcpEventLogger(void) { }
+    ~TcpEventLogger() { }
 
-    void clear_tcp_events(void)
+    void clear_tcp_events()
     {
         tcp_events = 0;
     }
@@ -61,8 +61,8 @@ public:
         tcp_events |= eventcode;
     }
 
-    void set_tcp_internal_syn_event(void);
-    void log_tcp_events(void);
+    void set_tcp_internal_syn_event();
+    void log_tcp_events();
     void log_internal_event(uint32_t eventSid);
 
 private:

@@ -30,8 +30,8 @@
 #include "pp_ip_api_iface.h"
 #include "pp_raw_buffer_iface.h"
 
-// FIXIT-H: Add Internet Header objects
-// FIXIT-H: Add Enum Interface
+// FIXIT-M add Internet Header objects
+// FIXIT-M add Enum Interface
 static void set_fields(lua_State* L, int tindex, DecodeData& self)
 {
     Lua::Table table(L, tindex);
@@ -109,7 +109,7 @@ static const luaL_Reg methods[] =
             return 1;
         }
     },
-    // FIXIT-L: add access to mplsHdr field
+    // FIXIT-L add access to mplsHdr field
     { nullptr, nullptr }
 };
 

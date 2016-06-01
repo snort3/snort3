@@ -73,7 +73,7 @@ int Active::send_ip(
     return ( (uint32_t)sent != len );
 }
 
-static inline EncodeFlags GetFlags(void)
+static inline EncodeFlags GetFlags()
 {
     EncodeFlags flags = ENC_FLAG_ID;
     if ( SFDAQ::can_inject_raw() || s_ipnet )
@@ -176,7 +176,7 @@ bool Active::init(SnortConfig* sc)
     return true;
 }
 
-void Active::term(void)
+void Active::term()
 {
     Active::close();
 }
@@ -331,7 +331,7 @@ bool Active::is_reset_candidate(const Packet* p)
 
 bool Active::is_unreachable_candidate(const Packet* p)
 {
-    // FIXIT allow unr to tcp/udp/icmp4/icmp6 only or for all
+    // FIXIT-L allow unr to tcp/udp/icmp4/icmp6 only or for all
     switch ( p->type() )
     {
     case PktType::TCP:

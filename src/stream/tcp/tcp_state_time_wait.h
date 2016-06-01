@@ -30,7 +30,7 @@ class TcpStateTimeWait : public TcpStateHandler
 {
 public:
     TcpStateTimeWait(TcpStateMachine&);
-    virtual ~TcpStateTimeWait(void);
+    virtual ~TcpStateTimeWait();
 
     bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;

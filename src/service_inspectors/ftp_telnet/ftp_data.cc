@@ -192,7 +192,7 @@ FtpDataFlowData::FtpDataFlowData(Packet* p) : FlowData(flow_id)
 FtpDataFlowData::~FtpDataFlowData()
 {
     if (session.filename)
-        free(session.filename);
+        snort_free(session.filename);
 }
 
 void FtpDataFlowData::handle_eof(Packet* p)

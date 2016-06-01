@@ -33,7 +33,7 @@
 
 void SMTP_GetEOL(const uint8_t*, const uint8_t*, const uint8_t**, const uint8_t**);
 void SMTP_LogFuncs(SMTP_PROTO_CONF* config, Packet* p, MimeSession* mime_ssn);
-void SMTP_ResetAltBuffer(void);
+void SMTP_ResetAltBuffer();
 
 #ifdef DEBUG_MSGS
 const char* SMTP_PrintBuffer(Packet*);

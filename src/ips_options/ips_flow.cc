@@ -75,8 +75,8 @@ public:
 
     int eval(Cursor&, Packet*) override;
 
-//private:  // FIXIT-L privatize
-    FlowCheckData config;
+//private:
+    FlowCheckData config;  // FIXIT-L privatize
 };
 
 //-------------------------------------------------------------------------

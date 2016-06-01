@@ -77,7 +77,7 @@ static THREAD_LOCAL unsigned qOverflow = 0;
 // the push/pop methods ensure that qIndex stays in
 // bounds and that it is only popped after it was
 // successfully pushed.
-void SnortEventqPush(void)
+void SnortEventqPush()
 {
     if ( qIndex < NUM_EVENT_QUEUES-1 )
         qIndex++;
@@ -85,7 +85,7 @@ void SnortEventqPush(void)
         qOverflow++;
 }
 
-void SnortEventqPop(void)
+void SnortEventqPop()
 {
     if ( qOverflow > 0 )
         qOverflow--;
@@ -97,10 +97,10 @@ void SnortEventqPop(void)
 /*
 **  Set default values
 */
-EventQueueConfig* EventQueueConfigNew(void)
+EventQueueConfig* EventQueueConfigNew()
 {
     EventQueueConfig* eqc =
-        (EventQueueConfig*)SnortAlloc(sizeof(EventQueueConfig));
+        (EventQueueConfig*)snort_calloc(sizeof(EventQueueConfig));
 
     eqc->max_events = 8;
     eqc->log_events = 3;
@@ -116,7 +116,7 @@ void EventQueueConfigFree(EventQueueConfig* eqc)
     if ( !eqc )
         return;
 
-    free(eqc);
+    snort_free(eqc);
 }
 
 // Return 0 if no OTN since -1 return indicates queue limit reached. See
@@ -248,18 +248,18 @@ int SnortEventqLog(Packet* p)
     return 0;
 }
 
-static inline void reset_counts(void)
+static inline void reset_counts()
 {
     pc.log_limit += s_events;
     s_events = 0;
 }
 
-void SnortEventqResetCounts(void)
+void SnortEventqResetCounts()
 {
     reset_counts();
 }
 
-void SnortEventqReset(void)
+void SnortEventqReset()
 {
     sfeventq_reset(event_queue[qIndex]);
     reset_counts();

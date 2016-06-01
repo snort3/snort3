@@ -238,7 +238,7 @@ bool SFDAQ::can_inject_raw()
 
 bool SFDAQ::can_replace()
 {
-    // FIXIT-H - X This is beyond broken.
+    // FIXIT-H X can_replace() is beyond broken.
     if (!local_instance)
         return true;
     return local_instance->can_replace();

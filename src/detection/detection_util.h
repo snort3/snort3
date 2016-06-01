@@ -63,12 +63,12 @@ inline void set_file_data(uint8_t* p, unsigned n)
 }
 
 // FIXIT-L event trace should be placed in its own files
-void EventTrace_Init(void);
-void EventTrace_Term(void);
+void EventTrace_Init();
+void EventTrace_Term();
 
 void EventTrace_Log(const Packet*, const OptTreeNode*, int action);
 
-inline int EventTrace_IsEnabled(void)
+inline int EventTrace_IsEnabled()
 {
     return ( snort_conf->event_trace_max > 0 );
 }

@@ -67,9 +67,8 @@ static plx_t* plx_new(void* pv_array[], int n)
     if (!pv_array || n < 0)
         return NULL;
 
-    p = (plx_t*)SnortAlloc(sizeof(plx_t));
-
-    p->p = (void**)SnortAlloc(n * sizeof(void*));
+    p = (plx_t*)snort_calloc(sizeof(plx_t));
+    p->p = (void**)snort_calloc(n, sizeof(void*));
 
     p->n = n;
     for (i=0; i<n; i++)
@@ -86,8 +85,8 @@ static void plx_free(void* p)
     if ( !plx )
         return;
     if ( plx->p )
-        free(plx->p);
-    free(p);
+        snort_free(plx->p);
+    snort_free(p);
 }
 
 #ifdef DEBUG_MSGS
@@ -760,7 +759,7 @@ static int PortTableCompileMergePortObjects(PortTable* p)
         }
 
         /* free the original list */
-        sflist_free_all(po->item_list, free);
+        sflist_free_all(po->item_list, snort_free);
 
         /* set the new list - this is a list of port items for this port object */
         po->item_list = plist;
@@ -883,18 +882,14 @@ static int PortTableConsistencyCheck(PortTable* p)
 /*
     Create a new table
 */
-PortTable* PortTableNew(void)
+PortTable* PortTableNew()
 {
-    PortTable* p = (PortTable*)calloc(1,sizeof(PortTable));
-
-    if (!p)
-        return 0;
-
+    PortTable* p = (PortTable*)snort_calloc(sizeof(PortTable));
     p->pt_polist = sflist_new();
 
     if (!p->pt_polist )
     {
-        free(p);
+        snort_free(p);
         return 0;
     }
 
@@ -935,7 +930,7 @@ void PortTableFree(PortTable* p)
         sfghash_delete(p->pt_mpxo_hash);
     }
 
-    free(p);
+    snort_free(p);
 }
 
 /*
@@ -1195,10 +1190,10 @@ void RuleListSortUniq(SF_LIST* rl)
     while (uniqElements != rl->count)
     {
         node = (int*)sflist_remove_tail (rl);
-        free(node);
+        snort_free(node);
     }
 
-    free(rlist);
+    snort_free(rlist);
 }
 
 /**Sort and make rule index in all port objects unique. Multiple policies may add

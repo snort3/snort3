@@ -48,11 +48,10 @@ class Runner
 public:
     static bool run_all(const struct Output&);
 
-    // FIXIT-M: This should be hidden
+    // FIXIT-L this method should be hidden
     static bool run_all(const struct Output&, const std::vector<Chunk>&);
 
 private:
-    // FIXIT-M: This should also be hidden
     static void run(const struct Output&, Test&, unsigned);
 };
 } // namespace Piglet

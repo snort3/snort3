@@ -58,9 +58,10 @@
 
 #include "hi_events.h"
 #include "main/snort_debug.h"
+#include "events/event_queue.h"
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
-#include "events/event_queue.h"
+#include "utils/util.h"
 
 #ifdef DEBUG_MSGS
 #define HI_TRACE     // define for state trace
@@ -83,8 +84,7 @@
 // config stuff
 static uint32_t hi_cap = 0;
 
-// stats
-// FIXIT-L eliminate these counts
+// FIXIT-L eliminate these counts or make module pegs or debug only
 static THREAD_LOCAL uint32_t hi_paf_calls = 0;
 static THREAD_LOCAL uint32_t hi_paf_bytes = 0;
 
@@ -569,7 +569,7 @@ static void hi_relink(State* state, const char* event, int next)
     hi_reload(state, tolower(*event), next);
 }
 
-static void hi_link_check(void)
+static void hi_link_check()
 {
     unsigned i, j;
 
@@ -583,7 +583,7 @@ static void hi_link_check(void)
     }
 }
 
-static bool hi_fsm_compile(void)
+static bool hi_fsm_compile()
 {
     unsigned i = 0, j;
     unsigned max = sizeof(hi_rule) / sizeof(hi_rule[0]);
@@ -603,12 +603,7 @@ static bool hi_fsm_compile(void)
     hi_fsm_size = max + extra;
     assert(hi_fsm_size < TBD);  // using uint8_t for Cell.next and Hi5State.fsm
 
-    hi_fsm = (State*)malloc(hi_fsm_size*sizeof(*hi_fsm));
-    if ( hi_fsm == NULL )
-    {
-        DebugMessage(DEBUG_STREAM_PAF, "Unable to allocate memory for hi_fsm.");
-        return false;
-    }
+    hi_fsm = (State*)snort_alloc(hi_fsm_size*sizeof(*hi_fsm));
     next = max;
 
     for ( i = 0; i < hi_fsm_size; i++ )
@@ -1148,9 +1143,9 @@ bool hi_paf_init(uint32_t cap)
     return true;
 }
 
-void hi_paf_term(void)
+void hi_paf_term()
 {
-    free(hi_fsm);
+    snort_free(hi_fsm);
     DebugFormat(DEBUG_STREAM_PAF,
         "%s: calls=%u, bytes=%u\n",  __func__, hi_paf_calls, hi_paf_bytes);
 

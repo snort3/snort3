@@ -29,7 +29,7 @@
 struct CaptureConfig
 {
     bool enabled;
-    std::string filter;    
+    std::string filter;
 };
 
 struct CaptureStats

@@ -610,7 +610,7 @@ static bool exec(
     return false;
 }
 
-// FIXIT-L this should not be by name
+// FIXIT-L escaping should not be by option name
 // probably should remove content escaping except for \" so
 // that individual rule options can do whatever
 static int get_escape(const string& s)

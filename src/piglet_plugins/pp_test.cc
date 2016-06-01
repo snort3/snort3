@@ -51,7 +51,7 @@ public:
 
 bool TestPiglet::setup()
 {
-    // FIXIT-L: Would like to be able to selectively load lua interfaces
+    // FIXIT-L would like to be able to selectively load lua interfaces
     install(L, BufferIface);
     install(L, CodecDataIface);
     install(L, CursorIface);

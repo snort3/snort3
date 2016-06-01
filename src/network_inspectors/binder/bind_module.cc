@@ -55,7 +55,7 @@ static const PegInfo bind_pegs[] =
 
 static const Parameter binder_when_params[] =
 {
-    // FIXIT when.policy_id should be an arbitrary string auto converted
+    // FIXIT-L when.policy_id should be an arbitrary string auto converted
     // into index for binder matching and lookups
     { "policy_id", Parameter::PT_INT, "0:", "0",
       "unique ID for selection of this config by external logic" },

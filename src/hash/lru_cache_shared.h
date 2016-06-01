@@ -63,13 +63,13 @@ public:
     }
 
     //  Get current number of elements in the LruCache.
-    size_t size(void)
+    size_t size()
     {
         std::lock_guard<std::mutex> cache_lock(cache_mutex);
         return current_size;
     }
 
-    size_t get_max_size(void)
+    size_t get_max_size()
     {
         std::lock_guard<std::mutex> cache_lock(cache_mutex);
         return max_size;
@@ -97,11 +97,11 @@ public:
     bool remove(const Key& key, Data& data);
 
     //  Remove all elements from the LruCache
-    void clear(void);
+    void clear();
 
     //  Return all data from the LruCache in order (most recently used to
     //  least).
-    std::vector<std::pair<Key, Data> > get_all_data(void);
+    std::vector<std::pair<Key, Data> > get_all_data();
 
     const PegInfo* get_pegs() const
     {
@@ -260,7 +260,7 @@ bool LruCacheShared<Key, Data, Hash>::remove(const Key& key, Data& data)
 }
 
 template<typename Key, typename Data, typename Hash>
-void LruCacheShared<Key, Data, Hash>::clear(void)
+void LruCacheShared<Key, Data, Hash>::clear()
 {
     LruMapIter map_iter;
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
@@ -278,7 +278,7 @@ void LruCacheShared<Key, Data, Hash>::clear(void)
 }
 
 template<typename Key, typename Data, typename Hash>
-std::vector<std::pair<Key, Data> > LruCacheShared<Key, Data, Hash>::get_all_data(void)
+std::vector<std::pair<Key, Data> > LruCacheShared<Key, Data, Hash>::get_all_data()
 {
     std::vector<std::pair<Key, Data> > vec;
     std::lock_guard<std::mutex> cache_lock(cache_mutex);

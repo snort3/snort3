@@ -168,9 +168,9 @@ void acsmCompressStates(ACSM_STRUCT2*, int);
 void acsmPrintInfo2(ACSM_STRUCT2* p);
 
 int acsmPrintDetailInfo2(ACSM_STRUCT2*);
-int acsmPrintSummaryInfo2(void);
-void acsmx2_print_qinfo(void);
-void acsm_init_summary(void);
+int acsmPrintSummaryInfo2();
+void acsmx2_print_qinfo();
+void acsm_init_summary();
 
 #endif
 

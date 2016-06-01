@@ -38,7 +38,7 @@
 
 using namespace std;
 
-// FIXIT-L define once
+// FIXIT-L define module names just once
 #define bind_id "binder"
 #define wiz_id "wizard"
 
@@ -788,7 +788,7 @@ void InspectorManager::execute(Packet* p)
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
     assert(fp);
 
-    // FIXIT-L blocked flows should not be normalized
+    // FIXIT-M blocked flows should not be normalized
     if ( !p->is_cooked() )
         ::execute(p, fp->packet.vec, fp->packet.num);
 

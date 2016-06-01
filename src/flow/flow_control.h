@@ -94,8 +94,6 @@ public:
 
     void clear_counts();
 
-    class Memcap& get_memcap(PktType);
-
 private:
     FlowCache* get_cache(PktType);
     const FlowCache* get_cache(PktType) const;

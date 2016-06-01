@@ -44,9 +44,10 @@ bool host_cache_add_service(sfip_t ipaddr, Protocol ipproto, Port port, const ch
     {
         //  This host hasn't been seen.  Add it.
         ht = std::make_shared<HostTracker>();
+
         if (ht == nullptr)
         {
-            //  FIXIT-L:  Log error here?
+            //  FIXIT-L add error count
             return false;
         }
         host_cache.insert(ipkey, ht);

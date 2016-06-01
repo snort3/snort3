@@ -56,11 +56,11 @@ class TcpTracker : public TcpStreamTracker
 {
 public:
     TcpTracker(bool, TcpSession*);
-    virtual ~TcpTracker(void);
+    virtual ~TcpTracker();
 
-    void init_tcp_state(void) override;
-    void print(void) override;
-    void init_flush_policy(void) override;
+    void init_tcp_state() override;
+    void print() override;
+    void init_flush_policy() override;
     void set_splitter(StreamSplitter* ss) override;
     void set_splitter(const Flow* flow) override;
     void reset_splitter( void ) override;
@@ -80,13 +80,13 @@ public:
     void update_tracker_ack_sent(TcpSegmentDescriptor& tsd) override;
     bool update_on_3whs_ack(TcpSegmentDescriptor& tsd) override;
     bool update_on_rst_recv(TcpSegmentDescriptor& tsd) override;
-    void update_on_rst_sent(void) override;
+    void update_on_rst_sent() override;
     bool update_on_fin_recv(TcpSegmentDescriptor& tsd) override;
     bool update_on_fin_sent(TcpSegmentDescriptor& tsd) override;
     bool is_segment_seq_valid(TcpSegmentDescriptor& tsd) override;
     void flush_data_on_fin_recv(TcpSegmentDescriptor& tsd) override;
 
-    void init_toolbox(void) override;
+    void init_toolbox() override;
 
 };
 

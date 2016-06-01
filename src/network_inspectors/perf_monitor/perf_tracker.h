@@ -26,7 +26,7 @@
 // create an instance of each configued class for each packet processing
 // thread. Subclasses of PerfTrackers should implement or call the following
 // methods, leaving the others for internal use by PerfMonitor:
-// 
+//
 // reset() - perform initialization after the output handle has been opened.
 //
 // update(Packet*) - update statistics basied on the current packet.
@@ -48,7 +48,7 @@ public:
     virtual void reset() {}
 
     virtual void update(Packet*) {}
-    virtual void process(bool /*summary*/) {} //FIXIT-M get rid of this step.
+    virtual void process(bool /*summary*/) {} // FIXIT-M get rid of this step.
 
     virtual void update_time(time_t time) final { cur_time = time; }
     virtual void open(bool append) final;

@@ -1135,7 +1135,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
     if ( iCallDetect == 0 )
     {
         /* snort_detect called at least once from above pkt processing loop. */
-        // FIXIT this throws off nfp rules like this:
+        // FIXIT-M this throws off nfp rules like this:
         // alert tcp any any -> any any ( sid:1; msg:"1"; flags:S; )
         // (check shutdown counts)
         DisableInspection();
@@ -1169,11 +1169,11 @@ void FreeHttpSessionData(void* data)
     if (hsd->decomp_state != NULL)
     {
         inflateEnd(&(hsd->decomp_state->d_stream));
-        free(hsd->decomp_state);
+        snort_free(hsd->decomp_state);
     }
 
     if (hsd->log_state != NULL)
-        free(hsd->log_state);
+        snort_free(hsd->log_state);
 
     if (hsd->true_ip)
         sfip_free(hsd->true_ip);
@@ -1318,15 +1318,11 @@ int GetHttpHostnameData(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type
     return 0;
 }
 
-void HI_SearchInit(void)
+void HI_SearchInit()
 {
     const HiSearchToken* tmp;
     hi_javascript_search_mpse = new SearchTool();
-    if (hi_javascript_search_mpse == NULL)
-    {
-        FatalError("%s(%d) Could not allocate memory for HTTP <script> tag search.\n",
-            __FILE__, __LINE__);
-    }
+
     for (tmp = &hi_patterns[0]; tmp->name != NULL; tmp++)
     {
         hi_js_search[tmp->search_id].name = tmp->name;
@@ -1334,13 +1330,8 @@ void HI_SearchInit(void)
         hi_javascript_search_mpse->add(tmp->name, tmp->name_len, tmp->search_id);
     }
     hi_javascript_search_mpse->prep();
-
     hi_htmltype_search_mpse = new SearchTool();
-    if (hi_htmltype_search_mpse == NULL)
-    {
-        FatalError("%s(%d) Could not allocate memory for HTTP <script> type search.\n",
-            __FILE__, __LINE__);
-    }
+
     for (tmp = &html_patterns[0]; tmp->name != NULL; tmp++)
     {
         hi_html_search[tmp->search_id].name = tmp->name;
@@ -1350,7 +1341,7 @@ void HI_SearchInit(void)
     hi_htmltype_search_mpse->prep();
 }
 
-void HI_SearchFree(void)
+void HI_SearchFree()
 {
     if (hi_javascript_search_mpse != NULL)
         delete hi_javascript_search_mpse;

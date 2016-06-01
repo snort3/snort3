@@ -55,18 +55,14 @@ struct _CircularBuffer
 
 CircularBuffer* cbuffer_init(uint64_t size)
 {
-    CircularBuffer* cb = (CircularBuffer*)SnortAlloc(sizeof(*cb));
-
-    if ( !cb )
-        return NULL;
+    CircularBuffer* cb = (CircularBuffer*)snort_calloc(sizeof(*cb));
 
     cb->size  = size + 1;
-
-    cb->elems = (ElemType*)SnortAlloc(cb->size * sizeof(ElemType));
+    cb->elems = (ElemType*)snort_calloc(cb->size, sizeof(ElemType));
 
     if (!cb->elems)
     {
-        free(cb);
+        snort_free(cb);
         return NULL;
     }
 
@@ -77,11 +73,11 @@ void cbuffer_free(CircularBuffer* cb)
 {
     if (cb && cb->elems)
     {
-        free(cb->elems);
+        snort_free(cb->elems);
         cb->elems = NULL;
     }
 
-    free(cb);
+    snort_free(cb);
 }
 
 int cbuffer_is_full(CircularBuffer* cb)

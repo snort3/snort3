@@ -41,7 +41,7 @@
  ***************************************************************************/
 OptFpList* AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode* otn)
 {
-    OptFpList* ofp = (OptFpList*)SnortAlloc(sizeof(OptFpList));
+    OptFpList* ofp = (OptFpList*)snort_calloc(sizeof(OptFpList));
 
     DebugMessage(DEBUG_CONFIGRULES,"Adding new rule to list\n");
 

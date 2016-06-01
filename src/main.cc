@@ -735,14 +735,14 @@ static bool set_mode()
 #ifdef PIGLET
     if ( Piglet::piglet_mode() )
     {
-        // FIXIT-L J the early return means that piglet and catch tests cannot
+        // FIXIT-L the early return means that piglet and catch tests cannot
         // be run in the same process
         main_exit_code = Piglet::main();
         return false;
     }
 #endif
 #ifdef UNIT_TEST
-    // FIXIT-M: X we should move this out of set_mode and not do Snort bringup/teardown at all
+    // FIXIT-M X we should move this out of set_mode and not do Snort bringup/teardown at all
     if ( catch_enabled() )
     {
         main_exit_code = catch_test();

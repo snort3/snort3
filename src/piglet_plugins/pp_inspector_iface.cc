@@ -52,7 +52,7 @@ static const luaL_Reg methods[] =
         [](lua_State* L)
         {
             auto& self = InspectorIface.get(L);
-            // FIXIT-L: Do we need an opaque SnortConfig interface?
+            // FIXIT-L do we need an opaque SnortConfig interface?
             bool result = self.configure(snort_conf);
             lua_pushboolean(L, result);
             return 1;
@@ -109,8 +109,8 @@ static const luaL_Reg methods[] =
             return 0;
         }
     },
-    // FIXIT-M: Add meta() method
-    // FIXIT-M: Add exec() method
+    // FIXIT-M add meta() method
+    // FIXIT-M add exec() method
     {
         "get_buf_from_key",
         [](lua_State* L)

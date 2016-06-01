@@ -94,7 +94,7 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     // this case because I don't want this going to the TCP, UDP, or
     // ICMP codec. Therefore, doing a minor decode here.
 
-    // FIXIT-L   Will fail to decode Ipv6 options
+    // FIXIT-H will fail to decode Ipv6 options
     switch (ip6h->next())
     {
     case IpProtocol::TCP:     /* decode the interesting part of the header */
@@ -105,7 +105,7 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         codec.proto_bits |= PROTO_BIT__UDP_EMBED_ICMP;
         break;
 
-    //  FIXIT-M: Do we need to handle ICMPV6 here?
+    //  FIXIT-H do we need to handle ICMPV6 here?
     case IpProtocol::ICMPV4:
         codec.proto_bits |= PROTO_BIT__ICMP_EMBED_ICMP;
         break;

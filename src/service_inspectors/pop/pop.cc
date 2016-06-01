@@ -146,14 +146,11 @@ static POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
     return pop_ssn;
 }
 
-static void POP_SearchInit(void)
+static void POP_SearchInit()
 {
     const POPToken* tmp;
     pop_cmd_search_mpse = new SearchTool();
-    if (pop_cmd_search_mpse == NULL)
-    {
-        FatalError("Could not allocate memory for POP Command search.\n");
-    }
+
     for (tmp = &pop_known_cmds[0]; tmp->name != NULL; tmp++)
     {
         pop_cmd_search[tmp->search_id].name = tmp->name;
@@ -161,12 +158,8 @@ static void POP_SearchInit(void)
         pop_cmd_search_mpse->add(tmp->name, tmp->name_len, tmp->search_id);
     }
     pop_cmd_search_mpse->prep();
-
     pop_resp_search_mpse = new SearchTool();
-    if (pop_resp_search_mpse == NULL)
-    {
-        FatalError("Could not allocate memory for POP Response search.\n");
-    }
+
     for (tmp = &pop_resps[0]; tmp->name != NULL; tmp++)
     {
         pop_resp_search[tmp->search_id].name = tmp->name;
@@ -176,7 +169,7 @@ static void POP_SearchInit(void)
     pop_resp_search_mpse->prep();
 }
 
-static void POP_SearchFree(void)
+static void POP_SearchFree()
 {
     if (pop_cmd_search_mpse != NULL)
         delete pop_cmd_search_mpse;
@@ -317,10 +310,11 @@ static const uint8_t* POP_HandleCommand(Packet* p, POPData* pop_ssn, const uint8
     /* get end of line and end of line marker */
     POP_GetEOL(ptr, end, &eol, &eolm);
 
-    /* FIXIT If the end of line marker coincides with the end of data we can't be
-     * sure that we got a command and not a substring which we could tell through
-     * inspection of the next packet. Maybe a command pending state where the first
-     * char in the next packet is checked for a space and end of line marker */
+    // FIXIT-M If the end of line marker coincides with the end of data we
+    // can't be sure that we got a command and not a substring which we
+    // could tell through inspection of the next packet. Maybe a command
+    // pending state where the first char in the next packet is checked for
+    // a space and end of line marker
 
     /* do not confine since there could be space chars before command */
     pop_current_search = &pop_cmd_search[0];

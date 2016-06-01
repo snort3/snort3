@@ -135,8 +135,9 @@ void Runner::run(const struct Output& output, Test& t, unsigned i)
     auto p = Manager::instantiate(
         state, t.chunk->target, t.type, t.name, t.use_defaults);
 
-    // FIXIT-L: This injection is a hack so we can log the test header
-    //          with all the parsed information filled in
+    // FIXIT-L this injection is a hack so we can log the test header with
+    // all the parsed information filled in
+
     if ( output.on_test_start )
         output.on_test_start(t, i);
 
@@ -163,7 +164,7 @@ bool Runner::run_all(const struct Output& output, const vector<Chunk>& chunks)
 {
     Summary summary;
 
-    // FIXIT-M: The checks for null belong somewhere else (maybe in Output?)
+    // FIXIT-L the checks for null belong somewhere else (maybe in Output?)
     if ( output.on_suite_start )
         output.on_suite_start(chunks);
 
@@ -174,7 +175,7 @@ bool Runner::run_all(const struct Output& output, const vector<Chunk>& chunks)
 
         run(output, test, i); // <-- RUN TEST
 
-        // FIXIT-M: This logic belongs somewhere else (maybe in Summary?)
+        // FIXIT-L this logic belongs somewhere else (maybe in Summary?)
         switch ( test.result )
         {
             case Test::PASSED:

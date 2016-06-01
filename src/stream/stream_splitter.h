@@ -79,9 +79,9 @@ public:
     virtual bool is_paf() { return false; }
     virtual unsigned max(Flow*);
 
-    // FIXIT-L this is temporary for legacy paf_max required only
-    // for HI; it is not appropriate for multiple stream_tcp with
-    // different paf_max; the HI splitter should pull from there
+    // FIXIT-L this is temporary for legacy paf_max required only for HI;
+    // it is not appropriate for multiple stream_tcp with different
+    // paf_max; the HI splitter should pull from there
     static void set_max(unsigned);
 
     virtual void reset() { }

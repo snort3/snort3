@@ -55,7 +55,7 @@ bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-    // FIXIT-M: What if the packet's data is non-zero?  For example, some
+    // FIXIT-H what if the packet's data is non-zero?  For example, some
     //          regression pcaps have the following: eth:ipv4:nonext:data
 
     // The size of this packet's data should be zero.  So, set this layer's

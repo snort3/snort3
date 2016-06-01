@@ -44,22 +44,22 @@ struct EventNode
     RuleType type;
 };
 
-EventQueueConfig* EventQueueConfigNew(void);
+EventQueueConfig* EventQueueConfigNew();
 void EventQueueConfigFree(EventQueueConfig*);
 
 void SnortEventqNew(EventQueueConfig*);
 void SnortEventqFree();
 
-SO_PUBLIC void SnortEventqReset(void);
-void SnortEventqResetCounts(void);
+SO_PUBLIC void SnortEventqReset();
+void SnortEventqResetCounts();
 
 SO_PUBLIC int SnortEventqLog(struct Packet*);
 SO_PUBLIC int SnortEventqAdd(const struct OptTreeNode*);
 SO_PUBLIC int SnortEventqAdd(uint32_t gid, uint32_t sid, RuleType = RULE_TYPE__NONE);
 SO_PUBLIC bool event_is_enabled(uint32_t gid, uint32_t sid);
 
-SO_PUBLIC void SnortEventqPush(void);
-SO_PUBLIC void SnortEventqPop(void);
+SO_PUBLIC void SnortEventqPush();
+SO_PUBLIC void SnortEventqPop();
 
 #endif
 

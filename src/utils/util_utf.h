@@ -24,15 +24,13 @@
 
 #include "main/snort_types.h"
 
-// FIXIT-L: Should get rid of these and change dependent return types to bool
 // return codes
-#define DECODE_UTF_SUCCESS 0
+#define DECODE_UTF_SUCCESS  0  // FIXIT-L replace with bool
 #define DECODE_UTF_FAILURE -1
 
-// FIXIT-L: Should be an enum
 // Character set types 
-#define CHARSET_DEFAULT 0
-#define CHARSET_UTF7 1
+#define CHARSET_DEFAULT 0  // FIXIT-L these should be an enum
+#define CHARSET_UTF7    1
 #define CHARSET_UTF16LE 2
 #define CHARSET_UTF16BE 3
 #define CHARSET_UTF32LE 4

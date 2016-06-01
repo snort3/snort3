@@ -43,7 +43,6 @@
 #include <sstream>
 #include <string>
 
-#include "utils/xmalloc.h"
 #include "utils/util.h"
 #include "hi_ui_config.h"
 #include "hi_return_codes.h"
@@ -237,14 +236,7 @@ int hi_ui_parse_iis_unicode_map(uint8_t** iis_unicode_map, char* filename,
         return HI_INVALID_FILE;
     }
 
-    *iis_unicode_map = (uint8_t*)xmalloc(sizeof(uint8_t)* 65536);
-
-    if (*iis_unicode_map == NULL)
-    {
-        fclose(fFile);
-        return HI_MEM_ALLOC_FAIL;
-    }
-
+    *iis_unicode_map = (uint8_t*)snort_alloc(sizeof(uint8_t)*65536);
     memset(*iis_unicode_map, HI_UI_NON_ASCII_CODEPOINT, (sizeof(uint8_t)*65536));
 
     /*
@@ -284,7 +276,7 @@ bool get_default_unicode_map(uint8_t*& map, int& page)
     // FIXIT-M This certainly looks wrong. Why isn't the background value for this table
     // initialized to HI_UI_NON_ASCII_CODEPOINT instead of zero? Compare with
     // hi_ui_parse_iis_unicode_map() above.
-    map = (uint8_t*)SnortAlloc(65536*sizeof(uint8_t));
+    map = (uint8_t*)snort_calloc(65536, sizeof(uint8_t));
 
     std::stringstream ss(default_unicode_map);
     std::string tok;
@@ -296,7 +288,7 @@ bool get_default_unicode_map(uint8_t*& map, int& page)
 
         if ( ucode > 65535 || ascii > 127 )
         {
-            free(map);
+            snort_free(map);
             map = nullptr;
             return false;
         }

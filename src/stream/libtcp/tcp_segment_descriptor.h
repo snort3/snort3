@@ -36,7 +36,7 @@ public:
 
     uint32_t init_mss(uint16_t* value);
     uint32_t init_wscale(uint16_t* value);
-    bool has_wscale(void);
+    bool has_wscale();
 
     Flow* get_flow() const
     {
@@ -133,7 +133,7 @@ public:
         pkt->dsize += offset;
     }
 
-    bool is_packet_from_server(void)
+    bool is_packet_from_server()
     {
         return pkt->is_from_server();
     }
@@ -145,7 +145,7 @@ public:
         pkt->dsize -= offset;
     }
 
-    void print_tsd(void);
+    void print_tsd();
 
 private:
     Flow* flow;

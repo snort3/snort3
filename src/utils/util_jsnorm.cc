@@ -372,7 +372,7 @@ static const JSNorm javascript_norm[] =
 
 static void UnescapeDecode(char*, uint16_t, char**, char**, uint16_t*, JSState*, uint8_t*);
 
-void InitJSNormLookupTable(void)
+void InitJSNormLookupTable()
 {
     int iNum;
     int iCtr;

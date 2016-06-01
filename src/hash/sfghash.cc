@@ -63,26 +63,9 @@
 #include <time.h>
 #include <assert.h>
 
+#include "utils/util.h"
 #include "sfhashfcn.h"
 #include "sfprimetable.h"
-/*
-*  Private Malloc
-*/
-static
-void* s_alloc(int n)
-{
-    return calloc(1,n);
-}
-
-/*
-*  Private Free
-*/
-static
-void s_free(void* p)
-{
-    if ( p )
-        free(p);
-}
 
 /*
 *
@@ -105,11 +88,8 @@ void s_free(void* p)
 *               should be of the form 'void userfree(void * userdata)',
 *               'free' works for simple allocations.
 */
-SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, void (* userfree)(void* p) )
+SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, SfgHashFree userfree)
 {
-    int i;
-    SFGHASH* h;
-
     if ( nrows > 0 ) /* make sure we have a prime number */
     {
         nrows = sf_nearest_prime(nrows);
@@ -119,44 +99,23 @@ SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, void (* userfree)(voi
         nrows = -nrows;
     }
 
-    h = (SFGHASH*)s_alloc(sizeof(SFGHASH) );
-    if ( !h )
-        return 0;
-
-    memset(h, 0, sizeof(SFGHASH) );
+    SFGHASH* h = (SFGHASH*)snort_calloc(sizeof(SFGHASH));
 
     h->sfhashfcn = sfhashfcn_new(nrows);
-    if ( !h->sfhashfcn )
-    {
-        free(h);
-        return 0;
-    }
+    h->table = (SFGHASH_NODE**)snort_calloc(nrows, sizeof(SFGHASH_NODE*));
 
-    h->table = (SFGHASH_NODE**)s_alloc(sizeof(SFGHASH_NODE*) * nrows);
-    if ( !h->table )
-    {
-        free(h->sfhashfcn);
-        free(h);
-        return 0;
-    }
-
-    for ( i=0; i<nrows; i++ )
+    for ( int i = 0; i < nrows; i++ )
     {
         h->table[i] = 0;
     }
 
     h->userkey = userkeys;
-
     h->keysize = keysize;
-
     h->nrows = nrows;
-
     h->count = 0;
-
     h->userfree = userfree;
 
     h->crow = 0; // findfirst/next current row
-
     h->cnode = 0; // findfirst/next current node ptr
 
     return h;
@@ -188,19 +147,19 @@ void sfghash_delete(SFGHASH* h)
                 node  = node->next;
 
                 if ( !h->userkey && onode->key )
-                    s_free( (void*)onode->key);
+                    snort_free((void*)onode->key);
 
                 if ( h->userfree && onode->data )
                     h->userfree(onode->data); /* free users data, with users function */
 
-                s_free(onode);
+                snort_free(onode);
             }
         }
-        s_free(h->table);
+        snort_free(h->table);
         h->table = 0;
     }
 
-    s_free(h);
+    snort_free(h);
 }
 
 /*
@@ -287,9 +246,7 @@ int sfghash_add(SFGHASH* t, const void* const key, void* const data)
     /*
     *  Create new node
     */
-    hnode = (SFGHASH_NODE*)s_alloc(sizeof(SFGHASH_NODE));
-    if ( !hnode )
-        return SFGHASH_NOMEM;
+    hnode = (SFGHASH_NODE*)snort_calloc(sizeof(SFGHASH_NODE));
 
     /* Add the Key */
     if ( t->userkey )
@@ -300,12 +257,7 @@ int sfghash_add(SFGHASH* t, const void* const key, void* const data)
     else
     {
         /* Create new key */
-        hnode->key = s_alloc(klen);
-        if ( !hnode->key )
-        {
-            free(hnode);
-            return SFGHASH_NOMEM;
-        }
+        hnode->key = snort_alloc(klen);
 
         /* Copy key  */
         memcpy((void*)hnode->key,key,klen);
@@ -447,7 +399,8 @@ int sfghash_find2(SFGHASH* t, const void* key, void** data)
 static int sfghash_free_node(SFGHASH* t, unsigned index, SFGHASH_NODE* hnode)
 {
     if ( !t->userkey && hnode->key )
-        s_free( (void*)hnode->key);
+        snort_free((void*)hnode->key);
+
     hnode->key = 0;
 
     if ( t->userfree)
@@ -466,7 +419,7 @@ static int sfghash_free_node(SFGHASH* t, unsigned index, SFGHASH_NODE* hnode)
             t->table[index]->prev = 0;
     }
 
-    s_free(hnode);
+    snort_free(hnode);
 
     t->count--;
 
@@ -626,7 +579,7 @@ int sfghash_set_keyops(SFGHASH* h,
 void myfree(void* p)
 {
     printf("freeing '%s'\n",p);
-    free(p);
+    snort_free(p);
 }
 
 /*
@@ -653,9 +606,9 @@ int main(int argc, char** argv)
     {
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
-        sfghash_add(t, str,  strupr(SnortStrdup(str)) );
+        sfghash_add(t, str, strupr(snort_strdup(str)) );
 
-        sfatom_add(str,  strupr(SnortStrdup(str)) );
+        sfatom_add(str, strupr(snort_strdup(str)) );
     }
 
     /* Find and Display Nodes in the Hash Table */
@@ -693,7 +646,7 @@ int main(int argc, char** argv)
     {
         printf("atom-findfirst/next: key=%s, data=%s\n", n->key, n->data);
 
-        free(n->data);  //since atom data is not freed automatically
+        snort_free(n->data);  //since atom data is not freed automatically
     }
 
     /* Free the table and it's user data */

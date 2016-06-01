@@ -548,7 +548,7 @@ int gtp_parse(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
  *       None
  ********************************************************************/
 
-void gtp_cleanInfoElements(void)
+void gtp_cleanInfoElements()
 {
     DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Cleaned total bytes %d, length %d.\n",
         (MAX_GTP_IE_CODE + 1) * sizeof(GTP_IEData), sizeof(gtp_ies)); );

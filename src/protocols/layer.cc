@@ -94,7 +94,7 @@ const arp::EtherARP* get_arp_layer(const Packet* const p)
     const Layer* lyr = p->layers;
 
     return reinterpret_cast<const arp::EtherARP*>(
-        find_inner_layer(lyr, num_layers, ProtocolId::ETHERTYPE_ARP, 
+        find_inner_layer(lyr, num_layers, ProtocolId::ETHERTYPE_ARP,
             ProtocolId::ETHERTYPE_REVARP));
 }
 

@@ -32,7 +32,7 @@ public:
     static void register_module(const char*, const char*, Module*);
     static void register_module(const char*, const char*, get_profile_stats_fn);
 
-    // FIXIT-L J do we need to call on main thread?
+    // FIXIT-L do we need to call on main thread?
     // call from packet threads, just before thread termination
     static void consolidate_stats();
     static void reset_stats();

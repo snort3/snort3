@@ -170,8 +170,8 @@ static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
     {
         Profile profile(dce2_smb_pstat_detect);
     }
-    //FIXIT-M Add HTTP, UDP cases when these are ported
-    //Same for all other instances of profiling
+    // FIXIT-M add HTTP, UDP cases when these are ported
+    // Same for all other instances of profiling
 
     SnortEventqPush();
     snort_detect(pkt);
@@ -223,7 +223,7 @@ DCE2_SsnData* get_dce2_session_data(Packet* p)
         return sd;
     }
 
-    // FIXIT - add checks for http, udp once ported
+    // FIXIT-L add checks for http, udp once ported
 
     return nullptr;
 }
@@ -299,7 +299,7 @@ static void dce_push_pkt_log(Packet* pkt,DCE2_SsnData* sd)
     SnortEventqPop();
 }
 
-//FIXIT-L Revisit packet stack since it may not be needed
+// FIXIT-L revisit packet stack since it may not be needed
 
 DCE2_Ret DCE2_PushPkt(Packet* p,DCE2_SsnData* sd)
 {
@@ -351,7 +351,7 @@ uint16_t DCE2_GetRpktMaxData(DCE2_SsnData* sd, DCE2_RpktType rtype)
     case DCE2_RPKT_TYPE__SMB_TRANS:
     case DCE2_RPKT_TYPE__SMB_CO_SEG:
     case DCE2_RPKT_TYPE__SMB_CO_FRAG:
-        //FIXIT-M Add support for these when SMB is ported
+        // FIXIT-M add support for these when SMB is ported
         break;
 
     case DCE2_RPKT_TYPE__TCP_CO_SEG:
@@ -384,7 +384,7 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
     case DCE2_RPKT_TYPE__SMB_CO_SEG:
     case DCE2_RPKT_TYPE__SMB_CO_FRAG:
     case DCE2_RPKT_TYPE__UDP_CL_FRAG:
-        //FIXIT-M add support when SMB, UDP are ported
+        // FIXIT-M add support when SMB, UDP are ported
         return nullptr;
 
     case DCE2_RPKT_TYPE__TCP_CO_SEG:

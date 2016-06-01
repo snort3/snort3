@@ -35,7 +35,7 @@ static MEM_OFFSET unused_ptr = 0;
 static size_t unused_mem = 0;
 static void* base_ptr = NULL;
 
-size_t segment_unusedmem(void)
+size_t segment_unusedmem()
 {
     return unused_mem;
 }
@@ -62,7 +62,7 @@ int segment_meminit(uint8_t* buff, size_t mem_cap)
  *    0: fail
  *    other: the offset of the allocated memory block
  **************************************************************************/
-MEM_OFFSET segment_malloc(size_t size)
+MEM_OFFSET segment_snort_alloc(size_t size)
 {
     MEM_OFFSET current_ptr = unused_ptr;
 
@@ -87,7 +87,7 @@ void segment_free(MEM_OFFSET)
 
 /***************************************************************************
  * allocate memory block from segment and initialize it to zero
- * It calls segment_malloc() to get memory.
+ * It calls segment_snort_alloc() to get memory.
  * todo:currently, we only allocate memory continuously. Need to reuse freed
  *      memory in the future.
  * return:
@@ -95,7 +95,7 @@ void segment_free(MEM_OFFSET)
  *    other: the offset of the allocated memory block
  **************************************************************************/
 
-MEM_OFFSET segment_calloc(size_t num, size_t size)
+MEM_OFFSET segment_snort_calloc(size_t num, size_t size)
 {
     MEM_OFFSET current_ptr;
     size_t total;
@@ -106,7 +106,7 @@ MEM_OFFSET segment_calloc(size_t num, size_t size)
     if (num > SIZE_MAX/size)
         return 0;
     total = num * size;
-    current_ptr = segment_malloc(total);
+    current_ptr = segment_snort_alloc(total);
     if (0 != current_ptr)
         memset((uint8_t*)base_ptr + current_ptr, 0, total);
 

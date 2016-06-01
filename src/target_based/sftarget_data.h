@@ -78,8 +78,8 @@ int SFAT_AddHost(HostAttributeEntry*);
 int SFAT_AddService(HostAttributeEntry*, ApplicationEntry*);
 int SFAT_AddHostEntryToMap(HostAttributeEntry*);
 
-HostAttributeEntry* SFAT_CreateHostEntry(void);
-ApplicationEntry* SFAT_CreateApplicationEntry(void);
+HostAttributeEntry* SFAT_CreateHostEntry();
+ApplicationEntry* SFAT_CreateApplicationEntry();
 
 #endif
 

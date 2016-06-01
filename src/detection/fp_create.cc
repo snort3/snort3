@@ -121,7 +121,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
     {
         root->num_children++;
         root->children = (detection_option_tree_node_t**)
-            SnortAlloc(sizeof(detection_option_tree_node_t*) * root->num_children);
+            snort_calloc(root->num_children, sizeof(detection_option_tree_node_t*));
     }
 
     int i = 0;
@@ -162,7 +162,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
 
             child->num_children++;
             child->children = (detection_option_tree_node_t**)
-                SnortAlloc(sizeof(child->children) * child->num_children);
+                snort_calloc(child->num_children, sizeof(child->children));
             child->is_relative = opt_fp->isRelative;
 
             if (node && child->is_relative)
@@ -210,18 +210,18 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
                 child->evaluate = opt_fp->OptTestFunc;
                 child->num_children++;
                 child->children = (detection_option_tree_node_t**)
-                    SnortAlloc(sizeof(child->children) * child->num_children);
+                    snort_calloc(child->num_children, sizeof(child->children));
                 child->is_relative = opt_fp->isRelative;
 
                 if (!node)
                 {
                     root->num_children++;
                     tmp_children = (detection_option_tree_node_t**)
-                        SnortAlloc(sizeof(tmp_children) * root->num_children);
+                        snort_calloc(root->num_children, sizeof(tmp_children));
                     memcpy(tmp_children, root->children,
                         sizeof(detection_option_tree_node_t*) * (root->num_children-1));
 
-                    free(root->children);
+                    snort_free(root->children);
                     root->children = tmp_children;
                     root->children[root->num_children-1] = child;
                 }
@@ -229,11 +229,11 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
                 {
                     node->num_children++;
                     tmp_children = (detection_option_tree_node_t**)
-                        SnortAlloc(sizeof(tmp_children) * node->num_children);
+                        snort_calloc(node->num_children, sizeof(tmp_children));
                     memcpy(tmp_children, node->children,
                         sizeof(detection_option_tree_node_t*) * (node->num_children-1));
 
-                    free(node->children);
+                    snort_free(node->children);
                     node->children = tmp_children;
                     node->children[node->num_children-1] = child;
                     if (child->is_relative)
@@ -256,11 +256,11 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
         {
             detection_option_tree_node_t** tmp_children;
             root->num_children++;
-            tmp_children = (detection_option_tree_node_t**)SnortAlloc(sizeof(tmp_children) *
-                root->num_children);
+            tmp_children = (detection_option_tree_node_t**)
+                snort_calloc(root->num_children, sizeof(tmp_children));
             memcpy(tmp_children, root->children,
                 sizeof(detection_option_tree_node_t*) * (root->num_children-1));
-            free(root->children);
+            snort_free(root->children);
             root->children = tmp_children;
         }
         root->children[root->num_children-1] = child;
@@ -271,11 +271,11 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
         {
             detection_option_tree_node_t** tmp_children;
             node->num_children++;
-            tmp_children = (detection_option_tree_node_t**)SnortAlloc(sizeof(tmp_children) *
-                node->num_children);
+            tmp_children = (detection_option_tree_node_t**)
+                snort_calloc(node->num_children, sizeof(tmp_children));
             memcpy(tmp_children, node->children,
                 sizeof(detection_option_tree_node_t*) * (node->num_children-1));
-            free(node->children);
+            snort_free(node->children);
             node->children = tmp_children;
         }
         node->children[node->num_children-1] = child;
@@ -290,7 +290,7 @@ static int add_patrn_to_neg_list(void* id, void** list)
         return -1;
 
     NCListNode** ncl = (NCListNode**)list;
-    NCListNode* node = (NCListNode*)SnortAlloc(sizeof(NCListNode));
+    NCListNode* node = (NCListNode*)snort_calloc(sizeof(NCListNode));
 
     node->pmx = (PMX*)id;
     node->next = *ncl;
@@ -310,7 +310,7 @@ static void neg_list_free(void** list)
     while (ncln != NULL)
     {
         NCListNode* tmp = ncln->next;
-        free(ncln);
+        snort_free(ncln);
         ncln = tmp;
     }
 
@@ -574,7 +574,7 @@ static int fpFinishPortGroupRule(
             return -1;
 
         /* create pmx */
-        PMX* pmx = (PMX*)SnortAlloc(sizeof(PMX));
+        PMX* pmx = (PMX*)snort_calloc(sizeof(PMX));
         pmx->rule_node.rnRuleData = otn;
         pmx->pmd = pmd;
 
@@ -661,7 +661,7 @@ static int fpFinishPortGroup(
     if (!rules)
     {
         /* Nothing in the port group so we can just free it */
-        free(pg);
+        snort_free(pg);
         return -1;
     }
 
@@ -901,25 +901,25 @@ static void fpFreeRuleMaps(SnortConfig* sc)
 
     if (sc->prmIpRTNX != NULL)
     {
-        free(sc->prmIpRTNX);
+        snort_free(sc->prmIpRTNX);
         sc->prmIpRTNX = NULL;
     }
 
     if (sc->prmIcmpRTNX != NULL)
     {
-        free(sc->prmIcmpRTNX);
+        snort_free(sc->prmIcmpRTNX);
         sc->prmIcmpRTNX = NULL;
     }
 
     if (sc->prmTcpRTNX != NULL)
     {
-        free(sc->prmTcpRTNX);
+        snort_free(sc->prmTcpRTNX);
         sc->prmTcpRTNX = NULL;
     }
 
     if (sc->prmUdpRTNX != NULL)
     {
-        free(sc->prmUdpRTNX);
+        snort_free(sc->prmUdpRTNX);
         sc->prmUdpRTNX = NULL;
     }
 }
@@ -1028,7 +1028,7 @@ static void fpPortGroupPrintRuleCount(PortGroup* pg, const char* what)
 static void fpDeletePMX(void* data)
 {
     if ( data )
-        free(data);
+        snort_free(data);
 }
 
 void fpDeletePortGroup(void* data)
@@ -1046,7 +1046,7 @@ void fpDeletePortGroup(void* data)
     }
 
     free_detection_option_root(&pg->nfp_tree);
-    free(pg);
+    snort_free(pg);
 }
 
 /*
@@ -1080,7 +1080,7 @@ static int fpCreatePortObject2PortGroup(
         return 0;
 
     /* create a port_group */
-    pg = (PortGroup*)SnortAlloc(sizeof(PortGroup));
+    pg = (PortGroup*)snort_calloc(sizeof(PortGroup));
 
     /*
      * Walk the rules in the PortObject and add to
@@ -1382,7 +1382,7 @@ static void fpBuildServicePortGroupByServiceOtnList(
     SnortConfig* sc, SFGHASH* p, const char* srvc, SF_LIST* list, FastPatternConfig* fp)
 {
     OptTreeNode* otn;
-    PortGroup* pg = (PortGroup*)SnortAlloc(sizeof(PortGroup));
+    PortGroup* pg = (PortGroup*)snort_calloc(sizeof(PortGroup));
 
     /*
      * add each rule to the port group pattern matchers,

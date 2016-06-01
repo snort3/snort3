@@ -30,9 +30,8 @@ class RuleOption;
 class Comments;
 class RuleApi;
 
-// Yes, I need to redo this API.
+// FIXIT-L simplify this API. Several options functions are no longer necessary
 
-// FIXIT-L Simplify this API.  Several options functions are no longer necessary!!
 class RuleApi
 {
 public:
@@ -54,7 +53,7 @@ public:
     // allows for easy swapping of data.  These two functions
     // swap data which will be printed in 'print_rules()' and
     // 'print_conf_options()'
-    void swap_rules(std::vector<Rule*>&); // FIXIT ??
+    void swap_rules(std::vector<Rule*>&); // FIXIT-L ?
 
     // include a snort-style rule file!
     void include_rule_file(std::string file_name);

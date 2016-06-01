@@ -74,7 +74,7 @@ void CleanupFTPCMDConf(void* ftpCmd)
     /* Free the FTP_PARAM_FMT stuff... */
     ftpp_ui_config_reset_ftp_cmd(FTPCmd);
 
-    free(FTPCmd);
+    snort_free(FTPCmd);
 }
 
 void CleanupFTPServerConf(void* serverConf)
@@ -92,7 +92,7 @@ void CleanupFTPServerConf(void* serverConf)
     {
         if ( cmdConf->param_format )
         {
-            free(cmdConf->param_format);
+            snort_free(cmdConf->param_format);
             cmdConf->param_format = nullptr;
         }
         cmdConf = ftp_cmd_lookup_next(ServerConf->cmd_lookup, &iRet);
@@ -104,7 +104,7 @@ void CleanupFTPServerConf(void* serverConf)
 void CleanupFTPBounceTo(void* ftpBounce)
 {
     FTP_BOUNCE_TO* FTPBounce = (FTP_BOUNCE_TO*)ftpBounce;
-    free(FTPBounce);
+    snort_free(FTPBounce);
 }
 
 void CleanupFTPClientConf(void* clientConf)
@@ -161,7 +161,7 @@ static int CheckFTPCmdOptions(FTP_SERVER_PROTO_CONF* serverConf)
 }
 
 /*
- * Function: CheckFTPServerConfigs(void)
+ * Function: CheckFTPServerConfigs()
  *
  * Purpose: This checks that the FTP server configurations are reasonable
  *
@@ -181,17 +181,6 @@ int CheckFTPServerConfigs(
     return 0;
 }
 
-/*
- * Function: FTPConfigCheck(void)
- *
- * Purpose: This checks that the FTP configuration provided includes
- *          the default configurations for Server & Client.
- *
- * Arguments: None
- *
- * Returns: None
- *
- */
 // FIXIT-L eliminate legacy void* cruft
 int FTPCheckConfigs(SnortConfig* sc, void* pData)
 {
@@ -217,17 +206,6 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
     return 0;
 }
 
-/*
- * Function: do_detection(Packet *p)
- *
- * Purpose: This is the routine that directly performs the rules checking
- *          for each of the FTP & telnet preprocessing modules.
- *
- * Arguments: p             => pointer to the packet structure
- *
- * Returns: None
- *
- */
 void do_detection(Packet* p)
 {
      // If we get here we either had a client or server request/response.

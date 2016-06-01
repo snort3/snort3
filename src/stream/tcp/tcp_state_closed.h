@@ -30,7 +30,7 @@ class TcpStateClosed : public TcpStateHandler
 {
 public:
     TcpStateClosed(TcpStateMachine&);
-    virtual ~TcpStateClosed(void);
+    virtual ~TcpStateClosed();
 
     bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;

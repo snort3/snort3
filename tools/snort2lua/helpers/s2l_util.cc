@@ -192,7 +192,7 @@ bool get_string(std::istringstream& stream,
         // find the first non-delimeter charachter
         const std::size_t first_char = option.find_first_not_of(delimeters);
 
-        // if there are no charachters between a delimeter, empty string. return false
+        // if there are no characters between a delimeter, empty string. return false
         if (first_char == std::string::npos)
             return false;
 

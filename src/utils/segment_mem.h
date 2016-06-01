@@ -28,9 +28,9 @@
 using MEM_OFFSET = uint32_t;
 
 int segment_meminit(uint8_t*, size_t);
-MEM_OFFSET segment_malloc(size_t size);
+MEM_OFFSET segment_snort_alloc(size_t size);
 void segment_free(MEM_OFFSET ptr);
-MEM_OFFSET segment_calloc(size_t num, size_t size);
+MEM_OFFSET segment_snort_calloc(size_t num, size_t size);
 size_t segment_unusedmem();
 void* segment_basePtr();
 #endif

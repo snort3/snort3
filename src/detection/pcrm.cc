@@ -58,12 +58,9 @@
 **    PORT_RULE_MAP * - NULL if failed, ptr otherwise.
 **
 */
-PORT_RULE_MAP* prmNewMap(void)
+PORT_RULE_MAP* prmNewMap()
 {
-    PORT_RULE_MAP* p;
-
-    p = (PORT_RULE_MAP*)calloc(1, sizeof(PORT_RULE_MAP) );
-
+    PORT_RULE_MAP* p = (PORT_RULE_MAP*)snort_calloc(sizeof(PORT_RULE_MAP));
     return p;
 }
 

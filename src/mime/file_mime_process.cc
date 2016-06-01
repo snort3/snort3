@@ -708,7 +708,7 @@ MailLogState* MimeSession::get_log_state()
  * This is the initialization function for mime processing.
  * This should be called when snort initializes
  */
-void MimeSession::init(void)
+void MimeSession::init()
 {
     const MimeToken* tmp;
 
@@ -733,7 +733,7 @@ void MimeSession::init(void)
 }
 
 // Free anything that needs it before shutting down preprocessor
-void MimeSession::exit(void)
+void MimeSession::exit()
 {
     if (mime_hdr_search_mpse != NULL)
         delete mime_hdr_search_mpse;

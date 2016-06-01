@@ -73,11 +73,9 @@ protected:
     Module* module;
     SnortConfig* snort_conf;
 
-    // FIXIT-L: unused
-    std::string error;
+    std::string error;  // FIXIT-L unused
 
-    // FIXIT-L: unused
-    void set_error(std::string s)
+    void set_error(std::string s)  // FIXIT-L unused
     { error = s; }
 
 private:

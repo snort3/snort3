@@ -53,7 +53,6 @@
 #include "utils/kmap.h"
 #include <mime/decode_base.h>
 #include "utils/util.h"
-#include "utils/xmalloc.h"
 #include "framework/inspector.h"
 #include "managers/inspector_manager.h"
 
@@ -101,7 +100,7 @@ THREAD_LOCAL bool hiDetectCalled = false;
 /*
 ** Prototypes
 */
-static inline void InitLookupTables(void);
+static inline void InitLookupTables();
 static void CheckGzipConfig(HTTPINSPECT_GLOBAL_CONF*);
 static void CheckMemcap(HTTPINSPECT_GLOBAL_CONF*);
 
@@ -159,7 +158,6 @@ static void updateConfigFromFileProcessing(HTTPINSPECT_CONF* ServerConf)
 static int HttpInspectVerifyPolicy(SnortConfig*, HTTPINSPECT_CONF* pData)
 {
     HttpInspectRegisterXtraDataFuncs();  // FIXIT-L must be done once
-
     updateConfigFromFileProcessing(pData);
     return 0;
 }
@@ -170,7 +168,7 @@ typedef struct _HttpEncodeData
     int encode_type;
 }HttpEncodeData;
 
-static inline void InitLookupTables(void)
+static inline void InitLookupTables()
 {
     int iNum;
     int iCtr;

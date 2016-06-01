@@ -102,7 +102,7 @@ ProfileStats* ReputationModule::get_profile() const
 bool ReputationModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("blacklist") )
-        conf->blacklist_path = SnortStrdup(v.get_string());
+        conf->blacklist_path = snort_strdup(v.get_string());
 
     else if ( v.is("memcap") )
         conf->memcap = v.get_long();
@@ -120,7 +120,7 @@ bool ReputationModule::set(const char*, Value& v, SnortConfig*)
         conf->whiteAction = (WhiteAction)v.get_long();
 
     else if ( v.is("whitelist") )
-        conf->whitelist_path = SnortStrdup(v.get_string());
+        conf->whitelist_path = snort_strdup(v.get_string());
 
     else
         return false;

@@ -168,7 +168,7 @@ SF_LIST* PortObjectItemListFromBits(const PortBitSet& parray, int n)
 
         if ( !poi )
         {
-            sflist_free_all(plist,free);
+            sflist_free_all(plist, snort_free);
             return 0;
         }
 
@@ -177,7 +177,7 @@ SF_LIST* PortObjectItemListFromBits(const PortBitSet& parray, int n)
 
         if ( sflist_add_tail(plist, poi) )
         {
-            sflist_free_all(plist, free);
+            sflist_free_all(plist, snort_free);
             return 0;
         }
     }
@@ -213,7 +213,7 @@ int* RuleListToSortedArray(SF_LIST* rl)
     if (!rl->count)
         return NULL;
 
-    ra = (int*)SnortAlloc(rl->count * sizeof(int));
+    ra = (int*)snort_calloc(rl->count, sizeof(int));
 
     for ( prid = (int*)sflist_first(rl,&pos);
         prid!= 0 && k < (int)rl->count;

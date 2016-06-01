@@ -20,9 +20,7 @@
 #ifndef DYN_ARRAY_H
 #define DYN_ARRAY_H
 
-// FIXIT-L: Change to vector
-// FIXIT-L: Change return type to bool
-int sfDynArrayCheckBounds(
+int sfDynArrayCheckBounds(  // FIXIT-L change return type to bool
     void** dynArray, unsigned int index, unsigned int* maxElements);
 
 #endif

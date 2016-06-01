@@ -111,7 +111,7 @@ uint32_t TcpSegmentDescriptor::init_wscale(uint16_t* value)
     return TF_NONE;
 }
 
-bool TcpSegmentDescriptor::has_wscale(void)
+bool TcpSegmentDescriptor::has_wscale()
 {
     uint16_t wscale;
 
@@ -120,7 +120,7 @@ bool TcpSegmentDescriptor::has_wscale(void)
     return ( init_wscale(&wscale) & TF_WSCALE ) != TF_NONE;
 }
 
-void TcpSegmentDescriptor::print_tsd(void)
+void TcpSegmentDescriptor::print_tsd()
 {
     LogMessage("Tcp Segment Descriptor:\n");
     LogMessage("    seq:    0x%08X\n", seg_seq);

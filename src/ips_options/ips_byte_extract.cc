@@ -70,7 +70,7 @@ public:
     { config = c; }
 
     ~ByteExtractOption()
-    { free(config.name); }
+    { snort_free(config.name); }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -225,7 +225,7 @@ static void clear_var_names()
 {
     for (int i = 0; i < NUM_BYTE_EXTRACT_VARS; i++)
     {
-        free(variable_names[i]);
+        snort_free(variable_names[i]);
         variable_names[i] = NULL;
     }
 }
@@ -275,7 +275,7 @@ static int8_t AddVarNameToList(ByteExtractData* data)
     {
         if (variable_names[i] == NULL)
         {
-            variable_names[i] = SnortStrdup(data->name);
+            variable_names[i] = snort_strdup(data->name);
             break;
         }
         else if ( strcmp(variable_names[i], data->name) == 0 )
@@ -454,7 +454,7 @@ bool ExtractModule::set(const char*, Value& v, SnortConfig*)
         data.offset = v.get_long();
 
     else if ( v.is("~name") )
-        data.name = SnortStrdup(v.get_string());
+        data.name = snort_strdup(v.get_string());
 
     else if ( v.is("relative") )
         data.relative_flag = 1;

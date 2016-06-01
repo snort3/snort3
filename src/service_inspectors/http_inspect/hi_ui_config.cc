@@ -40,7 +40,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "utils/xmalloc.h"
+#include "utils/util.h"
 #include "hi_return_codes.h"
 #include "hi_cmd_lookup.h"
 
@@ -53,10 +53,10 @@ HTTPINSPECT_GLOBAL_CONF::HTTPINSPECT_GLOBAL_CONF()
 HTTPINSPECT_GLOBAL_CONF::~HTTPINSPECT_GLOBAL_CONF()
 {
     if ( iis_unicode_map_filename )
-        free(iis_unicode_map_filename);
+        snort_free(iis_unicode_map_filename);
 
     if ( iis_unicode_map )
-        free(iis_unicode_map);
+        snort_free(iis_unicode_map);
 
     if (decode_conf)
         delete(decode_conf);
@@ -77,9 +77,8 @@ HTTPINSPECT_CONF::HTTPINSPECT_CONF()
 
 HTTPINSPECT_CONF::~HTTPINSPECT_CONF()
 {
-    // FIXIT-L xfree() etc should go
-    xfree(iis_unicode_map_filename);
-    xfree(iis_unicode_map);
+    snort_free(iis_unicode_map_filename);
+    snort_free(iis_unicode_map);
 
     http_cmd_lookup_cleanup(&cmd_lookup);
 }
@@ -154,6 +153,6 @@ void HttpInspectCleanupHttpMethodsConf(void* HttpMethods)
 {
     HTTP_CMD_CONF* HTTPMethods = (HTTP_CMD_CONF*)HttpMethods;
 
-    free(HTTPMethods);
+    snort_free(HTTPMethods);
 }
 

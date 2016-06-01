@@ -70,23 +70,22 @@
     x[8] = y[8]; x[9] = y[9]; x[10] = y[10]; x[11] = y[11]; \
     x[12] = y[12]; x[13] = y[13]; x[14] = y[14]; x[15] = y[15];
 
-//  FIXIT-M: Provide getter function to provide standardized access into
-//           the protocol_names array.
+// FIXIT-M provide getter function to for standardized access into the protocol_names array
 SO_PUBLIC extern char** protocol_names;
 
-void StoreSnortInfoStrings(void);
-int DisplayBanner(void);
+void StoreSnortInfoStrings();
+int DisplayBanner();
 int gmt2local(time_t);
 void ts_print(register const struct timeval*, char*);
-void CheckLogDir(void);
+void CheckLogDir();
 char* read_infile(const char* key, const char* fname);
-void CleanupProtoNames(void);
+void CleanupProtoNames();
 void CreatePidFile(pid_t);
-void ClosePidFile(void);
+void ClosePidFile();
 void SetUidGid(int, int);
 void InitGroups(int, int);
 void SetChroot(std::string root_dir, std::string& log_dir);
-void InitProtoNames(void);
+void InitProtoNames();
 
 // these functions are deprecated; use C++ strings instead
 SO_PUBLIC int SnortSnprintf(char*, size_t, const char*, ...)
@@ -94,7 +93,7 @@ SO_PUBLIC int SnortSnprintf(char*, size_t, const char*, ...)
 SO_PUBLIC int SnortSnprintfAppend(char*, size_t, const char*, ...)
     __attribute__((format (printf, 3, 4)));
 
-SO_PUBLIC char* SnortStrdup(const char*);
+SO_PUBLIC char* snort_strdup(const char*);
 SO_PUBLIC char* SnortStrndup(const char*, size_t);
 
 SO_PUBLIC const char* SnortStrcasestr(const char* s, int slen, const char* substr);
@@ -104,26 +103,33 @@ SO_PUBLIC const char* SnortStrnPbrk(const char* s, int slen, const char* accept)
 SO_PUBLIC int SnortStrncpy(char*, const char*, size_t);
 SO_PUBLIC int SnortStrnlen(const char*, int);
 
-char* CurrentWorkingDir(void);
+char* CurrentWorkingDir();
 char* GetAbsolutePath(const char* dir);
 char* StripPrefixDir(char* prefix, char* dir);
 
 #if defined(NOCOREFILE)
-void SetNoCores(void);
+void SetNoCores();
 #endif
 
-inline void* SnortAlloc(unsigned long size)
+inline void* snort_alloc(size_t sz)
+{ return new uint8_t[sz]; }
+
+inline void* snort_alloc(size_t num, size_t sz)
+{ return snort_alloc(num * sz); }
+
+inline void* snort_calloc(size_t num, size_t sz)
 {
-    void* pv = calloc(size, sizeof(char));
-
-    if ( pv )
-        return pv;
-
-    // FIXIT-M do not FatalError() on runtime allocation failures
-    FatalError("Unable to allocate memory (%lu requested)\n", size);
-
-    return NULL;
+    sz *= num;
+    auto p = snort_alloc(sz);
+    memset(p, 0, sz);
+    return p;
 }
+
+inline void* snort_calloc(size_t sz)
+{ return snort_calloc(1, sz); }
+
+inline void snort_free(void* p)
+{ delete[] (uint8_t*)p; }
 
 inline long SnortStrtol(const char* nptr, char** endptr, int base)
 {
@@ -201,7 +207,7 @@ inline int SnortStrToU32(const char* buffer, char** endptr,
     return 0;
 }
 
-inline pid_t gettid(void)
+inline pid_t gettid()
 {
 #if defined(LINUX) && defined(SYS_gettid)
     return syscall(SYS_gettid);

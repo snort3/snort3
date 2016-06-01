@@ -82,7 +82,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
 #include "main/snort_types.h"
+#include "utils/util.h"
 
 const char* rt_error_messages[] =
 {
@@ -110,12 +112,7 @@ static inline int allocateTableIndex(table_t* table);
  * Returns the new table. */
 table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_cap)
 {
-    table_t* table = (table_t*)malloc(sizeof(table_t));
-
-    if (!table)
-    {
-        return NULL;
-    }
+    table_t* table = (table_t*)snort_alloc(sizeof(table_t));
 
     /* If this limit is exceeded, there will be no way to distinguish
      * between pointers and indeces into the data table.  Only
@@ -134,7 +131,7 @@ table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
 #endif
 #endif
     {
-        free(table);
+        snort_free(table);
         return NULL;
     }
 
@@ -145,14 +142,7 @@ table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
     table->max_size = data_size;
     table->lastAllocatedIndex = 0;
 
-    table->data = (GENERIC*)calloc(sizeof(GENERIC) * table->max_size, 1);
-
-    if (!table->data)
-    {
-        free(table);
-        return NULL;
-    }
-
+    table->data = (GENERIC*)snort_calloc(sizeof(GENERIC) * table->max_size);
     table->allocated = sizeof(table_t) + sizeof(GENERIC) * table->max_size;
 
     table->ip_type = ip_type;
@@ -179,8 +169,8 @@ table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
         table->remove = NULL;
 
         table->rt = sfrt_lct_new(data_size);
-        free(table->data);
-        free(table);
+        snort_free(table->data);
+        snort_free(table);
         return NULL;
 
         break;
@@ -207,8 +197,8 @@ table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
         break;
 
     default:
-        free(table->data);
-        free(table);
+        snort_free(table->data);
+        snort_free(table);
         return NULL;
     }
 
@@ -266,8 +256,8 @@ table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
             table->free(table->rt);
         if (table->rt6)
             table->free(table->rt6);
-        free(table->data);
-        free(table);
+        snort_free(table->data);
+        snort_free(table);
         return NULL;
     }
 
@@ -289,7 +279,7 @@ void sfrt_free(table_t* table)
     }
     else
     {
-        free(table->data);
+        snort_free(table->data);
     }
 
     if (!table->rt)
@@ -310,7 +300,7 @@ void sfrt_free(table_t* table)
         table->free(table->rt6);
     }
 
-    free(table);
+    snort_free(table);
 }
 
 /* Perform a lookup on value contained in "ip" */
@@ -817,7 +807,7 @@ int main()
 #endif /* DEBUG_SFRT */
 
 #ifdef UNIT_TEST
-// FIXIT-L see sfip/sf_ip.cc
+// FIXIT-L Catch issue; see sfip/sf_ip.cc
 #include "sfrt_test.cc"
 #endif
 

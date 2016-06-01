@@ -24,7 +24,7 @@
 //
 // PerfFormatter provides an API for PerfTrackers to use for reporting data.
 // The basic flow from the perspective of a PerfTracker is:
-// 
+//
 // 1. Call register_section to create a section of stats
 //
 // 2. Call register_field to insert a field into the most recently created

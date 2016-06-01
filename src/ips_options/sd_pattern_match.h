@@ -24,6 +24,7 @@
 
 #include <iostream>
 #include <stdint.h>
+#include "utils/util.h"
 
 #define SD_SOCIAL_PATTERN          "\\b\\d{3}-\\d{2}-\\d{4}\\b"
 #define SD_SOCIAL_NODASHES_PATTERN "\\b\\d{9}\\b"
@@ -33,9 +34,11 @@ class SdOptionData
 {
 public:
     SdOptionData(std::string pattern);
-    ~SdOptionData(void)
-    { free(pattern); }
-    void ExpandBrackets(void);
+
+    ~SdOptionData()
+    { snort_free(pattern); }
+
+    void ExpandBrackets();
     bool match(const uint8_t* const buf, uint16_t* const buf_index, uint16_t buflen);
 
 private:

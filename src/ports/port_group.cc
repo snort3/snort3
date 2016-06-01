@@ -20,6 +20,7 @@
 #include "port_group.h"
 
 #include <stdlib.h>
+#include "utils/util.h"
 
 void PortGroup::add_rule()
 {
@@ -55,22 +56,16 @@ bool PortGroup::add_nfp_rule(void* rd)
 {
     if ( !nfp_head )
     {
-        nfp_head = (RULE_NODE*)calloc(1,sizeof(RULE_NODE) );
-        if ( !nfp_head )
-            return false;
-
-        nfp_tail             = nfp_head;
-        nfp_head->rnNext     = 0;
+        nfp_head = (RULE_NODE*)snort_calloc(sizeof(RULE_NODE));
+        nfp_tail = nfp_head;
+        nfp_head->rnNext = 0;
         nfp_head->rnRuleData = rd;
     }
     else
     {
-        nfp_tail->rnNext = (RULE_NODE*)calloc(1,sizeof(RULE_NODE) );
-        if (!nfp_tail->rnNext)
-            return false;
-
-        nfp_tail             = nfp_tail->rnNext;
-        nfp_tail->rnNext     = 0;
+        nfp_tail->rnNext = (RULE_NODE*)snort_calloc(sizeof(RULE_NODE));
+        nfp_tail = nfp_tail->rnNext;
+        nfp_tail->rnNext = 0;
         nfp_tail->rnRuleData = rd;
     }
 
@@ -92,7 +87,7 @@ void PortGroup::delete_nfp_rules()
     while (rn)
     {
         RULE_NODE* tmpRn = rn->rnNext;
-        free(rn);
+        snort_free(rn);
         rn = tmpRn;
     }
     nfp_head = nullptr;

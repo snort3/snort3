@@ -31,14 +31,14 @@ struct ThresholdConfig
     ThresholdObjects* thd_objs;
 };
 
-ThresholdConfig* ThresholdConfigNew(void);
+ThresholdConfig* ThresholdConfigNew();
 void ThresholdConfigFree(ThresholdConfig*);
-void sfthreshold_reset(void);
+void sfthreshold_reset();
 int sfthreshold_create(struct SnortConfig*, ThresholdConfig*, THDX_STRUCT*);
 int sfthreshold_test(unsigned int, unsigned int, const sfip_t*, const sfip_t*, long curtime);
 void print_thresholding(ThresholdConfig*, unsigned shutdown);
-void sfthreshold_reset_active(void);
-void sfthreshold_free(void);
+void sfthreshold_reset_active();
+void sfthreshold_free();
 
 #endif
 

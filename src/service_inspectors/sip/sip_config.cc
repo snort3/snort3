@@ -154,8 +154,8 @@ static SIPMethodNode* SIP_AddMethodToList(
         method =  method->nextm;
     }
 
-    method = (SIPMethodNode*)SnortAlloc(sizeof(*method));
-    method->methodName = SnortStrdup(methodName);
+    method = (SIPMethodNode*)snort_calloc(sizeof(*method));
+    method->methodName = snort_strdup(methodName);
     method->methodLen = methodLen;
     method->methodFlag = methodConf;
     method->nextm = nullptr;
@@ -215,8 +215,8 @@ void SIP_DeleteMethods(SIPMethodNode* node)
     while (node)
     {
         SIPMethodNode* next = node->nextm;
-        free(node->methodName);
-        free(node);
+        snort_free(node->methodName);
+        snort_free(node);
         node = next;
     }
 }

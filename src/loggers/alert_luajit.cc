@@ -158,10 +158,9 @@ LuaJitLogger::LuaJitLogger(const char* name, std::string& chunk, LuaLogModule* m
 
     unsigned max = ThreadConfig::get_instance_max();
 
-    // FIXIT-L might make more sense to have one instance
-    // with one lua state in each thread instead of one
-    // instance with one lua state per thread
-    // (same for LuaJitOption)
+    // FIXIT-L might make more sense to have one instance with one lua state in
+    // each thread instead of one instance with one lua state per thread (same
+    // for LuaJitOption)
     for ( unsigned i = 0; i < max; i++ )
     {
         states.emplace_back(true);

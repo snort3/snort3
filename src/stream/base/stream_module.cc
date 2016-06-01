@@ -30,14 +30,11 @@ using namespace std;
 // stream module
 //-------------------------------------------------------------------------
 
-#define CACHE_PARAMS(name, ssn, mem, prune, idle, cleanup) \
+#define CACHE_PARAMS(name, max, prune, idle, cleanup) \
 static const Parameter name[] = \
 { \
-    { "max_sessions", Parameter::PT_INT, "2:", ssn, \
+    { "max_sessions", Parameter::PT_INT, "2:", max, \
       "maximum simultaneous sessions tracked before pruning" }, \
- \
-    { "memcap", Parameter::PT_INT, "0:", mem, \
-      "maximum cache memory before pruning (0 is unlimited)" }, \
  \
     { "pruning_timeout", Parameter::PT_INT, "1:", prune, \
       "minimum inactive time before being eligible for pruning" }, \
@@ -51,12 +48,12 @@ static const Parameter name[] = \
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr } \
 }
 
-CACHE_PARAMS(ip_params,    "16384",  "23920640", "30", "180", "5");
-CACHE_PARAMS(icmp_params,  "32768",   "1048576", "30", "180", "5");
-CACHE_PARAMS(tcp_params,  "131072", "268435456", "30", "180", "5");
-CACHE_PARAMS(udp_params,   "65536",         "0", "30", "180", "5");
-CACHE_PARAMS(user_params,   "1024",   "1048576", "30", "180", "5");
-CACHE_PARAMS(file_params,    "128",         "0", "30", "180", "5");
+CACHE_PARAMS(ip_params,    "16384",  "30", "180", "5");
+CACHE_PARAMS(icmp_params,  "32768",  "30", "180", "5");
+CACHE_PARAMS(tcp_params,  "131072",  "30", "180", "5");
+CACHE_PARAMS(udp_params,   "65536",  "30", "180", "5");
+CACHE_PARAMS(user_params,   "1024",  "30", "180", "5");
+CACHE_PARAMS(file_params,    "128",  "30", "180", "5");
 
 #define CACHE_TABLE(cache, proto, params) \
     { cache, Parameter::PT_TABLE, params, nullptr, \
@@ -117,10 +114,7 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig*)
     else
         return false;
 
-    if ( v.is("memcap") )
-        fc->mem_cap = v.get_long();
-
-    else if ( v.is("max_sessions") )
+    if ( v.is("max_sessions") )
         fc->max_sessions = v.get_long();
 
     else if ( v.is("pruning_timeout") )

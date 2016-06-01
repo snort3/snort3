@@ -41,22 +41,22 @@ public:
     }
     static void set_filter(const char *f);
     static void add_source(SourceType type, const char *list);
-    static void setup(void);
-    static bool has_next(void);
-    static const char *get_next(void);
-    static unsigned get_file_count(void)
+    static void setup();
+    static bool has_next();
+    static const char *get_next();
+    static unsigned get_file_count()
     {
         return file_count;
     }
-    static unsigned get_queue_size(void)
+    static unsigned get_queue_size()
     {
         return pcap_queue.size();
     }
-    static long get_loop_count(void)
+    static long get_loop_count()
     {
         return pcap_loop_count;
     }
-    static void cleanup(void);
+    static void cleanup();
 private:
     struct PcapReadObject
     {

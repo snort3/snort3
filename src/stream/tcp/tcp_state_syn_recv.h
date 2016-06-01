@@ -30,7 +30,7 @@ class TcpStateSynRecv : public TcpStateHandler
 {
 public:
     TcpStateSynRecv(TcpStateMachine&);
-    virtual ~TcpStateSynRecv(void);
+    virtual ~TcpStateSynRecv();
 
     bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;

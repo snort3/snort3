@@ -435,7 +435,7 @@ bool TcpNormalizerProxy::validate_rst(TcpSegmentDescriptor& tsd)
     UNUSED(tsd);
 #endif
 
-    // FIXIT - will session->flow ever be null? i would think not, remove this check if possible
+    // FIXIT-L will session->flow ever be null? convert to assert if possible
     if ( session->flow )
     {
         DebugFormat(DEBUG_STREAM_STATE,

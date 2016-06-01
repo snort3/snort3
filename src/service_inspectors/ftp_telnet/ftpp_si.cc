@@ -53,6 +53,7 @@
 #include "ftpp_ui_config.h"
 #include "ft_main.h"
 #include "stream/stream_api.h"
+#include "utils/util.h"
 
 unsigned FtpFlowData::flow_id = 0;
 unsigned TelnetFlowData::flow_id = 0;
@@ -333,7 +334,7 @@ static int FTPInitConf(
 void FTPFreesession(FTP_SESSION* ssn)
 {
     if (ssn->filename)
-        free(ssn->filename);
+        snort_free(ssn->filename);
 }
 
 /* Function: FTPDataDirection

@@ -189,14 +189,11 @@ static IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
     return imap_ssn;
 }
 
-static void IMAP_SearchInit(void)
+static void IMAP_SearchInit()
 {
     const IMAPToken* tmp;
     imap_cmd_search_mpse = new SearchTool();
-    if (imap_cmd_search_mpse == NULL)
-    {
-        FatalError("Could not allocate memory for IMAP Command search.\n");
-    }
+
     for (tmp = &imap_known_cmds[0]; tmp->name != NULL; tmp++)
     {
         imap_cmd_search[tmp->search_id].name = tmp->name;
@@ -204,12 +201,8 @@ static void IMAP_SearchInit(void)
         imap_cmd_search_mpse->add(tmp->name, tmp->name_len, tmp->search_id);
     }
     imap_cmd_search_mpse->prep();
-
     imap_resp_search_mpse = new SearchTool();
-    if (imap_resp_search_mpse == NULL)
-    {
-        FatalError("Could not allocate memory for IMAP Response search.\n");
-    }
+
     for (tmp = &imap_resps[0]; tmp->name != NULL; tmp++)
     {
         imap_resp_search[tmp->search_id].name = tmp->name;
@@ -219,7 +212,7 @@ static void IMAP_SearchInit(void)
     imap_resp_search_mpse->prep();
 }
 
-static void IMAP_SearchFree(void)
+static void IMAP_SearchFree()
 {
     if (imap_cmd_search_mpse != NULL)
         delete imap_cmd_search_mpse;
@@ -360,7 +353,7 @@ static const uint8_t* IMAP_HandleCommand(Packet* p, IMAPData* imap_ssn, const ui
     /* get end of line and end of line marker */
     IMAP_GetEOL(ptr, end, &eol, &eolm);
 
-    /* FIXIT If the end of line marker coincides with the end of data we can't be
+    /* FIXIT-M If the end of line marker coincides with the end of data we can't be
      * sure that we got a command and not a substring which we could tell through
      * inspection of the next packet. Maybe a command pending state where the first
      * char in the next packet is checked for a space and end of line marker */

@@ -25,7 +25,7 @@
 #include "lua/lua_arg.h"
 #include "protocols/ip.h"
 
-// FIXIT-H: This should also be its own object (copyable)
+// FIXIT-M ip_api should also be its own object (copyable)
 static const class ip::IpApi ip_api {};
 
 static inline uint64_t get_encode_flag(uint32_t hi, uint32_t lo)
@@ -51,7 +51,7 @@ static const luaL_Reg methods[] =
             return 1;
         }
     },
-    // FIXIT-L: Add get and set methods
+    // FIXIT-L add get and set methods
     { nullptr, nullptr }
 };
 

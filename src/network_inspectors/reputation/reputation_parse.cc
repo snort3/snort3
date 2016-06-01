@@ -53,13 +53,13 @@ int totalNumEntries = 0;
 ReputationConfig::~ReputationConfig()
 {
     if (reputation_segment != nullptr)
-        free(reputation_segment);
+        snort_free(reputation_segment);
 
     if (blacklist_path)
-        free(blacklist_path);
+        snort_free(blacklist_path);
 
     if (whitelist_path)
-        free(whitelist_path);
+        snort_free(whitelist_path);
 }
 
 
@@ -99,10 +99,7 @@ void IpListInit(uint32_t maxEntries, ReputationConfig* config)
     {
         uint32_t mem_size;
         mem_size = estimateSizeFromEntries(maxEntries, config->memcap);
-        config->reputation_segment = (uint8_t*)malloc(mem_size);
-
-        if ( !config->reputation_segment )
-            FatalError("Failed to allocate memory for local segment\n");
+        config->reputation_segment = (uint8_t*)snort_alloc(mem_size);
 
         segment_meminit(config->reputation_segment, mem_size);
         base = config->reputation_segment;
@@ -116,7 +113,7 @@ void IpListInit(uint32_t maxEntries, ReputationConfig* config)
         if ( !config->iplist )
             FatalError("Failed to create IP list.\n");
 
-        list_ptr = segment_calloc((size_t)DECISION_MAX, sizeof(ListInfo));
+        list_ptr = segment_snort_calloc((size_t)DECISION_MAX, sizeof(ListInfo));
 
         if ( !list_ptr )
             FatalError("Failed to create IP list.\n");
@@ -184,7 +181,7 @@ static inline int duplicateInfo(IPrepInfo* destInfo,IPrepInfo* currentInfo,
         *destInfo = *currentInfo;
         if (!currentInfo->next)
             break;
-        nextInfo = segment_calloc(1,sizeof(IPrepInfo));
+        nextInfo = segment_snort_calloc(1,sizeof(IPrepInfo));
         if (!nextInfo)
         {
             destInfo->next = 0;
@@ -215,7 +212,7 @@ static int64_t updateEntryInfo(INFO* current, INFO new_entry, SaveDest saveDest,
     if (!(*current))
     {
         /* Copy the data to segment memory*/
-        *current = segment_calloc(1,sizeof(IPrepInfo));
+        *current = segment_snort_calloc(1,sizeof(IPrepInfo));
         if (!(*current))
         {
             return -1;
@@ -293,7 +290,7 @@ static int64_t updateEntryInfo(INFO* current, INFO new_entry, SaveDest saveDest,
     else
     {
         IPrepInfo* nextInfo;
-        MEM_OFFSET ipInfo_ptr = segment_calloc(1,sizeof(IPrepInfo));
+        MEM_OFFSET ipInfo_ptr = segment_snort_calloc(1,sizeof(IPrepInfo));
         if (!ipInfo_ptr)
             return -1;
         destInfo->next = ipInfo_ptr;
@@ -680,7 +677,7 @@ void LoadListFile(char* filename, INFO info, ReputationConfig* config)
         return;
 
     /*convert list info to ip entry info*/
-    ipInfo_ptr = segment_calloc(1,sizeof(IPrepInfo));
+    ipInfo_ptr = segment_snort_calloc(1,sizeof(IPrepInfo));
     if (!(ipInfo_ptr))
     {
         return;

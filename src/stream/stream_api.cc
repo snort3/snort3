@@ -116,13 +116,8 @@ void Stream::populate_session_key(Packet* p, FlowKey* key)
 
 FlowKey* Stream::get_session_key(Packet* p)
 {
-    FlowKey* key = (FlowKey*)calloc(1, sizeof(*key));
-
-    if (!key)
-        return NULL;
-
+    FlowKey* key = (FlowKey*)snort_calloc(sizeof(*key));
     populate_session_key(p, key);
-
     return key;
 }
 
@@ -171,7 +166,7 @@ void Stream::check_session_closed(Packet* p)
     if (flow->session_state & STREAM_STATE_CLOSED)
     {
         assert(flow_con);
-        // FIXIT-L J prune reason was actually 'closed'
+        // FIXIT-L prune reason was actually 'closed'
         flow_con->delete_flow(flow, PruneReason::USER);
         p->flow = nullptr;
     }
@@ -237,7 +232,7 @@ void Stream::stop_inspection(
             flow->session->flush_server(p);
     }
 
-    /* FIXIT: Handle bytes/response parameters */
+    /* FIXIT-M handle bytes/response parameters */
 
     DisableInspection();
     flow->set_state(Flow::ALLOW);
@@ -376,7 +371,7 @@ void Stream::set_application_protocol_id_from_host_entry(
         flow->server_port, SFAT_SERVICE);
 
 #if 0
-    // FIXIT - from client doesn't imply need to swap
+    // FIXIT-M from client doesn't imply need to swap
     if (direction == FROM_CLIENT)
     {
         if ( application_protocol &&

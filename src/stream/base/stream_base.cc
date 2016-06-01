@@ -70,7 +70,7 @@ THREAD_LOCAL BaseStats stream_base_stats;
     stream_base_stats.proto ## _user_prunes = \
         flow_con->get_prunes(PktType::pkttype, PruneReason::USER)
 
-// FIXIT-L J dependency on stats define in another file
+// FIXIT-L dependency on stats define in another file
 const PegInfo base_pegs[] =
 {
     PROTO_PEGS("ip"),
@@ -82,7 +82,7 @@ const PegInfo base_pegs[] =
     { nullptr, nullptr }
 };
 
-// FIXIT-L J dependency on stats define in another file
+// FIXIT-L dependency on stats define in another file
 void base_sum()
 {
     if ( !flow_con )
@@ -118,8 +118,7 @@ void base_reset()
 
 static inline bool is_eligible(Packet* p)
 {
-    // FIXIT-M  --  extra check??   bad checksums should be removed
-    //              in detect.c snort_inspect()
+    // FIXIT-M extra check?  bad checksums should be removed in detect.c snort_inspect()
     if ( p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP )
         return false;
 
@@ -168,11 +167,7 @@ void StreamBase::tinit()
     if ( config->ip_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::IP)) )
-        {
             flow_con->init_ip(config->ip_cfg, f);
-            // FIXIT-L update stream_ip to use standard memcap
-            //IpSession::set_memcap(flow_con->get_memcap(PktType::IP));
-        }
     }
     if ( config->icmp_cfg.max_sessions )
     {
@@ -182,10 +177,7 @@ void StreamBase::tinit()
     if ( config->tcp_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::TCP)) )
-        {
             flow_con->init_tcp(config->tcp_cfg, f);
-            TcpSession::set_memcap(flow_con->get_memcap(PktType::TCP));
-        }
     }
     if ( config->udp_cfg.max_sessions )
     {
@@ -195,11 +187,7 @@ void StreamBase::tinit()
     if ( config->user_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::PDU)) )
-        {
             flow_con->init_user(config->user_cfg, f);
-            // FIXIT-L update stream_ip to use standard memcap
-            //UserSession::set_memcap(flow_con->get_memcap(PktType::PDU));
-        }
     }
     if ( config->file_cfg.max_sessions )
     {

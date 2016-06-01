@@ -54,11 +54,11 @@ struct TagData
     int tag_direction;  /* source or dest, used for host tagging */
 };
 
-void InitTag(void);
-void CleanupTag(void);
+void InitTag();
+void CleanupTag();
 int CheckTagList(Packet*, Event*, void**);
 void SetTags(Packet*, const OptTreeNode*, uint16_t);
-void TagCacheReset(void);
+void TagCacheReset();
 
 #endif /* TAG_H */
 

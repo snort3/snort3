@@ -185,8 +185,8 @@ void bnfaPrintInfo(bnfa_struct_t* pstruct);    /* print info on this search engi
  */
 void bnfaPrintInfoEx(bnfa_struct_t* p, const char* text);
 void bnfaAccumInfo(bnfa_struct_t* pstruct);  // add info to summary over multiple search engines
-void bnfaPrintSummary(void); /* print current summary */
-void bnfaInitSummary(void);  /* reset accumulator foir global summary over multiple engines */
-void bnfa_print_qinfo(void);
+void bnfaPrintSummary(); /* print current summary */
+void bnfaInitSummary();  /* reset accumulator foir global summary over multiple engines */
+void bnfa_print_qinfo();
 #endif
 

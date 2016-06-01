@@ -186,7 +186,7 @@ static int ps_tracker_free(void* key, void* data)
     return 0;
 }
 
-void ps_cleanup(void)
+void ps_cleanup()
 {
     if (portscan_hash != NULL)
     {
@@ -224,7 +224,7 @@ void ps_init_hash(unsigned long memcap)
 /**
 **  Reset the portscan infrastructure.
 */
-void ps_reset(void)
+void ps_reset()
 {
     if (portscan_hash != NULL)
         sfxhash_make_empty(portscan_hash);

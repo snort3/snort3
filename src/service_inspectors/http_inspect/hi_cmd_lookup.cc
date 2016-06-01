@@ -83,26 +83,12 @@ int http_cmd_lookup_cleanup(CMD_LOOKUP** CmdLookup)
     return 0;
 }
 
-/*
- * Function: http_cmd_lookup_add(CMD_LOOKUP *CmdLookup,
- *                                 char *ip, int len,
- *                                 HTTP_CMD_CONF *HTTPCmd)
- *
- * Purpose: Add a cmd configuration to the list.
- *          We add these keys like you would normally think to add
- *          them, because on low endian machines the least significant
- *          byte is compared first.  This is what we want to compare
- *          IPs backward, doesn't work on high endian machines, but oh
- *          well.  Our platform is Intel.  FIXIT-L say what?
- *
- * Arguments: CmdLookup    => a pointer to the lookup structure
- *            cmd          => the http cmd
- *            len          => Length of the cmd
- *            HTTPCmd       => a pointer to the cmd configuration structure
- *
- * Returns: int => return code indicating error or success
- *
- */
+// Add a cmd configuration to the list.  We add these keys like you would
+// normally think to add them, because on low endian machines the least
+// significant byte is compared first.  This is what we want to compare IPs
+// backward, doesn't work on high endian machines, but oh well.  Our
+// platform is Intel.  FIXIT-L say what?  endian madness
+
 int http_cmd_lookup_add(CMD_LOOKUP* CmdLookup, char* cmd, int len,
     HTTP_CMD_CONF* HTTPCmd)
 {

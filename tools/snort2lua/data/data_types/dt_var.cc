@@ -151,7 +151,7 @@ std::ostream& operator<<(std::ostream& out, const Variable& var)
 
     for (Variable::VarData* v : var.vars)
     {
-        // keeping lines below max_line_length charachters
+        // keeping lines below max_line_length characters
         if ((count + 4) > var.max_line_length)
             print_newline(out, count, whitespace);
 

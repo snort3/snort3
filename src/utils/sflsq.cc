@@ -36,13 +36,14 @@
 #include <string.h>
 
 #include "main/snort_types.h"
+#include "utils/util.h"
 
 /*
 *  private alloc
 */
 static void* s_alloc(size_t n)
 {
-    void* p = (void*)calloc(1,n);
+    void* p = (void*)snort_calloc(n);
     return p;
 }
 
@@ -52,7 +53,7 @@ static void* s_alloc(size_t n)
 static void s_free(void* p)
 {
     if ( p )
-        free(p);
+        snort_free(p);
 }
 
 /*
@@ -67,7 +68,7 @@ void sflist_init(SF_LIST* s)
 /*
 *    NEW
 */
-SF_LIST* sflist_new(void)
+SF_LIST* sflist_new()
 {
     SF_LIST* s;
     s = (SF_LIST*)s_alloc(sizeof(SF_LIST) );
@@ -76,7 +77,7 @@ SF_LIST* sflist_new(void)
     return s;
 }
 
-SF_QUEUE* sfqueue_new(void)
+SF_QUEUE* sfqueue_new()
 {
     return (SF_QUEUE*)sflist_new();
 }

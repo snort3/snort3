@@ -193,7 +193,7 @@ bool HttpInspectModule::set(const char*, Value& v, SnortConfig*)
         config->anomalous_servers = v.get_bool();
 
     else if ( v.is("map_file") )
-        config->iis_unicode_map_filename = SnortStrdup(v.get_string());
+        config->iis_unicode_map_filename = snort_strdup(v.get_string());
 
     else if ( v.is("max_gzip_mem") )
         config->max_gzip_mem = v.get_long();
@@ -547,7 +547,7 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
         server->log_uri = v.get_bool();
 
     else if ( v.is("map_file") )
-        server->iis_unicode_map_filename = SnortStrdup(v.get_string());
+        server->iis_unicode_map_filename = snort_strdup(v.get_string());
 
     else if ( v.is("max_header_length") )
         server->max_hdr_len = v.get_long();
@@ -674,7 +674,7 @@ bool HttpServerModule::end(const char* fqn, int, SnortConfig*)
 
         while ( v.get_next_token(tok) )
         {
-            char* s = SnortStrdup(tok.c_str());
+            char* s = snort_strdup(tok.c_str());
             http_cmd_lookup_add(server->cmd_lookup, s, strlen(s), (HTTP_CMD_CONF*)s);
         }
     }

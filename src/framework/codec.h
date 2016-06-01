@@ -34,7 +34,6 @@
 // unfortunately necessary due to use of Ipapi in struct
 #include "protocols/protocol_ids.h"
 #include "protocols/ip.h"
-#include "protocols/mpls.h"  // FIXIT-M remove MPLS from Convenience pointers
 #include "protocols/layer.h"
 #include "framework/decode_data.h"
 

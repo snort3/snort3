@@ -35,8 +35,8 @@
 #include "framework/counts.h"
 #include "main/thread.h"
 
-//  FIXIT-H -- For now this emulates the Snort++ attribute table. Need
-//             to add in sfrnaincludes/host_tracker.h data eventually.
+//  FIXIT-M For now this emulates the Snort++ attribute table.
+//  Need to add in sfrnaincludes/host_tracker.h data eventually.
 
 typedef uint16_t Port;
 typedef uint16_t Protocol;
@@ -82,7 +82,7 @@ private:
     std::mutex host_tracker_lock;     //  Ensure that updates to a
                                       //  shared object are safe.
 
-    //  FIXIT-H - Do we need to use a host_id instead of sfip_t as in sfrna?
+    //  FIXIT-M do we need to use a host_id instead of sfip_t as in sfrna?
     sfip_t ip_addr;
 
     //  Policies to apply to this host.
@@ -93,12 +93,12 @@ private:
     std::list<HostApplicationEntry> clients;
 
 public:
-    HostTracker(void)
+    HostTracker()
     {
         memset(&ip_addr, 0, sizeof(ip_addr));
     }
 
-    sfip_t get_ip_addr(void)
+    sfip_t get_ip_addr()
     {
         std::lock_guard<std::mutex> lck(host_tracker_lock);
         return ip_addr;
@@ -110,7 +110,7 @@ public:
         std::memcpy(&ip_addr, &new_ip_addr, sizeof(ip_addr));
     }
 
-    Policy get_stream_policy(void)
+    Policy get_stream_policy()
     {
         std::lock_guard<std::mutex> lck(host_tracker_lock);
         return stream_policy;
@@ -122,7 +122,7 @@ public:
         stream_policy = policy;
     }
 
-    Policy get_frag_policy(void)
+    Policy get_frag_policy()
     {
         std::lock_guard<std::mutex> lck(host_tracker_lock);
         return frag_policy;

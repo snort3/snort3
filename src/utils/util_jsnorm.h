@@ -39,7 +39,7 @@ typedef struct
     uint16_t alerts;
 } JSState;
 
-SO_PUBLIC void InitJSNormLookupTable(void);
+SO_PUBLIC void InitJSNormLookupTable();
 
 SO_PUBLIC int JSNormalizeDecode(
     char*, uint16_t, char*, uint16_t destlen, char**, int*, JSState*, uint8_t*);

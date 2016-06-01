@@ -43,6 +43,7 @@
 
 #include "main/thread.h"
 #include "protocols/ipv6.h"
+#include "utils/util.h"
 
 #if 0
 /* Support function .. but could see some external uses */
@@ -78,9 +79,7 @@ static inline int sfip_str_to_fam(const char* str)
 /* Place-holder allocation incase we want to do something more indepth later */
 static inline sfip_t* _sfip_alloc()
 {
-    /* Note: using calloc here instead of SnortAlloc since the dynamic libs
-     * can't presently resolve SnortAlloc */
-    return (sfip_t*)calloc(sizeof(sfip_t), 1);
+    return (sfip_t*)snort_calloc(sizeof(sfip_t));
 }
 
 /* Masks off 'val' bits from the IP contained within 'ip' */
@@ -299,9 +298,7 @@ SFIP_RET sfip_pton(const char* src, sfip_t* dst)
     if (!dst || !src)
         return SFIP_ARG_ERR;
 
-    if ((sfip_buf = strdup(src)) == NULL)
-        return SFIP_ALLOC_ERR;
-
+    sfip_buf = snort_strdup(src);
     ip = sfip_buf;
     dst->family = sfip_str_to_fam(src);
 
@@ -326,7 +323,7 @@ SFIP_RET sfip_pton(const char* src, sfip_t* dst)
         if (((dst->family == AF_INET6) && !isxdigit((int)*mask)) ||
             ((dst->family == AF_INET) && !isdigit((int)*mask)))
         {
-            free(sfip_buf);
+            snort_free(sfip_buf);
             return SFIP_CIDR_ERR;
         }
 
@@ -381,7 +378,7 @@ SFIP_RET sfip_pton(const char* src, sfip_t* dst)
 
     if (sfip_convert_ip_text_to_binary(dst->family, ip, dst->ip8) != SFIP_SUCCESS)
     {
-        free(sfip_buf);
+        snort_free(sfip_buf);
         return SFIP_INET_PARSE_ERR;
     }
 
@@ -391,11 +388,11 @@ SFIP_RET sfip_pton(const char* src, sfip_t* dst)
     /* Apply mask */
     if (sfip_cidr_mask(dst, bits) != SFIP_SUCCESS)
     {
-        free(sfip_buf);
+        snort_free(sfip_buf);
         return SFIP_INVALID_MASK;
     }
 
-    free(sfip_buf);
+    snort_free(sfip_buf);
     return SFIP_SUCCESS;
 }
 
@@ -641,7 +638,7 @@ char* sfip_to_str(const sfip_t* ip)
 void sfip_free(sfip_t* ip)
 {
     if (ip)
-        free(ip);
+        snort_free(ip);
 }
 
 int sfip_ismapped(const sfip_t* ip)

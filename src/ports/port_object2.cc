@@ -91,7 +91,7 @@ static int* RuleHashToSortedArray(SFGHASH* rh)
     if (!rh->count)
         return NULL;
 
-    ra = (int*)SnortAlloc(rh->count * sizeof(int));
+    ra = (int*)snort_calloc(rh->count, sizeof(int));
 
     for ( node = sfghash_findfirst(rh);
         node != 0 && k < (int)rh->count;
@@ -119,22 +119,21 @@ static int* RuleHashToSortedArray(SFGHASH* rh)
 */
 PortObject2* PortObject2New(int nrules)
 {
-    PortObject2* po = (PortObject2*)SnortAlloc(sizeof(PortObject2));
-
+    PortObject2* po = (PortObject2*)snort_calloc(sizeof(PortObject2));
     po->item_list =(SF_LIST*)sflist_new();
 
     if ( !po->item_list )
     {
-        free(po);
+        snort_free(po);
         return 0;
     }
 
-    po->rule_hash =(SFGHASH*)sfghash_new(nrules,sizeof(int),0,
-        free /* frees data - should be rule id ptrs == (int*) */);
+    po->rule_hash =(SFGHASH*)sfghash_new(nrules,sizeof(int), 0,
+        snort_free /* frees data - should be rule id ptrs == (int*) */);
     if ( !po->rule_hash )
     {
-        sflist_free_all(po->item_list, free);
-        free(po);
+        sflist_free_all(po->item_list, snort_free);
+        snort_free(po);
         return 0;
     }
 
@@ -158,9 +157,11 @@ void PortObject2Free(void* pvoid)
         return;
 
     if ( po->name )
-        free (po->name);
+        snort_free(po->name);
+
     if ( po->item_list)
-        sflist_free_all(po->item_list, free);
+        sflist_free_all(po->item_list, snort_free);
+
     if ( po->rule_hash)
         sfghash_delete(po->rule_hash);
 
@@ -168,11 +169,9 @@ void PortObject2Free(void* pvoid)
         delete po->port_list;
 
     if (po->data && po->data_free)
-    {
         po->data_free(po->data);
-    }
 
-    free(po);
+    snort_free(po);
 }
 
 /*
@@ -199,15 +198,9 @@ PortObject2* PortObject2Dup(PortObject* po)
 
     /* Dup the Name */
     if ( po->name )
-        ponew->name = strdup(po->name);
+        ponew->name = snort_strdup(po->name);
     else
-        ponew->name = strdup("dup");
-
-    if ( !ponew->name )
-    {
-        free(ponew);
-        return NULL;
-    }
+        ponew->name = snort_strdup("dup");
 
     /* Dup the Item List */
     if ( po->item_list )
@@ -220,7 +213,7 @@ PortObject2* PortObject2Dup(PortObject* po)
 
             if (!poinew)
             {
-                free(ponew);
+                snort_free(ponew);
                 return NULL;
             }
 
@@ -235,16 +228,12 @@ PortObject2* PortObject2Dup(PortObject* po)
             prid != 0;
             prid  = (int*)sflist_next(&lpos) )
         {
-            prule = (int*)calloc(1,sizeof(int));
-            if (!prule)
-            {
-                free(ponew);
-                return NULL;
-            }
+            prule = (int*)snort_calloc(sizeof(int));
             *prule = *prid;
+
             if ( sfghash_add(ponew->rule_hash, prule, prule) != SFGHASH_OK )
             {
-                free(prule);
+                snort_free(prule);
             }
         }
     }
@@ -280,13 +269,12 @@ PortObject2* PortObject2AppendPortObject(PortObject2* poa, PortObject* pob)
         prid!= 0;
         prid = (int*)sflist_next(&lpos) )
     {
-        prid2 = (int*)calloc(1, sizeof(int));
-        if ( !prid2 )
-            return 0;
+        prid2 = (int*)snort_calloc(sizeof(int));
         *prid2 = *prid;
+
         if ( sfghash_add(poa->rule_hash,prid2,prid2) != SFGHASH_OK )
         {
-            free(prid2);
+            snort_free(prid2);
         }
     }
     return poa;
@@ -307,14 +295,12 @@ PortObject2* PortObject2AppendPortObject2(PortObject2* poa, PortObject2* pob)
         if ( !prid )
             continue;
 
-        prid2 = (int*)calloc(1, sizeof(int));
-        if ( !prid2 )
-            return 0;
-
+        prid2 = (int*)snort_calloc(sizeof(int));
         *prid2 = *prid;
+
         if ( sfghash_add(poa->rule_hash,prid2,prid2) != SFGHASH_OK )
         {
-            free(prid2);
+            snort_free(prid2);
         }
     }
     return poa;
@@ -437,7 +423,7 @@ void PortObject2PrintEx(PortObject2* po,
 
     LogMessage("%s", po_print_buf);
 
-    free(rlist);
+    snort_free(rlist);
 }
 
 void PortObject2Print(PortObject2* po)

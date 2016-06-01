@@ -37,7 +37,7 @@ struct sfip_var_t;
 struct vartable_t;
 
 /* Allocates new variable table */
-vartable_t* sfvt_alloc_table(void);
+vartable_t* sfvt_alloc_table();
 void sfvt_free_table(vartable_t* table);
 
 /* Adds the variable described by "str" to the table "table" */

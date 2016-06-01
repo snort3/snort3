@@ -159,18 +159,18 @@ ContentOption::~ContentOption()
         return;
 
     if ( cd->pmd.pattern_buf )
-        free((char*)cd->pmd.pattern_buf);
+        snort_free((char*)cd->pmd.pattern_buf);
 
     if ( cd->pmd.last_check )
-        free(cd->pmd.last_check);
+        snort_free(cd->pmd.last_check);
 
     if ( cd->skip_stride )
-        free(cd->skip_stride);
+        snort_free(cd->skip_stride);
 
     if ( cd->shift_stride )
-        free(cd->shift_stride);
+        snort_free(cd->shift_stride);
 
-    free(cd);
+    snort_free(cd);
 }
 
 uint32_t ContentOption::hash() const
@@ -458,9 +458,11 @@ static void parse_content(ContentData* cd, const char* rule)
     const char* tmp_buf = buf.c_str();
     unsigned dummy_size = buf.size();
 
-    cd->pmd.pattern_buf = (char*)SnortAlloc(dummy_size+1);
-    memcpy((char*)cd->pmd.pattern_buf, tmp_buf, dummy_size);
+    char* pattern_buf = (char*)snort_alloc(dummy_size+1);
+    memcpy(pattern_buf, tmp_buf, dummy_size);
+    pattern_buf[dummy_size] = '\0';
 
+    cd->pmd.pattern_buf = pattern_buf;
     cd->pmd.pattern_size = dummy_size;
     cd->pmd.negated = negated;
     cd->pmd.literal = true;
@@ -682,7 +684,7 @@ ContentData* ContentModule::get_data()
 
 bool ContentModule::begin(const char*, int, SnortConfig*)
 {
-    cd = (ContentData*)SnortAlloc(sizeof(ContentData));
+    cd = (ContentData*)snort_calloc(sizeof(ContentData));
     cd->init();
     return true;
 }

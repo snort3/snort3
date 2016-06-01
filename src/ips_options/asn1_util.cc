@@ -81,7 +81,7 @@ static THREAD_LOCAL int node_index;
 **
 **  @return void
 */
-static void asn1_init_node_index(void)
+static void asn1_init_node_index()
 {
     node_index = 0;
 }
@@ -98,7 +98,7 @@ static void asn1_init_node_index(void)
 **  @retval NULL memory allocation failed
 **  @retval !NULL function successful
 */
-static ASN1_TYPE* asn1_node_alloc(void)
+static ASN1_TYPE* asn1_node_alloc()
 {
     if ((asn1_config.mem == NULL) || (asn1_config.num_nodes <= node_index))
         return NULL;
@@ -133,7 +133,7 @@ void asn1_init_mem(SnortConfig* sc)
     if (num_nodes <= 0)
         return;
 
-    asn1_config.mem = (ASN1_TYPE*)SnortAlloc(sizeof(ASN1_TYPE) * num_nodes);
+    asn1_config.mem = (ASN1_TYPE*)snort_calloc(num_nodes, sizeof(ASN1_TYPE));
     asn1_config.num_nodes = num_nodes;
     node_index = 0;
 }
@@ -153,7 +153,7 @@ void asn1_free_mem(SnortConfig*)
 {
     if (asn1_config.mem != NULL)
     {
-        free(asn1_config.mem);
+        snort_free(asn1_config.mem);
         asn1_config.mem = NULL;
     }
 }
@@ -1080,11 +1080,7 @@ int main(int argc, char** argv)
 
     buf_size >>= 1;
 
-    buf = calloc(1,buf_size + 1);
-    if (!buf)
-    {
-        return 1;
-    }
+    buf = snort_calloc(buf_size + 1);
 
     for (iCtr = 0; iCtr < buf_size; iCtr++)
     {
@@ -1113,7 +1109,7 @@ int main(int argc, char** argv)
 
     asn1_print_types(asn1_type, 0);
 
-    free(buf);
+    snort_free(buf);
 
     return 0;
 }

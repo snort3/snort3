@@ -51,7 +51,7 @@ int Shell::panic(lua_State* L)
     throw runtime_error(fatal);
 }
 
-// FIXIT-L --shell --pause should stop before loading config so Lua state
+// FIXIT-L shell --pause should stop before loading config so Lua state
 // can be examined and modified.
 
 #if 0
@@ -128,7 +128,7 @@ static void config_lua(
 
 Shell::Shell(const char* s)
 {
-    // FIXIT-M: Should wrap in Lua::State
+    // FIXIT-M should wrap in Lua::State
     lua = luaL_newstate();
 
     if ( !lua )
@@ -191,7 +191,7 @@ void Shell::execute(const char* cmd, string& rsp)
 
     try
     {
-        // FIXIT-L: Shares logic with chunk
+        // FIXIT-L shares logic with chunk
         err = luaL_loadbuffer(lua, cmd, strlen(cmd), "shell");
 
         if ( !err )

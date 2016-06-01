@@ -77,8 +77,7 @@ bool Analyzer::execute(AnalyzerCommand ac)
     if ( ac == AC_STOP )
         daq_instance->break_loop(-1);
 
-    // FIXIT-L executing a command while paused
-    // will cause a resume
+    // FIXIT-L executing a command while paused will cause a resume
     command = ac;
     take_break();
 
@@ -142,11 +141,10 @@ void Analyzer::analyze()
         if ( daq_instance->acquire(0, main_func) )
             break;
 
-        // FIXIT-L acquire(0) won't return until no packets, signal, etc.
-        // which makes this idle unlikely to execute under high traffic
-        // conditions; that means the idle processing may not be useful
-        // or that we need a hook to do things periodically even when
-        // traffic is available
+        // FIXIT-L acquire(0) makes idle processing unlikely under high traffic
+        // because it won't return until no packets, signal, etc.  that means
+        // the idle processing may not be useful or that we need a hook to do
+        // things periodically even when traffic is available
         Snort::thread_idle();
     }
 }

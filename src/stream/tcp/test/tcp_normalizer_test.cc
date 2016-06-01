@@ -220,7 +220,7 @@ TEST(tcp_normalizers, norm_options_enabled)
     norm_enabled = false;
     for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
     {
-        TcpNormalizer* normalizer = TcpNormalizerFactory::create( session, os_policy, 
+        TcpNormalizer* normalizer = TcpNormalizerFactory::create( session, os_policy,
             session->client, session->server );
 
         CHECK( normalizer->get_opt_block() == NORM_MODE_TEST );

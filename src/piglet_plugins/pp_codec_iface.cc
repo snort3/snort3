@@ -86,7 +86,7 @@ static const luaL_Reg methods[] =
 
             //  Convert ProtocolId vector to uint16_t vector to make
             //  Lua templates happy.
-            //  FIXIT-L:  Add support for ProtocolId in Lua code.
+            //  FIXIT-L  add support for ProtocolId in Lua code.
             std::vector<uint16_t> tmp;
             for(auto a: ret)
                 tmp.push_back(to_utype(a));
@@ -188,7 +188,7 @@ static const luaL_Reg methods[] =
             uint32_t flags_lo = args[off + 2].check_size();
             auto& rb = RawBufferIface.get(L, off + 3);
 
-            // FIXIT-L: Args vs Iface is not orthogonal
+            // FIXIT-L Args vs Iface is not orthogonal
             uint16_t lyr_len = args[off + 4].opt_size(0, rb.size());
 
             auto& self = CodecIface.get(L);

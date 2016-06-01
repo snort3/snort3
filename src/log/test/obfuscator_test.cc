@@ -25,8 +25,7 @@
 #include <string.h>
 
 TEST_GROUP(ObfuscatorTests)
-{
-};
+{ };
 
 TEST(ObfuscatorTests, Test_1_Block)
 {
@@ -150,7 +149,7 @@ TEST(ObfuscatorTests, UpdateExactMatch)
     CHECK_TRUE( ++b == ob.end() );
 }
 
-// 
+//
 // Verify ObfuscatorBlock's are sorted on access
 //
 TEST(ObfuscatorTests, SortedElements)
@@ -166,7 +165,7 @@ TEST(ObfuscatorTests, SortedElements)
         CHECK_TRUE( last <= b.offset );
         last = b.offset;
     }
-};
+}
 
 TEST(ObfuscatorTests, Overlaps)
 {
@@ -181,9 +180,10 @@ TEST(ObfuscatorTests, Overlaps)
         CHECK_TRUE( last <= b.offset );
         last = b.offset;
     }
-};
+}
 
 int main(int argc, char *argv[])
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
+

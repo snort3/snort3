@@ -160,7 +160,8 @@ static char get_xlink_keyword(const uint8_t* ptr, const uint8_t* end)
 
     if (gotFirstChunk)
         next; # chunks came with proper first chunk specified
-    if (/X-LINK2STATE [FIRST|NEXT|LAST] CHUNK/) {
+    if (/X-LINK2STATE [FIRST|NEXT|LAST] CHUNK/)
+    {
         if (/X-LINK2STATE FIRST CHUNK/) gotFirstChunk = TRUE;
         next; # some specifier is marked
     }

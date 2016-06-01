@@ -131,7 +131,7 @@ void inc_parse_position()
 void parse_include(SnortConfig* sc, const char* arg)
 {
     struct stat file_stat;  /* for include path testing */
-    char* fname = SnortStrdup(arg);
+    char* fname = snort_strdup(arg);
 
     /* Stat the file.  If that fails, make it relative to the directory
      * that the top level snort configuration file was in */
@@ -140,22 +140,22 @@ void parse_include(SnortConfig* sc, const char* arg)
         const char* snort_conf_dir = get_snort_conf_dir();
 
         int path_len = strlen(snort_conf_dir) + strlen(arg) + 1;
-        free(fname);
+        snort_free(fname);
 
-        fname = (char*)SnortAlloc(path_len);
+        fname = (char*)snort_calloc(path_len);
         snprintf(fname, path_len, "%s%s", snort_conf_dir, arg);
     }
 
     push_parse_location(fname, 0);
     ParseConfigFile(sc, fname);
     pop_parse_location();
-    free((char*)fname);
+    snort_free((char*)fname);
 }
 
 void ParseIpVar(SnortConfig* sc, const char* var, const char* val)
 {
     int ret;
-    IpsPolicy* p = get_ips_policy(); // FIXIT-M double check, see below
+    IpsPolicy* p = get_ips_policy();  // FIXIT-M double check, see below
     DisallowCrossTableDuplicateVars(sc, var, VAR_TYPE__IPVAR);
 
     if ((ret = sfvt_define(p->ip_vartable, var, val)) != SFIP_SUCCESS)
@@ -203,11 +203,11 @@ void add_service_to_otn(
 
     if ( !otn->sigInfo.services )
         otn->sigInfo.services =
-            (ServiceInfo*)SnortAlloc(sizeof(ServiceInfo) * sc->max_metadata_services);
+            (ServiceInfo*)snort_calloc(sc->max_metadata_services, sizeof(ServiceInfo));
 
     int idx = otn->sigInfo.num_services++;
 
-    otn->sigInfo.services[idx].service = SnortStrdup(svc_name);
+    otn->sigInfo.services[idx].service = snort_strdup(svc_name);
     otn->sigInfo.services[idx].service_ordinal = svc_id;
 }
 
@@ -216,12 +216,12 @@ void add_service_to_otn(
 // or we are going to just alert instead of drop,
 // or we are going to ignore session data instead of drop.
 // the alert case is tested for separately with SnortConfig::treat_drop_as_alert().
-static inline int ScKeepDropRules(void)
+static inline int ScKeepDropRules()
 {
     return ( SnortConfig::inline_mode() || SnortConfig::adaptor_inline_mode() || SnortConfig::treat_drop_as_ignore() );
 }
 
-static inline int ScLoadAsDropRules(void)
+static inline int ScLoadAsDropRules()
 {
     return ( SnortConfig::inline_test_mode() || SnortConfig::adaptor_inline_test_mode() );
 }
@@ -266,13 +266,12 @@ ListHead* get_rule_list(SnortConfig* sc, const char* s)
     return p ? p->RuleList : nullptr;
 }
 
-// FIXIT-L move to snort config
-void AddRuleState(SnortConfig* sc, const RuleState& rs)
+void AddRuleState(SnortConfig* sc, const RuleState& rs)  // FIXIT-L move to snort config
 {
     if (sc == NULL)
         return;
 
-    RuleState* state = (RuleState*)SnortAlloc(sizeof(RuleState));
+    RuleState* state = (RuleState*)snort_calloc(sizeof(RuleState));
     *state = rs;
 
     if ( !sc->rule_state_list )

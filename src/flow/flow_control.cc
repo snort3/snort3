@@ -71,12 +71,12 @@ FlowControl::~FlowControl()
     delete file_cache;
     delete exp_cache;
 
-    free(ip_mem);
-    free(icmp_mem);
-    free(tcp_mem);
-    free(udp_mem);
-    free(user_mem);
-    free(file_mem);
+    snort_free(ip_mem);
+    snort_free(icmp_mem);
+    snort_free(tcp_mem);
+    snort_free(udp_mem);
+    snort_free(user_mem);
+    snort_free(file_mem);
 }
 
 //-------------------------------------------------------------------------
@@ -153,14 +153,6 @@ void FlowControl::clear_counts()
         cache->reset_stats();
 }
 
-Memcap& FlowControl::get_memcap (PktType type)
-{
-    static Memcap dummy;
-    FlowCache* cache = get_cache(type);
-    assert(cache);  // FIXIT-L dummy is a hack
-    return cache ? cache->get_memcap() : dummy;
-}
-
 //-------------------------------------------------------------------------
 // cache foo
 //-------------------------------------------------------------------------
@@ -179,7 +171,7 @@ inline FlowCache* FlowControl::get_cache (PktType type)
     }
 }
 
-// FIXIT-L J duplication of non-const method above
+// FIXIT-L duplication of non-const method above
 inline const FlowCache* FlowControl::get_cache (PktType type) const
 {
     switch ( type )
@@ -226,7 +218,7 @@ void FlowControl::delete_flow(const FlowKey* key)
     Flow* flow = cache->find(key);
 
     if ( flow )
-        // FIXIT-L J prune reason was actually HA sync
+        // FIXIT-L prune reason was actually HA sync
         cache->release(flow, PruneReason::USER);
 }
 
@@ -301,7 +293,7 @@ void FlowControl::preemptive_cleanup()
     DebugFormat(DEBUG_FLOW, "doing preemptive cleanup for packet of type %d",
             last_pkt_type);
 
-    // FIXIT-L J is there a possibility of this looping forever?
+    // FIXIT-H is there a possibility of this looping forever?
     while ( memory::MemoryCap::over_threshold() )
     {
         if ( !prune_one(PruneReason::PREEMPTIVE, true) )
@@ -542,11 +534,7 @@ void FlowControl::init_ip(
         return;
 
     ip_cache = new FlowCache(fc);
-
-    ip_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
-
-    if ( !ip_mem )
-        return;
+    ip_mem = (Flow*)snort_calloc(fc.max_sessions, sizeof(Flow));
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         ip_cache->push(ip_mem + i);
@@ -589,11 +577,7 @@ void FlowControl::init_icmp(
         return;
 
     icmp_cache = new FlowCache(fc);
-
-    icmp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
-
-    if ( !icmp_mem )
-        return;
+    icmp_mem = (Flow*)snort_calloc(fc.max_sessions, sizeof(Flow));
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         icmp_cache->push(icmp_mem + i);
@@ -639,11 +623,7 @@ void FlowControl::init_tcp(
         return;
 
     tcp_cache = new FlowCache(fc);
-
-    tcp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
-
-    if ( !tcp_mem )
-        return;
+    tcp_mem = (Flow*)snort_calloc(fc.max_sessions, sizeof(Flow));
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         tcp_cache->push(tcp_mem + i);
@@ -686,11 +666,7 @@ void FlowControl::init_udp(
         return;
 
     udp_cache = new FlowCache(fc);
-
-    udp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
-
-    if ( !udp_mem )
-        return;
+    udp_mem = (Flow*)snort_calloc(fc.max_sessions, sizeof(Flow));
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         udp_cache->push(udp_mem + i);
@@ -733,11 +709,7 @@ void FlowControl::init_user(
         return;
 
     user_cache = new FlowCache(fc);
-
-    user_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
-
-    if ( !user_mem )
-        return;
+    user_mem = (Flow*)snort_calloc(fc.max_sessions, sizeof(Flow));
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         user_cache->push(user_mem + i);
@@ -780,11 +752,7 @@ void FlowControl::init_file(
         return;
 
     file_cache = new FlowCache(fc);
-
-    file_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
-
-    if ( !file_mem )
-        return;
+    file_mem = (Flow*)snort_calloc(fc.max_sessions, sizeof(Flow));
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         file_cache->push(file_mem + i);

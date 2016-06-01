@@ -24,7 +24,7 @@
    non-Win32 code when printing out the name of the interface */
 #define PRINT_INTERFACE(i)  (i ? i : "NULL")
 
-void PrintAllInterfaces(void);
+void PrintAllInterfaces();
 
 #endif
 

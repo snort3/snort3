@@ -97,7 +97,7 @@ bool ImapModule::set(const char*, Value& v, SnortConfig*)
             decode_depth += 4 - (decode_depth & 3);
             if (decode_depth > 65535 )
             {
-                decode_depth = decode_depth - 4;  // FIXIT-L what does this do?
+                decode_depth = decode_depth - 4;  // FIXIT-H what does this do?
             }
             ParseWarning(WARN_CONF, "IMAP: 'b64_decode_depth' is not a multiple of 4. "
                 "Rounding up to the next multiple of 4. The new 'b64_decode_depth' is %d.\n",

@@ -56,7 +56,7 @@ std::string& trim(std::string& s);
 bool file_exists(const std::string& name);
 
 /*
- * Takes in a stream and a string of delimeters. The function will extract the charachters
+ * Takes in a stream and a string of delimeters. The function will extract the characters
  * from the stream until it hits one of the delimeters.  The substring will be set to the
  * third parameter.  The stream itself will point to the chrachter after the first delim.
  *
@@ -64,7 +64,7 @@ bool file_exists(const std::string& name);
  *          data_stream - the data stream from which to find a substring.
  *          delimeters - The string of delimeters.
  *          options - The found substring will be place in this parameter.  If the
- *                     stream is empty or no charachters have been extracted, then
+ *                     stream is empty or no characters have been extracted, then
  *                     this parameter wil be set to an empty string.
  * RETURNS:
  *          True - when the string is found.

@@ -377,7 +377,7 @@ bool dnp3_full_reassembly(dnp3ProtoConf& config, dnp3_session_data_t* session, P
     if ( dnp3_check_reserved_addrs(link) == false )
         return false;
 
-    /* FIXIT: NEED TO TRACK SEPARATE DNP3 SESSIONS OVER SINGLE TCP SESSION */
+    // FIXIT-L need to track separate dnp3 sessions over single tcp session
 
     /* Step 2: Remove CRCs */
     if ( dnp3_check_remove_crc(config, pdu_start, pdu_length, buf, &buflen) == false )

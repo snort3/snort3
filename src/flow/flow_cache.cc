@@ -37,8 +37,7 @@
 // FlowCache stuff
 //-------------------------------------------------------------------------
 
-FlowCache::FlowCache (const FlowConfig& cfg) :
-    config(cfg), memcap(cfg.mem_cap)
+FlowCache::FlowCache (const FlowConfig& cfg) : config(cfg)
 {
     cleanup_flows = cfg.max_sessions * cfg.cleanup_pct / 100;
     if ( cleanup_flows == 0 )
@@ -175,7 +174,7 @@ unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
     while ( flow and pruned <= cleanup_flows )
     {
 #if 0
-        // FIXIT-L this loops forever if 1 flow in cache
+        // FIXIT-H this loops forever if 1 flow in cache
         if (flow == save_me)
         {
             break;
@@ -212,7 +211,7 @@ unsigned FlowCache::prune_unis()
     ActiveSuspendContext act_susp;
 
     // we may have many or few unis; need to find reasonable ratio
-    // FIXIT-L max_uni should be based on typical ratios seen in perfmon
+    // FIXIT-M max_uni should be based on typical ratios seen in perfmon
     const unsigned max_uni = (config.max_sessions >> 2) + 1;
 
     Flow* curr = uni_tail->prev;
@@ -253,7 +252,7 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
             if ( flow->was_blocked() )
                 ++blocks;
 
-            // FIXIT-M J we should update last_data_seen upon touch to ensure
+            // FIXIT-M we should update last_data_seen upon touch to ensure
             // the hash_table LRU list remains sorted by time
             if ( !hash_table->touch() )
                 break;
@@ -297,7 +296,7 @@ bool FlowCache::prune_one(PruneReason reason, bool do_cleanup)
 
 unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 {
-    // FIXIT-H J should Active be suspended here too?
+    // FIXIT-H should Active be suspended here too?
     unsigned retired = 0;
 
     auto flow = static_cast<Flow*>(hash_table->current());

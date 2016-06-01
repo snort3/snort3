@@ -327,9 +327,9 @@ static void smb_invalid_share_free(void* data)
     if (smb_share == nullptr)
         return;
 
-    free(smb_share->unicode_str);
-    free(smb_share->ascii_str);
-    free(smb_share);
+    snort_free(smb_share->unicode_str);
+    snort_free(smb_share->ascii_str);
+    snort_free(smb_share);
 }
 
 static void set_smb_versions_mask(dce2SmbProtoConf& config, const char* s)
@@ -372,23 +372,14 @@ static bool set_smb_invalid_shares(dce2SmbProtoConf& config, Value& v)
         char* share  = (char*)tok.c_str();
         int share_len= strlen(share);
 
-        smb_share = (dce2SmbShare*)calloc(sizeof(dce2SmbShare),1);
-        smb_share_key = (dce2SmbShare*)calloc(sizeof(dce2SmbShare),1);
-        if ((smb_share == nullptr) || (smb_share_key == nullptr))
-        {
-            FatalError("DCE2 - Could not allocate memory for config\n");
-        }
+        smb_share = (dce2SmbShare*)snort_calloc(sizeof(dce2SmbShare));
+        smb_share_key = (dce2SmbShare*)snort_calloc(sizeof(dce2SmbShare));
 
         smb_share->unicode_str_len = (share_len * 2) + 2;
-        smb_share->unicode_str = (char*)calloc(smb_share->unicode_str_len,1);
+        smb_share->unicode_str = (char*)snort_calloc(smb_share->unicode_str_len);
 
         smb_share->ascii_str_len = share_len + 1;
-        smb_share->ascii_str = (char*)calloc(smb_share->ascii_str_len,1);
-
-        if ((smb_share->unicode_str == nullptr) || (smb_share->ascii_str == nullptr))
-        {
-            FatalError("DCE2 - Could not allocate memory for config\n");
-        }
+        smb_share->ascii_str = (char*)snort_calloc(smb_share->ascii_str_len);
 
         for (i = 0, j = 0; i < share_len; i++, j += 2)
         {
@@ -398,12 +389,7 @@ static bool set_smb_invalid_shares(dce2SmbProtoConf& config, Value& v)
 
         /* Just use ascii share as the key */
         smb_share_key->ascii_str_len = smb_share->ascii_str_len;
-        smb_share_key->ascii_str = (char*)calloc(smb_share_key->ascii_str_len,1);
-
-        if (smb_share_key->ascii_str == nullptr)
-        {
-            FatalError("DCE2 - Could not allocate memory for config\n");
-        }
+        smb_share_key->ascii_str = (char*)snort_calloc(smb_share_key->ascii_str_len);
 
         memcpy(smb_share_key->ascii_str, smb_share->ascii_str, smb_share_key->ascii_str_len);
 

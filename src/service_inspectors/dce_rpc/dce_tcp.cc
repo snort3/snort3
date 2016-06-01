@@ -40,9 +40,9 @@ Dce2TcpFlowData::~Dce2TcpFlowData()
 
 THREAD_LOCAL int dce2_tcp_inspector_instances = 0;
 
-//FIXIT-L Currently using separate buffers for segment and fragment reassembly
-//as in Snort2x code. Doesn't seem necessary for TCP but may be the case for
-//SMB/HTTP ..keeping logic consistent for now
+// FIXIT-L currently using separate buffers for segment and fragment reassembly
+// as in Snort2x code. Doesn't seem necessary for TCP but may be the case for
+// SMB/HTTP ..keeping logic consistent for now
 THREAD_LOCAL Packet* dce2_tcp_rpkt[DCE2_TCP_RPKT_TYPE_MAX] = { nullptr, nullptr };
 
 THREAD_LOCAL dce2TcpStats dce2_tcp_stats;
@@ -81,8 +81,8 @@ static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf*
     DCE2_TcpSsnData* dce2_tcp_sess = nullptr;
     Profile profile(dce2_tcp_pstat_new_session);
 
-    //FIXIT-M Re-evaluate after infrastructure/binder support if autodetect here
-    //is necessary
+    // FIXIT-M re-evaluate after infrastructure/binder support if autodetect here
+    // is necessary
     if (DCE2_TcpAutodetect(p))
     {
         DebugMessage(DEBUG_DCE_TCP, "DCE over TCP packet detected\n");
@@ -204,7 +204,7 @@ void Dce2Tcp::eval(Packet* p)
 
     if (dce2_tcp_sess)
     {
-        //FIXIT-L evaluate moving pushpkt out of session pstats
+        // FIXIT-L evaluate moving pushpkt out of session pstats
         if (DCE2_PushPkt(p,&dce2_tcp_sess->sd) != DCE2_RET__SUCCESS)
         {
             DebugMessage(DEBUG_DCE_TCP, "Failed to push packet onto packet stack.\n");
@@ -273,8 +273,8 @@ static void dce2_tcp_thread_init()
     {
         for (int i=0; i < DCE2_TCP_RPKT_TYPE_MAX; i++)
         {
-            Packet* p = (Packet*)SnortAlloc(sizeof(Packet));
-            p->data = (uint8_t*)SnortAlloc(DCE2_REASSEMBLY_BUF_SIZE);
+            Packet* p = (Packet*)snort_calloc(sizeof(Packet));
+            p->data = (uint8_t*)snort_calloc(DCE2_REASSEMBLY_BUF_SIZE);
             p->endianness = (Endianness*)new DceEndianness();
             p->dsize = DCE2_REASSEMBLY_BUF_SIZE;
             dce2_tcp_rpkt[i] = p;
@@ -298,10 +298,10 @@ static void dce2_tcp_thread_term()
                 Packet* p = dce2_tcp_rpkt[i];
                 if (p->data)
                 {
-                    free((void*)p->data);
+                    snort_free((void*)p->data);
                 }
                 delete p->endianness;
-                free(p);
+                snort_free(p);
                 dce2_tcp_rpkt[i] = nullptr;
             }
         }

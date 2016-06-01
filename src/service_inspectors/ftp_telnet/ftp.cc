@@ -253,16 +253,10 @@ static int ProcessFTPDataChanCmdsList(
     {
         /* Add it to the list */
         // note that struct includes 1 byte for null, so just add len
-        FTPCmd = (FTP_CMD_CONF*)calloc(1, sizeof(FTP_CMD_CONF)+strlen(cmd));
-        if (FTPCmd == NULL)
-        {
-            ParseAbort("failed to allocate memory");
-        }
-
+        FTPCmd = (FTP_CMD_CONF*)snort_calloc(sizeof(FTP_CMD_CONF)+strlen(cmd));
         strcpy(FTPCmd->cmd_name, cmd);
 
-        // FIXIT-L make sure pulled from server conf when used if not
-        // overridden
+        // FIXIT-L make sure pulled from server conf when used if not overridden
         //FTPCmd->max_param_len = ServerConf->def_max_param_len;
 
         ftp_cmd_lookup_add(ServerConf->cmd_lookup, cmd,
@@ -297,21 +291,11 @@ static int ProcessFTPDataChanCmdsList(
         }
         else
         {
-            Fmt = (FTP_PARAM_FMT*)calloc(1, sizeof(FTP_PARAM_FMT));
-            if (Fmt == NULL)
-            {
-                ParseAbort("Failed to allocate memory");
-            }
-
+            Fmt = (FTP_PARAM_FMT*)snort_calloc(sizeof(FTP_PARAM_FMT));
             Fmt->type = e_head;
             FTPCmd->param_format = Fmt;
 
-            Fmt = (FTP_PARAM_FMT*)calloc(1, sizeof(FTP_PARAM_FMT));
-            if (Fmt == NULL)
-            {
-                ParseAbort("Failed to allocate memory");
-            }
-
+            Fmt = (FTP_PARAM_FMT*)snort_calloc(sizeof(FTP_PARAM_FMT));
             Fmt->type = e_strformat;
             FTPCmd->param_format->next_param_fmt = Fmt;
             Fmt->prev_param_fmt = FTPCmd->param_format;

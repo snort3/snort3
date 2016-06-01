@@ -44,14 +44,14 @@ ReferenceNode* AddReference(
     }
 
     /* create the new node */
-    node = (ReferenceNode*)SnortAlloc(sizeof(ReferenceNode));
+    node = (ReferenceNode*)snort_calloc(sizeof(ReferenceNode));
 
     /* lookup the reference system */
     node->system = ReferenceSystemLookup(sc->references, system);
     if (node->system == NULL)
         node->system = ReferenceSystemAdd(sc, system, NULL);
 
-    node->id = SnortStrdup(id);
+    node->id = snort_strdup(id);
 
     /* Add the node to the front of the list */
     node->next = *head;
@@ -105,11 +105,11 @@ ReferenceSystemNode* ReferenceSystemAdd(
         return NULL;
 
     /* create the new node */
-    node = (ReferenceSystemNode*)SnortAlloc(sizeof(ReferenceSystemNode));
+    node = (ReferenceSystemNode*)snort_calloc(sizeof(ReferenceSystemNode));
+    node->name = snort_strdup(name);
 
-    node->name = SnortStrdup(name);
     if (url != NULL)
-        node->url = SnortStrdup(url);
+        node->url = snort_strdup(url);
 
     /* Add to the front of the list */
     node->next = *head;
@@ -161,10 +161,10 @@ void AddClassification(
         current = current->next;
     }
 
-    ClassType* new_node = (ClassType*)SnortAlloc(sizeof(ClassType));
+    ClassType* new_node = (ClassType*)snort_calloc(sizeof(ClassType));
 
-    new_node->type = SnortStrdup(type);
-    new_node->name = SnortStrdup(name);
+    new_node->type = snort_strdup(type);
+    new_node->name = snort_strdup(name);
     new_node->priority = priority;
     new_node->id = max_id + 1;
 
@@ -246,21 +246,21 @@ void OtnFree(void* data)
     {
         OptFpList* tmp = opt_func;
         opt_func = opt_func->next;
-        free(tmp);
+        snort_free(tmp);
     }
 
     if ( otn->sigInfo.message )
     {
         if (!otn->generated)
-            free(otn->sigInfo.message);
+            snort_free(otn->sigInfo.message);
     }
     for (svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
     {
         if (otn->sigInfo.services[svc_idx].service)
-            free(otn->sigInfo.services[svc_idx].service);
+            snort_free(otn->sigInfo.services[svc_idx].service);
     }
     if (otn->sigInfo.services)
-        free(otn->sigInfo.services);
+        snort_free(otn->sigInfo.services);
 
     ReferenceNode* ref_node = otn->sigInfo.refs;
 
@@ -268,15 +268,15 @@ void OtnFree(void* data)
     {
         ReferenceNode* tmp = ref_node;
         ref_node = ref_node->next;
-        free(tmp->id);
-        free(tmp);
+        snort_free(tmp->id);
+        snort_free(tmp);
     }
 
     if ( otn->tag )
-        free(otn->tag);
+        snort_free(otn->tag);
 
     if ( otn->soid )
-        free(otn->soid);
+        snort_free(otn->soid);
 
     /* RTN was generated on the fly.  Don't necessarily know which policy
      * at this point so go through all RTNs and delete them */
@@ -287,21 +287,21 @@ void OtnFree(void* data)
             RuleTreeNode* rtn = deleteRtnFromOtn(otn, i);
 
             if ( rtn )
-                free(rtn);
+                snort_free(rtn);
         }
     }
 
     if (otn->proto_nodes)
-        free(otn->proto_nodes);
+        snort_free(otn->proto_nodes);
 
     if (otn->detection_filter)
-        free(otn->detection_filter);
+        snort_free(otn->detection_filter);
 
-    free(otn->state);
-    free(otn);
+    snort_free(otn->state);
+    snort_free(otn);
 }
 
-SFGHASH* OtnLookupNew(void)
+SFGHASH* OtnLookupNew()
 {
     return sfghash_new(10000, sizeof(OtnKey), 0, OtnFree);
 }
@@ -318,6 +318,7 @@ void OtnLookupAdd(SFGHASH* otn_map, OptTreeNode* otn)
     key.sid = otn->sigInfo.id;
 
     status = sfghash_add(otn_map, &key, otn);
+
     switch (status)
     {
     case SFGHASH_OK:
@@ -328,9 +329,6 @@ void OtnLookupAdd(SFGHASH* otn_map, OptTreeNode* otn)
         ParseError("duplicate rule with same gid (%u) and sid (%u)",
             key.gid, key.sid);
         break;
-
-    case SFGHASH_NOMEM:
-        FatalError("Failed to allocate memory for rule.\n");
 
     default:
         FatalError("%s(%d): OtnLookupAdd() - unexpected return value "

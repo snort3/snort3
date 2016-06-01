@@ -122,7 +122,7 @@ THD_STRUCT* sfthd_new(unsigned lbytes, unsigned gbytes)
     THD_STRUCT* thd;
 
     /* Create the THD struct */
-    thd = (THD_STRUCT*)SnortAlloc(sizeof(THD_STRUCT));
+    thd = (THD_STRUCT*)snort_calloc(sizeof(THD_STRUCT));
 
 #ifndef CRIPPLE
     /* Create hash table for all of the local IP Nodes */
@@ -132,7 +132,7 @@ THD_STRUCT* sfthd_new(unsigned lbytes, unsigned gbytes)
 #ifdef THD_DEBUG
         printf("Could not allocate the sfxhash table\n");
 #endif
-        free(thd);
+        snort_free(thd);
         return NULL;
     }
 
@@ -147,7 +147,7 @@ THD_STRUCT* sfthd_new(unsigned lbytes, unsigned gbytes)
         printf("Could not allocate the sfxhash table\n");
 #endif
         sfxhash_delete(thd->ip_nodes);
-        free(thd);
+        snort_free(thd);
         return NULL;
     }
 #endif
@@ -155,9 +155,9 @@ THD_STRUCT* sfthd_new(unsigned lbytes, unsigned gbytes)
     return thd;
 }
 
-ThresholdObjects* sfthd_objs_new(void)
+ThresholdObjects* sfthd_objs_new()
 {
-    return (ThresholdObjects*)SnortAlloc(sizeof(ThresholdObjects));
+    return (ThresholdObjects*)snort_calloc(sizeof(ThresholdObjects));
 }
 
 static void sfthd_node_free(void* node)
@@ -172,7 +172,7 @@ static void sfthd_node_free(void* node)
         sfvar_free(sfthd_node->ip_address);
     }
 
-    free(sfthd_node);
+    snort_free(sfthd_node);
 }
 
 void sfthd_objs_free(ThresholdObjects* thd_objs)
@@ -221,20 +221,20 @@ void sfthd_objs_free(ThresholdObjects* thd_objs)
             }
         }
 
-        free(thd_objs->sfthd_garray[policyId]);
+        snort_free(thd_objs->sfthd_garray[policyId]);
     }
 
     if (thd_objs->sfthd_garray != NULL)
-        free(thd_objs->sfthd_garray);
+        snort_free(thd_objs->sfthd_garray);
 
-    free(thd_objs);
+    snort_free(thd_objs);
 }
 
 static void sfthd_item_free(void* item)
 {
     THD_ITEM* sfthd_item = (THD_ITEM*)item;
     sflist_free_all(sfthd_item->sfthd_node_list, sfthd_node_free);
-    free(sfthd_item);
+    snort_free(sfthd_item);
 }
 
 void sfthd_free(THD_STRUCT* thd)
@@ -250,7 +250,7 @@ void sfthd_free(THD_STRUCT* thd)
         sfxhash_delete(thd->ip_gnodes);
 #endif
 
-    free(thd);
+    snort_free(thd);
 }
 
 void* sfthd_create_rule_threshold(int id,
@@ -259,10 +259,7 @@ void* sfthd_create_rule_threshold(int id,
     int count,
     unsigned int seconds)
 {
-    THD_NODE* sfthd_node = (THD_NODE*)calloc(1, sizeof(THD_NODE));
-
-    if (sfthd_node == NULL)
-        return NULL;
+    THD_NODE* sfthd_node = (THD_NODE*)snort_calloc(sizeof(THD_NODE));
 
     sfthd_node->thd_id    = id;
     sfthd_node->tracking  = tracking;
@@ -360,11 +357,7 @@ static int sfthd_create_threshold_local(
     if ( !sfthd_item )
     {
         /* Create the sfthd_item hash node data */
-        sfthd_item = (THD_ITEM*)calloc(1,sizeof(THD_ITEM));
-        if ( !sfthd_item )
-        {
-            return -3;
-        }
+        sfthd_item = (THD_ITEM*)snort_calloc(sizeof(THD_ITEM));
 
         sfthd_item->gen_id = config->gen_id;
         sfthd_item->sig_id = config->sig_id;
@@ -373,7 +366,7 @@ static int sfthd_create_threshold_local(
 
         if (!sfthd_item->sfthd_node_list)
         {
-            free(sfthd_item);
+            snort_free(sfthd_item);
             return -4;
         }
 
@@ -382,7 +375,7 @@ static int sfthd_create_threshold_local(
         if ( hstatus )
         {
             sflist_free(sfthd_item->sfthd_node_list);
-            free(sfthd_item);
+            snort_free(sfthd_item);
             return -5;
         }
     }
@@ -417,11 +410,7 @@ static int sfthd_create_threshold_local(
     }
 
     /* Create a THD_NODE for this THD_ITEM (Object) */
-    sfthd_node = (THD_NODE*)calloc(1,sizeof(THD_NODE));
-    if ( !sfthd_node )
-    {
-        return -6;
-    }
+    sfthd_node = (THD_NODE*)snort_calloc(sizeof(THD_NODE));
 
     /* Limit priorities to force supression nodes to highest priority */
     if ( config->priority >= THD_PRIORITY_SUPPRESS )
@@ -519,11 +508,8 @@ static int sfthd_create_threshold_global(
 
     if (thd_objs->sfthd_garray[policy_id] == NULL)
     {
-        thd_objs->sfthd_garray[policy_id] = (THD_NODE**)(calloc(THD_MAX_GENID, sizeof(THD_NODE*)));
-        if (thd_objs->sfthd_garray[policy_id] == NULL)
-        {
-            return -1;
-        }
+        thd_objs->sfthd_garray[policy_id] =
+            (THD_NODE**)(snort_calloc(THD_MAX_GENID, sizeof(THD_NODE*)));
     }
 
     if ((config->gen_id == 0) &&
@@ -542,11 +528,7 @@ static int sfthd_create_threshold_global(
         return THD_TOO_MANY_THDOBJ;
     }
 
-    sfthd_node = (THD_NODE*)calloc(1,sizeof(THD_NODE));
-    if ( !sfthd_node )
-    {
-        return -2;
-    }
+    sfthd_node = (THD_NODE*)snort_calloc(sizeof(THD_NODE));
 
     /* Copy the node parameters */
     sfthd_node->thd_id = config->thd_id;
@@ -651,14 +633,11 @@ int sfthd_create_threshold(
     // FIXIT-L convert to std::vector
     sfDynArrayCheckBounds ((void**)&thd_objs->sfthd_garray, policyId,
         &thd_objs->numPoliciesAllocated);
+
     if (thd_objs->sfthd_garray[policyId] == NULL)
     {
-        thd_objs->sfthd_garray[policyId] = (THD_NODE**)SnortAlloc(THD_MAX_GENID *
-            sizeof(THD_NODE*));
-        if (thd_objs->sfthd_garray[policyId] == NULL)
-        {
-            return -1;
-        }
+        thd_objs->sfthd_garray[policyId] =
+            (THD_NODE**)snort_calloc(THD_MAX_GENID, sizeof(THD_NODE*));
     }
 
     if ( sig_id == 0 )
@@ -1329,7 +1308,7 @@ int sfthd_show_objects(ThresholdObjects* thd_objs)
 #endif // THD_DEBUG
 
 #ifdef UNIT_TEST
-// FIXIT-L see sfip/sf_ip.cc
+// FIXIT-L Catch issue; see sfip/sf_ip.cc
 #include "sfthd_test.cc"
 #endif
 

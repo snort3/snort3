@@ -44,7 +44,7 @@ enum IdNodeState
 class FileMagicData
 {
 public:
-    void clear(void);
+    void clear();
     std::string content_str;   /* magic content to match*/
     std::string content;       /* magic content raw values*/
     uint32_t offset;           /* pattern search start offset */
@@ -59,7 +59,7 @@ typedef std::vector<FileMagicData> FileMagics;
 class FileMagicRule
 {
 public:
-    void clear(void);
+    void clear();
     uint32_t rev = 0;
     uint32_t id = 0;
     std::string message;
@@ -88,12 +88,12 @@ class FileIdentifier
 {
 public:
     ~FileIdentifier();
-    uint32_t memory_usage(void) {return memory_used;}
+    uint32_t memory_usage() {return memory_used;}
     void insert_file_rule(FileMagicRule& rule);
     uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t offset, void** context);
     FileMagicRule* get_rule_from_id(uint32_t);
 private:
-    void init_merge_hash(void);
+    void init_merge_hash();
     void* calloc_mem(size_t size);
     void set_node_state_shared(IdentifierNode* start);
     IdentifierNode* clone_node(IdentifierNode* start);

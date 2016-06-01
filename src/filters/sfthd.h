@@ -213,7 +213,7 @@ THD_STRUCT* sfthd_new(unsigned lbytes, unsigned gbytes);
 SFXHASH* sfthd_local_new(unsigned bytes);
 SFXHASH* sfthd_global_new(unsigned bytes);
 void sfthd_free(THD_STRUCT*);
-ThresholdObjects* sfthd_objs_new(void);
+ThresholdObjects* sfthd_objs_new();
 void sfthd_objs_free(ThresholdObjects*);
 
 int sfthd_test_rule(SFXHASH* rule_hash, THD_NODE* sfthd_node,

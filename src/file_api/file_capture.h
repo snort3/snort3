@@ -81,11 +81,11 @@ public:
     void release_file();
 
     // Log file capture mempool usage
-    static void print_mem_usage(void);
+    static void print_mem_usage();
 
     // Exit file capture, release all file capture memory etc,
     // this must be called when snort exits
-    static void exit(void);
+    static void exit();
 
 private:
 

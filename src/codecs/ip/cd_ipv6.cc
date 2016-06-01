@@ -524,7 +524,7 @@ void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 {
     const ip::IP6Hdr* const ip6h = reinterpret_cast<const ip::IP6Hdr*>(raw_pkt);
 
-    // FIXIT-L  -->  This does NOT obfuscate correctly
+    // FIXIT-H this does NOT obfuscate correctly
     if (SnortConfig::obfuscate())
     {
         TextLog_Print(text_log, "x:x:x:x::x:x:x:x -> x:x:x:x::x:x:x:x");
@@ -605,7 +605,7 @@ void Ipv6Codec::update(const ip::IpApi&, const EncodeFlags flags,
     // in such case we do not modify the packet length.
     if ( (flags & UPD_MODIFIED) && !(flags & UPD_RESIZED) )
     {
-        // FIXIT-M -- this worked in Snort.  In Snort++, will this be accurate?
+        // FIXIT-H this worked in Snort.  In Snort++, will this be accurate?
         updated_len = ntohs(h->ip6_payload_len) + ip::IP6_HEADER_LEN;
     }
     else

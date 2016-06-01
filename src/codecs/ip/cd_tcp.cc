@@ -748,9 +748,7 @@ static void tcp_codec_ginit()
 {
     // Multicast addresses pursuant to RFC 5771
     SynToMulticastDstIp = sfip_var_from_string("[224.0.0.0/4]");
-
-    if ( SynToMulticastDstIp == NULL )
-        FatalError("Could not initialize SynToMulticastDstIp\n");
+    assert(SynToMulticastDstIp);
 }
 
 static void tcp_codec_gterm()

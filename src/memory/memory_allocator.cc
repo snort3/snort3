@@ -25,7 +25,7 @@
 namespace memory
 {
 
-// FIXIT-L J these could be made inlineable by defining in memory_manager.cc
+// FIXIT-L (de)allocate() could be inlined if defined in memory_manager.cc
 void* MemoryAllocator::allocate(size_t n)
 { return malloc(n); }
 

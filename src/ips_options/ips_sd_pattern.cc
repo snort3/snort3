@@ -18,7 +18,7 @@
 
 // ips_sd_pattern.cc author Victor Roemer <viroemer@cisco.com>
 
-// FIXIT-H: Use Hyperscan
+// FIXIT-M use Hyperscan
 
 #include <string.h>
 #include <assert.h>

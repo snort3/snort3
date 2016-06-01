@@ -389,7 +389,7 @@ bool ExpectCache::is_expected(Packet* p)
         if ( !node )
             return false;
     }
-    // FIXIT-M - X This should also include a lookup in the table for entries where both 
+    // FIXIT-M X This should also include a lookup in the table for entries where both
     // src and dst ports are known.
     if ( !node->head || (p->pkth->ts.tv_sec > node->expires) )
     {

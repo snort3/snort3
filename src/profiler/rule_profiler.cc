@@ -132,7 +132,7 @@ struct View
         state(otn_state)
     {
         if ( si )
-            // FIXIT-L J does sig_info need to be initialized otherwise?
+            // FIXIT-L does sig_info need to be initialized otherwise?
             sig_info = *si;
     }
 };
@@ -205,14 +205,14 @@ static std::vector<View> build_entries()
         if ( !state )
             continue;
 
-        // FIXIT-L J should we assert(otn->sigInfo)?
+        // FIXIT-L should we assert(otn->sigInfo)?
         entries.emplace_back(state, &otn->sigInfo);
     }
 
     return entries;
 }
 
-// FIXIT-L J logic duplicated from ProfilerPrinter
+// FIXIT-L logic duplicated from ProfilerPrinter
 static void print_single_entry(const View& v, unsigned n)
 {
     using std::chrono::duration_cast;
@@ -247,7 +247,7 @@ static void print_single_entry(const View& v, unsigned n)
     LogMessage("%s", ss.str().c_str());
 }
 
-// FIXIT-L J logic duplicated from ProfilerPrinter
+// FIXIT-L logic duplicated from ProfilerPrinter
 static void print_entries(std::vector<View>& entries, ProfilerSorter<View> sort, unsigned count)
 {
     std::ostringstream ss;
@@ -298,7 +298,7 @@ void show_rule_profiler_stats(const RuleProfilerConfig& config)
 
     auto sort = rule_stats::sorters[config.sort];
 
-    // FIXIT-L J do we eventually want to be able print rule totals, too?
+    // FIXIT-L do we eventually want to be able print rule totals, too?
     print_entries(entries, sort, config.count);
 }
 

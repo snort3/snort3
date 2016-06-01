@@ -24,7 +24,8 @@
 #include "framework/module.h"
 
 #ifdef UNIT_TEST
-#include <catch/catch.hpp>
+#include "catch/catch.hpp"
+#include "utils/util.h"
 #endif
 
 #define BASE_FILE (PERF_NAME ".csv")
@@ -63,12 +64,13 @@ class MockModule : public Module
 public:
     MockModule() : Module("mockery", "mockery")
     {
-        counts = (PegCount*)malloc(5 * sizeof(PegCount));
+        counts = (PegCount*)snort_alloc(5 * sizeof(PegCount));
+
         for( unsigned i = 0; i < 5; i++ )
             counts[i] = i;
     }
 
-    ~MockModule() { free(counts); }
+    ~MockModule() { snort_free(counts); }
 
     const PegInfo* get_pegs() const override { return pegs; }
 
@@ -77,7 +79,7 @@ public:
     void sum_stats() override {}
 
     void real_sum_stats() { Module::sum_stats(); }
-    
+
 private:
     PegCount* counts;
     PegInfo pegs[6] = {

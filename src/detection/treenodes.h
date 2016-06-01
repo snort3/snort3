@@ -56,7 +56,7 @@ struct OptFpList
 struct OtnState
 {
     // profiling
-    // FIXIT-L J factor the profiling stuff out
+    // FIXIT-L factor the profiling stuff out
     hr_duration elapsed = 0_ticks;
     hr_duration elapsed_match = 0_ticks;
     hr_duration elapsed_no_match = 0_ticks;

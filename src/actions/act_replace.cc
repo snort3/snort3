@@ -54,7 +54,7 @@ struct Replacement
 static THREAD_LOCAL Replacement* rpl;
 static THREAD_LOCAL int num_rpl = 0;
 
-void Replace_ResetQueue(void)
+void Replace_ResetQueue()
 {
     num_rpl = 0;
 }

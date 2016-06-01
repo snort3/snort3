@@ -28,8 +28,7 @@
 
 #include "main/snort_types.h"
 
-// FIXIT-L use bool or enum
-#define CB_SUCCESS   0
+#define CB_SUCCESS    0  // FIXIT-L use bool
 #define CB_FAIL      -1
 
 // Opaque buffer element type.  This would be defined by the application.
@@ -43,11 +42,8 @@ CircularBuffer* cbuffer_init(uint64_t size);
 
 void cbuffer_free(CircularBuffer* cb);
 
-// FIXIT-L use bool
-int cbuffer_is_full(CircularBuffer* cb);
-
-// FIXIT-L use bool
-int cbuffer_is_empty(CircularBuffer* cb);
+int cbuffer_is_full(CircularBuffer* cb); // FIXIT-L use bool
+int cbuffer_is_empty(CircularBuffer* cb); // FIXIT-L use bool
 
 // Returns number of elements in use
 uint64_t cbuffer_used(CircularBuffer* cb);
