@@ -22,7 +22,6 @@
 
 #include "normalize.h"
 #include "protocols/packet_manager.h"
-#include "utils/stats.h"
 
 struct NormalizerConfig;
 struct Packet;

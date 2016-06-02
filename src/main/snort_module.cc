@@ -275,9 +275,6 @@ static const Parameter s_params[] =
     { "--daq-list", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list packet acquisition modules available in optional dir, default is static modules only" },
 
-    { "--daq-mode", Parameter::PT_STRING, nullptr, nullptr,
-      "<mode> select the DAQ operating mode" },
-
     { "--daq-var", Parameter::PT_STRING, nullptr, nullptr,
       "<name=value> specify extra DAQ configuration variable" },
 

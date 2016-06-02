@@ -3211,7 +3211,7 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
 
             if (nb_len < sizeof(SmbNtHdr))
             {
-                DebugFormat(DEBUG_DCE_SMB, "NetBIOS SS len(%u) < SMB header len(%u).\n",
+                DebugFormat(DEBUG_DCE_SMB, "NetBIOS SS len(%zu) < SMB header len(%zu).\n",
                     sizeof(SmbNtHdr), sizeof(NbssHdr) + nb_len);
 
                 // FIXIT-M port segment check
@@ -3445,8 +3445,8 @@ void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
             /* It's something we want to inspect so make sure we have the full NBSS packet */
             if (data_len < data_need)
             {
-                DebugFormat(DEBUG_DCE_SMB, "Data len(%u) < "
-                    "NetBIOS SS header + NetBIOS len(%u). "
+                DebugFormat(DEBUG_DCE_SMB, "Data len(%hu) < "
+                    "NetBIOS SS header + NetBIOS len(%zu). "
                     "Queueing data.\n", data_len, sizeof(NbssHdr) + nb_len);
 
                 // FIXIT-M add segmentation code

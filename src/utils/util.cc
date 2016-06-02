@@ -839,7 +839,7 @@ void SetChroot(std::string directory, std::string& logstore)
 
     abslen = strlen(absdir);
 
-    DebugFormat(DEBUG_INIT, "ABS: %s %d\n", absdir, abslen);
+    DebugFormat(DEBUG_INIT, "ABS: %s %zu\n", absdir, abslen);
 
     /* make the chroot call */
     if (chroot(absdir) < 0)

@@ -61,7 +61,7 @@ OptFpList* AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode* otn)
         tmp->next = ofp;
     }
 
-    DebugFormat(DEBUG_CONFIGRULES,"Set OptTestFunc to %p\n", ro_eval_func);
+    DebugFormat(DEBUG_CONFIGRULES,"Set OptTestFunc to %p\n", (void*) ro_eval_func);
 
     ofp->OptTestFunc = ro_eval_func;
 

@@ -39,7 +39,6 @@
 using namespace std;
 
 #include "main.h"
-#include "main/analyzer.h"
 #include "main/thread.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -77,7 +76,7 @@ static const char* const pig_sig_names[PIG_SIG_MAX] =
 
 static Ring<PigSignal> sig_ring(4);
 static volatile sig_atomic_t child_ready_signal = 0;
-static THREAD_LOCAL volatile bool is_main_thread = false;
+static THREAD_LOCAL bool is_main_thread = false;
 
 typedef void (* sighandler_t)(int);
 static int add_signal(int sig, sighandler_t, int check_needed);
@@ -87,7 +86,7 @@ static bool exit_pronto = true;
 void set_quick_exit(bool b)
 { exit_pronto = b; }
 
-void init_main_thread_sig()
+void set_main_thread()
 { is_main_thread = true; }
 
 static void exit_log(const char* why)

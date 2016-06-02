@@ -54,7 +54,6 @@
 
 #include "ipobj.h"
 #include "main/snort_config.h"
-#include "main/analyzer.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet_manager.h"
 #include "protocols/packet.h"

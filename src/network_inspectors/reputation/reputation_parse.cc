@@ -348,7 +348,7 @@ static int AddIPtoList(sfip_t* ipAddr,INFO ipInfo_ptr, ReputationConfig* config)
 
     iRet = sfrt_flat_insert((void*)ipAddr, (unsigned char)ipAddr->bits, ipInfo_ptr, RT_FAVOR_ALL,
         config->iplist, &updateEntryInfo);
-    DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Unused memory: %d \n",segment_unusedmem()); );
+    DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Unused memory: %zu \n",segment_unusedmem()); );
 
     if (RT_SUCCESS == iRet)
     {

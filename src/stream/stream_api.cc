@@ -608,7 +608,7 @@ bool Stream::ignored_session(Flow* flow, Packet* p)
         (flow->ssn_state.ignore_direction & SSN_DIR_FROM_SERVER)) )
     {
         DebugFormat(DEBUG_STREAM_STATE,
-            "Stream Ignoring packet from %d. Session marked as ignore\n",
+            "Stream Ignoring packet from %s. Session marked as ignore\n",
             p->is_from_client() ? "sender" : "responder");
 
         DisableInspection();

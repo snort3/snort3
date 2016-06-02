@@ -189,7 +189,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     {
         DebugFormat(DEBUG_DECODE,
             "IP Len field is %d bytes bigger than captured length.\n"
-            "    (ip.len: %lu, cap.len: %lu)\n",
+            "    (ip.len: %u, cap.len: %u)\n",
             ip_len - raw.len, ip_len, raw.len);
 
         codec_event(codec, DECODE_IPV4_DGRAM_GT_CAPLEN);

@@ -96,7 +96,7 @@ static void plx_print(plx_t* p)
         int i;
         DebugFormat(DEBUG_PORTLISTS, "plx-n=%d\n", p->n);
         for (i=0; i<p->n; i++)
-            DebugFormat(DEBUG_PORTLISTS, "plx[%d]=%lu\n", i, p->p[i]);
+            DebugFormat(DEBUG_PORTLISTS, "plx[%d]=%p\n", i, p->p[i]);
         );
 }
 
@@ -473,9 +473,9 @@ static PortObject2* PortTableCompileMergePortObjectList2(
 
     DEBUG_WRAP(
         for (i=0; i<nsmall; i++)
-            DebugFormat(DEBUG_PORTLISTS, "posmall[%d]=%lu\n",i,posmall[i]);
+            DebugFormat(DEBUG_PORTLISTS, "posmall[%d]=%p\n",i,posmall[i]);
         for (i=0; i<nlarge; i++)
-            DebugFormat(DEBUG_PORTLISTS, "polarge[%d]=%lu\n",i,polarge[i]);
+            DebugFormat(DEBUG_PORTLISTS, "polarge[%d]=%p\n",i,polarge[i]);
         );
 
     /*

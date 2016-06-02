@@ -56,6 +56,7 @@
 #define DEBUG_SIDE_CHANNEL    0x0000000000004000LL
 #define DEBUG_CONNECTORS      0x0000000000008000LL
 #define DEBUG_HA              0x0000000000010000LL
+#define DEBUG_ANALYZER        0x0000000000020000LL
 
 // this env var uses the upper 32 bits of the flags:
 #define DEBUG_PLUGIN "SNORT_PP_DEBUG"
@@ -100,8 +101,7 @@ class SO_PUBLIC Debug
 public:
     static bool enabled(uint64_t flag);
 
-    static void print(
-        const char* file, int line, uint64_t dbg, const char* fmt, ...);
+    static void print(const char* file, int line, uint64_t dbg, const char* fmt, ...) __attribute__((format (printf, 4, 5)));
 
 private:
     static bool init;

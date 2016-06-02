@@ -78,6 +78,7 @@
 #include "protocols/udp.h"
 #include "protocols/icmp4.h"
 #include "search_engines/pat_stats.h"
+#include "utils/stats.h"
 
 THREAD_LOCAL ProfileStats rulePerfStats;
 THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
@@ -364,7 +365,7 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 
     // FIXIT-L maybe add a port test here ...
 
-    DebugFormat(DEBUG_DETECT, "[*] Rule Head %p\n", rtn);
+    DebugFormat(DEBUG_DETECT, "[*] Rule Head %p\n", (void*) rtn);
 
     if (!rtn->rule_func->RuleHeadFunc(p, rtn, rtn->rule_func, check_ports))
     {
@@ -377,7 +378,7 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 
     DebugMessage(DEBUG_DETECT,
         "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
-    DebugFormat(DEBUG_DETECT, "   => RTN %p Matched!\n", rtn);
+    DebugFormat(DEBUG_DETECT, "   => RTN %p Matched!\n", (void*) rtn);
     DebugMessage(DEBUG_DETECT,
         "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n");
     /*
@@ -1148,8 +1149,8 @@ static inline void fpEvalHeaderTcp(Packet* p, OTNX_MATCH_DATA* omd)
         return;
 
     DebugFormat(DEBUG_ATTRIBUTE,
-        "fpEvalHeaderTcp: sport=%d, dport=%d, src:%x, dst:%x, any:%x\n",
-        p->ptrs.sp,p->ptrs.dp,src,dst,any);
+        "fpEvalHeaderTcp: sport=%d, dport=%d, src:%p, dst:%p, any:%p\n",
+        p->ptrs.sp,p->ptrs.dp,(void*)src,(void*)dst,(void*)any);
 
     if ( dst )
         fpEvalHeaderSW(dst, p, 1, 0, 0, omd);
@@ -1169,8 +1170,8 @@ static inline void fpEvalHeaderUdp(Packet* p, OTNX_MATCH_DATA* omd)
         return;
 
     DebugFormat(DEBUG_ATTRIBUTE,
-        "fpEvalHeaderUdp: sport=%d, dport=%d, src:%x, dst:%x, any:%x\n",
-        p->ptrs.sp,p->ptrs.dp,src,dst,any);
+        "fpEvalHeaderUdp: sport=%d, dport=%d, src:%p, dst:%p, any:%p\n",
+        p->ptrs.sp,p->ptrs.dp,(void*)src,(void*)dst,(void*)any);
 
     if ( dst )
         fpEvalHeaderSW(dst, p, 1, 0, 0, omd) ;
@@ -1210,8 +1211,8 @@ static inline bool fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
 
         DebugFormat(DEBUG_ATTRIBUTE,
             "fpEvalHeaderSvc:targetbased-ordinal-lookup: "
-            "sport=%d, dport=%d, proto_ordinal=%d, proto=%d, src:%x, "
-            "file:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,proto,svc,file);
+            "sport=%d, dport=%d, proto_ordinal=%d, proto=%d, src:%p, "
+            "file:%p\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,proto,(void*)svc,(void*)file);
     }
     // FIXIT-P put alert service rules with file data fp in alert file group and
     // verfiy ports and service during rule eval to avoid searching file data 2x.

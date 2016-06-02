@@ -245,7 +245,7 @@ void ArpSpoof::eval(Packet* p)
     if ( ipme )
     {
         DebugFormat(DEBUG_INSPECTOR,
-            "MODNAME: LookupIPMacEntryByIP returned %p\n", ipme);
+            "MODNAME: LookupIPMacEntryByIP returned %p\n", (void*) ipme);
 
         auto cmp_ether_src = memcmp(eh->ether_src, ipme->mac_addr, 6);
         auto cmp_arp_sha = memcmp(ah->arp_sha, ipme->mac_addr, 6);

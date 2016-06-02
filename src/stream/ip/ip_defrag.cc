@@ -816,8 +816,8 @@ static void FragRebuild(FragTracker* ft, Packet* p)
             "   frag->size: %d\n"
             "   frag->prev: %p\n"
             "   frag->next: %p\n",
-            frag, frag->data, frag->offset,
-            frag->size, frag->prev, frag->next);
+            (void*) frag, frag->data, frag->offset,
+            frag->size, (void*) frag->prev, (void*) frag->next);
 
         /*
          * We somehow got a frag that had data beyond the calculated
@@ -985,7 +985,7 @@ static void delete_frag(Fragment* frag)
 static inline void delete_node(FragTracker* ft, Fragment* node)
 {
     DebugFormat(DEBUG_FRAG, "Deleting list node %p (p %p n %p)\n",
-        node, node->prev, node->next);
+        (void*) node, (void*) node->prev, (void*) node->next);
 
     if (node->prev)
     {
@@ -1484,8 +1484,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
 
         DebugFormat(DEBUG_FRAG,
             "%d right o %d s %d ptr %p prv %p nxt %p\n",
-            i, right->offset, right->size, right,
-            right->prev, right->next);
+            i, right->offset, right->size, (void*) right,
+            (void*) right->prev, (void*) right->next);
 
         if (right->offset >= frag_offset)
         {
@@ -2220,10 +2220,10 @@ int Defrag::add_frag_node(
         {
             DebugFormat(DEBUG_FRAG,
                 "Size: %d, offset: %d, len %d, "
-                "Prev: 0x%x, Next: 0x%x, This: 0x%x, Ord: %d, %s\n",
+                "Prev: 0x%p, Next: 0x%p, This: 0x%p, Ord: %d, %s\n",
                 newfrag->size, newfrag->offset,
-                newfrag->flen, newfrag->prev,
-                newfrag->next, newfrag, newfrag->ord,
+                newfrag->flen, (void*) newfrag->prev,
+                (void*) newfrag->next, (void*) newfrag, newfrag->ord,
                 newfrag->last ? "Last" : "");
             newfrag = newfrag->next;
         }
@@ -2279,8 +2279,8 @@ int Defrag::add_frag_node(
 
     DebugFormat(DEBUG_FRAG,
         "[*] Inserted new frag %d@%d ptr %p data %p prv %p nxt %p\n",
-        newfrag->size, newfrag->offset, newfrag, newfrag->data,
-        newfrag->prev, newfrag->next);
+        newfrag->size, newfrag->offset, (void*) newfrag, newfrag->data,
+        (void*) newfrag->prev, (void*) newfrag->next);
 
     /*
      * record the current size of the data in the fraglist
@@ -2352,8 +2352,8 @@ int Defrag::dup_frag_node(
 
     DebugFormat(DEBUG_FRAG,
         "[*] Inserted new frag %d@%d ptr %p data %p prv %p nxt %p\n",
-        newfrag->size, newfrag->offset, newfrag, newfrag->data,
-        newfrag->prev, newfrag->next);
+        newfrag->size, newfrag->offset, (void*) newfrag, newfrag->data,
+        (void*) newfrag->prev, (void*) newfrag->next);
 
     /*
      * record the current size of the data in the fraglist

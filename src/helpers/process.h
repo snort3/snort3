@@ -45,7 +45,7 @@ void help_signals();
 
 void daemonize();
 void set_quick_exit(bool);
-void init_main_thread_sig();
+void set_main_thread();
 
 void trim_heap();
 void log_malloc_info();

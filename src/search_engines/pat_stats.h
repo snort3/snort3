@@ -22,7 +22,6 @@
 
 #include "main/snort_types.h"
 #include "main/thread.h"
-#include "utils/stats.h"
 
 // pattern matcher queue statistics
 

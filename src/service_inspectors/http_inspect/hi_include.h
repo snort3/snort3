@@ -20,10 +20,10 @@
 #ifndef HI_INCLUDE_H
 #define HI_INCLUDE_H
 
+#include "framework/counts.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/thread.h"
-#include "utils/stats.h"
 
 #define HI_UNKNOWN_METHOD 1
 #define HI_POST_METHOD 2

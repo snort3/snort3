@@ -564,6 +564,9 @@ public:
 
     static bool address_space_agnostic()
     { return snort_conf->addressspace_agnostic; }
+
+    static bool change_privileges()
+    { return snort_conf->user_id != -1 || snort_conf->group_id != -1; }
 };
 
 #endif

@@ -134,7 +134,7 @@ int IpOptOption::eval(Cursor&, Packet* p)
     for ( const ip::IpOptions& opt : iter)
     {
         DebugFormat(DEBUG_IPS_OPTION, "testing pkt(%d):rule(%d)\n",
-            ipOptionData->ip_option,
+            static_cast<int>(ipOptionData->ip_option),
             static_cast<int>(opt.code));
 
         if (ipOptionData->ip_option == opt.code)

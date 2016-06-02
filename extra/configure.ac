@@ -1,5 +1,6 @@
 AC_INIT([snort_extra], [1.0.0-a4], [snort-team@cisco.com])
 AC_PREREQ(2.69)
+AC_CONFIG_MACRO_DIRS([m4])
 
 AM_INIT_AUTOMAKE([foreign])
 
@@ -14,7 +15,7 @@ AX_CXX_COMPILE_STDCXX_11
 PKG_CHECK_MODULES([SNORT3], [snort >= 3])
 
 # pkg magic doesn't work for custom vars
-CPPFLAGS="`pkg-config --variable=daq_cppflags snort` $(CPPFLAGS)"
+CPPFLAGS="`pkg-config --variable=daq_cppflags snort` ${CPPFLAGS}"
 
 AC_SUBST([SNORT3_CFLAGS])
 AC_SUBST([CPPFLAGS])

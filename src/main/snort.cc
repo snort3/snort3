@@ -321,11 +321,12 @@ void Snort::init(int argc, char** argv)
 //
 // FIXIT-L breaks DAQ_New()/Start() because packet threads won't be root when
 // opening iface
-void Snort::unprivileged_init()
+void Snort::drop_privileges()
 {
     if ( SnortConfig::create_pid_file() )
         CreatePidFile(snort_main_thread_pid);
 
+    /* FIXIT-M X - I have no idea if the chroot functionality actually works. */
     /* Drop the Chrooted Settings */
     if ( !snort_conf->chroot_dir.empty() )
         SetChroot(snort_conf->chroot_dir, snort_conf->log_dir);
@@ -334,6 +335,7 @@ void Snort::unprivileged_init()
     SetUidGid(SnortConfig::get_uid(), SnortConfig::get_gid());
 
     initializing = false;
+    privileges_dropped = true;
 }
 
 //-------------------------------------------------------------------------
@@ -440,6 +442,7 @@ void Snort::clean_exit(int)
 
 bool Snort::initializing = true;
 bool Snort::reloading = false;
+bool Snort::privileges_dropped = false;
 
 bool Snort::is_starting()
 { return initializing; }
@@ -447,11 +450,16 @@ bool Snort::is_starting()
 bool Snort::is_reloading()
 { return reloading; }
 
+bool Snort::has_dropped_privileges()
+{ return privileges_dropped; }
+
 void Snort::set_main_hook(MainHook_f f)
 { main_hook = f; }
 
 void Snort::setup(int argc, char* argv[])
 {
+    set_main_thread();
+
     OpenLogger();
 
     init(argc, argv);
@@ -467,13 +475,16 @@ void Snort::setup(int argc, char* argv[])
 
     /* Change groups */
     InitGroups(SnortConfig::get_uid(), SnortConfig::get_gid());
-    unprivileged_init();
 
     set_quick_exit(false);
+
+    TimeStart();
 }
 
 void Snort::cleanup()
 {
+    TimeStop();
+
     SFDAQ::term();
 
     if ( !SnortConfig::test_mode() )  // FIXIT-M ideally the check is in one place
@@ -591,7 +602,11 @@ void Snort::thread_rotate()
     SetRotatePerfFileFlag();
 }
 
-void Snort::thread_init(const char* intf)
+/*
+ * Perform all packet thread initialization actions that need to be taken with escalated privileges
+ * prior to starting the DAQ module.
+ */
+bool Snort::thread_init_privileged(const char* intf)
 {
     show_source(intf);
 
@@ -600,10 +615,18 @@ void Snort::thread_init(const char* intf)
     // FIXIT-M the start-up sequence is a little off due to dropping privs
     SFDAQInstance *daq_instance = new SFDAQInstance(intf);
     SFDAQ::set_local_instance(daq_instance);
-    // FIXIT-M X Should check return value from start() and bail on failure
-    if (daq_instance->configure(snort_conf))
-        daq_instance->start();
+    if (!daq_instance->configure(snort_conf))
+        return false;
 
+    return true;
+}
+
+/*
+ * Perform all packet thread initialization actions that can be taken with dropped privileges
+ * and/or must be called after the DAQ module has been started.
+ */
+void Snort::thread_init_unprivileged()
+{
     s_packet = new Packet(false);
     CodecManager::thread_init(snort_conf);
 

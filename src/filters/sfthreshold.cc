@@ -44,7 +44,6 @@
 #include <string.h>
 
 #include "sfthd.h"
-#include "main/analyzer.h"
 #include "main/snort_config.h"
 #include "utils/util.h"
 #include "parser/parser.h"

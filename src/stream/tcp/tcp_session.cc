@@ -52,7 +52,6 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
-#include "main/analyzer.h"
 #include "detection/detect.h"
 #include "detection/detection_util.h"
 #include "hash/sfxhash.h"
@@ -659,7 +658,7 @@ void TcpSession::update_session_on_rst(TcpSegmentDescriptor& tsd, bool flush)
 void TcpSession::update_paws_timestamps(TcpSegmentDescriptor& tsd)
 {
     // update PAWS timestamps
-    DebugFormat(DEBUG_STREAM_STATE, "PAWS update tsd.seq %lu > listener->r_win_base %lu\n",
+    DebugFormat(DEBUG_STREAM_STATE, "PAWS update tsd.seq %u > listener->r_win_base %u\n",
         tsd.get_seg_seq(), listener->r_win_base);
 
     if ( listener->normalizer->handling_timestamps()
@@ -995,7 +994,7 @@ void TcpSession::do_packet_analysis_post_checks(Packet* p)
         DisableInspection();
 
         DebugFormat(DEBUG_STREAM_STATE,
-            "Stream Ignoring packet from %d. Session marked as ignore\n",
+            "Stream Ignoring packet from %s. Session marked as ignore\n",
             p->is_from_server() ? "server" : "client");
     }
 }

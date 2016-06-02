@@ -897,7 +897,7 @@ static int sip_parse_cseq(SIPMsg* msg, const char* start, const char* end, SIP_P
         msg->cseqNameLen = end - msg->cseqName;
         method = SIP_FindMethod (config->methods, msg->cseqName, msg->cseqNameLen);
     }
-    DebugFormat(DEBUG_SIP, "CSeq number: %d, CSeqName: %.*s\n",
+    DebugFormat(DEBUG_SIP, "CSeq number: %lu, CSeqName: %.*s\n",
         msg->cseqnum, msg->cseqNameLen, msg->cseqName);
 
     if (NULL == method)
@@ -1091,7 +1091,7 @@ static int sip_parse_sdp_o(SIPMsg* msg, const char* start, const char* end)
     if (NULL == spaceIndex2)
         return SIP_PARSE_ERROR;
 
-    DebugFormat(DEBUG_SIP, "Session information: %.*s\n", spaceIndex - start, start);
+    DebugFormat(DEBUG_SIP, "Session information: %.*s\n", static_cast<int>(spaceIndex - start), start);
 
     //sessionId uses all elements from o: line except sessionId version
     msg->mediaSession->sessionID =  strToHash(start, spaceIndex - start);

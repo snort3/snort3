@@ -43,7 +43,6 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
-#include "main/analyzer.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "protocols/packet.h"

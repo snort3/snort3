@@ -132,7 +132,7 @@ void SegmentOverlapEditor::drop_old_segment()
 int SegmentOverlapEditor::generate_bad_segment_event()
 {
     DebugFormat(DEBUG_STREAM_STATE, "bad segment: overlap with invalid sequence number"
-        "(seq: %X  seq_end: %X overlap: %lu\n", seq, seq_end, overlap);
+        "(seq: %X  seq_end: %X overlap: %d\n", seq, seq_end, overlap);
     session->tel.set_tcp_event(EVENT_BAD_SEGMENT);
     inc_tcp_discards();
     return STREAM_INSERT_ANOMALY;

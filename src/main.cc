@@ -45,6 +45,7 @@ using namespace std;
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "main/snort_module.h"
 #include "main/thread_config.h"
 #include "framework/module.h"
@@ -77,11 +78,10 @@ using namespace std;
 
 static Swapper* swapper = NULL;
 
-static int exit_logged = 0;
+static int exit_requested = 0;
 static int main_exit_code = 0;
 static bool paused = false;
 
-static bool pause_enabled = false;
 #ifdef SHELL
 static bool shell_enabled = false;
 #endif
@@ -235,50 +235,75 @@ class Pig
 {
 public:
     Analyzer* analyzer;
+    bool awaiting_privilege_change = false;
 
-    Pig() { analyzer = nullptr; }
+    Pig() { analyzer = nullptr; athread = nullptr; idx = (unsigned) -1; }
 
     void set_index(unsigned index) { idx = index; }
 
-    void start(const char* source, Swapper*);
+    void prep(const char* source);
+    void start();
     void stop();
 
-    void execute(AnalyzerCommand);
+    bool attentive();
+    bool execute(AnalyzerCommand);
     void swap(Swapper*);
 
-    bool has_started() { return starts > 0; }
 private:
     std::thread* athread;
     unsigned idx;
-    unsigned starts = 0;
 };
 
-void Pig::start(const char* source, Swapper* ps)
+void Pig::prep(const char* source)
 {
-    LogMessage("++ [%u] %s\n", idx, source);
     analyzer = new Analyzer(idx, source);
-    athread = new std::thread(std::ref(*analyzer), ps);
-    starts++;
+}
+
+void Pig::start()
+{
+    if (!athread)
+    {
+        Swapper* ps = new Swapper(snort_conf, SFAT_GetConfig());
+        LogMessage("++ [%u] %s\n", idx, analyzer->get_source());
+        athread = new std::thread(std::ref(*analyzer), ps);
+    }
 }
 
 void Pig::stop()
 {
-    if ( !analyzer->is_done() )
-        analyzer->execute(AC_STOP);
+    if (analyzer)
+    {
+        if (athread)
+        {
+            if (analyzer->get_state() != Analyzer::State::STOPPED)
+                execute(AC_STOP);
 
-    athread->join();
-    delete athread;
+            athread->join();
+            delete athread;
+            athread = nullptr;
 
-    LogMessage("-- [%u] %s\n", idx, analyzer->get_source());
+            LogMessage("-- [%u] %s\n", idx, analyzer->get_source());
+        }
 
-    delete analyzer;
-    analyzer = nullptr;
+        delete analyzer;
+        analyzer = nullptr;
+    }
 }
 
-void Pig::execute(AnalyzerCommand ac)
+bool Pig::attentive()
 {
-    if ( analyzer )
+    return analyzer && athread && analyzer->get_current_command() == AC_NONE;
+}
+
+bool Pig::execute(AnalyzerCommand ac)
+{
+    if (attentive())
+    {
+        DebugFormat(DEBUG_ANALYZER, "[%u] Executing command %s\n", idx, Analyzer::get_command_string(ac));
         analyzer->execute(ac);
+        return true;
+    }
+    return false;
 }
 
 void Pig::swap(Swapper* ps)
@@ -299,7 +324,9 @@ static unsigned max_pigs = 0;
 
 static void broadcast(AnalyzerCommand ac)
 {
-    for ( unsigned idx = 0; idx < max_pigs; ++idx )
+    // FIXIT-H X - Broadcast should either wait for all pigs to be attentive
+    //              or queue commands for later processing.
+    for (unsigned idx = 0; idx < max_pigs; ++idx)
         pigs[idx].execute(ac);
 }
 
@@ -436,7 +463,7 @@ int main_dump_plugins(lua_State*)
 
 int main_quit(lua_State*)
 {
-    exit_logged = 1;
+    exit_requested = 1;
     request.respond("== stopping\n");
     broadcast(AC_STOP);
     return 0;
@@ -771,7 +798,7 @@ static bool set_mode()
     if ( snort_conf->run_flags & RUN_FLAG__PAUSE )
     {
         LogMessage("Paused; resume to start packet processing\n");
-        paused = pause_enabled = true;
+        paused = true;
     }
     else
         LogMessage("Commencing packet processing\n");
@@ -789,39 +816,24 @@ static bool set_mode()
     return true;
 }
 
-static inline bool dont_stop()
-{
-    if ( paused || Trough::has_next() )
-        return true;
-
-    if ( pause_enabled )
-    {
-        LogMessage("== pausing\n");
-        pause_enabled = false;
-        paused = true;
-        return true;
-    }
-    return false;
-}
-
-static const char* get_source()
-{
-    if ( Trough::has_next() )
-        return Trough::get_next();
-
-    return nullptr;
-}
-
 static void main_loop()
 {
-    unsigned idx = max_pigs, unborn_pigs = 0, swine = 0;
+    unsigned idx = max_pigs, swine = 0, pending_privileges = 0;
 
-    init_main_thread_sig();
+    if (SnortConfig::change_privileges())
+        pending_privileges = max_pigs;
 
+    // Preemptively prep all pigs in live traffic mode
     if (!SnortConfig::read_mode())
-        unborn_pigs = max_pigs;
+    {
+        for (swine = 0; swine < max_pigs; swine++)
+            pigs[swine].prep(SFDAQ::get_input_spec(snort_conf, idx));
+    }
 
-    while (!exit_logged && (swine || unborn_pigs || dont_stop()))
+    // Iterate over the drove, spawn them as allowed, and handle their deaths.
+    // FIXIT-L X - If an exit has been requested, we might want to have some mechanism
+    //              for forcing inconsiderate pigs to die in timely fashion.
+    while (swine || (!exit_requested && (paused || Trough::has_next())))
     {
         if ( ++idx >= max_pigs )
             idx = 0;
@@ -832,30 +844,61 @@ static void main_loop()
 
             if (pig.analyzer)
             {
-                if (pig.analyzer->is_done())
+                switch (pig.analyzer->get_state())
                 {
-                    pig.stop();
-                    --swine;
+                    case Analyzer::State::NEW:
+                        pig.start();
+                        break;
+
+                    case Analyzer::State::INITIALIZED:
+                        if (pig.analyzer->requires_privileged_start() && pending_privileges &&
+                            !Snort::has_dropped_privileges())
+                        {
+                            if (!pig.awaiting_privilege_change)
+                            {
+                                pig.awaiting_privilege_change = true;
+                                pending_privileges--;
+                            }
+                            if (pending_privileges)
+                                break;
+                            Snort::drop_privileges();
+                        }
+                        pig.execute(AC_START);
+                        break;
+
+                    case Analyzer::State::STARTED:
+                        if (!pig.analyzer->requires_privileged_start() && pending_privileges &&
+                            !Snort::has_dropped_privileges())
+                        {
+                            if (!pig.awaiting_privilege_change)
+                            {
+                                pig.awaiting_privilege_change = true;
+                                pending_privileges--;
+                            }
+                            if (pending_privileges)
+                                break;
+                            Snort::drop_privileges();
+                        }
+                        pig.execute(AC_RUN);
+                        break;
+
+                    case Analyzer::State::STOPPED:
+                        pig.stop();
+                        --swine;
+                        break;
+
+                    default:
+                        break;
                 }
             }
-            else if (!SnortConfig::read_mode())
+            else if (const char* src = Trough::get_next())
             {
-                if (!pig.has_started() && unborn_pigs)
-                {
-                    Swapper* swapper = new Swapper(snort_conf, SFAT_GetConfig());
-                    pig.start(SFDAQ::get_input_spec(snort_conf, idx), swapper);
-                    unborn_pigs--;
-                    ++swine;
-                    continue;
-                }
-            }
-            else if (const char* src = get_source())
-            {
-                Swapper* swapper = new Swapper(snort_conf, SFAT_GetConfig());
-                pig.start(src, swapper);
+                pig.prep(src);
                 ++swine;
                 continue;
             }
+            else if (pending_privileges)
+                pending_privileges--;
         }
         service_check();
     }
@@ -866,7 +909,6 @@ static void snort_main()
 #ifdef SHELL
     socket_init();
 #endif
-    TimeStart();
 
     max_pigs = ThreadConfig::get_instance_max();
     assert(max_pigs > 0);
@@ -894,7 +936,6 @@ static void snort_main()
     delete[] pigs;
     pigs = nullptr;
 
-    TimeStop();
 #ifdef SHELL
     socket_term();
 #endif

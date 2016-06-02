@@ -3,6 +3,32 @@ SnortConfig is used heavily throughout the code and should be updated so
 that builtin modules can attach state in a generic but readily accessible
 fashion.
 
+
+On Analyzer states and commands:
+
+The Analyzer life cycle is managed as a finite state machine.  It will start
+in the NEW state and will transition to the INITIALIZED state once the object
+is called as part of spinning off a packet thread.  Further transitions will
+be prompted by commands from the main thread.  From INITIALIZED, it will go to
+STARTED via the START command.  Similarly, it will go from STARTED to RUNNING
+via the RUN command.  Finally, it will end up in the STOPPED state when the
+Analyzer object has finished executing.  This can be prompted by the STOP
+command, but may also happen if the Analyzer finishes its operation for other
+reasons (such as encountering an error condition).  The one other state an
+Analyzer may be in is PAUSED, which will occur when it receives the PAUSE
+command while in the RUNNING state.  A subsequent RESUME command will switch
+it back from PAUSED to RUNNING.  One of the primary drivers of this state
+machine pattern is to allow the main thread to have synchronization points
+with the packet threads such that it can drop privileges at the correct time
+(based on the limitations of the selected DAQ module) prior to starting packet
+processing.
+
+Two other commands are currently available: SWAP and ROTATE.  The SWAP command
+will swap in a new configuration at the earliest convenience, and the ROTATE
+command will cause open per-thread output files to be closed, rotated, and
+reopened anew.
+
+
 Re THREAD_LOCAL defined in thread.h:
 
 In clang, this code compiles (std::array has, for all intents and purposes,
@@ -22,6 +48,7 @@ __declspec(thread) for windows, whenever we cross that bridge).
 
 
 Re Use of libhwloc in thread_config.cc:
+
 The Portable Hardware Locality (hwloc) library provides a nice,
 platform-independent abstraction layer for CPU and memory architecture
 information and management.  Currently it is being used as a cross-platform

@@ -104,7 +104,7 @@ uint32_t SFAT_NumberOfHosts()
 
 static void FreeApplicationEntry(ApplicationEntry* app)
 {
-    DebugFormat(DEBUG_ATTRIBUTE, "Freeing ApplicationEntry: 0x%x\n", app);
+    DebugFormat(DEBUG_ATTRIBUTE, "Freeing ApplicationEntry: 0x%p\n", (void*) app);
     snort_free(app);
 }
 
@@ -125,7 +125,7 @@ void FreeHostEntry(HostAttributeEntry* host)
     if (!host)
         return;
 
-    DebugFormat(DEBUG_ATTRIBUTE, "Freeing HostEntry: 0x%x\n", host);
+    DebugFormat(DEBUG_ATTRIBUTE, "Freeing HostEntry: 0x%p\n", (void*) host);
 
     /* Free the service list */
     if (host->services)

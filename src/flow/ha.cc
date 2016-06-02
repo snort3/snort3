@@ -481,7 +481,7 @@ bool HighAvailabilityManager::instantiate(PortBitSet* mod_ports, bool mod_use_da
 // Called prior to the starts of configuration in the main thread.
 void HighAvailabilityManager::pre_config_init()
 {
-    DebugFormat(DEBUG_HA,"HighAvailabilityManager::pre_config_init(): key size: %d\n",
+    DebugFormat(DEBUG_HA,"HighAvailabilityManager::pre_config_init(): key size: %zu\n",
         sizeof(FlowKey));
     ports = nullptr;
 }

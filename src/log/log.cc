@@ -36,7 +36,6 @@ using namespace std;
 
 #include "log_text.h"
 #include "main/snort_debug.h"
-#include "main/analyzer.h"
 #include "main/snort_config.h"
 #include "protocols/tcp.h"
 

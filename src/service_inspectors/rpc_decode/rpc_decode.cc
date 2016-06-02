@@ -200,7 +200,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
     DebugMessage(DEBUG_RPC,
         "STATEFUL: Start *******************************\n");
     DebugFormat(DEBUG_RPC,
-        "STATEFUL: Ssn: %p\n", rsdata);
+        "STATEFUL: Ssn: %p\n", (void*) rsdata);
 
     if (rsdata->ignore)
     {
@@ -636,7 +636,7 @@ static inline void RpcSsnSetInactive(RpcSsnData* rsdata, Packet*)
         return;
 
     DebugFormat(DEBUG_RPC, "STATEFUL: Deactivating session: %p\n",
-        rsdata);
+        (void*) rsdata);
 
     RpcSsnClean(rsdata);
 }
@@ -678,7 +678,7 @@ static RpcSsnData* RpcSsnDataNew(Packet* p)
 
     p->flow->set_application_data(fd);
 
-    DebugFormat(DEBUG_RPC, "STATEFUL: Created new session: " "%p\n", rsdata);
+    DebugFormat(DEBUG_RPC, "STATEFUL: Created new session: " "%p\n", (void*) rsdata);
     return rsdata;
 }
 

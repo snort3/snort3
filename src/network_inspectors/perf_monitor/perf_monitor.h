@@ -30,7 +30,6 @@
 #include "main/snort_debug.h"
 #include "main/thread.h"
 #include "protocols/packet.h"
-#include "utils/stats.h"
 
 extern PerfConfig* perfmon_config;  // FIXIT-M shouldn't be needed externally
 extern THREAD_LOCAL bool perfmon_rotate_perf_file;

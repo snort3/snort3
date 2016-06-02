@@ -361,8 +361,8 @@ static int BoGetDirection(Packet* p, const char* pkt_data)
         pkt_data++;
     }
 
-    DebugFormat(DEBUG_INSPECTOR, "Data length = %lu\n", len);
-    DebugFormat(DEBUG_INSPECTOR, "ID = %lu\n", id);
+    DebugFormat(DEBUG_INSPECTOR, "Data length = %u\n", len);
+    DebugFormat(DEBUG_INSPECTOR, "ID = %u\n", id);
 
     /* Do more len checking */
 

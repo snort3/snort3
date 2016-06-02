@@ -265,7 +265,7 @@ int TcpReassembler::add_reassembly_segment(TcpSegmentDescriptor& tsd, int16_t le
     tsd.get_pkt()->packet_flags |= PKT_STREAM_INSERT;
 
     DebugFormat(DEBUG_STREAM_STATE,
-        "added %d bytes on segment list @ seq: 0x%X, total %lu, %d segments queued\n",
+        "added %d bytes on segment list @ seq: 0x%X, total %u, %d segments queued\n",
         tsn->payload_size, tsn->seq, seg_bytes_logical, get_pending_segment_count(0));
 
 #ifdef SEG_TEST
@@ -287,7 +287,7 @@ int TcpReassembler::dup_reassembly_segment(TcpSegmentNode* left, TcpSegmentNode*
     queue_reassembly_segment(left, tsn);
 
     DebugFormat(DEBUG_STREAM_STATE,
-        "added %d bytes on segment list @ seq: 0x%X, total %lu, %d segments queued\n",
+        "added %d bytes on segment list @ seq: 0x%X, total %u, %d segments queued\n",
         tsn->payload_size, tsn->seq, seg_bytes_logical, get_pending_segment_count(0));
 
     *retSeg = tsn;
@@ -669,7 +669,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             stop_seq = seglist_base_seq + footprint;
         }
 
-        DebugFormat(DEBUG_STREAM_STATE, "Attempting to flush %lu bytes\n", footprint);
+        DebugFormat(DEBUG_STREAM_STATE, "Attempting to flush %u bytes\n", footprint);
 
         ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_sec = seglist.next->tv.tv_sec;
         ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_usec = seglist.next->tv.tv_usec;
@@ -1249,13 +1249,13 @@ void TcpReassembler::init_overlap_editor(TcpSegmentDescriptor& tsd)
         for ( tsn = seglist.head; tsn; tsn = tsn->next )
         {
             DEBUG_WRAP(
-                DebugFormat(DEBUG_STREAM_STATE, "tsn: %p  seq: 0x%X  size: %lu delta: %d\n",
-                tsn, tsn->seq, tsn->payload_size, ( tsn->seq - base_seq ) - last);
+                DebugFormat(DEBUG_STREAM_STATE, "tsn: %p  seq: 0x%X  size: %hu delta: %d\n",
+                (void*) tsn, tsn->seq, tsn->payload_size, ( tsn->seq - base_seq ) - last);
                 last = tsn->seq - base_seq;
                 lastptr = tsn;
 
                 DebugFormat(DEBUG_STREAM_STATE, "   lastptr: %p tsn->next: %p tsn->prev: %p\n",
-                lastptr, tsn->next, tsn->prev);
+                (void*) lastptr, (void*) tsn->next, (void*) tsn->prev);
                 );
 
             right = tsn;
@@ -1272,13 +1272,13 @@ void TcpReassembler::init_overlap_editor(TcpSegmentDescriptor& tsd)
         for ( tsn = seglist.tail; tsn; tsn = tsn->prev )
         {
             DEBUG_WRAP(
-                DebugFormat(DEBUG_STREAM_STATE, "tsn: %p  seq: 0x%X  size: %lu delta: %d\n",
-                tsn, tsn->seq, tsn->payload_size, ( tsn->seq - base_seq ) - last);
+                DebugFormat(DEBUG_STREAM_STATE, "tsn: %p  seq: 0x%X  size: %hu delta: %d\n",
+                (void*) tsn, tsn->seq, tsn->payload_size, ( tsn->seq - base_seq ) - last);
                 last = tsn->seq - base_seq;
                 lastptr = tsn;
 
                 DebugFormat(DEBUG_STREAM_STATE, "   lastptr: %p tsn->next: %p tsn->prev: %p\n",
-                lastptr, tsn->next, tsn->prev);
+                (void*) lastptr, (void*) tsn->next, (void*) tsn->prev);
                 );
 
             left = tsn;
@@ -1294,7 +1294,7 @@ void TcpReassembler::init_overlap_editor(TcpSegmentDescriptor& tsd)
     DebugMessage(DEBUG_STREAM_STATE, "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n");
     DebugMessage(DEBUG_STREAM_STATE, "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n");
     DebugFormat(DEBUG_STREAM_STATE, "left: %p:0x%X  right: %p:0x%X\n",
-        left, left ? left->seq : 0, right, right ? right->seq : 0);
+        (void*) left, left ? left->seq : 0, (void*) right, right ? right->seq : 0);
 
     init_soe(tsd, left, right);
 }

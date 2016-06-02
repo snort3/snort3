@@ -29,12 +29,14 @@
 enum AnalyzerCommand
 {
     AC_NONE,
+    AC_START,
+    AC_RUN,
     AC_STOP,
     AC_PAUSE,
     AC_RESUME,
     AC_ROTATE,
     AC_SWAP,
-    AC_MAX
+    AC_MAX = AC_SWAP
 };
 
 class Swapper;
@@ -43,27 +45,41 @@ class SFDAQInstance;
 class Analyzer
 {
 public:
+    enum class State {
+        NEW,
+        INITIALIZED,
+        STARTED,
+        RUNNING,
+        PAUSED,
+        STOPPED
+    };
     Analyzer(unsigned id, const char* source);
 
     void operator()(Swapper*);
 
-    bool is_done() { return done; }
+    State get_state() { return state; }
+    const char* get_state_string();
     uint64_t get_count() { return count; }
     const char* get_source() { return source; }
 
     // FIXIT-M add asynchronous response too
-    bool execute(AnalyzerCommand);
+    AnalyzerCommand get_current_command() { return command; }
+    void execute(AnalyzerCommand);
 
     void set_config(Swapper* ps) { swap = ps; }
     bool swap_pending() { return command == AC_SWAP; }
+    bool requires_privileged_start() { return privileged_start; }
+
+    static const char* get_command_string(AnalyzerCommand ac);
 
 private:
     void analyze();
-    bool handle(AnalyzerCommand);
+    bool handle_command();
 
 private:
+    volatile State state;
     volatile AnalyzerCommand command;
-    bool done;
+    volatile bool privileged_start;
     uint64_t count;
     unsigned id;
     const char* source;

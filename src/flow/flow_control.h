@@ -28,9 +28,9 @@
 #include <cstdint>
 
 #include "flow/flow_config.h"
+#include "framework/counts.h"
 #include "framework/decode_data.h"
 #include "framework/inspector.h"
-#include "utils/stats.h"
 
 class Flow;
 class FlowData;

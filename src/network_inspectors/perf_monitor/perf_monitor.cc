@@ -38,7 +38,6 @@
 #include "perf_monitor.h"
 #include "perf_module.h"
 
-#include "main/analyzer.h"
 #include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
@@ -241,16 +240,21 @@ void perf_monitor_idle_process()
 static bool ready_to_process(Packet* p)
 {
     static THREAD_LOCAL time_t sample_time = 0;
-    static THREAD_LOCAL time_t cur_time;
+    static THREAD_LOCAL time_t cur_time = 0;
     static THREAD_LOCAL uint64_t cnt = 0;
 
+    // FIXIT-M find a more graceful way to handle idle processing being called prior to receiving
+    // packets and issues with more general lack of synchronization between OS time and incoming
+    // packet timestamps.
     if (p)
     {
         cnt++;
         cur_time = p->pkth->ts.tv_sec;
     }
-    else
+    else if (cur_time)
         cur_time = time(nullptr);
+    else
+        return false;
 
     if (!sample_time)
         sample_time = cur_time;

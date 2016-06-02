@@ -163,10 +163,10 @@ void PacketManager::decode(
     // loop until the protocol id is no longer valid
     while (CodecManager::s_protocols[mapped_prot]->decode(raw, codec_data, p->ptrs))
     {
-        DebugFormat(DEBUG_DECODE, "Codec %s (protocol_id: %u:"
-            "ip header starts at: %p, length is %lu\n",
+        DebugFormat(DEBUG_DECODE, "Codec %s (protocol_id: %hu:"
+            "ip header starts at: %p, length is %d\n",
             CodecManager::s_protocols[mapped_prot]->get_name(),
-            codec_data.next_prot_id, pkt, codec_data.lyr_len);
+            static_cast<uint16_t>(codec_data.next_prot_id), pkt, codec_data.lyr_len);
 
         /*
          * We only want the layer immediately following SAVE_LAYER to have the
@@ -234,7 +234,7 @@ void PacketManager::decode(
     DebugFormat(DEBUG_DECODE, "Codec %s (protocol_id: %hu: ip header"
         " starts at: %p, length is %lu\n",
         CodecManager::s_protocols[mapped_prot]->get_name(),
-        prev_prot_id, pkt, (unsigned long)codec_data.lyr_len);
+        static_cast<uint16_t>(prev_prot_id), pkt, (unsigned long)codec_data.lyr_len);
 
     s_stats[mapped_prot + stat_offset]++;
 

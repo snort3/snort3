@@ -178,13 +178,16 @@ void SideChannelManager::thread_term()
     // First shutdown the connectors
     ConnectorManager::thread_term();
 
-    for ( auto& map : *tls_maps )
+    if (tls_maps)
     {
-        delete map->sc;
-        delete map;
-    }
+        for ( auto& map : *tls_maps )
+        {
+            delete map->sc;
+            delete map;
+        }
 
-    delete tls_maps;
+        delete tls_maps;
+    }
 }
 
 void SideChannelManager::term()

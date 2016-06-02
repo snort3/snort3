@@ -793,26 +793,6 @@ if test "x$DNET" = "xno" -a "x$DUMBNET" = "xno"; then
 fi
 
 #--------------------------------------------------------------------------
-# sfbpf 
-#--------------------------------------------------------------------------
-
-AC_CHECK_HEADERS(sfbpf.h,,[SFBPF_H="no"])
-
-if test "x$SFBPF_H" = "xno"; then
-    echo
-    echo "   ERROR:  sfbpf header not found"
-    exit
-fi
-
-AC_CHECK_LIB(sfbpf, sfbpf_compile, [LIBS="${LIBS} -lsfbpf"], [SFBPF="no"])
-
-if test "x$SFBPF" = "xno"; then
-    echo
-    echo "   ERROR:  sfbpf library not found"
-    exit
-fi
-
-#--------------------------------------------------------------------------
 # daq
 #--------------------------------------------------------------------------
 
@@ -875,6 +855,26 @@ else
         #AC_MSG_ERROR("Fatal!")
         exit 1
     fi
+fi
+
+#--------------------------------------------------------------------------
+# sfbpf 
+#--------------------------------------------------------------------------
+
+AC_CHECK_HEADERS(sfbpf.h,,[SFBPF_H="no"])
+
+if test "x$SFBPF_H" = "xno"; then
+    echo
+    echo "   ERROR:  sfbpf header not found"
+    exit
+fi
+
+AC_CHECK_LIB(sfbpf, sfbpf_compile, [LIBS="${LIBS} -lsfbpf"], [SFBPF="no"])
+
+if test "x$SFBPF" = "xno"; then
+    echo
+    echo "   ERROR:  sfbpf library not found"
+    exit
 fi
 
 #--------------------------------------------------------------------------

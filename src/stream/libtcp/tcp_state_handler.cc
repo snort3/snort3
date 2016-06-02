@@ -126,7 +126,7 @@ bool TcpStateHandler::default_state_action(TcpSegmentDescriptor& tsd, TcpStreamT
 {
 #ifdef DEBUG_MSGS
     DebugFormat(DEBUG_STREAM_STATE, "tsd: %p tracker: %p state: %u event: %u\n",
-        &tsd, &tracker, tracker.get_tcp_state(), tracker.get_tcp_event() );
+        (void*) &tsd, (void*) &tracker, tracker.get_tcp_state(), tracker.get_tcp_event() );
 #else
     UNUSED(tsd);
     UNUSED(tracker);

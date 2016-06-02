@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include "capture_module.h"
+#include "packet_capture.h"
 
 #include <pcap/pcap.h>
 #include <sfbpf.h>
@@ -79,7 +79,7 @@ public:
     PacketCapture(CaptureModule*);
 
     void eval(Packet*) override;
-    void tterm() override { capture_term(); };
+    void tterm() override { capture_term(); }
 
 protected:
     virtual bool capture_init();

@@ -290,8 +290,8 @@ void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
 
 void FlowControl::preemptive_cleanup()
 {
-    DebugFormat(DEBUG_FLOW, "doing preemptive cleanup for packet of type %d",
-            last_pkt_type);
+    DebugFormat(DEBUG_FLOW, "doing preemptive cleanup for packet of type %u",
+            (unsigned) last_pkt_type);
 
     // FIXIT-H is there a possibility of this looping forever?
     while ( memory::MemoryCap::over_threshold() )
@@ -802,7 +802,7 @@ char FlowControl::expected_flow(Flow* flow, Packet* p)
     if ( ignore )
     {
         DebugFormat(DEBUG_STREAM_STATE,
-            "Stream: Ignoring packet from %d. Marking flow marked as ignore.\n",
+            "Stream: Ignoring packet from %s. Marking flow marked as ignore.\n",
             p->packet_flags & PKT_FROM_CLIENT ? "sender" : "responder");
 
         flow->ssn_state.ignore_direction = ignore;
