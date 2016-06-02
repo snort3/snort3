@@ -33,7 +33,9 @@
 class SdOptionData
 {
 public:
-    SdOptionData(std::string pattern);
+    friend class SdPatternOption;
+
+    SdOptionData(std::string pattern, bool obfuscate);
 
     ~SdOptionData()
     { snort_free(pattern); }
@@ -44,6 +46,7 @@ public:
 private:
     char* pattern;
     int (*validate)(const uint8_t* buf, uint32_t buflen) = nullptr;
+    bool obfuscate_pii = false;
 };
 
 #endif

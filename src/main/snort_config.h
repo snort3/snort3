@@ -272,6 +272,7 @@ public:
     bool id_zero = false;
 
     bool stdin_rules = false;
+    bool obfuscate_pii = false;
 
     std::string pid_filename;
     std::string orig_log_dir;      /* set in case of chroot */

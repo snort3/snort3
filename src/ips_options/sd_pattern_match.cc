@@ -30,19 +30,26 @@
 #include "log/messages.h"
 #include "utils/util.h"
 
-SdOptionData::SdOptionData(std::string pattern_)
+SdOptionData::SdOptionData(std::string pattern_, bool obfuscate_)
 {
     if (pattern_ == "credit_card")
     {
         pattern_ = SD_CREDIT_PATTERN_ALL;
         validate = SdLuhnAlgorithm;
+        obfuscate_pii = obfuscate_;
     }
 
     else if (pattern_ == "us_social")
+    {
         pattern_ = SD_SOCIAL_PATTERN;
+        obfuscate_pii = obfuscate_;
+    }
 
     else if (pattern_ == "us_social_nodashes")
+    {
         pattern_ = SD_SOCIAL_NODASHES_PATTERN;
+        obfuscate_pii = obfuscate_;
+    }
 
     pattern = snort_strdup(pattern_.c_str());
     ExpandBrackets();

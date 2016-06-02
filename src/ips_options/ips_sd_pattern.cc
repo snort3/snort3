@@ -44,6 +44,7 @@ struct SdPatternConfig
 {
     std::string pii;
     unsigned threshold = 1;
+    bool obfuscate_pii;
 };
 
 static THREAD_LOCAL ProfileStats sd_pattern_perf_stats;
@@ -73,7 +74,7 @@ private:
 SdPatternOption::SdPatternOption(const SdPatternConfig& c) :
     IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE), config(c)
 {
-    opt = new SdOptionData(config.pii);
+    opt = new SdOptionData(config.pii, config.obfuscate_pii);
 }
 
 SdPatternOption::~SdPatternOption()
@@ -118,11 +119,14 @@ unsigned SdPatternOption::SdSearch(Cursor& c, Packet* p)
 
         if ( opt->match(buf, &match_len, buflen) )
         {
-            if ( !p->obfuscator )
-                p->obfuscator = new Obfuscator();
+            if ( opt->obfuscate_pii )
+            {
+                if ( !p->obfuscator )
+                    p->obfuscator = new Obfuscator();
 
-            uint32_t off = buf - start;
-            p->obfuscator->push(off, match_len);
+                uint32_t off = buf - start;
+                p->obfuscator->push(off, match_len - 4);
+            }
 
             buf += match_len;
             buflen -= match_len;
@@ -190,8 +194,9 @@ bool SdPatternModule::begin(const char*, int, SnortConfig*)
     return true;
 }
 
-bool SdPatternModule::set(const char*, Value& v, SnortConfig*)
+bool SdPatternModule::set(const char*, Value& v, SnortConfig* sc)
 {
+    config.obfuscate_pii = sc->obfuscate_pii;
     if ( v.is("~pattern") )
     {
         config.pii = v.get_string();

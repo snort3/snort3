@@ -717,6 +717,9 @@ static const Parameter output_params[] =
     { "obfuscate", Parameter::PT_BOOL, nullptr, "false",
       "obfuscate the logged IP addresses (same as -O)" },
 
+    { "obfuscate_pii", Parameter::PT_BOOL, nullptr, "false",
+        "Mask all but the last 4 characters of credit card and social security numbers" },
+
     { "show_year", Parameter::PT_BOOL, nullptr, "false",
       "include year in timestamp in the alert and log files (same as -y)" },
 
@@ -765,6 +768,9 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("obfuscate") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__OBFUSCATE);
+
+    else if ( v.is("obfuscate_pii") )
+        sc->obfuscate_pii = true;
 
     else if ( v.is("show_year") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__INCLUDE_YEAR);
