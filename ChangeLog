@@ -1,3 +1,12 @@
+16/06/03 - build 199
+
+-- add new http_inspect alerts abusive content-length and transfer-encodings
+-- add \b matching to sensitive data
+-- add obfuscation for sensitive data
+-- add support for unprivileged operation
+-- fix link with dynamic DAQ
+-- convert legacy allocations to memory manager for better memory profiling
+
 16/05/27 - build 198
 
 -- add double-decoding to new_http_inspect

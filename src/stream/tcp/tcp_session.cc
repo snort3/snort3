@@ -1099,10 +1099,17 @@ int TcpSession::process(Packet* p)
     (
         char flagbuf[9];
         CreateTCPFlagString(p->ptrs.tcph, flagbuf);
+
+        char src_addr[INET6_ADDRSTRLEN];
+        char dst_addr[INET6_ADDRSTRLEN];
+
+        sfip_ntop(p->ptrs.ip_api.get_src(), src_addr, sizeof(src_addr));
+        sfip_ntop(p->ptrs.ip_api.get_dst(), dst_addr, sizeof(dst_addr));
+
         DebugFormat((DEBUG_STREAM|DEBUG_STREAM_STATE),
-        "Got TCP Packet 0x%X:%d ->  0x%X:%d %s\nseq: 0x%X   ack:0x%X  dsize: %u\n",
-        p->ptrs.ip_api.get_src(), p->ptrs.sp, p->ptrs.ip_api.get_dst(), p->ptrs.dp, flagbuf,
-        p->ptrs.tcph->seq(), p->ptrs.tcph->ack(), p->dsize);
+            "Got TCP Packet %s:%d ->  %s:%d %s\nseq: 0x%X   ack:0x%X  dsize: %u\n",
+            src_addr, p->ptrs.sp, dst_addr, p->ptrs.dp, flagbuf,
+            p->ptrs.tcph->seq(), p->ptrs.tcph->ack(), p->dsize);
     );
 
     assert(flow->ssn_server);
