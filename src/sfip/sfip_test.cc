@@ -234,6 +234,8 @@ static FuncTest ftests[] =
 static int RunFunc(const char* func, const char* arg1, const char* arg2)
 {
     sfip_t ip1, ip2;
+    sfip_clear(ip1);
+    sfip_clear(ip2);
     int result = SFIP_FAILURE;
 
     if ( arg1 )
@@ -251,7 +253,7 @@ static int RunFunc(const char* func, const char* arg1, const char* arg2)
 
         result = strcmp(buf1, buf2) ? SFIP_FAILURE : SFIP_SUCCESS;
     }
-    else if ( !strcmp(func, "sfip_size") )
+    else if ( !strcmp(func, "sfip_size") and arg2 )
     {
         result = sfip_size(&ip1);
         result = (result == atoi(arg2)) ? SFIP_SUCCESS : SFIP_FAILURE;

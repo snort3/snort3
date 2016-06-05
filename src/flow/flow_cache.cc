@@ -247,8 +247,10 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
         auto flow = static_cast<Flow*>(hash_table->first());
         assert(flow); // holds true because hash_table->get_count() > 0
 
-        if ( flow == save_me or flow->was_blocked() )
+        if ( (save_me and flow == save_me) or flow->was_blocked() )
         {
+            // check for non-null save_me above to silence analyzer
+            // "called C++ object pointer is null" here
             if ( flow->was_blocked() )
                 ++blocks;
 
