@@ -34,8 +34,12 @@ class Flow;
 // NOTE: The type, masks, and count values must be in sync,
 typedef uint16_t FlowHAClientHandle;
 const FlowHAClientHandle SESSION_HA_CLIENT = 0x0000;
+const uint8_t SESSION_HA_CLIENT_INDEX = 0;
 const FlowHAClientHandle ALL_CLIENTS = 0xffff;
-const uint8_t MAX_CLIENTS = 16;
+// One client for each mask bit plus one 'automatic' session client
+//   client handle = (1<<(client_index-1)
+//   session client has handle of 0 and index of 0
+const uint8_t MAX_CLIENTS = 17;
 
 enum HAEvent
 {
@@ -125,12 +129,15 @@ public:
     virtual ~FlowHAClient() { }
     virtual bool consume(Flow*, HAMessage*) { return false; }
     virtual bool produce(Flow*, HAMessage*) { return false; }
-    virtual size_t get_message_size() { return 0; }
+    uint8_t get_message_size() { return header.length; }
+    bool fit(HAMessage*, uint8_t);
+    bool place(HAMessage*, uint8_t*, uint8_t);
     FlowHAClientHandle handle;  // Actual handle for the instance
-    static uint8_t s_handle_counter; // next handle to be assigned
+    HAClientHeader header;
 
 protected:
-    FlowHAClient(bool); // Arg == true for session client
+    FlowHAClient(uint8_t, bool);
+
 };
 
 // HighAvailability is instantiated for each packet-thread.

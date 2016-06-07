@@ -29,11 +29,9 @@
 class StreamHAClient : public FlowHAClient
 {
 public:
-    StreamHAClient() : FlowHAClient(true) { }
+    StreamHAClient() : FlowHAClient(sizeof(LwState), true) { }
     bool consume(Flow*, HAMessage*);
     bool produce(Flow*, HAMessage*);
-    size_t get_message_size()
-    { return sizeof(LwState); }
 
 private:
 };

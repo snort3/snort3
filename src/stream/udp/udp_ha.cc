@@ -31,15 +31,25 @@ void UdpHA::create_session(Flow*)
     DebugMessage(DEBUG_HA,"UdpHA::create_session)\n");
 }
 
-THREAD_LOCAL UdpHA* UdpHAManager::udp_ha;
+THREAD_LOCAL UdpHA* UdpHAManager::udp_ha = nullptr;
+
+void UdpHAManager::process_deletion(Flow* flow)
+{
+    if( udp_ha != nullptr )
+        udp_ha->process_deletion(flow);
+}
 
 void UdpHAManager::tinit()
 {
-    udp_ha = new UdpHA();
+    if ( HighAvailabilityManager::active() )
+        udp_ha = new UdpHA();
+    else
+        udp_ha = nullptr;
 }
 
 void UdpHAManager::tterm()
 {
-    delete udp_ha;
+    if ( udp_ha )
+        delete udp_ha;
 }
 

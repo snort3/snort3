@@ -56,16 +56,18 @@ void ProtocolHA::process_deletion(Flow* flow)
     HighAvailabilityManager::process_deletion(flow);
 }
 
-THREAD_LOCAL StreamHAClient* StreamHAManager::ha_client;
+THREAD_LOCAL StreamHAClient* StreamHAManager::ha_client = nullptr;
 
 void StreamHAManager::tinit()
 {
-    ha_client = new StreamHAClient();
+    if ( HighAvailabilityManager::active() )
+        ha_client = new StreamHAClient();
 }
 
 void StreamHAManager::tterm()
 {
-    delete ha_client;
+    if ( ha_client )
+        delete ha_client;
 }
 
 void StreamHAManager::process_deletion(Flow*)

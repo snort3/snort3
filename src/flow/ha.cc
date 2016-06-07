@@ -26,6 +26,7 @@
 #include "flow.h"
 #include "flow_key.h"
 #include "ha_module.h"
+#include "log/messages.h"
 #include "main/snort_debug.h"
 #include "packet_io/sfdaq.h"
 #include "profiler/profiler.h"
@@ -48,7 +49,7 @@ enum
     KEY_TYPE_IP4 = 2
 };
 
-typedef std::unordered_map<FlowHAClientHandle, FlowHAClient*> ClientMap;
+typedef std::array<FlowHAClient*, MAX_CLIENTS> ClientMap;
 
 THREAD_LOCAL SimpleStats ha_stats;
 THREAD_LOCAL ProfileStats ha_perf_stats;
@@ -57,10 +58,11 @@ static THREAD_LOCAL HighAvailability* ha;
 PortBitSet* HighAvailabilityManager::ports = nullptr;
 bool HighAvailabilityManager::use_daq_channel = false;
 struct timeval FlowHAState::min_session_lifetime;
-uint8_t FlowHAClient::s_handle_counter = 0;
+uint8_t s_handle_counter = 1; // stream client (index == 0) always exists
 
-static THREAD_LOCAL ClientMap* client_map;
-static THREAD_LOCAL FlowHAClient* s_session_client;
+// The [0] entry contains the stream client (always present)
+// Entries [1] to [MAX_CLIENTS-1] contain the optional clients
+static THREAD_LOCAL ClientMap* s_client_map;
 
 static inline bool is_ip6_key(const FlowKey* key)
 {
@@ -164,20 +166,50 @@ void FlowHAState::reset()
     pending = NONE_PENDING;
 }
 
-FlowHAClient::FlowHAClient(bool session_client)
+FlowHAClient::FlowHAClient(uint8_t length, bool session_client)
 {
     DebugMessage(DEBUG_HA,"FlowHAClient::FlowHAClient()\n");
+    if ( !s_client_map )
+        return;
+
+    header.length = length;
+
     if ( session_client )
     {
         handle = SESSION_HA_CLIENT;
-        s_session_client = this;
+        header.client = SESSION_HA_CLIENT_INDEX;
+        (*s_client_map)[0] = this;
     }
     else
     {
-        assert(s_handle_counter != MAX_CLIENTS);
-        handle = (1 << s_handle_counter);
+        if ( s_handle_counter >= MAX_CLIENTS )
+        {
+            ErrorMessage("Attempting to register too many FlowHAClients\n");
+            return;
+        }
+
+        header.client = s_handle_counter;
+        handle = (1 << (s_handle_counter-1));
+        (*s_client_map)[s_handle_counter] = this;
         s_handle_counter += 1;
     }
+}
+
+bool FlowHAClient::fit(HAMessage* msg, uint8_t size)
+{
+    return ( (int)(msg->cursor - msg->content()) < (int)(msg->content_length() - size) );
+}
+
+bool FlowHAClient::place(HAMessage* msg, uint8_t* data, uint8_t length)
+{
+    if ( fit(msg, length) )
+    {
+        memcpy(msg->cursor,data,(size_t)length);
+        msg->cursor += length;
+        return true;
+    }
+    else
+        return false;
 }
 
 // Write the key type, key length, and key into the message.
@@ -195,7 +227,7 @@ static uint8_t write_flow_key(Flow* flow, HAMessage* msg)
     {
         hdr->key_type = KEY_TYPE_IP6;
         memcpy(msg->cursor, key, KEY_SIZE_IP6);
-        msg->cursor = (uint8_t*)hdr + KEY_SIZE_IP6;
+        msg->cursor += KEY_SIZE_IP6;
         return KEY_SIZE_IP6;
     }
     else
@@ -262,15 +294,17 @@ static uint16_t calculate_msg_header_length(Flow* flow)
 // set of active clients.  The Session client is always present.
 static uint16_t calculate_update_msg_content_length(Flow* flow)
 {
-    uint16_t length = s_session_client->get_message_size();
+    assert(s_client_map);
+    assert((*s_client_map)[0]);
+    uint16_t length = ((*s_client_map)[0]->get_message_size() + sizeof(HAClientHeader));
     DebugFormat(DEBUG_HA,"HighAvailability::calculate_update_msg_content_length(): length: %d\n",
         length);
 
-    // Iterating through the hash map is OK to determine length.
-    for (auto& iter : * client_map )
-        if ( flow->ha_state->check_pending(iter.first) )
+    for (int i=1; i<s_handle_counter; i++)
+        if ( flow->ha_state->check_pending(1<<i) )
         {
-            length += iter.second->get_message_size();
+            assert((*s_client_map)[i]);
+            length += ((*s_client_map)[i]->get_message_size() + sizeof(HAClientHeader));
             DebugFormat(DEBUG_HA,
                 "HighAvailability::calculate_update_msg_content_length(): length: %d\n", length);
         }
@@ -289,19 +323,22 @@ static void write_msg_header(Flow* flow, HAEvent event, uint16_t content_length,
     write_flow_key(flow, msg);  // set cursor to just beyond key
 }
 
+static void write_update_msg_client( FlowHAClient* client, Flow* flow, HAMessage* msg)
+{
+    assert(client);
+    assert(msg);
+
+    client->place(msg,(uint8_t*)&(client->header),(uint8_t)sizeof(client->header));
+    client->produce(flow, msg);
+}
+
 static void write_update_msg_content(Flow* flow, HAMessage* msg)
 {
-    //  Always have the session portion
-    s_session_client->produce(flow,msg);
-
-    // Since I'm not sure that the hash map is deterministic, I'll
-    // step through the clients in order
-    for ( int i=0; i<FlowHAClient::s_handle_counter; i++ )
-    {
-        FlowHAClientHandle handle = 1<<i;
-        if ( flow->ha_state->check_pending(handle) )
-            client_map->find(handle)->second->produce(flow,msg);
-    }
+    assert(s_client_map);
+    
+    for ( int i=0; i<s_handle_counter; i++ )
+        if ( (i==SESSION_HA_CLIENT_INDEX) || flow->ha_state->check_pending(1<<i) )
+            write_update_msg_client((*s_client_map)[i],flow, msg);
 }
 
 static void consume_receive_delete_message(HAMessage* msg)
@@ -318,11 +355,42 @@ static void consume_receive_update_message(HAMessage* msg)
     // flow will be nullptr if/when the session does not exist in the caches
     Flow* flow = stream.get_session(&key);
 
-    assert(s_session_client);
+    assert(s_client_map);
 
-    // Update messages MUST include the session client component
-    if ( !s_session_client->consume(flow,msg) )
-        return;
+    // pointer to the last byte in the message
+    uint8_t* content_end = msg->content() + msg->content_length() - 1;
+
+    while( msg->cursor <= content_end )
+    {
+        // do we have sufficient message left to be able to have an HAClientHeader?
+        if ( (int)(content_end - msg->cursor) < (int)sizeof( HAClientHeader ) )
+        {
+            ErrorMessage("Consuming HA Update message - no HAClientHeader\n");
+            break;
+        }
+
+        HAClientHeader* header = (HAClientHeader*)msg->cursor;
+        msg->cursor += sizeof( HAClientHeader ); // step to the client content
+
+        if ( (header->client >= s_handle_counter) ||
+            ((*s_client_map)[header->client] == nullptr)  )
+        {
+            ErrorMessage("Consuming HA Update message - invalid client index\n");
+            break;
+        }
+
+        if ( (content_end - msg->cursor) < header->length )
+        {
+            ErrorMessage("Consuming HA Update memssage - message too short\n");
+            break;
+        }
+
+        if ( !(*s_client_map)[header->client]->consume(flow,msg) )
+        {
+            ErrorMessage("Consuming HA Update message - error from client consume()\n");
+            break;
+        }
+    }
 }
 
 static void consume_receive_message(HAMessage* msg)
@@ -377,7 +445,9 @@ HighAvailability::HighAvailability(PortBitSet* ports, bool)
                 break;
             }
 
-    client_map = new ClientMap;
+    s_client_map = new ClientMap;
+    for ( int i=0; i<MAX_CLIENTS; i++ )
+        (*s_client_map)[i] = nullptr;
 
     // Only looking for side channel processing - FIXIT-H
 }
@@ -391,7 +461,7 @@ HighAvailability::~HighAvailability()
         sc->unregister_receive_handler();
     }
 
-    delete client_map;
+    delete s_client_map;
 }
 
 void HighAvailability::receive_handler(SCMessage* sc_msg)

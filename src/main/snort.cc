@@ -646,9 +646,9 @@ void Snort::thread_init_unprivileged()
     EventManager::open_outputs();
     IpsManager::setup_options();
     ActionManager::thread_init(snort_conf);
-    InspectorManager::thread_init(snort_conf);
     SideChannelManager::thread_init();
-    HighAvailabilityManager::thread_init();
+    HighAvailabilityManager::thread_init(); // must be before InspectorManager::thread_init();
+    InspectorManager::thread_init(snort_conf);
 }
 
 void Snort::thread_term()
