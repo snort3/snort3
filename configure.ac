@@ -23,7 +23,7 @@
 # initialization
 #--------------------------------------------------------------------------
 
-AC_INIT([snort], [3.0.0-a4], [snort-team@cisco.com])
+AC_INIT([snort],[3.0.0-a4],[snort-team@cisco.com])
 AC_PREREQ([2.69])
 
 AC_CONFIG_SRCDIR([src/main.h])
@@ -41,7 +41,6 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_LIBTOOL
 AC_C_BIGENDIAN
 AC_C_INLINE
 
@@ -321,7 +320,7 @@ fi
 AM_CONDITIONAL(LINUX, [test "x$linux" = "xyes"])
 
 AC_ARG_ENABLE(static-ips-actions,
-    AC_HELP_STRING([--disable-static-ips-actions],[do not include ips actions in binary ]),
+    AS_HELP_STRING([--disable-static-ips-actions],[do not include ips actions in binary ]),
     static_ips_actions="$enableval", static_ips_actions="yes")
 
 AM_CONDITIONAL(STATIC_IPS_ACTIONS, [test "x$static_ips_actions" = "xyes"])
@@ -331,7 +330,7 @@ if test "x$static_ips_actions" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(static-inspectors,
-    AC_HELP_STRING([--disable-static-inspectors],[do not include inspectors in binary ]),
+    AS_HELP_STRING([--disable-static-inspectors],[do not include inspectors in binary ]),
     static_inspectors="$enableval", static_inspectors="yes")
 
 AM_CONDITIONAL(STATIC_INSPECTORS, [test "x$static_inspectors" = "xyes"])
@@ -341,7 +340,7 @@ if test "x$static_inspectors" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(static-loggers,
-    AC_HELP_STRING([--disable-static-loggers],[do not include loggers in binary ]),
+    AS_HELP_STRING([--disable-static-loggers],[do not include loggers in binary ]),
     static_loggers="$enableval", static_loggers="yes")
 
 AM_CONDITIONAL(STATIC_LOGGERS, [test "x$static_loggers" = "xyes"])
@@ -351,7 +350,7 @@ if test "x$static_loggers" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(static-ips-options,
-    AC_HELP_STRING([--disable-static-ips-options],[do not include ips options in binary ]),
+    AS_HELP_STRING([--disable-static-ips-options],[do not include ips options in binary ]),
     static_ips_options="$enableval", static_ips_options="yes")
 
 AM_CONDITIONAL(STATIC_IPS_OPTIONS, [test "x$static_ips_options" = "xyes"])
@@ -361,7 +360,7 @@ if test "x$static_ips_options" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(static-search-engines,
-    AC_HELP_STRING([--disable-static-search-engines],[do not include search engines in binary ]),
+    AS_HELP_STRING([--disable-static-search-engines],[do not include search engines in binary ]),
     static_search_engines="$enableval", static_search_engines="yes")
 
 AM_CONDITIONAL(STATIC_SEARCH_ENGINES, [test "x$static_search_engines" = "xyes"])
@@ -371,7 +370,7 @@ if test "x$static_search_engines" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(static-codecs,
-    AC_HELP_STRING([--disable-static-codecs],[do not include codecs in binary ]),
+    AS_HELP_STRING([--disable-static-codecs],[do not include codecs in binary ]),
     static_codecs="$enableval", static_codecs="yes")
 
 AM_CONDITIONAL(STATIC_CODECS, [test "x$static_codecs" = "xyes"])
@@ -381,7 +380,7 @@ if test "x$static_codecs" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(shell,
-    AC_HELP_STRING([--enable-shell],[enable command line shell support]),
+    AS_HELP_STRING([--enable-shell],[enable command line shell support]),
     enable_shell="$enableval", enable_shell="no")
 
 if test "x$enable_shell" = "xyes"; then
@@ -389,7 +388,7 @@ if test "x$enable_shell" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(large-pcap,
-    AC_HELP_STRING([--enable-large-pcap],[enable support for pcaps larger than 2 GB]),
+    AS_HELP_STRING([--enable-large-pcap],[enable support for pcaps larger than 2 GB]),
     enable_large_pcap="$enableval", enable_large_pcap="no")
 
 if test "x$enable_large_pcap" = "xyes"; then
@@ -397,8 +396,7 @@ if test "x$enable_large_pcap" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(debug-msgs,
-    AC_HELP_STRING([--enable-debug-msgs],
-        [enable debug printing options (bugreports and developers only)]),
+    AS_HELP_STRING([--enable-debug-msgs],[enable debug printing options (bugreports and developers only)]),
     enable_debug_msgs="$enableval", enable_debug_msgs="no")
 
 AM_CONDITIONAL(DEBUG_MSGS, test "x$enable_debug_msgs" = "xyes")
@@ -409,7 +407,7 @@ if test "x$enable_debug_msgs" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(debug,
-    AC_HELP_STRING([--enable-debug],[enable debugging options (bugreports and developers only)]),
+    AS_HELP_STRING([--enable-debug],[enable debugging options (bugreports and developers only)]),
     enable_debug="$enableval", enable_debug="no")
 
 if test "x$enable_debug" = "xyes"; then
@@ -421,7 +419,7 @@ else
 fi
 
 AC_ARG_ENABLE(gdb,
-    AC_HELP_STRING([--enable-gdb],[enable gdb debugging information]),
+    AS_HELP_STRING([--enable-gdb],[enable gdb debugging information]),
     enable_gdb="$enableval", enable_gdb="no")
 
 if test "x$enable_gdb" = "xyes"; then
@@ -430,7 +428,7 @@ if test "x$enable_gdb" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(gprof-profile,
-    AC_HELP_STRING([--enable-gprof-profile],[enable gprof profiling output (developers only)]),
+    AS_HELP_STRING([--enable-gprof-profile],[enable gprof profiling output (developers only)]),
     enable_gprof_profile="$enableval", enable_gprof_profile="no")
 
 # FIXIT-L need to check for g++ not gcc
@@ -443,7 +441,7 @@ if test "x$enable_gprof_profile" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(corefiles,
-    AC_HELP_STRING([--disable-corefiles],[prevent Snort from generating core files]),
+    AS_HELP_STRING([--disable-corefiles],[prevent Snort from generating core files]),
     enable_corefiles="$enableval", enable_corefiles="yes")
 
 if test "x$enable_corefiles" = "xno"; then
@@ -451,7 +449,7 @@ if test "x$enable_corefiles" = "xno"; then
 fi
 
 AC_ARG_ENABLE(address-sanitizer,
-    AC_HELP_STRING([--enable-address-sanitizer],[enable AddressSanitizer support]),
+    AS_HELP_STRING([--enable-address-sanitizer],[enable AddressSanitizer support]),
     [
         ASAN_CCXFLAGS="-fsanitize=address -fno-omit-frame-pointer"
     ])
@@ -504,7 +502,7 @@ CXXFLAGS="$CXX11_THREAD_CXXFLAGS $CXXFLAGS"
 #--------------------------------------------------------------------------
 
 AC_ARG_ENABLE(unit_tests,
-    AC_HELP_STRING([--enable-unit-tests],[build unit tests]),
+    AS_HELP_STRING([--enable-unit-tests],[build unit tests]),
     enable_unit_tests="$enableval", enable_unit_tests="no")
 
 have_cpputest_pc="no"
@@ -528,7 +526,7 @@ AM_CONDITIONAL(BUILD_CPPUTESTS, test "x$have_cpputest_pc" = "xyes")
 #--------------------------------------------------------------------------
 
 AC_ARG_ENABLE(piglet,
-    AC_HELP_STRING([--enable-piglet],[build piglet test harness]),
+    AS_HELP_STRING([--enable-piglet],[build piglet test harness]),
     enable_piglet="$enableval", enable_piglet="no")
 
 if test "x$enable_piglet" = "xyes"; then
@@ -542,7 +540,7 @@ AM_CONDITIONAL(ENABLE_PIGLET, test "x$enable_piglet" = "xyes")
 #--------------------------------------------------------------------------
 
 AC_ARG_WITH(pcap_includes,
-    AC_HELP_STRING([--with-pcap-includes=DIR],[libpcap include directory]),
+    AS_HELP_STRING([--with-pcap-includes=DIR],[libpcap include directory]),
     [with_libpcap_includes="$withval"],[with_libpcap_includes="no"])
 
 if test "x$with_libpcap_includes" != "xno"; then
@@ -550,7 +548,7 @@ if test "x$with_libpcap_includes" != "xno"; then
 fi
 
 AC_ARG_WITH(pcap_libraries,
-    AC_HELP_STRING([--with-pcap-libraries=DIR],[libpcap library directory]),
+    AS_HELP_STRING([--with-pcap-libraries=DIR],[libpcap library directory]),
     [with_libpcap_libraries="$withval"],[with_libpcap_libraries="no"])
 
 if test "x$with_libpcap_libraries" != "xno"; then
@@ -603,7 +601,7 @@ if test "${have_hwloc_pkgconfig}" = "yes" ; then
 fi
 
 AC_ARG_WITH(hwloc_includes,
-    AC_HELP_STRING([--with-hwloc-includes=DIR],[hwloc include directory]),
+    AS_HELP_STRING([--with-hwloc-includes=DIR],[hwloc include directory]),
     [with_hwloc_includes="$withval"],[with_hwloc_includes="no"])
 
 if test "x$with_hwloc_includes" != "xno"; then
@@ -611,7 +609,7 @@ if test "x$with_hwloc_includes" != "xno"; then
 fi
 
 AC_ARG_WITH(hwloc_libraries,
-    AC_HELP_STRING([--with-hwloc-libraries=DIR],[hwloc library directory]),
+    AS_HELP_STRING([--with-hwloc-libraries=DIR],[hwloc library directory]),
     [with_hwloc_libraries="$withval"],[with_hwloc_libraries="no"])
 
 if test "x$with_hwloc_libraries" != "xno"; then
@@ -638,7 +636,7 @@ if test "${have_luajit_pkgconfig}" = "yes" ; then
 fi
 
 AC_ARG_WITH(luajit_includes,
-    AC_HELP_STRING([--with-luajit-includes=DIR],[luajit include directory]),
+    AS_HELP_STRING([--with-luajit-includes=DIR],[luajit include directory]),
     [with_luajit_includes="$withval"],[with_luajit_includes="no"])
 
 if test "x$with_luajit_includes" != "xno"; then
@@ -646,7 +644,7 @@ if test "x$with_luajit_includes" != "xno"; then
 fi
 
 AC_ARG_WITH(luajit_libraries,
-    AC_HELP_STRING([--with-luajit-libraries=DIR],[luajit library directory]),
+    AS_HELP_STRING([--with-luajit-libraries=DIR],[luajit library directory]),
     [with_luajit_libraries="$withval"],[with_luajit_libraries="no"])
 
 if test "x$with_luajit_libraries" != "xno"; then
@@ -679,7 +677,7 @@ if test "${have_libpcre_pkgconfig}" = "yes" ; then
 fi
 
 AC_ARG_WITH(pcre_includes,
-    AC_HELP_STRING([--with-pcre-includes=DIR],[libpcre include directory]),
+    AS_HELP_STRING([--with-pcre-includes=DIR],[libpcre include directory]),
     [with_libpcre_includes="$withval"],[with_libpcre_includes="no"])
 
 if test "x$with_libpcre_includes" != "xno"; then
@@ -689,7 +687,7 @@ elif test "${have_libpcre_pkgconfig}" = "no"; then
 fi
 
 AC_ARG_WITH(pcre_libraries,
-    AC_HELP_STRING([--with-pcre-libraries=DIR],[libpcre library directory]),
+    AS_HELP_STRING([--with-pcre-libraries=DIR],[libpcre library directory]),
     [with_libpcre_libraries="$withval"],[with_libpcre_libraries="no"])
 
 if test "x$with_libpcre_libraries" != "xno"; then
@@ -751,7 +749,7 @@ fi
 #--------------------------------------------------------------------------
 
 AC_ARG_WITH(dnet_includes,
-    AC_HELP_STRING([--with-dnet-includes=DIR],[libdnet include directory]),
+    AS_HELP_STRING([--with-dnet-includes=DIR],[libdnet include directory]),
     [with_dnet_includes="$withval"],[with_dnet_includes="no"])
 
 if test "x$with_dnet_includes" != "xno"; then
@@ -761,7 +759,7 @@ else
 fi
 
 AC_ARG_WITH(dnet_libraries,
-    AC_HELP_STRING([--with-dnet-libraries=DIR],[libdnet library directory]),
+    AS_HELP_STRING([--with-dnet-libraries=DIR],[libdnet library directory]),
     [with_dnet_libraries="$withval"],[with_dnet_libraries="no"])
 
 if test "x$with_dnet_libraries" != "xno"; then
@@ -797,7 +795,7 @@ fi
 #--------------------------------------------------------------------------
 
 AC_ARG_WITH(daq_includes,
-    AC_HELP_STRING([--with-daq-includes=DIR],[DAQ include directory]),
+    AS_HELP_STRING([--with-daq-includes=DIR],[DAQ include directory]),
     [with_daq_includes="$withval"],[with_daq_includes="no"])
 
 if test "x$with_daq_includes" != "xno"; then
@@ -806,7 +804,7 @@ if test "x$with_daq_includes" != "xno"; then
 fi
 
 AC_ARG_WITH(daq_libraries,
-    AC_HELP_STRING([--with-daq-libraries=DIR],[DAQ library directory]),
+    AS_HELP_STRING([--with-daq-libraries=DIR],[DAQ library directory]),
     [with_daq_libraries="$withval"],[with_daq_libraries="no"])
 
 if test "x$with_daq_libraries" != "xno"; then
@@ -814,7 +812,7 @@ if test "x$with_daq_libraries" != "xno"; then
 fi
 
 AC_ARG_ENABLE(static_daq,
-    AC_HELP_STRING([--disable-static-daq],[link static DAQ modules.]),
+    AS_HELP_STRING([--disable-static-daq],[link static DAQ modules.]),
     enable_static_daq="$enableval", enable_static_daq="yes")
 
 if test "$DLLIB" != "no"; then
@@ -905,7 +903,7 @@ LIBS="$LIBS -lz"
 #--------------------------------------------------------------------------
 
 AC_ARG_WITH(lzma_includes,
-    AC_HELP_STRING([--with-lzma-includes=DIR],[liblzma include directory]),
+    AS_HELP_STRING([--with-lzma-includes=DIR],[liblzma include directory]),
     [with_lzma_includes="$withval"],[with_lzma_includes="no"])
 
 if test "x$with_lzma_includes" != "xno"; then
@@ -913,7 +911,7 @@ if test "x$with_lzma_includes" != "xno"; then
 fi
 
 AC_ARG_WITH(lzma_libraries,
-    AC_HELP_STRING([--with-lzma-libraries=DIR],[liblzma library directory]),
+    AS_HELP_STRING([--with-lzma-libraries=DIR],[liblzma library directory]),
     [with_lzma_libraries="$withval"],[with_lzma_libraries="no"])
 
 if test "x$with_lzma_libraries" != "xno"; then
@@ -935,7 +933,7 @@ fi
 #--------------------------------------------------------------------------
 
 AC_ARG_WITH(openssl_includes,
-    AC_HELP_STRING([--with-openssl-includes=DIR],[openssl include directory]),
+    AS_HELP_STRING([--with-openssl-includes=DIR],[openssl include directory]),
     [with_openssl_includes="$withval"],[with_openssl_includes="no"])
 
 if test "x$with_openssl_includes" != "xno"; then
@@ -943,7 +941,7 @@ if test "x$with_openssl_includes" != "xno"; then
 fi
 
 AC_ARG_WITH(openssl_libraries,
-    AC_HELP_STRING([--with-openssl-libraries=DIR],[openssl library directory]),
+    AS_HELP_STRING([--with-openssl-libraries=DIR],[openssl library directory]),
     [with_openssl_libraries="$withval"],[with_openssl_libraries="no"])
 
 if test "x$with_openssl_libraries" != "xno"; then
@@ -967,7 +965,7 @@ fi
 enable_intel_soft_cpm="yes"
 
 AC_ARG_WITH(intel_soft_cpm_includes,
-    AC_HELP_STRING([--with-intel-soft-cpm-includes=DIR],[Intel Soft CPM include directory]),
+    AS_HELP_STRING([--with-intel-soft-cpm-includes=DIR],[Intel Soft CPM include directory]),
     [with_intel_soft_cpm_includes="$withval"],[with_intel_soft_cpm_includes="no"])
 
 if test "x$with_intel_soft_cpm_includes" != "xno"; then
@@ -977,7 +975,7 @@ else
 fi
 
 AC_ARG_WITH(intel_soft_cpm_libraries,
-    AC_HELP_STRING([--with-intel-soft-cpm-libraries=DIR],[Intel Soft CPM library directory]),
+    AS_HELP_STRING([--with-intel-soft-cpm-libraries=DIR],[Intel Soft CPM library directory]),
     [with_intel_soft_cpm_libraries="$withval"],[with_intel_soft_cpm_libraries="no"])
 
 if test "x$with_intel_soft_cpm_libraries" != "xno"; then
@@ -1007,7 +1005,7 @@ if test "${have_hyperscan_pkgconfig}" = "yes" ; then
 fi
 
 AC_ARG_WITH(hyperscan_includes,
-    AC_HELP_STRING([--with-hyperscan-includes=DIR],[libhs include directory]),
+    AS_HELP_STRING([--with-hyperscan-includes=DIR],[libhs include directory]),
     [with_hyperscan_includes="$withval"],[with_hyperscan_includes="no"])
 
 if test "x$with_hyperscan_includes" != "xno"; then
@@ -1015,7 +1013,7 @@ if test "x$with_hyperscan_includes" != "xno"; then
 fi
 
 AC_ARG_WITH(hyperscan_libraries,
-    AC_HELP_STRING([--with-hyperscan-libraries=DIR],[libhs library directory]),
+    AS_HELP_STRING([--with-hyperscan-libraries=DIR],[libhs library directory]),
     [with_hyperscan_libraries="$withval"],[with_hyperscan_libraries="no"])
 
 if test "x$with_hyperscan_libraries" != "xno"; then

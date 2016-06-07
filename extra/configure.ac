@@ -1,12 +1,11 @@
-AC_INIT([snort_extra], [1.0.0-a4], [snort-team@cisco.com])
-AC_PREREQ(2.69)
+AC_INIT([snort_extra],[1.0.0-a4],[snort-team@cisco.com])
+AC_PREREQ([2.69])
 AC_CONFIG_MACRO_DIRS([m4])
 
 AM_INIT_AUTOMAKE([foreign])
 
 AC_PROG_CC([clang gcc])
 AC_PROG_CXX([clang++ g++])
-AC_PROG_LIBTOOL
 
 LT_INIT
 
