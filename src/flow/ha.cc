@@ -21,7 +21,7 @@
 
 #include <assert.h>
 #include <functional>
-#include <unordered_map>
+#include <array>
 
 #include "flow.h"
 #include "flow_key.h"

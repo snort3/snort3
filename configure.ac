@@ -11,8 +11,8 @@
 # vars
 # enables
 # unit tests
-# required libs (pcap, luajit, pcre, dnet, daq, zlib)
-# optional libs (pthreads, lzma, ssl / crypto, intel soft cpm)
+# required libs (pcap, luajit, pcre, dnet, daq, zlib, hwloc)
+# optional libs (hyperscan, pthreads, lzma, ssl / crypto, intel soft cpm)
 # outputs
 #
 # if you add an AC_DEFINE() for a symbol that appears in an exported
