@@ -38,7 +38,6 @@
 
 #include <stdint.h>
 
-#include "ftpp_include.h"
 #include "ftpp_ui_config.h"
 #include "ftp_client.h"
 #include "ftp_server.h"

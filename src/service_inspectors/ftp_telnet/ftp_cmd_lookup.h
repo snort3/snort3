@@ -32,7 +32,6 @@
 #ifndef FTP_CMD_LOOKUP_H
 #define FTP_CMD_LOOKUP_H
 
-#include "ftpp_include.h"
 #include "ftpp_ui_config.h"
 
 int ftp_cmd_lookup_init(CMD_LOOKUP** CmdLookup);

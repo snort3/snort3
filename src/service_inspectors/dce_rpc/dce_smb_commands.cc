@@ -21,9 +21,10 @@
 
 // Smb commands processing
 
-#include "dce_smb.h"
-#include "dce_smb_utils.h"
+#include "dce_smb_commands.h"
+
 #include "dce_smb_module.h"
+
 #include "main/snort_debug.h"
 #include "utils/util.h"
 #include "detection/detect.h"

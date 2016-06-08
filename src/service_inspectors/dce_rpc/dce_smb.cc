@@ -1470,7 +1470,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
 }
 
 // Temporary command function placeholder, until all of them are ported
-DCE2_Ret DCE2_SmbComFuncPlaceholder(DCE2_SmbSsnData*, const SmbNtHdr*,
+static DCE2_Ret DCE2_SmbComFuncPlaceholder(DCE2_SmbSsnData*, const SmbNtHdr*,
     const DCE2_SmbComInfo*, const uint8_t*, uint32_t)
 {
     return DCE2_RET__SUCCESS;
@@ -1518,7 +1518,7 @@ static bool DCE2_SmbAutodetect(Packet* p)
     return false;
 }
 
-void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
+static void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
 {
     if (ssd == nullptr)
         return;
@@ -1781,7 +1781,7 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
  * Returns: None
  *
  ********************************************************************/
-void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
+static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
 {
     DebugMessage(DEBUG_DCE_SMB, "Processing SMB packet.\n");
     dce2_smb_stats.smb_pkts++;
@@ -2022,7 +2022,7 @@ void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
  * Returns: None
  *
  ********************************************************************/
-void DCE2_SmbInitGlobals()
+static void DCE2_SmbInitGlobals()
 {
     memset(&smb_wcts, 0, sizeof(smb_wcts));
     memset(&smb_bccs, 0, sizeof(smb_bccs));

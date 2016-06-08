@@ -22,7 +22,7 @@
 #ifndef DCE_SMB_COMMANDS_H
 #define DCE_SMB_COMMANDS_H
 
-#include "dce_smb.h"
+#include "dce_smb_utils.h"
 
 DCE2_Ret DCE2_SmbOpen(DCE2_SmbSsnData*, const SmbNtHdr*,
     const DCE2_SmbComInfo*, const uint8_t*, uint32_t);

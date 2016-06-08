@@ -44,16 +44,6 @@ AC_PROG_MAKE_SET
 AC_C_BIGENDIAN
 AC_C_INLINE
 
-# g++ 4.7 will pass the c++11 check but is not sufficient
-if test "x$CXX" = "xg++" ; then
-    if `$CXX -dumpversion | awk '{exit $1<4.8?0:1}'` ; then
-       echo
-       echo "   ERROR:  g++ >= 4.8 is required"
-       echo
-       exit 1
-    fi
-fi
-
 CFLAGS="-std=gnu99 $CFLAGS"
 
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])

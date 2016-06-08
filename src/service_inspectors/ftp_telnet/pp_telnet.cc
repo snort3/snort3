@@ -47,13 +47,9 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-
-#include "telnet_module.h"
 #include "ftpp_return_codes.h"
+#include "telnet_module.h"
 
-#include "main/snort_debug.h"
-#include "stream/stream_api.h"
 #include "detection/detection_util.h"
 
 #define NUL 0x00

@@ -38,7 +38,6 @@
 
 #include "ftpp_ui_config.h"
 #include "protocols/packet.h"
-#include "framework/bits.h"
 
 #define BUF_SIZE 1024
 

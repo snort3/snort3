@@ -38,7 +38,6 @@
 #ifndef FTPP_UI_CONFIG_H
 #define FTPP_UI_CONFIG_H
 
-#include "ftpp_include.h"
 #include "framework/bits.h"
 #include "sfip/sfip_t.h"
 #include "sfrt/sfrt.h"

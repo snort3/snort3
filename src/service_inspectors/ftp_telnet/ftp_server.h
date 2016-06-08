@@ -33,8 +33,6 @@
  * inspection.
  */
 
-#include "ftpp_include.h"
-
 typedef struct s_FTP_SERVER_RSP
 {
     char* rsp_line;

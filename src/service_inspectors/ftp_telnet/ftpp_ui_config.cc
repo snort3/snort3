@@ -33,15 +33,11 @@
  */
 #include "ftpp_ui_config.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
- 
-#include "utils/util.h"
-#include "ftpp_return_codes.h"
-#include "ftp_cmd_lookup.h"
 #include "ftp_bounce_lookup.h"
+#include "ftp_cmd_lookup.h"
+#include "ftpp_return_codes.h"
+
+#include "utils/util.h"
 
 FTP_CLIENT_PROTO_CONF::FTP_CLIENT_PROTO_CONF()
 {

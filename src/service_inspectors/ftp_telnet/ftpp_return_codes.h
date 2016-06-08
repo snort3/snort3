@@ -35,8 +35,6 @@
 #ifndef FTPP_RETURN_CODES_H
 #define FTPP_RETURN_CODES_H
 
-#include "ftpp_include.h"
-
 #define FTPP_BOOL_FALSE 0
 #define FTPP_SUCCESS    0
 

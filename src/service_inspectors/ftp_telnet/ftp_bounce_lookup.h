@@ -32,7 +32,6 @@
 #ifndef FTP_BOUNCE_LOOKUP_H
 #define FTP_BOUNCE_LOOKUP_H
 
-#include "ftpp_include.h"
 #include "ftpp_ui_config.h"
 
 int ftp_bounce_lookup_init(BOUNCE_LOOKUP** BounceLookup);

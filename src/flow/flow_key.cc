@@ -261,9 +261,6 @@ void FlowKey::init(
 uint32_t FlowKey::hash(SFHASHFCN*, unsigned char* d, int)
 {
     uint32_t a,b,c;
-    uint32_t offset = 0;
-    uint32_t tmp = 0;
-    uint32_t tmp2 = 0;
 
     a = *(uint32_t*)d;         /* IPv6 lo[0] */
     b = *(uint32_t*)(d+4);     /* IPv6 lo[1] */
@@ -283,16 +280,10 @@ uint32_t FlowKey::hash(SFHASHFCN*, unsigned char* d, int)
 
     mix(a,b,c);
 
-    offset=36;
-    a += *(uint32_t*)(d+offset);   /* vlan, protocol, & version */
-    tmp = *(uint32_t*)(d+offset+4);
-    if ( tmp )
-    {
-        b += tmp;   /* mpls label */
-    }
-    offset += 8;    /* skip past vlan/proto/ipver & mpls label */
-    tmp2 = *(uint32_t*)(d+offset); /* after offset that has been moved */
-    c += tmp2; /* address space id and 16bits of zero'd pad */
+    a += *(uint32_t*)(d+36);    /* vlan tag, packet type, & version */
+    b += *(uint32_t*)(d+40);    /* mpls label */
+    c += *(uint32_t*)(d+44);    /* address space id and 16bits of zero'd pad */
+
     finalize(a,b,c);
 
     return c;

@@ -19,7 +19,6 @@
 // telnet_module.cc author Russ Combs <rucombs@cisco.com>
 
 #include "telnet_module.h"
-#include <sstream>
 
 using namespace std;
 

@@ -23,33 +23,14 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-#include <sys/types.h>
-
 #include "ftp_module.h"
 #include "ftpp_si.h"
-#include "ftpp_ui_config.h"
-#include "ftpp_return_codes.h"
-#include "ftp_cmd_lookup.h"
-#include "ft_main.h"
-#include "ftp_parse.h"
-#include "ftp_print.h"
-#include "ftp_splitter.h"
-#include "pp_ftp.h"
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "stream/stream_api.h"
-#include "file_api/file_api.h"
+#include "detection/detection_util.h"
 #include "file_api/file_service.h"
 #include "file_api/file_flows.h"
-#include "parser/parser.h"
-#include "framework/inspector.h"
-#include "detection/detection_util.h"
-#include "protocols/tcp.h"
 #include "profiler/profiler.h"
+#include "utils/util.h"
 
 #define s_name "ftp_data"
 

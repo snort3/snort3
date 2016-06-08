@@ -44,15 +44,10 @@
  */
 #include "ftpp_si.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-# include <ctype.h>
-
-#include "ftpp_return_codes.h"
-#include "ftpp_ui_config.h"
 #include "ft_main.h"
-#include "stream/stream_api.h"
+#include "ftpp_return_codes.h"
+
+#include "sfip/sf_ip.h"
 #include "utils/util.h"
 
 unsigned FtpFlowData::flow_id = 0;

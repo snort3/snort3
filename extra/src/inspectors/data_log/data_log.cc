@@ -104,7 +104,7 @@ public:
     DataLog(std::string s) { key = s; }
 
     void show(SnortConfig*) override;
-    void eval(Packet*) override { };
+    void eval(Packet*) override { }
 
     bool configure(SnortConfig*) override
     {

@@ -40,23 +40,16 @@
 #include "config.h"
 #endif
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-
-#include "pp_telnet.h"
-#include "ftp_module.h"
 #include "ft_main.h"
-#include "ftpp_return_codes.h"
-#include "ftp_cmd_lookup.h"
 #include "ftp_bounce_lookup.h"
+#include "ftp_cmd_lookup.h"
+#include "ftp_module.h"
+#include "ftpp_return_codes.h"
+#include "pp_telnet.h"
 
-#include "main/snort_debug.h"
-#include "stream/stream_api.h"
 #include "detection/detection_util.h"
-#include "sfip/sfip_t.h"
 #include "file_api/file_service.h"
+#include "sfip/sf_ip.h"
 
 #ifndef MAXHOSTNAMELEN /* Why doesn't Windows define this? */
 #define MAXHOSTNAMELEN 256

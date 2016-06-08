@@ -33,9 +33,6 @@
  * to access client inspection.
  */
 
-#include <sys/types.h>
-#include "ftpp_include.h"
-
 struct FTP_CLIENT_REQ
 {
     const char* cmd_line;

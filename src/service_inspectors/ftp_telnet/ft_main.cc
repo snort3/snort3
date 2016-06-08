@@ -44,29 +44,14 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <errno.h>
-
 #include "ftpp_return_codes.h"
-#include "ftpp_ui_config.h"
 #include "ftp_cmd_lookup.h"
 #include "ftp_bounce_lookup.h"
-#include "ftpp_si.h"
-#include "pp_telnet.h"
-#include "pp_ftp.h"
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "stream/stream_api.h"
-#include "profiler/profiler.h"
-#include "detection/detection_util.h"
-#include "parser/parser.h"
-#include "utils/sfsnprintfappend.h"
+#include "detection/detect.h"
 #include "framework/data_bus.h"
-#include "sfip/sf_ip.h"
+#include "log/messages.h"
+#include "utils/util.h"
 
 void CleanupFTPCMDConf(void* ftpCmd)
 {
