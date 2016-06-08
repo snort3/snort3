@@ -411,6 +411,7 @@ void Snort::term()
     SideChannelManager::term();
     ModuleManager::term();
     PluginManager::release_plugins();
+    ScriptManager::release_scripts();
 }
 
 void Snort::clean_exit(int)

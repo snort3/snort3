@@ -206,6 +206,7 @@ NORETURN static void show_help(SnortConfig* sc, const char* val, HelpType ht)
     }
     ModuleManager::term();
     PluginManager::release_plugins();
+    ScriptManager::release_scripts();
     delete snort_conf;
     exit(0);
 }
