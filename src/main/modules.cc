@@ -53,6 +53,7 @@
 #include "search_engines/pat_stats.h"
 #include "side_channel/side_channel_module.h"
 #include "sfip/sf_ip.h"
+#include "sfip/sf_ipvar.h"
 #include "target_based/sftarget_data.h"
 #include "target_based/snort_protocols.h"
 
@@ -1440,7 +1441,9 @@ static const Parameter rate_filter_params[] =
 class RateFilterModule : public Module
 {
 public:
-    RateFilterModule() : Module("rate_filter", rate_filter_help, rate_filter_params, true) { }
+    RateFilterModule() : Module("rate_filter", rate_filter_help, rate_filter_params, true)
+    { thdx.applyTo = nullptr; }
+    ~RateFilterModule();
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
@@ -1448,6 +1451,12 @@ public:
 private:
     tSFRFConfigNode thdx;
 };
+
+RateFilterModule::~RateFilterModule()
+{
+    if ( thdx.applyTo )
+        sfvar_free(thdx.applyTo);
+}
 
 bool RateFilterModule::set(const char*, Value& v, SnortConfig*)
 {
