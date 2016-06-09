@@ -37,6 +37,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+#include <fstream>
+#include <sstream>
 
 #ifdef LINUX
 #include <sys/syscall.h>
@@ -78,7 +80,7 @@ int DisplayBanner();
 int gmt2local(time_t);
 void ts_print(register const struct timeval*, char*);
 void CheckLogDir();
-char* read_infile(const char* key, const char* fname);
+std::string read_infile(const char* key, const char* fname);
 void CleanupProtoNames();
 void CreatePidFile(pid_t);
 void ClosePidFile();

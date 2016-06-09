@@ -461,63 +461,43 @@ void CleanupProtoNames()
  * Returns: the processed BPF string
  *
  ****************************************************************************/
-char* read_infile(const char* key, const char* fname)
+std::string read_infile(const char* key, const char* fname)
 {
-    int fd, cc;
-    char* cp, * cmt;
+    int fd = open(fname, O_RDONLY);
+
     struct stat buf;
-
-    fd = open(fname, O_RDONLY);
-
-    if (fd < 0)
-    {
-        ParseError("can't open %s = %s: %s", key, fname, get_error(errno));
-        return nullptr;
-    }
-
+    
     if (fstat(fd, &buf) < 0)
     {
         ParseError("can't stat %s: %s", fname, get_error(errno));
-        return nullptr;
+        return "";
     }
 
-    cp = (char*)snort_calloc(((u_int)buf.st_size + 1), sizeof(char));
-
-    cc = read(fd, cp, (int)buf.st_size);
-
-    if (cc < 0)
+    //check that its a regular file and not a directory or special file    
+    if (!S_ISREG(buf.st_mode) ) 
     {
-        ParseError("read %s: %s", fname, get_error(errno));
-        snort_free(cp);
-        return nullptr;
+        ParseError("not a regular file: %s", fname);
+        return "";
     }
 
-    if (cc != buf.st_size)
+    std::string line;
+    std::ifstream bpf_file(fname);
+  
+    if (bpf_file.is_open())
     {
-        ParseError("short read %s (%d != %d)", fname, cc, (int)buf.st_size);
-        snort_free(cp);
-        return nullptr;
+        std::stringstream file_content;
+        file_content << bpf_file.rdbuf();
+        line = file_content.str();
+        
+        bpf_file.close();
     }
-
-    cp[(int)buf.st_size] = '\0';
-
-    close(fd);
-
-    /* Treat everything upto the end of the line as a space
-     *  so that we can put comments in our BPF filters
-     */
-
-    while ((cmt = strchr(cp, '#')) != NULL)
+    else
     {
-        while (*cmt != '\r' && *cmt != '\n' && *cmt != '\0')
-        {
-            *cmt++ = ' ';
-        }
+        ParseError("can't open file %s = %s: %s", key, fname, get_error(errno));
+    	return "";	
     }
 
-    /** LogMessage("BPF filter file: %s\n", fname); **/
-
-    return(cp);
+    return(line);
 }
 
 /* Guaranteed to be '\0' terminated even if truncation occurs.
