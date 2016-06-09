@@ -19,14 +19,14 @@
 // side_channel_test.cc author Ed Borgoyn <eborgoyn@cisco.com>
 // unit test main
 
-#include <CppUTest/CommandLineTestRunner.h>
-#include <CppUTest/TestHarness.h>
-
 #include "side_channel/side_channel.h"
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "managers/connector_manager.h"
+
+#include <CppUTest/CommandLineTestRunner.h>
+#include <CppUTest/TestHarness.h>
 
 class TestConnectorMsgHandle : public ConnectorMsgHandle
 {

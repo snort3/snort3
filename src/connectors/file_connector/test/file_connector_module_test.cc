@@ -19,13 +19,13 @@
 // file_connector_module_test.cc author Ed Borgoyn <eborgoyn@cisco.com>
 // unit test main
 
-#include <CppUTest/CommandLineTestRunner.h>
-#include <CppUTest/TestHarness.h>
-
 #include "connectors/file_connector/file_connector_module.h"
 #include "profiler/profiler.h"
 
 #include "main/snort_debug.h"
+
+#include <CppUTest/CommandLineTestRunner.h>
+#include <CppUTest/TestHarness.h>
 
 THREAD_LOCAL SimpleStats file_connector_stats;
 THREAD_LOCAL ProfileStats file_connector_perfstats;

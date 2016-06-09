@@ -19,13 +19,13 @@
 // file_connector_test.cc author Ed Borgoyn <eborgoyn@cisco.com>
 // unit test main
 
-#include <CppUTest/CommandLineTestRunner.h>
-#include <CppUTest/TestHarness.h>
-
 #include "connectors/file_connector/file_connector.h"
 #include "connectors/file_connector/file_connector_module.h"
 
 #include "main/snort_debug.h"
+
+#include <CppUTest/CommandLineTestRunner.h>
+#include <CppUTest/TestHarness.h>
 
 extern const BaseApi* file_connector;
 ConnectorApi* fc_api = nullptr;

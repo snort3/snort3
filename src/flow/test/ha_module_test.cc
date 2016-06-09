@@ -19,15 +19,15 @@
 // ha_module_test.cc author Ed Borgoyn <eborgoyn@cisco.com>
 // unit test main
 
-#include <CppUTest/CommandLineTestRunner.h>
-#include <CppUTest/TestHarness.h>
-
 #include "flow/ha.h"
 #include "flow/ha_module.h"
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
+
+#include <CppUTest/CommandLineTestRunner.h>
+#include <CppUTest/TestHarness.h>
 
 void LogMessage(const char*,...) { }
 

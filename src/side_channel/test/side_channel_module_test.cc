@@ -19,15 +19,15 @@
 // side_channel_module_test.cc author Ed Borgoyn <eborgoyn@cisco.com>
 // unit test main
 
-#include <CppUTest/CommandLineTestRunner.h>
-#include <CppUTest/TestHarness.h>
-
 #include "side_channel/side_channel.h"
 #include "side_channel/side_channel_module.h"
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
+
+#include <CppUTest/CommandLineTestRunner.h>
+#include <CppUTest/TestHarness.h>
 
 THREAD_LOCAL SimpleStats sc_stats;
 THREAD_LOCAL ProfileStats sc_perf_stats;
