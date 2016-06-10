@@ -73,7 +73,7 @@ void SdOptionData::ExpandBrackets()
     {
         if ( (bracket_index > pattern) && (*(bracket_index-1) == '\\') )
         {
-            // Ignore escaped brackets 
+            // Ignore escaped brackets
             bracket_index = strchr(bracket_index+1, '{');
             continue;
         }
@@ -145,11 +145,11 @@ bool SdOptionData::match(const uint8_t * const buf, uint16_t * const buf_index, 
 
     while ( *buf_index < buflen && pattern[pattern_index] != '\0' && node_match )
     {
-        char const * const pc = &pattern[pattern_index]; 
+        char const * const pc = &pattern[pattern_index];
 
         if ( pc[0] == '\\' && pc[1] != '\0' )
         {
-match__rescan: 
+match__rescan:
             pattern_index++;
             switch ( pattern[pattern_index] )
             {
@@ -194,7 +194,7 @@ match__rescan:
                 // \b : match a numeric boundary
                 case 'b':
                     node_match = !isdigit((int)buf[*buf_index]);
-                    if ( !node_match && *buf_index == 0 
+                    if ( !node_match && *buf_index == 0
                       && pattern[pattern_index+1] != '\0'
                       && pattern[pattern_index+2] != '\0' )
                     {
@@ -232,12 +232,12 @@ match__rescan:
     {
         char const * const pc = &pattern[pattern_index];
 
-        // '\b' can match EOM 
+        // '\b' can match EOM
         if ( !(pc[0] == '\\' && pc[1] == 'b') )
         {
             if( (pc[0] == '\0') )
                 return true;
-                
+
             else
                 return false;
         }

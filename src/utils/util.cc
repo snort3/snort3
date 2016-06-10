@@ -464,17 +464,16 @@ void CleanupProtoNames()
 std::string read_infile(const char* key, const char* fname)
 {
     int fd = open(fname, O_RDONLY);
-
     struct stat buf;
-    
+
     if (fstat(fd, &buf) < 0)
     {
         ParseError("can't stat %s: %s", fname, get_error(errno));
         return "";
     }
 
-    //check that its a regular file and not a directory or special file    
-    if (!S_ISREG(buf.st_mode) ) 
+    //check that its a regular file and not a directory or special file
+    if (!S_ISREG(buf.st_mode) )
     {
         ParseError("not a regular file: %s", fname);
         return "";
@@ -482,13 +481,13 @@ std::string read_infile(const char* key, const char* fname)
 
     std::string line;
     std::ifstream bpf_file(fname);
-  
+
     if (bpf_file.is_open())
     {
         std::stringstream file_content;
         file_content << bpf_file.rdbuf();
         line = file_content.str();
-        
+
         bpf_file.close();
     }
     else
@@ -497,7 +496,7 @@ std::string read_infile(const char* key, const char* fname)
     	return "";	
     }
 
-    return(line);
+    return line;
 }
 
 /* Guaranteed to be '\0' terminated even if truncation occurs.

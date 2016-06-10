@@ -335,7 +335,7 @@ static void write_update_msg_client( FlowHAClient* client, Flow* flow, HAMessage
 static void write_update_msg_content(Flow* flow, HAMessage* msg)
 {
     assert(s_client_map);
-    
+
     for ( int i=0; i<s_handle_counter; i++ )
         if ( (i==SESSION_HA_CLIENT_INDEX) || flow->ha_state->check_pending(1<<i) )
             write_update_msg_client((*s_client_map)[i],flow, msg);
