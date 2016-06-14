@@ -27,9 +27,13 @@
 #include "framework/mpse.h"
 #include "managers/mpse_manager.h"
 
-SearchTool::SearchTool()
+SearchTool::SearchTool() : SearchTool("ac_bnfa")
 {
-    mpse = MpseManager::get_search_engine("ac_bnfa");
+}
+
+SearchTool::SearchTool(const char* method)
+{
+    mpse = MpseManager::get_search_engine(method);
     max_len = 0;
 }
 
@@ -43,12 +47,22 @@ void SearchTool::add(const char* pat, unsigned len, int id, bool no_case)
     add((uint8_t*)pat, len, id, no_case);
 }
 
+void SearchTool::add(const char* pat, unsigned len, void* id, bool no_case)
+{
+    add((uint8_t*)pat, len, id, no_case);
+}
+
 void SearchTool::add(const uint8_t* pat, unsigned len, int id, bool no_case)
+{
+    add(pat, len, (void*)(long)id, no_case);
+}
+
+void SearchTool::add(const uint8_t* pat, unsigned len, void* id, bool no_case)
 {
     Mpse::PatternDescriptor desc(no_case);
 
     if ( mpse )
-        mpse->add_pattern(nullptr,  pat, len, desc, (void*)(long)id);
+        mpse->add_pattern(nullptr,  pat, len, desc, id);
 
     if ( len > max_len )
         max_len = len;

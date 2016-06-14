@@ -176,8 +176,7 @@ endif()
 
 
 # set library variables
-
-if (DEFINED OPENSSL_CRYPTO_LIBRARIES)
+if (OPENSSL_FOUND AND DEFINED OPENSSL_CRYPTO_LIBRARIES)
     check_library_exists (${OPENSSL_CRYPTO_LIBRARIES} SHA256_Init "" HAVE_OPENSSL_SHA)
     check_library_exists (${OPENSSL_CRYPTO_LIBRARIES} MD5_Init "" HAVE_OPENSSL_MD5)
 endif()
@@ -190,7 +189,4 @@ if (DEFINED LIBLZMA_LIBRARIES)
     check_library_exists (${LIBLZMA_LIBRARIES} lzma_code "" HAVE_LZMA)
 endif()
 
-# FIXIT-L J is this necessary?
-set ( HAVE___FUNCTION__ HAS_CXX11_FUNC )
 check_library_exists (pcap pcap_lib_version "${PCAP_LIBRARIES}" HAVE_PCAP_LIB_VERSION)
-check_library_exists (pcap pcap_lex_destroy "${PCAP_LIBRARIES}" HAVE_PCAP_LEX_DESTROY)

@@ -9,9 +9,7 @@
 #
 #  PCAP_FOUND                System has libpcap, include and library dirs found
 #  PCAP_INCLUDE_DIR          The libpcap include directories.
-#  PCAP_LIBRARIES            The libpcap library (possibly includes a thread
-#                            library e.g. required by pf_ring's libpcap)
-#  HAVE_LIBPFRING              If a found version of libpcap supports PF_RING
+#  PCAP_LIBRARIES            The libpcap library
 
 
 set(ERROR_MESSAGE
@@ -73,11 +71,6 @@ if (NOT PCAP_LINKS_SOLO)
         message(SEND_ERROR "Couldn't determine how to link against libpcap")
     endif ()
 endif ()
-
-include(CheckFunctionExists)
-set(CMAKE_REQUIRED_LIBRARIES ${PCAP_LIBRARIES})
-check_function_exists(pcap_get_pfring_id HAVE_LIBPFRING)
-set(CMAKE_REQUIRED_LIBRARIES)
 
 mark_as_advanced(
     PCAP_INCLUDE_DIR

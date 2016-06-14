@@ -1,5 +1,6 @@
 
 add_library(preprocessor_states
+    pps_appid.cc
     pps_arpspoof.cc
     pps_bo.cc
     pps_dcerpc.cc

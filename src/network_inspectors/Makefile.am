@@ -14,6 +14,7 @@ network_inspectors.h
 #port_scan/libport_scan.a
 
 SUBDIRS = \
+appid \
 arp_spoof \
 binder \
 normalize \

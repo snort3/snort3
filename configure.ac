@@ -224,6 +224,51 @@ CXX_THREAD_LOCAL()
 #fi
 
 #--------------------------------------------------------------------------
+# compile-time security features
+#--------------------------------------------------------------------------
+
+# Based on Debian's hardening options (https://wiki.debian.org/Hardening)
+# Desired options:
+# CPPFLAGS: -Wdate-time -D_FORTIFY_SOURCE=2
+# CFLAGS/CXXFLAGS: -fPIE -fstack-protector-strong -Wformat -Werror=format-security
+# LDFLAGS: -fPIE -pie -Wl,-z,relro -Wl,-z,now
+
+AC_ARG_ENABLE(hardened_build,
+    AS_HELP_STRING([--enable-hardened-build], [Detect and use compile-time hardening options]))
+
+if test "x$enable_hardened_build" = "xyes"; then
+
+    AX_CHECK_PREPROC_FLAG([-Wdate-time], [HARD_CPPFLAGS="$HARD_CPPFLAGS -Wdate-time"])
+
+    AX_CHECK_PREPROC_FLAG([-D_FORTIFY_SOURCE=2], [HARD_CPPFLAGS="$HARD_CPPFLAGS -D_FORTIFY_SOURCE=2"])
+
+    AX_CHECK_COMPILE_FLAG([-fstack-protector-strong], [HARD_CFLAGS="$HARD_CFLAGS -fstack-protector-strong"])
+
+    AX_CHECK_COMPILE_FLAG([-Wformat], [HARD_CFLAGS="$HARD_CFLAGS -Wformat"])
+
+    AX_CHECK_COMPILE_FLAG([-Werror=format-security], [HARD_CFLAGS="$HARD_CFLAGS -Werror=format-security"])
+
+    AX_CHECK_LINK_FLAG([-Wl,-z,relro], [HARD_LDFLAGS="$HARD_LDFLAGS -Wl,-z,relro"])
+
+    AX_CHECK_LINK_FLAG([-Wl,-z,now], [HARD_LDFLAGS="$HARD_LDFLAGS -Wl,-z,now"])
+
+fi
+
+# PIE support gets its own switch since it requires any static libraries Snort wants to link in to
+# be built with PIC, which may or may not be feasible for the user.
+
+AC_ARG_ENABLE(pie,
+    AS_HELP_STRING([--enable-pie], [Attempt to produce a position-independent executable]))
+
+if test "x$enable_pie" = "xyes"; then
+
+    AX_CHECK_COMPILE_FLAG([-fPIE], [HARD_CFLAGS="$HARD_CFLAGS -fPIE"])
+
+    AX_CHECK_LINK_FLAG([-fPIE -pie], [HARD_LDFLAGS="$HARD_LDFLAGS -fPIE -pie"])
+
+fi
+
+#--------------------------------------------------------------------------
 # typedefs, structures, and compiler characteristics
 #--------------------------------------------------------------------------
 
@@ -546,11 +591,10 @@ if test "x$with_libpcap_libraries" != "xno"; then
 fi
 
 LPCAP=""
+AC_CHECK_HEADERS([pcap.h],, LPCAP="no")
 AC_CHECK_LIB(pcap, pcap_datalink,, LPCAP="no")
 
-# If both the AC_CHECK_LIB for normal pcap and pfring-enabled pcap fail then exit.
 if test "x$LPCAP" = "xno"; then
-  if test "x$LPFRING_PCAP" = "xno"; then
     echo
     echo "   ERROR:  Libpcap library/headers (libpcap.a (or .so)/pcap.h)"
     echo "   not found, go get it from http://www.tcpdump.org"
@@ -558,7 +602,6 @@ if test "x$LPCAP" = "xno"; then
     echo "   in unusual place.  Also check if your libpcap depends on another"
     echo "   shared library that may be installed in an unusual place"
     exit 1
-  fi
 fi
 
 AC_MSG_CHECKING([for pcap_lib_version])
@@ -702,7 +745,6 @@ fi
 
 # Verify that we have the library
 PCRE_L=""
-pcre_version_six=""
 AC_CHECK_LIB(pcre, pcre_compile, ,PCRE_L="no")
 if test "x$PCRE_L" = "xno"; then
     echo
@@ -710,28 +752,6 @@ if test "x$PCRE_L" = "xno"; then
     echo "   Get it from http://www.pcre.org"
     echo
     exit 1
-else
-    AC_MSG_CHECKING(for libpcre version 6.0 or greater)
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <pcre.h>]], [[
-       #if (PCRE_MAJOR < 6)
-       #error "Version failure"
-       #else
-       int a, b = 0, c = 0, d = 0;
-       pcre *tmp = NULL;
-       a = pcre_copy_named_substring(tmp, "", &b, c, "", "", d);
-       #endif
-      ]])],[pcre_version_six="yes"],[pcre_version_six="no"])
-fi
-
-if test "x$pcre_version_six" != "xyes"; then
-    AC_MSG_RESULT(no)
-    echo
-    echo "    ERROR:  Libpcre library version >= 6.0 not found."
-    echo "    Get it from http://www.pcre.org"
-    echo
-    exit 1
-else
-    AC_MSG_RESULT(yes)
 fi
 
 #--------------------------------------------------------------------------
@@ -802,7 +822,7 @@ if test "x$with_daq_libraries" != "xno"; then
 fi
 
 AC_ARG_ENABLE(static_daq,
-    AS_HELP_STRING([--disable-static-daq],[link static DAQ modules.]),
+    AS_HELP_STRING([--disable-static-daq],[link static DAQ modules]),
     enable_static_daq="$enableval", enable_static_daq="yes")
 
 if test "$DLLIB" != "no"; then
@@ -938,13 +958,21 @@ if test "x$with_openssl_libraries" != "xno"; then
     LDFLAGS="${LDFLAGS} -L${with_openssl_libraries}"
 fi
 
-AC_CHECK_LIB([crypto],[SHA256_Init],AC_DEFINE([HAVE_OPENSSL_SHA],[1],openssl SHA available),)
-AC_CHECK_LIB([crypto],[MD5_Init],AC_DEFINE([HAVE_OPENSSL_MD5],[1],openssl MD5 available),)
+AC_CHECK_HEADERS([openssl/md5.h], 
+    AC_CHECK_LIB([crypto],[MD5_Init],
+                 AC_DEFINE([HAVE_OPENSSL_MD5],[1],openssl MD5 available)
+                 BUILD_SSL_MD5="yes",
+                 ))
+AM_CONDITIONAL([BUILD_SSL_MD5], test "x$BUILD_SSL_MD5" != "xyes" )
 
-AM_CONDITIONAL([BUILD_SSL_MD5], test "x$ac_cv_lib_crypto_MD5_Init" != "xyes" )
-AM_CONDITIONAL([BUILD_SSL_SHA], test "x$ac_cv_lib_crypto_SHA256_Init" != "xyes" )
+AC_CHECK_HEADERS([openssl/sha.h],
+    AC_CHECK_LIB([crypto],[SHA256_Init],
+                 AC_DEFINE([HAVE_OPENSSL_SHA],[1],openssl SHA available)
+                 BUILD_SSL_SHA="yes",
+                 ))
+AM_CONDITIONAL([BUILD_SSL_SHA], test "x$BUILD_SSL_SHA" != "xyes" )
 
-if test "x$ac_cv_lib_crypto_MD5_Init" = "xyes"; then
+if test "x$BUILD_SSL_MD5" = "xyes" || test "x$BUILD_SSL_SHA" = "xyes" ; then
     LIBS="${LIBS} -lcrypto"
 fi
 
@@ -1043,10 +1071,10 @@ fi
 
 # Global defaults for AM_* flags.  Can be overridden on a per-Makefile.am basis.
 AM_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/network_inspectors'
-AM_CPPFLAGS="${AM_CPPFLAGS} ${CODE_COVERAGE_CPPFLAGS}"
-AM_CFLAGS="${CODE_COVERAGE_CFLAGS}"
-AM_CXXFLAGS="${CODE_COVERAGE_CXXFLAGS}"
-AM_LDFLAGS="${CODE_COVERAGE_LDFLAGS}"
+AM_CPPFLAGS="${AM_CPPFLAGS} ${CODE_COVERAGE_CPPFLAGS} ${HARD_CPPFLAGS}"
+AM_CFLAGS="${CODE_COVERAGE_CFLAGS} ${HARD_CFLAGS}"
+AM_CXXFLAGS="${CODE_COVERAGE_CXXFLAGS} ${HARD_CFLAGS}"
+AM_LDFLAGS="${CODE_COVERAGE_LDFLAGS} ${HARD_LDFLAGS}"
 
 # Special AM_CPPFLAGS for snort2lua.
 snort2lua_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir)/tools/snort2lua'
@@ -1107,6 +1135,12 @@ src/stream/user/Makefile \
 src/stream/file/Makefile \
 src/stream/tcp/test/Makefile \
 src/network_inspectors/Makefile \
+src/network_inspectors/appid/Makefile \
+src/network_inspectors/appid/client_plugins/Makefile \
+src/network_inspectors/appid/detector_plugins/Makefile \
+src/network_inspectors/appid/service_plugins/Makefile \
+src/network_inspectors/appid/test/Makefile \
+src/network_inspectors/appid/util/Makefile \
 src/network_inspectors/arp_spoof/Makefile \
 src/network_inspectors/binder/Makefile \
 src/network_inspectors/normalize/Makefile \

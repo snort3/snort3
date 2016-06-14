@@ -55,6 +55,12 @@ struct sfip_t
 /*      uint64_t    ip64[2]; */
     };
 
+    inline void clear()
+    {
+        family = bits = 0;
+        ip32[0] = ip32[1] = ip32[2] = ip32[3] = 0;
+    }
+
     inline bool is_ip6() const
     { return family == AF_INET6; }
 

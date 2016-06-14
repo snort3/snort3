@@ -10,50 +10,21 @@ set(ERROR_MESSAGE
     \tGet it from http://www.pcre.org\n"
 )
 
-find_path(PCRE_INCLUDE_DIR 
-    NAMES pcre.h
-)
+find_package(PkgConfig)
+pkg_check_modules(PC_PCRE libpcre)
 
-
-find_library(PCRE_LIBRARIES 
-    NAMES pcre
-    HINTS ${PCRE_LIBRARIES_DIR} # from ./configure_cmake.sh script
-    NO_DEFAULT_PATH
-    NO_CMAKE_ENVIRONMENT_PATH
-)
-
-find_library(PCRE_LIBRARIES
-    NAMES pcre
-)
-
+# Use PCRE_INCLUDE_DIR_HINT and PCRE_LIBRARIES_DIR_HINT from configure_cmake.sh as primary hints
+# and then package config information after that.
+find_path(PCRE_INCLUDE_DIR pcre.h
+    HINTS ${PCRE_INCLUDE_DIR_HINT} ${PC_PCRE_INCLUDEDIR} ${PC_PCRE_INCLUDE_DIRS})
+find_library(PCRE_LIBRARIES NAMES pcre
+    HINTS ${PCRE_LIBRARIES_DIR_HINT} ${PC_PCRE_LIBDIR} ${PC_PCRE_LIBRARY_DIRS})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PCRE
     REQUIRED_VARS PCRE_INCLUDE_DIR PCRE_LIBRARIES
     FAIL_MESSAGE "${ERROR_MESSAGE}"
 )
-
-set(bindir "${CMAKE_CURRENT_BINARY_DIR}/pcre_version")
-set(srcfile "${CMAKE_CURRENT_LIST_DIR}/Pcre/check_pcre_version.cpp")
-
-try_compile(VALID_PCRE_VERSION "${bindir}" "${srcfile}"
-    CMAKE_FLAGS
-        "-DLINK_LIBRARIES:STRING=${PCRE_LIBRARIES}"
-        "-DINCLUDE_DIRECTORIES:STRING=${PCRE_INCLUDE_DIR}"
-)
-
-
-if(NOT VALID_PCRE_VERSION)
-    # unset these variables to ensure we search for PCRE again
-    unset(PCRE_FOUND CACHE)
-    unset(PCRE_INCLUDE_DIR CACHE)
-    unset(PCRE_LIBRARIES CACHE)
-    message(SEND_ERROR
-        "\nERROR!  Libpcre library version >= 6.0 not found."
-        " Get it from http://www.pcre.org\n\n"
-    )
-endif()
-
 
 mark_as_advanced(
     PCRE_LIBRARIES 

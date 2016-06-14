@@ -31,7 +31,7 @@
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
 
-unsigned FlowData:: flow_id = 0;
+unsigned FlowData::flow_id = 0;
 
 FlowData::FlowData(unsigned u, Inspector* ph)
 {

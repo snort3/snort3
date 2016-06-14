@@ -23,50 +23,64 @@ Usage: $0 [OPTION]... [VAR=VALUE]...
 Optional Features:
     --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
     --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-    --disable-static-ips-actions    do not include ips actions in binary
-    --disable-static-inspectors    do not include inspectors in binary
-    --disable-static-loggers    do not include loggers in binary
-    --disable-static-ips-options    do not include ips options in binary
-    --disable-static-search-engines    do not include search engines in binary
-    --disable-static-codecs    do not include codecs in binary
-    --enable-valgrind        Only use if you are testing with valgrind.
-    --enable-shell           enable command line shell support
-    --enable-linux-smp-stats Enable statistics reporting through proc
-    --enable-debug-msgs      Enable debug printing options (bugreports and developers only)
-    --enable-large-pcap      Enable support for pcaps larger than 2 GB
-    --enable-address-sanitizer  Enable address sanitizer support
-    --enable-code-coverage   Whether to enable code coverage support
-    --enable-debug           Enable debugging options (bugreports and developers only)
-    --enable-gdb             Enable gdb debugging information
-    --enable-gprof-profile   Enable gprof profiling options (developers only)
-    --disable-corefiles      Prevent Snort from generating core files
-    --enable-unit-tests      Build unit tests
-    --enable-piglet          Build piglet test capability
-    --disable-static-daq     Link static DAQ modules.
+    --enable-code-coverage  Whether to enable code coverage support
+    --enable-hardened-build Detect and use compile-time hardening options
+    --enable-pie            Attempt to produce a position-independent executable
+    --disable-static-ips-actions
+                            do not include ips actions in binary
+    --disable-static-inspectors
+                            do not include inspectors in binary
+    --disable-static-loggers
+                            do not include loggers in binary
+    --disable-static-ips-options
+                            do not include ips options in binary
+    --disable-static-search-engines
+                            do not include search engines in binary
+    --disable-static-codecs do not include codecs in binary
+    --enable-shell          enable command line shell support
+    --enable-large-pcap     enable support for pcaps larger than 2 GB
+    --enable-debug-msgs     enable debug printing options (bugreports and
+                            developers only)
+    --enable-debug          enable debugging options (bugreports and developers
+                            only)
+    --enable-gdb            enable gdb debugging information
+    --enable-gprof-profile  enable gprof profiling options (developers only)
+    --disable-corefiles     prevent Snort from generating core files
+    --enable-address-sanitizer
+                            enable address sanitizer support
+    --enable-unit-tests     build unit tests
+    --enable-piglet         build piglet test harness
+    --disable-static-daq    link static DAQ modules
+    --disable-html-docs     don't create the HTML documentation
+    --disable-pdf-docs      don't create the PDF documentation
 
 Optional Packages:
     --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
     --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-    --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
-                            both]
-    --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
-    --with-sysroot=DIR Search for dependent libraries within DIR
-                          (or the compiler's sysroot if not specified).
-    --with-pcap-includes=DIR        libpcap include directory
-    --with-pcap-libraries=DIR       libpcap library directory
-    --with-luajit-includes=DIR      luajit include directory
-    --with-luajit-libraries=DIR     luajit library directory
-    --with-pcre-includes=DIR        libpcre include directory
-    --with-pcre-libraries=DIR       libpcre library directory
-    --with-openssl-includes=DIR     openssl include directory
-    --with-openssl-library=LIB      openssl library library - NOT THE DIRECTORY
-    --with-crypto-library=LIB       openssl crypto library - NOT THE DIRECTORY
-    --with-dnet-includes=DIR        libdnet include directory
-    --with-dnet-libraries=DIR       libdnet library directory
-    --with-daq-includes=DIR         DAQ include directory
-    --with-daq-libraries=DIR        DAQ library directory
-    --with-hyperscan-includes=DIR   libhs include directory
-    --with-hyperscan-libraries=DIR  libhs library directory
+    --with-pcap-includes=DIR
+                            libpcap include directory
+    --with-pcap-libraries=DIR
+                            libpcap library directory
+    --with-luajit-includes=DIR
+                            luajit include directory
+    --with-luajit-libraries=DIR
+                            luajit library directory
+    --with-pcre-includes=DIR
+                            libpcre include directory
+    --with-pcre-libraries=DIR
+                            libpcre library directory
+    --with-dnet-includes=DIR
+                            libdnet include directory
+    --with-dnet-libraries=DIR
+                            libdnet library directory
+    --with-daq-includes=DIR DAQ include directory
+    --with-daq-libraries=DIR
+                            DAQ library directory
+    --with-openssl=DIR      openssl installation root directory
+    --with-hyperscan-includes=DIR
+                            libhs include directory
+    --with-hyperscan-libraries=DIR
+                            libhs library directory
 
 Some influential environment variables:
     SIGNAL_SNORT_RELOAD=<value>
@@ -133,140 +147,137 @@ while [ $# -ne 0 ]; do
             prefix=$optarg
             append_cache_entry CMAKE_INSTALL_PREFIX PATH $optarg
             ;;
-        --disable-static-codecs)
-            append_cache_entry STATIC_CODECS       BOOL   false
-            ;;
-        --enable-static-codecs)
-            append_cache_entry STATIC_CODECS       BOOL   true
-            ;;
-        --disable-static-inspectors)
-            append_cache_entry STATIC_INSPECTORS    BOOL   false
-            ;;
-        --enable-static-inspectors)
-            append_cache_entry STATIC_INSPECTORS    BOOL   true
-            ;;
-        --disable-static-loggers)
-            append_cache_entry STATIC_LOGGERS       BOOL   false
-            ;;
-        --enable-static-loggers)
-            append_cache_entry STATIC_LOGGERS       BOOL   true
-            ;;
-        --disable-static-ips-options)
-            append_cache_entry STATIC_IPS_OPTIONS    BOOL   false
-            ;;
-        --enable-static-ips-actions)
-            append_cache_entry STATIC_IPS_ACTIONS    BOOL   true
-            ;;
-        --disable-static-ips-actions)
-            append_cache_entry STATIC_IPS_ACTIONS    BOOL   false
-            ;;
-        --enable-static-ips-options)
-            append_cache_entry STATIC_IPS_OPTIONS    BOOL   true
-            ;;
-        --disable-static-search-engines)
-            append_cache_entry STATIC_SEARCH_ENGINES       BOOL   false
-            ;;
-        --enable-static-search-engines)
-            append_cache_entry STATIC_SEARCH_ENGINES       BOOL   true
-            ;;
-        --disable-static-daq)
-            append_cache_entry ENABLE_STATIC_DAQ    BOOL   false
-            ;;
-        --enable-static-daq)
-            append_cache_entry ENABLE_STATIC_DAQ    BOOL   true
-            ;;
-        --disable-pthread)
-            append_cache_entry ENABLE_PTHREAD    BOOL   false
-            ;;
-        --enable-pthread)
-            append_cache_entry ENABLE_PTHREAD    BOOL   true
-            ;;
-        --disable-debug-msgs)
-            append_cache_entry ENABLE_DEBUG_MSGS    BOOL   false
-            ;;
-        --enable-debug-msgs)
-            append_cache_entry ENABLE_DEBUG_MSGS    BOOL   true
-            ;;
-        --disable-gdb)
-            append_cache_entry ENABLE_GDB    BOOL   false
-            ;;
-        --enable-gdb)
-            append_cache_entry ENABLE_GDB    BOOL   true
-            ;;
-        --disable-gprof-profile)
-            append_cache_entry ENABLE_PROFILE    BOOL   false
-            ;;
-        --enable-gprof-profile)
-            append_cache_entry ENABLE_PROFILE    BOOL   true
-            ;;
-        --disable-debug)
-            append_cache_entry ENABLE_DEBUG    BOOL   false
-            ;;
-        --enable-debug)
-            append_cache_entry ENABLE_DEBUG    BOOL   true
-            ;;
-        --disable-corefiles)
-            append_cache_entry ENABLE_COREFILES    BOOL   false
-            ;;
-        --enable-corefiles)
-            append_cache_entry ENABLE_COREFILES    BOOL   true
-            ;;
-        --disable-large-pcap)
-            append_cache_entry ENABLE_LARGE_PCAP    BOOL   false
-            ;;
-        --enable-large-pcap)
-            append_cache_entry ENABLE_LARGE_PCAP    BOOL   true
-            ;;
-        --enable-address-sanitizer)
-            append_cache_entry ENABLE_ADDRESS_SANITIZER BOOL    true
-            ;;
-        --disable-address-sanitizer)
-            append_cache_entry ENABLE_ADDRESS_SANITIZER BOOL    false
-            ;;
         --enable-code-coverage)
-            append_cache_entry ENABLE_CODE_COVERAGE BOOL    true
+            append_cache_entry ENABLE_CODE_COVERAGE     BOOL true
             ;;
         --disable-code-coverage)
-            append_cache_entry ENABLE_CODE_COVERAGE BOOL    false
+            append_cache_entry ENABLE_CODE_COVERAGE     BOOL false
+            ;;
+        --enable-hardened-build)
+            append_cache_entry ENABLE_HARDENED_BUILD    BOOL true
+            ;;
+        --disable-hardened-build)
+            append_cache_entry ENABLE_HARDENED_BUILD    BOOL false
+            ;;
+        --enable-pie)
+            append_cache_entry ENABLE_PIE               BOOL true
+            ;;
+        --disable-pie)
+            append_cache_entry ENABLE_PIE               BOOL false
+            ;;
+        --disable-static-ips-actions)
+            append_cache_entry STATIC_IPS_ACTIONS       BOOL false
+            ;;
+        --enable-static-ips-actions)
+            append_cache_entry STATIC_IPS_ACTIONS       BOOL true
+            ;;
+        --disable-static-inspectors)
+            append_cache_entry STATIC_INSPECTORS        BOOL false
+            ;;
+        --enable-static-inspectors)
+            append_cache_entry STATIC_INSPECTORS        BOOL true
+            ;;
+        --disable-static-loggers)
+            append_cache_entry STATIC_LOGGERS           BOOL false
+            ;;
+        --enable-static-loggers)
+            append_cache_entry STATIC_LOGGERS           BOOL true
+            ;;
+        --disable-static-ips-options)
+            append_cache_entry STATIC_IPS_OPTIONS       BOOL false
+            ;;
+        --enable-static-ips-options)
+            append_cache_entry STATIC_IPS_OPTIONS       BOOL true
+            ;;
+        --disable-static-search-engines)
+            append_cache_entry STATIC_SEARCH_ENGINES    BOOL false
+            ;;
+        --enable-static-search-engines)
+            append_cache_entry STATIC_SEARCH_ENGINES    BOOL true
+            ;;
+        --disable-static-codecs)
+            append_cache_entry STATIC_CODECS            BOOL false
+            ;;
+        --enable-static-codecs)
+            append_cache_entry STATIC_CODECS            BOOL true
             ;;
         --enable-shell)
-            append_cache_entry ENABLE_SHELL    BOOL   true
+            append_cache_entry ENABLE_SHELL             BOOL true
             ;;
         --disable-shell)
-            append_cache_entry ENABLE_SHELL    BOOL   false
+            append_cache_entry ENABLE_SHELL             BOOL false
             ;;
-        --disable-unit-tests)
-            append_cache_entry ENABLE_UNIT_TESTS    BOOL   false
+        --enable-large-pcap)
+            append_cache_entry ENABLE_LARGE_PCAP        BOOL true
+            ;;
+        --disable-large-pcap)
+            append_cache_entry ENABLE_LARGE_PCAP        BOOL false
+            ;;
+        --enable-debug-msgs)
+            append_cache_entry ENABLE_DEBUG_MSGS        BOOL true
+            ;;
+        --disable-debug-msgs)
+            append_cache_entry ENABLE_DEBUG_MSGS        BOOL false
+            ;;
+        --enable-debug)
+            append_cache_entry ENABLE_DEBUG             BOOL true
+            ;;
+        --disable-debug)
+            append_cache_entry ENABLE_DEBUG             BOOL false
+            ;;
+        --enable-gdb)
+            append_cache_entry ENABLE_GDB               BOOL true
+            ;;
+        --disable-gdb)
+            append_cache_entry ENABLE_GDB               BOOL false
+            ;;
+        --enable-gprof-profile)
+            append_cache_entry ENABLE_PROFILE           BOOL true
+            ;;
+        --disable-gprof-profile)
+            append_cache_entry ENABLE_PROFILE           BOOL false
+            ;;
+        --disable-corefiles)
+            append_cache_entry ENABLE_COREFILES         BOOL false
+            ;;
+        --enable-corefiles)
+            append_cache_entry ENABLE_COREFILES         BOOL true
+            ;;
+        --enable-address-sanitizer)
+            append_cache_entry ENABLE_ADDRESS_SANITIZER BOOL true
+            ;;
+        --disable-address-sanitizer)
+            append_cache_entry ENABLE_ADDRESS_SANITIZER BOOL false
             ;;
         --enable-unit-tests)
-            append_cache_entry ENABLE_UNIT_TESTS    BOOL   true
+            append_cache_entry ENABLE_UNIT_TESTS        BOOL true
             ;;
-        --disable-piglet)
-            append_cache_entry ENABLE_PIGLET    BOOL   false
+        --disable-unit-tests)
+            append_cache_entry ENABLE_UNIT_TESTS        BOOL false
             ;;
         --enable-piglet)
-            append_cache_entry ENABLE_PIGLET    BOOL   true
+            append_cache_entry ENABLE_PIGLET            BOOL true
+            ;;
+        --disable-piglet)
+            append_cache_entry ENABLE_PIGLET            BOOL false
+            ;;
+        --disable-static-daq)
+            append_cache_entry ENABLE_STATIC_DAQ        BOOL false
+            ;;
+        --enable-static-daq)
+            append_cache_entry ENABLE_STATIC_DAQ        BOOL true
             ;;
         --disable-html-docs)
-            append_cache_entry MAKE_HTML_DOC    BOOL   false
+            append_cache_entry MAKE_HTML_DOC            BOOL false
             ;;
         --enable-html-docs)
-            append_cache_entry MAKE_HTML_DOC    BOOL   true
+            append_cache_entry MAKE_HTML_DOC            BOOL true
             ;;
         --disable-pdf-docs)
-            append_cache_entry MAKE_PDF_DOC    BOOL   false
+            append_cache_entry MAKE_PDF_DOC             BOOL false
             ;;
         --enable-pdf-docs)
-            append_cache_entry MAKE_PDF_DOC    BOOL   true
-            ;;
-        --with-openssl-includes=*)
-            append_cache_entry OPENSSL_INCLUDE_DIR PATH $optarg
-            ;;
-        --with-openssl-library=*)
-            check_and_append_cache_entry OPENSSL_SSL_LIBRARY FILEPATH $optarg
-            ;;
-        --with-crypto-library=*)
-            check_and_append_cache_entry OPENSSL_CRYPTO_LIBRARY FILEPATH $optarg
+            append_cache_entry MAKE_PDF_DOC             BOOL true
             ;;
         --with-pcap-includes=*)
             append_cache_entry PCAP_INCLUDE_DIR PATH $optarg
@@ -275,28 +286,31 @@ while [ $# -ne 0 ]; do
             append_cache_entry PCAP_LIBRARIES_DIR PATH $optarg
             ;;
         --with-luajit-includes=*)
-            append_cache_entry LUAJIT_INCLUDE_DIR PATH $optarg
+            append_cache_entry LUAJIT_INCLUDE_DIR_HINT PATH $optarg
             ;;
         --with-luajit-libraries=*)
-            append_cache_entry LUAJIT_LIBRARIES_DIR PATH $optarg
+            append_cache_entry LUAJIT_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         --with-pcre-includes=*)
-            append_cache_entry PCRE_INCLUDE_DIR PATH $optarg
+            append_cache_entry PCRE_INCLUDE_DIR_HINT PATH $optarg
             ;;
         --with-pcre-libraries=*)
-            append_cache_entry PCRE_LIBRARIES_DIR PATH $optarg
+            append_cache_entry PCRE_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         --with-dnet-includes=*)
-            append_cache_entry DNET_INCLUDE_DIR PATH $optarg
+            append_cache_entry DNET_INCLUDE_DIR_HINT PATH $optarg
             ;;
         --with-dnet-libraries=*)
-            append_cache_entry DNET_LIBRARIES_DIR PATH $optarg
+            append_cache_entry DNET_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         --with-daq-includes=*)
             append_cache_entry DAQ_INCLUDE_DIR PATH $optarg
             ;;
         --with-daq-libraries=*)
             append_cache_entry DAQ_LIBRARIES_DIR PATH $optarg
+            ;;
+        --with-openssl=*)
+            append_cache_entry OPENSSL_ROOT_DIR PATH $optarg
             ;;
 #  Currently unsupported
 #        --with-intel-soft-cpm-includes=*)
@@ -310,12 +324,6 @@ while [ $# -ne 0 ]; do
             ;;
         --with-hyperscan-libraries=*)
             append_cache_entry HS_LIBRARIES_DIR PATH $optarg
-            ;;
-        --with-flex=*)
-            append_cache_entry FLEX_EXECUTABLE PATH $optarg
-            ;;
-        --with-bison=*)
-            append_cache_entry BISON_EXECUTABLE PATH $optarg
             ;;
         SIGNAL_SNORT_RELOAD=*)
             append_cache_entry SIGNAL_SNORT_RELOAD STRING $optarg
@@ -357,7 +365,6 @@ gen=""
 [ "$CMakeGenerator" ] && gen+=" -G $CMakeGenerator"
 
 cmake $gen \
-    -DCOMPILE_DEFINITIONS:STRING="$CPPFLAGS" \
     -DCMAKE_CXX_FLAGS:STRING="$CXXFLAGS $CPPFLAGS" \
     -DCMAKE_C_FLAGS:STRING="$CFLAGS $CPPFLAGS" \
     $CMakeCacheEntries $sourcedir

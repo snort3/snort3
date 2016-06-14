@@ -69,6 +69,8 @@ DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData*, const SmbNtHdr*,
     const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
 DCE2_Ret DCE2_SmbTransaction2(DCE2_SmbSsnData*, const SmbNtHdr*,
     const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
+DCE2_Ret DCE2_SmbNtTransact(DCE2_SmbSsnData *, const SmbNtHdr *,
+	const DCE2_SmbComInfo *, const uint8_t *, uint32_t);
 
 #endif
 

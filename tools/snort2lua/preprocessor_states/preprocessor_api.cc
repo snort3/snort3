@@ -21,6 +21,7 @@
 
 namespace preprocessors
 {
+extern const ConvertMap* appid_map;
 extern const ConvertMap* arpspoof_map;
 extern const ConvertMap* arpspoof_host_map;
 extern const ConvertMap* bo_map;
@@ -59,6 +60,7 @@ extern const ConvertMap* stream_udp_map;
 
 const std::vector<const ConvertMap*> preprocessor_api =
 {
+    appid_map,
     arpspoof_map,
     arpspoof_host_map,
     bo_map,
