@@ -1,4 +1,5 @@
 
+add_subdirectory(appid)
 add_subdirectory(arp_spoof)
 add_subdirectory(binder)
 add_subdirectory(normalize)
@@ -21,10 +22,15 @@ add_library( network_inspectors STATIC
 
 target_link_libraries( network_inspectors
     ${STATIC_INSPECTOR_LIBS}
+    appid
+    appid_client_plugins
+    appid_detector_plugins
+    appid_service_plugins
+    appid_util
     binder
     normalize
     perf_monitor
     port_scan
-    reputation 
+    reputation
     stream_tcp
 )

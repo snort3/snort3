@@ -1,0 +1,188 @@
+FILENAME                                                PORTING STATUS
+--------                                                --------------
+# Syntax:
+# - lines beginning with '#' are comments
+# - anything after a '#' on a line is a comment
+# - unprepped: <filename>
+# - in-progress: <filename> WORKING <cisco_username>
+# - not in-progress but not complete: <filename> PARTIAL <cisco_username>
+# - completed: <filename> DONE <cisco_username>
+#
+# A file should set to PARTIAL when an updated version is committed but not all the work is done
+# and the developer committing is not going to continue making changes, i.e. someone else can 
+# grab it and make more changes.
+#
+# you can add a short note/comment after the file if necessary
+# example:
+#     dns_defs.h WORKING jocornet # fixed everything but includes
+#
+
+#FILENAME                                       STATUS          USER
+#--------                                       ------          ----
+
+appid.h                                         DONE            jocornet
+app_forecast.cc                                 DONE            jocornet
+app_forecast.h                                  DONE            jocornet
+app_info_table.cc                               DONE            jocornet
+app_info_table.h                                DONE            jocornet
+appid_api.cc                                    DONE            jocornet
+appid_api.h                                     DONE            jocornet
+appid_config.cc                                 DONE            jocornet
+appid_config.h                                  DONE            jocornet
+appid_stats.cc                                  DONE            jocornet
+appid_stats.h                                   DONE            jocornet
+application_ids.h                               DONE            jocornet
+common_app_matcher.cc                           DONE            jocornet
+common_app_matcher.h                            DONE            jocornet
+dns_defs.h                                      DONE            jocornet
+appid_flow_data.cc                              DONE            jocornet
+appid_flow_data.h                               DONE            jocornet
+flow_error.h                                    DONE            jocornet
+fw_appid.cc                                     DONE            jocornet
+fw_appid.h                                      DONE           eborgoyn
+host_port_app_cache.cc                          DONE           eborgoyn
+host_port_app_cache.h                           DONE           eborgoyn
+http_common.h                                   DONE           eborgoyn
+length_app_cache.cc                             DONE           eborgoyn
+length_app_cache.h                              DONE           eborgoyn
+lua_detector_api.cc                             DONE           jocornet
+lua_detector_api.h                              DONE           eborgoyn
+lua_detector_flow_api.cc                        DONE           eborgoyn    # pending sfaddr -> sfip conversion
+lua_detector_flow_api.h                         DONE           eborgoyn
+lua_detector_module.cc                          DONE           eborgoyn    # compiles, but needs a ton of work
+lua_detector_module.h                           DONE           eborgoyn
+lua_detector_util.h                             DONE           eborgoyn    # added by jocornet
+service_state.cc                                DONE           eborgoyn
+service_state.h                                 DONE           eborgoyn
+sfaddr_temp.h                                   DONE           eborgoyn
+spp_appid.cc                                    DONE           huica
+spp_appid.h                                     DONE           huica
+thirdparty_appid_api.h                          DONE           huica
+thirdparty_appid_types.h                        DONE           huica
+thirdparty_appid_utils.cc                       DONE           huica
+thirdparty_appid_utils.h                        DONE           huica
+client_plugins/client_app_aim.cc                DONE           huica
+client_plugins/client_app_aim.h                 DONE           huica
+client_plugins/client_app_api.h                 DONE           huica
+client_plugins/client_app_base.cc               DONE           huica
+client_plugins/client_app_base.h                DONE           huica
+client_plugins/client_app_bit.cc                DONE           huica
+client_plugins/client_app_bit_tracker.cc        DONE           huica
+client_plugins/client_app_config.h              DONE           huica
+client_plugins/client_app_msn.cc                DONE           huica
+client_plugins/client_app_msn.h                 DONE           huica
+client_plugins/client_app_rtp.cc                DONE     	   mdagon
+client_plugins/client_app_smtp.cc               DONE           mdagon
+client_plugins/client_app_smtp.h                DONE           mdagon
+client_plugins/client_app_ssh.cc                DONE		   mdagon
+client_plugins/client_app_timbuktu.cc           DONE           mdagon
+client_plugins/client_app_tns.cc                DONE   		   mdagon
+client_plugins/client_app_vnc.cc                DONE  		   mdagon
+client_plugins/client_app_ym.cc                 DONE  		   mdagon
+client_plugins/client_app_ym.h                  DONE		   mdagon
+detector_plugins/detector_api.h                 DONE           mdagon
+detector_plugins/detector_base.cc               DONE           mdagon
+detector_plugins/detector_base.h                DONE           mdagon
+detector_plugins/detector_dns.cc                DONE           mdagon
+detector_plugins/detector_dns.h                 DONE           mdagon
+detector_plugins/detector_http.cc               DONE           mdagon    # sfaddr_t problems (notably 2x `sfip_set_raw`)
+detector_plugins/detector_http.h                DONE           mdagon
+detector_plugins/detector_imap.cc               DONE           mialtize
+detector_plugins/detector_kerberos.cc           DONE           mialtize
+detector_plugins/detector_pattern.cc            DONE           mialtize
+detector_plugins/detector_pattern.h             DONE           mialtize
+detector_plugins/detector_pop3.cc               DONE           mialtize
+detector_plugins/detector_sip.cc                DONE           mialtize
+detector_plugins/detector_sip.h                 DONE           mialtize
+detector_plugins/http_url_patterns.cc           DONE           mialtize
+detector_plugins/http_url_patterns.h            DONE           mialtize
+service_plugins/dcerpc.cc                       DONE           mialtize
+service_plugins/dcerpc.h                        DONE           mialtize
+service_plugins/service_api.h                   DONE           mialtize
+service_plugins/service_battle_field.cc         DONE           mialtize
+service_plugins/service_battle_field.h          DONE           mialtize
+service_plugins/service_bgp.cc                  DONE           mialtize
+service_plugins/service_bgp.h                   DONE           mialtize
+service_plugins/service_base.cc                 DONE           davmcphe    # SF_LIST and sfip_t/sfaddr_t badness
+service_plugins/service_base.h                  DONE           davmcphe
+service_plugins/service_bit.cc                  DONE           davmcphe
+service_plugins/service_bootp.cc                DONE           davmcphe
+service_plugins/service_bootp.h                 DONE           davmcphe
+service_plugins/service_config.h                DONE           davmcphe
+service_plugins/service_dcerpc.cc               DONE           davmcphe
+service_plugins/service_dcerpc.h                DONE           davmcphe
+service_plugins/service_direct_connect.cc       DONE           davmcphe
+service_plugins/service_direct_connect.h        DONE           davmcphe
+service_plugins/service_flap.cc                 DONE           davmcphe
+service_plugins/service_flap.h                  DONE           davmcphe
+service_plugins/service_ftp.cc                  DONE           davmcphe
+service_plugins/service_ftp.h                   DONE           davmcphe
+service_plugins/service_irc.cc                  DONE           davmcphe
+service_plugins/service_irc.h                   DONE           davmcphe
+service_plugins/service_lpr.cc                  DONE           davmcphe
+service_plugins/service_lpr.h                   DONE           rucombs
+service_plugins/service_mdns.cc                 DONE           rucombs     # name change, searchAPI -> SearchTool not completed
+service_plugins/service_mdns.h                  DONE           rucombs     # name change
+service_plugins/service_mysql.cc                DONE           rucombs
+service_plugins/service_mysql.h                 DONE           rucombs
+service_plugins/service_netbios.cc              DONE           rucombs
+service_plugins/service_netbios.h               DONE           rucombs
+service_plugins/service_nntp.cc                 DONE           rucombs
+service_plugins/service_nntp.h                  DONE           rucombs
+service_plugins/service_ntp.cc                  DONE           rucombs
+service_plugins/service_ntp.h                   DONE           rucombs
+service_plugins/service_radius.cc               DONE           rucombs
+service_plugins/service_radius.h                DONE           rucombs
+service_plugins/service_rexec.cc                DONE           rucombs
+service_plugins/service_rexec.h                 DONE           rucombs
+service_plugins/service_rfb.cc                  DONE           rucombs
+service_plugins/service_rfb.h                   WORKING        stechew
+service_plugins/service_rlogin.cc               WORKING        stechew
+service_plugins/service_rlogin.h                WORKING        stechew
+service_plugins/service_rpc.cc                  WORKING        stechew
+service_plugins/service_rpc.h                   WORKING        stechew
+service_plugins/service_rshell.cc               WORKING        stechew
+service_plugins/service_rshell.h                WORKING        stechew
+service_plugins/service_rsync.cc                WORKING        stechew
+service_plugins/service_rsync.h                 WORKING        stechew
+service_plugins/service_rtmp.cc                 WORKING        stechew
+service_plugins/service_rtmp.h                  WORKING        stechew
+service_plugins/service_smtp.cc                 WORKING        stechew
+service_plugins/service_smtp.h                  WORKING        stechew
+service_plugins/service_snmp.cc                 WORKING        stechew
+service_plugins/service_snmp.h                  WORKING        stechew
+service_plugins/service_ssh.cc                  WORKING        stechew
+service_plugins/service_ssh.h                   DONE           thopeter
+service_plugins/service_ssl.cc                  DONE           thopeter
+service_plugins/service_ssl.h                   DONE           thopeter
+service_plugins/service_telnet.cc               DONE           thopeter
+service_plugins/service_telnet.h                DONE           thopeter
+service_plugins/service_tftp.cc                 DONE           thopeter
+service_plugins/service_tftp.h                  DONE           thopeter
+service_plugins/service_timbuktu.cc             DONE           thopeter
+service_plugins/service_tns.cc                  DONE           thopeter
+service_plugins/service_util.h                  DONE           thopeter
+test/appid_tests.cc                             PARTIAL        thopeter
+test/external_apis.cc                           PARTIAL        viroemer
+test/external_apis.h                            DONE           thopeter
+test/mpse.cc                                    PARTIAL        thopeter
+test/session_file.cc                            PARTIAL        thopeter
+test/session_file.h                             DONE           thopeter
+test/sf_iph.cc                                  PARTIAL        thopeter
+util/common_util.h                              DONE           viroemer
+util/fw_avltree.cc                              DONE           viroemer
+util/fw_avltree.h                               DONE           viroemer
+util/ip_funcs.cc                                DONE           viroemer
+util/ip_funcs.h                                 DONE           viroemer
+util/network_set.cc                             DONE           viroemer
+util/network_set.h                              DONE           viroemer
+util/output_file.cc                             DONE           viroemer
+util/output_file.h                              DONE           viroemer
+util/sf_mlmp.cc                                 DONE           viroemer
+util/sf_mlmp.h                                  DONE           viroemer
+util/sf_multi_mpse.cc                           DONE           viroemer
+util/sf_multi_mpse.h                            DONE           viroemer
+util/sfksearch.cc                               DONE           viroemer
+util/sfksearch.h                                DONE           viroemer
+util/sfutil.cc                                  DONE           viroemer
+util/sfutil.h                                   DONE           viroemer

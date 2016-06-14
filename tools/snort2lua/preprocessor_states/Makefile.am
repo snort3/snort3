@@ -2,6 +2,7 @@
 noinst_LIBRARIES = libpreprocessor_states.a
 
 libpreprocessor_states_a_SOURCES = \
+pps_appid.cc \
 pps_arpspoof.cc \
 pps_bo.cc \
 pps_dcerpc.cc \
