@@ -11,60 +11,31 @@
 #  DNET_FOUND       - True if dnet found.
 #  HAVE_DUMBNET_H   - True if found dumnet rather than dnet
 
-
-
 set(ERROR_MESSAGE
     "   
     ERROR!  dnet header not found, go get it from
     http://code.google.com/p/libdnet/ or use the --with-dnet-*
-    options, if you have it installed in an unusual place.  You can also
-    set the DNET_DIR shell variable to dnets root installation directory"
+    options, if you have it installed in an unusual place.
+    "
 )
-
 
 # Check for libdumbnet first, then libdnet
-unset (DNET_INCLUDE_DIR CACHE)
 
-find_path(DNET_INCLUDE_DIR
-  NAMES dumbnet.h
-  HINTS ENV DNETDIR
-)
+find_path(DNET_INCLUDE_DIR dumbnet.h
+    HINTS ${DNET_INCLUDE_DIR_HINT})
 
-# If we found libdument header, define HAVE_DUMBNET_H for config.h generation.
+# If we found libdument header, define HAVE_DUMBNET_H for config.h generation
+# and search for libdumnet.
 if (DNET_INCLUDE_DIR)
-    set(HAVE_DUMBNET_H "YES")
+    set(HAVE_DUMBNET_H "1")
+    find_library(DNET_LIBRARIES NAMES dumbnet
+        HINTS ${DNET_LIBRARIES_DIR_HINT})
+else ()
+    find_path(DNET_INCLUDE_DIR dnet.h
+        HINTS ${DNET_INCLUDE_DIR_HINT})
+    find_library(DNET_LIBRARIES NAMES dnet
+        HINTS ${DNET_LIBRARIES_DIR_HINT})
 endif()
-
-
-# Search for library twice.  The first time using the custom path, second time
-# using standard paths
-find_library(DNET_LIBRARIES
-    NAMES dumbnet
-    HINTS ${DNET_LIBRARIES_DIR} # user specified option in ./configure_cmake.sh
-    NO_DEFAULT_PATH
-    NO_CMAKE_ENVIRONMENT_PATH
-)
-find_library(DNET_LIBRARIES
-    NAMES dumbnet
-)
-
-
-find_path(DNET_INCLUDE_DIR
-  NAMES dnet.h
-  HINTS ENV DNETDIR
-)
-
-find_library(DNET_LIBRARIES
-    NAMES dnet
-    HINTS ${DNET_LIBRARIES_DIR}
-    NO_DEFAULT_PATH
-    NO_CMAKE_ENVIRONMENT_PATH
-)
-find_library(DNET_LIBRARIES
-    NAMES dnet
-)
-
-
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(DNET 

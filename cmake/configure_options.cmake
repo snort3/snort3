@@ -34,6 +34,62 @@ if ( NOT (W3M_FOUND AND ASCIIDOC_FOUND) )
     set ( MAKE_TEXT_DOC OFF CACHE BOOL ${MAKE_TEXT_DOC_HELP_STRING} FORCE )
 endif()
 
+# security
+
+if ( ENABLE_HARDENED_BUILD )
+
+    check_cxx_compiler_flag ( "-Wdate-time" HAS_WDATE_TIME_CPPFLAG )
+    if ( HAS_WDATE_TIME_CPPFLAG )
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wdate-time" )
+    endif ()
+
+    check_cxx_compiler_flag ( "-D_FORTIFY_SOURCE=2" HAS_FORTIFY_SOURCE_2_CPPFLAG )
+    if ( HAS_FORTIFY_SOURCE_2_CPPFLAG )
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FORTIFY_SOURCE=2" )
+    endif ()
+
+    check_cxx_compiler_flag ( "-fstack-protector-strong" HAS_FSTACK_PROTECTOR_STRONG_CXXFLAG )
+    if ( HAS_FSTACK_PROTECTOR_STRONG_CXXFLAG )
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-strong" )
+    endif ()
+
+    check_cxx_compiler_flag ( "-Wformat" HAS_WFORMAT_CXXFLAG )
+    if ( HAS_WFORMAT_CXXFLAG )
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat" )
+    endif ()
+
+    check_cxx_compiler_flag ( "-Werror=format-security" HAS_WERROR_FORMAT_SECURITY_CXXFLAG )
+    if ( HAS_WERROR_FORMAT_SECURITY_CXXFLAG )
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=format-security" )
+    endif ()
+
+    set ( CMAKE_REQUIRED_FLAGS "-Wl,-z,relro" )
+    check_cxx_compiler_flag ( "" HAS_ZRELRO_LDFLAG )
+    if ( HAS_ZRELRO_LDFLAG )
+        set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,relro" )
+        set ( CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,-z,relro" )
+    endif ()
+    unset ( CMAKE_REQUIRED_FLAGS )
+
+    set ( CMAKE_REQUIRED_FLAGS "-Wl,-z,now" )
+    check_cxx_compiler_flag ( "-Wl,-z,now" HAS_ZNOW_LDFLAG )
+    if ( HAS_ZNOW_LDFLAG )
+        set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,now" )
+        set ( CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,-z,now" )
+    endif ()
+    unset ( CMAKE_REQUIRED_FLAGS )
+
+endif ( ENABLE_HARDENED_BUILD )
+
+if ( ENABLE_PIE )
+    check_cxx_compiler_flag ( "-fPIE -pie" HAS_PIE_SUPPORT )
+    if ( HAS_PIE_SUPPORT )
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE" )
+        set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fPIE -pie" )
+        set ( CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fPIE -pie" )
+    endif ()
+endif ( ENABLE_PIE )
+
 # debugging
 
 set ( DEBUG_MSGS ${ENABLE_DEBUG_MSGS} )

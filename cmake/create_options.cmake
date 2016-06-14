@@ -19,7 +19,6 @@ option ( ENABLE_SHELL "enable shell support" OFF )
 option ( ENABLE_UNIT_TESTS "enable unit tests" OFF )
 option ( ENABLE_PIGLET "enable piglet test harness" OFF )
 
-option ( ENABLE_PTHREAD "enable pthread support" ON )
 option ( ENABLE_COREFILES "Prevent Snort from generating core files" ON )
 option ( ENABLE_INTEL_SOFT_CPM "Enable Intel Soft CPM support" OFF )
 option ( ENABLE_LARGE_PCAP "Enable support for pcaps larger than 2 GB" OFF )
@@ -28,6 +27,10 @@ option ( ENABLE_LARGE_PCAP "Enable support for pcaps larger than 2 GB" OFF )
 option ( MAKE_HTML_DOC "Create the HTML documentation" ON )
 option ( MAKE_PDF_DOC "Create the PDF documentation" ON )
 option ( MAKE_TEXT_DOC "Create the text documentation" ON )
+
+# security
+option ( ENABLE_HARDENED_BUILD "Detect and use compile-time hardening options" OFF )
+option ( ENABLE_PIE "Attempt to produce a position-independent executable" OFF )
 
 # debugging
 option ( ENABLE_DEBUG_MSGS "Enable debug printing options (bugreports and developers only)" OFF )

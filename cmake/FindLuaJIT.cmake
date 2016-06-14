@@ -4,60 +4,27 @@
 #  LUAJIT_FOUND, if false, do not try to link to Lua
 #  LUAJIT_LIBRARIES
 #  LUAJIT_INCLUDE_DIR, where to find lua.h
-#  LUAJIT_VERSION_STRING, the version of Lua found (since CMake 2.8.8)
-
-## Copied from default CMake FindLua51.cmake
-set( LUA_PATHS
-    ~/Library/Frameworks
-    /Library/Frameworks
-    /sw
-    /opt/local
-    /opt/csw
-    /opt
-)
+#  LUAJIT_VERSION_STRING, the version of LuaJIT found
 
 set(ERROR_MESSAGE
     "\n\tCan't Find luajit!  Get it from
     http://luajit.org/download.html or use the --with-luajit-*
-    options if you have it installed inn an unusual place.  You can
-    also set the LUA_DIR environment variablet to the daqs root installation directory\n"
+    options if you have it installed inn an unusual place.\n"
 )
 
+find_package(PkgConfig)
+pkg_check_modules(PC_LUAJIT luajit)
 
-find_path(LUAJIT_INCLUDE_DIR 
-    NAMES luajit.h
-    HINTS ENV LUA_DIR
-    PATH_SUFFIXES include include/luajit-2.0
-    PATHS ${LUA_PATHS}
-)
-
-find_library(LUAJIT_LIBRARIES
-    NAMES luajit-5.1
-    HINTS ${LUAJIT_LIBRARIES_DIR}
-    DOC "Lua Libraries"
-    NO_DEFAULT_PATH
-    NO_CMAKE_ENVIRONMENT_PATH
-)
-find_library(LUAJIT_LIBRARIES
-    NAMES luajit-5.1
-    HINTS ENV LUA_DIR
-    PATH_SUFFIXES luajit-5.1
-    PATHS ${LUA_PATHS}
-    DOC "Lua Libraries"
-)
+# Use LUAJIT_INCLUDE_DIR_HINT and LUAJIT_LIBRARY_DIR_HINT from configure_cmake.sh as primary hints
+# and then package config information after that.
+find_path(LUAJIT_INCLUDE_DIR luajit.h
+    HINTS ${LUAJIT_INCLUDE_DIR_HINT} ${PC_LUAJIT_INCLUDEDIR} ${PC_LUAJIT_INCLUDE_DIRS})
+find_library(LUAJIT_LIBRARIES NAMES luajit-5.1
+    HINTS ${LUAJIT_LIBRARIES_DIR_HINT} ${PC_LUAJIT_LIBDIR} ${PC_LUAJIT_LIBRARY_DIRS})
 
 if (APPLE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LUAJIT_LIBRARIES} -pagezero_size 10000 -image_base 100000000")
 endif()
-
-if(LUAJIT_LIBRARIES)
-    # include the math library for Unix
-    if(UNIX AND NOT APPLE)
-        find_library(MATH_LIBRARY m)
-        list(APPEND LUAJIT_LIBRARIES "${MATH_LIBRARY}")
-    endif()
-endif()
-
 
 if(LUAJIT_INCLUDE_DIR AND EXISTS "${LUAJIT_INCLUDE_DIR}/luajit.h")
     file(STRINGS "${LUAJIT_INCLUDE_DIR}/luajit.h" luajit_version_str REGEX "^#define[ \t]+LUAJIT_VERSION[ \t]+\"LuaJIT .+\"")
@@ -75,9 +42,5 @@ find_package_handle_standard_args(LuaJIT
     FAIL_MESSAGE "${ERROR_MESSAGE}"
 )
 
-mark_as_advanced(
-    LUAJIT_INCLUDE_DIR 
-    LUAJIT_LIBRARIES 
-    MATH_LIBRARY
-)
+mark_as_advanced(LUAJIT_INCLUDE_DIR LUAJIT_LIBRARIES)
 
