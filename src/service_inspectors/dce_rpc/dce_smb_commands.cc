@@ -29,6 +29,18 @@
 #include "utils/util.h"
 #include "detection/detect.h"
 
+enum SmbNtTransactSubcommand
+{
+    NT_TRANSACT_UNKNOWN_0000            = 0x0000,
+    NT_TRANSACT_CREATE                  = 0x0001,
+    NT_TRANSACT_IOCTL                   = 0x0002,
+    NT_TRANSACT_SET_SECURITY_DESC       = 0x0003,
+    NT_TRANSACT_NOTIFY_CHANGE           = 0x0004,
+    NT_TRANSACT_RENAME                  = 0x0005,
+    NT_TRANSACT_QUERY_SECURITY_DESC     = 0x0006,
+    NT_TRANSACT_SUBCOM_MAX              = 0x0007
+} SmbNtTransactSubcommand;
+
 /********************************************************************
  * Global variables
  ********************************************************************/
@@ -143,6 +155,17 @@ const char* smb_transaction2_sub_command_strings[TRANS2_SUBCOM_MAX] =
     "TRANS2_REPORT_DFS_INCONSISTENCY"        // 0x0011
 };
 
+const char* smb_nt_transact_sub_command_strings[NT_TRANSACT_SUBCOM_MAX] =
+{
+    "Unknown",                               // 0x0000
+    "NT_TRANSACT_CREATE",                    // 0x0001
+    "NT_TRANSACT_IOCTL",                     // 0x0002
+    "NT_TRANSACT_SET_SECURITY_DESC",         // 0x0003
+    "NT_TRANSACT_NOTIFY_CHANGE",             // 0x0004
+    "NT_TRANSACT_RENAME",                    // 0x0005
+    "NT_TRANSACT_QUERY_SECURITY_DESC"        // 0x0006
+};
+
 /********************************************************************
  * Private function prototypes
  ********************************************************************/
@@ -177,6 +200,8 @@ static inline DCE2_Ret DCE2_SmbCheckData(DCE2_SmbSsnData*, const uint8_t*,
     const uint8_t*, const uint32_t, const uint16_t, const uint32_t, uint16_t);
 static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData*, const SmbNtHdr*,
     const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
+static DCE2_Ret DCE2_SmbNtTransactCreateReq(DCE2_SmbSsnData*,
+    const uint8_t*, uint32_t, bool);
 
 /*********************************************************************
  * Private functions
@@ -344,6 +369,56 @@ static DCE2_Ret DCE2_SmbCheckData(DCE2_SmbSsnData*,
     {
         dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
     }
+
+    return DCE2_RET__SUCCESS;
+}
+
+// NT_TRANSACT_CREATE
+static DCE2_Ret DCE2_SmbNtTransactCreateReq(DCE2_SmbSsnData* ssd,
+    const uint8_t* param_ptr, uint32_t param_len, bool unicode)
+{
+    uint32_t pad = 0;
+    uint32_t file_name_length;
+    const uint8_t* param_start = param_ptr;
+
+    if (param_len < sizeof(SmbNtTransactCreateReqParams))
+        return DCE2_RET__ERROR;
+
+    if (!DCE2_SmbIsTidIPC(ssd, ssd->cur_rtracker->tid))
+    {
+        uint32_t ext_file_attrs =
+            SmbNtTransactCreateReqFileAttrs((SmbNtTransactCreateReqParams*)param_ptr);
+
+        if (SmbEvasiveFileAttrs(ext_file_attrs))
+            dce_alert(GID_DCE2, DCE2_SMB_EVASIVE_FILE_ATTRS,
+                (dce2CommonStats*)&dce2_smb_stats);
+
+        // If the file is going to be accessed sequentially, track it.
+        if (SmbNtTransactCreateReqSequentialOnly((SmbNtTransactCreateReqParams*)param_ptr))
+            ssd->cur_rtracker->sequential_only = true;
+
+        ssd->cur_rtracker->file_size =
+            SmbNtTransactCreateReqAllocSize((SmbNtTransactCreateReqParams*)param_ptr);
+    }
+
+    file_name_length =
+        SmbNtTransactCreateReqFileNameLength((SmbNtTransactCreateReqParams*)param_ptr);
+
+    if (file_name_length > DCE2_SMB_MAX_PATH_LEN)
+        return DCE2_RET__ERROR;
+
+    DCE2_MOVE(param_ptr, param_len, sizeof(SmbNtTransactCreateReqParams));
+
+    if (unicode)
+        pad = (param_ptr - param_start) & 1;
+
+    if (param_len < (pad + file_name_length))
+        return DCE2_RET__ERROR;
+
+    DCE2_MOVE(param_ptr, param_len, pad);
+
+    ssd->cur_rtracker->file_name =
+        DCE2_SmbGetString(param_ptr, file_name_length, unicode, false);
 
     return DCE2_RET__SUCCESS;
 }
@@ -2040,10 +2115,6 @@ static DCE2_Ret DCE2_SmbUpdateTransRequest(DCE2_SmbSsnData* ssd,
     int data_params = DCE2_SMB_TRANS__NONE;
     uint8_t smb_com = DCE2_ComInfoSmbCom(com_info);
 
-    //FIXIT-M init to avoid warnings. can be removed once other commands are supported
-    tpcnt =0; pcnt =0; poff =0;
-    tdcnt =0; dcnt =0; doff =0;
-
     switch (smb_com)
     {
     case SMB_COM_TRANSACTION:
@@ -2192,7 +2263,45 @@ static DCE2_Ret DCE2_SmbUpdateTransRequest(DCE2_SmbSsnData* ssd,
         break;
 
     case SMB_COM_NT_TRANSACT:
-        // FIXIT-M port together with nt_transact
+        sub_com = SmbNtTransactReqSubCom((SmbNtTransactReq*)nb_ptr);
+        setup_count = SmbNtTransactReqSetupCnt((SmbNtTransactReq*)nb_ptr);
+        tdcnt = SmbNtTransactReqTotalDataCnt((SmbNtTransactReq*)nb_ptr);
+        doff = SmbNtTransactReqDataOff((SmbNtTransactReq*)nb_ptr);
+        dcnt = SmbNtTransactReqDataCnt((SmbNtTransactReq*)nb_ptr);
+        tpcnt = SmbNtTransactReqTotalParamCnt((SmbNtTransactReq*)nb_ptr);
+        pcnt = SmbNtTransactReqParamCnt((SmbNtTransactReq*)nb_ptr);
+        poff = SmbNtTransactReqParamOff((SmbNtTransactReq*)nb_ptr);
+
+        DebugFormat(DEBUG_DCE_SMB,
+            "Nt Transact subcommand: %s (0x%04X)\n",
+            (sub_com < NT_TRANSACT_SUBCOM_MAX)
+            ? smb_nt_transact_sub_command_strings[sub_com]
+            : "Unknown", sub_com);
+
+        switch (sub_com)
+        {
+        case NT_TRANSACT_CREATE:
+            dce_alert(GID_DCE2, DCE2_SMB_UNUSUAL_COMMAND_USED, (dce2CommonStats*)&dce2_smb_stats);
+            if (setup_count != 0)
+            {
+                dce_alert(GID_DCE2, DCE2_SMB_INVALID_SETUP_COUNT,
+                    (dce2CommonStats*)&dce2_smb_stats);
+                return DCE2_RET__ERROR;
+            }
+            data_params = DCE2_SMB_TRANS__PARAMS;
+            break;
+        case NT_TRANSACT_IOCTL:
+        case NT_TRANSACT_SET_SECURITY_DESC:
+        case NT_TRANSACT_NOTIFY_CHANGE:
+        case NT_TRANSACT_RENAME:
+        case NT_TRANSACT_QUERY_SECURITY_DESC:
+        default:
+            // Don't want to process this transaction any more
+            return DCE2_RET__IGNORE;
+        }
+
+        DCE2_MOVE(nb_ptr, nb_len, com_size);
+
         break;
 
     default:
@@ -2269,9 +2378,6 @@ static DCE2_Ret DCE2_SmbUpdateTransResponse(DCE2_SmbSsnData* ssd,
     int data_params = DCE2_SMB_TRANS__NONE;
     uint8_t smb_com = DCE2_ComInfoSmbCom(com_info);
 
-    //FIXIT-M init to avoid warnings. can be removed once other commands are supported
-    tpcnt =0; pcnt =0; poff =0; pdisp =0;
-    tdcnt =0; dcnt =0; doff =0; ddisp =0;
     switch (smb_com)
     {
     case SMB_COM_TRANSACTION:
@@ -2338,7 +2444,29 @@ static DCE2_Ret DCE2_SmbUpdateTransResponse(DCE2_SmbSsnData* ssd,
         break;
 
     case SMB_COM_NT_TRANSACT:
-        // FIXIT-M port along with NT_TRANSACT
+        tpcnt = SmbNtTransactRespTotalParamCnt((SmbNtTransactResp*)nb_ptr);
+        pcnt = SmbNtTransactRespParamCnt((SmbNtTransactResp*)nb_ptr);
+        poff = SmbNtTransactRespParamOff((SmbNtTransactResp*)nb_ptr);
+        pdisp = SmbNtTransactRespParamDisp((SmbNtTransactResp*)nb_ptr);
+        tdcnt = SmbNtTransactRespTotalDataCnt((SmbNtTransactResp*)nb_ptr);
+        dcnt = SmbNtTransactRespDataCnt((SmbNtTransactResp*)nb_ptr);
+        doff = SmbNtTransactRespDataOff((SmbNtTransactResp*)nb_ptr);
+        ddisp = SmbNtTransactRespDataDisp((SmbNtTransactResp*)nb_ptr);
+
+        DebugFormat(DEBUG_DCE_SMB,
+            "Nt Transact subcommand: %s (0x%04X)\n",
+            (sub_com < NT_TRANSACT_SUBCOM_MAX)
+            ? smb_nt_transact_sub_command_strings[sub_com]
+            : "Unknown", sub_com);
+
+        switch (sub_com)
+        {
+        case NT_TRANSACT_CREATE:
+            data_params = DCE2_SMB_TRANS__PARAMS;
+            break;
+        default:
+            return DCE2_RET__ERROR;
+        }
 
         break;
 
@@ -2995,6 +3123,145 @@ static DCE2_Ret DCE2_SmbTrans2SetFileInfoReq(DCE2_SmbSsnData* ssd,
 
     ssd->cur_rtracker->file_size = alignedNtohq((uint64_t*)data_ptr);
     ssd->cur_rtracker->ftracker = ftracker;
+
+    return DCE2_RET__SUCCESS;
+}
+
+// SMB_COM_NT_TRANSACT
+DCE2_Ret DCE2_SmbNtTransact(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
+    const DCE2_SmbComInfo* com_info, const uint8_t* nb_ptr, uint32_t nb_len)
+{
+    uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
+    DCE2_SmbTransactionTracker* ttracker = &ssd->cur_rtracker->ttracker;
+
+    // NOTE: Only looking at NT_TRANSACT_CREATE as another way to open a named pipe
+
+    // Got a matching request for an in progress transaction - don't process it,
+    // but don't want to remove tracker.
+    if (DCE2_ComInfoIsRequest(com_info)
+        && !DCE2_SmbIsTransactionComplete(ttracker))
+    {
+        DebugMessage(DEBUG_DCE_SMB, "Got new transaction request "
+            "that matches an in progress transaction - not inspecting.\n");
+        return DCE2_RET__ERROR;
+    }
+
+    if (!DCE2_ComInfoCanProcessCommand(com_info))
+        return DCE2_RET__ERROR;
+
+    // Interim response is sent if client didn't send all data / parameters
+    // in initial NtTransact request and will have to complete the request
+    // with NtTransactSecondary commands.
+    if (DCE2_ComInfoIsResponse(com_info)
+        && (com_size == sizeof(SmbNtTransactInterimResp)))
+    {
+        return DCE2_RET__SUCCESS;
+    }
+
+    if (DCE2_ComInfoIsRequest(com_info))
+    {
+        uint32_t pcnt = SmbNtTransactReqParamCnt((SmbNtTransactReq*)nb_ptr);
+        uint32_t poff = SmbNtTransactReqParamOff((SmbNtTransactReq*)nb_ptr);
+        DCE2_Ret status =
+            DCE2_SmbUpdateTransRequest(ssd, smb_hdr, com_info, nb_ptr, nb_len);
+
+        if (status != DCE2_RET__FULL)
+            return status;
+
+        DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + poff) - nb_ptr);
+
+        switch (ttracker->subcom)
+        {
+        case NT_TRANSACT_CREATE:
+            status = DCE2_SmbNtTransactCreateReq(ssd, nb_ptr, pcnt, SmbUnicode(smb_hdr));
+            if (status != DCE2_RET__SUCCESS)
+                return status;
+            break;
+
+        default:
+            return DCE2_RET__IGNORE;
+        }
+    }
+    else
+    {
+        const uint8_t* ptr;
+        uint32_t len;
+        DCE2_SmbFileTracker* ftracker = nullptr;
+
+        DCE2_Ret status =
+            DCE2_SmbUpdateTransResponse(ssd, smb_hdr, com_info, nb_ptr, nb_len);
+
+        if (status != DCE2_RET__FULL)
+            return status;
+
+        if (!DCE2_BufferIsEmpty(ttracker->pbuf))
+        {
+            ptr = DCE2_BufferData(ttracker->pbuf);
+            len = DCE2_BufferLength(ttracker->pbuf);
+        }
+        else
+        {
+            uint32_t poff = SmbNtTransactRespParamOff((SmbNtTransactResp*)nb_ptr);
+            uint32_t pcnt = SmbNtTransactRespParamCnt((SmbNtTransactResp*)nb_ptr);
+
+            DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + poff) - nb_ptr);
+
+            ptr = nb_ptr;
+            len = pcnt;
+        }
+
+        if (len < sizeof(SmbNtTransactCreateRespParams))
+            return DCE2_RET__ERROR;
+
+        if (!DCE2_SmbIsTidIPC(ssd, ssd->cur_rtracker->tid))
+        {
+            const bool is_directory =
+                SmbNtTransactCreateRespDirectory((SmbNtTransactCreateRespParams*)ptr);
+            const uint16_t resource_type =
+                SmbNtTransactCreateRespResourceType((SmbNtTransactCreateRespParams*)ptr);
+
+            if (is_directory || !SmbResourceTypeDisk(resource_type))
+                return DCE2_RET__SUCCESS;
+
+            // FIXIT-M port as part of fileAPI user story
+/*
+            // Give preference to files opened with the sequential only flag set
+            if (((ssd->fapi_ftracker == nullptr) || !ssd->fapi_ftracker->ff_sequential_only)
+                    && ssd->cur_rtracker->sequential_only)
+            {
+                DCE2_SmbAbortFileAPI(ssd);
+            }
+*/
+        }
+
+        ftracker = DCE2_SmbNewFileTracker(ssd,
+            ssd->cur_rtracker->uid, ssd->cur_rtracker->tid,
+            SmbNtTransactCreateRespFid((SmbNtTransactCreateRespParams*)ptr));
+        if (ftracker == nullptr)
+            return DCE2_RET__ERROR;
+
+        ftracker->file_name = ssd->cur_rtracker->file_name;
+        ssd->cur_rtracker->file_name = nullptr;
+
+        if (!ftracker->is_ipc)
+        {
+            uint32_t create_disposition =
+                SmbNtTransactCreateRespCreateAction((SmbNtTransactCreateRespParams*)ptr);
+
+            if (SmbCreateDispositionRead(create_disposition))
+            {
+                ftracker->ff_file_size =
+                    SmbNtTransactCreateRespEndOfFile((SmbNtTransactCreateRespParams*)ptr);
+            }
+            else
+            {
+                ftracker->ff_file_size = ssd->cur_rtracker->file_size;
+                ftracker->ff_file_direction = DCE2_SMB_FILE_DIRECTION__UPLOAD;
+            }
+
+            ftracker->ff_sequential_only = ssd->cur_rtracker->sequential_only;
+        }
+    }
 
     return DCE2_RET__SUCCESS;
 }

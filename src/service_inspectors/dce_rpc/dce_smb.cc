@@ -2408,8 +2408,7 @@ static void DCE2_SmbInitGlobals()
             DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 2, UINT16_MAX);
             break;
         case SMB_COM_NT_TRANSACT:
-            //smb_com_funcs[com] = DCE2_SmbNtTransact;
-            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_com_funcs[com] = DCE2_SmbNtTransact;
             smb_deprecated_coms[com] = false;
             smb_unusual_coms[com] = false;
 

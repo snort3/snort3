@@ -2296,6 +2296,246 @@ inline bool SmbSetFileInfoSetFileBasicInfo(const uint16_t info_level)
            || (info_level == SMB_INFO_PT_SET_FILE_BASIC_FILE_INFO));
 }
 
+/********************************************************************
+ * SMB_COM_NT_TRANSACT
+ ********************************************************************/
+#define SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY     0x00000004
+
+struct SmbNtTransactReq
+{
+    uint8_t  smb_wct;
+    uint8_t  smb_max_setup_count;
+    uint16_t smb_res;
+    uint32_t smb_total_param_count;
+    uint32_t smb_total_data_count;
+    uint32_t smb_max_param_count;
+    uint32_t smb_max_data_count;
+    uint32_t smb_param_count;
+    uint32_t smb_param_offset;
+    uint32_t smb_data_count;
+    uint32_t smb_data_offset;
+    uint8_t  smb_setup_count;
+    uint16_t smb_function;
+};
+
+struct SmbNtTransactInterimResp
+{
+    uint8_t  smb_wct;
+    uint16_t smb_bcc;
+
+};
+
+struct SmbNtTransactResp
+{
+    uint8_t  smb_wct;
+    uint8_t  smb_res[3];
+    uint32_t smb_total_param_count;
+    uint32_t smb_total_data_count;
+    uint32_t smb_param_count;
+    uint32_t smb_param_offset;
+    uint32_t smb_param_disp;
+    uint32_t smb_data_count;
+    uint32_t smb_data_offset;
+    uint32_t smb_data_disp;
+    uint8_t  smb_setup_count;
+};
+
+inline uint16_t SmbNtTransactReqSubCom(const SmbNtTransactReq *req)
+{
+    return alignedNtohs(&req->smb_function);
+}
+
+inline uint8_t SmbNtTransactReqSetupCnt(const SmbNtTransactReq *req)
+{
+    return req->smb_setup_count;
+}
+
+inline uint32_t SmbNtTransactReqTotalParamCnt(const SmbNtTransactReq *req)
+{
+    return alignedNtohl(&req->smb_total_param_count);
+}
+
+inline uint32_t SmbNtTransactReqParamCnt(const SmbNtTransactReq *req)
+{
+    return alignedNtohl(&req->smb_param_count);
+}
+
+inline uint32_t SmbNtTransactReqParamOff(const SmbNtTransactReq *req)
+{
+    return alignedNtohl(&req->smb_param_offset);
+}
+
+inline uint32_t SmbNtTransactReqTotalDataCnt(const SmbNtTransactReq *req)
+{
+    return alignedNtohl(&req->smb_total_data_count);
+}
+
+inline uint32_t SmbNtTransactReqDataCnt(const SmbNtTransactReq *req)
+{
+    return alignedNtohl(&req->smb_data_count);
+}
+
+inline uint32_t SmbNtTransactReqDataOff(const SmbNtTransactReq *req)
+{
+    return alignedNtohl(&req->smb_data_offset);
+}
+
+inline uint32_t SmbNtTransactRespTotalParamCnt(const SmbNtTransactResp *resp)
+{
+    return alignedNtohl(&resp->smb_total_param_count);
+}
+
+inline uint32_t SmbNtTransactRespParamCnt(const SmbNtTransactResp *resp)
+{
+    return alignedNtohl(&resp->smb_param_count);
+}
+
+inline uint32_t SmbNtTransactRespParamOff(const SmbNtTransactResp *resp)
+{
+    return alignedNtohl(&resp->smb_param_offset);
+}
+
+inline uint32_t SmbNtTransactRespParamDisp(const SmbNtTransactResp *resp)
+{
+    return alignedNtohl(&resp->smb_param_disp);
+}
+
+inline uint32_t SmbNtTransactRespTotalDataCnt(const SmbNtTransactResp *resp)
+{
+    return alignedNtohl(&resp->smb_total_data_count);
+}
+
+inline uint32_t SmbNtTransactRespDataCnt(const SmbNtTransactResp *resp)
+{
+    return alignedNtohl(&resp->smb_data_count);
+}
+
+inline uint32_t SmbNtTransactRespDataOff(const SmbNtTransactResp *resp)
+{
+    return alignedNtohl(&resp->smb_data_offset);
+}
+
+inline uint32_t SmbNtTransactRespDataDisp(const SmbNtTransactResp *resp)
+{
+    return alignedNtohl(&resp->smb_data_disp);
+}
+
+struct SmbNtTransactCreateReqParams
+{
+    uint32_t flags;
+    uint32_t root_dir_fid;
+    uint32_t desired_access;
+    uint64_t allocation_size;
+    uint32_t ext_file_attributes;
+    uint32_t share_access;
+    uint32_t create_disposition;
+    uint32_t create_options;
+    uint32_t security_descriptor_length;
+    uint32_t ea_length;
+    uint32_t name_length;
+    uint32_t impersonation_level;
+    uint8_t  security_flags;
+};
+
+inline uint64_t SmbNtTransactCreateReqAllocSize(const SmbNtTransactCreateReqParams *req)
+{
+    return alignedNtohq(&req->allocation_size);
+}
+
+inline uint32_t SmbNtTransactCreateReqFileNameLength(const SmbNtTransactCreateReqParams *req)
+{
+    return alignedNtohl(&req->name_length);
+}
+
+inline uint32_t SmbNtTransactCreateReqFileAttrs(const SmbNtTransactCreateReqParams *req)
+{
+    return alignedNtohl(&req->ext_file_attributes);
+}
+
+inline bool SmbNtTransactCreateReqSequentialOnly(const SmbNtTransactCreateReqParams *req)
+{
+    return (alignedNtohl(&req->create_options) & SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY);
+}
+
+struct SmbNtTransactCreateReq
+{
+    uint8_t  smb_wct;
+    uint8_t  smb_max_setup_count;
+    uint16_t smb_res;
+    uint32_t smb_total_param_count;
+    uint32_t smb_total_data_count;
+    uint32_t smb_max_param_count;
+    uint32_t smb_max_data_count;
+    uint32_t smb_param_count;
+    uint32_t smb_param_offset;
+    uint32_t smb_data_count;
+    uint32_t smb_data_offset;
+    uint8_t  smb_setup_count;   /* Must be 0x00 */
+    uint16_t smb_function;      /* NT_TRANSACT_CREATE */
+    uint16_t smb_bcc;
+};
+
+struct SmbNtTransactCreateRespParams
+{
+    uint8_t  op_lock_level;
+    uint8_t  reserved;
+    uint16_t smb_fid;
+    uint32_t create_action;
+    uint32_t ea_error_offset;
+    uint64_t creation_time;
+    uint64_t last_access_time;
+    uint64_t last_write_time;
+    uint64_t last_change_time;
+    uint32_t ext_file_attributes;
+    uint64_t allocation_size;
+    uint64_t end_of_file;
+    uint16_t resource_type;
+    uint16_t nm_pipe_status;
+    uint8_t  directory;
+};
+
+inline uint16_t SmbNtTransactCreateRespFid(const SmbNtTransactCreateRespParams *resp)
+{
+    return alignedNtohs(&resp->smb_fid);
+}
+
+inline uint32_t SmbNtTransactCreateRespCreateAction(const SmbNtTransactCreateRespParams *resp)
+{
+    return alignedNtohl(&resp->create_action);
+}
+
+inline uint64_t SmbNtTransactCreateRespEndOfFile(const SmbNtTransactCreateRespParams *resp)
+{
+    return alignedNtohq(&resp->end_of_file);
+}
+
+inline uint16_t SmbNtTransactCreateRespResourceType(const SmbNtTransactCreateRespParams *resp)
+{
+    return alignedNtohs(&resp->resource_type);
+}
+
+inline bool SmbNtTransactCreateRespDirectory(const SmbNtTransactCreateRespParams *resp)
+{
+    return (resp->directory ? true : false);
+}
+
+struct SmbNtTransactCreateResp
+{
+    uint8_t  smb_wct;
+    uint8_t  smb_res[3];
+    uint32_t smb_total_param_count;
+    uint32_t smb_total_data_count;
+    uint32_t smb_param_count;
+    uint32_t smb_param_offset;
+    uint32_t smb_param_disp;
+    uint32_t smb_data_count;
+    uint32_t smb_data_offset;
+    uint32_t smb_data_disp;
+    uint8_t  smb_setup_count;   /* 0x00 */
+    uint16_t smb_bcc;
+};
+
+
 #pragma pack()
 
 struct DCE2_SmbFsm
