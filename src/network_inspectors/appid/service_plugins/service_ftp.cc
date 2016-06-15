@@ -32,6 +32,7 @@
 #include "application_ids.h"
 #include "service_base.h"
 #include "service_util.h"
+#include "appid_module.h"
 
 // FIXIT-H This needs to use a real SFIP function
 static SFIP_RET sfip_convert_ip_text_to_binary(const int, const char*, void*)
@@ -1294,17 +1295,20 @@ inprocess:
     case SERVICE_SUCCESS:
         if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
         {
-            uint64_t encryptedFlag = getAppIdFlag(flowp, APPID_SESSION_ENCRYPTED |
-                APPID_SESSION_DECRYPTED);
+            uint64_t encryptedFlag = getAppIdFlag(flowp, 
+                APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
+
+            // FTPS only when encrypted==1 decrypted==0
             ftp_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
-                encryptedFlag == APPID_SESSION_ENCRYPTED ?                              // FTPS
-                                                                                        // only
-                                                                                        // when
-                                                                                        // encrypted==1
-                                                                                        // decrypted==0
+                encryptedFlag == APPID_SESSION_ENCRYPTED ?
                 APP_ID_FTPS : APP_ID_FTP_CONTROL,
                 fd->vendor[0] ? fd->vendor : nullptr,
                 fd->version[0] ? fd->version : nullptr, nullptr);
+
+            if(encryptedFlag == APPID_SESSION_ENCRYPTED)
+                appid_stats.ftps_count++;
+            else
+                appid_stats.ftp_count++;
         }
         return SERVICE_SUCCESS;
 

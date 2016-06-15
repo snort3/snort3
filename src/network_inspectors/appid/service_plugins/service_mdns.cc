@@ -288,9 +288,7 @@ static int MDNSUserAnalyser(AppIdData* flowp, const Packet* pkt, uint16_t size, 
             int user_printable_index =0;
 
             if (ret_value == -1)
-            {
                 return -1;
-            }
             else if (ret_value)
             {
                 while (start_index < data_size && (!isprint(srv_original[start_index])  ||
@@ -308,9 +306,8 @@ static int MDNSUserAnalyser(AppIdData* flowp, const Packet* pkt, uint16_t size, 
                 while (user_index < user_name_len)
                 {
                     if (!isprint(user_name[user_index]))
-                    {
                         return 1;
-                    }
+
                     user_index++;
                 }
 
@@ -322,9 +319,7 @@ static int MDNSUserAnalyser(AppIdData* flowp, const Packet* pkt, uint16_t size, 
             if ((resp_endptr  + NEXT_MESSAGE_OFFSET  ) < (srv_original + data_size))
             {
                 data_len_str = (uint8_t*)(resp_endptr+ LENGTH_OFFSET);
-                data_len = 0;
                 data_len =  (short)( data_len_str[0]<< SHIFT_BITS | ( data_len_str[1] ));
-
                 data_size = data_size - (resp_endptr  + NEXT_MESSAGE_OFFSET + data_len -
                     srv_original);
                 /* Check if user name is available in the Domain Name field */
@@ -348,9 +343,8 @@ static int MDNSUserAnalyser(AppIdData* flowp, const Packet* pkt, uint16_t size, 
                         while (user_index < user_name_len)
                         {
                             if (isprint(user_name_bkp[user_index]))
-                            {
                                 break;
-                            }
+
                             user_index++;
                         }
 
@@ -360,9 +354,8 @@ static int MDNSUserAnalyser(AppIdData* flowp, const Packet* pkt, uint16_t size, 
                         while (user_printable_index < user_name_len)
                         {
                             if (!isprint(user_name_bkp [user_printable_index ]))
-                            {
                                 return 0;
-                            }
+
                             user_printable_index++;
                         }
                         /* Copy  the user name if available */
@@ -383,14 +376,10 @@ static int MDNSUserAnalyser(AppIdData* flowp, const Packet* pkt, uint16_t size, 
                         return 0;
                 }
                 else
-                {
                     return 0;
-                }
             }
             else
-            {
                 return 0;
-            }
         }
     }
     else
@@ -423,7 +412,7 @@ static int MDNS_validate(ServiceValidationArgs* args)
         {
             if (pAppidActiveConfig->mod_config->mdns_user_reporting)
             {
-                ret_val = MDNSUserAnalyser(flowp, pkt, size, args->pConfig);
+                MDNSUserAnalyser(flowp, pkt, size, args->pConfig);
                 mdnsMatchListDestroy(args->pConfig);
                 goto success;
             }

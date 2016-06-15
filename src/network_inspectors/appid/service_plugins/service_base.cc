@@ -176,7 +176,9 @@ static RNAServiceValidationModule* static_service_list[] =
     &dns_service_mod,
 #ifdef REMOVED_WHILE_NOT_IN_USE
     &flap_service_mod,
+#endif
     &ftp_service_mod,
+#ifdef REMOVED_WHILE_NOT_IN_USE
     &irc_service_mod,
     &lpr_service_mod,
     &mysql_service_mod,
@@ -197,7 +199,9 @@ static RNAServiceValidationModule* static_service_list[] =
     &snmp_service_mod,
     &ssh_service_mod,
     &ssl_service_mod,
+#endif
     &telnet_service_mod,
+#ifdef REMOVED_WHILE_NOT_IN_USE
     &tftp_service_mod,
     &sip_service_mod,
     &directconnect_service_mod,
@@ -758,17 +762,12 @@ int serviceLoadForConfigCallback(void* symbol, AppIdConfig* pConfig)
     }
 
     svm->api = &serviceapi;
-    pp = svm->pp;
     for (pp=svm->pp; pp && pp->validate; pp++)
-    {
         if (CServiceAddPort(pp, svm, pConfig))
             return -1;
-    }
 
     if (svm->init(&svc_init_api))
-    {
         ErrorMessage("Error initializing service %s\n",svm->name);
-    }
 
     svm->next = pConfig->serviceConfig.active_service_list;
     pConfig->serviceConfig.active_service_list = svm;
@@ -816,12 +815,9 @@ int ReloadServiceModules(AppIdConfig* pConfig)
         // processing only non-lua service detectors.
         if (svm->init)
         {
-            pp = svm->pp;
             for (pp=svm->pp; pp && pp->validate; pp++)
-            {
                 if (CServiceAddPort(pp, svm, pConfig))
                     return -1;
-            }
         }
     }
 
@@ -1078,7 +1074,7 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
     patterns->find_all((char*)pkt->data, pkt->dsize, &pattern_match, false, (void*)&match_list);
 
     count = 0;
-    for (sm=match_list; sm; sm=sm->next)
+    for (sm = match_list; sm; sm = sm->next)
     {
         if (count >= smOrderedListSize)
         {

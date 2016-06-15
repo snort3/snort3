@@ -40,8 +40,11 @@ struct AppIdStats
     PegCount packet_count;
     PegCount dns_udp_count;
     PegCount dns_tcp_count;
+    PegCount ftp_count;
+    PegCount ftps_count;
     PegCount smtp_count;
     PegCount smtps_count;
+    PegCount telnet_count;
 };
 
 extern THREAD_LOCAL AppIdStats appid_stats;

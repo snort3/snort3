@@ -142,9 +142,6 @@ AppIdData* appSharedDataAlloc(IpProtocol proto, const sfip_t* ip)
     //     data->reset();
     // }
 
-    if ( !data )
-        FatalError("Could not allocate AppIdData data");
-
     if (thirdparty_appid_module)
         if (!(data->tpsession = thirdparty_appid_module->session_create()))
             FatalError("Could not allocate AppIdData->tpsession data");
@@ -536,11 +533,7 @@ static inline void appIdDebugParse(const char* desc, const uint8_t* data, uint32
             break;
 
         if (length >= sizeof(info->dport))
-        {
             memcpy(&info->dport, data, sizeof(info->dport));
-            length -= sizeof(info->dport);
-            data += sizeof(info->dport);
-        }
         else
             break;
     }
@@ -2282,6 +2275,9 @@ void fwAppIdSearch(Packet* p)
         else
             protocol = IpProtocol::UDP;
 
+        // FIXIT-H: sfip_fast_equals_raw is macro that is defined as empty
+        // this cause static analysis to think ip is never used after being set, but it will be
+        // when sfip_fast_equals_raw is implemented here
         ip = p->ptrs.ip_api.get_src();
         if (session->common.initiator_port)
             direction = (session->common.initiator_port == p->ptrs.sp) ? APP_ID_FROM_INITIATOR :
