@@ -9,14 +9,6 @@ set (HASH_INCLUDES
 
 set (HASH_SOURCES )
 
-if ( NOT HAVE_OPENSSL_MD5 )
-    list(APPEND HASH_SOURCES md5.c md5.h)
-endif ()
-
-if ( NOT HAVE_OPENSSL_SHA )
-    list(APPEND HASH_SOURCES sha2.c sha2.h)
-endif ()
-
 add_library( hash STATIC
     ${HASH_INCLUDES}
     ${HASH_SOURCES}

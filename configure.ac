@@ -11,8 +11,8 @@
 # vars
 # enables
 # unit tests
-# required libs (pcap, luajit, pcre, dnet, daq, zlib, hwloc)
-# optional libs (hyperscan, pthreads, lzma, ssl / crypto, intel soft cpm)
+# required libs (pcap, luajit, pcre, dnet, daq, zlib, hwloc, openssl / crypto)
+# optional libs (hyperscan, lzma, intel soft cpm)
 # outputs
 #
 # if you add an AC_DEFINE() for a symbol that appears in an exported
@@ -238,6 +238,9 @@ AC_ARG_ENABLE(hardened_build,
 
 if test "x$enable_hardened_build" = "xyes"; then
 
+    save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS -Werror"
+
     AX_CHECK_PREPROC_FLAG([-Wdate-time], [HARD_CPPFLAGS="$HARD_CPPFLAGS -Wdate-time"])
 
     AX_CHECK_PREPROC_FLAG([-D_FORTIFY_SOURCE=2], [HARD_CPPFLAGS="$HARD_CPPFLAGS -D_FORTIFY_SOURCE=2"])
@@ -251,6 +254,8 @@ if test "x$enable_hardened_build" = "xyes"; then
     AX_CHECK_LINK_FLAG([-Wl,-z,relro], [HARD_LDFLAGS="$HARD_LDFLAGS -Wl,-z,relro"])
 
     AX_CHECK_LINK_FLAG([-Wl,-z,now], [HARD_LDFLAGS="$HARD_LDFLAGS -Wl,-z,now"])
+
+    CPPFLAGS="$save_CPPFLAGS"
 
 fi
 
@@ -939,7 +944,7 @@ if test "x$LZMA_LIB" != "xno"; then
 fi
 
 #--------------------------------------------------------------------------
-# ssl / crypto (optional)
+# openssl / crypto
 #--------------------------------------------------------------------------
 
 AC_ARG_WITH(openssl_includes,
@@ -958,23 +963,8 @@ if test "x$with_openssl_libraries" != "xno"; then
     LDFLAGS="${LDFLAGS} -L${with_openssl_libraries}"
 fi
 
-AC_CHECK_HEADERS([openssl/md5.h], 
-    AC_CHECK_LIB([crypto],[MD5_Init],
-                 AC_DEFINE([HAVE_OPENSSL_MD5],[1],openssl MD5 available)
-                 BUILD_SSL_MD5="yes",
-                 ))
-AM_CONDITIONAL([BUILD_SSL_MD5], test "x$BUILD_SSL_MD5" != "xyes" )
-
-AC_CHECK_HEADERS([openssl/sha.h],
-    AC_CHECK_LIB([crypto],[SHA256_Init],
-                 AC_DEFINE([HAVE_OPENSSL_SHA],[1],openssl SHA available)
-                 BUILD_SSL_SHA="yes",
-                 ))
-AM_CONDITIONAL([BUILD_SSL_SHA], test "x$BUILD_SSL_SHA" != "xyes" )
-
-if test "x$BUILD_SSL_MD5" = "xyes" || test "x$BUILD_SSL_SHA" = "xyes" ; then
-    LIBS="${LIBS} -lcrypto"
-fi
+AC_CHECK_HEADERS([openssl/md5.h openssl/sha.h openssl/x509.h], , [AC_MSG_ERROR("OpenSSL headers not found.")])
+AC_CHECK_LIB([crypto], [MD5_Init], , [AC_MSG_ERROR("OpenSSL crypto library not found.")])
 
 #--------------------------------------------------------------------------
 # intel soft cpm (optional)

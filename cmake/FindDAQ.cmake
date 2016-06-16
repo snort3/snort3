@@ -1,31 +1,25 @@
 #
-#
 #  Locate DAQ library
 #  This module defines
 #  DAQ_FOUND, if false, do not try to link to Lua
 # 
-#  DAQ_FOUND - system has the daq
-#  DAQ_INCLUDE_DIR - the daqs include directory
-#  DAQ_LIBRARIES - the libraries needed to use the daq
+#  DAQ_FOUND - system has libdaq
+#  DAQ_INCLUDE_DIR - the libdaq include directory
+#  DAQ_LIBRARIES - the libraries needed to use libdaq
 #
-## Copied from default CMake FindLua51.cmake
-
-
 
 set (ERROR_MESSAGE 
     "
-    ERROR!  cannot find the DAQ.  Go get it from 
+    ERROR! Cannot find LibDAQ.  Go get it from 
     http://snort.org/snort-downloads or use the --with-daq-*
-    options if you have it installed inn an unusual place.  You can
-    also set the DAQ_DIR environment variablet to the daqs root installation directory\n\n"
+    options if you have it installed in an unusual place.\n\n"
 )
 
 find_path(DAQ_INCLUDE_DIR
     NAMES daq.h
-    HINTS ENV DAQ_DIR
-    PATH_SUFFIXES daq
+    HINTS ${DAQ_INCLUDE_DIR_HINT}
+    NO_SYSTEM_ENVIRONMENT_PATH
 )
-
 
 # find any static libraries
 if (ENABLE_STATIC_DAQ)
@@ -38,13 +32,10 @@ if (ENABLE_STATIC_DAQ)
 
     # This will be false if the exit status was 0 and true if the binary was not found
     if (result)
-        message(SEND_ERROR "
-
-        ERROR!  cannot find the DAQs static libraries!  make sure the binary
-        file `daq-modules-config` is in your path, or specific the daqs path 
-        with the --with-daq-root=<dir>
-
-        ")
+        message(SEND_ERROR 
+        "
+        ERROR! Cannot find LibDAQ's static libraries!  Make sure the binary
+        file `daq-modules-config` is in your path.\n\n")
     endif()
 
     set(DAQ_LIB daq_static)
@@ -53,19 +44,9 @@ else()
     set(DAQ_STATIC_LIBRARIES)
 endif()
 
-
 find_library(DAQ_LIBRARY
-    NAMES  ${DAQ_LIB}
-    HINTS ${DAQ_LIBRARIES_DIR} # user specified path in ./configure_cmake.sh
-    DOC "DAQ library directory"
-    NO_DEFAULT_PATH
-    NO_CMAKE_ENVIRONMENT_PATH
-)
-
-find_library(DAQ_LIBRARY
-    NAMES  ${DAQ_LIB}
-    HINTS  ENV DAQ_DIR
-    PATH_SUFFIXES daq
+    NAMES ${DAQ_LIB}
+    HINTS ${DAQ_LIBRARIES_DIR_HINT}     # user-specified path in ./configure_cmake.sh
     DOC "DAQ library directory"
 )
 
