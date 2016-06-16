@@ -52,6 +52,7 @@ NHttpInspect::NHttpInspect(const NHttpParaList* params_) : params(params_)
     }
     NHttpTestManager::set_print_amount(params->print_amount);
     NHttpTestManager::set_print_hex(params->print_hex);
+    NHttpTestManager::set_show_pegs(params->show_pegs);
 #endif
 }
 
@@ -128,6 +129,8 @@ const Field& NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Fl
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
         NHttpFlowData::nhttp_flow_id);
     assert(session_data != nullptr);
+
+    NHttpModule::increment_peg_counts(PEG_INSPECT);
 
     switch (session_data->section_type[source_id])
     {

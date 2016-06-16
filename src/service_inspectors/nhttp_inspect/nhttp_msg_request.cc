@@ -41,10 +41,7 @@ NHttpMsgRequest::NHttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size,
 
 void NHttpMsgRequest::parse_start_line()
 {
-    // Status line: "HTTP/X.Y KLM <text>" where X, Y, K, L, and M are decimal digits
     // Check the version field
-    // FIXIT-L An idea would be to move this test into the cutter and abort the scan() instead of
-    // allowing it to come here.
     if ((start_line.length < 10) || !is_sp_tab[start_line.start[start_line.length-9]] ||
          memcmp(start_line.start + start_line.length - 8, "HTTP/", 5))
     {
@@ -56,6 +53,8 @@ void NHttpMsgRequest::parse_start_line()
         }
         return;
     }
+
+    NHttpModule::increment_peg_counts(PEG_REQUEST);
 
     // The splitter guarantees there will be a non-whitespace at octet 1 and a whitespace within
     // octets 2-81. The following algorithm uses those assumptions.
@@ -75,6 +74,19 @@ void NHttpMsgRequest::parse_start_line()
     method.start = start_line.start;
     method.length = first_space;
     method_id = (MethodId)str_to_code(method.start, method.length, method_list);
+
+    switch (method_id)
+    {
+    case METH_GET: NHttpModule::increment_peg_counts(PEG_GET); break;
+    case METH_HEAD: NHttpModule::increment_peg_counts(PEG_HEAD); break;
+    case METH_POST: NHttpModule::increment_peg_counts(PEG_POST); break;
+    case METH_PUT: NHttpModule::increment_peg_counts(PEG_PUT); break;
+    case METH_DELETE: NHttpModule::increment_peg_counts(PEG_DELETE); break;
+    case METH_CONNECT: NHttpModule::increment_peg_counts(PEG_CONNECT); break;
+    case METH_OPTIONS: NHttpModule::increment_peg_counts(PEG_OPTIONS); break;
+    case METH_TRACE: NHttpModule::increment_peg_counts(PEG_TRACE); break;
+    default: NHttpModule::increment_peg_counts(PEG_OTHER_METHOD); break;
+    }
 
     version.start = start_line.start + (start_line.length - 8);
     version.length = 8;
@@ -264,15 +276,15 @@ void NHttpMsgRequest::print_section(FILE* output)
         uri->get_norm_fragment().print(output, "Normalized Fragment");
     }
     get_classic_buffer(NHTTP_BUFFER_METHOD, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_METHOD-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_METHOD-1]);
     get_classic_buffer(NHTTP_BUFFER_RAW_URI, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_URI-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_RAW_URI-1]);
     get_classic_buffer(NHTTP_BUFFER_URI, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_URI-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_URI-1]);
     get_classic_buffer(NHTTP_BUFFER_VERSION, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_VERSION-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_VERSION-1]);
     get_classic_buffer(NHTTP_BUFFER_RAW_REQUEST, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_REQUEST-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_RAW_REQUEST-1]);
     NHttpMsgSection::print_section_wrapup(output);
 }
 

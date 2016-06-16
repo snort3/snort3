@@ -71,6 +71,8 @@ void NHttpMsgStatus::parse_start_line()
         return;
     }
 
+    NHttpModule::increment_peg_counts(PEG_RESPONSE);
+
     version.start = start_line.start;
     version.length = 8;
     derive_version_id();
@@ -173,13 +175,13 @@ void NHttpMsgStatus::print_section(FILE* output)
     fprintf(output, "Status Code Num: %d\n", status_code_num);
     reason_phrase.print(output, "Reason Phrase");
     get_classic_buffer(NHTTP_BUFFER_STAT_CODE, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_STAT_CODE-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_STAT_CODE-1]);
     get_classic_buffer(NHTTP_BUFFER_STAT_MSG, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_STAT_MSG-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_STAT_MSG-1]);
     get_classic_buffer(NHTTP_BUFFER_VERSION, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_VERSION-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_VERSION-1]);
     get_classic_buffer(NHTTP_BUFFER_RAW_STATUS, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_STATUS-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_RAW_STATUS-1]);
     NHttpMsgSection::print_section_wrapup(output);
 }
 #endif

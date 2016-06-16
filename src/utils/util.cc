@@ -33,6 +33,7 @@
 #include <limits.h>
 #include <luajit.h>
 #include <netdb.h>
+#include <openssl/crypto.h>
 #include <pcap.h>
 #include <pcre.h>
 #include <pwd.h>
@@ -44,9 +45,6 @@
 #include <unistd.h>
 #include <zlib.h>
 
-#ifdef HAVE_OPENSSL_SHA
-#include <openssl/crypto.h>
-#endif
 
 #ifdef HAVE_LZMA
 #include <lzma.h>
@@ -138,9 +136,7 @@ int DisplayBanner()
 #ifdef HAVE_LZMA
     LogMessage("           Using LZMA version %s\n", lzma_version_string());
 #endif
-#ifdef HAVE_OPENSSL_SHA
     LogMessage("           Using %s\n", SSLeay_version(SSLEAY_VERSION));
-#endif
 #ifdef HAVE_HYPERSCAN
     LogMessage("           Using Hyperscan version %s\n", hs_version());
 #endif

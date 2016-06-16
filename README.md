@@ -70,6 +70,8 @@ the latest:
 * g++ >= 4.8 or other C++11 compiler
 * hwloc from https://www.open-mpi.org/projects/hwloc/ for CPU affinity management
 * LuaJIT from http://luajit.org for configuration and scripting
+* OpenSSL from https://www.openssl.org/source/ for SHA and MD5 file signatures,
+  the protected_content rule option, and SSL service detection
 * pcap from http://www.tcpdump.org for tcpdump style logging
 * pcre from http://www.pcre.org for regular expression pattern matching
 * pkgconfig from https://www.freedesktop.org/wiki/Software/pkg-config/ to locate build dependencies

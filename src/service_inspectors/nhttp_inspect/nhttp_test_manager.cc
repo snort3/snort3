@@ -32,6 +32,7 @@ int64_t NHttpTestManager::test_number = -1;
 FILE* NHttpTestManager::test_out = nullptr;
 long NHttpTestManager::print_amount = 1200;
 bool NHttpTestManager::print_hex = false;
+bool NHttpTestManager::show_pegs = true;
 
 void NHttpTestManager::update_test_number(int64_t new_test_number)
 {

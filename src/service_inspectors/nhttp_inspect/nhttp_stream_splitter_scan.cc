@@ -90,6 +90,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
     if (session_data == nullptr)
     {
         flow->set_application_data(session_data = new NHttpFlowData);
+        NHttpModule::increment_peg_counts(PEG_FLOW);
     }
 
     SectionType type = session_data->type_expected[source_id];
@@ -119,6 +120,8 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
 #endif
 
     assert(!session_data->tcp_close[source_id]);
+
+    NHttpModule::increment_peg_counts(PEG_SCAN);
 
     // Check for 0.9 response message
     if ((type == SEC_STATUS) &&

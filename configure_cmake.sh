@@ -304,10 +304,10 @@ while [ $# -ne 0 ]; do
             append_cache_entry DNET_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         --with-daq-includes=*)
-            append_cache_entry DAQ_INCLUDE_DIR PATH $optarg
+            append_cache_entry DAQ_INCLUDE_DIR_HINT PATH $optarg
             ;;
         --with-daq-libraries=*)
-            append_cache_entry DAQ_LIBRARIES_DIR PATH $optarg
+            append_cache_entry DAQ_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         --with-openssl=*)
             append_cache_entry OPENSSL_ROOT_DIR PATH $optarg

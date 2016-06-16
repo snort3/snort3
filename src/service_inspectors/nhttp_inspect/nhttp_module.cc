@@ -65,9 +65,12 @@ const Parameter NHttpModule::nhttp_params[] =
           "number of characters to print from a Field" },
     { "print_hex", Parameter::PT_BOOL, nullptr, "false",
       "nonprinting characters printed in [HH] format instead of using an asterisk" },
+    { "show_pegs", Parameter::PT_BOOL, nullptr, "true", "display peg counts with test output" },
 #endif
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
+
+THREAD_LOCAL PegCount NHttpModule::peg_counts[PEG_COUNT_MAX] = { 0 };
 
 bool NHttpModule::begin(const char*, int, SnortConfig*)
 {
@@ -162,6 +165,10 @@ bool NHttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("print_hex"))
     {
         params->print_hex = val.get_bool();
+    }
+    else if (val.is("show_pegs"))
+    {
+        params->show_pegs = val.get_bool();
     }
 #endif
     else

@@ -87,6 +87,7 @@ protected:
 #ifdef REG_TEST
     void print_section_title(FILE* output, const char* title) const;
     void print_section_wrapup(FILE* output) const;
+    void print_peg_counts(FILE* output) const;
 #endif
 
 private:

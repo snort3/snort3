@@ -290,11 +290,6 @@
 
 /*  Available libraries */
 
-/* openssl SHA available */
-#cmakedefine HAVE_OPENSSL_SHA 1
-
-#cmakedefine HAVE_OPENSSL_MD5 1
-
 /* hyperscan available */
 #cmakedefine HAVE_HYPERSCAN 1
 

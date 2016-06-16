@@ -176,11 +176,6 @@ endif()
 
 
 # set library variables
-if (OPENSSL_FOUND AND DEFINED OPENSSL_CRYPTO_LIBRARIES)
-    check_library_exists (${OPENSSL_CRYPTO_LIBRARIES} SHA256_Init "" HAVE_OPENSSL_SHA)
-    check_library_exists (${OPENSSL_CRYPTO_LIBRARIES} MD5_Init "" HAVE_OPENSSL_MD5)
-endif()
-
 if (HS_FOUND)
     check_library_exists (${HS_LIBRARIES} hs_scan "" HAVE_HYPERSCAN)
 endif()

@@ -24,33 +24,9 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-
-#ifdef HAVE_OPENSSL_SHA
-#include <openssl/sha.h>
-#else
-#include "hash/sha2.h"
-#endif
-
-#ifdef HAVE_OPENSSL_MD5
 #include <openssl/md5.h>
-#else
-extern "C"
-{
-#include "hash/md5.h"
-}
-
-typedef MD5Context MD5_CTX;
-
-inline int MD5_Init(MD5_CTX* c)
-{ MD5Init(c); return 0; }
-
-inline int MD5_Update(MD5_CTX* c, const unsigned char* data, unsigned long len)
-{ MD5Update(c, data, len); return 0; }
-
-inline int MD5_Final(unsigned char* md, MD5_CTX* c)
-{ MD5Final(md, c); return 0; }
-#endif
+#include <openssl/sha.h>
+#include <stdlib.h>
 
 #include "main/snort_types.h"
 

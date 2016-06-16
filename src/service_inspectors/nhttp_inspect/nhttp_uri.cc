@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "nhttp_enum.h"
+#include "nhttp_module.h"
 #include "nhttp_uri.h"
 
 using namespace NHttpEnums;
@@ -177,6 +178,7 @@ void NHttpUri::normalize()
     if (!((infractions & INF_URI_NEED_NORM_PATH)  || (infractions & INF_URI_NEED_NORM_HOST) ||
           (infractions & INF_URI_NEED_NORM_QUERY) || (infractions & INF_URI_NEED_NORM_FRAGMENT)))
     {
+        // This URI is OK, normalization not required
         host_norm = host;
         path_norm = path;
         query_norm = query;
@@ -184,6 +186,8 @@ void NHttpUri::normalize()
         classic_norm = uri;
         return;
     }
+
+    NHttpModule::increment_peg_counts(PEG_URI_NORM);
 
     // Create a new buffer containing the normalized URI by normalizing each individual piece.
     const uint32_t total_length = uri.length + UriNormalizer::URI_NORM_EXPANSION;
@@ -260,6 +264,20 @@ void NHttpUri::normalize()
         current += fragment_norm.length;
     }
     assert(current - new_buf <= total_length);
+
+    if ((infractions & INF_URI_MULTISLASH) || (infractions & INF_URI_SLASH_DOT) ||
+        (infractions & INF_URI_SLASH_DOT_DOT))
+    {
+        NHttpModule::increment_peg_counts(PEG_URI_PATH);
+    }
+
+    if ((infractions & INF_URI_U_ENCODE) || (infractions & INF_URI_UNKNOWN_PERCENT) ||
+        (infractions & INF_URI_PERCENT_UNRESERVED) || (infractions & INF_URI_PERCENT_UTF8_2B) ||
+        (infractions & INF_URI_PERCENT_UTF8_3B) || (infractions & INF_URI_DOUBLE_DECODE))
+    {
+        NHttpModule::increment_peg_counts(PEG_URI_CODING);
+    }
+
     classic_norm.set(current - new_buf, new_buf);
     classic_norm_allocated = true;
 }

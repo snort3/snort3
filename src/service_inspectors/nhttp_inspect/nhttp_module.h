@@ -63,6 +63,7 @@ public:
     bool test_output;
     long print_amount;
     bool print_hex;
+    bool show_pegs;
 #endif
 };
 
@@ -83,10 +84,26 @@ public:
         return ret_val;
     }
 
+    const PegInfo* get_pegs() const override { return peg_names; }
+    PegCount* get_counts() const override { return peg_counts; }
+    static void increment_peg_counts(NHttpEnums::PEG_COUNT counter)
+        { peg_counts[counter]++; return; }
+
+#ifdef REG_TEST
+    static const PegInfo* get_peg_names() { return peg_names; }
+    static const PegCount* get_peg_counts() { return peg_counts; }
+    static void reset_peg_counts()
+    {
+        for (unsigned k=0; k < NHttpEnums::PEG_COUNT_MAX; peg_counts[k++] = 0);
+    }
+#endif
+
 private:
     static const Parameter nhttp_params[];
     static const RuleMap nhttp_events[];
     NHttpParaList* params = nullptr;
+    static const PegInfo peg_names[];
+    static THREAD_LOCAL PegCount peg_counts[];
 };
 
 #endif
