@@ -26,6 +26,7 @@
 #include "file_api/file_service.h"
 #include "file_api/file_flows.h"
 
+#include "nhttp_module.h"
 #include "nhttp_api.h"
 #include "nhttp_normalizers.h"
 #include "nhttp_msg_request.h"
@@ -108,6 +109,7 @@ void NHttpMsgHeader::update_flow()
         {
             // Chunked body
             session_data->type_expected[source_id] = SEC_BODY_CHUNK;
+            NHttpModule::increment_peg_counts(PEG_CHUNKED);
             prepare_body();
             return;
         }
@@ -178,6 +180,10 @@ void NHttpMsgHeader::prepare_body()
     update_depth();
     session_data->infractions[source_id].reset();
     session_data->events[source_id].reset();
+    if (source_id == SRC_CLIENT)
+    {
+        NHttpModule::increment_peg_counts(PEG_REQUEST_BODY);
+    }
 }
 
 void NHttpMsgHeader::setup_file_processing()
@@ -252,13 +258,13 @@ void NHttpMsgHeader::print_section(FILE* output)
     NHttpMsgSection::print_section_title(output, "header");
     NHttpMsgHeadShared::print_headers(output);
     get_classic_buffer(NHTTP_BUFFER_COOKIE, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_COOKIE-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_COOKIE-1]);
     get_classic_buffer(NHTTP_BUFFER_HEADER, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_HEADER-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_HEADER-1]);
     get_classic_buffer(NHTTP_BUFFER_RAW_COOKIE, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_COOKIE-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_RAW_COOKIE-1]);
     get_classic_buffer(NHTTP_BUFFER_RAW_HEADER, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_HEADER-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_RAW_HEADER-1]);
     NHttpMsgSection::print_section_wrapup(output);
 }
 #endif

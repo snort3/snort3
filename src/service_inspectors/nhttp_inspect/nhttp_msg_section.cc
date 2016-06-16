@@ -23,6 +23,7 @@
 
 #include "nhttp_enum.h"
 #include "nhttp_transaction.h"
+#include "nhttp_test_manager.h"
 #include "nhttp_msg_section.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_status.h"
@@ -222,7 +223,27 @@ void NHttpMsgSection::print_section_wrapup(FILE* output) const
     fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 ", Events: %016" PRIx64 " %016"
         PRIx64 ", TCP Close: %s\n\n", infractions.get_raw2(), infractions.get_raw(),
         events.get_raw2(), events.get_raw(), tcp_close ? "True" : "False");
+    if (NHttpTestManager::get_show_pegs())
+    {
+        print_peg_counts(output);
+    }
     session_data->show(output);
+    fprintf(output, "\n");
+}
+
+void NHttpMsgSection::print_peg_counts(FILE* output) const
+{
+    const PegInfo* const peg_names = NHttpModule::get_peg_names();
+    const PegCount* const peg_counts = NHttpModule::get_peg_counts();
+
+    fprintf(output, "Peg Counts\n");
+    for (unsigned k = 0; k < PEG_COUNT_MAX; k++)
+    {
+        if (peg_counts[k] > 0)
+        {
+            fprintf(output, "%s: %" PRIu64 "\n", peg_names[k].name, peg_counts[k]);
+        }
+    }
     fprintf(output, "\n");
 }
 

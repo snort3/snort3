@@ -182,7 +182,7 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
             else if (uri_param.percent_u && is_u_encoding(input, k))
             {
                 // %u encoding, this is nonstandard and likely to be malicious
-                infractions += INF_U_ENCODE;
+                infractions += INF_URI_U_ENCODE;
                 events.create_event(EVENT_U_ENCODE);
                 percent_encoded[length] = true;
                 const uint8_t byte_val = reduce_to_eight_bits(extract_u_encoding(input, k),
@@ -197,7 +197,7 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
             else
             {
                 // don't recognize, pass it through
-                infractions += INF_UNKNOWN_PERCENT;
+                infractions += INF_URI_UNKNOWN_PERCENT;
                 events.create_event(EVENT_UNKNOWN_PERCENT);
                 double_decoding_needed = true;
                 out_buf[length++] = '%';
@@ -295,16 +295,16 @@ int32_t UriNormalizer::norm_double_decode(const Field& input, uint8_t* out_buf,
         {
             if (is_percent_encoding(input, k))
             {
-                infractions += INF_DOUBLE_DECODE;
+                infractions += INF_URI_DOUBLE_DECODE;
                 events.create_event(EVENT_DOUBLE_DECODE);
                 out_buf[length++] = extract_percent_encoding(input, k);
                 k += 2;
             }
             else if (uri_param.percent_u && is_u_encoding(input, k))
             {
-                infractions += INF_DOUBLE_DECODE;
+                infractions += INF_URI_DOUBLE_DECODE;
                 events.create_event(EVENT_DOUBLE_DECODE);
-                infractions += INF_U_ENCODE;
+                infractions += INF_URI_U_ENCODE;
                 events.create_event(EVENT_U_ENCODE);
                 out_buf[length++] = reduce_to_eight_bits(extract_u_encoding(input, k), uri_param,
                     infractions, events);

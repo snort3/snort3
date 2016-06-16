@@ -49,9 +49,9 @@ void NHttpMsgTrailer::print_section(FILE* output)
     NHttpMsgSection::print_section_title(output, "trailer");
     NHttpMsgHeadShared::print_headers(output);
     get_classic_buffer(NHTTP_BUFFER_TRAILER, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_TRAILER-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_TRAILER-1]);
     get_classic_buffer(NHTTP_BUFFER_RAW_TRAILER, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_RAW_TRAILER-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_RAW_TRAILER-1]);
     NHttpMsgSection::print_section_wrapup(output);
 }
 #endif

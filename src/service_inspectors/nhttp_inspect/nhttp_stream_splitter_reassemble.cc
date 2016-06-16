@@ -284,6 +284,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         return nullptr;
     }
 
+    NHttpModule::increment_peg_counts(PEG_REASSEMBLE);
+
     uint8_t*& buffer = session_data->section_buffer[source_id];
 
     const bool is_body = (session_data->section_type[source_id] == SEC_BODY_CHUNK) ||

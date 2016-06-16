@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <stdexcept>
 
+#include "nhttp_module.h"
 #include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
 
@@ -63,6 +64,9 @@ void NHttpTestInput::reset()
         fclose(include_file);
         include_file = nullptr;
     }
+
+    // Each test needs separate peg counts
+    NHttpModule::reset_peg_counts();
 }
 
 // Read from the test data file and present to StreamSplitter. In the process we may need to skip

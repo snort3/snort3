@@ -147,7 +147,7 @@ void NHttpMsgBody::print_body_section(FILE* output)
 {
     detect_data.print(output, "Detect data");
     get_classic_buffer(NHTTP_BUFFER_CLIENT_BODY, 0, 0).print(output,
-        NHttpApi::classic_buffers[NHTTP_BUFFER_CLIENT_BODY-1]);
+        NHttpApi::classic_buffer_names[NHTTP_BUFFER_CLIENT_BODY-1]);
     if (g_file_data.len > 0)
     {
         Field(g_file_data.len, g_file_data.data).print(output, "file_data");

@@ -33,7 +33,7 @@ Inspector* NHttpApi::nhttp_ctor(Module* mod)
     return new NHttpInspect(nhttp_mod->get_once_params());
 }
 
-const char* NHttpApi::classic_buffers[] =
+const char* NHttpApi::classic_buffer_names[] =
 {
     "http_client_body",
     "http_cookie",
@@ -69,7 +69,7 @@ const InspectApi NHttpApi::nhttp_api =
     },
     IT_SERVICE,
     (uint16_t)PktType::PDU,
-    classic_buffers,
+    classic_buffer_names,
     "http",
     NHttpApi::nhttp_init,
     NHttpApi::nhttp_term,
