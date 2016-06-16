@@ -204,7 +204,8 @@ int matchQueryElements(
     size_t appVersionSize
     )
 {
-    const uint8_t* index, * endKey;
+    const uint8_t* index;
+    const uint8_t* endKey;
     const uint8_t* queryEnd;
     uint32_t extractedSize;
     uint32_t copySize = 0;
@@ -217,25 +218,21 @@ int matchQueryElements(
     if (!userPattern->pattern || !packetData->pattern)
         return 0;
 
-    /*queryEnd is 1 past the end. */
+    // queryEnd is 1 past the end.  key1=value1&key2=value2
     queryEnd = packetData->pattern + packetData->patternSize;
-    index = packetData->pattern;
-    endKey = queryEnd;
-
-    /*?key1=value1&key2=value2 */
-    for (index = packetData->pattern; index < queryEnd; index = endKey+1)
+    for (index = packetData->pattern; index < queryEnd; index = endKey + 1)
     {
         /*find end of query tuple */
         endKey = (const uint8_t*)memchr (index, '&',  queryEnd - index);
         if (!endKey)
             endKey = queryEnd;
 
-        if (userPattern->patternSize < (uint32_t)(endKey-index))
+        if (userPattern->patternSize < (uint32_t)(endKey - index))
         {
             if (memcmp(index, userPattern->pattern, userPattern->patternSize) == 0)
             {
                 index += userPattern->patternSize;
-                extractedSize = (endKey-index);
+                extractedSize = (endKey - index);
                 appVersionSize--;
                 copySize = (extractedSize < appVersionSize) ? extractedSize : appVersionSize;
                 memcpy(appVersion, index, copySize);

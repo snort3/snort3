@@ -488,10 +488,8 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
 {
     ClientSMTPData* fd;
     const uint8_t* end;
-    unsigned len;
 #if UNIT_TESTING
     SMTPState currState = SMTP_STATE_NONE;
-
 #endif
 
     fd = (ClientSMTPData*)smtp_client_mod.api->data_get(flowp, smtp_client_mod.flow_data_index);
@@ -548,7 +546,6 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
         switch (fd->state)
         {
         case SMTP_STATE_HELO:
-            len = end - data;
             if (*data == HELO[fd->pos])
             {
                 fd->pos++;
@@ -619,6 +616,7 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
             else
                 goto done;
             break;
+
         case SMTP_STATE_RCPT_TO:
             if (*data == RCPTTO[fd->pos])
             {
@@ -656,10 +654,11 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
                 }
             }
             break;
+
         case SMTP_STATE_MESSAGE:
             if (*data == '.')
             {
-                len = end - data;
+                unsigned len = end - data;
                 if (len == 0 ||
                     (len >= 1 && data[1] == 0x0A) ||
                     (len >= 2 && data[1] == 0x0D && data[2] == 0x0A))

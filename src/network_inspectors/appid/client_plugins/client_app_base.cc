@@ -495,10 +495,6 @@ static void DisplayClientAppConfig(ClientAppConfig* config)
     }
     tmp = snprintf(&buffer[position], MAX_DISPLAY_SIZE-position,
         "----------------------------------------------\n");
-    if (tmp >= MAX_DISPLAY_SIZE-position)
-        position = MAX_DISPLAY_SIZE;
-    else if (tmp > 0)
-        position += tmp;
 
     DebugFormat(DEBUG_LOG,"%s\n",buffer);
 }

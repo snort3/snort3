@@ -21,13 +21,14 @@ set(ERROR_MESSAGE
 
 # Check for libdumbnet first, then libdnet
 
-find_path(DNET_INCLUDE_DIR dumbnet.h
+find_path(DUMBNET_INCLUDE_DIR dumbnet.h
     HINTS ${DNET_INCLUDE_DIR_HINT})
 
-# If we found libdument header, define HAVE_DUMBNET_H for config.h generation
-# and search for libdumnet.
-if (DNET_INCLUDE_DIR)
+# If we found libdumbnet header, define HAVE_DUMBNET_H for config.h generation
+# and search for libdumbnet.
+if (DUMBNET_INCLUDE_DIR)
     set(HAVE_DUMBNET_H "1")
+    set(DNET_INCLUDE_DIR ${DUMBNET_INCLUDE_DIR})
     find_library(DNET_LIBRARIES NAMES dumbnet
         HINTS ${DNET_LIBRARIES_DIR_HINT})
 else ()

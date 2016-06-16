@@ -20,15 +20,17 @@
 
 // Make some API calls to demonstrate that we can link with appid libs.
 
+#if 0
 #include <stdio.h>
 #include "util/fw_avltree.h"
 #include "protocols/protocol_ids.h"
 #include "sfip/sfip_t.h"
 #include "sfip/sf_ip.h"
 #include "fw_appid.h"
-
+#endif
 int main()
 {
+#if 0
     IpProtocol proto=IpProtocol::TCP;
     sfip_t* ip = nullptr;
     SFIP_RET status;
@@ -38,7 +40,7 @@ int main()
     ip = sfip_alloc("10.1.1.1", &status);
     fwAvlInit();
     appSharedDataAlloc(proto, ip);
-
+#endif
     return 0;
 }
 

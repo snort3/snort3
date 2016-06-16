@@ -2030,10 +2030,9 @@ int getHTTPHeaderLocation(const uint8_t* data, unsigned size, HttpId id, int* st
     return 0;
 }
 
-AppId getAppIdFromUrl(char* host, char* url, char** version,
-    char* referer, AppId* ClientAppId, AppId* serviceAppId,
-    AppId* payloadAppId, AppId* referredPayloadAppId, unsigned from_rtmp,
-    const DetectorHttpConfig* pHttpConfig)
+AppId getAppIdFromUrl(char* host, char* url, char** version, char* referer, AppId* ClientAppId,
+        AppId* serviceAppId, AppId* payloadAppId, AppId* referredPayloadAppId,
+        unsigned from_rtmp, const DetectorHttpConfig* pHttpConfig)
 {
     char* path;
     char* referer_start;
@@ -2077,20 +2076,14 @@ AppId getAppIdFromUrl(char* host, char* url, char** version,
         url_len = strlen(url);
     }
     else
-    {
         url_len = 0;
-    }
 
     if (!host)
     {
-        host_len = url_len;
-
         temp_host = host = snort_strdup(url);
         host  = strchr(host, '/');
         if (host != nullptr)
-        {
             *host = '\0';
-        }
         host = temp_host;
     }
     host_len = strlen(host);

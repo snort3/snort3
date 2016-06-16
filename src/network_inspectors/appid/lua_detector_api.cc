@@ -1006,7 +1006,6 @@ CLIENT_APP_RETCODE validateAnyClientApp(
     {
         ErrorMessage("client %s:  validator returned non-numeric value\n",clientName);
         detector->validateParams.pkt = nullptr;
-        retValue = SERVICE_ENULL;
     }
 
     retValue = lua_tonumber(myLuaState, -1);

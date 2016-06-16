@@ -375,8 +375,7 @@ AppIdData* AppIdEarlySessionCreate(
     }
 
     data = appSharedDataAlloc(proto, cliIp);
-    if (data)
-        data->common.policyId = appIdPolicyId;
+    data->common.policyId = appIdPolicyId;
 
     // FIXIT - expect session control packet support not ported to snort3 yet
     //node = (flags & APPID_EARLY_SESSION_FLAG_FW_RULE) ? &ctrlPkt->expectedSession : nullptr;

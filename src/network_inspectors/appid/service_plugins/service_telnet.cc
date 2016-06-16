@@ -32,6 +32,7 @@
 #include "appid_flow_data.h"
 #include "application_ids.h"
 #include "service_api.h"
+#include "appid_module.h"
 
 #define TELNET_COUNT_THRESHOLD 3
 
@@ -175,6 +176,7 @@ inprocess:
 success:
     telnet_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
         APP_ID_TELNET, nullptr, nullptr, nullptr);
+    appid_stats.telnet_count++;
     return SERVICE_SUCCESS;
 
 fail:

@@ -517,13 +517,10 @@ int parse_certificates(ServiceSSLData* ss)
                 certs_curr->common_name_ptr = (uint8_t*)start;
                 end = strstr(start, FIELD_SEPARATOR);
                 if (end)
-                {
                     length = end - start;
-                }
                 else
-                {
                     length = strlen(start);
-                }
+
                 certs_curr->common_name_len = length;
                 common_name_tot_len += length;
             }
@@ -536,21 +533,16 @@ int parse_certificates(ServiceSSLData* ss)
                 certs_curr->org_name_ptr = (uint8_t*)start;
                 end = strstr(start, FIELD_SEPARATOR);
                 if (end)
-                {
                     length = end - start;
-                }
                 else
-                {
                     length = strlen(start);
-                }
+
                 certs_curr->org_name_len = length;
                 org_name_tot_len += length;
             }
         }
         if (!success)
-        {
             goto parse_certificates_clean;
-        }
 
         // Build up concatenated string of fields.
         common_name = nullptr;
@@ -573,7 +565,7 @@ int parse_certificates(ServiceSSLData* ss)
         while (certs_curr)
         {
             /* Grab this common name. */
-            if (certs_curr->common_name_ptr && certs_curr->common_name_len)
+            if (common_name_ptr && certs_curr->common_name_ptr && certs_curr->common_name_len)
             {
                 memcpy(common_name_ptr, certs_curr->common_name_ptr, certs_curr->common_name_len);
                 common_name_ptr += certs_curr->common_name_len;
@@ -582,7 +574,7 @@ int parse_certificates(ServiceSSLData* ss)
             }
 
             /* Grab this org name. */
-            if (certs_curr->org_name_ptr && certs_curr->org_name_len)
+            if (org_name_ptr && certs_curr->org_name_ptr && certs_curr->org_name_len)
             {
                 memcpy(org_name_ptr, certs_curr->org_name_ptr, certs_curr->org_name_len);
                 org_name_ptr += certs_curr->org_name_len;
@@ -592,6 +584,7 @@ int parse_certificates(ServiceSSLData* ss)
 
             certs_curr = certs_curr->next;
         }
+
         if (common_name_tot_len)
         {
             common_name_ptr  -= 1;
