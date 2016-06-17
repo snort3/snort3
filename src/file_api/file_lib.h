@@ -37,7 +37,7 @@
 class FileCapture;
 class FileConfig;
 
-class FileInfo
+class SO_PUBLIC FileInfo
 {
 public:
     virtual ~FileInfo();
@@ -65,7 +65,7 @@ protected:
     size_t file_id = 0;
 };
 
-class FileContext: public FileInfo
+class SO_PUBLIC FileContext: public FileInfo
 {
 public:
     FileContext();

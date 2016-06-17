@@ -171,9 +171,8 @@ bool FileFlows::file_process(FileContext* context, const uint8_t* file_data,
 
     context->set_file_config(&(snort_conf->file_config));
 
-    FileEnforcer* file_enforcer = FileService::get_file_enforcer();
-    if (file_enforcer &&
-        (file_enforcer->cached_verdict_lookup(flow, context) != FILE_VERDICT_UNKNOWN))
+    if((FileService::get_file_enforcer()->cached_verdict_lookup(flow, context)
+        != FILE_VERDICT_UNKNOWN))
         return true;
 
     /*file type id*/

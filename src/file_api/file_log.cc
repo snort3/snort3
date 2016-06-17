@@ -96,11 +96,11 @@ public:
     LogHandler(FileLogConfig& conf)
     { config = conf; }
 
-    void handle(DataEvent& e, Flow*);
+    void handle(DataEvent&, Flow*);
 
 private:
     FileLogConfig config;
-    void log_file_name(TextLog* log, FileContext* file);
+    void log_file_name(TextLog*, FileContext*);
 };
 
 void LogHandler::log_file_name(TextLog* log, FileContext* file)
