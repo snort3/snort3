@@ -28,6 +28,8 @@
 #include <string.h>
 #include <time.h>
 
+#include "main/snort_types.h"
+
 struct SFHASHFCN;
 
 #define SFGHASH_NOMEM    -2
@@ -68,19 +70,16 @@ struct SFGHASH
     int splay;
 };
 
-SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, SfgHashFree);
-
-void sfghash_delete(SFGHASH*);
-int sfghash_add(SFGHASH*, const void* const key, void* const data);
-int sfghash_remove(SFGHASH*, const void* const key);
-int sfghash_count(SFGHASH*);
-void* sfghash_find(SFGHASH*, const void* const key);
-int sfghash_find2(SFGHASH*, const void*, void**);
-
-SFGHASH_NODE* sfghash_findfirst(SFGHASH*);
-SFGHASH_NODE* sfghash_findnext(SFGHASH*);
-
-int sfghash_set_keyops(SFGHASH*,
+SO_PUBLIC SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, SfgHashFree);
+SO_PUBLIC void sfghash_delete(SFGHASH*);
+SO_PUBLIC int sfghash_add(SFGHASH*, const void* const key, void* const data);
+SO_PUBLIC int sfghash_remove(SFGHASH*, const void* const key);
+SO_PUBLIC int sfghash_count(SFGHASH*);
+SO_PUBLIC void* sfghash_find(SFGHASH*, const void* const key);
+SO_PUBLIC int sfghash_find2(SFGHASH*, const void*, void**);
+SO_PUBLIC SFGHASH_NODE* sfghash_findfirst(SFGHASH*);
+SO_PUBLIC SFGHASH_NODE* sfghash_findnext(SFGHASH*);
+SO_PUBLIC int sfghash_set_keyops(SFGHASH*,
     unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
 

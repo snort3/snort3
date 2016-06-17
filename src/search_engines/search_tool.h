@@ -22,7 +22,7 @@
 
 #include "framework/mpse.h"
 
-class SearchTool
+class SO_PUBLIC SearchTool
 {
 public:
     SearchTool();

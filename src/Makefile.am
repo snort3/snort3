@@ -8,10 +8,6 @@ main.h
 if STATIC_INSPECTORS
 lib_list = \
 network_inspectors/appid/libappid.a \
-network_inspectors/appid/client_plugins/libappid_client_plugins.a \
-network_inspectors/appid/detector_plugins/libappid_detector_plugins.a \
-network_inspectors/appid/service_plugins/libappid_service_plugins.a \
-network_inspectors/appid/util/libappid_util.a \
 network_inspectors/arp_spoof/libarp_spoof.a \
 network_inspectors/packet_capture/libpacket_capture.a \
 service_inspectors/back_orifice/libback_orifice.a \

@@ -163,9 +163,9 @@ SO_PUBLIC int sfxhash_set_keyops(SFXHASH* h,
     unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
 
-SFXHASH_NODE* sfxhash_gfindfirst(SFXHASH* t);
-SFXHASH_NODE* sfxhash_gfindnext(SFXHASH* t);
-int sfxhash_add_return_data_ptr(SFXHASH* t, const void* key, void** data);
+SO_PUBLIC SFXHASH_NODE* sfxhash_gfindfirst(SFXHASH* t);
+SO_PUBLIC SFXHASH_NODE* sfxhash_gfindnext(SFXHASH* t);
+SO_PUBLIC int sfxhash_add_return_data_ptr(SFXHASH* t, const void* key, void** data);
 
 #endif
 

@@ -77,21 +77,21 @@
 SO_PUBLIC SFIP_RET sfip_pton(const char* src, sfip_t* dst);
 
 /* Allocate IP address from a character array describing the IP */
-sfip_t* sfip_alloc(const char* ip, SFIP_RET* status);
+SO_PUBLIC sfip_t* sfip_alloc(const char* ip, SFIP_RET* status);
 
 /* Frees an sfip_t */
-void sfip_free(sfip_t* ip);
+SO_PUBLIC void sfip_free(sfip_t* ip);
 
 /* Allocate IP address from an array of integers.  The array better be
  * long enough for the given family! */
-sfip_t* sfip_alloc_raw(void* ip, int family, SFIP_RET* status);
+SO_PUBLIC sfip_t* sfip_alloc_raw(void* ip, int family, SFIP_RET* status);
 
 /* Sets existing IP, "dst", to a raw source IP (4 or 16 bytes,
  * according to family) */
 SO_PUBLIC SFIP_RET sfip_set_raw(sfip_t* dst, const void* src, int src_family);
 
 /* Sets existing IP, "dst", to be source IP, "src" */
-SFIP_RET sfip_set_ip(sfip_t* dst, const sfip_t* src);
+SO_PUBLIC SFIP_RET sfip_set_ip(sfip_t* dst, const sfip_t* src);
 
 /* Obfuscates an IP */
 void sfip_obfuscate(sfip_t* ob, sfip_t* ip);

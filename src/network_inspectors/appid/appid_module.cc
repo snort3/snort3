@@ -33,6 +33,7 @@ using namespace std;
 
 THREAD_LOCAL ProfileStats appidPerfStats;
 
+// FIXIT-M: define and implement a flexible solution for maintaining protocol specific stats
 const PegInfo appid_pegs[] =
 {
     { "packet_count", "count of packets processed by appid" },

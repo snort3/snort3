@@ -44,6 +44,7 @@ include_directories(BEFORE network_inspectors)
 # STATIC_INSECTOR_LIBS in service_inspectors/CMakeLists.txt
 if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_LIBRARIES
+        appid
         arp_spoof
         back_orifice
         dns

@@ -23,7 +23,6 @@
 #endif
 #include "framework/inspector.h"
 
-extern const BaseApi* nin_appid_inspector;
 extern const BaseApi* nin_binder;
 extern const BaseApi* nin_normalize;
 extern const BaseApi* nin_perf_monitor;
@@ -32,13 +31,13 @@ extern const BaseApi* nin_port_scan;
 extern const BaseApi* nin_reputation;
 
 #ifdef STATIC_INSPECTORS
+extern const BaseApi* nin_appid;
 extern const BaseApi* nin_arp_spoof;
 extern const BaseApi* nin_packet_capture;
 #endif
 
 const BaseApi* network_inspectors[] =
 {
-    nin_appid_inspector,
     nin_binder,
     nin_normalize,
     nin_perf_monitor,
@@ -47,6 +46,7 @@ const BaseApi* network_inspectors[] =
     nin_reputation,
 
 #ifdef STATIC_INSPECTORS
+    nin_appid,
     nin_arp_spoof,
     nin_packet_capture,
 #endif

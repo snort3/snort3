@@ -365,8 +365,8 @@ AppIdData* AppIdEarlySessionCreate(
     char dst_ip[INET6_ADDRSTRLEN];
     // FIXIT - not needed  until crtlPkt expectedSession is supported
     //struct _ExpectNode** node;
-    AppIdData* data;
     enum PktType protocol = ( enum PktType )proto;
+    AppIdData* data;
 
     if (app_id_debug_session_flag)
     {

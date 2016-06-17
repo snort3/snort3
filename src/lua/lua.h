@@ -25,6 +25,8 @@
 #include <string>
 #include <lua.hpp>
 
+#include "main/snort_types.h"
+
 namespace Lua
 {
 
@@ -51,7 +53,7 @@ private:
 };
 
 // Stack maintainer for lua_State
-class ManageStack
+class SO_PUBLIC ManageStack
 {
 public:
     ManageStack(lua_State* L, int extra = 0);
