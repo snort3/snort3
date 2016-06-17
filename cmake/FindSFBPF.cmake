@@ -12,7 +12,6 @@ find_path (SFBPF_INCLUDE_DIR
 find_library(SFBPF_LIBRARIES
     NAMES sfbpf
     HINTS ${DAQ_LIBRARIES_DIR_HINT}      # user-specified option in ./configure_cmake.sh
-    NO_DEFAULT_PATH
 )
 
 include(FindPackageHandleStandardArgs)
