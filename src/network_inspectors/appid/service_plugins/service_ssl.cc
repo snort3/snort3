@@ -32,6 +32,7 @@
 #include "service_base.h"
 #include "service_ssl.h"
 #include "fw_appid.h"
+#include "appid_module.h"
 
 #include "main/snort_debug.h"
 #include "utils/util.h"
@@ -934,6 +935,7 @@ success:
     }
     ssl_service_mod.api->add_service(flowp, args->pkt, dir, &svc_element,
         getSslServiceAppId(args->pkt->ptrs.sp), nullptr, nullptr, nullptr);
+    appid_stats.ssl_flows++;
     return SERVICE_SUCCESS;
 }
 

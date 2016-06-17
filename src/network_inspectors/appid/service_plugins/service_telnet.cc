@@ -176,7 +176,7 @@ inprocess:
 success:
     telnet_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
         APP_ID_TELNET, nullptr, nullptr, nullptr);
-    appid_stats.telnet_count++;
+    appid_stats.telnet_flows++;
     return SERVICE_SUCCESS;
 
 fail:

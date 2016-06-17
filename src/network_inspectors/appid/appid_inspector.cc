@@ -80,7 +80,7 @@ void AppIdInspector::eval(Packet* pkt)
 {
     Profile profile(appidPerfStats);
 
-    appid_stats.packet_count++;
+    appid_stats.packets++;
     fwAppIdSearch(pkt);
 }
 

@@ -336,9 +336,9 @@ success:
         fd->state == SMTP_STATE_STARTTLS ? APP_ID_SMTPS : APP_ID_SMTP,
         nullptr, nullptr, nullptr);
     if (fd->state == SMTP_STATE_STARTTLS)
-        appid_stats.smtps_count++;
+        appid_stats.smtps_flows++;
     else
-        appid_stats.smtp_count++;
+        appid_stats.smtp_flows++;
 
     return SERVICE_SUCCESS;
 
