@@ -17,10 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// file_resume_block.h author Hui Cao <huica@cisco.com>
+// file_enforcer.h author Hui Cao <huica@cisco.com>
 
-#ifndef FILE_RESUME_BLOCK_H
-#define FILE_RESUME_BLOCK_H
+#ifndef FILE_ENFORCER_H
+#define FILE_ENFORCER_H
 
 // If a file transfered through HTTP is blocked, a new session might be created
 // to request the file data left. To block the new session, we use URL and IPs
@@ -36,7 +36,7 @@
 
 class FileInfo;
 
-class FileBlock
+class FileEnforcer
 {
 
     struct FileHashKey
@@ -49,7 +49,6 @@ class FileBlock
     struct FileNode
     {
         time_t expires;
-        FileVerdict verdict;
         FileInfo file;
     };
 
@@ -57,16 +56,15 @@ class FileBlock
     #define MAX_MEMORY_USED 10*1024*1024  // 10M
 
 public:
-    FileBlock();
-    ~FileBlock();
+    FileEnforcer();
+    ~FileEnforcer();
     FileVerdict cached_verdict_lookup(Flow*, FileInfo*);
-    bool apply_verdict(Flow*, FileVerdict);
     bool apply_verdict(Flow*, FileInfo*, FileVerdict);
 
 private:
-    void update_file_node(FileNode*, FileVerdict, FileInfo*);
+    void update_file_node(FileNode*, FileInfo*);
     FileVerdict check_verdict(Flow*, FileNode*, SFXHASH_NODE*);
-    int store_verdict(Flow*, FileInfo*, FileVerdict);
+    int store_verdict(Flow*, FileInfo*);
 
     /* The hash table of expected files */
     SFXHASH* fileHash = nullptr;

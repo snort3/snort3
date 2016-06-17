@@ -186,7 +186,7 @@ void MailLogState::set_file_name_from_log(Flow* flow)
     }
     else
     {
-        files->set_file_name(NULL, 0);
+        files->set_file_name(nullptr, 0);
     }
 }
 

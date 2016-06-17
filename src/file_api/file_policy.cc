@@ -24,13 +24,11 @@
 #include <iostream>
 #include <sstream>
 
-#include "file_service.h"
-#include "file_resume_block.h"
-#include "file_lib.h"
 #include "file_capture.h"
-
-#include "framework/logger.h"
-#include "events/event_queue.h"
+#include "file_config.h"
+#include "file_enforcer.h"
+#include "file_lib.h"
+#include "file_service.h"
 
 static FileRule emptyRule;
 
@@ -118,6 +116,8 @@ FileRule& FilePolicy::match_file_rule(Flow*, FileInfo* file)
 {
     for(unsigned i = 0; i < file_rules.size(); i++)
     {
+        if (file_rules[i].when.sha256.size())
+            continue;
         // No file type specified in rule or file type is matched
         if ((file_rules[i].when.type_id == 0) or
             (file_rules[i].when.type_id == file->get_file_type()))
@@ -153,9 +153,9 @@ void FilePolicy::policy_check(Flow*, FileContext* file)
 FileVerdict FilePolicy::type_lookup(Flow* flow, FileInfo* file)
 {
     FileRule rule = match_file_rule(nullptr, file);
-    FileBlock* file_block = FileService::get_file_block();
-    if (file_block)
-        file_block->apply_verdict(flow, file, rule.use.verdict);
+    FileEnforcer* file_enforcer = FileService::get_file_enforcer();
+    if (file_enforcer)
+        file_enforcer->apply_verdict(flow, file, rule.use.verdict);
     return rule.use.verdict;
 }
 
@@ -172,16 +172,16 @@ FileVerdict FilePolicy::type_lookup(Flow* flow, FileContext* file)
 FileVerdict FilePolicy::signature_lookup(Flow* flow, FileInfo* file)
 {
     FileVerdict verdict = match_file_signature(nullptr, file);
-    FileBlock* file_block = FileService::get_file_block();
-    if (file_block)
-        file_block->apply_verdict(flow, file, verdict);
+    FileEnforcer* file_enforcer = FileService::get_file_enforcer();
+    if (file_enforcer)
+        file_enforcer->apply_verdict(flow, file, verdict);
 
-    return FILE_VERDICT_UNKNOWN;
+    return verdict;
 }
 
 FileVerdict FilePolicy::signature_lookup(Flow* flow, FileContext* file )
 {
-    FileRule rule = match_file_rule(nullptr, file);
+    FileRule& rule = match_file_rule(nullptr, file);
 
     if (rule.use.capture_enabled)
     {

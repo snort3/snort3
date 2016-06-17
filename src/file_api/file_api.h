@@ -53,6 +53,9 @@ enum FileVerdict
     FILE_VERDICT_MAX
 };
 
+const std::string VerdictName[] =
+{"Unknown", "Log", "Stop", "Block", "Reset", "Pending", "Stop Capture", "INVALID"};
+
 enum FilePosition
 {
     SNORT_FILE_POSITION_UNKNOWN,

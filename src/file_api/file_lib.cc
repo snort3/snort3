@@ -34,6 +34,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <iostream>
+#include <iomanip>
+
 #include "file_identifier.h"
 #include "file_config.h"
 #include "hash/hashes.h"
@@ -44,8 +47,6 @@ FileInfo::~FileInfo ()
 {
     if(sha256)
         delete[] sha256;
-    if(file_name)
-        delete[] file_name;
 }
 
 FileInfo& FileInfo::operator=(const FileInfo& other)
@@ -53,16 +54,6 @@ FileInfo& FileInfo::operator=(const FileInfo& other)
     // check for self-assignment
     if(&other == this)
         return *this;
-
-    if (other.file_name and other.file_name_size)
-    {
-        file_name = new uint8_t[file_name_size];
-        if (file_name)
-        {
-            strncpy( (char *)file_name, (const char *)other.file_name, file_name_size);
-            file_name_size = other.file_name_size;
-        }
-    }
 
     if (other.sha256)
     {
@@ -75,39 +66,25 @@ FileInfo& FileInfo::operator=(const FileInfo& other)
     direction = other.direction;
     file_type_id = other.file_type_id;
     file_id = other.file_id;
+    file_name = other.file_name;
+    verdict = other.verdict;
 
     return *this;
 }
 
 /*File properties*/
 
-void FileInfo::set_file_name (const uint8_t *name, uint32_t name_size)
+void FileInfo::set_file_name (const char *name, uint32_t name_size)
 {
-    if (name and name_size and !file_name)
+    if (name and name_size)
     {
-        file_name = new uint8_t[name_size];
-        if (file_name)
-        {
-            strncpy( (char *)file_name, (const char *)name, name_size);
-            file_name_size = name_size;
-        }
+        file_name.assign(name, name_size);
     }
 }
 
-// Return true: file name available,
-//        false: file name is unavailable
-bool FileInfo::get_file_name(uint8_t** name, uint32_t* name_size)
+std::string& FileInfo::get_file_name()
 {
-    assert(name);
-    assert(name_size);
-
-    if (!file_name or !file_name_size)
-        return false;
-
-    *name = file_name;
-    *name_size = file_name_size;
-
-    return true;
+    return file_name;
 }
 
 void FileInfo::set_file_size(uint64_t size)
@@ -156,7 +133,7 @@ uint8_t* FileInfo::get_file_sig_sha256()
     return (sha256);
 }
 
-std::string FileInfo::sha_to_string (uint8_t *sha256)
+std::string FileInfo::sha_to_string (const uint8_t *sha256)
 {
     uint8_t conv[] = "0123456789ABCDEF";
     const uint8_t *index;
@@ -458,7 +435,7 @@ void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int ma
 /*
  * Print a 32-byte hash value.
  */
-void FileContext::print_file_sha256()
+void FileContext::print_file_sha256(std::ostream& log)
 {
 
     unsigned char* hash = sha256;
@@ -466,70 +443,27 @@ void FileContext::print_file_sha256()
     if (!sha256)
         return;
 
-    printf("SHA256: %02X%02X %02X%02X %02X%02X %02X%02X "
-        "%02X%02X %02X%02X %02X%02X %02X%02X "
-        "%02X%02X %02X%02X %02X%02X %02X%02X "
-        "%02X%02X %02X%02X %02X%02X %02X%02X\n",
-        hash[0], hash[1], hash[2], hash[3],
-        hash[4], hash[5], hash[6], hash[7],
-        hash[8], hash[9], hash[10], hash[11],
-        hash[12], hash[13], hash[14], hash[15],
-        hash[16], hash[17], hash[18], hash[19],
-        hash[20], hash[21], hash[22], hash[23],
-        hash[24], hash[25], hash[26], hash[27],
-        hash[28], hash[29], hash[30], hash[31]);
+    std::ios::fmtflags f(log.flags());
+    log <<"SHA256: ";
+    for (int i = 0; i < SHA256_HASH_SIZE; i+=2)
+    {
+        log << std::setfill('0') << std::setw(2) << std::hex << std::uppercase << (int)hash[i];
+        log << std::uppercase << (int)hash[i+1];
+        if (i < SHA256_HASH_SIZE - 2)
+            log << ' ';
+    }
+
+    log << std::endl;
+    log.flags(f);
 }
 
-#define MAX_CONTEXT_INFO_LEN 1024
-void FileContext::print()
+void FileContext::print( std::ostream& log)
 {
-    char buf[MAX_CONTEXT_INFO_LEN + 1];
-    int unused;
-    char* cur = buf;
-    int used = 0;
-
-    unused = sizeof(buf) - 1;
-    used = snprintf(cur, unused, "File name: ");
-
-    if (used < 0)
-    {
-        printf("Fail to output file context\n");
-        return;
-    }
-    unused -= used;
-    cur += used;
-
-    if ((file_name_size > 0) && (unused > (int)file_name_size))
-    {
-        strncpy(cur, (char*)file_name, file_name_size);
-        unused -= file_name_size;
-        cur += file_name_size;
-    }
-
-    if (unused > 0)
-    {
-        used = snprintf(cur, unused, "\nFile type: %s(%u)",
-            file_config->file_type_name(file_type_id).c_str(), file_type_id);
-        unused -= used;
-        cur += used;
-    }
-
-    if (unused > 0)
-    {
-        used = snprintf(cur, unused, "\nFile size: %u",
-            (unsigned int)file_size);
-        unused -= used;
-        cur += used;
-    }
-
-    if (unused > 0)
-    {
-        snprintf(cur, unused, "\nProcessed size: %u\n",
-            (unsigned int)processed_bytes);
-    }
-
-    buf[sizeof(buf) - 1] = '\0';
-    printf("%s", buf);
+    log << "File name: " << file_name << std::endl;
+    log << "File type: " << file_config->file_type_name(file_type_id)
+        << '('<< file_type_id  << ')' << std::endl;
+    log << "File size: " << file_size << std::endl;
+    log << "Processed size: " << processed_bytes << std::endl;
 }
 
 /**

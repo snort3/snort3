@@ -28,7 +28,7 @@
 #include "main/snort_types.h"
 #include "file_policy.h"
 
-class FileBlock;
+class FileEnforcer;
 
 class SO_PUBLIC FileService
 {
@@ -52,7 +52,7 @@ public:
     static int64_t get_max_file_depth();
 
     static FilePolicy& get_inspect();
-    static FileBlock* get_file_block() {return file_block;}
+    static FileEnforcer* get_file_enforcer() {return file_enforcer;}
 
 private:
     static void start_file_processing();
@@ -60,7 +60,9 @@ private:
     static bool file_signature_enabled;
     static bool file_capture_enabled;
     static bool file_processing_initiated;
-    static FileBlock* file_block;
+    static FileEnforcer* file_enforcer;
 };
+
+extern const struct BaseApi* file_inspectors[];
 #endif
 

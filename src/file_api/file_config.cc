@@ -31,10 +31,10 @@
 #include <iostream>
 #include <sys/types.h>
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-
 #include "parser/parse_utils.h"
+#include "main/snort_debug.h"
+#include "main/snort_config.h"
+#include "main/snort_types.h"
 
 bool FileConfig::process_file_magic(FileMagicData &magic)
 {
@@ -86,4 +86,9 @@ std::string FileConfig::file_type_name( uint32_t id)
         return info->type;
 
     return "";
+}
+
+std::string file_type_name(uint32_t id)
+{
+    return snort_conf->file_config.file_type_name(id);
 }

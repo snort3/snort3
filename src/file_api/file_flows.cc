@@ -37,7 +37,7 @@
 #include "file_api.h"
 #include "file_stats.h"
 #include "file_capture.h"
-#include "file_resume_block.h"
+#include "file_enforcer.h"
 #include "file_policy.h"
 #include "file_lib.h"
 #include "file_config.h"
@@ -45,7 +45,6 @@
 #include "main/snort_types.h"
 #include "stream/stream_api.h"
 #include "packet_io/active.h"
-
 
 int64_t FileConfig::show_data_depth = DEFAULT_FILE_SHOW_DATA_DEPTH;
 bool FileConfig::trace_type = false;
@@ -138,7 +137,7 @@ void FileFlows::finish_signature_lookup(FileContext* context)
         //Check file type based on file policy
         FilePolicy& inspect = FileService::get_inspect();
         inspect.signature_lookup(flow, context);
-
+        log_file_event(context, flow);
         context->config_file_signature(false);
         file_stats.signatures_processed[context->get_file_type()][context->get_file_direction()]++;
     }
@@ -172,9 +171,9 @@ bool FileFlows::file_process(FileContext* context, const uint8_t* file_data,
 
     context->set_file_config(&(snort_conf->file_config));
 
-    FileBlock* file_block = FileService::get_file_block();
-    if (file_block &&
-        (file_block->cached_verdict_lookup(flow, context) != FILE_VERDICT_UNKNOWN))
+    FileEnforcer* file_enforcer = FileService::get_file_enforcer();
+    if (file_enforcer &&
+        (file_enforcer->cached_verdict_lookup(flow, context) != FILE_VERDICT_UNKNOWN))
         return true;
 
     /*file type id*/
@@ -199,6 +198,7 @@ bool FileFlows::file_process(FileContext* context, const uint8_t* file_data,
             //Check file type based on file policy
             FilePolicy& inspect = FileService::get_inspect();
             inspect.type_lookup(flow, context);
+            log_file_event(context, flow);
         }
     }
 
@@ -213,7 +213,7 @@ bool FileFlows::file_process(FileContext* context, const uint8_t* file_data,
         context->update_file_size(data_size, position);
 
         if ( FileConfig::trace_signature )
-            context->print_file_sha256();
+            context->print_file_sha256(std::cout);
 
         /*Fails to capture, when out of memory or size limit, need lookup*/
         if (context->is_file_capture_enabled())
@@ -259,10 +259,43 @@ void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)
     if ( !context )
         return;
 
-    context->set_file_name(fname, name_size);
+    if ( !context->get_file_name().length() )
+    {
+        if (fname and name_size)
+            context->set_file_name((const char*)fname, name_size);
+        else
+            context->set_file_name(".", 1);
+
+        log_file_event(context, flow);
+    }
 
     if ( FileConfig::trace_type )
-        context->print();
+        context->print(std::cout);
+}
+
+void FileFlows::log_file_event(FileContext* context, Flow* flow)
+{
+    if ( context->get_file_name().length() )
+    {
+        switch (context->verdict)
+        {
+        case FILE_VERDICT_LOG:
+            // Log file event through data bus
+            get_data_bus().publish("file_event", (const uint8_t*)"LOG", 3, flow);
+            break;
+
+        case FILE_VERDICT_BLOCK:
+            // can't block session inside a session
+            get_data_bus().publish( "file_event", (const uint8_t*)"BLOCK", 5, flow);
+            break;
+
+        case FILE_VERDICT_REJECT:
+            get_data_bus().publish( "file_event", (const uint8_t*)"RESET", 5, flow);
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 FilePosition get_file_position(Packet* pkt)

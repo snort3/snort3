@@ -26,6 +26,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <iostream>
 
 #include "file_api/file_api.h"
 #include "flow/flow.h"
@@ -42,21 +43,21 @@ public:
     virtual ~FileInfo();
     FileInfo& operator=(const FileInfo& other);
     uint32_t get_file_type();
-    void set_file_name(const uint8_t* file_name, uint32_t name_size);
-    bool get_file_name( uint8_t** file_name, uint32_t* name_size);
+    void set_file_name(const char* file_name, uint32_t name_size);
+    std::string& get_file_name();
     void set_file_size(uint64_t size);
     uint64_t get_file_size();
     void set_file_direction(FileDirection dir);
     FileDirection get_file_direction();
     void set_file_sig_sha256(uint8_t* signature);
     uint8_t* get_file_sig_sha256();
-    std::string sha_to_string(uint8_t *sha256);
+    std::string sha_to_string(const uint8_t *sha256);
     void set_file_id(size_t index);
     size_t get_file_id();
+    FileVerdict verdict = FILE_VERDICT_UNKNOWN;
 
 protected:
-    uint8_t* file_name = nullptr;
-    uint32_t file_name_size = 0;
+    std::string file_name;
     uint64_t file_size = 0;
     FileDirection direction = DIRECTION_UNKNOWN;
     uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
@@ -93,10 +94,9 @@ public:
     void set_file_config(FileConfig* file_config);
     FileConfig*  get_file_config();
 
-
-    void print_file_sha256();
+    void print_file_sha256(std::ostream&);
     static void print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth);
-    void print();
+    void print(std::ostream&);
 
 private:
     bool file_type_enabled = false;
@@ -112,8 +112,6 @@ private:
     inline int get_data_size_from_depth_limit(FileProcessType type, int data_size);
     inline void finalize_file_type ();
 };
-
-const char* file_type_name(void* conf, uint32_t id);
 
 #endif
 

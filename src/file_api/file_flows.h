@@ -64,6 +64,7 @@ private:
     void finish_signature_lookup(FileContext*);
     void init_file_context(FileDirection, FileContext*);
     FileContext* find_main_file_context(FilePosition, FileDirection, size_t id = 0);
+    void log_file_event(FileContext*, Flow*);
     FileContext* main_context = nullptr;
     FileContext* pending_context = nullptr;
     FileContext* current_context = nullptr;
