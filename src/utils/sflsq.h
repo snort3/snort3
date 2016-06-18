@@ -21,6 +21,8 @@
 #ifndef SFLSQ_H
 #define SFLSQ_H
 
+#include "main/snort_types.h"
+
 // Simple LIST, STACK, QUEUE DICTIONARY (LIST BASED) interface
 // All of these functions are based on lists.
 // Use STL containers instead of these if possible.
@@ -72,21 +74,21 @@ typedef sf_list SF_LIST;
 // -----------------------------------------------------------------------------
 // Linked List Interface
 // -----------------------------------------------------------------------------
-SF_LIST* sflist_new();
-void sflist_init(SF_LIST*);
-int sflist_add_tail(SF_LIST*, NODE_DATA);
-int sflist_add_head(SF_LIST*, NODE_DATA);
-int sflist_add_before(SF_LIST*, SF_LNODE*, NODE_DATA);
-int sflist_add_after(SF_LIST*, SF_LNODE*, NODE_DATA);
-NODE_DATA sflist_remove_head(SF_LIST*);
-NODE_DATA sflist_remove_tail(SF_LIST*);
-void sflist_remove_node(SF_LIST*, SF_LNODE*);
-int sflist_count(SF_LIST*);
-NODE_DATA sflist_first(SF_LIST*, SF_LNODE**);
-NODE_DATA sflist_next(SF_LNODE**);
-void sflist_free(SF_LIST*);
-void sflist_free_all(SF_LIST*, void (* free)(void*) );
-void sflist_static_free_all(SF_LIST*, void (* nfree)(void*));
+SO_PUBLIC SF_LIST* sflist_new();
+SO_PUBLIC void sflist_init(SF_LIST*);
+SO_PUBLIC int sflist_add_tail(SF_LIST*, NODE_DATA);
+SO_PUBLIC int sflist_add_head(SF_LIST*, NODE_DATA);
+SO_PUBLIC int sflist_add_before(SF_LIST*, SF_LNODE*, NODE_DATA);
+SO_PUBLIC int sflist_add_after(SF_LIST*, SF_LNODE*, NODE_DATA);
+SO_PUBLIC NODE_DATA sflist_remove_head(SF_LIST*);
+SO_PUBLIC NODE_DATA sflist_remove_tail(SF_LIST*);
+SO_PUBLIC void sflist_remove_node(SF_LIST*, SF_LNODE*);
+SO_PUBLIC int sflist_count(SF_LIST*);
+SO_PUBLIC NODE_DATA sflist_first(SF_LIST*, SF_LNODE**);
+SO_PUBLIC NODE_DATA sflist_next(SF_LNODE**);
+SO_PUBLIC void sflist_free(SF_LIST*);
+SO_PUBLIC void sflist_free_all(SF_LIST*, void (* free)(void*) );
+SO_PUBLIC void sflist_static_free_all(SF_LIST*, void (* nfree)(void*));
 
 // -----------------------------------------------------------------------------
 //  Queue Interface ( FIFO - First in, First out )

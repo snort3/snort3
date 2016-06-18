@@ -10,6 +10,7 @@ add_subdirectory(reputation)
 
 if(STATIC_INSPECTORS)
     set(STATIC_INSPECTOR_LIBS
+        appid
         arp_spoof
         packet_capture
     )
@@ -22,11 +23,6 @@ add_library( network_inspectors STATIC
 
 target_link_libraries( network_inspectors
     ${STATIC_INSPECTOR_LIBS}
-    appid
-    appid_client_plugins
-    appid_detector_plugins
-    appid_service_plugins
-    appid_util
     binder
     normalize
     perf_monitor

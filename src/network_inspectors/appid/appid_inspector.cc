@@ -20,6 +20,11 @@
 // Created on: May 10, 2016
 
 #include "appid_inspector.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "profiler/profiler.h"
 #include "fw_appid.h"
 
@@ -75,7 +80,7 @@ void AppIdInspector::eval(Packet* pkt)
 {
     Profile profile(appidPerfStats);
 
-    appid_stats.packet_count++;
+    appid_stats.packets++;
     fwAppIdSearch(pkt);
 }
 
@@ -144,6 +149,6 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     nullptr
 };
 #else
-const BaseApi* nin_appid_inspector = &appid_inspector_api.base;
+const BaseApi* nin_appid = &appid_inspector_api.base;
 #endif
 

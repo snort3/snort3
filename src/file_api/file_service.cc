@@ -37,7 +37,7 @@
 #include "file_stats.h"
 #include "file_capture.h"
 #include "file_flows.h"
-#include "file_resume_block.h"
+#include "file_enforcer.h"
 #include "file_lib.h"
 #include "file_config.h"
 
@@ -55,7 +55,7 @@ bool FileService::file_type_id_enabled = false;
 bool FileService::file_signature_enabled = false;
 bool FileService::file_capture_enabled = false;
 bool FileService::file_processing_initiated = false;
-FileBlock* FileService::file_block = nullptr;
+FileEnforcer* FileService::file_enforcer = nullptr;
 
 void FileService::init()
 {
@@ -78,8 +78,8 @@ void FileService::post_init()
 
 void FileService::close()
 {
-    if (file_block)
-        delete file_block;
+    if (file_enforcer)
+        delete file_enforcer;
 
     MimeSession::exit();
     FileCapture::exit();
@@ -89,7 +89,7 @@ void FileService::start_file_processing()
 {
     if (!file_processing_initiated)
     {
-        file_block = new FileBlock;
+        file_enforcer = new FileEnforcer;
         //RegisterProfileStats("file", print_file_stats);  FIXIT-M put in module
         file_processing_initiated = true;
     }

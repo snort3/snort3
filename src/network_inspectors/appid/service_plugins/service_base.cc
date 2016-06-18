@@ -198,8 +198,8 @@ static RNAServiceValidationModule* static_service_list[] =
 #ifdef REMOVED_WHILE_NOT_IN_USE
     &snmp_service_mod,
     &ssh_service_mod,
-    &ssl_service_mod,
 #endif
+    &ssl_service_mod,
     &telnet_service_mod,
 #ifdef REMOVED_WHILE_NOT_IN_USE
     &tftp_service_mod,

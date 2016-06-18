@@ -23,25 +23,25 @@
  **  9.25.2012 - Initial Source Code. Hui Cao
  */
 
-#include "file_resume_block.h"
-
+#include "file_enforcer.h"
 #include "file_service.h"
 #include "file_api.h"
 #include "file_lib.h"
 
-#include "main/snort_types.h"
-#include "sfip/sfip_t.h"
-#include "utils/util.h"
-#include "utils/snort_bounds.h"
-#include "protocols/packet.h"
-#include "packet_io/active.h"
-#include "hash/sfxhash.h"
+#include "framework/data_bus.h"
 #include "hash/hashes.h"
+#include "hash/sfxhash.h"
+#include "main/snort_types.h"
 #include "managers/action_manager.h"
+#include "packet_io/active.h"
+#include "protocols/packet.h"
+#include "sfip/sfip_t.h"
 #include "sfip/sf_ip.h"
 #include "time/packet_time.h"
+#include "utils/util.h"
+#include "utils/snort_bounds.h"
 
-FileBlock::FileBlock()
+FileEnforcer::FileEnforcer()
 {
     fileHash = sfxhash_new(MAX_FILES_TRACKED, sizeof(FileHashKey), sizeof(FileNode),
         MAX_MEMORY_USED, 1, NULL, NULL, 1);
@@ -49,7 +49,7 @@ FileBlock::FileBlock()
         FatalError("Failed to create the expected channel hash table.\n");
 }
 
-FileBlock::~FileBlock()
+FileEnforcer::~FileEnforcer()
 {
     if (fileHash)
     {
@@ -57,13 +57,12 @@ FileBlock::~FileBlock()
     }
 }
 
-void FileBlock::update_file_node(FileNode* node, FileVerdict verdict, FileInfo* file)
+void FileEnforcer::update_file_node(FileNode* node, FileInfo* file)
 {
-    node->verdict = verdict;
     node->file = *file;
 }
 
-FileVerdict FileBlock::check_verdict(Flow* flow, FileNode* node, SFXHASH_NODE* hash_node)
+FileVerdict FileEnforcer::check_verdict(Flow* flow, FileNode* node, SFXHASH_NODE* hash_node)
 {
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
 
@@ -82,7 +81,7 @@ FileVerdict FileBlock::check_verdict(Flow* flow, FileNode* node, SFXHASH_NODE* h
     if ((verdict == FILE_VERDICT_UNKNOWN) ||
         (verdict == FILE_VERDICT_STOP_CAPTURE))
     {
-        verdict = node->verdict;
+        verdict = node->file.verdict;
     }
 
     if (verdict == FILE_VERDICT_LOG)
@@ -90,12 +89,10 @@ FileVerdict FileBlock::check_verdict(Flow* flow, FileNode* node, SFXHASH_NODE* h
         sfxhash_free_node(fileHash, hash_node);
     }
 
-    apply_verdict(flow, verdict);
-
     return verdict;
 }
 
-int FileBlock::store_verdict(Flow* flow, FileInfo* file, FileVerdict verdict)
+int FileEnforcer::store_verdict(Flow* flow, FileInfo* file)
 {
     assert(file);
     size_t file_sig = file->get_file_id();
@@ -122,14 +119,14 @@ int FileBlock::store_verdict(Flow* flow, FileInfo* file, FileVerdict verdict)
     if (node)
     {
         node->expires = now + timeout;
-        update_file_node(node, verdict, file);
+        update_file_node(node, file);
     }
     else
     {
         FileNode new_node;
         DebugMessage(DEBUG_FILE, "Adding file node\n");
 
-        update_file_node(&new_node, verdict, file);
+        update_file_node(&new_node, file);
 
         /*
          * use the time that we keep files around
@@ -156,33 +153,22 @@ int FileBlock::store_verdict(Flow* flow, FileInfo* file, FileVerdict verdict)
     return 0;
 }
 
-bool FileBlock::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict)
+bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict)
 {
-    if (apply_verdict(flow, verdict))
-    {
-        store_verdict(flow, file, verdict);
-        return true;
-    }
+    file->verdict = verdict;
 
-    return false;
-}
-
-bool FileBlock::apply_verdict(Flow*, FileVerdict verdict)
-{
-    if (verdict == FILE_VERDICT_LOG)
-    {
-        // Log file event through data bus
-    }
-    else if (verdict == FILE_VERDICT_BLOCK)
+    if (verdict == FILE_VERDICT_BLOCK)
     {
         // can't block session inside a session
         Active::set_delayed_action(Active::ACT_BLOCK, 1);
+        store_verdict(flow, file);
         return true;
     }
     else if (verdict == FILE_VERDICT_REJECT)
     {
         // can't reset session inside a session
         Active::set_delayed_action(Active::ACT_RESET, 1);
+        store_verdict(flow, file);
         return true;
     }
     else if (verdict == FILE_VERDICT_PENDING)
@@ -195,7 +181,7 @@ bool FileBlock::apply_verdict(Flow*, FileVerdict verdict)
     return false;
 }
 
-FileVerdict  FileBlock::cached_verdict_lookup(Flow* flow, FileInfo* file)
+FileVerdict  FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file)
 {
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
     SFXHASH_NODE* hash_node;

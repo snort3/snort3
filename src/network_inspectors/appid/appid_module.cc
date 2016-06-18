@@ -33,16 +33,18 @@ using namespace std;
 
 THREAD_LOCAL ProfileStats appidPerfStats;
 
+// FIXIT-M: define and implement a flexible solution for maintaining protocol specific stats
 const PegInfo appid_pegs[] =
 {
-    { "packet_count", "count of packets processed by appid" },
-    { "dns_udp_count", "count of dns flows over udp discovered by appid" },
-    { "dns_tcp_count", "count of dns flows over tcp discovered by appid" },
-    { "ftp_count", "count of ftp flows discovered by appid" },
-    { "ftps_count", "count of ftps flows discovered by appid" },
-    { "smtp_count", "count of smtp flows discovered by appid" },
-    { "smtps_count", "count of smtps flows discovered by appid" },
-    { "telnet_count", "count of telnet flows discovered by appid" },
+    { "packets", "count of packets processed by appid" },
+    { "dns_udp_flows", "count of dns flows over udp discovered by appid" },
+    { "dns_tcp_flows", "count of dns flows over tcp discovered by appid" },
+    { "ftp_flows", "count of ftp flows discovered by appid" },
+    { "ftps_flows", "count of ftps flows discovered by appid" },
+    { "smtp_flows", "count of smtp flows discovered by appid" },
+    { "smtps_flows", "count of smtps flows discovered by appid" },
+    { "ssl_flows", "count of ssl flows discovered by appid" },
+    { "telnet_flows", "count of telnet flows discovered by appid" },
     { nullptr, nullptr }
 };
 

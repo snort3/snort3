@@ -59,7 +59,7 @@ int16_t get_protocol_count();
 const char* get_protocol_name(uint16_t id);
 const char* get_protocol_name_sorted(uint16_t id);
 
-int16_t AddProtocolReference(const char* protocol);
+SO_PUBLIC int16_t AddProtocolReference(const char* protocol);
 SO_PUBLIC int16_t FindProtocolReference(const char* protocol);
 
 #if 0

@@ -69,5 +69,7 @@ private:
     FilePolicy filePolicy;
 };
 
+std::string file_type_name(uint32_t id);
+
 #endif
 

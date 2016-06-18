@@ -23,8 +23,10 @@
 #include <sys/time.h>
 #include <stdint.h>
 
+#include "main/snort_types.h"
+
 void packet_time_update(const struct timeval* cur_tv);
-time_t packet_time();
+SO_PUBLIC time_t packet_time();
 uint32_t packet_first_time();
 void packet_gettimeofday(struct timeval* tv);
 

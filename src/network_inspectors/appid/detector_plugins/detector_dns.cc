@@ -559,7 +559,7 @@ success:
         setAppIdFlag(flowp, APPID_SESSION_CONTINUE);
         dns_service_mod.api->add_service(flowp, args->pkt, dir, &udp_svc_element,
             APP_ID_DNS, nullptr, nullptr, nullptr);
-        appid_stats.dns_udp_count++;
+        appid_stats.dns_udp_flows++;
         return SERVICE_SUCCESS;
     case SERVICE_INVALID_CLIENT:
 invalid:
@@ -665,7 +665,7 @@ success:
     setAppIdFlag(flowp, APPID_SESSION_CONTINUE);
     dns_service_mod.api->add_service(flowp, args->pkt, dir, &tcp_svc_element,
         APP_ID_DNS, nullptr, nullptr, nullptr);
-    appid_stats.dns_tcp_count++;
+    appid_stats.dns_tcp_flows++;
     return SERVICE_SUCCESS;
 
 not_compatible:

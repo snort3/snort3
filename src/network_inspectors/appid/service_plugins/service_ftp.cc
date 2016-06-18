@@ -1306,9 +1306,9 @@ inprocess:
                 fd->version[0] ? fd->version : nullptr, nullptr);
 
             if(encryptedFlag == APPID_SESSION_ENCRYPTED)
-                appid_stats.ftps_count++;
+                appid_stats.ftps_flows++;
             else
-                appid_stats.ftp_count++;
+                appid_stats.ftp_flows++;
         }
         return SERVICE_SUCCESS;
 
