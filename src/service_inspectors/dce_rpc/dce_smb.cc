@@ -2042,7 +2042,6 @@ static void DCE2_SmbInitGlobals()
         switch (com)
         {
         case SMB_COM_OPEN:
-            // FIXIT-M port DCE2_SmbOpen. Same for other smb_com_funcs
             smb_com_funcs[com] = DCE2_SmbOpen;
 
             smb_deprecated_coms[com] = true;
@@ -2218,8 +2217,7 @@ static void DCE2_SmbInitGlobals()
             DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, UINT16_MAX);
             break;
         case SMB_COM_TRANSACTION_SECONDARY:
-            //smb_com_funcs[com] = DCE2_SmbTransactionSecondary;
-            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_com_funcs[com] = DCE2_SmbTransactionSecondary;
             smb_deprecated_coms[com] = false;
             smb_unusual_coms[com] = false;
 
@@ -2317,8 +2315,7 @@ static void DCE2_SmbInitGlobals()
             DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, UINT16_MAX);
             break;
         case SMB_COM_TRANSACTION2_SECONDARY:
-            //smb_com_funcs[com] = DCE2_SmbTransaction2Secondary;
-            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_com_funcs[com] = DCE2_SmbTransaction2Secondary;
             smb_deprecated_coms[com] = false;
             smb_unusual_coms[com] = false;
 
@@ -2437,8 +2434,7 @@ static void DCE2_SmbInitGlobals()
             DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, UINT16_MAX);
             break;
         case SMB_COM_NT_TRANSACT_SECONDARY:
-            //smb_com_funcs[com] = DCE2_SmbNtTransactSecondary;
-            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_com_funcs[com] = DCE2_SmbNtTransactSecondary;
             smb_deprecated_coms[com] = false;
             smb_unusual_coms[com] = false;
 

@@ -2303,8 +2303,8 @@ inline bool SmbSetFileInfoSetFileBasicInfo(const uint16_t info_level)
 
 struct SmbNtTransactReq
 {
-    uint8_t  smb_wct;
-    uint8_t  smb_max_setup_count;
+    uint8_t smb_wct;
+    uint8_t smb_max_setup_count;
     uint16_t smb_res;
     uint32_t smb_total_param_count;
     uint32_t smb_total_data_count;
@@ -2314,21 +2314,20 @@ struct SmbNtTransactReq
     uint32_t smb_param_offset;
     uint32_t smb_data_count;
     uint32_t smb_data_offset;
-    uint8_t  smb_setup_count;
+    uint8_t smb_setup_count;
     uint16_t smb_function;
 };
 
 struct SmbNtTransactInterimResp
 {
-    uint8_t  smb_wct;
+    uint8_t smb_wct;
     uint16_t smb_bcc;
-
 };
 
 struct SmbNtTransactResp
 {
-    uint8_t  smb_wct;
-    uint8_t  smb_res[3];
+    uint8_t smb_wct;
+    uint8_t smb_res[3];
     uint32_t smb_total_param_count;
     uint32_t smb_total_data_count;
     uint32_t smb_param_count;
@@ -2337,85 +2336,85 @@ struct SmbNtTransactResp
     uint32_t smb_data_count;
     uint32_t smb_data_offset;
     uint32_t smb_data_disp;
-    uint8_t  smb_setup_count;
+    uint8_t smb_setup_count;
 };
 
-inline uint16_t SmbNtTransactReqSubCom(const SmbNtTransactReq *req)
+inline uint16_t SmbNtTransactReqSubCom(const SmbNtTransactReq* req)
 {
     return alignedNtohs(&req->smb_function);
 }
 
-inline uint8_t SmbNtTransactReqSetupCnt(const SmbNtTransactReq *req)
+inline uint8_t SmbNtTransactReqSetupCnt(const SmbNtTransactReq* req)
 {
     return req->smb_setup_count;
 }
 
-inline uint32_t SmbNtTransactReqTotalParamCnt(const SmbNtTransactReq *req)
+inline uint32_t SmbNtTransactReqTotalParamCnt(const SmbNtTransactReq* req)
 {
     return alignedNtohl(&req->smb_total_param_count);
 }
 
-inline uint32_t SmbNtTransactReqParamCnt(const SmbNtTransactReq *req)
+inline uint32_t SmbNtTransactReqParamCnt(const SmbNtTransactReq* req)
 {
     return alignedNtohl(&req->smb_param_count);
 }
 
-inline uint32_t SmbNtTransactReqParamOff(const SmbNtTransactReq *req)
+inline uint32_t SmbNtTransactReqParamOff(const SmbNtTransactReq* req)
 {
     return alignedNtohl(&req->smb_param_offset);
 }
 
-inline uint32_t SmbNtTransactReqTotalDataCnt(const SmbNtTransactReq *req)
+inline uint32_t SmbNtTransactReqTotalDataCnt(const SmbNtTransactReq* req)
 {
     return alignedNtohl(&req->smb_total_data_count);
 }
 
-inline uint32_t SmbNtTransactReqDataCnt(const SmbNtTransactReq *req)
+inline uint32_t SmbNtTransactReqDataCnt(const SmbNtTransactReq* req)
 {
     return alignedNtohl(&req->smb_data_count);
 }
 
-inline uint32_t SmbNtTransactReqDataOff(const SmbNtTransactReq *req)
+inline uint32_t SmbNtTransactReqDataOff(const SmbNtTransactReq* req)
 {
     return alignedNtohl(&req->smb_data_offset);
 }
 
-inline uint32_t SmbNtTransactRespTotalParamCnt(const SmbNtTransactResp *resp)
+inline uint32_t SmbNtTransactRespTotalParamCnt(const SmbNtTransactResp* resp)
 {
     return alignedNtohl(&resp->smb_total_param_count);
 }
 
-inline uint32_t SmbNtTransactRespParamCnt(const SmbNtTransactResp *resp)
+inline uint32_t SmbNtTransactRespParamCnt(const SmbNtTransactResp* resp)
 {
     return alignedNtohl(&resp->smb_param_count);
 }
 
-inline uint32_t SmbNtTransactRespParamOff(const SmbNtTransactResp *resp)
+inline uint32_t SmbNtTransactRespParamOff(const SmbNtTransactResp* resp)
 {
     return alignedNtohl(&resp->smb_param_offset);
 }
 
-inline uint32_t SmbNtTransactRespParamDisp(const SmbNtTransactResp *resp)
+inline uint32_t SmbNtTransactRespParamDisp(const SmbNtTransactResp* resp)
 {
     return alignedNtohl(&resp->smb_param_disp);
 }
 
-inline uint32_t SmbNtTransactRespTotalDataCnt(const SmbNtTransactResp *resp)
+inline uint32_t SmbNtTransactRespTotalDataCnt(const SmbNtTransactResp* resp)
 {
     return alignedNtohl(&resp->smb_total_data_count);
 }
 
-inline uint32_t SmbNtTransactRespDataCnt(const SmbNtTransactResp *resp)
+inline uint32_t SmbNtTransactRespDataCnt(const SmbNtTransactResp* resp)
 {
     return alignedNtohl(&resp->smb_data_count);
 }
 
-inline uint32_t SmbNtTransactRespDataOff(const SmbNtTransactResp *resp)
+inline uint32_t SmbNtTransactRespDataOff(const SmbNtTransactResp* resp)
 {
     return alignedNtohl(&resp->smb_data_offset);
 }
 
-inline uint32_t SmbNtTransactRespDataDisp(const SmbNtTransactResp *resp)
+inline uint32_t SmbNtTransactRespDataDisp(const SmbNtTransactResp* resp)
 {
     return alignedNtohl(&resp->smb_data_disp);
 }
@@ -2434,33 +2433,33 @@ struct SmbNtTransactCreateReqParams
     uint32_t ea_length;
     uint32_t name_length;
     uint32_t impersonation_level;
-    uint8_t  security_flags;
+    uint8_t security_flags;
 };
 
-inline uint64_t SmbNtTransactCreateReqAllocSize(const SmbNtTransactCreateReqParams *req)
+inline uint64_t SmbNtTransactCreateReqAllocSize(const SmbNtTransactCreateReqParams* req)
 {
     return alignedNtohq(&req->allocation_size);
 }
 
-inline uint32_t SmbNtTransactCreateReqFileNameLength(const SmbNtTransactCreateReqParams *req)
+inline uint32_t SmbNtTransactCreateReqFileNameLength(const SmbNtTransactCreateReqParams* req)
 {
     return alignedNtohl(&req->name_length);
 }
 
-inline uint32_t SmbNtTransactCreateReqFileAttrs(const SmbNtTransactCreateReqParams *req)
+inline uint32_t SmbNtTransactCreateReqFileAttrs(const SmbNtTransactCreateReqParams* req)
 {
     return alignedNtohl(&req->ext_file_attributes);
 }
 
-inline bool SmbNtTransactCreateReqSequentialOnly(const SmbNtTransactCreateReqParams *req)
+inline bool SmbNtTransactCreateReqSequentialOnly(const SmbNtTransactCreateReqParams* req)
 {
     return (alignedNtohl(&req->create_options) & SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY);
 }
 
 struct SmbNtTransactCreateReq
 {
-    uint8_t  smb_wct;
-    uint8_t  smb_max_setup_count;
+    uint8_t smb_wct;
+    uint8_t smb_max_setup_count;
     uint16_t smb_res;
     uint32_t smb_total_param_count;
     uint32_t smb_total_data_count;
@@ -2470,15 +2469,15 @@ struct SmbNtTransactCreateReq
     uint32_t smb_param_offset;
     uint32_t smb_data_count;
     uint32_t smb_data_offset;
-    uint8_t  smb_setup_count;   /* Must be 0x00 */
+    uint8_t smb_setup_count;    /* Must be 0x00 */
     uint16_t smb_function;      /* NT_TRANSACT_CREATE */
     uint16_t smb_bcc;
 };
 
 struct SmbNtTransactCreateRespParams
 {
-    uint8_t  op_lock_level;
-    uint8_t  reserved;
+    uint8_t op_lock_level;
+    uint8_t reserved;
     uint16_t smb_fid;
     uint32_t create_action;
     uint32_t ea_error_offset;
@@ -2491,38 +2490,38 @@ struct SmbNtTransactCreateRespParams
     uint64_t end_of_file;
     uint16_t resource_type;
     uint16_t nm_pipe_status;
-    uint8_t  directory;
+    uint8_t directory;
 };
 
-inline uint16_t SmbNtTransactCreateRespFid(const SmbNtTransactCreateRespParams *resp)
+inline uint16_t SmbNtTransactCreateRespFid(const SmbNtTransactCreateRespParams* resp)
 {
     return alignedNtohs(&resp->smb_fid);
 }
 
-inline uint32_t SmbNtTransactCreateRespCreateAction(const SmbNtTransactCreateRespParams *resp)
+inline uint32_t SmbNtTransactCreateRespCreateAction(const SmbNtTransactCreateRespParams* resp)
 {
     return alignedNtohl(&resp->create_action);
 }
 
-inline uint64_t SmbNtTransactCreateRespEndOfFile(const SmbNtTransactCreateRespParams *resp)
+inline uint64_t SmbNtTransactCreateRespEndOfFile(const SmbNtTransactCreateRespParams* resp)
 {
     return alignedNtohq(&resp->end_of_file);
 }
 
-inline uint16_t SmbNtTransactCreateRespResourceType(const SmbNtTransactCreateRespParams *resp)
+inline uint16_t SmbNtTransactCreateRespResourceType(const SmbNtTransactCreateRespParams* resp)
 {
     return alignedNtohs(&resp->resource_type);
 }
 
-inline bool SmbNtTransactCreateRespDirectory(const SmbNtTransactCreateRespParams *resp)
+inline bool SmbNtTransactCreateRespDirectory(const SmbNtTransactCreateRespParams* resp)
 {
     return (resp->directory ? true : false);
 }
 
 struct SmbNtTransactCreateResp
 {
-    uint8_t  smb_wct;
-    uint8_t  smb_res[3];
+    uint8_t smb_wct;
+    uint8_t smb_res[3];
     uint32_t smb_total_param_count;
     uint32_t smb_total_data_count;
     uint32_t smb_param_count;
@@ -2531,10 +2530,186 @@ struct SmbNtTransactCreateResp
     uint32_t smb_data_count;
     uint32_t smb_data_offset;
     uint32_t smb_data_disp;
-    uint8_t  smb_setup_count;   /* 0x00 */
+    uint8_t smb_setup_count;    /* 0x00 */
     uint16_t smb_bcc;
 };
 
+/********************************************************************
+ * SMB_COM_TRANSACTION_SECONDARY
+ *  Continuation command for SMB_COM_TRANSACTION requests if all
+ *  data wasn't sent.
+ ********************************************************************/
+struct SmbTransactionSecondaryReq   /* smb_wct = 8 */
+{
+    uint8_t smb_wct;       /* count of 16-bit words that follow */
+    uint16_t smb_tpscnt;   /* total number of parameter bytes being sent */
+    uint16_t smb_tdscnt;   /* total number of data bytes being sent */
+    uint16_t smb_pscnt;    /* number of parameter bytes being sent this buffer */
+    uint16_t smb_psoff;    /* offset (from start of SMB hdr) to parameter bytes */
+    uint16_t smb_psdisp;   /* byte displacement for these parameter bytes */
+    uint16_t smb_dscnt;    /* number of data bytes being sent this buffer */
+    uint16_t smb_dsoff;    /* offset (from start of SMB hdr) to data bytes */
+    uint16_t smb_dsdisp;   /* byte displacement for these data bytes */
+    uint16_t smb_bcc;      /* total bytes (including pad bytes) following */
+};
+
+inline uint16_t SmbTransactionSecondaryReqTotalDataCnt(const SmbTransactionSecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_tdscnt);
+}
+
+inline uint16_t SmbTransactionSecondaryReqDataCnt(const SmbTransactionSecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_dscnt);
+}
+
+inline uint16_t SmbTransactionSecondaryReqDataOff(const SmbTransactionSecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_dsoff);
+}
+
+inline uint16_t SmbTransactionSecondaryReqDataDisp(const SmbTransactionSecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_dsdisp);
+}
+
+inline uint16_t SmbTransactionSecondaryReqTotalParamCnt(const SmbTransactionSecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_tpscnt);
+}
+
+inline uint16_t SmbTransactionSecondaryReqParamCnt(const SmbTransactionSecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_pscnt);
+}
+
+inline uint16_t SmbTransactionSecondaryReqParamOff(const SmbTransactionSecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_psoff);
+}
+
+inline uint16_t SmbTransactionSecondaryReqParamDisp(const SmbTransactionSecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_psdisp);
+}
+
+/********************************************************************
+ * SMB_COM_TRANSACTION2_SECONDARY
+ *  Continuation command for SMB_COM_TRANSACTION2 requests if all
+ *  data wasn't sent.
+ ********************************************************************/
+struct SmbTransaction2SecondaryReq
+{
+    uint8_t smb_wct;
+    uint16_t smb_total_param_count;
+    uint16_t smb_total_data_count;
+    uint16_t smb_param_count;
+    uint16_t smb_param_offset;
+    uint16_t smb_param_disp;
+    uint16_t smb_data_count;
+    uint16_t smb_data_offset;
+    uint16_t smb_data_disp;
+    uint16_t smb_fid;
+    uint16_t smb_bcc;
+};
+
+inline uint16_t SmbTransaction2SecondaryReqTotalParamCnt(const SmbTransaction2SecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_total_param_count);
+}
+
+inline uint16_t SmbTransaction2SecondaryReqParamCnt(const SmbTransaction2SecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_param_count);
+}
+
+inline uint16_t SmbTransaction2SecondaryReqParamOff(const SmbTransaction2SecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_param_offset);
+}
+
+inline uint16_t SmbTransaction2SecondaryReqParamDisp(const SmbTransaction2SecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_param_disp);
+}
+
+inline uint16_t SmbTransaction2SecondaryReqTotalDataCnt(const SmbTransaction2SecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_total_data_count);
+}
+
+inline uint16_t SmbTransaction2SecondaryReqDataCnt(const SmbTransaction2SecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_data_count);
+}
+
+inline uint16_t SmbTransaction2SecondaryReqDataOff(const SmbTransaction2SecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_data_offset);
+}
+
+inline uint16_t SmbTransaction2SecondaryReqDataDisp(const SmbTransaction2SecondaryReq* req)
+{
+    return alignedNtohs(&req->smb_data_disp);
+}
+
+/********************************************************************
+ * SMB_COM_NT_TRANSACT_SECONDARY
+ ********************************************************************/
+struct SmbNtTransactSecondaryReq
+{
+    uint8_t smb_wct;
+    uint8_t smb_res[3];
+    uint32_t smb_total_param_count;
+    uint32_t smb_total_data_count;
+    uint32_t smb_param_count;
+    uint32_t smb_param_offset;
+    uint32_t smb_param_disp;
+    uint32_t smb_data_count;
+    uint32_t smb_data_offset;
+    uint32_t smb_data_disp;
+    uint8_t smb_res2;
+};
+
+inline uint32_t SmbNtTransactSecondaryReqTotalParamCnt(const SmbNtTransactSecondaryReq* req)
+{
+    return alignedNtohl(&req->smb_total_param_count);
+}
+
+inline uint32_t SmbNtTransactSecondaryReqParamCnt(const SmbNtTransactSecondaryReq* req)
+{
+    return alignedNtohl(&req->smb_param_count);
+}
+
+inline uint32_t SmbNtTransactSecondaryReqParamOff(const SmbNtTransactSecondaryReq* req)
+{
+    return alignedNtohl(&req->smb_param_offset);
+}
+
+inline uint32_t SmbNtTransactSecondaryReqParamDisp(const SmbNtTransactSecondaryReq* req)
+{
+    return alignedNtohl(&req->smb_param_disp);
+}
+
+inline uint32_t SmbNtTransactSecondaryReqTotalDataCnt(const SmbNtTransactSecondaryReq* req)
+{
+    return alignedNtohl(&req->smb_total_data_count);
+}
+
+inline uint32_t SmbNtTransactSecondaryReqDataCnt(const SmbNtTransactSecondaryReq* req)
+{
+    return alignedNtohl(&req->smb_data_count);
+}
+
+inline uint32_t SmbNtTransactSecondaryReqDataOff(const SmbNtTransactSecondaryReq* req)
+{
+    return alignedNtohl(&req->smb_data_offset);
+}
+
+inline uint32_t SmbNtTransactSecondaryReqDataDisp(const SmbNtTransactSecondaryReq* req)
+{
+    return alignedNtohl(&req->smb_data_disp);
+}
 
 #pragma pack()
 
