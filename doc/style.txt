@@ -5,11 +5,21 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Generally try to follow
   http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml, 
-  but there are a few differences.
+  but there are some differences documented here.
 
 * Each source directory should have a dev_notes.txt file summarizing the
-  key points for the code in that directory.  These are built into the
-  developers guide.
+  key points and design decisions for the code in that directory.  These
+  are built into the developers guide.
+
+* Makefile.am and CMakeLists.txt should have the same files listed in alpha
+  order.  This makes it easier to maintain both build systems.
+
+* All new code must come with unit tests providing 95% coverage or better.
+
+* Generally, Catch is preferred for tests in the source file and CppUTest
+  is preferred for test executables in a test subdirectory.
+
+=== C++ Specific
 
 * Do not use exceptions.  Exception-safe code is non-trivial and we have
   ported legacy code that makes use of exceptions unwise.  There are a few
@@ -23,6 +33,28 @@ yet firm so feedback is welcome to get something we can live with.
 * Use smart pointers judiciously as they aren't free.  If you would have to
   roll your own, then use a smart pointer.  If you just need a dtor to
   delete something, write the dtor.
+
+* Prefer 'and' over && and 'or' over || for new source files.
+
+* Use nullptr instead of NULL.
+
+* Use new, delete, and their [] counterparts instead of malloc and free
+  except where realloc must be used.  But try not to use realloc.  New and
+  delete can't return nullptr so no need to check.  And Snort's memory
+  manager will ensure that we live within our memory budget.
+
+* Use references in lieu of pointers wherever possible.
+
+* Use the order public, protected, private top to bottom in a class
+  declaration.
+
+* Keep inline functions in a class declaration very brief, preferably just
+  one line.  If you need a more complex inline function, move the
+  definition below the class declaration.
+
+* The goal is to have highly readable class declarations.  The user
+  shouldn't have to sift through implementation details to see what is
+  available to the client.
 
 === Naming
 
@@ -80,7 +112,8 @@ yet firm so feedback is welcome to get something we can live with.
 === Logging
 
 * Messages intended for the user should not look like debug messages. Eg,
-  the function name should not be included.
+  the function name should not be included.  It is generally unhelpful to
+  include pointers.
 
 * Most debug messages should just be deleted.
 
@@ -96,7 +129,8 @@ yet firm so feedback is welcome to get something we can live with.
 * Use forward declarations (e.g. struct SnortConfig;) instead of void*.
 
 * Try not to use extern data unless absolutely necessary and then put the
-  extern in an appropriate header.
+  extern in an appropriate header.  Exceptions for things used in exactly
+  one place like BaseApi pointers.
 
 * Use const liberally.  In most cases, const char* s = "foo" should be
   const char* const s = "foo".  The former goes in the initialized data
@@ -122,7 +156,8 @@ yet firm so feedback is welcome to get something we can live with.
   multiple error returns.  The C-style use of zero for success and -1 for
   error is less readable and often leads to messy code that either ignores
   the various errors anyway or needlessly and ineffectively tries to do
-  something aobut them.
+  something aobut them.  Generally that code is not updated if new errors
+  are added.
 
 === Macros (aka defines)
 
@@ -144,6 +179,9 @@ yet firm so feedback is welcome to get something we can live with.
   surprises.
 
 === Formatting
+
+* Try to keep all source files under 2500 lines.  3000 is the max allowed.
+  If you need more lines, chances are that the code needs to be refactored.
 
 * Indent 4 space chars ... no tabs!
 
@@ -189,19 +227,6 @@ yet firm so feedback is welcome to get something we can live with.
       if ( test )
           foo();
 
-=== Classes
-
-* Use the order public, protected, private top to bottom in a class
-  declaration.
-
-* Keep inline functions in a class declaration very brief, preferably just
-  one line.  If you need a more complex inline function, move the
-  definition outside the class declaration.
-
-* The goal is to have highly readable class declarations.  The user
-  shouldn't have to sift through implementation details to see what is
-  available to the client.
-
 === Headers
 
 * Don't hesitate to create a new header if it is needed.  Don't lump
@@ -239,10 +264,14 @@ yet firm so feedback is welcome to get something we can live with.
 
 * A .cc should include its own .h before any others (including
   system headers).  This ensures that the header stands on its own and can
-  be used by clients without include prerequisites.
+  be used by clients without include prerequisites and the developer will
+  be the first to find a dependency problem.
 
 * Include required headers, all required headers, and nothing but required
   headers.  Don't just clone a bunch of headers because it is convenient.
+
+* Try to keep includes in alpha order.  This makes it easier to maintain,
+  avoid duplicates, etc.
 
 * Any file depending on #ifdefs should include config.h as shown below.  A
   .h should include it before any other includes, and a .cc should include
@@ -269,10 +298,6 @@ yet firm so feedback is welcome to get something we can live with.
     -fsanitize=address -fno-omit-frame-pointer
 
 * Then Fix All Warnings and Aborts.  None Allowed.
-
-=== Other
-
-* Prefer 'and' over && and 'or' over || for new source files.
 
 === Uncrustify
 
