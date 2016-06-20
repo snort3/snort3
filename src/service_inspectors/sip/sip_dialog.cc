@@ -49,7 +49,7 @@ static SIP_DialogData* SIP_addDialog(SIPMsg*, SIP_DialogData*, SIP_DialogList*);
 static int SIP_deleteDialog(SIP_DialogData*, SIP_DialogList*);
 
 #ifdef DEBUG_MSGS
-void SIP_displayMedias(SIP_MediaList* dList);
+static void SIP_displayMedias(SIP_MediaList* dList);
 #endif
 
 /********************************************************************
@@ -149,7 +149,7 @@ static int SIP_processInvite(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogL
     // check whether this invite has authorization information
     if ((SIP_DLG_AUTHENCATING != dialog->state) && (NULL != sipMsg->authorization))
     {
-        DebugFormat(DEBUG_SIP, "Dialog state code: %u\n",
+        DebugFormat(DEBUG_SIP, "Dialog state code: %hu\n",
             dialog->status_code);
 
         SnortEventqAdd(GID_SIP, SIP_EVENT_AUTH_INVITE_REPLAY_ATTACK);
@@ -402,9 +402,9 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
     while ((NULL != mdataA)&&(NULL != mdataB))
     {
         //void *ssn;
-        DebugFormat(DEBUG_SIP, "Ignoring channels Source IP: %s Port: %u\n",
+        DebugFormat(DEBUG_SIP, "Ignoring channels Source IP: %s Port: %hu\n",
             sfip_to_str(&mdataA->maddress), mdataA->mport);
-        DebugFormat(DEBUG_SIP, "Ignoring channels Destine IP: %s Port: %u\n",
+        DebugFormat(DEBUG_SIP, "Ignoring channels Destine IP: %s Port: %hu\n",
             sfip_to_str(&mdataB->maddress), mdataB->mport);
 
         /* Call into Streams to mark data channel as something to ignore. */
@@ -544,7 +544,7 @@ void SIP_displayMedias(SIP_MediaList* dList)
         mdata =  currSession->medias;
         while (NULL != mdata)
         {
-            DebugFormat(DEBUG_SIP, "Media IP: %s, port: %u, number of ports %u\n",
+            DebugFormat(DEBUG_SIP, "Media IP: %s, port: %hu, number of ports %hhu\n",
                 sfip_to_str(&mdata->maddress), mdata->mport, mdata->numPort);
             mdata = mdata->nextM;
         }
@@ -573,7 +573,7 @@ static SIP_DialogData* SIP_addDialog(SIPMsg* sipMsg, SIP_DialogData* currDialog,
 {
     SIP_DialogData* dialog;
 
-    DebugFormat(DEBUG_SIP, "Add Dialog id: %u, From: %u, To: %u, status code: %u\n",
+    DebugFormat(DEBUG_SIP, "Add Dialog id: %u, From: %u, To: %u, status code: %hu\n",
         sipMsg->dlgID.callIdHash,sipMsg->dlgID.fromTagHash,sipMsg->dlgID.toTagHash,
         sipMsg->status_code);
 

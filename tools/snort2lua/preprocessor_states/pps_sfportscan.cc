@@ -36,10 +36,8 @@ public:
     virtual bool convert(std::istringstream& data_stream);
 
 private:
-    bool parse_list(std::string table_name, std::istringstream& data_stream);
     bool parse_option(std::string table_name, std::istringstream& data_stream);
     bool add_portscan_global_option(std::string name, std::istringstream& data_stream);
-    // a wrapper for parse_list.  adds an addition '[..]' around the string
     bool parse_ip_list(std::string table_name, std::istringstream& data_stream);
 };
 } // namespace
@@ -63,20 +61,6 @@ bool PortScan::parse_ip_list(std::string list_name, std::istringstream& data_str
 
     prev = prev + "]";
     return table_api.add_option(list_name, prev);
-}
-
-bool PortScan::parse_list(std::string list_name, std::istringstream& data_stream)
-{
-    std::string elem;
-    bool retval = true;
-
-    if (!(data_stream >> elem) || (elem != "{"))
-        return false;
-
-    while (data_stream >> elem && elem != "}")
-        retval && table_api.add_list(list_name, elem) && retval;
-
-    return retval;
 }
 
 bool PortScan::parse_option(std::string list_name, std::istringstream& data_stream)

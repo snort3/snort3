@@ -443,7 +443,6 @@ TEST_CASE( "otn state", "[profiler][rule_profiler]" )
 
 TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
 {
-    SigInfo sig_info;
     auto entry = make_rule_entry(3_ticks, 2_ticks, 3, 2);
     entry.state.alerts = 77;
     entry.state.latency_timeouts = 5;

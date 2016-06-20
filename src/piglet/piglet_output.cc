@@ -85,7 +85,7 @@ const struct Output unit_test_output =
     [](const Summary& sum) -> void
     {
         printf(
-            "%f: Checks: %d, Failures: %d, Errors: %d\n",
+            "%f: Checks: %u, Failures: %u, Errors: %u\n",
             calc_percent(sum.passed, sum.total()),
             sum.total(), sum.failed, sum.errors
         );
@@ -96,7 +96,7 @@ const struct Output unit_test_output =
     [](const Test& t, unsigned i) -> void
     {
         printf(
-            "%s:%c:piglet:(%s::%s):%d: %s\n",
+            "%s:%c:piglet:(%s::%s):%u: %s\n",
             t.chunk->filename.c_str(), get_result_short(t.result),
             t.type.c_str(), t.name.c_str(), i, get_result_long(t.result)
         );
@@ -125,9 +125,9 @@ const struct Output pretty_output =  // FIXIT-L don't want to include this
         if ( sum.failed || sum.errors )
         {
             printf(
-                " - Passed: \x1b[32m%d\x1b[0m, "
-                "Failed: \x1b[31m%d\x1b[0m, "
-                "Errors: \x1b[33m%d\x1b[0m",
+                " - Passed: \x1b[32m%u\x1b[0m, "
+                "Failed: \x1b[31m%u\x1b[0m, "
+                "Errors: \x1b[33m%u\x1b[0m",
                 sum.passed, sum.failed, sum.errors
             );
         }
@@ -137,7 +137,7 @@ const struct Output pretty_output =  // FIXIT-L don't want to include this
     [](const Test& t, unsigned i) -> void
     {
         printf(
-            "%d) \x1b[34m%s::%s\x1b[0m: %s\n",
+            "%u) \x1b[34m%s::%s\x1b[0m: %s\n",
             i, t.type.c_str(), t.name.c_str(), t.chunk->filename.c_str()
         );
     },
@@ -186,7 +186,7 @@ const struct Output verbose_output =
     {
         printf("=========================================\n");
         printf(
-            "%0.f%% - passed: %d/%d, failed: %d, errors: %d\n",
+            "%0.f%% - passed: %u/%u, failed: %u, errors: %u\n",
             calc_percent(sum.passed, sum.total()),
             sum.passed, sum.total(), sum.failed, sum.errors
         );

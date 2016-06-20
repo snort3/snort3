@@ -201,7 +201,7 @@ public:
     FileLog(FileLogConfig& conf) { config = conf; }
 
     void show(SnortConfig*) override;
-    void eval(Packet*) override { };
+    void eval(Packet*) override { }
 
     bool configure(SnortConfig*) override
     {

@@ -468,7 +468,7 @@ void HighAvailability::receive_handler(SCMessage* sc_msg)
 {
     assert(sc_msg);
 
-    DebugFormat(DEBUG_HA,"HighAvailability::receive_handler: port: %d, length: %d\n",
+    DebugFormat(DEBUG_HA,"HighAvailability::receive_handler: port: %hu, length: %u\n",
         sc_msg->hdr->port, sc_msg->content_length);
 
     // SC received messages must have reference back to SideChannel object

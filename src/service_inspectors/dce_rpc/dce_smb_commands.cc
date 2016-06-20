@@ -1728,12 +1728,12 @@ DCE2_Ret DCE2_SmbTreeConnectAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         {
         case SERVICE_IPC:
             DebugFormat(DEBUG_DCE_SMB,
-                "Tid (%u) is an IPC tree.\n", tid);
+                "Tid (%hu) is an IPC tree.\n", tid);
             break;
         case SERVICE_DISK:
             is_ipc = false;
             DebugFormat(DEBUG_DCE_SMB,
-                "Tid (%u) is a DISK tree.\n", tid);
+                "Tid (%hu) is a DISK tree.\n", tid);
             break;
         default:
             return DCE2_RET__IGNORE;
@@ -1844,7 +1844,7 @@ DCE2_Ret DCE2_SmbTreeConnect(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         uint16_t tid = SmbTid(smb_hdr);
         DCE2_SmbInsertTid(ssd, tid, ssd->cur_rtracker->is_ipc);
 
-        DebugFormat(DEBUG_DCE_SMB, "Tid (%u) %s an IPC tree\n", tid,
+        DebugFormat(DEBUG_DCE_SMB, "Tid (%hu) %s an IPC tree\n", tid,
             (ssd->cur_rtracker->is_ipc) ? "is" : "is not");
     }
 

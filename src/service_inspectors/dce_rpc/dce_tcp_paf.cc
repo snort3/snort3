@@ -97,7 +97,7 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
         }
     }
 
-    DebugFormat(DEBUG_DCE_TCP, "Start state: %u\n", ds->paf_state);
+    DebugFormat(DEBUG_DCE_TCP, "Start state: %d\n", ds->paf_state);
     start_state = (uint8_t)ds->paf_state;
 
     while (n < len)
@@ -140,7 +140,7 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
                 return StreamSplitter::ABORT;
             }
 
-            DebugFormatNoFileLine(DEBUG_DCE_TCP, "Fragment length: %u\n", ds->frag_len);
+            DebugFormatNoFileLine(DEBUG_DCE_TCP, "Fragment length: %hu\n", ds->frag_len);
 
             /* Increment n here so we can continue */
             n += ds->frag_len - (uint8_t)ds->paf_state;
@@ -149,7 +149,7 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
              * flush just before it */
             if ((num_requests == 1) || (n <= len))
                 tmp_fp += ds->frag_len;
-            DebugFormatNoFileLine(DEBUG_DCE_TCP, "Requests: %u\n", num_requests);
+            DebugFormatNoFileLine(DEBUG_DCE_TCP, "Requests: %d\n", num_requests);
             ds->paf_state = DCE2_PAF_TCP_STATES__0;
             continue;      // we incremented n already
         default:

@@ -119,7 +119,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
 
         if (raw.len != ((unsigned int)ntohs(hdr->length) + len))
         {
-            DebugFormat(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
+            DebugFormat(DEBUG_DECODE, "Calculated length %u != %hu in header.\n",
                 raw.len - len, ntohs(hdr->length));
             codec_event(codec, DECODE_GTP_BAD_LEN);
             return false;
@@ -175,7 +175,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
 
         if (raw.len != ((unsigned int)ntohs(hdr->length) + GTP_MIN_LEN))
         {
-            DebugFormat(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
+            DebugFormat(DEBUG_DECODE, "Calculated length %u != %hu in header.\n",
                 raw.len - GTP_MIN_LEN, ntohs(hdr->length));
             codec_event(codec, DECODE_GTP_BAD_LEN);
             return false;

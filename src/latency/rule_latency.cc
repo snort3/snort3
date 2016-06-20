@@ -381,7 +381,7 @@ void RuleLatency::tterm()
 namespace t_rule_latency
 {
 
-struct MockConfigWrapper : rule_latency::ConfigWrapper
+struct MockConfigWrapper : public rule_latency::ConfigWrapper
 {
     RuleLatencyConfig config;
 
@@ -389,14 +389,14 @@ struct MockConfigWrapper : rule_latency::ConfigWrapper
     { return &config; }
 };
 
-struct EventHandlerSpy : rule_latency::EventHandler
+struct EventHandlerSpy : public rule_latency::EventHandler
 {
     unsigned count = 0;
     void handle(const rule_latency::Event&) override
     { ++count; }
 };
 
-struct MockClock : ClockTraits<hr_clock>
+struct MockClock : public ClockTraits<hr_clock>
 {
     static hr_time t;
 

@@ -151,7 +151,7 @@ void DCE2_SmbInsertUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
 {
     Profile profile(dce2_smb_pstat_smb_uid);
 
-    DebugFormat(DEBUG_DCE_SMB, "Inserting Uid: %u\n", uid);
+    DebugFormat(DEBUG_DCE_SMB, "Inserting Uid: %hu\n", uid);
 
     if (ssd->uid == DCE2_SENTINEL)
     {
@@ -180,7 +180,7 @@ void DCE2_SmbRemoveUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
 
     Profile profile(dce2_smb_pstat_smb_uid);
 
-    DebugFormat(DEBUG_DCE_SMB,"Removing Uid: %u\n", uid);
+    DebugFormat(DEBUG_DCE_SMB,"Removing Uid: %hu\n", uid);
 
     if ((ssd->uid != DCE2_SENTINEL) && (ssd->uid == (int)uid))
         ssd->uid = DCE2_SENTINEL;
@@ -326,10 +326,10 @@ DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
         dce2_smb_stats.smb_max_outstanding_requests = ssd->outstanding_requests;
 
     DebugFormat(DEBUG_DCE_SMB, "Added new request tracker => "
-        "Uid: %u, Tid: %u, Pid: %u, Mid: %u\n",
+        "Uid: %hu, Tid: %hu, Pid: %hu, Mid: %d\n",
         rtracker->uid, rtracker->tid, rtracker->pid, rtracker->mid);
     DebugFormat(DEBUG_DCE_SMB,
-        "Current outstanding requests: %u\n", ssd->outstanding_requests);
+        "Current outstanding requests: %hu\n", ssd->outstanding_requests);
 
     return rtracker;
 }
@@ -347,7 +347,7 @@ DCE2_SmbFileTracker* DCE2_SmbNewFileTracker(DCE2_SmbSsnData* ssd,
         return nullptr;
 
     DebugFormat(DEBUG_DCE_SMB, "Creating new file tracker "
-        "with Uid: %u, Tid: %u, Fid: 0x%04X\n", uid, tid, fid);
+        "with Uid: %hu, Tid: %hu, Fid: 0x%04X\n", uid, tid, fid);
 
     DCE2_SmbFileTracker* ftracker = nullptr;
     if (ssd->ftracker.fid == DCE2_SENTINEL)
@@ -449,7 +449,7 @@ DCE2_SmbFileTracker* DCE2_SmbFindFileTracker(DCE2_SmbSsnData* ssd,
     Profile profile(dce2_smb_pstat_smb_fid);
 
     DebugFormat(DEBUG_DCE_SMB, "Finding file tracker with "
-        "Uid: %u, Tid: %u, Fid: 0x%04X ... ", uid, tid, fid);
+        "Uid: %hu, Tid: %hu, Fid: 0x%04X ... ", uid, tid, fid);
 
     DCE2_SmbFileTracker* ftracker;
     if ((ssd->ftracker.fid != DCE2_SENTINEL) && (ssd->ftracker.fid == (int)fid))
@@ -523,7 +523,7 @@ DCE2_SmbFileTracker* DCE2_SmbFindFileTracker(DCE2_SmbSsnData* ssd,
     }
 
     DebugFormat(DEBUG_DCE_SMB, "Found with "
-        "Uid: %u, Tid: %u, Fid: 0x%04X\n",
+        "Uid: %hu, Tid: %hu, Fid: 0x%04X\n",
         ftracker->uid, ftracker->tid, ftracker->fid);
     return ftracker;
 }
@@ -645,7 +645,7 @@ void DCE2_SmbFileTrackerDataFree(void* data)
         return;
 
     DebugFormat(DEBUG_DCE_SMB, "Freeing file tracker: "
-        "Uid: %u, Tid: %u, Fid: 0x%04X\n",
+        "Uid: %hu, Tid: %hu, Fid: 0x%04X\n",
         ftracker->uid, ftracker->tid, ftracker->fid);
 
     DCE2_SmbCleanFileTracker(ftracker);
@@ -724,7 +724,7 @@ void DCE2_SmbRemoveRequestTracker(DCE2_SmbSsnData* ssd,
     }
 
     DebugFormat(DEBUG_DCE_SMB, "Removing request tracker => "
-        "Uid: %u, Tid: %u, Pid: %u, Mid: %u ... ",
+        "Uid: %hu, Tid: %hu, Pid: %hu, Mid: %d ... ",
         rtracker->uid, rtracker->tid, rtracker->pid, rtracker->mid);
 
     if (rtracker == &ssd->rtracker)
@@ -838,7 +838,7 @@ void DCE2_SmbRequestTrackerDataFree(void* data)
         return;
 
     DebugFormat(DEBUG_DCE_SMB, "Freeing request tracker: "
-        "Uid: %u, Tid: %u, Pid: %u, Mid: %u\n",
+        "Uid: %hu, Tid: %hu, Pid: %hu, Mid: %d\n",
         rtracker->uid, rtracker->tid, rtracker->pid, rtracker->mid);
 
     DCE2_SmbCleanRequestTracker(rtracker);
@@ -863,7 +863,7 @@ void DCE2_SmbRemoveTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
 {
     Profile profile(dce2_smb_pstat_smb_tid);
 
-    DebugFormat(DEBUG_DCE_SMB, "Removing Tid: %u\n", tid);
+    DebugFormat(DEBUG_DCE_SMB, "Removing Tid: %hu\n", tid);
 
     if ((ssd->tid != DCE2_SENTINEL) && ((ssd->tid & 0x0000ffff) == (int)tid))
         ssd->tid = DCE2_SENTINEL;
@@ -913,7 +913,7 @@ void DCE2_SmbInsertTid(DCE2_SmbSsnData* ssd,
         || ((ssd->max_file_depth == -1) && DCE2_ScSmbFileDepth(
         (dce2SmbProtoConf*)ssd->sd.config) == -1)))
     {
-        DebugFormat(DEBUG_DCE_SMB, "Not inserting TID (%u) "
+        DebugFormat(DEBUG_DCE_SMB, "Not inserting TID (%hu) "
             "because it's not IPC and not inspecting normal file "
             "data.", tid);
         return;
@@ -921,13 +921,13 @@ void DCE2_SmbInsertTid(DCE2_SmbSsnData* ssd,
 
     if (is_ipc && DCE2_ScSmbFileInspectionOnly((dce2SmbProtoConf*)ssd->sd.config))
     {
-        DebugFormat(DEBUG_DCE_SMB, "Not inserting TID (%u) "
+        DebugFormat(DEBUG_DCE_SMB, "Not inserting TID (%hu) "
             "because it's IPC and only inspecting normal file "
             "data.", tid);
         return;
     }
 
-    DebugFormat(DEBUG_DCE_SMB, "Inserting Tid: %u\n", tid);
+    DebugFormat(DEBUG_DCE_SMB, "Inserting Tid: %hu\n", tid);
     int insert_tid = (int)tid;
     // Set a bit so as to distinguish between IPC and non-IPC TIDs
     if (!is_ipc)
@@ -1027,7 +1027,7 @@ void DCE2_SmbQueueTmpFileTracker(DCE2_SmbSsnData* ssd,
     Profile profile(dce2_smb_pstat_smb_fid);
 
     DebugFormat(DEBUG_DCE_SMB, "Queueing file tracker "
-        "with Uid: %u, Tid: %u\n", uid, tid);
+        "with Uid: %hu, Tid: %hu\n", uid, tid);
 
     DCE2_SmbFileTracker* ftracker = (DCE2_SmbFileTracker*)
         snort_calloc(sizeof(DCE2_SmbFileTracker));

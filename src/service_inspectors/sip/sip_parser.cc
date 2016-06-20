@@ -416,7 +416,7 @@ static int sip_startline_parse(SIPMsg* msg, const char* buff, char* end, char** 
         if (space == NULL)
             return false;
         msg->uriLen = space - msg->uri;
-        DebugFormat(DEBUG_SIP, "uri: %.*s, length: %u\n", msg->uriLen, msg->uri,
+        DebugFormat(DEBUG_SIP, "uri: %.*s, length: %hu\n", msg->uriLen, msg->uri,
             msg->uriLen);
         if (0 == msg->uriLen)
             SnortEventqAdd(GID_SIP, SIP_EVENT_EMPTY_REQUEST_URI);
@@ -1203,7 +1203,7 @@ static int sip_parse_sdp_m(SIPMsg* msg, const char* start, const char* end)
     mdata->nextM = msg->mediaSession->medias;
     mdata->maddress = msg->mediaSession->maddress_default;
     msg->mediaSession->medias = mdata;
-    DebugFormat(DEBUG_SIP, "Media IP: %s, Media port %u, number of media: %d\n",
+    DebugFormat(DEBUG_SIP, "Media IP: %s, Media port %hu, number of media: %d\n",
         sfip_to_str(&mdata->maddress), mdata->mport, mdata->numPort);
     return SIP_PARSE_SUCCESS;
 }

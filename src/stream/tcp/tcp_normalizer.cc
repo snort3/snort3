@@ -309,7 +309,7 @@ int TcpNormalizer::validate_paws_timestamp(TcpSegmentDescriptor& tsd)
     {
         /* this packet is from way too far into the future */
         DebugFormat(DEBUG_STREAM_STATE,
-            "packet PAWS timestamp way too far ahead of last packet %ld %d...\n",
+            "packet PAWS timestamp way too far ahead of last packet %ld %u...\n",
             tsd.get_pkt()->pkth->ts.tv_sec, peer_tracker->get_ts_last_packet() );
         //inc_tcp_discards();
         ( ( TcpSession* )tsd.get_flow()->session )->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);

@@ -638,10 +638,10 @@ static void DCE2_CoCtxReq(DCE2_SsnData* sd, DCE2_CoTracker* cot, const DceRpcCoH
         }
 
         DebugFormat(DEBUG_DCE_COMMON, "Added Context item to queue.\n"
-            " Context id: %u\n"
+            " Context id: %hu\n"
             " Interface: %s\n"
-            " Interface major version: %u\n"
-            " Interface minor version: %u\n",
+            " Interface major version: %hu\n"
+            " Interface minor version: %hu\n",
             ctx_node->ctx_id,
             DCE2_UuidToStr(&ctx_node->iface, DCERPC_BO_FLAG__NONE),
             ctx_node->iface_vers_maj, ctx_node->iface_vers_min);
@@ -688,10 +688,10 @@ static void dce_co_process_ctx_result(DCE2_SsnData* sd,DCE2_CoTracker* cot,
     }
 
     DebugFormat(DEBUG_DCE_COMMON, "Adding Context item to context item list.\n"
-        " Context id: %u\n"
+        " Context id: %hu\n"
         " Interface: %s\n"
-        " Interface major version: %u\n"
-        " Interface minor version: %u\n",
+        " Interface major version: %hu\n"
+        " Interface minor version: %hu\n",
         ctx_node->ctx_id,
         DCE2_UuidToStr(&ctx_node->iface, DCERPC_BO_FLAG__NONE),
         ctx_node->iface_vers_maj, ctx_node->iface_vers_min);
@@ -2322,7 +2322,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         if (data_len < frag_len)
         {
             DebugFormat(DEBUG_DCE_COMMON,
-                "Not enough data in packet for fragment length: %u\n", frag_len);
+                "Not enough data in packet for fragment length: %hu\n", frag_len);
 
             /* Set frag length so we don't have to check it again in seg code */
             seg->frag_len = frag_len;

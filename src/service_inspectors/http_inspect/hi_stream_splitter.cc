@@ -585,7 +585,7 @@ static void hi_link_check()
 
 static bool hi_fsm_compile()
 {
-    unsigned i = 0, j;
+    unsigned i = 0;
     unsigned max = sizeof(hi_rule) / sizeof(hi_rule[0]);
     unsigned next, extra = 0;
 
@@ -607,12 +607,12 @@ static bool hi_fsm_compile()
     next = max;
 
     for ( i = 0; i < hi_fsm_size; i++ )
-        for ( j = 0; j < 256; j++ )
+        for ( int j = 0; j < 256; j++ )
             hi_fsm[i].cell[j].next = TBD;
 
     for ( i = 0; i < max; i++ )
     {
-        int prev = i, j, n = strlen(hi_rule[i].event);
+        int prev = i, n = strlen(hi_rule[i].event);
         const char* event = hi_rule[i].event;
 
         hi_link(hi_fsm+i, event, hi_rule+i);
@@ -622,7 +622,7 @@ static bool hi_fsm_compile()
             printf("Expanding %s at %u\n", hi_rule[i].event, next);
 #endif
 
-        for ( j = 1; j < n; j++ )
+        for ( int j = 1; j < n; j++ )
         {
             event = hi_rule[i].event + j;
             hi_link(hi_fsm+next, event, hi_rule+i);
@@ -802,7 +802,7 @@ static void hi_pipe_push(Hi5State* s_req, Flow* ssn)
     uint32_t nreq = s_req->pipe & 0xFF;
     uint32_t pipe = s_req->pipe >> 8;
 
-    DebugFormat(DEBUG_STREAM_PAF, "%s: nreq=%d, pipe=0x%X\n", __func__, nreq, pipe);
+    DebugFormat(DEBUG_STREAM_PAF, "%s: nreq=%u, pipe=0x%X\n", __func__, nreq, pipe);
 
     if ( nreq == MAX_PIPELINE )
     {
@@ -830,7 +830,7 @@ static void hi_pipe_pop(Hi5State* s_rsp, Flow* ssn)
     uint32_t nreq = s_req->pipe & 0xFF;
     uint32_t pipe = s_req->pipe >> 8;
 
-    DebugFormat(DEBUG_STREAM_PAF, "%s: nreq=%d, pipe=0x%X\n", __func__, nreq, pipe);
+    DebugFormat(DEBUG_STREAM_PAF, "%s: nreq=%u, pipe=0x%X\n", __func__, nreq, pipe);
 
     // FIXIT-L valgrind: Conditional jump or move depends on uninitialised value(s)
     if ( nreq == 0 || nreq == PIPELINE_RUPTURED )
@@ -885,7 +885,7 @@ static StreamSplitter::Status hi_scan_fsm(Hi5State* s, int c)
     get_state(prev, before, sizeof(before));
     get_state(s->fsm, after, sizeof(after));
     DebugFormat(DEBUG_STREAM_PAF,
-        "%s: %s(%u)[0x%2X, '%c'] -> %d,%s(%u)\n",
+        "%s: %s(%hhu)[0x%2X, '%c'] -> %d,%s(%hhu)\n",
         __func__, before, prev, c, isgraph(c) ? c : '.',
         cell->action, after, s->fsm);
 #endif
@@ -1045,7 +1045,7 @@ static void hi_reset(Hi5State* s, uint32_t flags)
     }
     s->flags = 0;
 
-    DebugFormat(DEBUG_STREAM_PAF, "%s: fsm=%u, flags=0x%X\n", __func__, s->fsm, s->flags);
+    DebugFormat(DEBUG_STREAM_PAF, "%s: fsm=%hhu, flags=0x%X\n", __func__, s->fsm, s->flags);
 }
 
 //--------------------------------------------------------------------

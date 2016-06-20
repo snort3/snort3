@@ -228,7 +228,7 @@ static inline bool process_command(SmtpPafData* pfdata,  uint8_t val)
         /* Continue finding the data length ...*/
         if (get_length(val, &pfdata->length) != SMTP_PAF_LENGTH_CONTINUE)
         {
-            DebugFormat(DEBUG_SMTP, "Find data length: %d\n",
+            DebugFormat(DEBUG_SMTP, "Find data length: %u\n",
                 pfdata->length);
             pfdata->cmd_info.cmd_state = SMTP_PAF_CMD_DATA_END_STATE;
         }

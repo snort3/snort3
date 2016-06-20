@@ -309,7 +309,7 @@ static int MakeOpenPortInfo(
         return -1;
 
     SnortSnprintf((char*)buffer, PROTO_BUFFER_SIZE,
-        "Open Port: %u\n", *((unsigned short*)user));
+        "Open Port: %hu\n", *((unsigned short*)user));
 
     dsize = SnortStrnlen((const char*)buffer, PROTO_BUFFER_SIZE);
     *total_size += dsize;

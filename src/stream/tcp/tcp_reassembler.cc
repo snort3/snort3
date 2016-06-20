@@ -222,7 +222,7 @@ int TcpReassembler::add_reassembly_segment(TcpSegmentDescriptor& tsd, int16_t le
     {
         // zero size data because of trimming.  Don't insert it
         DebugFormat(DEBUG_STREAM_STATE, "zero size TCP data after left & right trimming "
-            "(len: %d slide: %d trunc: %d)\n", len, slide, trunc_len);
+            "(len: %hd slide: %u trunc: %u)\n", len, slide, trunc_len);
         inc_tcp_discards();
         tracker->normalizer->trim_win_payload(tsd);
 
@@ -265,7 +265,7 @@ int TcpReassembler::add_reassembly_segment(TcpSegmentDescriptor& tsd, int16_t le
     tsd.get_pkt()->packet_flags |= PKT_STREAM_INSERT;
 
     DebugFormat(DEBUG_STREAM_STATE,
-        "added %d bytes on segment list @ seq: 0x%X, total %u, %d segments queued\n",
+        "added %hu bytes on segment list @ seq: 0x%X, total %u, %u segments queued\n",
         tsn->payload_size, tsn->seq, seg_bytes_logical, get_pending_segment_count(0));
 
 #ifdef SEG_TEST
@@ -287,7 +287,7 @@ int TcpReassembler::dup_reassembly_segment(TcpSegmentNode* left, TcpSegmentNode*
     queue_reassembly_segment(left, tsn);
 
     DebugFormat(DEBUG_STREAM_STATE,
-        "added %d bytes on segment list @ seq: 0x%X, total %u, %d segments queued\n",
+        "added %hu bytes on segment list @ seq: 0x%X, total %u, %u segments queued\n",
         tsn->payload_size, tsn->seq, seg_bytes_logical, get_pending_segment_count(0));
 
     *retSeg = tsn;
@@ -343,7 +343,7 @@ int TcpReassembler::purge_to_seq(uint32_t flush_seq)
 
     tsn = seglist.head;
 
-    DebugFormat(DEBUG_STREAM_STATE, "In purge_to_seq, start seq = 0x%X end seq = 0x%X delta %d\n",
+    DebugFormat(DEBUG_STREAM_STATE, "In purge_to_seq, start seq = 0x%X end seq = 0x%X delta %u\n",
         tsn->seq, flush_seq, flush_seq-tsn->seq);
 
     while ( tsn )
@@ -561,7 +561,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq, uint8_t* flus
 
     DEBUG_WRAP(bytes_queued -= bytes_flushed; );
     DebugFormat(DEBUG_STREAM_STATE,
-        "flushed %d bytes / %d segs on stream, %d bytes still queued\n",
+        "flushed %hu bytes / %u segs on stream, %u bytes still queued\n",
         bytes_flushed, segs, bytes_queued);
 
     return bytes_flushed;
@@ -648,7 +648,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 
         if (footprint == 0)
         {
-            DebugFormat(DEBUG_STREAM_STATE, "Negative footprint, bailing %d (0x%X - 0x%X)\n",
+            DebugFormat(DEBUG_STREAM_STATE, "Negative footprint, bailing %u (0x%X - 0x%X)\n",
                 footprint, stop_seq, seglist_base_seq);
             return bytes_processed;
         }
@@ -1212,7 +1212,7 @@ void TcpReassembler::insert_segment_in_empty_seglist(TcpSegmentDescriptor& tsd)
     add_reassembly_segment(tsd, tsd.get_seg_len(), overlap, 0, tsd.get_seg_seq() + overlap, NULL);
 
     DebugFormat(DEBUG_STREAM_STATE,
-        "Attached new queue to seglist, %d bytes queued, base_seq 0x%X\n",
+        "Attached new queue to seglist, %u bytes queued, base_seq 0x%X\n",
         tsd.get_seg_len() - overlap, seglist_base_seq);
 }
 
@@ -1249,7 +1249,7 @@ void TcpReassembler::init_overlap_editor(TcpSegmentDescriptor& tsd)
         for ( tsn = seglist.head; tsn; tsn = tsn->next )
         {
             DEBUG_WRAP(
-                DebugFormat(DEBUG_STREAM_STATE, "tsn: %p  seq: 0x%X  size: %hu delta: %d\n",
+                DebugFormat(DEBUG_STREAM_STATE, "tsn: %p  seq: 0x%X  size: %hu delta: %u\n",
                 (void*) tsn, tsn->seq, tsn->payload_size, ( tsn->seq - base_seq ) - last);
                 last = tsn->seq - base_seq;
                 lastptr = tsn;
@@ -1272,7 +1272,7 @@ void TcpReassembler::init_overlap_editor(TcpSegmentDescriptor& tsd)
         for ( tsn = seglist.tail; tsn; tsn = tsn->prev )
         {
             DEBUG_WRAP(
-                DebugFormat(DEBUG_STREAM_STATE, "tsn: %p  seq: 0x%X  size: %hu delta: %d\n",
+                DebugFormat(DEBUG_STREAM_STATE, "tsn: %p  seq: 0x%X  size: %hu delta: %u\n",
                 (void*) tsn, tsn->seq, tsn->payload_size, ( tsn->seq - base_seq ) - last);
                 last = tsn->seq - base_seq;
                 lastptr = tsn;
@@ -1304,11 +1304,11 @@ int TcpReassembler::insert_segment_in_seglist(TcpSegmentDescriptor& tsd)
     int rc = STREAM_INSERT_OK;
 
     DebugFormat(DEBUG_STREAM_STATE,
-        "Queuing %d bytes on stream!\nbase_seq: %X seq: %X  seq_end: %X\n",
+        "Queuing %u bytes on stream!\nbase_seq: %X seq: %X  seq_end: %X\n",
         tsd.get_end_seq() - tsd.get_seg_seq(), seglist_base_seq, tsd.get_seg_seq(),
         tsd.get_end_seq());
 
-    DebugFormat(DEBUG_STREAM_STATE, "%d segments on seglist\n", get_pending_segment_count(0));
+    DebugFormat(DEBUG_STREAM_STATE, "%u segments on seglist\n", get_pending_segment_count(0));
     DebugMessage(DEBUG_STREAM_STATE, "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n");
     DebugMessage(DEBUG_STREAM_STATE, "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n");
 

@@ -432,7 +432,7 @@ int detection_option_node_evaluate(
                 {
                     // none of the services match
                     DebugFormat(DEBUG_DETECT,
-                        "[**] SID %d not matched because of service mismatch (%d!=%d [**]\n",
+                        "[**] SID %u not matched because of service mismatch (%d!=%d [**]\n",
                         sig_info.id, app_proto, sig_info.services[0].service_ordinal);
 
                     break;  // out of case

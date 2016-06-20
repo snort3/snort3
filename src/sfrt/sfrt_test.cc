@@ -70,7 +70,7 @@ static void test_sfrt_remove_after_insert()
 
     num_entries = sizeof(ip_lists)/sizeof(ip_lists[0]);
     if ( s_debug )
-        printf("Number of entries: %d \n",num_entries);
+        printf("Number of entries: %u \n",num_entries);
 
     dir = sfrt_new(DIR_16_4x4_16x5_4x4, IPv6, num_entries + 1, 200);
 
@@ -144,8 +144,8 @@ static void test_sfrt_remove_after_insert()
 
     if ( s_debug )
     {
-        printf("Usage: %d bytes\n", sfrt_usage(dir));
-        printf("Number of entries: %d \n", sfrt_num_entries(dir));
+        printf("Usage: %u bytes\n", sfrt_usage(dir));
+        printf("Number of entries: %u \n", sfrt_num_entries(dir));
     }
 
     sfrt_free(dir);
@@ -161,7 +161,7 @@ static void test_sfrt_remove_after_insert_all()
     num_entries = sizeof(ip_lists)/sizeof(ip_lists[0]);
 
     if ( s_debug )
-        printf("Number of entries: %d \n",num_entries);
+        printf("Number of entries: %u \n",num_entries);
 
     dir = sfrt_new(DIR_16_4x4_16x5_4x4, IPv6, num_entries + 1, 200);
 
@@ -207,8 +207,8 @@ static void test_sfrt_remove_after_insert_all()
 
     if ( s_debug )
     {
-        printf("Usage: %d bytes\n", sfrt_usage(dir));
-        printf("Number of entries: %d \n", sfrt_num_entries(dir));
+        printf("Usage: %u bytes\n", sfrt_usage(dir));
+        printf("Number of entries: %u \n", sfrt_num_entries(dir));
     }
 
     /*remove all entries*/
@@ -235,7 +235,7 @@ static void test_sfrt_remove_after_insert_all()
         /*check the next entry still exist*/
         if (index + 1 < num_entries)
         {
-            IP_entry* ip_entry =  &(ip_lists[index + 1]);
+            ip_entry =  &(ip_lists[index + 1]);
             /*Parse IP*/
             if (ip_entry->ip_str)
                 sfip_pton(ip_entry->ip_str, &ip);
@@ -245,8 +245,8 @@ static void test_sfrt_remove_after_insert_all()
 
     if ( s_debug )
     {
-        printf("Usage: %d bytes\n", sfrt_usage(dir));
-        printf("Number of entries: %d \n", sfrt_num_entries(dir));
+        printf("Usage: %u bytes\n", sfrt_usage(dir));
+        printf("Number of entries: %u \n", sfrt_num_entries(dir));
     }
 
     sfrt_free(dir);

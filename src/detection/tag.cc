@@ -473,7 +473,7 @@ int CheckTagList(Packet* p, Event* event, void** log_list)
         return 0;
     }
 
-    DebugFormat(DEBUG_FLOW,"Host Tags Active: %d   Session Tags Active: %d\n",
+    DebugFormat(DEBUG_FLOW,"Host Tags Active: %u   Session Tags Active: %u\n",
         sfxhash_count(host_tag_cache_ptr), sfxhash_count(ssn_tag_cache_ptr));
 
     DebugMessage(DEBUG_FLOW, "[*] Checking session tag list (forward)...\n");

@@ -208,7 +208,7 @@ static void PrintHostAttributeEntry(HostAttributeEntry* host)
         host->ipAddr.bits);
 
     DebugFormat(DEBUG_ATTRIBUTE,
-        "\tPolicy Information: frag:%s (%u) stream: %s (%u)\n",
+        "\tPolicy Information: frag:%s (%hhu) stream: %s (%hhu)\n",
         "look-me-up", host->hostInfo.fragPolicy,
         "look-me-up", host->hostInfo.streamPolicy);
 

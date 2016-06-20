@@ -736,7 +736,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData* ssd,
     Profile profile(dce2_smb_pstat_smb_req);
 
     DebugFormat(DEBUG_DCE_SMB, "Find request tracker => "
-        "Uid: %u, Tid: %u, Pid: %u, Mid: %u ... ", uid, tid, pid, mid);
+        "Uid: %hu, Tid: %hu, Pid: %hu, Mid: %hu ... ", uid, tid, pid, mid);
 
     DCE2_SmbRequestTracker* tmp_rtracker = &ssd->rtracker;
     int smb_com = SmbCom(smb_hdr);
@@ -1346,7 +1346,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
             if (DCE2_SmbFindTid(ssd, SmbTid(smb_hdr)) != DCE2_RET__SUCCESS)
             {
                 DebugFormat(DEBUG_DCE_SMB,
-                    "Couldn't find Tid (%u)\n", SmbTid(smb_hdr));
+                    "Couldn't find Tid (%hu)\n", SmbTid(smb_hdr));
                 return nullptr;
             }
 
@@ -1830,7 +1830,7 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
             // See if there is enough data to process the NetBIOS header
             if (data_len < data_need)
             {
-                DebugFormat(DEBUG_DCE_SMB, "Data len(%u) < NetBIOS SS header(%u). "
+                DebugFormat(DEBUG_DCE_SMB, "Data len(%hu) < NetBIOS SS header(%u). "
                     "Queueing data.\n", data_len, data_need);
 
                 // FIXIT-M port segmentation code
@@ -1897,7 +1897,7 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
             // See if there is enough data to process the SMB header
             if (data_len < data_need)
             {
-                DebugFormat(DEBUG_DCE_SMB, "Data len (%u) < "
+                DebugFormat(DEBUG_DCE_SMB, "Data len (%hu) < "
                     "NetBIOS SS header + SMB header (%u). Queueing data.\n",
                     data_len, data_need);
 

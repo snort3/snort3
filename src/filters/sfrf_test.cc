@@ -975,7 +975,7 @@ static int EventCheck(int i)
     if ( p->expect == status )
         return 1;
 
-    printf("event[%d](%d,%d): exp %d, got %d\n",
+    printf("event[%u](%u,%u): exp %d, got %d\n",
         p->seq, p->gid, p->sid, p->expect, status);
     return 0;
 }
@@ -988,7 +988,7 @@ static int CapCheck(int i)
     if ( RULE_ORIG == status )
         return 1;
 
-    printf("cap[%d](%d,%d): exp %d, got %d\n",
+    printf("cap[%u](%u,%u): exp %d, got %d\n",
         p->seq, p->gid, p->sid, RULE_ORIG, status);
     return 0;
 }

@@ -268,7 +268,7 @@ void PacketLatency::tterm()
 namespace t_packet_latency
 {
 
-struct MockConfigWrapper : packet_latency::ConfigWrapper
+struct MockConfigWrapper : public packet_latency::ConfigWrapper
 {
     PacketLatencyConfig config;
 
@@ -276,14 +276,14 @@ struct MockConfigWrapper : packet_latency::ConfigWrapper
     { return &config; }
 };
 
-struct EventHandlerSpy : packet_latency::EventHandler
+struct EventHandlerSpy : public packet_latency::EventHandler
 {
     unsigned count = 0;
     void handle(const packet_latency::Event&) override
     { ++count; }
 };
 
-struct MockClock : ClockTraits<hr_clock>
+struct MockClock : public ClockTraits<hr_clock>
 {
     static hr_time t;
 

@@ -70,7 +70,7 @@ uint32_t TcpSegmentDescriptor::init_mss(uint16_t* value)
         if ( opt.code == TcpOptCode::MAXSEG )
         {
             *value = extract_16bits(opt.data);
-            DebugFormat(DEBUG_STREAM_STATE, "Found MSS %u\n", *value);
+            DebugFormat(DEBUG_STREAM_STATE, "Found MSS %hu\n", *value);
             return TF_MSS;
         }
     }

@@ -207,7 +207,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
         if (dsize < rsdata->ignore)
         {
             DebugFormat(DEBUG_RPC,
-                "STATEFUL: Ignoring %u bytes\n", dsize);
+                "STATEFUL: Ignoring %hu bytes\n", dsize);
 
             rsdata->ignore -= dsize;
 
@@ -237,7 +237,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
             if (dsize < RPC_FRAG_HDR_SIZE)
             {
                 DebugFormat(DEBUG_RPC,
-                    "STATEFUL: Not enough data for frag header: %u\n",
+                    "STATEFUL: Not enough data for frag header: %hu\n",
                     dsize);
 
                 RpcPreprocEvent(rconfig, rsdata, RPC_INCOMPLETE_SEGMENT);
@@ -256,7 +256,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
             if (dsize < (RPC_FRAG_HDR_SIZE + rsdata->frag_len))
             {
                 DebugFormat(DEBUG_RPC,
-                    "STATEFUL: Not enough data for fragment: %u\n",
+                    "STATEFUL: Not enough data for fragment: %hu\n",
                     dsize);
 
                 RpcPreprocEvent(rconfig, rsdata, RPC_INCOMPLETE_SEGMENT);
@@ -304,7 +304,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
                 {
                     DebugFormat(DEBUG_RPC,
                         "STATEFUL: Not enough data for frag header "
-                        "(%u): %u\n", need, dsize);
+                        "(%d): %hu\n", need, dsize);
 
                     RpcPreprocEvent(rconfig, rsdata, RPC_INCOMPLETE_SEGMENT);
 
@@ -330,7 +330,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
             if (dsize < need)
             {
                 DebugFormat(DEBUG_RPC,
-                    "STATEFUL: Not enough data for fragment (%u): %u\n",
+                    "STATEFUL: Not enough data for fragment (%d): %hu\n",
                     need, dsize);
 
                 RpcPreprocEvent(rconfig, rsdata, RPC_INCOMPLETE_SEGMENT);
@@ -769,13 +769,13 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
         if ((length + 4 != psize) && !(p->packet_flags & PKT_REBUILT_STREAM))
         {
             DebugFormat(DEBUG_RPC, "It's not the only thing in this buffer!"
-                " length: %d psize: %d!\n", length, psize);
+                " length: %u psize: %u!\n", length, psize);
             return RPC_MULTIPLE_RECORD;
         }
         else if ( length == 0 )
         {
             DebugFormat(DEBUG_RPC, "Zero-length RPC fragment detected."
-                " length: %d psize: %d.\n", length, psize);
+                " length: %u psize: %u.\n", length, psize);
             return RPC_ZERO_LENGTH_FRAGMENT;
         }
         return 0;
@@ -838,7 +838,7 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
              * psize's might be allowed */
 
             DebugFormat(DEBUG_RPC, "Integer Overflow"
-                " field(%d) exceeds packet size(%d)\n",
+                " field(%u) exceeds packet size(%u)\n",
                 length, psize);
             return RPC_LARGE_FRAGSIZE;
         }
@@ -848,7 +848,7 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
         if (length > psize)
         {
             DebugFormat(DEBUG_RPC, "Length of"
-                " field(%d) exceeds packet size(%d)\n",
+                " field(%u) exceeds packet size(%u)\n",
                 length, psize);
             return RPC_INCOMPLETE_SEGMENT;
         }
@@ -857,8 +857,8 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
             /* The entire request is larger than our current packet
              *  size
              */
-            DebugFormat(DEBUG_RPC, " Decoded Length (%d)"
-                "exceeds packet size(%d)\n",
+            DebugFormat(DEBUG_RPC, " Decoded Length (%u)"
+                "exceeds packet size(%u)\n",
                 decoded_len, psize);
             return RPC_LARGE_FRAGSIZE;
         }
@@ -874,7 +874,7 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
             fragcount++;
 
             DebugFormat(DEBUG_RPC,
-                "length: %d size: %d decoded_len: %d\n",
+                "length: %u size: %u decoded_len: %u\n",
                 length, psize, decoded_len);
 
             ret = SafeMemcpy(norm_index, data_index, length, decode_buf_start, decode_buf_end);
@@ -906,12 +906,12 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
      */
     if (decoded_len + ((fragcount - 1) * 4) != psize)
     {
-        DebugFormat(DEBUG_RPC, "decoded len does not compute: %d\n",
+        DebugFormat(DEBUG_RPC, "decoded len does not compute: %u\n",
             decoded_len);
         return RPC_MULTIPLE_RECORD;
     }
 
-    DebugFormat(DEBUG_RPC, "New size: %d\n", decoded_len);
+    DebugFormat(DEBUG_RPC, "New size: %u\n", decoded_len);
         DebugMessage(DEBUG_RPC, "converted data:\n");
     //LogNetData(data, decoded_len, p);
 

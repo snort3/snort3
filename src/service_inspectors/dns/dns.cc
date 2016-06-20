@@ -873,8 +873,8 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 {
                 case DNS_RESP_STATE_RR_RDATA_START:
                     DebugFormat(DEBUG_DNS,
-                        "DNS ANSWER RR %d: type %d, class %d, "
-                        "ttl %d rdlength %d\n", i,
+                        "DNS ANSWER RR %d: type %hu, class %hu, "
+                        "ttl %u rdlength %hu\n", i,
                         dnsSessionData->curr_rr.type,
                         dnsSessionData->curr_rr.dns_class,
                         dnsSessionData->curr_rr.ttl,
@@ -926,8 +926,8 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 {
                 case DNS_RESP_STATE_RR_RDATA_START:
                     DebugFormat(DEBUG_DNS,
-                        "DNS AUTH RR %d: type %d, class %d, "
-                        "ttl %d rdlength %d\n", i,
+                        "DNS AUTH RR %d: type %hu, class %hu, "
+                        "ttl %u rdlength %hu\n", i,
                         dnsSessionData->curr_rr.type,
                         dnsSessionData->curr_rr.dns_class,
                         dnsSessionData->curr_rr.ttl,
@@ -979,8 +979,8 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 {
                 case DNS_RESP_STATE_RR_RDATA_START:
                     DebugFormat(DEBUG_DNS,
-                        "DNS ADDITONAL RR %d: type %d, class %d, "
-                        "ttl %d rdlength %d\n", i,
+                        "DNS ADDITONAL RR %d: type %hu, class %hu, "
+                        "ttl %u rdlength %hu\n", i,
                         dnsSessionData->curr_rr.type,
                         dnsSessionData->curr_rr.dns_class,
                         dnsSessionData->curr_rr.ttl,

@@ -354,9 +354,9 @@ static int AddIPtoList(sfip_t* ipAddr,INFO ipInfo_ptr, ReputationConfig* config)
     {
 #ifdef DEBUG_MSGS
         IPrepInfo* result;
-        DebugFormat(DEBUG_REPUTATION, "Number of entries input: %d, in table: %d \n",
+        DebugFormat(DEBUG_REPUTATION, "Number of entries input: %d, in table: %u \n",
             totalNumEntries,sfrt_flat_num_entries(config->iplist) );
-        DebugFormat(DEBUG_REPUTATION, "Memory allocated: %d \n",sfrt_flat_usage(config->iplist) );
+        DebugFormat(DEBUG_REPUTATION, "Memory allocated: %u \n",sfrt_flat_usage(config->iplist) );
         result = (IPrepInfo*)sfrt_flat_lookup((void*)ipAddr, config->iplist);
         if (nullptr != result)
         {

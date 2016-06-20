@@ -38,29 +38,8 @@ public:
 
 private:
     bool output_set = false;
-
-    bool parse_file_option(std::istringstream& data_stream,
-        std::string orig_name,
-        std::string option_name,
-        std::string new_file_name);
 };
 } // namespace
-
-bool PerfMonitor::parse_file_option(std::istringstream& data_stream,
-    std::string orig_name,
-    std::string option_name,
-    std::string new_file_name)
-{
-    bool tmpval;
-
-    table_api.add_comment(orig_name + " deprecated. If '" + option_name +
-        " = true', Snort++ automatically prints to '" + new_file_name + "'");
-    tmpval = table_api.add_option(option_name, true);
-
-    if (eat_option(data_stream)) // we no longer care about the file name.
-        return tmpval;
-    return false;
-}
 
 bool PerfMonitor::convert(std::istringstream& data_stream)
 {

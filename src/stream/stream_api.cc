@@ -834,7 +834,6 @@ TEST_CASE("Stream API", "[stream_api][stream]")
     {
         Packet* pkt = get_syn_packet(flow);
         pkt->flow->session = new TcpSession(flow);
-        int dir;
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_SERVER, 0, 0);
         bool ignored = Stream::ignored_session(flow, pkt);
@@ -848,7 +847,6 @@ TEST_CASE("Stream API", "[stream_api][stream]")
     {
         Packet* pkt = get_syn_ack_packet(flow);
         pkt->flow->session = new TcpSession(flow);
-        int dir;
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_SERVER, 0, 0);
         bool ignored = Stream::ignored_session(flow, pkt);
@@ -861,7 +859,6 @@ TEST_CASE("Stream API", "[stream_api][stream]")
     {
         Packet* pkt = get_syn_packet(flow);
         pkt->flow->session = new TcpSession(flow);
-        int dir;
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0);
         bool ignored = Stream::ignored_session(flow, pkt);
@@ -875,7 +872,6 @@ TEST_CASE("Stream API", "[stream_api][stream]")
     {
         Packet* pkt = get_syn_ack_packet(flow);
         pkt->flow->session = new TcpSession(flow);
-        int dir;
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0);
         bool ignored = Stream::ignored_session(flow, pkt);
@@ -888,7 +884,6 @@ TEST_CASE("Stream API", "[stream_api][stream]")
     {
         Packet* pkt = get_syn_packet(flow);
         pkt->flow->session = new TcpSession(flow);
-        int dir;
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_BOTH, 0, 0);
         bool ignored = Stream::ignored_session(flow, pkt);
@@ -902,7 +897,6 @@ TEST_CASE("Stream API", "[stream_api][stream]")
     {
         Packet* pkt = get_syn_ack_packet(flow);
         pkt->flow->session = new TcpSession(flow);
-        int dir;
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_BOTH, 0, 0);
         bool ignored = Stream::ignored_session(flow, pkt);

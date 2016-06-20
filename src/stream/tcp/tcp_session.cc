@@ -1107,7 +1107,7 @@ int TcpSession::process(Packet* p)
         sfip_ntop(p->ptrs.ip_api.get_dst(), dst_addr, sizeof(dst_addr));
 
         DebugFormat((DEBUG_STREAM|DEBUG_STREAM_STATE),
-            "Got TCP Packet %s:%d ->  %s:%d %s\nseq: 0x%X   ack:0x%X  dsize: %u\n",
+            "Got TCP Packet %s:%hu ->  %s:%hu %s\nseq: 0x%X   ack:0x%X  dsize: %hu\n",
             src_addr, p->ptrs.sp, dst_addr, p->ptrs.dp, flagbuf,
             p->ptrs.tcph->seq(), p->ptrs.tcph->ack(), p->dsize);
     );

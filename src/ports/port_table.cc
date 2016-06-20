@@ -298,18 +298,18 @@ static PortObject2* _merge_N_pol(
     {
         for (i=1; i<pol_cnt; i++)
         {
-            DebugFormat(DEBUG_PORTLISTS,"*** %d rules in object %d\n",
+            DebugFormat(DEBUG_PORTLISTS,"*** %u rules in object %d\n",
                 ((PortObject*)pol[i])->rule_list->count,i);
             PortObjectAppendEx2(ponew, (PortObject*)pol[i]);
             DebugFormat(DEBUG_PORTLISTS,
-                "*** merged port-object[%d], %d rules\n",
+                "*** merged port-object[%d], %u rules\n",
                 i,ponew->rule_hash->count);
         }
         PortObjectNormalize( (PortObject*)ponew);
     }
 
     DebugFormat(DEBUG_PORTLISTS,
-        "*** merged %d port objects, %d rules\n",
+        "*** merged %d port objects, %u rules\n",
         pol_cnt,ponew->rule_hash->count);
     DebugMessage(DEBUG_PORTLISTS,"*** merged ponew - follows: \n");
     // PortObjectPrint2(ponew);

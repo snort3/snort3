@@ -221,7 +221,7 @@ const BaseApi* nin_packet_capture = &pc_api.base;
 #endif
 
 #ifdef UNIT_TEST
-Packet* init_null_packet()
+static Packet* init_null_packet()
 {
     static Packet p(false);
     static DAQ_PktHdr_t h;
@@ -317,7 +317,6 @@ TEST_CASE("blank filter", "[PacketCapture]")
     auto null_packet = init_null_packet();
 
     const uint8_t cooked[] = "AbCdEfGhIjKlMnOpQrStUvWxYz";
-    struct pcap_pkthdr hdr;
 
     Packet p(false);
     DAQ_PktHdr_t daq_hdr;

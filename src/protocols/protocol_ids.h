@@ -38,10 +38,10 @@
  */
 
 //  Convert enum to a value cast to the enum's underlying type.
-template<typename En>
-constexpr auto to_utype(En t)->typename std::underlying_type<En>::type
+template<typename E>
+inline constexpr typename std::underlying_type<E>::type to_utype(E enumerator)
 {
-    return static_cast<typename std::underlying_type<En>::type>(t);
+    return static_cast<typename std::underlying_type<E>::type>(enumerator);
 }
 
 using ProtocolIndex = uint8_t;

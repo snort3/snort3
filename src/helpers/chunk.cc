@@ -88,7 +88,6 @@ bool init_chunk(
 TEST_CASE( "chunk initialization", "[chunk]" )
 {
     Lua::State lua(true);
-    bool result;
 
     string test_chunk = "function init() return true end";
     string test_args_table = "args = { a = 1, b = 2 }";

@@ -497,8 +497,8 @@ static inline int FragCheckFirstLast(const Packet* const p,
         {
             ft->calculated_size = endOfThisFrag;
 
-            DebugFormat(DEBUG_FRAG, "Got last frag, Bytes: %d, "
-                "Calculated size: %d\n",
+            DebugFormat(DEBUG_FRAG, "Got last frag, Bytes: %u, "
+                "Calculated size: %u\n",
                 ft->frag_bytes,
                 ft->calculated_size);
         }
@@ -618,7 +618,7 @@ static inline int checkTinyFragments(
             if (p->dsize <= engine->min_fragment_length)
             {
                 DebugFormat(DEBUG_FRAG,
-                    "Frag: Received fragment size(%d) is not more than configured min_fragment_length (%d)\n",
+                    "Frag: Received fragment size(%d) is not more than configured min_fragment_length (%u)\n",
                     p->dsize, engine->min_fragment_length);
                 EventTinyFragments(engine);
                 return 1;
@@ -628,7 +628,7 @@ static inline int checkTinyFragments(
             if (trimmedLength <= engine->min_fragment_length)
             {
                 DebugFormat(DEBUG_FRAG,
-                    "Frag: # of New octets in Received fragment(%d) is not more than configured min_fragment_length (%d)\n",
+                    "Frag: # of New octets in Received fragment(%u) is not more than configured min_fragment_length (%u)\n",
                     trimmedLength, engine->min_fragment_length);
                 EventTinyFragments(engine);
                 return 1;
@@ -707,7 +707,7 @@ static inline int FragIsComplete(FragTracker* ft)
         }
 
         DebugFormat(DEBUG_FRAG,
-            "   Calc size (%d) != frag bytes (%d)\n",
+            "   Calc size (%u) != frag bytes (%u)\n",
             ft->calculated_size, ft->frag_bytes);
 
         /*
@@ -1150,7 +1150,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
         {
             DebugFormat(DEBUG_FRAG,
                 "[FRAG] Fragment discarded due to low TTL "
-                "[0x%X->0x%X], TTL: %d  " "Offset: %d Length: %d\n",
+                "[0x%X->0x%X], TTL: %d  " "Offset: %d Length: %hu\n",
                 ntohl(p->ptrs.ip_api.get_ip4h()->get_src()),
                 ntohl(p->ptrs.ip_api.get_ip4h()->get_dst()),
                 p->ptrs.ip_api.ttl(), frag_offset,
@@ -1214,7 +1214,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
         {
         case FRAG_INSERT_FAILED:
             DebugFormat(DEBUG_FRAG, "WARNING: Insert into Fraglist failed, "
-                "(offset: %u).\n", frag_offset);
+                "(offset: %hu).\n", frag_offset);
             return;
 
         case FRAG_INSERT_TTL:
@@ -1225,7 +1225,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
                 DebugFormat(DEBUG_FRAG,
                     "[FRAG] Fragment discarded due to large TTL Delta "
                     "[0x%X->0x%X], TTL: %d  orig TTL: %d "
-                    "Offset: %d Length: %d\n",
+                    "Offset: %hu Length: %hu\n",
                     ntohl(p->ptrs.ip_api.get_ip4h()->get_src()),
                     ntohl(p->ptrs.ip_api.get_ip4h()->get_dst()),
                     p->ptrs.ip_api.ttl(), ft->ttl, frag_offset,
@@ -1242,13 +1242,13 @@ void Defrag::process(Packet* p, FragTracker* ft)
 
         case FRAG_INSERT_TIMEOUT:
             DebugFormat(DEBUG_FRAG, "WARNING: Insert into Fraglist failed due to timeout, "
-                "(offset: %u).\n", frag_offset);
+                "(offset: %hu).\n", frag_offset);
             return;
 
         case FRAG_INSERT_OVERLAP_LIMIT:
             DebugFormat(DEBUG_FRAG,
                 "WARNING: Excessive IP fragment overlap, "
-                "(More: %u, offset: %u, offsetSize: %u).\n",
+                "(More: %d, offset: %d, offsetSize: %hu).\n",
                 (p->ptrs.decode_flags & DECODE_MF),
                 (frag_offset << 3), p->dsize);
             ip_stats.discards++;
@@ -2288,7 +2288,7 @@ int Defrag::add_frag_node(
     ft->frag_bytes += newfrag->size;
 
     DebugFormat(DEBUG_FRAG,
-        "[#] accumulated bytes on FragTracker %d, count"
+        "[#] accumulated bytes on FragTracker %u, count"
         " %d\n", ft->frag_bytes, ft->fraglist_count);
 
     *retFrag = newfrag;
@@ -2361,7 +2361,7 @@ int Defrag::dup_frag_node(
     ft->frag_bytes += newfrag->size;
 
     DebugFormat(DEBUG_FRAG,
-        "[#] accumulated bytes on FragTracker %d, count"
+        "[#] accumulated bytes on FragTracker %u, count"
         " %d\n", ft->frag_bytes, ft->fraglist_count);
 
     *retFrag = newfrag;

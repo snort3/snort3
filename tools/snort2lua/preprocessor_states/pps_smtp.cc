@@ -42,9 +42,6 @@ private:
         std::string format;
         int length;
 
-        inline bool operator==(Command c)
-        { return (!name.compare(c.name)); }
-
         Command() : name(std::string()),
             format(std::string()),
             length(command_default_len) { }

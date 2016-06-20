@@ -826,7 +826,7 @@ static void printOutFlowbits(FLOWBITS_OP* flowbits)
     DebugFormat(DEBUG_FLOWBITS, "%s: name = %s\n", s_name, flowbits->name);
     DebugFormat(DEBUG_FLOWBITS, "%s: eval = %d\n", s_name, flowbits->eval);
     DebugFormat(DEBUG_FLOWBITS, "%s: num_ids = %d\n", s_name, flowbits->num_ids);
-    DebugFormat(DEBUG_FLOWBITS, "%s: grp_id = %d\n", s_name, flowbits->group_id);
+    DebugFormat(DEBUG_FLOWBITS, "%s: grp_id = %u\n", s_name, flowbits->group_id);
     DebugFormat(DEBUG_FLOWBITS, "%s: group_name = %s\n", s_name, flowbits->group);
 
     for (int i = 0; i < flowbits->num_ids; i++)

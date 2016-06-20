@@ -121,7 +121,7 @@ int SegmentOverlapEditor::eval_right()
 void SegmentOverlapEditor::drop_old_segment()
 {
     DebugFormat(DEBUG_STREAM_STATE,
-        "full right overlap, dropping old segment at seq %d, size %d\n",
+        "full right overlap, dropping old segment at seq %u, size %hu\n",
         right->seq, right->payload_size);
 
     TcpSegmentNode* drop_seg = right;
@@ -219,8 +219,6 @@ int SegmentOverlapEditor::left_overlap_trim_first()
 
 int SegmentOverlapEditor::left_overlap_keep_last()
 {
-    int rc = STREAM_INSERT_OK;
-
     DebugFormat(DEBUG_STREAM_STATE, "left overlap %d\n", overlap);
 
     len = tsd->get_seg_len();
@@ -259,7 +257,7 @@ int SegmentOverlapEditor::left_overlap_keep_last()
         }
     }
 
-    return rc;
+    return STREAM_INSERT_OK;
 }
 
 void SegmentOverlapEditor::right_overlap_truncate_existing()

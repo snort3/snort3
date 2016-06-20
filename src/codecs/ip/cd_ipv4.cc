@@ -188,7 +188,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if (ip_len > raw.len)
     {
         DebugFormat(DEBUG_DECODE,
-            "IP Len field is %d bytes bigger than captured length.\n"
+            "IP Len field is %u bytes bigger than captured length.\n"
             "    (ip.len: %u, cap.len: %u)\n",
             ip_len - raw.len, ip_len, raw.len);
 
@@ -207,8 +207,8 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if (ip_len < hlen)
     {
         DebugFormat(DEBUG_DECODE,
-            "IP dgm len (%d bytes) < IP hdr "
-            "len (%d bytes), packet discarded\n", ip_len, hlen);
+            "IP dgm len (%u bytes) < IP hdr "
+            "len (%hu bytes), packet discarded\n", ip_len, hlen);
 
         codec_event(codec, DECODE_IPV4_DGRAM_LT_IPHDR);
         return false;

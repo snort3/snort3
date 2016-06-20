@@ -66,14 +66,14 @@ inline void TraceEvent(const Packet* p, TcpSegmentDescriptor*, uint32_t txd, uin
 
     uint32_t rseq = ( txd ) ? h->seq() - txd : h->seq();
     uint32_t rack = ( rxd ) ? h->ack() - rxd : h->ack();
-    fprintf(stdout, "\n" FMTu64("-3") " %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4u Len=%-4u%s\n",
+    fprintf(stdout, "\n" FMTu64("-3") " %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4hu Len=%-4hu%s\n",
         //"\n" FMTu64("-3") " %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4u Len=%-4u End=%-4u%s\n",
         pc.total_from_daq, flags, h->th_flags, rseq, rack, h->win(), p->dsize, order);
 }
 
 inline void TraceSession(const Flow* lws)
 {
-    fprintf(stdout, "    LWS: ST=0x%x SF=0x%x CP=%u SP=%u\n", (unsigned)lws->session_state,
+    fprintf(stdout, "    LWS: ST=0x%x SF=0x%x CP=%hu SP=%hu\n", (unsigned)lws->session_state,
         lws->ssn_state.session_flags, lws->client_port, lws->server_port);
 }
 

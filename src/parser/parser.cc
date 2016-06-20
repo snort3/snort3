@@ -536,13 +536,13 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname)
 
     if ( *fname )
     {
-        Shell* sh = sc->policy_map->get_shell();
+        sh = sc->policy_map->get_shell();
         sh->set_file(fname);
     }
 
     for ( unsigned i = 0; true; i++ )
     {
-        Shell* sh = sc->policy_map->get_shell(i);
+        sh = sc->policy_map->get_shell(i);
 
         if ( !sh )
             break;

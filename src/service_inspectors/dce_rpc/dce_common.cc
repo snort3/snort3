@@ -144,13 +144,13 @@ static void DCE2_PrintRoptions(DCE2_Roptions* ropts)
     {
         DebugFormat(DEBUG_DCE_COMMON, "  Iface: %s\n", DCE2_UuidToStr(&ropts->iface,
             DCERPC_BO_FLAG__NONE));
-        DebugFormat(DEBUG_DCE_COMMON, "  Iface version: %u\n", ropts->iface_vers_maj);
+        DebugFormat(DEBUG_DCE_COMMON, "  Iface version: %hu\n", ropts->iface_vers_maj);
     }
     if (ropts->opnum == DCE2_SENTINEL)
         DebugMessage(DEBUG_DCE_COMMON, "  Opnum: unset\n");
     else
     {
-        DebugFormat(DEBUG_DCE_COMMON, "  Opnum: %u\n", ropts->opnum);
+        DebugFormat(DEBUG_DCE_COMMON, "  Opnum: %d\n", ropts->opnum);
     }
     if (ropts->stub_data != nullptr)
         DebugFormat(DEBUG_DCE_COMMON, "  Stub data: %p\n", ropts->stub_data);
