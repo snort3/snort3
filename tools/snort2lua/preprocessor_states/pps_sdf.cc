@@ -34,7 +34,15 @@ public:
         std::string keyword;
 
         // skip over `preprocessor sensitive_data` because it is now a rule option.
-        while (data_stream >> keyword);
+        while (data_stream >> keyword)
+        {
+            if ( !keyword.compare("mask_output"))
+            {
+                table_api.open_table("output");
+                table_api.add_option("obfuscate_pii", true);
+                table_api.close_table();
+            }
+        }
 
         return true;
     }

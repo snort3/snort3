@@ -797,8 +797,7 @@ preprocessor dns: ports { 53 } enable_rdata_overflow
 # TODO: Add once this is included in Snort++
 #preprocessor ssl: ports { 443 465 563 636 989 992 993 994 995 7801 7802 7900 7901 7902 7903 7904 7905 7906 7907 7908 7909 7910 7911 7912 7913 7914 7915 7916 7917 7918 #7919 7920 }, trustservers, noinspect_encrypted
 
-# TODO: Add once this is included in Snort++
-#preprocessor sensitive_data: alert_threshold 25
+preprocessor sensitive_data: alert_threshold 25, mask_output
 
 # TODO: Add once this is included in Snort++
 #preprocessor sip: max_sessions 40000, \
