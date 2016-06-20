@@ -1,4 +1,6 @@
-AM_CPPFLAGS+=-I$(top_srcdir)/src/network_inspectors/appid
+AUTOMAKE_OPTIONS=foreign nostdinc subdir-objects
+
+AM_CPPFLAGS+=-I$(top_srcdir)/src/network_inspectors/appid -fno-strict-aliasing
 
 cp_file_list = \
 client_plugins/client_app_aim.cc \
@@ -163,7 +165,6 @@ lua_detector_module.h \
 lua_detector_util.h \
 service_state.cc \
 service_state.h \
-sfaddr_temp.h \
 thirdparty_appid_api.h \
 thirdparty_appid_types.h \
 thirdparty_appid_utils.cc \

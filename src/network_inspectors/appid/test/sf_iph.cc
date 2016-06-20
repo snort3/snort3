@@ -27,9 +27,6 @@
 #endif
 #include "decode.h"
 
-// FIXIT - this must go when snort2.9.x sf_ip.h changes are ported to snort++
-#include "sfaddr_temp.h"
-
 #define FAILURE -1
 #define SUCCESS 0
 #define IP6_HEADER_LEN 40

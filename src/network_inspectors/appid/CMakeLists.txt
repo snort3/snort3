@@ -1,3 +1,5 @@
+set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fno-strict-aliasing" )
+
 set ( APPID_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
 
 set ( CP_APPID_SOURCES
@@ -167,7 +169,6 @@ set ( APPID_SOURCES
     lua_detector_util.h
     service_state.cc
     service_state.h
-    sfaddr_temp.h
     thirdparty_appid_api.h
     thirdparty_appid_types.h
     thirdparty_appid_utils.cc

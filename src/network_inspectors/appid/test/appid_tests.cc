@@ -12,9 +12,6 @@
 #include "fw_appid.h"
 #include "session_file.h"
 
-// FIXIT - this must go when snort2.9.x sf_ip.h changes are ported to snort++
-#include "sfaddr_temp.h"
-
 #if 1 // FIXIT-M hacks
 // not sure where this is defined; outside the appid tree probably
 using ControlDataSendFunc = void (*)();

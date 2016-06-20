@@ -430,27 +430,14 @@ static void ClientAppParseOption(ClientAppConfig* config,
     }
 }
 
-static int ClientAppParseArgs(ClientAppConfig* config, SF_LIST* args)
-{
-    ConfigItem* ci;
-    SF_LNODE* cursor;
-
-    for (ci=(ConfigItem*)sflist_first(args, &cursor);
-        ci;
-        ci=(ConfigItem*)sflist_next(&cursor))
-    {
-        ClientAppParseOption(config, ci->name, ci->value);
-    }
-
-    return 0;
-}
-
+#ifdef DEBUG
 #define MAX_DISPLAY_SIZE   65536
 static void DisplayClientAppConfig(ClientAppConfig* config)
 {
     static char buffer[MAX_DISPLAY_SIZE];
     int position = 0;
     int tmp;
+
     RNAClientAppModuleConfig* mod_config;
     RNAClientAppModuleConfigItem* item;
     SF_LNODE* cursor;
@@ -493,11 +480,31 @@ static void DisplayClientAppConfig(ClientAppConfig* config)
                 position += tmp;
         }
     }
-    tmp = snprintf(&buffer[position], MAX_DISPLAY_SIZE-position,
-        "----------------------------------------------\n");
 
+    snprintf(&buffer[position], MAX_DISPLAY_SIZE - position,
+        "----------------------------------------------\n");
     DebugFormat(DEBUG_LOG,"%s\n",buffer);
 }
+#endif
+
+static int ClientAppParseArgs(ClientAppConfig* config, SF_LIST* args)
+{
+    ConfigItem* ci;
+    SF_LNODE* cursor;
+
+    for (ci = (ConfigItem*)sflist_first(args, &cursor);
+        ci;
+        ci = (ConfigItem*)sflist_next(&cursor))
+    {
+        ClientAppParseOption(config, ci->name, ci->value);
+    }
+
+#ifdef DEBUG
+    DisplayClientAppConfig(config);
+#endif
+    return 0;
+}
+
 
 static void free_module_config_item(void* module_config_item)
 {
@@ -614,7 +621,6 @@ void ClientAppInit(AppIdConfig* pConfig)
     pConfig->clientAppConfig.enabled = 1;
 
     ClientAppParseArgs(&pConfig->clientAppConfig, &pConfig->client_app_args);
-    DisplayClientAppConfig(&pConfig->clientAppConfig);
 
     if (pConfig->clientAppConfig.enabled)
     {

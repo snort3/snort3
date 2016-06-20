@@ -423,16 +423,11 @@ static int snort_pton(char const* src, sfip_t* dest)
 {
     char ipbuf[INET6_ADDRSTRLEN];
     char cidrbuf[sizeof("128")];
-    char* out;
-    enum
-    {
-        BEGIN, IP, CIDR1, CIDR2, END, INVALID
-    } state;
+    char* out = ipbuf;
+    enum { BEGIN, IP, CIDR1, CIDR2, END, INVALID } state = BEGIN;
 
     memset(ipbuf, '\0', sizeof(ipbuf));
     memset(cidrbuf, '\0', sizeof(cidrbuf));
-
-    state = BEGIN;
 
     while ( *src )
     {
@@ -448,7 +443,6 @@ static int snort_pton(char const* src, sfip_t* dest)
             if ( isident((int)ch) )
             {
                 // Set the first ipbuff byte and change state
-                out = ipbuf;
                 *out++ = ch;
                 state = IP;
             }

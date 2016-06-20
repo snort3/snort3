@@ -678,6 +678,10 @@ static int rpc_tcp_validate(ServiceValidationArgs* args)
             size -= length;
             if (rd->tcppos[dir] >= sizeof(ServiceRPCAuth))
             {
+                // FIXIT-M: the typecast for all the rd->tcpdata[dir] refs in this function cause
+                // this warning:
+                //     dereferencing type-punned pointer will break strict-aliasing rules
+                // investigate recoding to eliminate this and improve readability
                 length = ntohl(((ServiceRPCCall*)rd->tcpdata[dir])->cred.length);
                 if (length > (rd->tcpsize[dir] & ~RPC_TCP_FRAG_MASK) ||
                     rd->tcpfragpos[dir]+length > (rd->tcpsize[dir] & ~RPC_TCP_FRAG_MASK))

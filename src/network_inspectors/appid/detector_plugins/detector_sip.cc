@@ -692,10 +692,10 @@ void SipSessionSnortCallback(void*, ServiceEventType, void* data)
 
         src_ip[0] = 0;
         ip = p->ptrs.ip_api.get_src();
-        inet_ntop(sfaddr_family(ip), (void*)sfaddr_get_ptr(ip), src_ip, sizeof(src_ip));
+        sfip_ntop(ip, src_ip, sizeof(src_ip));
         dst_ip[0] = 0;
         ip = p->ptrs.ip_api.get_dst();
-        inet_ntop(sfaddr_family(ip), (void*)sfaddr_get_ptr(ip), dst_ip, sizeof(dst_ip));
+        sfip_ntop(ip, dst_ip, sizeof(dst_ip));
         fprintf(SF_DEBUG_FILE, "AppId Sip Snort Callback Session %s-%u -> %s-%u %d\n", src_ip,
             (unsigned)p->src_port, dst_ip, (unsigned)p->dst_port, IsTCP(p) ? IpProtocol::TCP :
             IpProtocol::UDP);

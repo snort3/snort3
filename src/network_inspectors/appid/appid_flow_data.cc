@@ -357,16 +357,14 @@ static void flowAppSharedDataDelete(AppIdData* sharedData)
 #endif
 
 AppIdData* AppIdEarlySessionCreate(
-    AppIdData*, const Packet* /*ctrlPkt*/, const sfip_t* cliIp, uint16_t cliPort, const
-    sfip_t* srvIp,
-    uint16_t srvPort, IpProtocol proto, int16_t app_id, int /*flags*/)
+    AppIdData*, const Packet* /*ctrlPkt*/, const sfip_t* cliIp, uint16_t cliPort,
+    const sfip_t* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id, int /*flags*/)
 {
     char src_ip[INET6_ADDRSTRLEN];
     char dst_ip[INET6_ADDRSTRLEN];
     // FIXIT - not needed  until crtlPkt expectedSession is supported
     //struct _ExpectNode** node;
     enum PktType protocol = ( enum PktType )proto;
-    AppIdData* data;
 
     if (app_id_debug_session_flag)
     {
@@ -374,7 +372,7 @@ AppIdData* AppIdEarlySessionCreate(
         sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
     }
 
-    data = appSharedDataAlloc(proto, cliIp);
+    AppIdData* data = appSharedDataAlloc(proto, cliIp);
     data->common.policyId = appIdPolicyId;
 
     // FIXIT - expect session control packet support not ported to snort3 yet

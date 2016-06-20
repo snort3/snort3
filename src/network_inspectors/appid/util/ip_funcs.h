@@ -26,9 +26,6 @@
 #include "protocols/ipv6.h"
 #include "network_set.h"
 
-// FIXIT - this must go when snort2.9.x sf_ip.h changes are ported to snort++
-#include "sfaddr_temp.h"
-
 #define IPFUNCS_EXCEPT_IP                0x01
 #define IPFUNCS_SECONDARY_IP             0x02
 #define IPFUNCS_APPID_SESSION_EXCLUDE_IP 0x04

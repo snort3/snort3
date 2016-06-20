@@ -311,7 +311,11 @@ inline uint32_t extract_32bits(const uint8_t* p)
 
 /* allows unaligned ntohl parameter - dies w/SIGBUS on SPARCs */
 inline uint32_t extract_32bits(const uint8_t* p)
-{ return ntohl(*(uint32_t*)p); }
+{
+    assert(p);
+
+    return ntohl(*(uint32_t*)p);
+}
 
 #endif
 

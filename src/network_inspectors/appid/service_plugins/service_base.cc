@@ -64,6 +64,7 @@
 #include "main/snort_debug.h"
 #include "search_engines/search_tool.h"
 #include "utils/util.h"
+#include "sfip/sf_ip.h"
 
 /*#define SERVICE_DEBUG 1
   #define SERVICE_DEBUG_PORT  0 */
@@ -225,7 +226,7 @@ struct ServiceMatch
 
 static DHCPInfo* dhcp_info_free_list;
 static FpSMBData* smb_data_free_list;
-static unsigned smOrderedListSize = 0;
+static unsigned smOrderedListSize = 32;
 static ServiceMatch** smOrderedList = nullptr;
 static ServiceMatch* free_service_match;
 static const uint8_t zeromac[6] = { 0, 0, 0, 0, 0, 0 };
@@ -659,8 +660,8 @@ int ServiceAddPort(RNAServiceValidationPort* pp, RNAServiceValidationModule* svm
     RNAServiceElement* serviceElement;
     uint8_t isAllocated = 0;
 
-    DebugFormat(DEBUG_INSPECTOR, "Adding service %s for protocol %u on port %u, %p",
-        svm->name, (unsigned)pp->proto, (unsigned)pp->port, (void*)pp->validate);
+    DebugFormat(DEBUG_INSPECTOR, "Adding service %s for protocol %u on port %u\n",
+        svm->name, (unsigned)pp->proto, (unsigned)pp->port);
     if (pp->proto == IpProtocol::TCP)
     {
         services = pConfig->serviceConfig.tcp_services;
@@ -984,7 +985,7 @@ void CleanupServices(AppIdConfig* /*pConfig*/)
     {
         // FIXIT - M - still allocated with calloc/realloc - vector coming soon...
         free(smOrderedList);
-        smOrderedListSize = 0;
+        smOrderedListSize = 32;
     }
 
     RemoveAllServicePorts(&pConfig->serviceConfig);
@@ -1047,7 +1048,6 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
 
     if (!smOrderedList)
     {
-        smOrderedListSize = 32;
         // FIXIT - H - using calloc because this may be realloc'ed later, change to vector asap
         smOrderedList = (ServiceMatch**)calloc(smOrderedListSize, sizeof(ServiceMatch*));
         if (!smOrderedList)
@@ -1080,8 +1080,8 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
         {
             ServiceMatch** tmp;
             smOrderedListSize *= 2;
-            tmp = (ServiceMatch**)realloc(smOrderedList, smOrderedListSize *
-                sizeof(*smOrderedList));
+            tmp = (ServiceMatch**)realloc(smOrderedList,
+                    smOrderedListSize * sizeof(*smOrderedList));
             if (!tmp)
             {
                 ErrorMessage("Realloc failure %u\n",smOrderedListSize);
@@ -1403,8 +1403,7 @@ static int AppIdServiceAddServiceEx(AppIdData* flow, const Packet* pkt, int dir,
         char ipstr[INET6_ADDRSTRLEN];
 
         ipstr[0] = 0;
-        inet_ntop(sfip_family(&flow->service_ip), (void*)sfaddr_get_ptr(&flow->service_ip),
-            ipstr, sizeof(ipstr));
+        sfip_ntop(&flow->service_ip, ipstr, sizeof(ipstr));
         fprintf(SF_DEBUG_FILE, "Valid: %s:%u:%u %p %d\n", ipstr, (unsigned)flow->proto,
             (unsigned)flow->service_port, id_state, (int)id_state->state);
     }
@@ -1561,8 +1560,7 @@ int AppIdServiceInProcess(AppIdData* flow, const Packet* pkt, int dir,
         char ipstr[INET6_ADDRSTRLEN];
 
         ipstr[0] = 0;
-        inet_ntop(sfip_family(&flow->service_ip), (void*)sfaddr_get_ptr(&flow->service_ip),
-            ipstr, sizeof(ipstr));
+        sfip_ntop(&flow->service_ip, ipstr, sizeof(ipstr));
         fprintf(SF_DEBUG_FILE, "Inprocess: %s:%u:%u %p %d\n", ipstr, (unsigned)flow->proto,
             (unsigned)flow->service_port,
             id_state, (int)id_state->state);
@@ -1711,8 +1709,7 @@ int AppIdServiceIncompatibleData(AppIdData* flow, const Packet* pkt, int dir,
         char ipstr[INET6_ADDRSTRLEN];
 
         ipstr[0] = 0;
-        inet_ntop(sfip_family(&flow->service_ip), (void*)sfaddr_get_ptr(&flow->service_ip),
-            ipstr, sizeof(ipstr));
+        sfip_ntop(&flow->service_ip, ipstr, sizeof(ipstr));
         fprintf(SF_DEBUG_FILE, "Incompat: %s:%u:%u %p %d %s\n", ipstr, (unsigned)flow->proto,
             (unsigned)flow->service_port,
             id_state, (int)id_state->state,
@@ -1728,8 +1725,7 @@ int AppIdServiceIncompatibleData(AppIdData* flow, const Packet* pkt, int dir,
         char ipstr[INET6_ADDRSTRLEN];
 
         ipstr[0] = 0;
-        inet_ntop(sfip_family(&flow->service_ip), (void*)sfaddr_get_ptr(&flow->service_ip),
-            ipstr, sizeof(ipstr));
+        sfip_ntop(&flow->service_ip, ipstr, sizeof(ipstr));
         fprintf(SF_DEBUG_FILE, "Incompat End: %s:%u:%u %p %d %s\n", ipstr, (unsigned)flow->proto,
             (unsigned)flow->service_port,
             id_state, (int)id_state->state, (id_state->svc && id_state->svc->name) ?
@@ -1865,8 +1861,7 @@ int AppIdServiceFailService(AppIdData* flow, const Packet* pkt, int dir,
         char ipstr[INET6_ADDRSTRLEN];
 
         ipstr[0] = 0;
-        inet_ntop(sfip_family(&flow->service_ip), (void*)sfaddr_get_ptr(&flow->service_ip),
-            ipstr, sizeof(ipstr));
+        sfip_ntop(&flow->service_ip, ipstr, sizeof(ipstr));
         fprintf(SF_DEBUG_FILE, "Fail: %s:%u:%u %p %d %s\n", ipstr, (unsigned)flow->proto,
             (unsigned)flow->service_port,
             id_state, (int)id_state->state,
@@ -1882,8 +1877,7 @@ int AppIdServiceFailService(AppIdData* flow, const Packet* pkt, int dir,
         char ipstr[INET6_ADDRSTRLEN];
 
         ipstr[0] = 0;
-        inet_ntop(sfip_family(&flow->service_ip), (void*)sfaddr_get_ptr(&flow->service_ip),
-            ipstr, sizeof(ipstr));
+        sfip_ntop(&flow->service_ip, ipstr, sizeof(ipstr));
         fprintf(SF_DEBUG_FILE, "Fail End: %s:%u:%u %p %d %s\n", ipstr, (unsigned)flow->proto,
             (unsigned)flow->service_port,
             id_state, (int)id_state->state, (id_state->svc && id_state->svc->name) ?
@@ -2003,7 +1997,7 @@ void FailInProcessService(AppIdData* flowp, const AppIdConfig*)
     if (flowp->service_port == SERVICE_DEBUG_PORT)
 #endif
     fprintf(SF_DEBUG_FILE, "FailInProcess %" PRIx64 ", %08X:%u proto %u\n",
-        flowp->common.flags, sfaddr_get_ip4_value(&flowp->common.initiator_ip),
+        flowp->common.flags, flowp->common.initiator_ip.ip32[3],
         (unsigned)flowp->service_port, (unsigned)flowp->proto);
 #endif
 
@@ -2163,8 +2157,8 @@ static const RNAServiceElement* AppIdGetNexService(const Packet* p, const int di
     return nullptr;
 }
 
-int AppIdDiscoverService(Packet* p, const int dir, AppIdData* rnaData, const
-    AppIdConfig* pConfig)
+int AppIdDiscoverService(Packet* p, const int dir, AppIdData* rnaData,
+        const AppIdConfig* pConfig)
 {
     const sfip_t* ip;
     int ret = SERVICE_NOMATCH;
@@ -2189,7 +2183,7 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdData* rnaData, const
         }
         else
         {
-            ip   = p->ptrs.ip_api.get_src();
+            ip   = p->ptrs.ip_api.get_dst();
             port = p->ptrs.dp;
         }
     }

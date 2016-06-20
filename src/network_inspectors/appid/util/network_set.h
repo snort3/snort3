@@ -62,14 +62,14 @@
 #if defined(WORDS_BIGENDIAN)
 struct NSIPv6Addr
 {
-    uint64_t hi;
-    uint64_t lo;
+    uint64_t hi = 0;
+    uint64_t lo = 0;
 };
 #else
 struct NSIPv6Addr
 {
-    uint64_t lo;
-    uint64_t hi;
+    uint64_t lo = 0;
+    uint64_t hi = 0;
 };
 #endif
 

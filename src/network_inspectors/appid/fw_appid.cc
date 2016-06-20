@@ -318,9 +318,7 @@ static inline int checkPortExclusion(const Packet* pkt, int reversed)
 #ifdef RNA_DEBUG_PE
                 char inetBuffer[INET6_ADDRSTRLEN];
                 inetBuffer[0] = 0;
-                inet_ntop(sfaddr_family(s_ip), (void*)sfaddr_get_ptr(s_ip), inetBuffer,
-                    sizeof(inetBuffer));
-
+                sfip_ntop(s_ip, inetBuffer, sizeof(inetBuffer));
                 SFDEBUG(MODULE_NAME, "excluding src port: %d",port);
                 SFDEBUG(MODULE_NAME, "for addresses src: %s", inetBuffer);
 #endif
@@ -346,8 +344,7 @@ static inline int checkPortExclusion(const Packet* pkt, int reversed)
 #ifdef RNA_DEBUG_PE
                 char inetBuffer[INET6_ADDRSTRLEN];
                 inetBuffer[0] = 0;
-                inet_ntop(sfaddr_family(s_ip), (void*)sfaddr_get_ptr(s_ip), inetBuffer,
-                    sizeof(inetBuffer));
+                sfip_ntop(s_ip, inetBuffer, sizeof(inetBuffer));
                 SFDEBUG(MODULE_NAME, "excluding dst port: %d",port);
                 SFDEBUG(MODULE_NAME, "for addresses dst: %s", inetBuffer);
 #endif
@@ -385,6 +382,7 @@ static inline bool fwAppIdDebugCheck(Flow* flow, AppIdData* session, volatile in
             uint16_t dport;
             char sipstr[INET6_ADDRSTRLEN];
             char dipstr[INET6_ADDRSTRLEN];
+
             if (session && session->common.fsf_type.flow_type != APPID_SESSION_TYPE_IGNORE)
             {
                 if (session->common.initiator_port)
@@ -404,20 +402,26 @@ static inline bool fwAppIdDebugCheck(Flow* flow, AppIdData* session, volatile in
                         dport = key->port_l;
                     }
                 }
-                // FIXIT - sfip_fast_eq6 is stub macro
-                else if (sfip_fast_eq6(&session->common.initiator_ip, key->ip_l) == 0)
-                {
-                    sfip_set_raw(&sip, key->ip_l, AF_INET);
-                    sfip_set_raw(&dip, key->ip_h, AF_INET);
-                    sport = key->port_l;
-                    dport = key->port_h;
-                }
                 else
                 {
-                    sfip_set_raw(&sip, key->ip_l, AF_INET);
-                    sfip_set_raw(&dip, key->ip_h, AF_INET);
-                    sport = key->port_h;
-                    dport = key->port_l;
+                    // FIXIT-L: the key_ip var was added to be able to call sfip_fast_eq6, need to
+                    // verify this works... not tested as yet...
+                    sfip_t key_ip;
+                    memcpy(key_ip.ip32, key->ip_l, sizeof(key_ip.ip32));
+                    if (sfip_fast_eq6(&session->common.initiator_ip, &key_ip) == 0)
+                    {
+                        sfip_set_raw(&sip, key->ip_l, AF_INET);
+                        sfip_set_raw(&dip, key->ip_h, AF_INET);
+                        sport = key->port_l;
+                        dport = key->port_h;
+                    }
+                    else
+                    {
+                        sfip_set_raw(&sip, key->ip_l, AF_INET);
+                        sfip_set_raw(&dip, key->ip_h, AF_INET);
+                        sport = key->port_h;
+                        dport = key->port_l;
+                    }
                 }
             }
             else
@@ -639,8 +643,7 @@ static inline unsigned isIPMonitored(const Packet* p, int dst)
     }
     else
     {
-        // FIXIT - the sfaddr_get_ptr macro is NULL, not good for memcpy
-        // memcpy(&ip6, sfaddr_get_ptr(sf_ip), sizeof(ip6));
+        memcpy(&ip6, sf_ip->ip32, sizeof(ip6));
         NSIPv6AddrNtoH(&ip6);
         NetworkSet_Contains6Ex(net_list, &ip6, &flags);
     }
@@ -2275,9 +2278,6 @@ void fwAppIdSearch(Packet* p)
         else
             protocol = IpProtocol::UDP;
 
-        // FIXIT-H: sfip_fast_equals_raw is macro that is defined as empty
-        // this cause static analysis to think ip is never used after being set, but it will be
-        // when sfip_fast_equals_raw is implemented here
         ip = p->ptrs.ip_api.get_src();
         if (session->common.initiator_port)
             direction = (session->common.initiator_port == p->ptrs.sp) ? APP_ID_FROM_INITIATOR :
@@ -3697,23 +3697,20 @@ void appSetServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigned e
     AppInfoTableEntry* pEntry = appInfoEntryGet(appId, pConfig);
     if (!pEntry)
     {
-        ErrorMessage("AppId: invalid direct service AppId, %d, for %p", appId, (void*)fcn);
+        ErrorMessage("AppId: invalid direct service AppId, %d", appId);
         return;
     }
     extractsInfo &= (APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_SERVICE_UDP_REVERSED);
     if (!extractsInfo)
     {
-        DebugFormat(DEBUG_APPID, "Ignoring direct service without info for %p with AppId %d",
-            (void*)fcn,
-            appId);
+        DebugFormat(DEBUG_APPID, "Ignoring direct service without info for AppId %d", appId);
         return;
     }
     pEntry->svrValidator = ServiceGetServiceElement(fcn, nullptr, pConfig);
     if (pEntry->svrValidator)
         pEntry->flags |= extractsInfo;
     else
-        ErrorMessage("AppId: failed to find a service element for %p with AppId %d", (void*)fcn,
-            appId);
+        ErrorMessage("AppId: failed to find a service element for AppId %d", appId);
 }
 
 void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigned extractsInfo,
@@ -3722,6 +3719,9 @@ void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigne
     AppInfoTableEntry* entry;
     AppIdConfig* pConfig = pAppidActiveConfig;
 
+    // FIXIT-L: what type of error would cause this lookup to fail? is this programming error
+    // or user error due to misconfig or something like that... if change in handling needed
+    // apply to all instances where this lookup is done
     if ((entry = appInfoEntryGet(appId, pConfig)))
     {
         entry->flags |= APPINFO_FLAG_ACTIVE;
@@ -3729,9 +3729,8 @@ void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigne
         extractsInfo &= (APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_SERVICE_UDP_REVERSED);
         if (!extractsInfo)
         {
-            DebugFormat(DEBUG_LOG,
-                "Ignoring direct service without info for %p %p with AppId %d\n",
-                (void*)fcn, (void*)data, appId);
+            DebugFormat(DEBUG_LOG, "Ignoring direct service without info for AppId: %d - %p\n",
+                    appId, (void*)data);
             return;
         }
 
@@ -3739,13 +3738,12 @@ void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigne
         if (entry->svrValidator)
             entry->flags |= extractsInfo;
         else
-            ErrorMessage("AppId: Failed to find a service element for %p %p with AppId %d",
-                (void*)fcn, (void*)data, appId);
+            ErrorMessage("AppId: Failed to find a service element for AppId: %d - %p\n",
+                    appId, (void*)data);
     }
     else
     {
-        ErrorMessage("Invalid direct service AppId, %d, for %p %p\n",
-            appId, (void*)fcn, (void*)data);
+        ErrorMessage("Invalid direct service for AppId: %d - %p\n", appId, (void*)data);
     }
 }
 
@@ -3755,24 +3753,21 @@ void appSetClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extractsIn
     AppInfoTableEntry* pEntry = appInfoEntryGet(appId, pConfig);
     if (!pEntry)
     {
-        ErrorMessage("AppId: invalid direct client application AppId, %d, for %p\n",
-            appId, (void*)fcn);
+        ErrorMessage("AppId: invalid direct client application AppId: %d\n", appId);
         return;
     }
     extractsInfo &= (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER);
     if (!extractsInfo)
     {
         DebugFormat(DEBUG_LOG,
-            "Ignoring direct client application without info for %p with AppId %d",
-            (void*)fcn, appId);
+            "Ignoring direct client application without info for AppId: %d", appId);
         return;
     }
     pEntry->clntValidator = ClientAppGetClientAppModule(fcn, nullptr, &pConfig->clientAppConfig);
     if (pEntry->clntValidator)
         pEntry->flags |= extractsInfo;
     else
-        ErrorMessage("Appid: Failed to find a client application module for %p with AppId %d\n",
-            (void*)fcn, appId);
+        ErrorMessage("Appid: Failed to find a client application module for AppId: %d\n", appId);
 }
 
 void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extractsInfo, struct
@@ -3788,8 +3783,8 @@ void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extract
         if (!extractsInfo)
         {
             DebugFormat(DEBUG_LOG,
-                "Ignoring direct client application without info for %p %p with AppId %d\n",
-                (void*)fcn, (void*)data, appId);
+                "Ignoring direct client application without info forAppId %d - %p\n",
+                appId, (void*)data);
             return;
         }
 
@@ -3798,13 +3793,13 @@ void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extract
             entry->flags |= extractsInfo;
         else
             ErrorMessage(
-                "AppId: Failed to find a client application module for %p %p with AppId %d",
-                (void*)fcn, (void*)data, appId);
+                "AppId: Failed to find a client application module forAppId: %d - %p\n",
+                appId, (void*)data);
     }
     else
     {
-        ErrorMessage("Invalid direct client application AppId, %d, for %p %p\n",
-            appId, (void*)fcn, (void*)data);
+        ErrorMessage("Invalid direct client application for AppId: %d - %p\n",
+            appId, (void*)data);
         return;
     }
 }

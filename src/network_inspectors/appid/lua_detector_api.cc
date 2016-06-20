@@ -2154,8 +2154,8 @@ static int Detector_addAppUrl(lua_State* L)
     u_int32_t appId = lua_tointeger(L, index++);
 
     /* Allocate memory for data structures */
-    DetectorAppUrlPattern* pattern = (DetectorAppUrlPattern*)snort_calloc(
-        sizeof(DetectorAppUrlPattern));
+    DetectorAppUrlPattern* pattern =
+            (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
     AppIdConfig* pConfig = ud->pAppidNewConfig;
 
     pattern->userData.service_id        = appGetAppFromServiceId(service_id, pConfig);
@@ -3312,7 +3312,7 @@ static void FreeDetectorAppUrlPattern(DetectorAppUrlPattern* pattern)
         if (pattern->patterns.scheme.pattern)
             snort_free(*(void**)&pattern->patterns.scheme.pattern);
         // FIXIT - pattern still allocated with calloc/realloc
-        free(pattern);
+        snort_free(pattern);
     }
 }
 

@@ -24,7 +24,6 @@
 
 #include <cstdint>
 
-// FIXIT - there are conflicts with sfaddr_temp.h - sf_ip.h must be first address those asap
 #include "appid_api.h"
 #include "appid_flow_data.h"
 #include "service_api.h"
