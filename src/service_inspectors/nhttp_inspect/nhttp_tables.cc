@@ -310,7 +310,7 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_PDF_UNSUP_COMP_TYPE,        "PDF file unsupported compression type" },
     { EVENT_PDF_CASC_COMP,              "PDF file cascaded compression" },
     { EVENT_PDF_PARSE_FAILURE,          "PDF file parse failure" },
-    { EVENT_LOSS_OF_SYNC,               "HTTP misformatted or not really HTTP" },
+    { EVENT_LOSS_OF_SYNC,               "Not HTTP traffic" },
     { EVENT_CHUNK_ZEROS,                "Chunk length has excessive leading zeros" },
     { EVENT_WS_BETWEEN_MSGS,            "White space before or between messages" },
     { EVENT_URI_MISSING,                "Request message without URI" },
@@ -333,6 +333,7 @@ const RuleMap NHttpModule::nhttp_events[] =
                                             "Encoding or nonzero Content-Length" },
     { EVENT_FINAL_NOT_CHUNKED,          "Transfer-Encoding did not end with chunked" },
     { EVENT_CHUNKED_BEFORE_END,         "Transfer-Encoding with chunked not at end" },
+    { EVENT_MISFORMATTED_HTTP,          "Misformatted HTTP traffic" },
     { 0, nullptr }
 };
 

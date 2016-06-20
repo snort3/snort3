@@ -26,6 +26,7 @@
 #include "events/event_queue.h"
 
 #include "nhttp_enum.h"
+#include "utils/util.h"
 
 //-------------------------------------------------------------------------
 // Event generator class
@@ -44,6 +45,14 @@ public:
             SnortEventqAdd(NHttpEnums::NHTTP_GID, (uint32_t)sid);
             events_generated[sid-1] = true;
         }
+    }
+
+    void generate_misformatted_http(const uint8_t* buffer, uint32_t length)
+    {
+        if ( SnortStrnStr((const char*)buffer, length, "HTTP/") != nullptr )
+            create_event(NHttpEnums::EVENT_MISFORMATTED_HTTP);
+        else
+            create_event(NHttpEnums::EVENT_LOSS_OF_SYNC);
     }
 
     // The following methods are for convenience of debug and test output only!

@@ -47,7 +47,7 @@ ScanResult NHttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
                 else
                 {
                     infractions += INF_TOO_MUCH_LEADING_WS;
-                    events.create_event(EVENT_LOSS_OF_SYNC);
+                    events.generate_misformatted_http(buffer, length);
                     return SCAN_ABORT;
                 }
             }
@@ -72,7 +72,7 @@ ScanResult NHttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
                 break;
             case V_BAD:
                 infractions += INF_NOT_HTTP;
-                events.create_event(EVENT_LOSS_OF_SYNC);
+                events.generate_misformatted_http(buffer, length);
                 return SCAN_ABORT;
             case V_TBD:
                 break;
@@ -87,7 +87,7 @@ ScanResult NHttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
         if (num_crlf == 1)
         {   // CR not followed by LF
             infractions += INF_LONE_CR;
-            events.create_event(EVENT_LOSS_OF_SYNC);
+            events.generate_misformatted_http(buffer, length);
             return SCAN_ABORT;
         }
         if (buffer[k] == '\r')

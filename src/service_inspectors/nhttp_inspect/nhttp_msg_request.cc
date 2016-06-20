@@ -49,7 +49,7 @@ void NHttpMsgRequest::parse_start_line()
         {
             // Just a plain old bad request
             infractions += INF_BAD_REQ_LINE;
-            events.create_event(EVENT_LOSS_OF_SYNC);
+            events.generate_misformatted_http(start_line.start, start_line.length);
         }
         return;
     }
