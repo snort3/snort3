@@ -40,6 +40,21 @@
 #define s_name "sd_pattern"
 #define s_help "rule option for detecting sensitive data"
 
+struct SdStats
+{
+    PegCount nomatch_notfound;
+    PegCount nomatch_threshold;
+};
+
+const PegInfo sd_pegs[] =
+{
+    { "below threshold", "sd_pattern matched but missed threshold" },
+    { "pattern not found", "sd_pattern did not not match" },
+    { nullptr, nullptr }
+};
+
+static THREAD_LOCAL SdStats s_stats;
+
 struct SdPatternConfig
 {
     std::string pii;
@@ -147,8 +162,13 @@ int SdPatternOption::eval(Cursor& c, Packet* p)
     Profile profile(sd_pattern_perf_stats);
 
     unsigned matches = SdSearch(c, p);
+
     if ( matches >= config.threshold )
         return DETECTION_OPTION_MATCH;
+    else if ( matches == 0 )
+        ++s_stats.nomatch_notfound;
+    else if ( matches > 0 && matches < config.threshold )
+        ++s_stats.nomatch_threshold;
 
     return DETECTION_OPTION_NO_MATCH;
 }
@@ -176,13 +196,17 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value& v, SnortConfig*) override;
 
+    const PegInfo* get_pegs() const override
+    { return sd_pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&s_stats; }
+
     ProfileStats* get_profile() const override
     { return &sd_pattern_perf_stats; }
 
     void get_data(SdPatternConfig& c)
-    {
-        c = config;
-    }
+    { c = config; }
 
 private:
     SdPatternConfig config;
