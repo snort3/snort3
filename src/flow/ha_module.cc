@@ -48,8 +48,22 @@ static const Parameter ha_params[] =
     { "ports", Parameter::PT_BIT_LIST, "65535", nullptr,
       "side channel message port list" },
 
+    { "min_age", Parameter::PT_REAL, "0.0:100.0", "1.0",
+      "minimum session life before HA updates" },
+
+    { "min_sync", Parameter::PT_REAL, "0.0:100.0", "1.0",
+      "minimum interval between HA updates" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
+
+static void convert_real_seconds_to_timeval(double seconds, struct timeval* tv)
+{
+    double whole = trunc(seconds);
+    double fraction = (seconds - whole);
+    tv->tv_sec = (time_t)whole;
+    tv->tv_usec = (long int)(fraction * 1.0E6);
+}
 
 HighAvailabilityModule::HighAvailabilityModule() :
     Module(HA_NAME, HA_HELP, ha_params)
@@ -58,6 +72,8 @@ HighAvailabilityModule::HighAvailabilityModule() :
     config.enabled = false;
     config.daq_channel = false;
     config.ports = nullptr;
+    convert_real_seconds_to_timeval(1.0, &config.min_session_lifetime);
+    convert_real_seconds_to_timeval(0.1, &config.min_sync_interval);
 }
 
 HighAvailabilityModule::~HighAvailabilityModule()
@@ -89,6 +105,14 @@ bool HighAvailabilityModule::set(const char* fqn, Value& v, SnortConfig*)
             config.ports = new PortBitSet;
         v.get_bits(*(config.ports) );
     }
+    else if ( v.is("min_age") )
+    {
+        convert_real_seconds_to_timeval(v.get_real(), &config.min_session_lifetime);
+    }
+    else if ( v.is("min_sync") )
+    {
+        convert_real_seconds_to_timeval(v.get_real(), &config.min_sync_interval);
+    }
     else
         return false;
 
@@ -116,7 +140,9 @@ bool HighAvailabilityModule::end(const char* fqn, int idx, SnortConfig*)
     UNUSED(idx);
 #endif
 
-    if ( config.enabled && !HighAvailabilityManager::instantiate(config.ports,config.daq_channel) )
+    if ( config.enabled &&
+        !HighAvailabilityManager::instantiate(config.ports, config.daq_channel,
+                        &config.min_session_lifetime, &config.min_sync_interval) )
     {
         ParseWarning(WARN_CONF, "Illegal HighAvailability configuration");
         return false;

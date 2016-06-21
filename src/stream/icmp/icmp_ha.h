@@ -15,58 +15,35 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// stream_ha.h author Ed Borgoyn <eborgoyn@cisco.com>
+// icmp_ha.h author Ed Borgoyn <eborgoyn@cisco.com>
 
-#ifndef STREAM_HA_H
-#define STREAM_HA_H
+#ifndef ICMP_HA_H
+#define ICMP_HA_H
 
-#include "flow/flow.h"
-#include "flow/ha.h"
 #include "main/snort_types.h"
+#include "stream/base/stream_ha.h"
 
 //-------------------------------------------------------------------------
 
-class __attribute__((__packed__)) SessionHAContent
-{
-public:
-    LwState ssn_state;
-    uint8_t flags;
-    static const uint8_t FLAG_LOW = 0x01; // client address / port is low in key
-    static const uint8_t FLAG_IP6 = 0x02; // key addresses are ip6
-};
+class Flow;
 
-class StreamHAClient : public FlowHAClient
+class IcmpHA : public ProtocolHA
 {
 public:
-    StreamHAClient() : FlowHAClient(sizeof(SessionHAContent), true) { }
-    bool consume(Flow**, FlowKey*, HAMessage*);
-    bool produce(Flow*, HAMessage*);
-    bool is_update_required(Flow*);
-    bool is_delete_required(Flow*);
+    IcmpHA() : ProtocolHA(PktType::ICMP) { }
+    void delete_session(Flow*);
+    void create_session(Flow*);
 
 private:
 };
 
-class ProtocolHA
+class IcmpHAManager
 {
 public:
-    ProtocolHA(PktType);
-    virtual ~ProtocolHA();
-    virtual void delete_session(Flow*) { }
-    virtual void create_session(Flow*) { }
-    virtual void deactivate_session(Flow*) { }
-    virtual void process_deletion(Flow*);
-
-private:
-};
-
-class StreamHAManager
-{
-public:
+    static void process_deletion(Flow* flow);
     static void tinit();
     static void tterm();
-
-    static THREAD_LOCAL StreamHAClient* ha_client;
+    static THREAD_LOCAL IcmpHA* icmp_ha;
 };
 #endif
 

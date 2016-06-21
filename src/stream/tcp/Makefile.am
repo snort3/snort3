@@ -8,6 +8,8 @@ segment_overlap_editor.h \
 segment_overlap_editor.cc \
 stream_tcp.cc \
 stream_tcp.h \
+tcp_ha.cc \
+tcp_ha.h \
 tcp_module.cc \
 tcp_module.h \
 tcp_debug_trace.h \

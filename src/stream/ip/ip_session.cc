@@ -26,6 +26,7 @@
 #include "stream_ip.h"
 #include "ip_module.h"
 #include "ip_defrag.h"
+#include "ip_ha.h"
 #include "stream/stream.h"
 #include "flow/flow_control.h"
 #include "sfip/sf_ip.h"
@@ -140,6 +141,7 @@ IpSession::IpSession(Flow* flow) : Session(flow)
 void IpSession::clear()
 {
     IpSessionCleanup(flow, &tracker);
+    IpHAManager::process_deletion(flow);
     ip_stats.current--;
 }
 

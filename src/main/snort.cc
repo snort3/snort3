@@ -650,6 +650,7 @@ void Snort::thread_init_unprivileged()
     SideChannelManager::thread_init();
     HighAvailabilityManager::thread_init(); // must be before InspectorManager::thread_init();
     InspectorManager::thread_init(snort_conf);
+    HighAvailabilityManager::process_receive(); // in case there are HA messages waiting, process them first
 }
 
 void Snort::thread_term()

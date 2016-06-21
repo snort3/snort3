@@ -15,41 +15,46 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// udp_ha.cc author Ed Borgoyn <eborgoyn@cisco.com>
+// tcp_ha.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
-#include "udp_ha.h"
+#include "tcp_ha.h"
 
 #include "main/snort_debug.h"
 
-void UdpHA::delete_session(Flow*)
+void TcpHA::delete_session(Flow*)
 {
-    DebugMessage(DEBUG_HA,"UdpHA::delete_session)\n");
+    DebugMessage(DEBUG_HA,"TcpHA::delete_session)\n");
 }
 
-void UdpHA::create_session(Flow*)
+void TcpHA::create_session(Flow*)
 {
-    DebugMessage(DEBUG_HA,"UdpHA::create_session)\n");
+    DebugMessage(DEBUG_HA,"TcpHA::create_session)\n");
 }
 
-THREAD_LOCAL UdpHA* UdpHAManager::udp_ha = nullptr;
-
-void UdpHAManager::process_deletion(Flow* flow)
+void TcpHA::deactivate_session(Flow*)
 {
-    if( udp_ha != nullptr )
-        udp_ha->process_deletion(flow);
+    DebugMessage(DEBUG_HA,"TcpHA::deactivate_session)\n");
 }
 
-void UdpHAManager::tinit()
+THREAD_LOCAL TcpHA* TcpHAManager::tcp_ha = nullptr;
+
+void TcpHAManager::process_deletion(Flow* flow)
+{
+    if( tcp_ha != nullptr )
+        tcp_ha->process_deletion(flow);
+}
+
+void TcpHAManager::tinit()
 {
     if ( HighAvailabilityManager::active() )
-        udp_ha = new UdpHA();
+        tcp_ha = new TcpHA();
     else
-        udp_ha = nullptr;
+        tcp_ha = nullptr;
 }
 
-void UdpHAManager::tterm()
+void TcpHAManager::tterm()
 {
-    if ( udp_ha != nullptr )
-        delete udp_ha;
+    if ( tcp_ha != nullptr )
+        delete tcp_ha;
 }
 

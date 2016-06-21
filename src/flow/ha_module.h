@@ -32,6 +32,8 @@ struct HighAvailabilityConfig
     bool enabled;
     bool daq_channel;
     PortBitSet* ports = nullptr;
+    struct timeval min_session_lifetime;
+    struct timeval min_sync_interval;
 };
 
 extern THREAD_LOCAL SimpleStats ha_stats;

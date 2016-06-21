@@ -65,7 +65,10 @@ void Flow::init(PktType type)
     bitop = new BitOp(getFlowbitSizeInBytes());
 
     if ( HighAvailabilityManager::active() )
+    {
         ha_state = new FlowHAState;
+        previous_ssn_state = ssn_state;
+    }
 }
 
 void Flow::term()

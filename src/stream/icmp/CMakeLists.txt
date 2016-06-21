@@ -1,5 +1,7 @@
 
 add_library( stream_icmp STATIC
+    icmp_ha.cc
+    icmp_ha.h
     icmp_module.cc
     icmp_module.h
     icmp_session.cc

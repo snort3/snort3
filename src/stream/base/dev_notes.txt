@@ -12,3 +12,21 @@ Each protocol (or packet source) stream supports is implemented as its own
 Inspector and the base class delegates the actual evaluation of a packet to
 the specific module.
 
+The base stream HA processing is implemented in stream_ha.*.  The 'session' FlowHAClient
+is implemented as the class 'StreamHAClient'.  This provides all top-level Stream HA
+processing.  Each stream per-protocol (../udp, ../tcp, etc.) in turn implements the
+per-protocol HA specifics.
+
+A static StreamHAManager class is used to create/destoy the StreamHAClient class in each
+packet processing thread.
+
+The StreamHAContent class defines the actual HA message content for this 'session' client.
+
+The stream_ha.* logic is linked to per-protocol logic via the ProtocolHA class.  This
+class is declared in stream_ha.h.  It is then defined and instantiated in each per-protocol
+HA handler.
+
+The result is a two layer class hierarchy.  StreamHAClient interfaces with the primary
+HA functionality as a FlowHAClient.  And the stream/<protocol>'s interface with the
+StreamHAClient.
+

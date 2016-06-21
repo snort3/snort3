@@ -59,7 +59,7 @@ static char* make_bit_string(int bit)
     return bit_string;
 }
 
-bool HighAvailabilityManager::instantiate(PortBitSet* mod_ports, bool mod_use_daq_channel)
+bool HighAvailabilityManager::instantiate(PortBitSet* mod_ports, bool mod_use_daq_channel, struct timeval*, struct timeval*)
 {
     s_instantiate_called = true;
     s_port_1_set = mod_ports->test(1);
@@ -83,13 +83,19 @@ TEST(high_availability_module_test, test_ha_valid)
 {
     Value ports_val(make_bit_string(1));
     Value enable_val(true);
+    Value min_age_val(1.0);
+    Value min_sync_val(0.1);
     Parameter ports_param = {"ports", Parameter::PT_BIT_LIST, "65535", nullptr, "ports"};
     Parameter enable_param = {"enable", Parameter::PT_BOOL, nullptr, "false", nullptr };
+    Parameter min_age_param = {"min_age", Parameter::PT_REAL, nullptr, "1.0", nullptr };
+    Parameter min_sync_param = {"min_sync", Parameter::PT_REAL, nullptr, "0.1", nullptr };
 
     HighAvailabilityModule module;
 
     ports_val.set(&ports_param);
     enable_val.set(&enable_param);
+    min_age_val.set(&min_age_param);
+    min_sync_val.set(&min_sync_param);
 
     s_instantiate_called = false;
     s_port_1_set = false;
@@ -98,6 +104,8 @@ TEST(high_availability_module_test, test_ha_valid)
     module.begin("high_availability", 0, nullptr);
     module.set("high_availability.ports", ports_val, nullptr);
     module.set("high_availability.enable", enable_val, nullptr);
+    module.set("high_availability.min_age", min_age_val, nullptr);
+    module.set("high_availability.min_sync", min_sync_val, nullptr);
     module.end("high_availability", 0, nullptr);
 
     CHECK(s_instantiate_called == true);

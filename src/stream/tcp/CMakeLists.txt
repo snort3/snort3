@@ -5,6 +5,8 @@ add_library( stream_tcp STATIC
     segment_overlap_editor.cc
     stream_tcp.cc
     stream_tcp.h
+    tcp_ha.cc
+    tcp_ha.h
     tcp_module.cc
     tcp_module.h
     tcp_defs.h

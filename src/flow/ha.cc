@@ -58,6 +58,7 @@ static THREAD_LOCAL HighAvailability* ha;
 PortBitSet* HighAvailabilityManager::ports = nullptr;
 bool HighAvailabilityManager::use_daq_channel = false;
 struct timeval FlowHAState::min_session_lifetime;
+struct timeval FlowHAState::min_sync_interval;
 uint8_t s_handle_counter = 1; // stream client (index == 0) always exists
 
 // The [0] entry contains the stream client (always present)
@@ -73,7 +74,18 @@ static inline bool is_ip6_key(const FlowKey* key)
 FlowHAState::FlowHAState()
 {
     state = INITIAL_STATE;
+    state |= (NEW | NEW_SESSION);
     pending = NONE_PENDING;
+
+    // Set the initial upate time to now+min_session_lifetime
+    packet_gettimeofday(&next_update);
+    next_update.tv_usec += min_session_lifetime.tv_usec;
+    if (next_update.tv_usec > USEC_PER_SEC)
+    {
+        next_update.tv_usec -= USEC_PER_SEC;
+        next_update.tv_sec++;
+    }
+    next_update.tv_sec += min_session_lifetime.tv_sec;
 }
 
 void FlowHAState::set_pending(FlowHAClientHandle handle)
@@ -93,47 +105,31 @@ void FlowHAState::clear_pending(FlowHAClientHandle handle)
 
 void FlowHAState::set(uint8_t new_state)
 {
-    state |= (new_state & STATUS_MASK);
+    state = new_state;
 }
 
-void FlowHAState::set(uint8_t new_state, uint8_t new_priority)
+void FlowHAState::add(uint8_t new_state)
 {
-    state |= (new_state & STATUS_MASK);
-    state |= (new_priority & PRIORITY_MASK);
+    state |= new_state;
 }
 
 void FlowHAState::clear(uint8_t old_state)
 {
-    state &= ~(old_state & STATUS_MASK);
+    state &= ~old_state;
 }
 
-void FlowHAState::clear(uint8_t old_state, uint8_t old_priority)
-{
-    state &= ~(old_state & STATUS_MASK);
-    state &= ~(old_priority & PRIORITY_MASK);
-}
-
-bool FlowHAState::check(uint8_t state_mask)
+bool FlowHAState::check_any(uint8_t state_mask)
 {
     return (state & state_mask) != 0;
 }
 
-bool FlowHAState::is_critical()
-{
-    return ((state & CRITICAL) != 0);
-}
-
-bool FlowHAState::is_major()
-{
-    return ((state & MAJOR) != 0);
-}
-
-void FlowHAState::config_lifetime(struct timeval min_lifetime)
+void FlowHAState::config_timers(struct timeval min_lifetime, struct timeval min_interval)
 {
     min_session_lifetime = min_lifetime;
+    min_sync_interval = min_interval;
 }
 
-bool FlowHAState::old_enough()
+bool FlowHAState::sync_interval_elapsed()
 {
     struct timeval pkt_time;
 
@@ -146,18 +142,13 @@ bool FlowHAState::old_enough()
 
 void FlowHAState::set_next_update()
 {
-    next_update.tv_usec += min_session_lifetime.tv_usec;
+    next_update.tv_usec += min_sync_interval.tv_usec;
     if (next_update.tv_usec > USEC_PER_SEC)
     {
         next_update.tv_usec -= USEC_PER_SEC;
         next_update.tv_sec++;
     }
-    next_update.tv_sec += min_session_lifetime.tv_sec;
-}
-
-void FlowHAState::initialize_update_time()
-{
-    packet_gettimeofday(&next_update);
+    next_update.tv_sec += min_sync_interval.tv_sec;
 }
 
 void FlowHAState::reset()
@@ -230,6 +221,9 @@ static uint8_t write_flow_key(Flow* flow, HAMessage* msg)
         msg->cursor += KEY_SIZE_IP6;
         return KEY_SIZE_IP6;
     }
+// FIXIT-H - remove the #ifdef COMPRESSED_KEY sections when the ip6/ip4 logic is implemented
+//   and the compressed key is available for use.  Until then all keys are IP6 and larger.
+#ifdef COMPRESSED_KEY
     else
     {
         hdr->key_type = KEY_TYPE_IP4;
@@ -242,6 +236,8 @@ static uint8_t write_flow_key(Flow* flow, HAMessage* msg)
 
         return KEY_SIZE_IP4;
     }
+#endif
+    return 0;
 }
 
 // Regardless of the message cursor, extract the key and
@@ -258,6 +254,7 @@ static uint8_t read_flow_key(FlowKey* key, HAMessage* msg)
         msg->cursor += KEY_SIZE_IP6;
         return KEY_SIZE_IP6;
     }
+#ifdef COMPRESSED_KEY
     else if ( hdr->key_type == KEY_TYPE_IP4 )
     {
         /* Lower IPv4 address */
@@ -275,6 +272,7 @@ static uint8_t read_flow_key(FlowKey* key, HAMessage* msg)
         msg->cursor += KEY_SIZE_IP4 - 8;
         return KEY_SIZE_IP4;
     }
+#endif
     else
         return 0;
 }
@@ -296,12 +294,11 @@ static uint16_t calculate_update_msg_content_length(Flow* flow)
 {
     assert(s_client_map);
     assert((*s_client_map)[0]);
-    uint16_t length = ((*s_client_map)[0]->get_message_size() + sizeof(HAClientHeader));
-    DebugFormat(DEBUG_HA,"HighAvailability::calculate_update_msg_content_length(): length: %d\n",
-        length);
 
-    for (int i=1; i<s_handle_counter; i++)
-        if ( flow->ha_state->check_pending(1<<i) )
+    uint16_t length = 0;
+
+    for (int i=0; i<s_handle_counter; i++)
+        if ( (i==SESSION_HA_CLIENT_INDEX) || flow->ha_state->check_pending(1<<(i-1)) )
         {
             assert((*s_client_map)[i]);
             length += ((*s_client_map)[i]->get_message_size() + sizeof(HAClientHeader));
@@ -337,7 +334,7 @@ static void write_update_msg_content(Flow* flow, HAMessage* msg)
     assert(s_client_map);
 
     for ( int i=0; i<s_handle_counter; i++ )
-        if ( (i==SESSION_HA_CLIENT_INDEX) || flow->ha_state->check_pending(1<<i) )
+        if ( (i==SESSION_HA_CLIENT_INDEX) || flow->ha_state->check_pending(1<<(i-1)) )
             write_update_msg_client((*s_client_map)[i],flow, msg);
 }
 
@@ -363,7 +360,7 @@ static void consume_receive_update_message(HAMessage* msg)
     while( msg->cursor <= content_end )
     {
         // do we have sufficient message left to be able to have an HAClientHeader?
-        if ( (int)(content_end - msg->cursor) < (int)sizeof( HAClientHeader ) )
+        if ( (int)(content_end - msg->cursor + 1) < (int)sizeof( HAClientHeader ) )
         {
             ErrorMessage("Consuming HA Update message - no HAClientHeader\n");
             break;
@@ -379,13 +376,18 @@ static void consume_receive_update_message(HAMessage* msg)
             break;
         }
 
-        if ( (content_end - msg->cursor) < header->length )
+        if ( (content_end - msg->cursor + 1) < header->length )
         {
             ErrorMessage("Consuming HA Update memssage - message too short\n");
             break;
         }
 
-        if ( !(*s_client_map)[header->client]->consume(flow,msg) )
+        // If the Flow does not exist in the caches, flow will be nullptr
+        // upon entry into this message processing loop.  Since the session
+        // client is always the first segment of the message, the consume()
+        // invocation for the session client will create the flow.  This
+        // flow can in turn be used by subsequent FlowHAClient's.
+        if ( !(*s_client_map)[header->client]->consume(&flow,&key,msg) )
         {
             ErrorMessage("Consuming HA Update message - error from client consume()\n");
             break;
@@ -489,6 +491,15 @@ void HighAvailability::process_update(Flow* flow, const DAQ_PktHdr_t* pkthdr)
     if ( !sc || !flow )
         return;
 
+    // We must have the map array and the session client
+    assert(s_client_map);
+    assert((*s_client_map)[0]);
+
+    if ( !(*s_client_map)[0]->is_update_required(flow) &&
+        ( !flow->ha_state->check_pending(ALL_CLIENTS) ||
+            flow->ha_state->check_any(FlowHAState::NEW) ) )
+        return;
+
     const uint16_t header_len = calculate_msg_header_length(flow);
     const uint16_t content_len = calculate_update_msg_content_length(flow);
 
@@ -499,6 +510,11 @@ void HighAvailability::process_update(Flow* flow, const DAQ_PktHdr_t* pkthdr)
     write_msg_header(flow, HA_UPDATE_EVENT, content_len, &ha_msg);
     write_update_msg_content(flow, &ha_msg);
     sc->transmit_message(sc_msg);
+
+    flow->ha_state->clear(FlowHAState::NEW | FlowHAState::MODIFIED |
+        FlowHAState::MAJOR | FlowHAState::CRITICAL);
+    flow->ha_state->clear_pending(ALL_CLIENTS);
+    flow->ha_state->set_next_update();
 }
 
 void HighAvailability::process_deletion(Flow* flow)
@@ -507,7 +523,7 @@ void HighAvailability::process_deletion(Flow* flow)
 
     // No need to send message if we already have, we are in standby, or
     // we have just been created and haven't yet sent an update
-    if ( flow->ha_state->check(FlowHAState::CREATED |
+    if ( flow->ha_state->check_any(FlowHAState::NEW |
         FlowHAState::DELETED |
         FlowHAState::STANDBY))
         return;
@@ -525,7 +541,7 @@ void HighAvailability::process_deletion(Flow* flow)
 
     sc->transmit_message(sc_msg);
 
-    flow->ha_state->set(FlowHAState::DELETED);
+    flow->ha_state->add(FlowHAState::DELETED);
 }
 
 void HighAvailability::process_receive()
@@ -535,10 +551,12 @@ void HighAvailability::process_receive()
 }
 
 // Called by the configuration parsing activity in the main thread.
-bool HighAvailabilityManager::instantiate(PortBitSet* mod_ports, bool mod_use_daq_channel)
+bool HighAvailabilityManager::instantiate(PortBitSet* mod_ports, bool mod_use_daq_channel,
+        struct timeval* min_session_lifetime, struct timeval* min_sync_interval)
 {
     DebugMessage(DEBUG_HA,"HighAvailabilityManager::instantiate()\n");
     ports = mod_ports;
+    FlowHAState::config_timers(*min_session_lifetime, *min_sync_interval);
 #ifdef HAVE_DAQ_EXT_MODFLOW
     use_daq_channel = mod_use_daq_channel;
 #else

@@ -2,6 +2,8 @@
 add_library( stream_ip STATIC
     ip_defrag.cc
     ip_defrag.h
+    ip_ha.cc
+    ip_ha.h
     ip_module.cc
     ip_module.h
     ip_session.cc

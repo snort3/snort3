@@ -20,6 +20,7 @@
 #ifndef HA_H
 #define HA_H
 
+#include "flow/flow_key.h"
 #include "main/snort_types.h"
 #include "packet_io/sfdaq.h"
 #include "side_channel/side_channel.h"
@@ -51,13 +52,14 @@ enum HAEvent
 class FlowHAState
 {
 public:
-    static const uint8_t CRITICAL = 0x20;
-    static const uint8_t MAJOR = 0x10;
+    static const uint8_t CRITICAL = 0x80;
+    static const uint8_t MAJOR = 0x40;
 
-    static const uint8_t CREATED = 0x01;
+    static const uint8_t NEW = 0x01;
     static const uint8_t MODIFIED = 0x02;
     static const uint8_t DELETED = 0x04;
     static const uint8_t STANDBY = 0x08;
+    static const uint8_t NEW_SESSION = 0x10;
 
     FlowHAState();
     ~FlowHAState() {}
@@ -66,25 +68,20 @@ public:
     void clear_pending(FlowHAClientHandle);
     bool check_pending(FlowHAClientHandle);
     void set(uint8_t state);
-    void set(uint8_t state, uint8_t priority);
+    void add(uint8_t state);
     void clear(uint8_t state);
-    void clear(uint8_t state, uint8_t priority);
-    bool check(uint8_t state);
-    bool is_critical();
-    bool is_major();
-    static void config_lifetime(timeval);
-    bool old_enough();
+    bool check_any(uint8_t state);
+    static void config_timers(timeval,timeval);
+    bool sync_interval_elapsed();
     void set_next_update();
-    void initialize_update_time();
     void reset();
 
 private:
     static const uint8_t INITIAL_STATE = 0x00;
     static const uint16_t NONE_PENDING = 0x0000;
-    static const uint8_t PRIORITY_MASK = 0x30;
-    static const uint8_t STATUS_MASK = 0x0f;
 
     static struct timeval min_session_lifetime;
+    static struct timeval min_sync_interval;
     uint8_t state;
     uint16_t pending;
     struct timeval next_update;
@@ -127,8 +124,10 @@ class FlowHAClient
 {
 public:
     virtual ~FlowHAClient() { }
-    virtual bool consume(Flow*, HAMessage*) { return false; }
+    virtual bool consume(Flow**, FlowKey*, HAMessage*) { return false; }
     virtual bool produce(Flow*, HAMessage*) { return false; }
+    virtual bool is_update_required(Flow*) { return false; }
+    virtual bool is_delete_required(Flow*) { return false; }
     uint8_t get_message_size() { return header.length; }
     bool fit(HAMessage*, uint8_t);
     bool place(HAMessage*, uint8_t*, uint8_t);
@@ -165,7 +164,7 @@ public:
     // Prior to parsing configuration
     static void pre_config_init();
     // Invoked by the module configuration parsing to create HA instance
-    static bool instantiate(PortBitSet*,bool);
+    static bool instantiate(PortBitSet*,bool,struct timeval*,struct timeval*);
     static void thread_init();
     static void thread_term();
     // true is we are configured and able to process

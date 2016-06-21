@@ -24,6 +24,7 @@
 #include <assert.h>
 
 #include "stream_icmp.h"
+#include "icmp_ha.h"
 #include "icmp_module.h"
 #include "icmp_session.h"
 
@@ -103,6 +104,16 @@ static Inspector* icmp_ctor(Module* m)
     return new StreamIcmp(mod->get_data());
 }
 
+static void icmp_tinit()
+{
+    IcmpHAManager::tinit();
+}
+
+static void icmp_tterm()
+{
+    IcmpHAManager::tterm();
+}
+
 static void icmp_dtor(Inspector* p)
 {
     delete p;
@@ -128,8 +139,8 @@ static const InspectApi icmp_api =
     nullptr, // service
     nullptr, // init
     nullptr, // term
-    nullptr, // tinit
-    nullptr, // tterm
+    icmp_tinit, // tinit
+    icmp_tterm, // tterm
     icmp_ctor,
     icmp_dtor,
     icmp_ssn,

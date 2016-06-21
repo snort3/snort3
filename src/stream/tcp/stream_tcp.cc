@@ -23,6 +23,7 @@
 #include <assert.h>
 
 #include "stream_tcp.h"
+#include "tcp_ha.h"
 #include "tcp_module.h"
 #include "tcp_session.h"
 
@@ -74,11 +75,13 @@ bool StreamTcp::configure(SnortConfig*)
 
 void StreamTcp::tinit()
 {
+    TcpHAManager::tinit();
     FlushBucket::set(config->footprint);
 }
 
 void StreamTcp::tterm()
 {
+    TcpHAManager::tterm();
     // must be done after StreamBase::tterm(); see tcp_tterm()
     //FlushBucket::clear();
 }

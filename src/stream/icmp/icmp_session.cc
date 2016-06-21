@@ -41,6 +41,7 @@
 #include "protocols/tcp.h"
 #include "sfip/sf_ip.h"
 
+#include "icmp_ha.h"
 #include "icmp_module.h"
 #include "icmp_session.h"
 
@@ -204,6 +205,7 @@ bool IcmpSession::setup(Packet*)
 void IcmpSession::clear()
 {
     IcmpSessionCleanup(flow);
+    IcmpHAManager::process_deletion(flow);
 }
 
 int IcmpSession::process(Packet* p)

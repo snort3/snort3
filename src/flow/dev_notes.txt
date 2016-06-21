@@ -30,6 +30,30 @@ client uses the FlowHAClient class to subscribe to the service.
 
 The HA subsystem exchanges two high level message types:
   - DELETE: Indicate to the partner that a session has neen removed.  No
-addition HA client status will be exchanged.
+additional HA client status will be exchanged.
   - UPDATE: Indicate all other state changes.  The message always includes
 the session state and optionally may include state from other HA clients.
+
+The HA subsystem implements these classes:
+  - HighAvailabilityManager - A collection of static elements providing the
+    top-most interface to HA capabilities.
+  - HAMessage - A wrapper around the actual message (SideChannel only for now)
+    and includes a cursor for producer/consumer activity.  Passed around
+    among all message handing classes/methods.
+  - HighAvailability - If HA is enabled instantiated in each packet thread and
+    provides all primary HA functionality for the thread.  Referenced via a
+    THREAD_LOCAL object pointer.
+  - FlowHAState - One per flow and referenced via a pointer in the Flow object.
+    Contains all dynamic state information.  A set of get'ers and set'ers are
+    implemented to help manage the flags, client pending flags, and timing
+    information.
+  - FlowHAClient - All HA coordination is managed via a set of FlowHAClient's.
+    Every function that desires to use HA capabilities defines one FlowHAClient
+    object within the packet processing thread.  Each client is provided a 
+    handle bit-mask as part of the pending logic.  The client may set the
+    pending bit to indicate the desire to add content to the HA message.
+    A maximum of 17 clients may existing (numbers 1-16, corresponding to the
+    16 bits of the pending flags.  Client 0 is the 'session', is always present,
+    and is handled as a special case.  Client 0 is the fundamental session HA
+    state sync functionality.  Other clients are optional.
+

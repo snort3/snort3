@@ -27,6 +27,7 @@
 
 #include "ip_module.h"
 #include "ip_defrag.h"
+#include "ip_ha.h"
 #include "ip_session.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
@@ -149,6 +150,16 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
+static void ip_tinit()
+{
+    IpHAManager::tinit();
+}
+
+static void ip_tterm()
+{
+    IpHAManager::tterm();
+}
+
 static Inspector* ip_ctor(Module* m)
 {
     StreamIpModule* mod = (StreamIpModule*)m;
@@ -185,8 +196,8 @@ static const InspectApi ip_api =
     nullptr, // service
     nullptr, // pinit
     nullptr, // pterm
-    nullptr, // tinit
-    nullptr, // tterm
+    ip_tinit, // tinit
+    ip_tterm, // tterm
     ip_ctor,
     ip_dtor,
     ip_ssn,

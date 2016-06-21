@@ -30,7 +30,7 @@ class Flow;
 class UdpHA : public ProtocolHA
 {
 public:
-    UdpHA() { }
+    UdpHA() : ProtocolHA(PktType::UDP) { }
     void delete_session(Flow*);
     void create_session(Flow*);
 

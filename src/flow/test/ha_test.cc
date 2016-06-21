@@ -48,21 +48,39 @@ static const uint8_t s_delete_message[] =
 TEST_KEY
 };
 
+static const uint8_t s_update_stream_message[] =
+{
+    0x02,
+    0x03,
+    0x00,
+    0x00,
+    0x01,
+TEST_KEY,
+    0x00,
+    10,
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+};
 
-static struct timeval s_time = { 0, 0 };
+
+static struct timeval s_packet_time = { 0, 0 };
 static uint8_t s_message[MSG_SIZE];
 static SideChannel s_side_channel;
 static SCMessage s_sc_message;
 static SCMessage s_rec_sc_message;
+static bool s_stream_consume_called = false;
+static bool s_other_consume_called = false;
 static bool s_get_session_called = false;
 static bool s_delete_session_called = false;
 static bool s_transmit_message_called = false;
+static bool s_stream_update_required = false;
+static bool s_other_update_required = false;
 static uint8_t* s_message_content = nullptr;
 static uint8_t s_message_length = 0;
 static Flow s_flow;
 static FlowKey s_flowkey;
 static DAQ_PktHdr_t s_pkthdr;
-static StreamHAClient* ha_client;
+static StreamHAClient* s_ha_client;
+static FlowHAClient* s_other_ha_client;
 static std::function<void (SCMessage*)> s_handler = nullptr;
 static SCMsgHdr s_sc_header = { 0, 1, 0, 0, };
 
@@ -71,7 +89,11 @@ class StreamHAClient : public FlowHAClient
 public:
     StreamHAClient() : FlowHAClient(10, true) { }
     ~StreamHAClient() { }
-    bool consume(Flow*, HAMessage*) { return true; }
+    bool consume(Flow**, FlowKey*, HAMessage*)
+    {
+        s_stream_consume_called = true;
+        return true;
+    }
     bool produce(Flow*, HAMessage* msg)
     {
         for ( uint8_t i=0; i<10; i++ )
@@ -79,6 +101,33 @@ public:
         return true;
     }
     uint8_t get_message_size() { return 10; }
+    bool is_update_required(Flow*) { return s_stream_update_required; }
+    bool fit(HAMessage*,uint8_t) { return true; }
+    bool place(HAMessage*,uint8_t*,uint8_t) { return true; }
+
+private:
+};
+
+class OtherHAClient : public FlowHAClient
+{
+public:
+    OtherHAClient() : FlowHAClient(5, false) { }
+    ~OtherHAClient() { }
+    bool consume(Flow*, HAMessage*)
+    {
+        s_other_consume_called = true;
+        return true;
+    }
+    bool produce(Flow*, HAMessage* msg)
+    {
+        for ( uint8_t i=0; i<5; i++ )
+            *(msg->cursor)++ = i;
+        return true;
+    }
+    uint8_t get_message_size() { return 5; }
+    bool is_update_required(Flow*) { return s_other_update_required; }
+    bool fit(HAMessage*,uint8_t) { return true; }
+    bool place(HAMessage*,uint8_t*,uint8_t) { return true; }
 
 private:
 };
@@ -102,7 +151,7 @@ void LogMessage(const char*,...) { }
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 
 void packet_gettimeofday(struct timeval* tv)
-{ *tv = s_time; }
+{ *tv = s_packet_time; }
 
 Flow::Flow() { ha_state = new FlowHAState; key = new FlowKey; }
 Flow::~Flow() { }
@@ -188,13 +237,78 @@ TEST(high_availability_manager_test, inst_init_term)
     HighAvailabilityManager::pre_config_init();
     PortBitSet port_set;
     port_set.set(1);
-    HighAvailabilityManager::instantiate(&port_set, false);
+    struct timeval age = { 1, 0 };
+    struct timeval interval = { 0, 500000 };
+    HighAvailabilityManager::instantiate(&port_set, false, &age, &interval);
     HighAvailabilityManager::thread_init();
-    ha_client = new StreamHAClient;
+    s_ha_client = new StreamHAClient;
     CHECK(HighAvailabilityManager::active()==true);
-    delete ha_client;
+    delete s_ha_client;
     HighAvailabilityManager::thread_term();
     CHECK(HighAvailabilityManager::active()==false);
+}
+
+TEST_GROUP(flow_ha_state_test)
+{
+    void setup() { }
+    void teardown() { }
+};
+
+TEST(flow_ha_state_test, timing_test)
+{
+    struct timeval min_age = { 10, 0 };  // 10 second min age
+
+    FlowHAState::config_timers(min_age, min_age); // one-time config
+
+    s_packet_time.tv_sec = 1;
+    FlowHAState* state = new FlowHAState;
+    state->set_next_update();       // set the time for next update
+    s_packet_time.tv_sec = 2;       // advance the clock to 2 seconds
+    CHECK(state->sync_interval_elapsed() == false);
+    delete state;
+
+    s_packet_time.tv_sec = 1;
+    state = new FlowHAState;
+    CHECK(state->sync_interval_elapsed() == false);
+    s_packet_time.tv_sec = 22;      // advance the clock to 22 seconds
+    state->set_next_update();       // set the time for next update
+    CHECK(state->sync_interval_elapsed() == true);
+    delete state;
+
+}
+
+TEST(flow_ha_state_test, pending_test)
+{
+    FlowHAState state;
+
+    state.clear_pending(ALL_CLIENTS);
+    CHECK(state.check_pending(ALL_CLIENTS) == false);
+    state.set_pending(1);
+    CHECK(state.check_pending(1) == true);
+    state.clear_pending(1);
+    CHECK(state.check_pending(1) == false);
+    state.set_pending(1);
+    CHECK(state.check_pending(1) == true);
+    state.reset();
+    CHECK(state.check_pending(1) == false);
+}
+
+TEST(flow_ha_state_test, state_test)
+{
+    FlowHAState state;
+
+    CHECK(state.check_any(FlowHAState::MODIFIED|FlowHAState::STANDBY|
+        FlowHAState::DELETED|FlowHAState::CRITICAL|FlowHAState::MAJOR) == false);
+    CHECK(state.check_any(FlowHAState::NEW) == true);
+    CHECK(state.check_any(FlowHAState::NEW_SESSION) == true);
+    state.add(FlowHAState::MODIFIED);
+    CHECK(state.check_any(FlowHAState::MODIFIED) == true);
+    state.set(FlowHAState::MODIFIED|FlowHAState::MAJOR);
+    CHECK(state.check_any(FlowHAState::MODIFIED) == true);
+    state.reset();
+    CHECK(state.check_any(FlowHAState::MODIFIED|FlowHAState::NEW|
+        FlowHAState::STANDBY|FlowHAState::DELETED|FlowHAState::NEW_SESSION|
+        FlowHAState::CRITICAL|FlowHAState::MAJOR) == false);
 }
 
 TEST_GROUP(high_availability_test)
@@ -205,14 +319,18 @@ TEST_GROUP(high_availability_test)
         HighAvailabilityManager::pre_config_init();
         PortBitSet port_set;
         port_set.set(1);
-        HighAvailabilityManager::instantiate(&port_set, false);
+        struct timeval age = { 1, 0 };
+        struct timeval interval = { 0, 500000 };
+        HighAvailabilityManager::instantiate(&port_set, false, &age, &interval);
         HighAvailabilityManager::thread_init();
-        ha_client = new StreamHAClient;
+        s_ha_client = new StreamHAClient;
+        s_other_ha_client = new OtherHAClient;
     }
 
     void teardown()
     {
-        delete ha_client;
+        delete s_other_ha_client;
+        delete s_ha_client;
         HighAvailabilityManager::thread_term();
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
@@ -228,6 +346,16 @@ TEST(high_availability_test, receive_deletion)
     CHECK(memcmp((const void*)&s_flowkey, (const void*)&s_test_key, sizeof(s_test_key)) == 0);
 }
 
+TEST(high_availability_test, receive_update_stream_only)
+{
+    s_stream_consume_called = false;
+    s_message_content = (uint8_t*)s_update_stream_message;
+    s_message_length = sizeof(s_update_stream_message);
+    HighAvailabilityManager::process_receive();
+    CHECK(s_stream_consume_called == true);
+    CHECK(memcmp((const void*)&s_flowkey, (const void*)&s_test_key, sizeof(s_test_key)) == 0);
+}
+
 TEST(high_availability_test, transmit_deletion)
 {
     s_transmit_message_called = false;
@@ -235,9 +363,31 @@ TEST(high_availability_test, transmit_deletion)
     CHECK(s_transmit_message_called == true);
 }
 
+TEST(high_availability_test, transmit_update_no_update)
+{
+    s_transmit_message_called = false;
+    s_stream_update_required = false;
+    s_other_update_required = false;
+    HighAvailabilityManager::process_update(&s_flow, &s_pkthdr);
+    CHECK(s_transmit_message_called == false);
+}
+
 TEST(high_availability_test, transmit_update_stream_only)
 {
     s_transmit_message_called = false;
+    s_stream_update_required = true;
+    s_other_update_required = false;
+    HighAvailabilityManager::process_update(&s_flow, &s_pkthdr);
+    CHECK(s_transmit_message_called == true);
+}
+
+TEST(high_availability_test, transmit_update_both_update)
+{
+    s_transmit_message_called = false;
+    s_stream_update_required = true;
+    s_other_update_required = true;
+    CHECK(s_other_ha_client->handle == 1);
+    s_flow.ha_state->set_pending(s_other_ha_client->handle);
     HighAvailabilityManager::process_update(&s_flow, &s_pkthdr);
     CHECK(s_transmit_message_called == true);
 }

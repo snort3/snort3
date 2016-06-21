@@ -350,6 +350,11 @@ TEST(file_connector_msg_handle, test)
 
 int main(int argc, char** argv)
 {
-    return CommandLineTestRunner::RunAllTests(argc, argv);
+    int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
+    std::remove("file_connector_rx_b_receive");
+    std::remove("file_connector_tx_b_transmit");
+    std::remove("file_connector_rx_t_receive");
+    std::remove("file_connector_tx_t_transmit");
+    return return_value;
 }
 

@@ -37,3 +37,9 @@ subdirectory located here.  These include the following:
 * user - implements module for handling Stream user session.  This handles
   payload only, eg from a socket.  Does splitter based reassembly like TCP.
 
+HA functionality for each protocol (IP,ICMP,UDP, & TCP) is implemented in
+./<protocol>/<protocol>_ha.*.  The static class <protocol>HAManager instantiates and
+destroys the <protocol>HA class.  <protocol>HA is a subclass of ProtocolHA and interfaces
+with the high level Stream HA functionality. <protocol>HA is instantiated in each packet
+processing thread.
+
