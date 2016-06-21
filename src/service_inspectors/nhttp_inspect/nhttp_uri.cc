@@ -69,8 +69,8 @@ void NHttpUri::parse_uri()
         // Find the "://" and then the "/"
         int j;
         int k;
-        for (j = 0; (uri.start[j] != ':') && (j < uri.length); j++);
-        for (k = j+3; (uri.start[k] != '/') && (k < uri.length); k++);
+        for (j = 0; (j < uri.length) && (uri.start[j] != ':'); j++);
+        for (k = j+3; (k < uri.length) && (uri.start[k] != '/'); k++);
         if ((k < uri.length) && (uri.start[j+1] == '/') && (uri.start[j+2] == '/'))
         {
             uri_type = URI_ABSOLUTE;
@@ -102,8 +102,8 @@ void NHttpUri::parse_authority()
         return;
     }
     host.start = authority.start;
-    for (host.length = 0; (authority.start[host.length] != ':') && (host.length <
-        authority.length); host.length++);
+    for (host.length = 0; (host.length < authority.length) &&
+        (authority.start[host.length] != ':'); host.length++);
     if (host.length < authority.length)
     {
         port.length = authority.length - host.length - 1;
@@ -125,8 +125,8 @@ void NHttpUri::parse_abs_path()
         return;
     }
     path.start = abs_path.start;
-    for (path.length = 0; (abs_path.start[path.length] != '?') && (abs_path.start[path.length] !=
-        '#') && (path.length < abs_path.length); path.length++);
+    for (path.length = 0; (path.length < abs_path.length) && (abs_path.start[path.length] != '?')
+        && (abs_path.start[path.length] != '#'); path.length++);
     if (path.length == abs_path.length)
     {
         query.length = STAT_NOT_PRESENT;
@@ -136,8 +136,8 @@ void NHttpUri::parse_abs_path()
     if (abs_path.start[path.length] == '?')
     {
         query.start = abs_path.start + path.length + 1;
-        for (query.length = 0; (query.start[query.length] != '#') && (query.length <
-            abs_path.length - path.length - 1); query.length++);
+        for (query.length = 0; (query.length < abs_path.length - path.length - 1) &&
+            (query.start[query.length] != '#'); query.length++);
         if (abs_path.length - path.length - 1 - query.length == 0)
         {
             fragment.length = STAT_NOT_PRESENT;

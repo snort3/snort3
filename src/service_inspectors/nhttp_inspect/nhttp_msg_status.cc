@@ -51,7 +51,7 @@ void NHttpMsgStatus::parse_start_line()
     }
 
     int32_t first_end; // last whitespace in first clump of whitespace
-    for (first_end = 9; is_sp_tab[start_line.start[first_end]] && (first_end < start_line.length);
+    for (first_end = 9; (first_end < start_line.length) && is_sp_tab[start_line.start[first_end]];
         first_end++);
     first_end--;
 

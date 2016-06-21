@@ -153,7 +153,6 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
         if (cutter->get_octets_seen() == MAX_OCTETS)
         {
             session_data->infractions[source_id] += INF_ENDLESS_HEADER;
-            // FIXIT-H suspicion that this alert is never generated.
             session_data->events[source_id].generate_misformatted_http(data, length);
             // FIXIT-H need to process this data not just discard it.
             session_data->type_expected[source_id] = SEC_ABORT;
