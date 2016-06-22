@@ -1,3 +1,23 @@
+16/06/22 - build 201
+
+-- initial appid port - in progress
+-- add configure --enable-hardened-build
+-- add configure --pie (position independent executable)
+-- add new_http_inspect alert for loss of sync
+-- add peg counts for new_http_inspect
+-- add peg counts for sd_pattern
+-- add file_log inspector to log file events
+-- add filename support to file daq
+-- add high availability support for udp and icmp
+-- add support for safe C library
+-- continue porting of dce_rpc - smb transaction processing (part 2)
+-- various snort2lua updates and fixes
+-- fix default prime tables for internal hash functions
+-- fix new_http_inspect bounds issues
+-- fix icc warnings
+-- miscellaneous cmake and auto tools build fixes
+-- openssl is now a mandatory dependency
+
 16/06/10 - build 200
 
 -- continued porting of dce_rpc - smb transaction processing
