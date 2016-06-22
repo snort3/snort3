@@ -448,7 +448,7 @@ void FileContext::print_file_sha256(std::ostream& log)
     for (int i = 0; i < SHA256_HASH_SIZE; i+=2)
     {
         log << std::setfill('0') << std::setw(2) << std::hex << std::uppercase << (int)hash[i];
-        log << std::uppercase << (int)hash[i+1];
+        log << std::setfill('0') << std::setw(2) << std::hex << std::uppercase << (int)hash[i+1];
         if (i < SHA256_HASH_SIZE - 2)
             log << ' ';
     }
