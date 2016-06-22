@@ -232,5 +232,5 @@ int* RuleListToSortedArray(SF_LIST* rl)
 // printing
 //-------------------------------------------------------------------------
 
-char po_print_buf[MAXPORTS];
+char po_print_buf[MAX_PORTS];
 

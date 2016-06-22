@@ -20,7 +20,6 @@
 
 #include "decode_buffer.h"
 
-#include "utils/snort_bounds.h"
 #include "utils/util.h"
 
 

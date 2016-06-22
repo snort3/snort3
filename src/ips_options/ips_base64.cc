@@ -36,7 +36,6 @@
 #include "utils/util.h"
 #include "mime/decode_b64.h"
 #include "utils/util_unfold.h"
-#include "utils/snort_bounds.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"
 #include "framework/cursor.h"

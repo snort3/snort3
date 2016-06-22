@@ -52,7 +52,6 @@
 #include "packet_io/sfdaq_config.h"
 #include "sfip/sf_ip.h"
 #include "utils/dnet_header.h"
-#include "utils/snort_bounds.h"
 #include "utils/util.h"
 
 #define LOG_NONE    "none"

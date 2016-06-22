@@ -23,7 +23,6 @@
 
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
-#include "utils/snort_bounds.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
 #include "framework/cursor.h"

@@ -26,6 +26,7 @@ Optional Features:
     --enable-code-coverage  Whether to enable code coverage support
     --enable-hardened-build Detect and use compile-time hardening options
     --enable-pie            Attempt to produce a position-independent executable
+    --disable-safec         do not use libsafec bounds checking  even if available
     --disable-static-ips-actions
                             do not include ips actions in binary
     --disable-static-inspectors
@@ -164,6 +165,12 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-pie)
             append_cache_entry ENABLE_PIE               BOOL false
+            ;;
+        --disable-safec)
+            append_cache_entry ENABLE_SAFEC             BOOL false
+            ;;
+        --enable-safec)
+            append_cache_entry ENABLE_SAFEC             BOOL true
             ;;
         --disable-static-ips-actions)
             append_cache_entry STATIC_IPS_ACTIONS       BOOL false

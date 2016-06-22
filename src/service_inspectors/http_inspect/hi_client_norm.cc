@@ -55,7 +55,7 @@
 #include "hi_norm.h"
 #include "hi_util.h"
 #include "hi_return_codes.h"
-#include "utils/snort_bounds.h"
+#include "utils/safec.h"
 
 int hi_split_header_cookie(
     HI_SESSION*, u_char* header, int* i_header_len,
@@ -71,8 +71,8 @@ int hi_split_header_cookie(
     const u_char* this_header_start = raw_header;
     const u_char* this_header_end;
     int this_header_len = 0;
-    const u_char* header_end;
-    const u_char* cookie_end;
+    size_t header_rem = *i_header_len;
+    size_t cookie_rem = *i_cookie_len;
 
     if (!cookie || !i_header_len || !i_cookie_len)
         return HI_INVALID_ARG;
@@ -81,9 +81,7 @@ int hi_split_header_cookie(
     if (cookie->cookie_end > raw_header + i_raw_header_len)
         return HI_OUT_OF_BOUNDS;
 
-    header_end = (const u_char*)(header + *i_header_len);
     *i_header_len = 0;
-    cookie_end = (const u_char*)(cookie_header + *i_cookie_len);
     *i_cookie_len = 0;
 
     do
@@ -100,10 +98,11 @@ int hi_split_header_cookie(
         /* Copy out the headers from start to beginning of the cookie */
         if (this_header_len > 0)
         {
-            if (SafeMemcpy(header + *i_header_len, this_header_start, this_header_len, header,
-                header_end) == SAFEMEM_SUCCESS)
+            if (header_rem >= (unsigned)this_header_len)
             {
+                memcpy_s(header + *i_header_len, header_rem, this_header_start, this_header_len);
                 *i_header_len += this_header_len;
+                header_rem -= this_header_len;
             }
         }
         else
@@ -121,10 +120,11 @@ int hi_split_header_cookie(
         /* And copy the cookie */
         if (this_cookie_len > 0)
         {
-            if (SafeMemcpy(cookie_header + *i_cookie_len, cookie->cookie, this_cookie_len,
-                cookie_header, cookie_end) == SAFEMEM_SUCCESS)
+            if (cookie_rem >= (unsigned)this_cookie_len)
             {
+                memcpy_s(cookie_header + *i_cookie_len, cookie_rem, cookie->cookie, this_cookie_len);
                 *i_cookie_len += this_cookie_len;
+                cookie_rem -= this_header_len;
             }
         }
         else
@@ -176,10 +176,11 @@ int hi_split_header_cookie(
         /* Copy the remaining headers after the last cookie */
         if (this_header_len > 0)
         {
-            if (SafeMemcpy(header + *i_header_len, this_header_start, this_header_len, header,
-                header_end) == SAFEMEM_SUCCESS)
+            if (header_rem >= (unsigned)this_header_len)
             {
+                memcpy_s(header + *i_header_len, header_rem, this_header_start, this_header_len);
                 *i_header_len += this_header_len;
+                header_rem -= this_header_len;
             }
         }
         else
@@ -297,8 +298,8 @@ int hi_client_norm(HI_SESSION* session)
                 ClientReq->header_raw_size = MAX_URI;
             }
             /* Limiting to MAX_URI above should cause this to always return SAFEMEM_SUCCESS */
-            SafeMemcpy(RawHeaderBuf, ClientReq->header_raw, ClientReq->header_raw_size,
-                &RawHeaderBuf[0], &RawHeaderBuf[0] + iRawHeaderBufSize);
+            memcpy_s(RawHeaderBuf, iRawHeaderBufSize,
+                ClientReq->header_raw, ClientReq->header_raw_size);
         }
         iRawHeaderBufSize = ClientReq->header_raw_size;
         iRawCookieBufSize = 0;

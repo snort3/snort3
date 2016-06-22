@@ -58,7 +58,6 @@
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
 #include "utils/util.h"
-#include "utils/snort_bounds.h"
 #include "hash/sfghash.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_vartable.h"

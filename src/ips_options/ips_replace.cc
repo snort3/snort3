@@ -30,7 +30,6 @@ using namespace std;
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/thread_config.h"
-#include "utils/snort_bounds.h"
 #include "protocols/packet.h"
 #include "parser/parser.h"
 #include "parser/parse_utils.h"

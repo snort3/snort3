@@ -516,6 +516,13 @@ char* ObfuscateIpToText(const sfip_t* ip)
     return ip_buf;
 }
 
+// FIXIT-M add throttling so we don't spam syslog
+void log_safec_error(const char* msg, void*, int e)
+{
+    ErrorMessage("SafeC error %i: %s\n", e, msg);
+    assert(false);
+}
+
 #ifdef UNIT_TEST
 
 static void set_packet_time(time_t x)

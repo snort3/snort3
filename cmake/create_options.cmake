@@ -31,6 +31,7 @@ option ( MAKE_TEXT_DOC "Create the text documentation" ON )
 # security
 option ( ENABLE_HARDENED_BUILD "Detect and use compile-time hardening options" OFF )
 option ( ENABLE_PIE "Attempt to produce a position-independent executable" OFF )
+option ( ENABLE_SAFEC "Use bounds checked functions provided by libsafec" ON )
 
 # debugging
 option ( ENABLE_DEBUG_MSGS "Enable debug printing options (bugreports and developers only)" OFF )

@@ -43,14 +43,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include <string>
-
 #include "parser/parser.h"
 #include "main/snort_debug.h"
 #include "detection/detect.h"
 #include "log/log.h"
 #include "profiler/profiler.h"
-#include "utils/snort_bounds.h"
 #include "utils/util.h"
 #include "detection/detection_util.h"
 #include "stream/stream_api.h"
@@ -60,6 +57,7 @@
 #include "protocols/packet.h"
 #include "framework/data_bus.h"
 #include "framework/inspector.h"
+#include "utils/safec.h"
 
 #include "rpc_module.h"
 
@@ -406,17 +404,10 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
 
 static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, Packet*)
 {
-    int status;
-
-    status = SafeMemcpy(DecodeBuffer.data, data, RPC_FRAG_HDR_SIZE + fraglen,
-        DecodeBuffer.data, DecodeBuffer.data + sizeof(DecodeBuffer.data));
-
-    if (status != SAFEMEM_SUCCESS)
-    {
-        DebugMessage(DEBUG_RPC,
-            "STATEFUL: Failed to copy raw data to alt buffer\n");
+    if (RPC_FRAG_HDR_SIZE + fraglen > sizeof(DecodeBuffer.data))
         return RPC_STATUS__ERROR;
-    }
+
+    memcpy_s(DecodeBuffer.data, sizeof(DecodeBuffer.data), data, RPC_FRAG_HDR_SIZE + fraglen);
 
     DecodeBuffer.len = (RPC_FRAG_HDR_SIZE + fraglen);
 
@@ -425,7 +416,6 @@ static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, Packet*)
 
 static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, Packet*)
 {
-    int status;
     uint32_t fraghdr = htonl(RpcBufLen(&rsdata->frag));
 
     DecodeBuffer.data[0] = *((uint8_t*)&fraghdr);
@@ -435,17 +425,14 @@ static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, Packet*)
 
     DecodeBuffer.data[0] |= 0x80;
 
-    status = SafeMemcpy(DecodeBuffer.data+4, RpcBufData(&rsdata->frag),
-        RpcBufLen(&rsdata->frag), DecodeBuffer.data+4,
-        DecodeBuffer.data + sizeof(DecodeBuffer.data));
-
-    if (status != SAFEMEM_SUCCESS)
+    if (RpcBufLen(&rsdata->frag) > sizeof(DecodeBuffer.data) - 4)
     {
-        DebugMessage(DEBUG_RPC,
-            "STATEFUL: Failed to copy frag data to alt buffer\n");
         RpcBufClean(&rsdata->frag);
         return RPC_STATUS__ERROR;
     }
+
+    memcpy_s(DecodeBuffer.data + 4, sizeof(DecodeBuffer.data) - 4,
+        RpcBufData(&rsdata->frag), RpcBufLen(&rsdata->frag));
 
     if (RpcBufLen(&rsdata->frag) > RPC_MAX_BUF_SIZE)
         RpcBufClean(&rsdata->frag);
@@ -457,19 +444,13 @@ static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, Packet*)
 
 static RpcStatus RpcPrepSeg(RpcSsnData* rsdata, Packet*)
 {
-    int status;
-
-    status = SafeMemcpy(DecodeBuffer.data, RpcBufData(&rsdata->seg),
-        RpcBufLen(&rsdata->seg), DecodeBuffer.data,
-        DecodeBuffer.data + sizeof(DecodeBuffer.data));
-
-    if (status != SAFEMEM_SUCCESS)
+    if (RpcBufLen(&rsdata->seg) > sizeof(DecodeBuffer.data))
     {
-        DebugMessage(DEBUG_RPC,
-            "STATEFUL: Failed to copy seg data to alt buffer\n");
         RpcBufClean(&rsdata->seg);
         return RPC_STATUS__ERROR;
     }
+    memcpy_s(DecodeBuffer.data, sizeof(DecodeBuffer.data),
+        RpcBufData(&rsdata->seg), RpcBufLen(&rsdata->seg));
 
     if (RpcBufLen(&rsdata->seg) > RPC_MAX_BUF_SIZE)
     {
@@ -528,7 +509,6 @@ static RpcStatus RpcBufAdd(RpcBuffer* buf, const uint8_t* data, uint32_t dsize)
 {
     const uint32_t min_alloc = flush_size;
     uint32_t alloc_size = dsize;
-    int status;
 
     if (buf == NULL)
         return RPC_STATUS__ERROR;
@@ -564,29 +544,29 @@ static RpcStatus RpcBufAdd(RpcBuffer* buf, const uint8_t* data, uint32_t dsize)
             return RPC_STATUS__ERROR;
         }
 
-        status = SafeMemcpy(tmp, buf->data, buf->len, tmp, tmp + new_size);
-        RpcFree(buf->data, buf->size);
-        buf->data = tmp;
-        buf->size = new_size;
-
-        if (status != SAFEMEM_SUCCESS)
+        if (buf->len > new_size)
         {
-            DebugMessage(DEBUG_RPC,
-                "STATEFUL: Failed to move buffer data\n");
+            RpcFree(buf->data, buf->size);
+            buf->data = tmp;
+            buf->size = new_size;
+
             RpcBufClean(buf);
             return RPC_STATUS__ERROR;
         }
+        memcpy_s(tmp, new_size, buf->data, buf->len);
+
+        RpcFree(buf->data, buf->size);
+        buf->data = tmp;
+        buf->size = new_size;
     }
 
-    status = SafeMemcpy(buf->data + buf->len, data, dsize,
-        buf->data + buf->len, buf->data + buf->size);
-    if (status != SAFEMEM_SUCCESS)
+    if (dsize > buf->size - buf->len)
     {
-        DebugMessage(DEBUG_RPC,
-            "STATEFUL: Failed to copy data to buffer\n");
         RpcBufClean(buf);
         return RPC_STATUS__ERROR;
     }
+
+    memcpy_s(buf->data + buf->len, buf->size - buf->len, data, dsize);
 
     buf->len += dsize;
 
@@ -736,9 +716,7 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
     uint32_t decoded_len; /* our decoded length is always atleast a 0 byte header */
     uint32_t fraghdr;   /* Used to store the RPC fragment header data */
     int fragcount = 0;   /* How many fragment counters have we seen? */
-    int ret;
-    uint8_t* decode_buf_start = DecodeBuffer.data;
-    uint8_t* decode_buf_end = decode_buf_start + sizeof(DecodeBuffer.data);
+    size_t decode_buf_rem = sizeof(DecodeBuffer.data);
 
     if (psize < MIN_CALL_BODY_SZ)
     {
@@ -800,6 +778,7 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
     /* This is where decoded data will be written */
     norm_index += 4;
     decoded_len = 4;
+    decode_buf_rem -= 4;
 
     /* always make sure that we have enough data to process atleast
      * the header and that we only process at most, one fragment
@@ -877,14 +856,14 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
                 "length: %u size: %u decoded_len: %u\n",
                 length, psize, decoded_len);
 
-            ret = SafeMemcpy(norm_index, data_index, length, decode_buf_start, decode_buf_end);
-            if (ret != SAFEMEM_SUCCESS)
+            if (decode_buf_rem >= length)
             {
-                return 0;
-            }
+                memcpy_s(norm_index, decode_buf_rem, data_index, length);
 
-            norm_index += length;
-            data_index += length;
+                norm_index += length;
+                data_index += length;
+                decode_buf_rem -= length;
+            }
         }
     }
 

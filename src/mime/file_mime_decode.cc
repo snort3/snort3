@@ -24,7 +24,6 @@
 #include "decode_bit.h"
 #include "decode_qp.h"
 #include "decode_uu.h"
-#include "utils/snort_bounds.h"
 #include "utils/util_unfold.h"
 #include "utils/util.h"
 

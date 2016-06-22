@@ -62,23 +62,7 @@
 #include "asn1_util.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
-
-/*
- * Check to make sure that p is less than or equal to the ptr range
- * pointers
- *
- * 1 means it's in bounds, 0 means it's not
- */
-static inline int inBounds(
-    const uint8_t* start, const uint8_t* end, const uint8_t* p)
-{
-    if (p >= start && p < end)
-    {
-        return 1;
-    }
-
-    return 0;
-}
+#include "utils/snort_bounds.h"
 
 /*
 **  NAME

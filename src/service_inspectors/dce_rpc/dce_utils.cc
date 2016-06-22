@@ -20,6 +20,7 @@
 #include "dce_utils.h"
 #include "main/snort_debug.h"
 #include "utils/util.h"
+#include "utils/safec.h"
 
 /********************************************************************
  * Function: DCE2_GetValue()
@@ -344,13 +345,7 @@ void* DCE2_ReAlloc(void* old_mem, uint32_t old_size, uint32_t new_size)
 
     new_mem = snort_calloc(new_size);
 
-    if (SafeMemcpy(new_mem, old_mem, old_size, new_mem,
-        (void*)((uint8_t*)new_mem + new_size)) != SAFEMEM_SUCCESS)
-    {
-        DebugMessage(DEBUG_DCE_COMMON, "Failed to copy old memory into new memory.\n");
-        snort_free(new_mem);
-        return nullptr;
-    }
+    memcpy_s(new_mem, new_size, old_mem, old_size);
 
     snort_free(old_mem);
 
@@ -394,12 +389,10 @@ DCE2_Ret DCE2_BufferAddData(DCE2_Buffer* buf, const uint8_t* data,
         buf->size = new_size;
     }
 
-    if (SafeMemcpy(buf->data + data_offset, data, data_len, buf->data,
-        buf->data + buf->size) != SAFEMEM_SUCCESS)
-    {
-        DebugMessage(DEBUG_DCE_COMMON, "Failed to copy data into buffer.\n");
+    if (data_len > buf->size - data_offset)
         return DCE2_RET__ERROR;
-    }
+
+    memcpy_s(buf->data + data_offset, buf->size - data_offset, data, data_len);
 
     if ((data_offset + data_len) > buf->len)
         buf->len = data_offset + data_len;

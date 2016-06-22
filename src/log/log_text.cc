@@ -48,7 +48,6 @@
 #include "service_inspectors/http_inspect/hi_main.h"  // FIXIT-H bad dependency for Is*Data()
 
 #include "sfip/sf_ip.h"
-#include "utils/snort_bounds.h"
 #include "utils/util.h"
 #include "utils/util_net.h"
 

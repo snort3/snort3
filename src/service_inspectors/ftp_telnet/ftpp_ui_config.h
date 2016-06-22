@@ -42,7 +42,6 @@
 #include "sfip/sfip_t.h"
 #include "sfrt/sfrt.h"
 #include "utils/kmap.h"
-#include "utils/snort_bounds.h"
 
 /*
  * Defines

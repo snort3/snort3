@@ -19,7 +19,6 @@
 // Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
 #include <mime/decode_base.h>
-#include "utils/snort_bounds.h"
 #include "utils/util.h"
 
 void DataDecode::reset_decoded_bytes()

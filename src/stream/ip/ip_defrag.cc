@@ -92,8 +92,8 @@
 #include "profiler/profiler.h"
 #include "time/timersub.h"
 #include "utils/stats.h"
-#include "utils/snort_bounds.h"
 #include "detection/detect.h"
+#include "utils/safec.h"
 
 /*  D E F I N E S  **************************************************/
 
@@ -737,10 +737,9 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     Profile profile(fragRebuildPerfStats);
 
     static THREAD_LOCAL uint8_t encap_frag_cnt = 0;
+    size_t offset = 0;
     uint8_t* rebuild_ptr = NULL;  /* ptr to the start of the reassembly buffer */
-    const uint8_t* rebuild_end;  /* ptr to the end of the reassembly buffer */
     Fragment* frag;    /* frag pointer for managing fragments */
-    int ret = 0;
     Packet* dpkt;
 
 // XXX NOT YET IMPLEMENTED - debugging
@@ -756,7 +755,6 @@ static void FragRebuild(FragTracker* ft, Packet* p)
      */
     rebuild_ptr = (uint8_t*)dpkt->data;
     // the encoder ensures enough space for a maximum datagram
-    rebuild_end = (uint8_t*)dpkt->data + IP_MAXPACKET;
 
     if (p->ptrs.ip_api.is_ip4())
     {
@@ -776,16 +774,9 @@ static void FragRebuild(FragTracker* ft, Packet* p)
                 new_ip_hlen);
             iph->set_hlen(new_ip_hlen >> 2);
 
-            ret = SafeMemcpy(rebuild_ptr, ft->ip_options_data,
-                ft->ip_options_len, rebuild_ptr, rebuild_end);
-
-            if (ret == SAFEMEM_ERROR)
-            {
-                /*XXX: Log message, failed to copy */
-                ft->frag_flags = ft->frag_flags | FRAG_REBUILT;
-                return;
-            }
+            memcpy_s(rebuild_ptr, IP_MAXPACKET, ft->ip_options_data, ft->ip_options_len);
             rebuild_ptr += ft->ip_options_len;
+            offset += ft->ip_options_len;
         }
         else if (ft->copied_ip_options_len)
         {
@@ -831,15 +822,14 @@ static void FragRebuild(FragTracker* ft, Packet* p)
          */
         if (frag->size)
         {
-            ret = SafeMemcpy(rebuild_ptr+frag->offset, frag->data, frag->size,
-                rebuild_ptr, rebuild_end);
-
-            if (ret == SAFEMEM_ERROR)
+            if (frag->size > IP_MAXPACKET - frag->offset - offset)
             {
-                /*XXX: Log message, failed to copy */
                 ft->frag_flags = ft->frag_flags | FRAG_REBUILT;
                 return;
             }
+
+            memcpy_s(rebuild_ptr + frag->offset,
+                IP_MAXPACKET - frag->offset - offset, frag->data, frag->size);
         }
     }
 

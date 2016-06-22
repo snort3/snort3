@@ -32,7 +32,6 @@
 #include "main/snort_debug.h"
 #include "utils/boyer_moore.h"
 #include "utils/util.h"
-#include "utils/snort_bounds.h"
 #include "parser/parser.h"
 #include "parser/parse_utils.h"
 #include "hash/sfhashfcn.h"

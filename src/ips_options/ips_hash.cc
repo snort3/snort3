@@ -26,7 +26,6 @@
 
 #include "ips_byte_extract.h"
 #include "main/snort_types.h"
-#include "utils/snort_bounds.h"
 #include "parser/parser.h"
 #include "parser/parse_utils.h"
 #include "hash/sfhashfcn.h"

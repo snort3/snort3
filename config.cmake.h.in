@@ -296,6 +296,10 @@
 /* lzma available */
 #cmakedefine HAVE_LZMA 1
 
+/* safec available */
+#cmakedefine HAVE_SAFEC 1
+#cmakedefine ENABLE_SAFEC 1
+
 
 /* Library specific functions */
 

@@ -91,7 +91,6 @@ PerfMonitor::PerfMonitor(PerfMonModule* mod)
 {
     mod->get_config(config);
     perfmon_config = &config;
-
 }
 
 void PerfMonitor::show(SnortConfig*)

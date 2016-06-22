@@ -34,6 +34,7 @@
 #include "framework/codec.h"
 #include "main/snort.h"
 #include "framework/endianness.h"
+#include "utils/safec.h"
 
 THREAD_LOCAL int dce2_detected = 0;
 THREAD_LOCAL DCE2_CStack* dce2_pkt_stack = nullptr;
@@ -431,13 +432,11 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
     if ((data_overhead + data_len) > DCE2_REASSEMBLY_BUF_SIZE)
         data_len -= (data_overhead + data_len) - DCE2_REASSEMBLY_BUF_SIZE;
 
-    if (SafeMemcpy((void*)(rpkt->data + data_overhead),
-        (void*)data, (size_t)data_len, (void*)rpkt->data,
-        (void*)((uint8_t*)rpkt->data + DCE2_REASSEMBLY_BUF_SIZE)) != SAFEMEM_SUCCESS)
-    {
-        DebugMessage(DEBUG_DCE_COMMON, "Failed to copy data into reassembly buffer.\n");
+    if (data_len > DCE2_REASSEMBLY_BUF_SIZE - data_overhead)
         return nullptr;
-    }
+
+    memcpy_s((void*)(rpkt->data + data_overhead),
+        DCE2_REASSEMBLY_BUF_SIZE - data_overhead, data, data_len);
 
     rpkt->dsize = data_len + data_overhead;
     return rpkt;
@@ -458,12 +457,11 @@ DCE2_Ret DCE2_AddDataToRpkt(Packet* rpkt, const uint8_t* data, uint32_t data_len
     if ((payload_end + data_len) > pkt_data_end)
         data_len = pkt_data_end - payload_end;
 
-    if (SafeMemcpy((void*)payload_end, (void*)data, (size_t)data_len,
-        (void*)payload_end, (void*)pkt_data_end) != SAFEMEM_SUCCESS)
-    {
-        DebugMessage(DEBUG_DCE_COMMON, "Failed to copy data into reassembly packet.\n");
+    if (data_len > DCE2_REASSEMBLY_BUF_SIZE - rpkt->dsize)
         return DCE2_RET__ERROR;
-    }
+
+    memcpy_s((void*)(payload_end), DCE2_REASSEMBLY_BUF_SIZE - rpkt->dsize,
+        data, data_len);
 
     rpkt->dsize += (uint16_t)data_len;
     return DCE2_RET__SUCCESS;

@@ -40,7 +40,6 @@
 #include "detection/detection_util.h"
 #include "framework/data_bus.h"
 #include "utils/util.h"
-#include "utils/snort_bounds.h"
 
 struct MimeToken
 {

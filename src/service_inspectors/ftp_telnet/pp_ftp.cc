@@ -321,7 +321,7 @@ static int getIP2428(
 
         case 3:      /* check port */
             port = atoi(tok);
-            if ( port < 0 || port > MAXPORTS-1 )
+            if ( port < 0 || port > MAX_PORTS-1 )
                 return FTPP_MALFORMED_IP_PORT;
             *portRet = port;
             fieldMask |= 4;

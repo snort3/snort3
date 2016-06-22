@@ -31,7 +31,6 @@
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "main/snort_debug.h"
-#include "utils/snort_bounds.h"
 #include "utils/util.h"
 #include "flow/flow_control.h"
 #include "flow/flow_cache.h"

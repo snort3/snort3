@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2005-2013 Sourcefire, Inc.
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,29 +15,32 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// safec.h author Carter Waxman <cwaxman@cisco.com>
 
-// port_utils.h derived from sfportobject.h by Marc Noron
+#ifndef UTILS_SAFEC_H
+#define UTILS_SAFEC_H
 
-#ifndef PORT_UTILS_H
-#define PORT_UTILS_H
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
-#include "framework/bits.h"
-#include "protocols/packet.h"
-#include "utils/sflsq.h"
-#include "utils/snort_bounds.h"
+//FIXIT-M combine these macros in the build foo 
+#if defined(HAVE_SAFEC) && defined(ENABLE_SAFEC)
 
-struct PortObject;
-struct PortObjectItem;
+extern "C"
+{
+#include <libsafec/safe_lib.h>
+}
 
-int PortObjectBits(PortBitSet&, PortObject*);
-SF_LIST* PortObjectItemListFromBits(const PortBitSet&, int n);
+#else
 
-int* RuleListToSortedArray(SF_LIST*);
+#define memcpy_s(dst, dsize, src, ssize) memcpy(dst, src, ssize)
+#define memmove_s(dst, dsize, src, ssize) memmove(dst, src, ssize)
 
-int integer_compare(const void* int1, const void* int2);
+#define set_mem_constraint_handler_s(x)
+#define set_str_constraint_handler_s(x)
 
-// global for printing so we don't put so many bytes on the stack
-extern char po_print_buf[MAX_PORTS];  // FIXIT-L delete this; replace with local stringstream
+#endif
 
 #endif
 

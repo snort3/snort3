@@ -65,6 +65,7 @@ using namespace std;
 #include "helpers/process.h"
 #include "helpers/swapper.h"
 #include "time/periodic.h"
+#include "utils/safec.h"
 
 #ifdef UNIT_TEST
 #include "catch/unit_test.h"
@@ -943,6 +944,9 @@ static void snort_main()
 
 int main(int argc, char* argv[])
 {
+    set_mem_constraint_handler_s(log_safec_error);
+    set_str_constraint_handler_s(log_safec_error);
+
     const char* s = getenv("SNORT_PROMPT");
 
     if ( s )

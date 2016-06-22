@@ -1,7 +1,7 @@
 find_package(Threads REQUIRED)
 
 # FIXIT-M  remove.
-add_definitions(" -std=c++11  -DHAVE_PTHREADS  ")
+add_definitions(" -std=c++11 -DHAVE_PTHREADS  ")
 
 if ( BUILD_SNPRINTF )
     SET (SNPRINTF_SOURCES
@@ -15,6 +15,7 @@ endif ( BUILD_SNPRINTF )
 set( UTIL_INCLUDES
     bitop.h
     dnet_header.h
+    safec.h
     segment_mem.h
     sflsq.h
     sfmemcap.h

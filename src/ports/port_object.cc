@@ -609,7 +609,7 @@ void PortObjectPrintEx(PortObject* po,
     unsigned i;
 
     /* static for printing so we don't put so many bytes on the stack */
-    static char po_print_buf[MAXPORTS];  // FIXIT-L delete this; replace with local stringstream
+    static char po_print_buf[MAX_PORTS];  // FIXIT-L delete this; replace with local stringstream
 
     int bufsize = sizeof(po_print_buf);
     po_print_buf[0] = '\0';

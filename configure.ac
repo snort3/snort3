@@ -224,56 +224,6 @@ CXX_THREAD_LOCAL()
 #fi
 
 #--------------------------------------------------------------------------
-# compile-time security features
-#--------------------------------------------------------------------------
-
-# Based on Debian's hardening options (https://wiki.debian.org/Hardening)
-# Desired options:
-# CPPFLAGS: -Wdate-time -D_FORTIFY_SOURCE=2
-# CFLAGS/CXXFLAGS: -fPIE -fstack-protector-strong -Wformat -Werror=format-security
-# LDFLAGS: -fPIE -pie -Wl,-z,relro -Wl,-z,now
-
-AC_ARG_ENABLE(hardened_build,
-    AS_HELP_STRING([--enable-hardened-build], [Detect and use compile-time hardening options]))
-
-if test "x$enable_hardened_build" = "xyes"; then
-
-    save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS -Werror"
-
-    AX_CHECK_PREPROC_FLAG([-Wdate-time], [HARD_CPPFLAGS="$HARD_CPPFLAGS -Wdate-time"])
-
-    AX_CHECK_PREPROC_FLAG([-D_FORTIFY_SOURCE=2], [HARD_CPPFLAGS="$HARD_CPPFLAGS -D_FORTIFY_SOURCE=2"])
-
-    AX_CHECK_COMPILE_FLAG([-fstack-protector-strong], [HARD_CFLAGS="$HARD_CFLAGS -fstack-protector-strong"])
-
-    AX_CHECK_COMPILE_FLAG([-Wformat], [HARD_CFLAGS="$HARD_CFLAGS -Wformat"])
-
-    AX_CHECK_COMPILE_FLAG([-Werror=format-security], [HARD_CFLAGS="$HARD_CFLAGS -Werror=format-security"])
-
-    AX_CHECK_LINK_FLAG([-Wl,-z,relro], [HARD_LDFLAGS="$HARD_LDFLAGS -Wl,-z,relro"])
-
-    AX_CHECK_LINK_FLAG([-Wl,-z,now], [HARD_LDFLAGS="$HARD_LDFLAGS -Wl,-z,now"])
-
-    CPPFLAGS="$save_CPPFLAGS"
-
-fi
-
-# PIE support gets its own switch since it requires any static libraries Snort wants to link in to
-# be built with PIC, which may or may not be feasible for the user.
-
-AC_ARG_ENABLE(pie,
-    AS_HELP_STRING([--enable-pie], [Attempt to produce a position-independent executable]))
-
-if test "x$enable_pie" = "xyes"; then
-
-    AX_CHECK_COMPILE_FLAG([-fPIE], [HARD_CFLAGS="$HARD_CFLAGS -fPIE"])
-
-    AX_CHECK_LINK_FLAG([-fPIE -pie], [HARD_LDFLAGS="$HARD_LDFLAGS -fPIE -pie"])
-
-fi
-
-#--------------------------------------------------------------------------
 # typedefs, structures, and compiler characteristics
 #--------------------------------------------------------------------------
 
@@ -493,6 +443,64 @@ AC_ARG_ENABLE(address-sanitizer,
     [
         ASAN_CCXFLAGS="-fsanitize=address -fno-omit-frame-pointer"
     ])
+
+#--------------------------------------------------------------------------
+# compile-time security features
+#--------------------------------------------------------------------------
+
+# Based on Debian's hardening options (https://wiki.debian.org/Hardening)
+# Desired options:
+# CPPFLAGS: -Wdate-time -D_FORTIFY_SOURCE=2
+# CFLAGS/CXXFLAGS: -fPIE -fstack-protector-strong -Wformat -Werror=format-security
+# LDFLAGS: -fPIE -pie -Wl,-z,relro -Wl,-z,now
+
+AC_ARG_ENABLE(hardened_build,
+    AS_HELP_STRING([--enable-hardened-build], [Detect and use compile-time hardening options]))
+
+if test "x$enable_hardened_build" = "xyes"; then
+
+    save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS -Werror"
+
+    AX_CHECK_PREPROC_FLAG([-Wdate-time], [HARD_CPPFLAGS="$HARD_CPPFLAGS -Wdate-time"])
+
+    AX_CHECK_PREPROC_FLAG([-D_FORTIFY_SOURCE=2], [HARD_CPPFLAGS="$HARD_CPPFLAGS -D_FORTIFY_SOURCE=2"])
+
+    AX_CHECK_COMPILE_FLAG([-fstack-protector-strong], [HARD_CFLAGS="$HARD_CFLAGS -fstack-protector-strong"])
+
+    AX_CHECK_COMPILE_FLAG([-Wformat], [HARD_CFLAGS="$HARD_CFLAGS -Wformat"])
+
+    AX_CHECK_COMPILE_FLAG([-Werror=format-security], [HARD_CFLAGS="$HARD_CFLAGS -Werror=format-security"])
+
+    AX_CHECK_LINK_FLAG([-Wl,-z,relro], [HARD_LDFLAGS="$HARD_LDFLAGS -Wl,-z,relro"])
+
+    AX_CHECK_LINK_FLAG([-Wl,-z,now], [HARD_LDFLAGS="$HARD_LDFLAGS -Wl,-z,now"])
+
+    CPPFLAGS="$save_CPPFLAGS"
+
+fi
+
+# PIE support gets its own switch since it requires any static libraries Snort wants to link in to
+# be built with PIC, which may or may not be feasible for the user.
+
+AC_ARG_ENABLE(pie,
+    AS_HELP_STRING([--enable-pie], [Attempt to produce a position-independent executable]))
+
+if test "x$enable_pie" = "xyes"; then
+
+    AX_CHECK_COMPILE_FLAG([-fPIE], [HARD_CFLAGS="$HARD_CFLAGS -fPIE"])
+
+    AX_CHECK_LINK_FLAG([-fPIE -pie], [HARD_LDFLAGS="$HARD_LDFLAGS -fPIE -pie"])
+
+fi
+
+AC_ARG_ENABLE(safec,
+    AS_HELP_STRING([--disable-safec], [Do not use libsafec bounds checking even if available]),
+    enable_safec="$enableval", enable_safec="yes")
+
+if test "x$enable_safec" = "xyes"; then
+    AC_DEFINE(ENABLE_SAFEC, [1], [enable libsafec functions if present])
+fi
 
 #--------------------------------------------------------------------------
 # C++11 threads
@@ -940,6 +948,31 @@ if test "x$LZMA_LIB" != "xno"; then
     if test "x$LZMA_HEADERS" != "xno"; then
         AC_DEFINE([HAVE_LZMA],[1],[can build lzma code])
         LIBS="${LIBS} -llzma"
+    fi
+fi
+
+#--------------------------------------------------------------------------
+# safec (optional)
+#--------------------------------------------------------------------------
+AC_MSG_CHECKING([for safec pkg-config presence])
+PKG_CHECK_EXISTS([safec-1.0], [ have_safec_pkgconfig="yes" ], [ have_safec_pkgconfig="no" ])
+AC_MSG_RESULT(${have_safec_pkgconfig})
+
+if test "${have_safec_pkgconfig}" = "yes" ; then
+    SAFEC_CFLAGS=`${PKG_CONFIG} --cflags safec-1.0`
+    SAFEC_LDFLAGS=`${PKG_CONFIG} --libs-only-L safec-1.0`
+fi
+
+CPPFLAGS="${CPPFLAGS} ${SAFEC_CFLAGS}"
+LDFLAGS="${LDFLAGS} ${SAFEC_LDFLAGS}"
+
+AC_CHECK_HEADERS(libsafec/safe_lib.h, SAFEC_HEADERS="yes", SAFEC_HEADERS="no")
+AC_CHECK_LIB(safec-1.0, memcpy_s, SAFEC_LIB="yes", SAFEC_LIB="no")
+
+if test "x$SAFEC_LIB" != "xno"; then
+    if test "x$SAFEC_HEADERS" != "xno"; then
+        AC_DEFINE([HAVE_SAFEC],[1],[can build safec code])
+        LIBS="${LIBS} -lsafec-1.0"
     fi
 fi
 

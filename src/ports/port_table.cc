@@ -41,7 +41,6 @@
 #include "detection/sfrim.h"
 #include "parser/parser.h"
 #include "utils/util.h"
-#include "utils/snort_bounds.h"
 #include "hash/sfhashfcn.h"
 
 #define PTBL_LRC_DEFAULT 10

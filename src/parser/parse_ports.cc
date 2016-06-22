@@ -18,6 +18,7 @@
 //--------------------------------------------------------------------------
 
 #include "parse_ports.h"
+#include "protocols/packet.h"
 #include "ports/port_table.h"
 #include "main/snort_debug.h"
 #include "utils/snort_bounds.h"
@@ -342,7 +343,7 @@ static PortObject* _POParsePort(POParser* pop)
             (c == ','))
         {
             /* Open ended range, highport is 65k */
-            hport = MAXPORTS-1;
+            hport = MAX_PORTS-1;
             PortObjectAddRange(po, lport, hport, 0);
             return po;
         }

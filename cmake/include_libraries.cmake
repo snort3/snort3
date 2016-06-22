@@ -17,4 +17,5 @@ find_package(Asciidoc QUIET)
 find_package(DBLATEX QUIET)
 find_package(Ruby QUIET 1.8.7)
 find_package(HS QUIET)
+find_package(SafeC QUIET)
 

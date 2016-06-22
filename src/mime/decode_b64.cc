@@ -22,7 +22,6 @@
 
 #include "decode_b64.h"
 
-#include "utils/snort_bounds.h"
 #include "utils/util.h"
 #include "utils/util_unfold.h"
 

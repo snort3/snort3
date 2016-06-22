@@ -57,7 +57,7 @@
 #include "hi_return_codes.h"
 
 #include "detection/detection_util.h"
-#include "utils/snort_bounds.h"
+#include "utils/safec.h"
 #include "utils/util_utf.h"
 
 int hi_server_norm(HI_SESSION* session, HttpSessionData* hsd)
@@ -107,8 +107,8 @@ int hi_server_norm(HI_SESSION* session, HttpSessionData* hsd)
                 ServerResp->header_raw_size = MAX_URI;
             }
             /* Limiting to MAX_URI above should cause this to always return SAFEMEM_SUCCESS */
-            SafeMemcpy(RawHeaderBuf, ServerResp->header_raw, ServerResp->header_raw_size,
-                &RawHeaderBuf[0], &RawHeaderBuf[0] + iRawHeaderBufSize);
+            memcpy_s(RawHeaderBuf, iRawHeaderBufSize,
+                ServerResp->header_raw, ServerResp->header_raw_size);
         }
         iRawHeaderBufSize = ServerResp->header_raw_size;
         iRawCookieBufSize = 0;
@@ -321,12 +321,13 @@ int hi_server_norm(HI_SESSION* session, HttpSessionData* hsd)
                 //Save before the <script> begins
                 if (js_start > ptr)
                 {
-                    status = SafeBoundsMemmove(HttpDecodeBuf.data+index, ptr, (js_start - ptr),
-                        HttpDecodeBuf.data, HttpDecodeBuf.data + sizeof(HttpDecodeBuf.data));
-                    if (status == SAFEMEM_SUCCESS)
-                        index += (js_start - ptr);
-                    else
+                    if ((unsigned long)(js_start - ptr) > sizeof(HttpDecodeBuf.data) - index)
                         break;
+
+                    memmove_s(HttpDecodeBuf.data + index,
+                        sizeof(HttpDecodeBuf.data) - index, ptr, js_start - ptr);
+
+                    index += js_start - ptr;
                 }
 
                 ptr = js_start;
@@ -355,12 +356,12 @@ int hi_server_norm(HI_SESSION* session, HttpSessionData* hsd)
 
         if (js_present)
         {
-            if ( ptr < end )
+            if ( ptr < end && (sizeof(HttpDecodeBuf.data) - index >= (unsigned long)(end - ptr)))
             {
-                status = SafeBoundsMemmove(HttpDecodeBuf.data+index, ptr, (end - ptr),
-                    HttpDecodeBuf.data, HttpDecodeBuf.data + sizeof(HttpDecodeBuf.data));
-                if (status == SAFEMEM_SUCCESS)
-                    index += (end - ptr);
+                memmove_s(HttpDecodeBuf.data + index,
+                    sizeof(HttpDecodeBuf.data) - index, ptr, end - ptr);
+
+                index += end - ptr;
             }
             SetHttpDecode((uint16_t)index);
             ServerResp->body = HttpDecodeBuf.data;

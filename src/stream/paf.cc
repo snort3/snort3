@@ -36,7 +36,6 @@
 #include "main/snort_debug.h"
 #include "stream/stream.h"
 #include "stream/stream_api.h"
-#include "utils/snort_bounds.h"
 
 //--------------------------------------------------------------------
 // private state

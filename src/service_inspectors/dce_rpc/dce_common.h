@@ -37,7 +37,7 @@ extern THREAD_LOCAL DCE2_CStack* dce2_pkt_stack;
 
 #define GID_DCE2 133
 #define DCE2_PKT_STACK__SIZE  10
-#define DCE2_REASSEMBLY_BUF_SIZE 65535
+#define DCE2_REASSEMBLY_BUF_SIZE 65535u
 
 enum DCE2_Policy
 {

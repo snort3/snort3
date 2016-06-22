@@ -20,7 +20,7 @@
 
 #include <mime/decode_base.h>
 #include "decode_uu.h"
-#include "utils/snort_bounds.h"
+#include "utils/safec.h"
 #include "utils/util.h"
 #include "utils/util_unfold.h"
 
@@ -55,13 +55,14 @@ DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
 
     if (encode_avail > 0)
     {
-        if (SafeMemcpy((buffer->get_encode_buff() + buffer->get_prev_encoded_bytes()),
-            start, act_encode_size, buffer->get_encode_buff(), (buffer->get_encode_buff()+
-                encode_avail + buffer->get_prev_encoded_bytes())) != SAFEMEM_SUCCESS)
+        if (act_encode_size > encode_avail)
         {
             reset_decode_state();
             return DECODE_FAIL;
         }
+
+        memcpy_s((buffer->get_encode_buff() + buffer->get_prev_encoded_bytes()),
+            encode_avail, start, act_encode_size);
     }
 
     act_encode_size = act_encode_size + buffer->get_prev_encoded_bytes();

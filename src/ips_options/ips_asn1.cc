@@ -65,7 +65,6 @@
 #include "protocols/packet.h"
 #include "parser/parser.h"
 #include "utils/util.h"
-#include "utils/snort_bounds.h"
 #include "ips_options/asn1_util.h"
 #include "hash/sfhashfcn.h"
 #include "detection/treenodes.h"

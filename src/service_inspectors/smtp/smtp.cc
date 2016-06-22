@@ -23,7 +23,6 @@
 #endif
 
 #include <assert.h>
-#include <string.h>
 #include <stdio.h>
 #include <sys/types.h>
 
@@ -36,11 +35,11 @@
 #include "parser/parser.h"
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
-#include "utils/snort_bounds.h"
 #include "target_based/snort_protocols.h"
 #include "protocols/ssl.h"
 #include "loggers/unified2_common.h"
 #include "detection/detection_util.h"
+#include "utils/safec.h"
 
 #include "smtp_module.h"
 #include "smtp_paf.h"
@@ -313,21 +312,15 @@ static int AddCmd(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum typ
 
     /* allocate enough memory for new commmand - alloc one extra for NULL entry */
     // FIXIT-L this constant reallocation is not necessary; use vector
-    cmds = (SMTPToken*)snort_calloc(config->num_cmds + 1, sizeof(*cmds));
-    cmd_config = (SMTPCmdConfig*)snort_calloc(config->num_cmds, sizeof(*cmd_config));
+    cmds = (SMTPToken*)snort_calloc((config->num_cmds + 1) * sizeof(*cmds));
+    cmd_config = (SMTPCmdConfig*)snort_calloc((config->num_cmds + 1) * sizeof(*cmd_config));
 
     /* copy existing commands into newly allocated memory */
-    int ret = SafeMemcpy(cmds, config->cmds, (config->num_cmds - 1) * sizeof(*cmds),
-        cmds, cmds + (config->num_cmds - 1));
+    memcpy_s(cmds, (config->num_cmds) * sizeof(*cmds),
+        config->cmds, (config->num_cmds) * sizeof(*cmds) - 1);
 
-    if (ret != SAFEMEM_SUCCESS)
-        FatalError("Failed to memory copy SMTP command structure\n");
-
-    ret = SafeMemcpy(cmd_config, config->cmd_config, (config->num_cmds - 1) *
-        sizeof(*cmd_config), cmd_config, cmd_config + (config->num_cmds - 1));
-
-    if (ret != SAFEMEM_SUCCESS)
-        FatalError("Failed to memory copy SMTP command structure\n");
+    memcpy_s(cmd_config, config->num_cmds * sizeof(*cmd_config),
+        config->cmd_config, config->num_cmds - 1);
 
     /* add new command to cmds cmd_config doesn't need anything added - this
      * will probably be done by a calling function */

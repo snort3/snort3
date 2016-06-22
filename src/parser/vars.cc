@@ -51,7 +51,6 @@
 #include "detection/signature.h"
 #include "detection/sfrim.h"
 #include "utils/util.h"
-#include "utils/snort_bounds.h"
 #include "utils/sflsq.h"
 #include "ports/port_object.h"
 #include "protocols/packet.h"

@@ -48,7 +48,6 @@
 #include "parse_stream.h"
 #include "vars.h"
 
-#include "utils/snort_bounds.h"
 #include "utils/util.h"
 #include "utils/sflsq.h"
 #include "ports/port_object.h"

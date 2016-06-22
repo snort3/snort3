@@ -101,7 +101,6 @@ using namespace std;
 #include "protocols/packet.h"
 #include "parser/parser.h"
 #include "utils/util.h"
-#include "utils/snort_bounds.h"
 #include "profiler/profiler.h"
 #include "hash/sfhashfcn.h"
 #include "detection/treenodes.h"

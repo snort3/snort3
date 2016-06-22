@@ -49,7 +49,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <errno.h>
@@ -64,6 +63,7 @@
 #include "utils/util.h"
 #include "utils/util_unfold.h"
 #include "detection/detection_util.h"
+#include "utils/safec.h"
 
 #define HEADER_NAME__COOKIE "Cookie"
 #define HEADER_LENGTH__COOKIE 6
@@ -1477,7 +1477,6 @@ static inline int HTTP_CopyExtraDataTosession(const uint8_t* start, int length, 
     uint8_t* alt_buf;
     uint32_t alt_size;
     uint32_t* alt_len;
-    int ret;
 
     if (length <= 0)
         return -1;
@@ -1505,12 +1504,7 @@ static inline int HTTP_CopyExtraDataTosession(const uint8_t* start, int length, 
 
     *alt_len = 0;
 
-    ret = SafeMemcpy(alt_buf, start, length, alt_buf, alt_buf + alt_size);
-
-    if (ret != SAFEMEM_SUCCESS)
-    {
-        return -1;
-    }
+    memcpy_s(alt_buf, alt_size, start, length);
 
     *alt_len += length;
 

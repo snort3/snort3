@@ -24,7 +24,6 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <string.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -33,8 +32,8 @@
 #include "smtp.h"
 #include "smtp_config.h"
 #include "stream/stream_api.h"
-#include "utils/snort_bounds.h"
 #include "detection/detection_util.h"
+#include "utils/safec.h"
 
 static THREAD_LOCAL DataBuffer DecodeBuf;
 
@@ -92,7 +91,6 @@ int SMTP_CopyToAltBuffer(const uint8_t* start, int length)
     uint8_t* alt_buf;
     int alt_size;
     unsigned int* alt_len;
-    int ret;
 
     /* if we make a call to this it means we want to use the alt buffer
      * regardless of whether we copy any data into it or not - barring a failure */
@@ -106,14 +104,14 @@ int SMTP_CopyToAltBuffer(const uint8_t* start, int length)
     alt_size = sizeof(DecodeBuf.data);
     alt_len = &DecodeBuf.len;
 
-    ret = SafeMemcpy(alt_buf + *alt_len, start, length, alt_buf, alt_buf + alt_size);
-
-    if (ret != SAFEMEM_SUCCESS)
+    if ((unsigned long)length > alt_size - *alt_len)
     {
         //SetDetectLimit(p, 0);
         smtp_normalizing = false;
         return -1;
     }
+
+    memcpy_s(alt_buf + *alt_len, alt_size - *alt_len, start, length);
     *alt_len += length;
 
     return 0;

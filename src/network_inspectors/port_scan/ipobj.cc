@@ -37,6 +37,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "protocols/packet.h"
 #include "utils/util.h"
 #include "utils/snort_bounds.h"
 #include "sfip/sf_ip.h"
@@ -269,7 +270,7 @@ static int port_parse(char* portstr, PORTSET* portset)
         }
 
         /* check to see if port is out of range */
-        if ( port_hi > MAXPORTS-1 || port_lo > MAXPORTS-1)
+        if ( port_hi > MAX_PORTS-1 || port_lo > MAX_PORTS-1)
         {
             snort_free(port_begin);
             return -4;

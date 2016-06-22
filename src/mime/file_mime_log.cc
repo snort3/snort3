@@ -29,11 +29,10 @@
 #include "config.h"
 #endif
 
-#include "main/snort_types.h"
 #include "utils/util.h"
-#include "utils/snort_bounds.h"
 #include "file_api/file_api.h"
 #include "file_api/file_flows.h"
+#include "utils/safec.h"
 
 #define MAX_FILE                             1024
 #define MAX_EMAIL                            1024
@@ -154,14 +153,15 @@ int MailLogState::log_file_name(const uint8_t* start, int length, bool* disp_con
         }
     }
 
-    ret = SafeMemcpy(alt_buf + *alt_len, start, length, alt_buf, alt_buf + alt_size);
-
-    if (ret != SAFEMEM_SUCCESS)
+    if (length > log_avail)
     {
         if (*alt_len != 0)
             *alt_len = *alt_len - 1;
         return -1;
     }
+
+    if (length > 0)
+        memcpy_s(alt_buf + *alt_len, log_avail, start, length);
 
     file_current = *alt_len;
     *alt_len += length;
@@ -195,7 +195,6 @@ int MailLogState::log_email_hdrs(const uint8_t* start, int length)
 {
     int log_avail = 0;
     uint8_t* log_buf;
-    int ret = 0;
 
     if (length <= 0)
         return -1;
@@ -204,23 +203,18 @@ int MailLogState::log_email_hdrs(const uint8_t* start, int length)
     log_buf = (uint8_t*)emailHdrs;
 
     if (log_avail <= 0)
-    {
-        return -1;
-    }
+        return 0;
 
-    if (length > log_avail )
-    {
+    if (length > log_avail)
         length = log_avail;
-    }
 
     /* appended by the EOL \r\n */
 
-    ret = SafeMemcpy(log_buf + hdrs_logged, start, length, log_buf, log_buf+ log_depth);
-
-    if (ret != SAFEMEM_SUCCESS)
-    {
+    if (length > log_avail)
         return -1;
-    }
+
+    if (length > 0)
+        memcpy_s(log_buf + hdrs_logged, log_avail, start, length);
 
     hdrs_logged += length;
 
@@ -236,7 +230,6 @@ int MailLogState::log_email_id(const uint8_t* start, int length, EmailUserType t
     uint8_t* alt_buf;
     int alt_size;
     uint16_t* alt_len;
-    int ret;
     int log_avail=0;
     const uint8_t* tmp_eol;
 
@@ -286,14 +279,15 @@ int MailLogState::log_email_id(const uint8_t* start, int length, EmailUserType t
         *alt_len = *alt_len + 1;
     }
 
-    ret = SafeMemcpy(alt_buf + *alt_len, start, length, alt_buf, alt_buf + alt_size);
-
-    if (ret != SAFEMEM_SUCCESS)
+    if (length > log_avail)
     {
         if (*alt_len != 0)
             *alt_len = *alt_len - 1;
         return -1;
     }
+
+    if (length > 0)
+        memcpy_s(alt_buf + *alt_len, log_avail, start, length);
 
     *alt_len += length;
 

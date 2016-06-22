@@ -21,7 +21,6 @@
 #include <mime/decode_base.h>
 #include "decode_qp.h"
 
-#include "utils/snort_bounds.h"
 #include "utils/util.h"
 #include "utils/util_unfold.h"
 

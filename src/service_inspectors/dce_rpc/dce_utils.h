@@ -20,10 +20,9 @@
 #ifndef DCE_UTILS_H
 #define DCE_UTILS_H
 
-#include <string.h>
 #include <ctype.h>
 #include "main/snort_types.h"
-#include "utils/snort_bounds.h"
+#include "utils/util.h"
 
 /********************************************************************
  * Macros

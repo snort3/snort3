@@ -6,6 +6,7 @@ x_includedir = $(pkgincludedir)/utils
 x_include_HEADERS = \
 bitop.h \
 dnet_header.h \
+safec.h \
 segment_mem.h \
 sflsq.h \
 sfmemcap.h \
@@ -30,9 +31,6 @@ util_net.cc util_net.h \
 util_unfold.cc util_unfold.h \
 util_utf.cc util_utf.h
 
-libutil_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
+libutils_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
 
-if BUILD_CPPUTESTS
 SUBDIRS = test
-endif
-

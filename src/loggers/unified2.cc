@@ -53,7 +53,6 @@
 #include "parser/parser.h"
 #include "events/event.h"
 #include "utils/util.h"
-#include "utils/snort_bounds.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "stream/stream_api.h"
@@ -61,6 +60,7 @@
 #include "protocols/vlan.h"
 #include "protocols/icmp4.h"
 #include "log/obfuscator.h"
+#include "utils/safec.h"
 
 using namespace std;
 
@@ -104,8 +104,6 @@ constexpr unsigned u2_buf_sz =
 
 // TBD - is performance any better if these buffers are off the heap?
 static THREAD_LOCAL uint8_t write_pkt_buffer[u2_buf_sz];
-
-#define write_pkt_end (write_pkt_buffer + u2_buf_sz)
 
 #define MAX_XDATA_WRITE_BUF_LEN \
     (MAX_XFF_WRITE_BUF_LENGTH - \
@@ -239,7 +237,7 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, Event* 
 {
     Serial_Unified2_Header hdr;
     Unified2IDSEvent alertdata;
-    uint32_t write_len = sizeof(Serial_Unified2_Header) + sizeof(Unified2IDSEvent);
+    uint32_t write_len = sizeof(hdr) + sizeof(alertdata);
 
     memset(&alertdata, 0, sizeof(alertdata));
 
@@ -302,25 +300,14 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, Event* 
     if ( config->limit && (u2.current + write_len) > config->limit )
         Unified2RotateFile(config);
 
-    hdr.length = htonl(sizeof(Unified2IDSEvent));
+    hdr.length = htonl(sizeof(alertdata));
     hdr.type = htonl(UNIFIED2_IDS_EVENT_VLAN);
 
-    if (SafeMemcpy(write_pkt_buffer, &hdr, sizeof(Serial_Unified2_Header),
-        write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy Serial_Unified2_Header. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return;
-    }
+    memcpy_s(write_pkt_buffer, sizeof(write_pkt_buffer), &hdr, sizeof(hdr));
 
-    if (SafeMemcpy(write_pkt_buffer + sizeof(Serial_Unified2_Header),
-        &alertdata, sizeof(Unified2IDSEvent),
-        write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy Unified2IDSEvent. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return;
-    }
+    size_t offset = sizeof(hdr);
+
+    memcpy_s(write_pkt_buffer + offset, sizeof(write_pkt_buffer) - offset, &alertdata, sizeof(alertdata));
 
     Unified2Write(write_pkt_buffer, write_len, config);
 }
@@ -399,22 +386,12 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, Event* 
     hdr.length = htonl(sizeof(Unified2IDSEventIPv6));
     hdr.type = htonl(UNIFIED2_IDS_EVENT_IPV6_VLAN);
 
-    if (SafeMemcpy(write_pkt_buffer, &hdr, sizeof(Serial_Unified2_Header),
-        write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy Serial_Unified2_Header. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return;
-    }
+    memcpy_s(write_pkt_buffer, sizeof(write_pkt_buffer), &hdr, sizeof(hdr));
 
-    if (SafeMemcpy(write_pkt_buffer + sizeof(Serial_Unified2_Header),
-        &alertdata, sizeof(Unified2IDSEventIPv6),
-        write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy Unified2IDSEventIPv6. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return;
-    }
+    size_t offset = sizeof(hdr);
+
+    memcpy_s(write_pkt_buffer + offset, sizeof(write_pkt_buffer) - offset,
+        &alertdata, sizeof(alertdata));
 
     Unified2Write(write_pkt_buffer, write_len, config);
 }
@@ -430,12 +407,9 @@ static void _WriteExtraData(Unified2Config* config,
     SerialUnified2ExtraData alertdata;
     Unified2ExtraDataHdr alertHdr;
     uint8_t write_buffer[MAX_XDATA_WRITE_BUF_LEN];
-    uint8_t* write_end = NULL;
     uint8_t* ptr = NULL;
 
-    uint32_t write_len;
-
-    write_len = sizeof(Serial_Unified2_Header) + sizeof(Unified2ExtraDataHdr);
+    uint32_t write_len = sizeof(hdr) + sizeof(alertHdr);
 
     alertdata.sensor_id = 0;
     alertdata.event_id = htonl(event_id);
@@ -448,55 +422,32 @@ static void _WriteExtraData(Unified2Config* config,
 
     write_len = write_len + sizeof(alertdata) + len;
     alertHdr.event_type = htonl(EVENT_TYPE_EXTRA_DATA);
-    alertHdr.event_length = htonl(write_len - sizeof(Serial_Unified2_Header));
+    alertHdr.event_length = htonl(write_len - sizeof(hdr));
+
+    if (write_len > sizeof(write_buffer))
+        return;
 
     if ( config->limit && (u2.current + write_len) > config->limit )
         Unified2RotateFile(config);
 
-    hdr.length = htonl(write_len - sizeof(Serial_Unified2_Header));
+    hdr.length = htonl(write_len - sizeof(hdr));
     hdr.type = htonl(UNIFIED2_EXTRA_DATA);
-
-    write_end = write_buffer + sizeof(write_buffer);
 
     ptr = write_buffer;
 
-    if (SafeMemcpy(ptr, &hdr, sizeof(hdr),
-        write_buffer, write_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy Serial_Unified2_Header. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return;
-    }
+    memcpy_s(ptr, sizeof(write_buffer), &hdr, sizeof(hdr));
 
-    ptr = ptr +  sizeof(hdr);
+    size_t offset = sizeof(hdr);
 
-    if (SafeMemcpy(ptr, &alertHdr, sizeof(alertHdr),
-        write_buffer, write_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy Unified2ExtraDataHdr. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return;
-    }
+    memcpy_s(ptr + offset, sizeof(write_buffer) - offset, &alertHdr, sizeof(alertHdr));
 
-    ptr = ptr + sizeof(alertHdr);
+    offset += sizeof(alertHdr);
 
-    if (SafeMemcpy(ptr, &alertdata, sizeof(alertdata),
-        write_buffer, write_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy SerialUnified2ExtraData. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return;
-    }
+    memcpy_s(ptr + offset, sizeof(write_buffer) - offset, &alertdata, sizeof(alertdata));
 
-    ptr = ptr + sizeof(alertdata);
+    offset += sizeof(alertdata);
 
-    if (SafeMemcpy(ptr, buffer, len,
-        write_buffer, write_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy Gzip Decompressed Buffer. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return;
-    }
+    memcpy_s(ptr + offset, sizeof(write_buffer) - offset, buffer, len);
 
     Unified2Write(write_buffer, write_len, config);
 }
@@ -536,7 +487,7 @@ static void _Unified2LogPacketAlert(
     Serial_Unified2_Header hdr;
     Serial_Unified2Packet logheader;
     uint32_t pkt_length = 0;
-    uint32_t write_len = sizeof(Serial_Unified2_Header) + sizeof(Serial_Unified2Packet) - 4;
+    uint32_t write_len = sizeof(hdr) + sizeof(Serial_Unified2Packet) - 4;
 
     logheader.sensor_id = 0;
     logheader.linktype = u2.base_proto;
@@ -576,34 +527,24 @@ static void _Unified2LogPacketAlert(
     hdr.length = htonl(sizeof(Serial_Unified2Packet) - 4 + pkt_length);
     hdr.type = htonl(UNIFIED2_PACKET);
 
-    if (SafeMemcpy(write_pkt_buffer, &hdr, sizeof(Serial_Unified2_Header),
-        write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy Serial_Unified2_Header. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return;
-    }
+    memcpy_s(write_pkt_buffer, sizeof(write_pkt_buffer), &hdr, sizeof(hdr));
 
-    if (SafeMemcpy(write_pkt_buffer + sizeof(Serial_Unified2_Header),
-        &logheader, sizeof(Serial_Unified2Packet) - 4,
-        write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy Serial_Unified2Packet. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return;
-    }
+    size_t offset = sizeof(hdr);
+
+    memcpy_s(write_pkt_buffer + offset, sizeof(write_pkt_buffer) - offset,
+        &logheader, sizeof(logheader) - 4);
+
+    offset += sizeof(logheader) - 4;
 
     if (pkt_length != 0)
     {
-        uint8_t *start = write_pkt_buffer + sizeof(Serial_Unified2_Header) + sizeof(Serial_Unified2Packet) - 4;
-
-        if (SafeMemcpy(start, p->is_data() ? p->data : p->pkt, pkt_length,
-            write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-        {
-            ErrorMessage("%s(%d) Failed to copy packet data. "
-                "Not writing unified2 event.\n", __FILE__, __LINE__);
+        if (pkt_length > sizeof(write_pkt_buffer) - offset)
             return;
-        }
+
+        uint8_t *start = write_pkt_buffer + offset;
+
+        memcpy_s(start, sizeof(write_pkt_buffer) - offset,
+            p->is_data() ? p->data : p->pkt, pkt_length);
 
         if ( p->obfuscator )
         {

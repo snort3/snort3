@@ -21,7 +21,6 @@
 #include <mime/decode_base.h>
 #include "decode_bit.h"
 
-#include "utils/snort_bounds.h"
 #include "utils/util.h"
 
 void BitDecode::reset_decode_state()

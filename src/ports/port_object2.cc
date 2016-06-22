@@ -40,7 +40,6 @@
 #include "main/snort_debug.h"
 #include "detection/sfrim.h"
 #include "parser/parser.h"
-#include "utils/snort_bounds.h"
 #include "utils/util.h"
 #include "hash/sfhashfcn.h"
 
