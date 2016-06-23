@@ -20,6 +20,8 @@
 
 #include "ha_module.h"
 
+#include <cmath>
+
 #include "ha.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
