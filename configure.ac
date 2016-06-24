@@ -1207,7 +1207,6 @@ src/catch/Makefile \
 src/time/Makefile \
 src/profiler/Makefile \
 src/utils/Makefile \
-src/utils/test/Makefile \
 lua/Makefile \
 doc/Makefile \
 daqs/Makefile \

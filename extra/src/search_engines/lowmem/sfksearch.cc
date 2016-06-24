@@ -42,9 +42,9 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/thread.h"
-#include "sfksearch.h"
-#include "utils/snort_bounds.h"
 #include "utils/util.h"
+
+#include "sfksearch.h"
 
 static void KTrieFree(KTRIENODE* n);
 
@@ -76,10 +76,8 @@ static void* KTRIE_MALLOC(int n)
 */
 static void KTRIE_FREE(void* p)
 {
-    if (p == NULL)
-        return;
-
-    snort_free(p);
+    if ( p )
+        snort_free(p);
 }
 
 /*
@@ -143,16 +141,13 @@ int KTriePatternCount(KTRIE_STRUCT* k)
  */
 void KTrieDelete(KTRIE_STRUCT* k)
 {
-    KTRIEPATTERN* p = NULL;
-    KTRIEPATTERN* pnext = NULL;
-    int i;
-
-    if (k == NULL)
+    if ( !k )
         return;
 
-    p = k->patrn;
+    KTRIEPATTERN* p = k->patrn;
+    KTRIEPATTERN* pnext = nullptr;
 
-    while (p != NULL)
+    while ( p )
     {
         pnext = p->next;
 
@@ -178,7 +173,7 @@ void KTrieDelete(KTRIE_STRUCT* k)
         p = pnext;
     }
 
-    for (i = 0; i < KTRIE_ROOT_NODES; i++)
+    for ( int i = 0; i < KTRIE_ROOT_NODES; i++ )
         KTrieFree(k->root[i]);
 
     KTRIE_FREE(k);
@@ -189,7 +184,7 @@ void KTrieDelete(KTRIE_STRUCT* k)
  */
 static void KTrieFree(KTRIENODE* n)
 {
-    if (n == NULL)
+    if ( !n )
         return;
 
     KTrieFree(n->child);
@@ -204,7 +199,7 @@ static void KTrieFree(KTRIENODE* n)
 static KTRIEPATTERN* KTrieNewPattern(const uint8_t* P, unsigned n)
 {
     if (n < 1)
-        return NULL;
+        return nullptr;
 
     KTRIEPATTERN* p = (KTRIEPATTERN*)KTRIE_MALLOC(sizeof(*p));
 
@@ -215,19 +210,10 @@ static KTRIEPATTERN* KTrieNewPattern(const uint8_t* P, unsigned n)
 
     /* Save Case specific version */
     p->Pcase = (uint8_t*)KTRIE_MALLOC(n);
+    memcpy(p->Pcase, P, n);
 
-    int ret = SafeMemcpy(p->Pcase, P, n, p->Pcase, p->Pcase + n);
-
-    if (ret != SAFEMEM_SUCCESS)
-    {
-        KTRIE_FREE(p->Pcase);
-        KTRIE_FREE(p->P);
-        KTRIE_FREE(p);
-        return NULL;
-    }
-
-    p->n    = n;
-    p->next = NULL;
+    p->n = n;
+    p->next = nullptr;
 
     return p;
 }
@@ -263,7 +249,7 @@ int KTrieAddPattern(
     pnew->nocase = nocase;
     pnew->negative = negative;
     pnew->user = user;
-    pnew->mnext  = NULL;
+    pnew->mnext = nullptr;
 
     ts->npats++;
     ts->memory += sizeof(KTRIEPATTERN) + 2 * n;  /* Case and nocase */
@@ -406,13 +392,12 @@ static int KTrieInsert(KTRIE_STRUCT* ts, KTRIEPATTERN* px)
 */
 static void Build_Bad_Character_Shifts(KTRIE_STRUCT* kt)
 {
-    int i,k;
     KTRIEPATTERN* plist;
 
     /* Calc the min pattern size */
     kt->bcSize = 32000;
 
-    for ( plist=kt->patrn; plist!=NULL; plist=plist->next )
+    for ( plist=kt->patrn; plist; plist=plist->next )
     {
         if ( plist->n < kt->bcSize )
         {
@@ -423,7 +408,7 @@ static void Build_Bad_Character_Shifts(KTRIE_STRUCT* kt)
     /*
     *  Initialze the Bad Character shift table.
     */
-    for (i = 0; i < KTRIE_ROOT_NODES; i++)
+    for ( int i = 0; i < KTRIE_ROOT_NODES; i++ )
     {
         kt->bcShift[i] = (unsigned short)kt->bcSize;
     }
@@ -431,11 +416,11 @@ static void Build_Bad_Character_Shifts(KTRIE_STRUCT* kt)
     /*
     *  Finish the Bad character shift table
     */
-    for ( plist=kt->patrn; plist!=NULL; plist=plist->next )
+    for ( plist=kt->patrn; plist; plist=plist->next )
     {
         int shift, cindex;
 
-        for ( k=0; k<kt->bcSize; k++ )
+        for ( int k=0; k<kt->bcSize; k++ )
         {
             shift = kt->bcSize - 1 - k;
 
@@ -479,7 +464,7 @@ static int KTrieBuildMatchStateNode(
         }
 
         /* Last call to finalize the tree for this root */
-        ts->agent->build_tree(sc, NULL, &root->pkeyword->rule_option_tree);
+        ts->agent->build_tree(sc, nullptr, &root->pkeyword->rule_option_tree);
     }
 
     /* for child of this root */
@@ -709,11 +694,7 @@ int KTrieSearch(
         return KTrieSearchBC(ks, T, n, match, context);
 }
 
-/*
-*
-*    TEST DRIVER FOR KEYWORD TRIE
-*
-*/
+// TEST DRIVER FOR KEYWORD TRIE
 #ifdef KTRIE_MAIN
 
 char** gargv;
@@ -728,9 +709,6 @@ int match(unsigned id, int index, void* context)
     return 0;
 }
 
-/*
-*
-*/
 int main(int argc, char** argv)
 {
     int i;

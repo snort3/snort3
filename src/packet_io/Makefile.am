@@ -15,4 +15,3 @@ sfdaq_module.h \
 trough.cc \
 trough.h
 
-#libpacket_io_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default

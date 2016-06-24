@@ -20,5 +20,3 @@ if ENABLE_UNIT_TESTS
 libsfrt_a_SOURCES += sfrt_test.cc
 endif
 
-#libsfrt_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
-

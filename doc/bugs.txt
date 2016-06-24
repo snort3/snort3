@@ -14,8 +14,6 @@
     src/service_inspectors/back_orifice/back_orifice.cc:231:25: warning:
     iteration 930u invokes undefined behavior [-Waggressive-loop-optimizations]
 
-* openssl is required for cmake builds.
-
 * Building with clang and autotools on Linux will show the following
   warning many times.  Please ignore.
 
@@ -104,6 +102,8 @@
 * The hext DAQ does not support embedded quotes in text lines (use hex
   lines as a workaround).
 
-* Stream TCP alert squash mechanism incorrectly squashes alerts for
+* stream_tcp alert squash mechanism incorrectly squashes alerts for
   different TCP packets.
+
+* stream_tcp gap count is broken.
 

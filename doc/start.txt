@@ -52,6 +52,9 @@ Optional:
 * source-highlight from http://www.gnu.org/software/src-highlite/ to
   generate the dev guide
 
+* safec from https://sourceforge.net/projects/safeclib/ for runtime bounds
+  checks on certain legacy C-library calls.
+
 
 === Building
 

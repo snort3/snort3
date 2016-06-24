@@ -42,8 +42,6 @@ ADD_LIBRARY( utils STATIC
     util.cc
     util_jsnorm.cc 
     util_jsnorm.h
-    util_math.cc 
-    util_math.h
     util_net.cc 
     util_net.h
     util_utf.cc 
@@ -60,4 +58,3 @@ install (FILES ${UTIL_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/utils"
 )
 
-add_subdirectory ( test )

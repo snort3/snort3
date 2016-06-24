@@ -294,10 +294,8 @@ int hi_client_norm(HI_SESSION* session)
         if (ClientReq->header_raw_size)
         {
             if (ClientReq->header_raw_size > MAX_URI)
-            {
                 ClientReq->header_raw_size = MAX_URI;
-            }
-            /* Limiting to MAX_URI above should cause this to always return SAFEMEM_SUCCESS */
+
             memcpy_s(RawHeaderBuf, iRawHeaderBufSize,
                 ClientReq->header_raw, ClientReq->header_raw_size);
         }

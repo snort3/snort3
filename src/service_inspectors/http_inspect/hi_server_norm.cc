@@ -103,10 +103,8 @@ int hi_server_norm(HI_SESSION* session, HttpSessionData* hsd)
         if (ServerResp->header_raw_size)
         {
             if (ServerResp->header_raw_size > MAX_URI)
-            {
                 ServerResp->header_raw_size = MAX_URI;
-            }
-            /* Limiting to MAX_URI above should cause this to always return SAFEMEM_SUCCESS */
+
             memcpy_s(RawHeaderBuf, iRawHeaderBufSize,
                 ServerResp->header_raw, ServerResp->header_raw_size);
         }

@@ -26,11 +26,7 @@ snort_bounds.h \
 stats.cc \
 util.cc \
 util_jsnorm.cc util_jsnorm.h \
-util_math.cc util_math.h \
 util_net.cc util_net.h \
 util_unfold.cc util_unfold.h \
 util_utf.cc util_utf.h
 
-libutils_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
-
-SUBDIRS = test
