@@ -159,6 +159,10 @@ DCE2_Ret DCE2_SmbInitFileTracker(DCE2_SmbSsnData*,
 void DCE2_SmbRequestTrackerDataFree(void*);
 DCE2_SmbFileTracker* DCE2_SmbFindFileTracker(DCE2_SmbSsnData*,
     const uint16_t, const uint16_t, const uint16_t);
+DCE2_Ret DCE2_SmbProcessRequestData(DCE2_SmbSsnData*, const uint16_t,
+    const uint8_t*, uint32_t, uint64_t);
+DCE2_Ret DCE2_SmbProcessResponseData(DCE2_SmbSsnData*,
+    const uint8_t*, uint32_t);
 
 /********************************************************************
  * Inline functions

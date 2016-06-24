@@ -14,6 +14,10 @@ set( FILE_LIST
    dce_smb_module.h 
    dce_smb_paf.cc 
    dce_smb_paf.h
+   dce_smb_transaction.cc
+   dce_smb_transaction.h
+   dce_smb_transaction_utils.cc
+   dce_smb_transaction_utils.h
    dce_smb_utils.cc
    dce_smb_utils.h
    dce_tcp.cc

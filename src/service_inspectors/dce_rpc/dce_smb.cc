@@ -23,6 +23,7 @@
 #include "dce_smb_paf.h"
 #include "dce_smb_module.h"
 #include "dce_smb_commands.h"
+#include "dce_smb_transaction.h"
 #include "dce_list.h"
 #include "main/snort_debug.h"
 #include "file_api/file_service.h"

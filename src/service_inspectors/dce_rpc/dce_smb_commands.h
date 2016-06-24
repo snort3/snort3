@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// dce_smb_utils.h author Maya Dagon <mdagon@cisco.com>
+// dce_smb_commands.h author Maya Dagon <mdagon@cisco.com>
 // based on work by Todd Wease
 
 #ifndef DCE_SMB_COMMANDS_H
@@ -61,21 +61,6 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData*, const SmbNtHdr*,
 DCE2_Ret DCE2_SmbTreeDisconnect(DCE2_SmbSsnData*, const SmbNtHdr*,
     const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
 DCE2_Ret DCE2_SmbLogoffAndX(DCE2_SmbSsnData*, const SmbNtHdr*,
-    const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
-DCE2_Ret DCE2_SmbTransactionReq(DCE2_SmbSsnData*,
-    DCE2_SmbTransactionTracker*, const uint8_t*, uint32_t,
-    const uint8_t*, uint32_t);
-DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData*, const SmbNtHdr*,
-    const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
-DCE2_Ret DCE2_SmbTransaction2(DCE2_SmbSsnData*, const SmbNtHdr*,
-    const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
-DCE2_Ret DCE2_SmbNtTransact(DCE2_SmbSsnData*, const SmbNtHdr*,
-    const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
-DCE2_Ret DCE2_SmbTransactionSecondary(DCE2_SmbSsnData*, const SmbNtHdr*,
-    const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
-DCE2_Ret DCE2_SmbTransaction2Secondary(DCE2_SmbSsnData*, const SmbNtHdr*,
-    const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
-DCE2_Ret DCE2_SmbNtTransactSecondary(DCE2_SmbSsnData*, const SmbNtHdr*,
     const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
 
 #endif

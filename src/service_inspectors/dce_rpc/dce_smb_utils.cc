@@ -1066,3 +1066,75 @@ void DCE2_SmbQueueTmpFileTracker(DCE2_SmbSsnData* ssd,
     }
 }
 
+DCE2_Ret DCE2_SmbProcessRequestData(DCE2_SmbSsnData* ssd,
+    const uint16_t fid, const uint8_t* data_ptr, uint32_t data_len, uint64_t offset)
+{
+    DCE2_SmbFileTracker* ftracker = DCE2_SmbGetFileTracker(ssd, fid);
+
+    DebugFormat(DEBUG_DCE_SMB,
+        "Entering Processing request data with Fid: 0x%04X, ftracker ? %s ~~~~~~~~~~~~~~~~~\n",
+        fid,ftracker ? "TRUE" : "FALSE");
+    if (ftracker == nullptr)
+        return DCE2_RET__ERROR;
+
+    DebugFormat(DEBUG_DCE_SMB,
+        "Processing request data with Fid: 0x%04X, is_ipc ? %s ~~~~~~~~~~~~~~~~~\n", ftracker->fid,
+        ftracker->is_ipc ? "TRUE" : "FALSE");
+
+    // Set this in case of chained commands or reassembled packet
+    ssd->cur_rtracker->ftracker = ftracker;
+
+    if (ftracker->is_ipc)
+    {
+        // Maximum possible fragment length is 16 bit
+        if (data_len > UINT16_MAX)
+            data_len = UINT16_MAX;
+
+        DCE2_CoProcess(&ssd->sd, ftracker->fp_co_tracker, data_ptr, (uint16_t)data_len);
+
+        if (!ftracker->fp_used)
+            ftracker->fp_used = true;
+    }
+    else
+    {
+        ftracker->ff_file_offset = offset;
+        // FIXIT-M uncomment when file processing is ported
+        // DCE2_SmbProcessFileData(ssd, ftracker, data_ptr, data_len, true);
+    }
+
+    DebugMessage(DEBUG_DCE_SMB, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+
+    return DCE2_RET__SUCCESS;
+}
+
+DCE2_Ret DCE2_SmbProcessResponseData(DCE2_SmbSsnData* ssd,
+    const uint8_t* data_ptr, uint32_t data_len)
+{
+    DCE2_SmbFileTracker* ftracker = ssd->cur_rtracker->ftracker;
+
+    if (ftracker == nullptr)
+        return DCE2_RET__ERROR;
+
+    DebugFormat(DEBUG_DCE_SMB,
+        "Processing response data with Fid: 0x%04X ~~~~~~~~~~~~~~~~\n", ftracker->fid);
+
+    if (ftracker->is_ipc)
+    {
+        // Maximum possible fragment length is 16 bit
+        if (data_len > UINT16_MAX)
+            data_len = UINT16_MAX;
+
+        DCE2_CoProcess(&ssd->sd, ftracker->fp_co_tracker, data_ptr, (uint16_t)data_len);
+    }
+    else
+    {
+        ftracker->ff_file_offset = ssd->cur_rtracker->file_offset;
+        // FIXIT-M uncomment when file processing is ported
+        //DCE2_SmbProcessFileData(ssd, ftracker, data_ptr, data_len, false);
+    }
+
+    DebugMessage(DEBUG_DCE_SMB, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+
+    return DCE2_RET__SUCCESS;
+}
+
