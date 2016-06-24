@@ -25,6 +25,7 @@
 #include "application_ids.h"
 
 #include "utils/util.h"
+#include "appid_module.h"
 
 #define SSH_PORT    22
 
@@ -567,6 +568,7 @@ inprocess:
     case SERVICE_SUCCESS:
         ssh_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
             APP_ID_SSH, ss->vendor, ss->version, nullptr);
+        appid_stats.ssh_flows++;
         return SERVICE_SUCCESS;
 
     case SERVICE_NOMATCH:

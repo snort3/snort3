@@ -43,6 +43,7 @@ const PegInfo appid_pegs[] =
     { "ftps_flows", "count of ftps flows discovered by appid" },
     { "smtp_flows", "count of smtp flows discovered by appid" },
     { "smtps_flows", "count of smtps flows discovered by appid" },
+    { "ssh_flows", "count of ssh flows discovered by appid" },
     { "ssl_flows", "count of ssl flows discovered by appid" },
     { "telnet_flows", "count of telnet flows discovered by appid" },
     { nullptr, nullptr }
