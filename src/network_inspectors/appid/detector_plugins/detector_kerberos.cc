@@ -993,7 +993,7 @@ static CLIENT_APP_RETCODE krb_client_validate(const uint8_t* data, uint16_t size
 #endif
 
 #ifdef APP_ID_USES_REASSEMBLED
-    kerberos_detector_mod.streamAPI->response_flush_stream(pkt);
+    stream.flush_response_flush(pkt);
 #endif
 
     if (!size)
@@ -1073,7 +1073,7 @@ static int krb_server_validate(ServiceValidationArgs* args)
         goto inprocess;
 
 #ifdef APP_ID_USES_REASSEMBLED
-    kerberos_detector_mod.streamAPI->response_flush_stream(pkt);
+    stream.flush_response_flush(pkt);
 #endif
 
     if (!size)

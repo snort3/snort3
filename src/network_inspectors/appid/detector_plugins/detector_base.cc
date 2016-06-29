@@ -43,12 +43,9 @@ extern RNADetectorValidationModule pattern_detector_mod;
 
 static RNADetectorValidationModule* static_detector_list[]
 {
-#ifdef REMOVED_WHILE_NOT_IN_USE
     &imap_detector_mod,
     &pop3_detector_mod,
     &kerberos_detector_mod
-#endif
-    nullptr
 };
 
 /**callback function for initializing static and dynamic detectors.

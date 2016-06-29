@@ -42,6 +42,9 @@ struct AppIdStats
     PegCount dns_tcp_flows;
     PegCount ftp_flows;
     PegCount ftps_flows;
+    PegCount imap_flows;
+    PegCount imaps_flows;
+    PegCount pop_flows;
     PegCount smtp_flows;
     PegCount smtps_flows;
     PegCount ssh_flows;

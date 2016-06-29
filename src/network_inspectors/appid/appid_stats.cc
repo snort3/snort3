@@ -382,10 +382,10 @@ static void dumpStats2()
     {
         if (bucket->appRecordCnt)
         {
-            buffSize = bucket->appRecordCnt * sizeof(struct AppIdStatOutputRecord) +
-                4 * sizeof(uint32_t);
+            buffSize = ( bucket->appRecordCnt * sizeof(struct AppIdStatOutputRecord) ) +
+                ( 4 * sizeof(uint32_t) );
             header.type = UNIFIED2_IDS_EVENT_APPSTAT;
-            header.length = buffSize - 2*sizeof(uint32_t);
+            header.length = buffSize - ( 2 * sizeof(uint32_t));
             buffer = (uint8_t*)snort_calloc(buffSize);
 #           ifdef DEBUG_STATS
             fprintf(SF_DEBUG_FILE, "Write App Records %u Size: %lu\n",
@@ -414,7 +414,7 @@ static void dumpStats2()
                 record = (struct AppIdStatRecord*)node->data;
                 app_id = record->app_id;
 
-                recBuffPtr = (struct AppIdStatOutputRecord*)buffPtr;
+                recBuffPtr = (struct AppIdStatOutputRecord*) buffPtr;
 
                 if (app_id >= 2000000000)
                 {
@@ -428,7 +428,7 @@ static void dumpStats2()
                     appName = entry->appName;
                     if (cooked_client)
                     {
-                        snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_cl_%s",appName);
+                        snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_cl_%s", appName);
                         tmpBuff[MAX_EVENT_APPNAME_LEN-1] = 0;
                         appName = tmpBuff;
                     }
@@ -441,19 +441,15 @@ static void dumpStats2()
                 {
                     ErrorMessage("invalid appid in appStatRecord (%u)\n", record->app_id);
                     if (cooked_client)
-                    {
                         snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_err_cl_%u",app_id);
-                    }
                     else
-                    {
                         snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_err_%u",app_id); // ODP out of
-                                                                                    // sync?
-                    }
-                    tmpBuff[MAX_EVENT_APPNAME_LEN-1] = 0;
+
+                    tmpBuff[MAX_EVENT_APPNAME_LEN - 1] = 0;
                     appName = tmpBuff;
                 }
 
-                memcpy(recBuffPtr->appName, appName, MAX_EVENT_APPNAME_LEN);
+                memcpy(recBuffPtr->appName, appName, strlen(appName));
 
                 /**buffPtr++ = htonl(record->app_id); */
                 recBuffPtr->initiatorBytes = htonl(record->initiatorBytes);

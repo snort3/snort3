@@ -491,7 +491,7 @@ static void ServiceRegisterPattern(RNAServiceValidationFCN fcn,
     }
     if (!li)
     {
-        li = (RNAServiceElement*)snort_calloc(sizeof(RNAServiceElement));
+        li = new RNAServiceElement;
         li->next = *list;
         *list = li;
         li->validate = fcn;
@@ -912,10 +912,8 @@ void ReconfigureServices(AppIdConfig* pConfig)
     ServiceInit(pConfig);
 }
 
-void CleanupServices(AppIdConfig* /*pConfig*/)
+void CleanupServices(AppIdConfig* pConfig)
 {
-// FIXIT-H: Without this defined, pConfig is unused parameter
-#ifdef RNA_FULL_CLEANUP
     ServicePatternData* pattern;
     RNAServiceElement* se;
     ServiceMatch* sm;
@@ -953,17 +951,17 @@ void CleanupServices(AppIdConfig* /*pConfig*/)
     while ((se=pConfig->serviceConfig.tcp_service_list))
     {
         pConfig->serviceConfig.tcp_service_list = se->next;
-        snort_free(se);
+        delete se;
     }
     while ((se=pConfig->serviceConfig.udp_service_list))
     {
         pConfig->serviceConfig.udp_service_list = se->next;
-        snort_free(se);
+        delete se;
     }
     while ((se=pConfig->serviceConfig.udp_reversed_service_list))
     {
         pConfig->serviceConfig.udp_reversed_service_list = se->next;
-        snort_free(se);
+        delete se;
     }
     while ((sd = smb_data_free_list))
     {
@@ -997,7 +995,6 @@ void CleanupServices(AppIdConfig* /*pConfig*/)
     }
 
     CleanServicePortPatternList(pConfig);
-#endif
 }
 
 static int AppIdPatternPrecedence(const void* a, const void* b)
@@ -1746,34 +1743,15 @@ int AppIdServiceFailService(AppIdData* flow, const Packet* pkt, int dir,
 
     /* If we're still working on a port/pattern list of detectors, then ignore
      * individual fails until we're done looking at everything. */
-    if (    (flow->serviceData == nullptr)                                                /* we're
-                                                                                          working
-                                                                                          on a list
-                                                                                          of
-                                                                                          detectors,
-                                                                                          and... */
+    if ( (flow->serviceData == nullptr)
         && (flow->candidate_service_list != nullptr)
         && (flow->id_state != nullptr) )
     {
-        if (sflist_count(flow->candidate_service_list) != 0)                           /*     it's
-                                                                                          not empty
-                                                                                          */
-        {
+        if (sflist_count(flow->candidate_service_list) != 0)
             return SERVICE_SUCCESS;
-        }
-        else if (    (flow->num_candidate_services_tried >= MAX_CANDIDATE_SERVICES)    /*     or
-                                                                                          it's
-                                                                                          empty,
-                                                                                          but we're
-                                                                                          tried
-                                                                                          everything
-                                                                                          we're
-                                                                                          going to
-                                                                                          try */
+        else if ( (flow->num_candidate_services_tried >= MAX_CANDIDATE_SERVICES)
             || (flow->id_state->state == SERVICE_ID_BRUTE_FORCE) )
-        {
             return SERVICE_SUCCESS;
-        }
     }
 
     flow->serviceAppId = APP_ID_NONE;

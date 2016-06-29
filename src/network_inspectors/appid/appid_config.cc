@@ -28,6 +28,7 @@
 #include "app_forecast.h"
 #include "fw_appid.h"
 #include "host_port_app_cache.h"
+#include "length_app_cache.h"
 #include "thirdparty_appid_utils.h"
 #include "client_plugins/client_app_base.h"
 #include "service_plugins/service_base.h"
@@ -73,6 +74,8 @@ AppIdModuleConfig::~AppIdModuleConfig()
     snort_free((void*)app_stats_filename);
     snort_free((void*)app_detector_dir);
     snort_free((void*)thirdparty_appid_dir);
+    pAppidActiveConfig = nullptr;
+
 }
 
 void AppIdConfig::add_generic_config_element(const char* name, void* pData)
@@ -921,9 +924,7 @@ int AppIdConfig::cleanup(void)
     {
         config_state = RNA_FW_CONFIG_STATE_PENDING;
         if (thirdparty_appid_module != nullptr)
-        {
             thirdparty_appid_module->print_stats();
-        }
         ThirdPartyAppIDFini();
 
         cleanup_config(pAppidActiveConfig);
@@ -931,6 +932,7 @@ int AppIdConfig::cleanup(void)
         CleanupClientApp(pAppidActiveConfig);
         LuaDetectorModuleManager::luaModuleFini();
         hostPortAppCacheFini(pAppidActiveConfig);
+        lengthAppCacheFini(pAppidActiveConfig);
         AppIdServiceStateCleanup();
         appIdStatsFini();
         fwAppIdFini(pAppidActiveConfig);
@@ -940,8 +942,6 @@ int AppIdConfig::cleanup(void)
 #endif
         service_dns_host_clean(&pAppidActiveConfig->serviceDnsConfig);
         config_state = RNA_FW_CONFIG_STATE_UNINIT;
-        snort_free(pAppidActiveConfig);
-        pAppidActiveConfig = nullptr;
         return 0;
     }
     return -1;

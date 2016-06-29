@@ -31,6 +31,7 @@
 #include "application_ids.h"
 #include "appid_api.h"
 #include "appid_config.h"
+#include "appid_module.h"
 #include "client_plugins/client_app_api.h"
 #include "service_plugins/service_api.h"
 
@@ -44,8 +45,9 @@ static const unsigned IMAP_USER_NAME_MAX_LEN = 32;
 static const unsigned IMAP_TAG_MAX_LEN = 6;
 static const unsigned MIN_CMDS = 3;
 
+// FIXIT-M: delete OK_LOGIN if not needed...
 // static const char* const OK_LOGIN = " LOGIN Ok.";
-static const char* const NO_LOGIN = " Login failed.";
+static const char NO_LOGIN[] = " Login failed.";
 
 struct CLIENT_APP_CONFIG
 {
@@ -190,9 +192,9 @@ static const unsigned IMAP_PORT = 143;
 
 static const unsigned IMAP_COUNT_THRESHOLD = 2;
 
-static const char* const OK = "OK";
-static const char* const BAD = "BAD";
-static const char* const NO = "NO";
+static const char OK[] = "OK";
+static const char BAD[] = "BAD";
+static const char NO[] = "NO";
 
 #define IMAP_FLAG_ALNUM         0x01
 #define IMAP_FLAG_FIRST_PACKET  0x02
@@ -712,7 +714,7 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
         (SearchTool*)( ( AppIdConfig*)pConfig)->find_generic_config_element(client_app_mod.name);
 
 #ifdef APP_ID_USES_REASSEMBLED
-    imap_detector_mod.streamAPI->response_flush_stream(pkt);
+    stream.flush_response_flush(pkt);
 #endif
 
     if (!size)
@@ -990,7 +992,7 @@ static int imap_validate(ServiceValidationArgs* args)
         goto inprocess;
 
 #ifdef APP_ID_USES_REASSEMBLED
-    imap_detector_mod.streamAPI->response_flush_stream(pkt);
+    stream.flush_response_flush(pkt);
 #endif
 
     if (!size)
@@ -1014,24 +1016,30 @@ static int imap_validate(ServiceValidationArgs* args)
     {
         clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
         if (getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+        {
+            appid_stats.imap_flows++;
             return SERVICE_SUCCESS;
+        }
     }
 
     if (!imap_server_validate(dd, data, size, flowp))
     {
-        if ((id->flags & IMAP_FLAG_RESULT_OK) && dd->client.state ==
-            IMAP_CLIENT_STATE_STARTTLS_CMD)
+        if ((id->flags & IMAP_FLAG_RESULT_OK) &&
+                dd->client.state == IMAP_CLIENT_STATE_STARTTLS_CMD)
         {
             /* IMAP server response to STARTTLS command from client was OK */
             service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
                 APP_ID_IMAPS, nullptr, nullptr, nullptr);
+            appid_stats.imaps_flows++;
             return SERVICE_SUCCESS;
         }
-        if (id->count >= IMAP_COUNT_THRESHOLD && !getAppIdFlag(flowp,
-            APPID_SESSION_SERVICE_DETECTED))
+
+        if (id->count >= IMAP_COUNT_THRESHOLD &&
+                !getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
         {
             service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
                 APP_ID_IMAP, nullptr, nullptr, nullptr);
+            appid_stats.imap_flows++;
             return SERVICE_SUCCESS;
         }
     }
@@ -1044,6 +1052,7 @@ static int imap_validate(ServiceValidationArgs* args)
     else
     {
         clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+        appid_stats.imap_flows++;
         return SERVICE_SUCCESS;
     }
 

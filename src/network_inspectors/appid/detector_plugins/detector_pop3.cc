@@ -21,6 +21,7 @@
 
 #include "app_info_table.h"
 #include "application_ids.h"
+#include "appid_module.h"
 #include "client_plugins/client_app_api.h"
 #include "detector_plugins/detector_api.h"
 #include "service_plugins/service_api.h"
@@ -176,9 +177,9 @@ static const unsigned POP3_PORT = 110;
 
 static const unsigned POP3_COUNT_THRESHOLD = 4;
 
-static const char* const POP3_OK = "+OK";
-static const char* const POP3_ERR = "-ERR";
-static const char* const POP3_TERM = ".\x00D\x00A";
+static const char POP3_OK[] = "+OK";
+static const char POP3_ERR[] = "-ERR";
+static const char POP3_TERM[] = ".\x00D\x00A";
 
 enum POP3State
 {
@@ -686,7 +687,7 @@ static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, c
         return CLIENT_APP_INPROCESS;
 
 #ifdef APP_ID_USES_REASSEMBLED
-    pop3_detector_mod.streamAPI->response_flush_stream(pkt);
+    stream.flush_response_flush(pkt);
 #endif
 
     dd = (POP3DetectorData*)pop3_detector_mod.api->data_get(flowp,
@@ -893,7 +894,7 @@ static int pop3_validate(ServiceValidationArgs* args)
         goto inprocess;
 
 #ifdef APP_ID_USES_REASSEMBLED
-    pop3_detector_mod.streamAPI->response_flush_stream(pkt);
+    stream.flush_response_flush(pkt);
 #endif
 
     if (dir != APP_ID_FROM_RESPONDER)
@@ -924,7 +925,10 @@ static int pop3_validate(ServiceValidationArgs* args)
     {
         clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
         if (getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+        {
+            appid_stats.pop_flows++;
             return SERVICE_SUCCESS;
+        }
     }
 
     if (!pop3_server_validate(dd, data, size, flowp, 1))
@@ -937,6 +941,7 @@ static int pop3_validate(ServiceValidationArgs* args)
                 pd->vendor,
                 pd->version[0] ? pd->version : nullptr, pd->subtype);
             pd->subtype = nullptr;
+            appid_stats.pop_flows++;
             return SERVICE_SUCCESS;
         }
     }
@@ -949,10 +954,11 @@ static int pop3_validate(ServiceValidationArgs* args)
     else
     {
         clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+        appid_stats.pop_flows++;
         return SERVICE_SUCCESS;
     }
 
-inprocess:;
+inprocess:
     service_mod.api->service_inprocess(flowp, pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 }

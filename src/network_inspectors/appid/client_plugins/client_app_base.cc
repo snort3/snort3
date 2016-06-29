@@ -134,9 +134,9 @@ static RNAClientAppModule* static_client_list[] =
     &timbuktu_client_mod,
     &tns_client_mod,
     &vnc_client_mod,
+#endif
     &pattern_udp_client_mod,
     &pattern_tcp_client_mod,
-#endif
     &dns_udp_client_mod,
     &dns_tcp_client_mod,
     &http_client_mod
@@ -231,8 +231,14 @@ static void clientCreatePattern(IpProtocol proto, const uint8_t* const pattern, 
     }
     else
     {
+        if (pClientAppConfig->tcp_patterns)
+            delete pClientAppConfig->tcp_patterns;
         pClientAppConfig->tcp_patterns = nullptr;
+
+        if (pClientAppConfig->udp_patterns)
+            delete pClientAppConfig->udp_patterns;
         pClientAppConfig->udp_patterns = nullptr;
+
         ErrorMessage("Invalid protocol when registering a pattern: %u\n",(unsigned)proto);
     }
 }
@@ -668,9 +674,8 @@ static ClientAppMatch* match_free_list;
 /**
  * Clean up the configuration of the client app module
  */
-void CleanupClientApp(AppIdConfig* /* pConfig */)
+void CleanupClientApp(AppIdConfig* pConfig )
 {
-#ifdef RNA_FULL_CLEANUP
     ClientAppMatch* match;
     ClientPatternData* pd;
     RNAClientAppRecord* li;
@@ -720,7 +725,6 @@ void CleanupClientApp(AppIdConfig* /* pConfig */)
         match_free_list = match->next;
         snort_free(match);
     }
-#endif
 }
 
 /*
