@@ -38,14 +38,18 @@ static const DetectorApi detector_api
 
 extern RNADetectorValidationModule imap_detector_mod;
 extern RNADetectorValidationModule pop3_detector_mod;
+#ifdef REMOVED_WHILE_NOT_IN_USE
 extern RNADetectorValidationModule kerberos_detector_mod;
 extern RNADetectorValidationModule pattern_detector_mod;
+#endif
 
 static RNADetectorValidationModule* static_detector_list[]
 {
     &imap_detector_mod,
     &pop3_detector_mod,
+#ifdef REMOVED_WHILE_NOT_IN_USE
     &kerberos_detector_mod
+#endif
 };
 
 /**callback function for initializing static and dynamic detectors.

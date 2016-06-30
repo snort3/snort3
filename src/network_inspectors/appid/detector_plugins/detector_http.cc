@@ -711,71 +711,20 @@ int http_detector_finalize(AppIdConfig* pConfig)
 
 void http_detector_clean(DetectorHttpConfig* pHttpConfig)
 {
-    if (pHttpConfig->via_matcher)
-    {
-        delete(pHttpConfig->via_matcher);
-        pHttpConfig->via_matcher = nullptr;
-    }
-    if (pHttpConfig->url_matcher)
-    {
-        delete(pHttpConfig->url_matcher);
-        pHttpConfig->url_matcher = nullptr;
-    }
-    if (pHttpConfig->client_agent_matcher)
-    {
-        delete(pHttpConfig->client_agent_matcher);
-        pHttpConfig->client_agent_matcher = nullptr;
-    }
-    if (pHttpConfig->header_matcher)
-    {
-        delete(pHttpConfig->header_matcher);
-        pHttpConfig->header_matcher = nullptr;
-    }
-    if (pHttpConfig->content_type_matcher)
-    {
-        delete(pHttpConfig->content_type_matcher);
-        pHttpConfig->content_type_matcher = nullptr;
-    }
-    if (pHttpConfig->chp_user_agent_matcher)
-    {
-        delete(pHttpConfig->chp_user_agent_matcher);
-        pHttpConfig->chp_user_agent_matcher = nullptr;
-    }
-    if (pHttpConfig->chp_host_matcher)
-    {
-        delete(pHttpConfig->chp_host_matcher);
-        pHttpConfig->chp_host_matcher = nullptr;
-    }
-    if (pHttpConfig->chp_uri_matcher)
-    {
-        delete(pHttpConfig->chp_uri_matcher);
-        pHttpConfig->chp_uri_matcher = nullptr;
-    }
-    if (pHttpConfig->chp_cookie_matcher)
-    {
-        delete(pHttpConfig->chp_cookie_matcher);
-        pHttpConfig->chp_cookie_matcher = nullptr;
-    }
-    if (pHttpConfig->chp_content_type_matcher)
-    {
-        delete(pHttpConfig->chp_content_type_matcher);
-        pHttpConfig->chp_content_type_matcher = nullptr;
-    }
-    if (pHttpConfig->chp_location_matcher)
-    {
-        delete(pHttpConfig->chp_location_matcher);
-        pHttpConfig->chp_location_matcher = nullptr;
-    }
-    if (pHttpConfig->chp_body_matcher)
-    {
-        delete(pHttpConfig->chp_body_matcher);
-        pHttpConfig->chp_body_matcher = nullptr;
-    }
-    if (pHttpConfig->chp_referer_matcher)
-    {
-        delete(pHttpConfig->chp_referer_matcher);
-        pHttpConfig->chp_referer_matcher = nullptr;
-    }
+    delete pHttpConfig->via_matcher;
+    delete pHttpConfig->url_matcher;
+    delete pHttpConfig->client_agent_matcher;
+    delete pHttpConfig->header_matcher;
+    delete pHttpConfig->content_type_matcher;
+    delete pHttpConfig->chp_user_agent_matcher;
+    delete pHttpConfig->chp_host_matcher;
+    delete pHttpConfig->chp_uri_matcher;
+    delete pHttpConfig->chp_cookie_matcher;
+    delete pHttpConfig->chp_content_type_matcher;
+    delete pHttpConfig->chp_location_matcher;
+    delete pHttpConfig->chp_body_matcher;
+    delete pHttpConfig->chp_req_body_matcher;
+    delete pHttpConfig->chp_referer_matcher;
 
     destroyHosUrlMatcher(&pHttpConfig->hosUrlMatcher);
     destroyHosUrlMatcher(&pHttpConfig->RTMPHosUrlMatcher);
