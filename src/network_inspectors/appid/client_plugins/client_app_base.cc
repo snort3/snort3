@@ -120,6 +120,7 @@ extern RNAClientAppModule http_client_mod;
 static RNAClientAppModule* static_client_list[] =
 {
     &smtp_client_mod,
+    &ssh_client_mod,
 
 #ifdef REMOVED_WHILE_NOT_IN_USE
     &msn_client_mod,
@@ -127,10 +128,11 @@ static RNAClientAppModule* static_client_list[] =
     &ym_client_mod,
     &sip_udp_client_mod,
     &sip_tcp_client_mod,
+#endif
     &bit_client_mod,
     &bit_tracker_client_mod,
+#ifdef REMOVED_WHILE_NOT_IN_USE
     &rtp_client_mod,
-    &ssh_client_mod,
     &timbuktu_client_mod,
     &tns_client_mod,
     &vnc_client_mod,
@@ -185,9 +187,9 @@ const RNAClientAppModule* ClientAppGetClientAppModule(RNAClientAppFCN fcn, struc
     return nullptr;
 }
 
-void add_pattern_data(SearchTool* st, const RNAClientAppModule* li, int position, const
-    uint8_t* const pattern, unsigned size,
-    unsigned nocase, int* count, ClientAppConfig* pClientAppConfig)
+void add_pattern_data(SearchTool* st, const RNAClientAppModule* li, int position,
+        const uint8_t* const pattern, unsigned size, unsigned nocase,
+        int* count, ClientAppConfig* pClientAppConfig)
 {
     ClientPatternData* pd = (ClientPatternData*)snort_calloc(sizeof(ClientPatternData));
     pd->ca = li;
@@ -211,34 +213,22 @@ static void clientCreatePattern(IpProtocol proto, const uint8_t* const pattern, 
 
     if (proto == IpProtocol::TCP)
     {
-        if (pClientAppConfig->tcp_patterns)
-            delete pClientAppConfig->tcp_patterns;
-        pClientAppConfig->tcp_patterns = new SearchTool("ac_full");
-        pClientAppConfig->udp_patterns = nullptr;
+        if (!pClientAppConfig->tcp_patterns)
+            pClientAppConfig->tcp_patterns = new SearchTool("ac_full");
         count = &pClientAppConfig->tcp_pattern_count;
         add_pattern_data(pClientAppConfig->tcp_patterns, li, position, pattern, size,
             nocase, count, pClientAppConfig);
     }
     else if (proto == IpProtocol::UDP)
     {
-        if (pClientAppConfig->udp_patterns)
-            delete pClientAppConfig->udp_patterns;
-        pClientAppConfig->udp_patterns = new SearchTool("ac_full");
-        pClientAppConfig->tcp_patterns = nullptr;
+        if (!pClientAppConfig->udp_patterns)
+            pClientAppConfig->udp_patterns = new SearchTool("ac_full");
         count = &pClientAppConfig->udp_pattern_count;
         add_pattern_data(pClientAppConfig->udp_patterns, li, position, pattern, size,
             nocase, count, pClientAppConfig);
     }
     else
     {
-        if (pClientAppConfig->tcp_patterns)
-            delete pClientAppConfig->tcp_patterns;
-        pClientAppConfig->tcp_patterns = nullptr;
-
-        if (pClientAppConfig->udp_patterns)
-            delete pClientAppConfig->udp_patterns;
-        pClientAppConfig->udp_patterns = nullptr;
-
         ErrorMessage("Invalid protocol when registering a pattern: %u\n",(unsigned)proto);
     }
 }
@@ -287,8 +277,8 @@ void ClientAppRegisterPattern(RNAClientAppFCN fcn, IpProtocol proto, const uint8
     {
         if ((li->module->validate == fcn) && (li->module->userData == userData))
         {
-            clientCreatePattern(proto, pattern, size, position, nocase, li->module,
-                pClientAppConfig);
+            clientCreatePattern(proto, pattern, size, position, nocase,
+                    li->module, pClientAppConfig);
             break;
         }
     }
@@ -965,8 +955,8 @@ static void ClientAppID(Packet* p, const int /*direction*/, AppIdData* flowp, co
     }
 }
 
-int AppIdDiscoverClientApp(Packet* p, int direction, AppIdData* rnaData, const
-    AppIdConfig* pConfig)
+int AppIdDiscoverClientApp(Packet* p, int direction, AppIdData* rnaData,
+        const AppIdConfig* pConfig)
 {
     if (!pConfig->clientAppConfig.enabled)
         return APPID_SESSION_SUCCESS;

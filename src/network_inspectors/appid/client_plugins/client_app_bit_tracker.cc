@@ -27,6 +27,7 @@
 #include "app_info_table.h"
 #include "application_ids.h"
 #include "client_app_api.h"
+#include "appid_module.h"
 
 static const char UDP_BIT_QUERY[] = "d1:a";
 static const char UDP_BIT_RESPONSE[] = "d1:r";
@@ -99,9 +100,9 @@ struct Client_App_Pattern
 
 static Client_App_Pattern udp_patterns[] =
 {
-    { (const uint8_t*)UDP_BIT_QUERY,    sizeof(UDP_BIT_QUERY),    0, APP_ID_BITTRACKER_CLIENT },
-    { (const uint8_t*)UDP_BIT_RESPONSE, sizeof(UDP_BIT_RESPONSE), 0, APP_ID_BITTRACKER_CLIENT },
-    { (const uint8_t*)UDP_BIT_ERROR,    sizeof(UDP_BIT_ERROR),    0, APP_ID_BITTRACKER_CLIENT },
+    { (const uint8_t*)UDP_BIT_QUERY,    sizeof(UDP_BIT_QUERY) - 1,    -1, APP_ID_BITTRACKER_CLIENT },
+    { (const uint8_t*)UDP_BIT_RESPONSE, sizeof(UDP_BIT_RESPONSE) - 1, -1, APP_ID_BITTRACKER_CLIENT },
+    { (const uint8_t*)UDP_BIT_ERROR,    sizeof(UDP_BIT_ERROR) - 1,    -1, APP_ID_BITTRACKER_CLIENT },
 };
 
 static AppRegistryEntry appIdRegistry[] =
@@ -269,6 +270,7 @@ done:
     bit_tracker_client_mod.api->add_app(flowp, APP_ID_BITTORRENT, APP_ID_BITTRACKER_CLIENT,
         nullptr);
     setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+    appid_stats.bittracker_clients++;
     return CLIENT_APP_SUCCESS;
 }
 

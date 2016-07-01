@@ -206,6 +206,35 @@ TEST(search_tool_tests, ac_full)
     delete stool;
 }
 
+TEST(search_tool_tests, search_all_ac_full)
+{
+    SearchTool *stool = new SearchTool("ac_full");
+    CHECK(stool->mpse);
+
+    pattern_id = 1;
+    stool->add("the", 3, pattern_id);
+    CHECK(stool->max_len == 3);
+
+    pattern_id = 77;
+    stool->add("uba", 3, pattern_id);
+    CHECK(stool->max_len == 3);
+
+    pattern_id = 2112;
+    stool->add("away", 4, pattern_id);
+    CHECK(stool->max_len == 4);
+
+    pattern_id = 1000;
+    stool->add("nothere", 7, pattern_id);
+    CHECK(stool->max_len == 7);
+
+    stool->prep();
+
+    const char *datastr = "the tuba ran away";
+    int result = stool->find_all(datastr, strlen(datastr), Test_SearchStrFound);
+    CHECK(result == 3);
+    delete stool;
+}
+
 //-------------------------------------------------------------------------
 // main
 //-------------------------------------------------------------------------

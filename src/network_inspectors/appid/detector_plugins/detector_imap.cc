@@ -1052,7 +1052,6 @@ static int imap_validate(ServiceValidationArgs* args)
     else
     {
         clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
-        appid_stats.imap_flows++;
         return SERVICE_SUCCESS;
     }
 

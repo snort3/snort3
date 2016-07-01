@@ -27,6 +27,7 @@
 #include "app_info_table.h"
 #include "application_ids.h"
 #include "client_app_api.h"
+#include "appid_module.h"
 
 static const char SSH_CLIENT_BANNER[] = "SSH-";
 #define SSH_CLIENT_BANNER_LEN (sizeof(SSH_CLIENT_BANNER)-1)
@@ -183,11 +184,11 @@ struct Client_App_Pattern
 
 static Client_App_Pattern patterns[] =
 {
-    { (const uint8_t*)SSH_CLIENT_BANNER, sizeof(SSH_CLIENT_BANNER)-1, 0, APP_ID_SSH },
-    { (const uint8_t*)OPENSSH_BANNER,    sizeof(OPENSSH_BANNER)-1,    0, APP_ID_OPENSSH },
-    { (const uint8_t*)PUTTY_BANNER,      sizeof(PUTTY_BANNER)-1,      0, APP_ID_PUTTY },
-    { (const uint8_t*)LSH_BANNER,        sizeof(LSH_BANNER)-1,        0, APP_ID_LSH },
-    { (const uint8_t*)DROPBEAR_BANNER,   sizeof(DROPBEAR_BANNER)-1,   0, APP_ID_DROPBEAR },
+    { (const uint8_t*)SSH_CLIENT_BANNER, sizeof(SSH_CLIENT_BANNER) - 1, 0, APP_ID_SSH },
+    { (const uint8_t*)OPENSSH_BANNER,    sizeof(OPENSSH_BANNER) - 1,    -1, APP_ID_OPENSSH },
+    { (const uint8_t*)PUTTY_BANNER,      sizeof(PUTTY_BANNER) - 1,      -1, APP_ID_PUTTY },
+    { (const uint8_t*)LSH_BANNER,        sizeof(LSH_BANNER) - 1,        0, APP_ID_LSH },
+    { (const uint8_t*)DROPBEAR_BANNER,   sizeof(DROPBEAR_BANNER) - 1,   -1, APP_ID_DROPBEAR },
 };
 
 static AppRegistryEntry appIdRegistry[] =
@@ -633,6 +634,7 @@ static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size
 
     ssh_client_mod.api->add_app(flowp, APP_ID_SSH, fd->client_id, (const char*)fd->version);
     setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+    appid_stats.ssh_clients++;
     return CLIENT_APP_SUCCESS;
 }
 

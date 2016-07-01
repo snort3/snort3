@@ -19,10 +19,13 @@
 
 // service_bit.cc author Sourcefire Inc.
 
-#include "main/snort_debug.h"
-#include "utils/util.h"
+
 #include "application_ids.h"
 #include "service_api.h"
+#include "appid_module.h"
+
+#include "main/snort_debug.h"
+#include "utils/util.h"
 
 static const char svc_name[] = "bt";
 static const uint8_t BIT_BANNER[]  = "\023BitTorrent protocol";
@@ -202,6 +205,7 @@ inprocess:
 success:
     bit_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
         APP_ID_BITTORRENT, nullptr, nullptr,  nullptr);
+    appid_stats.bit_flows++;
     return SERVICE_SUCCESS;
 
 fail:

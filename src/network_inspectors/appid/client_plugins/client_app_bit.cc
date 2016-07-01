@@ -21,6 +21,7 @@
 
 #include "client_app_api.h"
 #include "application_ids.h"
+#include "appid_module.h"
 
 #include "main/snort_debug.h"
 #include "utils/util.h"
@@ -101,7 +102,7 @@ struct Client_App_Pattern
 
 static Client_App_Pattern patterns[] =
 {
-    { (const uint8_t*)BIT_BANNER, sizeof(BIT_BANNER)-1, 0, APP_ID_BITTORRENT },
+    { (const uint8_t*)BIT_BANNER, BIT_BANNER_LEN, -1, APP_ID_BITTORRENT },
 };
 
 static AppRegistryEntry appIdRegistry[] =
@@ -224,6 +225,7 @@ inprocess:
 done:
     bit_client_mod.api->add_app(flowp, APP_ID_BITTORRENT, APP_ID_BITTORRENT, nullptr);
     setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+    appid_stats.bit_clients++;
     return CLIENT_APP_SUCCESS;
 }
 

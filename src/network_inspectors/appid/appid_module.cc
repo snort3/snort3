@@ -37,6 +37,9 @@ THREAD_LOCAL ProfileStats appidPerfStats;
 const PegInfo appid_pegs[] =
 {
     { "packets", "count of packets processed by appid" },
+    { "bit_clients", "count of bittorrent clients discovered by appid" },
+    { "bit_flows", "count of bittorrent flows discovered by appid" },
+    { "bittracker_clients", "count of bittorrent tracker clients discovered by appid" },
     { "dns_udp_flows", "count of dns flows over udp discovered by appid" },
     { "dns_tcp_flows", "count of dns flows over tcp discovered by appid" },
     { "ftp_flows", "count of ftp flows discovered by appid" },
@@ -46,6 +49,7 @@ const PegInfo appid_pegs[] =
     { "pop flows", "count of pop service flows discovered by appid" },
     { "smtp_flows", "count of smtp flows discovered by appid" },
     { "smtps_flows", "count of smtps flows discovered by appid" },
+    { "ssh_clients", "count of ssh clients discovered by appid" },
     { "ssh_flows", "count of ssh flows discovered by appid" },
     { "ssl_flows", "count of ssl flows discovered by appid" },
     { "telnet_flows", "count of telnet flows discovered by appid" },

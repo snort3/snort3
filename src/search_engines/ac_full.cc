@@ -77,9 +77,9 @@ public:
         void* context, int* current_state) override
     {
         if ( !obj->dfa_enabled() )
-            return 0;  // nfa + all not supported
-
-        return acsm_search_dfa_full_all(obj, T, n, match, context, current_state);
+            return acsm_search_nfa(obj, T, n, match, context, current_state);
+        else
+            return acsm_search_dfa_full_all(obj, T, n, match, context, current_state);
     }
 
     int print_info() override

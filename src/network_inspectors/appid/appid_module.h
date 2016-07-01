@@ -38,6 +38,9 @@ extern THREAD_LOCAL ProfileStats appidPerfStats;
 struct AppIdStats
 {
     PegCount packets;
+    PegCount bit_clients;
+    PegCount bit_flows;
+    PegCount bittracker_clients;
     PegCount dns_udp_flows;
     PegCount dns_tcp_flows;
     PegCount ftp_flows;
@@ -47,6 +50,7 @@ struct AppIdStats
     PegCount pop_flows;
     PegCount smtp_flows;
     PegCount smtps_flows;
+    PegCount ssh_clients;
     PegCount ssh_flows;
     PegCount ssl_flows;
     PegCount telnet_flows;

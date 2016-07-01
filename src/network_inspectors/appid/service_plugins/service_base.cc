@@ -209,9 +209,9 @@ static RNAServiceValidationModule* static_service_list[] =
     &battlefield_service_mod,
     &mdns_service_mod,
     &timbuktu_service_mod,
-    &bit_service_mod,
     &tns_service_mod,
 #endif
+    &bit_service_mod,
     &pattern_service_mod,
     &http_service_mod
 };

@@ -91,7 +91,7 @@
 #define DEBUG_APPID           0x0400000000000000LL
 
 #ifdef PIGLET
-#define DEBUG_PIGLET          0x0400000000000000LL
+#define DEBUG_PIGLET          0x0800000000000000LL
 #endif
 
 
