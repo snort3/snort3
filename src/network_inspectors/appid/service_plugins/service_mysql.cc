@@ -28,6 +28,7 @@
 #include "appid_flow_data.h"
 
 #include "service_api.h"
+#include "appid_module.h"
 
 #pragma pack(1)
 
@@ -150,6 +151,7 @@ static int svc_mysql_validate(ServiceValidationArgs* args)
         goto fail;
     mysql_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
         APP_ID_MYSQL, nullptr, (char*)p, nullptr);
+    appid_stats.mysql_flows++;
     return SERVICE_SUCCESS;
 
 inprocess:

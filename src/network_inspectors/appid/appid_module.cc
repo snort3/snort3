@@ -46,6 +46,7 @@ const PegInfo appid_pegs[] =
     { "ftps_flows", "count of ftps flows discovered by appid" },
     { "imap flows", "count of imap service flows discovered by appid" },
     { "imaps flows", "count of imap TLS service flows discovered by appid" },
+    { "mysql flows", "count of mysql service flows discovered by appid" },
     { "pop flows", "count of pop service flows discovered by appid" },
     { "smtp_flows", "count of smtp flows discovered by appid" },
     { "smtps_flows", "count of smtps flows discovered by appid" },

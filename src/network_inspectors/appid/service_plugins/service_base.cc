@@ -182,7 +182,9 @@ static RNAServiceValidationModule* static_service_list[] =
 #ifdef REMOVED_WHILE_NOT_IN_USE
     &irc_service_mod,
     &lpr_service_mod,
+#endif
     &mysql_service_mod,
+#ifdef REMOVED_WHILE_NOT_IN_USE
     &netbios_service_mod,
     &nntp_service_mod,
     &ntp_service_mod,
