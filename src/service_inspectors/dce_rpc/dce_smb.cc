@@ -2890,6 +2890,7 @@ static void dce2_smb_thread_init()
         {
             Packet* p = (Packet*)snort_calloc(sizeof(Packet));
             p->data = (uint8_t*)snort_calloc(DCE2_REASSEMBLY_BUF_SIZE);
+            p->endianness = (Endianness*)new DceEndianness();
             p->dsize = DCE2_REASSEMBLY_BUF_SIZE;
             dce2_smb_rpkt[i] = p;
         }
@@ -2914,6 +2915,7 @@ static void dce2_smb_thread_term()
                 {
                     snort_free((void*)p->data);
                 }
+                delete p->endianness;
                 snort_free(p);
                 dce2_smb_rpkt[i] = nullptr;
             }

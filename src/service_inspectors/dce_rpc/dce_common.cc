@@ -22,6 +22,7 @@
 #include "dce_tcp.h"
 #include "dce_smb.h"
 #include "dce_co.h"
+#include "dce_smb_utils.h"
 #include "framework/base_api.h"
 #include "framework/module.h"
 #include "flow/flow.h"
@@ -350,9 +351,20 @@ uint16_t DCE2_GetRpktMaxData(DCE2_SsnData* sd, DCE2_RpktType rtype)
     {
     case DCE2_RPKT_TYPE__SMB_SEG:
     case DCE2_RPKT_TYPE__SMB_TRANS:
+        break;
+
     case DCE2_RPKT_TYPE__SMB_CO_SEG:
+        if (DCE2_SsnFromClient(p))
+            overhead += DCE2_MOCK_HDR_LEN__SMB_CLI;
+        else
+            overhead += DCE2_MOCK_HDR_LEN__SMB_SRV;
+        break;
+
     case DCE2_RPKT_TYPE__SMB_CO_FRAG:
-        // FIXIT-M add support for these when SMB is ported
+        if (DCE2_SsnFromClient(p))
+            overhead += DCE2_MOCK_HDR_LEN__SMB_CLI + DCE2_MOCK_HDR_LEN__CO_CLI;
+        else
+            overhead += DCE2_MOCK_HDR_LEN__SMB_SRV + DCE2_MOCK_HDR_LEN__CO_SRV;
         break;
 
     case DCE2_RPKT_TYPE__TCP_CO_SEG:
@@ -371,37 +383,101 @@ uint16_t DCE2_GetRpktMaxData(DCE2_SsnData* sd, DCE2_RpktType rtype)
     return (DCE2_REASSEMBLY_BUF_SIZE - overhead);
 }
 
+static void dce2_fill_rpkt_info(Packet* rpkt, Packet* p)
+{
+    DceEndianness* endianness = (DceEndianness*)rpkt->endianness;
+    rpkt->reset();
+    rpkt->endianness = (Endianness*)endianness;
+    ((DceEndianness*)rpkt->endianness)->reset();
+    rpkt->pkth = p->pkth;
+    rpkt->ptrs = p->ptrs;
+    rpkt->flow = p->flow;
+    rpkt->proto_bits = p->proto_bits;
+    rpkt->packet_flags = p->packet_flags;
+    rpkt->packet_flags |= PKT_PSEUDO;
+    rpkt->user_policy_id = p->user_policy_id;
+}
+
 Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
     const uint8_t* data, uint32_t data_len)
 {
     Packet* rpkt = nullptr;
     uint16_t data_overhead = 0;
-    DceEndianness* endianness;
 
     switch (rpkt_type)
     {
     case DCE2_RPKT_TYPE__SMB_SEG:
+        rpkt = dce2_smb_rpkt[rpkt_type - DCE2_SMB_RPKT_TYPE_START];
+        dce2_fill_rpkt_info(rpkt, p);
+        rpkt->pseudo_type = PSEUDO_PKT_SMB_SEG;
+        break;
+
     case DCE2_RPKT_TYPE__SMB_TRANS:
+        rpkt = dce2_smb_rpkt[rpkt_type - DCE2_SMB_RPKT_TYPE_START];
+        dce2_fill_rpkt_info(rpkt, p);
+        rpkt->pseudo_type = PSEUDO_PKT_SMB_TRANS;
+        if (DCE2_SsnFromClient(p))
+        {
+            data_overhead = DCE2_MOCK_HDR_LEN__SMB_CLI;
+            memset((void*)rpkt->data, 0, data_overhead);
+            DCE2_SmbInitRdata((uint8_t*)rpkt->data, PKT_FROM_CLIENT);
+        }
+        else
+        {
+            data_overhead = DCE2_MOCK_HDR_LEN__SMB_SRV;
+            memset((void*)rpkt->data, 0, data_overhead);
+            DCE2_SmbInitRdata((uint8_t*)rpkt->data, PKT_FROM_SERVER);
+        }
+        break;
+
     case DCE2_RPKT_TYPE__SMB_CO_SEG:
+        rpkt = dce2_smb_rpkt[rpkt_type - DCE2_SMB_RPKT_TYPE_START];
+        dce2_fill_rpkt_info(rpkt, p);
+        rpkt->pseudo_type = PSEUDO_PKT_DCE_SEG;
+        if (DCE2_SsnFromClient(p))
+        {
+            data_overhead = DCE2_MOCK_HDR_LEN__SMB_CLI;
+            memset((void*)rpkt->data, 0, data_overhead);
+            DCE2_SmbInitRdata((uint8_t*)rpkt->data, PKT_FROM_CLIENT);
+        }
+        else
+        {
+            data_overhead = DCE2_MOCK_HDR_LEN__SMB_SRV;
+            memset((void*)rpkt->data, 0, data_overhead);
+            DCE2_SmbInitRdata((uint8_t*)rpkt->data, PKT_FROM_SERVER);
+        }
+        break;
+
     case DCE2_RPKT_TYPE__SMB_CO_FRAG:
+        rpkt = dce2_smb_rpkt[rpkt_type - DCE2_SMB_RPKT_TYPE_START];
+        dce2_fill_rpkt_info(rpkt, p);
+        rpkt->pseudo_type = PSEUDO_PKT_DCE_FRAG;
+        if (DCE2_SsnFromClient(p))
+        {
+            data_overhead = DCE2_MOCK_HDR_LEN__SMB_CLI + DCE2_MOCK_HDR_LEN__CO_CLI;
+            memset((void*)rpkt->data, 0, data_overhead);
+            DCE2_SmbInitRdata((uint8_t*)rpkt->data, PKT_FROM_CLIENT);
+            DCE2_CoInitRdata((uint8_t*)rpkt->data +
+                DCE2_MOCK_HDR_LEN__SMB_CLI, PKT_FROM_CLIENT);
+        }
+        else
+        {
+            data_overhead = DCE2_MOCK_HDR_LEN__SMB_SRV + DCE2_MOCK_HDR_LEN__CO_SRV;
+            memset((void*)rpkt->data, 0, data_overhead);
+            DCE2_SmbInitRdata((uint8_t*)rpkt->data, PKT_FROM_SERVER);
+            DCE2_CoInitRdata((uint8_t*)rpkt->data +
+                DCE2_MOCK_HDR_LEN__SMB_SRV, PKT_FROM_SERVER);
+        }
+        break;
+
     case DCE2_RPKT_TYPE__UDP_CL_FRAG:
-        // FIXIT-M add support when SMB, UDP are ported
+        // FIXIT-M add support when UDP is ported
         return nullptr;
 
     case DCE2_RPKT_TYPE__TCP_CO_SEG:
     case DCE2_RPKT_TYPE__TCP_CO_FRAG:
         rpkt = dce2_tcp_rpkt[rpkt_type - DCE2_TCP_RPKT_TYPE_START];
-        endianness = (DceEndianness*)rpkt->endianness;
-        rpkt->reset();
-        rpkt->endianness = (Endianness*)endianness;
-        ((DceEndianness*)rpkt->endianness)->reset();
-        rpkt->pkth = p->pkth;
-        rpkt->ptrs = p->ptrs;
-        rpkt->flow = p->flow;
-        rpkt->proto_bits = p->proto_bits;
-        rpkt->packet_flags = p->packet_flags;
-        rpkt->packet_flags |= PKT_PSEUDO;
-        rpkt->user_policy_id = p->user_policy_id;
+        dce2_fill_rpkt_info(rpkt, p);
         if (rpkt_type == DCE2_RPKT_TYPE__TCP_CO_FRAG)
         {
             rpkt->pseudo_type = PSEUDO_PKT_DCE_FRAG;

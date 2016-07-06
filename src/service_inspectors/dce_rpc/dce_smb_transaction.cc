@@ -936,24 +936,34 @@ static DCE2_Ret DCE2_SmbUpdateTransResponse(DCE2_SmbSsnData* ssd,
     {
         DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + doff) - nb_ptr);
 
-        if ((dcnt != 0)
-            && (DCE2_SmbBufferTransactionData(ttracker, nb_ptr, dcnt, ddisp)
-            != DCE2_RET__SUCCESS))
+		if ((ttracker->dsent < ttracker->tdcnt)
+                || (ttracker->psent < ttracker->tpcnt)
+                || !DCE2_BufferIsEmpty(ttracker->dbuf))
         {
-            return DCE2_RET__ERROR;
-        }
+			if ((dcnt != 0)
+				&& (DCE2_SmbBufferTransactionData(ttracker, nb_ptr, dcnt, ddisp)
+					!= DCE2_RET__SUCCESS))
+			{	   		 
+				return DCE2_RET__ERROR;
+			}
+		}
     }
 
     if (data_params & DCE2_SMB_TRANS__PARAMS)
     {
         DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + poff) - nb_ptr);
-
-        if ((pcnt != 0)
-            && (DCE2_SmbBufferTransactionParameters(ttracker, nb_ptr, pcnt, pdisp)
-            != DCE2_RET__SUCCESS))
+ 
+		if ((ttracker->dsent < ttracker->tdcnt)
+                || (ttracker->psent < ttracker->tpcnt)
+                || !DCE2_BufferIsEmpty(ttracker->dbuf))
         {
-            return DCE2_RET__ERROR;
-        }
+			if ((pcnt != 0)
+				&& (DCE2_SmbBufferTransactionParameters(ttracker, nb_ptr, pcnt, pdisp)
+					!= DCE2_RET__SUCCESS))
+			{
+				return DCE2_RET__ERROR;
+			}
+		}
     }
 
     if ((ttracker->dsent == ttracker->tdcnt)
@@ -1168,20 +1178,40 @@ DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         switch (ttracker->subcom)
         {
         case TRANS_TRANSACT_NMPIPE:
-        case TRANS_READ_NMPIPE:
-        {
-            // FIXIT-M port reassembly case
+        case TRANS_READ_NMPIPE:      
+            if (!DCE2_BufferIsEmpty(ttracker->dbuf))
+            {
+                const uint8_t* data_ptr = DCE2_BufferData(ttracker->dbuf);
+                uint32_t data_len = DCE2_BufferLength(ttracker->dbuf);			
+                Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr,
+											   &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
 
-            uint16_t dcnt = SmbTransactionRespDataCnt((SmbTransactionResp*)nb_ptr);
-            uint16_t doff = SmbTransactionRespDataOff((SmbTransactionResp*)nb_ptr);
+                if (rpkt == nullptr)
+                    return DCE2_RET__ERROR;
 
-            DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + doff) - nb_ptr);
+                DebugMessage(DEBUG_DCE_SMB, "Reassembled Transaction response\n");
+                DCE2_PrintPktData(rpkt->data, rpkt->dsize);
 
-            if (DCE2_SmbProcessResponseData(ssd, nb_ptr, dcnt) != DCE2_RET__SUCCESS)
-                return DCE2_RET__ERROR;
+                status = DCE2_SmbProcessResponseData(ssd, data_ptr, data_len);
+
+                DCE2_SmbReturnRpkt(ssd);
+
+                if (status != DCE2_RET__SUCCESS)
+                    return status;
+            }
+            else
+            {
+                uint16_t dcnt = SmbTransactionRespDataCnt((SmbTransactionResp*)nb_ptr);
+                uint16_t doff = SmbTransactionRespDataOff((SmbTransactionResp*)nb_ptr);
+
+                DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + doff) - nb_ptr);
+
+                if (DCE2_SmbProcessResponseData(ssd, nb_ptr, dcnt) != DCE2_RET__SUCCESS)
+                    return DCE2_RET__ERROR;
+            }
 
             break;
-        }
+        
         case TRANS_SET_NMPIPE_STATE:
             DebugFormat(DEBUG_DCE_SMB, "Setting pipe "
                 "to %s mode\n", ttracker->pipe_byte_mode ? "byte" : "message");
@@ -1617,23 +1647,20 @@ DCE2_Ret DCE2_SmbTransactionSecondary(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_
     case TRANS_TRANSACT_NMPIPE:
     case TRANS_WRITE_NMPIPE:
     {
-// FIXIT-M uncomment after porting packet reassembly code
-/*
-                const uint8_t *data_ptr = DCE2_BufferData(ttracker->dbuf);
-                uint32_t data_len = DCE2_BufferLength(ttracker->dbuf);
-                rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
+        const uint8_t* data_ptr = DCE2_BufferData(ttracker->dbuf);
+        uint32_t data_len = DCE2_BufferLength(ttracker->dbuf);	
+        Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
 
-                if (rpkt == nullptr)
-                    return DCE2_RET__ERROR;
+        if (rpkt == nullptr)
+            return DCE2_RET__ERROR;
 
-                DebugMessage(DEBUG_DCE_SMB, "Reassembled Transaction request\n"));
-                DCE2_DEBUG_CODE(DCE2_DEBUG__MAIN, DCE2_PrintPktData(rpkt->payload, rpkt->payload_size););
+        DebugMessage(DEBUG_DCE_SMB, "Reassembled Transaction request\n");
+        DCE2_PrintPktData(rpkt->data, rpkt->dsize);
 
-                status = DCE2_SmbTransactionReq(ssd, ttracker, data_ptr, data_len,
-                        DCE2_BufferData(ttracker->pbuf), DCE2_BufferLength(ttracker->pbuf));
+        status = DCE2_SmbTransactionReq(ssd, ttracker, data_ptr, data_len,
+            DCE2_BufferData(ttracker->pbuf), DCE2_BufferLength(ttracker->pbuf));
 
-                DCE2_SmbReturnRpkt();
-*/
+        DCE2_SmbReturnRpkt(ssd);
     }
     break;
 
@@ -1722,3 +1749,4 @@ DCE2_Ret DCE2_SmbNtTransactSecondary(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_h
 
     return DCE2_RET__SUCCESS;
 }
+

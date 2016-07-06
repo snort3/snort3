@@ -163,6 +163,10 @@ DCE2_Ret DCE2_SmbProcessRequestData(DCE2_SmbSsnData*, const uint16_t,
     const uint8_t*, uint32_t, uint64_t);
 DCE2_Ret DCE2_SmbProcessResponseData(DCE2_SmbSsnData*,
     const uint8_t*, uint32_t);
+void DCE2_SmbInitRdata(uint8_t*, int);
+void DCE2_SmbSetRdata(DCE2_SmbSsnData*, uint8_t*, uint16_t);
+Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData*, const uint8_t **,
+    uint32_t*, DCE2_RpktType);
 
 /********************************************************************
  * Inline functions
@@ -320,6 +324,11 @@ inline bool DCE2_SmbIsTransactionComplete(DCE2_SmbTransactionTracker* ttracker)
         && (ttracker->tpcnt == ttracker->psent))
         return true;
     return false;
+}
+
+inline void DCE2_SmbReturnRpkt(DCE2_SmbSsnData* ssd)
+{
+    DCE2_PopPkt(&ssd->sd);
 }
 
 #endif

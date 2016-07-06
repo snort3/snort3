@@ -29,7 +29,6 @@
 #include "utils/util.h"
 #include "detection/detect.h"
 
-
 #define SERVICE_0     (0)                // IPC start
 #define SERVICE_1     (SERVICE_0+4)      // DISK start
 #define SERVICE_FS    (SERVICE_1+3)      // Failure
@@ -322,28 +321,25 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
 
             if (ftracker->fp_writex_raw->remaining == 0)
             {
-                //FIXIT-M  - port Create reassembled packet
-/*
-                    const uint8_t *data_ptr = DCE2_BufferData(ftracker->fp_writex_raw->buf);
-                    uint32_t data_len = DCE2_BufferLength(ftracker->fp_writex_raw->buf);
-                    SFSnortPacket *rpkt = DCE2_SmbGetRpkt(ssd,
-                            &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
+                const uint8_t* data_ptr = DCE2_BufferData(ftracker->fp_writex_raw->buf);
+                uint32_t data_len = DCE2_BufferLength(ftracker->fp_writex_raw->buf);
+                Packet* rpkt = DCE2_SmbGetRpkt(ssd,
+                    &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
 
-                    if (rpkt == nullptr)
-                    {
-                        DCE2_BufferEmpty(ftracker->fp_writex_raw->buf);
-                        return DCE2_RET__ERROR;
-                    }
-
-                    DebugMessage(DEBUG_DCE_SMB,
-                                "Reassembled WriteAndX raw mode request\n"));
-                    DCE2_DEBUG_CODE(DCE2_DEBUG__MAIN, DCE2_PrintPktData(rpkt->payload, rpkt->payload_size););
-
-                    (void)DCE2_SmbProcessRequestData(ssd, fid, data_ptr, data_len, 0);
-
-                    DCE2_SmbReturnRpkt();
+                if (rpkt == nullptr)
+                {
                     DCE2_BufferEmpty(ftracker->fp_writex_raw->buf);
-*/
+                    return DCE2_RET__ERROR;
+                }
+
+                DebugMessage(DEBUG_DCE_SMB,
+                    "Reassembled WriteAndX raw mode request\n");
+                DCE2_PrintPktData(rpkt->data, rpkt->dsize);
+
+                (void)DCE2_SmbProcessRequestData(ssd, fid, data_ptr, data_len, 0);
+
+                DCE2_SmbReturnRpkt(ssd);
+                DCE2_BufferEmpty(ftracker->fp_writex_raw->buf);
             }
         }
         else

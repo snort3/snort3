@@ -31,6 +31,7 @@
 #define DCE2_SMB_NAME "dce_smb"
 #define DCE2_SMB_HELP "dce over smb inspection"
 #define DCE2_SMB_RPKT_TYPE_MAX 4
+#define DCE2_SMB_RPKT_TYPE_START 1
 
 #define DCE2_SMB_BAD_NBSS_TYPE 2
 #define DCE2_SMB_BAD_TYPE 3

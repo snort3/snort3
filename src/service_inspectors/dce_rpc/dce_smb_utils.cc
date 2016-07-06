@@ -1071,15 +1071,11 @@ DCE2_Ret DCE2_SmbProcessRequestData(DCE2_SmbSsnData* ssd,
 {
     DCE2_SmbFileTracker* ftracker = DCE2_SmbGetFileTracker(ssd, fid);
 
-    DebugFormat(DEBUG_DCE_SMB,
-        "Entering Processing request data with Fid: 0x%04X, ftracker ? %s ~~~~~~~~~~~~~~~~~\n",
-        fid,ftracker ? "TRUE" : "FALSE");
     if (ftracker == nullptr)
         return DCE2_RET__ERROR;
 
     DebugFormat(DEBUG_DCE_SMB,
-        "Processing request data with Fid: 0x%04X, is_ipc ? %s ~~~~~~~~~~~~~~~~~\n", ftracker->fid,
-        ftracker->is_ipc ? "TRUE" : "FALSE");
+        "Processing request data with Fid: 0x%04X ~~~~~~~~~~~~~~~~~\n", ftracker->fid);
 
     // Set this in case of chained commands or reassembled packet
     ssd->cur_rtracker->ftracker = ftracker;
@@ -1136,5 +1132,189 @@ DCE2_Ret DCE2_SmbProcessResponseData(DCE2_SmbSsnData* ssd,
     DebugMessage(DEBUG_DCE_SMB, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 
     return DCE2_RET__SUCCESS;
+}
+
+static inline uint16_t SmbHtons(const uint16_t* ptr)
+{
+    return alignedNtohs(ptr);
+}
+
+/********************************************************************
+ * Function: DCE2_SmbInitRdata()
+ *
+ * Purpose:
+ *  Initializes the reassembled packet structure for an SMB
+ *  reassembled packet.  Uses WriteAndX and ReadAndX.
+ *  TODO Use command that was used when reassembly occurred.
+ *  One issue with this is that multiple different write/read
+ *  commands can be used to write/read the full DCE/RPC
+ *  request/response.
+ *
+ * Arguments:
+ *  uint8_t * - pointer to the start of the NetBIOS header where
+ *              data initialization should start.
+ *  int dir   - FLAG_FROM_CLIENT or FLAG_FROM_SERVER
+ *
+ * Returns: None
+ *
+ ********************************************************************/
+void DCE2_SmbInitRdata(uint8_t* nb_ptr, int dir)
+{
+    NbssHdr* nb_hdr = (NbssHdr*)nb_ptr;
+    SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(NbssHdr));
+
+    nb_hdr->type = NBSS_SESSION_TYPE__MESSAGE;
+    memcpy((void*)smb_hdr->smb_idf, (void*)"\xffSMB", sizeof(smb_hdr->smb_idf));
+
+    if (dir == PKT_FROM_CLIENT)
+    {
+        SmbWriteAndXReq* writex =
+            (SmbWriteAndXReq*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
+        uint16_t offset = sizeof(SmbNtHdr) + sizeof(SmbWriteAndXReq);
+
+        smb_hdr->smb_com = SMB_COM_WRITE_ANDX;
+        smb_hdr->smb_flg = 0x00;
+
+        writex->smb_wct = 12;
+        writex->smb_com2 = SMB_COM_NO_ANDX_COMMAND;
+        writex->smb_doff = SmbHtons(&offset);
+    }
+    else
+    {
+        SmbReadAndXResp* readx =
+            (SmbReadAndXResp*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
+        uint16_t offset = sizeof(SmbNtHdr) + sizeof(SmbReadAndXResp);
+
+        smb_hdr->smb_com = SMB_COM_READ_ANDX;
+        smb_hdr->smb_flg = 0x80;
+
+        readx->smb_wct = 12;
+        readx->smb_com2 = SMB_COM_NO_ANDX_COMMAND;
+        readx->smb_doff = SmbHtons(&offset);
+    }
+}
+
+/********************************************************************
+ * Function: DCE2_SmbSetRdata()
+ *
+ * Purpose:
+ *  When a reassembled packet is needed this function is called to
+ *  fill in appropriate fields to make the reassembled packet look
+ *  correct from an SMB standpoint.
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData * - the session data structure.
+ *  uint8_t * - pointer to the start of the NetBIOS header where
+ *              data initialization should start.
+ *  uint16_t  - the length of the connection-oriented DCE/RPC data.
+ *
+ * Returns: None
+ *
+ ********************************************************************/
+void DCE2_SmbSetRdata(DCE2_SmbSsnData* ssd, uint8_t* nb_ptr, uint16_t co_len)
+{
+    NbssHdr* nb_hdr = (NbssHdr*)nb_ptr;
+    SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(NbssHdr));
+    uint16_t uid = (ssd->cur_rtracker == nullptr) ? 0 : ssd->cur_rtracker->uid;
+    uint16_t tid = (ssd->cur_rtracker == nullptr) ? 0 : ssd->cur_rtracker->tid;
+    DCE2_SmbFileTracker* ftracker = (ssd->cur_rtracker == nullptr) ? nullptr :
+        ssd->cur_rtracker->ftracker;
+
+    smb_hdr->smb_uid = SmbHtons((const uint16_t*)&uid);
+    smb_hdr->smb_tid = SmbHtons((const uint16_t*)&tid);
+
+    if (DCE2_SsnFromClient(ssd->sd.wire_pkt))
+    {
+        SmbWriteAndXReq* writex =
+            (SmbWriteAndXReq*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
+        uint32_t nb_len = sizeof(SmbNtHdr) + sizeof(SmbWriteAndXReq) + co_len;
+
+        /* The data will get truncated anyway since we can only fit
+         * 64K in the reassembly buffer */
+        if (nb_len > UINT16_MAX)
+            nb_len = UINT16_MAX;
+
+        nb_hdr->length = htons((uint16_t)nb_len);
+
+        if ((ftracker != nullptr) && (ftracker->fid > 0))
+        {
+            uint16_t fid = (uint16_t)ftracker->fid;
+            writex->smb_fid = SmbHtons(&fid);
+        }
+        else
+        {
+            writex->smb_fid = 0;
+        }
+
+        writex->smb_countleft = SmbHtons(&co_len);
+        writex->smb_dsize = SmbHtons(&co_len);
+        writex->smb_bcc = SmbHtons(&co_len);
+    }
+    else
+    {
+        SmbReadAndXResp* readx =
+            (SmbReadAndXResp*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
+        uint32_t nb_len = sizeof(SmbNtHdr) + sizeof(SmbReadAndXResp) + co_len;
+
+        /* The data will get truncated anyway since we can only fit
+         * 64K in the reassembly buffer */
+        if (nb_len > UINT16_MAX)
+            nb_len = UINT16_MAX;
+
+        nb_hdr->length = htons((uint16_t)nb_len);
+
+        readx->smb_remaining = SmbHtons(&co_len);
+        readx->smb_dsize = SmbHtons(&co_len);
+        readx->smb_bcc = SmbHtons(&co_len);
+    }
+}
+
+Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData* ssd,
+    const uint8_t** data, uint32_t* data_len, DCE2_RpktType rtype)
+{
+    if ((ssd == nullptr) || (data == nullptr) || (*data == nullptr)
+        || (data_len == nullptr) || (*data_len == 0))
+        return nullptr;
+
+    Packet* rpkt = DCE2_GetRpkt(ssd->sd.wire_pkt, rtype, *data, *data_len);
+
+    if (rpkt == nullptr)
+    {
+        DebugFormat(DEBUG_DCE_SMB,
+            "%s(%d) Failed to create reassembly packet.",
+            __FILE__, __LINE__);
+
+        return nullptr;
+    }
+
+    if (DCE2_PushPkt(rpkt, &ssd->sd) != DCE2_RET__SUCCESS)
+    {
+        DebugFormat(DEBUG_DCE_SMB,
+            "%s(%d) Failed to push packet onto packet stack.",
+            __FILE__, __LINE__);
+        return nullptr;
+    }
+
+    *data = rpkt->data;
+    *data_len = rpkt->dsize;
+
+    uint16_t header_len;
+    switch (rtype)
+    {
+    case DCE2_RPKT_TYPE__SMB_TRANS:
+        if (DCE2_SmbType(ssd) == SMB_TYPE__REQUEST)
+            header_len = DCE2_MOCK_HDR_LEN__SMB_CLI;
+        else
+            header_len = DCE2_MOCK_HDR_LEN__SMB_SRV;
+        DCE2_SmbSetRdata(ssd, (uint8_t*)rpkt->data,
+            (uint16_t)(rpkt->dsize - header_len));
+        DCE2_MOVE(*data, *data_len, header_len);
+        break;
+    case DCE2_RPKT_TYPE__SMB_SEG:
+    default:
+        break;
+    }
+
+    return rpkt;
 }
 
