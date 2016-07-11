@@ -2712,6 +2712,147 @@ inline uint32_t SmbNtTransactSecondaryReqDataDisp(const SmbNtTransactSecondaryRe
     return alignedNtohl(&req->smb_data_disp);
 }
 
+/********************************************************************
+ * SMB_COM_READ_RAW
+ ********************************************************************/
+struct SmbReadRawReq   /* smb_wct = 8 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint16_t smb_fid;        /* file handle */
+    uint32_t smb_offset;     /* offset in file to begin read */
+    uint16_t smb_maxcnt;     /* max number of bytes to return (max 65,535) */
+    uint16_t smb_mincnt;     /* min number of bytes to return (normally 0) */
+    uint32_t smb_timeout;    /* number of milliseconds to wait for completion */
+    uint16_t smb_rsvd;       /* reserved */
+    uint16_t smb_bcc;        /* value = 0 */
+};
+
+struct SmbReadRawExtReq   /* smb_wct = 10 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint16_t smb_fid;        /* file handle */
+    uint32_t smb_offset;     /* offset in file to begin read */
+    uint16_t smb_maxcnt;     /* max number of bytes to return (max 65,535) */
+    uint16_t smb_mincnt;     /* min number of bytes to return (normally 0) */
+    uint32_t smb_timeout;    /* number of milliseconds to wait for completion */
+    uint16_t smb_rsvd;       /* reserved */
+    uint32_t smb_off_high;   /* high offset in file to begin write */
+    uint16_t smb_bcc;        /* value = 0 */
+};
+
+/* Read Raw response is raw data wrapped in NetBIOS header */
+
+inline uint16_t SmbReadRawReqFid(const SmbReadRawReq* req)
+{
+    return alignedNtohs(&req->smb_fid);
+}
+
+inline uint64_t SmbReadRawReqOffset(const SmbReadRawExtReq* req)
+{
+    if (req->smb_wct == 8)
+        return (uint64_t)alignedNtohl(&req->smb_offset);
+    return (uint64_t)alignedNtohl(&req->smb_off_high) << 32 | (uint64_t)alignedNtohl(
+        &req->smb_offset);
+}
+
+/********************************************************************
+ * SMB_COM_WRITE_RAW
+ ********************************************************************/
+struct SmbWriteRawReq
+{
+    uint8_t smb_wct;       /* value = 12 */
+    uint16_t smb_fid;      /* file handle */
+    uint16_t smb_tcount;   /* total bytes (including this buf, 65,535 max ) */
+    uint16_t smb_rsvd;     /* reserved */
+    uint32_t smb_offset;   /* offset in file to begin write */
+    uint32_t smb_timeout;  /* number of milliseconds to wait for completion */
+    uint16_t smb_wmode;    /* write mode:
+                              bit0 - complete write to disk and send final result response
+                              bit1 - return smb_remaining (pipes/devices only) */
+    uint32_t smb_rsvd2;    /* reserved */
+    uint16_t smb_dsize;    /* number of data bytes this buffer (min value = 0) */
+    uint16_t smb_doff;     /* offset (from start of SMB hdr) to data bytes */
+    uint16_t smb_bcc;      /* total bytes (including pad bytes) following */
+};
+
+struct SmbWriteRawExtReq
+{
+    uint8_t smb_wct;       /* value = 14 */
+    uint16_t smb_fid;      /* file handle */
+    uint16_t smb_tcount;   /* total bytes (including this buf, 65,535 max ) */
+    uint16_t smb_rsvd;     /* reserved */
+    uint32_t smb_offset;   /* offset in file to begin write */
+    uint32_t smb_timeout;  /* number of milliseconds to wait for completion */
+    uint16_t smb_wmode;    /* write mode:
+                              bit0 - complete write to disk and send final result response
+                              bit1 - return smb_remaining (pipes/devices only) */
+    uint32_t smb_rsvd2;    /* reserved */
+    uint16_t smb_dsize;    /* number of data bytes this buffer (min value = 0) */
+    uint16_t smb_doff;     /* offset (from start of SMB hdr) to data bytes */
+    uint32_t smb_off_high; /* high offset in file to begin write */
+    uint16_t smb_bcc;      /* total bytes (including pad bytes) following */
+};
+
+struct SmbWriteRawInterimResp
+{
+    uint8_t smb_wct;         /* value = 1 */
+    uint16_t smb_remaining;  /* bytes remaining to be read (pipes/devices only) */
+    uint16_t smb_bcc;        /* value = 0 */
+};
+
+inline uint16_t SmbWriteRawReqTotalCount(const SmbWriteRawReq* req)
+{
+    return alignedNtohs(&req->smb_tcount);
+}
+
+inline bool SmbWriteRawReqWriteThrough(const SmbWriteRawReq* req)
+{
+    return alignedNtohs(&req->smb_wmode) & 0x0001;
+}
+
+inline uint16_t SmbWriteRawReqFid(const SmbWriteRawReq* req)
+{
+    return alignedNtohs(&req->smb_fid);
+}
+
+inline uint16_t SmbWriteRawReqDataOff(const SmbWriteRawReq* req)
+{
+    return alignedNtohs(&req->smb_doff);
+}
+
+inline uint16_t SmbWriteRawReqDataCnt(const SmbWriteRawReq* req)
+{
+    return alignedNtohs(&req->smb_dsize);
+}
+
+inline uint64_t SmbWriteRawReqOffset(const SmbWriteRawExtReq* req)
+{
+    if (req->smb_wct == 12)
+        return (uint64_t)alignedNtohl(&req->smb_offset);
+    return (uint64_t)alignedNtohl(&req->smb_off_high) << 32 | (uint64_t)alignedNtohl(
+        &req->smb_offset);
+}
+
+inline uint16_t SmbWriteRawInterimRespRemaining(const SmbWriteRawInterimResp* resp)
+{
+    return alignedNtohs(&resp->smb_remaining);
+}
+
+/********************************************************************
+ * SMB_COM_WRITE_COMPLETE - final response to an SMB_COM_WRITE_RAW
+ ********************************************************************/
+struct SmbWriteCompleteResp
+{
+    uint8_t smb_wct;     /* value = 1 */
+    uint16_t smb_count;  /* total number of bytes written */
+    uint16_t smb_bcc;    /* value = 0 */
+};
+
+inline uint16_t SmbWriteCompleteRespCount(const SmbWriteCompleteResp* resp)
+{
+    return alignedNtohs(&resp->smb_count);
+}
+
 #pragma pack()
 
 struct DCE2_SmbFsm

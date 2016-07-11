@@ -22,7 +22,7 @@
 // Smb commands processing
 
 #include "dce_smb_commands.h"
-
+#include "dce_smb_transaction_utils.h"
 #include "dce_smb_module.h"
 
 #include "main/snort_debug.h"
@@ -1505,6 +1505,124 @@ DCE2_Ret DCE2_SmbLogoffAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             break;
         }
     }
+
+    return DCE2_RET__SUCCESS;
+}
+
+// SMB_COM_READ_RAW
+DCE2_Ret DCE2_SmbReadRaw(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
+    const DCE2_SmbComInfo* com_info, const uint8_t* nb_ptr, uint32_t)
+{
+    if (!DCE2_ComInfoCanProcessCommand(com_info))
+        return DCE2_RET__ERROR;
+
+    if (DCE2_ComInfoIsRequest(com_info))
+    {
+        DCE2_SmbFileTracker* ftracker =
+            DCE2_SmbFindFileTracker(ssd, ssd->cur_rtracker->uid,
+            ssd->cur_rtracker->tid, SmbReadRawReqFid((SmbReadRawReq*)nb_ptr));
+
+        ssd->cur_rtracker->ftracker = ftracker;
+        ssd->pdu_state = DCE2_SMB_PDU_STATE__RAW_DATA;
+        if ((ftracker != nullptr) && !ftracker->is_ipc)
+            ssd->cur_rtracker->file_offset = SmbReadRawReqOffset((SmbReadRawExtReq*)nb_ptr);
+    }
+    else
+    {
+        // The server response is the raw data.  Supposedly if an error occurs,
+        // the server will send a 0 byte read.  Just the NetBIOS header with
+        // zero byte length.  Client upon getting the zero read is supposed to issue
+        // another read using ReadAndX or Read to get the error.
+        return DCE2_RET__ERROR;
+    }
+
+    return DCE2_RET__SUCCESS;
+}
+
+// SMB_COM_WRITE_RAW
+DCE2_Ret DCE2_SmbWriteRaw(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
+    const DCE2_SmbComInfo* com_info, const uint8_t* nb_ptr, uint32_t nb_len)
+{
+    if (!DCE2_ComInfoCanProcessCommand(com_info))
+        return DCE2_RET__ERROR;
+
+    if (DCE2_ComInfoIsRequest(com_info))
+    {
+        uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
+        uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
+        uint16_t fid = SmbWriteRawReqFid((SmbWriteRawReq*)nb_ptr);
+        uint16_t tdcnt = SmbWriteRawReqTotalCount((SmbWriteRawReq*)nb_ptr);
+        bool writethrough = SmbWriteRawReqWriteThrough((SmbWriteRawReq*)nb_ptr);
+        uint16_t doff = SmbWriteRawReqDataOff((SmbWriteRawReq*)nb_ptr);
+        uint16_t dcnt = SmbWriteRawReqDataCnt((SmbWriteRawReq*)nb_ptr);
+        uint64_t offset = SmbWriteRawReqOffset((SmbWriteRawExtReq*)nb_ptr);
+
+        DCE2_MOVE(nb_ptr, nb_len, com_size);
+
+        if (DCE2_SmbCheckTotalCount(tdcnt, dcnt, 0) != DCE2_RET__SUCCESS)
+            return DCE2_RET__ERROR;
+
+        if (DCE2_SmbCheckData(ssd, (uint8_t*)smb_hdr, nb_ptr, nb_len,
+            byte_count, dcnt, doff) != DCE2_RET__SUCCESS)
+            return DCE2_RET__ERROR;
+
+        // This may move backwards
+        DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + doff) - nb_ptr);
+
+        if (dcnt > nb_len)
+        {
+            dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+            return DCE2_RET__ERROR;
+        }
+
+        // If all of the data wasn't written in this request, the server will
+        // send an interim SMB_COM_WRITE_RAW response and the client will send
+        // the rest of the data raw.  In this case if the WriteThrough flag is
+        // not set, the server will not send a final SMB_COM_WRITE_COMPLETE
+        // response.  If all of the data is in this request the server will
+        // send an SMB_COM_WRITE_COMPLETE response regardless of whether or
+        // not the WriteThrough flag is set.
+        if (dcnt != tdcnt)
+        {
+            ssd->cur_rtracker->writeraw_writethrough = writethrough;
+            ssd->cur_rtracker->writeraw_remaining = tdcnt - dcnt;
+        }
+
+        return DCE2_SmbProcessRequestData(ssd, fid, nb_ptr, dcnt, offset);
+    }
+    else
+    {
+        DCE2_Policy policy = DCE2_SsnGetServerPolicy(&ssd->sd);
+
+        // Samba messes this up and sends a request instead of an interim
+        // response and a response instead of a Write Complete response.
+        switch (policy)
+        {
+        case DCE2_POLICY__SAMBA:
+        case DCE2_POLICY__SAMBA_3_0_37:
+        case DCE2_POLICY__SAMBA_3_0_22:
+        case DCE2_POLICY__SAMBA_3_0_20:
+            if (SmbType(smb_hdr) != SMB_TYPE__REQUEST)
+                return DCE2_RET__SUCCESS;
+            break;
+        default:
+            break;
+        }
+
+        // If all the data wasn't written initially this interim response will
+        // be sent by the server and the raw data will ensue from the client.
+        ssd->pdu_state = DCE2_SMB_PDU_STATE__RAW_DATA;
+    }
+
+    return DCE2_RET__SUCCESS;
+}
+
+// SMB_COM_WRITE_COMPLETE
+DCE2_Ret DCE2_SmbWriteComplete(DCE2_SmbSsnData*, const SmbNtHdr*,
+    const DCE2_SmbComInfo* com_info, const uint8_t*, uint32_t)
+{
+    if (!DCE2_ComInfoCanProcessCommand(com_info))
+        return DCE2_RET__ERROR;
 
     return DCE2_RET__SUCCESS;
 }

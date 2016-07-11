@@ -351,6 +351,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData*,
     const SmbNtHdr*);
 static inline DCE2_Ret DCE2_SmbCheckAndXOffset(const uint8_t*,
     const uint8_t*, const uint32_t);
+static void DCE2_SmbProcessRawData(DCE2_SmbSsnData*, const uint8_t*, uint32_t);
 
 /********************************************************************
  * Function: DCE2_SmbIsRawData()
@@ -1470,6 +1471,79 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
     return rtracker;
 }
 
+static void DCE2_SmbProcessRawData(DCE2_SmbSsnData* ssd, const uint8_t* nb_ptr, uint32_t nb_len)
+{
+    DCE2_SmbFileTracker* ftracker = ssd->cur_rtracker->ftracker;
+    bool remove_rtracker = false;
+
+    if (ftracker == nullptr)
+    {
+        DCE2_SmbRemoveRequestTracker(ssd, ssd->cur_rtracker);
+        ssd->cur_rtracker = nullptr;
+        return;
+    }
+
+    if (DCE2_SsnFromClient(ssd->sd.wire_pkt))
+    {
+        DebugMessage(DEBUG_DCE_SMB, "Raw data: Write Raw\n");
+        DebugFormat(DEBUG_DCE_SMB, "Request Fid: 0x%04X\n", ftracker->fid);
+
+        if (nb_len > ssd->cur_rtracker->writeraw_remaining)
+        {
+            dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+
+            // If this happens, Windows never responds regardless of
+            // WriteThrough flag, so get rid of request tracker
+            remove_rtracker = true;
+        }
+        else if (!ssd->cur_rtracker->writeraw_writethrough)
+        {
+            // If WriteThrough flag was not set on initial request, a
+            // SMB_COM_WRITE_COMPLETE will not be sent so need to get
+            // rid of request tracker.
+            remove_rtracker = true;
+        }
+        else
+        {
+            ssd->cur_rtracker->writeraw_writethrough = false;
+            ssd->cur_rtracker->writeraw_remaining = 0;
+        }
+    }
+    else
+    {
+        DebugMessage(DEBUG_DCE_SMB, "Raw data: Read Raw\n");
+        DebugFormat(DEBUG_DCE_SMB, "Response Fid: 0x%04X\n", ftracker->fid);
+
+        remove_rtracker = true;
+    }
+
+    // Only one raw read/write allowed
+    ssd->pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
+
+    if (ftracker->is_ipc)
+    {
+        // Maximum possible fragment length is 16 bit
+        if (nb_len > UINT16_MAX)
+            nb_len = UINT16_MAX;
+
+        DCE2_CoProcess(&ssd->sd, ftracker->fp_co_tracker, nb_ptr, (uint16_t)nb_len);
+    }
+// FIXIT-M to be ported - smb file-api user story
+/*
+    else
+    {
+        bool upload = DCE2_SsnFromClient(ssd->sd.wire_pkt) ? true : false;
+        DCE2_SmbProcessFileData(ssd, ftracker, nb_ptr, nb_len, upload);
+    }
+*/
+
+    if (remove_rtracker)
+    {
+        DCE2_SmbRemoveRequestTracker(ssd, ssd->cur_rtracker);
+        ssd->cur_rtracker = nullptr;
+    }
+}
+
 // Temporary command function placeholder, until all of them are ported
 static DCE2_Ret DCE2_SmbComFuncPlaceholder(DCE2_SmbSsnData*, const SmbNtHdr*,
     const DCE2_SmbComInfo*, const uint8_t*, uint32_t)
@@ -1990,7 +2064,11 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
             }
 
             case DCE2_SMB_PDU_STATE__RAW_DATA:
-                //FIXIT-M port raw state
+                DCE2_MOVE(nb_ptr, nb_len, sizeof(NbssHdr));
+                if (ssd->cur_rtracker != nullptr)
+                    DCE2_SmbProcessRawData(ssd, nb_ptr, nb_len);
+                // Only one raw read or write
+                ssd->pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
                 break;
             default:
                 DebugFormat(DEBUG_DCE_SMB, "%s(%d) Invalid SMB PDU "
@@ -2144,8 +2222,7 @@ static void DCE2_SmbInitGlobals()
             DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__RESPONSE, 0, 0);
             break;
         case SMB_COM_READ_RAW:
-            //smb_com_funcs[com] = DCE2_SmbReadRaw;
-            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_com_funcs[com] = DCE2_SmbReadRaw;
             smb_deprecated_coms[com] = true;
             smb_unusual_coms[com] = false;
 
@@ -2157,8 +2234,7 @@ static void DCE2_SmbInitGlobals()
             // Response is raw data, i.e. without SMB
             break;
         case SMB_COM_WRITE_RAW:
-            //smb_com_funcs[com] = DCE2_SmbWriteRaw;
-            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_com_funcs[com] = DCE2_SmbWriteRaw;
             smb_deprecated_coms[com] = true;
             smb_unusual_coms[com] = false;
 
@@ -2173,8 +2249,7 @@ static void DCE2_SmbInitGlobals()
             break;
         case SMB_COM_WRITE_COMPLETE:
             // Final server response to SMB_COM_WRITE_RAW
-            //smb_com_funcs[com] = DCE2_SmbWriteComplete;
-            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_com_funcs[com] = DCE2_SmbWriteComplete;
             smb_deprecated_coms[com] = true;
             smb_unusual_coms[com] = false;
 

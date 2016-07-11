@@ -97,45 +97,6 @@ static const DCE2_SmbFsm dce2_samba_pipe_fsm[] =
 /*********************************************************************
  * Private functions
  ********************************************************************/
-/********************************************************************
- * Function: DCE2_SmbCheckTotalCount()
- *
- * Purpose:
- *  Validates the advertised total data/param count.  Makes sure the
- *  current count isn't greater than total count, that the
- *  displacement + count isn't greater than the total data count and
- *  that the total data count isn't zero.  Mainly relevant to Write Raw,
- *  Transaction and Transaction Secondary commands.
- *
- * Arguments:
- *  const uint32_t    - total data count
- *  const uint32_t    - data count/size
- *  const uint32_t    - data displacement
- *
- * Returns:
- *  DCE2_Ret - DCE2_RET__SUCCESS if all is ok
- *             DCE2_RET__ERROR if any of the checks fail.
- *
- ********************************************************************/
-static DCE2_Ret DCE2_SmbCheckTotalCount(const uint32_t tcnt, const uint32_t cnt, const uint32_t
-    disp)
-{
-    DCE2_Ret ret = DCE2_RET__SUCCESS;
-
-    if (cnt > tcnt)
-    {
-        dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
-        ret = DCE2_RET__ERROR;
-    }
-
-    if (((uint64_t)disp + cnt) > tcnt)
-    {
-        dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, (dce2CommonStats*)&dce2_smb_stats);
-        ret = DCE2_RET__ERROR;
-    }
-
-    return ret;
-}
 
 /********************************************************************
  * Function: DCE2_SmbCheckTransDataParams()
@@ -225,6 +186,46 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
     }
 
     return DCE2_RET__SUCCESS;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbCheckTotalCount()
+ *
+ * Purpose:
+ *  Validates the advertised total data/param count.  Makes sure the
+ *  current count isn't greater than total count, that the
+ *  displacement + count isn't greater than the total data count and
+ *  that the total data count isn't zero.  Mainly relevant to Write Raw,
+ *  Transaction and Transaction Secondary commands.
+ *
+ * Arguments:
+ *  const uint32_t    - total data count
+ *  const uint32_t    - data count/size
+ *  const uint32_t    - data displacement
+ *
+ * Returns:
+ *  DCE2_Ret - DCE2_RET__SUCCESS if all is ok
+ *             DCE2_RET__ERROR if any of the checks fail.
+ *
+ ********************************************************************/
+DCE2_Ret DCE2_SmbCheckTotalCount(const uint32_t tcnt, const uint32_t cnt, const uint32_t
+    disp)
+{
+    DCE2_Ret ret = DCE2_RET__SUCCESS;
+
+    if (cnt > tcnt)
+    {
+        dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+        ret = DCE2_RET__ERROR;
+    }
+
+    if (((uint64_t)disp + cnt) > tcnt)
+    {
+        dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, (dce2CommonStats*)&dce2_smb_stats);
+        ret = DCE2_RET__ERROR;
+    }
+
+    return ret;
 }
 
 // Validates Name for Samba Transaction requests

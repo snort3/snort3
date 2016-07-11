@@ -44,6 +44,9 @@ DCE2_Ret DCE2_SmbBufferTransactionData(DCE2_SmbTransactionTracker* ttracker,
 DCE2_Ret DCE2_SmbBufferTransactionParameters(DCE2_SmbTransactionTracker* ttracker,
     const uint8_t* param_ptr, uint16_t pcnt, uint16_t pdisp);
 
+DCE2_Ret DCE2_SmbCheckTotalCount(const uint32_t tcnt, const uint32_t cnt, const uint32_t
+    disp);
+
 inline bool DCE2_SmbFileUpload(DCE2_SmbFileDirection dir)
 {
     return dir == DCE2_SMB_FILE_DIRECTION__UPLOAD;
