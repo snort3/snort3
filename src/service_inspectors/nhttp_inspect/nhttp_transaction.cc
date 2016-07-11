@@ -33,10 +33,10 @@ NHttpTransaction::~NHttpTransaction()
 {
     delete request;
     delete status;
-    delete header[0];
-    delete header[1];
-    delete trailer[0];
-    delete trailer[1];
+    delete header[SRC_CLIENT];
+    delete header[SRC_SERVER];
+    delete trailer[SRC_CLIENT];
+    delete trailer[SRC_SERVER];
     delete latest_body;
 }
 
@@ -49,58 +49,120 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
     // 3. garbage collects unneeded transactions
     // 4. returns the current transaction
 
-    // Request section: put the old transaction in the pipeline and replace it with a new
-    // transaction. If the pipeline overflows or underflows we stop using it and just delete the
-    // old transaction.
+    // Request section: replace the old request transaction with a new transaction.
     if (session_data->section_type[source_id] == SEC_REQUEST)
     {
-        // When pipelining is not occurring the response should already have taken this transaction
-        // and left nullptr.
+        // If the HTTP request and response messages are alternating (usual situation) the old
+        // request transaction will have been moved to the server side when the last response
+        // message was received. This will be nullptr and we don't need to deal with the old
+        // request transaction here.
         if (session_data->transaction[SRC_CLIENT] != nullptr)
         {
-            if ((session_data->pipeline_overflow) || (session_data->pipeline_underflow))
+            // The old request transaction is still here. Typically that is because the
+            // the current request has arrived before the previous response (pipelining). We need
+            // to add this transaction to our pipeline where it will wait for the matching
+            // response. But there are some special cases to check first.
+            if (session_data->transaction[SRC_CLIENT]->response_seen)
             {
-                delete session_data->transaction[SRC_CLIENT];
+                // The response started before the request finished. When the response took the
+                // old request transaction it did not leave the usual nullptr because we still
+                // needed it. Instead the two sides have been sharing the transaction. This is a
+                // soft delete that eliminates our interest in this transaction without disturbing
+                // the possibly ongoing response processing.
+                delete_transaction(session_data->transaction[SRC_CLIENT]);
+            }
+            else if ((session_data->pipeline_overflow) || (session_data->pipeline_underflow))
+            {
+                // Pipelining previously broke down and both sides are processed separately from
+                // now on. We just throw things away when we are done with them.
+                delete_transaction(session_data->transaction[SRC_CLIENT]);
             }
             else if (!session_data->add_to_pipeline(session_data->transaction[SRC_CLIENT]))
             {
                 // The pipeline is full and just overflowed.
-                session_data->infractions[source_id] += INF_PARTIAL_START;
+                session_data->infractions[source_id] += INF_PIPELINE_OVERFLOW;
                 session_data->events[source_id].create_event(EVENT_PIPELINE_MAX);
-                delete session_data->transaction[SRC_CLIENT];
+                delete_transaction(session_data->transaction[SRC_CLIENT]);
             }
         }
         session_data->transaction[SRC_CLIENT] = new NHttpTransaction;
     }
+    // This transaction has more than one response. This is a new response which is replacing the
+    // interim response. The two responses cannot coexist so we must clean up the interim response.
+    else if ((session_data->section_type[source_id] == SEC_STATUS) &&
+             (session_data->transaction[SRC_SERVER] != nullptr) &&
+              session_data->transaction[SRC_SERVER]->second_response_expected)
+    {
+        assert(session_data->transaction[SRC_SERVER] != nullptr);
+        session_data->transaction[SRC_SERVER]->second_response_expected = false;
+        delete session_data->transaction[SRC_SERVER]->status;
+        session_data->transaction[SRC_SERVER]->status = nullptr;
+        delete session_data->transaction[SRC_SERVER]->header[SRC_SERVER];
+        session_data->transaction[SRC_SERVER]->header[SRC_SERVER] = nullptr;
+        delete session_data->transaction[SRC_SERVER]->trailer[SRC_SERVER];
+        session_data->transaction[SRC_SERVER]->trailer[SRC_SERVER] = nullptr;
+    }
     // Status section: delete the current transaction and get a new one from the pipeline. If the
-    // pipeline is empty check for a request-side transaction that just finished and take it. If
-    // there is no transaction available then declare an underflow and create a new transaction
-    // specifically for the response side.
+    // pipeline is empty check for a request transaction and take it. If there is no transaction
+    // available then declare an underflow and create a new transaction specifically for the
+    // response side.
     else if (session_data->section_type[source_id] == SEC_STATUS)
     {
-        delete session_data->transaction[SRC_SERVER];
+        delete_transaction(session_data->transaction[SRC_SERVER]);
         if (session_data->pipeline_underflow)
         {
+            // A previous underflow separated the two sides forever
             session_data->transaction[SRC_SERVER] = new NHttpTransaction;
         }
         else if ((session_data->transaction[SRC_SERVER] = session_data->take_from_pipeline()) ==
             nullptr)
         {
-            if ((session_data->transaction[SRC_CLIENT] != nullptr) &&
-                (session_data->type_expected[SRC_CLIENT] == SEC_REQUEST))
+            if ((session_data->transaction[SRC_CLIENT] == nullptr) ||
+                (session_data->transaction[SRC_CLIENT]->response_seen))
             {
+                // Either there is no request at all or there is a request but a previous response
+                // already took it. Either way we have more responses than requests.
+                session_data->pipeline_underflow = true;
+                session_data->transaction[SRC_SERVER] = new NHttpTransaction;
+            }
+
+            else if (session_data->type_expected[SRC_CLIENT] == SEC_REQUEST)
+            {
+                // This is the normal case where the requests and responses are alternating (no
+                // pipelining). Processing of the response is complete so the request just takes
+                // it.
                 session_data->transaction[SRC_SERVER] = session_data->transaction[SRC_CLIENT];
                 session_data->transaction[SRC_CLIENT] = nullptr;
             }
             else
             {
-                session_data->pipeline_underflow = true;
-                session_data->transaction[SRC_SERVER] = new NHttpTransaction;
+                // Response message is starting before the request message has finished. Request
+                // side is not finished with this transaction so two sides share it
+                session_data->transaction[SRC_CLIENT]->shared_ownership = true;
+                session_data->transaction[SRC_SERVER] = session_data->transaction[SRC_CLIENT];
             }
         }
+        session_data->transaction[SRC_SERVER]->response_seen = true;
     }
 
-    assert((source_id == SRC_SERVER) || (session_data->transaction[source_id] != nullptr));
+    assert(session_data->transaction[source_id] != nullptr);
     return session_data->transaction[source_id];
+}
+
+void NHttpTransaction::delete_transaction(NHttpTransaction* transaction)
+{
+    if (transaction != nullptr)
+    {
+        if (!transaction->shared_ownership)
+            delete transaction;
+        else
+            transaction->shared_ownership = false;
+    }
+}
+
+void NHttpTransaction::set_body(NHttpMsgBody* latest_body_)
+{
+    delete latest_body;
+    latest_body = latest_body_;
 }
 

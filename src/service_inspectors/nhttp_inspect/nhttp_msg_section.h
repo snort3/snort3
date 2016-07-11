@@ -69,7 +69,7 @@ protected:
     NHttpFlowData* const session_data;
     const NHttpEnums::SourceId source_id;
     Flow* const flow;
-    uint64_t msg_num;
+    uint64_t trans_num;
     const NHttpParaList* const params;
     NHttpTransaction* const transaction;
     const bool tcp_close;

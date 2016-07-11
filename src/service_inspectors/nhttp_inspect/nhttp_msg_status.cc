@@ -163,6 +163,12 @@ void NHttpMsgStatus::update_flow()
         session_data->status_code_num = status_code_num;
         session_data->infractions[source_id].reset();
         session_data->events[source_id].reset();
+        // 100 response means the next response message will be added to this transaction instead
+        // of being part of another transaction. As implemented it is possible for multiple 100
+        // responses to all be included in the same transaction. It's not obvious whether that is
+        // the best way to handle what should be a highly abnormal situation.
+        if (status_code_num == 100)
+            transaction->second_response_coming();
     }
     session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 }

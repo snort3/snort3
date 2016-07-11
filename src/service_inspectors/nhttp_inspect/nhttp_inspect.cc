@@ -215,15 +215,15 @@ void NHttpInspect::clear(NHttpFlowData* session_data, SourceId source_id)
     latest_section = nullptr;
 
     // If current transaction is complete then we are done with it and should reclaim the space
-    if ((source_id == SRC_SERVER) && (session_data->type_expected[SRC_SERVER] == SEC_STATUS))
+    if ((source_id == SRC_SERVER) && (session_data->type_expected[SRC_SERVER] == SEC_STATUS) &&
+         session_data->transaction[SRC_SERVER]->final_response())
     {
-        delete session_data->transaction[SRC_SERVER];
+        NHttpTransaction::delete_transaction(session_data->transaction[SRC_SERVER]);
         session_data->transaction[SRC_SERVER] = nullptr;
     }
     else
     {
         // Get rid of most recent body section if present
-        delete session_data->transaction[source_id]->get_body();
         session_data->transaction[source_id]->set_body(nullptr);
     }
 }

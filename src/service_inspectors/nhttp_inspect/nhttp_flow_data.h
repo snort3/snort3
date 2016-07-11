@@ -54,6 +54,9 @@ public:
     friend class NHttpMsgBodyOld;
     friend class NHttpStreamSplitter;
     friend class NHttpTransaction;
+#ifdef REG_TEST
+    friend class NHttpUnitTestSetup;
+#endif
 
 private:
     // Convenience routines
@@ -104,7 +107,7 @@ private:
     int64_t detect_depth_remaining[2] = { NHttpEnums::STAT_NOT_PRESENT,
         NHttpEnums::STAT_NOT_PRESENT };
     MimeSession* mime_state = nullptr;  // SRC_CLIENT only
-    uint64_t expected_msg_num[2] = { 1, 1 };
+    uint64_t expected_trans_num[2] = { 1, 1 };
 
     // number of user data octets seen so far (regular body or chunks)
     int64_t body_octets[2] = { NHttpEnums::STAT_NOT_PRESENT, NHttpEnums::STAT_NOT_PRESENT };

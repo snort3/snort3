@@ -125,7 +125,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
 
     // Check for 0.9 response message
     if ((type == SEC_STATUS) &&
-        (session_data->expected_msg_num[SRC_SERVER] == session_data->zero_nine_expected))
+        (session_data->expected_trans_num[SRC_SERVER] == session_data->zero_nine_expected))
     {
         // 0.9 response is a body that runs to connection end with no headers. NHttpInspect does
         // not support no headers. Processing this imaginary status line and empty headers allows

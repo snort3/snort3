@@ -61,7 +61,7 @@ NHttpFlowData::~NHttpFlowData()
             (section_type[k] != SEC_BODY_OLD))
             // Body sections are reassembled in a static buffer
             delete[] section_buffer[k];
-        delete transaction[k];
+        NHttpTransaction::delete_transaction(transaction[k]);
         delete cutter[k];
         if (compress_stream[k] != nullptr)
         {
@@ -105,7 +105,7 @@ void NHttpFlowData::half_reset(SourceId source_id)
     if (source_id == SRC_CLIENT)
     {
         type_expected[SRC_CLIENT] = SEC_REQUEST;
-        expected_msg_num[SRC_CLIENT]++;
+        expected_trans_num[SRC_CLIENT]++;
         method_id = METH__NOT_PRESENT;
         if (mime_state != nullptr)
         {
@@ -116,7 +116,8 @@ void NHttpFlowData::half_reset(SourceId source_id)
     else
     {
         type_expected[SRC_SERVER] = SEC_STATUS;
-        expected_msg_num[SRC_SERVER]++;
+        if (transaction[SRC_SERVER]->final_response())
+            expected_trans_num[SRC_SERVER]++;
         status_code_num = STAT_NOT_PRESENT;
     }
 }
@@ -169,7 +170,7 @@ void NHttpFlowData::delete_pipeline()
 {
     for (int k=pipeline_front; k != pipeline_back; k = (k+1) % MAX_PIPELINE)
     {
-        delete pipeline[k];
+        NHttpTransaction::delete_transaction(pipeline[k]);
     }
     delete[] pipeline;
 }

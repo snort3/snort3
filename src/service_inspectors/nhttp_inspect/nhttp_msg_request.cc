@@ -212,7 +212,7 @@ void NHttpMsgRequest::gen_events()
         infractions += INF_ZERO_NINE_CONTINUE;
         events.create_event(EVENT_ZERO_NINE_CONTINUE);
     }
-    else if (zero_nine && (msg_num != 1))
+    else if (zero_nine && (trans_num != 1))
     {
         // Switched to 0.9 request after previously sending non-0.9 request on this connection
         infractions += INF_ZERO_NINE_NOT_FIRST;
@@ -237,7 +237,7 @@ void NHttpMsgRequest::update_flow()
             // FIXIT-L Add a configuration option to not do this. This would support an HTTP server
             // that responds to a 0.9 GET request with a full-blown 1.0 or 1.1 response with status
             // line and headers.
-            session_data->zero_nine_expected = msg_num;
+            session_data->zero_nine_expected = trans_num;
         }
     }
     else

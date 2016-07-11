@@ -36,7 +36,7 @@ class NHttpTransaction
 public:
     static NHttpTransaction* attach_my_transaction(NHttpFlowData* session_data,
         NHttpEnums::SourceId source_id);
-    ~NHttpTransaction();
+    static void delete_transaction(NHttpTransaction* transaction);
 
     NHttpMsgRequest* get_request() const { return request; }
     void set_request(NHttpMsgRequest* request_) { request = request_; }
@@ -54,16 +54,28 @@ public:
         { trailer[source_id] = trailer_; }
 
     NHttpMsgBody* get_body() const { return latest_body; }
-    void set_body(NHttpMsgBody* latest_body_) { latest_body = latest_body_; }
+    void set_body(NHttpMsgBody* latest_body_);
+
+    void second_response_coming() { assert(response_seen); second_response_expected = true; }
+    bool final_response() const { return !second_response_expected; }
 
 private:
     NHttpTransaction() = default;
+    ~NHttpTransaction();
 
     NHttpMsgRequest* request = nullptr;
     NHttpMsgStatus* status = nullptr;
     NHttpMsgHeader* header[2] = { nullptr, nullptr };
     NHttpMsgTrailer* trailer[2] = { nullptr, nullptr };
     NHttpMsgBody* latest_body = nullptr;
+
+    bool response_seen = false;
+    bool second_response_expected = false;
+
+    // This is a form of reference counting that prevents premature/double deletion of a
+    // transaction in the fairly rare case where the request and response are received in
+    // parallel.
+    bool shared_ownership = false;
 };
 
 #endif
