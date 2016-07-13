@@ -26,6 +26,7 @@
 
 #include "appid_flow_data.h"
 #include "application_ids.h"
+#include "appid_module.h"
 
 #define IRC_COUNT_THRESHOLD 10
 
@@ -320,6 +321,7 @@ inprocess:
 success:
     irc_service_mod.api->add_service(flowp, args->pkt, dir, &svc_element,
         APP_ID_IRCD, nullptr, nullptr, nullptr);
+    appid_stats.irc_flows++;
     return SERVICE_SUCCESS;
 
 fail:

@@ -22,11 +22,13 @@
 #include "main/snort_debug.h"
 #include "utils/util.h"
 
+#include "appid_module.h"
 #include "application_ids.h"
 #include "appid_flow_data.h"
+#include "app_info_table.h"
 #include "service_api.h"
 
-#define LPR_COUNT_THRESHOLD 5
+#define LPR_COUNT_THRESHOLD 2
 
 enum LPRState
 {
@@ -246,6 +248,7 @@ inprocess:
 success:
     lpr_service_mod.api->add_service(flowp, args->pkt, dir, &svc_element,
         APP_ID_PRINTSRV, nullptr, nullptr, nullptr);
+    appid_stats.lpr_flows++;
     return SERVICE_SUCCESS;
 
 fail:

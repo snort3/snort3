@@ -179,10 +179,8 @@ static RNAServiceValidationModule* static_service_list[] =
     &flap_service_mod,
 #endif
     &ftp_service_mod,
-#ifdef REMOVED_WHILE_NOT_IN_USE
     &irc_service_mod,
     &lpr_service_mod,
-#endif
     &mysql_service_mod,
 #ifdef REMOVED_WHILE_NOT_IN_USE
     &netbios_service_mod,
@@ -1765,8 +1763,8 @@ int AppIdServiceFailService(AppIdData* flow, const Packet* pkt, int dir,
      * gets all future flows. UDP_REVERSE should be marked only when detector positively
      * matches opposite direction patterns. */
 
-    if (getAppIdFlag(flow, APPID_SESSION_IGNORE_HOST|APPID_SESSION_UDP_REVERSED) || (svc_element &&
-        !svc_element->current_ref_count))
+    if (getAppIdFlag(flow, APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED)
+            || (svc_element && !svc_element->current_ref_count))
         return SERVICE_SUCCESS;
 
     /* For subsequent packets, avoid marking service failed on client packet,

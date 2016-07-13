@@ -357,9 +357,13 @@ static inline CLIENT_APP_RETCODE ssh_client_validate_keyx(uint16_t offset, const
             if (fd->pos >= fd->plen)
             {
                 offset++;
+                // FIXIT-M: if offset > size then there is probably a D-H Key Exchange Init packet in this payload
+                // For now parsing the Key Exchange Init is good enough to declare valid key exchange but for
+                // future enhance parsing to validate the D-H Key Exchange Init.
                 if (offset == size)
                     return CLIENT_APP_SUCCESS;
-                return CLIENT_APP_EINVALID;
+                else
+                    return CLIENT_APP_SUCCESS;
             }
             break;
 

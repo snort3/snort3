@@ -287,9 +287,7 @@ static void createServicePatternTrees(AppIdConfig* pConfig)
     }
 }
 
-static void createClientPatternTrees(
-    AppIdConfig* pConfig
-    )
+static void createClientPatternTrees( AppIdConfig* pConfig )
 {
     PatternService* ps;
     Pattern* pattern;
@@ -306,9 +304,7 @@ static void createClientPatternTrees(
     }
 }
 
-void registerServicePatterns(
-    AppIdConfig* pConfig
-    )
+void registerServicePatterns( AppIdConfig* pConfig )
 {
     PatternService* ps;
     Pattern* pattern;
@@ -351,18 +347,13 @@ void registerServicePatterns(
         }
     }
     if (pConfig->servicePortPattern->tcp_patterns)
-    {
         pConfig->servicePortPattern->tcp_patterns->prep();
-    }
+
     if (pConfig->servicePortPattern->udp_patterns)
-    {
         pConfig->servicePortPattern->udp_patterns->prep();
-    }
 }
 
-void registerClientPatterns(
-    AppIdConfig* pConfig
-    )
+void registerClientPatterns( AppIdConfig* pConfig )
 {
     PatternService* ps;
     Pattern* pattern;
@@ -397,13 +388,10 @@ void registerClientPatterns(
         }
     }
     if (pConfig->clientPortPattern->tcp_patterns)
-    {
         pConfig->clientPortPattern->tcp_patterns->prep();
-    }
+
     if (pConfig->clientPortPattern->udp_patterns)
-    {
         pConfig->clientPortPattern->udp_patterns->prep();
-    }
 }
 
 void dumpPatterns(const char* name, PatternService* pList)
@@ -570,9 +558,7 @@ static int pattern_match(void* id, void*, int index, void* data, void*)
 }
 
 static int csdPatternTreeSearch(const uint8_t* data, uint16_t size, IpProtocol protocol,
-    Packet* pkt,
-    const RNAServiceElement** serviceData, bool isClient,
-    const AppIdConfig* pConfig)
+    Packet* pkt, const RNAServiceElement** serviceData, bool isClient, const AppIdConfig* pConfig)
 {
     SearchTool* patternTree = nullptr;
     PatternService* ps;

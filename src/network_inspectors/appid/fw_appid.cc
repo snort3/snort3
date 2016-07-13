@@ -2290,13 +2290,10 @@ void fwAppIdSearch(Packet* p)
     {
         if (p->is_tcp())
             protocol = IpProtocol::TCP;
-
         else if (p->is_udp())
             protocol = IpProtocol::UDP;
-
         else if ( p->is_ip4() || p->is_ip6() )
             protocol = p->get_ip_proto_next();
-
         else
             return;
 
@@ -2828,8 +2825,7 @@ void fwAppIdSearch(Packet* p)
                     if (tpAppId > APP_ID_NONE)
                     {
                         //tp has positively identified appId, Dig deeper only if sourcefire
-                        // detector
-                        //identifies additional information or flow is UDP reveresed.
+                        // detector identifies additional information or flow is UDP reveresed.
                         if ((entry = appInfoEntryGet(tpAppId, pConfig))
                             && entry->svrValidator &&
                             ((entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL) ||
@@ -2864,13 +2860,11 @@ void fwAppIdSearch(Packet* p)
                 tpAppId > APP_ID_NONE  && tpAppId < SF_APPID_MAX)
             {
                 entry = appInfoEntryGet(tpAppId, pConfig);
-
-                if (entry && entry->svrValidator && !(entry->flags &
-                    APPINFO_FLAG_SERVICE_ADDITIONAL))
+                if (entry && entry->svrValidator
+                        && !(entry->flags &  APPINFO_FLAG_SERVICE_ADDITIONAL))
                 {
                     if (app_id_debug_session_flag)
-                        LogMessage("AppIdDbg %s Stopping service detection\n",
-                            app_id_debug_session);
+                        LogMessage("AppIdDbg %s Stop service detection\n", app_id_debug_session);
                     stopRnaServiceInspection(p, session, direction);
                 }
             }
