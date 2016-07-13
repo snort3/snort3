@@ -28,6 +28,7 @@
 #include "init_state.h"
 
 bool Converter::parse_includes = true;
+bool Converter::ohi_convert = false;
 bool Converter::convert_rules_mult_files = true;
 bool Converter::convert_conf_mult_files = true;
 

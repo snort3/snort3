@@ -16,6 +16,8 @@ pps_ftp_telnet_protocol.cc \
 pps_gtp.cc \
 pps_http_inspect.cc \
 pps_http_inspect_server.cc \
+pps_nhttp_inspect.cc \
+pps_nhttp_inspect_server.cc \
 pps_normalizers.cc \
 pps_perfmonitor.cc \
 pps_reputation.cc \

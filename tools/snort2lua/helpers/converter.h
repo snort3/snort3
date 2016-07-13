@@ -53,6 +53,12 @@ public:
     inline static bool include_create_lua()
     { return convert_conf_mult_files; }
 
+    inline static void set_ohi_convert(bool val)
+    { ohi_convert = val; }
+
+    inline static bool get_ohi_convert()
+    { return ohi_convert; }
+
     int convert(std::string input,
         std::string output,
         std::string rules,         // defaults to output_file
@@ -88,6 +94,7 @@ public:
 
 private:
     static bool parse_includes;
+    static bool ohi_convert;
     static bool convert_rules_mult_files;
     static bool convert_conf_mult_files;
 
