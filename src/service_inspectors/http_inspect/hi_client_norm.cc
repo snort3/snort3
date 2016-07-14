@@ -180,7 +180,6 @@ int hi_split_header_cookie(
             {
                 memcpy_s(header + *i_header_len, header_rem, this_header_start, this_header_len);
                 *i_header_len += this_header_len;
-                header_rem -= this_header_len;
             }
         }
         else
