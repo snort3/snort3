@@ -416,12 +416,7 @@ int AppIdConfig::add_port_exclusion(SF_LIST* port_exclusions[], const ip::snort_
     }
 
     /* add this PortExclusion to the sflist for this port */
-    if (sflist_add_tail(pe_list, port_ex) )
-    {
-        snort_free(port_ex);
-        ErrorMessage("Config: Failed to add an port exclusion to the list");
-        return -1;
-    }
+    sflist_add_tail(pe_list, port_ex);
     return 0;
 }
 

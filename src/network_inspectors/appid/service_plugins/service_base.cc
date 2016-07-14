@@ -658,7 +658,6 @@ int ServiceAddPort(RNAServiceValidationPort* pp, RNAServiceValidationModule* svm
     RNAServiceElement** list = nullptr;
     RNAServiceElement* li;
     RNAServiceElement* serviceElement;
-    uint8_t isAllocated = 0;
 
     DebugFormat(DEBUG_INSPECTOR, "Adding service %s for protocol %u on port %u\n",
         svm->name, (unsigned)pp->proto, (unsigned)pp->port);
@@ -695,7 +694,6 @@ int ServiceAddPort(RNAServiceValidationPort* pp, RNAServiceValidationModule* svm
     if (!li)
     {
         li = new RNAServiceElement;
-        isAllocated = 1;
         li->next = *list;
         *list = li;
         li->validate = pp->validate;
@@ -726,19 +724,7 @@ int ServiceAddPort(RNAServiceValidationPort* pp, RNAServiceValidationModule* svm
         ;
 
     if (!serviceElement)
-    {
-        if (sflist_add_tail(services[pp->port], li))
-        {
-            ErrorMessage("Could not add %s, service for protocol %u on port %u", svm->name,
-                (unsigned)pp->proto, (unsigned)pp->port);
-            if (isAllocated)
-            {
-                *list = li->next;
-                snort_free(li);
-            }
-            return -1;
-        }
-    }
+        sflist_add_tail(services[pp->port], li);
 
     li->ref_count++;
     return 0;
@@ -747,6 +733,7 @@ int ServiceAddPort(RNAServiceValidationPort* pp, RNAServiceValidationModule* svm
 static int CServiceAddPort(RNAServiceValidationPort* pp, RNAServiceValidationModule* svm,
     AppIdConfig* pConfig)
 {
+
     return ServiceAddPort(pp, svm, nullptr, pConfig);
 }
 
@@ -1608,21 +1595,11 @@ int AppIdServiceIncompatibleData(AppIdData* flow, const Packet* pkt, int dir,
         && (flow->candidate_service_list != nullptr)
         && (flow->id_state != nullptr) )
     {
-        if (sflist_count(flow->candidate_service_list) != 0)                           /*     it's
-                                                                                          not empty
-                                                                                          */
+        if (sflist_count(flow->candidate_service_list) != 0)
         {
             return SERVICE_SUCCESS;
         }
-        else if (    (flow->num_candidate_services_tried >= MAX_CANDIDATE_SERVICES)    /*     or
-                                                                                          it's
-                                                                                          empty,
-                                                                                          but we're
-                                                                                          tried
-                                                                                          everything
-                                                                                          we're
-                                                                                          going to
-                                                                                          try */
+        else if ((flow->num_candidate_services_tried >= MAX_CANDIDATE_SERVICES)
             || (flow->id_state->state == SERVICE_ID_BRUTE_FORCE) )
         {
             return SERVICE_SUCCESS;

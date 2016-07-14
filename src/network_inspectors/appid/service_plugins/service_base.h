@@ -51,49 +51,32 @@ int LoadServiceModules(const char** dir_list, uint32_t instance_id, AppIdConfig*
 // This function is called during reload/reconfiguration. It registers service ports in the given
 // AppId configuration. This function also takes care of services associated with detector modules.
 int ReloadServiceModules(AppIdConfig*);
-
 int serviceLoadCallback(void* symbol);
 int serviceLoadForConfigCallback(void* symbol, AppIdConfig*);
-int ServiceAddPort(
-    RNAServiceValidationPort*, RNAServiceValidationModule*, Detector*, AppIdConfig*);
+int ServiceAddPort(RNAServiceValidationPort*, RNAServiceValidationModule*, Detector*,
+        AppIdConfig*);
 void ServiceRemovePorts(RNAServiceValidationFCN, Detector*, AppIdConfig*);
-void ServiceRegisterPatternDetector(
-    RNAServiceValidationFCN, IpProtocol proto, const uint8_t* pattern,
-    unsigned size, int position, Detector*, const char* name);
-int AppIdDiscoverService(
-    Packet*, int direction, AppIdData*, const AppIdConfig*);
+void ServiceRegisterPatternDetector(RNAServiceValidationFCN, IpProtocol proto,
+        const uint8_t* pattern, unsigned size, int position, Detector*, const char* name);
+int AppIdDiscoverService(Packet*, int direction, AppIdData*, const AppIdConfig*);
 AppId getPortServiceId(IpProtocol proto, uint16_t port, const AppIdConfig*);
-
 void AppIdFreeServiceIDState(AppIdServiceIDState*);
-
-int AppIdServiceAddService(
-    AppIdData*, const Packet*, int dir, const RNAServiceElement*,
+int AppIdServiceAddService(AppIdData*, const Packet*, int dir, const RNAServiceElement*,
     AppId appId, const char* vendor, const char* version, const RNAServiceSubtype*);
-
-int AppIdServiceAddServiceSubtype(
-    AppIdData*, const Packet*, int dir, const RNAServiceElement*, AppId,
-    const char* vendor, const char* version, RNAServiceSubtype*);
-
-int AppIdServiceInProcess(
-    AppIdData*, const Packet*, int dir, const RNAServiceElement*);
-
-int AppIdServiceIncompatibleData(
-    AppIdData*, const Packet*, int dir, const RNAServiceElement*,
+int AppIdServiceAddServiceSubtype(AppIdData*, const Packet*, int dir, const RNAServiceElement*,
+        AppId, const char* vendor, const char* version, RNAServiceSubtype*);
+int AppIdServiceInProcess(AppIdData*, const Packet*, int dir, const RNAServiceElement*);
+int AppIdServiceIncompatibleData(AppIdData*, const Packet*, int dir, const RNAServiceElement*,
     unsigned flow_data_index, const AppIdConfig*);
-
-int AppIdServiceFailService(
-    AppIdData*, const Packet*, int dir, const RNAServiceElement*,
+int AppIdServiceFailService(AppIdData*, const Packet*, int dir, const RNAServiceElement*,
     unsigned flow_data_index, const AppIdConfig*);
-
 int AddFTPServiceState(AppIdData*);
 void AppIdFreeDhcpInfo(DHCPInfo*);
 void AppIdFreeSMBData(FpSMBData*);
 void AppIdFreeDhcpData(DhcpFPData*);
-
 void dumpPorts(FILE*, const AppIdConfig*);
-
-const RNAServiceElement* ServiceGetServiceElement(
-    RNAServiceValidationFCN, Detector*, AppIdConfig*);
+const RNAServiceElement* ServiceGetServiceElement(RNAServiceValidationFCN, Detector*,
+        AppIdConfig*);
 
 extern RNAServiceValidationModule* active_service_list;
 
@@ -102,8 +85,8 @@ extern uint32_t app_id_instance_id;
 void cleanupFreeServiceMatch();
 void AppIdFreeServiceMatchList(ServiceMatch* sm);
 
-inline bool compareServiceElements(
-    const RNAServiceElement* first, const RNAServiceElement* second)
+inline bool compareServiceElements(const RNAServiceElement* first,
+        const RNAServiceElement* second)
 {
     if (first == second)
         return 0;

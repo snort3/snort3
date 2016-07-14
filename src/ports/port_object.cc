@@ -143,7 +143,8 @@ int PortObjectAddItem(PortObject* po, PortObjectItem* poi, int* errflag)
         }
     }
 
-    return sflist_add_tail(po->item_list, poi);
+    sflist_add_tail(po->item_list, poi);
+    return 0;
 }
 
 /*
@@ -190,7 +191,8 @@ int PortObjectAddRange(PortObject* po, int lport, int hport, int not_flag)
 
     poi->negate = not_flag != 0;
 
-    return sflist_add_tail(po->item_list, poi);
+    sflist_add_tail(po->item_list, poi);
+    return 0;
 }
 
 int PortObjectAddRule(PortObject* po, int rule)
@@ -209,7 +211,6 @@ int PortObjectAddRule(PortObject* po, int rule)
     *pruleid = rule;
 
     sflist_add_tail(po->rule_list, pruleid);
-
     return 0;
 }
 

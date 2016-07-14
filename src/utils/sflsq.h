@@ -76,10 +76,9 @@ typedef sf_list SF_LIST;
 // -----------------------------------------------------------------------------
 SO_PUBLIC SF_LIST* sflist_new();
 SO_PUBLIC void sflist_init(SF_LIST*);
-SO_PUBLIC int sflist_add_tail(SF_LIST*, NODE_DATA);
-SO_PUBLIC int sflist_add_head(SF_LIST*, NODE_DATA);
-SO_PUBLIC int sflist_add_before(SF_LIST*, SF_LNODE*, NODE_DATA);
-SO_PUBLIC int sflist_add_after(SF_LIST*, SF_LNODE*, NODE_DATA);
+SO_PUBLIC void sflist_add_tail(SF_LIST*, NODE_DATA);
+SO_PUBLIC void sflist_add_head(SF_LIST*, NODE_DATA);
+SO_PUBLIC void sflist_add_before(SF_LIST*, SF_LNODE*, NODE_DATA);
 SO_PUBLIC NODE_DATA sflist_remove_head(SF_LIST*);
 SO_PUBLIC NODE_DATA sflist_remove_tail(SF_LIST*);
 SO_PUBLIC void sflist_remove_node(SF_LIST*, SF_LNODE*);
@@ -94,7 +93,7 @@ SO_PUBLIC void sflist_static_free_all(SF_LIST*, void (* nfree)(void*));
 //  Queue Interface ( FIFO - First in, First out )
 // -----------------------------------------------------------------------------
 SF_QUEUE* sfqueue_new();
-int sfqueue_add(SF_QUEUE*, NODE_DATA);
+void sfqueue_add(SF_QUEUE*, NODE_DATA);
 NODE_DATA sfqueue_remove(SF_QUEUE*);
 int sfqueue_count(SF_QUEUE*);
 void sfqueue_free(SF_QUEUE*);

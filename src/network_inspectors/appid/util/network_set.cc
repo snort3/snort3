@@ -124,13 +124,7 @@ int NetworkSet_AddNetworkRangeEx(NetworkSet* network_set, uint32_t range_min,
         }
     }
 
-    if (sflist_add_tail(&network_set->networks, (void*)network))
-    {
-        ErrorMessage("NetworkSet:Out of memory");
-        snort_free(network);
-        return -1;
-    }
-
+    sflist_add_tail(&network_set->networks, (void*)network);
     rval = sfxhash_add(network_set->ids, &network->info.id, &network->info.id);
     if (rval != SFXHASH_OK && rval != SFXHASH_INTABLE)
     {
@@ -194,13 +188,7 @@ int NetworkSet_AddNetworkRange6Ex(NetworkSet* network_set, NSIPv6Addr* range_min
         }
     }
 
-    // FIXIT - these sflist funcs probably should never fail now either since they use snort_calloc...
-    if (sflist_add_tail(&network_set->networks6, (void*)network))
-    {
-        ErrorMessage("NetworkSet:Out of memory");
-        snort_free(network);
-        return -1;
-    }
+    sflist_add_tail(&network_set->networks6, (void*)network);
     rval = sfxhash_add(network_set->ids6, &network->info.id, &network->info.id);
     if (rval != SFXHASH_OK && rval != SFXHASH_INTABLE)
     {
@@ -416,9 +404,7 @@ static inline int NetworkSet_OrderByNetmask(SF_LIST* ordered_networks, SF_LIST* 
 
         if (node_data)
         {
-            if (sflist_add_tail(ordered_networks, node_data) )
-                return -1;
-
+            sflist_add_tail(ordered_networks, node_data);
             sflist_remove_node(networks, node);
         }
     }
@@ -432,10 +418,8 @@ static inline int NetworkSet_AddList(SF_LIST* networks, SF_LIST* new_networks)
     void* network;
 
     while ((network = sflist_remove_head(new_networks)))
-    {
-        if (sflist_add_tail(networks, network))
-            return -1;
-    }
+        sflist_add_tail(networks, network);
+
     return 0;
 }
 
@@ -490,11 +474,7 @@ static inline int NetworkSet_ReduceNetworkSet(SF_LIST* networks)
                         *new_ias = *i_ias;
                         new_ias->range_min = ias->range_max + 1;
                         new_ias->range_max = tmp;
-                        if (sflist_add_tail(&reduced_networks, new_ias))
-                        {
-                            snort_free(new_ias);
-                            return -1;
-                        }
+                        sflist_add_tail(&reduced_networks, new_ias);
                         changed = true;
                     }
                 }
@@ -515,11 +495,7 @@ static inline int NetworkSet_ReduceNetworkSet(SF_LIST* networks)
                         *new_ias = *i_ias;
                         new_ias->range_min = tmp;
                         new_ias->range_max = ias->range_min - 1;
-                        if (sflist_add_tail(&reduced_networks, new_ias))
-                        {
-                            snort_free(new_ias);
-                            return -1;
-                        }
+                        sflist_add_tail(&reduced_networks, new_ias);
                         changed = true;
                     }
                 }
@@ -630,11 +606,7 @@ static inline int NetworkSet_ReduceNetworkSet(SF_LIST* networks)
                             *new_ias = *i_ias;
                             new_ias->range_min = ias->range_max + 1;
                             new_ias->range_max = tmp;
-                            if (sflist_add_tail(&reduced_networks, new_ias))
-                            {
-                                snort_free(new_ias);
-                                return -1;
-                            }
+                            sflist_add_tail(&reduced_networks, new_ias);
                             changed = true;
                         }
                     }
@@ -658,10 +630,8 @@ static inline int NetworkSet_ReduceNetworkSet(SF_LIST* networks)
                     i_ias = (Network*)sflist_next(&iter);
             }
 
-            if (ias && sflist_add_tail(&reduced_networks, ias))
-            {
-                return -1;
-            }
+            if (ias)
+                sflist_add_tail(&reduced_networks, ias);
         }
     }
 
@@ -717,10 +687,7 @@ static inline int NetworkSet_ReduceNetworkSet(SF_LIST* networks)
     sflist_static_free_all(networks, &snort_free);
     while ((ias = (Network*)sflist_remove_head(&reduced_networks)))
     {
-        if (sflist_add_tail(networks, ias))
-        {
-            return -1;
-        }
+        sflist_add_tail(networks, ias);
     }
     return 0;
 }
@@ -781,11 +748,7 @@ static inline int NetworkSet_ReduceNetworkSet6(SF_LIST* networks)
                         new_ias->range_min = ias->range_max;
                         NSIPv6AddrInc(&new_ias->range_min);
                         new_ias->range_max = tmp;
-                        if (sflist_add_tail(&reduced_networks, new_ias))
-                        {
-                            snort_free(new_ias);
-                            return -1;
-                        }
+                        sflist_add_tail(&reduced_networks, new_ias);
                         changed = true;
                     }
                 }
@@ -809,11 +772,7 @@ static inline int NetworkSet_ReduceNetworkSet6(SF_LIST* networks)
                         new_ias->range_min = tmp;
                         new_ias->range_max = ias->range_min;
                         NSIPv6AddrDec(&new_ias->range_max);
-                        if (sflist_add_tail(&reduced_networks, new_ias))
-                        {
-                            snort_free(new_ias);
-                            return -1;
-                        }
+                        sflist_add_tail(&reduced_networks, new_ias);
                         changed = true;
                     }
                 }
@@ -929,11 +888,7 @@ static inline int NetworkSet_ReduceNetworkSet6(SF_LIST* networks)
                             new_ias->range_min = ias->range_max;
                             NSIPv6AddrInc(&new_ias->range_min);
                             new_ias->range_max = tmp;
-                            if (sflist_add_tail(&reduced_networks, new_ias))
-                            {
-                                snort_free(new_ias);
-                                return -1;
-                            }
+                            sflist_add_tail(&reduced_networks, new_ias);
                             changed = true;
                         }
                     }
@@ -958,10 +913,8 @@ static inline int NetworkSet_ReduceNetworkSet6(SF_LIST* networks)
                     i_ias = (Network6*)sflist_next(&iter);
             }
 
-            if (ias && sflist_add_tail(&reduced_networks, ias))
-            {
-                return -1;
-            }
+            if (ias)
+                sflist_add_tail(&reduced_networks, ias);
         }
     }
 
@@ -1022,10 +975,7 @@ static inline int NetworkSet_ReduceNetworkSet6(SF_LIST* networks)
     sflist_static_free_all(networks, &snort_free);
     while ((ias = (Network6*)sflist_remove_head(&reduced_networks)))
     {
-        if (sflist_add_tail(networks, ias))
-        {
-            return -1;
-        }
+        sflist_add_tail(networks, ias);
     }
     return 0;
 }

@@ -793,7 +793,6 @@ static void rewriteCHP(const char* buf, int bs, int start,
 static char* normalize_userid(char* user)
 {
     int i, old_size;
-    //int new_size;
     int percent_count = 0;
     char a, b;
     char* tmp_ret, * tmp_user;
@@ -813,7 +812,6 @@ static char* normalize_userid(char* user)
     }
 
     /* Shrink user string in place */
-    //new_size = old_size - percent_count*2; // FIXIT-L new_size was never used
     tmp_ret = user;
     tmp_user = user;
 

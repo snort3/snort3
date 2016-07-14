@@ -174,13 +174,8 @@ SF_LIST* PortObjectItemListFromBits(const PortBitSet& parray, int n)
 
         poi->lport =(unsigned short)lport;
         poi->hport =(unsigned short)hport;
-
-        if ( sflist_add_tail(plist, poi) )
-        {
-            sflist_free_all(plist, snort_free);
-            return 0;
-        }
-    }
+        sflist_add_tail(plist, poi);
+     }
 
     return plist;
 }

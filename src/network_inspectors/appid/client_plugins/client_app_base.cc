@@ -372,11 +372,7 @@ static void AddModuleConfigItem(char* module_name, char* item_name, char* item_v
         mod_config = (RNAClientAppModuleConfig*)snort_calloc(sizeof(RNAClientAppModuleConfig));
         mod_config->name = snort_strdup(module_name);
         sflist_init(&mod_config->items);
-        if (sflist_add_tail(&config->module_configs, mod_config))
-        {
-            ErrorMessage("Failed to add a module configuration");
-            exit(-1);
-        }
+        sflist_add_tail(&config->module_configs, mod_config);
     }
 
     for (item = (RNAClientAppModuleConfigItem*)sflist_first(&mod_config->items, &cursor);
@@ -391,11 +387,7 @@ static void AddModuleConfigItem(char* module_name, char* item_name, char* item_v
     {
         item = (RNAClientAppModuleConfigItem*)snort_calloc(sizeof(RNAClientAppModuleConfigItem));
         item->name = snort_strdup(item_name);
-        if (sflist_add_tail(&mod_config->items, item))
-        {
-            ErrorMessage("Failed to add a module configuration item");
-            exit(-1);
-        }
+        sflist_add_tail(&mod_config->items, item);
     }
 
     if (item->value)

@@ -973,16 +973,11 @@ int PortTableAddObject(PortTable* p, PortObject* po)
         pox =(PortObject*)sflist_next(&lpos) )
     {
         if ( pox == po )
-        {
-            /* already in list - just return */
-            return 0;
-        }
+            return 0;   // already in list - just return
     }
 
     /* Save the users port object, if not already in the list */
-    if ( sflist_add_tail(p->pt_polist,po) )
-        return -1;
-
+    sflist_add_tail(p->pt_polist,po);
     return 0;
 }
 
@@ -1000,9 +995,7 @@ int PortTableCompile(PortTable* p)
     *  If not using an optimized Table use the rule_index_map in parser.c
     */
     if ( !p->pt_optimize )
-    {
         return 0;
-    }
 
     DebugMessage(DEBUG_PORTLISTS,"#PortTableCompile: Compiling Port Array Lists\n");
 

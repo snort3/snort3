@@ -177,8 +177,7 @@ static void ServiceMapAddOtnRaw(SFGHASH* table, char* servicename, OptTreeNode* 
     }
 
     /* add the rule */
-    if ( sflist_add_tail(list, otn) )
-        FatalError("service_rule_map: could not add a rule to the service rule-list\n");
+    sflist_add_tail(list, otn);
 }
 
 /*

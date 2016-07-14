@@ -1023,12 +1023,7 @@ static void FlowBitsVerify()
 
         if (fb->toggle != flowbits_toggle)
         {
-            if (sfqueue_add(flowbits_bit_queue, (NODE_DATA)(uintptr_t)fb->id) == -1)
-            {
-                ParseError("failed to add flow bit id to queue.");
-                return;
-            }
-
+            sfqueue_add(flowbits_bit_queue, (NODE_DATA)(uintptr_t)fb->id);
             sfghash_remove(flowbits_hash, n->key);
             continue;
         }
