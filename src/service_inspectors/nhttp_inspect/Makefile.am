@@ -1,4 +1,3 @@
-
 file_list = \
 nhttp_inspect.cc nhttp_inspect.h \
 nhttp_msg_section.cc nhttp_msg_section.h \
@@ -31,23 +30,28 @@ nhttp_field.cc nhttp_field.h \
 nhttp_infractions.h \
 nhttp_event_gen.h
 
+# FIXIT-L merge two file lists when OHI retired
+ips_file_list = ips_nhttp.cc ips_nhttp.h
+
 if STATIC_INSPECTORS
 noinst_LIBRARIES = libnhttp_inspect.a
 libnhttp_inspect_a_SOURCES = $(file_list)
+
+# FIXIT-L eliminate this block when OHI retired
+optlibdir = $(pkglibdir)/inspectors
+optlib_LTLIBRARIES = libnhttp_inspect_opt.la
+libnhttp_inspect_opt_la_CXXFLAGS = $(AM_CXXFLAGS)
+libnhttp_inspect_opt_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
+libnhttp_inspect_opt_la_SOURCES = $(ips_file_list)
+
 else
 shlibdir = $(pkglibdir)/inspectors
 shlib_LTLIBRARIES = libnhttp_inspect.la
 libnhttp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libnhttp_inspect_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libnhttp_inspect_la_SOURCES = $(file_list)
+libnhttp_inspect_la_SOURCES = $(file_list) $(ips_file_list)
+
 endif
-
-optlibdir = $(pkglibdir)/inspectors
-
-optlib_LTLIBRARIES = libnhttp_inspect_opt.la
-libnhttp_inspect_opt_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libnhttp_inspect_opt_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libnhttp_inspect_opt_la_SOURCES = ips_nhttp.cc ips_nhttp.h
 
 if BUILD_CPPUTESTS
 SUBDIRS = test

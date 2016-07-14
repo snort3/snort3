@@ -1,3 +1,16 @@
+# Version of the add_shared_library macro that does not set BUILDING_SO
+# FIXIT-L eliminate this macro when OHI retired
+macro (add_shared_library2 libname install_path)
+    set (sources ${ARGN})
+
+    add_library ( ${libname} SHARED ${sources} )
+
+    install (
+        TARGETS ${libname}
+        LIBRARY
+            DESTINATION "lib/${CMAKE_PROJECT_NAME}/${install_path}"
+    )
+endmacro (add_shared_library2)
 
 set (FILE_LIST
     nhttp_inspect.cc
@@ -58,12 +71,18 @@ set (FILE_LIST
     nhttp_event_gen.h
 )
 
+# FIXIT-L merge two file lists when OHI retired
+set (IPS_FILE_LIST
+    ips_nhttp.cc
+    ips_nhttp.h
+)
+
 if (STATIC_INSPECTORS)
     add_library(nhttp_inspect STATIC ${FILE_LIST})
+# FIXIT-L eliminate this call when OHI retired
+    add_shared_library2(nhttp_inspect_opt inspectors ${IPS_FILE_LIST})
 else(STATIC_INSPECTORS)
-    add_shared_library(nhttp_inspect inspectors ${FILE_LIST})
+    add_shared_library(nhttp_inspect inspectors ${FILE_LIST} ${IPS_FILE_LIST})
 endif(STATIC_INSPECTORS)
-
-add_shared_library(nhttp_inspect_opt inspectors ips_nhttp.cc ips_nhttp.h)
 
 add_subdirectory ( test )

@@ -82,9 +82,40 @@ const InspectApi NHttpApi::nhttp_api =
 };
 
 #ifdef BUILDING_SO
+extern const BaseApi* ips_uri;
+extern const BaseApi* ips_client_body;
+extern const BaseApi* ips_method;
+extern const BaseApi* ips_cookie;
+extern const BaseApi* ips_stat_code;
+extern const BaseApi* ips_stat_msg;
+extern const BaseApi* ips_raw_uri;
+extern const BaseApi* ips_raw_header;
+extern const BaseApi* ips_raw_cookie;
+extern const BaseApi* ips_version;
+extern const BaseApi* ips_header;
+extern const BaseApi* ips_trailer;
+extern const BaseApi* ips_raw_trailer;
+extern const BaseApi* ips_raw_request;
+extern const BaseApi* ips_raw_status;
+
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &NHttpApi::nhttp_api.base,
+    ips_uri,
+    ips_client_body,
+    ips_method,
+    ips_cookie,
+    ips_stat_code,
+    ips_stat_msg,
+    ips_raw_uri,
+    ips_raw_header,
+    ips_raw_cookie,
+    ips_version,
+    ips_header,
+    ips_trailer,
+    ips_raw_trailer,
+    ips_raw_request,
+    ips_raw_status,
     nullptr
 };
 #else
