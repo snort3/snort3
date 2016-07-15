@@ -1562,6 +1562,19 @@ inline uint16_t SmbNt_NegotiateRespMaxMultiplex(const SmbNt_NegotiateProtocolRes
     return alignedNtohs(&resp->smb_maxmux);
 }
 
+/* This is the Core Protocol response */
+struct SmbCore_NegotiateProtocolResp    /* smb_wct = 1 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_index;   /* index */
+    uint16_t smb_bcc;     /* must be 0 */
+};
+
+inline uint16_t SmbNegotiateRespDialectIndex(const SmbCore_NegotiateProtocolResp* resp)
+{
+    return alignedNtohs(&resp->smb_index);
+}
+
 /*********************************************************************
  * SMB_COM_TREE_CONNECT_ANDX
  *********************************************************************/

@@ -29,6 +29,8 @@
 #include "utils/util.h"
 #include "detection/detect.h"
 
+#define SMB_DIALECT_NT_LM_012       "NT LM 0.12"  // NT LAN Manager
+
 #define SERVICE_0     (0)                // IPC start
 #define SERVICE_1     (SERVICE_0+4)      // DISK start
 #define SERVICE_FS    (SERVICE_1+3)      // Failure
@@ -1644,7 +1646,7 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
 // SMB_COM_NEGOTIATE
 DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
-    const DCE2_SmbComInfo* com_info, const uint8_t* nb_ptr, uint32_t)
+    const DCE2_SmbComInfo* com_info, const uint8_t* nb_ptr, uint32_t nb_len)
 {
     if (!DCE2_ComInfoCanProcessCommand(com_info))
         return DCE2_RET__ERROR;
@@ -1653,11 +1655,65 @@ DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
 
     if (DCE2_ComInfoIsRequest(com_info))
     {
-        // FIXIT-M add dialect related code
+        // Have at least 2 bytes based on byte count check done earlier
+        uint8_t* term_ptr;
+        int ntlm_index = 0;
+        uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
+
+        DCE2_MOVE(nb_ptr, nb_len, com_size);
+
+        while ((term_ptr = (uint8_t*)memchr(nb_ptr, '\0', nb_len)) != nullptr)
+        {
+            if (!SmbFmtDialect(*nb_ptr))
+            {
+                dce_alert(GID_DCE2, DCE2_SMB_BAD_FORM, (dce2CommonStats*)&dce2_smb_stats);
+
+                // Windows errors if bad format
+                if (DCE2_SsnIsWindowsPolicy(&ssd->sd))
+                {
+                    return DCE2_RET__ERROR;
+                }
+            }
+
+            // Move past format
+            DCE2_MOVE(nb_ptr, nb_len, 1);
+
+            if (nb_len == 0)
+                break;
+
+            // Just a NULL byte - acceptable by Samba and Windows
+            if (term_ptr == nb_ptr)
+                continue;
+
+            if ((*nb_ptr == 'N')
+                && (strncmp((const char*)nb_ptr, SMB_DIALECT_NT_LM_012, term_ptr - nb_ptr) == 0))
+                break;
+
+            // Move past string and NULL byte
+            DCE2_MOVE(nb_ptr, nb_len, (term_ptr - nb_ptr) + 1);
+
+            ntlm_index++;
+        }
+
+        if (term_ptr != nullptr)
+        {
+            ssd->dialect_index = ntlm_index;
+        }
+        else
+        {
+            ssd->dialect_index = DCE2_SENTINEL;
+            dce_alert(GID_DCE2, DCE2_SMB_DEPR_DIALECT_NEGOTIATED,
+                (dce2CommonStats*)&dce2_smb_stats);
+        }
     }
     else
     {
-        // FIXIT-M add dialect related code
+        const uint16_t dialect_index =
+            SmbNegotiateRespDialectIndex((SmbCore_NegotiateProtocolResp*)nb_ptr);
+
+        if ((ssd->dialect_index != DCE2_SENTINEL) && (dialect_index != ssd->dialect_index))
+            dce_alert(GID_DCE2, DCE2_SMB_DEPR_DIALECT_NEGOTIATED,
+                (dce2CommonStats*)&dce2_smb_stats);
 
         ssd->ssn_state_flags |= DCE2_SMB_SSN_STATE__NEGOTIATED;
 
