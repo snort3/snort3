@@ -1,3 +1,13 @@
+16/07/15 - build 202
+
+-- fix dynamic build of new_http_inspect
+-- fix static analysis issues
+-- fix new_http_inspect handling of 100 response
+-- port appid detectors: kereberos, bittorrent, imap, pop
+-- port smb reassembly and raw commands processing
+-- snort2lua updates for new_http_inspect
+-- code refactoring and cleanup
+
 16/06/22 - build 201
 
 -- initial appid port - in progress
