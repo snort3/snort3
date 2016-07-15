@@ -295,6 +295,14 @@ inline DCE2_Policy DCE2_SsnGetPolicy(DCE2_SsnData* sd)
         return sd->client_policy;
 }
 
+inline void DCE2_SsnSetPolicy(DCE2_SsnData* sd, DCE2_Policy policy)
+{
+    if (DCE2_SsnFromClient(sd->wire_pkt))
+        sd->client_policy = policy;
+    else
+        sd->server_policy = policy;
+}
+
 /********************************************************************
  * Function: DCE2_SsnIsWindowsPolicy()
  *

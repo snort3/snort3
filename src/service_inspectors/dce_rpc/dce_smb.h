@@ -1436,6 +1436,74 @@ inline uint16_t SmbSessionSetupAndXReqMaxMultiplex(const SmbLm10_SessionSetupAnd
     return alignedNtohs(&req->smb_mpxmax);
 }
 
+/* Extended request as defined in NT LM 1.0 document */
+struct SmbNt10_SessionSetupAndXReq   /* smb_wct = 13 */
+{
+    uint8_t smb_wct;              /* count of 16-bit words that follow */
+    uint8_t smb_com2;             /* secondary (X) command, 0xFF = none */
+    uint8_t smb_reh2;             /* reserved (must be zero) */
+    uint16_t smb_off2;            /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_bufsize;         /* the consumers max buffer size */
+    uint16_t smb_mpxmax;          /* actual maximum multiplexed pending requests */
+    uint16_t smb_vc_num;          /* 0 = first (only), non zero - additional VC number */
+    uint32_t smb_sesskey;         /* Session Key (valid only if smb_vc_num != 0) */
+    uint16_t smb_oem_passlen;     /* case insensitive password length */
+    uint16_t smb_unicode_passlen; /* case sensitive password length */
+    uint32_t smb_rsvd;            /* reserved */
+    uint32_t smb_cap;             /* capabilities */
+    uint16_t smb_bcc;             /* minimum value = 0 */
+};
+
+inline uint16_t SmbNt10SessionSetupAndXReqOemPassLen(const SmbNt10_SessionSetupAndXReq* req)
+{
+    return alignedNtohs(&req->smb_oem_passlen);
+}
+
+inline uint16_t SmbNt10SessionSetupAndXReqUnicodePassLen(const SmbNt10_SessionSetupAndXReq* req)
+{
+    return alignedNtohs(&req->smb_unicode_passlen);
+}
+
+/* Extended request for security blob */
+struct SmbNt10_SessionSetupAndXExtReq   /* smb_wct = 12 */
+{
+    uint8_t smb_wct;          /* count of 16-bit words that follow */
+    uint8_t smb_com2;         /* secondary (X) command, 0xFF = none */
+    uint8_t smb_reh2;         /* reserved (must be zero) */
+    uint16_t smb_off2;        /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_bufsize;     /* the consumers max buffer size */
+    uint16_t smb_mpxmax;      /* actual maximum multiplexed pending requests */
+    uint16_t smb_vc_num;      /* 0 = first (only), non zero - additional VC number */
+    uint32_t smb_sesskey;     /* Session Key (valid only if smb_vc_num != 0) */
+    uint16_t smb_blob_len;    /* length of security blob */
+    uint32_t smb_rsvd;        /* reserved */
+    uint32_t smb_cap;         /* capabilities */
+    uint16_t smb_bcc;         /* minimum value = 0 */
+};
+
+inline uint16_t SmbSessionSetupAndXReqBlobLen(const SmbNt10_SessionSetupAndXExtReq* req)
+{
+    return alignedNtohs(&req->smb_blob_len);
+}
+
+/* Extended response for security blob */
+struct SmbNt10_SessionSetupAndXExtResp   /* smb_wct = 4 */
+{
+    uint8_t smb_wct;         /* count of 16-bit words that follow */
+    uint8_t smb_com2;        /* secondary (X) command, 0xFF = none */
+    uint8_t smb_res2;        /* reserved (pad to word) */
+    uint16_t smb_off2;       /* offset (from SMB hdr start) to next cmd (@smb_wct) */
+    uint16_t smb_action;     /* request mode:
+                                bit0 = Logged in successfully - BUT as GUEST */
+    uint16_t smb_blob_len;   /* length of security blob */
+    uint16_t smb_bcc;        /* min value = 0 */
+};
+
+inline uint16_t SmbSessionSetupAndXRespBlobLen(const SmbNt10_SessionSetupAndXExtResp* resp)
+{
+    return alignedNtohs(&resp->smb_blob_len);
+}
+
 /********************************************************************
  * SMB_COM_NEGOTIATE
  ********************************************************************/

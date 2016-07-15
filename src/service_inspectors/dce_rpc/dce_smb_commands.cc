@@ -39,6 +39,22 @@
 #define SHARE_FS    (SHARE_0+5)
 #define SHARE_IPC   (SHARE_FS+1)
 
+#define OS_0          (0)   // "Windows" start
+#define OS_1    (OS_0+ 8)   // Windows 2000 and XP server
+#define OS_2    (OS_1+ 4)   // Windows 2000 and XP client
+#define OS_3    (OS_2+ 5)   // "Server", 2003, 2008R2, 2008
+#define OS_4    (OS_3+20)   // Windows Vista
+#define OS_5    (OS_4 +5)   // Windows 7
+#define OS_6    (OS_5 +1)   // Windows NT
+#define OS_7    (OS_6 +2)   // Windows 98
+#define OS_FS   (OS_7+ 3)   // Failure state
+#define OS_WIN2000    (OS_FS+1)
+#define OS_WINXP      (OS_FS+2)
+#define OS_WIN2003    (OS_FS+3)
+#define OS_WINVISTA   (OS_FS+4)
+#define OS_WIN2008    (OS_FS+5)
+#define OS_WIN7       (OS_FS+6)
+
 static const DCE2_SmbFsm dce2_smb_service_fsm[] =
 {
     // IPC
@@ -64,6 +80,80 @@ static const DCE2_SmbFsm dce2_ipc_share_fsm[] =
     { '\0', SHARE_IPC, SHARE_FS },
 
     { 0, SHARE_FS, SHARE_FS }
+};
+
+static const DCE2_SmbFsm dce2_smb_os_fsm[] =
+{
+    // Windows start states
+    { 'W', OS_0+1, OS_FS },
+    { 'i', OS_0+2, OS_FS },
+    { 'n', OS_0+3, OS_FS },
+    { 'd', OS_0+4, OS_FS },
+    { 'o', OS_0+5, OS_FS },
+    { 'w', OS_0+6, OS_FS },
+    { 's', OS_0+7, OS_FS },
+    { ' ', OS_0+8, OS_FS },
+
+    // Windows 2000 and XP server states
+    { '5', OS_1+1, OS_2 },
+    { '.', OS_1+2, OS_FS },
+    { '1', OS_WINXP, OS_1+3 },    // Windows XP
+    { '0', OS_WIN2000, OS_FS },   // Windows 2000
+
+    // Windows 2000 or XP client states
+    { '2', OS_2+1, OS_3 },
+    { '0', OS_2+2, OS_FS },
+    { '0', OS_2+3, OS_FS },
+    { '2', OS_WINXP, OS_2+4 },    // Windows XP
+    { '0', OS_WIN2000, OS_FS },   // Windows 2000
+
+    // "Server" string states
+    { 'S', OS_3+ 1, OS_4 },
+    { 'e', OS_3+ 2, OS_FS },
+    { 'r', OS_3+ 3, OS_FS },
+    { 'v', OS_3+ 4, OS_FS },
+    { 'e', OS_3+ 5, OS_FS },
+    { 'r', OS_3+ 6, OS_FS },
+    { ' ', OS_3+ 7, OS_FS },
+    { '2', OS_3+ 8, OS_3+12 },
+    { '0', OS_3+ 9, OS_FS },
+    { '0', OS_3+10, OS_FS },
+    { '3', OS_WIN2003, OS_3+11 },   // Windows Server 2003
+    { '8', OS_WIN2008, OS_FS },     // Windows Server 2008R2
+
+    // Windows 2008 has this, 2008 R2 does not
+    { '(', OS_3+13, OS_FS },
+    { 'R', OS_3+14, OS_FS },
+    { ')', OS_3+15, OS_FS },
+    { ' ', OS_3+16, OS_FS },
+    { '2', OS_3+17, OS_FS },
+    { '0', OS_3+18, OS_FS },
+    { '0', OS_3+19, OS_FS },
+    { '8', OS_WIN2008, OS_FS },
+
+    // Windows Vista states
+    { 'V', OS_4+1, OS_5 },
+    { 'i', OS_4+2, OS_FS },
+    { 's', OS_4+3, OS_FS },
+    { 't', OS_4+4, OS_FS },
+    { 'a', OS_WINVISTA, OS_FS },
+
+    // Windows 7 state
+    { '7', OS_WIN7, OS_6 },
+
+    // Windows NT
+    { 'N', OS_6+1, OS_7 },
+    { 'T', OS_WIN2000, OS_FS },  // Windows NT, set policy to Windows 2000
+
+    // Windows 98
+    { '4', OS_7+1, OS_FS },
+    { '.', OS_7+2, OS_FS },
+    { '0', OS_WIN2000, OS_FS },  // Windows 98, set policy to Windows 2000
+
+    // Failure state
+    { 0, OS_FS, OS_FS }
+
+    // Match states shouldn't be accessed
 };
 
 /********************************************************************
@@ -365,6 +455,26 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
     }
 
     return DCE2_SmbProcessRequestData(ssd, fid, nb_ptr, dcnt, 0);
+}
+
+static inline void DCE2_SmbSetFingerprintedClient(DCE2_SmbSsnData* ssd)
+{
+    ssd->ssn_state_flags |= DCE2_SMB_SSN_STATE__FP_CLIENT;
+}
+
+static inline bool DCE2_SmbFingerprintedClient(DCE2_SmbSsnData* ssd)
+{
+    return ssd->ssn_state_flags & DCE2_SMB_SSN_STATE__FP_CLIENT;
+}
+
+static inline void DCE2_SmbSetFingerprintedServer(DCE2_SmbSsnData* ssd)
+{
+    ssd->ssn_state_flags |= DCE2_SMB_SSN_STATE__FP_SERVER;
+}
+
+static inline bool DCE2_SmbFingerprintedServer(DCE2_SmbSsnData* ssd)
+{
+    return ssd->ssn_state_flags & DCE2_SMB_SSN_STATE__FP_SERVER;
 }
 
 /********************************************************************
@@ -1076,7 +1186,7 @@ DCE2_Ret DCE2_SmbWriteAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
 // SMB_COM_SESSION_SETUP_ANDX
 DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
-    const DCE2_SmbComInfo* com_info, const uint8_t* nb_ptr, uint32_t)
+    const DCE2_SmbComInfo* com_info, const uint8_t* nb_ptr, uint32_t nb_len)
 {
     if (!DCE2_ComInfoCanProcessCommand(com_info))
         return DCE2_RET__ERROR;
@@ -1089,7 +1199,197 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (max_multiplex < ssd->max_outstanding_requests)
             ssd->max_outstanding_requests = max_multiplex;
 
-        // FIXIT-M port fingerprint related code
+        if (!DCE2_SmbFingerprintedClient(ssd) && DCE2_GcSmbFingerprintClient(
+            (dce2SmbProtoConf*)ssd->sd.config))
+        {
+            uint8_t increment = SmbUnicode(smb_hdr) ? 2 : 1;
+            uint16_t word_count = DCE2_ComInfoWordCount(com_info);
+            uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
+            uint32_t i;
+
+            DCE2_SmbSetFingerprintedClient(ssd);
+
+            // OS and Lanman strings won't be in request
+            if ((word_count != 13) && (word_count != 12))
+                return DCE2_RET__SUCCESS;
+
+            Profile profile(dce2_smb_pstat_smb_fingerprint);
+
+            if (word_count == 13)
+            {
+                uint16_t oem_pass_len =
+                    SmbNt10SessionSetupAndXReqOemPassLen((SmbNt10_SessionSetupAndXReq*)nb_ptr);
+                uint16_t uni_pass_len =
+                    SmbNt10SessionSetupAndXReqUnicodePassLen((SmbNt10_SessionSetupAndXReq*)nb_ptr);
+
+                DCE2_MOVE(nb_ptr, nb_len, com_size);
+
+                if (((uint32_t)oem_pass_len + uni_pass_len) > nb_len)
+                {
+                    return DCE2_RET__ERROR;
+                }
+
+                DCE2_MOVE(nb_ptr, nb_len, (oem_pass_len + uni_pass_len));
+
+                // If unicode there should be a padding byte if the password
+                // lengths are even since the command length is odd
+                if ((increment == 2) && (nb_len != 0) && !((oem_pass_len + uni_pass_len) & 1))
+                    DCE2_MOVE(nb_ptr, nb_len, 1);
+            }
+            else  // Extended security blob version, word count of 12
+            {
+                uint16_t blob_len =
+                    SmbSessionSetupAndXReqBlobLen((SmbNt10_SessionSetupAndXExtReq*)nb_ptr);
+
+                DCE2_MOVE(nb_ptr, nb_len, com_size);
+
+                if (blob_len > nb_len)
+                {
+                    return DCE2_RET__ERROR;
+                }
+
+                DCE2_MOVE(nb_ptr, nb_len, blob_len);
+
+                // If unicode there should be a padding byte if the blob
+                // length is even since the command length is odd
+                if ((increment == 2) && (nb_len != 0) && !(blob_len & 1))
+                    DCE2_MOVE(nb_ptr, nb_len, 1);
+            }
+
+            DebugMessage(DEBUG_DCE_SMB, "Attempting to fingerprint "
+                "Client Windows/Samba version ... \n");
+
+            // Move past Account and Domain strings
+            // Blob version doesn't have these as they're in the blob
+            if (DCE2_ComInfoWordCount(com_info) == 13)
+            {
+                int j;
+
+                for (j = 0; j < 2; j++)
+                {
+                    while ((nb_len >= increment) && (*nb_ptr != '\0'))
+                        DCE2_MOVE(nb_ptr, nb_len, increment);
+
+                    // Just return success if we run out of data
+                    if (nb_len < increment)
+                    {
+                        return DCE2_RET__SUCCESS;
+                    }
+
+                    // Move past NULL string terminator
+                    DCE2_MOVE(nb_ptr, nb_len, increment);
+                }
+            }
+
+            if (nb_len < increment)
+            {
+                return DCE2_RET__SUCCESS;
+            }
+
+            // Note the below is quick and dirty.  We're assuming the client
+            // is kosher.  It's policy will be used when the server is
+            // sending data to it.
+
+#ifdef DEBUG_MSGS
+            {
+                uint32_t k, l = 0;
+                char buf[65535];
+
+                for (k = 0; (k < nb_len) && (nb_ptr[k] != 0); k += increment, l++)
+                    buf[l] = nb_ptr[k];
+
+                buf[l] = 0;
+                DebugFormat(DEBUG_DCE_SMB, "  Client OS: %s\n", buf);
+
+                k += increment;
+
+                l = 0;
+                for (; k < nb_len && nb_ptr[k] != 0; k += increment, l++)
+                    buf[l] = nb_ptr[k];
+
+                buf[l] = 0;
+                DebugFormat(DEBUG_DCE_SMB, "  Client Lanman: %s\n", buf);
+            }
+#endif
+
+            // Windows Vista and above don't put anything here
+            if (*nb_ptr == '\0')
+            {
+                DebugMessage(DEBUG_DCE_SMB,
+                    "Setting client policy to Windows Vista\n");
+                DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__WINVISTA);
+                return DCE2_RET__SUCCESS;
+            }
+
+            // Windows
+            if (*nb_ptr == 'W')
+            {
+                int state = OS_0;
+                int64_t rlen = (int64_t)nb_len;
+
+                while ((rlen > 0) && (state < OS_FS))
+                {
+                    if (dce2_smb_os_fsm[state].input == (char)*nb_ptr)
+                    {
+                        state = dce2_smb_os_fsm[state].next_state;
+                        DCE2_MOVE(nb_ptr, rlen, increment);
+                    }
+                    else
+                    {
+                        state = dce2_smb_os_fsm[state].fail_state;
+                    }
+                }
+
+                switch (state)
+                {
+                case OS_WIN2000:
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting client policy to Windows 2000\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__WIN2000);
+                    break;
+                case OS_WINXP:
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting client policy to Windows XP\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__WINXP);
+                    break;
+                case OS_WIN2003:
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting client policy to Windows 2003\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__WIN2003);
+                    break;
+                default:
+                    break;
+                }
+
+                return DCE2_RET__SUCCESS;
+            }
+
+            // Samba puts "Unix" in the OS field
+            if (*nb_ptr != 'U')
+            {
+                return DCE2_RET__SUCCESS;
+            }
+
+            // Move past OS string
+            for (i = 0; (i < nb_len) && (nb_ptr[i] != '\0'); i += increment)
+                ;
+
+            if ((i + increment) >= nb_len)
+            {
+                return DCE2_RET__SUCCESS;
+            }
+
+            // Move to LanMan string
+            DCE2_MOVE(nb_ptr, nb_len, i + increment);
+
+            // Samba
+            if (*nb_ptr == 'S')
+            {
+                DebugMessage(DEBUG_DCE_SMB,
+                    "Setting client policy to Samba\n");
+                DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__SAMBA);
+            }
+        }
     }
     else
     {
@@ -1101,7 +1401,242 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (!(ssd->ssn_state_flags & DCE2_SMB_SSN_STATE__NEGOTIATED))
             ssd->ssn_state_flags |= DCE2_SMB_SSN_STATE__NEGOTIATED;
 
-        // FIXIT-M port fingerprint related code
+        if (!DCE2_SmbFingerprintedServer(ssd) && DCE2_GcSmbFingerprintServer(
+            (dce2SmbProtoConf*)ssd->sd.config))
+        {
+            uint8_t increment = SmbUnicode(smb_hdr) ? 2 : 1;
+            uint32_t i;
+
+            DCE2_SmbSetFingerprintedServer(ssd);
+
+            // Set the policy based on what the server reports in the OS field
+            // for Windows and the LanManager field for Samba
+
+            if (DCE2_ComInfoByteCount(com_info) == 0)
+                return DCE2_RET__SUCCESS;
+
+            Profile profile(dce2_smb_pstat_smb_fingerprint);
+
+            if (DCE2_ComInfoWordCount(com_info) == 3)
+            {
+                DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
+
+                // Word count 3 and Unicode has a one byte pad
+                if ((increment == 2) && (nb_len != 0))
+                    DCE2_MOVE(nb_ptr, nb_len, 1);
+            }
+            else  // Only valid word counts are 3 and 4
+            {
+                uint16_t blob_len = SmbSessionSetupAndXRespBlobLen(
+                    (SmbNt10_SessionSetupAndXExtResp*)nb_ptr);
+
+                DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
+
+                if (blob_len > nb_len)
+                {
+                    return DCE2_RET__ERROR;
+                }
+
+                DCE2_MOVE(nb_ptr, nb_len, blob_len);
+
+                if ((increment == 2) && (nb_len != 0) && !(blob_len & 1))
+                    DCE2_MOVE(nb_ptr, nb_len, 1);
+            }
+
+            DebugMessage(DEBUG_DCE_SMB, "Attempting to fingerprint "
+                "Server Windows/Samba version ... \n");
+
+            // Note the below is quick and dirty.  We're assuming the server
+            // is kosher.  It's policy will be used when the client is
+            // sending data to it.
+
+#ifdef DEBUG_MSGS
+            {
+                uint32_t k, l = 0;
+                char buf[65535];
+
+                for (k = 0; (k < nb_len) && (nb_ptr[k] != 0); k += increment, l++)
+                    buf[l] = nb_ptr[k];
+
+                buf[l] = 0;
+                DebugFormat(DEBUG_DCE_SMB, "  Server OS: %s\n", buf);
+
+                k += increment;
+
+                l = 0;
+                for (; k < nb_len && nb_ptr[k] != 0; k += increment, l++)
+                    buf[l] = nb_ptr[k];
+
+                buf[l] = 0;
+                DebugFormat(DEBUG_DCE_SMB, "  Server Lanman: %s\n", buf);
+            }
+#endif
+
+            if ((nb_len < increment) || (*nb_ptr == '\0'))
+            {
+                return DCE2_RET__SUCCESS;
+            }
+
+            // Next field should be OS string
+            for (i = 0; (i < nb_len) && (nb_ptr[i] != '\0'); i += increment)
+                ;
+            i -= increment;
+
+            // Windows
+            if (*nb_ptr == 'W')
+            {
+                int state = OS_0;
+                int64_t rlen = (int64_t)nb_len;
+
+                while ((rlen > 0) && (state < OS_FS))
+                {
+                    if (dce2_smb_os_fsm[state].input == (char)*nb_ptr)
+                    {
+                        state = dce2_smb_os_fsm[state].next_state;
+                        DCE2_MOVE(nb_ptr, rlen, increment);
+                    }
+                    else
+                    {
+                        state = dce2_smb_os_fsm[state].fail_state;
+                    }
+                }
+
+                switch (state)
+                {
+                case OS_WIN2000:
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting server policy to Windows 2000\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__WIN2000);
+                    break;
+                case OS_WINXP:
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting server policy to Windows XP\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__WINXP);
+                    break;
+                case OS_WIN2003:
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting server policy to Windows 2003\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__WIN2003);
+                    break;
+                case OS_WIN2008:
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting server policy to Windows 2008\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__WIN2008);
+                    break;
+                case OS_WINVISTA:
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting server policy to Windows Vista\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__WINVISTA);
+                    break;
+                case OS_WIN7:
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting server policy to Windows 7\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__WIN7);
+                    break;
+                default:
+                    break;
+                }
+
+                return DCE2_RET__SUCCESS;
+            }
+
+            // Samba puts "Unix" in the OS field
+            if (*nb_ptr != 'U')
+            {
+                return DCE2_RET__SUCCESS;
+            }
+
+            // Move past OS string
+            for (i = 0; (i < nb_len) && (nb_ptr[i] != '\0'); i += increment)
+                ;
+
+            if ((i + increment) >= nb_len)
+            {
+                return DCE2_RET__SUCCESS;
+            }
+
+            // Move to LanMan string
+            DCE2_MOVE(nb_ptr, nb_len, i + increment);
+
+            // Samba
+            if (*nb_ptr == 'S')
+            {
+                uint8_t r1 = 0;  // Release version first digit
+                uint8_t r2 = 0;  // Release version second digit
+
+                // Get Major version
+                for (i = 0; (i < nb_len) && (*nb_ptr != '\0'); i += increment)
+                {
+                    if (isdigit((int)nb_ptr[i]))
+                        break;
+                }
+
+                if ((i == nb_len) || (*nb_ptr == '\0'))
+                {
+                    return DCE2_RET__SUCCESS;
+                }
+
+                // If less than 3 set policy to earliest Samba policy we use
+                if ((nb_ptr[i] == '0') || (nb_ptr[i] == '1') || (nb_ptr[i] == '2'))
+                {
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting server policy to Samba 3.0.20\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__SAMBA_3_0_20);
+                    return DCE2_RET__SUCCESS;
+                }
+
+                // Need ".\d.\d\d" or ".\d.\d\x00"
+                if (i + increment*5 > nb_len)
+                {
+                    return DCE2_RET__SUCCESS;
+                }
+
+                i += increment*2;
+
+                // If it's not 0, then set to latest Samba policy we use
+                if (nb_ptr[i] != '0')
+                {
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting server policy to current Samba\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__SAMBA);
+                    return DCE2_RET__SUCCESS;
+                }
+
+                r1 = nb_ptr[i + increment*2];
+                r2 = nb_ptr[i + increment*3];
+
+                // First digit is 1 or no second digit or 20, Samba 3.0.20
+                if ((r1 == '1') || (r2 == '\0') || ((r1 == '2') && (r2 == '0')))
+                {
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting server policy to Samba 3.0.20\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__SAMBA_3_0_20);
+                    return DCE2_RET__SUCCESS;
+                }
+
+                // 21 or 22, Samba 3.0.22
+                if ((r1 == '2') && (r2 <= '2'))
+                {
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting server policy to Samba 3.0.22\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__SAMBA_3_0_22);
+                    return DCE2_RET__SUCCESS;
+                }
+
+                // 23, 24 ... 30 ... 37, Samba 3.0.37
+                if ((r1 == '2') || ((r1 == '3') && (r2 <= '7')))
+                {
+                    DebugMessage(DEBUG_DCE_SMB,
+                        "Setting server policy to Samba 3.0.37\n");
+                    DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__SAMBA_3_0_37);
+                    return DCE2_RET__SUCCESS;
+                }
+
+                DebugMessage(DEBUG_DCE_SMB,
+                    "Setting server policy to current Samba\n");
+                DCE2_SsnSetPolicy(&ssd->sd, DCE2_POLICY__SAMBA);
+            }
+        }
     }
 
     return DCE2_RET__SUCCESS;
