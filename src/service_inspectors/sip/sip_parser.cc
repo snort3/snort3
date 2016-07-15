@@ -728,9 +728,9 @@ static int sip_parse_from(SIPMsg* msg, const char* start, const char* end, SIP_P
 
     userStart = (char*)memchr(msg->from, ':', msg->fromLen);
     userEnd = (char*)memchr(msg->from, '>', msg->fromLen);
+
     if (userStart && userEnd && (userEnd > userStart))
     {
-        /*strndup here */
         msg->userName = userStart+1;
         msg->userNameLen = userEnd - userStart - 1;
     }
@@ -742,6 +742,7 @@ static int sip_parse_from(SIPMsg* msg, const char* start, const char* end, SIP_P
 
     DebugFormat(DEBUG_SIP, "From tag length: %d , hash: %u, content: %.*s\n",
         msg->fromTagLen, msg->dlgID.fromTagHash, msg->fromTagLen, msg->from_tag);
+
     return SIP_PARSE_SUCCESS;
 }
 

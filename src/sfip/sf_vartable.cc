@@ -74,9 +74,7 @@ static char* sfvt_expand_value(vartable_t* table, const char* value)
     if (ptr == end)
         return NULL;
 
-    tmp = SnortStrndup(ptr, end-ptr);
-    if (tmp == NULL)
-        return NULL;
+    tmp = snort_strndup(ptr, end-ptr);
 
     /* Start by allocating the length of the value */
     retsize = strlen(value) + 1;
@@ -124,12 +122,10 @@ static char* sfvt_expand_value(vartable_t* table, const char* value)
             if (varstart == ptr)
                 goto sfvt_expand_value_error;
 
-            vartmp = SnortStrndup(varstart, ptr - varstart);
-            if (vartmp == NULL)
-                goto sfvt_expand_value_error;
-
+            vartmp = snort_strndup(varstart, ptr - varstart);
             ipvar = sfvt_lookup_var(table, vartmp);
             snort_free(vartmp);
+
             if (ipvar == NULL)
                 goto sfvt_expand_value_error;
 

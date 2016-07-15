@@ -890,7 +890,7 @@ static void extractCHP(char* buf, int bs, int start,
     if (!end)
         end = begin+bs;
 
-    *outbuf = strndup(begin, end-begin);
+    *outbuf = snort_strndup(begin, end-begin);
 }
 
 static uint32_t ddToIp(char* start, int size)

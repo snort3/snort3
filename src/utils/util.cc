@@ -623,20 +623,17 @@ int SnortStrncpy(char* dst, const char* src, size_t dst_size)
     return SNORT_STRNCPY_SUCCESS;
 }
 
-char* SnortStrndup(const char* src, size_t dst_size)
+char* snort_strndup(const char* src, size_t dst_size)
 {
-    char* ret = (char*)snort_calloc(dst_size + 1);
-    int ret_val;
+    char* dup = (char*)snort_calloc(dst_size + 1);
 
-    ret_val = SnortStrncpy(ret, src, dst_size + 1);
-
-    if (ret_val == SNORT_STRNCPY_ERROR)
+    if ( SnortStrncpy(dup, src, dst_size + 1) == SNORT_STRNCPY_ERROR )
     {
-        snort_free(ret);
-        return NULL;
+        snort_free(dup);
+        return nullptr;
     }
 
-    return ret;
+    return dup;
 }
 
 /* Determines whether a buffer is '\0' terminated and returns the

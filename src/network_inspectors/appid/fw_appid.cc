@@ -3967,7 +3967,7 @@ void httpHeaderCallback(Packet* p, HttpParsedHeaders* const headers)
         if (headers->host.start)
         {
             snort_free(session->hsession->host);
-            session->hsession->host = strndup((char*)headers->host.start, headers->host.len);
+            session->hsession->host = snort_strndup((char*)headers->host.start, headers->host.len);
             session->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
 
             if (headers->url.start)
@@ -3984,20 +3984,20 @@ void httpHeaderCallback(Packet* p, HttpParsedHeaders* const headers)
         if (headers->userAgent.start)
         {
             snort_free(session->hsession->useragent);
-            session->hsession->useragent  = strndup((char*)headers->userAgent.start,
+            session->hsession->useragent = snort_strndup((char*)headers->userAgent.start,
                 headers->userAgent.len);
             session->scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
         }
         if (headers->referer.start)
         {
             snort_free(session->hsession->referer);
-            session->hsession->referer  = strndup((char*)headers->referer.start,
+            session->hsession->referer = snort_strndup((char*)headers->referer.start,
                 headers->referer.len);
         }
         if (headers->via.start)
         {
             snort_free(session->hsession->via);
-            session->hsession->via  = strndup((char*)headers->via.start, headers->via.len);
+            session->hsession->via = snort_strndup((char*)headers->via.start, headers->via.len);
             session->scan_flags |= SCAN_HTTP_VIA_FLAG;
         }
     }
@@ -4006,13 +4006,13 @@ void httpHeaderCallback(Packet* p, HttpParsedHeaders* const headers)
         if (headers->via.start)
         {
             snort_free(session->hsession->via);
-            session->hsession->via  = strndup((char*)headers->via.start, headers->via.len);
+            session->hsession->via = snort_strndup((char*)headers->via.start, headers->via.len);
             session->scan_flags |= SCAN_HTTP_VIA_FLAG;
         }
         if (headers->contentType.start)
         {
             snort_free(session->hsession->content_type);
-            session->hsession->content_type  = strndup((char*)headers->contentType.start,
+            session->hsession->content_type = snort_strndup((char*)headers->contentType.start,
                 headers->contentType.len);
         }
         if (headers->responseCode.start)
@@ -4022,7 +4022,7 @@ void httpHeaderCallback(Packet* p, HttpParsedHeaders* const headers)
             if (responseCodeNum > 0 && responseCodeNum < 700)
             {
                 snort_free(session->hsession->response_code);
-                session->hsession->response_code  = strndup((char*)headers->responseCode.start,
+                session->hsession->response_code = snort_strndup((char*)headers->responseCode.start,
                     headers->responseCode.len);
             }
         }

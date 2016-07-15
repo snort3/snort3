@@ -538,7 +538,7 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
             end++)
             ;
 
-        tok = SnortStrndup(str, end - str);
+        tok = snort_strndup(str, end - str);
 
         if (*str == LIST_OPEN)
         {
@@ -553,7 +553,7 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
             }
 
             str++;
-            list_tok = SnortStrndup(str, end - str);
+            list_tok = snort_strndup(str, end - str);
 
             if ((ret = sfvar_parse_iplist(table, var, list_tok,
                     negation ^ neg_ip)) != SFIP_SUCCESS)
@@ -743,7 +743,7 @@ sfip_var_t* sfvar_alloc(vartable_t* table, const char* variable, SFIP_RET* statu
     }
 
     /* Set the new variable's name/key */
-    if ((ret->name = SnortStrndup(str, end - str)) == NULL)
+    if ((ret->name = snort_strndup(str, end - str)) == NULL)
     {
         if (status)
             *status = SFIP_ALLOC_ERR;
@@ -773,7 +773,7 @@ sfip_var_t* sfvar_alloc(vartable_t* table, const char* variable, SFIP_RET* statu
     end++;
 
     /* See if this is just an alias */
-    tmp = SnortStrndup(str, end - str);
+    tmp = snort_strndup(str, end - str);
     tmpvar = sfvt_lookup_var(table, tmp);
     snort_free(tmp);
     if (tmpvar != NULL)

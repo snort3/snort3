@@ -430,13 +430,7 @@ static PortObject* _POParseString(POParser* pop)
                 return NULL;
             }
 
-            if ( (tok = SnortStrndup(pop->s, end - pop->s)) == NULL)
-            {
-                pop->errflag = POPERR_MALLOC_FAILED;
-                PortObjectFree(po);
-                return NULL;
-            }
-
+            tok = snort_strndup(pop->s, end - pop->s);
             POParserInit(&local_pop, tok, pop->pvTable);
 
             /* Recurse */

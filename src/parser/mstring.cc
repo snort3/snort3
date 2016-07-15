@@ -159,7 +159,7 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
     if ((cur_tok + 1) == (size_t)max_toks)
     {
         retstr = (char**)snort_calloc(sizeof(char*));
-        retstr[cur_tok] = SnortStrndup(&str[i], strlen(str) - i);
+        retstr[cur_tok] = snort_strndup(&str[i], strlen(str) - i);
         *num_toks = cur_tok + 1;
         return retstr;
     }
@@ -289,13 +289,7 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
                         break;
                 }
 
-                retstr[cur_tok] = SnortStrndup(&str[i], j - i);
-                if (retstr[cur_tok] == NULL)
-                {
-                    mSplitFree(&retstr, cur_tok + 1);
-                    return NULL;
-                }
-
+                retstr[cur_tok] = snort_strndup(&str[i], j - i);
                 return retstr;
             }
 

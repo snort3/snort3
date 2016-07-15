@@ -108,7 +108,7 @@ void config_set_var(SnortConfig* sc, const char* val)
             }
         }
 
-        node->name = SnortStrndup(val, equal_ptr - val);
+        node->name = snort_strndup(val, equal_ptr - val);
         node->value = snort_strdup(equal_ptr + 1);
         node->line = snort_strdup(val);
         node->next = sc->var_list;

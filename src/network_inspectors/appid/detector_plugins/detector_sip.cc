@@ -581,18 +581,18 @@ static void SipSessionCbClientProcess(const Packet* p, const SipHeaders* headers
         if (headers->from && headers->fromLen)
         {
             snort_free(fd->from);
-            fd->from = strndup(headers->from, headers->fromLen);
+            fd->from = snort_strndup(headers->from, headers->fromLen);
         }
 
         if (headers->userName && headers->userNameLen)
         {
             snort_free(fd->userName);
-            fd->userName = strndup(headers->userName, headers->userNameLen);
+            fd->userName = snort_strndup(headers->userName, headers->userNameLen);
         }
         if (headers->userAgent && headers->userAgentLen)
         {
             snort_free(fd->clientUserAgent);
-            fd->clientUserAgent = strndup(headers->userAgent, headers->userAgentLen);
+            fd->clientUserAgent = snort_strndup(headers->userAgent, headers->userAgentLen);
         }
     }
 

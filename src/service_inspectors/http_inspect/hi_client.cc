@@ -1835,7 +1835,7 @@ static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, cons
 
         if (cur_ptr - start_ptr)
         {
-            ipAddr = SnortStrndup((const char*)start_ptr, cur_ptr - start_ptr);
+            ipAddr = snort_strndup((const char*)start_ptr, cur_ptr - start_ptr);
         }
         if (ipAddr)
         {
@@ -1845,11 +1845,8 @@ static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, cons
                 if (port)
                 {
                     snort_free(ipAddr);
-                    ipAddr = SnortStrndup((const char*)start_ptr, port - start_ptr);
-                    if ( !ipAddr)
-                    {
-                        return p;
-                    }
+                    ipAddr = snort_strndup((const char*)start_ptr, port - start_ptr);
+
                     if ( (tmp = sfip_alloc(ipAddr, &status)) == NULL )
                     {
                         if ((status != SFIP_ARG_ERR) && (status !=SFIP_ALLOC_ERR))

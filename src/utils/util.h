@@ -96,7 +96,7 @@ SO_PUBLIC int SnortSnprintfAppend(char*, size_t, const char*, ...)
     __attribute__((format (printf, 3, 4)));
 
 SO_PUBLIC char* snort_strdup(const char*);
-SO_PUBLIC char* SnortStrndup(const char*, size_t);
+SO_PUBLIC char* snort_strndup(const char*, size_t);
 
 SO_PUBLIC const char* SnortStrcasestr(const char* s, int slen, const char* substr);
 SO_PUBLIC const char* SnortStrnStr(const char* s, int slen, const char* searchstr);
