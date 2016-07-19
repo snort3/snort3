@@ -2218,3 +2218,50 @@ DCE2_Ret DCE2_SmbWriteComplete(DCE2_SmbSsnData*, const SmbNtHdr*,
     return DCE2_RET__SUCCESS;
 }
 
+// SMB_COM_WRITE_AND_CLOSE
+DCE2_Ret DCE2_SmbWriteAndClose(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
+    const DCE2_SmbComInfo* com_info, const uint8_t* nb_ptr, uint32_t nb_len)
+{
+    if (!DCE2_ComInfoCanProcessCommand(com_info))
+        return DCE2_RET__ERROR;
+
+    if (DCE2_ComInfoIsRequest(com_info))
+    {
+        // Have at least one byte based on byte count check done earlier
+
+        uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
+        uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
+        uint16_t dcnt = SmbWriteAndCloseReqCount((SmbWriteAndCloseReq*)nb_ptr);
+        uint16_t fid = SmbWriteAndCloseReqFid((SmbWriteAndCloseReq*)nb_ptr);
+        uint32_t offset = SmbWriteAndCloseReqOffset((SmbWriteAndCloseReq*)nb_ptr);
+
+        DCE2_MOVE(nb_ptr, nb_len, (com_size + 1));
+
+        if (DCE2_SmbCheckData(ssd, (uint8_t*)smb_hdr, nb_ptr, nb_len,
+            byte_count, dcnt,
+            (uint16_t)(sizeof(SmbNtHdr) + com_size + 1)) != DCE2_RET__SUCCESS)
+            return DCE2_RET__ERROR;
+
+        if (dcnt == 0)
+        {
+            dce_alert(GID_DCE2, DCE2_SMB_DCNT_ZERO, (dce2CommonStats*)&dce2_smb_stats);
+            return DCE2_RET__ERROR;
+        }
+
+        // WriteAndClose has a 1 byte pad after the byte count
+        if ((uint32_t)(dcnt + 1) != (uint32_t)byte_count)
+            dce_alert(GID_DCE2, DCE2_SMB_INVALID_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
+
+        if (dcnt > nb_len)
+            dcnt = (uint16_t)nb_len;
+
+        return DCE2_SmbProcessRequestData(ssd, fid, nb_ptr, dcnt, offset);
+    }
+    else
+    {
+        DCE2_SmbRemoveFileTracker(ssd, ssd->cur_rtracker->ftracker);
+    }
+
+    return DCE2_RET__SUCCESS;
+}
+

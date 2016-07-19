@@ -1544,13 +1544,6 @@ static void DCE2_SmbProcessRawData(DCE2_SmbSsnData* ssd, const uint8_t* nb_ptr, 
     }
 }
 
-// Temporary command function placeholder, until all of them are ported
-static DCE2_Ret DCE2_SmbComFuncPlaceholder(DCE2_SmbSsnData*, const SmbNtHdr*,
-    const DCE2_SmbComInfo*, const uint8_t*, uint32_t)
-{
-    return DCE2_RET__SUCCESS;
-}
-
 static bool DCE2_SmbAutodetect(Packet* p)
 {
     if (p->dsize > (sizeof(NbssHdr) + sizeof(SmbNtHdr)))
@@ -2303,8 +2296,7 @@ static void DCE2_SmbInitGlobals()
             DCE2_SmbSetValidByteCount((uint8_t)com, SMB_TYPE__REQUEST, 0, UINT16_MAX);
             break;
         case SMB_COM_WRITE_AND_CLOSE:
-            //smb_com_funcs[com] = DCE2_SmbWriteAndClose;
-            smb_com_funcs[com] = DCE2_SmbComFuncPlaceholder;
+            smb_com_funcs[com] = DCE2_SmbWriteAndClose;
             smb_deprecated_coms[com] = true;
             smb_unusual_coms[com] = false;
 

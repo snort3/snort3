@@ -68,6 +68,8 @@ DCE2_Ret DCE2_SmbWriteRaw(DCE2_SmbSsnData*, const SmbNtHdr*,
     const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
 DCE2_Ret DCE2_SmbWriteComplete(DCE2_SmbSsnData*, const SmbNtHdr*,
     const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
+DCE2_Ret DCE2_SmbWriteAndClose(DCE2_SmbSsnData*, const SmbNtHdr*,
+    const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
 
 #endif
 

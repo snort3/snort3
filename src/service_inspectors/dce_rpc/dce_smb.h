@@ -2934,6 +2934,59 @@ inline uint16_t SmbWriteCompleteRespCount(const SmbWriteCompleteResp* resp)
     return alignedNtohs(&resp->smb_count);
 }
 
+/********************************************************************
+ * SMB_COM_WRITE_AND_CLOSE
+ ********************************************************************/
+struct SmbWriteAndCloseReq   /* smb_wct = 6 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_fid;     /* file handle (close after write) */
+    uint16_t smb_count;   /* number of bytes to write */
+    uint32_t smb_offset;  /* offset in file to begin write */
+    uint32_t smb_mtime;   /* modification time */
+    uint16_t smb_bcc;     /* 1 (for pad) + value of smb_count */
+};
+
+struct SmbWriteAndCloseExtReq   /* smb_wct = 12 */
+{
+    uint8_t smb_wct;      /* count of 16-bit words that follow */
+    uint16_t smb_fid;     /* file handle (close after write) */
+    uint16_t smb_count;   /* number of bytes to write */
+    uint32_t smb_offset;  /* offset in file to begin write */
+    uint32_t smb_mtime;   /* modification time */
+    uint32_t smb_rsvd1;   /* Optional */
+    uint32_t smb_rsvd2;   /* Optional */
+    uint32_t smb_rsvd3;   /* Optional */
+    uint16_t smb_bcc;     /* 1 (for pad) + value of smb_count */
+};
+
+struct SmbWriteAndCloseResp   /* smb_wct = 1 */
+{
+    uint8_t smb_wct;     /* count of 16-bit words that follow */
+    uint16_t smb_count;  /* number of bytes written */
+    uint16_t smb_bcc;    /* must be 0 */
+};
+
+inline uint16_t SmbWriteAndCloseReqFid(const SmbWriteAndCloseReq* req)
+{
+    return alignedNtohs(&req->smb_fid);
+}
+
+inline uint16_t SmbWriteAndCloseReqCount(const SmbWriteAndCloseReq* req)
+{
+    return alignedNtohs(&req->smb_count);
+}
+
+inline uint32_t SmbWriteAndCloseReqOffset(const SmbWriteAndCloseReq* req)
+{
+    return alignedNtohl(&req->smb_offset);
+}
+
+inline uint16_t SmbWriteAndCloseRespCount(const SmbWriteAndCloseResp* resp)
+{
+    return alignedNtohs(&resp->smb_count);
+}
+
 #pragma pack()
 
 struct DCE2_SmbFsm
