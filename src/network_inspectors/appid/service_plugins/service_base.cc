@@ -53,6 +53,7 @@
 #include "service_telnet.h"
 #include "service_tftp.h"
 #include "appid_flow_data.h"
+#include "appid_config.h"
 #include "fw_appid.h"
 #include "lua_detector_api.h"
 #include "lua_detector_module.h"
@@ -169,20 +170,15 @@ extern RNAServiceValidationModule http_service_mod;
 
 static RNAServiceValidationModule* static_service_list[] =
 {
-#ifdef REMOVED_WHILE_NOT_IN_USE
     &bgp_service_mod,
     &bootp_service_mod,
     &dcerpc_service_mod,
-#endif
     &dns_service_mod,
-#ifdef REMOVED_WHILE_NOT_IN_USE
     &flap_service_mod,
-#endif
     &ftp_service_mod,
     &irc_service_mod,
     &lpr_service_mod,
     &mysql_service_mod,
-#ifdef REMOVED_WHILE_NOT_IN_USE
     &netbios_service_mod,
     &nntp_service_mod,
     &ntp_service_mod,
@@ -194,15 +190,11 @@ static RNAServiceValidationModule* static_service_list[] =
     &rshell_service_mod,
     &rsync_service_mod,
     &rtmp_service_mod,
-#endif
     &smtp_service_mod,
-#ifdef REMOVED_WHILE_NOT_IN_USE
     &snmp_service_mod,
-#endif
     &ssh_service_mod,
     &ssl_service_mod,
     &telnet_service_mod,
-#ifdef REMOVED_WHILE_NOT_IN_USE
     &tftp_service_mod,
     &sip_service_mod,
     &directconnect_service_mod,
@@ -210,7 +202,6 @@ static RNAServiceValidationModule* static_service_list[] =
     &mdns_service_mod,
     &timbuktu_service_mod,
     &tns_service_mod,
-#endif
     &bit_service_mod,
     &pattern_service_mod,
     &http_service_mod

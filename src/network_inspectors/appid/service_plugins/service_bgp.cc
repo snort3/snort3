@@ -20,6 +20,7 @@
 // service_bgp.cc author Sourcefire Inc.
 
 #include "service_bgp.h"
+#include "appid_module.h"
 #include "application_ids.h"
 
 #include "main/snort_debug.h"
@@ -251,6 +252,7 @@ fail:
 success:
     bgp_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
         APP_ID_BGP, nullptr, nullptr, nullptr);
+    appid_stats.bgp_flows++;
     return SERVICE_SUCCESS;
 }
 

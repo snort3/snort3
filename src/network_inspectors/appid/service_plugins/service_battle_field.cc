@@ -20,6 +20,7 @@
 // service_battle_field.cc author Sourcefire Inc.
 
 #include "service_battle_field.h"
+#include "appid_module.h"
 #include "application_ids.h"
 
 #include "main/snort_debug.h"
@@ -222,6 +223,7 @@ success:
 
     battlefield_service_mod.api->add_service(flowp, pkt, args->dir, &svc_element,
         APP_ID_BATTLEFIELD, nullptr, nullptr, nullptr);
+    appid_stats.battlefield_flows++;
     return SERVICE_SUCCESS;
 
 fail:

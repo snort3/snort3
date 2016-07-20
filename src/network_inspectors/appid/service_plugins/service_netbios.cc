@@ -29,6 +29,7 @@
 #include "main/snort_debug.h"
 #include "utils/util.h"
 
+#include "appid_module.h"
 #include "app_info_table.h"
 #include "appid_api.h"
 #include "appid_flow_data.h"
@@ -614,6 +615,7 @@ static int nbns_validate(ServiceValidationArgs* args)
 success:
     netbios_service_mod.api->add_service(flowp, args->pkt, dir, &nbns_svc_element,
         APP_ID_NETBIOS_NS, nullptr, nullptr, nullptr);
+    appid_stats.netbios_flows++;
     return SERVICE_SUCCESS;
 
 inprocess:
@@ -1067,6 +1069,7 @@ static int nbss_validate(ServiceValidationArgs* args)
         {
             netbios_service_mod.api->add_misc(flowp, nd->miscAppId);
         }
+        appid_stats.netbios_flows++;
     }
     return SERVICE_SUCCESS;
 
@@ -1229,6 +1232,7 @@ success:
             {
                 netbios_service_mod.api->add_misc(flowp, miscAppId);
             }
+            appid_stats.netbios_flows++;
         }
     }
     return SERVICE_SUCCESS;

@@ -392,7 +392,7 @@ void appInfoTableInit(const char* path, AppIdConfig* pConfig)
     pAppidActiveConfig->mod_config->mdns_user_reporting = 1;
     pAppidActiveConfig->mod_config->dns_host_reporting = 1;
     pAppidActiveConfig->mod_config->max_tp_flow_depth = 5;
-    pAppidActiveConfig->mod_config->http2_detection_enabled = 0;
+    pAppidActiveConfig->mod_config->http2_detection_enabled = false;
 
     snprintf(filepath, sizeof(filepath), "%s/odp/%s", path, APP_CONFIG_FILE);
     appIdConfLoad (filepath);
@@ -765,12 +765,12 @@ static void appIdConfLoad(const char* path)
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
                     LogMessage("AppId: disabling internal HTTP/2 detection.\n");
-                    pAppidActiveConfig->mod_config->http2_detection_enabled = 0;
+                    pAppidActiveConfig->mod_config->http2_detection_enabled = false;
                 }
                 else if (!(strcasecmp(conf_val, "enabled")))
                 {
                     LogMessage("AppId: enabling internal HTTP/2 detection.\n");
-                    pAppidActiveConfig->mod_config->http2_detection_enabled = 1;
+                    pAppidActiveConfig->mod_config->http2_detection_enabled = true;
                 }
                 else
                 {

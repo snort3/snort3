@@ -19,6 +19,7 @@
 
 // service_timbuktu.cc author Sourcefire Inc.
 
+#include "appid_module.h"
 #include "appid_flow_data.h"
 #include "application_ids.h"
 #include "service_api.h"
@@ -189,6 +190,7 @@ inprocess:
 success:
     timbuktu_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
         APP_ID_TIMBUKTU, nullptr, nullptr, nullptr);
+    appid_stats.timbuktu_flows++;
     return SERVICE_SUCCESS;
 
 fail:

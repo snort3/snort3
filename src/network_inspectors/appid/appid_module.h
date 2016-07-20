@@ -38,11 +38,15 @@ extern THREAD_LOCAL ProfileStats appidPerfStats;
 struct AppIdStats
 {
     PegCount packets;
+    PegCount battlefield_flows;
+    PegCount bgp_flows;
     PegCount bit_clients;
     PegCount bit_flows;
     PegCount bittracker_clients;
-    PegCount dns_udp_flows;
+    PegCount dcerpc_tcp_flows;
+    PegCount dcerpc_udp_flows;
     PegCount dns_tcp_flows;
+    PegCount dns_udp_flows;
     PegCount ftp_flows;
     PegCount ftps_flows;
     PegCount imap_flows;
@@ -52,7 +56,9 @@ struct AppIdStats
     PegCount kerberos_flows;
     PegCount kerberos_users;
     PegCount lpr_flows;
+    PegCount mdns_flows;
     PegCount mysql_flows;
+    PegCount netbios_flows;
     PegCount pop_flows;
     PegCount smtp_flows;
     PegCount smtps_flows;
@@ -60,6 +66,7 @@ struct AppIdStats
     PegCount ssh_flows;
     PegCount ssl_flows;
     PegCount telnet_flows;
+    PegCount timbuktu_flows;
 };
 
 extern THREAD_LOCAL AppIdStats appid_stats;

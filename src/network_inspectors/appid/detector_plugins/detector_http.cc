@@ -630,9 +630,7 @@ static int processCHPList(CHPListElement* chplist, DetectorHttpConfig* pHttpConf
     return 1;
 }
 
-static SearchTool* registerHeaderPatterns(
-    HeaderPattern* patternList,
-    size_t patternListCount)
+static SearchTool* registerHeaderPatterns(HeaderPattern* patternList, size_t patternListCount)
 {
     SearchTool* patternMatcher = new SearchTool("ac_full");
 
@@ -802,7 +800,7 @@ static char* normalize_userid(char* user)
     // find number of '%'
     for (i = 0; i < old_size; i++)
     {
-        if (*(user+i) == '%')
+        if (*(user + i) == '%')
             percent_count++;
     }
     if (0 == percent_count)
@@ -850,9 +848,7 @@ static char* normalize_userid(char* user)
     return user;
 }
 
-static void extractCHP(char* buf, int bs, int start,
-    int psize, char* adata,
-    char** outbuf)
+static void extractCHP(char* buf, int bs, int start, int psize, char* adata,  char** outbuf)
 {
     char* begin = buf+start+psize;
     char* end = nullptr;
@@ -1018,8 +1014,7 @@ static IpProtocol ffSetProtocol(char* buf, int buf_size, int start, int psize)
     return (IpProtocol)temp_protocol;
 }
 
-static void fflowCreate(char* adata, fflow_info* fflow,
-    Packet* p, AppId target_appid)
+static void fflowCreate(char* adata, fflow_info* fflow, Packet* p, AppId target_appid)
 {
     char* saddr_string = nullptr;
     char* daddr_string = nullptr;
@@ -1466,8 +1461,7 @@ static inline int optionallyReplaceWithStrdup(char** optionalStr, const char* st
 }
 
 void identifyUserAgent(const uint8_t* start, int size, AppId* serviceAppId, AppId* ClientAppId,
-    char** version,
-    const DetectorHttpConfig* pHttpConfig)
+    char** version, const DetectorHttpConfig* pHttpConfig)
 {
     int skypeDetect;
     int mobileDetect;
@@ -1796,8 +1790,8 @@ done:
     FreeMatchStructures(mp);
 }
 
-int geAppidByViaPattern(const uint8_t* data, unsigned size, char** version, const
-    DetectorHttpConfig* pHttpConfig)
+int geAppidByViaPattern(const uint8_t* data, unsigned size, char** version,
+        const DetectorHttpConfig* pHttpConfig)
 {
     unsigned i;
     const uint8_t* data_ptr;
@@ -2287,12 +2281,9 @@ int webdav_found(HeaderMatchedPatterns* hmp)
 // knowledge" case for HTTP/2 (i.e., the client knows the server supports
 // HTTP/2 and jumps right in with the preface).
 
-static CLIENT_APP_RETCODE http_client_init(const IniClientAppAPI* const init_api,
-    SF_LIST* config);
+static CLIENT_APP_RETCODE http_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE http_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector* userData,
-    const AppIdConfig* pConfig);
-
+    AppIdData* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
 static int http_service_init(const IniServiceAPI* const init_api);
 static int http_service_validate(ServiceValidationArgs* args);
 

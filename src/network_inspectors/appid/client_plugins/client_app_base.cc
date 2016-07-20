@@ -121,22 +121,17 @@ static RNAClientAppModule* static_client_list[] =
 {
     &smtp_client_mod,
     &ssh_client_mod,
-
-#ifdef REMOVED_WHILE_NOT_IN_USE
     &msn_client_mod,
     &aim_client_mod,
     &ym_client_mod,
     &sip_udp_client_mod,
     &sip_tcp_client_mod,
-#endif
     &bit_client_mod,
     &bit_tracker_client_mod,
-#ifdef REMOVED_WHILE_NOT_IN_USE
     &rtp_client_mod,
     &timbuktu_client_mod,
     &tns_client_mod,
     &vnc_client_mod,
-#endif
     &pattern_udp_client_mod,
     &pattern_tcp_client_mod,
     &dns_udp_client_mod,

@@ -20,6 +20,7 @@
 // service_dcerpc.cc author Sourcefire Inc.
 
 #include "service_dcerpc.h"
+#include "appid_module.h"
 #include "application_ids.h"
 #include "dcerpc.h"
 
@@ -137,6 +138,7 @@ static int dcerpc_tcp_validate(ServiceValidationArgs* args)
     {
         dcerpc_service_mod.api->add_service(flowp, args->pkt, args->dir, &tcp_svc_element,
             APP_ID_DCE_RPC, nullptr, nullptr, nullptr);
+        appid_stats.dcerpc_tcp_flows++;
         return SERVICE_SUCCESS;
     }
 
@@ -188,6 +190,7 @@ static int dcerpc_udp_validate(ServiceValidationArgs* args)
     {
         dcerpc_service_mod.api->add_service(flowp, args->pkt, args->dir, &udp_svc_element,
             APP_ID_DCE_RPC, nullptr, nullptr, nullptr);
+        appid_stats.dcerpc_udp_flows++;
         return SERVICE_SUCCESS;
     }
 

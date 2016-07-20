@@ -21,6 +21,7 @@
 
 #include "service_mdns.h"
 
+#include "appid_module.h"
 #include "search_engines/search_tool.h"
 #include "client_plugins/client_app_base.h"
 #include "detector_plugins/http_url_patterns.h"
@@ -311,7 +312,7 @@ static int MDNSUserAnalyser(AppIdData* flowp, const Packet* pkt, uint16_t size, 
                     user_index++;
                 }
 
-                AppIdAddUser(flowp, user_name, APP_ID_MDNS, 1);
+                mdns_service_mod.api->add_user(flowp, user_name, APP_ID_MDNS, 1);
                 break;
             }
             /* Find the  length to Jump to the next response */
@@ -364,7 +365,7 @@ static int MDNSUserAnalyser(AppIdData* flowp, const Packet* pkt, uint16_t size, 
                             memcpy(user_name, user_name_bkp + user_index, user_name_len -
                                 user_index);
                             user_name[ user_name_len - user_index ] = '\0';
-                            AppIdAddUser(flowp, user_name, APP_ID_MDNS, 1);
+                            mdns_service_mod.api->add_user(flowp, user_name, APP_ID_MDNS, 1);
                             return 1;
                         }
                         else
@@ -427,6 +428,7 @@ static int MDNS_validate(ServiceValidationArgs* args)
 success:
     mdns_service_mod.api->add_service(flowp, pkt, args->dir, &svc_element,
         APP_ID_MDNS, nullptr, nullptr, nullptr);
+    appid_stats.mdns_flows++;
     return SERVICE_SUCCESS;
 
 fail:

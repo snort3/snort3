@@ -804,9 +804,7 @@ bool AppIdConfig::init_appid( )
         ClientAppInit(pAppidActiveConfig);
         ServiceInit(pAppidActiveConfig);
         LuaDetectorModuleManager::FinalizeLuaModules(pAppidActiveConfig);
-
         finalize_pattern_modules();
-
         http_detector_finalize(pAppidActiveConfig);
 #ifdef REMOVED_WHILE_NOT_IN_USE
         sipUaFinalize(&pAppidActiveConfig->detectorSipConfig);

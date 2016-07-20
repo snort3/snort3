@@ -61,22 +61,11 @@ AppId appGetAppFromClientId(uint32_t clientId, AppIdConfig*);
 AppId appGetAppFromPayloadId(uint32_t payloadId, AppIdConfig*);
 void appSharedDataDelete(AppIdData*);
 void AppIdAddUser(AppIdData*, const char* username, AppId, int success);
-void AppIdAddDnsQueryInfo(
-    AppIdData*,
-    uint16_t id,
-    const uint8_t* host, uint8_t host_len, uint16_t host_offset,
-    uint16_t record_type
-);
-
-void AppIdAddDnsResponseInfo(
-    AppIdData*,
-    uint16_t id,
-    const uint8_t* host, uint8_t host_len, uint16_t host_offset,
-    uint8_t response_type, uint32_t ttl
-);
-
+void AppIdAddDnsQueryInfo(AppIdData*, uint16_t id, const uint8_t* host, uint8_t host_len,
+        uint16_t host_offset, uint16_t record_type);
+void AppIdAddDnsResponseInfo(AppIdData*, uint16_t id, const uint8_t* host, uint8_t host_len,
+        uint16_t host_offset, uint8_t response_type, uint32_t ttl);
 void AppIdResetDnsInfo(AppIdData*);
-
 void AppIdAddPayload(AppIdData*, AppId);
 AppIdData* appSharedDataAlloc(IpProtocol proto, const sfip_t*);
 AppId getOpenAppId(void* ssnptr);
