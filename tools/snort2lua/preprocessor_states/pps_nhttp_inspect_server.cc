@@ -245,7 +245,7 @@ bool NHttpInspectServer::convert(std::istringstream& data_stream)
             parse_deleted_option("chunk_length", data_stream);
 
         else if (!keyword.compare("oversize_dir_length"))
-            parse_deleted_option("oversize_dir_length", data_stream);
+            tmpval = parse_int_option("oversize_dir_length", data_stream, false);
 
         else if (!keyword.compare("max_header_length"))
             parse_deleted_option("max_header_length", data_stream);

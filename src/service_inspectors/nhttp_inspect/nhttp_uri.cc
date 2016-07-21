@@ -154,6 +154,40 @@ void NHttpUri::parse_abs_path()
     }
 }
 
+void NHttpUri::check_oversize_dir(Field uri_field)
+{
+    int32_t total_length = 0;
+    const uint8_t* last_dir = nullptr;
+    const uint8_t* cur;
+    const uint8_t* end;
+
+    if ( uri_field.length < 0 )
+        return;
+
+    cur = uri_field.start;
+    end = uri_field.start + uri_field.length;
+
+    while ( cur <= end )
+    {
+        if ( *cur == '/' )
+        {
+            if ( last_dir )
+            {
+                total_length = cur - last_dir - 1;
+
+                if ( total_length > uri_param.oversize_dir_length )
+                {
+                    infractions += INF_OVERSIZE_DIR;
+                    events.create_event(EVENT_OVERSIZE_DIR);
+                    break;
+                }
+            }
+
+            last_dir = cur;
+        }
+        cur++;
+    }
+}
 void NHttpUri::normalize()
 {
     // Divide the URI up into its six components: scheme, host, port, path, query, and fragment
@@ -184,6 +218,7 @@ void NHttpUri::normalize()
         query_norm = query;
         fragment_norm = fragment;
         classic_norm = uri;
+        check_oversize_dir(path_norm);
         return;
     }
 
@@ -277,6 +312,8 @@ void NHttpUri::normalize()
     {
         NHttpModule::increment_peg_counts(PEG_URI_CODING);
     }
+
+    check_oversize_dir(path_norm);
 
     classic_norm.set(current - new_buf, new_buf);
     classic_norm_allocated = true;

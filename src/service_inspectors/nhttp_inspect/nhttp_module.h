@@ -45,6 +45,7 @@ public:
         bool percent_u = false;
         bool utf8 = true;
         bool utf8_bare_byte = false;
+        int oversize_dir_length = 300;
         bool iis_unicode = false;
         std::string iis_unicode_map_file;
         int iis_unicode_code_page = 1252;

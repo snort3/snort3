@@ -86,6 +86,8 @@ private:
     void parse_uri();
     void parse_authority();
     void parse_abs_path();
+
+    void check_oversize_dir(Field);
 };
 
 #endif
