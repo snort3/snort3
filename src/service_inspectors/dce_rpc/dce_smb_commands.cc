@@ -1479,11 +1479,6 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
                 return DCE2_RET__SUCCESS;
             }
 
-            // Next field should be OS string
-            for (i = 0; (i < nb_len) && (nb_ptr[i] != '\0'); i += increment)
-                ;
-            i -= increment;
-
             // Windows
             if (*nb_ptr == 'W')
             {
