@@ -251,7 +251,7 @@ static const IpsApi size_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    0, PROTO_BIT__TCP,  // FIXIT-L eventually change to 1 since <> and <=> are supported
     nullptr,
     nullptr,
     nullptr,

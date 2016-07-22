@@ -1,3 +1,10 @@
+16/07/22 - build 203
+
+-- add oversize directory alert to new_http_inspect
+-- add appid counts for mdns, timbuktu, battlefield, bgp, and netbios services
+-- continue smb port - write and close command, deprecated dialect check, smb fingerprint
+-- fix outstanding strndup calls
+
 16/07/15 - build 202
 
 -- fix dynamic build of new_http_inspect

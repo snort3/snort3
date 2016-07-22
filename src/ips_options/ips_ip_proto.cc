@@ -307,7 +307,7 @@ static const IpsApi ip_proto_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__IP,
+    0, PROTO_BIT__IP,
     nullptr,
     nullptr,
     nullptr,

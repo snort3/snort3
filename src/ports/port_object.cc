@@ -136,11 +136,7 @@ int PortObjectAddItem(PortObject* po, PortObjectItem* poi, int* errflag)
         p=(PortObjectItem*)sflist_next(&pos) )
     {
         if ((p->lport == poi->lport) && (p->hport == poi->hport))
-        {
-            if (errflag)
-                *errflag = 9; // FIXIT-L why return poparser code here? POPERR_DUPLICATE_ENTRY;
-            return -1; /* -1 chosen for consistency with sflist_add_tail */
-        }
+            ParseWarning(WARN_RULES, "duplicate ports in list");
     }
 
     sflist_add_tail(po->item_list, poi);
