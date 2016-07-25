@@ -1,5 +1,5 @@
 add_cpputest(nhttp_uri_norm_test nhttp_inspect framework)
 add_cpputest(nhttp_normalizers_test nhttp_inspect framework)
 add_cpputest(nhttp_module_test nhttp_inspect framework)
-add_cpputest(nhttp_transaction_test nhttp_inspect framework)
+add_cpputest(nhttp_transaction_test nhttp_inspect framework -lz)
 
