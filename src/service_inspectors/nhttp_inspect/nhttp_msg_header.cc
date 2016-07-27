@@ -150,6 +150,14 @@ void NHttpMsgHeader::update_flow()
     if (source_id == SRC_CLIENT)
     {
         // No body
+        if ((method_id == METH_POST) || (method_id == METH_PUT))
+        {
+            // Despite the name of this event, we assume for parsing purposes that this POST or PUT
+            // does not have a body rather than running to connection close. Obviously that is just
+            // an assumption.
+            infractions += INF_POST_WO_BODY;
+            events.create_event(EVENT_UNBOUNDED_POST);
+        }
         session_data->half_reset(source_id);
         return;
     }
