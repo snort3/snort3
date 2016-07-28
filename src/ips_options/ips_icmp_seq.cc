@@ -114,15 +114,15 @@ int IcmpSeqOption::eval(Cursor&, Packet* p)
 
     if ( (p->ptrs.icmph->type == ICMP_ECHO ||
         p->ptrs.icmph->type == ICMP_ECHOREPLY) ||
-        ((uint16_t)p->ptrs.icmph->type == icmp::Icmp6Types::ECHO_REQUEST ||
-        (uint16_t)p->ptrs.icmph->type == icmp::Icmp6Types::ECHO_REPLY) )
+        ((uint8_t)p->ptrs.icmph->type == icmp::Icmp6Types::ECHO_REQUEST ||
+        (uint8_t)p->ptrs.icmph->type == icmp::Icmp6Types::ECHO_REPLY) )
     {
-        if ( config.eval(p->ptrs.icmph->s_icmp_seq) )
+		uint16_t icmp_seq = ntohs(p->ptrs.icmph->s_icmp_seq);
+        if ( config.eval( icmp_seq ) )
         {
             return DETECTION_OPTION_MATCH;
         }
     }
-
     return DETECTION_OPTION_NO_MATCH;
 }
 
