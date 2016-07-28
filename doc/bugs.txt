@@ -26,7 +26,7 @@
 ==== Config
 
 * Parsing issue with IP lists.  can't parse rules with $EXTERNAL_NET
-  defined as below because or the space between ! and 10.
+  defined as below because of the space between ! and 10.
 
     HOME_NET = [[ 10.0.17.0/24 10.0.14.0/24 10.247.0.0/16 10.246.0.0/16 ]]
     EXTERNAL_NET = '! ' .. HOME_NET
@@ -43,10 +43,6 @@
 
 * --lua can only be used in addition to, not in place of, a -c config.
   Ideally, --lua could be used in lieu of -c.
-
-* Rule line numbers provided with syntax error messages are off by one. The first rule is
-  unnumbered, the second rule is one, etc. See nhttp_inspect/detection_buffers/bad_rules/expected
-  for an example.
 
 
 ==== Rules

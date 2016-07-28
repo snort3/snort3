@@ -34,9 +34,11 @@
 void parser_init();
 void parser_term();
 
-const char* get_parse_file();
+// line > 0 implies name is non-null
 void get_parse_location(const char*& name, unsigned& line);
-void push_parse_location(const char* name, unsigned line = 0);
+
+// use line = 0 for lua to suppress line numbers for errors or warnings
+void push_parse_location(const char* name, unsigned line = 1);
 
 void pop_parse_location();
 void inc_parse_position();

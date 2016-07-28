@@ -79,15 +79,6 @@ struct Location
 
 static std::stack<Location> files;
 
-const char* get_parse_file()
-{
-    if ( files.empty() )
-        return nullptr;
-
-    Location& loc = files.top();
-    return loc.file.c_str();
-}
-
 void get_parse_location(const char*& file, unsigned& line)
 {
     if ( files.empty() )
@@ -145,7 +136,7 @@ void parse_include(SnortConfig* sc, const char* arg)
         snprintf(fname, path_len, "%s%s", snort_conf_dir, arg);
     }
 
-    push_parse_location(fname, 0);
+    push_parse_location(fname);
     ParseConfigFile(sc, fname);
     pop_parse_location();
     snort_free((char*)fname);

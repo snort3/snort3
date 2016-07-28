@@ -466,7 +466,7 @@ static void parse_file(SnortConfig* sc, Shell* sh)
     if ( !fname || !*fname )
         return;
 
-    push_parse_location(fname);
+    push_parse_location(fname, 0);
     sh->configure(sc);
     pop_parse_location();
 }

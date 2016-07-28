@@ -73,6 +73,18 @@ unsigned get_parse_warnings()
     return tmp;
 }
 
+static void log_message(const char* type, const char* msg)
+{
+    const char* file_name;
+    unsigned file_line;
+    get_parse_location(file_name, file_line);
+
+    if ( file_line )
+        LogMessage("%s: %s:%d %s\n", type, file_name, file_line, msg);
+    else
+        LogMessage("%s: %s\n", type, msg);
+}
+
 void ParseMessage(const char* format, ...)
 {
     char buf[STD_BUF+1];
@@ -83,16 +95,7 @@ void ParseMessage(const char* format, ...)
     va_end(ap);
 
     buf[STD_BUF] = '\0';
-
-    const char* file_name;
-    unsigned file_line;
-    get_parse_location(file_name, file_line);
-
-   // FIXIT-L use same format filename/linenum as ParseWarning ( %s(%d) vs $s:%d )
-   if ( file_name )
-        LogMessage("%s(%d) %s\n", file_name, file_line, buf);
-    else
-        LogMessage("%s\n", buf);
+    log_message("INFO", buf);
 }
 
 void ParseWarning(WarningGroup wg, const char* format, ...)
@@ -108,16 +111,7 @@ void ParseWarning(WarningGroup wg, const char* format, ...)
     va_end(ap);
 
     buf[STD_BUF] = '\0';
-
-    const char* file_name;
-    unsigned file_line;
-    get_parse_location(file_name, file_line);
-
-    // FIXIT-L Why `file_line` here and `file_name` in ParseMessage?
-    if ( file_line )
-        LogMessage("WARNING: %s:%d %s\n", file_name, file_line, buf);
-    else
-        LogMessage("WARNING: %s\n", buf);
+    log_message("WARNING", buf);
 
     parse_warnings++;
 }
@@ -132,15 +126,7 @@ void ParseError(const char* format, ...)
     va_end(ap);
 
     buf[STD_BUF] = '\0';
-
-    const char* file_name;
-    unsigned file_line;
-    get_parse_location(file_name, file_line);
-
-    if (file_line )
-        LogMessage("ERROR: %s:%d %s\n", file_name, file_line, buf);
-    else
-        LogMessage("ERROR: %s\n", buf);
+    log_message("ERROR", buf);
 
     parse_errors++;
 }
@@ -160,9 +146,8 @@ NORETURN void ParseAbort(const char* format, ...)
     unsigned file_line;
     get_parse_location(file_name, file_line);
 
-    // FIXIT-L Refer to ParseMessage above.
-    if ( file_name )
-        FatalError("%s(%u) %s\n", file_name, file_line, buf);
+    if ( file_line )
+        FatalError("%s:%u %s\n", file_name, file_line, buf);
     else
         FatalError("%s\n", buf);
 }
