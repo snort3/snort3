@@ -1,3 +1,10 @@
+16/07/29 - build 204
+
+-- fixed issue with icmp_seq and icmp_id field matching
+-- fixed off-by-1 line number in rule parsing errors
+-- fix cmake make check issue with new_http_inspect
+-- added new_http_inspect unbounded POST alert
+
 16/07/22 - build 203
 
 -- add oversize directory alert to new_http_inspect
