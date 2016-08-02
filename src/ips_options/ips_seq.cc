@@ -87,9 +87,8 @@ int TcpSeqOption::eval(Cursor&, Packet* p)
     if (!p->ptrs.tcph)
         return DETECTION_OPTION_NO_MATCH;
 
-    if ( config.eval(p->ptrs.tcph->th_seq) )
+    if ( config.eval(p->ptrs.tcph->seq()) )
         return DETECTION_OPTION_MATCH;
-
     return DETECTION_OPTION_NO_MATCH;
 }
 
