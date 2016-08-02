@@ -87,7 +87,7 @@ int TcpWinOption::eval(Cursor&, Packet* p)
     if (!p->ptrs.tcph)
         return DETECTION_OPTION_NO_MATCH;
 
-    if ( config.eval(p->ptrs.tcph->th_win) )
+    if ( config.eval(p->ptrs.tcph->win()) )
         return DETECTION_OPTION_MATCH;
 
     return DETECTION_OPTION_NO_MATCH;
