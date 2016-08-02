@@ -30,6 +30,7 @@
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "utils/util.h"
+#include  <assert.h>
 
 THREAD_LOCAL int co_reassembled = 0;
 
@@ -2246,12 +2247,14 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
 }
 
 static DCE2_Ret DCE2_HandleSegmentation(DCE2_Buffer* seg_buf, const uint8_t* data_ptr,
-    uint16_t data_len, uint32_t need_len)
+    uint16_t data_len, uint32_t need_len, uint16_t* data_used)
 {
     uint32_t copy_len;
     DCE2_Ret status;
 
-    // FIXIT-L PORT_IF_NEEDED data_used
+/* Initialize in case we return early without adding
+     * any data to the buffer */
+    *data_used = 0;
 
     if (seg_buf == nullptr)
         return DCE2_RET__ERROR;
@@ -2280,6 +2283,10 @@ static DCE2_Ret DCE2_HandleSegmentation(DCE2_Buffer* seg_buf, const uint8_t* dat
     if (status != DCE2_RET__SUCCESS)
         return DCE2_RET__ERROR;
 
+    assert (copy_len <= data_len);
+
+    *data_used = (uint16_t)copy_len;
+
     if (DCE2_BufferLength(seg_buf) == need_len)
         return DCE2_RET__SUCCESS;
 
@@ -2294,7 +2301,7 @@ static DCE2_Ret DCE2_HandleSegmentation(DCE2_Buffer* seg_buf, const uint8_t* dat
  *
  ********************************************************************/
 static DCE2_Ret DCE2_CoHandleSegmentation(DCE2_SsnData* sd, DCE2_CoSeg* seg,
-    const uint8_t* data_ptr, uint16_t data_len, uint16_t need_len)
+    const uint8_t* data_ptr, uint16_t data_len, uint16_t need_len, uint16_t* data_used)
 {
     DCE2_Ret status;
 
@@ -2322,7 +2329,7 @@ static DCE2_Ret DCE2_CoHandleSegmentation(DCE2_SsnData* sd, DCE2_CoSeg* seg,
     }
 
     status = DCE2_HandleSegmentation(seg->buf,
-        data_ptr, data_len, need_len);
+        data_ptr, data_len, need_len, data_used);
 
     return status;
 }
@@ -2359,9 +2366,20 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         {
             const uint8_t* frag_ptr = data_ptr;
             uint16_t frag_len;
+            uint16_t data_used;
 
-            // FIXIT-L PORT_IF_NEEDED
-            //Not enough data left for a headerr
+            /* Not enough data left for a header.  Buffer it and return */
+            if (data_len < sizeof(DceRpcCoHdr))
+            {
+                DebugMessage(DEBUG_DCE_COMMON,
+                    "Not enough data in packet for DCE/RPC Connection-oriented header.\n");
+
+                DCE2_CoHandleSegmentation(sd, seg, data_ptr, data_len, sizeof(DceRpcCoHdr),
+                    &data_used);
+
+                /* Just break out of loop in case early detect is enabled */
+                break;
+            }
 
             if (DCE2_CoHdrChecks(sd, cot, (DceRpcCoHdr*)data_ptr) != DCE2_RET__SUCCESS)
                 return;
@@ -2377,7 +2395,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                 /* Set frag length so we don't have to check it again in seg code */
                 seg->frag_len = frag_len;
 
-                DCE2_CoHandleSegmentation(sd, seg, data_ptr, data_len, frag_len);
+                DCE2_CoHandleSegmentation(sd, seg, data_ptr, data_len, frag_len, &data_used);
                 goto dce2_coprocess_exit;
             }
 
@@ -2398,25 +2416,58 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         }
         else  /* We've already buffered data */
         {
+            uint16_t data_used = 0;
+
             DebugFormat(DEBUG_DCE_COMMON, "Segmentation buffer has %u bytes\n",
                 DCE2_BufferLength(seg->buf));
 
-            // FIXIT-L PORT_IF_NEEDED
-            //Need more data to get header
+            // Need more data to get header
+            if (DCE2_BufferLength(seg->buf) < sizeof(DceRpcCoHdr))
+            {
+                DCE2_Ret status = DCE2_CoHandleSegmentation(sd, seg, data_ptr, data_len,
+                    sizeof(DceRpcCoHdr), &data_used);
+
+                /* Still not enough for header */
+                if (status != DCE2_RET__SUCCESS)
+                    break;
+
+                /* Move the length of the amount of data we used to get header */
+                DCE2_MOVE(data_ptr, data_len, data_used);
+
+                if (DCE2_CoHdrChecks(sd, cot, (DceRpcCoHdr*)DCE2_BufferData(seg->buf)) !=
+                    DCE2_RET__SUCCESS)
+                {
+                    int data_back;
+                    DCE2_BufferEmpty(seg->buf);
+                    /* Move back to original packet header */
+                    data_back = -data_used;
+                    DCE2_MOVE(data_ptr, data_len, data_back);
+                    /*Check the original packet*/
+                    if (DCE2_CoHdrChecks(sd, cot, (DceRpcCoHdr*)data_ptr) != DCE2_RET__SUCCESS)
+                        return;
+                    else
+                    {
+                        /*Only use the original packet, ignore the data in seg_buffer*/
+                        num_frags = 0;
+                        continue;
+                    }
+                }
+
+                seg->frag_len = DceRpcCoFragLen((DceRpcCoHdr*)DCE2_BufferData(seg->buf));
+            }
 
             /* Need more data for full pdu */
             if (DCE2_BufferLength(seg->buf) < seg->frag_len)
             {
                 DCE2_Ret status = DCE2_CoHandleSegmentation(sd, seg, data_ptr, data_len,
-                    seg->frag_len);
+                    seg->frag_len, &data_used);
 
                 /* Still not enough */
                 if (status != DCE2_RET__SUCCESS)
-                    goto dce2_coprocess_exit;
-            }
+                    break;
 
-            // FIXIT-L PORT_IF_NEEDED
-            // DCE_MOVE, data_used
+                DCE2_MOVE(data_ptr, data_len, data_used);
+            }
 
             /* Do this before calling DCE2_CoSegDecode since it will empty
              * seg buffer */
@@ -2425,6 +2476,9 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
             /* Got the full DCE/RPC pdu. Need to create new packet before decoding */
             DCE2_CoSegDecode(sd, cot, seg);
+
+            if ( !data_used )
+                break;
         }
     }
 

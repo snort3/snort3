@@ -686,13 +686,16 @@ static uint32_t DCE2_IgnoreJunkData(const uint8_t* data_ptr, uint16_t data_len,
 static DCE2_Ret DCE2_SmbHdrChecks(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr)
 {
     Packet* p = ssd->sd.wire_pkt;
+    bool is_seg_buf = DCE2_SmbIsSegBuffer(ssd, (uint8_t*)smb_hdr);
 
     if ((DCE2_SsnFromServer(p) && (SmbType(smb_hdr) == SMB_TYPE__REQUEST)) ||
         (DCE2_SsnFromClient(p) && (SmbType(smb_hdr) == SMB_TYPE__RESPONSE)))
     {
-        // FIXIT-M port segment check
-        // Same for all cases below
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+        if (is_seg_buf)
+            DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_TYPE);
+        else
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+
         // Continue looking at traffic.  Neither Windows nor Samba seem
         // to care, or even look at this flag
     }
@@ -700,7 +703,11 @@ static DCE2_Ret DCE2_SmbHdrChecks(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr)
     if ((SmbId(smb_hdr) != DCE2_SMB_ID)
         && (SmbId(smb_hdr) != DCE2_SMB2_ID))
     {
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_ID, (dce2CommonStats*)&dce2_smb_stats);
+        if (is_seg_buf)
+            DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_ID);
+        else
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_ID, (dce2CommonStats*)&dce2_smb_stats);
+
         return DCE2_RET__IGNORE;
     }
 
@@ -1192,7 +1199,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
 
         DCE2_MOVE(nb_ptr, nb_len, (off2_ptr - nb_ptr));
 
-        // FIXIT Need to test more.
+        // FIXIT-L Need to test more.
         switch (smb_com)
         {
         case SMB_COM_SESSION_SETUP_ANDX:
@@ -1773,6 +1780,7 @@ static DCE2_SmbSsnData* dce2_handle_smb_session(Packet* p, dce2SmbProtoConf* con
 static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
 {
     Packet* p = ssd->sd.wire_pkt;
+    bool is_seg_buf = DCE2_SmbIsSegBuffer(ssd, (uint8_t*)nb_hdr);
 
     DebugMessage(DEBUG_DCE_SMB, "NetBIOS Session Service type: ");
 
@@ -1794,9 +1802,11 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
                 DebugFormat(DEBUG_DCE_SMB, "NetBIOS SS len(%zu) < SMB header len(%zu).\n",
                     sizeof(SmbNtHdr), sizeof(NbssHdr) + nb_len);
 
-                // FIXIT-M port segment check
-                // Same for all cases below
-                dce_alert(GID_DCE2, DCE2_SMB_NB_LT_SMBHDR, (dce2CommonStats*)&dce2_smb_stats);
+                if (is_seg_buf)
+                    DCE2_SmbSegAlert(ssd, DCE2_SMB_NB_LT_SMBHDR);
+                else
+                    dce_alert(GID_DCE2, DCE2_SMB_NB_LT_SMBHDR, (dce2CommonStats*)&dce2_smb_stats);
+
                 return DCE2_RET__IGNORE;
             }
         }
@@ -1807,7 +1817,10 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
         DebugMessage(DEBUG_DCE_SMB, "Session Request\n");
         if (DCE2_SsnFromServer(p))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+            if (is_seg_buf)
+                DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_NBSS_TYPE);
+            else
+                dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats);
         }
 
         break;
@@ -1817,7 +1830,10 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
     case NBSS_SESSION_TYPE__RETARGET_RESPONSE:
         if (DCE2_SsnFromClient(p))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+            if (is_seg_buf)
+                DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_NBSS_TYPE);
+            else
+                dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats);
         }
 
         break;
@@ -1829,7 +1845,11 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
     default:
         DebugFormat(DEBUG_DCE_SMB,
             "Invalid Session Service type: 0x%02X\n", NbssType(nb_hdr));
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats);
+
+        if (is_seg_buf)
+            DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_NBSS_TYPE);
+        else
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats);
 
         return DCE2_RET__ERROR;
     }
@@ -1857,6 +1877,7 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
     const Packet* p = ssd->sd.wire_pkt;
     const uint8_t* data_ptr = p->data;
     uint16_t data_len = p->dsize;
+    DCE2_Buffer** seg_buf = DCE2_SmbGetSegBuffer(ssd);
 
     /* Have to account for segmentation.  Even though stream will give
      * us larger chunks, we might end up in the middle of something */
@@ -1901,12 +1922,35 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
                 DebugFormat(DEBUG_DCE_SMB, "Data len(%hu) < NetBIOS SS header(%u). "
                     "Queueing data.\n", data_len, data_need);
 
-                // FIXIT-M port segmentation code
+                if (DCE2_SmbHandleSegmentation(seg_buf, data_ptr,
+                    data_len, sizeof(NbssHdr)) != DCE2_RET__SUCCESS)
+                {
+                    DCE2_BufferEmpty(*seg_buf);
+                }
+
                 return;
             }
 
             // Set the NetBIOS header structure
-            NbssHdr* nb_hdr = (NbssHdr*)data_ptr;
+            NbssHdr* nb_hdr;
+            if (DCE2_BufferIsEmpty(*seg_buf))
+            {
+                nb_hdr = (NbssHdr*)data_ptr;
+            }
+            else
+            {
+                // If data already buffered add the remainder for the
+                // size of the NetBIOS header
+                if (DCE2_SmbHandleSegmentation(seg_buf, data_ptr,
+                    data_need, sizeof(NbssHdr)) != DCE2_RET__SUCCESS)
+                {
+                    DCE2_BufferEmpty(*seg_buf);
+                    return;
+                }
+
+                nb_hdr = (NbssHdr*)DCE2_BufferData(*seg_buf);
+            }
+
             uint32_t nb_len = NbssLen(nb_hdr);
 
             DebugFormat(DEBUG_DCE_SMB, "NetBIOS PDU length: %u\n", nb_len);
@@ -1930,9 +1974,13 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
                     *ignore_bytes = DCE2_IgnoreJunkData(data_ptr, data_len, data_need + nb_len);
                 }
 
+                DCE2_BufferEmpty(*seg_buf);
                 dce2_smb_stats.smb_ignored_bytes += *ignore_bytes;
                 continue;
             }
+
+            if (!DCE2_BufferIsEmpty(*seg_buf))
+                DCE2_MOVE(data_ptr, data_len, (uint16_t)data_need);
 
             switch (ssd->pdu_state)
             {
@@ -1959,9 +2007,9 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
         // there won't be any DCE/RPC traffic associated with it.
         case DCE2_SMB_DATA_STATE__SMB_HEADER:
         {
-            // FIXIT-M add segmentation code path, including seg_buf code to the entire state
+            uint32_t data_need = (sizeof(NbssHdr) + sizeof(SmbNtHdr)) - DCE2_BufferLength(
+                *seg_buf);
 
-            uint32_t data_need = (sizeof(NbssHdr) + sizeof(SmbNtHdr));
             // See if there is enough data to process the SMB header
             if (data_len < data_need)
             {
@@ -1969,12 +2017,34 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
                     "NetBIOS SS header + SMB header (%u). Queueing data.\n",
                     data_len, data_need);
 
-                // FIXIT-M add segmentation code path
+                if (DCE2_SmbHandleSegmentation(seg_buf, data_ptr, data_len,
+                    sizeof(NbssHdr) + sizeof(SmbNtHdr)) != DCE2_RET__SUCCESS)
+                {
+                    DCE2_BufferEmpty(*seg_buf);
+                    *data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+                }
+
                 return;
             }
 
-            // FIXIT-M add segmentation checks
-            SmbNtHdr* smb_hdr = (SmbNtHdr*)(data_ptr + sizeof(NbssHdr));
+            // Set the SMB header structure
+            SmbNtHdr* smb_hdr;
+            if (DCE2_BufferIsEmpty(*seg_buf))
+            {
+                smb_hdr = (SmbNtHdr*)(data_ptr + sizeof(NbssHdr));
+            }
+            else
+            {
+                if (DCE2_SmbHandleSegmentation(seg_buf, data_ptr, data_need,
+                    sizeof(NbssHdr) + sizeof(SmbNtHdr)) != DCE2_RET__SUCCESS)
+                {
+                    DCE2_BufferEmpty(*seg_buf);
+                    *data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+                    return;
+                }
+
+                smb_hdr = (SmbNtHdr*)(DCE2_BufferData(*seg_buf) + sizeof(NbssHdr));
+            }
 
             // FIXIT-L Don't support SMB2 yet
             if (SmbId(smb_hdr) == DCE2_SMB2_ID)
@@ -1989,8 +2059,16 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
             {
                 DebugMessage(DEBUG_DCE_SMB, "Not inspecting SMB packet.\n");
 
-                // FIXIT-M add segmentation
-                *ignore_bytes = sizeof(NbssHdr) + NbssLen((NbssHdr*)data_ptr);
+                if (DCE2_BufferIsEmpty(*seg_buf))
+                {
+                    *ignore_bytes = sizeof(NbssHdr) + NbssLen((NbssHdr*)data_ptr);
+                }
+                else
+                {
+                    *ignore_bytes = (NbssLen((NbssHdr*)DCE2_BufferData(*seg_buf))
+                        - sizeof(SmbNtHdr)) + data_need;
+                    DCE2_BufferEmpty(*seg_buf);
+                }
 
                 *data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
                 dce2_smb_stats.smb_ignored_bytes += *ignore_bytes;
@@ -2002,13 +2080,25 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
             {
                 DebugMessage(DEBUG_DCE_SMB, "Bad SMB header.\n");
 
-                *ignore_bytes = sizeof(NbssHdr) + NbssLen((NbssHdr*)data_ptr);
+                if (DCE2_BufferIsEmpty(*seg_buf))
+                {
+                    *ignore_bytes = sizeof(NbssHdr) + NbssLen((NbssHdr*)data_ptr);
+                }
+                else
+                {
+                    *ignore_bytes = (NbssLen((NbssHdr*)DCE2_BufferData(*seg_buf))
+                        - sizeof(SmbNtHdr)) + data_need;
+                    DCE2_BufferEmpty(*seg_buf);
+                }
 
                 *data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
 
                 dce2_smb_stats.smb_ignored_bytes += *ignore_bytes;
                 continue;
             }
+
+            if (!DCE2_BufferIsEmpty(*seg_buf))
+                DCE2_MOVE(data_ptr, data_len, (uint16_t)data_need);
 
             *data_state = DCE2_SMB_DATA_STATE__NETBIOS_PDU;
         }
@@ -2019,8 +2109,19 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
         // to process.
         case DCE2_SMB_DATA_STATE__NETBIOS_PDU:
         {
-            uint32_t nb_len = NbssLen((NbssHdr*)data_ptr);
-            uint32_t data_need = sizeof(NbssHdr) + nb_len;
+            uint32_t nb_len;
+            uint32_t data_need;
+
+            if (DCE2_BufferIsEmpty(*seg_buf))
+            {
+                nb_len = NbssLen((NbssHdr*)data_ptr);
+                data_need = sizeof(NbssHdr) + nb_len;
+            }
+            else
+            {
+                nb_len = NbssLen((NbssHdr*)DCE2_BufferData(*seg_buf));
+                data_need = (sizeof(NbssHdr) + nb_len) - DCE2_BufferLength(*seg_buf);
+            }
 
             /* It's something we want to inspect so make sure we have the full NBSS packet */
             if (data_len < data_need)
@@ -2029,7 +2130,12 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
                     "NetBIOS SS header + NetBIOS len(%zu). "
                     "Queueing data.\n", data_len, sizeof(NbssHdr) + nb_len);
 
-                // FIXIT-M add segmentation code
+                if (DCE2_SmbHandleSegmentation(seg_buf, data_ptr, data_len,
+                    sizeof(NbssHdr) + nb_len) != DCE2_RET__SUCCESS)
+                {
+                    DCE2_BufferEmpty(*seg_buf);
+                    *data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+                }
 
                 return;
             }
@@ -2039,9 +2145,52 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
 
             *data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
 
-            const uint8_t* nb_ptr = data_ptr;
-            nb_len = data_need;
-            DCE2_MOVE(data_ptr, data_len, (uint16_t)data_need);
+            const uint8_t* nb_ptr;
+            if (DCE2_BufferIsEmpty(*seg_buf))
+            {
+                nb_ptr = data_ptr;
+                nb_len = data_need;
+                DCE2_MOVE(data_ptr, data_len, (uint16_t)data_need);
+            }
+            else
+            {
+                if (DCE2_SmbHandleSegmentation(seg_buf, data_ptr, data_need,
+                    sizeof(NbssHdr) + nb_len) != DCE2_RET__SUCCESS)
+                {
+                    DCE2_BufferEmpty(*seg_buf);
+                    DCE2_MOVE(data_ptr, data_len, (uint16_t)data_need);
+                    continue;
+                }
+
+                DCE2_MOVE(data_ptr, data_len, (uint16_t)data_need);
+
+                nb_ptr = DCE2_BufferData(*seg_buf);
+                nb_len = DCE2_BufferLength(*seg_buf);
+
+                // Get reassembled packet
+                Packet* rpkt = DCE2_SmbGetRpkt(ssd, &nb_ptr, &nb_len,
+                    DCE2_RPKT_TYPE__SMB_SEG);
+                if (rpkt == nullptr)
+                {
+                    DCE2_BufferEmpty(*seg_buf);
+                    continue;
+                }
+
+                nb_ptr = DCE2_BufferData(*seg_buf);
+                nb_len = DCE2_BufferLength(*seg_buf);
+
+                DebugFormat(DEBUG_DCE_SMB,
+                    "Segmentation buffer: len: %u, size: %u\n",
+                    DCE2_BufferLength(*seg_buf), DCE2_BufferSize(*seg_buf));
+
+                if (DCE2_SsnFromClient(ssd->sd.wire_pkt))
+                    dce2_smb_stats.smb_cli_seg_reassembled++;
+                else
+                    dce2_smb_stats.smb_srv_seg_reassembled++;
+
+                DebugMessage(DEBUG_DCE_SMB, "TCP reassembled SMB PDU\n");
+                DCE2_PrintPktData(rpkt->data, rpkt->dsize);
+            }
 
             switch (ssd->pdu_state)
             {
@@ -2068,6 +2217,14 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
                     "state: %d\n", __FILE__, __LINE__, ssd->pdu_state);
                 return;
             }
+
+            if (!DCE2_BufferIsEmpty(*seg_buf))
+            {
+                DCE2_SmbReturnRpkt(ssd);
+                DCE2_BufferDestroy(*seg_buf);
+                *seg_buf = nullptr;
+            }
+
             break;
         }
 

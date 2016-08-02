@@ -376,6 +376,13 @@ inline uint32_t DCE2_BufferLength(DCE2_Buffer* buf)
     return buf->len;
 }
 
+inline uint32_t DCE2_BufferSize(DCE2_Buffer* buf)
+{
+    if (buf == nullptr)
+        return 0;
+    return buf->size;
+}
+
 inline uint8_t* DCE2_BufferData(DCE2_Buffer* buf)
 {
     if (buf == nullptr)

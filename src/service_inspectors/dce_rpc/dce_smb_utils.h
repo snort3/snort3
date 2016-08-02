@@ -165,8 +165,12 @@ DCE2_Ret DCE2_SmbProcessResponseData(DCE2_SmbSsnData*,
     const uint8_t*, uint32_t);
 void DCE2_SmbInitRdata(uint8_t*, int);
 void DCE2_SmbSetRdata(DCE2_SmbSsnData*, uint8_t*, uint16_t);
-Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData*, const uint8_t **,
+Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData*, const uint8_t**,
     uint32_t*, DCE2_RpktType);
+DCE2_Ret DCE2_SmbHandleSegmentation(DCE2_Buffer**,
+    const uint8_t*, uint32_t, uint32_t);
+bool DCE2_SmbIsSegBuffer(DCE2_SmbSsnData*, const uint8_t*);
+void DCE2_SmbSegAlert(DCE2_SmbSsnData*, uint32_t rule_id);
 
 /********************************************************************
  * Inline functions
@@ -329,6 +333,13 @@ inline bool DCE2_SmbIsTransactionComplete(DCE2_SmbTransactionTracker* ttracker)
 inline void DCE2_SmbReturnRpkt(DCE2_SmbSsnData* ssd)
 {
     DCE2_PopPkt(&ssd->sd);
+}
+
+inline DCE2_Buffer** DCE2_SmbGetSegBuffer(DCE2_SmbSsnData* ssd)
+{
+    if (DCE2_SsnFromServer(ssd->sd.wire_pkt))
+        return &ssd->srv_seg;
+    return &ssd->cli_seg;
 }
 
 #endif

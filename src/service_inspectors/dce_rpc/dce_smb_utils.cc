@@ -1318,3 +1318,129 @@ Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData* ssd,
     return rpkt;
 }
 
+/********************************************************************
+ * Function: DCE2_SmbHandleSegmentation()
+ *
+ * Wrapper around DCE2_HandleSegmentation() to allocate a new
+ * buffer object if necessary.
+ *
+ * Arguments:
+ *  DCE2_SmbBuffer **
+ *      Pointer to pointer of buffer to add data to.  If NULL
+ *      a new buffer will be allocated.
+ *  uint8_t *
+ *      Pointer to the current data cursor in packet.
+ *  uint32_t
+ *      Length of data to add to buffer.
+ *  uint32_t
+ *      The minimum allocation size so that small allocations
+ *      aren't consistently done.
+ *
+ * Returns:
+ *  DCE2_Ret
+ *      DCE2_RET__ERROR if an error occured.  Nothing can
+ *          be trusted.
+ *      DCE2_RET__SUCCESS if data was successfully added.
+ *
+ ********************************************************************/
+DCE2_Ret DCE2_SmbHandleSegmentation(DCE2_Buffer** buf,
+    const uint8_t* data_ptr, uint32_t add_len, uint32_t alloc_size)
+{
+    Profile profile(dce2_smb_pstat_smb_seg);
+
+    if (buf == nullptr)
+    {
+        return DCE2_RET__ERROR;
+    }
+
+    if (*buf == nullptr)
+    {
+        /* No initial size or min alloc size */
+        *buf = DCE2_BufferNew(alloc_size, alloc_size);
+    }
+
+    DCE2_Ret status = DCE2_BufferAddData(*buf, data_ptr, add_len,
+        DCE2_BufferLength(*buf), DCE2_BUFFER_MIN_ADD_FLAG__IGNORE);
+
+    return status;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbIsSegBuffer()
+ *
+ * Purpose:
+ *  Determines whether the pointer passed in lies within one of the
+ *  segmentation buffers or not.
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData *
+ *      Pointer to SMB session data.
+ *
+ * Returns:
+ *  bool  -  True is the pointer lies within one of the segmentation
+ *           buffers.
+ *           False if it doesn't.
+ *
+ ********************************************************************/
+bool DCE2_SmbIsSegBuffer(DCE2_SmbSsnData* ssd, const uint8_t* ptr)
+{
+    DCE2_Buffer* seg_buf;
+
+    if (DCE2_SsnFromServer(ssd->sd.wire_pkt))
+        seg_buf = ssd->srv_seg;
+    else
+        seg_buf = ssd->cli_seg;
+
+    if (DCE2_BufferIsEmpty(seg_buf))
+        return false;
+
+    /* See if we're looking at a segmentation buffer */
+    if ((ptr < DCE2_BufferData(seg_buf)) ||
+        (ptr > (DCE2_BufferData(seg_buf) + DCE2_BufferLength(seg_buf))))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbSegAlert()
+ *
+ * Purpose:
+ *  To create a reassembled packet using the data in one of the
+ *  segmentation buffers in order to generate an alert with the
+ *  correct, or more complete data.
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData * - Pointer to SMB session data.
+ *  rule_id -  rule id .
+ *
+ * Returns: None
+ *
+ ********************************************************************/
+void DCE2_SmbSegAlert(DCE2_SmbSsnData* ssd, uint32_t rule_id)
+{
+    DCE2_Buffer* buf;
+
+    if (DCE2_SsnFromClient(ssd->sd.wire_pkt))
+        buf = ssd->cli_seg;
+    else
+        buf = ssd->srv_seg;
+
+    /* This should be called from the desegmentation code. */
+    if (DCE2_BufferIsEmpty(buf))
+        return;
+
+    const uint8_t* data_ptr = DCE2_BufferData(buf);
+    uint32_t data_len = DCE2_BufferLength(buf);
+
+    Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_SEG);
+    if (rpkt == nullptr)
+        return;
+
+    dce_alert(GID_DCE2, rule_id, (dce2CommonStats*)&dce2_smb_stats);
+
+    DCE2_SmbReturnRpkt(ssd);
+}
+
