@@ -22,8 +22,9 @@
 
 #include "hi_include.h"
 
-#define GID_HTTP_CLIENT  119
-#define GID_HTTP_SERVER  120
+// changed gids from 119-120 to avoid overlap with nhi
+#define GID_HTTP_CLIENT  319
+#define GID_HTTP_SERVER  320
 
 // Client Events
 typedef enum _HI_CLI_EVENTS
