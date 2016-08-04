@@ -39,6 +39,7 @@ extern const BaseApi* ips_pkt_data;
 extern const BaseApi* ips_reference;
 #ifdef HAVE_HYPERSCAN
 extern const BaseApi* ips_regex;
+extern const BaseApi* ips_sd_pattern;
 #endif
 extern const BaseApi* ips_replace;
 extern const BaseApi* ips_sha256;
@@ -82,7 +83,6 @@ extern const BaseApi* ips_raw_data;
 extern const BaseApi* ips_rem;
 extern const BaseApi* ips_rev;
 extern const BaseApi* ips_rpc;
-extern const BaseApi* ips_sd_pattern;
 extern const BaseApi* ips_seq;
 extern const BaseApi* ips_session;
 extern const BaseApi* ips_sid;
@@ -111,6 +111,7 @@ const BaseApi* ips_options[] =
     ips_reference,
 #ifdef HAVE_HYPERSCAN
     ips_regex,
+    ips_sd_pattern,
 #endif
     ips_replace,
     ips_sha256,
@@ -154,7 +155,6 @@ const BaseApi* ips_options[] =
     ips_rem,
     ips_rev,
     ips_rpc,
-    ips_sd_pattern,
     ips_seq,
     ips_session,
     ips_sid,
