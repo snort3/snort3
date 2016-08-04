@@ -47,6 +47,7 @@
 
 #ifdef HAVE_HYPERSCAN
 #include "ips_options/ips_regex.h"
+#include "ips_options/ips_sd_pattern.h"
 #include "search_engines/hyperscan.h"
 #endif
 
@@ -188,6 +189,7 @@ SnortConfig::~SnortConfig()
 
 #ifdef HAVE_HYPERSCAN
     hyperscan_cleanup(this);
+    sdpattern_cleanup(this);
     regex_cleanup(this);
 #endif
     pcre_cleanup(this);
@@ -275,6 +277,7 @@ void SnortConfig::setup()
     pcre_setup(this);
 #ifdef HAVE_HYPERSCAN
     regex_setup(this);
+    sdpattern_setup(this);
     hyperscan_setup(this);
 #endif
 }

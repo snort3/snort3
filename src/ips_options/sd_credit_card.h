@@ -24,6 +24,6 @@
 
 #include <stdint.h>
 
-int SdLuhnAlgorithm(const uint8_t *buf, uint32_t buflen);
+int SdLuhnAlgorithm(const uint8_t *buf, unsigned long long buflen);
 
 #endif

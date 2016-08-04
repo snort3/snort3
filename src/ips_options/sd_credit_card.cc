@@ -61,7 +61,7 @@ static inline int CheckIssuers(const uint8_t *cardnum, uint32_t buflen)
  *
  * Returns: 1 on match, 0 otherwise.
  */
-int SdLuhnAlgorithm(const uint8_t *buf, uint32_t buflen)
+int SdLuhnAlgorithm(const uint8_t *buf, unsigned long long buflen)
 {
     int i, digits, alternate, sum, val;
     char cc_digits[CC_COPY_BUF_LEN]; /* Normalized CC# string */

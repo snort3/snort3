@@ -136,11 +136,13 @@ struct SnortState
 {
     int* pcre_ovector;
 
-    // regex and hs are conditionally built but these are unconditional to
-    // avoid compatibility issues with plugins.  if these are conditional
-    // then API_OPTIONS must be updated.  note: fwd decls don't work here.
+    // regex hyperscan and sdpattern are conditionally built but these are
+    // unconditional to avoid compatibility issues with plugins.  if these are
+    // conditional then API_OPTIONS must be updated.
+    // note: fwd decls don't work here.
     void* regex_scratch;
     void* hyperscan_scratch;
+    void* sdpattern_scratch;
 };
 
 struct SnortConfig

@@ -31,9 +31,6 @@ ips_raw_data.cc \
 ips_rem.cc \
 ips_rev.cc \
 ips_rpc.cc \
-ips_sd_pattern.cc \
-sd_credit_card.cc sd_credit_card.h \
-sd_pattern_match.cc sd_pattern_match.h \
 ips_seq.cc \
 ips_session.cc \
 ips_sid.cc \
@@ -66,6 +63,7 @@ ips_so.cc
 
 if HAVE_HYPERSCAN
 libips_options_a_SOURCES += ips_regex.cc ips_regex.h
+libips_options_a_SOURCES += ips_sd_pattern.cc ips_sd_pattern.h sd_credit_card.cc sd_credit_card.h
 endif
 
 if STATIC_IPS_OPTIONS
@@ -228,12 +226,6 @@ optlib_LTLIBRARIES += libips_rpc.la
 libips_rpc_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_rpc_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libips_rpc_la_SOURCES = ips_rpc.cc
-
-optlib_LTLIBRARIES += libips_sd_pattern.la
-libips_sd_pattern_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_sd_pattern_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libips_sd_pattern_la_SOURCES = ips_sd_pattern.cc sd_credit_card.cc \
-							   sd_credit_card.h sd_pattern_match.cc sd_pattern_match.h
 
 optlib_LTLIBRARIES += libips_seq.la
 libips_seq_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
