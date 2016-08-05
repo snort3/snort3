@@ -1,3 +1,11 @@
+16/08/05 - build 205
+
+-- ported smb segmentation support
+-- converted sd_pattern to use hyperscan
+-- fixed help text for rule options ack, fragoffset, seq, tos, ttl,  and win
+-- fixed endianness issues with rule options seq and win
+-- fixed rule option session binary vs all
+
 16/07/29 - build 204
 
 -- fixed issue with icmp_seq and icmp_id field matching
