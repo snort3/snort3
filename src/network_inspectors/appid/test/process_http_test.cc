@@ -71,7 +71,6 @@ static void appIdTestSetup()
     _dpd.searchAPI = &searchAPI;
 #endif
 
-    appIdApiInit(&appIdApi);
 }
 
 #ifdef REMOVED_WHILE_NOT_IN_USE

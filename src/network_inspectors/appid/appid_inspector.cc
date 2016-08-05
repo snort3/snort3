@@ -144,9 +144,12 @@ const InspectApi appid_inspector_api =
 };
 
 #ifdef BUILDING_SO
+extern const BaseApi* ips_appid;
+
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &appid_inspector_api.base,
+    ips_appid,
     nullptr
 };
 #else

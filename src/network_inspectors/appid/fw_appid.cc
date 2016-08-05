@@ -3066,11 +3066,8 @@ void fwAppIdSearch(Packet* p)
 #endif
     }
 
-// FIXIT-M: Need to determine what api to use for this _dpd function
-#ifdef REMOVED_WHILE_NOT_IN_USE
-    _dpd.streamAPI->set_application_id(p->flow, serviceAppId, pickClientAppId(session),
+    p->flow->set_application_ids(serviceAppId, pickClientAppId(session),
         payloadAppId, pickMiscAppId(session));
-#endif
 
     /* Set the field that the Firewall queries to see if we have a search engine. */
     if (session->search_support_type == SEARCH_SUPPORT_TYPE_UNKNOWN && payloadAppId > APP_ID_NONE)

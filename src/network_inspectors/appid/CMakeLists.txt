@@ -158,6 +158,7 @@ set ( APPID_SOURCES
     host_port_app_cache.cc
     host_port_app_cache.h
     http_common.h
+    ips_appid_option.cc
     length_app_cache.cc
     length_app_cache.h
     lua_detector_api.cc

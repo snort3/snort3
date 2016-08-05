@@ -739,8 +739,6 @@ static void appIdTestSetup(void)
     _dpd.streamAPI = &streamAPI;
 
     _dpd.searchAPI = &searchAPI;
-
-    appIdApiInit(&appIdApi);
 }
 
 static void sessionTcaseSetup(void)

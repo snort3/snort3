@@ -231,11 +231,11 @@ void* appNameHashFind(SFGHASH* appNameHash, const char* appName)
 
 static void appIdConfLoad(const char* path);
 
-static unsigned int getAppIdStaticIndex(AppId appid)
+static AppId getAppIdStaticIndex(AppId appid)
 {
     if (appid > 0 && appid < SF_APPID_BUILDIN_MAX)
         return appid;
-    if (appid >= SF_APPID_CSD_MIN && appid < SF_APPID_CSD_MIN+(SF_APPID_MAX-SF_APPID_BUILDIN_MAX))
+    if (appid >= SF_APPID_CSD_MIN && appid < SF_APPID_CSD_MIN + (SF_APPID_MAX - SF_APPID_BUILDIN_MAX))
         return (SF_APPID_BUILDIN_MAX + appid - SF_APPID_CSD_MIN);
     return 0;
 }

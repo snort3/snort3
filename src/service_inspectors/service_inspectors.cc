@@ -34,6 +34,7 @@ extern const BaseApi* ips_ssl_state;
 extern const BaseApi* ips_ssl_version;
 
 #ifdef STATIC_INSPECTORS
+extern const BaseApi* ips_appid;
 extern const BaseApi* ips_dce_iface;
 extern const BaseApi* ips_dce_opnum;
 extern const BaseApi* ips_dce_stub_data;
@@ -82,6 +83,7 @@ const BaseApi* service_inspectors[] =
     ips_ssl_version,
 
 #ifdef STATIC_INSPECTORS
+    ips_appid,
     ips_dce_iface,
     ips_dce_opnum,
     ips_dce_stub_data,

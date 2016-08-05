@@ -84,6 +84,18 @@
 #define STREAM_STATE_IGNORE            0x1000
 #define STREAM_STATE_NO_PICKUP         0x2000
 
+// FIXIT-L: move to appid class if/when the application ids array
+// is moved
+typedef int32_t AppId;
+enum AppProtoIdIndex
+{
+    APP_PROTOID_SERVICE,
+    APP_PROTOID_CLIENT,
+    APP_PROTOID_PAYLOAD,
+    APP_PROTOID_MISC,
+    APP_PROTOID_MAX
+};
+
 struct Packet;
 
 typedef void (* StreamAppDataFree)(void*);
@@ -152,17 +164,16 @@ public:
     void free_application_data(uint32_t proto);
     void free_application_data(FlowData*);
     void free_application_data();
-
+    void set_application_ids(AppId serviceAppId, AppId clientAppId,
+            AppId payloadAppId, AppId miscAppId);
+    void get_application_ids(AppId& serviceAppId, AppId& clientAppId,
+            AppId& payloadAppId, AppId& miscAppId);
     void call_handlers(Packet* p, bool eof = false);
-
     void markup_packet_flags(Packet*);
-
     void set_direction(Packet*);
-
     void set_expire(const Packet*, uint32_t timeout);
     int get_expire(const Packet*);
     bool expired(const Packet*);
-
     void set_ttl(Packet*, bool client);
 
     uint32_t update_session_flags( uint32_t flags )
@@ -325,6 +336,9 @@ public:  // FIXIT-M privatize if possible
 
     uint8_t  response_count;
     bool disable_inspect;
+
+    // FIXIT-L: if appid is only consumer of this move to appid
+    AppId application_ids[APP_PROTOID_MAX];
 
 public:
     LwState ssn_state;
