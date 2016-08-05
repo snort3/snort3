@@ -455,16 +455,15 @@ static const InspectApi hi_api =
     nullptr  // reset
 };
 
-// can't be linked dynamically yet
-//#ifdef BUILDING_SO
-//SO_PUBLIC const BaseApi* snort_plugins[] =
-//{
-//    &hg_api.base,
-//    &hi_api.base,
-//    nullptr
-//};
-//#else
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &hg_api.base,
+    &hi_api.base,
+    nullptr
+};
+#else
 const BaseApi* sin_http_global = &hg_api.base;
 const BaseApi* sin_http_inspect = &hi_api.base;
-//#endif
+#endif
 

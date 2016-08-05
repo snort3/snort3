@@ -1473,14 +1473,10 @@ void LogPayload(TextLog* log, Packet* p)
         if (SnortConfig::output_char_data())
         {
             LogCharData(log, (const char*)p->data, p->dsize);
-            if (!IsJSNormData(p->flow))
+
+            if ( g_file_data.len > 0 )
             {
-                TextLog_Print(log, "%s\n", "Normalized JavaScript for this packet");
-                LogCharData(log, (const char*)g_file_data.data, g_file_data.len);
-            }
-            else if (!IsGzipData(p->flow))
-            {
-                TextLog_Print(log, "%s\n", "Decompressed Data for this packet");
+                TextLog_Print(log, "%s\n", "File data");
                 LogCharData(log, (const char*)g_file_data.data, g_file_data.len);
             }
         }
@@ -1499,14 +1495,10 @@ void LogPayload(TextLog* log, Packet* p)
             else
             {
                 LogNetData(log, p->data, p->dsize, p);
-                if (!IsJSNormData(p->flow))
+
+                if ( g_file_data.len > 0 )
                 {
-                    TextLog_Print(log, "%s\n", "Normalized JavaScript for this packet");
-                    LogNetData(log, g_file_data.data, g_file_data.len, p);
-                }
-                else if (!IsGzipData(p->flow))
-                {
-                    TextLog_Print(log, "%s\n", "Decompressed Data for this packet");
+                    TextLog_Print(log, "%s\n", "File data");
                     LogNetData(log, g_file_data.data, g_file_data.len, p);
                 }
             }

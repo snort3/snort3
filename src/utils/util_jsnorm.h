@@ -39,6 +39,8 @@ typedef struct
     uint16_t alerts;
 } JSState;
 
+void keep_jsnorm_lib();  // FIXIT-L eliminate; required to keep symbols for dyn plugins
+
 SO_PUBLIC void InitJSNormLookupTable();
 
 SO_PUBLIC int JSNormalizeDecode(

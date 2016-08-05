@@ -43,6 +43,8 @@
 
 #define ANY '\0'
 
+void keep_jsnorm_lib() { }
+
 typedef enum
 {
     PNORM_ACT_DQUOTES,

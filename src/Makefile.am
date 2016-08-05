@@ -16,6 +16,7 @@ service_inspectors/dnp3/libdnp3.a \
 service_inspectors/dns/libdns.a \
 service_inspectors/ftp_telnet/libftp_telnet.a \
 service_inspectors/gtp/libgtp_inspect.a \
+service_inspectors/http_inspect/libhttp_inspect.a \
 service_inspectors/modbus/libmodbus.a \
 service_inspectors/nhttp_inspect/libnhttp_inspect.a \
 service_inspectors/rpc_decode/librpc_decode.a \
@@ -75,7 +76,6 @@ stream/user/libstream_user.a \
 stream/file/libstream_file.a \
 stream/libstream_paf.a \
 mime/libmime.a \
-service_inspectors/http_inspect/libhttp_inspect.a \
 $(pig_list) \
 ips_options/libips_options.a \
 search_engines/libsearch_engines.a \

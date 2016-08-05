@@ -71,6 +71,8 @@ static struct sig_map_s
 
 static uint8_t File_Decomp_Buffer[DECODE_BLEN];
 
+void keep_decomp_lib() { }
+
 /* Look for possible sig at the current payload location.
    Do NOT beyond the current location (initial Next_In). */
 static fd_status_t Locate_Sig_Here(fd_session_p_t SessionPtr)

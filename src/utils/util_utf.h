@@ -46,6 +46,8 @@ struct decode_utf_state_t
     int charset;
 };
 
+void keep_utf_lib();  // FIXIT-L eliminate; required to keep symbols for dyn plugins
+
 // Init & Terminate functions for decode_utf_state_t
 SO_PUBLIC int init_decode_utf_state(decode_utf_state_t*);
 SO_PUBLIC int term_decode_utf_state(decode_utf_state_t*);

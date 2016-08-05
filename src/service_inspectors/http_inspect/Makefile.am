@@ -21,15 +21,14 @@ hi_ui_config.cc hi_ui_config.h \
 hi_ui_iis_unicode_map.cc hi_ui_iis_unicode_map.h \
 hi_util.h
 
-# can't be linked dynamically yet
-#if STATIC_INSPECTORS
+if STATIC_INSPECTORS
 noinst_LIBRARIES = libhttp_inspect.a
 libhttp_inspect_a_SOURCES = $(file_list)
-#else
-#shlibdir = $(pkglibdir)/inspectors
-#shlib_LTLIBRARIES = libhttp_inspect.la
-#libhttp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libhttp_inspect_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-#libhttp_inspect_la_SOURCES = $(file_list)
-#endif
+else
+shlibdir = $(pkglibdir)/inspectors
+shlib_LTLIBRARIES = libhttp_inspect.la
+libhttp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libhttp_inspect_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
+libhttp_inspect_la_SOURCES = $(file_list)
+endif
 

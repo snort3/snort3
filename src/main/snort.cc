@@ -35,6 +35,7 @@
 #include <netinet/in.h>
 #include <sys/stat.h>
 
+#include "decompress/file_decomp.h"
 #include "detection/detect.h"
 #include "detection/detection_util.h"
 #include "detection/fp_config.h"
@@ -75,7 +76,10 @@
 #include "target_based/sftarget_reader.h"
 #include "time/packet_time.h"
 #include "time/periodic.h"
+#include "utils/kmap.h"
 #include "utils/util.h"
+#include "utils/util_utf.h"
+#include "utils/util_jsnorm.h"
 
 #ifdef PIGLET
 #include "piglet/piglet.h"
@@ -478,6 +482,11 @@ void Snort::setup(int argc, char* argv[])
     InitGroups(SnortConfig::get_uid(), SnortConfig::get_gid());
 
     set_quick_exit(false);
+
+    keep_utf_lib();
+    keep_kmap_lib();
+    keep_decomp_lib();
+    keep_jsnorm_lib();
 
     TimeStart();
 }

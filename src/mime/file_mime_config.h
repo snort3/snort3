@@ -36,7 +36,7 @@
 #define MAX_DEPTH                     65535
 #define MIN_DEPTH                     -1
 
-class DecodeConfig
+class SO_PUBLIC DecodeConfig
 {
 public:
     void set_ignore_data(bool);

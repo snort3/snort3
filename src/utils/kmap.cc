@@ -35,9 +35,8 @@
 
 #include "utils/util.h"
 
-/*
-*
-*/
+void keep_kmap_lib() { }
+
 KMAP* KMapNew(KMapUserFreeFunc userfree)
 {
     KMAP* km = (KMAP*)snort_calloc(sizeof(KMAP));

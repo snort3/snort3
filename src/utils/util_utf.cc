@@ -28,6 +28,8 @@
 #define DSTATE_THIRD 2
 #define DSTATE_FOURTH 3
 
+void keep_utf_lib() { }
+
 /* init a new decode_utf_state_t */
 int init_decode_utf_state(decode_utf_state_t* p)
 {
