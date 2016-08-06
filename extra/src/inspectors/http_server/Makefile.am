@@ -19,16 +19,16 @@ hi_si.cc hi_si.h \
 hi_stream_splitter.cc hi_stream_splitter.h \
 hi_ui_config.cc hi_ui_config.h \
 hi_ui_iis_unicode_map.cc hi_ui_iis_unicode_map.h \
-hi_util.h
+hi_util.h \
+ips_http.cc \
+ips_http_header.cc
 
-if STATIC_INSPECTORS
-noinst_LIBRARIES = libhttp_inspect.a
-libhttp_inspect_a_SOURCES = $(file_list)
-else
-shlibdir = $(pkglibdir)/inspectors
-shlib_LTLIBRARIES = libhttp_inspect.la
-libhttp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libhttp_inspect_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libhttp_inspect_la_SOURCES = $(file_list)
-endif
+http_serverlibdir = $(pkglibdir)/inspectors
+
+AM_CXXFLAGS = @SNORT3_CFLAGS@ -std=c++11
+
+http_serverlib_LTLIBRARIES = libhttp_server.la
+libhttp_server_la_CXXFLAGS = $(AM_CXXFLAGS)
+libhttp_server_la_LDFLAGS  = -export-dynamic -shared -avoid-version
+libhttp_server_la_SOURCES  = $(file_list)
 

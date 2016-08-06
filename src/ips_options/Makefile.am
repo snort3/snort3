@@ -15,8 +15,6 @@ ips_flags.cc \
 ips_fragbits.cc \
 ips_fragoffset.cc \
 ips_gid.cc \
-ips_http.cc \
-ips_http_header.cc \
 ips_icmp_id.cc \
 ips_icmp_seq.cc \
 ips_icode.cc \
@@ -146,16 +144,6 @@ libips_gid_la_SOURCES = ips_gid.cc
 #libips_hash_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 #libips_hash_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 #libips_hash_la_SOURCES = ips_hash.cc
-
-optlib_LTLIBRARIES += libips_http.la
-libips_http_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_http_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libips_http_la_SOURCES = ips_http.cc
-
-optlib_LTLIBRARIES += libips_http_header.la
-libips_http_header_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_http_header_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libips_http_header_la_SOURCES = ips_http_header.cc
 
 optlib_LTLIBRARIES += libips_icmp_id.la
 libips_icmp_id_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

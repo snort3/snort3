@@ -16,9 +16,9 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
+// decode_base.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
-#include <mime/decode_base.h>
+#include "decode_base.h"
 #include "utils/util.h"
 
 void DataDecode::reset_decoded_bytes()

@@ -26,7 +26,7 @@
 
 #include <sys/types.h>
 #include "main/snort_types.h"
-#include "file_policy.h"
+#include "file_api/file_policy.h"
 
 class FileEnforcer;
 

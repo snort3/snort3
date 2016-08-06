@@ -27,7 +27,7 @@
 #include <cstdint>
 
 #include "log/messages.h"
-#include "loggers/unified2_common.h"
+#include "log/unified2.h"
 #include "utils/sflsq.h"
 #include "utils/util.h"
 

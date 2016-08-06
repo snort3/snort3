@@ -16,12 +16,9 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-**  Author(s):  Hui Cao <huica@cisco.com>
-**
-**  NOTES
-**  9.25.2012 - Initial Source Code. Hui Cao
-*/
+
+// file_mime_process.cc author Hui Cao <huica@cisco.com>
+// 9.25.2012 - Initial Source Code. Hui Cao
 
 #include "file_mime_process.h"
 
@@ -29,17 +26,17 @@
 #include "config.h"
 #endif
 
-#include "file_mime_config.h"
-#include "file_mime_decode.h"
+#include "main/snort_types.h"
+#include "detection/detection_util.h"
 #include "file_api/file_api.h"
 #include "file_api/file_flows.h"
-
-#include "main/snort_types.h"
-#include "search_engines/search_tool.h"
-#include "protocols/packet.h"
-#include "detection/detection_util.h"
 #include "framework/data_bus.h"
+#include "protocols/packet.h"
+#include "search_engines/search_tool.h"
 #include "utils/util.h"
+
+#include "file_mime_config.h"
+#include "file_mime_decode.h"
 
 struct MimeToken
 {

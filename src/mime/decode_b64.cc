@@ -16,14 +16,15 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
-
-#include <mime/decode_base.h>
+// decode_b64.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
 #include "decode_b64.h"
 
 #include "utils/util.h"
 #include "utils/util_unfold.h"
+
+#include "decode_base.h"
+#include "decode_buffer.h"
 
 void B64Decode::reset_decode_state()
 {

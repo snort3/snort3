@@ -16,12 +16,10 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
+// decode_buffer.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
 #include "decode_buffer.h"
-
 #include "utils/util.h"
-
 
 void DecodeBuffer::reset()
 {

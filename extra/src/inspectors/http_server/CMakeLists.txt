@@ -35,13 +35,38 @@ set (FILE_LIST
     hi_ui_iis_unicode_map.cc
     hi_ui_iis_unicode_map.h
     hi_util.h
+    ips_http.cc
+    ips_http_header.cc
 )
 
-# can't be be linked dynamically yet
-#if (STATIC_INSPECTORS)
-    add_library(http_inspect STATIC ${FILE_LIST})
+cmake_minimum_required ( VERSION 2.8.11 )
+project ( http_server CXX )
 
-#else (STATIC_INSPECTORS)
-#    add_shared_library(http_inspect inspectors ${FILE_LIST})
+if ( APPLE )
+    set ( CMAKE_MACOSX_RPATH OFF )
+    set (
+        CMAKE_SHARED_LINKER_FLAGS
+        "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup"
+    )
+endif ( APPLE )
 
-#endif (STATIC_INSPECTORS)
+include ( FindPkgConfig )
+pkg_search_module ( SNORT3 REQUIRED snort>=3 )
+
+add_library (
+    http_server SHARED
+    ${FILE_LIST}
+)
+
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+
+target_include_directories (
+    http_server PUBLIC
+    ${SNORT3_INCLUDE_DIRS}
+)
+
+install (
+    TARGETS http_server
+    LIBRARY DESTINATION "lib/${CMAKE_PROJECT_NAME}/inspectors"
+)
+

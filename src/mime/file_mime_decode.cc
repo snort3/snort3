@@ -16,16 +16,17 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
+// file_mime_decode.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
-#include <mime/decode_uu.h>
 #include "file_mime_decode.h"
+
+#include "utils/util_unfold.h"
+#include "utils/util.h"
+
 #include "decode_b64.h"
 #include "decode_bit.h"
 #include "decode_qp.h"
 #include "decode_uu.h"
-#include "utils/util_unfold.h"
-#include "utils/util.h"
 
 void MimeDecode::reset_decoded_bytes()
 {

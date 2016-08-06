@@ -23,7 +23,6 @@
 // Manage decode/encode buffers
 
 #include <stdlib.h>
-
 #include "main/snort_types.h"
 
 class DecodeBuffer

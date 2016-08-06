@@ -40,18 +40,15 @@
 #include <string.h>
 #include <sys/types.h>
 
+// FIXIT-L all snort includes should use <form> instead of "form"
 #include "protocols/packet.h"
 #include "main/snort_debug.h"
-#include "parser/parser.h"
 #include "decompress/file_decomp.h"
 #include "profiler/profiler.h"
-#include "detection/detection_util.h"
 #include "stream/stream_api.h"
-#include "target_based/snort_protocols.h"
 #include "file_api/file_api.h"
 #include "file_api/file_service.h"
-#include "utils/kmap.h"
-#include <mime/decode_base.h>
+#include "mime/decode_base.h"
 #include "utils/util.h"
 #include "framework/inspector.h"
 #include "managers/inspector_manager.h"
@@ -455,15 +452,31 @@ static const InspectApi hi_api =
     nullptr  // reset
 };
 
-#ifdef BUILDING_SO
+extern const BaseApi* ips_http_uri;
+extern const BaseApi* ips_http_header;
+extern const BaseApi* ips_http_client_body;
+extern const BaseApi* ips_http_method;
+extern const BaseApi* ips_http_cookie;
+extern const BaseApi* ips_http_stat_code;
+extern const BaseApi* ips_http_stat_msg;
+extern const BaseApi* ips_http_raw_uri;
+extern const BaseApi* ips_http_raw_header;
+extern const BaseApi* ips_http_raw_cookie;
+
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &hg_api.base,
     &hi_api.base,
+    ips_http_uri,
+    ips_http_header,
+    ips_http_client_body,
+    ips_http_method,
+    ips_http_cookie,
+    ips_http_stat_code,
+    ips_http_stat_msg,
+    ips_http_raw_uri,
+    ips_http_raw_header,
+    ips_http_raw_cookie,
     nullptr
 };
-#else
-const BaseApi* sin_http_global = &hg_api.base;
-const BaseApi* sin_http_inspect = &hi_api.base;
-#endif
 

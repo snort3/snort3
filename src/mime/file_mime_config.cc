@@ -16,18 +16,16 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-**  Author(s):  Hui Cao <huica@cisco.com>
-**
-**  NOTES
-**  9.25.2012 - Initial Source Code. Hui Cao
-*/
+
+// file_mime_config.cc author Hui Cao <huica@cisco.com>
+// 9.25.2012 - Initial Source Code. Hui Cao
 
 #include "file_mime_config.h"
 
 #include "log/messages.h"
 #include "main/snort_types.h"
 #include "file_api/file_service.h"
+
 #include "file_mime_process.h"
 
 void DecodeConfig::update_max_depth(int64_t depth)

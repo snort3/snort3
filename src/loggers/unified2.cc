@@ -25,7 +25,7 @@
  *
  */
 
-#include "loggers/unified2_common.h"
+#include "log/unified2.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

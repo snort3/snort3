@@ -57,6 +57,7 @@
 #include "hi_return_codes.h"
 
 #include "detection/detection_util.h"
+#include "search_engines/search_tool.h"
 #include "utils/safec.h"
 #include "utils/util_utf.h"
 

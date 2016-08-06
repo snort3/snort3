@@ -16,14 +16,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
+// decode_qp.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
-#include <mime/decode_base.h>
 #include "decode_qp.h"
 
 #include "utils/util.h"
 #include "utils/util_unfold.h"
 
+#include "decode_buffer.h"
 
 void QPDecode::reset_decode_state()
 {

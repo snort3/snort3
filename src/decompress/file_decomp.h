@@ -56,8 +56,9 @@ typedef enum file_compression_type
 
 typedef struct fd_session_s* fd_session_p_t, fd_session_t;
 
-#include "file_decomp_pdf.h"
-#include "file_decomp_swf.h"
+// FIXIT-L this should be unravelled so that these internal includes are not necessary
+#include "decompress/file_decomp_pdf.h"
+#include "decompress/file_decomp_swf.h"
 #include <zlib.h>
 
 #ifdef HAVE_LZMA

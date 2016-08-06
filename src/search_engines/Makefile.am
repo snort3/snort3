@@ -5,7 +5,8 @@ x_includedir = $(pkgincludedir)/search_engines
 
 x_include_HEADERS = \
 pat_stats.h \
-search_common.h
+search_common.h \
+search_tool.h
 
 acsmx_sources = \
 ac_std.cc \
@@ -47,7 +48,6 @@ libsearch_engines_a_SOURCES = \
 search_engines.cc \
 search_engines.h \
 search_tool.cc \
-search_tool.h \
 $(bnfa_sources) \
 $(hyper_sources)
 

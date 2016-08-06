@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2012-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -25,8 +24,7 @@
 // File name will be extracted from MIME header
 // Email headers and emails are also stored in the log buffer
 
-#include "file_mime_config.h"
-#include "file_mime_log.h"
+#include "mime/file_mime_config.h"
 #include "file_api/file_api.h"
 
 enum EmailUserType
@@ -51,14 +49,18 @@ class MailLogState
 public:
     MailLogState(MailLogConfig* conf);
     ~MailLogState();
+
     /* accumulate MIME attachment filenames. The filenames are appended by commas */
     int log_file_name (const uint8_t* start, int length, bool* disp_cont);
-    void set_file_name_from_log (Flow* flow);
-    int log_email_hdrs (const uint8_t* start, int length);
-    int log_email_id (const uint8_t* start, int length, EmailUserType type);
+    void set_file_name_from_log(Flow*);
+
+    int log_email_hdrs(const uint8_t* start, int length);
+    int log_email_id (const uint8_t* start, int length, EmailUserType);
+
     void get_file_name (uint8_t** buf, uint32_t* len);
     void get_email_hdrs (uint8_t** buf, uint32_t* len);
-    void get_email_id (uint8_t** buf, uint32_t* len, EmailUserType type);
+    void get_email_id (uint8_t** buf, uint32_t* len, EmailUserType);
+
     bool is_file_name_present();
     bool is_email_hdrs_present();
     bool is_email_from_present();
@@ -67,15 +69,15 @@ public:
 private:
     int extract_file_name(const char** start, int length, bool* disp_cont);
     int log_flags = 0;
-    uint8_t* buf = NULL;
+    uint8_t* buf = nullptr;
     unsigned char* emailHdrs;
     uint32_t log_depth;
     uint32_t hdrs_logged;
-    uint8_t* recipients = NULL;
+    uint8_t* recipients = nullptr;
     uint16_t rcpts_logged;
-    uint8_t* senders = NULL;
+    uint8_t* senders = nullptr;
     uint16_t snds_logged;
-    uint8_t* filenames = NULL;
+    uint8_t* filenames = nullptr;
     uint16_t file_logged;
     uint16_t file_current;
 };

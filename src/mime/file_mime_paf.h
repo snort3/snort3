@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2012-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -25,10 +24,8 @@
 // Provides list of MIME processing functions. Encoded file data will be decoded
 // and file name will be extracted from MIME header
 
-#include <pcre.h>
-
-#include "decode_base.h"
-#include "file_mime_config.h"
+#include "mime/decode_base.h"
+#include "mime/file_mime_config.h"
 #include "file_api/file_api.h"
 
 /* State tracker for data */
@@ -63,7 +60,7 @@ enum DataEndState
 struct MimeDataPafInfo
 {
     MimeDataState data_state;
-    char boundary[ MAX_MIME_BOUNDARY_LEN + 1];            /* MIME boundary string + '\0' */
+    char boundary[ MAX_MIME_BOUNDARY_LEN + 1];  /* MIME boundary string + '\0' */
     int boundary_len;
     char* boundary_search;
     MimeBoundaryState boundary_state;
@@ -82,10 +79,11 @@ inline bool scanning_boundary(MimeDataPafInfo* mime_info, uint32_t boundary_star
     return false;
 }
 
-SO_PUBLIC void reset_mime_paf_state(MimeDataPafInfo *data_info);
+SO_PUBLIC void reset_mime_paf_state(MimeDataPafInfo*);
+
 /*  Process data boundary and flush each file based on boundary*/
-SO_PUBLIC bool process_mime_paf_data(MimeDataPafInfo *data_info,  uint8_t val);
-SO_PUBLIC bool check_data_end(void *end_state,  uint8_t val);
+SO_PUBLIC bool process_mime_paf_data(MimeDataPafInfo*,  uint8_t val);
+SO_PUBLIC bool check_data_end(void* end_state,  uint8_t val);
 
 #endif
 

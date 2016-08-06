@@ -13,8 +13,7 @@ alert_full.cc \
 alert_syslog.cc \
 log_hext.cc \
 log_pcap.cc \
-unified2.cc \
-unified2_common.h
+unified2.cc
 
 if LINUX
 libloggers_a_SOURCES += alert_sf_socket.cc
@@ -59,6 +58,6 @@ liblog_pcap_la_SOURCES = log_pcap.cc
 ehlib_LTLIBRARIES += libunified2.la
 libunified2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libunified2_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libunified2_la_SOURCES = unified2.cc unified2_common.h
+libunified2_la_SOURCES = unified2.cc
 endif
 

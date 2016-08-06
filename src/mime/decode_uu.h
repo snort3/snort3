@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 1998-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -23,10 +22,9 @@
 
 // UU decoder
 
-#include "decode_base.h"
-#include "decode_buffer.h"
+#include "mime/decode_base.h"
 
-class UUDecode:public DataDecode
+class UUDecode : public DataDecode
 {
 public:
     UUDecode(int max_depth);
@@ -40,7 +38,7 @@ public:
 private:
     bool begin_found = false;
     bool end_found = false;
-    DecodeBuffer* buffer = nullptr;
+    class DecodeBuffer* buffer = nullptr;
 };
 
 int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32_t* bytes_read,

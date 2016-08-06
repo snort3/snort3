@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 1998-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -25,11 +24,10 @@
 
 #include <stdlib.h>
 
-#include "decode_base.h"
-#include "file_mime_config.h"
-
-#include "main/snort_types.h"
 #include "framework/counts.h"
+#include "main/snort_types.h"
+#include "mime/decode_base.h"
+#include "mime/file_mime_config.h"
 
 enum DecodeType
 {
@@ -79,7 +77,7 @@ public:
 private:
     DecodeType decode_type = DECODE_NONE;
     DecodeConfig* config;
-    DataDecode* decoder = NULL;
+    DataDecode* decoder = nullptr;
 };
 
 #endif

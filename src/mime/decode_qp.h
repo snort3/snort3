@@ -23,11 +23,9 @@
 // Email attachment decoder
 
 #include <stdlib.h>
+#include "mime/decode_base.h"
 
-#include "main/snort_types.h"
-#include "decode_buffer.h"
-
-class QPDecode:public DataDecode
+class QPDecode : public DataDecode
 {
 public:
     QPDecode(int max_depth);
@@ -39,7 +37,7 @@ public:
     void reset_decode_state() override;
 
 private:
-    DecodeBuffer* buffer = nullptr;
+    class DecodeBuffer* buffer = nullptr;
 
 };
 

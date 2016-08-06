@@ -37,7 +37,7 @@
 #include "utils/sfsnprintfappend.h"
 #include "target_based/snort_protocols.h"
 #include "protocols/ssl.h"
-#include "loggers/unified2_common.h"
+#include "log/unified2.h"
 #include "detection/detection_util.h"
 #include "utils/safec.h"
 

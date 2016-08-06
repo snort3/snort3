@@ -44,9 +44,6 @@
 #include "main/snort_config.h"
 #include "packet_io/sfdaq.h"
 
-// should be able to delete this when we cutover to NHI
-#include "service_inspectors/http_inspect/hi_main.h"  // FIXIT-H bad dependency for Is*Data()
-
 #include "sfip/sf_ip.h"
 #include "utils/util.h"
 #include "utils/util_net.h"

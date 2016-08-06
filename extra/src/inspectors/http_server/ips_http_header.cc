@@ -26,7 +26,6 @@ using namespace std;
 
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
-#include "parser/parser.h"
 #include "profiler/profiler.h"
 #include "flow/flow.h"
 #include "detection/detection_defines.h"
@@ -241,7 +240,7 @@ static const IpsApi header_api =
         PT_IPS_OPTION,
         sizeof(IpsApi),
         IPSAPI_VERSION,
-        0,
+        2,
         API_RESERVED,
         API_OPTIONS,
         s_name,

@@ -21,7 +21,6 @@ dnp3 \
 dns \
 ftp_telnet \
 gtp \
-http_inspect \
 imap \
 modbus \
 nhttp_inspect \

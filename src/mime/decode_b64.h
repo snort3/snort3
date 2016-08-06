@@ -25,10 +25,9 @@
 #include <stdlib.h>
 
 #include "main/snort_types.h"
-#include "decode_buffer.h"
-#include "decode_base.h"
+#include "mime/decode_base.h"
 
-class B64Decode: public DataDecode
+class B64Decode : public DataDecode
 {
 public:
     B64Decode(int max_depth);
@@ -40,7 +39,7 @@ public:
     void reset_decode_state() override;
 
 private:
-    DecodeBuffer* buffer = nullptr;
+    class DecodeBuffer* buffer = nullptr;
 };
 
 // FIXIT-L inbuf should probably be const uint8_t*

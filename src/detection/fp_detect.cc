@@ -66,6 +66,7 @@
 #include "filters/rate_filter.h"
 #include "events/event_wrapper.h"
 #include "packet_io/active.h"
+#include "parser/parser.h"
 #include "stream/stream_api.h"
 #include "utils/sflsq.h"
 #include "utils/util.h"

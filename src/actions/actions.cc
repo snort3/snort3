@@ -25,6 +25,7 @@
 #include "detection/detect.h"
 #include "detection/tag.h"
 #include "packet_io/active.h"
+#include "parser/parser.h"
 #include "utils/stats.h"
 
 static void pass()

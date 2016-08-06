@@ -23,10 +23,9 @@
 // Email attachment decoder
 
 #include <stdlib.h>
+#include "mime/decode_base.h"
 
-#include "main/snort_types.h"
-
-class BitDecode:public DataDecode
+class BitDecode : public DataDecode
 {
 public:
     BitDecode(int max_depth);

@@ -30,7 +30,6 @@
 #include "protocols/packet.h"
 #include "detection/rules.h"
 #include "detection/treenodes.h"
-#include "parser/parser.h"
 #include "log/log.h"
 #include "events/event.h"
 

@@ -18,8 +18,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef UNIFIED2_COMMON_H
-#define UNIFIED2_COMMON_H
+#ifndef UNIFIED2_H
+#define UNIFIED2_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -31,7 +31,7 @@
 #endif
 #include <netinet/in.h>
 
-#include <protocols/protocol_ids.h>
+#include "protocols/protocol_ids.h"
 
 // SNORT DEFINES
 // Long time ago...
