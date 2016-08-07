@@ -35,14 +35,7 @@ ips_file_list = ips_nhttp.cc ips_nhttp.h
 
 if STATIC_INSPECTORS
 noinst_LIBRARIES = libnhttp_inspect.a
-libnhttp_inspect_a_SOURCES = $(file_list)
-
-# FIXIT-L eliminate this block when OHI retired
-optlibdir = $(pkglibdir)/inspectors
-optlib_LTLIBRARIES = libnhttp_inspect_opt.la
-libnhttp_inspect_opt_la_CXXFLAGS = $(AM_CXXFLAGS)
-libnhttp_inspect_opt_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libnhttp_inspect_opt_la_SOURCES = $(ips_file_list)
+libnhttp_inspect_a_SOURCES = $(file_list) $(ips_file_list)
 
 else
 shlibdir = $(pkglibdir)/inspectors

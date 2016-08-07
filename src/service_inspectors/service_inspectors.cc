@@ -51,6 +51,24 @@ extern const BaseApi* ips_sip_header;
 extern const BaseApi* ips_sip_method;
 extern const BaseApi* ips_sip_stat_code;
 
+// FIXIT-L use snort_plugins aliases for static builds
+// so only one extern symbol per library is required
+extern const BaseApi* ips_http_uri;
+extern const BaseApi* ips_http_client_body;
+extern const BaseApi* ips_http_method;
+extern const BaseApi* ips_http_cookie;
+extern const BaseApi* ips_http_stat_code;
+extern const BaseApi* ips_http_stat_msg;
+extern const BaseApi* ips_http_raw_uri;
+extern const BaseApi* ips_http_raw_header;
+extern const BaseApi* ips_http_raw_cookie;
+extern const BaseApi* ips_http_version;
+extern const BaseApi* ips_http_header;
+extern const BaseApi* ips_http_trailer;
+extern const BaseApi* ips_http_raw_trailer;
+extern const BaseApi* ips_http_raw_request;
+extern const BaseApi* ips_http_raw_status;
+
 extern const BaseApi* sin_bo;
 extern const BaseApi* sin_dce_smb;
 extern const BaseApi* sin_dce_tcp;
@@ -97,6 +115,22 @@ const BaseApi* service_inspectors[] =
     ips_sip_header,
     ips_sip_method,
     ips_sip_stat_code,
+
+    ips_http_uri,
+    ips_http_client_body,
+    ips_http_method,
+    ips_http_cookie,
+    ips_http_stat_code,
+    ips_http_stat_msg,
+    ips_http_raw_uri,
+    ips_http_raw_header,
+    ips_http_raw_cookie,
+    ips_http_version,
+    ips_http_header,
+    ips_http_trailer,
+    ips_http_raw_trailer,
+    ips_http_raw_request,
+    ips_http_raw_status,
 
     sin_bo,
     sin_dce_smb,
