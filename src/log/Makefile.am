@@ -17,4 +17,7 @@ messages.cc \
 obfuscator.cc \
 text_log.cc
 
+if ENABLE_UNIT_TESTS
 SUBDIRS = test
+endif
+

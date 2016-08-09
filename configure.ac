@@ -1156,7 +1156,6 @@ src/stream/tcp/Makefile \
 src/stream/udp/Makefile \
 src/stream/user/Makefile \
 src/stream/file/Makefile \
-src/stream/tcp/test/Makefile \
 src/network_inspectors/Makefile \
 src/network_inspectors/appid/Makefile \
 src/network_inspectors/arp_spoof/Makefile \

@@ -191,7 +191,7 @@ $(util_file_list)
 endif
 
 #if BUILD_CPPUTESTS
-#SUBDIRS += test
+#SUBDIRS = test
 #endif
 
 
