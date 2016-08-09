@@ -25,6 +25,7 @@
 namespace rules
 {
 extern const ConvertMap* ack_map;
+extern const ConvertMap* appid_map;
 extern const ConvertMap* asn1_map;
 extern const ConvertMap* base64_data_map;
 extern const ConvertMap* base64_decode_map;
@@ -102,6 +103,7 @@ extern const ConvertMap* window_map;
 const std::vector<const ConvertMap*> rule_options_api =
 {
     ack_map,
+    appid_map,
     asn1_map,
     base64_data_map,
     base64_decode_map,

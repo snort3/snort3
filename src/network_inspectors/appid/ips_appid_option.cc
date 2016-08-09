@@ -78,7 +78,15 @@ class AppIdIpsOption : public IpsOption
 public:
     AppIdIpsOption(const AppIdRuleOptionData& c) :
         IpsOption(s_name)
-    { opt_data = c; }
+    {
+        opt_data = c;
+    }
+
+    ~AppIdIpsOption()
+    {
+        for (auto& appid_info : opt_data.appid_table)
+            snort_free( appid_info.appid_name);
+    }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -229,7 +237,7 @@ bool AppIdOptionModule::set(const char*, Value& v, SnortConfig*)
             tok.erase(0, 1);
 
         if ( tok[tok.length()-1] == '"' )
-            tok.erase(tok.length()-1, 1);
+            tok.erase(tok.length() - 1, 1);
 
         appid_info.appid_name = snort_strdup(tok.c_str());
         appid_info.appid_ordinal = 0;
