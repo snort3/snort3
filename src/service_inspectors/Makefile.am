@@ -9,7 +9,6 @@ service_inspectors.h
 #libservice_inspectors_a_LIBADD = \
 #back_orifice/libback_orifice.a \
 #ftp_telnet/libftp_telnet.a \
-#http_inspect/libhttp_inspect.a \
 #nhttp_inspect/libnhttp_inspect.a \
 #rpc_decode/librpc_decode.a
 #wizard/libwizard.a

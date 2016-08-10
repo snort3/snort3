@@ -4,7 +4,12 @@ set (LUA_INCLUDES
     ${CMAKE_CURRENT_BINARY_DIR}/snort_plugin.lua
 )
 
-add_library( managers
+set( MANAGERS_INCLUDES
+    inspector_manager.h
+)
+
+add_library( managers STATIC
+    ${MANAGERS_INCLUDES}
     action_manager.h
     action_manager.cc
     codec_manager.h
@@ -12,7 +17,6 @@ add_library( managers
     event_manager.cc
     event_manager.h
     inspector_manager.cc
-    inspector_manager.h
     ips_manager.cc
     ips_manager.h
     lua_plugin_defs.h
@@ -41,6 +45,10 @@ target_link_libraries(managers
     parser
     codecs
     ips_actions
+)
+
+install (FILES ${MANAGERS_INCLUDES}
+    DESTINATION "${INCLUDE_INSTALL_PATH}/managers"
 )
 
 add_custom_command (

@@ -111,7 +111,6 @@ target_link_libraries( snort
     stream_file
     stream_paf
     mime
-    http_inspect
     imap
     pop
     smtp

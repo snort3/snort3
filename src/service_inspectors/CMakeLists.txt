@@ -5,7 +5,6 @@ add_subdirectory(dnp3)
 add_subdirectory(dns)
 add_subdirectory(ftp_telnet)
 add_subdirectory(gtp)
-add_subdirectory(http_inspect)
 add_subdirectory(imap)
 add_subdirectory(modbus)
 add_subdirectory(nhttp_inspect)
@@ -44,6 +43,5 @@ add_library( service_inspectors STATIC
 )
 
 target_link_libraries( service_inspectors
-    http_inspect
     ${STATIC_INSECTOR_LIBS}
 )

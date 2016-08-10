@@ -1,15 +1,15 @@
 
-
 set (LOG_INCLUDES
+    log.h
     messages.h
     obfuscator.h
     text_log.h
+    unified2.h
 )
 
 add_library ( log STATIC
     ${LOG_INCLUDES}
     log.cc
-    log.h
     log_text.cc
     log_text.h
     messages.cc

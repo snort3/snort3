@@ -1,7 +1,9 @@
 
 set (DETECTION_INCLUDES
+    detect.h
     detection_defines.h
     detection_options.h
+    detection_util.h
     pattern_match_data.h
     rule_option_types.h
     rules.h
@@ -12,10 +14,8 @@ set (DETECTION_INCLUDES
 add_library (detection STATIC
     ${DETECTION_INCLUDES}
     detect.cc
-    detect.h
     detection_options.cc
     detection_util.cc
-    detection_util.h
     fp_config.cc
     fp_config.h
     fp_create.cc

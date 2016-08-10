@@ -14,7 +14,6 @@ set (PLUGIN_LIST
     log_hext.cc
     log_pcap.cc
     unified2.cc
-    unified2_common.h
 )
 
 if (LINUX)
@@ -44,7 +43,7 @@ else (STATIC_LOGGERS)
     add_shared_library(alert_syslog loggers alert_syslog.cc)
     add_shared_library(log_hext loggers log_hext.cc)
     add_shared_library(log_pcap loggers log_pcap.cc)
-    add_shared_library(unified2 loggers unified2.cc unified2_common.h)
+    add_shared_library(unified2 loggers unified2.cc)
 
 endif (STATIC_LOGGERS)
 

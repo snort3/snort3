@@ -2,6 +2,7 @@
 set (SEARCH_ENGINE_INCLUDES
     pat_stats.h
     search_common.h
+    search_tool.h
 )
 
 set (ACSMX_SOURCES
@@ -45,7 +46,6 @@ set (SEARCH_ENGINE_SOURCES
     search_engines.cc
     search_engines.h
     search_tool.cc
-    search_tool.h
     ${BNFA_SOURCES}
     ${HYPER_SOURCES}
 )
