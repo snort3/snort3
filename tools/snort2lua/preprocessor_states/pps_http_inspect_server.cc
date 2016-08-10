@@ -74,7 +74,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
     }
     else
     {
-        std::string table_name = "http_inspect_" + std::to_string(binding_id);
+        std::string table_name = "http_server_" + std::to_string(binding_id);
         bind.set_use_name(table_name);
         table_api.open_table(table_name);
         binding_id++;
