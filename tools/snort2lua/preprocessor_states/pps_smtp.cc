@@ -214,6 +214,10 @@ bool Smtp::convert(std::istringstream& data_stream)
         {
             tmpval = parse_int_option("email_hdrs_log_depth", data_stream, false);
         }
+        else if (!keyword.compare("max_auth_command_line_len"))
+        {
+            tmpval = parse_int_option("max_auth_command_line_len", data_stream, false);
+        }
         else if (!keyword.compare("max_command_line_len"))
         {
             tmpval = parse_int_option("max_command_line_len", data_stream, false);

@@ -447,6 +447,9 @@ static void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
     else
         LogMessage("%s%d\n", buf, config->max_header_line_len);
 
+    snprintf(buf, sizeof(buf) - 1, "    Max Auth Command Line Length: ");
+    LogMessage("%s%d\n", buf, config->max_auth_command_line_len);
+
     snprintf(buf, sizeof(buf) - 1, "    Max Response Line Length: ");
 
     if (config->max_response_line_len == 0)
@@ -1500,7 +1503,7 @@ public:
     void clear(Packet*) override;
 
     StreamSplitter* get_splitter(bool c2s) override
-    { return new SmtpSplitter(c2s); }
+    { return new SmtpSplitter(c2s, config->max_auth_command_line_len); }
 
     void ProcessSmtpCmdsList(const SmtpCmd*);
 

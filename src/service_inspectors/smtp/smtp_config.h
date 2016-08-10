@@ -123,9 +123,10 @@ struct SMTP_PROTO_CONF
 {
     NORM_TYPES normalize;
     bool ignore_tls_data;
-    int max_command_line_len;
-    int max_header_line_len;
-    int max_response_line_len;
+    int max_auth_command_line_len = 1000;
+    int max_command_line_len = 0;
+    int max_header_line_len = 0;
+    int max_response_line_len = 0;
     int xlink2state;
     MailLogConfig log_config;
     DecodeConfig decode_conf;

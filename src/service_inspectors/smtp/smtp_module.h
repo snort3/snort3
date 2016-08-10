@@ -45,6 +45,7 @@
 //#define SMTP_BITENC_DECODING_FAILED 12
 #define SMTP_UU_DECODING_FAILED     13
 #define SMTP_AUTH_ABORT_AUTH        14
+#define SMTP_AUTH_COMMAND_OVERFLOW  15
 
 #define SMTP_NAME "smtp"
 #define SMTP_HELP "smtp inspection"

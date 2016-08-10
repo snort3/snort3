@@ -65,7 +65,7 @@ struct SmtpPafData
 class SmtpSplitter : public StreamSplitter
 {
 public:
-    SmtpSplitter(bool c2s);
+    SmtpSplitter(bool c2s, int max_auth_cmd_line_len);
     ~SmtpSplitter();
 
     Status scan(Flow*, const uint8_t* data, uint32_t len,
@@ -75,6 +75,9 @@ public:
 
 public:
     SmtpPafData state;
+
+private:
+    int max_auth_command_line_len;
 };
 
 // Function: Check if IMAP data end is reached

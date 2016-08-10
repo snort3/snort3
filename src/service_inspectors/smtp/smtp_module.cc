@@ -46,19 +46,6 @@ SmtpCmd::SmtpCmd(std::string& key, int num)
     }
 }
 
-#define SMTP_COMMAND_OVERFLOW_STR        "Attempted command buffer overflow"
-#define SMTP_DATA_HDR_OVERFLOW_STR       "Attempted data header buffer overflow"
-#define SMTP_RESPONSE_OVERFLOW_STR       "Attempted response buffer overflow"
-#define SMTP_SPECIFIC_CMD_OVERFLOW_STR   "Attempted specific command buffer overflow"
-#define SMTP_UNKNOWN_CMD_STR             "Unknown command"
-#define SMTP_ILLEGAL_CMD_STR             "Illegal command"
-#define SMTP_HEADER_NAME_OVERFLOW_STR    "Attempted header name buffer overflow"
-#define SMTP_XLINK2STATE_OVERFLOW_STR    "Attempted X-Link2State command buffer overflow"
-#define SMTP_B64_DECODING_FAILED_STR     "Base64 Decoding failed."
-#define SMTP_QP_DECODING_FAILED_STR      "Quoted-Printable Decoding failed."
-#define SMTP_UU_DECODING_FAILED_STR      "Unix-to-Unix Decoding failed."
-#define SMTP_AUTH_ABORT_AUTH_STR         "Cyrus SASL authentication attack."
-
 static const Parameter smtp_command_params[] =
 {
     { "command", Parameter::PT_STRING, nullptr, nullptr,
@@ -114,6 +101,9 @@ static const Parameter s_params[] =
     { "log_rcptto", Parameter::PT_BOOL, nullptr, "false",
       "log the recipient's email address extracted from the RCPT TO command" },
 
+    { "max_auth_command_line_len", Parameter::PT_INT, "0:65535", "1000",
+      "max auth command Line Length" },
+
     { "max_command_line_len", Parameter::PT_INT, "0:65535", "0",
       "max Command Line Length" },
 
@@ -146,18 +136,19 @@ static const Parameter s_params[] =
 
 static const RuleMap smtp_rules[] =
 {
-    { SMTP_COMMAND_OVERFLOW, SMTP_COMMAND_OVERFLOW_STR },
-    { SMTP_DATA_HDR_OVERFLOW, SMTP_DATA_HDR_OVERFLOW_STR },
-    { SMTP_RESPONSE_OVERFLOW, SMTP_RESPONSE_OVERFLOW_STR },
-    { SMTP_SPECIFIC_CMD_OVERFLOW, SMTP_SPECIFIC_CMD_OVERFLOW_STR },
-    { SMTP_UNKNOWN_CMD, SMTP_UNKNOWN_CMD_STR },
-    { SMTP_ILLEGAL_CMD, SMTP_ILLEGAL_CMD_STR },
-    { SMTP_HEADER_NAME_OVERFLOW, SMTP_HEADER_NAME_OVERFLOW_STR },
-    { SMTP_XLINK2STATE_OVERFLOW, SMTP_XLINK2STATE_OVERFLOW_STR },
-    { SMTP_B64_DECODING_FAILED, SMTP_B64_DECODING_FAILED_STR },
-    { SMTP_QP_DECODING_FAILED, SMTP_QP_DECODING_FAILED_STR },
-    { SMTP_UU_DECODING_FAILED, SMTP_UU_DECODING_FAILED_STR },
-    { SMTP_AUTH_ABORT_AUTH, SMTP_AUTH_ABORT_AUTH_STR },
+    { SMTP_COMMAND_OVERFLOW, "Attempted command buffer overflow" },
+    { SMTP_DATA_HDR_OVERFLOW, "Attempted data header buffer overflow" },
+    { SMTP_RESPONSE_OVERFLOW, "Attempted response buffer overflow" },
+    { SMTP_SPECIFIC_CMD_OVERFLOW, "Attempted specific command buffer overflow" },
+    { SMTP_UNKNOWN_CMD, "Unknown command" },
+    { SMTP_ILLEGAL_CMD, "Illegal command" },
+    { SMTP_HEADER_NAME_OVERFLOW, "Attempted header name buffer overflow" },
+    { SMTP_XLINK2STATE_OVERFLOW, "Attempted X-Link2State command buffer overflow" },
+    { SMTP_B64_DECODING_FAILED, "Base64 Decoding failed" },
+    { SMTP_QP_DECODING_FAILED, "Quoted-Printable Decoding failed" },
+    { SMTP_UU_DECODING_FAILED, "Unix-to-Unix Decoding failed" },
+    { SMTP_AUTH_ABORT_AUTH, "Cyrus SASL authentication attack" },
+    { SMTP_AUTH_COMMAND_OVERFLOW, "Attempted authentication command buffer overflow" },
 
     { 0, nullptr }
 };
@@ -284,6 +275,9 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("log_email_hdrs"))
         config->log_config.log_email_hdrs = v.get_bool();
 
+    else if ( v.is("max_auth_command_line_len") )
+        config->max_auth_command_line_len = v.get_long();
+
     else if ( v.is("max_command_line_len") )
         config->max_command_line_len = v.get_long();
 
@@ -332,9 +326,6 @@ bool SmtpModule::begin(const char*, int, SnortConfig*)
     if(!config)
     {
         config = new SMTP_PROTO_CONF;
-        config->max_header_line_len = 0;
-        config->max_response_line_len = 0;
-        config->max_command_line_len = 0;
         config->xlink2state = ALERT_XLINK2STATE;
         config->decode_conf.set_ignore_data(config->ignore_tls_data = false);
         config->normalize = NORMALIZE_NONE;
