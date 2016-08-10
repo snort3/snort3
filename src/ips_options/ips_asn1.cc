@@ -192,7 +192,7 @@ static const Parameter s_params[] =
       "Detects a double ASCII encoding that is larger than a standard buffer." },
 
     { PRINT_OPT, Parameter::PT_IMPLIED, nullptr, nullptr,
-      "<>max | <max | >min" },
+      "dump decode data to console; always true" },
 
     { LENGTH_OPT, Parameter::PT_INT, "0:", nullptr,
       "Compares ASN.1 type lengths with the supplied argument." },
