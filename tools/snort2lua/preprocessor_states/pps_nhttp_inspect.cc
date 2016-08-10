@@ -57,8 +57,7 @@ bool NHttpInspect::convert(std::istringstream& data_stream)
             return false;
         }
     }
-    table_api.open_table("new_http_inspect");
-    table_api.add_diff_option_comment("http_inspect", "new_http_inspect");
+    table_api.open_table("http_inspect");
 
     while (data_stream >> keyword)
     {

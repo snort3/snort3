@@ -31,7 +31,7 @@
 #include "hi_ui_iis_unicode_map.h"
 
 //-------------------------------------------------------------------------
-// http_inspect module
+// http_server module
 //-------------------------------------------------------------------------
 
 // these are shared
@@ -450,7 +450,7 @@ static const RuleMap hi_server_rules[] =
 };
 
 #define hi_server_help  \
-    "http inspection and server rules; also configure http_inspect"
+    "http inspection and server rules; also configure http_global"
 
 HttpServerModule::HttpServerModule() :
     Module(SERVER_KEYWORD, hi_server_help, hi_server_params)

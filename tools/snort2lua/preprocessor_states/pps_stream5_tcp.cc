@@ -236,15 +236,15 @@ bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
             {
                 // yes, I agree this may appear odd that I am
                 // adding the value to a vector rather than creating a
-                // new binder.  The reasons is each binder may still
+                // new binder.  The reason is each binder may still
                 // change while parsing stream_tcp.  Since I don't want
                 // to create and save a new Binder for each protocol,
                 // lets save the different protocols and create new
                 // Binders at the very end of the convert() functions.
                 if (!protocol.compare("http_inspect"))
                 {
-                    if ( !cv.get_ohi_convert() )
-                        protocols->push_back("new_http_inspect");
+                    if ( cv.get_ohi_convert() )
+                        protocols->push_back("http_server");
                     else
                         protocols->push_back(protocol);
                 }

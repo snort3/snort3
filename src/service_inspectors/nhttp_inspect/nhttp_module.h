@@ -27,8 +27,8 @@
 
 #include "nhttp_enum.h"
 
-#define NHTTP_NAME "new_http_inspect"
-#define NHTTP_HELP "new HTTP inspector"
+#define NHTTP_NAME "http_inspect"
+#define NHTTP_HELP "HTTP inspector"
 
 struct NHttpParaList
 {

@@ -1167,7 +1167,7 @@ static void make_rule(ostream& os, const Module* m, const RuleMap* r)
 
 // FIXIT-L currently no way to know whether a module was activated or not
 // so modules with common rules will cause duplicate sid warnings
-// eg http_inspect and nhttp_inspect both have 119:1-34
+// eg http_server (old) and http_inspect (new) both have 119:1-34
 // only way to avoid that now is to not load plugins with common rules
 // (we don't want to suppress it because it could mean something is broken)
 void ModuleManager::load_rules(SnortConfig* sc)
