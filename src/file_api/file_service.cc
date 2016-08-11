@@ -65,15 +65,12 @@ void FileService::init()
 
 void FileService::post_init()
 {
-    FileConfig& file_config = snort_conf->file_config;
-
     FilePolicy& fp  = get_inspect();
 
     fp.load();
 
-    if ( file_capture_enabled)
-        FileCapture::init_mempool(file_config.capture_memcap,
-            file_config.capture_block_size);
+    if (file_capture_enabled)
+        FileCapture::init();
 }
 
 void FileService::close()

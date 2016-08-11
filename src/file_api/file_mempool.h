@@ -22,58 +22,68 @@
 #ifndef FILE_MEMPOOL_H
 #define FILE_MEMPOOL_H
 
- //  This mempool implementation has very efficient alloc/free operations.
- //  In addition, it provides thread-safe alloc/free for one allocation/free
- //  thread and one release thread.
- //  One more bonus: Double free detection is also added into this library
- //  This is a thread safe version of memory pool for one writer and one reader thread
+//  This mempool implementation has very efficient alloc/free operations.
+//  In addition, it provides thread-safe alloc/free for one allocation/free
+//  thread and one release thread.
+//  One more bonus: Double free detection is also added into this library
+//  This is a thread safe version of memory pool for one writer and one reader thread
+
+#include <mutex>
 
 #include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "circular_buffer.h"
 
 #define FILE_MEM_SUCCESS    0  // FIXIT-L use bool
 #define FILE_MEM_FAIL      -1
 
-typedef struct _FileMemPool
+class FileMemPool
 {
+public:
+
+    FileMemPool(uint64_t num_objects, size_t obj_size);
+    ~FileMemPool();
+
+    // Allocate a new object from the FileMemPool
+    // Note: Memory block will not be zeroed for performance
+    // Returns: a pointer to the FileMemPool object on success, nullptr on failure
+    void* m_alloc();
+
+    // This must be called by the same thread calling file_mempool_alloc()
+    // Return: FILE_MEM_SUCCESS or FILE_MEM_FAIL
+    int m_free(void* obj);
+
+    // This can be called by a different thread calling file_mempool_alloc()
+    // Return: FILE_MEM_SUCCESS or FILE_MEM_FAIL
+    int m_release(void* obj);
+
+    //Returns number of elements allocated
+    uint64_t allocated();
+
+    // Returns number of elements freed in current buffer
+    uint64_t freed();
+
+    // Returns number of elements released in current buffer
+    uint64_t released();
+
+    // Returns total number of elements in current buffer
+    uint64_t total_objects() { return total; }
+
+private:
+
+    void free_pools();
+    int remove(CircularBuffer* cb, void* obj);
+#ifdef DEBUG_MSGS
+    void verify();
+#endif
+
     void** datapool; /* memory buffer */
-
     uint64_t total;
-
     CircularBuffer* free_list;
     CircularBuffer* released_list;
     size_t obj_size;
-} FileMemPool;
-
-// This must be called before file mempool is used
-// Return: FILE_MEM_SUCCESS or FILE_MEM_FAIL
-int file_mempool_init(FileMemPool* mempool, uint64_t num_objects, size_t obj_size);
-
-// This must be called during snort exits
-// Return: FILE_MEM_SUCCESS or FILE_MEM_FAIL
-int file_mempool_destroy(FileMemPool* mempool);
-
-// Allocate a new object from the FileMemPool
-// Note: Memory block will not be zeroed for performance
-// Returns: a pointer to the FileMemPool object on success, NULL on failure
-void* file_mempool_alloc(FileMemPool* mempool);
-
-// This must be called by the same thread calling file_mempool_alloc()
-// Return: FILE_MEM_SUCCESS or FILE_MEM_FAIL
-int file_mempool_free(FileMemPool* mempool, void* obj);
-
-// This can be called by a different thread calling file_mempool_alloc()
-// Return: FILE_MEM_SUCCESS or FILE_MEM_FAIL
-int file_mempool_release(FileMemPool* mempool, void* obj);
-
-//Returns number of elements allocated in current buffer
-uint64_t file_mempool_allocated(FileMemPool* mempool);
-
-// Returns number of elements freed in current buffer
-uint64_t file_mempool_freed(FileMemPool* mempool);
-
-// Returns number of elements released in current buffer
-uint64_t file_mempool_released(FileMemPool* mempool);
+    std::mutex pool_mutex;
+};
 
 #endif
 

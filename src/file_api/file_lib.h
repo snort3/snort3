@@ -41,19 +41,21 @@ class SO_PUBLIC FileInfo
 {
 public:
     virtual ~FileInfo();
+    FileInfo(){};
+    FileInfo(const FileInfo& other);
     FileInfo& operator=(const FileInfo& other);
-    uint32_t get_file_type();
+    uint32_t get_file_type() const;
     void set_file_name(const char* file_name, uint32_t name_size);
     std::string& get_file_name();
     void set_file_size(uint64_t size);
-    uint64_t get_file_size();
+    uint64_t get_file_size() const;
     void set_file_direction(FileDirection dir);
-    FileDirection get_file_direction();
+    FileDirection get_file_direction() const;
     void set_file_sig_sha256(uint8_t* signature);
-    uint8_t* get_file_sig_sha256();
+    uint8_t* get_file_sig_sha256() const;
     std::string sha_to_string(const uint8_t *sha256);
     void set_file_id(size_t index);
-    size_t get_file_id();
+    size_t get_file_id() const;
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
 
 protected:
@@ -63,6 +65,9 @@ protected:
     uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
     uint8_t* sha256 = nullptr;
     size_t file_id = 0;
+
+private:
+    void copy(const FileInfo& other);
 };
 
 class SO_PUBLIC FileContext: public FileInfo
@@ -78,6 +83,10 @@ public:
     void stop_file_capture();
     FileCaptureState process_file_capture(const uint8_t* file_data, int data_size, FilePosition pos);
 
+    // Preserve the file in memory until it is released
+    // The file reserved will be returned and it will be detached from file context/session
+    FileCaptureState reserve_file(FileCapture* &dest);
+
     // Configuration functions
     void config_file_type(bool enabled);
     bool is_file_type_enabled();
@@ -88,8 +97,6 @@ public:
 
     //File properties
     uint64_t get_processed_bytes();
-
-    FileCapture *get_file_capture();
 
     void set_file_config(FileConfig* file_config);
     FileConfig*  get_file_config();

@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "file_config.h"
 #include "file_stats.h"
 
 #include "main/snort_config.h"
@@ -44,22 +45,108 @@
 #include "utils/util.h"
 #include "utils/stats.h"
 
-FileMemPool* file_mempool = nullptr;
+FileMemPool* FileCapture::file_mempool = nullptr;
 File_Capture_Stats file_capture_stats;
+
+std::mutex FileCapture::capture_mutex;
+std::condition_variable FileCapture::capture_cv;
+std::thread* FileCapture::file_storer = nullptr;
+std::queue<FileCapture*> FileCapture::files_waiting;
+bool FileCapture::running = true;
+
+// Only one writer thread supported
+void FileCapture::writer_thread()
+{
+    while (1)
+    {
+        // Wait until there are files
+        std::unique_lock<std::mutex> lk(capture_mutex);
+        capture_cv.wait(lk, [] { return !running or files_waiting.size(); });
+
+        if (!running)
+            break;
+
+        FileCapture* file = files_waiting.front();
+        files_waiting.pop();
+        lk.unlock();
+
+        file->store_file();
+        delete file;
+    }
+}
 
 FileCapture::FileCapture()
 {
     reserved = 0;
-    file_size = 0;
+    capture_size = 0;
     last = head = nullptr;
     current_data = nullptr;
     current_data_len = 0;
     capture_state = FILE_CAPTURE_SUCCESS;
 }
 
-FileCapture:: ~FileCapture()
+FileCapture::~FileCapture()
 {
-    stop();
+    FileCaptureBlock* file_block = head;
+
+    if (reserved)
+        file_capture_stats.files_released_total++;
+    else
+        file_capture_stats.files_freed_total++;
+
+    while (file_block)
+    {
+        FileCaptureBlock* next_block = file_block->next;
+        if (reserved)
+        {
+            if (file_mempool->m_release(file_block) != FILE_MEM_SUCCESS)
+                file_capture_stats.file_buffers_release_errors++;
+            file_capture_stats.file_buffers_released_total++;
+        }
+        else
+        {
+            if (file_mempool->m_free(file_block) != FILE_MEM_SUCCESS)
+                file_capture_stats.file_buffers_free_errors++;
+            file_capture_stats.file_buffers_freed_total++;
+        }
+
+        file_block = next_block;
+    }
+
+    head = last = nullptr;
+
+    if (file_info)
+        delete file_info;
+}
+
+void FileCapture::init()
+{
+    FileConfig& file_config = snort_conf->file_config;
+    init_mempool(file_config.capture_memcap, file_config.capture_block_size);
+    file_storer = new std::thread(writer_thread);
+}
+
+/*
+ *  Release all file capture memory etc,
+ *  this must be called when snort exits
+ */
+void FileCapture::exit()
+{
+    running = false;
+    capture_cv.notify_one();
+
+    if (file_storer)
+    {
+        file_storer->join();
+        delete file_storer;
+        file_storer = nullptr;
+    }
+
+    if (file_mempool)
+    {
+        delete file_mempool;
+        file_mempool = nullptr;
+    }
 }
 
 /*
@@ -67,73 +154,32 @@ FileCapture:: ~FileCapture()
  *
  * Arguments:
  *    int64_t max_file_mem: memcap in megabytes
- *    int64_t block_size:  file block size (metadata size excluded)
- *
- * Returns: NONE
+ *    int64_t block_len:  file block size (metadata size excluded)
  */
 void FileCapture::init_mempool(int64_t max_file_mem, int64_t block_len)
 {
     int64_t block_size = block_len + sizeof (FileCapture);
 
-    /*Convert megabytes to bytes*/
-    int64_t max_file_mem_in_bytes = max_file_mem * 1024 * 1024;
-
     if (block_size <= 0)
         return;
+
+    /*Convert megabytes to bytes*/
+    int64_t max_file_mem_in_bytes = max_file_mem * 1024 * 1024;
 
     if (block_size & 7)
         block_size += (8 - (block_size & 7));
 
     int max_files = max_file_mem_in_bytes / block_size;
 
-    file_mempool = (FileMemPool*)snort_calloc(sizeof(FileMemPool));
-
-    if ( file_mempool_init(file_mempool, max_files, block_size) != 0 )
-    {
-        FatalError("File capture: Could not initialize file buffer mempool.\n");
-    }
+    file_mempool = new FileMemPool(max_files, block_size);
 }
 
-/*
- * Stop file capture, memory resource will be released if not reserved
- *
- * Returns: NONE
- */
-void FileCapture::stop()
-{
-    /*free mempool*/
-    if (reserved)
-        return;
-
-    file_capture_stats.files_freed_total++;
-    FileCaptureBlock* fileblock = head;
-    while (fileblock)
-    {
-        if (file_mempool_free(file_mempool, fileblock) != FILE_MEM_SUCCESS)
-            file_capture_stats.file_buffers_free_errors++;
-        fileblock = fileblock->next;
-        file_capture_stats.file_buffers_freed_total++;
-    }
-
-    head = last = nullptr;
-}
-
-/*
- * Create file buffer in file mempool
- *
- * Args:
- *   FileMemPool *file_mempool: file mempool
- *   FileContext* context: file context
- *
- * Returns:
- *   FileCapture *: memory block that starts with file capture information
- */
-inline FileCaptureBlock* FileCapture::create_file_buffer(FileMemPool* file_mempool)
+inline FileCaptureBlock* FileCapture::create_file_buffer()
 {
     FileCaptureBlock* fileBlock;
     uint64_t num_files_queued;
 
-    fileBlock = (FileCaptureBlock*)file_mempool_alloc(file_mempool);
+    fileBlock = (FileCaptureBlock*)file_mempool->m_alloc();
 
     if (fileBlock == nullptr)
     {
@@ -147,7 +193,7 @@ inline FileCaptureBlock* FileCapture::create_file_buffer(FileMemPool* file_mempo
     fileBlock->length = 0;
     fileBlock->next = nullptr;     /*Only one block initially*/
 
-    num_files_queued = file_mempool_allocated(file_mempool);
+    num_files_queued = file_mempool->allocated();
     if (file_capture_stats.file_buffers_used_max < num_files_queued)
         file_capture_stats.file_buffers_used_max = num_files_queued;
 
@@ -158,19 +204,15 @@ inline FileCaptureBlock* FileCapture::create_file_buffer(FileMemPool* file_mempo
  * Save file to the buffer
  * If file needs to be extracted, buffer will be reserved
  * If file buffer isn't sufficient, need to add another buffer.
- *
- * Returns:
- *   0: successful or file capture is disabled
- *   1: fail to capture the file
  */
-inline FileCaptureState FileCapture::save_to_file_buffer(FileMemPool* file_mempool,
-    const uint8_t* file_data, int data_size, int64_t max_size)
+inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_data,
+    int data_size, int64_t max_size)
 {
     FileCaptureBlock* lastBlock = last;
     int64_t available_bytes;
     FileConfig& file_config =  snort_conf->file_config;
 
-    if ( data_size + (int64_t)file_size > max_size)
+    if ( data_size + (int64_t)capture_size > max_size)
     {
         FILE_DEBUG_MSGS("Exceeding max file capture size!\n");
         file_capture_stats.file_size_max++;
@@ -198,7 +240,7 @@ inline FileCaptureState FileCapture::save_to_file_buffer(FileMemPool* file_mempo
         while (1)
         {
             /*get another block*/
-            new_block = (FileCaptureBlock*)create_file_buffer(file_mempool);
+            new_block = (FileCaptureBlock*)create_file_buffer();
 
             if (new_block == nullptr)
             {
@@ -235,7 +277,7 @@ inline FileCaptureState FileCapture::save_to_file_buffer(FileMemPool* file_mempo
         lastBlock->length += data_size;
     }
 
-    file_size += data_size;
+    capture_size += data_size;
 
     return FILE_CAPTURE_SUCCESS;
 }
@@ -278,7 +320,7 @@ FileCaptureState FileCapture::process_buffer(const uint8_t* file_data,
          */
         if (!head)
         {
-            head = last = create_file_buffer(file_mempool);
+            head = last = create_file_buffer();
 
             if (!head)
             {
@@ -288,91 +330,79 @@ FileCaptureState FileCapture::process_buffer(const uint8_t* file_data,
             file_capture_stats.files_buffered_total++;
         }
 
-        return (save_to_file_buffer(file_mempool, file_data, data_size,
-                file_config.capture_max_size));
+        return (save_to_file_buffer(file_data, data_size, file_config.capture_max_size));
     }
 
     return FILE_CAPTURE_SUCCESS;
 }
 
-/*Helper function for error*/
-static inline FileCaptureState ERROR_capture(FileCaptureState state)
-{
-    file_capture_stats.file_reserve_failures++;
-    return state;
-}
-
 // Preserve the file in memory until it is released
-FileCaptureState FileCapture::reserve_file(FileContext* context)
+FileCaptureState FileCapture::reserve_file(const FileInfo* file)
 {
     uint64_t fileSize;
 
     FileConfig& file_config =  snort_conf->file_config;
 
-    if (!context || !context->is_file_capture_enabled())
-    {
-        return ERROR_capture(FILE_CAPTURE_FAIL);
-    }
-
     if (capture_state != FILE_CAPTURE_SUCCESS)
     {
-        return ERROR_capture(capture_state);
+        return error_capture(capture_state);
     }
 
-    FileCaptureBlock* fileInfo = head;
+    FileCaptureBlock* fileBlock = head;
 
     /*
      * Note: file size is updated at this point
      */
-    fileSize = context->get_file_size();
+    fileSize = file->get_file_size();
 
     if ( fileSize < (unsigned)file_config.capture_min_size)
     {
         file_capture_stats.file_size_min++;
-        return ERROR_capture(FILE_CAPTURE_MIN);
+        return error_capture(FILE_CAPTURE_MIN);
     }
 
     if ( fileSize > (unsigned)file_config.capture_max_size)
     {
         file_capture_stats.file_size_max++;
-        return ERROR_capture(FILE_CAPTURE_MAX);
+        return error_capture(FILE_CAPTURE_MAX);
     }
 
     /* Create a file buffer if it is not done yet,
      * This is the case for small file
      */
-    if (!fileInfo && context->is_file_capture_enabled())
+    if (!fileBlock)
     {
-        fileInfo  = create_file_buffer(file_mempool);
+        fileBlock  = create_file_buffer();
 
-        if (!fileInfo)
+        if (!fileBlock)
         {
             file_capture_stats.file_memcap_failures_reserve++;
-            return ERROR_capture(FILE_CAPTURE_MEMCAP);
+            return error_capture(FILE_CAPTURE_MEMCAP);
         }
 
         file_capture_stats.files_buffered_total++;
-        head = last = fileInfo;
+        head = last = fileBlock;
     }
 
-    if (!fileInfo)
+    if (!fileBlock)
     {
-        return ERROR_capture(FILE_CAPTURE_MEMCAP);
+        return error_capture(FILE_CAPTURE_MEMCAP);
     }
 
     /*Copy the last piece of file to file buffer*/
-    if (save_to_file_buffer(file_mempool, current_data,
+    if (save_to_file_buffer(current_data,
             current_data_len, file_config.capture_max_size) )
     {
-        return ERROR_capture(capture_state);
+        return error_capture(capture_state);
     }
 
     file_capture_stats.files_captured_total++;
 
-    reserved = true;
     current_block = head;
 
-    context->config_file_capture(false);
+    reserved = true;
+
+    file_info = new FileInfo(*file);
 
     return FILE_CAPTURE_SUCCESS;
 }
@@ -405,43 +435,18 @@ FileCaptureBlock* FileCapture::get_file_data(uint8_t** buff, int* size)
 }
 
 // Get the file size captured in the file buffer
-uint64_t FileCapture::capture_size() const
+uint64_t FileCapture::get_capture_size() const
 {
-    return file_size;
+    return capture_size;
 }
 
 /*
- * Release the file that is reserved in memory, this function might be
- * called in a different thread.
- *
- * Arguments:
- *   void *data: the memory block that stores file and its metadata
- */
-void FileCapture::release_file()
-{
-    reserved = false;
-
-    file_capture_stats.files_released_total++;
-    FileCaptureBlock* fileblock = head;
-
-    while (fileblock)
-    {
-        if (file_mempool_release(file_mempool, fileblock) != FILE_MEM_SUCCESS)
-            file_capture_stats.file_buffers_release_errors++;
-        fileblock = fileblock->next;
-        file_capture_stats.file_buffers_released_total++;
-    }
-
-    head = last = nullptr;
-}
-
-/*
- * writing file to the disk.
+ * writing file data to the disk.
  *
  * In the case of interrupt errors, the write is retried, but only for a
  * finite number of times.
  */
-void FileCapture::write_file(uint8_t* buf, size_t buf_len, FILE* fh)
+void FileCapture::write_file_data(uint8_t* buf, size_t buf_len, FILE* fh)
 {
     int max_retries = 3;
     size_t bytes_written = 0;
@@ -475,16 +480,12 @@ void FileCapture::write_file(uint8_t* buf, size_t buf_len, FILE* fh)
 }
 
 // Store files on local disk
-void FileCapture::store_file(FileContext* file)
+void FileCapture::store_file()
 {
-    uint8_t* sha = file->get_file_sig_sha256();
-    if (!sha)
+    if (!file_info)
         return;
 
-    std::string file_name = file->sha_to_string(sha);
-
-    std::string file_full_name;
-    get_instance_file(file_full_name, file_name.c_str());
+    std::string& file_full_name = file_info->get_file_name();
 
     /*Check whether the file exists*/
     struct stat buffer;
@@ -510,15 +511,36 @@ void FileCapture::store_file(FileContext* file)
         // Get file from file buffer
         if (!buff || !size )
         {
-            //file_inspect_stats.file_read_failures++;
             return;
         }
 
-        write_file(buff, size, fh);
+        write_file_data(buff, size, fh);
     }
     while (file_mem);
 
     fclose(fh);
+}
+
+// Queue files to be stored to disk
+void FileCapture::store_file_async()
+{
+    // send data to the writer thread
+    if (!file_info)
+        return;
+
+    uint8_t* sha = file_info->get_file_sig_sha256();
+    if (!sha)
+        return;
+
+    std::string file_name = file_info->sha_to_string(sha);
+
+    std::string file_full_name;
+    get_instance_file(file_full_name, file_name.c_str());
+    file_info->set_file_name(file_full_name.c_str(), file_full_name.size());
+
+    std::lock_guard<std::mutex> lk(capture_mutex);
+    files_waiting.push(this);
+    capture_cv.notify_one();
 }
 
 /*Log file capture mempool usage*/
@@ -526,23 +548,10 @@ void FileCapture::print_mem_usage()
 {
     if (file_mempool)
     {
-        LogCount("Max buffers can allocate", file_mempool->total);
-        LogCount("Buffers in use", file_mempool_allocated(file_mempool));
-        LogCount("Buffers in free list", file_mempool_freed(file_mempool));
-        LogCount("Buffers in release list", file_mempool_released(file_mempool));
-    }
-}
-
-/*
- *  Release all file capture memory etc,
- *  this must be called when snort exits
- */
-void FileCapture::exit()
-{
-    if (file_mempool_destroy(file_mempool) == 0)
-    {
-        snort_free(file_mempool);
-        file_mempool = nullptr;
+        LogCount("Max buffers can allocate", file_mempool->total_objects());
+        LogCount("Buffers in use", file_mempool->allocated());
+        LogCount("Buffers in free list", file_mempool->freed());
+        LogCount("Buffers in release list", file_mempool->released());
     }
 }
 

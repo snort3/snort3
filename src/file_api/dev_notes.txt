@@ -5,7 +5,12 @@ inpsectors such as HTTP, SMTP, POP, IMAP, SMB, and FTP etc.
 
 * File capture: provides the ability to capture file data and save them in the
 mempool, then they can be stored to disk. Currently, files can be saved to the 
-logging folder. In this release, writing to disk is done inside packet thread.
+logging folder. Writing to disk is done by a separate thread that will not block
+packet thread. When a file is available to store, it will be put into a queue.
+The writer thread will read from this queue to write to disk. In the multiple 
+packet thread case, many threads will write into this queue and one writer thread
+serves all of them. Thread synchronization is done by mutex and conditional
+variables for the queue.
 
 * File libraries: provides file type identification and file signature
 calculation

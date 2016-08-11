@@ -49,17 +49,12 @@ FileInfo::~FileInfo ()
         delete[] sha256;
 }
 
-FileInfo& FileInfo::operator=(const FileInfo& other)
+void FileInfo::copy(const FileInfo& other)
 {
-    // check for self-assignment
-    if(&other == this)
-        return *this;
-
     if (other.sha256)
     {
         sha256 = new uint8_t[SHA256_HASH_SIZE];
-        if (sha256)
-            strncpy( (char *)sha256, (const char *)other.sha256, SHA256_HASH_SIZE);
+        memcpy( (char *)sha256, (const char *)other.sha256, SHA256_HASH_SIZE);
     }
 
     file_size = other.file_size;
@@ -68,7 +63,20 @@ FileInfo& FileInfo::operator=(const FileInfo& other)
     file_id = other.file_id;
     file_name = other.file_name;
     verdict = other.verdict;
+}
 
+FileInfo::FileInfo(const FileInfo& other)
+{
+    copy(other);
+}
+
+FileInfo& FileInfo::operator=(const FileInfo& other)
+{
+    // check for self-assignment
+    if(&other == this)
+        return *this;
+
+    copy(other);
     return *this;
 }
 
@@ -92,12 +100,12 @@ void FileInfo::set_file_size(uint64_t size)
     file_size = size;
 }
 
-uint64_t FileInfo::get_file_size()
+uint64_t FileInfo::get_file_size() const
 {
     return file_size;
 }
 
-uint32_t FileInfo::get_file_type()
+uint32_t FileInfo::get_file_type() const
 {
     return file_type_id;
 }
@@ -107,7 +115,7 @@ void FileInfo::set_file_id(size_t id)
     file_id = id;
 }
 
-size_t FileInfo::get_file_id()
+size_t FileInfo::get_file_id() const
 {
     return file_id;
 }
@@ -118,7 +126,7 @@ void FileInfo::set_file_direction(FileDirection dir)
     direction = dir;
 }
 
-FileDirection FileInfo::get_file_direction()
+FileDirection FileInfo::get_file_direction() const
 {
     return (direction);
 }
@@ -128,7 +136,7 @@ void FileInfo::set_file_sig_sha256(uint8_t* signature)
     sha256 = signature;
 }
 
-uint8_t* FileInfo::get_file_sig_sha256()
+uint8_t* FileInfo::get_file_sig_sha256() const
 {
     return (sha256);
 }
@@ -291,11 +299,6 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
     }
 }
 
-FileCapture *FileContext::get_file_capture()
-{
-    return file_capture;
-}
-
 FileCaptureState FileContext::process_file_capture(const uint8_t* file_data,
     int data_size, FilePosition position)
 {
@@ -313,12 +316,24 @@ FileCaptureState FileContext::process_file_capture(const uint8_t* file_data,
     return file_state.capture_state;
 }
 
+FileCaptureState FileContext::reserve_file(FileCapture*& dest)
+{
+    if (!file_capture || !is_file_capture_enabled())
+        return error_capture(FILE_CAPTURE_FAIL);
+
+    FileCaptureState state = file_capture->reserve_file(this);
+    config_file_capture(false);
+    dest = file_capture;
+    file_capture = nullptr;
+    return state;
+}
+
 void FileContext::stop_file_capture()
 {
     if (file_capture)
     {
         delete file_capture;
-        file_capture = NULL;
+        file_capture = nullptr;
     }
 
     file_capture_enabled = false;

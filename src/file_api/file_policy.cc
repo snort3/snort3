@@ -185,14 +185,11 @@ FileVerdict FilePolicy::signature_lookup(Flow* flow, FileContext* file )
 
     if (rule.use.capture_enabled)
     {
-        FileCapture *capture = file->get_file_capture();
-        if (capture)
+        FileCapture *captured = nullptr;
+
+        if (file->reserve_file(captured) == FILE_CAPTURE_SUCCESS)
         {
-            if (capture->reserve_file(file) == FILE_CAPTURE_SUCCESS)
-            {
-                capture->store_file(file);
-                capture->release_file();
-            }
+           captured->store_file_async();
         }
     }
 
