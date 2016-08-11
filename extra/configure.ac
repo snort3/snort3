@@ -5,6 +5,7 @@ AC_CONFIG_MACRO_DIRS([m4])
 AM_INIT_AUTOMAKE([foreign])
 AM_SILENT_RULES([yes])
 
+AC_PROG_INSTALL
 AC_PROG_CC([clang gcc])
 AC_PROG_CXX([clang++ g++])
 
