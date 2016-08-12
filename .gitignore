@@ -15,6 +15,7 @@
 *.Po
 *~
 ._Xcode*
+*.dirstamp
 Cbuild/
 Makefile
 Makefile.in

@@ -161,7 +161,7 @@ void NHttpUri::check_oversize_dir(Field uri_field)
     const uint8_t* cur;
     const uint8_t* end;
 
-    if ( uri_field.length < 0 )
+    if ( uri_field.length <= 0 )
         return;
 
     cur = uri_field.start;
