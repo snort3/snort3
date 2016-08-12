@@ -135,7 +135,7 @@ void HttpFlowData::init()
 HttpFlowData::HttpFlowData() : FlowData(flow_id)
 {
     memset(&session, 0, sizeof(session));
-    init_decode_utf_state(&session.utf_state);
+    session.utf_state = new UtfDecodeSession();
 }
 
 HttpFlowData::~HttpFlowData()
@@ -1181,6 +1181,9 @@ void FreeHttpSessionData(void* data)
 
     if (hsd->mime_ssn)
         delete hsd->mime_ssn;
+
+    if (hsd->utf_state)
+        delete hsd->utf_state;
 
     if ( hsd->fd_state != 0 )
     {

@@ -34,6 +34,7 @@ const Parameter NHttpModule::nhttp_params[] =
     { "response_depth", Parameter::PT_INT, "-1:", "-1",
           "maximum response message body bytes to examine (-1 no limit)" },
     { "unzip", Parameter::PT_BOOL, nullptr, "true", "decompress gzip and deflate message bodies" },
+    { "normalize_utf", Parameter::PT_BOOL, nullptr, "true", "normalize charset utf encodings" },
     { "bad_characters", Parameter::PT_BIT_LIST, "255", nullptr,
           "alert when any of specified bytes are present in URI after percent decoding" },
     { "ignore_unreserved", Parameter::PT_STRING, "(optional)", nullptr,
@@ -94,6 +95,10 @@ bool NHttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("unzip"))
     {
         params->unzip = val.get_bool();
+    }
+    else if (val.is("normalize_utf"))
+    {
+        params->normalize_utf = val.get_bool();
     }
     else if (val.is("bad_characters"))
     {

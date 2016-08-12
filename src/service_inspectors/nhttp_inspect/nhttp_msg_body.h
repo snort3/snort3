@@ -50,12 +50,15 @@ protected:
 
 private:
     void do_file_processing();
+    void do_utf_decoding(const Field& input, Field& output, bool& decoded_alloc);
 
     Field detect_data;
     Field file_data;
     const bool detection_section;
     Field classic_client_body;   // URI normalization applied
     bool classic_client_body_alloc = false;
+    Field decoded_body;
+    bool decoded_body_alloc = false;
 };
 
 #endif

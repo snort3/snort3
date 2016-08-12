@@ -40,6 +40,12 @@ void NHttpMsgBodyChunk::update_flow()
             delete session_data->mime_state;
             session_data->mime_state = nullptr;
         }
+
+        if ((source_id == SRC_SERVER) && (session_data->utf_state != nullptr))
+        {
+            delete session_data->utf_state;
+            session_data->utf_state = nullptr;
+        }
     }
     else
     {

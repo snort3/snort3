@@ -75,6 +75,11 @@ NHttpFlowData::~NHttpFlowData()
         delete mime_state;
     }
 
+    if (utf_state != nullptr )
+    {
+        delete utf_state;
+    }
+
     delete_pipeline();
 }
 
@@ -119,6 +124,11 @@ void NHttpFlowData::half_reset(SourceId source_id)
         if (transaction[SRC_SERVER]->final_response())
             expected_trans_num[SRC_SERVER]++;
         status_code_num = STAT_NOT_PRESENT;
+        if (utf_state != nullptr)
+        {
+            delete utf_state;
+            utf_state = nullptr;
+        }
     }
 }
 

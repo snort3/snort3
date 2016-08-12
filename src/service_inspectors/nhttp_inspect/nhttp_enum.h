@@ -190,6 +190,8 @@ enum Infraction
     INF_CHUNKED_BEFORE_END,
     INF_OVERSIZE_DIR,
     INF_POST_WO_BODY,
+    INF_UTF_NORM_FAIL,
+    INF_UTF7,
     INF__MAX_VALUE
 };
 

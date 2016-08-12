@@ -183,76 +183,24 @@ int hi_server_norm(HI_SESSION* session, HttpSessionData* hsd)
 
     if (session->server_conf->normalize_utf && (ServerResp->body_size > 0))
     {
-        int bytes_copied, result, charset;
+        int bytes_copied;
+        bool decoded;
 
         if (hsd)
         {
-            charset = get_decode_utf_state_charset(&(hsd->utf_state));
+            decoded = hsd->utf_state->decode_utf((const char*)ServerResp->body, ServerResp->body_size,
+                (char*)HttpDecodeBuf.data, sizeof(HttpDecodeBuf.data), &bytes_copied);
 
-            if (charset == CHARSET_UNKNOWN)
-            {
-                /* Got a text content type but no charset.
-                 * Look for potential BOM (Byte Order Mark) */
-                if (ServerResp->body_size >= 4)
-                {
-                    uint8_t size = 0;
-
-                    if (!memcmp(ServerResp->body, "\x00\x00\xFE\xFF", 4))
-                    {
-                        charset = CHARSET_UTF32BE;
-                        size = 4;
-                    }
-                    else if (!memcmp(ServerResp->body, "\xFF\xFE\x00\x00", 4))
-                    {
-                        charset = CHARSET_UTF32LE;
-                        size = 4;
-                    }
-                    else if (!memcmp(ServerResp->body, "\xFE\xFF", 2))
-                    {
-                        charset = CHARSET_UTF16BE;
-                        size = 2;
-                    }
-                    else if (!memcmp(ServerResp->body, "\xFF\xFE", 2))
-                    {
-                        charset = CHARSET_UTF16LE;
-                        size = 2;
-                    }
-                    else
-                        charset = CHARSET_DEFAULT; // ensure we don't try again
-
-                    ServerResp->body += size;
-                    ServerResp->body_size -= size;
-                }
-                else
-                    charset = CHARSET_DEFAULT; // ensure we don't try again
-
-                set_decode_utf_state_charset(&(hsd->utf_state), charset);
-            }
-
-            /* Normalize server responses with utf-16le, utf-16be, utf-32le,
-               or utf-32be charsets.*/
-            switch (charset)
-            {
-            case CHARSET_UTF16LE:
-            case CHARSET_UTF16BE:
-            case CHARSET_UTF32LE:
-            case CHARSET_UTF32BE:
-                result = DecodeUTF((char*)ServerResp->body, ServerResp->body_size,
-                    (char*)HttpDecodeBuf.data, sizeof(HttpDecodeBuf.data),
-                    &bytes_copied,
-                    &(hsd->utf_state));
-
-                if (result == DECODE_UTF_FAILURE)
+                if (!decoded)
                 {
                     hi_set_event(GID_HTTP_SERVER, HI_SERVER_UTF_NORM_FAIL);
                 }
-                SetHttpDecode((uint16_t)bytes_copied);
-                ServerResp->body = HttpDecodeBuf.data;
-                ServerResp->body_size = HttpDecodeBuf.len;
-                break;
-            default:
-                break;
-            }
+                else if ( bytes_copied )
+                {
+                    SetHttpDecode((uint16_t)bytes_copied);
+                    ServerResp->body = HttpDecodeBuf.data;
+                    ServerResp->body_size = HttpDecodeBuf.len;
+                }
         }
     }
 

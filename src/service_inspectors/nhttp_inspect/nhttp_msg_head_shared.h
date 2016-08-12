@@ -52,6 +52,8 @@ public:
     static const StrCode header_list[];
     static const StrCode trans_code_list[];
     static const StrCode content_code_list[];
+    static const StrCode charset_code_list[];
+    static const StrCode charset_code_opt_list[];
 
 protected:
     NHttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size,
@@ -73,6 +75,7 @@ private:
     static const HeaderNormalizer NORMALIZER_BASIC;
     static const HeaderNormalizer NORMALIZER_NUMBER;
     static const HeaderNormalizer NORMALIZER_TOKEN_LIST;
+    static const HeaderNormalizer NORMALIZER_CHARSET;
     static const HeaderNormalizer NORMALIZER_CAT;
     static const HeaderNormalizer NORMALIZER_COOKIE;
 

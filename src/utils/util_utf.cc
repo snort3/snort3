@@ -22,6 +22,7 @@
 #include "util_utf.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #define DSTATE_FIRST 0
 #define DSTATE_SECOND 1
@@ -30,47 +31,36 @@
 
 void keep_utf_lib() { }
 
-/* init a new decode_utf_state_t */
-int init_decode_utf_state(decode_utf_state_t* p)
+UtfDecodeSession::UtfDecodeSession()
 {
-    if (p == NULL)
-        return DECODE_UTF_FAILURE;
-
-    p->state = DSTATE_FIRST;
-    p->charset = CHARSET_DEFAULT;
-    return DECODE_UTF_SUCCESS;
+    init_decode_utf_state();
 }
 
-/* terminate a decode_utf_state_t.
-   returns DECODE_UTF_FAILURE if we're not at the base state. */
-int term_decode_utf_state(decode_utf_state_t* dead)
+/* init a new decode_utf_state_t */
+void UtfDecodeSession::init_decode_utf_state()
 {
-    if (dead == NULL)
-        return DECODE_UTF_FAILURE;
-
-    if (dead->state != DSTATE_FIRST)
-        return DECODE_UTF_FAILURE;
-
-    return DECODE_UTF_SUCCESS;
+    dstate.state = DSTATE_FIRST;
+    dstate.charset = CHARSET_DEFAULT;
 }
 
 /* setters & getters */
-int set_decode_utf_state_charset(decode_utf_state_t* dstate, int charset)
+void UtfDecodeSession::set_decode_utf_state_charset(CharsetCode charset)
 {
-    if (dstate == NULL)
-        return DECODE_UTF_FAILURE;
-
-    dstate->state = DSTATE_FIRST;
-    dstate->charset = charset;
-    return DECODE_UTF_SUCCESS;
+    dstate.state = DSTATE_FIRST;
+    dstate.charset = charset;
 }
 
-int get_decode_utf_state_charset(decode_utf_state_t* dstate)
+CharsetCode UtfDecodeSession::get_decode_utf_state_charset()
 {
-    if (dstate == NULL)
-        return DECODE_UTF_FAILURE;
+    return dstate.charset;
+}
 
-    return dstate->charset;
+bool UtfDecodeSession::is_utf_encoding_present()
+{
+    if ( get_decode_utf_state_charset() > CHARSET_IRRELEVANT )
+        return true;
+    else
+        return false;
 }
 
 /* Decode UTF-16le from src to dst.
@@ -80,39 +70,34 @@ int get_decode_utf_state_charset(decode_utf_state_t* dstate)
  * dst          => buffer to write translated text
  * dst_len      => length allocated for dst
  * bytes_copied => store the # of bytes copied to dst
- * dstate       => saved state from last call
  *
- * returns: DECODE_UTF_SUCCESS or DECODE_UTF_FAILURE
+ * returns: true or false
  */
 
-static int DecodeUTF16LE(char* src, unsigned int src_len, char* dst, unsigned int dst_len,
-    int* bytes_copied, decode_utf_state_t* dstate)
+bool UtfDecodeSession::DecodeUTF16LE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len,
+    int* bytes_copied)
 {
-    char* src_index = src;
+    const char* src_index = src;
     char* dst_index = dst;
-    int result = DECODE_UTF_SUCCESS;
+    bool result = true;
 
-    if (src == NULL || dst == NULL || bytes_copied == NULL || dstate == NULL || src_len == 0 ||
-        dst_len == 0)
-        return DECODE_UTF_FAILURE;
-
-    while ((src_index < (char*)(src + src_len)) &&
-        (dst_index < (char*)(dst + dst_len)))
+    while ((src_index < (src + src_len)) &&
+        (dst_index < (dst + dst_len)))
     {
         /* Copy first byte, skip second, failing if second byte != 0 */
-        switch (dstate->state)
+        switch (dstate.state)
         {
         case DSTATE_FIRST:
             *dst_index++ = *src_index++;
-            dstate->state = DSTATE_SECOND;
+            dstate.state = DSTATE_SECOND;
             break;
         case DSTATE_SECOND:
             if (*src_index++ > 0)
-                result = DECODE_UTF_FAILURE;
-            dstate->state = DSTATE_FIRST;
+                result = false;
+            dstate.state = DSTATE_FIRST;
             break;
         default:
-            return DECODE_UTF_FAILURE;
+            return false;
         }
     }
 
@@ -128,39 +113,34 @@ static int DecodeUTF16LE(char* src, unsigned int src_len, char* dst, unsigned in
  * dst          => buffer to write translated text
  * dst_len      => length allocated for dst
  * bytes_copied => store the # of bytes copied to dst
- * dstate       => saved state from last call
  *
- * returns: DECODE_UTF_SUCCESS or DECODE_UTF_FAILURE
+ * returns: true or false
  */
 
-static int DecodeUTF16BE(char* src, unsigned int src_len, char* dst, unsigned int dst_len,
-    int* bytes_copied, decode_utf_state_t* dstate)
+bool UtfDecodeSession::DecodeUTF16BE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len,
+    int* bytes_copied)
 {
-    char* src_index = src;
+    const char* src_index = src;
     char* dst_index = dst;
-    int result = DECODE_UTF_SUCCESS;
+    bool result = true;
 
-    if (src == NULL || dst == NULL || bytes_copied == NULL || dstate == NULL || src_len == 0 ||
-        dst_len == 0)
-        return DECODE_UTF_FAILURE;
-
-    while ((src_index < (char*)(src + src_len)) &&
-        (dst_index < (char*)(dst + dst_len)))
+    while ((src_index < (src + src_len)) &&
+        (dst_index < (dst + dst_len)))
     {
         /* Skip first byte, copy second. */
-        switch (dstate->state)
+        switch (dstate.state)
         {
         case DSTATE_FIRST:
             if (*src_index++ > 0)
-                result = DECODE_UTF_FAILURE;
-            dstate->state = DSTATE_SECOND;
+                result = false;
+            dstate.state = DSTATE_SECOND;
             break;
         case DSTATE_SECOND:
             *dst_index++ = *src_index++;
-            dstate->state = DSTATE_FIRST;
+            dstate.state = DSTATE_FIRST;
             break;
         default:
-            return DECODE_UTF_FAILURE;
+            return false;
         }
     }
 
@@ -176,44 +156,39 @@ static int DecodeUTF16BE(char* src, unsigned int src_len, char* dst, unsigned in
  * dst          => buffer to write translated text
  * dst_len      => length allocated for dst
  * bytes_copied => store the # of bytes copied to dst
- * dstate       => saved state from last call
  *
- * returns: DECODE_UTF_SUCCESS or DECODE_UTF_FAILURE
+ * returns: true or false
  */
 
-static int DecodeUTF32LE(char* src, unsigned int src_len, char* dst, unsigned int dst_len,
-    int* bytes_copied, decode_utf_state_t* dstate)
+bool UtfDecodeSession::DecodeUTF32LE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len,
+    int* bytes_copied)
 {
-    char* src_index = src;
+    const char* src_index = src;
     char* dst_index = dst;
-    int result = DECODE_UTF_SUCCESS;
+    bool result = true;
 
-    if (src == NULL || dst == NULL || bytes_copied == NULL || dstate == NULL || src_len == 0 ||
-        dst_len == 0)
-        return DECODE_UTF_FAILURE;
-
-    while ((src_index < (char*)(src + src_len)) &&
-        (dst_index < (char*)(dst + dst_len)))
+    while ((src_index < (src + src_len)) &&
+        (dst_index < (dst + dst_len)))
     {
         /* Copy the first byte, then skip three. */
-        switch (dstate->state)
+        switch (dstate.state)
         {
         case DSTATE_FIRST:
             *dst_index++ = *src_index++;
-            dstate->state++;
+            dstate.state++;
             break;
         case DSTATE_SECOND:
         case DSTATE_THIRD:
         case DSTATE_FOURTH:
             if (*src_index++ > 0)
-                result = DECODE_UTF_FAILURE;
-            if (dstate->state == DSTATE_FOURTH)
-                dstate->state = DSTATE_FIRST;
+                result = false;
+            if (dstate.state == DSTATE_FOURTH)
+                dstate.state = DSTATE_FIRST;
             else
-                dstate->state++;
+                dstate.state++;
             break;
         default:
-            return DECODE_UTF_FAILURE;
+            return false;
         }
     }
 
@@ -229,41 +204,36 @@ static int DecodeUTF32LE(char* src, unsigned int src_len, char* dst, unsigned in
  * dst          => buffer to write translated text
  * dst_len      => length allocated for dst
  * bytes_copied => store the # of bytes copied to dst
- * dstate       => saved state from last call
  *
- * returns: DECODE_UTF_SUCCESS or DECODE_UTF_FAILURE
+ * returns: true or false
  */
 
-static int DecodeUTF32BE(char* src, unsigned int src_len, char* dst, unsigned int dst_len,
-    int* bytes_copied, decode_utf_state_t* dstate)
+bool UtfDecodeSession::DecodeUTF32BE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len,
+    int* bytes_copied)
 {
-    char* src_index = src;
+    const char* src_index = src;
     char* dst_index = dst;
-    int result = DECODE_UTF_SUCCESS;
+    bool result = true;
 
-    if (src == NULL || dst == NULL || bytes_copied == NULL || dstate == NULL || src_len == 0 ||
-        dst_len == 0)
-        return DECODE_UTF_FAILURE;
-
-    while ((src_index < (char*)(src + src_len)) &&
-        (dst_index < (char*)(dst + dst_len)))
+    while ((src_index < (src + src_len)) &&
+        (dst_index < (dst + dst_len)))
     {
         /* Skip 3 bytes, copy the fourth. */
-        switch (dstate->state)
+        switch (dstate.state)
         {
         case DSTATE_FIRST:
         case DSTATE_SECOND:
         case DSTATE_THIRD:
             if (*src_index++ > 0)
-                result = DECODE_UTF_FAILURE;
-            dstate->state++;
+                result = false;
+            dstate.state++;
             break;
         case DSTATE_FOURTH:
             *dst_index++ = *src_index++;
-            dstate->state = DSTATE_FIRST;
+            dstate.state = DSTATE_FIRST;
             break;
         default:
-            return DECODE_UTF_FAILURE;
+            return false;
         }
     }
 
@@ -272,28 +242,78 @@ static int DecodeUTF32BE(char* src, unsigned int src_len, char* dst, unsigned in
     return result;
 }
 
-/* Wrapper function for DecodeUTF{16,32}{LE,BE} */
-int DecodeUTF(
-    char* src, unsigned int src_len, char* dst, unsigned int dst_len,
-    int* bytes_copied, decode_utf_state_t* dstate)
+void UtfDecodeSession::determine_charset(const char** src, unsigned int *src_len)
 {
-    if ( !src || !dst || !bytes_copied || !dstate || !src_len || !dst_len )
-        return DECODE_UTF_FAILURE;
+    CharsetCode charset;
+    if (dstate.charset == CHARSET_UNKNOWN)
+    {
+        /* Got a text content type but no charset.
+         * Look for potential BOM (Byte Order Mark) */
+        if (*src_len >= 4)
+        {
+            uint8_t size = 0;
 
-    switch (dstate->charset)
+            if (!memcmp(*src, "\x00\x00\xFE\xFF", 4))
+            {
+                charset = CHARSET_UTF32BE;
+                size = 4;
+            }
+            else if (!memcmp(*src, "\xFF\xFE\x00\x00", 4))
+            {
+                charset = CHARSET_UTF32LE;
+                size = 4;
+            }
+            else if (!memcmp(*src, "\xFE\xFF", 2))
+            {
+                charset = CHARSET_UTF16BE;
+                size = 2;
+            }
+            else if (!memcmp(*src, "\xFF\xFE", 2))
+            {
+                charset = CHARSET_UTF16LE;
+                size = 2;
+            }
+            else
+                charset = CHARSET_DEFAULT; // ensure we don't try again
+            *src +=size;
+            *src_len -=size;
+        }
+        else
+            charset = CHARSET_DEFAULT; // ensure we don't try again
+        set_decode_utf_state_charset(charset);
+
+    }
+}
+
+/* Wrapper function for DecodeUTF{16,32}{LE,BE} */
+bool UtfDecodeSession::decode_utf(
+    const char* src, unsigned int src_len, char* dst, unsigned int dst_len,
+    int* bytes_copied)
+{
+    if ( !src || !dst || !bytes_copied || !src_len || !dst_len )
+        return false;
+
+    *bytes_copied = 0;
+
+    determine_charset(&src, &src_len);
+
+    if( !src_len)
+        return false;
+
+    switch (dstate.charset)
     {
     case CHARSET_UTF16LE:
-        return DecodeUTF16LE(src, src_len, dst, dst_len, bytes_copied, dstate);
+        return DecodeUTF16LE(src, src_len, dst, dst_len, bytes_copied);
     case CHARSET_UTF16BE:
-        return DecodeUTF16BE(src, src_len, dst, dst_len, bytes_copied, dstate);
+        return DecodeUTF16BE(src, src_len, dst, dst_len, bytes_copied);
     case CHARSET_UTF32LE:
-        return DecodeUTF32LE(src, src_len, dst, dst_len, bytes_copied, dstate);
+        return DecodeUTF32LE(src, src_len, dst, dst_len, bytes_copied);
     case CHARSET_UTF32BE:
-        return DecodeUTF32BE(src, src_len, dst, dst_len, bytes_copied, dstate);
+        return DecodeUTF32BE(src, src_len, dst, dst_len, bytes_copied);
+    default:
+        break;
     }
 
-    /* In case the function is called with a bad charset. */
-    *bytes_copied = 0;
-    return DECODE_UTF_FAILURE;
+    return true;
 }
 

@@ -27,6 +27,8 @@
 #include "framework/module.h"
 #include "framework/counts.h"
 
+#include "utils/util_utf.h"
+
 #include "nhttp_enum.h"
 #include "nhttp_str_to_code.h"
 #include "nhttp_normalizers.h"
@@ -173,6 +175,24 @@ const StrCode NHttpMsgHeadShared::content_code_list[] =
     { 0,                         nullptr }
 };
 
+const StrCode NHttpMsgHeadShared::charset_code_list[] =
+{
+    { CHARSET_DEFAULT,       "charset=utf-8" },
+    { CHARSET_UTF7,          "charset=utf-7" },
+    { CHARSET_UTF16LE,       "charset=utf-16le" },
+    { CHARSET_UTF16BE,       "charset=utf-16be" },
+    { CHARSET_UTF32LE,       "charset=utf-32le" },
+    { CHARSET_UTF32BE,       "charset=utf-32be" },
+    { 0,                     nullptr }
+};
+
+const StrCode NHttpMsgHeadShared::charset_code_opt_list[] =
+{
+    { CHARSET_UNKNOWN,       "charset=utf-" },
+    { CHARSET_IRRELEVANT,    "charset=" },
+    { 0,                     nullptr }
+};
+
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_BASIC
     { false, nullptr, nullptr, nullptr };
 
@@ -181,6 +201,9 @@ const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NUMBER
 
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TOKEN_LIST
     { true, norm_remove_lws, norm_to_lower, nullptr };
+
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CHARSET
+    { true, norm_remove_quotes_lws, norm_to_lower, nullptr };
 
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CAT
     { true, norm_remove_lws, nullptr, nullptr };
@@ -245,7 +268,7 @@ const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] 
     [HEAD_CONTENT_LOCATION] = &NORMALIZER_BASIC,
     [HEAD_CONTENT_MD5] = &NORMALIZER_BASIC,
     [HEAD_CONTENT_RANGE] = &NORMALIZER_BASIC,
-    [HEAD_CONTENT_TYPE] = &NORMALIZER_BASIC,
+    [HEAD_CONTENT_TYPE] = &NORMALIZER_CHARSET,
     [HEAD_EXPIRES] = &NORMALIZER_BASIC,
     [HEAD_LAST_MODIFIED] = &NORMALIZER_BASIC,
     [HEAD_X_FORWARDED_FOR] = &NORMALIZER_CAT,

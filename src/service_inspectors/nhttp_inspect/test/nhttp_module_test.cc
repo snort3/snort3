@@ -44,6 +44,7 @@ void Value::get_bits(std::bitset<256ul>&) const {}
 int SnortEventqAdd(unsigned int, unsigned int, RuleType) { return 0; }
 
 int32_t str_to_code(const uint8_t*, const int32_t, const StrCode []) { return 0; }
+int32_t substr_to_code(const uint8_t*, const int32_t, const StrCode []) { return 0; }
 long NHttpTestManager::print_amount {};
 bool NHttpTestManager::print_hex {};
 

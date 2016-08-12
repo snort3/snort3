@@ -25,6 +25,7 @@
 
 #include "stream/stream_api.h"
 #include "mime/file_mime_process.h"
+#include "utils/util_utf.h"
 
 #include "nhttp_cutter.h"
 #include "nhttp_infractions.h"
@@ -107,6 +108,7 @@ private:
     int64_t detect_depth_remaining[2] = { NHttpEnums::STAT_NOT_PRESENT,
         NHttpEnums::STAT_NOT_PRESENT };
     MimeSession* mime_state = nullptr;  // SRC_CLIENT only
+    UtfDecodeSession* utf_state = nullptr; //SRC_SERVER only
     uint64_t expected_trans_num[2] = { 1, 1 };
 
     // number of user data octets seen so far (regular body or chunks)

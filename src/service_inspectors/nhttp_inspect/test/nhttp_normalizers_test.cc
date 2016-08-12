@@ -28,6 +28,7 @@
 
 // Stubs whose sole purpose is to make the test code link
 int32_t str_to_code(const uint8_t*, const int32_t, const StrCode []) { return 0; }
+int32_t substr_to_code(const uint8_t*, const int32_t, const StrCode []) { return 0; }
 const bool NHttpEnums::is_sp_tab[256] {};
 long NHttpTestManager::print_amount {};
 bool NHttpTestManager::print_hex {};

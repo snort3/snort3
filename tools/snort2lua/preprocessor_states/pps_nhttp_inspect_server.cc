@@ -147,7 +147,7 @@ bool NHttpInspectServer::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("normalize_headers");
 
         else if (!keyword.compare("normalize_utf"))
-            table_api.add_deleted_comment("normalize_utf");
+            tmpval = table_api.add_option("normalize_utf", true);
 
         else if (!keyword.compare("log_uri"))
             table_api.add_deleted_comment("log_uri");

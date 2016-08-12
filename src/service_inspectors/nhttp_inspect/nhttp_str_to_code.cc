@@ -38,3 +38,17 @@ SO_PUBLIC int32_t str_to_code(const uint8_t* text, const int32_t text_len, const
     return NHttpEnums::STAT_OTHER;
 }
 
+SO_PUBLIC int32_t substr_to_code(const uint8_t* text, const int32_t text_len, const StrCode table[])
+{
+    for (int32_t k=0; table[k].name != nullptr; k++)
+    {
+        int32_t len =  (text_len <= (int)strlen(table[k].name) ) ? text_len : (int)strlen(table[k].name);
+
+        if (memcmp(text, table[k].name, len) == 0)
+        {
+            return table[k].code;
+        }
+    }
+    return NHttpEnums::STAT_OTHER;
+}
+

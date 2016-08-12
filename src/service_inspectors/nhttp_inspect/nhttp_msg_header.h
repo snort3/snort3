@@ -46,6 +46,7 @@ private:
     void prepare_body();
     void setup_file_processing();
     void setup_decompression();
+    void setup_utf_decoding();
 
     bool detection_section = true;
 

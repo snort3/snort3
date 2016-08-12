@@ -47,20 +47,35 @@ NHttpMsgBody::~NHttpMsgBody()
 {
     if (classic_client_body_alloc)
         classic_client_body.delete_buffer();
+
+    if (decoded_body_alloc)
+        decoded_body.delete_buffer();
 }
 
 void NHttpMsgBody::analyze()
 {
-    detect_data.length = (msg_text.length <= session_data->detect_depth_remaining[source_id]) ?
-       msg_text.length : session_data->detect_depth_remaining[source_id];
-    detect_data.start = msg_text.start;
+    do_utf_decoding(msg_text, decoded_body, decoded_body_alloc);
+    if ( decoded_body_alloc )
+    {
+        detect_data.length = (decoded_body.length <= session_data->detect_depth_remaining[source_id]) ?
+           decoded_body.length : session_data->detect_depth_remaining[source_id];
+        detect_data.start = decoded_body.start;
+    }
+    else
+    {
+        detect_data.length = (msg_text.length <= session_data->detect_depth_remaining[source_id]) ?
+           msg_text.length : session_data->detect_depth_remaining[source_id];
+        detect_data.start = msg_text.start;
+    }
+
     session_data->detect_depth_remaining[source_id] -= detect_data.length;
 
     // Always set file data. File processing will later set a new value in some cases.
     file_data.length = detect_data.length;
+
     if (file_data.length > 0)
     {
-        file_data.start = msg_text.start;
+        file_data.start = detect_data.start;
         set_file_data(const_cast<uint8_t*>(file_data.start), (unsigned)file_data.length);
     }
 
@@ -70,6 +85,36 @@ void NHttpMsgBody::analyze()
     }
 
     body_octets += msg_text.length;
+}
+
+void NHttpMsgBody::do_utf_decoding(const Field& input, Field& output, bool& decoded_alloc)
+{
+
+    if (!params->normalize_utf || source_id == SRC_CLIENT )
+        return;
+
+    if (session_data->utf_state && session_data->utf_state->is_utf_encoding_present() )
+    {
+        int bytes_copied;
+        bool decoded;
+        uint8_t* buffer = new uint8_t[input.length];
+        decoded = session_data->utf_state->decode_utf((const char*)input.start, input.length,
+                            (char*)buffer, input.length, &bytes_copied);
+        if (!decoded)
+        {
+            delete[] buffer;
+            infractions += INF_UTF_NORM_FAIL;
+            events.create_event(EVENT_UTF_NORM_FAIL);
+        }
+        else if ( bytes_copied )
+        {
+            output.set(bytes_copied, buffer);
+            decoded_alloc = true;
+        }
+        else
+            delete[] buffer;
+    }
+
 }
 
 void NHttpMsgBody::do_file_processing()

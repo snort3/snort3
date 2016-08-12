@@ -185,6 +185,7 @@ void NHttpMsgHeader::prepare_body()
     }
     setup_file_processing();
     setup_decompression();
+    setup_utf_decoding();
     update_depth();
     session_data->infractions[source_id].reset();
     session_data->events[source_id].reset();
@@ -259,6 +260,54 @@ void NHttpMsgHeader::setup_decompression()
         session_data->compress_stream[source_id] = nullptr;
     }
 }
+
+void NHttpMsgHeader::setup_utf_decoding()
+{
+    Field last_token;
+    CharsetCode charset_code;
+
+    if (!params->normalize_utf || source_id == SRC_CLIENT )
+        return;
+
+    const Field& norm_content_type = get_header_value_norm(HEAD_CONTENT_TYPE);
+    if (norm_content_type.length <= 0)
+        return;
+
+    get_last_token(norm_content_type, last_token, ';');
+
+    // No semicolon in the Content-Type header
+    if ( last_token.length == norm_content_type.length )
+    {
+        if( SnortStrnStr((const char*)norm_content_type.start, norm_content_type.length, "text") )
+        {
+            charset_code = CHARSET_UNKNOWN;
+        }
+        else
+            return;
+    }
+    else
+    {
+
+        charset_code = (CharsetCode)str_to_code(last_token.start, last_token.length, NHttpMsgHeadShared::charset_code_list);
+
+        if( charset_code == CHARSET_OTHER )
+        {
+            charset_code = (CharsetCode)substr_to_code(last_token.start, last_token.length, NHttpMsgHeadShared::charset_code_opt_list);
+
+            if( charset_code != CHARSET_UNKNOWN ) 
+                return;
+        }
+        else if ( charset_code == CHARSET_UTF7 )
+        {
+            infractions += INF_UTF7;
+            events.create_event(EVENT_UTF7);
+        }
+    }
+
+    session_data->utf_state = new UtfDecodeSession();
+    session_data->utf_state->set_decode_utf_state_charset(charset_code);
+}
+
 
 #ifdef REG_TEST
 void NHttpMsgHeader::print_section(FILE* output)

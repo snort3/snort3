@@ -345,7 +345,7 @@ static inline const u_char* extract_http_content_type_charset(
     sf_unfold_header(p, end-p, unfold_buf, sizeof(unfold_buf), &unfold_size, 0, 0);
     if (!unfold_size)
     {
-        set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_DEFAULT);
+        hsd->utf_state->set_decode_utf_state_charset(CHARSET_DEFAULT);
         return p;
     }
     p += unfold_size;
@@ -356,14 +356,14 @@ static inline const u_char* extract_http_content_type_charset(
     ptr = SnortStrcasestr(ptr, (int)(ptr_end - ptr), "text");
     if (!ptr)
     {
-        set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_DEFAULT);
+        hsd->utf_state->set_decode_utf_state_charset(CHARSET_DEFAULT);
         return p;
     }
 
     ptr = SnortStrcasestr(ptr, (int)(ptr_end - ptr), "utf-");
     if (!ptr)
     {
-        set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_UNKNOWN);
+        hsd->utf_state->set_decode_utf_state_charset(CHARSET_UNKNOWN);
         return p;
     }
     ptr += 4; /* length of "utf-" */
@@ -371,28 +371,28 @@ static inline const u_char* extract_http_content_type_charset(
 
     if ((cmplen > 0) && (*ptr == '8'))
     {
-        set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_DEFAULT);
+        hsd->utf_state->set_decode_utf_state_charset(CHARSET_DEFAULT);
     }
     else if ((cmplen > 0) && (*ptr == '7'))
     {
-        set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_UTF7);
+        hsd->utf_state->set_decode_utf_state_charset(CHARSET_UTF7);
         hi_set_event(GID_HTTP_SERVER, HI_SERVER_UTF7);
     }
     else if (cmplen >= 4)
     {
         if ( !strncasecmp(ptr, "16le", 4) )
-            set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_UTF16LE);
+            hsd->utf_state->set_decode_utf_state_charset(CHARSET_UTF16LE);
         else if ( !strncasecmp(ptr, "16be", 4) )
-            set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_UTF16BE);
+            hsd->utf_state->set_decode_utf_state_charset(CHARSET_UTF16BE);
         else if ( !strncasecmp(ptr, "32le", 4) )
-            set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_UTF32LE);
+            hsd->utf_state->set_decode_utf_state_charset(CHARSET_UTF32LE);
         else if ( !strncasecmp(ptr, "32be", 4) )
-            set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_UTF32BE);
+            hsd->utf_state->set_decode_utf_state_charset(CHARSET_UTF32BE);
         else
-            set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_UNKNOWN);
+            hsd->utf_state->set_decode_utf_state_charset(CHARSET_UNKNOWN);
     }
     else
-        set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_UNKNOWN);
+        hsd->utf_state->set_decode_utf_state_charset(CHARSET_UNKNOWN);
 
     return p;
 }
@@ -1673,7 +1673,7 @@ static int HttpResponseInspection(HI_SESSION* session, Packet* p, const unsigned
                 }
             }
 
-            if ((get_decode_utf_state_charset(&(sd->utf_state)) != CHARSET_DEFAULT)
+            if ((sd->utf_state->get_decode_utf_state_charset() != CHARSET_DEFAULT)
                 || (ServerConf->normalize_javascript && Server->response.body_size))
             {
                 if ( Server->response.body_size < sizeof(HttpDecodeBuf.data) )

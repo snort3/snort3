@@ -36,6 +36,7 @@ public:
     long request_depth;
     long response_depth;
     bool unzip;
+    bool normalize_utf = true;
     struct UriParam
     {
     public:

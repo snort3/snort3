@@ -54,6 +54,19 @@ int32_t norm_remove_lws(const uint8_t* in_buf, int32_t in_length, uint8_t* out_b
     }
     return length;
 }
+//FIXIT - norm_remove_lws and norm_remove_quotes_lws could be combined into one function
+int32_t norm_remove_quotes_lws(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
+    NHttpInfractions&, NHttpEventGen&)
+{
+    int32_t length = 0;
+    for (int32_t k=0; k < in_length; k++)
+    {
+        if (in_buf[k] == '\'' || in_buf[k] == '\"' || is_sp_tab[in_buf[k]])
+            continue;
+        out_buf[length++] = in_buf[k];
+    }
+    return length;
+}
 
 // Other header-value processing functions (not using the standard normalization signature)
 // Convert a decimal field such as Content-Length to an integer.
@@ -77,16 +90,23 @@ int64_t norm_decimal_integer(const Field& input)
     return total;
 }
 
+void get_last_token(const Field& input, Field& last_token, char ichar)
+{
+    assert(input.length > 0);
+    for (last_token.start = input.start + input.length - 1; (last_token.start >= input.start) &&
+        (*(last_token.start)!= ichar); (last_token.start)--);
+    (last_token.start)++;
+    last_token.length = input.length - (last_token.start - input.start);
+    return;
+}
+
 // Find the last token in a comma-separated field and convert it to an enum
 int32_t norm_last_token_code(const Field& input, const StrCode table[])
 {
-    assert(input.length > 0);
-    const uint8_t* last_start;
-    for (last_start = input.start + input.length - 1; (last_start >= input.start) &&
-        (*last_start != ','); last_start--);
-    last_start++;
-    const int32_t last_length = input.length - (last_start - input.start);
-    return str_to_code(last_start, last_length, table);
+    Field last_token;
+    get_last_token(input, last_token, ',');
+
+    return str_to_code(last_token.start, last_token.length, table);
 }
 
 // Given a comma-separated list of words, does "chunked" appear before the last word

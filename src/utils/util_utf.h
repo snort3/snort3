@@ -24,18 +24,19 @@
 
 #include "main/snort_types.h"
 
-// return codes
-#define DECODE_UTF_SUCCESS  0  // FIXIT-L replace with bool
-#define DECODE_UTF_FAILURE -1
-
-// Character set types 
-#define CHARSET_DEFAULT 0  // FIXIT-L these should be an enum
-#define CHARSET_UTF7    1
-#define CHARSET_UTF16LE 2
-#define CHARSET_UTF16BE 3
-#define CHARSET_UTF32LE 4
-#define CHARSET_UTF32BE 5
-#define CHARSET_UNKNOWN 255
+// Character set types. Used by HTTP inspectors. Update inspectors while changing this value.
+enum CharsetCode
+{
+    CHARSET_DEFAULT=0,
+    CHARSET_OTHER,
+    CHARSET_UTF7,
+    CHARSET_IRRELEVANT,
+    CHARSET_UTF16LE,
+    CHARSET_UTF16BE,
+    CHARSET_UTF32LE,
+    CHARSET_UTF32BE,
+    CHARSET_UNKNOWN
+};
 
 // Since payloads don't have to end on 2/4-byte boundaries, callers to
 // DecodeUTF are responsible for keeping a decode_utf_state_t. This carries
@@ -43,23 +44,27 @@
 struct decode_utf_state_t
 {
     int state;
-    int charset;
+    CharsetCode charset;
 };
 
 void keep_utf_lib();  // FIXIT-L eliminate; required to keep symbols for dyn plugins
 
-// Init & Terminate functions for decode_utf_state_t
-SO_PUBLIC int init_decode_utf_state(decode_utf_state_t*);
-SO_PUBLIC int term_decode_utf_state(decode_utf_state_t*);
-
-// setters & getters
-SO_PUBLIC int set_decode_utf_state_charset(decode_utf_state_t*, int charset);
-SO_PUBLIC int get_decode_utf_state_charset(decode_utf_state_t*);
-
-// UTF-Decoding function prototypes
-SO_PUBLIC int DecodeUTF(
-    char* src, unsigned int src_len, char* dst, unsigned int dst_len,
-    int* bytes_copied, decode_utf_state_t*);
-
+class SO_PUBLIC UtfDecodeSession
+{
+public:
+    UtfDecodeSession();
+    virtual ~UtfDecodeSession() { };
+    void init_decode_utf_state();
+    void set_decode_utf_state_charset(CharsetCode charset);
+    CharsetCode get_decode_utf_state_charset();
+    bool is_utf_encoding_present();
+    bool decode_utf(const char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied);
+private:
+    decode_utf_state_t dstate;
+    bool DecodeUTF16LE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied);
+    bool DecodeUTF16BE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied);
+    bool DecodeUTF32LE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied);
+    bool DecodeUTF32BE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied);
+    void determine_charset(const char** src, unsigned int *src_len);
+};
 #endif
-
