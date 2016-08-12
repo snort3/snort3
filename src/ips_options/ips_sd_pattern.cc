@@ -75,6 +75,7 @@ static THREAD_LOCAL SdStats s_stats;
 
 struct SdPatternConfig
 {
+    PatternMatchData pmd;
     hs_database_t* db;
 
     std::string pii;
@@ -87,6 +88,19 @@ struct SdPatternConfig
         if ( pii == rhs.pii and threshold == rhs.threshold )
             return true;
         return false;
+    }
+
+    SdPatternConfig()
+    { reset(); }
+
+    void reset()
+    {
+        memset(&pmd, 0, sizeof(pmd));
+        pii.clear();
+        threshold = 1;
+        obfuscate_pii = false;
+        validate = nullptr;
+        db = nullptr;
     }
 };
 
@@ -105,11 +119,14 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
+    PatternMatchData* get_pattern() override
+    { return &config.pmd; }
+
     int eval(Cursor&, Packet* p) override;
 
 private:
     unsigned SdSearch(Cursor&, Packet*);
-    const SdPatternConfig config;
+    SdPatternConfig config;
 };
 
 SdPatternOption::SdPatternOption(const SdPatternConfig& c) :
@@ -121,6 +138,11 @@ SdPatternOption::SdPatternOption(const SdPatternConfig& c) :
         ParseError("can't initialize sd_pattern for %s (%d) %p",
                 config.pii.c_str(), err, (void*)s_scratch);
     }
+
+    config.pmd.pattern_buf = config.pii.c_str();
+    config.pmd.pattern_size = config.pii.size();
+    config.pmd.fp_length = config.pmd.pattern_size;
+    config.pmd.fp_offset = 0;
 }
 
 SdPatternOption::~SdPatternOption()

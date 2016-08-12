@@ -1194,7 +1194,6 @@ static void ValidateFastPattern(OptTreeNode* otn)
             if (fpl->isRelative)
             {
                 assert(fp);
-                assert(false);  // fp only is set internally; should not be bad
                 clear_fast_pattern_only(fp);
             }
         }
