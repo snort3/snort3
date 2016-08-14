@@ -26,6 +26,48 @@
 #include "main/snort_debug.h"
 #include "utils/util.h"
 #include "detection/detect.h"
+#include "file_api/file_api.h"
+#include "file_api/file_flows.h"
+#include "detection/detection_util.h"
+
+/********************************************************************
+ * Private function prototypes
+ ********************************************************************/
+static void DCE2_FileDetect();
+static void DCE2_SmbSetNewFileAPIFileTracker(DCE2_SmbSsnData* ssd);
+static void DCE2_SmbResetFileChunks(DCE2_SmbFileTracker* ssd);
+static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd);
+
+/********************************************************************
+ * Inline functions
+ ********************************************************************/
+static inline bool DCE2_SmbIsVerdictSuspend(bool upload, FilePosition position)
+{
+    // FIXIT-M port active response related code
+/*
+#ifdef ACTIVE_RESPONSE
+    if (upload &&
+        ((position == SNORT_FILE_FULL) || (position == SNORT_FILE_END)))
+        return true;
+#else
+*/
+    UNUSED(upload);
+    UNUSED(position);
+/*
+#endif
+*/
+    return false;
+}
+
+static inline bool DCE2_SmbFileUpload(DCE2_SmbFileDirection dir)
+{
+    return dir == DCE2_SMB_FILE_DIRECTION__UPLOAD;
+}
+
+static inline bool DCE2_SmbFileDirUnknown(DCE2_SmbFileDirection dir)
+{
+    return dir == DCE2_SMB_FILE_DIRECTION__UNKNOWN;
+}
 
 /********************************************************************
  * Function:  DCE2_SmbIsTidIPC()
@@ -214,11 +256,10 @@ void DCE2_SmbRemoveUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
             {
                 if (ftracker->uid == uid)
                 {
-// FIXIT-M uncomment after file api is ported
+                    if (ssd->fapi_ftracker == ftracker)
+                        DCE2_SmbFinishFileAPI(ssd);
+                    // FIXIT-M port active response related code
 /*
-                        if (ssd->fapi_ftracker == ftracker)
-                            DCE2_SmbFinishFileAPI(ssd);
-
 #ifdef ACTIVE_RESPONSE
                         if (ssd->fb_ftracker == ftracker)
                             DCE2_SmbFinishFileBlockVerdict(ssd);
@@ -567,13 +608,10 @@ void DCE2_SmbRemoveFileTracker(DCE2_SmbSsnData* ssd, DCE2_SmbFileTracker* ftrack
     DebugFormat(DEBUG_DCE_SMB,
         "Removing file tracker with Fid: 0x%04X\n", ftracker->fid);
 
-    // FIXIT-M uncomment when file api related code is ported
-    /*
     if (ssd->fapi_ftracker == ftracker)
         DCE2_SmbFinishFileAPI(ssd);
-    */
 
-    //FIXIT-M port active response related code
+    // FIXIT-M port active response related code
 /*
 #ifdef ACTIVE_RESPONSE
     if (ssd->fb_ftracker == ftracker)
@@ -887,11 +925,10 @@ void DCE2_SmbRemoveTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
         {
             if (ftracker->tid == (int)tid)
             {
-// FIXIT-M uncomment once file api is ported
-/*
                 if (ssd->fapi_ftracker == ftracker)
                     DCE2_SmbFinishFileAPI(ssd);
-
+                // FIXIT-M port active response related code
+/*
 #ifdef ACTIVE_RESPONSE
                 if (ssd->fb_ftracker == ftracker)
                     DCE2_SmbFinishFileBlockVerdict(ssd);
@@ -1094,8 +1131,7 @@ DCE2_Ret DCE2_SmbProcessRequestData(DCE2_SmbSsnData* ssd,
     else
     {
         ftracker->ff_file_offset = offset;
-        // FIXIT-M uncomment when file processing is ported
-        // DCE2_SmbProcessFileData(ssd, ftracker, data_ptr, data_len, true);
+        DCE2_SmbProcessFileData(ssd, ftracker, data_ptr, data_len, true);
     }
 
     DebugMessage(DEBUG_DCE_SMB, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -1125,8 +1161,7 @@ DCE2_Ret DCE2_SmbProcessResponseData(DCE2_SmbSsnData* ssd,
     else
     {
         ftracker->ff_file_offset = ssd->cur_rtracker->file_offset;
-        // FIXIT-M uncomment when file processing is ported
-        //DCE2_SmbProcessFileData(ssd, ftracker, data_ptr, data_len, false);
+        DCE2_SmbProcessFileData(ssd, ftracker, data_ptr, data_len, false);
     }
 
     DebugMessage(DEBUG_DCE_SMB, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -1442,5 +1477,501 @@ void DCE2_SmbSegAlert(DCE2_SmbSsnData* ssd, uint32_t rule_id)
     dce_alert(GID_DCE2, rule_id, (dce2CommonStats*)&dce2_smb_stats);
 
     DCE2_SmbReturnRpkt(ssd);
+}
+
+static void DCE2_SmbResetFileChunks(DCE2_SmbFileTracker* ftracker)
+{
+    if (ftracker == nullptr)
+        return;
+
+    DCE2_ListDestroy(ftracker->ff_file_chunks);
+    ftracker->ff_file_chunks = nullptr;
+    ftracker->ff_bytes_queued = 0;
+}
+
+void DCE2_SmbAbortFileAPI(DCE2_SmbSsnData* ssd)
+{
+    DCE2_SmbResetFileChunks(ssd->fapi_ftracker);
+    ssd->fapi_ftracker = nullptr;
+}
+
+static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
+{
+    Packet* p = ssd->sd.wire_pkt;
+    DCE2_SmbFileTracker* ftracker = ssd->fapi_ftracker;
+
+    if (ftracker == nullptr)
+        return;
+
+    Profile profile(dce2_smb_pstat_smb_file);
+    FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+    bool upload = (ftracker->ff_file_direction == DCE2_SMB_FILE_DIRECTION__UPLOAD);
+
+    if (get_file_processed_size(p->flow) != 0)
+    {
+        // Never knew the size of the file so never knew when to tell the
+        // fileAPI the upload/download was finished.
+        if ((ftracker->ff_file_size == 0)
+            && (ftracker->ff_bytes_processed != 0))
+        {
+            Profile profile(dce2_smb_pstat_smb_file_api);
+            // FIXIT-M port active response related code
+/*
+#ifdef ACTIVE_RESPONSE
+            if (_dpd.fileAPI->file_process(p, nullptr, 0, SNORT_FILE_END, upload, upload))
+            {
+                if (upload)
+                {
+                    File_Verdict verdict =
+                        _dpd.fileAPI->get_file_verdict(ssd->sd.wire_pkt->stream_session);
+
+                    if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT))
+                        ssd->fb_ftracker = ftracker;
+                }
+            }
+#else
+*/
+            file_flows->file_process(nullptr, 0, SNORT_FILE_END, upload);
+/*
+#endif
+*/
+            dce2_smb_stats.smb_files_processed++;
+        }
+    }
+
+    ssd->fapi_ftracker = nullptr;
+}
+
+static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
+    DCE2_SmbFileTracker* ftracker, const uint8_t* data_ptr,
+    uint32_t data_len, bool upload)
+{
+    FilePosition position;
+    // FIXIT-M port active response related code
+/*
+#ifdef ACTIVE_RESPONSE
+    if (ssd->fb_ftracker && (ssd->fb_ftracker != ftracker))
+        return DCE2_RET__SUCCESS;
+#endif
+*/
+    // Trim data length if it exceeds the maximum file depth
+    if ((ssd->max_file_depth != 0)
+        && (ftracker->ff_bytes_processed + data_len) > (uint64_t)ssd->max_file_depth)
+        data_len = ssd->max_file_depth - ftracker->ff_bytes_processed;
+
+    if (ftracker->ff_file_size == 0)
+    {
+        // Don't know the file size.
+        if ((ftracker->ff_bytes_processed == 0) && (ssd->max_file_depth != 0)
+            && (data_len == (uint64_t)ssd->max_file_depth))
+            position = SNORT_FILE_FULL;
+        else if (ftracker->ff_bytes_processed == 0)
+            position = SNORT_FILE_START;
+        else if ((ssd->max_file_depth != 0)
+            && ((ftracker->ff_bytes_processed + data_len) == (uint64_t)ssd->max_file_depth))
+            position = SNORT_FILE_END;
+        else
+            position = SNORT_FILE_MIDDLE;
+    }
+    else
+    {
+        if ((ftracker->ff_bytes_processed == 0)
+            && ((data_len == ftracker->ff_file_size)
+            || ((ssd->max_file_depth != 0) && (data_len == (uint64_t)ssd->max_file_depth))))
+            position = SNORT_FILE_FULL;
+        else if (ftracker->ff_bytes_processed == 0)
+            position = SNORT_FILE_START;
+        else if (((ftracker->ff_bytes_processed + data_len) >= ftracker->ff_file_size)
+            || ((ssd->max_file_depth != 0)
+            && ((ftracker->ff_bytes_processed + data_len) == (uint64_t)ssd->max_file_depth)))
+            position = SNORT_FILE_END;
+        else
+            position = SNORT_FILE_MIDDLE;
+    }
+
+    DebugMessage(DEBUG_DCE_SMB, "Sending SMB file data to file API ........\n");
+
+    Profile profile(dce2_smb_pstat_smb_file_api);
+    FileFlows* file_flows = FileFlows::get_file_flows(ssd->sd.wire_pkt->flow);
+    if (!file_flows->file_process((uint8_t*)data_ptr, (int)data_len, position, upload,
+        DCE2_SmbIsVerdictSuspend(upload, position)))
+    {
+        DebugFormat(DEBUG_DCE_SMB, "File API returned FAILURE "
+            "for \"%s\" (0x%02X) %s\n", ftracker->file_name,
+            ftracker->fid, upload ? "UPLOAD" : "DOWNLOAD");
+
+        // Failure.  Abort tracking this file under file API
+        return DCE2_RET__ERROR;
+    }
+    else
+    {
+        DebugFormat(DEBUG_DCE_SMB, "File API returned SUCCESS "
+            "for \"%s\" (0x%02X) %s\n", ftracker->file_name,
+            ftracker->fid, upload ? "UPLOAD" : "DOWNLOAD");
+
+        if (((position == SNORT_FILE_START) || (position == SNORT_FILE_FULL))
+            && (strlen(ftracker->file_name) != 0))
+        {
+            file_flows->set_file_name((uint8_t*)ftracker->file_name, strlen(ftracker->file_name));
+        }
+
+        if ((position == SNORT_FILE_FULL) || (position == SNORT_FILE_END))
+        {
+            // FIXIT-M port active response related code
+/*#ifdef
+ ACTIVE_RESPONSE
+            if (upload)
+            {
+                File_Verdict verdict = _dpd.fileAPI->get_file_verdict(ssd->sd.wire_pkt->stream_session);
+
+                if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT)
+                        || (verdict == FILE_VERDICT_PENDING))
+                {
+                    ssd->fb_ftracker = ftracker;
+                }
+            }
+#endif
+*/
+            ftracker->ff_sequential_only = false;
+
+            dce2_smb_stats.smb_files_processed++;
+            return DCE2_RET__FULL;
+        }
+    }
+
+    return DCE2_RET__SUCCESS;
+}
+
+static int DCE2_SmbFileOffsetCompare(const void* a, const void* b)
+{
+    const DCE2_SmbFileChunk* x = (DCE2_SmbFileChunk*)a;
+    const DCE2_SmbFileChunk* y = (DCE2_SmbFileChunk*)b;
+
+    if (x->offset > y->offset)
+        return 1;
+    if (x->offset < y->offset)
+        return -1;
+
+    return 0;
+}
+
+static void DCE2_SmbFileChunkFree(void* data)
+{
+    DCE2_SmbFileChunk* fc = (DCE2_SmbFileChunk*)data;
+
+    if (fc == nullptr)
+        return;
+
+    if (fc->data != nullptr)
+        snort_free((void*)fc->data);
+
+    snort_free((void*)fc);
+}
+
+static DCE2_Ret DCE2_SmbHandleOutOfOrderFileData(DCE2_SmbSsnData* ssd,
+    DCE2_SmbFileTracker* ftracker, const uint8_t* data_ptr,
+    uint32_t data_len, bool upload)
+{
+    if (ftracker->ff_file_offset == ftracker->ff_bytes_processed)
+    {
+        uint64_t initial_offset = ftracker->ff_file_offset;
+        uint64_t next_offset = initial_offset + data_len;
+        DCE2_SmbFileChunk* file_chunk = (DCE2_SmbFileChunk*)DCE2_ListFirst(
+            ftracker->ff_file_chunks);
+        DCE2_Ret ret = DCE2_SmbFileAPIProcess(ssd, ftracker, data_ptr, data_len, upload);
+
+        ftracker->ff_bytes_processed += data_len;
+        ftracker->ff_file_offset = ftracker->ff_bytes_processed;
+
+        if (ret != DCE2_RET__SUCCESS)
+            return ret;
+
+        // Should already be chunks in here if we came into this function
+        // with an in order chunk, but check just in case.
+        if (file_chunk == nullptr)
+            return DCE2_RET__ERROR;
+
+        while (file_chunk != nullptr)
+        {
+            if (file_chunk->offset > next_offset)
+                break;
+
+            if (file_chunk->offset == next_offset)
+            {
+                ret = DCE2_SmbFileAPIProcess(ssd, ftracker,
+                    file_chunk->data, file_chunk->length, upload);
+
+                ftracker->ff_bytes_processed += file_chunk->length;
+                ftracker->ff_file_offset = ftracker->ff_bytes_processed;
+
+                if (ret != DCE2_RET__SUCCESS)
+                    return ret;
+
+                next_offset = file_chunk->offset + file_chunk->length;
+            }
+
+            ftracker->ff_bytes_queued -= file_chunk->length;
+            DCE2_ListRemoveCurrent(ftracker->ff_file_chunks);
+
+            file_chunk = (DCE2_SmbFileChunk*)DCE2_ListNext(ftracker->ff_file_chunks);
+        }
+
+        if (initial_offset == 0)
+            DCE2_SmbResetFileChunks(ftracker);
+    }
+    else
+    {
+        if (ftracker->ff_file_chunks == nullptr)
+        {
+            ftracker->ff_file_chunks = DCE2_ListNew(DCE2_LIST_TYPE__SORTED,
+                DCE2_SmbFileOffsetCompare, DCE2_SmbFileChunkFree,
+                nullptr, DCE2_LIST_FLAG__NO_DUPS);
+
+            if (ftracker->ff_file_chunks == nullptr)
+                return DCE2_RET__ERROR;
+        }
+
+        DCE2_SmbFileChunk* file_chunk = (DCE2_SmbFileChunk*)snort_calloc(
+            sizeof(DCE2_SmbFileChunk));
+        file_chunk->data = (uint8_t*)snort_calloc(data_len);
+
+        file_chunk->offset = ftracker->ff_file_offset;
+        file_chunk->length = data_len;
+        memcpy(file_chunk->data, data_ptr, data_len);
+        ftracker->ff_bytes_queued += data_len;
+
+        DCE2_Ret ret;
+        if ((ret = DCE2_ListInsert(ftracker->ff_file_chunks,
+                (void*)file_chunk, (void*)file_chunk)) != DCE2_RET__SUCCESS)
+        {
+            DebugFormat(DEBUG_DCE_SMB, "Insert file chunk failed: "
+                "0x%02X.\n", ftracker->fid);
+
+            snort_free((void*)file_chunk->data);
+            snort_free((void*)file_chunk);
+
+            if (ret != DCE2_RET__DUPLICATE)
+                return DCE2_RET__ERROR;
+        }
+    }
+
+    DebugFormat(DEBUG_DCE_SMB, "Currently buffering %u bytes "
+        "of out of order file data.\n", ftracker->ff_bytes_queued);
+
+    return DCE2_RET__SUCCESS;
+}
+
+/********************************************************************
+ * Function: DCE2_SmbProcessFileData()
+ *
+ * Purpose:
+ *  Processes regular file data send via reads/writes.  Sends
+ *  data to the file API for type id and signature and sets the
+ *  file data ptr for rule inspection.
+ *
+ * Arguments:
+ *  DCE2_SmbSsnData *      - pointer to SMB session data
+ *  DCE2_SmbFileTracker *  - pointer to file tracker
+ *  const uint8_t *        - pointer to file data
+ *  uint32_t               - length of file data
+ *  bool                   - whether it's an upload (true) or
+ *                           download (false)
+ *
+ * Returns: None
+ *
+ ********************************************************************/
+void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
+    DCE2_SmbFileTracker* ftracker, const uint8_t* data_ptr,
+    uint32_t data_len, bool upload)
+{
+    bool cur_upload = DCE2_SmbFileUpload(ftracker->ff_file_direction) ? true : false;
+    int64_t file_data_depth = DCE2_ScSmbFileDepth((dce2SmbProtoConf*)ssd->sd.config);
+
+    if (data_len == 0)
+        return;
+
+    Profile profile(dce2_smb_pstat_smb_file);
+
+    DebugFormat(DEBUG_DCE_SMB,
+        "File size: %lu, File offset: %lu, Bytes processed: %lu, "
+        "Data len: %u\n", ftracker->ff_file_size, ftracker->ff_file_offset,
+        ftracker->ff_bytes_processed, data_len);
+
+    // Account for wrapping.  Not likely but just in case.
+    if ((ftracker->ff_bytes_processed + data_len) < ftracker->ff_bytes_processed)
+    {
+        DCE2_SmbRemoveFileTracker(ssd, ftracker);
+        return;
+    }
+
+    if ((ftracker->ff_bytes_processed == 0)
+        && DCE2_SmbFileDirUnknown(ftracker->ff_file_direction))
+    {
+        ftracker->ff_file_direction =
+            upload ? DCE2_SMB_FILE_DIRECTION__UPLOAD : DCE2_SMB_FILE_DIRECTION__DOWNLOAD;
+    }
+    else if (cur_upload != upload)
+    {
+        if (cur_upload)
+        {
+            // Went from writing to reading.  Ignore the read.
+            DebugMessage(DEBUG_DCE_SMB, "Went from writing to "
+                "reading - ignoring read.\n");
+            return;
+        }
+
+        DebugMessage(DEBUG_DCE_SMB, "Went from reading to "
+            "writing - consider transfer done.\n");
+
+        // Went from reading to writing.  Consider the transfer done
+        // and remove the file tracker.
+        DCE2_SmbRemoveFileTracker(ssd, ftracker);
+        return;
+    }
+
+    if ((file_data_depth != -1) &&
+        ((ftracker->ff_file_offset == ftracker->ff_bytes_processed)
+        && ((file_data_depth == 0) || (ftracker->ff_bytes_processed < (uint64_t)file_data_depth))))
+    {
+        set_file_data((uint8_t*)data_ptr,
+            (data_len > UINT16_MAX) ? UINT16_MAX : (uint16_t)data_len);
+
+        DCE2_FileDetect();
+    }
+
+    if (ftracker == ssd->fapi_ftracker)
+    {
+        DCE2_Ret ret;
+
+        if ((ftracker->ff_file_offset != ftracker->ff_bytes_processed)
+            || !DCE2_ListIsEmpty(ftracker->ff_file_chunks))
+        {
+            if ((ssd->max_file_depth != 0)
+                && (ftracker->ff_file_offset >= (uint64_t)ssd->max_file_depth))
+            {
+                // If the offset is beyond the max file depth, ignore it.
+                return;
+            }
+            else if (upload && (data_len == 1)
+                && (ftracker->ff_file_offset > ftracker->ff_bytes_processed))
+            {
+                // Sometimes a write one byte is done at a high offset, I'm
+                // guessing to make sure the system has sufficient disk
+                // space to complete the full write.  Ignore it because it
+                // will likely be overwritten.
+                return;
+            }
+
+            if ((ftracker->ff_file_offset == 0) && (ftracker->ff_bytes_processed != 0))
+            {
+                // Sometimes initial reads/writes are out of order to get file info
+                // such as an icon, then proceed to write in order.  Usually the
+                // first read/write is at offset 0, then the next ones are somewhere
+                // off in the distance.  Reset and continue on below.
+                DCE2_SmbResetFileChunks(ftracker);
+                ftracker->ff_bytes_processed = 0;
+            }
+            else if (ftracker->ff_file_offset < ftracker->ff_bytes_processed)
+            {
+                DebugFormat(DEBUG_DCE_SMB, "File offset %lu is "
+                    "less than bytes processed %lu - aborting.\n",
+                    ftracker->ff_file_offset, ftracker->ff_bytes_processed);
+
+                DCE2_SmbAbortFileAPI(ssd);
+                DCE2_SmbSetNewFileAPIFileTracker(ssd);
+                return;
+            }
+            else
+            {
+                ret = DCE2_SmbHandleOutOfOrderFileData(ssd, ftracker, data_ptr, data_len, upload);
+                if (ret != DCE2_RET__SUCCESS)
+                {
+                    DCE2_SmbAbortFileAPI(ssd);
+                    DCE2_SmbSetNewFileAPIFileTracker(ssd);
+                }
+                return;
+            }
+        }
+
+        ret = DCE2_SmbFileAPIProcess(ssd, ftracker, data_ptr, data_len, upload);
+
+        ftracker->ff_bytes_processed += data_len;
+        ftracker->ff_file_offset = ftracker->ff_bytes_processed;
+
+        if (ret != DCE2_RET__SUCCESS)
+        {
+            DCE2_SmbAbortFileAPI(ssd);
+            DCE2_SmbSetNewFileAPIFileTracker(ssd);
+        }
+    }
+    else
+    {
+        if (ftracker->ff_file_offset == ftracker->ff_bytes_processed)
+        {
+            ftracker->ff_bytes_processed += data_len;
+            ftracker->ff_file_offset = ftracker->ff_bytes_processed;
+        }
+
+        if ((file_data_depth == -1)
+            || ((file_data_depth != 0)
+            && (ftracker->ff_bytes_processed >= (uint64_t)file_data_depth)))
+        {
+            DebugFormat(DEBUG_DCE_SMB, "Bytes processed %lu "
+                "is at or beyond file data depth %lu - finished.\n",
+                ftracker->ff_bytes_processed, file_data_depth);
+            DCE2_SmbRemoveFileTracker(ssd, ftracker);
+
+            return;
+        }
+    }
+}
+
+static void DCE2_FileDetect()
+{
+    Packet* top_pkt = (Packet*)DCE2_CStackTop(dce2_pkt_stack);
+    if (top_pkt == nullptr)
+    {
+        DebugMessage(DEBUG_DCE_SMB,"No packet on top of stack.\n");
+        return;
+    }
+    DebugMessage(DEBUG_DCE_SMB, "Detecting ------------------------------------------------\n");
+    DebugMessage(DEBUG_DCE_SMB, "Payload:\n");
+    DCE2_PrintPktData(top_pkt->data, top_pkt->dsize);
+
+    Profile profile(dce2_smb_pstat_smb_file_detect);
+
+    SnortEventqPush();
+    snort_detect(top_pkt);
+    SnortEventqPop();
+
+    // Reset file data pointer after detecting
+    set_file_data(nullptr, 0);
+    dce2_detected = 1;
+    DebugMessage(DEBUG_DCE_SMB, "----------------------------------------------------------\n");
+}
+
+static void DCE2_SmbSetNewFileAPIFileTracker(DCE2_SmbSsnData* ssd)
+{
+    DCE2_SmbFileTracker* ftracker = &ssd->ftracker;
+
+    while (ftracker != nullptr)
+    {
+        if ((ftracker != ssd->fapi_ftracker) && (ftracker->fid != DCE2_SENTINEL)
+            && !ftracker->is_ipc && ftracker->ff_sequential_only
+            && (ftracker->ff_bytes_processed == 0))
+        {
+            DebugFormat(DEBUG_DCE_SMB, "Designating file tracker "
+                "for file API processing: \"%s\" (0x%04X)\n",
+                ftracker->file_name, (uint16_t)ftracker->fid);
+            break;
+        }
+
+        if (ftracker == &ssd->ftracker)
+            ftracker = (DCE2_SmbFileTracker*)DCE2_ListFirst(ssd->ftrackers);
+        else
+            ftracker = (DCE2_SmbFileTracker*)DCE2_ListNext(ssd->ftrackers);
+    }
+
+    ssd->fapi_ftracker = ftracker;
 }
 

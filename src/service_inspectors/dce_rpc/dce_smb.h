@@ -877,7 +877,7 @@ inline uint16_t SmbOpenRespFid(const SmbOpenResp* resp)
 
 inline uint32_t SmbOpenRespFileSize(const SmbOpenResp* resp)
 {
-    return extract_32bits((uint8_t*)&resp->smb_file_size);
+    return alignedNtohl(&resp->smb_file_size);
 }
 
 inline uint16_t SmbOpenRespFileAttrs(const SmbOpenResp* resp)

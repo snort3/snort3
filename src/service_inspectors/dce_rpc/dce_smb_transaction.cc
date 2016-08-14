@@ -936,34 +936,34 @@ static DCE2_Ret DCE2_SmbUpdateTransResponse(DCE2_SmbSsnData* ssd,
     {
         DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + doff) - nb_ptr);
 
-		if ((ttracker->dsent < ttracker->tdcnt)
-                || (ttracker->psent < ttracker->tpcnt)
-                || !DCE2_BufferIsEmpty(ttracker->dbuf))
+        if ((ttracker->dsent < ttracker->tdcnt)
+            || (ttracker->psent < ttracker->tpcnt)
+            || !DCE2_BufferIsEmpty(ttracker->dbuf))
         {
-			if ((dcnt != 0)
-				&& (DCE2_SmbBufferTransactionData(ttracker, nb_ptr, dcnt, ddisp)
-					!= DCE2_RET__SUCCESS))
-			{	   		 
-				return DCE2_RET__ERROR;
-			}
-		}
+            if ((dcnt != 0)
+                && (DCE2_SmbBufferTransactionData(ttracker, nb_ptr, dcnt, ddisp)
+                != DCE2_RET__SUCCESS))
+            {
+                return DCE2_RET__ERROR;
+            }
+        }
     }
 
     if (data_params & DCE2_SMB_TRANS__PARAMS)
     {
         DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + poff) - nb_ptr);
- 
-		if ((ttracker->dsent < ttracker->tdcnt)
-                || (ttracker->psent < ttracker->tpcnt)
-                || !DCE2_BufferIsEmpty(ttracker->dbuf))
+
+        if ((ttracker->dsent < ttracker->tdcnt)
+            || (ttracker->psent < ttracker->tpcnt)
+            || !DCE2_BufferIsEmpty(ttracker->dbuf))
         {
-			if ((pcnt != 0)
-				&& (DCE2_SmbBufferTransactionParameters(ttracker, nb_ptr, pcnt, pdisp)
-					!= DCE2_RET__SUCCESS))
-			{
-				return DCE2_RET__ERROR;
-			}
-		}
+            if ((pcnt != 0)
+                && (DCE2_SmbBufferTransactionParameters(ttracker, nb_ptr, pcnt, pdisp)
+                != DCE2_RET__SUCCESS))
+            {
+                return DCE2_RET__ERROR;
+            }
+        }
     }
 
     if ((ttracker->dsent == ttracker->tdcnt)
@@ -1178,13 +1178,13 @@ DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         switch (ttracker->subcom)
         {
         case TRANS_TRANSACT_NMPIPE:
-        case TRANS_READ_NMPIPE:      
+        case TRANS_READ_NMPIPE:
             if (!DCE2_BufferIsEmpty(ttracker->dbuf))
             {
                 const uint8_t* data_ptr = DCE2_BufferData(ttracker->dbuf);
-                uint32_t data_len = DCE2_BufferLength(ttracker->dbuf);			
+                uint32_t data_len = DCE2_BufferLength(ttracker->dbuf);
                 Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr,
-											   &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
+                    &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
 
                 if (rpkt == nullptr)
                     return DCE2_RET__ERROR;
@@ -1211,7 +1211,7 @@ DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             }
 
             break;
-        
+
         case TRANS_SET_NMPIPE_STATE:
             DebugFormat(DEBUG_DCE_SMB, "Setting pipe "
                 "to %s mode\n", ttracker->pipe_byte_mode ? "byte" : "message");
@@ -1585,15 +1585,12 @@ DCE2_Ret DCE2_SmbNtTransact(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             if (is_directory || !SmbResourceTypeDisk(resource_type))
                 return DCE2_RET__SUCCESS;
 
-            // FIXIT-M port as part of fileAPI user story
-/*
             // Give preference to files opened with the sequential only flag set
             if (((ssd->fapi_ftracker == nullptr) || !ssd->fapi_ftracker->ff_sequential_only)
-                    && ssd->cur_rtracker->sequential_only)
+                && ssd->cur_rtracker->sequential_only)
             {
                 DCE2_SmbAbortFileAPI(ssd);
             }
-*/
         }
 
         ftracker = DCE2_SmbNewFileTracker(ssd,
@@ -1648,7 +1645,7 @@ DCE2_Ret DCE2_SmbTransactionSecondary(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_
     case TRANS_WRITE_NMPIPE:
     {
         const uint8_t* data_ptr = DCE2_BufferData(ttracker->dbuf);
-        uint32_t data_len = DCE2_BufferLength(ttracker->dbuf);	
+        uint32_t data_len = DCE2_BufferLength(ttracker->dbuf);
         Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
 
         if (rpkt == nullptr)

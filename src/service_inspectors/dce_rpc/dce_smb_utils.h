@@ -171,6 +171,10 @@ DCE2_Ret DCE2_SmbHandleSegmentation(DCE2_Buffer**,
     const uint8_t*, uint32_t, uint32_t);
 bool DCE2_SmbIsSegBuffer(DCE2_SmbSsnData*, const uint8_t*);
 void DCE2_SmbSegAlert(DCE2_SmbSsnData*, uint32_t rule_id);
+void DCE2_SmbAbortFileAPI(DCE2_SmbSsnData*);
+void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
+    DCE2_SmbFileTracker* ftracker, const uint8_t* data_ptr,
+    uint32_t data_len, bool upload);
 
 /********************************************************************
  * Inline functions

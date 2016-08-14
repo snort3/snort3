@@ -1938,14 +1938,11 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             }
 
             // Give preference to files opened with the sequential only flag set
-// FIXIT-M uncomment once fileApi is ported
-/*
             if (((ssd->fapi_ftracker == nullptr) || !ssd->fapi_ftracker->ff_sequential_only)
-                    && (ftracker == nullptr) && ssd->cur_rtracker->sequential_only)
+                && (ftracker == nullptr) && ssd->cur_rtracker->sequential_only)
             {
                 DCE2_SmbAbortFileAPI(ssd);
             }
-*/
         }
 
         if (ftracker == nullptr)

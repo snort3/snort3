@@ -1535,14 +1535,11 @@ static void DCE2_SmbProcessRawData(DCE2_SmbSsnData* ssd, const uint8_t* nb_ptr, 
 
         DCE2_CoProcess(&ssd->sd, ftracker->fp_co_tracker, nb_ptr, (uint16_t)nb_len);
     }
-// FIXIT-M to be ported - smb file-api user story
-/*
     else
     {
         bool upload = DCE2_SsnFromClient(ssd->sd.wire_pkt) ? true : false;
         DCE2_SmbProcessFileData(ssd, ftracker, nb_ptr, nb_len, upload);
     }
-*/
 
     if (remove_rtracker)
     {
