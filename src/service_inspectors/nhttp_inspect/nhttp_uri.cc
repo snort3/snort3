@@ -167,7 +167,7 @@ void NHttpUri::check_oversize_dir(Field uri_field)
     cur = uri_field.start;
     end = uri_field.start + uri_field.length;
 
-    while ( cur <= end )
+    while ( cur < end )
     {
         if ( *cur == '/' )
         {

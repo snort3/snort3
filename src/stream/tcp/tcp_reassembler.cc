@@ -676,8 +676,9 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 
         /* setup the pseudopacket payload */
         s5_pkt->dsize = 0;
+        s5_pkt->data = s5_pkt->pkt;
         const uint8_t* s5_pkt_end = s5_pkt->data + s5_pkt->max_dsize;
-        flushed_bytes = flush_data_segments(p, stop_seq, ( uint8_t* )s5_pkt->data, s5_pkt_end);
+        flushed_bytes = flush_data_segments(p, stop_seq, (uint8_t*)s5_pkt->data, s5_pkt_end);
 
         if ( flushed_bytes == 0 )
             break; /* No more data... bail */
