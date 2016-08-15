@@ -76,7 +76,6 @@ private:
 
     const uint32_t RPC_MSG_VERSION = 2;
     const uint32_t CALL = 0;
-    const uint32_t REPLY = 1;
     
     RpcCheckData config;
 };
@@ -144,8 +143,9 @@ bool RpcOption::is_match(Packet * p)
     // get pointer to packet data 
     const uint8_t* packet_data = p->data;
         
-    // read xid.. not being used currently 
-    uint32_t xid = get_int(packet_data);
+    // read xid.. not being used currently
+    // so just move to the next int
+    packet_data += 4; 
 
     // read direction .. CALL or REPLY etc..
     uint32_t message_type =  get_int(packet_data);
