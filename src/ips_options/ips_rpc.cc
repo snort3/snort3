@@ -1,7 +1,5 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2002-2013 Sourcefire, Inc.
-// Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,6 +15,8 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// ips_rpc.cc author Al Lewis <allewi>@cisco.com
+// based on work by Martin Roesch <roesch@sourcefire.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -25,7 +25,6 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <rpc/rpc.h>
 
 #include "protocols/packet.h"
 #include "parser/parser.h"
@@ -43,22 +42,16 @@
 
 static THREAD_LOCAL ProfileStats rpcCheckPerfStats;
 
-// This is driven by 64-bit Solaris which doesn't define _LONG
-#ifndef IXDR_GET_LONG
-    #define IXDR_GET_LONG IXDR_GET_INT32
-#endif
-
-typedef struct _RpcCheckData
+struct RpcCheckData
 {
-    u_long program; /* RPC program number */
-    u_long vers; /* RPC program version */
-    u_long proc; /* RPC procedure number */
-    int flags; /* Which of the above fields have been specified */
-} RpcCheckData;
+    uint32_t program; 	// RPC program number
+    uint32_t version; 	// RPC program version
+    uint32_t procedure; // RPC procedure number
+    uint32_t flags;	// fields that have been specified
+};
 
-#define RPC_CHECK_PROG 1
-#define RPC_CHECK_VERS 2
-#define RPC_CHECK_PROC 4
+#define RPC_CHECK_VERSION 1
+#define RPC_CHECK_PROCEDURE 2
 
 class RpcOption : public IpsOption
 {
@@ -71,8 +64,20 @@ public:
     bool operator==(const IpsOption&) const override;
 
     int eval(Cursor&, Packet*) override;
-
+    
 private:
+    uint32_t get_int(const uint8_t *&);
+    bool check_rpc_call(const uint8_t *&);
+    bool check_version(uint32_t);
+    bool check_procedure(uint32_t);
+    bool check_program (uint32_t);
+    bool is_match(Packet *);
+    bool is_valid(Packet *);
+
+    const uint32_t RPC_MSG_VERSION = 2;
+    const uint32_t CALL = 0;
+    const uint32_t REPLY = 1;
+    
     RpcCheckData config;
 };
 
@@ -86,8 +91,8 @@ uint32_t RpcOption::hash() const
     const RpcCheckData* data = &config;
 
     a = data->program;
-    b = data->vers;
-    c = data->proc;
+    b = data->version;
+    c = data->procedure;
 
     mix(a,b,c);
 
@@ -109,8 +114,8 @@ bool RpcOption::operator==(const IpsOption& ips) const
     RpcCheckData* right = (RpcCheckData*)&rhs.config;
 
     if ((left->program == right->program) &&
-        (left->vers == right->vers) &&
-        (left->proc == right->proc) &&
+        (left->version == right->version) &&
+        (left->procedure == right->procedure) &&
         (left->flags == right->flags))
     {
         return true;
@@ -123,106 +128,124 @@ int RpcOption::eval(Cursor&, Packet* p)
 {
     Profile profile(rpcCheckPerfStats);
 
-    RpcCheckData* ds_ptr = &config;
-
-    if (!(p->is_tcp() || p->is_udp()))
+    if( !( is_valid(p) ) )
         return DETECTION_OPTION_NO_MATCH;
 
-    auto c = p->data;
+    // test for match
+    if( is_match(p) )
+        return DETECTION_OPTION_MATCH;
 
-    if ( p->is_tcp() )
-    {
-        /* offset to rpc_msg */
-        c+=4;
-        /* Fail if the packet is too short to match */
-        if (p->dsize<28)
-        {
-            DebugMessage(DEBUG_IPS_OPTION, "RPC packet too small");
-            return DETECTION_OPTION_NO_MATCH;
-        }
-    }
-    else
-    { /* must be UDP
-         Fail if the packet is too short to match */
-        if (p->dsize<24)
-        {
-            DebugMessage(DEBUG_IPS_OPTION, "RPC packet too small");
-            return DETECTION_OPTION_NO_MATCH;
-        }
-    }
-
-#ifdef DEBUG_MSGS
-    DebugMessage(DEBUG_IPS_OPTION,"<---xid---> <---dir---> <---rpc--->"
-        " <---prog--> <---vers--> <---proc-->\n");
-    for (int i = 0; i < 24; i++)
-    {
-        DebugFormat(DEBUG_IPS_OPTION, "%02X ",c[i]);
-    }
-
-    DebugMessage(DEBUG_IPS_OPTION,"\n");
-#endif
-
-    /* Read xid */
-    (void)IXDR_GET_LONG (c);
-
-    /* Read direction : CALL or REPLY */
-    enum msg_type direction = IXDR_GET_ENUM (c, enum msg_type);
-
-    /* We only look at calls */
-    if (direction != CALL)
-    {
-        DebugMessage(DEBUG_IPS_OPTION, "RPC packet not a call");
-        return DETECTION_OPTION_NO_MATCH;
-    }
-
-    /* Read the RPC message version */
-    u_long rpcvers = IXDR_GET_LONG (c);
-
-    /* Fail if it is not right */
-    if (rpcvers != RPC_MSG_VERSION)
-    {
-        DebugMessage(DEBUG_IPS_OPTION,"RPC msg version invalid");
-        return DETECTION_OPTION_NO_MATCH;
-    }
-
-    /* Read the program number, version, and procedure */
-    u_long prog = IXDR_GET_LONG (c);
-    u_long vers = IXDR_GET_LONG (c);
-    u_long proc = IXDR_GET_LONG (c);
-
-    DebugFormat(DEBUG_IPS_OPTION,"RPC decoded to: %lu %lu %lu\n",
-        prog,vers,proc);
-
-    DebugFormat(DEBUG_IPS_OPTION, "RPC matching on: %d %d %d\n",
-        ds_ptr->flags & RPC_CHECK_PROG,ds_ptr->flags & RPC_CHECK_VERS,
-        ds_ptr->flags & RPC_CHECK_PROC);
-
-    if (!(ds_ptr->flags & RPC_CHECK_PROG) ||
-        ds_ptr->program == prog)
-    {
-        DebugMessage(DEBUG_IPS_OPTION,"RPC program matches");
-        if (!(ds_ptr->flags & RPC_CHECK_VERS) ||
-            ds_ptr->vers == vers)
-        {
-            DebugMessage(DEBUG_IPS_OPTION,"RPC version matches");
-            if (!(ds_ptr->flags & RPC_CHECK_PROC) ||
-                ds_ptr->proc == proc)
-            {
-                DebugMessage(DEBUG_IPS_OPTION,"RPC proc matches");
-                DebugMessage(DEBUG_IPS_OPTION, "Yippee! Found one!");
-                return DETECTION_OPTION_MATCH;
-            }
-        }
-    }
-    else
-    {
-        /* you can put debug comments here or not */
-        DebugMessage(DEBUG_IPS_OPTION,"RPC not equal\n");
-    }
-
-    /* if the test isn't successful, return 0 */
     return DETECTION_OPTION_NO_MATCH;
 }
+
+// check if there is a detection match 
+bool RpcOption::is_match(Packet * p)
+{ 
+    // get pointer to packet data 
+    const uint8_t* packet_data = p->data;
+        
+    // read xid.. not being used currently 
+    uint32_t xid = get_int(packet_data);
+
+    // read direction .. CALL or REPLY etc..
+    uint32_t message_type =  get_int(packet_data);
+
+    // read the RPC message version
+    uint32_t version = get_int(packet_data);
+
+    // fail if it is not right
+    if (version != RPC_MSG_VERSION)
+        return false;
+
+    if (message_type == CALL)
+        return check_rpc_call(packet_data);
+
+    return false;
+}
+
+// get an int from the current location..increments to next INT position
+uint32_t RpcOption::get_int(const uint8_t*& data)
+{
+    uint32_t value = extract_32bits(data);	
+    data += 4;
+    return value;
+}
+
+// check if the packet type and size are valid
+bool RpcOption::is_valid(Packet* p){
+
+    if (!(p->is_tcp() || p->is_udp()))
+        return false;
+
+    // fail if tcp packet is too short
+    if ( (p->is_tcp()) & (p->dsize < 28) )
+    {
+        return false;
+    }
+    // must be UDP. fail if the packet is too short
+    else if (p->dsize < 24)
+    {
+        return false;
+    }
+   
+    // assumed to be valid packet
+    return true;
+}
+
+// compare values in rpc call
+bool RpcOption::check_rpc_call(const uint8_t*& packet_data)
+{
+    // get the program number
+    uint32_t program = get_int(packet_data);
+
+    if( !check_program(program) )
+        return false;
+
+    // get the program version number
+    uint32_t version = get_int(packet_data);
+
+    if ( !check_version( version ) )
+        return false;
+
+    // get the procedure number
+    uint32_t procedure = get_int(packet_data);
+
+    // check procedure
+    if ( !check_procedure(procedure) )
+        return false;
+
+    // if nothing fails, return a match 
+    return true;
+} 
+
+// only check program values 
+bool RpcOption::check_program( uint32_t program )
+{
+    return (config.program == program);
+}
+
+// check if version match is requested and if values match
+bool RpcOption::check_version(uint32_t version)
+{
+    // if request is made to check, return result
+    if(config.flags & RPC_CHECK_VERSION)
+    {
+        return (config.version == version);
+    }   
+    
+    return true;
+}
+
+// check if procedure match is requested and values match
+bool RpcOption::check_procedure( uint32_t procedure)
+{
+    if(config.flags & RPC_CHECK_PROCEDURE)
+    {
+        return (config.procedure == procedure);
+    }
+    
+    return true;
+} 
 
 //-------------------------------------------------------------------------
 // module
@@ -230,13 +253,13 @@ int RpcOption::eval(Cursor&, Packet* p)
 
 static const Parameter s_params[] =
 {
-    { "~app", Parameter::PT_STRING, nullptr, nullptr,
+    { "~app", Parameter::PT_INT, nullptr, nullptr,
       "application number" },
 
-    { "~ver", Parameter::PT_STRING, nullptr, nullptr,
+    { "ver", Parameter::PT_INT, nullptr, nullptr,
       "version number or * for any" },
 
-    { "~proc", Parameter::PT_STRING, nullptr, nullptr,
+    { "proc", Parameter::PT_INT, nullptr, nullptr,
       "procedure number or * for any" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -267,27 +290,25 @@ bool RpcModule::begin(const char*, int, SnortConfig*)
 
 bool RpcModule::set(const char*, Value& v, SnortConfig*)
 {
-    char* end;
-
     if ( v.is("~app") )
     {
-        data.program = strtoul(v.get_string(), &end, 0);
-        data.flags |= RPC_CHECK_PROG;
+        data.program = (uint32_t) v.get_long();
+        return true;
     }
-    else if ( v.is("~ver") )
+    else if ( v.is("ver") )
     {
-        data.vers = strtoul(v.get_string(), &end, 0);
-        data.flags |= RPC_CHECK_VERS;
+        data.version = (uint32_t) v.get_long();
+        data.flags |= RPC_CHECK_VERSION;
+        return true;
     }
-    else if ( v.is("~proc") )
+    else if ( v.is("proc") )
     {
-        data.proc = strtoul(v.get_string(), &end, 0);
-        data.flags |= RPC_CHECK_PROC;
+        data.procedure = v.get_long();
+        data.flags |= RPC_CHECK_PROCEDURE;
+        return true;
     }
-    else
-        return false;
 
-    return true;
+    return false;
 }
 
 //-------------------------------------------------------------------------
@@ -349,4 +370,3 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* ips_rpc = &rpc_api.base;
 #endif
-
