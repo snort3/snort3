@@ -157,12 +157,9 @@ uint32_t parseMultipleHTTPPatterns(const char* pattern, tMlmpPattern* parts, uin
         const char* tmp2 = strstr(tmp, FP_OPERATION_AND);
         if (tmp2)
         {
-            parts[partNum].pattern = (uint8_t*)strndup(tmp, tmp2-tmp);
-            if (parts[partNum].pattern)
-            {
-                parts[partNum].patternSize = strlen((const char*)parts[partNum].pattern);
-                tmp = tmp2+strlen(FP_OPERATION_AND);
-            }
+            parts[partNum].pattern = (uint8_t*)snort_strndup(tmp, tmp2-tmp);
+            parts[partNum].patternSize = strlen((const char*)parts[partNum].pattern);
+            tmp = tmp2+strlen(FP_OPERATION_AND);
         }
         else
         {
