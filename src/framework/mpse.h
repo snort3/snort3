@@ -56,9 +56,11 @@ public:
         bool no_case;
         bool negated;
         bool literal;
+        unsigned flags;
 
-        PatternDescriptor(bool noc = false, bool neg = false, bool lit = false)
-        { no_case = noc; negated = neg; literal = lit; }
+        PatternDescriptor(
+            bool noc = false, bool neg = false, bool lit = false, unsigned f = 0)
+        { no_case = noc; negated = neg; literal = lit; flags = f; }
     };
 
     virtual int add_pattern(

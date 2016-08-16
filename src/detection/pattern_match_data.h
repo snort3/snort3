@@ -37,10 +37,11 @@ struct PmdLastCheck
 struct PatternMatchData
 {
     // used by both
-    bool negated;        // search for "not this pattern"
-    bool fp;             // For fast_pattern arguments
-    bool no_case;        // Toggle case sensitivity
-    bool relative;       // do relative pattern searching
+    bool negated;            // search for "not this pattern"
+    bool fp;                 // for fast_pattern arguments
+    bool no_case;            // toggle case sensitivity
+    bool relative;           // do relative pattern searching
+    bool literal;            // true for plain contents only
 
     uint16_t fp_offset;
     uint16_t fp_length;
@@ -48,10 +49,9 @@ struct PatternMatchData
     int offset;              // pattern search start offset
     int depth;               // pattern search depth
 
+    unsigned flags;          // hyperscan only FIXIT-L need to generalize
     unsigned pattern_size;   // size of app layer pattern
     const char* pattern_buf; // app layer pattern to match on
-
-    bool literal;            // set to plain contents
 
     // not used by ips_content
     int8_t fp_only;

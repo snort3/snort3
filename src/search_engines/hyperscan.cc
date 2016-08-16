@@ -39,6 +39,7 @@ struct Pattern
 {
     std::string pat;
     unsigned len;
+    unsigned flags;
     bool no_case;
     bool negate;
 
@@ -58,6 +59,7 @@ Pattern::Pattern(
     len = n;
     no_case = d.no_case;
     negate = d.negated;
+    flags = d.flags;
     user = u;
     user_tree = user_list = nullptr;
 }
@@ -205,7 +207,7 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
     for ( auto& p : pvector )
     {
         pats.push_back(p.pat.c_str());
-        flags.push_back(p.no_case ? HS_FLAG_CASELESS : 0);
+        flags.push_back(p.flags);
         ids.push_back(id++);
     }
 

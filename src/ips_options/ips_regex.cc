@@ -49,8 +49,6 @@ struct RegexConfig
     PatternMatchData pmd;
     std::string re;
     hs_database_t* db;
-    unsigned flags;
-    bool relative;
 
     RegexConfig()
     { reset(); }
@@ -60,7 +58,6 @@ struct RegexConfig
         memset(&pmd, 0, sizeof(pmd));
         re.clear();
         db = nullptr;
-        flags = 0;
     }
 };
 
@@ -133,7 +130,7 @@ RegexOption::~RegexOption()
 
 uint32_t RegexOption::hash() const
 {
-    uint32_t a = config.flags, b = config.pmd.relative, c = 0;
+    uint32_t a = config.pmd.flags, b = config.pmd.relative, c = 0;
     mix_str(a, b, c, config.re.c_str());
     mix_str(a, b, c, get_name());
     finalize(a, b, c);
@@ -150,7 +147,7 @@ bool RegexOption::operator==(const IpsOption& ips) const
     RegexOption& rhs = (RegexOption&)ips;
 
     if ( config.re == rhs.config.re and 
-         config.flags == rhs.config.flags and
+         config.pmd.flags == rhs.config.pmd.flags and
          config.pmd.relative == rhs.config.pmd.relative )
         return true;
 
@@ -273,13 +270,15 @@ bool RegexModule::set(const char*, Value& v, SnortConfig*)
     }
 
     else if ( v.is("nocase") )
-        config.flags |= HS_FLAG_CASELESS;
-
+    {
+        config.pmd.flags |= HS_FLAG_CASELESS;
+        config.pmd.no_case = true;
+    }
     else if ( v.is("dotall") )
-        config.flags |= HS_FLAG_DOTALL;
+        config.pmd.flags |= HS_FLAG_DOTALL;
 
     else if ( v.is("multiline") )
-        config.flags |= HS_FLAG_MULTILINE;
+        config.pmd.flags |= HS_FLAG_MULTILINE;
 
     else if ( v.is("relative") )
         config.pmd.relative = true;
@@ -294,7 +293,7 @@ bool RegexModule::end(const char*, int, SnortConfig*)
 {
     hs_compile_error_t* err = nullptr;
 
-    if ( hs_compile(config.re.c_str(), config.flags, HS_MODE_BLOCK, nullptr, &config.db, &err)
+    if ( hs_compile(config.re.c_str(), config.pmd.flags, HS_MODE_BLOCK, nullptr, &config.db, &err)
         or !config.db )
     {
         ParseError("can't compile regex '%s'", config.re.c_str());

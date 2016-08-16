@@ -603,7 +603,7 @@ static int fpFinishPortGroupRule(
                 pg->mpse[pmd->pm_type]->set_opt(1);
         }
 
-        Mpse::PatternDescriptor desc(pmd->no_case, pmd->negated, pmd->literal);
+        Mpse::PatternDescriptor desc(pmd->no_case, pmd->negated, pmd->literal, pmd->flags);
         pg->mpse[pmd->pm_type]->add_pattern(sc, (uint8_t*)pattern, pattern_length, desc, pmx);
     }
 
@@ -684,10 +684,11 @@ static int fpAddPortGroupRule(
     OptFpList* next = nullptr;
     pmd = get_fp_content(otn, next);
 
-    if ( pmd && pmd->fp)
+    if ( pmd && pmd->fp )
     {
         if (
-            pmd->fp && !pmd->relative && !pmd->negated && pmd->fp_only >= 0 &&
+            !pmd->relative && !pmd->negated && pmd->fp_only >= 0 &&
+            // FIXIT-L no_case consideration is mpse specific, delegate
             !pmd->offset && !pmd->depth && pmd->no_case )
         {
             if ( !next || !next->ips_opt || !next->ips_opt->is_relative() )
