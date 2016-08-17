@@ -153,6 +153,7 @@ enum class ProtocolId : std::uint16_t
     ETHERTYPE_EAPOL = 0x888e,
     ETHERTYPE_ERSPAN_TYPE2 = 0x88be,
     ETHERTYPE_FPATH = 0x8903,
+    ETHERTYPE_CISCO_META = 0x8909,
 };
 
 static const auto max_protocol_id =

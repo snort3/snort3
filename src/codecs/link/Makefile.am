@@ -7,6 +7,7 @@ liblink_codecs_a_SOURCES = \
 cd_arp.cc \
 cd_erspan2.cc \
 cd_erspan3.cc \
+cd_ciscometadata.cc \
 cd_fabricpath.cc \
 cd_mpls.cc \
 cd_ppp_encap.cc \
@@ -31,6 +32,11 @@ ehlib_LTLIBRARIES += libcd_erspan3.la
 libcd_erspan3_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_erspan3_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 libcd_erspan3_la_SOURCES = cd_erspan3.cc
+
+ehlib_LTLIBRARIES += libcd_ciscometadata.la
+libcd_ciscometadata_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_ciscometadata_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
+libcd_ciscometadata_la_SOURCES = cd_ciscometadata.cc
 
 ehlib_LTLIBRARIES += libcd_fabricpath.la
 libcd_fabricpath_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

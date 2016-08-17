@@ -4,6 +4,7 @@ if(STATIC_CODECS)
         cd_arp.cc
         cd_erspan2.cc
         cd_erspan3.cc
+        cd_ciscometadata.cc
         cd_fabricpath.cc
         cd_mpls.cc
         cd_ppp_encap.cc
@@ -11,12 +12,11 @@ if(STATIC_CODECS)
         cd_trans_bridge.cc
         cd_vlan.cc
     )
-
-
 else(STATIC_CODECS)
     add_shared_library(cd_arp codecs cd_arp.cc)
     add_shared_library(cd_erspan2 codecs cd_erspan2.cc)
     add_shared_library(cd_erspan3 codecs cd_erspan3.cc)
+    add_shared_library(cd_ciscometadata codecs cd_ciscometadata.cc)
     add_shared_library(cd_fabricpath codecs cd_fabricpath.cc)
     add_shared_library(cd_mpls codecs cd_mpls.cc)
     add_shared_library(cd_ppp_encap codecs cd_ppp_encap.cc)
