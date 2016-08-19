@@ -357,6 +357,9 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_FINAL_NOT_CHUNKED,          "Transfer-Encoding did not end with chunked" },
     { EVENT_CHUNKED_BEFORE_END,         "Transfer-Encoding with chunked not at end" },
     { EVENT_MISFORMATTED_HTTP,          "Misformatted HTTP traffic" },
+    { EVENT_UNSUPPORTED_ENCODING,       "Unsupported Transfer-Encoding or Content-Encoding used" },
+    { EVENT_UNKNOWN_ENCODING,           "Unknown Transfer-Encoding or Content-Encoding used" },
+    { EVENT_STACKED_ENCODINGS,          "Multiple layers of compression encodings applied" },
     { 0, nullptr }
 };
 

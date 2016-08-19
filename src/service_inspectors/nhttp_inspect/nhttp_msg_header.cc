@@ -229,22 +229,90 @@ void NHttpMsgHeader::setup_decompression()
     if (!params->unzip)
         return;
 
-    // FIXIT-M add support for compression in transfer encoding
-    // FIXIT-M add support for multiple content encoding values
-    const Field& norm_content_encoding = get_header_value_norm(HEAD_CONTENT_ENCODING);
-    if (norm_content_encoding.length <= 0)
-        return;
-
-    const Contentcoding compress_code = (Contentcoding)norm_last_token_code(
-        norm_content_encoding, NHttpMsgHeadShared::content_code_list);
-
     CompressId& compression = session_data->compression[source_id];
 
-    if ((compress_code == CONTENTCODE_GZIP) || (compress_code == CONTENTCODE_X_GZIP))
-        compression = CMP_GZIP;
-    else if (compress_code == CONTENTCODE_DEFLATE)
-        compression = CMP_DEFLATE;
-    else
+    // Search the Content-Encoding and Transfer-Encoding headers to find the type of compression
+    // used. We detect and alert on multiple layers of compression but we only decompress the
+    // outermost layer. We proceed through the headers inside-out, starting at the front of the
+    // list of Content-Encodings and ending with the last Transfer-Encoding. Thus the last encoding
+    // we encounter (other than chunked) is the one we use. If we don't recognize or support the
+    // last encoding we won't do anything.
+
+    const Field& norm_content_encoding = get_header_value_norm(HEAD_CONTENT_ENCODING);
+    int32_t cont_offset = 0;
+    while (norm_content_encoding.length > cont_offset)
+    {
+        const Contentcoding content_code = (Contentcoding)get_next_code(norm_content_encoding,
+            cont_offset, NHttpMsgHeadShared::content_code_list);
+        if ((compression != CMP_NONE) && (content_code != CONTENTCODE_IDENTITY))
+        {
+            infractions += INF_STACKED_ENCODINGS;
+            events.create_event(EVENT_STACKED_ENCODINGS);
+            compression = CMP_NONE;
+        }
+        switch (content_code)
+        {
+        case CONTENTCODE_GZIP:
+        case CONTENTCODE_X_GZIP:
+            compression = CMP_GZIP;
+            break;
+        case CONTENTCODE_DEFLATE:
+            compression = CMP_DEFLATE;
+            break;
+        case CONTENTCODE_COMPRESS:
+        case CONTENTCODE_EXI:
+        case CONTENTCODE_PACK200_GZIP:
+        case CONTENTCODE_X_COMPRESS:
+            infractions += INF_UNSUPPORTED_ENCODING;
+            events.create_event(EVENT_UNSUPPORTED_ENCODING);
+            break;
+        case CONTENTCODE_IDENTITY:
+            break;
+        case CONTENTCODE__OTHER:
+            infractions += INF_UNKNOWN_ENCODING;
+            events.create_event(EVENT_UNKNOWN_ENCODING);
+            break;
+        }
+    }
+
+    const Field& norm_transfer_encoding = get_header_value_norm(HEAD_TRANSFER_ENCODING);
+    int32_t trans_offset = 0;
+    while (norm_transfer_encoding.length > trans_offset)
+    {
+        const Transcoding transfer_code = (Transcoding)get_next_code(norm_transfer_encoding,
+            trans_offset, NHttpMsgHeadShared::trans_code_list);
+        if ((compression != CMP_NONE) &&
+            !((transfer_code == TRANSCODE_IDENTITY) || (transfer_code == TRANSCODE_CHUNKED)))
+        {
+            infractions += INF_STACKED_ENCODINGS;
+            events.create_event(EVENT_STACKED_ENCODINGS);
+            compression = CMP_NONE;
+        }
+        switch (transfer_code)
+        {
+        case TRANSCODE_GZIP:
+        case TRANSCODE_X_GZIP:
+            compression = CMP_GZIP;
+            break;
+        case TRANSCODE_DEFLATE:
+            compression = CMP_DEFLATE;
+            break;
+        case TRANSCODE_COMPRESS:
+        case TRANSCODE_X_COMPRESS:
+            infractions += INF_UNSUPPORTED_ENCODING;
+            events.create_event(EVENT_UNSUPPORTED_ENCODING);
+            break;
+        case TRANSCODE_CHUNKED:
+        case TRANSCODE_IDENTITY:
+            break;
+        case TRANSCODE__OTHER:
+            infractions += INF_UNKNOWN_ENCODING;
+            events.create_event(EVENT_UNKNOWN_ENCODING);
+            break;
+        }
+    }
+
+    if (compression == CMP_NONE)
         return;
 
     session_data->compress_stream[source_id] = new z_stream;

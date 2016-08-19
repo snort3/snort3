@@ -62,6 +62,8 @@ protected:
         : NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
         { }
     ~NHttpMsgHeadShared();
+    // Get the next item in a comma-separated header value and convert it to an enum value
+    static int32_t get_next_code(const Field& field, int32_t& offset, const StrCode table[]);
 
 #ifdef REG_TEST
     void print_headers(FILE* output);
