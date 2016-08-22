@@ -27,7 +27,7 @@
 bool NHttpTestManager::test_input = false;
 bool NHttpTestManager::test_output = false;
 NHttpTestInput* NHttpTestManager::test_input_source = nullptr;
-const char* NHttpTestManager::test_output_prefix = "nhttpresults/testcase";
+const char* NHttpTestManager::test_output_prefix = "httpresults/testcase";
 int64_t NHttpTestManager::test_number = -1;
 FILE* NHttpTestManager::test_out = nullptr;
 long NHttpTestManager::print_amount = 1200;
@@ -54,7 +54,7 @@ void NHttpTestManager::activate_test_input()
     test_input = true;
     if (test_input_source == nullptr)
     {
-        test_input_source = new NHttpTestInput("nhttp_test_msgs.txt");
+        test_input_source = new NHttpTestInput("http_test_msgs.txt");
     }
 }
 

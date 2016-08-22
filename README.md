@@ -224,7 +224,7 @@ currently available configuration, etc.  Some key changes to rules:
 It also covers new features not demonstrated here:
 
 * snort2lua, a tool to convert Snort 2.X conf and rules to the new form
-* a new HTTP inspector, new_http_inspect - incomplete but off to a good start
+* a new HTTP inspector
 * a binder, for mapping configuration to traffic
 * a wizard for port-independent configuration
 * improved rule parsing - arbitrary whitespace, C style comments, #begin/#end comments

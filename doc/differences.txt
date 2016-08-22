@@ -199,6 +199,3 @@ configure can be found by running the following command:
 
     snort --help-config http_inspect | grep http_inspect.profile
 
-The new Http Inspect (new_http_inspect) implementation of config options is
-still under development.
-

@@ -1026,18 +1026,16 @@ settings, etc., you can also script Loggers and IpsOptions.</p></div>
 <div class="sect2">
 <h3 id="_new_http_inspector">New Http Inspector</h3>
 <div class="paragraph"><p>One of the major undertakings for Snort 3.0 is developing a completely new
-HTTP inspector. It is incomplete right now but you can examine the
-work-in-progress. You can configure it by adding:</p></div>
+HTTP inspector. You can configure it by adding:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>new_http_inspect = {}</code></pre>
+<pre><code>http_inspect = {}</code></pre>
 </div></div>
 <div class="paragraph"><p>to your snort.lua configuration file. Or you can read it in the source code
-under src/service_inspectors/nhttp_inspect.</p></div>
-<div class="paragraph"><p>The classic HTTP preprocessor is still available in the alpha release as
-http_inspect. It’s probably the better choice for now if you just want to
-do some work and do not feel like experimenting. Be sure not to configure
-    both old and new HTTP inspectors at the same time.</p></div>
+under src/service_inspectors/http_inspect.</p></div>
+<div class="paragraph"><p>The classic HTTP preprocessor is still available in the alpha release
+under extra/src/inspectors/http_server. Be sure not to configure both old and new HTTP inspectors
+at the same time.</p></div>
 <div class="paragraph"><p>So why a new HTTP inspector?</p></div>
 <div class="paragraph"><p>For starters it is object-oriented. That’s good for us because we maintain
 this software. But it should also be really nice for open-source
@@ -1046,20 +1044,20 @@ processing without having to understand the whole thing. In fact much of
 the new HTTP inspector’s knowledge of HTTP is centralized in a series of
 tables where it can be easily reviewed and modified. Many significant
 changes can be made just by updating these tables.</p></div>
-<div class="paragraph"><p>New_http_inspect is the first inspector written specifically for the new
+<div class="paragraph"><p>The new http_inspect is the first inspector written specifically for the new
 Snort 3.0 architecture. That provides access to one of the very best
 features of Snort 3.0: purely PDU-based inspection. Classic http_inspect
 processes HTTP messages, but even while doing so it is constantly aware of
 IP packets and how they divide up the TCP data stream. The same HTTP
 message might be processed differently depending on how the sender (bad
 guy) divided it up into IP packets.</p></div>
-<div class="paragraph"><p>New_http_inspect is free of this burden and can focus exclusively on HTTP.
-That makes it much more simple, easier to test, and less prone to false
+<div class="paragraph"><p>The new http_inspect is free of this burden and can focus exclusively on
+HTTP. That makes it much more simple, easier to test, and less prone to false
 positives. It also greatly reduces the opportunity for adversaries to probe
 the inspector for weak spots by adjusting packet boundaries to disguise bad
 behavior.</p></div>
 <div class="paragraph"><p>Dealing solely with HTTP messages also opens the door for developing major
-new features. The new_http_inspect design supports true stateful
+new features. The new http_inspect design supports true stateful
 processing. Want to ask questions that involve both the client request and
 the server response? Or different requests in the same session? These
 things are possible.</p></div>
@@ -1069,9 +1067,8 @@ the name, it is better to think of HTTP/2 not as a newer version of
 HTTP/1.1, but rather a separate protocol layer that runs under HTTP/1.1 and
 on top of TLS or TCP. It’s a perfect fit for the new Snort 3.0 architecture
 because a new HTTP/2 inspector would naturally output HTTP/1.1 messages but
-not any underlying packets. Exactly what the new_http_inspect wants to
-input.</p></div>
-<div class="paragraph"><p>New_http_inspect is taking a very different approach to HTTP header fields.
+not any underlying packets. Exactly what the new http_inspect wants to input.</p></div>
+<div class="paragraph"><p>The new http_inspect is taking a very different approach to HTTP header fields.
 Classic http_inspect divides all the HTTP headers following the start line
 into cookies and everything else. It normalizes the two pieces using a
 generic process and puts them in buffers that one can write rules against.
@@ -14187,8 +14184,6 @@ configure can be found by running the following command:</p></div>
 <div class="content">
 <pre><code>snort --help-config http_inspect | grep http_inspect.profile</code></pre>
 </div></div>
-<div class="paragraph"><p>The new Http Inspect (new_http_inspect) implementation of config options is
-still under development.</p></div>
 </div>
 </div>
 </div>

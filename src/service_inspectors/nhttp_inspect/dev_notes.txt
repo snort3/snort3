@@ -1,92 +1,95 @@
-This is the new Snort HTTP inspector. The old Snort HTTP preprocessor has also
-been ported to Snort++ and will be maintained until NHttpInspect is finished.
-At that time NHttpInspect will be renamed HttpInspect and the old HttpInspect
-will be retired. Meanwhile the abbreviations HI and NHI are sometimes used when
-it is important to distinguish the two modules.
+The new Snort HTTP inspector (HI) is divided into two major parts. The HttpStreamSplitter
+(splitter) accepts TCP payload data from Stream and subdivides it into message sections.
+HttpInspect (inspector) processes individual message sections.
 
-HI and NHI are not intended to be used together. Only configure one of them
-at a time.
+Unlike other inspectors HI has an empty eval() member. All processing is done by the inspector
+process() member which is called directly from splitter reassemble(). Thus the data flow for
+processing a message section is one or more calls to splitter scan(), followed by one or more calls
+to splitter reassemble(), the last of which calls process(). The reassembled buffer returned to the
+framework is already ready for detection and the subsequent eval() call does nothing.
 
-NHI is divided into two major parts. The NHttpStreamSplitter (splitter) accepts
-TCP payload data from Stream and subdivides it into message sections.
-NHttpInspect (inspector) processes individual message sections.
+Splitter finish() is called by the framework when the TCP connection closes (including pruning).
+It serves several specialized purposes in cases where the HTTP message is truncated (ends
+unexpectedly).
 
-Unlike other inspectors NHI has an empty eval() member. All processing is done
-by the inspector process() member which is called directly from splitter
-reassemble(). Thus the data flow for processing a message section is one or
-more calls to splitter scan(), followed by one or more calls to splitter
-reassemble(), the last of which calls process(). The reassembled buffer
-returned to the framework is already ready for detection and the subsequent
-eval() call does nothing.
+HttpFlowData is a data class representing all HI information relating to a flow. It serves as
+persistent memory between invocations of HI by the framework. It also glues together the inspector,
+the client-to-server splitter, and the server-to-client splitter which pass information through the
+flow data.
 
-NHttpFlowData is a data class representing all NHI information relating to a
-flow. It serves as persistent memory between invocations of NHI by the
-framework. It also glues together the inspector, the client-to-server splitter,
-and the server-to-client splitter which pass information through the flow data.
-
-Message section is a core concept of NHI. A message section is a piece of an
-HTTP message that is processed together. There are seven types of message
-section:
+Message section is a core concept of HI. A message section is a piece of an HTTP message that is
+processed together. There are seven types of message section:
 
 1. Request line (client-to-server start line)
 2. Status line (server-to-client start line)
 3. Headers (all headers after the start line as a group)
-4. Content-Length message body (a block of message data usually not much larger
-   than 16K from a body defined by the Content-Length header)
+4. Content-Length message body (a block of message data usually not much larger than 16K from a
+   body defined by the Content-Length header)
 5. Chunked message body (same but from a chunked body)
-6. Old message body (same but from a body with no Content-Length header that
-   runs to connection close)
+6. Old message body (same but from a body with no Content-Length header that runs to connection
+   close)
 7. Trailers (all header lines following a chunked body as a group)
 
-Message sections are represented by message section objects that contain and
-process them. There are eleven message section classes that inherit as follows.
-An asterisk denotes a virtual class.
+Message sections are represented by message section objects that contain and process them. There
+are eleven message section classes that inherit as follows. An asterisk denotes a virtual class.
 
-1. NHttpMsgSection* - top level with all common elements
-2. NHttpMsgStart* : NHttpMsgSection - common elements of request and status
-3. NHttpMsgRequest : NHttpMsgStart
-4. NHttpMsgStatus : NHttpMsgStart
-5. NHttpMsgHeadShared* : NHttpMsgSection - common elements of header and trailer
-6. NHttpMsgHeader : NHttpMsgHeadShared
-7. NHttpMsgTrailer : NHttpMsgHeadShared
-8. NHttpMsgBody* : NHttpMsgSection - common elements of message body processing
-9. NHttpMsgBodyCl : NHttpMsgBody
-10. NHttpMsgBodyChunk : NHttpMsgBody
-11. NHttpMsgBodyOld : NHttpMsgBody
+1. HttpMsgSection* - top level with all common elements
+2. HttpMsgStart* : HttpMsgSection - common elements of request and status
+3. HttpMsgRequest : HttpMsgStart
+4. HttpMsgStatus : HttpMsgStart
+5. HttpMsgHeadShared* : HttpMsgSection - common elements of header and trailer
+6. HttpMsgHeader : HttpMsgHeadShared
+7. HttpMsgTrailer : HttpMsgHeadShared
+8. HttpMsgBody* : HttpMsgSection - common elements of message body processing
+9. HttpMsgBodyCl : HttpMsgBody
+10. HttpMsgBodyChunk : HttpMsgBody
+11. HttpMsgBodyOld : HttpMsgBody
 
-An NHttpTransaction is a container that keeps all the sections of a message
-together and associates the request message with the response message.
-Transactions may be organized into pipelines when an HTTP pipeline is present.
-The current transaction and any pipeline live in the flow data. A transaction
-may have only a request because the response is not (yet) received or only a
-response because the corresponding request is unknown or unavailable.
+An HttpTransaction is a container that keeps all the sections of a message together and associates
+the request message with the response message. Transactions may be organized into pipelines when an
+HTTP pipeline is present. The current transaction and any pipeline live in the flow data. A
+transaction may have only a request because the response is not (yet) received or only a response
+because the corresponding request is unknown or unavailable.
 
-The attach_my_transaction() factory method contains all the logic that makes
-this work. There are many corner cases. Don't mess with it until you fully
-understand it.
+The attach_my_transaction() factory method contains all the logic that makes this work. There are
+many corner cases. Don't mess with it until you fully understand it.
 
-Message sections implement the Just-In-Time (JIT) principle for work products.
-A mimimum of essential processing is done under process(). Other work products
-are derived and stored the first time detection or some other customer asks for
-them. The Field class is an important tool for managing JIT. It consists of a
-pointer to a raw message field or derived work product with a length field.
-Various negative length values specify the status of the field. For instance
-STAT_NOTCOMPUTE means the item has not been computed yet, STAT_NOTPRESENT
-means the item does not exist, and STAT_PROBLEMATIC means an attempt to compute
-the item failed. Never dereference the pointer without first checking the
-length value.
+Message sections implement the Just-In-Time (JIT) principle for work products. A mimimum of
+essential processing is done under process(). Other work products are derived and stored the first
+time detection or some other customer asks for them.
 
-All of these values and more are in nhttp_enums.h which is a general repository
-for enumerated values in NHI.
+The Field class is an important tool for managing JIT. It consists of a pointer to a raw message
+field or derived work product with a length field. Various negative length values specify the
+status of the field. For instance STAT_NOTCOMPUTE means the item has not been computed yet,
+STAT_NOTPRESENT means the item does not exist, and STAT_PROBLEMATIC means an attempt to compute the
+item failed. Never dereference the pointer without first checking the length value.
 
-The NHI internal test tool is the NHttpTestInput class. It allows the developer
-to write tests that simulate HTTP messages split into TCP segments at specified
-points. The tests cover all of splitter and inspector and the impact on
-downstream customers such as detection and file processing.
+All of these values and more are in http_enums.h which is a general repository for enumerated
+values in HI.
+
+A Field is intended to represent an immutable object. It is either part of the original message
+section or it is a work product that has been derived from the original message section. In the
+former case the original message is constant and there is no reason for a Field value to change. In
+the latter case, once the value has been derived from the original message there is no reason to
+derive it again.
+
+Once Field is set to a non-null value it should never change. The set functions will assert if this
+rule is disregarded. Because the set functions are much newer than the class there are still large
+amounts of code that have not yet been converted to use them. Meanwhile adhere to the rule even
+when not using the set functions.
+
+HI implements flow depth using the request_depth and response_depth parameters. HI seeks to provide
+a consistent experience to detection by making flow depth independent of factors that a sender
+could easily manipulate, such as header length, chunking, compression, and encodings. The maximum
+depth is computed against normalized message body data.
+
+The HI internal test tool is the HttpTestInput class. It allows the developer to write tests that
+simulate HTTP messages split into TCP segments at specified points. The tests cover all of splitter
+and inspector and the impact on downstream customers such as detection and file processing.
 
 Test tool usage instructions:
 
-The test input comes from the file nhttp_test_msgs.txt in the current directory. Enter HTTP test
+The test input comes from the file http_test_msgs.txt in the current directory. Enter HTTP test
 message text as you want it to be presented to the StreamSplitter.
 
 The easiest way to format is to put a blank line between message sections so that each message
