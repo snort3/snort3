@@ -110,11 +110,6 @@ private:
     const static char ANY_FLAG = '*'; 
     const static char NOT_FLAG = '!';
     
-    bool has_normal_mode();
-    bool has_any_mode();
-    bool has_not_mode();
-    bool has_plus_mode();
-    
     bool check_normal(const uint16_t);
     bool check_any(const uint16_t);
     bool check_not(const uint16_t);
@@ -148,18 +143,6 @@ void FragBitsData::set_plus_mode()
 
 void FragBitsData::set_not_mode()
 { mode = NOT; }
-
-bool FragBitsData::has_normal_mode()
-{ return (mode == NORMAL); }
-
-bool FragBitsData::has_any_mode()
-{ return (mode == ANY); }
-
-bool FragBitsData::has_not_mode()
-{ return (mode == NOT); }
-
-bool FragBitsData::has_plus_mode() 
-{ return (mode == PLUS); }
 
 // this is the function that checks for a match
 bool FragBitsData::is_match(Packet* p) 
