@@ -92,6 +92,7 @@ int sslAppGroupIdLookup(
 );
 
 AppId getAppId(void* ssnptr);
+void dump_appid_stats();
 
 #ifdef FW_TRACKER_DEBUG
 void logAppIdInfo(SFSnortPacket* p, char* message, AppId id);

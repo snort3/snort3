@@ -76,7 +76,30 @@ ProfileStats luaCustomPerfStats;
 
 static void FreeDetectorAppUrlPattern(DetectorAppUrlPattern* pattern);
 
-// FIXIT-H J lifetime of detector is easy to misuse with this idiom
+static inline int ConvertStringToAddress(const char* string, sfip_t* address)
+{
+    int af;
+    struct in6_addr buf;
+
+    if (strchr(string, ':'))
+        af = AF_INET6;
+    else if (strchr(string, '.'))
+        af = AF_INET;
+    else
+        return 0;
+
+    if (inet_pton(af, string, &buf))
+    {
+        if (sfip_set_raw(address, &buf, af) != SFIP_SUCCESS)
+            return 0;
+    }
+    else
+        return 0;
+
+    return 1;    // success
+}
+
+// FIXIT-M lifetime of detector is easy to misuse with this idiom
 // Leaves 1 value (the Detector userdata) at the top of the stack
 Detector* createDetector(lua_State* L, const char* detectorName)
 {
@@ -90,7 +113,6 @@ Detector* createDetector(lua_State* L, const char* detectorName)
     // FIXIT-M J should go in a different table maybe?
     lua_pushvalue(L, -1);
     detector->detectorUserDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
-
     return detector;
 }
 
@@ -104,7 +126,6 @@ int checkServiceElement(Detector* detector)
     if ( !detector->server.pServiceElement )
     {
         detector->server.pServiceElement = new RNAServiceElement;
-        assert(detector->server.pServiceElement);
         detector->server.pServiceElement->name = detector->server.serviceModule.name;
     }
 
@@ -170,7 +191,7 @@ static int service_registerPattern(lua_State* L)
 
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
 
-    // FIXIT-H J none of these params check for signedness casting issues
+    // FIXIT-M  none of these params check for signedness casting issues
     // FIXIT-M: May want to create a lua_toipprotocol() so we can handle
     //          error checking in that function.
     int protocol = lua_tonumber(L, index++);
@@ -221,7 +242,7 @@ static int common_registerAppId(lua_State* L)
 
 static int Detector_htons(lua_State* L)
 {
-    // FIXIT-L J ignoring arg #1, as it is unused
+    // FIXIT-L ignoring arg #1, as it is unused
     // auto* ud = UserData<Detector>::check(L, DETECTOR, 1);
 
     unsigned short aShort = lua_tonumber(L, 2);
@@ -232,7 +253,7 @@ static int Detector_htons(lua_State* L)
 
 static int Detector_htonl(lua_State* L)
 {
-    // FIXIT-L J ignoring arg #1, as it is unused
+    // FIXIT-L ignoring arg #1, as it is unused
     // auto* ud = UserData<Detector>::check(L, DETECTOR, 1);
 
     unsigned int anInt = lua_tonumber(L, 2);
@@ -262,7 +283,6 @@ static int Detector_logMessage(lua_State* L)
 
     case LUA_LOG_ERR:
     case LUA_LOG_WARN:
-        // FIXIT-L J should WARN do a WarningMessage instead?
         ErrorMessage("%s:%s\n", name, message);
         break;
 
@@ -844,14 +864,14 @@ static int Detector_getProtocolType(lua_State* L)
 
     if ( !ud->validateParams.pkt || !ud->validateParams.pkt->has_ip() )
     {
-        // FIXIT-H J why the inconsistent use of checkstack?
+        // FIXIT-M J why the inconsistent use of checkstack?
         lua_checkstack (L, 1);
         lua_pushnumber(L, 0);
         return 1;
     }
 
     lua_checkstack (L, 1);
-    // FIXIT-H: is this conversion to double valid?
+    // FIXIT-M: is this conversion to double valid?
     lua_pushnumber(L, (double)ud->validateParams.pkt->get_ip_proto_next() );
     return 1;
 }
@@ -1198,13 +1218,22 @@ static int Detector_getFlow(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    CHECK_INPUTS();
+    //CHECK_INPUTS();
+    if ( !ud->validateParams.pkt )
+    {
+        lua_pushnumber(L, SERVICE_ENULL);
+        return 1;
+    }
 
     auto df = new DetectorFlow();
     df->pFlow = ud->validateParams.flowp;
+    UserData<DetectorFlow>::push(L, DETECTORFLOW, df);
 
-    UserData<DetectorFlow>::push(L, "DetectorFlow", df);
+    df->myLuaState = L;
+    lua_pushvalue(L, -1);
+    df->userDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
 
+    sflist_add_tail(&allocatedFlowList, df);
     return 1;
 }
 
@@ -1237,7 +1266,7 @@ int Detector_addHttpPattern(lua_State* L)
     uint32_t payload         = lua_tointeger(L, index++);
     /*uint32_t payload_type    =*/ lua_tointeger(L, index++);
 
-    // FIXIT-H J should this be inverted?
+    // FIXIT-M should this be inverted?
     if (ud->validateParams.pkt)
     {
         ErrorMessage(
@@ -1326,7 +1355,6 @@ int Detector_addSSLCertPattern(lua_State* L)
 
     type = lua_tointeger(L, index++);
     app_id  = (AppId)lua_tointeger(L, index++);
-
     pattern_size = 0;
     const char* tmpString = lua_tolstring(L, index++, &pattern_size);
     if (!tmpString || !pattern_size)
@@ -1334,9 +1362,9 @@ int Detector_addSSLCertPattern(lua_State* L)
         ErrorMessage("Invalid SSL Host pattern string");
         return 0;
     }
-    pattern_str = (uint8_t*)snort_strdup(tmpString);
 
 #ifdef REMOVED_WHILE_NOT_IN_USE
+    pattern_str = (uint8_t*)snort_strdup(tmpString);
     if (!ssl_add_cert_pattern(pattern_str, pattern_size, type, app_id,
         &ud->pAppidNewConfig->serviceSslConfig))
     {
@@ -1417,9 +1445,9 @@ static int Detector_addSSLCnamePattern(lua_State* L)
         ErrorMessage("Invalid SSL Host pattern string");
         return 0;
     }
-    pattern_str = (uint8_t*)snort_strdup(tmpString);
 
 #ifdef REMOVED_WHILE_NOT_IN_USE
+    pattern_str = (uint8_t*)snort_strdup(tmpString);
     if (!ssl_add_cname_pattern(pattern_str, pattern_size, type, app_id,
         &ud->pAppidNewConfig->serviceSslConfig))
     {
@@ -1443,7 +1471,7 @@ static int Detector_addHostPortApp(lua_State* L)
     int index = 1;
     uint8_t type;
     AppId app_id;
-    in6_addr ip6Addr;
+    sfip_t ip_addr;
 
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
     if ( ud->validateParams.pkt )
@@ -1454,34 +1482,14 @@ static int Detector_addHostPortApp(lua_State* L)
 
     type = lua_tointeger(L, index++);
     app_id  = (AppId)lua_tointeger(L, index++);
-
     ipaddr_size = 0;
-    const char* tmpString = lua_tolstring(L, index++, &ipaddr_size);
-    if (!tmpString || !ipaddr_size)
+    const char* ip_str= lua_tolstring(L, index++, &ipaddr_size);
+    if (!ip_str || !ipaddr_size || !ConvertStringToAddress(ip_str, &ip_addr))
     {
-        ErrorMessage("%s:Invalid ipaddr string\n",__func__);
+        ErrorMessage("%s: Invalid IP address: %s\n",__func__, ip_str);
         return 0;
     }
-    if (!strchr(tmpString, ':'))
-    {
-        if (inet_pton(AF_INET, tmpString, &ip6Addr) <= 0)
-        {
-            ErrorMessage("%s: Invalid IP address: %s\n",__func__, tmpString);
-            return 0;
-        }
 
-        // FIXIT-H J ip6Addr type is struct in6_addr, so...
-        // ip6Addr.u6_addr32[0] = ip6Addr.u6_addr32[1] =  0;
-        // ip6Addr.u6_addr32[2] = ntohl(0x0000ffff);
-    }
-    else
-    {
-        if (inet_pton(AF_INET6, tmpString, &ip6Addr) <= 0)
-        {
-            ErrorMessage("%s: Invalid IP address: %s\n",__func__, tmpString);
-            return 0;
-        }
-    }
     unsigned port  = lua_tointeger(L, index++);
     unsigned proto  = lua_tointeger(L, index++);
 
@@ -1491,8 +1499,8 @@ static int Detector_addHostPortApp(lua_State* L)
         return 0;
     }
 
-    if (!hostPortAppCacheAdd(&ip6Addr, (uint16_t)port, (IpProtocol)proto, type, app_id,
-        ud->pAppidNewConfig))
+    if (!hostPortAppCacheAdd(&ip_addr, (uint16_t)port, (IpProtocol)proto, type, app_id,
+            ud->pAppidNewConfig))
     {
         ErrorMessage("%s:Failed to backend call\n",__func__);
     }
@@ -1648,9 +1656,10 @@ static inline int CHPGetPatternDataAndSize(lua_State* L, int index, char** patte
 static inline int CHPGetActionType(lua_State* L, int index, ActionType* action_type)
 {
     *action_type = (ActionType)lua_tointeger(L, index);
+    // FIXIT-M: many lua detectors call this with action_type == 14, max is set to 14...is this an issue or a feature
     if (*action_type < NO_ACTION || *action_type > MAX_ACTION_TYPE)
     {
-        ErrorMessage("LuaDetectorApi:Incompatible CHP Action type, might be for a later version.");
+        WarningMessage("LuaDetectorApi:Incompatible CHP Action type, might be for a later version.");
         return -1;
     }
     return 0;
@@ -2142,14 +2151,6 @@ static int Detector_addAppUrl(lua_State* L)
     tmpString = lua_tolstring(L, index++, &queryPatternSize);
     if (tmpString && queryPatternSize)
         queryPattern = (u_int8_t*)snort_strdup(tmpString);
-    else
-    {
-        ErrorMessage("Invalid query pattern string.");
-        snort_free(hostPattern);
-        snort_free(pathPattern);
-        snort_free(schemePattern);
-        return 0;
-    }
 
     u_int32_t appId = lua_tointeger(L, index++);
 
@@ -2233,7 +2234,7 @@ static int Detector_addRTMPUrl(lua_State* L)
     size_t hostPatternSize = 0;
     u_int8_t* hostPattern = nullptr;
     tmpString = lua_tolstring(L, index++, &hostPatternSize);
-    // FIXIT - recode all this to something elegant since snort_strdup can't fail (just like Rudy)
+    // FIXIT-L: recode all this to something elegant since snort_strdup can't fail (just like Rudy)
     if (!tmpString || !hostPatternSize || !(hostPattern = (u_int8_t*)snort_strdup(tmpString)))
     {
         ErrorMessage("Invalid host pattern string.");
@@ -2244,7 +2245,7 @@ static int Detector_addRTMPUrl(lua_State* L)
     size_t pathPatternSize = 0;
     u_int8_t* pathPattern = nullptr;
     tmpString = lua_tolstring(L, index++, &pathPatternSize);
-    // FIXIT - recode all this to something elegant since snort_strdup can't fail (just like Rudy)
+    // FIXIT-L: recode all this to something elegant since snort_strdup can't fail (just like Rudy)
     if (!tmpString || !pathPatternSize || !(pathPattern = (u_int8_t*)snort_strdup(tmpString)))
     {
         ErrorMessage("Invalid path pattern string.");
@@ -2256,7 +2257,7 @@ static int Detector_addRTMPUrl(lua_State* L)
     size_t schemePatternSize;
     u_int8_t* schemePattern = nullptr;
     tmpString = lua_tolstring(L, index++, &schemePatternSize);
-    // FIXIT - recode all this to something elegant since snort_strdup can't fail (just like Rudy)
+    // FIXIT-L: recode all this to something elegant since snort_strdup can't fail (just like Rudy)
     if (!tmpString || !schemePatternSize || !(schemePattern = (u_int8_t*)snort_strdup(tmpString)))
     {
         ErrorMessage("Invalid scheme pattern string.");
@@ -2911,7 +2912,7 @@ static int Detector_addSipServer(lua_State* L)
         return 0;
     }
 
-    // FIXIT - uncomment when sip detector is included in the build
+    // FIXIT-M: uncomment when sip detector is included in the build
 #ifdef REMOVED_WHILE_NOT_IN_USE
     sipServerPatternAdd(client_app, clientVersion, uaPattern,
             &ud->pAppidNewConfig->detectorSipConfig);
@@ -2919,29 +2920,6 @@ static int Detector_addSipServer(lua_State* L)
     appInfoSetActive(client_app, true);
 
     return 0;
-}
-
-static inline int ConvertStringToAddress(const char* string, sfip_t* address)
-{
-    int af;
-    struct in6_addr buf;
-
-    if (strchr(string, ':'))
-        af = AF_INET6;
-    else if (strchr(string, '.'))
-        af = AF_INET;
-    else
-        return 0;
-
-    if (inet_pton(af, string, &buf))
-    {
-        if (sfip_set_raw(address, &buf, af) != SFIP_SUCCESS)
-            return 0;
-    }
-    else
-        return 0;
-
-    return 1;    // success
 }
 
 /**Creates a future flow based on the current flow.  When the future flow is
@@ -2984,9 +2962,7 @@ static int createFutureFlow(lua_State* L)
 
     /*check inputs and whether this function is called in context of a packet */
     if ( !ud->validateParams.pkt )
-    {
         return 0;
-    }
 
     pattern = (char*)lua_tostring(L, 2);
     if (!ConvertStringToAddress(pattern, &client_addr))
@@ -2999,13 +2975,10 @@ static int createFutureFlow(lua_State* L)
         return 0;
 
     server_port = lua_tonumber(L, 5);
-
     proto = (IpProtocol)lua_tonumber(L, 6);
-
     service_app_id = lua_tointeger(L, 7);
     client_app_id  = lua_tointeger(L, 8);
     payload_app_id = lua_tointeger(L, 9);
-
     app_id_to_snort = lua_tointeger(L, 10);
     if (app_id_to_snort > APP_ID_NONE)
     {
@@ -3015,9 +2988,7 @@ static int createFutureFlow(lua_State* L)
         snort_app_id = entry->snortId;
     }
     else
-    {
         snort_app_id = 0;
-    }
 
     fp = AppIdEarlySessionCreate(ud->validateParams.flowp,
         ud->validateParams.pkt,
@@ -3225,6 +3196,7 @@ void Detector_fini(void* data)
  */
 static int Detector_gc(lua_State*)
 {
+    // FIXIT-M Does Detector_gc need to not be a no-op
     return 0;
 }
 
@@ -3237,7 +3209,7 @@ static int Detector_tostring(lua_State* L)
 
 static const luaL_reg Detector_meta[] =
 {
-    { "__gc",       Detector_gc }, // FIXIT-M J As of right now, Detector_gc is a no-op
+    { "__gc",       Detector_gc },
     { "__tostring", Detector_tostring },
     { 0, 0 }
 };
@@ -3295,7 +3267,7 @@ static void FreeCHPAppListElement(CHPListElement* element)
             snort_free(element->chp_action.pattern);
         if (element->chp_action.action_data)
             snort_free(element->chp_action.action_data);
-        free (element);
+        snort_free (element);
     }
 }
 
@@ -3311,7 +3283,6 @@ static void FreeDetectorAppUrlPattern(DetectorAppUrlPattern* pattern)
             snort_free(*(void**)&pattern->patterns.path.pattern);
         if (pattern->patterns.scheme.pattern)
             snort_free(*(void**)&pattern->patterns.scheme.pattern);
-        // FIXIT - pattern still allocated with calloc/realloc
         snort_free(pattern);
     }
 }
@@ -3334,13 +3305,14 @@ void CleanHttpPatternLists(AppIdConfig* pConfig)
     }
     if (pConfig->httpPatternLists.appUrlList.urlPattern)
     {
-        snort_free(pConfig->httpPatternLists.appUrlList.urlPattern);
+        // FIXIT-M: still allocated by malloc/realloc
+        free(pConfig->httpPatternLists.appUrlList.urlPattern);
         pConfig->httpPatternLists.appUrlList.urlPattern = nullptr;
     }
     pConfig->httpPatternLists.appUrlList.allocatedCount = 0;
     if (pConfig->httpPatternLists.RTMPUrlList.urlPattern)
     {
-        snort_free(pConfig->httpPatternLists.RTMPUrlList.urlPattern);
+        free(pConfig->httpPatternLists.RTMPUrlList.urlPattern);
         pConfig->httpPatternLists.RTMPUrlList.urlPattern = nullptr;
     }
     pConfig->httpPatternLists.RTMPUrlList.allocatedCount = 0;
@@ -3386,6 +3358,7 @@ Detector::~Detector()
     if ( detectorUserDataRef != LUA_REFNIL )
         luaL_unref(myLuaState, LUA_REGISTRYINDEX, detectorUserDataRef);
 
+    delete pFlow;
+
     delete[] validatorBuffer;
 }
-

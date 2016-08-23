@@ -789,7 +789,7 @@ static void dns_patterns_free(DetectorDNSHostPattern** list)
         {
             if (tmp_pattern->dpattern->pattern)
                 snort_free(tmp_pattern->dpattern->pattern);
-            free (tmp_pattern->dpattern);
+            snort_free (tmp_pattern->dpattern);
         }
         snort_free(tmp_pattern);
     }

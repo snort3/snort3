@@ -49,12 +49,10 @@ struct UserData
     {
         auto ud = static_cast<UserData<T>*>(lua_newuserdata(L, sizeof(UserData<T>)));
         assert(ud);
-
         ud->ptr = ptr;
-
         luaL_getmetatable(L, meta);
-        // metatable should already be in registry at this point
-        assert(lua_istable(L, -1));
+        // FIXIT-L: clean this up if not needed or enable the assert...metatable should already be in registry at this point
+        //assert(lua_istable(L, -1));
 
         lua_setmetatable(L, -2);
         return ud;

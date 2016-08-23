@@ -40,6 +40,8 @@ AppIdInspector::AppIdInspector(const AppIdModuleConfig* pc)
 
 AppIdInspector::~AppIdInspector()
 {
+    if(config->debug)
+        dump_appid_stats();
     delete active_config;
     delete config;
 }

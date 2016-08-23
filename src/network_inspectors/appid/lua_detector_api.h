@@ -38,13 +38,16 @@ class AppIdConfig;
 class AppIdData;
 struct RNAServiceElement;
 
+#define DETECTOR "Detector"
+#define DETECTORFLOW "DetectorFlow"
+
 struct DetectorPackageInfo
 {
     struct UniInfo
     {
-        std::string initFunctionName = "DetectorInit";     // client init function
-        std::string cleanFunctionName = "DetectorClean";    // client clean function
-        std::string validateFunctionName = "DetectorValidate"; // client validate function
+        std::string initFunctionName;       // FIXIT-M: clean this up = "DetectorInit";     // client init function
+        std::string cleanFunctionName;      //  = "DetectorClean";    // client clean function
+        std::string validateFunctionName;   // = "DetectorValidate"; // client validate function
         int minimum_matches = 0;
     };
 
@@ -123,9 +126,6 @@ struct Detector
                                           // cleaned; used at reload free and exit
     AppIdConfig* pAppidNewConfig;        ///< AppId context in which this detector should be
                                           // loaded; used at initialization and reload
-
-    /**Snort profiling stats for individual Lua detector.*/
-    ProfileStats* pPerfStats;
 };
 
 int Detector_register(lua_State*);

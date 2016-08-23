@@ -96,8 +96,8 @@ int addMlmpPattern(void* hosUrlMatcher, HosUrlPatternsList** hosUrlPatternsList,
     if (!hosUrlMatcher)
         return -1;
 
-    HosUrlDetectorPattern* detector = (HosUrlDetectorPattern*)snort_calloc(
-        sizeof(HosUrlDetectorPattern));
+    HosUrlDetectorPattern* detector =
+        (HosUrlDetectorPattern*)snort_calloc(sizeof(HosUrlDetectorPattern));
     detector->host.pattern = (uint8_t*)snort_strdup((char*)host_pattern);
 
     if (path_pattern)

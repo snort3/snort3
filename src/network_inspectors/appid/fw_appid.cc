@@ -935,23 +935,23 @@ static inline void seServiceAppIdData(AppIdData* session, AppId serviceAppId, ch
     }
 }
 
-static inline void setClientAppIdData(AppIdData* session, AppId ClientAppId, char** version)
+static inline void setClientAppIdData(AppIdData* session, AppId clientAppId, char** version)
 {
     AppIdConfig* pConfig = pAppidActiveConfig;
-    if (ClientAppId <= APP_ID_NONE || ClientAppId == APP_ID_HTTP)
+    if (clientAppId <= APP_ID_NONE || clientAppId == APP_ID_HTTP)
         return;
 
-    if (session->ClientAppId != ClientAppId)
+    if (session->ClientAppId != clientAppId)
     {
         unsigned prev_priority = appInfoEntryPriorityGet(session->ClientAppId, pConfig);
-        unsigned curr_priority = appInfoEntryPriorityGet(ClientAppId, pConfig);
+        unsigned curr_priority = appInfoEntryPriorityGet(clientAppId, pConfig);
 
         if (pAppidActiveConfig->mod_config->instance_id)
-            checkSandboxDetection(ClientAppId);
+            checkSandboxDetection(clientAppId);
 
         if ((session->ClientAppId) && (prev_priority > curr_priority ))
             return;
-        session->ClientAppId = ClientAppId;
+        session->ClientAppId = clientAppId;
 
         if (session->clientVersion)
             snort_free(session->clientVersion);
@@ -1414,7 +1414,7 @@ static inline int processHTTPPacket(Packet* p, AppIdData* session, int direction
     char* vendorVersion = nullptr;
     char* vendor = nullptr;
     AppId serviceAppId = 0;
-    AppId ClientAppId = 0;
+    AppId clientAppId = 0;
     AppId payloadAppId = 0;
     AppId referredPayloadAppId = 0;
     char* host;
@@ -1564,18 +1564,18 @@ static inline int processHTTPPacket(Packet* p, AppIdData* session, int direction
                     snort_free(version);
                     version = nullptr;
                 }
-                identifyUserAgent((uint8_t*)useragent, size, &serviceAppId, &ClientAppId, &version,
+                identifyUserAgent((uint8_t*)useragent, size, &serviceAppId, &clientAppId, &version,
                     &pConfig->detectorHttpConfig);
                 if (app_id_debug_session_flag && serviceAppId > APP_ID_NONE && serviceAppId !=
                     APP_ID_HTTP && session->serviceAppId != serviceAppId)
                     LogMessage("AppIdDbg %s User Agent is service %d\n", app_id_debug_session,
                         serviceAppId);
                 seServiceAppIdData(session, serviceAppId, nullptr, nullptr);
-                if (app_id_debug_session_flag && ClientAppId > APP_ID_NONE && ClientAppId !=
-                    APP_ID_HTTP && session->ClientAppId != ClientAppId)
+                if (app_id_debug_session_flag && clientAppId > APP_ID_NONE && clientAppId !=
+                    APP_ID_HTTP && session->ClientAppId != clientAppId)
                     LogMessage("AppIdDbg %s User Agent is client %d\n", app_id_debug_session,
-                        ClientAppId);
-                setClientAppIdData(session, ClientAppId, &version);
+                        clientAppId);
+                setClientAppIdData(session, clientAppId, &version);
                 session->scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
             }
 
@@ -1617,8 +1617,8 @@ static inline int processHTTPPacket(Packet* p, AppIdData* session, int direction
             {
                 if (direction == APP_ID_FROM_INITIATOR)
                 {
-                    if (app_id_debug_session_flag && ClientAppId > APP_ID_NONE && ClientAppId !=
-                        APP_ID_HTTP && session->ClientAppId != ClientAppId)
+                    if (app_id_debug_session_flag && clientAppId > APP_ID_NONE && clientAppId !=
+                        APP_ID_HTTP && session->ClientAppId != clientAppId)
                         LogMessage("AppIdDbg %s X is client %d\n", app_id_debug_session, appId);
                     setClientAppIdData(session, appId, &version);
                 }
@@ -1661,17 +1661,17 @@ static inline int processHTTPPacket(Packet* p, AppIdData* session, int direction
                 snort_free(version);
                 version = nullptr;
             }
-            if (getAppIdFromUrl(host, url, &version, referer, &ClientAppId, &serviceAppId,
+            if (getAppIdFromUrl(host, url, &version, referer, &clientAppId, &serviceAppId,
                 &payloadAppId, &referredPayloadAppId, 0, &pConfig->detectorHttpConfig) == 1)
             {
                 // do not overwrite a previously-set client or service
                 if (session->ClientAppId <= APP_ID_NONE)
                 {
-                    if (app_id_debug_session_flag && ClientAppId > APP_ID_NONE && ClientAppId !=
-                        APP_ID_HTTP && session->ClientAppId != ClientAppId)
+                    if (app_id_debug_session_flag && clientAppId > APP_ID_NONE && clientAppId !=
+                        APP_ID_HTTP && session->ClientAppId != clientAppId)
                         LogMessage("AppIdDbg %s URL is client %d\n", app_id_debug_session,
-                            ClientAppId);
-                    setClientAppIdData(session, ClientAppId, nullptr);
+                            clientAppId);
+                    setClientAppIdData(session, clientAppId, nullptr);
                 }
                 if (session->serviceAppId <= APP_ID_NONE)
                 {
@@ -1697,7 +1697,7 @@ static inline int processHTTPPacket(Packet* p, AppIdData* session, int direction
             if (session->tpPayloadAppId > APP_ID_NONE)
             {
                 entry = appInfoEntryGet(session->tpPayloadAppId, pConfig);
-                // only move tpPayloadAppId to client if its got a ClientAppId
+                // only move tpPayloadAppId to client if its got a clientAppId
                 if (entry->clientId > APP_ID_NONE)
                 {
                     session->miscAppId = session->ClientAppId;
@@ -1851,18 +1851,18 @@ static inline void ExamineSslMetadata(Packet*, AppIdData*, AppIdConfig*)
 #ifdef REMOVED_WHILE_NOT_IN_USE
     size_t size;
     int ret;
-    AppId ClientAppId = 0;
+    AppId clientAppId = 0;
     AppId payloadAppId = 0;
 
     if ((session->scan_flags & SCAN_SSL_HOST_FLAG) && session->tsession->tls_host)
     {
         size = strlen(session->tsession->tls_host);
         if ((ret = ssl_scan_hostname((const u_int8_t*)session->tsession->tls_host, size,
-                &ClientAppId, &payloadAppId, &pConfig->serviceSslConfig)))
+                &clientAppId, &payloadAppId, &pConfig->serviceSslConfig)))
         {
-            setClientAppIdData(session, ClientAppId, nullptr);
+            setClientAppIdData(session, clientAppId, nullptr);
             setPayloadAppIdData(session, (ApplicationId)payloadAppId, nullptr);
-            setSSLSquelch(p, ret, (ret == 1 ? payloadAppId : ClientAppId));
+            setSSLSquelch(p, ret, (ret == 1 ? payloadAppId : clientAppId));
         }
         session->scan_flags &= ~SCAN_SSL_HOST_FLAG;
         // ret = 0;
@@ -1871,11 +1871,11 @@ static inline void ExamineSslMetadata(Packet*, AppIdData*, AppIdConfig*)
     {
         size = strlen(session->tsession->tls_cname);
         if ((ret = ssl_scan_cname((const u_int8_t*)session->tsession->tls_cname, size,
-                &ClientAppId, &payloadAppId, &pConfig->serviceSslConfig)))
+                &clientAppId, &payloadAppId, &pConfig->serviceSslConfig)))
         {
-            setClientAppIdData(session, ClientAppId, nullptr);
+            setClientAppIdData(session, clientAppId, nullptr);
             setPayloadAppIdData(session, (ApplicationId)payloadAppId, nullptr);
-            setSSLSquelch(p, ret, (ret == 1 ? payloadAppId : ClientAppId));
+            setSSLSquelch(p, ret, (ret == 1 ? payloadAppId : clientAppId));
         }
         snort_free(session->tsession->tls_cname);
         session->tsession->tls_cname = nullptr;
@@ -1885,11 +1885,11 @@ static inline void ExamineSslMetadata(Packet*, AppIdData*, AppIdConfig*)
     {
         size = strlen(session->tsession->tls_orgUnit);
         if ((ret = ssl_scan_cname((const u_int8_t*)session->tsession->tls_orgUnit, size,
-                &ClientAppId, &payloadAppId, &pConfig->serviceSslConfig)))
+                &clientAppId, &payloadAppId, &pConfig->serviceSslConfig)))
         {
-            setClientAppIdData(session, ClientAppId, nullptr);
+            setClientAppIdData(session, clientAppId, nullptr);
             setPayloadAppIdData(session, (ApplicationId)payloadAppId, nullptr);
-            setSSLSquelch(p, ret, (ret == 1 ? payloadAppId : ClientAppId));
+            setSSLSquelch(p, ret, (ret == 1 ? payloadAppId : clientAppId));
         }
         snort_free(session->tsession->tls_orgUnit);
         session->tsession->tls_orgUnit = nullptr;
@@ -3784,7 +3784,7 @@ void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extract
             entry->flags |= extractsInfo;
         else
             ErrorMessage(
-                "AppId: Failed to find a client application module forAppId: %d - %p\n",
+                "AppId: Failed to find a client application module for AppId: %d - %p\n",
                 appId, (void*)data);
     }
     else
@@ -4080,11 +4080,8 @@ void checkSandboxDetection(AppId appId)
     if (pAppidActiveConfig->mod_config->instance_id && pConfig)
     {
         entry = appInfoEntryGet(appId, pConfig);
-        if (entry && entry->flags & APPINFO_FLAG_ACTIVE)
-        {
-            fprintf(SF_DEBUG_FILE, "add service\n");
+        if ( entry && ( entry->flags & APPINFO_FLAG_ACTIVE ) )
             fprintf(SF_DEBUG_FILE, "Detected AppId %d\n", entry->appId);
-        }
     }
 }
 

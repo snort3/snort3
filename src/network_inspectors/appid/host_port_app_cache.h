@@ -43,12 +43,10 @@ struct HostPortVal
 
 void hostPortAppCacheInit(AppIdConfig*);
 void hostPortAppCacheFini(AppIdConfig*);
-// FIXIT-M: Should proto be IpProtocol or ProtocolId?
-HostPortVal* hostPortAppCacheFind(
-    const sfip_t*, uint16_t port, IpProtocol proto, const AppIdConfig*);
-
-int hostPortAppCacheAdd(
-    const in6_addr*, uint16_t port, IpProtocol proto, unsigned type, AppId, AppIdConfig*);
+HostPortVal* hostPortAppCacheFind(const sfip_t*, uint16_t port, IpProtocol proto,
+        const AppIdConfig*);
+int hostPortAppCacheAdd(const sfip_t*, uint16_t port, IpProtocol proto, unsigned type,
+        AppId, AppIdConfig*);
 void hostPortAppCacheDump(const AppIdConfig*);
 
 #endif

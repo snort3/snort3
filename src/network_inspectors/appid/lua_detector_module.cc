@@ -164,31 +164,8 @@ static inline bool get_lua_field(
 
 static lua_State* createLuaState()
 {
-    // FIXIT-H J should obtain lua states from lua state factory
     auto L = luaL_newstate();
     luaL_openlibs(L);
-
-// FIXIT-M J this is stupid, remove it
-#ifdef HAVE_LIBLUAJIT
-    /*linked in during compilation */
-    luaopen_jit(myLuaState);
-
-    {
-        static unsigned once = 0;
-        if (!once)
-        {
-            lua_getfield(myLuaState, LUA_REGISTRYINDEX, "_LOADED");
-            lua_getfield(myLuaState, -1, "jit");  /* Get jit.* module table. */
-            lua_getfield (myLuaState, -1, "version");
-            if (lua_isstring(myLuaState, -1))
-                DEBUG_WRAP(DebugMessage(DEBUG_APPID, "LuaJIT: Version %s\n", lua_tostring(
-                    myLuaState, -1)); );
-            lua_pop(myLuaState, 1);
-            once = 1;
-        }
-    }
-
-#endif  /*HAVE_LIBLUAJIT */
 
     Detector_register(L);
     // After detector register the methods are still on the stack, remove them
@@ -239,143 +216,6 @@ static lua_State* createLuaState()
     return L;
 }
 
-#ifdef REMOVED_WHILE_NOT_IN_USE
-static void getDetectorPackageInfo(lua_State* L, Detector* detector, int fillDefaults)
-{
-    tDetectorPackageInfo* pkg = &detector->packageInfo;
-    lua_getglobal (L, "DetectorPackageInfo");
-    if (!lua_istable(L, -1))
-    {
-        lua_pop(L, 1);
-
-        if (fillDefaults)
-        {
-            /*set default values first */
-            pkg->name = snort_strdup("NoName");
-            pkg->server.initFunctionName = snort_strdup("DetectorInit");
-            pkg->server.cleanFunctionName = snort_strdup("DetectorClean");
-            pkg->server.validateFunctionName = snort_strdup("DetectorValidate");
-            if (!pkg->name || !pkg->server.initFunctionName || !pkg->server.cleanFunctionName ||
-                !pkg->server.validateFunctionName)
-                _dpd.errMsg("failed to allocate package");
-        }
-        return;
-    }
-
-    /* Get all the variables */
-    lua_getfield(L, -1, "name"); /* string */
-    if (lua_isstring(L, -1))
-    {
-        pkg->name = snort_strdup(lua_tostring(L, -1));
-        if (!pkg->name)
-            _dpd.errMsg("failed to allocate package name");
-    }
-    else if (fillDefaults)
-    {
-        pkg->name = snort_strdup("NoName");
-        if (!pkg->name)
-            _dpd.errMsg("failed to allocate package name");
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, -1, "proto"); /* integer? */
-    if (lua_isnumber(L, -1))
-    {
-        pkg->proto = lua_tointeger(L, -1);
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, -1, "client");
-    if (lua_istable(L, -1))
-    {
-        lua_getfield(L, -1, "init"); /* string*/
-        if (lua_isstring(L, -1))
-        {
-            pkg->client.initFunctionName = snort_strdup(lua_tostring(L, -1));
-            if (!pkg->client.initFunctionName)
-                _dpd.errMsg("failed to allocate client init function name");
-        }
-        lua_pop(L, 1);
-
-        lua_getfield(L, -1, "clean"); /* string*/
-        if (lua_isstring(L, -1))
-        {
-            pkg->client.cleanFunctionName = snort_strdup(lua_tostring(L, -1));
-            if (!pkg->client.cleanFunctionName)
-                lua_getfield(L, -1, "validate"); /* string*/
-            if (lua_isstring(L, -1))
-            {
-                pkg->client.validateFunctionName = snort_strdup(lua_tostring(L, -1));
-                if (!pkg->client.validateFunctionName)
-                    _dpd.errMsg("failed to allocate client validate function name");
-            }
-            lua_pop(L, 1);
-
-            lua_getfield(L, -1, "minimum_matches");     /* integer*/
-            if (lua_isnumber(L, -1))
-            {
-                pkg->client.minMatches = lua_tointeger(L, -1);
-            }
-            lua_pop(L, 1);
-        }
-        lua_pop(L, 1);      /*pop client table */
-
-        lua_getfield(L, -1, "server");
-        if (lua_istable(L, -1))
-        {
-            lua_getfield(L, -1, "init");     /* string*/
-            if (lua_isstring(L, -1))
-            {
-                pkg->server.initFunctionName = snort_strdup(lua_tostring(L, -1));
-                if (!pkg->server.initFunctionName)
-                    _dpd.errMsg("failed to allocate server init function name");
-            }
-            else if (fillDefaults)
-            {
-                pkg->server.initFunctionName = snort_strdup("DetectorInit");
-                if (!pkg->server.initFunctionName)
-                    _dpd.errMsg("failed to allocate server init function name");
-            }
-            lua_pop(L, 1);
-
-            lua_getfield(L, -1, "clean");     /* string*/
-            if (lua_isstring(L, -1))
-            {
-                pkg->server.cleanFunctionName = snort_strdup(lua_tostring(L, -1));
-                if (!pkg->server.cleanFunctionName)
-                    _dpd.errMsg("failed to allocate server clean function name");
-            }
-            else if (fillDefaults)
-            {
-                pkg->server.cleanFunctionName = snort_strdup("DetectorClean");
-                if (!pkg->server.cleanFunctionName)
-                    _dpd.errMsg("failed to allocate server clean function name");
-            }
-            lua_pop(L, 1);
-
-            lua_getfield(L, -1, "validate");     /* string*/
-            if (lua_isstring(L, -1))
-            {
-                pkg->server.validateFunctionName = snort_strdup(lua_tostring(L, -1));
-                if (!pkg->server.validateFunctionName)
-                    _dpd.errMsg("failed to allocate server validate function name");
-            }
-            else if (fillDefaults)
-            {
-                pkg->server.validateFunctionName = snort_strdup("DetectorValidate");
-                if (!pkg->server.validateFunctionName)
-                    _dpd.errMsg("failed to allocate server validate function name");
-            }
-            lua_pop(L, 1);
-        }
-        lua_pop(L, 1);      /*pop server table */
-
-        lua_pop(L, 1);      /*pop DetectorPackageInfo table */
-    }
-}
-
-#endif
-
 // fetch or create packageInfo defined inside lua detector
 static void getDetectorPackageInfo(Detector* detector)
 {
@@ -395,18 +235,12 @@ static void getDetectorPackageInfo(Detector* detector)
     // get proto
     if ( !get_lua_field(L, -1, "proto", pkg.proto) )
     {
-        // FIXIT-M J error messages should use source info
         ErrorMessage("DetectorPackageInfo field 'proto' is not a number\n");
     }
 
     // get client
     lua_getfield(L, -1, "client");
-    if ( !lua_istable(L, -1) )
-    {
-        // FIXIT-M J error messages should use source info
-        ErrorMessage("DetectorPackageInfo field 'client' is not a table\n");
-    }
-    else
+    if ( lua_istable(L, -1) )
     {
         get_lua_field(L, -1, "init", pkg.client.initFunctionName);
         get_lua_field(L, -1, "clean", pkg.client.cleanFunctionName);
@@ -419,18 +253,16 @@ static void getDetectorPackageInfo(Detector* detector)
 
     // get server
     lua_getfield(L, -1, "server");
-    if ( !lua_istable(L, -1) )
-    {
-        // FIXIT-M J error messages should use source info
-        ErrorMessage("DetectorPackageInfo field 'server' is not a table\n");
-    }
-    else
+    if ( lua_istable(L, -1) )
     {
         get_lua_field(L, -1, "init", pkg.server.initFunctionName);
         get_lua_field(L, -1, "clean", pkg.server.cleanFunctionName);
         get_lua_field(L, -1, "validate", pkg.server.validateFunctionName);
         get_lua_field(L, -1, "minimum_matches", pkg.server.minimum_matches);
     }
+
+    lua_pop(L, 1);  /*pop server table */
+    lua_pop(L, 1);  /*pop DetectorPackageInfo table */
 }
 
 /**Calls DetectorInit function inside lua detector.
@@ -445,23 +277,12 @@ static void luaServerInit(Detector* detector)
     auto L = detector->myLuaState;
     const auto& server = detector->packageInfo.server;
 
-    if ( server.initFunctionName.empty() )
-    {
-        ErrorMessage("Detector %s: DetectorInit() is not provided for server\n", name.c_str());
-        return;
-    }
-
     lua_getglobal(L, server.initFunctionName.c_str());
-
     if (!lua_isfunction(L, -1))
-    {
-        ErrorMessage("Detector %s: does not contain DetectorInit() function\n", name.c_str());
         return;
-    }
 
     /*first parameter is DetectorUserData */
     lua_rawgeti(L, LUA_REGISTRYINDEX, detector->detectorUserDataRef);
-
     if ( lua_pcall(L, 1, 1, 0) )
     {
         ErrorMessage("error loading lua Detector %s, error %s\n",
@@ -507,7 +328,6 @@ static void luaClientInit(Detector* detector)
 
     if ( lua_pcall(L, 2, 1, 0) )
     {
-        // FIXIT shouldn't this be using detector->name?
         ErrorMessage("Could not initialize the %s client app element: %s\n",
             detector->name.c_str(), lua_tostring(L, -1));
         return;
@@ -548,10 +368,10 @@ static void luaClientFini(Detector* detector)
 static inline void setLuaTrackerSize(lua_State* L, uint32_t numTrackers)
 {
     /*change flow tracker size according to available memory calculation */
-    lua_getglobal(L, "hosServiceTrackerModule");
+    lua_getglobal(L, "hostServiceTrackerModule");
     if (lua_istable(L, -1))
     {
-        lua_getfield(L, -1, "setHosServiceTrackerSize");
+        lua_getfield(L, -1, "setHostServiceTrackerSize");
         if (lua_isfunction(L, -1))
         {
             lua_pushinteger (L, numTrackers);
@@ -563,9 +383,7 @@ static inline void setLuaTrackerSize(lua_State* L, uint32_t numTrackers)
     }
     else
     {
-#ifdef LUA_DETECTOR_DEBUG
-        DebugFormat(DEBUG_LOG, "hosServiceTrackerModule.setHosServiceTrackerSize not found");
-#endif
+        DebugMessage(DEBUG_LOG, "hostServiceTrackerModule.setHosServiceTrackerSize not found");
     }
     lua_pop(L, 1);
 
@@ -585,9 +403,7 @@ static inline void setLuaTrackerSize(lua_State* L, uint32_t numTrackers)
     }
     else
     {
-#ifdef LUA_DETECTOR_DEBUG
-        DebugFormat(DEBUG_LOG, "flowTrackerModule.setFlowTrackerSize not found");
-#endif
+        DebugMessage(DEBUG_LOG, "flowTrackerModule.setFlowTrackerSize not found");
     }
     lua_pop(L, 1);
 }
@@ -602,19 +418,15 @@ static void luaCustomLoad( char* detectorName, char* validator, unsigned int val
     if ( !L )
     {
         ErrorMessage("can not create new luaState");
-        snort_free(validator);
+        delete[] validator;
         return;
     }
 
-    if ( luaL_loadbuffer(L, validator, validatorLen, "<buffer>") ||
-        lua_pcall(L, 0, 0, 0) )
+    if ( luaL_loadbuffer(L, validator, validatorLen, "<buffer>") || lua_pcall(L, 0, 0, 0) )
     {
-        ErrorMessage("cannot run validator %s, error: %s\n",
-            detectorName, lua_tostring(L, -1));
-
+        ErrorMessage("cannot run validator %s, error: %s\n", detectorName, lua_tostring(L, -1));
         lua_close(L);
-        snort_free(validator);
-
+        delete[] validator;
         return;
     }
 
@@ -623,8 +435,7 @@ static void luaCustomLoad( char* detectorName, char* validator, unsigned int val
     {
         ErrorMessage("cannot allocate detector %s\n", detectorName);
         lua_close(L);
-        snort_free(validator);
-
+        delete[] validator;
         return;
     }
 
@@ -636,7 +447,7 @@ static void luaCustomLoad( char* detectorName, char* validator, unsigned int val
 
     if ( detector->packageInfo.server.initFunctionName.empty() )
     {
-        assert(false); // FIXIT-H J cam is null at this point so... WOMP
+        //assert(false); // FIXIT-M cam is null at this point so... WOMP
         detector->client.appFpId = APP_ID_UNKNOWN;
         cam = &detector->client.appModule;
         // cam->name = detector->packageInfo.name;
@@ -659,7 +470,6 @@ static void luaCustomLoad( char* detectorName, char* validator, unsigned int val
         {
             detector->server.pServiceElement->validate = validateAnyService;
             detector->server.pServiceElement->userdata = detector;
-
             detector->server.pServiceElement->detectorType = DETECTOR_TYPE_DECODER;
         }
     }
@@ -724,9 +534,7 @@ static void loadCustomLuaModules(char* path, AppIdConfig* pConfig, bool isCustom
 
         basename = strrchr(globs.gl_pathv[n], '/');
         if (!basename)
-        {
             basename = globs.gl_pathv[n];
-        }
         basename++;
 
         snprintf(detectorName, LUA_DETECTOR_FILENAME_MAX, "%s_%s", (isCustom ? "custom" : "cisco"),
@@ -759,7 +567,6 @@ static void loadCustomLuaModules(char* path, AppIdConfig* pConfig, bool isCustom
         }
 
         auto validatorBuffer = new uint8_t[validatorBufferLen + 1]();
-
         if (fread(validatorBuffer, validatorBufferLen, 1, file) == 0)
         {
             ErrorMessage("Failed to read lua detector %s\n",globs.gl_pathv[n]);
@@ -768,12 +575,11 @@ static void loadCustomLuaModules(char* path, AppIdConfig* pConfig, bool isCustom
         }
 
         validatorBuffer[validatorBufferLen] = '\0';
-
         MD5INIT(&context);
         MD5UPDATE(&context, validatorBuffer, validatorBufferLen);
         MD5FINAL(digest, &context);
 
-        // FIXIT-H J this finds the wrong detector -- it should be find_last_of
+        // FIXIT-M this finds the wrong detector -- it should be find_last_of
         auto it = std::find_if(
             allocatedDetectorList.begin(),
             allocatedDetectorList.end(),
@@ -832,7 +638,6 @@ void LuaDetectorModuleManager::LoadLuaModules(AppIdConfig* pConfig)
     }
 
     char path[PATH_MAX];
-
     snprintf(path, sizeof(path), "%s/odp/lua", pAppidActiveConfig->mod_config->app_detector_dir);
     loadCustomLuaModules(path, pConfig, 0);
     snprintf(path, sizeof(path), "%s/custom/lua",
@@ -936,6 +741,8 @@ void LuaDetectorModuleManager::luaModuleFini()
     /*flow can be freed during garbage collection */
 
     sflist_static_free_all(&allocatedFlowList, freeDetectorFlow);
+    for ( auto& detector : allocatedDetectorList )
+        delete detector;
     allocatedDetectorList.clear();
 }
 
@@ -943,19 +750,22 @@ void RNAPndDumpLuaStats()
 {
     size_t totalMem = 0;
     size_t mem;
+    uint32_t total_detectors = 0;
 
     if ( allocatedDetectorList.empty() )
         return;
 
-    LogMessage("Lua detector Stats");
+    LogMessage("Lua Detector Stats:\n");
 
     for ( auto& detector : allocatedDetectorList )
     {
         mem = lua_gc(detector->myLuaState, LUA_GCCOUNT, 0);
         totalMem += mem;
-        LogMessage("    Detector %s: Lua Memory usage %zu kb", detector->name.c_str(), mem);
+        total_detectors++;
+        LogMessage("\tDetector %s: Lua Memory usage %zu kb\n", detector->name.c_str(), mem);
     }
 
-    LogMessage("Lua Stats total memory usage %zu kb", totalMem);
+    LogMessage("Lua Stats total detectors: %u\n", total_detectors);
+    LogMessage("Lua Stats total memory usage %zu kb\n", totalMem);
 }
 

@@ -34,12 +34,6 @@
 
 /*static const char * LuaLogLabel = "luaDetectorFlowApi"; */
 
-#define DETECTOR "Detector"
-#define DETECTORFLOW "DetectorFlow"
-
-#if 1 // FIXIT-M hacks
-#endif
-
 /* Lua flag bit/index to C flag value (0 for invalid). */
 static const uint64_t FLAGS_TABLE_LUA_TO_C[32]
 {

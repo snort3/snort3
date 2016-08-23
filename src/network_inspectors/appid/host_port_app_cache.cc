@@ -47,8 +47,8 @@ void hostPortAppCacheFini(AppIdConfig* pConfig)
     }
 }
 
-HostPortVal* hostPortAppCacheFind(
-    const sfip_t* snort_ip, uint16_t port, IpProtocol protocol, const AppIdConfig* pConfig)
+HostPortVal* hostPortAppCacheFind(const sfip_t* snort_ip, uint16_t port, IpProtocol protocol,
+        const AppIdConfig* pConfig)
 {
     HostPortKey hk;
     sfip_set_ip(&hk.ip, snort_ip);
@@ -58,7 +58,7 @@ HostPortVal* hostPortAppCacheFind(
     return (HostPortVal*)sfxhash_find(pConfig->hostPortCache, &hk);
 }
 
-int hostPortAppCacheAdd(const in6_addr* ip, uint16_t port, IpProtocol proto, unsigned type,
+int hostPortAppCacheAdd(const sfip_t* ip, uint16_t port, IpProtocol proto, unsigned type,
     AppId appId, AppIdConfig* pConfig)
 {
     HostPortKey hk;

@@ -571,7 +571,7 @@ static int addPatternRecursively(tMlmpTree* rootNode, const tMlmpPattern* inputP
                 (tPatternNode*)snort_calloc((partTotal - 1) * sizeof(tPatternNode));
         patternId = gPatternId++;
         i = 0;
-        patterns = inputPatternList+i;
+        patterns = inputPatternList + i;
 
         /*initialize primary Node */
         tmpPrimaryNode->patternNode.pattern.pattern = patterns->pattern;

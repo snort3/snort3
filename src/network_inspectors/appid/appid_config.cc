@@ -792,6 +792,7 @@ bool AppIdConfig::init_appid( )
             return false;
         if (!init_AF_actives( ))
             return false;
+
         LuaDetectorModuleManager::luaModuleInit();
         appInfoTableInit(mod_config->app_detector_dir, pAppidActiveConfig);
         read_port_detectors(ODP_PORT_DETECTORS);
