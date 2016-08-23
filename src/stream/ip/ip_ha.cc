@@ -19,16 +19,31 @@
 
 #include "ip_ha.h"
 
+#include "flow/flow_control.h"
 #include "main/snort_debug.h"
+#include "stream/ip/ip_session.h"
 
 void IpHA::delete_session(Flow*)
 {
     DebugMessage(DEBUG_HA,"IpHA::delete_session)\n");
 }
 
-void IpHA::create_session(Flow*)
+Flow* IpHA::create_session(FlowKey* key)
 {
-    DebugMessage(DEBUG_HA,"IpHA::create_session)\n");
+    DebugMessage(DEBUG_HA,"IpHA::create_session\n");
+
+    assert ( key );
+
+    Flow* flow = flow_con->new_flow(key);
+
+    if ( (flow != nullptr ) && (flow->session == nullptr) )
+    {
+        flow->init(PktType::IP);
+        flow->session = new IpSession(flow);
+    }
+
+    return flow;
+
 }
 
 THREAD_LOCAL IpHA* IpHAManager::ip_ha = nullptr;

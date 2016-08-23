@@ -163,23 +163,32 @@ class HighAvailabilityManager
 public:
     // Prior to parsing configuration
     static void pre_config_init();
+
     // Invoked by the module configuration parsing to create HA instance
     static bool instantiate(PortBitSet*,bool,struct timeval*,struct timeval*);
     static void thread_init();
+    static void thread_term_beginning(); // thread is about to be terminated
     static void thread_term();
-    // true is we are configured and able to process
+
+    // true if we are configured and able to process
     static bool active();
+
     // Within the packet callback, analyze the packet and flow for potential update messages
     static void process_update(Flow*, const DAQ_PktHdr_t*);
+
     // Anytime a flow is deleted, potentially generate a deletion message
     static void process_deletion(Flow*);
+
     // Look for and dispatch receive messages.
     static void process_receive();
+    static void set_modified(Flow*);
+    static bool in_standby(Flow*);
 
 private:
     HighAvailabilityManager() = delete;
     static bool use_daq_channel;
     static PortBitSet* ports;
+    static bool shutting_down;
 };
 #endif
 

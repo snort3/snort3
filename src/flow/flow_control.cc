@@ -453,13 +453,16 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 {
     unsigned news = 0;
 
+    assert ( flow );
+    flow->previous_ssn_state = flow->ssn_state;
+
     p->flow = flow;
     p->disable_inspect = flow->is_inspection_disabled();
 
     last_pkt_type = p->type();
     preemptive_cleanup();
 
-    if ( flow->flow_state )
+    if ( flow->flow_state != Flow::FlowState::SETUP )
         set_policies(snort_conf, flow->policy_id);
 
     else
@@ -470,9 +473,9 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         if ( b )
             b->eval(p);
 
-        if ( !b || (flow->flow_state == Flow::INSPECT &&
+        if ( !b || (flow->flow_state == Flow::FlowState::INSPECT &&
             (!flow->ssn_client || !flow->session->setup(p))) )
-            flow->set_state(Flow::ALLOW);
+            flow->set_state(Flow::FlowState::ALLOW);
 
         ++news;
     }
@@ -481,17 +484,17 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     switch ( flow->flow_state )
     {
-    case Flow::SETUP:
-        flow->set_state(Flow::ALLOW);
+    case Flow::FlowState::SETUP:
+        flow->set_state(Flow::FlowState::ALLOW);
         break;
 
-    case Flow::INSPECT:
+    case Flow::FlowState::INSPECT:
         assert(flow->ssn_client);
         assert(flow->ssn_server);
         flow->session->process(p);
         break;
 
-    case Flow::ALLOW:
+    case Flow::FlowState::ALLOW:
         if ( news )
             stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
         else
@@ -500,7 +503,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         p->ptrs.decode_flags |= DECODE_PKT_TRUST;
         break;
 
-    case Flow::BLOCK:
+    case Flow::FlowState::BLOCK:
         if ( news )
             stream.drop_traffic(flow, SSN_DIR_BOTH);
         else
@@ -509,7 +512,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         DisableInspection();
         break;
 
-    case Flow::RESET:
+    case Flow::FlowState::RESET:
         if ( news )
             stream.drop_traffic(flow, SSN_DIR_BOTH);
         else

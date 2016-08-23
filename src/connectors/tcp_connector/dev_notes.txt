@@ -1,0 +1,31 @@
+Implement a connector plugin that reads and writes side channel messages across
+a TCP stream channel.
+
+Each connector implements a duplex channel, both transmit and receive. When used
+by a side_channel object, a single TcpConnector object is used for both the
+transmit and receive connectors.
+
+An additional TcpConnector message header is pre-pended to each side channel
+message transmitted.  This header specifies the protocol format version and the
+length of the side channel message.  This length does not include the tcp
+connector message header, but does include the side channel message header.
+
+The tcp_connector Connector configuration results in ONE ConnectorCommon
+object which is used to contain a list of all Connectors being configured.
+A vector<> in the ConnectorCommon object holds individual Connector config
+objects.  The ConnectorManager then uses this vector<> to instantiate the
+set of desired Connectors.
+
+TCP connector configuration includes a partner address, base port numbers, and
+connection setup direction.  The actual port number used is the base port 
+number added to the thread instance value.
+
+A TCP connector can be either the active partner and initiate the TCP connection
+or can be the passive partner and expect to be called by the active side.  This
+is controlled by the 'setup' configuration element.
+
+Receive messages are managed via separate thread and ring buffer queue structure.
+The thread's purpose is to read whole side channel messages from the stream and
+insert them into the queue.  Then the packet processing thread is able to read
+whole side messages from the queue.
+

@@ -32,7 +32,7 @@ class IpHA : public ProtocolHA
 public:
     IpHA() : ProtocolHA(PktType::IP) { }
     void delete_session(Flow*);
-    void create_session(Flow*);
+    Flow* create_session(FlowKey*);
 
 private:
 };

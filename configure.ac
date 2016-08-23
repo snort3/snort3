@@ -1197,6 +1197,8 @@ src/side_channel/test/Makefile \
 src/connectors/Makefile \
 src/connectors/file_connector/Makefile \
 src/connectors/file_connector/test/Makefile \
+src/connectors/tcp_connector/Makefile \
+src/connectors/tcp_connector/test/Makefile \
 src/sfrt/Makefile \
 src/target_based/Makefile \
 src/host_tracker/Makefile \

@@ -16,26 +16,28 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// file_connector_config.h author Ed Borgoyn <eborgoyn@cisco.com>
+// tcp_connector_config.h author Ed Borgoyn <eborgoyn@cisco.com>
 
-#ifndef FILE_CONNECTOR_CONFIG_H
-#define FILE_CONNECTOR_CONFIG_H
+#ifndef TCP_CONNECTOR_CONFIG_H
+#define TCP_CONNECTOR_CONFIG_H
 
-#include <string>
 #include <vector>
 
 #include "framework/connector.h"
 
-class FileConnectorConfig : public ConnectorConfig
+class TcpConnectorConfig : public ConnectorConfig
 {
 public:
-    FileConnectorConfig()
-    { direction = Connector::CONN_UNDEFINED; text_format = false; }
+    enum Setup { CALL, ANSWER };
+    TcpConnectorConfig()
+    { direction = Connector::CONN_DUPLEX; async_receive = true; }
 
-    bool text_format;
-    std::string name;
+    uint16_t base_port;
+    std::string address;
+    Setup setup;
+    bool async_receive;
 
-    typedef std::vector<FileConnectorConfig*> FileConnectorConfigSet;
+    typedef std::vector<TcpConnectorConfig*> TcpConnectorConfigSet;
 };
 
 #endif

@@ -55,6 +55,9 @@ static const Parameter sc_params[] =
     { "connectors", Parameter::PT_LIST, sc_connectors_params, nullptr,
       "set of connectors" },
 
+    { "connector", Parameter::PT_STRING, nullptr, nullptr,
+      "connector handle" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 

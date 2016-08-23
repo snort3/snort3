@@ -433,7 +433,7 @@ void Active::reset_session(const Packet* p, bool force)
         if ( p->flow )
         {
             stream.init_active_response(p, p->flow);
-            p->flow->set_state(Flow::RESET);
+            p->flow->set_state(Flow::FlowState::RESET);
         }
     }
 }

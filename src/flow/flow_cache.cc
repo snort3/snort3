@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include "flow/ha.h"
 #include "hash/zhash.h"
 #include "helpers/flag_context.h"
 #include "ips_options/ips_flowbits.h"
@@ -310,6 +311,12 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
     {
         if ( flow->last_data_seen + config.nominal_timeout > thetime )
             break;
+
+        if ( HighAvailabilityManager::in_standby(flow) )
+        {
+            flow = static_cast<Flow*>(hash_table->next());
+            continue;
+        }
 
         DebugMessage(DEBUG_STREAM, "retiring stale flow\n");
         flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;

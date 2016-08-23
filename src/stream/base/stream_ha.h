@@ -30,6 +30,7 @@ class __attribute__((__packed__)) SessionHAContent
 {
 public:
     LwState ssn_state;
+    Flow::FlowState flow_state;
     uint8_t flags;
     static const uint8_t FLAG_LOW = 0x01; // client address / port is low in key
     static const uint8_t FLAG_IP6 = 0x02; // key addresses are ip6
@@ -53,7 +54,7 @@ public:
     ProtocolHA(PktType);
     virtual ~ProtocolHA();
     virtual void delete_session(Flow*) { }
-    virtual void create_session(Flow*) { }
+    virtual Flow* create_session(FlowKey*) { return nullptr; }
     virtual void deactivate_session(Flow*) { }
     virtual void process_deletion(Flow*);
 

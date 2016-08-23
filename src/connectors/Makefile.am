@@ -6,5 +6,6 @@ connectors.cc \
 connectors.h
 
 SUBDIRS = \
-file_connector
+file_connector \
+tcp_connector
 

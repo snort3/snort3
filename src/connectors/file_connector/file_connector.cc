@@ -64,7 +64,10 @@ FileConnectorCommon::FileConnectorCommon(FileConnectorConfig::FileConnectorConfi
 FileConnectorCommon::~FileConnectorCommon()
 {
     for ( auto conf : *config_set )
-        delete conf;
+    {
+        FileConnectorConfig* fconf = (FileConnectorConfig*)conf;
+        delete fconf;
+    }
 
     config_set->clear();
     delete config_set;
@@ -106,7 +109,7 @@ bool FileConnector::transmit_message(ConnectorMsgHandle* msg)
 
     if ( cfg->text_format )
     {
-        char* message = (char*)(fmsg->connector_msg.data + sizeof(SCMsgHdr));
+        unsigned char* message = (unsigned char*)(fmsg->connector_msg.data + sizeof(SCMsgHdr));
         SCMsgHdr* hdr = (SCMsgHdr*)(fmsg->connector_msg.data);
 
         file << hdr->port << ":" << hdr->time_seconds << "." << hdr->time_u_seconds;
@@ -251,14 +254,15 @@ static Connector* file_connector_tinit_transmit(std::string filename,
     FileConnectorConfig* cfg)
 {
     FileConnector* file_connector = new FileConnector(cfg);
+    std::string pathname;
 
     filename += "_transmit";
-    (void)get_instance_file(file_connector->filename, filename.c_str());
-    file_connector->file.open(file_connector->filename.c_str(),
+    (void)get_instance_file(pathname, filename.c_str());
+    file_connector->file.open(pathname,
         (std::ios::out | (cfg->text_format ? (std::ios::openmode)0 : std::ios::binary)) );
 
-    DebugFormat(DEBUG_CONNECTORS,"file_connector:file_connector_tinit_transmit(): filename: %s\n",
-        file_connector->filename.c_str());
+    DebugFormat(DEBUG_CONNECTORS,"file_connector:file_connector_tinit_transmit(): pathname: %s\n",
+        pathname.c_str());
 
     return file_connector;
 }
@@ -267,14 +271,14 @@ static Connector* file_connector_tinit_receive(std::string filename,
     FileConnectorConfig* cfg)
 {
     FileConnector* file_connector = new FileConnector(cfg);
+    std::string pathname;
 
     filename += "_receive";
-    (void)get_instance_file(file_connector->filename, filename.c_str());
-    file_connector->file.open(file_connector->filename.c_str(),
-        (std::ios::in | std::ios::binary) );
+    (void)get_instance_file(pathname, filename.c_str());
+    file_connector->file.open(pathname, (std::ios::in | std::ios::binary) );
 
-    DebugFormat(DEBUG_CONNECTORS,"file_connector:file_connector_tinit_receive(): filename: %s\n",
-        file_connector->filename.c_str());
+    DebugFormat(DEBUG_CONNECTORS,"file_connector:file_connector_tinit_receive(): pathname: %s\n",
+        pathname.c_str());
 
     return file_connector;
 }

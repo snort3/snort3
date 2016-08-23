@@ -158,7 +158,7 @@ void Flow::restart(bool free_flow_data)
 void Flow::clear(bool free_flow_data)
 {
     restart(free_flow_data);
-    set_state(SETUP);
+    set_state(FlowState::SETUP);
 
     if ( ssn_client )
     {

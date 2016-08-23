@@ -605,6 +605,7 @@ void Snort::thread_idle()
         flow_con->timeout_flows(16384, time(NULL));
     perf_monitor_idle_process();
     aux_counts.idle++;
+    HighAvailabilityManager::process_receive();
 }
 
 void Snort::thread_rotate()
@@ -664,6 +665,7 @@ void Snort::thread_init_unprivileged()
 
 void Snort::thread_term()
 {
+    HighAvailabilityManager::thread_term_beginning();
     if ( !snort_conf->dirty_pig )
         InspectorManager::thread_stop(snort_conf);
 

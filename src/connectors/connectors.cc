@@ -21,10 +21,12 @@
 #include "framework/connector.h"
 
 extern const BaseApi* file_connector;
+extern const BaseApi* tcp_connector;
 
 const BaseApi* connectors[] =
 {
     file_connector,
+    tcp_connector,
     nullptr
 };
 

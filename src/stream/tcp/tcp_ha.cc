@@ -19,16 +19,31 @@
 
 #include "tcp_ha.h"
 
+#include "flow/flow_control.h"
 #include "main/snort_debug.h"
+#include "stream/tcp/tcp_session.h"
 
 void TcpHA::delete_session(Flow*)
 {
     DebugMessage(DEBUG_HA,"TcpHA::delete_session)\n");
 }
 
-void TcpHA::create_session(Flow*)
+Flow* TcpHA::create_session(FlowKey* key)
 {
     DebugMessage(DEBUG_HA,"TcpHA::create_session)\n");
+
+    assert ( key );
+
+    Flow* flow = flow_con->new_flow(key);
+
+    if ( (flow != nullptr ) && (flow->session == nullptr) )
+    {
+        flow->init(PktType::TCP);
+        flow->session = new TcpSession(flow);
+    }
+
+    return flow;
+
 }
 
 void TcpHA::deactivate_session(Flow*)

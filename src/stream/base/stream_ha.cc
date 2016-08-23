@@ -55,6 +55,12 @@ static void protocol_deactivate_session(Flow* flow)
         protocol_ha->deactivate_session(flow);
 }
 
+static Flow* protocol_create_session(FlowKey* key)
+{
+    ProtocolHA* protocol_ha = get_protocol_ha(key->pkt_type);
+    return protocol_ha ?  protocol_ha->create_session(key) : nullptr;
+}
+
 static bool is_client_lower(Flow* flow)
 {
     if (sfip_fast_lt6(&(flow->client_ip), &(flow->server_ip)))
@@ -90,11 +96,14 @@ bool StreamHAClient::consume(Flow** flow, FlowKey* key, HAMessage* msg)
         return false;
 
     SessionHAContent* hac = (SessionHAContent*)msg->cursor;
+    msg->cursor += sizeof(SessionHAContent);
 
     // If flow is missing, we need to create a new one.
     if ( *flow == nullptr )
     {
-        *flow = stream.new_session(key);
+        // A nullptr indicates that the protocol has no handler
+        if ( (*flow = protocol_create_session(key)) == nullptr )
+            return false;
         (*flow)->ha_state->clear(FlowHAState::NEW);
         int family = (hac->flags & SessionHAContent::FLAG_IP6) ? AF_INET6 : AF_INET;
         if ( hac->flags & SessionHAContent::FLAG_LOW )
@@ -114,6 +123,7 @@ bool StreamHAClient::consume(Flow** flow, FlowKey* key, HAMessage* msg)
     }
 
     (*flow)->ssn_state = hac->ssn_state;
+    (*flow)->flow_state = hac->flow_state;
 
     if ( !(*flow)->ha_state->check_any(FlowHAState::STANDBY) )
     {
@@ -137,6 +147,7 @@ bool StreamHAClient::produce(Flow* flow, HAMessage* msg)
         SessionHAContent* hac = (SessionHAContent*)msg->cursor;
 
         memcpy(&(hac->ssn_state),&(flow->ssn_state),sizeof(LwState));
+        hac->flow_state = flow->flow_state;
         hac->flags = 0;
         msg->cursor += sizeof(SessionHAContent);
 

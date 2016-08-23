@@ -45,6 +45,26 @@ public:
     ConnectorMsg connector_msg;
 };
 
+class DuplexConnector : public Connector
+{
+    ConnectorMsgHandle* alloc_message(const uint32_t length, const uint8_t** data)
+    {
+        TestConnectorMsgHandle* msg = new TestConnectorMsgHandle(length);
+        *data = (uint8_t*)msg->connector_msg.data;
+        return msg;
+    }
+    void discard_message(ConnectorMsgHandle* msg)
+    { delete (TestConnectorMsgHandle*)msg; }
+    bool transmit_message(ConnectorMsgHandle* msg)
+    { delete (TestConnectorMsgHandle*)msg; return true; }
+    ConnectorMsgHandle* receive_message(bool)
+    { return new TestConnectorMsgHandle(30); }
+    ConnectorMsg* get_connector_msg(ConnectorMsgHandle* handle)
+    { return &((TestConnectorMsgHandle*)handle)->connector_msg; }
+    Direction get_connector_direction()
+    { return CONN_DUPLEX; }
+};
+
 class ReceiveConnector : public Connector
 {
     ConnectorMsgHandle* alloc_message(const uint32_t length, const uint8_t** data)
@@ -87,17 +107,20 @@ class TransmitConnector : public Connector
 
 Connector* receive_connector = nullptr;
 Connector* transmit_connector = nullptr;
+Connector* duplex_connector = nullptr;
 
 void ConnectorManager::thread_init()
 {
     receive_connector = new ReceiveConnector;
     transmit_connector = new TransmitConnector;
+    duplex_connector = new DuplexConnector;
 }
 
 void ConnectorManager::thread_term()
 {
     delete receive_connector;
     delete transmit_connector;
+    delete duplex_connector;
 }
 
 Connector* ConnectorManager::get_connector(const std::string connector_name)
@@ -106,6 +129,8 @@ Connector* ConnectorManager::get_connector(const std::string connector_name)
         return receive_connector;
     else if ( connector_name == "T" )
         return transmit_connector;
+    else if ( connector_name == "D" )
+        return duplex_connector;
     else
         return nullptr;
 }
@@ -157,6 +182,14 @@ TEST_GROUP(side_channel)
         test_connectors.clear();
         test_ports.reset(4);
 
+        test_connectors.push_back("D");
+        test_ports.set(5);
+
+        SideChannelManager::instantiate(&test_connectors, &test_ports);
+
+        test_connectors.clear();
+        test_ports.reset(5);
+
         SideChannelManager::thread_init();
     }
 
@@ -174,7 +207,7 @@ TEST(side_channel, test_connector_null)
 
 TEST(side_channel, test_connector_get_none)
 {
-    SideChannel* sc = SideChannelManager::get_side_channel(5);
+    SideChannel* sc = SideChannelManager::get_side_channel(6);
     CHECK(sc == nullptr);
 }
 
@@ -195,6 +228,10 @@ TEST(side_channel, test_connector_directions)
     sc = SideChannelManager::get_side_channel(4);
     CHECK(sc != nullptr);
     CHECK(sc->get_direction() == Connector::CONN_UNDEFINED);
+
+    sc = SideChannelManager::get_side_channel(5);
+    CHECK(sc != nullptr);
+    CHECK(sc->get_direction() == Connector::CONN_DUPLEX);
 }
 
 TEST(side_channel, test_connector_alloc_discard)

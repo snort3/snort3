@@ -147,6 +147,14 @@ void SideChannelManager::thread_init()
             if ( connector == nullptr )
                 continue;
 
+            if ( connector->get_connector_direction() == Connector::CONN_DUPLEX )
+            {
+                DebugFormat(DEBUG_SIDE_CHANNEL,
+                    "SideChannelManager::thread_init(): DUPLEX: %s\n", conn_name.c_str());
+                sc->connector_receive = connector;
+                sc->connector_transmit = connector;
+            }
+
             if ( connector->get_connector_direction() == Connector::CONN_RECEIVE )
             {
                 DebugFormat(DEBUG_SIDE_CHANNEL,

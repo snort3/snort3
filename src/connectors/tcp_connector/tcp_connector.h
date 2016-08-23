@@ -16,69 +16,79 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// file_connector.h author Ed Borgoyn <eborgoyn@cisco.com>
+// tcp_connector.h author Ed Borgoyn <eborgoyn@cisco.com>
 
-#ifndef FILE_CONNECTOR_H
-#define FILE_CONNECTOR_H
+#ifndef TCP_CONNECTOR_H
+#define TCP_CONNECTOR_H
 
 #include <fstream>
+#include <thread>
 
-#include "file_connector_config.h"
+#include "tcp_connector_config.h"
 #include "framework/connector.h"
+#include "helpers/ring.h"
 #include "main/thread.h"
 #include "profiler/profiler.h"
 
-#define FILE_FORMAT_VERSION (1)
+#define TCP_FORMAT_VERSION (1)
 
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
 
-class __attribute__((__packed__)) FileConnectorMsgHdr
+class __attribute__((__packed__)) TcpConnectorMsgHdr
 {
 public:
-    FileConnectorMsgHdr(uint32_t length)
-    { version = FILE_FORMAT_VERSION; connector_msg_length = length; }
+    TcpConnectorMsgHdr() {}
+    TcpConnectorMsgHdr(uint32_t length)
+    { version = TCP_FORMAT_VERSION; connector_msg_length = length; }
 
-    uint16_t version;
-    uint32_t connector_msg_length;
+    uint8_t version;
+    uint16_t connector_msg_length;
 };
 
-class FileConnectorMsgHandle : public ConnectorMsgHandle
+class TcpConnectorMsgHandle : public ConnectorMsgHandle
 {
 public:
-    FileConnectorMsgHandle(const uint32_t length);
-    ~FileConnectorMsgHandle();
+    TcpConnectorMsgHandle(const uint32_t length);
+    ~TcpConnectorMsgHandle();
     ConnectorMsg connector_msg;
 };
 
-class FileConnectorCommon : public ConnectorCommon
+class TcpConnectorCommon : public ConnectorCommon
 {
 public:
-    FileConnectorCommon(FileConnectorConfig::FileConnectorConfigSet*);
-    ~FileConnectorCommon();
+    TcpConnectorCommon(TcpConnectorConfig::TcpConnectorConfigSet*);
+    ~TcpConnectorCommon();
 };
 
-class FileConnector : public Connector
+class TcpConnector : public Connector
 {
 public:
-    FileConnector(FileConnectorConfig*);
-    ~FileConnector();
+    typedef Ring<TcpConnectorMsgHandle*> ReceiveRing;
+
+    TcpConnector(TcpConnectorConfig*, int sock_fd);
+    ~TcpConnector();
     ConnectorMsgHandle* alloc_message(const uint32_t, const uint8_t**);
     void discard_message(ConnectorMsgHandle*);
     bool transmit_message(ConnectorMsgHandle*);
     ConnectorMsgHandle* receive_message(bool);
 
     ConnectorMsg* get_connector_msg(ConnectorMsgHandle* handle)
-    { return( &((FileConnectorMsgHandle*)handle)->connector_msg ); }
+    { return( &((TcpConnectorMsgHandle*)handle)->connector_msg ); }
     Direction get_connector_direction()
-    { return( ((FileConnectorConfig*)config)->direction ); }
+    { return Connector::CONN_DUPLEX; }
+    void process_receive();
 
-    std::fstream file;
+    int sock_fd;
 
 private:
-    ConnectorMsgHandle* receive_message_binary();
-    ConnectorMsgHandle* receive_message_text();
+    bool run_thread;
+    std::thread* receive_thread;
+    void start_receive_thread();
+    void stop_receive_thread();
+    void receive_processing_thread();
+    ReceiveRing* receive_ring;
 };
 
 #endif

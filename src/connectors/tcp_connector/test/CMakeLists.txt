@@ -1,0 +1,3 @@
+add_cpputest(tcp_connector_test tcp_connector))
+add_cpputest(tcp_connector_module_test tcp_connector_module))
+

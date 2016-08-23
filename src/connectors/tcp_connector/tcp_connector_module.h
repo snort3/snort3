@@ -16,26 +16,38 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// file_connector_config.h author Ed Borgoyn <eborgoyn@cisco.com>
+// tcp_connector_module.h author Ed Borgoyn <eborgoyn@cisco.com>
 
-#ifndef FILE_CONNECTOR_CONFIG_H
-#define FILE_CONNECTOR_CONFIG_H
+#ifndef TCP_CONNECTOR_MODULE_H
+#define TCP_CONNECTOR_MODULE_H
 
-#include <string>
-#include <vector>
+#include "tcp_connector_config.h"
+#include "framework/module.h"
+#include "main/thread.h"
 
-#include "framework/connector.h"
+#define TCP_CONNECTOR_NAME "tcp_connector"
+#define TCP_CONNECTOR_HELP "implement the tcp stream connector"
 
-class FileConnectorConfig : public ConnectorConfig
+class TcpConnectorModule : public Module
 {
 public:
-    FileConnectorConfig()
-    { direction = Connector::CONN_UNDEFINED; text_format = false; }
+    TcpConnectorModule();
+    ~TcpConnectorModule();
 
-    bool text_format;
-    std::string name;
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
-    typedef std::vector<FileConnectorConfig*> FileConnectorConfigSet;
+    TcpConnectorConfig::TcpConnectorConfigSet* get_and_clear_config();
+
+    const PegInfo* get_pegs() const override;
+    PegCount* get_counts() const override;
+
+    ProfileStats* get_profile() const override;
+
+private:
+    TcpConnectorConfig::TcpConnectorConfigSet* config_set;
+    TcpConnectorConfig* config;
 };
 
 #endif

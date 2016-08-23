@@ -317,7 +317,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         p->disable_inspect = true;
         if (p->flow)
         {
-            p->flow->set_state(Flow::BLOCK);
+            p->flow->set_state(Flow::FlowState::BLOCK);
             p->flow->disable_inspection();
         }
 
@@ -336,7 +336,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         p->disable_inspect = true;
         if (p->flow)
         {
-            p->flow->set_state(Flow::ALLOW);
+            p->flow->set_state(Flow::FlowState::ALLOW);
             p->flow->disable_inspection();
         }
         reputationstats.whitelisted++;

@@ -287,21 +287,21 @@ bool Stuff::apply_action(Flow* flow)
     switch ( action )
     {
     case BindUse::BA_RESET:
-        flow->set_state(Flow::RESET);
+        flow->set_state(Flow::FlowState::RESET);
         return false;
 
     case BindUse::BA_BLOCK:
-        flow->set_state(Flow::BLOCK);
+        flow->set_state(Flow::FlowState::BLOCK);
         return false;
 
     case BindUse::BA_ALLOW:
-        flow->set_state(Flow::ALLOW);
+        flow->set_state(Flow::FlowState::ALLOW);
         return false;
 
     default:
         break;
     }
-    flow->set_state(Flow::INSPECT);
+    flow->set_state(Flow::FlowState::INSPECT);
     return true;
 }
 

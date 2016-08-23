@@ -141,9 +141,9 @@ struct LwState
 class SO_PUBLIC Flow
 {
 public:
-    enum FlowState
+    enum class FlowState : uint8_t
     {
-        SETUP,
+        SETUP = 0,
         INSPECT,
         BLOCK,
         RESET,
@@ -228,7 +228,7 @@ public:
     { return (ssn_state.session_flags & SSNFLAG_BLOCK) != 0; }
 
     bool full_inspection() const
-    { return flow_state <= INSPECT; }
+    { return flow_state <= FlowState::INSPECT; }
 
     void set_state(FlowState fs)
     { flow_state = fs; }

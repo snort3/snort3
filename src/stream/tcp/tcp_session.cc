@@ -78,6 +78,7 @@
 
 #include "stream/paf.h"
 #include "stream_tcp.h"
+#include "tcp_ha.h"
 #include "tcp_module.h"
 #include "tcp_event_logger.h"
 #include "tcp_debug_trace.h"
@@ -988,6 +989,9 @@ void TcpSession::do_packet_analysis_post_checks(Packet* p)
         flow->markup_packet_flags(p);
         flow->set_expire(p, config->session_timeout);
     }
+    else
+        TcpHAManager::process_deletion(p->flow);
+
     if (pkt_action_mask & ACTION_DISABLE_INSPECTION)
     {
         DisableInspection();

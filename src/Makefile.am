@@ -106,6 +106,7 @@ sfrt/libsfrt.a \
 protocols/libprotocols.a \
 connectors/libconnectors.a \
 connectors/file_connector/libfile_connector.a \
+connectors/tcp_connector/libtcp_connector.a \
 side_channel/libside_channel.a \
 ports/libports.a \
 utils/libutils.a

@@ -34,6 +34,7 @@
 #include "utils/util.h"
 #include "flow/flow_control.h"
 #include "flow/flow_cache.h"
+#include "flow/ha.h"
 #include "flow/session.h"
 #include "stream/stream.h"
 #include "stream/paf.h"
@@ -234,7 +235,7 @@ void Stream::stop_inspection(
     /* FIXIT-M handle bytes/response parameters */
 
     DisableInspection();
-    flow->set_state(Flow::ALLOW);
+    flow->set_state(Flow::FlowState::ALLOW);
 }
 
 void Stream::resume_inspection(Flow* flow, char dir)
@@ -302,7 +303,7 @@ void Stream::drop_session(const Packet* p)
         return;
 
     flow->session->clear();
-    flow->set_state(Flow::BLOCK);
+    flow->set_state(Flow::FlowState::BLOCK);
 
     if (!(p->packet_flags & PKT_STATELESS))
         drop_traffic(flow, SSN_DIR_BOTH);
@@ -619,6 +620,9 @@ bool Stream::ignored_session(Flow* flow, Packet* p)
 
 static int StreamExpireSession(Flow* lwssn)
 {
+    if ( HighAvailabilityManager::in_standby(lwssn) )
+        return 1;
+
     lwssn->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
     lwssn->session_state |= STREAM_STATE_TIMEDOUT;
 
@@ -818,12 +822,12 @@ TEST_CASE("Stream API", "[stream_api][stream]")
         Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0);
         dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_FROM_CLIENT ) );
-        CHECK( ( flow->flow_state == Flow::ALLOW ) );
+        CHECK( ( flow->flow_state == Flow::FlowState::ALLOW ) );
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_SERVER, 0, 0);
         dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_FROM_SERVER ) );
-        CHECK( ( flow->flow_state == Flow::ALLOW ) );
+        CHECK( ( flow->flow_state == Flow::FlowState::ALLOW ) );
 
         delete pkt->flow->session;
         delete pkt;

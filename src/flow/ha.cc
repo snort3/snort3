@@ -57,6 +57,7 @@ THREAD_LOCAL ProfileStats ha_perf_stats;
 static THREAD_LOCAL HighAvailability* ha;
 PortBitSet* HighAvailabilityManager::ports = nullptr;
 bool HighAvailabilityManager::use_daq_channel = false;
+bool HighAvailabilityManager::shutting_down = false;
 struct timeval FlowHAState::min_session_lifetime;
 struct timeval FlowHAState::min_sync_interval;
 uint8_t s_handle_counter = 1; // stream client (index == 0) always exists
@@ -585,6 +586,11 @@ void HighAvailabilityManager::thread_init()
         ha = nullptr;
 }
 
+void HighAvailabilityManager::thread_term_beginning()
+{
+    shutting_down = true;
+}
+
 // Called in the packet thread at run-down
 void HighAvailabilityManager::thread_term()
 {
@@ -605,7 +611,7 @@ void HighAvailabilityManager::process_update(Flow* flow, const DAQ_PktHdr_t* pkt
 // Deletion messages only contain session content
 void HighAvailabilityManager::process_deletion(Flow* flow)
 {
-    if ( ha != nullptr )
+    if ( (ha != nullptr) && !shutting_down )
         ha->process_deletion(flow);
 }
 
@@ -619,4 +625,18 @@ void HighAvailabilityManager::process_receive()
 bool HighAvailabilityManager::active()
 {
     return (ha != nullptr);
+}
+
+void HighAvailabilityManager::set_modified(Flow* flow)
+{
+    if ( (ha != nullptr) && (flow != nullptr) && (flow->ha_state != nullptr) )
+        flow->ha_state->add(FlowHAState::MODIFIED);
+}
+
+bool HighAvailabilityManager::in_standby(Flow* flow)
+{
+    if ( (ha != nullptr) && (flow != nullptr) && (flow->ha_state != nullptr) )
+        return flow->ha_state->check_any(FlowHAState::STANDBY);
+    else
+        return false;
 }

@@ -19,16 +19,32 @@
 
 #include "icmp_ha.h"
 
+#include "flow/flow_control.h"
 #include "main/snort_debug.h"
+#include "stream/icmp/icmp_session.h"
+#include "stream/stream.h"
 
 void IcmpHA::delete_session(Flow*)
 {
     DebugMessage(DEBUG_HA,"IcmpHA::delete_session)\n");
 }
 
-void IcmpHA::create_session(Flow*)
+Flow* IcmpHA::create_session(FlowKey* key)
 {
-    DebugMessage(DEBUG_HA,"IcmpHA::create_session)\n");
+    DebugMessage(DEBUG_HA,"IcmpHA::create_session\n");
+
+    assert ( key );
+
+    Flow* flow = flow_con->new_flow(key);
+
+    if ( (flow != nullptr ) && (flow->session == nullptr) )
+    {
+        flow->init(PktType::ICMP);
+        flow->session = new IcmpSession(flow);
+    }
+
+    return flow;
+
 }
 
 THREAD_LOCAL IcmpHA* IcmpHAManager::icmp_ha = nullptr;

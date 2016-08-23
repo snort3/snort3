@@ -19,16 +19,32 @@
 
 #include "udp_ha.h"
 
+#include "flow/flow_control.h"
 #include "main/snort_debug.h"
+#include "stream/udp/udp_session.h"
+
+extern THREAD_LOCAL class FlowControl* flow_con;
 
 void UdpHA::delete_session(Flow*)
 {
-    DebugMessage(DEBUG_HA,"UdpHA::delete_session)\n");
+    DebugMessage(DEBUG_HA,"UdpHA::delete_session\n");
 }
 
-void UdpHA::create_session(Flow*)
+Flow* UdpHA::create_session(FlowKey* key)
 {
-    DebugMessage(DEBUG_HA,"UdpHA::create_session)\n");
+    DebugMessage(DEBUG_HA,"UdpHA::create_session\n");
+
+    assert ( key );
+
+    Flow* flow = flow_con->new_flow(key);
+
+    if ( (flow != nullptr ) && (flow->session == nullptr) )
+    {
+        flow->init(PktType::UDP);
+        flow->session = new UdpSession(flow);
+    }
+
+    return flow;
 }
 
 THREAD_LOCAL UdpHA* UdpHAManager::udp_ha = nullptr;
