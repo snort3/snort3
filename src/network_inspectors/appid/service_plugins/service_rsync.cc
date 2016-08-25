@@ -24,6 +24,7 @@
 #include "application_ids.h"
 #include "service_api.h"
 #include "app_info_table.h"
+#include "appid_module.h"
 
 #include "main/snort_debug.h"
 #include "utils/util.h"
@@ -102,6 +103,11 @@ static int rsync_validate(ServiceValidationArgs* args)
 {
     ServiceRSYNCData* rd;
     int i;
+
+    // FIXIT-L: Should this be an assert instead?
+    if (!args)
+        return SERVICE_NOMATCH;
+
     AppIdData* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
@@ -155,6 +161,7 @@ inprocess:
 success:
     rsync_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
         APP_ID_RSYNC, nullptr, nullptr, nullptr);
+    appid_stats.rsync_flows++;
     return SERVICE_SUCCESS;
 
 fail:

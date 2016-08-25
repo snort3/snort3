@@ -147,6 +147,7 @@ set ( APPID_SOURCES
     appid_module.cc
     appid_module.h
     appid_stats.cc
+    appid_stats_counter.cc
     appid_stats.h
     app_info_table.cc
     app_info_table.h
@@ -197,7 +198,7 @@ endif (STATIC_INSPECTORS)
 
 target_include_directories ( appid PRIVATE ${APPID_INCLUDE_DIR} )
 
-#  FIXIT-H: Add unit tests
+add_subdirectory(service_plugins/test)
 
 #install (FILES ${APPID_INCLUDES}
 #    DESTINATION "${INCLUDE_INSTALL_PATH}/appid"

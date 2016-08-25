@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2005-2013 Sourcefire, Inc.
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,14 +16,11 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// service_rsync.h author Sourcefire Inc.
+// appid_module.cc author Steve Chew <stechew@cisco.com>
+// Created on: Auguest 18, 2016
 
-#ifndef SERVICE_RSYNC_H
-#define SERVICE_RSYNC_H
+#include "main/thread.h"
+#include "appid_module.h"
 
-#include "service_api.h"
+THREAD_LOCAL AppIdStats appid_stats;
 
-//  FIXIT-L: Make the globals const or, if necessary, thread-local.
-extern RNAServiceValidationModule rsync_service_mod;
-
-#endif

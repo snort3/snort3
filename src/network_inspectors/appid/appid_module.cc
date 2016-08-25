@@ -59,6 +59,7 @@ const PegInfo appid_pegs[] =
     { "mysql_flows", "count of mysql service flows discovered by appid" },
     { "netbios_flows", "count of netbios service flows discovered by appid" },
     { "pop_flows", "count of pop service flows discovered by appid" },
+    { "rsync_flows", "count of rsync service flows discovered by appid" },
     { "smtp_flows", "count of smtp flows discovered by appid" },
     { "smtps_flows", "count of smtps flows discovered by appid" },
     { "ssh_clients", "count of ssh clients discovered by appid" },
@@ -68,8 +69,6 @@ const PegInfo appid_pegs[] =
     { "timbuktu_flows", "count of timbuktu flows discovered by appid" },
     { nullptr, nullptr }
 };
-
-THREAD_LOCAL AppIdStats appid_stats;
 
 static const Parameter s_params[] =
 {

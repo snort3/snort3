@@ -143,6 +143,7 @@ appid_inspector.h \
 appid_module.cc \
 appid_module.h \
 appid_stats.cc \
+appid_stats_counter.cc \
 appid_stats.h \
 app_info_table.cc \
 app_info_table.h \
@@ -190,8 +191,7 @@ $(dp_file_list) \
 $(util_file_list)
 endif
 
-#if BUILD_CPPUTESTS
-#SUBDIRS = test
-#endif
-
+if ENABLE_UNIT_TESTS
+SUBDIRS=service_plugins/test
+endif
 

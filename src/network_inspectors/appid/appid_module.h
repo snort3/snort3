@@ -60,6 +60,7 @@ struct AppIdStats
     PegCount mysql_flows;
     PegCount netbios_flows;
     PegCount pop_flows;
+    PegCount rsync_flows;
     PegCount smtp_flows;
     PegCount smtps_flows;
     PegCount ssh_clients;
