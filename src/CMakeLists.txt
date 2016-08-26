@@ -51,7 +51,7 @@ if (STATIC_INSPECTORS)
         back_orifice
         dns
         ftp_telnet
-        nhttp_inspect
+        http_inspect
         rpc_decode
         sip
         ssh

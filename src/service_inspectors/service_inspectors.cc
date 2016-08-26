@@ -79,7 +79,7 @@ extern const BaseApi* sin_ftp_server;
 extern const BaseApi* sin_ftp_data;
 extern const BaseApi* sin_gtp;
 extern const BaseApi* sin_modbus;
-extern const BaseApi* sin_nhttp;
+extern const BaseApi* sin_http;
 extern const BaseApi* sin_rpc_decode;
 extern const BaseApi* sin_sip;
 extern const BaseApi* sin_ssh;
@@ -142,7 +142,7 @@ const BaseApi* service_inspectors[] =
     sin_ftp_data,
     sin_gtp,
     sin_modbus,
-    sin_nhttp,
+    sin_http,
     sin_rpc_decode,
     sin_sip,
     sin_ssh,

@@ -159,7 +159,7 @@ enum SEARCH_SUPPORT_TYPE
     SEARCH_SUPPORT_TYPE_UNKNOWN,
 };
 
-// FIXIT-M J probable duplication from nhttp
+// FIXIT-M J probable duplication from new http_inspect
 enum HTTP_FIELD_ID
 {
     REQ_AGENT_FID       = 0,

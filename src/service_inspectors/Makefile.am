@@ -9,7 +9,7 @@ service_inspectors.h
 #libservice_inspectors_a_LIBADD = \
 #back_orifice/libback_orifice.a \
 #ftp_telnet/libftp_telnet.a \
-#nhttp_inspect/libnhttp_inspect.a \
+#http_inspect/libhttp_inspect.a \
 #rpc_decode/librpc_decode.a
 #wizard/libwizard.a
 
@@ -22,7 +22,7 @@ ftp_telnet \
 gtp \
 imap \
 modbus \
-nhttp_inspect \
+http_inspect \
 pop \
 rpc_decode \
 sip \

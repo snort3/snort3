@@ -17,7 +17,7 @@ service_inspectors/dns/libdns.a \
 service_inspectors/ftp_telnet/libftp_telnet.a \
 service_inspectors/gtp/libgtp_inspect.a \
 service_inspectors/modbus/libmodbus.a \
-service_inspectors/nhttp_inspect/libnhttp_inspect.a \
+service_inspectors/http_inspect/libhttp_inspect.a \
 service_inspectors/rpc_decode/librpc_decode.a \
 service_inspectors/sip/libsip.a \
 service_inspectors/ssh/libssh.a \
