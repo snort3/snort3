@@ -10,7 +10,8 @@ packet thread. When a file is available to store, it will be put into a queue.
 The writer thread will read from this queue to write to disk. In the multiple 
 packet thread case, many threads will write into this queue and one writer thread
 serves all of them. Thread synchronization is done by mutex and conditional
-variables for the queue.
+variables for the queue. In the future, we will add support for multiple writer
+threads to improve performance when multiple disks are used.
 
 * File libraries: provides file type identification and file signature
 calculation
