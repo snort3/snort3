@@ -110,23 +110,23 @@ service_plugins/service_tns.cc \
 service_plugins/service_util.h
 
 util_file_list = \
-util/common_util.h \
-util/fw_avltree.cc \
-util/fw_avltree.h \
-util/ip_funcs.cc \
-util/ip_funcs.h \
-util/network_set.cc \
-util/network_set.h \
-util/output_file.cc \
-util/output_file.h \
-util/sfksearch.cc \
-util/sfksearch.h \
-util/sf_mlmp.cc \
-util/sf_mlmp.h \
-util/sf_multi_mpse.cc \
-util/sf_multi_mpse.h \
-util/sfutil.cc \
-util/sfutil.h
+appid_utils/common_util.h \
+appid_utils/fw_avltree.cc \
+appid_utils/fw_avltree.h \
+appid_utils/ip_funcs.cc \
+appid_utils/ip_funcs.h \
+appid_utils/network_set.cc \
+appid_utils/network_set.h \
+appid_utils/output_file.cc \
+appid_utils/output_file.h \
+appid_utils/sfksearch.cc \
+appid_utils/sfksearch.h \
+appid_utils/sf_mlmp.cc \
+appid_utils/sf_mlmp.h \
+appid_utils/sf_multi_mpse.cc \
+appid_utils/sf_multi_mpse.h \
+appid_utils/sfutil.cc \
+appid_utils/sfutil.h
 
 file_list = \
 app_forecast.cc \
@@ -135,8 +135,8 @@ appid_api.cc \
 appid_api.h \
 appid_config.cc \
 appid_config.h \
-appid_flow_data.cc \
-appid_flow_data.h \
+appid_session.cc \
+appid_session.h \
 appid.h \
 appid_inspector.cc \
 appid_inspector.h \
@@ -148,7 +148,6 @@ appid_stats.h \
 app_info_table.cc \
 app_info_table.h \
 application_ids.h \
-dns_defs.h \
 flow_error.h \
 fw_appid.cc \
 fw_appid.h \

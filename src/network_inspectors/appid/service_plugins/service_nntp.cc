@@ -24,7 +24,7 @@
 #include "main/snort_debug.h"
 #include "utils/util.h"
 
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "application_ids.h"
 #include "service_api.h"
 
@@ -297,7 +297,7 @@ static int nntp_validate(ServiceValidationArgs* args)
     ServiceNNTPData* nd;
     uint16_t offset;
     int code;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 

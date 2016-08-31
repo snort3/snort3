@@ -75,7 +75,7 @@ THREAD_LOCAL AIM_CLIENT_APP_CONFIG aim_config;
 
 static CLIENT_APP_RETCODE aim_init(const IniClientAppAPI* const, SF_LIST* config);
 static CLIENT_APP_RETCODE aim_validate(
-    const uint8_t* data, uint16_t size, const int dir, AppIdData*, Packet*,
+    const uint8_t* data, uint16_t size, const int dir, AppIdSession*, Packet*,
     Detector*, const AppIdConfig*);
 
 RNAClientAppModule aim_client_mod =
@@ -199,7 +199,7 @@ static inline bool check_username(
 }
 
 static CLIENT_APP_RETCODE aim_validate(
-    const uint8_t* const data, uint16_t size, const int dir, AppIdData* flowp,
+    const uint8_t* const data, uint16_t size, const int dir, AppIdSession* flowp,
     Packet*, Detector*, const AppIdConfig*)
 {
     if ( dir != APP_ID_FROM_INITIATOR )
@@ -312,7 +312,7 @@ static CLIENT_APP_RETCODE aim_validate(
     return CLIENT_APP_INPROCESS;
 
 bail:
-    setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
     return CLIENT_APP_SUCCESS;
 }
 

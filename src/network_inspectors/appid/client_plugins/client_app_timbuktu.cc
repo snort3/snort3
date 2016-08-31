@@ -70,7 +70,7 @@ THREAD_LOCAL TIMBUKTU_CLIENT_APP_CONFIG timbuktu_config;
 
 static CLIENT_APP_RETCODE timbuktu_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE timbuktu_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
 
 SO_PUBLIC RNAClientAppModule timbuktu_client_mod =
 {
@@ -152,7 +152,7 @@ static CLIENT_APP_RETCODE timbuktu_init(const IniClientAppAPI* const init_api, S
 }
 
 static CLIENT_APP_RETCODE timbuktu_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet*, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet*, struct Detector*, const AppIdConfig*)
 {
     ClientTIMBUKTUData* fd;
     uint16_t offset;
@@ -237,7 +237,7 @@ inprocess:
 
 done:
     timbuktu_client_mod.api->add_app(flowp, APP_ID_TIMBUKTU, APP_ID_TIMBUKTU, nullptr);
-    setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
     return CLIENT_APP_SUCCESS;
 }
 

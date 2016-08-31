@@ -26,6 +26,7 @@
 #endif
 
 #include "profiler/profiler.h"
+#include "appid_session.h"
 #include "fw_appid.h"
 
 //-------------------------------------------------------------------------
@@ -49,6 +50,8 @@ AppIdInspector::~AppIdInspector()
 bool AppIdInspector::configure(SnortConfig*)
 {
     active_config = new AppIdConfig( ( AppIdModuleConfig* )config);
+    if(config->debug)
+    	show(nullptr);
     return active_config->init_appid();
 
     // FIXIT some of this stuff may be needed in some fashion...
@@ -84,7 +87,7 @@ void AppIdInspector::eval(Packet* pkt)
     Profile profile(appidPerfStats);
 
     appid_stats.packets++;
-    fwAppIdSearch(pkt);
+    AppIdSession::do_application_discovery(pkt);
 }
 
 //-------------------------------------------------------------------------
@@ -103,7 +106,7 @@ static void mod_dtor(Module* m)
 
 static void appid_inspector_init()
 {
-    AppIdData::init();
+    AppIdSession::init();
 }
 
 static Inspector* appid_inspector_ctor(Module* m)
@@ -157,4 +160,148 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* nin_appid = &appid_inspector_api.base;
 #endif
+
+#ifdef REMOVED_WHILE_NOT_IN_USE
+// FIXIT-M: This is to be replace with snort3 inspection events
+void httpHeaderCallback(Packet* p, HttpParsedHeaders* const headers)
+{
+    AppIdSession* session;
+    int direction;
+    AppIdConfig* pConfig = pAppidActiveConfig;
+
+    if (thirdparty_appid_module)
+        return;
+    if (!p || !(session = appid_api.get_appid_data(p->flow)))
+        return;
+
+    direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
+
+    if (!session->hsession)
+        session->hsession = (decltype(session->hsession))snort_calloc(sizeof(httpSession));
+
+    if (direction == APP_ID_FROM_INITIATOR)
+    {
+        if (headers->host.start)
+        {
+            snort_free(session->hsession->host);
+            session->hsession->host = snort_strndup((char*)headers->host.start, headers->host.len);
+            session->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+
+            if (headers->url.start)
+            {
+                snort_free(session->hsession->url);
+                session->hsession->url = (char*)snort_calloc(sizeof(HTTP_PREFIX) +
+                    headers->host.len + headers->url.len);
+                strcpy(session->hsession->url, HTTP_PREFIX);
+                strncat(session->hsession->url, (char*)headers->host.start, headers->host.len);
+                strncat(session->hsession->url, (char*)headers->url.start, headers->url.len);
+                session->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+            }
+        }
+        if (headers->userAgent.start)
+        {
+            snort_free(session->hsession->useragent);
+            session->hsession->useragent = snort_strndup((char*)headers->userAgent.start,
+                headers->userAgent.len);
+            session->scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
+        }
+        if (headers->referer.start)
+        {
+            snort_free(session->hsession->referer);
+            session->hsession->referer = snort_strndup((char*)headers->referer.start,
+                headers->referer.len);
+        }
+        if (headers->via.start)
+        {
+            snort_free(session->hsession->via);
+            session->hsession->via = snort_strndup((char*)headers->via.start, headers->via.len);
+            session->scan_flags |= SCAN_HTTP_VIA_FLAG;
+        }
+    }
+    else
+    {
+        if (headers->via.start)
+        {
+            snort_free(session->hsession->via);
+            session->hsession->via = snort_strndup((char*)headers->via.start, headers->via.len);
+            session->scan_flags |= SCAN_HTTP_VIA_FLAG;
+        }
+        if (headers->contentType.start)
+        {
+            snort_free(session->hsession->content_type);
+            session->hsession->content_type = snort_strndup((char*)headers->contentType.start,
+                headers->contentType.len);
+        }
+        if (headers->responseCode.start)
+        {
+            long responseCodeNum;
+            responseCodeNum = strtoul((char*)headers->responseCode.start, nullptr, 10);
+            if (responseCodeNum > 0 && responseCodeNum < 700)
+            {
+                snort_free(session->hsession->response_code);
+                session->hsession->response_code = snort_strndup((char*)headers->responseCode.start,
+                    headers->responseCode.len);
+            }
+        }
+    }
+
+    session->processHTTPPacket(p, direction, headers, pConfig);
+    session->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
+    p->flow->set_application_ids(session->pick_service_app_id(), session->pick_client_app_id(),
+            session->pick_payload_app_id(), session->pick_misc_app_id());
+}
+#endif
+
+/**
+ * @returns 1 if some appid is found, 0 otherwise.
+ */
+//int sslAppGroupIdLookup(void* ssnptr, const char* serverName, const char* commonName,
+//    AppId* serviceAppId, AppId* ClientAppId, AppId* payloadAppId)
+int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
+{
+    // FIXIT-M: detemine need and proper location for this code when support for ssl is implemented
+#ifdef REMOVED_WHILE_NOT_IN_USE
+    AppIdSession* session;
+    *serviceAppId = *ClientAppId = *payload_app_id = APP_ID_NONE;
+
+    if (commonName)
+    {
+        ssl_scan_cname((const uint8_t*)commonName, strlen(commonName), ClientAppId, payload_app_id,
+            &pAppidActiveConfig->serviceSslConfig);
+    }
+    if (serverName)
+    {
+        ssl_scan_hostname((const uint8_t*)serverName, strlen(serverName), ClientAppId,
+            payload_app_id, &pAppidActiveConfig->serviceSslConfig);
+    }
+
+    if (ssnptr && (session = appid_api.get_appid_data(ssnptr)))
+    {
+        *serviceAppId = pick_service_app_id(session);
+        if (*ClientAppId == APP_ID_NONE)
+        {
+            *ClientAppId = pick_client_app_id(session);
+        }
+        if (*payload_app_id == APP_ID_NONE)
+        {
+            *payload_app_id = pick_payload_app_id(session);
+        }
+    }
+    if (*serviceAppId != APP_ID_NONE ||
+        *ClientAppId != APP_ID_NONE ||
+        *payload_app_id != APP_ID_NONE)
+    {
+        return 1;
+    }
+#endif
+
+    return 0;
+}
+
+AppId getOpenAppId(Flow* flow)
+{
+    assert(flow);
+    AppIdSession* session = appid_api.get_appid_data(flow);
+    return session->payload_app_id;
+}
 

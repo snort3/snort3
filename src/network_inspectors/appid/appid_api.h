@@ -28,6 +28,10 @@
 
 enum class IpProtocol : uint8_t;
 
+#define APP_MAPPING_FILE "appMapping.data"
+#define APP_CONFIG_FILE "appid.conf"
+#define USR_CONFIG_FILE "userappid.conf"
+
 #define APPID_SESSION_RESPONDER_MONITORED   (1ULL << 0)
 #define APPID_SESSION_INITIATOR_MONITORED   (1ULL << 1)
 #define APPID_SESSION_SPECIAL_MONITORED     (1ULL << 2)
@@ -88,8 +92,7 @@ enum class IpProtocol : uint8_t;
                                              APPID_SESSION_NO_TPI | \
                                              APPID_SESSION_SERVICE_DETECTED | \
                                              APPID_SESSION_PORT_SERVICE_DONE)
-
-class AppIdData;
+class AppIdSession;
 
 enum APPID_FLOW_TYPE
 {
@@ -180,70 +183,76 @@ enum HTTP_FIELD_ID
 
 struct sfip_t;
 
-class AppIdApi
+class SO_PUBLIC AppIdApi
 {
-    const char* getApplicationName(int32_t appId);
-    AppId getApplicationId(const char* appName);
-    AppId getServiceAppId(AppIdData*);
-    AppId getPorServiceAppId(AppIdData*);
-    AppId getOnlyServiceAppId(AppIdData*);
-    AppId getMiscAppId(AppIdData*);
-    AppId getClientAppId(AppIdData*);
-    AppId getPayloadAppId(AppIdData*);
-    AppId getReferredAppId(AppIdData*);
-    AppId getFwServiceAppId(AppIdData*);
-    AppId getFwMiscAppId(AppIdData*);
-    AppId getFwClientAppId(AppIdData*);
-    AppId getFwPayloadAppId(AppIdData*);
-    AppId getFwReferredAppId(AppIdData*);
-    bool isSessionSslDecrypted(AppIdData*);
-    bool isAppIdInspectingSession(AppIdData*);
-    bool isAppIdAvailable(AppIdData*);
-    char* getUserName(AppIdData*, AppId* service, bool* isLoginSuccessful);
-    char* getClientVersion(AppIdData*);
-    uint64_t getAppIdSessionAttribute(AppIdData*, uint64_t flag);
-    APPID_FLOW_TYPE getFlowType(AppIdData*);
-    void getServiceInfo(AppIdData*, char **serviceVendor, char** serviceVersion, RNAServiceSubtype** subtype);
-    short getServicePort(AppIdData*);
-    sfip_t* getServiceIp(AppIdData*);
-    sfip_t* getInitiatorIp(AppIdData*);
-    char* getHttpUserAgent(AppIdData*);
-    char* getHttpHost(AppIdData*);
-    char* getHttpUrl(AppIdData*);
-    char* getHttpReferer(AppIdData*);
-    char* getHttpNewUrl(AppIdData*);
-    char* getHttpUri(AppIdData*);
-    char* getHttpResponseCode(AppIdData*);
-    char* getHttpCookie(AppIdData*);
-    char* getHttpNewCookie(AppIdData*);
-    char* getHttpContentType(AppIdData*);
-    char* getHttpLocation(AppIdData*);
-    char* getHttpBody(AppIdData*);
-    char* getHttpReqBody(AppIdData*);
-    uint16_t getHttpUriOffset(AppIdData*);
-    uint16_t getHttpUriEndOffset(AppIdData*);
-    uint16_t getHttpCookieOffset(AppIdData*);
-    uint16_t getHttpCookieEndOffset(AppIdData*);
-    SEARCH_SUPPORT_TYPE getHttpSearch(AppIdData*);
-    sfip_t* getHttpXffAddr(AppIdData*);
-    char* getTlsHost(AppIdData*);
-    DhcpFPData* getDhcpFpData(AppIdData*);
-    void freeDhcpFpData(AppIdData*, DhcpFPData*);
-    DHCPInfo* getDhcpInfo(AppIdData*);
-    void freeDhcpInfo(AppIdData*, DHCPInfo*);
-    FpSMBData* getSmbFpData(AppIdData*);
-    void freeSmbFpData(AppIdData*, FpSMBData*);
-    char* getNetbiosName(AppIdData*);
-    uint32_t produceHAState(void* lwssn, uint8_t* buf);
-    uint32_t consumeHAState(void* lwssn, const uint8_t* buf, uint8_t length, IpProtocol proto, sfip_t* ip);
-    AppIdData* getAppIdData(void* lwssn);
-    char* getDNSQuery(AppIdData*, uint8_t* query_len);
-    uint16_t getDNSQueryoffset(AppIdData*);
-    uint16_t getDNSRecordType(AppIdData*);
-    uint8_t getDNSResponseType(AppIdData*);
-    uint32_t getDNSTTL(AppIdData*);
-    char* getHttpNewField(AppIdData*, HTTP_FIELD_ID);
-    void freeHttpNewField(AppIdData*, HTTP_FIELD_ID);
+public:
+    SO_PRIVATE AppIdApi() {}
+    SO_PRIVATE ~AppIdApi() {}
+
+    const char* get_application_name(int32_t app_id);
+    AppId get_application_id(const char* appName);
+    AppId get_service_app_id(AppIdSession*);
+    AppId get_port_service_app_id(AppIdSession*);
+    AppId get_only_service_app_id(AppIdSession*);
+    AppId get_misc_app_id(AppIdSession*);
+    AppId get_client_app_id(AppIdSession*);
+    AppId get_payload_app_id(AppIdSession*);
+    AppId get_referred_app_id(AppIdSession*);
+    AppId get_fw_service_app_id(AppIdSession*);
+    AppId get_fw_misc_app_id(AppIdSession*);
+    AppId get_fw_client_app_id(AppIdSession*);
+    AppId get_fw_payload_app_id(AppIdSession*);
+    AppId get_fw_referred_app_id(AppIdSession*);
+    bool is_ssl_session_decrypted(AppIdSession*);
+    bool is_appid_inspecting_session(AppIdSession*);
+    bool is_appid_available(AppIdSession*);
+    char* get_user_name(AppIdSession*, AppId* service, bool* isLoginSuccessful);
+    char* get_client_version(AppIdSession*);
+    uint64_t get_appid_session_attribute(AppIdSession*, uint64_t flag);
+    APPID_FLOW_TYPE get_flow_type(AppIdSession*);
+    void get_service_info(AppIdSession*, char **serviceVendor, char** serviceVersion, RNAServiceSubtype** subtype);
+    short get_service_port(AppIdSession*);
+    sfip_t* get_service_ip(AppIdSession*);
+    sfip_t* get_initiator_ip(AppIdSession*);
+    char* get_http_user_agent(AppIdSession*);
+    char* get_http_host(AppIdSession*);
+    char* get_http_url(AppIdSession*);
+    char* get_http_referer(AppIdSession*);
+    char* get_http_new_url(AppIdSession*);
+    char* get_http_uri(AppIdSession*);
+    char* get_http_response_code(AppIdSession*);
+    char* get_http_cookie(AppIdSession*);
+    char* get_http_new_cookie(AppIdSession*);
+    char* get_http_content_type(AppIdSession*);
+    char* get_http_location(AppIdSession*);
+    char* get_http_body(AppIdSession*);
+    char* get_http_request_body(AppIdSession*);
+    uint16_t get_http_uri_offset(AppIdSession*);
+    uint16_t get_http_uri_end_offset(AppIdSession*);
+    uint16_t get_http_cookie_offset(AppIdSession*);
+    uint16_t get_http_cookie_end_offset(AppIdSession*);
+    SEARCH_SUPPORT_TYPE get_http_search(AppIdSession*);
+    sfip_t* get_http_xff_addr(AppIdSession*);
+    char* get_tls_host(AppIdSession*);
+    DhcpFPData* get_dhcp_fp_data(AppIdSession*);
+    void free_dhcp_fp_data(AppIdSession*, DhcpFPData*);
+    DHCPInfo* get_dhcp_info(AppIdSession*);
+    void free_dhcp_info(AppIdSession*, DHCPInfo*);
+    FpSMBData* get_smb_fp_data(AppIdSession*);
+    void free_smb_fp_data(AppIdSession*, FpSMBData*);
+    char* get_netbios_name(AppIdSession*);
+    uint32_t produce_ha_state(void* lwssn, uint8_t* buf);
+    uint32_t consume_ha_state(void* lwssn, const uint8_t* buf, uint8_t length, IpProtocol proto, sfip_t* ip);
+    AppIdSession* get_appid_data(Flow* flow);
+    char* get_dns_query(AppIdSession*, uint8_t* query_len);
+    uint16_t get_dns_query_offset(AppIdSession*);
+    uint16_t get_dns_record_type(AppIdSession*);
+    uint8_t get_dns_response_type(AppIdSession*);
+    uint32_t get_dns_ttl(AppIdSession*);
+    char* get_http_new_field(AppIdSession*, HTTP_FIELD_ID);
+    void free_http_new_field(AppIdSession*, HTTP_FIELD_ID);
 };
+
+SO_PUBLIC extern AppIdApi appid_api;
 
 #endif

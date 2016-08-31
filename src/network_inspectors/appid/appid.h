@@ -51,10 +51,11 @@ enum SERVICE_HOST_INFO_CODE
 // FIXIT-M J this should go in a separate header
 #define DHCP_OPTION55_LEN_MAX 255
 
-// FIXIT-M J this should go in a separate header
 #define FINGERPRINT_UDP_FLAGS_XENIX 0x00000800
 #define FINGERPRINT_UDP_FLAGS_NT    0x00001000
 #define FINGERPRINT_UDP_FLAGS_MASK  (FINGERPRINT_UDP_FLAGS_XENIX | FINGERPRINT_UDP_FLAGS_NT)
+
+using AppIdFreeFCN = void(*)(void*);
 
 #endif
 

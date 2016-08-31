@@ -56,7 +56,7 @@ THREAD_LOCAL VNC_CLIENT_APP_CONFIG vnc_config;
 
 static CLIENT_APP_RETCODE vnc_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE vnc_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector* userData,
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData,
     const AppIdConfig* pConfig);
 
 SO_PUBLIC RNAClientAppModule vnc_client_mod =
@@ -141,7 +141,7 @@ static CLIENT_APP_RETCODE vnc_init(const IniClientAppAPI* const init_api, SF_LIS
 }
 
 static CLIENT_APP_RETCODE vnc_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet*, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet*, struct Detector*, const AppIdConfig*)
 {
     ClientVNCData* fd;
     uint16_t offset;
@@ -198,7 +198,7 @@ inprocess:
 
 done:
     vnc_client_mod.api->add_app(flowp, APP_ID_VNC_RFB, APP_ID_VNC, (const char*)fd->version);
-    setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
     return CLIENT_APP_SUCCESS;
 }
 

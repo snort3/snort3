@@ -22,10 +22,10 @@
 #ifndef APPID_STATS_H
 #define APPID_STATS_H
 
-class AppIdData;
+class AppIdSession;
 class AppIdModuleConfig;
 
-void appIdStatsUpdate(AppIdData*);
+void appIdStatsUpdate(AppIdSession*);
 void appIdStatsInit(AppIdModuleConfig* config);
 void appIdStatsReinit();
 void appIdStatsIdleFlush();

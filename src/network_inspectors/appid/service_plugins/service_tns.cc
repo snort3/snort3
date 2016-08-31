@@ -20,7 +20,7 @@
 // service_tns.cc author Sourcefire Inc.
 
 #include "app_info_table.h"
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "application_ids.h"
 #include "service_api.h"
 
@@ -144,7 +144,7 @@ static int tns_validate(ServiceValidationArgs* args)
 {
     ServiceTNSData* ss;
     uint16_t offset;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 

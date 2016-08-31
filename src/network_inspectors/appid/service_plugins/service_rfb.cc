@@ -98,7 +98,7 @@ static int rfb_validate(ServiceValidationArgs* args)
     unsigned i;
     char* v;
     const unsigned char* p;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 

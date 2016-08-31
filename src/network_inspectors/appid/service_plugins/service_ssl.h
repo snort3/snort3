@@ -27,7 +27,7 @@
 
 extern struct RNAServiceValidationModule ssl_service_mod;
 AppId getSslServiceAppId(short srcPort);
-bool isSslServiceAppId(AppId appId);
+bool isSslServiceAppId(AppId);
 void service_ssl_clean(ServiceSslConfig*);
 int ssl_detector_process_patterns(ServiceSslConfig*);
 int ssl_scan_hostname(const u_int8_t*, size_t, AppId*, AppId*, ServiceSslConfig*);
@@ -35,7 +35,7 @@ int ssl_scan_cname(const u_int8_t*, size_t, AppId*, AppId*, ServiceSslConfig*);
 int ssl_add_cert_pattern(uint8_t*, size_t, uint8_t, AppId, ServiceSslConfig*);
 int ssl_add_cname_pattern(uint8_t*, size_t, uint8_t, AppId, ServiceSslConfig*);
 void ssl_detector_free_patterns(ServiceSslConfig*);
-int setSSLSquelch(Packet* p, int type, AppId appId);
+bool setSSLSquelch(Packet*, int type, AppId);
 
 #endif
 

@@ -47,7 +47,8 @@ struct UserData
 
     static UserData<T>* push(lua_State* L, const char* const meta, T* ptr = nullptr)
     {
-        auto ud = static_cast<UserData<T>*>(lua_newuserdata(L, sizeof(UserData<T>)));
+        int type_size = sizeof(UserData<T>);
+        auto ud = static_cast<UserData<T>*>(lua_newuserdata(L, type_size));
         assert(ud);
         ud->ptr = ptr;
         luaL_getmetatable(L, meta);

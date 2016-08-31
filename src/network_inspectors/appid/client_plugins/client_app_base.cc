@@ -62,10 +62,10 @@
  * already exist). */
 #define MAX_CANDIDATE_CLIENTS 10
 
-static void* client_app_flowdata_get(AppIdData* flowp, unsigned client_id);
-static int client_app_flowdata_add(AppIdData* flowp, void* data, unsigned client_id, AppIdFreeFCN
+static void* client_app_flowdata_get(AppIdSession* flowp, unsigned client_id);
+static int client_app_flowdata_add(AppIdSession* flowp, void* data, unsigned client_id, AppIdFreeFCN
     fcn);
-static void AppIdAddClientAppInfo(AppIdData* flowp, const char* info);
+static void AppIdAddClientAppInfo(AppIdSession* flowp, const char* info);
 
 static const ClientAppApi client_app_api =
 {
@@ -140,6 +140,29 @@ static RNAClientAppModule* static_client_list[] =
 };
 
 /*static const char * const MODULE_NAME = "ClientApp"; */
+
+void appSetClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extractsInfo,
+    AppIdConfig* pConfig)
+{
+    AppInfoTableEntry* pEntry = appInfoEntryGet(appId, pConfig);
+    if (!pEntry)
+    {
+        ErrorMessage("AppId: invalid direct client application AppId: %d\n", appId);
+        return;
+    }
+    extractsInfo &= (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER);
+    if (!extractsInfo)
+    {
+        DebugFormat(DEBUG_LOG,
+            "Ignoring direct client application without info for AppId: %d", appId);
+        return;
+    }
+    pEntry->clntValidator = ClientAppGetClientAppModule(fcn, nullptr, &pConfig->clientAppConfig);
+    if (pEntry->clntValidator)
+        pEntry->flags |= extractsInfo;
+    else
+        ErrorMessage("Appid: Failed to find a client application module for AppId: %d\n", appId);
+}
 
 const ClientAppApi* getClientApi(void)
 {
@@ -607,7 +630,7 @@ void ClientAppInit(AppIdConfig* pConfig)
 
     if (pConfig->clientAppConfig.enabled)
     {
-        client_init_api.debug = app_id_debug;
+        client_init_api.debug = pAppidActiveConfig->mod_config->debug;
         client_init_api.pAppidConfig = pConfig;
         // FIXIT - active config global must go...
         client_init_api.instance_id = pAppidActiveConfig->mod_config->instance_id;
@@ -751,29 +774,29 @@ static int pattern_match(void* id, void* /*unused_tree*/, int index, void* data,
     return 0;
 }
 
-void AppIdAddClientApp(AppIdData* flowp, AppId service_id, AppId id, const char* version)
+void AppIdAddClientApp(AppIdSession* flowp, AppId service_id, AppId id, const char* version)
 {
     if (version)
     {
-        if (flowp->clientVersion)
+        if (flowp->client_version)
         {
-            if (strcmp(version, flowp->clientVersion))
+            if (strcmp(version, flowp->client_version))
             {
-                snort_free(flowp->clientVersion);
-                flowp->clientVersion = snort_strdup(version);
+                snort_free(flowp->client_version);
+                flowp->client_version = snort_strdup(version);
             }
         }
         else
-            flowp->clientVersion = snort_strdup(version);
+            flowp->client_version = snort_strdup(version);
     }
 
-    setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
-    flowp->ClientServiceAppId = service_id;
-    flowp->ClientAppId = id;
+    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    flowp->client_service_app_id = service_id;
+    flowp->client_app_id = id;
     checkSandboxDetection(id);
 }
 
-static void AppIdAddClientAppInfo(AppIdData* flowp, const char* info)
+static void AppIdAddClientAppInfo(AppIdSession* flowp, const char* info)
 {
     if (flowp->hsession && !flowp->hsession->url)
         flowp->hsession->url = snort_strdup(info);
@@ -867,7 +890,7 @@ static void FreeClientPatternList(ClientAppMatch** match_list)
  *
  * @param p packet to process
  */
-static void ClientAppID(Packet* p, const int /*direction*/, AppIdData* flowp, const
+static void ClientAppID(Packet* p, const int /*direction*/, AppIdSession* flowp, const
     AppIdConfig* pConfig)
 {
     const RNAClientAppModule* client = nullptr;
@@ -880,7 +903,7 @@ static void ClientAppID(Packet* p, const int /*direction*/, AppIdData* flowp, co
     if (!p->dsize)
         return;
 
-    if (flowp->clientData != nullptr)
+    if (flowp->rna_client_data != nullptr)
         return;
 
     if (flowp->candidate_client_list != nullptr)
@@ -895,7 +918,7 @@ static void ClientAppID(Packet* p, const int /*direction*/, AppIdData* flowp, co
         flowp->num_candidate_clients_tried = 0;
     }
 
-    match_list = BuildClientPatternList(p, flowp->proto, &pConfig->clientAppConfig);
+    match_list = BuildClientPatternList(p, flowp->protocol, &pConfig->clientAppConfig);
     while (flowp->num_candidate_clients_tried < MAX_CANDIDATE_CLIENTS)
     {
         const RNAClientAppModule* tmp = GetNextFromClientPatternList(&match_list);
@@ -928,7 +951,7 @@ static void ClientAppID(Packet* p, const int /*direction*/, AppIdData* flowp, co
         switch (p->ptrs.dp)
         {
         case 465:
-            if (getAppIdFlag(flowp, APPID_SESSION_DECRYPTED))
+            if (flowp->getAppIdFlag(APPID_SESSION_DECRYPTED))
                 client = &smtp_client_mod;
             break;
         default:
@@ -942,7 +965,7 @@ static void ClientAppID(Packet* p, const int /*direction*/, AppIdData* flowp, co
     }
 }
 
-int AppIdDiscoverClientApp(Packet* p, int direction, AppIdData* rnaData,
+int AppIdDiscoverClientApp(Packet* p, int direction, AppIdSession* rnaData,
         const AppIdConfig* pConfig)
 {
     if (!pConfig->clientAppConfig.enabled)
@@ -951,11 +974,11 @@ int AppIdDiscoverClientApp(Packet* p, int direction, AppIdData* rnaData,
     if (direction == APP_ID_FROM_INITIATOR)
     {
         /* get out if we've already tried to validate a client app */
-        if (!getAppIdFlag(rnaData, APPID_SESSION_CLIENT_DETECTED))
+        if (!rnaData->getAppIdFlag(APPID_SESSION_CLIENT_DETECTED))
             ClientAppID(p, direction, rnaData, pConfig);
     }
-    else if (rnaData->rnaServiceState != RNA_STATE_STATEFUL && getAppIdFlag(rnaData,
-        APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))
+    else if ( rnaData->rnaServiceState != RNA_STATE_STATEFUL
+              && rnaData->getAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))
         ClientAppID(p, direction, rnaData, pConfig);
 
     return APPID_SESSION_SUCCESS;
@@ -967,14 +990,14 @@ DetectorAppUrlList* geAppUrlList(AppIdConfig* pConfig)
     return (&patternLists->appUrlList);
 }
 
-static void* client_app_flowdata_get(AppIdData* flowp, unsigned client_id)
+static void* client_app_flowdata_get(AppIdSession* flowp, unsigned client_id)
 {
-    return AppIdFlowdataGet(flowp, client_id);
+    return flowp->get_flow_data(client_id);
 }
 
-static int client_app_flowdata_add(AppIdData* flowp, void* data, unsigned client_id, AppIdFreeFCN
+static int client_app_flowdata_add(AppIdSession* flowp, void* data, unsigned client_id, AppIdFreeFCN
     fcn)
 {
-    return AppIdFlowdataAdd(flowp, data, client_id, fcn);
+    return flowp->add_flow_data(data, client_id, fcn);
 }
 

@@ -108,7 +108,7 @@ static int rsync_validate(ServiceValidationArgs* args)
     if (!args)
         return SERVICE_NOMATCH;
 
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 

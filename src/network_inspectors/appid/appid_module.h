@@ -38,6 +38,8 @@ extern THREAD_LOCAL ProfileStats appidPerfStats;
 struct AppIdStats
 {
     PegCount packets;
+    PegCount processed_packets;
+    PegCount ignored_packets;
     PegCount battlefield_flows;
     PegCount bgp_flows;
     PegCount bit_clients;

@@ -35,7 +35,7 @@ struct ProfileStats;
 struct ServiceValidationArgs;
 struct lua_State;
 class AppIdConfig;
-class AppIdData;
+class AppIdSession;
 struct RNAServiceElement;
 
 #define DETECTOR "Detector"
@@ -72,14 +72,14 @@ struct Detector
         const uint8_t* data;
         uint16_t size;
         int dir;
-        AppIdData* flowp;
+        AppIdSession* flowp;
         Packet* pkt;
         uint8_t macAddress[6];
     } validateParams;
 
     /**Pointer to flow created by a validator.
      */
-    AppIdData* pFlow;
+    AppIdSession* pFlow;
 
     struct
     {
@@ -136,7 +136,7 @@ CLIENT_APP_RETCODE validateAnyClientApp(
     const uint8_t* data,
     uint16_t size,
     const int dir,
-    AppIdData*,
+    AppIdSession*,
     Packet*,
     Detector*,
     const AppIdConfig*

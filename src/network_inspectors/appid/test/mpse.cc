@@ -44,20 +44,12 @@
 #include "sf_types.h"
 #include "util.h"
 
-#ifdef DYNAMIC_PREPROC_CONTEXT
-#include "sf_dynamic_preprocessor.h"
-#endif //DYNAMIC_PREPROC_CONTEXT
-
 #ifdef INTEL_SOFT_CPM
 #include "intel-soft-cpm.h"
 #endif
 #include "profiler.h"
-#ifndef DYNAMIC_PREPROC_CONTEXT
+
 #include "snort.h"
-#endif
-#ifdef PERF_PROFILING
-PreprocStats mpsePerfStats;
-#endif
 
 static uint64_t s_bcnt=0;
 
@@ -144,7 +136,6 @@ void* mpseNew(int method, int use_global_counter_flag,
     return (void*)p;
 }
 
-#ifndef DYNAMIC_PREPROC_CONTEXT
 void* mpseNewWithSnortConfig(struct _SnortConfig* sc,
     int method, int use_global_counter_flag,
     void (* userfree)(void* p),
@@ -224,8 +215,6 @@ void* mpseNewWithSnortConfig(struct _SnortConfig* sc,
 
     return (void*)p;
 }
-
-#endif //DYNAMIC_PREPROC_CONTEXT
 
 void mpseVerbose(void* pvoid)
 {
@@ -344,7 +333,6 @@ int mpseAddPattern(void* pvoid, void* P, int m,
     }
 }
 
-#ifndef DYNAMIC_PREPROC_CONTEXT
 int mpseAddPatternWithSnortConfig(SnortConfig* sc, void* pvoid, void* P, int m,
     unsigned noCase, unsigned offset, unsigned depth,
     unsigned negative, void* ID, int IID)
@@ -383,8 +371,6 @@ int mpseAddPatternWithSnortConfig(SnortConfig* sc, void* pvoid, void* P, int m,
         return -1;
     }
 }
-
-#endif // DYNAMIC_PREPROC_CONTEXT
 
 void mpseLargeShifts(void* pvoid, int flag)
 {
@@ -435,7 +421,6 @@ int mpsePrepPatterns(void* pvoid,
     return retv;
 }
 
-#ifndef DYNAMIC_PREPROC_CONTEXT
 int mpsePrepPatternsWithSnortConf(struct _SnortConfig* sc, void* pvoid,
     int ( * build_tree )(struct _SnortConfig*, void* id, void** existing_tree),
     int ( * neg_list_func )(void* id, void** list) )
@@ -478,8 +463,6 @@ int mpsePrepPatternsWithSnortConf(struct _SnortConfig* sc, void* pvoid,
 
     return retv;
 }
-
-#endif //DYNAMIC_PREPROC_CONTEXT
 
 void mpseSetRuleMask(void* pvoid, BITOP* rm)
 {
@@ -558,7 +541,6 @@ int mpsePrintSummary(int method)
     return 0;
 }
 
-#ifndef DYNAMIC_PREPROC_CONTEXT
 int mpsePrintSummaryWithSnortConfig(SnortConfig* sc, int method)
 {
     switch (method)
@@ -598,8 +580,6 @@ int mpsePrintSummaryWithSnortConfig(SnortConfig* sc, int method)
 
     return 0;
 }
-
-#endif //DYNAMIC_PREPROC_CONTEXT
 
 void mpseInitSummary(void)
 {

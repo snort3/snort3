@@ -149,7 +149,7 @@ static int bgp_validate(ServiceValidationArgs* args)
 {
     ServiceBGPData* bd;
     const ServiceBGPHeader* bh;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
     uint16_t len;

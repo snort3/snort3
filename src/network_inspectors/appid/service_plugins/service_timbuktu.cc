@@ -20,7 +20,7 @@
 // service_timbuktu.cc author Sourcefire Inc.
 
 #include "appid_module.h"
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "application_ids.h"
 #include "service_api.h"
 
@@ -116,7 +116,7 @@ static int timbuktu_init(const IniServiceAPI* const init_api)
 static int timbuktu_validate(ServiceValidationArgs* args)
 {
     ServiceTIMBUKTUData* ss;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
     uint16_t offset=0;

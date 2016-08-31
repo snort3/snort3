@@ -124,8 +124,7 @@ public:
     // Adds entry to the expected session cache with a flow key generated from the network
     // n-tuple parameters specified.  Inspection will be turned off for this expected session
     // when it arrives.
-    int ignore_session(
-        const sfip_t *addr1, uint16_t p1, const sfip_t *addr2, uint16_t p2,
+    int ignore_session( const sfip_t *addr1, uint16_t p1, const sfip_t *addr2, uint16_t p2,
         PktType, char dir, uint32_t ppId);
 
     // Resume inspection for flow.

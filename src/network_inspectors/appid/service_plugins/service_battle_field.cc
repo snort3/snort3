@@ -125,7 +125,7 @@ static int battle_field_init(const IniServiceAPI* const init_api)
 static int battle_field_validate(ServiceValidationArgs* args)
 {
     ServiceData* fd;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     uint16_t size = args->size;

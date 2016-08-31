@@ -63,7 +63,7 @@ void checkSessionForAFIndicator(
 }
 
 AppId checkSessionForAFForecast(
-    AppIdData* session, Packet* p, int dir, const AppIdConfig* pConfig, ApplicationId forecast)
+    AppIdSession* session, Packet* p, int dir, const AppIdConfig* pConfig, ApplicationId forecast)
 {
     AFActVal* check_act_val;
 
@@ -82,7 +82,7 @@ AppId checkSessionForAFForecast(
         return APP_ID_UNKNOWN;
     }
 
-    session->payloadAppId = check_act_val->target;
+    session->payload_app_id = check_act_val->target;
     return forecast;
 }
 

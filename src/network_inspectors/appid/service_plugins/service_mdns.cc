@@ -26,9 +26,9 @@
 #include "client_plugins/client_app_base.h"
 #include "detector_plugins/http_url_patterns.h"
 #include "detector_plugins/detector_http.h"
-#include "util/common_util.h"
+#include "appid_utils/common_util.h"
 #include "appid_config.h"
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "fw_appid.h"
 #include "http_common.h"
 #include "lua_detector_api.h"
@@ -246,7 +246,7 @@ static int ReferencePointer(const char* start_ptr, const char** resp_endptr,   i
                2. Calls the function which scans for pattern to identify the user
                3. Calls the function which does the Username reporting along with the host
   MDNS User Analysis*/
-static int MDNSUserAnalyser(AppIdData* flowp, const Packet* pkt, uint16_t size, const
+static int MDNSUserAnalyser(AppIdSession* flowp, const Packet* pkt, uint16_t size, const
     AppIdConfig* pConfig)
 {
     const char* query_val;
@@ -393,7 +393,7 @@ static int MDNS_validate(ServiceValidationArgs* args)
 {
     ServiceMDNSData* fd;
     int ret_val;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     uint16_t size = args->size;

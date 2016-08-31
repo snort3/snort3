@@ -27,11 +27,103 @@
 #include "appid_module.h"
 #include "app_info_table.h"
 #include "application_ids.h"
-#include "dns_defs.h"
-
 #include "client_plugins/client_app_api.h"
 #include "service_plugins/service_api.h"
 #include "service_plugins/service_config.h"
+
+#define MAX_OPCODE     5
+#define INVALID_OPCODE 3
+
+#define MAX_RCODE 10
+
+#define RCODE_NXDOMAIN 3
+
+#define DNS_LENGTH_FLAGS 0xC0
+
+#define PATTERN_A_REC      1
+#define PATTERN_AAAA_REC  28
+#define PATTERN_CNAME_REC  5
+#define PATTERN_SRV_REC   33
+#define PATTERN_TXT_REC   16
+#define PATTERN_MX_REC    15
+#define PATTERN_SOA_REC    6
+#define PATTERN_NS_REC     2
+#define PATTERN_PTR_REC   12
+
+#pragma pack(1)
+
+// FIXIT-H J bitfields should be replaced with getters/setters
+struct DNSHeader
+{
+    uint16_t id;
+#if defined(SF_BIGENDIAN)
+    uint8_t QR : 1,
+        Opcode : 4,
+        AA : 1,
+        TC : 1,
+        RD : 1;
+    uint8_t RA : 1,
+        Z : 1,
+        AD : 1,
+        CD : 1,
+        RCODE : 4;
+#else
+    uint8_t RD : 1,
+        TC : 1,
+        AA : 1,
+        Opcode : 4,
+        QR : 1;
+    uint8_t RCODE : 4,
+        CD : 1,
+        AD : 1,
+        Z : 1,
+        RA : 1;
+#endif
+    uint16_t QDCount;
+    uint16_t ANCount;
+    uint16_t NSCount;
+    uint16_t ARCount;
+};
+
+struct DNSTCPHeader
+{
+    uint16_t length;
+};
+
+struct DNSLabel
+{
+    uint8_t len;
+    uint8_t name;
+};
+
+struct DNSLabelPtr
+{
+    uint16_t position;
+    uint8_t data;
+};
+
+struct DNSLabelBitfield
+{
+    uint8_t id;
+    uint8_t len;
+    uint8_t data;
+};
+
+struct DNSQueryFixed
+{
+    uint16_t QType;
+    uint16_t QClass;
+};
+
+struct DNSAnswerData
+{
+    uint16_t type;
+    uint16_t klass;
+    uint32_t ttl;
+    uint16_t r_len;
+};
+
+#pragma pack()
 
 enum DNSState
 {
@@ -110,10 +202,10 @@ static AppRegistryEntry appIdRegistry[] =
 static CLIENT_APP_RETCODE dns_udp_client_init(const IniClientAppAPI* const, SF_LIST*);
 static CLIENT_APP_RETCODE dns_tcp_client_init(const IniClientAppAPI* const, SF_LIST*);
 static CLIENT_APP_RETCODE dns_udp_client_validate(
-    const uint8_t*, uint16_t, const int, AppIdData*, Packet*, Detector*, const AppIdConfig*);
+    const uint8_t*, uint16_t, const int, AppIdSession*, Packet*, Detector*, const AppIdConfig*);
 
 static CLIENT_APP_RETCODE dns_tcp_client_validate(
-    const uint8_t*, uint16_t, const int, AppIdData*, Packet*, Detector*, const AppIdConfig*);
+    const uint8_t*, uint16_t, const int, AppIdSession*, Packet*, Detector*, const AppIdConfig*);
 
 SO_PUBLIC RNAClientAppModule dns_udp_client_mod =
 {
@@ -154,11 +246,11 @@ static CLIENT_APP_RETCODE dns_tcp_client_init(const IniClientAppAPI* const, SF_L
 { return CLIENT_APP_SUCCESS; }
 
 static CLIENT_APP_RETCODE dns_udp_client_validate(
-    const uint8_t*, uint16_t, const int, AppIdData*, Packet*, Detector*, const AppIdConfig*)
+    const uint8_t*, uint16_t, const int, AppIdSession*, Packet*, Detector*, const AppIdConfig*)
 { return CLIENT_APP_INPROCESS; }
 
 static CLIENT_APP_RETCODE dns_tcp_client_validate(
-    const uint8_t*, uint16_t, const int, AppIdData*, Packet*, Detector*, const AppIdConfig*)
+    const uint8_t*, uint16_t, const int, AppIdSession*, Packet*, Detector*, const AppIdConfig*)
 { return CLIENT_APP_INPROCESS; }
 
 static int dns_host_pattern_match(void* id, void*, int index, void* data, void*)
@@ -284,7 +376,7 @@ static int dns_validate_label(const uint8_t* data, uint16_t* offset, uint16_t si
 }
 
 static int dns_validate_query(const uint8_t* data, uint16_t* offset, uint16_t size,
-    uint16_t id, unsigned host_reporting, AppIdData* flowp)
+    uint16_t id, unsigned host_reporting, AppIdSession* flowp)
 {
     int ret;
     const uint8_t* host;
@@ -335,7 +427,7 @@ static int dns_validate_query(const uint8_t* data, uint16_t* offset, uint16_t si
 }
 
 static int dns_validate_answer(const uint8_t* data, uint16_t* offset, uint16_t size,
-    uint16_t id, uint8_t rcode, unsigned host_reporting, AppIdData* flowp)
+    uint16_t id, uint8_t rcode, unsigned host_reporting, AppIdSession* flowp)
 {
     int ret;
     const uint8_t* host;
@@ -395,7 +487,7 @@ static int dns_validate_answer(const uint8_t* data, uint16_t* offset, uint16_t s
 }
 
 static int dns_validate_header(const int dir, DNSHeader* hdr,
-    unsigned host_reporting, AppIdData* flowp)
+    unsigned host_reporting, AppIdSession* flowp)
 {
     if (hdr->Opcode > MAX_OPCODE || hdr->Opcode == INVALID_OPCODE)
     {
@@ -422,7 +514,7 @@ static int dns_validate_header(const int dir, DNSHeader* hdr,
 }
 
 static int validate_packet(const uint8_t* data, uint16_t size, const int,
-    unsigned host_reporting, AppIdData* flowp)
+    unsigned host_reporting, AppIdSession* flowp)
 {
     uint16_t i;
     uint16_t count;
@@ -497,7 +589,7 @@ static int validate_packet(const uint8_t* data, uint16_t size, const int,
 static int dns_udp_validate(ServiceValidationArgs* args)
 {
     int rval;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     const int dir = args->dir;
     uint16_t size = args->size;
@@ -517,7 +609,7 @@ static int dns_udp_validate(ServiceValidationArgs* args)
         {
             if (dir == APP_ID_FROM_RESPONDER)
             {
-                if (getAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED))
+                if (flowp->getAppIdFlag(APPID_SESSION_UDP_REVERSED))
                 {
                     // To get here, we missed the initial query, got a
                     // response, and now we've got another query.
@@ -536,7 +628,7 @@ static int dns_udp_validate(ServiceValidationArgs* args)
                     pAppidActiveConfig->mod_config->dns_host_reporting, flowp);
                 if (rval == SERVICE_SUCCESS)
                 {
-                    setAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED);
+                    flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
                     goto success;
                 }
                 goto nomatch;
@@ -556,7 +648,7 @@ udp_done:
     {
     case SERVICE_SUCCESS:
 success:
-        setAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+        flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
         dns_service_mod.api->add_service(flowp, args->pkt, dir, &udp_svc_element,
             APP_ID_DNS, nullptr, nullptr, nullptr);
         appid_stats.dns_udp_flows++;
@@ -589,7 +681,7 @@ static int dns_tcp_validate(ServiceValidationArgs* args)
     const DNSTCPHeader* hdr;
     uint16_t tmp;
     int rval;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     const int dir = args->dir;
     uint16_t size = args->size;
@@ -662,7 +754,7 @@ tcp_done:
     }
 
 success:
-    setAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+    flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
     dns_service_mod.api->add_service(flowp, args->pkt, dir, &tcp_svc_element,
         APP_ID_DNS, nullptr, nullptr, nullptr);
     appid_stats.dns_tcp_flows++;

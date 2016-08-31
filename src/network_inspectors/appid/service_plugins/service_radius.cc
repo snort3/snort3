@@ -25,7 +25,7 @@
 #include "utils/util.h"
 
 #include "app_info_table.h"
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "application_ids.h"
 #include "service_api.h"
 
@@ -134,7 +134,7 @@ static int radius_validate(ServiceValidationArgs* args)
     const RADIUSHeader* hdr = (const RADIUSHeader*)args->data;
     uint16_t len;
     int new_dir;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const int dir = args->dir;
     uint16_t size = args->size;
 
@@ -160,12 +160,12 @@ static int radius_validate(ServiceValidationArgs* args)
             hdr->code == RADIUS_CODE_ACCESS_REJECT ||
             hdr->code == RADIUS_CODE_ACCESS_CHALLENGE)
         {
-            setAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED);
+            flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
             rd->state = RADIUS_STATE_RESPONSE;
             new_dir = APP_ID_FROM_RESPONDER;
         }
     }
-    else if (getAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED))
+    else if (flowp->getAppIdFlag(APPID_SESSION_UDP_REVERSED))
     {
         new_dir = (dir == APP_ID_FROM_RESPONDER) ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
     }
@@ -242,7 +242,7 @@ static int radius_validate_accounting(ServiceValidationArgs* args)
     const RADIUSHeader* hdr = (const RADIUSHeader*)args->data;
     uint16_t len;
     int new_dir;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const int dir = args->dir;
     uint16_t size = args->size;
 
@@ -266,12 +266,12 @@ static int radius_validate_accounting(ServiceValidationArgs* args)
     {
         if (hdr->code == RADIUS_CODE_ACCOUNTING_RESPONSE)
         {
-            setAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED);
+            flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
             rd->state = RADIUS_STATE_RESPONSE;
             new_dir = APP_ID_FROM_RESPONDER;
         }
     }
-    else if (getAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED))
+    else if (flowp->getAppIdFlag(APPID_SESSION_UDP_REVERSED))
     {
         new_dir = (dir == APP_ID_FROM_RESPONDER) ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
     }

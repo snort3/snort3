@@ -83,13 +83,11 @@ struct SessionFileData
     char fileName[16];
 };
 
-#ifdef MPLS
 struct MPLS_Hdr
 {
     uint16_t length;
     uint8_t* start;
 };
-#endif
 
 //  FIXIT-M: Temporary structs and defines for initial appid port.
 using tSfPolicyId = int;
@@ -134,10 +132,6 @@ struct SessionControlBlock
 
     uint8_t protocol;
 
-#ifdef ACTIVE_RESPONSE
-    uint8_t response_count;
-#endif
-
     uint8_t inner_client_ttl;
     uint8_t inner_server_ttl;
     uint8_t outer_client_ttl;
@@ -146,11 +140,9 @@ struct SessionControlBlock
     StreamHAState ha_state;
     StreamHAState cached_ha_state;
 
-#ifdef ENABLE_HA
     struct timeval ha_next_update;
     uint8_t ha_pending_mask;
     uint8_t ha_flags;
-#endif
 
     bool session_established;
     bool new_session;
@@ -162,10 +154,8 @@ struct SessionControlBlock
 
     int16_t app_protocol_id[MAX_APP_PROTOCOL_ID];
 
-#ifdef MPLS
     MPLS_Hdr* clientMplsHeader;
     MPLS_Hdr* serverMplsHeader;
-#endif
 };
 
 void sessionFileInit();

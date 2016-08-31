@@ -30,131 +30,150 @@
 
 #define SSL_WHITELIST_PKT_LIMIT 20
 
-AppId getServiceAppId(AppIdData* appIdData)
+AppIdApi appid_api;
+
+const char* AppIdApi::get_application_name(int32_t app_id)
 {
-    if (appIdData)
-        return pickServiceAppId(appIdData);
+    return appGetAppName(app_id);
+}
+
+AppId AppIdApi::get_application_id(const char* appName)
+{
+    return appGetAppId(appName);
+}
+
+AppId AppIdApi::get_service_app_id(AppIdSession* session)
+{
+    if (session)
+        return session->pick_service_app_id();
 
     return APP_ID_NONE;
 }
 
-AppId getOnlyServiceAppId(AppIdData* appIdData)
+AppId AppIdApi::get_port_service_app_id(AppIdSession* session)
 {
-    if (appIdData)
-        return pickOnlyServiceAppId(appIdData);
+    if (session)
+        return session->portServiceAppId;
+    return APP_ID_NONE;
+}
+
+AppId AppIdApi::get_only_service_app_id(AppIdSession* session)
+{
+    if (session)
+        return session->pick_only_service_app_id();
 
     return APP_ID_NONE;
 }
 
-AppId getMiscAppId(AppIdData* appIdData)
+AppId AppIdApi::get_misc_app_id(AppIdSession* session)
 {
-    if (appIdData)
-        return pickMiscAppId(appIdData);
+    if (session)
+        return session->pick_misc_app_id();
 
     return APP_ID_NONE;
 }
 
-AppId getClientAppId(AppIdData* appIdData)
+AppId AppIdApi::get_client_app_id(AppIdSession* session)
 {
-    if (appIdData)
-        return pickClientAppId(appIdData);
+    if (session)
+        return session->pick_client_app_id();
 
     return APP_ID_NONE;
 }
 
-AppId getPayloadAppId(AppIdData* appIdData)
+AppId AppIdApi::get_payload_app_id(AppIdSession* session)
 {
-    if (appIdData)
-        return pickPayloadId(appIdData);
+    if (session)
+        return session->pick_payload_app_id();
 
     return APP_ID_NONE;
 }
 
-AppId getReferredAppId(AppIdData* appIdData)
+AppId AppIdApi::get_referred_app_id(AppIdSession* session)
 {
-    if (appIdData)
-        return pickReferredPayloadId(appIdData);
+    if (session)
+        return session->pick_referred_payload_app_id();
 
     return APP_ID_NONE;
 }
 
-AppId getFwServiceAppId(AppIdData* appIdData)
+AppId AppIdApi::get_fw_service_app_id(AppIdSession* session)
 {
-    if (appIdData)
-        return fwPickServiceAppId(appIdData);
+    if (session)
+        return session->fw_pick_service_app_id();
 
     return APP_ID_NONE;
 }
 
-AppId getFwMiscAppId(AppIdData* appIdData)
+AppId AppIdApi::get_fw_misc_app_id(AppIdSession* session)
 {
-    if (appIdData)
-        return fwPickMiscAppId(appIdData);
+    if (session)
+        return session->fw_pick_misc_app_id();
 
     return APP_ID_NONE;
 }
 
-AppId getFwClientAppId(AppIdData* appIdData)
+AppId AppIdApi::get_fw_client_app_id(AppIdSession* session)
 {
-    if (appIdData)
-        return fwPickClientAppId(appIdData);
+    if (session)
+        return session->fw_pick_client_app_id();
 
     return APP_ID_NONE;
 }
 
-AppId getFwPayloadAppId(AppIdData* appIdData)
+AppId AppIdApi::get_fw_payload_app_id(AppIdSession* session)
 {
-    if (appIdData)
-        return fwPickPayloadAppId(appIdData);
+    if (session)
+        return session->fw_pick_payload_app_id();
 
     return APP_ID_NONE;
 }
 
-AppId getFwReferredAppId(AppIdData* appIdData)
+AppId AppIdApi::get_fw_referred_app_id(AppIdSession* session)
 {
-    if (appIdData)
-        return fwPickReferredPayloadAppId(appIdData);
+    if (session)
+        return session->fw_pick_referred_payload_app_id();
 
     return APP_ID_NONE;
 }
 
-bool isSessionSslDecrypted(AppIdData* appIdData)
+bool AppIdApi::is_ssl_session_decrypted(AppIdSession* session)
 {
-    if (appIdData)
-        return isFwSessionSslDecrypted(appIdData);
+    if (session)
+        return session->is_ssl_session_decrypted();
 
     return false;
 }
 
-AppIdData* getAppIdData(void* lwssn)
+AppIdSession* AppIdApi::get_appid_data(Flow* flow)
 {
-    AppIdData* appIdData = (AppIdData*)(((Flow*)lwssn)->get_application_data(AppIdData::flow_id));
+    AppIdSession* session = (AppIdSession*) flow->get_application_data(AppIdSession::flow_id);
 
-    return (appIdData && appIdData->common.fsf_type.flow_type == APPID_SESSION_TYPE_NORMAL) ?
-           appIdData : nullptr;
+    return (session && session->common.fsf_type.flow_type == APPID_SESSION_TYPE_NORMAL) ?
+           session : nullptr;
 }
 
-bool IsAppIdInspectingSession(AppIdData* appIdSession)
+bool AppIdApi::is_appid_inspecting_session(AppIdSession* appIdSession)
 {
     if (appIdSession && appIdSession->common.fsf_type.flow_type == APPID_SESSION_TYPE_NORMAL)
     {
         if (appIdSession->rnaServiceState != RNA_STATE_FINISHED ||
             !TPIsAppIdDone(appIdSession->tpsession) ||
-            getAppIdFlag(appIdSession, APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) ||
-            (getAppIdFlag(appIdSession, APPID_SESSION_ENCRYPTED) &&
-            (getAppIdFlag(appIdSession, APPID_SESSION_DECRYPTED) ||
-            appIdSession->session_packet_count < SSL_WHITELIST_PKT_LIMIT)))
+            appIdSession->getAppIdFlag(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) ||
+                (appIdSession->getAppIdFlag(APPID_SESSION_ENCRYPTED) &&
+                        (appIdSession->getAppIdFlag(APPID_SESSION_DECRYPTED) ||
+                         appIdSession->session_packet_count < SSL_WHITELIST_PKT_LIMIT)))
         {
             return true;
         }
-        if (appIdSession->rnaClientState != RNA_STATE_FINISHED &&
-            (!getAppIdFlag(appIdSession, APPID_SESSION_CLIENT_DETECTED) ||
-            (appIdSession->rnaServiceState != RNA_STATE_STATEFUL && getAppIdFlag(appIdSession,
-            APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))))
+        if (appIdSession->rna_client_state != RNA_STATE_FINISHED &&
+            (!appIdSession->getAppIdFlag(APPID_SESSION_CLIENT_DETECTED) ||
+            (appIdSession->rnaServiceState != RNA_STATE_STATEFUL
+                    && appIdSession->getAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))))
         {
             return true;
         }
-        if (appIdSession->tpAppId == APP_ID_SSH && appIdSession->payloadAppId != APP_ID_SFTP &&
+        if (appIdSession->tp_app_id == APP_ID_SSH && appIdSession->payload_app_id != APP_ID_SFTP &&
             appIdSession->session_packet_count < MAX_SFTP_PACKET_COUNT)
         {
             return true;
@@ -163,54 +182,54 @@ bool IsAppIdInspectingSession(AppIdData* appIdSession)
     return false;
 }
 
-char* getUserName(AppIdData* appIdData, AppId* service, bool* isLoginSuccessful)
+char* AppIdApi::get_user_name(AppIdSession* session, AppId* service, bool* isLoginSuccessful)
 {
     char* userName = nullptr;
-    if (appIdData)
+    if (session)
     {
-        userName = appIdData->username;
-        *service = appIdData->usernameService;
-        *isLoginSuccessful = getAppIdFlag(appIdData, APPID_SESSION_LOGIN_SUCCEEDED) ? true : false;
-        appIdData->username = nullptr; //transfer ownership to caller.
+        userName = session->username;
+        *service = session->username_service;
+        *isLoginSuccessful = session->getAppIdFlag(APPID_SESSION_LOGIN_SUCCEEDED) ? true : false;
+        session->username = nullptr; //transfer ownership to caller.
         return userName;
     }
     return nullptr;
 }
 
-bool isAppIdAvailable(AppIdData* appIdData)
+bool AppIdApi::is_appid_available(AppIdSession* session)
 {
-    if (appIdData)
+    if (session)
     {
-        if (getAppIdFlag(appIdData, APPID_SESSION_NO_TPI))
+        if (session->getAppIdFlag(APPID_SESSION_NO_TPI))
             return true;
-        return TPIsAppIdAvailable(appIdData->tpsession);
+        return TPIsAppIdAvailable(session->tpsession);
     }
     return false;
 }
 
-char* getClientVersion(AppIdData* appIdData)
+char* AppIdApi::get_client_version(AppIdSession* session)
 {
-    return appIdData ? appIdData->clientVersion : nullptr;
+    return session ? session->client_version : nullptr;
 }
 
-uint64_t getAppIdSessionAttribute(AppIdData* appIdData, uint64_t flags)
+uint64_t AppIdApi::get_appid_session_attribute(AppIdSession* session, uint64_t flags)
 {
-    return appIdData ? getAppIdFlag(appIdData, flags) : 0;
+    return session ? session->getAppIdFlag(flags) : 0;
 }
 
-APPID_FLOW_TYPE getFlowType(AppIdData* appIdData)
+APPID_FLOW_TYPE AppIdApi::get_flow_type(AppIdSession* session)
 {
-    return appIdData ? appIdData->common.fsf_type.flow_type : APPID_FLOW_TYPE_IGNORE;
+    return session ? session->common.fsf_type.flow_type : APPID_FLOW_TYPE_IGNORE;
 }
 
-void getServiceInfo(AppIdData* appIdData, char** serviceVendor, char** serviceVersion,
+void AppIdApi::get_service_info(AppIdSession* session, char** serviceVendor, char** serviceVersion,
     RNAServiceSubtype** serviceSubtype)
 {
-    if (appIdData)
+    if (session)
     {
-        *serviceVendor = appIdData->serviceVendor;
-        *serviceVersion = appIdData->serviceVersion;
-        *serviceSubtype = appIdData->subtype;
+        *serviceVendor = session->serviceVendor;
+        *serviceVersion = session->serviceVersion;
+        *serviceSubtype = session->subtype;
     }
     else
     {
@@ -220,253 +239,246 @@ void getServiceInfo(AppIdData* appIdData, char** serviceVendor, char** serviceVe
     }
 }
 
-short getServicePort(AppIdData* appIdData)
+short AppIdApi::get_service_port(AppIdSession* session)
 {
-    if (appIdData)
-        return appIdData->service_port;
+    if (session)
+        return session->service_port;
     return 0;
 }
 
-char* getHttpUserAgent(AppIdData* appIdData)
+char* AppIdApi::get_http_user_agent(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->useragent;
+    if (session && session->hsession)
+        return session->hsession->useragent;
     return nullptr;
 }
 
-char* getHttpHost(AppIdData* appIdData)
+char* AppIdApi::get_http_host(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->host;
+    if (session && session->hsession)
+        return session->hsession->host;
     return nullptr;
 }
 
-char* getHttpUrl(AppIdData* appIdData)
+char* AppIdApi::get_http_url(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->url;
+    if (session && session->hsession)
+        return session->hsession->url;
     return nullptr;
 }
 
-char* getHttpReferer(AppIdData* appIdData)
+char* AppIdApi::get_http_referer(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->referer;
+    if (session && session->hsession)
+        return session->hsession->referer;
     return nullptr;
 }
 
-char* getHttpNewUrl(AppIdData* appIdData)
+char* AppIdApi::get_http_new_url(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->new_field[REQ_URI_FID];
+    if (session && session->hsession)
+        return session->hsession->new_field[REQ_URI_FID];
     return nullptr;
 }
 
-char* getHttpUri(AppIdData* appIdData)
+char* AppIdApi::get_http_uri(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->uri;
+    if (session && session->hsession)
+        return session->hsession->uri;
     return nullptr;
 }
 
-char* getHttpResponseCode(AppIdData* appIdData)
+char* AppIdApi::get_http_response_code(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->response_code;
+    if (session && session->hsession)
+        return session->hsession->response_code;
     return nullptr;
 }
 
-char* getHttpCookie(AppIdData* appIdData)
+char* AppIdApi::get_http_cookie(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->cookie;
+    if (session && session->hsession)
+        return session->hsession->cookie;
     return nullptr;
 }
 
-char* getHttpNewCookie(AppIdData* appIdData)
+char* AppIdApi::get_http_new_cookie(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->new_field[REQ_COOKIE_FID];
+    if (session && session->hsession)
+        return session->hsession->new_field[REQ_COOKIE_FID];
     return nullptr;
 }
 
-char* getHttpNewField(AppIdData* appIdData, HTTP_FIELD_ID fieldId)
+char* AppIdApi::get_http_new_field(AppIdSession* session, HTTP_FIELD_ID fieldId)
 {
-    if (appIdData && appIdData->hsession && fieldId >= 0 && fieldId <= HTTP_FIELD_MAX)
-        return appIdData->hsession->new_field[fieldId];
+    if (session && session->hsession && fieldId >= 0 && fieldId <= HTTP_FIELD_MAX)
+        return session->hsession->new_field[fieldId];
     return nullptr;
 }
 
-void freeHttpNewField(AppIdData* appIdData, HTTP_FIELD_ID fieldId)
+void AppIdApi::free_http_new_field(AppIdSession* session, HTTP_FIELD_ID fieldId)
 {
-    if (appIdData && appIdData->hsession && fieldId >= 0 && fieldId <= HTTP_FIELD_MAX &&
-        nullptr != appIdData->hsession->new_field[fieldId])
+    if (session && session->hsession && fieldId >= 0 && fieldId <= HTTP_FIELD_MAX &&
+        nullptr != session->hsession->new_field[fieldId])
     {
-        snort_free(appIdData->hsession->new_field[fieldId]);
-        appIdData->hsession->new_field[fieldId] = nullptr;
+        snort_free(session->hsession->new_field[fieldId]);
+        session->hsession->new_field[fieldId] = nullptr;
     }
 }
 
-char* getHttpContentType(AppIdData* appIdData)
+char* AppIdApi::get_http_content_type(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->content_type;
+    if (session && session->hsession)
+        return session->hsession->content_type;
     return nullptr;
 }
 
-char* getHttpLocation(AppIdData* appIdData)
+char* AppIdApi::get_http_location(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->location;
+    if (session && session->hsession)
+        return session->hsession->location;
     return nullptr;
 }
 
-char* getHttpBody(AppIdData* appIdData)
+char* AppIdApi::get_http_body(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->body;
+    if (session && session->hsession)
+        return session->hsession->body;
     return nullptr;
 }
 
-char* getHttpReqBody(AppIdData* appIdData)
+char* AppIdApi::get_http_request_body(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->req_body;
+    if (session && session->hsession)
+        return session->hsession->req_body;
     return nullptr;
 }
 
-uint16_t getHttpUriOffset(AppIdData* appIdData)
+uint16_t AppIdApi::get_http_uri_offset(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->uriOffset;
+    if (session && session->hsession)
+        return session->hsession->uriOffset;
     return 0;
 }
 
-uint16_t getHttpUriEndOffset(AppIdData* appIdData)
+uint16_t AppIdApi::get_http_uri_end_offset(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->uriEndOffset;
+    if (session && session->hsession)
+        return session->hsession->uriEndOffset;
     return 0;
 }
 
-uint16_t getHttpCookieOffset(AppIdData* appIdData)
+uint16_t AppIdApi::get_http_cookie_offset(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->cookieOffset;
+    if (session && session->hsession)
+        return session->hsession->cookieOffset;
     return 0;
 }
 
-uint16_t getHttpCookieEndOffset(AppIdData* appIdData)
+uint16_t AppIdApi::get_http_cookie_end_offset(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->cookieEndOffset;
+    if (session && session->hsession)
+        return session->hsession->cookieEndOffset;
     return 0;
 }
 
-SEARCH_SUPPORT_TYPE getHttpSearch(AppIdData* appIdData)
+SEARCH_SUPPORT_TYPE AppIdApi::get_http_search(AppIdSession* session)
 {
-    if (appIdData)
-        return (appIdData->search_support_type != SEARCH_SUPPORT_TYPE_UNKNOWN) ?
-               appIdData->search_support_type : NOT_A_SEARCH_ENGINE;
+    if (session)
+        return (session->search_support_type != SEARCH_SUPPORT_TYPE_UNKNOWN) ?
+               session->search_support_type : NOT_A_SEARCH_ENGINE;
     return NOT_A_SEARCH_ENGINE;
 }
 
 // FIXIT used to be sfaddr_t
-sfip_t* getHttpXffAddr(AppIdData* appIdData)
+sfip_t* AppIdApi::get_http_xff_addr(AppIdSession* session)
 {
-    if (appIdData && appIdData->hsession)
-        return appIdData->hsession->xffAddr;
+    if (session && session->hsession)
+        return session->hsession->xffAddr;
     return nullptr;
 }
 
-char* getTlsHost(AppIdData* appIdData)
+char* AppIdApi::get_tls_host(AppIdSession* session)
 {
-    if (appIdData && appIdData->tsession)
-        return appIdData->tsession->tls_host;
-    return nullptr;
-}
-
-AppId getPorServiceAppId(AppIdData* appIdData)
-{
-    if (appIdData)
-        return appIdData->portServiceAppId;
-    return APP_ID_NONE;
-}
-
-// FIXIT used to be sfaddr_t
-sfip_t* getServiceIp(AppIdData* appIdData)
-{
-    if (appIdData)
-        return &appIdData->service_ip;
+    if (session && session->tsession)
+        return session->tsession->tls_host;
     return nullptr;
 }
 
 // FIXIT used to be sfaddr_t
-sfip_t* getInitiatorIp(AppIdData* appIdData)
+sfip_t* AppIdApi::get_service_ip(AppIdSession* session)
 {
-    return appIdData ? &appIdData->common.initiator_ip : nullptr;
+    if (session)
+        return &session->service_ip;
+    return nullptr;
 }
 
-DhcpFPData* getDhcpFpData(AppIdData* appIdData)
+// FIXIT used to be sfaddr_t
+sfip_t* AppIdApi::get_initiator_ip(AppIdSession* session)
 {
-    if (appIdData && getAppIdFlag(appIdData, APPID_SESSION_HAS_DHCP_FP))
+    return session ? &session->common.initiator_ip : nullptr;
+}
+
+DhcpFPData* AppIdApi::get_dhcp_fp_data(AppIdSession* session)
+{
+    if (session && session->getAppIdFlag(APPID_SESSION_HAS_DHCP_FP))
         return static_cast<DhcpFPData*>(
-            AppIdFlowdataRemove(appIdData, APPID_SESSION_DATA_DHCP_FP_DATA));
+            session->remove_flow_data(APPID_SESSION_DATA_DHCP_FP_DATA));
 
     return nullptr;
 }
 
-void freeDhcpFpData(AppIdData* appIdData, DhcpFPData* data)
+void AppIdApi::free_dhcp_fp_data(AppIdSession* session, DhcpFPData* data)
 {
-    if (appIdData)
+    if (session)
     {
-        clearAppIdFlag(appIdData, APPID_SESSION_HAS_DHCP_FP);
+        session->clearAppIdFlag(APPID_SESSION_HAS_DHCP_FP);
         AppIdFreeDhcpData(data);
     }
 }
 
-DHCPInfo* getDhcpInfo(AppIdData* appIdData)
+DHCPInfo* AppIdApi::get_dhcp_info(AppIdSession* session)
 {
-    if (appIdData && getAppIdFlag(appIdData, APPID_SESSION_HAS_DHCP_INFO))
+    if (session && session->getAppIdFlag(APPID_SESSION_HAS_DHCP_INFO))
         return static_cast<DHCPInfo*>(
-            AppIdFlowdataRemove(appIdData, APPID_SESSION_DATA_DHCP_INFO));
+            session->remove_flow_data(APPID_SESSION_DATA_DHCP_INFO));
 
     return nullptr;
 }
 
-void freeDhcpInfo(AppIdData* appIdData, DHCPInfo* data)
+void AppIdApi::free_dhcp_info(AppIdSession* session, DHCPInfo* data)
 {
-    if (appIdData)
+    if (session)
     {
-        clearAppIdFlag(appIdData, APPID_SESSION_HAS_DHCP_INFO);
+        session->clearAppIdFlag(APPID_SESSION_HAS_DHCP_INFO);
         AppIdFreeDhcpInfo(data);
     }
 }
 
-FpSMBData* getSmbFpData(AppIdData* appIdData)
+FpSMBData* AppIdApi::get_smb_fp_data(AppIdSession* session)
 {
-    if (appIdData && getAppIdFlag(appIdData, APPID_SESSION_HAS_SMB_INFO))
+    if (session && session->getAppIdFlag(APPID_SESSION_HAS_SMB_INFO))
         return static_cast<FpSMBData*>(
-            AppIdFlowdataRemove(appIdData, APPID_SESSION_DATA_SMB_DATA));
+            session->remove_flow_data(APPID_SESSION_DATA_SMB_DATA));
 
     return nullptr;
 }
 
-void freeSmbFpData(AppIdData* appIdData, FpSMBData* data)
+void AppIdApi::free_smb_fp_data(AppIdSession* session, FpSMBData* data)
 {
-    if (appIdData)
+    if (session)
     {
-        clearAppIdFlag(appIdData, APPID_SESSION_HAS_SMB_INFO);
+        session->clearAppIdFlag(APPID_SESSION_HAS_SMB_INFO);
         AppIdFreeSMBData(data);
     }
 }
 
-char* getNetbiosName(AppIdData* appIdData)
+char* AppIdApi::get_netbios_name(AppIdSession* session)
 {
-    if (appIdData)
+    if (session)
     {
-        char* netbiosName = appIdData->netbios_name;
-        appIdData->netbios_name = nullptr; //transfer ownership to caller.
+        char* netbiosName = session->netbios_name;
+        session->netbios_name = nullptr; //transfer ownership to caller.
         return netbiosName;
     }
     return nullptr;
@@ -477,31 +489,31 @@ char* getNetbiosName(AppIdData* appIdData)
 #define APPID_HA_FLAGS_SVC_DONE (1<<2)
 #define APPID_HA_FLAGS_HTTP (1<<3)
 
-uint32_t produceHAState(void* lwssn, uint8_t* buf)
+uint32_t AppIdApi::produce_ha_state(void* lwssn, uint8_t* buf)
 {
     AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
-    AppIdData* appIdData = (AppIdData*)(((Flow*)lwssn)->get_application_data(AppIdData::flow_id));
+    AppIdSession* session = (AppIdSession*)(((Flow*)lwssn)->get_application_data(AppIdSession::flow_id));
 
     // FIXIT - getFlowType should be a class member
-    if (appIdData && getFlowType(appIdData) != APPID_FLOW_TYPE_NORMAL)
-        appIdData = nullptr;
-    if (appIdData)
+    if (session && get_flow_type(session) != APPID_FLOW_TYPE_NORMAL)
+        session = nullptr;
+    if (session)
     {
         appHA->flags = APPID_HA_FLAGS_APP;
-        if (TPIsAppIdAvailable(appIdData->tpsession))
+        if (TPIsAppIdAvailable(session->tpsession))
             appHA->flags |= APPID_HA_FLAGS_TP_DONE;
-        if (getAppIdFlag(appIdData, APPID_SESSION_SERVICE_DETECTED))
+        if (session->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
             appHA->flags |= APPID_HA_FLAGS_SVC_DONE;
-        if (getAppIdFlag(appIdData, APPID_SESSION_HTTP_SESSION))
+        if (session->getAppIdFlag(APPID_SESSION_HTTP_SESSION))
             appHA->flags |= APPID_HA_FLAGS_HTTP;
-        appHA->appId[0] = appIdData->tpAppId;
-        appHA->appId[1] = appIdData->serviceAppId;
-        appHA->appId[2] = appIdData->ClientServiceAppId;
-        appHA->appId[3] = appIdData->portServiceAppId;
-        appHA->appId[4] = appIdData->payloadAppId;
-        appHA->appId[5] = appIdData->tpPayloadAppId;
-        appHA->appId[6] = appIdData->ClientAppId;
-        appHA->appId[7] = appIdData->miscAppId;
+        appHA->appId[0] = session->tp_app_id;
+        appHA->appId[1] = session->serviceAppId;
+        appHA->appId[2] = session->client_service_app_id;
+        appHA->appId[3] = session->portServiceAppId;
+        appHA->appId[4] = session->payload_app_id;
+        appHA->appId[5] = session->tp_payload_app_id;
+        appHA->appId[6] = session->client_app_id;
+        appHA->appId[7] = session->misc_app_id;
     }
     else
     {
@@ -511,103 +523,103 @@ uint32_t produceHAState(void* lwssn, uint8_t* buf)
 }
 
 // FIXIT last arg used to be sfaddr_t
-uint32_t consumeHAState(void* lwssn, const uint8_t* buf, uint8_t, IpProtocol proto,
+uint32_t AppIdApi::consume_ha_state(void* lwssn, const uint8_t* buf, uint8_t, IpProtocol proto,
     sfip_t* ip)
 {
     AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
     if (appHA->flags & APPID_HA_FLAGS_APP)
     {
-        AppIdData* appIdData = (AppIdData*)(((Flow*)lwssn)->get_application_data(
-            AppIdData::flow_id));
+        AppIdSession* session = (AppIdSession*)(((Flow*)lwssn)->get_application_data(
+            AppIdSession::flow_id));
 
-        if (!appIdData)
+        if (!session)
         {
-            appIdData = appSharedDataAlloc(proto, ip);
-            ((Flow*)lwssn)->set_application_data(appIdData);
-            if (appIdData->serviceAppId == APP_ID_FTP_CONTROL)
+            session = new AppIdSession(proto, ip);
+            ((Flow*)lwssn)->set_application_data(session);
+            if (session->serviceAppId == APP_ID_FTP_CONTROL)
             {
-                setAppIdFlag(appIdData, APPID_SESSION_CLIENT_DETECTED |
+                session->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED |
                     APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_SERVICE_DETECTED);
-                if (!AddFTPServiceState(appIdData))
+                if (!AddFTPServiceState(session))
                 {
-                    setAppIdFlag(appIdData, APPID_SESSION_CONTINUE);
+                    session->setAppIdFlag(APPID_SESSION_CONTINUE);
                 }
-                appIdData->rnaServiceState = RNA_STATE_STATEFUL;
+                session->rnaServiceState = RNA_STATE_STATEFUL;
             }
             else
-                appIdData->rnaServiceState = RNA_STATE_FINISHED;
-            appIdData->rnaClientState = RNA_STATE_FINISHED;
+                session->rnaServiceState = RNA_STATE_FINISHED;
+            session->rna_client_state = RNA_STATE_FINISHED;
             if (thirdparty_appid_module)
-                thirdparty_appid_module->session_state_set(appIdData->tpsession, TP_STATE_HA);
+                thirdparty_appid_module->session_state_set(session->tpsession, TP_STATE_HA);
         }
 
-        if (appHA->flags & APPID_HA_FLAGS_TP_DONE && thirdparty_appid_module)
+        if ( ( appHA->flags & APPID_HA_FLAGS_TP_DONE ) && thirdparty_appid_module )
         {
-            thirdparty_appid_module->session_state_set(appIdData->tpsession, TP_STATE_TERMINATED);
-            setAppIdFlag(appIdData, APPID_SESSION_NO_TPI);
+            thirdparty_appid_module->session_state_set(session->tpsession, TP_STATE_TERMINATED);
+            session->setAppIdFlag(APPID_SESSION_NO_TPI);
         }
         if (appHA->flags & APPID_HA_FLAGS_SVC_DONE)
-            setAppIdFlag(appIdData, APPID_SESSION_SERVICE_DETECTED);
+            session->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED);
         if (appHA->flags & APPID_HA_FLAGS_HTTP)
-            setAppIdFlag(appIdData, APPID_SESSION_HTTP_SESSION);
+            session->setAppIdFlag(APPID_SESSION_HTTP_SESSION);
 
-        appIdData->tpAppId = appHA->appId[0];
-        appIdData->serviceAppId = appHA->appId[1];
-        appIdData->ClientServiceAppId = appHA->appId[2];
-        appIdData->portServiceAppId = appHA->appId[3];
-        appIdData->payloadAppId = appHA->appId[4];
-        appIdData->tpPayloadAppId = appHA->appId[5];
-        appIdData->ClientAppId = appHA->appId[6];
-        appIdData->miscAppId = appHA->appId[7];
+        session->tp_app_id = appHA->appId[0];
+        session->serviceAppId = appHA->appId[1];
+        session->client_service_app_id = appHA->appId[2];
+        session->portServiceAppId = appHA->appId[3];
+        session->payload_app_id = appHA->appId[4];
+        session->tp_payload_app_id = appHA->appId[5];
+        session->client_app_id = appHA->appId[6];
+        session->misc_app_id = appHA->appId[7];
     }
     return sizeof(*appHA);
 }
 
-char* getDNSQuery(AppIdData* appIdData, uint8_t* query_len)
+char* AppIdApi::get_dns_query(AppIdSession* session, uint8_t* query_len)
 {
-    if (appIdData && appIdData->dsession)
+    if (session && session->dsession)
     {
         if (query_len)
         {
-            if (appIdData->dsession->host)
-                *query_len = appIdData->dsession->host_len;
+            if (session->dsession->host)
+                *query_len = session->dsession->host_len;
 
             else
                 *query_len = 0;
         }
 
-        return appIdData->dsession->host;
+        return session->dsession->host;
     }
     if (query_len)
         *query_len = 0;
     return nullptr;
 }
 
-uint16_t getDNSQueryoffset(AppIdData* appIdData)
+uint16_t AppIdApi::get_dns_query_offset(AppIdSession* session)
 {
-    if (appIdData && appIdData->dsession)
-        return appIdData->dsession->host_offset;
+    if (session && session->dsession)
+        return session->dsession->host_offset;
     return 0;
 }
 
-uint16_t getDNSRecordType(AppIdData* appIdData)
+uint16_t AppIdApi::get_dns_record_type(AppIdSession* session)
 {
-    if (appIdData && appIdData->dsession)
-        return appIdData->dsession->record_type;
+    if (session && session->dsession)
+        return session->dsession->record_type;
     return 0;
 }
 
-uint8_t getDNSResponseType(AppIdData* appIdData)
+uint8_t AppIdApi::get_dns_response_type(AppIdSession* session)
 {
-    if (appIdData && appIdData->dsession)
-        return appIdData->dsession->response_type;
+    if (session && session->dsession)
+        return session->dsession->response_type;
     return 0;
 }
 
-uint32_t getDNSTTL(AppIdData* appIdData)
+uint32_t AppIdApi::get_dns_ttl(AppIdSession* session)
 {
-    if (appIdData && appIdData->dsession)
-        return appIdData->dsession->ttl;
+    if (session && session->dsession)
+        return session->dsession->ttl;
     return 0;
 }
 

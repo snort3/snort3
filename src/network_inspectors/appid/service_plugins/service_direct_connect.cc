@@ -45,10 +45,10 @@ struct ServiceData
 static int direct_connect_init(const IniServiceAPI* const init_api);
 static int direct_connect_validate(ServiceValidationArgs* args);
 static int validateDirectConnectTcp(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, const Packet* pkt, ServiceData* serviceData,
+    AppIdSession* flowp, const Packet* pkt, ServiceData* serviceData,
     const AppIdConfig* pConfig);
 static int validateDirectConnectUdp(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, const Packet* pkt, ServiceData* serviceData,
+    AppIdSession* flowp, const Packet* pkt, ServiceData* serviceData,
     const AppIdConfig* pConfig);
 
 static RNAServiceElement svc_element =
@@ -132,7 +132,7 @@ static int direct_connect_init(const IniServiceAPI* const init_api)
 static int direct_connect_validate(ServiceValidationArgs* args)
 {
     ServiceData* fd;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 
@@ -152,7 +152,7 @@ static int direct_connect_validate(ServiceValidationArgs* args)
             directconnect_service_mod.flow_data_index, &snort_free);
     }
 
-    if (flowp->proto == IpProtocol::TCP)
+    if (flowp->protocol == IpProtocol::TCP)
         return validateDirectConnectTcp(data, size, args->dir, flowp, args->pkt, fd,
             args->pConfig);
     else
@@ -161,7 +161,7 @@ static int direct_connect_validate(ServiceValidationArgs* args)
 }
 
 static int validateDirectConnectTcp(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, const Packet* pkt, ServiceData* serviceData,
+    AppIdSession* flowp, const Packet* pkt, ServiceData* serviceData,
     const AppIdConfig* pConfig)
 {
     switch (serviceData->state)
@@ -271,7 +271,7 @@ fail:
 }
 
 static int validateDirectConnectUdp(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, const Packet* pkt, ServiceData* serviceData,
+    AppIdSession* flowp, const Packet* pkt, ServiceData* serviceData,
     const AppIdConfig* pConfig)
 {
     if (dir == APP_ID_FROM_RESPONDER && serviceData->state == CONN_STATE_SERVICE_DETECTED)

@@ -52,12 +52,12 @@
 #include "service_ssl.h"
 #include "service_telnet.h"
 #include "service_tftp.h"
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "appid_config.h"
 #include "fw_appid.h"
 #include "lua_detector_api.h"
 #include "lua_detector_module.h"
-#include "util/ip_funcs.h"
+#include "appid_utils/ip_funcs.h"
 #include "detector_plugins/detector_dns.h"
 #include "detector_plugins/detector_pattern.h"
 #include "detector_plugins/detector_sip.h"
@@ -82,23 +82,21 @@
  * already exist). */
 #define MAX_CANDIDATE_SERVICES 10
 
-static void* service_flowdata_get(AppIdData* flow, unsigned service_id);
-static int service_flowdata_add(AppIdData* flow, void* data, unsigned service_id, AppIdFreeFCN
+static void* service_flowdata_get(AppIdSession* flow, unsigned service_id);
+static int service_flowdata_add(AppIdSession* flow, void* data, unsigned service_id, AppIdFreeFCN
     fcn);
-static void AppIdAddHostInfo(AppIdData* flow, SERVICE_HOST_INFO_CODE code, const void* info);
-static int AppIdAddDHCP(AppIdData* flowp, unsigned op55_len, const uint8_t* op55, unsigned
+static void AppIdAddHostInfo(AppIdSession* flow, SERVICE_HOST_INFO_CODE code, const void* info);
+static int AppIdAddDHCP(AppIdSession* flowp, unsigned op55_len, const uint8_t* op55, unsigned
     op60_len, const uint8_t* op60, const uint8_t* mac);
-static void AppIdAddHostIP(AppIdData* flow, const uint8_t* mac, uint32_t ip4,
+static void AppIdAddHostIP(AppIdSession* flow, const uint8_t* mac, uint32_t ip4,
     int32_t zone, uint32_t subnetmask, uint32_t leaseSecs, uint32_t router);
-static void AppIdAddSMBData(AppIdData* flow, unsigned major, unsigned minor, uint32_t flags);
-static void AppIdServiceAddMisc(AppIdData* flow, AppId miscId);
+static void AppIdAddSMBData(AppIdSession* flow, unsigned major, unsigned minor, uint32_t flags);
+static void AppIdServiceAddMisc(AppIdSession* flow, AppId miscId);
 
 const ServiceApi serviceapi =
 {
     &service_flowdata_get,
     &service_flowdata_add,
-    &AppIdEarlySessionCreate,
-    &AppIdFlowdataAddId,
     &AppIdAddDHCP,
     &AppIdAddHostIP,
     &AppIdAddSMBData,
@@ -132,18 +130,14 @@ static RNAServiceElement* ftp_service = nullptr;
 static ServicePatternData* free_pattern_data;
 
 /*C service API */
-static void ServiceRegisterPattern(RNAServiceValidationFCN fcn,
-    IpProtocol proto, const uint8_t* pattern, unsigned size,
-    int position, struct Detector* userdata, int provides_user,
-    const char* name, ServiceConfig* pServiceConfig);
-static void CServiceRegisterPattern(RNAServiceValidationFCN fcn, IpProtocol proto,
-    const uint8_t* pattern, unsigned size,
-    int position, const char* name, AppIdConfig* pConfig);
-static void ServiceRegisterPatternUser(RNAServiceValidationFCN fcn, IpProtocol proto,
-    const uint8_t* pattern, unsigned size,
-    int position, const char* name, AppIdConfig* pConfig);
-static int CServiceAddPort(RNAServiceValidationPort* pp, RNAServiceValidationModule* svm,
-    AppIdConfig* pConfig);
+static void ServiceRegisterPattern(RNAServiceValidationFCN, IpProtocol, const uint8_t*, unsigned,
+        int, struct Detector*, int, const char*, ServiceConfig*);
+static void CServiceRegisterPattern(RNAServiceValidationFCN, IpProtocol, const uint8_t* ,
+        unsigned, int , const char*, AppIdConfig*);
+static void ServiceRegisterPatternUser(RNAServiceValidationFCN, IpProtocol, const uint8_t*,
+        unsigned, int, const char*, AppIdConfig*);
+void appSetServiceValidator( RNAServiceValidationFCN, AppId, unsigned extractsInfo, AppIdConfig*);
+static int CServiceAddPort(const RNAServiceValidationPort*, RNAServiceValidationModule*, AppIdConfig*);
 static void CServiceRemovePorts(RNAServiceValidationFCN validate, AppIdConfig* pConfig);
 
 static IniServiceAPI svc_init_api =
@@ -222,6 +216,29 @@ static ServiceMatch** smOrderedList = nullptr;
 static ServiceMatch* free_service_match;
 static const uint8_t zeromac[6] = { 0, 0, 0, 0, 0, 0 };
 
+
+void appSetServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigned extractsInfo,
+    AppIdConfig* pConfig)
+{
+    AppInfoTableEntry* pEntry = appInfoEntryGet(appId, pConfig);
+    if (!pEntry)
+    {
+        ErrorMessage("AppId: invalid direct service AppId, %d", appId);
+        return;
+    }
+    extractsInfo &= (APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_SERVICE_UDP_REVERSED);
+    if (!extractsInfo)
+    {
+        DebugFormat(DEBUG_APPID, "Ignoring direct service without info for AppId %d", appId);
+        return;
+    }
+    pEntry->svrValidator = ServiceGetServiceElement(fcn, nullptr, pConfig);
+    if (pEntry->svrValidator)
+        pEntry->flags |= extractsInfo;
+    else
+        ErrorMessage("AppId: failed to find a service element for AppId %d", appId);
+}
+
 /**free ServiceMatch List.
  */
 void AppIdFreeServiceMatchList(ServiceMatch* sm)
@@ -247,11 +264,11 @@ void cleanupFreeServiceMatch(void)
     }
 }
 
-int AddFTPServiceState(AppIdData* fp)
+int AddFTPServiceState(AppIdSession* fp)
 {
     if (!ftp_service)
         return -1;
-    return AppIdFlowdataAddId(fp, 21, ftp_service);
+    return fp->add_flow_data_id(21, ftp_service);
 }
 
 /**allocate one ServiceMatch element.
@@ -341,7 +358,7 @@ static inline RNAServiceElement* AppIdGetNexServiceByPort(
     IpProtocol protocol,
     uint16_t port,
     const RNAServiceElement* const lasService,
-    AppIdData* rnaData,
+    AppIdSession* rnaData,
     const AppIdConfig* pConfig
     )
 {
@@ -575,7 +592,7 @@ static void RemoveServicePortsByType(RNAServiceValidationFCN validate, SF_LIST**
                 {
                     li->ref_count--;
                     sflist_remove_node(listTmp, iter);
-                    // FIXIT - M Revisit this for better solution to calling sflist_first after
+                    // FIXIT-M: Revisit this for better solution to calling sflist_first after
                     // deleting a node... ultimate solution for use of sflist would be move
                     // to STL
                     liTmp = (RNAServiceElement*)sflist_first(listTmp, &iter);
@@ -642,7 +659,7 @@ static void CServiceRemovePorts(RNAServiceValidationFCN validate, AppIdConfig* p
     ServiceRemovePorts(validate, nullptr, pConfig);
 }
 
-int ServiceAddPort(RNAServiceValidationPort* pp, RNAServiceValidationModule* svm,
+int ServiceAddPort(const RNAServiceValidationPort* pp, RNAServiceValidationModule* svm,
     struct Detector* userdata, AppIdConfig* pConfig)
 {
     SF_LIST** services;
@@ -721,7 +738,7 @@ int ServiceAddPort(RNAServiceValidationPort* pp, RNAServiceValidationModule* svm
     return 0;
 }
 
-static int CServiceAddPort(RNAServiceValidationPort* pp, RNAServiceValidationModule* svm,
+static int CServiceAddPort(const RNAServiceValidationPort* pp, RNAServiceValidationModule* svm,
     AppIdConfig* pConfig)
 {
 
@@ -732,7 +749,7 @@ int serviceLoadForConfigCallback(void* symbol, AppIdConfig* pConfig)
 {
     static unsigned service_module_index = 0;
     RNAServiceValidationModule* svm = (RNAServiceValidationModule*)symbol;
-    RNAServiceValidationPort* pp;
+    const RNAServiceValidationPort* pp;
 
     if (service_module_index >= 65536)
     {
@@ -741,7 +758,7 @@ int serviceLoadForConfigCallback(void* symbol, AppIdConfig* pConfig)
     }
 
     svm->api = &serviceapi;
-    for (pp=svm->pp; pp && pp->validate; pp++)
+    for (pp = svm->pp; pp && pp->validate; pp++)
         if (CServiceAddPort(pp, svm, pConfig))
             return -1;
 
@@ -782,9 +799,9 @@ int LoadServiceModules(const char**, uint32_t instance_id, AppIdConfig* pConfig)
 int ReloadServiceModules(AppIdConfig* pConfig)
 {
     RNAServiceValidationModule* svm;
-    RNAServiceValidationPort* pp;
+    const RNAServiceValidationPort* pp;
 
-    svc_init_api.debug = app_id_debug;
+    svc_init_api.debug = pAppidActiveConfig->mod_config->debug;
     svc_init_api.pAppidConfig = pConfig;
 
     // active_service_list contains both service modules and services associated with
@@ -794,7 +811,7 @@ int ReloadServiceModules(AppIdConfig* pConfig)
         // processing only non-lua service detectors.
         if (svm->init)
         {
-            for (pp=svm->pp; pp && pp->validate; pp++)
+            for (pp = svm->pp; pp && pp->validate; pp++)
                 if (CServiceAddPort(pp, svm, pConfig))
                     return -1;
         }
@@ -959,7 +976,7 @@ void CleanupServices(AppIdConfig* pConfig)
     cleanupFreeServiceMatch();
     if (smOrderedList)
     {
-        // FIXIT - M - still allocated with calloc/realloc - vector coming soon...
+        // FIXIT-M: still allocated with calloc/realloc - vector coming soon...
         free(smOrderedList);
         smOrderedListSize = 32;
     }
@@ -1023,7 +1040,7 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
 
     if (!smOrderedList)
     {
-        // FIXIT - H - using calloc because this may be realloc'ed later, change to vector asap
+        // FIXIT-M: - using calloc because this may be realloc'ed later, change to vector asap
         smOrderedList = (ServiceMatch**)calloc(smOrderedListSize, sizeof(ServiceMatch*));
         if (!smOrderedList)
         {
@@ -1131,7 +1148,7 @@ static inline RNAServiceElement* AppIdGetServiceByBruteForce(
     return service;
 }
 
-static void AppIdAddHostInfo(AppIdData*, SERVICE_HOST_INFO_CODE, const void*)
+static void AppIdAddHostInfo(AppIdSession*, SERVICE_HOST_INFO_CODE, const void*)
 {
 }
 
@@ -1140,23 +1157,23 @@ void AppIdFreeDhcpData(DhcpFPData* dd)
     snort_free(dd);
 }
 
-static int AppIdAddDHCP(AppIdData* flowp, unsigned op55_len, const uint8_t* op55, unsigned
+static int AppIdAddDHCP(AppIdSession* flowp, unsigned op55_len, const uint8_t* op55, unsigned
     op60_len, const uint8_t* op60, const uint8_t* mac)
 {
-    if (op55_len && op55_len <= DHCP_OPTION55_LEN_MAX && !getAppIdFlag(flowp,
-        APPID_SESSION_HAS_DHCP_FP))
+    if (op55_len && op55_len <= DHCP_OPTION55_LEN_MAX
+            && !flowp->getAppIdFlag(APPID_SESSION_HAS_DHCP_FP))
     {
         DhcpFPData* rdd;
 
         rdd = (DhcpFPData*)snort_calloc(sizeof(*rdd));
-        if (AppIdFlowdataAdd(flowp, rdd, APPID_SESSION_DATA_DHCP_FP_DATA,
+        if (flowp->add_flow_data(rdd, APPID_SESSION_DATA_DHCP_FP_DATA,
             (AppIdFreeFCN)AppIdFreeDhcpData))
         {
             AppIdFreeDhcpData(rdd);
             return -1;
         }
 
-        setAppIdFlag(flowp, APPID_SESSION_HAS_DHCP_FP);
+        flowp->setAppIdFlag(APPID_SESSION_HAS_DHCP_FP);
         rdd->op55_len = (op55_len > DHCP_OP55_MAX_SIZE) ? DHCP_OP55_MAX_SIZE : op55_len;
         memcpy(rdd->op55, op55, rdd->op55_len);
         rdd->op60_len =  (op60_len > DHCP_OP60_MAX_SIZE) ? DHCP_OP60_MAX_SIZE : op60_len;
@@ -1176,7 +1193,7 @@ void AppIdFreeDhcpInfo(DHCPInfo* dd)
     }
 }
 
-static void AppIdAddHostIP(AppIdData* flow, const uint8_t* mac, uint32_t ip, int32_t zone,
+static void AppIdAddHostIP(AppIdSession* flow, const uint8_t* mac, uint32_t ip, int32_t zone,
     uint32_t subnetmask, uint32_t leaseSecs, uint32_t router)
 {
     DHCPInfo* info;
@@ -1185,8 +1202,8 @@ static void AppIdAddHostIP(AppIdData* flow, const uint8_t* mac, uint32_t ip, int
     if (memcmp(mac, zeromac, 6) == 0 || ip == 0)
         return;
 
-    if (!getAppIdFlag(flow, APPID_SESSION_DO_RNA) || getAppIdFlag(flow,
-        APPID_SESSION_HAS_DHCP_INFO))
+    if (!flow->getAppIdFlag(APPID_SESSION_DO_RNA)
+            || flow->getAppIdFlag(APPID_SESSION_HAS_DHCP_INFO))
         return;
 
     flags = isIPv4HostMonitored(ntohl(ip), zone);
@@ -1201,13 +1218,13 @@ static void AppIdAddHostIP(AppIdData* flow, const uint8_t* mac, uint32_t ip, int
     else
         info = (DHCPInfo*)snort_calloc(sizeof(DHCPInfo));
 
-    if (AppIdFlowdataAdd(flow, info, APPID_SESSION_DATA_DHCP_INFO,
+    if (flow->add_flow_data(info, APPID_SESSION_DATA_DHCP_INFO,
         (AppIdFreeFCN)AppIdFreeDhcpInfo))
     {
         AppIdFreeDhcpInfo(info);
         return;
     }
-    setAppIdFlag(flow, APPID_SESSION_HAS_DHCP_INFO);
+    flow->setAppIdFlag(APPID_SESSION_HAS_DHCP_INFO);
     info->ipAddr = ip;
     memcpy(info->macAddr, mac, sizeof(info->macAddr));
     info->subnetmask = subnetmask;
@@ -1224,7 +1241,7 @@ void AppIdFreeSMBData(FpSMBData* sd)
     }
 }
 
-static void AppIdAddSMBData(AppIdData* flow, unsigned major, unsigned minor, uint32_t flags)
+static void AppIdAddSMBData(AppIdSession* flow, unsigned major, unsigned minor, uint32_t flags)
 {
     FpSMBData* sd;
 
@@ -1239,19 +1256,19 @@ static void AppIdAddSMBData(AppIdData* flow, unsigned major, unsigned minor, uin
     else
         sd = (FpSMBData*)snort_calloc(sizeof(FpSMBData));
 
-    if (AppIdFlowdataAdd(flow, sd, APPID_SESSION_DATA_SMB_DATA, (AppIdFreeFCN)AppIdFreeSMBData))
+    if (flow->add_flow_data(sd, APPID_SESSION_DATA_SMB_DATA, (AppIdFreeFCN)AppIdFreeSMBData))
     {
         AppIdFreeSMBData(sd);
         return;
     }
 
-    setAppIdFlag(flow, APPID_SESSION_HAS_SMB_INFO);
+    flow->setAppIdFlag(APPID_SESSION_HAS_SMB_INFO);
     sd->major = major;
     sd->minor = minor;
     sd->flags = flags & FINGERPRINT_UDP_FLAGS_MASK;
 }
 
-static int AppIdServiceAddServiceEx(AppIdData* flow, const Packet* pkt, int dir,
+static int AppIdServiceAddServiceEx(AppIdSession* flow, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element,
     AppId appId, const char* vendor, const char* version)
 {
@@ -1279,15 +1296,15 @@ static int AppIdServiceAddServiceEx(AppIdData* flow, const Packet* pkt, int dir,
             snort_free(flow->serviceVersion);
         flow->serviceVersion = snort_strdup(version);
     }
-    setAppIdFlag(flow, APPID_SESSION_SERVICE_DETECTED);
+    flow->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED);
     flow->serviceAppId = appId;
 
     checkSandboxDetection(appId);
 
-    if (getAppIdFlag(flow, APPID_SESSION_IGNORE_HOST))
+    if (flow->getAppIdFlag(APPID_SESSION_IGNORE_HOST))
         return SERVICE_SUCCESS;
 
-    if (!getAppIdFlag(flow, APPID_SESSION_UDP_REVERSED))
+    if (!flow->getAppIdFlag(APPID_SESSION_UDP_REVERSED))
     {
         if (dir == APP_ID_FROM_INITIATOR)
         {
@@ -1318,15 +1335,15 @@ static int AppIdServiceAddServiceEx(AppIdData* flow, const Packet* pkt, int dir,
 
     /* If we ended up with UDP reversed, make sure we're pointing to the
      * correct host tracker entry. */
-    if (getAppIdFlag(flow, APPID_SESSION_UDP_REVERSED))
+    if (flow->getAppIdFlag(APPID_SESSION_UDP_REVERSED))
     {
-        flow->id_state = AppIdGetServiceIDState(ip, flow->proto, port,
+        flow->id_state = AppIdGetServiceIDState(ip, flow->protocol, port,
             AppIdServiceDetectionLevel(flow));
     }
 
     if (!(id_state = flow->id_state))
     {
-        if (!(id_state = AppIdAddServiceIDState(ip, flow->proto, port, AppIdServiceDetectionLevel(
+        if (!(id_state = AppIdAddServiceIDState(ip, flow->protocol, port, AppIdServiceDetectionLevel(
                 flow))))
         {
             ErrorMessage("Add service failed to create state");
@@ -1409,7 +1426,7 @@ static int AppIdServiceAddServiceEx(AppIdData* flow, const Packet* pkt, int dir,
     return SERVICE_SUCCESS;
 }
 
-int AppIdServiceAddServiceSubtype(AppIdData* flow, const Packet* pkt, int dir,
+int AppIdServiceAddServiceSubtype(AppIdSession* flow, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element,
     AppId appId, const char* vendor, const char* version,
     RNAServiceSubtype* subtype)
@@ -1431,7 +1448,7 @@ int AppIdServiceAddServiceSubtype(AppIdData* flow, const Packet* pkt, int dir,
     return AppIdServiceAddServiceEx(flow, pkt, dir, svc_element, appId, vendor, version);
 }
 
-int AppIdServiceAddService(AppIdData* flow, const Packet* pkt, int dir,
+int AppIdServiceAddService(AppIdSession* flow, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element,
     AppId appId, const char* vendor, const char* version,
     const RNAServiceSubtype* subtype)
@@ -1472,7 +1489,7 @@ int AppIdServiceAddService(AppIdData* flow, const Packet* pkt, int dir,
     return AppIdServiceAddServiceEx(flow, pkt, dir, svc_element, appId, vendor, version);
 }
 
-int AppIdServiceInProcess(AppIdData* flow, const Packet* pkt, int dir,
+int AppIdServiceInProcess(AppIdSession* flow, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element)
 {
     AppIdServiceIDState* id_state;
@@ -1483,7 +1500,7 @@ int AppIdServiceInProcess(AppIdData* flow, const Packet* pkt, int dir,
         return SERVICE_EINVALID;
     }
 
-    if (dir == APP_ID_FROM_INITIATOR || getAppIdFlag(flow, APPID_SESSION_IGNORE_HOST|
+    if (dir == APP_ID_FROM_INITIATOR || flow->getAppIdFlag(APPID_SESSION_IGNORE_HOST|
         APPID_SESSION_UDP_REVERSED))
         return SERVICE_SUCCESS;
 
@@ -1495,7 +1512,7 @@ int AppIdServiceInProcess(AppIdData* flow, const Packet* pkt, int dir,
         ip = pkt->ptrs.ip_api.get_src();
         port = flow->service_port ? flow->service_port : pkt->ptrs.sp;
 
-        if (!(id_state = AppIdAddServiceIDState(ip, flow->proto, port, AppIdServiceDetectionLevel(
+        if (!(id_state = AppIdAddServiceIDState(ip, flow->protocol, port, AppIdServiceDetectionLevel(
                 flow))))
         {
             ErrorMessage("In-process service failed to create state");
@@ -1561,7 +1578,7 @@ int AppIdServiceInProcess(AppIdData* flow, const Packet* pkt, int dir,
  * client ultimately we will have to fail the service. If the same behavior is seen from different
  * clients going to same service then this most likely the service is something else.
  */
-int AppIdServiceIncompatibleData(AppIdData* flow, const Packet* pkt, int dir,
+int AppIdServiceIncompatibleData(AppIdSession* flow, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element, unsigned flow_data_index, const AppIdConfig*)
 {
     AppIdServiceIDState* id_state;
@@ -1573,7 +1590,7 @@ int AppIdServiceIncompatibleData(AppIdData* flow, const Packet* pkt, int dir,
     }
 
     if (flow_data_index != APPID_SESSION_DATA_NONE)
-        AppIdFlowdataDelete(flow, flow_data_index);
+        flow->free_flow_data_by_id(flow_data_index);
 
     /* If we're still working on a port/pattern list of detectors, then ignore
      * individual fails until we're done looking at everything. */
@@ -1597,18 +1614,18 @@ int AppIdServiceIncompatibleData(AppIdData* flow, const Packet* pkt, int dir,
         }
     }
 
-    setAppIdFlag(flow, APPID_SESSION_SERVICE_DETECTED);
-    clearAppIdFlag(flow, APPID_SESSION_CONTINUE);
+    flow->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED);
+    flow->clearAppIdFlag(APPID_SESSION_CONTINUE);
 
     flow->serviceAppId = APP_ID_NONE;
 
-    if (getAppIdFlag(flow, APPID_SESSION_IGNORE_HOST|APPID_SESSION_UDP_REVERSED) || (svc_element &&
+    if (flow->getAppIdFlag(APPID_SESSION_IGNORE_HOST|APPID_SESSION_UDP_REVERSED) || (svc_element &&
         !svc_element->current_ref_count))
         return SERVICE_SUCCESS;
 
     if (dir == APP_ID_FROM_INITIATOR)
     {
-        setAppIdFlag(flow, APPID_SESSION_INCOMPATIBLE);
+        flow->setAppIdFlag(APPID_SESSION_INCOMPATIBLE);
         return SERVICE_SUCCESS;
     }
 
@@ -1620,7 +1637,7 @@ int AppIdServiceIncompatibleData(AppIdData* flow, const Packet* pkt, int dir,
         ip = pkt->ptrs.ip_api.get_src();
         port = flow->service_port ? flow->service_port : pkt->ptrs.sp;
 
-        if (!(id_state = AppIdAddServiceIDState(ip, flow->proto, port, AppIdServiceDetectionLevel(
+        if (!(id_state = AppIdAddServiceIDState(ip, flow->protocol, port, AppIdServiceDetectionLevel(
                 flow))))
         {
             ErrorMessage("Incompatible service failed to create state");
@@ -1701,13 +1718,13 @@ int AppIdServiceIncompatibleData(AppIdData* flow, const Packet* pkt, int dir,
     return SERVICE_SUCCESS;
 }
 
-int AppIdServiceFailService(AppIdData* flow, const Packet* pkt, int dir,
+int AppIdServiceFailService(AppIdSession* flow, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element, unsigned flow_data_index, const AppIdConfig*)
 {
     AppIdServiceIDState* id_state;
 
     if (flow_data_index != APPID_SESSION_DATA_NONE)
-        AppIdFlowdataDelete(flow, flow_data_index);
+        flow->free_flow_data_by_id(flow_data_index);
 
     /* If we're still working on a port/pattern list of detectors, then ignore
      * individual fails until we're done looking at everything. */
@@ -1724,14 +1741,14 @@ int AppIdServiceFailService(AppIdData* flow, const Packet* pkt, int dir,
 
     flow->serviceAppId = APP_ID_NONE;
 
-    setAppIdFlag(flow, APPID_SESSION_SERVICE_DETECTED);
-    clearAppIdFlag(flow, APPID_SESSION_CONTINUE);
+    flow->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED);
+    flow->clearAppIdFlag(APPID_SESSION_CONTINUE);
 
     /* detectors should be careful in marking flow UDP_REVERSED otherwise the same detector
      * gets all future flows. UDP_REVERSE should be marked only when detector positively
      * matches opposite direction patterns. */
 
-    if (getAppIdFlag(flow, APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED)
+    if (flow->getAppIdFlag(APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED)
             || (svc_element && !svc_element->current_ref_count))
         return SERVICE_SUCCESS;
 
@@ -1739,7 +1756,7 @@ int AppIdServiceFailService(AppIdData* flow, const Packet* pkt, int dir,
      * otherwise the service will show up on client side. */
     if (dir == APP_ID_FROM_INITIATOR)
     {
-        setAppIdFlag(flow, APPID_SESSION_INCOMPATIBLE);
+        flow->setAppIdFlag(APPID_SESSION_INCOMPATIBLE);
         return SERVICE_SUCCESS;
     }
 
@@ -1751,7 +1768,7 @@ int AppIdServiceFailService(AppIdData* flow, const Packet* pkt, int dir,
         ip = pkt->ptrs.ip_api.get_src();
         port = flow->service_port ? flow->service_port : pkt->ptrs.sp;
 
-        if (!(id_state = AppIdAddServiceIDState(ip, flow->proto, port, AppIdServiceDetectionLevel(
+        if (!(id_state = AppIdAddServiceIDState(ip, flow->protocol, port, AppIdServiceDetectionLevel(
                 flow))))
         {
             ErrorMessage("Fail service failed to create state");
@@ -1840,7 +1857,7 @@ int AppIdServiceFailService(AppIdData* flow, const Packet* pkt, int dir,
  *  - invalid_client_count: If our service detector search had trouble
  *    simply because of unrecognized client data, then consider retrying
  *    the search again. */
-static void HandleFailure(AppIdData* flowp,
+static void HandleFailure(AppIdSession* flowp,
     AppIdServiceIDState* id_state,
     const sfip_t* client_ip,
     unsigned timeout)
@@ -1928,14 +1945,14 @@ static void HandleFailure(AppIdData* flowp,
  *
  * @note Packet may be nullptr when this function is called upon session timeout.
  */
-void FailInProcessService(AppIdData* flowp, const AppIdConfig*)
+void FailInProcessService(AppIdSession* flowp, const AppIdConfig*)
 {
     AppIdServiceIDState* id_state;
 
-    if (getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED|APPID_SESSION_UDP_REVERSED))
+    if (flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED|APPID_SESSION_UDP_REVERSED))
         return;
 
-    id_state = AppIdGetServiceIDState(&flowp->service_ip, flowp->proto, flowp->service_port,
+    id_state = AppIdGetServiceIDState(&flowp->service_ip, flowp->protocol, flowp->service_port,
         AppIdServiceDetectionLevel(flowp));
 
 #ifdef SERVICE_DEBUG
@@ -1962,7 +1979,7 @@ void FailInProcessService(AppIdData* flowp, const AppIdConfig*)
 
     id_state->invalid_client_count += STATE_ID_INCONCLUSIVE_SERVICE_WEIGHT;
 
-    // FIXIT - we need a Flow to get the ip address of client/server...
+    // FIXIT-M: we need a Flow to get the ip address of client/server...
 #ifdef REMOVED_WHILE_NOT_IN_USE
     sfip_t* tmp_ip = _dpd.sessionAPI->get_session_ip_address(flowp->ssn, SSN_DIR_FROM_SERVER);
     if (sfip_fast_eq6(tmp_ip, &flowp->service_ip))
@@ -1997,9 +2014,9 @@ void FailInProcessService(AppIdData* flowp, const AppIdConfig*)
  * through the main port/pattern search (and returning which detector to add
  * next to the list of detectors to try (even if only 1)). */
 static const RNAServiceElement* AppIdGetNexService(const Packet* p, const int dir,
-    AppIdData* rnaData,  const AppIdConfig* pConfig, AppIdServiceIDState* id_state)
+    AppIdSession* rnaData,  const AppIdConfig* pConfig, AppIdServiceIDState* id_state)
 {
-    auto proto = rnaData->proto;
+    auto proto = rnaData->protocol;
 
     /* If NEW, just advance onto trying ports. */
     if (id_state->state == SERVICE_ID_NEW)
@@ -2039,9 +2056,8 @@ static const RNAServiceElement* AppIdGetNexService(const Packet* p, const int di
          * first with UDP reversed services before moving onto pattern matches. */
         if (dir == APP_ID_FROM_INITIATOR)
         {
-            if (!getAppIdFlag(rnaData, APPID_SESSION_ADDITIONAL_PACKET) && (proto ==
-                IpProtocol::UDP)
-                && !rnaData->tried_reverse_service )
+            if (!rnaData->getAppIdFlag(APPID_SESSION_ADDITIONAL_PACKET)
+                    && (proto == IpProtocol::UDP) && !rnaData->tried_reverse_service )
             {
                 SF_LNODE* iter;
                 AppIdServiceIDState* reverse_id_state;
@@ -2103,7 +2119,7 @@ static const RNAServiceElement* AppIdGetNexService(const Packet* p, const int di
     return nullptr;
 }
 
-int AppIdDiscoverService(Packet* p, const int dir, AppIdData* rnaData,
+int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* rnaData,
         const AppIdConfig* pConfig)
 {
     const sfip_t* ip;
@@ -2114,7 +2130,7 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdData* rnaData,
     ServiceValidationArgs args;
 
     /* Get packet info. */
-    auto proto = rnaData->proto;
+    auto proto = rnaData->protocol;
     if (sfip_is_set(&rnaData->service_ip))
     {
         ip   = &rnaData->service_ip;
@@ -2342,15 +2358,15 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdData* rnaData,
     return ret;
 }
 
-static void* service_flowdata_get(AppIdData* flow, unsigned service_id)
+static void* service_flowdata_get(AppIdSession* flow, unsigned service_id)
 {
-    return AppIdFlowdataGet(flow, service_id);
+    return flow->get_flow_data(service_id);
 }
 
-static int service_flowdata_add(AppIdData* flow, void* data, unsigned service_id, AppIdFreeFCN
+static int service_flowdata_add(AppIdSession* flow, void* data, unsigned service_id, AppIdFreeFCN
     fcn)
 {
-    return AppIdFlowdataAdd(flow, data, service_id, fcn);
+    return flow->add_flow_data(data, service_id, fcn);
 }
 
 /** GUS: 2006 09 28 10:10:54
@@ -2384,9 +2400,9 @@ void dumpPorts(FILE* stream, const AppIdConfig* pConfig)
     fprintf(stream,") \n");
 }
 
-static void AppIdServiceAddMisc(AppIdData* flow, AppId miscId)
+static void AppIdServiceAddMisc(AppIdSession* flow, AppId miscId)
 {
     if (flow != nullptr)
-        flow->miscAppId = miscId;
+        flow->misc_app_id = miscId;
 }
 

@@ -131,7 +131,7 @@ static int bit_init(const IniServiceAPI* const init_api)
 static int bit_validate(ServiceValidationArgs* args)
 {
     ServiceBITData* ss;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
     uint16_t offset;

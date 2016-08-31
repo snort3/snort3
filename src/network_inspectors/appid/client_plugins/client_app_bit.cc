@@ -73,7 +73,7 @@ THREAD_LOCAL BIT_CLIENT_APP_CONFIG bit_config;
 
 static CLIENT_APP_RETCODE bit_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE bit_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector* userData,
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData,
     const AppIdConfig* pConfig);
 
 SO_PUBLIC RNAClientAppModule bit_client_mod =
@@ -155,7 +155,7 @@ static CLIENT_APP_RETCODE bit_init(const IniClientAppAPI* const init_api, SF_LIS
 }
 
 static CLIENT_APP_RETCODE bit_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet*, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet*, struct Detector*, const AppIdConfig*)
 {
     ClientBITData* fd;
     uint16_t offset;
@@ -224,7 +224,7 @@ inprocess:
 
 done:
     bit_client_mod.api->add_app(flowp, APP_ID_BITTORRENT, APP_ID_BITTORRENT, nullptr);
-    setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.bit_clients++;
     return CLIENT_APP_SUCCESS;
 }

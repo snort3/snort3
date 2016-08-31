@@ -26,8 +26,6 @@ AppIdApi appIdApi;
 static void appIdTestSetup()
 {
 #ifdef REMOVED_WHILE_NOT_IN_USE
-    static SessionAPI sessionAPI = { 0 };
-    static StreamAPI streamAPI = { 0 };
 
     testFilesPath = getenv("APPID_TESTS_PATH");
 
@@ -40,35 +38,6 @@ static void appIdTestSetup()
     strcpy(rnaConfPath, testFilesPath);
     strcat(rnaConfPath, "/rna.conf");
 
-    _dpd.tokenSplit = mSplit;
-    _dpd.tokenFree = mSplitFree;
-    LogMessage = logMsg;
-    _dpd.errMsg = errMsg;
-    _dpd.debugMsg = debugMsg;
-    _dpd.addProtocolReference = addProtocolReference;
-    _dpd.addPreproc = addPreproc;
-    _dpd.getParserPolicy = getParserPolicy;
-    _dpd.getDefaultPolicy = getDefaultPolicy;
-    _dpd.isAppIdRequired = isAppIdRequired;
-    _dpd.getSnortInstance = getSnortInstance;
-    _dpd.findProtocolReference = findProtocolReference;
-
-    sessionAPI.enable_preproc_all_ports = enable_preproc_all_ports;
-    sessionAPI.get_application_data = get_application_data;
-    sessionAPI.set_application_data = set_application_data;
-    sessionAPI.get_packet_direction = get_packet_direction;
-    sessionAPI.get_session_flags = get_session_flags;
-    sessionAPI.get_session_ip_address = get_session_ip_address;
-    sessionAPI.get_application_protocol_id = get_application_protocol_id;
-    sessionAPI.get_http_xff_precedence = get_http_xff_precedence;
-    _dpd.sessionAPI = &sessionAPI;
-
-    streamAPI.is_session_decrypted = is_session_decrypted;
-    streamAPI.set_application_id = set_application_id;
-    streamAPI.is_session_http2 = is_session_http2;
-    _dpd.streamAPI = &streamAPI;
-
-    _dpd.searchAPI = &searchAPI;
 #endif
 
 }

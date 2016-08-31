@@ -33,6 +33,7 @@
 #include "sfip/sf_ip.h"
 #include "utils/util.h"
 
+#include "appid_module.h"
 #include "app_forecast.h"
 #include "app_info_table.h"
 #include "fw_appid.h"
@@ -118,7 +119,9 @@ Detector* createDetector(lua_State* L, const char* detectorName)
 
 // must be called only when RNA is exitting.
 static void freeDetector(Detector* detector)
-{ delete detector; }
+{
+	delete detector;
+}
 
 // check service element, Allocate if necessary
 int checkServiceElement(Detector* detector)
@@ -218,6 +221,74 @@ static int service_registerPattern(lua_State* L)
     return 1;
 }
 
+void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extractsInfo,
+        struct Detector* data)
+{
+    AppInfoTableEntry* entry;
+    AppIdConfig* pConfig = pAppidActiveConfig;
+
+    if ((entry = appInfoEntryGet(appId, pConfig)))
+    {
+        entry->flags |= APPINFO_FLAG_ACTIVE;
+        extractsInfo &= (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER);
+        if (!extractsInfo)
+        {
+            DebugFormat(DEBUG_LOG,
+                "Ignoring direct client application without info forAppId %d - %p\n",
+                appId, (void*)data);
+            return;
+        }
+
+        entry->clntValidator = ClientAppGetClientAppModule(fcn, data, &pConfig->clientAppConfig);
+        if (entry->clntValidator)
+            entry->flags |= extractsInfo;
+        else
+            ErrorMessage(
+                "AppId: Failed to find a client application module for AppId: %d - %p\n",
+                appId, (void*)data);
+    }
+    else
+    {
+        ErrorMessage("Invalid direct client application for AppId: %d - %p\n",
+            appId, (void*)data);
+        return;
+    }
+}
+
+void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigned extractsInfo,
+    struct Detector* data)
+{
+    AppInfoTableEntry* entry;
+    AppIdConfig* pConfig = pAppidActiveConfig;
+
+    // FIXIT-L: what type of error would cause this lookup to fail? is this programming error
+    // or user error due to misconfig or something like that... if change in handling needed
+    // apply to all instances where this lookup is done
+    if ((entry = appInfoEntryGet(appId, pConfig)))
+    {
+        entry->flags |= APPINFO_FLAG_ACTIVE;
+
+        extractsInfo &= (APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_SERVICE_UDP_REVERSED);
+        if (!extractsInfo)
+        {
+            DebugFormat(DEBUG_LOG, "Ignoring direct service without info for AppId: %d - %p\n",
+                    appId, (void*)data);
+            return;
+        }
+
+        entry->svrValidator = ServiceGetServiceElement(fcn, data, pConfig);
+        if (entry->svrValidator)
+            entry->flags |= extractsInfo;
+        else
+            ErrorMessage("AppId: Failed to find a service element for AppId: %d - %p\n",
+                    appId, (void*)data);
+    }
+    else
+    {
+        ErrorMessage("Invalid direct service for AppId: %d - %p\n", appId, (void*)data);
+    }
+}
+
 static int common_registerAppId(lua_State* L)
 {
     unsigned int appId;
@@ -227,8 +298,8 @@ static int common_registerAppId(lua_State* L)
     appId = lua_tonumber(L, index++);
 
     if ( !ud->packageInfo.server.initFunctionName.empty() )
-        appSetLuaServiceValidator(
-            validateAnyService, appId, APPINFO_FLAG_SERVICE_ADDITIONAL, ud.ptr);
+        appSetLuaServiceValidator(validateAnyService, appId, APPINFO_FLAG_SERVICE_ADDITIONAL,
+                ud.ptr);
 
     if ( !ud->packageInfo.client.initFunctionName.empty() )
         appSetLuaClientValidator(
@@ -315,7 +386,7 @@ static int service_analyzePayload(lua_State* L)
 
     assert(ud->validateParams.pkt);
 
-    ud->validateParams.flowp->payloadAppId = payloadId;
+    ud->validateParams.flowp->payload_app_id = payloadId;
 
     return 0;
 }
@@ -586,7 +657,7 @@ static int service_addDataId(lua_State* L)
         return 1;
     }
 
-    AppIdFlowdataAddId(ud->validateParams.flowp, sport, ud->server.pServiceElement);
+    ud->validateParams.flowp->add_flow_data_id(sport, ud->server.pServiceElement);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -963,7 +1034,7 @@ static int Detector_getPktDstIPAddr(lua_State* L)
 static int Detector_getPktCount(lua_State* L)
 {
     lua_checkstack (L, 1);
-    lua_pushnumber(L, app_id_processed_packet_count);
+    lua_pushnumber(L, appid_stats.processed_packets);
     return 1;
 }
 
@@ -971,7 +1042,7 @@ CLIENT_APP_RETCODE validateAnyClientApp(
     const uint8_t* data,
     uint16_t size,
     const int dir,
-    AppIdData* flowp,
+    AppIdSession* flowp,
     Packet* pkt,
     Detector* detector,
     const AppIdConfig*
@@ -2388,8 +2459,7 @@ static int openCreateApp(lua_State* L)
         return 1;   /*number of results */
     }
 
-    AppInfoTableEntry* entry = appInfoEntryCreate(tmpString,
-        ud->pAppidNewConfig);
+    AppInfoTableEntry* entry = appInfoEntryCreate(tmpString, ud->pAppidNewConfig);
 
     if (entry)
     {
@@ -2956,7 +3026,7 @@ static int createFutureFlow(lua_State* L)
     char* pattern;
     AppId service_app_id, client_app_id, payload_app_id, app_id_to_snort;
     int16_t snort_app_id;
-    AppIdData* fp;
+    AppIdSession* fp;
 
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
@@ -2990,20 +3060,18 @@ static int createFutureFlow(lua_State* L)
     else
         snort_app_id = 0;
 
-    fp = AppIdEarlySessionCreate(ud->validateParams.flowp,
-        ud->validateParams.pkt,
-        &client_addr, client_port, &server_addr, server_port, proto,
-        snort_app_id,
-        APPID_EARLY_SESSION_FLAG_FW_RULE);
+    fp = AppIdSession::create_future_session(ud->validateParams.pkt,  &client_addr,
+            client_port, &server_addr, server_port, proto, snort_app_id,
+            APPID_EARLY_SESSION_FLAG_FW_RULE);
     if (fp)
     {
         fp->serviceAppId = service_app_id;
-        fp->ClientAppId  = client_app_id;
-        fp->payloadAppId = payload_app_id;
-        setAppIdFlag(fp, APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
+        fp->client_app_id  = client_app_id;
+        fp->payload_app_id = payload_app_id;
+        fp->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
             APPID_SESSION_PORT_SERVICE_DONE);
         fp->rnaServiceState = RNA_STATE_FINISHED;
-        fp->rnaClientState  = RNA_STATE_FINISHED;
+        fp->rna_client_state  = RNA_STATE_FINISHED;
 
         return 1;
     }
@@ -3102,8 +3170,7 @@ static const luaL_reg Detector_methods[] =
     //HTTP Multi Pattern engine
     { "CHPCreateApp",             Detector_CHPCreateApp },
     { "CHPAddAction",             Detector_CHPAddAction },
-    { "CHPMultiCreateApp",        Detector_CHPMultiCreateApp },// allows multiple detectors, same
-                                                               // appId
+    { "CHPMultiCreateApp",        Detector_CHPMultiCreateApp }, // multiple detectors, same appId
     { "CHPMultiAddAction",        Detector_CHPMultiAddAction },
 
     //App Forecasting engine

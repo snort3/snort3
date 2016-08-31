@@ -126,7 +126,7 @@ static int bootp_validate(ServiceValidationArgs* args)
     unsigned op60_len=0;
     const uint8_t* op55=nullptr;
     const uint8_t* op60=nullptr;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -228,11 +228,11 @@ static int bootp_validate(ServiceValidationArgs* args)
 
     if (dir == APP_ID_FROM_INITIATOR)
     {
-        setAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED);
+        flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
     }
     else
     {
-        clearAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED);
+        flowp->clearAppIdFlag(APPID_SESSION_UDP_REVERSED);
     }
 
     if (size > sizeof(ServiceBOOTPHeader) + 4)
@@ -305,32 +305,32 @@ static int bootp_validate(ServiceValidationArgs* args)
     }
 
 success:
-    if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
     {
-        setAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+        flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
         bootp_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
             APP_ID_DHCP, nullptr, nullptr, nullptr);
     }
     return SERVICE_SUCCESS;
 
 inprocess:
-    if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
     {
         bootp_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
     }
     return SERVICE_INPROCESS;
 
 fail:
-    if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
     {
         bootp_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
             bootp_service_mod.flow_data_index, args->pConfig);
     }
-    clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+    flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
     return SERVICE_NOMATCH;
 
 not_compatible:
-    if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
     {
         bootp_service_mod.api->incompatible_data(flowp, args->pkt, args->dir, &svc_element,
             bootp_service_mod.flow_data_index, args->pConfig);

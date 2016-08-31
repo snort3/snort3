@@ -26,8 +26,8 @@
 #include "log/messages.h"
 #include "service_plugins/service_base.h"
 
-static void* detector_flowdata_get(AppIdData* flowp, unsigned detector_id);
-static int detector_flowdata_add(AppIdData* flowp, void* data, unsigned detector_id,
+static void* detector_flowdata_get(AppIdSession* flowp, unsigned detector_id);
+static int detector_flowdata_add(AppIdSession* flowp, void* data, unsigned detector_id,
     AppIdFreeFCN fcn);
 
 static const DetectorApi detector_api
@@ -39,7 +39,6 @@ static const DetectorApi detector_api
 extern RNADetectorValidationModule imap_detector_mod;
 extern RNADetectorValidationModule pop3_detector_mod;
 extern RNADetectorValidationModule kerberos_detector_mod;
-extern RNADetectorValidationModule pattern_detector_mod;
 
 static RNADetectorValidationModule* static_detector_list[]
 {
@@ -77,7 +76,6 @@ static int detectorLoadCallback(void* symbol)
 
     svm->api = &detector_api;
     svm->flow_data_index = detector_module_index | APPID_SESSION_DATA_DETECTOR_MODSTATE_BIT;
-//    svm->streamAPI = _dpd.streamAPI;  FIXIT - removed to permit compilation.
     detector_module_index++;
 
     return 0;
@@ -103,9 +101,9 @@ int LoadDetectorModules(const char** )
 *
 * @return RNA flow data structure for success
 */
-static void* detector_flowdata_get(AppIdData* flowp, unsigned detector_id)
+static void* detector_flowdata_get(AppIdSession* flowp, unsigned detector_id)
 {
-    return AppIdFlowdataGet(flowp, detector_id);
+    return flowp->get_flow_data(detector_id);
 }
 
 /**
@@ -117,9 +115,9 @@ static void* detector_flowdata_get(AppIdData* flowp, unsigned detector_id)
 *
 * @return RNA flow data structure for success
 */
-static int detector_flowdata_add(AppIdData* flowp, void* data, unsigned detector_id,
+static int detector_flowdata_add(AppIdSession* flowp, void* data, unsigned detector_id,
     AppIdFreeFCN fcn)
 {
-    return AppIdFlowdataAdd(flowp, data, detector_id, fcn);
+    return flowp->add_flow_data(data, detector_id, fcn);
 }
 

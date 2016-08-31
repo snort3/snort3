@@ -396,7 +396,7 @@ static int ssh_validate(ServiceValidationArgs* args)
     const char* end;
     unsigned len;
     int client_major;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 

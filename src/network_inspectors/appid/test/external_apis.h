@@ -62,7 +62,6 @@ int16_t get_application_protocol_id(void* scbptr);
 char** get_http_xff_precedence(void* ssn, uint32_t flags, int* nFields);
 
 // Stream APIs
-bool is_session_decrypted(void* stream_session);
 void set_application_id(
     void* ssnptr, int16_t serviceAppid, int16_t ClientAppid,
     int16_t payloadAppId, int16_t miscAppid);

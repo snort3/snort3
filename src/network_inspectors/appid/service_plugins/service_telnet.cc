@@ -29,7 +29,7 @@
 #include "main/snort_debug.h"
 #include "utils/util.h"
 
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "application_ids.h"
 #include "service_api.h"
 #include "appid_module.h"
@@ -125,7 +125,7 @@ static int telnet_validate(ServiceValidationArgs* args)
 {
     ServiceTelnetData* td;
     const uint8_t* end;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 

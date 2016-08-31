@@ -27,7 +27,7 @@
 
 #include "service_plugins/service_api.h"
 #include "service_plugins/service_util.h"
-#include "util/sf_mlmp.h"
+#include "appid_utils/sf_mlmp.h"
 #include "utils/util.h"
 
 #include "app_info_table.h"
@@ -1210,13 +1210,13 @@ static void fflowCreate(char* adata, fflow_info* fflow, Packet* p, AppId target_
 
 void finalizeFflow(fflow_info* fflow, unsigned app_type_flags, AppId target_appId, Packet* p)
 {
-    AppIdData* fp;
+    AppIdSession* fp;
     sfip_t saddr, daddr;
 
     sfip_set_raw(&saddr, &fflow->sip, AF_INET);
     sfip_set_raw(&daddr, &fflow->dip, AF_INET);
 
-    if (!(fp = AppIdEarlySessionCreate(nullptr, p, &saddr, fflow->sport, &daddr, fflow->dport,
+    if (!(fp = AppIdSession::create_future_session(p, &saddr, fflow->sport, &daddr, fflow->dport,
             fflow->protocol, target_appId, 0)))
         return;
 
@@ -1224,16 +1224,16 @@ void finalizeFflow(fflow_info* fflow, unsigned app_type_flags, AppId target_appI
     {
         fp->serviceAppId = target_appId;
         fp->rnaServiceState = RNA_STATE_FINISHED;
-        fp->rnaClientState = RNA_STATE_FINISHED;
+        fp->rna_client_state = RNA_STATE_FINISHED;
     }
     if (app_type_flags & APP_TYPE_CLIENT)
     {
-        fp->ClientAppId = target_appId;
-        fp->rnaClientState = RNA_STATE_FINISHED;
+        fp->client_app_id = target_appId;
+        fp->rna_client_state = RNA_STATE_FINISHED;
     }
     if (app_type_flags & APP_TYPE_PAYLOAD)
     {
-        fp->payloadAppId = target_appId;
+        fp->payload_app_id = target_appId;
     }
 }
 
@@ -2283,7 +2283,7 @@ int webdav_found(HeaderMatchedPatterns* hmp)
 
 static CLIENT_APP_RETCODE http_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE http_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
 static int http_service_init(const IniServiceAPI* const init_api);
 static int http_service_validate(ServiceValidationArgs* args);
 
@@ -2391,15 +2391,15 @@ static CLIENT_APP_RETCODE http_client_init(const IniClientAppAPI* const init_api
 }
 
 static CLIENT_APP_RETCODE http_client_validate(const uint8_t*, uint16_t, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet* pkt, struct Detector*, const AppIdConfig*)
 {
     http_client_mod.api->add_app(flowp, APP_ID_HTTP, APP_ID_HTTP + GENERIC_APP_OFFSET, nullptr);
-    flowp->rnaClientState = RNA_STATE_FINISHED;
+    flowp->rna_client_state = RNA_STATE_FINISHED;
     http_service_mod.api->add_service(flowp, pkt, dir, &http_service_element,
         APP_ID_HTTP, nullptr, nullptr, nullptr);
     flowp->rnaServiceState = RNA_STATE_FINISHED;
-    setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED | APPID_SESSION_SERVICE_DETECTED);
-    clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED | APPID_SESSION_SERVICE_DETECTED);
+    flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
     flowp->is_http2 = true;
 
     return CLIENT_APP_SUCCESS;

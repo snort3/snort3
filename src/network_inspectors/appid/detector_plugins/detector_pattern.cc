@@ -38,7 +38,7 @@ static void pattern_service_clean(const CleanServiceAPI* const clean_api);
 static CLIENT_APP_RETCODE client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE client_init_tcp(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector* userData,
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData,
     const AppIdConfig* pConfig);
 static void client_clean(const CleanClientAppAPI* const clean_api);
 static const IniServiceAPI* iniServiceApi;
@@ -652,7 +652,7 @@ static int service_validate(ServiceValidationArgs* args)
 {
     uint32_t id;
     const RNAServiceElement* service = nullptr;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -665,7 +665,7 @@ static int service_validate(ServiceValidationArgs* args)
     if (dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    id = csdPatternTreeSearch(data, size, flowp->proto, pkt, &service, false, args->pConfig);
+    id = csdPatternTreeSearch(data, size, flowp->protocol, pkt, &service, false, args->pConfig);
     if (!id)
         goto fail;
 
@@ -717,7 +717,7 @@ static void client_clean(const CleanClientAppAPI* const clean_api)
 }
 
 static CLIENT_APP_RETCODE client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector*, const AppIdConfig* pConfig)
+    AppIdSession* flowp, Packet* pkt, struct Detector*, const AppIdConfig* pConfig)
 {
     AppId id;
     const RNAServiceElement* service = nullptr;
@@ -729,7 +729,7 @@ static CLIENT_APP_RETCODE client_validate(const uint8_t* data, uint16_t size, co
     if (dir == APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    id = csdPatternTreeSearch(data, size, flowp->proto, pkt, &service, true,
+    id = csdPatternTreeSearch(data, size, flowp->protocol, pkt, &service, true,
         (AppIdConfig*)pConfig);
     if (!id)
         goto fail;

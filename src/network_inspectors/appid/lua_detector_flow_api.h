@@ -26,13 +26,13 @@
 // The flow object on Lua side is a userData.
 
 struct lua_State;
-class AppIdData;
+class AppIdSession;
 
 struct DetectorFlow
 {
     // FIXIT-M why is the lua state and user data ref on this object?
     lua_State* myLuaState;
-    AppIdData* pFlow;
+    AppIdSession* pFlow;
     int userDataRef;
 };
 

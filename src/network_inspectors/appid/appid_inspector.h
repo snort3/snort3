@@ -49,4 +49,8 @@ private:
     AppIdConfig* active_config = nullptr;
 };
 
+void httpHeaderCallback(Packet*, HttpParsedHeaders* const);
+int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*);
+AppId getOpenAppId(Flow*);
+
 #endif

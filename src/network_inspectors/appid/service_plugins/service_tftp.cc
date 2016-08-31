@@ -33,7 +33,7 @@
 
 #include "app_info_table.h"
 #include "appid_api.h"
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "application_ids.h"
 #include "service_api.h"
 #include "service_base.h"
@@ -167,10 +167,10 @@ static int tftp_validate(ServiceValidationArgs* args)
     int mode;
     uint16_t block = 0;
     uint16_t tmp;
-    AppIdData* pf;
+    AppIdSession* pf;
     const sfip_t* sip;
     const sfip_t* dip;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -229,16 +229,16 @@ static int tftp_validate(ServiceValidationArgs* args)
         tmp_td->state = TFTP_STATE_TRANSFER;
         dip = pkt->ptrs.ip_api.get_dst();
         sip = pkt->ptrs.ip_api.get_src();
-        pf = tftp_service_mod.api->flow_new(flowp, pkt, dip, 0, sip, pkt->ptrs.sp, flowp->proto,
-            app_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
+        pf = AppIdSession::create_future_session(pkt, dip, 0, sip, pkt->ptrs.sp, flowp->protocol, app_id,
+                APPID_EARLY_SESSION_FLAG_FW_RULE);
         if (pf)
         {
             tftp_service_mod.api->data_add(pf, tmp_td,
                 tftp_service_mod.flow_data_index, &snort_free);
-            if (tftp_service_mod.api->data_add_id(pf, pkt->ptrs.dp, &svc_element))
+            if (pf->add_flow_data_id(pkt->ptrs.dp, &svc_element))
             {
-                setAppIdFlag(pf, APPID_SESSION_SERVICE_DETECTED);
-                clearAppIdFlag(pf, APPID_SESSION_CONTINUE);
+                pf->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED);
+                pf->clearAppIdFlag(APPID_SESSION_CONTINUE);
                 tmp_td->state = TFTP_STATE_ERROR;
                 return SERVICE_ENOMEM;
             }

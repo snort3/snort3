@@ -33,10 +33,6 @@
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
 
-#define APP_MAPPING_FILE "appMapping.data"
-#define APP_CONFIG_FILE "appid.conf"
-#define USR_CONFIG_FILE "userappid.conf"
-
 #define MAX_TABLE_LINE_LEN      1024
 #define CONF_SEPARATORS         "\t\n\r"
 #define MIN_MAX_TP_FLOW_DEPTH   1
@@ -140,10 +136,6 @@ SFGHASH* appNameHashInit()
 {
     SFGHASH* appNameHash;
     appNameHash = sfghash_new(65, 0, 0 /* alloc copies of lowercased keys */, nullptr);
-    if (!appNameHash)
-    {
-        FatalError("AppNameHash: Failed to Initialize\n");
-    }
     return appNameHash;
 }
 
@@ -178,9 +170,6 @@ void appNameHashAdd(SFGHASH* appNameHash, const char* appName, void* data)
         return;
 
     searchName = strdupToLower(appName);
-    if (!searchName)
-        return;
-
     if (SFGHASH_OK == (errCode = sfghash_add(appNameHash, searchName, data)))
     {
         DebugFormat(DEBUG_INSPECTOR, "App name added for %s\n", appName);
@@ -217,11 +206,7 @@ void* appNameHashFind(SFGHASH* appNameHash, const char* appName)
         return nullptr;
 
     searchName = strdupToLower(appName);
-    if (!searchName)
-        return nullptr;
-
     data = sfghash_find(appNameHash, searchName);
-
     snort_free(searchName);
 
     return data;

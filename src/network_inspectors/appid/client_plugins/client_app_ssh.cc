@@ -155,7 +155,7 @@ THREAD_LOCAL SSH_CLIENT_CONFIG ssh_client_config;
 
 static CLIENT_APP_RETCODE ssh_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp,  Packet* pkt, struct Detector* userData,
+    AppIdSession* flowp,  Packet* pkt, struct Detector* userData,
     const AppIdConfig* pConfig);
 
 SO_PUBLIC RNAClientAppModule ssh_client_mod =
@@ -614,7 +614,7 @@ static inline CLIENT_APP_RETCODE ssh_client_sm(const uint8_t* data, uint16_t siz
 }
 
 static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet*, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet*, struct Detector*, const AppIdConfig*)
 {
     ClientSSHData* fd;
     CLIENT_APP_RETCODE sm_ret;
@@ -637,7 +637,7 @@ static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size
         return sm_ret;
 
     ssh_client_mod.api->add_app(flowp, APP_ID_SSH, fd->client_id, (const char*)fd->version);
-    setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.ssh_clients++;
     return CLIENT_APP_SUCCESS;
 }

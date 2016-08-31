@@ -27,7 +27,7 @@
 #include <netinet/in.h>
 #include <openssl/x509.h>
 
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "service_config.h"
 #include "service_base.h"
 #include "service_ssl.h"
@@ -265,8 +265,7 @@ static const RNAServiceElement svc_element =
     "ssl",
 };
 
-// FIXIT thread safety, can this be const?
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &ssl_validate, 261, IpProtocol::TCP, 0 },
     { &ssl_validate, 261, IpProtocol::UDP, 0 },
@@ -297,7 +296,6 @@ static RNAServiceValidationPort pp[] =
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
 };
 
-// FIXIT thread safety, can this be const?
 RNAServiceValidationModule ssl_service_mod =
 {
     "ssl",
@@ -628,7 +626,7 @@ static int ssl_validate(ServiceValidationArgs* args)
     const ServiceSSLV3Record* rec;
     const ServiceSSLV3CertsRecord* certs_rec;
     uint16_t ver;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     const int dir = args->dir;
     uint16_t size = args->size;
@@ -886,7 +884,7 @@ success:
             goto fail;
         }
     }
-    setAppIdFlag(flowp, APPID_SESSION_SSL_SESSION);
+    flowp->setAppIdFlag(APPID_SESSION_SSL_SESSION);
     if (ss->host_name || ss->common_name || ss->org_name)
     {
         if (!flowp->tsession)
@@ -1140,35 +1138,35 @@ void ssl_detector_free_patterns(ServiceSslConfig* pSslConfig)
     ssl_patterns_free(&pSslConfig->DetectorSSLCnamePatternList);
 }
 
-int setSSLSquelch(Packet* p, int type, AppId appId)
+bool setSSLSquelch(Packet* p, int type, AppId appId)
 {
     const sfip_t* sip;
     const sfip_t* dip;
-    AppIdData* f;
+    AppIdSession* f;
 
     if (!appInfoEntryFlagGet(appId, APPINFO_FLAG_SSL_SQUELCH, pAppidActiveConfig))
-        return 0;
+        return false;
 
     dip = p->ptrs.ip_api.get_dst();
     sip = p->ptrs.ip_api.get_src();
 
-    if (!(f = AppIdEarlySessionCreate(nullptr, p, sip, 0, dip, p->ptrs.dp,
-            IpProtocol::TCP, appId, 0)))
-        return 0;
+    if (!(f = AppIdSession::create_future_session(p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP,
+    		appId, 0)))
+        return false;
 
     switch (type)
     {
     case 1:
-        f->payloadAppId = appId;
+        f->payload_app_id = appId;
         break;
     case 2:
-        f->ClientAppId = appId;
-        f->rnaClientState = RNA_STATE_FINISHED;
+        f->client_app_id = appId;
+        f->rna_client_state = RNA_STATE_FINISHED;
         break;
     default:
-        return 0;
+        return false;
     }
 
-    return 1;
+    return true;
 }
 

@@ -27,8 +27,8 @@
 
 #include "application_ids.h"
 #include "http_common.h"
-#include "util/sf_multi_mpse.h"
-#include "util/sf_mlmp.h"
+#include "appid_utils/sf_multi_mpse.h"
+#include "appid_utils/sf_mlmp.h"
 #include "utils/util.h"
 
 static const char* const FP_OPERATION_AND = "%&%";

@@ -1,13 +1,13 @@
 //#include <stdarg.h>
 #include "external_apis.h"
 #include "session_file.h"
-#include "appid_flow_data.h"
+#include "appid_session.h"
 
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 
-AppIdData* pAppIdData = nullptr;
+AppIdSession* pAppIdData = nullptr;
 
 /***********************************************************
  * Local functions
@@ -178,7 +178,7 @@ void* get_application_data(void*, uint32_t)
     return pAppIdData;
 }
 
-int set_application_data(void*, uint32_t, AppIdData* data, StreamAppDataFree)
+int set_application_data(void*, uint32_t, AppIdSession* data, StreamAppDataFree)
 {
     pAppIdData = data;
 
@@ -221,11 +221,6 @@ sfaddr_t* get_session_ip_address(void* scbptr, uint32_t direction)
     }
 
     return nullptr;
-}
-
-bool is_session_decrypted(void*)
-{
-    return true;
 }
 
 void set_application_id(void*, int16_t, int16_t, int16_t, int16_t)

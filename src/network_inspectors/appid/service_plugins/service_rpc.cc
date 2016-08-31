@@ -290,7 +290,7 @@ static const RPCProgram* FindRPCProgram(uint32_t program)
 }
 
 static int validate_packet(const uint8_t* data, uint16_t size, int dir,
-    AppIdData* flowp, Packet* pkt, ServiceRPCData* rd,
+    AppIdSession* flowp, Packet* pkt, ServiceRPCData* rd,
     const char** pname, uint32_t* program)
 {
     const ServiceRPCCall* call;
@@ -302,7 +302,7 @@ static int validate_packet(const uint8_t* data, uint16_t size, int dir,
     uint32_t tmp;
     uint32_t val;
     const uint8_t* end;
-    AppIdData* pf;
+    AppIdSession* pf;
     const RPCProgram* rprog;
 
     if (!size)
@@ -310,7 +310,7 @@ static int validate_packet(const uint8_t* data, uint16_t size, int dir,
 
     end = data + size;
 
-    if (flowp->proto == IpProtocol::UDP)
+    if (flowp->protocol == IpProtocol::UDP)
     {
         if (!rd->once)
         {
@@ -320,12 +320,12 @@ static int validate_packet(const uint8_t* data, uint16_t size, int dir,
             rpc = (ServiceRPC*)data;
             if (ntohl(rpc->type) == RPC_TYPE_REPLY)
             {
-                setAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED);
+                flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
                 rd->state = RPC_STATE_REPLY;
                 dir = APP_ID_FROM_RESPONDER;
             }
         }
-        else if (getAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED))
+        else if (flowp->getAppIdFlag(APPID_SESSION_UDP_REVERSED))
         {
             dir = (dir == APP_ID_FROM_RESPONDER) ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         }
@@ -422,17 +422,15 @@ static int validate_packet(const uint8_t* data, uint16_t size, int dir,
                         dip = pkt->ptrs.ip_api.get_dst();
                         sip = pkt->ptrs.ip_api.get_src();
                         tmp = ntohl(pmr->port);
-                        pf = rpc_service_mod.api->flow_new(flowp, pkt, dip, 0, sip, (uint16_t)tmp,
+                        pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)tmp,
                             //  FIXIT-H: Change rd->proto to be IpProtocol
                             (IpProtocol)ntohl(rd->proto), app_id, 0);
                         if (pf)
                         {
-                            rpc_service_mod.api->data_add_id(pf, (uint16_t)tmp,
-                                flowp->proto==IpProtocol::TCP ? &tcp_svc_element : &svc_element);
+                            pf->add_flow_data_id((uint16_t)tmp,
+                                    flowp->protocol == IpProtocol::TCP ? &tcp_svc_element : &svc_element);
                             pf->rnaServiceState = RNA_STATE_STATEFUL;
-                            setAppIdFlag(pf,
-                                getAppIdFlag(flowp,
-                                APPID_SESSION_RESPONDER_MONITORED |
+                            pf->setAppIdFlag(flowp->getAppIdFlag(APPID_SESSION_RESPONDER_MONITORED |
                                 APPID_SESSION_INITIATOR_MONITORED |
                                 APPID_SESSION_SPECIAL_MONITORED |
                                 APPID_SESSION_RESPONDER_CHECKED |
@@ -478,7 +476,7 @@ static int rpc_validate(ServiceValidationArgs* args)
     uint32_t program = 0;
     const char* pname = nullptr;
     int rval;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -515,14 +513,14 @@ done:
     switch (rval)
     {
     case SERVICE_INPROCESS:
-        if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
         {
             rpc_service_mod.api->service_inprocess(flowp, pkt, dir, &svc_element);
         }
         return SERVICE_INPROCESS;
 
     case SERVICE_SUCCESS:
-        if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
         {
             if (pname && *pname)
             {
@@ -542,27 +540,27 @@ done:
             rpc_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
                 APP_ID_SUN_RPC, nullptr, nullptr, subtype);
         }
-        setAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+        flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
         return SERVICE_SUCCESS;
 
     case SERVICE_NOT_COMPATIBLE:
-        if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
         {
             rpc_service_mod.api->incompatible_data(flowp, pkt, dir, &svc_element,
                 rpc_service_mod.flow_data_index,
                 args->pConfig);
         }
-        clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
         return SERVICE_NOT_COMPATIBLE;
 
     case SERVICE_NOMATCH:
-        if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
         {
             rpc_service_mod.api->fail_service(flowp, pkt, dir, &svc_element,
                 rpc_service_mod.flow_data_index,
                 args->pConfig);
         }
-        clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
         return SERVICE_NOMATCH;
     default:
         return rval;
@@ -586,7 +584,7 @@ static int rpc_tcp_validate(ServiceValidationArgs* args)
     uint32_t program = 0;
     const char* pname = nullptr;
 
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -861,7 +859,7 @@ static int rpc_tcp_validate(ServiceValidationArgs* args)
                 goto fail;
             else
             {
-                clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+                flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
                 goto done;
             }
         }
@@ -883,14 +881,14 @@ done:
     {
     case SERVICE_INPROCESS:
 inprocess:
-        if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
         {
             rpc_service_mod.api->service_inprocess(flowp, pkt, dir, &tcp_svc_element);
         }
         return SERVICE_INPROCESS;
 
     case SERVICE_SUCCESS:
-        if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
         {
             if (pname && *pname)
             {
@@ -910,35 +908,35 @@ inprocess:
             rpc_service_mod.api->add_service(flowp, pkt, dir, &tcp_svc_element,
                 APP_ID_SUN_RPC, nullptr, nullptr, subtype);
         }
-        setAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+        flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
         return SERVICE_SUCCESS;
 
     case SERVICE_NOT_COMPATIBLE:
-        if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
         {
             rpc_service_mod.api->incompatible_data(flowp, pkt, dir, &tcp_svc_element,
                 rpc_service_mod.flow_data_index,
                 args->pConfig);
         }
-        clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
         return SERVICE_NOT_COMPATIBLE;
 
     case SERVICE_NOMATCH:
 fail:
-        if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
         {
             rpc_service_mod.api->fail_service(flowp, pkt, dir, &tcp_svc_element,
                 rpc_service_mod.flow_data_index,
                 args->pConfig);
         }
-        clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
         return SERVICE_NOMATCH;
     default:
         return retval;
     }
 
 bail:
-    clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+    flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
     rd->tcpstate[APP_ID_FROM_INITIATOR] = RPC_TCP_STATE_DONE;
     rd->tcpstate[APP_ID_FROM_RESPONDER] = RPC_TCP_STATE_DONE;
     if (dir == APP_ID_FROM_INITIATOR)

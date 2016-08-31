@@ -32,10 +32,10 @@
 #include "utils/util.h"
 
 #include "appid_api.h"
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "fw_appid.h"
-#include "util/fw_avltree.h"
-#include "util/output_file.h"
+#include "appid_utils/fw_avltree.h"
+#include "appid_utils/output_file.h"
 
 #define URLCATBUCKETS   100
 #define URLREPBUCKETS   5
@@ -118,7 +118,7 @@ static inline time_t get_time()
     return now - (now % bucketInterval);
 }
 
-void appIdStatsUpdate(AppIdData* session)
+void appIdStatsUpdate(AppIdSession* session)
 {
     if ( !enableAppStats )
         return;
@@ -142,7 +142,7 @@ void appIdStatsUpdate(AppIdData* session)
     bucket->totalStats.txByteCnt += session->stats.initiatorBytes;
     bucket->totalStats.rxByteCnt += session->stats.responderBytes;
 
-    const uint32_t web_app_id = pickPayloadId(session);
+    const uint32_t web_app_id = session->pick_payload_app_id();
     if (web_app_id > APP_ID_NONE)
     {
         const uint32_t app_id = web_app_id;
@@ -174,7 +174,7 @@ void appIdStatsUpdate(AppIdData* session)
         }
     }
 
-    const uint32_t service_app_id = pickServiceAppId(session);
+    const uint32_t service_app_id = session->pick_service_app_id();
     if ((service_app_id) &&
         (service_app_id != web_app_id))
     {
@@ -207,7 +207,7 @@ void appIdStatsUpdate(AppIdData* session)
         }
     }
 
-    const uint32_t client_app_id = pickClientAppId(session);
+    const uint32_t client_app_id = session->pick_client_app_id();
     if (client_app_id > APP_ID_NONE
         && client_app_id != service_app_id
         && client_app_id != web_app_id)

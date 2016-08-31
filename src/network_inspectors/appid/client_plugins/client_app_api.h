@@ -25,7 +25,7 @@
 #include <cstdint>
 
 #include "appid_api.h"
-#include "appid_flow_data.h"
+#include "appid_session.h"
 
 struct Packet;
 struct Detector;
@@ -59,7 +59,7 @@ using RNAClientAppFCN = CLIENT_APP_RETCODE(*)(
     const uint8_t* data,
     uint16_t size,
     const int dir,
-    AppIdData*,
+    AppIdSession*,
     Packet*,
     Detector*,
     const AppIdConfig*
@@ -101,12 +101,12 @@ using RNAClientAppInitFCN = CLIENT_APP_RETCODE(*)(const IniClientAppAPI* const, 
 using RNAClientAppFinalizeFCN = CLIENT_APP_RETCODE (*)(const FinalizeClientAppAPI* const);
 using RNAClientAppCleanFCN = void(*)(const CleanClientAppAPI* const);
 
-using ClientAppFlowdataGet = void*(*)(AppIdData*, unsigned);
-using ClientAppFlowdataAdd = int(*)(AppIdData*, void*, unsigned, AppIdFreeFCN);
-using ClientAppAddApp = void(*)(AppIdData*, AppId, AppId, const char*);
-using ClientAppAddInfo = void(*)(AppIdData*, const char*);
-using ClientAppAddUser = void(*)(AppIdData*, const char*, AppId, int);
-using ClientAppAddPayload = void(*)(AppIdData*, AppId);
+using ClientAppFlowdataGet = void*(*)(AppIdSession*, unsigned);
+using ClientAppFlowdataAdd = int(*)(AppIdSession*, void*, unsigned, AppIdFreeFCN);
+using ClientAppAddApp = void(*)(AppIdSession*, AppId, AppId, const char*);
+using ClientAppAddInfo = void(*)(AppIdSession*, const char*);
+using ClientAppAddUser = void(*)(AppIdSession*, const char*, AppId, int);
+using ClientAppAddPayload = void(*)(AppIdSession*, AppId);
 
 struct ClientAppApi
 {

@@ -25,7 +25,7 @@
 
 #include "application_ids.h"
 #include "app_info_table.h"
-#include "appid_flow_data.h"
+#include "appid_session.h"
 
 #include "service_api.h"
 #include "appid_module.h"
@@ -105,7 +105,7 @@ static int svc_mysql_validate(ServiceValidationArgs* args)
     uint32_t len;
     const uint8_t* end;
     const uint8_t* p = nullptr;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     uint16_t size = args->size;
 
     if (!size)

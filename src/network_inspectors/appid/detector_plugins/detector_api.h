@@ -22,14 +22,13 @@
 #ifndef DETECTOR_API_H
 #define DETECTOR_API_H
 
-#include "appid_flow_data.h"
+#include "appid_session.h"
 
 struct RNAServiceValidationModule;
 struct RNAClientAppModule;
-struct StreamAPI;
 
-using DetectorFlowdataGet = void*(*)(AppIdData*, unsigned);
-using DetectorFlowdataAdd = int(*)(AppIdData*, void*, unsigned, AppIdFreeFCN);
+using DetectorFlowdataGet = void*(*)(AppIdSession*, unsigned);
+using DetectorFlowdataAdd = int(*)(AppIdSession*, void*, unsigned, AppIdFreeFCN);
 
 struct DetectorApi
 {
@@ -48,7 +47,6 @@ struct RNADetectorValidationModule
 
     const DetectorApi* api;
     unsigned flow_data_index;
-    StreamAPI* streamAPI;
 };
 
 #endif

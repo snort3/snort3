@@ -130,7 +130,7 @@ THREAD_LOCAL TNS_CLIENT_APP_CONFIG tns_config;
 
 static CLIENT_APP_RETCODE tns_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
 
 SO_PUBLIC RNAClientAppModule tns_client_mod =
 {
@@ -213,7 +213,7 @@ static CLIENT_APP_RETCODE tns_init(const IniClientAppAPI* const init_api, SF_LIS
 
 #define TNS_MAX_INFO_SIZE    63
 static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet*, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet*, struct Detector*, const AppIdConfig*)
 {
     char username[TNS_MAX_INFO_SIZE+1];
     ClientTNSData* fd;
@@ -430,7 +430,7 @@ done:
         username[user_size] = 0;
         tns_client_mod.api->add_user(flowp, username, APP_ID_ORACLE_DATABASE, 1);
     }
-    setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
     return CLIENT_APP_SUCCESS;
 }
 

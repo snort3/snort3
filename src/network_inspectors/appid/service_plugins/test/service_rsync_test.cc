@@ -29,7 +29,7 @@ void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 
 extern int rsync_validate(ServiceValidationArgs*);
 
-int fake_service_inprocess(AppIdData*, const Packet*, int, const RNAServiceElement*)
+int fake_service_inprocess(AppIdSession*, const Packet*, int, const RNAServiceElement*)
 {
     mock().actualCall("service_inprocess");
     return -1;
@@ -37,26 +37,26 @@ int fake_service_inprocess(AppIdData*, const Packet*, int, const RNAServiceEleme
 
 ServiceRSYNCData* fake_rsync_data = NULL;
 
-void* fake_service_flowdata_get(AppIdData*, unsigned)
+void* fake_service_flowdata_get(AppIdSession*, unsigned)
 {
     mock().actualCall("data_get");
     return fake_rsync_data;
 }
 
-int fake_data_add(AppIdData*, void* data, unsigned, AppIdFreeFCN)
+int fake_data_add(AppIdSession*, void* data, unsigned, AppIdFreeFCN)
 {
     mock().actualCall("data_add");
     fake_rsync_data = (ServiceRSYNCData*)data;
     return -1;
 }
 
-int fake_fail_service(AppIdData*, const Packet*, int, const RNAServiceElement*, unsigned, const AppIdConfig*)
+int fake_fail_service(AppIdSession*, const Packet*, int, const RNAServiceElement*, unsigned, const AppIdConfig*)
 {
     mock().actualCall("fail_service");
     return -1;
 }
 
-int fake_add_service(AppIdData*, const Packet*, int, 
+int fake_add_service(AppIdSession*, const Packet*, int,
     const RNAServiceElement*, AppId, const char*, const char *,
     const RNAServiceSubtype*)
 {
@@ -68,8 +68,6 @@ const ServiceApi fake_serviceapi =
 {
     &fake_service_flowdata_get,
     &fake_data_add,
-    nullptr,
-    nullptr,
     nullptr,
     nullptr,
     nullptr,

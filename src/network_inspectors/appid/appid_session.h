@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// appid_flow_data.h author Sourcefire Inc.
+// appid_session.h author Sourcefire Inc.
 
 #ifndef APPID_SESSION_H
 #define APPID_SESSION_H
@@ -38,6 +38,10 @@
 #include "service_state.h"
 #include "thirdparty_appid_api.h"
 #include "thirdparty_appid_types.h"
+#include "http_common.h"
+
+#define MAX_ATTR_LEN           1024
+#define HTTP_PREFIX "http://"
 
 #define SF_DEBUG_FILE   stdout
 #define NUMBER_OF_PTYPES    9
@@ -71,12 +75,6 @@ enum RNA_INSPECTION_STATE
     RNA_STATE_STATEFUL,
     RNA_STATE_FINISHED
 };
-
-using AppIdFreeFCN = void(*)(void*);
-
-#define FINGERPRINT_UDP_FLAGS_XENIX 0x00000800
-#define FINGERPRINT_UDP_FLAGS_NT    0x00001000
-#define FINGERPRINT_UDP_FLAGS_MASK  (FINGERPRINT_UDP_FLAGS_XENIX | FINGERPRINT_UDP_FLAGS_NT)
 
 struct AppIdFlowData
 {
@@ -205,23 +203,71 @@ struct tlsSession
     int tls_orgUnit_strlen;
 };
 
-class AppIdData : public FlowData
+extern char app_id_debug_session[];
+extern bool app_id_debug_session_flag;
+
+/* The UNSYNCED_SNORT_ID value is to cheaply insure we get
+   the value from snort rather than assume */
+#define UNSYNCED_SNORT_ID   0x5555
+
+void map_app_names_to_snort_ids();
+
+class AppIdSession : public FlowData
 {
 public:
-    AppIdData() : FlowData(flow_id) { service_ip.clear(); }
-    ~AppIdData();
+    AppIdSession(IpProtocol proto, const sfip_t* ip);
+    ~AppIdSession();
 
-    void reset()
-    { *this = AppIdData(); }
+    static AppIdSession* allocate_session(const Packet*, IpProtocol, int);
+    static AppIdSession* create_future_session(const Packet*, const sfip_t*, uint16_t, const sfip_t*,
+            uint16_t, IpProtocol, int16_t, int);
+    static void do_application_discovery(Packet*);
 
+private:
+    bool do_client_discovery(int, Packet*);
+    bool do_service_discovery(IpProtocol, int, AppId, AppId,  Packet*);
+    int exec_client_detectors(Packet*, int, AppIdConfig*);
 
+    static uint64_t is_session_monitored(const Packet*, int, AppIdSession*);
+    static bool is_packet_ignored(Packet* p);
+    bool is_payload_appid_set();
+    void clear_app_id_data();
+    void reinit_shared_data();
+    bool is_ssl_decryption_enabled();
+    void check_app_detection_restart();
+    void update_encrypted_app_id(AppId serviceAppId);
+    void sync_with_snort_id(AppId, Packet*, AppIdConfig*);
+    void examine_ssl_metadata(Packet*, AppIdConfig*);
+    void examine_rtmp_metadata();
+    void set_client_app_id_data(AppId clientAppId, char** version);
+    void set_service_appid_data( AppId, char*, char**);
+    void set_referred_payload_app_id_data( AppId);
+    void set_payload_app_id_data( ApplicationId, char**);
+    void stop_rna_service_inspection(Packet*,  int);
+
+#ifdef REMOVED_WHILE_NOT_IN_USE
+    // FIXIT-M: these are not needed until appid for snort3 supports 3rd party detectors (e.g. NAVL)
+    void ProcessThirdPartyResults(Packet*, int, AppId*, ThirdPartyAppIDAttributeData*);
+    void checkTerminateTpModule(uint16_t tpPktCount);
+    bool do_third_party_discovery(IpProtocol, const sfip_t*,  Packet*, int&);
+
+    // FIXIT-H: when http detection is made functional we need to look at these methods and determine if they are
+    // needed and what changes are required for snort3
+    void pickHttpXffAddress(Packet*, ThirdPartyAppIDAttributeData*);
+    int initial_CHP_sweep(char**, MatchedCHPAction**, const DetectorHttpConfig*);
+    void clearMiscHttpFlags();
+    int processHTTPPacket(Packet*, int, HttpParsedHeaders* const, const AppIdConfig*);
+    void processCHP(char**, Packet*, const AppIdConfig*);
+#endif
+
+public:
     CommonAppIdData common;
-    AppIdData* next = nullptr;
-    Flow* ssn = nullptr;
+    AppIdSession* next = nullptr;
+    Flow* flow = nullptr;
 
     sfip_t service_ip;
     uint16_t service_port = 0;
-    IpProtocol proto = IpProtocol::PROTO_NOT_SET;
+    IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
     uint8_t previous_tcp_flags = 0;
 
     AppIdFlowData* flowData = nullptr;
@@ -242,51 +288,41 @@ public:
     int got_incompatible_services = 0;
 
     /**AppId matching client side */
-    AppId ClientAppId = APP_ID_NONE;
-    AppId ClientServiceAppId = APP_ID_NONE;
-    char* clientVersion = nullptr;
+    AppId client_app_id = APP_ID_NONE;
+    AppId client_service_app_id = APP_ID_NONE;
+    char* client_version = nullptr;
     /**RNAClientAppModule for identifying client detector*/
-    const RNAClientAppModule* clientData = nullptr;
-    RNA_INSPECTION_STATE rnaClientState = RNA_STATE_NONE;
+    const RNAClientAppModule* rna_client_data = nullptr;
+    RNA_INSPECTION_STATE rna_client_state = RNA_STATE_NONE;
     SF_LIST* candidate_client_list = nullptr;
     unsigned int num_candidate_clients_tried = 0;
     bool tried_reverse_service = false;
 
     /**AppId matching payload*/
-    AppId payloadAppId = APP_ID_NONE;
-    AppId referredPayloadAppId = APP_ID_NONE;
-    AppId miscAppId = APP_ID_NONE;
+    AppId payload_app_id = APP_ID_NONE;
+    AppId referred_payload_app_id = APP_ID_NONE;
+    AppId misc_app_id = APP_ID_NONE;
 
     //appId determined by 3rd party library
-    AppId tpAppId = APP_ID_NONE;
-    AppId tpPayloadAppId = APP_ID_NONE;
+    AppId tp_app_id = APP_ID_NONE;
+    AppId tp_payload_app_id = APP_ID_NONE;
 
     char* username = nullptr;
-    AppId usernameService = APP_ID_NONE;
-
-    char* netbiosDomain = nullptr;
-
+    AppId username_service = APP_ID_NONE;
+    char* netbios_domain = nullptr;
     uint32_t id = 0;
-
     httpSession* hsession = nullptr;
     tlsSession* tsession = nullptr;
-
     unsigned scan_flags = 0;
-#if RESPONSE_CODE_PACKET_THRESHHOLD
-    unsigned response_code_packets = 0;
-#endif
-
     AppId referredAppId = APP_ID_NONE;
-
-    AppId tmpAppId = APP_ID_NONE;
+    AppId temp_app_id = APP_ID_NONE;
     void* tpsession = nullptr;
     uint16_t init_tpPackets = 0;
     uint16_t resp_tpPackets = 0;
-    uint8_t tpReinspectByInitiator = 0;
-    char* payloadVersion = nullptr;
-
+    uint8_t tp_reinspect_by_initiator = 0;
+    char* payload_version = nullptr;
     uint16_t session_packet_count = 0;
-    int16_t snortId = 0;
+    int16_t snort_id = UNSYNCED_SNORT_ID;
 
     /* Length-based detectors. */
     LengthKey length_sequence;
@@ -300,7 +336,7 @@ public:
     } stats = {0, 0, 0, 0};
 
     // Policy and rule ID for related flows (e.g. ftp-data)
-    AppIdData* expectedFlow = nullptr;
+    AppIdSession* expectedFlow = nullptr;
 
     //appIds picked from encrypted session.
     struct
@@ -325,31 +361,49 @@ public:
     static unsigned flow_id;
     static void init() { flow_id = FlowData::get_flow_id(); }
 
-    void appHttpFieldClear();
-    void appHttpSessionDataFree();
-    void appDNSSessionDataFree();
-    void appTlsSessionDataFree();
-    void AppIdFlowdataFree();
-    void appSharedDataDelete();
+    void setAppIdFlag(uint64_t flags)
+    {
+        common.flags |= flags;
+    }
+
+    void clearAppIdFlag(uint64_t flags)
+    {
+        common.flags &= ~flags;
+    }
+
+    inline uint64_t getAppIdFlag(uint64_t flags)
+    {
+        return (common.flags & flags);
+    }
+
+    static void release_free_list_flow_data();
+    void* get_flow_data(unsigned id);
+    int add_flow_data(void* data, unsigned id, AppIdFreeFCN);
+    int add_flow_data_id(uint16_t port, const RNAServiceElement*);
+    void* remove_flow_data(unsigned id);
+    void free_flow_data_by_id(unsigned id);
+    void free_flow_data_by_mask(unsigned mask);
+
+    void clear_http_field();
+    void free_http_session_data();
+    void free_dns_session_data();
+    void free_tls_session_data();
+    void free_flow_data();
+    void delete_shared_data();
+
+    AppId is_appid_detection_done();
+    AppId pick_service_app_id();
+    AppId pick_only_service_app_id();
+    AppId pick_misc_app_id();
+    AppId pick_client_app_id();
+    AppId pick_payload_app_id();
+    AppId pick_referred_payload_app_id();
+    AppId fw_pick_service_app_id();
+    AppId fw_pick_misc_app_id();
+    AppId fw_pick_client_app_id();
+    AppId fw_pick_payload_app_id();
+    AppId fw_pick_referred_payload_app_id();
+    bool is_ssl_session_decrypted();
 };
-
-inline void setAppIdFlag(AppIdData* flow, uint64_t flags)
-{ flow->common.flags |= flags; }
-
-inline void clearAppIdFlag(AppIdData* flow, uint64_t flags)
-{ flow->common.flags &= ~flags; }
-
-inline uint64_t getAppIdFlag(AppIdData* flow, uint64_t flags)
-{ return (flow->common.flags & flags); }
-
-void AppIdFlowdataFini();
-void* AppIdFlowdataGet(AppIdData*, unsigned id);
-int AppIdFlowdataAdd(AppIdData*, void* data, unsigned id, AppIdFreeFCN);
-void* AppIdFlowdataRemove(AppIdData*, unsigned id);
-void AppIdFlowdataDelete(AppIdData*, unsigned id);
-void AppIdFlowdataDeleteAllByMask(AppIdData*, unsigned mask);
-AppIdData* AppIdEarlySessionCreate(AppIdData*, const Packet* ctrlPkt, const sfip_t* cliIp,
-    uint16_t cliPort, const sfip_t* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id, int flags);
-int AppIdFlowdataAddId(AppIdData*, uint16_t port, const RNAServiceElement*);
 
 #endif

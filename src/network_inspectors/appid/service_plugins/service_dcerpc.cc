@@ -105,7 +105,7 @@ static int dcerpc_tcp_validate(ServiceValidationArgs* args)
     ServiceDCERPCData* dd;
     int retval = SERVICE_INPROCESS;
     int length;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 
@@ -157,7 +157,7 @@ static int dcerpc_udp_validate(ServiceValidationArgs* args)
     ServiceDCERPCData* dd;
     int retval = SERVICE_NOMATCH;
     int length;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 

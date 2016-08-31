@@ -137,8 +137,8 @@ static int rshell_validate(ServiceValidationArgs* args)
     ServiceRSHELLData* tmp_rd;
     int i;
     uint32_t port;
-    AppIdData* pf;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* pf;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -191,14 +191,14 @@ static int rshell_validate(ServiceValidationArgs* args)
             dip = pkt->ptrs.ip_api.get_dst();
             sip = pkt->ptrs.ip_api.get_src();
             // FIXIT-M can flow_new return null?
-            pf = rshell_service_mod.api->flow_new(flowp, pkt, dip, 0, sip, (uint16_t)port,
-                IpProtocol::TCP, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
+            pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)port, IpProtocol::TCP, app_id,
+                    APPID_EARLY_SESSION_FLAG_FW_RULE);
             if (pf)
             {
-                pf->rnaClientState = RNA_STATE_FINISHED;
+                pf->rna_client_state = RNA_STATE_FINISHED;
                 rshell_service_mod.api->data_add(pf, tmp_rd,
                     rshell_service_mod.flow_data_index, &rshell_free_state);
-                if (rshell_service_mod.api->data_add_id(pf, (uint16_t)port, &svc_element))
+                if (pf->add_flow_data_id((uint16_t)port, &svc_element))
                 {
                     pf->rnaServiceState = RNA_STATE_FINISHED;
                     tmp_rd->state = RSHELL_STATE_DONE;
@@ -317,7 +317,7 @@ static int rshell_validate(ServiceValidationArgs* args)
     case RSHELL_STATE_STDERR_CONNECT_SYN_ACK:
         if (rd->parent && rd->parent->state == RSHELL_STATE_SERVER_CONNECT)
             rd->parent->state = RSHELL_STATE_USERNAME;
-        setAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED);
+        flowp->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED);
         return SERVICE_SUCCESS;
     default:
         goto bail;

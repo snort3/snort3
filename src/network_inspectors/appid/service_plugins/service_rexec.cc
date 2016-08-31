@@ -35,7 +35,7 @@
 
 #include "appid_api.h"
 #include "app_info_table.h"
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "application_ids.h"
 #include "service_api.h"
 #include "service_base.h"
@@ -143,8 +143,8 @@ static int rexec_validate(ServiceValidationArgs* args)
 {
     int i;
     uint32_t port;
-    AppIdData* pf;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* pf;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -189,8 +189,7 @@ static int rexec_validate(ServiceValidationArgs* args)
 
             dip = pkt->ptrs.ip_api.get_dst();
             sip = pkt->ptrs.ip_api.get_src();
-            pf = rexec_service_mod.api->flow_new(flowp, pkt, dip, 0, sip, (uint16_t)port,
-                IpProtocol::TCP, app_id,
+            pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)port, IpProtocol::TCP, app_id,
                 APPID_EARLY_SESSION_FLAG_FW_RULE);
             if (pf)
             {
@@ -201,7 +200,7 @@ static int rexec_validate(ServiceValidationArgs* args)
 
                 rexec_service_mod.api->data_add(pf, tmp_rd,
                     rexec_service_mod.flow_data_index, &rexec_free_state);
-                if (rexec_service_mod.api->data_add_id(pf, (uint16_t)port, &svc_element))
+                if (pf->add_flow_data_id((uint16_t)port, &svc_element))
                 {
                     pf->rnaServiceState = RNA_STATE_FINISHED;
                     tmp_rd->state = REXEC_STATE_DONE;
@@ -310,7 +309,7 @@ static int rexec_validate(ServiceValidationArgs* args)
         if (rd->parent && rd->parent->state == REXEC_STATE_SERVER_CONNECT)
         {
             rd->parent->state = REXEC_STATE_USERNAME;
-            clearAppIdFlag(flowp, APPID_SESSION_REXEC_STDERR);
+            flowp->clearAppIdFlag(APPID_SESSION_REXEC_STDERR);
         }
         goto bail;
     default:
@@ -318,14 +317,14 @@ static int rexec_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
     {
         rexec_service_mod.api->service_inprocess(flowp, pkt, dir, &svc_element);
     }
     return SERVICE_INPROCESS;
 
 success:
-    if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
     {
         rexec_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
             APP_ID_EXEC, nullptr, nullptr, nullptr);
@@ -333,23 +332,23 @@ success:
     return SERVICE_SUCCESS;
 
 bail:
-    if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
     {
         rexec_service_mod.api->incompatible_data(flowp, pkt, dir, &svc_element,
             rexec_service_mod.flow_data_index,
             args->pConfig);
     }
-    clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+    flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
     return SERVICE_NOT_COMPATIBLE;
 
 fail:
-    if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
     {
         rexec_service_mod.api->fail_service(flowp, pkt, dir, &svc_element,
             rexec_service_mod.flow_data_index,
             args->pConfig);
     }
-    clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+    flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
     return SERVICE_NOMATCH;
 }
 

@@ -22,7 +22,7 @@
 
 #if 0
 #include <stdio.h>
-#include "util/fw_avltree.h"
+#include "appid_utils/fw_avltree.h"
 #include "protocols/protocol_ids.h"
 #include "sfip/sfip_t.h"
 #include "sfip/sf_ip.h"

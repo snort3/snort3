@@ -24,16 +24,39 @@
 
 #include "appid.h"
 #include "appid_api.h"
-#include "utils/sflsq.h"
+#include "appid_utils/sf_multi_mpse.h"
 
-// FIXIT-H rename util/ so we don't confuse it with src/utils
-#include "util/sf_multi_mpse.h"
+#include "utils/sflsq.h"
 
 #define MAX_USERNAME_SIZE   64
 #define MAX_URL_SIZE        65535
 
 class SearchTool;
 struct tMlmpTree;
+
+// FIXIT-M hack to get initial port to build, define these properly
+#if 1
+struct HttpParsedHeaders
+{
+    struct HttpBuf
+    {
+        char* start;
+        int len;
+    };
+
+    HttpBuf host;
+    HttpBuf url;
+    HttpBuf userAgent;
+    HttpBuf referer;
+    HttpBuf via;
+    HttpBuf contentType;
+    HttpBuf responseCode;
+};
+
+#define HTTP_XFF_FIELD_X_FORWARDED_FOR ""
+#define HTTP_XFF_FIELD_TRUE_CLIENT_IP ""
+
+#endif
 
 // These values are used in Lua code as raw numbers. Do NOT reassign new values.
 enum DHPSequence
@@ -183,6 +206,29 @@ struct CHPListElement
 {
     CHPAction chp_action;
     CHPListElement* next;
+};
+
+struct MatchedCHPAction
+{
+    CHPAction* mpattern;
+    int index;
+    MatchedCHPAction* next;
+};
+
+// This is an array element for the dynamically growing tally below
+struct CHPMatchCandidate
+{
+    CHPApp* chpapp;
+    int key_pattern_length_sum;
+    int key_pattern_countdown;
+};
+
+// FIXIT-M: make the 'item' field a std:vector and refactor code to eliminate realloc calls
+struct CHPMatchTally
+{
+    int allocated_elements;
+    int in_use_elements;
+    CHPMatchCandidate item[1];
 };
 
 struct HttpPatternLists

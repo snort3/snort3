@@ -138,7 +138,7 @@ static int flap_validate(ServiceValidationArgs* args)
     const FLAPHeader* hdr = (const FLAPHeader*)args->data;
     const FLAPFNAC* ff;
     const FLAPTLV* tlv;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     uint16_t size = args->size;
     uint16_t len;
 

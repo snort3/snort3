@@ -31,12 +31,16 @@ using namespace std;
 // appid module
 //-------------------------------------------------------------------------
 
+unsigned long app_id_ignored_packet_count = 0;
+
 THREAD_LOCAL ProfileStats appidPerfStats;
 
 // FIXIT-M: define and implement a flexible solution for maintaining protocol specific stats
 const PegInfo appid_pegs[] =
 {
-    { "packets", "count of packets processed by appid" },
+    { "packets", "count of packets received by appid inspector" },
+    { "processed packets", "count of packets processed by appid inspector" },
+    { "ignored packets", "count of packets ignored by appid inspector" },
     { "battlefield_flows", "count of battle field flows discovered by appid" },
     { "bgp_flows", "count of bgp flows discovered by appid" },
     { "bit_clients", "count of bittorrent clients discovered by appid" },

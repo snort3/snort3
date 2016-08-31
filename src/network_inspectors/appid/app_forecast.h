@@ -30,7 +30,7 @@
 #include "appid_config.h"
 #include "protocols/packet.h"
 
-#include "appid_flow_data.h"
+#include "appid_session.h"
 
 // indicator - the appId that indicates there may be subsequent flows to look for, from the same host
 // forecast - the appId in the subsequent flow that we are looking for
@@ -62,7 +62,7 @@ struct AFActVal
 };
 
 void checkSessionForAFIndicator(Packet*, int, const AppIdConfig*, ApplicationId);
-AppId checkSessionForAFForecast(AppIdData*, Packet*, int, const AppIdConfig*, ApplicationId);
+AppId checkSessionForAFForecast(AppIdSession*, Packet*, int, const AppIdConfig*, ApplicationId);
 
 #endif
 

@@ -439,13 +439,13 @@ static int snmp_validate(ServiceValidationArgs* args)
 {
     ServiceSNMPData* sd;
     ServiceSNMPData* tmp_sd;
-    AppIdData* pf;
+    AppIdSession* pf;
     uint8_t pdu;
     const sfip_t* sip;
     const sfip_t* dip;
     uint8_t version;
     const char* version_str = nullptr;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -468,7 +468,7 @@ static int snmp_validate(ServiceValidationArgs* args)
     {
         if (app_id_debug_session_flag)
             LogMessage("AppIdDbg %s snmp payload verify failed\n", app_id_debug_session);
-        if (getAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED))
+        if (flowp->getAppIdFlag(APPID_SESSION_UDP_REVERSED))
         {
             if (dir == APP_ID_FROM_RESPONDER)
                 goto bail;
@@ -493,13 +493,13 @@ static int snmp_validate(ServiceValidationArgs* args)
         if (pdu != SNMP_PDU_GET_RESPONSE && dir == APP_ID_FROM_RESPONDER)
         {
             sd->state = SNMP_STATE_R_RESPONSE;
-            setAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED);
+            flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
             break;
         }
         if (pdu == SNMP_PDU_GET_RESPONSE && dir == APP_ID_FROM_INITIATOR)
         {
             sd->state = SNMP_STATE_R_REQUEST;
-            setAppIdFlag(flowp, APPID_SESSION_UDP_REVERSED);
+            flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
             break;
         }
 
@@ -511,8 +511,8 @@ static int snmp_validate(ServiceValidationArgs* args)
 
         if (pdu == SNMP_PDU_TRAP || pdu == SNMP_PDU_TRAPV2)
         {
-            setAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE);
-            clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+            flowp->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE);
+            flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
             flowp->serviceAppId = APP_ID_SNMP;
             break;
         }
@@ -521,18 +521,17 @@ static int snmp_validate(ServiceValidationArgs* args)
         /*adding expected connection in case the server doesn't send from 161*/
         dip = pkt->ptrs.ip_api.get_dst();
         sip = pkt->ptrs.ip_api.get_src();
-        pf = snmp_service_mod.api->flow_new(flowp, pkt, dip, 0, sip, pkt->ptrs.sp, flowp->proto,
-            app_id, 0);
+        pf = AppIdSession::create_future_session(pkt, dip, 0, sip, pkt->ptrs.sp, flowp->protocol, app_id, 0);
         if (pf)
         {
             tmp_sd = (ServiceSNMPData*)snort_calloc(sizeof(ServiceSNMPData));
             tmp_sd->state = SNMP_STATE_RESPONSE;
             snmp_service_mod.api->data_add(pf, tmp_sd,
                 snmp_service_mod.flow_data_index, &snort_free);
-            if (snmp_service_mod.api->data_add_id(pf, pkt->ptrs.dp, &svc_element))
+            if (pf->add_flow_data_id(pkt->ptrs.dp, &svc_element))
             {
-                setAppIdFlag(pf, APPID_SESSION_SERVICE_DETECTED);
-                clearAppIdFlag(pf, APPID_SESSION_CONTINUE);
+                pf->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED);
+                pf->clearAppIdFlag(APPID_SESSION_CONTINUE);
                 tmp_sd->state = SNMP_STATE_ERROR;
                 return SERVICE_ENULL;
             }

@@ -34,7 +34,7 @@ THREAD_LOCAL void* module_handle = nullptr;
 THREAD_LOCAL struct ThirdPartyConfig thirdpartyConfig;
 THREAD_LOCAL ThirdPartyAppIDModule* thirdparty_appid_module = nullptr;
 
-// FIXIT - these need to be define or otherwise obtained...
+// FIXIT-L: these need to be define or otherwise obtained...
 static char* defaultXffFields[] = { nullptr /* HTTP_XFF_FIELD_X_FORWARDED_FOR, */
                                     /* HTTP_XFF_FIELD_TRUE_CLIENT_IP */ };
 
@@ -97,7 +97,7 @@ void ThirdPartyAppIDInit(AppIdModuleConfig* appidStaticConfig)
         || ( thirdparty_appid_dir[0] == 0 ) )
         return;
 
-    // FIXIT - need to port loadAllLibs function to snort3
+    // FIXIT-L: need to port loadAllLibs function to snort3
     // _dpd.loadAllLibs(thirdparty_appid_dir, LoadCallback);
     if (thirdparty_appid_module == nullptr)
     {
@@ -117,12 +117,12 @@ void ThirdPartyAppIDInit(AppIdModuleConfig* appidStaticConfig)
         thirdpartyConfig.http_upgrade_reporting_enabled = 0;
     thirdpartyConfig.appid_tp_dir[0] = '\0';    // use default path
 
-    // FIXIT - need to provide log function and getSnortInstance function to 3rd party utils
+    // FIXIT-L: need to provide log function and getSnortInstance function to 3rd party utils
 #ifdef REMOVED_WHILE_NOT_IN_USE
     thirdpartyUtils.logMsg           = &DebugFormat;
     thirdpartyUtils.getSnortInstance = _dpd.getSnortInstance;
 
-    // FIXIT - need to get xff fields from http config
+    // FIXIT-L: need to get xff fields from http config
     thirdpartyConfig.xffFields = _dpd.getHttpXffFields(&thirdpartyConfig.numXffFields);
 #endif
 
@@ -160,7 +160,7 @@ void ThirdPartyAppIDReconfigure(void)
     thirdpartyConfig.oldNumXffFields = thirdpartyConfig.numXffFields;
     thirdpartyConfig.oldXffFields = thirdpartyConfig.xffFields;
 
-    // FIXIT - need to get xff fields from http config
+    // FIXIT-L: need to get xff fields from http config
     // thirdpartyConfig.xffFields = _dpd.getHttpXffFields(&thirdpartyConfig.numXffFields);
     if (!thirdpartyConfig.xffFields)
     {

@@ -27,17 +27,17 @@ extern int AppIdReconfigureSwap(uint16_t type, void* new_context, void** old_con
 extern void AppIdReconfigureFree(uint16_t type, void* old_context, struct _THREAD_ELEMENT* te,
     ControlDataSendFunc f);
 
-extern int processHTTPPacket(Packet* p, AppIdData* session, int direction,
+extern int processHTTPPacket(Packet* p, AppIdSession* session, int direction,
     HttpParsedHeaders* const headers, const AppIdConfig* pConfig);
 extern void appIdApiInit(struct AppIdApi*);
 extern void sfiph_build(Packet* p, const void* hdr, int family);
-extern void pickHttpXffAddress(Packet* p, AppIdData* appIdSession,
+extern void pickHttpXffAddress(Packet* p, AppIdSession* appIdSession,
     ThirdPartyAppIDAttributeData* attribute_data);
 
 AppIdApi appIdApi;
 
 // FIXIT: use APIs instead of using global
-extern AppIdData* pAppIdData;
+extern AppIdSession* pAppIdData;
 
 static char* testFilesPath = nullptr;
 static char rnaConfPath[PATH_MAX] = { 0 };
@@ -47,7 +47,7 @@ static void testProcessHttpPacket(const char* useragent, const char* host, const
 {
     // FIXIT-M J these need to be cleared, probably
     Packet p;
-    AppIdData session;
+    AppIdSession session;
 
     char buf[1024];
     int bufLen;
@@ -75,10 +75,10 @@ static void testProcessHttpPacket(const char* useragent, const char* host, const
         "4faa8b240a5fef0aa5147448c8005347; ugs=1; tnr:usrvtstg01=1336576805411%7C0%7C0%7C1%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C0%7C1%7Cf%7C"
         "1%7C4%7C1336576805411; tnr:sesctmp01=1336576805411; s_cc=true; s_sq=%5B%5BB%5D%5D; adDEmas=R08&broadband&gblx.net&73&gbr&826027&0&10198&-&-&-&15275&; adDEon=true; s_ppv=13");
     session.serviceAppId = APP_ID_NONE;
-    session.payloadAppId = APP_ID_NONE;
-    session.tpPayloadAppId = 1190;
+    session.payload_app_id = APP_ID_NONE;
+    session.tp_payload_app_id = 1190;
     session.scan_flags = 0x26;
-    session.ClientAppId = 0;
+    session.client_app_id = 0;
 
     strcpy(buf, "GET / HTTP/1.1\r\n");
     strcat(buf, "Host: ");
@@ -154,11 +154,11 @@ void testFwAppIdSearch(const char* fileName)
 
         if (httpHeader)
         {
-            httpHeaderCallback(&pkt, httpHeader);
+            //httpHeaderCallback(&pkt, httpHeader);
         }
         else
         {
-            fwAppIdSearch(&pkt);
+            do_application_discovery(&pkt);
         }
 
         if (pkt.data)
@@ -197,39 +197,39 @@ void testFwAppIdSearch(const char* fileName)
     LogMessage("App name = %s\n", appGeAppName(appIdApi.geServiceAppId(pAppIdData)));
     LogMessage("AppId = %d\n", appGeAppId(appGeAppName(appIdApi.geServiceAppId(pAppIdData))));
     LogMessage("Service AppId = %d\n", appIdApi.geServiceAppId(pAppIdData));
-    LogMessage("Only Service AppId = %d\n", appIdApi.getOnlyServiceAppId(pAppIdData));
-    LogMessage("Misc AppId = %d\n", appIdApi.getMiscAppId(pAppIdData));
-    LogMessage("Client AppId = %d\n", appIdApi.getClientAppId(pAppIdData));
-    LogMessage("Payload AppId = %d\n", appIdApi.getPayloadAppId(pAppIdData));
-    LogMessage("Referred AppId = %d\n", appIdApi.getReferredAppId(pAppIdData));
-    LogMessage("Fw Service AppId = %d\n", appIdApi.getFwServiceAppId(pAppIdData));
-    LogMessage("Fw Misc AppId = %d\n", appIdApi.getFwMiscAppId(pAppIdData));
-    LogMessage("Fw Client AppId = %d\n", appIdApi.getFwClientAppId(pAppIdData));
-    LogMessage("Fw Payload AppId = %d\n", appIdApi.getFwPayloadAppId(pAppIdData));
-    LogMessage("Fw Referred AppId = %d\n", appIdApi.getFwReferredAppId(pAppIdData));
-    LogMessage("Is Session SSL Decrypted = %d\n", appIdApi.isSessionSslDecrypted(pAppIdData));
-    LogMessage("Is AppId Inspecting Session = %d\n", appIdApi.isAppIdInspectingSession(
+    LogMessage("Only Service AppId = %d\n", appIdApi.get_only_service_app_id(pAppIdData));
+    LogMessage("Misc AppId = %d\n", appIdApi.get_misc_app_id(pAppIdData));
+    LogMessage("Client AppId = %d\n", appIdApi.get_client_app_id(pAppIdData));
+    LogMessage("Payload AppId = %d\n", appIdApi.get_payload_app_id(pAppIdData));
+    LogMessage("Referred AppId = %d\n", appIdApi.get_referred_app_id(pAppIdData));
+    LogMessage("Fw Service AppId = %d\n", appIdApi.get_fw_service_app_id(pAppIdData));
+    LogMessage("Fw Misc AppId = %d\n", appIdApi.get_fw_misc_app_id(pAppIdData));
+    LogMessage("Fw Client AppId = %d\n", appIdApi.get_fw_client_app_id(pAppIdData));
+    LogMessage("Fw Payload AppId = %d\n", appIdApi.get_fw_payload_app_id(pAppIdData));
+    LogMessage("Fw Referred AppId = %d\n", appIdApi.get_fw_feferred_app_id(pAppIdData));
+    LogMessage("Is Session SSL Decrypted = %d\n", appIdApi.is_ssl_session_decrypted(pAppIdData));
+    LogMessage("Is AppId Inspecting Session = %d\n", appIdApi.is_appid_inspecting_session(
         pAppIdData));
-    LogMessage("Is AppId Available = %d\n", appIdApi.isAppIdAvailable(pAppIdData));
-    userName = appIdApi.getUserName(pAppIdData, &service, &isLoginSuccessful);
+    LogMessage("Is AppId Available = %d\n", appIdApi.is_appid_available(pAppIdData));
+    userName = appIdApi.get_user_name(pAppIdData, &service, &isLoginSuccessful);
     LogMessage("User name = %s, service = %d, isLoginSuccessful = %d\n",
         userName, service, isLoginSuccessful);
     LogMessage("Client version = %s\n", appIdApi.geClientVersion(pAppIdData));
     // TODO: Is the flag argument correct?
-    LogMessage("Session attribute = %" PRIx64 "\n", appIdApi.getAppIdSessionAttribute(pAppIdData,
+    LogMessage("Session attribute = %" PRIx64 "\n", appIdApi.get_appid_session_attribute(pAppIdData,
         0));
-    LogMessage("Flow type = %08X\n", appIdApi.getFlowType(pAppIdData));
+    LogMessage("Flow type = %08X\n", appIdApi.get_flow_type(pAppIdData));
     appIdApi.geServiceInfo(pAppIdData, &serviceVendor, &serviceVersion, &serviceSubtype);
     LogMessage("Service vendor = %s, version = %s\n",
         serviceVendor, serviceVersion);
     LogMessage("Service port = %d\n", appIdApi.geServicePort(pAppIdData));
     LogMessage("Service IP = %s\n", inet_ntoa(appIdApi.geServiceIp(pAppIdData)));
-    LogMessage("HTTP user agent = %s\n", appIdApi.getHttpUserAgent(pAppIdData));
+    LogMessage("HTTP user agent = %s\n", appIdApi.get_http_user_agent(pAppIdData));
     LogMessage("HTTP host = %s\n", appIdApi.getHttpHost(pAppIdData));
-    LogMessage("HTTP URL = %s\n", appIdApi.getHttpUrl(pAppIdData));
-    LogMessage("HTTP referer = %s\n", appIdApi.getHttpReferer(pAppIdData));
+    LogMessage("HTTP URL = %s\n", appIdApi.get_http_url(pAppIdData));
+    LogMessage("HTTP referer = %s\n", appIdApi.get_http_referer(pAppIdData));
     LogMessage("TLS host = %s\n", appIdApi.getTlsHost(pAppIdData));
-    LogMessage("NetBIOS name = %s\n", appIdApi.getNetbiosName(pAppIdData));
+    LogMessage("NetBIOS name = %s\n", appIdApi.get_netbios_name(pAppIdData));
 
     fclose(file);
 }
@@ -424,7 +424,7 @@ END_TEST START_TEST(HttpAfterReloadReconfigureTest)
 END_TEST START_TEST(HttpXffTest)
 {
     Packet p = { 0 };
-    AppIdData session = { 0 };
+    AppIdSession session = { 0 };
     httpSession hsession = { 0 };
     ThirdPartyAppIDAttributeData tpData = { 0 };
     SFIP_RET status;
@@ -511,7 +511,7 @@ END_TEST START_TEST(AimSessionTest)
 
     ck_assert_str_eq(appGeAppName(appIdApi.geServiceAppId(pAppIdData)), "AOL Instant Messenger");
     ck_assert_uint_eq(appIdApi.geServiceAppId(pAppIdData), APP_ID_AOL_INSTANT_MESSENGER);
-    ck_assert_uint_eq(appIdApi.getClientAppId(pAppIdData), APP_ID_AOL_INSTANT_MESSENGER);
+    ck_assert_uint_eq(appIdApi.get_client_app_id(pAppIdData), APP_ID_AOL_INSTANT_MESSENGER);
 
     appSharedDataDelete(pAppIdData);
     pAppIdData = nullptr;
@@ -523,8 +523,8 @@ END_TEST START_TEST(CnnSessionTest)
 
     ck_assert_str_eq(appGeAppName(appIdApi.geServiceAppId(pAppIdData)), "HTTP");
     ck_assert_uint_eq(appIdApi.geServiceAppId(pAppIdData), APP_ID_HTTP);
-    ck_assert_uint_eq(appIdApi.getClientAppId(pAppIdData), APP_ID_FIREFOX);
-    ck_assert_uint_eq(appIdApi.getPayloadAppId(pAppIdData), 1190); // CNN app
+    ck_assert_uint_eq(appIdApi.get_client_app_id(pAppIdData), APP_ID_FIREFOX);
+    ck_assert_uint_eq(appIdApi.get_payload_app_id(pAppIdData), 1190); // CNN app
     ck_assert_str_eq(appIdApi.getHttpHost(pAppIdData), "www.cnn.com");
 
     appSharedDataDelete(pAppIdData);
@@ -537,7 +537,7 @@ END_TEST START_TEST(DnsSessionTest)
 
     ck_assert_str_eq(appGeAppName(appIdApi.geServiceAppId(pAppIdData)), "DNS");
     ck_assert_uint_eq(appIdApi.geServiceAppId(pAppIdData), APP_ID_DNS);
-    ck_assert_uint_eq(appIdApi.getClientAppId(pAppIdData), APP_ID_DNS);
+    ck_assert_uint_eq(appIdApi.get_client_app_id(pAppIdData), APP_ID_DNS);
     ck_assert_uint_eq(appIdApi.geServicePort(pAppIdData), 53);
 
     appSharedDataDelete(pAppIdData);
@@ -603,7 +603,7 @@ END_TEST START_TEST(PatternSessionTest)
 
     ck_assert_str_eq(appGeAppName(appIdApi.geServiceAppId(pAppIdData)), "3Com AMP3");
     ck_assert_uint_eq(appIdApi.geServiceAppId(pAppIdData), 3000);
-    ck_assert_uint_eq(appIdApi.getClientAppId(pAppIdData), 3000);
+    ck_assert_uint_eq(appIdApi.get_client_app_id(pAppIdData), 3000);
 
     appSharedDataDelete(pAppIdData);
     pAppIdData = nullptr;
@@ -627,7 +627,7 @@ END_TEST START_TEST(RfbSessionTest)
 
     ck_assert_str_eq(appGeAppName(appIdApi.geServiceAppId(pAppIdData)), "RFB");
     ck_assert_uint_eq(appIdApi.geServiceAppId(pAppIdData), APP_ID_VNC_RFB);
-    ck_assert_uint_eq(appIdApi.getClientAppId(pAppIdData), APP_ID_VNC);
+    ck_assert_uint_eq(appIdApi.get_client_app_id(pAppIdData), APP_ID_VNC);
     ck_assert_uint_eq(appIdApi.geServicePort(pAppIdData), 5900);
 
     appSharedDataDelete(pAppIdData);
@@ -675,8 +675,8 @@ END_TEST START_TEST(WebexSessionTest)
 
     ck_assert_str_eq(appGeAppName(appIdApi.geServiceAppId(pAppIdData)), "HTTP");
     ck_assert_uint_eq(appIdApi.geServiceAppId(pAppIdData), APP_ID_HTTP);
-    ck_assert_uint_eq(appIdApi.getClientAppId(pAppIdData), 2932); // WebEx
-    ck_assert_uint_eq(appIdApi.getPayloadAppId(pAppIdData), 2932); // WebEx
+    ck_assert_uint_eq(appIdApi.get_client_app_id(pAppIdData), 2932); // WebEx
+    ck_assert_uint_eq(appIdApi.get_payload_app_id(pAppIdData), 2932); // WebEx
 
     appSharedDataDelete(pAppIdData);
     pAppIdData = nullptr;
@@ -696,9 +696,6 @@ END_TEST
 
 static void appIdTestSetup(void)
 {
-    static SessionAPI sessionAPI = { 0 };
-    static StreamAPI streamAPI = { 0 };
-
     testFilesPath = getenv("APPID_TESTS_PATH");
 
     if (testFilesPath == nullptr)
@@ -709,36 +706,6 @@ static void appIdTestSetup(void)
 
     strcpy(rnaConfPath, testFilesPath);
     strcat(rnaConfPath, "/rna.conf");
-
-    _dpd.tokenSplit = mSplit;
-    _dpd.tokenFree = mSplitFree;
-    LogMessage = logMsg;
-    _dpd.errMsg = errMsg;
-    _dpd.debugMsg = debugMsg;
-    _dpd.addProtocolReference = addProtocolReference;
-    _dpd.addPreproc = addPreproc;
-    _dpd.getParserPolicy = getParserPolicy;
-    _dpd.getDefaultPolicy = getDefaultPolicy;
-    _dpd.isAppIdRequired = isAppIdRequired;
-    _dpd.getSnortInstance = getSnortInstance;
-    _dpd.findProtocolReference = findProtocolReference;
-
-    sessionAPI.enable_preproc_all_ports = enable_preproc_all_ports;
-    sessionAPI.get_application_data = get_application_data;
-    sessionAPI.set_application_data = set_application_data;
-    sessionAPI.get_packet_direction = get_packet_direction;
-    sessionAPI.get_session_flags = get_session_flags;
-    sessionAPI.get_session_ip_address = get_session_ip_address;
-    sessionAPI.get_application_protocol_id = get_application_protocol_id;
-    sessionAPI.get_http_xff_precedence = get_http_xff_precedence;
-    _dpd.sessionAPI = &sessionAPI;
-
-    streamAPI.is_session_decrypted = is_session_decrypted;
-    streamAPI.set_application_id = set_application_id;
-    streamAPI.is_session_http2 = is_session_http2;
-    _dpd.streamAPI = &streamAPI;
-
-    _dpd.searchAPI = &searchAPI;
 }
 
 static void sessionTcaseSetup(void)

@@ -25,12 +25,12 @@
 #include <cstdint>
 
 #include "appid_api.h"
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "service_api.h"
 #include "sfip/sf_ip.h"
 
 class AppIdConfig;
-class AppIdData;
+class AppIdSession;
 struct RNAServiceElement;
 struct DhcpFPData;
 struct FpSMBData;
@@ -45,7 +45,7 @@ void ReconfigureServices(AppIdConfig*);
 void UnconfigureServices(AppIdConfig*);
 void ServiceInit(AppIdConfig*);
 void ServiceFinalize(AppIdConfig*);
-void FailInProcessService(AppIdData*, const AppIdConfig*);
+void FailInProcessService(AppIdSession*, const AppIdConfig*);
 int LoadServiceModules(const char** dir_list, uint32_t instance_id, AppIdConfig*);
 
 // This function is called during reload/reconfiguration. It registers service ports in the given
@@ -53,24 +53,24 @@ int LoadServiceModules(const char** dir_list, uint32_t instance_id, AppIdConfig*
 int ReloadServiceModules(AppIdConfig*);
 int serviceLoadCallback(void* symbol);
 int serviceLoadForConfigCallback(void* symbol, AppIdConfig*);
-int ServiceAddPort(RNAServiceValidationPort*, RNAServiceValidationModule*, Detector*,
+int ServiceAddPort(const RNAServiceValidationPort*, RNAServiceValidationModule*, Detector*,
         AppIdConfig*);
 void ServiceRemovePorts(RNAServiceValidationFCN, Detector*, AppIdConfig*);
 void ServiceRegisterPatternDetector(RNAServiceValidationFCN, IpProtocol proto,
         const uint8_t* pattern, unsigned size, int position, Detector*, const char* name);
-int AppIdDiscoverService(Packet*, int direction, AppIdData*, const AppIdConfig*);
+int AppIdDiscoverService(Packet*, int direction, AppIdSession*, const AppIdConfig*);
 AppId getPortServiceId(IpProtocol proto, uint16_t port, const AppIdConfig*);
 void AppIdFreeServiceIDState(AppIdServiceIDState*);
-int AppIdServiceAddService(AppIdData*, const Packet*, int dir, const RNAServiceElement*,
+int AppIdServiceAddService(AppIdSession*, const Packet*, int dir, const RNAServiceElement*,
     AppId appId, const char* vendor, const char* version, const RNAServiceSubtype*);
-int AppIdServiceAddServiceSubtype(AppIdData*, const Packet*, int dir, const RNAServiceElement*,
+int AppIdServiceAddServiceSubtype(AppIdSession*, const Packet*, int dir, const RNAServiceElement*,
         AppId, const char* vendor, const char* version, RNAServiceSubtype*);
-int AppIdServiceInProcess(AppIdData*, const Packet*, int dir, const RNAServiceElement*);
-int AppIdServiceIncompatibleData(AppIdData*, const Packet*, int dir, const RNAServiceElement*,
+int AppIdServiceInProcess(AppIdSession*, const Packet*, int dir, const RNAServiceElement*);
+int AppIdServiceIncompatibleData(AppIdSession*, const Packet*, int dir, const RNAServiceElement*,
     unsigned flow_data_index, const AppIdConfig*);
-int AppIdServiceFailService(AppIdData*, const Packet*, int dir, const RNAServiceElement*,
+int AppIdServiceFailService(AppIdSession*, const Packet*, int dir, const RNAServiceElement*,
     unsigned flow_data_index, const AppIdConfig*);
-int AddFTPServiceState(AppIdData*);
+int AddFTPServiceState(AppIdSession*);
 void AppIdFreeDhcpInfo(DHCPInfo*);
 void AppIdFreeSMBData(FpSMBData*);
 void AppIdFreeDhcpData(DhcpFPData*);
@@ -95,26 +95,25 @@ inline bool compareServiceElements(const RNAServiceElement* first,
     return (first->validate != second->validate || first->userdata != second->userdata);
 }
 
-inline uint32_t AppIdServiceDetectionLevel(AppIdData* session)
+inline uint32_t AppIdServiceDetectionLevel(AppIdSession* session)
 {
-    if (getAppIdFlag(session, APPID_SESSION_DECRYPTED))
+    if (session->getAppIdFlag(APPID_SESSION_DECRYPTED))
         return 1;
     return 0;
 }
 
-inline void PopulateExpectedFlow(AppIdData* parent, AppIdData* expected, uint64_t flags)
+inline void PopulateExpectedFlow(AppIdSession* parent, AppIdSession* expected, uint64_t flags)
 {
-    setAppIdFlag(expected, flags |
-        getAppIdFlag(parent,
-        APPID_SESSION_RESPONDER_MONITORED |
-        APPID_SESSION_INITIATOR_MONITORED |
-        APPID_SESSION_SPECIAL_MONITORED |
-        APPID_SESSION_RESPONDER_CHECKED |
-        APPID_SESSION_INITIATOR_CHECKED |
-        APPID_SESSION_DISCOVER_APP |
-        APPID_SESSION_DISCOVER_USER));
+    expected->setAppIdFlag(flags |
+        parent->getAppIdFlag(APPID_SESSION_RESPONDER_MONITORED |
+                APPID_SESSION_INITIATOR_MONITORED |
+                APPID_SESSION_SPECIAL_MONITORED |
+                APPID_SESSION_RESPONDER_CHECKED |
+                APPID_SESSION_INITIATOR_CHECKED |
+                APPID_SESSION_DISCOVER_APP |
+                APPID_SESSION_DISCOVER_USER));
     expected->rnaServiceState = RNA_STATE_FINISHED;
-    expected->rnaClientState = RNA_STATE_FINISHED;
+    expected->rna_client_state = RNA_STATE_FINISHED;
 }
 
 #endif

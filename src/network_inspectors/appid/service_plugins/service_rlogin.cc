@@ -97,7 +97,7 @@ static int rlogin_init(const IniServiceAPI* const init_api)
 static int rlogin_validate(ServiceValidationArgs* args)
 {
     ServiceRLOGINData* rd;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     Packet* pkt = args->pkt;
     const uint8_t* data = args->data;
     uint16_t size = args->size;

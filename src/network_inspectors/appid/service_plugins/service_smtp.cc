@@ -237,7 +237,7 @@ static int smtp_validate_reply(const uint8_t* data, uint16_t* offset,
 static int smtp_validate(ServiceValidationArgs* args)
 {
     ServiceSMTPData* fd;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
     uint16_t offset;
@@ -256,7 +256,7 @@ static int smtp_validate(ServiceValidationArgs* args)
     }
     else
     {
-        if (getAppIdFlag(flowp, APPID_SESSION_ENCRYPTED) && fd->state == SMTP_STATE_TRANSFER)
+        if (flowp->getAppIdFlag(APPID_SESSION_ENCRYPTED) && fd->state == SMTP_STATE_TRANSFER)
         {
             fd->state = SMTP_STATE_STARTTLS;
         }
@@ -265,7 +265,7 @@ static int smtp_validate(ServiceValidationArgs* args)
     if (!fd->set_flags)
     {
         fd->set_flags = 1;
-        setAppIdFlag(flowp, APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+        flowp->setAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
     offset = 0;
@@ -316,7 +316,7 @@ static int smtp_validate(ServiceValidationArgs* args)
             if (fd->code == 220)
                 goto success;
             /* STARTTLS failed. */
-            clearAppIdFlag(flowp, APPID_SESSION_ENCRYPTED); // not encrypted after all
+            flowp->clearAppIdFlag(APPID_SESSION_ENCRYPTED); // not encrypted after all
             fd->state = SMTP_STATE_HELO; // revert the state
             break;
         case SMTP_STATE_TRANSFER:

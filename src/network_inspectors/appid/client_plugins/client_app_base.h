@@ -28,7 +28,7 @@
 
 #define GENERIC_APP_OFFSET 2000000000
 
-class AppIdData;
+class AppIdSession;
 class AppIdConfig;
 struct Detector;
 struct DetectorSipConfig;
@@ -45,13 +45,14 @@ void UnconfigureClientApp(AppIdConfig*);
 void CleanupClientApp(AppIdConfig*);
 int ClientAppLoadCallback(void* symbol);
 int ClientAppLoadForConfigCallback(void* symbol, ClientAppConfig*);
+void appSetClientValidator(RNAClientAppFCN, AppId, unsigned extractsInfo, AppIdConfig*);
 int LoadClientAppModules(AppIdConfig*);
 void ClientAppRegisterPattern(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
         unsigned size, int position, unsigned nocase, Detector*, ClientAppConfig*);
 const ClientAppApi* getClientApi();
 RNAClientAppModuleConfig* getClientAppModuleConfig(const char* moduleName, ClientAppConfig*);
-int AppIdDiscoverClientApp(Packet* p, int direction, AppIdData*, const AppIdConfig*);
-void AppIdAddClientApp(AppIdData*, AppId service_id, AppId id, const char* version);
+int AppIdDiscoverClientApp(Packet* p, int direction, AppIdSession*, const AppIdConfig*);
+void AppIdAddClientApp(AppIdSession*, AppId service_id, AppId id, const char* version);
 DetectorAppUrlList* getAppUrlList(AppIdConfig*);
 const RNAClientAppModule* ClientAppGetClientAppModule(RNAClientAppFCN, Detector*,
         ClientAppConfig*);

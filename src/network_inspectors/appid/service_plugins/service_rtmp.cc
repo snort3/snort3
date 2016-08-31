@@ -450,7 +450,7 @@ parse_rtmp_message_fail:
 static int rtmp_validate(ServiceValidationArgs* args)
 {
     ServiceRTMPData* ss;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     const int dir = args->dir;
     uint16_t size = args->size;

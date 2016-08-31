@@ -64,7 +64,7 @@ static POP3_CLIENT_APP_CONFIG pop3_config;
 static CLIENT_APP_RETCODE pop3_ca_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static void pop3_ca_clean(const CleanClientAppAPI* const clean_api);
 static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector* userData,
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData,
     const AppIdConfig* pConfig);
 
 static RNAClientAppModule client_app_mod =
@@ -245,7 +245,6 @@ SO_PUBLIC RNADetectorValidationModule pop3_detector_mod =
     &client_app_mod,
     nullptr,
     0,
-    nullptr
 };
 
 static AppRegistryEntry appIdRegistry[] =
@@ -398,7 +397,7 @@ static int pop3_check_line(const uint8_t** data, const uint8_t* end)
 }
 
 static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint16_t size,
-    AppIdData* flowp, int server)
+    AppIdSession* flowp, int server)
 {
     static const char ven_cppop[] = "cppop";
     static const char ven_cc[] = "Cubic Circle";
@@ -468,8 +467,8 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
             }
             else
             {
-                setAppIdFlag(flowp, APPID_SESSION_ENCRYPTED);
-                clearAppIdFlag(flowp, APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                flowp->setAppIdFlag(APPID_SESSION_ENCRYPTED);
+                flowp->clearAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                 /* we are potentially overriding the APP_ID_POP3 assessment that was made earlier.
                    */
                 client_app_mod.api->add_app(flowp, APP_ID_POP3S, APP_ID_POP3S, nullptr); // sets
@@ -491,10 +490,10 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
                 snort_free(dd->client.username);
                 dd->client.username = nullptr;
                 dd->need_continue = 0;
-                clearAppIdFlag(flowp, APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                flowp->clearAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                 dd->client.got_user = 1;
                 if (dd->client.detected)
-                    setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+                    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
             }
         }
         if (server && begin)
@@ -674,7 +673,7 @@ ven_ver_done:;
 }
 
 static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet*, struct Detector*, const AppIdConfig* pConfig)
+    AppIdSession* flowp, Packet*, struct Detector*, const AppIdConfig* pConfig)
 {
     const uint8_t* s = data;
     const uint8_t* end = (data + size);
@@ -708,7 +707,7 @@ static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, c
     {
         dd->need_continue = 1;
         fd->set_flags = 1;
-        setAppIdFlag(flowp, APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+        flowp->setAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
     if (dir == APP_ID_FROM_RESPONDER)
@@ -719,7 +718,7 @@ static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, c
 #endif
 
         if (pop3_server_validate(dd, data, size, flowp, 0))
-            clearAppIdFlag(flowp, APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+            flowp->clearAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
         return CLIENT_APP_INPROCESS;
     }
 
@@ -741,7 +740,7 @@ static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, c
         if (!cmd)
         {
             dd->need_continue = 0;
-            setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+            flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
             return CLIENT_APP_SUCCESS;
         }
         s += cmd->length;
@@ -884,7 +883,7 @@ static int pop3_validate(ServiceValidationArgs* args)
 {
     POP3DetectorData* dd;
     ServicePOP3Data* pd;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -920,11 +919,11 @@ static int pop3_validate(ServiceValidationArgs* args)
         pd = &dd->server;
 
     if (dd->need_continue)
-        setAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+        flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
     else
     {
-        clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
-        if (getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
+        if (flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
         {
             appid_stats.pop_flows++;
             return SERVICE_SUCCESS;
@@ -933,8 +932,8 @@ static int pop3_validate(ServiceValidationArgs* args)
 
     if (!pop3_server_validate(dd, data, size, flowp, 1))
     {
-        if (pd->count >= POP3_COUNT_THRESHOLD && !getAppIdFlag(flowp,
-            APPID_SESSION_SERVICE_DETECTED))
+        if (pd->count >= POP3_COUNT_THRESHOLD
+                && !flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
         {
             service_mod.api->add_service_consume_subtype(flowp, pkt, dir, &svc_element,
                 dd->client.state == POP3_CLIENT_STATE_STLS_CMD ? APP_ID_POP3S : APP_ID_POP3,
@@ -945,7 +944,7 @@ static int pop3_validate(ServiceValidationArgs* args)
             return SERVICE_SUCCESS;
         }
     }
-    else if (!getAppIdFlag(flowp, APPID_SESSION_SERVICE_DETECTED))
+    else if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
     {
         service_mod.api->fail_service(flowp, pkt, dir, &svc_element,
             service_mod.flow_data_index, args->pConfig);
@@ -953,7 +952,7 @@ static int pop3_validate(ServiceValidationArgs* args)
     }
     else
     {
-        clearAppIdFlag(flowp, APPID_SESSION_CONTINUE);
+        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
         appid_stats.pop_flows++;
         return SERVICE_SUCCESS;
     }

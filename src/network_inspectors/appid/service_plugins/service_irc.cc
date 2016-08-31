@@ -24,7 +24,7 @@
 #include "main/snort_debug.h"
 #include "utils/util.h"
 
-#include "appid_flow_data.h"
+#include "appid_session.h"
 #include "application_ids.h"
 #include "appid_module.h"
 
@@ -123,7 +123,7 @@ static int irc_validate(ServiceValidationArgs* args)
     IRCState* state;
     unsigned* pos;
     const char** command;
-    AppIdData* flowp = args->flowp;
+    AppIdSession* flowp = args->flowp;
     const uint8_t* data = args->data;
     const int dir = args->dir;
     uint16_t size = args->size;

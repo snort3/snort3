@@ -34,7 +34,7 @@ struct MSN_CLIENT_APP_CONFIG
 THREAD_LOCAL MSN_CLIENT_APP_CONFIG msn_config;
 
 static CLIENT_APP_RETCODE msn_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
 
 struct Client_App_Pattern
 {
@@ -113,7 +113,7 @@ static CLIENT_APP_RETCODE msn_init(const IniClientAppAPI* const init_api, SF_LIS
 }
 
 static CLIENT_APP_RETCODE msn_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet* pkt, struct Detector*, const AppIdConfig*)
 {
     const u_int8_t* end;
     u_int8_t version[MAX_VERSION_SIZE];
@@ -194,7 +194,7 @@ static CLIENT_APP_RETCODE msn_validate(const uint8_t* data, uint16_t size, const
 
 done:
     msn_client_mod.api->add_app(flowp, APP_ID_MSN_MESSENGER, product_id, (char*)version);
-    setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
     return CLIENT_APP_SUCCESS;
 }
 

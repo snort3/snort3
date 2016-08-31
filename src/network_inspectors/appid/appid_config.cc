@@ -37,10 +37,10 @@
 #include "detector_plugins/detector_http.h"
 #include "detector_plugins/detector_dns.h"
 
-#include "util/network_set.h"
-#include "util/ip_funcs.h"
-#include "util/common_util.h"
-#include "util/sfutil.h"
+#include "appid_utils/network_set.h"
+#include "appid_utils/ip_funcs.h"
+#include "appid_utils/common_util.h"
+#include "appid_utils/sfutil.h"
 
 #include "lua_detector_api.h"
 #include "lua_detector_module.h"
@@ -774,7 +774,7 @@ void AppIdConfig::set_safe_search_enforcement(int enabled)
 
 bool AppIdConfig::init_appid( )
 {
-    fwAppIdInit();
+    map_app_names_to_snort_ids();
 
     if (config_state == RNA_FW_CONFIG_STATE_UNINIT)
     {
@@ -867,22 +867,22 @@ static void cleanup_config(AppIdConfig* pConfig)
     {
         if ( pConfig->tcp_port_exclusions_src[i] != nullptr )
         {
-            sflist_free_all(pConfig->tcp_port_exclusions_src[i], &free);
+            sflist_free_all(pConfig->tcp_port_exclusions_src[i], &snort_free);
             pConfig->tcp_port_exclusions_src[i] = nullptr;
         }
         if ( pConfig->tcp_port_exclusions_dst[i] != nullptr )
         {
-            sflist_free_all(pConfig->tcp_port_exclusions_dst[i], &free);
+            sflist_free_all(pConfig->tcp_port_exclusions_dst[i], &snort_free);
             pConfig->tcp_port_exclusions_dst[i] = nullptr;
         }
         if ( pConfig->udp_port_exclusions_src[i] != nullptr )
         {
-            sflist_free_all(pConfig->udp_port_exclusions_src[i], &free);
+            sflist_free_all(pConfig->udp_port_exclusions_src[i], &snort_free);
             pConfig->udp_port_exclusions_src[i] = nullptr;
         }
         if ( pConfig->udp_port_exclusions_dst[i] != nullptr )
         {
-            sflist_free_all(pConfig->udp_port_exclusions_dst[i], &free);
+            sflist_free_all(pConfig->udp_port_exclusions_dst[i], &snort_free);
             pConfig->udp_port_exclusions_dst[i] = nullptr;
         }
     }

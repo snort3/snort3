@@ -93,7 +93,7 @@ THREAD_LOCAL SMTP_CLIENT_APP_CONFIG smtp_config;
 
 static CLIENT_APP_RETCODE smtp_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
 
 SO_PUBLIC RNAClientAppModule smtp_client_mod =
 {
@@ -235,7 +235,7 @@ static CLIENT_APP_RETCODE smtp_init(const IniClientAppAPI* const init_api, SF_LI
 }
 
 static int ExtractVersion(ClientSMTPData* const fd, const uint8_t* product,
-    const uint8_t* data, AppIdData* flowp, Packet*)
+    const uint8_t* data, AppIdSession* flowp, Packet*)
 {
     const u_int8_t* p;
     u_int8_t* v;
@@ -484,7 +484,7 @@ static void freeData(void* data)
 }
 
 static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdData* flowp, Packet* pkt, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet* pkt, struct Detector*, const AppIdConfig*)
 {
     ClientSMTPData* fd;
     const uint8_t* end;
@@ -513,10 +513,10 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
         {
             fd->flags &= ~(CLIENT_FLAG_STARTTLS_SENT);
             fd->flags |= CLIENT_FLAG_SMTPS;
-            clearAppIdFlag(flowp, APPID_SESSION_CLIENT_GETS_SERVER_PACKETS); // we no longer need
+            flowp->clearAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS); // we no longer need
                                                                              // to examine the
                                                                              // response.
-            if (!getAppIdFlag(flowp, APPID_SESSION_DECRYPTED))
+            if (!flowp->getAppIdFlag(APPID_SESSION_DECRYPTED))
             {
                 /* Because we can't see any further info without decryption we settle for
                    plain APP_ID_SMTPS instead of perhaps finding data that would make calling
@@ -527,9 +527,9 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
         }
         return CLIENT_APP_INPROCESS;
     }
-    if (getAppIdFlag(flowp, APPID_SESSION_ENCRYPTED))
+    if (flowp->getAppIdFlag(APPID_SESSION_ENCRYPTED))
     {
-        if (!getAppIdFlag(flowp, APPID_SESSION_DECRYPTED))
+        if (!flowp->getAppIdFlag(APPID_SESSION_DECRYPTED))
             return CLIENT_APP_INPROCESS;
     }
 
@@ -610,7 +610,7 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
                     fd->pos = 0;
                     fd->nextstate = fd->state;
                     fd->state = SMTP_STATE_SKIP_LINE;
-                    setAppIdFlag(flowp, APPID_SESSION_ENCRYPTED);
+                    flowp->setAppIdFlag(APPID_SESSION_ENCRYPTED);
                 }
             }
             else
@@ -744,7 +744,7 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
     return CLIENT_APP_INPROCESS;
 
 done:
-    setAppIdFlag(flowp, APPID_SESSION_CLIENT_DETECTED);
+    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
     return CLIENT_APP_SUCCESS;
 }
 
