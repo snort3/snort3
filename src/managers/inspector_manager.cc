@@ -35,6 +35,7 @@
 #include "packet_io/active.h"
 #include "target_based/snort_protocols.h"
 #include "binder/bind_module.h"
+#include "binder/binder.h"
 
 using namespace std;
 
@@ -747,7 +748,7 @@ void InspectorManager::bumble(Packet* p)
     Inspector* ins = get_binder();
 
     if ( ins )
-        ins->exec(0, flow);
+        ins->exec(BinderSpace::ExecOperation::HANDLE_GADGET, flow);
 
     flow->clear_clouseau();
 

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2016 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,34 +15,16 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// ip_ha.h author Ed Borgoyn <eborgoyn@cisco.com>
 
-#ifndef IP_HA_H
-#define IP_HA_H
+// binder.h author Ed Borgoyn <eborgoyn@cisco.com>
 
-#include "main/snort_types.h"
-#include "stream/base/stream_ha.h"
+#ifndef BINDER_H
+#define BINDER_H
 
-//-------------------------------------------------------------------------
-
-class Flow;
-
-class IpHA : public ProtocolHA
+namespace BinderSpace
 {
-public:
-    IpHA() : ProtocolHA(PktType::IP) { }
-    Flow* create_session(FlowKey*);
+    enum ExecOperation : int { HANDLE_GADGET, EVAL_STANDBY_FLOW };
+}
 
-private:
-};
-
-class IpHAManager
-{
-public:
-    static void process_deletion(Flow* flow);
-    static void tinit();
-    static void tterm();
-    static THREAD_LOCAL IpHA* ip_ha;
-};
 #endif
 

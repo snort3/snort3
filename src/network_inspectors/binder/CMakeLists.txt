@@ -13,3 +13,5 @@ set(FILE_LIST
 #    add_shared_library(binder inspectors ${FILE_LIST})
 #    
 #endif (STATIC_INSPECTORS)
+
+add_subdirectory( test )

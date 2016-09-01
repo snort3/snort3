@@ -89,7 +89,7 @@ class StreamHAClient : public FlowHAClient
 public:
     StreamHAClient() : FlowHAClient(10, true) { }
     ~StreamHAClient() { }
-    bool consume(Flow**, FlowKey*, HAMessage*)
+    bool consume(Flow*&, FlowKey*, HAMessage*)
     {
         s_stream_consume_called = true;
         return true;
@@ -113,7 +113,7 @@ class OtherHAClient : public FlowHAClient
 public:
     OtherHAClient() : FlowHAClient(5, false) { }
     ~OtherHAClient() { }
-    bool consume(Flow*, HAMessage*)
+    bool consume(Flow*&, HAMessage*)
     {
         s_other_consume_called = true;
         return true;

@@ -24,11 +24,6 @@
 #include "stream/icmp/icmp_session.h"
 #include "stream/stream.h"
 
-void IcmpHA::delete_session(Flow*)
-{
-    DebugMessage(DEBUG_HA,"IcmpHA::delete_session)\n");
-}
-
 Flow* IcmpHA::create_session(FlowKey* key)
 {
     DebugMessage(DEBUG_HA,"IcmpHA::create_session\n");

@@ -31,7 +31,6 @@ class IcmpHA : public ProtocolHA
 {
 public:
     IcmpHA() : ProtocolHA(PktType::ICMP) { }
-    void delete_session(Flow*);
     Flow* create_session(FlowKey*);
 
 private:

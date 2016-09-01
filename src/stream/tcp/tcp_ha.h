@@ -31,7 +31,6 @@ class TcpHA : public ProtocolHA
 {
 public:
     TcpHA() : ProtocolHA(PktType::TCP) { }
-    void delete_session(Flow*);
     Flow* create_session(FlowKey*);
     void deactivate_session(Flow*);
 

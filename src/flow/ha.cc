@@ -388,7 +388,7 @@ static void consume_receive_update_message(HAMessage* msg)
         // client is always the first segment of the message, the consume()
         // invocation for the session client will create the flow.  This
         // flow can in turn be used by subsequent FlowHAClient's.
-        if ( !(*s_client_map)[header->client]->consume(&flow,&key,msg) )
+        if ( !(*s_client_map)[header->client]->consume(flow,&key,msg) )
         {
             ErrorMessage("Consuming HA Update message - error from client consume()\n");
             break;

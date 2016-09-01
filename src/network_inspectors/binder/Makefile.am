@@ -16,3 +16,8 @@ libbinder_a_SOURCES = $(file_list)
 #libbinder_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
 #libbinder_la_SOURCES = $(file_list)
 #endif
+
+if ENABLE_UNIT_TESTS
+SUBDIRS = test
+endif
+

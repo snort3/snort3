@@ -25,3 +25,4 @@ file) that has its own binder, and so on.
 The implementation is not yet optimized for performance.  A faster method
 of searching for applicable bindings should be developed.
 
+The exec() method implements specialized Inspector::Binder functionality.

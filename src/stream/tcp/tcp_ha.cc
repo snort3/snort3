@@ -23,11 +23,6 @@
 #include "main/snort_debug.h"
 #include "stream/tcp/tcp_session.h"
 
-void TcpHA::delete_session(Flow*)
-{
-    DebugMessage(DEBUG_HA,"TcpHA::delete_session)\n");
-}
-
 Flow* TcpHA::create_session(FlowKey* key)
 {
     DebugMessage(DEBUG_HA,"TcpHA::create_session)\n");

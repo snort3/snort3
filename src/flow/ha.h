@@ -124,7 +124,7 @@ class FlowHAClient
 {
 public:
     virtual ~FlowHAClient() { }
-    virtual bool consume(Flow**, FlowKey*, HAMessage*) { return false; }
+    virtual bool consume(Flow*&, FlowKey*, HAMessage*) { return false; }
     virtual bool produce(Flow*, HAMessage*) { return false; }
     virtual bool is_update_required(Flow*) { return false; }
     virtual bool is_delete_required(Flow*) { return false; }

@@ -17,8 +17,8 @@
 //--------------------------------------------------------------------------
 // binder.cc author Russ Combs <rucombs@cisco.com>
 
-#ifndef BINDER_H
-#define BINDER_H
+#ifndef BINDING_H
+#define BINDING_H
 
 #include <string>
 

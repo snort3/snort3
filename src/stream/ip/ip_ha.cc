@@ -23,11 +23,6 @@
 #include "main/snort_debug.h"
 #include "stream/ip/ip_session.h"
 
-void IpHA::delete_session(Flow*)
-{
-    DebugMessage(DEBUG_HA,"IpHA::delete_session)\n");
-}
-
 Flow* IpHA::create_session(FlowKey* key)
 {
     DebugMessage(DEBUG_HA,"IpHA::create_session\n");

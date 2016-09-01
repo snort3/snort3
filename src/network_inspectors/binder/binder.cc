@@ -17,6 +17,8 @@
 //--------------------------------------------------------------------------
 // binder.cc author Russ Combs <rucombs@cisco.com>
 
+#include "binder.h"
+
 #include <vector>
 using namespace std;
 
@@ -403,6 +405,8 @@ private:
     void get_bindings(Flow*, Stuff&);
     void apply(Flow*, Stuff&);
     Inspector* find_gadget(Flow*);
+    int exec_handle_gadget(void*);
+    int exec_eval_standby_flow(void*);
 
 private:
     vector<Binding*> bindings;
@@ -450,7 +454,7 @@ void Binder::eval(Packet* p)
     ++bstats.packets;
 }
 
-int Binder::exec(int, void* pv)
+int Binder::exec_handle_gadget( void* pv )
 {
     Flow* flow = (Flow*)pv;
     Inspector* ins = find_gadget(flow);
@@ -478,6 +482,32 @@ int Binder::exec(int, void* pv)
     }
 
     return 0;
+}
+
+// similar to eval(), but working on a Flow in HA Standby mode
+int Binder::exec_eval_standby_flow( void* pv )
+{
+    Flow* flow = (Flow*)pv;
+
+    Stuff stuff;
+    get_bindings(flow, stuff);
+    apply(flow, stuff);
+
+    ++bstats.verdicts[stuff.action];
+    return 0;
+}
+ 
+int Binder::exec(int operation, void* pv)
+{
+    switch( operation )
+    {
+        case BinderSpace::ExecOperation::HANDLE_GADGET:
+            return exec_handle_gadget( pv );
+        case BinderSpace::ExecOperation::EVAL_STANDBY_FLOW:
+            return exec_eval_standby_flow( pv );
+        default:
+            return (-1);
+    }
 }
 
 //-------------------------------------------------------------------------

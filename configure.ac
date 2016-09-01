@@ -1161,6 +1161,7 @@ src/network_inspectors/appid/Makefile \
 src/network_inspectors/appid/service_plugins/test/Makefile \
 src/network_inspectors/arp_spoof/Makefile \
 src/network_inspectors/binder/Makefile \
+src/network_inspectors/binder/test/Makefile \
 src/network_inspectors/normalize/Makefile \
 src/network_inspectors/packet_capture/Makefile \
 src/network_inspectors/perf_monitor/Makefile \

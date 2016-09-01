@@ -25,11 +25,6 @@
 
 extern THREAD_LOCAL class FlowControl* flow_con;
 
-void UdpHA::delete_session(Flow*)
-{
-    DebugMessage(DEBUG_HA,"UdpHA::delete_session\n");
-}
-
 Flow* UdpHA::create_session(FlowKey* key)
 {
     DebugMessage(DEBUG_HA,"UdpHA::create_session\n");

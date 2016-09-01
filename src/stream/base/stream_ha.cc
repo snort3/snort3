@@ -22,7 +22,9 @@
 #include <thread>
 #include <unordered_map>
 
+#include "binder/binder.h"
 #include "main/snort_debug.h"
+#include "managers/inspector_manager.h"
 #include "sfip/sf_ip.h"
 #include "stream/stream_api.h"
 
@@ -82,11 +84,10 @@ static bool is_client_lower(Flow* flow)
     return false;
 }
 
-bool StreamHAClient::consume(Flow** flow, FlowKey* key, HAMessage* msg)
+bool StreamHAClient::consume(Flow*& flow, FlowKey* key, HAMessage* msg)
 {
     DebugMessage(DEBUG_HA,"StreamHAClient::consume()\n");
 
-    assert(flow); // but *flow could be nullptr
     assert(key);
     assert(msg);
 
@@ -99,36 +100,39 @@ bool StreamHAClient::consume(Flow** flow, FlowKey* key, HAMessage* msg)
     msg->cursor += sizeof(SessionHAContent);
 
     // If flow is missing, we need to create a new one.
-    if ( *flow == nullptr )
+    if ( flow == nullptr )
     {
         // A nullptr indicates that the protocol has no handler
-        if ( (*flow = protocol_create_session(key)) == nullptr )
+        if ( (flow = protocol_create_session(key)) == nullptr )
             return false;
-        (*flow)->ha_state->clear(FlowHAState::NEW);
+        Inspector* b = InspectorManager::get_binder();
+        if ( b != nullptr )
+            b->exec(BinderSpace::ExecOperation::EVAL_STANDBY_FLOW,(void*)flow);
+        flow->ha_state->clear(FlowHAState::NEW);
         int family = (hac->flags & SessionHAContent::FLAG_IP6) ? AF_INET6 : AF_INET;
         if ( hac->flags & SessionHAContent::FLAG_LOW )
         {
-            sfip_set_raw(&((*flow)->server_ip), (*flow)->key->ip_l, family);
-            sfip_set_raw(&((*flow)->client_ip), (*flow)->key->ip_h, family);
-            (*flow)->server_port = (*flow)->key->port_l;
-            (*flow)->client_port = (*flow)->key->port_h;
+            sfip_set_raw(&(flow->server_ip), flow->key->ip_l, family);
+            sfip_set_raw(&(flow->client_ip), flow->key->ip_h, family);
+            flow->server_port = flow->key->port_l;
+            flow->client_port = flow->key->port_h;
         }
         else
         {
-            sfip_set_raw(&((*flow)->client_ip), (*flow)->key->ip_l, family);
-            sfip_set_raw(&((*flow)->server_ip), (*flow)->key->ip_h, family);
-            (*flow)->client_port = (*flow)->key->port_l;
-            (*flow)->server_port = (*flow)->key->port_h;
+            sfip_set_raw(&(flow->client_ip), flow->key->ip_l, family);
+            sfip_set_raw(&(flow->server_ip), flow->key->ip_h, family);
+            flow->client_port = flow->key->port_l;
+            flow->server_port = flow->key->port_h;
         }
     }
 
-    (*flow)->ssn_state = hac->ssn_state;
-    (*flow)->flow_state = hac->flow_state;
+    flow->ssn_state = hac->ssn_state;
+    flow->flow_state = hac->flow_state;
 
-    if ( !(*flow)->ha_state->check_any(FlowHAState::STANDBY) )
+    if ( !flow->ha_state->check_any(FlowHAState::STANDBY) )
     {
-        protocol_deactivate_session(*flow);
-        (*flow)->ha_state->add(FlowHAState::STANDBY);
+        protocol_deactivate_session(flow);
+        flow->ha_state->add(FlowHAState::STANDBY);
     }
 
     return true;

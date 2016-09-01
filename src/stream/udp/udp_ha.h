@@ -31,7 +31,6 @@ class UdpHA : public ProtocolHA
 {
 public:
     UdpHA() : ProtocolHA(PktType::UDP) { }
-    void delete_session(Flow*);
     Flow* create_session(FlowKey*);
 
 private:
