@@ -28,7 +28,8 @@
 #include "ftpp_ui_config.h"
 
 int PrintConfOpt(bool on, const char* Option);
-int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF*);
+// FIXIT-L orphan code until FTP client inspector acquires a show() method
+// int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF*);
 int PrintFTPServerConf(FTP_SERVER_PROTO_CONF*);
 
 #endif

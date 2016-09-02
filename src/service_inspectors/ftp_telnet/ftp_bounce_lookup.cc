@@ -190,6 +190,8 @@ FTP_BOUNCE_TO* ftp_bounce_lookup_find(
     return BounceTo;
 }
 
+// FIXIT-L orphan code until FTP client inspector acquires a show() method
+#if 0
 /*
  * Function: ftp_bounce_lookup_first(BOUNCE_LOOKUP *BounceLookup,
  *                                   int *iError)
@@ -272,4 +274,5 @@ FTP_BOUNCE_TO* ftp_bounce_lookup_next(BOUNCE_LOOKUP* BounceLookup,
 
     return BounceTo;
 }
+#endif
 

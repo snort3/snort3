@@ -169,6 +169,8 @@ static void PrintCmdFmt(char* buf, FTP_PARAM_FMT* CmdFmt)
         PrintCmdFmt(buf, CmdFmt->next_param_fmt);
 }
 
+// FIXIT-L orphan code until FTP client inspector acquires a show() method
+#if 0
 int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF* ClientConf)
 {
     FTP_BOUNCE_TO* FTPBounce;
@@ -219,6 +221,7 @@ int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF* ClientConf)
 
     return FTPP_SUCCESS;
 }
+#endif
 
 int PrintFTPServerConf(FTP_SERVER_PROTO_CONF* ServerConf)
 {
