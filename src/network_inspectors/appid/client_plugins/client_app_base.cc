@@ -169,7 +169,7 @@ const ClientAppApi* getClientApi(void)
     return &client_app_api;
 }
 
-RNAClientAppModuleConfig* geClientAppModuleConfig(const char* moduleName,
+RNAClientAppModuleConfig* getClientAppModuleConfig(const char* moduleName,
     ClientAppConfig* pClientAppConfig)
 {
     SF_LNODE* cursor;
@@ -205,7 +205,7 @@ const RNAClientAppModule* ClientAppGetClientAppModule(RNAClientAppFCN fcn, struc
     return nullptr;
 }
 
-void add_pattern_data(SearchTool* st, const RNAClientAppModule* li, int position,
+static void add_pattern_data(SearchTool* st, const RNAClientAppModule* li, int position,
         const uint8_t* const pattern, unsigned size, unsigned nocase,
         int* count, ClientAppConfig* pClientAppConfig)
 {
@@ -984,7 +984,7 @@ int AppIdDiscoverClientApp(Packet* p, int direction, AppIdSession* rnaData,
     return APPID_SESSION_SUCCESS;
 }
 
-DetectorAppUrlList* geAppUrlList(AppIdConfig* pConfig)
+DetectorAppUrlList* getAppUrlList(AppIdConfig* pConfig)
 {
     HttpPatternLists* patternLists = &pConfig->httpPatternLists;
     return (&patternLists->appUrlList);

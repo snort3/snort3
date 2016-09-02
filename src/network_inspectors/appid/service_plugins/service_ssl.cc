@@ -341,7 +341,7 @@ static int ssl_init(const IniServiceAPI* const init_api)
     return 0;
 }
 
-void ssl_free(void* ss)    /* AppIdFreeFCN */
+static void ssl_free(void* ss)    /* AppIdFreeFCN */
 {
     ServiceSSLData* ss_tmp = (ServiceSSLData*)ss;
     snort_free(ss_tmp->certs_data);
@@ -351,7 +351,7 @@ void ssl_free(void* ss)    /* AppIdFreeFCN */
     snort_free(ss_tmp);
 }
 
-void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceSSLData* ss)
+static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceSSLData* ss)
 {
     const ServiceSSLV3Hdr* hdr3;
     const ServiceSSLV3Record* rec;
@@ -458,7 +458,7 @@ void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceSSLData*
     }
 }
 
-int parse_certificates(ServiceSSLData* ss)
+static int parse_certificates(ServiceSSLData* ss)
 {
     int success = 0;
     if (ss->certs_data && ss->certs_len)

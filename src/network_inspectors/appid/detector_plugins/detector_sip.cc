@@ -343,6 +343,7 @@ static CLIENT_APP_RETCODE sip_tcp_client_validate(const uint8_t* data, uint16_t 
     return sip_client_validate(data, size, dir, flowp, pkt, userData, pConfig);
 }
 
+#ifdef APPID_UNUSED_CODE
 static int sipAppAddPattern(DetectorAppSipPattern** patternList, AppId ClientAppId,
     const char* clientVersion, const char* serverPattern)
 {
@@ -359,7 +360,7 @@ static int sipAppAddPattern(DetectorAppSipPattern** patternList, AppId ClientApp
     return 0;
 }
 
-int sipUaPatternAdd(
+static int sipUaPatternAdd(
     AppId ClientAppId,
     const char* clientVersion,
     const char* pattern,
@@ -369,7 +370,7 @@ int sipUaPatternAdd(
     return sipAppAddPattern(&pSipConfig->appSipUaList, ClientAppId, clientVersion, pattern);
 }
 
-int sipServerPatternAdd(
+static int sipServerPatternAdd(
     AppId ClientAppId,
     const char* clientVersion,
     const char* pattern,
@@ -379,7 +380,7 @@ int sipServerPatternAdd(
     return sipAppAddPattern(&pSipConfig->appSipServerList, ClientAppId, clientVersion, pattern);
 }
 
-int sipUaFinalize(DetectorSipConfig* pSipConfig)
+static int sipUaFinalize(DetectorSipConfig* pSipConfig)
 {
     const int PATTERN_PART_MAX=10;
     static tMlmpPattern patterns[PATTERN_PART_MAX];
@@ -420,6 +421,7 @@ int sipUaFinalize(DetectorSipConfig* pSipConfig)
     mlmpProcessPatterns((tMlmpTree*)pSipConfig->sipServerMatcher);
     return 0;
 }
+#endif
 
 static void sipUaClean(DetectorSipConfig* pSipConfig)
 {

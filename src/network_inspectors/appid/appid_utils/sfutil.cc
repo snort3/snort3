@@ -28,18 +28,6 @@
 
 #include "utils/util.h"
 
-void ConfigItemFree(ConfigItem* ci)
-{
-    if (ci)
-    {
-        if (ci->name)
-            snort_free(ci->name);
-        if (ci->value)
-            snort_free(ci->value);
-        snort_free(ci);
-    }
-}
-
 int Split(char* data, char** toklist, int max_toks, const char* separator)
 {
     char** ap;

@@ -583,10 +583,7 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
     NetworkSet* my_net_list;
 
     if (NetworkSet_New(&net_list))
-    {
         FatalError("Failed to allocate a network set");
-        exit(1);
-    }
     net_list_list = net_list;
 
     if (!config_file || (!config_file[0]))

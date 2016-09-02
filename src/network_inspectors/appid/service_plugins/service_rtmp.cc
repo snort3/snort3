@@ -131,7 +131,7 @@ static int rtmp_init(const IniServiceAPI* const init_api)
     return 0;
 }
 
-void rtmp_free(void* ss)    /* AppIdFreeFCN */
+static void rtmp_free(void* ss)    /* AppIdFreeFCN */
 {
     ServiceRTMPData* ss_tmp = (ServiceRTMPData*)ss;
     snort_free(ss_tmp->swfUrl);
@@ -139,7 +139,7 @@ void rtmp_free(void* ss)    /* AppIdFreeFCN */
     snort_free(ss_tmp);
 }
 
-int parse_rtmp_chunk_basic_header(const uint8_t** data_inout, uint16_t* size_inout,
+static int parse_rtmp_chunk_basic_header(const uint8_t** data_inout, uint16_t* size_inout,
     uint8_t* format, uint32_t* chunk_stream_id)
 {
     const uint8_t* data = *data_inout;
@@ -177,7 +177,7 @@ int parse_rtmp_chunk_basic_header(const uint8_t** data_inout, uint16_t* size_ino
     return 1;
 }
 
-int parse_rtmp_messgage_header(const uint8_t** data_inout, uint16_t* size_inout,
+static int parse_rtmp_message_header(const uint8_t** data_inout, uint16_t* size_inout,
     uint32_t* chunk_stream_id, uint32_t* message_length, uint8_t* message_type_id)
 {
     const uint8_t* data = *data_inout;
@@ -213,7 +213,7 @@ int parse_rtmp_messgage_header(const uint8_t** data_inout, uint16_t* size_inout,
     return 1;
 }
 
-int unchunk_rtmp_message_body(const uint8_t** data_inout, uint16_t* size_inout,
+static int unchunk_rtmp_message_body(const uint8_t** data_inout, uint16_t* size_inout,
     uint32_t chunk_stream_id, uint32_t message_length, uint8_t* message_body)
 {
     const uint8_t* data = *data_inout;
@@ -254,7 +254,7 @@ int unchunk_rtmp_message_body(const uint8_t** data_inout, uint16_t* size_inout,
     return 1;
 }
 
-char* duplicate_string(const uint8_t** data_inout, uint16_t* size_inout)
+static char* duplicate_string(const uint8_t** data_inout, uint16_t* size_inout)
 {
     const uint8_t* data = *data_inout;
     uint16_t size = *size_inout;
@@ -285,7 +285,7 @@ char* duplicate_string(const uint8_t** data_inout, uint16_t* size_inout)
     return str;
 }
 
-int skip_property_value(const uint8_t** data_inout, uint16_t* size_inout)
+static int skip_property_value(const uint8_t** data_inout, uint16_t* size_inout)
 {
     const uint8_t* data = *data_inout;
     uint16_t size = *size_inout;
@@ -336,7 +336,7 @@ int skip_property_value(const uint8_t** data_inout, uint16_t* size_inout)
     return 1;
 }
 
-int parse_rtmp_message(const uint8_t** data_inout, uint16_t* size_inout, ServiceRTMPData* ss)
+static int parse_rtmp_message(const uint8_t** data_inout, uint16_t* size_inout, ServiceRTMPData* ss)
 {
     const uint8_t* data = *data_inout;
     uint16_t size = *size_inout;
@@ -348,7 +348,7 @@ int parse_rtmp_message(const uint8_t** data_inout, uint16_t* size_inout, Service
     uint16_t field_len;
     uint8_t* body = nullptr;
 
-    if (!parse_rtmp_messgage_header(&data, &size, &id, &msg_len, &msg_type))
+    if (!parse_rtmp_message_header(&data, &size, &id, &msg_len, &msg_type))
         goto parse_rtmp_message_fail;
     if (msg_type != RTMP_AMF0_COMMAND_MESSAGE_ID)
         goto parse_rtmp_message_fail;

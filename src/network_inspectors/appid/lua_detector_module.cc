@@ -63,7 +63,7 @@ static uint32_t gLuaTrackerSize = 0;
 static unsigned gNumDetectors = 0;
 static unsigned gNumActiveDetectors;
 
-inline bool match_char_set(char c, const char* set)
+static inline bool match_char_set(char c, const char* set)
 {
     while ( *set && *set != c )
         ++set;
@@ -71,7 +71,7 @@ inline bool match_char_set(char c, const char* set)
     return *set != '\0';
 }
 
-inline const char* find_first_not_of(const char* s, const char* const set)
+static inline const char* find_first_not_of(const char* s, const char* const set)
 {
     while ( *s && match_char_set(*s, set) )
         ++s;
@@ -79,7 +79,7 @@ inline const char* find_first_not_of(const char* s, const char* const set)
     return s;
 }
 
-inline const char* find_first_of(const char* s, const char* const set)
+static inline const char* find_first_of(const char* s, const char* const set)
 {
     while ( *s && !match_char_set(*s, set) )
         ++s;
@@ -87,7 +87,7 @@ inline const char* find_first_of(const char* s, const char* const set)
     return s;
 }
 
-const char* tokenize(const char* const delim, const char*& save, size_t& len)
+static const char* tokenize(const char* const delim, const char*& save, size_t& len)
 {
     if ( !save || !*save )
         return nullptr;

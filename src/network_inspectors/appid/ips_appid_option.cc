@@ -190,7 +190,7 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-bool compare_appid_names(const AppIdInfo& l, const AppIdInfo& r )
+static bool compare_appid_names(const AppIdInfo& l, const AppIdInfo& r )
 {
     int rc = strcmp(l.appid_name, r.appid_name);
     if( rc < 0 )

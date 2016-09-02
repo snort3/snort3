@@ -61,11 +61,13 @@ void dump_appid_stats()
     RNAPndDumpLuaStats();
 }
 
+#ifdef APPID_UNUSED_CODE
 void reset_appid_stats(int, void*)
 {
     if (thirdparty_appid_module)
         thirdparty_appid_module->reset_stats();
 }
+#endif
 
 void fwAppIdFini(AppIdConfig* pConfig)
 {

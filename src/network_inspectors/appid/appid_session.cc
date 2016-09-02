@@ -198,6 +198,7 @@ static inline bool fwAppIdDebugCheck(Flow* flow, AppIdSession* session, volatile
     return false;
 }
 
+#ifdef APPID_UNUSED_CODE
 static inline void appIdDebugParse(const char* desc, const uint8_t* data, uint32_t length,
     volatile int* debug_flag, FWDebugSessionConstraints* info)
 {
@@ -313,6 +314,7 @@ int AppIdDebug(uint16_t, const uint8_t* const data, uint32_t length, void**, cha
     appIdDebugParse("appId", data, length, &app_id_debug_flag, &app_id_debug_info);
     return 0;
 }
+#endif
 
 // FIXIT-M: this function does work that probably should be in http inspector, appid should leverage that if possible
 static inline void getOffsetsFromRebuilt(Packet* pkt, httpSession* hsession)

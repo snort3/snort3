@@ -502,7 +502,7 @@ char* ObfuscateIpToText(const sfip_t* ip)
 }
 
 // FIXIT-M add throttling so we don't spam syslog
-void log_safec_error(const char* msg, void*, int e)
+NORETURN void log_safec_error(const char* msg, void*, int e)
 {
     ErrorMessage("SafeC error %i: %s\n", e, msg);
     assert(false);

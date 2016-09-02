@@ -21,7 +21,7 @@
 
 #include "detector_pattern.h"
 #include "app_info_table.h"
-#include "client_plugins/client_app_api.h"
+#include "client_plugins/client_app_base.h"
 #include "service_plugins/service_api.h"
 
 #include "log/messages.h"
@@ -304,7 +304,7 @@ static void createClientPatternTrees( AppIdConfig* pConfig )
     }
 }
 
-void registerServicePatterns( AppIdConfig* pConfig )
+static void registerServicePatterns( AppIdConfig* pConfig )
 {
     PatternService* ps;
     Pattern* pattern;
@@ -353,7 +353,7 @@ void registerServicePatterns( AppIdConfig* pConfig )
         pConfig->servicePortPattern->udp_patterns->prep();
 }
 
-void registerClientPatterns( AppIdConfig* pConfig )
+static void registerClientPatterns( AppIdConfig* pConfig )
 {
     PatternService* ps;
     Pattern* pattern;
@@ -394,7 +394,7 @@ void registerClientPatterns( AppIdConfig* pConfig )
         pConfig->clientPortPattern->udp_patterns->prep();
 }
 
-void dumpPatterns(const char* name, PatternService* pList)
+static void dumpPatterns(const char* name, PatternService* pList)
 {
     UNUSED(name);
     PatternService* ps;

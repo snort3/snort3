@@ -132,14 +132,14 @@ static inline void* dynamicArrayGetNext(DynamicArray* array)
 }
 
 // End of Dynamic array
-SFGHASH* appNameHashInit()
+static SFGHASH* appNameHashInit()
 {
     SFGHASH* appNameHash;
     appNameHash = sfghash_new(65, 0, 0 /* alloc copies of lowercased keys */, nullptr);
     return appNameHash;
 }
 
-void appNameHashFini(SFGHASH* appNameHash)
+static void appNameHashFini(SFGHASH* appNameHash)
 {
     if (appNameHash)
     {
@@ -161,7 +161,7 @@ static inline char* strdupToLower(const char* source)
     return dest;
 }
 
-void appNameHashAdd(SFGHASH* appNameHash, const char* appName, void* data)
+static void appNameHashAdd(SFGHASH* appNameHash, const char* appName, void* data)
 {
     char* searchName;
     int errCode;
@@ -197,7 +197,7 @@ void appNameHashAdd(SFGHASH* appNameHash, const char* appName, void* data)
     snort_free(searchName);
 }
 
-void* appNameHashFind(SFGHASH* appNameHash, const char* appName)
+static void* appNameHashFind(SFGHASH* appNameHash, const char* appName)
 {
     void* data;
     char* searchName;

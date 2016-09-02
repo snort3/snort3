@@ -221,7 +221,7 @@ static int service_registerPattern(lua_State* L)
     return 1;
 }
 
-void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extractsInfo,
+static void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extractsInfo,
         struct Detector* data)
 {
     AppInfoTableEntry* entry;
@@ -255,7 +255,7 @@ void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extract
     }
 }
 
-void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigned extractsInfo,
+static void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigned extractsInfo,
     struct Detector* data)
 {
     AppInfoTableEntry* entry;
@@ -2558,7 +2558,7 @@ static int openAddPayloadApp(lua_State* L)
     return 1;
 }
 
-int openAddHttpPattern(lua_State* L)
+static int openAddHttpPattern(lua_State* L)
 {
     int index = 1;
     AppIdConfig* pConfig;

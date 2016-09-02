@@ -387,7 +387,7 @@ static int pattern_match(void* id, void*, int index, void* data, void*)
     return 1;
 }
 
-inline static int isImapTagChar(uint8_t tag)
+static inline int isImapTagChar(uint8_t tag)
 {
     /* Per RFC 3501
        tag char's cannot consist of ", %, { */

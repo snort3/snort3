@@ -90,7 +90,8 @@ void AppIdServiceStateCleanup(void)
     }
 }
 
-void AppIdRemoveServiceIDState(const sfip_t* ip, IpProtocol proto, uint16_t port, uint32_t level)
+#ifdef APPID_UNUSED_CODE
+static void AppIdRemoveServiceIDState(const sfip_t* ip, IpProtocol proto, uint16_t port, uint32_t level)
 {
     AppIdServiceStateKey k;
     SFXHASH* cache;
@@ -121,6 +122,7 @@ void AppIdRemoveServiceIDState(const sfip_t* ip, IpProtocol proto, uint16_t port
             (unsigned)port);
     }
 }
+#endif
 
 AppIdServiceIDState* AppIdGetServiceIDState(const sfip_t* ip, IpProtocol proto,
     uint16_t port, uint32_t level)

@@ -188,7 +188,7 @@ struct hsContext
 
 // FIXIT-H Count matches
 // FIXIT-H afix this to SdPatternOption
-int hs_match(unsigned int /*id*/, unsigned long long from,
+static int hs_match(unsigned int /*id*/, unsigned long long from,
         unsigned long long to, unsigned int /*flags*/, void *context)
 {
     hsContext* ctx = (hsContext*) context;

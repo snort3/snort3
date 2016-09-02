@@ -363,7 +363,7 @@ FwAvlTree* fwAvlInit()
     return (FwAvlTree*)snort_calloc(sizeof(FwAvlTree));
 }
 
-FwQNode* newFwQNode(FwAvlNode* treeNode)
+static FwQNode* newFwQNode(FwAvlNode* treeNode)
 {
     FwQNode* q_node = (FwQNode*)snort_calloc(sizeof(FwQNode));
 

@@ -37,8 +37,8 @@ THREAD_LOCAL ThirdPartyAppIDModule* thirdparty_appid_module = nullptr;
 // FIXIT-L: these need to be define or otherwise obtained...
 static char* defaultXffFields[] = { nullptr /* HTTP_XFF_FIELD_X_FORWARDED_FOR, */
                                     /* HTTP_XFF_FIELD_TRUE_CLIENT_IP */ };
-
-int LoadCallback(const char* const path, int /* indent */)
+#ifdef APPID_UNUSED_CODE
+static int LoadCallback(const char* const path, int /* indent */)
 {
     void* handle;
     ThirdPartyAppIDModule* tp_module;
@@ -86,6 +86,7 @@ int LoadCallback(const char* const path, int /* indent */)
     thirdparty_appid_module = tp_module;
     return 0;
 }
+#endif
 
 void ThirdPartyAppIDInit(AppIdModuleConfig* appidStaticConfig)
 {

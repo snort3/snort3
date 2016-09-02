@@ -21,6 +21,7 @@
 
 // Smb transaction commands processing
 
+#include "dce_smb_transaction.h"
 #include "dce_smb_transaction_utils.h"
 #include "dce_smb_utils.h"
 #include "dce_smb_module.h"

@@ -41,7 +41,7 @@ class SO_PUBLIC FileInfo
 {
 public:
     virtual ~FileInfo();
-    FileInfo(){};
+    FileInfo(){}
     FileInfo(const FileInfo& other);
     FileInfo& operator=(const FileInfo& other);
     uint32_t get_file_type() const;
