@@ -1,3 +1,21 @@
+16/09/02 - build 207
+
+-- ported smb file processing
+-- ported the 2.9.8 ciscometadata decoder
+-- ported the 2.9.8 double and triple vlan tagging changes
+-- use sd_pattern as a fast-pattern
+-- rewrite and fix the rpc option
+-- cleanup fragbits option implementation
+-- finish up cutover to the new http_inspect by default
+-- added appid counts for rsync
+-- added http_inspect alerts for Transfer-Encoding and Content-Encoding abuse
+-- moved file capture to offload thread
+-- numerous fixes, cleanup, and refactoring for appid
+-- numerous fixes, cleanup, and refactoring for high availability
+-- fixed regex as fast pattern with hyperscan mpse
+-- fixed http_inspect and tcp valgrind errors
+-- fixed extra auto build from dist
+
 16/08/10 - build 206
 
 -- ported appid rule option as "appids"
