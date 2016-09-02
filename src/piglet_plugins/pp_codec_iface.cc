@@ -37,6 +37,7 @@
 #include "pp_enc_state_iface.h"
 #include "pp_ip_api_iface.h"
 #include "pp_raw_buffer_iface.h"
+#include "pp_flow_iface.h"
 
 // FIXIT-M delete this, and make the IpApi arg in codec.update required
 static const ip::IpApi default_ip_api {};
@@ -156,10 +157,11 @@ static const luaL_Reg methods[] =
             auto& rb = RawBufferIface.get(L, 1); // raw_in
             auto& es = EncStateIface.get(L, 2);
             auto& b = BufferIface.get(L, 3);
+            auto& flow = FlowIface.get(L, 4);
 
             auto& self = CodecIface.get(L);
 
-            bool result = self.encode(get_data(rb), rb.size(), es, b);
+            bool result = self.encode(get_data(rb), rb.size(), es, b, &flow);
 
             lua_pushboolean(L, result);
 

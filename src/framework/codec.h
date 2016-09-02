@@ -41,6 +41,7 @@ struct TextLog;
 struct _daq_pkthdr;
 struct Packet;
 struct Layer;
+class Flow;
 enum CodecSid : uint32_t;
 
 namespace ip
@@ -329,7 +330,7 @@ public:
     virtual bool encode(const uint8_t* const /*raw_in */,
         const uint16_t /*raw_len*/,
         EncState&,
-        Buffer&)
+        Buffer&, Flow*)
     { return true; }
 
     /*

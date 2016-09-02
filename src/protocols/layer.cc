@@ -79,6 +79,24 @@ static inline const uint8_t* find_inner_layer(const Layer* lyr,
     return nullptr;
 }
 
+static inline const Layer* find_layer(const Layer* lyr,
+    uint8_t num_layers,
+    ProtocolId prot_id1,
+    ProtocolId prot_id2)
+{
+    int tmp = num_layers-1;
+    lyr = &lyr[tmp];
+
+    for (int i = num_layers - 1; i >= 0; i--)
+    {
+        if (lyr->prot_id == prot_id1 ||
+            lyr->prot_id == prot_id2)
+            return lyr;
+        lyr--;
+    }
+    return nullptr;
+}
+
 void set_packet_pointer(const Packet* const p)
 { curr_pkt = p; }
 
@@ -114,6 +132,15 @@ const eapol::EtherEapol* get_eapol_layer(const Packet* const p)
 
     return reinterpret_cast<const eapol::EtherEapol*>(
         find_inner_layer(lyr, num_layers, ProtocolId::ETHERTYPE_EAPOL));
+}
+
+const Layer* get_mpls_layer(const Packet* const p)
+{
+    uint8_t num_layers = p->num_layers;
+    const Layer* lyr = p->layers;
+
+    return find_layer(lyr, num_layers, ProtocolId::ETHERTYPE_MPLS_UNICAST,
+            ProtocolId::ETHERTYPE_MPLS_MULTICAST);
 }
 
 const vlan::VlanTagHdr* get_vlan_layer(const Packet* const p)

@@ -482,6 +482,10 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     flow->set_direction(p);
 
+    // This requires the packet direction to be set
+    if ( p->proto_bits & PROTO_BIT__MPLS )
+        flow->set_mpls_layer_per_dir(p);
+
     switch ( flow->flow_state )
     {
     case Flow::FlowState::SETUP:

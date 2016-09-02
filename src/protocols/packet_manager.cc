@@ -390,7 +390,7 @@ bool PacketManager::encode(const Packet* p,
             const Layer& l = lyrs[i];
             ProtocolIndex mapped_prot =
                 i ? CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
-            if (!CodecManager::s_protocols[mapped_prot]->encode(l.start, l.length, enc, buf))
+            if (!CodecManager::s_protocols[mapped_prot]->encode(l.start, l.length, enc, buf, p->flow))
             {
                 return false;
             }
@@ -408,7 +408,7 @@ bool PacketManager::encode(const Packet* p,
         ProtocolIndex mapped_prot =
             i ? CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
 
-        if (!CodecManager::s_protocols[mapped_prot]->encode(l.start, l.length, enc, buf))
+        if (!CodecManager::s_protocols[mapped_prot]->encode(l.start, l.length, enc, buf, p->flow))
         {
             return false;
         }

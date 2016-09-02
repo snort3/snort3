@@ -175,6 +175,8 @@ public:
     int get_expire(const Packet*);
     bool expired(const Packet*);
     void set_ttl(Packet*, bool client);
+    void set_mpls_layer_per_dir(Packet*);
+    Layer get_mpls_layer_per_dir(bool);
 
     uint32_t update_session_flags( uint32_t flags )
     {
@@ -312,6 +314,7 @@ public:  // FIXIT-M privatize if possible
     Inspector* gadget;    // service handler
     Inspector* data;
     const char* service;
+    Layer clientMplsLyr, serverMplsLyr;
 
     unsigned policy_id;
 

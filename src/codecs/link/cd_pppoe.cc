@@ -75,7 +75,7 @@ public: ~PPPoECodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override final;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-        EncState&, Buffer&) override final;
+        EncState&, Buffer&, Flow*) override final;
 
 protected:
     PPPoECodec(const char* s, PppoepktType type) :
@@ -265,7 +265,7 @@ bool PPPoECodec::decode(const RawData& raw,
  ******************************************************************/
 
 bool PPPoECodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
-    EncState&, Buffer& buf)
+    EncState&, Buffer& buf, Flow*)
 {
     if (!buf.allocate(raw_len))
         return false;

@@ -51,7 +51,7 @@ public:
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-        EncState&, Buffer&) override;
+        EncState&, Buffer&, Flow*) override;
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 };
 
@@ -83,7 +83,7 @@ bool FabricPathCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 }
 
 bool FabricPathCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
-    EncState& enc, Buffer& buf)
+    EncState& enc, Buffer& buf, Flow*)
 {
     // not raw ip -> encode layer 2
     bool raw = ( enc.flags & ENC_FLAG_RAW );

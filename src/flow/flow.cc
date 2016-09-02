@@ -95,6 +95,17 @@ void Flow::term()
 
     if ( ha_state )
         delete ha_state;
+
+    if ( clientMplsLyr.length )
+    {
+        delete[] clientMplsLyr.start;
+        clientMplsLyr.length = 0;
+    }
+    if ( serverMplsLyr.length )
+    {
+        delete[] serverMplsLyr.start;
+        serverMplsLyr.length = 0;
+    }
 }
 
 void Flow::reset(bool do_cleanup)
@@ -109,6 +120,17 @@ void Flow::reset(bool do_cleanup)
     }
 
     free_application_data();
+
+    if ( clientMplsLyr.length )
+    {
+        delete[] clientMplsLyr.start;
+        clientMplsLyr.length = 0;
+    }
+    if ( serverMplsLyr.length )
+    {
+        delete[] serverMplsLyr.start;
+        serverMplsLyr.length = 0;
+    }
 
     // FIXIT-M cleanup() winds up calling clear()
     if ( ssn_client )
@@ -144,6 +166,17 @@ void Flow::restart(bool free_flow_data)
 {
     if ( free_flow_data )
         free_application_data();
+
+    if ( clientMplsLyr.length )
+    {
+        delete[] clientMplsLyr.start;
+        clientMplsLyr.length = 0;
+    }
+    if ( serverMplsLyr.length )
+    {
+        delete[] serverMplsLyr.start;
+        serverMplsLyr.length = 0;
+    }
 
     bitop->reset();
 
@@ -428,4 +461,41 @@ void Flow::get_application_ids(AppId& serviceAppId, AppId& clientAppId,
     clientAppId  = application_ids[APP_PROTOID_CLIENT];
     payloadAppId = application_ids[APP_PROTOID_PAYLOAD];
     miscAppId    = application_ids[APP_PROTOID_MISC];
+}
+
+void Flow::set_mpls_layer_per_dir(Packet* p)
+{
+    const Layer* mpls_lyr = layer::get_mpls_layer(p);
+
+    if ( !mpls_lyr || !(mpls_lyr->start) )
+        return;
+
+    if ( p->packet_flags & PKT_FROM_CLIENT )
+    {
+        if ( !clientMplsLyr.length )
+        {
+            clientMplsLyr.length = mpls_lyr->length;
+            clientMplsLyr.prot_id = mpls_lyr->prot_id;
+            clientMplsLyr.start = new uint8_t[mpls_lyr->length];
+            memcpy((void *)clientMplsLyr.start, mpls_lyr->start, mpls_lyr->length);
+        }
+    }
+    else
+    {
+        if ( !serverMplsLyr.length )
+        {
+            serverMplsLyr.length = mpls_lyr->length;
+            serverMplsLyr.prot_id = mpls_lyr->prot_id;
+            serverMplsLyr.start = new uint8_t[mpls_lyr->length];
+            memcpy((void *)serverMplsLyr.start, mpls_lyr->start, mpls_lyr->length);
+        }
+    }
+}
+
+Layer Flow::get_mpls_layer_per_dir(bool client)
+{
+    if ( client )
+        return clientMplsLyr;
+    else
+        return serverMplsLyr;
 }

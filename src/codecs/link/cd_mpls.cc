@@ -26,6 +26,7 @@
 #include "protocols/mpls.h"
 #include "main/snort_config.h"
 #include "log/text_log.h"
+#include "utils/safec.h"
 
 #define CD_MPLS_NAME "mpls"
 #define CD_MPLS_HELP "support for multiprotocol label switching"
@@ -128,6 +129,8 @@ public:
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+        EncState&, Buffer&, Flow*) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 
 private:
@@ -229,6 +232,32 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     default:
         break;
     }
+
+    return true;
+}
+bool MplsCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
+        EncState& enc, Buffer& buf, Flow* pflow)
+{
+    uint16_t hdr_len = raw_len;
+    const uint8_t* hdr_start = raw_in;
+    if( pflow )
+    {
+        Layer mpls_lyr = pflow->get_mpls_layer_per_dir(enc.forward());
+
+        if( mpls_lyr.length )
+        {
+            hdr_len = mpls_lyr.length;
+            hdr_start = mpls_lyr.start;
+        }
+
+    }
+
+    if (!buf.allocate(hdr_len))
+        return false;
+
+    memcpy_s(buf.data(), hdr_len, hdr_start, hdr_len);
+    enc.next_ethertype = ProtocolId::ETHERTYPE_NOT_SET;
+    enc.next_proto = IpProtocol::PROTO_NOT_SET;
 
     return true;
 }

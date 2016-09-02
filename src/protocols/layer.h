@@ -100,6 +100,7 @@ SO_PUBLIC const uint8_t* get_root_layer(const Packet* const);
 SO_PUBLIC const udp::UDPHdr* get_outer_udp_lyr(const Packet* const);
 // return the inner ip layer's index in the p->layers array
 SO_PUBLIC int get_inner_ip_lyr_index(const Packet* const p);
+SO_PUBLIC const Layer* get_mpls_layer(const Packet* const p);
 
 // Two versions of this because ip_defrag:: wants to call this on
 // its rebuilt packet, not on the current packet.  Extra function

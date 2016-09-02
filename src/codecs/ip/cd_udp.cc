@@ -146,7 +146,7 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-        EncState&, Buffer&) override;
+        EncState&, Buffer&, Flow*) override;
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
@@ -346,7 +346,7 @@ void UdpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
  ******************************************************************/
 
 bool UdpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
-    EncState& enc, Buffer& buf)
+    EncState& enc, Buffer& buf, Flow*)
 {
     // If we enter this function, this packe is some sort of tunnel.
 

@@ -63,7 +63,7 @@ public:
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-        EncState&, Buffer&) override;
+        EncState&, Buffer&, Flow*) override;
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
 };
@@ -235,7 +235,7 @@ static inline bool update_GTP_length(GTPHdr* const gtph, int gtp_total_len)
 }
 
 bool GtpCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
-    EncState&, Buffer& buf)
+    EncState&, Buffer& buf, Flow*)
 {
     if (buf.allocate(raw_len))
         return false;
