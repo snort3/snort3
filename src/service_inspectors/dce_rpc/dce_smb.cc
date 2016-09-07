@@ -19,6 +19,7 @@
 // dce_smb.cc author Rashmi Pitre <rrp@cisco.com>
 
 #include "dce_smb.h"
+#include "dce_smb2.h"
 #include "dce_smb_utils.h"
 #include "dce_smb_paf.h"
 #include "dce_smb_module.h"
@@ -1493,7 +1494,7 @@ static void DCE2_SmbProcessRawData(DCE2_SmbSsnData* ssd, const uint8_t* nb_ptr, 
     if (DCE2_SsnFromClient(ssd->sd.wire_pkt))
     {
         DebugMessage(DEBUG_DCE_SMB, "Raw data: Write Raw\n");
-        DebugFormat(DEBUG_DCE_SMB, "Request Fid: 0x%04X\n", ftracker->fid);
+        DebugFormat(DEBUG_DCE_SMB, "Request Fid: 0x%04X\n", ftracker->fid_v1);
 
         if (nb_len > ssd->cur_rtracker->writeraw_remaining)
         {
@@ -1519,7 +1520,7 @@ static void DCE2_SmbProcessRawData(DCE2_SmbSsnData* ssd, const uint8_t* nb_ptr, 
     else
     {
         DebugMessage(DEBUG_DCE_SMB, "Raw data: Read Raw\n");
-        DebugFormat(DEBUG_DCE_SMB, "Response Fid: 0x%04X\n", ftracker->fid);
+        DebugFormat(DEBUG_DCE_SMB, "Response Fid: 0x%04X\n", ftracker->fid_v1);
 
         remove_rtracker = true;
     }
@@ -1638,6 +1639,12 @@ static void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
         DCE2_BufferDestroy(ssd->srv_seg);
         ssd->srv_seg = nullptr;
     }
+
+    if (ssd->smb2_requests != nullptr)
+    {
+        DCE2_Smb2CleanRequests(ssd->smb2_requests);
+        ssd->smb2_requests = nullptr;
+    }
 }
 
 Dce2SmbFlowData::Dce2SmbFlowData() : FlowData(flow_id)
@@ -1691,7 +1698,7 @@ static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf*
             dce2_smb_sess->pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
             dce2_smb_sess->uid = DCE2_SENTINEL;
             dce2_smb_sess->tid = DCE2_SENTINEL;
-            dce2_smb_sess->ftracker.fid = DCE2_SENTINEL;
+            dce2_smb_sess->ftracker.fid_v1 = DCE2_SENTINEL;
             dce2_smb_sess->rtracker.mid = DCE2_SENTINEL;
             dce2_smb_sess->max_file_depth = FileService::get_max_file_depth();
 
@@ -1854,19 +1861,9 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
     return DCE2_RET__IGNORE;
 }
 
-/********************************************************************
- * Function: DCE2_SmbProcess()
- *
- * Purpose:
- *  This is the main entry point for SMB processing.
- *
- * Arguments:
- *  DCE2_SmbSsnData * - the session data structure.
- *
- * Returns: None
- *
- ********************************************************************/
-static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
+
+// This is the main entry point for SMB1 processing.
+static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
 {
     DebugMessage(DEBUG_DCE_SMB, "Processing SMB packet.\n");
     dce2_smb_stats.smb_pkts++;
@@ -2043,10 +2040,14 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
                 smb_hdr = (SmbNtHdr*)(DCE2_BufferData(*seg_buf) + sizeof(NbssHdr));
             }
 
-            // FIXIT-L Don't support SMB2 yet
             if (SmbId(smb_hdr) == DCE2_SMB2_ID)
             {
-                ssd->sd.flags |= DCE2_SSN_FLAG__NO_INSPECT;
+                ssd->sd.flags |= DCE2_SSN_FLAG__SMB2;
+                if (!DCE2_GcIsLegacyMode((dce2SmbProtoConf*)ssd->sd.config))
+                {
+                    DCE2_Smb2InitFileTracker(&(ssd->ftracker), false, 0);
+                    DCE2_Smb2Process(ssd);
+                }
                 return;
             }
 
@@ -2231,6 +2232,44 @@ static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
             return;
         }
     }
+}
+
+// This is the main entry point for SMB processing
+void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
+{
+    if (DCE2_GcIsLegacyMode((dce2SmbProtoConf*)ssd->sd.config))
+    {
+        DCE2_Smb1Process(ssd);
+        return;
+    }
+
+    Packet* p = ssd->sd.wire_pkt;
+    DCE2_SmbVersion smb_version = DCE2_Smb2Version(p);
+    if (smb_version == DCE2_SMB_VERISON_1)
+    {
+        if ((ssd->sd.flags & DCE2_SSN_FLAG__SMB2))
+        {
+            DebugMessage(DEBUG_DCE_SMB, "SMB1 packet detected!\n");
+            ssd->sd.flags &= ~DCE2_SSN_FLAG__SMB2;
+            DCE2_SmbCleanFileTracker(&(ssd->ftracker));
+            ssd->ftracker.is_smb2 = false;
+        }
+    }
+    else if (smb_version == DCE2_SMB_VERISON_2)
+    {
+        if (!(ssd->sd.flags & DCE2_SSN_FLAG__SMB2))
+        {
+            DebugMessage(DEBUG_DCE_SMB, "SMB2 packet detected!\n");
+            DCE2_SmbCleanFileTracker(&(ssd->ftracker));
+            DCE2_Smb2InitFileTracker(&(ssd->ftracker), 0, 0);
+            ssd->sd.flags |= DCE2_SSN_FLAG__SMB2;
+        }
+    }
+
+    if (ssd->sd.flags & DCE2_SSN_FLAG__SMB2)
+        DCE2_Smb2Process(ssd);
+    else
+        DCE2_Smb1Process(ssd);
 }
 
 /********************************************************************

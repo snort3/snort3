@@ -175,6 +175,7 @@ void DCE2_SmbAbortFileAPI(DCE2_SmbSsnData*);
 void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
     DCE2_SmbFileTracker* ftracker, const uint8_t* data_ptr,
     uint32_t data_len, bool upload);
+void DCE2_FileDetect();
 
 /********************************************************************
  * Inline functions

@@ -64,6 +64,7 @@ struct dce2SmbProtoConf
     dce2SmbFileInspection smb_file_inspection;
     int16_t smb_file_depth;
     DCE2_List* smb_invalid_shares;
+    bool legacy_mode;
 };
 
 class Dce2SmbModule : public Module
@@ -141,6 +142,13 @@ inline bool DCE2_GcSmbFingerprintServer(const dce2SmbProtoConf* sc)
         return false;
     return sc->smb_fingerprint_policy
            & DCE2_SMB_FINGERPRINT_POLICY_SERVER ? true : false;
+}
+
+inline bool DCE2_GcIsLegacyMode(const dce2SmbProtoConf* sc)
+{
+    if (sc == nullptr)
+        return false;
+    return sc->legacy_mode;
 }
 
 #endif

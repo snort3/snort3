@@ -36,6 +36,7 @@ private:
     bool add_option_to_all(std::string option, const bool val);
     bool add_option_to_all(std::string option, const int val);
     bool add_option_to_type(std::string type, std::string option, std::string value);
+    bool add_option_to_type(std::string type, std::string option);
     bool parse_int_and_add_to_all(std::string opt_name, std::istringstream& stream);
     bool parse_string_and_add_to_type(std::string type, std::string opt_name,
         std::istringstream& stream);
@@ -90,6 +91,18 @@ bool Dcerpc::add_option_to_type(std::string type, std::string option, const std:
     for (int i=0; i < DcerpcServer::get_binding_id(); i++)
     {
         tmpval = add_option_to_table(table_api, "dce_" + type + std::to_string(i), option, val) &&
+            tmpval;
+    }
+
+    return tmpval;
+}
+
+bool Dcerpc::add_option_to_type(std::string type, std::string option)
+{
+    bool tmpval = add_option_to_table(table_api, "dce_" + type, option, true);
+    for (int i=0; i < DcerpcServer::get_binding_id(); i++)
+    {
+        tmpval = add_option_to_table(table_api, "dce_" + type + std::to_string(i), option, true) &&
             tmpval;
     }
 
@@ -197,7 +210,7 @@ bool Dcerpc::convert(std::istringstream& data_stream)
             tmpval = parse_string_and_add_to_type("smb", "smb_fingerprint_policy", data_stream);
 
         else if (!keyword.compare("smb_legacy_mode"))
-            tmpval = add_deleted_comment_to_table("dce_smb", "smb_legacy_mode");
+            tmpval = add_option_to_type("smb", "smb_legacy_mode");
         else
         {
             tmpval = false;

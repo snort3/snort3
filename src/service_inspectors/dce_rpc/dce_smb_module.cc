@@ -70,10 +70,18 @@ static const PegInfo dce2_smb_pegs[] =
       "total connection-oriented server fragments reassembled" },
     { "Sessions", "total smb sessions" },
     { "Packets", "total smb packets" },
+    { "Ignored bytes", "total ignored bytes" },
     { "Client segs reassembled", "total smb client segments reassembled" },
     { "Server segs reassembled", "total smb server segments reassembled" },
     { "Max outstanding requests", "total smb maximum outstanding requests" },
     { "Files processed", "total smb files processed" },
+    { "SMBv2 create", "total number of SMBv2 create packets seen" },
+    { "SMBv2 write", "total number of SMBv2 write packets seen" },
+    { "SMBv2 read", "total number of SMBv2 read packets seen" },
+    { "SMBv2 set info", "total number of SMBv2 set info packets seen" },
+    { "SMBv2 tree connect", "total number of SMBv2 tree connect packets seen" },
+    { "SMBv2 tree disconnect", "total number of SMBv2 tree disconnect packets seen" },
+    { "SMBv2 close", "total number of SMBv2 close packets seen" },
     { nullptr, nullptr }
 };
 
@@ -109,7 +117,8 @@ static const Parameter s_params[] =
       " SMB file depth for file data" },
     { "smb_invalid_shares", Parameter::PT_STRING, nullptr, nullptr,
       "SMB shares to alert on " },
-
+    { "smb_legacy_mode", Parameter::PT_BOOL, nullptr, "false",
+      "inspect only SMBv1" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -166,6 +175,8 @@ static const RuleMap dce2_smb_rules[] =
     { DCE2_SMB_INVALID_SETUP_COUNT, DCE2_SMB_INVALID_SETUP_COUNT_STR },
     { DCE2_SMB_MULTIPLE_NEGOTIATIONS, DCE2_SMB_MULTIPLE_NEGOTIATIONS_STR },
     { DCE2_SMB_EVASIVE_FILE_ATTRS, DCE2_SMB_EVASIVE_FILE_ATTRS_STR },
+    { DCE2_SMB_INVALID_FILE_OFFSET, DCE2_SMB_INVALID_FILE_OFFSET_STR },
+    { DCE2_SMB_BAD_NEXT_COMMAND_OFFSET, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET_STR },
     { 0, nullptr }
 };
 
@@ -438,6 +449,8 @@ bool Dce2SmbModule::set(const char*, Value& v, SnortConfig*)
         config.smb_file_depth = v.get_long();
     else if ( v.is("smb_invalid_shares") )
         return(set_smb_invalid_shares(config,v));
+    else if ( v.is("smb_legacy_mode"))
+        config.legacy_mode = v.get_bool();
     else
         return false;
     return true;
@@ -517,5 +530,7 @@ void print_dce2_smb_conf(dce2SmbProtoConf& config)
             LogMessage("    %s\n",share->ascii_str);
         }
     }
+    if (config.legacy_mode)
+        LogMessage("    SMB legacy mode enabled\n");
 }
 

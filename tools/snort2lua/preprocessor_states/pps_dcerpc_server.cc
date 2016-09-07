@@ -540,6 +540,13 @@ bool DcerpcServer::init_net_created_table()
             tmpval;
         table_api.open_table("dce_smb");
     }
+    if (table_api.option_exists("smb_legacy_mode"))
+    {
+        table_api.close_table();
+        tmpval = add_option_to_table(table_api,table_name["smb"], "smb_legacy_mode", true) &&
+            tmpval;
+        table_api.open_table("dce_smb");
+    }
     table_api.close_table();
 
     return tmpval;

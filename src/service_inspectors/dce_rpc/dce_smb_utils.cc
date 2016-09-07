@@ -33,7 +33,6 @@
 /********************************************************************
  * Private function prototypes
  ********************************************************************/
-static void DCE2_FileDetect();
 static void DCE2_SmbSetNewFileAPIFileTracker(DCE2_SmbSsnData* ssd);
 static void DCE2_SmbResetFileChunks(DCE2_SmbFileTracker* ssd);
 static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd);
@@ -240,8 +239,8 @@ void DCE2_SmbRemoveUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
     case DCE2_POLICY__SAMBA:
     case DCE2_POLICY__SAMBA_3_0_37:
         // Removing uid invalidates any fid that was created with it */
-        if ((ssd->ftracker.fid != DCE2_SENTINEL) &&
-            (ssd->ftracker.uid == uid))
+        if ((ssd->ftracker.fid_v1 != DCE2_SENTINEL) &&
+            (ssd->ftracker.uid_v1 == uid))
         {
             DCE2_SmbRemoveFileTracker(ssd, &ssd->ftracker);
         }
@@ -254,7 +253,7 @@ void DCE2_SmbRemoveUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
                 ftracker != nullptr;
                 ftracker = (DCE2_SmbFileTracker*)DCE2_ListNext(ssd->ftrackers))
             {
-                if (ftracker->uid == uid)
+                if (ftracker->uid_v1 == uid)
                 {
                     if (ssd->fapi_ftracker == ftracker)
                         DCE2_SmbFinishFileAPI(ssd);
@@ -391,7 +390,7 @@ DCE2_SmbFileTracker* DCE2_SmbNewFileTracker(DCE2_SmbSsnData* ssd,
         "with Uid: %hu, Tid: %hu, Fid: 0x%04X\n", uid, tid, fid);
 
     DCE2_SmbFileTracker* ftracker = nullptr;
-    if (ssd->ftracker.fid == DCE2_SENTINEL)
+    if (ssd->ftracker.fid_v1 == DCE2_SENTINEL)
     {
         ftracker = &ssd->ftracker;
         if (DCE2_SmbInitFileTracker(ssd, ftracker, is_ipc, uid, tid, (int)fid) !=
@@ -449,11 +448,13 @@ DCE2_Ret DCE2_SmbInitFileTracker(DCE2_SmbSsnData* ssd,
     if (ftracker == nullptr)
         return DCE2_RET__ERROR;
 
-    ftracker->uid = uid;
-    ftracker->tid = tid;
-    ftracker->fid = fid;
+    ftracker->uid_v1 = uid;
+    ftracker->tid_v1 = tid;
+    ftracker->fid_v1 = fid;
     ftracker->is_ipc = is_ipc;
+    ftracker->is_smb2 = false;
     ftracker->file_name = nullptr;
+    ftracker->file_name_size = 0;
     if (is_ipc)
     {
         DCE2_CoTracker* co_tracker = (DCE2_CoTracker*)snort_calloc(sizeof(DCE2_CoTracker));
@@ -493,7 +494,7 @@ DCE2_SmbFileTracker* DCE2_SmbFindFileTracker(DCE2_SmbSsnData* ssd,
         "Uid: %hu, Tid: %hu, Fid: 0x%04X ... ", uid, tid, fid);
 
     DCE2_SmbFileTracker* ftracker;
-    if ((ssd->ftracker.fid != DCE2_SENTINEL) && (ssd->ftracker.fid == (int)fid))
+    if ((ssd->ftracker.fid_v1 != DCE2_SENTINEL) && (ssd->ftracker.fid_v1 == (int)fid))
     {
         ftracker = &ssd->ftracker;
     }
@@ -516,7 +517,7 @@ DCE2_SmbFileTracker* DCE2_SmbFindFileTracker(DCE2_SmbSsnData* ssd,
     case DCE2_POLICY__SAMBA:
     case DCE2_POLICY__SAMBA_3_0_37:
         // Only Uid used to open file can be used to make a request
-        if (ftracker->uid != uid)
+        if (ftracker->uid_v1 != uid)
         {
             DebugMessage(DEBUG_DCE_SMB, "Not found.\n");
             return nullptr;
@@ -549,7 +550,7 @@ DCE2_SmbFileTracker* DCE2_SmbFindFileTracker(DCE2_SmbSsnData* ssd,
     case DCE2_POLICY__WIN2008:
     case DCE2_POLICY__WIN7:
         // Both Uid and Tid used to create file must be used to make a request
-        if ((ftracker->uid != uid) || (ftracker->tid != tid))
+        if ((ftracker->uid_v1 != uid) || (ftracker->tid_v1 != tid))
         {
             DebugMessage(DEBUG_DCE_SMB, "Not found.\n");
             return nullptr;
@@ -565,7 +566,7 @@ DCE2_SmbFileTracker* DCE2_SmbFindFileTracker(DCE2_SmbSsnData* ssd,
 
     DebugFormat(DEBUG_DCE_SMB, "Found with "
         "Uid: %hu, Tid: %hu, Fid: 0x%04X\n",
-        ftracker->uid, ftracker->tid, ftracker->fid);
+        ftracker->uid_v1, ftracker->tid_v1, ftracker->fid_v1);
     return ftracker;
 }
 
@@ -606,7 +607,7 @@ void DCE2_SmbRemoveFileTracker(DCE2_SmbSsnData* ssd, DCE2_SmbFileTracker* ftrack
     Profile profile(dce2_smb_pstat_smb_fid);
 
     DebugFormat(DEBUG_DCE_SMB,
-        "Removing file tracker with Fid: 0x%04X\n", ftracker->fid);
+        "Removing file tracker with Fid: 0x%04X\n", ftracker->fid_v1);
 
     if (ssd->fapi_ftracker == ftracker)
         DCE2_SmbFinishFileAPI(ssd);
@@ -621,7 +622,7 @@ void DCE2_SmbRemoveFileTracker(DCE2_SmbSsnData* ssd, DCE2_SmbFileTracker* ftrack
     if (ftracker == &ssd->ftracker)
         DCE2_SmbCleanFileTracker(&ssd->ftracker);
     else if (ssd->ftrackers != nullptr)
-        DCE2_ListRemove(ssd->ftrackers, (void*)(uintptr_t)ftracker->fid);
+        DCE2_ListRemove(ssd->ftrackers, (void*)(uintptr_t)ftracker->fid_v1);
 
     DCE2_SmbRemoveFileTrackerFromRequestTrackers(ssd, ftracker);
 }
@@ -633,11 +634,12 @@ void DCE2_SmbCleanFileTracker(DCE2_SmbFileTracker* ftracker)
 
     Profile profile(dce2_smb_pstat_smb_fid);
 
-    ftracker->fid = DCE2_SENTINEL;
+    ftracker->fid_v1 = DCE2_SENTINEL;
     if (ftracker->file_name != nullptr)
     {
         snort_free((void*)ftracker->file_name);
         ftracker->file_name = nullptr;
+        ftracker->file_name_size = 0;
     }
 
     if (ftracker->is_ipc)
@@ -684,7 +686,7 @@ void DCE2_SmbFileTrackerDataFree(void* data)
 
     DebugFormat(DEBUG_DCE_SMB, "Freeing file tracker: "
         "Uid: %hu, Tid: %hu, Fid: 0x%04X\n",
-        ftracker->uid, ftracker->tid, ftracker->fid);
+        ftracker->uid_v1, ftracker->tid_v1, ftracker->fid_v1);
 
     DCE2_SmbCleanFileTracker(ftracker);
     snort_free((void*)ftracker);
@@ -831,7 +833,7 @@ DCE2_SmbFileTracker* DCE2_SmbDequeueTmpFileTracker(DCE2_SmbSsnData* ssd,
         return nullptr;
     }
 
-    if (ssd->ftracker.fid == DCE2_SENTINEL)
+    if (ssd->ftracker.fid_v1 == DCE2_SENTINEL)
     {
         memcpy(&ssd->ftracker, ftracker, sizeof(DCE2_SmbFileTracker));
         snort_free((void*)ftracker);
@@ -863,7 +865,7 @@ DCE2_SmbFileTracker* DCE2_SmbDequeueTmpFileTracker(DCE2_SmbSsnData* ssd,
     }
 
     // Other values were intialized when queueing.
-    ftracker->fid = (int)fid;
+    ftracker->fid_v1 = (int)fid;
 
     return ftracker;
 }
@@ -909,8 +911,8 @@ void DCE2_SmbRemoveTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
         DCE2_ListRemove(ssd->tids, (void*)(uintptr_t)tid);
 
     // Removing Tid invalidates files created with it
-    if ((ssd->ftracker.fid != DCE2_SENTINEL)
-        && (ssd->ftracker.tid == tid))
+    if ((ssd->ftracker.fid_v1 != DCE2_SENTINEL)
+        && (ssd->ftracker.tid_v1 == tid))
     {
         DCE2_SmbRemoveFileTracker(ssd, &ssd->ftracker);
     }
@@ -923,7 +925,7 @@ void DCE2_SmbRemoveTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
             ftracker != nullptr;
             ftracker = (DCE2_SmbFileTracker*)DCE2_ListNext(ssd->ftrackers))
         {
-            if (ftracker->tid == (int)tid)
+            if (ftracker->tid_v1 == (int)tid)
             {
                 if (ssd->fapi_ftracker == ftracker)
                     DCE2_SmbFinishFileAPI(ssd);
@@ -1112,7 +1114,7 @@ DCE2_Ret DCE2_SmbProcessRequestData(DCE2_SmbSsnData* ssd,
         return DCE2_RET__ERROR;
 
     DebugFormat(DEBUG_DCE_SMB,
-        "Processing request data with Fid: 0x%04X ~~~~~~~~~~~~~~~~~\n", ftracker->fid);
+        "Processing request data with Fid: 0x%04X ~~~~~~~~~~~~~~~~~\n", ftracker->fid_v1);
 
     // Set this in case of chained commands or reassembled packet
     ssd->cur_rtracker->ftracker = ftracker;
@@ -1148,7 +1150,7 @@ DCE2_Ret DCE2_SmbProcessResponseData(DCE2_SmbSsnData* ssd,
         return DCE2_RET__ERROR;
 
     DebugFormat(DEBUG_DCE_SMB,
-        "Processing response data with Fid: 0x%04X ~~~~~~~~~~~~~~~~\n", ftracker->fid);
+        "Processing response data with Fid: 0x%04X ~~~~~~~~~~~~~~~~\n", ftracker->fid_v1);
 
     if (ftracker->is_ipc)
     {
@@ -1271,9 +1273,9 @@ void DCE2_SmbSetRdata(DCE2_SmbSsnData* ssd, uint8_t* nb_ptr, uint16_t co_len)
 
         nb_hdr->length = htons((uint16_t)nb_len);
 
-        if ((ftracker != nullptr) && (ftracker->fid > 0))
+        if ((ftracker != nullptr) && (ftracker->fid_v1 > 0))
         {
-            uint16_t fid = (uint16_t)ftracker->fid;
+            uint16_t fid = (uint16_t)ftracker->fid_v1;
             writex->smb_fid = SmbHtons(&fid);
         }
         else
@@ -1598,7 +1600,7 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
     {
         DebugFormat(DEBUG_DCE_SMB, "File API returned FAILURE "
             "for \"%s\" (0x%02X) %s\n", ftracker->file_name,
-            ftracker->fid, upload ? "UPLOAD" : "DOWNLOAD");
+            ftracker->fid_v1, upload ? "UPLOAD" : "DOWNLOAD");
 
         // Failure.  Abort tracking this file under file API
         return DCE2_RET__ERROR;
@@ -1607,7 +1609,7 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
     {
         DebugFormat(DEBUG_DCE_SMB, "File API returned SUCCESS "
             "for \"%s\" (0x%02X) %s\n", ftracker->file_name,
-            ftracker->fid, upload ? "UPLOAD" : "DOWNLOAD");
+            ftracker->fid_v1, upload ? "UPLOAD" : "DOWNLOAD");
 
         if (((position == SNORT_FILE_START) || (position == SNORT_FILE_FULL))
             && (strlen(ftracker->file_name) != 0))
@@ -1745,7 +1747,7 @@ static DCE2_Ret DCE2_SmbHandleOutOfOrderFileData(DCE2_SmbSsnData* ssd,
                 (void*)file_chunk, (void*)file_chunk)) != DCE2_RET__SUCCESS)
         {
             DebugFormat(DEBUG_DCE_SMB, "Insert file chunk failed: "
-                "0x%02X.\n", ftracker->fid);
+                "0x%02X.\n", ftracker->fid_v1);
 
             snort_free((void*)file_chunk->data);
             snort_free((void*)file_chunk);
@@ -1926,7 +1928,7 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
     }
 }
 
-static void DCE2_FileDetect()
+void DCE2_FileDetect()
 {
     Packet* top_pkt = (Packet*)DCE2_CStackTop(dce2_pkt_stack);
     if (top_pkt == nullptr)
@@ -1956,13 +1958,13 @@ static void DCE2_SmbSetNewFileAPIFileTracker(DCE2_SmbSsnData* ssd)
 
     while (ftracker != nullptr)
     {
-        if ((ftracker != ssd->fapi_ftracker) && (ftracker->fid != DCE2_SENTINEL)
+        if ((ftracker != ssd->fapi_ftracker) && (ftracker->fid_v1 != DCE2_SENTINEL)
             && !ftracker->is_ipc && ftracker->ff_sequential_only
             && (ftracker->ff_bytes_processed == 0))
         {
             DebugFormat(DEBUG_DCE_SMB, "Designating file tracker "
                 "for file API processing: \"%s\" (0x%04X)\n",
-                ftracker->file_name, (uint16_t)ftracker->fid);
+                ftracker->file_name, (uint16_t)ftracker->fid_v1);
             break;
         }
 

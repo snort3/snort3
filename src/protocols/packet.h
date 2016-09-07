@@ -255,19 +255,19 @@ struct SO_PUBLIC Packet
     bool is_from_server() const
     { return (packet_flags & PKT_FROM_SERVER) != 0; }
 
-    bool is_portscan()
+    bool is_portscan() const
     { return is_cooked() and (pseudo_type == PSEUDO_PKT_PS); }
 
-    bool is_full_pdu()
+    bool is_full_pdu() const
     { return (packet_flags & PKT_PDU_FULL) == PKT_PDU_FULL; }
 
-    bool is_pdu_start()
+    bool is_pdu_start() const
     { return (packet_flags & PKT_PDU_HEAD) != 0; }
 
-    bool has_paf_payload()
+    bool has_paf_payload() const
     { return (packet_flags & PKT_REBUILT_STREAM) or is_full_pdu(); }
 
-    bool is_rebuilt()
+    bool is_rebuilt() const
     { return (packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0; }
 
     int16_t get_application_protocol()

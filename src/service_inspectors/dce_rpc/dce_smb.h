@@ -73,6 +73,8 @@
 #define DCE2_SMB_INVALID_SETUP_COUNT 55
 #define DCE2_SMB_MULTIPLE_NEGOTIATIONS 56
 #define DCE2_SMB_EVASIVE_FILE_ATTRS 57
+#define DCE2_SMB_INVALID_FILE_OFFSET 58
+#define DCE2_SMB_BAD_NEXT_COMMAND_OFFSET 59
 
 #define DCE2_SMB_BAD_NBSS_TYPE_STR "SMB - Bad NetBIOS Session Service session type."
 #define DCE2_SMB_BAD_TYPE_STR  "SMB - Bad SMB message type."
@@ -122,6 +124,10 @@
     "SMB - Client attempted multiple dialect negotiations on session."
 #define DCE2_SMB_EVASIVE_FILE_ATTRS_STR \
     "SMB - Client attempted to create or set a file's attributes to readonly/hidden/system."
+#define DCE2_SMB_INVALID_FILE_OFFSET_STR \
+    "SMB - File offset provided is greater than file size specified"
+#define DCE2_SMB_BAD_NEXT_COMMAND_OFFSET_STR \
+    "SMB - Next command specified in SMB2 header is beyond payload boundary"
 
 #define SMB_MAX_NUM_COMS   256
 
@@ -217,6 +223,14 @@ struct dce2SmbStats
     uint64_t smb_nt_transact_subcom_stats[2][NT_TRANSACT_SUBCOM_MAX+1];
     */
     PegCount smb_files_processed;
+    /* SMB2 stats */
+    PegCount smb2_create;
+    PegCount smb2_write;
+    PegCount smb2_read;
+    PegCount smb2_set_info;
+    PegCount smb2_tree_connect;
+    PegCount smb2_tree_disconnect;
+    PegCount smb2_close;
 };
 
 extern THREAD_LOCAL dce2SmbStats dce2_smb_stats;
@@ -582,11 +596,25 @@ struct DCE2_SmbFileChunk
 
 struct DCE2_SmbFileTracker
 {
-    int fid;   // A signed integer so it can be set to sentinel
-    uint16_t uid;
-    uint16_t tid;
+    union
+    {
+        struct
+        {
+            int file_id;   // A signed integer so it can be set to sentinel
+            uint16_t u_id;
+            uint16_t tree_id;
+        } id_smb1;
+
+        struct
+        {
+            uint64_t file_id;
+        } id_smb2;
+    } file_key;
+
     bool is_ipc;
+    bool is_smb2;
     char* file_name;
+    uint16_t file_name_size;
 
     union
     {
@@ -618,6 +646,10 @@ struct DCE2_SmbFileTracker
         } file;
     } tracker;
 
+#define fid_v1                file_key.id_smb1.file_id
+#define uid_v1                file_key.id_smb1.u_id
+#define tid_v1                file_key.id_smb1.tree_id
+#define fid_v2                file_key.id_smb2.file_id
 #define fp_byte_mode   tracker.nmpipe.byte_mode
 #define fp_used        tracker.nmpipe.used
 #define fp_writex_raw  tracker.nmpipe.writex_raw
@@ -629,6 +661,22 @@ struct DCE2_SmbFileTracker
 #define ff_file_chunks        tracker.file.file_chunks
 #define ff_bytes_queued       tracker.file.bytes_queued
 #define ff_sequential_only    tracker.file.sequential_only
+};
+
+enum DCE2_SmbVersion
+{
+    DCE2_SMB_VERISON_NULL,
+    DCE2_SMB_VERISON_1,
+    DCE2_SMB_VERISON_2
+};
+
+struct Smb2Request
+{
+    uint64_t message_id;   /* identifies a message uniquely on connection */
+    uint64_t offset;       /* data offset */
+    uint64_t file_id;      /* file id */
+    struct Smb2Request* next;
+    struct Smb2Request* previous;
 };
 
 struct DCE2_SmbTransactionTracker
@@ -727,6 +775,8 @@ struct DCE2_SmbSsnData
     // The file API supports one concurrent upload/download per session.
     // This is a reference to a file tracker so shouldn't be freed.
     DCE2_SmbFileTracker* fapi_ftracker;
+
+    Smb2Request* smb2_requests;
 
 #ifdef ACTIVE_RESPONSE
     DCE2_SmbFileTracker* fb_ftracker;

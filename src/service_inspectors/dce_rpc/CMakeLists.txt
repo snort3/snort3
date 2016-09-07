@@ -8,6 +8,8 @@ set( FILE_LIST
    dce_list.cc
    dce_smb.cc 
    dce_smb.h
+   dce_smb2.cc
+   dce_smb2.h
    dce_smb_commands.cc
    dce_smb_commands.h 
    dce_smb_module.cc 

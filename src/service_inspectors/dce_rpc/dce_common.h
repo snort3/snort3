@@ -185,6 +185,7 @@ enum DCE2_SsnFlag
     DCE2_SSN_FLAG__NONE               = 0x0000,
     DCE2_SSN_FLAG__AUTODETECTED       = 0x0001,
     DCE2_SSN_FLAG__NO_INSPECT         = 0x0002,
+    DCE2_SSN_FLAG__SMB2               = 0x0004,
     DCE2_SSN_FLAG__ALL                = 0xffff
 };
 
