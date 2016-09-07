@@ -63,6 +63,18 @@ struct AppIdStats
     PegCount netbios_flows;
     PegCount pop_flows;
     PegCount rsync_flows;
+    PegCount smtp_aol_clients;
+    PegCount smtp_applemail_clients;
+    PegCount smtp_eudora_clients;
+    PegCount smtp_eudora_pro_clients;
+    PegCount smtp_evolution_clients;
+    PegCount smtp_kmail_clients;
+    PegCount smtp_lotus_notes_clients;
+    PegCount smtp_microsoft_outlook_clients;
+    PegCount smtp_microsoft_outlook_express_clients;
+    PegCount smtp_microsoft_outlook_imo_clients;
+    PegCount smtp_mutt_clients;
+    PegCount smtp_thunderbird_clients;
     PegCount smtp_flows;
     PegCount smtps_flows;
     PegCount ssh_clients;

@@ -191,6 +191,7 @@ $(util_file_list)
 endif
 
 if ENABLE_UNIT_TESTS
-SUBDIRS=service_plugins/test
+SUBDIRS=service_plugins/test \
+client_plugins/test
 endif
 

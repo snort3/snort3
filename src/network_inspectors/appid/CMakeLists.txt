@@ -198,6 +198,7 @@ endif (STATIC_INSPECTORS)
 target_include_directories ( appid PRIVATE ${APPID_INCLUDE_DIR} )
 
 add_subdirectory(service_plugins/test)
+add_subdirectory(client_plugins/test)
 
 #install (FILES ${APPID_INCLUDES}
 #    DESTINATION "${INCLUDE_INSTALL_PATH}/appid"
