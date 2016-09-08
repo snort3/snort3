@@ -23,17 +23,13 @@
 
 // File_Decomp global typedefs (used in child objects)
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <stdint.h>
 #include <string.h>
 
 #include "main/snort_types.h"
 
 /* Function return codes used internally and with caller */
-typedef enum fd_status
+enum fd_status_t
 {
     File_Decomp_DecompError = -2,  /* Error from decompression */
     File_Decomp_Error = -1,        /* Error from decompression */
@@ -43,27 +39,16 @@ typedef enum fd_status
     File_Decomp_BlockOut = 3,      /* Blocked due to lack of output space */
     File_Decomp_BlockIn = 4,       /* Blocked due to lack in input data */
     File_Decomp_Eof = 5            /* End of file located */
-} fd_status_t;
+};
 
-typedef enum file_compression_type
+enum file_compression_type_t
 {
     FILE_COMPRESSION_TYPE_NONE,
     FILE_COMPRESSION_TYPE_DEFLATE,
     FILE_COMPRESSION_TYPE_ZLIB,
     FILE_COMPRESSION_TYPE_LZMA,
     FILE_COMPRESSION_TYPE_MAX
-} file_compression_type_t;
-
-typedef struct fd_session_s* fd_session_p_t, fd_session_t;
-
-// FIXIT-L this should be unravelled so that these internal includes are not necessary
-#include "decompress/file_decomp_pdf.h"
-#include "decompress/file_decomp_swf.h"
-#include <zlib.h>
-
-#ifdef HAVE_LZMA
-#include <lzma.h>
-#endif
+};
 
 /* Potential decompression modes, passed in at initalization time. */
 #define FILE_SWF_LZMA_BIT    (0x00000001)
@@ -90,61 +75,65 @@ enum FileDecompError
 };
 
 /* Private Types */
-typedef enum file_type
+enum file_type_t
 {
     FILE_TYPE_NONE,
     FILE_TYPE_SWF,
     FILE_TYPE_PDF,
     FILE_TYPE_MAX
-} file_type_t;
+};
 
-typedef enum states
+enum fd_states_t
 {
     STATE_NEW,        /* Session created */
     STATE_READY,      /* Session created and ready for content, no file/decomp selected */
     STATE_ACTIVE,     /* Decompressor inited and ready for content */
     STATE_COMPLETE    /* Decompression completed */
-} fd_states_t;
+};
 
 /* Primary file decompression session state context */
-struct fd_session_s
+struct fd_session_t
 {
-    uint8_t* Next_In;   /* next input byte */
-    uint32_t Avail_In;  /* number of bytes available at next_in */
-    uint32_t Total_In;  /* total number of input bytes read so far */
+    // FIXIT-L replace with abstract base class pointer used for
+    // PDF or SWF subclass and eliminate switches on File_Type
+    union
+    {
+        struct fd_PDF_t* PDF;
+        struct fd_SWF_t* SWF;
+    };
 
-    uint8_t* Next_Out;  /* next output byte should be put there */
-    uint32_t Avail_Out; /* remaining free space at next_out */
-    uint32_t Total_Out; /* total number of bytes output so far */
+    uint8_t* Next_In;    // next input byte
+    uint8_t* Next_Out;   // next output byte should be put there
+    uint8_t* Buffer;     // pointer to decompresiion buffer
 
-    /* Internal buffer setup by _Init().  App can overide. */
-    uint8_t* Buffer;    /* pointer to decompresiion buffer */
-    uint32_t Buffer_Len; /* length of decompression buffer */
-
-    /* Configuration settings */
-    uint32_t Compr_Depth;
-    uint32_t Decompr_Depth;
-    uint32_t Modes;     /* Bit mapped set of potential file/algo modes */
-
-    /* Alerting callback */
+    // Alerting callback
     void (* Alert_Callback)(void* Context, int Event);
     void* Alert_Context;
 
-    /* Internal State */
-    uint8_t File_Type;   /* Active file type */
-    uint8_t Decomp_Type; /* Active decompression type */
-    uint8_t Sig_State;   /* Sig search state machine */
-    uint8_t State;       /* main state machine */
+    uint32_t Avail_In;   // number of bytes available at next_in
+    uint32_t Total_In;   // total number of input bytes read so far
 
-    union
-    {
-        fd_PDF_t PDF;
-        fd_SWF_t SWF;
-    } Decomp_State;
+    uint32_t Avail_Out;  // remaining free space at next_out
+    uint32_t Total_Out;  // total number of bytes output so far
 
-    /* Specific event indicated by DecomprError return */
-    int Error_Event;
+    uint32_t Buffer_Len;  // length of decompression buffer
+
+    // Configuration settings
+    uint32_t Compr_Depth;
+    uint32_t Decompr_Depth;
+    uint32_t Modes;      // Bit mapped set of potential file/algo modes
+
+    int Error_Event;     // Specific event indicated by DecomprError return
+
+    // Internal State
+    uint8_t File_Type;   // Active file type
+    uint8_t Decomp_Type; // Active decompression type
+    uint8_t Sig_State;   // Sig search state machine
+    uint8_t State;       // main state machine
 };
+
+// FIXIT-L don't obfuscate pointers
+typedef fd_session_t* fd_session_p_t;
 
 /* Macros */
 

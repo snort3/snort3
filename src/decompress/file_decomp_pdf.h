@@ -22,7 +22,10 @@
 #ifndef FILE_DECOMP_PDF_H
 #define FILE_DECOMP_PDF_H
 
+#include <stdint.h>
 #include <zlib.h>
+
+#include "file_decomp.h"
 
 #define ELEM_BUF_LEN        (12)
 #define FILTER_SPEC_BUF_LEN (40)
@@ -31,21 +34,21 @@
 /* FIXIT-L Other than the API prototypes, the other parts of this header should
    be private to file_decomp_pdf. */
 
-typedef enum pdf_states
+enum fd_PDF_States
 {
     PDF_STATE_NEW,
     PDF_STATE_LOCATE_STREAM,     /* Found sig bytes, looking for dictionary & stream*/
     PDF_STATE_INIT_STREAM,       /* Init stream */
     PDF_STATE_PROCESS_STREAM     /* Processing stream */
-} fd_PDF_States;
+};
 
-typedef struct fd_PDF_Parse_Stack_s
+struct fd_PDF_Parse_Stack_t
 {
     uint8_t State;
     uint8_t Sub_State;
-} fd_PDF_Parse_Stack_t, * fd_PDF_Parse_Stack_p_t;
+};
 
-typedef struct fd_PDF_Parse_s
+struct fd_PDF_Parse_t
 {
     uint8_t Dict_Nesting_Cnt;
     uint8_t Elem_Buf[ELEM_BUF_LEN];
@@ -58,14 +61,14 @@ typedef struct fd_PDF_Parse_s
     uint32_t Gen_Number;
     uint8_t Sub_State;
     uint8_t State;
-} fd_PDF_Parse_t, * fd_PDF_Parse_p_t;
+};
 
-typedef struct fd_PDF_Deflate_s
+struct fd_PDF_Deflate_t
 {
     z_stream StreamDeflate;
-} fd_PDF_Deflate_t;
+};
 
-typedef struct fd_PDF_s
+struct fd_PDF_t
 {
     union
     {
@@ -74,7 +77,12 @@ typedef struct fd_PDF_s
     fd_PDF_Parse_t Parse;
     uint8_t Decomp_Type;
     uint8_t State;
-} fd_PDF_t, * fd_PDF_p_t;
+};
+
+// FIXIT-L don't obfuscate pointers
+typedef fd_PDF_Parse_Stack_t* fd_PDF_Parse_Stack_p_t;
+typedef fd_PDF_Parse_t* fd_PDF_Parse_p_t;
+typedef fd_PDF_t* fd_PDF_p_t;
 
 /* API Functions */
 

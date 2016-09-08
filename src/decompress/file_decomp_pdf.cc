@@ -18,7 +18,6 @@
 
 // file_decomp_pdf.cc author Ed Borgoyn <eborgoyn@sourcefire.com>
 
-#include "file_decomp.h"
 #include "file_decomp_pdf.h"
 
 #ifdef HAVE_CONFIG_H
@@ -31,6 +30,7 @@
 #include <zlib.h>
 
 #include "main/thread.h"
+#include "utils/util.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
@@ -172,7 +172,7 @@ static inline void Process_One_Filter(fd_session_p_t SessionPtr, uint8_t* Token,
         {
             /* Found our first matching, supported filter type */
             SessionPtr->Decomp_Type = Comp_Type;
-            SessionPtr->Decomp_State.PDF.Decomp_Type = Comp_Type;
+            SessionPtr->PDF->Decomp_Type = Comp_Type;
         }
     }
     else
@@ -198,7 +198,7 @@ static fd_status_t Process_Filter_Spec(fd_session_p_t SessionPtr)
     int Index;
 
     fd_status_t Ret_Code = File_Decomp_OK;
-    fd_PDF_Parse_p_t p = &(SessionPtr->Decomp_State.PDF.Parse);
+    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
 
     /* Assume the 'no compression' result */
     SessionPtr->Decomp_Type = FILE_COMPRESSION_TYPE_NONE;
@@ -281,7 +281,7 @@ static fd_status_t Process_Filter_Spec(fd_session_p_t SessionPtr)
 
 static inline void Init_Parser(fd_session_p_t SessionPtr)
 {
-    fd_PDF_Parse_p_t p = &(SessionPtr->Decomp_State.PDF.Parse);
+    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
     /* The parser starts in the P_COMMENT state we start
        parsing the file just after the signature is located
        and the signature is syntactially a comment. */
@@ -337,7 +337,7 @@ static inline fd_PDF_Parse_Stack_p_t Get_Previous_State(fd_PDF_Parse_p_t p)
 static inline fd_status_t Handle_State_DICT_OBJECT(fd_session_p_t SessionPtr, uint8_t c)
 {
     char Filter_Tok[] = TOK_DICT_FILT;
-    fd_PDF_Parse_p_t p = &(SessionPtr->Decomp_State.PDF.Parse);
+    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
 
     /* enter with c being an EOL from the ind obj state */
     if ( p->State != P_DICT_OBJECT )
@@ -548,7 +548,7 @@ static inline fd_status_t Handle_State_IND_OBJ(fd_session_p_t SessionPtr, uint8_
     static THREAD_LOCAL uint8_t Stream_Token[] = { TOK_STRM_OPEN };
     static THREAD_LOCAL uint8_t Stream_End_Token[] = { TOK_STRM_CLOSE };
 
-    fd_PDF_Parse_p_t p = &(SessionPtr->Decomp_State.PDF.Parse);
+    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
 
     /* Upon initial entry, setup state context */
     if ( p->State != P_IND_OBJ )
@@ -729,7 +729,7 @@ static inline fd_status_t Handle_State_XREF(fd_session_p_t SessionPtr, uint8_t c
 {
     static THREAD_LOCAL const uint8_t* Xref_Tok = (uint8_t*)TOK_XRF_STARTXREF;
     uint8_t Xref_End_Tok[] = { TOK_XRF_END };
-    fd_PDF_Parse_p_t p = &(SessionPtr->Decomp_State.PDF.Parse);
+    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
 
     if ( p->State != P_XREF )
     {
@@ -788,7 +788,7 @@ static inline fd_status_t Handle_State_XREF(fd_session_p_t SessionPtr, uint8_t c
 
 static inline fd_status_t Handle_State_START(fd_session_p_t SessionPtr, uint8_t c)
 {
-    fd_PDF_Parse_p_t p = &(SessionPtr->Decomp_State.PDF.Parse);
+    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
     /* Skip any whitespace.  This will include
        the LF as part of a <CRLF> EOL token. */
     if ( IS_WHITESPACE(c) )
@@ -832,7 +832,7 @@ static inline fd_status_t Handle_State_START(fd_session_p_t SessionPtr, uint8_t 
 /* Parse file until input blocked or stream located. */
 static fd_status_t Locate_Stream_Beginning(fd_session_p_t SessionPtr)
 {
-    fd_PDF_Parse_p_t p = &(SessionPtr->Decomp_State.PDF.Parse);
+    fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
     fd_status_t Ret_Code = File_Decomp_OK;
     uint8_t c;
 
@@ -907,7 +907,7 @@ static fd_status_t Locate_Stream_Beginning(fd_session_p_t SessionPtr)
 
 static fd_status_t Init_Stream(fd_session_p_t SessionPtr)
 {
-    fd_PDF_p_t StPtr = &(SessionPtr->Decomp_State.PDF);
+    fd_PDF_p_t StPtr = SessionPtr->PDF;
 
     switch ( StPtr->Decomp_Type )
     {
@@ -942,7 +942,7 @@ static fd_status_t Init_Stream(fd_session_p_t SessionPtr)
 
 static fd_status_t Decomp_Stream(fd_session_p_t SessionPtr)
 {
-    fd_PDF_p_t StPtr = &(SessionPtr->Decomp_State.PDF);
+    fd_PDF_p_t StPtr = SessionPtr->PDF;
 
     /* No reason to decompress if there's no input or
        room for output. */
@@ -989,10 +989,10 @@ static fd_status_t Decomp_Stream(fd_session_p_t SessionPtr)
 static fd_status_t Close_Stream(fd_session_p_t SessionPtr)
 {
     /* Put the parser state back where it was interrupted */
-    if ( Pop_State(&(SessionPtr->Decomp_State.PDF.Parse) ) == File_Decomp_Error )
+    if ( Pop_State(&(SessionPtr->PDF->Parse) ) == File_Decomp_Error )
         return( File_Decomp_Error );
 
-    SessionPtr->Decomp_State.PDF.State = PDF_STATE_LOCATE_STREAM;
+    SessionPtr->PDF->State = PDF_STATE_LOCATE_STREAM;
 
     return( File_Decomp_OK );
 }
@@ -1005,7 +1005,7 @@ fd_status_t File_Decomp_End_PDF(fd_session_p_t SessionPtr)
     if ( SessionPtr == NULL )
         return( File_Decomp_Error );
 
-    StPtr = &(SessionPtr->Decomp_State.PDF);
+    StPtr = SessionPtr->PDF;
 
     if ( (StPtr->State != PDF_STATE_INIT_STREAM) &&
         (StPtr->State != PDF_STATE_PROCESS_STREAM) )
@@ -1038,12 +1038,12 @@ fd_status_t File_Decomp_End_PDF(fd_session_p_t SessionPtr)
 /* From caller, initialize PDF state machine. */
 fd_status_t File_Decomp_Init_PDF(fd_session_p_t SessionPtr)
 {
-    fd_PDF_p_t StPtr;
-
     if ( SessionPtr == NULL )
         return( File_Decomp_Error );
 
-    StPtr = &(SessionPtr->Decomp_State.PDF);
+    SessionPtr->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
+
+    fd_PDF_p_t StPtr = SessionPtr->PDF;
 
     Init_Parser(SessionPtr);
 
@@ -1066,7 +1066,7 @@ fd_status_t File_Decomp_PDF(fd_session_p_t SessionPtr)
     /* Process all data until blocked */
     while ( 1 )
     {
-        switch ( SessionPtr->Decomp_State.PDF.State )
+        switch ( SessionPtr->PDF->State )
         {
         case ( PDF_STATE_LOCATE_STREAM ):
         {
@@ -1090,7 +1090,7 @@ fd_status_t File_Decomp_PDF(fd_session_p_t SessionPtr)
             }
             else
             {
-                SessionPtr->Decomp_State.PDF.State = PDF_STATE_INIT_STREAM;
+                SessionPtr->PDF->State = PDF_STATE_INIT_STREAM;
                 /* If we've located the beginning of stream, set new state
                    and fall into next state */
             }
@@ -1109,7 +1109,7 @@ fd_status_t File_Decomp_PDF(fd_session_p_t SessionPtr)
                 break;
             }
 
-            SessionPtr->Decomp_State.PDF.State = PDF_STATE_PROCESS_STREAM;
+            SessionPtr->PDF->State = PDF_STATE_PROCESS_STREAM;
             /* INTENTIONAL FALL-THROUGH INTO PDF_STATE_PROCESS_STREAM CASE. */
         }
 
@@ -1176,8 +1176,10 @@ TEST_CASE("File_Decomp_PDF-not_pdf-error", "[file_decomp]")
     fd_session_p_t p_s;
 
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
     p_s->File_Type = FILE_TYPE_SWF;
     REQUIRE(File_Decomp_PDF(p_s) == File_Decomp_Error);
+    snort_free(p_s->PDF);
 }
 
 TEST_CASE("File_Decomp_PDF-bad_state-error", "[file_decomp]")
@@ -1185,9 +1187,11 @@ TEST_CASE("File_Decomp_PDF-bad_state-error", "[file_decomp]")
     fd_session_p_t p_s;
 
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
     p_s->File_Type = FILE_TYPE_PDF;
-    p_s->Decomp_State.PDF.State = PDF_STATE_NEW;
+    p_s->PDF->State = PDF_STATE_NEW;
     REQUIRE(File_Decomp_PDF(p_s) == File_Decomp_Error);
+    snort_free(p_s->PDF);
 }
 
 TEST_CASE("File_Decomp_End_PDF-bad_type-error", "[file_decomp]")
@@ -1195,9 +1199,11 @@ TEST_CASE("File_Decomp_End_PDF-bad_type-error", "[file_decomp]")
     fd_session_p_t p_s;
 
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
-    p_s->Decomp_State.PDF.Decomp_Type = FILE_COMPRESSION_TYPE_LZMA;
-    p_s->Decomp_State.PDF.State = PDF_STATE_PROCESS_STREAM;
+    p_s->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
+    p_s->PDF->Decomp_Type = FILE_COMPRESSION_TYPE_LZMA;
+    p_s->PDF->State = PDF_STATE_PROCESS_STREAM;
     REQUIRE(File_Decomp_End_PDF(p_s) == File_Decomp_Error);
+    snort_free(p_s->PDF);
 }
 
 #endif

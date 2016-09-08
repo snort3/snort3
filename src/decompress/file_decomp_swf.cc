@@ -18,7 +18,6 @@
 
 // file_decomp_swf.cc author Ed Borgoyn <eborgoyn@sourcefire.com>
 
-#include "file_decomp.h"
 #include "file_decomp_swf.h"
 
 #ifdef HAVE_CONFIG_H
@@ -31,6 +30,8 @@
 #ifdef HAVE_LZMA
 #include <lzma.h>
 #endif
+
+#include "utils/util.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
@@ -47,13 +48,13 @@
 static fd_status_t File_Decomp_Process_LZMA_Header(fd_session_p_t SessionPtr)
 {
     uint8_t LZMA_Header[LZMA_HEADER_LEN];
-    uint8_t* SWF_Header = SessionPtr->Decomp_State.SWF.Header_Bytes;
+    uint8_t* SWF_Header = SessionPtr->SWF->Header_Bytes;
     uint64_t LZMA_Uncomp_Len;
     uint32_t SWF_Uncomp_Len;
     int idx;
 
     lzma_ret l_ret;
-    lzma_stream* l_s = &(SessionPtr->Decomp_State.SWF.StreamLZMA);
+    lzma_stream* l_s = &(SessionPtr->SWF->StreamLZMA);
 
     SWF_Uncomp_Len = 0;
     /* Read little-endian into value */
@@ -109,7 +110,7 @@ static fd_status_t Decomp(fd_session_p_t SessionPtr)
     case FILE_COMPRESSION_TYPE_ZLIB:
     {
         int z_ret;
-        z_stream* z_s = &(SessionPtr->Decomp_State.SWF.StreamZLIB);
+        z_stream* z_s = &(SessionPtr->SWF->StreamZLIB);
 
         SYNC_IN(z_s)
 
@@ -134,7 +135,7 @@ static fd_status_t Decomp(fd_session_p_t SessionPtr)
     case FILE_COMPRESSION_TYPE_LZMA:
     {
         lzma_ret l_ret;
-        lzma_stream* l_s = &(SessionPtr->Decomp_State.SWF.StreamLZMA);
+        lzma_stream* l_s = &(SessionPtr->SWF->StreamLZMA);
 
         SYNC_IN(l_s)
 
@@ -173,7 +174,7 @@ fd_status_t File_Decomp_End_SWF(fd_session_p_t SessionPtr)
     case FILE_COMPRESSION_TYPE_ZLIB:
     {
         int z_ret;
-        z_stream* z_s = &(SessionPtr->Decomp_State.SWF.StreamZLIB);
+        z_stream* z_s = &(SessionPtr->SWF->StreamZLIB);
 
         z_ret = inflateEnd(z_s);
 
@@ -188,7 +189,7 @@ fd_status_t File_Decomp_End_SWF(fd_session_p_t SessionPtr)
 #ifdef HAVE_LZMA
     case FILE_COMPRESSION_TYPE_LZMA:
     {
-        lzma_stream* l_s = &(SessionPtr->Decomp_State.SWF.StreamLZMA);
+        lzma_stream* l_s = &(SessionPtr->SWF->StreamLZMA);
 
         lzma_end(l_s);
 
@@ -207,10 +208,12 @@ fd_status_t File_Decomp_Init_SWF(fd_session_p_t SessionPtr)
     if ( SessionPtr == NULL )
         return( File_Decomp_Error );
 
+    SessionPtr->SWF = (fd_SWF_t*)snort_calloc(sizeof(fd_SWF_t));
+
     /* Indicate the we need to look for the remainder of the
        uncompressed header. */
-    SessionPtr->Decomp_State.SWF.State = SWF_STATE_GET_HEADER;
-    SessionPtr->Decomp_State.SWF.Header_Cnt = 0;
+    SessionPtr->SWF->State = SWF_STATE_GET_HEADER;
+    SessionPtr->SWF->Header_Cnt = 0;
 
     switch ( SessionPtr->Decomp_Type )
     {
@@ -219,10 +222,10 @@ fd_status_t File_Decomp_Init_SWF(fd_session_p_t SessionPtr)
         int z_ret;
         z_stream* z_s;
 
-        SessionPtr->Decomp_State.SWF.Header_Len =
+        SessionPtr->SWF->Header_Len =
             SWF_VER_LEN + SWF_UCL_LEN;
 
-        z_s = &(SessionPtr->Decomp_State.SWF.StreamZLIB);
+        z_s = &(SessionPtr->SWF->StreamZLIB);
 
         memset( (char*)z_s, 0, sizeof(z_stream));
 
@@ -246,10 +249,10 @@ fd_status_t File_Decomp_Init_SWF(fd_session_p_t SessionPtr)
         lzma_ret l_ret;
         lzma_stream* l_s;
 
-        SessionPtr->Decomp_State.SWF.Header_Len =
+        SessionPtr->SWF->Header_Len =
             SWF_VER_LEN + SWF_UCL_LEN + SWF_LZMA_CML_LEN + SWF_LZMA_PRP_LEN;
 
-        l_s = &(SessionPtr->Decomp_State.SWF.StreamLZMA);
+        l_s = &(SessionPtr->SWF->StreamLZMA);
 
         memset( (char*)l_s, 0, sizeof(lzma_stream));
 
@@ -281,14 +284,14 @@ fd_status_t File_Decomp_SWF(fd_session_p_t SessionPtr)
         return( File_Decomp_Error );
 
     /* Are we still looking for the balance of the uncompressed header? */
-    switch ( SessionPtr->Decomp_State.SWF.State )
+    switch ( SessionPtr->SWF->State )
     {
     case ( SWF_STATE_GET_HEADER ):
     {
-        uint8_t* Cnt_Ptr = &(SessionPtr->Decomp_State.SWF.Header_Cnt);      // For convenience
-        uint8_t* Len_Ptr = &(SessionPtr->Decomp_State.SWF.Header_Len);      // For convenience
+        uint8_t& Cnt_Ptr = SessionPtr->SWF->Header_Cnt;
+        uint8_t& Len_Ptr = SessionPtr->SWF->Header_Len;
 
-        while ( *Len_Ptr > *Cnt_Ptr )
+        while ( Len_Ptr > Cnt_Ptr )
         {
             if ( SessionPtr->Avail_In == 0 )
                 return( File_Decomp_BlockIn );
@@ -296,14 +299,14 @@ fd_status_t File_Decomp_SWF(fd_session_p_t SessionPtr)
             if ( SessionPtr->Avail_Out == 0 )
                 return( File_Decomp_BlockOut );
 
-            SessionPtr->Decomp_State.SWF.Header_Bytes[*Cnt_Ptr] =
+            SessionPtr->SWF->Header_Bytes[Cnt_Ptr] =
                 *(SessionPtr->Next_In);
 
             (void)Move_1(SessionPtr);
-            *Cnt_Ptr += 1;
+            ++Cnt_Ptr;
         }
 
-        SessionPtr->Decomp_State.SWF.State = SWF_STATE_PROC_HEADER;
+        SessionPtr->SWF->State = SWF_STATE_PROC_HEADER;
         /* INTENTIONAL FALL-THROUGH INTO SWF_STATE_PROC_HEADER CASE. */
     }
     case ( SWF_STATE_PROC_HEADER ):
@@ -317,7 +320,7 @@ fd_status_t File_Decomp_SWF(fd_session_p_t SessionPtr)
         }
 #endif
 
-        SessionPtr->Decomp_State.SWF.State = SWF_STATE_DATA;
+        SessionPtr->SWF->State = SWF_STATE_DATA;
         /* INTENTIONAL FALL-THROUGH INTO SWF_STATE_DATA CASE. */
     }
     case ( SWF_STATE_DATA ):
@@ -363,8 +366,10 @@ TEST_CASE("File_Decomp_SWF-not_swf-error", "[file_decomp]")
     fd_session_p_t p_s;
 
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->SWF = (fd_SWF_t*)snort_calloc(sizeof(fd_SWF_t));
     p_s->File_Type = FILE_TYPE_PDF;
     REQUIRE(File_Decomp_SWF(p_s) == File_Decomp_Error);
+    snort_free(p_s->SWF);
 }
 
 TEST_CASE("File_Decomp_SWF-bad_state-error", "[file_decomp]")
@@ -372,9 +377,11 @@ TEST_CASE("File_Decomp_SWF-bad_state-error", "[file_decomp]")
     fd_session_p_t p_s;
 
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->SWF = (fd_SWF_t*)snort_calloc(sizeof(fd_SWF_t));
     p_s->File_Type = FILE_TYPE_SWF;
-    p_s->Decomp_State.SWF.State = SWF_STATE_NEW;
+    p_s->SWF->State = SWF_STATE_NEW;
     REQUIRE(File_Decomp_SWF(p_s) == File_Decomp_Error);
+    snort_free(p_s->SWF);
 }
 
 TEST_CASE("File_Decomp_Init_SWF-bad_type-error", "[file_decomp]")
@@ -382,8 +389,10 @@ TEST_CASE("File_Decomp_Init_SWF-bad_type-error", "[file_decomp]")
     fd_session_p_t p_s;
 
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->SWF = (fd_SWF_t*)snort_calloc(sizeof(fd_SWF_t));
     p_s->Decomp_Type = FILE_COMPRESSION_TYPE_DEFLATE;
     REQUIRE(File_Decomp_Init_SWF(p_s) == File_Decomp_Error);
+    snort_free(p_s->SWF);
 }
 
 TEST_CASE("File_Decomp_End_SWF-bad_type-error", "[file_decomp]")
@@ -391,8 +400,10 @@ TEST_CASE("File_Decomp_End_SWF-bad_type-error", "[file_decomp]")
     fd_session_p_t p_s;
 
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->SWF = (fd_SWF_t*)snort_calloc(sizeof(fd_SWF_t));
     p_s->Decomp_Type = FILE_COMPRESSION_TYPE_DEFLATE;
     REQUIRE(File_Decomp_End_SWF(p_s) == File_Decomp_Error);
+    snort_free(p_s->SWF);
 }
 
 #endif

@@ -18,16 +18,24 @@
 
 // file_decomp.cc author Ed Borgoyn <eborgoyn@sourcefire.com>
 
+#include "file_decomp.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "file_decomp.h"
+#ifdef HAVE_LZMA
+#include <lzma.h>
+#endif
+
+#include <zlib.h>
+
 #include "main/snort_types.h"
 #include "utils/util.h"
 #include "detection/detection_util.h"
-#include "decompress/file_decomp_pdf.h"
-#include "decompress/file_decomp_swf.h"
+
+#include "file_decomp_pdf.h"
+#include "file_decomp_swf.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
@@ -413,6 +421,21 @@ fd_status_t File_Decomp_StopFree(fd_session_p_t SessionPtr)
 
 void File_Decomp_Free(fd_session_p_t SessionPtr)
 {
+    assert(SessionPtr);
+
+    switch ( SessionPtr->File_Type )
+    {
+    case FILE_TYPE_SWF:
+        assert(SessionPtr->SWF);
+        snort_free(SessionPtr->SWF);
+        break;
+
+    case FILE_TYPE_PDF:
+        assert(SessionPtr->PDF);
+        snort_free(SessionPtr->PDF);
+        break;
+    }
+
     delete SessionPtr;
 }
 

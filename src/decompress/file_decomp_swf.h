@@ -26,10 +26,14 @@
 #include "config.h"
 #endif
 
+#include <stdint.h>
 #include <zlib.h>
+
 #ifdef HAVE_LZMA
 #include <lzma.h>
 #endif
+
+#include "file_decomp.h"
 
 /* FIXIT-L Other than the API prototypes, the other parts of this header should
    be private to file_decomp_swf. */
@@ -54,15 +58,15 @@
 
 /* Types */
 
-typedef enum swf_states
+enum fd_SWF_States
 {
     SWF_STATE_NEW,
     SWF_STATE_GET_HEADER,     /* Found sig bytes, looking for end of uncomp header */
     SWF_STATE_PROC_HEADER,    /* Found header bytes, now process the header */
     SWF_STATE_DATA            /* Done with header, looking for start of data */
-} fd_SWF_States;
+};
 
-typedef struct fd_SWF_s
+struct fd_SWF_t
 {
     z_stream StreamZLIB;
 #ifdef HAVE_LZMA
@@ -72,7 +76,7 @@ typedef struct fd_SWF_s
     uint8_t State;
     uint8_t Header_Len;
     uint8_t Header_Cnt;
-} fd_SWF_t;
+};
 
 /* API Functions */
 
