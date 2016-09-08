@@ -177,6 +177,7 @@ int IpSession::process(Packet* p)
         if ( flow_con->expected_session(flow, p))
             return 0;
 #endif
+        IpHAManager::process_deletion(flow);
     }
 
     if ( stream.blocked_session(flow, p) || stream.ignored_session(flow, p) )

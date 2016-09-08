@@ -22,6 +22,7 @@
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "sfip/sf_ip.h"
+#include "stream/tcp/tcp_ha.h"
 
 #include "tcp_stream_session.h"
 
@@ -437,6 +438,7 @@ void TcpStreamSession::clear()
     if ( tcp_init )
         // this does NOT flush data
         clear_session( true, false, false );
+    TcpHAManager::process_deletion(flow);
 }
 
 void TcpStreamSession::set_splitter(bool to_server, StreamSplitter* ss)

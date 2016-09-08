@@ -200,6 +200,7 @@ int UdpSession::process(Packet* p)
         flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
         udpStats.created++; // FIXIT-M is this correct? will mess with calc of current sessions
         udpStats.timeouts++;
+        UdpHAManager::process_deletion(flow);
     }
 
     ProcessUdp(flow, p, pc, nullptr);

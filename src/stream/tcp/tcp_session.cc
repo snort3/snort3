@@ -1043,6 +1043,7 @@ void TcpSession::cleanup_session_if_expired(Packet* p)
             clear_session(true, true, false, p);
 
         tcpStats.timeouts++;
+        TcpHAManager::process_deletion(flow);
     }
 }
 
