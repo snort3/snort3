@@ -42,12 +42,8 @@ static int s_bind_return = 0;
 static int s_listen_return = 0;
 static int s_accept_return = 2;
 static int s_connect_return = 1;
-static TcpConnectorMsgHandle* s_get_return = nullptr;
-static TcpConnectorMsgHandle* s_put_storage = nullptr;
-static bool s_put_return = false;
 static bool s_poll_error = false;
 static bool s_poll_undesirable = false;
-static bool s_put_called = false;
 static bool s_poll_data_available = false;
 static int s_rec_error = 0;
 static int s_rec_error_size = -1;
@@ -151,11 +147,8 @@ static void set_normal_status()
     s_connect_return = 1;
     s_send_ret_header = sizeof(TcpConnectorMsgHdr);
     s_send_ret_other = 0;
-    s_get_return = nullptr;
-    s_put_return = false;
     s_poll_error = false;
     s_poll_undesirable = false;
-    s_put_called = false;
     s_poll_data_available = false;
     s_rec_error = 0;
     s_rec_error_size = -1;
@@ -186,17 +179,6 @@ bool TcpConnectorModule::end(const char*, int, SnortConfig*) { return true; }
 const PegInfo* TcpConnectorModule::get_pegs() const { return nullptr; }
 
 PegCount* TcpConnectorModule::get_counts() const { return nullptr; }
-
-template<>
-bool TcpConnector::ReceiveRing::put(TcpConnectorMsgHandle* handle)
-{
-    s_put_called = true;
-    s_put_storage = handle;
-    return s_put_return;
-}
-template<>
-TcpConnectorMsgHandle* TcpConnector::ReceiveRing::get(TcpConnectorMsgHandle*) { return s_get_return; }
-
 
 TEST_GROUP(tcp_connector)
 {
@@ -486,7 +468,10 @@ TEST(tcp_connector_no_tinit_tterm_call, poll_undesirable)
     s_rec_message_size = size; // also trigger the read action
     TcpConnector* tcpc = (TcpConnector*)connector;
     tcpc->process_receive();
-    CHECK(s_put_called == false);
+    tcpc->process_receive();
+    tcpc->process_receive();
+    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
+    CHECK(handle == nullptr);
     delete[] message;
 }
 
@@ -506,7 +491,10 @@ TEST(tcp_connector_no_tinit_tterm_call, poll_error)
     s_rec_message_size = size; // also trigger the read action
     TcpConnector* tcpc = (TcpConnector*)connector;
     tcpc->process_receive();
-    CHECK(s_put_called == false);
+    tcpc->process_receive();
+    tcpc->process_receive();
+    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
+    CHECK(handle == nullptr);
     delete[] message;
 }
 
@@ -649,7 +637,8 @@ TEST(tcp_connector_tinit_tterm_call, receive)
     s_rec_message_size = size; // also trigger the read action
     s_poll_data_available = true;
     tcpc->process_receive();
-    s_get_return = s_put_storage; 
+    tcpc->process_receive();
+    tcpc->process_receive();
     TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
     ConnectorMsg* conn_msg = tcpc->get_connector_msg(handle);
 
@@ -658,7 +647,6 @@ TEST(tcp_connector_tinit_tterm_call, receive)
     CHECK(memcmp( handle->connector_msg.data, (message+sizeof(TcpConnectorMsgHdr)), 10) == 0);
     tcpc->discard_message(handle);
     delete[] message;
-    s_get_return = nullptr;
     handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
     CHECK(handle == nullptr);
 }
@@ -679,7 +667,10 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_wrong_version)
     CHECK(connector != nullptr);
     TcpConnector* tcpc = (TcpConnector*)connector;
     tcpc->process_receive();
-    CHECK(s_put_called == false);
+    tcpc->process_receive();
+    tcpc->process_receive();
+    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
+    CHECK(handle == nullptr);
     delete[] message;
 }
 
@@ -700,8 +691,6 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_error_EAGAIN)
     CHECK(connector != nullptr);
     TcpConnector* tcpc = (TcpConnector*)connector;
     tcpc->process_receive();
-    CHECK(s_put_called == true);
-    s_get_return = s_put_storage; 
     TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
     CHECK(handle != nullptr);
     tcpc->discard_message(handle);
@@ -727,8 +716,6 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_error_EBADF)
     tcpc->process_receive();
     tcpc->process_receive();
     tcpc->process_receive();
-    CHECK(s_put_called == true);
-    s_get_return = s_put_storage; 
     TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
     CHECK(handle != nullptr);
     tcpc->discard_message(handle);
@@ -752,7 +739,10 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_closed)
     CHECK(connector != nullptr);
     TcpConnector* tcpc = (TcpConnector*)connector;
     tcpc->process_receive();
-    CHECK(s_put_called == false);
+    tcpc->process_receive();
+    tcpc->process_receive();
+    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
+    CHECK(handle == nullptr);
     delete[] message;
 }
 
@@ -774,7 +764,10 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_body_closed)
     CHECK(connector != nullptr);
     TcpConnector* tcpc = (TcpConnector*)connector;
     tcpc->process_receive();
-    CHECK(s_put_called == false);
+    tcpc->process_receive();
+    tcpc->process_receive();
+    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
+    CHECK(handle == nullptr);
     delete[] message;
 }
 
