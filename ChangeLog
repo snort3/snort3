@@ -1,3 +1,12 @@
+16/09/09 - build 208
+
+-- fixed for TCP high availability
+-- fixed install of file_decomp.h for consistency between Snort and extras
+-- added smtp client counters and unit tests
+-- ported Smbv2/3 file support
+-- ported mpls encode fixes from 2983
+-- cleaned up compiler warnings
+
 16/09/02 - build 207
 
 -- ported smb file processing
