@@ -96,7 +96,7 @@ public:
 
     bool retry() override;
 
-    PatternMatchData* get_pattern() override
+    PatternMatchData* get_pattern(int, RuleDirection) override
     { return &config.pmd; }
 
     int eval(Cursor&, Packet*) override;
@@ -137,7 +137,7 @@ uint32_t RegexOption::hash() const
     return c;
 }
 
-// see ContentOption::operator==() for why this is always false
+// see ContentOption::operator==()
 bool RegexOption::operator==(const IpsOption& ips) const
 {
 #if 0
@@ -146,15 +146,12 @@ bool RegexOption::operator==(const IpsOption& ips) const
 
     RegexOption& rhs = (RegexOption&)ips;
 
-    if ( config.re == rhs.config.re and 
-         config.pmd.flags == rhs.config.pmd.flags and
-         config.pmd.relative == rhs.config.pmd.relative )
+    if ( config.re == rhs.config.re and
+        config.pmd.flags == rhs.config.pmd.flags and
+        config.pmd.relative == rhs.config.pmd.relative )
         return true;
-
-#else
-    UNUSED(ips);
 #endif
-    return false;
+    return this == &ips;
 }
 
 static int hs_match(
@@ -268,7 +265,6 @@ bool RegexModule::set(const char*, Value& v, SnortConfig*)
         config.re.erase(0, 1);
         config.re.erase(config.re.length()-1, 1);
     }
-
     else if ( v.is("nocase") )
     {
         config.pmd.flags |= HS_FLAG_CASELESS;

@@ -21,6 +21,7 @@
 #define PARSE_RULE_H
 
 #include "detection/rules.h"
+#include "framework/ips_option.h"
 
 struct OptFpList;
 struct OptTreeNode;
@@ -44,7 +45,7 @@ OptTreeNode* parse_rule_open(SnortConfig*, RuleTreeNode&, bool stub = false);
 const char* parse_rule_close(SnortConfig*, RuleTreeNode&, OptTreeNode*);
 
 bool is_fast_pattern_only(OptFpList*);
-struct PatternMatchData* get_pmd(OptFpList*);
+struct PatternMatchData* get_pmd(OptFpList*, int proto, RuleDirection);
 
 int get_rule_count();
 

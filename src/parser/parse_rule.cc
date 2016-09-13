@@ -816,7 +816,7 @@ static void XferHeader(RuleTreeNode* test_node, RuleTreeNode* rtn)
  *
  ***************************************************************************/
 static void AddRuleFuncToList(
-    int (* rfunc) (Packet*, RuleTreeNode*, struct RuleFpList*, int),
+    int (* rfunc)(Packet*, RuleTreeNode*, struct RuleFpList*, int),
     RuleTreeNode* rtn)
 {
     RuleFpList* idx;
@@ -1143,17 +1143,17 @@ static int mergeDuplicateOtn(
     return 1;
 }
 
-PatternMatchData* get_pmd(OptFpList* ofl)
+PatternMatchData* get_pmd(OptFpList* ofl, int proto, RuleDirection direction)
 {
     if ( !ofl->ips_opt )
         return nullptr;
 
-    return ofl->ips_opt->get_pattern();
+    return ofl->ips_opt->get_pattern(proto, direction);
 }
 
 static void finalize_content(OptFpList* ofl)
 {
-    PatternMatchData* pmd = get_pmd(ofl);
+    PatternMatchData* pmd = get_pmd(ofl, 0, RULE_WO_DIR);
 
     if ( !pmd )
         return;
@@ -1165,7 +1165,7 @@ static void finalize_content(OptFpList* ofl)
 
 bool is_fast_pattern_only(OptFpList* ofl)
 {
-    PatternMatchData* pmd = get_pmd(ofl);
+    PatternMatchData* pmd = get_pmd(ofl, 0, RULE_WO_DIR);
 
     if ( !pmd )
         return false;
@@ -1175,7 +1175,7 @@ bool is_fast_pattern_only(OptFpList* ofl)
 
 static void clear_fast_pattern_only(OptFpList* ofl)
 {
-    PatternMatchData* pmd = get_pmd(ofl);
+    PatternMatchData* pmd = get_pmd(ofl, 0, RULE_WO_DIR);
 
     if ( pmd && pmd->fp_only > 0 )
         pmd->fp_only = 0;
@@ -1199,7 +1199,7 @@ static void ValidateFastPattern(OptTreeNode* otn)
         }
 
         // reset the check if one of these are present.
-        if ( fpl->ips_opt and !fpl->ips_opt->get_pattern() )
+        if ( fpl->ips_opt and !fpl->ips_opt->get_pattern(0, RULE_WO_DIR))
         {
             if ( fpl->ips_opt->get_cursor_type() > CAT_NONE )
                 relative_is_bad_mkay = false;
@@ -1536,7 +1536,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
      * After otn processing we can finalize port object processing for this rule
      */
     if ( FinishPortListRule(
-            sc->port_tables, new_rtn, otn, rtn.proto, has_fp, sc->fast_pattern_config) )
+        sc->port_tables, new_rtn, otn, rtn.proto, has_fp, sc->fast_pattern_config) )
         ParseError("Failed to finish a port list rule.");
 
     return nullptr;

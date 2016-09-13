@@ -177,7 +177,7 @@ void RangeCheck::init()
     min = max = 0;
 }
 
-bool RangeCheck::is_set()
+bool RangeCheck::is_set() const
 {
     return (op != MAX);
 }
@@ -222,7 +222,7 @@ bool RangeCheck::parse(const char* s)
     return true;
 }
 
-bool RangeCheck::eval(long c)
+bool RangeCheck::eval(long c) const
 {
     switch ( op )
     {
