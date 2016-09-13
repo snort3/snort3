@@ -96,6 +96,7 @@ struct OTNX_MATCH_DATA
     unsigned size;
 
     int check_ports;
+    bool have_match;
 
     MATCH_INFO* matchInfo;
     int iMatchInfoArraySize;

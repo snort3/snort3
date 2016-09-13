@@ -90,9 +90,9 @@ filters/libfilter.a \
 detection/libdetection.a \
 framework/libframework.a \
 file_api/libfile_api.a \
-time/libtime.a \
 latency/liblatency.a \
 profiler/libprofiler.a \
+time/libtime.a \
 actions/libips_actions.a \
 events/libevents.a \
 hash/libhash.a \

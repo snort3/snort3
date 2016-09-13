@@ -32,6 +32,7 @@
 #include "events/event_queue.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+
 #include "latency_config.h"
 #include "latency_rules.h"
 #include "latency_stats.h"
@@ -49,8 +50,6 @@ namespace rule_latency
 // helpers
 // -----------------------------------------------------------------------------
 
-using DefaultClock = hr_clock;
-
 struct Event
 {
     enum Type
@@ -61,7 +60,7 @@ struct Event
     };
 
     Type type;
-    typename DefaultClock::duration elapsed;
+    typename SnortClock::duration elapsed;
     detection_option_tree_root_t* root;
 };
 
@@ -96,7 +95,7 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
 
         os << ": ";
 
-        os << duration_cast<microseconds>(e.elapsed).count() << " usec, ";
+        os << clock_usecs(duration_cast<microseconds>(e.elapsed).count()) << " usec, ";
     }
 
     // FIXIT-L clean up rule latency logging; delete or make useful
@@ -175,7 +174,7 @@ struct DefaultRuleInterface
 // implementation
 // -----------------------------------------------------------------------------
 
-template<typename Clock = DefaultClock, typename RuleTree = DefaultRuleInterface>
+template<typename Clock = SnortClock, typename RuleTree = DefaultRuleInterface>
 class Impl
 {
 public:

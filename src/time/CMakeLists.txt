@@ -4,6 +4,7 @@ set ( TIME_INTERNAL_SOURCES
     periodic.cc
     periodic.h
     timersub.h
+    tsc_clock.cc
     )
 
 if ( ENABLE_UNIT_TESTS )
@@ -11,9 +12,9 @@ if ( ENABLE_UNIT_TESTS )
 endif ( ENABLE_UNIT_TESTS )
 
 set ( TIME_INCLUDES
-    cpuclock.h
     clock_defs.h
     stopwatch.h
+    tsc_clock.h
     )
 
 add_library ( time STATIC

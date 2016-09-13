@@ -38,7 +38,7 @@
 #include "catch/catch.hpp"
 #endif
 
-#define s_time_table_title "Module Profile Statistics"
+#define s_time_table_title "module profile"
 
 namespace time_stats
 {
@@ -131,7 +131,7 @@ static void print_fn(StatsTable& t, const View& v)
     t << v.checks();
 
     // total time
-    t << duration_cast<microseconds>(v.elapsed()).count();
+    t << clock_usecs(duration_cast<microseconds>(v.elapsed()).count());
 
     // avg/check
     t << duration_cast<microseconds>(v.avg_check()).count();

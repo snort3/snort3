@@ -71,7 +71,6 @@ void snort_inspect(Packet* p)
 {
     {
         PacketLatency::Context pkt_latency_ctx { p };
-
         bool inspected = false;
 
         // If the packet has errors, we won't analyze it.

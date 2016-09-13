@@ -29,6 +29,7 @@
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
 #include "time/clock_defs.h"
+
 #include "latency_config.h"
 #include "latency_timer.h"
 #include "latency_util.h"
@@ -49,13 +50,11 @@ namespace packet_latency
 // helpers
 // -----------------------------------------------------------------------------
 
-using DefaultClock = hr_clock;
-
 struct Event
 {
     const Packet* packet;
     bool fastpathed;
-    typename DefaultClock::duration elapsed;
+    typename SnortClock::duration elapsed;
 };
 
 template<typename Clock>
@@ -91,7 +90,7 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
 
     os << ": ";
 
-    os << duration_cast<microseconds>(e.elapsed).count() << " usec, [";
+    os << clock_usecs(duration_cast<microseconds>(e.elapsed).count()) << " usec, [";
     os << e.packet->ptrs.ip_api.get_src() << " -> " <<
         e.packet->ptrs.ip_api.get_dst() << "]";
 
@@ -102,7 +101,7 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
 // implementation
 // -----------------------------------------------------------------------------
 
-template<typename Clock = DefaultClock>
+template<typename Clock = SnortClock>
 class Impl
 {
 public:
@@ -152,7 +151,7 @@ inline bool Impl<Clock>::pop(const Packet* p)
         if ( config->action & PacketLatencyConfig::LOG )
             log_handler.handle(e);
 
-        if ( timer.marked_as_fastpathed and (config->action & PacketLatencyConfig::ALERT) )
+        if ( config->action & PacketLatencyConfig::ALERT )
             event_handler.handle(e);
     }
 

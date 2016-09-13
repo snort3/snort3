@@ -32,7 +32,7 @@
 #include "catch/catch.hpp"
 #endif
 
-static constexpr unsigned WIDTH = 40;
+static constexpr unsigned WIDTH = 50;
 static constexpr char ENDL = '\n';
 
 const StatsTable::Header StatsTable::HEADER { '=' };

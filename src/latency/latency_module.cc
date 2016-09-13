@@ -113,8 +113,10 @@ static inline bool latency_set(Value& v, PacketLatencyConfig& config)
     using std::chrono::microseconds;
 
     if ( v.is("max_time") )
-        config.max_time =
-            duration_cast<decltype(config.max_time)>(microseconds(v.get_long()));
+    {
+        long t = clock_ticks(v.get_long());
+        config.max_time = duration_cast<decltype(config.max_time)>(microseconds(t));
+    }
 
     else if ( v.is("fastpath") )
         config.fastpath = v.get_bool();
@@ -136,9 +138,10 @@ static inline bool latency_set(Value& v, RuleLatencyConfig& config)
     using std::chrono::milliseconds;
 
     if ( v.is("max_time") )
-        config.max_time =
-            duration_cast<decltype(config.max_time)>(microseconds(v.get_long()));
-
+    {
+        long t = clock_ticks(v.get_long());
+        config.max_time = duration_cast<decltype(config.max_time)>(microseconds(t));
+    }
     else if ( v.is("suspend") )
         config.suspend = v.get_bool();
 
@@ -146,9 +149,10 @@ static inline bool latency_set(Value& v, RuleLatencyConfig& config)
         config.suspend_threshold = v.get_long();
 
     else if ( v.is("max_suspend_time") )
-        config.max_suspend_time =
-            duration_cast<decltype(config.max_time)>(milliseconds(v.get_long()));
-
+    {
+        long t = clock_ticks(v.get_long());
+        config.max_suspend_time = duration_cast<decltype(config.max_time)>(milliseconds(t));
+    }
     else if ( v.is("action") )
         config.action =
             static_cast<decltype(config.action)>(v.get_long());

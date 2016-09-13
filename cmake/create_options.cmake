@@ -22,6 +22,7 @@ option ( ENABLE_PIGLET "enable piglet test harness" OFF )
 option ( ENABLE_COREFILES "Prevent Snort from generating core files" ON )
 option ( ENABLE_INTEL_SOFT_CPM "Enable Intel Soft CPM support" OFF )
 option ( ENABLE_LARGE_PCAP "Enable support for pcaps larger than 2 GB" OFF )
+option ( ENABLE_TSC_CLOCK "Use timestamp counter register clock (x86 only)" OFF )
 
 # documentation
 option ( MAKE_HTML_DOC "Create the HTML documentation" ON )

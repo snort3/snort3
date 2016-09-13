@@ -160,7 +160,7 @@ void Stream::check_session_closed(Packet* p)
 {
     Flow* flow = p->flow;
 
-    if (!p || !flow)
+    if ( !flow )
         return;
 
     if (flow->session_state & STREAM_STATE_CLOSED)
