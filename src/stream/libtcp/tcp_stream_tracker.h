@@ -240,6 +240,10 @@ public:
         this->fin_final_seq = fin_final_seq;
     }
 
+    // FIXIT-M fin_final_seq can be zero so need to use current state
+    // or other flag to know when it is actually set
+    bool fin_set() { return fin_final_seq != 0; }
+
     uint32_t get_ts_last_packet() const
     {
         return ts_last_packet;

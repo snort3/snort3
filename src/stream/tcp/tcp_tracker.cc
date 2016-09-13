@@ -490,7 +490,7 @@ bool TcpTracker::update_on_fin_recv(TcpSegmentDescriptor& tsd)
     r_nxt_ack++;
 
     // set final seq # any packet rx'ed with seq > is bad
-    if ( fin_final_seq == 0 )
+    if ( !fin_set() )
         fin_final_seq = tsd.get_end_seq() + 1;
 
     return true;

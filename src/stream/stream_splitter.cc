@@ -25,7 +25,7 @@
 #include "flush_bucket.h"
 #include "protocols/packet.h"
 
-static THREAD_LOCAL uint8_t pdu_buf[65536];
+static THREAD_LOCAL uint8_t pdu_buf[StreamSplitter::max_buf];
 static THREAD_LOCAL StreamBuffer str_buf;
 
 unsigned StreamSplitter::max_pdu = 16384;
