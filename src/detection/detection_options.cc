@@ -454,7 +454,7 @@ int detection_option_node_evaluate(
                 bool f_result = true;
 
                 if ( otn->detection_filter )
-                    f_result = detection_filter_test(otn->detection_filter,
+                    f_result = !detection_filter_test(otn->detection_filter,
                         p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(),
                         p->pkth->ts.tv_sec);
 
