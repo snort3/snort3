@@ -134,7 +134,7 @@ static void print_fn(StatsTable& t, const View& v)
     t << clock_usecs(duration_cast<microseconds>(v.elapsed()).count());
 
     // avg/check
-    t << duration_cast<microseconds>(v.avg_check()).count();
+    t << clock_usecs(duration_cast<microseconds>(v.avg_check()).count());
 }
 
 } // namespace time_stats

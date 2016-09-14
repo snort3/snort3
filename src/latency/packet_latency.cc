@@ -359,7 +359,7 @@ TEST_CASE ( "packet latency impl", "[latency]" )
             CHECK_FALSE( impl.fastpath() );
             CHECK( impl.pop(nullptr) );
 
-            CHECK( event_handler.count == 0 );
+            CHECK( event_handler.count == 1 );
             CHECK( log_handler.count == 1 );
         }
 

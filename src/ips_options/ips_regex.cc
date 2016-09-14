@@ -253,6 +253,7 @@ RegexModule::~RegexModule()
 bool RegexModule::begin(const char*, int, SnortConfig*)
 {
     config.reset();
+    config.pmd.flags |= HS_FLAG_SINGLEMATCH;
     return true;
 }
 

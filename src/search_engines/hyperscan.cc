@@ -207,7 +207,7 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
     for ( auto& p : pvector )
     {
         pats.push_back(p.pat.c_str());
-        flags.push_back(p.flags);
+        flags.push_back(p.flags | HS_FLAG_SINGLEMATCH);
         ids.push_back(id++);
     }
 
