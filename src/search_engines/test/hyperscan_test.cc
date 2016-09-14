@@ -180,6 +180,8 @@ TEST_GROUP(mpse_hs_match)
 
     void setup()
     {
+        // FIXIT-L cpputest hangs or crashes in the leak detector
+        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         CHECK(se_hyperscan);
         hs = mpse_api->ctor(snort_conf, nullptr, false, &s_agent);
         CHECK(hs);
@@ -190,6 +192,7 @@ TEST_GROUP(mpse_hs_match)
     {
         mpse_api->dtor(hs);
         hyperscan_cleanup(snort_conf);
+        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 
@@ -304,6 +307,8 @@ TEST_GROUP(mpse_hs_multi)
 
     void setup()
     {
+        // FIXIT-L cpputest hangs or crashes in the leak detector
+        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         CHECK(se_hyperscan);
 
         hs1 = mpse_api->ctor(snort_conf, nullptr, false, &s_agent);
@@ -320,6 +325,7 @@ TEST_GROUP(mpse_hs_multi)
         mpse_api->dtor(hs1);
         mpse_api->dtor(hs2);
         hyperscan_cleanup(snort_conf);
+        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 
