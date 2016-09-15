@@ -1,3 +1,14 @@
+16/09/14 - build 209
+
+-- add dce iface fast pattern for tcp
+-- add --enable-tsc-clock to build/use TSC register (on x86)
+-- update latency to use ticks during runtime
+-- tcp stream reassembly tweaks
+-- fix inverted detection_filter logic
+-- fix stream profile stats parents
+-- fix most bogus gap counts
+-- unit test fixes for high availability, hyperscan, and regex
+
 16/09/09 - build 208
 
 -- fixed for TCP high availability
