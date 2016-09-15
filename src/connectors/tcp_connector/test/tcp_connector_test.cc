@@ -31,6 +31,12 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+#ifdef MACOS
+#define __THROW
+#define __SOCKADDR_ARG          struct sockaddr*
+#define __CONST_SOCKADDR_ARG    const struct sockaddr*
+#endif
+
 extern const BaseApi* tcp_connector;
 ConnectorApi* tcpc_api = nullptr;
 
@@ -89,7 +95,7 @@ int poll (struct pollfd* fds, nfds_t nfds, int)
 
     if ( s_poll_undesirable )
     {
-        fds[0].revents |= POLLRDHUP;
+        fds[0].revents |= POLLHUP;
         return 1;
     }
 
