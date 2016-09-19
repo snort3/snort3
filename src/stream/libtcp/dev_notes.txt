@@ -16,3 +16,12 @@ This TCP library module provides the following functions:
 * TCP State Machine - this class is the engine that dispatches processing to the correct
   event handling method of the handler for the current TCP state of the flow.
 
+Most of the TCP HA processing is contained in the ../tcp area and one needed to refer
+to ../tcp/dev_notes.txt for a description.
+
+One HA state transition is implemented within this TCP library.  In
+TcpStreamSession::clear(), TcpHAManager::process_deletion() is invoked to
+cause HA to generate a Deletion message for the target flow.  This handles
+the case where a TCP session is being removed from from the flow cache due
+to a timeout or pruning function.  Other normal TCP stream closure actions
+are handled in the ../tcp/tcp_session.cc module.

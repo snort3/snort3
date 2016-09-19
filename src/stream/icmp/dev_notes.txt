@@ -11,3 +11,17 @@ packets directly to the ICMP session packet processing method.
 Currently only the ICMP Unreachable message is handled by the ICMP session
 module.
 
+The module icmp_ha.cc (and icmp_ha.h) implements the per-protocol hooks into
+the stream logic for HA.  IcmpHAManager is a static class that interfaces
+to a per-packet thread instance of the class IcmpHA.  IcmpHA is sub-class
+of ProtocolHA, declared in the stream/base area.  Thus each protocol
+within 'stream' can have specific HA logic and interfaces.
+
+IcmpHAManager::process_deletion() is called when an ICMP stream is being 
+destroyed and indicates to the stream & flow HA logic that a flow
+deletion HA message needs to be emitted for the flow in question.
+Icmp streams are closed due to timeout or puning actions which lead
+to the invocation of process_deletion().
+
+IcmpHA::create_session() is called from the stream & flow HA logic and
+handles the creation of new flow upon receiving an HA update message.

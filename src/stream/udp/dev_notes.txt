@@ -8,3 +8,17 @@ functions for loading stream UDP configuration and packet evaluation.  The
 packet eval method is not used as the base Stream Inspector delegates
 packets directly to the UDP session packet processing method.
 
+The module udp_ha.cc (and udp_ha.h) implements the per-protocol hooks into
+the stream logic for HA.  UdpHAManager is a static class that interfaces
+to a per-packet thread instance of the class UdpHA.  UdpHA is sub-class
+of ProtocolHA, declared in the stream/base area.  Thus each protocol
+within 'stream' can have specific HA logic and interfaces.
+
+UdpHAManager::process_deletion() is called when an UDP stream is being 
+destroyed and indicates to the stream & flow HA logic that a flow
+deletion HA message needs to be emitted for the flow in question.
+Udp streams are closed due to timeout or puning actions which lead
+to the invocation of process_deletion().
+
+UdpHA::create_session() is called from the stream & flow HA logic and
+handles the creation of new flow upon receiving an HA update message.
