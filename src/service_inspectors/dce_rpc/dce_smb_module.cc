@@ -431,10 +431,8 @@ static bool set_smb_invalid_shares(dce2SmbProtoConf& config, Value& v)
 
 bool Dce2SmbModule::set(const char*, Value& v, SnortConfig*)
 {
-    if (dce2_set_common_config(v,config.common))
+    if (dce2_set_co_config(v,config.common))
         return true;
-    else if ( v.is("reassemble_threshold") )
-        config.co_reassemble_threshold = v.get_long();
     else if ( v.is("smb_fingerprint_policy") )
         config.smb_fingerprint_policy = (dce2SmbFingerprintPolicy)v.get_long();
     else if ( v.is("smb_max_chain") )
@@ -466,9 +464,7 @@ void print_dce2_smb_conf(dce2SmbProtoConf& config)
 {
     LogMessage("DCE SMB config: \n");
 
-    print_dce2_common_config(config.common);
-    LogMessage("    Reassemble Threshold : %d\n",
-        config.co_reassemble_threshold);
+    print_dce2_co_config(config.common);
     LogMessage("    SMB fingerprint policy : %s\n",
         dce2SmbFingerprintPolicyStrings[config.smb_fingerprint_policy]);
 

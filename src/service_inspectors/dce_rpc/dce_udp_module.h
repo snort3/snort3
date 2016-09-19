@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2016 6isco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,25 +16,37 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 //
-// dce_tcp_module.h author Rashmi Pitre <rrp@cisco.com>
+// dce_udp_module.h author Maya Dagon <mdagon@cisco.com>
 
-#ifndef DCE2_TCP_MODULE_H
-#define DCE2_TCP_MODULE_H
+#ifndef DCE2_UDP_MODULE_H
+#define DCE2_UDP_MODULE_H
 
 #include "dce_common.h"
 #include "framework/module.h"
 
+#define DCE2_CL_BAD_MAJOR_VERSION           40
+#define DCE2_CL_BAD_PDU_TYPE                41
+#define DCE2_CL_DATA_LT_HDR                 42
+#define DCE2_CL_BAD_SEQ_NUM                 43
+
+#define DCE2_CL_BAD_MAJOR_VERSION_STR  "Connection-less DCE/RPC - Invalid major version."
+#define DCE2_CL_BAD_PDU_TYPE_STR  "Connection-less DCE/RPC - Invalid pdu type."
+#define DCE2_CL_DATA_LT_HDR_STR \
+    "Connection-less DCE/RPC - Data length less than header size."
+#define DCE2_CL_BAD_SEQ_NUM_STR \
+    "Connection-less DCE/RPC - Bad sequence number."
+
 struct SnortConfig;
 
-struct dce2TcpProtoConf
+struct dce2UdpProtoConf
 {
-    dce2CoProtoConf common;
+    dce2CommonProtoConf common;
 };
 
-class Dce2TcpModule : public Module
+class Dce2UdpModule : public Module
 {
 public:
-    Dce2TcpModule();
+    Dce2UdpModule();
 
     bool set(const char*, Value&, SnortConfig*) override;
 
@@ -47,13 +59,13 @@ public:
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
-    void get_data(dce2TcpProtoConf&);
+    void get_data(dce2UdpProtoConf&);
 
 private:
-    dce2TcpProtoConf config;
+    dce2UdpProtoConf config;
 };
 
-void print_dce2_tcp_conf(dce2TcpProtoConf& config);
+void print_dce2_udp_conf(dce2UdpProtoConf& config);
 
 #endif
 

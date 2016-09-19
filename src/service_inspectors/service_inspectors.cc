@@ -72,6 +72,7 @@ extern const BaseApi* ips_http_raw_status;
 extern const BaseApi* sin_bo;
 extern const BaseApi* sin_dce_smb;
 extern const BaseApi* sin_dce_tcp;
+extern const BaseApi* sin_dce_udp;
 extern const BaseApi* sin_dnp3;
 extern const BaseApi* sin_dns;
 extern const BaseApi* sin_ftp_client;
@@ -135,6 +136,7 @@ const BaseApi* service_inspectors[] =
     sin_bo,
     sin_dce_smb,
     sin_dce_tcp,
+    sin_dce_udp,
     sin_dnp3,
     sin_dns,
     sin_ftp_client,

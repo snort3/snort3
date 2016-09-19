@@ -178,13 +178,10 @@ ProfileStats* Dce2TcpModule::get_profile(
 
 bool Dce2TcpModule::set(const char*, Value& v, SnortConfig*)
 {
-    if (dce2_set_common_config(v,config.common))
+    if (dce2_set_co_config(v,config.common))
         return true;
-    else if ( v.is("reassemble_threshold") )
-        config.co_reassemble_threshold = v.get_long();
-    else
-        return false;
-    return true;
+    
+	return false;
 }
 
 void Dce2TcpModule::get_data(dce2TcpProtoConf& dce2_tcp_config)
@@ -195,9 +192,6 @@ void Dce2TcpModule::get_data(dce2TcpProtoConf& dce2_tcp_config)
 void print_dce2_tcp_conf(dce2TcpProtoConf& config)
 {
     LogMessage("DCE TCP config: \n");
-
-    print_dce2_common_config(config.common);
-    LogMessage("    Reassemble Threshold : %d\n",
-        config.co_reassemble_threshold);
+    print_dce2_co_config(config.common);
 }
 

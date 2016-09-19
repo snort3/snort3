@@ -55,8 +55,7 @@ struct dce2SmbShare
 
 struct dce2SmbProtoConf
 {
-    dce2CommonProtoConf common;
-    uint16_t co_reassemble_threshold;
+    dce2CoProtoConf common;
     dce2SmbFingerprintPolicy smb_fingerprint_policy;
     uint8_t smb_max_chain;
     uint8_t smb_max_compound;

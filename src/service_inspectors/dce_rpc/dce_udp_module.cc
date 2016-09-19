@@ -1,0 +1,162 @@
+//--------------------------------------------------------------------------
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
+
+// dce_udp_module.cc author Maya Dagon <mdagon@cisco.com>
+
+#include "dce_udp_module.h"
+#include "dce_udp.h"
+#include "dce_common.h"
+#include "main/snort_config.h"
+
+using namespace std;
+
+static const Parameter s_params[] =
+{
+    { "disable_defrag", Parameter::PT_BOOL, nullptr, "false",
+      " Disable DCE/RPC defragmentation" },
+    { "max_frag_len", Parameter::PT_INT, "1514:65535", "65535",
+      " Maximum fragment size for defragmentation" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const RuleMap dce2_udp_rules[] =
+{
+    { DCE2_CL_BAD_MAJOR_VERSION, DCE2_CL_BAD_MAJOR_VERSION_STR },
+    { DCE2_CL_BAD_PDU_TYPE, DCE2_CL_BAD_PDU_TYPE_STR },
+    { DCE2_CL_DATA_LT_HDR, DCE2_CL_DATA_LT_HDR_STR },
+    { DCE2_CL_BAD_SEQ_NUM, DCE2_CL_BAD_SEQ_NUM_STR },
+    { 0, nullptr }
+};
+
+static const PegInfo dce2_udp_pegs[] =
+{
+    { "events", "total events" },
+    { "aborted sessions", "total aborted sessions" },
+    { "bad autodetects", "total bad autodetects" },
+    { "udp sessions", "total udp sessions" },
+    { "udp packets", "total udp packets" },
+    { "Requests", "total connection-less requests" },
+    { "Acks", "total connection-less acks" },
+    { "Cancels", "total connection-less cancels" },
+    { "Client facks", "total connection-less client facks" },
+    { "Ping", "total connection-less ping" },
+    { "Responses", "total connection-less responses" },
+    { "Rejects", "total connection-less rejects" },
+    { "Cancel acks", "total connection-less cancel acks" },
+    { "Server facks", "total connection-less server facks" },
+    { "Faults", "total connection-less faults" },
+    { "No calls", "total connection-less no calls" },
+    { "Working", "total connection-less working" },
+    { "Other requests", "total connection-less other requests" },
+    { "Other responses", "total connection-less other responses" },
+    { "Fragments", "total connection-less fragments" },
+    { "Max fragment size",
+      "connection-less maximum fragment size" },
+    { "Frags reassembled",
+      "total connection-less fragments reassembled" },
+    { "Max seqnum",
+      "max connection-less seqnum" },
+    { nullptr, nullptr }
+};
+
+Dce2UdpModule::Dce2UdpModule() : Module(DCE2_UDP_NAME, DCE2_UDP_HELP, s_params)
+{
+}
+
+const RuleMap* Dce2UdpModule::get_rules() const
+{
+    return dce2_udp_rules;
+}
+
+const PegInfo* Dce2UdpModule::get_pegs() const
+{
+    return dce2_udp_pegs;
+}
+
+PegCount* Dce2UdpModule::get_counts() const
+{
+    return (PegCount*)&dce2_udp_stats;
+}
+
+ProfileStats* Dce2UdpModule::get_profile(
+    unsigned index, const char*& name, const char*& parent) const
+{
+    switch ( index )
+    {
+    case 0:
+        name = "dce_udp_main";
+        parent = nullptr;
+        return &dce2_udp_pstat_main;
+
+    case 1:
+        name = "dce_udp_session";
+        parent = "dce_udp_main";
+        return &dce2_udp_pstat_session;
+
+    case 2:
+        name = "dce_udp_new_session";
+        parent = "dce_udp_session";
+        return &dce2_udp_pstat_new_session;
+
+    case 3:
+        name = "dce_udp_detect";
+        parent = "dce_udp_main";
+        return &dce2_udp_pstat_detect;
+
+    case 4:
+        name = "dce_udp_log";
+        parent = "dce_udp_main";
+        return &dce2_udp_pstat_log;
+
+    case 5:
+        name = "dce_udp_cl_acts";
+        parent = "dce_udp_main";
+        return &dce2_udp_pstat_cl_acts;
+
+    case 6:
+        name = "dce_udp_cl_frag";
+        parent = "dce_udp_main";
+        return &dce2_udp_pstat_cl_frag;
+
+    case 7:
+        name = "dce_udp_cl_reass";
+        parent = "dce_udp_main";
+        return &dce2_udp_pstat_cl_reass;
+    }
+    return nullptr;
+}
+
+bool Dce2UdpModule::set(const char*, Value& v, SnortConfig*)
+{
+    if (dce2_set_common_config(v,config.common))
+        return true;
+    else
+        return false;
+}
+
+void Dce2UdpModule::get_data(dce2UdpProtoConf& dce2_udp_config)
+{
+    dce2_udp_config = config;
+}
+
+void print_dce2_udp_conf(dce2UdpProtoConf& config)
+{
+    LogMessage("DCE UDP config: \n");
+    print_dce2_common_config(config.common);
+}
+

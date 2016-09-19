@@ -89,9 +89,19 @@ bool dce2_set_common_config(Value& v, dce2CommonProtoConf& common)
 
     else if ( v.is("max_frag_len") )
         common.max_frag_len = v.get_long();
+    else
+        return false;
+    return true;
+}
 
+bool dce2_set_co_config(Value& v, dce2CoProtoConf& co)
+{
+    if (dce2_set_common_config(v, co.common))
+        return true;
     else if ( v.is("policy") )
-        common.policy = (DCE2_Policy)v.get_long();
+        co.policy = (DCE2_Policy)v.get_long();
+    else if ( v.is("reassemble_threshold") )
+        co.co_reassemble_threshold = v.get_long();
     else
         return false;
     return true;
@@ -104,8 +114,16 @@ void print_dce2_common_config(dce2CommonProtoConf& common)
         "DISABLED" : "ENABLED");
     LogMessage("    Max Fragment length: %d\n",
         common.max_frag_len);
+}
+
+void print_dce2_co_config(dce2CoProtoConf& co)
+{
+    print_dce2_common_config(co.common);
+
     LogMessage("    Policy : %s\n",
-        dce2_get_policy_name(common.policy));
+        dce2_get_policy_name(co.policy));
+    LogMessage("    Reassemble Threshold : %d\n",
+        co.co_reassemble_threshold);
 }
 
 bool dce2_paf_abort(Flow* flow, DCE2_SsnData* sd)
@@ -553,6 +571,7 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &dce2_tcp_api.base,
     &dce2_smb_api.base,
+    &dce2_udp_api.base,
     ips_dce_iface,
     ips_dce_opnum,
     ips_dce_stub_data,
@@ -562,6 +581,7 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 
 const BaseApi* sin_dce_tcp = &dce2_tcp_api.base;
 const BaseApi* sin_dce_smb = &dce2_smb_api.base;
+const BaseApi* sin_dce_udp = &dce2_udp_api.base;
 
 #endif
 
