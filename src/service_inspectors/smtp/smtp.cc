@@ -200,9 +200,7 @@ SmtpFlowData::~SmtpFlowData()
 unsigned SmtpFlowData::flow_id = 0;
 static SMTPData* get_session_data(Flow* flow)
 {
-    SmtpFlowData* fd = (SmtpFlowData*)flow->get_application_data(
-        SmtpFlowData::flow_id);
-
+    SmtpFlowData* fd = (SmtpFlowData*)flow->get_flow_data(SmtpFlowData::flow_id);
     return fd ? &fd->session : NULL;
 }
 
@@ -211,7 +209,7 @@ static SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
     SMTPData* smtp_ssn;
     SmtpFlowData* fd = new SmtpFlowData;
 
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
     smtp_ssn = &fd->session;
 
     smtpstats.sessions++;

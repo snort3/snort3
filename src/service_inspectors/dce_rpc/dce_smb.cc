@@ -1660,18 +1660,15 @@ unsigned Dce2SmbFlowData::flow_id = 0;
 
 DCE2_SmbSsnData* get_dce2_smb_session_data(Flow* flow)
 {
-    Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_application_data(
-        Dce2SmbFlowData::flow_id);
-
+    Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_flow_data(Dce2SmbFlowData::flow_id);
     return fd ? &fd->dce2_smb_session : nullptr;
 }
 
 static DCE2_SmbSsnData* set_new_dce2_smb_session(Packet* p)
 {
     Dce2SmbFlowData* fd = new Dce2SmbFlowData;
-
     memset(&fd->dce2_smb_session,0,sizeof(DCE2_SmbSsnData));
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
     return(&fd->dce2_smb_session);
 }
 

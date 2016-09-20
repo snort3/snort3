@@ -95,11 +95,13 @@ THREAD_LOCAL LatencyStats latency_stats;
 
 static const PegInfo latency_pegs[] =
 {
-    { "total_packets", "total packets monitored" },
-    { "packet_timeouts", "packets that timed out" },
-    { "total_rule_evals", "total rule evals monitored" },
-    { "rule_eval_timeouts", "rule evals that timed out" },
-    { "rule_tree_enables", "rule tree re-enables" },
+    { "total packets", "total packets monitored" },
+    { "total usecs", "total usecs elapsed" },
+    { "max usecs", "maximum usecs elapsed" },
+    { "packet timeouts", "packets that timed out" },
+    { "total rule evals", "total rule evals monitored" },
+    { "rule eval timeouts", "rule evals that timed out" },
+    { "rule tree enables", "rule tree re-enables" },
     { nullptr, nullptr }
 };
 

@@ -241,9 +241,8 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
 
         if ( sfvar_ip_in(SynToMulticastDstIp, snort.ip_api.get_dst()) )
-        {
             codec_event(codec, DECODE_SYN_TO_MULTICAST);
-        }
+
         if ( (tcph->th_flags & TH_RST) )
             codec_event(codec, DECODE_TCP_SYN_RST);
 

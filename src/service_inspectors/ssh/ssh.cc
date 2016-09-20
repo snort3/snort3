@@ -64,15 +64,13 @@ unsigned SshFlowData::flow_id = 0;
 static SSHData* SetNewSSHData(Packet* p)
 {
     SshFlowData* fd = new SshFlowData;
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
     return &fd->session;
 }
 
 static SSHData* get_session_data(Flow* flow)
 {
-    SshFlowData* fd = (SshFlowData*)flow->get_application_data(
-        SshFlowData::flow_id);
-
+    SshFlowData* fd = (SshFlowData*)flow->get_flow_data(SshFlowData::flow_id);
     return fd ? &fd->session : NULL;
 }
 

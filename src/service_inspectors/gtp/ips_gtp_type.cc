@@ -105,7 +105,7 @@ int GtpTypeOption::eval(Cursor&, Packet* p)
     if ( !p or !p->flow )
         return DETECTION_OPTION_NO_MATCH;
 
-    GtpFlowData* gfd = (GtpFlowData*)p->flow->get_application_data(GtpFlowData::flow_id);
+    GtpFlowData* gfd = (GtpFlowData*)p->flow->get_flow_data(GtpFlowData::flow_id);
 
     if ( !gfd )
         return DETECTION_OPTION_NO_MATCH;

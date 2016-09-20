@@ -107,7 +107,11 @@ void snort_inspect(Packet* p)
 
         check_tags_flag = 1;
 
-        /* Check for normally closed session */
+        // clear closed sessions here after inspection since non-stream
+        // inspectors may depend on flow information
+        // FIXIT-H but this result in double clearing?  should normal
+        // clear_session() calls be deleted from stream?  this is a
+        // performance hit on short-lived flows
         stream.check_session_closed(p);
 
         /*

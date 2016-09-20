@@ -162,9 +162,6 @@ public:
         Flow*, Packet* p, uint32_t gid, uint32_t sid,
         uint32_t eventId, uint32_t eventSecond);
 
-    // Get pointer to Flowbits data
-    static BitOp* get_flow_bitop(const Packet*);
-
     // Get reassembly direction for given session
     static char get_reassembly_direction(Flow*);
 
@@ -202,13 +199,13 @@ public:
 
     // Get pointer to application data for a flow based on the lookup tuples for cases where
     // Snort does not have an active packet that is relevant.
-    static FlowData* get_application_data_from_ip_port(
+    static FlowData* get_flow_data(
         PktType type, IpProtocol proto,
         const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flow_id);
 
     // Get pointer to application data for a flow using the FlowKey as the lookup criteria
-     static FlowData* get_application_data_from_key(const FlowKey*, unsigned flow_id);
+     static FlowData* get_flow_data(const FlowKey*, unsigned flow_id);
 
     // -- extra data methods
     uint32_t reg_xtra_data_cb(LogFunction);
@@ -221,7 +218,7 @@ public:
 
     // Get pointer to a session flow instance for a flow based on the lookup tuples for
     // cases where Snort does not have an active packet that is relevant.
-     static Flow* get_session_ptr_from_ip_port(
+     static Flow* get_session_ptr(
         PktType type, IpProtocol proto,
         const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
@@ -237,7 +234,7 @@ public:
 
     void update_direction(Flow*, char dir, const sfip_t* ip, uint16_t port);
 
-    static void set_application_protocol_id_from_host_entry(
+    static void set_application_protocol_id(
         Flow*, const struct HostAttributeEntry*, int direction);
 
     static bool is_midstream(Flow* flow)

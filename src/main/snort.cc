@@ -602,7 +602,9 @@ void Snort::capture_packet()
 void Snort::thread_idle()
 {
     if ( flow_con )
-        flow_con->timeout_flows(16384, time(NULL));
+        // FIXIT-M batch here or loop vs looping over idle?
+        flow_con->timeout_flows(time(NULL));
+
     perf_monitor_idle_process();
     aux_counts.idle++;
     HighAvailabilityManager::process_receive();
@@ -852,9 +854,7 @@ DAQ_Verdict Snort::packet_callback(
     PacketManager::encode_reset();
 
     if ( flow_con ) // FIXIT-M always instantiate
-    {
-        flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
-    }
+        flow_con->timeout_flows(pkthdr->ts.tv_sec);
 
     HighAvailabilityManager::process_receive();
 

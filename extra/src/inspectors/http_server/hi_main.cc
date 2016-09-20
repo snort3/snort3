@@ -146,15 +146,13 @@ HttpFlowData::~HttpFlowData()
 HttpSessionData* SetNewHttpSessionData(Packet* p, void*)
 {
     HttpFlowData* fd = new HttpFlowData;
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
     return &fd->session;
 }
 
 static HttpSessionData* get_session_data(Flow* flow)
 {
-    HttpFlowData* fd = (HttpFlowData*)flow->get_application_data(
-        HttpFlowData::flow_id);
-
+    HttpFlowData* fd = (HttpFlowData*)flow->get_flow_data(HttpFlowData::flow_id);
     return fd ? &fd->session : NULL;
 }
 

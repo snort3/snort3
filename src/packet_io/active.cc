@@ -40,7 +40,7 @@ THREAD_LOCAL Active::ActiveAction Active::active_action = Active::ACT_PASS;
 THREAD_LOCAL Active::ActiveAction Active::delayed_active_action = Active::ACT_PASS;
 
 THREAD_LOCAL int Active::active_tunnel_bypass = 0;
-THREAD_LOCAL bool Active::active_suspend = 0;
+THREAD_LOCAL bool Active::active_suspend = false;
 
 THREAD_LOCAL uint8_t Active::s_attempts = 0;
 THREAD_LOCAL uint64_t Active::s_injects = 0;

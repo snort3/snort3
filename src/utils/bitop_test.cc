@@ -12,7 +12,7 @@ static bool t_bitop_buffer_zero(BitOp& bitop)
 
 TEST_CASE( "bitop", "[bitop]" )
 {
-    BitOp bitop(3);
+    BitOp bitop(24);
 
     SECTION( "zero-initialized" )
     {

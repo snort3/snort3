@@ -29,7 +29,6 @@
 
 #include <assert.h>
 
-#include "utils/bitop.h"
 #include "sfip/sfip_t.h"
 #include "flow/flow_key.h"
 #include "framework/inspector.h"
@@ -156,23 +155,22 @@ public:
     void term();
 
     void reset(bool do_cleanup = true);
-    void restart(bool free_flow_data = true);
-    void clear(bool free_flow_data = true);
+    void restart(bool dump_flow_data = true);
+    void clear(bool dump_flow_data = true);
 
-    int set_application_data(FlowData*);
-    FlowData* get_application_data(uint32_t proto);
-    void free_application_data(uint32_t proto);
-    void free_application_data(FlowData*);
-    void free_application_data();
-    void set_application_ids(AppId serviceAppId, AppId clientAppId,
-            AppId payloadAppId, AppId miscAppId);
-    void get_application_ids(AppId& serviceAppId, AppId& clientAppId,
-            AppId& payloadAppId, AppId& miscAppId);
+    int set_flow_data(FlowData*);
+    FlowData* get_flow_data(uint32_t proto);
+    void free_flow_data(uint32_t proto);
+    void free_flow_data(FlowData*);
+    void free_flow_data();
+
+    void set_application_ids(AppId service, AppId client, AppId payload, AppId misc);
+    void get_application_ids(AppId& service, AppId& client, AppId& payload, AppId& misc);
+
     void call_handlers(Packet* p, bool eof = false);
     void markup_packet_flags(Packet*);
     void set_direction(Packet*);
     void set_expire(const Packet*, uint32_t timeout);
-    int get_expire(const Packet*);
     bool expired(const Packet*);
     void set_ttl(Packet*, bool client);
     void set_mpls_layer_per_dir(Packet*);
@@ -294,11 +292,15 @@ public:
     }
 
 public:  // FIXIT-M privatize if possible
+    // fields are organized by initialization and size to minimize
+    // void space and allow for memset of tail end of struct
+
     // these fields are const after initialization
     const FlowKey* key;
     class Session* session;
     class BitOp* bitop;
     class FlowHAState* ha_state;
+
     uint8_t ip_proto; // FIXIT-M do we need both of these?
     PktType pkt_type; // ^^
 
@@ -306,24 +308,30 @@ public:  // FIXIT-M privatize if possible
     Flow* prev, * next;
     Inspector* ssn_client;
     Inspector* ssn_server;
+
     long last_data_seen;
+    Layer mpls_client, mpls_server;
 
     // everything from here down is zeroed
-    FlowData* appDataList;
+    FlowData* flow_data;
     Inspector* clouseau;  // service identifier
     Inspector* gadget;    // service handler
     Inspector* data;
     const char* service;
-    Layer clientMplsLyr, serverMplsLyr;
 
-    unsigned policy_id;
-
-    FlowState flow_state;
+    uint64_t expire_time;
 
     sfip_t client_ip; // FIXIT-L family and bits should be changed to uint16_t
     sfip_t server_ip; // or uint8_t to reduce sizeof from 24 to 20
 
-    uint64_t expire_time;
+    LwState ssn_state;
+    LwState previous_ssn_state;
+
+    // FIXIT-L: if appid is only consumer of this move to appid
+    AppId application_ids[APP_PROTOID_MAX];
+
+    FlowState flow_state;
+    unsigned policy_id;
 
     int32_t iface_in;
     int32_t iface_out;
@@ -340,12 +348,8 @@ public:  // FIXIT-M privatize if possible
     uint8_t  response_count;
     bool disable_inspect;
 
-    // FIXIT-L: if appid is only consumer of this move to appid
-    AppId application_ids[APP_PROTOID_MAX];
-
-public:
-    LwState ssn_state;
-    LwState previous_ssn_state;
+private:
+    void clean();
 };
 
 #endif

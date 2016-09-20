@@ -65,6 +65,7 @@ struct StreamModuleConfig
     FlowConfig udp_cfg;
     FlowConfig user_cfg;
     FlowConfig file_cfg;
+    bool ip_frags_only;
 };
 
 class StreamModule : public Module

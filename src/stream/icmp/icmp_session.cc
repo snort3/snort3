@@ -62,6 +62,7 @@ static void IcmpSessionCleanup(Flow* ssn)
 {
     if (ssn->ssn_state.session_flags & SSNFLAG_PRUNED)
         icmpStats.prunes++;
+
     else if (ssn->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
         icmpStats.timeouts++;
 

@@ -61,6 +61,7 @@ static void UdpSessionCleanup(Flow* lwssn)
 {
     if (lwssn->ssn_state.session_flags & SSNFLAG_PRUNED)
         udpStats.prunes++;
+
     else if (lwssn->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
         udpStats.timeouts++;
 
@@ -198,8 +199,7 @@ int UdpSession::process(Packet* p)
         UdpSessionCleanup(flow);
         flow->restart();
         flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
-        udpStats.created++; // FIXIT-M is this correct? will mess with calc of current sessions
-        udpStats.timeouts++;
+        udpStats.created++;
         UdpHAManager::process_deletion(flow);
     }
 

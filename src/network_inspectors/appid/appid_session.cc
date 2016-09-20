@@ -424,7 +424,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, 
     data->flow = p->flow;
     data->stats.firstPktsecond = p->pkth->ts.tv_sec;
 
-    p->flow->set_application_data(data);
+    p->flow->set_flow_data(data);
     return data;
 }
 
@@ -1604,7 +1604,7 @@ void AppIdSession::do_application_discovery(Packet* p)
     if( is_packet_ignored(p) )
         return;
 
-    AppIdSession* session = (AppIdSession*) p->flow->get_application_data(AppIdSession::flow_id);
+    AppIdSession* session = (AppIdSession*) p->flow->get_flow_data(AppIdSession::flow_id);
     if (session)
     {
         if (session->common.fsf_type.flow_type == APPID_SESSION_TYPE_IGNORE)
@@ -1655,11 +1655,11 @@ void AppIdSession::do_application_discovery(Packet* p)
                 APPID_SESSION_BIDIRECTIONAL_CHECKED)
             {
                 // FIXIT-M: This _dpd call needs to be convert to correct snort++ call
-                // static THREAD_LOCAL APPID_SESSION_STRUCT_FLAG ignore_fsf {
-                // APPID_SESSION_TYPE_IGNORE };
+                // static THREAD_LOCAL APPID_SESSION_STRUCT_FLAG ignore_fsf
+                // { APPID_SESSION_TYPE_IGNORE };
 
-                // _dpd.sessionAPI->set_application_data(p->flow, PP_APP_ID, &ignore_fsf,
-                //     nullptr);
+                // p->flow->set_flow_data(PP_APP_ID, &ignore_fsf, nullptr);
+
                 if (app_id_debug_session_flag)
                     LogMessage("AppIdDbg %s not monitored\n", app_id_debug_session);
             }
@@ -1681,7 +1681,7 @@ void AppIdSession::do_application_discovery(Packet* p)
                 else
                     tmp_session->common.initiator_port = 0;
                 tmp_session->common.policyId = appIdPolicyId;
-                p->flow->set_application_data(tmp_session);
+                p->flow->set_flow_data(tmp_session);
                 if (app_id_debug_session_flag)
                     LogMessage("AppIdDbg %s unknown monitoring\n", app_id_debug_session);
             }

@@ -147,7 +147,7 @@ bool AppIdApi::is_ssl_session_decrypted(AppIdSession* session)
 
 AppIdSession* AppIdApi::get_appid_data(Flow* flow)
 {
-    AppIdSession* session = (AppIdSession*) flow->get_application_data(AppIdSession::flow_id);
+    AppIdSession* session = (AppIdSession*) flow->get_flow_data(AppIdSession::flow_id);
 
     return (session && session->common.fsf_type.flow_type == APPID_SESSION_TYPE_NORMAL) ?
            session : nullptr;
@@ -492,7 +492,7 @@ char* AppIdApi::get_netbios_name(AppIdSession* session)
 uint32_t AppIdApi::produce_ha_state(void* lwssn, uint8_t* buf)
 {
     AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
-    AppIdSession* session = (AppIdSession*)(((Flow*)lwssn)->get_application_data(AppIdSession::flow_id));
+    AppIdSession* session = (AppIdSession*)(((Flow*)lwssn)->get_flow_data(AppIdSession::flow_id));
 
     // FIXIT - getFlowType should be a class member
     if (session && get_flow_type(session) != APPID_FLOW_TYPE_NORMAL)
@@ -529,13 +529,13 @@ uint32_t AppIdApi::consume_ha_state(void* lwssn, const uint8_t* buf, uint8_t, Ip
     AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
     if (appHA->flags & APPID_HA_FLAGS_APP)
     {
-        AppIdSession* session = (AppIdSession*)(((Flow*)lwssn)->get_application_data(
+        AppIdSession* session = (AppIdSession*)(((Flow*)lwssn)->get_flow_data(
             AppIdSession::flow_id));
 
         if (!session)
         {
             session = new AppIdSession(proto, ip);
-            ((Flow*)lwssn)->set_application_data(session);
+            ((Flow*)lwssn)->set_flow_data(session);
             if (session->serviceAppId == APP_ID_FTP_CONTROL)
             {
                 session->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED |

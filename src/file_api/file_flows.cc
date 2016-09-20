@@ -55,7 +55,7 @@ unsigned FileFlows::flow_id = 0;
 
 FileFlows* FileFlows::get_file_flows(Flow* flow)
 {
-    FileFlows* fd = (FileFlows*) flow->get_application_data(FileFlows::flow_id);
+    FileFlows* fd = (FileFlows*) flow->get_flow_data(FileFlows::flow_id);
 
     if (fd)
         return fd;
@@ -63,7 +63,7 @@ FileFlows* FileFlows::get_file_flows(Flow* flow)
     if (FileService::is_file_service_enabled())
     {
         fd = new FileFlows(flow);
-        flow->set_application_data(fd);
+        flow->set_flow_data(fd);
     }
 
     return fd;

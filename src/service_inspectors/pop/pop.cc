@@ -118,9 +118,7 @@ PopFlowData::~PopFlowData()
 unsigned PopFlowData::flow_id = 0;
 static POPData* get_session_data(Flow* flow)
 {
-    PopFlowData* fd = (PopFlowData*)flow->get_application_data(
-        PopFlowData::flow_id);
-
+    PopFlowData* fd = (PopFlowData*)flow->get_flow_data(PopFlowData::flow_id);
     return fd ? &fd->session : NULL;
 }
 
@@ -129,7 +127,7 @@ static POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
     POPData* pop_ssn;
     PopFlowData* fd = new PopFlowData;
 
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
     pop_ssn = &fd->session;
 
     popstats.sessions++;

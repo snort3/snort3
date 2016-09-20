@@ -141,9 +141,15 @@ typedef struct _FLOWBITS_GRP
     BitOp* GrpBitOp;
 } FLOWBITS_GRP;
 
-static SFGHASH* flowbits_grp_hash = NULL;
-
 static std::forward_list<const FLOWBITS_OP*> op_list;
+
+static SFGHASH* flowbits_hash = NULL;
+static SFGHASH* flowbits_grp_hash = NULL;
+static SF_QUEUE* flowbits_bit_queue = NULL;
+
+static unsigned flowbits_count = 0;
+static unsigned flowbits_grp_count = 0;
+static int flowbits_toggle = 1;
 
 static int check_flowbits(
     uint8_t type, uint8_t evalType, uint16_t* ids, uint16_t num_ids,
@@ -269,6 +275,19 @@ int FlowBitsOption::eval(Cursor&, Packet* p)
 // helper methods
 //-------------------------------------------------------------------------
 
+static inline BitOp* get_flow_bitop(const Packet* p)
+{
+    Flow* flow = p->flow;
+
+    if (!flow)
+        return NULL;
+
+    if ( !flow->bitop )
+        flow->bitop = new BitOp(flowbits_count);
+
+    return flow->bitop;
+}
+
 static inline int clear_group_bit(BitOp* bitop, char* group)
 {
     if ( !group )
@@ -391,15 +410,15 @@ static int check_flowbits(
     uint8_t type, uint8_t evalType, uint16_t* ids, uint16_t num_ids, char* group, Packet* p)
 {
     int rval = DETECTION_OPTION_NO_MATCH;
-    BitOp* bitop;
     Flowbits_eval eval = (Flowbits_eval)evalType;
     int result = 0;
     int i;
 
-    bitop = stream.get_flow_bitop(p);
+    BitOp* bitop = get_flow_bitop(p);
+
     if (!bitop)
     {
-        DebugMessage(DEBUG_FLOWBITS, "No FLOWBITS_DATA");
+        assert(false);
         return rval;
     }
 
@@ -509,25 +528,6 @@ static int check_flowbits(
 // public methods
 //-------------------------------------------------------------------------
 
-static SFGHASH* flowbits_hash = NULL;
-static SF_QUEUE* flowbits_bit_queue = NULL;
-static uint16_t flowbits_count = 0;
-static uint16_t flowbits_grp_count = 0;
-static int flowbits_toggle = 1;
-
-// FIXIT-P consider allocating flowbits on session on demand instead of
-// preallocating.
-
-unsigned int getFlowbitSize()
-{
-    return flowbits_count;
-}
-
-unsigned int getFlowbitSizeInBytes()
-{
-    return flowbits_count ? (flowbits_count + 7) >> 3 : 1;
-}
-
 void FlowbitResetCounts()
 {
     SFGHASH_NODE* n;
@@ -605,7 +605,7 @@ static FLOWBITS_OBJECT* getFlowBitItem(char* flowbitName, FLOWBITS_OP* flowbits)
             if ( !flowbits_count )
             {
                 ParseError("The number of flowbit IDs in the current ruleset exceeds "
-                    "the maximum number of IDs that are allowed (65535).");
+                    "the maximum number of IDs that are allowed (%u).", flowbits_count-1);
             }
         }
 
@@ -981,14 +981,12 @@ static void init_groups()
     if ( !flowbits_hash or !flowbits_grp_hash )
         return;
 
-    unsigned size = getFlowbitSizeInBytes();
-
     for ( SFGHASH_NODE* n = sfghash_findfirst(flowbits_grp_hash);
         n != NULL;
         n= sfghash_findnext(flowbits_grp_hash) )
     {
         FLOWBITS_GRP* fbg = (FLOWBITS_GRP*)n->data;
-        fbg->GrpBitOp = new BitOp(size);
+        fbg->GrpBitOp = new BitOp(flowbits_count);
         fbg->GrpBitOp->reset();
     }
 

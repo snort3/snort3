@@ -31,6 +31,7 @@
 #include "main/snort_debug.h"
 #include "packet_io/active.h"
 #include "time/packet_time.h"
+#include "utils/stats.h"
 
 #define SESSION_CACHE_FLAG_PURGING  0x01
 
@@ -40,13 +41,6 @@
 
 FlowCache::FlowCache (const FlowConfig& cfg) : config(cfg)
 {
-    cleanup_flows = cfg.max_sessions * cfg.cleanup_pct / 100;
-    if ( cleanup_flows == 0 )
-        cleanup_flows = 1;
-
-    assert(cleanup_flows <= cfg.max_sessions);
-    assert(cleanup_flows > 0);
-
     hash_table = new ZHash(config.max_sessions, sizeof(FlowKey));
     hash_table->set_keyops(FlowKey::hash, FlowKey::compare);
 
@@ -307,7 +301,7 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
     if ( !flow )
         flow = static_cast<Flow*>(hash_table->first());
 
-    while ( flow and retired < num_flows )
+    while ( flow and (retired < num_flows) )
     {
         if ( flow->last_data_seen + config.nominal_timeout > thetime )
             break;
@@ -340,7 +334,6 @@ unsigned FlowCache::purge()
 
     while ( auto flow = static_cast<Flow*>(hash_table->first()) )
     {
-        flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
         release(flow, PruneReason::PURGE);
         ++retired;
     }

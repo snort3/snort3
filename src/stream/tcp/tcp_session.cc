@@ -160,14 +160,14 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
 {
     if ( client->reassembler )
     {
-        if( flush_segments )
+        if ( flush_segments )
             client->reassembler->flush_queued_segments(flow, true, p);
         client->reassembler->purge_segment_list();
     }
 
     if ( server->reassembler )
     {
-        if( flush_segments )
+        if ( flush_segments )
             server->reassembler->flush_queued_segments(flow, true, p);
         server->reassembler->purge_segment_list();
     }
@@ -179,14 +179,15 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     else
         return;
 
-    if (flow->get_session_flags() & SSNFLAG_PRUNED)
+    if ( flow->get_session_flags() & SSNFLAG_PRUNED )
         tcpStats.prunes++;
-    else if (flow->get_session_flags() & SSNFLAG_TIMEDOUT)
+
+    else if ( flow->get_session_flags() & SSNFLAG_TIMEDOUT )
         tcpStats.timeouts++;
 
     update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
 
-    if( restart )
+    if ( restart )
     {
         flow->restart(free_flow_data);
         paf_reset(&client->paf_state);
@@ -234,8 +235,9 @@ void TcpSession::update_perf_base_state(char newState)
             if ( ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
                 && !( session_flags & SSNFLAG_COUNTED_CLOSING ) )
             {
-                assert(tcpStats.sessions_initializing);
-                tcpStats.sessions_initializing--;
+                //assert(tcpStats.sessions_initializing);
+                if ( tcpStats.sessions_initializing )  // FIXIT-L eliminate / fix underflow
+                    tcpStats.sessions_initializing--;
             }
         }
         break;
@@ -248,7 +250,7 @@ void TcpSession::update_perf_base_state(char newState)
 
             if ( session_flags & SSNFLAG_COUNTED_ESTABLISH )
             {
-                assert(tcpStats.sessions_established);
+                //assert(tcpStats.sessions_established);
                 tcpStats.sessions_established--;
 
                 if (perfmon_config  && (perfmon_config->perf_flags & PERF_FLOWIP))
@@ -257,8 +259,9 @@ void TcpSession::update_perf_base_state(char newState)
             }
             else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
             {
-                assert(tcpStats.sessions_initializing);
-                tcpStats.sessions_initializing--;
+                //assert(tcpStats.sessions_initializing);
+                if ( tcpStats.sessions_initializing )  // FIXIT-L eliminate / fix underflow
+                    tcpStats.sessions_initializing--;
             }
         }
         break;
@@ -266,13 +269,14 @@ void TcpSession::update_perf_base_state(char newState)
     case TcpStreamTracker::TCP_CLOSED:
         if ( session_flags & SSNFLAG_COUNTED_CLOSING )
         {
-            assert(tcpStats.sessions_closing);
+            //assert(tcpStats.sessions_closing);
             tcpStats.sessions_closing--;
         }
         else if ( session_flags & SSNFLAG_COUNTED_ESTABLISH )
         {
-            assert(tcpStats.sessions_established);
-            tcpStats.sessions_established--;
+            //assert(tcpStats.sessions_established);
+            if ( tcpStats.sessions_established )  // FIXIT-L eliminate / fix underflow
+                tcpStats.sessions_established--;
 
             if ( perfmon_config && ( perfmon_config->perf_flags & PERF_FLOWIP ) )
                 perf_flow_ip->update_state(&flow->client_ip,
@@ -280,8 +284,9 @@ void TcpSession::update_perf_base_state(char newState)
         }
         else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
         {
-            assert(tcpStats.sessions_initializing);
-            tcpStats.sessions_initializing--;
+            //assert(tcpStats.sessions_initializing);
+            if ( tcpStats.sessions_initializing )  // FIXIT-L eliminate / fix underflow
+                tcpStats.sessions_initializing--;
         }
         break;
 
@@ -649,7 +654,7 @@ void TcpSession::update_session_on_rst(TcpSegmentDescriptor& tsd, bool flush)
         flush_talker(tsd.get_pkt());
         set_splitter(true, nullptr);
         set_splitter(false, nullptr);
-        flow->free_application_data();
+        flow->free_flow_data();
     }
 
     talker->update_on_rst_sent( );
@@ -831,12 +836,17 @@ TcpStreamTracker::TcpState TcpSession::get_listener_state()
 void TcpSession::check_for_repeated_syn(TcpSegmentDescriptor& tsd)
 {
     uint32_t action = ACTION_NOTHING;
-    if (!SEQ_EQ(tsd.get_seg_seq(), talker->get_iss())
-        && listener->normalizer->packet_dropper(tsd, NORM_TCP_BLOCK))
-        action = ACTION_BAD_PKT;
-    else if (talker->get_tcp_state() >= TcpStreamTracker::TCP_ESTABLISHED)
-        action = listener->normalizer->handle_repeated_syn(tsd);
 
+    if ( !SEQ_EQ(tsd.get_seg_seq(), talker->get_iss()) and
+        listener->normalizer->packet_dropper(tsd, NORM_TCP_BLOCK) )
+    {
+        action = ACTION_BAD_PKT;
+    }
+    else if ( talker->get_tcp_state() >= TcpStreamTracker::TCP_ESTABLISHED and
+        talker->get_tcp_state() < TcpStreamTracker::TCP_CLOSED )
+    {
+        action = listener->normalizer->handle_repeated_syn(tsd);
+    }
     if (action != ACTION_NOTHING)
     {
         /* got a bad SYN on the session, alert! */

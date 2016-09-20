@@ -72,7 +72,8 @@ public:
     void SwapPacketHeaderFoo();
 
     virtual void update_perf_base_state(char) { }
-    virtual void clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p = nullptr) = 0;
+    virtual void clear_session(
+        bool free_flow_data, bool flush_segments, bool restart, Packet* p = nullptr) = 0;
 
     // FIXIT-L these 2 function names convey no meaning afaict... figure out
     // why are they called and name appropriately...
@@ -94,8 +95,12 @@ public:
 
     virtual void flush() { }
 
-    virtual TcpStreamTracker::TcpState get_talker_state() { return TcpStreamTracker::TCP_MAX_STATES; }
-    virtual TcpStreamTracker::TcpState get_listener_state() { return TcpStreamTracker::TCP_MAX_STATES; }
+    virtual TcpStreamTracker::TcpState get_talker_state()
+    { return TcpStreamTracker::TCP_MAX_STATES; }
+
+    virtual TcpStreamTracker::TcpState get_listener_state()
+    { return TcpStreamTracker::TCP_MAX_STATES; }
+
     virtual void init_new_tcp_session(TcpSegmentDescriptor&);
     virtual void update_timestamp_tracking(TcpSegmentDescriptor&) { }
     virtual void update_session_on_syn_ack();
@@ -117,9 +122,7 @@ public:
     }
 
     void set_pkt_action_flag(uint32_t flag)
-    {
-        pkt_action_mask |= flag;
-    }
+    { pkt_action_mask |= flag; }
 
     virtual void update_paws_timestamps(TcpSegmentDescriptor&) { }
     virtual void check_for_repeated_syn(TcpSegmentDescriptor&) { }

@@ -36,17 +36,14 @@ unsigned Dnp3FlowData::flow_id = 0;
 
 static dnp3_session_data_t* get_session_data(Flow* flow)
 {
-    Dnp3FlowData* fd = (Dnp3FlowData*)flow->get_application_data(
-        Dnp3FlowData::flow_id);
-
+    Dnp3FlowData* fd = (Dnp3FlowData*)flow->get_flow_data(Dnp3FlowData::flow_id);
     return fd ? &fd->dnp3_session : nullptr;
 }
 
 static dnp3_session_data_t* set_new_dnp3_session(Packet* p)
 {
     Dnp3FlowData* fd = new Dnp3FlowData;
-
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
     return(&fd->dnp3_session);
 }
 

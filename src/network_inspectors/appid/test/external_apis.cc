@@ -173,12 +173,12 @@ void enable_preproc_all_ports(struct _SnortConfig*, uint32_t, uint32_t)
 {
 }
 
-void* get_application_data(void*, uint32_t)
+void* get_flow_data(void*, uint32_t)
 {
     return pAppIdData;
 }
 
-int set_application_data(void*, uint32_t, AppIdSession* data, StreamAppDataFree)
+int set_flow_data(void*, uint32_t, AppIdSession* data, StreamAppDataFree)
 {
     pAppIdData = data;
 

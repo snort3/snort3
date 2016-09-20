@@ -31,7 +31,6 @@
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "main/snort_debug.h"
-#include "utils/util.h"
 #include "flow/flow_control.h"
 #include "flow/flow_cache.h"
 #include "flow/ha.h"
@@ -52,6 +51,8 @@
 #include "protocols/vlan.h"
 #include "target_based/snort_protocols.h"
 #include "target_based/sftarget_hostentry.h"
+#include "utils/bitop.h"
+#include "utils/util.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
@@ -86,7 +87,7 @@ void Stream::delete_session(const FlowKey* key)
 // key foo
 //-------------------------------------------------------------------------
 
-Flow* Stream::get_session_ptr_from_ip_port(
+Flow* Stream::get_session_ptr(
     PktType type, IpProtocol proto,
     const sfip_t* srcIP, uint16_t srcPort,
     const sfip_t* dstIP, uint16_t dstPort,
@@ -125,14 +126,14 @@ FlowKey* Stream::get_session_key(Packet* p)
 // app data foo
 //-------------------------------------------------------------------------
 
-FlowData* Stream::get_application_data_from_key(
+FlowData* Stream::get_flow_data(
     const FlowKey* key, unsigned flow_id)
 {
     Flow* flow = get_session(key);
-    return flow->get_application_data(flow_id);
+    return flow->get_flow_data(flow_id);
 }
 
-FlowData* Stream::get_application_data_from_ip_port(
+FlowData* Stream::get_flow_data(
     PktType type, IpProtocol proto,
     const sfip_t* srcIP, uint16_t srcPort,
     const sfip_t* dstIP, uint16_t dstPort,
@@ -141,7 +142,7 @@ FlowData* Stream::get_application_data_from_ip_port(
 {
     Flow* flow;
 
-    flow = get_session_ptr_from_ip_port(
+    flow = get_session_ptr(
         type, proto,
         srcIP, srcPort, dstIP, dstPort,
         vlan, mplsId, addressSpaceID);
@@ -149,7 +150,7 @@ FlowData* Stream::get_application_data_from_ip_port(
     if (!flow)
         return NULL;
 
-    return flow->get_application_data(flow_id);
+    return flow->get_flow_data(flow_id);
 }
 
 //-------------------------------------------------------------------------
@@ -313,16 +314,6 @@ void Stream::drop_session(const Packet* p)
 // misc support
 //-------------------------------------------------------------------------
 
-BitOp* Stream::get_flow_bitop(const Packet* p)
-{
-    Flow* flow = p->flow;
-
-    if (!flow)
-        return NULL;
-
-    return flow->bitop;
-}
-
 void Stream::init_active_response(const Packet* p, Flow* flow)
 {
     if ( !flow )
@@ -349,7 +340,7 @@ int Stream::set_application_protocol_id_expected(
         srcIP, srcPort, dstIP, dstPort, protocol, appId, fd);
 }
 
-void Stream::set_application_protocol_id_from_host_entry(
+void Stream::set_application_protocol_id(
     Flow* flow, const HostAttributeEntry* host_entry, int /*direction*/)
 {
     int16_t application_protocol;
@@ -411,7 +402,7 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
     host_entry = SFAT_LookupHostEntryByIP(&flow->server_ip);
     if (host_entry)
     {
-        set_application_protocol_id_from_host_entry(flow, host_entry, FROM_SERVER);
+        set_application_protocol_id(flow, host_entry, FROM_SERVER);
 
         if (flow->ssn_state.application_protocol != 0)
         {
@@ -422,7 +413,7 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
     host_entry = SFAT_LookupHostEntryByIP(&flow->client_ip);
     if (host_entry)
     {
-        set_application_protocol_id_from_host_entry(flow, host_entry, FROM_CLIENT);
+        set_application_protocol_id(flow, host_entry, FROM_CLIENT);
 
         if (flow->ssn_state.application_protocol != 0)
         {
@@ -560,7 +551,7 @@ static void active_response(Packet* p, Flow* lwssn)
     else
         lwssn->session_state |= STREAM_STATE_DROP_SERVER;
 
-    if ( (lwssn->response_count < max) && lwssn->get_expire(p) )
+    if ( (lwssn->response_count < max) && lwssn->expired(p) )
     {
         uint32_t delay = snort_conf->min_interval;
         EncodeFlags flags =
@@ -618,8 +609,11 @@ bool Stream::ignored_session(Flow* flow, Packet* p)
     return false;
 }
 
-static int StreamExpireSession(Flow* lwssn)
+static int StreamExpire(Packet* p, Flow* lwssn)
 {
+    if ( !lwssn->expired(p) )
+        return 0;
+
     if ( HighAvailabilityManager::in_standby(lwssn) )
         return 1;
 
@@ -627,17 +621,6 @@ static int StreamExpireSession(Flow* lwssn)
     lwssn->session_state |= STREAM_STATE_TIMEDOUT;
 
     return 1;
-}
-
-static int StreamExpire(Packet* p, Flow* lwssn)
-{
-    if ( lwssn->expired(p) )
-    {
-        /* Expiration time has passed. */
-        return StreamExpireSession(lwssn);
-    }
-
-    return 0;
 }
 
 bool Stream::expired_session(Flow* flow, Packet* p)

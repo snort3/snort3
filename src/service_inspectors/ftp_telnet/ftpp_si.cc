@@ -101,7 +101,7 @@ static int TelnetStatefulsessionInspection(Packet* p,
 
         SiInput->pproto = FTPP_SI_PROTO_TELNET;
 
-        p->flow->set_application_data(fd);
+        p->flow->set_flow_data(fd);
 
         *Telnetsession = Newsession;
         return FTPP_SUCCESS;
@@ -421,7 +421,7 @@ static int FTPStatefulsessionInspection(
             Newsession->client_conf = ClientConf;
             Newsession->server_conf = ServerConf;
 
-            p->flow->set_application_data(fd);
+            p->flow->set_flow_data(fd);
 
             *Ftpsession = Newsession;
             SiInput->pproto = FTPP_SI_PROTO_FTP;

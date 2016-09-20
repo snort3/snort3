@@ -87,7 +87,7 @@ static inline int GTP_Process(Packet* p, GTP_Roptions* pRopts)
 static GTP_Roptions* GTPGetNewSession(Packet* packetp)
 {
     GtpFlowData* gfd = new GtpFlowData;
-    packetp->flow->set_application_data(gfd);
+    packetp->flow->set_flow_data(gfd);
 
     GTP_Roptions* pRopts = &gfd->ropts;
     gtp_stats.sessions++;
@@ -99,7 +99,7 @@ static GTP_Roptions* GTPGetNewSession(Packet* packetp)
 void GTPmain(Packet* packetp)
 {
     /* Attempt to get a previously allocated GTP block. */
-    GtpFlowData* gfd = (GtpFlowData*)packetp->flow->get_application_data(GtpFlowData::flow_id);
+    GtpFlowData* gfd = (GtpFlowData*)packetp->flow->get_flow_data(GtpFlowData::flow_id);
     GTP_Roptions* pRopts = gfd ? &gfd->ropts : nullptr;
 
     if ( !pRopts )

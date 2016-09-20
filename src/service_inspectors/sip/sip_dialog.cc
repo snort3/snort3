@@ -408,7 +408,7 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
             sfip_to_str(&mdataB->maddress), mdataB->mport);
 
         /* Call into Streams to mark data channel as something to ignore. */
-        FlowData* fd = stream.get_application_data_from_ip_port(
+        FlowData* fd = stream.get_flow_data(
             PktType::UDP, IpProtocol::UDP, &mdataA->maddress,mdataA->mport,
             &mdataB->maddress, mdataB->mport, 0, 0, p->pkth->address_space_id,
             SipFlowData::flow_id);

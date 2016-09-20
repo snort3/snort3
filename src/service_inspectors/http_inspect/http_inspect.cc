@@ -126,8 +126,7 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuff
 const Field& HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
     SourceId source_id, bool buf_owner) const
 {
-    HttpFlowData* session_data = (HttpFlowData*)flow->get_application_data(
-        HttpFlowData::http_flow_id);
+    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::http_flow_id);
     assert(session_data != nullptr);
 
     HttpModule::increment_peg_counts(PEG_INSPECT);
@@ -196,7 +195,7 @@ void HttpInspect::clear(Packet* p)
     latest_section = nullptr;
 
     HttpFlowData* session_data =
-        (HttpFlowData*)p->flow->get_application_data(HttpFlowData::http_flow_id);
+        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::http_flow_id);
 
     if (session_data == nullptr)
         return;

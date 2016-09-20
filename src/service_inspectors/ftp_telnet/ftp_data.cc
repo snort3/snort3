@@ -82,7 +82,7 @@ static int SnortFTPData(Packet* p)
         return -1;
 
     FtpDataFlowData* fd = (FtpDataFlowData*)
-        p->flow->get_application_data(FtpFlowData::flow_id);
+        p->flow->get_flow_data(FtpFlowData::flow_id);
 
     FTP_DATA_SESSION* data_ssn = fd ? &fd->session : nullptr;
 
@@ -100,7 +100,7 @@ static int SnortFTPData(Packet* p)
         /* FTP-Data session is in limbo, we need to lookup the control session
          * to figure out what to do. */
 
-        FtpFlowData* fd = (FtpFlowData*)stream.get_application_data_from_key(
+        FtpFlowData* fd = (FtpFlowData*)stream.get_flow_data(
             &data_ssn->ftp_key, FtpFlowData::flow_id);
 
         FTP_SESSION* ftp_ssn = fd ? &fd->session : NULL;

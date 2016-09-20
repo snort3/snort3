@@ -53,8 +53,8 @@ int16_t findProtocolReference(const char* app);
 
 // Session APIs
 void enable_preproc_all_ports(SnortConfig*, uint32_t appId, uint32_t flags);
-void* get_application_data(void* stream_session, uint32_t protocol);
-int set_application_data(void* scbptr, uint32_t protocol, void* data, StreamAppDataFree);
+void* get_flow_data(void* stream_session, uint32_t protocol);
+int set_flow_data(void* scbptr, uint32_t protocol, void* data, StreamAppDataFree);
 uint32_t get_packet_direction(Packet*);
 uint32_t get_session_flags(void* ssnptr);
 sfaddr_t* get_session_ip_address(void* scbptr, uint32_t direction);

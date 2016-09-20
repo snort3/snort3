@@ -85,15 +85,13 @@ const PegInfo ssl_peg_names[] =
 static SSLData* SetNewSSLData(Packet* p)
 {
     SslFlowData* fd = new SslFlowData;
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
     return &fd->session;
 }
 
 SSLData* get_ssl_session_data(Flow* flow)
 {
-    SslFlowData* fd = (SslFlowData*)flow->get_application_data(
-        SslFlowData::flow_id);
-
+    SslFlowData* fd = (SslFlowData*)flow->get_flow_data(SslFlowData::flow_id);
     return fd ? &fd->session : NULL;
 }
 

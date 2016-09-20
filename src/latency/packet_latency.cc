@@ -29,6 +29,7 @@
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
 #include "time/clock_defs.h"
+#include "utils/stats.h"
 
 #include "latency_config.h"
 #include "latency_timer.h"
@@ -43,6 +44,8 @@
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
+
+static THREAD_LOCAL uint64_t elapsed = 0;
 
 namespace packet_latency
 {
@@ -84,7 +87,7 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
     using std::chrono::duration_cast;
     using std::chrono::microseconds;
 
-    os << "latency: packet timed out";
+    os << "latency: packet " << pc.total_from_daq << " timed out";
     if ( e.fastpathed )
         os << " (fastpathed)";
 
@@ -154,6 +157,11 @@ inline bool Impl<Clock>::pop(const Packet* p)
         if ( config->action & PacketLatencyConfig::ALERT )
             event_handler.handle(e);
     }
+
+    // FIXIT-H this is fugly and inefficient
+    using std::chrono::duration_cast;
+    using std::chrono::microseconds;
+    elapsed = clock_usecs(duration_cast<microseconds>(timer.elapsed()).count());
 
     timers.pop_back();
     return timed_out;
@@ -236,6 +244,12 @@ void PacketLatency::pop(const Packet* p)
     {
         if ( packet_latency::get_impl().pop(p) )
             ++latency_stats.packet_timeouts;
+
+        // FIXIT-L the timer is still running so this max is slightly larger than logged
+        if ( elapsed > latency_stats.max_usecs )
+            latency_stats.max_usecs = elapsed;
+
+        latency_stats.total_usecs += elapsed;
     }
 }
 

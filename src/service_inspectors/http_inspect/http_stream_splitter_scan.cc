@@ -85,11 +85,11 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
     // This is the session state information we share with HttpInspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
     // connection the new flow data object is created here.
-    HttpFlowData* session_data = (HttpFlowData*)flow->get_application_data(
-        HttpFlowData::http_flow_id);
+    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::http_flow_id);
+
     if (session_data == nullptr)
     {
-        flow->set_application_data(session_data = new HttpFlowData);
+        flow->set_flow_data(session_data = new HttpFlowData);
         HttpModule::increment_peg_counts(PEG_FLOW);
     }
 
@@ -205,9 +205,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
 
 bool HttpStreamSplitter::finish(Flow* flow)
 {
-    HttpFlowData* session_data = (HttpFlowData*)flow->get_application_data(
-        HttpFlowData::http_flow_id);
-
+    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::http_flow_id);
     assert(session_data != nullptr);
 
 #ifdef REG_TEST

@@ -23,9 +23,5 @@
 void FlowbitResetCounts();
 int FlowBits_SetOperation(void*);
 
-void setFlowbitSize(unsigned);
-unsigned int getFlowbitSize();
-unsigned int getFlowbitSizeInBytes();
-
 #endif
 

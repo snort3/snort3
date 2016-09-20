@@ -229,7 +229,8 @@ void StreamBase::eval(Packet* p)
     switch ( p->type() )
     {
     case PktType::IP:
-        if ( p->has_ip() )
+        if ( p->has_ip() and
+            ((p->ptrs.decode_flags & DECODE_FRAG) or !config->ip_frags_only) )
             flow_con->process_ip(p);
         break;
 

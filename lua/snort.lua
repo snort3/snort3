@@ -69,6 +69,7 @@ back_orifice = { }
 dnp3 = { }
 dns = { }
 gtp_inspect = default_gtp
+http_inspect = { }
 imap = { }
 smtp = { }
 pop = { }
@@ -79,10 +80,6 @@ sip = { }
 ssh = { }
 ssl = { }
 telnet = { }
-
--- use http_inspect or new_http_inspect (incomplete)
-http_inspect = { }
---new_http_inspect = { }
 
 ftp_server = default_ftp_server
 ftp_client = { }

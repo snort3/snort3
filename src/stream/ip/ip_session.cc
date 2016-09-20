@@ -74,11 +74,7 @@ static void IpSessionCleanup(Flow* lws, FragTracker* tracker)
 
     if ( lws->ssn_state.session_flags & SSNFLAG_TIMEDOUT )
         ip_stats.timeouts++;
-    else if ( lws->ssn_state.session_flags & SSNFLAG_PRUNED )
-        ip_stats.prunes++;
 
-    if ( lws->ssn_state.session_flags & SSNFLAG_TIMEDOUT )
-        ip_stats.timeouts++;
     else if ( lws->ssn_state.session_flags & SSNFLAG_PRUNED )
         ip_stats.prunes++;
 

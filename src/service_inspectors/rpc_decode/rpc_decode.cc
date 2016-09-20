@@ -656,7 +656,7 @@ static RpcSsnData* RpcSsnDataNew(Packet* p)
     RpcSsnData* rsdata = &fd->session;
     rsdata->active = 1;
 
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
 
     DebugFormat(DEBUG_RPC, "STATEFUL: Created new session: " "%p\n", (void*) rsdata);
     return rsdata;
@@ -985,8 +985,7 @@ void RpcDecode::eval(Packet* p)
 
     if ( p->flow )
     {
-        RpcFlowData* fd = (RpcFlowData*)p->flow->get_application_data(
-            RpcFlowData::flow_id);
+        RpcFlowData* fd = (RpcFlowData*)p->flow->get_flow_data(RpcFlowData::flow_id);
 
         if ( fd )
             rsdata = &fd->session;

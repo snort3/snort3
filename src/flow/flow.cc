@@ -26,10 +26,10 @@
 #include "flow/ha.h"
 #include "flow/session.h"
 #include "ips_options/ips_flowbits.h"
-#include "utils/bitop.h"
-#include "utils/util.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
+#include "utils/bitop.h"
+#include "utils/util.h"
 
 unsigned FlowData::flow_id = 0;
 
@@ -60,15 +60,15 @@ Flow::~Flow()
 void Flow::init(PktType type)
 {
     pkt_type = type;
-
-    // FIXIT-M getFlowbitSizeInBytes() should be attribute of ??? (or eliminate)
-    bitop = new BitOp(getFlowbitSizeInBytes());
+    bitop = nullptr;
 
     if ( HighAvailabilityManager::active() )
     {
         ha_state = new FlowHAState;
         previous_ssn_state = ssn_state;
     }
+    mpls_client.length = 0;
+    mpls_server.length = 0;
 }
 
 void Flow::term()
@@ -76,7 +76,16 @@ void Flow::term()
     if ( session )
         delete session;
 
-    free_application_data();
+    free_flow_data();
+
+    if ( mpls_client.length )
+        delete[] mpls_client.start;
+
+    if ( mpls_server.length )
+        delete[] mpls_server.start;
+
+    if ( bitop )
+        delete bitop;
 
     if ( ssn_client )
         ssn_client->rem_ref();
@@ -90,21 +99,26 @@ void Flow::term()
     if ( gadget )
         gadget->rem_ref();
 
-    if ( bitop )
-        delete bitop;
-
     if ( ha_state )
         delete ha_state;
+}
 
-    if ( clientMplsLyr.length )
+inline void Flow::clean()
+{
+    if ( mpls_client.length )
     {
-        delete[] clientMplsLyr.start;
-        clientMplsLyr.length = 0;
+        delete[] mpls_client.start;
+        mpls_client.length = 0;
     }
-    if ( serverMplsLyr.length )
+    if ( mpls_server.length )
     {
-        delete[] serverMplsLyr.start;
-        serverMplsLyr.length = 0;
+        delete[] mpls_server.start;
+        mpls_server.length = 0;
+    }
+    if ( bitop )
+    {
+        delete bitop;
+        bitop = nullptr;
     }
 }
 
@@ -119,18 +133,8 @@ void Flow::reset(bool do_cleanup)
             session->clear();
     }
 
-    free_application_data();
-
-    if ( clientMplsLyr.length )
-    {
-        delete[] clientMplsLyr.start;
-        clientMplsLyr.length = 0;
-    }
-    if ( serverMplsLyr.length )
-    {
-        delete[] serverMplsLyr.start;
-        serverMplsLyr.length = 0;
-    }
+    free_flow_data();
+    clean();
 
     // FIXIT-M cleanup() winds up calling clear()
     if ( ssn_client )
@@ -152,33 +156,20 @@ void Flow::reset(bool do_cleanup)
     if ( data )
         clear_data();
 
-    constexpr size_t offset = offsetof(Flow, appDataList);
-    // FIXIT-L need a struct to zero here to make future proof
-    memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
-
-    bitop->reset();
-
     if ( ha_state )
         ha_state->reset();
+
+    constexpr size_t offset = offsetof(Flow, flow_data);
+    // FIXIT-L need a struct to zero here to make future proof
+    memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
 }
 
-void Flow::restart(bool free_flow_data)
+void Flow::restart(bool dump_flow_data)
 {
-    if ( free_flow_data )
-        free_application_data();
+    if ( dump_flow_data )
+        free_flow_data();
 
-    if ( clientMplsLyr.length )
-    {
-        delete[] clientMplsLyr.start;
-        clientMplsLyr.length = 0;
-    }
-    if ( serverMplsLyr.length )
-    {
-        delete[] serverMplsLyr.start;
-        serverMplsLyr.length = 0;
-    }
-
-    bitop->reset();
+    clean();
 
     ssn_state.ignore_direction = 0;
     ssn_state.session_flags = SSNFLAG_NONE;
@@ -188,9 +179,9 @@ void Flow::restart(bool free_flow_data)
     previous_ssn_state = ssn_state;
 }
 
-void Flow::clear(bool free_flow_data)
+void Flow::clear(bool dump_flow_data)
 {
-    restart(free_flow_data);
+    restart(dump_flow_data);
     set_state(FlowState::SETUP);
 
     if ( ssn_client )
@@ -210,45 +201,45 @@ void Flow::clear(bool free_flow_data)
         clear_gadget();
 }
 
-int Flow::set_application_data(FlowData* fd)
+int Flow::set_flow_data(FlowData* fd)
 {
-    FlowData* appData = get_application_data(fd->get_id());
-    assert(appData != fd);
+    FlowData* old = get_flow_data(fd->get_id());
+    assert(old != fd);
 
-    if (appData)
-        free_application_data(appData);
+    if (old)
+        free_flow_data(old);
 
     fd->prev = nullptr;
-    fd->next = appDataList;
+    fd->next = flow_data;
 
-    if ( appDataList )
-        appDataList->prev = fd;
+    if ( flow_data )
+        flow_data->prev = fd;
 
-    appDataList = fd;
+    flow_data = fd;
     return 0;
 }
 
-FlowData* Flow::get_application_data(unsigned id)
+FlowData* Flow::get_flow_data(unsigned id)
 {
-    FlowData* appData = appDataList;
+    FlowData* fd = flow_data;
 
-    while (appData)
+    while (fd)
     {
-        if (appData->get_id() == id)
-            return appData;
+        if (fd->get_id() == id)
+            return fd;
 
-        appData = appData->next;
+        fd = fd->next;
     }
     return nullptr;
 }
 
-void Flow::free_application_data(FlowData* fd)
+void Flow::free_flow_data(FlowData* fd)
 {
-    if ( fd == appDataList )
+    if ( fd == flow_data )
     {
-        appDataList = fd->next;
-        if ( appDataList )
-            appDataList->prev = nullptr;
+        flow_data = fd->next;
+        if ( flow_data )
+            flow_data->prev = nullptr;
     }
     else if ( !fd->next )
     {
@@ -262,39 +253,39 @@ void Flow::free_application_data(FlowData* fd)
     delete fd;
 }
 
-void Flow::free_application_data(uint32_t proto)
+void Flow::free_flow_data(uint32_t proto)
 {
-    FlowData* fd = get_application_data(proto);
+    FlowData* fd = get_flow_data(proto);
 
     if ( fd )
-        free_application_data(fd);
+        free_flow_data(fd);
 }
 
-void Flow::free_application_data()
+void Flow::free_flow_data()
 {
-    FlowData* appData = appDataList;
+    FlowData* fd = flow_data;
 
-    while (appData)
+    while (fd)
     {
-        FlowData* tmp = appData;
-        appData = appData->next;
+        FlowData* tmp = fd;
+        fd = fd->next;
         delete tmp;
     }
-    appDataList = nullptr;
+    flow_data = nullptr;
 }
 
 void Flow::call_handlers(Packet* p, bool eof)
 {
-    FlowData* appData = appDataList;
+    FlowData* fd = flow_data;
 
-    while (appData)
+    while (fd)
     {
         if ( eof )
-            appData->handle_eof(p);
+            fd->handle_eof(p);
         else
-            appData->handle_retransmit(p);
+            fd->handle_retransmit(p);
 
-        appData = appData->next;
+        fd = fd->next;
     }
 }
 
@@ -375,27 +366,9 @@ void Flow::set_direction(Packet* p)
     }
 }
 
-static constexpr int TCP_HZ = 100;
-
-static inline uint64_t CalcJiffies(const Packet* p)
-{
-    uint64_t ret = 0;
-    uint64_t sec = (uint64_t)p->pkth->ts.tv_sec * TCP_HZ;
-    uint64_t usec = (p->pkth->ts.tv_usec / (1000000UL/TCP_HZ));
-
-    ret = sec + usec;
-
-    return ret;
-}
-
 void Flow::set_expire(const Packet* p, uint32_t timeout)
 {
-    expire_time = CalcJiffies(p) + (timeout * TCP_HZ);
-}
-
-int Flow::get_expire(const Packet* p)
-{
-    return ( CalcJiffies(p) > expire_time );
+    expire_time = (uint64_t)p->pkth->ts.tv_sec + timeout;
 }
 
 bool Flow::expired(const Packet* p)
@@ -403,9 +376,7 @@ bool Flow::expired(const Packet* p)
     if ( !expire_time )
         return false;
 
-    uint64_t pkttime = CalcJiffies(p);
-
-    if ( (int)(pkttime - expire_time) > 0 )
+    if ( (uint64_t)p->pkth->ts.tv_sec > expire_time )
         return true;
 
     return false;
@@ -472,22 +443,22 @@ void Flow::set_mpls_layer_per_dir(Packet* p)
 
     if ( p->packet_flags & PKT_FROM_CLIENT )
     {
-        if ( !clientMplsLyr.length )
+        if ( !mpls_client.length )
         {
-            clientMplsLyr.length = mpls_lyr->length;
-            clientMplsLyr.prot_id = mpls_lyr->prot_id;
-            clientMplsLyr.start = new uint8_t[mpls_lyr->length];
-            memcpy((void *)clientMplsLyr.start, mpls_lyr->start, mpls_lyr->length);
+            mpls_client.length = mpls_lyr->length;
+            mpls_client.prot_id = mpls_lyr->prot_id;
+            mpls_client.start = new uint8_t[mpls_lyr->length];
+            memcpy((void *)mpls_client.start, mpls_lyr->start, mpls_lyr->length);
         }
     }
     else
     {
-        if ( !serverMplsLyr.length )
+        if ( !mpls_server.length )
         {
-            serverMplsLyr.length = mpls_lyr->length;
-            serverMplsLyr.prot_id = mpls_lyr->prot_id;
-            serverMplsLyr.start = new uint8_t[mpls_lyr->length];
-            memcpy((void *)serverMplsLyr.start, mpls_lyr->start, mpls_lyr->length);
+            mpls_server.length = mpls_lyr->length;
+            mpls_server.prot_id = mpls_lyr->prot_id;
+            mpls_server.start = new uint8_t[mpls_lyr->length];
+            memcpy((void *)mpls_server.start, mpls_lyr->start, mpls_lyr->length);
         }
     }
 }
@@ -495,7 +466,7 @@ void Flow::set_mpls_layer_per_dir(Packet* p)
 Layer Flow::get_mpls_layer_per_dir(bool client)
 {
     if ( client )
-        return clientMplsLyr;
+        return mpls_client;
     else
-        return serverMplsLyr;
+        return mpls_server;
 }

@@ -79,7 +79,7 @@ static DNSData* SetNewDNSData(Packet* p)
 
     fd = new DnsFlowData;
 
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
     return &fd->session;
 }
 
@@ -107,9 +107,7 @@ static DNSData* get_dns_session_data(Packet* p, bool from_server)
         return &udpSessionData;
     }
 
-    fd = (DnsFlowData*)((p->flow)->get_application_data(
-        DnsFlowData::flow_id));
-
+    fd = (DnsFlowData*)((p->flow)->get_flow_data(DnsFlowData::flow_id));
     return fd ? &fd->session : NULL;
 }
 

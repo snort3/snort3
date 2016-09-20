@@ -159,9 +159,7 @@ ImapFlowData::~ImapFlowData()
 unsigned ImapFlowData::flow_id = 0;
 static IMAPData* get_session_data(Flow* flow)
 {
-    ImapFlowData* fd = (ImapFlowData*)flow->get_application_data(
-        ImapFlowData::flow_id);
-
+    ImapFlowData* fd = (ImapFlowData*)flow->get_flow_data(ImapFlowData::flow_id);
     return fd ? &fd->session : NULL;
 }
 
@@ -170,7 +168,7 @@ static IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
     IMAPData* imap_ssn;
     ImapFlowData* fd = new ImapFlowData;
 
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
     imap_ssn = &fd->session;
 
     imapstats.sessions++;
