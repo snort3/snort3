@@ -1,3 +1,14 @@
+16/09/20 - build 210
+
+-- started dce_udp porting
+-- added HA details to stream/* dev_notes
+-- added stream.ip_frag_only to avoid tracking unwanted flows
+-- updated default stream cache sizes to match 2.X
+-- fixed tcp_connector_test for OSX build
+-- fixed binder make files to include binder.h
+-- fixed double counting of ip and udp timeouts and prunes
+-- fixed clearing of SYN - RST flows
+
 16/09/14 - build 209
 
 -- add dce iface fast pattern for tcp
