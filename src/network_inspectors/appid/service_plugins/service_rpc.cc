@@ -21,10 +21,14 @@
 
 #include "service_rpc.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <netdb.h>
 
 #if defined(FREEBSD) || defined(OPENBSD)
-#include "rpc/rpc.h"
+#include <rpc/rpc.h>
 #endif
 
 #include "service_api.h"
