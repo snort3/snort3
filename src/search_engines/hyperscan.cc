@@ -62,6 +62,11 @@ Pattern::Pattern(
     flags = d.flags;
     user = u;
     user_tree = user_list = nullptr;
+
+    if ( no_case )
+        flags |= HS_FLAG_CASELESS;
+
+    flags |= HS_FLAG_SINGLEMATCH;
 }
 
 void Pattern::escape(const uint8_t* s, unsigned n, bool literal)
@@ -207,7 +212,7 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
     for ( auto& p : pvector )
     {
         pats.push_back(p.pat.c_str());
-        flags.push_back(p.flags | HS_FLAG_SINGLEMATCH);
+        flags.push_back(p.flags);
         ids.push_back(id++);
     }
 
