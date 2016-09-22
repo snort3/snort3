@@ -23,19 +23,18 @@
 #include "config.h"
 #endif
 
-#include "stream_user.h"
-#include "user_module.h"
-
-#include "stream/stream.h"
-#include "stream/stream_splitter.h"
-#include "stream/paf.h"
-
-#include "flow/flow_control.h"
 #include "main/snort.h"
 #include "perf_monitor/perf_monitor.h"
 #include "profiler/profiler.h"
 #include "sfip/sf_ip.h"
 #include "utils/util.h"
+
+#include "stream/stream.h"
+#include "stream/stream_splitter.h"
+#include "stream/paf.h"
+
+#include "stream_user.h"
+#include "user_module.h"
 
 THREAD_LOCAL ProfileStats user_perf_stats;
 
@@ -427,7 +426,7 @@ bool UserSession::setup(Packet*)
     server.init();
 
 #ifdef ENABLE_EXPECTED_USER
-    if ( flow_con->expected_session(flow, p))
+    if ( Stream::expected_flow(flow, p) )
         return false;
 #endif
     return true;
@@ -463,20 +462,20 @@ int UserSession::process(Packet* p)
 {
     Profile profile(user_perf_stats);
 
-    if ( stream.expired_session(flow, p) )
+    if ( Stream::expired_flow(flow, p) )
     {
         flow->restart();
         // FIXIT-M count user session timeouts here
 
 #ifdef ENABLE_EXPECTED_USER
-        if ( flow_con->expected_session(flow, p))
+        if ( Stream::expected_flow(flow, p))
             return 0;
 #endif
     }
 
     flow->set_direction(p);
 
-    if ( stream.blocked_session(flow, p) || stream.ignored_session(flow, p) )
+    if ( Stream::blocked_flow(flow, p) || Stream::ignored_flow(flow, p) )
         return 0;
 
     update(p, flow);

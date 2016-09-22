@@ -23,7 +23,6 @@
 #include <stdio.h>
 
 #include "main/snort_types.h"
-#include "stream/stream_api.h"
 
 #include "http_enum.h"
 #include "http_msg_request.h"

@@ -19,9 +19,6 @@
 // prune_handler.cc author Joel Cornett <jocornet@cisco.com>
 
 #include "prune_handler.h"
-
-#include "flow/flow_cache.h"
-#include "flow/flow_control.h"
 #include "stream/stream.h"
 
 namespace memory
@@ -29,9 +26,7 @@ namespace memory
 
 void prune_handler()
 {
-    // assert(flow_con);
-    if ( flow_con )
-        flow_con->prune_one(PruneReason::MEMCAP, false);
+    Stream::prune_flows();
 }
 
 } // namespace memory

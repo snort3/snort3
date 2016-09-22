@@ -28,7 +28,6 @@
 
 #include "detection/detection_util.h"
 #include "protocols/packet.h"
-#include "stream/stream_api.h"
 #include "utils/util_jsnorm.h"
 #include "utils/util_utf.h"
 #include "hi_ui_config.h"

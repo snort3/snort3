@@ -23,8 +23,8 @@
 #include <string>
 
 #include "profiler/profiler.h"
-#include "stream_tcp.h"
 #include "stream/stream.h"
+#include "stream_tcp.h"
 
 using namespace std;
 

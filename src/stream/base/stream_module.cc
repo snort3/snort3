@@ -20,8 +20,6 @@
 
 #include "stream_module.h"
 
-#include "stream/stream.h"
-
 #include <string>
 
 using namespace std;

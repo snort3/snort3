@@ -22,6 +22,7 @@
 #ifndef SEGMENT_OVERLAP_EDITOR_H
 #define SEGMENT_OVERLAP_EDITOR_H
 
+#include "normalize/normalize.h"
 #include "tcp_defs.h"
 #include "tcp_segment_node.h"
 #include "tcp_session.h"

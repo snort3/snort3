@@ -22,8 +22,9 @@
 #include <assert.h>
 
 #include "time/packet_time.h"
-#include "stream/stream_api.h"  // FIXIT-M bad dependency
 #include "hash/zhash.h"
+#include "protocols/packet.h"
+#include "stream/stream.h"
 #include "sfip/sf_ip.h"
 
 /* Reasonably small, and prime */

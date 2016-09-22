@@ -73,7 +73,7 @@
 
 #define SLAM_MAX 4
 
-// target-based policy types - changes to this enum require changes to stream_api.h::TCP_POLICIES
+// target-based policy types - changes to this enum require changes to stream.h::TCP_POLICIES
 enum class StreamPolicy
 {
     OS_INVALID = 0,

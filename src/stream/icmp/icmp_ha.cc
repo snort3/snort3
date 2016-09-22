@@ -26,11 +26,8 @@
 
 Flow* IcmpHA::create_session(FlowKey* key)
 {
-    DebugMessage(DEBUG_HA,"IcmpHA::create_session\n");
-
-    assert ( key );
-
-    Flow* flow = flow_con->new_flow(key);
+    assert(key);
+    Flow* flow = Stream::new_flow(key);
 
     if ( (flow != nullptr ) && (flow->session == nullptr) )
     {

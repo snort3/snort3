@@ -71,7 +71,7 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "search_engines/search_tool.h"
-#include "stream/stream_api.h"
+#include "stream/stream.h"
 #include "utils/util.h"
 #include "utils/util_utf.h"
 #include "utils/sfsnprintfappend.h"
@@ -158,11 +158,11 @@ static HttpSessionData* get_session_data(Flow* flow)
 
 void HttpInspectRegisterXtraDataFuncs()
 {
-    xtra_trueip_id = stream.reg_xtra_data_cb(GetHttpTrueIP);
-    xtra_uri_id = stream.reg_xtra_data_cb(GetHttpUriData);
-    xtra_hname_id = stream.reg_xtra_data_cb(GetHttpHostnameData);
-    xtra_gzip_id = stream.reg_xtra_data_cb(GetHttpGzipData);
-    xtra_jsnorm_id = stream.reg_xtra_data_cb(GetHttpJSNormData);
+    xtra_trueip_id = Stream::reg_xtra_data_cb(GetHttpTrueIP);
+    xtra_uri_id = Stream::reg_xtra_data_cb(GetHttpUriData);
+    xtra_hname_id = Stream::reg_xtra_data_cb(GetHttpHostnameData);
+    xtra_gzip_id = Stream::reg_xtra_data_cb(GetHttpGzipData);
+    xtra_jsnorm_id = Stream::reg_xtra_data_cb(GetHttpJSNormData);
 }
 
 static void PrintFileDecompOpt(HTTPINSPECT_CONF* ServerConf)
@@ -369,7 +369,7 @@ static inline int SetSiInput(HI_SI_INPUT* SiInput, Packet* p)
     /*
     **  We now set the packet direction
     */
-    if (p->flow && stream.is_midstream(p->flow))
+    if (p->flow && Stream::is_midstream(p->flow))
     {
         SiInput->pdir = HI_SI_NO_MODE;
     }
@@ -449,24 +449,24 @@ static inline void HttpLogFuncs(
 
     /* for pipelined HTTP requests */
     if ( !iCallDetect )
-        stream.clear_extra_data(p->flow, p, 0);
+        Stream::clear_extra_data(p->flow, p, 0);
 
     if (hsd->true_ip)
     {
         if (!(p->packet_flags & PKT_STREAM_INSERT) && !(p->packet_flags & PKT_REBUILT_STREAM))
             SetExtraData(p, xtra_trueip_id);
         else
-            stream.set_extra_data(p->flow, p, xtra_trueip_id);
+            Stream::set_extra_data(p->flow, p, xtra_trueip_id);
     }
 
     if (hsd->log_flags & HTTP_LOG_URI)
     {
-        stream.set_extra_data(p->flow, p, xtra_uri_id);
+        Stream::set_extra_data(p->flow, p, xtra_uri_id);
     }
 
     if (hsd->log_flags & HTTP_LOG_HOSTNAME)
     {
-        stream.set_extra_data(p->flow, p, xtra_hname_id);
+        Stream::set_extra_data(p->flow, p, xtra_hname_id);
     }
 
     if (hsd->log_flags & HTTP_LOG_JSNORM_DATA)

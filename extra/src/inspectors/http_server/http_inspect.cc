@@ -45,7 +45,6 @@
 #include "main/snort_debug.h"
 #include "decompress/file_decomp.h"
 #include "profiler/profiler.h"
-#include "stream/stream_api.h"
 #include "file_api/file_api.h"
 #include "file_api/file_service.h"
 #include "mime/decode_base.h"

@@ -28,7 +28,6 @@
 #include "ip_defrag.h"
 #include "ip_ha.h"
 #include "stream/stream.h"
-#include "flow/flow_control.h"
 #include "sfip/sf_ip.h"
 #include "profiler/profiler.h"
 
@@ -152,7 +151,7 @@ bool IpSession::setup(Packet*)
     ip_stats.current++;
 
 #ifdef ENABLE_EXPECTED_IP
-    if ( flow_con->expected_session(flow, p))
+    if ( Stream::expected_flow(flow, p) )
     {
         ip_stats.sessions--; // Incremented in SESSION_STATS_ADD
         MODULE_PROFILE_END(ip_perf_stats);
@@ -165,18 +164,18 @@ int IpSession::process(Packet* p)
 {
     Profile profile(ip_perf_stats);
 
-    if ( stream.expired_session(flow, p) )
+    if ( Stream::expired_flow(flow, p) )
     {
         IpSessionCleanup(flow, &tracker);
 
 #ifdef ENABLE_EXPECTED_IP
-        if ( flow_con->expected_session(flow, p))
+        if ( Stream::expected_flow(flow, p) )
             return 0;
 #endif
         IpHAManager::process_deletion(flow);
     }
 
-    if ( stream.blocked_session(flow, p) || stream.ignored_session(flow, p) )
+    if ( Stream::blocked_flow(flow, p) || Stream::ignored_flow(flow, p) )
         return 0;
 
     if ( p->ptrs.decode_flags & DECODE_FRAG )

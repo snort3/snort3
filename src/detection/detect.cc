@@ -46,6 +46,7 @@
 #include "ports/port_object.h"
 #include "profiler/profiler_defs.h"
 #include "sfip/sf_ipvar.h"
+#include "stream/stream.h"
 #include "utils/stats.h"
 
 #define CHECK_SRC_IP         0x01
@@ -112,7 +113,7 @@ void snort_inspect(Packet* p)
         // FIXIT-H but this result in double clearing?  should normal
         // clear_session() calls be deleted from stream?  this is a
         // performance hit on short-lived flows
-        stream.check_session_closed(p);
+        Stream::check_flow_closed(p);
 
         /*
         ** By checking tagging here, we make sure that we log the

@@ -43,7 +43,6 @@
 #include "file_config.h"
 
 #include "main/snort_types.h"
-#include "stream/stream_api.h"
 #include "packet_io/active.h"
 
 int64_t FileConfig::show_data_depth = DEFAULT_FILE_SHOW_DATA_DEPTH;

@@ -19,9 +19,22 @@
 
 // appid_flow_data.cc author Sourcefire Inc.
 
+#include "log/messages.h"
 #include "protocols/tcp.h"
 #include "profiler/profiler.h"
 #include "target_based/snort_protocols.h"
+#include "sfip/sf_ip.h"
+#include "stream/stream.h"
+#include "time/packet_time.h"
+#include "utils/util.h"
+
+#include "appid_utils/ip_funcs.h"
+#include "client_plugins/client_app_base.h"
+#include "detector_plugins/detector_http.h"
+#include "detector_plugins/detector_dns.h"
+#include "service_plugins/service_base.h"
+#include "service_plugins/service_ssl.h"
+#include "service_plugins/service_util.h"
 
 #include "appid_session.h"
 #include "appid_module.h"
@@ -30,19 +43,6 @@
 #include "app_forecast.h"
 #include "host_port_app_cache.h"
 #include "lua_detector_module.h"
-#include "client_plugins/client_app_base.h"
-#include "detector_plugins/detector_http.h"
-#include "detector_plugins/detector_dns.h"
-#include "service_plugins/service_base.h"
-#include "service_plugins/service_ssl.h"
-#include "service_plugins/service_util.h"
-
-#include "log/messages.h"
-#include "stream/stream_api.h"
-#include "sfip/sf_ip.h"
-#include "utils/util.h"
-#include "appid_utils/ip_funcs.h"
-#include "time/packet_time.h"
 
 ProfileStats tpPerfStats;
 ProfileStats tpLibPerfStats;
@@ -469,8 +469,8 @@ AppIdSession* AppIdSession::create_future_session(const Packet* /*ctrlPkt*/, con
 
     // FIXIT - 2.9.x set_application_protocol_id_expected has several new parameters, need to look
     // into what is required to support those here.
-    if (stream.set_application_protocol_id_expected(/*crtlPkt,*/ cliIp, cliPort, srvIp, srvPort,
-        protocol, app_id, session) )
+    if ( Stream::set_application_protocol_id_expected(
+        /*crtlPkt,*/ cliIp, cliPort, srvIp, srvPort, protocol, app_id, session) )
     {
         if (app_id_debug_session_flag)
             LogMessage("AppIdDbg %s failed to create a related flow for %s-%u -> %s-%u %u\n",
@@ -1256,7 +1256,8 @@ bool AppIdSession::do_third_party_discovery(IpProtocol protocol, const sfip_t* i
                 thirdparty_appid_module->disable_flags(tpsession,
                         TP_SESSION_FLAG_ATTRIBUTE | TP_SESSION_FLAG_TUNNELING | TP_SESSION_FLAG_FUTUREFLOW);
             }
-            if (tp_app_id == APP_ID_SSL && (stream.get_application_protocol_id(p->flow) == snortId_for_ftp_data))
+            if (tp_app_id == APP_ID_SSL &&
+                (Stream::get_application_protocol_id(p->flow) == snortId_for_ftp_data))
             {
                 //  If we see SSL on an FTP data channel set tpAppId back
                 //  to APP_ID_NONE so the FTP preprocessor picks up the flow.

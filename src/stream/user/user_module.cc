@@ -24,7 +24,6 @@ using namespace std;
 
 #include "stream_user.h"
 #include "main/snort_config.h"
-#include "stream/stream.h"
 
 //-------------------------------------------------------------------------
 // stream_user module

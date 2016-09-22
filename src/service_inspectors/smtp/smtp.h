@@ -24,9 +24,9 @@
 // Implementation header with definitions, datatypes and flowdata class for
 // SMTP service inspector.
 
-#include "protocols/packet.h"
-#include "stream/stream_api.h"
 #include "main/thread.h"
+#include "protocols/packet.h"
+#include "stream/stream.h"
 #include "smtp_config.h"
 
 // Direction packet is coming from, if we can figure it out

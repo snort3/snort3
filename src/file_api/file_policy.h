@@ -20,8 +20,10 @@
 #ifndef FILE_POLICY_H
 #define FILE_POLICY_H
 
-#include "file_api.h"
 #include <map>
+#include <vector>
+
+#include "file_api.h"
 
 struct FileVerdictWhen
 {

@@ -34,7 +34,6 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
-#include "stream/stream_api.h"
 #include "parser/parser.h"
 #include "framework/inspector.h"
 #include "target_based/snort_protocols.h"
@@ -255,7 +254,7 @@ static int POP_Setup(Packet* p, POPData* ssn)
         (p->packet_flags & PKT_REBUILT_STREAM))
     {
         int missing_in_rebuilt =
-            stream.missing_in_reassembled(p->flow, SSN_DIR_FROM_CLIENT);
+            Stream::missing_in_reassembled(p->flow, SSN_DIR_FROM_CLIENT);
 
         if (ssn->session_flags & POP_FLAG_NEXT_STATE_UNKNOWN)
         {
@@ -583,7 +582,7 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
                 pop_ssn->state = STATE_TLS_DATA;
             }
             else if (!(p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
-                && !stream.missed_packets(p->flow, SSN_DIR_BOTH))
+                && !Stream::missed_packets(p->flow, SSN_DIR_BOTH))
             {
                 /* revert back to command state - assume server didn't accept STARTTLS */
                 pop_ssn->state = STATE_UNKNOWN;

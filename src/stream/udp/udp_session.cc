@@ -23,10 +23,6 @@
 #include "config.h"
 #endif
 
-#include "stream_udp.h"
-#include "udp_module.h"
-#include "udp_ha.h"
-
 #include "stream/stream.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
@@ -36,12 +32,16 @@
 #include "hash/sfxhash.h"
 #include "utils/util.h"
 #include "protocols/packet.h"
-#include "flow/flow_control.h"
 #include "flow/session.h"
 #include "packet_io/active.h"
+#include "perf_monitor/flow_ip_tracker.h"
 #include "profiler/profiler.h"
 #include "sfip/sf_ip.h"
-#include "perf_monitor/flow_ip_tracker.h"
+#include "stream/stream.h"
+
+#include "stream_udp.h"
+#include "udp_module.h"
+#include "udp_ha.h"
 
 // NOTE:  sender is assumed to be client
 //        responder is assumed to be server
@@ -74,10 +74,10 @@ static int ProcessUdp(
 {
     assert(lwssn->pkt_type == PktType::UDP);
 
-    if ( stream.blocked_session(lwssn, p) )
+    if ( Stream::blocked_flow(lwssn, p) )
         return 0;
 
-    if ( stream.ignored_session(lwssn, p) )
+    if ( Stream::ignored_flow(lwssn, p) )
         return 0;
 
     /* if both seen, mark established */
@@ -139,7 +139,7 @@ bool UdpSession::setup(Packet* p)
             &flow->server_ip, SFS_STATE_UDP_CREATED);
     }
 
-    if ( flow_con->expected_flow(flow, p) )
+    if ( Stream::expected_flow(flow, p) )
     {
         udpStats.sessions--; // incremented in SESSIONS_STATS_ADD
         return false;
@@ -194,7 +194,7 @@ int UdpSession::process(Packet* p)
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
     // Check if the session is expired.
     // Should be done before we do something with the packet...
-    if ( stream.expired_session(flow, p) )
+    if ( Stream::expired_flow(flow, p) )
     {
         UdpSessionCleanup(flow);
         flow->restart();

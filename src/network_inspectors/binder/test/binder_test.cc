@@ -30,7 +30,6 @@
 #include "managers/inspector_manager.h"
 #include "main/policy.h"
 #include "profiler/profiler.h"
-#include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 #include "utils/stats.h"
 

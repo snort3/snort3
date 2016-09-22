@@ -25,7 +25,6 @@
 #include "framework/counts.h"
 #include "detection/detect.h"
 #include "normalize/normalize.h"
-#include "stream/stream_api.h"
 
 #include "segment_overlap_editor.h"
 #include "tcp_defs.h"

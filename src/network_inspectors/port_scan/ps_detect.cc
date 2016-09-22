@@ -47,13 +47,13 @@
 #include "protocols/packet.h"
 #include "time/packet_time.h"
 #include "hash/sfxhash.h"
-#include "stream/stream_api.h"
-#include "sfip/sf_ip.h"
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 #include "protocols/eth.h"
+#include "sfip/sf_ip.h"
+#include "stream/stream.h"
 
 typedef struct s_PS_HASH_KEY
 {
@@ -343,7 +343,7 @@ int PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
     }
     else if (p->ptrs.udph && p->flow)
     {
-        if (stream.get_packet_direction(p) & PKT_FROM_SERVER)
+        if (Stream::get_packet_direction(p) & PKT_FROM_SERVER)
             reverse_pkt = 1;
     }
 
@@ -996,7 +996,7 @@ int PortScan::ps_tracker_update_udp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     {
         if ( p->flow )
         {
-            uint32_t direction = stream.get_packet_direction(p);
+            uint32_t direction = Stream::get_packet_direction(p);
 
             if (direction == PKT_FROM_CLIENT)
             {

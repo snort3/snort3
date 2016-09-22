@@ -19,19 +19,15 @@
 
 #include "udp_ha.h"
 
-#include "flow/flow_control.h"
 #include "main/snort_debug.h"
-#include "stream/udp/udp_session.h"
-
-extern THREAD_LOCAL class FlowControl* flow_con;
+#include "stream/stream.h"
+#include "udp_session.h"
 
 Flow* UdpHA::create_session(FlowKey* key)
 {
-    DebugMessage(DEBUG_HA,"UdpHA::create_session\n");
+    assert(key);
 
-    assert ( key );
-
-    Flow* flow = flow_con->new_flow(key);
+    Flow* flow = Stream::new_flow(key);
 
     if ( (flow != nullptr ) && (flow->session == nullptr) )
     {

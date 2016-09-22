@@ -32,7 +32,6 @@ using namespace std;
 #include "protocols/packet.h"
 #include "protocols/vlan.h"
 #include "protocols/layer.h"
-#include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 #include "profiler/profiler.h"
 #include "utils/stats.h"
@@ -207,7 +206,7 @@ static void set_session(Flow* flow)
 
 static void set_service(Flow* flow, const HostAttributeEntry* host)
 {
-    stream.set_application_protocol_id(flow, host, FROM_SERVER);
+    Stream::set_application_protocol_id(flow, host, FROM_SERVER);
 }
 
 static Inspector* get_gadget(Flow* flow)
@@ -472,13 +471,13 @@ int Binder::exec_handle_gadget( void* pv )
 
     if ( ins )
     {
-        stream.set_splitter(flow, true, ins->get_splitter(true));
-        stream.set_splitter(flow, false, ins->get_splitter(false));
+        Stream::set_splitter(flow, true, ins->get_splitter(true));
+        Stream::set_splitter(flow, false, ins->get_splitter(false));
     }
     else
     {
-        stream.set_splitter(flow, true, new AtomSplitter(true));
-        stream.set_splitter(flow, false, new AtomSplitter(false));
+        Stream::set_splitter(flow, true, new AtomSplitter(true));
+        Stream::set_splitter(flow, false, new AtomSplitter(false));
     }
 
     return 0;

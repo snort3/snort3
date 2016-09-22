@@ -35,14 +35,13 @@
 #include <sys/types.h>
 
 #include "events/event_queue.h"
+#include "file_api/file_api.h"
+#include "framework/inspector.h"
 #include "log/messages.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
-#include "profiler/profiler.h"
-#include "stream/stream_api.h"
-#include "file_api/file_api.h"
 #include "parser/parser.h"
-#include "framework/inspector.h"
+#include "profiler/profiler.h"
 #include "utils/sfsnprintfappend.h"
 #include "target_based/snort_protocols.h"
 
@@ -173,7 +172,7 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
     // means we've already missed packets) set missed packets flag and make
     // sure we don't do any more reassembly on this session
     if ((p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
-        || stream.missed_packets(p->flow, SSN_DIR_BOTH))
+        || Stream::missed_packets(p->flow, SSN_DIR_BOTH))
     {
         // Order only matters if the packets are not encrypted
         if ( !(sessp->state_flags & SSH_FLG_SESS_ENCRYPTED ))
@@ -270,7 +269,7 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
                     else
                         SnortEventqAdd(GID_SSH, SSH_EVENT_RESPOVERFLOW);
 
-                    stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
+                    Stream::stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
                 }
             }
 
@@ -290,7 +289,7 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
             // and therefore cannot be used late in an
             // encrypted session. For performance purposes,
             // stop examining this session.
-            stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
+            Stream::stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
         }
     }
 }

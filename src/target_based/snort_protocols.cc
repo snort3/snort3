@@ -26,14 +26,14 @@
 #include <vector>
 using namespace std;
 
+#include "hash/sfghash.h"
+#include "main/snort_debug.h"
+#include "utils/util.h"
+#include "stream/stream.h"
+
 #include "sftarget_reader.h"
 #include "sftarget_hostentry.h"
 #include "sftarget_data.h"
-
-#include "hash/sfghash.h"
-#include "utils/util.h"
-#include "main/snort_debug.h"
-#include "stream/stream_api.h"
 
 struct SFTargetProtocolReference
 {
@@ -177,7 +177,7 @@ int16_t GetProtocolReference(Packet* p)
         if ( p->flow )
         {
             /* Use session information via Stream API */
-            protocol = stream.get_application_protocol_id(p->flow);
+            protocol = Stream::get_application_protocol_id(p->flow);
 
             if ( protocol )
                 break;

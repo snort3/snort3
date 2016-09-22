@@ -713,7 +713,7 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
         (SearchTool*)( ( AppIdConfig*)pConfig)->find_generic_config_element(client_app_mod.name);
 
 #ifdef APP_ID_USES_REASSEMBLED
-    stream.flush_response_flush(pkt);
+    Stream::flush_response_flush(pkt);
 #endif
 
     if (!size)
@@ -990,7 +990,7 @@ static int imap_validate(ServiceValidationArgs* args)
         goto inprocess;
 
 #ifdef APP_ID_USES_REASSEMBLED
-    stream.flush_response_flush(pkt);
+    Stream::flush_response_flush(pkt);
 #endif
 
     if (!size)

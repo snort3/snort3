@@ -34,7 +34,6 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
-#include "stream/stream_api.h"
 #include "file_api/file_api.h"
 #include "parser/parser.h"
 #include "framework/inspector.h"
@@ -44,6 +43,7 @@
 #include "utils/util.h"
 #include "protocols/ssl.h"
 #include "mime/file_mime_process.h"
+#include "stream/stream.h"
 
 #include "imap_paf.h"
 #include "imap_module.h"
@@ -298,7 +298,7 @@ static int IMAP_Setup(Packet* p, IMAPData* ssn)
         (p->packet_flags & PKT_REBUILT_STREAM))
     {
         int missing_in_rebuilt =
-            stream.missing_in_reassembled(p->flow, SSN_DIR_FROM_CLIENT);
+            Stream::missing_in_reassembled(p->flow, SSN_DIR_FROM_CLIENT);
 
         if (ssn->session_flags & IMAP_FLAG_NEXT_STATE_UNKNOWN)
         {
@@ -645,7 +645,7 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
                 imap_ssn->state = STATE_TLS_DATA;
             }
             else if (!(p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
-                && !stream.missed_packets(p->flow, SSN_DIR_BOTH))
+                && !Stream::missed_packets(p->flow, SSN_DIR_BOTH))
             {
                 /* revert back to command state - assume server didn't accept STARTTLS */
                 imap_ssn->state = STATE_UNKNOWN;

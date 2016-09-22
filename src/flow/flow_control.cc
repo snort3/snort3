@@ -34,6 +34,7 @@
 #include "protocols/udp.h"
 #include "protocols/vlan.h"
 #include "sfip/sf_ip.h"
+#include "stream/stream.h"
 
 #include "expect_cache.h"
 #include "flow_cache.h"
@@ -446,7 +447,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     case Flow::FlowState::ALLOW:
         if ( news )
-            stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
+            Stream::stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
         else
             DisableInspection();
 
@@ -455,7 +456,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     case Flow::FlowState::BLOCK:
         if ( news )
-            stream.drop_traffic(flow, SSN_DIR_BOTH);
+            Stream::drop_traffic(flow, SSN_DIR_BOTH);
         else
             Active::block_again();
 
@@ -464,11 +465,11 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     case Flow::FlowState::RESET:
         if ( news )
-            stream.drop_traffic(flow, SSN_DIR_BOTH);
+            Stream::drop_traffic(flow, SSN_DIR_BOTH);
         else
             Active::reset_again();
 
-        stream.blocked_session(flow, p);
+        Stream::blocked_flow(flow, p);
         DisableInspection();
         break;
     }

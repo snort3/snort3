@@ -31,7 +31,7 @@ static inline ImapPafData* get_state(Flow* flow, bool c2s)
     if ( !flow )
         return nullptr;
 
-    ImapSplitter* s = (ImapSplitter*)stream.get_splitter(flow, c2s);
+    ImapSplitter* s = (ImapSplitter*)Stream::get_splitter(flow, c2s);
     return s ? &s->state : nullptr;
 }
 

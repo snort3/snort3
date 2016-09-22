@@ -68,11 +68,9 @@
 #include "log/log_text.h"
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
-#include "flow/flow_control.h"
 #include "flow/session.h"
 #include "profiler/profiler.h"
 #include "file_api/file_api.h"
-#include "normalize/normalize.h"
 #include "perf_monitor/flow_tracker.h"
 #include "filters/sfrf.h"
 
@@ -606,7 +604,7 @@ void TcpSession::update_ignored_session(TcpSegmentDescriptor& tsd)
 {
     // FIXIT-L why flush here instead of just purge?
     // s5_ignored_session() may be disabling detection too soon if we really want to flush
-    if (stream.ignored_session(flow, tsd.get_pkt()))
+    if (Stream::ignored_flow(flow, tsd.get_pkt()))
     {
         if ( talker && ( talker->get_tf_flags() & TF_FORCE_FLUSH ) )
         {
@@ -1024,13 +1022,13 @@ bool TcpSession::is_flow_handling_packets(Packet* p)
         flow_ready = false;
     }
 
-    if (stream.blocked_session(flow, p) || (flow->session_state & STREAM_STATE_IGNORE))
+    if (Stream::blocked_flow(flow, p) || (flow->session_state & STREAM_STATE_IGNORE))
         flow_ready = false;
 
-    // FIXIT-L expected flow should be checked by flow_con before we get here
+    // FIXIT-L expected flow should be checked by Stream before we get here
     // harmonize this with that and the checks above
-    char ignore = flow_con->expected_flow(flow, p);
-    if (ignore)
+
+    if ( Stream::expected_flow(flow, p) )
     {
         server->flush_policy = STREAM_FLPOLICY_IGNORE;
         client->flush_policy = STREAM_FLPOLICY_IGNORE;
@@ -1044,7 +1042,7 @@ void TcpSession::cleanup_session_if_expired(Packet* p)
 {
     // Check if the session is expired. Should be done before we do something with
     // the packet...Insert a packet, or handle state change SYN, FIN, RST, etc.
-    if (stream.expired_session(flow, p))
+    if (Stream::expired_flow(flow, p))
     {
         /* Session is timed out, if also reset then restart, otherwise clear */
         if (flow->get_session_flags() & SSNFLAG_RESET)

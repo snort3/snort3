@@ -38,13 +38,13 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
-#include "stream/stream_api.h"
 #include "parser/parser.h"
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
 #include "target_based/snort_protocols.h"
 #include "detection/detect.h"
 #include "protocols/ssl.h"
+#include "stream/stream.h"
 
 #include "ssl_module.h"
 
@@ -163,7 +163,7 @@ static inline bool SSLPP_is_encrypted(SSL_PROTO_CONF* config, uint32_t ssl_flags
         /* Check if we're either midstream or if packets were missed after the
          *          * connection was established */
         else if ((packet->flow->get_session_flags() & SSNFLAG_MIDSTREAM) ||
-            (stream.missed_packets(packet->flow, SSN_DIR_BOTH)))
+            (Stream::missed_packets(packet->flow, SSN_DIR_BOTH)))
         {
             if ((ssl_flags & (SSL_CAPP_FLAG | SSL_SAPP_FLAG)) == (SSL_CAPP_FLAG | SSL_SAPP_FLAG))
             {
@@ -236,7 +236,7 @@ static inline uint32_t SSLPP_process_app(SSL_PROTO_CONF* config, uint32_t ssn_fl
         if (!config->max_heartbeat_len)
         {
             DebugMessage(DEBUG_SSL, "STOPPING INSPECTION (process_app)\n");
-            stream.stop_inspection(packet->flow, packet, SSN_DIR_BOTH, -1, 0);
+            Stream::stop_inspection(packet->flow, packet, SSN_DIR_BOTH, -1, 0);
             sslstats.stopped++;
         }
         else if (!(new_flags & SSL_HEARTBEAT_SEEN))
@@ -264,7 +264,7 @@ static inline void SSLPP_process_other(SSL_PROTO_CONF* config, SSLData* sd, uint
         if (!config->max_heartbeat_len)
         {
             DebugMessage(DEBUG_SSL, "STOPPING INSPECTION (process_other)\n");
-            stream.stop_inspection(packet->flow, packet, SSN_DIR_BOTH, -1, 0);
+            Stream::stop_inspection(packet->flow, packet, SSN_DIR_BOTH, -1, 0);
         }
         else if (!(new_flags & SSL_HEARTBEAT_SEEN))
         {
@@ -374,7 +374,7 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
     {
         if ( (SSL_IS_SHELLO(new_flags) && !SSL_IS_CHELLO(sd->ssn_flags) ))
         {
-            if (!(stream.missed_packets(p->flow, SSN_DIR_FROM_CLIENT)))
+            if (!(Stream::missed_packets(p->flow, SSN_DIR_FROM_CLIENT)))
                 SnortEventqAdd(GID_SSL, SSL_INVALID_SERVER_HELLO);
         }
     }

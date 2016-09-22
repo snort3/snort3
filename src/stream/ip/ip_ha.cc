@@ -19,17 +19,15 @@
 
 #include "ip_ha.h"
 
-#include "flow/flow_control.h"
 #include "main/snort_debug.h"
-#include "stream/ip/ip_session.h"
+#include "stream/stream.h"
+#include "ip_session.h"
 
 Flow* IpHA::create_session(FlowKey* key)
 {
-    DebugMessage(DEBUG_HA,"IpHA::create_session\n");
+    assert(key);
 
-    assert ( key );
-
-    Flow* flow = flow_con->new_flow(key);
+    Flow* flow = Stream::new_flow(key);
 
     if ( (flow != nullptr ) && (flow->session == nullptr) )
     {

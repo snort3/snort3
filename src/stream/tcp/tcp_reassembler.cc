@@ -28,7 +28,7 @@
 
 #include "main/snort.h"
 #include "protocols/packet.h"
-#include "stream/stream.h"
+#include "protocols/packet_manager.h"
 #include "profiler/profiler.h"
 #include "flow/flow_control.h"
 
@@ -305,7 +305,7 @@ int TcpReassembler::purge_alerts(uint32_t /*flush_seq*/,  Flow* flow)
 
         //if (SEQ_LT(ai->seq, flush_seq) )
         {
-            stream.log_extra_data(flow, xtradata_mask, ai->event_id, ai->event_second);
+            Stream::log_extra_data(flow, xtradata_mask, ai->event_id, ai->event_second);
             memset(ai, 0, sizeof(*ai));
         }
 #if 0

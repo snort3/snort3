@@ -26,8 +26,8 @@
 
 #include "main/snort_types.h"
 #include "main/thread.h"
+#include "flow/session.h"
 #include "framework/module.h"
-#include "stream/stream.h"
 #include "tcp_stream_config.h"
 
 #define GID_STREAM_TCP  129

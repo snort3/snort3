@@ -25,7 +25,6 @@
 // Protocol aware flushing for DNP3.
 
 #include "main/snort_types.h"
-#include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 
 enum dnp3_paf_state

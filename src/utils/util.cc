@@ -69,7 +69,6 @@
 #include "ips_options/ips_pcre.h"
 #include "time/packet_time.h"
 #include "time/timersub.h"
-#include "stream/stream.h"
 
 #ifdef PATH_MAX
 #define PATH_MAX_UTIL PATH_MAX

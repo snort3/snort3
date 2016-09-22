@@ -111,11 +111,7 @@ const std::string* lua_option = nullptr,
 bool use_string_array = false>
 static ConversionState* config_string_ctor(Converter& c)
 {
-    return new ConfigStringOption(c,
-        snort_option,
-        lua_table,
-        lua_option,
-        use_string_array);
+    return new ConfigStringOption(c, snort_option, lua_table, lua_option, use_string_array);
 }
 } // namespace
 

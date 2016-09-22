@@ -28,7 +28,6 @@
 #define HI_STREAM_SPLITTER_H
 
 #include "main/snort_types.h"
-#include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 
 bool hi_paf_init(uint32_t cap);

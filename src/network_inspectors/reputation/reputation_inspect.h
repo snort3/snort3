@@ -20,7 +20,6 @@
 #define REPUTATION_INSPECT_H
 
 #include "protocols/packet.h"
-#include "stream/stream_api.h"
 
 // Per-session data block containing current state
 // of the Reputation preprocessor for the session.

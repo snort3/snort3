@@ -19,13 +19,12 @@
 // tcp_state_none.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 30, 2015
 
-#include "stream/stream.h"
+#include "tcp_state_none.h"
 
 #include "tcp_module.h"
 #include "tcp_tracker.h"
 #include "tcp_session.h"
 #include "tcp_normalizer.h"
-#include "tcp_state_none.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"

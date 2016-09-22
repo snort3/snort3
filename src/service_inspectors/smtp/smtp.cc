@@ -29,7 +29,6 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
-#include "stream/stream_api.h"
 #include "file_api/file_api.h"
 #include "mime/file_mime_process.h"
 #include "parser/parser.h"
@@ -221,7 +220,7 @@ static SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
     smtp_ssn->mime_ssn->config = config;
     smtp_ssn->mime_ssn->set_mime_stats(&(smtpstats.mime_stats));
 
-    if(stream.is_midstream(p->flow))
+    if(Stream::is_midstream(p->flow))
     {
         DebugMessage(DEBUG_SMTP, "Got midstream packet - "
             "setting state to unknown\n");
@@ -546,7 +545,7 @@ static int SMTP_Setup(Packet* p, SMTPData* ssn)
         (p->packet_flags & PKT_REBUILT_STREAM))
     {
         int missing_in_rebuilt =
-            stream.missing_in_reassembled(p->flow, SSN_DIR_FROM_CLIENT);
+            Stream::missing_in_reassembled(p->flow, SSN_DIR_FROM_CLIENT);
 
         if (ssn->session_flags & SMTP_FLAG_NEXT_STATE_UNKNOWN)
         {
@@ -1095,7 +1094,7 @@ static void SMTP_ProcessServerPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
             smtp_ssn->state = STATE_TLS_DATA;
         }
         else if (!(p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
-            && !stream.missed_packets(p->flow, SSN_DIR_BOTH))
+            && !Stream::missed_packets(p->flow, SSN_DIR_BOTH))
         {
             /* Check to see if the raw packet is in order */
             if (p->packet_flags & PKT_STREAM_ORDER_OK)
@@ -1285,7 +1284,7 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
             /* if we're ignoring tls data, set a zero length alt buffer */
             if (config->ignore_tls_data)
             {
-                stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
+                Stream::stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
                 return;
             }
         }
@@ -1390,10 +1389,10 @@ static int SMTP_GetEmailHdrs(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t*
 
 static void SMTP_RegXtraDataFuncs(SMTP_PROTO_CONF* config)
 {
-    config->xtra_filename_id = stream.reg_xtra_data_cb(SMTP_GetFilename);
-    config->xtra_mfrom_id = stream.reg_xtra_data_cb(SMTP_GetMailFrom);
-    config->xtra_rcptto_id = stream.reg_xtra_data_cb(SMTP_GetRcptTo);
-    config->xtra_ehdrs_id = stream.reg_xtra_data_cb(SMTP_GetEmailHdrs);
+    config->xtra_filename_id = Stream::reg_xtra_data_cb(SMTP_GetFilename);
+    config->xtra_mfrom_id = Stream::reg_xtra_data_cb(SMTP_GetMailFrom);
+    config->xtra_rcptto_id = Stream::reg_xtra_data_cb(SMTP_GetRcptTo);
+    config->xtra_ehdrs_id = Stream::reg_xtra_data_cb(SMTP_GetEmailHdrs);
 }
 
 int SmtpMime::handle_header_line(const uint8_t* ptr, const uint8_t* eol,

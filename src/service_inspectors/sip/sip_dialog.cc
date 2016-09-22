@@ -27,12 +27,12 @@
 
 #include <assert.h>
 
+#include "framework/data_bus.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
+#include "stream/stream.h"
 #include "sfip/sf_ip.h"
-#include "stream/stream_api.h"
-#include "framework/data_bus.h"
 
 #include "sip_module.h"
 #include "sip.h"
@@ -408,7 +408,7 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
             sfip_to_str(&mdataB->maddress), mdataB->mport);
 
         /* Call into Streams to mark data channel as something to ignore. */
-        FlowData* fd = stream.get_flow_data(
+        FlowData* fd = Stream::get_flow_data(
             PktType::UDP, IpProtocol::UDP, &mdataA->maddress,mdataA->mport,
             &mdataB->maddress, mdataB->mport, 0, 0, p->pkth->address_space_id,
             SipFlowData::flow_id);
@@ -418,7 +418,7 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
         }
         else
         {
-            stream.ignore_session(&mdataA->maddress, mdataA->mport, &mdataB->maddress,
+            Stream::ignore_flow(&mdataA->maddress, mdataA->mport, &mdataB->maddress,
                 mdataB->mport, p->type(), SSN_DIR_BOTH, SipFlowData::flow_id);
         }
         sip_stats.ignoreChannels++;
@@ -694,7 +694,7 @@ static void sip_update_appid(const Packet* p, const SIPMsg* sipMsg, const SIP_Di
 
     sipEventData.packet = p;
 
-    if (stream.service_event_publish(PP_SIP, p->flow, SIP_EVENT_TYPE_SIP_DIALOG, &sipEventData)
+    if (Stream::service_event_publish(PP_SIP, p->flow, SIP_EVENT_TYPE_SIP_DIALOG, &sipEventData)
      == false)
      ErrorMessage("failed to publish to SIP_DIALOG\n");
 }

@@ -38,8 +38,8 @@
 #include "hash/sfhashfcn.h"
 #include "log/messages.h"
 #include "profiler/profiler.h"
+#include "stream/stream.h"
 #include "utils/util.h"
-#include "stream/stream_api.h"
 
 //-------------------------------------------------------------------------
 // appid option

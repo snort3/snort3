@@ -45,7 +45,6 @@
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
-#include "flow/flow_control.h"
 #include "flow/ha.h"
 #include "framework/mpse.h"
 #include "helpers/process.h"
@@ -601,10 +600,7 @@ void Snort::capture_packet()
 
 void Snort::thread_idle()
 {
-    if ( flow_con )
-        // FIXIT-M batch here or loop vs looping over idle?
-        flow_con->timeout_flows(time(NULL));
-
+    Stream::timeout_flows(time(nullptr));
     perf_monitor_idle_process();
     aux_counts.idle++;
     HighAvailabilityManager::process_receive();
@@ -668,9 +664,11 @@ void Snort::thread_init_unprivileged()
 void Snort::thread_term()
 {
     HighAvailabilityManager::thread_term_beginning();
-    if ( !snort_conf->dirty_pig )
-        InspectorManager::thread_stop(snort_conf);
 
+    if ( !snort_conf->dirty_pig )
+        Stream::purge_flows();
+
+    InspectorManager::thread_stop(snort_conf);
     ModuleManager::accumulate(snort_conf);
     InspectorManager::thread_term(snort_conf);
     ActionManager::thread_term(snort_conf);
@@ -852,10 +850,7 @@ DAQ_Verdict Snort::packet_callback(
 
     Active::reset();
     PacketManager::encode_reset();
-
-    if ( flow_con ) // FIXIT-M always instantiate
-        flow_con->timeout_flows(pkthdr->ts.tv_sec);
-
+    Stream::timeout_flows(pkthdr->ts.tv_sec);
     HighAvailabilityManager::process_receive();
 
     s_packet->pkth = nullptr;  // no longer avail upon sig segv

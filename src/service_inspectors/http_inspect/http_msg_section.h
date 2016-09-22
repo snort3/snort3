@@ -20,7 +20,6 @@
 #ifndef HTTP_MSG_SECTION_H
 #define HTTP_MSG_SECTION_H
 
-#include "stream/stream_api.h"
 #include "detection/detection_util.h"
 
 #include "http_field.h"

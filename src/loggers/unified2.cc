@@ -52,15 +52,15 @@
 #include "detection/detect.h"
 #include "parser/parser.h"
 #include "events/event.h"
-#include "utils/util.h"
+#include "log/obfuscator.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
-#include "stream/stream_api.h"
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
 #include "protocols/icmp4.h"
-#include "log/obfuscator.h"
+#include "stream/stream.h"
 #include "utils/safec.h"
+#include "utils/util.h"
 
 using namespace std;
 
@@ -878,7 +878,7 @@ void U2Logger::open()
 
     Unified2InitFile(&config);
 
-    stream.reg_xtra_data_log(AlertExtraData, &config);
+    Stream::reg_xtra_data_log(AlertExtraData, &config);
 }
 
 void U2Logger::close()
@@ -910,14 +910,14 @@ void U2Logger::alert(Packet* p, const char* msg, Event* event)
     }
 
     if ( p->flow )
-        stream.update_session_alert(
+        Stream::update_flow_alert(
             p->flow, p, event->sig_info->generator, event->sig_info->id,
             event->event_id, event->ref_time.tv_sec);
 
     if ( p->xtradata_mask )
     {
         LogFunction* log_funcs;
-        uint32_t max_count = stream.get_xtra_data_map(&log_funcs);
+        uint32_t max_count = Stream::get_xtra_data_map(&log_funcs);
 
         if ( max_count > 0 )
             AlertExtraData(

@@ -124,13 +124,13 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
             if ( srod.direction & SSN_DIR_FROM_SERVER )
             {
                 tcpssn->server->flush_policy = STREAM_FLPOLICY_IGNORE;
-                stream.set_splitter(lwssn, true);
+                Stream::set_splitter(lwssn, true);
             }
 
             if ( srod.direction & SSN_DIR_FROM_CLIENT )
             {
                 tcpssn->client->flush_policy = STREAM_FLPOLICY_IGNORE;
-                stream.set_splitter(lwssn, false);
+                Stream::set_splitter(lwssn, false);
             }
         }
         else
@@ -140,13 +140,13 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
             if ( srod.direction & SSN_DIR_FROM_SERVER )
             {
                 tcpssn->server->flush_policy = STREAM_FLPOLICY_ON_ACK;
-                stream.set_splitter(lwssn, true, new AtomSplitter(true));
+                Stream::set_splitter(lwssn, true, new AtomSplitter(true));
             }
 
             if ( srod.direction & SSN_DIR_FROM_CLIENT )
             {
                 tcpssn->client->flush_policy = STREAM_FLPOLICY_ON_ACK;
-                stream.set_splitter(lwssn, false, new AtomSplitter(false));
+                Stream::set_splitter(lwssn, false, new AtomSplitter(false));
             }
         }
 
@@ -316,7 +316,7 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
         IpsOption* ropt = reassemble_api.ctor(reassembler, nullptr);
         int rc = ropt->eval(cursor, pkt);
         CHECK( ( rc == DETECTION_OPTION_MATCH ) );
-        StreamSplitter* ss = stream.get_splitter(flow, true);
+        StreamSplitter* ss = Stream::get_splitter(flow, true);
         CHECK( ( ss != nullptr ) );
         CHECK( ( !ss->is_paf() ) );
         CHECK( ( ( ( TcpSession* )pkt->flow->session)->server.flush_policy

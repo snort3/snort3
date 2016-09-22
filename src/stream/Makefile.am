@@ -7,12 +7,11 @@ x_includedir = $(pkgincludedir)/stream
 
 x_include_HEADERS = \
 paf.h \
-stream_api.h \
+stream.h \
 stream_splitter.h
 
 libstream_a_SOURCES = \
-stream.h \
-stream_api.cc \
+stream.cc \
 stream_inspectors.cc \
 stream_inspectors.h \
 stream_splitter.cc

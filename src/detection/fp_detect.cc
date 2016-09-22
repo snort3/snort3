@@ -67,7 +67,6 @@
 #include "events/event_wrapper.h"
 #include "packet_io/active.h"
 #include "parser/parser.h"
-#include "stream/stream_api.h"
 #include "utils/sflsq.h"
 #include "utils/util.h"
 #include "profiler/profiler.h"
@@ -79,6 +78,7 @@
 #include "protocols/udp.h"
 #include "protocols/icmp4.h"
 #include "search_engines/pat_stats.h"
+#include "stream/stream.h"
 #include "utils/stats.h"
 
 THREAD_LOCAL ProfileStats rulePerfStats;
@@ -562,7 +562,7 @@ static inline int fpAddSessionAlert(Packet* p, const OptTreeNode* otn)
     if ( !otn )
         return 0;
 
-    return !stream.add_session_alert(
+    return !Stream::add_flow_alert(
         p->flow, p, otn->sigInfo.generator, otn->sigInfo.id);
 }
 
@@ -588,7 +588,7 @@ static inline int fpSessionAlerted(Packet* p, const OptTreeNode* otn)
 {
     const SigInfo* si = &otn->sigInfo;
 
-    if (!stream.check_session_alerted(p->flow, p, si->generator, si->id))
+    if (!Stream::check_flow_alerted(p->flow, p, si->generator, si->id))
         return 0;
     else
         return 1;

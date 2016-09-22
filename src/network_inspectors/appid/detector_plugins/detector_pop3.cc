@@ -686,7 +686,7 @@ static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, c
         return CLIENT_APP_INPROCESS;
 
 #ifdef APP_ID_USES_REASSEMBLED
-    stream.flush_response_flush(pkt);
+    Stream::flush_response_flush(pkt);
 #endif
 
     dd = (POP3DetectorData*)pop3_detector_mod.api->data_get(flowp,
@@ -893,7 +893,7 @@ static int pop3_validate(ServiceValidationArgs* args)
         goto inprocess;
 
 #ifdef APP_ID_USES_REASSEMBLED
-    stream.flush_response_flush(pkt);
+    Stream::flush_response_flush(pkt);
 #endif
 
     if (dir != APP_ID_FROM_RESPONDER)

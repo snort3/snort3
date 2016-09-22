@@ -37,9 +37,9 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
-#include "stream/stream_api.h"
 #include "parser/parser.h"
 #include "framework/inspector.h"
+#include "stream/stream.h"
 #include "utils/sfsnprintfappend.h"
 
 #include "dns_module.h"
@@ -1034,7 +1034,7 @@ static void snort_dns(Packet* p)
             return;
         }
 
-        if ( !stream.is_stream_sequenced(p->flow, SSN_DIR_FROM_CLIENT) )
+        if ( !Stream::is_stream_sequenced(p->flow, SSN_DIR_FROM_CLIENT) )
         {
             return;
         }

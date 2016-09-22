@@ -23,8 +23,8 @@
 
 #include "main/snort_types.h"
 #include "main/thread.h"
+#include "flow/session.h"
 #include "framework/module.h"
-#include "stream/stream.h"
 
 extern const PegInfo icmp_pegs[];
 extern THREAD_LOCAL struct IcmpStats icmpStats;

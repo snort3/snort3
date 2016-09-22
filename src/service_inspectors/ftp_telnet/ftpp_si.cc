@@ -48,6 +48,7 @@
 #include "ftpp_return_codes.h"
 
 #include "sfip/sf_ip.h"
+#include "stream/stream.h"
 #include "utils/util.h"
 
 unsigned FtpFlowData::flow_id = 0;
@@ -340,7 +341,7 @@ void FTPFreesession(FTP_SESSION* ssn)
 bool FTPDataDirection(Packet* p, FTP_DATA_SESSION* ftpdata)
 {
     uint32_t direction;
-    uint32_t pktdir = stream.get_packet_direction(p);
+    uint32_t pktdir = Stream::get_packet_direction(p);
 
     if (ftpdata->mode == FTPP_XFER_ACTIVE)
         direction = ftpdata->direction ?  PKT_FROM_SERVER : PKT_FROM_CLIENT;
@@ -493,7 +494,7 @@ int SetSiInput(FTPP_SI_INPUT* SiInput, Packet* p)
     /*
      * We now set the packet direction
      */
-    if (p->flow && stream.is_midstream(p->flow))
+    if (p->flow && Stream::is_midstream(p->flow))
     {
         SiInput->pdir = FTPP_SI_NO_MODE;
     }
