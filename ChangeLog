@@ -1,3 +1,10 @@
+16/09/22 - build 211
+
+-- fix hyperscan detection with nocase
+-- fix shutdown sequence
+-- fix --dirty-pig
+-- fix FreeBSD build re appid / service_rpc
+
 16/09/20 - build 210
 
 -- started dce_udp porting
