@@ -113,7 +113,7 @@ public:
 
 private:
     TimeProfilerStats& stats;
-    Stopwatch<hr_clock> sw;
+    Stopwatch<SnortClock> sw;
     bool stopped_once = false;
 };
 

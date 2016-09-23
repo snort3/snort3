@@ -60,6 +60,9 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("capture_block_size") )
         fc.capture_block_size = v.get_long();
 
+    else if ( v.is("max_files_cached") )
+        fc.max_files_cached = v.get_long();
+
     else if ( v.is("enable_type") )
     {
         if ( v.get_bool() )
@@ -200,3 +203,4 @@ bool FileIdModule::end(const char* fqn, int idx, SnortConfig* sc)
 
     return true;
 }
+

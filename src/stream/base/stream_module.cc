@@ -20,8 +20,6 @@
 
 #include "stream_module.h"
 
-#include "stream/stream.h"
-
 #include <string>
 
 using namespace std;
@@ -42,16 +40,13 @@ static const Parameter name[] = \
     { "idle_timeout", Parameter::PT_INT, "1:", idle, \
       "maximum inactive time before retiring session tracker" }, \
  \
-    { "cleanup_pct", Parameter::PT_INT, "1:100", cleanup, \
-      "percent of cache to clean when max_sessions is reached" }, \
-\
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr } \
 }
 
 CACHE_PARAMS(ip_params,    "16384",  "30", "180", "5");
-CACHE_PARAMS(icmp_params,  "32768",  "30", "180", "5");
-CACHE_PARAMS(tcp_params,  "131072",  "30", "180", "5");
-CACHE_PARAMS(udp_params,   "65536",  "30", "180", "5");
+CACHE_PARAMS(icmp_params,  "65536",  "30", "180", "5");
+CACHE_PARAMS(tcp_params,  "262144",  "30", "180", "5");
+CACHE_PARAMS(udp_params,  "131072",  "30", "180", "5");
 CACHE_PARAMS(user_params,   "1024",  "30", "180", "5");
 CACHE_PARAMS(file_params,    "128",  "30", "180", "5");
 
@@ -61,6 +56,9 @@ CACHE_PARAMS(file_params,    "128",  "30", "180", "5");
 
 static const Parameter s_params[] =
 {
+    { "ip_frags_only", Parameter::PT_BOOL, nullptr, "false",
+      "don't process non-frag flows" },
+
     CACHE_TABLE("ip_cache",   "ip",   ip_params),
     CACHE_TABLE("icmp_cache", "icmp", icmp_params),
     CACHE_TABLE("tcp_cache",  "tcp",  tcp_params),
@@ -93,7 +91,12 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     FlowConfig* fc = nullptr;
 
-    if ( strstr(fqn, "ip_cache") )
+    if ( v.is("ip_frags_only") )
+    {
+        config.ip_frags_only = v.get_bool();
+        return true;
+    }
+    else if ( strstr(fqn, "ip_cache") )
         fc = &config.ip_cfg;
 
     else if ( strstr(fqn, "icmp_cache") )
@@ -122,9 +125,6 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig*)
 
     else if ( v.is("idle_timeout") )
         fc->nominal_timeout = v.get_long();
-
-    else if ( v.is("cleanup_pct") )
-        fc->cleanup_pct = v.get_long();
 
     else
         return false;

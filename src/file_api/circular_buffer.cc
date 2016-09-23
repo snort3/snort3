@@ -44,11 +44,7 @@ struct _CircularBuffer
     uint64_t size;     /* maximum number of elements           */
     uint64_t start;    /* index of oldest element, reader update only */
     uint64_t end;      /* index to write new element, writer update only*/
-    uint64_t under_run;
-    uint64_t over_run;
     ElemType* elems;    /* vector of elements                   */
-    uint64_t total_write;
-    uint64_t total_read;
 };
 
 /* This approach adds one byte to end and start pointers */
@@ -110,12 +106,6 @@ uint64_t cbuffer_used(CircularBuffer* cb)
     }
 }
 
-/* Returns number of free elements*/
-uint64_t cbuffer_available(CircularBuffer* cb)
-{
-    return (cbuffer_size(cb) - cbuffer_used(cb));
-}
-
 /* Returns total number of elements*/
 uint64_t cbuffer_size(CircularBuffer* cb)
 {
@@ -138,7 +128,6 @@ int cbuffer_write(CircularBuffer* cb, const ElemType elem)
 
     if ( cbuffer_is_full (cb))  /* full, return error */
     {
-        cb->over_run++;
         return CB_FAIL;
     }
 
@@ -147,7 +136,6 @@ int cbuffer_write(CircularBuffer* cb, const ElemType elem)
         w = 0;
 
     cb->end = w;
-    cb->total_write++;
 
     return CB_SUCCESS;
 }
@@ -168,7 +156,6 @@ int cbuffer_read(CircularBuffer* cb, ElemType* elem)
 
     if (cbuffer_is_empty(cb)) /* Empty, return error */
     {
-        cb->under_run++;
         return CB_FAIL;
     }
 
@@ -177,52 +164,7 @@ int cbuffer_read(CircularBuffer* cb, ElemType* elem)
         r = 0;
 
     cb->start = r;
-    cb->total_read++;
 
     return CB_SUCCESS;
-}
-
-/*
- * Read one element from the buffer and no change on buffer
- *
- * Args:
- *   CircularBuffer *: buffer
- *   ElemType *elem: the element pointer to be stored
- * Return:
- *   CB_FAIL
- *   CB_SUCCESS
- */
-int cbuffer_peek(CircularBuffer* cb, ElemType* elem)
-{
-    if (cbuffer_is_empty(cb)) /* Empty, return error */
-        return CB_FAIL;
-
-    *elem = cb->elems[cb->start];
-
-    return CB_SUCCESS;
-}
-
-/* Returns total number of reads*/
-uint64_t cbuffer_num_reads(CircularBuffer* cb)
-{
-    return (cb->total_read);
-}
-
-/* Returns total number of writes*/
-uint64_t cbuffer_num_writes(CircularBuffer* cb)
-{
-    return (cb->total_write);
-}
-
-/* Returns total number of writer overruns*/
-uint64_t cbuffer_num_over_runs(CircularBuffer* cb)
-{
-    return (cb->over_run);
-}
-
-/* Returns total number of reader overruns*/
-uint64_t cbuffer_num_under_runs(CircularBuffer* cb)
-{
-    return (cb->under_run);
 }
 

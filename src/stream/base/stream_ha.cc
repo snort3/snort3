@@ -25,8 +25,8 @@
 #include "binder/binder.h"
 #include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
+#include "stream/stream.h"
 #include "sfip/sf_ip.h"
-#include "stream/stream_api.h"
 
 // HA Session flags helper macros
 #define HA_IGNORED_SESSION_FLAGS \

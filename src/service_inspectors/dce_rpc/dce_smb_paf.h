@@ -23,7 +23,6 @@
 #define DCE_SMB_PAF_H
 
 #include "main/snort_types.h"
-#include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 
 #define DCE2_SMB_PAF_SHIFT(x64, x8) { x64 <<= 8; x64 |= (uint64_t)x8; }

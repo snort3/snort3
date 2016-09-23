@@ -27,6 +27,10 @@ dce_tcp_module.cc \
 dce_tcp_module.h \
 dce_tcp_paf.cc \
 dce_tcp_paf.h \
+dce_udp.cc\
+dce_udp.h \
+dce_udp_module.cc \
+dce_udp_module.h \
 dce_utils.cc \
 dce_utils.h \
 ips_dce_iface.cc \

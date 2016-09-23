@@ -34,6 +34,7 @@
 #include "protocols/udp.h"
 #include "protocols/vlan.h"
 #include "sfip/sf_ip.h"
+#include "stream/stream.h"
 
 #include "expect_cache.h"
 #include "flow_cache.h"
@@ -41,25 +42,7 @@
 #include "session.h"
 
 FlowControl::FlowControl()
-{
-    ip_cache = nullptr;
-    icmp_cache = nullptr;
-    tcp_cache = nullptr;
-    udp_cache = nullptr;
-    user_cache = nullptr;
-    file_cache = nullptr;
-    exp_cache = nullptr;
-
-    ip_mem = icmp_mem = nullptr;
-    tcp_mem = udp_mem = nullptr;
-    user_mem = file_mem = nullptr;
-
-    get_ip = get_icmp = nullptr;
-    get_tcp = get_udp = nullptr;
-    get_user = get_file = nullptr;
-
-    last_pkt_type = PktType::NONE;
-}
+{ }
 
 FlowControl::~FlowControl()
 {
@@ -90,16 +73,6 @@ static THREAD_LOCAL PegCount udp_count = 0;
 static THREAD_LOCAL PegCount user_count = 0;
 static THREAD_LOCAL PegCount file_count = 0;
 
-uint32_t FlowControl::max_flows(PktType type)
-{
-    FlowCache* cache = get_cache(type);
-
-    if ( cache )
-        return cache->get_max_flows();
-
-    return 0;
-}
-
 PegCount FlowControl::get_flows(PktType type)
 {
     switch ( type )
@@ -108,7 +81,7 @@ PegCount FlowControl::get_flows(PktType type)
     case PktType::ICMP: return icmp_count;
     case PktType::TCP:  return tcp_count;
     case PktType::UDP:  return udp_count;
-    case PktType::PDU: return user_count;
+    case PktType::PDU:  return user_count;
     case PktType::FILE: return file_count;
     default:            return 0;
     }
@@ -238,24 +211,6 @@ void FlowControl::purge_flows (PktType type)
         cache->purge();
 }
 
-void FlowControl::prune_flows(PktType type, const Packet* p)
-{
-    if ( !p )
-        return;
-
-    FlowCache* cache = get_cache(type);
-
-    if ( !cache )
-        return;
-
-    // smack the older timed out flows
-    if ( !cache->prune_stale(p->pkth->ts.tv_sec, p->flow) )
-    {
-        // if no luck, try the memcap
-        cache->prune_excess(p->flow);
-    }
-}
-
 // hole for memory manager/prune handler
 bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
 {
@@ -263,27 +218,19 @@ bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
     return cache ? cache->prune_one(reason, do_cleanup) : false;
 }
 
-void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
+void FlowControl::timeout_flows(time_t cur_time)
 {
+    if ( !types.size() )
+        return;
+
     Active::suspend();
+    FlowCache* fc = get_cache(types[next]);
 
-    if ( ip_cache )
-        ip_cache->timeout(flowCount, cur_time);
+    if ( ++next >= types.size() )
+        next = 0;
 
-    //if ( icmp_cache )
-    //icmp_cache does not need cleaning
-
-    if ( tcp_cache )
-        tcp_cache->timeout(flowCount, cur_time);
-
-    if ( udp_cache )
-        udp_cache->timeout(flowCount, cur_time);
-
-    if ( user_cache )
-        user_cache->timeout(flowCount, cur_time);
-
-    if ( file_cache )
-        file_cache->timeout(flowCount, cur_time);
+    if ( fc )
+        fc->timeout(1, cur_time);
 
     Active::resume();
 }
@@ -500,7 +447,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     case Flow::FlowState::ALLOW:
         if ( news )
-            stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
+            Stream::stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
         else
             DisableInspection();
 
@@ -509,7 +456,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     case Flow::FlowState::BLOCK:
         if ( news )
-            stream.drop_traffic(flow, SSN_DIR_BOTH);
+            Stream::drop_traffic(flow, SSN_DIR_BOTH);
         else
             Active::block_again();
 
@@ -518,11 +465,11 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     case Flow::FlowState::RESET:
         if ( news )
-            stream.drop_traffic(flow, SSN_DIR_BOTH);
+            Stream::drop_traffic(flow, SSN_DIR_BOTH);
         else
             Active::reset_again();
 
-        stream.blocked_session(flow, p);
+        Stream::blocked_flow(flow, p);
         DisableInspection();
         break;
     }
@@ -547,6 +494,7 @@ void FlowControl::init_ip(
         ip_cache->push(ip_mem + i);
 
     get_ip = get_ssn;
+    types.push_back(PktType::IP);
 }
 
 void FlowControl::process_ip(Packet* p)
@@ -590,6 +538,7 @@ void FlowControl::init_icmp(
         icmp_cache->push(icmp_mem + i);
 
     get_icmp = get_ssn;
+    types.push_back(PktType::ICMP);
 }
 
 void FlowControl::process_icmp(Packet* p)
@@ -636,6 +585,7 @@ void FlowControl::init_tcp(
         tcp_cache->push(tcp_mem + i);
 
     get_tcp = get_ssn;
+    types.push_back(PktType::TCP);
 }
 
 void FlowControl::process_tcp(Packet* p)
@@ -679,6 +629,7 @@ void FlowControl::init_udp(
         udp_cache->push(udp_mem + i);
 
     get_udp = get_ssn;
+    types.push_back(PktType::UDP);
 }
 
 void FlowControl::process_udp(Packet* p)
@@ -722,6 +673,7 @@ void FlowControl::init_user(
         user_cache->push(user_mem + i);
 
     get_user = get_ssn;
+    types.push_back(PktType::PDU);
 }
 
 void FlowControl::process_user(Packet* p)
@@ -765,6 +717,7 @@ void FlowControl::init_file(
         file_cache->push(file_mem + i);
 
     get_file = get_ssn;
+    types.push_back(PktType::FILE);
 }
 
 void FlowControl::process_file(Packet* p)

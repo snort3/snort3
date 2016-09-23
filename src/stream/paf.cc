@@ -34,8 +34,7 @@
 
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
-#include "stream/stream.h"
-#include "stream/stream_api.h"
+#include "protocols/packet.h"
 
 //--------------------------------------------------------------------
 // private state

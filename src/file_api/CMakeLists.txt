@@ -1,11 +1,13 @@
 
 set( FILE_API_INCLUDES
     file_api.h
-    file_config.h 
+    file_config.h
+    file_cache.h 
     file_flows.h
     file_identifier.h 
     file_lib.h 
     file_policy.h
+    file_segment.h
     file_service.h 
 )
 
@@ -15,6 +17,8 @@ add_library ( file_api STATIC
     circular_buffer.h
     file_capture.cc
     file_capture.h
+    file_cache.cc
+    file_cache.h
     file_config.cc 
     file_enforcer.cc 
     file_enforcer.h 
@@ -26,7 +30,9 @@ add_library ( file_api STATIC
     file_mempool.h
     file_module.cc
     file_module.h
-    file_policy.cc 
+    file_policy.cc
+    file_segment.cc
+    file_segment.h 
     file_service.cc 
     file_stats.cc 
     file_stats.h

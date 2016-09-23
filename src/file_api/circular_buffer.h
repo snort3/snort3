@@ -48,9 +48,6 @@ int cbuffer_is_empty(CircularBuffer* cb); // FIXIT-L use bool
 // Returns number of elements in use
 uint64_t cbuffer_used(CircularBuffer* cb);
 
-// Returns number of free elements
-uint64_t cbuffer_available(CircularBuffer* cb);
-
 // Returns total number of elements
 uint64_t cbuffer_size(CircularBuffer* cb);
 
@@ -60,20 +57,6 @@ int cbuffer_write(CircularBuffer* cb, const ElemType elem);
 // Read one element from the buffer and remove it from buffer
 // Returns CB_SUCCESS or CB_FAIL
 int cbuffer_read(CircularBuffer* cb, ElemType* elem);
-
-// Read one element from the buffer and no change on buffer
-// Returns CB_SUCCESS or CB_FAIL
-int cbuffer_peek(CircularBuffer* cb, ElemType* elem);
-
-uint64_t cbuffer_num_reads(CircularBuffer* cb);
-
-uint64_t cbuffer_num_writes(CircularBuffer* cb);
-
-/* Returns total number of writer overruns*/
-uint64_t cbuffer_num_over_runs(CircularBuffer* cb);
-
-/* Returns total number of reader overruns*/
-uint64_t cbuffer_num_under_runs(CircularBuffer* cb);
 
 #endif
 

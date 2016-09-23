@@ -51,7 +51,6 @@
 #include "hi_ui_config.h"
 #include "hi_ad.h"
 #include "hi_main.h"
-#include "stream/stream_api.h"
 
 /*
 **  NAME

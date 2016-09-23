@@ -180,6 +180,8 @@ TEST_GROUP(mpse_hs_match)
 
     void setup()
     {
+        // FIXIT-L cpputest hangs or crashes in the leak detector
+        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         CHECK(se_hyperscan);
         hs = mpse_api->ctor(snort_conf, nullptr, false, &s_agent);
         CHECK(hs);
@@ -190,6 +192,7 @@ TEST_GROUP(mpse_hs_match)
     {
         mpse_api->dtor(hs);
         hyperscan_cleanup(snort_conf);
+        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 
@@ -219,21 +222,35 @@ TEST(mpse_hs_match, single)
     CHECK(hits == 1);
 }
 
-TEST(mpse_hs_match, other)
+TEST(mpse_hs_match, nocase)
 {
-    Mpse::PatternDescriptor desc(false, true, false);
+    Mpse::PatternDescriptor desc(true, true, false);
 
     CHECK(hs->add_pattern(nullptr, (uint8_t*)"foo", 3, desc, s_user) == 0);
-    CHECK(hs->add_pattern(nullptr, (uint8_t*)"\rbar\n", 3, desc, s_user) == 0);
-    CHECK(hs->add_pattern(nullptr, (uint8_t*)"\\(baz\\)", 3, desc, s_user) == 0);
-
     CHECK(hs->prep_patterns(snort_conf) == 0);
-    CHECK(hs->get_pattern_count() == 3);
+    CHECK(hs->get_pattern_count() == 1);
 
     hyperscan_setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 0);
+    CHECK(hs->search((uint8_t*)"fOo", 3, match, nullptr, &state) == 0);
+    CHECK(hits == 2);
+}
+
+TEST(mpse_hs_match, other)
+{
+    Mpse::PatternDescriptor desc(false, true, false);
+
+    CHECK(hs->add_pattern(nullptr, (uint8_t*)"foo", 3, desc, s_user) == 0);
+    CHECK(hs->prep_patterns(snort_conf) == 0);
+    CHECK(hs->get_pattern_count() == 1);
+
+    hyperscan_setup(snort_conf);
+
+    int state = 0;
+    CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 0);
+    CHECK(hs->search((uint8_t*)"fOo", 3, match, nullptr, &state) == 0);
     CHECK(hits == 1);
 }
 
@@ -304,6 +321,8 @@ TEST_GROUP(mpse_hs_multi)
 
     void setup()
     {
+        // FIXIT-L cpputest hangs or crashes in the leak detector
+        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         CHECK(se_hyperscan);
 
         hs1 = mpse_api->ctor(snort_conf, nullptr, false, &s_agent);
@@ -320,6 +339,7 @@ TEST_GROUP(mpse_hs_multi)
         mpse_api->dtor(hs1);
         mpse_api->dtor(hs2);
         hyperscan_cleanup(snort_conf);
+        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 

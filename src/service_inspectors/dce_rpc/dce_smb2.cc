@@ -25,6 +25,7 @@
 #include "dce_smb_utils.h"
 #include "detection/detection_util.h"
 #include "main/snort_debug.h"
+#include "file_api/file_flows.h"
 
 #define   UNKNOWN_FILE_SIZE                  ~0
 
@@ -240,8 +241,16 @@ static inline void DCE2_Smb2ResetFileName(DCE2_SmbFileTracker* ftracker)
     ftracker->file_name_size = 0;
 }
 
+static inline FileContext* get_file_context(DCE2_SmbSsnData* ssd, uint64_t file_id)
+{
+    assert(ssd->sd.wire_pkt);
+    FileFlows* file_flows = FileFlows::get_file_flows((ssd->sd.wire_pkt)->flow);
+    assert(file_flows);
+    return file_flows->get_file_context(file_id, true);
+}
+
 static inline void DCE2_Smb2ProcessFileData(DCE2_SmbSsnData* ssd, const uint8_t* file_data,
-    uint32_t data_size, bool)
+    uint32_t data_size, FileDirection dir)
 {
     int64_t file_detection_depth = DCE2_ScSmbFileDepth((dce2SmbProtoConf*)ssd->sd.config);
     int64_t detection_size = 0;
@@ -264,13 +273,11 @@ static inline void DCE2_Smb2ProcessFileData(DCE2_SmbSsnData* ssd, const uint8_t*
         DCE2_FileDetect();
     }
 
-// FIXIT-L port file processing
-/*
-    _dpd.fileAPI->file_segment_process(fileCache, (void *)ssd->sd.wire_pkt,
-            ssd->ftracker.fid_v2, ssd->ftracker.tracker.file.file_size,
-            file_data, data_size, ssd->ftracker.tracker.file.file_offset,
-            upload);
-*/
+    assert(ssd->sd.wire_pkt);
+    FileFlows* file_flows = FileFlows::get_file_flows((ssd->sd.wire_pkt)->flow);
+
+    file_flows->file_process(ssd->ftracker.fid_v2, file_data, data_size,
+        ssd->ftracker.tracker.file.file_offset, dir);
 }
 
 /********************************************************************
@@ -378,11 +385,12 @@ static void DCE2_Smb2CreateResponse(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
 
     if (ssd->ftracker.file_name && ssd->ftracker.file_name_size)
     {
-// FIXIT-L port file processing
-/*
-        _dpd.fileAPI->file_cache_update_entry(fileCache, (void *)ssd->sd.wire_pkt, ssd->ftracker.fid_v2,
-                (uint8_t *) ssd->ftracker.file_name,  ssd->ftracker.file_name_size, file_size);
-*/
+        FileContext* file = get_file_context(ssd, ssd->ftracker.fid_v2);
+        if (file)
+        {
+            file->set_file_size(file_size);
+            file->set_file_name(ssd->ftracker.file_name, ssd->ftracker.file_name_size);
+        }
     }
     DCE2_Smb2ResetFileName(&(ssd->ftracker));
 }
@@ -453,15 +461,16 @@ static void DCE2_Smb2CloseCmd(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
         !ssd->ftracker.tracker.file.file_size
         && ssd->ftracker.tracker.file.file_offset)
     {
-        bool upload = DCE2_SsnFromClient(ssd->sd.wire_pkt) ? true : false;
+        FileDirection dir = DCE2_SsnFromClient(ssd->sd.wire_pkt) ? FILE_UPLOAD : FILE_DOWNLOAD;
         ssd->ftracker.tracker.file.file_size = ssd->ftracker.tracker.file.file_offset;
-// FIXIT-L port file processing
-/*
-        uint64_t fileId_persistent = alignedNtohq((const uint64_t *)(&(smb_close_hdr->fileId_persistent)));
-        _dpd.fileAPI->file_cache_update_entry(fileCache, (void *)ssd->sd.wire_pkt,
-                fileId_persistent, nullptr,  0, ssd->ftracker.tracker.file.file_size);
-*/
-        DCE2_Smb2ProcessFileData(ssd, nullptr, 0, upload);
+        uint64_t fileId_persistent = alignedNtohq(&(smb_close_hdr->fileId_persistent));
+        FileContext* file = get_file_context(ssd, fileId_persistent);
+        if (file)
+        {
+            file->set_file_size(ssd->ftracker.tracker.file.file_size);
+        }
+
+        DCE2_Smb2ProcessFileData(ssd, nullptr, 0, dir);
     }
 }
 
@@ -491,12 +500,12 @@ static void DCE2_Smb2SetInfo(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
             uint64_t file_size = alignedNtohq((const uint64_t*)file_data);
             DebugFormat(DEBUG_DCE_SMB, "Get file size %lu!\n", file_size);
             ssd->ftracker.tracker.file.file_size = file_size;
-//FIXIT-L port file processing
-/*
-           uint64_t fileId_persistent = alignedNtohq((const uint64_t *)(&(smb_set_info_hdr->fileId_persistent)));
-            _dpd.fileAPI->file_cache_update_entry(fileCache, (void *)ssd->sd.wire_pkt,
-                    fileId_persistent, nullptr,  0, file_size);
-*/
+            uint64_t fileId_persistent = alignedNtohq(&(smb_set_info_hdr->fileId_persistent));
+            FileContext* file = get_file_context(ssd, fileId_persistent);
+            if (file)
+            {
+                file->set_file_size(ssd->ftracker.tracker.file.file_size);
+            }
         }
     }
 }
@@ -562,7 +571,7 @@ static void DCE2_Smb2ReadResponse(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr,
 
     DCE2_Smb2RemoveRequest(ssd, request);
 
-    DCE2_Smb2ProcessFileData(ssd, file_data, data_size, false);
+    DCE2_Smb2ProcessFileData(ssd, file_data, data_size, FILE_DOWNLOAD);
     ssd->ftracker.tracker.file.file_offset += data_size;
     total_data_length = alignedNtohl((const uint32_t*)&(smb_read_hdr->length));
     if (total_data_length > (uint32_t)data_size)
@@ -645,7 +654,7 @@ static void DCE2_Smb2WriteRequest(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr,
     ssd->ftracker.tracker.file.file_direction = DCE2_SMB_FILE_DIRECTION__UPLOAD;
     ssd->ftracker.tracker.file.file_offset = offset;
 
-    DCE2_Smb2ProcessFileData(ssd, file_data, data_size, true);
+    DCE2_Smb2ProcessFileData(ssd, file_data, data_size, FILE_UPLOAD);
     ssd->ftracker.tracker.file.file_offset += data_size;
     total_data_length = alignedNtohl((const uint32_t*)&(smb_write_hdr->length));
     if (total_data_length > (uint32_t)data_size)
@@ -797,8 +806,8 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
     else if (ssd->pdu_state == DCE2_SMB_PDU_STATE__RAW_DATA)
     {
         /*continue processing raw data*/
-        bool upload = DCE2_SsnFromClient(ssd->sd.wire_pkt) ? true : false;
-        DCE2_Smb2ProcessFileData(ssd, data_ptr, data_len, upload);
+        FileDirection dir = DCE2_SsnFromClient(ssd->sd.wire_pkt) ? FILE_UPLOAD : FILE_DOWNLOAD;
+        DCE2_Smb2ProcessFileData(ssd, data_ptr, data_len, dir);
         ssd->ftracker.tracker.file.file_offset += data_len;
     }
 }

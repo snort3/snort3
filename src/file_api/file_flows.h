@@ -34,7 +34,7 @@ class SO_PUBLIC FileFlows : public FlowData
 {
 public:
 
-    FileFlows(Flow* f) : FlowData(flow_id), flow(f) {}
+    FileFlows(Flow* f) : FlowData(flow_id), flow(f) { }
     ~FileFlows();
     static void init()
     { flow_id = FlowData::get_flow_id(); }
@@ -42,8 +42,12 @@ public:
     // Factory method to get file flows
     static FileFlows* get_file_flows(Flow*);
 
-    FileContext* get_current_file_context() {return current_context; }
+    FileContext* get_current_file_context();
+
     void set_current_file_context(FileContext*);
+
+    // Get file context based on file id, create it if not existed
+    FileContext* get_file_context(uint64_t file_id, bool to_create);
 
     uint32_t get_new_file_instance();
 
@@ -54,21 +58,21 @@ public:
         bool upload, size_t file_index = 0);
 
     // This is used for each file context. Support multiple files per session
-    bool file_process(FileContext*, const uint8_t* file_data, int data_size, FilePosition);
+    bool file_process(uint64_t file_id, const uint8_t* file_data,
+        int data_size, uint64_t offset, FileDirection);
 
     //void handle_retransmit(Packet*) override;
     static unsigned flow_id;
 
 private:
     void save_to_pending_context();
-    void finish_signature_lookup(FileContext*);
     void init_file_context(FileDirection, FileContext*);
     FileContext* find_main_file_context(FilePosition, FileDirection, size_t id = 0);
-    void log_file_event(FileContext*, Flow*);
     FileContext* main_context = nullptr;
     FileContext* pending_context = nullptr;
     FileContext* current_context = nullptr;
     uint32_t max_file_id = 0;
+    uint64_t current_file_id = 0;
     Flow* flow = nullptr;
 };
 #endif

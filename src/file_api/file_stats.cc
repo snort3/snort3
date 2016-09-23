@@ -33,6 +33,7 @@
 
 #include "file_stats.h"
 #include "file_capture.h"
+#include "file_cache.h"
 #include "file_config.h"
 
 #include "main/snort_types.h"
@@ -148,7 +149,7 @@ void print_file_stats()
 #if 0
     LogLabel("file type verdicts");
 
-    uint64_t verdicts_total = 0;
+    uint64_t verdicts_total = 0;#include "file_capture.h"
     for (i = 0; i < FILE_VERDICT_MAX; i++)
     {
         verdicts_total+=file_stats.verdicts_type[i];
@@ -281,6 +282,7 @@ void print_file_stats()
     LogLabel("file stats summary");
     LogCount("Files processed",file_stats.files_total);
     LogCount("Files data processed", file_stats.file_data_total);
-
+    if(FileCache::num_add_fails)
+        LogCount("Fails to add to cache", FileCache::num_add_fails);
 }
 

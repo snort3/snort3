@@ -20,7 +20,6 @@
 #define STREAM_TCP_H
 
 #include "flow/flow.h"
-#include "stream/stream_api.h"
 #include "protocols/packet.h"
 
 #include "tcp_defs.h"

@@ -25,7 +25,7 @@
 namespace t_stopwatch
 {
 
-struct Clock : public ClockTraits<hr_clock>
+struct Clock : public ClockTraits<SnortClock>
 {
     static time_point now()
     { return time; }

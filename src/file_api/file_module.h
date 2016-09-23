@@ -137,6 +137,9 @@ static const Parameter file_id_params[] =
     { "capture_block_size", Parameter::PT_INT, "8:", "32768",
       "file capture block size in bytes" },
 
+    { "max_files_cached", Parameter::PT_INT, "8:", "65536",
+      "maximal number of files cached in memory" },
+
     { "enable_type", Parameter::PT_BOOL, nullptr, "false",
       "enable type ID" },
 
@@ -166,7 +169,6 @@ static const Parameter file_id_params[] =
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
-
 
 #define file_id_help \
     "configure file identification"

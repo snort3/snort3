@@ -377,6 +377,14 @@ if test "x$enable_shell" = "xyes"; then
     AC_DEFINE(SHELL, [1], [enable shell support])
 fi
 
+AC_ARG_ENABLE(tsc-clock,
+    AS_HELP_STRING([--enable-tsc-clock],[use timestamp counter register clock (x86 only)]),
+    enable_tsc_clock="$enableval", enable_tsc_clock="no")
+
+if test "x$enable_tsc_clock" = "xyes"; then
+    AC_DEFINE(USE_TSC_CLOCK, [1], [enable tsc clock])
+fi
+
 AC_ARG_ENABLE(large-pcap,
     AS_HELP_STRING([--enable-large-pcap],[enable support for pcaps larger than 2 GB]),
     enable_large_pcap="$enableval", enable_large_pcap="no")

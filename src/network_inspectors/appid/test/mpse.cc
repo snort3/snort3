@@ -34,7 +34,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "bitop.h"
 #include "bnfa_search.h"
 #include "acsmx.h"
 #include "acsmx2.h"
@@ -462,17 +461,6 @@ int mpsePrepPatternsWithSnortConf(struct _SnortConfig* sc, void* pvoid,
     }
 
     return retv;
-}
-
-void mpseSetRuleMask(void* pvoid, BITOP* rm)
-{
-    MPSE* p = (MPSE*)pvoid;
-
-    switch ( p->method )
-    {
-    default:
-        return;
-    }
 }
 
 int mpsePrintInfo(void* pvoid)

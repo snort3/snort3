@@ -45,7 +45,6 @@ extern "C" {
 #include "events/event.h"
 #include "parser/parser.h"
 #include "packet_io/sfdaq.h"
-#include "stream/stream_api.h"
 #include "utils/util.h"
 #include "utils/stats.h"
 

@@ -28,8 +28,7 @@ struct SnortConfig;
 
 struct dce2TcpProtoConf
 {
-    dce2CommonProtoConf common;
-    uint16_t co_reassemble_threshold;
+    dce2CoProtoConf common;
 };
 
 class Dce2TcpModule : public Module

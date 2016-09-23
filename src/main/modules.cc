@@ -54,6 +54,7 @@
 #include "side_channel/side_channel_module.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_ipvar.h"
+#include "stream/stream.h"
 #include "target_based/sftarget_data.h"
 #include "target_based/snort_protocols.h"
 

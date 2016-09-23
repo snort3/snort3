@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <zlib.h>
 
-#include "stream/stream_api.h"
+#include "flow/flow.h"
 #include "mime/file_mime_process.h"
 #include "utils/util_utf.h"
 

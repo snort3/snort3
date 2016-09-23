@@ -36,7 +36,7 @@
 #include "main/snort_config.h"
 #include "main/snort_types.h"
 
-bool FileConfig::process_file_magic(FileMagicData &magic)
+bool FileConfig::process_file_magic(FileMagicData& magic)
 {
     bool negated = false;
     std::string str = '"' + magic.content_str + '"';
@@ -57,22 +57,22 @@ uint32_t FileConfig::find_file_type_id(const uint8_t* buf, int len,
 }
 
 /*The main function for parsing rule option*/
-void FileConfig::process_file_rule(FileMagicRule &rule)
+void FileConfig::process_file_rule(FileMagicRule& rule)
 {
     fileIdentifier.insert_file_rule(rule);
 }
 
-void FileConfig::process_file_policy_rule(FileRule &rule)
+void FileConfig::process_file_policy_rule(FileRule& rule)
 {
     filePolicy.insert_file_rule(rule);
 }
 
-FileMagicRule*  FileConfig::get_rule_from_id(uint32_t id)
+FileMagicRule* FileConfig::get_rule_from_id(uint32_t id)
 {
     return fileIdentifier.get_rule_from_id(id);
 }
 
-std::string FileConfig::file_type_name( uint32_t id)
+std::string FileConfig::file_type_name(uint32_t id)
 {
     if (SNORT_FILE_TYPE_UNKNOWN == id)
         return "Unknown file type, done";
@@ -92,3 +92,4 @@ std::string file_type_name(uint32_t id)
 {
     return snort_conf->file_config.file_type_name(id);
 }
+

@@ -24,7 +24,7 @@
 // the subclasses do the actual work of tracking, reassembly, etc.
 
 #include "sfip/sfip_t.h"
-#include "stream/stream_api.h"
+#include "stream/stream.h"
 
 struct Packet;
 class Flow;

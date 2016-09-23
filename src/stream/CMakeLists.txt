@@ -10,13 +10,12 @@ add_subdirectory(file)
 
 set (STREAM_INCLUDES
     paf.h
-    stream_api.h
+    stream.h
     stream_splitter.h
 )
 
 add_library( stream STATIC
-    stream.h
-    stream_api.cc
+    stream.cc
     stream_inspectors.cc
     stream_inspectors.h
     stream_splitter.cc

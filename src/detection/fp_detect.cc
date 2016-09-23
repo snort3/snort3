@@ -67,7 +67,6 @@
 #include "events/event_wrapper.h"
 #include "packet_io/active.h"
 #include "parser/parser.h"
-#include "stream/stream_api.h"
 #include "utils/sflsq.h"
 #include "utils/util.h"
 #include "profiler/profiler.h"
@@ -79,6 +78,7 @@
 #include "protocols/udp.h"
 #include "protocols/icmp4.h"
 #include "search_engines/pat_stats.h"
+#include "stream/stream.h"
 #include "utils/stats.h"
 
 THREAD_LOCAL ProfileStats rulePerfStats;
@@ -88,7 +88,7 @@ THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
 
 THREAD_LOCAL uint64_t rule_eval_pkt_count = 0;
 
-THREAD_LOCAL OTNX_MATCH_DATA t_omd;
+static THREAD_LOCAL OTNX_MATCH_DATA t_omd;
 
 /* initialize the global OTNX_MATCH_DATA variable */
 void otnx_match_data_init(int num_rule_types)
@@ -111,14 +111,10 @@ void otnx_match_data_term()
 
 static inline void InitMatchInfo(OTNX_MATCH_DATA* o)
 {
-    int i = 0;
+    for ( int i = 0; i < o->iMatchInfoArraySize; i++ )
+        o->matchInfo[i].iMatchCount = 0;
 
-    for (i = 0; i < o->iMatchInfoArraySize; i++)
-    {
-        o->matchInfo[i].iMatchCount  = 0;
-        o->matchInfo[i].iMatchIndex  = 0;
-        o->matchInfo[i].iMatchMaxLen = 0;
-    }
+    o->have_match = false;
 }
 
 // called by fpLogEvent(), which does the filtering etc.
@@ -270,14 +266,10 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 **    int - 1 max_events variable hit, 0 successful.
 **
 */
-int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, const OptTreeNode* otn)
+int fpAddMatch(OTNX_MATCH_DATA* omd_local, int /*pLen*/, const OptTreeNode* otn)
 {
-    MATCH_INFO* pmi;
-    int evalIndex;
-    int i;
     RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
-
-    evalIndex = rtn->listhead->ruleListNode->evalIndex;
+    int evalIndex = rtn->listhead->ruleListNode->evalIndex;
 
     /* bounds check index */
     if ( evalIndex >= omd_local->iMatchInfoArraySize )
@@ -285,7 +277,7 @@ int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, const OptTreeNode* otn)
         pc.match_limit++;
         return 1;
     }
-    pmi = &omd_local->matchInfo[evalIndex];
+    MATCH_INFO* pmi = &omd_local->matchInfo[evalIndex];
 
     /*
     **  If we hit the max number of unique events for any rule type alert,
@@ -298,43 +290,18 @@ int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, const OptTreeNode* otn)
         return 1;
     }
 
-    /* Check that we are not storing the same otn again */
-    for ( i=0; i< pmi->iMatchCount; i++ )
+    // don't store the same otn again
+    for ( int i=0; i< pmi->iMatchCount; i++ )
     {
         if ( pmi->MatchArray[ i  ] == otn )
-        {
-            //LogMessage("fpAddMatch: storing the same otn...\n");
             return 0;
-        }
     }
 
-    /*
-    **  Add the event to the appropriate list
-    */
+    //  add the event to the appropriate list
     pmi->MatchArray[ pmi->iMatchCount ] = otn;
 
-    /*
-    **  This means that we are adding a NC rule
-    **  and we only set the index to this rule
-    **  if there is no content rules in the
-    **  same array.
-    */
-    if (pLen > 0)
-    {
-        /*
-        **  Event Comparison Function
-        **  Here the largest content match is the
-        **  priority
-        */
-        if ( pmi->iMatchMaxLen < pLen )
-        {
-            pmi->iMatchMaxLen = pLen;
-            pmi->iMatchIndex  = pmi->iMatchCount;
-        }
-    }
-
     pmi->iMatchCount++;
-
+    omd_local->have_match = true;
     return 0;
 }
 
@@ -595,7 +562,7 @@ static inline int fpAddSessionAlert(Packet* p, const OptTreeNode* otn)
     if ( !otn )
         return 0;
 
-    return !stream.add_session_alert(
+    return !Stream::add_flow_alert(
         p->flow, p, otn->sigInfo.generator, otn->sigInfo.id);
 }
 
@@ -621,7 +588,7 @@ static inline int fpSessionAlerted(Packet* p, const OptTreeNode* otn)
 {
     const SigInfo* si = &otn->sigInfo;
 
-    if (!stream.check_session_alerted(p->flow, p, si->generator, si->id))
+    if (!Stream::check_flow_alerted(p->flow, p, si->generator, si->id))
         return 0;
     else
         return 1;
@@ -702,6 +669,9 @@ static inline int fpSessionAlerted(Packet* p, const OptTreeNode* otn)
 */
 static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
 {
+    if ( !o->have_match )
+        return 0;
+
     int i;
     int j;
     int k;

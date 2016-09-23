@@ -22,7 +22,6 @@
 // Implementation header with definitions, datatypes and flowdata class for SIP service inspector.
 
 #include "protocols/packet.h"
-#include "stream/stream_api.h"
 #include "sip_config.h"
 #include "sip_dialog.h"
 #include "sip_parser.h"

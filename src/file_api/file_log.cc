@@ -121,12 +121,12 @@ void LogHandler::log_file_name(TextLog* log, FileContext* file)
 
     for (size_t i = start; i < name.length(); i++)
     {
-        if ( name[i] > 0x1F && name[i] < 0x7F)
-        {   /* printable */
+        if ( name[i] > 0x1F && name[i] < 0x7F) /* printable */
+        {
             TextLog_Putc(log, name[i]);
         }
-        else
-        {   /* not printable */
+        else /* not printable */
+        {
             TextLog_Putc(log, '.');
         }
     }
@@ -134,7 +134,7 @@ void LogHandler::log_file_name(TextLog* log, FileContext* file)
     TextLog_Puts(log, "\"] ");
 }
 
-void LogHandler::handle(DataEvent& , Flow* f)
+void LogHandler::handle(DataEvent&, Flow* f)
 {
     if (config.log_sys_time)
     {
@@ -216,8 +216,8 @@ private:
 void FileLog::show(SnortConfig*)
 {
     LogMessage("%s config:\n", s_name);
-    LogMessage("    Log system time: %s\n", config.log_sys_time? "true" : "false");
-    LogMessage("    Log packet time: %s\n", config.log_pkt_time? "true" : "false");
+    LogMessage("    Log system time: %s\n", config.log_sys_time ? "true" : "false");
+    LogMessage("    Log packet time: %s\n", config.log_pkt_time ? "true" : "false");
 }
 
 //-------------------------------------------------------------------------
@@ -279,7 +279,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* fl_ctor(Module* m)
 {
-    FileLogModule* fl_module = (FileLogModule *)m;
+    FileLogModule* fl_module = (FileLogModule*)m;
     return new FileLog(fl_module->config);
 }
 
@@ -303,7 +303,7 @@ static const InspectApi fl_api
         mod_dtor
     },
     IT_PASSIVE,
-    (uint16_t)PktType::NONE,
+    (uint16_t) PktType::NONE,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

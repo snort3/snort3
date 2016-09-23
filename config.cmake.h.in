@@ -100,6 +100,8 @@
 #cmakedefine _LARGEFILE_SOURCE 1
 #cmakedefine _FILE_OFFSET_BITS @_FILE_OFFSET_BITS@
 
+/* enable ha capable build */
+#cmakedefine USE_TSC_CLOCK 1
 
 
 /* platforms */

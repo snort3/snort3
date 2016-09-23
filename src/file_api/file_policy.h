@@ -20,8 +20,10 @@
 #ifndef FILE_POLICY_H
 #define FILE_POLICY_H
 
-#include "file_api.h"
 #include <map>
+#include <vector>
+
+#include "file_api.h"
 
 struct FileVerdictWhen
 {
@@ -44,7 +46,7 @@ public:
     FileVerdictUse use;
 
     FileRule();
-    ~FileRule() {}
+    ~FileRule() { }
     void clear();
 };
 
@@ -52,10 +54,9 @@ class FileInfo;
 
 class FilePolicy
 {
-
 public:
-    FilePolicy() {}
-    ~FilePolicy() {}
+    FilePolicy() { }
+    ~FilePolicy() { }
 
     // This is called when a new flow is queried for the first time
     // Check & update what file policy is enabled on this flow/file
@@ -73,13 +74,13 @@ public:
     // This is called after file signature is complete
     virtual FileVerdict signature_lookup(Flow* flow, FileInfo* file);
 
-    void insert_file_rule(FileRule &);
+    void insert_file_rule(FileRule&);
     void set_file_type(bool enabled);
     void set_file_signature(bool enabled);
     void set_file_capture(bool enabled);
-    bool is_type_id_enabled() {return type_enabled;}
-    bool is_signature_enabled() {return signature_enabled;}
-    bool is_capture_enabled() {return capture_enabled;}
+    bool is_type_id_enabled() { return type_enabled; }
+    bool is_signature_enabled() { return signature_enabled; }
+    bool is_capture_enabled() { return capture_enabled; }
     void load();
 
 private:
@@ -93,3 +94,4 @@ private:
 };
 
 #endif
+

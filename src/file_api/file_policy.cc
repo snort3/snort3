@@ -62,7 +62,7 @@ void FilePolicy::set_file_capture(bool enabled)
     capture_enabled = enabled;
 }
 
-void FilePolicy::insert_file_rule(FileRule &rule)
+void FilePolicy::insert_file_rule(FileRule& rule)
 {
     file_rules.push_back(rule);
 
@@ -75,7 +75,7 @@ void FilePolicy::insert_file_rule(FileRule &rule)
 
         while (offset < hex.size())
         {
-            int buffer = std::stoi( hex.substr(offset, 2), nullptr, 16);
+            int buffer = std::stoi(hex.substr(offset, 2), nullptr, 16);
             bytes.push_back(static_cast<unsigned char>(buffer));
             offset += 2;
         }
@@ -109,18 +109,17 @@ void FilePolicy::load()
     emptyRule.use.type_enabled = type_enabled;
     emptyRule.use.signature_enabled = signature_enabled;
     emptyRule.use.capture_enabled = capture_enabled;
-
 }
 
 FileRule& FilePolicy::match_file_rule(Flow*, FileInfo* file)
 {
-    for(unsigned i = 0; i < file_rules.size(); i++)
+    for (unsigned i = 0; i < file_rules.size(); i++)
     {
         if (file_rules[i].when.sha256.size())
             continue;
         // No file type specified in rule or file type is matched
-        if ((file_rules[i].when.type_id == 0) or
-            (file_rules[i].when.type_id == file->get_file_type()))
+        if ((file_rules[i].when.type_id == 0)or
+                (file_rules[i].when.type_id == file->get_file_type()))
             return file_rules[i];
     }
 
@@ -132,11 +131,11 @@ FileVerdict FilePolicy::match_file_signature(Flow*, FileInfo* file)
     // No file type specified in rule or file type is matched
     if (file->get_file_sig_sha256())
     {
-        std::string sha((const char *)file->get_file_sig_sha256(), SHA256_HASH_SIZE);
+        std::string sha((const char*)file->get_file_sig_sha256(), SHA256_HASH_SIZE);
 
-        std::map<std::string, FileVerdict>::iterator it;
-
-        return file_shas[sha];
+        auto search = file_shas.find(sha);
+        if (search != file_shas.end())
+            return search->second;
     }
 
     return FILE_VERDICT_UNKNOWN;
@@ -161,7 +160,7 @@ FileVerdict FilePolicy::type_lookup(Flow* flow, FileInfo* file)
 
 FileVerdict FilePolicy::type_lookup(Flow* flow, FileContext* file)
 {
-    type_lookup(flow, (FileInfo *)file);
+    type_lookup(flow, (FileInfo*)file);
     FileRule rule = match_file_rule(nullptr, file);
     file->config_file_signature(rule.use.signature_enabled);
     file->config_file_capture(rule.use.capture_enabled);
@@ -179,20 +178,18 @@ FileVerdict FilePolicy::signature_lookup(Flow* flow, FileInfo* file)
     return verdict;
 }
 
-FileVerdict FilePolicy::signature_lookup(Flow* flow, FileContext* file )
+FileVerdict FilePolicy::signature_lookup(Flow* flow, FileContext* file)
 {
     FileRule& rule = match_file_rule(nullptr, file);
 
     if (rule.use.capture_enabled)
     {
-        FileCapture *captured = nullptr;
+        FileCapture* captured = nullptr;
 
         if (file->reserve_file(captured) == FILE_CAPTURE_SUCCESS)
-        {
-           captured->store_file_async();
-        }
+            captured->store_file_async();
     }
 
-    return (signature_lookup(flow, (FileInfo *)file));
+    return (signature_lookup(flow, (FileInfo*)file));
 }
 

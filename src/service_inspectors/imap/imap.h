@@ -25,7 +25,7 @@
 // IMAP service inspector.
 
 #include "protocols/packet.h"
-#include "stream/stream_api.h"
+#include "stream/stream.h"
 #include "imap_config.h"
 
 // Direction packet is coming from, if we can figure it out

@@ -20,12 +20,13 @@
 
 #include <bitset>
 
-#include "profiler/profiler.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "file_api/file_identifier.h"
 #include "file_api/file_flows.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
 
 typedef std::bitset<FILE_ID_MAX> TypeBitSet;
 

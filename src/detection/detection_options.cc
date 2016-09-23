@@ -310,13 +310,14 @@ void print_option_tree(detection_option_tree_node_t* node, int level)
 
     DEBUG_WRAP(
         DebugFormat(DEBUG_DETECT, "%d%*s%*d 0x%x\n",
-            level, indent - offset, option_type_str[node->option_type],
-            54 - indent, node->num_children, node->option_data);
+        level, indent - offset, option_type_str[node->option_type],
+        54 - indent, node->num_children, node->option_data);
 
         for (i=0; i<node->num_children; i++)
             print_option_tree(node->children[i], level+1);
         );
 }
+
 #endif
 
 void* add_detection_option_tree(
@@ -370,13 +371,13 @@ int detection_option_node_evaluate(
         auto last_check = state.last_check;
 
         if ( last_check.ts == p->pkth->ts &&
-             last_check.packet_number == cur_eval_pkt_count &&
-             last_check.rebuild_flag == (p->packet_flags & PKT_REBUILT_STREAM) &&
-             !(p->packet_flags & PKT_ALLOW_MULTIPLE_DETECT) )
+            last_check.packet_number == cur_eval_pkt_count &&
+            last_check.rebuild_flag == (p->packet_flags & PKT_REBUILT_STREAM) &&
+            !(p->packet_flags & PKT_ALLOW_MULTIPLE_DETECT) )
         {
             if ( !last_check.flowbit_failed &&
-                 !(p->packet_flags & PKT_IP_RULE_2ND) &&
-                 !(p->proto_bits & (PROTO_BIT__TEREDO|PROTO_BIT__GTP)) )
+                !(p->packet_flags & PKT_IP_RULE_2ND) &&
+                !(p->proto_bits & (PROTO_BIT__TEREDO|PROTO_BIT__GTP)) )
             {
                 return last_check.result;
             }
@@ -397,7 +398,7 @@ int detection_option_node_evaluate(
         IpsOption* opt = (IpsOption*)node->option_data;
         try_again = opt->retry();
 
-        PatternMatchData* pmd = opt->get_pattern();
+        PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
 
         if ( pmd and pmd->last_check )
             content_last = pmd->last_check + get_instance_id();
@@ -409,7 +410,7 @@ int detection_option_node_evaluate(
         switch ( node->option_type )
         {
         case RULE_OPTION_TYPE_LEAF_NODE:
-        // Add the match for this otn to the queue.
+            // Add the match for this otn to the queue.
         {
             OptTreeNode* otn = (OptTreeNode*)node->option_data;
             int16_t app_proto = p->get_application_protocol();
@@ -453,7 +454,7 @@ int detection_option_node_evaluate(
                 bool f_result = true;
 
                 if ( otn->detection_filter )
-                    f_result = detection_filter_test(otn->detection_filter,
+                    f_result = !detection_filter_test(otn->detection_filter,
                         p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(),
                         p->pkth->ts.tv_sec);
 
@@ -486,8 +487,8 @@ int detection_option_node_evaluate(
                 if ( content_last )
                 {
                     if ( content_last->ts == p->pkth->ts &&
-                         content_last->packet_number == cur_eval_pkt_count &&
-                         content_last->rebuild_flag == (p->packet_flags & PKT_REBUILT_STREAM) )
+                        content_last->packet_number == cur_eval_pkt_count &&
+                        content_last->rebuild_flag == (p->packet_flags & PKT_REBUILT_STREAM) )
                     {
                         rval = DETECTION_OPTION_NO_MATCH;
                         break;
@@ -520,7 +521,6 @@ int detection_option_node_evaluate(
                 rval = node->evaluate(node->option_data, cursor, p);
 
             break;
-
         }
 
         if ( rval == DETECTION_OPTION_NO_MATCH )
@@ -528,7 +528,6 @@ int detection_option_node_evaluate(
             state.last_check.result = result;
             return result;
         }
-
         else if ( rval == DETECTION_OPTION_FAILED_BIT )
         {
             eval_data->flowbit_failed = 1;
@@ -537,7 +536,6 @@ int detection_option_node_evaluate(
             state.last_check.result = result;
             return 0;
         }
-
         else if ( rval == DETECTION_OPTION_NO_ALERT )
         {
             // Cache the current flowbit_noalert flag, and set it
@@ -590,14 +588,13 @@ int detection_option_node_evaluate(
                                     continue;
                                 }
                             }
-
                             else if ( child_node->option_type == RULE_OPTION_TYPE_CONTENT )
                             {
                                 // Check for an unbounded relative search.  If this
                                 // failed before, it's going to fail again so don't
                                 // go down this path again
                                 IpsOption* opt = (IpsOption*)node->option_data;
-                                PatternMatchData* pmd = opt->get_pattern();
+                                PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
 
                                 if ( pmd->unbounded() )
                                 {
@@ -610,7 +607,6 @@ int detection_option_node_evaluate(
                                 }
                             }
                         }
-
                         else if ( child_node->option_type == RULE_OPTION_TYPE_LEAF_NODE )
                             // Leaf node matched, don't eval again
                             continue;
@@ -665,12 +661,11 @@ int detection_option_node_evaluate(
         }
 
         if ( continue_loop &&
-             rval == DETECTION_OPTION_MATCH &&
-             node->relative_children )
+            rval == DETECTION_OPTION_MATCH &&
+            node->relative_children )
         {
             continue_loop = try_again;
         }
-
         else
             continue_loop = false;
 
@@ -747,7 +742,6 @@ static void detection_option_node_update_otn_stats(detection_option_tree_node_t*
         local_stats.latency_timeouts = timeouts;
         local_stats.latency_suspends = suspends;
     }
-
     else
     {
         local_stats.elapsed = node_stats.elapsed;
@@ -811,7 +805,6 @@ void detection_option_tree_update_otn_stats(SFXHASH* doth)
             detection_option_node_update_otn_stats(node, nullptr, checks, timeouts, suspends);
     }
 }
-
 
 detection_option_tree_root_t* new_root()
 {

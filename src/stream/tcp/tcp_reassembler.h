@@ -25,7 +25,6 @@
 #include "framework/counts.h"
 #include "detection/detect.h"
 #include "normalize/normalize.h"
-#include "stream/stream_api.h"
 
 #include "segment_overlap_editor.h"
 #include "tcp_defs.h"
@@ -146,9 +145,8 @@ protected:
     bool is_segment_fasttrack(TcpSegmentNode* tail, TcpSegmentDescriptor&);
     int purge_alerts(uint32_t /*flush_seq*/,  Flow* flow);
     void show_rebuilt_packet(Packet* pkt);
-    uint32_t get_flush_data_len(TcpSegmentNode* ss, uint32_t to_seq, uint32_t flushBufSize);
-    int flush_data_segments(Packet* p, uint32_t toSeq,  uint8_t* flushbuf,
-            const  uint8_t* flushbuf_end);
+    uint32_t get_flush_data_len(TcpSegmentNode* ss, uint32_t to_seq, unsigned max);
+    int flush_data_segments(Packet* p, uint32_t toSeq);
     void prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags);
     int _flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags);
     int flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags);

@@ -68,8 +68,7 @@ public:
         if ((lua_option != nullptr) && snort_option->compare(*lua_option))
         {
             retval = parse_int_option(*lua_option, stream, false);
-            table_api.add_diff_option_comment("config " + *snort_option +
-                ":", *lua_option);
+            table_api.add_diff_option_comment("config " + *snort_option + ":", *lua_option);
         }
         else
         {
@@ -92,10 +91,7 @@ const std::string* lua_table,
 const std::string* lua_option = nullptr>
 static ConversionState* config_int_ctor(Converter& c)
 {
-    return new ConfigIntOption(c,
-        snort_option,
-        lua_table,
-        lua_option);
+    return new ConfigIntOption(c, snort_option, lua_table, lua_option);
 }
 } // namespace
 

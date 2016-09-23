@@ -26,8 +26,8 @@
 
 #include "main/snort_types.h"
 #include "main/thread.h"
+#include "flow/session.h"
 #include "framework/module.h"
-#include "stream/stream.h"
 
 struct SnortConfig;
 
@@ -57,7 +57,7 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
-    ProfileStats* get_profile() const override;
+    ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     StreamUdpConfig* get_data();

@@ -19,26 +19,31 @@
 // tcp_stream_tracker.cpp author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jun 24, 2015
 
-#include "protocols/tcp_options.h"
-#include "protocols/tcp.h"
-#include "protocols/eth.h"
-#include "profiler/profiler.h"
-
-#include "stream/stream.h"
 #include "tcp_stream_tracker.h"
 
-const char* tcp_state_names[] =
-{ "TCP_LISTEN", "TCP_SYN_SENT", "TCP_SYN_RECV", "TCP_ESTABLISHED","TCP_FIN_WAIT1",
-  "TCP_FIN_WAIT2", "TCP_CLOSE_WAIT", "TCP_CLOSING", "TCP_LAST_ACK",
-  "TCP_TIME_WAIT", "TCP_CLOSED", "TCP_STATE_NONE",};
+#include "profiler/profiler.h"
+#include "protocols/eth.h"
+#include "protocols/tcp.h"
+#include "protocols/tcp_options.h"
+#include "stream/stream.h"
 
-const char* tcp_event_names[] = { "TCP_SYN_SENT_EVENT", "TCP_SYN_RECV_EVENT",
-                                  "TCP_SYN_ACK_SENT_EVENT", "TCP_SYN_ACK_RECV_EVENT",
-                                  "TCP_ACK_SENT_EVENT",
-                                  "TCP_ACK_RECV_EVENT", "TCP_DATA_SEG_SENT_EVENT",
-                                  "TCP_DATA_SEG_RECV_EVENT",
-                                  "TCP_FIN_SENT_EVENT", "TCP_FIN_RECV_EVENT", "TCP_RST_SENT_EVENT",
-                                  "TCP_RST_RECV_EVENT" };
+const char* tcp_state_names[] =
+{
+    "TCP_LISTEN", "TCP_SYN_SENT", "TCP_SYN_RECV",
+    "TCP_ESTABLISHED",
+    "TCP_FIN_WAIT1", "TCP_FIN_WAIT2", "TCP_CLOSE_WAIT", "TCP_CLOSING",
+    "TCP_LAST_ACK", "TCP_TIME_WAIT", "TCP_CLOSED",
+    "TCP_STATE_NONE"
+};
+
+const char* tcp_event_names[] = {
+    "TCP_SYN_SENT_EVENT", "TCP_SYN_RECV_EVENT",
+    "TCP_SYN_ACK_SENT_EVENT", "TCP_SYN_ACK_RECV_EVENT",
+    "TCP_ACK_SENT_EVENT", "TCP_ACK_RECV_EVENT",
+    "TCP_DATA_SEG_SENT_EVENT", "TCP_DATA_SEG_RECV_EVENT",
+    "TCP_FIN_SENT_EVENT", "TCP_FIN_RECV_EVENT",
+    "TCP_RST_SENT_EVENT", "TCP_RST_RECV_EVENT"
+};
 
 TcpStreamTracker::TcpStreamTracker(bool client) :
     client_tracker(client), tcp_state(client ? TCP_STATE_NONE : TCP_LISTEN)

@@ -84,7 +84,7 @@ int GtpVersionOption::eval(Cursor&, Packet* p)
     if ( !p or !p->flow )
         return DETECTION_OPTION_NO_MATCH;
 
-    GtpFlowData* gfd = (GtpFlowData*)p->flow->get_application_data(GtpFlowData::flow_id);
+    GtpFlowData* gfd = (GtpFlowData*)p->flow->get_flow_data(GtpFlowData::flow_id);
 
     if ( gfd and version == gfd->ropts.gtp_version )
         return DETECTION_OPTION_MATCH;

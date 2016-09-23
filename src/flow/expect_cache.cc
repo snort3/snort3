@@ -22,8 +22,9 @@
 #include <assert.h>
 
 #include "time/packet_time.h"
-#include "stream/stream_api.h"  // FIXIT-M bad dependency
 #include "hash/zhash.h"
+#include "protocols/packet.h"
+#include "stream/stream.h"
 #include "sfip/sf_ip.h"
 
 /* Reasonably small, and prime */
@@ -432,7 +433,7 @@ char ExpectCache::process_expected(Packet* p, Flow* lws)
     while ((fd = head->data))
     {
         head->data = fd->next;
-        lws->set_application_data(fd);
+        lws->set_flow_data(fd);
         ++realized;
         fd->handle_expected(p);
     }

@@ -62,6 +62,7 @@ static void IcmpSessionCleanup(Flow* ssn)
 {
     if (ssn->ssn_state.session_flags & SSNFLAG_PRUNED)
         icmpStats.prunes++;
+
     else if (ssn->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
         icmpStats.timeouts++;
 
@@ -157,15 +158,15 @@ static int ProcessIcmpUnreach(Packet* p)
     {
     case PktType::TCP:
         /* Lookup a TCP session */
-        ssn = Stream::get_session(&skey);
+        ssn = Stream::get_flow(&skey);
         break;
     case PktType::UDP:
         /* Lookup a UDP session */
-        ssn = Stream::get_session(&skey);
+        ssn = Stream::get_flow(&skey);
         break;
     case PktType::ICMP:
         /* Lookup a ICMP session */
-        ssn = Stream::get_session(&skey);
+        ssn = Stream::get_flow(&skey);
         break;
     default:
         break;

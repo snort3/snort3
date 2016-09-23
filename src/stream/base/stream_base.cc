@@ -16,23 +16,21 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "stream/stream.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <assert.h>
 
-#include "stream_module.h"
-#include "stream_ha.h"
-#include "main/snort_debug.h"
-#include "managers/inspector_manager.h"
 #include "flow/flow_control.h"
 #include "flow/prune_stats.h"
-#include "stream/stream_api.h"
+#include "main/snort_debug.h"
+#include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
+
 #include "stream/tcp/tcp_session.h"
+#include "stream_module.h"
+#include "stream_ha.h"
 
 //-------------------------------------------------------------------------
 // stats
@@ -203,13 +201,6 @@ void StreamBase::tinit()
 
 void StreamBase::tterm()
 {
-    flow_con->purge_flows(PktType::IP);
-    flow_con->purge_flows(PktType::ICMP);
-    flow_con->purge_flows(PktType::TCP);
-    flow_con->purge_flows(PktType::UDP);
-    flow_con->purge_flows(PktType::PDU);
-    flow_con->purge_flows(PktType::FILE);
-
     StreamHAManager::tterm();
 }
 
@@ -229,7 +220,8 @@ void StreamBase::eval(Packet* p)
     switch ( p->type() )
     {
     case PktType::IP:
-        if ( p->has_ip() )
+        if ( p->has_ip() and
+            ((p->ptrs.decode_flags & DECODE_FRAG) or !config->ip_frags_only) )
             flow_con->process_ip(p);
         break;
 

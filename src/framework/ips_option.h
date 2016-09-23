@@ -51,6 +51,13 @@ enum CursorActionType
     CAT_SET_KEY,
 };
 
+enum RuleDirection
+{
+    RULE_FROM_CLIENT,
+    RULE_FROM_SERVER,
+    RULE_WO_DIR
+};
+
 class SO_PUBLIC IpsOption
 {
 public:
@@ -78,7 +85,7 @@ public:
     { return CAT_NONE; }
 
     // for fast-pattern options like content
-    virtual struct PatternMatchData* get_pattern()
+    virtual struct PatternMatchData* get_pattern(int /*proto*/, RuleDirection)
     { return nullptr; }
 
     static int eval(void* v, Cursor& c, Packet* p)

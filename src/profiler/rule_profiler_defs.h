@@ -67,7 +67,7 @@ public:
 
 private:
     dot_node_state_t& stats;
-    Stopwatch<hr_clock> sw;
+    Stopwatch<SnortClock> sw;
     bool finished = false;
 };
 

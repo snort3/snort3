@@ -31,6 +31,7 @@
 
 extern const InspectApi dce2_smb_api;
 extern const InspectApi dce2_tcp_api;
+extern const InspectApi dce2_udp_api;
 extern THREAD_LOCAL int dce2_detected;
 extern THREAD_LOCAL int dce2_inspector_instances;
 extern THREAD_LOCAL DCE2_CStack* dce2_pkt_stack;
@@ -103,7 +104,13 @@ struct dce2CommonProtoConf
 {
     bool disable_defrag;
     int max_frag_len;
+};
+
+struct dce2CoProtoConf
+{
+    dce2CommonProtoConf common;
     DCE2_Policy policy;
+    uint16_t co_reassemble_threshold;
 };
 
 #define DCE2_DEBUG__PAF_END_MSG    "=========================================================="
@@ -415,6 +422,8 @@ inline void dce_alert(uint32_t gid, uint32_t sid, dce2CommonStats* stats)
 
 bool dce2_set_common_config(Value&, dce2CommonProtoConf&);
 void print_dce2_common_config(dce2CommonProtoConf&);
+bool dce2_set_co_config(Value&, dce2CoProtoConf&);
+void print_dce2_co_config(dce2CoProtoConf&);
 bool dce2_paf_abort(Flow*, DCE2_SsnData*);
 void DCE2_Detect(DCE2_SsnData*);
 Packet* DCE2_GetRpkt(Packet*, DCE2_RpktType,

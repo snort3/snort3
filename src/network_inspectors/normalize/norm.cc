@@ -33,7 +33,6 @@
 #include "protocols/tcp_options.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
-#include "stream/stream.h"
 #include "stream/tcp/tcp_normalizer.h"
 #include "utils/stats.h"
 

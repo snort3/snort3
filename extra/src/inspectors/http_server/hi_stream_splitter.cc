@@ -60,7 +60,7 @@
 #include "main/snort_debug.h"
 #include "events/event_queue.h"
 #include "protocols/packet.h"
-#include "stream/stream_api.h"
+#include "stream/stream.h"
 #include "utils/util.h"
 
 #ifdef DEBUG_MSGS
@@ -780,7 +780,7 @@ static inline Hi5State* get_state(Flow* flow, bool c2s)
     if ( !flow )
         return nullptr;
 
-    HttpSplitter* s = (HttpSplitter*)stream.get_splitter(flow, c2s);
+    HttpSplitter* s = (HttpSplitter*)Stream::get_splitter(flow, c2s);
     return s ? &s->state : nullptr;
 }
 
@@ -806,7 +806,7 @@ static void hi_pipe_push(Hi5State* s_req, Flow* ssn)
 
     if ( nreq == MAX_PIPELINE )
     {
-        if ( stream.is_paf_active(ssn, 0) )
+        if ( Stream::is_paf_active(ssn, 0) )
             hi_paf_event_pipe();
     }
     else if ( nreq < MAX_PIPELINE )

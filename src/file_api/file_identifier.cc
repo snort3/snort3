@@ -42,11 +42,11 @@
 #include "catch/catch.hpp"
 #endif
 
-typedef struct _IdentifierSharedNode
+struct MergeNode
 {
     IdentifierNode* shared_node;  /*the node that is shared*/
     IdentifierNode* append_node;  /*the node that is added*/
-} IdentifierSharedNode;
+} ;
 
 void FileMagicData::clear()
 {
@@ -68,8 +68,8 @@ void FileMagicRule::clear()
 
 void FileIdentifier::init_merge_hash()
 {
-    identifier_merge_hash = sfghash_new(1000, sizeof(IdentifierSharedNode), 0, NULL);
-    if (identifier_merge_hash == NULL)
+    identifier_merge_hash = sfghash_new(1000, sizeof(MergeNode), 0, nullptr);
+    if (identifier_merge_hash == nullptr)
     {
         FatalError("%s(%d) Could not create identifier merge hash.\n",
             __FILE__, __LINE__);
@@ -79,13 +79,12 @@ void FileIdentifier::init_merge_hash()
 FileIdentifier::~FileIdentifier()
 {
     /*Release memory used for identifiers*/
-    for (IDMemoryBlocks::iterator idMem = idMemoryBlocks.begin();
-            idMem != idMemoryBlocks.end(); idMem++)
+    for (auto mem_block:id_memory_blocks)
     {
-        snort_free(idMem->mem);
+        snort_free(mem_block);
     }
 
-    if (identifier_merge_hash != NULL)
+    if (identifier_merge_hash != nullptr)
     {
         sfghash_delete(identifier_merge_hash);
     }
@@ -93,13 +92,10 @@ FileIdentifier::~FileIdentifier()
 
 void* FileIdentifier::calloc_mem(size_t size)
 {
-    void* ret;
-    IDMemoryBlock memblock;
-    ret = snort_calloc(size);
+    void* ret = snort_calloc(size);
     memory_used += size;
     /*For memory management*/
-    memblock.mem = ret;
-    idMemoryBlocks.push_back(memblock);
+    id_memory_blocks.push_back(ret);
     return ret;
 }
 
@@ -116,10 +112,10 @@ void FileIdentifier::set_node_state_shared(IdentifierNode* start)
     if (start->state == ID_NODE_USED)
         start->state = ID_NODE_SHARED;
     else
-       start->state = ID_NODE_USED;
+        start->state = ID_NODE_USED;
 
     for (i = 0; i < MAX_BRANCH; i++)
-       set_node_state_shared(start->next[i]);
+        set_node_state_shared(start->next[i]);
 }
 
 /*Clone a trie*/
@@ -128,7 +124,7 @@ IdentifierNode* FileIdentifier::clone_node(IdentifierNode* start)
     int index;
     IdentifierNode* node;
     if (!start)
-        return NULL;
+        return nullptr;
 
     node = (IdentifierNode*)calloc_mem(sizeof(*node));
 
@@ -158,10 +154,10 @@ void FileIdentifier::verify_magic_offset(FileMagicData* parent, FileMagicData* c
 IdentifierNode* FileIdentifier::create_trie_from_magic(FileMagicRule& rule, uint32_t type_id)
 {
     IdentifierNode* current;
-    IdentifierNode* root = NULL;
+    IdentifierNode* root = nullptr;
 
     if (!rule.file_magics.size() || !type_id)
-        return NULL;
+        return nullptr;
 
     /* Content magics are sorted based on offset, this
      * will help compile the file magic trio
@@ -172,16 +168,15 @@ IdentifierNode* FileIdentifier::create_trie_from_magic(FileMagicRule& rule, uint
     current->state = ID_NODE_NEW;
     root = current;
 
-    for(FileMagics::iterator magic = rule.file_magics.begin();
-            magic !=rule.file_magics.end(); magic++)
+    for (auto magic:rule.file_magics)
     {
         unsigned int i;
-        current->offset = magic->offset;
-        for (i = 0; i < magic->content.size(); i++)
+        current->offset = magic.offset;
+        for (i = 0; i < magic.content.size(); i++)
         {
             IdentifierNode* node = (IdentifierNode*)calloc_mem(sizeof(*node));
-            uint8_t index = magic->content[i];
-            node->offset = magic->offset + i + 1;
+            uint8_t index = magic.content[i];
+            node->offset = magic.offset + i + 1;
             node->state = ID_NODE_NEW;
             current->next[index] = node;
             current = node;
@@ -199,14 +194,14 @@ bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr
     IdentifierNode* append)
 {
     IdentifierNode* next = (*next_ptr);
-    IdentifierSharedNode sharedIdentifier;
+    MergeNode merge_node;
     IdentifierNode* result;
 
     if (!append || (next == append))
         return false;
 
-    sharedIdentifier.append_node = append;
-    sharedIdentifier.shared_node = next;
+    merge_node.append_node = append;
+    merge_node.shared_node = next;
     if (!next)
     {
         /*reuse the append*/
@@ -214,7 +209,7 @@ bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr
         set_node_state_shared(append);
         return false;
     }
-    else if ((result = (IdentifierNode*)sfghash_find(identifier_merge_hash, &sharedIdentifier)))
+    else if ((result = (IdentifierNode*)sfghash_find(identifier_merge_hash, &merge_node)))
     {
         /*the same pointer has been processed, reuse it*/
         *next_ptr = result;
@@ -228,8 +223,8 @@ bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr
             /*offset could have gap when non 0 offset is allowed */
             int index;
             IdentifierNode* node = (IdentifierNode*)calloc_mem(sizeof(*node));
-            sharedIdentifier.shared_node = next;
-            sharedIdentifier.append_node = append;
+            merge_node.shared_node = next;
+            merge_node.append_node = append;
             node->offset = append->offset;
 
             for (index = 0; index < MAX_BRANCH; index++)
@@ -239,17 +234,17 @@ bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr
 
             set_node_state_shared(next);
             next = node;
-            sfghash_add(identifier_merge_hash, &sharedIdentifier, next);
+            sfghash_add(identifier_merge_hash, &merge_node, next);
         }
         else if (next->state == ID_NODE_SHARED)
         {
             /*shared, need to clone one*/
             IdentifierNode* current_next = next;
-            sharedIdentifier.shared_node = current_next;
-            sharedIdentifier.append_node = append;
+            merge_node.shared_node = current_next;
+            merge_node.append_node = append;
             next = clone_node(current_next);
             set_node_state_shared(next);
-            sfghash_add(identifier_merge_hash, &sharedIdentifier, next);
+            sfghash_add(identifier_merge_hash, &merge_node, next);
         }
 
         *next_ptr = next;
@@ -307,7 +302,7 @@ void FileIdentifier::insert_file_rule(FileMagicRule& rule)
 
     if (!identifier_root)
     {
-        identifier_root = (IdentifierNode *)calloc_mem(sizeof(*identifier_root));
+        identifier_root = (IdentifierNode*)calloc_mem(sizeof(*identifier_root));
         init_merge_hash();
     }
 
@@ -322,7 +317,6 @@ void FileIdentifier::insert_file_rule(FileMagicRule& rule)
         ParseError("file type: duplicated rule id %u defined", rule.id);
         return;
     }
-
 
     file_magic_rules[rule.id] = rule;
 
@@ -375,7 +369,7 @@ uint32_t FileIdentifier::find_file_type_id(const uint8_t* buf, int len, uint64_t
     }
 
     /*Either end of magics or passed the current offset*/
-    *context = NULL;
+    *context = nullptr;
 
     if ( file_type_id == SNORT_FILE_TYPE_CONTINUE )
         file_type_id = SNORT_FILE_TYPE_UNKNOWN;
@@ -383,14 +377,14 @@ uint32_t FileIdentifier::find_file_type_id(const uint8_t* buf, int len, uint64_t
     return file_type_id;
 }
 
-FileMagicRule*  FileIdentifier::get_rule_from_id(uint32_t id)
+FileMagicRule* FileIdentifier::get_rule_from_id(uint32_t id)
 {
     if ((id < FILE_ID_MAX) && (file_magic_rules[id].id > 0))
     {
         return (&(file_magic_rules[id]));
     }
     else
-        return NULL;
+        return nullptr;
 }
 
 //--------------------------------------------------------------------------
@@ -424,10 +418,9 @@ TEST_CASE ("FileIdRulePDF", "[FileMagic]")
 
     const char* data = "PDF";
 
-    void *context = NULL;
+    void* context = nullptr;
 
-    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) == 1);
-
+    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) == 1);
 }
 
 TEST_CASE ("FileIdRuleUnknow", "[FileMagic]")
@@ -449,11 +442,10 @@ TEST_CASE ("FileIdRuleUnknow", "[FileMagic]")
 
     const char* data = "DDF";
 
-    void *context = NULL;
+    void* context = nullptr;
 
-    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) ==
+    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) ==
         SNORT_FILE_TYPE_UNKNOWN);
-
 }
 
 TEST_CASE ("FileIdRuleEXE", "[FileMagic]")
@@ -484,9 +476,9 @@ TEST_CASE ("FileIdRuleEXE", "[FileMagic]")
     rc.insert_file_rule(rule);
 
     const char* data = "PDFooo";
-    void *context = NULL;
+    void* context = nullptr;
 
-    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) == 1);
+    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) == 1);
 }
 
 TEST_CASE ("FileIdRulePDFEXE", "[FileMagic]")
@@ -517,10 +509,10 @@ TEST_CASE ("FileIdRulePDFEXE", "[FileMagic]")
     rc.insert_file_rule(rule);
 
     const char* data = "PDFEXE";
-    void *context = NULL;
+    void* context = nullptr;
 
     // Match the last one
-    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) == 3);
+    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) == 3);
 }
 
 TEST_CASE ("FileIdRuleFirst", "[FileMagic]")
@@ -551,8 +543,9 @@ TEST_CASE ("FileIdRuleFirst", "[FileMagic]")
     rc.insert_file_rule(rule);
 
     const char* data = "PDF";
-    void *context = NULL;
+    void* context = nullptr;
 
-    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) == 1);
+    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) == 1);
 }
 #endif
+

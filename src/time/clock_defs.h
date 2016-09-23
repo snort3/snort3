@@ -20,11 +20,23 @@
 #ifndef CLOCK_DEFS_H
 #define CLOCK_DEFS_H
 
-#include <chrono>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
+#ifdef USE_TSC_CLOCK
+#include "time/tsc_clock.h"
+using SnortClock = TscClock;
+
+#else
+#include <chrono>
 using hr_clock = std::chrono::high_resolution_clock;
-using hr_duration = hr_clock::duration;
-using hr_time = hr_clock::time_point;
+using SnortClock = hr_clock;
+inline long clock_scale() { return 1.0; }
+#endif
+
+using hr_duration = SnortClock::duration;
+using hr_time = SnortClock::time_point;
 
 inline constexpr hr_duration operator "" _ticks (unsigned long long int v)
 { return hr_duration(v); }
@@ -39,4 +51,11 @@ struct ClockTraits
     using time_point = TimePoint;
     using rep = Rep;
 };
+
+inline long clock_usecs(long ticks)
+{ return ticks / clock_scale(); }
+
+inline long clock_ticks(long usecs)
+{ return usecs * clock_scale(); }
+
 #endif

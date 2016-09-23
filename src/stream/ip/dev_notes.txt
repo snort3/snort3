@@ -8,3 +8,17 @@ functions for loading stream IP configuration and packet evaluation.  The
 packet eval method is not used as the base Stream Inspector delegates
 packets directly to the IP session packet processing method.
 
+The module ip_ha.cc (and ip_ha.h) implements the per-protocol hooks into
+the stream logic for HA.  IpHAManager is a static class that interfaces
+to a per-packet thread instance of the class IpHA.  IpHA is sub-class
+of ProtocolHA, declared in the stream/base area.  Thus each protocol
+within 'stream' can have specific HA logic and interfaces.
+
+IpHAManager::process_deletion() is called when an IP stream is being 
+destroyed and indicates to the stream & flow HA logic that a flow
+deletion HA message needs to be emitted for the flow in question.
+Ip streams are closed due to timeout or puning actions which lead
+to the invocation of process_deletion().
+
+IpHA::create_session() is called from the stream & flow HA logic and
+handles the creation of new flow upon receiving an HA update message.

@@ -25,7 +25,7 @@
 // POP service inspector.
 
 #include "protocols/packet.h"
-#include "stream/stream_api.h"
+#include "stream/stream.h"
 #include "pop_config.h"
 
 // Direction packet is coming from, if we can figure it out

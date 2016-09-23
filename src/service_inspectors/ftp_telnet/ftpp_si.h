@@ -43,8 +43,8 @@
 #include "ftp_server.h"
 #include "protocols/packet.h"
 #include "file_api/file_api.h"
-#include "stream/stream_api.h"
 #include "flow/flow.h"
+#include "stream/stream.h"
 
 /*
  * These are the defines for the different types of

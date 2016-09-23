@@ -27,6 +27,8 @@
 struct LatencyStats
 {
     PegCount total_packets;
+    PegCount total_usecs;
+    PegCount max_usecs;
     PegCount packet_timeouts;
     PegCount total_rule_evals;
     PegCount rule_eval_timeouts;

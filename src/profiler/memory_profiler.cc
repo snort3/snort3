@@ -40,7 +40,7 @@
 // show statistics
 // -----------------------------------------------------------------------------
 
-#define s_memory_table_title "Memory Profile Statistics"
+#define s_memory_table_title "memory profile"
 
 namespace memory_stats
 {

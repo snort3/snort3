@@ -27,8 +27,8 @@
 // and configurations.
 
 #include <sys/types.h>
+#include <string>
 
-#include "stream/stream_api.h"
 #include "main/snort_types.h"
 
 #define     ENABLE_FILE_TYPE_IDENTIFICATION      0x1
@@ -90,7 +90,6 @@ enum FileProcessType
 
 enum FileDirection
 {
-   DIRECTION_UNKNOWN,
    FILE_DOWNLOAD,
    FILE_UPLOAD
 };
@@ -139,8 +138,8 @@ inline bool isFileEnd(FilePosition position)
     return ((position == SNORT_FILE_END) || (position == SNORT_FILE_FULL));
 }
 
-SO_PUBLIC uint64_t get_file_processed_size(Flow* flow);
-FilePosition get_file_position(Packet* pkt);
+SO_PUBLIC uint64_t get_file_processed_size(class Flow* flow);
+FilePosition get_file_position(struct Packet* pkt);
 
 #endif
 

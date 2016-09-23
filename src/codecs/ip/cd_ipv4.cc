@@ -36,7 +36,6 @@
 #include "packet_io/active.h"
 #include "codecs/ip/checksum.h"
 #include "main/thread.h"
-#include "stream/stream_api.h"
 #include "codecs/codec_module.h"
 #include "protocols/ip.h"
 #include "protocols/ipv4_options.h"

@@ -31,7 +31,6 @@
 
 #include "smtp.h"
 #include "smtp_config.h"
-#include "stream/stream_api.h"
 #include "detection/detection_util.h"
 #include "utils/safec.h"
 
@@ -129,22 +128,22 @@ void SMTP_LogFuncs(SMTP_PROTO_CONF* config, Packet* p, MimeSession* mime_ssn)
 
     if (log->is_file_name_present())
     {
-        stream.set_extra_data(p->flow, p, config->xtra_filename_id);
+        Stream::set_extra_data(p->flow, p, config->xtra_filename_id);
     }
 
     if (log->is_email_from_present())
     {
-        stream.set_extra_data(p->flow, p, config->xtra_mfrom_id);
+        Stream::set_extra_data(p->flow, p, config->xtra_mfrom_id);
     }
 
     if (log->is_email_to_present())
     {
-        stream.set_extra_data(p->flow, p, config->xtra_rcptto_id);
+        Stream::set_extra_data(p->flow, p, config->xtra_rcptto_id);
     }
 
     if (log->is_email_hdrs_present())
     {
-        stream.set_extra_data(p->flow, p, config->xtra_ehdrs_id);
+        Stream::set_extra_data(p->flow, p, config->xtra_ehdrs_id);
     }
 }
 

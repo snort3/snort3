@@ -23,9 +23,21 @@
 #define TCP_STREAM_CONFIG_H
 
 #include "time/packet_time.h"
-#include "stream/stream.h"
-
 #include "tcp_defs.h"
+
+#define STREAM_CONFIG_STATEFUL_INSPECTION      0x00000001
+#define STREAM_CONFIG_LOG_STREAMS              0x00000004
+#define STREAM_CONFIG_REASS_CLIENT             0x00000008
+#define STREAM_CONFIG_REASS_SERVER             0x00000010
+#define STREAM_CONFIG_ASYNC                    0x00000020
+#define STREAM_CONFIG_SHOW_PACKETS             0x00000040
+#define STREAM_CONFIG_MIDSTREAM_DROP_NOALERT   0x00000080
+#define STREAM_CONFIG_IGNORE_ANY               0x00000100
+#define STREAM_CONFIG_STATIC_FLUSHPOINTS       0x00000200
+#define STREAM_CONFIG_IPS                      0x00000400
+#define STREAM_CONFIG_NO_ASYNC_REASSEMBLY      0x00000800
+
+#define STREAM_DEFAULT_SSN_TIMEOUT  30
 
 class TcpStreamConfig
 {

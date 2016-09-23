@@ -62,6 +62,11 @@ Pattern::Pattern(
     flags = d.flags;
     user = u;
     user_tree = user_list = nullptr;
+
+    if ( no_case )
+        flags |= HS_FLAG_CASELESS;
+
+    flags |= HS_FLAG_SINGLEMATCH;
 }
 
 void Pattern::escape(const uint8_t* s, unsigned n, bool literal)

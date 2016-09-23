@@ -38,13 +38,12 @@ class FileInfo;
 
 class FileEnforcer
 {
-
     struct FileHashKey
     {
         sfip_t sip;
         sfip_t dip;
         size_t file_sig;
-    } ;
+    };
 
     struct FileNode
     {

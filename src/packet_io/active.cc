@@ -28,6 +28,7 @@
 #include "managers/action_manager.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/tcp.h"
+#include "stream/stream.h"
 #include "utils/dnet_header.h"
 
 #define MAX_ATTEMPTS 20
@@ -40,7 +41,7 @@ THREAD_LOCAL Active::ActiveAction Active::active_action = Active::ACT_PASS;
 THREAD_LOCAL Active::ActiveAction Active::delayed_active_action = Active::ACT_PASS;
 
 THREAD_LOCAL int Active::active_tunnel_bypass = 0;
-THREAD_LOCAL bool Active::active_suspend = 0;
+THREAD_LOCAL bool Active::active_suspend = false;
 
 THREAD_LOCAL uint8_t Active::s_attempts = 0;
 THREAD_LOCAL uint64_t Active::s_injects = 0;
@@ -415,7 +416,7 @@ void Active::block_session(const Packet* p, bool force)
     active_action = ACT_BLOCK;
 
     if ( force or SnortConfig::inline_mode() or SnortConfig::treat_drop_as_ignore() )
-        stream.drop_session(p);
+        Stream::drop_flow(p);
 }
 
 void Active::reset_session(const Packet* p, bool force)
@@ -424,7 +425,7 @@ void Active::reset_session(const Packet* p, bool force)
     active_action = ACT_RESET;
 
     if ( force or SnortConfig::inline_mode() or SnortConfig::treat_drop_as_ignore() )
-        stream.drop_session(p);
+        Stream::drop_flow(p);
 
     if ( s_enabled and snort_conf->max_responses )
     {
@@ -432,7 +433,7 @@ void Active::reset_session(const Packet* p, bool force)
 
         if ( p->flow )
         {
-            stream.init_active_response(p, p->flow);
+            Stream::init_active_response(p, p->flow);
             p->flow->set_state(Flow::FlowState::RESET);
         }
     }

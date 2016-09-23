@@ -75,7 +75,7 @@ void Modbus::eval(Packet* p)
     assert(p->has_tcp_data());
 
     ModbusFlowData* mfd =
-        (ModbusFlowData*)p->flow->get_application_data(ModbusFlowData::flow_id);
+        (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::flow_id);
 
     if ( !p->is_full_pdu() )
     {
@@ -93,7 +93,7 @@ void Modbus::eval(Packet* p)
     if ( !mfd )
     {
         mfd = new ModbusFlowData;
-        p->flow->set_application_data(mfd);
+        p->flow->set_flow_data(mfd);
         modbus_stats.sessions++;
     }
 

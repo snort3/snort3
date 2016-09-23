@@ -44,7 +44,6 @@
 #include "appid_utils/network_set.h"
 #include "time/packet_time.h"
 #include "sfip/sf_ip.h"
-#include "stream/stream_api.h"
 
 #define HTTP_PATTERN_MAX_LEN    1024
 #define PORT_MAX 65535

@@ -26,6 +26,7 @@
 // processed.  flows are pruned as needed to process new flows.
 
 #include <cstdint>
+#include <vector>
 
 #include "flow/flow_config.h"
 #include "framework/counts.h"
@@ -69,9 +70,9 @@ public:
     void delete_flow(const FlowKey*);
     void delete_flow(Flow*, PruneReason);
     void purge_flows(PktType);
-    void prune_flows(PktType, const Packet*);
     bool prune_one(PruneReason, bool do_cleanup);
-    void timeout_flows(uint32_t flowCount, time_t cur_time);
+
+    void timeout_flows(time_t cur_time);
 
     char expected_flow(Flow*, Packet*);
     bool is_expected(Packet*);
@@ -85,8 +86,6 @@ public:
         const sfip_t *srcIP, uint16_t srcPort,
         const sfip_t *dstIP, uint16_t dstPort,
         PktType, int16_t appId, FlowData*);
-
-    uint32_t max_flows(PktType);
 
     PegCount get_flows(PktType);
     PegCount get_total_prunes(PktType) const;
@@ -104,30 +103,33 @@ private:
     void preemptive_cleanup();
 
 private:
-    FlowCache* ip_cache;
-    FlowCache* icmp_cache;
-    FlowCache* tcp_cache;
-    FlowCache* udp_cache;
-    FlowCache* user_cache;
-    FlowCache* file_cache;
+    FlowCache* ip_cache = nullptr;
+    FlowCache* icmp_cache = nullptr;
+    FlowCache* tcp_cache = nullptr;
+    FlowCache* udp_cache = nullptr;
+    FlowCache* user_cache = nullptr;
+    FlowCache* file_cache = nullptr;
 
     // preallocated arrays
-    Flow* ip_mem;
-    Flow* icmp_mem;
-    Flow* tcp_mem;
-    Flow* udp_mem;
-    Flow* user_mem;
-    Flow* file_mem;
+    Flow* ip_mem = nullptr;
+    Flow* icmp_mem = nullptr;
+    Flow* tcp_mem = nullptr;
+    Flow* udp_mem = nullptr;
+    Flow* user_mem = nullptr;
+    Flow* file_mem = nullptr;
 
-    InspectSsnFunc get_ip;
-    InspectSsnFunc get_icmp;
-    InspectSsnFunc get_tcp;
-    InspectSsnFunc get_udp;
-    InspectSsnFunc get_user;
-    InspectSsnFunc get_file;
+    InspectSsnFunc get_ip = nullptr;
+    InspectSsnFunc get_icmp = nullptr;
+    InspectSsnFunc get_tcp = nullptr;
+    InspectSsnFunc get_udp = nullptr;
+    InspectSsnFunc get_user = nullptr;
+    InspectSsnFunc get_file = nullptr;
 
-    class ExpectCache* exp_cache;
-    PktType last_pkt_type;
+    class ExpectCache* exp_cache = nullptr;
+    PktType last_pkt_type = PktType::NONE;
+
+    std::vector<PktType> types;
+    unsigned next = 0;
 };
 
 #endif

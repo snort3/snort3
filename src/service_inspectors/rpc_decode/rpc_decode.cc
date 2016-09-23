@@ -50,13 +50,13 @@
 #include "profiler/profiler.h"
 #include "utils/util.h"
 #include "detection/detection_util.h"
-#include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 #include "target_based/snort_protocols.h"
 #include "protocols/tcp.h"
 #include "protocols/packet.h"
 #include "framework/data_bus.h"
 #include "framework/inspector.h"
+#include "stream/stream.h"
 #include "utils/safec.h"
 
 #include "rpc_module.h"
@@ -656,7 +656,7 @@ static RpcSsnData* RpcSsnDataNew(Packet* p)
     RpcSsnData* rsdata = &fd->session;
     rsdata->active = 1;
 
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
 
     DebugFormat(DEBUG_RPC, "STATEFUL: Created new session: " "%p\n", (void*) rsdata);
     return rsdata;
@@ -985,8 +985,7 @@ void RpcDecode::eval(Packet* p)
 
     if ( p->flow )
     {
-        RpcFlowData* fd = (RpcFlowData*)p->flow->get_application_data(
-            RpcFlowData::flow_id);
+        RpcFlowData* fd = (RpcFlowData*)p->flow->get_flow_data(RpcFlowData::flow_id);
 
         if ( fd )
             rsdata = &fd->session;
@@ -994,7 +993,7 @@ void RpcDecode::eval(Packet* p)
 
     ++rdstats.total_packets;
 
-    if ( !rsdata && p->flow && !stream.is_midstream(p->flow) )
+    if ( !rsdata && p->flow && !Stream::is_midstream(p->flow) )
         rsdata = RpcSsnDataNew(p);
 
     if ( RpcSsnIsActive(rsdata) and (p->packet_flags & PKT_REBUILT_STREAM) )

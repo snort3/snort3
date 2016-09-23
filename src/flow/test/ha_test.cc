@@ -23,7 +23,7 @@
 
 #include "flow/flow.h"
 #include "main/snort_debug.h"
-#include "stream/stream_api.h"
+#include "stream/stream.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -132,14 +132,14 @@ public:
 private:
 };
 
-Flow*  Stream::get_session(const FlowKey* flowkey)
+Flow*  Stream::get_flow(const FlowKey* flowkey)
 {
     s_flowkey = *flowkey;
     s_get_session_called = true;
     return &s_flow;
 }
 
-void Stream::delete_session(const FlowKey* flowkey)
+void Stream::delete_flow(const FlowKey* flowkey)
 {
     s_flowkey = *flowkey;
     s_delete_session_called = true;

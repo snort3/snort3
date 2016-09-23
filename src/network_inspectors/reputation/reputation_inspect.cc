@@ -39,7 +39,6 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
-#include "stream/stream_api.h"
 #include "file_api/file_api.h"
 #include "parser/parser.h"
 #include "framework/inspector.h"
@@ -87,13 +86,13 @@ unsigned ReputationFlowData::flow_id = 0;
 static ReputationData* SetNewReputationData(Flow* flow)
 {
     ReputationFlowData* fd = new ReputationFlowData;
-    flow->set_application_data(fd);
+    flow->set_flow_data(fd);
     return &fd->session;
 }
 
 static ReputationData* get_session_data(Flow* flow)
 {
-    ReputationFlowData* fd = (ReputationFlowData*)flow->get_application_data(
+    ReputationFlowData* fd = (ReputationFlowData*)flow->get_flow_data(
         ReputationFlowData::flow_id);
 
     return fd ? &fd->session : nullptr;

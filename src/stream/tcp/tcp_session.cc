@@ -68,11 +68,9 @@
 #include "log/log_text.h"
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
-#include "flow/flow_control.h"
 #include "flow/session.h"
 #include "profiler/profiler.h"
 #include "file_api/file_api.h"
-#include "normalize/normalize.h"
 #include "perf_monitor/flow_tracker.h"
 #include "filters/sfrf.h"
 
@@ -160,14 +158,14 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
 {
     if ( client->reassembler )
     {
-        if( flush_segments )
+        if ( flush_segments )
             client->reassembler->flush_queued_segments(flow, true, p);
         client->reassembler->purge_segment_list();
     }
 
     if ( server->reassembler )
     {
-        if( flush_segments )
+        if ( flush_segments )
             server->reassembler->flush_queued_segments(flow, true, p);
         server->reassembler->purge_segment_list();
     }
@@ -179,14 +177,15 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     else
         return;
 
-    if (flow->get_session_flags() & SSNFLAG_PRUNED)
+    if ( flow->get_session_flags() & SSNFLAG_PRUNED )
         tcpStats.prunes++;
-    else if (flow->get_session_flags() & SSNFLAG_TIMEDOUT)
+
+    else if ( flow->get_session_flags() & SSNFLAG_TIMEDOUT )
         tcpStats.timeouts++;
 
     update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
 
-    if( restart )
+    if ( restart )
     {
         flow->restart(free_flow_data);
         paf_reset(&client->paf_state);
@@ -234,8 +233,9 @@ void TcpSession::update_perf_base_state(char newState)
             if ( ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
                 && !( session_flags & SSNFLAG_COUNTED_CLOSING ) )
             {
-                assert(tcpStats.sessions_initializing);
-                tcpStats.sessions_initializing--;
+                //assert(tcpStats.sessions_initializing);
+                if ( tcpStats.sessions_initializing )  // FIXIT-L eliminate / fix underflow
+                    tcpStats.sessions_initializing--;
             }
         }
         break;
@@ -248,7 +248,7 @@ void TcpSession::update_perf_base_state(char newState)
 
             if ( session_flags & SSNFLAG_COUNTED_ESTABLISH )
             {
-                assert(tcpStats.sessions_established);
+                //assert(tcpStats.sessions_established);
                 tcpStats.sessions_established--;
 
                 if (perfmon_config  && (perfmon_config->perf_flags & PERF_FLOWIP))
@@ -257,8 +257,9 @@ void TcpSession::update_perf_base_state(char newState)
             }
             else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
             {
-                assert(tcpStats.sessions_initializing);
-                tcpStats.sessions_initializing--;
+                //assert(tcpStats.sessions_initializing);
+                if ( tcpStats.sessions_initializing )  // FIXIT-L eliminate / fix underflow
+                    tcpStats.sessions_initializing--;
             }
         }
         break;
@@ -266,13 +267,14 @@ void TcpSession::update_perf_base_state(char newState)
     case TcpStreamTracker::TCP_CLOSED:
         if ( session_flags & SSNFLAG_COUNTED_CLOSING )
         {
-            assert(tcpStats.sessions_closing);
+            //assert(tcpStats.sessions_closing);
             tcpStats.sessions_closing--;
         }
         else if ( session_flags & SSNFLAG_COUNTED_ESTABLISH )
         {
-            assert(tcpStats.sessions_established);
-            tcpStats.sessions_established--;
+            //assert(tcpStats.sessions_established);
+            if ( tcpStats.sessions_established )  // FIXIT-L eliminate / fix underflow
+                tcpStats.sessions_established--;
 
             if ( perfmon_config && ( perfmon_config->perf_flags & PERF_FLOWIP ) )
                 perf_flow_ip->update_state(&flow->client_ip,
@@ -280,8 +282,9 @@ void TcpSession::update_perf_base_state(char newState)
         }
         else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
         {
-            assert(tcpStats.sessions_initializing);
-            tcpStats.sessions_initializing--;
+            //assert(tcpStats.sessions_initializing);
+            if ( tcpStats.sessions_initializing )  // FIXIT-L eliminate / fix underflow
+                tcpStats.sessions_initializing--;
         }
         break;
 
@@ -601,7 +604,7 @@ void TcpSession::update_ignored_session(TcpSegmentDescriptor& tsd)
 {
     // FIXIT-L why flush here instead of just purge?
     // s5_ignored_session() may be disabling detection too soon if we really want to flush
-    if (stream.ignored_session(flow, tsd.get_pkt()))
+    if (Stream::ignored_flow(flow, tsd.get_pkt()))
     {
         if ( talker && ( talker->get_tf_flags() & TF_FORCE_FLUSH ) )
         {
@@ -649,7 +652,7 @@ void TcpSession::update_session_on_rst(TcpSegmentDescriptor& tsd, bool flush)
         flush_talker(tsd.get_pkt());
         set_splitter(true, nullptr);
         set_splitter(false, nullptr);
-        flow->free_application_data();
+        flow->free_flow_data();
     }
 
     talker->update_on_rst_sent( );
@@ -831,12 +834,17 @@ TcpStreamTracker::TcpState TcpSession::get_listener_state()
 void TcpSession::check_for_repeated_syn(TcpSegmentDescriptor& tsd)
 {
     uint32_t action = ACTION_NOTHING;
-    if (!SEQ_EQ(tsd.get_seg_seq(), talker->get_iss())
-        && listener->normalizer->packet_dropper(tsd, NORM_TCP_BLOCK))
-        action = ACTION_BAD_PKT;
-    else if (talker->get_tcp_state() >= TcpStreamTracker::TCP_ESTABLISHED)
-        action = listener->normalizer->handle_repeated_syn(tsd);
 
+    if ( !SEQ_EQ(tsd.get_seg_seq(), talker->get_iss()) and
+        listener->normalizer->packet_dropper(tsd, NORM_TCP_BLOCK) )
+    {
+        action = ACTION_BAD_PKT;
+    }
+    else if ( talker->get_tcp_state() >= TcpStreamTracker::TCP_ESTABLISHED and
+        talker->get_tcp_state() < TcpStreamTracker::TCP_CLOSED )
+    {
+        action = listener->normalizer->handle_repeated_syn(tsd);
+    }
     if (action != ACTION_NOTHING)
     {
         /* got a bad SYN on the session, alert! */
@@ -1014,13 +1022,13 @@ bool TcpSession::is_flow_handling_packets(Packet* p)
         flow_ready = false;
     }
 
-    if (stream.blocked_session(flow, p) || (flow->session_state & STREAM_STATE_IGNORE))
+    if (Stream::blocked_flow(flow, p) || (flow->session_state & STREAM_STATE_IGNORE))
         flow_ready = false;
 
-    // FIXIT-L expected flow should be checked by flow_con before we get here
+    // FIXIT-L expected flow should be checked by Stream before we get here
     // harmonize this with that and the checks above
-    char ignore = flow_con->expected_flow(flow, p);
-    if (ignore)
+
+    if ( Stream::expected_flow(flow, p) )
     {
         server->flush_policy = STREAM_FLPOLICY_IGNORE;
         client->flush_policy = STREAM_FLPOLICY_IGNORE;
@@ -1034,7 +1042,7 @@ void TcpSession::cleanup_session_if_expired(Packet* p)
 {
     // Check if the session is expired. Should be done before we do something with
     // the packet...Insert a packet, or handle state change SYN, FIN, RST, etc.
-    if (stream.expired_session(flow, p))
+    if (Stream::expired_flow(flow, p))
     {
         /* Session is timed out, if also reset then restart, otherwise clear */
         if (flow->get_session_flags() & SSNFLAG_RESET)

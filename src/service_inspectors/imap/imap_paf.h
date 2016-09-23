@@ -25,7 +25,6 @@
 // Protocol aware flushing for IMAP
 
 #include "main/snort_types.h"
-#include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 #include "mime/file_mime_paf.h"
 

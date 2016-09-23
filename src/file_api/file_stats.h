@@ -36,7 +36,7 @@
 
 #define MAX_PROTOCOL_ORDINAL 8192  // FIXIT-L use std::vector and get_protocol_count()
 
-typedef struct _File_Stats
+struct FileStats
 {
     uint64_t files_total;
     uint64_t files_processed[FILE_ID_MAX + 1][2];
@@ -48,7 +48,7 @@ typedef struct _File_Stats
     uint64_t data_processed[FILE_ID_MAX + 1][2];
     uint64_t file_data_total;
     uint64_t files_sig_depth;
-} FileStats;
+};
 
 extern FileStats file_stats;
 

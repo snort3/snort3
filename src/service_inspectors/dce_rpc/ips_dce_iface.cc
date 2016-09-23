@@ -29,8 +29,11 @@
 #include "framework/range.h"
 #include "detection/detect.h"
 #include "detection/detection_defines.h"
+#include "detection/pattern_match_data.h"
 #include "hash/sfhashfcn.h"
 #include "profiler/profiler.h"
+#include "target_based/snort_protocols.h"
+#include "main/snort_debug.h"
 
 //-------------------------------------------------------------------------
 // dcerpc2 interface rule options
@@ -199,18 +202,71 @@ class Dce2IfaceOption : public IpsOption
 {
 public:
     Dce2IfaceOption(RangeCheck iface_version, bool iface_any_frag, Uuid iface_uuid) :
-        IpsOption(s_name)
-    { version = iface_version; any_frag = iface_any_frag; uuid = iface_uuid; }
+        IpsOption(s_name), version(iface_version), any_frag(iface_any_frag), uuid(iface_uuid)
+    {
+        memset(&pmd, 0, sizeof(pmd));
+    }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
     int eval(Cursor&, Packet*) override;
+    PatternMatchData* get_pattern(int proto, RuleDirection direction) override;
+    ~Dce2IfaceOption();
 
 private:
-    RangeCheck version;
-    bool any_frag;
-    Uuid uuid;
+    const RangeCheck version;
+    const bool any_frag;
+    const Uuid uuid;
+    PatternMatchData pmd;
 };
+
+Dce2IfaceOption::~Dce2IfaceOption()
+{
+    if ( pmd.pattern_buf)
+    {
+        snort_free((char*)pmd.pattern_buf);
+    }
+}
+
+PatternMatchData* Dce2IfaceOption::get_pattern(int proto, RuleDirection direction)
+{
+    if (pmd.pattern_buf)
+    {
+        return &pmd;
+    }
+
+    if (proto == SNORT_PROTO_TCP)
+    {
+        const char client_fp[] = "\x05\x00\x00";
+        const char server_fp[] = "\x05\x00\x02";
+        const char no_dir_fp[] = "\x05\x00";
+
+        switch (direction)
+        {
+        case RULE_FROM_CLIENT:
+            pmd.pattern_size = 3;
+            pmd.pattern_buf = (char*)snort_alloc(pmd.pattern_size);
+            memcpy((void*)pmd.pattern_buf, client_fp, pmd.pattern_size);
+            break;
+
+        case RULE_FROM_SERVER:
+            pmd.pattern_size = 3;
+            pmd.pattern_buf = (char*)snort_alloc(pmd.pattern_size);
+            memcpy((void*)pmd.pattern_buf, server_fp, pmd.pattern_size);
+            break;
+
+        default:
+            pmd.pattern_size = 2;
+            pmd.pattern_buf = (char*)snort_alloc(pmd.pattern_size);
+            memcpy((void*)pmd.pattern_buf, no_dir_fp, pmd.pattern_size);
+            break;
+        }
+        return &pmd;
+    }
+    // FIXIT-L add udp fast pattern
+
+    return nullptr;
+}
 
 uint32_t Dce2IfaceOption::hash() const
 {
@@ -244,19 +300,11 @@ uint32_t Dce2IfaceOption::hash() const
 
 bool Dce2IfaceOption::operator==(const IpsOption& ips) const
 {
-    if ( strcmp(get_name(), ips.get_name()) )
-        return false;
-
-    const Dce2IfaceOption& rhs = (Dce2IfaceOption&)ips;
-
-    if ((DCE2_UuidCompare(&uuid, &rhs.uuid) == 0) &&
-        (version == rhs.version) &&
-        (any_frag == rhs.any_frag))
-    {
-        return true;
-    }
-
-    return false;
+    // FIXIT-L
+    // Fast pattern is calculated only after the entire rule is parsed.
+    // The rule option can be mistaken as a duplicate because we don't take the fast pattern into
+    // account. Instead of comparing values, make sure it is the same object.
+    return this == &ips;
 }
 
 int Dce2IfaceOption::eval(Cursor&, Packet* p)

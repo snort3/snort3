@@ -55,6 +55,8 @@ struct BaseStats
     PROTO_FIELDS(file);
 };
 
+extern const PegInfo base_pegs[];
+
 extern THREAD_LOCAL BaseStats stream_base_stats;
 
 struct StreamModuleConfig
@@ -65,6 +67,7 @@ struct StreamModuleConfig
     FlowConfig udp_cfg;
     FlowConfig user_cfg;
     FlowConfig file_cfg;
+    bool ip_frags_only;
 };
 
 class StreamModule : public Module

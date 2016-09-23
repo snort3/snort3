@@ -143,7 +143,7 @@ public:
     int eval(Cursor& c, Packet*) override
     { return CheckANDPatternMatch(config, c); }
 
-    PatternMatchData* get_pattern() override
+    PatternMatchData* get_pattern(int, RuleDirection) override
     { return &config->pmd; }
 
 protected:
@@ -243,10 +243,11 @@ static bool same_buffers(
     }
     return true;
 }
+
 #endif
 
 // FIXIT-P fp, fp_only are set after hash table comparisons so this must
-// return false to avoid unnecessary reevaluation and false positives.
+// return this == &ips to avoid unnecessary reevaluation and false positives.
 // when this is fixed, add PatternMatchData::operator==().
 bool ContentOption::operator==(const IpsOption& ips) const
 {
@@ -286,10 +287,8 @@ bool ContentOption::operator==(const IpsOption& ips) const
     {
         return true;
     }
-#else
-    UNUSED(ips);
 #endif
-    return false;
+    return this == &ips;
 }
 
 //-------------------------------------------------------------------------
@@ -410,7 +409,6 @@ static int CheckANDPatternMatch(ContentData* idx, Cursor& c)
         DebugMessage(DEBUG_PATTERN_MATCH, "Pattern match found\n");
         return DETECTION_OPTION_MATCH;
     }
-
     else
     {
         DebugMessage(DEBUG_PATTERN_MATCH, "Pattern match failed\n");

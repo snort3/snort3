@@ -84,6 +84,9 @@ public:
     // paf_max; the HI splitter should pull from there
     static void set_max(unsigned);
 
+    // FIXIT-L max_pdu should suffice
+    static const unsigned max_buf = 65536;
+
     virtual void reset() { }
     virtual void update() { }
 

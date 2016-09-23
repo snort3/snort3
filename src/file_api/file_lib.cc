@@ -37,15 +37,22 @@
 #include <iostream>
 #include <iomanip>
 
-#include "file_identifier.h"
+#include "file_capture.h"
 #include "file_config.h"
+#include "file_enforcer.h"
+#include "file_identifier.h"
+#include "file_service.h"
+#include "file_segment.h"
+#include "file_stats.h"
+
 #include "hash/hashes.h"
 #include "utils/util.h"
-#include "file_api/file_capture.h"
+#include "main/snort_config.h"
+#include "framework/data_bus.h"
 
 FileInfo::~FileInfo ()
 {
-    if(sha256)
+    if (sha256)
         delete[] sha256;
 }
 
@@ -54,7 +61,7 @@ void FileInfo::copy(const FileInfo& other)
     if (other.sha256)
     {
         sha256 = new uint8_t[SHA256_HASH_SIZE];
-        memcpy( (char *)sha256, (const char *)other.sha256, SHA256_HASH_SIZE);
+        memcpy( (char*)sha256, (const char*)other.sha256, SHA256_HASH_SIZE);
     }
 
     file_size = other.file_size;
@@ -73,7 +80,7 @@ FileInfo::FileInfo(const FileInfo& other)
 FileInfo& FileInfo::operator=(const FileInfo& other)
 {
     // check for self-assignment
-    if(&other == this)
+    if (&other == this)
         return *this;
 
     copy(other);
@@ -82,12 +89,14 @@ FileInfo& FileInfo::operator=(const FileInfo& other)
 
 /*File properties*/
 
-void FileInfo::set_file_name (const char *name, uint32_t name_size)
+void FileInfo::set_file_name(const char* name, uint32_t name_size)
 {
     if (name and name_size)
     {
         file_name.assign(name, name_size);
     }
+
+    file_name_set = true;
 }
 
 std::string& FileInfo::get_file_name()
@@ -120,7 +129,6 @@ size_t FileInfo::get_file_id() const
     return file_id;
 }
 
-
 void FileInfo::set_file_direction(FileDirection dir)
 {
     direction = dir;
@@ -128,7 +136,7 @@ void FileInfo::set_file_direction(FileDirection dir)
 
 FileDirection FileInfo::get_file_direction() const
 {
-    return (direction);
+    return direction;
 }
 
 void FileInfo::set_file_sig_sha256(uint8_t* signature)
@@ -141,17 +149,17 @@ uint8_t* FileInfo::get_file_sig_sha256() const
     return (sha256);
 }
 
-std::string FileInfo::sha_to_string (const uint8_t *sha256)
+std::string FileInfo::sha_to_string(const uint8_t* sha256)
 {
     uint8_t conv[] = "0123456789ABCDEF";
-    const uint8_t *index;
-    const uint8_t *end;
+    const uint8_t* index;
+    const uint8_t* end;
     std::string sha_out;
 
     index = sha256;
     end = index + SHA256_HASH_SIZE;
 
-    while(index < end)
+    while (index < end)
     {
         sha_out.push_back(conv[((*index & 0xFF)>>4)]);
         sha_out.push_back(conv[((*index & 0xFF)&0x0F)]);
@@ -165,16 +173,19 @@ FileContext::FileContext ()
 {
     file_type_context = nullptr;
     file_signature_context = nullptr;
-    file_config = nullptr;
+    file_config = &(snort_conf->file_config);
     file_capture = nullptr;
+    file_segments = nullptr;
 }
 
 FileContext::~FileContext ()
 {
     if (file_signature_context)
         snort_free(file_signature_context);
-    if(file_capture)
+    if (file_capture)
         stop_file_capture();
+    if (file_segments)
+        delete file_segments;
 }
 
 inline int FileContext::get_data_size_from_depth_limit(FileProcessType type, int
@@ -206,12 +217,152 @@ inline int FileContext::get_data_size_from_depth_limit(FileProcessType type, int
 }
 
 /* stop file type identification */
-inline void FileContext::finalize_file_type ()
+inline void FileContext::finalize_file_type()
 {
     if (SNORT_FILE_TYPE_CONTINUE ==  file_type_id)
         file_type_id = SNORT_FILE_TYPE_UNKNOWN;
     file_type_context = nullptr;
 }
+
+void FileContext::log_file_event(Flow* flow)
+{
+    // wait for file name is set to log file event
+    if ( is_file_name_set() )
+    {
+        switch (verdict)
+        {
+        case FILE_VERDICT_LOG:
+            // Log file event through data bus
+            get_data_bus().publish("file_event", (const uint8_t*)"LOG", 3, flow);
+            break;
+
+        case FILE_VERDICT_BLOCK:
+            // can't block session inside a session
+            get_data_bus().publish("file_event", (const uint8_t*)"BLOCK", 5, flow);
+            break;
+
+        case FILE_VERDICT_REJECT:
+            get_data_bus().publish("file_event", (const uint8_t*)"RESET", 5, flow);
+            break;
+        default:
+            break;
+        }
+        if ( FileConfig::trace_type )
+            print(std::cout);
+    }
+}
+
+void FileContext::finish_signature_lookup(Flow* flow)
+{
+    if (get_file_sig_sha256())
+    {
+        //Check file type based on file policy
+        FilePolicy& inspect = FileService::get_inspect();
+        inspect.signature_lookup(flow, this);
+        log_file_event(flow);
+        config_file_signature(false);
+        file_stats.signatures_processed[get_file_type()][get_file_direction()]++;
+    }
+}
+
+void FileContext::check_policy(Flow* flow, FileDirection dir)
+{
+    file_stats.files_total++;
+    set_file_direction(dir);
+    FilePolicy& inspect = FileService::get_inspect();
+    inspect.policy_check(flow, this);
+}
+
+/*
+ * Return:
+ *    true: continue processing/log/block this file
+ *    false: ignore this file
+ */
+bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
+    FilePosition position)
+{
+    if ( FileConfig::trace_stream )
+    {
+        FileContext::print_file_data(stdout, file_data, data_size,
+            snort_conf->file_config.show_data_depth);
+    }
+
+    //set_current_file_context(context);
+    file_stats.file_data_total += data_size;
+
+    if ((!is_file_type_enabled())and (!is_file_signature_enabled()))
+    {
+        update_file_size(data_size, position);
+        return false;
+    }
+
+    if ((FileService::get_file_enforcer()->cached_verdict_lookup(flow, this)
+            != FILE_VERDICT_UNKNOWN))
+        return true;
+
+    /*file type id*/
+    if (is_file_type_enabled())
+    {
+        process_file_type(file_data, data_size, position);
+
+        /*Don't care unknown file type*/
+        if (get_file_type()== SNORT_FILE_TYPE_UNKNOWN)
+        {
+            config_file_type(false);
+            config_file_signature(false);
+            update_file_size(data_size, position);
+            stop_file_capture();
+            return false;
+        }
+
+        if (get_file_type() != SNORT_FILE_TYPE_CONTINUE)
+        {
+            config_file_type(false);
+            file_stats.files_processed[get_file_type()][get_file_direction()]++;
+            //Check file type based on file policy
+            FilePolicy& inspect = FileService::get_inspect();
+            inspect.type_lookup(flow, this);
+            log_file_event(flow);
+        }
+    }
+
+    /* file signature calculation */
+    if (is_file_signature_enabled())
+    {
+        process_file_signature_sha256(file_data, data_size, position);
+
+        file_stats.data_processed[get_file_type()][get_file_direction()]
+            += data_size;
+
+        update_file_size(data_size, position);
+
+        if ( FileConfig::trace_signature )
+            print_file_sha256(std::cout);
+
+        /*Fails to capture, when out of memory or size limit, need lookup*/
+        if (is_file_capture_enabled())
+        {
+            process_file_capture(file_data, data_size, position);
+        }
+
+        finish_signature_lookup(flow);
+    }
+    else
+    {
+        update_file_size(data_size, position);
+    }
+
+    return true;
+}
+
+bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
+    uint64_t offset)
+{
+    if (!file_segments)
+        file_segments = new FileSegments(this);
+    return file_segments->process(flow, file_data, data_size, offset);
+}
+
 /*
  * Main File type processing function
  * We use file type context to decide file type across packets
@@ -384,17 +535,6 @@ uint64_t FileContext::get_processed_bytes()
     return processed_bytes;
 }
 
-
-void FileContext::set_file_config(FileConfig* config)
-{
-    file_config = config;
-}
-
-FileConfig*  FileContext::get_file_config()
-{
-    return file_config;
-}
-
 void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth)
 {
     char str[18];
@@ -452,7 +592,6 @@ void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int ma
  */
 void FileContext::print_file_sha256(std::ostream& log)
 {
-
     unsigned char* hash = sha256;
 
     if (!sha256)
@@ -472,7 +611,7 @@ void FileContext::print_file_sha256(std::ostream& log)
     log.flags(f);
 }
 
-void FileContext::print( std::ostream& log)
+void FileContext::print(std::ostream& log)
 {
     log << "File name: " << file_name << std::endl;
     log << "File type: " << file_config->file_type_name(file_type_id)
@@ -509,3 +648,4 @@ bool file_IDs_from_group(const void *conf, const char *group,
     return get_ids_from_group(conf, group, ids, count);
 }
  **/
+

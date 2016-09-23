@@ -66,7 +66,7 @@ static inline SmtpPafData* get_state(Flow* flow, bool c2s)
     if ( !flow )
         return nullptr;
 
-    SmtpSplitter* s = (SmtpSplitter*)stream.get_splitter(flow, c2s);
+    SmtpSplitter* s = (SmtpSplitter*)Stream::get_splitter(flow, c2s);
     return s ? &s->state : nullptr;
 }
 

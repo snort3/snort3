@@ -81,7 +81,7 @@ struct SdPatternConfig
     std::string pii;
     unsigned threshold = 1;
     bool obfuscate_pii = false;
-    int (*validate)(const uint8_t* buf, unsigned long long buflen) = nullptr;
+    int (* validate)(const uint8_t* buf, unsigned long long buflen) = nullptr;
 
     inline bool operator==(const SdPatternConfig& rhs) const
     {
@@ -119,7 +119,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    PatternMatchData* get_pattern() override
+    PatternMatchData* get_pattern(int, RuleDirection) override
     { return &config.pmd; }
 
     int eval(Cursor&, Packet* p) override;
@@ -136,7 +136,7 @@ SdPatternOption::SdPatternOption(const SdPatternConfig& c) :
     {
         // FIXIT-L why is this failing but everything is working?
         ParseError("can't initialize sd_pattern for %s (%d) %p",
-                config.pii.c_str(), err, (void*)s_scratch);
+            config.pii.c_str(), err, (void*)s_scratch);
     }
 
     config.pmd.pattern_buf = config.pii.c_str();
@@ -146,7 +146,7 @@ SdPatternOption::SdPatternOption(const SdPatternConfig& c) :
 }
 
 SdPatternOption::~SdPatternOption()
-{ 
+{
     if ( config.db )
         hs_free_database(config.db);
 }
@@ -173,10 +173,10 @@ bool SdPatternOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-struct hsContext 
+struct hsContext
 {
-    hsContext(const SdPatternConfig &c_, Packet* p_, const uint8_t* const start_)
-        : config(c_), packet(p_), start(start_) {}
+    hsContext(const SdPatternConfig& c_, Packet* p_, const uint8_t* const start_)
+        : config(c_), packet(p_), start(start_) { }
 
     unsigned int count = 0;
 
@@ -209,7 +209,7 @@ static int hs_match(unsigned int /*id*/, unsigned long long from,
             ctx->packet->obfuscator = new Obfuscator();
 
         uint32_t off = ctx->buf - ctx->start;
-        // FIXIT-L Make configurable or don't show any PII partials (0 for user defined??) 
+        // FIXIT-L Make configurable or don't show any PII partials (0 for user defined??)
         len = len > 4 ? len - 4 : len;
         ctx->packet->obfuscator->push(off, len);
     }
@@ -323,13 +323,11 @@ bool SdPatternModule::set(const char*, Value& v, SnortConfig* sc)
         config.validate = SdLuhnAlgorithm;
         config.obfuscate_pii = sc->obfuscate_pii;
     }
-
     else if (config.pii == "us_social")
     {
         config.pii = SD_SOCIAL_PATTERN;
         config.obfuscate_pii = sc->obfuscate_pii;
     }
-
     else if (config.pii == "us_social_nodashes")
     {
         config.pii = SD_SOCIAL_NODASHES_PATTERN;
@@ -343,7 +341,8 @@ bool SdPatternModule::end(const char*, int, SnortConfig*)
 {
     hs_compile_error_t* err = nullptr;
 
-    if ( hs_compile(config.pii.c_str(), HS_FLAG_DOTALL|HS_FLAG_SOM_LEFTMOST, HS_MODE_BLOCK, nullptr, &config.db, &err)
+    if ( hs_compile(config.pii.c_str(), HS_FLAG_DOTALL|HS_FLAG_SOM_LEFTMOST, HS_MODE_BLOCK,
+        nullptr, &config.db, &err)
         or !config.db )
     {
         ParseError("can't compile regex '%s'", config.pii.c_str());
@@ -407,7 +406,7 @@ static IpsOption* sd_pattern_ctor(Module* m, OptTreeNode*)
 }
 
 static void sd_pattern_dtor(IpsOption* p)
-{ 
+{
     delete p;
 }
 

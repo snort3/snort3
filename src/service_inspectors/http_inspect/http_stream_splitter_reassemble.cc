@@ -207,8 +207,7 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
 
     assert(total <= MAX_OCTETS);
 
-    HttpFlowData* session_data = (HttpFlowData*)flow->get_application_data(
-        HttpFlowData::http_flow_id);
+    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::http_flow_id);
     assert(session_data != nullptr);
 
 #ifdef REG_TEST

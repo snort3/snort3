@@ -46,7 +46,7 @@
 #include "catch/catch.hpp"
 #endif
 
-#define s_rule_table_title "Rule Profile Statistics"
+#define s_rule_table_title "rule profile"
 
 static inline OtnState& operator+=(OtnState& lhs, const OtnState& rhs)
 {
@@ -228,17 +228,17 @@ static void print_single_entry(const View& v, unsigned n)
         table << n; // #
 
         table << v.sig_info.generator; // gid
-        table << v.sig_info.id; // sid
-        table << v.sig_info.rev; // rev
+        table << v.sig_info.id;        // sid
+        table << v.sig_info.rev;
 
-        table << v.checks(); // checks
-        table << v.matches(); // matches
-        table << v.alerts(); // alerts
+        table << v.checks();
+        table << v.matches();
+        table << v.alerts();
 
-        table << duration_cast<microseconds>(v.elapsed()).count(); // time
-        table << duration_cast<microseconds>(v.avg_check()).count(); // avg/check
-        table << duration_cast<microseconds>(v.avg_match()).count(); // avg/match
-        table << duration_cast<microseconds>(v.avg_no_match()).count(); // avg/non-match
+        table << clock_usecs(duration_cast<microseconds>(v.elapsed()).count());
+        table << clock_usecs(duration_cast<microseconds>(v.avg_check()).count());
+        table << clock_usecs(duration_cast<microseconds>(v.avg_match()).count());
+        table << clock_usecs(duration_cast<microseconds>(v.avg_no_match()).count());
 
         table << v.timeouts();
         table << v.suspends();

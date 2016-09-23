@@ -28,7 +28,7 @@
 
 #include "main/snort.h"
 #include "protocols/packet.h"
-#include "stream/stream.h"
+#include "protocols/packet_manager.h"
 #include "profiler/profiler.h"
 #include "flow/flow_control.h"
 
@@ -305,7 +305,7 @@ int TcpReassembler::purge_alerts(uint32_t /*flush_seq*/,  Flow* flow)
 
         //if (SEQ_LT(ai->seq, flush_seq) )
         {
-            stream.log_extra_data(flow, xtradata_mask, ai->event_id, ai->event_second);
+            Stream::log_extra_data(flow, xtradata_mask, ai->event_id, ai->event_second);
             memset(ai, 0, sizeof(*ai));
         }
 #if 0
@@ -457,14 +457,12 @@ void TcpReassembler::show_rebuilt_packet(Packet* pkt)
     }
 }
 
-uint32_t TcpReassembler::get_flush_data_len(TcpSegmentNode* tsn, uint32_t to_seq,
-    uint32_t flushBufSize)
+uint32_t TcpReassembler::get_flush_data_len(TcpSegmentNode* tsn, uint32_t to_seq, unsigned max)
 {
     unsigned int flushSize = tsn->payload_size;
 
-    // copy only till flush buffer gets full
-    if ( flushSize > flushBufSize )
-        flushSize = flushBufSize;
+    if ( flushSize > max )
+        flushSize = max;
 
     // copy only to flush point
     if ( paf_active(&tracker->paf_state) && SEQ_GT(tsn->seq + flushSize, to_seq) )
@@ -474,10 +472,9 @@ uint32_t TcpReassembler::get_flush_data_len(TcpSegmentNode* tsn, uint32_t to_seq
 }
 
 // flush the client seglist up to the most recently acked segment
-int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq, uint8_t* flushbuf,
-    const uint8_t* flushbuf_end)
+int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq)
 {
-    uint16_t bytes_flushed = 0;
+    uint32_t bytes_flushed = 0;
     uint32_t segs = 0;
     uint32_t flags = PKT_PDU_HEAD;
     DEBUG_WRAP(uint32_t bytes_queued = seg_bytes_logical; );
@@ -489,8 +486,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq, uint8_t* flus
     while ( SEQ_LT(seglist.next->seq, toSeq) )
     {
         TcpSegmentNode* tsn = seglist.next, * sr = nullptr;
-        unsigned flushbuf_size = flushbuf_end - flushbuf;
-        unsigned bytes_to_copy = get_flush_data_len(tsn, toSeq, flushbuf_size);
+        unsigned bytes_to_copy = get_flush_data_len(tsn, toSeq, tracker->splitter->max(p->flow));
         unsigned bytes_copied = 0;
         assert(bytes_to_copy);
 
@@ -500,25 +496,20 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq, uint8_t* flus
             || SEQ_EQ(tsn->seq +  bytes_to_copy, toSeq) )
             flags |= PKT_PDU_TAIL;
 
-        const StreamBuffer* sb = tracker->splitter->reassemble(p->flow, total, bytes_flushed,
-            tsn->payload,
-            bytes_to_copy, flags, bytes_copied);
+        const StreamBuffer* sb = tracker->splitter->reassemble(
+            p->flow, total, bytes_flushed, tsn->payload, bytes_to_copy, flags, bytes_copied);
+
         flags = 0;
+
         if ( sb )
         {
             s5_pkt->data = sb->data;
             s5_pkt->dsize = sb->length;
             assert(sb->length <= s5_pkt->max_dsize);
 
-            // FIXIT-M flushbuf should be eliminated from this function
-            // since we are actually using the stream splitter buffer
-            flushbuf = ( uint8_t* )s5_pkt->data;
-            // ensure we stop here
             bytes_to_copy = bytes_copied;
         }
         assert(bytes_to_copy == bytes_copied);
-
-        flushbuf += bytes_to_copy;
         bytes_flushed += bytes_to_copy;
 
         if ( bytes_to_copy < tsn->payload_size
@@ -532,9 +523,6 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq, uint8_t* flus
         tsn->buffered = true;
         flush_count++;
         segs++;
-
-        if ( flushbuf >= flushbuf_end )
-            break;
 
         if ( SEQ_EQ(tsn->seq + bytes_to_copy, toSeq) )
             break;
@@ -550,12 +538,18 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq, uint8_t* flus
             if ( tsn->next )
                 seglist.next = tsn->next;
 
-            tracker->set_tf_flags(TF_MISSING_PKT);
+            // FIXIT-L this is suboptimal - better to exclude fin from toSeq
+            if ( !tracker->fin_set() or SEQ_LT(toSeq, tracker->fin_final_seq) )
+                tracker->set_tf_flags(TF_MISSING_PKT);
+
             break;
         }
         seglist.next = tsn->next;
 
         if ( sb || !seglist.next )
+            break;
+
+        if ( bytes_flushed + seglist.next->payload_size >= StreamSplitter::max_buf )
             break;
     }
 
@@ -634,10 +628,6 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 
     prep_s5_pkt(session->flow, p, pkt_flags);
 
-    // if not specified, set bytes to flush to what was acked
-    if (!bytes && SEQ_GT(tracker->r_win_base, seglist_base_seq))
-        bytes = tracker->r_win_base - seglist_base_seq;
-
     // FIXIT-L this should not be necessary here
     seglist_base_seq = seglist.next->seq;
     stop_seq = seglist_base_seq + bytes;
@@ -676,9 +666,8 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 
         /* setup the pseudopacket payload */
         s5_pkt->dsize = 0;
-        s5_pkt->data = s5_pkt->pkt;
-        const uint8_t* s5_pkt_end = s5_pkt->data + s5_pkt->max_dsize;
-        flushed_bytes = flush_data_segments(p, stop_seq, (uint8_t*)s5_pkt->data, s5_pkt_end);
+        s5_pkt->data = nullptr;
+        flushed_bytes = flush_data_segments(p, stop_seq);
 
         if ( flushed_bytes == 0 )
             break; /* No more data... bail */
@@ -783,28 +772,26 @@ int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
     return _flush_to_seq(bytes, p, pkt_flags);
 }
 
-// FIXIT-H the seq number math in the following 2 funcs does not handle
-// wrapping get the footprint for the current seglist, the difference
+// get the footprint for the current seglist, the difference
 // between our base sequence and the last ack'd sequence we received
 
 uint32_t TcpReassembler::get_q_footprint()
 {
-    int32_t fp;
-
-    if ( tracker == nullptr )
-        return 0;
-
-    fp = tracker->r_win_base - seglist_base_seq;
-    if ( fp <= 0 )
+    if ( !tracker )
         return 0;
 
     seglist.next = seglist.head;
+    uint32_t fp = tracker->r_win_base - seglist_base_seq;
+
+    // FIXIT-M ideally would exclude fin here
+
     return fp;
 }
 
 // FIXIT-P get_q_sequenced() performance could possibly be
 // boosted by tracking sequenced bytes as seglist is updated
 // to avoid the while loop, etc. below.
+
 uint32_t TcpReassembler::get_q_sequenced()
 {
     int32_t len;

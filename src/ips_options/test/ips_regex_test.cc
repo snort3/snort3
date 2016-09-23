@@ -259,6 +259,8 @@ TEST_GROUP(ips_regex_option)
 
     void setup()
     {
+        // FIXIT-L cpputest hangs or crashes in the leak detector
+        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         opt = get_option(" foo ");
         regex_setup(snort_conf);
     }
@@ -268,6 +270,7 @@ TEST_GROUP(ips_regex_option)
         api->dtor(opt);
         regex_cleanup(snort_conf);
         api->pterm(snort_conf);
+        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 
@@ -330,6 +333,8 @@ TEST_GROUP(ips_regex_option_relative)
 
     void setup()
     {
+        // FIXIT-L cpputest hangs or crashes in the leak detector
+        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         opt = get_option("\\bfoo", true);
         regex_setup(snort_conf);
     }
@@ -338,6 +343,7 @@ TEST_GROUP(ips_regex_option_relative)
         IpsApi* api = (IpsApi*)ips_regex;
         api->dtor(opt);
         regex_cleanup(snort_conf);
+        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 

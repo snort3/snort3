@@ -46,8 +46,14 @@ StreamUdpModule::StreamUdpModule() :
     config = nullptr;
 }
 
-ProfileStats* StreamUdpModule::get_profile() const
+ProfileStats* StreamUdpModule::get_profile(
+    unsigned index, const char*& name, const char*& parent) const
 {
+    if ( index )
+        return nullptr;
+
+    name = MOD_NAME;
+    parent = "stream";
     return &udp_perf_stats;
 }
 

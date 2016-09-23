@@ -29,6 +29,7 @@
 #include "file_api/file_policy.h"
 
 class FileEnforcer;
+class FileCache;
 
 class SO_PUBLIC FileService
 {
@@ -43,16 +44,17 @@ public:
     static void close();
 
     static void enable_file_type();
-    static void enable_file_signature ();
+    static void enable_file_signature();
     static void enable_file_capture();
-    static bool is_file_type_id_enabled() {return file_type_id_enabled;}
-    static bool is_file_signature_enabled() {return file_signature_enabled;}
-    static bool is_file_capture_enabled() {return file_capture_enabled;}
+    static bool is_file_type_id_enabled() { return file_type_id_enabled; }
+    static bool is_file_signature_enabled() { return file_signature_enabled; }
+    static bool is_file_capture_enabled() { return file_capture_enabled; }
     static bool is_file_service_enabled();
     static int64_t get_max_file_depth();
 
     static FilePolicy& get_inspect();
-    static FileEnforcer* get_file_enforcer() {return file_enforcer;}
+    static FileEnforcer* get_file_enforcer() { return file_enforcer; }
+    static FileCache* get_file_cache() { return file_cache; }
 
 private:
     static void start_file_processing();
@@ -61,6 +63,7 @@ private:
     static bool file_capture_enabled;
     static bool file_processing_initiated;
     static FileEnforcer* file_enforcer;
+    static FileCache* file_cache;
 };
 
 extern const struct BaseApi* file_inspectors[];

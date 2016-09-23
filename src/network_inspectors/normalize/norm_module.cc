@@ -24,7 +24,6 @@
 #include <sstream>
 #include <vector>
 
-#include "stream/stream.h"
 #include "stream/tcp/tcp_normalizer.h"
 
 using namespace std;

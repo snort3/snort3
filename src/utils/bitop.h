@@ -59,8 +59,10 @@ private:
 // -----------------------------------------------------------------------------
 
 inline BitOp::BitOp(size_t len) :
-    bit_buf(new uint8_t[len]()), buf_size(len)
-{ }
+    buf_size(len ? (len + 7) >> 3 : 1)
+{
+    bit_buf = new uint8_t[len]();
+}
 
 inline BitOp::~BitOp()
 { delete[] bit_buf; }
@@ -68,7 +70,6 @@ inline BitOp::~BitOp()
 inline uint8_t BitOp::mask(size_t bit) const
 { return (uint8_t)(0x80 >> (bit & 7)); }
 
-// FIXIT-L ops that don't need to be inlined can probably be put into a .cc file
 // Reset the bit buffer so that it can be reused
 inline void BitOp::reset()
 { memset(bit_buf, 0, buf_size); }

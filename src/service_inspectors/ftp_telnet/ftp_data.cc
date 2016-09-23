@@ -82,7 +82,7 @@ static int SnortFTPData(Packet* p)
         return -1;
 
     FtpDataFlowData* fd = (FtpDataFlowData*)
-        p->flow->get_application_data(FtpFlowData::flow_id);
+        p->flow->get_flow_data(FtpFlowData::flow_id);
 
     FTP_DATA_SESSION* data_ssn = fd ? &fd->session : nullptr;
 
@@ -100,7 +100,7 @@ static int SnortFTPData(Packet* p)
         /* FTP-Data session is in limbo, we need to lookup the control session
          * to figure out what to do. */
 
-        FtpFlowData* fd = (FtpFlowData*)stream.get_application_data_from_key(
+        FtpFlowData* fd = (FtpFlowData*)Stream::get_flow_data(
             &data_ssn->ftp_key, FtpFlowData::flow_id);
 
         FTP_SESSION* ftp_ssn = fd ? &fd->session : NULL;
@@ -167,7 +167,7 @@ FtpDataFlowData::FtpDataFlowData(Packet* p) : FlowData(flow_id)
     memset(&session, 0, sizeof(session));
 
     session.ft_ssn.proto = FTPP_SI_PROTO_FTP_DATA;
-    stream.populate_session_key(p, &session.ftp_key);
+    Stream::populate_flow_key(p, &session.ftp_key);
 }
 
 FtpDataFlowData::~FtpDataFlowData()
@@ -186,7 +186,7 @@ void FtpDataFlowData::handle_eof(Packet* p)
     initFilePosition(&data_ssn->position, get_file_processed_size(p->flow));
     finalFilePosition(&data_ssn->position);
 
-    stream.flush_request(p);
+    Stream::flush_request(p);
 
     if (!(data_ssn->packet_flags & FTPDATA_FLG_STOP))
     {

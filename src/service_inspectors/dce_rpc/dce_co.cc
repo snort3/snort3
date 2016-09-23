@@ -318,12 +318,12 @@ static inline bool DCE2_GcReassembleEarly(DCE2_SsnData* sd)
     void* config = sd->config;
     if (sd->trans == DCE2_TRANS_TYPE__TCP)
     {
-        if (((dce2TcpProtoConf*)config)->co_reassemble_threshold > 0)
+        if (((dce2TcpProtoConf*)config)->common.co_reassemble_threshold > 0)
             return true;
     }
     else
     {
-        if (((dce2SmbProtoConf*)config)->co_reassemble_threshold > 0)
+        if (((dce2SmbProtoConf*)config)->common.co_reassemble_threshold > 0)
             return true;
     }
     return false;
@@ -336,11 +336,11 @@ static inline uint16_t DCE2_GcReassembleThreshold(DCE2_SsnData* sd)
     {
         if (sd->trans == DCE2_TRANS_TYPE__TCP)
         {
-            return ((dce2TcpProtoConf*)config)->co_reassemble_threshold;
+            return ((dce2TcpProtoConf*)config)->common.co_reassemble_threshold;
         }
         else
         {
-            return ((dce2SmbProtoConf*)config)->co_reassemble_threshold;
+            return ((dce2SmbProtoConf*)config)->common.co_reassemble_threshold;
         }
     }
     return UINT16_MAX;

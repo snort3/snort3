@@ -1068,7 +1068,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                 ftpdata->data_chan = session->server_conf->data_chan;
 
                                 /* Call into Streams to mark data channel as ftp-data */
-                                result = stream.set_application_protocol_id_expected(
+                                result = Stream::set_application_protocol_id_expected(
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
                                     p->type(), ftp_data_app_id, fd);
@@ -1080,7 +1080,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                             {
                                 /* Call into Streams to mark data channel as something
                                  * to ignore. */
-                                stream.ignore_session(
+                                Stream::ignore_flow(
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
                                     p->type(), SSN_DIR_BOTH,
@@ -1140,7 +1140,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                             ftpdata->data_chan = session->server_conf->data_chan;
 
                             /* Call into Streams to mark data channel as ftp-data */
-                            result = stream.set_application_protocol_id_expected(
+                            result = Stream::set_application_protocol_id_expected(
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
                                 p->type(), ftp_data_app_id, fd);
@@ -1152,7 +1152,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                         {
                             /* Call into Streams to mark data channel as something
                              * to ignore. */
-                            stream.ignore_session(
+                            Stream::ignore_flow(
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
                                 p->type(), SSN_DIR_BOTH,
@@ -1381,7 +1381,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                     if (!ftpssn->server_conf->check_encrypted_data)
                     {
                         /* Mark this session & packet as one to ignore */
-                        stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
+                        Stream::stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
                     }
                     DebugMessage(DEBUG_FTPTELNET,
                         "FTP client stream is now encrypted\n");
@@ -1460,7 +1460,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                     if (!ftpssn->server_conf->check_encrypted_data)
                     {
                         /* Mark this session & packet as one to ignore */
-                        stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
+                        Stream::stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
                     }
                     DebugMessage(DEBUG_FTPTELNET,
                         "FTP server stream is now encrypted\n");

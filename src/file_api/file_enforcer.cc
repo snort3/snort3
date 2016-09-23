@@ -181,7 +181,7 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
     return false;
 }
 
-FileVerdict  FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file)
+FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file)
 {
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
     SFXHASH_NODE* hash_node;

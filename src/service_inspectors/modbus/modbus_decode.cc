@@ -24,7 +24,6 @@
 #include "modbus.h"
 #include "modbus_module.h"
 #include "protocols/packet.h"
-#include "stream/stream_api.h"
 #include "events/event_queue.h"
 
 // FIXIT-L convert this stuff to a table and make configurable
@@ -406,7 +405,7 @@ bool ModbusDecode(Packet* p)
         return false;
 
     ModbusFlowData* mfd =
-        (ModbusFlowData*)p->flow->get_application_data(ModbusFlowData::flow_id);
+        (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::flow_id);
 
     /* Lay the header struct over the payload */
     header = (modbus_header_t*)p->data;

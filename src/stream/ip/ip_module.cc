@@ -140,7 +140,7 @@ ProfileStats* StreamIpModule::get_profile(
     {
     case 0:
         name = "stream_ip";
-        parent = nullptr;
+        parent = "stream";
         return &ip_perf_stats;
 
     case 1:

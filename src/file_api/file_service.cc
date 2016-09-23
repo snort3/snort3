@@ -34,18 +34,18 @@
 #include <stdlib.h>
 
 #include "file_api.h"
-#include "file_stats.h"
 #include "file_capture.h"
+#include "file_cache.h"
+#include "file_config.h"
 #include "file_flows.h"
 #include "file_enforcer.h"
 #include "file_lib.h"
-#include "file_config.h"
+#include "file_stats.h"
 
 #include "mime/file_mime_config.h"
 #include "mime/file_mime_process.h"
 #include "main/snort_types.h"
 #include "managers/action_manager.h"
-#include "stream/stream_api.h"
 #include "detection/detect.h"
 #include "detection/detection_util.h"
 #include "packet_io/active.h"
@@ -56,6 +56,7 @@ bool FileService::file_signature_enabled = false;
 bool FileService::file_capture_enabled = false;
 bool FileService::file_processing_initiated = false;
 FileEnforcer* FileService::file_enforcer = nullptr;
+FileCache* FileService::file_cache = nullptr;
 
 void FileService::init()
 {
@@ -77,6 +78,8 @@ void FileService::close()
 {
     if (file_enforcer)
         delete file_enforcer;
+    if (file_cache)
+        delete file_cache;
 
     MimeSession::exit();
     FileCapture::exit();
@@ -87,6 +90,7 @@ void FileService::start_file_processing()
     if (!file_processing_initiated)
     {
         file_enforcer = new FileEnforcer;
+        file_cache = new FileCache;
         //RegisterProfileStats("file", print_file_stats);  FIXIT-M put in module
         file_processing_initiated = true;
     }
@@ -187,3 +191,4 @@ uint64_t get_file_processed_size(Flow* flow)
 
     return context->get_processed_bytes();
 }
+

@@ -32,7 +32,6 @@
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
 #include "profiler/profiler.h"
-#include "stream/stream_api.h"
 #include "file_api/file_api.h"
 #include "parser/parser.h"
 #include "framework/inspector.h"
@@ -74,16 +73,14 @@ static SIPData* SetNewSIPData(Packet* p, SIP_PROTO_CONF* config)
         MaxSessionsAlerted = 0;
     }
     SipFlowData* fd = new SipFlowData;
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
     numSessions++;
     return &fd->session;
 }
 
 SIPData* get_sip_session_data(Flow* flow)
 {
-    SipFlowData* fd = (SipFlowData*)flow->get_application_data(
-        SipFlowData::flow_id);
-
+    SipFlowData* fd = (SipFlowData*)flow->get_flow_data(SipFlowData::flow_id);
     return fd ? &fd->session : NULL;
 }
 

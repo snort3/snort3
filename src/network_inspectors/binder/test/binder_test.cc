@@ -30,7 +30,6 @@
 #include "managers/inspector_manager.h"
 #include "main/policy.h"
 #include "profiler/profiler.h"
-#include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 #include "utils/stats.h"
 
@@ -90,7 +89,7 @@ unsigned THREAD_LOCAL Inspector::slot = 0;
 void ParseError(const char*, ...) { }
 void LogMessage(const char*,...) { }
 
-void Stream::set_application_protocol_id_from_host_entry(Flow*, HostAttributeEntry const*, int) { }
+void Stream::set_application_protocol_id(Flow*, HostAttributeEntry const*, int) { }
 void Stream::set_splitter(Flow*, bool, class StreamSplitter*) { }
 const char* get_protocol_name(uint16_t) { return ""; }
 int16_t FindProtocolReference(const char*) { return 0; }
@@ -118,7 +117,7 @@ TEST(binder, exec)
     memset(conf,0,sizeof(SnortConfig));
     snort_conf = (SnortConfig*)conf;
     Flow* flow = new Flow;
-    constexpr size_t offset = offsetof(Flow, appDataList);
+    constexpr size_t offset = offsetof(Flow, flow_data);
     memset((uint8_t*)flow+offset, 0, sizeof(Flow)-offset);
 
     s_inspector = new MyInspector();

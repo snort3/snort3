@@ -87,7 +87,6 @@ public:
     void flush_data_on_fin_recv(TcpSegmentDescriptor& tsd) override;
 
     void init_toolbox() override;
-
 };
 
 #endif

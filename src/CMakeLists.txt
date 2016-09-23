@@ -133,9 +133,9 @@ target_link_libraries( snort
     detection
     framework
     file_api
-    time
     latency
     profiler
+    time
     ips_actions
     events
     hash

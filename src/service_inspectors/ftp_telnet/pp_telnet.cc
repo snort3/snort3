@@ -127,7 +127,7 @@ int normalize_telnet(
         else
         {
             /* Okay, it wasn't an IAC also its a midstream pickup */
-            if (*read_ptr > 0x7F && stream.is_midstream(p->flow))
+            if (*read_ptr > 0x7F && Stream::is_midstream(p->flow))
             {
                 consec_8bit_chars++;
                 if (consec_8bit_chars > CONSECUTIVE_8BIT_THRESHOLD)
@@ -145,7 +145,7 @@ int normalize_telnet(
                         if (!tnssn->telnet_conf->check_encrypted_data)
                         {
                             /* Mark this session & packet as one to ignore */
-                            stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
+                            Stream::stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
                             /* No point to do further normalization */
                             return FTPP_ALERT;
                         }
@@ -342,7 +342,7 @@ int normalize_telnet(
                         if (!tnssn->telnet_conf->check_encrypted_data)
                         {
                             /* Mark this session & packet as one to ignore */
-                            stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
+                            Stream::stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
                             /* No point to do further normalization */
                             return FTPP_ALERT;
                         }

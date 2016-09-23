@@ -37,6 +37,8 @@
 #define DEFAULT_FILE_CAPTURE_MAX_SIZE       1048576     // 1 MiB
 #define DEFAULT_FILE_CAPTURE_MIN_SIZE       0           // 0
 #define DEFAULT_FILE_CAPTURE_BLOCK_SIZE     32768       // 32 KiB
+#define DEFAULT_MAX_FILES_CACHED            65536
+
 class FileConfig
 {
 public:
@@ -45,8 +47,8 @@ public:
     void process_file_policy_rule(FileRule&);
     bool process_file_magic(FileMagicData&);
     uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t file_offset, void** context);
-    FilePolicy& get_file_policy() {return filePolicy;}
-    std::string file_type_name( uint32_t id);
+    FilePolicy& get_file_policy() { return filePolicy; }
+    std::string file_type_name(uint32_t id);
 
     int64_t file_type_depth = DEFAULT_FILE_TYPE_DEPTH;
     int64_t file_signature_depth = DEFAULT_FILE_SIGNATURE_DEPTH;
@@ -58,6 +60,7 @@ public:
     int64_t capture_min_size = DEFAULT_FILE_CAPTURE_MIN_SIZE;
     int64_t capture_block_size = DEFAULT_FILE_CAPTURE_BLOCK_SIZE;
     int64_t file_depth =  0;
+    int64_t max_files_cached = DEFAULT_MAX_FILES_CACHED;
 
     static int64_t show_data_depth;
     static bool trace_type;

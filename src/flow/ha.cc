@@ -31,7 +31,7 @@
 #include "packet_io/sfdaq.h"
 #include "profiler/profiler.h"
 #include "side_channel/side_channel.h"
-#include "stream/stream_api.h"
+#include "stream/stream.h"
 #include "time/packet_time.h"
 
 static const uint8_t HA_MESSAGE_VERSION = 3;
@@ -343,7 +343,7 @@ static void consume_receive_delete_message(HAMessage* msg)
 {
     FlowKey key;
     (void)read_flow_key(&key, msg);
-    stream.delete_session(&key);
+    Stream::delete_flow(&key);
 }
 
 static void consume_receive_update_message(HAMessage* msg)
@@ -351,7 +351,7 @@ static void consume_receive_update_message(HAMessage* msg)
     FlowKey key;
     (void)read_flow_key(&key, msg);
     // flow will be nullptr if/when the session does not exist in the caches
-    Flow* flow = stream.get_session(&key);
+    Flow* flow = Stream::get_flow(&key);
 
     assert(s_client_map);
 

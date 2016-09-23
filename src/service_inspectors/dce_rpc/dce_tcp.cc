@@ -61,9 +61,7 @@ unsigned Dce2TcpFlowData::flow_id = 0;
 
 DCE2_TcpSsnData* get_dce2_tcp_session_data(Flow* flow)
 {
-    Dce2TcpFlowData* fd = (Dce2TcpFlowData*)flow->get_application_data(
-        Dce2TcpFlowData::flow_id);
-
+    Dce2TcpFlowData* fd = (Dce2TcpFlowData*)flow->get_flow_data(Dce2TcpFlowData::flow_id);
     return fd ? &fd->dce2_tcp_session : nullptr;
 }
 
@@ -72,7 +70,7 @@ static DCE2_TcpSsnData* set_new_dce2_tcp_session(Packet* p)
     Dce2TcpFlowData* fd = new Dce2TcpFlowData;
 
     memset(&fd->dce2_tcp_session,0,sizeof(DCE2_TcpSsnData));
-    p->flow->set_application_data(fd);
+    p->flow->set_flow_data(fd);
     return(&fd->dce2_tcp_session);
 }
 

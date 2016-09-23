@@ -24,7 +24,6 @@
 
 #include "dce_common.h"
 #include "main/snort_types.h"
-#include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 
 #define DCE2_DEBUG__PAF_START_MSG_TCP  "DCE/RPC over TCP PAF ====================================="

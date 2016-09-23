@@ -46,9 +46,9 @@
 #include "utils/stats.h"
 #include "log/text_log.h"
 #include "main/snort_debug.h"
-#include "stream/stream_api.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
+#include "stream/stream.h"
 
 THREAD_LOCAL ProfileStats decodePerfStats;
 
@@ -347,11 +347,11 @@ static inline uint8_t GetTTL(const Packet* const p, bool forward)
 
     // outermost ip is considered to be outer here,
     // even if it is the only ip layer ...
-    ttl = stream.get_session_ttl(p->flow, dir, outer);
+    ttl = Stream::get_flow_ttl(p->flow, dir, outer);
 
     // if we don't get outer, we use inner
     if ( 0 == ttl && outer )
-        ttl = stream.get_session_ttl(p->flow, dir, false);
+        ttl = Stream::get_flow_ttl(p->flow, dir, false);
 
     return ttl;
 }

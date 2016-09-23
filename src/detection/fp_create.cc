@@ -471,7 +471,14 @@ bool set_fp_content(OptTreeNode* otn)
             fp_only = !ofl->ips_opt->fp_research();
         }
 
-        PatternMatchData* tmp = get_pmd(ofl);
+        // Set rule direction
+        RuleDirection dir = RULE_WO_DIR;
+        if (OtnFlowFromServer(otn))
+            dir = RULE_FROM_SERVER;
+        else if (OtnFlowFromClient(otn))
+            dir = RULE_FROM_CLIENT;
+
+        PatternMatchData* tmp = get_pmd(ofl, otn->proto, dir);
 
         if ( !tmp )
             continue;
@@ -537,7 +544,7 @@ static PatternMatchData* get_fp_content(OptTreeNode* otn, OptFpList*& next)
         if ( !ofl->ips_opt )
             continue;
 
-        PatternMatchData* pmd = get_pmd(ofl);
+        PatternMatchData* pmd = get_pmd(ofl, 0, RULE_WO_DIR);
 
         if ( !pmd )
             continue;
@@ -585,8 +592,8 @@ static int fpFinishPortGroupRule(
         {
             static MpseAgent agent =
             {
-                  pmx_create_tree, add_patrn_to_neg_list,
-                  fpDeletePMX, free_detection_option_root, neg_list_free
+                pmx_create_tree, add_patrn_to_neg_list,
+                fpDeletePMX, free_detection_option_root, neg_list_free
             };
 
             pg->mpse[pmd->pm_type] = MpseManager::get_search_engine(
@@ -1924,7 +1931,6 @@ static void PrintFastPatternInfo(OptTreeNode* otn, PatternMatchData* pmd,
         snprintf(buf, sizeof(buf), "%2.02X ", (uint8_t)pattern[i]);
         hex += buf;
         txt += isprint(pattern[i]) ? pattern[i] : '.';
-
     }
     printf("fast pattern[%d] = x%s '%s'\n", pattern_length, hex.c_str(), txt.c_str());
 #else
