@@ -43,7 +43,7 @@ struct SnortConfig;
     PegCount proto ## _uni_prunes; \
     PegCount proto ## _preemptive_prunes; \
     PegCount proto ## _memcap_prunes; \
-    PegCount proto ## _user_prunes
+    PegCount proto ## _ha_prunes
 
 struct BaseStats
 {

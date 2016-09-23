@@ -191,8 +191,7 @@ void FlowControl::delete_flow(const FlowKey* key)
     Flow* flow = cache->find(key);
 
     if ( flow )
-        // FIXIT-L prune reason was actually HA sync
-        cache->release(flow, PruneReason::USER);
+        cache->release(flow, PruneReason::HA);
 }
 
 void FlowControl::delete_flow(Flow* flow, PruneReason reason)

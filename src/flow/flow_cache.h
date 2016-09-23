@@ -46,7 +46,7 @@ public:
     Flow* find(const FlowKey*);
     Flow* get(const FlowKey*);
 
-    int release(Flow*, PruneReason = PruneReason::USER, bool do_cleanup = true);
+    int release(Flow*, PruneReason = PruneReason::NONE, bool do_cleanup = true);
 
     unsigned prune_unis();
     unsigned prune_stale(uint32_t thetime, const Flow* save_me);
@@ -61,7 +61,7 @@ public:
     { return config.max_sessions; }
 
     PegCount get_total_prunes() const
-    { return prune_stats.get_total() - prune_stats.get(PruneReason::PURGE); }
+    { return prune_stats.get_total(); }
 
     PegCount get_prunes(PruneReason reason) const
     { return prune_stats.get(reason); }

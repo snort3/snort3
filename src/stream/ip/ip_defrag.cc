@@ -1282,6 +1282,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
         else
         {
             release_tracker(ft);
+            p->flow->session_state |= STREAM_STATE_CLOSED;
         }
     }
 }

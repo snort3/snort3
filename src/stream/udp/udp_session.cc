@@ -59,12 +59,6 @@ THREAD_LOCAL ProfileStats udp_perf_stats;
 
 static void UdpSessionCleanup(Flow* lwssn)
 {
-    if (lwssn->ssn_state.session_flags & SSNFLAG_PRUNED)
-        udpStats.prunes++;
-
-    else if (lwssn->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
-        udpStats.timeouts++;
-
     if ( lwssn->ssn_state.session_flags & SSNFLAG_SEEN_SENDER )
         udpStats.released++;
 }
@@ -196,6 +190,7 @@ int UdpSession::process(Packet* p)
     // Should be done before we do something with the packet...
     if ( Stream::expired_flow(flow, p) )
     {
+        udpStats.timeouts++;
         UdpSessionCleanup(flow);
         flow->restart();
         flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;

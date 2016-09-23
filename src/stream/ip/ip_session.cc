@@ -34,8 +34,8 @@
 const PegInfo ip_pegs[] =
 {
     SESSION_PEGS("ip"),
-    { "total", "total fragments" },
-    { "current", "current fragments" },
+    { "total frags", "total fragments" },
+    { "current frags", "current fragments" },
     { "max frags", "max fragments" },
     { "reassembled", "reassembled datagrams" },
     { "discards", "fragments discarded" },
@@ -70,12 +70,6 @@ static void IpSessionCleanup(Flow* lws, FragTracker* tracker)
         Defrag* d = get_defrag(lws->ssn_server);
         d->cleanup(tracker);
     }
-
-    if ( lws->ssn_state.session_flags & SSNFLAG_TIMEDOUT )
-        ip_stats.timeouts++;
-
-    else if ( lws->ssn_state.session_flags & SSNFLAG_PRUNED )
-        ip_stats.prunes++;
 
     ip_stats.released++;
     lws->restart();
@@ -166,6 +160,7 @@ int IpSession::process(Packet* p)
 
     if ( Stream::expired_flow(flow, p) )
     {
+        ip_stats.timeouts++;
         IpSessionCleanup(flow, &tracker);
 
 #ifdef ENABLE_EXPECTED_IP

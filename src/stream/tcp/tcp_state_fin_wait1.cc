@@ -146,6 +146,7 @@ bool TcpStateFinWait1::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
         trk.session->update_session_on_rst(tsd, true);
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
         trk.session->set_pkt_action_flag(ACTION_RST);
+        tsd.get_pkt()->flow->session_state |= STREAM_STATE_CLOSED;
     }
     else
     {

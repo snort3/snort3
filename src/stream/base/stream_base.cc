@@ -45,18 +45,18 @@ THREAD_LOCAL BaseStats stream_base_stats;
 #define PROTO_PEGS(proto_str) \
     { proto_str " flows", "total " proto_str " sessions" }, \
     { proto_str " total prunes", "total " proto_str " sessions pruned" }, \
-    { proto_str " timeout prunes", proto_str " sessions pruned due to timeout" }, \
+    { proto_str " idle prunes", proto_str " sessions pruned due to timeout" }, \
     { proto_str " excess prunes", proto_str " sessions pruned due to excess" }, \
     { proto_str " uni prunes", proto_str " uni sessions pruned" }, \
     { proto_str " preemptive prunes", proto_str " sessions pruned during preemptive pruning" }, \
     { proto_str " memcap prunes", proto_str " sessions pruned due to memcap" }, \
-    { proto_str " user prunes", proto_str " sessions pruned for other reasons" }
+    { proto_str " ha prunes", proto_str " sessions pruned by high availability sync" }
 
 #define SET_PROTO_COUNTS(proto, pkttype) \
     stream_base_stats.proto ## _flows = flow_con->get_flows(PktType::pkttype); \
     stream_base_stats.proto ## _total_prunes = flow_con->get_total_prunes(PktType::pkttype), \
     stream_base_stats.proto ## _timeout_prunes = \
-        flow_con->get_prunes(PktType::pkttype, PruneReason::TIMEOUT), \
+        flow_con->get_prunes(PktType::pkttype, PruneReason::IDLE), \
     stream_base_stats.proto ## _excess_prunes = \
         flow_con->get_prunes(PktType::pkttype, PruneReason::EXCESS), \
     stream_base_stats.proto ## _uni_prunes = \
@@ -65,8 +65,8 @@ THREAD_LOCAL BaseStats stream_base_stats;
         flow_con->get_prunes(PktType::pkttype, PruneReason::PREEMPTIVE), \
     stream_base_stats.proto ## _memcap_prunes = \
         flow_con->get_prunes(PktType::pkttype, PruneReason::MEMCAP), \
-    stream_base_stats.proto ## _user_prunes = \
-        flow_con->get_prunes(PktType::pkttype, PruneReason::USER)
+    stream_base_stats.proto ## _ha_prunes = \
+        flow_con->get_prunes(PktType::pkttype, PruneReason::HA)
 
 // FIXIT-L dependency on stats define in another file
 const PegInfo base_pegs[] =

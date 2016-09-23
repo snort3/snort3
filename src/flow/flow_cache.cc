@@ -192,7 +192,7 @@ unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
 
         DebugMessage(DEBUG_STREAM, "pruning stale flow\n");
         flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
-        release(flow, PruneReason::TIMEOUT);
+        release(flow, PruneReason::IDLE);
         ++pruned;
 
         flow = static_cast<Flow*>(hash_table->first());
@@ -314,7 +314,7 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 
         DebugMessage(DEBUG_STREAM, "retiring stale flow\n");
         flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
-        release(flow, PruneReason::TIMEOUT);
+        release(flow, PruneReason::IDLE);
 
         ++retired;
 
@@ -334,7 +334,7 @@ unsigned FlowCache::purge()
 
     while ( auto flow = static_cast<Flow*>(hash_table->first()) )
     {
-        release(flow, PruneReason::PURGE);
+        release(flow, PruneReason::NONE);
         ++retired;
     }
 

@@ -56,6 +56,7 @@
 #include "detection/detection_util.h"
 #include "hash/sfxhash.h"
 #include "utils/util.h"
+#include "utils/util_net.h"
 #include "utils/sflsq.h"
 #include "time/packet_time.h"
 #include "perf_monitor/flow_ip_tracker.h"
@@ -176,12 +177,6 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
         tcpStats.no_pickups++;
     else
         return;
-
-    if ( flow->get_session_flags() & SSNFLAG_PRUNED )
-        tcpStats.prunes++;
-
-    else if ( flow->get_session_flags() & SSNFLAG_TIMEDOUT )
-        tcpStats.timeouts++;
 
     update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
 

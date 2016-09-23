@@ -60,12 +60,6 @@ THREAD_LOCAL ProfileStats icmp_perf_stats;
 
 static void IcmpSessionCleanup(Flow* ssn)
 {
-    if (ssn->ssn_state.session_flags & SSNFLAG_PRUNED)
-        icmpStats.prunes++;
-
-    else if (ssn->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
-        icmpStats.timeouts++;
-
     if ( ssn->ssn_state.session_flags & SSNFLAG_SEEN_SENDER )
         icmpStats.released++;
 

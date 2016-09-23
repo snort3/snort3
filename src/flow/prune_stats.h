@@ -26,17 +26,15 @@
 
 #include "framework/counts.h"
 
-// FIXIT-L we can probably fiddle with these breakdowns
 enum class PruneReason : uint8_t
 {
-    // FIXIT-L do we want to count purges?  yes
-    PURGE = 0,
-    TIMEOUT,
+    IDLE,
     EXCESS,
     UNI,
     PREEMPTIVE,
     MEMCAP,
-    USER,
+    HA,
+    NONE,
     MAX
 };
 
@@ -61,7 +59,7 @@ struct PruneStats
 inline PegCount PruneStats::get_total() const
 {
     PegCount total = 0;
-    for ( reason_t i = 0; i < static_cast<reason_t>(PruneReason::MAX); ++i )
+    for ( reason_t i = 0; i < static_cast<reason_t>(PruneReason::NONE); ++i )
         total += prunes[i];
 
     return total;
