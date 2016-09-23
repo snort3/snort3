@@ -44,13 +44,15 @@ enum DceDetectListState
     DCE_DETECT_LIST_STATE__END,
 };
 
-std::string transport[2] = { "smb", "tcp" };
+std::string transport[3] = { "smb", "tcp", "udp" };
 
 std::map <std::string, std::vector<uint16_t> > default_ports
 {
     { "smb", { 139, 445 }
     },
     { "tcp", { 135 }
+    },
+    { "udp", { 135 }
     }
 };
 
@@ -60,6 +62,8 @@ std::map <std::string, std::vector<uint16_t> > autodetect_default_ports
     { "smb", { 1025 }
     },
     { "tcp", { 1026 }
+    },
+    { "udp", { 1027 }
     }
 };
 
@@ -524,6 +528,8 @@ bool DcerpcServer::init_net_created_table()
         table_api.close_table();
         for (auto type : transport)
         {
+            if (type.compare("udp") == 0)
+                continue;
             tmpval = add_option_to_table(table_api,table_name[type], "reassemble_threshold",
                 std::stoi(val)) && tmpval;
         }
@@ -598,12 +604,14 @@ bool DcerpcServer::parse_nets(std::istringstream& data_stream, std::map<std::str
     return true;
 }
 
-bool DcerpcServer::add_option_to_all_transports(std::string option, std::string value)
+bool DcerpcServer::add_option_to_transports(std::string option, std::string value, bool co_only)
 {
     bool retval = true;
 
     for (auto type: transport)
     {
+        if (co_only && (type.compare("udp") == 0))
+            continue;
         table_api.open_table(table_name[type]);
         retval = table_api.add_option(option, value) && retval;
         table_api.close_table();
@@ -619,17 +627,20 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
 
     Binder bind_tcp(table_api);
     Binder bind_smb(table_api);
+    Binder bind_udp(table_api);
 
     std::map<std::string, Binder*> bind;
 
     bind["smb"] = &bind_smb;
     bind["tcp"] = &bind_tcp;
+    bind["udp"] = &bind_udp;
 
     for (auto type : transport)
     {
-        bind[type]->set_when_proto("tcp"); // FIXIT-M once dce_udp is ported
+        bind[type]->set_when_proto("tcp");
         bind[type]->set_use_type("dce_" + type);
     }
+    bind["udp"]->set_when_proto("udp");
 
     if (!(data_stream >> keyword))
         return false;
@@ -682,7 +693,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
             if (policy.back() == ',')
                 policy.pop_back();
 
-            tmpval = add_option_to_all_transports("policy", policy);
+            tmpval = add_option_to_transports("policy", policy, true);
         }
         else if (!keyword.compare("detect"))
         {

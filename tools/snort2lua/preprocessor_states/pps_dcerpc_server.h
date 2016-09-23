@@ -30,7 +30,7 @@ namespace preprocessors
 {
 namespace dce
 {
-extern std::string transport[2];
+extern std::string transport[3];
 
 class DcerpcServer : public ConversionState
 {
@@ -55,7 +55,7 @@ private:
     bool init_new_tables(bool is_default);
     bool parse_nets(std::istringstream& data_stream, std::map<std::string,
         Binder*> bind);
-    bool add_option_to_all_transports(std::string option, std::string value);
+    bool add_option_to_transports(std::string option, std::string value, bool co_only);
     std::map<std::string, bool> detect_ports_set;
     std::map<std::string, bool> autodetect_ports_set;
     std::map<std::string, std::string> table_name;

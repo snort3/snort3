@@ -33,11 +33,11 @@ public:
 private:
     bool add_deleted_comment_to_table(std::string table_name, std::string option);
     bool add_deleted_comment_to_defaults(std::string option);
-    bool add_option_to_all(std::string option, const bool val);
-    bool add_option_to_all(std::string option, const int val);
+    bool add_option_to_all(std::string option, const bool val, bool co_only);
+    bool add_option_to_all(std::string option, const int val, bool co_only);
     bool add_option_to_type(std::string type, std::string option, std::string value);
     bool add_option_to_type(std::string type, std::string option);
-    bool parse_int_and_add_to_all(std::string opt_name, std::istringstream& stream);
+    bool parse_int_and_add_to_all(std::string opt_name, std::istringstream& stream, bool co_only);
     bool parse_string_and_add_to_type(std::string type, std::string opt_name,
         std::istringstream& stream);
 };
@@ -51,12 +51,14 @@ bool Dcerpc::add_deleted_comment_to_table(std::string table_name, std::string op
     return tmpval;
 }
 
-bool Dcerpc::add_option_to_all(std::string option, const bool val)
+bool Dcerpc::add_option_to_all(std::string option, const bool val, bool co_only)
 {
     bool tmpval = true;
 
     for (auto type : transport)
     {
+        if (co_only && (type.compare("udp") == 0))
+            continue;
         tmpval = add_option_to_table(table_api, "dce_" + type, option, val);
         for (int i=0; i < DcerpcServer::get_binding_id(); i++)
         {
@@ -67,12 +69,14 @@ bool Dcerpc::add_option_to_all(std::string option, const bool val)
     return tmpval;
 }
 
-bool Dcerpc::add_option_to_all(std::string option, const int val)
+bool Dcerpc::add_option_to_all(std::string option, const int val, bool co_only)
 {
     bool tmpval = true;
 
     for (auto type : transport)
     {
+        if (co_only && (type.compare("udp") == 0))
+            continue;
         tmpval = add_option_to_table(table_api, "dce_" + type, option, val);
         for (int i=0; i < DcerpcServer::get_binding_id(); i++)
         {
@@ -120,13 +124,14 @@ bool Dcerpc::add_deleted_comment_to_defaults(std::string option)
     return tmpval;
 }
 
-bool Dcerpc::parse_int_and_add_to_all(std::string opt_name, std::istringstream& stream)
+bool Dcerpc::parse_int_and_add_to_all(std::string opt_name, std::istringstream& stream, bool
+    co_only)
 {
     int val;
 
     if (stream >> val)
     {
-        return add_option_to_all(opt_name, val);
+        return add_option_to_all(opt_name, val, co_only);
     }
 
     return false;
@@ -170,10 +175,10 @@ bool Dcerpc::convert(std::istringstream& data_stream)
             tmpval = eat_option(data_stream);
         }
         else if (!keyword.compare("disable_defrag"))
-            tmpval = add_option_to_all("disable_defrag", true);
+            tmpval = add_option_to_all("disable_defrag", true, false);
 
         else if (!keyword.compare("max_frag_len"))
-            tmpval = parse_int_and_add_to_all("max_frag_len", data_stream);
+            tmpval = parse_int_and_add_to_all("max_frag_len", data_stream, false);
 
         else if (!keyword.compare("events"))
         {
@@ -201,7 +206,7 @@ bool Dcerpc::convert(std::istringstream& data_stream)
             }
         }
         else if (!keyword.compare("reassemble_threshold"))
-            tmpval = parse_int_and_add_to_all("reassemble_threshold", data_stream);
+            tmpval = parse_int_and_add_to_all("reassemble_threshold", data_stream, true);
 
         else if (!keyword.compare("disabled"))
             tmpval = add_deleted_comment_to_defaults("disabled");
