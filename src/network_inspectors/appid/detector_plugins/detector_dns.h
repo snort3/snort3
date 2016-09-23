@@ -32,7 +32,7 @@ extern struct RNAServiceValidationModule dns_service_mod;
 extern struct RNAClientAppModule dns_udp_client_mod;
 extern struct RNAClientAppModule dns_tcp_client_mod;
 
-int dns_host_scan_hostname(const u_int8_t*, size_t, AppId*, AppId*, const ServiceDnsConfig*);
+int dns_host_scan_hostname(const uint8_t*, size_t, AppId*, AppId*, const ServiceDnsConfig*);
 void service_dns_host_clean(ServiceDnsConfig* pConfig);
 int dns_host_detector_process_patterns(ServiceDnsConfig* pConfig);
 int dns_add_host_pattern(uint8_t*, size_t, uint8_t, AppId, ServiceDnsConfig*);

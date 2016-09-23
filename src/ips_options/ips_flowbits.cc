@@ -48,7 +48,6 @@
 
 #include <string>
 #include <forward_list>
-using namespace std;
 
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
@@ -67,6 +66,8 @@ using namespace std;
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+
+using namespace std;
 
 #define s_name "flowbits"
 

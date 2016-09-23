@@ -27,8 +27,10 @@
 
 #include <netdb.h>
 
-#if defined(FREEBSD) || defined(OPENBSD)
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <rpc/rpc.h>
+#elif defined(__sun)
+#include <rpc/rpcent.h>
 #endif
 
 #include "service_api.h"

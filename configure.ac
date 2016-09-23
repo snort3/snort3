@@ -82,25 +82,11 @@ linux="no"
 macos="no"
 
 case "$host" in
-  *-openbsd*)
-    AC_DEFINE([OPENBSD],[1],[Define if OpenBSD])
-    ;;
-  *-solaris*)
-    AC_DEFINE([SOLARIS],[1],[Define if Solaris])
-    ;;
-  *-sunos*)
-    AC_DEFINE([SUNOS],[1],[Define if SunOS])
-    ;;
   *-linux*)
     linux="yes"
-    AC_DEFINE([LINUX],[1],[Define if Linux])
-    ;;
-  *-freebsd*)
-    AC_DEFINE([FREEBSD],[1],[Define if FreeBSD])
     ;;
   *-apple*)
     macos="yes"
-    AC_DEFINE([MACOS],[1],[Define if MacOS])
 esac
 
 #--------------------------------------------------------------------------
@@ -118,19 +104,6 @@ AM_CONDITIONAL(MAKE_PDF_DOC, [test "x$have_dblatex" = "xyes" -a "x$have_asciidoc
 AC_CHECK_PROG(have_w3m,w3m,yes,no)
 
 AM_CONDITIONAL(MAKE_TEXT_DOC, [test "x$have_w3m" = "xyes" -a "x$have_asciidoc" = "xyes"])
-
-AC_MSG_CHECKING(for sparc)
-if eval "echo $host_cpu|grep -i sparc >/dev/null"; then
-    AC_DEFINE([WORDS_MUSTALIGN],[1],[Define if words must align])
-    AC_MSG_RESULT(yes)
-
-    # gcc, sparc and optimization not so good
-    if test -n "$GCC"; then
-        NO_OPTIMIZE="yes"
-    fi
-else
-    AC_MSG_RESULT(no)
-fi
 
 #--------------------------------------------------------------------------
 # visibility foo

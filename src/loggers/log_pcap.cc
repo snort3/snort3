@@ -48,6 +48,8 @@ extern "C" {
 #include "utils/util.h"
 #include "utils/stats.h"
 
+using namespace std;
+
 /*
  * <pcap file> ::= <pcap file hdr> [<pcap pkt hdr> <packet>]*
  * on 64 bit systems, some fields in the <pcap * hdr> are 8 bytes
@@ -58,8 +60,6 @@ extern "C" {
 
 #define PCAP_FILE_HDR_SZ (24)
 #define PCAP_PKT_HDR_SZ  (16)
-
-using namespace std;
 
 struct LtdConfig
 {

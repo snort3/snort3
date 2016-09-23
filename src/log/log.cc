@@ -32,7 +32,6 @@
 
 #include <string>
 #include <mutex>
-using namespace std;
 
 #include "log_text.h"
 #include "main/snort_debug.h"
@@ -130,7 +129,7 @@ int RollAlertFile(const char* filearg)
 // default logger stuff
 //--------------------------------------------------------------------
 
-static mutex log_mutex;
+static std::mutex log_mutex;
 
 static TextLog* text_log = NULL;
 

@@ -293,11 +293,7 @@ inline uint16_t DceRpcNtohs(const uint16_t* ptr, const DceRpcBoFlag bo_flag)
     if (ptr == nullptr)
         return 0;
 
-#ifdef WORDS_MUSTALIGN
-    value = *((uint8_t*)ptr) << 8 | *((uint8_t*)ptr + 1);
-#else
     value = *ptr;
-#endif  /* WORDS_MUSTALIGN */
 
     if (bo_flag == DCERPC_BO_FLAG__NONE)
         return value;
@@ -324,12 +320,7 @@ inline uint32_t DceRpcNtohl(const uint32_t* ptr, const DceRpcBoFlag bo_flag)
     if (ptr == nullptr)
         return 0;
 
-#ifdef WORDS_MUSTALIGN
-    value = *((uint8_t*)ptr) << 24 | *((uint8_t*)ptr + 1) << 16 |
-        *((uint8_t*)ptr + 2) << 8  | *((uint8_t*)ptr + 3);
-#else
     value = *ptr;
-#endif  /* WORDS_MUSTALIGN */
 
     if (bo_flag == DCERPC_BO_FLAG__NONE)
         return value;

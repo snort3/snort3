@@ -27,7 +27,7 @@
 #include <lua.hpp>
 
 extern "C" {
-#include <daq.h>
+#include <daq_common.h>
 }
 
 #include "lua/lua_arg.h"

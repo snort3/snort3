@@ -20,7 +20,6 @@
 // Created on: Jun 24, 2015
 
 #include <iostream>
-using namespace std;
 
 #include "main/snort_debug.h"
 
@@ -31,6 +30,8 @@ using namespace std;
 #include "catch/catch.hpp"
 #include "stream_tcp_unit_test.h"
 #endif
+
+using namespace std;
 
 TcpStateHandler::TcpStateHandler(TcpStreamTracker::TcpState state, TcpStateMachine& tsm)
     : tsm(&tsm), tcp_state(state)

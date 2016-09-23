@@ -419,7 +419,7 @@ bool SFDAQInstance::can_whitelist()
 bool SFDAQInstance::set_filter(const char* bpf)
 {
     int err = 0;
-    static mutex bpf_gate;
+    static std::mutex bpf_gate;
 
     // doesn't look like the bpf flex scanner is reentrant
     bpf_gate.lock();

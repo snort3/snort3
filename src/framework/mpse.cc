@@ -22,11 +22,12 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-using namespace std;
 
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "profiler/profiler.h"
+
+using namespace std;
 
 // this is accumulated only for fast pattern
 // searches for the detection engine

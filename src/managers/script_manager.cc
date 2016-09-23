@@ -40,6 +40,8 @@
 #include "piglet/piglet_manager.h"
 #endif
 
+using namespace std;
+
 // FIXIT-P this approach results in N * K lua states where
 // N ::= number of instances of script + args and
 // K ::= number of threads
@@ -48,7 +50,6 @@
 // ultimately should look into changing detection engine to
 // keep just one copy of rule option + args
 
-using namespace std;
 #define script_pattern "*.lua"
 
 //-------------------------------------------------------------------------

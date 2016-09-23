@@ -32,7 +32,7 @@ public:
     template<typename T>
     using ArgCallback = void (*)(lua_State*, int, T& ud);
 
-    Args(lua_State* _L) : L { _L }, count { lua_gettop(L) } { }
+    Args(lua_State* state) : L { state }, count { lua_gettop(L) } { }
 
 private:
     lua_State* L;
@@ -40,8 +40,8 @@ private:
     struct ArgRef
     {
     public:
-        ArgRef(lua_State* _L, int ct, int i) :
-            L { _L }, count { ct }, index { i } { }
+        ArgRef(lua_State* state, int ct, int i) :
+            L { state }, count { ct }, index { i } { }
 
         // We treat nil as !exists
         inline bool exists()

@@ -20,10 +20,11 @@
 #include "file_module.h"
 
 #include <string>
-using namespace std;
 
 #include "stream_file.h"
 #include "main/snort_config.h"
+
+using namespace std;
 
 //-------------------------------------------------------------------------
 // stream_file module

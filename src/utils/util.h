@@ -40,7 +40,7 @@
 #include <fstream>
 #include <sstream>
 
-#ifdef LINUX
+#if defined(__linux__)
 #include <sys/syscall.h>
 #endif
 
@@ -211,7 +211,7 @@ inline int SnortStrToU32(const char* buffer, char** endptr,
 
 inline pid_t gettid()
 {
-#if defined(LINUX) && defined(SYS_gettid)
+#if defined(__linux__) && defined(SYS_gettid)
     return syscall(SYS_gettid);
 #else
     return getpid();

@@ -115,10 +115,10 @@ static CLIENT_APP_RETCODE msn_init(const IniClientAppAPI* const init_api, SF_LIS
 static CLIENT_APP_RETCODE msn_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* flowp, Packet* pkt, struct Detector*, const AppIdConfig*)
 {
-    const u_int8_t* end;
-    u_int8_t version[MAX_VERSION_SIZE];
-    u_int8_t* v;
-    u_int8_t* v_end;
+    const uint8_t* end;
+    uint8_t version[MAX_VERSION_SIZE];
+    uint8_t* v;
+    uint8_t* v_end;
     uint32_t product_id;
 
     product_id = APP_ID_MSN_MESSENGER;

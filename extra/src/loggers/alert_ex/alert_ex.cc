@@ -28,13 +28,14 @@
 
 #include <algorithm>
 #include <iostream>
-using namespace std;
 
 #include "main/snort_types.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "protocols/packet.h"
 #include "detection/signature.h"
+
+using namespace std;
 
 static const char* s_name = "alert_ex";
 static const char* s_help = "output gid:sid:rev for alerts";

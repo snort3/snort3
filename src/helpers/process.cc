@@ -36,7 +36,6 @@
 #endif
 
 #include <iostream>
-using namespace std;
 
 #include "main.h"
 #include "main/thread.h"
@@ -47,6 +46,8 @@ using namespace std;
 #include "helpers/markup.h"
 #include "helpers/ring.h"
 #include "parser/parser.h"
+
+using namespace std;
 
 #ifndef SIGNAL_SNORT_RELOAD
 #define SIGNAL_SNORT_RELOAD        SIGHUP
@@ -223,16 +224,11 @@ static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
 
 void init_signals()
 {
-#if defined(LINUX) || defined(FREEBSD) || defined(OPENBSD) || \
-    defined(SOLARIS) || defined(BSD) || defined(MACOS)
     sigset_t set;
 
     sigemptyset(&set);
     // FIXIT-L this is undefined for multithreaded apps
     sigprocmask(SIG_SETMASK, &set, NULL);
-#else
-    sigsetmask(0);
-#endif
 
     /* Make this prog behave nicely when signals come along.
      * Windows doesn't like all of these signals, and will

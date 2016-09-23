@@ -43,11 +43,11 @@
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
 
+using namespace std;
+
 #ifndef LOG_AUTHPRIV
 #define LOG_AUTHPRIV LOG_AUTH
 #endif
-
-using namespace std;
 
 #define s_name "alert_syslog"
 
@@ -112,8 +112,10 @@ static int get_options(const char* s)
     if ( strstr(s, "ndelay") )
         opts |= LOG_NDELAY;
 
+#ifdef LOG_PERROR
     if ( strstr(s, "perror") )
         opts |= LOG_PERROR;
+#endif
 
     if ( strstr(s, "pid") )
         opts |= LOG_PID;

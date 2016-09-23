@@ -26,7 +26,7 @@
 #endif
 
 #include <sys/types.h>
-#ifdef LINUX
+#if defined(__linux__)
 #include <stdint.h>
 #endif
 #include <netinet/in.h>

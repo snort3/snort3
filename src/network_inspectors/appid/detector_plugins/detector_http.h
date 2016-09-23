@@ -129,7 +129,7 @@ struct HeaderMatchedPatterns
 
 
 
-int geAppidByViaPattern(const u_int8_t*, unsigned, char**, const DetectorHttpConfig*);
+int geAppidByViaPattern(const uint8_t*, unsigned, char**, const DetectorHttpConfig*);
 int getHTTPHeaderLocation(const uint8_t*, unsigned, HttpId, int*, int*, HeaderMatchedPatterns*,
         const DetectorHttpConfig*);
 inline void FreeMatchedCHPActions(MatchedCHPAction* ma)
@@ -152,7 +152,7 @@ AppId getAppIdFromUrl(char*, char*, char**, char*, AppId*, AppId*, AppId*, AppId
         const DetectorHttpConfig*);
 AppId geAppidByContentType(const uint8_t*, int, const DetectorHttpConfig*);
 AppId scan_header_x_working_with(const uint8_t*, uint32_t, char**);
-void identifyUserAgent(const u_int8_t*, int, AppId*, AppId*, char**, const DetectorHttpConfig*);
+void identifyUserAgent(const uint8_t*, int, AppId*, AppId*, char**, const DetectorHttpConfig*);
 void getServerVendorVersion(const uint8_t*, int, char**, char**, RNAServiceSubtype**);
 int webdav_found(HeaderMatchedPatterns*);
 int http_detector_finalize(AppIdConfig*);

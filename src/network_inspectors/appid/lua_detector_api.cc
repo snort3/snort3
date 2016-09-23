@@ -1985,8 +1985,8 @@ static int Detector_portOnlyService(lua_State* L)
     }
 
     AppId appId = lua_tointeger(L, index++);
-    u_int16_t port = lua_tointeger(L, index++);
-    u_int8_t protocol = lua_tointeger(L, index++);
+    uint16_t port = lua_tointeger(L, index++);
+    uint8_t protocol = lua_tointeger(L, index++);
 
     if (port == 0)
         ud->pAppidNewConfig->ip_protocol[protocol] = appId;
@@ -2163,11 +2163,11 @@ static int Detector_addAppUrl(lua_State* L)
         return 0;
     }
 
-    u_int32_t service_id      = lua_tointeger(L, index++);
-    u_int32_t client_app      = lua_tointeger(L, index++);
-    /*u_int32_t client_app_type =*/ lua_tointeger(L, index++);
-    u_int32_t payload         = lua_tointeger(L, index++);
-    /*u_int32_t payload_type    =*/ lua_tointeger(L, index++);
+    uint32_t service_id      = lua_tointeger(L, index++);
+    uint32_t client_app      = lua_tointeger(L, index++);
+    /*uint32_t client_app_type =*/ lua_tointeger(L, index++);
+    uint32_t payload         = lua_tointeger(L, index++);
+    /*uint32_t payload_type    =*/ lua_tointeger(L, index++);
 
     if (ud->validateParams.pkt)
     {
@@ -2179,7 +2179,7 @@ static int Detector_addAppUrl(lua_State* L)
 
     /* Verify that host pattern is a valid string */
     size_t hostPatternSize = 0;
-    u_int8_t* hostPattern = nullptr;
+    uint8_t* hostPattern = nullptr;
     tmpString = lua_tolstring(L, index++, &hostPatternSize);
     if (!tmpString || !hostPatternSize)
     {
@@ -2187,11 +2187,11 @@ static int Detector_addAppUrl(lua_State* L)
         return 0;
     }
     else
-        hostPattern = (u_int8_t*)snort_strdup(tmpString);
+        hostPattern = (uint8_t*)snort_strdup(tmpString);
 
     /* Verify that path pattern is a valid string */
     size_t pathPatternSize = 0;
-    u_int8_t* pathPattern = nullptr;
+    uint8_t* pathPattern = nullptr;
     tmpString = lua_tolstring(L, index++, &pathPatternSize);
     if (!tmpString || !pathPatternSize )
     {
@@ -2200,11 +2200,11 @@ static int Detector_addAppUrl(lua_State* L)
         return 0;
     }
     else
-        pathPattern = (u_int8_t*)snort_strdup(tmpString);
+        pathPattern = (uint8_t*)snort_strdup(tmpString);
 
     /* Verify that scheme pattern is a valid string */
     size_t schemePatternSize;
-    u_int8_t* schemePattern = nullptr;
+    uint8_t* schemePattern = nullptr;
     tmpString = lua_tolstring(L, index++, &schemePatternSize);
     if (!tmpString || !schemePatternSize )
     {
@@ -2214,16 +2214,16 @@ static int Detector_addAppUrl(lua_State* L)
         return 0;
     }
     else
-        schemePattern = (u_int8_t*)snort_strdup(tmpString);
+        schemePattern = (uint8_t*)snort_strdup(tmpString);
 
     /* Verify that query pattern is a valid string */
     size_t queryPatternSize;
-    u_int8_t* queryPattern = nullptr;
+    uint8_t* queryPattern = nullptr;
     tmpString = lua_tolstring(L, index++, &queryPatternSize);
     if (tmpString && queryPatternSize)
-        queryPattern = (u_int8_t*)snort_strdup(tmpString);
+        queryPattern = (uint8_t*)snort_strdup(tmpString);
 
-    u_int32_t appId = lua_tointeger(L, index++);
+    uint32_t appId = lua_tointeger(L, index++);
 
     /* Allocate memory for data structures */
     DetectorAppUrlPattern* pattern =
@@ -2287,11 +2287,11 @@ static int Detector_addRTMPUrl(lua_State* L)
         return 0;
     }
 
-    u_int32_t service_id      = lua_tointeger(L, index++);
-    u_int32_t client_app      = lua_tointeger(L, index++);
-    /*u_int32_t client_app_type =*/ lua_tointeger(L, index++);
-    u_int32_t payload         = lua_tointeger(L, index++);
-    /*u_int32_t payload_type    =*/ lua_tointeger(L, index++);
+    uint32_t service_id      = lua_tointeger(L, index++);
+    uint32_t client_app      = lua_tointeger(L, index++);
+    /*uint32_t client_app_type =*/ lua_tointeger(L, index++);
+    uint32_t payload         = lua_tointeger(L, index++);
+    /*uint32_t payload_type    =*/ lua_tointeger(L, index++);
 
     if (ud->validateParams.pkt)
     {
@@ -2303,10 +2303,10 @@ static int Detector_addRTMPUrl(lua_State* L)
 
     /* Verify that host pattern is a valid string */
     size_t hostPatternSize = 0;
-    u_int8_t* hostPattern = nullptr;
+    uint8_t* hostPattern = nullptr;
     tmpString = lua_tolstring(L, index++, &hostPatternSize);
     // FIXIT-L: recode all this to something elegant since snort_strdup can't fail (just like Rudy)
-    if (!tmpString || !hostPatternSize || !(hostPattern = (u_int8_t*)snort_strdup(tmpString)))
+    if (!tmpString || !hostPatternSize || !(hostPattern = (uint8_t*)snort_strdup(tmpString)))
     {
         ErrorMessage("Invalid host pattern string.");
         return 0;
@@ -2314,10 +2314,10 @@ static int Detector_addRTMPUrl(lua_State* L)
 
     /* Verify that path pattern is a valid string */
     size_t pathPatternSize = 0;
-    u_int8_t* pathPattern = nullptr;
+    uint8_t* pathPattern = nullptr;
     tmpString = lua_tolstring(L, index++, &pathPatternSize);
     // FIXIT-L: recode all this to something elegant since snort_strdup can't fail (just like Rudy)
-    if (!tmpString || !pathPatternSize || !(pathPattern = (u_int8_t*)snort_strdup(tmpString)))
+    if (!tmpString || !pathPatternSize || !(pathPattern = (uint8_t*)snort_strdup(tmpString)))
     {
         ErrorMessage("Invalid path pattern string.");
         snort_free(hostPattern);
@@ -2326,10 +2326,10 @@ static int Detector_addRTMPUrl(lua_State* L)
 
     /* Verify that scheme pattern is a valid string */
     size_t schemePatternSize;
-    u_int8_t* schemePattern = nullptr;
+    uint8_t* schemePattern = nullptr;
     tmpString = lua_tolstring(L, index++, &schemePatternSize);
     // FIXIT-L: recode all this to something elegant since snort_strdup can't fail (just like Rudy)
-    if (!tmpString || !schemePatternSize || !(schemePattern = (u_int8_t*)snort_strdup(tmpString)))
+    if (!tmpString || !schemePatternSize || !(schemePattern = (uint8_t*)snort_strdup(tmpString)))
     {
         ErrorMessage("Invalid scheme pattern string.");
         snort_free(pathPattern);
@@ -2339,12 +2339,12 @@ static int Detector_addRTMPUrl(lua_State* L)
 
     /* Verify that query pattern is a valid string */
     size_t queryPatternSize;
-    u_int8_t* queryPattern = nullptr;
+    uint8_t* queryPattern = nullptr;
     tmpString = lua_tolstring(L, index++, &queryPatternSize);
     if (tmpString  && queryPatternSize)
-        queryPattern = (u_int8_t*)snort_strdup(tmpString);
+        queryPattern = (uint8_t*)snort_strdup(tmpString);
 
-    u_int32_t appId           = lua_tointeger(L, index++);
+    uint32_t appId           = lua_tointeger(L, index++);
 
     /* Allocate memory for data structures */
     DetectorAppUrlPattern* pattern = (DetectorAppUrlPattern*)snort_calloc(
@@ -2404,7 +2404,7 @@ static int Detector_addSipUserAgent(lua_State* L)
     /* Verify detector user data and that we are not in packet context */
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
 
-    u_int32_t client_app      = lua_tointeger(L, index++);
+    uint32_t client_app      = lua_tointeger(L, index++);
     const char* clientVersion       = lua_tostring(L, index++);
     if (!clientVersion )
     {
@@ -2656,9 +2656,9 @@ static int openAddUrlPattern(lua_State* L)
     }
 
     AppIdConfig* pConfig = ud->pAppidNewConfig;
-    u_int32_t serviceAppId      = lua_tointeger(L, index++);
-    u_int32_t clienAppId      = lua_tointeger(L, index++);
-    u_int32_t payloadAppId         = lua_tointeger(L, index++);
+    uint32_t serviceAppId      = lua_tointeger(L, index++);
+    uint32_t clienAppId      = lua_tointeger(L, index++);
+    uint32_t payloadAppId         = lua_tointeger(L, index++);
 
     if (ud->validateParams.pkt)
     {
@@ -2670,9 +2670,9 @@ static int openAddUrlPattern(lua_State* L)
 
     /* Verify that host pattern is a valid string */
     size_t hostPatternSize = 0;
-    u_int8_t* hostPattern = nullptr;
+    uint8_t* hostPattern = nullptr;
     tmpString = lua_tolstring(L, index++, &hostPatternSize);
-    if (!tmpString || !hostPatternSize || !(hostPattern = (u_int8_t* )snort_strdup(tmpString)))
+    if (!tmpString || !hostPatternSize || !(hostPattern = (uint8_t* )snort_strdup(tmpString)))
     {
         ErrorMessage("Invalid host pattern string.");
         return 0;
@@ -2680,9 +2680,9 @@ static int openAddUrlPattern(lua_State* L)
 
     /* Verify that path pattern is a valid string */
     size_t pathPatternSize = 0;
-    u_int8_t* pathPattern = nullptr;
+    uint8_t* pathPattern = nullptr;
     tmpString = lua_tolstring(L, index++, &pathPatternSize);
-    if (!tmpString || !pathPatternSize || !(pathPattern = (u_int8_t*)snort_strdup(tmpString)))
+    if (!tmpString || !pathPatternSize || !(pathPattern = (uint8_t*)snort_strdup(tmpString)))
     {
         ErrorMessage("Invalid path pattern string.");
         snort_free(hostPattern);
@@ -2691,9 +2691,9 @@ static int openAddUrlPattern(lua_State* L)
 
     /* Verify that scheme pattern is a valid string */
     size_t schemePatternSize;
-    u_int8_t* schemePattern = nullptr;
+    uint8_t* schemePattern = nullptr;
     tmpString = lua_tolstring(L, index++, &schemePatternSize);
-    if (!tmpString || !schemePatternSize || !(schemePattern = (u_int8_t*)snort_strdup(tmpString)))
+    if (!tmpString || !schemePatternSize || !(schemePattern = (uint8_t*)snort_strdup(tmpString)))
     {
         ErrorMessage("Invalid scheme pattern string.");
         snort_free(pathPattern);
@@ -2960,7 +2960,7 @@ static int Detector_addSipServer(lua_State* L)
     /* Verify detector user data and that we are not in packet context */
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
 
-    u_int32_t client_app      = lua_tointeger(L, index++);
+    uint32_t client_app      = lua_tointeger(L, index++);
     const char* clientVersion       = lua_tostring(L, index++);
     if (!clientVersion )
     {

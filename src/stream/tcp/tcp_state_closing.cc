@@ -20,7 +20,6 @@
 // Created on: Aug 5, 2015
 
 #include <iostream>
-using namespace std;
 
 #include "tcp_module.h"
 #include "tcp_tracker.h"
@@ -31,6 +30,8 @@ using namespace std;
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
+
+using namespace std;
 
 TcpStateClosing::TcpStateClosing(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_CLOSING, tsm)

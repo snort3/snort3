@@ -56,11 +56,11 @@
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
 
+using namespace std;
+
 static THREAD_LOCAL TextLog* full_log = nullptr;
 
 #define LOG_BUFFER (4*K_BYTES)
-
-using namespace std;
 
 #define S_NAME "alert_full"
 #define F_NAME S_NAME ".txt"

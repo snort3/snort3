@@ -21,11 +21,12 @@
 #include "ip_module.h"
 
 #include <string>
-using namespace std;
 
 #include "stream_ip.h"
 #include "ip_defrag.h"
 #include "stream/stream.h"
+
+using namespace std;
 
 #define DEFRAG_IPOPTIONS_STR \
     "inconsistent IP options on fragmented packets"

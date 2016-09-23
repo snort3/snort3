@@ -24,7 +24,6 @@
 #endif
 
 #include <string>
-using namespace std;
 
 #include "framework/parameter.h"
 #include "framework/module.h"
@@ -34,6 +33,8 @@ using namespace std;
 #include "log/messages.h"
 #include "detection/treenodes.h"
 #include "profiler/profiler.h"
+
+using namespace std;
 
 #define s_name "so"
 

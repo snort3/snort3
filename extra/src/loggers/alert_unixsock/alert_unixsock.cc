@@ -216,7 +216,7 @@ static void OpenAlertSock()
     if ( (us.socket = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0 )
         FatalError("socket() call failed: %s", get_error(errno));
 
-#ifdef FREEBSD
+#ifdef __FreeBSD__
     int buflen=sizeof(us.alert);
 
     if ( setsockopt(us.socket, SOL_SOCKET, SO_SNDBUF, (char*)&buflen, sizeof(int)) < 0 )

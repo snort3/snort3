@@ -58,6 +58,8 @@
 #include "packet_io/intf.h"
 #include "events/event.h"
 
+using namespace std;
+
 /* full buf was chosen to allow printing max size packets
  * in hex/ascii mode:
  * each byte => 2 nibbles + space + ascii + overhead
@@ -66,8 +68,6 @@
 #define FAST_BUF (4*K_BYTES)
 
 static THREAD_LOCAL TextLog* fast_log = nullptr;
-
-using namespace std;
 
 #define S_NAME "alert_fast"
 #define F_NAME S_NAME ".txt"

@@ -80,7 +80,7 @@ namespace Piglet
 const struct Output unit_test_output =
 {
     [](const std::vector<Chunk>& chunks) -> void
-    { printf("Running suite: piglet (%lu tests)\n", chunks.size()); },
+    { printf("Running suite: piglet (%zu tests)\n", chunks.size()); },
 
     [](const Summary& sum) -> void
     {
@@ -179,7 +179,7 @@ const struct Output verbose_output =
         if ( chunks.size() == 1 )
             printf("=== PIGLET (1 test)\n");
         else
-            printf("=== PIGLET (%lu tests)\n", chunks.size());
+            printf("=== PIGLET (%zu tests)\n", chunks.size());
     },
 
     [](const Summary& sum) -> void

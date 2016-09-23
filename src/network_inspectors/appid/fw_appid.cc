@@ -51,11 +51,11 @@
 void dump_appid_stats()
 {
     LogMessage("Application Identification Preprocessor:\n");
-    LogMessage("   Total packets received : %lu\n", appid_stats.packets);
-    LogMessage("  Total packets processed : %lu\n", appid_stats.processed_packets);
+    LogMessage("   Total packets received : %" PRIu64 "\n", appid_stats.packets);
+    LogMessage("  Total packets processed : %" PRIu64 "\n", appid_stats.processed_packets);
     if (thirdparty_appid_module)
         thirdparty_appid_module->print_stats();
-    LogMessage("    Total packets ignored : %lu\n", appid_stats.ignored_packets);
+    LogMessage("    Total packets ignored : %" PRIu64 "\n", appid_stats.ignored_packets);
     AppIdServiceStateDumpStats();
     RNAPndDumpLuaStats();
 }

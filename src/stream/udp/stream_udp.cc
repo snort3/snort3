@@ -48,7 +48,7 @@ static void udp_show(StreamUdpConfig* pc)
     LogMessage("    Ignore Any -> Any Rules: %s\n", opt);
 
 #ifdef REG_TEST
-    LogMessage("    UDP Session Size: %lu\n",sizeof(UdpSession));
+    LogMessage("    UDP Session Size: %zu\n", sizeof(UdpSession));
 #endif
 }
 

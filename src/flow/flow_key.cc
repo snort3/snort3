@@ -291,7 +291,6 @@ uint32_t FlowKey::hash(SFHASHFCN*, unsigned char* d, int)
 
 int FlowKey::compare(const void* s1, const void* s2, size_t)
 {
-#ifndef SPARCV9 /* ie, everything else, use 64bit comparisons */
     uint64_t* a,* b;
 
     a = (uint64_t*)s1;
@@ -325,62 +324,6 @@ int FlowKey::compare(const void* s1, const void* s2, size_t)
     b++;
     if (*a - *b)
         return 1;               /* Compares MPLS label, AddressSpace ID and 16bit pad */
-
-#else /* SPARCV9 */
-    uint32_t* a,* b;
-
-    a = (uint32_t*)s1;
-    b = (uint32_t*)s2;
-    if ((*a - *b) || (*(a+1) - *(b+1)))
-        return 1;                                       /* Compares IPv4 lo/hi */
-    /* Compares IPv6 low[0,1] */
-
-    a+=2;
-    b+=2;
-    if ((*a - *b) || (*(a+1) - *(b+1)))
-        return 1;                                       /* Compares port lo/hi, vlan, protocol,
-                                                          version */
-    /* Compares IPv6 low[2,3] */
-
-    a+=2;
-    b+=2;
-    if ((*a - *b) || (*(a+1) - *(b+1)))
-        return 1;                                       /* Compares IPv6 hi[0,1] */
-
-    a+=2;
-    b+=2;
-    if ((*a - *b) || (*(a+1) - *(b+1)))
-        return 1;                                       /* Compares IPv6 hi[2,3] */
-
-    a+=2;
-    b+=2;
-    if ((*a - *b) || (*(a+1) - *(b+1)))
-        return 1;                                       /* Compares port lo/hi, vlan, protocol,
-                                                          version */
-
-    a+=2;
-    b+=2;
-    {
-        uint32_t* x, * y;
-        x = (uint32_t*)a;
-        y = (uint32_t*)b;
-        // x++;
-        // y++;
-        if (*x - *y)
-            return 1;           /* Compares mpls label */
-    }
-    a++;
-    b++;
-    {
-        uint16_t* x, * y;
-        x = (uint16_t*)a;
-        y = (uint16_t*)b;
-        // x++;
-        // y++;
-        if (*x - *y)
-            return 1;           /* Compares addressSpaceID, no pad */
-    }
-#endif /* SPARCV9 */
 
     return 0;
 }

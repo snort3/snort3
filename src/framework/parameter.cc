@@ -27,10 +27,11 @@
 #include <iomanip>
 #include <sstream>
 #include <vector>
-using namespace std;
 
 #include "value.h"
 #include "utils/dnet_header.h"
+
+using namespace std;
 
 static bool valid_bool(Value& v, const char*)
 {

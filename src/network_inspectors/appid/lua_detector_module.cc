@@ -498,9 +498,9 @@ void LuaDetectorModuleManager::luaModuleInit()
 #define LUA_TRACKERS_MAX  10000
 #define LUA_TRACKER_AVG_MEM_BYTES  740
 
-static inline uint32_t calculateLuaTrackerSize(u_int64_t rnaMemory, uint32_t numDetectors)
+static inline uint32_t calculateLuaTrackerSize(uint64_t rnaMemory, uint32_t numDetectors)
 {
-    u_int64_t detectorMemory = (rnaMemory/8);
+    uint64_t detectorMemory = (rnaMemory/8);
     unsigned numTrackers;
     if (!numDetectors)
         numDetectors = 1;

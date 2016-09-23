@@ -1449,7 +1449,7 @@ bool AppIdSession::do_service_discovery(IpProtocol protocol, int direction, AppI
                     && dsession && dsession->host)
             {
                 size_t size = dsession->host_len;
-                dns_host_scan_hostname((const u_int8_t*) (dsession->host), size, &ClientAppId, &payloadAppId,
+                dns_host_scan_hostname((const uint8_t*) (dsession->host), size, &ClientAppId, &payloadAppId,
                         &pConfig->serviceDnsConfig);
                 set_client_app_id_data(ClientAppId, nullptr);
             }
@@ -1898,7 +1898,7 @@ void AppIdSession::do_application_discovery(Packet* p)
             session->dsession && session->dsession->host )
         {
             size_t size = session->dsession->host_len;
-            dns_host_scan_hostname((const u_int8_t*)session->dsession->host, size, &ClientAppId,
+            dns_host_scan_hostname((const uint8_t*)session->dsession->host, size, &ClientAppId,
                 &payloadAppId, &pConfig->serviceDnsConfig);
             session->set_client_app_id_data(ClientAppId, nullptr);
         }
@@ -2498,7 +2498,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppIdConfig* pConfig)
     if ((scan_flags & SCAN_SSL_HOST_FLAG) && tsession->tls_host)
     {
         size = strlen(tsession->tls_host);
-        if ((ret = ssl_scan_hostname((const u_int8_t*)tsession->tls_host, size,
+        if ((ret = ssl_scan_hostname((const uint8_t*)tsession->tls_host, size,
                 &clientAppId, &payload_app_id, &pConfig->serviceSslConfig)))
         {
             set_client_app_id_data(clientAppId, nullptr);
@@ -2510,7 +2510,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppIdConfig* pConfig)
     if (tsession->tls_cname)
     {
         size = strlen(tsession->tls_cname);
-        if ((ret = ssl_scan_cname((const u_int8_t*)tsession->tls_cname, size,
+        if ((ret = ssl_scan_cname((const uint8_t*)tsession->tls_cname, size,
                 &clientAppId, &payload_app_id, &pConfig->serviceSslConfig)))
         {
             set_client_app_id_data(clientAppId, nullptr);
@@ -2523,7 +2523,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p, AppIdConfig* pConfig)
     if (tsession->tls_orgUnit)
     {
         size = strlen(tsession->tls_orgUnit);
-        if ((ret = ssl_scan_cname((const u_int8_t*)tsession->tls_orgUnit, size,
+        if ((ret = ssl_scan_cname((const uint8_t*)tsession->tls_orgUnit, size,
                 &clientAppId, &payload_app_id, &pConfig->serviceSslConfig)))
         {
             set_client_app_id_data(clientAppId, nullptr);

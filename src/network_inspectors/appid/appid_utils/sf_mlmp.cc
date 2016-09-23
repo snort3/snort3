@@ -298,7 +298,7 @@ static void dumpTreesRecursively(tMlmpTree* rootNode)
                 ddPatternNode->partNum,
                 ddPatternNode->partTotal,
                 (char*)ddPatternNode->pattern.pattern,
-                (u_int32_t)ddPatternNode->pattern.patternSize);
+                (uint32_t)ddPatternNode->pattern.patternSize);
         }
 
         if (primaryPatternNode->nextLevelMatcher)
@@ -344,7 +344,7 @@ static tPatternNode* patternSelector(const tMatchedPatternList* patternMatchList
                 "\t\tid %d, Pattern %s, size %u, partNum %u, partTotal %u, userData %p\n",
                 ddPatternNode->patternId,
                 ddPatternNode->pattern.pattern,
-                (u_int32_t)ddPatternNode->pattern.patternSize,
+                (uint32_t)ddPatternNode->pattern.patternSize,
                 ddPatternNode->partNum,
                 ddPatternNode->partTotal,
                 ddPatternNode->userData);
@@ -402,7 +402,7 @@ static tPatternNode* patternSelector(const tMatchedPatternList* patternMatchList
                 "\t\tSELECTED Id %d, pattern %s, size %u, partNum %u, partTotal %u, userData %p\n",
                 ddPatternNode->patternId,
                 ddPatternNode->pattern.pattern,
-                (u_int32_t)ddPatternNode->pattern.patternSize,
+                (uint32_t)ddPatternNode->pattern.patternSize,
                 ddPatternNode->partNum,
                 ddPatternNode->partTotal,
                 ddPatternNode->userData);
@@ -441,7 +441,7 @@ static int patternMatcherCallback(void* id, void*, int index, void* data, void*)
         "\tCallback id %d, Pattern %s, size %u, partNum %u, partTotal %u, userData %p\n",
         target->patternId,
         target->pattern.pattern,
-        (u_int32_t)target->pattern.patternSize,
+        (uint32_t)target->pattern.patternSize,
         target->partNum,
         target->partTotal,
         target->userData);

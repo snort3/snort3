@@ -31,7 +31,7 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-#ifdef MACOS
+#if defined(__APPLE__)
 #define __THROW
 #define __SOCKADDR_ARG          struct sockaddr*
 #define __CONST_SOCKADDR_ARG    const struct sockaddr*

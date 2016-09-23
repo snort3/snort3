@@ -56,12 +56,18 @@ yet firm so feedback is welcome to get something we can live with.
   shouldn't have to sift through implementation details to see what is
   available to the client.
 
+* Any using statements in source files should be added only after all
+  includes have been declared.
+
 === Naming
 
 * Use camel case for namespaces, classes, and types like WhizBangPdfChecker.
 
 * Use lower case identifiers with underscore separators, e.g. some_function()
   and my_var.
+
+* Do not start or end variable names with an underscore.  This has a good
+  chance of conflicting with macro and/or system definitions.
 
 * Use lower case filenames with underscores.
 

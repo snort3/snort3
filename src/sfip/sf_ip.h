@@ -102,7 +102,7 @@ inline unsigned int sfip_size(const sfip_t* ipt)
 {
     if ( ipt->family == AF_INET6 )
         return sizeof(*ipt);
-    return (unsigned int)((ipt->ip8+4) - (u_int8_t*)ipt);
+    return (unsigned int)((ipt->ip8+4) - (uint8_t*)ipt);
 }
 
 /* Member-access *******************************************************/
@@ -209,10 +209,10 @@ inline int sfip_is_loopback(const sfip_t* ip)
 int sfip_ismapped(const sfip_t* ip);
 
 /* Support function for sfip_compare */
-inline SFIP_RET _ip4_cmp(u_int32_t ip1, u_int32_t ip2)
+inline SFIP_RET _ip4_cmp(uint32_t ip1, uint32_t ip2)
 {
-    u_int32_t hip1 = htonl(ip1);
-    u_int32_t hip2 = htonl(ip2);
+    uint32_t hip1 = htonl(ip1);
+    uint32_t hip2 = htonl(ip2);
     if (hip1 < hip2)
         return SFIP_LESSER;
     if (hip1 > hip2)
@@ -224,7 +224,7 @@ inline SFIP_RET _ip4_cmp(u_int32_t ip1, u_int32_t ip2)
 inline SFIP_RET _ip6_cmp(const sfip_t* ip1, const sfip_t* ip2)
 {
     SFIP_RET ret;
-    const u_int32_t* p1, * p2;
+    const uint32_t* p1, * p2;
 
     /* XXX
      * Argument are assumed trusted!
@@ -363,7 +363,7 @@ inline int sfip_fast_eq4(const sfip_t* const ip1, const sfip_t* const ip2)
 
 inline int sfip_fast_lt6(const sfip_t* const ip1, const sfip_t* const ip2)
 {
-    const u_int32_t* p1, * p2;
+    const uint32_t* p1, * p2;
 
     p1 = ip1->ip32;
     p2 = ip2->ip32;
@@ -393,7 +393,7 @@ inline int sfip_fast_lt6(const sfip_t* const ip1, const sfip_t* const ip2)
 
 inline int sfip_fast_gt6(const sfip_t* const ip1, const sfip_t* const ip2)
 {
-    const u_int32_t* p1, * p2;
+    const uint32_t* p1, * p2;
 
     p1 = ip1->ip32;
     p2 = ip2->ip32;
@@ -423,7 +423,7 @@ inline int sfip_fast_gt6(const sfip_t* const ip1, const sfip_t* const ip2)
 
 inline int sfip_fast_eq6(const sfip_t* ip1, const sfip_t* ip2)
 {
-    const u_int32_t* p1, * p2;
+    const uint32_t* p1, * p2;
 
     p1 = ip1->ip32;
     p2 = ip2->ip32;
@@ -443,8 +443,8 @@ inline int sfip_fast_eq6(const sfip_t* ip1, const sfip_t* ip2)
 /* Checks if ip2 is equal to ip1 or contained within the CIDR ip1 */
 inline bool sfip_fast_cont4(const sfip_t* ip1, const sfip_t* ip2)
 {
-    u_int32_t shift = 32 - sfip_bits(ip1);
-    u_int32_t ip = ntohl(*ip2->ip32);
+    uint32_t shift = 32 - sfip_bits(ip1);
+    uint32_t ip = ntohl(*ip2->ip32);
 
     ip >>= shift;
     ip <<= shift;
@@ -455,7 +455,7 @@ inline bool sfip_fast_cont4(const sfip_t* ip1, const sfip_t* ip2)
 /* Checks if ip2 is equal to ip1 or contained within the CIDR ip1 */
 inline int sfip_fast_cont6(const sfip_t* ip1, const sfip_t* ip2)
 {
-    u_int32_t ip;
+    uint32_t ip;
     int i, bits = sfip_bits(ip1);
     int words = bits / 32;
     bits = 32 - (bits % 32);

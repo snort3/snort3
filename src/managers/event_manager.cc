@@ -28,7 +28,6 @@
 #include <errno.h>
 
 #include <list>
-using namespace std;
 
 #include "plugin_manager.h"
 #include "module_manager.h"
@@ -42,6 +41,8 @@ using namespace std;
 #include "loggers/loggers.h"
 #include "parser/parser.h"
 #include "log/messages.h"
+
+using namespace std;
 
 struct Output
 {

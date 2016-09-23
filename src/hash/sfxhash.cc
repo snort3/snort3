@@ -221,12 +221,7 @@ SFXHASH* sfxhash_new(int nrows, int keysize, int datasize, unsigned long maxmem,
     h->usrfree  = usrfree;
     h->keysize  = keysize;
 
-#ifdef WORDS_MUSTALIGN
-    if ((h->keysize) & 7)
-        h->pad = (8 - ((h->keysize) & 7));
-#else
     h->pad = 0;
-#endif
     h->datasize = datasize;
     h->nrows    = nrows;
     h->max_nodes = 0;

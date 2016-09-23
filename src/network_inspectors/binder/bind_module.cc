@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include <string>
-using namespace std;
 
 #include "binding.h"
 #include "protocols/packet.h"
@@ -34,6 +33,8 @@ using namespace std;
 #include "main/shell.h"
 #include "managers/module_manager.h"
 #include "parser/parser.h"
+
+using namespace std;
 
 #define FILE_KEY ".file"
 

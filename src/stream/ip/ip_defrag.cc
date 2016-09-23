@@ -209,7 +209,7 @@ static void FragPrintEngineConfig(FragEngine* engine)
     LogMessage("    Min fragment Length:     %d\n",
         engine->min_fragment_length);
 #ifdef REG_TEST
-    LogMessage("    FragTracker Size: %lu\n",sizeof(FragTracker));
+    LogMessage("    FragTracker Size: %zu\n", sizeof(FragTracker));
 #endif
 }
 

@@ -61,13 +61,13 @@
 
 #include "rpc_module.h"
 
+using namespace std;
+
 #define RPC_MAX_BUF_SIZE   256
 #define RPC_FRAG_HDR_SIZE  sizeof(uint32_t)
 #define RPC_FRAG_LEN(ptr)  (ntohl(*((uint32_t*)ptr)) & 0x7FFFFFFF)
 
 static THREAD_LOCAL DataBuffer DecodeBuffer;
-
-using namespace std;
 
 struct RpcDecodeConfig
 {

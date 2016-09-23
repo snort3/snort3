@@ -20,7 +20,6 @@
 #include "binder.h"
 
 #include <vector>
-using namespace std;
 
 #include "binding.h"
 #include "bind_module.h"
@@ -43,6 +42,8 @@ using namespace std;
 #include "target_based/snort_protocols.h"
 #include "target_based/sftarget_reader.h"
 #include "packet_io/active.h"
+
+using namespace std;
 
 THREAD_LOCAL ProfileStats bindPerfStats;
 

@@ -119,7 +119,7 @@ static void PrintIPMacEntryList(IPMacEntryList& ipmel)
         return;
 
     LogMessage("Arpspoof IPMacEntry List");
-    LogMessage("  Size: %ld\n", ipmel.size());
+    LogMessage("  Size: %zu\n", ipmel.size());
 
     for ( auto p : ipmel )
     {

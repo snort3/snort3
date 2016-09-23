@@ -245,7 +245,7 @@ static void dumpTreesRecursively(void* root, int level)
     {
         printf("%sPattern %s, size %u, userData %p\n", offset,
             (char*)patternNode->pattern.pattern,
-            (u_int32_t)patternNode->pattern.patternSize,
+            (uint32_t)patternNode->pattern.patternSize,
             patternNode->userData);
 
         /*recursion into next lower level */

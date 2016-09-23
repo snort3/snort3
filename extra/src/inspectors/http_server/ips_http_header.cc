@@ -22,7 +22,6 @@
 #endif
 
 #include <string>
-using namespace std;
 
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
@@ -34,6 +33,8 @@ using namespace std;
 #include "framework/inspector.h"
 #include "framework/module.h"
 #include "protocols/packet.h"
+
+using namespace std;
 
 #define s_name "http_header"
 

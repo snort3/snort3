@@ -54,14 +54,14 @@
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 
+using namespace std;
+
 #define LOG_BUFFER (4*K_BYTES)
 
 static THREAD_LOCAL TextLog* csv_log;
 
 #define S_NAME "alert_csv"
 #define F_NAME S_NAME ".txt"
-
-using namespace std;
 
 //-------------------------------------------------------------------------
 // field formatting functions

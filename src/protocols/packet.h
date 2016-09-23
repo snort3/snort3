@@ -31,8 +31,7 @@
 #include <net/if.h>
 
 extern "C" {
-#include <daq.h>
-#include <sfbpf_dlt.h>
+#include <daq_common.h>
 }
 
 #include "main/snort_types.h"
@@ -99,16 +98,6 @@ enum PseudoPacketType
     PSEUDO_PKT_SDF,
     PSEUDO_PKT_MAX
 };
-
-/* We must twiddle to align the offset the ethernet header and align
- * the IP header on solaris -- maybe this will work on HPUX too.
- */
-#if defined (SOLARIS) || defined (SUNOS) || defined (__sparc__) || defined(__sparc64__) || \
-    defined (HPUX)
-#define SPARC_TWIDDLE       2
-#else
-#define SPARC_TWIDDLE       0
-#endif
 
 /* default mpls flags */
 #define DEFAULT_MPLS_PAYLOADTYPE      MPLS_PAYLOADTYPE_IPV4
@@ -295,29 +284,12 @@ inline void SetExtraData(Packet* p, const uint32_t xid)
 inline uint16_t extract_16bits(const uint8_t* const p)
 { return ntohs(*(uint16_t*)(p)); }
 
-#ifdef WORDS_MUSTALIGN
-
-#ifdef __GNUC__
-/* force word-aligned ntohl parameter */
-inline uint32_t extract_32bits(const uint8_t* p)
-{
-    uint32_t tmp;
-    memmove(&tmp, p, sizeof(uint32_t));
-    return ntohl(tmp);
-}
-#endif
-
-#else
-
-/* allows unaligned ntohl parameter - dies w/SIGBUS on SPARCs */
 inline uint32_t extract_32bits(const uint8_t* p)
 {
     assert(p);
 
     return ntohl(*(uint32_t*)p);
 }
-
-#endif
 
 inline uint16_t alignedNtohs(const uint16_t* ptr)
 {
@@ -326,11 +298,7 @@ inline uint16_t alignedNtohs(const uint16_t* ptr)
     if (ptr == nullptr)
         return 0;
 
-#ifdef WORDS_MUSTALIGN
-    value = *((uint8_t*)ptr) << 8 | *((uint8_t*)ptr + 1);
-#else
     value = *ptr;
-#endif
 
 #ifdef WORDS_BIGENDIAN
     return ((value & 0xff00) >> 8) | ((value & 0x00ff) << 8);
@@ -346,12 +314,7 @@ inline uint32_t alignedNtohl(const uint32_t* ptr)
     if (ptr == nullptr)
         return 0;
 
-#ifdef WORDS_MUSTALIGN
-    value = *((uint8_t*)ptr) << 24 | *((uint8_t*)ptr + 1) << 16 |
-        *((uint8_t*)ptr + 2) << 8  | *((uint8_t*)ptr + 3);
-#else
     value = *ptr;
-#endif
 
 #ifdef WORDS_BIGENDIAN
     return ((value & 0xff000000) >> 24) | ((value & 0x00ff0000) >> 8)  |
@@ -368,14 +331,7 @@ inline uint64_t alignedNtohq(const uint64_t* ptr)
     if (ptr == NULL)
         return 0;
 
-#ifdef WORDS_MUSTALIGN
-    value = *((uint8_t*)ptr) << 56 | *((uint8_t*)ptr + 1) << 48 |
-        *((uint8_t*)ptr + 2) << 40 | *((uint8_t*)ptr + 3) << 32 |
-        *((uint8_t*)ptr + 4) << 24 | *((uint8_t*)ptr + 5) << 16 |
-        *((uint8_t*)ptr + 6) << 8  | *((uint8_t*)ptr + 7);
-#else
     value = *ptr;
-#endif
 
 #ifdef WORDS_BIGENDIAN
     return ((value & 0xff00000000000000) >> 56) | ((value & 0x00ff000000000000) >> 40) |

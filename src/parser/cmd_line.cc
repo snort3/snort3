@@ -24,7 +24,6 @@
 #endif
 
 #include <string>
-using namespace std;
 
 #include "main/help.h"
 #include "main/snort_module.h"
@@ -35,6 +34,8 @@ using namespace std;
 #include "parser/arg_list.h"
 #include "parser/parser.h"
 #include "utils/util.h"
+
+using namespace std;
 
 //-------------------------------------------------------------------------
 

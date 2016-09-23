@@ -113,7 +113,7 @@ SO_PUBLIC RNAClientAppModule smtp_client_mod =
 
 struct Client_App_Pattern
 {
-    const u_int8_t* pattern;
+    const uint8_t* pattern;
     unsigned length;
     int index;
     unsigned appId;
@@ -245,9 +245,9 @@ static int extract_version_and_add_client_app(ApplicationId clientId,
     ClientSMTPData* const client_data, AppIdSession* flowp, 
     AppId appId, PegCount *stat_counter)
 {
-    const u_int8_t* p;
-    u_int8_t* v;
-    u_int8_t* v_end;
+    const uint8_t* p;
+    uint8_t* v;
+    uint8_t* v_end;
 
     v_end = client_data->version;
     v_end += MAX_VERSION_SIZE - 1;
@@ -276,9 +276,9 @@ static int extract_version_and_add_client_app(ApplicationId clientId,
 static int IdentifyClientVersion(ClientSMTPData* const fd, const uint8_t* product,
     const uint8_t* data_end, AppIdSession* flowp, Packet*)
 {
-    const u_int8_t* p;
-    u_int8_t* v;
-    u_int8_t* v_end;
+    const uint8_t* p;
+    uint8_t* v;
+    uint8_t* v_end;
     unsigned len;
     unsigned sublen;
     AppId appId = (fd->flags & CLIENT_FLAG_SMTPS) ?  APP_ID_SMTPS : APP_ID_SMTP;

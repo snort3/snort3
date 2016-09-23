@@ -90,15 +90,14 @@ enum OutputFlag
     OUTPUT_FLAG__APP_DATA          = 0x00000008,      /* -d */
 
     OUTPUT_FLAG__SHOW_DATA_LINK    = 0x00000010,      /* -e */
-    OUTPUT_FLAG__SHOW_WIFI_MGMT    = 0x00000020,      /* -w */
-    OUTPUT_FLAG__USE_UTC           = 0x00000040,      /* -U */
-    OUTPUT_FLAG__INCLUDE_YEAR      = 0x00000080,      /* -y */
-
+    OUTPUT_FLAG__USE_UTC           = 0x00000020,      /* -U */
+    OUTPUT_FLAG__INCLUDE_YEAR      = 0x00000040,      /* -y */
     /* Note using this alters the packet - can't be used inline */
-    OUTPUT_FLAG__OBFUSCATE         = 0x00000100,      /* -B */
-    OUTPUT_FLAG__ALERT_IFACE       = 0x00000200,      /* -I */
-    OUTPUT_FLAG__NO_TIMESTAMP      = 0x00000400,      /* --nostamps */
-    OUTPUT_FLAG__ALERTS            = 0x00000800,      /* -A */
+    OUTPUT_FLAG__OBFUSCATE         = 0x00000080,      /* -B */
+
+    OUTPUT_FLAG__ALERT_IFACE       = 0x00000100,      /* -I */
+    OUTPUT_FLAG__NO_TIMESTAMP      = 0x00000200,      /* --nostamps */
+    OUTPUT_FLAG__ALERTS            = 0x00000400,      /* -A */
 };
 
 enum LoggingFlag
@@ -495,9 +494,6 @@ public:
 
     static bool line_buffered_logging()
     { return snort_conf->output_flags & OUTPUT_FLAG__LINE_BUFFER; }
-
-    static bool output_wifi_mgmt()
-    { return snort_conf->output_flags & OUTPUT_FLAG__SHOW_WIFI_MGMT; }
 
     // run flags
     static bool no_lock_pid_file()

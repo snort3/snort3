@@ -24,7 +24,6 @@
 #include <algorithm>
 #include <string>
 #include <vector>
-using namespace std;
 
 #include "hash/sfghash.h"
 #include "main/snort_debug.h"
@@ -34,6 +33,8 @@ using namespace std;
 #include "sftarget_reader.h"
 #include "sftarget_hostentry.h"
 #include "sftarget_data.h"
+
+using namespace std;
 
 struct SFTargetProtocolReference
 {

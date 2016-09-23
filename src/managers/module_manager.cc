@@ -1242,7 +1242,7 @@ void ModuleManager::dump_stats(SnortConfig*, const char* skip)
 
 void ModuleManager::accumulate(SnortConfig*)
 {
-    static mutex stats_mutex;
+    static std::mutex stats_mutex;
     stats_mutex.lock();
 
     for ( auto p : s_modules )

@@ -45,12 +45,6 @@
 /* include internal decoders in binary */
 #cmakedefine STATIC_CODECS 1
 
-/* enable proc stats */
-#cmakedefine LINUX_SMP 1
-
-/* pass packet during initialization */
-#cmakedefine INLINE_FAILOPEN 1
-
 /* enalbe debug messages */
 #cmakedefine DEBUG_MSGS 1
 
@@ -62,9 +56,6 @@
 
 /* enable profiling */
 #cmakedefine PROFILE 1
-
-/* enable sourcefire tweaks */
-#cmakedefine SOURCEFIRE 1
 
 /* do not generate a core file on segfault etc */
 #cmakedefine NOCOREFILE 1
@@ -104,47 +95,7 @@
 #cmakedefine USE_TSC_CLOCK 1
 
 
-/* platforms */
-
-
-
-/* Define if OpenBSD */
-#cmakedefine OPENBSD 1
-
-/* Define if Irix */
-#cmakedefine IRIX 1
-
-/* Define if Solaris */
-#cmakedefine SOLARIS 1
-
-/* Define if SunOS */
-#cmakedefine SUNOS 1
-
-/* Define if Linux */
-#cmakedefine LINUX 1
-
-/* Define if HP-UX */
-#cmakedefine HPUX 1
-
-/* Define if FreeBSD */
-#cmakedefine FREEBSD 1
-
-/* Define if BSDi */
-#cmakedefine BSDI 1
-
-/* Define if AIX */
-#cmakedefine AIX 1
-
-/* Define if Tru64 or OSF*/
-#cmakedefine OSF1 1
-
-/* Define if MacOS */
-#cmakedefine MACOS 1
-
-
-
 /*  Print available system types and their sizes */
-
 
 /* Define to 1 if the system has the type `int16_t'. */
 #cmakedefine HAVE_INT16_T 1
@@ -169,18 +120,6 @@
 
 /* Define to 1 if the system has the type `uint8_t'. */
 #cmakedefine HAVE_UINT8_T 1
-
-/* Define to 1 if the system has the type `u_int16_t'. */
-#cmakedefine HAVE_U_INT16_T 1
-
-/* Define to 1 if the system has the type `u_int32_t'. */
-#cmakedefine HAVE_U_INT32_T 1
-
-/* Define to 1 if the system has the type `u_int64_t'. */
-#cmakedefine HAVE_U_INT64_T 1
-
-/* Define to 1 if the system has the type `u_int8_t'. */
-#cmakedefine HAVE_U_INT8_T 1
 
 /* The size of `char', as computed by sizeof. */
 #cmakedefine SIZEOF_CHAR @SIZEOF_CHAR@
@@ -223,10 +162,6 @@
 
 /* Define if words are big endian */
 #cmakedefine WORDS_BIGENDIAN 1
-
-/* Define if words must align */
-#cmakedefine WORDS_MUSTALIGN 1
-
 
 
 /*  Header file definitions */
@@ -289,7 +224,6 @@
 #cmakedefine HAVE_DUMBNET_H 1
 
 
-
 /*  Available libraries */
 
 /* hyperscan available */
@@ -305,9 +239,6 @@
 
 /* Library specific functions */
 
-/* Can cleanup lex buffer stack created by pcap bpf filter */
-#cmakedefine HAVE_PCAP_LEX_DESTROY 1
-
 /* Can output the library version. */
 #cmakedefine HAVE_PCAP_LIB_VERSION 1
 
@@ -316,9 +247,6 @@
 
 /* Define if the compiler supports visibility declarations. */
 #cmakedefine HAVE_VISIBILITY 1
-
-/* Define whether linuxthreads is being used */
-#cmakedefine HAVE_LINUXTHREADS 1
 
 /* Define if `thread_local` keyword should be used */
 #cmakedefine USE_THREAD_LOCAL 1

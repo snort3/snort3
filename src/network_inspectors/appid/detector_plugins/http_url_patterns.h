@@ -39,7 +39,7 @@ int matchQueryElements(tMlpPattern* packetData,
     char* appVersion,
     size_t appVersionSize);
 
-uint32_t parseMultipleHTTPPatterns(const char* pattern, tMlmpPattern* parts, u_int32_t
+uint32_t parseMultipleHTTPPatterns(const char* pattern, tMlmpPattern* parts, uint32_t
     numPartLimit, int level);
 void destroyHosUrlPatternList(HosUrlPatternsList** pHosUrlPatternsList);
 

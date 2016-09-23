@@ -24,7 +24,6 @@
 
 #include <assert.h>
 #include <string>
-using namespace std;
 
 #include "main/snort_config.h"
 #include "main/snort_types.h"
@@ -42,6 +41,8 @@ using namespace std;
 #include "actions/act_replace.h"
 #include "hash/sfhashfcn.h"
 #include "profiler/profiler.h"
+
+using namespace std;
 
 static void replace_parse(const char* args, string& s)
 {

@@ -20,7 +20,6 @@
 #include "mpse_manager.h"
 
 #include <list>
-using namespace std;
 
 #include "module_manager.h"
 #include "main/snort_types.h"
@@ -31,6 +30,8 @@ using namespace std;
 #include "parser/parser.h"
 #include "log/messages.h"
 #include "search_engines/search_common.h"
+
+using namespace std;
 
 typedef list<const MpseApi*> EngineList;
 static EngineList s_engines;

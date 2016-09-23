@@ -30,7 +30,6 @@
 
 #include <list>
 #include <fstream>
-using namespace std;
 
 #include "plugin_manager.h"
 #include "main/snort_types.h"
@@ -45,6 +44,8 @@ using namespace std;
 #include "utils/util.h"
 #include "parser/parser.h"
 #include "log/messages.h"
+
+using namespace std;
 
 struct Option
 {

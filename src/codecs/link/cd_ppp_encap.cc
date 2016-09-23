@@ -58,15 +58,6 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     DebugMessage(DEBUG_DECODE, "PPP Packet!\n");
 
-#ifdef WORDS_MUSTALIGN
-    DebugMessage(DEBUG_DECODE, "Packet with PPP header.  "
-        "PPP is only 1 or 2 bytes and will throw off "
-        "alignment on this architecture when decoding IP, "
-        "causing a bus error - stop decoding packet.\n");
-    return true;
-
-#endif  /* WORDS_MUSTALIGN */
-
     if (raw.len < 2)
         return false;
 

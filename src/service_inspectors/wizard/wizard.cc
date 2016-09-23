@@ -18,7 +18,6 @@
 // wizard.cc author Russ Combs <rucombs@cisco.com>
 
 #include <vector>
-using namespace std;
 
 #include "flow/flow.h"
 #include "framework/inspector.h"
@@ -32,6 +31,8 @@ using namespace std;
 
 #include "magic.h"
 #include "wiz_module.h"
+
+using namespace std;
 
 THREAD_LOCAL ProfileStats wizPerfStats;
 

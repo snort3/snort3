@@ -36,7 +36,6 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-using namespace std;
 
 #include "plugin_manager.h"
 #include "main/snort_types.h"
@@ -47,6 +46,8 @@ using namespace std;
 #include "utils/util.h"
 #include "parser/parser.h"
 #include "log/messages.h"
+
+using namespace std;
 
 static list<const SoApi*> s_rules;
 

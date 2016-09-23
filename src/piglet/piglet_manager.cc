@@ -43,7 +43,7 @@ using namespace std;
 // Manager State
 // -----------------------------------------------------------------------------
 
-map<PlugType, Api*> plugins;
+std::map<PlugType, Api*> plugins;
 vector<Chunk> chunks;
 
 // -----------------------------------------------------------------------------

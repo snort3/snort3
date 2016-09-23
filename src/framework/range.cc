@@ -24,11 +24,12 @@
 #include <string.h>
 
 #include <string>
-using namespace std;
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
+
+using namespace std;
 
 //--------------------------------------------------------------------------
 // private parsing methods

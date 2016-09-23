@@ -22,7 +22,6 @@
 #include <assert.h>
 
 #include <list>
-using namespace std;
 
 #include "main/snort_types.h"
 #include "main/snort_config.h"
@@ -34,6 +33,8 @@ using namespace std;
 #include "log/messages.h"
 #include "actions/act_replace.h"
 #include "packet_io/active.h"
+
+using namespace std;
 
 struct Actor
 {

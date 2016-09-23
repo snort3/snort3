@@ -22,7 +22,6 @@
 
 #include <chrono>
 #include <thread>
-using namespace std;
 
 #include "snort.h"
 #include "snort_debug.h"
@@ -31,6 +30,8 @@ using namespace std;
 #include "log/messages.h"
 #include "memory/memory_cap.h"
 #include "packet_io/sfdaq.h"
+
+using namespace std;
 
 typedef DAQ_Verdict
 (* PacketCallback)(void*, const DAQ_PktHdr_t*, const uint8_t*);

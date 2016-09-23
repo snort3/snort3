@@ -90,10 +90,11 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
+using namespace std;
+
 static THREAD_LOCAL ProfileStats byteJumpPerfStats;
 
 #define s_name "byte_jump"
-using namespace std;
 
 typedef struct _ByteJumpData
 {

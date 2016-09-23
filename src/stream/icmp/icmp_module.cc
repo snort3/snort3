@@ -21,9 +21,10 @@
 #include "icmp_module.h"
 
 #include <string>
-using namespace std;
 
 #include "stream_icmp.h"
+
+using namespace std;
 
 //-------------------------------------------------------------------------
 // stream_icmp module

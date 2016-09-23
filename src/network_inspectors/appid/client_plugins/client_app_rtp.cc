@@ -103,7 +103,7 @@ SO_PUBLIC RNAClientAppModule rtp_client_mod =
 
 struct Client_App_Pattern
 {
-    const u_int8_t* pattern;
+    const uint8_t* pattern;
     unsigned length;
     int index;
     unsigned appId;

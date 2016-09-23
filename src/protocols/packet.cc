@@ -39,10 +39,9 @@ Packet::Packet(bool packet_data)
     }
     else
     {
-        uint8_t* b = new uint8_t[sizeof(*pkth) + Codec::PKT_MAX + SPARC_TWIDDLE];
+        uint8_t* b = new uint8_t[sizeof(*pkth) + Codec::PKT_MAX];
         pkth = (DAQ_PktHdr_t*)b;
         b += sizeof(*pkth);
-        b += SPARC_TWIDDLE;
         pkt = b;
     }
 

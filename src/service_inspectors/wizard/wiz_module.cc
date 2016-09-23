@@ -24,9 +24,10 @@
 #include <string.h>
 
 #include <string>
-using namespace std;
 
 #include "magic.h"
+
+using namespace std;
 
 //-------------------------------------------------------------------------
 // wizard module

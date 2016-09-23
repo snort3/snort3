@@ -32,6 +32,10 @@
 #include <errno.h>
 #include <signal.h>
 
+extern "C" {
+#include <sfbpf_dlt.h>
+}
+
 #include "log.h"
 #include "text_log.h"
 #include "obfuscator.h"

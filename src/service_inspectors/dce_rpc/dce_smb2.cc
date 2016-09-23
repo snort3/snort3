@@ -379,7 +379,7 @@ static void DCE2_Smb2CreateResponse(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
     if (smb_create_hdr->end_of_file)
     {
         file_size = alignedNtohq((const uint64_t*)(&(smb_create_hdr->end_of_file)));
-        DebugFormat(DEBUG_DCE_SMB, "Get file size %lu!\n", file_size);
+        DebugFormat(DEBUG_DCE_SMB, "Get file size %" PRIu64 "!\n", file_size);
         ssd->ftracker.tracker.file.file_size = file_size;
     }
 
@@ -498,7 +498,7 @@ static void DCE2_Smb2SetInfo(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
         if (smb_set_info_hdr->file_info_class == SMB2_FILE_ENDOFFILE_INFO)
         {
             uint64_t file_size = alignedNtohq((const uint64_t*)file_data);
-            DebugFormat(DEBUG_DCE_SMB, "Get file size %lu!\n", file_size);
+            DebugFormat(DEBUG_DCE_SMB, "Get file size %" PRIu64 "!\n", file_size);
             ssd->ftracker.tracker.file.file_size = file_size;
             uint64_t fileId_persistent = alignedNtohq(&(smb_set_info_hdr->fileId_persistent));
             FileContext* file = get_file_context(ssd, fileId_persistent);

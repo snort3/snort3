@@ -39,7 +39,6 @@
 
 #include <string>
 #include <thread>
-using namespace std;
 
 #include "main/analyzer.h"
 #include "main/shell.h"
@@ -74,6 +73,8 @@ using namespace std;
 #ifdef PIGLET
 #include "piglet/piglet.h"
 #endif
+
+using namespace std;
 
 //-------------------------------------------------------------------------
 

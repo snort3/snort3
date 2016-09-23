@@ -16,7 +16,7 @@ set (PLUGIN_LIST
     unified2.cc
 )
 
-if (LINUX)
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
     set ( LOGGER_SOURCES
         ${LOGGER_SOURCES}
         alert_sf_socket.cc

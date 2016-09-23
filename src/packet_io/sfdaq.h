@@ -23,7 +23,7 @@
 #define SFDAQ_H
 
 extern "C" {
-#include <daq.h>
+#include <daq_common.h>
 }
 
 #include <string>

@@ -311,7 +311,6 @@ void PacketManager::decode(
 // - don't include original options
 // - inner layer differs from original (eg tcp data segment becomes rst)
 // - must ensure proper ttl/hop limit for reverse direction
-// - sparc twiddle must be factored in packet start for transmission
 //
 // iterate over decoded layers and encode the response packet.  actually
 // make nested calls.  on the way in we setup invariant stuff and as we

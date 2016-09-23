@@ -21,9 +21,10 @@
 #include "udp_module.h"
 
 #include <string>
-using namespace std;
 
 #include "stream_udp.h"
+
+using namespace std;
 
 //-------------------------------------------------------------------------
 // stream_udp module

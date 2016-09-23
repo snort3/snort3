@@ -20,13 +20,14 @@
 // Created on: Aug 5, 2015
 
 #include <iostream>
-using namespace std;
 
 #include "tcp_module.h"
 #include "tcp_tracker.h"
 #include "tcp_session.h"
 #include "tcp_normalizer.h"
 #include "tcp_state_syn_recv.h"
+
+using namespace std;
 
 TcpStateSynRecv::TcpStateSynRecv(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_SYN_RECV, tsm)

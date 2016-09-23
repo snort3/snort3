@@ -27,11 +27,11 @@
 #include "sfip/sfip_t.h"
 #include "sfip/sf_ip.h"
 
-using namespace std;
-
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
+
+using namespace std;
 
 Value::~Value()
 {

@@ -1003,7 +1003,7 @@ bool isSslServiceAppId(AppId appId)
     return false;
 }
 
-static int ssl_scan_patterns(SearchTool* matcher, const u_int8_t* pattern, size_t size,
+static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* pattern, size_t size,
     AppId* ClientAppId, AppId* payloadId)
 {
     MatchedSSLPatterns* mp = nullptr;
@@ -1057,13 +1057,13 @@ static int ssl_scan_patterns(SearchTool* matcher, const u_int8_t* pattern, size_
     return 1;
 }
 
-int ssl_scan_hostname(const u_int8_t* pattern, size_t size, AppId* ClientAppId, AppId* payloadId,
+int ssl_scan_hostname(const uint8_t* pattern, size_t size, AppId* ClientAppId, AppId* payloadId,
     ServiceSslConfig* pSslConfig)
 {
     return ssl_scan_patterns(pSslConfig->ssl_host_matcher, pattern, size, ClientAppId, payloadId);
 }
 
-int ssl_scan_cname(const u_int8_t* pattern, size_t size, AppId* ClientAppId, AppId* payloadId,
+int ssl_scan_cname(const uint8_t* pattern, size_t size, AppId* ClientAppId, AppId* payloadId,
     ServiceSslConfig* pSslConfig)
 {
     return ssl_scan_patterns(pSslConfig->ssl_cname_matcher, pattern, size, ClientAppId, payloadId);

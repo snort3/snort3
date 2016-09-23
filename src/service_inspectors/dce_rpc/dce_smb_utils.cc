@@ -1795,7 +1795,7 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
     Profile profile(dce2_smb_pstat_smb_file);
 
     DebugFormat(DEBUG_DCE_SMB,
-        "File size: %lu, File offset: %lu, Bytes processed: %lu, "
+        "File size: %" PRIu64 ", File offset: %" PRIu64 ", Bytes processed: %" PRIu64 ", "
         "Data len: %u\n", ftracker->ff_file_size, ftracker->ff_file_offset,
         ftracker->ff_bytes_processed, data_len);
 
@@ -1875,8 +1875,8 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
             }
             else if (ftracker->ff_file_offset < ftracker->ff_bytes_processed)
             {
-                DebugFormat(DEBUG_DCE_SMB, "File offset %lu is "
-                    "less than bytes processed %lu - aborting.\n",
+                DebugFormat(DEBUG_DCE_SMB, "File offset %" PRIu64 " is "
+                    "less than bytes processed %" PRIu64 " - aborting.\n",
                     ftracker->ff_file_offset, ftracker->ff_bytes_processed);
 
                 DCE2_SmbAbortFileAPI(ssd);
@@ -1918,8 +1918,8 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
             || ((file_data_depth != 0)
             && (ftracker->ff_bytes_processed >= (uint64_t)file_data_depth)))
         {
-            DebugFormat(DEBUG_DCE_SMB, "Bytes processed %lu "
-                "is at or beyond file data depth %lu - finished.\n",
+            DebugFormat(DEBUG_DCE_SMB, "Bytes processed %" PRIu64
+                "is at or beyond file data depth %" PRIi64 " - finished.\n",
                 ftracker->ff_bytes_processed, file_data_depth);
             DCE2_SmbRemoveFileTracker(ssd, ftracker);
 

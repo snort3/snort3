@@ -898,7 +898,7 @@ static int sip_parse_cseq(SIPMsg* msg, const char* start, const char* end, SIP_P
         msg->cseqNameLen = end - msg->cseqName;
         method = SIP_FindMethod (config->methods, msg->cseqName, msg->cseqNameLen);
     }
-    DebugFormat(DEBUG_SIP, "CSeq number: %lu, CSeqName: %.*s\n",
+    DebugFormat(DEBUG_SIP, "CSeq number: %" PRIu64 ", CSeqName: %.*s\n",
         msg->cseqnum, msg->cseqNameLen, msg->cseqName);
 
     if (NULL == method)

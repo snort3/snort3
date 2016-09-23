@@ -30,7 +30,6 @@
 #include <map>
 #include <vector>
 #include <iostream>
-using namespace std;
 
 #include "action_manager.h"
 #include "event_manager.h"
@@ -73,7 +72,9 @@ using namespace std;
 #include "parser/parser.h"
 #include "file_api/file_service.h"
 
-#if defined(LINUX)
+using namespace std;
+
+#if defined(__linux__)
 #define lib_pattern "*.so"
 #else
 #define lib_pattern "*.dylib"
@@ -157,7 +158,7 @@ struct Plugin
     { source.clear(); key.clear(); api = nullptr; handle = nullptr; }
 };
 
-typedef map<string, Plugin> PlugMap;
+typedef std::map<string, Plugin> PlugMap;
 static PlugMap plug_map;
 
 struct RefCount
@@ -169,7 +170,7 @@ struct RefCount
     //~RefCount() { assert(!count); }; // FIXIT-L fails on fatal error
 };
 
-typedef map<void*, RefCount> RefMap;
+typedef std::map<void*, RefCount> RefMap;
 static RefMap ref_map;
 
 static void set_key(string& key, Symbol* sym, const char* name)

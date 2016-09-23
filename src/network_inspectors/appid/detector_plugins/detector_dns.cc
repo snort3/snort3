@@ -778,7 +778,7 @@ inprocess:
     return SERVICE_INPROCESS;
 }
 
-static int dns_host_scan_patterns(SearchTool* matcher, const u_int8_t* pattern, size_t size,
+static int dns_host_scan_patterns(SearchTool* matcher, const uint8_t* pattern, size_t size,
     AppId* ClientAppId, AppId* payloadId)
 {
     MatchedDNSPatterns* mp = nullptr;
@@ -826,7 +826,7 @@ static int dns_host_scan_patterns(SearchTool* matcher, const u_int8_t* pattern, 
     return 1;
 }
 
-int dns_host_scan_hostname(const u_int8_t* pattern, size_t size, AppId* ClientAppId,
+int dns_host_scan_hostname(const uint8_t* pattern, size_t size, AppId* ClientAppId,
     AppId* payloadId, const ServiceDnsConfig* pDnsConfig)
 {
     return dns_host_scan_patterns(pDnsConfig->dns_host_host_matcher, pattern, size, ClientAppId,

@@ -26,7 +26,6 @@
 #include <syslog.h>
 #include <iostream>
 #include <string>
-using namespace std;
 
 #include "main.h"
 #include "main/snort_config.h"
@@ -45,6 +44,8 @@ using namespace std;
 #include "helpers/process.h"
 #include "utils/util.h"
 #include "helpers/markup.h"
+
+using namespace std;
 
 #define snort_help \
     "\n" \

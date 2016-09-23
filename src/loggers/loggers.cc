@@ -28,7 +28,7 @@
 // to ensure PacketManager::log_protocols() is built into Snort++
 extern const BaseApi* log_codecs;
 
-#ifdef LINUX
+#if defined(__linux__)
 extern const BaseApi* alert_sf_socket;
 #endif
 
@@ -47,7 +47,7 @@ const BaseApi* loggers[] =
     // loggers
     log_codecs,
 
-#ifdef LINUX
+#if defined(__linux__)
     alert_sf_socket,
 #endif
 

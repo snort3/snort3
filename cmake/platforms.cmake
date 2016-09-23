@@ -4,35 +4,8 @@
 # 
 
 
-# TODO:  Either make a macro or a  of platforms and loop over them.
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "openbsd")
-    set(OPENBSD "1")
-endif ()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "solaris")
-    set(SOLARIS "1")
-endif ()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "sunos")
-    set(SUNOS "1")
-endif ()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "linux")
-    set(LINUX "1")
-endif ()
-
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
-    set(LINUX "1")
-endif()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "freebsd")
-    set(FREEBSD "1")
-endif ()
-
 # APPLE is defined by Cmake
 if (APPLE)
-    set(MACOS 1)
     set(CMAKE_MACOSX_RPATH OFF)
 endif()
 

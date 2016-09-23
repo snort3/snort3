@@ -24,7 +24,7 @@
 
 #include "packet_capture.h"
 
-#include <pcap/pcap.h>
+#include <pcap.h>
 #include <sfbpf.h>
 #include <string>
 
@@ -38,10 +38,10 @@
 #include "catch/catch.hpp"
 #endif
 
+using namespace std;
+
 #define FILE_NAME "packet_capture.pcap"
 #define SNAP_LEN 65535
-
-using namespace std;
 
 static CaptureConfig config;
 

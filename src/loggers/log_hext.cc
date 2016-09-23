@@ -28,7 +28,6 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
-using namespace std;
 
 #include "main/snort_types.h"
 #include "framework/logger.h"
@@ -36,6 +35,8 @@ using namespace std;
 #include "protocols/packet.h"
 #include "log/text_log.h"
 #include "sfip/sf_ip.h"
+
+using namespace std;
 
 #define S_NAME "log_hext"
 #define F_NAME S_NAME ".txt"

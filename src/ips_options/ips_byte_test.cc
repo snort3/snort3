@@ -92,7 +92,6 @@
 #include <errno.h>
 
 #include <string>
-using namespace std;
 
 #include "extract.h"
 #include "ips_byte_extract.h"
@@ -110,6 +109,8 @@ using namespace std;
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+
+using namespace std;
 
 #define PARSELEN 10
 #define TEXTLEN  (PARSELEN + 2)

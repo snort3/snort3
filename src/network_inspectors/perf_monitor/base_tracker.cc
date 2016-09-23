@@ -28,9 +28,9 @@
 #include "utils/util.h"
 #endif
 
-#define BASE_FILE (PERF_NAME ".csv")
-
 using namespace std;
+
+#define BASE_FILE (PERF_NAME ".csv")
 
 BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf,
     perf->output == PERF_FILE ? BASE_FILE : nullptr)

@@ -26,7 +26,7 @@
 #include "config.h"
 #endif
 
-#ifdef LINUX
+#if defined(__linux__)
 #include <sys/socket.h>
 #include <sys/un.h>
 
@@ -47,6 +47,8 @@
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
 
+using namespace std;
+
 struct SfSock
 {
     int connected;
@@ -62,7 +64,6 @@ struct RuleId
 
 static THREAD_LOCAL SfSock context;
 
-using namespace std;
 typedef vector<RuleId> RuleVector;
 
 #define s_name "alert_sfsocket"
@@ -415,5 +416,5 @@ static LogApi sf_sock_api
 
 const BaseApi* alert_sf_socket = &sf_sock_api.base;
 
-#endif   /* LINUX */
+#endif   /* __linux__ */
 

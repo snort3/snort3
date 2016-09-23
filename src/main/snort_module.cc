@@ -28,7 +28,6 @@
 #include <string.h>
 
 #include <string>
-using namespace std;
 
 #include "main.h"
 #include "snort_config.h"
@@ -52,6 +51,8 @@ using namespace std;
 #ifdef UNIT_TEST
 #include "catch/unit_test.h"
 #endif
+
+using namespace std;
 
 //-------------------------------------------------------------------------
 // commands
@@ -234,11 +235,6 @@ static const Parameter s_params[] =
 
     { "-W", Parameter::PT_IMPLIED, nullptr, nullptr,
       "lists available interfaces" },
-
-#if defined(DLT_IEEE802_11)
-    { "-w", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "dump 802.11 management and control frames" },
-#endif
 
     { "-X", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump the raw packet data starting at the link layer" },
@@ -645,11 +641,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("-W") )
         list_interfaces(sc);
-
-#if defined(DLT_IEEE802_11)
-    else if ( v.is("-w") )
-        sc->output_flags |= OUTPUT_FLAG__SHOW_WIFI_MGMT;
-#endif
 
     else if ( v.is("-X") )
         ConfigDumpPayloadVerbose(sc, v.get_string());

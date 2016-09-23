@@ -161,15 +161,6 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     // not raw ip -> encode layer 2
     bool raw = ( enc.flags & ENC_FLAG_RAW );
 
-    if ( !raw && (buf.size() == 0) )
-    {
-        // for alignment
-        if (!buf.allocate(SPARC_TWIDDLE))
-            return false;
-
-        buf.off = SPARC_TWIDDLE;
-    }
-
     if ( !raw || (buf.size() != 0) )
     {
         // we get here for outer-most layer when not raw ip

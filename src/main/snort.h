@@ -28,7 +28,7 @@
 #include <stdio.h>
 
 extern "C" {
-#include <daq.h>
+#include <daq_common.h>
 }
 
 class Flow;

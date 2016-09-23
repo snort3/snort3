@@ -20,10 +20,11 @@
 #include "user_module.h"
 
 #include <string>
-using namespace std;
 
 #include "stream_user.h"
 #include "main/snort_config.h"
+
+using namespace std;
 
 //-------------------------------------------------------------------------
 // stream_user module

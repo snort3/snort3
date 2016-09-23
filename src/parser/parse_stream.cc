@@ -26,7 +26,6 @@
 #include <istream>
 #include <sstream>
 #include <string>
-using namespace std;
 
 #include "parser.h"
 #include "parse_conf.h"
@@ -34,6 +33,8 @@ using namespace std;
 #include "detection/treenodes.h"
 #include "log/messages.h"
 #include "managers/ips_manager.h"
+
+using namespace std;
 
 static unsigned chars = 0, tokens = 0;
 static unsigned lines = 1, comments = 0;

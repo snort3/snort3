@@ -101,7 +101,7 @@ static const AppRegistryEntry appIdRegistry[] =
 static int timbuktu_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&timbuktu_validate, IpProtocol::TCP, (const
-        u_int8_t*)TIMBUKTU_BANNER,
+        uint8_t*)TIMBUKTU_BANNER,
         sizeof(TIMBUKTU_BANNER)-1, 0, svc_name, init_api->pAppidConfig);
     for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {

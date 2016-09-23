@@ -23,7 +23,6 @@
 
 #include <string>
 #include <vector>
-using namespace std;
 
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
@@ -34,6 +33,8 @@ using namespace std;
 #include "framework/module.h"
 #include "parser/parse_conf.h"
 #include "parser/parser.h"
+
+using namespace std;
 
 #define s_name "metadata"
 
