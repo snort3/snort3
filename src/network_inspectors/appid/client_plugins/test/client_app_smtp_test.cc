@@ -19,11 +19,11 @@
 // client_app_smtp_test.cc author Steve Chew <stechew@cisco.com>
 // unit test for client_app_smtp
 
+#include "network_inspectors/appid/client_plugins/client_app_smtp.cc"
+
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
-
-#include "network_inspectors/appid/client_plugins/client_app_smtp.cc"
 
 #include <string>
 

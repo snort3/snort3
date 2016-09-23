@@ -19,11 +19,11 @@
 // service_rsync_test.cc author Steve Chew <stechew@cisco.com>
 // unit test for service_rsync
 
+#include "network_inspectors/appid/service_plugins/service_rsync.cc"
+
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
-
-#include "network_inspectors/appid/service_plugins/service_rsync.cc"
 
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 
