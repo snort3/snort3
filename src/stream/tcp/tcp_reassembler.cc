@@ -555,7 +555,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq)
 
     DEBUG_WRAP(bytes_queued -= bytes_flushed; );
     DebugFormat(DEBUG_STREAM_STATE,
-        "flushed %hu bytes / %u segs on stream, %u bytes still queued\n",
+        "flushed %u bytes / %u segs on stream, %u bytes still queued\n",
         bytes_flushed, segs, bytes_queued);
 
     return bytes_flushed;

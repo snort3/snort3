@@ -1,3 +1,24 @@
+16/09/24 - build 212
+
+-- add dce udp snort2lua
+-- add file detection when they are transferred in segments in SMB2
+-- fix another case of CPPUTest header order issues
+-- separate idle timeouts from session timeouts counts
+-- close tcp on rst in close wait, closing, fin wait 1, and fin wait 2
+-- doc: update style guide for 'using' statements and underscores
+-- packet_capture: Include top-level pcap.h for backward compatibility
+-- main: remove unused -w commandline option
+-- lua: fix conflict with _L macro from ctype.h on OpenBSD
+-- cmake: clean dead variables out of config.cmake.h
+-- build: fix 32-bit compiler warnings
+-- build: fix illumos/OpenSolaris build and remove SOLARIS/SUNOS defines
+-- build: remove superfluous LINUX and MACOS definitions
+-- build: remove superfluous OPENBSD and FREEBSD definitions
+-- build: entering 'std' namespace should be after all headers are included
+-- build: clean up u_int*_t usage
+-- build: remove SPARC support
+-- build: clean up some DAQ header inclusion creep.
+
 16/09/22 - build 211
 
 -- fix hyperscan detection with nocase
