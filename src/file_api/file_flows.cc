@@ -177,8 +177,11 @@ bool FileFlows::file_process(uint64_t file_id, const uint8_t* file_data,
     if (!context)
         return 0;
 
-    context->check_policy(flow, dir);
-    context->set_file_id(file_id);
+    if (!context->get_processed_bytes())
+    {
+        context->check_policy(flow, dir);
+        context->set_file_id(file_id);
+    }
 
     if (context->verdict != FILE_VERDICT_UNKNOWN)
     {

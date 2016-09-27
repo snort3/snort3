@@ -357,7 +357,7 @@ static void DCE2_Smb2CreateRequest(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
         }
         ssd->ftracker.file_name = DCE2_Smb2GetFileName(file_data, size, true, false);
         if (ssd->ftracker.file_name)
-            ssd->ftracker.file_name_size = strlen(ssd->ftracker.file_name) + 1;
+            ssd->ftracker.file_name_size = strlen(ssd->ftracker.file_name);
     }
 }
 
