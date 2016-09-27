@@ -43,9 +43,9 @@
 #define s_name "sd_pattern"
 #define s_help "rule option for detecting sensitive data"
 
-#define SD_SOCIAL_PATTERN          "\\b\\d{3}-\\d{2}-\\d{4}\\b"
-#define SD_SOCIAL_NODASHES_PATTERN "\\b\\d{9}\\b"
-#define SD_CREDIT_PATTERN_ALL      "\\b\\d{4}[- ]?\\d{4}[- ]?\\d{2}[- ]?\\d{2}[- ]?\\d{3,4}\\b"
+#define SD_SOCIAL_PATTERN          R"(\b\d{3}-\d{2}-\d{4}\b)"
+#define SD_SOCIAL_NODASHES_PATTERN R"(\b\d{9}\b)"
+#define SD_CREDIT_PATTERN_ALL      R"(\b\d{4}[- ]?\d{4}[- ]?\d{2}[- ]?\d{2}[- ]?\d{3,4}\b)"
 
 // we need to update scratch in the main thread as each pattern is processed
 // and then clone to thread specific after all rules are loaded.  s_scratch is
@@ -186,8 +186,6 @@ struct hsContext
     const uint8_t* buf = nullptr;
 };
 
-// FIXIT-H Count matches
-// FIXIT-H afix this to SdPatternOption
 static int hs_match(unsigned int /*id*/, unsigned long long from,
         unsigned long long to, unsigned int /*flags*/, void *context)
 {
@@ -198,7 +196,7 @@ static int hs_match(unsigned int /*id*/, unsigned long long from,
     assert(ctx->start);
 
     unsigned long long len = to - from;
-    if ( ctx->config.validate && ctx->config.validate(ctx->buf, len) != 1 )
+    if ( ctx->config.validate && ctx->config.validate(ctx->buf+from, len) != 1 )
         return 0;
 
     ctx->count++;
