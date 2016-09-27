@@ -63,7 +63,7 @@ protected:
     int eval_left();
     int eval_right();
 
-    virtual bool is_segment_retransmit();
+    virtual bool is_segment_retransmit(bool*);
     virtual void drop_old_segment();
     virtual int generate_bad_segment_event();
 

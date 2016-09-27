@@ -71,16 +71,27 @@ void TcpSegmentNode::term()
     delete this;
 }
 
-bool TcpSegmentNode::is_retransmit(const uint8_t* rdata, uint16_t rsize, uint32_t rseq)
+bool TcpSegmentNode::is_retransmit(const uint8_t* rdata, uint16_t rsize, uint32_t rseq, uint16_t orig_dsize, bool *full_retransmit)
 {
     // retransmit must have same payload at same place
     if ( !SEQ_EQ(seq, rseq) )
         return false;
 
-    if ( ( ( payload_size <= rsize )and !memcmp(data, rdata, payload_size) )
-        or ( ( payload_size > rsize )and !memcmp(data, rdata, rsize) ) )
+    if( orig_dsize == payload_size )
+    {
+        if ( ( ( payload_size <= rsize )and !memcmp(data, rdata, payload_size) )
+            or ( ( payload_size > rsize )and !memcmp(data, rdata, rsize) ) )
+        {
+            return true;
+        }
+    }
+    //Checking for a possible split of segment in which case
+    //we compare complete data of the segment to find a retransmission
+    else if(full_retransmit and (orig_dsize == rsize) and !memcmp(data, rdata, rsize) )
+    {
+        *full_retransmit = true;
         return true;
+    }
 
     return false;
 }
-

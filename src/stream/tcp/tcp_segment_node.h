@@ -45,7 +45,7 @@ public:
     static TcpSegmentNode* init(const struct timeval&, const uint8_t*, unsigned);
 
     void term();
-    bool is_retransmit(const uint8_t*, uint16_t size, uint32_t);
+    bool is_retransmit(const uint8_t*, uint16_t size, uint32_t, uint16_t, bool*);
 
     TcpSegmentNode* prev;
     TcpSegmentNode* next;

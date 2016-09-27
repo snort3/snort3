@@ -30,20 +30,24 @@
 #include "tcp_normalizer.h"
 #include "tcp_reassembler.h"
 
-bool SegmentOverlapEditor::is_segment_retransmit()
+bool SegmentOverlapEditor::is_segment_retransmit(bool* full_retransmit)
 {
     // Don't want to count retransmits as overlaps or do anything
     // else with them.  Account for retransmits of multiple PDUs
     // in one segment.
-    if ( right->is_retransmit(rdata, rsize, rseq) )
+    if ( right->is_retransmit(rdata, rsize, rseq, right->orig_dsize, ((rseq == tsd->get_seg_seq())?full_retransmit:nullptr)) )
     {
-        rdata += right->payload_size;
-        rsize -= right->payload_size;
-        rseq += right->payload_size;
-
-        seq += right->payload_size;
-        left = right;
-        right = right->next;
+        if ( !(*full_retransmit) )
+        {
+            rdata += right->payload_size;
+            rsize -= right->payload_size;
+            rseq += right->payload_size;
+            seq += right->payload_size;
+            left = right;
+            right = right->next;
+        }
+        else
+            rsize = 0;
 
         if ( rsize == 0 )
         {
@@ -84,7 +88,7 @@ int SegmentOverlapEditor::eval_right()
 
         if ( overlap < right->payload_size )
         {
-            if ( right->is_retransmit(rdata, rsize, rseq) )
+            if ( right->is_retransmit(rdata, rsize, rseq, right->orig_dsize, nullptr) )
             {
                 // All data was retransmitted
                 session->retransmit_process();
@@ -101,11 +105,16 @@ int SegmentOverlapEditor::eval_right()
         }
         else  // Full overlap
         {
+            bool full_retransmit = false;
             // Don't want to count retransmits as overlaps or do anything
             // else with them.  Account for retransmits of multiple PDUs
             // in one segment.
-            if ( is_segment_retransmit() )
+            if ( is_segment_retransmit(&full_retransmit) )
+            {
+                if ( full_retransmit )
+                    break;
                 continue;
+            }
 
             tcpStats.overlaps++;
             overlap_count++;
