@@ -1,3 +1,10 @@
+16/09/27 - build 213
+
+-- ported full retransmit changes from snort 2X
+-- fixed carved smb2 filenames
+-- fixed multithread hyperscan mpse
+-- fixed sd_pattern iterative validation
+
 16/09/24 - build 212
 
 -- add dce udp snort2lua
