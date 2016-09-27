@@ -153,13 +153,16 @@ private:
 
     hs_database_t* hs_db = nullptr;
 
-    MpseMatch match_cb = nullptr;
-    void* match_ctx = nullptr;
+    static THREAD_LOCAL MpseMatch match_cb;
+    static THREAD_LOCAL void* match_ctx;
 
 public:
     static uint64_t instances;
     static uint64_t patterns;
 };
+
+THREAD_LOCAL MpseMatch HyperscanMpse::match_cb = nullptr;
+THREAD_LOCAL void* HyperscanMpse::match_ctx = nullptr;
 
 uint64_t HyperscanMpse::instances = 0;
 uint64_t HyperscanMpse::patterns = 0;
