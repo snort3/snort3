@@ -61,6 +61,8 @@ static bool loaded = false;
 // specific for each thread / instance
 static THREAD_LOCAL SFDAQInstance *local_instance = nullptr;
 
+#include "tics/tics.h"
+
 /*
  * SFDAQ
  */
@@ -324,6 +326,47 @@ bool SFDAQInstance::configure(const SnortConfig* sc)
     cfg.mode = daq_mode;
     cfg.extra = nullptr;
     cfg.flags = 0;
+
+#ifndef TICS_USE_LOAD_BALANCE
+    if (strcasecmp(type, "tics_daq") == 0)
+    {
+        fprintf(stdout, "daq [%s] is selected, in order to use tics-daq, "
+                        "the macro TICS_USE_LOAD_BALANCE should be enabled\n", type);
+        exit (-1);
+    }
+#else /* !TICS_USE_LOAD_BALANCE */
+    if (strcasecmp(type, "tics_daq") == 0)
+    {
+        cfg.name = (char *) sc->dpdk_eal_cmd_cstr;
+        char * tmp_value = (char *)malloc(sizeof(char)*128);
+        if (!tmp_value)
+        {
+            fprintf(stdout, "tmp_value allocation error in %s\n", __FUNCTION__);
+            exit(-1);
+        }
+        else
+        {
+            sprintf(tmp_value, "%d%c", enabled_rxp_queue_cnt, '\0');
+            daq_config_set_value(&cfg, "rxp_queue_cnt", tmp_value);
+            sprintf(tmp_value, "%d%c", sc->dpdk_data_port_cnt, '\0');
+            daq_config_set_value(&cfg, "data_port_cnt", tmp_value);
+            #ifdef TICS_USE_RXP_MATCH
+                sprintf(tmp_value, "%d%c", 1, '\0');
+            #else /* TICS_USE_RXP_MATCH */
+                sprintf(tmp_value, "%d%c", 0, '\0');
+            #endif /* TICS_USE_RXP_MATCH */
+            daq_config_set_value(&cfg, "dpdk_init_by_snort", tmp_value);
+        }
+    }
+    else
+    {
+        fprintf(stdout, "daq [%s] is selected, "
+                        "but the macro TICS_USE_LOAD_BALANCE is enabled, "
+                        "in order to use tics-load-balance, "
+                        "daq [tics_daq] should be used\n", type);
+        exit (-1);
+    }
+#endif /* TICS_USE_LOAD_BALANCE */
 
     for (auto& kvp : sc->daq_config->variables)
     {

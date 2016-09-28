@@ -35,6 +35,8 @@
 #include "main/snort_config.h"
 #include "utils/stats.h"
 
+#include "tics/tics.h"
+
 struct Pattern
 {
     std::string pat;
@@ -253,6 +255,99 @@ int HyperscanMpse::match(
     return  h->match(id, to);
 }
 
+#ifdef TICS_USE_RXP_MATCH
+int HyperscanMpse::_search(
+    const uint8_t* buf, int n, MpseMatch mf, void* pv, int* current_state)
+{
+    *current_state = 0;
+
+    match_cb = mf;
+    match_ctx = pv;
+
+    SnortState* ss = snort_conf->state + get_instance_id();
+
+    /*Check the match mode*/
+#ifdef TICS_USE_HYPERSCAN_RXP_HYBRID_MATCH
+
+    /*If data size is smaller or equal to the limit we scan with hyperscan*/
+    if(n <= TICS_MAX_RXP_PACKET_LENGTH||rxp_response_queues_status[PM_TYPE_search]==false)
+    {
+        pc.tics_hs_searches++;
+        /*Count the type of error that lead us to this point*/
+        if(n <= TICS_MAX_RXP_PACKET_LENGTH)
+        {
+            pc.tics_hs_pkt_len_searches++;
+        }
+        else if(rxp_response_queues_status[PM_TYPE_search]==false)
+        {
+            pc.tics_hs_rxp_err_searches++;
+        }
+
+        /*Count the type of data analyzed by hyperscan*/
+        if (PM_TYPE_search == PM_TYPE_PKT)
+        {
+            pc.tics_hs_pkt_searches++;
+        }
+        else if (PM_TYPE_search == PM_TYPE_FILE)
+        {
+            pc.tics_hs_file_searches++;
+        }
+        else if (PM_TYPE_search == PM_TYPE_KEY)
+        {
+            pc.tics_hs_key_searches++;
+        }
+        else if (PM_TYPE_search == PM_TYPE_HEADER)
+        {
+            pc.tics_hs_header_searches++;
+        }
+        else if (PM_TYPE_search == PM_TYPE_BODY)
+        {
+            pc.tics_hs_body_searches++;
+        }
+        else if (PM_TYPE_search == PM_TYPE_ALT)
+        {
+            pc.tics_hs_alt_searches++;
+        }
+        else
+        {
+            fprintf(stdout,"Error: TICS The job analyzed belong to type (%d)\n",PM_TYPE_search);
+            exit(-1);
+        }
+
+        // scratch is null for the degenerate case w/o patterns
+        assert(!hs_db or ss->hyperscan_scratch);
+
+        hs_scan(hs_db, (char*)buf, n, 0, (hs_scratch_t*)ss->hyperscan_scratch,
+            HyperscanMpse::match, this);
+    }
+    else
+
+#endif /* TICS_USE_HYPERSCAN_RXP_HYBRID_MATCH */
+
+    {
+        pc.tics_rxp_searches++;
+
+        /* Check if matches were found by rxp */
+        if (rxp_response_queues[PM_TYPE_search][port_group_search].index != 0)
+        {
+            /*Check the list of matches from rxp*/
+            uint32_t i = 0;
+            for (i = 0; i < rxp_response_queues[PM_TYPE_search][port_group_search].index; i++)
+            {
+                    uint32_t j = 0;
+                    PMQ *tmp_resps = &(rxp_response_queues[PM_TYPE_search][port_group_search]);
+                    for (j = 0; j < t2s_psb_id_map[tmp_resps->id[i]-1].tics_fp_elem->snort_add_seqs_cnt; j++)
+                    {
+                            /*call hyperscan_match*/
+                            match(t2s_psb_id_map[tmp_resps->id[i]-1].tics_fp_elem->snort_add_seqs[j],
+                                    tmp_resps->to[i]);
+                    }
+            }
+        }
+    }
+    return 0;
+}
+#else /* TICS_USE_RXP_MATCH */
 int HyperscanMpse::_search(
     const uint8_t* buf, int n, MpseMatch mf, void* pv, int* current_state)
 {
@@ -271,6 +366,7 @@ int HyperscanMpse::_search(
 
     return 0;
 }
+#endif /* TICS_USE_RXP_MATCH */
 
 //-------------------------------------------------------------------------
 // public methods

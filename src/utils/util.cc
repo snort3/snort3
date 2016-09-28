@@ -54,6 +54,11 @@
 #include <hs_compile.h>
 #endif
 
+#include "tics/tics_macro_enabler.h"
+#ifdef TICS_USE_RXP_MATCH
+#include "tics/tics.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
@@ -139,6 +144,10 @@ int DisplayBanner()
 #ifdef HAVE_HYPERSCAN
     LogMessage("           Using Hyperscan version %s\n", hs_version());
 #endif
+#ifdef TICS_USE_RXP_MATCH
+    LogMessage("           Using TICS RXP %s\n", TICS_VERSION);
+#endif
+
     LogMessage("\n");
 
     return 0;

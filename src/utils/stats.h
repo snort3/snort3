@@ -34,12 +34,43 @@
 #include "main/thread.h"
 #include "main/snort_types.h"
 #include "framework/counts.h"
+#include "tics/tics_macro_enabler.h"
 
 typedef std::vector<unsigned> IndexVec;
 
 // FIXIT-L split this out into appropriate modules
 struct PacketCount
 {
+#ifdef TICS_USE_RXP_MATCH
+    PegCount tics_rxp_searches;
+    PegCount tics_raw_searches;
+    PegCount tics_cooked_searches;
+    PegCount tics_pkt_searches;
+    PegCount tics_alt_searches;
+    PegCount tics_key_searches;
+    PegCount tics_header_searches;
+    PegCount tics_body_searches;
+    PegCount tics_file_searches;
+    PegCount tics_scan_portgroup_cnt;
+    PegCount tics_scan_pm_type_pkt_cnt;
+    PegCount tics_scan_pm_type_alt_cnt;
+    PegCount tics_scan_pm_type_key_cnt;
+    PegCount tics_scan_pm_type_header_cnt;
+    PegCount tics_scan_pm_type_body_cnt;
+    PegCount tics_scan_pm_type_file_cnt;
+    PegCount tics_match_limit_reach;
+    PegCount tics_scan_errors;
+    PegCount tics_rxp_len_err_searches;
+    PegCount tics_hs_searches;
+    PegCount tics_hs_pkt_len_searches;
+    PegCount tics_hs_rxp_err_searches;
+    PegCount tics_hs_pkt_searches;
+    PegCount tics_hs_key_searches;
+    PegCount tics_hs_header_searches;
+    PegCount tics_hs_file_searches;
+    PegCount tics_hs_body_searches;
+    PegCount tics_hs_alt_searches;
+#endif /* TICS_USE_RXP_MATCH */
     PegCount total_from_daq;
     PegCount slow_searches;
     PegCount raw_searches;

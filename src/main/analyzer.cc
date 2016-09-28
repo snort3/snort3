@@ -30,6 +30,7 @@
 #include "log/messages.h"
 #include "memory/memory_cap.h"
 #include "packet_io/sfdaq.h"
+#include "tics/tics.h"
 
 using namespace std;
 

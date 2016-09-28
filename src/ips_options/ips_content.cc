@@ -44,6 +44,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+#include "tics/tics.h"
 
 #define MAX_PATTERN_SIZE 2048
 
@@ -718,8 +719,18 @@ bool ContentModule::end(const char*, int, SnortConfig*)
 bool ContentModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~data") )
+    {
         parse_content(cd, v.get_string());
 
+#ifdef TICS_GENERATE_RULE_FILE
+        cd->pmd.orig_pattern = strdup(v.get_string());
+        if (TicsGenerateFpPattern(cd->pmd.orig_pattern, cd->pmd.tics_fp_pattern, cd->pmd.tics_fp_len))
+        {
+            printf("Tics fp pattern generation failure in %s\n", __FUNCTION__);
+            exit (0);
+        }
+#endif /* TICS_GENERATE_RULE_FILE */
+    }
     else if ( v.is("offset") )
         parse_offset(cd, v.get_string());
 

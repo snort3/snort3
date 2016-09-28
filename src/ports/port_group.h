@@ -25,6 +25,8 @@
 #ifndef PortGroup_H
 #define PortGroup_H
 
+#include "tics/tics_macro_enabler.h"
+
 // PortGroup contains a set of fast patterns in the form of an MPSE and a
 // set of non-fast-pattern (nfp) rules.  when a PortGroup is selected, the
 // MPSE will run fp rules if there is a match on the associated fast
@@ -66,6 +68,10 @@ struct PortGroup
     // FIXIT-L these runtime counts are only valid with one packet thread
     unsigned match_count;
     unsigned event_count;
+
+#ifdef TICS_GENERATE_RULE_FILE
+    unsigned tics_subset_id[PM_TYPE_MAX];
+#endif /* TICS_GENERATE_RULE_FILE */
 
     void add_rule();
     bool add_nfp_rule(void*);

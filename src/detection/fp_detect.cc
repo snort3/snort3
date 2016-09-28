@@ -81,6 +81,8 @@
 #include "stream/stream.h"
 #include "utils/stats.h"
 
+#include "tics/tics.h"
+
 THREAD_LOCAL ProfileStats rulePerfStats;
 THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
 THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
@@ -89,6 +91,11 @@ THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
 THREAD_LOCAL uint64_t rule_eval_pkt_count = 0;
 
 static THREAD_LOCAL OTNX_MATCH_DATA t_omd;
+
+#ifdef TICS_USE_RXP_MATCH
+THREAD_LOCAL int PM_TYPE_search = PM_TYPE_MAX;
+THREAD_LOCAL int port_group_search = 0;
+#endif
 
 /* initialize the global OTNX_MATCH_DATA variable */
 void otnx_match_data_init(int num_rule_types)
@@ -920,7 +927,13 @@ static int fp_search(
                 pattern_match_size = p->alt_dsize;
 
             if ( pattern_match_size )
+            {
+#ifdef TICS_USE_RXP_MATCH
+                PM_TYPE_search = PM_TYPE_PKT;
+#endif /* TICS_USE_RXP_MATCH */
+
                 SEARCH_DATA(p->data, pattern_match_size, pc.pkt_searches);
+            }
 
             if ( pattern_match_size )
                 p->is_cooked() ?  pc.cooked_searches++ : pc.raw_searches++;
@@ -930,13 +943,31 @@ static int fp_search(
     if ( (!user_mode or type == 1) and gadget )
     {
         // service searches PDU buffers and file
+#ifdef TICS_USE_RXP_MATCH
+        PM_TYPE_search = PM_TYPE_KEY;
+#endif /* TICS_USE_RXP_MATCH */
+
         SEARCH_BUFFER(buf.IBT_KEY, PM_TYPE_KEY, pc.key_searches);
+
+#ifdef TICS_USE_RXP_MATCH
+        PM_TYPE_search = PM_TYPE_HEADER;
+#endif /* TICS_USE_RXP_MATCH */
+
         SEARCH_BUFFER(buf.IBT_HEADER, PM_TYPE_HEADER, pc.header_searches);
+
+#ifdef TICS_USE_RXP_MATCH
+        PM_TYPE_search = PM_TYPE_BODY;
+#endif /* TICS_USE_RXP_MATCH */
+
         SEARCH_BUFFER(buf.IBT_BODY, PM_TYPE_BODY, pc.body_searches);
 
         // FIXIT-L PM_TYPE_ALT will never be set unless we add
         // norm_data keyword or telnet, rpc_decode, smtp keywords
         // until then we must use the standard packet mpse
+#ifdef TICS_USE_RXP_MATCH
+        PM_TYPE_search = PM_TYPE_ALT;
+#endif /* TICS_USE_RXP_MATCH */
+
         SEARCH_BUFFER(buf.IBT_ALT, PM_TYPE_PKT, pc.alt_searches);
     }
 
@@ -948,7 +979,13 @@ static int fp_search(
             // FIXIT-M file data should be obtained from
             // inspector gadget as is done with SEARCH_BUFFER
             if ( g_file_data.len )
+            {
+#ifdef TICS_USE_RXP_MATCH
+                PM_TYPE_search = PM_TYPE_FILE;
+#endif /* TICS_USE_RXP_MATCH */
+
                 SEARCH_DATA(g_file_data.data, g_file_data.len, pc.file_searches);
+            }
         }
     }
     return 0;
@@ -1092,10 +1129,22 @@ static inline void fpEvalHeaderIp(Packet* p, OTNX_MATCH_DATA* omd)
         LogMessage("fpEvalHeaderIp: ip_group=%p, any=%p\n", (void*)ip_group, (void*)any);
 
     if ( ip_group )
+    {
+#ifdef TICS_USE_RXP_MATCH
+        port_group_search = TICS_PORT_GROUP_IP_GROUP;
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSW(ip_group, p, 0, 1, 0, omd);
+    }
 
     if  (any )
+    {
+    #ifdef TICS_USE_RXP_MATCH
+        port_group_search = TICS_PORT_GROUP_ANY;
+    #endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSW(any, p, 0, 1, 0, omd);
+    }
 }
 
 static inline void fpEvalHeaderIcmp(Packet* p, OTNX_MATCH_DATA* omd)
@@ -1106,10 +1155,22 @@ static inline void fpEvalHeaderIcmp(Packet* p, OTNX_MATCH_DATA* omd)
         return;
 
     if ( type )
+    {
+#ifdef TICS_USE_RXP_MATCH
+        port_group_search = TICS_PORT_GROUP_TYPE;
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSW(type, p, 0, 0, 0, omd);
+    }
 
     if ( any )
+    {
+#ifdef TICS_USE_RXP_MATCH
+        port_group_search = TICS_PORT_GROUP_ANY;
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSW(any, p, 0, 0, 0, omd);
+    }
 }
 
 static inline void fpEvalHeaderTcp(Packet* p, OTNX_MATCH_DATA* omd)
@@ -1124,13 +1185,31 @@ static inline void fpEvalHeaderTcp(Packet* p, OTNX_MATCH_DATA* omd)
         p->ptrs.sp,p->ptrs.dp,(void*)src,(void*)dst,(void*)any);
 
     if ( dst )
+    {
+#ifdef TICS_USE_RXP_MATCH
+        port_group_search = TICS_PORT_GROUP_DST;
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSW(dst, p, 1, 0, 0, omd);
+    }
 
     if ( src )
+    {
+        #ifdef TICS_USE_RXP_MATCH
+            port_group_search = TICS_PORT_GROUP_SRC;
+        #endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSW(src, p, 1, 0, 0, omd);
+    }
 
     if ( any )
+    {
+#ifdef TICS_USE_RXP_MATCH
+        port_group_search = TICS_PORT_GROUP_ANY;
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSW(any, p, 1, 0, 0, omd);
+    }
 }
 
 static inline void fpEvalHeaderUdp(Packet* p, OTNX_MATCH_DATA* omd)
@@ -1145,13 +1224,31 @@ static inline void fpEvalHeaderUdp(Packet* p, OTNX_MATCH_DATA* omd)
         p->ptrs.sp,p->ptrs.dp,(void*)src,(void*)dst,(void*)any);
 
     if ( dst )
+    {
+#ifdef TICS_USE_RXP_MATCH
+        port_group_search = TICS_PORT_GROUP_DST;
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSW(dst, p, 1, 0, 0, omd) ;
+    }
 
     if ( src )
+    {
+#ifdef TICS_USE_RXP_MATCH
+        port_group_search = TICS_PORT_GROUP_SRC;
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSW(src, p, 1, 0, 0, omd) ;
+    }
 
     if ( any )
+    {
+#ifdef TICS_USE_RXP_MATCH
+        port_group_search = TICS_PORT_GROUP_ANY;
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSW(any, p, 1, 0, 0, omd) ;
+    }
 }
 
 static inline bool fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
@@ -1190,10 +1287,22 @@ static inline bool fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
     int check_ports = (proto == SNORT_PROTO_USER) ? 2 : 1;
 
     if ( file )
+    {
+        #ifdef TICS_USE_RXP_MATCH
+            port_group_search = TICS_PORT_GROUP_FILE;
+        #endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSW(file, p, check_ports, 0, 2, omd);
+    }
 
     if ( svc )
+    {
+#ifdef TICS_USE_RXP_MATCH
+        port_group_search = TICS_PORT_GROUP_SVC;
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSW(svc, p, check_ports, 0, 1, omd);
+    }
 
     return svc != nullptr;
 }
@@ -1225,6 +1334,10 @@ static void fpEvalPacketUdp(Packet* p)
     auto save_do_detect_content = do_detect_content;
     if ( p->dsize )
         do_detect_content = true;
+
+#ifdef TICS_USE_RXP_MATCH
+    tics_scan_pkt(p);
+#endif /* TICS_USE_RXP_MATCH */
 
     fpEvalHeaderUdp(p, omd);
 
@@ -1264,6 +1377,13 @@ static void fpEvalPacketUdp(Packet* p)
 */
 int fpEvalPacket(Packet* p)
 {
+
+    /* TICS modes check up */
+#if defined (TICS_USE_RXP_MATCH) && !defined (TICS_GENERATE_RULE_FILE)
+    fprintf(stdout, "Error: TICS RXP MATCH requires TICS_GENERATE_RULE_FILE");
+    exit(-1);
+#endif /* TICS_USE_RXP_MATCH && !TICS_GENERATE_RULE_FILE */
+
     OTNX_MATCH_DATA* omd = &t_omd;
     InitMatchInfo(omd);
 
@@ -1275,26 +1395,51 @@ int fpEvalPacket(Packet* p)
     switch (p->type())
     {
     case PktType::IP:
+#ifdef TICS_USE_RXP_MATCH
+        /*TICS RXP analysis function call*/
+        tics_scan_pkt(p);
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderIp(p, omd);
         fpEvalHeaderSvc(p, omd, SNORT_PROTO_IP);
         break;
 
     case PktType::ICMP:
+#ifdef TICS_USE_RXP_MATCH
+        /*TICS RXP analysis function call*/
+        tics_scan_pkt(p);
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderIcmp(p, omd);
         fpEvalHeaderSvc(p, omd, SNORT_PROTO_ICMP);
         break;
 
     case PktType::TCP:
+#ifdef TICS_USE_RXP_MATCH
+        /*TICS RXP analysis function call*/
+        tics_scan_pkt(p);
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderTcp(p, omd);
         fpEvalHeaderSvc(p, omd, SNORT_PROTO_TCP);
         break;
 
     case PktType::UDP:
+#ifdef TICS_USE_RXP_MATCH
+        /*TICS RXP analysis function call*/
+        tics_scan_pkt(p);
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderUdp(p, omd);
         fpEvalHeaderSvc(p, omd, SNORT_PROTO_UDP);
         break;
 
     case PktType::PDU:
+#ifdef TICS_USE_RXP_MATCH
+        /*TICS RXP analysis function call*/
+        tics_scan_pkt(p);
+#endif /* TICS_USE_RXP_MATCH */
+
         if ( snort_conf->sopgTable->user_mode )
             fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER);
 
@@ -1312,6 +1457,11 @@ int fpEvalPacket(Packet* p)
         break;
 
     case PktType::FILE:
+#ifdef TICS_USE_RXP_MATCH
+        /*TICS RXP analysis function call*/
+        tics_scan_pkt(p);
+#endif /* TICS_USE_RXP_MATCH */
+
         fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER);
         break;
 

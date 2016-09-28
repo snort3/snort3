@@ -40,6 +40,8 @@
 #include "events/event_queue.h"
 #include "file_api/file_config.h"
 
+#include "tics/tics_macro_enabler.h"
+
 #define DEFAULT_LOG_DIR "."
 
 enum RunFlag
@@ -523,9 +525,14 @@ public:
     static bool assure_established()
     { return snort_conf->run_flags & RUN_FLAG__ASSURE_EST; }
 
+#ifdef TICS_STATIC_HASH
+    static bool static_hash()
+    { return true; }
+#else /* TICS_STATIC_HASH */
     // FIXIT-L snort_conf needed for static hash before initialized
     static bool static_hash()
     { return snort_conf && snort_conf->run_flags & RUN_FLAG__STATIC_HASH; }
+#endif /* TICS_STATIC_HASH */
 
     // other stuff
     static uint8_t min_ttl()
@@ -566,6 +573,25 @@ public:
 
     static bool change_privileges()
     { return snort_conf->user_id != -1 || snort_conf->group_id != -1; }
+
+#ifdef TICS_USE_LOAD_BALANCE
+public:
+    char* dpdk_eal_cmd_cstr;
+    std::string dpdk_eal_cmd;
+    int dpdk_data_port_cnt;
+    static char* & get_dpdk_eal_cmd_cstr()
+    {
+        return snort_conf->dpdk_eal_cmd_cstr;
+    }
+    static std::string & get_dpdk_eal_cmd()
+    {
+        return snort_conf->dpdk_eal_cmd;
+    }
+    static int & get_dpdk_data_port_cnt()
+    {
+        return snort_conf->dpdk_data_port_cnt;
+    }
+#endif /* TICS_USE_LOAD_BALANCE */
 };
 
 #endif

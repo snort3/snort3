@@ -232,6 +232,47 @@ void Trough::cleanup()
     pcap_queue.clear();
 }
 
+#ifdef TICS_USE_LOAD_BALANCE
+const char* Trough::get_next()
+{
+    const char* pcap = NULL;
+    char * ret_str = NULL;
+
+    if (launched_inspect_thread_cnt >= enabled_rxp_queue_cnt)
+    {
+        return NULL;
+    }
+    ret_str = (char *)malloc(sizeof(char) * 128);
+    if (!ret_str)
+    {
+        printf("ret_str allocation error in %s\n", __FUNCTION__);
+        exit (-1);
+    }
+    sprintf(ret_str, "Pkt inspection thread [%d]\n",
+            launched_inspect_thread_cnt++);
+
+    if (pcap_queue.empty() || pcap_queue_iter == pcap_queue.cend())
+    {
+        pcap = ret_str;
+        return pcap;
+    }
+
+    pcap = pcap_queue_iter->c_str();
+    pcap_queue_iter++;
+    /* If we've reached the end, reset the iterator if we have more
+        loops to cover. */
+    if (pcap_queue_iter == pcap_queue.cend() && pcap_loop_count > 1)
+    {
+        pcap_loop_count--;
+        pcap_queue_iter = pcap_queue.cbegin();
+    }
+
+    file_count++;
+
+    pcap = ret_str;
+    return pcap;
+}
+#else /* TICS_USE_LOAD_BALANCE */
 const char* Trough::get_next()
 {
     const char* pcap = NULL;
@@ -252,9 +293,54 @@ const char* Trough::get_next()
     file_count++;
     return pcap;
 }
+#endif /* TICS_USE_LOAD_BALANCE */
 
 bool Trough::has_next()
 {
+#ifdef TICS_USE_LOAD_BALANCE
+    return (launched_inspect_thread_cnt < enabled_rxp_queue_cnt);
+#else /* TICS_USE_LOAD_BALANCE */
     return (!pcap_queue.empty() && pcap_queue_iter != pcap_queue.cend());
+#endif /* TICS_USE_LOAD_BALANCE */
 }
 
+#ifdef TICS_USE_LOAD_BALANCE
+int Trough::set_dpdk_eal_cmd_str()
+{
+    char* & tmp_cmd_cstr = SnortConfig::get_dpdk_eal_cmd_cstr();
+    std::string & tmp_cmd = SnortConfig::get_dpdk_eal_cmd();
+    char tmp_num[128];
+    int i = 0;
+    int & tmp_cnt = SnortConfig::get_dpdk_data_port_cnt();
+    tmp_cnt = pcap_queue.size();
+    for (i = 0; i < pcap_queue.size(); i++)
+    {
+        tmp_cmd.append("--vdev=eth_pcap");
+        sprintf(tmp_num, "%d", i);
+        tmp_cmd.append(tmp_num);
+        tmp_cmd.append(",");
+        tmp_cmd.append("rx_pcap=");
+        tmp_cmd.append(pcap_queue[i]);
+        tmp_cmd.append(",tx_pcap=out");
+        tmp_cmd.append(tmp_num);
+        tmp_cmd.append(".pcap ");
+    }
+    tmp_cmd_cstr = (char *)(tmp_cmd.c_str());
+#if 1
+    std::cout<<"dpdk_eal_cmd: "<<SnortConfig::get_dpdk_eal_cmd()<<std::endl;
+    std::cout<<"dpdk data port cnt: "<<SnortConfig::get_dpdk_data_port_cnt()<<std::endl;
+    std::cout<<"dpdk_eal_cmd_cstr: "<<SnortConfig::get_dpdk_eal_cmd_cstr()<<std::endl;
+#endif /* 0 */
+   return 0;
+}
+int Trough::print_pcap_queue()
+{
+    int i = 0;
+    printf("The total pcap count: %lu\n", pcap_queue.size());
+    for (i = 0; i < (int)pcap_queue.size(); i++)
+    {
+         fprintf(stdout, "%s\n", pcap_queue[i].c_str());
+    }
+    return 0;
+}
+#endif /* TICS_USE_LOAD_BALANCE */

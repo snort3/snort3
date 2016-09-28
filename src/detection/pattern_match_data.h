@@ -26,6 +26,7 @@
 
 #include "main/snort_types.h"
 #include "detection/treenodes.h"
+#include "tics/tics_macro_enabler.h"
 
 struct PmdLastCheck
 {
@@ -36,6 +37,11 @@ struct PmdLastCheck
 
 struct PatternMatchData
 {
+#ifdef TICS_GENERATE_RULE_FILE
+    const char *orig_pattern;
+    char *tics_fp_pattern;
+    uint16_t tics_fp_len;
+#endif /* TICS_GENERATE_RULE_FILE */
     // used by both
     bool negated;            // search for "not this pattern"
     bool fp;                 // for fast_pattern arguments

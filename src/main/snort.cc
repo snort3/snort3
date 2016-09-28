@@ -90,6 +90,7 @@
 #include "snort_config.h"
 #include "snort_debug.h"
 #include "thread_config.h"
+#include "tics/tics.h"
 
 using namespace std;
 
@@ -218,7 +219,11 @@ void Snort::init(int argc, char** argv)
     snort_conf = snort_cmd_line_conf;
 
     LogMessage("--------------------------------------------------\n");
+#ifdef TICS_USE_RXP_MATCH
+    LogMessage("%s  Snort++ %s-%s TICS_VERSION %s\n", get_prompt(), VERSION, BUILD,TICS_VERSION);
+#else
     LogMessage("%s  Snort++ %s-%s\n", get_prompt(), VERSION, BUILD);
+#endif
     LogMessage("--------------------------------------------------\n");
 
 #ifdef PIGLET

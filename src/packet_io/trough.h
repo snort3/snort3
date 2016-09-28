@@ -22,6 +22,7 @@
 
 #include <string>
 #include <vector>
+#include "tics/tics.h"
 
 // Trough provides access to sources (interface, file, etc.).
 
@@ -57,6 +58,10 @@ public:
         return pcap_loop_count;
     }
     static void cleanup();
+#ifdef TICS_USE_LOAD_BALANCE
+    static int print_pcap_queue();
+    static int set_dpdk_eal_cmd_str();
+#endif /* TICS_USE_LOAD_BALANCE */
 private:
     struct PcapReadObject
     {
