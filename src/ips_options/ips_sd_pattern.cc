@@ -206,10 +206,9 @@ static int hs_match(unsigned int /*id*/, unsigned long long from,
         if ( !ctx->packet->obfuscator )
             ctx->packet->obfuscator = new Obfuscator();
 
-        uint32_t off = ctx->buf - ctx->start;
         // FIXIT-L Make configurable or don't show any PII partials (0 for user defined??)
-        len = len > 4 ? len - 4 : len;
-        ctx->packet->obfuscator->push(off, len);
+        uint32_t off = ctx->buf + from - ctx->start;
+        ctx->packet->obfuscator->push(off, len - 4);
     }
 
     return 0;
@@ -300,8 +299,6 @@ bool SdPatternModule::begin(const char*, int, SnortConfig*)
 
 bool SdPatternModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    config.obfuscate_pii = false;
-
     if ( v.is("~pattern") )
     {
         config.pii = v.get_string();
