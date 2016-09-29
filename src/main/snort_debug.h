@@ -94,6 +94,7 @@
 #define DEBUG_PIGLET          0x0800000000000000LL
 #endif
 
+#define DEBUG_DCE_UDP         0x1000000000000000LL
 
 #ifdef DEBUG_MSGS
 
@@ -102,7 +103,8 @@ class SO_PUBLIC Debug
 public:
     static bool enabled(uint64_t flag);
 
-    static void print(const char* file, int line, uint64_t dbg, const char* fmt, ...) __attribute__((format (printf, 4, 5)));
+    static void print(const char* file, int line, uint64_t dbg, const char* fmt,
+        ...) __attribute__((format (printf, 4, 5)));
 
 private:
     static bool init;
@@ -127,3 +129,4 @@ private:
 #endif
 
 #endif
+

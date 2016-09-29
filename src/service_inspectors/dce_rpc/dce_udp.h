@@ -75,6 +75,50 @@ extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_acts;
 extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_frag;
 extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_reass;
 
+struct DceRpcClHdr   /* Connectionless header */
+{
+    uint8_t rpc_vers;
+    uint8_t ptype;
+    uint8_t flags1;
+    uint8_t flags2;
+    uint8_t drep[3];
+    uint8_t serial_hi;
+    Uuid object;
+    Uuid if_id;
+    Uuid act_id;
+    uint32_t server_boot;
+    uint32_t if_vers;
+    uint32_t seqnum;
+    uint16_t opnum;
+    uint16_t ihint;
+    uint16_t ahint;
+    uint16_t len;
+    uint16_t fragnum;
+    uint8_t auth_proto;
+    uint8_t serial_lo;
+
+};
+
+inline uint8_t DceRpcClRpcVers(const DceRpcClHdr *cl)
+{
+    return cl->rpc_vers;
+}
+
+inline uint8_t DceRpcClPduType(const DceRpcClHdr *cl)
+{
+    return cl->ptype;
+}
+
+inline DceRpcBoFlag DceRpcClByteOrder(const DceRpcClHdr *cl)
+{
+    return DceRpcByteOrder(cl->drep[0]);
+}
+
+inline uint16_t DceRpcClLen(const DceRpcClHdr *cl)
+{
+    return DceRpcNtohs(&cl->len, DceRpcClByteOrder(cl));
+}
+
 struct DCE2_ClTracker
 {
     DCE2_List* act_trackers;  /* List of activity trackers */
@@ -101,6 +145,8 @@ public:
     static unsigned flow_id;
     DCE2_UdpSsnData dce2_udp_session;
 };
+
+DCE2_UdpSsnData* get_dce2_udp_session_data(Flow*);
 
 #endif
 
