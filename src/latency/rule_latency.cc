@@ -29,9 +29,12 @@
 #include <sstream>
 
 #include "detection/detection_options.h"
+#include "detection/treenodes.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "sfip/sf_ip.h"
+#include "utils/stats.h"
 
 #include "latency_config.h"
 #include "latency_rules.h"
@@ -62,16 +65,18 @@ struct Event
     Type type;
     typename SnortClock::duration elapsed;
     detection_option_tree_root_t* root;
+    Packet* packet;
 };
 
 template<typename Clock>
 class RuleTimer : public LatencyTimer<Clock>
 {
 public:
-    RuleTimer(typename Clock::duration d, detection_option_tree_root_t* root) :
-        LatencyTimer<Clock>(d), root(root) { }
+    RuleTimer(typename Clock::duration d, detection_option_tree_root_t* root, Packet* p) :
+        LatencyTimer<Clock>(d), root(root), packet(p) { }
 
     detection_option_tree_root_t* root;
+    Packet* packet;
 };
 
 using ConfigWrapper = ReferenceWrapper<RuleLatencyConfig>;
@@ -82,26 +87,31 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
     using std::chrono::duration_cast;
     using std::chrono::microseconds;
 
-    os << "latency: ";
+    os << "latency: " << pc.total_from_daq << " rule tree ";
 
-    if ( e.type == Event::EVENT_ENABLED )
-        os << "rule tree enabled: ";
-
-    else
+    switch ( e.type )
     {
-        os << "rule tree timed out";
-        if ( e.type == Event::EVENT_SUSPENDED )
-            os << " (suspended)";
+    case Event::EVENT_ENABLED:
+        os << "enabled: ";
+        break;
 
-        os << ": ";
+    case Event::EVENT_TIMED_OUT:
+        os << "timed out: ";
+        break;
 
-        os << clock_usecs(duration_cast<microseconds>(e.elapsed).count()) << " usec, ";
+    case Event::EVENT_SUSPENDED:
+        os << "suspended: ";
+        break;
     }
 
-    // FIXIT-L clean up rule latency logging; delete or make useful
-    // seeing the address of the dot root is not particularly helpful
-    // except during debugging (ported from legacy ppm)
-    os << "[" << e.root << "]";
+    os << clock_usecs(duration_cast<microseconds>(e.elapsed).count()) << " usec, ";
+    os << e.root->otn->sigInfo.generator << ":" << e.root->otn->sigInfo.id;
+
+    if ( e.root->num_children > 1 )
+        os << " (of " << e.root->num_children << ")";
+
+    os << ", " << e.packet->ptrs.ip_api.get_src() << ":" << e.packet->ptrs.sp;
+    os << " -> " << e.packet->ptrs.ip_api.get_dst() << ":" << e.packet->ptrs.dp;
 
     return os;
 }
@@ -180,7 +190,7 @@ class Impl
 public:
     Impl(const ConfigWrapper&, EventHandler&, EventHandler&);
 
-    bool push(detection_option_tree_root_t*);
+    bool push(detection_option_tree_root_t*, Packet*);
     bool pop();
     bool suspended() const;
 
@@ -199,23 +209,18 @@ inline Impl<Clock, RuleTree>::Impl(const ConfigWrapper& cfg, EventHandler& eh, E
 { }
 
 template<typename Clock, typename RuleTree>
-inline bool Impl<Clock, RuleTree>::push(detection_option_tree_root_t* root)
+inline bool Impl<Clock, RuleTree>::push(detection_option_tree_root_t* root, Packet* p)
 {
-    assert(root);
+    assert(root and p);
 
     // FIXIT-L rule timer is pushed even if rule is not enabled (no visible side-effects)
-    timers.emplace_back(config->max_time, root);
+    timers.emplace_back(config->max_time, root, p);
 
     if ( config->allow_reenable() )
     {
         if ( RuleTree::reenable(*root, config->max_suspend_time, Clock::now()) )
         {
-            Event e {
-                Event::EVENT_ENABLED,
-                typename Clock::duration(0),
-                root
-            };
-
+            Event e { Event::EVENT_ENABLED, config->max_suspend_time, root, p };
             handle(e);
             return true;
         }
@@ -241,10 +246,10 @@ inline bool Impl<Clock, RuleTree>::pop()
             auto suspended = RuleTree::timeout_and_suspend(*timer.root, config->suspend_threshold,
                 Clock::now(), config->suspend);
 
-            Event e {
+            Event e
+            {
                 suspended ? Event::EVENT_SUSPENDED : Event::EVENT_TIMED_OUT,
-                timer.elapsed(),
-                timer.root
+                timer.elapsed(), timer.root, timer.packet
             };
 
             handle(e);
@@ -332,11 +337,11 @@ static inline Impl<>& get_impl()
 // rule latency interface
 // -----------------------------------------------------------------------------
 
-void RuleLatency::push(detection_option_tree_root_t* root)
+void RuleLatency::push(detection_option_tree_root_t* root, Packet* p)
 {
     if ( rule_latency::config->enabled() )
     {
-        if ( rule_latency::get_impl().push(root) )
+        if ( rule_latency::get_impl().push(root, p) )
             ++latency_stats.rule_tree_enables;
 
         ++latency_stats.total_rule_evals;
@@ -465,6 +470,7 @@ TEST_CASE ( "rule latency impl", "[latency]" )
     config.config.action = RuleLatencyConfig::ALERT_AND_LOG;
 
     detection_option_tree_root_t root;
+    Packet pkt(false);
 
     rule_latency::Impl<MockClock, RuleInterfaceSpy> impl(config, event_handler, log_handler);
 
@@ -476,7 +482,7 @@ TEST_CASE ( "rule latency impl", "[latency]" )
 
             SECTION( "push rule" )
             {
-                CHECK_FALSE( impl.push(&root) );
+                CHECK_FALSE( impl.push(&root, &pkt) );
                 CHECK( log_handler.count == 0 );
                 CHECK( event_handler.count == 0 );
                 CHECK( RuleInterfaceSpy::reenable_called );
@@ -486,7 +492,7 @@ TEST_CASE ( "rule latency impl", "[latency]" )
             {
                 RuleInterfaceSpy::reenable_result = true;
 
-                CHECK( impl.push(&root) );
+                CHECK( impl.push(&root, &pkt) );
                 CHECK( log_handler.count == 1 );
                 CHECK( event_handler.count == 1 );
                 CHECK( RuleInterfaceSpy::reenable_called );
@@ -499,7 +505,7 @@ TEST_CASE ( "rule latency impl", "[latency]" )
 
             SECTION( "push rule" )
             {
-                CHECK_FALSE( impl.push(&root) );
+                CHECK_FALSE( impl.push(&root, &pkt) );
                 CHECK( log_handler.count == 0 );
                 CHECK( event_handler.count == 0 );
                 CHECK_FALSE( RuleInterfaceSpy::reenable_called );
@@ -511,7 +517,7 @@ TEST_CASE ( "rule latency impl", "[latency]" )
     {
         RuleInterfaceSpy::is_suspended_result = true;
 
-        impl.push(&root);
+        impl.push(&root, &pkt);
 
         SECTION( "suspending of rules disabled" )
         {
@@ -534,7 +540,7 @@ TEST_CASE ( "rule latency impl", "[latency]" )
     {
         config.config.max_time = 1_ticks;
 
-        impl.push(&root);
+        impl.push(&root, &pkt);
 
         SECTION( "rule timeout" )
         {

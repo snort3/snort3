@@ -111,7 +111,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
         return -1;
 
     if (!*existing_tree)
-        *existing_tree = new_root();
+        *existing_tree = new_root(otn);
 
     detection_option_tree_root_t* root = (detection_option_tree_root_t*)*existing_tree;
 
@@ -322,17 +322,18 @@ static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree)
     if (!existing_tree)
         return -1;
 
-    if (!*existing_tree)
-        *existing_tree = new_root();
-
     if (!id)
     {
+        assert(*existing_tree);
         /* NULL input id (PMX *), last call for this pattern state */
         return finalize_detection_option_tree(sc, (detection_option_tree_root_t*)*existing_tree);
     }
 
     PMX* pmx = (PMX*)id;
     OptTreeNode* otn = (OptTreeNode*)pmx->rule_node.rnRuleData;
+
+    if (!*existing_tree)
+        *existing_tree = new_root(otn);
 
     return otn_create_tree(otn, existing_tree);
 }

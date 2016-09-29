@@ -73,29 +73,29 @@ public:
 using ConfigWrapper = ReferenceWrapper<PacketLatencyConfig>;
 using EventHandler = EventingWrapper<Event>;
 
-static inline std::ostream& operator<<(std::ostream& os, const sfip_t* addr)
-{
-    char str[INET6_ADDRSTRLEN + 1];
-    sfip_ntop(addr, str, sizeof(str));
-    str[INET6_ADDRSTRLEN] = '\0';
-    os << str;
-    return os;
-}
-
 static inline std::ostream& operator<<(std::ostream& os, const Event& e)
 {
     using std::chrono::duration_cast;
     using std::chrono::microseconds;
 
-    os << "latency: packet " << pc.total_from_daq << " timed out";
+    os << "latency: " << pc.total_from_daq << " packet";
+
     if ( e.fastpathed )
-        os << " (fastpathed)";
+        os << " fastpathed: ";
+    else
+        os << " timed out: ";
 
-    os << ": ";
+    os << clock_usecs(duration_cast<microseconds>(e.elapsed).count()) << " usec, ";
 
-    os << clock_usecs(duration_cast<microseconds>(e.elapsed).count()) << " usec, [";
-    os << e.packet->ptrs.ip_api.get_src() << " -> " <<
-        e.packet->ptrs.ip_api.get_dst() << "]";
+    if ( e.packet->is_cooked() )
+        os << e.packet->get_pseudo_type();
+    else
+        os << e.packet->get_type();
+
+    os << "[" << e.packet->dsize << "]";
+
+    os << ", " << e.packet->ptrs.ip_api.get_src() << ":" << e.packet->ptrs.sp;
+    os << " -> " << e.packet->ptrs.ip_api.get_dst() << ":" << e.packet->ptrs.dp;
 
     return os;
 }

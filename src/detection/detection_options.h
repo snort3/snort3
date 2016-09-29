@@ -100,6 +100,8 @@ struct detection_option_tree_root_t
     int num_children;
     detection_option_tree_node_t** children;
     RuleLatencyState* latency_state;
+
+    struct OptTreeNode* otn;  // first rule in tree
 };
 
 struct detection_option_eval_data_t
@@ -126,7 +128,7 @@ void print_option_tree(detection_option_tree_node_t*, int level);
 #endif
 void detection_option_tree_update_otn_stats(SFXHASH*);
 
-detection_option_tree_root_t* new_root();
+detection_option_tree_root_t* new_root(OptTreeNode*);
 void free_detection_option_root(void** existing_tree);
 
 detection_option_tree_node_t* new_node(option_type_t, void*);

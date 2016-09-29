@@ -22,11 +22,12 @@
 #define RULE_LATENCY_H
 
 struct detection_option_tree_root_t;
+struct Packet;
 
 class RuleLatency
 {
 public:
-    static void push(detection_option_tree_root_t*);
+    static void push(detection_option_tree_root_t*, Packet*);
     static void pop();
     static bool suspended();
 
@@ -35,8 +36,8 @@ public:
     class Context
     {
     public:
-        Context(detection_option_tree_root_t* root)
-        { RuleLatency::push(root); }
+        Context(detection_option_tree_root_t* root, Packet* p)
+        { RuleLatency::push(root, p); }
 
         ~Context()
         { RuleLatency::pop(); }

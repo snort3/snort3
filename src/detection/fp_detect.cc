@@ -362,7 +362,7 @@ static int detection_option_tree_evaluate(detection_option_tree_root_t* root,
     if ( !root )
         return 0;
 
-    RuleLatency::Context rule_latency_ctx(root);
+    RuleLatency::Context rule_latency_ctx(root, eval_data->p);
 
     if ( RuleLatency::suspended() )
         return 0;

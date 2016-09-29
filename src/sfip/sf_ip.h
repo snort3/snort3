@@ -42,6 +42,8 @@
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
 
+#include <sstream>
+
 /* define SFIP_ROBUST to check pointers passed into the sfip libs.
  * Robustification should not be enabled if the client code is trustworthy.
  * Namely, if pointers are checked once in the client, or are pointers to
@@ -699,6 +701,14 @@ inline void sfip_copy(sfip_t& lhs, const sfip_t* const rhs)
 /* Uses a static buffer to return a string representation of the IP */
 SO_PUBLIC void sfip_raw_ntop(int family, const void* ip_raw, char* buf, int bufsize);
 SO_PUBLIC void sfip_ntop(const sfip_t* ip, char* buf, int bufsize);
+
+inline std::ostream& operator<<(std::ostream& os, const sfip_t* addr)
+{
+    char str[INET6_ADDRSTRLEN];
+    sfip_ntop(addr, str, sizeof(str));
+    os << str;
+    return os;
+}
 
 #endif
 

@@ -806,12 +806,13 @@ void detection_option_tree_update_otn_stats(SFXHASH* doth)
     }
 }
 
-detection_option_tree_root_t* new_root()
+detection_option_tree_root_t* new_root(OptTreeNode* otn)
 {
     detection_option_tree_root_t* p = (detection_option_tree_root_t*)
         snort_calloc(sizeof(detection_option_tree_root_t));
 
     p->latency_state = new RuleLatencyState[ThreadConfig::get_instance_max()]();
+    p->otn = otn;
 
     return p;
 }
