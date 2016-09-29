@@ -1072,6 +1072,7 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
         {
             ServiceMatch** tmp;
             smOrderedListSize *= 2;
+            assert(smOrderedListSize > 0);
             tmp = (ServiceMatch**)realloc(smOrderedList,
                     smOrderedListSize * sizeof(*smOrderedList));
             if (!tmp)

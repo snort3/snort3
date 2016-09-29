@@ -1954,6 +1954,7 @@ void DCE2_FileDetect()
 
 static void DCE2_SmbSetNewFileAPIFileTracker(DCE2_SmbSsnData* ssd)
 {
+    assert(ssd);
     DCE2_SmbFileTracker* ftracker = &ssd->ftracker;
 
     while (ftracker != nullptr)
