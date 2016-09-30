@@ -347,6 +347,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_UNKNOWN_PERCENT,            "Unrecognized type of percent encoding in URI" },
     { EVENT_BROKEN_CHUNK,               "HTTP chunk misformatted" },
     { EVENT_CHUNK_WHITESPACE,           "White space following chunk length" },
+    { EVENT_HEAD_NAME_WHITESPACE,       "White space within header name" },
     { EVENT_GZIP_OVERRUN,               "Excessive gzip compression" },
     { EVENT_GZIP_FAILURE,               "Gzip decompression failed" },
     { EVENT_ZERO_NINE_CONTINUE,         "HTTP 0.9 requested followed by another request" },
