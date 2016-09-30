@@ -1081,14 +1081,14 @@ CPPFLAGS="${CPPFLAGS} ${DPDK_CFLAGS}"
 LDFLAGS="${LDFLAGS} ${DPDK_LDFLAGS}"
 
 AC_CHECK_HEADERS(rxp.h, RXP_HEADERS="yes", RXP_HEADERS="no")
-AC_CHECK_LIB(dpdk, rxp_init, RXP_LIB="yes", RXP_LIB="no")
+#AC_CHECK_LIB(dpdk, rxp_init, RXP_LIB="yes", RXP_LIB="no")
 
-if test "x$RXP_LIB" != "xno"; then
+#if test "x$RXP_LIB" != "xno"; then
     if test "x$RXP_HEADERS" != "xno"; then
         AC_DEFINE([HAVE_DPDK],[1],[can build dpdk code])
         LIBS="${LIBS} -ldpdk"
     fi
-fi
+#fi
 
 AM_CONDITIONAL([HAVE_DPDK], [test "x$RXP_HEADERS" = "xyes" -a "x$RXP_LIB" = "xyes"])
 
