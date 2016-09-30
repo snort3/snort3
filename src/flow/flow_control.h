@@ -74,18 +74,20 @@ public:
 
     void timeout_flows(time_t cur_time);
 
-    char expected_flow(Flow*, Packet*);
+    bool expected_flow(Flow*, Packet*);
     bool is_expected(Packet*);
 
     int add_expected(
+        const Packet* ctrlPkt, PktType, IpProtocol,
         const sfip_t *srcIP, uint16_t srcPort,
         const sfip_t *dstIP, uint16_t dstPort,
-        PktType, char direction, FlowData*);
+        char direction, FlowData*);
 
     int add_expected(
+        const Packet* ctrlPkt, PktType, IpProtocol,
         const sfip_t *srcIP, uint16_t srcPort,
         const sfip_t *dstIP, uint16_t dstPort,
-        PktType, int16_t appId, FlowData*);
+        int16_t appId, FlowData*);
 
     PegCount get_flows(PktType);
     PegCount get_total_prunes(PktType) const;

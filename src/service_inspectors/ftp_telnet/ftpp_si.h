@@ -220,6 +220,7 @@ public:
     static void init()
     { flow_id = FlowData::get_flow_id(); }
 
+    void handle_expected(Packet*) override;
     void handle_eof(Packet*) override;
 
 public:

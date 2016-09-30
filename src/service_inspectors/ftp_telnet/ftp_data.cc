@@ -37,6 +37,8 @@
 #define s_help \
     "FTP data channel handler"
 
+static const char* const fd_svc_name = "ftp-data";
+
 static THREAD_LOCAL ProfileStats ftpdataPerfStats;
 static THREAD_LOCAL SimpleStats fdstats;
 
@@ -82,7 +84,7 @@ static int SnortFTPData(Packet* p)
         return -1;
 
     FtpDataFlowData* fd = (FtpDataFlowData*)
-        p->flow->get_flow_data(FtpFlowData::flow_id);
+        p->flow->get_flow_data(FtpDataFlowData::flow_id);
 
     FTP_DATA_SESSION* data_ssn = fd ? &fd->session : nullptr;
 
@@ -168,12 +170,21 @@ FtpDataFlowData::FtpDataFlowData(Packet* p) : FlowData(flow_id)
 
     session.ft_ssn.proto = FTPP_SI_PROTO_FTP_DATA;
     Stream::populate_flow_key(p, &session.ftp_key);
+    if (p->flow)
+        session.ftp_key.pkt_type = p->flow->pkt_type;
 }
 
 FtpDataFlowData::~FtpDataFlowData()
 {
     if (session.filename)
         snort_free(session.filename);
+}
+
+void FtpDataFlowData::handle_expected(Packet* p)
+{
+    // FIXIT-M X This is an ugly, ugly hack, but it's the way Wizard is doing it
+    if (!p->flow->service)
+        p->flow->service = fd_svc_name;
 }
 
 void FtpDataFlowData::handle_eof(Packet* p)
@@ -287,7 +298,7 @@ const InspectApi fd_api =
     IT_SERVICE,
     (uint16_t)PktType::PDU,
     nullptr, // buffers
-    "ftp-data",
+    fd_svc_name,
     fd_init,
     nullptr, // pterm
     nullptr, // tinit

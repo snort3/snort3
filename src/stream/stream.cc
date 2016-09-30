@@ -137,6 +137,8 @@ FlowData* Stream::get_flow_data(
     const FlowKey* key, unsigned flow_id)
 {
     Flow* flow = get_flow(key);
+    if (!flow)
+        return nullptr;
     return flow->get_flow_data(flow_id);
 }
 
@@ -153,7 +155,7 @@ FlowData* Stream::get_flow_data(
         vlan, mplsId, addressSpaceID);
 
     if (!flow)
-        return NULL;
+        return nullptr;
 
     return flow->get_flow_data(flow_id);
 }
@@ -178,14 +180,16 @@ void Stream::check_flow_closed(Packet* p)
 }
 
 int Stream::ignore_flow(
+    const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
     const sfip_t* srcIP, uint16_t srcPort,
     const sfip_t* dstIP, uint16_t dstPort,
-    PktType protocol, char direction,
-    uint32_t flow_id)
+    char direction, uint32_t flow_id)
 {
     assert(flow_con);
     FlowData* fd = new FlowData(flow_id);
-    return flow_con->add_expected(srcIP, srcPort, dstIP, dstPort, protocol, direction, fd);
+
+    return flow_con->add_expected(
+        ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, direction, fd);
 }
 
 void Stream::proxy_started(Flow* flow, unsigned dir)
@@ -362,14 +366,15 @@ bool Stream::expected_flow(Flow* f, Packet* p)
 //-------------------------------------------------------------------------
 
 int Stream::set_application_protocol_id_expected(
+    const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
     const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
-    PktType protocol, int16_t appId, FlowData* fd)
+    const sfip_t* dstIP, uint16_t dstPort, 
+    int16_t appId, FlowData* fd)
 {
     assert(flow_con);
 
     return flow_con->add_expected(
-        srcIP, srcPort, dstIP, dstPort, protocol, appId, fd);
+        ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, appId, fd);
 }
 
 void Stream::set_application_protocol_id(

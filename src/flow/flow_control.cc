@@ -754,9 +754,9 @@ void FlowControl::init_exp(uint32_t max)
     exp_cache = new ExpectCache(max);
 }
 
-char FlowControl::expected_flow(Flow* flow, Packet* p)
+bool FlowControl::expected_flow(Flow* flow, Packet* p)
 {
-    char ignore = exp_cache->check(p, flow);
+    bool ignore = exp_cache->check(p, flow);
 
     if ( ignore )
     {
@@ -772,22 +772,25 @@ char FlowControl::expected_flow(Flow* flow, Packet* p)
 }
 
 int FlowControl::add_expected(
+    const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    PktType type, char direction,
-    FlowData* fd)
+    char direction, FlowData* fd)
 {
     return exp_cache->add_flow(
-        srcIP, srcPort, dstIP, dstPort, type, direction, fd);
+        ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort,
+        direction, fd);
 }
 
 int FlowControl::add_expected(
+    const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    PktType type, int16_t appId, FlowData* fd)
+    int16_t appId, FlowData* fd)
 {
     return exp_cache->add_flow(
-        srcIP, srcPort, dstIP, dstPort, type, SSN_DIR_BOTH, fd, appId);
+        ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort,
+        SSN_DIR_BOTH, fd, appId);
 }
 
 bool FlowControl::is_expected(Packet* p)

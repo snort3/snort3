@@ -269,7 +269,7 @@ static int ProcessFTPDataChanCmdsList(
         FTPCmd->file_put_cmd = 1;
 
     if ( fc->flags & CMD_GET )
-        FTPCmd->data_xfer_cmd = 1;
+        FTPCmd->file_get_cmd = 1;
 
     if ( fc->flags & CMD_CHECK )
     {

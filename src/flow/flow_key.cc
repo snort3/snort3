@@ -35,7 +35,7 @@
 // init foo
 //-------------------------------------------------------------------------
 
-inline void FlowKey::init4(
+inline bool FlowKey::init4(
     IpProtocol ip_proto,
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
@@ -43,6 +43,7 @@ inline void FlowKey::init4(
 {
     const uint32_t* src;
     const uint32_t* dst;
+    bool reversed = false;
 
     if ( ip_proto ==  IpProtocol::ICMPV4 )
     {
@@ -81,6 +82,7 @@ inline void FlowKey::init4(
         {
             port_l = dstPort;
             port_h = srcPort;
+            reversed = true;
         }
     }
     else
@@ -89,15 +91,18 @@ inline void FlowKey::init4(
         port_l = dstPort;
         COPY4(ip_h, src);
         port_h = srcPort;
+        reversed = true;
     }
     if (SnortConfig::mpls_overlapping_ip() &&
         ip::isPrivateIP(*src) && ip::isPrivateIP(*dst))
         mplsLabel = mplsId;
     else
         mplsLabel = 0;
+
+    return reversed;
 }
 
-inline void FlowKey::init6(
+inline bool FlowKey::init6(
     IpProtocol ip_proto,
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
@@ -105,6 +110,7 @@ inline void FlowKey::init6(
 {
     const sfip_t* src;
     const sfip_t* dst;
+    bool reversed = false;
 
     if ( ip_proto == IpProtocol::ICMPV4 )
     {
@@ -158,6 +164,7 @@ inline void FlowKey::init6(
         {
             port_l = dstPort;
             port_h = srcPort;
+            reversed = true;
         }
     }
     else
@@ -166,12 +173,15 @@ inline void FlowKey::init6(
         port_l = dstPort;
         COPY4(ip_h, src->ip32);
         port_h = srcPort;
+        reversed = true;
     }
 
     if (SnortConfig::mpls_overlapping_ip())
         mplsLabel = mplsId;
     else
         mplsLabel = 0;
+
+    return reversed;
 }
 
 void FlowKey::init_vlan(uint16_t vlanId)
@@ -199,35 +209,39 @@ void FlowKey::init_mpls(uint32_t mplsId)
         mplsLabel = 0;
 }
 
-void FlowKey::init(
+bool FlowKey::init(
     PktType type, IpProtocol ip_proto,
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
     uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId)
 {
+    bool reversed;
+
     /* Because the key is going to be used for hash lookups,
-     * the lower of the values of the IP address field is
-     * stored in the ip_l and the port for that ip is
-     * stored in port_l.
+     * the key fields will be normalized such that the lower
+     * of the IP addresses is stored in ip_l and the port for
+     * that IP is stored in port_l.
      */
     if (srcIP->is_ip4())
     {
         version = 4;
-        init4(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+        reversed = init4(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
     }
     else
     {
         version = 6;
-        init6(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+        reversed = init6(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
     }
 
     pkt_type = type;
 
     init_vlan(vlanId);
     init_address_space(addrSpaceId);
+
+    return reversed;
 }
 
-void FlowKey::init(
+bool FlowKey::init(
     PktType type, IpProtocol ip_proto,
     const sfip_t *srcIP, const sfip_t *dstIP,
     uint32_t id, uint16_t vlanId,
@@ -252,6 +266,8 @@ void FlowKey::init(
 
     init_vlan(vlanId);
     init_address_space(addrSpaceId);
+
+    return false;
 }
 
 //-------------------------------------------------------------------------

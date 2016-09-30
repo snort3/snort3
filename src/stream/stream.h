@@ -108,8 +108,8 @@ public:
     // n-tuple parameters specified.  Inspection will be turned off for this expected session
     // when it arrives.
     static int ignore_flow(
-        const sfip_t *addr1, uint16_t p1, const sfip_t *addr2, uint16_t p2,
-        PktType, char dir, uint32_t ppId);
+        const Packet* ctrlPkt, PktType, IpProtocol, const sfip_t* srcIP, uint16_t srcPort,
+        const sfip_t* dstIP, uint16_t dstPort, char direction, uint32_t flow_id);
 
     // Resume inspection for flow.
     // FIXIT-L does resume work only for a flow that has been stopped by call to stop_inspection?
@@ -178,8 +178,8 @@ public:
     // Turn off inspection for potential session. Adds session identifiers to a hash table.
     // TCP only.
     static int set_application_protocol_id_expected(
-        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, PktType,
-        int16_t appId, FlowData*);
+        const Packet* ctrlPkt, PktType, IpProtocol, const sfip_t* srcIP, uint16_t srcPort,
+        const sfip_t* dstIP, uint16_t dstPort, int16_t appId, FlowData*);
 
     // Get pointer to application data for a flow based on the lookup tuples for cases where
     // Snort does not have an active packet that is relevant.

@@ -41,13 +41,17 @@ struct FlowKey
     uint16_t   addressSpaceId;
     uint16_t   addressSpaceIdPad1;
 
-    void init(
+    /* The init() functions return true if the key IP/port fields were actively
+        normalized, reversing the source and destination addresses internally.
+        The IP-only init() will always return false as we will not reorder its
+        addresses at this time. */
+    bool init(
         PktType, IpProtocol,
         const sfip_t *srcIP, uint16_t srcPort,
         const sfip_t *dstIP, uint16_t dstPort,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
-    void init(
+    bool init(
         PktType, IpProtocol,
         const sfip_t *srcIP, const sfip_t *dstIP,
         uint32_t id, uint16_t vlanId,
@@ -62,13 +66,13 @@ struct FlowKey
     static int compare(const void* s1, const void* s2, size_t);
 
 private:
-    void init4(
+    bool init4(
         IpProtocol,
         const sfip_t *srcIP, uint16_t srcPort,
         const sfip_t *dstIP, uint16_t dstPort,
         uint32_t mplsId, bool order = true);
 
-    void init6(
+    bool init6(
         IpProtocol,
         const sfip_t *srcIP, uint16_t srcPort,
         const sfip_t *dstIP, uint16_t dstPort,

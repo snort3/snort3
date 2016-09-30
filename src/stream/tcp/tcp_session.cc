@@ -680,9 +680,7 @@ void TcpSession::update_paws_timestamps(TcpSegmentDescriptor& tsd)
 
 void TcpSession::check_for_session_hijack(TcpSegmentDescriptor& tsd)
 {
-#ifdef DAQ_PKT_FLAG_PRE_ROUTING
     if (!(tsd.get_pkt()->pkth->flags & DAQ_PKT_FLAG_PRE_ROUTING))
-#endif
     {
         uint32_t event_code = 0;
 
@@ -1022,7 +1020,6 @@ bool TcpSession::is_flow_handling_packets(Packet* p)
 
     // FIXIT-L expected flow should be checked by Stream before we get here
     // harmonize this with that and the checks above
-
     if ( Stream::expected_flow(flow, p) )
     {
         server->flush_policy = STREAM_FLPOLICY_IGNORE;

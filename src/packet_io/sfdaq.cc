@@ -38,6 +38,7 @@ extern "C" {
 #include "sfdaq_config.h"
 #include "main/snort_config.h"
 #include "parser/parser.h"
+#include "protocols/vlan.h"
 #include "utils/util.h"
 
 using namespace std;
@@ -529,13 +530,62 @@ int SFDAQInstance::modify_flow_opaque(const DAQ_PktHdr_t* hdr, uint32_t opaque)
 {
     DAQ_ModFlow_t mod;
 
-#ifdef DAQ_MODFLOW_TYPE_OPAQUE
     mod.type = DAQ_MODFLOW_TYPE_OPAQUE;
     mod.length = sizeof(opaque);
     mod.value = &opaque;
-#else
-    mod.opaque = opaque;
-#endif
 
     return daq_modify_flow(daq_mod, daq_hand, hdr, &mod);
+}
+
+// FIXIT-L X Add Snort flag defitions for callers to use and translate/pass them through to the DAQ module
+int SFDAQInstance::add_expected(const Packet* ctrlPkt, const sfip_t* cliIP, uint16_t cliPort,
+        const sfip_t* srvIP, uint16_t srvPort, IpProtocol protocol, unsigned timeout_ms, unsigned /* flags */)
+{
+    DAQ_Data_Channel_Params_t daq_params;
+    DAQ_DP_key_t dp_key;
+
+    dp_key.src_af = cliIP->family;
+    if (cliIP->is_ip4())
+        dp_key.sa.src_ip4.s_addr = *cliIP->ip32;
+    else
+        memcpy(&dp_key.sa.src_ip6, cliIP->ip8, sizeof(dp_key.sa.src_ip6));
+    dp_key.src_port = cliPort;
+
+    dp_key.dst_af = srvIP->family;
+    if (srvIP->is_ip4())
+        dp_key.da.dst_ip4.s_addr = *srvIP->ip32;
+    else
+        memcpy(&dp_key.da.dst_ip6, srvIP->ip8, sizeof(dp_key.da.dst_ip6));
+    dp_key.dst_port = srvPort;
+
+    dp_key.protocol = (uint8_t) protocol;
+    dp_key.vlan_cnots = 1;
+    if (ctrlPkt->proto_bits & PROTO_BIT__VLAN)
+        dp_key.vlan_id = layer::get_vlan_layer(ctrlPkt)->vid();
+    else
+        dp_key.vlan_id = 0xFFFF;
+
+    if (ctrlPkt->proto_bits & PROTO_BIT__GTP)
+        dp_key.tunnel_type = DAQ_DP_TUNNEL_TYPE_GTP_TUNNEL;
+    else if (ctrlPkt->proto_bits & PROTO_BIT__MPLS)
+        dp_key.tunnel_type = DAQ_DP_TUNNEL_TYPE_MPLS_TUNNEL;
+/*
+    else if ( ctrlPkt->encapsulated )
+        dp_key.tunnel_type = DAQ_DP_TUNNEL_TYPE_OTHER_TUNNEL;
+*/
+    else
+        dp_key.tunnel_type = DAQ_DP_TUNNEL_TYPE_NON_TUNNEL;
+
+    memset(&daq_params, 0, sizeof(daq_params));
+    daq_params.timeout_ms = timeout_ms;
+/*
+    if (flags & DAQ_DC_FLOAT)
+        daq_params.flags |= DAQ_DATA_CHANNEL_FLOAT;
+    if (flags & DAQ_DC_ALLOW_MULTIPLE)
+        daq_params.flags |= DAQ_DATA_CHANNEL_ALLOW_MULTIPLE;
+    if (flags & DAQ_DC_PERSIST)
+        daq_params.flags |= DAQ_DATA_CHANNEL_PERSIST;
+*/
+
+    return daq_dp_add_dc(daq_mod, daq_hand, ctrlPkt->pkth, &dp_key, NULL, &daq_params);
 }

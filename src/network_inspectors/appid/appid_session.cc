@@ -446,14 +446,35 @@ AppIdSession::~AppIdSession()
     delete_shared_data();
 }
 
-AppIdSession* AppIdSession::create_future_session(const Packet* /*ctrlPkt*/, const sfip_t* cliIp, uint16_t cliPort,
+// FIXIT-L X Move this to somewhere more generally available/appropriate.
+static inline PktType get_pkt_type_from_ip_proto(IpProtocol proto)
+{
+    switch (proto)
+    {
+        case IpProtocol::TCP:
+            return PktType::TCP;
+        case IpProtocol::UDP:
+            return PktType::UDP;
+        case IpProtocol::ICMPV4:
+            return PktType::ICMP;
+        case IpProtocol::IP:
+            return PktType::IP;
+        default:
+            break;
+    }
+    return PktType::NONE;
+}
+
+AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const sfip_t* cliIp, uint16_t cliPort,
     const sfip_t* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id, int /*flags*/)
 {
     char src_ip[INET6_ADDRSTRLEN];
     char dst_ip[INET6_ADDRSTRLEN];
-    // FIXIT - not needed  until crtlPkt expectedSession is supported
+    // FIXIT - not needed  until ctrlPkt expectedSession is supported
     //struct _ExpectNode** node;
-    enum PktType protocol = ( enum PktType ) proto;
+    enum PktType type = get_pkt_type_from_ip_proto(proto);
+
+    assert(type != PktType::NONE);
 
     if (app_id_debug_session_flag)
     {
@@ -469,8 +490,8 @@ AppIdSession* AppIdSession::create_future_session(const Packet* /*ctrlPkt*/, con
 
     // FIXIT - 2.9.x set_application_protocol_id_expected has several new parameters, need to look
     // into what is required to support those here.
-    if ( Stream::set_application_protocol_id_expected(
-        /*crtlPkt,*/ cliIp, cliPort, srvIp, srvPort, protocol, app_id, session) )
+    if ( Stream::set_application_protocol_id_expected(ctrlPkt, type, proto, cliIp, cliPort, srvIp, srvPort,
+        app_id, session) )
     {
         if (app_id_debug_session_flag)
             LogMessage("AppIdDbg %s failed to create a related flow for %s-%u -> %s-%u %u\n",

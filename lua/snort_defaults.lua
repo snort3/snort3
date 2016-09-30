@@ -128,6 +128,36 @@ ftp_default_commands =
     XSEM XSEN XSHA1 XSHA256
 ]]
 
+ftp_default_data_chan_cmds = 
+[[
+    PORT PASV LPRT LPSV EPRT EPSV
+]]
+
+ftp_default_data_xfer_cmds =
+[[
+    RETR STOR STOU APPE LIST NLST
+]]
+
+ftp_default_file_put_cmds = 
+[[
+    STOR STOU
+]]
+
+ftp_default_file_get_cmds = 
+[[
+    RETR
+]]
+
+ftp_default_login_cmds = 
+[[
+    USER PASS
+]]
+
+ftp_default_encr_cmds = 
+[[
+    AUTH
+]]
+
 ftp_format_commands = 
 [[ 
     ACCT ADAT ALLO APPE AUTH CEL CLNT CMD CONF CWD DELE ENC EPRT EPSV ESTP
@@ -193,6 +223,12 @@ default_ftp_server =
     ignore_data_chan = true,
 
     ftp_cmds = ftp_default_commands,
+    data_chan_cmds = ftp_default_data_chan_cmds,
+    data_xfer_cmds = ftp_default_data_xfer_cmds,
+    file_put_cmds = ftp_default_file_put_cmds,
+    file_get_cmds = ftp_default_file_get_cmds,
+    login_cmds = ftp_default_login_cmds,
+    encr_cmds = ftp_default_encr_cmds,
     chk_str_fmt = ftp_format_commands,
     cmd_validity = ftp_command_specs
 }

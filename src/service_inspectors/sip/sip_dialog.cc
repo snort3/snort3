@@ -28,11 +28,12 @@
 #include <assert.h>
 
 #include "framework/data_bus.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 #include "main/snort_config.h"
-#include "stream/stream.h"
+#include "main/snort_debug.h"
+#include "main/snort_types.h"
+#include "protocols/vlan.h"
 #include "sfip/sf_ip.h"
+#include "stream/stream.h"
 
 #include "sip_module.h"
 #include "sip.h"
@@ -408,18 +409,20 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
             sfip_to_str(&mdataB->maddress), mdataB->mport);
 
         /* Call into Streams to mark data channel as something to ignore. */
-        FlowData* fd = Stream::get_flow_data(
-            PktType::UDP, IpProtocol::UDP, &mdataA->maddress,mdataA->mport,
-            &mdataB->maddress, mdataB->mport, 0, 0, p->pkth->address_space_id,
-            SipFlowData::flow_id);
-        if ( fd )
+        Flow* ssn = Stream::get_flow(
+            PktType::UDP, IpProtocol::UDP, &mdataA->maddress,
+            mdataA->mport, &mdataB->maddress, mdataB->mport,
+            (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
+            (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
+            p->pkth->address_space_id);
+        if (ssn)
         {
-            p->flow->set_ignore_direction(SSN_DIR_BOTH);
+            ssn->set_ignore_direction(SSN_DIR_BOTH);
         }
         else
         {
-            Stream::ignore_flow(&mdataA->maddress, mdataA->mport, &mdataB->maddress,
-                mdataB->mport, p->type(), SSN_DIR_BOTH, SipFlowData::flow_id);
+            Stream::ignore_flow(p, p->flow->pkt_type, p->get_ip_proto_next(), &mdataA->maddress,
+                mdataA->mport, &mdataB->maddress, mdataB->mport, SSN_DIR_BOTH, SipFlowData::flow_id);
         }
         sip_stats.ignoreChannels++;
         mdataA = mdataA->nextM;

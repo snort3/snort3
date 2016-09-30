@@ -309,7 +309,7 @@ void* ZHash::pop()
     return pv;
 }
 
-void* ZHash::get(const void* key)
+void* ZHash::get(const void* key, bool *new_node)
 {
     int index = 0;
     ZHashNode* node = find_node_row(key, &index);
@@ -329,6 +329,9 @@ void* ZHash::get(const void* key)
     glink_node(node);
 
     count++;
+
+    if (new_node)
+        *new_node = true;
 
     return node->data;
 }

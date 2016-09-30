@@ -120,6 +120,7 @@ FileMemPool::FileMemPool(uint64_t num_objects, size_t o_size)
         return;
     }
 
+    total = 0;
     for (i=0; i<num_objects; i++)
     {
         void* data = ((char*)datapool) + (i * obj_size);

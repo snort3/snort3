@@ -984,6 +984,8 @@ int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
  * Returns: int => return code indicating error or success
  *
  */
+// FIXIT-M X Expected flow operations are using hardcoded TCP PktType/IpProtocol,
+//      which could that bite us on the mythical FTP over UDP or SCTP?
 static int do_stateful_checks(FTP_SESSION* session, Packet* p,
     FTP_CLIENT_REQ* req, int rsp_code)
 {
@@ -1069,9 +1071,10 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
 
                                 /* Call into Streams to mark data channel as ftp-data */
                                 result = Stream::set_application_protocol_id_expected(
+                                    p, PktType::TCP, IpProtocol::TCP,
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
-                                    p->type(), ftp_data_app_id, fd);
+                                    ftp_data_app_id, fd);
 
                                 if (result < 0)
                                     delete fd;
@@ -1081,10 +1084,10 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                 /* Call into Streams to mark data channel as something
                                  * to ignore. */
                                 Stream::ignore_flow(
+                                    p, PktType::TCP, IpProtocol::TCP,
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
-                                    p->type(), SSN_DIR_BOTH,
-                                    FtpDataFlowData::flow_id);
+                                    SSN_DIR_BOTH, FtpDataFlowData::flow_id);
                             }
                         }
                     }
@@ -1141,9 +1144,10 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
 
                             /* Call into Streams to mark data channel as ftp-data */
                             result = Stream::set_application_protocol_id_expected(
+                                p, PktType::TCP, IpProtocol::TCP,
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
-                                p->type(), ftp_data_app_id, fd);
+                                ftp_data_app_id, fd);
 
                             if (result < 0)
                                 delete fd;
@@ -1153,10 +1157,10 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                             /* Call into Streams to mark data channel as something
                              * to ignore. */
                             Stream::ignore_flow(
+                                p, PktType::TCP, IpProtocol::TCP,
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
-                                p->type(), SSN_DIR_BOTH,
-                                FtpDataFlowData::flow_id);
+                                SSN_DIR_BOTH, FtpDataFlowData::flow_id);
                         }
                     }
                 }

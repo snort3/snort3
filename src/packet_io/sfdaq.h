@@ -29,8 +29,11 @@ extern "C" {
 #include <string>
 
 #include "main/snort_types.h"
+#include "protocols/protocol_ids.h"
 
+struct Packet;
 struct SnortConfig;
+struct sfip_t;
 
 class SFDAQInstance
 {
@@ -55,6 +58,9 @@ public:
     bool break_loop(int error);
     const DAQ_Stats_t* get_stats();
     int modify_flow_opaque(const DAQ_PktHdr_t*, uint32_t opaque);
+    int add_expected(const Packet* ctrlPkt, const sfip_t* cliIP, uint16_t cliPort,
+            const sfip_t* srvIP, uint16_t srvPort, IpProtocol, unsigned timeout_ms,
+            unsigned /* flags */);
 private:
     bool set_filter(const char*);
     std::string interface_spec;

@@ -65,6 +65,8 @@
 #include "flow/flow.h"
 
 struct Packet;
+struct ExpectFlow;
+struct ExpectNode;
 
 class ExpectCache
 {
@@ -72,14 +74,13 @@ public:
     ExpectCache(uint32_t max);
     ~ExpectCache();
 
-    int add_flow(
-        const sfip_t *cliIP, uint16_t cliPort,
-        const sfip_t *srvIP, uint16_t srvPort,
-        PktType, char direction, FlowData*, int16_t appId = 0);
+    int add_flow(const Packet *ctrlPkt, PktType, IpProtocol,
+        const sfip_t* cliIP, uint16_t cliPort,
+        const sfip_t* srvIP, uint16_t srvPort,
+        char direction, FlowData*, int16_t appId = 0);
 
     bool is_expected(Packet*);
-    char process_expected(Packet*, Flow*);
-    char check(Packet*, Flow*);
+    bool check(Packet*, Flow*);
 
     unsigned long get_expects() { return expects; }
     unsigned long get_realized() { return realized; }
@@ -89,15 +90,16 @@ public:
 private:
     void prune();
 
-    struct ExpectNode* get_node(struct ExpectKey&, bool&);
-    struct ExpectFlow* get_flow(ExpectNode*, uint32_t, int16_t);
+    ExpectNode* get_node(FlowKey&, bool&);
+    ExpectFlow* get_flow(ExpectNode*, uint32_t, int16_t);
     bool set_data(ExpectNode*, ExpectFlow*&, FlowData*);
+    ExpectNode* find_node_by_packet(Packet*, FlowKey&);
+    bool process_expected(ExpectNode*, FlowKey&, Packet*, Flow*);
 
 private:
     class ZHash* hash_table;
-    struct ExpectNode* nodes;
-    struct ExpectFlow* pool, * free_list;
-    sfip_t zeroed;
+    ExpectNode* nodes;
+    ExpectFlow* pool, * free_list;
 
     unsigned long expects, realized;
     unsigned long prunes, overflows;
