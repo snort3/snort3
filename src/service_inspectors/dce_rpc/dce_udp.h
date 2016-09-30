@@ -22,11 +22,9 @@
 #ifndef DCE_UDP_H
 #define DCE_UDP_H
 
+#include "profiler/profiler_defs.h"
+
 #include "dce_common.h"
-#include "dce_list.h"
-#include "protocols/packet.h"
-#include "profiler/profiler.h"
-#include "framework/counts.h"
 
 #define DCE2_UDP_NAME "dce_udp"
 #define DCE2_UDP_HELP "dce over udp inspection"

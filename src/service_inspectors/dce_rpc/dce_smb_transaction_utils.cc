@@ -21,13 +21,9 @@
 
 // Smb transaction commands utils
 
-#include "dce_smb.h"
-#include "dce_utils.h"
-#include "dce_smb_module.h"
+#include "dce_smb_transaction_utils.h"
 
 #include "main/snort_debug.h"
-#include "utils/util.h"
-#include "detection/detect.h"
 
 #define TRANS_NM_PIPE_0       (0)
 #define TRANS_NM_PIPE_1       (TRANS_NM_PIPE_0+7)

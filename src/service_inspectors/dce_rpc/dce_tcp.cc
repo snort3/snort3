@@ -20,14 +20,12 @@
 // based on work by Todd Wease
 
 #include "dce_tcp.h"
-#include "dce_tcp_paf.h"
-#include "dce_tcp_module.h"
-#include "dce_co.h"
-#include "main/snort_debug.h"
+
 #include "detection/detect.h"
-#include "log/messages.h"
-#include "protocols/packet_manager.h"
 #include "utils/util.h"
+
+#include "dce_tcp_module.h"
+#include "dce_tcp_paf.h"
 
 Dce2TcpFlowData::Dce2TcpFlowData() : FlowData(flow_id)
 {

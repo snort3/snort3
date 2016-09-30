@@ -19,10 +19,10 @@
 // dce_tcp_module.cc author Rashmi Pitre <rrp@cisco.com>
 
 #include "dce_tcp_module.h"
+
+#include "log/messages.h"
+
 #include "dce_tcp.h"
-#include "dce_common.h"
-#include "main/snort_config.h"
-#include "dce_co.h"
 
 using namespace std;
 

@@ -23,7 +23,6 @@
 #define _DCE_SMB2_H_
 
 #include "dce_smb.h"
-#include "dce_utils.h"
 
 #define SMB2_FLAGS_ASYNC_COMMAND  0x00000002
 

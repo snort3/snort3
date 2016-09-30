@@ -20,17 +20,15 @@
 // based on work by Todd Wease
 
 #include "dce_co.h"
-#include "dce_tcp.h"
-#include "dce_smb.h"
-#include "dce_tcp_module.h"
-#include "dce_smb_module.h"
-#include "dce_list.h"
-#include "dce_utils.h"
-#include "dce_smb_utils.h"
-#include "log/messages.h"
+
 #include "main/snort_debug.h"
 #include "utils/util.h"
-#include  <assert.h>
+
+#include "dce_smb.h"
+#include "dce_smb_module.h"
+#include "dce_tcp.h"
+#include "dce_tcp_module.h"
+#include "dce_smb_utils.h"
 
 THREAD_LOCAL int co_reassembled = 0;
 

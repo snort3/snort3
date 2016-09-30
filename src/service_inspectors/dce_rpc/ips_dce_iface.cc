@@ -19,21 +19,18 @@
 // ips_dce_iface.cc author Maya Dagon <mdagon@cisco.com>
 // based on work by Todd Wease
 
-#include "dce_utils.h"
-#include "dce_common.h"
 #include <cerrno>
 
-#include "framework/ips_option.h"
-#include "framework/module.h"
-#include "framework/parameter.h"
-#include "framework/range.h"
-#include "detection/detect.h"
 #include "detection/detection_defines.h"
 #include "detection/pattern_match_data.h"
-#include "hash/sfhashfcn.h"
+#include "framework/module.h"
+#include "framework/ips_option.h"
+#include "framework/range.h"
 #include "profiler/profiler.h"
 #include "target_based/snort_protocols.h"
-#include "main/snort_debug.h"
+#include "utils/util.h"
+
+#include "dce_common.h"
 
 //-------------------------------------------------------------------------
 // dcerpc2 interface rule options

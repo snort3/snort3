@@ -19,16 +19,13 @@
 // dce_smb_utils.cc author Maya Dagon <mdagon@cisco.com>
 // based on work by Todd Wease
 
-#include "dce_smb.h"
 #include "dce_smb_utils.h"
-#include "dce_smb_module.h"
-#include "dce_list.h"
-#include "main/snort_debug.h"
-#include "utils/util.h"
-#include "detection/detect.h"
-#include "file_api/file_api.h"
-#include "file_api/file_flows.h"
+
 #include "detection/detection_util.h"
+#include "file_api/file_flows.h"
+#include "utils/util.h"
+
+#include "dce_smb_module.h"
 
 /********************************************************************
  * Private function prototypes

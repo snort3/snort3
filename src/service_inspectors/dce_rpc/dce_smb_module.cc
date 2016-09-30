@@ -19,11 +19,10 @@
 // dce_smb_module.cc author Rashmi Pitre <rrp@cisco.com>
 
 #include "dce_smb_module.h"
-#include "dce_smb.h"
-#include "dce_common.h"
-#include "dce_co.h"
 
 #include "main/snort_config.h"
+
+#include "dce_smb.h"
 
 using namespace std;
 

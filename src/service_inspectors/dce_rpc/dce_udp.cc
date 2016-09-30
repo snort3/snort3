@@ -20,12 +20,10 @@
 // based on work by Todd Wease
 
 #include "dce_udp.h"
-#include "dce_udp_module.h"
-#include "main/snort_debug.h"
+
 #include "detection/detect.h"
-#include "log/messages.h"
-#include "protocols/packet_manager.h"
-#include "utils/util.h"
+
+#include "dce_udp_module.h"
 
 THREAD_LOCAL int dce2_udp_inspector_instances = 0;
 
@@ -40,7 +38,7 @@ THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_acts;
 THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_frag;
 THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_reass;
 
-void DCE2_ClCleanTracker(DCE2_ClTracker* clt)
+static void DCE2_ClCleanTracker(DCE2_ClTracker* clt)
 {
     if (clt == nullptr)
         return;

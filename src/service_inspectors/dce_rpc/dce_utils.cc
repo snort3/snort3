@@ -18,6 +18,7 @@
 //--------------------------------------------------------------------------
 
 #include "dce_utils.h"
+
 #include "main/snort_debug.h"
 #include "utils/util.h"
 #include "utils/safec.h"

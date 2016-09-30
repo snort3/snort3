@@ -19,23 +19,14 @@
 // dce_common.cc author Rashmi Pitre <rrp@cisco.com>
 
 #include "dce_common.h"
-#include "dce_tcp.h"
-#include "dce_smb.h"
-#include "dce_co.h"
-#include "dce_smb_utils.h"
-#include "framework/base_api.h"
-#include "framework/module.h"
-#include "flow/flow.h"
-#include "log/messages.h"
-#include "main/snort_debug.h"
+
 #include "detection/detect.h"
 #include "ips_options/extract.h"
-#include "protocols/packet_manager.h"
-#include "events/event_queue.h"
-#include "framework/codec.h"
-#include "main/snort.h"
-#include "framework/endianness.h"
+#include "log/messages.h"
 #include "utils/safec.h"
+
+#include "dce_smb_utils.h"
+#include "dce_tcp.h"
 
 THREAD_LOCAL int dce2_detected = 0;
 THREAD_LOCAL DCE2_CStack* dce2_pkt_stack = nullptr;

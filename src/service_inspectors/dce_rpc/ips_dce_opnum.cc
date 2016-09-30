@@ -19,18 +19,13 @@
 // ips_dce_opnum.cc author Maya Dagon <mdagon@cisco.com>
 // based on work by Todd Wease
 
-#include "dce_utils.h"
-#include "dce_common.h"
-
+#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "framework/parameter.h"
-#include "detection/detection_defines.h"
-#include "hash/sfhashfcn.h"
 #include "profiler/profiler.h"
-#include "protocols/packet.h"
 #include "utils/util.h"
-#include "log/messages.h"
+
+#include "dce_common.h"
 
 //-------------------------------------------------------------------------
 // dcerpc2 opnum rule options

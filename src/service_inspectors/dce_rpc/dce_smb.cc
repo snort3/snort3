@@ -19,17 +19,18 @@
 // dce_smb.cc author Rashmi Pitre <rrp@cisco.com>
 
 #include "dce_smb.h"
-#include "dce_smb2.h"
+
+#include "detection/detect.h"
+#include "file_api/file_service.h"
+#include "protocols/packet.h"
+#include "utils/util.h"
+
+#include "dce_smb_module.h"
 #include "dce_smb_utils.h"
 #include "dce_smb_paf.h"
-#include "dce_smb_module.h"
 #include "dce_smb_commands.h"
 #include "dce_smb_transaction.h"
-#include "dce_list.h"
-#include "main/snort_debug.h"
-#include "file_api/file_service.h"
-#include "utils/util.h"
-#include "detection/detect.h"
+#include "dce_smb2.h"
 
 THREAD_LOCAL int dce2_smb_inspector_instances = 0;
 
@@ -2232,7 +2233,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
 }
 
 // This is the main entry point for SMB processing
-void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
+static void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
 {
     if (DCE2_GcIsLegacyMode((dce2SmbProtoConf*)ssd->sd.config))
     {

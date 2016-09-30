@@ -20,9 +20,10 @@
 // based on work by Todd Wease
 
 #include "dce_tcp_paf.h"
-#include "dce_tcp.h"
-#include "dce_common.h"
+
 #include "main/snort_debug.h"
+
+#include "dce_tcp.h"
 
 /*********************************************************************
  * Function: dce2_tcp_paf()

@@ -26,10 +26,9 @@
  ****************************************************************************/
 
 #include "dce_list.h"
-#include "dce_utils.h"
 
-#include "utils/util.h"
 #include "main/snort_debug.h"
+#include "utils/util.h"
 
 /********************************************************************
  * Private function prototyes

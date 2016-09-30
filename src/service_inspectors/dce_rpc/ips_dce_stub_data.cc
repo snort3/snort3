@@ -19,15 +19,13 @@
 // ips_dce_stub_data.cc author Maya Dagon <mdagon@cisco.com>
 // based on work by Todd Wease
 
-#include "dce_common.h"
-
 #include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "hash/sfhashfcn.h"
-#include "protocols/packet.h"
 #include "profiler/profiler.h"
+
+#include "dce_common.h"
 
 #define s_name "dce_stub_data"
 #define s_help \

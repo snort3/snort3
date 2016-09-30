@@ -21,13 +21,12 @@
 #ifndef DCE_COMMON_H
 #define DCE_COMMON_H
 
-#include "dce_utils.h"
-#include "dce_list.h"
-#include "main/snort_types.h"
-#include "framework/module.h"
-#include "framework/inspector.h"
-#include "protocols/packet.h"
 #include "events/event_queue.h"
+#include "framework/counts.h"
+#include "framework/value.h"
+#include "protocols/packet.h"
+
+#include "dce_list.h"
 
 extern const InspectApi dce2_smb_api;
 extern const InspectApi dce2_tcp_api;

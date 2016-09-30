@@ -20,12 +20,12 @@
 // Author(s):  Hui Cao <huica@cisco.com>
 
 #include "dce_smb2.h"
-#include "dce_list.h"
+
+#include "detection/detection_util.h"
+#include "file_api/file_flows.h"
+
 #include "dce_smb_module.h"
 #include "dce_smb_utils.h"
-#include "detection/detection_util.h"
-#include "main/snort_debug.h"
-#include "file_api/file_flows.h"
 
 #define   UNKNOWN_FILE_SIZE                  ~0
 

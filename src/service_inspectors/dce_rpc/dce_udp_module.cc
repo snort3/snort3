@@ -19,9 +19,10 @@
 // dce_udp_module.cc author Maya Dagon <mdagon@cisco.com>
 
 #include "dce_udp_module.h"
+
+#include "log/messages.h"
+
 #include "dce_udp.h"
-#include "dce_common.h"
-#include "main/snort_config.h"
 
 using namespace std;
 

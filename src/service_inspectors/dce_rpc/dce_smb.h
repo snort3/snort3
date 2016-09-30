@@ -22,11 +22,11 @@
 #ifndef DCE_SMB_H
 #define DCE_SMB_H
 
-#include "dce_common.h"
-#include "dce_co.h"
-#include "protocols/packet.h"
-#include "profiler/profiler.h"
 #include "framework/counts.h"
+#include "protocols/packet.h"
+#include "profiler/profiler_defs.h"
+
+#include "dce_co.h"
 
 #define DCE2_SMB_NAME "dce_smb"
 #define DCE2_SMB_HELP "dce over smb inspection"

@@ -22,13 +22,10 @@
 // Smb transaction commands processing
 
 #include "dce_smb_transaction.h"
-#include "dce_smb_transaction_utils.h"
-#include "dce_smb_utils.h"
-#include "dce_smb_module.h"
 
 #include "main/snort_debug.h"
-#include "utils/util.h"
-#include "detection/detect.h"
+
+#include "dce_smb_transaction_utils.h"
 
 #define DCE2_SMB_TRANS__NONE    0x00
 #define DCE2_SMB_TRANS__DATA    0x01

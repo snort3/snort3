@@ -20,10 +20,10 @@
 // based on work by Todd Wease
 
 #include "dce_smb_paf.h"
-#include "dce_smb.h"
-#include "dce_common.h"
+
 #include "main/snort_debug.h"
-#include "protocols/packet.h"
+
+#include "dce_smb.h"
 
 /*********************************************************************
  * Function: DCE2_PafSmbIsValidNetbiosHdr()

@@ -21,8 +21,8 @@
 #define DCE_UTILS_H
 
 #include <ctype.h>
+#include <string.h>
 #include "main/snort_types.h"
-#include "utils/util.h"
 
 /********************************************************************
  * Macros

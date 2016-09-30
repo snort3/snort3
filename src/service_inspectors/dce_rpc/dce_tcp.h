@@ -22,10 +22,9 @@
 #ifndef DCE_TCP_H
 #define DCE_TCP_H
 
+#include "profiler/profiler_defs.h"
+
 #include "dce_co.h"
-#include "protocols/packet.h"
-#include "profiler/profiler.h"
-#include "framework/counts.h"
 
 #define DCE2_TCP_NAME "dce_tcp"
 #define DCE2_TCP_HELP "dce over tcp inspection"

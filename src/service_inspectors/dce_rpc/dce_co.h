@@ -24,7 +24,6 @@
 
 #include "dce_common.h"
 #include "dce_list.h"
-#include "dce_utils.h"
 
 #define DCE2_CO_BAD_MAJOR_VERSION           27
 #define DCE2_CO_BAD_MINOR_VERSION           28

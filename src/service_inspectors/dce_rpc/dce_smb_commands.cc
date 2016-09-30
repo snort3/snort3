@@ -22,12 +22,12 @@
 // Smb commands processing
 
 #include "dce_smb_commands.h"
-#include "dce_smb_transaction_utils.h"
-#include "dce_smb_module.h"
 
 #include "main/snort_debug.h"
 #include "utils/util.h"
-#include "detection/detect.h"
+
+#include "dce_smb_module.h"
+#include "dce_smb_transaction_utils.h"
 
 #define SMB_DIALECT_NT_LM_012       "NT LM 0.12"  // NT LAN Manager
 
