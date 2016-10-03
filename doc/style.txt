@@ -94,9 +94,9 @@ yet firm so feedback is welcome to get something we can live with.
   day or even just a minute.  That way we can find them easily and won't
   lose track of them.
 
-* Presently using FIXIT-X where X = P | H | M | L, indicating perf, high,
-  med, or low priority.  For now, H, M, or L can indicate alpha 1, 2, or 3.
-  Perf changes fall between alpha 1 and 2.
+* Presently using FIXIT-X where X = A | P | H | M | L, indicating analysis,
+  perf, high, med, or low priority.  For now, H, M, or L can indicate alpha
+  1, 2, or 3.  Perf changes fall between alpha 1 and 2.
 
 * Put the copyright(s) and license in a comment block at the top of each
   source file (.h and .cc).  Don't bother with trivial scripts and make

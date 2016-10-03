@@ -986,6 +986,10 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
             ServiceMatch** tmp;
             smOrderedListSize *= 2;
             assert(smOrderedListSize > 0);
+            // FIXIT-A - Even with the assert() on the previous line, the clang 
+            //          static analyser version 3.4.2 throws a false positive
+            //          realloc() zero size error,  More recent clang versions
+            //          do NOT find an error.
             tmp = (ServiceMatch**)realloc(smOrderedList,
                     smOrderedListSize * sizeof(*smOrderedList));
             if (!tmp)
