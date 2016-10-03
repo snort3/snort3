@@ -107,20 +107,20 @@ static int smtp_init(const IniServiceAPI* const init_api)
     const char SMTP_PATTERN4[] = "smtp";
 
     init_api->RegisterPattern(&smtp_validate, IpProtocol::TCP, (uint8_t*)SMTP_PATTERN1,
-        sizeof(SMTP_PATTERN1) - 1, 0, "smtp", init_api->pAppidConfig);
+        sizeof(SMTP_PATTERN1) - 1, 0, "smtp");
     init_api->RegisterPattern(&smtp_validate, IpProtocol::TCP, (uint8_t*)SMTP_PATTERN2,
-        sizeof(SMTP_PATTERN2) - 1, 0, "smtp", init_api->pAppidConfig);
+        sizeof(SMTP_PATTERN2) - 1, 0, "smtp");
     init_api->RegisterPattern(&smtp_validate, IpProtocol::TCP, (uint8_t*)SMTP_PATTERN3,
-        sizeof(SMTP_PATTERN3) - 1, -1, "smtp", init_api->pAppidConfig);
+        sizeof(SMTP_PATTERN3) - 1, -1, "smtp");
     init_api->RegisterPattern(&smtp_validate, IpProtocol::TCP, (uint8_t*)SMTP_PATTERN4,
-        sizeof(SMTP_PATTERN4) - 1, -1, "smtp", init_api->pAppidConfig);
+        sizeof(SMTP_PATTERN4) - 1, -1, "smtp");
 
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&smtp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

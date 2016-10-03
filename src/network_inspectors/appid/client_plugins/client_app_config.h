@@ -35,17 +35,21 @@ struct ClientPatternData
     const RNAClientAppModule* ca;
 };
 
-struct ClientAppConfig
+class ClientAppConfig
 {
-    RNAClientAppRecord* tcp_client_app_list;    // List of all TCP client apps (C and  Lua)
-    RNAClientAppRecord* udp_client_app_list;    // List of all UDP client apps (C and Lua)
-    int enabled;
+public:
+    ClientAppConfig() {}
+    ~ClientAppConfig() {}
+
+    RNAClientAppRecord* tcp_client_app_list = nullptr;
+    RNAClientAppRecord* udp_client_app_list = nullptr;
+    bool enabled = false;
     SF_LIST module_configs;
-    ClientPatternData* pattern_data_list;
-    SearchTool* tcp_patterns;
-    int tcp_pattern_count;
-    SearchTool* udp_patterns;
-    int udp_pattern_count;
+    ClientPatternData* pattern_data_list = nullptr;
+    SearchTool* tcp_patterns = nullptr;
+    int tcp_pattern_count = 0;
+    SearchTool* udp_patterns = nullptr;
+    int udp_pattern_count = 0;
 };
 
 #endif

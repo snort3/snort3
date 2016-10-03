@@ -40,7 +40,7 @@ THREAD_LOCAL YM_CLIENT_APP_CONFIG ym_config;
 
 static CLIENT_APP_RETCODE ym_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
 
 RNAClientAppModule ym_client_mod =
 {
@@ -109,7 +109,7 @@ static CLIENT_APP_RETCODE ym_init(const IniClientAppAPI* const init_api, SF_LIST
             DebugFormat(DEBUG_LOG,"registering patterns: %s: %d\n",
             		(const char*)patterns[i].pattern, patterns[i].index);
             init_api->RegisterPattern(&ym_validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index, init_api->pAppidConfig);
+                patterns[i].length, patterns[i].index);
         }
     }
 
@@ -118,7 +118,7 @@ static CLIENT_APP_RETCODE ym_init(const IniClientAppAPI* const init_api, SF_LIST
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
         init_api->RegisterAppId(&ym_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[j].additionalInfo);
     }
 
     return CLIENT_APP_SUCCESS;
@@ -140,7 +140,7 @@ static const uint8_t* skip_separator(const uint8_t* data, const uint8_t* end)
 }
 
 static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet* pkt, Detector*)
 {
 #define HEADERSIZE 20
 #define VERSIONID "135"

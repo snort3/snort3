@@ -136,29 +136,29 @@ static int snmp_init(const IniServiceAPI* const init_api)
     app_id = AddProtocolReference("snmp");
 
     init_api->RegisterPattern(&snmp_validate, IpProtocol::UDP, SNMP_PATTERN_2,
-        sizeof(SNMP_PATTERN_2), 2, "snmp", init_api->pAppidConfig);
+        sizeof(SNMP_PATTERN_2), 2, "snmp");
     init_api->RegisterPattern(&snmp_validate, IpProtocol::UDP, SNMP_PATTERN_3,
-        sizeof(SNMP_PATTERN_3), 2, "snmp", init_api->pAppidConfig);
+        sizeof(SNMP_PATTERN_3), 2, "snmp");
     init_api->RegisterPattern(&snmp_validate, IpProtocol::UDP, SNMP_PATTERN_4,
-        sizeof(SNMP_PATTERN_4), 2, "snmp", init_api->pAppidConfig);
+        sizeof(SNMP_PATTERN_4), 2, "snmp");
     init_api->RegisterPattern(&snmp_validate, IpProtocol::UDP, SNMP_PATTERN_2,
-        sizeof(SNMP_PATTERN_2), 3, "snmp", init_api->pAppidConfig);
+        sizeof(SNMP_PATTERN_2), 3, "snmp");
     init_api->RegisterPattern(&snmp_validate, IpProtocol::UDP, SNMP_PATTERN_3,
-        sizeof(SNMP_PATTERN_3), 3, "snmp", init_api->pAppidConfig);
+        sizeof(SNMP_PATTERN_3), 3, "snmp");
     init_api->RegisterPattern(&snmp_validate, IpProtocol::UDP, SNMP_PATTERN_4,
-        sizeof(SNMP_PATTERN_4), 3, "snmp", init_api->pAppidConfig);
+        sizeof(SNMP_PATTERN_4), 3, "snmp");
     init_api->RegisterPattern(&snmp_validate, IpProtocol::UDP, SNMP_PATTERN_2,
-        sizeof(SNMP_PATTERN_2), 4, "snmp", init_api->pAppidConfig);
+        sizeof(SNMP_PATTERN_2), 4, "snmp");
     init_api->RegisterPattern(&snmp_validate, IpProtocol::UDP, SNMP_PATTERN_3,
-        sizeof(SNMP_PATTERN_3),  4, "snmp", init_api->pAppidConfig);
+        sizeof(SNMP_PATTERN_3),  4, "snmp");
     init_api->RegisterPattern(&snmp_validate, IpProtocol::UDP, SNMP_PATTERN_4,
-        sizeof(SNMP_PATTERN_4), 4, "snmp", init_api->pAppidConfig);
+        sizeof(SNMP_PATTERN_4), 4, "snmp");
 
     for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&snmp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

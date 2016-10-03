@@ -31,9 +31,10 @@
 #include "utils/sflsq.h"
 #include "utils/util.h"
 
+#include "appid_module.h"
 #include "appid_api.h"
 #include "appid_session.h"
-#include "fw_appid.h"
+#include "app_info_table.h"
 #include "appid_utils/fw_avltree.h"
 #include "appid_utils/output_file.h"
 
@@ -44,10 +45,6 @@
 #if 1
 #define UNIFIED2_IDS_EVENT_APPSTAT 1
 #endif
-
-static time_t bucketStart;
-static time_t bucketInterval;
-static time_t bucketEnd;
 
 struct AppIdStatRecord
 {
@@ -87,30 +84,30 @@ struct StatsBucket
     uint32_t appRecordCnt;
 };
 
-static SF_LIST* currBuckets;
-static SF_LIST* logBuckets;
+static THREAD_LOCAL SF_LIST* currBuckets = nullptr;
+static THREAD_LOCAL SF_LIST* logBuckets = nullptr;
+static THREAD_LOCAL FILE* appfp = nullptr;
+static THREAD_LOCAL size_t appSize;
+static THREAD_LOCAL time_t appTime;
+static THREAD_LOCAL const char* appid_stats_filename = nullptr;
+static THREAD_LOCAL time_t bucketStart;
+static THREAD_LOCAL time_t bucketInterval;
+static THREAD_LOCAL time_t bucketEnd;
 
-static const char* appFilePath;
-
-static FILE* appfp;
-
-static size_t appSize;
-
-static time_t appTime;
-
-Serial_Unified2_Header header;
-
+static const char appid_stats_file_suffix[] = "_appid_stats.log";
 static size_t rollSize;
 static time_t rollPeriod;
 static bool enableAppStats;
 
-static void endStats2Period(void);
-static void startStats2Period(time_t startTime);
-static struct StatsBucket* getStatsBucket(time_t startTime);
-static void dumpStats2(void);
+static void end_stats_period(void);
+static void start_stats_period(time_t startTime);
+static struct StatsBucket* get_stats_bucket(time_t startTime);
+static void dump_statistics(void);
 
-static void deleteRecord(void* record)
-{ snort_free(record); }
+static void delete_record(void* record)
+{
+	snort_free(record);
+}
 
 static inline time_t get_time()
 {
@@ -118,7 +115,7 @@ static inline time_t get_time()
     return now - (now % bucketInterval);
 }
 
-void appIdStatsUpdate(AppIdSession* session)
+void update_appid_statistics(AppIdSession* session)
 {
     if ( !enableAppStats )
         return;
@@ -127,15 +124,15 @@ void appIdStatsUpdate(AppIdSession* session)
 
     if (now >= bucketEnd)
     {
-        endStats2Period();
-        dumpStats2();
-        startStats2Period(now);
+        end_stats_period();
+        dump_statistics();
+        start_stats_period(now);
     }
 
     time_t bucketTime = session->stats.firstPktsecond -
         (session->stats.firstPktsecond % bucketInterval);
 
-    StatsBucket* bucket = getStatsBucket(bucketTime);
+    StatsBucket* bucket = get_stats_bucket(bucketTime);
     if ( !bucket )
         return;
 
@@ -243,26 +240,27 @@ void appIdStatsUpdate(AppIdSession* session)
     }
 }
 
-void appIdStatsInit(AppIdModuleConfig* config)
+void init_appid_statistics(const AppIdModuleConfig* config)
 {
-    if (config->app_stats_filename)
+    if (config->stats_logging_enabled)
     {
         enableAppStats = true;
-        appFilePath = config->app_stats_filename;
+        std::string stats_file;
+        appid_stats_filename = snort_strdup(get_instance_file(stats_file, appid_stats_file_suffix));
 
         rollPeriod = config->app_stats_rollover_time;
         rollSize = config->app_stats_rollover_size;
         bucketInterval = config->app_stats_period;
 
         time_t now = get_time();
-        startStats2Period(now);
+        start_stats_period(now);
         appfp = nullptr;
     }
     else
         enableAppStats = false;
 }
 
-static void appIdStatsCloseFiles()
+static void close_stats_log_file()
 {
     if (appfp)
     {
@@ -271,7 +269,7 @@ static void appIdStatsCloseFiles()
     }
 }
 
-void appIdStatsReinit()
+void reinit_appid_statistics()
 {
     // FIXIT-L J really should something like:
     // if ( !stats_files_are_open() )
@@ -279,10 +277,10 @@ void appIdStatsReinit()
     if (!enableAppStats)
         return;
 
-    appIdStatsCloseFiles();
+    close_stats_log_file();
 }
 
-void appIdStatsIdleFlush()
+void flush_appid_statistics()
 {
     if (!enableAppStats)
         return;
@@ -290,26 +288,26 @@ void appIdStatsIdleFlush()
     time_t now = get_time();
     if (now >= bucketEnd)
     {
-        endStats2Period();
-        dumpStats2();
-        startStats2Period(now);
+        end_stats_period();
+        dump_statistics();
+        start_stats_period(now);
     }
 }
 
-static void startStats2Period(time_t startTime)
+static void start_stats_period(time_t startTime)
 {
     bucketStart = startTime;
     bucketEnd = bucketStart + bucketInterval;
 }
 
-static void endStats2Period(void)
+static void end_stats_period(void)
 {
     SF_LIST* bucketList = logBuckets;
     logBuckets = currBuckets;
     currBuckets = bucketList;
 }
 
-static StatsBucket* getStatsBucket(time_t startTime)
+static StatsBucket* get_stats_bucket(time_t startTime)
 {
     StatsBucket* bucket = nullptr;
 
@@ -365,13 +363,15 @@ static StatsBucket* getStatsBucket(time_t startTime)
     return bucket;
 }
 
-static void dumpStats2()
+static void dump_statistics()
 {
     struct StatsBucket* bucket = nullptr;
     uint8_t* buffer;
     uint32_t* buffPtr;
     struct    FwAvlNode* node;
     struct AppIdStatRecord* record;
+    Serial_Unified2_Header header;
+
     size_t buffSize;
     time_t currTime = time(nullptr);
 
@@ -422,7 +422,7 @@ static void dumpStats2()
                     app_id -= 2000000000;
                 }
 
-                AppInfoTableEntry* entry = appInfoEntryGet(app_id, pAppidActiveConfig);
+                AppInfoTableEntry* entry = appInfoEntryGet(app_id);
                 if (entry)
                 {
                     appName = entry->appName;
@@ -443,7 +443,7 @@ static void dumpStats2()
                     if (cooked_client)
                         snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_err_cl_%u",app_id);
                     else
-                        snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_err_%u",app_id); // ODP out of
+                        snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_err_%u",app_id);
 
                     tmpBuff[MAX_EVENT_APPNAME_LEN - 1] = 0;
                     appName = tmpBuff;
@@ -454,22 +454,21 @@ static void dumpStats2()
                 /**buffPtr++ = htonl(record->app_id); */
                 recBuffPtr->initiatorBytes = htonl(record->initiatorBytes);
                 recBuffPtr->responderBytes = htonl(record->responderBytes);
-
                 buffPtr += sizeof(*recBuffPtr)/sizeof(*buffPtr);
             }
 
-            if (appFilePath)
+            if (appid_stats_filename)
             {
                 if (!appfp)
                 {
-                    appfp = openOutputFile(appFilePath, currTime);
+                    appfp = openOutputFile(appid_stats_filename, currTime);
                     appTime = currTime;
                     appSize = 0;
                 }
                 else if (((currTime - appTime) > rollPeriod) ||
                     ((appSize + buffSize) > rollSize))
                 {
-                    appfp = rolloverOutputFile(appFilePath, appfp, currTime);
+                    appfp = rolloverOutputFile(appid_stats_filename, appfp, currTime);
                     appTime = currTime;
                     appSize = 0;
                 }
@@ -482,8 +481,8 @@ static void dumpStats2()
                     else
                     {
                         ErrorMessage(
-                            "NGFW Rule Engine Failed to write to statistics file (%s): %s\n",
-                            appFilePath, strerror(errno));
+                            "AppID ailed to write to statistics file (%s): %s\n",
+                            appid_stats_filename, strerror(errno));
                         fclose(appfp);
                         appfp = nullptr;
                     }
@@ -491,34 +490,34 @@ static void dumpStats2()
             }
             snort_free(buffer);
         }
-        fwAvlDeleteTree(bucket->appsTree, deleteRecord);
+        fwAvlDeleteTree(bucket->appsTree, delete_record);
         snort_free(bucket);
     }
 }
 
-void appIdStatsFini()
+void cleanup_appid_statistics()
 {
     if (!enableAppStats)
         return;
 
     /*flush the last stats period. */
-    endStats2Period();
-    dumpStats2();
-
-    if (!currBuckets)
-        return;
-
-    while (auto bucket = (StatsBucket*)sflist_remove_head(currBuckets))
-    {
-        fwAvlDeleteTree(bucket->appsTree, deleteRecord);
-        snort_free(bucket);
-    }
-
-    snort_free(currBuckets);
+    end_stats_period();
+    dump_statistics();
+    close_stats_log_file();
+    snort_free((void*)appid_stats_filename);
 
     if (logBuckets)
         snort_free(logBuckets);
 
-    appIdStatsCloseFiles();
+    if (currBuckets)
+    {
+    	while (auto bucket = (StatsBucket*)sflist_remove_head(currBuckets))
+    	{
+    		fwAvlDeleteTree(bucket->appsTree, delete_record);
+    		snort_free(bucket);
+    	}
+
+    	snort_free(currBuckets);
+    }
 }
 

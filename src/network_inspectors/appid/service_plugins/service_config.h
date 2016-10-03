@@ -49,14 +49,6 @@ struct DetectorSSLCertPattern
     DetectorSSLCertPattern* next;
 };
 
-struct ServiceSslConfig
-{
-    DetectorSSLCertPattern* DetectorSSLCertPatternList;
-    DetectorSSLCertPattern* DetectorSSLCnamePatternList;
-    SearchTool* ssl_host_matcher;
-    SearchTool* ssl_cname_matcher;
-};
-
 // DNS host pattern structure
 struct DNSHostPattern
 {
@@ -72,12 +64,6 @@ struct DetectorDNSHostPattern
     DetectorDNSHostPattern* next;
 };
 
-struct ServiceDnsConfig
-{
-    DetectorDNSHostPattern* DetectorDNSHostPatternList;
-    SearchTool* dns_host_host_matcher;
-};
-
 struct ServicePatternData
 {
     ServicePatternData* next;
@@ -86,24 +72,29 @@ struct ServicePatternData
     RNAServiceElement* svc;
 };
 
-struct ServiceConfig
+class ServiceConfig
 {
-    RNAServiceValidationModule* active_service_list; // List of all services (Lua and C)
-    RNAServiceElement* tcp_service_list;             // List of all TCP services (Lua and C)
-    RNAServiceElement* udp_service_list;             // List of all UDP services (Lua and C)
-    RNAServiceElement* udp_reversed_service_list;    // List of all UDP reversed services (Lua and C)
+public:
+    ServiceConfig() {}
+    ~ServiceConfig() {}
+
+    // Lists of services (Lua and C)
+    RNAServiceValidationModule* active_service_list = nullptr;
+    RNAServiceElement* tcp_service_list = nullptr;
+    RNAServiceElement* udp_service_list = nullptr;
+    RNAServiceElement* udp_reversed_service_list = nullptr;
 
     //list nodes are RNAServiceElement*.
-    SF_LIST* tcp_services[RNA_SERVICE_MAX_PORT];
-    SF_LIST* udp_services[RNA_SERVICE_MAX_PORT];
-    SF_LIST* udp_reversed_services[RNA_SERVICE_MAX_PORT];
+    SF_LIST* tcp_services[RNA_SERVICE_MAX_PORT] = { nullptr };
+    SF_LIST* udp_services[RNA_SERVICE_MAX_PORT] = { nullptr };
+    SF_LIST* udp_reversed_services[RNA_SERVICE_MAX_PORT] = { nullptr };
 
-    SearchTool* tcp_patterns;
-    ServicePatternData* tcp_pattern_data;
-    int tcp_pattern_count;
-    SearchTool* udp_patterns;
-    ServicePatternData* udp_pattern_data;
-    int udp_pattern_count;
+    SearchTool* tcp_patterns = nullptr;
+    ServicePatternData* tcp_pattern_data = nullptr;
+    int tcp_pattern_count = 0;
+    SearchTool* udp_patterns = nullptr;
+    ServicePatternData* udp_pattern_data = nullptr;
+    int udp_pattern_count = 0;
 };
 
 #endif

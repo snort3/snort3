@@ -186,6 +186,16 @@ struct ServiceSSLV2Hdr
     uint16_t conn_len;
 };
 
+struct ServiceSslConfig
+{
+    DetectorSSLCertPattern* DetectorSSLCertPatternList;
+    DetectorSSLCertPattern* DetectorSSLCnamePatternList;
+    SearchTool* ssl_host_matcher;
+    SearchTool* ssl_cname_matcher;
+};
+
+static THREAD_LOCAL ServiceSslConfig service_ssl_config;
+
 #pragma pack()
 
 /* Convert 3-byte lengths in TLS headers to integers. */
@@ -238,14 +248,14 @@ static int ssl_detector_create_matcher(SearchTool** matcher, DetectorSSLCertPatt
     return 1;
 }
 
-int ssl_detector_process_patterns(ServiceSslConfig* pSslConfig)
+int ssl_detector_process_patterns()
 {
     int retVal = 1;
-    if (!ssl_detector_create_matcher(&pSslConfig->ssl_host_matcher,
-        pSslConfig->DetectorSSLCertPatternList))
+    if (!ssl_detector_create_matcher(&service_ssl_config.ssl_host_matcher,
+        service_ssl_config.DetectorSSLCertPatternList))
         retVal = 0;
-    if (!ssl_detector_create_matcher(&pSslConfig->ssl_cname_matcher,
-        pSslConfig->DetectorSSLCnamePatternList))
+    if (!ssl_detector_create_matcher(&service_ssl_config.ssl_cname_matcher,
+        service_ssl_config.DetectorSSLCnamePatternList))
         retVal = 0;
     return retVal;
 }
@@ -322,20 +332,20 @@ static const AppRegistryEntry appIdRegistry[] =
 static int ssl_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN_PCT,
-        sizeof(SSL_PATTERN_PCT), 2, "ssl", init_api->pAppidConfig);
+        sizeof(SSL_PATTERN_PCT), 2, "ssl");
     init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN3_0,
-        sizeof(SSL_PATTERN3_0), 0, "ssl", init_api->pAppidConfig);
+        sizeof(SSL_PATTERN3_0), 0, "ssl");
     init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN3_1,
-        sizeof(SSL_PATTERN3_1), 0, "ssl", init_api->pAppidConfig);
+        sizeof(SSL_PATTERN3_1), 0, "ssl");
     init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN3_2,
-        sizeof(SSL_PATTERN3_2), 0, "ssl", init_api->pAppidConfig);
+        sizeof(SSL_PATTERN3_2), 0, "ssl");
     init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN3_3,
-        sizeof(SSL_PATTERN3_3), 0, "ssl", init_api->pAppidConfig);
+        sizeof(SSL_PATTERN3_3), 0, "ssl");
     for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&ssl_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;
@@ -1057,29 +1067,29 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* pattern, size_t
     return 1;
 }
 
-int ssl_scan_hostname(const uint8_t* pattern, size_t size, AppId* ClientAppId, AppId* payloadId,
-    ServiceSslConfig* pSslConfig)
+int ssl_scan_hostname(const uint8_t* pattern, size_t size, AppId* ClientAppId, AppId* payloadId)
 {
-    return ssl_scan_patterns(pSslConfig->ssl_host_matcher, pattern, size, ClientAppId, payloadId);
+    return ssl_scan_patterns(service_ssl_config.ssl_host_matcher, pattern, size, ClientAppId, payloadId);
 }
 
-int ssl_scan_cname(const uint8_t* pattern, size_t size, AppId* ClientAppId, AppId* payloadId,
-    ServiceSslConfig* pSslConfig)
+int ssl_scan_cname(const uint8_t* pattern, size_t size, AppId* ClientAppId, AppId* payloadId)
 {
-    return ssl_scan_patterns(pSslConfig->ssl_cname_matcher, pattern, size, ClientAppId, payloadId);
+    return ssl_scan_patterns(service_ssl_config.ssl_cname_matcher, pattern, size, ClientAppId, payloadId);
 }
 
-void service_ssl_clean(ServiceSslConfig* pSslConfig)
+void service_ssl_clean()
 {
-    if (pSslConfig->ssl_host_matcher)
+    ssl_detector_free_patterns();
+
+    if (service_ssl_config.ssl_host_matcher)
     {
-        delete pSslConfig->ssl_host_matcher;
-        pSslConfig->ssl_host_matcher = nullptr;
+        delete service_ssl_config.ssl_host_matcher;
+        service_ssl_config.ssl_host_matcher = nullptr;
     }
-    if (pSslConfig->ssl_cname_matcher)
+    if (service_ssl_config.ssl_cname_matcher)
     {
-        delete pSslConfig->ssl_cname_matcher;
-        pSslConfig->ssl_cname_matcher = nullptr;
+        delete service_ssl_config.ssl_cname_matcher;
+        service_ssl_config.ssl_cname_matcher = nullptr;
     }
 }
 
@@ -1101,17 +1111,15 @@ static int ssl_add_pattern(DetectorSSLCertPattern** list, uint8_t* pattern_str, 
     return 1;
 }
 
-int ssl_add_cert_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id,
-    ServiceSslConfig* pSslConfig)
+int ssl_add_cert_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
 {
-    return ssl_add_pattern(&pSslConfig->DetectorSSLCertPatternList, pattern_str, pattern_size,
+    return ssl_add_pattern(&service_ssl_config.DetectorSSLCertPatternList, pattern_str, pattern_size,
         type, app_id);
 }
 
-int ssl_add_cname_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id,
-    ServiceSslConfig* pSslConfig)
+int ssl_add_cname_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
 {
-    return ssl_add_pattern(&pSslConfig->DetectorSSLCnamePatternList, pattern_str, pattern_size,
+    return ssl_add_pattern(&service_ssl_config.DetectorSSLCnamePatternList, pattern_str, pattern_size,
         type, app_id);
 }
 
@@ -1132,10 +1140,10 @@ static void ssl_patterns_free(DetectorSSLCertPattern** list)
     }
 }
 
-void ssl_detector_free_patterns(ServiceSslConfig* pSslConfig)
+void ssl_detector_free_patterns()
 {
-    ssl_patterns_free(&pSslConfig->DetectorSSLCertPatternList);
-    ssl_patterns_free(&pSslConfig->DetectorSSLCnamePatternList);
+    ssl_patterns_free(&service_ssl_config.DetectorSSLCertPatternList);
+    ssl_patterns_free(&service_ssl_config.DetectorSSLCnamePatternList);
 }
 
 bool setSSLSquelch(Packet* p, int type, AppId appId)
@@ -1144,7 +1152,7 @@ bool setSSLSquelch(Packet* p, int type, AppId appId)
     const sfip_t* dip;
     AppIdSession* f;
 
-    if (!appInfoEntryFlagGet(appId, APPINFO_FLAG_SSL_SQUELCH, pAppidActiveConfig))
+    if (!appInfoEntryFlagGet(appId, APPINFO_FLAG_SSL_SQUELCH))
         return false;
 
     dip = p->ptrs.ip_api.get_dst();

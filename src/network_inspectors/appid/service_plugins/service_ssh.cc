@@ -171,12 +171,12 @@ static const AppRegistryEntry appIdRegistry[] =
 static int ssh_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&ssh_validate, IpProtocol::TCP, (uint8_t*)SSH_BANNER,
-        sizeof(SSH_BANNER) - 1, 0, "ssh", init_api->pAppidConfig);
+        sizeof(SSH_BANNER) - 1, 0, "ssh");
     for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&ssh_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
     return 0;
 }

@@ -78,10 +78,9 @@ struct ClientAppData
 static CLIENT_APP_CONFIG ca_config;
 
 static CLIENT_APP_RETCODE init(const IniClientAppAPI* const init_api, SF_LIST* config);
-static void clean(const CleanClientAppAPI* const clean_api);
+static void clean();
 static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, Detector* userData,
-    const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, Detector* userData);
 
 static RNAClientAppModule client_app_mod =
 {
@@ -334,7 +333,7 @@ static CLIENT_APP_RETCODE init(const IniClientAppAPI* const init_api, SF_LIST* c
         {
             DebugFormat(DEBUG_LOG,"registering pattern: %s\n",(const char*)patterns[i].pattern);
             init_api->RegisterPatternNoCase(&validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, -1, init_api->pAppidConfig);
+                patterns[i].length, -1);
         }
     }
 
@@ -342,8 +341,7 @@ static CLIENT_APP_RETCODE init(const IniClientAppAPI* const init_api, SF_LIST* c
     for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
-        init_api->RegisterAppId(&validate, appIdRegistry[j].appId, appIdRegistry[j].additionalInfo,
-            init_api->pAppidConfig);
+        init_api->RegisterAppId(&validate, appIdRegistry[j].appId, appIdRegistry[j].additionalInfo);
     }
 
     return CLIENT_APP_SUCCESS;
@@ -352,27 +350,27 @@ static CLIENT_APP_RETCODE init(const IniClientAppAPI* const init_api, SF_LIST* c
 static int imap_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPatternUser(&imap_validate, IpProtocol::TCP, (uint8_t*)IMAP_PATTERN,
-        sizeof(IMAP_PATTERN)-1, 0, "imap", init_api->pAppidConfig);
+        sizeof(IMAP_PATTERN)-1, 0, "imap");
 
     unsigned j;
     for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
         init_api->RegisterAppId(&imap_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[j].additionalInfo);
     }
 
     return 0;
 }
 
-static void clean(const CleanClientAppAPI* const clean_api)
+static void clean()
 {
     SearchTool* cmd_matcher =
-        (SearchTool*)clean_api->pAppidConfig->find_generic_config_element(client_app_mod.name);
+        (SearchTool*)pAppidActiveConfig->find_generic_config_element(client_app_mod.name);
     if (cmd_matcher)
         delete cmd_matcher;
 
-    clean_api->pAppidConfig->remove_generic_config_element(client_app_mod.name);
+    pAppidActiveConfig->remove_generic_config_element(client_app_mod.name);
 }
 
 static int pattern_match(void* id, void*, int index, void* data, void*)
@@ -699,8 +697,7 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
 }
 
 static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet*, struct Detector*,
-    const AppIdConfig* pConfig)
+    AppIdSession* flowp, Packet*, struct Detector*)
 {
     const uint8_t* s = data;
     const uint8_t* end = (data + size);
@@ -710,7 +707,7 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
     ClientAppData* fd;
     char tag[IMAP_TAG_MAX_LEN+1] = { 0 };
     SearchTool* cmd_matcher =
-        (SearchTool*)( ( AppIdConfig*)pConfig)->find_generic_config_element(client_app_mod.name);
+        (SearchTool*)pAppidActiveConfig->find_generic_config_element(client_app_mod.name);
 
 #ifdef APP_ID_USES_REASSEMBLED
     Stream::flush_response_flush(pkt);

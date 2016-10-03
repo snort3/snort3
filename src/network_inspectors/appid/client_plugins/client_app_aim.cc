@@ -74,9 +74,8 @@ THREAD_LOCAL AIM_CLIENT_APP_CONFIG aim_config;
 #define MAX_VERSION_SIZE    64
 
 static CLIENT_APP_RETCODE aim_init(const IniClientAppAPI* const, SF_LIST* config);
-static CLIENT_APP_RETCODE aim_validate(
-    const uint8_t* data, uint16_t size, const int dir, AppIdSession*, Packet*,
-    Detector*, const AppIdConfig*);
+static CLIENT_APP_RETCODE aim_validate( const uint8_t* data, uint16_t size, const int dir,
+        AppIdSession*, Packet*, Detector*);
 
 RNAClientAppModule aim_client_mod =
 {
@@ -150,7 +149,7 @@ static CLIENT_APP_RETCODE aim_init(const IniClientAppAPI* const init_api, SF_LIS
                 patterns[i].length, patterns[i].index);
 
             init_api->RegisterPattern(&aim_validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index, init_api->pAppidConfig);
+                patterns[i].length, patterns[i].index);
         }
     }
 
@@ -159,8 +158,7 @@ static CLIENT_APP_RETCODE aim_init(const IniClientAppAPI* const init_api, SF_LIS
         DebugFormat(DEBUG_INSPECTOR, "registering appId: %d\n",
             appIdRegistry[j].appId);
 
-        init_api->RegisterAppId(&aim_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo, init_api->pAppidConfig);
+        init_api->RegisterAppId(&aim_validate, appIdRegistry[j].appId, appIdRegistry[j].additionalInfo);
     }
 
     return CLIENT_APP_SUCCESS;
@@ -198,9 +196,8 @@ static inline bool check_username(
     return true;
 }
 
-static CLIENT_APP_RETCODE aim_validate(
-    const uint8_t* const data, uint16_t size, const int dir, AppIdSession* flowp,
-    Packet*, Detector*, const AppIdConfig*)
+static CLIENT_APP_RETCODE aim_validate( const uint8_t* const data, uint16_t size, const int dir,
+        AppIdSession* flowp, Packet*, Detector*)
 {
     if ( dir != APP_ID_FROM_INITIATOR )
         return CLIENT_APP_INPROCESS;

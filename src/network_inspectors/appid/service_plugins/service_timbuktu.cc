@@ -100,14 +100,14 @@ static const AppRegistryEntry appIdRegistry[] =
 
 static int timbuktu_init(const IniServiceAPI* const init_api)
 {
-    init_api->RegisterPattern(&timbuktu_validate, IpProtocol::TCP, (const
-        uint8_t*)TIMBUKTU_BANNER,
-        sizeof(TIMBUKTU_BANNER)-1, 0, svc_name, init_api->pAppidConfig);
+    init_api->RegisterPattern(&timbuktu_validate, IpProtocol::TCP,
+            (const uint8_t*)TIMBUKTU_BANNER, sizeof(TIMBUKTU_BANNER) - 1,
+            0, svc_name);
     for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&timbuktu_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

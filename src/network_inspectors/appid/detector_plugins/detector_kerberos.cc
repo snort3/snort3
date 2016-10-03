@@ -113,8 +113,7 @@ static KRB_CLIENT_APP_CONFIG krb_client_config;
 
 static CLIENT_APP_RETCODE krb_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE krb_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData,
-    const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
 
 static RNAClientAppModule client_app_mod =
 {
@@ -243,9 +242,9 @@ static CLIENT_APP_RETCODE krb_client_init(const IniClientAppAPI* const init_api,
             DebugFormat(DEBUG_INSPECTOR,"registering pattern with length %u\n",
                 client_patterns[i].length);
             init_api->RegisterPattern(&krb_client_validate, IpProtocol::UDP,
-                client_patterns[i].pattern, client_patterns[i].length, -1, init_api->pAppidConfig);
+                client_patterns[i].pattern, client_patterns[i].length, -1);
             init_api->RegisterPattern(&krb_client_validate, IpProtocol::TCP,
-                client_patterns[i].pattern, client_patterns[i].length, -1, init_api->pAppidConfig);
+                client_patterns[i].pattern, client_patterns[i].length, -1);
         }
     }
 
@@ -254,7 +253,7 @@ static CLIENT_APP_RETCODE krb_client_init(const IniClientAppAPI* const init_api,
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[j].appId);
         init_api->RegisterAppId(&krb_client_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[j].additionalInfo);
     }
 
     return CLIENT_APP_SUCCESS;
@@ -269,11 +268,9 @@ static int krb_server_init(const IniServiceAPI* const init_api)
         DebugFormat(DEBUG_INSPECTOR,"registering pattern with length %u\n",
             service_patterns[i].length);
         init_api->RegisterPatternUser(&krb_server_validate, IpProtocol::UDP,
-            service_patterns[i].pattern,
-            service_patterns[i].length, -1, "kerberos", init_api->pAppidConfig);
+            service_patterns[i].pattern, service_patterns[i].length, -1, "kerberos");
         init_api->RegisterPatternUser(&krb_server_validate, IpProtocol::TCP,
-            service_patterns[i].pattern,
-            service_patterns[i].length, -1, "kerberos", init_api->pAppidConfig);
+            service_patterns[i].pattern, service_patterns[i].length, -1, "kerberos");
     }
 
     unsigned j;
@@ -281,7 +278,7 @@ static int krb_server_init(const IniServiceAPI* const init_api)
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[j].appId);
         init_api->RegisterAppId(&krb_server_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[j].additionalInfo);
     }
 
     return 0;
@@ -959,7 +956,7 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
 }
 
 static CLIENT_APP_RETCODE krb_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet* pkt, struct Detector*)
 {
     const uint8_t* s = data;
     const uint8_t* end = (data + size);

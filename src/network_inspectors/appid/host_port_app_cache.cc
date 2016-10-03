@@ -26,40 +26,39 @@
 #include "log/messages.h"
 #include "sfip/sf_ip.h"
 
-void hostPortAppCacheInit(AppIdConfig* pConfig)
+THREAD_LOCAL SFXHASH* hostPortCache = nullptr;
+
+void hostPortAppCacheInit()
 {
-    auto hash = sfxhash_new(
-        2048, sizeof(HostPortKey), sizeof(HostPortVal), 0, 0, nullptr, nullptr, 0);
+    auto hash = sfxhash_new( 2048, sizeof(HostPortKey), sizeof(HostPortVal),
+            0, 0, nullptr, nullptr, 0);
 
     if ( hash )
-        pConfig->hostPortCache = hash;
-
+        hostPortCache = hash;
     else
         ErrorMessage("failed to allocate HostPort map");
 }
 
-void hostPortAppCacheFini(AppIdConfig* pConfig)
+void hostPortAppCacheFini()
 {
-    if ( pConfig->hostPortCache )
+    if ( hostPortCache )
     {
-        sfxhash_delete(pConfig->hostPortCache);
-        pConfig->hostPortCache = nullptr;
+        sfxhash_delete(hostPortCache);
+        hostPortCache = nullptr;
     }
 }
 
-HostPortVal* hostPortAppCacheFind(const sfip_t* snort_ip, uint16_t port, IpProtocol protocol,
-        const AppIdConfig* pConfig)
+HostPortVal* hostPortAppCacheFind(const sfip_t* snort_ip, uint16_t port, IpProtocol protocol)
 {
     HostPortKey hk;
     sfip_set_ip(&hk.ip, snort_ip);
     hk.port = port;
     hk.proto = protocol;
 
-    return (HostPortVal*)sfxhash_find(pConfig->hostPortCache, &hk);
+    return (HostPortVal*)sfxhash_find(hostPortCache, &hk);
 }
 
-int hostPortAppCacheAdd(const sfip_t* ip, uint16_t port, IpProtocol proto, unsigned type,
-    AppId appId, AppIdConfig* pConfig)
+int hostPortAppCacheAdd(const sfip_t* ip, uint16_t port, IpProtocol proto, unsigned type, AppId appId)
 {
     HostPortKey hk;
     HostPortVal hv;
@@ -69,14 +68,14 @@ int hostPortAppCacheAdd(const sfip_t* ip, uint16_t port, IpProtocol proto, unsig
     hv.appId = appId;
     hv.type = type;
 
-    return sfxhash_add(pConfig->hostPortCache, &hk, &hv) ? 0 : 1;
+    return sfxhash_add(hostPortCache, &hk, &hv) ? 0 : 1;
 }
 
-void hostPortAppCacheDump(const AppIdConfig* pConfig)
+void hostPortAppCacheDump()
 {
-    for ( SFXHASH_NODE* node = sfxhash_findfirst(pConfig->hostPortCache);
+    for ( SFXHASH_NODE* node = sfxhash_findfirst(hostPortCache);
         node;
-        node = sfxhash_findnext(pConfig->hostPortCache))
+        node = sfxhash_findnext(hostPortCache))
     {
         char inet_buffer[INET6_ADDRSTRLEN];
         HostPortKey* hk;

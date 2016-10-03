@@ -46,6 +46,8 @@ static RNADetectorValidationModule* static_detector_list[]
     &pop3_detector_mod,
     &kerberos_detector_mod
 };
+const uint32_t NUM_STATIC_DETECTORS =
+        sizeof(static_detector_list) / sizeof(RNADetectorValidationModule*);
 
 //callback function for initializing static and dynamic detectors.
 static int detectorLoadCallback(void* symbol)
@@ -58,21 +60,14 @@ static int detectorLoadCallback(void* symbol)
         ErrorMessage("Maximum number of detector modules exceeded");
         return -1;
     }
+
     if (svm->service)
-    {
         if (serviceLoadCallback(svm->service))
-        {
             return -1;
-        }
-    }
 
     if (svm->client)
-    {
         if (ClientAppLoadCallback(svm->client))
-        {
             return -1;
-        }
-    }
 
     svm->api = &detector_api;
     svm->flow_data_index = detector_module_index | APPID_SESSION_DATA_DETECTOR_MODSTATE_BIT;
@@ -81,11 +76,11 @@ static int detectorLoadCallback(void* symbol)
     return 0;
 }
 
-int LoadDetectorModules(const char** )
+int init_detector_plugins()
 {
     unsigned i;
 
-    for (i=0; i<sizeof(static_detector_list)/sizeof(*static_detector_list); i++)
+    for (i=0; i < NUM_STATIC_DETECTORS; i++)
     {
         if (static_detector_list[i] && detectorLoadCallback(static_detector_list[i]))
             return -1;

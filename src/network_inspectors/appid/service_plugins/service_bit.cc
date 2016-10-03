@@ -116,13 +116,13 @@ static AppRegistryEntry appIdRegistry[] =
 static int bit_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&bit_validate, IpProtocol::TCP, (const uint8_t*)BIT_BANNER,
-        sizeof(BIT_BANNER)-1, 0, svc_name, init_api->pAppidConfig);
+        sizeof(BIT_BANNER)-1, 0, svc_name);
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&bit_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

@@ -88,7 +88,7 @@ static int rlogin_init(const IniServiceAPI* const init_api)
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&rlogin_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

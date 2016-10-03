@@ -25,13 +25,36 @@
 #include "config.h"
 #endif
 
+#include "main/thread.h"
 #include "profiler/profiler.h"
+#include "appid_stats.h"
 #include "appid_session.h"
 #include "fw_appid.h"
+#include "lua_detector_module.h"
+#include "lua_detector_api.h"
+#include "host_port_app_cache.h"
+#include "app_forecast.h"
+#include "service_plugins/service_base.h"
+#include "service_plugins/service_ssl.h"
+#include "client_plugins/client_app_base.h"
+#include "detector_plugins/detector_base.h"
+#include "detector_plugins/detector_dns.h"
+#include "detector_plugins/detector_http.h"
+#include "detector_plugins/detector_sip.h"
+#include "detector_plugins/detector_pattern.h"
 
-//-------------------------------------------------------------------------
-// class stuff
-//-------------------------------------------------------------------------
+THREAD_LOCAL LuaDetectorManager* lua_detector_mgr;
+
+static void dump_appid_stats()
+{
+    LogMessage("Application Identification Preprocessor:\n");
+    LogMessage("   Total packets received : %lu\n", appid_stats.packets);
+    LogMessage("  Total packets processed : %lu\n", appid_stats.processed_packets);
+    if (thirdparty_appid_module)
+        thirdparty_appid_module->print_stats();
+    LogMessage("    Total packets ignored : %lu\n", appid_stats.ignored_packets);
+    AppIdServiceStateDumpStats();
+}
 
 AppIdInspector::AppIdInspector(const AppIdModuleConfig* pc)
 {
@@ -43,6 +66,7 @@ AppIdInspector::~AppIdInspector()
 {
     if(config->debug)
         dump_appid_stats();
+
     delete active_config;
     delete config;
 }
@@ -73,13 +97,69 @@ void AppIdInspector::show(SnortConfig*)
     LogMessage("AppId Configuration\n");
 
     LogMessage("    Detector Path:          %s\n", config->app_detector_dir);
-    LogMessage("    appStats Files:         %s\n", config->app_stats_filename);
+    LogMessage("    appStats Logging:       %s\n", config->stats_logging_enabled ? "enabled" : "disabled");
     LogMessage("    appStats Period:        %lu secs\n", config->app_stats_period);
     LogMessage("    appStats Rollover Size: %lu bytes\n",
         config->app_stats_rollover_size);
     LogMessage("    appStats Rollover time: %lu secs\n",
         config->app_stats_rollover_time);
     LogMessage("\n");
+}
+
+void AppIdInspector::tinit()
+{
+    init_appid_statistics(config);
+    hostPortAppCacheInit();
+    init_dynamic_app_info_table();
+    init_appid_forecast();
+    init_http_detector();
+    init_service_plugins();
+    init_client_plugins();
+    init_detector_plugins();
+    init_CHP_glossary();
+    init_length_app_cache();
+
+    lua_detector_mgr = new LuaDetectorManager;
+    lua_detector_mgr->LoadLuaModules(pAppidActiveConfig);
+    lua_detector_mgr->luaModuleInitAllClients();
+    lua_detector_mgr->luaModuleInitAllServices();
+    lua_detector_mgr->FinalizeLuaModules();
+    if(config->debug && list_lua_detectors)
+    {
+        lua_detector_mgr->list_lua_detectors();
+        list_lua_detectors = false;
+    }
+
+    finalize_service_port_patterns();
+    finalize_client_port_patterns();
+    finalize_service_patterns();
+    finalize_client_plugins();
+    finalize_http_detector();
+    finalize_sip_ua();
+    ssl_detector_process_patterns();
+    dns_host_detector_process_patterns();
+
+    if (init_service_state(config->memcap))
+        exit(-1);
+}
+
+void AppIdInspector::tterm()
+{
+    hostPortAppCacheFini();
+    clean_appid_forecast();
+    service_dns_host_clean();
+    service_ssl_clean();
+    clean_service_plugins();
+    clean_client_plugins();
+    clean_http_detector();
+    free_CHP_glossary();
+    free_length_app_cache();
+    free_dynamic_app_info_table();
+
+    AppIdSession::release_free_list_flow_data();
+    delete lua_detector_mgr;
+    clean_service_state();
+    cleanup_appid_statistics();
 }
 
 void AppIdInspector::eval(Packet* pkt)

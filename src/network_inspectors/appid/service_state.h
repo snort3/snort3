@@ -125,8 +125,8 @@ union AppIdServiceStateKey
     AppIdServiceStateKey6 key6;
 };
 
-int AppIdServiceStateInit(unsigned long memcap);
-void AppIdServiceStateCleanup();
+int init_service_state(unsigned long memcap);
+void clean_service_state();
 void AppIdRemoveServiceIDState(sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
 AppIdServiceIDState* AppIdGetServiceIDState( const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
 AppIdServiceIDState* AppIdAddServiceIDState( const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);

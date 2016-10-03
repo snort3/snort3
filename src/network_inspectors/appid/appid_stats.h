@@ -25,10 +25,10 @@
 class AppIdSession;
 class AppIdModuleConfig;
 
-void appIdStatsUpdate(AppIdSession*);
-void appIdStatsInit(AppIdModuleConfig* config);
-void appIdStatsReinit();
-void appIdStatsIdleFlush();
-void appIdStatsFini();
+void update_appid_statistics(AppIdSession*);
+void init_appid_statistics(const AppIdModuleConfig*);
+void reinit_appid_statistics();
+void flush_appid_statistics();
+void cleanup_appid_statistics();
 
 #endif

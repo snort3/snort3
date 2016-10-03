@@ -67,51 +67,55 @@ struct AppInfoTableEntry
     char* appName;
 };
 
-void appInfoTableInit(const char* path, AppIdConfig*);
-void appInfoTableFini(AppIdConfig*);
+void appNameHashFini();
 
-AppInfoTableEntry* appInfoEntryGet(AppId, const AppIdConfig*);
-AppInfoTableEntry* appInfoEntryCreate(const char* appName, AppIdConfig*);
+void init_appid_info_table(const char* path);
+void cleanup_appid_info_table();
+void init_dynamic_app_info_table();
+void free_dynamic_app_info_table();
+
+AppInfoTableEntry* appInfoEntryGet(AppId);
+AppInfoTableEntry* appInfoEntryCreate(const char* appName);
 AppId appGetSnortIdFromAppId(AppId);
-AppId appGetAppFromServiceId(uint32_t appId, AppIdConfig* pConfig);
-AppId appGetAppFromClientId(uint32_t appId, AppIdConfig* pConfig);
-AppId appGetAppFromPayloadId(uint32_t appId, AppIdConfig* pConfig);
+AppId get_appid_by_service_id(uint32_t appId);
+AppId get_appid_by_client_id(uint32_t appId);
+AppId get_appid_by_payload_id(uint32_t appId);
 void AppIdDumpStats(int exit_flag);
-void appInfoTableDump(AppIdConfig*);
-void appInfoSetActive(AppId, bool active);
-const char* appGetAppName(int32_t appId);
-int32_t appGetAppId(const char* appName);
+void dump_app_info_table();
+void set_app_info_active(AppId);
+const char* get_app_name(int32_t appId);
+int32_t get_appid_by_name(const char* appName);
 
-inline void appInfoEntryFlagSet(AppId appId, unsigned flags, AppIdConfig* pConfig)
+inline void appInfoEntryFlagSet(AppId appId, unsigned flags)
 {
-    AppInfoTableEntry* entry = appInfoEntryGet(appId, pConfig);
+    AppInfoTableEntry* entry = appInfoEntryGet(appId);
     if ( entry )
         entry->flags |= flags;
 }
 
-inline void appInfoEntryFlagClear(AppId appId, unsigned flags, AppIdConfig* pConfig)
+inline void appInfoEntryFlagClear(AppId appId, unsigned flags)
 {
-    AppInfoTableEntry* entry = appInfoEntryGet(appId, pConfig);
+    AppInfoTableEntry* entry = appInfoEntryGet(appId);
     if ( entry )
         entry->flags &= (~flags);
 }
 
-inline unsigned appInfoEntryFlagGet(AppId app_id, unsigned flags, AppIdConfig* pConfig)
+inline unsigned appInfoEntryFlagGet(AppId app_id, unsigned flags)
 {
-    AppInfoTableEntry* entry = appInfoEntryGet(app_id, pConfig);
+    AppInfoTableEntry* entry = appInfoEntryGet(app_id);
     return entry ? entry->flags & flags : 0;
 }
 
-inline void appInfoEntryPrioritySet(AppId appId, unsigned priority, AppIdConfig* pConfig)
+inline void appInfoEntryPrioritySet(AppId appId, unsigned priority)
 {
-    AppInfoTableEntry* entry = appInfoEntryGet(appId, pConfig);
+    AppInfoTableEntry* entry = appInfoEntryGet(appId);
     if ( entry )
         entry->priority |= priority;
 }
 
-inline unsigned appInfoEntryPriorityGet(AppId app_id, AppIdConfig* pConfig)
+inline unsigned appInfoEntryPriorityGet(AppId app_id)
 {
-    AppInfoTableEntry* entry = appInfoEntryGet(app_id, pConfig);
+    AppInfoTableEntry* entry = appInfoEntryGet(app_id);
     return entry ? entry->priority : 0;
 }
 

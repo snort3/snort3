@@ -23,48 +23,55 @@
 #define LUA_DETECTOR_MODULE_H
 
 #include <string>
+#include <list>
 
+#include "main/thread.h"
 #include "utils/sflsq.h"
 
 class AppIdConfig;
+struct Detector;
 
-class LuaDetectorModuleManager
+class LuaDetectorManager
 {
 public:
-    // Initializes Lua modules. Open lua and if available LuaJIT libraries, and registers all API modules.
-    static void luaModuleInit();
-    static void luaModuleFini();
+    LuaDetectorManager();
+    ~LuaDetectorManager();
 
     // Load all Lua modules into a detector list
     //
     // Each RNA detector file in the folder app_id_detector_path is parsed for
     // detector information. If it is a valid detector, a detector data structure
     // is created for it and stored in allocatedDetectorList.
-    static void LoadLuaModules(AppIdConfig*);
+    void LoadLuaModules(AppIdConfig*);
 
     // Finalize Lua modules
     // This function should be called after LoadLuaModules(). It sets up proper AppId references
     // and tracker size for all the detectors.
-    static void FinalizeLuaModules(AppIdConfig*);
+    void FinalizeLuaModules();
 
     // Unload Lua modules
     //
     // This function cleans up all the data structures that were created for the Lua detectors
     // in a given AppId context. It should be called after FinalizeLuaModules().
-    static void UnloadLuaModules(AppIdConfig*);
+    void UnloadLuaModules(AppIdConfig*);
 
-    static void add_chunk(const std::string&);
+    void add_chunk(const std::string&);
+
+    void luaModuleInitAllServices();
+    void luaModuleInitAllClients();
+    void list_lua_detectors();
+
+private:
+    void luaCustomLoad( char* detectorName, char* validator, unsigned int validatorLen,
+            unsigned char* const digest, AppIdConfig*, bool isCustom);
+    void loadCustomLuaModules(char* path, AppIdConfig*, bool isCustom);
+    void luaDetectorsUnload();
+    void luaDetectorsSetTrackerSize();
+
+    std::list<Detector*> allocatedDetectorList;
 };
 
-void luaModuleInitAllServices();
-void luaModuleCleanAllClients();
-void luaModuleInitAllClients();
-void RNAPndDumpLuaStats();
-
-void luaDetectorsUnload(AppIdConfig*);
-void luaDetectorsSetTrackerSize();
-
-extern SF_LIST allocatedFlowList;
+extern THREAD_LOCAL SF_LIST allocatedFlowList;
 
 #endif
 

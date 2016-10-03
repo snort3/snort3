@@ -99,24 +99,24 @@ static AppRegistryEntry appIdRegistry[] =
 static int battle_field_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_HELLO,
-        sizeof(PATTERN_HELLO)-1,  5, "battle_field", init_api->pAppidConfig);
+        sizeof(PATTERN_HELLO)-1,  5, "battle_field");
     init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_2,
-        sizeof(PATTERN_2)-1,  0, "battle_field", init_api->pAppidConfig);
+        sizeof(PATTERN_2)-1,  0, "battle_field");
     init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_3,
-        sizeof(PATTERN_3)-1,  0, "battle_field", init_api->pAppidConfig);
+        sizeof(PATTERN_3)-1,  0, "battle_field");
     init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_4,
-        sizeof(PATTERN_4)-1,  0, "battle_field", init_api->pAppidConfig);
+        sizeof(PATTERN_4)-1,  0, "battle_field");
     init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_5,
-        sizeof(PATTERN_5)-1,  0, "battle_field", init_api->pAppidConfig);
+        sizeof(PATTERN_5)-1,  0, "battle_field");
     init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_6,
-        sizeof(PATTERN_6)-1,  0, "battle_field", init_api->pAppidConfig);
+        sizeof(PATTERN_6)-1,  0, "battle_field");
 
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&battle_field_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

@@ -55,41 +55,21 @@ struct RNAClientAppModuleConfigItem
     const char* value;
 };
 
-using RNAClientAppFCN = CLIENT_APP_RETCODE(*)(
-    const uint8_t* data,
-    uint16_t size,
-    const int dir,
-    AppIdSession*,
-    Packet*,
-    Detector*,
-    const AppIdConfig*
-);
+using RNAClientAppFCN = CLIENT_APP_RETCODE(*)( const uint8_t* data, uint16_t size, const int dir,
+    AppIdSession*, Packet*, Detector*);
 
 struct IniClientAppAPI
 {
-    void (* RegisterPattern)(
-        RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
-        unsigned size, int position, AppIdConfig*);
-
-    void (* RegisterPatternEx)(
-        RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
+    void (* RegisterPattern)(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
+        unsigned size, int position);
+    void (* RegisterPatternEx)(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
         unsigned size, int position, Detector*);
-
-    void (* RegisterPatternNoCase)(
-        RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
-        unsigned size, int position, AppIdConfig*);
-
-    void (* RegisterAppId)(
-        RNAClientAppFCN, AppId, uint32_t additionalInfo, AppIdConfig*);
-
+    void (* RegisterPatternNoCase)(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
+        unsigned size, int position);
+    void (* RegisterAppId)(RNAClientAppFCN, AppId, uint32_t additionalInfo);
     int debug;
     uint32_t instance_id;
     AppIdConfig* pAppidConfig;  ///< AppId context for which this API should be used
-};
-
-struct CleanClientAppAPI
-{
-    AppIdConfig* pAppidConfig = nullptr;  ///< AppId context for which this API should be used
 };
 
 struct FinalizeClientAppAPI
@@ -99,7 +79,7 @@ struct FinalizeClientAppAPI
 
 using RNAClientAppInitFCN = CLIENT_APP_RETCODE(*)(const IniClientAppAPI* const, SF_LIST* config);
 using RNAClientAppFinalizeFCN = CLIENT_APP_RETCODE (*)(const FinalizeClientAppAPI* const);
-using RNAClientAppCleanFCN = void(*)(const CleanClientAppAPI* const);
+using RNAClientAppCleanFCN = void(*)();
 
 using ClientAppFlowdataGet = void*(*)(AppIdSession*, unsigned);
 using ClientAppFlowdataAdd = int(*)(AppIdSession*, void*, unsigned, AppIdFreeFCN);

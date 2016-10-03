@@ -119,13 +119,13 @@ static AppRegistryEntry appIdRegistry[] =
 static int flap_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&flap_validate, IpProtocol::TCP, FLAP_PATTERN,
-            sizeof(FLAP_PATTERN), 0, "flap", init_api->pAppidConfig);
+            sizeof(FLAP_PATTERN), 0, "flap");
     //unsigned i;
     for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&flap_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

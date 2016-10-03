@@ -48,6 +48,14 @@ struct DynamicArray
     size_t stepSize;
 };
 
+static AppInfoTableEntry* AppInfoList = nullptr;
+static AppInfoTableEntry* AppInfoTable[SF_APPID_MAX] = { nullptr };
+static AppInfoTableEntry* AppInfoTableByService[SF_APPID_MAX] = { nullptr };
+static AppInfoTableEntry* AppInfoTableByClient[SF_APPID_MAX] = { nullptr };
+static AppInfoTableEntry* AppInfoTableByPayload[SF_APPID_MAX] = { nullptr };
+static SFGHASH* AppNameHash = nullptr;
+static THREAD_LOCAL DynamicArray* AppInfoTableDyn  = nullptr;
+
 static inline DynamicArray* dynamicArrayCreate(unsigned indexStart)
 {
     DynamicArray* array;
@@ -86,6 +94,11 @@ static inline void dynamicArraySetIndex(DynamicArray* array, unsigned index,
 
 static inline AppInfoTableEntry* dynamicArrayGetIndex(DynamicArray* array, unsigned index)
 {
+    // FIXIT-H: appid stats dumped from main thread at snort exit happens after the array has been
+    // freed
+    if(!array)
+        return nullptr;
+
     if (index >= array->indexStart && index < (array->indexStart + array->usedCount))
         return array->table[index - array->indexStart];
     return nullptr;
@@ -131,7 +144,6 @@ static inline void* dynamicArrayGetNext(DynamicArray* array)
     return nullptr;
 }
 
-// End of Dynamic array
 static SFGHASH* appNameHashInit()
 {
     SFGHASH* appNameHash;
@@ -139,12 +151,10 @@ static SFGHASH* appNameHashInit()
     return appNameHash;
 }
 
-static void appNameHashFini(SFGHASH* appNameHash)
+void appNameHashFini()
 {
-    if (appNameHash)
-    {
-        sfghash_delete(appNameHash);
-    }
+    if (AppNameHash)
+        sfghash_delete(AppNameHash);
 }
 
 static inline char* strdupToLower(const char* source)
@@ -214,7 +224,7 @@ static void* appNameHashFind(SFGHASH* appNameHash, const char* appName)
 
 // End of appName hash
 
-static void appIdConfLoad(const char* path);
+static void load_appid_config(const char* path);
 
 static AppId getAppIdStaticIndex(AppId appid)
 {
@@ -225,15 +235,15 @@ static AppId getAppIdStaticIndex(AppId appid)
     return 0;
 }
 
-AppInfoTableEntry* appInfoEntryGet(AppId appId, const AppIdConfig* pConfig)
+AppInfoTableEntry* appInfoEntryGet(AppId appId)
 {
     AppId tmp;
     if ((tmp = getAppIdStaticIndex(appId)))
-        return pConfig->AppInfoTable[tmp];
-    return dynamicArrayGetIndex(pConfig->AppInfoTableDyn, appId);
+        return AppInfoTable[tmp];
+    return dynamicArrayGetIndex(AppInfoTableDyn, appId);
 }
 
-AppInfoTableEntry* appInfoEntryCreate(const char* appName, AppIdConfig* pConfig)
+AppInfoTableEntry* appInfoEntryCreate(const char* appName)
 {
     AppId appId;
     AppInfoTableEntry* entry;
@@ -244,11 +254,11 @@ AppInfoTableEntry* appInfoEntryCreate(const char* appName, AppIdConfig* pConfig)
         return nullptr;
     }
 
-    entry = static_cast<decltype(entry)>(appNameHashFind(pConfig->AppNameHash, appName));
+    entry = static_cast<decltype(entry)>(appNameHashFind(AppNameHash, appName));
 
     if (!entry)
     {
-        if (!dynamicArrayCreateIndex(pConfig->AppInfoTableDyn, (uint32_t*)&appId))
+        if (!dynamicArrayCreateIndex(AppInfoTableDyn, (uint32_t*)&appId))
             return nullptr;
 
         entry = static_cast<decltype(entry)>(snort_calloc(sizeof(AppInfoTableEntry)));
@@ -257,12 +267,23 @@ AppInfoTableEntry* appInfoEntryCreate(const char* appName, AppIdConfig* pConfig)
         entry->clientId = entry->appId;
         entry->payloadId = entry->appId;
         entry->appName = snort_strdup(appName);
-        dynamicArraySetIndex(pConfig->AppInfoTableDyn, appId, entry);
+        dynamicArraySetIndex(AppInfoTableDyn, appId, entry);
     }
     return entry;
 }
 
-void appInfoTableInit(const char* path, AppIdConfig* pConfig)
+void init_dynamic_app_info_table()
+{
+    AppInfoTableDyn = dynamicArrayCreate(SF_APPID_DYNAMIC_MIN);
+}
+
+void free_dynamic_app_info_table()
+{
+    dynamicArrayDestroy(AppInfoTableDyn);
+    AppInfoTableDyn = nullptr;
+}
+
+void init_appid_info_table(const char* path)
 {
     FILE* tableFile;
     const char* token;
@@ -272,10 +293,8 @@ void appInfoTableInit(const char* path, AppIdConfig* pConfig)
     uint32_t clientId, serviceId, payloadId;
     char filepath[PATH_MAX];
     char* appName;
-    char* snortName=nullptr;
+    char* snortName = nullptr;
     char* context;
-
-    pConfig->AppInfoTableDyn = dynamicArrayCreate(SF_APPID_DYNAMIC_MIN);
 
     snprintf(filepath, sizeof(filepath), "%s/odp/%s", path, APP_MAPPING_FILE);
 
@@ -343,8 +362,8 @@ void appInfoTableInit(const char* path, AppIdConfig* pConfig)
             snortName = snort_strdup(token);
 
         entry = static_cast<decltype(entry)>(snort_calloc(sizeof(AppInfoTableEntry)));
-        entry->next = pConfig->AppInfoList;
-        pConfig->AppInfoList = entry;
+        entry->next = AppInfoList;
+        AppInfoList = entry;
         entry->snortId = AddProtocolReference(snortName);
         snort_free(snortName);
         snortName = nullptr;
@@ -356,19 +375,18 @@ void appInfoTableInit(const char* path, AppIdConfig* pConfig)
         entry->priority = APP_PRIORITY_DEFAULT;
 
         if ((appId = getAppIdStaticIndex(entry->appId)))
-            pConfig->AppInfoTable[appId] = entry;
+            AppInfoTable[appId] = entry;
         if ((appId = getAppIdStaticIndex(entry->serviceId)))
-            pConfig->AppInfoTableByService[appId] = entry;
+            AppInfoTableByService[appId] = entry;
         if ((appId = getAppIdStaticIndex(entry->clientId)))
-            pConfig->AppInfoTableByClient[appId] = entry;
+            AppInfoTableByClient[appId] = entry;
         if ((appId = getAppIdStaticIndex(entry->payloadId)))
-            pConfig->AppInfoTableByPayload[appId] = entry;
+            AppInfoTableByPayload[appId] = entry;
 
-        if (!pConfig->AppNameHash)
-        {
-            pConfig->AppNameHash = appNameHashInit();
-        }
-        appNameHashAdd(pConfig->AppNameHash, appName, entry);
+        if (!AppNameHash)
+            AppNameHash = appNameHashInit();
+
+        appNameHashAdd(AppNameHash, appName, entry);
     }
     fclose(tableFile);
 
@@ -380,140 +398,127 @@ void appInfoTableInit(const char* path, AppIdConfig* pConfig)
     pAppidActiveConfig->mod_config->http2_detection_enabled = false;
 
     snprintf(filepath, sizeof(filepath), "%s/odp/%s", path, APP_CONFIG_FILE);
-    appIdConfLoad (filepath);
+    load_appid_config (filepath);
     snprintf(filepath, sizeof(filepath), "%s/custom/%s", path, USR_CONFIG_FILE);
-    appIdConfLoad (filepath);
+    load_appid_config (filepath);
 }
 
-void appInfoTableFini(AppIdConfig* pConfig)
+void cleanup_appid_info_table()
 {
     AppInfoTableEntry* entry;
 
-    while ((entry = pConfig->AppInfoList))
+    while ((entry = AppInfoList))
     {
-        pConfig->AppInfoList = entry->next;
+        AppInfoList = entry->next;
         snort_free(entry->appName);
         snort_free(entry);
     }
 
-    dynamicArrayDestroy(pConfig->AppInfoTableDyn);
-    pConfig->AppInfoTableDyn = nullptr;
-
-    appNameHashFini(pConfig->AppNameHash);
+    appNameHashFini();
 }
 
-void appInfoTableDump(AppIdConfig* pConfig)
+void dump_app_info_table()
 {
     AppInfoTableEntry* entry;
     AppId appId;
 
-    ErrorMessage("Cisco provided detectors:\n");
+    LogMessage("Cisco provided detectors:\n");
     for (appId = 1; appId < SF_APPID_MAX; appId++)
     {
-        entry = pConfig->AppInfoTable[appId];
+        entry = AppInfoTable[appId];
         if (entry)
-            ErrorMessage("%s\t%d\t%s\n", entry->appName, entry->appId, (entry->flags &
+            LogMessage("%s\t%d\t%s\n", entry->appName, entry->appId, (entry->flags &
                 APPINFO_FLAG_ACTIVE) ? "active" : "inactive");
     }
-    ErrorMessage("User provided detectors:\n");
-    for (entry = (decltype(entry))dynamicArrayGetFirst(pConfig->AppInfoTableDyn); entry; entry =
-        (decltype(entry))dynamicArrayGetNext(pConfig->AppInfoTableDyn))
+
+    LogMessage("User provided detectors:\n");
+    for (entry = (decltype(entry))dynamicArrayGetFirst(AppInfoTableDyn);
+            entry;
+            entry = (decltype(entry))dynamicArrayGetNext(AppInfoTableDyn))
     {
-        ErrorMessage("%s\t%d\t%s\n", entry->appName, entry->appId, (entry->flags &
+        LogMessage("%s\t%d\t%s\n", entry->appName, entry->appId, (entry->flags &
             APPINFO_FLAG_ACTIVE) ? "active" : "inactive");
     }
 }
 
-AppId appGetAppFromServiceId(uint32_t appId, AppIdConfig* pConfig)
+AppId get_appid_by_service_id(uint32_t appId)
 {
     AppInfoTableEntry* entry;
     AppId tmp;
 
     if ((tmp = getAppIdStaticIndex(appId)))
-        entry = pConfig->AppInfoTableByService[tmp];
+        entry = AppInfoTableByService[tmp];
     else
-        entry = dynamicArrayGetIndex(pConfig->AppInfoTableDyn, appId);
+        entry = dynamicArrayGetIndex(AppInfoTableDyn, appId);
 
     return entry ? entry->appId : APP_ID_NONE;
 }
 
-AppId appGetAppFromClientId(uint32_t appId, AppIdConfig* pConfig)
+AppId get_appid_by_client_id(uint32_t appId)
 {
     AppInfoTableEntry* entry;
     AppId tmp;
 
     if ((tmp = getAppIdStaticIndex(appId)))
-        entry = pConfig->AppInfoTableByClient[tmp];
+        entry = AppInfoTableByClient[tmp];
     else
-        entry = dynamicArrayGetIndex(pConfig->AppInfoTableDyn, appId);
+        entry = dynamicArrayGetIndex(AppInfoTableDyn, appId);
 
     return entry ? entry->appId : APP_ID_NONE;
 }
 
-AppId appGetAppFromPayloadId(uint32_t appId, AppIdConfig* pConfig)
+AppId get_appid_by_payload_id(uint32_t appId)
 {
     AppInfoTableEntry* entry;
     AppId tmp;
 
     if ((tmp = getAppIdStaticIndex(appId)))
-        entry = pConfig->AppInfoTableByPayload[tmp];
+        entry = AppInfoTableByPayload[tmp];
     else
-        entry = dynamicArrayGetIndex(pConfig->AppInfoTableDyn, appId);
+        entry = dynamicArrayGetIndex(AppInfoTableDyn, appId);
 
     return entry ? entry->appId : APP_ID_NONE;
 }
 
-const char* appGetAppName(int32_t appId)
+const char* get_app_name(int32_t appId)
 {
     AppInfoTableEntry* entry;
-    AppIdConfig* pConfig = pAppidActiveConfig;
     AppId tmp;
 
     if ((tmp = getAppIdStaticIndex(appId)))
-        entry = pConfig->AppInfoTable[tmp];
+        entry = AppInfoTable[tmp];
     else
-        entry = dynamicArrayGetIndex(pConfig->AppInfoTableDyn, appId);
+        entry = dynamicArrayGetIndex(AppInfoTableDyn, appId);
 
     return entry ? entry->appName : nullptr;
 }
 
-int32_t appGetAppId(const char* appName)
+int32_t get_appid_by_name(const char* appName)
 {
-    AppInfoTableEntry* entry;
-    AppIdConfig* pConfig = pAppidActiveConfig;
-
-    entry = (decltype(entry))appNameHashFind(pConfig->AppNameHash, appName);
+    AppInfoTableEntry* entry = (decltype(entry))appNameHashFind(AppNameHash, appName);
     return entry ? entry->appId : 0;
 }
 
-void appInfoSetActive(AppId appId, bool active)
+void set_app_info_active(AppId appId)
 {
     AppInfoTableEntry* entry = nullptr;
-    AppIdConfig* pConfig = pAppidActiveConfig;
     AppId tmp;
 
     if (appId == APP_ID_NONE)
         return;
 
     if ((tmp = getAppIdStaticIndex(appId)))
-        entry =  pConfig->AppInfoTable[tmp];
+        entry =  AppInfoTable[tmp];
     else
-        entry = dynamicArrayGetIndex(pConfig->AppInfoTableDyn, appId);
+        entry = dynamicArrayGetIndex(AppInfoTableDyn, appId);
 
     if (entry)
-    {
-        if (active)
-            entry->flags |= APPINFO_FLAG_ACTIVE;
-        else
-            entry->flags &= ~APPINFO_FLAG_ACTIVE;
-    }
+        entry->flags |= APPINFO_FLAG_ACTIVE;
     else
-    {
         ErrorMessage("AppInfo: AppId %d is UNKNOWN\n", appId);
-    }
 }
 
-static void appIdConfLoad(const char* path)
+static void load_appid_config(const char* path)
 {
     FILE* config_file;
     char* token;
@@ -524,7 +529,6 @@ static void appIdConfLoad(const char* path)
     char* conf_key;
     char* conf_val;
     unsigned line = 0;
-    AppIdConfig* pConfig = pAppidActiveConfig;
     int max_tp_flow_depth;
     char* context;
 
@@ -597,14 +601,14 @@ static void appIdConfLoad(const char* path)
                 DebugFormat(DEBUG_INSPECTOR,
                     "AppId: if thirdparty reports app %d, we will use it as a client.\n",
                     atoi(conf_val));
-                appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_TP_CLIENT, pConfig);
+                appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_TP_CLIENT);
             }
             else if (!(strcasecmp(conf_key, "ssl_reinspect")))
             {
                 DebugFormat(DEBUG_INSPECTOR,
                     "AppId: adding app %d to list of SSL apps that get more granular inspection.\n",
                     atoi(conf_val));
-                appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_SSL_INSPECT, pConfig);
+                appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_SSL_INSPECT);
             }
             else if (!(strcasecmp(conf_key, "disable_safe_search")))
             {
@@ -620,14 +624,14 @@ static void appIdConfLoad(const char* path)
                 DebugFormat(DEBUG_INSPECTOR,
                     "AppId: adding app %d to list of SSL apps that may open a second SSL connection.\n",
                     atoi(conf_val));
-                appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_SSL_SQUELCH, pConfig);
+                appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_SSL_SQUELCH);
             }
             else if (!(strcasecmp(conf_key, "defer_to_thirdparty")))
             {
                 DebugFormat(DEBUG_INSPECTOR,
                     "AppId: adding app %d to list of apps where we should take thirdparty ID over the NDE's.\n",
                     atoi(conf_val));
-                appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_DEFER, pConfig);
+                appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_DEFER);
             }
             else if (!(strcasecmp(conf_key, "defer_payload_to_thirdparty")))
             {
@@ -635,7 +639,7 @@ static void appIdConfLoad(const char* path)
                     "AppId: adding app %d to list of apps where we should take "
                     "thirdparty payload ID over the NDE's.\n",
                     atoi(conf_val));
-                appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_DEFER_PAYLOAD, pConfig);
+                appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_DEFER_PAYLOAD);
             }
             else if (!(strcasecmp(conf_key, "chp_userid")))
             {
@@ -690,7 +694,7 @@ static void appIdConfLoad(const char* path)
                 conf_val = token;
                 uint8_t temp_val;
                 temp_val = strtol(conf_val, nullptr, 10);
-                appInfoEntryPrioritySet (temp_appid, temp_val, pConfig);
+                appInfoEntryPrioritySet (temp_appid, temp_val);
                 DebugFormat(DEBUG_INSPECTOR,"AppId: %d Setting priority bit %d .\n",
                     temp_appid, temp_val);
             }
@@ -705,13 +709,13 @@ static void appIdConfLoad(const char* path)
                 {
                     referred_app_index=0;
                     referred_app_index += sprintf(referred_app_list, "%d ", atoi(conf_val));
-                    appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_REFERRED, pConfig);
+                    appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_REFERRED);
 
                     while ((token = strtok_r(nullptr, CONF_SEPARATORS, &context)) != nullptr)
                     {
                         referred_app_index += sprintf(referred_app_list+referred_app_index, "%d ",
                             atoi(token));
-                        appInfoEntryFlagSet(atoi(token), APPINFO_FLAG_REFERRED, pConfig);
+                        appInfoEntryFlagSet(atoi(token), APPINFO_FLAG_REFERRED);
                     }
                     DebugFormat(DEBUG_INSPECTOR,
                         "AppId: adding appIds to list of referred web apps: %s\n",
@@ -738,7 +742,7 @@ static void appIdConfLoad(const char* path)
             {
                 LogMessage("AppId: adding app %d to list of ignore thirdparty apps.\n", atoi(
                     conf_val));
-                appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_IGNORE, pConfig);
+                appInfoEntryFlagSet(atoi(conf_val), APPINFO_FLAG_IGNORE);
             }
             else if (!(strcasecmp(conf_key, "http2_detection")))
             {

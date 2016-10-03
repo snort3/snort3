@@ -34,7 +34,7 @@ struct MSN_CLIENT_APP_CONFIG
 THREAD_LOCAL MSN_CLIENT_APP_CONFIG msn_config;
 
 static CLIENT_APP_RETCODE msn_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
 
 struct Client_App_Pattern
 {
@@ -97,7 +97,7 @@ static CLIENT_APP_RETCODE msn_init(const IniClientAppAPI* const init_api, SF_LIS
             DebugFormat(DEBUG_APPID,"registering patterns: %s: %d\n",
             		(const char*)patterns[i].pattern, patterns[i].index);
             init_api->RegisterPattern(&msn_validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index, init_api->pAppidConfig);
+                patterns[i].length, patterns[i].index);
         }
     }
 
@@ -106,14 +106,14 @@ static CLIENT_APP_RETCODE msn_init(const IniClientAppAPI* const init_api, SF_LIS
         DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[j].appId);
 
         init_api->RegisterAppId(&msn_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[j].additionalInfo);
     }
 
     return CLIENT_APP_SUCCESS;
 }
 
 static CLIENT_APP_RETCODE msn_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet* pkt, struct Detector*)
 {
     const uint8_t* end;
     uint8_t version[MAX_VERSION_SIZE];

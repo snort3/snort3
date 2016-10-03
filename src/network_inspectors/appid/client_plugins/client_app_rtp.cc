@@ -83,7 +83,7 @@ THREAD_LOCAL RTP_CLIENT_APP_CONFIG rtp_config;
 
 static CLIENT_APP_RETCODE rtp_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE rtp_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
 
 SO_PUBLIC RNAClientAppModule rtp_client_mod =
 {
@@ -260,7 +260,7 @@ static CLIENT_APP_RETCODE rtp_init(const IniClientAppAPI* const init_api, SF_LIS
             DebugFormat(DEBUG_LOG,"registering patterns: %s: %d\n",
                 (const char*)patterns[i].pattern, patterns[i].index);
             init_api->RegisterPattern(&rtp_validate, IpProtocol::UDP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index, init_api->pAppidConfig);
+                patterns[i].length, patterns[i].index);
         }
     }
 
@@ -269,14 +269,14 @@ static CLIENT_APP_RETCODE rtp_init(const IniClientAppAPI* const init_api, SF_LIS
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
         init_api->RegisterAppId(&rtp_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[j].additionalInfo);
     }
 
     return CLIENT_APP_SUCCESS;
 }
 
 static CLIENT_APP_RETCODE rtp_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet*, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet*, struct Detector*)
 {
     ClientRTPData* fd;
     ClientRTPMsg* hdr;

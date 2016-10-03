@@ -22,7 +22,7 @@
 #ifndef DETECTOR_BASE_H
 #define DETECTOR_BASE_H
 
-int LoadDetectorModules(const char** dir_list);
+int init_detector_plugins();
 
 #endif
 

@@ -62,10 +62,9 @@ struct ClientPOP3Data
 static POP3_CLIENT_APP_CONFIG pop3_config;
 
 static CLIENT_APP_RETCODE pop3_ca_init(const IniClientAppAPI* const init_api, SF_LIST* config);
-static void pop3_ca_clean(const CleanClientAppAPI* const clean_api);
+static void pop3_ca_clean();
 static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData,
-    const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
 
 static RNAClientAppModule client_app_mod =
 {
@@ -294,8 +293,7 @@ static CLIENT_APP_RETCODE pop3_ca_init(const IniClientAppAPI* const init_api, SF
             DebugFormat(DEBUG_INSPECTOR,"registering pattern: %s\n",
             		(const char*)patterns[i].pattern);
             init_api->RegisterPatternNoCase(&pop3_ca_validate, IpProtocol::TCP,
-                patterns[i].pattern,
-                patterns[i].length, 0, init_api->pAppidConfig);
+                patterns[i].pattern, patterns[i].length, 0);
         }
     }
 
@@ -304,7 +302,7 @@ static CLIENT_APP_RETCODE pop3_ca_init(const IniClientAppAPI* const init_api, SF
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[j].appId);
         init_api->RegisterAppId(&pop3_ca_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[j].additionalInfo);
     }
 
     return CLIENT_APP_SUCCESS;
@@ -313,27 +311,27 @@ static CLIENT_APP_RETCODE pop3_ca_init(const IniClientAppAPI* const init_api, SF
 static int pop3_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPatternUser(&pop3_validate, IpProtocol::TCP, (uint8_t*)POP3_OK,
-        sizeof(POP3_OK)-1, 0, "pop3", init_api->pAppidConfig);
+        sizeof(POP3_OK)-1, 0, "pop3");
     init_api->RegisterPatternUser(&pop3_validate, IpProtocol::TCP, (uint8_t*)POP3_ERR,
-        sizeof(POP3_ERR)-1, 0, "pop3", init_api->pAppidConfig);
+        sizeof(POP3_ERR)-1, 0, "pop3");
 
     unsigned j;
     for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[j].appId);
         init_api->RegisterAppId(&pop3_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[j].additionalInfo);
     }
     return 0;
 }
 
-static void pop3_ca_clean(const CleanClientAppAPI* const clean_api)
+static void pop3_ca_clean()
 {
     SearchTool* cmd_matcher =
-        (SearchTool*)clean_api->pAppidConfig->find_generic_config_element(client_app_mod.name);
+        (SearchTool*)pAppidActiveConfig->find_generic_config_element(client_app_mod.name);
     if (cmd_matcher)
         delete cmd_matcher;
-    clean_api->pAppidConfig->remove_generic_config_element(client_app_mod.name);
+    pAppidActiveConfig->remove_generic_config_element(client_app_mod.name);
 }
 
 static int pop3_pattern_match(void* id, void*, int index, void* data, void*)
@@ -673,7 +671,7 @@ ven_ver_done:;
 }
 
 static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet*, struct Detector*, const AppIdConfig* pConfig)
+    AppIdSession* flowp, Packet*, struct Detector*)
 {
     const uint8_t* s = data;
     const uint8_t* end = (data + size);
@@ -731,7 +729,7 @@ static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, c
     {
         unsigned pattern_index;
         SearchTool* cmd_matcher =
-            (SearchTool*)((AppIdConfig*)pConfig)->find_generic_config_element(client_app_mod.name);
+            (SearchTool*)pAppidActiveConfig->find_generic_config_element(client_app_mod.name);
 
         cmd = nullptr;
         cmd_matcher->find_all((char*)s, (length > longest_pattern ? longest_pattern : length),

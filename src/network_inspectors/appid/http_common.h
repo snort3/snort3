@@ -86,35 +86,6 @@ struct HTTPListElement
     HTTPListElement* next;
 };
 
-#define APPL_VERSION_LENGTH   40
-
-struct UrlUserData
-{
-    uint32_t service_id;
-    uint32_t client_app;
-    uint32_t payload;
-    AppId appId;
-    tMlpPattern query;
-};
-
-struct DetectorAppUrlPattern
-{
-    struct
-    {
-        tMlpPattern host;
-        tMlpPattern path;
-        tMlpPattern scheme;
-    } patterns;
-
-    UrlUserData userData;
-};
-
-struct DetectorAppUrlList
-{
-    DetectorAppUrlPattern** urlPattern;
-    size_t usedCount;
-    size_t allocatedCount;
-};
 
 // These values are used in Lua code as raw numbers. Do NOT reassign new values.
 #define APP_TYPE_SERVICE    0x1
@@ -139,7 +110,9 @@ enum ActionType
     HOLD_FLOW,                              //12
     GET_OFFSETS_FROM_REBUILT,               //13
     SEARCH_UNSUPPORTED,                     //14
-    MAX_ACTION_TYPE = SEARCH_UNSUPPORTED,
+    DEFER_TO_SIMPLE_DETECT,                 //15
+    MAX_ACTION_TYPE = DEFER_TO_SIMPLE_DETECT,
+
 };
 
 // These values are used in Lua code as raw numbers. Do NOT reassign new values.
@@ -231,17 +204,6 @@ struct CHPMatchTally
     CHPMatchCandidate item[1];
 };
 
-struct HttpPatternLists
-{
-    HTTPListElement* hostPayloadPatternList;
-    HTTPListElement* urlPatternList;
-    HTTPListElement* clientAgentPatternList;
-    HTTPListElement* contentTypePatternList;
-    CHPListElement* chpList;
-    DetectorAppUrlList appUrlList;
-    DetectorAppUrlList RTMPUrlList;
-};
-
 // url parts extracted from http headers.
 struct UrlStruct
 {
@@ -270,37 +232,5 @@ struct HosUrlPatternsList
     HosUrlDetectorPattern* tail;
 };
 
-struct DetectorHttpConfig
-{
-    SearchTool* url_matcher;
-    SearchTool* client_agent_matcher;
-    SearchTool* via_matcher;
-    tMlmpTree* hosUrlMatcher;
-    tMlmpTree* RTMPHosUrlMatcher;
-    SearchTool* header_matcher;
-    SearchTool* content_type_matcher;
-
-    // CHP matchers
-    // TODO: Is there a need for these variables? They just point to the pointers in the
-    // array chp_matchers[]. They are used only in the function http_detector_clean(). But
-    // there we could easily traverse through the members of chp_matchers instead of using
-    // these variables.
-    SearchTool* chp_user_agent_matcher;
-    SearchTool* chp_host_matcher;
-    SearchTool* chp_referer_matcher;
-    SearchTool* chp_uri_matcher;
-    SearchTool* chp_cookie_matcher;
-    SearchTool* chp_content_type_matcher;
-    SearchTool* chp_location_matcher;
-    SearchTool* chp_body_matcher;
-    // TODO: chp_req_body_matcher is not being used anywhere in the code, should it be removed?
-    SearchTool* chp_req_body_matcher;
-
-    SearchTool* chp_matchers[MAX_PATTERN_TYPE+1];
-
-    HosUrlPatternsList* hosUrlPatternsList;
-};
-
-extern AppId getAppIdByHttpUrl(UrlStruct* url, UrlUserData** rnaData);
 #endif
 

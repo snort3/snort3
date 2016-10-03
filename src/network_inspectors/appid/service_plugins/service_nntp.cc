@@ -105,16 +105,16 @@ static AppRegistryEntry appIdRegistry[] =
 static int nntp_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&nntp_validate, IpProtocol::TCP, (uint8_t*)NNTP_PATTERN1,
-        sizeof(NNTP_PATTERN1)-1, 0, "nntp", init_api->pAppidConfig);
+        sizeof(NNTP_PATTERN1)-1, 0, "nntp");
     init_api->RegisterPattern(&nntp_validate, IpProtocol::TCP, (uint8_t*)NNTP_PATTERN2,
-        sizeof(NNTP_PATTERN2)-1, 0, "nntp", init_api->pAppidConfig);
+        sizeof(NNTP_PATTERN2)-1, 0, "nntp");
 
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&nntp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

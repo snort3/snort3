@@ -23,7 +23,6 @@
 
 #include "lua_detector_module.h"
 
-#include <list>
 #include <algorithm>
 #include <glob.h>
 #include <lua.hpp>
@@ -31,6 +30,7 @@
 
 #include "appid_config.h"
 #include "client_plugins/client_app_base.h"
+#include "service_plugins/service_base.h"
 #include "fw_appid.h" // for lua*PerfStats
 #include "hash/sfghash.h"
 #include "log/messages.h"
@@ -50,15 +50,7 @@
 #define MAXPD 1024
 #define LUA_DETECTOR_FILENAME_MAX 1024
 
-// This data structure is shared in the main and the reload threads. However, the detectors
-// in this list could be using different AppID contexts (pAppidOldConfig, pAppidActiveConfig
-// and pAppidActiveConfig) based on which context the detector is being used. For example,
-// a detector could simultaneously be loaded in the reload thread while the same detector
-// could be used in the packet processing thread. Since allocatedDetectorList is used only
-// during loading, we don't need to use synchronization measures to access it.
-static std::list<Detector*> allocatedDetectorList;
-
-SF_LIST allocatedFlowList;  /*list of flows allocated. */
+THREAD_LOCAL SF_LIST allocatedFlowList;  /*list of flows allocated. */
 static uint32_t gLuaTrackerSize = 0;
 static unsigned gNumDetectors = 0;
 static unsigned gNumActiveDetectors;
@@ -333,9 +325,7 @@ static void luaClientInit(Detector* detector)
         return;
     }
     else
-    {
         DebugFormat(DEBUG_APPID, "Initialized %s\n", detector->name.c_str());
-    }
 }
 
 static void luaClientFini(Detector* detector)
@@ -363,8 +353,6 @@ static void luaClientFini(Detector* detector)
     }
 }
 
-/**set tracker sizes on Lua detector sizes. Uses global module names to access functions.
- */
 static inline void setLuaTrackerSize(lua_State* L, uint32_t numTrackers)
 {
     /*change flow tracker size according to available memory calculation */
@@ -376,15 +364,12 @@ static inline void setLuaTrackerSize(lua_State* L, uint32_t numTrackers)
         {
             lua_pushinteger (L, numTrackers);
             if (lua_pcall(L, 1, 0, 0) != 0)
-            {
                 ErrorMessage("error setting tracker size");
-            }
         }
     }
     else
-    {
         DebugMessage(DEBUG_LOG, "hostServiceTrackerModule.setHosServiceTrackerSize not found");
-    }
+
     lua_pop(L, 1);
 
     /*change flow tracker size according to available memory calculation */
@@ -396,20 +381,35 @@ static inline void setLuaTrackerSize(lua_State* L, uint32_t numTrackers)
         {
             lua_pushinteger (L, numTrackers);
             if (lua_pcall(L, 1, 0, 0) != 0)
-            {
                 ErrorMessage("error setting tracker size");
-            }
         }
     }
     else
-    {
         DebugMessage(DEBUG_LOG, "flowTrackerModule.setFlowTrackerSize not found");
-    }
+
     lua_pop(L, 1);
 }
 
-static void luaCustomLoad( char* detectorName, char* validator, unsigned int validatorLen,
-        unsigned char* const digest, AppIdConfig* pConfig, bool isCustom)
+LuaDetectorManager::LuaDetectorManager()
+{
+    sflist_init(&allocatedFlowList);
+    allocatedDetectorList.clear();
+}
+
+LuaDetectorManager::~LuaDetectorManager()
+{
+    for ( auto& detector : allocatedDetectorList )
+         if ( !detector->packageInfo.client.initFunctionName.empty() )
+             luaClientFini(detector);
+
+    sflist_static_free_all(&allocatedFlowList, freeDetectorFlow);
+    for ( auto& detector : allocatedDetectorList )
+        delete detector;
+    allocatedDetectorList.clear();}
+
+void LuaDetectorManager::luaCustomLoad( char* detectorName, char* validator,
+        unsigned int validatorLen, unsigned char* const digest, AppIdConfig* pConfig,
+        bool isCustom)
 {
     Detector* detector;
     RNAClientAppModule* cam = nullptr;
@@ -442,7 +442,7 @@ static void luaCustomLoad( char* detectorName, char* validator, unsigned int val
     getDetectorPackageInfo(detector);
     detector->validatorBuffer = validator;
     detector->isActive = true;
-    detector->pAppidNewConfig = detector->pAppidActiveConfig = detector->pAppidOldConfig = pConfig;
+    detector->appid_config =  pConfig;
     detector->isCustom = isCustom;
 
     if ( detector->packageInfo.server.initFunctionName.empty() )
@@ -459,10 +459,7 @@ static void luaCustomLoad( char* detectorName, char* validator, unsigned int val
     }
     else
     {
-        /*add to active service list */
-        detector->server.serviceModule.next = pConfig->serviceConfig.active_service_list;
-        pConfig->serviceConfig.active_service_list = &detector->server.serviceModule;
-
+        add_service_to_active_list(&detector->server.serviceModule);
         detector->server.serviceId = APP_ID_UNKNOWN;
 
         /*create a ServiceElement */
@@ -479,12 +476,6 @@ static void luaCustomLoad( char* detectorName, char* validator, unsigned int val
     gNumDetectors++;
 
     DebugFormat(DEBUG_LOG,"Loaded detector %s\n", detectorName);
-}
-
-void LuaDetectorModuleManager::luaModuleInit()
-{
-    sflist_init(&allocatedFlowList);
-    allocatedDetectorList.clear();
 }
 
 /**calculates Number of flow and host tracker entries for Lua detectors, given amount
@@ -508,7 +499,7 @@ static inline uint32_t calculateLuaTrackerSize(uint64_t rnaMemory, uint32_t numD
     return (numTrackers > LUA_TRACKERS_MAX) ? LUA_TRACKERS_MAX : numTrackers;
 }
 
-static void loadCustomLuaModules(char* path, AppIdConfig* pConfig, bool isCustom)
+void LuaDetectorManager::loadCustomLuaModules(char* path, AppIdConfig* pConfig, bool isCustom)
 {
     unsigned n;
     FILE* file;
@@ -554,7 +545,6 @@ static void loadCustomLuaModules(char* path, AppIdConfig* pConfig, bool isCustom
         }
 
         auto validatorBufferLen = ftell(file);
-
         if (validatorBufferLen == -1)
         {
             ErrorMessage("Unable to return offset on lua detector '%s'\n",globs.gl_pathv[n]);
@@ -593,7 +583,7 @@ static void loadCustomLuaModules(char* path, AppIdConfig* pConfig, bool isCustom
             if ( !memcmp(digest, detector->digest, sizeof(digest)) )
             {
                 detector->isActive = true;
-                detector->pAppidNewConfig = pConfig;
+                detector->appid_config = pConfig;
                 delete[] validatorBuffer;
             }
         }
@@ -605,14 +595,12 @@ static void loadCustomLuaModules(char* path, AppIdConfig* pConfig, bool isCustom
     globfree(&globs);
 }
 
-void LuaDetectorModuleManager::FinalizeLuaModules(AppIdConfig* pConfig)
+void LuaDetectorManager::FinalizeLuaModules()
 {
     gNumActiveDetectors = 0;
 
     for ( auto& detector : allocatedDetectorList )
     {
-        detector->pAppidOldConfig = detector->pAppidActiveConfig;
-        detector->pAppidActiveConfig = pConfig;
         if ( detector->isActive )
         {
             ++gNumActiveDetectors;
@@ -626,7 +614,7 @@ void LuaDetectorModuleManager::FinalizeLuaModules(AppIdConfig* pConfig)
     luaDetectorsSetTrackerSize();
 }
 
-void LuaDetectorModuleManager::LoadLuaModules(AppIdConfig* pConfig)
+void LuaDetectorManager::LoadLuaModules(AppIdConfig* pConfig)
 {
     for ( auto& detector : allocatedDetectorList )
     {
@@ -646,12 +634,12 @@ void LuaDetectorModuleManager::LoadLuaModules(AppIdConfig* pConfig)
     // luaDetectorsCleanInactive();
 }
 
-void luaDetectorsUnload(AppIdConfig* pConfig)
+void LuaDetectorManager::luaDetectorsUnload()
 {
     for ( auto& detector : allocatedDetectorList )
     {
         if ( detector->isActive && !detector->packageInfo.server.initFunctionName.empty())
-            detectorRemoveAllPorts(detector, pConfig);
+            detectorRemoveAllPorts(detector);
 
         if ( detector->isActive && !detector->packageInfo.client.initFunctionName.empty() )
             luaClientFini(detector);
@@ -665,7 +653,7 @@ void luaDetectorsUnload(AppIdConfig* pConfig)
     gNumActiveDetectors = 0;
 }
 
-void luaDetectorsSetTrackerSize()
+void LuaDetectorManager::luaDetectorsSetTrackerSize()
 {
     gLuaTrackerSize = calculateLuaTrackerSize(512*1024*1024, gNumActiveDetectors);
 
@@ -678,7 +666,7 @@ void luaDetectorsSetTrackerSize()
     }
 }
 
-void LuaDetectorModuleManager::UnloadLuaModules(AppIdConfig*)
+void LuaDetectorManager::UnloadLuaModules(AppIdConfig*)
 {
     for ( auto& detector : allocatedDetectorList )
     {
@@ -689,10 +677,6 @@ void LuaDetectorModuleManager::UnloadLuaModules(AppIdConfig*)
 
             detector->wasActive = false;
         }
-
-        // Detector cleanup is done. Move pAppidOldConfig to the current
-        // AppID context.
-        detector->pAppidOldConfig = detector->pAppidActiveConfig;
     }
 }
 
@@ -702,7 +686,7 @@ void LuaDetectorModuleManager::UnloadLuaModules(AppIdConfig*)
  * newly activated or deactivate detectors. Current design calls for restarting
  * RNA whenever detectors are activated/deactivated.
  */
-void luaModuleInitAllServices()
+void LuaDetectorManager::luaModuleInitAllServices()
 {
     for ( auto& detector : allocatedDetectorList )
         luaServerInit(detector);
@@ -714,39 +698,14 @@ void luaModuleInitAllServices()
  * newly activated or deactivate detectors. Current design calls for restarting
  * RNA whenever detectors are activated/deactivated.
  */
-void luaModuleInitAllClients()
+void LuaDetectorManager::luaModuleInitAllClients()
 {
     for ( auto& detector : allocatedDetectorList )
         if ( detector->isActive && !detector->packageInfo.client.initFunctionName.empty() )
             luaClientInit(detector);
 }
 
-void luaModuleCleanAllClients()
-{
-    for ( auto& detector : allocatedDetectorList )
-        if ( !detector->packageInfo.client.initFunctionName.empty() )
-            luaClientFini(detector);
-
-    /*dont free detector. Lua side reclaims the memory. */
-}
-
-/**Finish routine for DetectorCore module. It release all Lua sessions and frees any memory.
- * @warn This function should be called once and that too when RNA is performing clean exit.
- * @return void.
-  */
-void LuaDetectorModuleManager::luaModuleFini()
-{
-    DebugMessage(DEBUG_APPID, "luaModuleFini(): entered");
-
-    /*flow can be freed during garbage collection */
-
-    sflist_static_free_all(&allocatedFlowList, freeDetectorFlow);
-    for ( auto& detector : allocatedDetectorList )
-        delete detector;
-    allocatedDetectorList.clear();
-}
-
-void RNAPndDumpLuaStats()
+void LuaDetectorManager::list_lua_detectors()
 {
     size_t totalMem = 0;
     size_t mem;

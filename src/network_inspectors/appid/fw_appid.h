@@ -41,7 +41,6 @@ extern uint8_t appIdPriorityArray[SF_APPID_MAX + 1];
 
 AppIdSession* getAppIdData(void* lwssn);
 
-void fwAppIdFini(AppIdConfig*);
 void AppIdAddUser(AppIdSession*, const char* username, AppId, int success);
 void AppIdAddDnsQueryInfo(AppIdSession*, uint16_t id, const uint8_t* host, uint8_t host_len,
         uint16_t host_offset, uint16_t record_type);
@@ -49,7 +48,6 @@ void AppIdAddDnsResponseInfo(AppIdSession*, uint16_t id, const uint8_t* host, ui
         uint16_t host_offset, uint8_t response_type, uint32_t ttl);
 void AppIdResetDnsInfo(AppIdSession*);
 void AppIdAddPayload(AppIdSession*, AppId);
-void dump_appid_stats();
 
 extern unsigned dhcp_fp_table_size;
 
@@ -122,8 +120,7 @@ inline int TPIsAppIdAvailable(void* tpSession)
 inline int testSSLAppIdForReinspect(AppId app_id)
 {
     if (app_id <= SF_APPID_MAX &&
-            (app_id == APP_ID_SSL ||
-                    appInfoEntryFlagGet(app_id, APPINFO_FLAG_SSL_INSPECT, pAppidActiveConfig)))
+            (app_id == APP_ID_SSL || appInfoEntryFlagGet(app_id, APPINFO_FLAG_SSL_INSPECT)))
         return 1;
     else
         return 0;

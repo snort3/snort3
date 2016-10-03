@@ -92,7 +92,7 @@ bool AppId::convert(std::istringstream& data_stream)
             std::string file_name;
             if (arg_stream >> file_name)
             {
-                tmpval = table_api.add_option("app_stats_filename", file_name);
+                tmpval = table_api.add_option("log_stats", true);
             }
             else
             {

@@ -598,9 +598,7 @@ static int addPatternRecursively(tMlmpTree* rootNode, const tMlmpPattern* inputP
         patterns = inputPatternList + i;
 
         /*create list of remaining nodes  */
-        for (partNum = 2;
-            partNum <= partTotal;
-            partNum++)
+        for (partNum = 2; partNum <= partTotal; partNum++)
         {
             newNode = tmpPrimaryNode->patternNode.nextPattern + (partNum -2);
             newNode->pattern.pattern = patterns->pattern;

@@ -36,6 +36,8 @@ public:
 
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
+    void tinit() override;
+    void tterm() override;
     void eval(Packet*) override;
 
     AppIdConfig* get_active_config()
@@ -47,6 +49,7 @@ private:
 
     const AppIdModuleConfig* config = nullptr;
     AppIdConfig* active_config = nullptr;
+    bool list_lua_detectors = true;
 };
 
 void httpHeaderCallback(Packet*, HttpParsedHeaders* const);

@@ -48,18 +48,6 @@
 #define HTTP_PATTERN_MAX_LEN    1024
 #define PORT_MAX 65535
 
-void dump_appid_stats()
-{
-    LogMessage("Application Identification Preprocessor:\n");
-    LogMessage("   Total packets received : %" PRIu64 "\n", appid_stats.packets);
-    LogMessage("  Total packets processed : %" PRIu64 "\n", appid_stats.processed_packets);
-    if (thirdparty_appid_module)
-        thirdparty_appid_module->print_stats();
-    LogMessage("    Total packets ignored : %" PRIu64 "\n", appid_stats.ignored_packets);
-    AppIdServiceStateDumpStats();
-    RNAPndDumpLuaStats();
-}
-
 #ifdef APPID_UNUSED_CODE
 void reset_appid_stats(int, void*)
 {
@@ -67,12 +55,6 @@ void reset_appid_stats(int, void*)
         thirdparty_appid_module->reset_stats();
 }
 #endif
-
-void fwAppIdFini(AppIdConfig* pConfig)
-{
-    AppIdSession::release_free_list_flow_data();
-    appInfoTableFini(pConfig);
-}
 
 unsigned isIPv4HostMonitored(uint32_t ip4, int32_t zone)
 {
@@ -180,12 +162,13 @@ void AppIdAddPayload(AppIdSession* session, AppId payload_id)
 void checkSandboxDetection(AppId appId)
 {
     AppInfoTableEntry* entry;
-    AppIdConfig* pConfig = pAppidActiveConfig;
 
-    if (pAppidActiveConfig->mod_config->instance_id && pConfig)
+    if (pAppidActiveConfig->mod_config->instance_id)
     {
-        entry = appInfoEntryGet(appId, pConfig);
+        entry = appInfoEntryGet(appId);
         if ( entry && ( entry->flags & APPINFO_FLAG_ACTIVE ) )
             fprintf(SF_DEBUG_FILE, "Detected AppId %d\n", entry->appId);
+        else if( appId != 0 )
+            fprintf(SF_DEBUG_FILE, "No Entry For AppId %d\n", appId);
     }
 }

@@ -80,13 +80,13 @@ static AppRegistryEntry appIdRegistry[] =
 static int rfb_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&rfb_validate, IpProtocol::TCP, (uint8_t*)RFB_BANNER,
-        sizeof(RFB_BANNER) - 1, 0, "rfb", init_api->pAppidConfig);
+        sizeof(RFB_BANNER) - 1, 0, "rfb");
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&rfb_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

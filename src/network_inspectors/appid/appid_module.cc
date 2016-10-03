@@ -92,8 +92,8 @@ static const Parameter s_params[] =
       "RNA configuration file" },
     { "memcap", Parameter::PT_INT, "1048576:3221225472", "268435456",
       "time period for collecting and logging AppId statistics" },
-    { "app_stats_filename", Parameter::PT_STRING, nullptr, nullptr,
-      "Filename for logging AppId statistics" },
+    { "log_stats", Parameter::PT_BOOL, nullptr, "false",
+      "enable logging of AppId statistics" },
     { "app_stats_period", Parameter::PT_INT, "0:", "300",
       "time period for collecting and logging AppId statistics" },
     { "app_stats_rollover_size", Parameter::PT_INT, "0:", "20971520",
@@ -151,8 +151,8 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
         config->conf_file = snort_strdup(v.get_string());
     else if ( v.is("memcap") )
         config->memcap = v.get_long();
-    else if ( v.is("app_stats_filename") )
-        config->app_stats_filename = snort_strdup(v.get_string());
+    else if ( v.is("log_stats") )
+        config->stats_logging_enabled = v.get_bool();
     else if ( v.is("app_stats_period") )
         config->app_stats_period = v.get_long();
     else if ( v.is("app_stats_rollover_size") )

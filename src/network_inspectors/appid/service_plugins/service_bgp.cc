@@ -132,14 +132,14 @@ static AppRegistryEntry appIdRegistry[] =
 
 static int bgp_init(const IniServiceAPI* const init_api)
 {
-    init_api->RegisterPattern(&bgp_validate, IpProtocol::TCP, BGP_PATTERN, sizeof(BGP_PATTERN), 0,
-        "bgp", init_api->pAppidConfig);
+    init_api->RegisterPattern(&bgp_validate, IpProtocol::TCP, BGP_PATTERN,
+            sizeof(BGP_PATTERN), 0, "bgp");
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&bgp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

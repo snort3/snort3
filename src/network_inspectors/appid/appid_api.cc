@@ -34,12 +34,12 @@ AppIdApi appid_api;
 
 const char* AppIdApi::get_application_name(int32_t app_id)
 {
-    return appGetAppName(app_id);
+    return get_app_name(app_id);
 }
 
 AppId AppIdApi::get_application_id(const char* appName)
 {
-    return appGetAppId(appName);
+    return get_appid_by_name(appName);
 }
 
 AppId AppIdApi::get_service_app_id(AppIdSession* session)

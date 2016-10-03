@@ -87,13 +87,13 @@ static AppRegistryEntry appIdRegistry[] =
 static int rsync_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&rsync_validate, IpProtocol::TCP, (uint8_t*)RSYNC_BANNER,
-        sizeof(RSYNC_BANNER)-1, 0, "rsync", init_api->pAppidConfig);
+        sizeof(RSYNC_BANNER)-1, 0, "rsync");
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&rsync_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

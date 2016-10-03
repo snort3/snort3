@@ -46,10 +46,10 @@ struct LengthKey
 
 #pragma pack()
 
-void lengthAppCacheInit(AppIdConfig*);
-void lengthAppCacheFini(AppIdConfig*);
-AppId lengthAppCacheFind(const LengthKey*, const AppIdConfig*);
-bool lengthAppCacheAdd(const LengthKey*, AppId, AppIdConfig*);
+void init_length_app_cache();
+void free_length_app_cache();
+AppId find_length_app_cache(const LengthKey*);
+bool add_length_app_cache(const LengthKey*, AppId);
 
 #endif
 

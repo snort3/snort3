@@ -120,45 +120,21 @@ struct Detector
     char* validatorBuffer;
     unsigned char digest[16];
 
-    AppIdConfig* pAppidActiveConfig;     ///< AppId context in which this detector should be used;
-                                          // used during packet processing
-    AppIdConfig* pAppidOldConfig;        ///< AppId context in which this detector should be
-                                          // cleaned; used at reload free and exit
-    AppIdConfig* pAppidNewConfig;        ///< AppId context in which this detector should be
-                                          // loaded; used at initialization and reload
+    AppIdConfig* appid_config;
 };
 
 int Detector_register(lua_State*);
 void Detector_fini(void* detector);
-void detectorRemoveAllPorts(Detector*, AppIdConfig*);
+void detectorRemoveAllPorts(Detector*);
 Detector* createDetector(lua_State*, const char* filename);
-CLIENT_APP_RETCODE validateAnyClientApp(
-    const uint8_t* data,
-    uint16_t size,
-    const int dir,
-    AppIdSession*,
-    Packet*,
-    Detector*,
-    const AppIdConfig*
-);
-
-enum httpPatternType
-{
-    HTTP_PAYLOAD    = 1,
-    HTTP_USER_AGENT = 2,
-    HTTP_URL        = 3
-};
-
+CLIENT_APP_RETCODE validateAnyClientApp(const uint8_t* data, uint16_t size, const int dir,
+    AppIdSession*, Packet*, Detector*);
 int Detector_addSSLCertPattern(lua_State*);
 int Detector_addDNSHostPattern(lua_State*);
-
 int Detector_addHttpPattern(lua_State*);
-
-void CleanHttpPatternLists(AppIdConfig*);
-void CleanClientPortPatternList(AppIdConfig*);
-void CleanServicePortPatternList(AppIdConfig*);
-
 int validateAnyService(ServiceValidationArgs*);
 int checkServiceElement(Detector*);
+int init_CHP_glossary();
+void free_CHP_glossary();
 
 #endif

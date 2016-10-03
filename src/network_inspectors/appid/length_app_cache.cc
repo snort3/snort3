@@ -29,35 +29,31 @@
 
 #define HASH_NUM_ROWS (1024)
 
-void lengthAppCacheInit(AppIdConfig* pConfig)
+static THREAD_LOCAL SFXHASH* lengthCache = nullptr;
+
+void init_length_app_cache()
 {
-    if (!(pConfig->lengthCache = sfxhash_new(HASH_NUM_ROWS,
-            sizeof(LengthKey),
-            sizeof(AppId),
-            0,
-            0,
-            nullptr,
-            nullptr,
-            0)))
+    if (!(lengthCache = sfxhash_new(HASH_NUM_ROWS, sizeof(LengthKey), sizeof(AppId),
+            0, 0, nullptr, nullptr, 0)))
     {
         ErrorMessage("lengthAppCache: Failed to allocate length cache!");
     }
 }
 
-void lengthAppCacheFini(AppIdConfig* pConfig)
+void free_length_app_cache()
 {
-    if (pConfig->lengthCache)
+    if (lengthCache)
     {
-        sfxhash_delete(pConfig->lengthCache);
-        pConfig->lengthCache = nullptr;
+        sfxhash_delete(lengthCache);
+        lengthCache = nullptr;
     }
 }
 
-AppId lengthAppCacheFind(const LengthKey* key, const AppIdConfig* pConfig)
+AppId find_length_app_cache(const LengthKey* key)
 {
     AppId* val;
 
-    val = (AppId*)sfxhash_find(pConfig->lengthCache, (void*)key);
+    val = (AppId*)sfxhash_find(lengthCache, (void*)key);
     if (val == nullptr)
     {
         return APP_ID_NONE;    /* no match */
@@ -68,9 +64,9 @@ AppId lengthAppCacheFind(const LengthKey* key, const AppIdConfig* pConfig)
     }
 }
 
-bool lengthAppCacheAdd(const LengthKey* key, AppId val, AppIdConfig* pConfig)
+bool add_length_app_cache(const LengthKey* key, AppId val)
 {
-    if (sfxhash_add(pConfig->lengthCache, (void*)key, (void*)&val))
+    if (sfxhash_add(lengthCache, (void*)key, (void*)&val))
     {
         return false;
     }

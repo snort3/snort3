@@ -96,14 +96,14 @@ static int MDNS_init(const IniServiceAPI* const init_api);
 static int ReferencePointer(const char* start_ptr,const char** resp_endptr,   int* start_index,
     uint16_t data_size, uint8_t* user_name_len, unsigned offset, const AppIdConfig* pConfig);
 static int MDNS_validate(ServiceValidationArgs* args);
-static int mdnsMatcherCreate(AppIdConfig* pConfig);
-static void mdnsMatcherDestroy(AppIdConfig* pConfig);
+static int mdnsMatcherCreate();
+static void mdnsMatcherDestroy();
 static unsigned mdnsMatchListCreate(const char* data, uint16_t dataSize, const
     AppIdConfig* pConfig);
 static void mdnsMatchListFind(const char* dataPtr, uint16_t index, const char** resp_endptr,
     int* pattern_length, const AppIdConfig* pConfig);
-static void mdnsMatchListDestroy(const AppIdConfig* pConfig);
-static void MDNS_clean(const CleanServiceAPI* const clean_api);
+static void mdnsMatchListDestroy();
+static void MDNS_clean();
 
 static RNAServiceElement svc_element =
 {
@@ -147,10 +147,10 @@ static int MDNS_init(const IniServiceAPI* const init_api)
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&MDNS_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
-    mdnsMatcherCreate(init_api->pAppidConfig);
+    mdnsMatcherCreate();
     return 0;
 }
 
@@ -414,7 +414,7 @@ static int MDNS_validate(ServiceValidationArgs* args)
             if (pAppidActiveConfig->mod_config->mdns_user_reporting)
             {
                 MDNSUserAnalyser(flowp, pkt, size, args->pConfig);
-                mdnsMatchListDestroy(args->pConfig);
+                mdnsMatchListDestroy();
                 goto success;
             }
             goto success;
@@ -437,7 +437,7 @@ fail:
     return SERVICE_NOMATCH;
 }
 
-static MatchedPatterns* patternFreeList;
+static THREAD_LOCAL MatchedPatterns* patternFreeList;
 
 static MdnsPattern patterns[] =
 {
@@ -447,7 +447,7 @@ static MdnsPattern patterns[] =
     { (uint8_t*)PATTERN_STR_ARPA_2, sizeof(PATTERN_STR_ARPA_2) },
 };
 
-static int mdnsMatcherCreate(AppIdConfig* pConfig)
+static int mdnsMatcherCreate()
 {
     MdnsConfig* pMdnsConfig = (MdnsConfig*)snort_calloc(sizeof(MdnsConfig));
 
@@ -462,19 +462,20 @@ static int mdnsMatcherCreate(AppIdConfig* pConfig)
             (char*)patterns[i].pattern, patterns[i].length, &patterns[i]);
 
     pMdnsConfig->mdnsMatcher->prep();
-    pConfig->add_generic_config_element(svc_element.name, pMdnsConfig);
+    pAppidActiveConfig->add_generic_config_element(svc_element.name, pMdnsConfig);
     return 1;
 }
 
-static void mdnsMatcherDestroy(AppIdConfig* pConfig)
+static void mdnsMatcherDestroy()
 {
-    MdnsConfig* pMdnsConfig = (MdnsConfig*)pConfig->find_generic_config_element(svc_element.name);
+    MdnsConfig* pMdnsConfig =
+            (MdnsConfig*)pAppidActiveConfig->find_generic_config_element(svc_element.name);
     MatchedPatterns* node;
     if (pMdnsConfig->mdnsMatcher)
         delete pMdnsConfig->mdnsMatcher;
     pMdnsConfig->mdnsMatcher = nullptr;
 
-    mdnsMatchListDestroy(pConfig);
+    mdnsMatchListDestroy();
 
     while ((node = patternFreeList))
     {
@@ -482,7 +483,7 @@ static void mdnsMatcherDestroy(AppIdConfig* pConfig)
         snort_free(node);
     }
     snort_free(pMdnsConfig);
-    pConfig->remove_generic_config_element(svc_element.name);
+    pAppidActiveConfig->remove_generic_config_element(svc_element.name);
 }
 
 static int mdns_pattern_match(void* id, void*, int index, void* data, void*)
@@ -531,7 +532,7 @@ static unsigned mdnsMatchListCreate(const char* data, uint16_t dataSize, const
         svc_element.name);
 
     if (pMdnsConfig->patternList)
-        mdnsMatchListDestroy(pConfig);
+        mdnsMatchListDestroy();
 
     pMdnsConfig->mdnsMatcher->find_all(
         (char*)data, dataSize, mdns_pattern_match, false, (void*)&pMdnsConfig->patternList);
@@ -568,12 +569,12 @@ static void mdnsMatchListFind(const char* dataPtr, uint16_t index, const char** 
     *pattern_length = 0;
 }
 
-static void mdnsMatchListDestroy(const AppIdConfig* pConfig)
+static void mdnsMatchListDestroy()
 {
     MatchedPatterns* element;
 
-    MdnsConfig* pMdnsConfig = (MdnsConfig*)((AppIdConfig*)pConfig)->find_generic_config_element(
-        svc_element.name);
+    MdnsConfig* pMdnsConfig =
+            (MdnsConfig*)pAppidActiveConfig->find_generic_config_element(svc_element.name);
     while (pMdnsConfig->patternList)
     {
         element = pMdnsConfig->patternList;
@@ -584,8 +585,8 @@ static void mdnsMatchListDestroy(const AppIdConfig* pConfig)
     }
 }
 
-static void MDNS_clean(const CleanServiceAPI* const clean_api)
+static void MDNS_clean()
 {
-    mdnsMatcherDestroy(clean_api->pAppidConfig);
+    mdnsMatcherDestroy();
 }
 

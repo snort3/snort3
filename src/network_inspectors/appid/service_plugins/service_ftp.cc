@@ -141,19 +141,19 @@ static int ftp_init(const IniServiceAPI* const init_api)
     ftp_data_app_id = AddProtocolReference("ftp-data");
 
     init_api->RegisterPattern(&ftp_validate, IpProtocol::TCP, (uint8_t*)FTP_PATTERN1,
-        sizeof(FTP_PATTERN1)-1, 0, "ftp", init_api->pAppidConfig);
+        sizeof(FTP_PATTERN1)-1, 0, "ftp");
     init_api->RegisterPattern(&ftp_validate, IpProtocol::TCP, (uint8_t*)FTP_PATTERN2,
-        sizeof(FTP_PATTERN2)-1, 0, "ftp", init_api->pAppidConfig);
+        sizeof(FTP_PATTERN2)-1, 0, "ftp");
     init_api->RegisterPattern(&ftp_validate, IpProtocol::TCP, (uint8_t*)FTP_PATTERN3,
-        sizeof(FTP_PATTERN3)-1, -1, "ftp", init_api->pAppidConfig);
+        sizeof(FTP_PATTERN3)-1, -1, "ftp");
     init_api->RegisterPattern(&ftp_validate, IpProtocol::TCP, (uint8_t*)FTP_PATTERN4,
-        sizeof(FTP_PATTERN4)-1, -1, "ftp", init_api->pAppidConfig);
+        sizeof(FTP_PATTERN4)-1, -1, "ftp");
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&ftp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

@@ -42,21 +42,16 @@ struct DetectorAppSipPattern
     DetectorAppSipPattern* next;
 };
 
-struct DetectorSipConfig
-{
-    void* sipUaMatcher;
-    DetectorAppSipPattern* appSipUaList;
-    void* sipServerMatcher;
-    DetectorAppSipPattern* appSipServerList;
-};
-
 extern struct RNAClientAppModule sip_udp_client_mod;
 extern struct RNAClientAppModule sip_tcp_client_mod;
 extern struct RNAServiceValidationModule sip_service_mod;
 
 // FIXIT-M: ServiceEventType enum needs to become real when SIP is supported
 enum ServiceEventType {};
-void SipSessionSnortCallback(void* ssnptr, ServiceEventType, void* eventData);
 
+void SipSessionSnortCallback(void* ssnptr, ServiceEventType, void* eventData);
+int sipUaPatternAdd( AppId, const char* clientVersion, const char* uaPattern);
+int sipServerPatternAdd(AppId, const char* clientVersion, const char* uaPattern);
+int finalize_sip_ua();
 #endif
 

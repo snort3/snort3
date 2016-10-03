@@ -42,8 +42,6 @@
 struct NetworkSet;
 struct AppInfoTableEntry;
 struct DynamicArray;
-struct ServicePortPattern;
-struct ClientPortPattern;
 struct SFGHASH;
 struct SFXHASH;
 
@@ -71,7 +69,6 @@ struct AppidGenericConfigItem
     void* pData;    ///< Module configuration data
 };
 
-// FIXIT - these values come from struct AppidStaticConfig...that should go away when this all works
 class AppIdModuleConfig
 {
 public:
@@ -79,7 +76,7 @@ public:
     ~AppIdModuleConfig();
 
     const char* conf_file = nullptr;
-    const char* app_stats_filename = nullptr;
+    bool stats_logging_enabled = false;
     unsigned long app_stats_period = 0;
     unsigned long app_stats_rollover_size = 0;
     unsigned long app_stats_rollover_time = 0;
@@ -122,7 +119,7 @@ public:
     ~AppIdConfig() { cleanup(); }
 
     bool init_appid();
-    int cleanup(void);
+    void cleanup();
     void show();
 
     void set_safe_search_enforcement(int enabled);
@@ -146,36 +143,9 @@ public:
     SF_LIST* udp_port_exclusions_src[APP_ID_PORT_ARRAY_SIZE] = { nullptr };
     SF_LIST* tcp_port_exclusions_dst[APP_ID_PORT_ARRAY_SIZE] = { nullptr };
     SF_LIST* udp_port_exclusions_dst[APP_ID_PORT_ARRAY_SIZE] = { nullptr };
-    SFXHASH* CHP_glossary = nullptr;      // keep track of http multipatterns here
-    SFXHASH* AF_indicators = nullptr;     // App Forecasting list of "indicator apps"
-    SFXHASH* AF_actives = nullptr;        // App Forecasting list of hosts to watch for forecast apps
-    AppInfoTableEntry* AppInfoList = nullptr;
-    AppInfoTableEntry* AppInfoTable[SF_APPID_MAX] = { nullptr };
-    AppInfoTableEntry* AppInfoTableByService[SF_APPID_MAX] = { nullptr };
-    AppInfoTableEntry* AppInfoTableByClient[SF_APPID_MAX] = { nullptr };
-    AppInfoTableEntry* AppInfoTableByPayload[SF_APPID_MAX] = { nullptr };
-    DynamicArray* AppInfoTableDyn  = nullptr;
-    SFGHASH* AppNameHash = nullptr;
-    SFXHASH* hostPortCache = nullptr;
-    SFXHASH* lengthCache = nullptr;
-    DetectorHttpConfig detectorHttpConfig;  // HTTP detector configuration
-    DetectorSipConfig detectorSipConfig;    // SIP detector configuration
-    ServiceConfig serviceConfig;            // Common configuration for all services
-    ServiceSslConfig serviceSslConfig;      // SSL service configuration
-    ServiceDnsConfig serviceDnsConfig;      // DNS service configuration
-    ClientAppConfig clientAppConfig;        // Common configuration for all client applications
-    HttpPatternLists httpPatternLists;
-    ServicePortPattern* servicePortPattern = nullptr;
-    ClientPortPattern* clientPortPattern = nullptr;
-    SF_LIST genericConfigList;                      ///< List of AppidGenericConfigItem structures
     AppIdModuleConfig* mod_config;
 
 private:
-    int init_AF_indicators();
-    int init_AF_actives();
-    int init_CHP_glossary();
-    void load_modules(uint32_t instance_id);
-    void finalize_pattern_modules();
     void read_port_detectors(const char* files);
     void configure_analysis_networks(char* toklist[], uint32_t flag);
     int add_port_exclusion(SF_LIST* port_exclusions[], const ip::snort_in6_addr* ip,
@@ -183,8 +153,7 @@ private:
     void process_port_exclusion(char* toklist[]);
     void process_config_directive(char* toklist[], int /* reload */);
     int load_analysis_config(const char* config_file, int reload, int instance_id);
-
-    RnaFwConfigState config_state = RNA_FW_CONFIG_STATE_UNINIT;
+    void display_port_config();
 };
 
 // FIXIT - this global needs to go asap... just here now to compile while doing some major config refactoring

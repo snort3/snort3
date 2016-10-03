@@ -226,7 +226,7 @@ public:
 private:
     bool do_client_discovery(int, Packet*);
     bool do_service_discovery(IpProtocol, int, AppId, AppId,  Packet*);
-    int exec_client_detectors(Packet*, int, AppIdConfig*);
+    int exec_client_detectors(Packet*, int);
 
     static uint64_t is_session_monitored(const Packet*, int, AppIdSession*);
     static bool is_packet_ignored(Packet* p);
@@ -236,8 +236,8 @@ private:
     bool is_ssl_decryption_enabled();
     void check_app_detection_restart();
     void update_encrypted_app_id(AppId serviceAppId);
-    void sync_with_snort_id(AppId, Packet*, AppIdConfig*);
-    void examine_ssl_metadata(Packet*, AppIdConfig*);
+    void sync_with_snort_id(AppId, Packet*);
+    void examine_ssl_metadata(Packet*);
     void examine_rtmp_metadata();
     void set_client_app_id_data(AppId clientAppId, char** version);
     void set_service_appid_data( AppId, char*, char**);
@@ -254,10 +254,10 @@ private:
     // FIXIT-H: when http detection is made functional we need to look at these methods and determine if they are
     // needed and what changes are required for snort3
     void pickHttpXffAddress(Packet*, ThirdPartyAppIDAttributeData*);
-    int initial_CHP_sweep(char**, MatchedCHPAction**, const DetectorHttpConfig*);
+    int initial_CHP_sweep(char**, MatchedCHPAction**);
     void clearMiscHttpFlags();
-    int processHTTPPacket(Packet*, int, HttpParsedHeaders* const, const AppIdConfig*);
-    void processCHP(char**, Packet*, const AppIdConfig*);
+    int processHTTPPacket(Packet*, int, HttpParsedHeaders* const);
+    void processCHP(char**, Packet*);
 #endif
 
 public:
@@ -357,6 +357,8 @@ public:
 
     bool is_http2 = false;
     SEARCH_SUPPORT_TYPE search_support_type = SEARCH_SUPPORT_TYPE_UNKNOWN;
+
+    bool in_expected_cache = false;
 
     static unsigned flow_id;
     static void init() { flow_id = FlowData::get_flow_id(); }

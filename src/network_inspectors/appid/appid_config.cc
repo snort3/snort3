@@ -22,38 +22,19 @@
 #include <glob.h>
 
 #include "appid_config.h"
-#include "appid_stats.h"
 #include "app_info_table.h"
-#include "application_ids.h"
-#include "app_forecast.h"
-#include "fw_appid.h"
-#include "host_port_app_cache.h"
-#include "length_app_cache.h"
-#include "thirdparty_appid_utils.h"
-#include "client_plugins/client_app_base.h"
-#include "service_plugins/service_base.h"
-#include "service_plugins/service_ssl.h"
-#include "detector_plugins/detector_base.h"
-#include "detector_plugins/detector_http.h"
-#include "detector_plugins/detector_dns.h"
-
 #include "appid_utils/network_set.h"
 #include "appid_utils/ip_funcs.h"
 #include "appid_utils/common_util.h"
 #include "appid_utils/sfutil.h"
-
-#include "lua_detector_api.h"
-#include "lua_detector_module.h"
-
 #include "main/snort_debug.h"
 #include "log/messages.h"
 #include "utils/util.h"
+#include "thirdparty_appid_utils.h"
+#include "service_plugins/service_base.h"
 
 #define ODP_PORT_DETECTORS "odp/port/*"
 #define CUSTOM_PORT_DETECTORS "custom/port/*"
-
-/*static const char * const MODULE_NAME = "AppMatcher"; */
-#define MAX_DISPLAY_SIZE   65536
 
 // FIXIT - M this global needs to go asap... just here now to compile while doing some major config
 // refactoring
@@ -68,10 +49,11 @@ struct PortList
     uint16_t port;
 };
 
+static THREAD_LOCAL SF_LIST genericConfigList;                      ///< List of AppidGenericConfigItem structures
+
 AppIdModuleConfig::~AppIdModuleConfig()
 {
     snort_free((void*)conf_file);
-    snort_free((void*)app_stats_filename);
     snort_free((void*)app_detector_dir);
     snort_free((void*)thirdparty_appid_dir);
     pAppidActiveConfig = nullptr;
@@ -243,9 +225,9 @@ void AppIdConfig::read_port_detectors(const char* files)
                     udp_port_only[tmp_port->port] = appId;
 
                 snort_free(tmp_port);
-                appInfoSetActive(appId, true);
+                set_app_info_active(appId);
             }
-            appInfoSetActive(appId, true);
+            set_app_info_active(appId);
         }
         else
             ErrorMessage("Missing parameter(s) in port service '%s'\n",globs.gl_pathv[n]);
@@ -678,91 +660,6 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
     return 0;
 }
 
-void AppIdConfig::load_modules(uint32_t instance_id)
-{
-    if (LoadServiceModules(nullptr, instance_id, this))
-        exit(-1);
-
-    if (LoadClientAppModules(this))
-        exit(-1);
-
-    if (LoadDetectorModules(nullptr))
-        exit(-1);
-}
-
-void AppIdConfig::finalize_pattern_modules()
-{
-    unsigned int i;
-    ServicePatternData* curr;
-    ServicePatternData* lists[] = { serviceConfig.tcp_pattern_data,
-                                    serviceConfig.udp_pattern_data };
-    for (i = 0; i < (sizeof(lists) / sizeof(*lists)); i++)
-    {
-        curr = lists[i];
-        while (curr != nullptr)
-        {
-            if (curr->svc != nullptr)
-            {
-                bool isActive = true;
-                if (curr->svc->userdata && !curr->svc->userdata->isActive)
-                {
-                    /* C detectors don't have userdata here, but they're always
-                     * active.  So, this check is really just for Lua
-                     * detectors. */
-                    isActive = false;
-                }
-                if (isActive)
-                {
-                    curr->svc->current_ref_count = curr->svc->ref_count;
-                }
-            }
-            curr = curr->next;
-        }
-    }
-}
-
-int AppIdConfig::init_AF_indicators()
-{
-    if (!(AF_indicators = sfxhash_new(1024, sizeof(AppId), sizeof(AFElement), 0,
-            0, nullptr, nullptr, 0)))
-    {
-        ErrorMessage("Config: failed to allocate memory for an sfxhash.");
-        return 0;
-    }
-    else
-        return 1;
-}
-
-int AppIdConfig::init_AF_actives()
-{
-    if (!(AF_actives = sfxhash_new(1024, sizeof(AFActKey), sizeof(AFActVal),
-            (sizeof(SFXHASH_NODE)*2048), 1, nullptr,  nullptr, 1)))
-    {
-        ErrorMessage("Config: failed to allocate memory for an sfxhash.");
-        return 0;
-    }
-    else
-        return 1;
-}
-
-static int genericDataFree(void* /* key */, void* data)
-{
-    if (data)
-        snort_free(data);
-    return 0;
-}
-
-int AppIdConfig::init_CHP_glossary()
-{
-    if (!(CHP_glossary = sfxhash_new(1024, sizeof(AppId), 0, 0, 0, nullptr, &genericDataFree, 0)))
-    {
-        ErrorMessage("Config: failed to allocate memory for an sfxhash.");
-        return 0;
-    }
-    else
-        return 1;
-}
-
 void AppIdConfig::set_safe_search_enforcement(int enabled)
 {
     DEBUG_WRAP(DebugFormat(DEBUG_APPID, "    Safe Search Enforcement enabled = %d.\n",enabled); );
@@ -771,73 +668,34 @@ void AppIdConfig::set_safe_search_enforcement(int enabled)
 
 bool AppIdConfig::init_appid( )
 {
-    map_app_names_to_snort_ids();
+	map_app_names_to_snort_ids();
 
-    if (config_state == RNA_FW_CONFIG_STATE_UNINIT)
-    {
-        appIdPolicyId = 53;
-        // FIXIT - active config must be per Inspector instance...not this global...
-        pAppidActiveConfig = this;
-        config_state = RNA_FW_CONFIG_STATE_PENDING;
+	appIdPolicyId = 53;
+	// FIXIT - active config must be per Inspector instance...not this global...
+	pAppidActiveConfig = this;
+	InitNetmasks(app_id_netmasks);
+	init_appid_info_table(mod_config->app_detector_dir);
+	sflist_init(&pAppidActiveConfig->client_app_args);
+	load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);
+	read_port_detectors(ODP_PORT_DETECTORS);
+	read_port_detectors(CUSTOM_PORT_DETECTORS);
 
-        InitNetmasks(app_id_netmasks);
-        sflist_init(&pAppidActiveConfig->client_app_args);
-        load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);
-        if (!init_CHP_glossary( ))
-            return false;
-        if (!init_AF_indicators( ))
-            return false;
-        if (!init_AF_actives( ))
-            return false;
+	ThirdPartyAppIDInit(mod_config);
 
-        LuaDetectorModuleManager::luaModuleInit();
-        appInfoTableInit(mod_config->app_detector_dir, pAppidActiveConfig);
-        read_port_detectors(ODP_PORT_DETECTORS);
-        read_port_detectors(CUSTOM_PORT_DETECTORS);
-        load_modules(mod_config->instance_id);
-        hostPortAppCacheInit(pAppidActiveConfig);
-        lengthAppCacheInit(pAppidActiveConfig);
+	show();
 
-        LuaDetectorModuleManager::LoadLuaModules(pAppidActiveConfig);
-        ClientAppInit(pAppidActiveConfig);
-        ServiceInit(pAppidActiveConfig);
-        LuaDetectorModuleManager::FinalizeLuaModules(pAppidActiveConfig);
-        finalize_pattern_modules();
-        http_detector_finalize(pAppidActiveConfig);
-#ifdef REMOVED_WHILE_NOT_IN_USE
-        sipUaFinalize(&pAppidActiveConfig->detectorSipConfig);
-        ssl_detector_process_patterns(&pAppidActiveConfig->serviceSslConfig);
-#endif
-        dns_host_detector_process_patterns(&pAppidActiveConfig->serviceDnsConfig);
-        portPatternFinalize(pAppidActiveConfig);
-        ClientAppFinalize(pAppidActiveConfig);
-        ServiceFinalize(pAppidActiveConfig);
-        appIdStatsInit(mod_config);
-        ThirdPartyAppIDInit(mod_config);
+	if ( mod_config->dump_ports )
+	{
+		dumpPorts(stdout);
+		display_port_config();
+		dump_app_info_table();
+		exit(0);
+	}
 
-        show();
-
-        // FIXIT - do we still need to support this?
-        if (pAppidActiveConfig->mod_config->dump_ports)
-        {
-            dumpPorts(stdout, pAppidActiveConfig);
-            appInfoTableDump(pAppidActiveConfig);
-            exit(0);
-        }
-
-#ifdef DEBUG_APP_COMMON
-        DisplayPortConfig(pAppidActiveConfig);
-#endif
-        if (AppIdServiceStateInit(mod_config->memcap))
-            exit(-1);
-        config_state = RNA_FW_CONFIG_STATE_INIT;
-        return true;
-    }
-
-    return false;
+	return true;
 }
 
-static void ConfigItemFree(ConfigItem* ci)
+static void free_config_items(ConfigItem* ci)
 {
     if (ci)
     {
@@ -849,96 +707,44 @@ static void ConfigItemFree(ConfigItem* ci)
     }
 }
 
-static void cleanup_config(AppIdConfig* pConfig)
+void free_port_exclusion_list( SF_LIST** pe_list )
 {
-    NetworkSet* net_list;          ///< list of network sets
-    unsigned int i;
-    while ((net_list = pConfig->net_list_list))
+    for ( unsigned i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++ )
     {
-        pConfig->net_list_list = net_list->next;
+        if ( pe_list[i] != nullptr )
+        {
+            sflist_free_all(pe_list[i], &snort_free);
+            pe_list[i] = nullptr;
+        }
+    }
+}
+
+void AppIdConfig::cleanup()
+{
+
+    if (thirdparty_appid_module != nullptr)
+        thirdparty_appid_module->print_stats();
+    ThirdPartyAppIDFini();
+
+    cleanup_appid_info_table();
+
+    NetworkSet* net_list;          ///< list of network sets
+    while ((net_list = net_list_list))
+    {
+        net_list_list = net_list->next;
         NetworkSet_Destroy(net_list);
     }
 
-    /* clean up any port exclusions that have been allocated */
-    for ( i=0; i<APP_ID_PORT_ARRAY_SIZE; i++ )
-    {
-        if ( pConfig->tcp_port_exclusions_src[i] != nullptr )
-        {
-            sflist_free_all(pConfig->tcp_port_exclusions_src[i], &snort_free);
-            pConfig->tcp_port_exclusions_src[i] = nullptr;
-        }
-        if ( pConfig->tcp_port_exclusions_dst[i] != nullptr )
-        {
-            sflist_free_all(pConfig->tcp_port_exclusions_dst[i], &snort_free);
-            pConfig->tcp_port_exclusions_dst[i] = nullptr;
-        }
-        if ( pConfig->udp_port_exclusions_src[i] != nullptr )
-        {
-            sflist_free_all(pConfig->udp_port_exclusions_src[i], &snort_free);
-            pConfig->udp_port_exclusions_src[i] = nullptr;
-        }
-        if ( pConfig->udp_port_exclusions_dst[i] != nullptr )
-        {
-            sflist_free_all(pConfig->udp_port_exclusions_dst[i], &snort_free);
-            pConfig->udp_port_exclusions_dst[i] = nullptr;
-        }
-    }
+    free_port_exclusion_list(tcp_port_exclusions_src);
+    free_port_exclusion_list(tcp_port_exclusions_dst);
+    free_port_exclusion_list(udp_port_exclusions_src);
+    free_port_exclusion_list(udp_port_exclusions_dst);
 
-    pConfig->net_list = nullptr;
-
-    if (pConfig->CHP_glossary)
-    {
-        sfxhash_delete(pConfig->CHP_glossary);
-        pConfig->CHP_glossary = nullptr;
-    }
-
-    if (pConfig->AF_indicators)
-    {
-        sfxhash_delete(pConfig->AF_indicators);
-        pConfig->AF_indicators = nullptr;
-    }
-
-    if (pConfig->AF_actives)
-    {
-        sfxhash_delete(pConfig->AF_actives);
-        pConfig->AF_actives = nullptr;
-    }
-
-    memset(pConfig->net_list_by_zone, 0, sizeof(pConfig->net_list_by_zone));
-
-    sflist_static_free_all(&pConfig->client_app_args, (void (*)(void*))ConfigItemFree);
+    memset(net_list_by_zone, 0, sizeof(net_list_by_zone));
+    sflist_static_free_all(&client_app_args, (void (*)(void*))free_config_items);
 }
 
-int AppIdConfig::cleanup(void)
-{
-    if (config_state == RNA_FW_CONFIG_STATE_INIT)
-    {
-        config_state = RNA_FW_CONFIG_STATE_PENDING;
-        if (thirdparty_appid_module != nullptr)
-            thirdparty_appid_module->print_stats();
-        ThirdPartyAppIDFini();
-
-        cleanup_config(pAppidActiveConfig);
-        CleanupServices(pAppidActiveConfig);
-        CleanupClientApp(pAppidActiveConfig);
-        LuaDetectorModuleManager::luaModuleFini();
-        hostPortAppCacheFini(pAppidActiveConfig);
-        lengthAppCacheFini(pAppidActiveConfig);
-        AppIdServiceStateCleanup();
-        appIdStatsFini();
-        fwAppIdFini(pAppidActiveConfig);
-        http_detector_clean(&pAppidActiveConfig->detectorHttpConfig);
-#ifdef REMOVED_WHILE_NOT_IN_USE
-        service_ssl_clean(&pAppidActiveConfig->serviceSslConfig);
-#endif
-        service_dns_host_clean(&pAppidActiveConfig->serviceDnsConfig);
-        config_state = RNA_FW_CONFIG_STATE_UNINIT;
-        return 0;
-    }
-    return -1;
-}
-
-static void DisplayPortExclusionList(SF_LIST* pe_list, uint16_t port)
+static void display_port_exclusion_list(SF_LIST* pe_list, uint16_t port)
 {
     const char* p;
     const char* p2;
@@ -1035,23 +841,22 @@ void AppIdConfig::show()
 
     LogMessage("    Excluded TCP Ports for Src:\n");
     for (i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++)
-        DisplayPortExclusionList(tcp_port_exclusions_src[i], i);
+        display_port_exclusion_list(tcp_port_exclusions_src[i], i);
 
     LogMessage("    Excluded TCP Ports for Dst:\n");
     for (i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++)
-        DisplayPortExclusionList(tcp_port_exclusions_dst[i], i);
+        display_port_exclusion_list(tcp_port_exclusions_dst[i], i);
 
     LogMessage("    Excluded UDP Ports Src:\n");
     for (i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++)
-        DisplayPortExclusionList(udp_port_exclusions_src[i], i);
+        display_port_exclusion_list(udp_port_exclusions_src[i], i);
 
     LogMessage("    Excluded UDP Ports Dst:\n");
     for (i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++)
-        DisplayPortExclusionList(udp_port_exclusions_dst[i], i);
+        display_port_exclusion_list(udp_port_exclusions_dst[i], i);
 }
 
-#ifdef DEBUG_APP_COMMON
-static void DisplayPortConfig(AppIdConfig* aic)
+void AppIdConfig::display_port_config()
 {
     unsigned i;
     int first;
@@ -1084,6 +889,4 @@ static void DisplayPortConfig(AppIdConfig* aic)
         }
     }
 }
-
-#endif
 

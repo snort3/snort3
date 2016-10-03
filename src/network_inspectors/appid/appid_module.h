@@ -28,10 +28,6 @@
 
 extern THREAD_LOCAL ProfileStats appidPerfStats;
 
-//-------------------------------------------------------------------------
-// stream module
-//-------------------------------------------------------------------------
-
 #define MOD_NAME "appid"
 #define MOD_HELP "application and service identification"
 

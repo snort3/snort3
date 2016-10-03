@@ -104,26 +104,26 @@ static AppRegistryEntry appIdRegistry[] =
 static int direct_connect_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN1,
-        sizeof(PATTERN1)-1,  0, "direct_connect", init_api->pAppidConfig);
+        sizeof(PATTERN1)-1,  0, "direct_connect");
     init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN2,
-        sizeof(PATTERN2)-1,  0, "direct_connect", init_api->pAppidConfig);
+        sizeof(PATTERN2)-1,  0, "direct_connect");
     init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN3,
-        sizeof(PATTERN3)-1,  0, "direct_connect", init_api->pAppidConfig);
+        sizeof(PATTERN3)-1,  0, "direct_connect");
     init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN4,
-        sizeof(PATTERN4)-1,  0, "direct_connect", init_api->pAppidConfig);
+        sizeof(PATTERN4)-1,  0, "direct_connect");
     init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN5,
-        sizeof(PATTERN5)-1,  0, "direct_connect", init_api->pAppidConfig);
+        sizeof(PATTERN5)-1,  0, "direct_connect");
     init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN6,
-        sizeof(PATTERN6)-1,  0, "direct_connect", init_api->pAppidConfig);
+        sizeof(PATTERN6)-1,  0, "direct_connect");
     init_api->RegisterPattern(&direct_connect_validate, IpProtocol::UDP, (uint8_t*)PATTERN7,
-        sizeof(PATTERN7)-1,  0, "direct_connect", init_api->pAppidConfig);
+        sizeof(PATTERN7)-1,  0, "direct_connect");
 
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&direct_connect_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

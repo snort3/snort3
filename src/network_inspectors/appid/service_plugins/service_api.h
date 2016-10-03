@@ -69,20 +69,19 @@ struct CleanServiceAPI
 
 struct IniServiceAPI;
 using RNAServiceValidationInitFCN = int(*)(const IniServiceAPI* const);
-using RNAServiceValidationCleanFCN = void(*)(const CleanServiceAPI* const);
+using RNAServiceValidationCleanFCN = void(*)();
 
 struct RNAServiceValidationPort;
 struct RNAServiceValidationModule;
 struct IniServiceAPI
 {
     void (* RegisterPattern)( RNAServiceValidationFCN, IpProtocol proto, const uint8_t* pattern,
-        unsigned size, int position, const char* name, AppIdConfig*);
-    int (* AddPort)( const RNAServiceValidationPort*, RNAServiceValidationModule*, AppIdConfig*);
-    void (* RemovePorts)(RNAServiceValidationFCN, AppIdConfig*);
+        unsigned size, int position, const char* name);
+    int (* AddPort)( const RNAServiceValidationPort*, RNAServiceValidationModule*);
+    void (* RemovePorts)(RNAServiceValidationFCN);
     void (* RegisterPatternUser)(RNAServiceValidationFCN, IpProtocol proto,
-            const uint8_t* pattern, unsigned size, int position, const char* name, AppIdConfig*);
-    void (* RegisterAppId)( RNAServiceValidationFCN, AppId, uint32_t additionalInfo,
-            AppIdConfig*);
+            const uint8_t* pattern, unsigned size, int position, const char* name);
+    void (* RegisterAppId)( RNAServiceValidationFCN, AppId, uint32_t additionalInfo);
     int debug;
     uint32_t instance_id;
     AppIdConfig* pAppidConfig;  ///< AppId context for which this API should be used

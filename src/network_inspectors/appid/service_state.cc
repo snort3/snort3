@@ -28,8 +28,8 @@
 
 /*#define DEBUG_SERVICE_STATE 1*/
 
-static SFXHASH* serviceStateCache4;
-static SFXHASH* serviceStateCache6;
+static THREAD_LOCAL SFXHASH* serviceStateCache4;
+static THREAD_LOCAL SFXHASH* serviceStateCache6;
 
 #define SERVICE_STATE_CACHE_ROWS    65536
 
@@ -45,7 +45,7 @@ static int AppIdServiceStateFree(void*, void* data)
     return 0;
 }
 
-int AppIdServiceStateInit(unsigned long memcap)
+int init_service_state(unsigned long memcap)
 {
     serviceStateCache4 = sfxhash_new(SERVICE_STATE_CACHE_ROWS,
         sizeof(AppIdServiceStateKey4),
@@ -76,7 +76,7 @@ int AppIdServiceStateInit(unsigned long memcap)
     return 0;
 }
 
-void AppIdServiceStateCleanup(void)
+void clean_service_state(void)
 {
     if (serviceStateCache4)
     {

@@ -86,29 +86,29 @@ struct ClientSIPData
     char* from;
 };
 
-struct SIP_CLIENT_APP_CONFIG
+struct DetectorSipConfig
 {
-    int enabled;
+    bool enabled;
+    void* sip_ua_matcher;
+    DetectorAppSipPattern* sip_ua_list;
+    void* sip_server_matcher;
+    DetectorAppSipPattern* sip_server_list;
 };
 
-// FIXIT-L THREAD_LOCAL?
-static SIP_CLIENT_APP_CONFIG sip_config;
+static THREAD_LOCAL DetectorSipConfig detector_sip_config;
 
 static CLIENT_APP_RETCODE sip_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
-static void sip_clean(const CleanClientAppAPI* const clean_api);
+static void sip_clean();
 static CLIENT_APP_RETCODE sip_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, Detector* userData,
-    const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, Detector* userData);
 static CLIENT_APP_RETCODE sip_tcp_client_init(const IniClientAppAPI* const init_api,
     SF_LIST* config);
-static CLIENT_APP_RETCODE sip_tcp_client_validate(const uint8_t* data, uint16_t size, const int
-    dir,
-    AppIdSession* flowp, Packet* pkt, Detector* userData,
-    const AppIdConfig* pConfig);
-static int sipAppGeClientApp(void* patternMatcher, char* pattern, uint32_t patternLen,
+static CLIENT_APP_RETCODE sip_tcp_client_validate(const uint8_t* data, uint16_t size,
+        const int dir, AppIdSession* flowp, Packet* pkt, Detector* userData);
+static int get_sip_client_app(void* patternMatcher, char* pattern, uint32_t patternLen,
     AppId* ClientAppId, char** clientVersion);
-static void sipUaClean(DetectorSipConfig* pConfig);
-static void sipServerClean(DetectorSipConfig* pConfig);
+static void clean_sip_ua();
+static void clean_sip_server();
 
 RNAClientAppModule sip_udp_client_mod =
 {
@@ -219,14 +219,14 @@ static CLIENT_APP_RETCODE sip_client_init(const IniClientAppAPI* const init_api,
 
     /*configuration is read by sip_tcp_init(), which is called first */
 
-    if (sip_config.enabled)
+    if (detector_sip_config.enabled)
     {
         for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
         {
             DebugFormat(DEBUG_LOG,"registering patterns: %s: %d\n",
             		(const char*)patterns[i].pattern, patterns[i].index);
             init_api->RegisterPattern(&sip_client_validate, IpProtocol::UDP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index, init_api->pAppidConfig);
+                patterns[i].length, patterns[i].index);
         }
     }
 
@@ -235,39 +235,34 @@ static CLIENT_APP_RETCODE sip_client_init(const IniClientAppAPI* const init_api,
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdClientRegistry[j].appId);
         init_api->RegisterAppId(&sip_client_validate, appIdClientRegistry[j].appId,
-            appIdClientRegistry[j].additionalInfo, init_api->pAppidConfig);
+            appIdClientRegistry[j].additionalInfo);
     }
 
-    if (init_api->pAppidConfig->detectorSipConfig.sipUaMatcher)
-    {
-        sipUaClean(&init_api->pAppidConfig->detectorSipConfig);
-    }
-    if (init_api->pAppidConfig->detectorSipConfig.sipServerMatcher)
-    {
-        sipServerClean(&init_api->pAppidConfig->detectorSipConfig);
-    }
+    if (detector_sip_config.sip_ua_matcher)
+        clean_sip_ua();
+
+    if (detector_sip_config.sip_server_matcher)
+        clean_sip_server();
+
     return CLIENT_APP_SUCCESS;
 }
 
-static void sip_clean(const CleanClientAppAPI* const clean_api)
+static void sip_clean()
 {
-    if (clean_api->pAppidConfig->detectorSipConfig.sipUaMatcher)
-    {
-        sipUaClean(&clean_api->pAppidConfig->detectorSipConfig);
-    }
-    if (clean_api->pAppidConfig->detectorSipConfig.sipServerMatcher)
-    {
-        sipServerClean(&clean_api->pAppidConfig->detectorSipConfig);
-    }
+    if (detector_sip_config.sip_ua_matcher)
+        clean_sip_ua();
+
+    if (detector_sip_config.sip_server_matcher)
+        clean_sip_server();
 }
 
 static CLIENT_APP_RETCODE sip_tcp_client_init(const IniClientAppAPI* const init_api,
-    SF_LIST* config)
+        SF_LIST* config)
 {
     unsigned i;
     RNAClientAppModuleConfigItem* item;
 
-    sip_config.enabled = 1;
+    detector_sip_config.enabled = true;
 
     if (config)
     {
@@ -277,13 +272,11 @@ static CLIENT_APP_RETCODE sip_tcp_client_init(const IniClientAppAPI* const init_
         {
             DebugFormat(DEBUG_LOG,"Processing %s: %s\n",item->name, item->value);
             if (strcasecmp(item->name, "enabled") == 0)
-            {
-                sip_config.enabled = atoi(item->value);
-            }
+                detector_sip_config.enabled = atoi(item->value) ? true : false;
         }
     }
 
-    if (sip_config.enabled)
+    if (detector_sip_config.enabled)
     {
         for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
         {
@@ -291,7 +284,7 @@ static CLIENT_APP_RETCODE sip_tcp_client_init(const IniClientAppAPI* const init_
             		(const char*)patterns[i].pattern, patterns[i].index);
             init_api->RegisterPattern(&sip_tcp_client_validate, IpProtocol::TCP,
                 patterns[i].pattern, patterns[i].length,
-                patterns[i].index, init_api->pAppidConfig);
+                patterns[i].index);
         }
     }
 
@@ -300,7 +293,7 @@ static CLIENT_APP_RETCODE sip_tcp_client_init(const IniClientAppAPI* const init_
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdClientRegistry[j].appId);
         init_api->RegisterAppId(&sip_tcp_client_validate, appIdClientRegistry[j].appId,
-            appIdClientRegistry[j].additionalInfo, init_api->pAppidConfig);
+            appIdClientRegistry[j].additionalInfo);
     }
 
     return CLIENT_APP_SUCCESS;
@@ -317,7 +310,7 @@ static void clientDataFree(void* data)
 
 // static const char* const SIP_USRNAME_BEGIN_MARKER = "<sip:";
 static CLIENT_APP_RETCODE sip_client_validate(const uint8_t*, uint16_t, const int,
-    AppIdSession* flowp, Packet*, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet*, struct Detector*)
 {
     ClientSIPData* fd;
 
@@ -335,15 +328,12 @@ static CLIENT_APP_RETCODE sip_client_validate(const uint8_t*, uint16_t, const in
     return CLIENT_APP_INPROCESS;
 }
 
-static CLIENT_APP_RETCODE sip_tcp_client_validate(const uint8_t* data, uint16_t size, const int
-    dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData,
-    const AppIdConfig* pConfig)
+static CLIENT_APP_RETCODE sip_tcp_client_validate(const uint8_t* data, uint16_t size,
+        const int dir, AppIdSession* flowp, Packet* pkt, struct Detector* userData)
 {
-    return sip_client_validate(data, size, dir, flowp, pkt, userData, pConfig);
+    return sip_client_validate(data, size, dir, flowp, pkt, userData);
 }
 
-#ifdef APPID_UNUSED_CODE
 static int sipAppAddPattern(DetectorAppSipPattern** patternList, AppId ClientAppId,
     const char* clientVersion, const char* serverPattern)
 {
@@ -360,113 +350,99 @@ static int sipAppAddPattern(DetectorAppSipPattern** patternList, AppId ClientApp
     return 0;
 }
 
-static int sipUaPatternAdd(
-    AppId ClientAppId,
-    const char* clientVersion,
-    const char* pattern,
-    DetectorSipConfig* pSipConfig
-    )
+int sipUaPatternAdd( AppId ClientAppId, const char* clientVersion, const char* pattern)
 {
-    return sipAppAddPattern(&pSipConfig->appSipUaList, ClientAppId, clientVersion, pattern);
+    return sipAppAddPattern(&detector_sip_config.sip_ua_list, ClientAppId, clientVersion, pattern);
 }
 
-static int sipServerPatternAdd(
-    AppId ClientAppId,
-    const char* clientVersion,
-    const char* pattern,
-    DetectorSipConfig* pSipConfig
-    )
+// FIXIT-L - noone calls this function, is it needed?
+int sipServerPatternAdd(AppId ClientAppId, const char* clientVersion, const char* pattern)
 {
-    return sipAppAddPattern(&pSipConfig->appSipServerList, ClientAppId, clientVersion, pattern);
+    return sipAppAddPattern(&detector_sip_config.sip_server_list, ClientAppId, clientVersion, pattern);
 }
 
-static int sipUaFinalize(DetectorSipConfig* pSipConfig)
+int finalize_sip_ua()
 {
-    const int PATTERN_PART_MAX=10;
-    static tMlmpPattern patterns[PATTERN_PART_MAX];
+    const int PATTERN_PART_MAX = 10;
+    static THREAD_LOCAL tMlmpPattern patterns[PATTERN_PART_MAX];
     int num_patterns;
     DetectorAppSipPattern* patternNode;
 
-    pSipConfig->sipUaMatcher = mlmpCreate();
-    if (!pSipConfig->sipUaMatcher)
+    detector_sip_config.sip_ua_matcher = mlmpCreate();
+    if (!detector_sip_config.sip_ua_matcher)
         return -1;
 
-    pSipConfig->sipServerMatcher = mlmpCreate();
-    if (!pSipConfig->sipServerMatcher)
+    detector_sip_config.sip_server_matcher = mlmpCreate();
+    if (!detector_sip_config.sip_server_matcher)
     {
-        mlmpDestroy((tMlmpTree*)pSipConfig->sipUaMatcher);
-        pSipConfig->sipUaMatcher = nullptr;
+        mlmpDestroy((tMlmpTree*)detector_sip_config.sip_ua_matcher);
+        detector_sip_config.sip_ua_matcher = nullptr;
         return -1;
     }
 
-    for (patternNode = pSipConfig->appSipUaList; patternNode; patternNode = patternNode->next)
+    for (patternNode = detector_sip_config.sip_ua_list; patternNode; patternNode = patternNode->next)
     {
         num_patterns = parseMultipleHTTPPatterns((const char*)patternNode->pattern.pattern,
             patterns,  PATTERN_PART_MAX, 0);
         patterns[num_patterns].pattern = nullptr;
 
-        mlmpAddPattern((tMlmpTree*)pSipConfig->sipUaMatcher, patterns, patternNode);
+        mlmpAddPattern((tMlmpTree*)detector_sip_config.sip_ua_matcher, patterns, patternNode);
     }
 
-    for (patternNode = pSipConfig->appSipServerList; patternNode; patternNode = patternNode->next)
+    for (patternNode = detector_sip_config.sip_server_list; patternNode; patternNode = patternNode->next)
     {
         num_patterns = parseMultipleHTTPPatterns((const char*)patternNode->pattern.pattern,
             patterns,  PATTERN_PART_MAX, 0);
         patterns[num_patterns].pattern = nullptr;
 
-        mlmpAddPattern((tMlmpTree*)pSipConfig->sipServerMatcher, patterns, patternNode);
+        mlmpAddPattern((tMlmpTree*)detector_sip_config.sip_server_matcher, patterns, patternNode);
     }
 
-    mlmpProcessPatterns((tMlmpTree*)pSipConfig->sipUaMatcher);
-    mlmpProcessPatterns((tMlmpTree*)pSipConfig->sipServerMatcher);
+    mlmpProcessPatterns((tMlmpTree*)detector_sip_config.sip_ua_matcher);
+    mlmpProcessPatterns((tMlmpTree*)detector_sip_config.sip_server_matcher);
     return 0;
 }
-#endif
 
-static void sipUaClean(DetectorSipConfig* pSipConfig)
+static void clean_sip_ua()
 {
     DetectorAppSipPattern* node;
 
-    if (pSipConfig->sipUaMatcher)
+    if (detector_sip_config.sip_ua_matcher)
     {
-        mlmpDestroy((tMlmpTree*)pSipConfig->sipUaMatcher);
-        pSipConfig->sipUaMatcher = nullptr;
+        mlmpDestroy((tMlmpTree*)detector_sip_config.sip_ua_matcher);
+        detector_sip_config.sip_ua_matcher = nullptr;
     }
 
-    for (node = pSipConfig->appSipUaList; node; node = pSipConfig->appSipUaList)
+    for (node = detector_sip_config.sip_ua_list; node; node = detector_sip_config.sip_ua_list)
     {
-        pSipConfig->appSipUaList = node->next;
+        detector_sip_config.sip_ua_list = node->next;
         snort_free((void*)node->pattern.pattern);
         snort_free(node->userData.clientVersion);
         snort_free(node);
     }
 }
 
-static void sipServerClean(DetectorSipConfig* pSipConfig)
+static void clean_sip_server()
 {
     DetectorAppSipPattern* node;
 
-    if (pSipConfig->sipServerMatcher)
+    if (detector_sip_config.sip_server_matcher)
     {
-        mlmpDestroy((tMlmpTree*)pSipConfig->sipServerMatcher);
-        pSipConfig->sipServerMatcher = nullptr;
+        mlmpDestroy((tMlmpTree*)detector_sip_config.sip_server_matcher);
+        detector_sip_config.sip_server_matcher = nullptr;
     }
 
-    for (node = pSipConfig->appSipServerList; node; node = pSipConfig->appSipServerList)
+    for (node = detector_sip_config.sip_server_list; node; node = detector_sip_config.sip_server_list)
     {
-        pSipConfig->appSipServerList = node->next;
+        detector_sip_config.sip_server_list = node->next;
         snort_free((void*)node->pattern.pattern);
         snort_free(node->userData.clientVersion);
         snort_free(node);
     }
 }
 
-static int sipAppGeClientApp(
-    void* patternMatcher,
-    char* pattern,
-    uint32_t patternLen,
-    AppId* ClientAppId,
-    char** clientVersion)
+static int get_sip_client_app(void* patternMatcher, char* pattern, uint32_t patternLen,
+    AppId* ClientAppId, char** clientVersion)
 {
     tMlmpPattern patterns[3];
     DetectorAppSipPattern* data;
@@ -489,9 +465,8 @@ static int sipAppGeClientApp(
     return 1;
 }
 
-static void createRtpFlow(AppIdSession* flowp, const Packet* pkt, const sfip_t* cliIp, uint16_t
-    cliPort,
-    const sfip_t* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id)
+static void createRtpFlow(AppIdSession* flowp, const Packet* pkt, const sfip_t* cliIp,
+        uint16_t cliPort,  const sfip_t* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id)
 {
     AppIdSession* fp, * fp2;
 
@@ -600,7 +575,7 @@ static void SipSessionCbClientProcess(const Packet* p, const SipHeaders* headers
 
     if (fd->clientUserAgent)
     {
-        if (sipAppGeClientApp(pAppidActiveConfig->detectorSipConfig.sipUaMatcher,
+        if (get_sip_client_app(detector_sip_config.sip_ua_matcher,
             fd->clientUserAgent, strlen(fd->clientUserAgent), &ClientAppId, &clientVersion))
             goto success;
     }
@@ -609,7 +584,7 @@ static void SipSessionCbClientProcess(const Packet* p, const SipHeaders* headers
     {
         fd->flags |= SIP_FLAG_SERVER_CHECKED;
 
-        if (sipAppGeClientApp(pAppidActiveConfig->detectorSipConfig.sipServerMatcher,
+        if (get_sip_client_app(detector_sip_config.sip_server_matcher,
             (char*)fd->from, strlen(fd->from), &ClientAppId, &clientVersion))
             goto success;
     }
@@ -718,46 +693,41 @@ void SipSessionSnortCallback(void*, ServiceEventType, void* data)
 
 static int sip_service_init(const IniServiceAPI* const init_api)
 {
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP, (const uint8_t*)SIP_BANNER,
-        SIP_BANNER_LEN, 0, svc_name, init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP, (const uint8_t*)SIP_BANNER,
-        SIP_BANNER_LEN, 0, svc_name, init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP, (const
-        uint8_t*)SIP_INVITE_BANNER, SIP_INVITE_BANNER_LEN, 0, svc_name, init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP, (const
-        uint8_t*)SIP_INVITE_BANNER, SIP_INVITE_BANNER_LEN, 0, svc_name, init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP, (const
-        uint8_t*)SIP_ACK_BANNER,
-        SIP_ACK_BANNER_LEN, 0, svc_name, init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP, (const
-        uint8_t*)SIP_ACK_BANNER,
-        SIP_ACK_BANNER_LEN, 0, svc_name, init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP, (const
-        uint8_t*)SIP_REGISTER_BANNER, SIP_REGISTER_BANNER_LEN, 0, svc_name,
-        init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP, (const
-        uint8_t*)SIP_REGISTER_BANNER, SIP_REGISTER_BANNER_LEN, 0, svc_name,
-        init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP, (const
-        uint8_t*)SIP_CANCEL_BANNER, SIP_CANCEL_BANNER_LEN, 0, svc_name, init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP, (const
-        uint8_t*)SIP_CANCEL_BANNER, SIP_CANCEL_BANNER_LEN, 0, svc_name, init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP, (const
-        uint8_t*)SIP_BYE_BANNER,
-        SIP_BYE_BANNER_LEN, 0, svc_name, init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP, (const
-        uint8_t*)SIP_BYE_BANNER,
-        SIP_BYE_BANNER_LEN, 0, svc_name, init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP, (const
-        uint8_t*)SIP_OPTIONS_BANNER, SIP_OPTIONS_BANNER_LEN, 0, svc_name, init_api->pAppidConfig);
-    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP, (const
-        uint8_t*)SIP_OPTIONS_BANNER, SIP_OPTIONS_BANNER_LEN, 0, svc_name, init_api->pAppidConfig);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP,
+            (const uint8_t*)SIP_BANNER, SIP_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP,
+            (const uint8_t*)SIP_BANNER, SIP_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP,
+            (const uint8_t*)SIP_INVITE_BANNER, SIP_INVITE_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP,
+            (const uint8_t*)SIP_INVITE_BANNER, SIP_INVITE_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP,
+            (const uint8_t*)SIP_ACK_BANNER, SIP_ACK_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP,
+            (const uint8_t*)SIP_ACK_BANNER, SIP_ACK_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP,
+            (const uint8_t*)SIP_REGISTER_BANNER, SIP_REGISTER_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP,
+            (const uint8_t*)SIP_REGISTER_BANNER, SIP_REGISTER_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP,
+            (const uint8_t*)SIP_CANCEL_BANNER, SIP_CANCEL_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP,
+            (const uint8_t*)SIP_CANCEL_BANNER, SIP_CANCEL_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP,
+            (const uint8_t*)SIP_BYE_BANNER, SIP_BYE_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP,
+            (const uint8_t*)SIP_BYE_BANNER, SIP_BYE_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP,
+            (const uint8_t*)SIP_OPTIONS_BANNER, SIP_OPTIONS_BANNER_LEN, 0, svc_name);
+    init_api->RegisterPattern(&sip_service_validate, IpProtocol::TCP,
+            (const  uint8_t*)SIP_OPTIONS_BANNER, SIP_OPTIONS_BANNER_LEN, 0, svc_name);
+
     unsigned i;
     for (i=0; i < sizeof(appIdServiceRegistry)/sizeof(*appIdServiceRegistry); i++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdServiceRegistry[i].appId);
         init_api->RegisterAppId(&sip_service_validate, appIdServiceRegistry[i].appId,
-            appIdServiceRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdServiceRegistry[i].additionalInfo);
     }
 
     return 0;

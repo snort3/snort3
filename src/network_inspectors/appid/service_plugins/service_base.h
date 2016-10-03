@@ -40,22 +40,17 @@ struct Detector;
 struct RNAServiceValidationPort;
 struct RNAServiceValidationModule;
 
-void CleanupServices(AppIdConfig*);
-void ReconfigureServices(AppIdConfig*);
-void UnconfigureServices(AppIdConfig*);
-void ServiceInit(AppIdConfig*);
-void ServiceFinalize(AppIdConfig*);
-void FailInProcessService(AppIdSession*, const AppIdConfig*);
-int LoadServiceModules(const char** dir_list, uint32_t instance_id, AppIdConfig*);
+void init_service_plugins();
+void finalize_service_patterns();
 
-// This function is called during reload/reconfiguration. It registers service ports in the given
-// AppId configuration. This function also takes care of services associated with detector modules.
-int ReloadServiceModules(AppIdConfig*);
+void clean_service_plugins();
+void UnconfigureServices();
+void ServiceFinalize();
+void FailInProcessService(AppIdSession*, const AppIdConfig*);
+
 int serviceLoadCallback(void* symbol);
-int serviceLoadForConfigCallback(void* symbol, AppIdConfig*);
-int ServiceAddPort(const RNAServiceValidationPort*, RNAServiceValidationModule*, Detector*,
-        AppIdConfig*);
-void ServiceRemovePorts(RNAServiceValidationFCN, Detector*, AppIdConfig*);
+int ServiceAddPort(const RNAServiceValidationPort*, RNAServiceValidationModule*, Detector*);
+void ServiceRemovePorts(RNAServiceValidationFCN, Detector*);
 void ServiceRegisterPatternDetector(RNAServiceValidationFCN, IpProtocol proto,
         const uint8_t* pattern, unsigned size, int position, Detector*, const char* name);
 int AppIdDiscoverService(Packet*, int direction, AppIdSession*, const AppIdConfig*);
@@ -74,15 +69,12 @@ int AddFTPServiceState(AppIdSession*);
 void AppIdFreeDhcpInfo(DHCPInfo*);
 void AppIdFreeSMBData(FpSMBData*);
 void AppIdFreeDhcpData(DhcpFPData*);
-void dumpPorts(FILE*, const AppIdConfig*);
-const RNAServiceElement* ServiceGetServiceElement(RNAServiceValidationFCN, Detector*,
-        AppIdConfig*);
+void dumpPorts(FILE*);
+const RNAServiceElement* ServiceGetServiceElement(RNAServiceValidationFCN, Detector*);
 
-extern RNAServiceValidationModule* active_service_list;
-
+void add_service_to_active_list(RNAServiceValidationModule* service);
 extern uint32_t app_id_instance_id;
 
-void cleanupFreeServiceMatch();
 void AppIdFreeServiceMatchList(ServiceMatch* sm);
 
 inline bool compareServiceElements(const RNAServiceElement* first,

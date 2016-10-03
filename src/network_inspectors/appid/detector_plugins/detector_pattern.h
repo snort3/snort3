@@ -70,21 +70,28 @@ struct PatternService
 class SearchTool;
 struct ServicePortPattern
 {
-    PortPatternNode* luaInjectedPatterns;
-    PatternService* servicePortPattern;
-    SearchTool* tcp_patterns;
-    SearchTool* udp_patterns;
-    SearchTool* tcpPortPatternTree[65536];
-    SearchTool* udpPortPatternTree[65536];
+    PortPatternNode* luaInjectedPatterns = nullptr;
+    PatternService* servicePortPattern = nullptr;
+    SearchTool* tcp_patterns = nullptr;
+    SearchTool* udp_patterns = nullptr;
+    SearchTool* tcpPortPatternTree[65536] = { nullptr };
+    SearchTool* udpPortPatternTree[65536] = { nullptr };
 };
 
 struct ClientPortPattern
 {
-    PortPatternNode* luaInjectedPatterns;
-    PatternService* servicePortPattern;
-    SearchTool* tcp_patterns;
-    SearchTool* udp_patterns;
+    PortPatternNode* luaInjectedPatterns = nullptr;
+    PatternService* servicePortPattern = nullptr;
+    SearchTool* tcp_patterns = nullptr;
+    SearchTool* udp_patterns = nullptr;
 };
+
+void insert_service_port_pattern(PortPatternNode* pPattern);
+void insert_client_port_pattern(PortPatternNode* pPattern);
+void finalize_service_port_patterns();
+void clean_service_port_patterns();
+void clean_client_port_patterns();
+void finalize_client_port_patterns();
 
 #endif
 

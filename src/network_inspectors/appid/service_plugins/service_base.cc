@@ -93,6 +93,24 @@ static void AppIdAddHostIP(AppIdSession* flow, const uint8_t* mac, uint32_t ip4,
 static void AppIdAddSMBData(AppIdSession* flow, unsigned major, unsigned minor, uint32_t flags);
 static void AppIdServiceAddMisc(AppIdSession* flow, AppId miscId);
 
+struct ServiceMatch
+{
+    struct ServiceMatch* next;
+    unsigned count;
+    unsigned size;
+    RNAServiceElement* svc;
+};
+
+static const uint8_t zeromac[6] = { 0, 0, 0, 0, 0, 0 };
+static unsigned smOrderedListSize = 32;
+static THREAD_LOCAL DHCPInfo* dhcp_info_free_list;
+static THREAD_LOCAL FpSMBData* smb_data_free_list;
+static THREAD_LOCAL ServiceMatch** smOrderedList = nullptr;
+static THREAD_LOCAL ServiceMatch* free_service_match;
+static THREAD_LOCAL ServiceConfig* serviceConfig = nullptr;
+static THREAD_LOCAL RNAServiceElement* ftp_service = nullptr;
+static THREAD_LOCAL ServicePatternData* free_pattern_data = nullptr;
+
 const ServiceApi serviceapi =
 {
     &service_flowdata_get,
@@ -125,20 +143,16 @@ static const char* serviceIdStateName[] =
 };
 #endif
 
-static RNAServiceElement* ftp_service = nullptr;
-
-static ServicePatternData* free_pattern_data;
-
 /*C service API */
 static void ServiceRegisterPattern(RNAServiceValidationFCN, IpProtocol, const uint8_t*, unsigned,
-        int, struct Detector*, int, const char*, ServiceConfig*);
+        int, struct Detector*, int, const char* );
 static void CServiceRegisterPattern(RNAServiceValidationFCN, IpProtocol, const uint8_t* ,
-        unsigned, int , const char*, AppIdConfig*);
+        unsigned, int , const char*);
 static void ServiceRegisterPatternUser(RNAServiceValidationFCN, IpProtocol, const uint8_t*,
-        unsigned, int, const char*, AppIdConfig*);
-void appSetServiceValidator( RNAServiceValidationFCN, AppId, unsigned extractsInfo, AppIdConfig*);
-static int CServiceAddPort(const RNAServiceValidationPort*, RNAServiceValidationModule*, AppIdConfig*);
-static void CServiceRemovePorts(RNAServiceValidationFCN validate, AppIdConfig* pConfig);
+        unsigned, int, const char*);
+void appSetServiceValidator( RNAServiceValidationFCN, AppId, unsigned extractsInfo);
+static int CServiceAddPort(const RNAServiceValidationPort*, RNAServiceValidationModule*);
+static void CServiceRemovePorts(RNAServiceValidationFCN validate);
 
 static IniServiceAPI svc_init_api =
 {
@@ -149,11 +163,6 @@ static IniServiceAPI svc_init_api =
     &appSetServiceValidator,
     0,
     0,
-    nullptr
-};
-
-static CleanServiceAPI svc_clean_api =
-{
     nullptr
 };
 
@@ -201,26 +210,12 @@ static RNAServiceValidationModule* static_service_list[] =
     &http_service_mod
 };
 
-struct ServiceMatch
+const uint32_t NUM_STATIC_SERVICES =
+        sizeof(static_service_list) / sizeof(RNAServiceValidationModule*);
+
+void appSetServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigned extractsInfo)
 {
-    struct ServiceMatch* next;
-    unsigned count;
-    unsigned size;
-    RNAServiceElement* svc;
-};
-
-static DHCPInfo* dhcp_info_free_list;
-static FpSMBData* smb_data_free_list;
-static unsigned smOrderedListSize = 32;
-static ServiceMatch** smOrderedList = nullptr;
-static ServiceMatch* free_service_match;
-static const uint8_t zeromac[6] = { 0, 0, 0, 0, 0, 0 };
-
-
-void appSetServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigned extractsInfo,
-    AppIdConfig* pConfig)
-{
-    AppInfoTableEntry* pEntry = appInfoEntryGet(appId, pConfig);
+    AppInfoTableEntry* pEntry = appInfoEntryGet(appId);
     if (!pEntry)
     {
         ErrorMessage("AppId: invalid direct service AppId, %d", appId);
@@ -232,7 +227,7 @@ void appSetServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigned e
         DebugFormat(DEBUG_APPID, "Ignoring direct service without info for AppId %d", appId);
         return;
     }
-    pEntry->svrValidator = ServiceGetServiceElement(fcn, nullptr, pConfig);
+    pEntry->svrValidator = ServiceGetServiceElement(fcn, nullptr);
     if (pEntry->svrValidator)
         pEntry->flags |= extractsInfo;
     else
@@ -252,16 +247,6 @@ void AppIdFreeServiceMatchList(ServiceMatch* sm)
         ;
     tmpSm->next = free_service_match;
     free_service_match = sm;
-}
-
-void cleanupFreeServiceMatch(void)
-{
-    ServiceMatch* match;
-    while ((match=free_service_match) != nullptr)
-    {
-        free_service_match = match->next;
-        snort_free(match);
-    }
 }
 
 int AddFTPServiceState(AppIdSession* fp)
@@ -354,13 +339,8 @@ static inline uint16_t sslPortRemap(
     }
 }
 
-static inline RNAServiceElement* AppIdGetNexServiceByPort(
-    IpProtocol protocol,
-    uint16_t port,
-    const RNAServiceElement* const lasService,
-    AppIdSession* rnaData,
-    const AppIdConfig* pConfig
-    )
+static inline RNAServiceElement* AppIdGetNexServiceByPort( IpProtocol protocol, uint16_t port,
+    const RNAServiceElement* const lasService, AppIdSession* rnaData)
 {
     RNAServiceElement* service = nullptr;
     SF_LIST* list = nullptr;
@@ -369,15 +349,15 @@ static inline RNAServiceElement* AppIdGetNexServiceByPort(
     {
         unsigned remappedPort = sslPortRemap(port);
         if (remappedPort)
-            list = pConfig->serviceConfig.tcp_services[remappedPort];
+            list = serviceConfig->tcp_services[remappedPort];
     }
     else if (protocol == IpProtocol::TCP)
     {
-        list = pConfig->serviceConfig.tcp_services[port];
+        list = serviceConfig->tcp_services[port];
     }
     else
     {
-        list = pConfig->serviceConfig.udp_services[port];
+        list = serviceConfig->udp_services[port];
     }
 
     if (list)
@@ -438,19 +418,17 @@ static inline RNAServiceElement* AppIdNexServiceByPattern(AppIdServiceIDState* i
     return service;
 }
 
-const RNAServiceElement* ServiceGetServiceElement(RNAServiceValidationFCN fcn, struct
-    Detector* userdata,
-    AppIdConfig* pConfig)
+const RNAServiceElement* ServiceGetServiceElement(RNAServiceValidationFCN fcn, Detector* userdata)
 {
     RNAServiceElement* li;
 
-    for (li=pConfig->serviceConfig.tcp_service_list; li; li=li->next)
+    for (li=serviceConfig->tcp_service_list; li; li=li->next)
     {
         if ((li->validate == fcn) && (li->userdata == userdata))
             return li;
     }
 
-    for (li=pConfig->serviceConfig.udp_service_list; li; li=li->next)
+    for (li=serviceConfig->udp_service_list; li; li=li->next)
     {
         if ((li->validate == fcn) && (li->userdata == userdata))
             return li;
@@ -458,10 +436,9 @@ const RNAServiceElement* ServiceGetServiceElement(RNAServiceValidationFCN fcn, s
     return nullptr;
 }
 
-static void ServiceRegisterPattern(RNAServiceValidationFCN fcn,
-    IpProtocol proto, const uint8_t* pattern, unsigned size,
-    int position, struct Detector* userdata, int provides_user,
-    const char* name, ServiceConfig* pServiceConfig)
+static void ServiceRegisterPattern(RNAServiceValidationFCN fcn, IpProtocol proto,
+        const uint8_t* pattern, unsigned size, int position, struct Detector* userdata,
+        int provides_user, const char* name)
 {
     SearchTool** patterns;
     ServicePatternData** pd_list;
@@ -472,19 +449,19 @@ static void ServiceRegisterPattern(RNAServiceValidationFCN fcn,
 
     if ((IpProtocol)proto == IpProtocol::TCP)
     {
-        patterns = &pServiceConfig->tcp_patterns;
-        pd_list = &pServiceConfig->tcp_pattern_data;
+        patterns = &serviceConfig->tcp_patterns;
+        pd_list = &serviceConfig->tcp_pattern_data;
 
-        count = &pServiceConfig->tcp_pattern_count;
-        list = &pServiceConfig->tcp_service_list;
+        count = &serviceConfig->tcp_pattern_count;
+        list = &serviceConfig->tcp_service_list;
     }
     else if ((IpProtocol)proto == IpProtocol::UDP)
     {
-        patterns = &pServiceConfig->udp_patterns;
-        pd_list = &pServiceConfig->udp_pattern_data;
+        patterns = &serviceConfig->udp_patterns;
+        pd_list = &serviceConfig->udp_pattern_data;
 
-        count = &pServiceConfig->udp_pattern_count;
-        list = &pServiceConfig->udp_service_list;
+        count = &serviceConfig->udp_pattern_count;
+        list = &serviceConfig->udp_service_list;
     }
     else
     {
@@ -542,24 +519,19 @@ void ServiceRegisterPatternDetector(RNAServiceValidationFCN fcn,
     IpProtocol proto, const uint8_t* pattern, unsigned size,
     int position, struct Detector* userdata, const char* name)
 {
-    ServiceRegisterPattern(fcn, proto, pattern, size, position, userdata, 0, name,
-        &userdata->pAppidNewConfig->serviceConfig);
+    ServiceRegisterPattern(fcn, proto, pattern, size, position, userdata, 0, name);
 }
 
 static void ServiceRegisterPatternUser(RNAServiceValidationFCN fcn, IpProtocol proto,
-    const uint8_t* pattern, unsigned size, int position, const char* name, AppIdConfig* pConfig)
+    const uint8_t* pattern, unsigned size, int position, const char* name)
 {
-    ServiceRegisterPattern(fcn, proto, pattern, size, position, nullptr, 1, name,
-        &pConfig->serviceConfig);
+    ServiceRegisterPattern(fcn, proto, pattern, size, position, nullptr, 1, name);
 }
 
 static void CServiceRegisterPattern(RNAServiceValidationFCN fcn, IpProtocol proto,
-    const uint8_t* pattern, unsigned size,
-    int position, const char* name,
-    AppIdConfig* pConfig)
+    const uint8_t* pattern, unsigned size, int position, const char* name)
 {
-    ServiceRegisterPattern(fcn, proto, pattern, size, position, nullptr, 0, name,
-        &pConfig->serviceConfig);
+    ServiceRegisterPattern(fcn, proto, pattern, size, position, nullptr, 0, name);
 }
 
 static void RemoveServicePortsByType(RNAServiceValidationFCN validate, SF_LIST** services,
@@ -610,57 +582,55 @@ static void RemoveServicePortsByType(RNAServiceValidationFCN validate, SF_LIST**
  * This function takes care of removing ports for all services including C service modules,
  * Lua detector modules and services associated with C detector modules.
  *
- * @param pServiceConfig - Service configuration from which all ports need to be removed
  * @return void
  */
-static void RemoveAllServicePorts(ServiceConfig* pServiceConfig)
+static void RemoveAllServicePorts()
 {
     int i;
 
-    for (i=0; i<RNA_SERVICE_MAX_PORT; i++)
+    for ( i= 0; i < RNA_SERVICE_MAX_PORT; i++)
     {
-        if (pServiceConfig->tcp_services[i])
+        if (serviceConfig->tcp_services[i])
         {
-            sflist_free(pServiceConfig->tcp_services[i]);
-            pServiceConfig->tcp_services[i] = nullptr;
+            sflist_free(serviceConfig->tcp_services[i]);
+            serviceConfig->tcp_services[i] = nullptr;
         }
     }
-    for (i=0; i<RNA_SERVICE_MAX_PORT; i++)
+    for (i = 0; i < RNA_SERVICE_MAX_PORT; i++)
     {
-        if (pServiceConfig->udp_services[i])
+        if (serviceConfig->udp_services[i])
         {
-            sflist_free(pServiceConfig->udp_services[i]);
-            pServiceConfig->udp_services[i] = nullptr;
+            sflist_free(serviceConfig->udp_services[i]);
+            serviceConfig->udp_services[i] = nullptr;
         }
     }
-    for (i=0; i<RNA_SERVICE_MAX_PORT; i++)
+    for (i = 0; i < RNA_SERVICE_MAX_PORT; i++)
     {
-        if (pServiceConfig->udp_reversed_services[i])
+        if (serviceConfig->udp_reversed_services[i])
         {
-            sflist_free(pServiceConfig->udp_reversed_services[i]);
-            pServiceConfig->udp_reversed_services[i] = nullptr;
+            sflist_free(serviceConfig->udp_reversed_services[i]);
+            serviceConfig->udp_reversed_services[i] = nullptr;
         }
     }
 }
 
-void ServiceRemovePorts(RNAServiceValidationFCN validate, struct Detector* userdata,
-    AppIdConfig* pConfig)
+void ServiceRemovePorts(RNAServiceValidationFCN validate, struct Detector* userdata)
 {
-    RemoveServicePortsByType(validate, pConfig->serviceConfig.tcp_services,
-        pConfig->serviceConfig.tcp_service_list, userdata);
-    RemoveServicePortsByType(validate, pConfig->serviceConfig.udp_services,
-        pConfig->serviceConfig.udp_service_list, userdata);
-    RemoveServicePortsByType(validate, pConfig->serviceConfig.udp_reversed_services,
-        pConfig->serviceConfig.udp_reversed_service_list, userdata);
+    RemoveServicePortsByType(validate, serviceConfig->tcp_services,
+        serviceConfig->tcp_service_list, userdata);
+    RemoveServicePortsByType(validate, serviceConfig->udp_services,
+        serviceConfig->udp_service_list, userdata);
+    RemoveServicePortsByType(validate, serviceConfig->udp_reversed_services,
+        serviceConfig->udp_reversed_service_list, userdata);
 }
 
-static void CServiceRemovePorts(RNAServiceValidationFCN validate, AppIdConfig* pConfig)
+static void CServiceRemovePorts(RNAServiceValidationFCN validate)
 {
-    ServiceRemovePorts(validate, nullptr, pConfig);
+    ServiceRemovePorts(validate, nullptr);
 }
 
 int ServiceAddPort(const RNAServiceValidationPort* pp, RNAServiceValidationModule* svm,
-    struct Detector* userdata, AppIdConfig* pConfig)
+    struct Detector* userdata)
 {
     SF_LIST** services;
     RNAServiceElement** list = nullptr;
@@ -671,20 +641,20 @@ int ServiceAddPort(const RNAServiceValidationPort* pp, RNAServiceValidationModul
         svm->name, (unsigned)pp->proto, (unsigned)pp->port);
     if (pp->proto == IpProtocol::TCP)
     {
-        services = pConfig->serviceConfig.tcp_services;
-        list = &pConfig->serviceConfig.tcp_service_list;
+        services = serviceConfig->tcp_services;
+        list = &serviceConfig->tcp_service_list;
     }
     else if (pp->proto == IpProtocol::UDP)
     {
         if (!pp->reversed_validation)
         {
-            services = pConfig->serviceConfig.udp_services;
-            list = &pConfig->serviceConfig.udp_service_list;
+            services = serviceConfig->udp_services;
+            list = &serviceConfig->udp_service_list;
         }
         else
         {
-            services = pConfig->serviceConfig.udp_reversed_services;
-            list = &pConfig->serviceConfig.udp_reversed_service_list;
+            services = serviceConfig->udp_reversed_services;
+            list = &serviceConfig->udp_reversed_service_list;
         }
     }
     else
@@ -738,14 +708,18 @@ int ServiceAddPort(const RNAServiceValidationPort* pp, RNAServiceValidationModul
     return 0;
 }
 
-static int CServiceAddPort(const RNAServiceValidationPort* pp, RNAServiceValidationModule* svm,
-    AppIdConfig* pConfig)
+static int CServiceAddPort(const RNAServiceValidationPort* pp, RNAServiceValidationModule* svm)
 {
-
-    return ServiceAddPort(pp, svm, nullptr, pConfig);
+    return ServiceAddPort(pp, svm, nullptr);
 }
 
-int serviceLoadForConfigCallback(void* symbol, AppIdConfig* pConfig)
+void add_service_to_active_list(RNAServiceValidationModule* service)
+{
+    service->next = serviceConfig->active_service_list;
+    serviceConfig->active_service_list = service;
+}
+
+static int serviceLoadForConfigCallback(void* symbol)
 {
     static unsigned service_module_index = 0;
     RNAServiceValidationModule* svm = (RNAServiceValidationModule*)symbol;
@@ -759,14 +733,14 @@ int serviceLoadForConfigCallback(void* symbol, AppIdConfig* pConfig)
 
     svm->api = &serviceapi;
     for (pp = svm->pp; pp && pp->validate; pp++)
-        if (CServiceAddPort(pp, svm, pConfig))
+        if (CServiceAddPort(pp, svm))
             return -1;
 
     if (svm->init(&svc_init_api))
         ErrorMessage("Error initializing service %s\n",svm->name);
 
-    svm->next = pConfig->serviceConfig.active_service_list;
-    pConfig->serviceConfig.active_service_list = svm;
+    svm->next = serviceConfig->active_service_list;
+    serviceConfig->active_service_list = svm;
 
     svm->flow_data_index = service_module_index | APPID_SESSION_DATA_SERVICE_MODSTATE_BIT;
     service_module_index++;
@@ -776,138 +750,68 @@ int serviceLoadForConfigCallback(void* symbol, AppIdConfig* pConfig)
 
 int serviceLoadCallback(void* symbol)
 {
-    return serviceLoadForConfigCallback(symbol, pAppidActiveConfig);
+    return serviceLoadForConfigCallback(symbol);
 }
 
-int LoadServiceModules(const char**, uint32_t instance_id, AppIdConfig* pConfig)
+static int load_service_detectors()
 {
-    unsigned i;
-
-    svc_init_api.instance_id = instance_id;
+    svc_init_api.instance_id = pAppidActiveConfig->mod_config->instance_id;
     svc_init_api.debug = pAppidActiveConfig->mod_config->debug;
-    svc_init_api.pAppidConfig = pConfig;
+    svc_init_api.pAppidConfig = pAppidActiveConfig;
 
-    for (i=0; i<sizeof(static_service_list)/sizeof(*static_service_list); i++)
+    for ( unsigned i = 0; i < NUM_STATIC_SERVICES; i++)
     {
-        if (serviceLoadForConfigCallback(static_service_list[i], pConfig))
+        if (serviceLoadForConfigCallback(static_service_list[i]))
             return -1;
     }
 
     return 0;
 }
 
-int ReloadServiceModules(AppIdConfig* pConfig)
+void init_service_plugins()
 {
-    RNAServiceValidationModule* svm;
-    const RNAServiceValidationPort* pp;
+    serviceConfig = new ServiceConfig;
 
-    svc_init_api.debug = pAppidActiveConfig->mod_config->debug;
-    svc_init_api.pAppidConfig = pConfig;
+    if ( load_service_detectors() )
+        exit(-1);
+}
 
-    // active_service_list contains both service modules and services associated with
-    // detector modules
-    for (svm=pConfig->serviceConfig.active_service_list; svm; svm=svm->next)
+void finalize_service_patterns()
+{
+    ServicePatternData* curr;
+    ServicePatternData* lists[] = { serviceConfig->tcp_pattern_data,
+                                    serviceConfig->udp_pattern_data };
+    for ( unsigned i = 0; i < (sizeof(lists) / sizeof(*lists)); i++)
     {
-        // processing only non-lua service detectors.
-        if (svm->init)
+        curr = lists[i];
+        while (curr != nullptr)
         {
-            for (pp = svm->pp; pp && pp->validate; pp++)
-                if (CServiceAddPort(pp, svm, pConfig))
-                    return -1;
+            if (curr->svc != nullptr)
+            {
+                bool isActive = true;
+                if (curr->svc->userdata && !curr->svc->userdata->isActive)
+                {
+                    /* C detectors don't have userdata here, but they're always
+                     * active.  So, this check is really just for Lua
+                     * detectors. */
+                    isActive = false;
+                }
+                if (isActive)
+                {
+                    curr->svc->current_ref_count = curr->svc->ref_count;
+                }
+            }
+            curr = curr->next;
         }
     }
 
-    return 0;
+    if (serviceConfig->tcp_patterns)
+        serviceConfig->tcp_patterns->prep();
+    if (serviceConfig->udp_patterns)
+        serviceConfig->udp_patterns->prep();
 }
 
-void ServiceInit(AppIdConfig*)
-{
-    luaModuleInitAllServices();
-}
-
-void ServiceFinalize(AppIdConfig* pConfig)
-{
-    if (pConfig->serviceConfig.tcp_patterns)
-        pConfig->serviceConfig.tcp_patterns->prep();
-    if (pConfig->serviceConfig.udp_patterns)
-        pConfig->serviceConfig.udp_patterns->prep();
-}
-
-void UnconfigureServices(AppIdConfig* pConfig)
-{
-    RNAServiceElement* li;
-    ServicePatternData* pd;
-    RNAServiceValidationModule* svm;
-
-    svc_clean_api.pAppidConfig = pConfig;
-
-    if (pConfig->serviceConfig.tcp_patterns)
-    {
-        delete pConfig->serviceConfig.tcp_patterns;
-        pConfig->serviceConfig.tcp_patterns = nullptr;
-    }
-    // Do not free memory for the pattern; this can be later reclaimed when a
-    // new pattern needs to be created. Memory for these patterns will be freed
-    // on exit.
-    while (pConfig->serviceConfig.tcp_pattern_data)
-    {
-        pd = pConfig->serviceConfig.tcp_pattern_data;
-        if ((li = pd->svc) != nullptr)
-            li->ref_count--;
-        pConfig->serviceConfig.tcp_pattern_data = pd->next;
-        pd->next = free_pattern_data;
-        free_pattern_data = pd;
-    }
-    if (pConfig->serviceConfig.udp_patterns)
-    {
-        delete pConfig->serviceConfig.udp_patterns;
-        pConfig->serviceConfig.udp_patterns = nullptr;
-    }
-    while (pConfig->serviceConfig.udp_pattern_data)
-    {
-        pd = pConfig->serviceConfig.udp_pattern_data;
-        if ((li = pd->svc) != nullptr)
-            li->ref_count--;
-        pConfig->serviceConfig.udp_pattern_data = pd->next;
-        pd->next = free_pattern_data;
-        free_pattern_data = pd;
-    }
-
-    RemoveAllServicePorts(&pConfig->serviceConfig);
-
-    for (svm=pConfig->serviceConfig.active_service_list; svm; svm=svm->next)
-    {
-        if (svm->clean)
-            svm->clean(&svc_clean_api);
-    }
-
-    CleanServicePortPatternList(pConfig);
-}
-
-void ReconfigureServices(AppIdConfig* pConfig)
-{
-    RNAServiceValidationModule* svm;
-
-    for (svm=pConfig->serviceConfig.active_service_list; svm; svm=svm->next)
-    {
-        /*processing only non-lua service detectors. */
-        if (svm->init)
-        {
-            if (svm->init(&svc_init_api))
-            {
-                ErrorMessage("Error initializing service %s\n",svm->name);
-            }
-            else
-            {
-                DebugFormat(DEBUG_INSPECTOR,"Initialized service %s\n",svm->name);
-            }
-        }
-    }
-
-    ServiceInit(pConfig);
-}
-
-void CleanupServices(AppIdConfig* pConfig)
+void clean_service_plugins()
 {
     ServicePatternData* pattern;
     RNAServiceElement* se;
@@ -916,64 +820,71 @@ void CleanupServices(AppIdConfig* pConfig)
     FpSMBData* sd;
     DHCPInfo* info;
 
-    svc_clean_api.pAppidConfig = pConfig;
+    if (serviceConfig->tcp_patterns)
+    {
+        delete serviceConfig->tcp_patterns;
+        serviceConfig->tcp_patterns = nullptr;
+    }
 
-    if (pConfig->serviceConfig.tcp_patterns)
+    if (serviceConfig->udp_patterns)
     {
-        delete pConfig->serviceConfig.tcp_patterns;
-        pConfig->serviceConfig.tcp_patterns = nullptr;
+        delete serviceConfig->udp_patterns;
+        serviceConfig->udp_patterns = nullptr;
     }
-    if (pConfig->serviceConfig.udp_patterns)
+
+    while ((pattern = serviceConfig->tcp_pattern_data))
     {
-        delete pConfig->serviceConfig.udp_patterns;
-        pConfig->serviceConfig.udp_patterns = nullptr;
-    }
-    while ((pattern=pConfig->serviceConfig.tcp_pattern_data))
-    {
-        pConfig->serviceConfig.tcp_pattern_data = pattern->next;
+        serviceConfig->tcp_pattern_data = pattern->next;
         snort_free(pattern);
     }
-    while ((pattern=pConfig->serviceConfig.udp_pattern_data))
+    while ((pattern = serviceConfig->udp_pattern_data))
     {
-        pConfig->serviceConfig.udp_pattern_data = pattern->next;
+        serviceConfig->udp_pattern_data = pattern->next;
         snort_free(pattern);
     }
-    while ((pattern=free_pattern_data))
+
+    while ((pattern = free_pattern_data))
     {
         free_pattern_data = pattern->next;
         snort_free(pattern);
     }
-    while ((se=pConfig->serviceConfig.tcp_service_list))
+
+    while ((se = serviceConfig->tcp_service_list))
     {
-        pConfig->serviceConfig.tcp_service_list = se->next;
+        serviceConfig->tcp_service_list = se->next;
         delete se;
     }
-    while ((se=pConfig->serviceConfig.udp_service_list))
+
+    while ((se = serviceConfig->udp_service_list))
     {
-        pConfig->serviceConfig.udp_service_list = se->next;
+        serviceConfig->udp_service_list = se->next;
         delete se;
     }
-    while ((se=pConfig->serviceConfig.udp_reversed_service_list))
+
+    while ((se = serviceConfig->udp_reversed_service_list))
     {
-        pConfig->serviceConfig.udp_reversed_service_list = se->next;
+        serviceConfig->udp_reversed_service_list = se->next;
         delete se;
     }
+
     while ((sd = smb_data_free_list))
     {
         smb_data_free_list = sd->next;
         snort_free(sd);
     }
+
     while ((info = dhcp_info_free_list))
     {
         dhcp_info_free_list = info->next;
         snort_free(info);
     }
+
     while ((sm = free_service_match))
     {
         free_service_match = sm->next;
         snort_free(sm);
     }
-    cleanupFreeServiceMatch();
+
     if (smOrderedList)
     {
         // FIXIT-M: still allocated with calloc/realloc - vector coming soon...
@@ -981,15 +892,17 @@ void CleanupServices(AppIdConfig* pConfig)
         smOrderedListSize = 32;
     }
 
-    RemoveAllServicePorts(&pConfig->serviceConfig);
+    RemoveAllServicePorts();
 
-    for (svm=pConfig->serviceConfig.active_service_list; svm; svm=svm->next)
+    for (svm = serviceConfig->active_service_list; svm; svm = svm->next)
     {
         if (svm->clean)
-            svm->clean(&svc_clean_api);
+            svm->clean();
     }
 
-    CleanServicePortPatternList(pConfig);
+    clean_service_port_patterns();
+
+    delete serviceConfig;
 }
 
 static int AppIdPatternPrecedence(const void* a, const void* b)
@@ -1013,7 +926,7 @@ static int AppIdPatternPrecedence(const void* a, const void* b)
  * this sensor.
 */
 static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpProtocol proto,
-    const int, AppIdServiceIDState* id_state, const ServiceConfig* pServiceConfig)
+    const int, AppIdServiceIDState* id_state)
 {
     SearchTool* patterns = nullptr;
     ServiceMatch* match_list;
@@ -1023,9 +936,9 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
     RNAServiceElement* service = nullptr;
 
     if (proto == IpProtocol::TCP)
-        patterns = pServiceConfig->tcp_patterns;
+        patterns = serviceConfig->tcp_patterns;
     else
-        patterns = pServiceConfig->udp_patterns;
+        patterns = serviceConfig->udp_patterns;
 
     if (!patterns)
     {
@@ -1129,19 +1042,16 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
     return service;
 }
 
-static inline RNAServiceElement* AppIdGetServiceByBruteForce(
-    IpProtocol protocol,
-    const RNAServiceElement* lasService,
-    const AppIdConfig* pConfig
-    )
+static inline RNAServiceElement* AppIdGetServiceByBruteForce(IpProtocol protocol,
+    const RNAServiceElement* lasService)
 {
     RNAServiceElement* service;
 
     if (lasService)
         service = lasService->next;
     else
-        service = ((protocol == IpProtocol::TCP) ? pConfig->serviceConfig.tcp_service_list :
-            pConfig->serviceConfig.udp_service_list);
+        service = ((protocol == IpProtocol::TCP) ? serviceConfig->tcp_service_list :
+            serviceConfig->udp_service_list);
 
     while (service && !service->current_ref_count)
         service = service->next;
@@ -2015,7 +1925,7 @@ void FailInProcessService(AppIdSession* flowp, const AppIdConfig*)
  * through the main port/pattern search (and returning which detector to add
  * next to the list of detectors to try (even if only 1)). */
 static const RNAServiceElement* AppIdGetNexService(const Packet* p, const int dir,
-    AppIdSession* rnaData,  const AppIdConfig* pConfig, AppIdServiceIDState* id_state)
+    AppIdSession* rnaData, AppIdServiceIDState* id_state)
 {
     auto proto = rnaData->protocol;
 
@@ -2030,7 +1940,7 @@ static const RNAServiceElement* AppIdGetNexService(const Packet* p, const int di
     if (id_state->state == SERVICE_ID_PORT)
     {
         id_state->svc = AppIdGetNexServiceByPort(proto, (uint16_t)((dir ==
-            APP_ID_FROM_RESPONDER) ? p->ptrs.sp : p->ptrs.dp), id_state->svc, rnaData, pConfig);
+            APP_ID_FROM_RESPONDER) ? p->ptrs.sp : p->ptrs.dp), id_state->svc, rnaData);
         if (id_state->svc != nullptr)
         {
             return id_state->svc;
@@ -2070,12 +1980,12 @@ static const RNAServiceElement* AppIdGetNexService(const Packet* p, const int di
                 {
                     reverse_service = reverse_id_state->svc;
                 }
-                if (    reverse_service
-                    || (pConfig->serviceConfig.udp_reversed_services[p->ptrs.sp] &&
+                if ( reverse_service
+                    || (serviceConfig->udp_reversed_services[p->ptrs.sp] &&
                     (reverse_service = ( RNAServiceElement*)sflist_first(
-                        pConfig->serviceConfig.udp_reversed_services[p->ptrs.sp], &iter)))
-                    || (p->dsize && (reverse_service = AppIdGetServiceByPattern(p, proto,
-                        dir, nullptr, &pConfig->serviceConfig))) )
+                        serviceConfig->udp_reversed_services[p->ptrs.sp], &iter)))
+                    || (p->dsize &&
+                        (reverse_service = AppIdGetServiceByPattern(p, proto, dir, nullptr))) )
                 {
                     id_state->svc = reverse_service;
                     return id_state->svc;
@@ -2089,8 +1999,7 @@ static const RNAServiceElement* AppIdGetNexService(const Packet* p, const int di
         {
             if (id_state->serviceList == nullptr)    /* no list yet (need to make one) */
             {
-                id_state->svc = AppIdGetServiceByPattern(p, proto, dir, id_state,
-                    &pConfig->serviceConfig);
+                id_state->svc = AppIdGetServiceByPattern(p, proto, dir, id_state);
             }
             else    /* already have a pattern service list (just use it) */
             {
@@ -2183,7 +2092,7 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* rnaData,
             && (rnaData->num_candidate_services_tried == 0)
             && !id_state->searching )
         {
-            rnaData->serviceData = AppIdGetServiceByBruteForce(proto, id_state->svc, pConfig);
+            rnaData->serviceData = AppIdGetServiceByBruteForce(proto, id_state->svc);
             id_state->svc = rnaData->serviceData;
         }
     }
@@ -2235,8 +2144,7 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* rnaData,
         {
             while (rnaData->num_candidate_services_tried < MAX_CANDIDATE_SERVICES)
             {
-                const RNAServiceElement* tmp = AppIdGetNexService(p, dir, rnaData, pConfig,
-                    id_state);
+                const RNAServiceElement* tmp = AppIdGetNexService(p, dir, rnaData, id_state);
                 if (tmp != nullptr)
                 {
                     SF_LNODE* iter = nullptr;
@@ -2370,10 +2278,6 @@ static int service_flowdata_add(AppIdSession* flow, void* data, unsigned service
     return flow->add_flow_data(data, service_id, fcn);
 }
 
-/** GUS: 2006 09 28 10:10:54
- *  A simple function that prints the
- *  ports that have decoders registered.
- */
 static void dumpServices(FILE* stream, SF_LIST* const* parray)
 {
     int i,n = 0;
@@ -2382,22 +2286,21 @@ static void dumpServices(FILE* stream, SF_LIST* const* parray)
         if (parray[i] && (sflist_count(parray[i]) != 0))
         {
             if ( n !=  0)
-            {
                 fprintf(stream," ");
-            }
+
             n++;
             fprintf(stream,"%d",i);
         }
     }
 }
 
-void dumpPorts(FILE* stream, const AppIdConfig* pConfig)
+void dumpPorts(FILE* stream)
 {
     fprintf(stream,"(tcp ");
-    dumpServices(stream,pConfig->serviceConfig.tcp_services);
+    dumpServices(stream, serviceConfig->tcp_services);
     fprintf(stream,") \n");
     fprintf(stream,"(udp ");
-    dumpServices(stream,pConfig->serviceConfig.udp_services);
+    dumpServices(stream, serviceConfig->udp_services);
     fprintf(stream,") \n");
 }
 

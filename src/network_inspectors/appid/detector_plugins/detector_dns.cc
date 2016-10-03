@@ -201,11 +201,10 @@ static AppRegistryEntry appIdRegistry[] =
 
 static CLIENT_APP_RETCODE dns_udp_client_init(const IniClientAppAPI* const, SF_LIST*);
 static CLIENT_APP_RETCODE dns_tcp_client_init(const IniClientAppAPI* const, SF_LIST*);
-static CLIENT_APP_RETCODE dns_udp_client_validate(
-    const uint8_t*, uint16_t, const int, AppIdSession*, Packet*, Detector*, const AppIdConfig*);
-
-static CLIENT_APP_RETCODE dns_tcp_client_validate(
-    const uint8_t*, uint16_t, const int, AppIdSession*, Packet*, Detector*, const AppIdConfig*);
+static CLIENT_APP_RETCODE dns_udp_client_validate(const uint8_t*, uint16_t, const int,
+        AppIdSession*, Packet*, Detector*);
+static CLIENT_APP_RETCODE dns_tcp_client_validate(const uint8_t*, uint16_t, const int,
+        AppIdSession*, Packet*, Detector*);
 
 SO_PUBLIC RNAClientAppModule dns_udp_client_mod =
 {
@@ -239,19 +238,34 @@ SO_PUBLIC RNAClientAppModule dns_tcp_client_mod =
     0,                          // flow_data_index
 };
 
+struct ServiceDnsConfig
+{
+    DetectorDNSHostPattern* DetectorDNSHostPatternList;
+    SearchTool* dns_host_host_matcher;
+};
+static THREAD_LOCAL ServiceDnsConfig serviceDnsConfig;      // DNS service configuration
+
 static CLIENT_APP_RETCODE dns_udp_client_init(const IniClientAppAPI* const, SF_LIST*)
-{ return CLIENT_APP_SUCCESS; }
+{
+    return CLIENT_APP_SUCCESS;
+}
 
 static CLIENT_APP_RETCODE dns_tcp_client_init(const IniClientAppAPI* const, SF_LIST*)
-{ return CLIENT_APP_SUCCESS; }
+{
+    return CLIENT_APP_SUCCESS;
+}
 
-static CLIENT_APP_RETCODE dns_udp_client_validate(
-    const uint8_t*, uint16_t, const int, AppIdSession*, Packet*, Detector*, const AppIdConfig*)
-{ return CLIENT_APP_INPROCESS; }
+static CLIENT_APP_RETCODE dns_udp_client_validate(const uint8_t*, uint16_t, const int, AppIdSession*,
+        Packet*, Detector*)
+{
+    return CLIENT_APP_INPROCESS;
+}
 
-static CLIENT_APP_RETCODE dns_tcp_client_validate(
-    const uint8_t*, uint16_t, const int, AppIdSession*, Packet*, Detector*, const AppIdConfig*)
-{ return CLIENT_APP_INPROCESS; }
+static CLIENT_APP_RETCODE dns_tcp_client_validate( const uint8_t*, uint16_t, const int, AppIdSession*,
+        Packet*, Detector*)
+{
+    return CLIENT_APP_INPROCESS;
+}
 
 static int dns_host_pattern_match(void* id, void*, int index, void* data, void*)
 {
@@ -268,34 +282,33 @@ static int dns_host_pattern_match(void* id, void*, int index, void* data, void*)
     return 0;
 }
 
-static int dns_host_detector_create_matcher(ServiceDnsConfig* pDnsConfig,
-    DetectorDNSHostPattern* list)
+static int dns_host_detector_create_matcher(DetectorDNSHostPattern* list)
 {
     DetectorDNSHostPattern* element = nullptr;
 
-    if (pDnsConfig->dns_host_host_matcher)
-        delete pDnsConfig->dns_host_host_matcher;
+    if (serviceDnsConfig.dns_host_host_matcher)
+        delete serviceDnsConfig.dns_host_host_matcher;
 
-    pDnsConfig->dns_host_host_matcher = new SearchTool("ac_full");
-    if (!pDnsConfig->dns_host_host_matcher)
+    serviceDnsConfig.dns_host_host_matcher = new SearchTool("ac_full");
+    if (!serviceDnsConfig.dns_host_host_matcher)
         return 0;
 
     /* Add patterns from Lua API */
     for (element = list; element; element = element->next)
     {
-        pDnsConfig->dns_host_host_matcher->add((char*)element->dpattern->pattern,
+        serviceDnsConfig.dns_host_host_matcher->add((char*)element->dpattern->pattern,
             element->dpattern->pattern_size, element->dpattern, true);
     }
 
-    pDnsConfig->dns_host_host_matcher->prep();
+    serviceDnsConfig.dns_host_host_matcher->prep();
 
     return 1;
 }
 
-int dns_host_detector_process_patterns(ServiceDnsConfig* pDnsConfig)
+int dns_host_detector_process_patterns()
 {
     int retVal = 1;
-    if (!dns_host_detector_create_matcher(pDnsConfig, pDnsConfig->DetectorDNSHostPatternList))
+    if (!dns_host_detector_create_matcher(serviceDnsConfig.DetectorDNSHostPatternList))
         retVal = 0;
     return retVal;
 }
@@ -307,7 +320,7 @@ static int dns_service_init(const IniServiceAPI* const init_api)
     {
         DebugFormat(DEBUG_INSPECTOR, "registering appId: %d\n", appIdRegistry[i].appId);
         init_api->RegisterAppId(&dns_udp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;
@@ -827,18 +840,20 @@ static int dns_host_scan_patterns(SearchTool* matcher, const uint8_t* pattern, s
 }
 
 int dns_host_scan_hostname(const uint8_t* pattern, size_t size, AppId* ClientAppId,
-    AppId* payloadId, const ServiceDnsConfig* pDnsConfig)
+    AppId* payloadId)
 {
-    return dns_host_scan_patterns(pDnsConfig->dns_host_host_matcher, pattern, size, ClientAppId,
-        payloadId);
+    return dns_host_scan_patterns(serviceDnsConfig.dns_host_host_matcher, pattern, size,
+    		+ClientAppId, payloadId);
 }
 
-void service_dns_host_clean(ServiceDnsConfig* pDnsConfig)
+void service_dns_host_clean()
 {
-    if (pDnsConfig->dns_host_host_matcher )
+    dns_detector_free_patterns();
+
+    if (serviceDnsConfig.dns_host_host_matcher )
     {
-        delete pDnsConfig->dns_host_host_matcher;
-        pDnsConfig->dns_host_host_matcher = nullptr;
+        delete serviceDnsConfig.dns_host_host_matcher;
+        serviceDnsConfig.dns_host_host_matcher = nullptr;
     }
 }
 
@@ -863,10 +878,9 @@ static int dns_add_pattern(DetectorDNSHostPattern** list, uint8_t* pattern_str, 
     return 1;
 }
 
-int dns_add_host_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id,
-    ServiceDnsConfig* pDnsConfig)
+int dns_add_host_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
 {
-    return dns_add_pattern(&pDnsConfig->DetectorDNSHostPatternList, pattern_str, pattern_size,
+    return dns_add_pattern(&serviceDnsConfig.DetectorDNSHostPatternList, pattern_str, pattern_size,
         type, app_id);
 }
 
@@ -887,9 +901,9 @@ static void dns_patterns_free(DetectorDNSHostPattern** list)
     }
 }
 
-void dns_detector_free_patterns(ServiceDnsConfig* pDnsConfig)
+void dns_detector_free_patterns()
 {
-    dns_patterns_free(&pDnsConfig->DetectorDNSHostPatternList);
+    dns_patterns_free(&serviceDnsConfig.DetectorDNSHostPatternList);
 }
 
 char* dns_parse_host(const uint8_t* host, uint8_t host_len)

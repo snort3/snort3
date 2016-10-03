@@ -81,19 +81,19 @@ void destroyHosUrlPatternList(HosUrlPatternsList** pHosUrlPatternsList)
     *pHosUrlPatternsList = nullptr;
 }
 
-int addMlmpPattern(void* hosUrlMatcher, HosUrlPatternsList** hosUrlPatternsList,
-    const uint8_t* host_pattern, int host_pattern_size,
-    const uint8_t* path_pattern, int path_pattern_size, const uint8_t* query_pattern, int
-    query_pattern_size,
+int addMlmpPattern(void* host_url_matcher, HosUrlPatternsList** hosUrlPatternsList,
+    const uint8_t* host_pattern, int host_pattern_size, const uint8_t* path_pattern,
+    int path_pattern_size, const uint8_t* query_pattern, int query_pattern_size,
     AppId appId, uint32_t payload_id, uint32_t service_id, uint32_t client_id, DHPSequence seq)
 {
-    static tMlmpPattern patterns[PATTERN_PART_MAX];
+    tMlmpPattern patterns[PATTERN_PART_MAX];
+
     int num_patterns;
 
     if (!host_pattern)
         return -1;
 
-    if (!hosUrlMatcher)
+    if (!host_url_matcher)
         return -1;
 
     HosUrlDetectorPattern* detector =
@@ -138,11 +138,11 @@ int addMlmpPattern(void* hosUrlMatcher, HosUrlPatternsList** hosUrlPatternsList,
     if (addHosUrlPatternToList(detector, hosUrlPatternsList))
         return -1;
 
-    return mlmpAddPattern((tMlmpTree*)hosUrlMatcher, patterns, detector);
+    return mlmpAddPattern((tMlmpTree*)host_url_matcher, patterns, detector);
 }
 
-uint32_t parseMultipleHTTPPatterns(const char* pattern, tMlmpPattern* parts, uint32_t
-    numPartLimit, int level)
+uint32_t parseMultipleHTTPPatterns(const char* pattern, tMlmpPattern* parts,
+        uint32_t numPartLimit, int level)
 {
     uint32_t partNum = 0;
     const char* tmp;
@@ -185,12 +185,12 @@ uint32_t parseMultipleHTTPPatterns(const char* pattern, tMlmpPattern* parts, uin
 
 /**recursively destroy matcher.
  */
-void destroyHosUrlMatcher(tMlmpTree** hosUrlMatcher)
+void destroyHosUrlMatcher(tMlmpTree** host_url_matcher)
 {
-    if (hosUrlMatcher && *hosUrlMatcher)
+    if (host_url_matcher && *host_url_matcher)
     {
-        mlmpDestroy(*hosUrlMatcher);
-        *hosUrlMatcher = nullptr;
+        mlmpDestroy(*host_url_matcher);
+        *host_url_matcher = nullptr;
     }
 }
 

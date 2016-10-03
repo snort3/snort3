@@ -61,8 +61,12 @@ struct AFActVal
     time_t last;
 };
 
-void checkSessionForAFIndicator(Packet*, int, const AppIdConfig*, ApplicationId);
-AppId checkSessionForAFForecast(AppIdSession*, Packet*, int, const AppIdConfig*, ApplicationId);
+int init_appid_forecast();
+void clean_appid_forecast();
+void add_af_indicator(ApplicationId indicator, ApplicationId forecast, ApplicationId target );
+
+void checkSessionForAFIndicator(Packet*, int, ApplicationId);
+AppId checkSessionForAFForecast(AppIdSession*, Packet*, int, ApplicationId);
 
 #endif
 

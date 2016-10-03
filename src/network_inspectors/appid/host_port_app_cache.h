@@ -41,13 +41,11 @@ struct HostPortVal
     unsigned type;
 };
 
-void hostPortAppCacheInit(AppIdConfig*);
-void hostPortAppCacheFini(AppIdConfig*);
-HostPortVal* hostPortAppCacheFind(const sfip_t*, uint16_t port, IpProtocol proto,
-        const AppIdConfig*);
-int hostPortAppCacheAdd(const sfip_t*, uint16_t port, IpProtocol proto, unsigned type,
-        AppId, AppIdConfig*);
-void hostPortAppCacheDump(const AppIdConfig*);
+void hostPortAppCacheInit();
+void hostPortAppCacheFini();
+HostPortVal* hostPortAppCacheFind(const sfip_t*, uint16_t port, IpProtocol proto);
+int hostPortAppCacheAdd(const sfip_t*, uint16_t port, IpProtocol proto, unsigned type, AppId);
+void hostPortAppCacheDump();
 
 #endif
 

@@ -331,6 +331,253 @@ static HeaderPattern header_patterns[] =
     { HTTP_ID_LEN, (uint8_t*)HTTP_HEADER_LF, HTTP_HEADER_LF_SIZE }
 };
 
+class DetectorHttpConfig
+{
+public:
+    DetectorHttpConfig() {}
+    ~DetectorHttpConfig() {}
+
+    SearchTool* url_matcher = nullptr;
+    SearchTool* client_agent_matcher = nullptr;
+    SearchTool* via_matcher = nullptr;
+    tMlmpTree* host_url_matcher = nullptr;
+    tMlmpTree* RTMPHosUrlMatcher = nullptr;
+    SearchTool* header_matcher = nullptr;
+    SearchTool* content_type_matcher = nullptr;
+    SearchTool* chp_matchers[MAX_PATTERN_TYPE + 1] = { nullptr };
+    HosUrlPatternsList* hosUrlPatternsList = nullptr;
+};
+
+static THREAD_LOCAL DetectorHttpConfig* detectorHttpConfig = nullptr;
+
+#define URL_LIST_STEP_SIZE  5000
+class HttpPatternLists
+{
+public:
+    HttpPatternLists() {}
+    ~HttpPatternLists() {}
+
+    HTTPListElement* hostPayloadPatternList = nullptr;
+    HTTPListElement* urlPatternList = nullptr;
+    HTTPListElement* clientAgentPatternList = nullptr;
+    HTTPListElement* contentTypePatternList = nullptr;
+    CHPListElement* chpList = nullptr;
+    DetectorAppUrlList appUrlList;
+    DetectorAppUrlList RTMPUrlList;
+};
+
+static THREAD_LOCAL HttpPatternLists* httpPatternLists = nullptr;
+
+void init_http_detector()
+{
+    httpPatternLists = new HttpPatternLists;
+}
+
+static void FreeDetectorAppUrlPattern(DetectorAppUrlPattern* pattern)
+{
+    if (pattern)
+    {
+        if (pattern->userData.query.pattern)
+            snort_free(*(void**)&pattern->userData.query.pattern);
+        if (pattern->patterns.host.pattern)
+            snort_free(*(void**)&pattern->patterns.host.pattern);
+        if (pattern->patterns.path.pattern)
+            snort_free(*(void**)&pattern->patterns.path.pattern);
+        if (pattern->patterns.scheme.pattern)
+            snort_free(*(void**)&pattern->patterns.scheme.pattern);
+        snort_free(pattern);
+    }
+}
+
+void insert_chp_pattern(CHPListElement* chpa)
+{
+    CHPListElement* tmp_chpa = httpPatternLists->chpList;
+    if (!tmp_chpa)
+        httpPatternLists->chpList = chpa;
+    else
+    {
+        while (tmp_chpa->next)
+            tmp_chpa = tmp_chpa->next;
+        tmp_chpa->next = chpa;
+    }
+}
+
+void insert_http_pattern_element(enum httpPatternType pType, HTTPListElement* element)
+{
+    switch (pType)
+    {
+    case HTTP_PAYLOAD:
+        element->next = httpPatternLists->hostPayloadPatternList;
+        httpPatternLists->hostPayloadPatternList = element;
+        break;
+    case HTTP_URL:
+        element->next = httpPatternLists->urlPatternList;
+        httpPatternLists->urlPatternList = element;
+        break;
+    case HTTP_USER_AGENT:
+        element->next = httpPatternLists->clientAgentPatternList;
+        httpPatternLists->clientAgentPatternList = element;
+        break;
+    }
+}
+
+void insert_content_type_pattern(HTTPListElement* element)
+{
+    element->next = httpPatternLists->contentTypePatternList;
+    httpPatternLists->contentTypePatternList = element;
+}
+
+void insert_url_pattern(DetectorAppUrlPattern* pattern)
+{
+    DetectorAppUrlList* urlList = &httpPatternLists->appUrlList;
+    /**first time usedCount and allocatedCount are both 0, urlPattern will be nullptr.
+     * This case is same as malloc. In case of error, realloc will return nullptr, and
+     * original urlPattern buffer is left untouched.
+     */
+    if (urlList->usedCount == urlList->allocatedCount)
+    {
+        DetectorAppUrlPattern** tmp = (decltype(tmp)) (realloc(urlList->urlPattern,
+                (urlList->allocatedCount + URL_LIST_STEP_SIZE) * sizeof(*tmp)));
+        if (!tmp)
+        {
+            FreeDetectorAppUrlPattern(pattern);
+            //return 0;
+        }
+        urlList->urlPattern = tmp;
+        urlList->allocatedCount += URL_LIST_STEP_SIZE;
+    }
+    urlList->urlPattern[urlList->usedCount++] = pattern;
+}
+
+void insert_rtmp_url_pattern(DetectorAppUrlPattern* pattern)
+{
+    DetectorAppUrlList* urlList = &httpPatternLists->RTMPUrlList;
+    /**first time usedCount and allocatedCount are both 0, urlPattern will be nullptr.
+     * This case is same as malloc. In case of error, realloc will return nullptr, and
+     * original urlPattern buffer is left untouched.
+     */
+    if (urlList->usedCount == urlList->allocatedCount)
+    {
+        DetectorAppUrlPattern** tmp = (decltype(tmp)) (realloc(urlList->urlPattern,
+                (urlList->allocatedCount + URL_LIST_STEP_SIZE) * sizeof(*tmp)));
+        if (!tmp)
+        {
+            FreeDetectorAppUrlPattern(pattern);
+            //return 0;
+        }
+        urlList->urlPattern = tmp;
+        urlList->allocatedCount += URL_LIST_STEP_SIZE;
+    }
+    urlList->urlPattern[urlList->usedCount++] = pattern;
+}
+
+void insert_app_url_pattern(DetectorAppUrlPattern* pattern)
+{
+    DetectorAppUrlList* urlList = &httpPatternLists->appUrlList;
+    /**first time usedCount and allocatedCount are both 0, urlPattern will be nullptr.
+     * This case is same as malloc. In case of error, realloc will return nullptr, and
+     * original urlPattern buffer is left untouched.
+     */
+    if (urlList->usedCount == urlList->allocatedCount)
+    {
+        DetectorAppUrlPattern** tmp = (decltype(tmp)) (realloc(urlList->urlPattern,
+                (urlList->allocatedCount + URL_LIST_STEP_SIZE) * sizeof(*tmp)));
+        if (!tmp)
+        {
+            FreeDetectorAppUrlPattern(pattern);
+            //return 0;
+        }
+        urlList->urlPattern = tmp;
+        urlList->allocatedCount += URL_LIST_STEP_SIZE;
+    }
+    urlList->urlPattern[urlList->usedCount++] = pattern;
+}
+
+DetectorAppUrlList* getAppUrlList()
+{
+    return (&httpPatternLists->appUrlList);
+}
+
+static void FreeHTTPListElement(HTTPListElement* element)
+{
+    if (element)
+    {
+        if (element->detectorHTTPPattern.pattern)
+            snort_free(element->detectorHTTPPattern.pattern);
+        snort_free(element);
+    }
+}
+
+static void FreeCHPAppListElement(CHPListElement* element)
+{
+    if (element)
+    {
+        if (element->chp_action.pattern)
+            snort_free(element->chp_action.pattern);
+        if (element->chp_action.action_data)
+            snort_free(element->chp_action.action_data);
+        snort_free (element);
+    }
+}
+
+static void CleanHttpPatternLists()
+{
+    HTTPListElement* element;
+    CHPListElement* chpe;
+    size_t i;
+
+    for (i = 0; i < httpPatternLists->appUrlList.usedCount; i++)
+    {
+        FreeDetectorAppUrlPattern(httpPatternLists->appUrlList.urlPattern[i]);
+        httpPatternLists->appUrlList.urlPattern[i] = nullptr;
+    }
+    for (i = 0; i < httpPatternLists->RTMPUrlList.usedCount; i++)
+    {
+        FreeDetectorAppUrlPattern(httpPatternLists->RTMPUrlList.urlPattern[i]);
+        httpPatternLists->RTMPUrlList.urlPattern[i] = nullptr;
+    }
+    if (httpPatternLists->appUrlList.urlPattern)
+    {
+        // FIXIT-M: still allocated by malloc/realloc
+        free(httpPatternLists->appUrlList.urlPattern);
+        httpPatternLists->appUrlList.urlPattern = nullptr;
+    }
+    httpPatternLists->appUrlList.allocatedCount = 0;
+    if (httpPatternLists->RTMPUrlList.urlPattern)
+    {
+        free(httpPatternLists->RTMPUrlList.urlPattern);
+        httpPatternLists->RTMPUrlList.urlPattern = nullptr;
+    }
+    httpPatternLists->RTMPUrlList.allocatedCount = 0;
+    httpPatternLists->appUrlList.usedCount = 0;
+    httpPatternLists->RTMPUrlList.usedCount = 0;
+    while ((element = httpPatternLists->clientAgentPatternList))
+    {
+        httpPatternLists->clientAgentPatternList = element->next;
+        FreeHTTPListElement(element);
+    }
+    while ((element = httpPatternLists->hostPayloadPatternList))
+    {
+        httpPatternLists->hostPayloadPatternList = element->next;
+        FreeHTTPListElement(element);
+    }
+    while ((element = httpPatternLists->urlPatternList))
+    {
+        httpPatternLists->urlPatternList = element->next;
+        FreeHTTPListElement(element);
+    }
+    while ((element = httpPatternLists->contentTypePatternList))
+    {
+        httpPatternLists->contentTypePatternList = element->next;
+        FreeHTTPListElement(element);
+    }
+    while ((chpe = httpPatternLists->chpList))
+    {
+        httpPatternLists->chpList = chpe->next;
+        FreeCHPAppListElement(chpe);
+    }
+}
+
 static int content_pattern_match(void* id, void*, int index, void* data, void*)
 {
     MatchedPatterns* cm;
@@ -506,27 +753,22 @@ static SearchTool* processPatterns(DetectorHTTPPattern* patternList,
     return patternMatcher;
 }
 
-static int processHostPatterns(
-    DetectorHTTPPattern* patternList,
-    size_t patternListCount,
-    HTTPListElement* luaPatternList,
-    DetectorAppUrlList* urlPatternList,
-    DetectorAppUrlList* RTMPUrlList,
-    DetectorHttpConfig* pHttpConfig
-    )
+static int processHostPatterns(DetectorHTTPPattern* patternList, size_t patternListCount,
+    HTTPListElement* luaPatternList, DetectorAppUrlList* urlPatternList,
+    DetectorAppUrlList* RTMPUrlList)
 {
     HTTPListElement* element;
     DetectorAppUrlPattern* appUrlPattern;
 
-    if (!pHttpConfig->hosUrlMatcher)
-        pHttpConfig->hosUrlMatcher = mlmpCreate();
+    if (!detectorHttpConfig->host_url_matcher)
+        detectorHttpConfig->host_url_matcher = mlmpCreate();
 
-    if (!pHttpConfig->RTMPHosUrlMatcher)
-        pHttpConfig->RTMPHosUrlMatcher = mlmpCreate();
+    if (!detectorHttpConfig->RTMPHosUrlMatcher)
+        detectorHttpConfig->RTMPHosUrlMatcher = mlmpCreate();
 
     for (uint32_t i = 0; i < patternListCount; i++)
     {
-        if (addMlmpPattern(pHttpConfig->hosUrlMatcher,  &pHttpConfig->hosUrlPatternsList,
+        if (addMlmpPattern(detectorHttpConfig->host_url_matcher,  &detectorHttpConfig->hosUrlPatternsList,
             patternList[i].pattern, patternList[i].pattern_size,
             nullptr, 0, nullptr, 0, patternList[i].appId, patternList[i].payload,
             patternList[i].service_id,
@@ -536,7 +778,7 @@ static int processHostPatterns(
 
     for (element = luaPatternList; element != 0; element = element->next)
     {
-        if (addMlmpPattern(pHttpConfig->hosUrlMatcher, &pHttpConfig->hosUrlPatternsList,
+        if (addMlmpPattern(detectorHttpConfig->host_url_matcher, &detectorHttpConfig->hosUrlPatternsList,
             element->detectorHTTPPattern.pattern, element->detectorHTTPPattern.pattern_size,
             nullptr, 0, nullptr, 0, element->detectorHTTPPattern.appId,
             element->detectorHTTPPattern.payload, element->detectorHTTPPattern.service_id,
@@ -547,7 +789,7 @@ static int processHostPatterns(
     for (uint32_t i = 0; i < RTMPUrlList->usedCount; i++)
     {
         appUrlPattern = RTMPUrlList->urlPattern[i];
-        if (addMlmpPattern(pHttpConfig->RTMPHosUrlMatcher, &pHttpConfig->hosUrlPatternsList,
+        if (addMlmpPattern(detectorHttpConfig->RTMPHosUrlMatcher, &detectorHttpConfig->hosUrlPatternsList,
             appUrlPattern->patterns.host.pattern, appUrlPattern->patterns.host.patternSize,
             appUrlPattern->patterns.path.pattern, appUrlPattern->patterns.path.patternSize,
             appUrlPattern->userData.query.pattern, appUrlPattern->userData.query.patternSize,
@@ -560,7 +802,7 @@ static int processHostPatterns(
     for (uint32_t i = 0; i < urlPatternList->usedCount; i++)
     {
         appUrlPattern = urlPatternList->urlPattern[i];
-        if (addMlmpPattern(pHttpConfig->hosUrlMatcher, &pHttpConfig->hosUrlPatternsList,
+        if (addMlmpPattern(detectorHttpConfig->host_url_matcher, &detectorHttpConfig->hosUrlPatternsList,
             appUrlPattern->patterns.host.pattern, appUrlPattern->patterns.host.patternSize,
             appUrlPattern->patterns.path.pattern, appUrlPattern->patterns.path.patternSize,
             appUrlPattern->userData.query.pattern, appUrlPattern->userData.query.patternSize,
@@ -570,8 +812,8 @@ static int processHostPatterns(
             return -1;
     }
 
-    mlmpProcessPatterns(pHttpConfig->hosUrlMatcher);
-    mlmpProcessPatterns(pHttpConfig->RTMPHosUrlMatcher);
+    mlmpProcessPatterns(detectorHttpConfig->host_url_matcher);
+    mlmpProcessPatterns(detectorHttpConfig->RTMPHosUrlMatcher);
     return 0;
 }
 
@@ -603,29 +845,28 @@ static SearchTool* processContentTypePatterns(DetectorHTTPPattern* patternList,
     return patternMatcher;
 }
 
-static int processCHPList(CHPListElement* chplist, DetectorHttpConfig* pHttpConfig)
+static int processCHPList(CHPListElement* chplist)
 {
     CHPListElement* chpe;
 
-    for (size_t i = 0; i < sizeof(pHttpConfig->chp_matchers)/sizeof(pHttpConfig->chp_matchers[0]);
-        i++)
+    for (size_t i = 0; i <= MAX_PATTERN_TYPE; i++)
     {
-        pHttpConfig->chp_matchers[i] = new SearchTool("ac_full");
-        if (!pHttpConfig->chp_matchers[i])
+        detectorHttpConfig->chp_matchers[i] = new SearchTool("ac_full");
+        if (!detectorHttpConfig->chp_matchers[i])
             return 0;
     }
 
     for (chpe = chplist; chpe; chpe = chpe->next)
     {
-        pHttpConfig->chp_matchers[chpe->chp_action.ptype]->add(chpe->chp_action.pattern,
+        detectorHttpConfig->chp_matchers[chpe->chp_action.ptype]->add(chpe->chp_action.pattern,
             chpe->chp_action.psize,
             &chpe->chp_action,
             true);
     }
 
-    for (size_t i = 0; i < sizeof(pHttpConfig->chp_matchers)/sizeof(pHttpConfig->chp_matchers[0]);
+    for (size_t i = 0; i < sizeof(detectorHttpConfig->chp_matchers)/sizeof(detectorHttpConfig->chp_matchers[0]);
         i++)
-        pHttpConfig->chp_matchers[i]->prep();
+        detectorHttpConfig->chp_matchers[i]->prep();
 
     return 1;
 }
@@ -642,91 +883,77 @@ static SearchTool* registerHeaderPatterns(HeaderPattern* patternList, size_t pat
     return patternMatcher;
 }
 
-int http_detector_finalize(AppIdConfig* pConfig)
+int finalize_http_detector()
 {
     size_t upc = 0;
     size_t apc = 0;
     size_t ctc = 0;
     size_t vpc = 0;
-
-    DetectorHttpConfig* pHttpConfig = &pConfig->detectorHttpConfig;
-    HttpPatternLists* patternLists = &pConfig->httpPatternLists;
     uint32_t numPatterns;
+
+    detectorHttpConfig = new DetectorHttpConfig;
 
     /*create via pattern matcher */
     numPatterns = sizeof(via_http_detector_patterns)/sizeof(*via_http_detector_patterns);
-    pHttpConfig->via_matcher = processPatterns(via_http_detector_patterns, numPatterns, &vpc,
+    detectorHttpConfig->via_matcher = processPatterns(via_http_detector_patterns, numPatterns, &vpc,
         nullptr);
-    if (!pHttpConfig->via_matcher)
+    if (!detectorHttpConfig->via_matcher)
         return -1;
 
     /*create url pattern matcher */
-    pHttpConfig->url_matcher = processPatterns(nullptr, 0, &upc,
-        patternLists->urlPatternList);
-    if (!pHttpConfig->url_matcher)
+    detectorHttpConfig->url_matcher = processPatterns(nullptr, 0, &upc, httpPatternLists->urlPatternList);
+    if (!detectorHttpConfig->url_matcher)
         return -1;
 
     /*create client agent pattern matcher */
     numPatterns = sizeof(client_agent_patterns)/sizeof(*client_agent_patterns);
-    pHttpConfig->client_agent_matcher = processPatterns(client_agent_patterns,numPatterns, &apc,
-        patternLists->clientAgentPatternList);
-    if (!pHttpConfig->client_agent_matcher)
+    detectorHttpConfig->client_agent_matcher = processPatterns(client_agent_patterns,numPatterns,
+            &apc, httpPatternLists->clientAgentPatternList);
+    if (!detectorHttpConfig->client_agent_matcher)
         return -1;
 
     numPatterns = sizeof(header_patterns)/sizeof(*header_patterns);
-    pHttpConfig->header_matcher = registerHeaderPatterns(header_patterns,numPatterns);
-    if (!pHttpConfig->header_matcher)
+    detectorHttpConfig->header_matcher = registerHeaderPatterns(header_patterns, numPatterns);
+    if (!detectorHttpConfig->header_matcher)
         return -1;
 
     numPatterns = sizeof(host_payload_http_detector_patterns)/
         sizeof(*host_payload_http_detector_patterns);
     if (processHostPatterns(host_payload_http_detector_patterns, numPatterns,
-        patternLists->hostPayloadPatternList, &patternLists->appUrlList,
-        &patternLists->RTMPUrlList, pHttpConfig) < 0)
+        httpPatternLists->hostPayloadPatternList, &httpPatternLists->appUrlList,
+        &httpPatternLists->RTMPUrlList) < 0)
         return -1;
 
     numPatterns = sizeof(content_type_patterns)/sizeof(*content_type_patterns);
-    pHttpConfig->content_type_matcher = processContentTypePatterns(content_type_patterns,
-        numPatterns, patternLists->contentTypePatternList, &ctc);
-    if (!pHttpConfig->content_type_matcher)
+    detectorHttpConfig->content_type_matcher = processContentTypePatterns(content_type_patterns,
+        numPatterns, httpPatternLists->contentTypePatternList, &ctc);
+    if (!detectorHttpConfig->content_type_matcher)
         return -1;
 
-    if (!processCHPList(patternLists->chpList, pHttpConfig))
+    if (!processCHPList(httpPatternLists->chpList))
         return -1;
-
-    pHttpConfig->chp_user_agent_matcher = pHttpConfig->chp_matchers[AGENT_PT];
-    pHttpConfig->chp_host_matcher = pHttpConfig->chp_matchers[HOST_PT];
-    pHttpConfig->chp_referer_matcher = pHttpConfig->chp_matchers[REFERER_PT];
-    pHttpConfig->chp_uri_matcher = pHttpConfig->chp_matchers[URI_PT];
-    pHttpConfig->chp_cookie_matcher = pHttpConfig->chp_matchers[COOKIE_PT];
-    pHttpConfig->chp_req_body_matcher = pHttpConfig->chp_matchers[REQ_BODY_PT];
-    pHttpConfig->chp_content_type_matcher = pHttpConfig->chp_matchers[CONTENT_TYPE_PT];
-    pHttpConfig->chp_location_matcher = pHttpConfig->chp_matchers[LOCATION_PT];
-    pHttpConfig->chp_body_matcher = pHttpConfig->chp_matchers[BODY_PT];
 
     return 0;
 }
 
-void http_detector_clean(DetectorHttpConfig* pHttpConfig)
+void clean_http_detector()
 {
-    delete pHttpConfig->via_matcher;
-    delete pHttpConfig->url_matcher;
-    delete pHttpConfig->client_agent_matcher;
-    delete pHttpConfig->header_matcher;
-    delete pHttpConfig->content_type_matcher;
-    delete pHttpConfig->chp_user_agent_matcher;
-    delete pHttpConfig->chp_host_matcher;
-    delete pHttpConfig->chp_uri_matcher;
-    delete pHttpConfig->chp_cookie_matcher;
-    delete pHttpConfig->chp_content_type_matcher;
-    delete pHttpConfig->chp_location_matcher;
-    delete pHttpConfig->chp_body_matcher;
-    delete pHttpConfig->chp_req_body_matcher;
-    delete pHttpConfig->chp_referer_matcher;
+    delete detectorHttpConfig->via_matcher;
+    delete detectorHttpConfig->url_matcher;
+    delete detectorHttpConfig->client_agent_matcher;
+    delete detectorHttpConfig->header_matcher;
+    delete detectorHttpConfig->content_type_matcher;
 
-    destroyHosUrlMatcher(&pHttpConfig->hosUrlMatcher);
-    destroyHosUrlMatcher(&pHttpConfig->RTMPHosUrlMatcher);
-    destroyHosUrlPatternList(&pHttpConfig->hosUrlPatternsList);
+    for (size_t i = 0; i <= MAX_PATTERN_TYPE; i++)
+         delete detectorHttpConfig->chp_matchers[i];
+
+    destroyHosUrlMatcher(&detectorHttpConfig->host_url_matcher);
+    destroyHosUrlMatcher(&detectorHttpConfig->RTMPHosUrlMatcher);
+    destroyHosUrlPatternList(&detectorHttpConfig->hosUrlPatternsList);
+
+    CleanHttpPatternLists();
+    delete httpPatternLists;
+    delete detectorHttpConfig;
 }
 
 static inline void FreeMatchStructures(MatchedPatterns* mp)
@@ -1238,14 +1465,14 @@ void finalizeFflow(fflow_info* fflow, unsigned app_type_flags, AppId target_appI
 }
 
 int scanKeyCHP(PatternType ptype, char* buf, int buf_size, CHPMatchTally** ppTally,
-    MatchedCHPAction** ppmatches, const DetectorHttpConfig* pHttpConfig)
+    MatchedCHPAction** ppmatches)
 {
     CHPTallyAndActions tallyAndActions;
     tallyAndActions.pTally = *ppTally;
     tallyAndActions.matches = *ppmatches;
 
     //FIXIT-H
-    pHttpConfig->chp_matchers[ptype]->find_all(buf, buf_size, &chp_key_pattern_match,
+    detectorHttpConfig->chp_matchers[ptype]->find_all(buf, buf_size, &chp_key_pattern_match,
         false, (void*)(&tallyAndActions));
 
     *ppTally = tallyAndActions.pTally;
@@ -1253,10 +1480,8 @@ int scanKeyCHP(PatternType ptype, char* buf, int buf_size, CHPMatchTally** ppTal
     return (int)(tallyAndActions.pTally != nullptr);
 }
 
-AppId scanCHP(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp,
-    char** version, char** user, char** new_field,
-    int* total_found, httpSession* hsession, Packet* p, const
-    DetectorHttpConfig* pHttpConfig)
+AppId scanCHP(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp, char** version,
+        char** user, char** new_field, int* total_found, httpSession* hsession, Packet* p)
 {
     MatchedCHPAction* second_sweep_for_inserts = nullptr;
     int do_not_further_modify_field = 0;
@@ -1270,7 +1495,7 @@ AppId scanCHP(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp,
         mp = nullptr;
 
         // FIXIT-H
-        pHttpConfig->chp_matchers[ptype]->find_all(buf, buf_size, &chp_pattern_match,
+        detectorHttpConfig->chp_matchers[ptype]->find_all(buf, buf_size, &chp_pattern_match,
             false, (void*)(&mp));
     }
     if (!mp)
@@ -1290,9 +1515,18 @@ AppId scanCHP(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp,
         {
             switch (match->action)
             {
+            case DEFER_TO_SIMPLE_DETECT:
+                // Ignore all other patterns; we are done.
+                FreeMatchedCHPActions(mp);
+                // Returning APP_ID_NONE will trigger the clearing of hsession->skip_simple_detect
+                // and the freeing of any planned field rewrites.
+                return APP_ID_NONE;
+                break;
+
             default:
                 (*total_found)++;
                 break;
+
             case ALTERNATE_APPID:     // an "optional" action that doesn't count towards totals
             case REWRITE_FIELD:       // handled when the action completes successfully
             case INSERT_FIELD:        // handled when the action completes successfully
@@ -1428,6 +1662,8 @@ AppId scanCHP(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp,
         case NO_ACTION:
             hsession->skip_simple_detect = true;
             break;
+        default:
+            break;
         }
     }
     // non-nullptr second_sweep_for_inserts indicates the insert action we will use.
@@ -1461,7 +1697,7 @@ static inline int optionallyReplaceWithStrdup(char** optionalStr, const char* st
 }
 
 void identifyUserAgent(const uint8_t* start, int size, AppId* serviceAppId, AppId* ClientAppId,
-    char** version, const DetectorHttpConfig* pHttpConfig)
+    char** version)
 {
     int skypeDetect;
     int mobileDetect;
@@ -1480,7 +1716,7 @@ void identifyUserAgent(const uint8_t* start, int size, AppId* serviceAppId, AppI
     temp_ver[0] = 0;
 
     // FIXIT-H
-    pHttpConfig->client_agent_matcher->find_all((const char*)start, size, &http_pattern_match,
+    detectorHttpConfig->client_agent_matcher->find_all((const char*)start, size, &http_pattern_match,
         false, (void*)&mp);
 
     if (mp)
@@ -1790,8 +2026,7 @@ done:
     FreeMatchStructures(mp);
 }
 
-int geAppidByViaPattern(const uint8_t* data, unsigned size, char** version,
-        const DetectorHttpConfig* pHttpConfig)
+int geAppidByViaPattern(const uint8_t* data, unsigned size, char** version)
 {
     unsigned i;
     const uint8_t* data_ptr;
@@ -1800,10 +2035,10 @@ int geAppidByViaPattern(const uint8_t* data, unsigned size, char** version,
     DetectorHTTPPattern* match = nullptr;
     char temp_ver[MAX_VERSION_SIZE];
 
-    if (pHttpConfig->via_matcher)
+    if (detectorHttpConfig->via_matcher)
     {
         // FIXIT-H
-        pHttpConfig->via_matcher->find_all((const char*)data, size, &http_pattern_match,
+        detectorHttpConfig->via_matcher->find_all((const char*)data, size, &http_pattern_match,
             false, (void*)&mp);
     }
 
@@ -1869,16 +2104,16 @@ AppId scan_header_x_working_with(const uint8_t* data, uint32_t size, char** vers
     return APP_ID_NONE;
 }
 
-AppId geAppidByContentType(const uint8_t* data, int size, const DetectorHttpConfig* pHttpConfig)
+AppId geAppidByContentType(const uint8_t* data, int size)
 {
     MatchedPatterns* mp = nullptr;
     DetectorHTTPPattern* match;
     AppId payloadId;
 
-    if (pHttpConfig->content_type_matcher)
+    if (detectorHttpConfig->content_type_matcher)
     {
         // FIXIT-H
-        pHttpConfig->content_type_matcher->find_all((const char*)data, size,
+        detectorHttpConfig->content_type_matcher->find_all((const char*)data, size,
             &content_pattern_match, false, (void*)&mp);
     }
 
@@ -1932,8 +2167,7 @@ done:
 }
 
 int getHTTPHeaderLocation(const uint8_t* data, unsigned size, HttpId id, int* start, int* end,
-    HeaderMatchedPatterns* hmp,
-    const DetectorHttpConfig* pHttpConfig)
+        HeaderMatchedPatterns* hmp)
 {
     HTTPHeaderIndices* match;
 
@@ -1947,10 +2181,10 @@ int getHTTPHeaderLocation(const uint8_t* data, unsigned size, HttpId id, int* st
     if (hmp->searched)
         return 0;
 
-    if (pHttpConfig->header_matcher)
+    if (detectorHttpConfig->header_matcher)
     {
         //FIXIT-H
-        pHttpConfig->header_matcher->find_all((const char*)data, size,
+        detectorHttpConfig->header_matcher->find_all((const char*)data, size,
             &http_header_pattern_match, false, (void*)hmp);
     }
 
@@ -1972,8 +2206,7 @@ int getHTTPHeaderLocation(const uint8_t* data, unsigned size, HttpId id, int* st
 }
 
 AppId getAppIdFromUrl(char* host, char* url, char** version, char* referer, AppId* ClientAppId,
-        AppId* serviceAppId, AppId* payloadAppId, AppId* referredPayloadAppId,
-        unsigned from_rtmp, const DetectorHttpConfig* pHttpConfig)
+        AppId* serviceAppId, AppId* payloadAppId, AppId* referredPayloadAppId, unsigned from_rtmp)
 {
     char* path;
     char* referer_start;
@@ -1995,7 +2228,7 @@ AppId getAppIdFromUrl(char* host, char* url, char** version, char* referer, AppI
 #define URL_SCHEME_END_PATTERN "://"
 #define URL_SCHEME_MAX_LEN     (sizeof("https://")-1)
 
-    matcher = (from_rtmp ? pHttpConfig->RTMPHosUrlMatcher : pHttpConfig->hosUrlMatcher);
+    matcher = (from_rtmp ? detectorHttpConfig->RTMPHosUrlMatcher : detectorHttpConfig->host_url_matcher);
 
     if (!host && !url)
         return 0;
@@ -2083,8 +2316,7 @@ AppId getAppIdFromUrl(char* host, char* url, char** version, char* referer, AppI
     snort_free(temp_host);
 
     /* if referred_id feature id disabled, referer will be null */
-    if (referer && (!payload_found || appInfoEntryFlagGet(data->payload_id, APPINFO_FLAG_REFERRED,
-        pAppidActiveConfig)))
+    if (referer && (!payload_found || appInfoEntryFlagGet(data->payload_id, APPINFO_FLAG_REFERRED)))
     {
         referer_start = referer;
 
@@ -2283,7 +2515,7 @@ int webdav_found(HeaderMatchedPatterns* hmp)
 
 static CLIENT_APP_RETCODE http_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE http_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData, const AppIdConfig* pConfig);
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
 static int http_service_init(const IniServiceAPI* const init_api);
 static int http_service_validate(ServiceValidationArgs* args);
 
@@ -2376,7 +2608,7 @@ static CLIENT_APP_RETCODE http_client_init(const IniClientAppAPI* const init_api
             DebugFormat(DEBUG_LOG, "registering patterns: %s: %d",
                 (const char*)patterns[i].pattern, patterns[i].index);
             init_api->RegisterPattern(&http_client_validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index, init_api->pAppidConfig);
+                patterns[i].length, patterns[i].index);
         }
     }
 
@@ -2384,14 +2616,14 @@ static CLIENT_APP_RETCODE http_client_init(const IniClientAppAPI* const init_api
     {
         DebugFormat(DEBUG_LOG, "registering appId: %d\n", appIdRegistry[j].appId);
         init_api->RegisterAppId(&http_client_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[j].additionalInfo);
     }
 
     return CLIENT_APP_SUCCESS;
 }
 
 static CLIENT_APP_RETCODE http_client_validate(const uint8_t*, uint16_t, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector*, const AppIdConfig*)
+    AppIdSession* flowp, Packet* pkt, struct Detector*)
 {
     http_client_mod.api->add_app(flowp, APP_ID_HTTP, APP_ID_HTTP + GENERIC_APP_OFFSET, nullptr);
     flowp->rna_client_state = RNA_STATE_FINISHED;
@@ -2412,7 +2644,7 @@ static int http_service_init(const IniServiceAPI* const init_api)
     {
         DebugFormat(DEBUG_LOG, "registering appId: %d\n", appIdRegistry[i].appId);
         init_api->RegisterAppId(&http_service_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

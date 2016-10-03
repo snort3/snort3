@@ -28,19 +28,19 @@
 #include "main/snort_debug.h"
 #include "utils/util.h"
 
+static THREAD_LOCAL ServicePortPattern service_port_patterns;
+static THREAD_LOCAL ClientPortPattern clientPortPattern;
+
 static int service_validate(ServiceValidationArgs* args);
-static int csdPatternTreeSearch(const uint8_t* data, uint16_t size, IpProtocol protocol,
-    Packet* pkt,
-    const RNAServiceElement** serviceData, bool isClient,
-    const AppIdConfig* pConfig);
+static int csdPatternTreeSearch(const uint8_t* data, uint16_t size, IpProtocol protocol, Packet* pkt,
+    const RNAServiceElement** serviceData, bool isClient);
 static int pattern_service_init(const IniServiceAPI* const iniServiceApi);
-static void pattern_service_clean(const CleanServiceAPI* const clean_api);
+static void pattern_service_clean();
 static CLIENT_APP_RETCODE client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE client_init_tcp(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData,
-    const AppIdConfig* pConfig);
-static void client_clean(const CleanClientAppAPI* const clean_api);
+    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
+static void client_clean();
 static const IniServiceAPI* iniServiceApi;
 static const IniClientAppAPI* iniClientApi;
 
@@ -186,8 +186,7 @@ static void read_patterns(PortPatternNode* portPatternList, PatternService** ser
         pattern->offset = pNode->offset;
         pattern->next = ps->pattern;
         ps->pattern = pattern;
-
-        appInfoSetActive(ps->id, true);
+        set_app_info_active(ps->id);
     }
 }
 
@@ -206,7 +205,7 @@ static void install_ports(PatternService* serviceList, const IniServiceAPI* cons
         {
             pp.port = port->port;
             pp.proto = (IpProtocol)ps->proto;
-            if (iniServiceApi->AddPort(&pp, &pattern_service_mod, iniServiceApi->pAppidConfig))
+            if (iniServiceApi->AddPort(&pp, &pattern_service_mod))
                 ErrorMessage("Failed to add port - %d:%u:%d\n",ps->id,
                 		(unsigned)pp.port, (uint8_t)pp.proto);
             else
@@ -233,78 +232,158 @@ static void RegisterPattern(SearchTool** patterns, Pattern* pattern)
     (*patterns)->add((char*)pattern->data, pattern->length, pattern, false);
 }
 
+void insert_service_port_pattern(PortPatternNode* pPattern)
+{
+    PortPatternNode** prev;
+    PortPatternNode** curr;
+    prev = nullptr;
+
+    for (curr = &service_port_patterns.luaInjectedPatterns; *curr; prev = curr, curr = &((*curr)->next))
+    {
+        if (strcmp(pPattern->detectorName, (*curr)->detectorName) || pPattern->protocol < (*curr)->protocol
+                || pPattern->port < (*curr)->port)
+            break;
+    }
+
+    if (prev)
+    {
+        pPattern->next = (*prev)->next;
+        (*prev)->next = pPattern;
+    }
+    else
+    {
+        pPattern->next = *curr;
+        *curr = pPattern;
+    }
+}
+
+void clean_service_port_patterns()
+{
+    PortPatternNode* tmp;
+
+    while ((tmp = service_port_patterns.luaInjectedPatterns))
+    {
+        service_port_patterns.luaInjectedPatterns = tmp->next;
+        snort_free(tmp->pattern);
+        snort_free(tmp->detectorName);
+        snort_free(tmp);
+    }
+}
+
+
+void insert_client_port_pattern(PortPatternNode* pPattern)
+{
+    //insert ports in order.
+    {
+        PortPatternNode** prev;
+        PortPatternNode** curr;
+        prev = nullptr;
+        for (curr = &clientPortPattern.luaInjectedPatterns; *curr; prev = curr, curr = &((*curr)->next))
+        {
+            if (strcmp(pPattern->detectorName, (*curr)->detectorName) || pPattern->protocol < (*curr)->protocol
+                    || pPattern->port < (*curr)->port)
+                break;
+        }
+        if (prev)
+        {
+            pPattern->next = (*prev)->next;
+            (*prev)->next = pPattern;
+        }
+        else
+        {
+            pPattern->next = *curr;
+            *curr = pPattern;
+        }
+    }
+}
+
+void clean_client_port_patterns()
+{
+    PortPatternNode* tmp;
+
+    while ((tmp = clientPortPattern.luaInjectedPatterns))
+    {
+        clientPortPattern.luaInjectedPatterns = tmp->next;
+        snort_free(tmp->pattern);
+        snort_free(tmp->detectorName);
+        snort_free(tmp);
+    }
+}
+
 // Creates unique subset of services registered on ports, and then creates pattern trees.
-static void createServicePatternTrees(AppIdConfig* pConfig)
+static void createServicePatternTrees()
 {
     PatternService* ps;
     Pattern* pattern;
     PortNode* port;
     unsigned i;
 
-    for (ps = pConfig->servicePortPattern->servicePortPattern; ps; ps = ps->next)
+    for (ps = service_port_patterns.servicePortPattern; ps; ps = ps->next)
     {
         for (port = ps->port; port; port = port->next)
         {
             for (pattern = ps->pattern; pattern; pattern = pattern->next)
             {
                 if (ps->proto == IpProtocol::TCP)
-                    RegisterPattern(&pConfig->servicePortPattern->tcpPortPatternTree[port->port],
-                        pattern);
+                    RegisterPattern(&service_port_patterns.tcpPortPatternTree[port->port],
+                            pattern);
                 else
-                    RegisterPattern(&pConfig->servicePortPattern->udpPortPatternTree[port->port],
+                    RegisterPattern(&service_port_patterns.udpPortPatternTree[port->port],
                         pattern);
             }
         }
     }
+
     for (i = 0; i < 65536; i++)
     {
-        if (pConfig->servicePortPattern->tcpPortPatternTree[i])
+        if (service_port_patterns.tcpPortPatternTree[i])
         {
-            for (ps = pConfig->servicePortPattern->servicePortPattern; ps; ps = ps->next)
+            for (ps = service_port_patterns.servicePortPattern; ps; ps = ps->next)
             {
                 if (ps->port || (ps->proto != IpProtocol::TCP))
                     continue;
 
                 for (pattern = ps->pattern; pattern; pattern = pattern->next)
-                    RegisterPattern(&pConfig->servicePortPattern->tcpPortPatternTree[i], pattern);
+                    RegisterPattern(&service_port_patterns.tcpPortPatternTree[i], pattern);
             }
 
-            pConfig->servicePortPattern->tcpPortPatternTree[i]->prep();
+            service_port_patterns.tcpPortPatternTree[i]->prep();
         }
-        if (pConfig->servicePortPattern->udpPortPatternTree[i])
+
+        if (service_port_patterns.udpPortPatternTree[i])
         {
-            for (ps = pConfig->servicePortPattern->servicePortPattern; ps; ps = ps->next)
+            for (ps = service_port_patterns.servicePortPattern; ps; ps = ps->next)
             {
                 if (ps->port || (ps->proto != IpProtocol::UDP))
                     continue;
 
                 for (pattern = ps->pattern; pattern; pattern = pattern->next)
-                    RegisterPattern(&pConfig->servicePortPattern->udpPortPatternTree[i], pattern);
+                    RegisterPattern(&service_port_patterns.udpPortPatternTree[i], pattern);
             }
 
-            pConfig->servicePortPattern->udpPortPatternTree[i]->prep();
+            service_port_patterns.udpPortPatternTree[i]->prep();
         }
     }
 }
 
-static void createClientPatternTrees( AppIdConfig* pConfig )
+static void createClientPatternTrees()
 {
     PatternService* ps;
     Pattern* pattern;
 
-    for (ps = pConfig->clientPortPattern->servicePortPattern; ps; ps = ps->next)
+    for (ps = clientPortPattern.servicePortPattern; ps; ps = ps->next)
     {
         for (pattern = ps->pattern; pattern; pattern = pattern->next)
         {
             if (ps->proto == IpProtocol::TCP)
-                RegisterPattern(&pConfig->clientPortPattern->tcp_patterns, pattern);
+                RegisterPattern(&clientPortPattern.tcp_patterns, pattern);
             else
-                RegisterPattern(&pConfig->clientPortPattern->udp_patterns, pattern);
+                RegisterPattern(&clientPortPattern.udp_patterns, pattern);
         }
     }
 }
 
-static void registerServicePatterns( AppIdConfig* pConfig )
+static void registerServicePatterns()
 {
     PatternService* ps;
     Pattern* pattern;
@@ -313,7 +392,7 @@ static void registerServicePatterns( AppIdConfig* pConfig )
      * pattern tree. Register patterns with ports with local pattern
      * tree only.
      */
-    for (ps = pConfig->servicePortPattern->servicePortPattern; ps; ps = ps->next)
+    for (ps = service_port_patterns.servicePortPattern; ps; ps = ps->next)
     {
         if (!ps->port)
         {
@@ -325,17 +404,15 @@ static void registerServicePatterns( AppIdConfig* pConfig )
                     {
                         DebugFormat(DEBUG_LOG,"Adding pattern with length %u\n",pattern->length);
                         iniServiceApi->RegisterPattern(&service_validate, IpProtocol::TCP,
-                            pattern->data, pattern->length,
-                            pattern->offset, "pattern", iniServiceApi->pAppidConfig);
-                        RegisterPattern(&pConfig->servicePortPattern->tcp_patterns, pattern);
+                            pattern->data, pattern->length, pattern->offset, "pattern");
+                        RegisterPattern(&service_port_patterns.tcp_patterns, pattern);
                     }
                     else
                     {
                         DebugFormat(DEBUG_LOG,"Adding pattern with length %u\n",pattern->length);
                         iniServiceApi->RegisterPattern(&service_validate, IpProtocol::UDP,
-                            pattern->data, pattern->length,
-                            pattern->offset, "pattern", iniServiceApi->pAppidConfig);
-                        RegisterPattern(&pConfig->servicePortPattern->udp_patterns, pattern);
+                            pattern->data, pattern->length, pattern->offset, "pattern");
+                        RegisterPattern(&service_port_patterns.udp_patterns, pattern);
                     }
                 }
             }
@@ -346,14 +423,14 @@ static void registerServicePatterns( AppIdConfig* pConfig )
                 ps->count++;
         }
     }
-    if (pConfig->servicePortPattern->tcp_patterns)
-        pConfig->servicePortPattern->tcp_patterns->prep();
+    if (service_port_patterns.tcp_patterns)
+        service_port_patterns.tcp_patterns->prep();
 
-    if (pConfig->servicePortPattern->udp_patterns)
-        pConfig->servicePortPattern->udp_patterns->prep();
+    if (service_port_patterns.udp_patterns)
+        service_port_patterns.udp_patterns->prep();
 }
 
-static void registerClientPatterns( AppIdConfig* pConfig )
+static void registerClientPatterns()
 {
     PatternService* ps;
     Pattern* pattern;
@@ -362,7 +439,7 @@ static void registerClientPatterns( AppIdConfig* pConfig )
      * pattern tree. Register patterns with ports with local pattern
      * tree only.
      */
-    for (ps = pConfig->clientPortPattern->servicePortPattern; ps; ps = ps->next)
+    for (ps = clientPortPattern.servicePortPattern; ps; ps = ps->next)
     {
         for (pattern = ps->pattern; pattern; pattern = pattern->next)
         {
@@ -373,25 +450,25 @@ static void registerClientPatterns( AppIdConfig* pConfig )
                     DebugFormat(DEBUG_LOG,"Adding pattern with length %u\n",pattern->length);
                     iniClientApi->RegisterPattern(&client_validate, IpProtocol::TCP, pattern->data,
                         pattern->length,
-                        pattern->offset, iniClientApi->pAppidConfig);
-                    RegisterPattern(&pConfig->clientPortPattern->tcp_patterns, pattern);
+                        pattern->offset);
+                    RegisterPattern(&clientPortPattern.tcp_patterns, pattern);
                 }
                 else
                 {
                     DebugFormat(DEBUG_LOG,"Adding pattern with length %u\n",pattern->length);
                     iniClientApi->RegisterPattern(&client_validate, IpProtocol::UDP, pattern->data,
-                        pattern->length, pattern->offset, iniClientApi->pAppidConfig);
-                    RegisterPattern(&pConfig->clientPortPattern->udp_patterns, pattern);
+                        pattern->length, pattern->offset);
+                    RegisterPattern(&clientPortPattern.udp_patterns, pattern);
                 }
             }
             ps->count++;
         }
     }
-    if (pConfig->clientPortPattern->tcp_patterns)
-        pConfig->clientPortPattern->tcp_patterns->prep();
+    if (clientPortPattern.tcp_patterns)
+        clientPortPattern.tcp_patterns->prep();
 
-    if (pConfig->clientPortPattern->udp_patterns)
-        pConfig->clientPortPattern->udp_patterns->prep();
+    if (clientPortPattern.udp_patterns)
+        clientPortPattern.udp_patterns->prep();
 }
 
 static void dumpPatterns(const char* name, PatternService* pList)
@@ -419,27 +496,22 @@ static void dumpPatterns(const char* name, PatternService* pList)
     }
 }
 
-int portPatternFinalize(AppIdConfig* pConfig)
+void finalize_client_port_patterns()
 {
-    if (pConfig->clientPortPattern)
-    {
-        read_patterns(pConfig->clientPortPattern->luaInjectedPatterns,
-            &pConfig->clientPortPattern->servicePortPattern);
-        createClientPatternTrees(pConfig);
-        registerClientPatterns(pConfig);
-        dumpPatterns("Client", pConfig->clientPortPattern->servicePortPattern);
-    }
-    if (pConfig->servicePortPattern)
-    {
-        read_patterns(pConfig->servicePortPattern->luaInjectedPatterns,
-            &pConfig->servicePortPattern->servicePortPattern);
-        install_ports(pConfig->servicePortPattern->servicePortPattern, iniServiceApi);
-        createServicePatternTrees(pConfig);
-        registerServicePatterns(pConfig);
-        dumpPatterns("Server", pConfig->servicePortPattern->servicePortPattern);
-    }
 
-    return 0;
+    read_patterns(clientPortPattern.luaInjectedPatterns, &clientPortPattern.servicePortPattern);
+    createClientPatternTrees();
+    registerClientPatterns();
+    dumpPatterns("Client", clientPortPattern.servicePortPattern);
+}
+
+void finalize_service_port_patterns()
+{
+    read_patterns(service_port_patterns.luaInjectedPatterns, &service_port_patterns.servicePortPattern);
+    install_ports(service_port_patterns.servicePortPattern, iniServiceApi);
+    createServicePatternTrees();
+    registerServicePatterns();
+    dumpPatterns("Server", service_port_patterns.servicePortPattern);
 }
 
 static int pattern_service_init(const IniServiceAPI* const init_api)
@@ -451,42 +523,41 @@ static int pattern_service_init(const IniServiceAPI* const init_api)
     return 0;
 }
 
-static void pattern_service_clean(const CleanServiceAPI* const clean_api)
+static void pattern_service_clean()
 {
     PatternService* ps;
-    AppIdConfig* pConfig = clean_api->pAppidConfig;
 
-    if (pConfig->servicePortPattern && pConfig->servicePortPattern->servicePortPattern)
+    if ( service_port_patterns.servicePortPattern )
     {
         unsigned i;
 
-        if (pConfig->servicePortPattern->tcp_patterns)
+        if (service_port_patterns.tcp_patterns)
         {
-            delete pConfig->servicePortPattern->tcp_patterns;
-            pConfig->servicePortPattern->tcp_patterns = nullptr;
+            delete service_port_patterns.tcp_patterns;
+            service_port_patterns.tcp_patterns = nullptr;
         }
-        if (pConfig->servicePortPattern->udp_patterns)
+        if (service_port_patterns.udp_patterns)
         {
-            delete pConfig->servicePortPattern->udp_patterns;
-            pConfig->servicePortPattern->udp_patterns = nullptr;
+            delete service_port_patterns.udp_patterns;
+            service_port_patterns.udp_patterns = nullptr;
         }
         for (i = 0; i < 65536; i++)
         {
-            if (pConfig->servicePortPattern->tcpPortPatternTree[i])
+            if (service_port_patterns.tcpPortPatternTree[i])
             {
-                delete pConfig->servicePortPattern->tcpPortPatternTree[i];
-                pConfig->servicePortPattern->tcpPortPatternTree[i] = nullptr;
+                delete service_port_patterns.tcpPortPatternTree[i];
+                service_port_patterns.tcpPortPatternTree[i] = nullptr;
             }
-            if (pConfig->servicePortPattern->udpPortPatternTree[i])
+            if (service_port_patterns.udpPortPatternTree[i])
             {
-                delete pConfig->servicePortPattern->udpPortPatternTree[i];
-                pConfig->servicePortPattern->udpPortPatternTree[i] = nullptr;
+                delete service_port_patterns.udpPortPatternTree[i];
+                service_port_patterns.udpPortPatternTree[i] = nullptr;
             }
         }
-        while (pConfig->servicePortPattern->servicePortPattern)
+        while (service_port_patterns.servicePortPattern)
         {
-            ps = pConfig->servicePortPattern->servicePortPattern;
-            pConfig->servicePortPattern->servicePortPattern = ps->next;
+            ps = service_port_patterns.servicePortPattern;
+            service_port_patterns.servicePortPattern = ps->next;
             FreePatternService(ps);
         }
     }
@@ -558,7 +629,7 @@ static int pattern_match(void* id, void*, int index, void* data, void*)
 }
 
 static int csdPatternTreeSearch(const uint8_t* data, uint16_t size, IpProtocol protocol,
-    Packet* pkt, const RNAServiceElement** serviceData, bool isClient, const AppIdConfig* pConfig)
+    Packet* pkt, const RNAServiceElement** serviceData, bool isClient)
 {
     SearchTool* patternTree = nullptr;
     PatternService* ps;
@@ -575,19 +646,19 @@ static int csdPatternTreeSearch(const uint8_t* data, uint16_t size, IpProtocol p
     if (!isClient)
     {
         if (protocol == IpProtocol::UDP)
-            patternTree = pConfig->servicePortPattern->udpPortPatternTree[pkt->ptrs.sp];
+            patternTree = service_port_patterns.udpPortPatternTree[pkt->ptrs.sp];
         else
-            patternTree = pConfig->servicePortPattern->tcpPortPatternTree[pkt->ptrs.sp];
+            patternTree = service_port_patterns.tcpPortPatternTree[pkt->ptrs.sp];
     }
 
     if (!patternTree)
     {
         if (protocol == IpProtocol::UDP)
-            patternTree = (isClient) ? pConfig->clientPortPattern->udp_patterns :
-                pConfig->servicePortPattern->udp_patterns;
+            patternTree = (isClient) ? clientPortPattern.udp_patterns :
+                service_port_patterns.udp_patterns;
         else
-            patternTree = (isClient) ? pConfig->clientPortPattern->tcp_patterns :
-                pConfig->servicePortPattern->tcp_patterns;
+            patternTree = (isClient) ? clientPortPattern.tcp_patterns :
+                service_port_patterns.tcp_patterns;
     }
 
     if (patternTree)
@@ -665,7 +736,7 @@ static int service_validate(ServiceValidationArgs* args)
     if (dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    id = csdPatternTreeSearch(data, size, flowp->protocol, pkt, &service, false, args->pConfig);
+    id = csdPatternTreeSearch(data, size, flowp->protocol, pkt, &service, false);
     if (!id)
         goto fail;
 
@@ -696,28 +767,26 @@ static CLIENT_APP_RETCODE client_init_tcp(const IniClientAppAPI* const, SF_LIST*
     return CLIENT_APP_SUCCESS;
 }
 
-static void client_clean(const CleanClientAppAPI* const clean_api)
+static void client_clean()
 {
-    AppIdConfig* pConfig = clean_api->pAppidConfig;
-
-    if (pConfig->clientPortPattern && pConfig->clientPortPattern->servicePortPattern)
+    if (clientPortPattern.servicePortPattern)
     {
-        if (pConfig->clientPortPattern->tcp_patterns)
+        if (clientPortPattern.tcp_patterns)
         {
-            delete pConfig->clientPortPattern->tcp_patterns;
-            pConfig->clientPortPattern->tcp_patterns = nullptr;
+            delete clientPortPattern.tcp_patterns;
+            clientPortPattern.tcp_patterns = nullptr;
         }
 
-        if (pConfig->clientPortPattern->udp_patterns)
+        if (clientPortPattern.udp_patterns)
         {
-            delete pConfig->clientPortPattern->udp_patterns;
-            pConfig->clientPortPattern->udp_patterns = nullptr;
+            delete clientPortPattern.udp_patterns;
+            clientPortPattern.udp_patterns = nullptr;
         }
     }
 }
 
 static CLIENT_APP_RETCODE client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector*, const AppIdConfig* pConfig)
+    AppIdSession* flowp, Packet* pkt, struct Detector*)
 {
     AppId id;
     const RNAServiceElement* service = nullptr;
@@ -729,8 +798,7 @@ static CLIENT_APP_RETCODE client_validate(const uint8_t* data, uint16_t size, co
     if (dir == APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    id = csdPatternTreeSearch(data, size, flowp->protocol, pkt, &service, true,
-        (AppIdConfig*)pConfig);
+    id = csdPatternTreeSearch(data, size, flowp->protocol, pkt, &service, true);
     if (!id)
         goto fail;
 

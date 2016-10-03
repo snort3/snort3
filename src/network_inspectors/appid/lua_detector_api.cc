@@ -46,11 +46,11 @@
 #include "service_plugins/service_ssl.h"
 #include "client_plugins/client_app_base.h"
 #include "detector_plugins/detector_dns.h"
+#include "detector_plugins/detector_http.h"
 #include "detector_plugins/detector_pattern.h"
 
 #define DETECTOR "Detector"
 #define OVECCOUNT 30    /* should be a multiple of 3 */
-#define URL_LIST_STEP_SIZE  5000
 
 #define CHECK_INPUTS() \
     if ( !checkServiceElement(ud) || !ud->validateParams.pkt ) \
@@ -69,13 +69,36 @@ enum
     LUA_LOG_DEBUG = 5,
 };
 
-/*static const char * LuaLogLabel = "luaDetectorApi"; */
-
 ProfileStats luaDetectorsPerfStats;
 ProfileStats luaCiscoPerfStats;
 ProfileStats luaCustomPerfStats;
 
-static void FreeDetectorAppUrlPattern(DetectorAppUrlPattern* pattern);
+static THREAD_LOCAL SFXHASH* CHP_glossary = nullptr;      // keep track of http multipatterns here
+
+static int genericDataFree(void* /* key */, void* data)
+{
+    if (data)
+        snort_free(data);
+    return 0;
+}
+
+int init_CHP_glossary()
+{
+    if (!(CHP_glossary = sfxhash_new(1024, sizeof(AppId), 0, 0, 0, nullptr, &genericDataFree, 0)))
+    {
+        ErrorMessage("Config: failed to allocate memory for an sfxhash.");
+        return 0;
+    }
+    else
+        return 1;
+}
+
+void free_CHP_glossary()
+{
+    if (CHP_glossary)
+        sfxhash_delete(CHP_glossary);
+    CHP_glossary = nullptr;
+}
 
 static inline int ConvertStringToAddress(const char* string, sfip_t* address)
 {
@@ -225,9 +248,8 @@ static void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned 
         struct Detector* data)
 {
     AppInfoTableEntry* entry;
-    AppIdConfig* pConfig = pAppidActiveConfig;
 
-    if ((entry = appInfoEntryGet(appId, pConfig)))
+    if ((entry = appInfoEntryGet(appId)))
     {
         entry->flags |= APPINFO_FLAG_ACTIVE;
         extractsInfo &= (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER);
@@ -239,7 +261,7 @@ static void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned 
             return;
         }
 
-        entry->clntValidator = ClientAppGetClientAppModule(fcn, data, &pConfig->clientAppConfig);
+        entry->clntValidator = ClientAppGetClientAppModule(fcn, data);
         if (entry->clntValidator)
             entry->flags |= extractsInfo;
         else
@@ -259,12 +281,11 @@ static void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, 
     struct Detector* data)
 {
     AppInfoTableEntry* entry;
-    AppIdConfig* pConfig = pAppidActiveConfig;
 
     // FIXIT-L: what type of error would cause this lookup to fail? is this programming error
     // or user error due to misconfig or something like that... if change in handling needed
     // apply to all instances where this lookup is done
-    if ((entry = appInfoEntryGet(appId, pConfig)))
+    if ((entry = appInfoEntryGet(appId)))
     {
         entry->flags |= APPINFO_FLAG_ACTIVE;
 
@@ -276,7 +297,7 @@ static void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, 
             return;
         }
 
-        entry->svrValidator = ServiceGetServiceElement(fcn, data, pConfig);
+        entry->svrValidator = ServiceGetServiceElement(fcn, data);
         if (entry->svrValidator)
             entry->flags |= extractsInfo;
         else
@@ -305,7 +326,7 @@ static int common_registerAppId(lua_State* L)
         appSetLuaClientValidator(
             validateAnyClientApp, appId, APPINFO_FLAG_CLIENT_ADDITIONAL, ud.ptr);
 
-    appInfoSetActive(appId, true);
+    set_app_info_active(appId);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -490,23 +511,6 @@ static int service_getServiceId(lua_State* L)
     return 1;
 }
 
-/**
- * Design Notes: In these APIs, three different AppID contexts - pAppidNewConfig, pAppidOldConfig
- * and pAppidActiveConfig are used. pAppidNewConfig is used in APIs related to the loading of the
- * detector such as service_addPorts(), client_registerPattern(), etc. A detector is loaded either
- * during reload or at initialization. Use of pAppidNewConfig will cause the data structures related
- * to the detector such as service ports, patterns, etc to be saved in the new AppID context.
- *
- * The new AppID context becomes active at the end of initialization or at reload swap.
- * FinalizeLuaModules() is called at this time, which changes all the detectors' pAppidActiveConfig
- * references to the new context. Also, pAppidOldConfig will be changed to point to the previous
- * AppID context. In the packet processing APIs such as service_addService(), client_addUser(), etc.
- * pAppidActiveConfig is used.
- *
- * In the cleanup APIs such as service_removePorts(), Detector_fini(), etc., data structures in the
- * old AppID conext need to be freed. Therefore, pAppidOldConfig is used in these APIs.
- */
-
 // Add port for a given service. Lua detectors call this function to register ports on which a
 // given service is expected to run.
 // @param protocol/stack - protocol type. Values can be {tcp=6, udp=17 }
@@ -528,7 +532,7 @@ static int service_addPorts(lua_State* L)
         return 1;
     }
 
-    if ( ServiceAddPort(&pp, &ud->server.serviceModule, ud, ud->pAppidNewConfig) )
+    if ( ServiceAddPort(&pp, &ud->server.serviceModule, ud) )
     {
         lua_pushnumber(L, -1);
         return 1;
@@ -541,22 +545,23 @@ static int service_addPorts(lua_State* L)
 }
 
 // Remove all ports for a given service. Lua detectors call this function to remove ports for this
-// service
-// when exiting. This function is not used currently by any detectors.
+// service when exiting. This function is not used currently by any detectors.
 // @return status/stack - 0 if successful, -1 otherwise.
 static int service_removePorts(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    detectorRemoveAllPorts(ud, ud->pAppidOldConfig);
+    detectorRemoveAllPorts(ud);
 
     lua_pushnumber(L, 0);
     return 1;
 }
 
 // Shared function between Lua API and RNA core.
-void detectorRemoveAllPorts(Detector* detector, AppIdConfig* pConfig)
-{ ServiceRemovePorts(&validateAnyService, detector, pConfig); }
+void detectorRemoveAllPorts(Detector* detector)
+{
+    ServiceRemovePorts(&validateAnyService, detector);
+}
 
 // Set service name. Lua detectors call this function to set service name. It is preferred to set
 // service name
@@ -698,7 +703,7 @@ static int service_addService(
       Subtype is not displayed on DC at present. */
     retValue = AppIdServiceAddService(ud->validateParams.flowp, ud->validateParams.pkt,
         ud->validateParams.dir, ud->server.pServiceElement,
-        appGetAppFromServiceId(serviceId, ud->pAppidActiveConfig), vendor, version, nullptr);
+        get_appid_by_service_id(serviceId), vendor, version, nullptr);
 
     lua_pushnumber(L, retValue);
     return 1;
@@ -718,9 +723,8 @@ static int service_failService(lua_State* L)
     CHECK_INPUTS();
 
     unsigned int retValue = AppIdServiceFailService(ud->validateParams.flowp,
-        ud->validateParams.pkt,
-        ud->validateParams.dir, ud->server.pServiceElement, APPID_SESSION_DATA_NONE,
-        ud->pAppidActiveConfig);
+        ud->validateParams.pkt, ud->validateParams.dir, ud->server.pServiceElement,
+        APPID_SESSION_DATA_NONE, ud->appid_config);
 
     lua_pushnumber(L, retValue);
     return 1;
@@ -763,7 +767,7 @@ static int service_inCompatibleData(lua_State* L)
     retValue = AppIdServiceIncompatibleData(ud->validateParams.flowp,
         ud->validateParams.pkt,
         ud->validateParams.dir, ud->server.pServiceElement,
-        APPID_SESSION_DATA_NONE, ud->pAppidActiveConfig);
+        APPID_SESSION_DATA_NONE, ud->appid_config);
 
     lua_pushnumber(L, retValue);
     return 1;
@@ -1038,15 +1042,8 @@ static int Detector_getPktCount(lua_State* L)
     return 1;
 }
 
-CLIENT_APP_RETCODE validateAnyClientApp(
-    const uint8_t* data,
-    uint16_t size,
-    const int dir,
-    AppIdSession* flowp,
-    Packet* pkt,
-    Detector* detector,
-    const AppIdConfig*
-    )
+CLIENT_APP_RETCODE validateAnyClientApp( const uint8_t* data, uint16_t size, const int dir,
+    AppIdSession* flowp, Packet* pkt, Detector* detector )
 {
     Profile lua_profile_context(luaCustomPerfStats);
 
@@ -1131,18 +1128,16 @@ static int client_registerPattern(lua_State* L)
     /*mpse library does not hold reference to pattern therefore we dont need to allocate it. */
 
     ud->client.appModule.userData = ud.ptr;
-    ClientAppLoadForConfigCallback((void*)&(ud->client.appModule),
-        &ud->pAppidNewConfig->clientAppConfig);
-    ClientAppRegisterPattern(
-        validateAnyClientApp, protocol, (const uint8_t*)pattern, size,
-        position, 0, ud, &ud->pAppidNewConfig->clientAppConfig);
+    ClientAppLoadCallback((void*)&(ud->client.appModule));
+    ClientAppRegisterPattern(validateAnyClientApp, protocol, (const uint8_t*)pattern,
+            size, position, 0, ud);
 
     lua_pushnumber(L, 0);
     return 1;   /*number of results */
 }
 
 /**Creates a new detector instance. Creates a new detector instance and leaves the instance
- * on stack. This is the first call by a lua detector to create and instance. Later calls
+ * on stack. This is the first call by a lua detector to create an instance. Later calls
  * provide the detector instance.
  *
  * @param Lua_State* - Lua state variable.
@@ -1201,8 +1196,7 @@ static int client_addApp(lua_State* L)
     }
 
     ud->client.appModule.api->add_app(ud->validateParams.flowp,
-        appGetAppFromServiceId(serviceId, ud->pAppidActiveConfig), appGetAppFromClientId(
-        productId, ud->pAppidActiveConfig), version);
+        get_appid_by_service_id(serviceId), get_appid_by_client_id(productId), version);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -1247,7 +1241,7 @@ static int client_addUser(lua_State* L)
     }
 
     ud->client.appModule.api->add_user(ud->validateParams.flowp, userName,
-        appGetAppFromServiceId(serviceId, ud->pAppidActiveConfig), 1);
+        get_appid_by_service_id(serviceId), 1);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -1269,7 +1263,7 @@ static int client_addPayload(lua_State* L)
     }
 
     ud->client.appModule.api->add_payload(ud->validateParams.flowp,
-        appGetAppFromPayloadId(payloadId, ud->pAppidActiveConfig));
+            get_appid_by_payload_id(payloadId));
 
     lua_pushnumber(L, 0);
     return 1;
@@ -1360,12 +1354,10 @@ int Detector_addHttpPattern(lua_State* L)
 
     HTTPListElement* element = (HTTPListElement*)snort_calloc(sizeof(HTTPListElement));
     DetectorHTTPPattern* pattern = &element->detectorHTTPPattern;
-    AppIdConfig* pConfig = ud->pAppidNewConfig;
-
     pattern->seq           = seq;
-    pattern->service_id    = appGetAppFromServiceId(service_id, pConfig);
-    pattern->client_app    = appGetAppFromClientId(client_app, pConfig);
-    pattern->payload       = appGetAppFromPayloadId(payload, pConfig);
+    pattern->service_id    = get_appid_by_service_id(service_id);
+    pattern->client_app    = get_appid_by_client_id(client_app);
+    pattern->payload       = get_appid_by_payload_id(payload);
     pattern->pattern       = pattern_str;
     pattern->pattern_size  = (int)pattern_size;
     pattern->appId         = appId;
@@ -1376,32 +1368,14 @@ int Detector_addHttpPattern(lua_State* L)
        payload database. If you want a host pattern ID, use the other API.  */
 
     if (!service_id && !client_app && !payload && pType == 2)
-    {
         pattern->client_app = appId;
-    }
 
-    switch (pType)
-    {
-    case HTTP_PAYLOAD:
-        element->next = pConfig->httpPatternLists.hostPayloadPatternList;
-        pConfig->httpPatternLists.hostPayloadPatternList = element;
-        break;
+    insert_http_pattern_element(pType, element);
 
-    case HTTP_URL:
-        element->next = pConfig->httpPatternLists.urlPatternList;
-        pConfig->httpPatternLists.urlPatternList = element;
-        break;
-
-    case HTTP_USER_AGENT:
-        element->next = pConfig->httpPatternLists.clientAgentPatternList;
-        pConfig->httpPatternLists.clientAgentPatternList = element;
-        break;
-    }
-
-    appInfoSetActive(pattern->service_id, true);
-    appInfoSetActive(pattern->client_app, true);
-    appInfoSetActive(pattern->payload, true);
-    appInfoSetActive(appId, true);
+    set_app_info_active(pattern->service_id);
+    set_app_info_active(pattern->client_app);
+    set_app_info_active(pattern->payload);
+    set_app_info_active(appId);
 
     return 0;
 }
@@ -1437,7 +1411,7 @@ int Detector_addSSLCertPattern(lua_State* L)
 #ifdef REMOVED_WHILE_NOT_IN_USE
     pattern_str = (uint8_t*)snort_strdup(tmpString);
     if (!ssl_add_cert_pattern(pattern_str, pattern_size, type, app_id,
-        &ud->pAppidNewConfig->serviceSslConfig))
+        &ud->appid_config->serviceSslConfig))
     {
         snort_free(pattern_str);
         ErrorMessage("Failed to add an SSL pattern list member");
@@ -1448,7 +1422,7 @@ int Detector_addSSLCertPattern(lua_State* L)
     UNUSED(type);
 #endif
 
-    appInfoSetActive(app_id, true);
+    set_app_info_active(app_id);
     return 0;
 }
 
@@ -1481,8 +1455,7 @@ int Detector_addDNSHostPattern(lua_State* L)
         return 0;
     }
     pattern_str = (uint8_t*)snort_strdup(tmpString);
-    if (!dns_add_host_pattern(pattern_str, pattern_size, type, app_id,
-        &ud->pAppidNewConfig->serviceDnsConfig))
+    if (!dns_add_host_pattern(pattern_str, pattern_size, type, app_id))
     {
         snort_free(pattern_str);
         ErrorMessage("LuaDetectorApi:Failed to add an SSL pattern list member");
@@ -1520,7 +1493,7 @@ static int Detector_addSSLCnamePattern(lua_State* L)
 #ifdef REMOVED_WHILE_NOT_IN_USE
     pattern_str = (uint8_t*)snort_strdup(tmpString);
     if (!ssl_add_cname_pattern(pattern_str, pattern_size, type, app_id,
-        &ud->pAppidNewConfig->serviceSslConfig))
+        &ud->appid_config->serviceSslConfig))
     {
         snort_free(pattern_str);
         ErrorMessage("Failed to add an SSL pattern list member");
@@ -1531,7 +1504,7 @@ static int Detector_addSSLCnamePattern(lua_State* L)
     UNUSED(type);
 #endif
 
-    appInfoSetActive(app_id, true);
+    set_app_info_active(app_id);
     return 0;
 }
 
@@ -1570,8 +1543,7 @@ static int Detector_addHostPortApp(lua_State* L)
         return 0;
     }
 
-    if (!hostPortAppCacheAdd(&ip_addr, (uint16_t)port, (IpProtocol)proto, type, app_id,
-            ud->pAppidNewConfig))
+    if (!hostPortAppCacheAdd(&ip_addr, (uint16_t)port, (IpProtocol)proto, type, app_id))
     {
         ErrorMessage("%s:Failed to backend call\n",__func__);
     }
@@ -1606,16 +1578,11 @@ static int Detector_addContentTypePattern(lua_State* L)
 
     HTTPListElement* element = (HTTPListElement*)snort_calloc(sizeof(HTTPListElement));
     DetectorHTTPPattern* detector = &element->detectorHTTPPattern;
-    AppIdConfig* pConfig  = ud->pAppidNewConfig;
-
     detector->pattern = pattern;
     detector->pattern_size = strlen((char*)pattern);
     detector->appId = appId;
-
-    element->next = pConfig->httpPatternLists.contentTypePatternList;
-    pConfig->httpPatternLists.contentTypePatternList = element;
-
-    appInfoSetActive(appId, true);
+    insert_content_type_pattern(element);
+    set_app_info_active(appId);
 
     return 0;
 }
@@ -1634,16 +1601,14 @@ static inline int GetDetectorUserData(lua_State* L, int index,
     return 0;
 }
 
-static int detector_create_chp_app(UserData<Detector>* ud, AppId appIdInstance,
-    unsigned app_type_flags, int num_matches)
+static int detector_create_chp_app(AppId appIdInstance, unsigned app_type_flags, int num_matches)
 {
     CHPApp* new_app = (CHPApp*)snort_calloc(sizeof(CHPApp));
     new_app->appIdInstance = appIdInstance;
     new_app->app_type_flags = app_type_flags;
     new_app->num_matches = num_matches;
 
-    if (sfxhash_add((*ud)->pAppidNewConfig->CHP_glossary,
-        &(new_app->appIdInstance), new_app))
+    if (sfxhash_add(CHP_glossary, &(new_app->appIdInstance), new_app))
     {
         ErrorMessage("LuaDetectorApi:Failed to add CHP for appId %d, instance %d",
             CHP_APPIDINSTANCE_TO_ID(appIdInstance), CHP_APPIDINSTANCE_TO_INSTANCE(appIdInstance));
@@ -1659,9 +1624,7 @@ static int Detector_CHPCreateApp(lua_State* L)
     AppId appId;
     unsigned app_type_flags;
     int num_matches;
-
     AppId appIdInstance;
-
     int index = 1;
 
     if (GetDetectorUserData(L, index++, &ud,
@@ -1675,7 +1638,7 @@ static int Detector_CHPCreateApp(lua_State* L)
     num_matches =       lua_tointeger(L, index++);
 
     // We only want one of these for each appId.
-    if (sfxhash_find((*ud)->pAppidNewConfig->CHP_glossary, &appIdInstance))
+    if (sfxhash_find(CHP_glossary, &appIdInstance))
     {
         ErrorMessage(
             "LuaDetectorApi:Attempt to add more than one CHP for appId %d - use CHPMultiCreateApp",
@@ -1683,7 +1646,7 @@ static int Detector_CHPCreateApp(lua_State* L)
         return 0;
     }
 
-    detector_create_chp_app(ud, appIdInstance, app_type_flags, num_matches);
+    detector_create_chp_app(appIdInstance, app_type_flags, num_matches);
     return 0;
 }
 
@@ -1750,17 +1713,15 @@ static inline int CHPGetActionData(lua_State* L, int index, char** action_data)
     return 0;
 }
 
-static int detector_add_chp_action(UserData<Detector>* ud,
-    AppId appIdInstance, int isKeyPattern, PatternType patternType,
-    size_t patternSize, char* patternData, ActionType actionType, char* optionalActionData)
+static int detector_add_chp_action(AppId appIdInstance, int isKeyPattern, PatternType patternType,
+        size_t patternSize, char* patternData, ActionType actionType, char* optionalActionData)
 {
     uint precedence;
-    CHPListElement* tmp_chpa, * chpa;
+    CHPListElement* chpa;
     CHPApp* chpapp;
 
     //find the CHP App for this
-    if (!(chpapp = (decltype(chpapp))sfxhash_find((*ud)->pAppidNewConfig->CHP_glossary,
-            &appIdInstance)))
+    if (!(chpapp = (decltype(chpapp))sfxhash_find(CHP_glossary, &appIdInstance)))
     {
         ErrorMessage(
             "LuaDetectorApi:Invalid attempt to add a CHP action for unknown appId %d, instance %d. - pattern:\"%s\" - action \"%s\"",
@@ -1797,31 +1758,19 @@ static int detector_add_chp_action(UserData<Detector>* ud,
     chpa->chp_action.action = actionType;
     chpa->chp_action.action_data = optionalActionData;
     chpa->chp_action.chpapp = chpapp; // link this struct to the Glossary entry
-
-    AppIdConfig* pConfig = (*ud)->pAppidNewConfig;
-
-    tmp_chpa = pConfig->httpPatternLists.chpList;
-    if (!tmp_chpa)
-        pConfig->httpPatternLists.chpList = chpa;
-    else
-    {
-        while (tmp_chpa->next)
-            tmp_chpa = tmp_chpa->next;
-        tmp_chpa->next = chpa;
-    }
+    insert_chp_pattern(chpa);
 
     /* Set the safe-search bits in the appId entry */
     if (actionType == GET_OFFSETS_FROM_REBUILT)
     {
         /* This is a search engine and it is SUPPORTED for safe-search packet rewrite */
         appInfoEntryFlagSet(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE |
-            APPINFO_FLAG_SUPPORTED_SEARCH, pConfig);
+            APPINFO_FLAG_SUPPORTED_SEARCH);
     }
     else if (actionType == SEARCH_UNSUPPORTED)
     {
         /* This is a search engine and it is UNSUPPORTED for safe-search packet rewrite */
-        appInfoEntryFlagSet(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE,
-            pConfig);
+        appInfoEntryFlagSet(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE);
     }
     return 0;
 }
@@ -1874,8 +1823,8 @@ static int Detector_CHPAddAction(lua_State* L)
         return 0;
     }
 
-    return detector_add_chp_action(ud, appIdInstance, key_pattern, ptype,
-        psize, pattern, action, action_data);
+    return detector_add_chp_action(appIdInstance, key_pattern, ptype, psize, pattern,
+            action, action_data);
 }
 
 static int Detector_CHPMultiCreateApp(lua_State* L)
@@ -1901,8 +1850,7 @@ static int Detector_CHPMultiCreateApp(lua_State* L)
     for (instance=0; instance < CHP_APPID_INSTANCE_MAX; instance++ )
     {
         appIdInstance = (appId << CHP_APPID_BITS_FOR_INSTANCE) + instance;
-        if (sfxhash_find((*ud)->pAppidNewConfig->CHP_glossary,
-            &appIdInstance))
+        if ( sfxhash_find(CHP_glossary, &appIdInstance) )
             continue;
         break;
     }
@@ -1915,7 +1863,7 @@ static int Detector_CHPMultiCreateApp(lua_State* L)
         return 0;
     }
 
-    if (detector_create_chp_app(ud, appIdInstance, app_type_flags, num_matches))
+    if ( detector_create_chp_app(appIdInstance, app_type_flags, num_matches) )
         return 0;
 
     lua_pushnumber(L, appIdInstance);
@@ -1968,8 +1916,8 @@ static int Detector_CHPMultiAddAction(lua_State* L)
         return 0;
     }
 
-    return detector_add_chp_action(ud, appIdInstance, key_pattern, ptype,
-        psize, pattern, action, action_data);
+    return detector_add_chp_action(appIdInstance, key_pattern, ptype, psize, pattern,
+            action, action_data);
 }
 
 static int Detector_portOnlyService(lua_State* L)
@@ -1989,11 +1937,11 @@ static int Detector_portOnlyService(lua_State* L)
     uint8_t protocol = lua_tointeger(L, index++);
 
     if (port == 0)
-        ud->pAppidNewConfig->ip_protocol[protocol] = appId;
+        ud->appid_config->ip_protocol[protocol] = appId;
     else if (protocol == 6)
-        ud->pAppidNewConfig->tcp_port_only[port] = appId;
+        ud->appid_config->tcp_port_only[port] = appId;
     else if (protocol == 17)
-        ud->pAppidNewConfig->udp_port_only[port] = appId;
+        ud->appid_config->udp_port_only[port] = appId;
 
     return 0;
 }
@@ -2023,7 +1971,7 @@ static int Detector_lengthAppCacheAdd(lua_State* L)
     LengthKey length_sequence;
     int index = 1;
 
-    auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
+    UserData<Detector>::check(L, DETECTOR, index++);
 
     AppId appId = lua_tonumber(L, index++);
     IpProtocol proto = (IpProtocol)lua_tonumber(L, index++);
@@ -2102,7 +2050,7 @@ static int Detector_lengthAppCacheAdd(lua_State* L)
         str_ptr++;
     }
 
-    if (!lengthAppCacheAdd(&length_sequence, appId, ud->pAppidNewConfig))
+    if ( !add_length_app_cache(&length_sequence, appId) )
     {
         ErrorMessage("LuaDetectorApi:Could not add entry to cache!");
         lua_pushnumber(L, -1);
@@ -2116,7 +2064,6 @@ static int Detector_lengthAppCacheAdd(lua_State* L)
 static int Detector_AFAddApp(lua_State* L)
 {
     int index = 1;
-    AFElement val;
 
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
     if ( ud->validateParams.pkt )
@@ -2128,23 +2075,7 @@ static int Detector_AFAddApp(lua_State* L)
     ApplicationId indicator = (ApplicationId)lua_tointeger(L, index++);
     ApplicationId forecast  = (ApplicationId)lua_tointeger(L, index++);
     ApplicationId target    = (ApplicationId)lua_tointeger(L, index++);
-
-    if (sfxhash_find(ud->pAppidNewConfig->AF_indicators, &indicator))
-    {
-        ErrorMessage("LuaDetectorApi:Attempt to add more than one AFElement per appId %d",
-            indicator);
-        return 0;
-    }
-
-    val.indicator = indicator;
-    val.forecast = forecast;
-    val.target = target;
-
-    if (sfxhash_add(ud->pAppidNewConfig->AF_indicators, &indicator, &val))
-    {
-        ErrorMessage("LuaDetectorApi:Failed to add AFElement for appId %d", indicator);
-        return 0;
-    }
+    add_af_indicator(indicator, forecast, target);
 
     return 0;
 }
@@ -2152,7 +2083,6 @@ static int Detector_AFAddApp(lua_State* L)
 static int Detector_addAppUrl(lua_State* L)
 {
     int index = 1;
-    DetectorAppUrlPattern** tmp;
     const char* tmpString;
 
     /* Verify detector user data and that we are not in packet context */
@@ -2228,11 +2158,10 @@ static int Detector_addAppUrl(lua_State* L)
     /* Allocate memory for data structures */
     DetectorAppUrlPattern* pattern =
             (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
-    AppIdConfig* pConfig = ud->pAppidNewConfig;
 
-    pattern->userData.service_id        = appGetAppFromServiceId(service_id, pConfig);
-    pattern->userData.client_app        = appGetAppFromClientId(client_app, pConfig);
-    pattern->userData.payload           = appGetAppFromPayloadId(payload, pConfig);
+    pattern->userData.service_id        = get_appid_by_service_id(service_id);
+    pattern->userData.client_app        = get_appid_by_client_id(client_app);
+    pattern->userData.payload           = get_appid_by_payload_id(payload);
     pattern->userData.appId             = appId;
     pattern->userData.query.pattern     = queryPattern;
     pattern->userData.query.patternSize = queryPatternSize;
@@ -2242,33 +2171,12 @@ static int Detector_addAppUrl(lua_State* L)
     pattern->patterns.path.patternSize  = (int)pathPatternSize;
     pattern->patterns.scheme.pattern    = schemePattern;
     pattern->patterns.scheme.patternSize = (int)schemePatternSize;
+    insert_url_pattern(pattern);
 
-    DetectorAppUrlList* urlList = &pConfig->httpPatternLists.appUrlList;
-
-    /**first time usedCount and allocatedCount are both 0, urlPattern will be nullptr.
-     * This case is same as malloc. In case of error, realloc will return nullptr, and
-     * original urlPattern buffer is left untouched.
-     */
-    if (urlList->usedCount == urlList->allocatedCount)
-    {
-        tmp = (decltype(tmp))realloc(urlList->urlPattern, (urlList->allocatedCount+
-            URL_LIST_STEP_SIZE)*
-            sizeof(*tmp));
-        if (!tmp)
-        {
-            FreeDetectorAppUrlPattern(pattern);
-            return 0;
-        }
-        urlList->urlPattern = tmp;
-        urlList->allocatedCount += URL_LIST_STEP_SIZE;
-    }
-
-    urlList->urlPattern[urlList->usedCount++] = pattern;
-
-    appInfoSetActive(pattern->userData.service_id, true);
-    appInfoSetActive(pattern->userData.client_app, true);
-    appInfoSetActive(pattern->userData.payload, true);
-    appInfoSetActive(appId, true);
+    set_app_info_active(pattern->userData.service_id);
+    set_app_info_active(pattern->userData.client_app);
+    set_app_info_active(pattern->userData.payload);
+    set_app_info_active(appId);
 
     return 0;
 }
@@ -2276,7 +2184,6 @@ static int Detector_addAppUrl(lua_State* L)
 static int Detector_addRTMPUrl(lua_State* L)
 {
     int index = 1;
-    DetectorAppUrlPattern** tmp;
     const char* tmpString;
 
     /* Verify detector user data and that we are not in packet context */
@@ -2364,34 +2271,12 @@ static int Detector_addRTMPUrl(lua_State* L)
     pattern->patterns.path.patternSize         = (int)pathPatternSize;
     pattern->patterns.scheme.pattern              = schemePattern;
     pattern->patterns.scheme.patternSize         = (int)schemePatternSize;
+    insert_rtmp_url_pattern(pattern);
 
-    AppIdConfig* pConfig = ud->pAppidNewConfig;
-    DetectorAppUrlList* urlList = &pConfig->httpPatternLists.RTMPUrlList;
-
-    /**first time usedCount and allocatedCount are both 0, urlPattern will be nullptr.
-     * This case is same as malloc. In case of error, realloc will return nullptr, and
-     * original urlPattern buffer is left untouched.
-     */
-    if (urlList->usedCount == urlList->allocatedCount)
-    {
-        tmp = (decltype(tmp))realloc(urlList->urlPattern, (urlList->allocatedCount+
-            URL_LIST_STEP_SIZE)*
-            sizeof(*tmp));
-        if (!tmp)
-        {
-            FreeDetectorAppUrlPattern(pattern);
-            return 0;
-        }
-        urlList->urlPattern = tmp;
-        urlList->allocatedCount += URL_LIST_STEP_SIZE;
-    }
-
-    urlList->urlPattern[urlList->usedCount++] = pattern;
-
-    appInfoSetActive(pattern->userData.service_id, true);
-    appInfoSetActive(pattern->userData.client_app, true);
-    appInfoSetActive(pattern->userData.payload, true);
-    appInfoSetActive(appId, true);
+    set_app_info_active(pattern->userData.service_id);
+    set_app_info_active(pattern->userData.client_app);
+    set_app_info_active(pattern->userData.payload);
+    set_app_info_active(appId);
 
     return 0;
 }
@@ -2426,12 +2311,9 @@ static int Detector_addSipUserAgent(lua_State* L)
         return 0;
     }
 
-#ifdef REMOVED_WHILE_NOT_IN_USE
-    sipUaPatternAdd(client_app, clientVersion, uaPattern,
-            &ud->pAppidNewConfig->detectorSipConfig);
-#endif
+    sipUaPatternAdd(client_app, clientVersion, uaPattern);
 
-    appInfoSetActive(client_app, true);
+    set_app_info_active(client_app);
 
     return 0;
 }
@@ -2459,7 +2341,7 @@ static int openCreateApp(lua_State* L)
         return 1;   /*number of results */
     }
 
-    AppInfoTableEntry* entry = appInfoEntryCreate(tmpString, ud->pAppidNewConfig);
+    AppInfoTableEntry* entry = appInfoEntryCreate(tmpString);
 
     if (entry)
     {
@@ -2561,12 +2443,9 @@ static int openAddPayloadApp(lua_State* L)
 static int openAddHttpPattern(lua_State* L)
 {
     int index = 1;
-    AppIdConfig* pConfig;
 
     /* Verify detector user data and that we are not in packet context */
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
-
-    pConfig = ud->pAppidNewConfig;
 
     /* Verify valid pattern type */
     enum httpPatternType pType = (enum httpPatternType)lua_tointeger(L, index++);
@@ -2615,28 +2494,11 @@ static int openAddHttpPattern(lua_State* L)
     pattern->pattern       = pattern_str;
     pattern->pattern_size  = (int)pattern_size;
     pattern->appId         = APP_ID_NONE;
+    insert_http_pattern_element(pType, element);
 
-    switch (pType)
-    {
-    case HTTP_PAYLOAD:
-        element->next = pConfig->httpPatternLists.hostPayloadPatternList;
-        pConfig->httpPatternLists.hostPayloadPatternList = element;
-        break;
-
-    case HTTP_URL:
-        element->next = pConfig->httpPatternLists.urlPatternList;
-        pConfig->httpPatternLists.urlPatternList = element;
-        break;
-
-    case HTTP_USER_AGENT:
-        element->next = pConfig->httpPatternLists.clientAgentPatternList;
-        pConfig->httpPatternLists.clientAgentPatternList = element;
-        break;
-    }
-
-    appInfoSetActive(serviceAppId, true);
-    appInfoSetActive(clienAppId, true);
-    appInfoSetActive(payloadAppId, true);
+    set_app_info_active(serviceAppId);
+    set_app_info_active(clienAppId);
+    set_app_info_active(payloadAppId);
 
     return 0;
 }
@@ -2644,7 +2506,6 @@ static int openAddHttpPattern(lua_State* L)
 static int openAddUrlPattern(lua_State* L)
 {
     int index = 1;
-    DetectorAppUrlPattern** tmp;
     const char* tmpString;
 
     /* Verify detector user data and that we are not in packet context */
@@ -2655,10 +2516,9 @@ static int openAddUrlPattern(lua_State* L)
         return 0;
     }
 
-    AppIdConfig* pConfig = ud->pAppidNewConfig;
-    uint32_t serviceAppId      = lua_tointeger(L, index++);
-    uint32_t clienAppId      = lua_tointeger(L, index++);
-    uint32_t payloadAppId         = lua_tointeger(L, index++);
+    u_int32_t serviceAppId = lua_tointeger(L, index++);
+    u_int32_t clienAppId   = lua_tointeger(L, index++);
+    u_int32_t payloadAppId = lua_tointeger(L, index++);
 
     if (ud->validateParams.pkt)
     {
@@ -2716,69 +2576,13 @@ static int openAddUrlPattern(lua_State* L)
     pattern->patterns.path.patternSize         = (int)pathPatternSize;
     pattern->patterns.scheme.pattern              = schemePattern;
     pattern->patterns.scheme.patternSize         = (int)schemePatternSize;
+    insert_app_url_pattern(pattern);
 
-    DetectorAppUrlList* urlList = &pConfig->httpPatternLists.appUrlList;
-
-    /**first time usedCount and allocatedCount are both 0, urlPattern will be nullptr.
-     * This case is same as malloc. In case of error, realloc will return nullptr, and
-     * original urlPattern buffer is left untouched.
-     */
-    if (urlList->usedCount == urlList->allocatedCount)
-    {
-        tmp = (decltype(tmp))realloc(urlList->urlPattern,
-            (urlList->allocatedCount + URL_LIST_STEP_SIZE) * sizeof(*tmp));
-        if (!tmp)
-        {
-            FreeDetectorAppUrlPattern(pattern);
-            return 0;
-        }
-        urlList->urlPattern = tmp;
-        urlList->allocatedCount += URL_LIST_STEP_SIZE;
-    }
-
-    urlList->urlPattern[urlList->usedCount++] = pattern;
-
-    appInfoSetActive(serviceAppId, true);
-    appInfoSetActive(clienAppId, true);
-    appInfoSetActive(payloadAppId, true);
+    set_app_info_active(serviceAppId);
+    set_app_info_active(clienAppId);
+    set_app_info_active(payloadAppId);
 
     return 0;
-}
-
-void CleanClientPortPatternList(AppIdConfig* pConfig)
-{
-    PortPatternNode* tmp;
-
-    if ( pConfig->clientPortPattern)
-    {
-        while ((tmp = pConfig->clientPortPattern->luaInjectedPatterns))
-        {
-            pConfig->clientPortPattern->luaInjectedPatterns = tmp->next;
-            snort_free(tmp->pattern);
-            snort_free(tmp->detectorName);
-            snort_free(tmp);
-        }
-
-        snort_free(pConfig->clientPortPattern);
-    }
-}
-
-void CleanServicePortPatternList(AppIdConfig* pConfig)
-{
-    PortPatternNode* tmp;
-
-    if ( pConfig->servicePortPattern)
-    {
-        while ((tmp = pConfig->servicePortPattern->luaInjectedPatterns))
-        {
-            pConfig->servicePortPattern->luaInjectedPatterns = tmp->next;
-            snort_free(tmp->pattern);
-            snort_free(tmp->detectorName);
-            snort_free(tmp);
-        }
-
-        snort_free(pConfig->servicePortPattern);
-    }
 }
 
 /* Add a port and pattern based detection for client application. Both port and pattern criteria
@@ -2797,7 +2601,6 @@ void CleanServicePortPatternList(AppIdConfig* pConfig)
 static int addPortPatternClient(lua_State* L)
 {
     int index = 1;
-    AppIdConfig* pConfig;
     PortPatternNode* pPattern;
     IpProtocol protocol;
     uint16_t port;
@@ -2809,18 +2612,12 @@ static int addPortPatternClient(lua_State* L)
     /* Verify detector user data and that we are not in packet context */
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
 
-    pConfig = ud->pAppidNewConfig;
     protocol = (IpProtocol)lua_tonumber(L, index++);
     //port      = lua_tonumber(L, index++);
     port = 0;
     pattern = lua_tolstring(L, index++, &patternSize);
     position = lua_tonumber(L, index++);
     appId = lua_tointeger(L, index++);
-
-    if (!pConfig->clientPortPattern)
-        pConfig->clientPortPattern =
-            (decltype(pConfig->clientPortPattern))snort_calloc(sizeof(ClientPortPattern));
-
     if (appId <= APP_ID_NONE || !pattern || !patternSize || (protocol != IpProtocol::TCP &&
         protocol !=
         IpProtocol::UDP))
@@ -2829,6 +2626,7 @@ static int addPortPatternClient(lua_State* L)
             ud->name.c_str());
         return 0;
     }
+
     pPattern  = (decltype(pPattern))snort_calloc(sizeof(PortPatternNode));
     pPattern->pattern  = (decltype(pPattern->pattern))snort_calloc(patternSize);
     pPattern->appId = appId;
@@ -2838,35 +2636,9 @@ static int addPortPatternClient(lua_State* L)
     pPattern->length = patternSize;
     pPattern->offset = position;
     pPattern->detectorName = snort_strdup(ud->name.c_str());
+    insert_client_port_pattern(pPattern);
 
-    //insert ports in order.
-    {
-        PortPatternNode** prev;
-        PortPatternNode** curr;
-
-        prev = nullptr;
-        for (curr = &pConfig->clientPortPattern->luaInjectedPatterns;
-            *curr;
-            prev = curr, curr = &((*curr)->next))
-        {
-            if (strcmp(pPattern->detectorName, (*curr)->detectorName) || pPattern->protocol <
-                (*curr)->protocol
-                || pPattern->port < (*curr)->port)
-                break;
-        }
-        if (prev)
-        {
-            pPattern->next = (*prev)->next;
-            (*prev)->next = pPattern;
-        }
-        else
-        {
-            pPattern->next = *curr;
-            *curr = pPattern;
-        }
-    }
-
-    appInfoSetActive(appId, true);
+    set_app_info_active(appId);
 
     return 0;
 }
@@ -2888,7 +2660,6 @@ static int addPortPatternService(lua_State* L)
 {
     int index = 1;
     size_t patternSize = 0;
-    AppIdConfig* pConfig;
     PortPatternNode* pPattern;
     IpProtocol protocol;
     uint16_t port;
@@ -2899,16 +2670,11 @@ static int addPortPatternService(lua_State* L)
     /* Verify detector user data and that we are not in packet context */
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
 
-    pConfig = ud->pAppidNewConfig;
     protocol = (IpProtocol)lua_tonumber(L, index++);
     port      = lua_tonumber(L, index++);
     pattern = lua_tolstring(L, index++, &patternSize);
     position = lua_tonumber(L, index++);
     appId = lua_tointeger(L, index++);
-
-    if (!pConfig->servicePortPattern)
-        pConfig->servicePortPattern =
-            (decltype(pConfig->servicePortPattern))snort_calloc(sizeof(ServicePortPattern));
 
     pPattern = (decltype(pPattern))snort_calloc(sizeof(PortPatternNode));
     pPattern->pattern  = (decltype(pPattern->pattern))snort_calloc(patternSize);
@@ -2921,33 +2687,9 @@ static int addPortPatternService(lua_State* L)
     pPattern->detectorName = snort_strdup(ud->name.c_str());
 
     //insert ports in order.
-    {
-        PortPatternNode** prev;
-        PortPatternNode** curr;
+    insert_service_port_pattern(pPattern);
 
-        prev = nullptr;
-        for (curr = &pConfig->servicePortPattern->luaInjectedPatterns;
-            *curr;
-            prev = curr, curr = &((*curr)->next))
-        {
-            if (strcmp(pPattern->detectorName, (*curr)->detectorName) || pPattern->protocol <
-                (*curr)->protocol
-                || pPattern->port < (*curr)->port)
-                break;
-        }
-        if (prev)
-        {
-            pPattern->next = (*prev)->next;
-            (*prev)->next = pPattern;
-        }
-        else
-        {
-            pPattern->next = *curr;
-            *curr = pPattern;
-        }
-    }
-
-    appInfoSetActive(appId, true);
+    set_app_info_active(appId);
 
     return 0;
 }
@@ -2985,9 +2727,9 @@ static int Detector_addSipServer(lua_State* L)
     // FIXIT-M: uncomment when sip detector is included in the build
 #ifdef REMOVED_WHILE_NOT_IN_USE
     sipServerPatternAdd(client_app, clientVersion, uaPattern,
-            &ud->pAppidNewConfig->detectorSipConfig);
+            &ud->appid_config->detectorSipConfig);
 #endif
-    appInfoSetActive(client_app, true);
+    set_app_info_active(client_app);
 
     return 0;
 }
@@ -3052,7 +2794,7 @@ static int createFutureFlow(lua_State* L)
     app_id_to_snort = lua_tointeger(L, 10);
     if (app_id_to_snort > APP_ID_NONE)
     {
-        AppInfoTableEntry* entry = appInfoEntryGet(app_id_to_snort, pAppidActiveConfig);
+        AppInfoTableEntry* entry = appInfoEntryGet(app_id_to_snort);
         if (nullptr == entry)
             return 0;
         snort_app_id = entry->snortId;
@@ -3315,102 +3057,6 @@ int Detector_register(lua_State* L)
 }
 
 /** @} */ /* end of LuaDetectorBaseApi */
-
-static void FreeHTTPListElement(HTTPListElement* element)
-{
-    if (element)
-    {
-        if (element->detectorHTTPPattern.pattern)
-            snort_free(element->detectorHTTPPattern.pattern);
-        snort_free(element);
-    }
-}
-
-static void FreeCHPAppListElement(CHPListElement* element)
-{
-    if (element)
-    {
-        if (element->chp_action.pattern)
-            snort_free(element->chp_action.pattern);
-        if (element->chp_action.action_data)
-            snort_free(element->chp_action.action_data);
-        snort_free (element);
-    }
-}
-
-static void FreeDetectorAppUrlPattern(DetectorAppUrlPattern* pattern)
-{
-    if (pattern)
-    {
-        if (pattern->userData.query.pattern)
-            snort_free(*(void**)&pattern->userData.query.pattern);
-        if (pattern->patterns.host.pattern)
-            snort_free(*(void**)&pattern->patterns.host.pattern);
-        if (pattern->patterns.path.pattern)
-            snort_free(*(void**)&pattern->patterns.path.pattern);
-        if (pattern->patterns.scheme.pattern)
-            snort_free(*(void**)&pattern->patterns.scheme.pattern);
-        snort_free(pattern);
-    }
-}
-
-void CleanHttpPatternLists(AppIdConfig* pConfig)
-{
-    HTTPListElement* element;
-    CHPListElement* chpe;
-    size_t i;
-
-    for (i = 0; i < pConfig->httpPatternLists.appUrlList.usedCount; i++)
-    {
-        FreeDetectorAppUrlPattern(pConfig->httpPatternLists.appUrlList.urlPattern[i]);
-        pConfig->httpPatternLists.appUrlList.urlPattern[i] = nullptr;
-    }
-    for (i = 0; i < pConfig->httpPatternLists.RTMPUrlList.usedCount; i++)
-    {
-        FreeDetectorAppUrlPattern(pConfig->httpPatternLists.RTMPUrlList.urlPattern[i]);
-        pConfig->httpPatternLists.RTMPUrlList.urlPattern[i] = nullptr;
-    }
-    if (pConfig->httpPatternLists.appUrlList.urlPattern)
-    {
-        // FIXIT-M: still allocated by malloc/realloc
-        free(pConfig->httpPatternLists.appUrlList.urlPattern);
-        pConfig->httpPatternLists.appUrlList.urlPattern = nullptr;
-    }
-    pConfig->httpPatternLists.appUrlList.allocatedCount = 0;
-    if (pConfig->httpPatternLists.RTMPUrlList.urlPattern)
-    {
-        free(pConfig->httpPatternLists.RTMPUrlList.urlPattern);
-        pConfig->httpPatternLists.RTMPUrlList.urlPattern = nullptr;
-    }
-    pConfig->httpPatternLists.RTMPUrlList.allocatedCount = 0;
-    pConfig->httpPatternLists.appUrlList.usedCount = 0;
-    pConfig->httpPatternLists.RTMPUrlList.usedCount = 0;
-    while ((element = pConfig->httpPatternLists.clientAgentPatternList))
-    {
-        pConfig->httpPatternLists.clientAgentPatternList = element->next;
-        FreeHTTPListElement(element);
-    }
-    while ((element = pConfig->httpPatternLists.hostPayloadPatternList))
-    {
-        pConfig->httpPatternLists.hostPayloadPatternList = element->next;
-        FreeHTTPListElement(element);
-    }
-    while ((element = pConfig->httpPatternLists.urlPatternList))
-    {
-        pConfig->httpPatternLists.urlPatternList = element->next;
-        FreeHTTPListElement(element);
-    }
-    while ((element = pConfig->httpPatternLists.contentTypePatternList))
-    {
-        pConfig->httpPatternLists.contentTypePatternList = element->next;
-        FreeHTTPListElement(element);
-    }
-    while ((chpe = pConfig->httpPatternLists.chpList))
-    {
-        pConfig->httpPatternLists.chpList = chpe->next;
-        FreeCHPAppListElement(chpe);
-    }
-}
 
 // -----------------------------------------------------------------------------
 // Detector

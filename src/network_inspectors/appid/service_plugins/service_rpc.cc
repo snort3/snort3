@@ -264,20 +264,20 @@ static int rpc_init(const IniServiceAPI* const init_api)
     }
 
     init_api->RegisterPattern(&rpc_tcp_validate, IpProtocol::TCP, rpc_reply_accepted_pattern,
-        sizeof(rpc_reply_accepted_pattern), 8, "rpc", init_api->pAppidConfig);
+        sizeof(rpc_reply_accepted_pattern), 8, "rpc");
     init_api->RegisterPattern(&rpc_tcp_validate, IpProtocol::TCP, rpc_reply_denied_pattern,
-        sizeof(rpc_reply_denied_pattern), 8, "rpc", init_api->pAppidConfig);
+        sizeof(rpc_reply_denied_pattern), 8, "rpc");
     init_api->RegisterPattern(&rpc_validate, IpProtocol::UDP, rpc_reply_accepted_pattern,
-        sizeof(rpc_reply_accepted_pattern), 4, "rpc", init_api->pAppidConfig);
+        sizeof(rpc_reply_accepted_pattern), 4, "rpc");
     init_api->RegisterPattern(&rpc_validate, IpProtocol::UDP, rpc_reply_denied_pattern,
-        sizeof(rpc_reply_denied_pattern), 4, "rpc", init_api->pAppidConfig);
+        sizeof(rpc_reply_denied_pattern), 4, "rpc");
 
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&rpc_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

@@ -32,8 +32,6 @@
 #include "sfip/sf_ip.h"
 #include "appid_utils/common_util.h"
 
-/*static const char * LuaLogLabel = "luaDetectorFlowApi"; */
-
 /* Lua flag bit/index to C flag value (0 for invalid). */
 static const uint64_t FLAGS_TABLE_LUA_TO_C[32]
 {

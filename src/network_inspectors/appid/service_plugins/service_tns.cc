@@ -129,12 +129,12 @@ static const AppRegistryEntry appIdRegistry[] =
 static int tns_init(const IniServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&tns_validate, IpProtocol::TCP, (const uint8_t*)TNS_BANNER,
-        TNS_BANNER_LEN, 2, svc_name, init_api->pAppidConfig);
+        TNS_BANNER_LEN, 2, svc_name);
     for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&tns_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
 
     return 0;

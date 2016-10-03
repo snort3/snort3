@@ -31,10 +31,16 @@ struct httpSession;
 struct fflow_info;
 struct CHPAction;
 struct CHPApp;
-struct DetectorHttpConfig;
 class AppIdConfig;
 
 #define MAX_VERSION_SIZE    64
+
+enum httpPatternType
+{
+    HTTP_PAYLOAD    = 1,
+    HTTP_USER_AGENT = 2,
+    HTTP_URL        = 3
+};
 
 enum HttpId
 {
@@ -127,11 +133,47 @@ struct HeaderMatchedPatterns
 	int searched;
 };
 
+struct UrlUserData
+{
+    uint32_t service_id;
+    uint32_t client_app;
+    uint32_t payload;
+    AppId appId;
+    tMlpPattern query;
+};
 
+struct DetectorAppUrlPattern
+{
+    struct
+    {
+        tMlpPattern host;
+        tMlpPattern path;
+        tMlpPattern scheme;
+    } patterns;
 
-int geAppidByViaPattern(const uint8_t*, unsigned, char**, const DetectorHttpConfig*);
-int getHTTPHeaderLocation(const uint8_t*, unsigned, HttpId, int*, int*, HeaderMatchedPatterns*,
-        const DetectorHttpConfig*);
+    UrlUserData userData;
+};
+
+struct DetectorAppUrlList
+{
+    DetectorAppUrlPattern** urlPattern = nullptr;
+    size_t usedCount = 0;
+    size_t allocatedCount = 0;
+};
+
+void init_http_detector();
+int finalize_http_detector();
+void clean_http_detector();
+void insert_chp_pattern(CHPListElement* chpa);
+void insert_http_pattern_element(enum httpPatternType pType, HTTPListElement* element);
+void insert_content_type_pattern(HTTPListElement* element);
+void insert_url_pattern(DetectorAppUrlPattern* pattern);
+void insert_rtmp_url_pattern(DetectorAppUrlPattern* pattern);
+void insert_app_url_pattern(DetectorAppUrlPattern* pattern);
+DetectorAppUrlList* getAppUrlList();
+
+int geAppidByViaPattern(const uint8_t*, unsigned, char**);
+int getHTTPHeaderLocation(const uint8_t*, unsigned, HttpId, int*, int*, HeaderMatchedPatterns*);
 inline void FreeMatchedCHPActions(MatchedCHPAction* ma)
 {
 	MatchedCHPAction* tmp;
@@ -144,19 +186,16 @@ inline void FreeMatchedCHPActions(MatchedCHPAction* ma)
 	}
 }
 
-int scanKeyCHP(PatternType, char*, int, CHPMatchTally**, MatchedCHPAction**,
-        const DetectorHttpConfig*);
+int scanKeyCHP(PatternType, char*, int, CHPMatchTally**, MatchedCHPAction**);
 AppId scanCHP(PatternType, char*, int, MatchedCHPAction*, char**, char**, char**, int*,
-        httpSession*, Packet*, const DetectorHttpConfig*);
-AppId getAppIdFromUrl(char*, char*, char**, char*, AppId*, AppId*, AppId*, AppId*, unsigned,
-        const DetectorHttpConfig*);
-AppId geAppidByContentType(const uint8_t*, int, const DetectorHttpConfig*);
+        httpSession*, Packet*);
+AppId getAppIdFromUrl(char*, char*, char**, char*, AppId*, AppId*, AppId*, AppId*, unsigned);
+AppId geAppidByContentType(const uint8_t*, int);
 AppId scan_header_x_working_with(const uint8_t*, uint32_t, char**);
-void identifyUserAgent(const uint8_t*, int, AppId*, AppId*, char**, const DetectorHttpConfig*);
+void identifyUserAgent(const uint8_t*, int, AppId*, AppId*, char**);
 void getServerVendorVersion(const uint8_t*, int, char**, char**, RNAServiceSubtype**);
 int webdav_found(HeaderMatchedPatterns*);
-int http_detector_finalize(AppIdConfig*);
-void http_detector_clean(DetectorHttpConfig*);
+
 void finalizeFflow(fflow_info*, unsigned app_type_flags, AppId, Packet* );
 
 #endif

@@ -126,7 +126,7 @@ static int rtmp_init(const IniServiceAPI* const init_api)
     {
         DebugFormat(DEBUG_INSPECTOR, "registering appId: %d\n", appIdRegistry[i].appId);
         init_api->RegisterAppId(&rtmp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo, init_api->pAppidConfig);
+            appIdRegistry[i].additionalInfo);
     }
     return 0;
 }
