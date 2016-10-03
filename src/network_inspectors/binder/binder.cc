@@ -100,11 +100,25 @@ bool Binding::check_addr(const Flow* flow) const
     if ( !when.nets )
         return true;
 
-    if ( sfvar_ip_in(when.nets, &flow->client_ip) )
-        return true;
+    switch ( when.role )
+    {
+        case BindWhen::BR_SERVER:
+            if ( sfvar_ip_in(when.nets, &flow->server_ip) )
+                return true;
+            break;
+        case BindWhen::BR_CLIENT:
+            if ( sfvar_ip_in(when.nets, &flow->client_ip) )
+                return true;
+            break;
+        case BindWhen::BR_EITHER:
+            if ( sfvar_ip_in(when.nets, &flow->client_ip) or
+                    sfvar_ip_in(when.nets, &flow->server_ip) )
+                return true;
+            break;
+        default:
+            break;
+    }
 
-    if ( sfvar_ip_in(when.nets, &flow->server_ip) )
-        return true;
 
     return false;
 }
@@ -140,7 +154,18 @@ bool Binding::check_vlan(const Flow* flow) const
 
 bool Binding::check_port(const Flow* flow) const
 {
-    return when.ports.test(flow->server_port);
+    switch ( when.role )
+    {
+        case BindWhen::BR_SERVER:
+            return when.ports.test(flow->server_port);
+        case BindWhen::BR_CLIENT:
+            return when.ports.test(flow->client_port);
+        case BindWhen::BR_EITHER:
+            return (when.ports.test(flow->client_port) or when.ports.test(flow->server_port) );
+        default:
+            break;
+    }
+    return false;
 }
 
 bool Binding::check_service(const Flow* flow) const

@@ -961,6 +961,7 @@ static inline int _sfvar_ip_in6(sfip_var_t* var, const sfip_t* ip)
     return 0;
 }
 
+// FIXIT-L sfvar_ip_in, _sfvar_ip_in4 and _sfvar_ip_in6 should all return boool
 /* Returns SFIP_SUCCESS if ip is contained in 'var', SFIP_FAILURE otherwise
    If either argument is NULL, SFIP_ARG_ERR is returned. */
 int sfvar_ip_in(sfip_var_t* var, const sfip_t* ip)

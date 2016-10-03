@@ -30,7 +30,7 @@ class Flow;
 struct BindWhen
 {
     enum Role
-    { BR_EITHER, BR_CLIENT, BR_SERVER, BR_MAX };
+    { BR_CLIENT, BR_SERVER, BR_EITHER, BR_MAX };
 
     unsigned id;
     unsigned protos;

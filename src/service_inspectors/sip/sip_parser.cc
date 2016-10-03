@@ -793,6 +793,30 @@ static int sip_parse_to(SIPMsg* msg, const char* start, const char* end, SIP_PRO
     return SIP_PARSE_SUCCESS;
 }
 
+static inline bool is_valid_ip(const char *start, int length)
+{
+    sfip_t ip;
+    char ipStr[INET6_ADDRSTRLEN];
+
+    /*Get the IP address*/
+    if(length > INET6_ADDRSTRLEN - 1)
+    {
+        length = INET6_ADDRSTRLEN - 1;
+    }
+    memcpy(ipStr, start, length);
+    ipStr[length] = '\0';
+
+    DebugFormat(DEBUG_SIP, "IP data: %s\n", ipStr);
+
+    if( (sfip_pton(ipStr, &ip)) != SFIP_SUCCESS)
+    {
+        DebugMessage(DEBUG_SIP, "Not valid IP! \n");
+        return false;
+    }
+
+    return true;
+}
+
 /********************************************************************
  * Function: sip_parse_call_id()
  *
@@ -810,11 +834,18 @@ static int sip_parse_to(SIPMsg* msg, const char* start, const char* end, SIP_PRO
 
 static int sip_parse_call_id(SIPMsg* msg, const char* start, const char* end, SIP_PROTO_CONF*)
 {
-    DEBUG_WRAP(int length = end -start; )
+    int length = end -start;
     DebugFormat(DEBUG_SIP, "Call-Id value: %.*s\n", length, start);
     msg->call_id = (char*)start;
+    /*ignore ip address in call id by adjusting length*/
+    char* at = (char*)memchr(start, '@', length);
+    if(at && (at < end) && is_valid_ip(at+1, (end-at-1)))
+    {
+        length = at - start;
+    }
+
     msg->callIdLen = end - start;
-    msg->dlgID.callIdHash =  strToHash(msg->call_id, msg->callIdLen);
+    msg->dlgID.callIdHash =  strToHash(msg->call_id, length);
     DebugFormat(DEBUG_SIP, "Call-Id length: %d, Hash: %u\n",
         msg->callIdLen, msg->dlgID.callIdHash);
 
