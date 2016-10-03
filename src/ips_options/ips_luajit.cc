@@ -38,6 +38,7 @@
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "detection/detection_defines.h"
+#include "utils/util.h"
 
 static THREAD_LOCAL ProfileStats luaIpsPerfStats;
 
@@ -127,11 +128,12 @@ private:
 
     std::string config;
     std::vector<Lua::State> states;
+    char* my_name;
 };
 
 LuaJitOption::LuaJitOption(
     const char* name, std::string& chunk, LuaJitModule* mod)
-    : IpsOption(name, RULE_OPTION_TYPE_BUFFER_USE)
+    : IpsOption((my_name = snort_strdup(name)), RULE_OPTION_TYPE_BUFFER_USE)
 {
     // create an args table with any rule options
     config = "args = { ";
@@ -148,7 +150,9 @@ LuaJitOption::LuaJitOption(
 }
 
 LuaJitOption::~LuaJitOption()
-{ }
+{
+    snort_free((void*)my_name);
+}
 
 uint32_t LuaJitOption::hash() const
 {
