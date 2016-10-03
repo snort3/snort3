@@ -1,6 +1,7 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
+// Copyright (C) 2014-2016 Titan IC Systems Ltd. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -64,6 +65,9 @@
 #include "detection_defines.h"
 #include "sfrim.h"
 #include "pattern_match_data.h"
+
+#include "tics/tics.h"
+#include "packet_io/trough.h"
 
 static unsigned mpse_count = 0;
 
@@ -610,8 +614,24 @@ static int fpFinishPortGroupRule(
                 pg->mpse[pmd->pm_type]->set_opt(1);
         }
 
+#ifdef TICS_GENERATE_RULE_FILE
+        tics_fp_elem_t *fp_elem = NULL;
+        if (tics_create_fp_elem(&fp_elem, pmd, otn))
+        {
+            printf("fp_elem creation failure in %s\n", __FUNCTION__);
+            exit (0);
+        }
+        if (tics_add_fp(fp_elem, PmType(pmd->pm_type), pg))
+        {
+            exit (0);
+        }
+#endif /* TICS_GENERATE_RULE_FILE */
+
         Mpse::PatternDescriptor desc(pmd->no_case, pmd->negated, pmd->literal, pmd->flags);
         pg->mpse[pmd->pm_type]->add_pattern(sc, (uint8_t*)pattern, pattern_length, desc, pmx);
+#ifdef TICS_GENERATE_RULE_FILE
+        snort_add_pattern_cnt++;
+#endif /* TICS_GENERATE_RULE_FILE */
     }
 
     return 0;
@@ -632,6 +652,10 @@ static int fpFinishPortGroup(
         {
             if (pg->mpse[i]->get_pattern_count() != 0)
             {
+#ifdef TICS_GENERATE_RULE_FILE
+                snort_prep_patterns_cnt++;
+#endif /* TICS_GENERATE_RULE_FILE */
+
                 if (pg->mpse[i]->prep_patterns(sc) != 0)
                 {
                     FatalError("Failed to compile port group patterns.\n");
@@ -1214,6 +1238,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nIP-SRC ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_IP_GROUP;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortTablePortGroups(sc, p->ip.src, add_any_any))
     {
         LogMessage("fpCreatePorTablePortGroups failed-ip.src\n");
@@ -1223,6 +1250,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nIP-DST ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_IP_GROUP;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortTablePortGroups(sc, p->ip.dst, add_any_any))
     {
         LogMessage("fpCreatePorTablePortGroups failed-ip.dst\n");
@@ -1232,6 +1262,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nIP-ANY ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_ANY;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortObject2PortGroup(sc, po2, 0))
     {
         LogMessage("fpCreatePorTablePortGroups failed-ip any\n");
@@ -1252,6 +1285,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nICMP-SRC ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_TYPE;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortTablePortGroups(sc, p->icmp.src, add_any_any))
     {
         LogMessage("fpCreatePorTablePortGroups failed-icmp.src\n");
@@ -1261,6 +1297,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nICMP-DST ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_TYPE;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortTablePortGroups(sc, p->icmp.dst, add_any_any))
     {
         LogMessage("fpCreatePorTablePortGroups failed-icmp.src\n");
@@ -1270,6 +1309,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nICMP-ANY ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_ANY;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortObject2PortGroup(sc, po2, 0))
     {
         LogMessage("fpCreatePorTablePortGroups failed-icmp any\n");
@@ -1289,6 +1331,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nTCP-SRC ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_SRC;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortTablePortGroups(sc, p->tcp.src, add_any_any))
     {
         LogMessage("fpCreatePorTablePortGroups failed-tcp.src\n");
@@ -1298,6 +1343,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nTCP-DST ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_DST;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortTablePortGroups(sc, p->tcp.dst, add_any_any))
     {
         LogMessage("fpCreatePorTablePortGroups failed-tcp.dst\n");
@@ -1307,6 +1355,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nTCP-ANY ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_ANY;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortObject2PortGroup(sc, po2, 0))
     {
         LogMessage("fpCreatePorTablePortGroups failed-tcp any\n");
@@ -1327,6 +1378,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nUDP-SRC ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_SRC;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortTablePortGroups(sc, p->udp.src, add_any_any))
     {
         LogMessage("fpCreatePorTablePortGroups failed-udp.src\n");
@@ -1336,6 +1390,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nUDP-DST ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_DST;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortTablePortGroups(sc, p->udp.dst, add_any_any))
     {
         LogMessage("fpCreatePorTablePortGroups failed-udp.src\n");
@@ -1345,6 +1402,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nUDP-ANY ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_ANY;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortObject2PortGroup(sc, po2, 0))
     {
         LogMessage("fpCreatePorTablePortGroups failed-udp.src\n");
@@ -1363,6 +1423,9 @@ static int fpCreatePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nSVC-ANY ");
 
+#ifdef TICS_USE_RXP_MATCH
+    global_tics_pg_type = TICS_PORT_GROUP_ANY;
+#endif /* TICS_USE_RXP_MATCH */
     if (fpCreatePortObject2PortGroup(sc, po2, 0))
     {
         LogMessage("fpCreatePorTablePortGroups failed-svc_any\n");
@@ -1478,6 +1541,16 @@ static void fpCreateServiceMapPortGroups(SnortConfig* sc)
 
     for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
     {
+#ifdef TICS_USE_RXP_MATCH
+        if (i == SNORT_PROTO_FILE)
+        {
+            global_tics_pg_type = TICS_PORT_GROUP_FILE;
+        }
+        else
+        {
+            global_tics_pg_type = TICS_PORT_GROUP_SVC;
+        }
+#endif /* TICS_USE_RXP_MATCH */
         fpBuildServicePortGroups(sc, sc->spgmmTable->to_srv[i],
             sc->sopgTable->to_srv[i], sc->srmmTable->to_srv[i], fp);
 
@@ -1772,11 +1845,31 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("Service Based Rule Maps Done....\n");
 
+#ifdef TICS_GENERATE_RULE_FILE
+    if (tics_finalize_fp_subsets())
+    {
+        exit (-1);
+    }
+    if (tics_generate_rule_file())
+    {
+        exit (-1);
+    }
+    if (tics_generate_t2s_psb_id_map())
+    {
+        exit (-1);
+    }
+#endif /* TICS_GENERATE_RULE_FILE */
+
     fp_print_port_groups(port_tables);
     fp_print_service_groups(sc->spgmmTable);
 
     if ( mpse_count )
     {
+#ifdef TICS_GENERATE_RULE_FILE
+        printf("snort's mpse_count = %d\n", mpse_count);
+        printf("snort's add_pattern call count = %d\n", snort_add_pattern_cnt);
+        printf("snort's prep_patterns call count = %d\n", snort_prep_patterns_cnt);
+#endif /* TICS_GENERATE_RULE_FILE */
         LogLabel("search engine");
         MpseManager::print_mpse_summary(fp->get_search_api());
     }

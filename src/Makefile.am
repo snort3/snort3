@@ -109,7 +109,8 @@ connectors/file_connector/libfile_connector.a \
 connectors/tcp_connector/libtcp_connector.a \
 side_channel/libside_channel.a \
 ports/libports.a \
-utils/libutils.a
+utils/libutils.a \
+tics/libtics.a
 
 SUBDIRS = \
 actions \
@@ -149,7 +150,8 @@ stream \
 target_based \
 time \
 profiler \
-utils
+utils \
+tics
 
 if ENABLE_UNIT_TESTS
 SUBDIRS += catch

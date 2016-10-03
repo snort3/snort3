@@ -30,6 +30,7 @@
 #include "parser/parser.h"
 #include "log/messages.h"
 #include "search_engines/search_common.h"
+#include "tics/tics_macro_enabler.h"
 
 using namespace std;
 

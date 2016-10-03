@@ -1,6 +1,7 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
+// Copyright (C) 2014-2016 Titan IC Systems Ltd. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -24,6 +25,8 @@
 
 #ifndef PortGroup_H
 #define PortGroup_H
+
+#include "tics/tics_macro_enabler.h"
 
 // PortGroup contains a set of fast patterns in the form of an MPSE and a
 // set of non-fast-pattern (nfp) rules.  when a PortGroup is selected, the
@@ -66,6 +69,10 @@ struct PortGroup
     // FIXIT-L these runtime counts are only valid with one packet thread
     unsigned match_count;
     unsigned event_count;
+
+#ifdef TICS_GENERATE_RULE_FILE
+    unsigned tics_subset_id[PM_TYPE_MAX];
+#endif /* TICS_GENERATE_RULE_FILE */
 
     void add_rule();
     bool add_nfp_rule(void*);

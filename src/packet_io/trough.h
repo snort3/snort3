@@ -1,6 +1,7 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
+// Copyright (C) 2014-2016 Titan IC Systems Ltd. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -22,6 +23,7 @@
 
 #include <string>
 #include <vector>
+#include "tics/tics.h"
 
 // Trough provides access to sources (interface, file, etc.).
 
@@ -57,6 +59,10 @@ public:
         return pcap_loop_count;
     }
     static void cleanup();
+#ifdef TICS_USE_LOAD_BALANCE
+    static int print_pcap_queue();
+    static int set_dpdk_eal_cmd_str();
+#endif /* TICS_USE_LOAD_BALANCE */
 private:
     struct PcapReadObject
     {

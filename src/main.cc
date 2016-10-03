@@ -1,5 +1,6 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2016 Titan IC Systems Ltd. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -74,7 +75,17 @@
 #include "piglet/piglet.h"
 #endif
 
+#include "tics/tics.h"
+
 using namespace std;
+
+#ifdef TICS_GENERATE_RULE_FILE
+    FILE *tics_rule_file_handle = NULL;
+#endif /* TICS_GENERATE_RULE_FILE */
+#ifdef TICS_USE_LOAD_BALANCE
+    int enabled_rxp_queue_cnt = 0;
+    int launched_inspect_thread_cnt = 0;
+#endif /* TICS_USE_LOAD_BALANCE */
 
 //-------------------------------------------------------------------------
 
@@ -915,6 +926,55 @@ static void snort_main()
     max_pigs = ThreadConfig::get_instance_max();
     assert(max_pigs > 0);
 
+#ifdef TICS_USE_LOAD_BALANCE
+    Trough::print_pcap_queue();
+    Trough::set_dpdk_eal_cmd_str();
+    enabled_rxp_queue_cnt = ThreadConfig::get_instance_max();
+    if (enabled_rxp_queue_cnt <= 1)
+    {
+        enabled_rxp_queue_cnt = TICS_DEFAULT_RXP_QUEUE_CNT;
+    }
+    #ifdef TICS_USE_RXP_MATCH
+        if (enabled_rxp_queue_cnt > MAX_NUMBER_QUEUES)
+        {
+            enabled_rxp_queue_cnt = MAX_NUMBER_QUEUES;
+        }
+    #endif /* TICS_USE_RXP_MATCH */
+    max_pigs = enabled_rxp_queue_cnt;
+
+    #ifdef TICS_USE_RXP_MATCH
+        int& data_port_cnt = SnortConfig::get_dpdk_data_port_cnt();
+        int rxp_port_id = data_port_cnt;
+        if (tics_dpdk_init(rxp_port_id, enabled_rxp_queue_cnt))
+        {
+            exit (-1);
+        }
+        else if (tics_program_rxp_rule_file(rxp_port_id, 0))
+        {
+            exit (-1);
+        }
+        else
+        {
+            printf("rule file program is done and rxp enable is done\n");
+        }
+    #endif /* TICS_USE_RXP_MATCH */
+#else /* TICS_USE_LOAD_BALANCE */
+    #ifdef TICS_USE_RXP_MATCH
+        if (tics_dpdk_init(0, MAX_NUMBER_QUEUES))
+        {
+            exit (-1);
+        }
+        else if (tics_program_rxp_rule_file(0, 0))
+        {
+            exit (-1);
+        }
+        else
+        {
+            printf("rule file program is done and rxp enable is done\n");
+        }
+    #endif /* TICS_USE_RXP_MATCH */
+#endif /* TICS_USE_LOAD_BALANCE */
+
     pigs = new Pig[max_pigs];
 
     for (unsigned idx = 0; idx < max_pigs; idx++)
@@ -952,6 +1012,15 @@ int main(int argc, char* argv[])
 
     if ( s )
         prompt = s;
+
+#ifdef TICS_GENERATE_RULE_FILE
+    tics_rule_file_handle = fopen(TICS_RULE_FILE_PATH, "w");
+    if (!tics_rule_file_handle)
+    {
+        printf("file open failure in %s\n", __FUNCTION__);
+        exit (0);
+    }
+#endif /* TICS_GENERATE_RULE_FILE */
 
     Snort::setup(argc, argv);
 

@@ -1,6 +1,7 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
+// Copyright (C) 2014-2016 Titan IC Systems Ltd. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -90,6 +91,7 @@
 #include "snort_config.h"
 #include "snort_debug.h"
 #include "thread_config.h"
+#include "tics/tics.h"
 
 using namespace std;
 
@@ -218,7 +220,11 @@ void Snort::init(int argc, char** argv)
     snort_conf = snort_cmd_line_conf;
 
     LogMessage("--------------------------------------------------\n");
+#ifdef TICS_USE_RXP_MATCH
+    LogMessage("%s  Snort++ %s-%s TICS_VERSION %s\n", get_prompt(), VERSION, BUILD,TICS_VERSION);
+#else
     LogMessage("%s  Snort++ %s-%s\n", get_prompt(), VERSION, BUILD);
+#endif
     LogMessage("--------------------------------------------------\n");
 
 #ifdef PIGLET

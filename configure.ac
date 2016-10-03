@@ -1058,6 +1058,41 @@ fi
 AM_CONDITIONAL([HAVE_HYPERSCAN], [test "x$HS_HEADERS" = "xyes" -a "x$HS_LIB" = "xyes"])
 
 #--------------------------------------------------------------------------
+# DPDK for TICS RXP
+#--------------------------------------------------------------------------
+
+AC_ARG_WITH(dpdk_includes,
+    AS_HELP_STRING([--with-dpdk-includes=DIR],[libdpdk include directory]),
+    [with_dpdk_includes="$withval"],[with_dpdk_includes="no"])
+
+if test "x$with_dpdk_includes" != "xno"; then
+    DPDK_CFLAGS="-I${with_dpdk_includes}"
+fi
+
+AC_ARG_WITH(dpdk_libraries,
+    AS_HELP_STRING([--with-dpdk-libraries=DIR],[libdpdk library directory]),
+    [with_dpdk_libraries="$withval"],[with_dpdk_libraries="no"])
+
+if test "x$with_dpdk_libraries" != "xno"; then
+    DPDK_LDFLAGS="-L${with_dpdk_libraries}"
+fi
+
+CPPFLAGS="${CPPFLAGS} ${DPDK_CFLAGS}"
+LDFLAGS="${LDFLAGS} ${DPDK_LDFLAGS}"
+
+AC_CHECK_HEADERS(rxp.h, RXP_HEADERS="yes", RXP_HEADERS="no")
+#AC_CHECK_LIB(dpdk, rxp_init, RXP_LIB="yes", RXP_LIB="no")
+
+#if test "x$RXP_LIB" != "xno"; then
+    if test "x$RXP_HEADERS" != "xno"; then
+        AC_DEFINE([HAVE_DPDK],[1],[can build dpdk code])
+        LIBS="${LIBS} -ldpdk"
+    fi
+#fi
+
+AM_CONDITIONAL([HAVE_DPDK], [test "x$RXP_HEADERS" = "xyes" -a "x$RXP_LIB" = "xyes"])
+
+#--------------------------------------------------------------------------
 # outputs
 #--------------------------------------------------------------------------
 
@@ -1191,6 +1226,7 @@ src/catch/Makefile \
 src/time/Makefile \
 src/profiler/Makefile \
 src/utils/Makefile \
+src/tics/Makefile \
 lua/Makefile \
 doc/Makefile \
 daqs/Makefile \

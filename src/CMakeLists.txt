@@ -29,9 +29,12 @@ set(EXTERNAL_INCLUDES
     ${ZLIB_INCLUDE_DIRS}
 )
 
+find_library(DPDK_LIBRARIES NAMES dpdk HINTS ${DPDK_LIBRARIES_DIR})
+link_directories(${DPDK_LIBRARIES_DIR})
+
 if ( HS_FOUND )
-    LIST(APPEND EXTERNAL_LIBRARIES ${HS_LIBRARIES})
-    LIST(APPEND EXTERNAL_INCLUDES ${HS_INCLUDE_DIRS})
+    LIST(APPEND EXTERNAL_LIBRARIES ${HS_LIBRARIES} ${DPDK_LIBRARIES})
+    LIST(APPEND EXTERNAL_INCLUDES ${HS_INCLUDE_DIRS} ${DPDK_INCLUDE_DIRS})
 endif ()
 
 include_directories(BEFORE ${LUAJIT_INCLUDE_DIR})
@@ -149,6 +152,7 @@ target_link_libraries( snort
     protocols
     ports
     utils
+    tics
     ${EXTERNAL_LIBRARIES}
 )
 
@@ -190,6 +194,7 @@ add_subdirectory(network_inspectors)
 add_subdirectory(search_engines)
 add_subdirectory(side_channel)
 add_subdirectory(connectors)
+add_subdirectory(tics)
 
 
 #  setting export properties

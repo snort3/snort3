@@ -2,6 +2,7 @@
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 // Copyright (C) 2002 Martin Roesch <roesch@sourcefire.com>
+// Copyright (C) 2014-2016 Titan IC Systems Ltd. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -52,6 +53,11 @@
 
 #ifdef HAVE_HYPERSCAN
 #include <hs_compile.h>
+#endif
+
+#include "tics/tics_macro_enabler.h"
+#ifdef TICS_USE_RXP_MATCH
+#include "tics/tics.h"
 #endif
 
 #include <sys/types.h>
@@ -139,6 +145,10 @@ int DisplayBanner()
 #ifdef HAVE_HYPERSCAN
     LogMessage("           Using Hyperscan version %s\n", hs_version());
 #endif
+#ifdef TICS_USE_RXP_MATCH
+    LogMessage("           Using TICS RXP %s\n", TICS_VERSION);
+#endif
+
     LogMessage("\n");
 
     return 0;

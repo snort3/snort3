@@ -1,6 +1,7 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
+// Copyright (C) 2014-2016 Titan IC Systems Ltd. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -188,6 +189,36 @@ const PegInfo daq_names[] =
 
 const PegInfo pc_names[] =
 {
+#ifdef TICS_USE_RXP_MATCH
+    { "tics rxp searches", "rxp search" },
+    { "tics raw searches", "fast pattern searches in raw packet data" },
+    { "tics cooked searches", "fast pattern searches in cooked packet data" },
+    { "tics pkt searches", "fast pattern searches in packet data" },
+    { "tics alt searches", "alt fast pattern searches in packet data" },
+    { "tics key searches", "fast pattern searches in key buffer" },
+    { "tics header searches", "fast pattern searches in header buffer" },
+    { "tics body searches", "fast pattern searches in body buffer" },
+    { "tics file searches", "fast pattern searches in file buffer" },
+    { "tics scan portgroup cnt", "how many port group has been used" },
+    { "tics scan pm type pkt cnt", "how many PM_TYPE_PKT subset has been used" },
+    { "tics scan pm type alt cnt", "how many PM_TYPE_ALT subset has been used" },
+    { "tics scan pm type key cnt", "how many PM_TYPE_KEY subset has been used" },
+    { "tics scan pm type header cnt", "how many PM_TYPE_HEADER subset has been used" },
+    { "tics scan pm type body cnt", "how many PM_TYPE_BODY subset has been used" },
+    { "tics scan pm type file cnt", "how many PM_TYPE_FILE subset has been used" },
+    { "tics match limit reach", "how many times the rxp match limit has been reached" },
+    { "tics scan errors", "how many errors has been found in the rxp analysis" },
+    { "tics rxp pkt len err searches", "hs search due packet length limitations" },
+    { "tics hs searches", "hyperscan search" },
+    { "tics hs pkt len searches", "hs search due packet length limitations" },
+    { "tics hs rxp err searches", "hyperscan search due analysis errors" },
+    { "tics hs pkt searches", "hyperscan fast pattern searches in packet data" },
+    { "tics hs key searches", "hyperscan fast pattern searches in key buffer" },
+    { "tics hs header searches", "hyperscan fast pattern searches in header buffer" },
+    { "tics hs file searches", "hyperscan fast pattern searches in file buffer" },
+    { "tics hs body searches", "hyperscan fast pattern searches in body buffer" },
+    { "tics hs alt searches", "hyperscan alt fast pattern searches in packet data" },
+#endif /* TICS_USE_RXP_MATCH */
     { "analyzed", "packets sent to detection" },
     { "slow searches", "non-fast pattern rule evaluations" },
     { "raw searches", "fast pattern searches in raw packet data" },
