@@ -29,34 +29,23 @@ void BitDecode::reset_decode_state()
 DecodeResult BitDecode::decode_data(const uint8_t* start, const uint8_t* end)
 {
     uint32_t bytes_avail = 0;
-    uint32_t act_size = 0;
+    uint32_t act_size = end - start;
 
     if (!(decode_depth))
     {
-        bytes_avail = buf_size;
+        bytes_avail = act_size;
     }
-    else if ( decode_depth < 0 )
+    else if ( (uint32_t)decode_depth > decode_bytes_read )
     {
-        return DECODE_EXCEEDED;
+        bytes_avail = (uint32_t)decode_depth - decode_bytes_read;
     }
     else
-    {
-        bytes_avail = decode_depth - decode_bytes_read;
-    }
-
-    /* 1. Stop decoding when we have reached either the decode depth or encode depth.
-     * 2. Stop decoding when we are out of memory */
-    if (bytes_avail ==0)
     {
         reset_decode_state();
         return DECODE_EXCEEDED;
     }
 
-    if ( (uint32_t)(end-start) < bytes_avail )
-    {
-        act_size = ( end - start);
-    }
-    else
+    if ( act_size > bytes_avail )
     {
         act_size = bytes_avail;
     }
@@ -68,14 +57,8 @@ DecodeResult BitDecode::decode_data(const uint8_t* start, const uint8_t* end)
     return DECODE_SUCCESS;
 }
 
-#define MAX_DEPTH       65536
-
-BitDecode::BitDecode(int max_depth):DataDecode(max_depth)
+BitDecode::BitDecode(int max_depth, int detect_depth) : DataDecode(max_depth, detect_depth)
 {
-    if (!max_depth)
-        buf_size = MAX_DEPTH;
-    else
-        buf_size = max_depth;
     decode_depth = max_depth;
     decode_bytes_read = 0;
     decoded_bytes = 0;
@@ -83,7 +66,5 @@ BitDecode::BitDecode(int max_depth):DataDecode(max_depth)
 
 BitDecode::~BitDecode()
 {
-
 }
-
 

@@ -28,13 +28,9 @@
 
 #include "file_mime_process.h"
 
-void DecodeConfig::update_max_depth(int64_t depth)
+DecodeConfig::DecodeConfig()
 {
-    // 0 means unlimited
-    if (!depth)
-        max_depth = MAX_DEPTH;
-    else if (max_depth < depth)
-        max_depth = depth;
+    sync_all_depths();
 }
 
 void DecodeConfig::set_ignore_data(bool ignored)
@@ -60,7 +56,6 @@ int DecodeConfig::get_max_mime_mem()
 void DecodeConfig::set_b64_depth(int depth)
 {
     b64_depth = depth;
-    update_max_depth(depth);
 }
 
 int DecodeConfig::get_b64_depth()
@@ -71,7 +66,6 @@ int DecodeConfig::get_b64_depth()
 void DecodeConfig::set_qp_depth(int depth)
 {
     qp_depth = depth;
-    update_max_depth(depth);
 }
 
 int DecodeConfig::get_qp_depth()
@@ -82,7 +76,6 @@ int DecodeConfig::get_qp_depth()
 void DecodeConfig::set_bitenc_depth(int depth)
 {
     bitenc_depth = depth;
-    update_max_depth(depth);
 }
 
 int DecodeConfig::get_bitenc_depth()
@@ -93,7 +86,6 @@ int DecodeConfig::get_bitenc_depth()
 void DecodeConfig::set_uu_depth(int depth)
 {
     uu_depth = depth;
-    update_max_depth(depth);
 }
 
 int DecodeConfig::get_uu_depth()
@@ -106,37 +98,32 @@ int64_t DecodeConfig::get_file_depth()
     return file_depth;
 }
 
-int DecodeConfig::get_max_depth()
-{
-    return max_depth;
-}
-
 bool DecodeConfig::is_decoding_enabled()
 {
-    if (max_depth > -1)
-        return true;
-    else
-        return false;
-}
-
-void DecodeConfig::set_file_depth(int64_t file_depth)
-{
-    if ((!file_depth) || (file_depth > MAX_DEPTH))
-    {
-        max_depth = MAX_DEPTH;
-    }
-    else if (file_depth > max_depth)
-    {
-        max_depth = (int)file_depth;
-    }
+    return decode_enabled;
 }
 
 // update file depth and max_depth etc
 void DecodeConfig::sync_all_depths()
 {
     file_depth = FileService::get_max_file_depth();
+    if ((file_depth >= 0)or (b64_depth >= 0) or (qp_depth >= 0)
+        or (bitenc_depth >= 0) or (uu_depth >= 0))
+        decode_enabled = true;
+    else
+        decode_enabled = false;
+}
 
-    set_file_depth(file_depth);
+int DecodeConfig::get_max_depth(int decode_depth)
+{
+    sync_all_depths();
+
+    if (!file_depth or !decode_depth)
+        return 0;
+    else if (file_depth > decode_depth)
+        return file_depth;
+    else
+        return decode_depth;
 }
 
 void DecodeConfig::print_decode_conf()
@@ -206,3 +193,4 @@ void DecodeConfig::print_decode_conf()
     else
         LogMessage("    Non-Encoded MIME attachment Extraction/text: %s\n", "Disabled");
 }
+

@@ -27,7 +27,7 @@
 class UUDecode : public DataDecode
 {
 public:
-    UUDecode(int max_depth);
+    UUDecode(int max_depth, int detect_depth);
     ~UUDecode();
 
     // Main function to decode file data

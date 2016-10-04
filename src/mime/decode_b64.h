@@ -30,7 +30,7 @@
 class B64Decode : public DataDecode
 {
 public:
-    B64Decode(int max_depth);
+    B64Decode(int max_depth, int detect_depth);
     ~B64Decode();
 
     // Main function to decode file data
@@ -47,7 +47,7 @@ SO_PUBLIC int sf_base64decode(
     uint8_t* inbuf, uint32_t inbuf_size,
     uint8_t* outbuf, uint32_t outbuf_size,
     uint32_t* bytes_written
-);
+    );
 
 #endif
 

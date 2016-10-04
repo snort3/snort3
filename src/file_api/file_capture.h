@@ -67,10 +67,10 @@ public:
     bool is_reserved() { return reserved; }
 
     // Get the file that is reserved in memory, this should be called repeatedly
-    // until NULL is returned to get the full file
+    // until nullptr is returned to get the full file
     // Returns:
     //   the next memory block
-    //   NULL: end of file or fail to get file
+    //   nullptr: end of file or fail to get file
     FileCaptureBlock* get_file_data(uint8_t** buff, int* size);
 
     // Get the file size captured in the file buffer

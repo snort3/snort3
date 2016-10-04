@@ -28,7 +28,7 @@
 class BitDecode : public DataDecode
 {
 public:
-    BitDecode(int max_depth);
+    BitDecode(int max_depth, int detect_depth);
     ~BitDecode();
 
     // Main function to decode file data
@@ -37,7 +37,6 @@ public:
     void reset_decode_state() override;
 
 private:
-    uint32_t buf_size;
     int decode_depth;
 };
 

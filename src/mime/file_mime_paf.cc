@@ -50,7 +50,7 @@ static inline bool store_boundary(MimeDataPafInfo* data_info,  uint8_t val)
         if (val == '=')
             data_info->boundary_search++;
         else if (!isspace(val))
-            data_info->boundary_search = NULL;
+            data_info->boundary_search = nullptr;
     }
     else if (*(data_info->boundary_search) == '\0')
     {
@@ -88,7 +88,7 @@ static inline bool store_boundary(MimeDataPafInfo* data_info,  uint8_t val)
         if ((val == '.') || isspace (val))
             data_info->boundary_search = (char*)&boundary_str[0];
         else
-            data_info->boundary_search = NULL;
+            data_info->boundary_search = nullptr;
     }
 
     return false;
@@ -101,15 +101,8 @@ static inline bool check_boundary(MimeDataPafInfo* data_info,  uint8_t data)
     switch (data_info->boundary_state)
     {
     case MIME_PAF_BOUNDARY_UNKNOWN:
-        if (data == '\n')
-            data_info->boundary_state = MIME_PAF_BOUNDARY_LF;
-        break;
-
-    case MIME_PAF_BOUNDARY_LF:
         if (data == '-')
             data_info->boundary_state = MIME_PAF_BOUNDARY_HYPEN_FIRST;
-        else if (data != '\n')
-            data_info->boundary_state = MIME_PAF_BOUNDARY_UNKNOWN;
         break;
 
     case MIME_PAF_BOUNDARY_HYPEN_FIRST:
@@ -118,8 +111,6 @@ static inline bool check_boundary(MimeDataPafInfo* data_info,  uint8_t data)
             data_info->boundary_state = MIME_PAF_BOUNDARY_HYPEN_SECOND;
             data_info->boundary_search = data_info->boundary;
         }
-        else if (data == '\n')
-            data_info->boundary_state = MIME_PAF_BOUNDARY_LF;
         else
             data_info->boundary_state = MIME_PAF_BOUNDARY_UNKNOWN;
         break;
@@ -139,6 +130,8 @@ static inline bool check_boundary(MimeDataPafInfo* data_info,  uint8_t data)
         }
         else if (*(data_info->boundary_search) == data)
             data_info->boundary_search++;
+        else if (data == '-')
+            data_info->boundary_state = MIME_PAF_BOUNDARY_HYPEN_FIRST;
         else
             data_info->boundary_state = MIME_PAF_BOUNDARY_UNKNOWN;
         break;
@@ -149,7 +142,7 @@ static inline bool check_boundary(MimeDataPafInfo* data_info,  uint8_t data)
 
 void reset_mime_paf_state(MimeDataPafInfo* data_info)
 {
-    data_info->boundary_search = NULL;
+    data_info->boundary_search = nullptr;
     data_info->boundary_len = 0;
     data_info->boundary[0] = '\0';
     data_info->boundary_state = MIME_PAF_BOUNDARY_UNKNOWN;

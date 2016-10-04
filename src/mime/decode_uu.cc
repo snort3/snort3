@@ -70,8 +70,8 @@ DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
     act_encode_size = act_encode_size + buffer->get_prev_encoded_bytes();
 
     if (sf_uudecode(buffer->get_encode_buff(), act_encode_size, buffer->get_decode_buff(),
-        buffer->get_decode_avail(), &bytes_read, &act_decode_size,
-        &(begin_found), &(end_found)) != 0)
+            buffer->get_decode_avail(), &bytes_read, &act_decode_size,
+            &(begin_found), &(end_found)) != 0)
     {
         reset_decode_state();
         return DECODE_FAIL;
@@ -104,8 +104,7 @@ DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
     return DECODE_SUCCESS;
 }
 
-
-UUDecode::UUDecode(int max_depth):DataDecode(max_depth)
+UUDecode::UUDecode(int max_depth, int detect_depth) : DataDecode(max_depth, detect_depth)
 {
     buffer = new DecodeBuffer(max_depth);
 }
@@ -114,7 +113,6 @@ UUDecode::~UUDecode()
 {
     if (buffer)
         delete buffer;
-
 }
 
 int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32_t* bytes_read,
@@ -240,3 +238,4 @@ int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32
     *bytes_copied = dptr - dst;
     return 0;
 }
+

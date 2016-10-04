@@ -51,15 +51,15 @@ public:
     ~MailLogState();
 
     /* accumulate MIME attachment filenames. The filenames are appended by commas */
-    int log_file_name (const uint8_t* start, int length, bool* disp_cont);
+    int log_file_name(const uint8_t* start, int length, bool* disp_cont);
     void set_file_name_from_log(Flow*);
 
     int log_email_hdrs(const uint8_t* start, int length);
     int log_email_id (const uint8_t* start, int length, EmailUserType);
 
-    void get_file_name (uint8_t** buf, uint32_t* len);
-    void get_email_hdrs (uint8_t** buf, uint32_t* len);
-    void get_email_id (uint8_t** buf, uint32_t* len, EmailUserType);
+    void get_file_name(uint8_t** buf, uint32_t* len);
+    void get_email_hdrs(uint8_t** buf, uint32_t* len);
+    void get_email_id(uint8_t** buf, uint32_t* len, EmailUserType);
 
     bool is_file_name_present();
     bool is_email_hdrs_present();

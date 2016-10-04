@@ -206,10 +206,16 @@ void HttpMsgHeader::setup_file_processing()
            session_data->file_depth_remaining[source_id] = 0;
            return;
         }
-
-        if (source_id == SRC_CLIENT)
+        // FIXIT check boundary to make sure this is not MIME for sure
+        if ((source_id == SRC_CLIENT) and (get_header_value_norm(HEAD_CONTENT_TYPE).length > 0 ))
         {
             session_data->mime_state = new MimeSession(&decode_conf, &mime_conf);
+            const Field& headers = get_classic_raw_header();
+            if (headers.length > 0)
+            {
+                session_data->mime_state->process_mime_data(flow, headers.start,
+                    headers.length, true, SNORT_FILE_POSITION_UNKNOWN);
+            }
         }
         else
         {

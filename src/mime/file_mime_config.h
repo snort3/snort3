@@ -38,6 +38,7 @@
 class SO_PUBLIC DecodeConfig
 {
 public:
+    DecodeConfig();
     void set_ignore_data(bool);
     bool is_ignore_data();
     void set_max_mime_mem(int);
@@ -50,11 +51,11 @@ public:
     int get_bitenc_depth();
     void set_uu_depth(int);
     int get_uu_depth();
-    int get_max_depth();
     int64_t get_file_depth();
     bool is_decoding_enabled();
     void sync_all_depths();
     void print_decode_conf();
+    int get_max_depth(int);
 
 private:
     bool ignore_data = false;
@@ -64,9 +65,7 @@ private:
     int bitenc_depth = DEFAULT_DEPTH;
     int uu_depth = DEFAULT_DEPTH;
     int64_t file_depth = MIN_DEPTH;
-    int max_depth = DEFAULT_DEPTH;  //is the max of all depths
-    void set_file_depth(int64_t);
-    void update_max_depth(int64_t);
+    bool decode_enabled = true;
 };
 
 #endif

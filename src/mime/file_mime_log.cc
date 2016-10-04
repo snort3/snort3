@@ -40,11 +40,10 @@
 #define MIME_FLAG_FILENAME_PRESENT                0x00000004
 #define MIME_FLAG_EMAIL_HDRS_PRESENT              0x00000008
 
-
 /* Extract the filename from the header */
 int MailLogState::extract_file_name(const char** start, int length, bool* disp_cont)
 {
-    const char* tmp = NULL;
+    const char* tmp = nullptr;
     const char* end = *start+length;
 
     if (length <= 0)
@@ -54,7 +53,7 @@ int MailLogState::extract_file_name(const char** start, int length, bool* disp_c
     {
         tmp = SnortStrcasestr(*start, length, "filename");
 
-        if ( tmp == NULL )
+        if ( tmp == nullptr )
             return -1;
 
         tmp = tmp + 8;
@@ -81,7 +80,7 @@ int MailLogState::extract_file_name(const char** start, int length, bool* disp_c
             }
             *start = tmp;
             tmp = SnortStrnPbrk(*start,(end - tmp),"\"");
-            if (tmp == NULL )
+            if (tmp == nullptr )
             {
                 if ((end - tmp) > 0 )
                 {
@@ -168,7 +167,6 @@ int MailLogState::log_file_name(const uint8_t* start, int length, bool* disp_con
     return 0;
 }
 
-
 void MailLogState::set_file_name_from_log(Flow* flow)
 {
     FileFlows* files = FileFlows::get_file_flows(flow);
@@ -234,7 +232,7 @@ int MailLogState::log_email_id(const uint8_t* start, int length, EmailUserType t
         return -1;
 
     tmp_eol = (uint8_t*)memchr(start, ':', length);
-    if (tmp_eol == NULL)
+    if (tmp_eol == nullptr)
         return -1;
 
     if ((tmp_eol+1) < (start+length))
@@ -305,7 +303,6 @@ void MailLogState::get_email_hdrs(uint8_t** buf, uint32_t* len)
 {
     *buf = emailHdrs;
     *len = hdrs_logged;
-
 }
 
 void MailLogState::get_email_id(uint8_t** buf, uint32_t* len, EmailUserType type)
@@ -353,7 +350,7 @@ bool MailLogState::is_email_to_present()
 MailLogState::MailLogState(MailLogConfig* conf)
 {
     if (conf && (conf->log_email_hdrs || conf->log_filename
-        || conf->log_mailfrom || conf->log_rcptto))
+            || conf->log_mailfrom || conf->log_rcptto))
     {
         uint32_t bufsz = (2* MAX_EMAIL) + MAX_FILE + conf->email_hdrs_log_depth;
         buf = (uint8_t*)snort_calloc(bufsz);
@@ -374,6 +371,7 @@ MailLogState::MailLogState(MailLogConfig* conf)
 
 MailLogState::~MailLogState()
 {
-    if (buf != NULL)
+    if (buf != nullptr)
         snort_free(buf);
 }
+

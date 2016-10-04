@@ -28,7 +28,7 @@
 class QPDecode : public DataDecode
 {
 public:
-    QPDecode(int max_depth);
+    QPDecode(int max_depth, int detect_depth);
     ~QPDecode();
 
     // Main function to decode file data
@@ -38,7 +38,6 @@ public:
 
 private:
     class DecodeBuffer* buffer = nullptr;
-
 };
 
 int sf_qpdecode(char* src, uint32_t slen, char* dst, uint32_t dlen, uint32_t* bytes_read,

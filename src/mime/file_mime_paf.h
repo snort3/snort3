@@ -39,7 +39,6 @@ enum MimeDataState
 enum MimeBoundaryState
 {
     MIME_PAF_BOUNDARY_UNKNOWN = 0,      /* UNKNOWN */
-    MIME_PAF_BOUNDARY_LF,               /* '\n' */
     MIME_PAF_BOUNDARY_HYPEN_FIRST,      /* First '-' */
     MIME_PAF_BOUNDARY_HYPEN_SECOND      /* Second '-' */
 };

@@ -51,7 +51,6 @@ bool DecodeBuffer::check_restore_buffer()
     if (prev_encoded_bytes > encode_avail)
         prev_encoded_bytes = encode_avail;
 
-
     uint32_t prev_bytes = prev_encoded_bytes;
 
     uint32_t i = 0;
@@ -129,3 +128,4 @@ void DecodeBuffer::save_buffer(uint8_t* buff, uint32_t buff_size)
     prev_encoded_bytes = buff_size;
     prev_encoded_buf = buff;
 }
+

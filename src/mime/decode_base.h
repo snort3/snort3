@@ -30,12 +30,12 @@ enum DecodeResult
     DECODE_SUCCESS,
     DECODE_EXCEEDED, // Decode Complete when we reach the max depths
     DECODE_FAIL
-} ;
+};
 
 class DataDecode
 {
 public:
-    DataDecode(int max_depth);
+    DataDecode(int max_depth, int detect_depth);
     virtual ~DataDecode();
 
     // Main function to decode file data
@@ -48,13 +48,14 @@ public:
 
     virtual void reset_decode_state();
 
+    // Used to limit number of bytes examined for rule evaluation
     int get_detection_depth();
 
 protected:
     uint32_t decoded_bytes = 0;
     uint32_t decode_bytes_read;
     uint8_t* decodePtr = nullptr;
-    int decode_depth;
+    int detection_depth;
 };
 
 #endif

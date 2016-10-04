@@ -153,12 +153,12 @@ FileMemPool::~FileMemPool()
  * Args:
  *   FileMemPool: pointer to a FileMemPool struct
  *
- * Returns: a pointer to the FileMemPool object on success, NULL on failure
+ * Returns: a pointer to the FileMemPool object on success, nullptr on failure
  */
 
 void* FileMemPool::m_alloc()
 {
-    void* b = NULL;
+    void* b = nullptr;
 
     std::lock_guard<std::mutex> lock(pool_mutex);
 
@@ -166,7 +166,7 @@ void* FileMemPool::m_alloc()
     {
         if (cbuffer_read(released_list, &b))
         {
-            return NULL;
+            return nullptr;
         }
     }
 

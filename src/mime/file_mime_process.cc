@@ -43,7 +43,7 @@ struct MimeToken
     const char* name;
     int name_len;
     int search_id;
-} ;
+};
 
 enum MimeHdrEnum
 {
@@ -58,27 +58,27 @@ const MimeToken mime_hdrs[] =
     { "Content-type:", 13, HDR_CONTENT_TYPE },
     { "Content-Transfer-Encoding:", 26, HDR_CONT_TRANS_ENC },
     { "Content-Disposition:", 20, HDR_CONT_DISP },
-    { NULL,             0, 0 }
+    { nullptr,             0, 0 }
 };
 
 struct MIMESearch
 {
     const char* name;
     int name_len;
-} ;
+};
 
 struct MIMESearchInfo
 {
     int id;
     int index;
     int length;
-} ;
+};
 
 MIMESearchInfo mime_search_info;
 
 SearchTool* mime_hdr_search_mpse = nullptr;
 MIMESearch mime_hdr_search[HDR_LAST];
-MIMESearch* mime_current_search = NULL;
+MIMESearch* mime_current_search = nullptr;
 
 static void get_mime_eol(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
@@ -95,7 +95,7 @@ static void get_mime_eol(const uint8_t* ptr, const uint8_t* end,
     }
 
     tmp_eol = (uint8_t*)memchr(ptr, '\n', end - ptr);
-    if (tmp_eol == NULL)
+    if (tmp_eol == nullptr)
     {
         tmp_eol = end;
         tmp_eolm = end;
@@ -148,12 +148,12 @@ void MimeSession::setup_decode(const char* data, int size, bool cnt_xf)
     /* Check for Encoding Type */
     if ( decode_conf && decode_conf->is_decoding_enabled())
     {
-        if (decode_state == NULL)
+        if (decode_state == nullptr)
         {
             decode_state = new MimeDecode(decode_conf);
         }
 
-        if (decode_state != NULL)
+        if (decode_state != nullptr)
         {
             decode_state->process_decode_type(data, size, cnt_xf, mime_stats);
             state_flags |= MIME_FLAG_EMAIL_ATTACH;
@@ -176,9 +176,9 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
     const uint8_t* eol = data_end_marker;
     const uint8_t* eolm = eol;
     const uint8_t* colon;
-    const uint8_t* content_type_ptr = NULL;
-    const uint8_t* cont_trans_enc = NULL;
-    const uint8_t* cont_disp = NULL;
+    const uint8_t* content_type_ptr = nullptr;
+    const uint8_t* cont_trans_enc = nullptr;
+    const uint8_t* cont_disp = nullptr;
     int header_found;
     const uint8_t* start_hdr;
 
@@ -314,14 +314,14 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
 
         int ret = handle_header_line(ptr, eol, max_header_name_len);
         if (ret < 0)
-            return NULL;
+            return nullptr;
         else if (ret > 0)
         {
             /* assume we guessed wrong and are in the body */
             data_state = STATE_DATA_BODY;
             state_flags &=
                 ~(MIME_FLAG_FOLDING | MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_DATA_HEADER_CONT
-                    | MIME_FLAG_IN_CONT_TRANS_ENC | MIME_FLAG_IN_CONT_DISP);
+                | MIME_FLAG_IN_CONT_TRANS_ENC | MIME_FLAG_IN_CONT_DISP);
             return ptr;
         }
 
@@ -349,34 +349,34 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
          * because boundary=BOUNDARY can be split across mulitple folded lines before
          * or after the '=' */
         if ((state_flags &
-            (MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONTENT_TYPE)
+                (MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONTENT_TYPE)
         {
             if ((data_state == STATE_MIME_HEADER) && !(state_flags &
-                MIME_FLAG_EMAIL_ATTACH))
+                    MIME_FLAG_EMAIL_ATTACH))
             {
                 setup_decode((const char*)content_type_ptr, (eolm - content_type_ptr), false);
             }
 
             state_flags &= ~MIME_FLAG_IN_CONTENT_TYPE;
-            content_type_ptr = NULL;
+            content_type_ptr = nullptr;
         }
         else if ((state_flags &
-            (MIME_FLAG_IN_CONT_TRANS_ENC | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONT_TRANS_ENC)
+                (MIME_FLAG_IN_CONT_TRANS_ENC | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONT_TRANS_ENC)
         {
             setup_decode((const char*)cont_trans_enc, (eolm - cont_trans_enc), true);
 
             state_flags &= ~MIME_FLAG_IN_CONT_TRANS_ENC;
 
-            cont_trans_enc = NULL;
+            cont_trans_enc = nullptr;
         }
         else if (((state_flags &
-            (MIME_FLAG_IN_CONT_DISP | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONT_DISP) && cont_disp)
+                    (MIME_FLAG_IN_CONT_DISP | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONT_DISP) &&
+            cont_disp)
         {
             bool disp_cont = (state_flags & MIME_FLAG_IN_CONT_DISP_CONT) ? true : false;
             if (log_config->log_filename && log_state )
             {
                 log_state->log_file_name(cont_disp, eolm - cont_disp, &disp_cont);
-
             }
             if (disp_cont)
             {
@@ -388,10 +388,8 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
                 state_flags &= ~MIME_FLAG_IN_CONT_DISP_CONT;
             }
 
-            cont_disp = NULL;
+            cont_disp = nullptr;
         }
-
-        data_state = STATE_DATA_HEADER;
 
         ptr = eol;
 
@@ -444,7 +442,6 @@ static const uint8_t* GetDataEnd(const uint8_t* data_start,
 const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
     const uint8_t* data_end, bool is_data_end)
 {
-
     if (state_flags & MIME_FLAG_EMAIL_ATTACH)
     {
         const uint8_t* attach_start = ptr;
@@ -499,8 +496,8 @@ const uint8_t* MimeSession::process_mime_data_paf(
     {
         if ((start < end) && (*start == '.'))
         {
-            const uint8_t* eol = NULL;
-            const uint8_t* eolm = NULL;
+            const uint8_t* eol = nullptr;
+            const uint8_t* eolm = nullptr;
 
             get_mime_eol(start, end, &eol, &eolm);
 
@@ -511,7 +508,7 @@ const uint8_t* MimeSession::process_mime_data_paf(
                 /* if we're normalizing and not ignoring data copy data end marker
                  * and dot to alt buffer */
                 if (normalize_data(start, end) < 0)
-                    return NULL;
+                    return nullptr;
 
                 reset_mime_state();
 
@@ -553,16 +550,16 @@ const uint8_t* MimeSession::process_mime_data_paf(
 #endif
 
         start = process_mime_header(start, end);
-        if (start == NULL)
-            return NULL;
+        if (start == nullptr)
+            return nullptr;
     }
 
     if (normalize_data(start, end) < 0)
-        return NULL;
+        return nullptr;
     /* now we shouldn't have to worry about copying any data to the alt buffer
      *      * only mime headers if we find them and only if we're ignoring data */
 
-    while ((start != NULL) && (start < end))
+    while ((start != nullptr) && (start < end))
     {
         switch (data_state)
         {
@@ -579,10 +576,10 @@ const uint8_t* MimeSession::process_mime_data_paf(
 
     /* We have either reached the end of MIME header or end of MIME encoded data*/
 
-    if ((decode_state) != NULL)
+    if ((decode_state) != nullptr)
     {
         DecodeConfig* conf= decode_conf;
-        uint8_t* buffer = NULL;
+        uint8_t* buffer = nullptr;
         uint32_t buf_size = 0;
 
         decode_state->get_decoded_data(&buffer, &buf_size);
@@ -602,22 +599,22 @@ const uint8_t* MimeSession::process_mime_data_paf(
         }
         if (mime_stats)
         {
-            switch(decode_state->get_decode_type())
+            switch (decode_state->get_decode_type())
             {
-                case DECODE_B64:
-                    mime_stats->b64_bytes += buf_size;
-                    break;
-                case DECODE_QP:
-                    mime_stats->qp_bytes += buf_size;
-                    break;
-                case DECODE_UU:
-                    mime_stats->uu_bytes += buf_size;
-                    break;
-                case DECODE_BITENC:
-                    mime_stats->bitenc_bytes += buf_size;
-                    break;
-                default:
-                    break;
+            case DECODE_B64:
+                mime_stats->b64_bytes += buf_size;
+                break;
+            case DECODE_QP:
+                mime_stats->qp_bytes += buf_size;
+                break;
+            case DECODE_UU:
+                mime_stats->uu_bytes += buf_size;
+                break;
+            case DECODE_BITENC:
+                mime_stats->bitenc_bytes += buf_size;
+                break;
+            default:
+                break;
             }
         }
 
@@ -663,6 +660,7 @@ const uint8_t* MimeSession::process_mime_data(Flow* flow, const uint8_t* start,
             finalFilePosition(&position);
             process_mime_data_paf(flow, attach_start, attach_end,
                 upload, position);
+            data_state = STATE_MIME_HEADER;
             position = SNORT_FILE_START;
             attach_start = start + 1;
         }
@@ -710,14 +708,14 @@ void MimeSession::init()
 
     /* Header search */
     mime_hdr_search_mpse = new SearchTool();
-    if (mime_hdr_search_mpse == NULL)
+    if (mime_hdr_search_mpse == nullptr)
     {
         // FIXIT-M make configurable or at least fall back to any
         // available search engine
         FatalError("Could not instantiate ac_bnfa search engine.\n");
     }
 
-    for (tmp = &mime_hdrs[0]; tmp->name != NULL; tmp++)
+    for (tmp = &mime_hdrs[0]; tmp->name != nullptr; tmp++)
     {
         mime_hdr_search[tmp->search_id].name = tmp->name;
         mime_hdr_search[tmp->search_id].name_len = tmp->name_len;
@@ -731,7 +729,7 @@ void MimeSession::init()
 // Free anything that needs it before shutting down preprocessor
 void MimeSession::exit()
 {
-    if (mime_hdr_search_mpse != NULL)
+    if (mime_hdr_search_mpse != nullptr)
         delete mime_hdr_search_mpse;
 }
 
@@ -751,3 +749,4 @@ MimeSession::~MimeSession()
     if ( log_state )
         delete(log_state);
 }
+

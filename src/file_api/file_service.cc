@@ -96,14 +96,6 @@ void FileService::start_file_processing()
     }
 }
 
-/*
- * - Only accepts 1 (ONE) callback being registered.
- *
- * - Call with NULL callback to "force" (guarantee) file type identification.
- *
- * TBD: Remove per-context "file_type_enabled" checking to simplify implementation.
- *
- */
 void FileService::enable_file_type()
 {
     if (!file_type_id_enabled)

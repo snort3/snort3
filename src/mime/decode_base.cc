@@ -30,22 +30,23 @@ void DataDecode::reset_decoded_bytes()
 void DataDecode::reset_decode_state()
 {
     reset_decoded_bytes();
+    decode_bytes_read = 0;
 }
 
 int DataDecode::get_detection_depth()
 {
     // unlimited
-    if (!decode_depth)
+    if (!detection_depth)
         return decoded_bytes;
     // exceeded depth before (decode_bytes_read has been updated)
-    else if (decode_depth < (int64_t)decode_bytes_read - decoded_bytes)
+    else if (detection_depth < (int64_t)decode_bytes_read - decoded_bytes)
         return 0;
     // lower than depth
-    else if (decode_depth > (int64_t)decode_bytes_read)
+    else if (detection_depth > (int64_t)decode_bytes_read)
         return decoded_bytes;
     // cut off
     else
-        return (decode_depth + (int64_t )decoded_bytes - decode_bytes_read);
+        return (detection_depth + (int64_t )decoded_bytes - decode_bytes_read);
 }
 
 int DataDecode::get_decoded_data(uint8_t** buf,  uint32_t* size)
@@ -55,7 +56,7 @@ int DataDecode::get_decoded_data(uint8_t** buf,  uint32_t* size)
     else
         return 0;
 
-    if (decodePtr != NULL)
+    if (decodePtr != nullptr)
         *buf = decodePtr;
     else
         return 0;
@@ -63,16 +64,14 @@ int DataDecode::get_decoded_data(uint8_t** buf,  uint32_t* size)
     return (*size);
 }
 
-#define MAX_DEPTH       65536
-
-DataDecode::DataDecode(int max_depth)
+DataDecode::DataDecode(int, int detect_depth)
 {
-    decode_depth = max_depth;
+    detection_depth = detect_depth;
     decode_bytes_read = 0;
     decoded_bytes = 0;
 }
 
 DataDecode::~DataDecode()
 {
-
 }
+

@@ -59,7 +59,7 @@ CircularBuffer* cbuffer_init(uint64_t size)
     if (!cb->elems)
     {
         snort_free(cb);
-        return NULL;
+        return nullptr;
     }
 
     return cb;
@@ -70,7 +70,7 @@ void cbuffer_free(CircularBuffer* cb)
     if (cb && cb->elems)
     {
         snort_free(cb->elems);
-        cb->elems = NULL;
+        cb->elems = nullptr;
     }
 
     snort_free(cb);

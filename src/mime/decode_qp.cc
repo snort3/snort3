@@ -61,8 +61,8 @@ DecodeResult QPDecode::decode_data(const uint8_t* start, const uint8_t* end)
     }
     else if (!act_decode_size && !encode_avail)
     {
-       reset_decode_state();
-       return DECODE_FAIL;
+        reset_decode_state();
+        return DECODE_FAIL;
     }
 
     if (bytes_read < act_encode_size)
@@ -78,8 +78,7 @@ DecodeResult QPDecode::decode_data(const uint8_t* start, const uint8_t* end)
     return DECODE_SUCCESS;
 }
 
-
-QPDecode::QPDecode(int max_depth):DataDecode(max_depth)
+QPDecode::QPDecode(int max_depth, int detect_depth) : DataDecode(max_depth, detect_depth)
 {
     buffer = new DecodeBuffer(max_depth);
 }
@@ -88,7 +87,6 @@ QPDecode::~QPDecode()
 {
     if (buffer)
         delete buffer;
-
 }
 
 int sf_qpdecode(char* src, uint32_t slen, char* dst, uint32_t dlen, uint32_t* bytes_read,
@@ -165,3 +163,4 @@ int sf_qpdecode(char* src, uint32_t slen, char* dst, uint32_t dlen, uint32_t* by
 
     return 0;
 }
+

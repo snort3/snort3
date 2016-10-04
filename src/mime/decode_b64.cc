@@ -83,15 +83,15 @@ DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end)
     return DECODE_SUCCESS;
 }
 
-B64Decode::B64Decode(int max_depth):DataDecode(max_depth)
+B64Decode::B64Decode(int max_depth, int detect_depth) : DataDecode(max_depth, detect_depth)
 {
     buffer = new DecodeBuffer(max_depth);
 }
 
 B64Decode::~B64Decode()
 {
-   if (buffer)
-       delete buffer;
+    if (buffer)
+        delete buffer;
 }
 
 uint8_t sf_decode64tab[256] =

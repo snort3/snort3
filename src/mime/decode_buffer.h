@@ -41,12 +41,12 @@ public:
     void update_buffer(uint32_t act_encode_size, uint32_t act_decode_size);
 
     void reset();
-    uint8_t* get_decode_buff() {return decodeBuf;}
-    uint8_t* get_encode_buff() {return encodeBuf;}
-    uint32_t get_decode_bytes_read() {return decode_bytes_read;}
+    uint8_t* get_decode_buff() { return decodeBuf; }
+    uint8_t* get_encode_buff() { return encodeBuf; }
+    uint32_t get_decode_bytes_read() { return decode_bytes_read; }
     uint32_t get_decode_avail();
     uint32_t get_encode_avail();
-    uint32_t get_prev_encoded_bytes() {return prev_encoded_bytes;}
+    uint32_t get_prev_encoded_bytes() { return prev_encoded_bytes; }
 
 private:
     uint32_t buf_size;

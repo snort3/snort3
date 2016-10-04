@@ -44,7 +44,7 @@
 FileEnforcer::FileEnforcer()
 {
     fileHash = sfxhash_new(MAX_FILES_TRACKED, sizeof(FileHashKey), sizeof(FileNode),
-        MAX_MEMORY_USED, 1, NULL, NULL, 1);
+        MAX_MEMORY_USED, 1, nullptr, nullptr, 1);
     if (!fileHash)
         FatalError("Failed to create the expected channel hash table.\n");
 }
