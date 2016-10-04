@@ -772,7 +772,7 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
         v.update_mask(sc->output_flags, OUTPUT_FLAG__OBFUSCATE);
 
     else if ( v.is("obfuscate_pii") )
-        sc->obfuscate_pii = true;
+        sc->obfuscate_pii = v.get_bool();
 
     else if ( v.is("show_year") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__INCLUDE_YEAR);
