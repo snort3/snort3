@@ -325,7 +325,9 @@ static void luaClientInit(Detector* detector)
         return;
     }
     else
+    {
         DebugFormat(DEBUG_APPID, "Initialized %s\n", detector->name.c_str());
+    }
 }
 
 static void luaClientFini(Detector* detector)
@@ -368,8 +370,9 @@ static inline void setLuaTrackerSize(lua_State* L, uint32_t numTrackers)
         }
     }
     else
+    {
         DebugMessage(DEBUG_LOG, "hostServiceTrackerModule.setHosServiceTrackerSize not found");
-
+    }
     lua_pop(L, 1);
 
     /*change flow tracker size according to available memory calculation */
@@ -385,8 +388,9 @@ static inline void setLuaTrackerSize(lua_State* L, uint32_t numTrackers)
         }
     }
     else
+    {
         DebugMessage(DEBUG_LOG, "flowTrackerModule.setFlowTrackerSize not found");
-
+    }
     lua_pop(L, 1);
 }
 

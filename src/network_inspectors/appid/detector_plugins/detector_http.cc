@@ -441,7 +441,7 @@ void insert_url_pattern(DetectorAppUrlPattern* pattern)
         if (!tmp)
         {
             FreeDetectorAppUrlPattern(pattern);
-            //return 0;
+            return;
         }
         urlList->urlPattern = tmp;
         urlList->allocatedCount += URL_LIST_STEP_SIZE;
@@ -463,7 +463,7 @@ void insert_rtmp_url_pattern(DetectorAppUrlPattern* pattern)
         if (!tmp)
         {
             FreeDetectorAppUrlPattern(pattern);
-            //return 0;
+            return;
         }
         urlList->urlPattern = tmp;
         urlList->allocatedCount += URL_LIST_STEP_SIZE;
@@ -485,7 +485,7 @@ void insert_app_url_pattern(DetectorAppUrlPattern* pattern)
         if (!tmp)
         {
             FreeDetectorAppUrlPattern(pattern);
-            //return 0;
+            return;
         }
         urlList->urlPattern = tmp;
         urlList->allocatedCount += URL_LIST_STEP_SIZE;

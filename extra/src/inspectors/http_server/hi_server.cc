@@ -1673,7 +1673,7 @@ static int HttpResponseInspection(HI_SESSION* session, Packet* p, const unsigned
                 }
             }
 
-            if ((sd->utf_state->get_decode_utf_state_charset() != CHARSET_DEFAULT)
+            if ((sd && sd->utf_state->get_decode_utf_state_charset() != CHARSET_DEFAULT)
                 || (ServerConf->normalize_javascript && Server->response.body_size))
             {
                 if ( Server->response.body_size < sizeof(HttpDecodeBuf.data) )

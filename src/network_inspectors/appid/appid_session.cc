@@ -1929,8 +1929,9 @@ void AppIdSession::do_application_discovery(Packet* p)
     }
     else if (protocol != IpProtocol::TCP || !p->dsize || (p->packet_flags & PKT_STREAM_ORDER_OK))
     {
-        isTpAppidDiscoveryDone = session->do_service_discovery(protocol, direction, ClientAppId,
-                payloadAppId, p);
+        // FIXIT-M commented out assignment causes analysis warning
+        /*isTpAppidDiscoveryDone = */
+            session->do_service_discovery(protocol, direction, ClientAppId, payloadAppId, p);
         isTpAppidDiscoveryDone = session->do_client_discovery(direction, p);
         session->setAppIdFlag(APPID_SESSION_ADDITIONAL_PACKET);
     }
