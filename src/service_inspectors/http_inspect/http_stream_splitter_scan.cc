@@ -256,7 +256,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
         if (!session_data->mime_state)
         {
             FileFlows* file_flows = FileFlows::get_file_flows(flow);
-            bool download = (source_id == SRC_SERVER);
+            const bool download = (source_id == SRC_SERVER);
             file_flows->file_process(nullptr, 0, SNORT_FILE_END, !download);
         }
         else

@@ -199,6 +199,7 @@ void HttpMsgHeader::setup_file_processing()
 {
     // FIXIT-M Bidirectional file processing is problematic so we don't do it. When the library
     // fully supports it remove the outer if statement that prevents it from being done.
+    // In addition, mime_state needs to become bidirectional.
     if (session_data->file_depth_remaining[1-source_id] <= 0)
     {
         if ((session_data->file_depth_remaining[source_id] = FileService::get_max_file_depth()) < 0)
@@ -206,10 +207,11 @@ void HttpMsgHeader::setup_file_processing()
            session_data->file_depth_remaining[source_id] = 0;
            return;
         }
-        // FIXIT check boundary to make sure this is not MIME for sure
+        // FIXIT-M check boundary to make sure this is not MIME for sure
         if ((source_id == SRC_CLIENT) and (get_header_value_norm(HEAD_CONTENT_TYPE).length > 0 ))
         {
             session_data->mime_state = new MimeSession(&decode_conf, &mime_conf);
+            // FIX-H use specific header instead of classic raw header
             const Field& headers = get_classic_raw_header();
             if (headers.length > 0)
             {

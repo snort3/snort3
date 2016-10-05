@@ -140,7 +140,7 @@ void HttpMsgBody::do_file_processing()
     if (!session_data->mime_state)
     {
         FileFlows* file_flows = FileFlows::get_file_flows(flow);
-        bool download = (source_id == SRC_SERVER);
+        const bool download = (source_id == SRC_SERVER);
 
         if (file_flows->file_process(file_data.start, fp_length,
             file_position, !download))
