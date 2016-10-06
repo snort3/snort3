@@ -1971,11 +1971,6 @@ static void DCE2_SmbSetNewFileAPIFileTracker(DCE2_SmbSsnData* ssd)
         else
             ftracker = (DCE2_SmbFileTracker*)DCE2_ListNext(ssd->ftrackers);
     }
-
-    // FIXIT-A - Even with the assert(ssd) a few lines prior, the clang 
-    //          static analyser version 3.4.2 throws a false positive
-    //          null pointer dereference error,  More recent clang versions
-    //          do NOT find an error.
     ssd->fapi_ftracker = ftracker;
 }
 

@@ -933,7 +933,7 @@ static inline void add_node(FragTracker* ft, Fragment* prev,
     {
         node->next = ft->fraglist;
         if (node->next)
-            node->next->prev = node;
+            node->next->prev = node;  // FIXIT-A Use of memory after it is freed
         else
             ft->fraglist_tail = node;
         ft->fraglist = node;

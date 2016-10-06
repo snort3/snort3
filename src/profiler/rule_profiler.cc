@@ -30,7 +30,12 @@
 #include <sstream>
 #include <vector>
 
-#include "detection/detection_options.h"
+// this include eventually leads to possible issues with std::chrono:
+// 1.  Undefined or garbage value returned to caller (rep count())
+// 2.  The left expression of the compound assignment is an uninitialized value.
+//     The computed value will also be garbage (duration& operator+=(const duration& __d))
+#include "detection/detection_options.h"  // ... FIXIT-A
+
 #include "detection/treenodes.h"
 #include "hash/sfghash.h"
 #include "main/snort_config.h"

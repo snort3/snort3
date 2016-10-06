@@ -818,7 +818,8 @@ struct SmbAndXCommon
 inline uint32_t NbssLen(const NbssHdr* nb)
 {
     /* Treat first bit of flags as the upper byte to length */
-    return ((nb->flags & 0x01) << 16) | ntohs(nb->length);
+    // The left operand of '&' is a garbage value
+    return ((nb->flags & 0x01) << 16) | ntohs(nb->length);  // ... FIXIT-A
 }
 
 inline uint8_t NbssType(const NbssHdr* nb)
@@ -853,7 +854,9 @@ inline uint16_t SmbEmptyComBcc(const SmbEmptyCom* ec)
 
 inline int SmbType(const SmbNtHdr* hdr)
 {
-    if (hdr->smb_flg & SMB_FLG__TYPE)
+    // Access to field 'smb_flg' results in a dereference of a null pointer
+    // (loaded from variable 'hdr')
+    if (hdr->smb_flg & SMB_FLG__TYPE)  // ... FIXIT-A
         return SMB_TYPE__RESPONSE;
 
     return SMB_TYPE__REQUEST;

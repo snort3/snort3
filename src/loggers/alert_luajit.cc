@@ -18,7 +18,7 @@
 // alert_luajit.cc author Russ Combs <rucombs@cisco.com>
 
 #include <assert.h>
-#include <vector>
+#include <vector>  // FIXIT-A Returning null reference (somewhere below)
 #include <lua.hpp>
 
 #include "main/snort_types.h"

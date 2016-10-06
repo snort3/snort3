@@ -79,7 +79,8 @@ static int SIP_processRequest(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialog
     if ((NULL == dialog)&&(SIP_METHOD_CANCEL != sipMsg->methodFlag))
     {
         // Clang analyzer is false positive, dlist->head is updated after free
-        dialog = SIP_addDialog(sipMsg, dList->head, dList); // FIXIT-A
+        // (Use of memory after it is freed)
+        dialog = SIP_addDialog(sipMsg, dList->head, dList); // ... FIXIT-A
     }
 
     methodFlag = sipMsg->methodFlag;
@@ -649,7 +650,7 @@ static int SIP_deleteDialog(SIP_DialogData* currDialog, SIP_DialogList* dList)
     return true;
 }
 
-// TO-DO: Appid related. Publish event for appid
+// FIXIT-H Publish event for appid
 #if 0
 /*********************************************************************
  * Update appId sip detector with parsed SIP message and dialog
@@ -764,6 +765,7 @@ int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO
     else
         ret = false;
 
+// FIXIT-H Publish event for appid
 #if 0
     for (dialog = dList->head;
         dialog;
@@ -772,8 +774,8 @@ int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO
         if (sipMsg->dlgID.callIdHash == dialog->dlgID.callIdHash)
             break;
     }
+    sip_update_appid(p, sipMsg, dialog);
 #endif
-    //sip_update_appid(p, sipMsg, dialog);
 
     return ret;
 }
