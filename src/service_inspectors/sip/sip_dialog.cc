@@ -78,7 +78,8 @@ static int SIP_processRequest(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialog
     /*If dialog not exist, create one */
     if ((NULL == dialog)&&(SIP_METHOD_CANCEL != sipMsg->methodFlag))
     {
-        dialog = SIP_addDialog(sipMsg, dList->head, dList);
+        // Clang analyzer is false positive, dlist->head is updated after free
+        dialog = SIP_addDialog(sipMsg, dList->head, dList); // FIXIT-A
     }
 
     methodFlag = sipMsg->methodFlag;
@@ -763,6 +764,7 @@ int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO
     else
         ret = false;
 
+#if 0
     for (dialog = dList->head;
         dialog;
         dialog = dialog->nextD)
@@ -770,7 +772,7 @@ int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO
         if (sipMsg->dlgID.callIdHash == dialog->dlgID.callIdHash)
             break;
     }
-
+#endif
     //sip_update_appid(p, sipMsg, dialog);
 
     return ret;
