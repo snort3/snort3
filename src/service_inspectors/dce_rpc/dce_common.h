@@ -25,6 +25,7 @@
 #include "framework/counts.h"
 #include "framework/value.h"
 #include "protocols/packet.h"
+#include <assert.h>
 
 #include "dce_list.h"
 
@@ -296,6 +297,8 @@ inline int DCE2_SsnFromClient(Packet* p)
 
 inline DCE2_Policy DCE2_SsnGetPolicy(DCE2_SsnData* sd)
 {
+    assert(sd);
+
     if (DCE2_SsnFromClient(sd->wire_pkt))
         return sd->server_policy;
     else
