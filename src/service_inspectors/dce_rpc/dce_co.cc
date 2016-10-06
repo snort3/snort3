@@ -1323,6 +1323,10 @@ static void DCE2_CoReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoRpkt
 {
     DceRpcCoHdr* co_hdr = nullptr;
     Packet* rpkt = dce_co_reassemble(sd,cot,co_rtype,&co_hdr);
+
+    if ( !rpkt )
+        return;
+
     /* Push packet onto stack */
     if (DCE2_PushPkt(rpkt,sd) != DCE2_RET__SUCCESS)
     {
