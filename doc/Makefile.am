@@ -56,11 +56,6 @@ snort_manual.pdf \
 online_manual.sh \
 dev_guide.sh
 
-doc_DATA = \
-snort_manual.text \
-snort_manual.html \
-snort_manual.pdf
-
 dist_doc_DATA = \
 $(unbuilt_sources)
 
@@ -207,7 +202,6 @@ delete_unbuilt = $(if $(and $(findstring $(builddir),$(srcdir)),$(findstring $(s
 clean-local:
 	rm -f $(BUILT_SOURCES)
 	rm -f $(delete_unbuilt)
-	rm -f $(doc_DATA)
 	rm -f snort_manual.{fo,xml}
 	rm -rf snort_manual.chunked
 	rm -f *.css *.tgz
