@@ -1,5 +1,4 @@
 add_subdirectory ( cd_eapol )
-add_subdirectory ( cd_i4l_rawip )
 add_subdirectory ( cd_linux_sll )
 add_subdirectory ( cd_null )
 add_subdirectory ( cd_pflog )

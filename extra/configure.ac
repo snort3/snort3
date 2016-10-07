@@ -26,7 +26,6 @@ Makefile \
 src/Makefile \
 src/codecs/Makefile \
 src/codecs/cd_eapol/Makefile \
-src/codecs/cd_i4l_rawip/Makefile \
 src/codecs/cd_linux_sll/Makefile \
 src/codecs/cd_null/Makefile \
 src/codecs/cd_pflog/Makefile \

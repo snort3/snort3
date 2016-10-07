@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include <fcntl.h>
 #include <grp.h>
 #include <luajit.h>
 #include <netdb.h>

@@ -17,8 +17,12 @@
 //--------------------------------------------------------------------------
 // cd_sip.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <pcap.h>
-#include <cstdint>
+#include <stdint.h>
+
+extern "C" {
+#include <sfbpf_dlt.h>
+}
+
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
 
@@ -43,9 +47,7 @@ public:
 
 void SlipCodec::get_data_link_type(std::vector<int>& v)
 {
-#if DLT_SLIP
     v.push_back(DLT_SLIP);
-#endif
 }
 
 bool SlipCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)

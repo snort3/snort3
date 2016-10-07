@@ -22,7 +22,10 @@
 #include "config.h"
 #endif
 
-#include <pcap.h>
+extern "C" {
+#include <sfbpf_dlt.h>
+}
+
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 #include "protocols/packet.h"
@@ -68,11 +71,6 @@ public:
         uint16_t lyr_len, uint32_t& updated_len) override;
 };
 } // namespace
-
-#ifndef DLT_PPP_ETHER
-// For PPP over Eth, the first layer is ethernet.
-constexpr int DLT_PPP_ETHER = 51;
-#endif
 
 void EthCodec::get_data_link_type(std::vector<int>& v)
 {

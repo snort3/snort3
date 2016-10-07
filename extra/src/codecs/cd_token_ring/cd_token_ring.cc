@@ -23,12 +23,13 @@
 #include "config.h"
 #endif
 
-#include <pcap.h>
+extern "C" {
+#include <sfbpf_dlt.h>
+}
+
 #include "protocols/token_ring.h"
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-
-#ifdef DLT_IEEE802
 
 namespace
 {
@@ -225,6 +226,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     &tr_api.base,
     nullptr
 };
-
-#endif
 

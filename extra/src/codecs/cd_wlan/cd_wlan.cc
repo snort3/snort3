@@ -22,16 +22,15 @@
 #include "config.h"
 #endif
 
-#include <pcap.h>
+extern "C" {
+#include <sfbpf_dlt.h>
+}
+
 #include "protocols/wlan.h"
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
 #include "protocols/protocol_ids.h"
 #include "log/text_log.h"
-
-#ifndef DLT_IEEE802_11
-#define DLT_IEEE802_11 105
-#endif
 
 #define CD_WLAN_NAME "wlan"
 #define CD_WLAN_HELP_STR "support for wireless local area network protocol"

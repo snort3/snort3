@@ -2516,9 +2516,9 @@ static int openAddUrlPattern(lua_State* L)
         return 0;
     }
 
-    u_int32_t serviceAppId = lua_tointeger(L, index++);
-    u_int32_t clienAppId   = lua_tointeger(L, index++);
-    u_int32_t payloadAppId = lua_tointeger(L, index++);
+    uint32_t serviceAppId = lua_tointeger(L, index++);
+    uint32_t clienAppId   = lua_tointeger(L, index++);
+    uint32_t payloadAppId = lua_tointeger(L, index++);
 
     if (ud->validateParams.pkt)
     {

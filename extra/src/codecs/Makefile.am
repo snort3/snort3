@@ -1,6 +1,5 @@
 SUBDIRS = \
 cd_eapol \
-cd_i4l_rawip \
 cd_linux_sll \
 cd_null \
 cd_pflog \

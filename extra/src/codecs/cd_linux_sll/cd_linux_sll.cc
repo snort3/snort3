@@ -21,7 +21,10 @@
 #include "config.h"
 #endif
 
-#include <pcap.h>
+extern "C" {
+#include <sfbpf_dlt.h>
+}
+
 #include "framework/codec.h"
 #include "protocols/linux_sll.h"
 
@@ -44,9 +47,7 @@ public:
 
 void LinuxSllCodec::get_data_link_type(std::vector<int>& v)
 {
-#ifdef DLT_LINUX_SLL
     v.push_back(DLT_LINUX_SLL);
-#endif
 }
 
 bool LinuxSllCodec::decode(const RawData& raw, CodecData& data, DecodeData&)

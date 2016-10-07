@@ -21,12 +21,11 @@
 #include "config.h"
 #endif
 
-#include <pcap.h>
-#include "framework/codec.h"
+extern "C" {
+#include <sfbpf_dlt.h>
+}
 
-#ifndef DLT_PFLOG
-#define DLT_PFLOG 117
-#endif
+#include "framework/codec.h"
 
 #define PFLOG_NAME "pflog"
 #define PFLOG_HELP_STR "support for OpenBSD PF log"

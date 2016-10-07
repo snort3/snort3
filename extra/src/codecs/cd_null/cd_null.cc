@@ -21,7 +21,9 @@
 #include "config.h"
 #endif
 
-#include <pcap.h>
+extern "C" {
+#include <sfbpf_dlt.h>
+}
 
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"

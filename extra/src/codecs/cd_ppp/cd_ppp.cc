@@ -21,7 +21,12 @@
 #include "config.h"
 #endif
 
-#include <cstdint>
+#include <stdint.h>
+
+extern "C" {
+#include <sfbpf_dlt.h>
+}
+
 #include "framework/codec.h"
 
 #define PPP_NAME "ppp"
@@ -40,10 +45,6 @@ public:
     void get_data_link_type(std::vector<int>&) override;
 };
 } // namespace
-
-#ifndef DLT_PPP
-static constexpr int DLT_PPP = 9;
-#endif
 
 static constexpr uint8_t CHDLC_ADDR_BROADCAST = 0xff;
 static constexpr uint8_t CHDLC_CTRL_UNNUMBERED = 0x03;
