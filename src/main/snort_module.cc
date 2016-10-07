@@ -38,6 +38,7 @@
 #include "framework/base_api.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
+#include "log/messages.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "packet_io/sfdaq_config.h"

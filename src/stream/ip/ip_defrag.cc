@@ -87,6 +87,7 @@
 #include "protocols/layer.h"
 #include "protocols/ipv4_options.h"
 #include "protocols/packet_manager.h"
+#include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"

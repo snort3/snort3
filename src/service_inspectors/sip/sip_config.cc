@@ -21,9 +21,10 @@
 
 #include "sip_config.h"
 
-#include "utils/util.h"
+#include "log/messages.h"
 #include "main/snort_debug.h"
 #include "parser/parser.h"
+#include "utils/util.h"
 
 #define SIP_SEPERATORS       "()<>@,;:\\/[]?={}\" "
 

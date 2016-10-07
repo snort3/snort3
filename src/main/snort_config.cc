@@ -32,6 +32,7 @@
 #include "helpers/process.h"
 #include "ips_options/ips_pcre.h"
 #include "latency/latency_config.h"
+#include "log/messages.h"
 #include "managers/inspector_manager.h"
 #include "managers/ips_manager.h"
 #include "managers/module_manager.h"

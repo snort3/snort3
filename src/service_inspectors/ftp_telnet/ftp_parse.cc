@@ -33,6 +33,7 @@
 #include "ftp_cmd_lookup.h"
 #include "ftpp_return_codes.h"
 
+#include "log/messages.h"
 #include "sfip/sf_ip.h"
 #include "utils/util.h"
 

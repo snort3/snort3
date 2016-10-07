@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/snort_config.h"

@@ -25,6 +25,7 @@
 
 #include "active.h"
 
+#include "log/messages.h"
 #include "managers/action_manager.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/tcp.h"

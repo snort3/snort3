@@ -22,9 +22,11 @@
 
 #include <assert.h>
 #include <limits>
+
+#include "log/messages.h"
+#include "main/snort_debug.h"
 #include "parser/config_file.h"
 #include "utils/util.h"
-#include "main/snort_debug.h"
 
 using namespace std;
 

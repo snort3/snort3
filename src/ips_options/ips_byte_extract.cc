@@ -25,6 +25,7 @@
 #endif
 
 #include "extract.h"
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "parser/parser.h"
 #include "detection/detection_defines.h"

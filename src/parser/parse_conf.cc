@@ -64,6 +64,7 @@
 #include "packet_io/active.h"
 #include "file_api/file_config.h"
 #include "framework/ips_option.h"
+#include "log/messages.h"
 #include "managers/action_manager.h"
 #include "actions/actions.h"
 #include "target_based/snort_protocols.h"

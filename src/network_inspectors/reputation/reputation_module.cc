@@ -20,9 +20,11 @@
 
 #include "reputation_module.h"
 
-#include "utils/util.h"
 #include <assert.h>
 #include <sstream>
+
+#include "log/messages.h"
+#include "utils/util.h"
 
 #include "reputation_parse.h"
 

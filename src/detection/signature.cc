@@ -27,6 +27,7 @@
 #include "detection/rules.h"
 #include "detection/treenodes.h"
 #include "hash/sfghash.h"
+#include "log/messages.h"
 #include "parser/parser.h"
 #include "main/snort_config.h"
 

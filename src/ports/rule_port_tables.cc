@@ -21,6 +21,7 @@
 
 #include "port_object.h"
 #include "port_table.h"
+#include "log/messages.h"
 #include "parser/parser.h"
 #include "utils/util.h"
 

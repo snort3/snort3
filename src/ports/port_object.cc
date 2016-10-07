@@ -28,6 +28,7 @@
 
 #include "port_item.h"
 #include "port_utils.h"
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"

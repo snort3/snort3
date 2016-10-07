@@ -52,6 +52,7 @@
 #include "ips_options/ips_flowbits.h"
 #include "latency/packet_latency.h"
 #include "latency/rule_latency.h"
+#include "log/messages.h"
 #include "managers/action_manager.h"
 #include "managers/codec_manager.h"
 #include "managers/inspector_manager.h"

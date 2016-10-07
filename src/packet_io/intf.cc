@@ -22,6 +22,7 @@
 #include <pcap.h>
 #include <stdio.h>
 
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "utils/util.h"

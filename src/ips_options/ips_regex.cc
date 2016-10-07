@@ -34,6 +34,7 @@
 #include "detection/detection_defines.h"
 #include "detection/pattern_match_data.h"
 #include "hash/sfhashfcn.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
 #include "parser/parser.h"

@@ -52,6 +52,7 @@
 #include "detection/detect.h"
 #include "parser/parser.h"
 #include "events/event.h"
+#include "log/messages.h"
 #include "log/obfuscator.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"

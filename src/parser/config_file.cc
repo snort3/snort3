@@ -42,6 +42,7 @@
 #include "mstring.h"
 
 #include "detection/detect.h"
+#include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/snort_types.h"

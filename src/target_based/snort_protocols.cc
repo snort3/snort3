@@ -26,9 +26,10 @@
 #include <vector>
 
 #include "hash/sfghash.h"
+#include "log/messages.h"
 #include "main/snort_debug.h"
-#include "utils/util.h"
 #include "stream/stream.h"
+#include "utils/util.h"
 
 #include "sftarget_reader.h"
 #include "sftarget_hostentry.h"

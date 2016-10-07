@@ -31,6 +31,7 @@
 #include "framework/data_bus.h"
 #include "hash/hashes.h"
 #include "hash/sfxhash.h"
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "managers/action_manager.h"
 #include "packet_io/active.h"

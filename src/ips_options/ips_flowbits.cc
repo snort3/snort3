@@ -49,6 +49,7 @@
 #include <string>
 #include <forward_list>
 
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "detection/treenodes.h"

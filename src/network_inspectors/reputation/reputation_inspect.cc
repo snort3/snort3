@@ -36,6 +36,7 @@
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
 #include "events/event_queue.h"
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"

@@ -19,6 +19,7 @@
 // tcp_stream_config.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Oct 22, 2015
 
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "tcp_stream_config.h"
 

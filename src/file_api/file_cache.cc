@@ -20,12 +20,13 @@
 #include "file_cache.h"
 #include "file_service.h"
 
+#include "log/messages.h"
+#include "main/snort_config.h"
 #include "sfip/sfip_t.h"
 #include "sfip/sf_ip.h"
 #include "time/packet_time.h"
 #include "utils/util.h"
 #include "utils/snort_bounds.h"
-#include "main/snort_config.h"
 
 uint64_t FileCache::num_add_fails = 0;
 

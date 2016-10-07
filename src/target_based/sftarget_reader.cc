@@ -41,13 +41,14 @@
 #include "sftarget_hostentry.h"
 #include "sftarget_data.h"
 
+#include "hash/sfxhash.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "parser/parser.h"
-#include "hash/sfxhash.h"
+#include "utils/stats.h"
 #include "utils/util.h"
 #include "utils/util_net.h"
-#include "utils/stats.h"
 #include "sfip/sf_ip.h"
 #include "sfrt/sfrt.h"
 

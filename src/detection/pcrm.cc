@@ -40,6 +40,7 @@
 
 #include "fp_config.h"
 #include "fp_create.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "utils/util.h"
 

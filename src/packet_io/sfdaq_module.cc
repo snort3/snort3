@@ -24,8 +24,10 @@
 
 #include "sfdaq_module.h"
 
-#include "sfdaq_config.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
+
+#include "sfdaq_config.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"

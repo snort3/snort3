@@ -41,6 +41,7 @@
 #include <sys/types.h>
 
 // FIXIT-L all snort includes should use <form> instead of "form"
+#include "log/messages.h"
 #include "protocols/packet.h"
 #include "main/snort_debug.h"
 #include "decompress/file_decomp.h"

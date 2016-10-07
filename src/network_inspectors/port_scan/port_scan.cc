@@ -53,6 +53,7 @@
 #include "ps_module.h"
 
 #include "ipobj.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet_manager.h"

@@ -24,6 +24,7 @@
 #endif
 
 #include "util.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "helpers/process.h"
 #include "packet_io/sfdaq.h"

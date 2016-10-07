@@ -21,6 +21,7 @@
 
 #include <hwloc.h>
 
+#include "log/messages.h"
 #include "utils/util.h"
 
 #ifdef UNIT_TEST

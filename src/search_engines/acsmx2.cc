@@ -130,6 +130,7 @@
 #include "main/snort_config.h"
 #endif
 
+#include "log/messages.h"
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "utils/stats.h"

@@ -20,6 +20,7 @@
 
 #include "dnp3_module.h"
 #include "dnp3.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 
 using namespace std;

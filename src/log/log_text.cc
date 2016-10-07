@@ -44,6 +44,7 @@ extern "C" {
 #include "detection/treenodes.h"
 #include "detection/signature.h"
 #include "detection/detection_util.h"
+#include "log/messages.h"
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
 #include "packet_io/sfdaq.h"

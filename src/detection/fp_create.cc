@@ -52,6 +52,7 @@
 #include "ports/rule_port_tables.h"
 #include "framework/mpse.h"
 #include "framework/ips_option.h"
+#include "log/messages.h"
 #include "managers/mpse_manager.h"
 #include "target_based/snort_protocols.h"
 

@@ -25,6 +25,7 @@
 #include <utility>
 
 #include "framework/connector.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "module_manager.h"

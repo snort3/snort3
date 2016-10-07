@@ -23,10 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "utils/util.h"
-#include "parser/parser.h"
 #include "filters/sfthd.h"
+#include "log/messages.h"
 #include "main/thread.h"
+#include "parser/parser.h"
+#include "utils/util.h"
 
 static THREAD_LOCAL SFXHASH* detection_filter_hash = NULL;
 

@@ -56,6 +56,7 @@
 
 #include "latency/packet_latency.h"
 #include "latency/rule_latency.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "framework/cursor.h"

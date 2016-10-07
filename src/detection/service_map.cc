@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "hash/sfghash.h"
 #include "utils/sflsq.h"

@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/snort_config.h"

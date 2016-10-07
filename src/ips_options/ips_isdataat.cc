@@ -43,6 +43,7 @@
 #include <errno.h>
 
 #include "ips_byte_extract.h"
+#include "log/messages.h"
 #include "protocols/packet.h"
 #include "parser/parser.h"
 #include "parser/mstring.h"

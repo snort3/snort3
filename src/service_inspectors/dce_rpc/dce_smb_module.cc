@@ -20,6 +20,7 @@
 
 #include "dce_smb_module.h"
 
+#include "log/messages.h"
 #include "main/snort_config.h"
 
 #include "dce_smb.h"

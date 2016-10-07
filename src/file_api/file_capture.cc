@@ -37,13 +37,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "file_config.h"
-#include "file_stats.h"
-
-#include "main/snort_config.h"
 #include "hash/hashes.h"
+#include "log/messages.h"
+#include "main/snort_config.h"
 #include "utils/util.h"
 #include "utils/stats.h"
+
+#include "file_config.h"
+#include "file_stats.h"
 
 FileMemPool* FileCapture::file_mempool = nullptr;
 File_Capture_Stats file_capture_stats;

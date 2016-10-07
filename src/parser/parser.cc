@@ -76,6 +76,7 @@
 #include "packet_io/active.h"
 #include "file_api/file_config.h"
 #include "actions/actions.h"
+#include "log/messages.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
 #include "target_based/snort_protocols.h"

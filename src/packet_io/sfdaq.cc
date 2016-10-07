@@ -35,11 +35,13 @@ extern "C" {
 #include <sfbpf_dlt.h>
 }
 
-#include "sfdaq_config.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "parser/parser.h"
 #include "protocols/vlan.h"
 #include "utils/util.h"
+
+#include "sfdaq_config.h"
 
 using namespace std;
 

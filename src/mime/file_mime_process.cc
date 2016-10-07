@@ -31,6 +31,7 @@
 #include "file_api/file_api.h"
 #include "file_api/file_flows.h"
 #include "framework/data_bus.h"
+#include "log/messages.h"
 #include "protocols/packet.h"
 #include "search_engines/search_tool.h"
 #include "utils/util.h"

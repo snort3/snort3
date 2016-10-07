@@ -43,6 +43,7 @@
 #include <sys/types.h>
 
 #include "ipobj.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "protocols/packet.h"
 #include "time/packet_time.h"

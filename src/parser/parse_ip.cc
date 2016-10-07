@@ -31,6 +31,7 @@
 #include <sys/types.h>
 
 #include "parser.h"
+#include "log/messages.h"
 #include "main/snort_debug.h"
 #include "sfip/sf_vartable.h"
 #include "sfip/sf_ipvar.h"

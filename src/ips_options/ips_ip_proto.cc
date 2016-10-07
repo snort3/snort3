@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <netdb.h>
 
+#include "log/messages.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "parser/parser.h"

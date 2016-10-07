@@ -29,6 +29,7 @@
 
 #include "rules.h"
 #include "treenodes.h"
+#include "log/messages.h"
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
 #include "protocols/packet.h"

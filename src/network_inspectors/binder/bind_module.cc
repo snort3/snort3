@@ -28,6 +28,7 @@
 #include "binding.h"
 #include "protocols/packet.h"
 #include "parser/parse_ip.h"
+#include "log/messages.h"
 #include "main/policy.h"
 #include "main/snort_config.h"
 #include "main/shell.h"

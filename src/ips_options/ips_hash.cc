@@ -25,6 +25,7 @@
 #include <string>
 
 #include "ips_byte_extract.h"
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "parser/parser.h"
 #include "parser/parse_utils.h"

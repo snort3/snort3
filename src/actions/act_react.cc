@@ -51,6 +51,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"

@@ -22,6 +22,7 @@
 #endif
 
 #include "framework/codec.h"
+#include "log/messages.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
 #include "codecs/codec_module.h"

@@ -25,6 +25,7 @@
 
 #include <string>
 
+#include "log/messages.h"
 #include "main/help.h"
 #include "main/snort_module.h"
 #include "main/snort_config.h"

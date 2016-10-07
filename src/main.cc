@@ -40,6 +40,7 @@
 #include <string>
 #include <thread>
 
+#include "log/messages.h"
 #include "main/analyzer.h"
 #include "main/shell.h"
 #include "main/snort.h"

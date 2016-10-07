@@ -38,6 +38,7 @@
 #include "main/snort_debug.h"
 #include "framework/logger.h"
 #include "framework/module.h"
+#include "log/messages.h"
 #include "managers/event_manager.h"
 #include "detection/rules.h"
 #include "detection/treenodes.h"

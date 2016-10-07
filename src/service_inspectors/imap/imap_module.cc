@@ -19,8 +19,11 @@
 // imap_module.cc author Bhagyashree Bantwal <bbantwal@cisco.com>
 
 #include "imap_module.h"
+
 #include <assert.h>
 #include <sstream>
+
+#include "log/messages.h"
 #include "main/snort_config.h"
 
 using namespace std;

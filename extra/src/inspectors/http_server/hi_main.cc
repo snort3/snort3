@@ -64,6 +64,7 @@
 #include "file_api/file_api.h"
 #include "file_api/file_flows.h"
 #include "framework/data_bus.h"
+#include "log/messages.h"
 #include "log/unified2.h"
 #include "main/snort_debug.h"
 #include "mime/decode_base.h"

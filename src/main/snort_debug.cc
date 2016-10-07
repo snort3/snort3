@@ -25,6 +25,8 @@
 #include <syslog.h>
 #include <stdlib.h>
 
+#include "log/messages.h"
+
 #include "snort_types.h"
 #include "snort_config.h"
 

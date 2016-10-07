@@ -24,27 +24,15 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <dirent.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <fnmatch.h>
 #include <grp.h>
-#include <limits.h>
 #include <luajit.h>
 #include <netdb.h>
 #include <openssl/crypto.h>
 #include <pcap.h>
 #include <pcre.h>
 #include <pwd.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <string.h>
-#include <syslog.h>
-#include <time.h>
-#include <unistd.h>
+#include <sys/file.h>
 #include <zlib.h>
-
 
 #ifdef HAVE_LZMA
 #include <lzma.h>
@@ -54,21 +42,18 @@
 #include <hs_compile.h>
 #endif
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/resource.h>
+extern "C" {
+#include <daq.h>
+}
 
-#include "sflsq.h"
+#include <fstream>
+#include <sstream>
+
+#include "log/messages.h"
+#include "main/build.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
-#include "main/snort_types.h"
-#include "main/build.h"
-#include "parser/parser.h"
 #include "packet_io/sfdaq.h"
-#include "packet_io/active.h"
-#include "ips_options/ips_pcre.h"
-#include "time/packet_time.h"
-#include "time/timersub.h"
 
 #ifdef PATH_MAX
 #define PATH_MAX_UTIL PATH_MAX
@@ -126,6 +111,7 @@ int DisplayBanner()
     LogMessage("           Copyright (C) 2014-2016 Cisco and/or its affiliates."
                            " All rights reserved.\n");
     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
+    LogMessage("           Using DAQ version %s\n", daq_version_string());
 #ifdef HAVE_PCAP_LIB_VERSION
     LogMessage("           Using %s\n", pcap_lib_version());
 #endif

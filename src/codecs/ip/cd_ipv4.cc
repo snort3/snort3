@@ -39,6 +39,7 @@
 #include "codecs/codec_module.h"
 #include "protocols/ip.h"
 #include "protocols/ipv4_options.h"
+#include "log/messages.h"
 #include "log/text_log.h"
 #include "log/log_text.h"
 #include "sfip/sf_ipvar.h"

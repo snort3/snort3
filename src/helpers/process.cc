@@ -37,6 +37,7 @@
 
 #include <iostream>
 
+#include "log/messages.h"
 #include "main.h"
 #include "main/thread.h"
 #include "main/snort.h"

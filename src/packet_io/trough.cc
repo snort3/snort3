@@ -25,8 +25,9 @@
 #include <algorithm>
 #include <fstream>
 
-#include "main/snort_config.h"
 #include "helpers/directory.h"
+#include "log/messages.h"
+#include "main/snort_config.h"
 
 std::vector<struct Trough::PcapReadObject> Trough::pcap_object_list;
 std::vector<std::string> Trough::pcap_queue;

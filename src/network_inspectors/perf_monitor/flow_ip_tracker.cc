@@ -21,6 +21,7 @@
 #include "flow_ip_tracker.h"
 #include "perf_module.h"
 
+#include "log/messages.h"
 #include "sfip/sf_ip.h"
 #include "utils/util.h"
 

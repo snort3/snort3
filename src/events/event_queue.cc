@@ -59,6 +59,7 @@
 #include "utils/util.h"
 #include "utils/stats.h"
 #include "filters/sfthreshold.h"
+#include "log/messages.h"
 #include "parser/parser.h"
 
 typedef struct s_SNORT_EVENTQ_USER

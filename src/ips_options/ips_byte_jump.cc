@@ -75,6 +75,7 @@
 
 #include "extract.h"
 #include "ips_byte_extract.h"
+#include "log/messages.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"

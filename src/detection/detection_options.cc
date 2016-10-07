@@ -50,6 +50,7 @@
 #include "ips_options/ips_pcre.h"
 #include "filters/detection_filter.h"
 #include "latency/packet_latency.h"
+#include "log/messages.h"
 #include "main/thread_config.h"
 #include "framework/ips_option.h"
 #include "framework/cursor.h"

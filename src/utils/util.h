@@ -30,15 +30,10 @@
 #include "config.h"
 #endif
 
-#include <sys/time.h>
-#include <sys/types.h>
-#include <stdlib.h>
 #include <errno.h>
-#include <unistd.h>
+#include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <fstream>
-#include <sstream>
+#include <unistd.h>
 
 #if defined(__linux__)
 #include <sys/syscall.h>
@@ -47,7 +42,6 @@
 #include <string>
 
 #include "main/snort_types.h"
-#include "log/messages.h"
 
 #define SNORT_SNPRINTF_SUCCESS 0
 #define SNORT_SNPRINTF_TRUNCATION 1
