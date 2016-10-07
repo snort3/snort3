@@ -26,9 +26,12 @@
 #include "utils/util.h"
 #include "tcp_module.h"
 
+// FIXIT-P this is going to set each member 2X; once here and once in init
+// separate ctors with default initializers would set them only once
 TcpSegmentNode::TcpSegmentNode() :
-    prev(nullptr), next(nullptr), tv({ 0, 0 }), ts(0), seq(0), orig_dsize(0),
-    payload_size(0), urg_offset(0), buffered(false), data(nullptr), payload(nullptr)
+    prev(nullptr), next(nullptr), data(nullptr),
+    tv({ 0, 0 }), ts(0), seq(0), offset(0), orig_dsize(0),
+    payload_size(0), urg_offset(0), buffered(false)
 {
 }
 
@@ -47,16 +50,16 @@ TcpSegmentNode* TcpSegmentNode::init(TcpSegmentDescriptor& tsd)
 
 TcpSegmentNode* TcpSegmentNode::init(TcpSegmentNode& tsn)
 {
-    return init(tsn.tv, tsn.payload, tsn.payload_size);
+    return init(tsn.tv, tsn.payload(), tsn.payload_size);
 }
 
 TcpSegmentNode* TcpSegmentNode::init(const struct timeval& tv, const uint8_t* data, unsigned dsize)
 {
     TcpSegmentNode* ss = new TcpSegmentNode;
     ss->data = ( uint8_t* )snort_alloc(dsize);
-    ss->payload = ss->data;
+    memcpy(ss->data, data, dsize);
+    ss->offset = 0;
     ss->tv = tv;
-    memcpy(ss->payload, data, dsize);
     ss->orig_dsize = dsize;
     ss->payload_size = ss->orig_dsize;
     tcpStats.mem_in_use += dsize;

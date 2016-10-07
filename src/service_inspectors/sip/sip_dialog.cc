@@ -80,7 +80,7 @@ static int SIP_processRequest(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialog
     {
         // Clang analyzer is false positive, dlist->head is updated after free
         // (Use of memory after it is freed)
-        dialog = SIP_addDialog(sipMsg, dList->head, dList); // ... FIXIT-A
+        dialog = SIP_addDialog(sipMsg, dList->head, dList); // ... FIXIT-W
     }
 
     methodFlag = sipMsg->methodFlag;

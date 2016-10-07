@@ -220,37 +220,22 @@ int TcpReassembler::add_reassembly_segment(TcpSegmentDescriptor& tsd, int16_t le
 
     if ( newSize <= 0 )
     {
+        // FIXIT-L ideally newSize would not go negative
+        //assert(newSize == 0);
+
         // zero size data because of trimming.  Don't insert it
         DebugFormat(DEBUG_STREAM_STATE, "zero size TCP data after left & right trimming "
             "(len: %hd slide: %u trunc: %u)\n", len, slide, trunc_len);
+
         inc_tcp_discards();
         tracker->normalizer->trim_win_payload(tsd);
 
-#ifdef DEBUG_STREAM_EX
-        {
-            TcpSegmentNode* idx = seglist.head;
-            unsigned long i = 0;
-            DebugFormat(DEBUG_STREAM_STATE, "Dumping seglist, %d segments\n", tracker->seg_count);
-            while (idx)
-            {
-                i++;
-                DebugFormat(DEBUG_STREAM_STATE,
-                    "%d  ptr: %p  seq: 0x%X  size: %d nxt: %p prv: %p\n",
-                    i, idx, idx->seq, idx->payload_size, idx->next, idx->prev);
-
-                if (tracker->seg_count < i)
-                    FatalError("Circular list\n");
-
-                idx = idx->next;
-            }
-        }
-#endif
-        return STREAM_INSERT_ANOMALY;
+        return STREAM_INSERT_OK;
     }
 
     // FIXIT-L don't allocate overlapped part
     tsn = TcpSegmentNode::init(tsd);
-    tsn->payload = tsn->data + slide;
+    tsn->offset = slide;
     tsn->payload_size = (uint16_t)newSize;
     tsn->seq = seq;
     tsn->ts = tsd.get_ts();
@@ -280,7 +265,6 @@ int TcpReassembler::dup_reassembly_segment(TcpSegmentNode* left, TcpSegmentNode*
     tcpStats.segs_split++;
 
     // twiddle the values for overlaps
-    tsn->payload = tsn->data;
     tsn->payload_size = left->payload_size;
     tsn->seq = left->seq;
 
@@ -497,7 +481,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq)
             flags |= PKT_PDU_TAIL;
 
         const StreamBuffer* sb = tracker->splitter->reassemble(
-            p->flow, total, bytes_flushed, tsn->payload, bytes_to_copy, flags, bytes_copied);
+            p->flow, total, bytes_flushed, tsn->payload(), bytes_to_copy, flags, bytes_copied);
 
         flags = 0;
 
@@ -518,7 +502,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq)
             tsn->payload_size = bytes_to_copy;
             sr->seq += bytes_to_copy;
             sr->payload_size -= bytes_to_copy;
-            sr->payload += bytes_to_copy;
+            sr->offset += bytes_to_copy;
         }
         tsn->buffered = true;
         flush_count++;
@@ -637,20 +621,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         footprint = stop_seq - seglist_base_seq;
 
         if (footprint == 0)
-        {
-            DebugFormat(DEBUG_STREAM_STATE, "Negative footprint, bailing %u (0x%X - 0x%X)\n",
-                footprint, stop_seq, seglist_base_seq);
             return bytes_processed;
-        }
-
-#ifdef DEBUG_STREAM_EX
-        if (footprint < tracker->seg_bytes_logical)
-        {
-            DebugFormat(DEBUG_STREAM_STATE,
-                "Footprint less than queued bytes, win_base: 0x%X base_seq: 0x%X\n",
-                stop_seq, seglist_base_seq);
-        }
-#endif
 
         if (footprint > s5_pkt->max_dsize )
         {
@@ -939,7 +910,7 @@ uint32_t TcpReassembler::flush_pdu_ips(uint32_t* flags)
         }
 
         flush_pt = paf_check(tracker->splitter, &tracker->paf_state, session->flow,
-            tsn->payload, size, total, tsn->seq, flags);
+            tsn->payload(), size, total, tsn->seq, flags);
 
         if (flush_pt >= 0)
         {
@@ -1010,7 +981,7 @@ uint32_t TcpReassembler::flush_pdu_ackd(uint32_t* flags)
         total += size;
 
         flush_pt = paf_check(tracker->splitter, &tracker->paf_state, session->flow,
-            tsn->payload, size, total, tsn->seq, flags);
+            tsn->payload(), size, total, tsn->seq, flags);
 
         if ( flush_pt >= 0 )
         {

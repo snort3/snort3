@@ -216,7 +216,7 @@ void Request::respond(const char* s) const
         return;
     }
     // FIXIT-L count errors?
-    (void)write(fd, s, strlen(s));
+    (void)write(fd, s, strlen(s));  // FIXIT-W ignoring return value
 }
 
 // FIXIT-L would like to flush prompt w/o \n

@@ -145,8 +145,6 @@ public:
         pkt->dsize -= offset;
     }
 
-    void print_tsd();
-
 private:
     Flow* flow;
     Packet* pkt;

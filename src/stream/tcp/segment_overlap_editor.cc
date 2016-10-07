@@ -21,6 +21,8 @@
 
 #include "segment_overlap_editor.h"
 
+#include <assert.h>
+
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
@@ -35,7 +37,9 @@ bool SegmentOverlapEditor::is_segment_retransmit(bool* full_retransmit)
     // Don't want to count retransmits as overlaps or do anything
     // else with them.  Account for retransmits of multiple PDUs
     // in one segment.
-    if ( right->is_retransmit(rdata, rsize, rseq, right->orig_dsize, ((rseq == tsd->get_seg_seq())?full_retransmit:nullptr)) )
+    bool* pb = (rseq == tsd->get_seg_seq()) ? full_retransmit : nullptr;
+
+    if ( right->is_retransmit(rdata, rsize, rseq, right->orig_dsize, pb) )
     {
         if ( !(*full_retransmit) )
         {
@@ -77,6 +81,8 @@ int SegmentOverlapEditor::eval_right()
     while ( right && SEQ_LT(right->seq, seq_end) )
     {
         trunc_len = 0;
+
+        assert(SEQ_LEQ(seq, right->seq));
         overlap = ( int )( seq_end - right->seq );
 
         DebugFormat(DEBUG_STREAM_STATE, "right overlap(%d): len: %d right->seq: 0x%X seq: 0x%X\n",
@@ -84,7 +90,7 @@ int SegmentOverlapEditor::eval_right()
 
         // Treat sequence number overlap as a retransmission, only check right side since
         //  left side happens rarely
-        session->retransmit_handle(tsd->get_pkt() );
+        session->retransmit_handle(tsd->get_pkt());
 
         if ( overlap < right->payload_size )
         {
@@ -138,49 +144,44 @@ void SegmentOverlapEditor::drop_old_segment()
     delete_reassembly_segment(drop_seg);
 }
 
-int SegmentOverlapEditor::generate_bad_segment_event()
-{
-    DebugFormat(DEBUG_STREAM_STATE, "bad segment: overlap with invalid sequence number"
-        "(seq: %X  seq_end: %X overlap: %d\n", seq, seq_end, overlap);
-    session->tel.set_tcp_event(EVENT_BAD_SEGMENT);
-    inc_tcp_discards();
-    return STREAM_INSERT_ANOMALY;
-}
-
 int SegmentOverlapEditor::left_overlap_keep_first()
 {
-    int rc = STREAM_INSERT_OK;
-
     DebugFormat(DEBUG_STREAM_STATE, "left overlap %d\n", overlap);
+
+    // NOTE that overlap will always be less than left->size since
+    // seq is always greater than left->seq
+    assert(SEQ_GT(seq, left->seq));
 
     len = tsd->get_seg_len();
     overlap = left->seq + left->payload_size - seq;
+
+    if ( len < overlap )
+        overlap = len;
+
     if ( overlap > 0 )
     {
-        // NOTE that overlap will always be less than left->size since
-        // seq is always greater than left->seq
         tcpStats.overlaps++;
         overlap_count++;
 
         DebugMessage(DEBUG_STREAM_STATE, "left overlap, honoring old data\n");
-        if ( SEQ_LT(left->seq, tsd->get_seg_seq() ) && SEQ_GT(left->seq + left->payload_size,
-            tsd->get_seg_seq() + tsd->get_seg_len() ) )
+
+        if ( SEQ_GT(left->seq + left->payload_size, seq_end) )
         {
             if (tcp_ips_data == NORM_MODE_ON)
             {
                 unsigned offset = tsd->get_seg_seq() - left->seq;
-                memcpy((uint8_t*)tsd->get_pkt()->data, left->payload + offset, tsd->get_seg_len());
+                memcpy((uint8_t*)tsd->get_pkt()->data, left->payload()+offset, tsd->get_seg_len());
                 tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
             }
             tcp_norm_stats[PC_TCP_IPS_DATA][tcp_ips_data]++;
         }
-        else if ( SEQ_LT(left->seq, tsd->get_seg_seq() ) )
+        else
         {
             if ( tcp_ips_data == NORM_MODE_ON )
             {
                 unsigned offset = tsd->get_seg_seq() - left->seq;
                 unsigned length = left->seq + left->payload_size - tsd->get_seg_seq();
-                memcpy((uint8_t*)tsd->get_pkt()->data, left->payload + offset, length);
+                memcpy((uint8_t*)tsd->get_pkt()->data, left->payload()+offset, length);
                 tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
             }
 
@@ -188,57 +189,57 @@ int SegmentOverlapEditor::left_overlap_keep_first()
         }
 
         seq += overlap;
-        if ( SEQ_LEQ(seq_end, seq) )
-            return generate_bad_segment_event();
     }
 
-    return rc;
+    return STREAM_INSERT_OK;
 }
 
 int SegmentOverlapEditor::left_overlap_trim_first()
 {
-    int rc = STREAM_INSERT_OK;
-
     DebugFormat(DEBUG_STREAM_STATE, "left overlap %d\n", overlap);
+    assert(SEQ_GT(seq, left->seq));
 
     len = tsd->get_seg_len();
     overlap = left->seq + left->payload_size - seq;
+
     if ( overlap > 0 )
     {
         tcpStats.overlaps++;
         overlap_count++;
 
-        if ( SEQ_LT(left->seq, seq) && SEQ_GEQ(left->seq + left->payload_size, seq + len)  )
+        if ( SEQ_GEQ(left->seq + left->payload_size, seq + len)  )
         {
             // existing packet overlaps new on both sides.  Drop the new data.
             DebugMessage(DEBUG_STREAM_STATE, "left overlap, honoring old data\n");
-            seq += overlap;
-            if ( SEQ_LEQ(seq_end, seq) )
-                return generate_bad_segment_event();
+            seq += len;
         }
-
-        /* Otherwise, trim the old data accordingly */
-        left->payload_size -= ( int16_t )overlap;
-        seg_bytes_logical -= overlap;
-        DebugMessage(DEBUG_STREAM_STATE, "left overlap, honoring new data\n");
+        else
+        {
+            /* Otherwise, trim the old data accordingly */
+            left->payload_size -= ( int16_t )overlap;
+            seg_bytes_logical -= overlap;
+            DebugMessage(DEBUG_STREAM_STATE, "left overlap, honoring new data\n");
+        }
     }
 
-    return rc;
+    return STREAM_INSERT_OK;
 }
 
 int SegmentOverlapEditor::left_overlap_keep_last()
 {
     DebugFormat(DEBUG_STREAM_STATE, "left overlap %d\n", overlap);
+    assert(SEQ_GT(seq, left->seq));
 
     len = tsd->get_seg_len();
     overlap = left->seq + left->payload_size - seq;
+
     if ( overlap > 0 )
     {
         tcpStats.overlaps++;
         overlap_count++;
 
         /* True "Last" policy" */
-        if ( SEQ_LT(left->seq, seq) && SEQ_GT(left->seq + left->payload_size, seq + len) )
+        if ( SEQ_GT(left->seq + left->payload_size, seq + len) )
         {
             /* New data is overlapped on both sides by existing data.  Existing data needs to be
              * split and the new data inserted in the middle.
@@ -256,7 +257,7 @@ int SegmentOverlapEditor::left_overlap_keep_last()
             right->seq = seq + len;
             uint16_t delta = ( int16_t )( right->seq - left->seq );
             right->payload_size -= delta;
-            right->payload += delta;
+            right->offset += delta;
             seg_bytes_logical -= delta;
         }
         else
@@ -281,7 +282,7 @@ void SegmentOverlapEditor::right_overlap_truncate_existing()
     {
         /* partial overlap */
         right->seq += overlap;
-        right->payload += overlap;
+        right->offset += overlap;
         right->payload_size -= (int16_t)overlap;
         seg_bytes_logical -= overlap;
         total_bytes_queued -= overlap;
@@ -294,7 +295,7 @@ void SegmentOverlapEditor::right_overlap_truncate_new()
     {
         unsigned offset = right->seq - tsd->get_seg_seq();
         unsigned length = tsd->get_seg_seq() + tsd->get_seg_len() - right->seq;
-        memcpy((uint8_t*)tsd->get_pkt()->data + offset, right->payload, length);
+        memcpy((uint8_t*)tsd->get_pkt()->data + offset, right->payload(), length);
         tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
     }
 
@@ -311,7 +312,7 @@ int SegmentOverlapEditor::full_right_overlap_truncate_new()
     if ( tcp_ips_data == NORM_MODE_ON )
     {
         unsigned offset = right->seq - tsd->get_seg_seq();
-        memcpy((uint8_t*)tsd->get_pkt()->data + offset, right->payload, right->payload_size);
+        memcpy((uint8_t*)tsd->get_pkt()->data + offset, right->payload(), right->payload_size);
         tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
     }
 
@@ -327,7 +328,7 @@ int SegmentOverlapEditor::full_right_overlap_truncate_new()
 
         /* Adjusted seq is fully overlapped */
         if ( SEQ_EQ(seq, seq_end) )
-            return generate_bad_segment_event();
+            return STREAM_INSERT_OK;
     }
     else
     {
@@ -405,9 +406,14 @@ int SegmentOverlapEditor::full_right_overlap_os3()
     if ( SEQ_EQ(right->seq, seq) && ( right->payload_size == len )
         && ( left && !SEQ_EQ(left->seq + left->payload_size, seq) ) )
     {
-        trunc_len += overlap;
-        if ( SEQ_LEQ( ( int )( seq_end - trunc_len ), seq) )
-            return generate_bad_segment_event();
+        right_overlap_truncate_new();
+
+        rdata += right->payload_size;
+        rsize -= right->payload_size;
+        rseq += right->payload_size;
+        seq += right->payload_size;
+        left = right;
+        right = right->next;
     }
     else
     {

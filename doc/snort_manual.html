@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.9" />
+<meta name="generator" content="AsciiDoc 8.6.8" />
 <title>Snort++ User Manual</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -94,9 +94,7 @@ ul > li > * { color: black; }
   padding: 0;
   margin: 0;
 }
-pre {
-  white-space: pre-wrap;
-}
+
 
 #author {
   color: #527bbd;
@@ -225,7 +223,7 @@ div.exampleblock > div.content {
 }
 
 div.imageblock div.content { padding-left: 0; }
-span.image img { border-style: none; vertical-align: text-bottom; }
+span.image img { border-style: none; }
 a.image:visited { color: white; }
 
 dl {
@@ -1026,16 +1024,18 @@ settings, etc., you can also script Loggers and IpsOptions.</p></div>
 <div class="sect2">
 <h3 id="_new_http_inspector">New Http Inspector</h3>
 <div class="paragraph"><p>One of the major undertakings for Snort 3.0 is developing a completely new
-HTTP inspector. You can configure it by adding:</p></div>
+HTTP inspector. It is incomplete right now but you can examine the
+work-in-progress. You can configure it by adding:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>http_inspect = {}</code></pre>
+<pre><code>new_http_inspect = {}</code></pre>
 </div></div>
 <div class="paragraph"><p>to your snort.lua configuration file. Or you can read it in the source code
-under src/service_inspectors/http_inspect.</p></div>
-<div class="paragraph"><p>The classic HTTP preprocessor is still available in the alpha release under
-extra. It has been renamed http_server. Be sure not to configure both old
-and new HTTP inspectors at the same time.</p></div>
+under src/service_inspectors/nhttp_inspect.</p></div>
+<div class="paragraph"><p>The classic HTTP preprocessor is still available in the alpha release as
+http_inspect. It’s probably the better choice for now if you just want to
+do some work and do not feel like experimenting. Be sure not to configure
+    both old and new HTTP inspectors at the same time.</p></div>
 <div class="paragraph"><p>So why a new HTTP inspector?</p></div>
 <div class="paragraph"><p>For starters it is object-oriented. That’s good for us because we maintain
 this software. But it should also be really nice for open-source
@@ -1044,20 +1044,20 @@ processing without having to understand the whole thing. In fact much of
 the new HTTP inspector’s knowledge of HTTP is centralized in a series of
 tables where it can be easily reviewed and modified. Many significant
 changes can be made just by updating these tables.</p></div>
-<div class="paragraph"><p>Http_inspect is the first inspector written specifically for the new
+<div class="paragraph"><p>New_http_inspect is the first inspector written specifically for the new
 Snort 3.0 architecture. That provides access to one of the very best
-features of Snort 3.0: purely PDU-based inspection. The classic preprocessor
+features of Snort 3.0: purely PDU-based inspection. Classic http_inspect
 processes HTTP messages, but even while doing so it is constantly aware of
 IP packets and how they divide up the TCP data stream. The same HTTP
 message might be processed differently depending on how the sender (bad
 guy) divided it up into IP packets.</p></div>
-<div class="paragraph"><p>Http_inspect is free of this burden and can focus exclusively on HTTP.
-That makes it much simpler, easier to test, and less prone to false
+<div class="paragraph"><p>New_http_inspect is free of this burden and can focus exclusively on HTTP.
+That makes it much more simple, easier to test, and less prone to false
 positives. It also greatly reduces the opportunity for adversaries to probe
 the inspector for weak spots by adjusting packet boundaries to disguise bad
 behavior.</p></div>
 <div class="paragraph"><p>Dealing solely with HTTP messages also opens the door for developing major
-new features. The http_inspect design supports true stateful
+new features. The new_http_inspect design supports true stateful
 processing. Want to ask questions that involve both the client request and
 the server response? Or different requests in the same session? These
 things are possible.</p></div>
@@ -1067,9 +1067,10 @@ the name, it is better to think of HTTP/2 not as a newer version of
 HTTP/1.1, but rather a separate protocol layer that runs under HTTP/1.1 and
 on top of TLS or TCP. It’s a perfect fit for the new Snort 3.0 architecture
 because a new HTTP/2 inspector would naturally output HTTP/1.1 messages but
-not any underlying packets. Exactly what http_inspect wants to input.</p></div>
-<div class="paragraph"><p>Http_inspect is taking a very different approach to HTTP header fields.
-The classic preprocessor divides all the HTTP headers following the start line
+not any underlying packets. Exactly what the new_http_inspect wants to
+input.</p></div>
+<div class="paragraph"><p>New_http_inspect is taking a very different approach to HTTP header fields.
+Classic http_inspect divides all the HTTP headers following the start line
 into cookies and everything else. It normalizes the two pieces using a
 generic process and puts them in buffers that one can write rules against.
 There is some limited support for examining individual headers within the
@@ -1081,9 +1082,7 @@ normalization means put that date in a standard format.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_binder_and_wizard">Binder and Wizard</h3>
-<div class="paragraph"><p>One of the fundamental differences between Snort and Snort++ concerns configuration
-related to networks and ports. Here is a brief review of Snort&#8217;s configuration for
-network and service related components:</p></div>
+<div class="paragraph"><p>One of the fundamental differences between Snort and Snort++ concerns configuration related to networks and ports.  Here is a brief review of Snort&#8217;s configuration for network and service related components:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -2478,7 +2477,7 @@ bool <strong>daq.no_promisc</strong> = false: whether to put DAQ device into pro
 </li>
 <li>
 <p>
-<strong>116:472</strong> (decode) too many protocols present
+<strong>116:468</strong> (decode) too many protocols present
 </p>
 </li>
 </ul></div>
@@ -3658,11 +3657,6 @@ bit_list <strong>side_channel.ports</strong>: side channel message port list { 6
 string <strong>side_channel.connectors[].connector</strong>: connector handle
 </p>
 </li>
-<li>
-<p>
-string <strong>side_channel.connector</strong>: connector handle
-</p>
-</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 </div>
@@ -4392,34 +4386,6 @@ protocol decoding, anomaly detection, and construction of active responses.</p><
 <li>
 <p>
 <strong>116:466</strong> (auth) bad authentication header length
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
-<h3 id="_ciscometadata">ciscometadata</h3>
-<div class="paragraph"><p>What: support for cisco metadata</p></div>
-<div class="paragraph"><p>Type: codec</p></div>
-<div class="paragraph"><p>Rules:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>116:468</strong> (ciscometadata) truncated Cisco Metadata header
-</p>
-</li>
-<li>
-<p>
-<strong>116:469</strong> (ciscometadata) invalid Cisco Metadata option length
-</p>
-</li>
-<li>
-<p>
-<strong>116:470</strong> (ciscometadata) invalid Cisco Metadata option type
-</p>
-</li>
-<li>
-<p>
-<strong>116:471</strong> (ciscometadata) invalid Cisco Metadata SGT
 </p>
 </li>
 </ul></div>
@@ -5539,11 +5505,6 @@ string <strong>appid.thirdparty_appid_dir</strong>: directory to load thirdparty
 <li>
 <p>
 <strong>appid.pop_flows</strong>: count of pop service flows discovered by appid
-</p>
-</li>
-<li>
-<p>
-<strong>appid.rsync_flows</strong>: count of rsync service flows discovered by appid
 </p>
 </li>
 <li>
@@ -6980,11 +6941,6 @@ bool <strong>http_inspect.unzip</strong> = true: decompress gzip and deflate mes
 </li>
 <li>
 <p>
-bool <strong>http_inspect.normalize_utf</strong> = true: normalize charset utf encodings
-</p>
-</li>
-<li>
-<p>
 bit_list <strong>http_inspect.bad_characters</strong>: alert when any of specified bytes are present in URI after percent decoding { 255 }
 </p>
 </li>
@@ -7444,21 +7400,6 @@ bool <strong>http_inspect.show_pegs</strong> = true: display peg counts with tes
 <li>
 <p>
 <strong>119:75</strong> (http_inspect) Misformatted HTTP traffic
-</p>
-</li>
-<li>
-<p>
-<strong>119:76</strong> (http_inspect) Unsupported Transfer-Encoding or Content-Encoding used
-</p>
-</li>
-<li>
-<p>
-<strong>119:77</strong> (http_inspect) Unknown Transfer-Encoding or Content-Encoding used
-</p>
-</li>
-<li>
-<p>
-<strong>119:78</strong> (http_inspect) Multiple layers of compression encodings applied
 </p>
 </li>
 </ul></div>
@@ -12238,17 +12179,17 @@ int <strong>rev.~</strong>: revision { 1: }
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>rpc.~app</strong>: application number
+string <strong>rpc.~app</strong>: application number
 </p>
 </li>
 <li>
 <p>
-int <strong>rpc.ver</strong>: version number or * for any
+string <strong>rpc.~ver</strong>: version number or * for any
 </p>
 </li>
 <li>
 <p>
-int <strong>rpc.proc</strong>: procedure number or * for any
+string <strong>rpc.~proc</strong>: procedure number or * for any
 </p>
 </li>
 </ul></div>
@@ -14267,6 +14208,8 @@ configure can be found by running the following command:</p></div>
 <div class="content">
 <pre><code>snort --help-config http_inspect | grep http_inspect.profile</code></pre>
 </div></div>
+<div class="paragraph"><p>The new Http Inspect (new_http_inspect) implementation of config options is
+still under development.</p></div>
 </div>
 </div>
 </div>
@@ -19360,11 +19303,6 @@ string <strong>http_inspect.iis_unicode_map_file</strong>: file containing code 
 </li>
 <li>
 <p>
-bool <strong>http_inspect.normalize_utf</strong> = true: normalize charset utf encodings
-</p>
-</li>
-<li>
-<p>
 int <strong>http_inspect.oversize_dir_length</strong> = 300: maximum length for URL directory { 1:65535 }
 </p>
 </li>
@@ -20570,17 +20508,17 @@ int <strong>rev.~</strong>: revision { 1: }
 </li>
 <li>
 <p>
-int <strong>rpc.~app</strong>: application number
+string <strong>rpc.~app</strong>: application number
 </p>
 </li>
 <li>
 <p>
-int <strong>rpc.proc</strong>: procedure number or * for any
+string <strong>rpc.~proc</strong>: procedure number or * for any
 </p>
 </li>
 <li>
 <p>
-int <strong>rpc.ver</strong>: version number or * for any
+string <strong>rpc.~ver</strong>: version number or * for any
 </p>
 </li>
 <li>
@@ -20731,11 +20669,6 @@ string <strong>sha512.offset</strong>: var or number of bytes from start of buff
 <li>
 <p>
 implied <strong>sha512.relative</strong> = false: offset from cursor instead of start of buffer
-</p>
-</li>
-<li>
-<p>
-string <strong>side_channel.connector</strong>: connector handle
 </p>
 </li>
 <li>
@@ -21975,26 +21908,6 @@ int <strong>tag.seconds</strong>: tag for this many seconds { 1: }
 </li>
 <li>
 <p>
-string <strong>tcp_connector.address</strong>: address
-</p>
-</li>
-<li>
-<p>
-port <strong>tcp_connector.base_port</strong>: base port number
-</p>
-</li>
-<li>
-<p>
-string <strong>tcp_connector.connector</strong>: connector name
-</p>
-</li>
-<li>
-<p>
-enum <strong>tcp_connector.setup</strong>: stream establishment { call | answer }
-</p>
-</li>
-<li>
-<p>
 int <strong>telnet.ayt_attack_thresh</strong> = -1: alert on this number of consecutive telnet AYT commands { -1: }
 </p>
 </li>
@@ -22236,11 +22149,6 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>appid.pop_flows</strong>: count of pop service flows discovered by appid
-</p>
-</li>
-<li>
-<p>
-<strong>appid.rsync_flows</strong>: count of rsync service flows discovered by appid
 </p>
 </li>
 <li>
@@ -24555,11 +24463,6 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>tcp_connector.messages</strong>: total messages
-</p>
-</li>
-<li>
-<p>
 <strong>telnet.packets</strong>: total packets
 </p>
 </li>
@@ -24631,11 +24534,6 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>116</strong>: auth
-</p>
-</li>
-<li>
-<p>
-<strong>116</strong>: ciscometadata
 </p>
 </li>
 <li>
@@ -25620,27 +25518,7 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>116:468</strong> (ciscometadata) truncated Cisco Metadata header
-</p>
-</li>
-<li>
-<p>
-<strong>116:469</strong> (ciscometadata) invalid Cisco Metadata option length
-</p>
-</li>
-<li>
-<p>
-<strong>116:470</strong> (ciscometadata) invalid Cisco Metadata option type
-</p>
-</li>
-<li>
-<p>
-<strong>116:471</strong> (ciscometadata) invalid Cisco Metadata SGT
-</p>
-</li>
-<li>
-<p>
-<strong>116:472</strong> (decode) too many protocols present
+<strong>116:468</strong> (decode) too many protocols present
 </p>
 </li>
 <li>
@@ -26011,21 +25889,6 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>119:75</strong> (http_inspect) Misformatted HTTP traffic
-</p>
-</li>
-<li>
-<p>
-<strong>119:76</strong> (http_inspect) Unsupported Transfer-Encoding or Content-Encoding used
-</p>
-</li>
-<li>
-<p>
-<strong>119:77</strong> (http_inspect) Unknown Transfer-Encoding or Content-Encoding used
-</p>
-</li>
-<li>
-<p>
-<strong>119:78</strong> (http_inspect) Multiple layers of compression encodings applied
 </p>
 </li>
 <li>
@@ -27626,11 +27489,6 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>ciscometadata</strong> (codec): support for cisco metadata
-</p>
-</li>
-<li>
-<p>
 <strong>classifications</strong> (basic): define rule categories with priority
 </p>
 </li>
@@ -28426,11 +28284,6 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>tcp_connector</strong> (connector): implement the tcp stream connector
-</p>
-</li>
-<li>
-<p>
 <strong>telnet</strong> (inspector): telnet inspection and normalization
 </p>
 </li>
@@ -28482,11 +28335,6 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>codec::auth</strong>: support for IP authentication header
-</p>
-</li>
-<li>
-<p>
-<strong>codec::ciscometadata</strong>: support for cisco metadata
 </p>
 </li>
 <li>
@@ -28662,11 +28510,6 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>connector::file_connector</strong>: implement the file based connector
-</p>
-</li>
-<li>
-<p>
-<strong>connector::tcp_connector</strong>: implement the tcp stream connector
 </p>
 </li>
 <li>
@@ -29453,8 +29296,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated
- 2015-08-03 17:17:47 EDT
+Last updated 2016-08-11 02:38:58 EDT
 </div>
 </div>
 </body>

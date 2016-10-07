@@ -50,9 +50,13 @@ TcpSegmentDescriptor::TcpSegmentDescriptor(Flow* flow, Packet* pkt, TcpEventLogg
             tel.log_internal_event(INTERNAL_EVENT_SYN_RECEIVED);
     }
 
-    #ifdef DEBUG_STREAM_EX
-    print_tsd( );
-    #endif
+#ifdef DEBUG_STREAM_EX
+    LogMessage("Tcp Segment Descriptor:\n");
+    LogMessage("    seq:    0x%08X\n", seg_seq);
+    LogMessage("    ack:    0x%08X\n", seg_ack);
+    LogMessage("    win:    %d\n", seg_wnd);
+    LogMessage("    end:    0x%08X\n", end_seq);
+#endif
 }
 
 TcpSegmentDescriptor::~TcpSegmentDescriptor()
@@ -118,14 +122,5 @@ bool TcpSegmentDescriptor::has_wscale()
     DebugMessage(DEBUG_STREAM_STATE, "Checking for wscale...\n");
 
     return ( init_wscale(&wscale) & TF_WSCALE ) != TF_NONE;
-}
-
-void TcpSegmentDescriptor::print_tsd()
-{
-    LogMessage("Tcp Segment Descriptor:\n");
-    LogMessage("    seq:    0x%08X\n", seg_seq);
-    LogMessage("    ack:    0x%08X\n", seg_ack);
-    LogMessage("    win:    %d\n", seg_wnd);
-    LogMessage("    end:    0x%08X\n", end_seq);
 }
 

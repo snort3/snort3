@@ -146,7 +146,7 @@ void Analyzer::execute(AnalyzerCommand ac)
 
     /* Break out of the DAQ acquire loop so that the command will be processed.
         This is explicitly safe to call from another thread. */
-    if (daq_instance)
+    if ( state == State::RUNNING and daq_instance )
         daq_instance->break_loop(0);
 }
 

@@ -34,11 +34,10 @@
 // ... however, use of padding below is critical, adjust if needed
 //-----------------------------------------------------------------
 
-class TcpSegmentNode
+struct TcpSegmentNode
 {
-public:
     TcpSegmentNode();
-    virtual ~TcpSegmentNode();
+    ~TcpSegmentNode();
 
     static TcpSegmentNode* init(TcpSegmentDescriptor& tsd);
     static TcpSegmentNode* init(TcpSegmentNode& tsn);
@@ -47,19 +46,24 @@ public:
     void term();
     bool is_retransmit(const uint8_t*, uint16_t size, uint32_t, uint16_t, bool*);
 
+    uint8_t* payload()
+    { return data + offset; }
+
     TcpSegmentNode* prev;
     TcpSegmentNode* next;
+
+    uint8_t* data;
 
     struct timeval tv;
     uint32_t ts;
     uint32_t seq;
+
+    uint16_t offset;
     uint16_t orig_dsize;
     uint16_t payload_size;
     uint16_t urg_offset;
-    bool buffered;
 
-    uint8_t* data;
-    uint8_t* payload;
+    bool buffered;
 };
 
 class TcpSegmentList

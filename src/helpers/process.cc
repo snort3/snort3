@@ -100,7 +100,7 @@ static void exit_log(const char* why)
     strncat(buf, why, sizeof(buf)-strlen(buf)-1);
     strncat(buf, " signal, exiting\n", sizeof(buf)-strlen(buf)-1);
 
-    (void)write(STDOUT_FILENO, buf, strlen(buf));
+    (void)write(STDOUT_FILENO, buf, strlen(buf));  // FIXIT-W ignoring return value
 }
 
 static void exit_handler(int signal)

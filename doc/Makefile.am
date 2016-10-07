@@ -50,9 +50,9 @@ $(unbuilt_sources) \
 $(BUILT_SOURCES)
 
 EXTRA_DIST = \
-default_snort_manual.text \
-default_snort_manual.html \
-default_snort_manual.pdf \
+snort_manual.text \
+snort_manual.html \
+snort_manual.pdf \
 online_manual.sh \
 dev_guide.sh
 
@@ -62,7 +62,7 @@ snort_manual.html \
 snort_manual.pdf
 
 dist_doc_DATA = \
-$(all_sources)
+$(unbuilt_sources)
 
 snort = $(top_builddir)/src/snort
 snort2lua = $(top_builddir)/tools/snort2lua/snort2lua
@@ -163,45 +163,37 @@ html_args = \
 # asciidoc.css doesn't seem to work with -a linkcss asciidoc native html
 # generation; buggy passthru of base64 data.
 if MAKE_HTML_DOC
-snort_manual.html: $(all_sources)
+html: $(all_sources)
 	a2x -f chunked $(html_args) $(snort_src)
 	tar zcf snort_manual.tgz snort_manual.chunked
 	asciidoc -b xhtml11 -a toc2 -a icons -a imagesdir=. $(snort_src)
-else
-snort_manual.html: default_snort_manual.html
-	cp $< $@
 endif
 
-# a2x generates an intermediate xml file unconditionally and always places
-# it in this dir even if the output is put elsewhere, which breaks parallel
-# builds.  hence we just build all sequentially, which is why dependencies
-# are:  text depends on pdf depends on html.
 if MAKE_PDF_DOC
-snort_manual.pdf: $(all_sources) snort_manual.html
+pdf: $(all_sources)
 	a2x -f pdf $(pdf_args) $(snort_src)
-else
-snort_manual.pdf: default_snort_manual.pdf snort_manual.html
-	cp $< $@
 endif
 
 if MAKE_TEXT_DOC
-snort_manual.text: $(all_sources) snort_manual.pdf
+text: $(all_sources)
 	a2x -f text $(snort_src)
-else
-snort_manual.text: default_snort_manual.text snort_manual.pdf
-	cp $< $@
 endif
 
+if MAKE_HTML_DOC
 # autotools makes doesn't seem to like directory targets, especially ones
 # with an unspecified set of files.  to avoid these issues, we generate
 # a tarball and then explode that upon install with a hook.  note that
 # there is no default for chunked.
-if MAKE_HTML_DOC
-install-data-hook:
-	tar zxf $(builddir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/
-
-uninstall-hook:
-	rm -rf $(DESTDIR)$(docdir)/snort_manual.chunked
+#
+# after changing the target from all to html, exploding the tarball must
+# be conditional, but install fails with this hook:
+#
+#install-data-hook:
+#	[ -e $(builddir)/snort_manual.tgz ] && \
+#		tar zxf $(builddir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/
+#
+#uninstall-hook:
+#	rm -rf $(DESTDIR)$(docdir)/snort_manual.chunked
 
 snort_online.html: $(all_sources)
 	$(srcdir)/online_manual.sh

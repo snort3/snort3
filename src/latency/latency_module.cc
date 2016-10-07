@@ -43,7 +43,7 @@ static const Parameter s_packet_params[] =
     { "fastpath", Parameter::PT_BOOL, nullptr, "false",
         "fastpath expensive packets (max_time exceeded)" },
 
-    { "action", Parameter::PT_ENUM, "none | alert | log | alert_and_log", "alert_and_log",
+    { "action", Parameter::PT_ENUM, "none | alert | log | alert_and_log", "none",
         "event action if packet times out and is fastpathed" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -65,7 +65,7 @@ static const Parameter s_rule_params[] =
     { "max_suspend_time", Parameter::PT_INT, "0:", "30000",
         "set max time for suspending a rule (ms, 0 means permanently disable rule)" },
 
-    { "action", Parameter::PT_ENUM, "none | alert | log | alert_and_log", "alert_and_log",
+    { "action", Parameter::PT_ENUM, "none | alert | log | alert_and_log", "none",
         "event action for rule latency enable and suspend events" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

@@ -95,37 +95,38 @@ Table of Contents
     5.4. binder
     5.5. dce_smb
     5.6. dce_tcp
-    5.7. dnp3
-    5.8. dns
-    5.9. file_log
-    5.10. ftp_client
-    5.11. ftp_data
-    5.12. ftp_server
-    5.13. gtp_inspect
-    5.14. http_inspect
-    5.15. imap
-    5.16. modbus
-    5.17. normalizer
-    5.18. packet_capture
-    5.19. perf_monitor
-    5.20. pop
-    5.21. port_scan
-    5.22. port_scan_global
-    5.23. reputation
-    5.24. rpc_decode
-    5.25. sip
-    5.26. smtp
-    5.27. ssh
-    5.28. ssl
-    5.29. stream
-    5.30. stream_file
-    5.31. stream_icmp
-    5.32. stream_ip
-    5.33. stream_tcp
-    5.34. stream_udp
-    5.35. stream_user
-    5.36. telnet
-    5.37. wizard
+    5.7. dce_udp
+    5.8. dnp3
+    5.9. dns
+    5.10. file_log
+    5.11. ftp_client
+    5.12. ftp_data
+    5.13. ftp_server
+    5.14. gtp_inspect
+    5.15. http_inspect
+    5.16. imap
+    5.17. modbus
+    5.18. normalizer
+    5.19. packet_capture
+    5.20. perf_monitor
+    5.21. pop
+    5.22. port_scan
+    5.23. port_scan_global
+    5.24. reputation
+    5.25. rpc_decode
+    5.26. sip
+    5.27. smtp
+    5.28. ssh
+    5.29. ssl
+    5.30. stream
+    5.31. stream_file
+    5.32. stream_icmp
+    5.33. stream_ip
+    5.34. stream_tcp
+    5.35. stream_udp
+    5.36. stream_user
+    5.37. telnet
+    5.38. wizard
 
 6. IPS Action Modules
 
@@ -319,7 +320,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0-a4 (Build 206) from 2.9.7-262
+o"  )~   Version 3.0.0-a4 (Build 213) from 2.9.7-262
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
@@ -1432,6 +1433,8 @@ Configuration:
     less than this { 0: }
   * int file_id.capture_block_size = 32768: file capture block size
     in bytes { 8: }
+  * int file_id.max_files_cached = 65536: maximal number of files
+    cached in memory { 8: }
   * bool file_id.enable_type = false: enable type ID
   * bool file_id.enable_signature = false: enable signature
     calculation
@@ -1618,11 +1621,13 @@ Rules:
 
 Peg counts:
 
-  * latency.total_packets: total packets monitored
-  * latency.packet_timeouts: packets that timed out
-  * latency.total_rule_evals: total rule evals monitored
-  * latency.rule_eval_timeouts: rule evals that timed out
-  * latency.rule_tree_enables: rule tree re-enables
+  * latency.total packets: total packets monitored
+  * latency.total usecs: total usecs elapsed
+  * latency.max usecs: maximum usecs elapsed
+  * latency.packet timeouts: packets that timed out
+  * latency.total rule evals: total rule evals monitored
+  * latency.rule eval timeouts: rule evals that timed out
+  * latency.rule tree enables: rule tree re-enables
 
 
 3.17. memory
@@ -1972,7 +1977,6 @@ Configuration:
   * implied snort.-V: (same as --version)
   * implied snort.-v: be verbose
   * implied snort.-W: lists available interfaces
-  * implied snort.-w: dump 802.11 management and control frames
   * implied snort.-X: dump the raw packet data starting at the link
     layer
   * implied snort.-x: same as --pedantic
@@ -2675,7 +2679,11 @@ Configuration:
 
 Peg counts:
 
-  * appid.packets: count of packets processed by appid
+  * appid.packets: count of packets received by appid inspector
+  * appid.processed packets: count of packets processed by appid
+    inspector
+  * appid.ignored packets: count of packets ignored by appid
+    inspector
   * appid.battlefield_flows: count of battle field flows discovered
     by appid
   * appid.bgp_flows: count of bgp flows discovered by appid
@@ -2712,6 +2720,30 @@ Peg counts:
   * appid.pop_flows: count of pop service flows discovered by appid
   * appid.rsync_flows: count of rsync service flows discovered by
     appid
+  * appid.smtp_aol_clients: count of AOL smtp clients discovered by
+    appid
+  * appid.smtp_applemail_clients: count of Apple Mail smtp clients
+    discovered by appid
+  * appid.smtp_eudora_clients: count of Eudora smtp clients
+    discovered by appid
+  * appid.smtp_eudora_pro_clients: count of Eudora Pro smtp clients
+    discovered by appid
+  * appid.smtp_evolution_clients: count of Evolution smtp clients
+    discovered by appid
+  * appid.smtp_kmail_clients: count of KMail smtp clients discovered
+    by appid
+  * appid.smtp_lotus_notes_clients: count of Lotus Notes smtp clients
+    discovered by appid
+  * appid.smtp_microsoft_outlook_clients: count of Microsoft Outlook
+    smtp clients discovered by appid
+  * appid.smtp_microsoft_outlook_express_clients: count of Microsoft
+    Outlook Express smtp clients discovered by appid
+  * appid.smtp_microsoft_outlook_imo_clients: count of Microsoft
+    Outlook IMO smtp clients discovered by appid
+  * appid.smtp_mutt_clients: count of Mutt smtp clients discovered by
+    appid
+  * appid.smtp_thunderbird_clients: count of Thunderbird smtp clients
+    discovered by appid
   * appid.smtp_flows: count of smtp flows discovered by appid
   * appid.smtps_flows: count of smtps flows discovered by appid
   * appid.ssh_clients: count of ssh clients discovered by appid
@@ -2834,6 +2866,7 @@ Configuration:
   * int dce_smb.smb_file_depth = 16384: SMB file depth for file data
     { -1: }
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
+  * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
 
 Rules:
 
@@ -2916,6 +2949,10 @@ Rules:
     negotiations on session.
   * 133:57 (dce_smb) SMB - Client attempted to create or set a file’s
     attributes to readonly/hidden/system.
+  * 133:58 (dce_smb) SMB - File offset provided is greater than file
+    size specified
+  * 133:59 (dce_smb) SMB - Next command specified in SMB2 header is
+    beyond payload boundary
 
 Peg counts:
 
@@ -2964,6 +3001,7 @@ Peg counts:
     server fragments reassembled
   * dce_smb.Sessions: total smb sessions
   * dce_smb.Packets: total smb packets
+  * dce_smb.Ignored bytes: total ignored bytes
   * dce_smb.Client segs reassembled: total smb client segments
     reassembled
   * dce_smb.Server segs reassembled: total smb server segments
@@ -2971,6 +3009,16 @@ Peg counts:
   * dce_smb.Max outstanding requests: total smb maximum outstanding
     requests
   * dce_smb.Files processed: total smb files processed
+  * dce_smb.SMBv2 create: total number of SMBv2 create packets seen
+  * dce_smb.SMBv2 write: total number of SMBv2 write packets seen
+  * dce_smb.SMBv2 read: total number of SMBv2 read packets seen
+  * dce_smb.SMBv2 set info: total number of SMBv2 set info packets
+    seen
+  * dce_smb.SMBv2 tree connect: total number of SMBv2 tree connect
+    packets seen
+  * dce_smb.SMBv2 tree disconnect: total number of SMBv2 tree
+    disconnect packets seen
+  * dce_smb.SMBv2 close: total number of SMBv2 close packets seen
 
 
 5.6. dce_tcp
@@ -3072,7 +3120,58 @@ Peg counts:
   * dce_tcp.tcp packets: total tcp packets
 
 
-5.7. dnp3
+5.7. dce_udp
+
+--------------
+
+What: dce over udp inspection
+
+Type: inspector
+
+Configuration:
+
+  * bool dce_udp.disable_defrag = false: Disable DCE/RPC
+    defragmentation
+  * int dce_udp.max_frag_len = 65535: Maximum fragment size for
+    defragmentation { 1514:65535 }
+
+Rules:
+
+  * 133:40 (dce_udp) Connection-less DCE/RPC - Invalid major version.
+  * 133:41 (dce_udp) Connection-less DCE/RPC - Invalid pdu type.
+  * 133:42 (dce_udp) Connection-less DCE/RPC - Data length less than
+    header size.
+  * 133:43 (dce_udp) Connection-less DCE/RPC - Bad sequence number.
+
+Peg counts:
+
+  * dce_udp.events: total events
+  * dce_udp.aborted sessions: total aborted sessions
+  * dce_udp.bad autodetects: total bad autodetects
+  * dce_udp.udp sessions: total udp sessions
+  * dce_udp.udp packets: total udp packets
+  * dce_udp.Requests: total connection-less requests
+  * dce_udp.Acks: total connection-less acks
+  * dce_udp.Cancels: total connection-less cancels
+  * dce_udp.Client facks: total connection-less client facks
+  * dce_udp.Ping: total connection-less ping
+  * dce_udp.Responses: total connection-less responses
+  * dce_udp.Rejects: total connection-less rejects
+  * dce_udp.Cancel acks: total connection-less cancel acks
+  * dce_udp.Server facks: total connection-less server facks
+  * dce_udp.Faults: total connection-less faults
+  * dce_udp.No calls: total connection-less no calls
+  * dce_udp.Working: total connection-less working
+  * dce_udp.Other requests: total connection-less other requests
+  * dce_udp.Other responses: total connection-less other responses
+  * dce_udp.Fragments: total connection-less fragments
+  * dce_udp.Max fragment size: connection-less maximum fragment size
+  * dce_udp.Frags reassembled: total connection-less fragments
+    reassembled
+  * dce_udp.Max seqnum: max connection-less seqnum
+
+
+5.8. dnp3
 
 --------------
 
@@ -3106,7 +3205,7 @@ Peg counts:
   * dnp3.dnp3 application pdus: total dnp3 application pdus
 
 
-5.8. dns
+5.9. dns
 
 --------------
 
@@ -3127,7 +3226,7 @@ Peg counts:
   * dns.responses: total dns responses
 
 
-5.9. file_log
+5.10. file_log
 
 --------------
 
@@ -3147,7 +3246,7 @@ Peg counts:
   * file_log.total events: total file events
 
 
-5.10. ftp_client
+5.11. ftp_client
 
 --------------
 
@@ -3171,7 +3270,7 @@ Configuration:
     sequences on ftp control channel
 
 
-5.11. ftp_data
+5.12. ftp_data
 
 --------------
 
@@ -3184,7 +3283,7 @@ Peg counts:
   * ftp_data.packets: total packets
 
 
-5.12. ftp_server
+5.13. ftp_server
 
 --------------
 
@@ -3251,7 +3350,7 @@ Peg counts:
   * ftp_server.packets: total packets
 
 
-5.13. gtp_inspect
+5.14. gtp_inspect
 
 --------------
 
@@ -3285,7 +3384,7 @@ Peg counts:
   * gtp_inspect.unknown infos: unknown information elements
 
 
-5.14. http_inspect
+5.15. http_inspect
 
 --------------
 
@@ -3461,7 +3560,7 @@ Peg counts:
   * http_inspect.URI coding: URIs with character coding problems
 
 
-5.15. imap
+5.16. imap
 
 --------------
 
@@ -3503,7 +3602,7 @@ Peg counts:
   * imap.non-encoded bytes: total non-encoded extracted bytes
 
 
-5.16. modbus
+5.17. modbus
 
 --------------
 
@@ -3524,7 +3623,7 @@ Peg counts:
   * modbus.frames: total Modbus messages
 
 
-5.17. normalizer
+5.18. normalizer
 
 --------------
 
@@ -3650,7 +3749,7 @@ Peg counts:
   * normalizer.test tcp block: test blocked segments
 
 
-5.18. packet_capture
+5.19. packet_capture
 
 --------------
 
@@ -3676,7 +3775,7 @@ Peg counts:
     filter
 
 
-5.19. perf_monitor
+5.20. perf_monitor
 
 --------------
 
@@ -3714,7 +3813,7 @@ Peg counts:
   * perf_monitor.packets: total packets
 
 
-5.20. pop
+5.21. pop
 
 --------------
 
@@ -3756,7 +3855,7 @@ Peg counts:
   * pop.non-encoded bytes: total non-encoded extracted bytes
 
 
-5.21. port_scan
+5.22. port_scan
 
 --------------
 
@@ -3814,7 +3913,7 @@ Rules:
   * 122:27 (port_scan) open port
 
 
-5.22. port_scan_global
+5.23. port_scan_global
 
 --------------
 
@@ -3832,7 +3931,7 @@ Peg counts:
   * port_scan_global.packets: total packets
 
 
-5.23. reputation
+5.24. reputation
 
 --------------
 
@@ -3870,7 +3969,7 @@ Peg counts:
   * reputation.memory_allocated: total memory allocated
 
 
-5.24. rpc_decode
+5.25. rpc_decode
 
 --------------
 
@@ -3891,7 +3990,7 @@ Peg counts:
   * rpc_decode.packets: total packets
 
 
-5.25. sip
+5.26. sip
 
 --------------
 
@@ -3988,7 +4087,7 @@ Peg counts:
   * sip.9xx: 9xx
 
 
-5.26. smtp
+5.27. smtp
 
 --------------
 
@@ -4079,7 +4178,7 @@ Peg counts:
   * smtp.non-encoded bytes: total non-encoded extracted bytes
 
 
-5.27. ssh
+5.28. ssh
 
 --------------
 
@@ -4111,7 +4210,7 @@ Peg counts:
   * ssh.packets: total packets
 
 
-5.28. ssl
+5.29. ssl
 
 --------------
 
@@ -4155,7 +4254,7 @@ Peg counts:
   * ssl.detection disabled: total detection disabled
 
 
-5.29. stream
+5.30. stream
 
 --------------
 
@@ -4165,114 +4264,108 @@ Type: inspector
 
 Configuration:
 
+  * bool stream.ip_frags_only = false: don’t process non-frag flows
   * int stream.ip_cache.max_sessions = 16384: maximum simultaneous
     sessions tracked before pruning { 2: }
   * int stream.ip_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
-  * int stream.ip_cache.cleanup_pct = 5: percent of cache to clean
-    when max_sessions is reached { 1:100 }
-  * int stream.icmp_cache.max_sessions = 32768: maximum simultaneous
+  * int stream.icmp_cache.max_sessions = 65536: maximum simultaneous
     sessions tracked before pruning { 2: }
   * int stream.icmp_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
-  * int stream.icmp_cache.cleanup_pct = 5: percent of cache to clean
-    when max_sessions is reached { 1:100 }
-  * int stream.tcp_cache.max_sessions = 131072: maximum simultaneous
+  * int stream.tcp_cache.max_sessions = 262144: maximum simultaneous
     sessions tracked before pruning { 2: }
   * int stream.tcp_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
   * int stream.tcp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
-  * int stream.tcp_cache.cleanup_pct = 5: percent of cache to clean
-    when max_sessions is reached { 1:100 }
-  * int stream.udp_cache.max_sessions = 65536: maximum simultaneous
+  * int stream.udp_cache.max_sessions = 131072: maximum simultaneous
     sessions tracked before pruning { 2: }
   * int stream.udp_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
-  * int stream.udp_cache.cleanup_pct = 5: percent of cache to clean
-    when max_sessions is reached { 1:100 }
   * int stream.user_cache.max_sessions = 1024: maximum simultaneous
     sessions tracked before pruning { 2: }
   * int stream.user_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
-  * int stream.user_cache.cleanup_pct = 5: percent of cache to clean
-    when max_sessions is reached { 1:100 }
   * int stream.file_cache.max_sessions = 128: maximum simultaneous
     sessions tracked before pruning { 2: }
   * int stream.file_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
-  * int stream.file_cache.cleanup_pct = 5: percent of cache to clean
-    when max_sessions is reached { 1:100 }
 
 Peg counts:
 
   * stream.ip flows: total ip sessions
   * stream.ip total prunes: total ip sessions pruned
-  * stream.ip timeout prunes: ip sessions pruned due to timeout
+  * stream.ip idle prunes: ip sessions pruned due to timeout
   * stream.ip excess prunes: ip sessions pruned due to excess
   * stream.ip uni prunes: ip uni sessions pruned
   * stream.ip preemptive prunes: ip sessions pruned during preemptive
     pruning
   * stream.ip memcap prunes: ip sessions pruned due to memcap
-  * stream.ip user prunes: ip sessions pruned for other reasons
+  * stream.ip ha prunes: ip sessions pruned by high availability sync
   * stream.icmp flows: total icmp sessions
   * stream.icmp total prunes: total icmp sessions pruned
-  * stream.icmp timeout prunes: icmp sessions pruned due to timeout
+  * stream.icmp idle prunes: icmp sessions pruned due to timeout
   * stream.icmp excess prunes: icmp sessions pruned due to excess
   * stream.icmp uni prunes: icmp uni sessions pruned
   * stream.icmp preemptive prunes: icmp sessions pruned during
     preemptive pruning
   * stream.icmp memcap prunes: icmp sessions pruned due to memcap
-  * stream.icmp user prunes: icmp sessions pruned for other reasons
+  * stream.icmp ha prunes: icmp sessions pruned by high availability
+    sync
   * stream.tcp flows: total tcp sessions
   * stream.tcp total prunes: total tcp sessions pruned
-  * stream.tcp timeout prunes: tcp sessions pruned due to timeout
+  * stream.tcp idle prunes: tcp sessions pruned due to timeout
   * stream.tcp excess prunes: tcp sessions pruned due to excess
   * stream.tcp uni prunes: tcp uni sessions pruned
   * stream.tcp preemptive prunes: tcp sessions pruned during
     preemptive pruning
   * stream.tcp memcap prunes: tcp sessions pruned due to memcap
-  * stream.tcp user prunes: tcp sessions pruned for other reasons
+  * stream.tcp ha prunes: tcp sessions pruned by high availability
+    sync
   * stream.udp flows: total udp sessions
   * stream.udp total prunes: total udp sessions pruned
-  * stream.udp timeout prunes: udp sessions pruned due to timeout
+  * stream.udp idle prunes: udp sessions pruned due to timeout
   * stream.udp excess prunes: udp sessions pruned due to excess
   * stream.udp uni prunes: udp uni sessions pruned
   * stream.udp preemptive prunes: udp sessions pruned during
     preemptive pruning
   * stream.udp memcap prunes: udp sessions pruned due to memcap
-  * stream.udp user prunes: udp sessions pruned for other reasons
+  * stream.udp ha prunes: udp sessions pruned by high availability
+    sync
   * stream.user flows: total user sessions
   * stream.user total prunes: total user sessions pruned
-  * stream.user timeout prunes: user sessions pruned due to timeout
+  * stream.user idle prunes: user sessions pruned due to timeout
   * stream.user excess prunes: user sessions pruned due to excess
   * stream.user uni prunes: user uni sessions pruned
   * stream.user preemptive prunes: user sessions pruned during
     preemptive pruning
   * stream.user memcap prunes: user sessions pruned due to memcap
-  * stream.user user prunes: user sessions pruned for other reasons
+  * stream.user ha prunes: user sessions pruned by high availability
+    sync
   * stream.file flows: total file sessions
   * stream.file total prunes: total file sessions pruned
-  * stream.file timeout prunes: file sessions pruned due to timeout
+  * stream.file idle prunes: file sessions pruned due to timeout
   * stream.file excess prunes: file sessions pruned due to excess
   * stream.file uni prunes: file uni sessions pruned
   * stream.file preemptive prunes: file sessions pruned during
     preemptive pruning
   * stream.file memcap prunes: file sessions pruned due to memcap
-  * stream.file user prunes: file sessions pruned for other reasons
+  * stream.file ha prunes: file sessions pruned by high availability
+    sync
 
 
-5.30. stream_file
+5.31. stream_file
 
 --------------
 
@@ -4285,7 +4378,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.31. stream_icmp
+5.32. stream_icmp
 
 --------------
 
@@ -4308,7 +4401,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes
 
 
-5.32. stream_ip
+5.33. stream_ip
 
 --------------
 
@@ -4355,8 +4448,8 @@ Peg counts:
   * stream_ip.released: ip session trackers released
   * stream_ip.timeouts: ip session timeouts
   * stream_ip.prunes: ip session prunes
-  * stream_ip.total: total fragments
-  * stream_ip.current: current fragments
+  * stream_ip.total frags: total fragments
+  * stream_ip.current frags: current fragments
   * stream_ip.max frags: max fragments
   * stream_ip.reassembled: reassembled datagrams
   * stream_ip.discards: fragments discarded
@@ -4376,7 +4469,7 @@ Peg counts:
   * stream_ip.fragmented bytes: total fragmented bytes
 
 
-5.33. stream_tcp
+5.34. stream_tcp
 
 --------------
 
@@ -4492,7 +4585,7 @@ Peg counts:
   * stream_tcp.closing: number of sessions currently closing
 
 
-5.34. stream_udp
+5.35. stream_udp
 
 --------------
 
@@ -4517,7 +4610,7 @@ Peg counts:
   * stream_udp.prunes: udp session prunes
 
 
-5.35. stream_user
+5.36. stream_user
 
 --------------
 
@@ -4531,7 +4624,7 @@ Configuration:
     1:86400 }
 
 
-5.36. telnet
+5.37. telnet
 
 --------------
 
@@ -4560,7 +4653,7 @@ Peg counts:
   * telnet.packets: total packets
 
 
-5.37. wizard
+5.38. wizard
 
 --------------
 
@@ -8133,6 +8226,8 @@ with.
   * The goal is to have highly readable class declarations. The user
     shouldn’t have to sift through implementation details to see what
     is available to the client.
+  * Any using statements in source files should be added only after
+    all includes have been declared.
 
 
 15.3. Naming
@@ -8143,6 +8238,8 @@ with.
     WhizBangPdfChecker.
   * Use lower case identifiers with underscore separators, e.g.
     some_function() and my_var.
+  * Do not start or end variable names with an underscore. This has a
+    good chance of conflicting with macro and/or system definitions.
   * Use lower case filenames with underscores.
 
 
@@ -8981,7 +9078,6 @@ libraries see the Getting Started section of the manual.
     scripts
   * --warn-symbols warn about unknown symbols in your Lua config
   * --warn-vars warn about variable definition and usage issues
-  * -w dump 802.11 management and control frames
   * -W lists available interfaces
   * --x2c output ASCII char for given hex (see also --c2x)
   * --x2s output ASCII string for given byte code (see also --x2c)
@@ -9289,6 +9385,7 @@ Some additional details to note:
   * enum dce_smb.smb_fingerprint_policy = none: Target based SMB
     policy to use { none | client | server | both }
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
+  * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
   * int dce_smb.smb_max_chain = 3: SMB max chain size { 0:255 }
   * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
   * multi dce_smb.valid_smb_versions = all: Valid SMB versions { v1 |
@@ -9302,6 +9399,10 @@ Some additional details to note:
     Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
   * int dce_tcp.reassemble_threshold = 0: Minimum bytes received
     before performing reassembly { 0:65535 }
+  * bool dce_udp.disable_defrag = false: Disable DCE/RPC
+    defragmentation
+  * int dce_udp.max_frag_len = 65535: Maximum fragment size for
+    defragmentation { 1514:65535 }
   * int detection.asn1 = 256: maximum decode nodes { 1: }
   * int detection_filter.count: hits in interval before allowing the
     rule to fire { 1: }
@@ -9386,6 +9487,8 @@ Some additional details to note:
   * string file_id.file_rules[].version: file type version
   * int file_id.lookup_timeout = 2: give up on lookup after this many
     seconds { 0: }
+  * int file_id.max_files_cached = 65536: maximal number of files
+    cached in memory { 8: }
   * int file_id.show_data_depth = 100: print this many octets { 0: }
   * int file_id.signature_depth = 10485760: stop signature at this
     point { 0: }
@@ -10262,7 +10365,6 @@ Some additional details to note:
     Lua config
   * implied snort.--warn-vars: warn about variable definition and
     usage issues
-  * implied snort.-w: dump 802.11 management and control frames
   * implied snort.-W: lists available interfaces
   * int snort.--x2c: output ASCII char for given hex (see also --c2x)
   * string snort.--x2s: output ASCII string for given byte code (see
@@ -10316,8 +10418,6 @@ Some additional details to note:
   * implied ssl_version.!tls1.2: check for records that are not
     tls1.2
   * implied ssl_version.tls1.2: check for tls1.2
-  * int stream.file_cache.cleanup_pct = 5: percent of cache to clean
-    when max_sessions is reached { 1:100 }
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
   * int stream.file_cache.max_sessions = 128: maximum simultaneous
@@ -10325,24 +10425,21 @@ Some additional details to note:
   * int stream.file_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
   * bool stream_file.upload = false: indicate file transfer direction
-  * int stream.icmp_cache.cleanup_pct = 5: percent of cache to clean
-    when max_sessions is reached { 1:100 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
-  * int stream.icmp_cache.max_sessions = 32768: maximum simultaneous
+  * int stream.icmp_cache.max_sessions = 65536: maximum simultaneous
     sessions tracked before pruning { 2: }
   * int stream.icmp_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
   * int stream_icmp.session_timeout = 30: session tracking timeout {
     1:86400 }
-  * int stream.ip_cache.cleanup_pct = 5: percent of cache to clean
-    when max_sessions is reached { 1:100 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
   * int stream.ip_cache.max_sessions = 16384: maximum simultaneous
     sessions tracked before pruning { 2: }
   * int stream.ip_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
+  * bool stream.ip_frags_only = false: don’t process non-frag flows
   * int stream_ip.max_frags = 8192: maximum number of simultaneous
     fragments being tracked { 1: }
   * int stream_ip.max_overlaps = 0: maximum allowed overlaps per
@@ -10365,11 +10462,9 @@ Some additional details to note:
   * enum stream_size.~direction: compare applies to the given
     direction(s) { either|to_server|to_client|both }
   * string stream_size.~range: size for comparison
-  * int stream.tcp_cache.cleanup_pct = 5: percent of cache to clean
-    when max_sessions is reached { 1:100 }
   * int stream.tcp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
-  * int stream.tcp_cache.max_sessions = 131072: maximum simultaneous
+  * int stream.tcp_cache.max_sessions = 262144: maximum simultaneous
     sessions tracked before pruning { 2: }
   * int stream.tcp_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
@@ -10405,11 +10500,9 @@ Some additional details to note:
     segments queued { 0:2048 }
   * int stream_tcp.small_segments.maximum_size = 0: limit number of
     small segments queued { 0:2048 }
-  * int stream.udp_cache.cleanup_pct = 5: percent of cache to clean
-    when max_sessions is reached { 1:100 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
-  * int stream.udp_cache.max_sessions = 65536: maximum simultaneous
+  * int stream.udp_cache.max_sessions = 131072: maximum simultaneous
     sessions tracked before pruning { 2: }
   * int stream.udp_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
@@ -10417,8 +10510,6 @@ Some additional details to note:
     rules w/o ports only if rules with ports are present
   * int stream_udp.session_timeout = 30: session tracking timeout {
     1:86400 }
-  * int stream.user_cache.cleanup_pct = 5: percent of cache to clean
-    when max_sessions is reached { 1:100 }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
   * int stream.user_cache.max_sessions = 1024: maximum simultaneous
@@ -10507,6 +10598,8 @@ Some additional details to note:
     appid
   * appid.ftp_flows: count of ftp flows discovered by appid
   * appid.ftps_flows: count of ftps flows discovered by appid
+  * appid.ignored packets: count of packets ignored by appid
+    inspector
   * appid.imap_flows: count of imap service flows discovered by appid
   * appid.imaps_flows: count of imap TLS service flows discovered by
     appid
@@ -10522,12 +10615,38 @@ Some additional details to note:
     appid
   * appid.netbios_flows: count of netbios service flows discovered by
     appid
-  * appid.packets: count of packets processed by appid
+  * appid.packets: count of packets received by appid inspector
   * appid.pop_flows: count of pop service flows discovered by appid
+  * appid.processed packets: count of packets processed by appid
+    inspector
   * appid.rsync_flows: count of rsync service flows discovered by
     appid
+  * appid.smtp_aol_clients: count of AOL smtp clients discovered by
+    appid
+  * appid.smtp_applemail_clients: count of Apple Mail smtp clients
+    discovered by appid
+  * appid.smtp_eudora_clients: count of Eudora smtp clients
+    discovered by appid
+  * appid.smtp_eudora_pro_clients: count of Eudora Pro smtp clients
+    discovered by appid
+  * appid.smtp_evolution_clients: count of Evolution smtp clients
+    discovered by appid
   * appid.smtp_flows: count of smtp flows discovered by appid
+  * appid.smtp_kmail_clients: count of KMail smtp clients discovered
+    by appid
+  * appid.smtp_lotus_notes_clients: count of Lotus Notes smtp clients
+    discovered by appid
+  * appid.smtp_microsoft_outlook_clients: count of Microsoft Outlook
+    smtp clients discovered by appid
+  * appid.smtp_microsoft_outlook_express_clients: count of Microsoft
+    Outlook Express smtp clients discovered by appid
+  * appid.smtp_microsoft_outlook_imo_clients: count of Microsoft
+    Outlook IMO smtp clients discovered by appid
+  * appid.smtp_mutt_clients: count of Mutt smtp clients discovered by
+    appid
   * appid.smtps_flows: count of smtps flows discovered by appid
+  * appid.smtp_thunderbird_clients: count of Thunderbird smtp clients
+    discovered by appid
   * appid.ssh_clients: count of ssh clients discovered by appid
   * appid.ssh_flows: count of ssh flows discovered by appid
   * appid.ssl_flows: count of ssl flows discovered by appid
@@ -10582,6 +10701,7 @@ Some additional details to note:
   * dce_smb.events: total events
   * dce_smb.Faults: total connection-oriented faults
   * dce_smb.Files processed: total smb files processed
+  * dce_smb.Ignored bytes: total ignored bytes
   * dce_smb.Max outstanding requests: total smb maximum outstanding
     requests
   * dce_smb.MS RPC/HTTP PDUs: total connection-oriented MS requests
@@ -10611,6 +10731,16 @@ Some additional details to note:
     reassembled
   * dce_smb.Sessions: total smb sessions
   * dce_smb.Shutdowns: total connection-oriented shutdowns
+  * dce_smb.SMBv2 close: total number of SMBv2 close packets seen
+  * dce_smb.SMBv2 create: total number of SMBv2 create packets seen
+  * dce_smb.SMBv2 read: total number of SMBv2 read packets seen
+  * dce_smb.SMBv2 set info: total number of SMBv2 set info packets
+    seen
+  * dce_smb.SMBv2 tree connect: total number of SMBv2 tree connect
+    packets seen
+  * dce_smb.SMBv2 tree disconnect: total number of SMBv2 tree
+    disconnect packets seen
+  * dce_smb.SMBv2 write: total number of SMBv2 write packets seen
   * dce_tcp.aborted sessions: total aborted sessions
   * dce_tcp.Alter context responses: total connection-oriented alter
     context responses
@@ -10656,6 +10786,30 @@ Some additional details to note:
   * dce_tcp.Shutdowns: total connection-oriented shutdowns
   * dce_tcp.tcp packets: total tcp packets
   * dce_tcp.tcp sessions: total tcp sessions
+  * dce_udp.aborted sessions: total aborted sessions
+  * dce_udp.Acks: total connection-less acks
+  * dce_udp.bad autodetects: total bad autodetects
+  * dce_udp.Cancel acks: total connection-less cancel acks
+  * dce_udp.Cancels: total connection-less cancels
+  * dce_udp.Client facks: total connection-less client facks
+  * dce_udp.events: total events
+  * dce_udp.Faults: total connection-less faults
+  * dce_udp.Fragments: total connection-less fragments
+  * dce_udp.Frags reassembled: total connection-less fragments
+    reassembled
+  * dce_udp.Max fragment size: connection-less maximum fragment size
+  * dce_udp.Max seqnum: max connection-less seqnum
+  * dce_udp.No calls: total connection-less no calls
+  * dce_udp.Other requests: total connection-less other requests
+  * dce_udp.Other responses: total connection-less other responses
+  * dce_udp.Ping: total connection-less ping
+  * dce_udp.Rejects: total connection-less rejects
+  * dce_udp.Requests: total connection-less requests
+  * dce_udp.Responses: total connection-less responses
+  * dce_udp.Server facks: total connection-less server facks
+  * dce_udp.udp packets: total udp packets
+  * dce_udp.udp sessions: total udp sessions
+  * dce_udp.Working: total connection-less working
   * detection.alert limit: events previously triggered on same PDU
   * detection.alerts: alerts not including IP reputation
   * detection.alt searches: alt fast pattern searches in packet data
@@ -10743,11 +10897,13 @@ Some additional details to note:
   * imap.uu attachments: total uu attachments decoded
   * imap.uu decoded bytes: total uu decoded bytes
   * ipv4.bad checksum: nonzero ip checksums
-  * latency.packet_timeouts: packets that timed out
-  * latency.rule_eval_timeouts: rule evals that timed out
-  * latency.rule_tree_enables: rule tree re-enables
-  * latency.total_packets: total packets monitored
-  * latency.total_rule_evals: total rule evals monitored
+  * latency.max usecs: maximum usecs elapsed
+  * latency.packet timeouts: packets that timed out
+  * latency.rule eval timeouts: rule evals that timed out
+  * latency.rule tree enables: rule tree re-enables
+  * latency.total packets: total packets monitored
+  * latency.total rule evals: total rule evals monitored
+  * latency.total usecs: total usecs elapsed
   * modbus.frames: total Modbus messages
   * modbus.sessions: total sessions processed
   * mpls.total bytes: total mpls labeled bytes processed
@@ -10928,16 +11084,20 @@ Some additional details to note:
   * ssl.unrecognized records: total unrecognized records
   * stream.file excess prunes: file sessions pruned due to excess
   * stream.file flows: total file sessions
+  * stream.file ha prunes: file sessions pruned by high availability
+    sync
+  * stream.file idle prunes: file sessions pruned due to timeout
   * stream.file memcap prunes: file sessions pruned due to memcap
   * stream.file preemptive prunes: file sessions pruned during
     preemptive pruning
-  * stream.file timeout prunes: file sessions pruned due to timeout
   * stream.file total prunes: total file sessions pruned
   * stream.file uni prunes: file uni sessions pruned
-  * stream.file user prunes: file sessions pruned for other reasons
   * stream_icmp.created: icmp session trackers created
   * stream.icmp excess prunes: icmp sessions pruned due to excess
   * stream.icmp flows: total icmp sessions
+  * stream.icmp ha prunes: icmp sessions pruned by high availability
+    sync
+  * stream.icmp idle prunes: icmp sessions pruned due to timeout
   * stream_icmp.max: max icmp sessions
   * stream.icmp memcap prunes: icmp sessions pruned due to memcap
   * stream.icmp preemptive prunes: icmp sessions pruned during
@@ -10945,21 +11105,21 @@ Some additional details to note:
   * stream_icmp.prunes: icmp session prunes
   * stream_icmp.released: icmp session trackers released
   * stream_icmp.sessions: total icmp sessions
-  * stream.icmp timeout prunes: icmp sessions pruned due to timeout
   * stream_icmp.timeouts: icmp session timeouts
   * stream.icmp total prunes: total icmp sessions pruned
   * stream.icmp uni prunes: icmp uni sessions pruned
-  * stream.icmp user prunes: icmp sessions pruned for other reasons
   * stream_ip.alerts: alerts generated
   * stream_ip.anomalies: anomalies detected
   * stream_ip.created: ip session trackers created
-  * stream_ip.current: current fragments
+  * stream_ip.current frags: current fragments
   * stream_ip.discards: fragments discarded
   * stream_ip.drops: fragments dropped
   * stream.ip excess prunes: ip sessions pruned due to excess
   * stream.ip flows: total ip sessions
   * stream_ip.fragmented bytes: total fragmented bytes
   * stream_ip.frag timeouts: datagrams abandoned
+  * stream.ip ha prunes: ip sessions pruned by high availability sync
+  * stream.ip idle prunes: ip sessions pruned due to timeout
   * stream_ip.max frags: max fragments
   * stream_ip.max: max ip sessions
   * stream.ip memcap prunes: ip sessions pruned due to memcap
@@ -10974,16 +11134,14 @@ Some additional details to note:
   * stream_ip.reassembled: reassembled datagrams
   * stream_ip.released: ip session trackers released
   * stream_ip.sessions: total ip sessions
-  * stream.ip timeout prunes: ip sessions pruned due to timeout
   * stream_ip.timeouts: ip session timeouts
+  * stream_ip.total frags: total fragments
   * stream.ip total prunes: total ip sessions pruned
-  * stream_ip.total: total fragments
   * stream_ip.trackers added: datagram trackers created
   * stream_ip.trackers cleared: datagram trackers cleared
   * stream_ip.trackers completed: datagram trackers completed
   * stream_ip.trackers freed: datagram trackers released
   * stream.ip uni prunes: ip uni sessions pruned
-  * stream.ip user prunes: ip sessions pruned for other reasons
   * stream_tcp.3way trackers: tcp session tracking started on ack
   * stream_tcp.client cleanups: number of times data from server was
     flushed when session released
@@ -10996,6 +11154,9 @@ Some additional details to note:
   * stream.tcp excess prunes: tcp sessions pruned due to excess
   * stream.tcp flows: total tcp sessions
   * stream_tcp.gaps: missing data between PDUs
+  * stream.tcp ha prunes: tcp sessions pruned by high availability
+    sync
+  * stream.tcp idle prunes: tcp sessions pruned due to timeout
   * stream_tcp.ignored: tcp packets ignored
   * stream_tcp.initializing: number of sessions currently
     initializing
@@ -11027,15 +11188,16 @@ Some additional details to note:
   * stream_tcp.syn-ack trackers: tcp session tracking started on
     syn-ack
   * stream_tcp.syn trackers: tcp session tracking started on syn
-  * stream.tcp timeout prunes: tcp sessions pruned due to timeout
   * stream_tcp.timeouts: tcp session timeouts
   * stream.tcp total prunes: total tcp sessions pruned
   * stream.tcp uni prunes: tcp uni sessions pruned
   * stream_tcp.untracked: tcp packets not tracked
-  * stream.tcp user prunes: tcp sessions pruned for other reasons
   * stream_udp.created: udp session trackers created
   * stream.udp excess prunes: udp sessions pruned due to excess
   * stream.udp flows: total udp sessions
+  * stream.udp ha prunes: udp sessions pruned by high availability
+    sync
+  * stream.udp idle prunes: udp sessions pruned due to timeout
   * stream_udp.max: max udp sessions
   * stream.udp memcap prunes: udp sessions pruned due to memcap
   * stream.udp preemptive prunes: udp sessions pruned during
@@ -11043,20 +11205,19 @@ Some additional details to note:
   * stream_udp.prunes: udp session prunes
   * stream_udp.released: udp session trackers released
   * stream_udp.sessions: total udp sessions
-  * stream.udp timeout prunes: udp sessions pruned due to timeout
   * stream_udp.timeouts: udp session timeouts
   * stream.udp total prunes: total udp sessions pruned
   * stream.udp uni prunes: udp uni sessions pruned
-  * stream.udp user prunes: udp sessions pruned for other reasons
   * stream.user excess prunes: user sessions pruned due to excess
   * stream.user flows: total user sessions
+  * stream.user ha prunes: user sessions pruned by high availability
+    sync
+  * stream.user idle prunes: user sessions pruned due to timeout
   * stream.user memcap prunes: user sessions pruned due to memcap
   * stream.user preemptive prunes: user sessions pruned during
     preemptive pruning
-  * stream.user timeout prunes: user sessions pruned due to timeout
   * stream.user total prunes: total user sessions pruned
   * stream.user uni prunes: user uni sessions pruned
-  * stream.user user prunes: user sessions pruned for other reasons
   * tcp.bad checksum (ip4): nonzero tcp over ip checksums
   * tcp.bad checksum (ip6): nonzero tcp over ipv6 checksums
   * tcp_connector.messages: total messages
@@ -11111,6 +11272,7 @@ Some additional details to note:
   * 131: dns
   * 133: dce_smb
   * 133: dce_tcp
+  * 133: dce_udp
   * 134: latency
   * 136: reputation
   * 137: ssl
@@ -11592,6 +11754,11 @@ Some additional details to note:
   * 133:39 (dce_tcp) Connection-oriented DCE/RPC - Context id of non
     first/last fragment different from context id established for
     fragmented request.
+  * 133:40 (dce_udp) Connection-less DCE/RPC - Invalid major version.
+  * 133:41 (dce_udp) Connection-less DCE/RPC - Invalid pdu type.
+  * 133:42 (dce_udp) Connection-less DCE/RPC - Data length less than
+    header size.
+  * 133:43 (dce_udp) Connection-less DCE/RPC - Bad sequence number.
   * 133:44 (dce_smb) SMB - Invalid SMB version 1 seen.
   * 133:45 (dce_smb) SMB - Invalid SMB version 2 seen.
   * 133:46 (dce_smb) SMB - Invalid user, tree connect, file binding.
@@ -11608,6 +11775,10 @@ Some additional details to note:
     negotiations on session.
   * 133:57 (dce_smb) SMB - Client attempted to create or set a file’s
     attributes to readonly/hidden/system.
+  * 133:58 (dce_smb) SMB - File offset provided is greater than file
+    size specified
+  * 133:59 (dce_smb) SMB - Next command specified in SMB2 header is
+    beyond payload boundary
   * 134:1 (latency) rule tree suspended due to latency
   * 134:2 (latency) rule tree re-enabled after suspend timeout
   * 134:3 (latency) packet fastpathed due to latency
@@ -12063,6 +12234,7 @@ deleted -> unified2: 'filename'
   * dce_smb (inspector): dce over smb inspection
   * dce_stub_data (ips_option): sets the cursor to dcerpc stub data
   * dce_tcp (inspector): dce over tcp inspection
+  * dce_udp (inspector): dce over udp inspection
   * decode (basic): general decoder rules
   * detection (basic): configure general IPS rule processing
     parameters
@@ -12332,6 +12504,7 @@ deleted -> unified2: 'filename'
     services, etc.
   * inspector::dce_smb: dce over smb inspection
   * inspector::dce_tcp: dce over tcp inspection
+  * inspector::dce_udp: dce over udp inspection
   * inspector::dnp3: dnp3 inspection
   * inspector::dns: dns inspection
   * inspector::file_log: log file event to file.log

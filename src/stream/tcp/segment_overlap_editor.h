@@ -27,10 +27,7 @@
 #include "tcp_segment_node.h"
 #include "tcp_session.h"
 
-#define STREAM_INSERT_OK            0
-#define STREAM_INSERT_ANOMALY       1
-#define STREAM_INSERT_TIMEOUT       2
-#define STREAM_INSERT_FAILED        3
+#define STREAM_INSERT_OK  0  // FIXIT-L replace with bool
 
 class SegmentOverlapEditor
 {
@@ -65,7 +62,6 @@ protected:
 
     virtual bool is_segment_retransmit(bool*);
     virtual void drop_old_segment();
-    virtual int generate_bad_segment_event();
 
     virtual int left_overlap_keep_first();
     virtual int left_overlap_trim_first();

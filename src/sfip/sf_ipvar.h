@@ -110,8 +110,7 @@ SFIP_RET sfvar_compare(const sfip_var_t* one, const sfip_var_t* two);
 /* Free an allocated variable */
 void sfvar_free(sfip_var_t* var);
 
-/* Returns non-zero if ip is contained in 'var', 0 otherwise
-   If either argument is NULL, 0 is returned. */
-int sfvar_ip_in(sfip_var_t* var, const sfip_t* ip);
+// returns true if both args are valid and ip is contained by var
+bool sfvar_ip_in(sfip_var_t* var, const sfip_t* ip);
 
 #endif

@@ -403,24 +403,24 @@ int main()
     puts("Containment checks:");
     var = sfvt_lookup(table, "goo");
     ip = sfip_alloc("192.168.248.255");
-    TEST(sfvar_ip_in(var, ip) == SFIP_SUCCESS);
+    TEST(sfvar_ip_in(var, ip));
 
     /* Check against the 'any' variable */
     var = sfvt_lookup_var(table, "moo");
-    TEST(sfvar_ip_in(var, ip) == SFIP_SUCCESS);
+    TEST(sfvar_ip_in(var, ip));
 
     /* Verify it's not in this variable */
     var = sfvt_lookup_var(table, "foo");
-    TEST(sfvar_ip_in(var, ip) == SFIP_FAILURE);
+    TEST(!sfvar_ip_in(var, ip));
 
     /* Check boundary cases */
     var = sfvt_lookup_var(table, "goo");
     free_ip(ip);
     ip = sfip_alloc_str("192.168.0.3");
-    TEST(sfvar_ip_in(var, ip) == SFIP_FAILURE);
+    TEST(!sfvar_ip_in(var, ip));
     free_ip(ip);
     ip = sfip_alloc_str("192.168.0.2");
-    TEST(sfvar_ip_in(var, ip) == SFIP_SUCCESS);
+    TEST(sfvar_ip_in(var, ip));
 
     puts("");
     puts("********************************************************************");

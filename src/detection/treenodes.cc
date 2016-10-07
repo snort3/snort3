@@ -27,26 +27,12 @@
 
 #include "detect.h"
 
-/****************************************************************************
- *
- * Function: AddOptFuncToList(int (*func)(), OptTreeNode *)
- *
- * Purpose: Links the option detection module to the OTN
- *
- * Arguments: (*func)() => function pointer to the detection module
- *            otn =>  pointer to the current OptTreeNode
- *
- * Returns: void function
- *
- ***************************************************************************/
 OptFpList* AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode* otn)
 {
     OptFpList* ofp = (OptFpList*)snort_calloc(sizeof(OptFpList));
+    ofp->OptTestFunc = ro_eval_func;
 
-    DebugMessage(DEBUG_CONFIGRULES,"Adding new rule to list\n");
-
-    /* if there are no nodes on the function list... */
-    if (otn->opt_func == NULL)
+    if ( !otn->opt_func )
     {
         otn->opt_func = ofp;
     }
@@ -54,17 +40,12 @@ OptFpList* AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode* otn)
     {
         OptFpList* tmp = otn->opt_func;
 
-        /* walk to the end of the list */
+        // walk to the end of the list
         while ( tmp->next )
             tmp = tmp->next;
 
         tmp->next = ofp;
     }
-
-    DebugFormat(DEBUG_CONFIGRULES,"Set OptTestFunc to %p\n", (void*)ro_eval_func);
-
-    ofp->OptTestFunc = ro_eval_func;
-
     return ofp;
 }
 

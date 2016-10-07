@@ -252,7 +252,7 @@ int VarIsIpAddr(vartable_t* ip_vartable, const char* value)
     if ((*value == '[') && (*(value+1) == ']'))
         return 1;
 
-    while (*value == '!' || *value == '[')
+    while ( *value == '!' or *value == '[' or isspace(*value) )
         value++;
 
     /* Check for dotted-quad */
@@ -310,7 +310,7 @@ static int CheckBrackets(char* value)
 {
     int num_brackets = 0;
 
-    while (*value == '!')
+    while ( *value == '!' or isspace(*value) )
         value++;
 
     if ((value[0] != '[') || value[strlen(value)-1] != ']')

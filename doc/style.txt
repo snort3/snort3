@@ -94,9 +94,10 @@ yet firm so feedback is welcome to get something we can live with.
   day or even just a minute.  That way we can find them easily and won't
   lose track of them.
 
-* Presently using FIXIT-X where X = A | P | H | M | L, indicating analysis,
-  perf, high, med, or low priority.  For now, H, M, or L can indicate alpha
-  1, 2, or 3.  Perf changes fall between alpha 1 and 2.
+* Presently using FIXIT-X where X = A | W | P | H | M | L, indicating analysis,
+  warning, perf, high, med, or low priority.  Place A and W comments on the
+  exact warning line so we can match up comments and build output.  Supporting
+  comments can be added above.
 
 * Put the copyright(s) and license in a comment block at the top of each
   source file (.h and .cc).  Don't bother with trivial scripts and make
@@ -113,7 +114,7 @@ yet firm so feedback is welcome to get something we can live with.
     // based on work by Ryan Jordan
 
 * Each header should have a comment immediately after the header guard to
-  give an overview of the file so the user knows what's going on.
+  give an overview of the file so the reader knows what's going on.
 
 === Logging
 

@@ -94,6 +94,9 @@ static sfip_node_t* sfipnode_alloc(const char* str, SFIP_RET* status)
         ret->flags |= SFIP_NEGATED;
     }
 
+    while ( isspace(*str) )
+        ++str;
+
     /* Check if this is an "any" */
     if (!strncasecmp(str, "any", 3))
     {
@@ -529,8 +532,11 @@ SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
         neg_ip = 0;
 
         /* Handle multiple negations */
-        for (; *str == '!'; str++)
-            neg_ip = !neg_ip;
+        for (; *str == '!' or isspace(*str); str++)
+        {
+            if ( *str == '!' )
+                neg_ip = !neg_ip;
+        }
 
         /* Find end of this token */
         for (end = str+1;
@@ -824,7 +830,7 @@ sfip_var_t* sfvar_alloc(vartable_t* table, const char* variable, SFIP_RET* statu
 }
 
 /* Support function for sfvar_ip_in  */
-static inline int _sfvar_ip_in4(sfip_var_t* var, const sfip_t* ip)
+static inline bool sfvar_ip_in4(sfip_var_t* var, const sfip_t* ip)
 {
     int match;
     sfip_node_t* pos_idx, * neg_idx;
@@ -842,12 +848,10 @@ static inline int _sfvar_ip_in4(sfip_var_t* var, const sfip_t* ip)
                 continue;
 
             if (sfip_fast_cont4(neg_idx->ip, ip))
-            {
-                return 0;
-            }
+                return false;
         }
 
-        return 1;
+        return true;
     }
 
     while (pos_idx)
@@ -857,7 +861,7 @@ static inline int _sfvar_ip_in4(sfip_var_t* var, const sfip_t* ip)
             if (sfip_family(neg_idx->ip) == AF_INET &&
                 sfip_fast_cont4(neg_idx->ip, ip))
             {
-                return 0;
+                return false;
             }
 
             neg_idx = neg_idx->next;
@@ -865,7 +869,7 @@ static inline int _sfvar_ip_in4(sfip_var_t* var, const sfip_t* ip)
         /* No more potential negations.  Check if we've already matched. */
         else if (match)
         {
-            return 1;
+            return true;
         }
 
         if (!match)
@@ -889,11 +893,11 @@ static inline int _sfvar_ip_in4(sfip_var_t* var, const sfip_t* ip)
         }
     }
 
-    return 0;
+    return false;
 }
 
 /* Support function for sfvar_ip_in  */
-static inline int _sfvar_ip_in6(sfip_var_t* var, const sfip_t* ip)
+static inline bool sfvar_ip_in6(sfip_var_t* var, const sfip_t* ip)
 {
     int match;
     sfip_node_t* pos_idx, * neg_idx;
@@ -911,12 +915,10 @@ static inline int _sfvar_ip_in6(sfip_var_t* var, const sfip_t* ip)
                 continue;
 
             if (sfip_fast_cont6(neg_idx->ip, ip))
-            {
-                return 0;
-            }
+                return false;
         }
 
-        return 1;
+        return true;
     }
 
     while (pos_idx)
@@ -926,7 +928,7 @@ static inline int _sfvar_ip_in6(sfip_var_t* var, const sfip_t* ip)
             if (sfip_family(neg_idx->ip) == AF_INET6 &&
                 sfip_fast_cont6(neg_idx->ip, ip))
             {
-                return 0;
+                return false;
             }
 
             neg_idx = neg_idx->next;
@@ -934,7 +936,7 @@ static inline int _sfvar_ip_in6(sfip_var_t* var, const sfip_t* ip)
         /* No more potential negations.  Check if we've already matched. */
         else if (match)
         {
-            return 1;
+            return true;
         }
 
         if (!match)
@@ -958,41 +960,25 @@ static inline int _sfvar_ip_in6(sfip_var_t* var, const sfip_t* ip)
         }
     }
 
-    return 0;
+    return false;
 }
 
-// FIXIT-L sfvar_ip_in, _sfvar_ip_in4 and _sfvar_ip_in6 should all return boool
-/* Returns SFIP_SUCCESS if ip is contained in 'var', SFIP_FAILURE otherwise
-   If either argument is NULL, SFIP_ARG_ERR is returned. */
-int sfvar_ip_in(sfip_var_t* var, const sfip_t* ip)
+bool sfvar_ip_in(sfip_var_t* var, const sfip_t* ip)
 {
     if (!var || !ip)
-        return 0;
+        return false;
 
-#if 0
-    if (var->mode == SFIP_TABLE)
-    {
-        // XXX
-    }
-    else
-    {
-#endif
     /* Since this is a performance-critical function it uses different
      * codepaths for IPv6 and IPv4 traffic, rather than the dual-stack
      * functions. */
 
     if (sfip_family(ip) == AF_INET)
     {
-        return _sfvar_ip_in4(var, ip);
+        return sfvar_ip_in4(var, ip);
     }
     else
     {
-        return _sfvar_ip_in6(var, ip);
+        return sfvar_ip_in6(var, ip);
     }
-#if 0
 }
 
-#endif
-}
-
-/* XXX The unit tests for this code are performed within sf_vartable.c */
