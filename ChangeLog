@@ -1,3 +1,36 @@
+16/10/07 - build 214
+
+-- updated DAQ - you *must* use DAQ 2.2.1
+-- add libDAQ version to snort -V output
+-- add support http file upload processing and process decode/detection depths
+-- port sip changes to avoid using NAT ip when calculating callid
+-- port dce_udp autodetect and session creation
+-- fix static analysis issues
+-- fix analyzer/pig race condition
+-- fix explicit obfuscation disable not working
+-- fix ftp_data: Gracefully handle cleared flow data
+-- fix LuaJIT rule option memory leak of plugin name
+-- fix various appid issues - initial port is nearing completion
+-- fix http_inspect event 119:66
+-- fix ac_full initialization performance
+-- fix stream_tcp left overlap on hpux, solaris
+-- fix/remove 129:5 ("bad segment") events
+-- file_mempool: fix initializing total pool size
+-- fix bpf includes
+-- fix builds for OpenSolaris
+-- expected: push expected flow information through the DAQ module
+-- expected: expected cache revamp and related bugfixes
+-- ftp_data: add expected data consumption to set service name and fix bugs
+-- build: remove lingering libDAQ #ifdefs
+-- defaults: update FTP default config based on Snort2's hardcoded one
+-- rename default_snort_manual.* to snort_manual.*
+-- build docs only by explicit target (make html|pdf|text)
+-- update default manuals to build 213
+-- tolerate more spaces in ip lists
+-- add rev to rule latency logs
+-- change default latency actions to none
+-- deleted non-functional extra decoder for i4l_rawip
+
 16/09/27 - build 213
 
 -- ported full retransmit changes from snort 2X
