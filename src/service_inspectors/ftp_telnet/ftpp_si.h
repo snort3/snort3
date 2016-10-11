@@ -68,6 +68,8 @@
 #define PROTO_IS_FTP_DATA(ssn)          FTPP_SI_IS_PROTO(ssn, FTPP_SI_PROTO_FTP_DATA)
 #define PROTO_IS_TELNET(ssn)            FTPP_SI_IS_PROTO(ssn, FTPP_SI_PROTO_TELNET)
 
+#define FTP_FLG_MALWARE  (1<<0)
+
 typedef struct s_FTP_TELNET_SESSION
 {
     int proto;
@@ -121,6 +123,7 @@ public:
 #define DATA_CHAN_XFER_CMD_ISSUED   0x10
 #define DATA_CHAN_XFER_STARTED      0x20
 #define DATA_CHAN_CLIENT_HELLO_SEEN 0x40
+#define DATA_CHAN_REST_CMD_ISSUED   0x80
 
 #define AUTH_TLS_CMD_ISSUED         0x01
 #define AUTH_SSL_CMD_ISSUED         0x02
@@ -167,9 +170,11 @@ struct FTP_SESSION
     /* A file is being transfered on ftp-data channel */
     char* filename;
     int file_xfer_info; /* -1: ignore, 0: unknown, >0: filename length */
+    unsigned char flags;
 
     /* Command/data channel encryption */
     int encr_state;
+    void *datassn;
 };
 
 void FTPFreesession(FTP_SESSION*);
@@ -231,6 +236,7 @@ public:
 #define FTPDATA_FLG_REASSEMBLY_SET  (1<<0)
 #define FTPDATA_FLG_FILENAME_SET    (1<<1)
 #define FTPDATA_FLG_STOP            (1<<2)
+#define FTPDATA_FLG_REST            (1<<3)
 
 /*
  * The FTPP_SI_INPUT structure holds the information that the session

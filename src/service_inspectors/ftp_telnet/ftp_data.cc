@@ -31,6 +31,7 @@
 #include "file_api/file_flows.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
+#include "packet_io/active.h"
 
 #define s_name "ftp_data"
 
@@ -55,6 +56,12 @@ static void FTPDataProcess(
 
     set_file_data((uint8_t*)p->data, p->dsize);
 
+    if (data_ssn->packet_flags & FTPDATA_FLG_REST)
+    {
+        Active::block_again();
+        return;
+    }
+
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
 
     if (!file_flows)
@@ -62,6 +69,17 @@ static void FTPDataProcess(
 
     status = file_flows->file_process(file_data, data_length,
         data_ssn->position, data_ssn->direction);
+
+    if (Active::packet_force_dropped())
+    {
+        FtpFlowData* fd = (FtpFlowData*)Stream::get_flow_data(
+                            &data_ssn->ftp_key, FtpFlowData::flow_id);
+
+        FTP_SESSION* ftp_ssn = fd ? &fd->session : NULL;
+
+        if (PROTO_IS_FTP(ftp_ssn))
+            ftp_ssn->flags |= FTP_FLG_MALWARE;
+    }
 
     /* Filename needs to be set AFTER the first call to file_process( ) */
     if (data_ssn->filename && !(data_ssn->packet_flags & FTPDATA_FLG_FILENAME_SET))

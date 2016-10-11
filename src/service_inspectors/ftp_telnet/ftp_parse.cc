@@ -631,7 +631,7 @@ int ProcessFTPCmdValidity(
         ftp_cmd_lookup_add(ServerConf->cmd_lookup, cmd, strlen(cmd), FTPCmd);
     }
 
-    FTPCmd->check_validity = 1;
+    FTPCmd->check_validity = true;
     if (FTPCmd->param_format)
     {
         ftpp_ui_config_reset_ftp_cmd_format(FTPCmd->param_format);

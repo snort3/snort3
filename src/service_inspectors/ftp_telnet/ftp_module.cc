@@ -265,6 +265,9 @@ static const Parameter ftp_server_params[] =
     { "data_chan_cmds", Parameter::PT_STRING, nullptr, nullptr,
       "check the formatting of the given commands" },
 
+    { "data_rest_cmds", Parameter::PT_STRING, nullptr, nullptr,
+      "check the formatting of the given commands" },
+
     { "data_xfer_cmds", Parameter::PT_STRING, nullptr, nullptr,
       "check the formatting of the given commands" },
 
@@ -396,6 +399,9 @@ bool FtpServerModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("data_chan_cmds") )
         add_commands(v, CMD_DATA);
+
+    else if ( v.is("data_rest_cmds") )
+        add_commands(v, CMD_REST);
 
     else if ( v.is("data_xfer_cmds") )
         add_commands(v, CMD_XFER);

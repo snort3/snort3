@@ -107,7 +107,7 @@ static int getIP959(
         }
         while ((this_param < last_char) &&
             (*this_param != ',') &&
-            (strchr(term_char, *this_param) == NULL));
+            (strchr(term_char, *this_param) == nullptr));
         if (value > 0xFF)
         {
             return FTPP_INVALID_ARG;
@@ -121,11 +121,11 @@ static int getIP959(
             port = (port << 8) + value;
         }
 
-        if (strchr(term_char, *this_param) == NULL)
+        if (strchr(term_char, *this_param) == nullptr)
             this_param++;
         octet++;
     }
-    while ((this_param < last_char) && (strchr(term_char, *this_param) == NULL));
+    while ((this_param < last_char) && (strchr(term_char, *this_param) == nullptr));
 
     if (octet != 6)
     {
@@ -927,7 +927,7 @@ int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
         session->server_conf->ignore_telnet_erase_cmds) )
         ignoreTelnetErase = FTPP_IGNORE_TNC_ERASE_CMDS;
 
-    iRet = normalize_telnet(NULL, p, iMode, ignoreTelnetErase);
+    iRet = normalize_telnet(nullptr, p, iMode, ignoreTelnetErase);
 
     if (iRet != FTPP_SUCCESS && iRet != FTPP_NORMALIZED)
     {
@@ -1068,6 +1068,8 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                 /* This is a passive data transfer */
                                 ftpdata->mode = FTPP_XFER_PASSIVE;
                                 ftpdata->data_chan = session->server_conf->data_chan;
+                                if (session->flags & FTP_FLG_MALWARE)
+                                    session->datassn = ftpdata;
 
                                 /* Call into Streams to mark data channel as ftp-data */
                                 result = Stream::set_application_protocol_id_expected(
@@ -1077,7 +1079,10 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                     ftp_data_app_id, fd);
 
                                 if (result < 0)
+                                {
                                     delete fd;
+                                    session->datassn = nullptr;
+                                }
                             }
                             else if (session->server_conf->data_chan)
                             {
@@ -1141,6 +1146,8 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                             /* This is a active data transfer */
                             ftpdata->mode = FTPP_XFER_ACTIVE;
                             ftpdata->data_chan = session->server_conf->data_chan;
+                            if (session->flags & FTP_FLG_MALWARE)
+                                session->datassn = ftpdata;
 
                             /* Call into Streams to mark data channel as ftp-data */
                             result = Stream::set_application_protocol_id_expected(
@@ -1150,7 +1157,10 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                 ftp_data_app_id, fd);
 
                             if (result < 0)
+                            {
                                 delete fd;
+                                session->datassn = nullptr;
+                            }
                         }
                         else if (session->server_conf->data_chan)
                         {
@@ -1171,6 +1181,27 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                 }
             }
         }
+        else if (session->data_chan_state & DATA_CHAN_REST_CMD_ISSUED)
+        {
+            if (ftp_cmd_pipe_index == session->data_xfer_index)
+            {
+                if (session->data_chan_index == 0)
+                    ftp_cmd_pipe_index = 1;
+                session->data_xfer_index = 0;
+                if (rsp_code == 350)
+                {
+                    FTP_DATA_SESSION *ftpdata = (FTP_DATA_SESSION*)session->datassn;
+
+                    if ((session->flags & FTP_FLG_MALWARE) && ftpdata)
+                    {
+                        ftpdata->packet_flags |= FTPDATA_FLG_REST;
+                        session->datassn = nullptr;
+                    }
+                }
+                session->data_chan_index = 0;
+                session->data_chan_state &= ~DATA_CHAN_REST_CMD_ISSUED;
+            }
+        }
         else if (session->data_chan_state & DATA_CHAN_XFER_CMD_ISSUED)
         {
             if (ftp_cmd_pipe_index == session->data_xfer_index)
@@ -1188,6 +1219,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                 sfip_clear(session->serverIP);
                 sfip_clear(session->clientIP);
                 session->serverPort = session->clientPort = 0;
+                session->datassn = nullptr;
 
                 session->data_chan_state = NO_STATE;
             }
@@ -1270,7 +1302,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
     long state = FTP_CMD_OK;
     int rsp_code = 0;
     FTP_CLIENT_REQ* req;
-    FTP_CMD_CONF* CmdConf = NULL;
+    FTP_CMD_CONF* CmdConf = nullptr;
 
     const unsigned char* read_ptr;
     const unsigned char* end = p->data + p->dsize;
@@ -1410,7 +1442,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                         req->cmd_begin,
                         req->cmd_size,
                         &iRet);
-                    if ((iRet == FTPP_NOT_FOUND) || (CmdConf == NULL))
+                    if ((iRet == FTPP_NOT_FOUND) || (CmdConf == nullptr))
                     {
                         /* Alert, cmd not found */
                         SnortEventqAdd(GID_FTP, FTP_INVALID_CMD);
@@ -1515,8 +1547,8 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 
                     if (ftpssn->server.response.state != 0)
                     {
-                        req->cmd_begin = NULL;
-                        req->cmd_end = NULL;
+                        req->cmd_begin = nullptr;
+                        req->cmd_end = nullptr;
                         if (*read_ptr != SP)
                             read_ptr--;
                         state = FTP_RESPONSE_CONT;
@@ -1573,8 +1605,8 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             if (*read_ptr == LF)
             {
                 read_ptr++;
-                req->param_begin = NULL;
-                req->param_end = NULL;
+                req->param_begin = nullptr;
+                req->param_end = nullptr;
             }
             else if (!space && ftpssn->server.response.state == 0)
             {
@@ -1586,7 +1618,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 /* Now grab the command parameters/response message
                  * read_ptr < end already checked */
                 req->param_begin = (const char*)read_ptr;
-                if ((read_ptr = (unsigned char*)memchr(read_ptr, CR, end - read_ptr)) == NULL)
+                if ((read_ptr = (unsigned char*)memchr(read_ptr, CR, end - read_ptr)) == nullptr)
                     read_ptr = end;
                 req->param_end = (const char*)read_ptr;
                 read_ptr++;
@@ -1612,8 +1644,8 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
         else
         {
             /* Nothing left --> no parameters/message.  Not even an LF */
-            req->param_begin = NULL;
-            req->param_end = NULL;
+            req->param_begin = nullptr;
+            req->param_end = nullptr;
             DebugMessage(DEBUG_FTPTELNET,
                 "Missing LF from end of FTP command sans params\n");
         }
@@ -1623,7 +1655,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
         if (read_ptr < end)
             req->pipeline_req = (const char*)read_ptr;
         else
-            req->pipeline_req = NULL;
+            req->pipeline_req = nullptr;
 
         req->param_size = req->param_end - req->param_begin;
         switch (state)
@@ -1713,6 +1745,20 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                         ftpssn->data_chan_state &= ~DATA_CHAN_PORT_CMD_ISSUED;
                     }
                 }
+                else if ((ftpssn->flags & FTP_FLG_MALWARE) && CmdConf->data_rest_cmd)
+                {
+                    if ((req->param_begin != NULL) && (req->param_size > 0))
+                    {
+                        char *return_ptr = 0;
+                        errno = 0;
+                        unsigned long offset = strtoul(req->param_begin, &return_ptr, 10);
+                        if ((errno == ERANGE || errno == EINVAL) || (offset > 0))
+                        {
+                            ftpssn->data_chan_state |= DATA_CHAN_REST_CMD_ISSUED;
+                            ftpssn->data_xfer_index = ftp_cmd_pipe_index;
+                        }
+                    }
+                }
                 else if (CmdConf->data_xfer_cmd)
                 {
                     /* If we are not ignoring the data channel OR file processing is enabled */
@@ -1725,14 +1771,14 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                         if (ftpssn->filename)
                         {
                             snort_free(ftpssn->filename);
-                            ftpssn->filename = NULL;
+                            ftpssn->filename = nullptr;
                             ftpssn->file_xfer_info = FTPP_FILE_IGNORE;
                         }
 
                         // Get the file name and set direction of the get/put request.
                         // Request could have been sent without parameters, i.e. filename,
                         // so make sure something is there.
-                        if (((req->param_begin != NULL) && (req->param_size > 0))
+                        if (((req->param_begin != nullptr) && (req->param_size > 0))
                             && (CmdConf->file_get_cmd || CmdConf->file_put_cmd))
                         {
                             ftpssn->filename = (char*)snort_alloc(req->param_size+1);

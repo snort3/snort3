@@ -249,6 +249,9 @@ bool FtpServer::convert(std::istringstream& data_stream)
         else if (!keyword.compare("data_chan_cmds"))
             tmpval = parse_curly_bracket_list("data_chan_cmds", data_stream);
 
+        else if (!keyword.compare("data_rest_cmds"))
+            tmpval = parse_curly_bracket_list("data_rest_cmds", data_stream);
+
         else if (!keyword.compare("data_xfer_cmds"))
             tmpval = parse_curly_bracket_list("data_xfer_cmds", data_stream);
 

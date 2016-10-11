@@ -90,6 +90,7 @@ private:
 #define CMD_ENCR   0x0080
 #define CMD_DIR    0x0100
 #define CMD_VALID  0x0200
+#define CMD_REST   0x0400
 
 struct FtpCmd
 {

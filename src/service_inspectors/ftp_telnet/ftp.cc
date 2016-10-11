@@ -260,16 +260,19 @@ static int ProcessFTPDataChanCmdsList(
         FTPCmd->max_param_len_overridden = 1;
     }
     if ( fc->flags & CMD_DATA )
-        FTPCmd->data_chan_cmd = 1;
+        FTPCmd->data_chan_cmd = true;
+
+    if ( fc->flags & CMD_REST )
+        FTPCmd->data_rest_cmd = true;
 
     if ( fc->flags & CMD_XFER )
-        FTPCmd->data_xfer_cmd = 1;
+        FTPCmd->data_xfer_cmd = true;
 
     if ( fc->flags & CMD_PUT )
-        FTPCmd->file_put_cmd = 1;
+        FTPCmd->file_put_cmd = true;
 
     if ( fc->flags & CMD_GET )
-        FTPCmd->file_get_cmd = 1;
+        FTPCmd->file_get_cmd = true;
 
     if ( fc->flags & CMD_CHECK )
     {
@@ -289,7 +292,7 @@ static int ProcessFTPDataChanCmdsList(
             FTPCmd->param_format->next_param_fmt = Fmt;
             Fmt->prev_param_fmt = FTPCmd->param_format;
         }
-        FTPCmd->check_validity = 1;
+        FTPCmd->check_validity = true;
     }
     if ( fc->flags & CMD_VALID )
     {
@@ -298,10 +301,10 @@ static int ProcessFTPDataChanCmdsList(
             ServerConf, cmd, fc->format.c_str(), err, sizeof(err));
     }
     if ( fc->flags & CMD_ENCR )
-        FTPCmd->encr_cmd = 1;
+        FTPCmd->encr_cmd = true;
 
     if ( fc->flags & CMD_LOGIN )
-        FTPCmd->login_cmd = 1;
+        FTPCmd->login_cmd = true;
 
     return 0;
 }

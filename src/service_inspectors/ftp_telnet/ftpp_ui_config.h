@@ -158,13 +158,14 @@ typedef struct s_FTP_CMD_CONF
     unsigned int max_param_len;
     int max_param_len_overridden;
 
-    int check_validity;
-    int data_chan_cmd;
-    int data_xfer_cmd;
-    int file_put_cmd;
-    int file_get_cmd;
-    int encr_cmd;
-    int login_cmd;
+    bool check_validity;
+    bool data_chan_cmd;
+    bool data_xfer_cmd;
+    bool data_rest_cmd;
+    bool file_put_cmd;
+    bool file_get_cmd;
+    bool encr_cmd;
+    bool login_cmd;
     int dir_response;
 
     FTP_PARAM_FMT* param_format;
