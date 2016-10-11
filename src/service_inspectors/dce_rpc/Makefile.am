@@ -31,6 +31,7 @@ dce_udp.cc\
 dce_udp.h \
 dce_udp_module.cc \
 dce_udp_module.h \
+dce_udp_processing.cc \
 dce_utils.cc \
 dce_utils.h \
 ips_dce_iface.cc \

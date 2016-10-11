@@ -27,6 +27,7 @@
 
 #include "dce_smb_utils.h"
 #include "dce_tcp.h"
+#include "dce_udp.h"
 
 THREAD_LOCAL int dce2_detected = 0;
 THREAD_LOCAL DCE2_CStack* dce2_pkt_stack = nullptr;
@@ -177,11 +178,15 @@ static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
     {
         Profile profile(dce2_tcp_pstat_detect);
     }
-    else
+    else if  (sd->trans == DCE2_TRANS_TYPE__SMB)
     {
         Profile profile(dce2_smb_pstat_detect);
-    }
-    // FIXIT-M add HTTP, UDP cases when these are ported
+    } 
+	else 
+	{
+		Profile profile(dce2_udp_pstat_detect);
+	}
+    // FIXIT-M add HTTP case when these are ported
     // Same for all other instances of profiling
 
     SnortEventqPush();
@@ -234,7 +239,14 @@ DCE2_SsnData* get_dce2_session_data(Packet* p)
         return sd;
     }
 
-    // FIXIT-L add checks for http, udp once ported
+	DCE2_UdpSsnData* udp_data = get_dce2_udp_session_data(p->flow);
+    sd = (udp_data != nullptr) ? &(udp_data->sd) : nullptr;
+    if ((sd != nullptr) && (sd->trans == DCE2_TRANS_TYPE__UDP))
+    {
+        return sd;
+    }
+
+    // FIXIT-L add checks for http once ported
 
     return nullptr;
 }
@@ -299,9 +311,13 @@ static void dce_push_pkt_log(Packet* pkt,DCE2_SsnData* sd)
     {
         Profile profile(dce2_tcp_pstat_log);
     }
-    else
+    else if (sd->trans == DCE2_TRANS_TYPE__SMB)
     {
         Profile profile(dce2_smb_pstat_log);
+    }
+	else
+	{
+        Profile profile(dce2_udp_pstat_log);
     }
 
     SnortEventqPush();
@@ -334,6 +350,10 @@ void DCE2_PopPkt(DCE2_SsnData* sd)
     if (sd->trans == DCE2_TRANS_TYPE__TCP)
     {
         Profile profile(dce2_tcp_pstat_log);
+    }
+	else if (sd->trans == DCE2_TRANS_TYPE__UDP)
+    {
+        Profile profile(dce2_udp_pstat_log);
     }
     else
     {

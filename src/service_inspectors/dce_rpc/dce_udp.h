@@ -42,7 +42,6 @@ struct dce2UdpStats
     /*DCE UDP specific*/
     PegCount udp_sessions;
     PegCount udp_pkts;
-    PegCount cl_pkts;
     PegCount cl_request;
     PegCount cl_ack;
     PegCount cl_cancel;
@@ -97,6 +96,18 @@ struct DceRpcClHdr   /* Connectionless header */
 
 };
 
+enum DceRpcClFlags1
+{
+    DCERPC_CL_FLAGS1__RESERVED_01 = 0x01,
+    DCERPC_CL_FLAGS1__LASTFRAG = 0x02,
+    DCERPC_CL_FLAGS1__FRAG = 0x04,
+    DCERPC_CL_FLAGS1__NOFACK = 0x08,
+    DCERPC_CL_FLAGS1__MAYBE = 0x10,
+    DCERPC_CL_FLAGS1__IDEMPOTENT = 0x20,
+    DCERPC_CL_FLAGS1__BROADCAST = 0x40,
+    DCERPC_CL_FLAGS1__RESERVED_80 = 0x80
+};
+
 inline uint8_t DceRpcClRpcVers(const DceRpcClHdr *cl)
 {
     return cl->rpc_vers;
@@ -115,6 +126,59 @@ inline DceRpcBoFlag DceRpcClByteOrder(const DceRpcClHdr *cl)
 inline uint16_t DceRpcClLen(const DceRpcClHdr *cl)
 {
     return DceRpcNtohs(&cl->len, DceRpcClByteOrder(cl));
+}
+
+inline uint16_t DceRpcClOpnum(const DceRpcClHdr *cl)
+{
+    return DceRpcNtohs(&cl->opnum, DceRpcClByteOrder(cl));
+}
+
+inline uint32_t DceRpcClSeqNum(const DceRpcClHdr *cl)
+{
+    return DceRpcNtohl(&cl->seqnum, DceRpcClByteOrder(cl));
+}
+
+inline const Uuid * DceRpcClIface(const DceRpcClHdr *cl)
+{
+    return &cl->if_id;
+}
+
+inline uint32_t DceRpcClIfaceVers(const DceRpcClHdr *cl)
+{
+    return DceRpcNtohl(&cl->if_vers, DceRpcClByteOrder(cl));
+}
+
+inline uint16_t DceRpcClFragNum(const DceRpcClHdr *cl)
+{
+    return DceRpcNtohs(&cl->fragnum, DceRpcClByteOrder(cl));
+}
+
+inline int DceRpcClFragFlag(const DceRpcClHdr *cl)
+{
+    return cl->flags1 & DCERPC_CL_FLAGS1__FRAG;
+}
+
+inline bool DceRpcClFirstFrag(const DceRpcClHdr *cl)
+{
+    return (DceRpcClFragFlag(cl) && (DceRpcClFragNum(cl) == 0));
+}
+
+inline int DceRpcClLastFrag(const DceRpcClHdr *cl)
+{
+    return cl->flags1 & DCERPC_CL_FLAGS1__LASTFRAG;
+}
+
+inline bool DceRpcClFrag(const DceRpcClHdr *cl)
+{
+    if (DceRpcClFragFlag(cl))
+    {
+        if (DceRpcClLastFrag(cl) && (DceRpcClFragNum(cl) == 0))
+            return false;
+
+        return true;
+    }
+
+    return false;
 }
 
 struct DCE2_ClTracker
@@ -139,12 +203,13 @@ public:
         flow_id = FlowData::get_flow_id();
     }
 
-public:
     static unsigned flow_id;
     DCE2_UdpSsnData dce2_udp_session;
 };
 
 DCE2_UdpSsnData* get_dce2_udp_session_data(Flow*);
+
+void DCE2_ClProcess(DCE2_SsnData *sd, DCE2_ClTracker *clt);
 
 #endif
 
