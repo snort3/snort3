@@ -42,10 +42,19 @@
 #include "utils/util.h"
 #include "utils/snort_bounds.h"
 
+static int file_node_free_func(void*, void* data)
+{
+    FileEnforcer::FileNode* node = (FileEnforcer::FileNode*)data;
+    assert(node);
+    delete node->file;
+    node->file = nullptr;
+    return 0;
+}
+
 FileEnforcer::FileEnforcer()
 {
     fileHash = sfxhash_new(MAX_FILES_TRACKED, sizeof(FileHashKey), sizeof(FileNode),
-        MAX_MEMORY_USED, 1, nullptr, nullptr, 1);
+        MAX_MEMORY_USED, 1, nullptr, file_node_free_func, 1);
     if (!fileHash)
         FatalError("Failed to create the expected channel hash table.\n");
 }
@@ -60,7 +69,7 @@ FileEnforcer::~FileEnforcer()
 
 void FileEnforcer::update_file_node(FileNode* node, FileInfo* file)
 {
-    node->file = *file;
+    *(node->file) = *file;
 }
 
 FileVerdict FileEnforcer::check_verdict(Flow* flow, FileNode* node, SFXHASH_NODE* hash_node)
@@ -71,18 +80,20 @@ FileVerdict FileEnforcer::check_verdict(Flow* flow, FileNode* node, SFXHASH_NODE
     // Check file type first
     FilePolicy& inspect = FileService::get_inspect();
 
-    verdict = inspect.type_lookup(flow, &(node->file));
+    assert(node->file);
+
+    verdict = inspect.type_lookup(flow, node->file);
 
     if ((verdict == FILE_VERDICT_UNKNOWN) ||
         (verdict == FILE_VERDICT_STOP_CAPTURE))
     {
-        verdict = inspect.signature_lookup(flow, &(node->file));
+        verdict = inspect.signature_lookup(flow, node->file);
     }
 
     if ((verdict == FILE_VERDICT_UNKNOWN) ||
         (verdict == FILE_VERDICT_STOP_CAPTURE))
     {
-        verdict = node->file.verdict;
+        verdict = node->file->verdict;
     }
 
     if (verdict == FILE_VERDICT_LOG)
@@ -126,6 +137,8 @@ int FileEnforcer::store_verdict(Flow* flow, FileInfo* file)
     {
         FileNode new_node;
         DebugMessage(DEBUG_FILE, "Adding file node\n");
+
+        new_node.file = new FileInfo();
 
         update_file_node(&new_node, file);
 
@@ -215,7 +228,7 @@ FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file)
     else
         return verdict;
 
-    if (node)
+    if (node && node->file)
     {
         DebugMessage(DEBUG_FILE, "Found resumed file\n");
         if (node->expires && packet_time() > node->expires)

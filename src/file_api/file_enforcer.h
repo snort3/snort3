@@ -45,16 +45,16 @@ class FileEnforcer
         size_t file_sig;
     };
 
+    #define MAX_FILES_TRACKED 16384
+    #define MAX_MEMORY_USED (10*1024*1024)  // 10M
+
+public:
     struct FileNode
     {
         time_t expires;
-        FileInfo file;
+        FileInfo* file;
     };
 
-    #define MAX_FILES_TRACKED 16384
-    #define MAX_MEMORY_USED 10*1024*1024  // 10M
-
-public:
     FileEnforcer();
     ~FileEnforcer();
     FileVerdict cached_verdict_lookup(Flow*, FileInfo*);

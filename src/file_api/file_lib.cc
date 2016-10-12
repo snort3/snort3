@@ -329,7 +329,8 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
     /* file signature calculation */
     if (is_file_signature_enabled())
     {
-        process_file_signature_sha256(file_data, data_size, position);
+        if (!sha256)
+            process_file_signature_sha256(file_data, data_size, position);
 
         file_stats.data_processed[get_file_type()][get_file_direction()]
             += data_size;
@@ -418,27 +419,27 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
     switch (position)
     {
     case SNORT_FILE_START:
-        file_signature_context = snort_calloc(sizeof(SHA256_CTX));
+        if (!file_signature_context)
+            file_signature_context = snort_calloc(sizeof(SHA256_CTX));
         SHA256_Init((SHA256_CTX*)file_signature_context);
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
         break;
     case SNORT_FILE_MIDDLE:
         if (!file_signature_context)
-            file_signature_context = snort_calloc(sizeof(SHA256_CTX));
+            return;
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
         break;
     case SNORT_FILE_END:
         if (!file_signature_context)
-            file_signature_context = snort_calloc(sizeof(SHA256_CTX));
-        if (processed_bytes == 0)
-            SHA256_Init((SHA256_CTX*)file_signature_context);
+            return;
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
         sha256 = new uint8_t[SHA256_HASH_SIZE];
         SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
         file_state.sig_state = FILE_SIG_DONE;
         break;
     case SNORT_FILE_FULL:
-        file_signature_context = snort_calloc(sizeof (SHA256_CTX));
+        if (!file_signature_context)
+            file_signature_context = snort_calloc(sizeof (SHA256_CTX));
         SHA256_Init((SHA256_CTX*)file_signature_context);
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
         sha256 = new uint8_t[SHA256_HASH_SIZE];
