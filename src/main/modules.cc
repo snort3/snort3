@@ -1423,9 +1423,10 @@ static const Parameter rate_filter_params[] =
     { "seconds", Parameter::PT_INT, "0:", "1",
       "count interval" },
 
-    { "new_action", Parameter::PT_SELECT,
-      // FIXIT-L this list should be defined globally
-      "alert | drop | log | pass | | reject | sdrop", "alert",
+    { "new_action", Parameter::PT_ENUM,
+      // FIXIT-L new_action options must match RuleType and
+      // should include pluggable actions as well
+      "log | pass | alert | drop | block | reset", "alert",
       "take this action on future hits until timeout" },
 
     { "timeout", Parameter::PT_INT, "0:", "1",
@@ -1501,10 +1502,9 @@ bool RateFilterModule::begin(const char*, int, SnortConfig*)
 bool RateFilterModule::end(const char*, int idx, SnortConfig* sc)
 {
     if ( idx && RateFilter_Create(sc, sc->rate_filter_config,  &thdx) )
-    {
         ParseError("bad rate_filter configuration [%d]", idx);
-        return false;
-    }
+
+    thdx.applyTo = nullptr;
     return true;
 }
 

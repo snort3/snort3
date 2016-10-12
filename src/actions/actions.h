@@ -33,6 +33,7 @@
 struct Packet;
 struct OptTreeNode;
 
+// FIXIT-L if RuleType is changed, RateFilterModule must be updated
 enum RuleType  // FIXIT-L convert to a scoped enum
 {
     RULE_TYPE__NONE = 0,

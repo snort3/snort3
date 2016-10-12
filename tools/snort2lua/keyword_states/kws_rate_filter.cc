@@ -76,6 +76,8 @@ bool RateFilter::convert(std::istringstream& data_stream)
     std::string args;
 
     table_api.open_table("rate_filter");
+    table_api.open_table();
+
     fix_separators(data_stream);
 
     while (std::getline(data_stream, args, ';'))
