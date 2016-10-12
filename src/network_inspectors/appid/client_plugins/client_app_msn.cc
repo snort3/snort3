@@ -23,6 +23,7 @@
 #include "main/snort_debug.h"
 #include "app_info_table.h"
 #include "application_ids.h"
+#include "appid_module.h"
 
 #define MAX_VERSION_SIZE 64
 
@@ -53,7 +54,7 @@ static const uint8_t MSMSGS[] = "MSMSGS";
 
 static Client_App_Pattern patterns[] =
 {
-    { VER,     sizeof(VER)-1,      0, APP_ID_MSN },
+    { VER,     sizeof(VER)-1,     -1, APP_ID_MSN },
     { CVRMAIN, sizeof(CVRMAIN)-1, -1, APP_ID_MSN },
     { MSNMSGR, sizeof(MSNMSGR)-1, -1, APP_ID_MSN_MESSENGER },
     { MACMSGS, sizeof(MACMSGS)-1, -1, APP_ID_MSN_MESSENGER },
@@ -195,6 +196,7 @@ static CLIENT_APP_RETCODE msn_validate(const uint8_t* data, uint16_t size, const
 done:
     msn_client_mod.api->add_app(flowp, APP_ID_MSN_MESSENGER, product_id, (char*)version);
     flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    appid_stats.msn_clients++;
     return CLIENT_APP_SUCCESS;
 }
 

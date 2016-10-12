@@ -23,6 +23,7 @@
 
 #include "service_api.h"
 #include "application_ids.h"
+#include "appid_module.h"
 
 #include "main/snort_debug.h"
 #include "protocols/tcp.h"
@@ -165,6 +166,7 @@ inprocess:
 success:
     rlogin_service_mod.api->add_service(flowp, pkt, args->dir, &svc_element,
         APP_ID_RLOGIN, nullptr, nullptr, nullptr);
+    appid_stats.rlogin_flows++;
     return SERVICE_SUCCESS;
 
 fail:

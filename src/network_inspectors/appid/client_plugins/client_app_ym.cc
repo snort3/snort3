@@ -28,6 +28,7 @@
 #include "app_info_table.h"
 #include "application_ids.h"
 #include "client_app_api.h"
+#include "appid_module.h"
 
 struct YM_CLIENT_APP_CONFIG
 {
@@ -70,7 +71,7 @@ static const uint8_t APP_YMSG[] = "YMSG";
 
 static Client_App_Pattern patterns[] =
 {
-    { APP_YMSG, sizeof(APP_YMSG)-1, 0, APP_ID_YAHOO_MSG },
+    { APP_YMSG, sizeof(APP_YMSG)-1, -1, APP_ID_YAHOO_MSG },
 };
 
 static AppRegistryEntry appIdRegistry[] =
@@ -222,6 +223,7 @@ static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const 
 done:
     ym_client_mod.api->add_app(flowp, APP_ID_YAHOO, product_id, (char*)version);
     flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    appid_stats.yahoo_messenger_clients++;
     return CLIENT_APP_SUCCESS;
 }
 

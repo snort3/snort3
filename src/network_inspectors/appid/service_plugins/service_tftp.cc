@@ -34,6 +34,7 @@
 #include "app_info_table.h"
 #include "appid_api.h"
 #include "appid_session.h"
+#include "appid_module.h"
 #include "application_ids.h"
 #include "service_api.h"
 #include "service_base.h"
@@ -367,6 +368,7 @@ success:
         LogMessage("AppIdDbg %s tftp success\n", app_id_debug_session);
     tftp_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
         APP_ID_TFTP, nullptr, nullptr, nullptr);
+    appid_stats.tftp_flows++;
     return SERVICE_SUCCESS;
 
 bail:

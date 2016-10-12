@@ -32,6 +32,7 @@
 
 #include "app_info_table.h"
 #include "application_ids.h"
+#include "appid_module.h"
 
 #pragma pack(1)
 
@@ -302,6 +303,7 @@ static CLIENT_APP_RETCODE aim_validate( const uint8_t* const data, uint16_t size
                 aim_client_mod.api->add_app(
                     flowp, APP_ID_AOL_INSTANT_MESSENGER,
                     APP_ID_AOL_INSTANT_MESSENGER, version);
+                appid_stats.aim_clients++;
             }
         }
     }

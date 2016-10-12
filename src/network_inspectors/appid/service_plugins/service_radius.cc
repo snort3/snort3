@@ -28,6 +28,7 @@
 #include "appid_session.h"
 #include "application_ids.h"
 #include "service_api.h"
+#include "appid_module.h"
 
 #define RADIUS_CODE_ACCESS_REQUEST       1
 #define RADIUS_CODE_ACCESS_ACCEPT        2
@@ -223,6 +224,7 @@ inprocess:
 success:
     radius_service_mod.api->add_service(flowp, args->pkt, dir, &svc_element,
         APP_ID_RADIUS, nullptr, nullptr, nullptr);
+    appid_stats.radius_flows++;
     return SERVICE_SUCCESS;
 
 not_compatible:
@@ -325,6 +327,7 @@ inprocess:
 success:
     radius_service_mod.api->add_service(flowp, args->pkt, dir, &acct_svc_element,
         APP_ID_RADIUS_ACCT, nullptr, nullptr, nullptr);
+    appid_stats.radius_flows++;
     return SERVICE_SUCCESS;
 
 not_compatible:

@@ -25,6 +25,7 @@
 #include "service_api.h"
 #include "service_base.h"
 #include "app_info_table.h"
+#include "appid_module.h"
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
@@ -330,6 +331,7 @@ inprocess:
 success:
     rshell_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
         APP_ID_SHELL, nullptr, nullptr, nullptr);
+    appid_stats.rshell_flows++;
     return SERVICE_SUCCESS;
 
 bail:

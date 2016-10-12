@@ -25,6 +25,8 @@
 #include "main/snort_debug.h"
 #include "utils/util.h"
 
+#include "appid_module.h"
+
 enum CONNECTION_STATES
 {
     CONN_STATE_INIT,
@@ -262,6 +264,7 @@ success:
 
     directconnect_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
         APP_ID_DIRECT_CONNECT, nullptr, nullptr, nullptr);
+    appid_stats.direct_connect_flows++;
     return SERVICE_SUCCESS;
 
 fail:
@@ -314,6 +317,7 @@ success:
 reportSuccess:
     directconnect_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
         APP_ID_DIRECT_CONNECT, nullptr, nullptr, nullptr);
+    appid_stats.direct_connect_flows++;
     return SERVICE_SUCCESS;
 
 fail:

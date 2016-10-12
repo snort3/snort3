@@ -24,6 +24,7 @@
 #include "service_api.h"
 #include "app_info_table.h"
 #include "application_ids.h"
+#include "appid_module.h"
 
 #include "main/snort_debug.h"
 
@@ -129,6 +130,7 @@ static int rfb_validate(ServiceValidationArgs* args)
     *v = 0;
     rfb_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
         APP_ID_VNC_RFB, nullptr, version, nullptr);
+    appid_stats.rfb_flows++;
     return SERVICE_SUCCESS;
 
 inprocess:

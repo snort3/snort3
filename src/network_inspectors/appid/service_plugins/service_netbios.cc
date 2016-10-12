@@ -611,7 +611,7 @@ static int nbns_validate(ServiceValidationArgs* args)
 success:
     netbios_service_mod.api->add_service(flowp, args->pkt, dir, &nbns_svc_element,
         APP_ID_NETBIOS_NS, nullptr, nullptr, nullptr);
-    appid_stats.netbios_flows++;
+    appid_stats.netbios_ns_flows++;
     return SERVICE_SUCCESS;
 
 inprocess:
@@ -1065,7 +1065,7 @@ static int nbss_validate(ServiceValidationArgs* args)
         {
             netbios_service_mod.api->add_misc(flowp, nd->miscAppId);
         }
-        appid_stats.netbios_flows++;
+        appid_stats.netbios_ssn_flows++;
     }
     return SERVICE_SUCCESS;
 
@@ -1228,7 +1228,7 @@ success:
             {
                 netbios_service_mod.api->add_misc(flowp, miscAppId);
             }
-            appid_stats.netbios_flows++;
+            appid_stats.netbios_dgm_flows++;
         }
     }
     return SERVICE_SUCCESS;

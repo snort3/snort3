@@ -24,6 +24,7 @@
 #include "application_ids.h"
 #include "service_api.h"
 #include "app_info_table.h"
+#include "appid_module.h"
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
@@ -702,6 +703,7 @@ success:
     }
     rtmp_service_mod.api->add_service(flowp, args->pkt, dir, &svc_element,
         APP_ID_RTMP, nullptr, nullptr, nullptr);
+    appid_stats.rtmp_flows++;
     return SERVICE_SUCCESS;
 }
 

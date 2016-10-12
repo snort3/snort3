@@ -36,6 +36,7 @@
 #include "appid_api.h"
 #include "app_info_table.h"
 #include "appid_session.h"
+#include "appid_module.h"
 #include "application_ids.h"
 #include "service_api.h"
 #include "service_base.h"
@@ -328,6 +329,7 @@ success:
     {
         rexec_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
             APP_ID_EXEC, nullptr, nullptr, nullptr);
+        appid_stats.rexec_flows++;
     }
     return SERVICE_SUCCESS;
 

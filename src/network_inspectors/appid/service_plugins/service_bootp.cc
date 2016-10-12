@@ -24,6 +24,7 @@
 #include "protocols/eth.h"
 #include "app_info_table.h"
 #include "application_ids.h"
+#include "appid_module.h"
 
 #define DHCP_MAGIC_COOKIE 0x63825363
 
@@ -310,6 +311,7 @@ success:
         flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
         bootp_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
             APP_ID_DHCP, nullptr, nullptr, nullptr);
+        appid_stats.bootp_flows++;
     }
     return SERVICE_SUCCESS;
 

@@ -27,6 +27,7 @@
 #include "app_info_table.h"
 #include "application_ids.h"
 #include "client_app_api.h"
+#include "appid_module.h"
 
 static const char TNS_BANNER[] = "\000\000";
 #define TNS_BANNER_LEN (sizeof(TNS_BANNER)-1)
@@ -158,7 +159,7 @@ struct Client_App_Pattern
 
 static Client_App_Pattern patterns[] =
 {
-    { (const uint8_t*)TNS_BANNER, sizeof(TNS_BANNER)-1, 2, APP_ID_ORACLE_DATABASE },
+    { (const uint8_t*)TNS_BANNER, sizeof(TNS_BANNER)-1, -1, APP_ID_ORACLE_DATABASE },
 };
 
 static AppRegistryEntry appIdRegistry[] =
@@ -431,6 +432,7 @@ done:
         tns_client_mod.api->add_user(flowp, username, APP_ID_ORACLE_DATABASE, 1);
     }
     flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    appid_stats.tns_clients++;
     return CLIENT_APP_SUCCESS;
 }
 

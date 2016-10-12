@@ -21,6 +21,7 @@
 
 #include "app_info_table.h"
 #include "appid_session.h"
+#include "appid_module.h"
 #include "application_ids.h"
 #include "service_api.h"
 
@@ -307,6 +308,7 @@ inprocess:
 success:
     tns_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element, APP_ID_ORACLE_TNS,
         nullptr, ss->version ? ss->version : nullptr, nullptr);
+    appid_stats.tns_flows++;
     return SERVICE_SUCCESS;
 
 fail:

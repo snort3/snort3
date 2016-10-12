@@ -27,6 +27,7 @@
 #include "app_info_table.h"
 #include "application_ids.h"
 #include "client_app_api.h"
+#include "appid_module.h"
 
 static const char VNC_BANNER[] = "RFB ";
 static const char VNC_BANNER2[] = ".";
@@ -84,7 +85,7 @@ struct Client_App_Pattern
 
 static Client_App_Pattern patterns[] =
 {
-    { (const uint8_t*)VNC_BANNER,  sizeof(VNC_BANNER)-1,  0, APP_ID_VNC },
+    { (const uint8_t*)VNC_BANNER,  sizeof(VNC_BANNER)-1, -1, APP_ID_VNC },
     { (const uint8_t*)VNC_BANNER2, sizeof(VNC_BANNER2)-1, 7, APP_ID_VNC },
 };
 
@@ -198,6 +199,7 @@ inprocess:
 done:
     vnc_client_mod.api->add_app(flowp, APP_ID_VNC_RFB, APP_ID_VNC, (const char*)fd->version);
     flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    appid_stats.vnc_clients++;
     return CLIENT_APP_SUCCESS;
 }
 

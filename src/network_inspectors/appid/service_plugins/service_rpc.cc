@@ -41,6 +41,7 @@
 #include "application_ids.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
+#include "appid_module.h"
 
 /*#define RNA_DEBUG_RPC   1 */
 
@@ -543,8 +544,9 @@ done:
             }
             else
                 subtype = nullptr;
-            rpc_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
-                APP_ID_SUN_RPC, nullptr, nullptr, subtype);
+                rpc_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
+                    APP_ID_SUN_RPC, nullptr, nullptr, subtype);
+                appid_stats.rpc_flows++;
         }
         flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
         return SERVICE_SUCCESS;
@@ -911,8 +913,9 @@ inprocess:
             }
             else
                 subtype = nullptr;
-            rpc_service_mod.api->add_service(flowp, pkt, dir, &tcp_svc_element,
-                APP_ID_SUN_RPC, nullptr, nullptr, subtype);
+                rpc_service_mod.api->add_service(flowp, pkt, dir, &tcp_svc_element,
+                    APP_ID_SUN_RPC, nullptr, nullptr, subtype);
+                appid_stats.rpc_flows++;
         }
         flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
         return SERVICE_SUCCESS;

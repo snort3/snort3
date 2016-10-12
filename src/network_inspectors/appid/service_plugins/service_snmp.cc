@@ -26,6 +26,7 @@
 #include "utils/util.h"
 
 #include "appid_api.h"
+#include "appid_module.h"
 #include "app_info_table.h"
 #include "service_base.h"
 #include "application_ids.h"
@@ -614,6 +615,7 @@ success:
     snmp_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
         APP_ID_SNMP,
         SNMP_VENDOR_STR, version_str, nullptr);
+    appid_stats.snmp_flows++;
     return SERVICE_SUCCESS;
 
 bail:

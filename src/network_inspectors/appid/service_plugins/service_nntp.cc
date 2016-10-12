@@ -25,6 +25,7 @@
 #include "utils/util.h"
 
 #include "appid_session.h"
+#include "appid_module.h"
 #include "application_ids.h"
 #include "service_api.h"
 
@@ -380,6 +381,7 @@ inprocess:
 success:
     nntp_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
         APP_ID_NNTP, nullptr, nullptr, nullptr);
+    appid_stats.nntp_flows++;
     return SERVICE_SUCCESS;
 
 fail:

@@ -24,6 +24,7 @@
 #include "main/snort_debug.h"
 
 #include "appid_session.h"
+#include "appid_module.h"
 #include "application_ids.h"
 #include "service_api.h"
 
@@ -164,6 +165,7 @@ static int ntp_validate(ServiceValidationArgs* args)
 
     ntp_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
         APP_ID_NTP, nullptr, nullptr, nullptr);
+    appid_stats.ntp_flows++;
     return SERVICE_SUCCESS;
 
 inprocess:
