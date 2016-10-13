@@ -35,7 +35,7 @@
 static int rfb_init(const IniServiceAPI* const init_api);
 static int rfb_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &rfb_validate,
@@ -47,7 +47,7 @@ static RNAServiceElement svc_element =
     "rfb"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &rfb_validate, 5900, IpProtocol::TCP, 0 },
     { &rfb_validate, 5901, IpProtocol::TCP, 0 },
@@ -99,7 +99,7 @@ static int rfb_validate(ServiceValidationArgs* args)
     unsigned i;
     char* v;
     const unsigned char* p;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 
@@ -128,18 +128,18 @@ static int rfb_validate(ServiceValidationArgs* args)
         p++;
     }
     *v = 0;
-    rfb_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+    rfb_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
         APP_ID_VNC_RFB, nullptr, version, nullptr);
     appid_stats.rfb_flows++;
     return SERVICE_SUCCESS;
 
 inprocess:
-    rfb_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+    rfb_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 fail:
-    rfb_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-        rfb_service_mod.flow_data_index, args->pConfig);
+    rfb_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+        rfb_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

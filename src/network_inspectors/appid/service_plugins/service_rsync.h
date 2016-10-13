@@ -24,7 +24,6 @@
 
 #include "service_api.h"
 
-//  FIXIT-L: Make the globals const or, if necessary, thread-local.
 extern RNAServiceValidationModule rsync_service_mod;
 
 #endif

@@ -23,10 +23,7 @@
 #define THIRDPARTY_APPID_TYPES_H
 
 #include <stdint.h>
-
-// FIXIT-H J pulled from session_api.h include tree.
-// this belongs somewhere else...
-#define HTTP_MAX_XFF_FIELDS 255
+#include "http_common.h"
 
 #define TP_SESSION_FLAG_DPI        0x00000001
 #define TP_SESSION_FLAG_MUTABLE    0x00000002

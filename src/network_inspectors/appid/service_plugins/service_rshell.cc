@@ -24,12 +24,12 @@
 #include "application_ids.h"
 #include "service_api.h"
 #include "service_base.h"
+#include "service_util.h"
 #include "app_info_table.h"
 #include "appid_module.h"
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
-#include "target_based/snort_protocols.h"
 #include "utils/util.h"
 
 #define RSHELL_PORT  514
@@ -58,8 +58,7 @@ struct ServiceRSHELLData
 static int rshell_init(const IniServiceAPI* const init_api);
 static int rshell_validate(ServiceValidationArgs* args);
 
-//  FIXIT-L: Make the globals const or, if necessary, thread-local.
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &rshell_validate,
@@ -71,7 +70,7 @@ static RNAServiceElement svc_element =
     "rshell"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &rshell_validate, RSHELL_PORT, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
@@ -100,7 +99,7 @@ static int rshell_init(const IniServiceAPI* const init_api)
 {
     unsigned i;
 
-    app_id = AddProtocolReference("rsh-error");
+    app_id = add_appid_protocol_reference("rsh-error");
 
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
@@ -139,28 +138,26 @@ static int rshell_validate(ServiceValidationArgs* args)
     int i;
     uint32_t port;
     AppIdSession* pf;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
     uint16_t size = args->size;
-    bool app_id_debug_session_flag = args->app_id_debug_session_flag;
-    char* app_id_debug_session = args->app_id_debug_session;
 
-    rd = (ServiceRSHELLData*)rshell_service_mod.api->data_get(flowp,
+    rd = (ServiceRSHELLData*)rshell_service_mod.api->data_get(asd,
         rshell_service_mod.flow_data_index);
     if (!rd)
     {
         if (!size)
             goto inprocess;
         rd = (ServiceRSHELLData*)snort_calloc(sizeof(ServiceRSHELLData));
-        rshell_service_mod.api->data_add(flowp, rd,
+        rshell_service_mod.api->data_add(asd, rd,
             rshell_service_mod.flow_data_index, &rshell_free_state);
         rd->state = RSHELL_STATE_PORT;
     }
 
-    if (app_id_debug_session_flag)
-        LogMessage("AppIdDbg %s rshell state %d\n", app_id_debug_session, rd->state);
+    if (args->session_logging_enabled)
+        LogMessage("AppIdDbg %s rshell state %d\n", args->session_logging_id, rd->state);
 
     switch (rd->state)
     {
@@ -191,7 +188,6 @@ static int rshell_validate(ServiceValidationArgs* args)
             tmp_rd->parent = rd;
             dip = pkt->ptrs.ip_api.get_dst();
             sip = pkt->ptrs.ip_api.get_src();
-            // FIXIT-M can flow_new return null?
             pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)port, IpProtocol::TCP, app_id,
                     APPID_EARLY_SESSION_FLAG_FW_RULE);
             if (pf)
@@ -207,7 +203,7 @@ static int rshell_validate(ServiceValidationArgs* args)
                     return SERVICE_ENOMEM;
                 }
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
-                PopulateExpectedFlow(flowp, pf,
+                PopulateExpectedFlow(asd, pf,
                     APPID_SESSION_NO_TPI |
                     APPID_SESSION_IGNORE_HOST |
                     APPID_SESSION_NOT_A_SERVICE |
@@ -318,30 +314,30 @@ static int rshell_validate(ServiceValidationArgs* args)
     case RSHELL_STATE_STDERR_CONNECT_SYN_ACK:
         if (rd->parent && rd->parent->state == RSHELL_STATE_SERVER_CONNECT)
             rd->parent->state = RSHELL_STATE_USERNAME;
-        flowp->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED);
+        asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
         return SERVICE_SUCCESS;
     default:
         goto bail;
     }
 
 inprocess:
-    rshell_service_mod.api->service_inprocess(flowp, pkt, dir, &svc_element);
+    rshell_service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    rshell_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
+    rshell_service_mod.api->add_service(asd, pkt, dir, &svc_element,
         APP_ID_SHELL, nullptr, nullptr, nullptr);
     appid_stats.rshell_flows++;
     return SERVICE_SUCCESS;
 
 bail:
-    rshell_service_mod.api->incompatible_data(flowp, pkt, dir, &svc_element,
+    rshell_service_mod.api->incompatible_data(asd, pkt, dir, &svc_element,
         rshell_service_mod.flow_data_index, args->pConfig);
     return SERVICE_NOT_COMPATIBLE;
 
 fail:
-    rshell_service_mod.api->fail_service(flowp, pkt, dir, &svc_element,
-        rshell_service_mod.flow_data_index, args->pConfig);
+    rshell_service_mod.api->fail_service(asd, pkt, dir, &svc_element,
+        rshell_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

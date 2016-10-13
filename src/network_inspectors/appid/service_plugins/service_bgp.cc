@@ -89,7 +89,7 @@ struct ServiceBGPV1Open
 static int bgp_init(const IniServiceAPI* const init_api);
 static int bgp_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &bgp_validate,
@@ -101,7 +101,7 @@ static RNAServiceElement svc_element =
     "bgp"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &bgp_validate, BGP_PORT, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
@@ -149,7 +149,7 @@ static int bgp_validate(ServiceValidationArgs* args)
 {
     ServiceBGPData* bd;
     const ServiceBGPHeader* bh;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
     uint16_t len;
@@ -162,11 +162,11 @@ static int bgp_validate(ServiceValidationArgs* args)
     if (size < sizeof(ServiceBGPHeader))
         goto fail;
 
-    bd = (ServiceBGPData*)bgp_service_mod.api->data_get(flowp, bgp_service_mod.flow_data_index);
+    bd = (ServiceBGPData*)bgp_service_mod.api->data_get(asd, bgp_service_mod.flow_data_index);
     if (!bd)
     {
         bd = (ServiceBGPData*)snort_calloc(sizeof(ServiceBGPData));
-        bgp_service_mod.api->data_add(flowp, bd, bgp_service_mod.flow_data_index, &snort_free);
+        bgp_service_mod.api->data_add(asd, bd, bgp_service_mod.flow_data_index, &snort_free);
         bd->state = BGP_STATE_CONNECTION;
     }
 
@@ -241,16 +241,16 @@ static int bgp_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    bgp_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+    bgp_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 fail:
-    bgp_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-        bgp_service_mod.flow_data_index, args->pConfig);
+    bgp_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+        bgp_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 
 success:
-    bgp_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+    bgp_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
         APP_ID_BGP, nullptr, nullptr, nullptr);
     appid_stats.bgp_flows++;
     return SERVICE_SUCCESS;

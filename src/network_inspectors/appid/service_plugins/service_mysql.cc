@@ -51,7 +51,7 @@ struct ServiceMYSQLHdr
 static int svc_mysql_init(const IniServiceAPI* const init_api);
 static int svc_mysql_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element
+static const RNAServiceElement svc_element
 {
     nullptr,
     &svc_mysql_validate,
@@ -63,7 +63,7 @@ static RNAServiceElement svc_element
     "mysql"
 };
 
-static RNAServiceValidationPort pp[]
+static const RNAServiceValidationPort pp[]
 {
     { &svc_mysql_validate, 3306, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
@@ -105,7 +105,7 @@ static int svc_mysql_validate(ServiceValidationArgs* args)
     uint32_t len;
     const uint8_t* end;
     const uint8_t* p = nullptr;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     uint16_t size = args->size;
 
     if (!size)
@@ -149,18 +149,18 @@ static int svc_mysql_validate(ServiceValidationArgs* args)
     data += 6;
     if (data >= end)
         goto fail;
-    mysql_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+    mysql_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
         APP_ID_MYSQL, nullptr, (char*)p, nullptr);
     appid_stats.mysql_flows++;
     return SERVICE_SUCCESS;
 
 inprocess:
-    mysql_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+    mysql_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 fail:
-    mysql_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-        mysql_service_mod.flow_data_index, args->pConfig);
+    mysql_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+        mysql_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

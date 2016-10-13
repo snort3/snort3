@@ -83,7 +83,7 @@
 #define STREAM_STATE_IGNORE            0x1000
 #define STREAM_STATE_NO_PICKUP         0x2000
 
-// FIXIT-L: move to appid class if/when the application ids array
+// FIXIT-L move to appid class if/when the application ids array
 // is moved
 typedef int32_t AppId;
 enum AppProtoIdIndex

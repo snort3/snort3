@@ -217,10 +217,10 @@ static int DetectorFlow_new(lua_State* L)
 
     sflist_add_tail(&allocatedFlowList, detector_flow);
 
-    detector_flow->pFlow = AppIdSession::create_future_session(detector_data->validateParams.pkt, &saddr,
+    detector_flow->asd = AppIdSession::create_future_session(detector_data->validateParams.pkt, &saddr,
             sport, &daddr, dport, proto, 0, 0);
 
-    if (!detector_flow->pFlow)
+    if (!detector_flow->asd)
     {
         /*calloced buffer will be freed later after the current packet is processed. */
         lua_pop(L, 1);
@@ -264,7 +264,7 @@ static int DetectorFlow_setFlowFlag(lua_State* L)
     flags = lua_tonumber(L, 2);
     flags = ConvertFlagsLuaToC(flags);
 
-    pLuaData->pFlow->setAppIdFlag(flags);
+    pLuaData->asd->set_session_flags(flags);
 
     return 0;
 }
@@ -288,7 +288,7 @@ static int DetectorFlow_getFlowFlag(lua_State* L)
     flags = lua_tonumber(L, 2);
     flags = ConvertFlagsLuaToC(flags);
 
-    ret = pLuaData->pFlow->getAppIdFlag(flags);
+    ret = pLuaData->asd->get_session_flags(flags);
     ret = ConvertFlagsCToLua(ret);
     lua_pushnumber(L, ret);
 
@@ -312,7 +312,7 @@ static int DetectorFlow_clearFlowFlag(lua_State* L)
     flags = lua_tonumber(L, 2);
     flags = ConvertFlagsLuaToC(flags);
 
-    pLuaData->pFlow->clearAppIdFlag(flags);
+    pLuaData->asd->clear_session_flags(flags);
 
     return 0;
 }
@@ -370,8 +370,8 @@ static int DetectorFlow_getFlowKey(lua_State* L)
     auto& pLuaData = *UserData<DetectorFlow>::check(L, DETECTORFLOW, 1);
     assert(pLuaData.ptr);
 
-    lua_pushlstring(L, (char*)&pLuaData->pFlow->id,
-        sizeof(pLuaData->pFlow->id));
+    lua_pushlstring(L, (char*)&pLuaData->asd->session_id,
+        sizeof(pLuaData->asd->session_id));
 
     return 1;
 }

@@ -54,7 +54,7 @@ static void dump_appid_stats()
     if (thirdparty_appid_module)
         thirdparty_appid_module->print_stats();
     LogMessage("    Total packets ignored : %" PRIu64 "\n", appid_stats.ignored_packets);
-    AppIdServiceStateDumpStats();
+    dump_service_state_stats();
 }
 
 AppIdInspector::AppIdInspector(const AppIdModuleConfig* pc)
@@ -79,14 +79,14 @@ bool AppIdInspector::configure(SnortConfig*)
     	show(nullptr);
     return active_config->init_appid();
 
-    // FIXIT some of this stuff may be needed in some fashion...
+    // FIXIT-M some of this stuff may be needed in some fashion...
 #ifdef REMOVED_WHILE_NOT_IN_USE
     _dpd.registerGeAppId(getOpenAppId);
     if (!thirdparty_appid_module)
         _dpd.streamAPI->register_http_header_callback(httpHeaderCallback);
     _dpd.registerSslAppIdLookup(sslAppGroupIdLookup);
 
-    // FIXIT AppID will need to register for SIP events for sip detection to work...
+    // FIXIT-M AppID will need to register for SIP events for sip detection to work...
     if (_dpd.streamAPI->service_event_subscribe(PP_SIP, SIP_EVENT_TYPE_SIP_DIALOG,
         SipSessionSnortCallback) == false)
         DynamicPreprocessorFatalMessage("failed to subscribe to SIP_DIALOG\n");
@@ -111,7 +111,6 @@ void AppIdInspector::tinit()
 {
     init_appid_statistics(config);
     hostPortAppCacheInit();
-    init_dynamic_app_info_table();
     init_appid_forecast();
     init_http_detector();
     init_service_plugins();
@@ -121,10 +120,8 @@ void AppIdInspector::tinit()
     init_length_app_cache();
 
     lua_detector_mgr = new LuaDetectorManager;
-    lua_detector_mgr->LoadLuaModules(pAppidActiveConfig);
-    lua_detector_mgr->luaModuleInitAllClients();
-    lua_detector_mgr->luaModuleInitAllServices();
-    lua_detector_mgr->FinalizeLuaModules();
+    lua_detector_mgr->load_lua_detectors(active_config);
+    lua_detector_mgr->activate_lua_detectors();
     if(config->debug && list_lua_detectors)
     {
         lua_detector_mgr->list_lua_detectors();
@@ -146,6 +143,8 @@ void AppIdInspector::tinit()
 
 void AppIdInspector::tterm()
 {
+    cleanup_appid_statistics();
+
     hostPortAppCacheFini();
     clean_appid_forecast();
     service_dns_host_clean();
@@ -155,12 +154,10 @@ void AppIdInspector::tterm()
     clean_http_detector();
     free_CHP_glossary();
     free_length_app_cache();
-    free_dynamic_app_info_table();
 
     AppIdSession::release_free_list_flow_data();
     delete lua_detector_mgr;
     clean_service_state();
-    cleanup_appid_statistics();
 }
 
 void AppIdInspector::eval(Packet* pkt)
@@ -243,74 +240,74 @@ const BaseApi* nin_appid = &appid_inspector_api.base;
 #endif
 
 #ifdef REMOVED_WHILE_NOT_IN_USE
-// FIXIT-M: This is to be replace with snort3 inspection events
+// FIXIT-M This is to be replace with snort3 inspection events
 void httpHeaderCallback(Packet* p, HttpParsedHeaders* const headers)
 {
-    AppIdSession* session;
+    AppIdSession* asd;
     int direction;
-    AppIdConfig* pConfig = pAppidActiveConfig;
+    AppIdConfig* pConfig = AppIdConfig::get_appid_config();
 
     if (thirdparty_appid_module)
         return;
-    if (!p || !(session = appid_api.get_appid_data(p->flow)))
+    if (!p || !(asd = appid_api.get_appid_data(p->flow)))
         return;
 
     direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
-    if (!session->hsession)
-        session->hsession = (decltype(session->hsession))snort_calloc(sizeof(httpSession));
+    if (!asd->hsession)
+        asd->hsession = (decltype(asd->hsession))snort_calloc(sizeof(httpSession));
 
     if (direction == APP_ID_FROM_INITIATOR)
     {
         if (headers->host.start)
         {
-            snort_free(session->hsession->host);
-            session->hsession->host = snort_strndup((char*)headers->host.start, headers->host.len);
-            session->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+            snort_free(asd->hsession->host);
+            asd->hsession->host = snort_strndup((char*)headers->host.start, headers->host.len);
+            asd->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
 
             if (headers->url.start)
             {
-                snort_free(session->hsession->url);
-                session->hsession->url = (char*)snort_calloc(sizeof(HTTP_PREFIX) +
+                snort_free(asd->hsession->url);
+                asd->hsession->url = (char*)snort_calloc(sizeof(HTTP_PREFIX) +
                     headers->host.len + headers->url.len);
-                strcpy(session->hsession->url, HTTP_PREFIX);
-                strncat(session->hsession->url, (char*)headers->host.start, headers->host.len);
-                strncat(session->hsession->url, (char*)headers->url.start, headers->url.len);
-                session->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+                strcpy(asd->hsession->url, HTTP_PREFIX);
+                strncat(asd->hsession->url, (char*)headers->host.start, headers->host.len);
+                strncat(asd->hsession->url, (char*)headers->url.start, headers->url.len);
+                asd->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
             }
         }
         if (headers->userAgent.start)
         {
-            snort_free(session->hsession->useragent);
-            session->hsession->useragent = snort_strndup((char*)headers->userAgent.start,
+            snort_free(asd->hsession->useragent);
+            asd->hsession->useragent = snort_strndup((char*)headers->userAgent.start,
                 headers->userAgent.len);
-            session->scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
+            asd->scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
         }
         if (headers->referer.start)
         {
-            snort_free(session->hsession->referer);
-            session->hsession->referer = snort_strndup((char*)headers->referer.start,
+            snort_free(asd->hsession->referer);
+            asd->hsession->referer = snort_strndup((char*)headers->referer.start,
                 headers->referer.len);
         }
         if (headers->via.start)
         {
-            snort_free(session->hsession->via);
-            session->hsession->via = snort_strndup((char*)headers->via.start, headers->via.len);
-            session->scan_flags |= SCAN_HTTP_VIA_FLAG;
+            snort_free(asd->hsession->via);
+            asd->hsession->via = snort_strndup((char*)headers->via.start, headers->via.len);
+            asd->scan_flags |= SCAN_HTTP_VIA_FLAG;
         }
     }
     else
     {
         if (headers->via.start)
         {
-            snort_free(session->hsession->via);
-            session->hsession->via = snort_strndup((char*)headers->via.start, headers->via.len);
-            session->scan_flags |= SCAN_HTTP_VIA_FLAG;
+            snort_free(asd->hsession->via);
+            asd->hsession->via = snort_strndup((char*)headers->via.start, headers->via.len);
+            asd->scan_flags |= SCAN_HTTP_VIA_FLAG;
         }
         if (headers->contentType.start)
         {
-            snort_free(session->hsession->content_type);
-            session->hsession->content_type = snort_strndup((char*)headers->contentType.start,
+            snort_free(asd->hsession->content_type);
+            asd->hsession->content_type = snort_strndup((char*)headers->contentType.start,
                 headers->contentType.len);
         }
         if (headers->responseCode.start)
@@ -319,17 +316,17 @@ void httpHeaderCallback(Packet* p, HttpParsedHeaders* const headers)
             responseCodeNum = strtoul((char*)headers->responseCode.start, nullptr, 10);
             if (responseCodeNum > 0 && responseCodeNum < 700)
             {
-                snort_free(session->hsession->response_code);
-                session->hsession->response_code = snort_strndup((char*)headers->responseCode.start,
+                snort_free(asd->hsession->response_code);
+                asd->hsession->response_code = snort_strndup((char*)headers->responseCode.start,
                     headers->responseCode.len);
             }
         }
     }
 
-    session->processHTTPPacket(p, direction, headers, pConfig);
-    session->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
-    p->flow->set_application_ids(session->pick_service_app_id(), session->pick_client_app_id(),
-            session->pick_payload_app_id(), session->pick_misc_app_id());
+    asd->processHTTPPacket(p, direction, headers, pConfig);
+    asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
+    p->flow->set_application_ids(asd->pick_service_app_id(), asd->pick_client_app_id(),
+            asd->pick_payload_app_id(), asd->pick_misc_app_id());
 }
 #endif
 
@@ -340,32 +337,32 @@ void httpHeaderCallback(Packet* p, HttpParsedHeaders* const headers)
 //    AppId* serviceAppId, AppId* ClientAppId, AppId* payloadAppId)
 int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
 {
-    // FIXIT-M: detemine need and proper location for this code when support for ssl is implemented
+    // FIXIT-M detemine need and proper location for this code when support for ssl is implemented
 #ifdef REMOVED_WHILE_NOT_IN_USE
-    AppIdSession* session;
+    AppIdSession* asd;
     *serviceAppId = *ClientAppId = *payload_app_id = APP_ID_NONE;
 
     if (commonName)
     {
         ssl_scan_cname((const uint8_t*)commonName, strlen(commonName), ClientAppId, payload_app_id,
-            &pAppidActiveConfig->serviceSslConfig);
+            &AppIdConfig::get_appid_config()->serviceSslConfig);
     }
     if (serverName)
     {
         ssl_scan_hostname((const uint8_t*)serverName, strlen(serverName), ClientAppId,
-            payload_app_id, &pAppidActiveConfig->serviceSslConfig);
+            payload_app_id, &AppIdConfig::get_appid_config()->serviceSslConfig);
     }
 
-    if (ssnptr && (session = appid_api.get_appid_data(ssnptr)))
+    if (ssnptr && (asd = appid_api.get_appid_data(ssnptr)))
     {
-        *serviceAppId = pick_service_app_id(session);
+        *serviceAppId = pick_service_app_id(asd);
         if (*ClientAppId == APP_ID_NONE)
         {
-            *ClientAppId = pick_client_app_id(session);
+            *ClientAppId = pick_client_app_id(asd);
         }
         if (*payload_app_id == APP_ID_NONE)
         {
-            *payload_app_id = pick_payload_app_id(session);
+            *payload_app_id = pick_payload_app_id(asd);
         }
     }
     if (*serviceAppId != APP_ID_NONE ||
@@ -382,7 +379,7 @@ int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
 AppId getOpenAppId(Flow* flow)
 {
     assert(flow);
-    AppIdSession* session = appid_api.get_appid_data(flow);
-    return session->payload_app_id;
+    AppIdSession* asd = appid_api.get_appid_data(flow);
+    return asd->payload_app_id;
 }
 

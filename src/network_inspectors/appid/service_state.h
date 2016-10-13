@@ -96,8 +96,8 @@ struct AppIdServiceIDState
      * matching, but has the disadvantage of making one flow match dependent on first instance of the
      * same flow.
      */
-    ServiceMatch* serviceList;
-    ServiceMatch* currenService;
+    ServiceMatch* service_list;
+    ServiceMatch* current_service;
 
     /** Is this entry currently being used in an active session? */
     bool searching;
@@ -127,9 +127,9 @@ union AppIdServiceStateKey
 
 int init_service_state(unsigned long memcap);
 void clean_service_state();
-void AppIdRemoveServiceIDState(sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
-AppIdServiceIDState* AppIdGetServiceIDState( const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
-AppIdServiceIDState* AppIdAddServiceIDState( const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
-void AppIdServiceStateDumpStats();
+void remove_service_id_state(const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
+AppIdServiceIDState* get_service_id_state( const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
+AppIdServiceIDState* add_service_id_state( const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
+void dump_service_state_stats();
 
 #endif

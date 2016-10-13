@@ -40,7 +40,7 @@ static int dcerpc_init(const IniServiceAPI* const init_api);
 static int dcerpc_tcp_validate(ServiceValidationArgs* args);
 static int dcerpc_udp_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement tcp_svc_element =
+static const RNAServiceElement tcp_svc_element =
 {
     nullptr,
     &dcerpc_tcp_validate,
@@ -51,7 +51,7 @@ static RNAServiceElement tcp_svc_element =
     0,
     "dcerpc"
 };
-static RNAServiceElement udp_svc_element =
+static const RNAServiceElement udp_svc_element =
 {
     nullptr,
     &dcerpc_udp_validate,
@@ -63,7 +63,7 @@ static RNAServiceElement udp_svc_element =
     "udp dcerpc"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &dcerpc_tcp_validate, 135, IpProtocol::TCP, 0 },
     { &dcerpc_udp_validate, 135, IpProtocol::UDP, 0 },
@@ -105,7 +105,7 @@ static int dcerpc_tcp_validate(ServiceValidationArgs* args)
     ServiceDCERPCData* dd;
     int retval = SERVICE_INPROCESS;
     int length;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 
@@ -114,12 +114,12 @@ static int dcerpc_tcp_validate(ServiceValidationArgs* args)
     if (!size)
         goto inprocess;
 
-    dd = (ServiceDCERPCData*)dcerpc_service_mod.api->data_get(flowp,
+    dd = (ServiceDCERPCData*)dcerpc_service_mod.api->data_get(asd,
         dcerpc_service_mod.flow_data_index);
     if (!dd)
     {
         dd = (ServiceDCERPCData*)snort_calloc(sizeof(ServiceDCERPCData));
-        dcerpc_service_mod.api->data_add(flowp, dd, dcerpc_service_mod.flow_data_index,
+        dcerpc_service_mod.api->data_add(asd, dd, dcerpc_service_mod.flow_data_index,
             &snort_free);
     }
 
@@ -136,19 +136,19 @@ static int dcerpc_tcp_validate(ServiceValidationArgs* args)
     }
     if (retval == SERVICE_SUCCESS)
     {
-        dcerpc_service_mod.api->add_service(flowp, args->pkt, args->dir, &tcp_svc_element,
+        dcerpc_service_mod.api->add_service(asd, args->pkt, args->dir, &tcp_svc_element,
             APP_ID_DCE_RPC, nullptr, nullptr, nullptr);
         appid_stats.dcerpc_tcp_flows++;
         return SERVICE_SUCCESS;
     }
 
 inprocess:
-    dcerpc_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &tcp_svc_element);
+    dcerpc_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &tcp_svc_element);
     return SERVICE_INPROCESS;
 
 fail:
-    dcerpc_service_mod.api->fail_service(flowp, args->pkt, args->dir, &tcp_svc_element,
-        dcerpc_service_mod.flow_data_index, args->pConfig);
+    dcerpc_service_mod.api->fail_service(asd, args->pkt, args->dir, &tcp_svc_element,
+        dcerpc_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 
@@ -157,7 +157,7 @@ static int dcerpc_udp_validate(ServiceValidationArgs* args)
     ServiceDCERPCData* dd;
     int retval = SERVICE_NOMATCH;
     int length;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 
@@ -166,12 +166,12 @@ static int dcerpc_udp_validate(ServiceValidationArgs* args)
     if (!size)
         goto inprocess;
 
-    dd = (ServiceDCERPCData*)dcerpc_service_mod.api->data_get(flowp,
+    dd = (ServiceDCERPCData*)dcerpc_service_mod.api->data_get(asd,
         dcerpc_service_mod.flow_data_index);
     if (!dd)
     {
         dd = (ServiceDCERPCData*)snort_calloc(sizeof(ServiceDCERPCData));
-        dcerpc_service_mod.api->data_add(flowp, dd, dcerpc_service_mod.flow_data_index,
+        dcerpc_service_mod.api->data_add(asd, dd, dcerpc_service_mod.flow_data_index,
             &snort_free);
     }
 
@@ -188,19 +188,19 @@ static int dcerpc_udp_validate(ServiceValidationArgs* args)
     }
     if (retval == SERVICE_SUCCESS)
     {
-        dcerpc_service_mod.api->add_service(flowp, args->pkt, args->dir, &udp_svc_element,
+        dcerpc_service_mod.api->add_service(asd, args->pkt, args->dir, &udp_svc_element,
             APP_ID_DCE_RPC, nullptr, nullptr, nullptr);
         appid_stats.dcerpc_udp_flows++;
         return SERVICE_SUCCESS;
     }
 
 inprocess:
-    dcerpc_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &udp_svc_element);
+    dcerpc_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &udp_svc_element);
     return SERVICE_INPROCESS;
 
 fail:
-    dcerpc_service_mod.api->fail_service(flowp, args->pkt, args->dir, &udp_svc_element,
-        dcerpc_service_mod.flow_data_index, args->pConfig);
+    dcerpc_service_mod.api->fail_service(asd, args->pkt, args->dir, &udp_svc_element,
+        dcerpc_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

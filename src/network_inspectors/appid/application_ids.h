@@ -999,8 +999,6 @@ enum ApplicationId : int32_t
     APP_ID_ANYCONNECT_IPSEC_CLIENT        = 2923,
     APP_ID_FTP_ACTIVE                     = 4002,
     APP_ID_FTP_PASSIVE                    = 4003,
-
-    // FIXIT - L Need better name since often there is no UI
     APP_ID_UNKNOWN_UI                     = 65535  // this causes the UI to render Unknown instead of pending or blank
 };
 

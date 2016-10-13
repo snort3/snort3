@@ -21,6 +21,7 @@
 
 #include <string>
 
+#include "sfip/sf_ip.h"
 #include "appid_module.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
@@ -35,7 +36,7 @@ unsigned long app_id_ignored_packet_count = 0;
 
 THREAD_LOCAL ProfileStats appidPerfStats;
 
-// FIXIT-M: define and implement a flexible solution for maintaining protocol specific stats
+// FIXIT-M define and implement a flexible solution for maintaining protocol specific stats
 const PegInfo appid_pegs[] =
 {
     { "packets", "count of packets received by appid inspector" },
@@ -108,6 +109,20 @@ const PegInfo appid_pegs[] =
     { nullptr, nullptr }
 };
 
+static const Parameter session_log_filter[] =
+{
+    {"src_ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
+            "source ip address in CIDR format" },
+    {  "dst_ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
+            "destination ip address in CIDR format" },
+    { "src_port", Parameter::PT_PORT, "1:", nullptr, "source port" },
+    { "dst_port", Parameter::PT_PORT, "1:", nullptr, "destination port" },
+    { "protocol", Parameter::PT_STRING, nullptr, nullptr,"ip protocol"},
+    { "log_all_sessions", Parameter::PT_BOOL, nullptr, "false",
+          "enable logging for all appid sessions" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter s_params[] =
 {
     { "conf", Parameter::PT_STRING, nullptr, nullptr,
@@ -132,11 +147,12 @@ static const Parameter s_params[] =
       "enable dump of AppId port information" },
     { "thirdparty_appid_dir", Parameter::PT_STRING, nullptr, nullptr,
       "directory to load thirdparty AppId detectors from" },
-
+    { "session_log_filter", Parameter::PT_TABLE, session_log_filter, nullptr,
+        "session log filter options" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-//  FIXIT-M: Add appid_rules back in once we start using it.
+//  FIXIT-M Add appid_rules back in once we start using it.
 #ifdef REMOVED_WHILE_NOT_IN_USE
 static const RuleMap appid_rules[] =
 {
@@ -191,6 +207,14 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
         config->debug = v.get_bool();
     else if ( v.is("dump_ports") )
         config->dump_ports = v.get_bool();
+    else if ( v.is("session_log_filter") )
+        config->session_log_filter.log_all_sessions = false;  // FIXIT-L need to implement support for all log options
+    else if ( v.is("log_all_sessions") )
+        config->session_log_filter.log_all_sessions = v.get_bool();
+    else if (v.is("src_ip") )
+        sfip_pton(v.get_string(), &config->session_log_filter.sip);
+    else if (v.is("dst_ip") )
+        sfip_pton(v.get_string(), &config->session_log_filter.dip);
     else
         return false;
 

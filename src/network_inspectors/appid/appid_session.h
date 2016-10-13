@@ -44,18 +44,14 @@
 #define HTTP_PREFIX "http://"
 
 #define SF_DEBUG_FILE   stdout
-#define NUMBER_OF_PTYPES    9
 
 #define APPID_SESSION_DATA_NONE                  0
-
 #define APPID_SESSION_DATA_DHCP_FP_DATA          2
 #define APPID_SESSION_DATA_SMB_DATA              4
 #define APPID_SESSION_DATA_DHCP_INFO             5
-
 #define APPID_SESSION_DATA_SERVICE_MODSTATE_BIT  0x20000000
 #define APPID_SESSION_DATA_CLIENT_MODSTATE_BIT   0x40000000
 #define APPID_SESSION_DATA_DETECTOR_MODSTATE_BIT 0x80000000
-
 #define APPID_SESSION_BIDIRECTIONAL_CHECKED \
     (APPID_SESSION_INITIATOR_CHECKED | \
     APPID_SESSION_RESPONDER_CHECKED)
@@ -63,10 +59,12 @@
     (APPID_SESSION_RESPONDER_MONITORED | \
     APPID_SESSION_INITIATOR_MONITORED | APPID_SESSION_DISCOVER_USER | \
     APPID_SESSION_SPECIAL_MONITORED)
+#define MAX_SESSION_LOGGING_ID_LEN    (39+1+5+4+39+1+5+1+3+1+1+1+2+1+10+1+1+1+10+1)
 
 struct RNAServiceElement;
 struct RNAServiceSubtype;
 struct RNAClientAppModule;
+class AppInfoManager;
 
 enum RNA_INSPECTION_STATE
 {
@@ -84,18 +82,9 @@ struct AppIdFlowData
     AppIdFreeFCN fd_free;
 };
 
-#define APPID_SESSION_TYPE_IGNORE   APPID_FLOW_TYPE_IGNORE
-#define APPID_SESSION_TYPE_NORMAL   APPID_FLOW_TYPE_NORMAL
-#define APPID_SESSION_TYPE_TMP      APPID_FLOW_TYPE_TMP
-
-struct APPID_SESSION_STRUCT_FLAG
-{
-    APPID_FLOW_TYPE flow_type;
-};
-
 struct CommonAppIdData
 {
-    APPID_SESSION_STRUCT_FLAG fsf_type;  /* This must be first. */
+    APPID_FLOW_TYPE flow_type;
     unsigned policyId;
     //flags shared with other preprocessor via session attributes.
     uint64_t flags;
@@ -121,11 +110,6 @@ struct fflow_info
     IpProtocol protocol;
     AppId appId;
     int flow_prepared;
-};
-
-struct HttpRewriteableFields
-{
-    char* str;
 };
 
 struct httpSession
@@ -203,9 +187,6 @@ struct tlsSession
     int tls_orgUnit_strlen;
 };
 
-extern char app_id_debug_session[];
-extern bool app_id_debug_session_flag;
-
 /* The UNSYNCED_SNORT_ID value is to cheaply insure we get
    the value from snort rather than assume */
 #define UNSYNCED_SNORT_ID   0x5555
@@ -215,7 +196,7 @@ void map_app_names_to_snort_ids();
 class AppIdSession : public FlowData
 {
 public:
-    AppIdSession(IpProtocol proto, const sfip_t* ip);
+    AppIdSession(IpProtocol, const sfip_t*);
     ~AppIdSession();
 
     static AppIdSession* allocate_session(const Packet*, IpProtocol, int);
@@ -223,55 +204,17 @@ public:
             uint16_t, IpProtocol, int16_t, int);
     static void do_application_discovery(Packet*);
 
-private:
-    bool do_client_discovery(int, Packet*);
-    bool do_service_discovery(IpProtocol, int, AppId, AppId,  Packet*);
-    int exec_client_detectors(Packet*, int);
-
-    static uint64_t is_session_monitored(const Packet*, int, AppIdSession*);
-    static bool is_packet_ignored(Packet* p);
-    bool is_payload_appid_set();
-    void clear_app_id_data();
-    void reinit_shared_data();
-    bool is_ssl_decryption_enabled();
-    void check_app_detection_restart();
-    void update_encrypted_app_id(AppId serviceAppId);
-    void sync_with_snort_id(AppId, Packet*);
-    void examine_ssl_metadata(Packet*);
-    void examine_rtmp_metadata();
-    void set_client_app_id_data(AppId clientAppId, char** version);
-    void set_service_appid_data( AppId, char*, char**);
-    void set_referred_payload_app_id_data( AppId);
-    void set_payload_app_id_data( ApplicationId, char**);
-    void stop_rna_service_inspection(Packet*,  int);
-
-#ifdef REMOVED_WHILE_NOT_IN_USE
-    // FIXIT-M: these are not needed until appid for snort3 supports 3rd party detectors (e.g. NAVL)
-    void ProcessThirdPartyResults(Packet*, int, AppId*, ThirdPartyAppIDAttributeData*);
-    void checkTerminateTpModule(uint16_t tpPktCount);
-    bool do_third_party_discovery(IpProtocol, const sfip_t*,  Packet*, int&);
-
-    // FIXIT-H: when http detection is made functional we need to look at these methods and determine if they are
-    // needed and what changes are required for snort3
-    void pickHttpXffAddress(Packet*, ThirdPartyAppIDAttributeData*);
-    int initial_CHP_sweep(char**, MatchedCHPAction**);
-    void clearMiscHttpFlags();
-    int processHTTPPacket(Packet*, int, HttpParsedHeaders* const);
-    void processCHP(char**, Packet*);
-#endif
-
-public:
+    AppIdConfig* config = nullptr;
     CommonAppIdData common;
     AppIdSession* next = nullptr;
     Flow* flow = nullptr;
+    AppIdFlowData* flowData = nullptr;
+    AppInfoManager* app_info_mgr = nullptr;
 
     sfip_t service_ip;
     uint16_t service_port = 0;
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
     uint8_t previous_tcp_flags = 0;
-
-    AppIdFlowData* flowData = nullptr;
-
     // AppId matching service side
     AppId serviceAppId = APP_ID_NONE;
     AppId portServiceAppId = APP_ID_NONE;
@@ -310,7 +253,7 @@ public:
     char* username = nullptr;
     AppId username_service = APP_ID_NONE;
     char* netbios_domain = nullptr;
-    uint32_t id = 0;
+    uint32_t session_id = 0;
     httpSession* hsession = nullptr;
     tlsSession* tsession = nullptr;
     unsigned scan_flags = 0;
@@ -356,27 +299,28 @@ public:
     AppId pastForecast = APP_ID_NONE;
 
     bool is_http2 = false;
-    SEARCH_SUPPORT_TYPE search_support_type = SEARCH_SUPPORT_TYPE_UNKNOWN;
-
+    SEARCH_SUPPORT_TYPE search_support_type = UNKNOWN_SEARCH_ENGINE;
     bool in_expected_cache = false;
-
     static unsigned flow_id;
     static void init() { flow_id = FlowData::get_flow_id(); }
 
-    void setAppIdFlag(uint64_t flags)
+    void set_session_flags(uint64_t flags)
     {
         common.flags |= flags;
     }
 
-    void clearAppIdFlag(uint64_t flags)
+    void clear_session_flags(uint64_t flags)
     {
         common.flags &= ~flags;
     }
 
-    inline uint64_t getAppIdFlag(uint64_t flags)
+    inline uint64_t get_session_flags(uint64_t flags)
     {
         return (common.flags & flags);
     }
+
+    char session_logging_id[MAX_SESSION_LOGGING_ID_LEN];
+    bool session_logging_enabled = false;
 
     static void release_free_list_flow_data();
     void* get_flow_data(unsigned id);
@@ -406,6 +350,48 @@ public:
     AppId fw_pick_payload_app_id();
     AppId fw_pick_referred_payload_app_id();
     bool is_ssl_session_decrypted();
+private:
+    bool do_client_discovery(int, Packet*);
+    bool do_service_discovery(IpProtocol, int, AppId, AppId,  Packet*);
+    int exec_client_detectors(Packet*, int);
+
+    static uint64_t is_session_monitored(const Packet*, int, AppIdSession*);
+    static bool is_packet_ignored(Packet* p);
+    bool is_payload_appid_set();
+    void reinit_shared_data();
+    bool is_ssl_decryption_enabled();
+    void check_app_detection_restart();
+    void update_encrypted_app_id(AppId serviceAppId);
+    void sync_with_snort_id(AppId, Packet*);
+    void examine_ssl_metadata(Packet*);
+    void examine_rtmp_metadata();
+    void set_client_app_id_data(AppId clientAppId, char** version);
+    void set_service_appid_data( AppId, char*, char**);
+    void set_referred_payload_app_id_data( AppId);
+    void set_payload_app_id_data( ApplicationId, char**);
+    void stop_rna_service_inspection(Packet*,  int);
+    void set_session_logging_state(const Packet* pkt, int direction);
+
+#ifdef REMOVED_WHILE_NOT_IN_USE
+    // FIXIT-M these are not needed until appid for snort3 supports 3rd party detectors (e.g. NAVL)
+    void ProcessThirdPartyResults(Packet*, int, AppId*, ThirdPartyAppIDAttributeData*);
+    void checkTerminateTpModule(uint16_t tpPktCount);
+    bool do_third_party_discovery(IpProtocol, const sfip_t*,  Packet*, int&);
+
+    // FIXIT-H when http detection is made functional we need to look at these methods and determine if they are
+    // needed and what changes are required for snort3
+    void clear_app_id_data();
+    void pickHttpXffAddress(Packet*, ThirdPartyAppIDAttributeData*);
+    int initial_CHP_sweep(char**, MatchedCHPAction**);
+    void clearMiscHttpFlags();
+    int processHTTPPacket(Packet*, int, HttpParsedHeaders* const);
+    void processCHP(char**, Packet*);
+#endif
+
+    void create_session_logging_id(int direction, Packet* pkt);
+
+    static THREAD_LOCAL uint32_t appid_flow_data_id;
+    static THREAD_LOCAL AppIdFlowData* fd_free_list;
 };
 
 #endif

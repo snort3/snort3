@@ -74,6 +74,9 @@
 
 /* IP allocations and setting ******************************************/
 
+/* Converts string IP format to an array of values. Also checks IP address format. */
+SO_PUBLIC SFIP_RET sfip_convert_ip_text_to_binary(const int family, const char* ip, void* dst);
+
 /* Parses "src" and stores results in "dst"
    If the conversion is invalid, returns SFIP_FAILURE */
 SO_PUBLIC SFIP_RET sfip_pton(const char* src, sfip_t* dst);

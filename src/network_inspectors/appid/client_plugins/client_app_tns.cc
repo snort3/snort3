@@ -131,7 +131,7 @@ THREAD_LOCAL TNS_CLIENT_APP_CONFIG tns_config;
 
 static CLIENT_APP_RETCODE tns_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
 SO_PUBLIC RNAClientAppModule tns_client_mod =
 {
@@ -214,7 +214,7 @@ static CLIENT_APP_RETCODE tns_init(const IniClientAppAPI* const init_api, SF_LIS
 
 #define TNS_MAX_INFO_SIZE    63
 static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, struct Detector*)
 {
     char username[TNS_MAX_INFO_SIZE+1];
     ClientTNSData* fd;
@@ -227,11 +227,11 @@ static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const
     if (dir != APP_ID_FROM_INITIATOR)
         return CLIENT_APP_INPROCESS;
 
-    fd = (ClientTNSData*)tns_client_mod.api->data_get(flowp, tns_client_mod.flow_data_index);
+    fd = (ClientTNSData*)tns_client_mod.api->data_get(asd, tns_client_mod.flow_data_index);
     if (!fd)
     {
         fd = (ClientTNSData*)snort_calloc(sizeof(ClientTNSData));
-        tns_client_mod.api->data_add(flowp, fd, tns_client_mod.flow_data_index, &snort_free);
+        tns_client_mod.api->data_add(asd, fd, tns_client_mod.flow_data_index, &snort_free);
         fd->state = TNS_STATE_MESSAGE_LEN;
     }
 
@@ -421,7 +421,7 @@ inprocess:
     return CLIENT_APP_INPROCESS;
 
 done:
-    tns_client_mod.api->add_app(flowp, APP_ID_ORACLE_TNS, APP_ID_ORACLE_DATABASE, fd->version);
+    tns_client_mod.api->add_app(asd, APP_ID_ORACLE_TNS, APP_ID_ORACLE_DATABASE, fd->version);
     if (user_start && user_end && ((user_size = user_end - user_start) > 0))
     {
         /* we truncate extra long usernames */
@@ -429,9 +429,9 @@ done:
             user_size = TNS_MAX_INFO_SIZE;
         memcpy(username, &data[user_start], user_size);
         username[user_size] = 0;
-        tns_client_mod.api->add_user(flowp, username, APP_ID_ORACLE_DATABASE, 1);
+        tns_client_mod.api->add_user(asd, username, APP_ID_ORACLE_DATABASE, 1);
     }
-    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.tns_clients++;
     return CLIENT_APP_SUCCESS;
 }

@@ -57,7 +57,7 @@ THREAD_LOCAL VNC_CLIENT_APP_CONFIG vnc_config;
 
 static CLIENT_APP_RETCODE vnc_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE vnc_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
 SO_PUBLIC RNAClientAppModule vnc_client_mod =
 {
@@ -141,7 +141,7 @@ static CLIENT_APP_RETCODE vnc_init(const IniClientAppAPI* const init_api, SF_LIS
 }
 
 static CLIENT_APP_RETCODE vnc_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, struct Detector*)
 {
     ClientVNCData* fd;
     uint16_t offset;
@@ -149,11 +149,11 @@ static CLIENT_APP_RETCODE vnc_validate(const uint8_t* data, uint16_t size, const
     if (dir != APP_ID_FROM_INITIATOR)
         return CLIENT_APP_INPROCESS;
 
-    fd = (ClientVNCData*)vnc_client_mod.api->data_get(flowp, vnc_client_mod.flow_data_index);
+    fd = (ClientVNCData*)vnc_client_mod.api->data_get(asd, vnc_client_mod.flow_data_index);
     if (!fd)
     {
         fd = (ClientVNCData*)snort_calloc(sizeof(ClientVNCData));
-        vnc_client_mod.api->data_add(flowp, fd, vnc_client_mod.flow_data_index, &snort_free);
+        vnc_client_mod.api->data_add(asd, fd, vnc_client_mod.flow_data_index, &snort_free);
         fd->state = VNC_STATE_BANNER;
     }
 
@@ -197,8 +197,8 @@ inprocess:
     return CLIENT_APP_INPROCESS;
 
 done:
-    vnc_client_mod.api->add_app(flowp, APP_ID_VNC_RFB, APP_ID_VNC, (const char*)fd->version);
-    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    vnc_client_mod.api->add_app(asd, APP_ID_VNC_RFB, APP_ID_VNC, (const char*)fd->version);
+    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.vnc_clients++;
     return CLIENT_APP_SUCCESS;
 }

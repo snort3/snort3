@@ -235,7 +235,7 @@ TEST(client_app_smtp, identify_client_version_mozilla_thunderbird)
     check_client_version(client_str, APP_ID_THUNDERBIRD, "5.0", &appid_stats.smtp_thunderbird_clients);
 }
 
-//  FIXIT-M: Add additional tests for other client types (Outlook, etc).
+//  FIXIT-M Add additional tests for other client types (Outlook, etc).
 
 int main(int argc, char** argv)
 {

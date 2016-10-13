@@ -37,38 +37,23 @@ public:
     LuaDetectorManager();
     ~LuaDetectorManager();
 
-    // Load all Lua modules into a detector list
-    //
-    // Each RNA detector file in the folder app_id_detector_path is parsed for
-    // detector information. If it is a valid detector, a detector data structure
-    // is created for it and stored in allocatedDetectorList.
-    void LoadLuaModules(AppIdConfig*);
-
-    // Finalize Lua modules
-    // This function should be called after LoadLuaModules(). It sets up proper AppId references
-    // and tracker size for all the detectors.
-    void FinalizeLuaModules();
-
-    // Unload Lua modules
-    //
-    // This function cleans up all the data structures that were created for the Lua detectors
-    // in a given AppId context. It should be called after FinalizeLuaModules().
-    void UnloadLuaModules(AppIdConfig*);
-
-    void add_chunk(const std::string&);
-
-    void luaModuleInitAllServices();
-    void luaModuleInitAllClients();
+    void load_lua_detectors(AppIdConfig*);
+    void activate_lua_detectors();
     void list_lua_detectors();
 
 private:
-    void luaCustomLoad( char* detectorName, char* validator, unsigned int validatorLen,
+    void init_lua_service_detectors();
+    void init_lua_client_detectors();
+    void initialize_lua_detector(const char* detectorName, char* validator, unsigned int validatorLen,
             unsigned char* const digest, AppIdConfig*, bool isCustom);
-    void loadCustomLuaModules(char* path, AppIdConfig*, bool isCustom);
-    void luaDetectorsUnload();
-    void luaDetectorsSetTrackerSize();
+    void validate_lua_detector(const char* path, AppIdConfig*, bool isCustom);
 
-    std::list<Detector*> allocatedDetectorList;
+    std::list<Detector*> allocated_detectors;
+
+    // FIXIT-L make these perf counters
+    uint32_t lua_tracker_size = 0;
+    uint32_t num_lua_detectors = 0;
+    uint32_t num_active_lua_detectors = 0;
 };
 
 extern THREAD_LOCAL SF_LIST allocatedFlowList;

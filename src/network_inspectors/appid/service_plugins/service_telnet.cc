@@ -83,15 +83,13 @@ static const RNAServiceElement svc_element =
     "telnet",
 };
 
-// FIXIT thread safety, can this be const?
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &telnet_validate, 23, IpProtocol::TCP, 0 },
     { &telnet_validate, 23, IpProtocol::UDP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
 };
 
-// FIXIT thread safety, can this be const?
 RNAServiceValidationModule telnet_service_mod =
 {
     "TELNET",
@@ -125,7 +123,7 @@ static int telnet_validate(ServiceValidationArgs* args)
 {
     ServiceTelnetData* td;
     const uint8_t* end;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 
@@ -134,12 +132,12 @@ static int telnet_validate(ServiceValidationArgs* args)
     if (args->dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    td = (ServiceTelnetData*)telnet_service_mod.api->data_get(flowp,
+    td = (ServiceTelnetData*)telnet_service_mod.api->data_get(asd,
         telnet_service_mod.flow_data_index);
     if (!td)
     {
         td = (ServiceTelnetData*)snort_calloc(sizeof(ServiceTelnetData));
-        telnet_service_mod.api->data_add(flowp, td, telnet_service_mod.flow_data_index,
+        telnet_service_mod.api->data_add(asd, td, telnet_service_mod.flow_data_index,
             &snort_free);
     }
 
@@ -170,18 +168,18 @@ static int telnet_validate(ServiceValidationArgs* args)
         }
     }
 inprocess:
-    telnet_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+    telnet_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    telnet_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+    telnet_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
         APP_ID_TELNET, nullptr, nullptr, nullptr);
     appid_stats.telnet_flows++;
     return SERVICE_SUCCESS;
 
 fail:
-    telnet_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-        telnet_service_mod.flow_data_index, args->pConfig);
+    telnet_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+        telnet_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

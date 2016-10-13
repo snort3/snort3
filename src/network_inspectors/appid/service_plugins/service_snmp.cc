@@ -22,13 +22,13 @@
 #include "service_snmp.h"
 
 #include "log/messages.h"
-#include "target_based/snort_protocols.h"
 #include "utils/util.h"
 
 #include "appid_api.h"
 #include "appid_module.h"
 #include "app_info_table.h"
 #include "service_base.h"
+#include "service_util.h"
 #include "application_ids.h"
 
 #define SNMP_PORT   161
@@ -88,8 +88,7 @@ struct ServiceSNMPHeader
 static int snmp_init(const IniServiceAPI* const init_api);
 static int snmp_validate(ServiceValidationArgs* args);
 
-//  FIXIT-L: Make the globals const or, if necessary, thread-local.
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &snmp_validate,
@@ -101,7 +100,7 @@ static RNAServiceElement svc_element =
     "snmp",
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &snmp_validate, SNMP_PORT, IpProtocol::TCP, 0 },
     { &snmp_validate, SNMP_PORT, IpProtocol::UDP, 0 },
@@ -134,7 +133,7 @@ static int16_t app_id = 0;
 
 static int snmp_init(const IniServiceAPI* const init_api)
 {
-    app_id = AddProtocolReference("snmp");
+    app_id = add_appid_protocol_reference("snmp");
 
     init_api->RegisterPattern(&snmp_validate, IpProtocol::UDP, SNMP_PATTERN_2,
         sizeof(SNMP_PATTERN_2), 2, "snmp");
@@ -446,30 +445,28 @@ static int snmp_validate(ServiceValidationArgs* args)
     const sfip_t* dip;
     uint8_t version;
     const char* version_str = nullptr;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
     uint16_t size = args->size;
-    bool app_id_debug_session_flag = args->app_id_debug_session_flag;
-    char* app_id_debug_session = args->app_id_debug_session;
 
     if (!size)
         goto inprocess;
 
-    sd = (ServiceSNMPData*)snmp_service_mod.api->data_get(flowp, snmp_service_mod.flow_data_index);
+    sd = (ServiceSNMPData*)snmp_service_mod.api->data_get(asd, snmp_service_mod.flow_data_index);
     if (!sd)
     {
         sd = (ServiceSNMPData*)snort_calloc(sizeof(ServiceSNMPData));
-        snmp_service_mod.api->data_add(flowp, sd, snmp_service_mod.flow_data_index, &snort_free);
+        snmp_service_mod.api->data_add(asd, sd, snmp_service_mod.flow_data_index, &snort_free);
         sd->state = SNMP_STATE_CONNECTION;
     }
 
     if (snmp_verify_packet(&data, data+size, &pdu, &version))
     {
-        if (app_id_debug_session_flag)
-            LogMessage("AppIdDbg %s snmp payload verify failed\n", app_id_debug_session);
-        if (flowp->getAppIdFlag(APPID_SESSION_UDP_REVERSED))
+        if (args->session_logging_enabled)
+            LogMessage("AppIdDbg %s snmp payload verify failed\n", args->session_logging_id);
+        if (asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
         {
             if (dir == APP_ID_FROM_RESPONDER)
                 goto bail;
@@ -485,8 +482,8 @@ static int snmp_validate(ServiceValidationArgs* args)
         }
     }
 
-    if (app_id_debug_session_flag)
-        LogMessage("AppIdDbg %s snmp state %d\n", app_id_debug_session, sd->state);
+    if (args->session_logging_enabled)
+        LogMessage("AppIdDbg %s snmp state %d\n", args->session_logging_id, sd->state);
 
     switch (sd->state)
     {
@@ -494,13 +491,13 @@ static int snmp_validate(ServiceValidationArgs* args)
         if (pdu != SNMP_PDU_GET_RESPONSE && dir == APP_ID_FROM_RESPONDER)
         {
             sd->state = SNMP_STATE_R_RESPONSE;
-            flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
+            asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
             break;
         }
         if (pdu == SNMP_PDU_GET_RESPONSE && dir == APP_ID_FROM_INITIATOR)
         {
             sd->state = SNMP_STATE_R_REQUEST;
-            flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
+            asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
             break;
         }
 
@@ -512,9 +509,9 @@ static int snmp_validate(ServiceValidationArgs* args)
 
         if (pdu == SNMP_PDU_TRAP || pdu == SNMP_PDU_TRAPV2)
         {
-            flowp->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE);
-            flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
-            flowp->serviceAppId = APP_ID_SNMP;
+            asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE);
+            asd->clear_session_flags(APPID_SESSION_CONTINUE);
+            asd->serviceAppId = APP_ID_SNMP;
             break;
         }
         sd->state = SNMP_STATE_RESPONSE;
@@ -522,7 +519,7 @@ static int snmp_validate(ServiceValidationArgs* args)
         /*adding expected connection in case the server doesn't send from 161*/
         dip = pkt->ptrs.ip_api.get_dst();
         sip = pkt->ptrs.ip_api.get_src();
-        pf = AppIdSession::create_future_session(pkt, dip, 0, sip, pkt->ptrs.sp, flowp->protocol, app_id, 0);
+        pf = AppIdSession::create_future_session(pkt, dip, 0, sip, pkt->ptrs.sp, asd->protocol, app_id, 0);
         if (pf)
         {
             tmp_sd = (ServiceSNMPData*)snort_calloc(sizeof(ServiceSNMPData));
@@ -531,12 +528,12 @@ static int snmp_validate(ServiceValidationArgs* args)
                 snmp_service_mod.flow_data_index, &snort_free);
             if (pf->add_flow_data_id(pkt->ptrs.dp, &svc_element))
             {
-                pf->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED);
-                pf->clearAppIdFlag(APPID_SESSION_CONTINUE);
+                pf->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+                pf->clear_session_flags(APPID_SESSION_CONTINUE);
                 tmp_sd->state = SNMP_STATE_ERROR;
                 return SERVICE_ENULL;
             }
-            PopulateExpectedFlow(flowp, pf, APPID_SESSION_EXPECTED_EVALUATE);
+            PopulateExpectedFlow(asd, pf, APPID_SESSION_EXPECTED_EVALUATE);
             pf->rnaServiceState = RNA_STATE_STATEFUL;
             pf->scan_flags |= SCAN_HOST_PORT_FLAG;
             pf->common.initiator_ip = *sip;
@@ -590,7 +587,7 @@ static int snmp_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    snmp_service_mod.api->service_inprocess(flowp, pkt, dir, &svc_element);
+    snmp_service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
@@ -612,22 +609,21 @@ success:
         version_str = nullptr;
         break;
     }
-    snmp_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
+    snmp_service_mod.api->add_service(asd, pkt, dir, &svc_element,
         APP_ID_SNMP,
         SNMP_VENDOR_STR, version_str, nullptr);
     appid_stats.snmp_flows++;
     return SERVICE_SUCCESS;
 
 bail:
-    snmp_service_mod.api->incompatible_data(flowp, pkt, dir, &svc_element,
+    snmp_service_mod.api->incompatible_data(asd, pkt, dir, &svc_element,
         snmp_service_mod.flow_data_index,
         args->pConfig);
     return SERVICE_NOT_COMPATIBLE;
 
 fail:
-    snmp_service_mod.api->fail_service(flowp, pkt, dir, &svc_element,
-        snmp_service_mod.flow_data_index,
-        args->pConfig);
+    snmp_service_mod.api->fail_service(asd, pkt, dir, &svc_element,
+        snmp_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

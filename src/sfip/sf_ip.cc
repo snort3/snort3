@@ -120,7 +120,7 @@ static inline int sfip_cidr_mask(sfip_t* ip, int val)
 /* Converts string IP format to an array of values. Also checks IP address format.
    Specifically look for issues that inet_pton either overlooks or is inconsistent
    about.  */
-static inline SFIP_RET sfip_convert_ip_text_to_binary(const int family, const char* ip, void* dst)
+SFIP_RET sfip_convert_ip_text_to_binary(const int family, const char* ip, void* dst)
 {
     const char* my_ip = ip;
 

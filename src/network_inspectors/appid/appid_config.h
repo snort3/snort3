@@ -22,28 +22,18 @@
 #ifndef APP_ID_CONFIG_H
 #define APP_ID_CONFIG_H
 
-//  AppId configuration data structures and access methods
-
+#include "appid.h"
 #include "client_plugins/client_app_config.h"
 #include "detector_plugins/detector_sip.h"
 #include "service_plugins/service_config.h"
 
-#include "appid.h"
-#include "http_common.h"
-
-
 #define APP_ID_MAX_DIRS         16
 #define APP_ID_PORT_ARRAY_SIZE  65536
 #define MAX_ZONES               1024
-
-// FIXIT - defined here but confirm where this is defined in 2.9.8
 #define MAX_EVENT_APPNAME_LEN   64
 
 struct NetworkSet;
-struct AppInfoTableEntry;
-struct DynamicArray;
-struct SFGHASH;
-struct SFXHASH;
+class AppInfoManager;
 
 extern unsigned appIdPolicyId;
 extern uint32_t app_id_netmasks[];
@@ -69,10 +59,22 @@ struct AppidGenericConfigItem
     void* pData;    ///< Module configuration data
 };
 
+struct AppIdSessionLogFilter
+{
+    sfip_t sip;
+    bool sip_flag = false;
+    sfip_t dip;
+    bool dip_flag = false;
+    uint16_t sport = 0;
+    uint16_t dport = 0;
+    PktType protocol = PktType::NONE;
+    bool log_all_sessions = false;
+};
+
 class AppIdModuleConfig
 {
 public:
-    AppIdModuleConfig() {}
+    AppIdModuleConfig() { }
     ~AppIdModuleConfig();
 
     const char* conf_file = nullptr;
@@ -86,8 +88,9 @@ public:
     uint32_t memcap = 0;
     bool debug = false;
     bool dump_ports = false;
+    AppIdSessionLogFilter session_log_filter;
 
-    // FIXIT - configs below not set from appid preproc config...
+    // FIXIT-L configs below not set from appid preproc config, should they be?
     uint32_t disable_safe_search = 0;
     uint32_t dns_host_reporting = 0;
     uint32_t referred_appId_disabled = 0;
@@ -115,13 +118,14 @@ enum RnaFwConfigState
 class AppIdConfig
 {
 public:
-    AppIdConfig( AppIdModuleConfig* config ) : mod_config( config ) { }
-    ~AppIdConfig() { cleanup(); }
+    AppIdConfig( AppIdModuleConfig* config );
+    ~AppIdConfig();
 
     bool init_appid();
     void cleanup();
     void show();
 
+    static AppIdConfig* get_appid_config();
     void set_safe_search_enforcement(int enabled);
 
     // add, find, remove generic config items...
@@ -154,9 +158,8 @@ private:
     void process_config_directive(char* toklist[], int /* reload */);
     int load_analysis_config(const char* config_file, int reload, int instance_id);
     void display_port_config();
-};
 
-// FIXIT - this global needs to go asap... just here now to compile while doing some major config refactoring
-extern AppIdConfig* pAppidActiveConfig;
+    AppInfoManager& app_info_mgr;
+};
 
 #endif

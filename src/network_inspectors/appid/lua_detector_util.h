@@ -52,9 +52,6 @@ struct UserData
         assert(ud);
         ud->ptr = ptr;
         luaL_getmetatable(L, meta);
-        // FIXIT-L: clean this up if not needed or enable the assert...metatable should already be in registry at this point
-        //assert(lua_istable(L, -1));
-
         lua_setmetatable(L, -2);
         return ud;
     }

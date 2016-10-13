@@ -45,9 +45,9 @@ struct DetectorPackageInfo
 {
     struct UniInfo
     {
-        std::string initFunctionName;       // FIXIT-M: clean this up = "DetectorInit";     // client init function
-        std::string cleanFunctionName;      //  = "DetectorClean";    // client clean function
-        std::string validateFunctionName;   // = "DetectorValidate"; // client validate function
+        std::string initFunctionName;
+        std::string cleanFunctionName;
+        std::string validateFunctionName;
         int minimum_matches = 0;
     };
 
@@ -62,8 +62,7 @@ struct Detector
 {
     ~Detector();
 
-    /**Identifies customer created detectors using SDL. */
-    bool isCustom;
+    bool isCustom;          // true for customer created detectors
     bool isActive;
     bool wasActive;
 
@@ -72,54 +71,32 @@ struct Detector
         const uint8_t* data;
         uint16_t size;
         int dir;
-        AppIdSession* flowp;
+        AppIdSession* asd;
         Packet* pkt;
         uint8_t macAddress[6];
     } validateParams;
 
-    /**Pointer to flow created by a validator.
-     */
-    AppIdSession* pFlow;
-
     struct
     {
         unsigned int serviceId;
-
-        /**present only for server detectors*/
         RNAServiceValidationModule serviceModule;
-
-        /**calloced buffer to satisfy internal flow API.
-        */
         RNAServiceElement* pServiceElement;
     } server;
 
-    /**constructed from packageInfo read from lua detector directly. Present
-     * only for client detectors.
-     */
     struct
     {
-        /**application fingerprint id.*/
         unsigned int appFpId;
-
-        /**Client Application Module. */
         RNAClientAppModule appModule;
     } client;
 
+    AppIdSession* pFlow;
     lua_State* myLuaState;
-
-    /**Reference to lua userdata. This is a key into LUA_REGISTRYINDEX */
-    int detectorUserDataRef;
-
-    std::string name; // lua file name is used as detector name
-
-    /**Package information retrieved from detector lua file.
-     */
+    int detectorUserDataRef;    // key into LUA_REGISTRYINDEX
+    std::string name;
     DetectorPackageInfo packageInfo;
-
     unsigned detector_version;
     char* validatorBuffer;
     unsigned char digest[16];
-
     AppIdConfig* appid_config;
 };
 

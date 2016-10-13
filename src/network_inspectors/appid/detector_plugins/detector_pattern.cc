@@ -39,12 +39,12 @@ static void pattern_service_clean();
 static CLIENT_APP_RETCODE client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE client_init_tcp(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, struct Detector* userData);
 static void client_clean();
 static const IniServiceAPI* iniServiceApi;
 static const IniClientAppAPI* iniClientApi;
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &service_validate,
@@ -98,14 +98,6 @@ RNAClientAppModule pattern_tcp_client_mod =
     0,
     nullptr,
     0,
-    0
-};
-
-static RNAServiceValidationPort pp =
-{
-    &service_validate,
-    0,
-    IpProtocol::PROTO_NOT_SET,
     0
 };
 
@@ -186,7 +178,7 @@ static void read_patterns(PortPatternNode* portPatternList, PatternService** ser
         pattern->offset = pNode->offset;
         pattern->next = ps->pattern;
         ps->pattern = pattern;
-        set_app_info_active(ps->id);
+        AppInfoManager::get_instance().set_app_info_active(ps->id);
     }
 }
 
@@ -195,6 +187,7 @@ static void install_ports(PatternService* serviceList, const IniServiceAPI* cons
 {
     PatternService* ps;
     PortNode* port;
+    RNAServiceValidationPort pp = { &service_validate, 0, IpProtocol::PROTO_NOT_SET, 0 };
 
     for (ps = serviceList; ps; ps = ps->next)
     {
@@ -723,35 +716,34 @@ static int service_validate(ServiceValidationArgs* args)
 {
     uint32_t id;
     const RNAServiceElement* service = nullptr;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
     uint16_t size = args->size;
 
-    if (!data || !pattern_service_mod.api || !flowp || !pkt)
+    if (!data || !pattern_service_mod.api || !asd || !pkt)
         return SERVICE_ENULL;
     if (!size)
         goto inprocess;
     if (dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    id = csdPatternTreeSearch(data, size, flowp->protocol, pkt, &service, false);
+    id = csdPatternTreeSearch(data, size, asd->protocol, pkt, &service, false);
     if (!id)
         goto fail;
 
-    pattern_service_mod.api->add_service(flowp, pkt, dir, &svc_element, id, nullptr, nullptr,
+    pattern_service_mod.api->add_service(asd, pkt, dir, &svc_element, id, nullptr, nullptr,
         nullptr);
     return SERVICE_SUCCESS;
 
 inprocess:
-    pattern_service_mod.api->service_inprocess(flowp, pkt, dir, &svc_element);
+    pattern_service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 
 fail:
-    pattern_service_mod.api->fail_service(flowp, pkt, dir, &svc_element,
-        pattern_service_mod.flow_data_index,
-        args->pConfig);
+    pattern_service_mod.api->fail_service(asd, pkt, dir, &svc_element,
+        pattern_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 
@@ -786,23 +778,23 @@ static void client_clean()
 }
 
 static CLIENT_APP_RETCODE client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector*)
+    AppIdSession* asd, Packet* pkt, struct Detector*)
 {
     AppId id;
     const RNAServiceElement* service = nullptr;
 
-    if (!data || !flowp || !pkt)
+    if (!data || !asd || !pkt)
         return CLIENT_APP_ENULL;
     if (!size)
         goto inprocess;
     if (dir == APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    id = csdPatternTreeSearch(data, size, flowp->protocol, pkt, &service, true);
+    id = csdPatternTreeSearch(data, size, asd->protocol, pkt, &service, true);
     if (!id)
         goto fail;
 
-    pattern_tcp_client_mod.api->add_app(flowp, id, id, nullptr);
+    pattern_tcp_client_mod.api->add_app(asd, id, id, nullptr);
     return CLIENT_APP_SUCCESS;
 
 inprocess:

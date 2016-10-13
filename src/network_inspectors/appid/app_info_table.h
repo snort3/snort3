@@ -23,9 +23,13 @@
 #define APP_INFO_TABLE_H
 
 #include <cstdint>
+#include <map>
+#include <mutex>
 
+#include "application_ids.h"
 #include "appid_api.h"
 #include "appid_config.h"
+#include "utils/util.h"
 
 #define APP_PRIORITY_DEFAULT 2
 
@@ -52,72 +56,103 @@ enum AppInfoFlags
     APPINFO_FLAG_SUPPORTED_SEARCH     = (1<<14)
 };
 
-struct AppInfoTableEntry
+class AppInfoTableEntry
 {
-    AppInfoTableEntry* next;
-    AppId appId;
-    uint32_t serviceId;
-    uint32_t clientId;
-    uint32_t payloadId;
-    int16_t snortId;
-    uint32_t flags;
-    const RNAClientAppModule* clntValidator;
-    const RNAServiceElement* svrValidator;
-    uint32_t priority;
-    char* appName;
+public:
+    AppInfoTableEntry(AppId id, char* name)
+        : appId(id), app_name(name)
+    {
+
+    }
+
+    ~AppInfoTableEntry()
+    {
+        if( app_name )
+            snort_free(app_name);
+        if( app_name_key )
+            snort_free(app_name_key);
+    }
+
+    AppId appId = APP_ID_NONE;
+    uint32_t serviceId = APP_ID_NONE;
+    uint32_t clientId = APP_ID_NONE;
+    uint32_t payloadId = APP_ID_NONE;
+    int16_t snortId = 0;
+    uint32_t flags = 0;
+    uint32_t priority = APP_PRIORITY_DEFAULT;
+    const RNAClientAppModule* clntValidator = nullptr;
+    const RNAServiceElement* svrValidator = nullptr;
+    char* app_name = nullptr;
+    char* app_name_key = nullptr;
 };
 
-void appNameHashFini();
+typedef std::map<AppId, AppInfoTableEntry*> AppInfoTable;
+typedef std::map<std::string, AppInfoTableEntry*> AppInfoNameTable;
 
-void init_appid_info_table(const char* path);
-void cleanup_appid_info_table();
-void init_dynamic_app_info_table();
-void free_dynamic_app_info_table();
-
-AppInfoTableEntry* appInfoEntryGet(AppId);
-AppInfoTableEntry* appInfoEntryCreate(const char* appName);
-AppId appGetSnortIdFromAppId(AppId);
-AppId get_appid_by_service_id(uint32_t appId);
-AppId get_appid_by_client_id(uint32_t appId);
-AppId get_appid_by_payload_id(uint32_t appId);
-void AppIdDumpStats(int exit_flag);
-void dump_app_info_table();
-void set_app_info_active(AppId);
-const char* get_app_name(int32_t appId);
-int32_t get_appid_by_name(const char* appName);
-
-inline void appInfoEntryFlagSet(AppId appId, unsigned flags)
+class AppInfoManager
 {
-    AppInfoTableEntry* entry = appInfoEntryGet(appId);
-    if ( entry )
-        entry->flags |= flags;
-}
+public:
+    ~AppInfoManager() {}
 
-inline void appInfoEntryFlagClear(AppId appId, unsigned flags)
-{
-    AppInfoTableEntry* entry = appInfoEntryGet(appId);
-    if ( entry )
-        entry->flags &= (~flags);
-}
+    static AppInfoManager& get_instance()
+    {
+        static AppInfoManager instance;
+        return instance;
+    }
 
-inline unsigned appInfoEntryFlagGet(AppId app_id, unsigned flags)
-{
-    AppInfoTableEntry* entry = appInfoEntryGet(app_id);
-    return entry ? entry->flags & flags : 0;
-}
+    AppInfoTableEntry* get_app_info_entry(AppId);
+    AppInfoTableEntry* add_dynamic_app_entry(const char* app_name);
+    AppId get_appid_by_service_id(uint32_t);
+    AppId get_appid_by_client_id(uint32_t);
+    AppId get_appid_by_payload_id(uint32_t);
+    void set_app_info_active(AppId);
+    const char* get_app_name(AppId);
+    int32_t get_appid_by_name(const char* app_name);
 
-inline void appInfoEntryPrioritySet(AppId appId, unsigned priority)
-{
-    AppInfoTableEntry* entry = appInfoEntryGet(appId);
-    if ( entry )
-        entry->priority |= priority;
-}
+    void set_app_info_flags(AppId appId, unsigned flags)
+    {
+        AppInfoTableEntry* entry = get_app_info_entry(appId);
+        if ( entry )
+            entry->flags |= flags;
+    }
 
-inline unsigned appInfoEntryPriorityGet(AppId app_id)
-{
-    AppInfoTableEntry* entry = appInfoEntryGet(app_id);
-    return entry ? entry->priority : 0;
-}
+    void clear_app_info_flags(AppId appId, unsigned flags)
+    {
+        AppInfoTableEntry* entry = get_app_info_entry(appId);
+        if ( entry )
+            entry->flags &= (~flags);
+    }
+
+    unsigned get_app_info_flags(AppId app_id, unsigned flags)
+    {
+        AppInfoTableEntry* entry = get_app_info_entry(app_id);
+        return entry ? entry->flags & flags : 0;
+    }
+
+    void set_app_info_priority(AppId appId, unsigned priority)
+    {
+        AppInfoTableEntry* entry = get_app_info_entry(appId);
+        if ( entry )
+            entry->priority |= priority;
+    }
+
+    unsigned get_app_info_priority(AppId app_id)
+    {
+        AppInfoTableEntry* entry = get_app_info_entry(app_id);
+        return entry ? entry->priority : 0;
+    }
+
+     void init_appid_info_table(const char* path);
+     void cleanup_appid_info_table();
+     void dump_app_info_table();
+
+private:
+    AppInfoManager() {}
+    void load_appid_config(const char* path);
+    AppInfoTableEntry* get_app_info_entry(AppId appId, const AppInfoTable& lookup_table);
+    std::mutex custom_app_mutex;
+
+};
 
 #endif
 

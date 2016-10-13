@@ -25,8 +25,9 @@
 #include "log/messages.h"
 #include "service_plugins/service_base.h"
 #include "sfip/sf_ip.h"
+#include "utils/util.h"
 
-/*#define DEBUG_SERVICE_STATE 1*/
+//#define DEBUG_SERVICE_STATE 1
 
 static THREAD_LOCAL SFXHASH* serviceStateCache4;
 static THREAD_LOCAL SFXHASH* serviceStateCache6;
@@ -36,10 +37,11 @@ static THREAD_LOCAL SFXHASH* serviceStateCache6;
 static int AppIdServiceStateFree(void*, void* data)
 {
     AppIdServiceIDState* id_state = (AppIdServiceIDState*)data;
-    if (id_state->serviceList)
+
+    if (id_state->service_list)
     {
-        AppIdFreeServiceMatchList(id_state->serviceList);
-        id_state->serviceList = nullptr;
+        AppIdFreeServiceMatchList(id_state->service_list);
+        id_state->service_list = nullptr;
     }
 
     return 0;
@@ -48,26 +50,16 @@ static int AppIdServiceStateFree(void*, void* data)
 int init_service_state(unsigned long memcap)
 {
     serviceStateCache4 = sfxhash_new(SERVICE_STATE_CACHE_ROWS,
-        sizeof(AppIdServiceStateKey4),
-        sizeof(AppIdServiceIDState),
-        memcap >> 1,
-        1,
-        &AppIdServiceStateFree,
-        &AppIdServiceStateFree,
-        1);
+        sizeof(AppIdServiceStateKey4), sizeof(AppIdServiceIDState), memcap >> 1, 1,
+        &AppIdServiceStateFree, &AppIdServiceStateFree, 1);
     if (!serviceStateCache4)
     {
         ErrorMessage("Failed to allocate a hash table");
         return -1;
     }
     serviceStateCache6 = sfxhash_new(SERVICE_STATE_CACHE_ROWS,
-        sizeof(AppIdServiceStateKey6),
-        sizeof(AppIdServiceIDState),
-        memcap >> 1,
-        1,
-        &AppIdServiceStateFree,
-        &AppIdServiceStateFree,
-        1);
+        sizeof(AppIdServiceStateKey6), sizeof(AppIdServiceIDState), memcap >> 1, 1,
+        &AppIdServiceStateFree, &AppIdServiceStateFree, 1);
     if (!serviceStateCache6)
     {
         ErrorMessage("Failed to allocate a hash table");
@@ -83,6 +75,7 @@ void clean_service_state(void)
         sfxhash_delete(serviceStateCache4);
         serviceStateCache4 = nullptr;
     }
+
     if (serviceStateCache6)
     {
         sfxhash_delete(serviceStateCache6);
@@ -90,8 +83,7 @@ void clean_service_state(void)
     }
 }
 
-#ifdef APPID_UNUSED_CODE
-static void AppIdRemoveServiceIDState(const sfip_t* ip, IpProtocol proto, uint16_t port, uint32_t level)
+void remove_service_id_state(const sfip_t* ip, IpProtocol proto, uint16_t port, uint32_t level)
 {
     AppIdServiceStateKey k;
     SFXHASH* cache;
@@ -118,18 +110,18 @@ static void AppIdRemoveServiceIDState(const sfip_t* ip, IpProtocol proto, uint16
 
         ipstr[0] = 0;
         sfip_ntop(ip, ipstr, sizeof(ipstr));
-        ErrorMessage("Failed to remove from hash: %s:%u:%u\n",ipstr, (unsigned)proto,
+        ErrorMessage("Failed to remove from hash: %s:%u:%u\n", ipstr, (unsigned)proto,
             (unsigned)port);
     }
 }
-#endif
 
-AppIdServiceIDState* AppIdGetServiceIDState(const sfip_t* ip, IpProtocol proto,
-    uint16_t port, uint32_t level)
+AppIdServiceIDState* get_service_id_state(const sfip_t* ip, IpProtocol proto, uint16_t port,
+        uint32_t level)
 {
-    AppIdServiceStateKey k;
     SFXHASH* cache;
-    AppIdServiceIDState* ss;
+    AppIdServiceStateKey k;
+    char ipstr[INET6_ADDRSTRLEN];   // FIXIT-M ASAN reports mem leak on ServiceMatch* objects if this is not defined
+                                    //  which makes no sense, need to investigate further
 
     if (sfip_family(ip) == AF_INET6)
     {
@@ -147,15 +139,15 @@ AppIdServiceIDState* AppIdGetServiceIDState(const sfip_t* ip, IpProtocol proto,
         k.key4.level = level;
         cache = serviceStateCache4;
     }
-    ss = (AppIdServiceIDState*)sfxhash_find(cache, &k);
+    AppIdServiceIDState* ss = (AppIdServiceIDState*)sfxhash_find(cache, &k);
 
 #ifdef DEBUG_SERVICE_STATE
-    char ipstr[INET6_ADDRSTRLEN];
-
     ipstr[0] = 0;
     sfip_ntop(ip, ipstr, sizeof(ipstr));
-    LogMessage("ServiceState: Read from hash: %s:%u:%u:%u %p %u %p\n",ipstr, (unsigned)proto,
-        (unsigned)port, level, ss, ss ? ss->state : 0, ss ? ss->svc : nullptr);
+    DebugFormat(DEBUG_APPID, "ServiceState: Read from hash: %s:%u:%u:%u %p %u %p\n", ipstr, (unsigned)proto,
+        (unsigned)port, level, (void*)ss, ss ? ss->state : 0, ss ? (void*)ss->svc : nullptr);
+#else
+    UNUSED(ipstr);
 #endif
 
     if (ss && ss->svc && !ss->svc->ref_count)
@@ -167,14 +159,12 @@ AppIdServiceIDState* AppIdGetServiceIDState(const sfip_t* ip, IpProtocol proto,
     return ss;
 }
 
-AppIdServiceIDState* AppIdAddServiceIDState(const sfip_t* ip, IpProtocol proto, uint16_t port,
-    uint32_t
-    level)
+AppIdServiceIDState* add_service_id_state(const sfip_t* ip, IpProtocol proto, uint16_t port,
+    uint32_t level)
 {
     AppIdServiceStateKey k;
     AppIdServiceIDState* ss;
     SFXHASH* cache;
-    char ipstr[INET6_ADDRSTRLEN];
 
     if (sfip_family(ip) == AF_INET6)
     {
@@ -192,26 +182,30 @@ AppIdServiceIDState* AppIdAddServiceIDState(const sfip_t* ip, IpProtocol proto, 
         k.key4.level = level;
         cache = serviceStateCache4;
     }
-#ifdef DEBUG_SERVICE_STATE
-    ipstr[0] = 0;
-    sfip_ntop(ip, ipstr, sizeof(ipstr));
-#endif
+
     if ((sfxhash_add_return_data_ptr(cache, &k, (void**)&ss) < 0) || !ss)
     {
-        ipstr[0] = 0;
+        char ipstr[INET6_ADDRSTRLEN];
+
         sfip_ntop(ip, ipstr, sizeof(ipstr));
-        ErrorMessage("ServiceState: Failed to add to hash: %s:%u:%u:%u\n",ipstr, (unsigned)proto,
+        ErrorMessage("ServiceState: Failed to add to hash: %s:%u:%u:%u\n", ipstr, (unsigned)proto,
             (unsigned)port, level);
         return nullptr;
     }
+
 #ifdef DEBUG_SERVICE_STATE
-    LogMessage("ServiceState: Added to hash: %s:%u:%u:%u %p\n",ipstr, (unsigned)proto,
-        (unsigned)port, level, ss);
+    char ipstr[INET6_ADDRSTRLEN];
+
+    ipstr[0] = 0;
+    sfip_ntop(ip, ipstr, sizeof(ipstr));
+    DebugFormat(DEBUG_APPID, "ServiceState: Added to hash: %s:%u:%u:%u %p\n", ipstr, (unsigned)proto,
+        (unsigned)port, level, (void*)ss);
 #endif
+
     return ss;
 }
 
-void AppIdServiceStateDumpStats(void)
+void dump_service_state_stats(void)
 {
     LogMessage("Service State:\n");
     if (serviceStateCache4)

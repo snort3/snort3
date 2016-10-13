@@ -47,13 +47,11 @@ struct ServiceData
 static int direct_connect_init(const IniServiceAPI* const init_api);
 static int direct_connect_validate(ServiceValidationArgs* args);
 static int validateDirectConnectTcp(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, const Packet* pkt, ServiceData* serviceData,
-    const AppIdConfig* pConfig);
+    AppIdSession* asd, const Packet* pkt, ServiceData* serviceData);
 static int validateDirectConnectUdp(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, const Packet* pkt, ServiceData* serviceData,
-    const AppIdConfig* pConfig);
+    AppIdSession* asd, const Packet* pkt, ServiceData* serviceData);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &direct_connect_validate,
@@ -65,7 +63,7 @@ static RNAServiceElement svc_element =
     "direct_connect"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &direct_connect_validate, 411, IpProtocol::TCP, 0 },
     { &direct_connect_validate, 411, IpProtocol::UDP, 0 },
@@ -134,37 +132,34 @@ static int direct_connect_init(const IniServiceAPI* const init_api)
 static int direct_connect_validate(ServiceValidationArgs* args)
 {
     ServiceData* fd;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 
     if (!size)
     {
-        directconnect_service_mod.api->service_inprocess(flowp, args->pkt, args->dir,
+        directconnect_service_mod.api->service_inprocess(asd, args->pkt, args->dir,
             &svc_element);
         return SERVICE_INPROCESS;
     }
 
-    fd = (ServiceData*)directconnect_service_mod.api->data_get(flowp,
+    fd = (ServiceData*)directconnect_service_mod.api->data_get(asd,
         directconnect_service_mod.flow_data_index);
     if (!fd)
     {
         fd = (ServiceData*)snort_calloc(sizeof(ServiceData));
-        directconnect_service_mod.api->data_add(flowp, fd,
+        directconnect_service_mod.api->data_add(asd, fd,
             directconnect_service_mod.flow_data_index, &snort_free);
     }
 
-    if (flowp->protocol == IpProtocol::TCP)
-        return validateDirectConnectTcp(data, size, args->dir, flowp, args->pkt, fd,
-            args->pConfig);
+    if (asd->protocol == IpProtocol::TCP)
+        return validateDirectConnectTcp(data, size, args->dir, asd, args->pkt, fd);
     else
-        return validateDirectConnectUdp(data, size, args->dir, flowp, args->pkt, fd,
-            args->pConfig);
+        return validateDirectConnectUdp(data, size, args->dir, asd, args->pkt, fd);
 }
 
 static int validateDirectConnectTcp(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, const Packet* pkt, ServiceData* serviceData,
-    const AppIdConfig* pConfig)
+    AppIdSession* asd, const Packet* pkt, ServiceData* serviceData)
 {
     switch (serviceData->state)
     {
@@ -252,7 +247,7 @@ inprocess:
     if (serviceData->packetCount >= MAX_PACKET_INSPECTION_COUNT)
         goto fail;
 
-    directconnect_service_mod.api->service_inprocess(flowp, pkt, dir, &svc_element);
+    directconnect_service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
@@ -262,20 +257,19 @@ success:
         goto inprocess;
     }
 
-    directconnect_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
+    directconnect_service_mod.api->add_service(asd, pkt, dir, &svc_element,
         APP_ID_DIRECT_CONNECT, nullptr, nullptr, nullptr);
     appid_stats.direct_connect_flows++;
     return SERVICE_SUCCESS;
 
 fail:
-    directconnect_service_mod.api->fail_service(flowp, pkt, dir, &svc_element,
-        directconnect_service_mod.flow_data_index, pConfig);
+    directconnect_service_mod.api->fail_service(asd, pkt, dir, &svc_element,
+        directconnect_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 
 static int validateDirectConnectUdp(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, const Packet* pkt, ServiceData* serviceData,
-    const AppIdConfig* pConfig)
+    AppIdSession* asd, const Packet* pkt, ServiceData* serviceData)
 {
     if (dir == APP_ID_FROM_RESPONDER && serviceData->state == CONN_STATE_SERVICE_DETECTED)
     {
@@ -304,7 +298,7 @@ inprocess:
     if (serviceData->packetCount >= MAX_PACKET_INSPECTION_COUNT)
         goto fail;
 
-    directconnect_service_mod.api->service_inprocess(flowp, pkt, dir, &svc_element);
+    directconnect_service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
@@ -315,14 +309,14 @@ success:
     }
 
 reportSuccess:
-    directconnect_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
+    directconnect_service_mod.api->add_service(asd, pkt, dir, &svc_element,
         APP_ID_DIRECT_CONNECT, nullptr, nullptr, nullptr);
     appid_stats.direct_connect_flows++;
     return SERVICE_SUCCESS;
 
 fail:
-    directconnect_service_mod.api->fail_service(flowp, pkt, dir, &svc_element,
-        directconnect_service_mod.flow_data_index, pConfig);
+    directconnect_service_mod.api->fail_service(asd, pkt, dir, &svc_element,
+        directconnect_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

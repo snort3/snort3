@@ -46,6 +46,7 @@
 #define UNIFIED2_IDS_EVENT_VLAN      104
 #define UNIFIED2_IDS_EVENT_IPV6_VLAN 105
 #define UNIFIED2_EXTRA_DATA          110
+#define UNIFIED2_IDS_EVENT_APPSTAT   113
 
 /* Data structure used for serialization of Unified2 Records */
 typedef struct _Serial_Unified2_Header

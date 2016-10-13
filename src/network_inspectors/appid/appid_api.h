@@ -112,25 +112,21 @@ struct RNAServiceSubtype
 #define DHCP_OP55_MAX_SIZE  64
 #define DHCP_OP60_MAX_SIZE  64
 
-struct DhcpFPData
+struct DHCPData
 {
-    DhcpFPData *next;
+    DHCPData *next;
     unsigned op55_len;
     unsigned op60_len;
     uint8_t op55[DHCP_OP55_MAX_SIZE];
     uint8_t op60[DHCP_OP60_MAX_SIZE];
-    // FIXIT-L J should be using eth address type here
-    uint8_t mac[6];
+    uint8_t eth_addr[6];
 } ;
 
-// FIXIT-L J inconsistently named structs (DHCPInfo vs DhcpFPData, note the "DHCP")
 struct DHCPInfo
 {
     DHCPInfo *next;
     uint32_t ipAddr;
-    // FIXIT-L J should be using eth address type here
-    // FIXIT-L J inconsistently named fields (macAddr here, mac in DhcpFPData)
-    uint8_t  macAddr[6];
+    uint8_t  eth_addr[6];
     uint32_t subnetmask;
     uint32_t leaseSecs;
     uint32_t router;
@@ -155,14 +151,12 @@ struct AppIdSessionHA
 
 enum SEARCH_SUPPORT_TYPE
 {
-    // FIXIT-L J enums are inconsistently named
     NOT_A_SEARCH_ENGINE,
     SUPPORTED_SEARCH_ENGINE,
     UNSUPPORTED_SEARCH_ENGINE,
-    SEARCH_SUPPORT_TYPE_UNKNOWN,
+    UNKNOWN_SEARCH_ENGINE,
 };
 
-// FIXIT-M J probable duplication from new http_inspect
 enum HTTP_FIELD_ID
 {
     REQ_AGENT_FID       = 0,
@@ -234,15 +228,16 @@ public:
     SEARCH_SUPPORT_TYPE get_http_search(AppIdSession*);
     sfip_t* get_http_xff_addr(AppIdSession*);
     char* get_tls_host(AppIdSession*);
-    DhcpFPData* get_dhcp_fp_data(AppIdSession*);
-    void free_dhcp_fp_data(AppIdSession*, DhcpFPData*);
+    DHCPData* get_dhcp_fp_data(AppIdSession*);
+    void free_dhcp_fp_data(AppIdSession*, DHCPData*);
     DHCPInfo* get_dhcp_info(AppIdSession*);
     void free_dhcp_info(AppIdSession*, DHCPInfo*);
     FpSMBData* get_smb_fp_data(AppIdSession*);
     void free_smb_fp_data(AppIdSession*, FpSMBData*);
     char* get_netbios_name(AppIdSession*);
-    uint32_t produce_ha_state(void* lwssn, uint8_t* buf);
-    uint32_t consume_ha_state(void* lwssn, const uint8_t* buf, uint8_t length, IpProtocol proto, sfip_t* ip);
+    uint32_t produce_ha_state(Flow* flow, uint8_t* buf);
+    uint32_t consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t length,
+            IpProtocol proto, sfip_t* ip);
     AppIdSession* get_appid_data(Flow* flow);
     char* get_dns_query(AppIdSession*, uint8_t* query_len);
     uint16_t get_dns_query_offset(AppIdSession*);

@@ -62,7 +62,7 @@ struct ServiceNTPOptional
 static int ntp_init(const IniServiceAPI* const init_api);
 static int ntp_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &ntp_validate,
@@ -74,7 +74,7 @@ static RNAServiceElement svc_element =
     "ntp"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &ntp_validate, 123, IpProtocol::UDP, 0 },
     { &ntp_validate, 123, IpProtocol::TCP, 0 },
@@ -116,7 +116,7 @@ static int ntp_validate(ServiceValidationArgs* args)
     const ServiceNTPHeader* nh;
     uint8_t ver;
     uint8_t mode;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 
@@ -163,18 +163,18 @@ static int ntp_validate(ServiceValidationArgs* args)
             goto fail;
     }
 
-    ntp_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+    ntp_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
         APP_ID_NTP, nullptr, nullptr, nullptr);
     appid_stats.ntp_flows++;
     return SERVICE_SUCCESS;
 
 inprocess:
-    ntp_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+    ntp_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 fail:
-    ntp_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-        ntp_service_mod.flow_data_index, args->pConfig);
+    ntp_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+        ntp_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

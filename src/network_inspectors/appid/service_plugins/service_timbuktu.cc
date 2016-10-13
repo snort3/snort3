@@ -73,14 +73,12 @@ static const RNAServiceElement svc_element =
     "timbuktu"
 };
 
-// FIXIT thread safety, can this be const?
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &timbuktu_validate, TIMBUKTU_PORT, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
 };
 
-// FIXIT thread safety, can this be const?
 SO_PUBLIC RNAServiceValidationModule timbuktu_service_mod =
 {
     svc_name,
@@ -116,7 +114,7 @@ static int timbuktu_init(const IniServiceAPI* const init_api)
 static int timbuktu_validate(ServiceValidationArgs* args)
 {
     ServiceTIMBUKTUData* ss;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
     uint16_t offset=0;
@@ -126,12 +124,12 @@ static int timbuktu_validate(ServiceValidationArgs* args)
     if (args->dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    ss = (ServiceTIMBUKTUData*)timbuktu_service_mod.api->data_get(flowp,
+    ss = (ServiceTIMBUKTUData*)timbuktu_service_mod.api->data_get(asd,
         timbuktu_service_mod.flow_data_index);
     if (!ss)
     {
         ss = (ServiceTIMBUKTUData*)snort_calloc(sizeof(ServiceTIMBUKTUData));
-        timbuktu_service_mod.api->data_add(flowp, ss,
+        timbuktu_service_mod.api->data_add(asd, ss,
             timbuktu_service_mod.flow_data_index, &snort_free);
         ss->state = TIMBUKTU_STATE_BANNER;
     }
@@ -184,19 +182,18 @@ static int timbuktu_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    timbuktu_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+    timbuktu_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    timbuktu_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+    timbuktu_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
         APP_ID_TIMBUKTU, nullptr, nullptr, nullptr);
     appid_stats.timbuktu_flows++;
     return SERVICE_SUCCESS;
 
 fail:
-    timbuktu_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-        timbuktu_service_mod.flow_data_index,
-        args->pConfig);
+    timbuktu_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+        timbuktu_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

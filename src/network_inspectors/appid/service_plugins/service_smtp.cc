@@ -62,8 +62,7 @@ struct ServiceSMTPCode
 static int smtp_init(const IniServiceAPI* const init_api);
 static int smtp_validate(ServiceValidationArgs* args);
 
-//  FIXIT-L: Make the globals const or, if necessary, thread-local.
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &smtp_validate,
@@ -75,7 +74,7 @@ static RNAServiceElement svc_element =
     "smtp"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &smtp_validate, 25, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
@@ -237,7 +236,7 @@ static int smtp_validate_reply(const uint8_t* data, uint16_t* offset,
 static int smtp_validate(ServiceValidationArgs* args)
 {
     ServiceSMTPData* fd;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
     uint16_t offset;
@@ -247,16 +246,16 @@ static int smtp_validate(ServiceValidationArgs* args)
     if (args->dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    fd = (ServiceSMTPData*)smtp_service_mod.api->data_get(flowp, smtp_service_mod.flow_data_index);
+    fd = (ServiceSMTPData*)smtp_service_mod.api->data_get(asd, smtp_service_mod.flow_data_index);
     if (!fd)
     {
         fd = (ServiceSMTPData*)snort_calloc(sizeof(ServiceSMTPData));
-        smtp_service_mod.api->data_add(flowp, fd, smtp_service_mod.flow_data_index, &snort_free);
+        smtp_service_mod.api->data_add(asd, fd, smtp_service_mod.flow_data_index, &snort_free);
         fd->state = SMTP_STATE_CONNECTION;
     }
     else
     {
-        if (flowp->getAppIdFlag(APPID_SESSION_ENCRYPTED) && fd->state == SMTP_STATE_TRANSFER)
+        if (asd->get_session_flags(APPID_SESSION_ENCRYPTED) && fd->state == SMTP_STATE_TRANSFER)
         {
             fd->state = SMTP_STATE_STARTTLS;
         }
@@ -265,7 +264,7 @@ static int smtp_validate(ServiceValidationArgs* args)
     if (!fd->set_flags)
     {
         fd->set_flags = 1;
-        flowp->setAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+        asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
     offset = 0;
@@ -316,7 +315,7 @@ static int smtp_validate(ServiceValidationArgs* args)
             if (fd->code == 220)
                 goto success;
             /* STARTTLS failed. */
-            flowp->clearAppIdFlag(APPID_SESSION_ENCRYPTED); // not encrypted after all
+            asd->clear_session_flags(APPID_SESSION_ENCRYPTED); // not encrypted after all
             fd->state = SMTP_STATE_HELO; // revert the state
             break;
         case SMTP_STATE_TRANSFER:
@@ -328,11 +327,11 @@ static int smtp_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    smtp_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+    smtp_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    smtp_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+    smtp_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
         fd->state == SMTP_STATE_STARTTLS ? APP_ID_SMTPS : APP_ID_SMTP,
         nullptr, nullptr, nullptr);
     if (fd->state == SMTP_STATE_STARTTLS)
@@ -343,8 +342,8 @@ success:
     return SERVICE_SUCCESS;
 
 fail:
-    smtp_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-        smtp_service_mod.flow_data_index, args->pConfig);
+    smtp_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+        smtp_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

@@ -35,11 +35,9 @@
 
 #define ODP_PORT_DETECTORS "odp/port/*"
 #define CUSTOM_PORT_DETECTORS "custom/port/*"
+#define MAX_DISPLAY_SIZE   65536
 
-// FIXIT - M this global needs to go asap... just here now to compile while doing some major config
-// refactoring
-AppIdConfig* pAppidActiveConfig = nullptr;
-
+static AppIdConfig* appid_config = nullptr;
 unsigned appIdPolicyId;
 uint32_t app_id_netmasks[33];
 
@@ -56,8 +54,24 @@ AppIdModuleConfig::~AppIdModuleConfig()
     snort_free((void*)conf_file);
     snort_free((void*)app_detector_dir);
     snort_free((void*)thirdparty_appid_dir);
-    pAppidActiveConfig = nullptr;
+    appid_config = nullptr;
 
+}
+
+AppIdConfig::AppIdConfig( AppIdModuleConfig* config )
+     : mod_config( config ), app_info_mgr(AppInfoManager::get_instance())
+{
+
+}
+
+AppIdConfig::~AppIdConfig()
+{
+    cleanup();
+}
+
+AppIdConfig* AppIdConfig::get_appid_config()
+{
+    return appid_config;
 }
 
 void AppIdConfig::add_generic_config_element(const char* name, void* pData)
@@ -82,9 +96,7 @@ void* AppIdConfig::find_generic_config_element(const char* name)
         pConfigItem = (AppidGenericConfigItem*)sflist_next(&next))
     {
         if (strcmp(pConfigItem->name, name) == 0)
-        {
             return pConfigItem->pData;
-        }
     }
 
     return nullptr;
@@ -214,6 +226,7 @@ void AppIdConfig::read_port_detectors(const char* files)
                 }
             }
         }
+
         if (port && proto && appId > APP_ID_NONE)
         {
             while ((tmp_port = port))
@@ -225,9 +238,9 @@ void AppIdConfig::read_port_detectors(const char* files)
                     udp_port_only[tmp_port->port] = appId;
 
                 snort_free(tmp_port);
-                set_app_info_active(appId);
+                app_info_mgr.set_app_info_active(appId);
             }
-            set_app_info_active(appId);
+            app_info_mgr.set_app_info_active(appId);
         }
         else
             ErrorMessage("Missing parameter(s) in port service '%s'\n",globs.gl_pathv[n]);
@@ -668,28 +681,24 @@ void AppIdConfig::set_safe_search_enforcement(int enabled)
 
 bool AppIdConfig::init_appid( )
 {
+    appid_config = this;
 	map_app_names_to_snort_ids();
-
 	appIdPolicyId = 53;
-	// FIXIT - active config must be per Inspector instance...not this global...
-	pAppidActiveConfig = this;
 	InitNetmasks(app_id_netmasks);
-	init_appid_info_table(mod_config->app_detector_dir);
-	sflist_init(&pAppidActiveConfig->client_app_args);
+	app_info_mgr.init_appid_info_table(mod_config->app_detector_dir);
+	sflist_init(&appid_config->client_app_args);
 	load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);
 	read_port_detectors(ODP_PORT_DETECTORS);
 	read_port_detectors(CUSTOM_PORT_DETECTORS);
-
 	ThirdPartyAppIDInit(mod_config);
-
 	show();
 
 	if ( mod_config->dump_ports )
 	{
 		dumpPorts(stdout);
 		display_port_config();
-		dump_app_info_table();
-		exit(0);
+		app_info_mgr.dump_app_info_table();
+		exit(0);        // FIXIT-L - implement better way to dump config and exit
 	}
 
 	return true;
@@ -726,7 +735,7 @@ void AppIdConfig::cleanup()
         thirdparty_appid_module->print_stats();
     ThirdPartyAppIDFini();
 
-    cleanup_appid_info_table();
+    app_info_mgr.cleanup_appid_info_table();
 
     NetworkSet* net_list;          ///< list of network sets
     while ((net_list = net_list_list))
@@ -862,7 +871,7 @@ void AppIdConfig::display_port_config()
     int first;
 
     first = 1;
-    for (i=0; i<sizeof(tcp_port_only)/sizeof(*tcp_port_only); i++)
+    for (i = 0; i < sizeof(tcp_port_only) / sizeof(AppId); i++)
     {
         if (tcp_port_only[i])
         {
@@ -876,7 +885,7 @@ void AppIdConfig::display_port_config()
     }
 
     first = 1;
-    for (i=0; i<sizeof(udp_port_only)/sizeof(*udp_port_only); i++)
+    for (i = 0; i<sizeof(udp_port_only) / sizeof(AppId); i++)
     {
         if (udp_port_only[i])
         {
@@ -889,4 +898,3 @@ void AppIdConfig::display_port_config()
         }
     }
 }
-

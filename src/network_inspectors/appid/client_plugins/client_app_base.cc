@@ -62,10 +62,10 @@
  * already exist). */
 #define MAX_CANDIDATE_CLIENTS 10
 
-static void* client_app_flowdata_get(AppIdSession* flowp, unsigned client_id);
-static int client_app_flowdata_add(AppIdSession* flowp, void* data, unsigned client_id, AppIdFreeFCN
+static void* client_app_flowdata_get(AppIdSession* asd, unsigned client_id);
+static int client_app_flowdata_add(AppIdSession* asd, void* data, unsigned client_id, AppIdFreeFCN
     fcn);
-static void AppIdAddClientAppInfo(AppIdSession* flowp, const char* info);
+static void AppIdAddClientAppInfo(AppIdSession* asd, const char* info);
 
 static const ClientAppApi client_app_api =
 {
@@ -147,7 +147,7 @@ static THREAD_LOCAL ClientAppMatch* match_free_list = nullptr;
 
 static void appSetClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extractsInfo)
 {
-    AppInfoTableEntry* pEntry = appInfoEntryGet(appId);
+    AppInfoTableEntry* pEntry = AppInfoManager::get_instance().get_app_info_entry(appId);
     if (!pEntry)
     {
         ErrorMessage("AppId: invalid direct client application AppId: %d\n", appId);
@@ -571,14 +571,13 @@ void init_client_plugins()
 
     sflist_init(&client_app_config->module_configs);
     client_app_config->enabled = true;
-    ClientAppParseArgs(&pAppidActiveConfig->client_app_args);
+    ClientAppParseArgs(&AppIdConfig::get_appid_config()->client_app_args);
 
     if (client_app_config->enabled)
     {
-        client_init_api.debug = pAppidActiveConfig->mod_config->debug;
-        client_init_api.pAppidConfig = pAppidActiveConfig;
-        // FIXIT - active config global must go...
-        client_init_api.instance_id = pAppidActiveConfig->mod_config->instance_id;
+        client_init_api.debug = AppIdConfig::get_appid_config()->mod_config->debug;
+        client_init_api.pAppidConfig = AppIdConfig::get_appid_config();
+        client_init_api.instance_id = AppIdConfig::get_appid_config()->mod_config->instance_id;
 
         for (li = client_app_config->tcp_client_app_list; li; li = li->next)
             initialize_module(li);
@@ -702,32 +701,32 @@ static int pattern_match(void* id, void* /*unused_tree*/, int index, void* data,
     return 0;
 }
 
-void AppIdAddClientApp(AppIdSession* flowp, AppId service_id, AppId id, const char* version)
+void AppIdAddClientApp(AppIdSession* asd, AppId service_id, AppId id, const char* version)
 {
     if (version)
     {
-        if (flowp->client_version)
+        if (asd->client_version)
         {
-            if (strcmp(version, flowp->client_version))
+            if (strcmp(version, asd->client_version))
             {
-                snort_free(flowp->client_version);
-                flowp->client_version = snort_strdup(version);
+                snort_free(asd->client_version);
+                asd->client_version = snort_strdup(version);
             }
         }
         else
-            flowp->client_version = snort_strdup(version);
+            asd->client_version = snort_strdup(version);
     }
 
-    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
-    flowp->client_service_app_id = service_id;
-    flowp->client_app_id = id;
+    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    asd->client_service_app_id = service_id;
+    asd->client_app_id = id;
     checkSandboxDetection(id);
 }
 
-static void AppIdAddClientAppInfo(AppIdSession* flowp, const char* info)
+static void AppIdAddClientAppInfo(AppIdSession* asd, const char* info)
 {
-    if (flowp->hsession && !flowp->hsession->url)
-        flowp->hsession->url = snort_strdup(info);
+    if (asd->hsession && !asd->hsession->url)
+        asd->hsession->url = snort_strdup(info);
 }
 
 static ClientAppMatch* BuildClientPatternList(const Packet* pkt, IpProtocol protocol)
@@ -817,7 +816,7 @@ static void FreeClientPatternList(ClientAppMatch** match_list)
  *
  * @param p packet to process
  */
-static void ClientAppID(Packet* p, const int /*direction*/, AppIdSession* flowp)
+static void ClientAppID(Packet* p, const int /*direction*/, AppIdSession* asd)
 {
     const RNAClientAppModule* client = nullptr;
     ClientAppMatch* match_list;
@@ -829,36 +828,36 @@ static void ClientAppID(Packet* p, const int /*direction*/, AppIdSession* flowp)
     if (!p->dsize)
         return;
 
-    if (flowp->rna_client_data != nullptr)
+    if (asd->rna_client_data != nullptr)
         return;
 
-    if (flowp->candidate_client_list != nullptr)
+    if (asd->candidate_client_list != nullptr)
     {
-        if (flowp->num_candidate_clients_tried > 0)
+        if (asd->num_candidate_clients_tried > 0)
             return;
     }
     else
     {
-        flowp->candidate_client_list = (SF_LIST*) snort_calloc(sizeof(SF_LIST));
-        sflist_init(flowp->candidate_client_list);
-        flowp->num_candidate_clients_tried = 0;
+        asd->candidate_client_list = (SF_LIST*) snort_calloc(sizeof(SF_LIST));
+        sflist_init(asd->candidate_client_list);
+        asd->num_candidate_clients_tried = 0;
     }
 
-    match_list = BuildClientPatternList(p, flowp->protocol);
-    while (flowp->num_candidate_clients_tried < MAX_CANDIDATE_CLIENTS)
+    match_list = BuildClientPatternList(p, asd->protocol);
+    while (asd->num_candidate_clients_tried < MAX_CANDIDATE_CLIENTS)
     {
         const RNAClientAppModule* tmp = GetNextFromClientPatternList(&match_list);
         if (tmp != nullptr)
         {
             SF_LNODE* cursor;
 
-            client = (RNAClientAppModule*)sflist_first(flowp->candidate_client_list, &cursor);
+            client = (RNAClientAppModule*)sflist_first(asd->candidate_client_list, &cursor);
             while (client && (client != tmp))
                 client = (RNAClientAppModule*)sflist_next(&cursor);
             if (client == nullptr)
             {
-                sflist_add_tail(flowp->candidate_client_list, (void*)tmp);
-                flowp->num_candidate_clients_tried++;
+                sflist_add_tail(asd->candidate_client_list, (void*)tmp);
+                asd->num_candidate_clients_tried++;
 #ifdef CLIENT_APP_DEBUG
                 _dpd.logMsg("Using %s from pattern match", tmp ? tmp->name : \ n ",ULL");
 #endif
@@ -871,13 +870,13 @@ static void ClientAppID(Packet* p, const int /*direction*/, AppIdSession* flowp)
     }
     FreeClientPatternList(&match_list);
 
-    if (sflist_count(flowp->candidate_client_list) == 0)
+    if (sflist_count(asd->candidate_client_list) == 0)
     {
         client = nullptr;
         switch (p->ptrs.dp)
         {
         case 465:
-            if (flowp->getAppIdFlag(APPID_SESSION_DECRYPTED))
+            if (asd->get_session_flags(APPID_SESSION_DECRYPTED))
                 client = &smtp_client_mod;
             break;
         default:
@@ -885,8 +884,8 @@ static void ClientAppID(Packet* p, const int /*direction*/, AppIdSession* flowp)
         }
         if (client != nullptr)
         {
-            sflist_add_tail(flowp->candidate_client_list, (void*)client);
-            flowp->num_candidate_clients_tried++;
+            sflist_add_tail(asd->candidate_client_list, (void*)client);
+            asd->num_candidate_clients_tried++;
         }
     }
 }
@@ -899,24 +898,24 @@ int AppIdDiscoverClientApp(Packet* p, int direction, AppIdSession* rnaData)
     if (direction == APP_ID_FROM_INITIATOR)
     {
         /* get out if we've already tried to validate a client app */
-        if (!rnaData->getAppIdFlag(APPID_SESSION_CLIENT_DETECTED))
+        if (!rnaData->get_session_flags(APPID_SESSION_CLIENT_DETECTED))
             ClientAppID(p, direction, rnaData);
     }
     else if ( rnaData->rnaServiceState != RNA_STATE_STATEFUL
-              && rnaData->getAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))
+              && rnaData->get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))
         ClientAppID(p, direction, rnaData);
 
     return APPID_SESSION_SUCCESS;
 }
 
-static void* client_app_flowdata_get(AppIdSession* flowp, unsigned client_id)
+static void* client_app_flowdata_get(AppIdSession* asd, unsigned client_id)
 {
-    return flowp->get_flow_data(client_id);
+    return asd->get_flow_data(client_id);
 }
 
-static int client_app_flowdata_add(AppIdSession* flowp, void* data, unsigned client_id, AppIdFreeFCN
+static int client_app_flowdata_add(AppIdSession* asd, void* data, unsigned client_id, AppIdFreeFCN
     fcn)
 {
-    return flowp->add_flow_data(data, client_id, fcn);
+    return asd->add_flow_data(data, client_id, fcn);
 }
 

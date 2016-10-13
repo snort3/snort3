@@ -68,7 +68,7 @@ struct ServiceIRCData
 static int irc_init(const IniServiceAPI* const init_api);
 static int irc_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &irc_validate,
@@ -80,7 +80,7 @@ static RNAServiceElement svc_element =
     "irc"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &irc_validate, 6667, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
@@ -123,7 +123,7 @@ static int irc_validate(ServiceValidationArgs* args)
     IRCState* state;
     unsigned* pos;
     const char** command;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     const int dir = args->dir;
     uint16_t size = args->size;
@@ -131,11 +131,11 @@ static int irc_validate(ServiceValidationArgs* args)
     if (!size)
         goto inprocess;
 
-    id = (ServiceIRCData*)irc_service_mod.api->data_get(flowp, irc_service_mod.flow_data_index);
+    id = (ServiceIRCData*)irc_service_mod.api->data_get(asd, irc_service_mod.flow_data_index);
     if (!id)
     {
         id =  (ServiceIRCData*)snort_calloc(sizeof(ServiceIRCData));
-        irc_service_mod.api->data_add(flowp, id, irc_service_mod.flow_data_index, &snort_free);
+        irc_service_mod.api->data_add(asd, id, irc_service_mod.flow_data_index, &snort_free);
         id->initiator_state = IRC_STATE_BEGIN;
         id->state = IRC_STATE_BEGIN;
     }
@@ -315,11 +315,11 @@ static int irc_validate(ServiceValidationArgs* args)
         }
     }
 inprocess:
-    irc_service_mod.api->service_inprocess(flowp, args->pkt, dir, &svc_element);
+    irc_service_mod.api->service_inprocess(asd, args->pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    irc_service_mod.api->add_service(flowp, args->pkt, dir, &svc_element,
+    irc_service_mod.api->add_service(asd, args->pkt, dir, &svc_element,
         APP_ID_IRCD, nullptr, nullptr, nullptr);
     appid_stats.irc_flows++;
     return SERVICE_SUCCESS;
@@ -327,12 +327,12 @@ success:
 fail:
     if (dir == APP_ID_FROM_RESPONDER)
     {
-        irc_service_mod.api->fail_service(flowp, args->pkt, dir, &svc_element,
-            irc_service_mod.flow_data_index, args->pConfig);
+        irc_service_mod.api->fail_service(asd, args->pkt, dir, &svc_element,
+            irc_service_mod.flow_data_index);
     }
     else
     {
-        irc_service_mod.api->incompatible_data(flowp, args->pkt, dir, &svc_element,
+        irc_service_mod.api->incompatible_data(asd, args->pkt, dir, &svc_element,
             irc_service_mod.flow_data_index, args->pConfig);
     }
     return SERVICE_NOMATCH;

@@ -47,7 +47,7 @@ struct ServiceData
 static int battle_field_init(const IniServiceAPI* const init_api);
 static int battle_field_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &battle_field_validate,
@@ -59,7 +59,7 @@ static RNAServiceElement svc_element =
     "battle_field"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &battle_field_validate, 4711,  IpProtocol::TCP, 0 },
     { &battle_field_validate, 16567, IpProtocol::UDP, 0 },
@@ -114,7 +114,6 @@ static int battle_field_init(const IniServiceAPI* const init_api)
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
-        DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&battle_field_validate, appIdRegistry[i].appId,
             appIdRegistry[i].additionalInfo);
     }
@@ -125,7 +124,7 @@ static int battle_field_init(const IniServiceAPI* const init_api)
 static int battle_field_validate(ServiceValidationArgs* args)
 {
     ServiceData* fd;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     uint16_t size = args->size;
@@ -135,12 +134,12 @@ static int battle_field_validate(ServiceValidationArgs* args)
         goto inprocess_nofd;
     }
 
-    fd = (ServiceData*)battlefield_service_mod.api->data_get(flowp,
+    fd = (ServiceData*)battlefield_service_mod.api->data_get(asd,
         battlefield_service_mod.flow_data_index);
     if (!fd)
     {
         fd = (ServiceData*)snort_calloc(sizeof(ServiceData));
-        battlefield_service_mod.api->data_add(flowp, fd,
+        battlefield_service_mod.api->data_add(asd, fd,
             battlefield_service_mod.flow_data_index, &snort_free);
     }
 
@@ -201,9 +200,8 @@ static int battle_field_validate(ServiceValidationArgs* args)
         goto success;
     }
 
-    battlefield_service_mod.api->fail_service(flowp, pkt, args->dir, &svc_element,
-        battlefield_service_mod.flow_data_index,
-        args->pConfig);
+    battlefield_service_mod.api->fail_service(asd, pkt, args->dir, &svc_element,
+        battlefield_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 
 inprocess:
@@ -211,7 +209,7 @@ inprocess:
     if (fd->packetCount >= MAX_PACKET_INSPECTION_COUNT)
         goto fail;
 inprocess_nofd:
-    battlefield_service_mod.api->service_inprocess(flowp, pkt, args->dir, &svc_element);
+    battlefield_service_mod.api->service_inprocess(asd, pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
@@ -221,15 +219,14 @@ success:
         goto inprocess;
     }
 
-    battlefield_service_mod.api->add_service(flowp, pkt, args->dir, &svc_element,
+    battlefield_service_mod.api->add_service(asd, pkt, args->dir, &svc_element,
         APP_ID_BATTLEFIELD, nullptr, nullptr, nullptr);
     appid_stats.battlefield_flows++;
     return SERVICE_SUCCESS;
 
 fail:
-    battlefield_service_mod.api->fail_service(flowp, pkt, args->dir, &svc_element,
-        battlefield_service_mod.flow_data_index,
-        args->pConfig);
+    battlefield_service_mod.api->fail_service(asd, pkt, args->dir, &svc_element,
+        battlefield_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

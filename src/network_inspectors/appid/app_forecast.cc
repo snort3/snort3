@@ -24,7 +24,6 @@
 #include "hash/sfxhash.h"
 #include "time/packet_time.h"
 #include "log/messages.h"
-
 #include "application_ids.h"
 
 static AFActKey master_key;
@@ -83,7 +82,7 @@ void add_af_indicator(ApplicationId indicator, ApplicationId forecast, Applicati
         ErrorMessage("LuaDetectorApi:Failed to add AFElement for appId %d", indicator);
 }
 
-static inline void rekeyMasterAFActKey(Packet* p, int dir, ApplicationId forecast)
+static inline void rekey_master_AF_key(Packet* p, int dir, ApplicationId forecast)
 {
     const sfip_t* src = dir ? p->ptrs.ip_api.get_dst() : p->ptrs.ip_api.get_src();
 
@@ -93,13 +92,13 @@ static inline void rekeyMasterAFActKey(Packet* p, int dir, ApplicationId forecas
     master_key.forecast = forecast;
 }
 
-void checkSessionForAFIndicator(Packet* p, int dir, ApplicationId indicator)
+void check_session_for_AF_indicator(Packet* p, int dir, ApplicationId indicator)
 {
     AFElement* ind_element;
     if (!(ind_element = (AFElement*)sfxhash_find(AF_indicators, &indicator)))
         return;
 
-    rekeyMasterAFActKey(p, dir, ind_element->forecast);
+    rekey_master_AF_key(p, dir, ind_element->forecast);
 
     AFActVal* test_active_value;
     if ((test_active_value = (AFActVal*)sfxhash_find(AF_actives, &master_key)))
@@ -116,11 +115,11 @@ void checkSessionForAFIndicator(Packet* p, int dir, ApplicationId indicator)
     sfxhash_add(AF_actives, &master_key, &new_active_value);
 }
 
-AppId checkSessionForAFForecast(AppIdSession* session, Packet* p, int dir, ApplicationId forecast)
+AppId check_session_for_AF_forecast(AppIdSession* asd, Packet* p, int dir, ApplicationId forecast)
 {
     AFActVal* check_act_val;
 
-    rekeyMasterAFActKey(p, dir, forecast);
+    rekey_master_AF_key(p, dir, forecast);
 
     //get out if there is no value
     if (!(check_act_val = (AFActVal*)sfxhash_find(AF_actives, &master_key)))
@@ -135,7 +134,7 @@ AppId checkSessionForAFForecast(AppIdSession* session, Packet* p, int dir, Appli
         return APP_ID_UNKNOWN;
     }
 
-    session->payload_app_id = check_act_val->target;
+    asd->payload_app_id = check_act_val->target;
     return forecast;
 }
 

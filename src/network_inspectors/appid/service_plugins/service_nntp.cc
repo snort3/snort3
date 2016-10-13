@@ -65,7 +65,7 @@ struct ServiceNNTPCode
 static int nntp_init(const IniServiceAPI* const init_api);
 static int nntp_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &nntp_validate,
@@ -77,7 +77,7 @@ static RNAServiceElement svc_element =
     "nntp"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &nntp_validate, NNTP_PORT, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
@@ -298,7 +298,7 @@ static int nntp_validate(ServiceValidationArgs* args)
     ServiceNNTPData* nd;
     uint16_t offset;
     int code;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 
@@ -307,11 +307,11 @@ static int nntp_validate(ServiceValidationArgs* args)
     if (args->dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    nd = (ServiceNNTPData*)nntp_service_mod.api->data_get(flowp, nntp_service_mod.flow_data_index);
+    nd = (ServiceNNTPData*)nntp_service_mod.api->data_get(asd, nntp_service_mod.flow_data_index);
     if (!nd)
     {
         nd = (ServiceNNTPData*)snort_calloc(sizeof(ServiceNNTPData));
-        nntp_service_mod.api->data_add(flowp, nd, nntp_service_mod.flow_data_index, &snort_free);
+        nntp_service_mod.api->data_add(asd, nd, nntp_service_mod.flow_data_index, &snort_free);
         nd->state = NNTP_STATE_CONNECTION;
     }
 
@@ -375,18 +375,18 @@ static int nntp_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    nntp_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+    nntp_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    nntp_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+    nntp_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
         APP_ID_NNTP, nullptr, nullptr, nullptr);
     appid_stats.nntp_flows++;
     return SERVICE_SUCCESS;
 
 fail:
-    nntp_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-        nntp_service_mod.flow_data_index, args->pConfig);
+    nntp_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+        nntp_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

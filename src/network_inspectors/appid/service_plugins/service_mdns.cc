@@ -105,7 +105,7 @@ static void mdnsMatchListFind(const char* dataPtr, uint16_t index, const char** 
 static void mdnsMatchListDestroy();
 static void MDNS_clean();
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &MDNS_validate,
@@ -117,7 +117,7 @@ static RNAServiceElement svc_element =
     "MDNS"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &MDNS_validate, 5353, IpProtocol::UDP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
@@ -246,7 +246,7 @@ static int ReferencePointer(const char* start_ptr, const char** resp_endptr,   i
                2. Calls the function which scans for pattern to identify the user
                3. Calls the function which does the Username reporting along with the host
   MDNS User Analysis*/
-static int MDNSUserAnalyser(AppIdSession* flowp, const Packet* pkt, uint16_t size, const
+static int MDNSUserAnalyser(AppIdSession* asd, const Packet* pkt, uint16_t size, const
     AppIdConfig* pConfig)
 {
     const char* query_val;
@@ -312,7 +312,7 @@ static int MDNSUserAnalyser(AppIdSession* flowp, const Packet* pkt, uint16_t siz
                     user_index++;
                 }
 
-                mdns_service_mod.api->add_user(flowp, user_name, APP_ID_MDNS, 1);
+                mdns_service_mod.api->add_user(asd, user_name, APP_ID_MDNS, 1);
                 break;
             }
             /* Find the  length to Jump to the next response */
@@ -365,7 +365,7 @@ static int MDNSUserAnalyser(AppIdSession* flowp, const Packet* pkt, uint16_t siz
                             memcpy(user_name, user_name_bkp + user_index, user_name_len -
                                 user_index);
                             user_name[ user_name_len - user_index ] = '\0';
-                            mdns_service_mod.api->add_user(flowp, user_name, APP_ID_MDNS, 1);
+                            mdns_service_mod.api->add_user(asd, user_name, APP_ID_MDNS, 1);
                             return 1;
                         }
                         else
@@ -393,16 +393,16 @@ static int MDNS_validate(ServiceValidationArgs* args)
 {
     ServiceMDNSData* fd;
     int ret_val;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     uint16_t size = args->size;
 
-    fd = (ServiceMDNSData*)mdns_service_mod.api->data_get(flowp, mdns_service_mod.flow_data_index);
+    fd = (ServiceMDNSData*)mdns_service_mod.api->data_get(asd, mdns_service_mod.flow_data_index);
     if (!fd)
     {
         fd = (ServiceMDNSData*)snort_calloc(sizeof(ServiceMDNSData));
-        mdns_service_mod.api->data_add(flowp, fd, mdns_service_mod.flow_data_index, &snort_free);
+        mdns_service_mod.api->data_add(asd, fd, mdns_service_mod.flow_data_index, &snort_free);
         fd->state = MDNS_STATE_CONNECTION;
     }
 
@@ -411,9 +411,9 @@ static int MDNS_validate(ServiceValidationArgs* args)
         ret_val = MDNS_validate_reply(data, size);
         if (ret_val == 1)
         {
-            if (pAppidActiveConfig->mod_config->mdns_user_reporting)
+            if (AppIdConfig::get_appid_config()->mod_config->mdns_user_reporting)
             {
-                MDNSUserAnalyser(flowp, pkt, size, args->pConfig);
+                MDNSUserAnalyser(asd, pkt, size, args->pConfig);
                 mdnsMatchListDestroy();
                 goto success;
             }
@@ -426,14 +426,14 @@ static int MDNS_validate(ServiceValidationArgs* args)
         goto fail;
 
 success:
-    mdns_service_mod.api->add_service(flowp, pkt, args->dir, &svc_element,
+    mdns_service_mod.api->add_service(asd, pkt, args->dir, &svc_element,
         APP_ID_MDNS, nullptr, nullptr, nullptr);
     appid_stats.mdns_flows++;
     return SERVICE_SUCCESS;
 
 fail:
-    mdns_service_mod.api->fail_service(flowp, pkt, args->dir, &svc_element,
-        mdns_service_mod.flow_data_index, args->pConfig);
+    mdns_service_mod.api->fail_service(asd, pkt, args->dir, &svc_element,
+        mdns_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 
@@ -462,14 +462,14 @@ static int mdnsMatcherCreate()
             (char*)patterns[i].pattern, patterns[i].length, &patterns[i]);
 
     pMdnsConfig->mdnsMatcher->prep();
-    pAppidActiveConfig->add_generic_config_element(svc_element.name, pMdnsConfig);
+    AppIdConfig::get_appid_config()->add_generic_config_element(svc_element.name, pMdnsConfig);
     return 1;
 }
 
 static void mdnsMatcherDestroy()
 {
     MdnsConfig* pMdnsConfig =
-            (MdnsConfig*)pAppidActiveConfig->find_generic_config_element(svc_element.name);
+            (MdnsConfig*)AppIdConfig::get_appid_config()->find_generic_config_element(svc_element.name);
     MatchedPatterns* node;
     if (pMdnsConfig->mdnsMatcher)
         delete pMdnsConfig->mdnsMatcher;
@@ -483,7 +483,7 @@ static void mdnsMatcherDestroy()
         snort_free(node);
     }
     snort_free(pMdnsConfig);
-    pAppidActiveConfig->remove_generic_config_element(svc_element.name);
+    AppIdConfig::get_appid_config()->remove_generic_config_element(svc_element.name);
 }
 
 static int mdns_pattern_match(void* id, void*, int index, void* data, void*)
@@ -574,7 +574,7 @@ static void mdnsMatchListDestroy()
     MatchedPatterns* element;
 
     MdnsConfig* pMdnsConfig =
-            (MdnsConfig*)pAppidActiveConfig->find_generic_config_element(svc_element.name);
+            (MdnsConfig*)AppIdConfig::get_appid_config()->find_generic_config_element(svc_element.name);
     while (pMdnsConfig->patternList)
     {
         element = pMdnsConfig->patternList;

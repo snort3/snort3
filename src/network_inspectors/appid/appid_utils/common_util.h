@@ -29,19 +29,6 @@
 
 #include "framework/decode_data.h"
 
-struct FWDebugSessionConstraints
-{
-    ip::snort_in6_addr sip;
-    int sip_flag;
-    ip::snort_in6_addr dip;
-    int dip_flag;
-    uint16_t sport;
-    uint16_t dport;
-    PktType protocol;
-};
-
-#define FW_DEBUG_SESSION_ID_SIZE    (39+1+5+4+39+1+5+1+3+1+1+1+2+1+10+1+1+1+10+1)
-
 struct ConfigItem
 {
     char* name;                         /* name of the config item */

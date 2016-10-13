@@ -34,8 +34,6 @@
 class SearchTool;
 struct tMlmpTree;
 
-// FIXIT-M hack to get initial port to build, define these properly
-#if 1
 struct HttpParsedHeaders
 {
     struct HttpBuf
@@ -55,8 +53,7 @@ struct HttpParsedHeaders
 
 #define HTTP_XFF_FIELD_X_FORWARDED_FOR ""
 #define HTTP_XFF_FIELD_TRUE_CLIENT_IP ""
-
-#endif
+#define HTTP_MAX_XFF_FIELDS 255
 
 // These values are used in Lua code as raw numbers. Do NOT reassign new values.
 enum DHPSequence
@@ -196,12 +193,12 @@ struct CHPMatchCandidate
     int key_pattern_countdown;
 };
 
-// FIXIT-M: make the 'item' field a std:vector and refactor code to eliminate realloc calls
-struct CHPMatchTally
+typedef std::vector<CHPMatchCandidate> CHPMatchTally;
+
+struct CHPTallyAndActions
 {
-    int allocated_elements;
-    int in_use_elements;
-    CHPMatchCandidate item[1];
+    CHPMatchTally match_tally;
+    MatchedCHPAction* matches;
 };
 
 // url parts extracted from http headers.

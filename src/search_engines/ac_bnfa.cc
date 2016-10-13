@@ -85,7 +85,7 @@ public:
             obj, T, n, match, context, 0 /* start-state */, current_state);
     }
 
-    //  FIXIT-L: Implement search_all method for AC_BNFA.
+    //  FIXIT-L Implement search_all method for AC_BNFA.
 
     int print_info() override
     {

@@ -128,7 +128,7 @@ struct SO_PUBLIC Packet
     uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
 
     uint8_t num_layers;         /* index into layers for next encap */
-    // FIXIT-M: Consider moving ip_proto_next below `pkth`.
+    // FIXIT-M Consider moving ip_proto_next below `pkth`.
     IpProtocol ip_proto_next;      /* the protocol ID after IP and all IP6 extension */
     bool disable_inspect;
     // nothing after this point is zeroed ...

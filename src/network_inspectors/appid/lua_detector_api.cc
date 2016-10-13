@@ -134,7 +134,6 @@ Detector* createDetector(lua_State* L, const char* detectorName)
     UserData<Detector>::push(L, DETECTOR, detector);
 
     // add a lua reference so the detector doesn't get garbage-collected
-    // FIXIT-M J should go in a different table maybe?
     lua_pushvalue(L, -1);
     detector->detectorUserDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
     return detector;
@@ -218,7 +217,7 @@ static int service_registerPattern(lua_State* L)
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
 
     // FIXIT-M  none of these params check for signedness casting issues
-    // FIXIT-M: May want to create a lua_toipprotocol() so we can handle
+    // FIXIT-M May want to create a lua_toipprotocol() so we can handle
     //          error checking in that function.
     int protocol = lua_tonumber(L, index++);
     if (protocol > UINT8_MAX)
@@ -249,7 +248,7 @@ static void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned 
 {
     AppInfoTableEntry* entry;
 
-    if ((entry = appInfoEntryGet(appId)))
+    if ((entry = AppInfoManager::get_instance().get_app_info_entry(appId)))
     {
         entry->flags |= APPINFO_FLAG_ACTIVE;
         extractsInfo &= (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER);
@@ -282,10 +281,7 @@ static void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, 
 {
     AppInfoTableEntry* entry;
 
-    // FIXIT-L: what type of error would cause this lookup to fail? is this programming error
-    // or user error due to misconfig or something like that... if change in handling needed
-    // apply to all instances where this lookup is done
-    if ((entry = appInfoEntryGet(appId)))
+    if ((entry = AppInfoManager::get_instance().get_app_info_entry(appId)))
     {
         entry->flags |= APPINFO_FLAG_ACTIVE;
 
@@ -297,16 +293,15 @@ static void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, 
             return;
         }
 
-        entry->svrValidator = ServiceGetServiceElement(fcn, data);
+        entry->svrValidator = get_service_element(fcn, data);
         if (entry->svrValidator)
             entry->flags |= extractsInfo;
         else
-            ErrorMessage("AppId: Failed to find a service element for AppId: %d - %p\n",
-                    appId, (void*)data);
+            ErrorMessage("AppId: Failed to find a service element for AppId: %d\n",appId);
     }
     else
     {
-        ErrorMessage("Invalid direct service for AppId: %d - %p\n", appId, (void*)data);
+        WarningMessage("AppId: %d has not entry in application mapping configuration and no custom detector\n", appId);
     }
 }
 
@@ -326,7 +321,7 @@ static int common_registerAppId(lua_State* L)
         appSetLuaClientValidator(
             validateAnyClientApp, appId, APPINFO_FLAG_CLIENT_ADDITIONAL, ud.ptr);
 
-    set_app_info_active(appId);
+    AppInfoManager::get_instance().set_app_info_active(appId);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -334,9 +329,6 @@ static int common_registerAppId(lua_State* L)
 
 static int Detector_htons(lua_State* L)
 {
-    // FIXIT-L ignoring arg #1, as it is unused
-    // auto* ud = UserData<Detector>::check(L, DETECTOR, 1);
-
     unsigned short aShort = lua_tonumber(L, 2);
 
     lua_pushnumber(L, htons(aShort));
@@ -345,9 +337,6 @@ static int Detector_htons(lua_State* L)
 
 static int Detector_htonl(lua_State* L)
 {
-    // FIXIT-L ignoring arg #1, as it is unused
-    // auto* ud = UserData<Detector>::check(L, DETECTOR, 1);
-
     unsigned int anInt = lua_tonumber(L, 2);
 
     lua_pushnumber(L, htonl(anInt));
@@ -407,7 +396,7 @@ static int service_analyzePayload(lua_State* L)
 
     assert(ud->validateParams.pkt);
 
-    ud->validateParams.flowp->payload_app_id = payloadId;
+    ud->validateParams.asd->payload_app_id = payloadId;
 
     return 0;
 }
@@ -430,8 +419,7 @@ int validateAnyService(ServiceValidationArgs* args)
 
     if ( !detector )
     {
-        // FIXIT-M J unhelpful error message
-        ErrorMessage("invalid LUA parameters");
+        ErrorMessage("The service validation arguments do not contain a detector object\n");
         return SERVICE_ENULL;
     }
 
@@ -440,7 +428,7 @@ int validateAnyService(ServiceValidationArgs* args)
     detector->validateParams.data = args->data;
     detector->validateParams.size = args->size;
     detector->validateParams.dir = args->dir;
-    detector->validateParams.flowp = args->flowp;
+    detector->validateParams.asd = args->asd;
     detector->validateParams.pkt = args->pkt;
 
     const auto& serverName = detector->name;
@@ -582,9 +570,7 @@ static int service_setServiceName(lua_State* L)
  * @return int - Number of elements on stack, which is always 1.
  * @return serviceName/stack - service name if successful, nil otherwise.
  */
-static int service_getServiceName(
-    lua_State* L
-    )
+static int service_getServiceName(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
@@ -662,7 +648,7 @@ static int service_addDataId(lua_State* L)
         return 1;
     }
 
-    ud->validateParams.flowp->add_flow_data_id(sport, ud->server.pServiceElement);
+    ud->validateParams.asd->add_flow_data_id(sport, ud->server.pServiceElement);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -701,9 +687,9 @@ static int service_addService(
     /*Phase2 - discuss RNAServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr.
       Subtype is not displayed on DC at present. */
-    retValue = AppIdServiceAddService(ud->validateParams.flowp, ud->validateParams.pkt,
+    retValue = AppIdServiceAddService(ud->validateParams.asd, ud->validateParams.pkt,
         ud->validateParams.dir, ud->server.pServiceElement,
-        get_appid_by_service_id(serviceId), vendor, version, nullptr);
+        AppInfoManager::get_instance().get_appid_by_service_id(serviceId), vendor, version, nullptr);
 
     lua_pushnumber(L, retValue);
     return 1;
@@ -722,9 +708,9 @@ static int service_failService(lua_State* L)
 
     CHECK_INPUTS();
 
-    unsigned int retValue = AppIdServiceFailService(ud->validateParams.flowp,
+    unsigned int retValue = AppIdServiceFailService(ud->validateParams.asd,
         ud->validateParams.pkt, ud->validateParams.dir, ud->server.pServiceElement,
-        APPID_SESSION_DATA_NONE, ud->appid_config);
+        APPID_SESSION_DATA_NONE);
 
     lua_pushnumber(L, retValue);
     return 1;
@@ -743,7 +729,7 @@ static int service_inProcessService(lua_State* L)
 
     CHECK_INPUTS();
 
-    unsigned int retValue = AppIdServiceInProcess(ud->validateParams.flowp, ud->validateParams.pkt,
+    unsigned int retValue = AppIdServiceInProcess(ud->validateParams.asd, ud->validateParams.pkt,
         ud->validateParams.dir, ud->server.pServiceElement);
 
     lua_pushnumber(L, retValue);
@@ -764,7 +750,7 @@ static int service_inCompatibleData(lua_State* L)
 
     CHECK_INPUTS();
 
-    retValue = AppIdServiceIncompatibleData(ud->validateParams.flowp,
+    retValue = AppIdServiceIncompatibleData(ud->validateParams.asd,
         ud->validateParams.pkt,
         ud->validateParams.dir, ud->server.pServiceElement,
         APPID_SESSION_DATA_NONE, ud->appid_config);
@@ -946,7 +932,7 @@ static int Detector_getProtocolType(lua_State* L)
     }
 
     lua_checkstack (L, 1);
-    // FIXIT-M: is this conversion to double valid?
+    // FIXIT-M is this conversion to double valid?
     lua_pushnumber(L, (double)ud->validateParams.pkt->get_ip_proto_next() );
     return 1;
 }
@@ -1043,7 +1029,7 @@ static int Detector_getPktCount(lua_State* L)
 }
 
 CLIENT_APP_RETCODE validateAnyClientApp( const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, Detector* detector )
+    AppIdSession* asd, Packet* pkt, Detector* detector )
 {
     Profile lua_profile_context(luaCustomPerfStats);
 
@@ -1052,7 +1038,7 @@ CLIENT_APP_RETCODE validateAnyClientApp( const uint8_t* data, uint16_t size, con
     const char* validateFn;
     const char* clientName;
 
-    if (!data || !flowp || !pkt || !detector)
+    if (!data || !asd || !pkt || !detector)
     {
         return CLIENT_APP_ENULL;
     }
@@ -1061,7 +1047,7 @@ CLIENT_APP_RETCODE validateAnyClientApp( const uint8_t* data, uint16_t size, con
     detector->validateParams.data = data;
     detector->validateParams.size = size;
     detector->validateParams.dir = dir;
-    detector->validateParams.flowp = flowp;
+    detector->validateParams.asd = asd;
     detector->validateParams.pkt = (Packet*)pkt;
     validateFn = detector->packageInfo.client.validateFunctionName.c_str();
     clientName = detector->name.c_str();
@@ -1171,7 +1157,7 @@ static int service_addClient(lua_State* L)
         return 1;
     }
 
-    AppIdAddClientApp(ud->validateParams.flowp, serviceId, clienAppId, version);
+    AppIdAddClientApp(ud->validateParams.asd, serviceId, clienAppId, version);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -1195,8 +1181,9 @@ static int client_addApp(lua_State* L)
         return 1;
     }
 
-    ud->client.appModule.api->add_app(ud->validateParams.flowp,
-        get_appid_by_service_id(serviceId), get_appid_by_client_id(productId), version);
+    ud->client.appModule.api->add_app(ud->validateParams.asd,
+        AppInfoManager::get_instance().get_appid_by_service_id(serviceId),
+        AppInfoManager::get_instance().get_appid_by_client_id(productId), version);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -1217,7 +1204,7 @@ static int client_addInfo(lua_State* L)
         return 1;
     }
 
-    ud->client.appModule.api->add_info(ud->validateParams.flowp, info);
+    ud->client.appModule.api->add_info(ud->validateParams.asd, info);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -1240,8 +1227,8 @@ static int client_addUser(lua_State* L)
         return 1;
     }
 
-    ud->client.appModule.api->add_user(ud->validateParams.flowp, userName,
-        get_appid_by_service_id(serviceId), 1);
+    ud->client.appModule.api->add_user(ud->validateParams.asd, userName,
+        AppInfoManager::get_instance().get_appid_by_service_id(serviceId), 1);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -1262,8 +1249,8 @@ static int client_addPayload(lua_State* L)
         return 1;
     }
 
-    ud->client.appModule.api->add_payload(ud->validateParams.flowp,
-            get_appid_by_payload_id(payloadId));
+    ud->client.appModule.api->add_payload(ud->validateParams.asd,
+        AppInfoManager::get_instance().get_appid_by_payload_id(payloadId));
 
     lua_pushnumber(L, 0);
     return 1;
@@ -1291,7 +1278,7 @@ static int Detector_getFlow(lua_State* L)
     }
 
     auto df = new DetectorFlow();
-    df->pFlow = ud->validateParams.flowp;
+    df->asd = ud->validateParams.asd;
     UserData<DetectorFlow>::push(L, DETECTORFLOW, df);
 
     df->myLuaState = L;
@@ -1351,13 +1338,13 @@ int Detector_addHttpPattern(lua_State* L)
 
     uint8_t* pattern_str = (uint8_t*)snort_strdup(tmpString);
     uint32_t appId = lua_tointeger(L, index++);
-
+    AppInfoManager& app_info_manager = AppInfoManager::get_instance();
     HTTPListElement* element = (HTTPListElement*)snort_calloc(sizeof(HTTPListElement));
     DetectorHTTPPattern* pattern = &element->detectorHTTPPattern;
     pattern->seq           = seq;
-    pattern->service_id    = get_appid_by_service_id(service_id);
-    pattern->client_app    = get_appid_by_client_id(client_app);
-    pattern->payload       = get_appid_by_payload_id(payload);
+    pattern->service_id    = app_info_manager.get_appid_by_service_id(service_id);
+    pattern->client_app    = app_info_manager.get_appid_by_client_id(client_app);
+    pattern->payload       = app_info_manager.get_appid_by_payload_id(payload);
     pattern->pattern       = pattern_str;
     pattern->pattern_size  = (int)pattern_size;
     pattern->appId         = appId;
@@ -1372,10 +1359,10 @@ int Detector_addHttpPattern(lua_State* L)
 
     insert_http_pattern_element(pType, element);
 
-    set_app_info_active(pattern->service_id);
-    set_app_info_active(pattern->client_app);
-    set_app_info_active(pattern->payload);
-    set_app_info_active(appId);
+    app_info_manager.set_app_info_active(pattern->service_id);
+    app_info_manager.set_app_info_active(pattern->client_app);
+    app_info_manager.set_app_info_active(pattern->payload);
+    app_info_manager.set_app_info_active(appId);
 
     return 0;
 }
@@ -1422,7 +1409,7 @@ int Detector_addSSLCertPattern(lua_State* L)
     UNUSED(type);
 #endif
 
-    set_app_info_active(app_id);
+    AppInfoManager::get_instance().set_app_info_active(app_id);
     return 0;
 }
 
@@ -1504,7 +1491,7 @@ static int Detector_addSSLCnamePattern(lua_State* L)
     UNUSED(type);
 #endif
 
-    set_app_info_active(app_id);
+    AppInfoManager::get_instance().set_app_info_active(app_id);
     return 0;
 }
 
@@ -1582,7 +1569,7 @@ static int Detector_addContentTypePattern(lua_State* L)
     detector->pattern_size = strlen((char*)pattern);
     detector->appId = appId;
     insert_content_type_pattern(element);
-    set_app_info_active(appId);
+    AppInfoManager::get_instance().set_app_info_active(appId);
 
     return 0;
 }
@@ -1673,27 +1660,24 @@ static inline int CHPGetPatternDataAndSize(lua_State* L, int index, char** patte
     *pattern_size = 0;
     *pattern_data = nullptr;
     tmpString = lua_tolstring(L, index, &*pattern_size);
-    // FIXIT-M: recode all this to something elegant since snort_strdup can't fail (just like Rudy)
     // non-empty pattern required
-    if (!tmpString || !*pattern_size || !(*pattern_data = snort_strdup(tmpString)))
+    if (!tmpString || !*pattern_size)
     {
-        if (*pattern_size) // implies snort_strdup() failed
-            ErrorMessage("LuaDetectorApi:CHP Action PATTERN string mem alloc failed.");
-        else
-            ErrorMessage("LuaDetectorApi:Invalid CHP Action PATTERN string.");  // empty string in
-                                                                                // Lua code - bad
+    	ErrorMessage("LuaDetectorApi:Invalid CHP Action PATTERN string.");
         return -1;
     }
+    *pattern_data = snort_strdup(tmpString);
     return 0;
 }
 
 static inline int CHPGetActionType(lua_State* L, int index, ActionType* action_type)
 {
     *action_type = (ActionType)lua_tointeger(L, index);
-    // FIXIT-M: many lua detectors call this with action_type == 14, max is set to 14...is this an issue or a feature
     if (*action_type < NO_ACTION || *action_type > MAX_ACTION_TYPE)
     {
-        WarningMessage("LuaDetectorApi:Incompatible CHP Action type, might be for a later version.");
+        WarningMessage(
+        		"LuaDetectorApi:Unsupported CHP Action type: %d, possible version mismatch.",
+        		*action_type);
         return -1;
     }
     return 0;
@@ -1764,13 +1748,13 @@ static int detector_add_chp_action(AppId appIdInstance, int isKeyPattern, Patter
     if (actionType == GET_OFFSETS_FROM_REBUILT)
     {
         /* This is a search engine and it is SUPPORTED for safe-search packet rewrite */
-        appInfoEntryFlagSet(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE |
+        AppInfoManager::get_instance().set_app_info_flags(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE |
             APPINFO_FLAG_SUPPORTED_SEARCH);
     }
     else if (actionType == SEARCH_UNSUPPORTED)
     {
         /* This is a search engine and it is UNSUPPORTED for safe-search packet rewrite */
-        appInfoEntryFlagSet(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE);
+        AppInfoManager::get_instance().set_app_info_flags(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE);
     }
     return 0;
 }
@@ -2154,14 +2138,12 @@ static int Detector_addAppUrl(lua_State* L)
         queryPattern = (uint8_t*)snort_strdup(tmpString);
 
     uint32_t appId = lua_tointeger(L, index++);
-
-    /* Allocate memory for data structures */
+    AppInfoManager& app_info_manager = AppInfoManager::get_instance();
     DetectorAppUrlPattern* pattern =
             (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
-
-    pattern->userData.service_id        = get_appid_by_service_id(service_id);
-    pattern->userData.client_app        = get_appid_by_client_id(client_app);
-    pattern->userData.payload           = get_appid_by_payload_id(payload);
+    pattern->userData.service_id        = app_info_manager.get_appid_by_service_id(service_id);
+    pattern->userData.client_app        = app_info_manager.get_appid_by_client_id(client_app);
+    pattern->userData.payload           = app_info_manager.get_appid_by_payload_id(payload);
     pattern->userData.appId             = appId;
     pattern->userData.query.pattern     = queryPattern;
     pattern->userData.query.patternSize = queryPatternSize;
@@ -2173,10 +2155,10 @@ static int Detector_addAppUrl(lua_State* L)
     pattern->patterns.scheme.patternSize = (int)schemePatternSize;
     insert_url_pattern(pattern);
 
-    set_app_info_active(pattern->userData.service_id);
-    set_app_info_active(pattern->userData.client_app);
-    set_app_info_active(pattern->userData.payload);
-    set_app_info_active(appId);
+    app_info_manager.set_app_info_active(pattern->userData.service_id);
+    app_info_manager.set_app_info_active(pattern->userData.client_app);
+    app_info_manager.set_app_info_active(pattern->userData.payload);
+    app_info_manager.set_app_info_active(appId);
 
     return 0;
 }
@@ -2210,39 +2192,36 @@ static int Detector_addRTMPUrl(lua_State* L)
 
     /* Verify that host pattern is a valid string */
     size_t hostPatternSize = 0;
-    uint8_t* hostPattern = nullptr;
     tmpString = lua_tolstring(L, index++, &hostPatternSize);
-    // FIXIT-L: recode all this to something elegant since snort_strdup can't fail (just like Rudy)
-    if (!tmpString || !hostPatternSize || !(hostPattern = (uint8_t*)snort_strdup(tmpString)))
+    if (!tmpString || !hostPatternSize)
     {
         ErrorMessage("Invalid host pattern string.");
         return 0;
     }
+    u_int8_t* hostPattern = (u_int8_t*)snort_strdup(tmpString);
 
     /* Verify that path pattern is a valid string */
     size_t pathPatternSize = 0;
-    uint8_t* pathPattern = nullptr;
     tmpString = lua_tolstring(L, index++, &pathPatternSize);
-    // FIXIT-L: recode all this to something elegant since snort_strdup can't fail (just like Rudy)
-    if (!tmpString || !pathPatternSize || !(pathPattern = (uint8_t*)snort_strdup(tmpString)))
+    if (!tmpString || !pathPatternSize)
     {
         ErrorMessage("Invalid path pattern string.");
         snort_free(hostPattern);
         return 0;
     }
+    u_int8_t* pathPattern = (u_int8_t*)snort_strdup(tmpString);
 
     /* Verify that scheme pattern is a valid string */
     size_t schemePatternSize;
-    uint8_t* schemePattern = nullptr;
     tmpString = lua_tolstring(L, index++, &schemePatternSize);
-    // FIXIT-L: recode all this to something elegant since snort_strdup can't fail (just like Rudy)
-    if (!tmpString || !schemePatternSize || !(schemePattern = (uint8_t*)snort_strdup(tmpString)))
+    if (!tmpString || !schemePatternSize)
     {
         ErrorMessage("Invalid scheme pattern string.");
         snort_free(pathPattern);
         snort_free(hostPattern);
         return 0;
     }
+    u_int8_t* schemePattern = (u_int8_t*)snort_strdup(tmpString);
 
     /* Verify that query pattern is a valid string */
     size_t queryPatternSize;
@@ -2251,11 +2230,11 @@ static int Detector_addRTMPUrl(lua_State* L)
     if (tmpString  && queryPatternSize)
         queryPattern = (uint8_t*)snort_strdup(tmpString);
 
-    uint32_t appId           = lua_tointeger(L, index++);
+    u_int32_t appId = lua_tointeger(L, index++);
 
     /* Allocate memory for data structures */
-    DetectorAppUrlPattern* pattern = (DetectorAppUrlPattern*)snort_calloc(
-        sizeof(DetectorAppUrlPattern));
+    DetectorAppUrlPattern* pattern =
+            (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
 
     /* we want to put these patterns in just like for regular Urls, but we do NOT need legacy IDs for them.
      * so just use the appID for service, client, or payload ID */
@@ -2273,10 +2252,11 @@ static int Detector_addRTMPUrl(lua_State* L)
     pattern->patterns.scheme.patternSize         = (int)schemePatternSize;
     insert_rtmp_url_pattern(pattern);
 
-    set_app_info_active(pattern->userData.service_id);
-    set_app_info_active(pattern->userData.client_app);
-    set_app_info_active(pattern->userData.payload);
-    set_app_info_active(appId);
+    AppInfoManager& app_info_manager = AppInfoManager::get_instance();
+    app_info_manager.set_app_info_active(pattern->userData.service_id);
+    app_info_manager.set_app_info_active(pattern->userData.client_app);
+    app_info_manager.set_app_info_active(pattern->userData.payload);
+    app_info_manager.set_app_info_active(appId);
 
     return 0;
 }
@@ -2313,7 +2293,7 @@ static int Detector_addSipUserAgent(lua_State* L)
 
     sipUaPatternAdd(client_app, clientVersion, uaPattern);
 
-    set_app_info_active(client_app);
+    AppInfoManager::get_instance().set_app_info_active(client_app);
 
     return 0;
 }
@@ -2341,7 +2321,7 @@ static int openCreateApp(lua_State* L)
         return 1;   /*number of results */
     }
 
-    AppInfoTableEntry* entry = appInfoEntryCreate(tmpString);
+    AppInfoTableEntry* entry = AppInfoManager::get_instance().add_dynamic_app_entry(tmpString);
 
     if (entry)
     {
@@ -2361,8 +2341,7 @@ static int openAddClientApp(lua_State* L)
     serviceAppId = lua_tonumber(L, 2);
     clienAppId = lua_tonumber(L, 3);
 
-    /*check inputs and whether this function is called in context of a
-      packet */
+    // check inputs and whether this function is called in context of a packet
     if ( !ud->validateParams.pkt )
     {
         lua_pushnumber(L, -1);
@@ -2375,7 +2354,7 @@ static int openAddClientApp(lua_State* L)
         return 1;
     }
 
-    ud->client.appModule.api->add_app(ud->validateParams.flowp, serviceAppId,
+    ud->client.appModule.api->add_app(ud->validateParams.asd, serviceAppId,
         clienAppId, "");
 
     lua_pushnumber(L, 0);
@@ -2404,7 +2383,7 @@ static int openAddServiceApp(lua_State* L)
     /*Phase2 - discuss RNAServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr.
       Subtype is not displayed on DC at present. */
-    retValue = AppIdServiceAddService(ud->validateParams.flowp, ud->validateParams.pkt,
+    retValue = AppIdServiceAddService(ud->validateParams.asd, ud->validateParams.pkt,
         ud->validateParams.dir, ud->server.pServiceElement,
         serviceId, nullptr, nullptr, nullptr);
 
@@ -2434,7 +2413,7 @@ static int openAddPayloadApp(lua_State* L)
         return 1;
     }
 
-    ud->client.appModule.api->add_payload(ud->validateParams.flowp, payloadAppId);
+    ud->client.appModule.api->add_payload(ud->validateParams.asd, payloadAppId);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -2496,9 +2475,10 @@ static int openAddHttpPattern(lua_State* L)
     pattern->appId         = APP_ID_NONE;
     insert_http_pattern_element(pType, element);
 
-    set_app_info_active(serviceAppId);
-    set_app_info_active(clienAppId);
-    set_app_info_active(payloadAppId);
+    AppInfoManager& app_info_manager = AppInfoManager::get_instance();
+    app_info_manager.set_app_info_active(serviceAppId);
+    app_info_manager.set_app_info_active(clienAppId);
+    app_info_manager.set_app_info_active(payloadAppId);
 
     return 0;
 }
@@ -2578,9 +2558,10 @@ static int openAddUrlPattern(lua_State* L)
     pattern->patterns.scheme.patternSize         = (int)schemePatternSize;
     insert_app_url_pattern(pattern);
 
-    set_app_info_active(serviceAppId);
-    set_app_info_active(clienAppId);
-    set_app_info_active(payloadAppId);
+    AppInfoManager& app_info_manager = AppInfoManager::get_instance();
+    app_info_manager.set_app_info_active(serviceAppId);
+    app_info_manager.set_app_info_active(clienAppId);
+    app_info_manager.set_app_info_active(payloadAppId);
 
     return 0;
 }
@@ -2638,7 +2619,7 @@ static int addPortPatternClient(lua_State* L)
     pPattern->detectorName = snort_strdup(ud->name.c_str());
     insert_client_port_pattern(pPattern);
 
-    set_app_info_active(appId);
+    AppInfoManager::get_instance().set_app_info_active(appId);
 
     return 0;
 }
@@ -2689,7 +2670,7 @@ static int addPortPatternService(lua_State* L)
     //insert ports in order.
     insert_service_port_pattern(pPattern);
 
-    set_app_info_active(appId);
+    AppInfoManager::get_instance().set_app_info_active(appId);
 
     return 0;
 }
@@ -2724,12 +2705,12 @@ static int Detector_addSipServer(lua_State* L)
         return 0;
     }
 
-    // FIXIT-M: uncomment when sip detector is included in the build
+    // FIXIT-M uncomment when sip detector is included in the build
 #ifdef REMOVED_WHILE_NOT_IN_USE
     sipServerPatternAdd(client_app, clientVersion, uaPattern,
             &ud->appid_config->detectorSipConfig);
 #endif
-    set_app_info_active(client_app);
+    AppInfoManager::get_instance().set_app_info_active(client_app);
 
     return 0;
 }
@@ -2794,7 +2775,7 @@ static int createFutureFlow(lua_State* L)
     app_id_to_snort = lua_tointeger(L, 10);
     if (app_id_to_snort > APP_ID_NONE)
     {
-        AppInfoTableEntry* entry = appInfoEntryGet(app_id_to_snort);
+        AppInfoTableEntry* entry = AppInfoManager::get_instance().get_app_info_entry(app_id_to_snort);
         if (nullptr == entry)
             return 0;
         snort_app_id = entry->snortId;
@@ -2810,7 +2791,7 @@ static int createFutureFlow(lua_State* L)
         fp->serviceAppId = service_app_id;
         fp->client_app_id  = client_app_id;
         fp->payload_app_id = payload_app_id;
-        fp->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
+        fp->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
             APPID_SESSION_PORT_SERVICE_DONE);
         fp->rnaServiceState = RNA_STATE_FINISHED;
         fp->rna_client_state  = RNA_STATE_FINISHED;
@@ -2994,18 +2975,20 @@ void Detector_fini(void* data)
     lua_close(myLuaState);
 }
 
-/**Garbage collector hook function. Called when Lua side garbage collects detector api instance. Current design is to allocate
- * one of each luaState, detector and detectorUserData buffers, and hold these buffers till RNA exits. SigHups processing
- * reuses the buffers and calls DetectorInit to reinitialize. RNA ensures that UserData<Detector> is not garbage collected, by
- * creating a reference in LUA_REGISTRY table. The reference is released only on RNA exit.
+/* Garbage collector hook function. Called when Lua side garbage collects detector
+ * api instance. Current design is to allocate one of each luaState, detector and
+ * detectorUserData buffers, and hold these buffers till RNA exits. SigHups processing
+ * reuses the buffers and calls DetectorInit to reinitialize. RNA ensures that
+ * UserData<Detector> is not garbage collected, by creating a reference in LUA_REGISTRY
+ * table. The reference is released only on RNA exit.
  *
- * If in future, one needs to free any of these buffers then one should consider references to detector buffer in  RNAServiceElement
- * stored in flows and hostServices  data structures. Other detectors at this time create one static instance for the lifetime of RNA,
- * and therefore we have adopted the same principle for Lua Detecotors.
+ * If in future, one needs to free any of these buffers then one should consider
+ * references to detector buffer in  RNAServiceElement stored in flows and hostServices
+ * data structures. Other detectors at this time create one static instance for the
+ * lifetime of RNA, and therefore we have adopted the same principle for Lua Detecotors.
  */
 static int Detector_gc(lua_State*)
 {
-    // FIXIT-M Does Detector_gc need to not be a no-op
     return 0;
 }
 

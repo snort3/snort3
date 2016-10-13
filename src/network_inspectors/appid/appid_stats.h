@@ -26,9 +26,7 @@ class AppIdSession;
 class AppIdModuleConfig;
 
 void update_appid_statistics(AppIdSession*);
-void init_appid_statistics(const AppIdModuleConfig*);
-void reinit_appid_statistics();
+void init_appid_statistics(const AppIdModuleConfig* config);
 void flush_appid_statistics();
 void cleanup_appid_statistics();
-
 #endif

@@ -154,13 +154,6 @@ struct DetectorAppUrlPattern
     UrlUserData userData;
 };
 
-struct DetectorAppUrlList
-{
-    DetectorAppUrlPattern** urlPattern = nullptr;
-    size_t usedCount = 0;
-    size_t allocatedCount = 0;
-};
-
 void init_http_detector();
 int finalize_http_detector();
 void clean_http_detector();
@@ -170,11 +163,9 @@ void insert_content_type_pattern(HTTPListElement* element);
 void insert_url_pattern(DetectorAppUrlPattern* pattern);
 void insert_rtmp_url_pattern(DetectorAppUrlPattern* pattern);
 void insert_app_url_pattern(DetectorAppUrlPattern* pattern);
-DetectorAppUrlList* getAppUrlList();
-
-int geAppidByViaPattern(const uint8_t*, unsigned, char**);
-int getHTTPHeaderLocation(const uint8_t*, unsigned, HttpId, int*, int*, HeaderMatchedPatterns*);
-inline void FreeMatchedCHPActions(MatchedCHPAction* ma)
+int get_appid_by_pattern(const uint8_t*, unsigned, char**);
+int get_http_header_location(const uint8_t*, unsigned, HttpId, int*, int*, HeaderMatchedPatterns*);
+inline void free_matched_chp_actions(MatchedCHPAction* ma)
 {
 	MatchedCHPAction* tmp;
 
@@ -186,17 +177,16 @@ inline void FreeMatchedCHPActions(MatchedCHPAction* ma)
 	}
 }
 
-int scanKeyCHP(PatternType, char*, int, CHPMatchTally**, MatchedCHPAction**);
-AppId scanCHP(PatternType, char*, int, MatchedCHPAction*, char**, char**, char**, int*,
+void scan_key_chp(PatternType ptype, char* buf, int buf_size, CHPTallyAndActions& match_tally);
+AppId scan_chp(PatternType, char*, int, MatchedCHPAction*, char**, char**, char**, int*,
         httpSession*, Packet*);
-AppId getAppIdFromUrl(char*, char*, char**, char*, AppId*, AppId*, AppId*, AppId*, unsigned);
-AppId geAppidByContentType(const uint8_t*, int);
+AppId get_appid_from_url(char*, char*, char**, char*, AppId*, AppId*, AppId*, AppId*, unsigned);
+AppId get_appid_by_content_type(const uint8_t*, int);
 AppId scan_header_x_working_with(const uint8_t*, uint32_t, char**);
-void identifyUserAgent(const uint8_t*, int, AppId*, AppId*, char**);
-void getServerVendorVersion(const uint8_t*, int, char**, char**, RNAServiceSubtype**);
-int webdav_found(HeaderMatchedPatterns*);
-
-void finalizeFflow(fflow_info*, unsigned app_type_flags, AppId, Packet* );
+void identify_user_agent(const uint8_t*, int, AppId*, AppId*, char**);
+void get_server_vendor_version(const uint8_t*, int, char**, char**, RNAServiceSubtype**);
+bool is_webdav_found(HeaderMatchedPatterns*);
+void finalize_fflow(fflow_info*, unsigned app_type_flags, AppId, Packet* );
 
 #endif
 

@@ -56,16 +56,8 @@ using ThirdPartyAppIDModReconfigure = int(*)(ThirdPartyConfig*);
 using ThirdPartyAppIDModFini = int(*)();
 using ThirdPartyAppIDSessionCreate = void*(*)();
 using ThirdPartyAppIDSessionDelete = int(*)(void* tpsession, int just_reset_state);
-// FIXIT-L J use references for output parameters
-using ThirdPartyAppIDSessionProcess = int(*)(
-    void* tpsession,                                // in
-    Packet*,                                        // in
-    int direction,                                  // in
-    AppId*,                                        // out
-    int* confidence,                                // out
-    AppId** proto_list,                            // out
-    ThirdPartyAppIDAttributeData** attribute_data   // out
-);
+using ThirdPartyAppIDSessionProcess = int(*)( void* tpsession, Packet*, int direction,                                  // in
+    AppId*, int* confidence, AppId** proto_list, ThirdPartyAppIDAttributeData** attribute_data );
 using ThirdPartyAppIDPrintStats = int(*)();
 using ThirdPartyAppIDResetStats = int(*)();
 using ThirdPartyAppIDDisableFlags = int(*)(void* tpsession, uint32_t session_flags);

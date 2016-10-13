@@ -636,7 +636,7 @@ static int ssl_validate(ServiceValidationArgs* args)
     const ServiceSSLV3Record* rec;
     const ServiceSSLV3CertsRecord* certs_rec;
     uint16_t ver;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     const int dir = args->dir;
     uint16_t size = args->size;
@@ -644,11 +644,11 @@ static int ssl_validate(ServiceValidationArgs* args)
     if (!size)
         goto inprocess;
 
-    ss = (ServiceSSLData*)ssl_service_mod.api->data_get(flowp, ssl_service_mod.flow_data_index);
+    ss = (ServiceSSLData*)ssl_service_mod.api->data_get(asd, ssl_service_mod.flow_data_index);
     if (!ss)
     {
         ss = (ServiceSSLData*)snort_calloc(sizeof(ServiceSSLData));
-        ssl_service_mod.api->data_add(flowp, ss, ssl_service_mod.flow_data_index, &ssl_free);
+        ssl_service_mod.api->data_add(asd, ss, ssl_service_mod.flow_data_index, &ssl_free);
         ss->state = SSL_STATE_INITIATE;
     }
     /* Start off with a Client Hello from client to server. */
@@ -872,7 +872,7 @@ not_v2:;
     }
 
 inprocess:
-    ssl_service_mod.api->service_inprocess(flowp, args->pkt, dir, &svc_element);
+    ssl_service_mod.api->service_inprocess(asd, args->pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 
 fail:
@@ -882,8 +882,8 @@ fail:
     snort_free(ss->org_name);
     ss->certs_data = nullptr;
     ss->host_name = ss->common_name = ss->org_name = nullptr;
-    ssl_service_mod.api->fail_service(flowp, args->pkt, dir, &svc_element,
-        ssl_service_mod.flow_data_index, args->pConfig);
+    ssl_service_mod.api->fail_service(asd, args->pkt, dir, &svc_element,
+        ssl_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 
 success:
@@ -894,54 +894,54 @@ success:
             goto fail;
         }
     }
-    flowp->setAppIdFlag(APPID_SESSION_SSL_SESSION);
+    asd->set_session_flags(APPID_SESSION_SSL_SESSION);
     if (ss->host_name || ss->common_name || ss->org_name)
     {
-        if (!flowp->tsession)
-            flowp->tsession = (tlsSession*)snort_calloc(sizeof(tlsSession));
+        if (!asd->tsession)
+            asd->tsession = (tlsSession*)snort_calloc(sizeof(tlsSession));
 
         /* TLS Host */
         if (ss->host_name)
         {
-            if (flowp->tsession->tls_host)
-                snort_free(flowp->tsession->tls_host);
-            flowp->tsession->tls_host = ss->host_name;
-            flowp->tsession->tls_host_strlen = ss->host_name_strlen;
-            flowp->scan_flags |= SCAN_SSL_HOST_FLAG;
+            if (asd->tsession->tls_host)
+                snort_free(asd->tsession->tls_host);
+            asd->tsession->tls_host = ss->host_name;
+            asd->tsession->tls_host_strlen = ss->host_name_strlen;
+            asd->scan_flags |= SCAN_SSL_HOST_FLAG;
         }
         else if (ss->common_name)
         {
             // use common name (from server) if we didn't see host name (from client)
             char* common_name = snort_strdup(ss->common_name);
 
-            if (flowp->tsession->tls_host)
-                snort_free(flowp->tsession->tls_host);
-            flowp->tsession->tls_host = common_name;
-            flowp->tsession->tls_host_strlen = ss->common_name_strlen;
-            flowp->scan_flags |= SCAN_SSL_HOST_FLAG;
+            if (asd->tsession->tls_host)
+                snort_free(asd->tsession->tls_host);
+            asd->tsession->tls_host = common_name;
+            asd->tsession->tls_host_strlen = ss->common_name_strlen;
+            asd->scan_flags |= SCAN_SSL_HOST_FLAG;
         }
 
         /* TLS Common Name */
         if (ss->common_name)
         {
-            if (flowp->tsession->tls_cname)
-                snort_free(flowp->tsession->tls_cname);
-            flowp->tsession->tls_cname = ss->common_name;
-            flowp->tsession->tls_cname_strlen = ss->common_name_strlen;
+            if (asd->tsession->tls_cname)
+                snort_free(asd->tsession->tls_cname);
+            asd->tsession->tls_cname = ss->common_name;
+            asd->tsession->tls_cname_strlen = ss->common_name_strlen;
         }
 
         /* TLS Org Unit */
         if (ss->org_name)
         {
-            if (flowp->tsession->tls_orgUnit)
-                snort_free(flowp->tsession->tls_orgUnit);
-            flowp->tsession->tls_orgUnit = ss->org_name;
-            flowp->tsession->tls_orgUnit_strlen = ss->org_name_strlen;
+            if (asd->tsession->tls_orgUnit)
+                snort_free(asd->tsession->tls_orgUnit);
+            asd->tsession->tls_orgUnit = ss->org_name;
+            asd->tsession->tls_orgUnit_strlen = ss->org_name_strlen;
         }
 
         ss->host_name = ss->common_name = ss->org_name = nullptr;
     }
-    ssl_service_mod.api->add_service(flowp, args->pkt, dir, &svc_element,
+    ssl_service_mod.api->add_service(asd, args->pkt, dir, &svc_element,
         getSslServiceAppId(args->pkt->ptrs.sp), nullptr, nullptr, nullptr);
     appid_stats.ssl_flows++;
     return SERVICE_SUCCESS;
@@ -1152,7 +1152,7 @@ bool setSSLSquelch(Packet* p, int type, AppId appId)
     const sfip_t* dip;
     AppIdSession* f;
 
-    if (!appInfoEntryFlagGet(appId, APPINFO_FLAG_SSL_SQUELCH))
+    if (!AppInfoManager::get_instance().get_app_info_flags(appId, APPINFO_FLAG_SSL_SQUELCH))
         return false;
 
     dip = p->ptrs.ip_api.get_dst();

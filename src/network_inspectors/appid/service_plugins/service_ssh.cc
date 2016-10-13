@@ -142,15 +142,12 @@ static const RNAServiceElement svc_element =
     "ssh",
 };
 
-// FIXIT can this be const? That would require that RNAServiceValidationModule.pp be const which
-// I don't know about. Otherwise we have a thread safety issue here.
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &ssh_validate, SSH_PORT, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
 };
 
-// FIXIT maybe this can be const, else thread safety issue
 RNAServiceValidationModule ssh_service_mod =
 {
     "SSH",
@@ -396,18 +393,18 @@ static int ssh_validate(ServiceValidationArgs* args)
     const char* end;
     unsigned len;
     int client_major;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 
     if (!size)
         goto inprocess;
 
-    ss = (ServiceSSHData*)ssh_service_mod.api->data_get(flowp, ssh_service_mod.flow_data_index);
+    ss = (ServiceSSHData*)ssh_service_mod.api->data_get(asd, ssh_service_mod.flow_data_index);
     if (!ss)
     {
         ss = (ServiceSSHData*)snort_calloc(sizeof(ServiceSSHData));
-        ssh_service_mod.api->data_add(flowp, ss,
+        ssh_service_mod.api->data_add(asd, ss,
             ssh_service_mod.flow_data_index, &ssh_free_state);
         ss->state = SSH_STATE_BANNER;
         ss->hstate = SSH_HEADER_BEGIN;
@@ -562,23 +559,23 @@ done:
     {
     case SERVICE_INPROCESS:
 inprocess:
-        ssh_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+        ssh_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
         return SERVICE_INPROCESS;
 
     case SERVICE_SUCCESS:
-        ssh_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+        ssh_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
             APP_ID_SSH, ss->vendor, ss->version, nullptr);
         appid_stats.ssh_flows++;
         return SERVICE_SUCCESS;
 
     case SERVICE_NOMATCH:
 fail:
-        ssh_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-            ssh_service_mod.flow_data_index, args->pConfig);
+        ssh_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+            ssh_service_mod.flow_data_index);
         return SERVICE_NOMATCH;
 
 not_compatible:
-        ssh_service_mod.api->incompatible_data(flowp, args->pkt, args->dir, &svc_element,
+        ssh_service_mod.api->incompatible_data(asd, args->pkt, args->dir, &svc_element,
             ssh_service_mod.flow_data_index, args->pConfig);
         return SERVICE_NOT_COMPATIBLE;
 

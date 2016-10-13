@@ -48,8 +48,7 @@ struct ServiceRSYNCData
 static int rsync_init(const IniServiceAPI* const init_api);
 static int rsync_validate(ServiceValidationArgs* args);
 
-//  FIXIT-L: Make the globals const or, if necessary, thread-local.
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &rsync_validate,
@@ -61,7 +60,7 @@ static RNAServiceElement svc_element =
     "rsync"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &rsync_validate, RSYNC_PORT, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
@@ -104,11 +103,9 @@ static int rsync_validate(ServiceValidationArgs* args)
     ServiceRSYNCData* rd;
     int i;
 
-    // FIXIT-L: Should this be an assert instead?
-    if (!args)
-        return SERVICE_NOMATCH;
+    assert(args);
 
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 
@@ -117,12 +114,12 @@ static int rsync_validate(ServiceValidationArgs* args)
     if (args->dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    rd = (ServiceRSYNCData*)rsync_service_mod.api->data_get(flowp,
+    rd = (ServiceRSYNCData*)rsync_service_mod.api->data_get(asd,
         rsync_service_mod.flow_data_index);
     if (!rd)
     {
         rd = (ServiceRSYNCData*)snort_calloc(sizeof(ServiceRSYNCData));
-        rsync_service_mod.api->data_add(flowp, rd, rsync_service_mod.flow_data_index, &snort_free);
+        rsync_service_mod.api->data_add(asd, rd, rsync_service_mod.flow_data_index, &snort_free);
         rd->state = RSYNC_STATE_BANNER;
     }
 
@@ -155,18 +152,18 @@ static int rsync_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    rsync_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+    rsync_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    rsync_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+    rsync_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
         APP_ID_RSYNC, nullptr, nullptr, nullptr);
     appid_stats.rsync_flows++;
     return SERVICE_SUCCESS;
 
 fail:
-    rsync_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-        rsync_service_mod.flow_data_index, args->pConfig);
+    rsync_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+        rsync_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

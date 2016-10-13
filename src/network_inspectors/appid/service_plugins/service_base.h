@@ -32,7 +32,7 @@
 class AppIdConfig;
 class AppIdSession;
 struct RNAServiceElement;
-struct DhcpFPData;
+struct DHCPData;
 struct FpSMBData;
 struct Packet;
 struct ServiceMatch;
@@ -53,7 +53,7 @@ int ServiceAddPort(const RNAServiceValidationPort*, RNAServiceValidationModule*,
 void ServiceRemovePorts(RNAServiceValidationFCN, Detector*);
 void ServiceRegisterPatternDetector(RNAServiceValidationFCN, IpProtocol proto,
         const uint8_t* pattern, unsigned size, int position, Detector*, const char* name);
-int AppIdDiscoverService(Packet*, int direction, AppIdSession*, const AppIdConfig*);
+int AppIdDiscoverService(Packet*, int direction, AppIdSession*);
 AppId getPortServiceId(IpProtocol proto, uint16_t port, const AppIdConfig*);
 void AppIdFreeServiceIDState(AppIdServiceIDState*);
 int AppIdServiceAddService(AppIdSession*, const Packet*, int dir, const RNAServiceElement*,
@@ -64,14 +64,13 @@ int AppIdServiceInProcess(AppIdSession*, const Packet*, int dir, const RNAServic
 int AppIdServiceIncompatibleData(AppIdSession*, const Packet*, int dir, const RNAServiceElement*,
     unsigned flow_data_index, const AppIdConfig*);
 int AppIdServiceFailService(AppIdSession*, const Packet*, int dir, const RNAServiceElement*,
-    unsigned flow_data_index, const AppIdConfig*);
+    unsigned flow_data_index);
 int AddFTPServiceState(AppIdSession*);
 void AppIdFreeDhcpInfo(DHCPInfo*);
 void AppIdFreeSMBData(FpSMBData*);
-void AppIdFreeDhcpData(DhcpFPData*);
+void AppIdFreeDhcpData(DHCPData*);
 void dumpPorts(FILE*);
-const RNAServiceElement* ServiceGetServiceElement(RNAServiceValidationFCN, Detector*);
-
+const RNAServiceElement* get_service_element(RNAServiceValidationFCN, Detector*);
 void add_service_to_active_list(RNAServiceValidationModule* service);
 extern uint32_t app_id_instance_id;
 
@@ -87,17 +86,17 @@ inline bool compareServiceElements(const RNAServiceElement* first,
     return (first->validate != second->validate || first->userdata != second->userdata);
 }
 
-inline uint32_t AppIdServiceDetectionLevel(AppIdSession* session)
+inline uint32_t AppIdServiceDetectionLevel(AppIdSession* asd)
 {
-    if (session->getAppIdFlag(APPID_SESSION_DECRYPTED))
+    if (asd->get_session_flags(APPID_SESSION_DECRYPTED))
         return 1;
     return 0;
 }
 
 inline void PopulateExpectedFlow(AppIdSession* parent, AppIdSession* expected, uint64_t flags)
 {
-    expected->setAppIdFlag(flags |
-        parent->getAppIdFlag(APPID_SESSION_RESPONDER_MONITORED |
+    expected->set_session_flags(flags |
+        parent->get_session_flags(APPID_SESSION_RESPONDER_MONITORED |
                 APPID_SESSION_INITIATOR_MONITORED |
                 APPID_SESSION_SPECIAL_MONITORED |
                 APPID_SESSION_RESPONDER_CHECKED |

@@ -23,7 +23,6 @@
 #define SERVICE_RSHELL_H
 
 struct RNAServiceValidationModule;
-//  FIXIT-L: Make the globals const or, if necessary, thread-local.
 extern RNAServiceValidationModule rshell_service_mod;
 
 #endif

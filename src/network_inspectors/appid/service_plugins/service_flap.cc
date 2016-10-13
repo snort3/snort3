@@ -77,7 +77,7 @@ struct FLAPHeader
 static int flap_init(const IniServiceAPI* const init_api);
 static int flap_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &flap_validate,
@@ -89,7 +89,7 @@ static RNAServiceElement svc_element =
     "flap"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &flap_validate, 5190, IpProtocol::TCP, 0 },
     { &flap_validate, 9898, IpProtocol::TCP, 0 },
@@ -138,7 +138,7 @@ static int flap_validate(ServiceValidationArgs* args)
     const FLAPHeader* hdr = (const FLAPHeader*)args->data;
     const FLAPFNAC* ff;
     const FLAPTLV* tlv;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     uint16_t size = args->size;
     uint16_t len;
 
@@ -147,11 +147,11 @@ static int flap_validate(ServiceValidationArgs* args)
     if (args->dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    sf = (ServiceFLAPData*)flap_service_mod.api->data_get(flowp, flap_service_mod.flow_data_index);
+    sf = (ServiceFLAPData*)flap_service_mod.api->data_get(asd, flap_service_mod.flow_data_index);
     if (!sf)
     {
         sf = (ServiceFLAPData*)snort_calloc(sizeof(ServiceFLAPData));
-        flap_service_mod.api->data_add(flowp, sf, flap_service_mod.flow_data_index, &snort_free);
+        flap_service_mod.api->data_add(asd, sf, flap_service_mod.flow_data_index, &snort_free);
         sf->state = FLAP_STATE_ACK;
     }
 
@@ -226,17 +226,17 @@ static int flap_validate(ServiceValidationArgs* args)
     }
 
 fail:
-    flap_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-        flap_service_mod.flow_data_index, args->pConfig);
+    flap_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+        flap_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 
 success:
-    flap_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+    flap_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
         APP_ID_AOL_INSTANT_MESSENGER, nullptr, nullptr, nullptr);
     return SERVICE_SUCCESS;
 
 inprocess:
-    flap_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+    flap_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 }
 

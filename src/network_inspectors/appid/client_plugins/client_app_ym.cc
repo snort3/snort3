@@ -41,7 +41,7 @@ THREAD_LOCAL YM_CLIENT_APP_CONFIG ym_config;
 
 static CLIENT_APP_RETCODE ym_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
 RNAClientAppModule ym_client_mod =
 {
@@ -141,7 +141,7 @@ static const uint8_t* skip_separator(const uint8_t* data, const uint8_t* end)
 }
 
 static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, Detector*)
+    AppIdSession* asd, Packet* pkt, Detector*)
 {
 #define HEADERSIZE 20
 #define VERSIONID "135"
@@ -159,7 +159,7 @@ static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const 
 
     DebugFormat(DEBUG_LOG,"Found yahoo! client: %zu\n",sizeof(VERSIONID));
 
-    if (!data || !ym_client_mod.api || !flowp || !pkt)
+    if (!data || !ym_client_mod.api || !asd || !pkt)
         return CLIENT_APP_ENULL;
 
     if (dir != APP_ID_FROM_INITIATOR)
@@ -221,8 +221,8 @@ static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const 
     return CLIENT_APP_INPROCESS;
 
 done:
-    ym_client_mod.api->add_app(flowp, APP_ID_YAHOO, product_id, (char*)version);
-    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    ym_client_mod.api->add_app(asd, APP_ID_YAHOO, product_id, (char*)version);
+    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.yahoo_messenger_clients++;
     return CLIENT_APP_SUCCESS;
 }

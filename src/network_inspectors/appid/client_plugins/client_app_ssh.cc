@@ -155,7 +155,7 @@ THREAD_LOCAL SSH_CLIENT_CONFIG ssh_client_config;
 
 static CLIENT_APP_RETCODE ssh_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp,  Packet* pkt, struct Detector* userData);
+    AppIdSession* asd,  Packet* pkt, struct Detector* userData);
 
 SO_PUBLIC RNAClientAppModule ssh_client_mod =
 {
@@ -356,7 +356,7 @@ static inline CLIENT_APP_RETCODE ssh_client_validate_keyx(uint16_t offset, const
             if (fd->pos >= fd->plen)
             {
                 offset++;
-                // FIXIT-M: if offset > size then there is probably a D-H Key Exchange Init packet in this payload
+                // FIXIT-L if offset > size then there is probably a D-H Key Exchange Init packet in this payload
                 // For now parsing the Key Exchange Init is good enough to declare valid key exchange but for
                 // future enhance parsing to validate the D-H Key Exchange Init.
                 if (offset == size)
@@ -613,7 +613,7 @@ static inline CLIENT_APP_RETCODE ssh_client_sm(const uint8_t* data, uint16_t siz
 }
 
 static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, struct Detector*)
 {
     ClientSSHData* fd;
     CLIENT_APP_RETCODE sm_ret;
@@ -621,11 +621,11 @@ static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size
     if (!size || dir != APP_ID_FROM_INITIATOR)
         return CLIENT_APP_INPROCESS;
 
-    fd = ( ClientSSHData*)ssh_client_mod.api->data_get(flowp, ssh_client_mod.flow_data_index);
+    fd = ( ClientSSHData*)ssh_client_mod.api->data_get(asd, ssh_client_mod.flow_data_index);
     if (!fd)
     {
         fd = (ClientSSHData*)snort_calloc(sizeof(ClientSSHData));
-        ssh_client_mod.api->data_add(flowp, fd, ssh_client_mod.flow_data_index, &snort_free);
+        ssh_client_mod.api->data_add(asd, fd, ssh_client_mod.flow_data_index, &snort_free);
         fd->state = SSH_CLIENT_STATE_BANNER;
         fd->hstate = SSH2_HEADER_BEGIN;
         fd->oldhstate = SSH1_HEADER_BEGIN;
@@ -635,8 +635,8 @@ static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size
     if (sm_ret != CLIENT_APP_SUCCESS)
         return sm_ret;
 
-    ssh_client_mod.api->add_app(flowp, APP_ID_SSH, fd->client_id, (const char*)fd->version);
-    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    ssh_client_mod.api->add_app(asd, APP_ID_SSH, fd->client_id, (const char*)fd->version);
+    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.ssh_clients++;
     return CLIENT_APP_SUCCESS;
 }

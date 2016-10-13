@@ -70,7 +70,7 @@ THREAD_LOCAL TIMBUKTU_CLIENT_APP_CONFIG timbuktu_config;
 
 static CLIENT_APP_RETCODE timbuktu_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE timbuktu_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
 SO_PUBLIC RNAClientAppModule timbuktu_client_mod =
 {
@@ -152,7 +152,7 @@ static CLIENT_APP_RETCODE timbuktu_init(const IniClientAppAPI* const init_api, S
 }
 
 static CLIENT_APP_RETCODE timbuktu_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, struct Detector*)
 {
     ClientTIMBUKTUData* fd;
     uint16_t offset;
@@ -160,12 +160,12 @@ static CLIENT_APP_RETCODE timbuktu_validate(const uint8_t* data, uint16_t size, 
     if (dir != APP_ID_FROM_INITIATOR)
         return CLIENT_APP_INPROCESS;
 
-    fd = (ClientTIMBUKTUData*)timbuktu_client_mod.api->data_get(flowp,
+    fd = (ClientTIMBUKTUData*)timbuktu_client_mod.api->data_get(asd,
         timbuktu_client_mod.flow_data_index);
     if (!fd)
     {
         fd = (ClientTIMBUKTUData*)snort_calloc(sizeof(ClientTIMBUKTUData));
-        timbuktu_client_mod.api->data_add(flowp, fd,
+        timbuktu_client_mod.api->data_add(asd, fd,
             timbuktu_client_mod.flow_data_index, &snort_free);
         fd->state = TIMBUKTU_STATE_BANNER;
     }
@@ -236,8 +236,8 @@ inprocess:
     return CLIENT_APP_INPROCESS;
 
 done:
-    timbuktu_client_mod.api->add_app(flowp, APP_ID_TIMBUKTU, APP_ID_TIMBUKTU, nullptr);
-    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    timbuktu_client_mod.api->add_app(asd, APP_ID_TIMBUKTU, APP_ID_TIMBUKTU, nullptr);
+    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     return CLIENT_APP_SUCCESS;
 }
 

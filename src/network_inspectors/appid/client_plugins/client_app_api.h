@@ -26,6 +26,7 @@
 
 #include "appid_api.h"
 #include "appid_session.h"
+#include "utils/util.h"
 
 struct Packet;
 struct Detector;

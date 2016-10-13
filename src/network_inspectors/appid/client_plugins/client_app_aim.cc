@@ -198,7 +198,7 @@ static inline bool check_username(
 }
 
 static CLIENT_APP_RETCODE aim_validate( const uint8_t* const data, uint16_t size, const int dir,
-        AppIdSession* flowp, Packet*, Detector*)
+        AppIdSession* asd, Packet*, Detector*)
 {
     if ( dir != APP_ID_FROM_INITIATOR )
         return CLIENT_APP_INPROCESS;
@@ -269,7 +269,7 @@ static CLIENT_APP_RETCODE aim_validate( const uint8_t* const data, uint16_t size
                         char username[USERNAME_LEN];
 
                         if ( check_username(cur, tlv, username, username + USERNAME_LEN) )
-                            aim_client_mod.api->add_user(flowp, username,
+                            aim_client_mod.api->add_user(asd, username,
                                 APP_ID_AOL_INSTANT_MESSENGER, 1);
                     }
                     break;
@@ -300,8 +300,7 @@ static CLIENT_APP_RETCODE aim_validate( const uint8_t* const data, uint16_t size
                 char version[MAX_VERSION_SIZE];
 
                 snprintf(version, sizeof(version), "%d.%d.%d", major, minor, lesser);
-                aim_client_mod.api->add_app(
-                    flowp, APP_ID_AOL_INSTANT_MESSENGER,
+                aim_client_mod.api->add_app( asd, APP_ID_AOL_INSTANT_MESSENGER,
                     APP_ID_AOL_INSTANT_MESSENGER, version);
                 appid_stats.aim_clients++;
             }
@@ -311,7 +310,7 @@ static CLIENT_APP_RETCODE aim_validate( const uint8_t* const data, uint16_t size
     return CLIENT_APP_INPROCESS;
 
 bail:
-    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     return CLIENT_APP_SUCCESS;
 }
 

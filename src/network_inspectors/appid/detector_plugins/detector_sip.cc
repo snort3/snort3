@@ -100,11 +100,11 @@ static THREAD_LOCAL DetectorSipConfig detector_sip_config;
 static CLIENT_APP_RETCODE sip_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static void sip_clean();
 static CLIENT_APP_RETCODE sip_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, Detector* userData);
+    AppIdSession* asd, Packet* pkt, Detector* userData);
 static CLIENT_APP_RETCODE sip_tcp_client_init(const IniClientAppAPI* const init_api,
     SF_LIST* config);
 static CLIENT_APP_RETCODE sip_tcp_client_validate(const uint8_t* data, uint16_t size,
-        const int dir, AppIdSession* flowp, Packet* pkt, Detector* userData);
+    const int dir, AppIdSession* asd, Packet* pkt, Detector* userData);
 static int get_sip_client_app(void* patternMatcher, char* pattern, uint32_t patternLen,
     AppId* ClientAppId, char** clientVersion);
 static void clean_sip_ua();
@@ -182,7 +182,7 @@ struct ServiceSIPData
 static int sip_service_init(const IniServiceAPI* const init_api);
 static int sip_service_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &sip_service_validate,
@@ -194,7 +194,7 @@ static RNAServiceElement svc_element =
     "sip"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &sip_service_validate, SIP_PORT, IpProtocol::TCP, 0 },
     { &sip_service_validate, SIP_PORT, IpProtocol::UDP, 0 },
@@ -310,28 +310,28 @@ static void clientDataFree(void* data)
 
 // static const char* const SIP_USRNAME_BEGIN_MARKER = "<sip:";
 static CLIENT_APP_RETCODE sip_client_validate(const uint8_t*, uint16_t, const int,
-    AppIdSession* flowp, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, struct Detector*)
 {
     ClientSIPData* fd;
 
-    fd = (ClientSIPData*)sip_udp_client_mod.api->data_get(flowp,
+    fd = (ClientSIPData*)sip_udp_client_mod.api->data_get(asd,
         sip_udp_client_mod.flow_data_index);
     if (!fd)
     {
         fd = (ClientSIPData*)snort_calloc(sizeof(ClientSIPData));
-        sip_udp_client_mod.api->data_add(flowp, fd,
+        sip_udp_client_mod.api->data_add(asd, fd,
             sip_udp_client_mod.flow_data_index, &clientDataFree);
         fd->owner = &sip_udp_client_mod;
-        flowp->setAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+        asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
     return CLIENT_APP_INPROCESS;
 }
 
-static CLIENT_APP_RETCODE sip_tcp_client_validate(const uint8_t* data, uint16_t size,
-        const int dir, AppIdSession* flowp, Packet* pkt, struct Detector* userData)
+static CLIENT_APP_RETCODE sip_tcp_client_validate(const uint8_t* data, uint16_t size, const int
+    dir, AppIdSession* asd, Packet* pkt, struct Detector* userData)
 {
-    return sip_client_validate(data, size, dir, flowp, pkt, userData);
+    return sip_client_validate(data, size, dir, asd, pkt, userData);
 }
 
 static int sipAppAddPattern(DetectorAppSipPattern** patternList, AppId ClientAppId,
@@ -355,7 +355,6 @@ int sipUaPatternAdd( AppId ClientAppId, const char* clientVersion, const char* p
     return sipAppAddPattern(&detector_sip_config.sip_ua_list, ClientAppId, clientVersion, pattern);
 }
 
-// FIXIT-L - noone calls this function, is it needed?
 int sipServerPatternAdd(AppId ClientAppId, const char* clientVersion, const char* pattern)
 {
     return sipAppAddPattern(&detector_sip_config.sip_server_list, ClientAppId, clientVersion, pattern);
@@ -465,8 +464,8 @@ static int get_sip_client_app(void* patternMatcher, char* pattern, uint32_t patt
     return 1;
 }
 
-static void createRtpFlow(AppIdSession* flowp, const Packet* pkt, const sfip_t* cliIp,
-        uint16_t cliPort,  const sfip_t* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id)
+static void createRtpFlow(AppIdSession* asd, const Packet* pkt, const sfip_t* cliIp,
+        uint16_t cliPort, const sfip_t* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id)
 {
     AppIdSession* fp, * fp2;
 
@@ -474,10 +473,10 @@ static void createRtpFlow(AppIdSession* flowp, const Packet* pkt, const sfip_t* 
             APPID_EARLY_SESSION_FLAG_FW_RULE);
     if (fp)
     {
-        fp->client_app_id = flowp->client_app_id;
-        fp->payload_app_id = flowp->payload_app_id;
+        fp->client_app_id = asd->client_app_id;
+        fp->payload_app_id = asd->payload_app_id;
         fp->serviceAppId = APP_ID_RTP;
-        PopulateExpectedFlow(flowp, fp, APPID_SESSION_IGNORE_ID_FLAGS);
+        PopulateExpectedFlow(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 
     // create an RTCP flow as well
@@ -485,21 +484,21 @@ static void createRtpFlow(AppIdSession* flowp, const Packet* pkt, const sfip_t* 
             APPID_EARLY_SESSION_FLAG_FW_RULE);
     if (fp2)
     {
-        fp2->client_app_id = flowp->client_app_id;
-        fp2->payload_app_id = flowp->payload_app_id;
+        fp2->client_app_id = asd->client_app_id;
+        fp2->payload_app_id = asd->payload_app_id;
         fp2->serviceAppId = APP_ID_RTCP;
-        PopulateExpectedFlow(flowp, fp2, APPID_SESSION_IGNORE_ID_FLAGS);
+        PopulateExpectedFlow(asd, fp2, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 }
 
-static int addFutureRtpFlows(AppIdSession* flowp, const SipDialog* dialog, const Packet* p)
+static int addFutureRtpFlows(AppIdSession* asd, const SipDialog* dialog, const Packet* p)
 {
     SIP_MediaData* mdataA,* mdataB;
 
-    // check the first media session
+    // check the first media asd
     if (nullptr == dialog->mediaSessions)
         return -1;
-    // check the second media session
+    // check the second media asd
     if (nullptr == dialog->mediaSessions->nextS)
         return -1;
 
@@ -515,13 +514,10 @@ static int addFutureRtpFlows(AppIdSession* flowp, const SipDialog* dialog, const
         DebugFormat(DEBUG_SIP, "Adding future channels Destine IP: %s Port: %u\n",
             sfip_to_str(&mdataB->maddress), mdataB->mport);
 
-        // FIXIT All of the casts in these two function calls are flagrantly wrong. These
-        // signatures don't line up and it doesn't seem to be a simple fix.
-        createRtpFlow(flowp, p, &mdataA->maddress, mdataA->mport, &mdataB->maddress,
+        createRtpFlow(asd, p, &mdataA->maddress, mdataA->mport, &mdataB->maddress,
             mdataB->mport, IpProtocol::UDP, APP_ID_RTP);
-        createRtpFlow(flowp, p, &mdataB->maddress, mdataB->mport, &mdataA->maddress,
+        createRtpFlow(asd, p, &mdataB->maddress, mdataB->mport, &mdataA->maddress,
             mdataA->mport, IpProtocol::UDP, APP_ID_RTP);
-
         mdataA = mdataA->nextM;
         mdataB = mdataB->nextM;
     }
@@ -529,22 +525,22 @@ static int addFutureRtpFlows(AppIdSession* flowp, const SipDialog* dialog, const
 }
 
 static void SipSessionCbClientProcess(const Packet* p, const SipHeaders* headers, const
-    SipDialog* dialog, AppIdSession* flowp)
+    SipDialog* dialog, AppIdSession* asd)
 {
     ClientSIPData* fd;
     AppId ClientAppId = APP_ID_SIP;
     char* clientVersion = nullptr;
     int direction;
 
-    fd = (ClientSIPData*)sip_udp_client_mod.api->data_get(flowp,
+    fd = (ClientSIPData*)sip_udp_client_mod.api->data_get(asd,
         sip_udp_client_mod.flow_data_index);
     if (!fd)
     {
         fd = (ClientSIPData*)snort_calloc(sizeof(ClientSIPData));
-        sip_udp_client_mod.api->data_add(flowp, fd,
+        sip_udp_client_mod.api->data_add(asd, fd,
             sip_udp_client_mod.flow_data_index, &clientDataFree);
         fd->owner = &sip_udp_client_mod;
-        flowp->setAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+        asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
     if (fd->owner != &sip_udp_client_mod && fd->owner != &sip_tcp_client_mod)
@@ -594,25 +590,25 @@ static void SipSessionCbClientProcess(const Packet* p, const SipHeaders* headers
 
 success:
     //client detection successful
-    sip_udp_client_mod.api->add_app(flowp, APP_ID_SIP, ClientAppId, clientVersion);
+    sip_udp_client_mod.api->add_app(asd, APP_ID_SIP, ClientAppId, clientVersion);
 
     if (fd->userName)
-        sip_udp_client_mod.api->add_user(flowp, (char*)fd->userName, APP_ID_SIP, 1);
+        sip_udp_client_mod.api->add_user(asd, (char*)fd->userName, APP_ID_SIP, 1);
 
-    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
 }
 
 static void SipSessionCbServiceProcess(const Packet* p, const SipHeaders* headers, const
-    SipDialog* dialog, AppIdSession* flowp)
+    SipDialog* dialog, AppIdSession* asd)
 {
     ServiceSIPData* ss;
     int direction;
 
-    ss = (ServiceSIPData*)sip_service_mod.api->data_get(flowp, sip_service_mod.flow_data_index);
+    ss = (ServiceSIPData*)sip_service_mod.api->data_get(asd, sip_service_mod.flow_data_index);
     if (!ss)
     {
         ss = (ServiceSIPData*)snort_calloc(sizeof(ServiceSIPData));
-        sip_service_mod.api->data_add(flowp, ss, sip_service_mod.flow_data_index, &snort_free);
+        sip_service_mod.api->data_add(asd, ss, sip_service_mod.flow_data_index, &snort_free);
     }
 
     ss->serverPkt = 0;
@@ -639,14 +635,14 @@ static void SipSessionCbServiceProcess(const Packet* p, const SipHeaders* header
         return;
 
     if (dialog->mediaUpdated)
-        addFutureRtpFlows(flowp, dialog, p);
+        addFutureRtpFlows(asd, dialog, p);
 
     if (dialog->state == SIP_DLG_ESTABLISHED)
     {
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
-            sip_service_mod.api->add_service(flowp, p, direction, &svc_element,
+            asd->set_session_flags(APPID_SESSION_CONTINUE);
+            sip_service_mod.api->add_service(asd, p, direction, &svc_element,
                 APP_ID_SIP, ss->vendor[0] ? ss->vendor : nullptr, nullptr, nullptr);
         }
     }
@@ -654,7 +650,7 @@ static void SipSessionCbServiceProcess(const Packet* p, const SipHeaders* header
 
 void SipSessionSnortCallback(void*, ServiceEventType, void* data)
 {
-    AppIdSession* session = nullptr;
+    AppIdSession* asd = nullptr;
     SipEventData* eventData = (SipEventData*)data;
 
     const Packet* p = eventData->packet;
@@ -679,16 +675,16 @@ void SipSessionSnortCallback(void*, ServiceEventType, void* data)
     }
 #endif
     if(p->flow)
-    	session = appid_api.get_appid_data(p->flow);
+    	asd = appid_api.get_appid_data(p->flow);
 
-    if(!session)
+    if(!asd)
     {
     	WarningMessage("AppId Session does not exist.\n");
     	return;
     }
 
-    SipSessionCbClientProcess(p, headers, dialog, session);
-    SipSessionCbServiceProcess(p, headers, dialog, session);
+    SipSessionCbClientProcess(p, headers, dialog, asd);
+    SipSessionCbServiceProcess(p, headers, dialog, asd);
 }
 
 static int sip_service_init(const IniServiceAPI* const init_api)
@@ -736,13 +732,13 @@ static int sip_service_init(const IniServiceAPI* const init_api)
 static int sip_service_validate(ServiceValidationArgs* args)
 {
     ServiceSIPData* ss;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
 
-    ss = (ServiceSIPData*)sip_service_mod.api->data_get(flowp, sip_service_mod.flow_data_index);
+    ss = (ServiceSIPData*)sip_service_mod.api->data_get(asd, sip_service_mod.flow_data_index);
     if (!ss)
     {
         ss = (ServiceSIPData*)snort_calloc(sizeof(ServiceSIPData));
-        sip_service_mod.api->data_add(flowp, ss, sip_service_mod.flow_data_index, &snort_free);
+        sip_service_mod.api->data_add(asd, ss, sip_service_mod.flow_data_index, &snort_free);
     }
 
     if (args->size && args->dir == APP_ID_FROM_RESPONDER)
@@ -752,18 +748,18 @@ static int sip_service_validate(ServiceValidationArgs* args)
 
     if (ss->serverPkt > 10)
     {
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            sip_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-                sip_service_mod.flow_data_index, args->pConfig);
+            sip_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+                sip_service_mod.flow_data_index);
         }
-        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
+        asd->clear_session_flags(APPID_SESSION_CONTINUE);
         return SERVICE_NOMATCH;
     }
 
-    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        sip_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+        sip_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     }
 
     return SERVICE_INPROCESS;

@@ -23,7 +23,6 @@
 
 #include "main/snort_debug.h"
 #include "sfip/sf_ip.h"
-#include "target_based/snort_protocols.h"
 #include "utils/util.h"
 
 #include "app_info_table.h"
@@ -34,12 +33,7 @@
 #include "service_util.h"
 #include "appid_module.h"
 
-// FIXIT-H This needs to use a real SFIP function
-static SFIP_RET sfip_convert_ip_text_to_binary(const int, const char*, void*)
-{ return SFIP_SUCCESS; }
-
 #define FTP_PORT    21
-/*#define RNA_FTP_EXPECTED_ON_PORT    1 */
 
 enum FTPState
 {
@@ -91,7 +85,7 @@ struct ServiceFTPCode
 static int ftp_init(const IniServiceAPI* const init_api);
 static int ftp_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &ftp_validate,
@@ -103,7 +97,7 @@ static RNAServiceElement svc_element =
     "ftp"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &ftp_validate, FTP_PORT, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
@@ -138,7 +132,7 @@ static int16_t ftp_data_app_id = 0;
 
 static int ftp_init(const IniServiceAPI* const init_api)
 {
-    ftp_data_app_id = AddProtocolReference("ftp-data");
+    ftp_data_app_id = add_appid_protocol_reference("ftp-data");
 
     init_api->RegisterPattern(&ftp_validate, IpProtocol::TCP, (uint8_t*)FTP_PATTERN1,
         sizeof(FTP_PATTERN1)-1, 0, "ftp");
@@ -776,8 +770,7 @@ static addr_family_map RFC2428_known_address_families[] =
     { 0, 0 }
 };
 
-static int ftp_validate_eprt(const uint8_t* data, uint16_t size,
-    sfip_t* address, uint16_t* port)
+static int ftp_validate_eprt(const uint8_t* data, uint16_t size, sfip_t* address, uint16_t* port)
 {
     int index;
     int addrFamilySupported = 0;
@@ -786,7 +779,7 @@ static int ftp_validate_eprt(const uint8_t* data, uint16_t size,
     uint32_t tmp;
     char tmp_str[INET6_ADDRSTRLEN+1];
 
-    memset(address,0,sizeof(sfip_t));
+    memset(address, 0, sizeof(sfip_t));
     *port = 0;
 
     end = data + size;
@@ -815,6 +808,7 @@ static int ftp_validate_eprt(const uint8_t* data, uint16_t size,
     }
     tmp_str[index] = '\0'; // make the copied portion be nul terminated.
 
+    // FIXIT-L recode logic above and this call to call sfip_pton instead...
     if (sfip_convert_ip_text_to_binary(addrFamilySupported, tmp_str, &address) != SFIP_SUCCESS)
         return -1;
 
@@ -829,19 +823,19 @@ static int ftp_validate_eprt(const uint8_t* data, uint16_t size,
     return 0;
 }
 
-static inline void WatchForCommandResult(ServiceFTPData* fd, AppIdSession* flowp, FTPCmd command)
+static inline void WatchForCommandResult(ServiceFTPData* fd, AppIdSession* asd, FTPCmd command)
 {
     if (fd->state != FTP_STATE_MONITOR)
     {
-        flowp->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_CONTINUE);
+        asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_CONTINUE);
         fd->state = FTP_STATE_MONITOR;
     }
     fd->cmd = command;
 }
 
-static inline void InitializeDataSession(AppIdSession* flowp,AppIdSession* fp)
+static inline void InitializeDataSession(AppIdSession* asd, AppIdSession* fp)
 {
-    unsigned encryptedFlag = flowp->getAppIdFlag(APPID_SESSION_ENCRYPTED |
+    unsigned encryptedFlag = asd->get_session_flags(APPID_SESSION_ENCRYPTED |
         APPID_SESSION_DECRYPTED);
     if (encryptedFlag == APPID_SESSION_ENCRYPTED)
     {
@@ -853,7 +847,7 @@ static inline void InitializeDataSession(AppIdSession* flowp,AppIdSession* fp)
                            // zeroes.
         fp->serviceAppId = APP_ID_FTP_DATA;
     }
-    PopulateExpectedFlow(flowp, fp, APPID_SESSION_IGNORE_ID_FLAGS | encryptedFlag);
+    PopulateExpectedFlow(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS | encryptedFlag);
 }
 
 static int ftp_validate(ServiceValidationArgs* args)
@@ -871,7 +865,7 @@ static int ftp_validate(ServiceValidationArgs* args)
     uint16_t port;
     AppIdSession* fp;
     int retval = SERVICE_INPROCESS;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -884,19 +878,19 @@ static int ftp_validate(ServiceValidationArgs* args)
     //to direct traffic to SSL detector to extract payload from certs. This will require
     // manintaining
     //two detector states at the same time.
-    if (flowp->getAppIdFlag(APPID_SESSION_ENCRYPTED))
+    if (asd->get_session_flags(APPID_SESSION_ENCRYPTED))
     {
-        if (!flowp->getAppIdFlag(APPID_SESSION_DECRYPTED))
+        if (!asd->get_session_flags(APPID_SESSION_DECRYPTED))
         {
             goto inprocess;
         }
     }
 
-    fd = (ServiceFTPData*)ftp_service_mod.api->data_get(flowp, ftp_service_mod.flow_data_index);
+    fd = (ServiceFTPData*)ftp_service_mod.api->data_get(asd, ftp_service_mod.flow_data_index);
     if (!fd)
     {
         fd = (ServiceFTPData*)snort_calloc(sizeof(ServiceFTPData));
-        ftp_service_mod.api->data_add(flowp, fd, ftp_service_mod.flow_data_index, &snort_free);
+        ftp_service_mod.api->data_add(asd, fd, ftp_service_mod.flow_data_index, &snort_free);
         fd->state = FTP_STATE_CONNECTION;
         fd->rstate = FTP_REPLY_BEGIN;
         fd->cmd = FTP_CMD_NONE;
@@ -914,7 +908,7 @@ static int ftp_validate(ServiceValidationArgs* args)
                 size-(sizeof(FTP_PORT_CMD)-1),
                 &fd->address, &fd->port) == 0)
             {
-                WatchForCommandResult(fd, flowp, FTP_CMD_PORT_EPRT);
+                WatchForCommandResult(fd, asd, FTP_CMD_PORT_EPRT);
             }
         }
         else if (size > sizeof(FTP_EPRT_CMD)-1 &&
@@ -924,7 +918,7 @@ static int ftp_validate(ServiceValidationArgs* args)
                 size-(sizeof(FTP_EPRT_CMD)-1),
                 &fd->address, &fd->port) == 0)
             {
-                WatchForCommandResult(fd, flowp, FTP_CMD_PORT_EPRT);
+                WatchForCommandResult(fd, asd, FTP_CMD_PORT_EPRT);
             }
         }
         else if ( size > sizeof(FTP_PASV_CMD)-1 &&
@@ -932,7 +926,7 @@ static int ftp_validate(ServiceValidationArgs* args)
             strncasecmp((char*)data, FTP_EPSV_CMD, sizeof(FTP_EPSV_CMD)-1) == 0 )
             )
         {
-            WatchForCommandResult(fd, flowp, FTP_CMD_PASV_EPSV);
+            WatchForCommandResult(fd, asd, FTP_CMD_PASV_EPSV);
         }
         goto inprocess;
     }
@@ -989,7 +983,7 @@ static int ftp_validate(ServiceValidationArgs* args)
             case 551: /*requested action aborted :page type unknown */
             case 552: /*requested action aborted */
             case 553: /*requested action not taken file name is not allowed */
-                flowp->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_CONTINUE);
+                asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_CONTINUE);
                 fd->state = FTP_STATE_MONITOR;
                 break;
             case 221: /*good bye */
@@ -1011,20 +1005,20 @@ static int ftp_validate(ServiceValidationArgs* args)
                     fd->state = FTP_STATE_CONNECTION_ERROR;
                     break;
                 case 230:
-                    flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
+                    asd->set_session_flags(APPID_SESSION_CONTINUE);
                     fd->state = FTP_STATE_MONITOR;
                     retval = SERVICE_SUCCESS;
                     break;
                 case 234:
                 {
-                    flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
+                    asd->set_session_flags(APPID_SESSION_CONTINUE);
                     retval = SERVICE_SUCCESS;
                     /*
                     // we do not set the state to FTP_STATE_MONITOR here because we don't know
                     // if there will be SSL decryption to allow us to see what we are interested in.
                     // Let the WatchForCommandResult() usage elsewhere take care of it.
                     */
-                    flowp->setAppIdFlag(APPID_SESSION_CONTINUE | APPID_SESSION_ENCRYPTED |
+                    asd->set_session_flags(APPID_SESSION_CONTINUE | APPID_SESSION_ENCRYPTED |
                         APPID_SESSION_STICKY_SERVICE);
                 }
                 break;
@@ -1075,7 +1069,7 @@ static int ftp_validate(ServiceValidationArgs* args)
                     break;
                 case 202:
                 case 230:
-                    flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
+                    asd->set_session_flags(APPID_SESSION_CONTINUE);
                     fd->state = FTP_STATE_MONITOR;
                     retval = SERVICE_SUCCESS;
                 default:
@@ -1128,7 +1122,7 @@ static int ftp_validate(ServiceValidationArgs* args)
                 {
                 case 202:
                 case 230:
-                    flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
+                    asd->set_session_flags(APPID_SESSION_CONTINUE);
                     fd->state = FTP_STATE_MONITOR;
                     retval = SERVICE_SUCCESS;
                 default:
@@ -1191,19 +1185,19 @@ static int ftp_validate(ServiceValidationArgs* args)
                     sip = pkt->ptrs.ip_api.get_src();
                     addr = htonl(address);
                     sfip_set_raw(&ip, &addr, AF_INET);
-                    fp = AppIdSession::create_future_session(pkt, dip, 0, &ip, port, flowp->protocol, ftp_data_app_id,
+                    fp = AppIdSession::create_future_session(pkt, dip, 0, &ip, port, asd->protocol, ftp_data_app_id,
                         APPID_EARLY_SESSION_FLAG_FW_RULE);
                     if (fp)
-                        InitializeDataSession(flowp,fp);
+                        InitializeDataSession(asd,fp);
 
                     if (!sfip_fast_eq6(&ip, sip))
                     {
-                        fp = flowp->create_future_session(pkt, dip, 0, sip, port, flowp->protocol, ftp_data_app_id,
+                        fp = asd->create_future_session(pkt, dip, 0, sip, port, asd->protocol, ftp_data_app_id,
                             APPID_EARLY_SESSION_FLAG_FW_RULE);
                         if (fp)
-                            InitializeDataSession(flowp,fp);
+                            InitializeDataSession(asd,fp);
                     }
-                    ftp_service_mod.api->add_payload(flowp, APP_ID_FTP_PASSIVE);
+                    ftp_service_mod.api->add_payload(asd, APP_ID_FTP_PASSIVE);
                 }
                 else if (code < 0)
                     goto fail;
@@ -1221,12 +1215,12 @@ static int ftp_validate(ServiceValidationArgs* args)
                     const sfip_t* dip;
                     dip = pkt->ptrs.ip_api.get_dst();
                     sip = pkt->ptrs.ip_api.get_src();
-                    fp = flowp->create_future_session(pkt, dip, 0, sip, port, flowp->protocol,
+                    fp = asd->create_future_session(pkt, dip, 0, sip, port, asd->protocol,
                         ftp_data_app_id,
                         APPID_EARLY_SESSION_FLAG_FW_RULE);
                     if (fp)
-                        InitializeDataSession(flowp,fp);
-                    ftp_service_mod.api->add_payload(flowp, APP_ID_FTP_PASSIVE);
+                        InitializeDataSession(asd,fp);
+                    ftp_service_mod.api->add_payload(asd, APP_ID_FTP_PASSIVE);
                 }
                 else if (code < 0)
                     goto fail;
@@ -1237,11 +1231,11 @@ static int ftp_validate(ServiceValidationArgs* args)
                 {
                     const sfip_t* sip;
                     sip = pkt->ptrs.ip_api.get_src();
-                    fp = flowp->create_future_session(pkt, sip, 0, &fd->address, fd->port, flowp->protocol, ftp_data_app_id,
+                    fp = asd->create_future_session(pkt, sip, 0, &fd->address, fd->port, asd->protocol, ftp_data_app_id,
                         APPID_EARLY_SESSION_FLAG_FW_RULE);
                     if (fp)
-                        InitializeDataSession(flowp,fp);
-                    ftp_service_mod.api->add_payload(flowp, APP_ID_FTP_ACTIVE); // Active mode FTP
+                        InitializeDataSession(asd,fp);
+                    ftp_service_mod.api->add_payload(asd, APP_ID_FTP_ACTIVE); // Active mode FTP
                                                                                 // is reported as a
                                                                                 // payload id
                 }
@@ -1262,20 +1256,20 @@ static int ftp_validate(ServiceValidationArgs* args)
     default:
     case SERVICE_INPROCESS:
 inprocess:
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            ftp_service_mod.api->service_inprocess(flowp, pkt, dir, &svc_element);
+            ftp_service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
         }
         return SERVICE_INPROCESS;
 
     case SERVICE_SUCCESS:
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            uint64_t encryptedFlag = flowp->getAppIdFlag(
+            uint64_t encryptedFlag = asd->get_session_flags(
                 APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
 
             // FTPS only when encrypted==1 decrypted==0
-            ftp_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
+            ftp_service_mod.api->add_service(asd, pkt, dir, &svc_element,
                 encryptedFlag == APPID_SESSION_ENCRYPTED ?
                 APP_ID_FTPS : APP_ID_FTP_CONTROL,
                 fd->vendor[0] ? fd->vendor : nullptr,
@@ -1290,12 +1284,12 @@ inprocess:
 
     case SERVICE_NOMATCH:
 fail:
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            ftp_service_mod.api->fail_service(flowp, pkt, dir, &svc_element,
-                ftp_service_mod.flow_data_index, args->pConfig);
+            ftp_service_mod.api->fail_service(asd, pkt, dir, &svc_element,
+                ftp_service_mod.flow_data_index);
         }
-        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
+        asd->clear_session_flags(APPID_SESSION_CONTINUE);
         return SERVICE_NOMATCH;
     }
 }

@@ -83,8 +83,7 @@ struct ServiceRTMPData
 static int rtmp_init(const IniServiceAPI* const api);
 static int rtmp_validate(ServiceValidationArgs* args);
 
-//  FIXIT-L: Make the globals const or, if necessary, thread-local.
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &rtmp_validate,
@@ -96,7 +95,7 @@ static RNAServiceElement svc_element =
     "rtmp"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &rtmp_validate, 1935, IpProtocol::TCP, 0 },
     { &rtmp_validate, 1935, IpProtocol::UDP, 0 },
@@ -451,7 +450,7 @@ parse_rtmp_message_fail:
 static int rtmp_validate(ServiceValidationArgs* args)
 {
     ServiceRTMPData* ss;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     const int dir = args->dir;
     uint16_t size = args->size;
@@ -459,11 +458,11 @@ static int rtmp_validate(ServiceValidationArgs* args)
     if (!size)
         goto inprocess;
 
-    ss = (ServiceRTMPData*)rtmp_service_mod.api->data_get(flowp, rtmp_service_mod.flow_data_index);
+    ss = (ServiceRTMPData*)rtmp_service_mod.api->data_get(asd, rtmp_service_mod.flow_data_index);
     if (!ss)
     {
         ss = (ServiceRTMPData*)snort_calloc(sizeof(ServiceRTMPData));
-        rtmp_service_mod.api->data_add(flowp, ss, rtmp_service_mod.flow_data_index, &rtmp_free);
+        rtmp_service_mod.api->data_add(asd, ss, rtmp_service_mod.flow_data_index, &rtmp_free);
     }
 
     /* Client -> Server */
@@ -655,33 +654,33 @@ static int rtmp_validate(ServiceValidationArgs* args)
     }
 
     /* Give up if it's taking us too long to figure out this thing. */
-    if (flowp->session_packet_count >= pAppidActiveConfig->mod_config->rtmp_max_packets)
+    if (asd->session_packet_count >= AppIdConfig::get_appid_config()->mod_config->rtmp_max_packets)
     {
         goto fail;
     }
 
 inprocess:
-    rtmp_service_mod.api->service_inprocess(flowp, args->pkt, dir, &svc_element);
+    rtmp_service_mod.api->service_inprocess(asd, args->pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 
 fail:
     snort_free(ss->swfUrl);
     snort_free(ss->pageUrl);
     ss->swfUrl = ss->pageUrl = nullptr;
-    rtmp_service_mod.api->fail_service(flowp, args->pkt, dir, &svc_element,
-        rtmp_service_mod.flow_data_index, args->pConfig);
+    rtmp_service_mod.api->fail_service(asd, args->pkt, dir, &svc_element,
+        rtmp_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 
 success:
     if (ss->swfUrl != nullptr)
     {
-        if (!flowp->hsession)
-            flowp->hsession = (httpSession*)snort_calloc(sizeof(httpSession));
+        if (!asd->hsession)
+            asd->hsession = (httpSession*)snort_calloc(sizeof(httpSession));
 
-        if (flowp->hsession->url == nullptr)
+        if (asd->hsession->url == nullptr)
         {
-            flowp->hsession->url = ss->swfUrl;
-            flowp->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+            asd->hsession->url = ss->swfUrl;
+            asd->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
         else
         {
@@ -691,17 +690,17 @@ success:
     }
     if (ss->pageUrl != nullptr)
     {
-        if (!flowp->hsession)
-            flowp->hsession = (httpSession*)snort_calloc(sizeof(httpSession));
+        if (!asd->hsession)
+            asd->hsession = (httpSession*)snort_calloc(sizeof(httpSession));
 
-        if (!pAppidActiveConfig->mod_config->referred_appId_disabled &&
-            (flowp->hsession->referer == nullptr))
-            flowp->hsession->referer = ss->pageUrl;
+        if (!AppIdConfig::get_appid_config()->mod_config->referred_appId_disabled &&
+            (asd->hsession->referer == nullptr))
+            asd->hsession->referer = ss->pageUrl;
         else
             snort_free(ss->pageUrl);
         ss->pageUrl = nullptr;
     }
-    rtmp_service_mod.api->add_service(flowp, args->pkt, dir, &svc_element,
+    rtmp_service_mod.api->add_service(asd, args->pkt, dir, &svc_element,
         APP_ID_RTMP, nullptr, nullptr, nullptr);
     appid_stats.rtmp_flows++;
     return SERVICE_SUCCESS;

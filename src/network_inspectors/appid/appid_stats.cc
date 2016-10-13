@@ -41,11 +41,6 @@
 #define URLCATBUCKETS   100
 #define URLREPBUCKETS   5
 
-// FIXIT - find out where this is defined in snort 2.x and define appropriately here
-#if 1
-#define UNIFIED2_IDS_EVENT_APPSTAT 1
-#endif
-
 struct AppIdStatRecord
 {
     uint32_t app_id;
@@ -61,7 +56,7 @@ struct AppIdStatRecord
 
 struct AppIdStatOutputRecord
 {
-    char appName[MAX_EVENT_APPNAME_LEN];
+    char app_name[MAX_EVENT_APPNAME_LEN];
     uint32_t initiatorBytes;
     uint32_t responderBytes;
 };
@@ -115,7 +110,7 @@ static inline time_t get_time()
     return now - (now % bucketInterval);
 }
 
-void update_appid_statistics(AppIdSession* session)
+void update_appid_statistics(AppIdSession* asd)
 {
     if ( !enableAppStats )
         return;
@@ -129,17 +124,17 @@ void update_appid_statistics(AppIdSession* session)
         start_stats_period(now);
     }
 
-    time_t bucketTime = session->stats.firstPktsecond -
-        (session->stats.firstPktsecond % bucketInterval);
+    time_t bucketTime = asd->stats.firstPktsecond -
+        (asd->stats.firstPktsecond % bucketInterval);
 
     StatsBucket* bucket = get_stats_bucket(bucketTime);
     if ( !bucket )
         return;
 
-    bucket->totalStats.txByteCnt += session->stats.initiatorBytes;
-    bucket->totalStats.rxByteCnt += session->stats.responderBytes;
+    bucket->totalStats.txByteCnt += asd->stats.initiatorBytes;
+    bucket->totalStats.rxByteCnt += asd->stats.responderBytes;
 
-    const uint32_t web_app_id = session->pick_payload_app_id();
+    const uint32_t web_app_id = asd->pick_payload_app_id();
     if (web_app_id > APP_ID_NONE)
     {
         const uint32_t app_id = web_app_id;
@@ -158,7 +153,7 @@ void update_appid_statistics(AppIdSession* session)
             }
             else
             {
-                // FIXIT-M really? we just silently ignore an allocation failure?
+                WarningMessage("Error saving statistics record for app id: %u", app_id);
                 snort_free(record);
                 record = nullptr;
             }
@@ -166,12 +161,12 @@ void update_appid_statistics(AppIdSession* session)
 
         if (record)
         {
-            record->initiatorBytes += session->stats.initiatorBytes;
-            record->responderBytes += session->stats.responderBytes;
+            record->initiatorBytes += asd->stats.initiatorBytes;
+            record->responderBytes += asd->stats.responderBytes;
         }
     }
 
-    const uint32_t service_app_id = session->pick_service_app_id();
+    const uint32_t service_app_id = asd->pick_service_app_id();
     if ((service_app_id) &&
         (service_app_id != web_app_id))
     {
@@ -191,7 +186,7 @@ void update_appid_statistics(AppIdSession* session)
             }
             else
             {
-                // FIXIT-M really? don't ignore insert failure? add a stat here
+                WarningMessage("Error saving statistics record for app id: %u", app_id);
                 snort_free(record);
                 record = nullptr;
             }
@@ -199,12 +194,12 @@ void update_appid_statistics(AppIdSession* session)
 
         if (record)
         {
-            record->initiatorBytes += session->stats.initiatorBytes;
-            record->responderBytes += session->stats.responderBytes;
+            record->initiatorBytes += asd->stats.initiatorBytes;
+            record->responderBytes += asd->stats.responderBytes;
         }
     }
 
-    const uint32_t client_app_id = session->pick_client_app_id();
+    const uint32_t client_app_id = asd->pick_client_app_id();
     if (client_app_id > APP_ID_NONE
         && client_app_id != service_app_id
         && client_app_id != web_app_id)
@@ -226,7 +221,7 @@ void update_appid_statistics(AppIdSession* session)
             }
             else
             {
-                // FIXIT-M really? we just silently ignore an allocation failure?
+                WarningMessage("Error saving statistics record for app id: %u", app_id);
                 snort_free(record);
                 record = nullptr;
             }
@@ -234,8 +229,8 @@ void update_appid_statistics(AppIdSession* session)
 
         if (record)
         {
-            record->initiatorBytes += session->stats.initiatorBytes;
-            record->responderBytes += session->stats.responderBytes;
+            record->initiatorBytes += asd->stats.initiatorBytes;
+            record->responderBytes += asd->stats.responderBytes;
         }
     }
 }
@@ -267,17 +262,6 @@ static void close_stats_log_file()
         fclose(appfp);
         appfp = nullptr;
     }
-}
-
-void reinit_appid_statistics()
-{
-    // FIXIT-L J really should something like:
-    // if ( !stats_files_are_open() )
-    //      return;
-    if (!enableAppStats)
-        return;
-
-    close_stats_log_file();
 }
 
 void flush_appid_statistics()
@@ -406,7 +390,7 @@ static void dump_statistics()
             for (node = fwAvlFirst(bucket->appsTree); node != nullptr; node = fwAvlNext(node))
             {
                 struct AppIdStatOutputRecord* recBuffPtr;
-                const char* appName;
+                const char* app_name;
                 bool cooked_client = false;
                 AppId app_id;
                 char tmpBuff[MAX_EVENT_APPNAME_LEN];
@@ -422,21 +406,21 @@ static void dump_statistics()
                     app_id -= 2000000000;
                 }
 
-                AppInfoTableEntry* entry = appInfoEntryGet(app_id);
+                AppInfoTableEntry* entry = AppInfoManager::get_instance().get_app_info_entry(app_id);
                 if (entry)
                 {
-                    appName = entry->appName;
+                    app_name = entry->app_name;
                     if (cooked_client)
                     {
-                        snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_cl_%s", appName);
+                        snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_cl_%s", app_name);
                         tmpBuff[MAX_EVENT_APPNAME_LEN-1] = 0;
-                        appName = tmpBuff;
+                        app_name = tmpBuff;
                     }
                 }
                 else if (app_id == APP_ID_UNKNOWN || app_id == APP_ID_UNKNOWN_UI)
-                    appName = "__unknown";
+                    app_name = "__unknown";
                 else if (app_id == APP_ID_NONE)
-                    appName = "__none";
+                    app_name = "__none";
                 else
                 {
                     ErrorMessage("invalid appid in appStatRecord (%u)\n", record->app_id);
@@ -446,10 +430,10 @@ static void dump_statistics()
                         snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_err_%u",app_id);
 
                     tmpBuff[MAX_EVENT_APPNAME_LEN - 1] = 0;
-                    appName = tmpBuff;
+                    app_name = tmpBuff;
                 }
 
-                memcpy(recBuffPtr->appName, appName, strlen(appName));
+                memcpy(recBuffPtr->app_name, app_name, strlen(app_name));
 
                 /**buffPtr++ = htonl(record->app_id); */
                 recBuffPtr->initiatorBytes = htonl(record->initiatorBytes);

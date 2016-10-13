@@ -46,7 +46,7 @@ extern struct RNAClientAppModule sip_udp_client_mod;
 extern struct RNAClientAppModule sip_tcp_client_mod;
 extern struct RNAServiceValidationModule sip_service_mod;
 
-// FIXIT-M: ServiceEventType enum needs to become real when SIP is supported
+// FIXIT-M ServiceEventType enum needs to become real when SIP is supported
 enum ServiceEventType {};
 
 void SipSessionSnortCallback(void* ssnptr, ServiceEventType, void* eventData);

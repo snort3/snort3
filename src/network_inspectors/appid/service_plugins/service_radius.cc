@@ -65,7 +65,7 @@ static int radius_init(const IniServiceAPI* const init_api);
 static int radius_validate(ServiceValidationArgs* args);
 static int radius_validate_accounting(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &radius_validate,
@@ -77,7 +77,7 @@ static RNAServiceElement svc_element =
     "radius"
 };
 
-static RNAServiceElement acct_svc_element =
+static const RNAServiceElement acct_svc_element =
 {
     nullptr,
     &radius_validate_accounting,
@@ -89,7 +89,7 @@ static RNAServiceElement acct_svc_element =
     "radacct"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &radius_validate, 1812, IpProtocol::UDP, 0 },
     { &radius_validate, 1812, IpProtocol::UDP, 1 },
@@ -135,7 +135,7 @@ static int radius_validate(ServiceValidationArgs* args)
     const RADIUSHeader* hdr = (const RADIUSHeader*)args->data;
     uint16_t len;
     int new_dir;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const int dir = args->dir;
     uint16_t size = args->size;
 
@@ -144,12 +144,12 @@ static int radius_validate(ServiceValidationArgs* args)
     if (size < sizeof(RADIUSHeader))
         goto fail;
 
-    rd = (ServiceRADIUSData*)radius_service_mod.api->data_get(flowp,
+    rd = (ServiceRADIUSData*)radius_service_mod.api->data_get(asd,
         radius_service_mod.flow_data_index);
     if (!rd)
     {
         rd = (ServiceRADIUSData*)snort_calloc(sizeof(ServiceRADIUSData));
-        radius_service_mod.api->data_add(flowp, rd, radius_service_mod.flow_data_index,
+        radius_service_mod.api->data_add(asd, rd, radius_service_mod.flow_data_index,
             &snort_free);
         rd->state = RADIUS_STATE_REQUEST;
     }
@@ -161,12 +161,12 @@ static int radius_validate(ServiceValidationArgs* args)
             hdr->code == RADIUS_CODE_ACCESS_REJECT ||
             hdr->code == RADIUS_CODE_ACCESS_CHALLENGE)
         {
-            flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
+            asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
             rd->state = RADIUS_STATE_RESPONSE;
             new_dir = APP_ID_FROM_RESPONDER;
         }
     }
-    else if (flowp->getAppIdFlag(APPID_SESSION_UDP_REVERSED))
+    else if (asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
     {
         new_dir = (dir == APP_ID_FROM_RESPONDER) ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
     }
@@ -218,23 +218,23 @@ static int radius_validate(ServiceValidationArgs* args)
         goto fail;
     }
 inprocess:
-    radius_service_mod.api->service_inprocess(flowp, args->pkt, dir, &svc_element);
+    radius_service_mod.api->service_inprocess(asd, args->pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    radius_service_mod.api->add_service(flowp, args->pkt, dir, &svc_element,
+    radius_service_mod.api->add_service(asd, args->pkt, dir, &svc_element,
         APP_ID_RADIUS, nullptr, nullptr, nullptr);
     appid_stats.radius_flows++;
     return SERVICE_SUCCESS;
 
 not_compatible:
-    radius_service_mod.api->incompatible_data(flowp, args->pkt, dir, &svc_element,
+    radius_service_mod.api->incompatible_data(asd, args->pkt, dir, &svc_element,
         radius_service_mod.flow_data_index, args->pConfig);
     return SERVICE_NOT_COMPATIBLE;
 
 fail:
-    radius_service_mod.api->fail_service(flowp, args->pkt, dir, &svc_element,
-        radius_service_mod.flow_data_index, args->pConfig);
+    radius_service_mod.api->fail_service(asd, args->pkt, dir, &svc_element,
+        radius_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 
@@ -244,7 +244,7 @@ static int radius_validate_accounting(ServiceValidationArgs* args)
     const RADIUSHeader* hdr = (const RADIUSHeader*)args->data;
     uint16_t len;
     int new_dir;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const int dir = args->dir;
     uint16_t size = args->size;
 
@@ -253,12 +253,12 @@ static int radius_validate_accounting(ServiceValidationArgs* args)
     if (size < sizeof(RADIUSHeader))
         goto fail;
 
-    rd = (ServiceRADIUSData*)radius_service_mod.api->data_get(flowp,
+    rd = (ServiceRADIUSData*)radius_service_mod.api->data_get(asd,
         radius_service_mod.flow_data_index);
     if (!rd)
     {
         rd = (ServiceRADIUSData*)snort_calloc(sizeof(ServiceRADIUSData));
-        radius_service_mod.api->data_add(flowp, rd, radius_service_mod.flow_data_index,
+        radius_service_mod.api->data_add(asd, rd, radius_service_mod.flow_data_index,
             &snort_free);
         rd->state = RADIUS_STATE_REQUEST;
     }
@@ -268,12 +268,12 @@ static int radius_validate_accounting(ServiceValidationArgs* args)
     {
         if (hdr->code == RADIUS_CODE_ACCOUNTING_RESPONSE)
         {
-            flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
+            asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
             rd->state = RADIUS_STATE_RESPONSE;
             new_dir = APP_ID_FROM_RESPONDER;
         }
     }
-    else if (flowp->getAppIdFlag(APPID_SESSION_UDP_REVERSED))
+    else if (asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
     {
         new_dir = (dir == APP_ID_FROM_RESPONDER) ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
     }
@@ -321,23 +321,23 @@ static int radius_validate_accounting(ServiceValidationArgs* args)
         goto fail;
     }
 inprocess:
-    radius_service_mod.api->service_inprocess(flowp, args->pkt, dir, &acct_svc_element);
+    radius_service_mod.api->service_inprocess(asd, args->pkt, dir, &acct_svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    radius_service_mod.api->add_service(flowp, args->pkt, dir, &acct_svc_element,
+    radius_service_mod.api->add_service(asd, args->pkt, dir, &acct_svc_element,
         APP_ID_RADIUS_ACCT, nullptr, nullptr, nullptr);
     appid_stats.radius_flows++;
     return SERVICE_SUCCESS;
 
 not_compatible:
-    radius_service_mod.api->incompatible_data(flowp, args->pkt, dir, &acct_svc_element,
+    radius_service_mod.api->incompatible_data(asd, args->pkt, dir, &acct_svc_element,
         radius_service_mod.flow_data_index, args->pConfig);
     return SERVICE_NOT_COMPATIBLE;
 
 fail:
-    radius_service_mod.api->fail_service(flowp, args->pkt, dir, &acct_svc_element,
-        radius_service_mod.flow_data_index, args->pConfig);
+    radius_service_mod.api->fail_service(asd, args->pkt, dir, &acct_svc_element,
+        radius_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

@@ -65,7 +65,7 @@ struct ServiceLPRData
 static int lpr_init(const IniServiceAPI* const init_api);
 static int lpr_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &lpr_validate,
@@ -77,7 +77,7 @@ static RNAServiceElement svc_element =
     "lpr"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &lpr_validate, 515, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
@@ -117,7 +117,7 @@ static int lpr_validate(ServiceValidationArgs* args)
 {
     ServiceLPRData* ld;
     int i;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     const int dir = args->dir;
     uint16_t size = args->size;
@@ -125,11 +125,11 @@ static int lpr_validate(ServiceValidationArgs* args)
     if (!size)
         goto inprocess;
 
-    ld = (ServiceLPRData*)lpr_service_mod.api->data_get(flowp, lpr_service_mod.flow_data_index);
+    ld = (ServiceLPRData*)lpr_service_mod.api->data_get(asd, lpr_service_mod.flow_data_index);
     if (!ld)
     {
         ld = (ServiceLPRData*)snort_calloc(sizeof(ServiceLPRData));
-        lpr_service_mod.api->data_add(flowp, ld, lpr_service_mod.flow_data_index, &snort_free);
+        lpr_service_mod.api->data_add(asd, ld, lpr_service_mod.flow_data_index, &snort_free);
         ld->state = LPR_STATE_COMMAND;
     }
 
@@ -242,22 +242,22 @@ static int lpr_validate(ServiceValidationArgs* args)
         goto bail;
     }
 inprocess:
-    lpr_service_mod.api->service_inprocess(flowp, args->pkt, dir, &svc_element);
+    lpr_service_mod.api->service_inprocess(asd, args->pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    lpr_service_mod.api->add_service(flowp, args->pkt, dir, &svc_element,
+    lpr_service_mod.api->add_service(asd, args->pkt, dir, &svc_element,
         APP_ID_PRINTSRV, nullptr, nullptr, nullptr);
     appid_stats.lpr_flows++;
     return SERVICE_SUCCESS;
 
 fail:
-    lpr_service_mod.api->fail_service(flowp, args->pkt, dir, &svc_element,
-        lpr_service_mod.flow_data_index, args->pConfig);
+    lpr_service_mod.api->fail_service(asd, args->pkt, dir, &svc_element,
+        lpr_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 
 bail:
-    lpr_service_mod.api->incompatible_data(flowp, args->pkt, dir, &svc_element,
+    lpr_service_mod.api->incompatible_data(asd, args->pkt, dir, &svc_element,
         lpr_service_mod.flow_data_index, args->pConfig);
     return SERVICE_NOT_COMPATIBLE;
 }

@@ -33,13 +33,13 @@
 #include <rpc/rpcent.h>
 #endif
 
+#include "application_ids.h"
 #include "service_api.h"
 #include "app_info_table.h"
+#include "service_util.h"
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
-#include "application_ids.h"
-#include "target_based/snort_protocols.h"
 #include "utils/util.h"
 #include "appid_module.h"
 
@@ -108,7 +108,7 @@ struct ServiceRPCPortmap
 {
     uint32_t program;
     uint32_t version;
-    uint32_t proto;
+    IpProtocol proto;
     uint32_t port;
 };
 
@@ -152,7 +152,7 @@ struct ServiceRPCData
     uint32_t program;
     uint32_t procedure;
     uint32_t xid;
-    uint32_t proto;
+    IpProtocol proto;
     uint32_t tcpsize[APP_ID_APPID_SESSION_DIRECTION_MAX];
     uint32_t tcpfragpos[APP_ID_APPID_SESSION_DIRECTION_MAX];
     uint32_t tcpauthsize[APP_ID_APPID_SESSION_DIRECTION_MAX];
@@ -165,7 +165,7 @@ static int rpc_init(const IniServiceAPI* const init_api);
 static int rpc_validate(ServiceValidationArgs* args);
 static int rpc_tcp_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &rpc_validate,
@@ -176,7 +176,7 @@ static RNAServiceElement svc_element =
     0,
     "rpc"
 };
-static RNAServiceElement tcp_svc_element =
+static const RNAServiceElement tcp_svc_element =
 {
     nullptr,
     &rpc_tcp_validate,
@@ -193,7 +193,7 @@ static RNAServiceElement tcp_svc_element =
 #define RPC_PORT_MOUNTD     4046
 #define RPC_PORT_NLOCKMGR   4045
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &rpc_validate, RPC_PORT_PORTMAPPER, IpProtocol::UDP, 0 },
     { &rpc_validate, RPC_PORT_PORTMAPPER, IpProtocol::UDP, 1 },
@@ -246,7 +246,7 @@ static int rpc_init(const IniServiceAPI* const init_api)
     struct rpcent* rpc;
     RPCProgram* prog;
 
-    app_id = AddProtocolReference("sunrpc");
+    app_id = add_appid_protocol_reference("sunrpc");
 
     if (!rpc_programs)
     {
@@ -296,9 +296,8 @@ static const RPCProgram* FindRPCProgram(uint32_t program)
     return rpc;
 }
 
-static int validate_packet(const uint8_t* data, uint16_t size, int dir,
-    AppIdSession* flowp, Packet* pkt, ServiceRPCData* rd,
-    const char** pname, uint32_t* program)
+static int validate_packet(const uint8_t* data, uint16_t size, int dir, AppIdSession* asd,
+        Packet* pkt, ServiceRPCData* rd, const char** pname, uint32_t* program)
 {
     const ServiceRPCCall* call;
     const ServiceRPCReply* reply;
@@ -317,7 +316,7 @@ static int validate_packet(const uint8_t* data, uint16_t size, int dir,
 
     end = data + size;
 
-    if (flowp->protocol == IpProtocol::UDP)
+    if (asd->protocol == IpProtocol::UDP)
     {
         if (!rd->once)
         {
@@ -327,12 +326,12 @@ static int validate_packet(const uint8_t* data, uint16_t size, int dir,
             rpc = (ServiceRPC*)data;
             if (ntohl(rpc->type) == RPC_TYPE_REPLY)
             {
-                flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
+                asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
                 rd->state = RPC_STATE_REPLY;
                 dir = APP_ID_FROM_RESPONDER;
             }
         }
-        else if (flowp->getAppIdFlag(APPID_SESSION_UDP_REVERSED))
+        else if (asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
         {
             dir = (dir == APP_ID_FROM_RESPONDER) ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         }
@@ -430,14 +429,13 @@ static int validate_packet(const uint8_t* data, uint16_t size, int dir,
                         sip = pkt->ptrs.ip_api.get_src();
                         tmp = ntohl(pmr->port);
                         pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)tmp,
-                            //  FIXIT-H: Change rd->proto to be IpProtocol
-                            (IpProtocol)ntohl(rd->proto), app_id, 0);
+                            (IpProtocol)ntohl((uint32_t)rd->proto), app_id, 0);
                         if (pf)
                         {
                             pf->add_flow_data_id((uint16_t)tmp,
-                                    flowp->protocol == IpProtocol::TCP ? &tcp_svc_element : &svc_element);
+                                    asd->protocol == IpProtocol::TCP ? &tcp_svc_element : &svc_element);
                             pf->rnaServiceState = RNA_STATE_STATEFUL;
-                            pf->setAppIdFlag(flowp->getAppIdFlag(APPID_SESSION_RESPONDER_MONITORED |
+                            pf->set_session_flags(asd->get_session_flags(APPID_SESSION_RESPONDER_MONITORED |
                                 APPID_SESSION_INITIATOR_MONITORED |
                                 APPID_SESSION_SPECIAL_MONITORED |
                                 APPID_SESSION_RESPONDER_CHECKED |
@@ -483,7 +481,7 @@ static int rpc_validate(ServiceValidationArgs* args)
     uint32_t program = 0;
     const char* pname = nullptr;
     int rval;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -495,39 +493,39 @@ static int rpc_validate(ServiceValidationArgs* args)
         goto done;
     }
 
-    rd = (ServiceRPCData*)rpc_service_mod.api->data_get(flowp, rpc_service_mod.flow_data_index);
+    rd = (ServiceRPCData*)rpc_service_mod.api->data_get(asd, rpc_service_mod.flow_data_index);
     if (!rd)
     {
         rd = (ServiceRPCData*)snort_calloc(sizeof(ServiceRPCData));
-        rpc_service_mod.api->data_add(flowp, rd, rpc_service_mod.flow_data_index, &snort_free);
+        rpc_service_mod.api->data_add(asd, rd, rpc_service_mod.flow_data_index, &snort_free);
         rd->state = (dir == APP_ID_FROM_INITIATOR) ? RPC_STATE_CALL : RPC_STATE_REPLY;
         rd->xid = 0xFFFFFFFF;
     }
 
 #ifdef RNA_DEBUG_RPC
     fprintf(SF_DEBUG_FILE, "Begin %u -> %u %u %d state %d\n", pkt->src_port, pkt->dst_port,
-        flowp->proto, dir, rd->state);
+        asd->proto, dir, rd->state);
 #endif
 
-    rval = validate_packet(data, size, dir, flowp, pkt, rd, &pname, &program);
+    rval = validate_packet(data, size, dir, asd, pkt, rd, &pname, &program);
 
 #ifdef RNA_DEBUG_RPC
     fprintf(SF_DEBUG_FILE, "End %u -> %u %u %d state %d rval %d\n", pkt->src_port, pkt->dst_port,
-        flowp->proto, dir, rd->state, rval);
+        asd->proto, dir, rd->state, rval);
 #endif
 
 done:
     switch (rval)
     {
     case SERVICE_INPROCESS:
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            rpc_service_mod.api->service_inprocess(flowp, pkt, dir, &svc_element);
+            rpc_service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
         }
         return SERVICE_INPROCESS;
 
     case SERVICE_SUCCESS:
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
             if (pname && *pname)
             {
@@ -544,31 +542,30 @@ done:
             }
             else
                 subtype = nullptr;
-                rpc_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
-                    APP_ID_SUN_RPC, nullptr, nullptr, subtype);
+            rpc_service_mod.api->add_service(asd, pkt, dir, &svc_element,
+                APP_ID_SUN_RPC, nullptr, nullptr, subtype);
                 appid_stats.rpc_flows++;
         }
-        flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
+        asd->set_session_flags(APPID_SESSION_CONTINUE);
         return SERVICE_SUCCESS;
 
     case SERVICE_NOT_COMPATIBLE:
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            rpc_service_mod.api->incompatible_data(flowp, pkt, dir, &svc_element,
+            rpc_service_mod.api->incompatible_data(asd, pkt, dir, &svc_element,
                 rpc_service_mod.flow_data_index,
                 args->pConfig);
         }
-        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
+        asd->clear_session_flags(APPID_SESSION_CONTINUE);
         return SERVICE_NOT_COMPATIBLE;
 
     case SERVICE_NOMATCH:
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            rpc_service_mod.api->fail_service(flowp, pkt, dir, &svc_element,
-                rpc_service_mod.flow_data_index,
-                args->pConfig);
+            rpc_service_mod.api->fail_service(asd, pkt, dir, &svc_element,
+                rpc_service_mod.flow_data_index);
         }
-        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
+        asd->clear_session_flags(APPID_SESSION_CONTINUE);
         return SERVICE_NOMATCH;
     default:
         return rval;
@@ -592,7 +589,7 @@ static int rpc_tcp_validate(ServiceValidationArgs* args)
     uint32_t program = 0;
     const char* pname = nullptr;
 
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -601,11 +598,11 @@ static int rpc_tcp_validate(ServiceValidationArgs* args)
     if (!size)
         goto inprocess;
 
-    rd = (ServiceRPCData*)rpc_service_mod.api->data_get(flowp, rpc_service_mod.flow_data_index);
+    rd = (ServiceRPCData*)rpc_service_mod.api->data_get(asd, rpc_service_mod.flow_data_index);
     if (!rd)
     {
         rd = (ServiceRPCData*)snort_calloc(sizeof(ServiceRPCData));
-        rpc_service_mod.api->data_add(flowp, rd, rpc_service_mod.flow_data_index, &snort_free);
+        rpc_service_mod.api->data_add(asd, rd, rpc_service_mod.flow_data_index, &snort_free);
         rd->state = RPC_STATE_CALL;
         for (ret=0; ret<APP_ID_APPID_SESSION_DIRECTION_MAX; ret++)
         {
@@ -684,7 +681,7 @@ static int rpc_tcp_validate(ServiceValidationArgs* args)
             size -= length;
             if (rd->tcppos[dir] >= sizeof(ServiceRPCAuth))
             {
-                // FIXIT-M: the typecast for all the rd->tcpdata[dir] refs in this function cause
+                // FIXIT-M the typecast for all the rd->tcpdata[dir] refs in this function cause
                 // this warning:
                 //     dereferencing type-punned pointer will break strict-aliasing rules
                 // investigate recoding to eliminate this and improve readability
@@ -763,16 +760,15 @@ static int rpc_tcp_validate(ServiceValidationArgs* args)
                         {
 #ifdef RNA_DEBUG_RPC
                             fprintf(SF_DEBUG_FILE, "V Begin %u -> %u %u %d state %d\n",
-                                pkt->src_port, pkt->dst_port, flowp->proto, dir, rd->state);
+                                pkt->src_port, pkt->dst_port, asd->proto, dir, rd->state);
 #endif
 
-                            ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, flowp,
-                                pkt,
-                                rd, &pname, &program);
+                            ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, asd,
+                                    pkt, rd, &pname, &program);
 
 #ifdef RNA_DEBUG_RPC
                             fprintf(SF_DEBUG_FILE, "V End %u -> %u %u %d state %d rval %d\n",
-                                pkt->src_port, pkt->dst_port, flowp->proto, dir, rd->state, ret);
+                                pkt->src_port, pkt->dst_port, asd->proto, dir, rd->state, ret);
 #endif
 
                             if (retval == -1)
@@ -841,15 +837,15 @@ static int rpc_tcp_validate(ServiceValidationArgs* args)
                 {
 #ifdef RNA_DEBUG_RPC
                     fprintf(SF_DEBUG_FILE, "P Begin %u -> %u %u %d state %d\n", pkt->src_port,
-                        pkt->dst_port, flowp->proto, dir, rd->state);
+                        pkt->dst_port, asd->proto, dir, rd->state);
 #endif
 
-                    ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, flowp, pkt,
+                    ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, asd, pkt,
                         rd, &pname, &program);
 
 #ifdef RNA_DEBUG_RPC
                     fprintf(SF_DEBUG_FILE, "P End %u -> %u %u %d state %d rval %d\n",
-                        pkt->src_port, pkt->dst_port, flowp->proto, dir, rd->state, ret);
+                        pkt->src_port, pkt->dst_port, asd->proto, dir, rd->state, ret);
 #endif
 
                     if (retval == -1)
@@ -867,7 +863,7 @@ static int rpc_tcp_validate(ServiceValidationArgs* args)
                 goto fail;
             else
             {
-                flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
+                asd->clear_session_flags(APPID_SESSION_CONTINUE);
                 goto done;
             }
         }
@@ -889,14 +885,14 @@ done:
     {
     case SERVICE_INPROCESS:
 inprocess:
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            rpc_service_mod.api->service_inprocess(flowp, pkt, dir, &tcp_svc_element);
+            rpc_service_mod.api->service_inprocess(asd, pkt, dir, &tcp_svc_element);
         }
         return SERVICE_INPROCESS;
 
     case SERVICE_SUCCESS:
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
             if (pname && *pname)
             {
@@ -913,39 +909,38 @@ inprocess:
             }
             else
                 subtype = nullptr;
-                rpc_service_mod.api->add_service(flowp, pkt, dir, &tcp_svc_element,
-                    APP_ID_SUN_RPC, nullptr, nullptr, subtype);
+            rpc_service_mod.api->add_service(asd, pkt, dir, &tcp_svc_element,
+                APP_ID_SUN_RPC, nullptr, nullptr, subtype);
                 appid_stats.rpc_flows++;
         }
-        flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
+        asd->set_session_flags(APPID_SESSION_CONTINUE);
         return SERVICE_SUCCESS;
 
     case SERVICE_NOT_COMPATIBLE:
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            rpc_service_mod.api->incompatible_data(flowp, pkt, dir, &tcp_svc_element,
+            rpc_service_mod.api->incompatible_data(asd, pkt, dir, &tcp_svc_element,
                 rpc_service_mod.flow_data_index,
                 args->pConfig);
         }
-        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
+        asd->clear_session_flags(APPID_SESSION_CONTINUE);
         return SERVICE_NOT_COMPATIBLE;
 
     case SERVICE_NOMATCH:
 fail:
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            rpc_service_mod.api->fail_service(flowp, pkt, dir, &tcp_svc_element,
-                rpc_service_mod.flow_data_index,
-                args->pConfig);
+            rpc_service_mod.api->fail_service(asd, pkt, dir, &tcp_svc_element,
+                rpc_service_mod.flow_data_index);
         }
-        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
+        asd->clear_session_flags(APPID_SESSION_CONTINUE);
         return SERVICE_NOMATCH;
     default:
         return retval;
     }
 
 bail:
-    flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
+    asd->clear_session_flags(APPID_SESSION_CONTINUE);
     rd->tcpstate[APP_ID_FROM_INITIATOR] = RPC_TCP_STATE_DONE;
     rd->tcpstate[APP_ID_FROM_RESPONDER] = RPC_TCP_STATE_DONE;
     if (dir == APP_ID_FROM_INITIATOR)

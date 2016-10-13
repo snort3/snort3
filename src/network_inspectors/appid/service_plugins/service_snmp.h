@@ -26,7 +26,6 @@
 
 #include "detector_plugins/detector_api.h"
 
-//  FIXIT-L: Make the globals const or, if necessary, thread-local.
 extern RNAServiceValidationModule snmp_service_mod;
 
 #endif

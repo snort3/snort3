@@ -47,7 +47,7 @@ struct ServiceRLOGINData
 static int rlogin_init(const IniServiceAPI* const init_api);
 static int rlogin_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &rlogin_validate,
@@ -59,7 +59,7 @@ static RNAServiceElement svc_element =
     "rlogin"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &rlogin_validate, 513, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
@@ -98,7 +98,7 @@ static int rlogin_init(const IniServiceAPI* const init_api)
 static int rlogin_validate(ServiceValidationArgs* args)
 {
     ServiceRLOGINData* rd;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     Packet* pkt = args->pkt;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
@@ -108,12 +108,12 @@ static int rlogin_validate(ServiceValidationArgs* args)
     if (args->dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    rd = (ServiceRLOGINData*)rlogin_service_mod.api->data_get(flowp,
+    rd = (ServiceRLOGINData*)rlogin_service_mod.api->data_get(asd,
         rlogin_service_mod.flow_data_index);
     if (!rd)
     {
         rd = (ServiceRLOGINData*)snort_calloc(sizeof(ServiceRLOGINData));
-        rlogin_service_mod.api->data_add(flowp, rd, rlogin_service_mod.flow_data_index,
+        rlogin_service_mod.api->data_add(asd, rd, rlogin_service_mod.flow_data_index,
             &snort_free);
         rd->state = RLOGIN_STATE_HANDSHAKE;
     }
@@ -160,18 +160,18 @@ static int rlogin_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    rlogin_service_mod.api->service_inprocess(flowp, pkt, args->dir, &svc_element);
+    rlogin_service_mod.api->service_inprocess(asd, pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    rlogin_service_mod.api->add_service(flowp, pkt, args->dir, &svc_element,
+    rlogin_service_mod.api->add_service(asd, pkt, args->dir, &svc_element,
         APP_ID_RLOGIN, nullptr, nullptr, nullptr);
     appid_stats.rlogin_flows++;
     return SERVICE_SUCCESS;
 
 fail:
-    rlogin_service_mod.api->fail_service(flowp, pkt, args->dir, &svc_element,
-        rlogin_service_mod.flow_data_index, args->pConfig);
+    rlogin_service_mod.api->fail_service(asd, pkt, args->dir, &svc_element,
+        rlogin_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

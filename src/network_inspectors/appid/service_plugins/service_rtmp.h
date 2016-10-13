@@ -23,7 +23,6 @@
 #define SERVICE_RTMP_H
 
 struct RNAServiceValidationModule;
-//  FIXIT-L: Make the globals const or, if necessary, thread-local.
 extern RNAServiceValidationModule rtmp_service_mod;
 
 #endif

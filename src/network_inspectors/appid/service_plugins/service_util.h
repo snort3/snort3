@@ -24,6 +24,9 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <mutex>
+
+#include "target_based/snort_protocols.h"
 
 inline const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
     const uint8_t* needle, unsigned needle_len)
@@ -38,6 +41,16 @@ inline const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_
         }
     }
     return nullptr;
+}
+
+inline int16_t add_appid_protocol_reference(const char* protocol)
+{
+    static std::mutex apr_mutex;
+
+    apr_mutex.lock();
+    int16_t id = AddProtocolReference(protocol);
+    apr_mutex.unlock();
+    return id;
 }
 
 #endif

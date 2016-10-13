@@ -138,7 +138,7 @@ bool AppIdIpsOption::operator==(const IpsOption& ips) const
 void AppIdIpsOption::map_names_to_ids()
 {
     for (auto& appid_info : opt_data.appid_table)
-            appid_info.appid_ordinal = get_appid_by_name(appid_info.appid_name);
+            appid_info.appid_ordinal = AppInfoManager::get_instance().get_appid_by_name(appid_info.appid_name);
 
     opt_data.ids_mapped = true;
 }

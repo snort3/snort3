@@ -54,7 +54,7 @@ bool TcpStateEstablished::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTrack
 {
     if ( trk.session->config->midstream_allowed(tsd.get_pkt()) )
     {
-        // FIXIT-M: there may be an issue when syn/ack from server is seen
+        // FIXIT-M there may be an issue when syn/ack from server is seen
         // after ack from client which causes some tracker state variables to
         // not be initialized... update_tracker_ack_sent may fix that but needs
         // more testing

@@ -50,17 +50,15 @@ struct ServiceValidationArgs
     const uint8_t* data;
     uint16_t size;
     int dir;
-    AppIdSession* flowp;
+    AppIdSession* asd;
     Packet* pkt;
     struct Detector* userdata;
     const AppIdConfig* pConfig;
-    bool app_id_debug_session_flag;
-    char* app_id_debug_session;
+    bool session_logging_enabled;
+    char* session_logging_id;
 };
 
 using RNAServiceValidationFCN = int(*)(ServiceValidationArgs*);
-
-#define MakeRNAServiceValidationPrototype(name) static int name(ServiceValidationArgs* args)
 
 struct CleanServiceAPI
 {
@@ -85,12 +83,6 @@ struct IniServiceAPI
     int debug;
     uint32_t instance_id;
     AppIdConfig* pAppidConfig;  ///< AppId context for which this API should be used
-};
-
-struct RNAServicePerf
-{
-    /*time to validate */
-    uint64_t totalValidateTime;
 };
 
 struct RNAServiceElement
@@ -128,7 +120,7 @@ typedef int (* AddServiceConsumeSubtype)(AppIdSession* flow, const Packet* pkt, 
 typedef int (* ServiceInProcess)(AppIdSession* flow, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element);
 typedef int (* FailService)(AppIdSession* flow, const Packet* pkt, int dir,
-    const RNAServiceElement* svc_element, unsigned flow_data_index, const AppIdConfig* pConfig);
+    const RNAServiceElement* svc_element, unsigned flow_data_index);
 typedef int (* IncompatibleData)(AppIdSession* flow, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element, unsigned flow_data_index, const AppIdConfig*);
 typedef void (* AddHostInfo)(AppIdSession* flow, SERVICE_HOST_INFO_CODE code, const void* info);

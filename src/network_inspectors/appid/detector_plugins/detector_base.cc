@@ -26,8 +26,8 @@
 #include "log/messages.h"
 #include "service_plugins/service_base.h"
 
-static void* detector_flowdata_get(AppIdSession* flowp, unsigned detector_id);
-static int detector_flowdata_add(AppIdSession* flowp, void* data, unsigned detector_id,
+static void* detector_flowdata_get(AppIdSession* asd, unsigned detector_id);
+static int detector_flowdata_add(AppIdSession* asd, void* data, unsigned detector_id,
     AppIdFreeFCN fcn);
 
 static const DetectorApi detector_api
@@ -96,9 +96,9 @@ int init_detector_plugins()
 *
 * @return RNA flow data structure for success
 */
-static void* detector_flowdata_get(AppIdSession* flowp, unsigned detector_id)
+static void* detector_flowdata_get(AppIdSession* asd, unsigned detector_id)
 {
-    return flowp->get_flow_data(detector_id);
+    return asd->get_flow_data(detector_id);
 }
 
 /**
@@ -110,9 +110,9 @@ static void* detector_flowdata_get(AppIdSession* flowp, unsigned detector_id)
 *
 * @return RNA flow data structure for success
 */
-static int detector_flowdata_add(AppIdSession* flowp, void* data, unsigned detector_id,
+static int detector_flowdata_add(AppIdSession* asd, void* data, unsigned detector_id,
     AppIdFreeFCN fcn)
 {
-    return flowp->add_flow_data(data, detector_id, fcn);
+    return asd->add_flow_data(data, detector_id, fcn);
 }
 

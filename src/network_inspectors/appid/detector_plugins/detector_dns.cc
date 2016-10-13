@@ -52,7 +52,6 @@
 
 #pragma pack(1)
 
-// FIXIT-H J bitfields should be replaced with getters/setters
 struct DNSHeader
 {
     uint16_t id;
@@ -148,7 +147,7 @@ static int dns_service_init(const IniServiceAPI* const);
 static int dns_udp_validate(ServiceValidationArgs*);
 static int dns_tcp_validate(ServiceValidationArgs*);
 
-static RNAServiceElement udp_svc_element =
+static const RNAServiceElement udp_svc_element =
 {
     nullptr,                            // next
     &dns_udp_validate,                  // validate
@@ -160,7 +159,7 @@ static RNAServiceElement udp_svc_element =
     "dns"                               // name
 };
 
-static RNAServiceElement tcp_svc_element =
+static const RNAServiceElement tcp_svc_element =
 {
     nullptr,                            // next
     &dns_tcp_validate,                  // validate
@@ -172,7 +171,7 @@ static RNAServiceElement tcp_svc_element =
     "tcp dns"                               // name
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &dns_tcp_validate, 53, IpProtocol::TCP, 0 },
     { &dns_udp_validate, 53, IpProtocol::UDP, 0 },
@@ -389,7 +388,7 @@ static int dns_validate_label(const uint8_t* data, uint16_t* offset, uint16_t si
 }
 
 static int dns_validate_query(const uint8_t* data, uint16_t* offset, uint16_t size,
-    uint16_t id, unsigned host_reporting, AppIdSession* flowp)
+    uint16_t id, unsigned host_reporting, AppIdSession* asd)
 {
     int ret;
     const uint8_t* host;
@@ -425,11 +424,11 @@ static int dns_validate_query(const uint8_t* data, uint16_t* offset, uint16_t si
             case PATTERN_MX_REC:
             case PATTERN_SOA_REC:
             case PATTERN_NS_REC:
-                dns_service_mod.api->add_dns_query_info(flowp, id, host, host_len, host_offset,
+                dns_service_mod.api->add_dns_query_info(asd, id, host, host_len, host_offset,
                     record_type);
                 break;
             case PATTERN_PTR_REC:
-                dns_service_mod.api->add_dns_query_info(flowp, id, nullptr, 0, 0, record_type);
+                dns_service_mod.api->add_dns_query_info(asd, id, nullptr, 0, 0, record_type);
                 break;
             default:
                 break;
@@ -440,7 +439,7 @@ static int dns_validate_query(const uint8_t* data, uint16_t* offset, uint16_t si
 }
 
 static int dns_validate_answer(const uint8_t* data, uint16_t* offset, uint16_t size,
-    uint16_t id, uint8_t rcode, unsigned host_reporting, AppIdSession* flowp)
+    uint16_t id, uint8_t rcode, unsigned host_reporting, AppIdSession* asd)
 {
     int ret;
     const uint8_t* host;
@@ -476,7 +475,7 @@ static int dns_validate_answer(const uint8_t* data, uint16_t* offset, uint16_t s
             case PATTERN_MX_REC:
             case PATTERN_SOA_REC:
             case PATTERN_NS_REC:
-                dns_service_mod.api->add_dns_response_info(flowp, id, nullptr, 0, 0, rcode, ttl);
+                dns_service_mod.api->add_dns_response_info(asd, id, nullptr, 0, 0, rcode, ttl);
                 break;
             case PATTERN_PTR_REC:
                 host = data + r_data_offset;
@@ -488,7 +487,7 @@ static int dns_validate_answer(const uint8_t* data, uint16_t* offset, uint16_t s
                     host_len    = 0;
                     host_offset = 0;
                 }
-                dns_service_mod.api->add_dns_response_info(flowp, id, host, host_len, host_offset,
+                dns_service_mod.api->add_dns_response_info(asd, id, host, host_len, host_offset,
                     rcode, ttl);
                 break;
             default:
@@ -500,7 +499,7 @@ static int dns_validate_answer(const uint8_t* data, uint16_t* offset, uint16_t s
 }
 
 static int dns_validate_header(const int dir, DNSHeader* hdr,
-    unsigned host_reporting, AppIdSession* flowp)
+    unsigned host_reporting, AppIdSession* asd)
 {
     if (hdr->Opcode > MAX_OPCODE || hdr->Opcode == INVALID_OPCODE)
     {
@@ -518,7 +517,7 @@ static int dns_validate_header(const int dir, DNSHeader* hdr,
     {
         // Query.
         if (host_reporting)
-            dns_service_mod.api->reset_dns_info(flowp);
+            dns_service_mod.api->reset_dns_info(asd);
         return dir == APP_ID_FROM_INITIATOR ? SERVICE_SUCCESS : SERVICE_REVERSED;
     }
 
@@ -527,7 +526,7 @@ static int dns_validate_header(const int dir, DNSHeader* hdr,
 }
 
 static int validate_packet(const uint8_t* data, uint16_t size, const int,
-    unsigned host_reporting, AppIdSession* flowp)
+    unsigned host_reporting, AppIdSession* asd)
 {
     uint16_t i;
     uint16_t count;
@@ -544,7 +543,7 @@ static int validate_packet(const uint8_t* data, uint16_t size, const int,
         count = ntohs(hdr->QDCount);
         for (i=0; i<count; i++)
         {
-            if (dns_validate_query(data, &offset, size, ntohs(hdr->id), host_reporting, flowp) !=
+            if (dns_validate_query(data, &offset, size, ntohs(hdr->id), host_reporting, asd) !=
                 SERVICE_SUCCESS)
             {
                 return SERVICE_NOMATCH;
@@ -558,7 +557,7 @@ static int validate_packet(const uint8_t* data, uint16_t size, const int,
         for (i=0; i<count; i++)
         {
             if (dns_validate_answer(data, &offset, size, ntohs(hdr->id), hdr->RCODE,
-                host_reporting, flowp) != SERVICE_SUCCESS)
+                host_reporting, asd) != SERVICE_SUCCESS)
             {
                 return SERVICE_NOMATCH;
             }
@@ -571,7 +570,7 @@ static int validate_packet(const uint8_t* data, uint16_t size, const int,
         for (i=0; i<count; i++)
         {
             if (dns_validate_answer(data, &offset, size, ntohs(hdr->id), hdr->RCODE,
-                host_reporting, flowp) != SERVICE_SUCCESS)
+                host_reporting, asd) != SERVICE_SUCCESS)
             {
                 return SERVICE_NOMATCH;
             }
@@ -584,7 +583,7 @@ static int validate_packet(const uint8_t* data, uint16_t size, const int,
         for (i=0; i<count; i++)
         {
             if (dns_validate_answer(data, &offset, size, ntohs(hdr->id), hdr->RCODE,
-                host_reporting, flowp) != SERVICE_SUCCESS)
+                host_reporting, asd) != SERVICE_SUCCESS)
             {
                 return SERVICE_NOMATCH;
             }
@@ -592,7 +591,7 @@ static int validate_packet(const uint8_t* data, uint16_t size, const int,
     }
 
     if (hdr->QR && (hdr->RCODE != 0))    // error response
-        dns_service_mod.api->add_dns_response_info(flowp, ntohs(hdr->id), nullptr, 0, 0,
+        dns_service_mod.api->add_dns_response_info(asd, ntohs(hdr->id), nullptr, 0, 0,
             hdr->RCODE,
             0);
 
@@ -602,7 +601,7 @@ static int validate_packet(const uint8_t* data, uint16_t size, const int,
 static int dns_udp_validate(ServiceValidationArgs* args)
 {
     int rval;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     const int dir = args->dir;
     uint16_t size = args->size;
@@ -616,18 +615,18 @@ static int dns_udp_validate(ServiceValidationArgs* args)
         goto udp_done;
     }
     if ((rval = dns_validate_header(dir, (DNSHeader*)data,
-            pAppidActiveConfig->mod_config->dns_host_reporting, flowp)) != SERVICE_SUCCESS)
+            AppIdConfig::get_appid_config()->mod_config->dns_host_reporting, asd)) != SERVICE_SUCCESS)
     {
         if (rval == SERVICE_REVERSED)
         {
             if (dir == APP_ID_FROM_RESPONDER)
             {
-                if (flowp->getAppIdFlag(APPID_SESSION_UDP_REVERSED))
+                if (asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
                 {
                     // To get here, we missed the initial query, got a
                     // response, and now we've got another query.
                     rval = validate_packet(data, size, dir,
-                        pAppidActiveConfig->mod_config->dns_host_reporting, flowp);
+                        AppIdConfig::get_appid_config()->mod_config->dns_host_reporting, asd);
                     if (rval == SERVICE_SUCCESS)
                         goto inprocess;
                 }
@@ -638,10 +637,10 @@ static int dns_udp_validate(ServiceValidationArgs* args)
                 // To get here, we missed the initial query, but now we've got
                 // a response.
                 rval = validate_packet(data, size, dir,
-                    pAppidActiveConfig->mod_config->dns_host_reporting, flowp);
+                    AppIdConfig::get_appid_config()->mod_config->dns_host_reporting, asd);
                 if (rval == SERVICE_SUCCESS)
                 {
-                    flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
+                    asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
                     goto success;
                 }
                 goto nomatch;
@@ -652,7 +651,7 @@ static int dns_udp_validate(ServiceValidationArgs* args)
     }
 
     rval = validate_packet(data, size, dir,
-        pAppidActiveConfig->mod_config->dns_host_reporting, flowp);
+        AppIdConfig::get_appid_config()->mod_config->dns_host_reporting, asd);
     if ((rval == SERVICE_SUCCESS) && (dir == APP_ID_FROM_INITIATOR))
         goto inprocess;
 
@@ -661,27 +660,26 @@ udp_done:
     {
     case SERVICE_SUCCESS:
 success:
-        flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
-        dns_service_mod.api->add_service(flowp, args->pkt, dir, &udp_svc_element,
+        asd->set_session_flags(APPID_SESSION_CONTINUE);
+        dns_service_mod.api->add_service(asd, args->pkt, dir, &udp_svc_element,
             APP_ID_DNS, nullptr, nullptr, nullptr);
         appid_stats.dns_udp_flows++;
         return SERVICE_SUCCESS;
     case SERVICE_INVALID_CLIENT:
 invalid:
-        dns_service_mod.api->incompatible_data(flowp, args->pkt, dir, &udp_svc_element,
+        dns_service_mod.api->incompatible_data(asd, args->pkt, dir, &udp_svc_element,
             dns_service_mod.flow_data_index,
             args->pConfig);
         return SERVICE_NOT_COMPATIBLE;
     case SERVICE_NOMATCH:
 nomatch:
-        dns_service_mod.api->fail_service(flowp, args->pkt, dir, &udp_svc_element,
-            dns_service_mod.flow_data_index,
-            args->pConfig);
+        dns_service_mod.api->fail_service(asd, args->pkt, dir, &udp_svc_element,
+            dns_service_mod.flow_data_index);
         return SERVICE_NOMATCH;
     case SERVICE_INPROCESS:
 inprocess:
-        dns_udp_client_mod.api->add_app(flowp, APP_ID_NONE, APP_ID_DNS, nullptr);
-        dns_service_mod.api->service_inprocess(flowp, args->pkt, dir, &udp_svc_element);
+        dns_udp_client_mod.api->add_app(asd, APP_ID_NONE, APP_ID_DNS, nullptr);
+        dns_service_mod.api->service_inprocess(asd, args->pkt, dir, &udp_svc_element);
         return SERVICE_INPROCESS;
     default:
         return rval;
@@ -694,7 +692,7 @@ static int dns_tcp_validate(ServiceValidationArgs* args)
     const DNSTCPHeader* hdr;
     uint16_t tmp;
     int rval;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     const int dir = args->dir;
     uint16_t size = args->size;
@@ -713,7 +711,7 @@ static int dns_tcp_validate(ServiceValidationArgs* args)
     size -= sizeof(DNSTCPHeader);
     tmp = ntohs(hdr->length);
     if (tmp < sizeof(DNSHeader) || dns_validate_header(dir, (DNSHeader*)data,
-        pAppidActiveConfig->mod_config->dns_host_reporting, flowp))
+        AppIdConfig::get_appid_config()->mod_config->dns_host_reporting, asd))
     {
         if (dir == APP_ID_FROM_INITIATOR)
             goto not_compatible;
@@ -723,17 +721,17 @@ static int dns_tcp_validate(ServiceValidationArgs* args)
 
     if (tmp > size)
         goto not_compatible;
-    rval = validate_packet(data, size, dir, pAppidActiveConfig->mod_config->dns_host_reporting,
-        flowp);
+    rval = validate_packet(data, size, dir, AppIdConfig::get_appid_config()->mod_config->dns_host_reporting,
+        asd);
     if (rval != SERVICE_SUCCESS)
         goto tcp_done;
 
-    dd = static_cast<ServiceDNSData*>(dns_service_mod.api->data_get(flowp,
+    dd = static_cast<ServiceDNSData*>(dns_service_mod.api->data_get(asd,
         dns_service_mod.flow_data_index));
     if (!dd)
     {
         dd = static_cast<ServiceDNSData*>(snort_calloc(sizeof(ServiceDNSData)));
-        if (dns_service_mod.api->data_add(flowp, dd, dns_service_mod.flow_data_index, &snort_free))
+        if (dns_service_mod.api->data_add(asd, dd, dns_service_mod.flow_data_index, &snort_free))
             dd->state = DNS_STATE_QUERY;
     }
 
@@ -767,27 +765,26 @@ tcp_done:
     }
 
 success:
-    flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
-    dns_service_mod.api->add_service(flowp, args->pkt, dir, &tcp_svc_element,
+    asd->set_session_flags(APPID_SESSION_CONTINUE);
+    dns_service_mod.api->add_service(asd, args->pkt, dir, &tcp_svc_element,
         APP_ID_DNS, nullptr, nullptr, nullptr);
     appid_stats.dns_tcp_flows++;
     return SERVICE_SUCCESS;
 
 not_compatible:
-    dns_service_mod.api->incompatible_data(flowp, args->pkt, dir, &tcp_svc_element,
+    dns_service_mod.api->incompatible_data(asd, args->pkt, dir, &tcp_svc_element,
         dns_service_mod.flow_data_index,
         args->pConfig);
     return SERVICE_NOT_COMPATIBLE;
 
 fail:
-    dns_service_mod.api->fail_service(flowp, args->pkt, dir, &tcp_svc_element,
-        dns_service_mod.flow_data_index,
-        args->pConfig);
+    dns_service_mod.api->fail_service(asd, args->pkt, dir, &tcp_svc_element,
+        dns_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 
 inprocess:
-    dns_tcp_client_mod.api->add_app(flowp, APP_ID_NONE, APP_ID_DNS, nullptr);
-    dns_service_mod.api->service_inprocess(flowp, args->pkt, dir, &tcp_svc_element);
+    dns_tcp_client_mod.api->add_app(asd, APP_ID_NONE, APP_ID_DNS, nullptr);
+    dns_service_mod.api->service_inprocess(asd, args->pkt, dir, &tcp_svc_element);
     return SERVICE_INPROCESS;
 }
 

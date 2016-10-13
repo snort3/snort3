@@ -38,6 +38,7 @@
 #include "application_ids.h"
 #include "service_api.h"
 #include "service_base.h"
+#include "service_util.h"
 
 #define TFTP_PORT   69
 
@@ -90,14 +91,12 @@ static const RNAServiceElement svc_element =
     "tftp",
 };
 
-// FIXIT thread safety, can this be const?
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &tftp_validate, 69, IpProtocol::UDP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
 };
 
-// FIXIT thread safety, can this be const?
 RNAServiceValidationModule tftp_service_mod =
 {
     "TFTP",
@@ -119,7 +118,8 @@ static int16_t app_id = 0;
 
 static int tftp_init(const IniServiceAPI* const init_api)
 {
-    app_id = AddProtocolReference("tftp");
+    app_id = add_appid_protocol_reference("tftp");
+
     for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
@@ -171,25 +171,24 @@ static int tftp_validate(ServiceValidationArgs* args)
     AppIdSession* pf;
     const sfip_t* sip;
     const sfip_t* dip;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
     uint16_t size = args->size;
-    char* app_id_debug_session = args->app_id_debug_session;
 
     if (!size)
         goto inprocess;
 
-    td = (ServiceTFTPData*)tftp_service_mod.api->data_get(flowp, tftp_service_mod.flow_data_index);
+    td = (ServiceTFTPData*)tftp_service_mod.api->data_get(asd, tftp_service_mod.flow_data_index);
     if (!td)
     {
         td = (ServiceTFTPData*)snort_calloc(sizeof(ServiceTFTPData));
-        tftp_service_mod.api->data_add(flowp, td, tftp_service_mod.flow_data_index, &snort_free);
+        tftp_service_mod.api->data_add(asd, td, tftp_service_mod.flow_data_index, &snort_free);
         td->state = TFTP_STATE_CONNECTION;
     }
-    if (args->app_id_debug_session_flag)
-        LogMessage("AppIdDbg %s tftp state %d\n", app_id_debug_session, td->state);
+    if (args->session_logging_enabled)
+        LogMessage("AppIdDbg %s tftp state %d\n", args->session_logging_id, td->state);
 
     if (td->state == TFTP_STATE_CONNECTION && dir == APP_ID_FROM_RESPONDER)
         goto fail;
@@ -230,7 +229,7 @@ static int tftp_validate(ServiceValidationArgs* args)
         tmp_td->state = TFTP_STATE_TRANSFER;
         dip = pkt->ptrs.ip_api.get_dst();
         sip = pkt->ptrs.ip_api.get_src();
-        pf = AppIdSession::create_future_session(pkt, dip, 0, sip, pkt->ptrs.sp, flowp->protocol, app_id,
+        pf = AppIdSession::create_future_session(pkt, dip, 0, sip, pkt->ptrs.sp, asd->protocol, app_id,
                 APPID_EARLY_SESSION_FLAG_FW_RULE);
         if (pf)
         {
@@ -238,12 +237,12 @@ static int tftp_validate(ServiceValidationArgs* args)
                 tftp_service_mod.flow_data_index, &snort_free);
             if (pf->add_flow_data_id(pkt->ptrs.dp, &svc_element))
             {
-                pf->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED);
-                pf->clearAppIdFlag(APPID_SESSION_CONTINUE);
+                pf->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+                pf->clear_session_flags(APPID_SESSION_CONTINUE);
                 tmp_td->state = TFTP_STATE_ERROR;
                 return SERVICE_ENOMEM;
             }
-            PopulateExpectedFlow(flowp, pf, APPID_SESSION_EXPECTED_EVALUATE);
+            PopulateExpectedFlow(asd, pf, APPID_SESSION_EXPECTED_EVALUATE);
             pf->common.initiator_ip = *sip;
             pf->rnaServiceState = RNA_STATE_STATEFUL;
             pf->scan_flags |= SCAN_HOST_PORT_FLAG;
@@ -258,12 +257,12 @@ static int tftp_validate(ServiceValidationArgs* args)
     case TFTP_STATE_TRANSFER:
         if ((mode=tftp_verify_header(data, size, &block)) < 0)
         {
-            if (args->app_id_debug_session_flag)
-                LogMessage("AppIdDbg %s tftp failed to verify\n", app_id_debug_session);
+            if (args->session_logging_enabled)
+                LogMessage("AppIdDbg %s tftp failed to verify\n", args->session_logging_id);
             goto fail;
         }
-        if (args->app_id_debug_session_flag)
-            LogMessage("AppIdDbg %s tftp mode %d and block %u\n", app_id_debug_session,
+        if (args->session_logging_enabled)
+            LogMessage("AppIdDbg %s tftp mode %d and block %u\n", args->session_logging_id,
                 mode, (unsigned)block);
         if (mode == TFTP_STATE_ACK)
         {
@@ -301,13 +300,13 @@ static int tftp_validate(ServiceValidationArgs* args)
                 goto fail;
             else
             {
-                if (args->app_id_debug_session_flag)
-                    LogMessage("AppIdDbg %s tftp failed to verify\n", app_id_debug_session);
+                if (args->session_logging_enabled)
+                    LogMessage("AppIdDbg %s tftp failed to verify\n", args->session_logging_id);
                 goto bail;
             }
         }
-        if (args->app_id_debug_session_flag)
-            LogMessage("AppIdDbg %s tftp mode %d\n", app_id_debug_session, mode);
+        if (args->session_logging_enabled)
+            LogMessage("AppIdDbg %s tftp mode %d\n", args->session_logging_id, mode);
         if (mode == TFTP_STATE_ERROR)
         {
             td->state = TFTP_STATE_TRANSFER;
@@ -315,8 +314,8 @@ static int tftp_validate(ServiceValidationArgs* args)
         }
         if (dir == APP_ID_FROM_INITIATOR && mode != TFTP_STATE_DATA)
         {
-            if (args->app_id_debug_session_flag)
-                LogMessage("AppIdDbg %s tftp bad mode\n", app_id_debug_session);
+            if (args->session_logging_enabled)
+                LogMessage("AppIdDbg %s tftp bad mode\n", args->session_logging_id);
             goto bail;
         }
         if (dir == APP_ID_FROM_RESPONDER && mode != TFTP_STATE_ACK)
@@ -360,25 +359,25 @@ static int tftp_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    tftp_service_mod.api->service_inprocess(flowp, pkt, dir, &svc_element);
+    tftp_service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    if (args->app_id_debug_session_flag)
-        LogMessage("AppIdDbg %s tftp success\n", app_id_debug_session);
-    tftp_service_mod.api->add_service(flowp, pkt, dir, &svc_element,
+    if (args->session_logging_enabled)
+        LogMessage("AppIdDbg %s tftp success\n", args->session_logging_id);
+    tftp_service_mod.api->add_service(asd, pkt, dir, &svc_element,
         APP_ID_TFTP, nullptr, nullptr, nullptr);
     appid_stats.tftp_flows++;
     return SERVICE_SUCCESS;
 
 bail:
-    tftp_service_mod.api->incompatible_data(flowp, pkt, dir, &svc_element,
+    tftp_service_mod.api->incompatible_data(asd, pkt, dir, &svc_element,
         tftp_service_mod.flow_data_index, args->pConfig);
     return SERVICE_NOT_COMPATIBLE;
 
 fail:
-    tftp_service_mod.api->fail_service(flowp, pkt, dir, &svc_element,
-        tftp_service_mod.flow_data_index, args->pConfig);
+    tftp_service_mod.api->fail_service(asd, pkt, dir, &svc_element,
+        tftp_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

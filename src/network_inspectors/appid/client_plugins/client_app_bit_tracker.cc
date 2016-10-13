@@ -72,7 +72,7 @@ THREAD_LOCAL BIT_CLIENT_APP_CONFIG udp_bit_config;
 
 static CLIENT_APP_RETCODE udp_bit_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE udp_bit_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
 SO_PUBLIC RNAClientAppModule bit_tracker_client_mod =
 {
@@ -156,7 +156,7 @@ static CLIENT_APP_RETCODE udp_bit_init(const IniClientAppAPI* const init_api, SF
 }
 
 static CLIENT_APP_RETCODE udp_bit_validate(const uint8_t* data, uint16_t size, const int /*dir*/,
-    AppIdSession* flowp, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, struct Detector*)
 {
     ClientBITData* fd;
     uint16_t offset;
@@ -164,12 +164,12 @@ static CLIENT_APP_RETCODE udp_bit_validate(const uint8_t* data, uint16_t size, c
     if (size < (UDP_BIT_FIRST_LEN + UDP_BIT_END_LEN + 3))
         return CLIENT_APP_EINVALID;
 
-    fd = (ClientBITData*)bit_tracker_client_mod.api->data_get(flowp,
+    fd = (ClientBITData*)bit_tracker_client_mod.api->data_get(asd,
         bit_tracker_client_mod.flow_data_index);
     if (!fd)
     {
         fd = (ClientBITData*)snort_calloc(sizeof(ClientBITData));
-        bit_tracker_client_mod.api->data_add(flowp, fd,
+        bit_tracker_client_mod.api->data_add(asd, fd,
             bit_tracker_client_mod.flow_data_index, &snort_free);
         fd->state = BIT_STATE_BANNER;
     }
@@ -267,9 +267,9 @@ inprocess:
     return CLIENT_APP_INPROCESS;
 
 done:
-    bit_tracker_client_mod.api->add_app(flowp, APP_ID_BITTORRENT, APP_ID_BITTRACKER_CLIENT,
+    bit_tracker_client_mod.api->add_app(asd, APP_ID_BITTORRENT, APP_ID_BITTRACKER_CLIENT,
         nullptr);
-    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.bittracker_clients++;
     return CLIENT_APP_SUCCESS;
 }

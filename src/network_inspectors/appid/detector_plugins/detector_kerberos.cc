@@ -108,12 +108,11 @@ struct DetectorData
     int need_continue;
 };
 
-// FIXIT-L THREAD_LOCAL?
 static KRB_CLIENT_APP_CONFIG krb_client_config;
 
 static CLIENT_APP_RETCODE krb_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE krb_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
 static RNAClientAppModule client_app_mod =
 {
@@ -153,7 +152,7 @@ static Detector_Pattern client_patterns[] =
 static int krb_server_init(const IniServiceAPI* const init_api);
 static int krb_server_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &krb_server_validate,
@@ -165,7 +164,7 @@ static RNAServiceElement svc_element =
     "kerberos"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &krb_server_validate, 88, IpProtocol::TCP, 0 },
     { &krb_server_validate, 88, IpProtocol::UDP, 0 },
@@ -294,7 +293,7 @@ static int krb_server_init(const IniServiceAPI* const init_api)
 #define ERROR_MSG_TYPE      0x1e
 
 static KRB_RETCODE krb_walk_client_packet(KRBState* krbs, const uint8_t* s, const uint8_t* end,
-    AppIdSession* flowp)
+    AppIdSession* asd)
 {
     static const uint8_t KRB_CLIENT_VERSION[] = "\x0a1\x003\x002\x001";
     static const uint8_t KRB_CLIENT_TYPE[] = "\x0a2\x003\x002\x001";
@@ -306,7 +305,7 @@ static KRB_RETCODE krb_walk_client_packet(KRBState* krbs, const uint8_t* s, cons
 #ifdef DEBUG_MSGS
         if (krbs->state != krbs->last_state)
         {
-            DebugFormat(DEBUG_INSPECTOR,"%p State %d\n", (void*)flowp, krbs->state);
+            DebugFormat(DEBUG_INSPECTOR,"%p State %d\n", (void*)asd, krbs->state);
             krbs->last_state = krbs->state;
         }
 #endif
@@ -320,7 +319,7 @@ static KRB_RETCODE krb_walk_client_packet(KRBState* krbs, const uint8_t* s, cons
             break;
         case KRB_STATE_APP:
             DebugFormat(DEBUG_INSPECTOR,"%p Type %u (%02X)\n",
-                    (void*)flowp, *s & (~ASN_1_TYPE_MASK), *s);
+                    (void*)asd, *s & (~ASN_1_TYPE_MASK), *s);
             if ((*s & ASN_1_TYPE_MASK) != (ASN_1_APPLICATION|ASN_1_CONSTRUCT))
                 return KRB_FAILED;
             krbs->msg_type = *s & (~ASN_1_TYPE_MASK);
@@ -386,7 +385,7 @@ static KRB_RETCODE krb_walk_client_packet(KRBState* krbs, const uint8_t* s, cons
             krbs->tag = 0xa2;
             break;
         case KRB_STATE_FIELD:
-            DebugFormat(DEBUG_INSPECTOR,"%p Tag %02X\n", (void*)flowp, *s);
+            DebugFormat(DEBUG_INSPECTOR,"%p Tag %02X\n", (void*)asd, *s);
             if (krbs->msg_len < 2 || *s <= krbs->tag || (*s & ASN_1_TYPE_MASK) != 0xa0)
                 return KRB_FAILED;
             krbs->tag = *s;
@@ -409,10 +408,10 @@ static KRB_RETCODE krb_walk_client_packet(KRBState* krbs, const uint8_t* s, cons
             {
                 if (krbs->msg_len <= 1)
                 {
-                    DebugFormat(DEBUG_INSPECTOR,"%p Valid\n", (void*)flowp);
+                    DebugFormat(DEBUG_INSPECTOR,"%p Valid\n", (void*)asd);
                     if (!krbs->added)
                     {
-                        client_app_mod.api->add_app(flowp, APP_ID_KERBEROS, APP_ID_KERBEROS,
+                        client_app_mod.api->add_app(asd, APP_ID_KERBEROS, APP_ID_KERBEROS,
                             krbs->ver);
                         krbs->added = 1;
                     }
@@ -442,7 +441,7 @@ static KRB_RETCODE krb_walk_client_packet(KRBState* krbs, const uint8_t* s, cons
             break;
 
         case KRB_STATE_FIELD_LEVEL2:
-            DebugFormat(DEBUG_INSPECTOR,"%p Tag %02X\n", (void*)flowp, *s);
+            DebugFormat(DEBUG_INSPECTOR,"%p Tag %02X\n", (void*)asd, *s);
             if (krbs->msg_len <= 1)
             {
                 krbs->state = KRB_STATE_APP;
@@ -555,7 +554,7 @@ static KRB_RETCODE krb_walk_client_packet(KRBState* krbs, const uint8_t* s, cons
             {
                 if (krbs->pos)
                 {
-                    DebugFormat(DEBUG_INSPECTOR,"%p Name %u\n", (void*)flowp, krbs->pos);
+                    DebugFormat(DEBUG_INSPECTOR,"%p Name %u\n", (void*)asd, krbs->pos);
                     krbs->cname[krbs->pos] = 0;
                 }
                 if (krbs->msg_len <= 1)
@@ -616,7 +615,7 @@ static KRB_RETCODE krb_walk_client_packet(KRBState* krbs, const uint8_t* s, cons
 }
 
 static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_t* end,
-    AppIdSession* flowp, Packet* pkt, const int dir,
+    AppIdSession* asd, Packet* pkt, const int dir,
     const char* reqCname)
 {
     static const uint8_t KRB_SERVER_VERSION[] = "\x0a0\x003\x002\x001";
@@ -630,7 +629,7 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
 #ifdef DEBUG_MSGS
         if (krbs->state != krbs->last_state)
         {
-            DebugFormat(DEBUG_INSPECTOR,"%p State %d\n", (void*)flowp, krbs->state);
+            DebugFormat(DEBUG_INSPECTOR,"%p State %d\n", (void*)asd, krbs->state);
             krbs->last_state = krbs->state;
         }
 #endif
@@ -644,7 +643,7 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
             break;
         case KRB_STATE_APP:
             DebugFormat(DEBUG_INSPECTOR,"%p Type %u (%02X)\n",
-                    (void*)flowp, *s & (~ASN_1_TYPE_MASK), *s);
+                    (void*)asd, *s & (~ASN_1_TYPE_MASK), *s);
             if ((*s & ASN_1_TYPE_MASK) != (ASN_1_APPLICATION|ASN_1_CONSTRUCT))
                 return KRB_FAILED;
             krbs->msg_type = *s & (~ASN_1_TYPE_MASK);
@@ -720,7 +719,7 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
             krbs->pos++;
             break;
         case KRB_STATE_ERROR_VALUE:
-            DebugFormat(DEBUG_INSPECTOR,"%p Error %u\n", (void*)flowp, *s);
+            DebugFormat(DEBUG_INSPECTOR,"%p Error %u\n", (void*)asd, *s);
             if (krbs->msg_len <= 1)
             {
                 krbs->flags |= KRB_FLAG_SERVICE_DETECTED;
@@ -732,13 +731,13 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
 
             if (*s == KDC_ERR_PREAUTH_FAILED)
             {
-                DebugFormat(DEBUG_INSPECTOR,"%p unAuthorized\n", (void*)flowp);
+                DebugFormat(DEBUG_INSPECTOR,"%p unAuthorized\n", (void*)asd);
                 krbs->flags |= KRB_FLAG_AUTH_FAILED;
             }
             krbs->state = KRB_STATE_FIELD;
             break;
         case KRB_STATE_FIELD:
-            DebugFormat(DEBUG_INSPECTOR,"%p Tag %02X\n", (void*)flowp, *s);
+            DebugFormat(DEBUG_INSPECTOR,"%p Tag %02X\n", (void*)asd, *s);
             if (krbs->msg_len < 2 || *s <= krbs->tag || (*s & ASN_1_TYPE_MASK) != 0xa0)
                 return KRB_FAILED;
             krbs->tag = *s;
@@ -856,7 +855,7 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
             {
                 if (krbs->pos)
                 {
-                    DebugFormat(DEBUG_INSPECTOR,"%p Name %u\n", (void*)flowp, krbs->pos);
+                    DebugFormat(DEBUG_INSPECTOR,"%p Name %u\n", (void*)asd, krbs->pos);
                     krbs->cname[krbs->pos] = 0;
                     krbs->flags |= KRB_FLAG_USER_DETECTED;
                 }
@@ -919,14 +918,14 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
     if (krbs->msg_len <= 1)
     {
         /*end of server response message */
-        DebugFormat(DEBUG_INSPECTOR,"%p Valid\n", (void*)flowp);
+        DebugFormat(DEBUG_INSPECTOR,"%p Valid\n", (void*)asd);
         if (krbs->flags & KRB_FLAG_SERVICE_DETECTED)
         {
-            if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED) && pkt)
+            if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED) && pkt)
             {
-                service_mod.api->add_service(flowp, pkt, dir, &svc_element, APP_ID_KERBEROS,
+                service_mod.api->add_service(asd, pkt, dir, &svc_element, APP_ID_KERBEROS,
                     nullptr, krbs->ver, nullptr);
-                flowp->setAppIdFlag(APPID_SESSION_SERVICE_DETECTED);
+                asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
                 appid_stats.kerberos_flows++;
             }
         }
@@ -936,7 +935,7 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
             if (krb_client_config.failedLogin
                 && ((krbs->flags & KRB_FLAG_USER_DETECTED) || reqCname))
             {
-                service_mod.api->add_user(flowp,
+                service_mod.api->add_user(asd,
                     (krbs->flags & KRB_FLAG_USER_DETECTED) ? krbs->cname : reqCname,
                     APP_ID_LDAP, 0);
                 appid_stats.kerberos_users++;
@@ -945,7 +944,7 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
         }
         else if (krbs->flags & KRB_FLAG_USER_DETECTED)
         {
-            service_mod.api->add_user(flowp, krbs->cname, APP_ID_LDAP, 1);
+            service_mod.api->add_user(asd, krbs->cname, APP_ID_LDAP, 1);
             appid_stats.kerberos_users++;
         }
 
@@ -956,7 +955,7 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
 }
 
 static CLIENT_APP_RETCODE krb_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector*)
+    AppIdSession* asd, Packet* pkt, struct Detector*)
 {
     const uint8_t* s = data;
     const uint8_t* end = (data + size);
@@ -964,7 +963,7 @@ static CLIENT_APP_RETCODE krb_client_validate(const uint8_t* data, uint16_t size
 
 #ifdef DEBUG_MSGS
     DebugFormat(DEBUG_INSPECTOR, "%p Processing %u %u->%u %u %d",
-            (void*)flowp, (unsigned int)flowp->protocol, pkt->ptrs.sp, pkt->ptrs.dp, size, dir);
+            (void*)asd, (unsigned int)asd->protocol, pkt->ptrs.sp, pkt->ptrs.dp, size, dir);
 #else
     UNUSED(pkt);
 #endif
@@ -976,14 +975,14 @@ static CLIENT_APP_RETCODE krb_client_validate(const uint8_t* data, uint16_t size
     if (!size)
         return CLIENT_APP_INPROCESS;
 
-    fd = (DetectorData*)kerberos_detector_mod.api->data_get(flowp,
+    fd = (DetectorData*)kerberos_detector_mod.api->data_get(asd,
         kerberos_detector_mod.flow_data_index);
     if (!fd)
     {
         fd = (DetectorData*)snort_calloc(sizeof(DetectorData));
-        kerberos_detector_mod.api->data_add(flowp, fd,
+        kerberos_detector_mod.api->data_add(asd, fd,
             kerberos_detector_mod.flow_data_index, &snort_free);
-        if (flowp->protocol == IpProtocol::TCP)
+        if (asd->protocol == IpProtocol::TCP)
         {
             fd->clnt_state.state = KRB_STATE_TCP_LENGTH;
             fd->svr_state.state = KRB_STATE_TCP_LENGTH;
@@ -1003,24 +1002,24 @@ static CLIENT_APP_RETCODE krb_client_validate(const uint8_t* data, uint16_t size
     {
         fd->need_continue = 1;
         fd->set_flags = 1;
-        flowp->setAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+        asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
     if (dir == APP_ID_FROM_INITIATOR)
     {
-        if (krb_walk_client_packet(&fd->clnt_state, s, end, flowp) == KRB_FAILED)
+        if (krb_walk_client_packet(&fd->clnt_state, s, end, asd) == KRB_FAILED)
         {
-            DebugFormat(DEBUG_INSPECTOR,"%p Failed\n", (void*)flowp);
-            flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
-            flowp->clearAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+            DebugFormat(DEBUG_INSPECTOR,"%p Failed\n", (void*)asd);
+            asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+            asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
             return CLIENT_APP_SUCCESS;
         }
     }
-    else if (krb_walk_server_packet(&fd->svr_state, s, end, flowp, nullptr, dir,
+    else if (krb_walk_server_packet(&fd->svr_state, s, end, asd, nullptr, dir,
         fd->clnt_state.cname) == KRB_FAILED)
     {
-        DebugFormat(DEBUG_INSPECTOR,"%p Server Failed\n", (void*)flowp);
-        flowp->clearAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+        DebugFormat(DEBUG_INSPECTOR,"%p Server Failed\n", (void*)asd);
+        asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
     return CLIENT_APP_INPROCESS;
 }
@@ -1028,7 +1027,7 @@ static CLIENT_APP_RETCODE krb_client_validate(const uint8_t* data, uint16_t size
 static int krb_server_validate(ServiceValidationArgs* args)
 {
     DetectorData* fd;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -1037,7 +1036,7 @@ static int krb_server_validate(ServiceValidationArgs* args)
     const uint8_t* end = (data + size);
 
     DebugFormat(DEBUG_INSPECTOR, "%p Processing %u %u->%u %u %d",
-            (void*)flowp, (unsigned int)flowp->protocol, pkt->ptrs.sp, pkt->ptrs.dp, size, dir);
+            (void*)asd, (unsigned int)asd->protocol, pkt->ptrs.sp, pkt->ptrs.dp, size, dir);
 
     if (dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
@@ -1049,14 +1048,14 @@ static int krb_server_validate(ServiceValidationArgs* args)
     if (!size)
         goto inprocess;
 
-    fd = (DetectorData*)kerberos_detector_mod.api->data_get(flowp,
+    fd = (DetectorData*)kerberos_detector_mod.api->data_get(asd,
         kerberos_detector_mod.flow_data_index);
     if (!fd)
     {
         fd = (DetectorData*)snort_calloc(sizeof(DetectorData));
-        kerberos_detector_mod.api->data_add(flowp, fd,
+        kerberos_detector_mod.api->data_add(asd, fd,
             kerberos_detector_mod.flow_data_index, &snort_free);
-        if (flowp->protocol == IpProtocol::TCP)
+        if (asd->protocol == IpProtocol::TCP)
         {
             fd->clnt_state.state = KRB_STATE_TCP_LENGTH;
             fd->svr_state.state = KRB_STATE_TCP_LENGTH;
@@ -1073,30 +1072,30 @@ static int krb_server_validate(ServiceValidationArgs* args)
     }
 
     if (fd->need_continue)
-        flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
+        asd->set_session_flags(APPID_SESSION_CONTINUE);
     else
     {
-        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
-        if (flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        asd->clear_session_flags(APPID_SESSION_CONTINUE);
+        if (asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
             return SERVICE_SUCCESS;
     }
 
-    if (krb_walk_server_packet(&fd->svr_state, s, end, flowp, pkt, dir, fd->clnt_state.cname) ==
+    if (krb_walk_server_packet(&fd->svr_state, s, end, asd, pkt, dir, fd->clnt_state.cname) ==
         KRB_FAILED)
     {
-        DebugFormat(DEBUG_INSPECTOR,"%p Failed\n", (void*)flowp);
-        if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+        DebugFormat(DEBUG_INSPECTOR,"%p Failed\n", (void*)asd);
+        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            service_mod.api->fail_service(flowp, pkt, dir, &svc_element,
-                service_mod.flow_data_index, args->pConfig);
+            service_mod.api->fail_service(asd, pkt, dir, &svc_element,
+                service_mod.flow_data_index);
             return SERVICE_NOMATCH;
         }
-        flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
+        asd->clear_session_flags(APPID_SESSION_CONTINUE);
         return SERVICE_SUCCESS;
     }
 
 inprocess:
-    service_mod.api->service_inprocess(flowp, pkt, dir, &svc_element);
+    service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
     return SERVICE_INPROCESS;
 }
 

@@ -93,7 +93,7 @@ THREAD_LOCAL SMTP_CLIENT_APP_CONFIG smtp_config;
 
 static CLIENT_APP_RETCODE smtp_init(const IniClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
 SO_PUBLIC RNAClientAppModule smtp_client_mod =
 {
@@ -240,10 +240,9 @@ static CLIENT_APP_RETCODE smtp_init(const IniClientAppAPI* const init_api, SF_LI
  *    prefix_len - The number of characters that are the prefix to the version,
  *              including the NUL terminating character.
  */
-static int extract_version_and_add_client_app(ApplicationId clientId, 
-    const int prefix_len, const uint8_t* product, const uint8_t* product_end, 
-    ClientSMTPData* const client_data, AppIdSession* flowp, 
-    AppId appId, PegCount *stat_counter)
+static int extract_version_and_add_client_app(ApplicationId clientId, const int prefix_len,
+        const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const client_data,
+        AppIdSession* asd, AppId appId, PegCount *stat_counter)
 {
     const uint8_t* p;
     uint8_t* v;
@@ -262,7 +261,7 @@ static int extract_version_and_add_client_app(ApplicationId clientId,
         *v = *p;
     }
     *v = 0;
-    smtp_client_mod.api->add_app(flowp, appId, clientId, (char*)client_data->version);
+    smtp_client_mod.api->add_app(asd, appId, clientId, (char*)client_data->version);
     (*stat_counter)++;
     return 0;
 }
@@ -274,7 +273,7 @@ static int extract_version_and_add_client_app(ApplicationId clientId,
  *  Returns 0 if a recognized product is found.  Otherwise returns 1.
  */
 static int IdentifyClientVersion(ClientSMTPData* const fd, const uint8_t* product,
-    const uint8_t* data_end, AppIdSession* flowp, Packet*)
+    const uint8_t* data_end, AppIdSession* asd, Packet*)
 {
     const uint8_t* p;
     uint8_t* v;
@@ -301,7 +300,7 @@ static int IdentifyClientVersion(ClientSMTPData* const fd, const uint8_t* produc
                 if (p >= data_end || *p != ' ')
                     return 1;
                 return extract_version_and_add_client_app(APP_ID_OUTLOOK, 
-                    2, p, data_end, fd, flowp, appId, 
+                    2, p, data_end, fd, asd, appId,
                     &appid_stats.smtp_microsoft_outlook_clients);
             }
             else if (*p == ' ')
@@ -310,13 +309,13 @@ static int IdentifyClientVersion(ClientSMTPData* const fd, const uint8_t* produc
                 if (data_end-p >= (int)sizeof(EXPRESS) && memcmp(p, EXPRESS, sizeof(EXPRESS)-1) == 0)
                 {
                     return extract_version_and_add_client_app(APP_ID_OUTLOOK_EXPRESS, 
-                        sizeof(EXPRESS), p, data_end, fd, flowp, appId, 
+                        sizeof(EXPRESS), p, data_end, fd, asd, appId,
                         &appid_stats.smtp_microsoft_outlook_express_clients);
                 }
                 else if (data_end-p >= (int)sizeof(IMO) && memcmp(p, IMO, sizeof(IMO)-1) == 0)
                 {
                     return extract_version_and_add_client_app(APP_ID_OUTLOOK, 
-                        sizeof(IMO), p, data_end, fd, flowp, appId, 
+                        sizeof(IMO), p, data_end, fd, asd, appId,
                         &appid_stats.smtp_microsoft_outlook_imo_clients);
                 }
             }
@@ -326,14 +325,14 @@ static int IdentifyClientVersion(ClientSMTPData* const fd, const uint8_t* produc
         sizeof(APP_SMTP_EVOLUTION)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_EVOLUTION, 
-            sizeof(APP_SMTP_EVOLUTION), product, data_end, fd, flowp, appId, 
+            sizeof(APP_SMTP_EVOLUTION), product, data_end, fd, asd, appId,
             &appid_stats.smtp_evolution_clients);
     }
     else if (len >= sizeof(APP_SMTP_LOTUS_NOTES) && memcmp(product, APP_SMTP_LOTUS_NOTES,
         sizeof(APP_SMTP_LOTUS_NOTES)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_LOTUS_NOTES, 
-            sizeof(APP_SMTP_LOTUS_NOTES), product, data_end, fd, flowp, appId, 
+            sizeof(APP_SMTP_LOTUS_NOTES), product, data_end, fd, asd, appId,
             &appid_stats.smtp_lotus_notes_clients);
     }
     else if (len >= sizeof(APP_SMTP_APPLEMAIL) && memcmp(product, APP_SMTP_APPLEMAIL,
@@ -347,7 +346,7 @@ static int IdentifyClientVersion(ClientSMTPData* const fd, const uint8_t* produc
             *v = *p;
         }
         *v = 0;
-        smtp_client_mod.api->add_app(flowp, appId, APP_ID_APPLE_EMAIL, (char*)fd->version);
+        smtp_client_mod.api->add_app(asd, appId, APP_ID_APPLE_EMAIL, (char*)fd->version);
         appid_stats.smtp_applemail_clients++;
         return 0;
     }
@@ -355,49 +354,49 @@ static int IdentifyClientVersion(ClientSMTPData* const fd, const uint8_t* produc
         sizeof(APP_SMTP_EUDORA)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_EUDORA, 
-            sizeof(APP_SMTP_EUDORA), product, data_end, fd, flowp, appId, 
+            sizeof(APP_SMTP_EUDORA), product, data_end, fd, asd, appId,
             &appid_stats.smtp_eudora_clients);
     }
     else if (len >= sizeof(APP_SMTP_EUDORAPRO) && memcmp(product, APP_SMTP_EUDORAPRO,
         sizeof(APP_SMTP_EUDORAPRO)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_EUDORA_PRO, 
-            sizeof(APP_SMTP_EUDORAPRO), product, data_end, fd, flowp, appId, 
+            sizeof(APP_SMTP_EUDORAPRO), product, data_end, fd, asd, appId,
             &appid_stats.smtp_eudora_pro_clients);
     }
     else if (len >= sizeof(APP_SMTP_AOL) && memcmp(product, APP_SMTP_AOL, 
         sizeof(APP_SMTP_AOL)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_AOL_EMAIL, 
-            sizeof(APP_SMTP_AOL), product, data_end, fd, flowp, appId, 
+            sizeof(APP_SMTP_AOL), product, data_end, fd, asd, appId,
             &appid_stats.smtp_aol_clients);
     }
     else if (len >= sizeof(APP_SMTP_MUTT) && memcmp(product, APP_SMTP_MUTT, 
         sizeof(APP_SMTP_MUTT)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_MUTT, 
-            sizeof(APP_SMTP_MUTT), product, data_end, fd, flowp, appId, 
+            sizeof(APP_SMTP_MUTT), product, data_end, fd, asd, appId,
             &appid_stats.smtp_mutt_clients);
     }
     else if (len >= sizeof(APP_SMTP_KMAIL) && memcmp(product, APP_SMTP_KMAIL,
         sizeof(APP_SMTP_KMAIL)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_KMAIL, 
-            sizeof(APP_SMTP_KMAIL), product, data_end, fd, flowp, appId, 
+            sizeof(APP_SMTP_KMAIL), product, data_end, fd, asd, appId,
             &appid_stats.smtp_kmail_clients);
     }
     else if (len >= sizeof(APP_SMTP_THUNDERBIRD) && memcmp(product, APP_SMTP_THUNDERBIRD,
         sizeof(APP_SMTP_THUNDERBIRD)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_THUNDERBIRD, 
-            sizeof(APP_SMTP_THUNDERBIRD), product, data_end, fd, flowp, appId, 
+            sizeof(APP_SMTP_THUNDERBIRD), product, data_end, fd, asd, appId,
             &appid_stats.smtp_thunderbird_clients);
     }
     else if (len >= sizeof(APP_SMTP_MTHUNDERBIRD) && memcmp(product, APP_SMTP_MTHUNDERBIRD,
         sizeof(APP_SMTP_MTHUNDERBIRD)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_THUNDERBIRD, 
-            sizeof(APP_SMTP_MTHUNDERBIRD), product, data_end, fd, flowp, appId, 
+            sizeof(APP_SMTP_MTHUNDERBIRD), product, data_end, fd, asd, appId,
             &appid_stats.smtp_thunderbird_clients);
     }
     else if (len >= sizeof(APP_SMTP_MOZILLA) && memcmp(product, APP_SMTP_MOZILLA,
@@ -413,7 +412,7 @@ static int IdentifyClientVersion(ClientSMTPData* const fd, const uint8_t* produc
                 {
                     return extract_version_and_add_client_app(
                         APP_ID_THUNDERBIRD, sizeof(APP_SMTP_THUNDERBIRD_SHORT),
-                        p, data_end, fd, flowp, appId, 
+                        p, data_end, fd, asd, appId,
                         &appid_stats.smtp_thunderbird_clients);
                 }
             }
@@ -431,7 +430,7 @@ static void freeData(void* data)
 }
 
 static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector*)
+    AppIdSession* asd, Packet* pkt, struct Detector*)
 {
     ClientSMTPData* fd;
     const uint8_t* end;
@@ -439,13 +438,13 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
     SMTPState currState = SMTP_STATE_NONE;
 #endif
 
-    fd = (ClientSMTPData*)smtp_client_mod.api->data_get(flowp, smtp_client_mod.flow_data_index);
+    fd = (ClientSMTPData*)smtp_client_mod.api->data_get(asd, smtp_client_mod.flow_data_index);
     if (!fd)
     {
         fd = (ClientSMTPData*)snort_calloc(sizeof(ClientSMTPData));
         if (!fd)
             return CLIENT_APP_ENOMEM;
-        if (smtp_client_mod.api->data_add(flowp, fd, smtp_client_mod.flow_data_index, &freeData))
+        if (smtp_client_mod.api->data_add(asd, fd, smtp_client_mod.flow_data_index, &freeData))
         {
             snort_free(fd);
             return CLIENT_APP_ENOMEM;
@@ -460,33 +459,33 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
         {
             fd->flags &= ~(CLIENT_FLAG_STARTTLS_SENT);
             fd->flags |= CLIENT_FLAG_SMTPS;
-            flowp->clearAppIdFlag(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS); // we no longer need
+            asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS); // we no longer need
                                                                              // to examine the
                                                                              // response.
-            if (!flowp->getAppIdFlag(APPID_SESSION_DECRYPTED))
+            if (!asd->get_session_flags(APPID_SESSION_DECRYPTED))
             {
                 /* Because we can't see any further info without decryption we settle for
                    plain APP_ID_SMTPS instead of perhaps finding data that would make calling
                    IdentifyClientVersion() worthwhile, So set the appid and call it good. */
-                smtp_client_mod.api->add_app(flowp, APP_ID_SMTPS, APP_ID_SMTPS, nullptr);
+                smtp_client_mod.api->add_app(asd, APP_ID_SMTPS, APP_ID_SMTPS, nullptr);
                 goto done;
             }
         }
         return CLIENT_APP_INPROCESS;
     }
-    if (flowp->getAppIdFlag(APPID_SESSION_ENCRYPTED))
+    if (asd->get_session_flags(APPID_SESSION_ENCRYPTED))
     {
-        if (!flowp->getAppIdFlag(APPID_SESSION_DECRYPTED))
+        if (!asd->get_session_flags(APPID_SESSION_DECRYPTED))
             return CLIENT_APP_INPROCESS;
     }
 
     for (end = data + size; data < end; data++)
     {
 #if UNIT_TESTING
-        if (app_id_debug_session_flag && currState != fd->state)
+        if (session_logging_enabled && currState != fd->state)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_APPID, "AppIdDbg %s SMTP client state %s\n",
-                app_id_debug_session, stateName[fd->state]); );
+                session_logging_id, stateName[fd->state]); );
             currState = fd->state;
         }
 #endif
@@ -557,7 +556,7 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
                     fd->pos = 0;
                     fd->nextstate = fd->state;
                     fd->state = SMTP_STATE_SKIP_LINE;
-                    flowp->setAppIdFlag(APPID_SESSION_ENCRYPTED);
+                    asd->set_session_flags(APPID_SESSION_ENCRYPTED);
                 }
             }
             else
@@ -611,7 +610,7 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
                     (len >= 2 && data[1] == 0x0D && data[2] == 0x0A))
                 {
                     AppId appId = (fd->flags & CLIENT_FLAG_SMTPS) ?  APP_ID_SMTPS : APP_ID_SMTP;
-                    smtp_client_mod.api->add_app(flowp, appId, appId, nullptr);
+                    smtp_client_mod.api->add_app(asd, appId, appId, nullptr);
                     goto done;
                 }
             }
@@ -648,7 +647,7 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
             {
                 if (fd->headerline && fd->pos)
                 {
-                    IdentifyClientVersion(fd, fd->headerline, fd->headerline + fd->pos, flowp, pkt);
+                    IdentifyClientVersion(fd, fd->headerline, fd->headerline + fd->pos, asd, pkt);
                     snort_free(fd->headerline);
                     fd->headerline = nullptr;
                 }
@@ -691,7 +690,7 @@ static CLIENT_APP_RETCODE smtp_validate(const uint8_t* data, uint16_t size, cons
     return CLIENT_APP_INPROCESS;
 
 done:
-    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     return CLIENT_APP_SUCCESS;
 }
 

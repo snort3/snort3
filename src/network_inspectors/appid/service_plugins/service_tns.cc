@@ -102,14 +102,12 @@ static const RNAServiceElement svc_element =
     "tns"
 };
 
-// FIXIT thread safety, can this be const?
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &tns_validate, TNS_PORT, IpProtocol::TCP, 0 },
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
 };
 
-// FIXIT thread safety, can this be const?
 SO_PUBLIC RNAServiceValidationModule tns_service_mod =
 {
     svc_name,
@@ -145,7 +143,7 @@ static int tns_validate(ServiceValidationArgs* args)
 {
     ServiceTNSData* ss;
     uint16_t offset;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
 
@@ -154,11 +152,11 @@ static int tns_validate(ServiceValidationArgs* args)
     if (args->dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    ss = (ServiceTNSData*)tns_service_mod.api->data_get(flowp, tns_service_mod.flow_data_index);
+    ss = (ServiceTNSData*)tns_service_mod.api->data_get(asd, tns_service_mod.flow_data_index);
     if (!ss)
     {
         ss = (ServiceTNSData*)snort_calloc(sizeof(ServiceTNSData));
-        tns_service_mod.api->data_add(flowp, ss, tns_service_mod.flow_data_index, &snort_free);
+        tns_service_mod.api->data_add(asd, ss, tns_service_mod.flow_data_index, &snort_free);
         ss->state = TNS_STATE_MESSAGE_LEN;
     }
 
@@ -302,18 +300,18 @@ static int tns_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    tns_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+    tns_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    tns_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element, APP_ID_ORACLE_TNS,
+    tns_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element, APP_ID_ORACLE_TNS,
         nullptr, ss->version ? ss->version : nullptr, nullptr);
     appid_stats.tns_flows++;
     return SERVICE_SUCCESS;
 
 fail:
-    tns_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-        tns_service_mod.flow_data_index, args->pConfig);
+    tns_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+        tns_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

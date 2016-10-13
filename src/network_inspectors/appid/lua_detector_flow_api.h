@@ -30,9 +30,8 @@ class AppIdSession;
 
 struct DetectorFlow
 {
-    // FIXIT-M why is the lua state and user data ref on this object?
     lua_State* myLuaState;
-    AppIdSession* pFlow;
+    AppIdSession* asd;
     int userDataRef;
 };
 

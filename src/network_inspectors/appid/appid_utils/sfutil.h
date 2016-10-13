@@ -24,7 +24,6 @@
 
 #include <stdint.h>
 
-int SFGetRelocatePathForFile(const char* const content_file, const char** const root_path);
 extern int Tokenize(char* data, char* toklist[]);
 extern int strip(char* data);
 extern void InitNetmasks(uint32_t netmasks[]);

@@ -69,7 +69,7 @@ struct ServiceDHCPOption
 static int bootp_init(const IniServiceAPI* const init_api);
 static int bootp_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &bootp_validate,
@@ -81,7 +81,7 @@ static RNAServiceElement svc_element =
     "bootp"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &bootp_validate, 67, IpProtocol::UDP, 0 },
     { &bootp_validate, 67, IpProtocol::UDP, 1 },
@@ -127,7 +127,7 @@ static int bootp_validate(ServiceValidationArgs* args)
     unsigned op60_len=0;
     const uint8_t* op55=nullptr;
     const uint8_t* op60=nullptr;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     const int dir = args->dir;
@@ -182,7 +182,7 @@ static int bootp_validate(ServiceValidationArgs* args)
 
                         if (option53 && op55_len && (memcmp(eh->ether_src, bh->chaddr, 6) == 0))
                         {
-                            if (bootp_service_mod.api->data_add_dhcp(flowp, op55_len, op55,
+                            if (bootp_service_mod.api->data_add_dhcp(asd, op55_len, op55,
                                 op60_len, op60,
                                 bh->chaddr))
                             {
@@ -229,11 +229,11 @@ static int bootp_validate(ServiceValidationArgs* args)
 
     if (dir == APP_ID_FROM_INITIATOR)
     {
-        flowp->setAppIdFlag(APPID_SESSION_UDP_REVERSED);
+        asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
     }
     else
     {
-        flowp->clearAppIdFlag(APPID_SESSION_UDP_REVERSED);
+        asd->clear_session_flags(APPID_SESSION_UDP_REVERSED);
     }
 
     if (size > sizeof(ServiceBOOTPHeader) + 4)
@@ -259,7 +259,7 @@ static int bootp_validate(ServiceValidationArgs* args)
                         goto fail;
 
                     if (option53 && (memcmp(eh->ether_dst, bh->chaddr, 6) == 0))
-                        bootp_service_mod.api->dhcpNewLease(flowp, bh->chaddr, bh->yiaddr,
+                        bootp_service_mod.api->dhcpNewLease(asd, bh->chaddr, bh->yiaddr,
                             pkt->pkth->ingress_group, ntohl(subnet), ntohl(leaseTime),
                             router);
                     goto success;
@@ -306,35 +306,35 @@ static int bootp_validate(ServiceValidationArgs* args)
     }
 
 success:
-    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        flowp->setAppIdFlag(APPID_SESSION_CONTINUE);
-        bootp_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+        asd->set_session_flags(APPID_SESSION_CONTINUE);
+        bootp_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
             APP_ID_DHCP, nullptr, nullptr, nullptr);
         appid_stats.bootp_flows++;
     }
     return SERVICE_SUCCESS;
 
 inprocess:
-    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        bootp_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+        bootp_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     }
     return SERVICE_INPROCESS;
 
 fail:
-    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        bootp_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-            bootp_service_mod.flow_data_index, args->pConfig);
+        bootp_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+            bootp_service_mod.flow_data_index);
     }
-    flowp->clearAppIdFlag(APPID_SESSION_CONTINUE);
+    asd->clear_session_flags(APPID_SESSION_CONTINUE);
     return SERVICE_NOMATCH;
 
 not_compatible:
-    if (!flowp->getAppIdFlag(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        bootp_service_mod.api->incompatible_data(flowp, args->pkt, args->dir, &svc_element,
+        bootp_service_mod.api->incompatible_data(asd, args->pkt, args->dir, &svc_element,
             bootp_service_mod.flow_data_index, args->pConfig);
     }
     return SERVICE_NOT_COMPATIBLE;

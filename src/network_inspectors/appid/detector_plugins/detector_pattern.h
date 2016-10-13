@@ -49,7 +49,7 @@ struct Pattern
     PatternService* ps;
 };
 
-struct PortNode // FIXIT this name changed from "Port" which is already in use by Snort++
+struct PortNode
 {
     PortNode* next;
     uint16_t port;

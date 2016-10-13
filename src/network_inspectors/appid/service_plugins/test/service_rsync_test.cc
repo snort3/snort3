@@ -50,7 +50,7 @@ int fake_data_add(AppIdSession*, void* data, unsigned, AppIdFreeFCN)
     return -1;
 }
 
-int fake_fail_service(AppIdSession*, const Packet*, int, const RNAServiceElement*, unsigned, const AppIdConfig*)
+int fake_fail_service(AppIdSession*, const Packet*, int, const RNAServiceElement*, unsigned)
 {
     mock().actualCall("fail_service");
     return -1;
@@ -98,11 +98,6 @@ TEST_GROUP(service_rsync)
         mock().clear();
     }
 };
-
-TEST(service_rsync, rsync_validate_null_args)
-{
-    LONGS_EQUAL(SERVICE_NOMATCH, rsync_validate(nullptr));
-}
 
 TEST(service_rsync, rsync_validate_zero_size)
 {

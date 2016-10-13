@@ -69,7 +69,7 @@ struct ServiceBITMsg
 static int bit_init(const IniServiceAPI* const init_api);
 static int bit_validate(ServiceValidationArgs* args);
 
-static RNAServiceElement svc_element =
+static const RNAServiceElement svc_element =
 {
     nullptr,
     &bit_validate,
@@ -81,7 +81,7 @@ static RNAServiceElement svc_element =
     "bit"
 };
 
-static RNAServiceValidationPort pp[] =
+static const RNAServiceValidationPort pp[] =
 {
     { &bit_validate, BIT_PORT, IpProtocol::TCP, 0 },
     { &bit_validate, BIT_PORT+1, IpProtocol::TCP, 0 },
@@ -95,7 +95,6 @@ static RNAServiceValidationPort pp[] =
     { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
 };
 
-// FIXIT - Why is there no service_bit.h that declares this extern like all the others?
 SO_PUBLIC RNAServiceValidationModule bit_service_mod =
 {
     svc_name,
@@ -131,7 +130,7 @@ static int bit_init(const IniServiceAPI* const init_api)
 static int bit_validate(ServiceValidationArgs* args)
 {
     ServiceBITData* ss;
-    AppIdSession* flowp = args->flowp;
+    AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     uint16_t size = args->size;
     uint16_t offset;
@@ -141,11 +140,11 @@ static int bit_validate(ServiceValidationArgs* args)
     if (args->dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    ss = (ServiceBITData*)bit_service_mod.api->data_get(flowp, bit_service_mod.flow_data_index);
+    ss = (ServiceBITData*)bit_service_mod.api->data_get(asd, bit_service_mod.flow_data_index);
     if (!ss)
     {
         ss = (ServiceBITData*)snort_calloc(sizeof(ServiceBITData));
-        bit_service_mod.api->data_add(flowp, ss, bit_service_mod.flow_data_index, &snort_free);
+        bit_service_mod.api->data_add(asd, ss, bit_service_mod.flow_data_index, &snort_free);
         ss->state = BIT_STATE_BANNER;
     }
 
@@ -199,18 +198,18 @@ static int bit_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    bit_service_mod.api->service_inprocess(flowp, args->pkt, args->dir, &svc_element);
+    bit_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
     return SERVICE_INPROCESS;
 
 success:
-    bit_service_mod.api->add_service(flowp, args->pkt, args->dir, &svc_element,
+    bit_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
         APP_ID_BITTORRENT, nullptr, nullptr,  nullptr);
     appid_stats.bit_flows++;
     return SERVICE_SUCCESS;
 
 fail:
-    bit_service_mod.api->fail_service(flowp, args->pkt, args->dir, &svc_element,
-        bit_service_mod.flow_data_index, args->pConfig);
+    bit_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
+        bit_service_mod.flow_data_index);
     return SERVICE_NOMATCH;
 }
 

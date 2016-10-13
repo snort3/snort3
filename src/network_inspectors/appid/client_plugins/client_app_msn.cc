@@ -35,7 +35,7 @@ struct MSN_CLIENT_APP_CONFIG
 THREAD_LOCAL MSN_CLIENT_APP_CONFIG msn_config;
 
 static CLIENT_APP_RETCODE msn_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
 struct Client_App_Pattern
 {
@@ -114,7 +114,7 @@ static CLIENT_APP_RETCODE msn_init(const IniClientAppAPI* const init_api, SF_LIS
 }
 
 static CLIENT_APP_RETCODE msn_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* flowp, Packet* pkt, struct Detector*)
+    AppIdSession* asd, Packet* pkt, struct Detector*)
 {
     const uint8_t* end;
     uint8_t version[MAX_VERSION_SIZE];
@@ -125,7 +125,7 @@ static CLIENT_APP_RETCODE msn_validate(const uint8_t* data, uint16_t size, const
     product_id = APP_ID_MSN_MESSENGER;
     memset(&version,0,sizeof(version));
 
-    if (!data || !msn_client_mod.api || !flowp || !pkt)
+    if (!data || !msn_client_mod.api || !asd || !pkt)
         return CLIENT_APP_ENULL;
 
     if (dir != APP_ID_FROM_INITIATOR)
@@ -194,8 +194,8 @@ static CLIENT_APP_RETCODE msn_validate(const uint8_t* data, uint16_t size, const
     return CLIENT_APP_INPROCESS;
 
 done:
-    msn_client_mod.api->add_app(flowp, APP_ID_MSN_MESSENGER, product_id, (char*)version);
-    flowp->setAppIdFlag(APPID_SESSION_CLIENT_DETECTED);
+    msn_client_mod.api->add_app(asd, APP_ID_MSN_MESSENGER, product_id, (char*)version);
+    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.msn_clients++;
     return CLIENT_APP_SUCCESS;
 }
