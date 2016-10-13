@@ -217,9 +217,6 @@ static const Parameter search_engine_params[] =
     { "debug_print_rule_groups_compiled", Parameter::PT_BOOL, nullptr, "false",
       "prints compiled rule group information" },
 
-    { "debug_print_fast_pattern", Parameter::PT_BOOL, nullptr, "false",
-      "print fast pattern info for each rule" },
-
     { "max_pattern_len", Parameter::PT_INT, "0:", "0",
       "truncate patterns when compiling into state machine (0 means no maximum)" },
 
@@ -232,11 +229,14 @@ static const Parameter search_engine_params[] =
     { "search_method", Parameter::PT_DYNAMIC, (void*)&get_search_methods, "ac_bnfa",
       "set fast pattern algorithm - choose available search engine" },
 
-    { "split_any_any", Parameter::PT_BOOL, nullptr, "false",
-      "evaluate any-any rules separately to save memory" },
-
     { "search_optimize", Parameter::PT_BOOL, nullptr, "true",
       "tweak state machine construction for better performance" },
+
+    { "show_fast_patterns", Parameter::PT_BOOL, nullptr, "false",
+      "print fast pattern info for each rule" },
+
+    { "split_any_any", Parameter::PT_BOOL, nullptr, "false",
+      "evaluate any-any rules separately to save memory" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -312,9 +312,6 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
         if ( v.get_bool() )
             fp->set_debug_print_rule_groups_compiled();
     }
-    else if ( v.is("debug_print_fast_pattern") )
-        fp->set_debug_print_fast_patterns(v.get_bool());
-
     else if ( v.is("max_pattern_len") )
         fp->set_max_pattern_len(v.get_long());
 
@@ -329,11 +326,14 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
         if ( !fp->set_detect_search_method(v.get_string()) )
             return false;
     }
-    else if ( v.is("split_any_any") )
-        fp->set_split_any_any(v.get_long());
-
     else if ( v.is("search_optimize") )
         fp->set_search_opt(v.get_long());
+
+    else if ( v.is("show_fast_patterns") )
+        fp->set_debug_print_fast_patterns(v.get_bool());
+
+    else if ( v.is("split_any_any") )
+        fp->set_split_any_any(v.get_long());
 
     else
         return false;

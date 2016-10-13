@@ -61,20 +61,23 @@
 #include "rules.h"
 #include "treenodes.h"
 #include "fp_detect.h"
+#include "fp_utils.h"
 #include "detection_options.h"
 #include "detection_defines.h"
 #include "sfrim.h"
 #include "pattern_match_data.h"
 
 static unsigned mpse_count = 0;
+static const char* s_group = "";
 
 static void fpDeletePMX(void* data);
 
 static int fpGetFinalPattern(
     FastPatternConfig*, PatternMatchData*, const char*& ret_pattern, int& ret_bytes);
 
-static void PrintFastPatternInfo(
-    OptTreeNode*, PatternMatchData*, const char* pattern, int pattern_length);
+static void print_nfp_info(const char*, const OptTreeNode*);
+static void print_fp_info(const char*, const OptTreeNode*, const PatternMatchData*,
+    const char* pattern, int pattern_length);
 
 static const char* const pm_type_strings[PM_TYPE_MAX] =
 {
@@ -291,7 +294,7 @@ static int add_patrn_to_neg_list(void* id, void** list)
         return -1;
 
     NCListNode** ncl = (NCListNode**)list;
-    NCListNode* node = (NCListNode*)snort_calloc(sizeof(NCListNode));
+    NCListNode* node = (NCListNode*)snort_alloc(sizeof(NCListNode));
 
     node->pmx = (PMX*)id;
     node->next = *ncl;
@@ -325,7 +328,9 @@ static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree)
 
     if (!id)
     {
-        assert(*existing_tree);
+        if ( !*existing_tree )
+            return -1;
+
         /* NULL input id (PMX *), last call for this pattern state */
         return finalize_detection_option_tree(sc, (detection_option_tree_root_t*)*existing_tree);
     }
@@ -339,282 +344,58 @@ static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree)
     return otn_create_tree(otn, existing_tree);
 }
 
-/* FLP_Trim
-  * Trim zero byte prefixes, this increases uniqueness
-  * will not alter regex since they can't contain bald \0
-  *
-  * returns
-  *   length - of trimmed pattern
-  *   buff - ptr to new beggining of trimmed buffer
-  */
-static int FLP_Trim(const char* p, int plen, const char** buff)
-{
-    int i;
-    int size = 0;
-
-    if ( !p )
-        return 0;
-
-    for (i=0; i<plen; i++)
-    {
-        if ( p[i] != 0 )
-            break;
-    }
-
-    if ( i < plen )
-        size = plen - i;
-    else
-        size = 0;
-
-    if ( buff && (size==0) )
-    {
-        *buff = 0;
-    }
-    else if ( buff )
-    {
-        *buff = &p[i];
-    }
-    return size;
-}
-
-static bool pmd_can_be_fp(PatternMatchData* pmd, CursorActionType cat)
-{
-    if ( cat <= CAT_SET_OTHER )
-        return false;
-
-    return pmd->can_be_fp();
-}
-
-struct FpFoo
-{
-    CursorActionType cat;
-    PatternMatchData* pmd;
-    int size;
-
-    FpFoo()
-    { cat = CAT_NONE; pmd = nullptr; size = 0; }
-
-    FpFoo(CursorActionType c, PatternMatchData* p)
-    {
-        cat = c;
-        pmd = p;
-        size = FLP_Trim(pmd->pattern_buf, pmd->pattern_size, nullptr);
-    }
-
-    bool is_better(FpFoo& rhs)
-    {
-        if ( size && !rhs.size )
-            return true;
-
-        if ( !rhs.pmd )
-            return true;
-
-        if ( !pmd->negated && rhs.pmd->negated )
-            return true;
-
-        if ( cat > rhs.cat )
-            return true;
-
-        if ( cat < rhs.cat )
-            return false;
-
-        if ( size > rhs.size )
-            return true;
-
-        return false;
-    }
-};
-
-static PmType get_pm_type(CursorActionType cat)
-{
-    switch ( cat )
-    {
-    case CAT_SET_RAW:
-    case CAT_SET_OTHER:
-        return PM_TYPE_PKT;
-
-    case CAT_SET_BODY:
-        return PM_TYPE_BODY;
-
-    case CAT_SET_HEADER:
-        return PM_TYPE_HEADER;
-
-    case CAT_SET_KEY:
-        return PM_TYPE_KEY;
-
-    case CAT_SET_FILE:
-        return PM_TYPE_FILE;
-
-    default:
-        break;
-    }
-    assert(false);
-    return PM_TYPE_MAX;
-}
-
-bool set_fp_content(OptTreeNode* otn)
-{
-    CursorActionType curr_cat = CAT_SET_RAW;
-    FpFoo best;
-    PatternMatchData* pmd = nullptr;
-    bool content = false;
-    bool fp_only = true;
-
-    for (OptFpList* ofl = otn->opt_func; ofl; ofl = ofl->next)
-    {
-        if ( !ofl->ips_opt )
-            continue;
-
-        CursorActionType cat = ofl->ips_opt->get_cursor_type();
-
-        if ( cat > CAT_ADJUST )
-        {
-            curr_cat = cat;
-            fp_only = !ofl->ips_opt->fp_research();
-        }
-
-        // Set rule direction
-        RuleDirection dir = RULE_WO_DIR;
-        if (OtnFlowFromServer(otn))
-            dir = RULE_FROM_SERVER;
-        else if (OtnFlowFromClient(otn))
-            dir = RULE_FROM_CLIENT;
-
-        PatternMatchData* tmp = get_pmd(ofl, otn->proto, dir);
-
-        if ( !tmp )
-            continue;
-
-        content = true;
-
-        if ( !fp_only )
-            tmp->fp_only = -1;
-
-        tmp->pm_type = get_pm_type(curr_cat);
-
-        if ( tmp->fp )
-        {
-            if ( pmd )
-                ParseWarning(WARN_RULES,
-                    "only one fast_pattern content per rule allowed - ignored");
-
-            else if ( !pmd_can_be_fp(tmp, curr_cat) )
-                ParseWarning(WARN_RULES,
-                    "content ineligible for fast_pattern matcher - ignored");
-
-            else
-                pmd = tmp;
-        }
-
-        if ( !pmd_can_be_fp(tmp, curr_cat) )
-            continue;
-
-        FpFoo curr(curr_cat, tmp);
-
-        if ( curr.is_better(best) )
-            best = curr;
-    }
-    if ( !pmd && best.pmd )
-    {
-        pmd = best.pmd;
-        pmd->fp = 1;
-    }
-
-    if ( best.pmd and otn->proto == SNORT_PROTO_FILE and best.cat != CAT_SET_FILE )
-    {
-        ParseWarning(WARN_RULES, "file rule %u:%u does not have file_data fast pattern",
-            otn->sigInfo.generator, otn->sigInfo.id);
-
-        best.pmd->fp = 0;
-        return false;
-    }
-
-    if ( pmd )
-        return true;
-
-    if ( content )
-        ParseWarning(WARN_RULES, "content based rule %u:%u has no fast pattern",
-            otn->sigInfo.generator, otn->sigInfo.id);
-
-    return false;
-}
-
-static PatternMatchData* get_fp_content(OptTreeNode* otn, OptFpList*& next)
-{
-    for (OptFpList* ofl = otn->opt_func; ofl; ofl = ofl->next)
-    {
-        if ( !ofl->ips_opt )
-            continue;
-
-        PatternMatchData* pmd = get_pmd(ofl, 0, RULE_WO_DIR);
-
-        if ( !pmd )
-            continue;
-
-        next = ofl->next;
-
-        if ( pmd->fp )
-            return pmd;
-    }
-    return nullptr;
-}
-
 static int fpFinishPortGroupRule(
     SnortConfig* sc, PortGroup* pg,
     OptTreeNode* otn, PatternMatchData* pmd, FastPatternConfig* fp)
 {
-    const char* pattern;
-    int pattern_length;
-
     if ( !pmd )
     {
         pg->add_nfp_rule(otn);
-        return 0;  /* Not adding any content to pattern matcher */
+        print_nfp_info(s_group, otn);
+        return 0;
     }
-    else
+    if ( !pg->mpse[pmd->pm_type] )
     {
-        if (pmd->negated)
-            pg->add_nfp_rule(otn);
+        static MpseAgent agent =
+        {
+            pmx_create_tree, add_patrn_to_neg_list,
+            fpDeletePMX, free_detection_option_root, neg_list_free
+        };
 
-        else
-            pg->add_rule();
-
-        if (fpGetFinalPattern(fp, pmd, pattern, pattern_length) == -1)
-            return -1;
-
-        /* create pmx */
-        PMX* pmx = (PMX*)snort_calloc(sizeof(PMX));
-        pmx->rule_node.rnRuleData = otn;
-        pmx->pmd = pmd;
-
-        if (fp->get_debug_print_fast_patterns())
-            PrintFastPatternInfo(otn, pmd, pattern, pattern_length);
+        pg->mpse[pmd->pm_type] = MpseManager::get_search_engine(
+            sc, fp->get_search_api(), true, &agent);
 
         if ( !pg->mpse[pmd->pm_type] )
         {
-            static MpseAgent agent =
-            {
-                pmx_create_tree, add_patrn_to_neg_list,
-                fpDeletePMX, free_detection_option_root, neg_list_free
-            };
-
-            pg->mpse[pmd->pm_type] = MpseManager::get_search_engine(
-                sc, fp->get_search_api(), true, &agent);
-
-            if ( !pg->mpse[pmd->pm_type] )
-            {
-                ParseError("Failed to create pattern matcher for %d", pmd->pm_type);
-                return -1;
-            }
-            mpse_count++;
-
-            if ( fp->get_search_opt() )
-                pg->mpse[pmd->pm_type]->set_opt(1);
+            ParseError("Failed to create pattern matcher for %d", pmd->pm_type);
+            return -1;
         }
+        mpse_count++;
 
-        Mpse::PatternDescriptor desc(pmd->no_case, pmd->negated, pmd->literal, pmd->flags);
-        pg->mpse[pmd->pm_type]->add_pattern(sc, (uint8_t*)pattern, pattern_length, desc, pmx);
+        if ( fp->get_search_opt() )
+            pg->mpse[pmd->pm_type]->set_opt(1);
     }
+    if (pmd->negated)
+        pg->add_nfp_rule(otn);
+
+    else
+        pg->add_rule();
+
+    const char* pattern;
+    int pattern_length;
+
+    if (fpGetFinalPattern(fp, pmd, pattern, pattern_length) == -1)
+        return -1;
+
+    if ( fp->get_debug_print_fast_patterns() )
+        print_fp_info(s_group, otn, pmd, pattern, pattern_length);
+
+    PMX* pmx = (PMX*)snort_calloc(sizeof(PMX));
+    pmx->rule_node.rnRuleData = otn;
+    pmx->pmd = pmd;
+
+    Mpse::PatternDescriptor desc(pmd->no_case, pmd->negated, pmd->literal, pmd->flags);
+    pg->mpse[pmd->pm_type]->add_pattern(sc, (uint8_t*)pattern, pattern_length, desc, pmx);
 
     return 0;
 }
@@ -678,7 +459,7 @@ static int fpFinishPortGroup(
 }
 
 static int fpAddPortGroupRule(
-    SnortConfig* sc, PortGroup* pg, OptTreeNode* otn, FastPatternConfig* fp)
+    SnortConfig* sc, PortGroup* pg, OptTreeNode* otn, FastPatternConfig* fp, bool srvc)
 {
     PatternMatchData* pmd = NULL;
 
@@ -691,9 +472,9 @@ static int fpAddPortGroupRule(
         return -1;
 
     OptFpList* next = nullptr;
-    pmd = get_fp_content(otn, next);
+    pmd = get_fp_content(otn, next, srvc);
 
-    if ( pmd && pmd->fp )
+    if ( pmd )
     {
         if (
             !pmd->relative && !pmd->negated && pmd->fp_only >= 0 &&
@@ -713,16 +494,7 @@ static int fpAddPortGroupRule(
         }
     }
 
-    /* If we get this far then no URI contents were added */
-
-    if ( pmd && fpFinishPortGroupRule(sc, pg, otn, pmd, fp) == 0)
-    {
-        if (pmd->pattern_size > otn->longestPatternLen)
-            otn->longestPatternLen = pmd->pattern_size;
-        return 0;
-    }
-
-    /* No content added */
+    // no fast pattern added
     if (fpFinishPortGroupRule(sc, pg, otn, NULL, fp) != 0)
         return -1;
 
@@ -988,7 +760,7 @@ static int fpGetFinalPattern(
         if ( fp->get_trim() )
         {
             bytes =
-                FLP_Trim(pmd->pattern_buf, pmd->pattern_size, &pattern);
+                flp_trim(pmd->pattern_buf, pmd->pattern_size, &pattern);
 
             if (bytes < (int)pmd->pattern_size)
             {
@@ -1091,6 +863,7 @@ static int fpCreatePortObject2PortGroup(
 
     /* create a port_group */
     pg = (PortGroup*)snort_calloc(sizeof(PortGroup));
+    s_group = "port";
 
     /*
      * Walk the rules in the PortObject and add to
@@ -1129,7 +902,7 @@ static int fpCreatePortObject2PortGroup(
             assert(otn);
 
             if ( is_network_protocol(otn->proto) )
-                fpAddPortGroupRule(sc, pg, otn, fp);
+                fpAddPortGroupRule(sc, pg, otn, fp, false);
         }
 
         if (fp->get_debug_print_rule_group_build_details())
@@ -1393,6 +1166,7 @@ static void fpBuildServicePortGroupByServiceOtnList(
 {
     OptTreeNode* otn;
     PortGroup* pg = (PortGroup*)snort_calloc(sizeof(PortGroup));
+    s_group = srvc;
 
     /*
      * add each rule to the port group pattern matchers,
@@ -1404,7 +1178,7 @@ static void fpBuildServicePortGroupByServiceOtnList(
         otn;
         otn = (OptTreeNode*)sflist_next(&cursor))
     {
-        if (fpAddPortGroupRule(sc, pg, otn, fp) != 0)
+        if (fpAddPortGroupRule(sc, pg, otn, fp, true) != 0)
             continue;
     }
 
@@ -1812,119 +1586,16 @@ void fpDeleteFastPacketDetection(SnortConfig* sc)
         delete sc->sopgTable;
 }
 
-/*
-**  Wrapper for prmShowEventStats
-*/
-void fpShowEventStats(SnortConfig* sc)
+static void print_nfp_info(const char* group, const OptTreeNode* otn)
 {
-    if ((sc == NULL) || (sc->fast_pattern_config == NULL))
-        return;
-
-    /* If not debug, then we don't print anything. */
-    if (!sc->fast_pattern_config->get_debug_mode())
-        return;
-
-    LogMessage("\n");
-    LogMessage("** IP Event Stats --\n");
-    prmShowEventStats(sc->prmIpRTNX);
-
-    LogMessage("\n");
-    LogMessage("** ICMP Event Stats --\n");
-    prmShowEventStats(sc->prmIcmpRTNX);
-
-    LogMessage("\n");
-    LogMessage("** TCP Event Stats --\n");
-    prmShowEventStats(sc->prmTcpRTNX);
-
-    LogMessage("\n");
-    LogMessage("** UDP Event Stats --\n");
-    prmShowEventStats(sc->prmUdpRTNX);
+    ParseWarning(WARN_RULES, "%s rule %u:%u:%u has no fast pattern",
+        group, otn->sigInfo.generator, otn->sigInfo.id, otn->sigInfo.rev);
 }
 
-static const char* PatternRawToContent(const char* pattern, int pattern_len)
-{
-    static char content_buf[1024];
-    int max_write_size = sizeof(content_buf) - 64;
-    int i, j = 0;
-    int hex = 0;
-
-    if ((pattern == NULL) || (pattern_len <= 0))
-        return "";
-
-    content_buf[j++] = '"';
-
-    for (i = 0; i < pattern_len; i++)
-    {
-        uint8_t c = (uint8_t)pattern[i];
-
-        if ((c < 128) && isprint(c) && !isspace(c)
-            && (c != '|') && (c != '"') && (c != ';'))
-        {
-            if (hex)
-            {
-                content_buf[j-1] = '|';
-                hex = 0;
-            }
-
-            content_buf[j++] = c;
-        }
-        else
-        {
-            uint8_t up4, lo4;
-
-            if (!hex)
-            {
-                content_buf[j++] = '|';
-                hex = 1;
-            }
-
-            up4 = c >> 4;
-            lo4 = c & 0x0f;
-
-            if (up4 > 0x09)
-                up4 += ('A' - 0x0a);
-            else
-                up4 += '0';
-
-            if (lo4 > 0x09)
-                lo4 += ('A' - 0x0a);
-            else
-                lo4 += '0';
-
-            content_buf[j++] = up4;
-            content_buf[j++] = lo4;
-            content_buf[j++] = ' ';
-        }
-
-        if (j > max_write_size)
-            break;
-    }
-
-    if (j > max_write_size)
-    {
-        content_buf[j] = 0;
-        SnortSnprintfAppend(content_buf, sizeof(content_buf),
-            " ... \" (pattern too large)");
-    }
-    else
-    {
-        if (hex)
-            content_buf[j-1] = '|';
-
-        content_buf[j++] = '"';
-        content_buf[j] = 0;
-    }
-
-    return content_buf;
-}
-
-static void PrintFastPatternInfo(OptTreeNode* otn, PatternMatchData* pmd,
+static void print_fp_info(
+    const char* group, const OptTreeNode* otn, const PatternMatchData* pmd,
     const char* pattern, int pattern_length)
 {
-    if ((otn == NULL) || (pmd == NULL))
-        return;
-
-#if 0
     std::string hex, txt;
     char buf[8];
 
@@ -1934,48 +1605,15 @@ static void PrintFastPatternInfo(OptTreeNode* otn, PatternMatchData* pmd,
         hex += buf;
         txt += isprint(pattern[i]) ? pattern[i] : '.';
     }
-    printf("fast pattern[%d] = x%s '%s'\n", pattern_length, hex.c_str(), txt.c_str());
-#else
-    LogMessage("%u:%u\n", otn->sigInfo.generator, otn->sigInfo.id);
-    LogMessage("  Fast pattern matcher: %s\n", pm_type_strings[pmd->pm_type]);
-    LogMessage("  Fast pattern set: %s\n", pmd->fp ? "yes" : "no");
-    LogMessage("  Fast pattern only: %d\n", pmd->fp_only);
-    LogMessage("  Negated: %s\n", pmd->negated ? "yes" : "no");
+    std::string opts = "(";
+    if ( pmd->fp ) opts += " user";
+    if ( pmd->fp_only ) opts += " only";
+    if ( pmd->negated ) opts += " negated";
+    opts += " )";
 
-    /* Fast pattern only patterns don't use offset and length */
-    if ((pmd->fp_length != 0) && pmd->fp_only <= 0)
-    {
-        LogMessage("  Pattern <offset,length>: %d,%d\n",
-            pmd->fp_offset, pmd->fp_length);
-        LogMessage("    %s\n",
-            PatternRawToContent(pmd->pattern_buf + pmd->fp_offset,
-            pmd->fp_length));
-    }
-    else
-    {
-        LogMessage("  Pattern offset,length: none\n");
-    }
-
-    /* Fast pattern only patterns don't get truncated */
-    if ( pmd->fp_only <= 0 &&
-        (((pmd->fp_length != 0) && (pmd->fp_length > pattern_length)) ||
-        ((pmd->fp_length == 0) && ((int)pmd->pattern_size > pattern_length))) )
-    {
-        LogMessage("  Pattern truncated: %d to %d bytes\n",
-            pmd->fp_length ? pmd->fp_length : pmd->pattern_size,
-            pattern_length);
-    }
-    else
-    {
-        LogMessage("  Pattern truncated: no\n");
-    }
-
-    LogMessage("  Original pattern\n");
-    LogMessage("    %s\n",
-        PatternRawToContent(pmd->pattern_buf,pmd->pattern_size));
-
-    LogMessage("  Final pattern\n");
-    LogMessage("    %s\n", PatternRawToContent(pattern, pattern_length));
-#endif
+    LogMessage("FP %s %u:%u:%u %s[%d] = '%s' |%s| %s\n",
+        group, otn->sigInfo.generator, otn->sigInfo.id, otn->sigInfo.rev,
+        pm_type_strings[pmd->pm_type], pattern_length,
+        txt.c_str(), hex.c_str(), opts.c_str());
 }
 

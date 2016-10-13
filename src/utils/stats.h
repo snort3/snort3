@@ -41,7 +41,7 @@ typedef std::vector<unsigned> IndexVec;
 struct PacketCount
 {
     PegCount total_from_daq;
-    PegCount slow_searches;
+    PegCount hard_evals;
     PegCount raw_searches;
     PegCount cooked_searches;
     PegCount pkt_searches;

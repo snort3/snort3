@@ -22,6 +22,8 @@ add_library (detection STATIC
     fp_create.h
     fp_detect.cc
     fp_detect.h
+    fp_utils.cc
+    fp_utils.h
     pcrm.cc
     pcrm.h
     service_map.cc

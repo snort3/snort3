@@ -85,7 +85,7 @@ public:
     { return CAT_NONE; }
 
     // for fast-pattern options like content
-    virtual struct PatternMatchData* get_pattern(int /*proto*/, RuleDirection)
+    virtual struct PatternMatchData* get_pattern(int /*proto*/, RuleDirection = RULE_WO_DIR)
     { return nullptr; }
 
     static int eval(void* v, Cursor& c, Packet* p)

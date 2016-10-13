@@ -1,6 +1,7 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
+// Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,43 +18,24 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// pcrm.h is a heavily refactored version of work by:
-//
-// Marc Norton <mnorton@sourcefire.com>
-// Dan Roelker <droelker@sourcefire.com>
+#ifndef FP_UTILS_H
+#define FP_UTILS_H
 
-#ifndef PCRM_H
-#define PCRM_H
+// fast pattern utilities
 
-// Packet Classification-Rule Manager
-// runle groups by source and dest ports as well as any
-// (generic refers to any)
+#include "framework/ips_option.h"
 
-#include "protocols/packet.h"
-#include "ports/port_group.h"
+struct OptFpList;
+struct OptTreeNode;
 
-#define ANYPORT (-1)
+struct PatternMatchData* get_pmd(OptFpList*, int proto, RuleDirection);
+bool is_fast_pattern_only(OptFpList*);
+void validate_fast_pattern(OptTreeNode*);
 
-struct PORT_RULE_MAP
-{
-    int prmNumDstRules;
-    int prmNumSrcRules;
-    int prmNumGenericRules;
+int flp_trim(const char* p, int plen, const char** buff);
+bool set_fp_content(OptTreeNode*);
 
-    int prmNumDstGroups;
-    int prmNumSrcGroups;
-
-    PortGroup* prmSrcPort[MAX_PORTS];
-    PortGroup* prmDstPort[MAX_PORTS];
-    PortGroup* prmGeneric;
-};
-
-PORT_RULE_MAP* prmNewMap();
-
-int prmFindRuleGroupTcp(PORT_RULE_MAP*, int, int, PortGroup**, PortGroup**, PortGroup**);
-int prmFindRuleGroupUdp(PORT_RULE_MAP*, int, int, PortGroup**, PortGroup**, PortGroup**);
-int prmFindRuleGroupIp(PORT_RULE_MAP*, int, PortGroup**, PortGroup**);
-int prmFindRuleGroupIcmp(PORT_RULE_MAP*, int, PortGroup**, PortGroup**);
+PatternMatchData* get_fp_content(OptTreeNode*, OptFpList*&, bool srvc);
 
 #endif
 

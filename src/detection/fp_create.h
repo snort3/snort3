@@ -54,11 +54,7 @@ struct NCListNode
 int fpCreateFastPacketDetection(SnortConfig*);
 void fpDeleteFastPacketDetection(SnortConfig*);
 
-void fpShowEventStats(SnortConfig*);
-
 void fpDeletePortGroup(void*);
-
-bool set_fp_content(struct OptTreeNode*);
 
 #endif
 

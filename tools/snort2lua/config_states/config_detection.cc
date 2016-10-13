@@ -111,9 +111,8 @@ bool Detection::convert(std::istringstream& data_stream)
         }
         else if (!keyword.compare("debug-print-fast-pattern"))
         {
-            table_api.add_diff_option_comment("debug-print-fast-pattern",
-                "debug_print_fast_pattern");
-            tmpval = table_api.add_option("debug_print_fast_pattern", true);
+            table_api.add_diff_option_comment("debug-print-fast-pattern", "show_fast_patterns");
+            tmpval = table_api.add_option("show_fast_patterns", true);
         }
         else if (!keyword.compare("max_queue_events"))
         {

@@ -190,7 +190,7 @@ const PegInfo daq_names[] =
 const PegInfo pc_names[] =
 {
     { "analyzed", "packets sent to detection" },
-    { "slow searches", "non-fast pattern rule evaluations" },
+    { "hard evals", "non-fast pattern rule evaluations" },
     { "raw searches", "fast pattern searches in raw packet data" },
     { "cooked searches", "fast pattern searches in cooked packet data" },
     { "pkt searches", "fast pattern searches in packet data" },
@@ -322,7 +322,6 @@ void PrintStatistics()
     timing_stats();
 
     // FIXIT-L below stats need to be made consistent with above
-    fpShowEventStats(snort_conf);
     print_thresholding(snort_conf->threshold_config, 1);
 
     {

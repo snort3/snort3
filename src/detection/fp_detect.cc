@@ -425,17 +425,9 @@ static int rule_tree_match(
         }
 
         if ( ret )
-        {
-            //  We have a qualified event from this tree
-            pomd->pg->event_count++;
             pmqs.qualified_events++;
-        }
         else
-        {
-            // This means that the event is non-qualified.
-            pomd->pg->match_count++;
             pmqs.non_qualified_events++;
-        }
     }
 
     if (eval_data.flowbit_failed)
@@ -511,6 +503,8 @@ static int sortOrderByPriority(const void* e1, const void* e2)
     return 0;
 }
 
+// FIXIT-L pattern length is not a valid event sort criterion for
+// non-literals
 static int sortOrderByContentLength(const void* e1, const void* e2)
 {
     OptTreeNode* otn1;
@@ -1042,18 +1036,11 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
             }
 
             if (rval)
-            {
-                // We have a qualified event from this tree
-                port_group->event_count++;
                 pmqs.qualified_events++;
-            }
             else
-            {
-                // This means that the event is non-qualified.
-                port_group->match_count++;
                 pmqs.non_qualified_events++;
-            }
-            pc.slow_searches++;
+
+            pc.hard_evals++;
         }
 
         // FIXIT-L need to eval all IP layers, etc.

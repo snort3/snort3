@@ -40,14 +40,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "hash/sfghash.h"
+#include "ips_options/ips_flow.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "hash/sfghash.h"
-#include "utils/sflsq.h"
-#include "ips_options/ips_flow.h"
-#include "detection/treenodes.h"
-#include "detection/fp_detect.h"
 #include "parser/parser.h"
+#include "utils/sflsq.h"
+
+#include "fp_create.h"
+#include "treenodes.h"
 
 //-------------------------------------------------------------------------
 // service map stuff

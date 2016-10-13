@@ -63,10 +63,6 @@ struct PortGroup
     unsigned rule_count;
     unsigned nfp_rule_count;
 
-    // FIXIT-L these runtime counts are only valid with one packet thread
-    unsigned match_count;
-    unsigned event_count;
-
     void add_rule();
     bool add_nfp_rule(void*);
     void delete_nfp_rules();

@@ -33,7 +33,6 @@
 #include "config.h"
 #endif
 
-#include "detection/fp_create.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "utils/sflsq.h"
@@ -41,6 +40,8 @@
 #define REBUILD_FLAGS (PKT_REBUILT_FRAG | PKT_REBUILT_STREAM)
 
 struct ProfileStats;
+struct OptTreeNode;
+struct PortGroup;
 
 extern THREAD_LOCAL ProfileStats rulePerfStats;
 extern THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
@@ -51,11 +52,11 @@ extern THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
 **  This is the only function that is needed to do an
 **  inspection on a packet.
 */
-int fpEvalPacket(Packet* p);
+int fpEvalPacket(Packet*);
 
 struct RuleTreeNode;
-int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p);
-int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports);
+int fpLogEvent(const RuleTreeNode*, const OptTreeNode*, Packet*);
+int fpEvalRTN(RuleTreeNode*, Packet*, int check_ports);
 
 /*
 **  This define is for the number of unique events
@@ -105,7 +106,7 @@ struct OTNX_MATCH_DATA
 void otnx_match_data_init(int);
 void otnx_match_data_term();
 
-int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, const OptTreeNode* otn);
+int fpAddMatch(OTNX_MATCH_DATA*, int pLen, const OptTreeNode*);
 OptTreeNode* GetOTN(uint32_t gid, uint32_t sid);
 
 /* counter for number of times we evaluate rules.  Used to

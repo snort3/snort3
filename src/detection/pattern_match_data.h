@@ -21,11 +21,15 @@
 #ifndef PATTERN_MATCH_DATA_H
 #define PATTERN_MATCH_DATA_H
 
+#include <assert.h>
 #include <ctype.h>
 #include <sys/time.h>
 
-#include "main/snort_types.h"
 #include "detection/treenodes.h"
+#include "framework/ips_option.h"  // FIXIT-L not a good dependency
+#include "main/snort_types.h"
+#include "main/thread_config.h"
+#include "utils/util.h"
 
 struct PmdLastCheck
 {
@@ -38,10 +42,10 @@ struct PatternMatchData
 {
     // used by both
     bool negated;            // search for "not this pattern"
-    bool fp;                 // for fast_pattern arguments
     bool no_case;            // toggle case sensitivity
     bool relative;           // do relative pattern searching
     bool literal;            // true for plain contents only
+    bool fp;                 // for fast_pattern arguments
 
     uint16_t fp_offset;
     uint16_t fp_length;
@@ -99,6 +103,12 @@ inline bool PatternMatchData::can_be_fp() const
 
     return true;
 }
+
+// pmd related utilities
+struct OptFpList;
+
+PatternMatchData* get_pmd(OptFpList*, int proto, RuleDirection);
+bool is_fast_pattern_only(OptFpList*);
 
 #endif
 
