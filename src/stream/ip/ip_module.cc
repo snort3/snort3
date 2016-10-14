@@ -79,6 +79,8 @@ FragEngine::FragEngine()
 // stream_ip module
 //-------------------------------------------------------------------------
 
+Trace TRACE_NAME(stream_ip);
+
 static const RuleMap stream_ip_rules[] =
 {
     { DEFRAG_IPOPTIONS, DEFRAG_IPOPTIONS_STR },
@@ -120,10 +122,8 @@ static const Parameter s_params[] =
 };
 
 StreamIpModule::StreamIpModule() :
-    Module(MOD_NAME, MOD_HELP, s_params)
-{
-    config = nullptr;
-}
+    Module(MOD_NAME, MOD_HELP, s_params, false, &TRACE_NAME(stream_ip))
+{ config = nullptr; }
 
 StreamIpModule::~StreamIpModule()
 {
@@ -169,7 +169,7 @@ StreamIpConfig* StreamIpModule::get_data()
     return temp;
 }
 
-bool StreamIpModule::set(const char*, Value& v, SnortConfig*)
+bool StreamIpModule::set(const char* f, Value& v, SnortConfig* c)
 {
     if ( v.is("max_frags") )
         config->frag_engine.max_frags = v.get_long();
@@ -193,7 +193,7 @@ bool StreamIpModule::set(const char*, Value& v, SnortConfig*)
         config->frag_engine.frag_timeout = v.get_long();
     }
     else
-        return false;
+        return Module::set(f, v, c);
 
     return true;
 }

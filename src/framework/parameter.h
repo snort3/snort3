@@ -84,6 +84,7 @@ struct SO_PUBLIC Parameter
     double get_number() const;
     const char* get_string() const;
 
+    static const Parameter* find(const Parameter*, const Parameter*, const char*);
     static const Parameter* find(const Parameter*, const char*);
 
     // 0-based; -1 if not found; list is | delimited

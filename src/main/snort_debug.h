@@ -30,6 +30,8 @@
 #include "config.h"
 #endif
 
+#include <cstdarg>
+#include <cstdio>
 #include <stdint.h>
 #include <ctype.h>
 
@@ -96,7 +98,78 @@
 
 #define DEBUG_DCE_UDP         0x1000000000000000LL
 
+typedef uint64_t Trace;
+
+bool trace_enabled(Trace mask);
+bool trace_enabled(Trace mask, Trace flags);
+
+#define TRACE_NAME(name) name##_trace
+
 #ifdef DEBUG_MSGS
+
+void trace_vprintf(const char* name, Trace mask, const char* file, int line,
+    Trace flags, const char* fmt, va_list);
+
+template <void (trace_vprintf)(const char*, Trace, const char*, int, Trace, const char*, va_list)>
+static inline void trace_printf(const char* name, Trace mask, const char* file, int line,
+    Trace flags, const char* fmt, ...) __attribute__((format (printf, 6, 7)));
+
+template <void (trace_vprintf)(const char*, Trace, const char*, int, Trace, const char*, va_list) = trace_vprintf>
+static inline void trace_printf(const char* name, Trace mask, const char* file, int line,
+    Trace flags, const char* fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+
+    trace_vprintf(name, mask, file, line, flags, fmt, ap);
+
+    va_end(ap);
+}
+
+template <void (trace_vprintf)(const char*, Trace, const char*, int, Trace, const char*, va_list)>
+static inline void trace_printf(const char* name, Trace mask, const char* file,
+    int line, const char* fmt, ...) __attribute__((format (printf, 5, 6)));
+
+template <void (trace_vprintf)(const char*, Trace, const char*, int, Trace, const char*, va_list) = trace_vprintf>
+static inline void trace_printf(const char* name, Trace mask, const char* file,
+    int line, const char* fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+
+    trace_vprintf(name, mask, file, line, UINT64_MAX, fmt, ap);
+
+    va_end(ap);
+}
+
+template <void (trace_vprintf)(const char*, Trace, const char*, int, Trace, const char*, va_list) = trace_vprintf>
+static inline void trace_print(const char* name, Trace mask, const char* file,
+    int line, const char* msg)
+{
+    trace_printf<trace_vprintf>(name, mask, file, line, UINT64_MAX, "%s", msg);
+}
+
+template <void (trace_vprintf)(const char*, Trace, const char*, int, Trace, const char*, va_list) = trace_vprintf>
+static inline void trace_print(const char* name, Trace mask, const char* file,
+    int line, Trace flags, const char* msg)
+{
+    trace_printf<trace_vprintf>(name, mask, file, line, flags, "%s", msg);
+}
+
+#define trace_print trace_print<trace_vprintf>
+#define trace_printf trace_printf<trace_vprintf>
+
+#define trace_log(tracer, ...) \
+    trace_print(#tracer, tracer##_trace, nullptr, 0, __VA_ARGS__)
+
+#define trace_logf(tracer, ...) \
+    trace_printf(#tracer, tracer##_trace, nullptr, 0, __VA_ARGS__)
+
+#define trace_debug(tracer, ...) \
+    trace_print(#tracer, tracer##_trace, __FILE__, __LINE__, __VA_ARGS__)
+
+#define trace_debugf(tracer, ...) \
+    trace_printf(#tracer, tracer##_trace, __FILE__, __LINE__, __VA_ARGS__)
 
 class SO_PUBLIC Debug
 {
@@ -122,6 +195,11 @@ private:
 #define DEBUG_WRAP(code) code
 
 #else
+#define trace_log(tracer, ...)
+#define trace_logf(tracer, ...)
+#define trace_debug(tracer, ...)
+#define trace_debugf(tracer, ...)
+
 #define DebugFormat(dbg, fmt, ...)
 #define DebugFormatNoFileLine(dbg, fmt, ...)
 #define DebugMessage(dbg, msg)

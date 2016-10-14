@@ -21,6 +21,7 @@
 #ifndef IP_MODULE_H
 #define IP_MODULE_H
 
+#include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "main/thread.h"
 #include "flow/session.h"
@@ -85,6 +86,7 @@ extern THREAD_LOCAL ProfileStats ip_perf_stats;
 extern THREAD_LOCAL ProfileStats fragPerfStats;
 extern THREAD_LOCAL ProfileStats fragInsertPerfStats;
 extern THREAD_LOCAL ProfileStats fragRebuildPerfStats;
+extern Trace TRACE_NAME(stream_ip);
 
 //-------------------------------------------------------------------------
 // stream_ip module

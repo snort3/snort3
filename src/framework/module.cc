@@ -21,8 +21,12 @@
 #include "parameter.h"
 #include "utils/stats.h"
 
-static const Parameter null_params[] =
+
+static const Parameter defaults[] =
 {
+    { "trace", Parameter::PT_INT, nullptr, nullptr,
+      "mask for enabling debug traces in module"  },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -46,7 +50,8 @@ void Module::init(const char* s, const char* h)
 {
     name = s;
     help = h;
-    params = null_params;
+    params = &defaults[(sizeof(defaults) / sizeof(Parameter)) - 1];
+    default_params = params;
     list = false;
     num_counts = -1;
 }
@@ -54,11 +59,28 @@ void Module::init(const char* s, const char* h)
 Module::Module(const char* s, const char* h)
 { init(s, h); }
 
-Module::Module(const char* s, const char* h, const Parameter* p, bool is_list)
+Module::Module(const char* s, const char* h, const Parameter* p, bool is_list, Trace* t)
 {
     init(s, h);
-    params = p;
     list = is_list;
+    trace = t;
+    params = p;
+
+    // FIXIT-L: This will not be valid after adding more default options
+    if ( t )
+        default_params = defaults;
+}
+
+bool Module::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("trace") )
+    {
+        if ( trace )
+            *trace = v.get_long();
+    }
+    else
+        return false;
+    return true;
 }
 
 void Module::sum_stats()

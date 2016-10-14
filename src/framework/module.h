@@ -41,10 +41,12 @@
 #include <string>
 #include <vector>
 
+#include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "framework/value.h"
 #include "framework/parameter.h"
 #include "framework/counts.h"
+#include "main/snort_debug.h"
 #include "utils/stats.h"
 
 using LuaCFunction = int(*)(struct lua_State*);
@@ -83,8 +85,7 @@ public:
     virtual bool end(const char*, int, SnortConfig*)
     { return true; }
 
-    virtual bool set(const char*, Value&, SnortConfig*)
-    { return false; }
+    virtual bool set(const char*, Value&, SnortConfig*);
 
     // ips events:
     virtual unsigned get_gid() const
@@ -114,6 +115,9 @@ public:
 
     const Parameter* get_parameters() const
     { return params; }
+
+    const Parameter* get_default_parameters() const
+    { return default_params; }
 
     virtual const Command* get_commands() const
     { return nullptr; }
@@ -152,7 +156,8 @@ public:
 
 protected:
     Module(const char* name, const char* help);
-    Module(const char* name, const char* help, const Parameter*, bool is_list = false);
+    Module(const char* name, const char* help, const Parameter*,
+        bool is_list = false, Trace* = nullptr);
 
 private:
     friend class ModuleManager;
@@ -162,10 +167,12 @@ private:
     const char* help;
 
     const Parameter* params;
+    const Parameter* default_params = nullptr;
     bool list;
 
     std::vector<PegCount> counts;
     int num_counts;
+    Trace* trace;
 };
 
 #endif

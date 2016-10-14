@@ -138,8 +138,7 @@ static void set(
     key = k.c_str();
 
     Module* m = get_snort_module();
-    const Parameter* p = m->get_parameters();
-    p = Parameter::find(p, key);
+    const Parameter* p = Parameter::find(m->get_parameters(), key);
 
     if ( !p )
         ParseError("unknown option %s %s", key, val);

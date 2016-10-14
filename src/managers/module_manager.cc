@@ -310,7 +310,7 @@ static void dump_table(string& key, const char* pfx, const Parameter* p, bool li
             dump_field_lua(fqn, p, true);
         }
     }
-    while ( p->name )
+    while ( p && p->name )
         dump_field(key, pfx, p++, list);
 }
 
@@ -459,6 +459,9 @@ static bool set_value(const char* fqn, Value& v)
     // now we must traverse the mod params to get the leaf
     string s = fqn;
     const Parameter* p = get_params(s, mod->get_parameters());
+
+    if ( !p )
+        p = get_params(s, mod->get_default_parameters());
 
     if ( !p )
     {
@@ -667,6 +670,9 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     {
         std::string sfqn = s;
         p = get_params(sfqn, m->get_parameters(), idx);
+
+        if ( !p )
+            p = get_params(sfqn, m->get_default_parameters(), idx);
 
         if ( !p )
         {
@@ -908,13 +914,14 @@ void ModuleManager::show_module(const char* name)
 
         cout << endl << "Type: "  << mod_type(p->api) << endl;
 
-        if ( const Parameter* params = m->get_parameters() )
+        const Parameter* params = m->get_parameters();
+        const Parameter* def_params = m->get_default_parameters();
+
+        if ( ( params and params->type < Parameter::PT_MAX ) ||
+             ( def_params and params->type < Parameter::PT_MAX ) )
         {
-            if ( params->type < Parameter::PT_MAX )
-            {
-                cout << endl << "Configuration: " << endl << endl;
-                show_configs(name, true);
-            }
+            cout << endl << "Configuration: " << endl << endl;
+            show_configs(name, true);
         }
 
         if ( m->get_commands() )
@@ -985,6 +992,12 @@ void ModuleManager::show_configs(const char* pfx, bool exact)
         {
             dump_field(s, pfx, m->params);
         }
+        
+        s = m->name;
+
+        if ( m->default_params )
+            dump_table(s, pfx, m->default_params);
+
         if ( !pfx )
             cout << endl;
 
