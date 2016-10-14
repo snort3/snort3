@@ -219,6 +219,8 @@ TEST_CASE("Set and implement thread affinity", "[ThreadConfig]")
         tc.implement_thread_affinity(STHREAD_TYPE_MAIN, 0);
         hwloc_get_cpubind(topology, thread_cpuset, HWLOC_CPUBIND_THREAD);
         CHECK(hwloc_bitmap_isequal(thread_cpuset, process_cpuset));
+
+        hwloc_bitmap_free(thread_cpuset);
     }
 }
 

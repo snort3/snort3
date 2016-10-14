@@ -24,11 +24,12 @@
 
 #include "catch/catch.hpp"
 
-#include "sfip/sf_ip.h"
-#include "parser/parse_ip.h"
 #include "filters/sfthd.h"
+#include "hash/sfxhash.h"
+#include "main/policy.h"
+#include "parser/parse_ip.h"
+#include "sfip/sf_ip.h"
 #include "utils/util.h"
-#include "main/snort_config.h"
 
 //---------------------------------------------------------------
 
@@ -740,6 +741,12 @@ static EventData pktData[] =
 
 static void Init(ThreshData* base, int max)
 {
+    // FIXIT-L must set policies because they may have been invalidated
+    // by prior tests with transient SnortConfigs.  better to fix sfthd
+    // to use a SnortConfig parameter or make this a make check test
+    // with a separate executable.
+    set_default_policy();
+
     int i;
     int id = 0;
 
@@ -751,7 +758,7 @@ static void Init(ThreshData* base, int max)
         {
             sfip_var_t* set = p->ip ? sfip_var_from_string(p->ip) : NULL;
 
-            p->create = sfthd_create_threshold(snort_conf,
+            p->create = sfthd_create_threshold(nullptr,
                 pThdObjs, p->gid, p->sid, p->tracking, p->type, PRIORITY,
                 p->count, p->seconds, set);
 
@@ -790,6 +797,18 @@ static void Term()
     pThdObjs = NULL;
     sfthd_free(pThd);
     pThd = NULL;
+
+    for ( unsigned i = 0; i < NUM_RULS; i++ )
+    {
+        ThreshData* p = ruleData + i;
+
+        if ( p->rule )
+        {
+            sfthd_node_free(p->rule);
+            p->rule = nullptr;
+        }
+    }
+    sfxhash_delete(dThd);
 }
 
 static int SetupCheck(int i)

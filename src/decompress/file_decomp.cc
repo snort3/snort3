@@ -485,6 +485,7 @@ TEST_CASE("File_Decomp_SetBuf-Decompr_Depth-error", "[file_decomp]")
     p_s->Total_Out = 20;
     p_s->Decompr_Depth = 10;
     REQUIRE(File_Decomp_SetBuf(p_s) == File_Decomp_Error);
+    File_Decomp_Free(p_s);
 }
 
 TEST_CASE("File_Decomp_SetBuf-Compr_Depth-error", "[file_decomp]")
@@ -495,6 +496,7 @@ TEST_CASE("File_Decomp_SetBuf-Compr_Depth-error", "[file_decomp]")
     p_s->Total_In = 20;
     p_s->Compr_Depth = 10;
     REQUIRE(File_Decomp_SetBuf(p_s) == File_Decomp_Error);
+    File_Decomp_Free(p_s);
 }
 
 TEST_CASE("File_Decomp_New", "[file_decomp]")
@@ -510,6 +512,7 @@ TEST_CASE("File_Decomp_New", "[file_decomp]")
     REQUIRE(p_s->Avail_Out == 0);
     REQUIRE(p_s->Next_In == NULL);
     REQUIRE(p_s->Next_Out == NULL);
+    File_Decomp_Free(p_s);
 }
 
 TEST_CASE("File_Decomp-null", "[file_decomp]")
@@ -523,6 +526,7 @@ TEST_CASE("File_Decomp-not_active", "[file_decomp]")
 
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
     REQUIRE(File_Decomp(p_s) == File_Decomp_Error);
+    File_Decomp_Free(p_s);
 }
 
 TEST_CASE("File_Decomp-complete_state", "[file_decomp]")
@@ -532,6 +536,7 @@ TEST_CASE("File_Decomp-complete_state", "[file_decomp]")
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
     p_s->State = STATE_COMPLETE;
     REQUIRE(File_Decomp(p_s) == File_Decomp_Error);
+    File_Decomp_Free(p_s);
 }
 
 TEST_CASE("Initialize_Decompression-not_active", "[file_decomp]")
@@ -540,6 +545,7 @@ TEST_CASE("Initialize_Decompression-not_active", "[file_decomp]")
 
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
     REQUIRE(Initialize_Decompression(p_s) == File_Decomp_Error);
+    File_Decomp_Free(p_s);
 }
 
 TEST_CASE("Process_Decompression-not_active", "[file_decomp]")
@@ -548,6 +554,7 @@ TEST_CASE("Process_Decompression-not_active", "[file_decomp]")
 
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
     REQUIRE(Process_Decompression(p_s) == File_Decomp_Error);
+    File_Decomp_Free(p_s);
 }
 
 #endif

@@ -286,6 +286,7 @@ const BaseApi* ips_stream_reassemble = &reassemble_api.base;
 
 #include "framework/cursor.h"
 
+// FIXIT-L these tests need some TLC
 TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
 {
     // initialization code here
@@ -323,6 +324,10 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
             == STREAM_FLPOLICY_IGNORE ) );
     }
 #endif
+    delete pkt->flow->session;
+    delete pkt;
+    delete flow;
+    ips_stream_reassemble->mod_dtor(reassembler);
 }
 
 #endif

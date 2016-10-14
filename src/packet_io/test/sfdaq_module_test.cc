@@ -56,10 +56,11 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
     Value no_promisc(true);
     CHECK(sfdm.set("daq.no_promisc", no_promisc, &sc));
 
+    CHECK(sfdm.begin("daq.instances", 0, &sc));
     CHECK(sfdm.begin("daq.instances", 1, &sc));
-    CHECK_FALSE(sfdm.end("daq.instances", 1, &sc));
 
-    CHECK(sfdm.begin("daq.instances", 1, &sc));
+    CHECK_FALSE(sfdm.end("daq.instances", 1, &sc));
+    CHECK(sfdm.begin("daq.instances", 2, &sc));
 
     Value instance_id(static_cast<double>(5));
     CHECK(sfdm.set("daq.instances.id", instance_id, &sc));
@@ -72,7 +73,8 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
     CHECK(sfdm.set("daq.instances.variables", instance_var1, &sc));
     CHECK(sfdm.set("daq.instances.variables", instance_var2, &sc));
 
-    CHECK(sfdm.end("daq.instances", 1, &sc));
+    CHECK(sfdm.end("daq.instances", 2, &sc));
+    CHECK(sfdm.end("daq.instances", 0, &sc));
     CHECK(sfdm.end("daq", 0, &sc));
 
     /* Validate the configuration */

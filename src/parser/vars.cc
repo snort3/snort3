@@ -937,63 +937,41 @@ void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
 //--------------------------------------------------------------------------
 
 #ifdef UNIT_TEST
+// FIXIT-L these var tests are inadequate
 
 TEST_CASE("config_set_var-success", "[vars]")
 {
-    SnortConfig* sc = new SnortConfig;
+    SnortConfig sc;
+    sc.var_list = NULL;
+    config_set_var(&sc, "A=B");
 
-    sc->var_list = NULL;
-
-    config_set_var(sc, "A=B");
-
-    REQUIRE(sc->var_list != NULL);
-    REQUIRE(sc->var_list->name != NULL);
-    REQUIRE(sc->var_list->value != NULL);
-    REQUIRE(*(sc->var_list->name) == 'A');
-    REQUIRE(*(sc->var_list->value) == 'B');
+    REQUIRE(sc.var_list->name[0] == 'A');
+    REQUIRE(sc.var_list->value[0] == 'B');
 }
 
 TEST_CASE("config_set_var-existing-success", "[vars]")
 {
-    SnortConfig* sc = new SnortConfig;
-    VarNode* vn1 = new VarNode;
-    VarNode* vn2 = new VarNode;
+    SnortConfig sc;
 
-    sc->var_list = vn1;
-    vn1->name = (char*)"C";
-    vn1->next = vn2;
-    vn2->name = (char*)"D";
-    vn2->next = NULL;
+    config_set_var(&sc, "C=D");
+    config_set_var(&sc, "A=B");
 
-    config_set_var(sc, "A=B");
-
-    REQUIRE(sc->var_list != NULL);
-    REQUIRE(sc->var_list->name != NULL);
-    REQUIRE(sc->var_list->value != NULL);
-    REQUIRE(*(sc->var_list->name) == 'A');
-    REQUIRE(*(sc->var_list->value) == 'B');
+    REQUIRE(sc.var_list->name[0] == 'A');
+    REQUIRE(sc.var_list->value[0] == 'B');
 }
 
+// FIXIT-L missing CHECKs / REQUIREs
 TEST_CASE("config_set_var-duplicate-error", "[vars]")
 {
-    SnortConfig* sc = new SnortConfig;
-    VarNode* vn1 = new VarNode;
-    VarNode* vn2 = new VarNode;
-
-    sc->var_list = vn1;
-    vn1->name = (char*)"C";
-    vn1->next = vn2;
-    vn2->name = (char*)"A";
-    vn2->next = NULL;
-
-    config_set_var(sc, "A=B");
+    SnortConfig sc;
+    config_set_var(&sc, "A=B");
 }
 
 TEST_CASE("config_set_var-no_equals_sign-error", "[vars]")
 {
-    SnortConfig* sc = new SnortConfig;
-
-    config_set_var(sc, "A");
+    SnortConfig sc;
+    config_set_var(&sc, "A");
 }
 
 #endif
+

@@ -24,6 +24,8 @@
 
 #include "sfdaq_module.h"
 
+#include <assert.h>
+
 #include "log/messages.h"
 #include "main/snort_config.h"
 
@@ -78,14 +80,17 @@ bool SFDAQModule::begin(const char* fqn, int idx, SnortConfig*)
 {
     if (!strcmp(fqn, "daq"))
         config = new SFDAQConfig();
+
     else if (!strcmp(fqn, "daq.instances"))
     {
         if (idx == 0)
             return true;
+
+        assert(!instance_config);
         instance_config = new SFDAQInstanceConfig();
+
         instance_id = -1;
     }
-
     return true;
 }
 
@@ -137,9 +142,12 @@ bool SFDAQModule::end(const char* fqn, int idx, SnortConfig* sc)
     {
         if (idx == 0)
             return true;
-        if (instance_id < 0)
+
+        if (instance_id < 0 or config->instances[instance_id])
         {
-            ParseError("%s - no DAQ instance ID specified", fqn);
+            ParseError("%s - duplicate or no DAQ instance ID specified", fqn);
+            delete instance_config;
+            instance_config = nullptr;
             return false;
         }
         config->instances[instance_id] = instance_config;
@@ -149,6 +157,7 @@ bool SFDAQModule::end(const char* fqn, int idx, SnortConfig* sc)
     {
         if ( sc->daq_config )
             delete sc->daq_config;
+
         sc->daq_config = config;
         config = nullptr;
     }

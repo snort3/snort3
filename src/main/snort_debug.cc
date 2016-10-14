@@ -286,8 +286,7 @@ TEST_CASE("trace_debugf", "[trace]")
 TEST_CASE("safety", "[trace]")
 {
     Trace TRACE_NAME(testing) = TRACE_SECTION_2 | TRACE_SECTION_3;
-    
-    char* message = new char[STD_BUF + 1];
+    char message[STD_BUF + 1];
 
     for( int i = 0; i < STD_BUF; i++ )
         message[i] = 'A';
@@ -296,8 +295,7 @@ TEST_CASE("safety", "[trace]")
     testing_dump[0] = '\0';
     trace_log(testing, message);
     CHECK( strlen(testing_dump) == STD_BUF - 1 );
-
-    delete message;
 }
 
 #endif
+

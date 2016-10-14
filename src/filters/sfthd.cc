@@ -160,7 +160,7 @@ ThresholdObjects* sfthd_objs_new()
     return (ThresholdObjects*)snort_calloc(sizeof(ThresholdObjects));
 }
 
-static void sfthd_node_free(void* node)
+void sfthd_node_free(void* node)
 {
     THD_NODE* sfthd_node = (THD_NODE*)node;
 

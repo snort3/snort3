@@ -27,15 +27,16 @@
 
 #include "catch/catch.hpp"
 
-#include "main/snort_types.h"
-#include "main/snort_config.h"
 #include "detection/rules.h"
 #include "detection/treenodes.h"
-#include "sfip/sf_ip.h"
-#include "parser/parse_ip.h"
+#include "filters/rate_filter.h"
 #include "filters/sfrf.h"
-#include "utils/util.h"
 #include "hash/sfghash.h"
+#include "main/snort_types.h"
+#include "main/policy.h"
+#include "parser/parse_ip.h"
+#include "sfip/sf_ip.h"
+#include "utils/util.h"
 
 //---------------------------------------------------------------
 
@@ -85,7 +86,7 @@ typedef struct
     int expect;
 } EventData;
 
-static RateFilterConfig rfc;
+static RateFilterConfig* rfc = nullptr;
 
 //---------------------------------------------------------------
 
@@ -891,19 +892,21 @@ static void PrintTests()
     }
     exit(0);
 }
-
 #endif
 
 //---------------------------------------------------------------
 
 static void Init(unsigned cap)
 {
-    unsigned i;
+    // FIXIT-L must set policies because they may have been invalidated
+    // by prior tests with transient SnortConfigs.  better to fix sfrf
+    // to use a SnortConfig parameter or make this a make check test
+    // with a separate executable.
+    set_default_policy();
+    rfc = RateFilter_ConfigNew();
+    rfc->memcap = cap;
 
-    memset(&rfc, 0, sizeof(rfc));
-    rfc.memcap = cap;
-
-    for ( i = 0; i < NUM_NODES; i++ )
+    for ( unsigned i = 0; i < NUM_NODES; i++ )
     {
         RateData* p = rfData + i;
         tSFRFConfigNode cfg;
@@ -917,22 +920,15 @@ static void Init(unsigned cap)
         cfg.timeout = p->timeout;
         cfg.applyTo = p->ip ? sfip_var_from_string(p->ip) : NULL;
 
-        p->create = SFRF_ConfigAdd(snort_conf, &rfc, &cfg);
+        p->create = SFRF_ConfigAdd(nullptr, rfc, &cfg);
     }
 }
 
 static void Term()
 {
-    int i;
-
-    for (i = 0; i < SFRF_MAX_GENID; i++)
-    {
-        SFGHASH** h = rfc.genHash + i;
-        if ( *h )
-            sfghash_delete(*h);
-        *h = NULL;
-    }
     SFRF_Delete();
+    RateFilter_ConfigFree(rfc);
+    rfc = nullptr;
 }
 
 static int SetupCheck(int i)
@@ -959,7 +955,7 @@ static int EventTest(EventData* p)
     sfip_pton(p->dip, &dip);
 
     status = SFRF_TestThreshold(
-        &rfc, p->gid, p->sid, &sip, &dip, curtime, op);
+        rfc, p->gid, p->sid, &sip, &dip, curtime, op);
 
     if ( status >= RULE_TYPE__MAX )
         status -= RULE_TYPE__MAX;

@@ -226,6 +226,7 @@ void* sfthd_create_rule_threshold(
     int count,
     unsigned int seconds
     );
+void sfthd_node_free(void*);
 
 struct SnortConfig;
 int sfthd_create_threshold(

@@ -1156,22 +1156,22 @@ fd_status_t File_Decomp_PDF(fd_session_p_t SessionPtr)
 
 #ifdef UNIT_TEST
 
-TEST_CASE("File_Decomp_PDF-null", "[file_decomp]")
+TEST_CASE("File_Decomp_PDF-null", "[file_decomp_pdf]")
 {
     REQUIRE(File_Decomp_PDF((fd_session_p_t)NULL) == File_Decomp_Error);
 }
 
-TEST_CASE("File_Decomp_Init_PDF-null", "[file_decomp]")
+TEST_CASE("File_Decomp_Init_PDF-null", "[file_decomp_pdf]")
 {
     REQUIRE(File_Decomp_Init_PDF((fd_session_p_t)NULL) == File_Decomp_Error);
 }
 
-TEST_CASE("File_Decomp_End_PDF-null", "[file_decomp]")
+TEST_CASE("File_Decomp_End_PDF-null", "[file_decomp_pdf]")
 {
     REQUIRE(File_Decomp_End_PDF((fd_session_p_t)NULL) == File_Decomp_Error);
 }
 
-TEST_CASE("File_Decomp_PDF-not_pdf-error", "[file_decomp]")
+TEST_CASE("File_Decomp_PDF-not_pdf-error", "[file_decomp_pdf]")
 {
     fd_session_p_t p_s;
 
@@ -1179,10 +1179,11 @@ TEST_CASE("File_Decomp_PDF-not_pdf-error", "[file_decomp]")
     p_s->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
     p_s->File_Type = FILE_TYPE_SWF;
     REQUIRE(File_Decomp_PDF(p_s) == File_Decomp_Error);
-    snort_free(p_s->PDF);
+    p_s->File_Type = FILE_TYPE_PDF;
+    File_Decomp_Free(p_s);
 }
 
-TEST_CASE("File_Decomp_PDF-bad_state-error", "[file_decomp]")
+TEST_CASE("File_Decomp_PDF-bad_state-error", "[file_decomp_pdf]")
 {
     fd_session_p_t p_s;
 
@@ -1191,19 +1192,20 @@ TEST_CASE("File_Decomp_PDF-bad_state-error", "[file_decomp]")
     p_s->File_Type = FILE_TYPE_PDF;
     p_s->PDF->State = PDF_STATE_NEW;
     REQUIRE(File_Decomp_PDF(p_s) == File_Decomp_Error);
-    snort_free(p_s->PDF);
+    File_Decomp_Free(p_s);
 }
 
-TEST_CASE("File_Decomp_End_PDF-bad_type-error", "[file_decomp]")
+TEST_CASE("File_Decomp_End_PDF-bad_type-error", "[file_decomp_pdf]")
 {
     fd_session_p_t p_s;
 
     REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
     p_s->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
+    p_s->File_Type = FILE_TYPE_PDF;
     p_s->PDF->Decomp_Type = FILE_COMPRESSION_TYPE_LZMA;
     p_s->PDF->State = PDF_STATE_PROCESS_STREAM;
     REQUIRE(File_Decomp_End_PDF(p_s) == File_Decomp_Error);
-    snort_free(p_s->PDF);
+    File_Decomp_Free(p_s);
 }
 
 #endif
