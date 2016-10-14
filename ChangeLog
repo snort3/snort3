@@ -1,3 +1,15 @@
+16/10/13 - build 215
+
+-- added module trace facility
+-- port block malware over ftp for clients/servers that support REST command
+-- port dce_udp packet processing
+-- change search_engine.debug_print_fast_pattern to show_fast_patterns
+-- overhaul appid for multiple threads, memory leaks, and coding style
+-- fix various appid patterns and counts
+-- fix fast pattern selection
+-- fix file hash pruning issue
+-- fix rate_filter action config and apply_to clean up
+
 16/10/07 - build 214
 
 -- updated DAQ - you *must* use DAQ 2.2.1
