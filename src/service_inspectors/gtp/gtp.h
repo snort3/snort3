@@ -69,10 +69,9 @@ struct GTP_Stats
     //GTP_MsgType* msgTypeTable[MAX_GTP_VERSION_CODE + 1][MAX_GTP_TYPE_CODE + 1];
 };
 
-extern THREAD_LOCAL GTPConfig* gtp_eval_config;
 extern THREAD_LOCAL GTP_Stats gtp_stats;
 
-void GTPmain(struct Packet*);
+void GTPmain(const GTPConfig&, struct Packet*);
 
 #endif
 

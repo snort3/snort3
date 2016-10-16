@@ -190,7 +190,7 @@ inline bool SfIp::is_loopback() const
 
 inline bool SfIp::is_private() const
 {
-    /* Check the first 80 bits in an IPv6 address, and 
+    /* Check the first 80 bits in an IPv6 address, and
         verify they're zero.  If not, it's not a loopback. */
     if (ip32[0] || ip32[1] || ip16[4])
         return false;
@@ -317,7 +317,7 @@ inline SfIpRet SfIp::_ip6_cmp(const SfIp& ip2) const
     return ret;
 }
 
-/* 
+/*
  * Returns SFIP_LESSER, SFIP_EQUAL, SFIP_GREATER, if this is less than, equal to,
  * or greater than ip2.  In the case of mismatched families, the IPv4 address
  * is converted to an IPv6 representation.

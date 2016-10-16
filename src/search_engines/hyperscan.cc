@@ -106,8 +106,8 @@ static hs_scratch_t* s_scratch = nullptr;
 class HyperscanMpse : public Mpse
 {
 public:
-    HyperscanMpse(SnortConfig*, bool use_gc, const MpseAgent* a)
-        : Mpse("hyperscan", use_gc)
+    HyperscanMpse(SnortConfig*, const MpseAgent* a)
+        : Mpse("hyperscan")
     {
         agent = a;
         ++instances;
@@ -330,9 +330,9 @@ void hyperscan_cleanup(SnortConfig* sc)
 //-------------------------------------------------------------------------
 
 static Mpse* hs_ctor(
-    SnortConfig* sc, class Module*, bool use_gc, const MpseAgent* a)
+    SnortConfig* sc, class Module*, const MpseAgent* a)
 {
-    return new HyperscanMpse(sc, use_gc, a);
+    return new HyperscanMpse(sc, a);
 }
 
 static void hs_dtor(Mpse* p)

@@ -50,5 +50,7 @@ public:
 int get_message_type(int version, const char* name);
 int get_info_type(int version, const char* name);
 
+struct GTP_IEData* get_infos();
+
 #endif
 

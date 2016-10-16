@@ -64,7 +64,7 @@ struct Tracker
     constexpr Tracker() = default;
 };
 
-THREAD_LOCAL Tracker s_tracker;
+static THREAD_LOCAL Tracker s_tracker;
 
 // -----------------------------------------------------------------------------
 // helpers

@@ -36,10 +36,10 @@
 THREAD_LOCAL GTP_Stats gtp_stats;
 
 // Analyzes GTP packets for anomalies/exploits.
-static inline int GTP_Process(Packet* p, GTP_Roptions* pRopts)
+static inline int GTP_Process(const GTPConfig& config, Packet* p, GTP_Roptions* pRopts)
 {
     const uint8_t* gtp_buff =  p->data;
-    static THREAD_LOCAL uint32_t msgId = 0;
+    static THREAD_LOCAL uint64_t msg_id = 0;
 
     GTPMsg gtpMsg;
     memset(&gtpMsg, 0, GTPMSG_ZERO_LEN);
@@ -49,14 +49,9 @@ static inline int GTP_Process(Packet* p, GTP_Roptions* pRopts)
      * belongs to the message
      * Using msg_id avoids initializing info_elements for every message
      * Tabled based info_elements improves information element search performance */
+    gtpMsg.msg_id = ++msg_id;
 
-    /* To avoid id overlap, clean table when msgId resets*/
-    if ( msgId == 0)
-        gtp_cleanInfoElements();
-
-    gtpMsg.msg_id = ++msgId;
-
-    int status = gtp_parse(&gtpMsg, gtp_buff, p->dsize);
+    int status = gtp_parse(config, &gtpMsg, gtp_buff, p->dsize);
 
     /*Update the session data*/
     pRopts->gtp_type = gtpMsg.msg_type;
@@ -83,7 +78,7 @@ static GTP_Roptions* GTPGetNewSession(Packet* packetp)
 }
 
 // Main runtime entry point for GTP preprocessor.
-void GTPmain(Packet* packetp)
+void GTPmain(const GTPConfig& config, Packet* packetp)
 {
     /* Attempt to get a previously allocated GTP block. */
     GtpFlowData* gfd = (GtpFlowData*)packetp->flow->get_flow_data(GtpFlowData::flow_id);
@@ -101,6 +96,6 @@ void GTPmain(Packet* packetp)
         }
     }
 
-    GTP_Process(packetp, pRopts);
+    GTP_Process(config, packetp, pRopts);
 }
 

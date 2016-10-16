@@ -44,8 +44,8 @@ private:
     bnfa_struct_t* obj;
 
 public:
-    AcBnfaMpse(SnortConfig*, bool use_gc, const MpseAgent* agent)
-        : Mpse("ac_bnfa", use_gc)
+    AcBnfaMpse(SnortConfig*, const MpseAgent* agent)
+        : Mpse("ac_bnfa")
     {
         obj=bnfaNew(agent);
         if ( obj ) obj->bnfaMethod = 1;
@@ -103,9 +103,9 @@ public:
 //-------------------------------------------------------------------------
 
 static Mpse* bnfa_ctor(
-    SnortConfig* sc, class Module*, bool use_gc, const MpseAgent* agent)
+    SnortConfig* sc, class Module*, const MpseAgent* agent)
 {
-    return new AcBnfaMpse(sc, use_gc, agent);
+    return new AcBnfaMpse(sc, agent);
 }
 
 static void bnfa_dtor(Mpse* p)

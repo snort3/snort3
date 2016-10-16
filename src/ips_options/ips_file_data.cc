@@ -23,7 +23,7 @@
 #endif
 
 #include "detection/detection_defines.h"
-#include "detection/detection_util.h"
+#include "detection/detection_engine.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -53,7 +53,8 @@ int FileDataOption::eval(Cursor& c, Packet*)
 {
     Profile profile(fileDataPerfStats);
 
-    DataPointer& dp = get_file_data();
+    DataPointer dp;
+    DetectionEngine::get_file_data(dp);
 
     if ( !dp.data || !dp.len )
         return DETECTION_OPTION_NO_MATCH;

@@ -94,7 +94,7 @@ static bool tail_read(void* buf, size_t size)
 
     if( tail )
         clearerr(file);
-    
+
     if( to_read )
         return false;
 
@@ -214,7 +214,7 @@ int main(int argc, char* argv[])
     if( !(opt_flags & OPT_INFILE) )
         error("-i is required");
 
-    file = fopen(in_file.c_str(), "rb"); 
+    file = fopen(in_file.c_str(), "rb");
     if( !file )
         error("Unable to open file");
 
@@ -246,11 +246,13 @@ int main(int argc, char* argv[])
             if( flatbuffers::GenerateText(parser, record, &json) )
                 cout << "[\n{ timestamp: " << timestamp << " },\n" << json << "],\n";
             else
-                cerr << "{ status: \"Unable to process record\", timestamp: " << timestamp << " },\n";
+                cerr << "{ status: \"Unable to process record\", timestamp: "
+                     << timestamp << " },\n";
         }
         else
-            cerr << "{ status: \"Record appears to be corrupt\", timestamp: " << timestamp << " },\n";
-            
+            cerr << "{ status: \"Record appears to be corrupt\", timestamp: "
+                 << timestamp << " },\n";
+
         free(record);
 
         timestamp = ntohll(read<uint64_t>());

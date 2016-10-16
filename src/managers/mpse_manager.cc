@@ -85,10 +85,10 @@ const MpseApi* MpseManager::get_search_api(const char* name)
 }
 
 Mpse* MpseManager::get_search_engine(
-    SnortConfig* sc, const MpseApi* api, bool use_gc, const MpseAgent* agent)
+    SnortConfig* sc, const MpseApi* api, const MpseAgent* agent)
 {
     Module* mod = ModuleManager::get_module(api->base.name);
-    Mpse* eng = api->ctor(sc, mod, use_gc, agent);
+    Mpse* eng = api->ctor(sc, mod, agent);
     eng->set_api(api);
     return eng;
 }
@@ -101,7 +101,7 @@ Mpse* MpseManager::get_search_engine(const char* type)
         return nullptr;
 
     Module* mod = ModuleManager::get_module(api->base.name);
-    Mpse* eng = api->ctor(nullptr, mod, false, nullptr);
+    Mpse* eng = api->ctor(nullptr, mod, nullptr);
     eng->set_api(api);
     return eng;
 }
@@ -172,11 +172,12 @@ void MpseManager::print_search_engine_stats()
 MpseWrapper* MpseManager::instantiate(const char* name, Module* m, SnortConfig* sc)
 {
     auto api = ::get_api(name);
+
     if ( !api || !api->ctor )
         return nullptr;
 
-    // FIXIT-M is use_gc = false correct?
-    auto p = api->ctor(sc, m, false, nullptr);
+    auto p = api->ctor(sc, m, nullptr);
+
     if ( !p )
         return nullptr;
 

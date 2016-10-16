@@ -255,34 +255,46 @@ static void AlertSyslog(
             && (ip_proto != IpProtocol::UDP)))
         {
             const char* ip_fmt = "%s -> %s";
+            InetBuf src, dst;
 
             if (SnortConfig::obfuscate())
             {
-                SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                    ObfuscateIpToText(p->ptrs.ip_api.get_src()),
-                    ObfuscateIpToText(p->ptrs.ip_api.get_dst()));
+                ObfuscateIpToText(p->ptrs.ip_api.get_src(), snort_conf->homenet,
+                    snort_conf->obfuscation_net, src);
+
+                ObfuscateIpToText(p->ptrs.ip_api.get_dst(), snort_conf->homenet,
+                    snort_conf->obfuscation_net, dst);
+
+                SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt, src, dst);
             }
             else
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                    inet_ntoax(p->ptrs.ip_api.get_src()), inet_ntoax(p->ptrs.ip_api.get_dst()));
+                    inet_ntoax(p->ptrs.ip_api.get_src(), src),
+                    inet_ntoax(p->ptrs.ip_api.get_dst(), dst));
             }
         }
         else
         {
             const char* ip_fmt = "%s:%d -> %s:%d";
+            InetBuf src, dst;
 
             if (SnortConfig::obfuscate())
             {
+                ObfuscateIpToText(p->ptrs.ip_api.get_src(), snort_conf->homenet,
+                    snort_conf->obfuscation_net, src);
+
+                ObfuscateIpToText(p->ptrs.ip_api.get_dst(), snort_conf->homenet,
+                    snort_conf->obfuscation_net, dst);
+
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                    ObfuscateIpToText(p->ptrs.ip_api.get_src()), p->ptrs.sp,
-                    ObfuscateIpToText(p->ptrs.ip_api.get_dst()), p->ptrs.dp);
+                    src, p->ptrs.sp, dst, p->ptrs.dp);
             }
             else
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                    inet_ntoax(p->ptrs.ip_api.get_src()), p->ptrs.sp,
-                    inet_ntoax(p->ptrs.ip_api.get_dst()), p->ptrs.dp);
+                    inet_ntoax(p->ptrs.ip_api.get_src(), src), p->ptrs.sp,
+                    inet_ntoax(p->ptrs.ip_api.get_dst(), dst), p->ptrs.dp);
             }
         }
 

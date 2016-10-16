@@ -40,8 +40,8 @@ private:
     IntelPm* obj;
 
 public:
-    IntelCpmMpse(SnortConfig* sc, bool use_gc, const MpseAgent* agent)
-        : Mpse("intel_cpm", use_gc)
+    IntelCpmMpse(SnortConfig* sc, const MpseAgent* agent)
+        : Mpse("intel_cpm")
     {
         obj = IntelPmNew(sc, agent);
     }
@@ -102,9 +102,9 @@ static void cpm_stop()
 }
 
 static Mpse* cpm_ctor(
-    SnortConfig* sc, class Module*, bool use_gc, const MpseAgent* agent)
+    SnortConfig* sc, class Module*, const MpseAgent* agent)
 {
-    return new IntelCpmMpse(sc, use_gc, agent);
+    return new IntelCpmMpse(sc, agent);
 }
 
 static void cpm_dtor(Mpse* p)

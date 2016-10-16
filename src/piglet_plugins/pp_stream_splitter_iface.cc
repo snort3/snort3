@@ -77,9 +77,9 @@ static const luaL_Reg methods[] =
 
             Lua::Stack<unsigned>::push(L, copied);
 
-            if ( sb )
+            if ( sb.data )
                 RawBufferIface.create(
-                    L, reinterpret_cast<const char*>(sb->data), sb->length);
+                    L, reinterpret_cast<const char*>(sb.data), sb.length);
             else
                 lua_pushnil(L);
 

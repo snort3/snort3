@@ -108,5 +108,7 @@ void OtnRemove(SFGHASH*, OptTreeNode*);
 void OtnDeleteData(void* data);
 void OtnFree(void* data);
 
+OptTreeNode* GetOTN(uint32_t gid, uint32_t sid);
+
 #endif
 

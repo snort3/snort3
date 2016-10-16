@@ -185,6 +185,8 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             ip_len - raw.len, ip_len, raw.len);
 
         codec_event(codec, DECODE_IPV4_DGRAM_GT_CAPLEN);
+        // FIXIT-L we should decode this layer if possible instead of stopping now
+        // ip6 etc may have similar issues
         return false;
     }
 #if 0

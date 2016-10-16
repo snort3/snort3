@@ -84,7 +84,7 @@ struct SdPatternConfig
     std::string pii;
     unsigned threshold = 1;
     bool obfuscate_pii = false;
-    bool forced_boundary = false; 
+    bool forced_boundary = false;
     int (* validate)(const uint8_t* buf, unsigned long long buflen) = nullptr;
 
     inline bool operator==(const SdPatternConfig& rhs) const
@@ -196,7 +196,7 @@ struct hsContext
             left = true;
 
         // validate the right side
-   
+
         if ( from+len == buflen )
             right = true;
         else if ( from + len < buflen && !::isdigit((int)buf[from+len]) )

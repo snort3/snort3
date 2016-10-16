@@ -38,7 +38,7 @@ using namespace HttpEnums;
 unsigned FlowData::flow_id = 0;
 FlowData::FlowData(unsigned, Inspector*) {}
 FlowData::~FlowData() {}
-int SnortEventqAdd(unsigned int, unsigned int, RuleType) { return 0; }
+int DetectionEngine::queue_event(unsigned int, unsigned int, RuleType) { return 0; }
 THREAD_LOCAL PegCount HttpModule::peg_counts[1];
 fd_status_t File_Decomp_StopFree(fd_session_t*) { return File_Decomp_OK; }
 

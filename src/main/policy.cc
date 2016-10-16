@@ -23,7 +23,7 @@
 
 #include "policy.h"
 
-#include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "managers/inspector_manager.h"
 #include "parser/vars.h"
 #include "ports/port_var_table.h"
@@ -62,7 +62,7 @@ public:
     AltPktHandler() { }
 
     void handle(DataEvent& e, Flow*)
-    { snort_detect((Packet*)e.get_packet()); }  // FIXIT-L not const!
+    { DetectionEngine::detect((Packet*)e.get_packet()); }  // FIXIT-L not const!
 };
 
 InspectionPolicy::InspectionPolicy()

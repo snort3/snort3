@@ -38,10 +38,12 @@ public:
         my_inspector(my_inspector_) { }
     Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t not_used,
         uint32_t* flush_offset) override;
-    const StreamBuffer* reassemble(Flow* flow, unsigned total, unsigned, const
+    const StreamBuffer reassemble(Flow* flow, unsigned total, unsigned, const
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
     bool finish(Flow* flow) override;
     bool is_paf() override { return true; }
+
+    // FIXIT-M should return actual packet buffer size
     unsigned max(Flow*) override { return HttpEnums::MAX_OCTETS; }
 
 private:

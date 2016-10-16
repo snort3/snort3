@@ -42,6 +42,7 @@ bool FileService::file_type_id_enabled = false;
 bool FileService::file_signature_enabled = false;
 bool FileService::file_capture_enabled = false;
 bool FileService::file_processing_initiated = false;
+
 FileEnforcer* FileService::file_enforcer = nullptr;
 FileCache* FileService::file_cache = nullptr;
 

@@ -47,14 +47,10 @@
 //    to set these fields
 //-------------------------------------------------------------------------
 
-class TcpNormalizer;
-class TcpReassembler;
-class TcpSession;
-
 class TcpTracker : public TcpStreamTracker
 {
 public:
-    TcpTracker(bool, TcpSession*);
+    TcpTracker(bool, class TcpSession*);
     virtual ~TcpTracker();
 
     void init_tcp_state() override;

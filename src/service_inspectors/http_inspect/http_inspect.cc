@@ -152,35 +152,34 @@ const Field& HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flo
 
     HttpModule::increment_peg_counts(PEG_INSPECT);
 
-    HttpMsgSection*& latest_section = session_data->latest_section;
     switch (session_data->section_type[source_id])
     {
     case SEC_REQUEST:
-        latest_section = new HttpMsgRequest(
+        session_data->latest_section = new HttpMsgRequest(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_STATUS:
-        latest_section = new HttpMsgStatus(
+        session_data->latest_section = new HttpMsgStatus(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_HEADER:
-        latest_section = new HttpMsgHeader(
+        session_data->latest_section = new HttpMsgHeader(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_BODY_CL:
-        latest_section = new HttpMsgBodyCl(
+        session_data->latest_section = new HttpMsgBodyCl(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_BODY_OLD:
-        latest_section = new HttpMsgBodyOld(
+        session_data->latest_section = new HttpMsgBodyOld(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_BODY_CHUNK:
-        latest_section = new HttpMsgBodyChunk(
+        session_data->latest_section = new HttpMsgBodyChunk(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_TRAILER:
-        latest_section = new HttpMsgTrailer(
+        session_data->latest_section = new HttpMsgTrailer(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     default:
@@ -192,13 +191,13 @@ const Field& HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flo
         return Field::FIELD_NULL;
     }
 
-    latest_section->analyze();
-    latest_section->update_flow();
+    session_data->latest_section->analyze();
+    session_data->latest_section->update_flow();
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output())
     {
-        latest_section->print_section(HttpTestManager::get_output_file());
+        session_data->latest_section->print_section(HttpTestManager::get_output_file());
         fflush(HttpTestManager::get_output_file());
         if (HttpTestManager::use_test_input())
         {
@@ -209,8 +208,8 @@ const Field& HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flo
     }
 #endif
 
-    latest_section->publish();
-    return latest_section->get_detect_buf();
+    session_data->latest_section->publish();
+    return session_data->latest_section->get_detect_buf();
 }
 
 void HttpInspect::clear(Packet* p)

@@ -29,6 +29,7 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 
+#include "http_flow_data.h"
 #include "http_inspect.h"
 #include "http_msg_head_shared.h"
 

@@ -430,9 +430,9 @@ bool TcpStreamSession::setup(Packet*)
     return true;
 }
 
-void TcpStreamSession::cleanup()
+void TcpStreamSession::cleanup(Packet* p)
 {
-    clear_session( true, true, false );
+    clear_session(true, true, false, p);
 }
 
 void TcpStreamSession::clear()
@@ -469,18 +469,11 @@ void TcpStreamSession::start_proxy()
 
 void TcpStreamSession::sinit()
 {
-    s5_pkt = new Packet();
     //AtomSplitter::init();  // FIXIT-L PAF implement
 }
 
 void TcpStreamSession::sterm()
-{
-    if (s5_pkt)
-    {
-        delete s5_pkt;
-        s5_pkt = nullptr;
-    }
-}
+{ }
 
 void TcpStreamSession::print()
 {

@@ -32,17 +32,15 @@ public:
 
     Status scan(Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
-    const StreamBuffer* reassemble(Flow*, unsigned, unsigned,
+
+    const StreamBuffer reassemble(Flow*, unsigned, unsigned,
         const uint8_t*, unsigned, uint32_t, unsigned&) override;
+
     bool is_paf() override
-    {
-        return true;
-    }
+    { return true; }
 
     bool cutover_inspector()
-    {
-        return cutover;
-    }
+    { return cutover; }
 
 private:
     Status match_request_head(const uint8_t* data, uint32_t& len);

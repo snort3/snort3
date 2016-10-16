@@ -57,10 +57,10 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
         *swapped = 1;
     }
 
-    value = (FlowStateValue*)sfxhash_find(ipMap, &key);
+    value = (FlowStateValue*)sfxhash_find(ip_map, &key);
     if (!value)
     {
-        node = sfxhash_get_node(ipMap, &key);
+        node = sfxhash_get_node(ip_map, &key);
         if (!node)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM,
@@ -75,8 +75,8 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
     return value;
 }
 
-FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf,
-        perf->output == PERF_FILE, TRACKER_NAME)
+FlowIPTracker::FlowIPTracker(PerfConfig* perf) :
+    PerfTracker(perf, perf->output == PERF_FILE, TRACKER_NAME)
 {
     formatter->register_section("flow_ip");
     formatter->register_field("ip_a", ip_a);
@@ -112,34 +112,23 @@ FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf,
     formatter->register_field("udp_created", (PegCount*)
         &stats.state_changes[SFS_STATE_UDP_CREATED]);
     formatter->finalize_fields();
+
+    ip_map = sfxhash_new(1021, sizeof(FlowStateKey), sizeof(FlowStateValue),
+        perfmon_config->flowip_memcap, 1, nullptr, nullptr, 1);
+
+    if (!ip_map)
+        FatalError("Unable to allocate memory for FlowIP stats\n");
 }
 
 FlowIPTracker::~FlowIPTracker()
 {
-    if (ipMap)
-    {
-        sfxhash_delete(ipMap);
-        ipMap = nullptr;
-    }
+    if (ip_map)
+        sfxhash_delete(ip_map);
 }
 
 void FlowIPTracker::reset()
 {
-    static THREAD_LOCAL bool first = true;
-
-    if (first)
-    {
-        ipMap = sfxhash_new(1021, sizeof(FlowStateKey), sizeof(FlowStateValue),
-            perfmon_config->flowip_memcap, 1, nullptr, nullptr, 1);
-
-        if (!ipMap)
-            // FIXIT-M FlowIp allocations should all occur at thread init
-            FatalError("Unable to allocate memory for FlowIP stats\n");
-
-        first = false;
-    }
-    else
-        sfxhash_make_empty(ipMap);
+    sfxhash_make_empty(ip_map);
 }
 
 void FlowIPTracker::update(Packet* p)
@@ -181,7 +170,7 @@ void FlowIPTracker::update(Packet* p)
 
 void FlowIPTracker::process(bool)
 {
-    for (auto node = sfxhash_findfirst(ipMap); node; node = sfxhash_findnext(ipMap))
+    for (auto node = sfxhash_findfirst(ip_map); node; node = sfxhash_findnext(ip_map))
     {
         FlowStateKey* key = (FlowStateKey*)node->key;
         FlowStateValue* cur_stats = (FlowStateValue*)node->data;

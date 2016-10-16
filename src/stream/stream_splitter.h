@@ -65,7 +65,7 @@ public:
 
     // the last call to reassemble() will be made with len == 0 if
     // finish() returned true as an opportunity for a final flush
-    virtual const StreamBuffer* reassemble(
+    virtual const StreamBuffer reassemble(
         Flow*,
         unsigned total,        // total amount to flush (sum of iterations)
         unsigned offset,       // data offset from start of reassembly

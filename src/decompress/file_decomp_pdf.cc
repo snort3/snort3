@@ -49,7 +49,7 @@
 #define TOK_DICT_NULL      "null"
 #define TOK_DICT_NULL_FILT " null "  // Enclose the null object in spaces
 #define TOK_XRF_XREF       "xref"
-#define TOK_XRF_TRAILER    "trailer"
+//#define TOK_XRF_TRAILER    "trailer"  // unused
 #define TOK_XRF_STARTXREF  "startxref"
 #define TOK_XRF_END        "%%EOF"
 
@@ -148,7 +148,7 @@ static inline uint8_t Get_Decomp_Type(uint8_t* Token, uint8_t Length)
     return( FILE_COMPRESSION_TYPE_NONE );
 }
 
-static inline void Process_One_Filter(fd_session_p_t SessionPtr, uint8_t* Token, uint8_t Length)
+static inline void Process_One_Filter(fd_session_t* SessionPtr, uint8_t* Token, uint8_t Length)
 {
     uint8_t Comp_Type;
 
@@ -180,7 +180,7 @@ static inline void Process_One_Filter(fd_session_p_t SessionPtr, uint8_t* Token,
 /* Parse the buffered Filter_Spec and create a stream decompression
    mode and/or event alerts.  Return File_Decomp_OK if successful.
    Return File_Decomp_Error for a parsing error. */
-static fd_status_t Process_Filter_Spec(fd_session_p_t SessionPtr)
+static fd_status_t Process_Filter_Spec(fd_session_t* SessionPtr)
 {
     /* The following string contains CHR_ARRAY_OPEN, CHR_ARRAY_CLOSE,
        and CHR_NAME_SEP. */
@@ -274,7 +274,7 @@ static fd_status_t Process_Filter_Spec(fd_session_p_t SessionPtr)
     return( Ret_Code );
 }
 
-static inline void Init_Parser(fd_session_p_t SessionPtr)
+static inline void Init_Parser(fd_session_t* SessionPtr)
 {
     fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
     /* The parser starts in the P_COMMENT state we start
@@ -282,6 +282,7 @@ static inline void Init_Parser(fd_session_p_t SessionPtr)
        and the signature is syntactically a comment. */
     p->State = P_COMMENT;
     p->Parse_Stack_Index = 0; // Stack is empty
+    p->xref_tok = (uint8_t*)TOK_XRF_STARTXREF;
 }
 
 static inline fd_status_t Push_State(fd_PDF_Parse_p_t p)
@@ -329,7 +330,7 @@ static inline fd_PDF_Parse_Stack_p_t Get_Previous_State(fd_PDF_Parse_p_t p)
    Objects can be recursively composed of arrays of objects. In our limited parsing paradigm, we
    will only process the contents of top level Dictionaries and ignore deeper levels.  We will
    only explore Dictionary objects within Indirect Objects.  */
-static inline fd_status_t Handle_State_DICT_OBJECT(fd_session_p_t SessionPtr, uint8_t c)
+static inline fd_status_t Handle_State_DICT_OBJECT(fd_session_t* SessionPtr, uint8_t c)
 {
     char Filter_Tok[] = TOK_DICT_FILT;
     fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
@@ -536,13 +537,8 @@ static inline fd_status_t Process_Stream(fd_PDF_Parse_p_t p)
 
 /* Indirect Objects occur only at the top level of the file and comprise the
    bulk of the file content. */
-static inline fd_status_t Handle_State_IND_OBJ(fd_session_p_t SessionPtr, uint8_t c)
+static inline fd_status_t Handle_State_IND_OBJ(fd_session_t* SessionPtr, uint8_t c)
 {
-    static THREAD_LOCAL uint8_t Ind_Obj_Token[] = { TOK_OBJ_OPEN };
-    static THREAD_LOCAL uint8_t Ind_Obj_End_Token[] = { TOK_OBJ_CLOSE };
-    static THREAD_LOCAL uint8_t Stream_Token[] = { TOK_STRM_OPEN };
-    static THREAD_LOCAL uint8_t Stream_End_Token[] = { TOK_STRM_CLOSE };
-
     fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
 
     /* Upon initial entry, setup state context */
@@ -592,9 +588,9 @@ static inline fd_status_t Handle_State_IND_OBJ(fd_session_p_t SessionPtr, uint8_
 
     case ( P_OBJ_TOKEN ):
     {
-        if ( c == Ind_Obj_Token[p->Elem_Index++] )
+        if ( c == TOK_OBJ_OPEN[p->Elem_Index++] )
         {
-            if ( Ind_Obj_Token[p->Elem_Index] == '\0' )
+            if ( TOK_OBJ_OPEN[p->Elem_Index] == '\0' )
             {
                 p->Sub_State = P_OBJ_EOL;
                 break;
@@ -622,9 +618,9 @@ static inline fd_status_t Handle_State_IND_OBJ(fd_session_p_t SessionPtr, uint8_
 
     case ( P_STREAM_TOKEN ):
     {
-        if ( c == Stream_Token[p->Elem_Index++] )
+        if ( c == TOK_STRM_OPEN[p->Elem_Index++] )
         {
-            if ( Stream_Token[p->Elem_Index] == '\0' )
+            if ( TOK_STRM_OPEN[p->Elem_Index] == '\0' )
             {
                 /* Look for the limited EOL sequence */
                 p->Sub_State = P_STREAM_EOL;
@@ -673,9 +669,9 @@ static inline fd_status_t Handle_State_IND_OBJ(fd_session_p_t SessionPtr, uint8_
 
     case ( P_ENDSTREAM_TOKEN ):
     {
-        if ( c == Stream_End_Token[p->Elem_Index++] )
+        if ( c == TOK_STRM_CLOSE[p->Elem_Index++] )
         {
-            if ( Stream_End_Token[p->Elem_Index] == '\0' )
+            if ( TOK_STRM_CLOSE[p->Elem_Index] == '\0' )
             {
                 p->Sub_State = P_ENDOBJ_TOKEN;
             }
@@ -690,9 +686,9 @@ static inline fd_status_t Handle_State_IND_OBJ(fd_session_p_t SessionPtr, uint8_
 
     case ( P_ENDOBJ_TOKEN ):
     {
-        if ( c == Ind_Obj_End_Token[p->Elem_Index++] )
+        if ( c == TOK_OBJ_CLOSE[p->Elem_Index++] )
         {
-            if ( Ind_Obj_End_Token[p->Elem_Index] == '\0' )
+            if ( TOK_OBJ_CLOSE[p->Elem_Index] == '\0' )
             {
                 /* we found the end of the indirect object, return
                    back to the parent state (always START in this case) */
@@ -720,10 +716,8 @@ static inline fd_status_t Handle_State_IND_OBJ(fd_session_p_t SessionPtr, uint8_
 /* A simple state machine to process the xref/trailer/startxref file segments.  No
    semantic processing and only rough syntactical processing to allow us to skip through
    this segment. */
-static inline fd_status_t Handle_State_XREF(fd_session_p_t SessionPtr, uint8_t c)
+static inline fd_status_t Handle_State_XREF(fd_session_t* SessionPtr, uint8_t c)
 {
-    static THREAD_LOCAL const uint8_t* Xref_Tok = (uint8_t*)TOK_XRF_STARTXREF;
-    uint8_t Xref_End_Tok[] = { TOK_XRF_END };
     fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
 
     if ( p->State != P_XREF )
@@ -731,7 +725,7 @@ static inline fd_status_t Handle_State_XREF(fd_session_p_t SessionPtr, uint8_t c
         p->Sub_State = P_XREF_TOKEN;
         p->Elem_Index = 1;  // already matched the first char in START state
         p->State = P_XREF;
-        Xref_Tok = (uint8_t*)((c == TOK_XRF_XREF[0]) ? TOK_XRF_XREF : TOK_XRF_STARTXREF);
+        p->xref_tok = (uint8_t*)((c == TOK_XRF_XREF[0]) ? TOK_XRF_XREF : TOK_XRF_STARTXREF);
         return( File_Decomp_OK );
     }
 
@@ -739,9 +733,9 @@ static inline fd_status_t Handle_State_XREF(fd_session_p_t SessionPtr, uint8_t c
     {
     case ( P_XREF_TOKEN ):
     {
-        if ( c == Xref_Tok[p->Elem_Index++] )
+        if ( c == p->xref_tok[p->Elem_Index++] )
         {
-            if ( Xref_Tok[p->Elem_Index] == '\0' )
+            if ( p->xref_tok[p->Elem_Index] == '\0' )
             {
                 p->Elem_Index = 0;
                 p->Sub_State = P_XREF_END_TOKEN;
@@ -756,9 +750,9 @@ static inline fd_status_t Handle_State_XREF(fd_session_p_t SessionPtr, uint8_t c
 
     case ( P_XREF_END_TOKEN ):
     {
-        if ( c == Xref_End_Tok[p->Elem_Index++] )
+        if ( c == TOK_XRF_END[p->Elem_Index++] )
         {
-            if ( Xref_End_Tok[p->Elem_Index] == '\0' )
+            if ( TOK_XRF_END[p->Elem_Index] == '\0' )
             {
                 p->State = P_START;
             }
@@ -781,7 +775,7 @@ static inline fd_status_t Handle_State_XREF(fd_session_p_t SessionPtr, uint8_t c
     return( File_Decomp_OK );
 }
 
-static inline fd_status_t Handle_State_START(fd_session_p_t SessionPtr, uint8_t c)
+static inline fd_status_t Handle_State_START(fd_session_t* SessionPtr, uint8_t c)
 {
     fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
     /* Skip any whitespace.  This will include
@@ -824,7 +818,7 @@ static inline fd_status_t Handle_State_START(fd_session_p_t SessionPtr, uint8_t 
 // FIXIT-L Should remove the /Filter spec that was located by replacing the name with null.
 
 /* Parse file until input blocked or stream located. */
-static fd_status_t Locate_Stream_Beginning(fd_session_p_t SessionPtr)
+static fd_status_t Locate_Stream_Beginning(fd_session_t* SessionPtr)
 {
     fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
     fd_status_t Ret_Code = File_Decomp_OK;
@@ -899,7 +893,7 @@ static fd_status_t Locate_Stream_Beginning(fd_session_p_t SessionPtr)
     }
 }
 
-static fd_status_t Init_Stream(fd_session_p_t SessionPtr)
+static fd_status_t Init_Stream(fd_session_t* SessionPtr)
 {
     fd_PDF_p_t StPtr = SessionPtr->PDF;
 
@@ -934,7 +928,7 @@ static fd_status_t Init_Stream(fd_session_p_t SessionPtr)
     return( File_Decomp_OK );
 }
 
-static fd_status_t Decomp_Stream(fd_session_p_t SessionPtr)
+static fd_status_t Decomp_Stream(fd_session_t* SessionPtr)
 {
     fd_PDF_p_t StPtr = SessionPtr->PDF;
 
@@ -980,7 +974,7 @@ static fd_status_t Decomp_Stream(fd_session_p_t SessionPtr)
 
 /* After processing a stream, close the decompression engine
    and return the state of the parser. */
-static fd_status_t Close_Stream(fd_session_p_t SessionPtr)
+static fd_status_t Close_Stream(fd_session_t* SessionPtr)
 {
     /* Put the parser state back where it was interrupted */
     if ( Pop_State(&(SessionPtr->PDF->Parse) ) == File_Decomp_Error )
@@ -992,7 +986,7 @@ static fd_status_t Close_Stream(fd_session_p_t SessionPtr)
 }
 
 /* Abort the decompression session upon command from caller. */
-fd_status_t File_Decomp_End_PDF(fd_session_p_t SessionPtr)
+fd_status_t File_Decomp_End_PDF(fd_session_t* SessionPtr)
 {
     fd_PDF_p_t StPtr;
 
@@ -1030,7 +1024,7 @@ fd_status_t File_Decomp_End_PDF(fd_session_p_t SessionPtr)
 }
 
 /* From caller, initialize PDF state machine. */
-fd_status_t File_Decomp_Init_PDF(fd_session_p_t SessionPtr)
+fd_status_t File_Decomp_Init_PDF(fd_session_t* SessionPtr)
 {
     if ( SessionPtr == NULL )
         return( File_Decomp_Error );
@@ -1050,7 +1044,7 @@ fd_status_t File_Decomp_Init_PDF(fd_session_p_t SessionPtr)
 }
 
 /* Run the PDF state machine */
-fd_status_t File_Decomp_PDF(fd_session_p_t SessionPtr)
+fd_status_t File_Decomp_PDF(fd_session_t* SessionPtr)
 {
     fd_status_t Ret_Code;
 
@@ -1152,22 +1146,22 @@ fd_status_t File_Decomp_PDF(fd_session_p_t SessionPtr)
 
 TEST_CASE("File_Decomp_PDF-null", "[file_decomp_pdf]")
 {
-    REQUIRE((File_Decomp_PDF((fd_session_p_t)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_PDF((fd_session_t*)NULL) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_Init_PDF-null", "[file_decomp_pdf]")
 {
-    REQUIRE((File_Decomp_Init_PDF((fd_session_p_t)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_Init_PDF((fd_session_t*)NULL) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_End_PDF-null", "[file_decomp_pdf]")
 {
-    REQUIRE((File_Decomp_End_PDF((fd_session_p_t)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_End_PDF((fd_session_t*)NULL) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_PDF-not_pdf-error", "[file_decomp_pdf]")
 {
-    fd_session_p_t p_s = File_Decomp_New();
+    fd_session_t* p_s = File_Decomp_New();
 
     REQUIRE(p_s != nullptr);
     p_s->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
@@ -1179,7 +1173,7 @@ TEST_CASE("File_Decomp_PDF-not_pdf-error", "[file_decomp_pdf]")
 
 TEST_CASE("File_Decomp_PDF-bad_state-error", "[file_decomp_pdf]")
 {
-    fd_session_p_t p_s = File_Decomp_New();
+    fd_session_t* p_s = File_Decomp_New();
 
     REQUIRE(p_s != nullptr);
     p_s->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
@@ -1191,7 +1185,7 @@ TEST_CASE("File_Decomp_PDF-bad_state-error", "[file_decomp_pdf]")
 
 TEST_CASE("File_Decomp_End_PDF-bad_type-error", "[file_decomp_pdf]")
 {
-    fd_session_p_t p_s = File_Decomp_New();
+    fd_session_t* p_s = File_Decomp_New();
 
     REQUIRE(p_s != nullptr);
     p_s->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));

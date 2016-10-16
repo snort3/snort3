@@ -47,6 +47,7 @@
 
 #include "pp_telnet.h"
 
+#include "detection/detection_engine.h"
 #include "detection/detection_util.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
@@ -64,17 +65,16 @@
  */
 #define CONSECUTIVE_8BIT_THRESHOLD 3
 
-static THREAD_LOCAL DataBuffer DecodeBuffer;
-
-void reset_telnet_buffer()
+void reset_telnet_buffer(Packet* p)
 {
-    DecodeBuffer.len = 0;
+    DetectionEngine::get_alt_buffer(p).len = 0;
 }
 
-const uint8_t* get_telnet_buffer(unsigned& len)
+const uint8_t* get_telnet_buffer(Packet* p, unsigned& len)
 {
-    len = DecodeBuffer.len;
-    return len ? DecodeBuffer.data : nullptr;
+    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    len = buf.len;
+    return len ? buf.data : nullptr;
 }
 
 /*
@@ -97,11 +97,13 @@ int normalize_telnet(
     int ret = FTPP_NORMALIZED;
     const unsigned char* read_ptr, * sb_start = NULL;
     int saw_ayt = 0;
-    const unsigned char* start = DecodeBuffer.data;
     unsigned char* write_ptr;
     const unsigned char* end;
     int normalization_required = 0;
     int consec_8bit_chars = 0;
+
+    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    const unsigned char* start = buf.data;
 
     /* Telnet commands are handled in here.
     * They can be 2 bytes long -- ie, IAC NOP, IAC AYT, etc.
@@ -142,7 +144,7 @@ int normalize_telnet(
                     if (tnssn)
                     {
                         tnssn->encr_state = 1;
-                        SnortEventqAdd(GID_TELNET, TELNET_ENCRYPTED);
+                        DetectionEngine::queue_event(GID_TELNET, TELNET_ENCRYPTED);
 
                         if (!tnssn->telnet_conf->check_encrypted_data)
                         {
@@ -185,11 +187,11 @@ int normalize_telnet(
     /* setup for overwriting the negotiation strings with
     * the follow-on data
     */
-    write_ptr = (unsigned char*)DecodeBuffer.data;
+    write_ptr = (unsigned char*)buf.data;
 
     /* walk thru the remainder of the packet */
     while ((read_ptr < end) &&
-        (write_ptr < ((unsigned char*)DecodeBuffer.data) + sizeof(DecodeBuffer.data)))
+        (write_ptr < ((unsigned char*)buf.data) + sizeof(buf.data)))
     {
         saw_ayt = 0;
         /* if the following byte isn't a subnegotiation initialization */
@@ -249,7 +251,7 @@ int normalize_telnet(
                         tnssn->telnet_conf->ayt_threshold))
                     {
                         /* Alert on consecutive AYT commands */
-                        SnortEventqAdd(GID_TELNET, TELNET_AYT_OVERFLOW);
+                        DetectionEngine::queue_event(GID_TELNET, TELNET_AYT_OVERFLOW);
                         tnssn->consec_ayt = 0;
                         return FTPP_ALERT;
                     }
@@ -339,7 +341,7 @@ int normalize_telnet(
                     if (tnssn)
                     {
                         tnssn->encr_state = 1;
-                        SnortEventqAdd(GID_TELNET, TELNET_ENCRYPTED);
+                        DetectionEngine::queue_event(GID_TELNET, TELNET_ENCRYPTED);
 
                         if (!tnssn->telnet_conf->check_encrypted_data)
                         {
@@ -385,7 +387,7 @@ int normalize_telnet(
                 else
                 {
                     /* Alert on SB without SE */
-                    SnortEventqAdd(GID_TELNET, TELNET_SB_NO_SE);
+                    DetectionEngine::queue_event(GID_TELNET, TELNET_SB_NO_SE);
                     ret = FTPP_ALERT;
                 }
 

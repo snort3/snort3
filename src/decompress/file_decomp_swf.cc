@@ -38,7 +38,7 @@
 #define SWF_UCL_OFFSET   (1)
 #define SWF_HDR_LEN      (SWF_SIG_LEN + SWF_VER_LEN + SWF_UCL_LEN)
 
-static fd_status_t File_Decomp_Process_LZMA_Header(fd_session_p_t SessionPtr)
+static fd_status_t File_Decomp_Process_LZMA_Header(fd_session_t* SessionPtr)
 {
     uint8_t LZMA_Header[LZMA_HEADER_LEN];
     uint8_t* SWF_Header = SessionPtr->SWF->Header_Bytes;
@@ -91,7 +91,7 @@ static fd_status_t File_Decomp_Process_LZMA_Header(fd_session_p_t SessionPtr)
 
 #endif
 
-static fd_status_t Decomp(fd_session_p_t SessionPtr)
+static fd_status_t Decomp(fd_session_t* SessionPtr)
 {
     switch ( SessionPtr->Decomp_Type )
     {
@@ -152,7 +152,7 @@ static fd_status_t Decomp(fd_session_p_t SessionPtr)
     return( File_Decomp_OK );
 }
 
-fd_status_t File_Decomp_End_SWF(fd_session_p_t SessionPtr)
+fd_status_t File_Decomp_End_SWF(fd_session_t* SessionPtr)
 {
     if ( SessionPtr == NULL )
         return( File_Decomp_Error );
@@ -191,7 +191,7 @@ fd_status_t File_Decomp_End_SWF(fd_session_p_t SessionPtr)
     return( File_Decomp_OK );
 }
 
-fd_status_t File_Decomp_Init_SWF(fd_session_p_t SessionPtr)
+fd_status_t File_Decomp_Init_SWF(fd_session_t* SessionPtr)
 {
     if ( SessionPtr == NULL )
         return( File_Decomp_Error );
@@ -264,7 +264,7 @@ fd_status_t File_Decomp_Init_SWF(fd_session_p_t SessionPtr)
     return( File_Decomp_OK );
 }
 
-fd_status_t File_Decomp_SWF(fd_session_p_t SessionPtr)
+fd_status_t File_Decomp_SWF(fd_session_t* SessionPtr)
 {
     fd_status_t Ret_Code;
 
@@ -336,22 +336,22 @@ fd_status_t File_Decomp_SWF(fd_session_p_t SessionPtr)
 
 TEST_CASE("File_Decomp_SWF-null", "[file_decomp_swf]")
 {
-    REQUIRE((File_Decomp_SWF((fd_session_p_t)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_SWF((fd_session_t*)NULL) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_Init_SWF-null", "[file_decomp_swf]")
 {
-    REQUIRE((File_Decomp_Init_SWF((fd_session_p_t)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_Init_SWF((fd_session_t*)NULL) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_End_SWF-null", "[file_decomp_swf]")
 {
-    REQUIRE((File_Decomp_End_SWF((fd_session_p_t)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_End_SWF((fd_session_t*)NULL) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_SWF-not_swf-error", "[file_decomp_swf]")
 {
-    fd_session_p_t p_s = File_Decomp_New();
+    fd_session_t* p_s = File_Decomp_New();
 
     REQUIRE(p_s != nullptr);
     p_s->SWF = (fd_SWF_t*)snort_calloc(sizeof(fd_SWF_t));
@@ -363,7 +363,7 @@ TEST_CASE("File_Decomp_SWF-not_swf-error", "[file_decomp_swf]")
 
 TEST_CASE("File_Decomp_SWF-bad_state-error", "[file_decomp_swf]")
 {
-    fd_session_p_t p_s = File_Decomp_New();
+    fd_session_t* p_s = File_Decomp_New();
 
     REQUIRE(p_s != nullptr);
     p_s->SWF = (fd_SWF_t*)snort_calloc(sizeof(fd_SWF_t));
@@ -375,7 +375,7 @@ TEST_CASE("File_Decomp_SWF-bad_state-error", "[file_decomp_swf]")
 
 TEST_CASE("File_Decomp_Init_SWF-bad_type-error", "[file_decomp_swf]")
 {
-    fd_session_p_t p_s = File_Decomp_New();
+    fd_session_t* p_s = File_Decomp_New();
 
     REQUIRE(p_s != nullptr);
     p_s->File_Type = FILE_TYPE_SWF;
@@ -386,7 +386,7 @@ TEST_CASE("File_Decomp_Init_SWF-bad_type-error", "[file_decomp_swf]")
 
 TEST_CASE("File_Decomp_End_SWF-bad_type-error", "[file_decomp_swf]")
 {
-    fd_session_p_t p_s = File_Decomp_New();
+    fd_session_t* p_s = File_Decomp_New();
 
     REQUIRE(p_s != nullptr);
     p_s->SWF = (fd_SWF_t*)snort_calloc(sizeof(fd_SWF_t));

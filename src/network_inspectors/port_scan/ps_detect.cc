@@ -1279,10 +1279,10 @@ static int ps_alert_one_to_many(
 
 int PortScan::ps_alert_tcp(PS_PROTO* scanner, PS_PROTO* scanned)
 {
-    static THREAD_LOCAL const PS_ALERT_CONF* one_to_one;
-    static THREAD_LOCAL const PS_ALERT_CONF* one_to_one_decoy;
-    static THREAD_LOCAL const PS_ALERT_CONF* one_to_many;
-    static THREAD_LOCAL const PS_ALERT_CONF* many_to_one;
+    const PS_ALERT_CONF* one_to_one;
+    const PS_ALERT_CONF* one_to_one_decoy;
+    const PS_ALERT_CONF* one_to_many;
+    const PS_ALERT_CONF* many_to_one;
 
     /*
     ** Set the configurations depending on the sensitivity
@@ -1350,10 +1350,10 @@ int PortScan::ps_alert_tcp(PS_PROTO* scanner, PS_PROTO* scanned)
 
 int PortScan::ps_alert_ip(PS_PROTO* scanner, PS_PROTO* scanned)
 {
-    static THREAD_LOCAL const PS_ALERT_CONF* one_to_one;
-    static THREAD_LOCAL const PS_ALERT_CONF* one_to_one_decoy;
-    static THREAD_LOCAL const PS_ALERT_CONF* one_to_many;
-    static THREAD_LOCAL const PS_ALERT_CONF* many_to_one;
+    const PS_ALERT_CONF* one_to_one;
+    const PS_ALERT_CONF* one_to_one_decoy;
+    const PS_ALERT_CONF* one_to_many;
+    const PS_ALERT_CONF* many_to_one;
 
     /*
     ** Set the configurations depending on the sensitivity
@@ -1421,10 +1421,10 @@ int PortScan::ps_alert_ip(PS_PROTO* scanner, PS_PROTO* scanned)
 
 int PortScan::ps_alert_udp(PS_PROTO* scanner, PS_PROTO* scanned)
 {
-    static THREAD_LOCAL const PS_ALERT_CONF* one_to_one;
-    static THREAD_LOCAL const PS_ALERT_CONF* one_to_one_decoy;
-    static THREAD_LOCAL const PS_ALERT_CONF* one_to_many;
-    static THREAD_LOCAL const PS_ALERT_CONF* many_to_one;
+    const PS_ALERT_CONF* one_to_one;
+    const PS_ALERT_CONF* one_to_one_decoy;
+    const PS_ALERT_CONF* one_to_many;
+    const PS_ALERT_CONF* many_to_one;
 
     /*
     ** Set the configurations depending on the sensitivity
@@ -1492,7 +1492,7 @@ int PortScan::ps_alert_udp(PS_PROTO* scanner, PS_PROTO* scanned)
 
 int PortScan::ps_alert_icmp(PS_PROTO* scanner, PS_PROTO* scanned)
 {
-    static THREAD_LOCAL const PS_ALERT_CONF* one_to_many;
+    const PS_ALERT_CONF* one_to_many;
 
     /*
     ** Set the configurations depending on the sensitivity

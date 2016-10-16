@@ -22,7 +22,7 @@
 
 #include "flow_control.h"
 
-#include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
@@ -44,6 +44,8 @@ FlowControl::FlowControl()
 
 FlowControl::~FlowControl()
 {
+    DetectionEngine de;
+
     delete ip_cache;
     delete icmp_cache;
     delete tcp_cache;
@@ -432,6 +434,9 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     if ( p->proto_bits & PROTO_BIT__MPLS )
         flow->set_mpls_layer_per_dir(p);
 
+    if ( p->type() == PktType::PDU )  // FIXIT-H cooked or PDU?
+        DetectionEngine::onload(flow);
+
     switch ( flow->flow_state )
     {
     case Flow::FlowState::SETUP:
@@ -448,7 +453,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         if ( news )
             Stream::stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
         else
-            DisableInspection();
+            DetectionEngine::disable_all(p);
 
         p->ptrs.decode_flags |= DECODE_PKT_TRUST;
         break;
@@ -459,7 +464,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         else
             Active::block_again();
 
-        DisableInspection();
+        DetectionEngine::disable_all(p);
         break;
 
     case Flow::FlowState::RESET:
@@ -469,7 +474,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
             Active::reset_again();
 
         Stream::blocked_flow(flow, p);
-        DisableInspection();
+        DetectionEngine::disable_all(p);
         break;
     }
 
@@ -765,7 +770,7 @@ bool FlowControl::expected_flow(Flow* flow, Packet* p)
             (p->packet_flags & PKT_FROM_CLIENT) ? "sender" : "responder");
 
         flow->ssn_state.ignore_direction = ignore;
-        DisableInspection();
+        DetectionEngine::disable_all(p);
     }
 
     return ignore;

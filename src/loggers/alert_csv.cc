@@ -28,6 +28,7 @@
 #include "config.h"
 #endif
 
+#include "detection/detection_engine.h"
 #include "detection/signature.h"
 #include "events/event.h"
 #include "framework/logger.h"
@@ -216,7 +217,7 @@ static void ff_pkt_gen(Args& a)
 
 static void ff_pkt_num(Args&)
 {
-    TextLog_Print(csv_log, STDu64, pc.total_from_daq);
+    TextLog_Print(csv_log, STDu64, DetectionEngine::get_context()->pkt_count);
 }
 
 static void ff_proto(Args& a)

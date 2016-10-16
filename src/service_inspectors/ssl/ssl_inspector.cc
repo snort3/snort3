@@ -26,6 +26,7 @@
 #include "ssl_inspector.h"
 
 #include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
@@ -164,7 +165,7 @@ static inline bool SSLPP_is_encrypted(SSL_PROTO_CONF* config, uint32_t ssl_flags
 }
 
 static inline uint32_t SSLPP_process_alert(
-    SSL_PROTO_CONF*, uint32_t ssn_flags, uint32_t new_flags, const Packet* packet)
+    SSL_PROTO_CONF*, uint32_t ssn_flags, uint32_t new_flags, Packet* packet)
 {
     DebugMessage(DEBUG_SSL, "Process Alert\n");
 
@@ -178,7 +179,7 @@ static inline uint32_t SSLPP_process_alert(
         !(new_flags & SSL_HEARTBEAT_SEEN))
     {
         DebugMessage(DEBUG_SSL, "Disabling detect\n");
-        DisableDetect();
+        DetectionEngine::disable_content(packet);
     }
 
     /* Need to negate the application flags from the opposing side. */
@@ -229,7 +230,7 @@ static inline uint32_t SSLPP_process_app(SSL_PROTO_CONF* config, uint32_t ssn_fl
         }
         else if (!(new_flags & SSL_HEARTBEAT_SEEN))
         {
-            DisableDetect();
+            DetectionEngine::disable_content(packet);
         }
     }
 
@@ -256,7 +257,7 @@ static inline void SSLPP_process_other(SSL_PROTO_CONF* config, SSLData* sd, uint
         }
         else if (!(new_flags & SSL_HEARTBEAT_SEEN))
         {
-            DisableDetect();
+            DetectionEngine::disable_content(packet);
         }
     }
     else
@@ -312,21 +313,21 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 
     if (heartbleed_type & SSL_HEARTBLEED_REQUEST)
     {
-        SnortEventqAdd(GID_SSL, SSL_ALERT_HB_REQUEST);
+        DetectionEngine::queue_event(GID_SSL, SSL_ALERT_HB_REQUEST);
     }
     else if (heartbleed_type & SSL_HEARTBLEED_RESPONSE)
     {
-        SnortEventqAdd(GID_SSL, SSL_ALERT_HB_RESPONSE);
+        DetectionEngine::queue_event(GID_SSL, SSL_ALERT_HB_RESPONSE);
     }
     else if (heartbleed_type & SSL_HEARTBLEED_UNKNOWN)
     {
         if (!dir)
         {
-            SnortEventqAdd(GID_SSL, SSL_ALERT_HB_REQUEST);
+            DetectionEngine::queue_event(GID_SSL, SSL_ALERT_HB_REQUEST);
         }
         else
         {
-            SnortEventqAdd(GID_SSL, SSL_ALERT_HB_RESPONSE);
+            DetectionEngine::queue_event(GID_SSL, SSL_ALERT_HB_RESPONSE);
         }
     }
     if (sd->ssn_flags & SSL_ENCRYPTED_FLAG )
@@ -337,7 +338,7 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 
         if (!(new_flags & SSL_HEARTBEAT_SEEN))
         {
-            DisableDetect();
+            DetectionEngine::disable_content(p);
         }
 
         sd->ssn_flags |= new_flags;
@@ -356,14 +357,14 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
     if ( (SSL_IS_CHELLO(new_flags) && SSL_IS_CHELLO(sd->ssn_flags) && SSL_IS_SHELLO(sd->ssn_flags) )
             || (SSL_IS_CHELLO(new_flags) && SSL_IS_SHELLO(sd->ssn_flags) ))
     {
-        SnortEventqAdd(GID_SSL, SSL_INVALID_CLIENT_HELLO);
+        DetectionEngine::queue_event(GID_SSL, SSL_INVALID_CLIENT_HELLO);
     }
     else if (!(config->trustservers))
     {
         if ( (SSL_IS_SHELLO(new_flags) && !SSL_IS_CHELLO(sd->ssn_flags) ))
         {
             if (!(Stream::missed_packets(p->flow, SSN_DIR_FROM_CLIENT)))
-                SnortEventqAdd(GID_SSL, SSL_INVALID_SERVER_HELLO);
+                DetectionEngine::queue_event(GID_SSL, SSL_INVALID_SERVER_HELLO);
         }
     }
 

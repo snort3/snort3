@@ -43,6 +43,7 @@
 #endif
 
 #include "detection/detect.h"
+#include "detection/signature.h"
 #include "events/event.h"
 #include "events/event_wrapper.h"
 #include "filters/sfthreshold.h"
@@ -230,8 +231,6 @@ static int GenerateOpenPortEvent(Packet* p, uint32_t gen_id, uint32_t sig_id,
     uint32_t sig_rev, uint32_t cls, uint32_t pri,
     uint32_t event_ref, struct timeval* event_time, const char* msg)
 {
-    Event event;
-
     /*
     **  This means that we logged an open port, but we don't have a event
     **  reference for it, so we don't log a snort event.  We still keep
@@ -243,8 +242,10 @@ static int GenerateOpenPortEvent(Packet* p, uint32_t gen_id, uint32_t sig_id,
     /* reset the thresholding subsystem checks for this packet */
     sfthreshold_reset();
 
-    SetEvent(&event, gen_id, sig_id, sig_rev, cls, pri, event_ref);
-    //CallAlertFuncs(p,msg,NULL,&event);
+    SigInfo info;
+    Event event(info);
+
+    SetEvent(event, gen_id, sig_id, sig_rev, cls, pri, event_ref);
 
     event.ref_time.tv_sec  = event_time->tv_sec;
     event.ref_time.tv_usec = event_time->tv_usec;

@@ -16,17 +16,11 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/**
+/*
  * @file   event_wrapper.c
  * @author Chris Green <cmg@sourcefire.com>
  *
  * @date   Wed Jun 18 10:49:59 2003
- *
- * @brief  generate a snort event
- *
- * This is a wrapper around SetEvent,CallLogFuncs,CallEventFuncs
- *
- * Notes:
  *
  *   10/31/05 - Marc Norton
  *   Changes to support every event being controlled via a rule.
@@ -50,22 +44,19 @@
  * This function has been updated to find an otn and route the call to fpLogEvent
  * if possible.  This requires a rule be written for each decoder event,
  * and possibly some preporcessor events.  The bulk of eventing is handled vie the
- * SnortEventqAdd() and SnortEventLog() functions - which already  route the events to
- * the fpLogEvent()function.
+ * DetectionEngine::queue_event() and SnortEventLog() functions - which already
+ * route the events to the fpLogEvent()function.
  */
 uint32_t GenerateSnortEvent(Packet* p, uint32_t gid, uint32_t sid)
 {
-    OptTreeNode* otn;
-    RuleTreeNode* rtn;
+    OptTreeNode* otn = GetOTN(gid, sid);
 
-    otn = GetOTN(gid, sid);
-
-    if (otn == NULL)
+    if ( !otn )
         return 0;
 
-    rtn = getRuntimeRtnFromOtn(otn);
+    RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
 
-    if (rtn == NULL)
+    if ( !rtn )
         return 0;
 
     fpLogEvent(rtn, otn, p);

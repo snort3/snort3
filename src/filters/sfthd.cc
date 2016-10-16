@@ -645,10 +645,9 @@ int sfthd_create_threshold(
 }
 
 #ifdef THD_DEBUG
-static char* printIP(unsigned u)
+static char* printIP(unsigned u, char* buf, unsigned len)
 {
-    static THREAD_LOCAL char s[80];
-    SnortSnprintf(s,80,"%d.%d.%d.%d", (u>>24)&0xff, (u>>16)&0xff, (u>>8)&0xff, u&0xff);
+    SnortSnprintf(buf, len, "%d.%d.%d.%d", (u>>24)&0xff, (u>>16)&0xff, (u>>8)&0xff, u&0xff);
     return s;
 }
 
@@ -866,10 +865,12 @@ int sfthd_test_local(
     PolicyId policy_id = get_network_policy()->policy_id;
 
 #ifdef THD_DEBUG
-    printf("THD_DEBUG: Key THD_NODE IP=%s,",printIP((unsigned)sfthd_node->ip_address) );
-    printf(" MASK=%s\n",printIP((unsigned)sfthd_node->ip_mask) );
-    printf("THD_DEBUG:        PKT  SIP=%s\n",printIP((unsigned)sip) );
-    printf("THD_DEBUG:        PKT  DIP=%s\n",printIP((unsigned)dip) );
+    char buf[24];
+    printf("THD_DEBUG: Key THD_NODE IP=%s,",
+        printIP((unsigned)sfthd_node->ip_address), buf, sizeof(buf) );
+    printf(" MASK=%s\n", printIP((unsigned)sfthd_node->ip_mask, buf, sizeof(buf)) );
+    printf("THD_DEBUG:        PKT  SIP=%s\n", printIP((unsigned)sip, buf, sizeof(buf)) );
+    printf("THD_DEBUG:        PKT  DIP=%s\n", printIP((unsigned)dip, buf, sizeof(buf)) );
     fflush(stdout);
 #endif
 
@@ -963,10 +964,12 @@ static inline int sfthd_test_global(
     PolicyId policy_id = get_network_policy()->policy_id;
 
 #ifdef THD_DEBUG
-    printf("THD_DEBUG: Global THD_NODE IP=%s,",printIP((unsigned)sfthd_node->ip_address) );
-    printf(" MASK=%s\n",printIP((unsigned)sfthd_node->ip_mask) );
-    printf("THD_DEBUG:        PKT  SIP=%s\n",printIP((unsigned)sip) );
-    printf("THD_DEBUG:        PKT  DIP=%s\n",printIP((unsigned)dip) );
+    char buf[24];
+    printf("THD_DEBUG: Global THD_NODE IP=%s,",
+        printIP((unsigned)sfthd_node->ip_address, buf, sizeof(buf)) );
+    printf(" MASK=%s\n", printIP((unsigned)sfthd_node->ip_mask, buf, sizeof(buf)) );
+    printf("THD_DEBUG:        PKT  SIP=%s\n", printIP((unsigned)sip, buf, sizeof(buf)) );
+    printf("THD_DEBUG:        PKT  DIP=%s\n", printIP((unsigned)dip, buf, sizeof(buf)) );
     fflush(stdout);
 #endif
 

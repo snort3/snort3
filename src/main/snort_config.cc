@@ -28,6 +28,7 @@
 #include <syslog.h>
 
 #include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "detection/fp_config.h"
 #include "detection/fp_create.h"
 #include "filters/detection_filter.h"
@@ -902,7 +903,7 @@ void SnortConfig::set_alert_mode(const char* val)
         output = val;
 
     output_flags |= OUTPUT_FLAG__ALERTS;
-    Snort::set_main_hook(snort_inspect);
+    Snort::set_main_hook(DetectionEngine::inspect);
 }
 
 void SnortConfig::set_log_mode(const char* val)

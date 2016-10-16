@@ -538,7 +538,8 @@ bool DcerpcServer::init_net_created_table()
         table_api.close_table();
         for (auto type : transport)
         {
-            if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) || (type.compare("udp") == 0) ) 
+            if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) ||
+                (type.compare("udp") == 0) )
                 continue;
             tmpval = add_option_to_table(table_api,table_name[type], "reassemble_threshold",
                 std::stoi(val)) && tmpval;

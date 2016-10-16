@@ -34,7 +34,7 @@
 #include "dce_tcp.h"
 #include "dce_tcp_module.h"
 
-THREAD_LOCAL int co_reassembled = 0;
+static THREAD_LOCAL int co_reassembled = 0;
 
 /********************************************************************
  * Function: DCE2_CoInitTracker()
@@ -1204,28 +1204,19 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     if (*rtype == DCE2_RPKT_TYPE__NULL)
         return nullptr;
 
-    if (frag_data != nullptr)
+    if ( frag_data )
     {
         rpkt = DCE2_GetRpkt(sd->wire_pkt, *rtype, frag_data, frag_len);
-        if (rpkt == nullptr)
-        {
-            DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly buffer.\n");
-            return nullptr;
-        }
-        if (seg_data != nullptr)
+
+        if ( rpkt and seg_data )
         {
             /* If this fails, we'll still have the frag data */
             DCE2_AddDataToRpkt(rpkt, seg_data, seg_len);
         }
     }
-    else if (seg_data != nullptr)
+    else if ( seg_data )
     {
         rpkt = DCE2_GetRpkt(sd->wire_pkt, *rtype, seg_data, seg_len);
-        if (rpkt == nullptr)
-        {
-            DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly packet.\n");
-            return nullptr;
-        }
     }
 
     return rpkt;
@@ -1333,20 +1324,12 @@ static void DCE2_CoReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoRpkt
     if ( !rpkt )
         return;
 
-    /* Push packet onto stack */
-    if (DCE2_PushPkt(rpkt,sd) != DCE2_RET__SUCCESS)
-    {
-        DebugMessage(DEBUG_DCE_COMMON, "Failed to push packet onto packet stack.\n");
-        return;
-    }
     DCE2_CoSetRopts(sd, cot, co_hdr, rpkt);
 
     DebugMessage(DEBUG_DCE_COMMON, "Reassembled CO fragmented packet:\n");
     DCE2_PrintPktData(rpkt->data, rpkt->dsize);
 
     DCE2_Detect(sd);
-    DCE2_PopPkt(sd);
-
     co_reassembled = 1;
 }
 
@@ -2149,27 +2132,18 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
     switch (sd->trans)
     {
     case DCE2_TRANS_TYPE__SMB:
-        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__SMB_CO_SEG,
-            data_ptr, data_len);
-        if (rpkt == nullptr)
-        {
-            DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly packet.\n");
+        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__SMB_CO_SEG, data_ptr, data_len);
+
+        if ( !rpkt )
             return nullptr;
-        }
+
         DCE2_SmbSetRdata((DCE2_SmbSsnData*)sd, (uint8_t*)rpkt->data,
             (uint16_t)(rpkt->dsize - smb_hdr_len));
         break;
 
     case DCE2_TRANS_TYPE__TCP:
         // FIXIT-M add HTTP cases when it is ported
-        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__TCP_CO_SEG,
-            data_ptr, data_len);
-        if (rpkt == nullptr)
-        {
-            DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly packet.\n");
-            return nullptr;
-        }
-
+        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__TCP_CO_SEG, data_ptr, data_len);
         break;
 
     default:
@@ -2234,12 +2208,6 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
         return;
     }
 
-    if (DCE2_PushPkt(rpkt,sd) != DCE2_RET__SUCCESS)
-    {
-        DebugMessage(DEBUG_DCE_COMMON, "Failed to push packet onto packet stack.\n");
-        return;
-    }
-
     /* All is good.  Decode the pdu */
     DCE2_CoDecode(sd, cot, frag_ptr, frag_len);
 
@@ -2250,8 +2218,6 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
      * detection engine hasn't seen yet */
     if (!co_reassembled)
         DCE2_Detect(sd);
-
-    DCE2_PopPkt(sd);
 }
 
 static DCE2_Ret DCE2_HandleSegmentation(DCE2_Buffer* seg_buf, const uint8_t* data_ptr,

@@ -127,15 +127,14 @@ Mpse* MpseManager::get_search_engine(const char *type)
     {
         CHECK(se_ac_bnfa);
         mpse_api->init();
-        acf = mpse_api->ctor(snort_conf, nullptr, false, &s_agent);
+        acf = mpse_api->ctor(snort_conf, nullptr, &s_agent);
         CHECK(acf);
     }
 
     return acf;
 }
 
-Mpse* MpseManager::get_search_engine(
-    SnortConfig*, const MpseApi*, bool, const MpseAgent*)
+Mpse* MpseManager::get_search_engine(SnortConfig*, const MpseApi*, const MpseAgent*)
 {
     return MpseManager::get_search_engine("ac_bnfa");
 }
@@ -145,7 +144,7 @@ void MpseManager::delete_search_engine(Mpse*)
     mpse_api->dtor(acf);
 }
 
-Mpse::Mpse(const char*, bool) { }
+Mpse::Mpse(const char*) { }
 
 int Mpse::search(
     const unsigned char* T, int n, MpseMatch match,
@@ -161,14 +160,9 @@ int Mpse::search_all(
     return _search(T, n, match, context, current_state);
 }
 
-uint64_t Mpse::get_pattern_byte_count()
-{ return 0; }
-
-void Mpse::reset_pattern_byte_count()
-{ }
-
-int pattern_id = 0;
-int Test_SearchStrFound(void* /* id */, void* /* tree */, int /* index */, void* /* context */, void* /* neg_list */)
+static int pattern_id = 0;
+static int Test_SearchStrFound(
+    void* /*id*/, void* /*tree*/, int /*index*/, void* /*context*/, void* /*neg_list*/)
 {
     //printf("found str with id=%ld, index=%d\n", (long)id, index);
     return 0;

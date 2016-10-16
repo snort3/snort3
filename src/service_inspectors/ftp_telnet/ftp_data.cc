@@ -23,7 +23,7 @@
 
 #include "ftp_data.h"
 
-#include "detection/detection_util.h"
+#include "detection/detection_engine.h"
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
 #include "packet_io/active.h"
@@ -48,14 +48,12 @@ static THREAD_LOCAL SimpleStats fdstats;
 // implementation stuff
 //-------------------------------------------------------------------------
 
-// FIXIT-L seems like file_data should be const pointer.
-// Need to root this out and eliminate const-removing casts.
 static void FTPDataProcess(
     Packet* p, FTP_DATA_SESSION* data_ssn, uint8_t* file_data, uint16_t data_length)
 {
     int status;
 
-    set_file_data((uint8_t*)p->data, p->dsize);
+    set_file_data(p->data, p->dsize);
 
     if (data_ssn->packet_flags & FTPDATA_FLG_REST)
     {

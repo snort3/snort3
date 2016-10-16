@@ -72,13 +72,11 @@ static struct sig_map_s
 #define SIG_CHR_INDEX_MASK  (0x07)
 #define SIG_CHR_INDEX_SHIFT (0)
 
-static THREAD_LOCAL uint8_t File_Decomp_Buffer[DECODE_BLEN];
-
 void keep_decomp_lib() { }
 
 /* Look for possible sig at the current payload location.
    Do NOT beyond the current location (initial Next_In). */
-static fd_status_t Locate_Sig_Here(fd_session_p_t SessionPtr)
+static fd_status_t Locate_Sig_Here(fd_session_t* SessionPtr)
 {
     uint64_t Sig_Index, Char_Index;
 
@@ -181,7 +179,7 @@ static fd_status_t Locate_Sig_Here(fd_session_p_t SessionPtr)
     }
 }
 
-static fd_status_t Initialize_Decompression(fd_session_p_t SessionPtr)
+static fd_status_t Initialize_Decompression(fd_session_t* SessionPtr)
 {
     fd_status_t Ret_Code = File_Decomp_OK;
 
@@ -207,7 +205,7 @@ static fd_status_t Initialize_Decompression(fd_session_p_t SessionPtr)
     return( Ret_Code );
 }
 
-static fd_status_t Process_Decompression(fd_session_p_t SessionPtr)
+static fd_status_t Process_Decompression(fd_session_t* SessionPtr)
 {
     fd_status_t Ret_Code = File_Decomp_OK;
 
@@ -235,7 +233,7 @@ static fd_status_t Process_Decompression(fd_session_p_t SessionPtr)
 
 /* The caller provides Compr_Depth, Decompr_Depth and Modes in the session object.
    Based on the requested Modes, gear=up to initialize the potential decompressors. */
-fd_status_t File_Decomp_Init(fd_session_p_t SessionPtr)
+fd_status_t File_Decomp_Init(fd_session_t* SessionPtr)
 {
     int Sig;
 
@@ -268,54 +266,10 @@ fd_status_t File_Decomp_Init(fd_session_p_t SessionPtr)
     return( File_Decomp_OK );
 }
 
-/* Setup session to use internal decompression buffer. Set compr/decompr limits */
-// FIXIT-L OHI-only method eventually should be removed.
-fd_status_t File_Decomp_SetBuf(fd_session_p_t SessionPtr)
-{
-    if ( SessionPtr == NULL )
-        return( File_Decomp_Error );
-
-    SessionPtr->Next_Out = File_Decomp_Buffer;
-    SessionPtr->Avail_Out = sizeof(File_Decomp_Buffer);
-
-    /* If Compr/Decompr limits are set, then enforce then. */
-    if ( SessionPtr->Decompr_Depth > 0 )
-    {
-        uint32_t remainder;
-
-        if ( SessionPtr->Total_Out > SessionPtr->Decompr_Depth )
-            return( File_Decomp_Error );
-
-        /* Calc whats left in allowance */
-        remainder = (SessionPtr->Total_Out - SessionPtr->Decompr_Depth);
-
-        /* Use smaller of remainder or value provided */
-        SessionPtr->Avail_Out = (remainder < SessionPtr->Avail_Out) ?
-            remainder : SessionPtr->Avail_Out;
-    }
-
-    if ( SessionPtr->Compr_Depth > 0 )
-    {
-        uint32_t remainder;
-
-        if ( SessionPtr->Total_In > SessionPtr->Compr_Depth )
-            return( File_Decomp_Error );
-
-        remainder = (SessionPtr->Total_In - SessionPtr->Compr_Depth);
-
-        SessionPtr->Avail_In = (remainder < SessionPtr->Avail_In) ?
-            remainder : SessionPtr->Avail_In;
-    }
-
-    /* SessionPtr->Next_In is set by the caller to File_Decomp() */
-
-    return( File_Decomp_OK );
-}
-
 /* Returns a new session object from the MemPool */
-fd_session_p_t File_Decomp_New()
+fd_session_t* File_Decomp_New()
 {
-    fd_session_p_t New_Session = new fd_session_t;
+    fd_session_t* New_Session = new fd_session_t;
 
     New_Session->State = STATE_NEW;
     New_Session->Sig_State = 0;
@@ -332,7 +286,7 @@ fd_session_p_t File_Decomp_New()
 /* Process Decompression.  The session Next_In, Avail_In, Next_Out, Avail_Out MUST have been
    set by caller.
 */
-fd_status_t File_Decomp(fd_session_p_t SessionPtr)
+fd_status_t File_Decomp(fd_session_t* SessionPtr)
 {
     fd_status_t Return_Code;
 
@@ -366,7 +320,7 @@ fd_status_t File_Decomp(fd_session_p_t SessionPtr)
         return( File_Decomp_Error );
 }
 
-fd_status_t File_Decomp_End(fd_session_p_t SessionPtr)
+fd_status_t File_Decomp_End(fd_session_t* SessionPtr)
 {
     if ( SessionPtr == NULL )
         return( File_Decomp_Error );
@@ -386,7 +340,7 @@ fd_status_t File_Decomp_End(fd_session_p_t SessionPtr)
     return( File_Decomp_Error );
 }
 
-fd_status_t File_Decomp_Reset(fd_session_p_t SessionPtr)
+fd_status_t File_Decomp_Reset(fd_session_t* SessionPtr)
 {
     fd_status_t Ret_Code;
 
@@ -400,7 +354,7 @@ fd_status_t File_Decomp_Reset(fd_session_p_t SessionPtr)
     return( Ret_Code );
 }
 
-fd_status_t File_Decomp_StopFree(fd_session_p_t SessionPtr)
+fd_status_t File_Decomp_StopFree(fd_session_t* SessionPtr)
 {
     if ( SessionPtr == NULL )
         return( File_Decomp_Error );
@@ -411,7 +365,7 @@ fd_status_t File_Decomp_StopFree(fd_session_p_t SessionPtr)
     return( File_Decomp_OK );
 }
 
-void File_Decomp_Free(fd_session_p_t SessionPtr)
+void File_Decomp_Free(fd_session_t* SessionPtr)
 {
     assert(SessionPtr);
 
@@ -431,7 +385,7 @@ void File_Decomp_Free(fd_session_p_t SessionPtr)
     delete SessionPtr;
 }
 
-void File_Decomp_Alert(fd_session_p_t SessionPtr, int Event)
+void File_Decomp_Alert(fd_session_t* SessionPtr, int Event)
 {
     if ( (SessionPtr != NULL) && (SessionPtr->Alert_Callback != NULL) &&
         (SessionPtr->Alert_Context) )
@@ -446,54 +400,27 @@ void File_Decomp_Alert(fd_session_p_t SessionPtr, int Event)
 
 TEST_CASE("File_Decomp_StopFree-null", "[file_decomp]")
 {
-    REQUIRE((File_Decomp_StopFree((fd_session_p_t)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_StopFree((fd_session_t*)NULL) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_Reset-null", "[file_decomp]")
 {
-    REQUIRE((File_Decomp_Reset((fd_session_p_t)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_Reset((fd_session_t*)NULL) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_End-null", "[file_decomp]")
 {
-    REQUIRE((File_Decomp_End((fd_session_p_t)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_End((fd_session_t*)NULL) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_Init-null", "[file_decomp]")
 {
-    REQUIRE((File_Decomp_Init((fd_session_p_t)NULL) == File_Decomp_Error));
-}
-
-TEST_CASE("File_Decomp_SetBuf-null", "[file_decomp]")
-{
-    REQUIRE((File_Decomp_SetBuf((fd_session_p_t)NULL) == File_Decomp_Error));
-}
-
-TEST_CASE("File_Decomp_SetBuf-Decompr_Depth-error", "[file_decomp]")
-{
-    fd_session_p_t p_s = File_Decomp_New();
-
-    REQUIRE(p_s != nullptr);
-    p_s->Total_Out = 20;
-    p_s->Decompr_Depth = 10;
-    REQUIRE((File_Decomp_SetBuf(p_s) == File_Decomp_Error));
-    File_Decomp_Free(p_s);
-}
-
-TEST_CASE("File_Decomp_SetBuf-Compr_Depth-error", "[file_decomp]")
-{
-    fd_session_p_t p_s = File_Decomp_New();
-
-    REQUIRE(p_s != nullptr);
-    p_s->Total_In = 20;
-    p_s->Compr_Depth = 10;
-    REQUIRE((File_Decomp_SetBuf(p_s) == File_Decomp_Error));
-    File_Decomp_Free(p_s);
+    REQUIRE((File_Decomp_Init((fd_session_t*)NULL) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_New", "[file_decomp]")
 {
-    fd_session_p_t p_s = File_Decomp_New();
+    fd_session_t* p_s = File_Decomp_New();
 
     REQUIRE(p_s != nullptr);
     REQUIRE(p_s->State == STATE_NEW);
@@ -509,12 +436,12 @@ TEST_CASE("File_Decomp_New", "[file_decomp]")
 
 TEST_CASE("File_Decomp-null", "[file_decomp]")
 {
-    REQUIRE((File_Decomp((fd_session_p_t)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp((fd_session_t*)NULL) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp-not_active", "[file_decomp]")
 {
-    fd_session_p_t p_s = File_Decomp_New();
+    fd_session_t* p_s = File_Decomp_New();
 
     REQUIRE(p_s != nullptr);
     REQUIRE((File_Decomp(p_s) == File_Decomp_Error));
@@ -523,7 +450,7 @@ TEST_CASE("File_Decomp-not_active", "[file_decomp]")
 
 TEST_CASE("File_Decomp-complete_state", "[file_decomp]")
 {
-    fd_session_p_t p_s = File_Decomp_New();
+    fd_session_t* p_s = File_Decomp_New();
 
     REQUIRE(p_s != nullptr);
     p_s->State = STATE_COMPLETE;
@@ -533,7 +460,7 @@ TEST_CASE("File_Decomp-complete_state", "[file_decomp]")
 
 TEST_CASE("Initialize_Decompression-not_active", "[file_decomp]")
 {
-    fd_session_p_t p_s = File_Decomp_New();
+    fd_session_t* p_s = File_Decomp_New();
 
     REQUIRE(p_s != nullptr);
     REQUIRE((Initialize_Decompression(p_s) == File_Decomp_Error));
@@ -542,7 +469,7 @@ TEST_CASE("Initialize_Decompression-not_active", "[file_decomp]")
 
 TEST_CASE("Process_Decompression-not_active", "[file_decomp]")
 {
-    fd_session_p_t p_s = File_Decomp_New();
+    fd_session_t* p_s = File_Decomp_New();
 
     REQUIRE(p_s != nullptr);
     REQUIRE((Process_Decompression(p_s) == File_Decomp_Error));

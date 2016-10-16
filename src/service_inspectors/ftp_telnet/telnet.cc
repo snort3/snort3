@@ -256,19 +256,19 @@ void Telnet::eval(Packet* p)
 }
 
 bool Telnet::get_buf(
-    InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b)
+    InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
     if ( ibt != InspectionBuffer::IBT_ALT )
         return false;
 
-    b.data = get_telnet_buffer(b.len);
+    b.data = get_telnet_buffer(p, b.len);
 
     return (b.data != nullptr);
 }
 
-void Telnet::clear(Packet*)
+void Telnet::clear(Packet* p)
 {
-    reset_telnet_buffer();
+    reset_telnet_buffer(p);
 }
 
 //-------------------------------------------------------------------------

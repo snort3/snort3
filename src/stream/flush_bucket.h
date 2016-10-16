@@ -20,7 +20,10 @@
 #ifndef FLUSH_BUCKET_H
 #define FLUSH_BUCKET_H
 
+// FlushBuckets manage a set of flush points for stream_tcp.
+
 #include <cstdint>
+#include <vector>
 
 class FlushBucket
 {
@@ -39,27 +42,37 @@ protected:
 class ConstFlushBucket : public FlushBucket
 {
 public:
-    ConstFlushBucket(uint16_t sz)
-    { size = sz; }
+    ConstFlushBucket(uint16_t fp)
+    { pt = fp; }
 
     uint16_t get_next()
-    { return size; }
+    { return pt; }
 
 private:
-    uint16_t size;
+    uint16_t pt;
 };
 
-class StaticFlushBucket : public FlushBucket
+class VarFlushBucket : public FlushBucket
+{
+public:
+    uint16_t get_next() override;
+
+protected:
+    VarFlushBucket() { }
+    void set_next(uint16_t);
+
+private:
+    unsigned idx = 0;
+    std::vector<uint16_t> flush_points;
+};
+
+class StaticFlushBucket : public VarFlushBucket
 {
 public:
     StaticFlushBucket();
-    uint16_t get_next();
-
-private:
-    unsigned idx;
 };
 
-class RandomFlushBucket : public StaticFlushBucket
+class RandomFlushBucket : public VarFlushBucket
 {
 public:
     RandomFlushBucket();

@@ -25,6 +25,7 @@
 
 #include "modbus_decode.h"
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "protocols/packet.h"
 
@@ -234,7 +235,7 @@ static void ModbusCheckRequestLengths(modbus_session_data_t* session, Packet* p)
     }
 
     if (!check_passed)
-        SnortEventqAdd(GID_MODBUS, MODBUS_BAD_LENGTH);
+        DetectionEngine::queue_event(GID_MODBUS, MODBUS_BAD_LENGTH);
 }
 
 static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p)
@@ -362,7 +363,7 @@ static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p
     }
 
     if (!check_passed)
-        SnortEventqAdd(GID_MODBUS, MODBUS_BAD_LENGTH);
+        DetectionEngine::queue_event(GID_MODBUS, MODBUS_BAD_LENGTH);
 }
 
 static void ModbusCheckReservedFuncs(modbus_header_t* header, Packet* p)
@@ -381,7 +382,7 @@ static void ModbusCheckReservedFuncs(modbus_header_t* header, Packet* p)
         sub_func = ntohs(sub_func);
 
         if ((sub_func == 19) || (sub_func >= 21))
-            SnortEventqAdd(GID_MODBUS, MODBUS_RESERVED_FUNCTION);
+            DetectionEngine::queue_event(GID_MODBUS, MODBUS_RESERVED_FUNCTION);
     }
     break;
 
@@ -397,7 +398,7 @@ static void ModbusCheckReservedFuncs(modbus_header_t* header, Packet* p)
     case 0x7D:
     case 0x7E:
     case 0x7F:
-        SnortEventqAdd(GID_MODBUS, MODBUS_RESERVED_FUNCTION);
+        DetectionEngine::queue_event(GID_MODBUS, MODBUS_RESERVED_FUNCTION);
         break;
     }
 }
@@ -419,7 +420,7 @@ bool ModbusDecode(Packet* p)
        multiplexing with some other protocols over serial line. */
     if (header->protocol_id != MODBUS_PROTOCOL_ID)
     {
-        SnortEventqAdd(GID_MODBUS, MODBUS_BAD_PROTO_ID);
+        DetectionEngine::queue_event(GID_MODBUS, MODBUS_BAD_PROTO_ID);
         return false;
     }
 

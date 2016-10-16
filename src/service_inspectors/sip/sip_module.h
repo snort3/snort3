@@ -28,7 +28,7 @@
 
 #define GID_SIP 140
 
-#define SIP_EVENT_MAX_SESSIONS        1
+//#define SIP_EVENT_MAX_SESSIONS      1   // deprecated
 #define SIP_EVENT_EMPTY_REQUEST_URI   2
 #define SIP_EVENT_BAD_URI             3
 #define SIP_EVENT_EMPTY_CALL_ID       4

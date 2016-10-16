@@ -27,20 +27,15 @@
 
 using namespace std;
 
-// this is accumulated only for fast pattern
-// searches for the detection engine
-static THREAD_LOCAL uint64_t s_bcnt=0;
-
 THREAD_LOCAL ProfileStats mpsePerfStats;
 
 //-------------------------------------------------------------------------
 // base stuff
 //-------------------------------------------------------------------------
 
-Mpse::Mpse(const char* m, bool use_gc)
+Mpse::Mpse(const char* m)
 {
     method = m;
-    inc_global_counter = use_gc;
     verbose = 0;
 }
 
@@ -52,9 +47,6 @@ int Mpse::search(
 
     int ret = _search(T, n, match, context, current_state);
 
-    if ( inc_global_counter )
-        s_bcnt += n;
-
     return ret;
 }
 
@@ -63,15 +55,5 @@ int Mpse::search_all(
     void* context, int* current_state)
 {
     return _search(T, n, match, context, current_state);
-}
-
-uint64_t Mpse::get_pattern_byte_count()
-{
-    return s_bcnt;
-}
-
-void Mpse::reset_pattern_byte_count()
-{
-    s_bcnt = 0;
 }
 

@@ -28,17 +28,18 @@
 
 #include <arpa/inet.h>
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
 
 #include "gtp.h"
+#include "gtp_inspect.h"
 #include "gtp_module.h"
 
 #pragma pack(1)
-
 static inline void alert(int sid)
 {
-    SnortEventqAdd(GID_GTP, sid);
+    DetectionEngine::queue_event(GID_GTP, sid);
     gtp_stats.events++;
 }
 
@@ -64,16 +65,7 @@ struct GTP_IE_Hdr
     uint8_t type;
     uint16_t length;            /* length */
 };
-
 #pragma pack()
-
-/* This table stores all the information elements in a packet
- * To save memory, only one table for all packets, because we inspect
- * one packet at a time
- * The information in the table might from previous packet,
- * use msg_id to find out whether the information is current.
- * */
-THREAD_LOCAL GTP_IEData gtp_ies[MAX_GTP_IE_CODE + 1];
 
 #define GTP_HEADER_LEN_V0       (20)
 #define GTP_HEADER_LEN_V1       (12)
@@ -132,29 +124,8 @@ static void printInfoElements(GTP_IEData* info_elements, GTPMsg* msg)
 }
 #endif
 
-/********************************************************************
- * Function: gtp_processInfoElements()
- *
- * Process information elements
- *
- * Arguments:
- *  GTPMsg *: the GTP message
- *
- *  char *
- *      Pointer to the current position in the GTP message.
- *
- *  uint8_t *
- *      Pointer to the port array mask to set bits for the ports
- *      parsed.
- *
- * Returns:
- *  GTP_Ret
- *      true if we were able to successfully parse the
- *          port list.
- *      false if an error occurred in parsing the port list.
- *
- ********************************************************************/
-static int gtp_processInfoElements(GTPMsg* msg, const uint8_t* buff, uint16_t len)
+static int gtp_processInfoElements(
+    const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_t len)
 {
     uint8_t* start;
     uint8_t type;
@@ -169,15 +140,13 @@ static int gtp_processInfoElements(GTPMsg* msg, const uint8_t* buff, uint16_t le
 
     while ( unprocessed_len > 0)
     {
-        GTP_InfoElement* ie;
-        uint16_t length;
-
         type =  *start;
 
         if (previous_type  >  type)
             alert(GTP_EVENT_OUT_OF_ORDER_IE);
 
-        ie = &gtp_eval_config->infov[msg->version][type];
+        const GTP_InfoElement* ie = &config.infov[msg->version][type];
+        uint16_t length;
 
         if ( NULL == ie )
         {
@@ -453,7 +422,7 @@ static int gtp_parse_v2(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
  *  false
  *  true
  ********************************************************************/
-int gtp_parse(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
+int gtp_parse(const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_GTP, "Start parsing...\n"));
 
@@ -480,7 +449,7 @@ int gtp_parse(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
         return false;
     }
 
-    GTP_MsgType* msgType = &gtp_eval_config->msgv[msg->version][msg->msg_type];
+    const GTP_MsgType* msgType = &config.msgv[msg->version][msg->msg_type];
 
     if ( NULL == msgType )
     {
@@ -506,18 +475,17 @@ int gtp_parse(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
     switch (msg->version)
     {
     case 0: /*GTP v0*/
-
         status = gtp_parse_v0(msg, buff, gtp_len);
         break;
-    case 1: /*GTP v1*/
 
+    case 1: /*GTP v1*/
         status = gtp_parse_v1(msg, buff, gtp_len);
         break;
 
     case 2: /*GTP v2 */
         status = gtp_parse_v2(msg, buff, gtp_len);
-
         break;
+
     default:
         DEBUG_WRAP(DebugMessage(DEBUG_GTP, "Unknown protocol version.\n"); );
         return false;
@@ -526,29 +494,11 @@ int gtp_parse(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
     /*Parse information elements*/
     if ((msg->header_len < gtp_len)&& (true == status))
     {
-        msg->info_elements = gtp_ies;
+        msg->info_elements = get_infos();
         buff += msg->header_len;
-        status = gtp_processInfoElements(msg, buff, (uint16_t)(gtp_len - msg->header_len));
+        status = gtp_processInfoElements(
+            config, msg, buff, (uint16_t)(gtp_len - msg->header_len));
     }
     return status;
-}
-
-/********************************************************************
- * Function: gtp_cleanInfoElements()
- *
- * Clean up the shared information elements table
- *
- * Arguments:
- *       None
- *
- * Returns:
- *       None
- ********************************************************************/
-
-void gtp_cleanInfoElements()
-{
-    DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Cleaned total bytes %zu, length %zu.\n",
-        (MAX_GTP_IE_CODE + 1) * sizeof(GTP_IEData), sizeof(gtp_ies)); );
-    memset(gtp_ies, 0, sizeof(gtp_ies));
 }
 

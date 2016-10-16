@@ -21,6 +21,7 @@
 #ifndef MESSAGES_H
 #define MESSAGES_H
 
+#include <arpa/inet.h>
 #include <cstdio>
 #include <ctime>
 
@@ -86,8 +87,6 @@ private:
 SO_PUBLIC NORETURN void FatalError(const char*, ...) __attribute__((format (printf, 1, 2)));
 
 SO_PUBLIC void PrintPacketData(const uint8_t*, const uint32_t);
-struct SfIp;
-SO_PUBLIC char* ObfuscateIpToText(const SfIp*);
 
 void log_safec_error(const char*, void*, int);
 

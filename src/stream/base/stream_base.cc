@@ -22,9 +22,9 @@
 
 #include "flow/flow_control.h"
 #include "flow/prune_stats.h"
-#include "protocols/packet.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler_defs.h"
+#include "protocols/packet.h"
 
 #include "stream_ha.h"
 #include "stream_module.h"

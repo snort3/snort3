@@ -164,7 +164,7 @@ protected:
     Module(const char* name, const char* help, const Parameter*,
         bool is_list = false, Trace* = nullptr);
 
-    void sum_stats_helper(bool accumulate_now_stats, 
+    void sum_stats_helper(bool accumulate_now_stats,
         const CountType* const count_types);
 
 private:

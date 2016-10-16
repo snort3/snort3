@@ -16,20 +16,20 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// util_net.h author Chris Green <cmg@sourcefire.com>
 
 #ifndef UTIL_NET_H
 #define UTIL_NET_H
 
-// Miscellaneous "to string" functions.
-// Both functions return pointers to static buffers.
-// Be aware that subsequent calls will overwrite the memory that is pointed to
-
+#include <arpa/inet.h>
 #include "main/snort_types.h"
 
-struct SfIp;
+struct SfCidr;
+typedef char InetBuf[INET6_ADDRSTRLEN];
 
-SO_PUBLIC char* inet_ntoax(const SfIp*);
+SO_PUBLIC char* inet_ntoax(const struct SfIp*, InetBuf&);
+
+SO_PUBLIC char* ObfuscateIpToText(
+    const struct SfIp*, SfCidr& homenet, SfCidr& obfuscate_net, InetBuf&);
 
 #endif
 

@@ -23,7 +23,7 @@
 
 #include "file_session.h"
 
-#include "detection/detection_util.h"
+#include "detection/detection_engine.h"
 #include "file_api/file_flows.h"
 #include "packet_io/sfdaq.h"
 #include "profiler/profiler_defs.h"
@@ -34,7 +34,7 @@
 
 #define DECODE_PDU (DECODE_SOF | DECODE_EOF)
 
-THREAD_LOCAL ProfileStats file_ssn_stats;
+static THREAD_LOCAL ProfileStats file_ssn_stats;
 
 //-------------------------------------------------------------------------
 // FileSession methods
@@ -84,7 +84,7 @@ int FileSession::process(Packet* p)
         if (file_name)
             file_flows->set_file_name((uint8_t*)file_name, strlen(file_name));
     }
-    set_file_data((uint8_t*)p->data, p->dsize);
+    set_file_data(p->data, p->dsize);
 
     return 0;
 }

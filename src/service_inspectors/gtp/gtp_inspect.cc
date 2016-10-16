@@ -25,14 +25,14 @@
 
 #include "gtp_inspect.h"
 
+#include "detection/detection_engine.h"
+#include "detection/ips_context.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
 #include "gtp.h"
 #include "gtp_module.h"
-
-THREAD_LOCAL GTPConfig* gtp_eval_config = nullptr;
 
 //-------------------------------------------------------------------------
 // flow stuff
@@ -48,6 +48,42 @@ void GtpFlowData::init()
 GtpFlowData::GtpFlowData() : FlowData(flow_id)
 {
     memset(&ropts, 0, sizeof(ropts));
+}
+
+//-------------------------------------------------------------------------
+// ips context stuff
+//-------------------------------------------------------------------------
+
+static unsigned ips_id = 0;
+
+// This table stores all the information elements in a packet
+// To save memory, only one table for each ips context.
+//
+// The information in the table might from previous packet,
+// use msg_id to find out whether the information is current.
+
+class GtpContextData : public IpsContextData
+{
+public:
+    GtpContextData()
+    { memset(gtp_ies, 0, sizeof(gtp_ies)); }
+
+    static void init()
+    { ips_id = IpsContextData::get_ips_id(); }
+
+    GTP_IEData gtp_ies[MAX_GTP_IE_CODE + 1];
+};
+
+GTP_IEData* get_infos()
+{
+    GtpContextData* gcd = (GtpContextData*)DetectionEngine::get_data(ips_id);
+
+    if ( !gcd )
+    {
+        gcd = new GtpContextData;
+        DetectionEngine::set_data(ips_id, gcd);
+    }
+    return gcd->gtp_ies;
 }
 
 //-------------------------------------------------------------------------
@@ -93,8 +129,7 @@ void GtpInspect::eval(Packet* p)
     // preconditions - what we registered for
     assert(p->has_udp_data());
 
-    gtp_eval_config = &config;
-    GTPmain(p);
+    GTPmain(config, p);
 }
 
 //-------------------------------------------------------------------------
@@ -158,6 +193,7 @@ static void mod_dtor(Module* m)
 static void gtp_init()
 {
     GtpFlowData::init();
+    GtpContextData::init();
 }
 
 static void gtp_term()

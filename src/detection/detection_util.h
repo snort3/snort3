@@ -31,7 +31,7 @@
 
 struct DataPointer
 {
-    uint8_t* data;
+    const uint8_t* data;
     unsigned len;
 };
 
@@ -41,17 +41,12 @@ struct DataBuffer
     unsigned len;
 };
 
-extern THREAD_LOCAL DataPointer g_file_data;
-
 #define SetDetectLimit(pktPtr, altLen) \
 { \
     pktPtr->alt_dsize = altLen; \
 }
 
 #define IsLimitedDetect(pktPtr) (pktPtr->packet_flags & PKT_HTTP_DECODE)
-
-SO_PUBLIC DataPointer& get_file_data();
-SO_PUBLIC void set_file_data(uint8_t*, unsigned);
 
 // FIXIT-L event trace should be placed in its own files
 void EventTrace_Init();
@@ -63,9 +58,6 @@ inline int EventTrace_IsEnabled()
 {
     return ( snort_conf->event_trace_max > 0 );
 }
-
-inline void DetectReset()
-{ set_file_data(nullptr, 0); }
 
 #endif
 

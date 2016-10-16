@@ -24,9 +24,10 @@
 
 #include "dce_common.h"
 
-#include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "ips_options/extract.h"
 #include "log/messages.h"
+#include "main/snort_debug.h"
 #include "utils/safec.h"
 
 #include "dce_http_proxy_module.h"
@@ -36,8 +37,7 @@
 #include "dce_udp.h"
 
 THREAD_LOCAL int dce2_detected = 0;
-THREAD_LOCAL DCE2_CStack* dce2_pkt_stack = nullptr;
-THREAD_LOCAL int dce2_inspector_instances = 0;
+static THREAD_LOCAL bool using_rpkt = false;
 
 static const char* dce2_get_policy_name(DCE2_Policy policy)
 {
@@ -183,6 +183,7 @@ static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
 {
     if (sd->trans == DCE2_TRANS_TYPE__TCP)
     {
+        // FIXIT-M this doesn't look right; profile immediately goes out of scope
         Profile profile(dce2_tcp_pstat_detect);
     }
     else if (sd->trans == DCE2_TRANS_TYPE__SMB)
@@ -194,27 +195,26 @@ static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
         Profile profile(dce2_udp_pstat_detect);
     }
 
-    SnortEventqPush();
-    snort_detect(pkt);
-    SnortEventqPop();
+    DetectionEngine::detect(pkt);
 
     dce2_detected = 1;
 }
 
 void DCE2_Detect(DCE2_SsnData* sd)
 {
-    Packet* top_pkt;
-    top_pkt = (Packet*)DCE2_CStackTop(dce2_pkt_stack);
-    if (top_pkt == nullptr)
+    if ( using_rpkt )
     {
-        DebugMessage(DEBUG_DCE_COMMON,"No packet on top of stack.\n");
+        using_rpkt = false;
+        DetectionEngine de;
+        DCE2_Detect(sd);
         return;
     }
-    DebugMessage(DEBUG_DCE_COMMON, "Detecting ------------------------------------------------\n");
-    DebugMessage(DEBUG_DCE_COMMON, " Rule options:\n");
+    Packet* top_pkt = DetectionEngine::get_current_packet();
+
     DCE2_PrintRoptions(&sd->ropts);
     DebugMessage(DEBUG_DCE_COMMON, "Payload:\n");
     DCE2_PrintPktData(top_pkt->data, top_pkt->dsize);
+
     if (sd->ropts.stub_data != nullptr)
     {
         DebugMessage(DEBUG_DCE_COMMON,"\nStub data:\n");
@@ -308,72 +308,6 @@ bool DceEndianness::get_offset_endianness(int32_t offset, uint8_t& endian)
     return true;
 }
 
-static void dce_push_pkt_log(Packet* pkt,DCE2_SsnData* sd)
-{
-    if (sd->trans == DCE2_TRANS_TYPE__TCP)
-    {
-        Profile profile(dce2_tcp_pstat_log);
-    }
-    else if (sd->trans == DCE2_TRANS_TYPE__SMB)
-    {
-        Profile profile(dce2_smb_pstat_log);
-    }
-    else
-    {
-        Profile profile(dce2_udp_pstat_log);
-    }
-
-    SnortEventqPush();
-    SnortEventqLog(pkt);
-    SnortEventqReset();
-    SnortEventqPop();
-}
-
-// FIXIT-L revisit packet stack since it may not be needed
-
-DCE2_Ret DCE2_PushPkt(Packet* p,DCE2_SsnData* sd)
-{
-    Packet* top_pkt;
-    top_pkt = (Packet*)DCE2_CStackTop(dce2_pkt_stack);
-
-    if (top_pkt != nullptr)
-    {
-        dce_push_pkt_log(top_pkt,sd);
-    }
-    if (DCE2_CStackPush(dce2_pkt_stack, (void*)p) != DCE2_RET__SUCCESS)
-        return DCE2_RET__ERROR;
-
-    return DCE2_RET__SUCCESS;
-}
-
-void DCE2_PopPkt(DCE2_SsnData* sd)
-{
-    Packet* pop_pkt = (Packet*)DCE2_CStackPop(dce2_pkt_stack);
-
-    if (sd->trans == DCE2_TRANS_TYPE__TCP)
-    {
-        Profile profile(dce2_tcp_pstat_log);
-    }
-    else if (sd->trans == DCE2_TRANS_TYPE__UDP)
-    {
-        Profile profile(dce2_udp_pstat_log);
-    }
-    else
-    {
-        Profile profile(dce2_smb_pstat_log);
-    }
-
-    if (pop_pkt == nullptr)
-    {
-        DebugMessage(DEBUG_DCE_COMMON, "No packet to pop off stack.\n");
-        return;
-    }
-    SnortEventqPush();
-    SnortEventqLog(pop_pkt);
-    SnortEventqReset();
-    SnortEventqPop();
-}
-
 uint16_t DCE2_GetRpktMaxData(DCE2_SsnData* sd, DCE2_RpktType rtype)
 {
     Packet* p = sd->wire_pkt;
@@ -412,15 +346,12 @@ uint16_t DCE2_GetRpktMaxData(DCE2_SsnData* sd, DCE2_RpktType rtype)
         DebugFormat(DEBUG_DCE_COMMON,"Invalid reassembly packet type: %d\n",rtype);
         return 0;
     }
-    return (DCE2_REASSEMBLY_BUF_SIZE - overhead);
+    return (Packet::max_dsize - overhead);
 }
 
 static void dce2_fill_rpkt_info(Packet* rpkt, Packet* p)
 {
-    DceEndianness* endianness = (DceEndianness*)rpkt->endianness;
-    rpkt->reset();
-    rpkt->endianness = (Endianness*)endianness;
-    ((DceEndianness*)rpkt->endianness)->reset();
+    rpkt->endianness = new DceEndianness();
     rpkt->pkth = p->pkth;
     rpkt->ptrs = p->ptrs;
     rpkt->flow = p->flow;
@@ -433,20 +364,17 @@ static void dce2_fill_rpkt_info(Packet* rpkt, Packet* p)
 Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
     const uint8_t* data, uint32_t data_len)
 {
-    Packet* rpkt = nullptr;
+    Packet* rpkt = DetectionEngine::set_packet();
+    dce2_fill_rpkt_info(rpkt, p);
     uint16_t data_overhead = 0;
 
     switch (rpkt_type)
     {
     case DCE2_RPKT_TYPE__SMB_SEG:
-        rpkt = dce2_smb_rpkt[rpkt_type - DCE2_SMB_RPKT_TYPE_START];
-        dce2_fill_rpkt_info(rpkt, p);
         rpkt->pseudo_type = PSEUDO_PKT_SMB_SEG;
         break;
 
     case DCE2_RPKT_TYPE__SMB_TRANS:
-        rpkt = dce2_smb_rpkt[rpkt_type - DCE2_SMB_RPKT_TYPE_START];
-        dce2_fill_rpkt_info(rpkt, p);
         rpkt->pseudo_type = PSEUDO_PKT_SMB_TRANS;
         if (DCE2_SsnFromClient(p))
         {
@@ -463,8 +391,6 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
         break;
 
     case DCE2_RPKT_TYPE__SMB_CO_SEG:
-        rpkt = dce2_smb_rpkt[rpkt_type - DCE2_SMB_RPKT_TYPE_START];
-        dce2_fill_rpkt_info(rpkt, p);
         rpkt->pseudo_type = PSEUDO_PKT_DCE_SEG;
         if (DCE2_SsnFromClient(p))
         {
@@ -481,8 +407,6 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
         break;
 
     case DCE2_RPKT_TYPE__SMB_CO_FRAG:
-        rpkt = dce2_smb_rpkt[rpkt_type - DCE2_SMB_RPKT_TYPE_START];
-        dce2_fill_rpkt_info(rpkt, p);
         rpkt->pseudo_type = PSEUDO_PKT_DCE_FRAG;
         if (DCE2_SsnFromClient(p))
         {
@@ -503,8 +427,6 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
         break;
 
     case DCE2_RPKT_TYPE__UDP_CL_FRAG:
-        rpkt = dce2_udp_rpkt;
-        dce2_fill_rpkt_info(rpkt, p);
         rpkt->pseudo_type = PSEUDO_PKT_DCE_FRAG;
         data_overhead = DCE2_MOCK_HDR_LEN__CL;
         memset((void*)rpkt->data, 0, data_overhead);
@@ -513,8 +435,6 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
 
     case DCE2_RPKT_TYPE__TCP_CO_SEG:
     case DCE2_RPKT_TYPE__TCP_CO_FRAG:
-        rpkt = dce2_tcp_rpkt[rpkt_type - DCE2_TCP_RPKT_TYPE_START];
-        dce2_fill_rpkt_info(rpkt, p);
         if (rpkt_type == DCE2_RPKT_TYPE__TCP_CO_FRAG)
         {
             rpkt->pseudo_type = PSEUDO_PKT_DCE_FRAG;
@@ -539,19 +459,26 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
 
     default:
         DebugFormat(DEBUG_DCE_COMMON, "Invalid reassembly packet type: %d\n",rpkt_type);
+        assert(false);
         return nullptr;
     }
 
-    if ((data_overhead + data_len) > DCE2_REASSEMBLY_BUF_SIZE)
-        data_len -= (data_overhead + data_len) - DCE2_REASSEMBLY_BUF_SIZE;
+    if ((data_overhead + data_len) > Packet::max_dsize)
+        data_len -= (data_overhead + data_len) - Packet::max_dsize;
 
-    if (data_len > DCE2_REASSEMBLY_BUF_SIZE - data_overhead)
+    if (data_len > Packet::max_dsize - data_overhead)
+    {
+        DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly packet.\n");
+        delete rpkt->endianness;
+        rpkt->endianness = nullptr;
         return nullptr;
+    }
 
     memcpy_s((void*)(rpkt->data + data_overhead),
-        DCE2_REASSEMBLY_BUF_SIZE - data_overhead, data, data_len);
+        Packet::max_dsize - data_overhead, data, data_len);
 
     rpkt->dsize = data_len + data_overhead;
+    using_rpkt = true;
     return rpkt;
 }
 
@@ -564,16 +491,16 @@ DCE2_Ret DCE2_AddDataToRpkt(Packet* rpkt, const uint8_t* data, uint32_t data_len
         return DCE2_RET__ERROR;
 
     // FIXIT-L PORT_IF_NEEDED packet size and hdr check
-    const uint8_t* pkt_data_end = rpkt->data + DCE2_REASSEMBLY_BUF_SIZE;
+    const uint8_t* pkt_data_end = rpkt->data + Packet::max_dsize;
     const uint8_t* payload_end = rpkt->data + rpkt->dsize;
 
     if ((payload_end + data_len) > pkt_data_end)
         data_len = pkt_data_end - payload_end;
 
-    if (data_len > DCE2_REASSEMBLY_BUF_SIZE - rpkt->dsize)
+    if (data_len > Packet::max_dsize - rpkt->dsize)
         return DCE2_RET__ERROR;
 
-    memcpy_s((void*)(payload_end), DCE2_REASSEMBLY_BUF_SIZE - rpkt->dsize,
+    memcpy_s((void*)(payload_end), Packet::max_dsize - rpkt->dsize,
         data, data_len);
 
     rpkt->dsize += (uint16_t)data_len;

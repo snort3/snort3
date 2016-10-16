@@ -22,6 +22,7 @@
 
 #include "smtp.h"
 
+#include "detection/detection_engine.h"
 #include "detection/detection_util.h"
 #include "log/messages.h"
 #include "log/unified2.h"
@@ -149,9 +150,9 @@ const SMTPAuth smtp_auth_no_ctx[] =
 SearchTool* smtp_resp_search_mpse = nullptr;
 
 SMTPSearch smtp_resp_search[RESP_LAST];
-THREAD_LOCAL const SMTPSearch* smtp_current_search = NULL;
-THREAD_LOCAL SMTPSearchInfo smtp_search_info;
 
+static THREAD_LOCAL const SMTPSearch* smtp_current_search = NULL;
+static THREAD_LOCAL SMTPSearchInfo smtp_search_info;
 
 const PegInfo smtp_peg_names[] =
 {
@@ -170,7 +171,6 @@ const PegInfo smtp_peg_names[] =
 
     { nullptr, nullptr }
 };
-
 
 static void snort_smtp(SMTP_PROTO_CONF* GlobalConf, Packet* p);
 static void SMTP_ResetState(Flow*);
@@ -759,16 +759,16 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
 
             if (smtp_ssn->state != STATE_AUTH)
             {
-                SnortEventqAdd(GID_SMTP,SMTP_UNKNOWN_CMD);
+                DetectionEngine::queue_event(GID_SMTP,SMTP_UNKNOWN_CMD);
 
                 if (alert_long_command_line)
-                    SnortEventqAdd(GID_SMTP, SMTP_COMMAND_OVERFLOW);
+                    DetectionEngine::queue_event(GID_SMTP, SMTP_COMMAND_OVERFLOW);
             }
 
             /* if normalizing, copy line to alt buffer */
             if (smtp_normalizing)
             {
-                ret = SMTP_CopyToAltBuffer(ptr, eol - ptr);
+                ret = SMTP_CopyToAltBuffer(p, ptr, eol - ptr);
                 if (ret == -1)
                     return NULL;
             }
@@ -784,18 +784,18 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
     {
         if (cmd_line_len > config->cmd_config[smtp_search_info.id].max_line_len)
         {
-            SnortEventqAdd(GID_SMTP, SMTP_SPECIFIC_CMD_OVERFLOW);
+            DetectionEngine::queue_event(GID_SMTP, SMTP_SPECIFIC_CMD_OVERFLOW);
         }
     }
     else if (alert_long_command_line)
     {
-        SnortEventqAdd(GID_SMTP, SMTP_COMMAND_OVERFLOW);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_COMMAND_OVERFLOW);
     }
 
     if (config->cmd_config[smtp_search_info.id].alert)
     {
         /* Are we alerting on this command? */
-        SnortEventqAdd(GID_SMTP, SMTP_ILLEGAL_CMD);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_ILLEGAL_CMD);
     }
 
     switch (smtp_search_info.id)
@@ -856,7 +856,7 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
             eolm)
             && (smtp_ssn->state_flags & SMTP_FLAG_ABORT))
         {
-            SnortEventqAdd(GID_SMTP, SMTP_AUTH_ABORT_AUTH);
+            DetectionEngine::queue_event(GID_SMTP, SMTP_AUTH_ABORT_AUTH);
         }
         smtp_ssn->state_flags &= ~(SMTP_FLAG_ABORT);
         break;
@@ -987,7 +987,7 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
     }
     else if (smtp_normalizing) /* Already normalizing */
     {
-        ret = SMTP_CopyToAltBuffer(ptr, eol - ptr);
+        ret = SMTP_CopyToAltBuffer(p, ptr, eol - ptr);
         if (ret == -1)
             return NULL;
     }
@@ -1033,7 +1033,7 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
             break;
         case STATE_XEXCH50:
             if (smtp_normalizing)
-                SMTP_CopyToAltBuffer(ptr, end - ptr);
+                SMTP_CopyToAltBuffer(p, ptr, end - ptr);
             if (smtp_is_data_end (p->flow))
                 smtp_ssn->state = STATE_COMMAND;
             return;
@@ -1051,13 +1051,6 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
             return;
         }
     }
-
-#ifdef DEBUG_MSGS
-    if (smtp_normalizing)
-    {
-        DebugFormat(DEBUG_SMTP, "Normalized data\n%s\n", SMTP_PrintBuffer(p));
-    }
-#endif
 }
 
 /*
@@ -1190,7 +1183,7 @@ static void SMTP_ProcessServerPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
         if ((config->max_response_line_len != 0) &&
             (resp_line_len > config->max_response_line_len))
         {
-            SnortEventqAdd(GID_SMTP, SMTP_RESPONSE_OVERFLOW);
+            DetectionEngine::queue_event(GID_SMTP, SMTP_RESPONSE_OVERFLOW);
         }
 
         ptr = eol;
@@ -1227,7 +1220,7 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
     }
 
     pkt_dir = SMTP_Setup(p, smtp_ssn);
-    SMTP_ResetAltBuffer();
+    SMTP_ResetAltBuffer(p);
 
     /* reset normalization stuff */
     smtp_normalizing = false;
@@ -1318,14 +1311,6 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
                 smtp_ssn->session_flags &= ~SMTP_FLAG_GOT_NON_REBUILT;
             }
 
-#ifdef DEBUG_MSGS
-            /* Interesting to see how often packets are rebuilt */
-            DebugFormat(DEBUG_SMTP, "Payload: %s\n%s\n",
-                (p->packet_flags & PKT_REBUILT_STREAM) ?
-                "reassembled" : "not reassembled",
-                SMTP_PrintBuffer(p));
-#endif
-
             SMTP_ProcessClientPacket(config, p, smtp_ssn);
         }
     }
@@ -1403,12 +1388,12 @@ int SmtpMime::handle_header_line(const uint8_t* ptr, const uint8_t* eol,
     header_line_len = eol - ptr;
 
     if (max_header_len)
-        SnortEventqAdd(GID_SMTP, SMTP_HEADER_NAME_OVERFLOW);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_HEADER_NAME_OVERFLOW);
 
     if ((config->max_header_line_len != 0) &&
         (header_line_len > config->max_header_line_len))
     {
-        SnortEventqAdd(GID_SMTP, SMTP_DATA_HDR_OVERFLOW);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_DATA_HDR_OVERFLOW);
 
     }
 
@@ -1416,7 +1401,7 @@ int SmtpMime::handle_header_line(const uint8_t* ptr, const uint8_t* eol,
      * currently the code does not normalize headers */
     if (smtp_normalizing)
     {
-        ret = SMTP_CopyToAltBuffer(ptr, eol - ptr);
+        ret = SMTP_CopyToAltBuffer(nullptr, ptr, eol - ptr);
         if (ret == -1)
             return (-1);
     }
@@ -1440,12 +1425,12 @@ int SmtpMime::normalize_data(const uint8_t* ptr, const uint8_t* data_end)
      * ignoring data, copy all of the data into the alt buffer */
     /*if (config->decode_conf.ignore_data && !smtp_normalizing)
     {
-        return SMTP_CopyToAltBuffer(p->data, ptr - p->data);
+        return SMTP_CopyToAltBuffer(nullptr, p->data, ptr - p->data);
     }
     else */
     if (!config->decode_conf.is_ignore_data() && smtp_normalizing)
     {
-        return SMTP_CopyToAltBuffer(ptr, data_end - ptr);
+        return SMTP_CopyToAltBuffer(nullptr, ptr, data_end - ptr);
     }
 
     return 0;
@@ -1456,13 +1441,13 @@ void SmtpMime::decode_alert()
     switch ( decode_state->get_decode_type() )
     {
     case DECODE_B64:
-        SnortEventqAdd(GID_SMTP, SMTP_B64_DECODING_FAILED);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_B64_DECODING_FAILED);
         break;
     case DECODE_QP:
-        SnortEventqAdd(GID_SMTP, SMTP_QP_DECODING_FAILED);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_QP_DECODING_FAILED);
         break;
     case DECODE_UU:
-        SnortEventqAdd(GID_SMTP, SMTP_UU_DECODING_FAILED);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_UU_DECODING_FAILED);
         break;
 
     default:
@@ -1553,19 +1538,19 @@ void Smtp::eval(Packet* p)
 }
 
 bool Smtp::get_buf(
-    InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b)
+    InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
     if ( ibt != InspectionBuffer::IBT_ALT )
         return false;
 
-    b.data = SMTP_GetAltBuffer(b.len);
+    b.data = SMTP_GetAltBuffer(p, b.len);
 
     return (b.data != nullptr);
 }
 
-void Smtp::clear(Packet*)
+void Smtp::clear(Packet* p)
 {
-    SMTP_ResetAltBuffer();
+    SMTP_ResetAltBuffer(p);
 }
 
 void Smtp::ProcessSmtpCmdsList(const SmtpCmd* sc)

@@ -26,6 +26,7 @@
 #include "reputation_inspect.h"
 
 #include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
 #include "packet_io/active.h"
@@ -296,10 +297,10 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
 
     else if (BLACKLISTED == decision)
     {
-        SnortEventqAdd(GID_REPUTATION, REPUTATION_EVENT_BLACKLIST);
+        DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_BLACKLIST);
         Active::drop_packet(p, true);
         // disable all preproc analysis and detection for this packet
-        DisableInspection();
+        DetectionEngine::disable_all(p);
         p->disable_inspect = true;
         if (p->flow)
         {
@@ -311,14 +312,14 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
     }
     else if (MONITORED == decision)
     {
-        SnortEventqAdd(GID_REPUTATION, REPUTATION_EVENT_MONITOR);
+        DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_MONITOR);
         reputationstats.monitored++;
     }
     else if (WHITELISTED_TRUST == decision)
     {
-        SnortEventqAdd(GID_REPUTATION, REPUTATION_EVENT_WHITELIST);
+        DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_WHITELIST);
         p->packet_flags |= PKT_IGNORE;
-        DisableInspection();
+        DetectionEngine::disable_all(p);
         p->disable_inspect = true;
         if (p->flow)
         {

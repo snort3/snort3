@@ -26,6 +26,7 @@
 
 #include "modbus_paf.h"
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 
 #include "modbus.h"
@@ -78,7 +79,7 @@ StreamSplitter::Status ModbusSplitter::scan(
             if ((modbus_length < MODBUS_MIN_HDR_LEN) ||
                 (modbus_length > MODBUS_MAX_HDR_LEN))
             {
-                SnortEventqAdd(GID_MODBUS, MODBUS_BAD_LENGTH);
+                DetectionEngine::queue_event(GID_MODBUS, MODBUS_BAD_LENGTH);
             }
 
             *fp = modbus_length + bytes_processed;

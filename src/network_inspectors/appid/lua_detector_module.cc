@@ -45,8 +45,8 @@
 #define AVG_LUA_TRACKER_SIZE_IN_BYTES 740
 #define MAX_MEMORY_FOR_LUA_DETECTORS (512 * 1024 * 1024)
 
-THREAD_LOCAL LuaDetectorManager* lua_detector_mgr;
-THREAD_LOCAL SF_LIST allocated_detector_flow_list;
+static THREAD_LOCAL LuaDetectorManager* lua_detector_mgr;
+static THREAD_LOCAL SF_LIST allocated_detector_flow_list;
 
 static inline bool get_lua_field(lua_State* L, int table, const char* field, std::string& out)
 {

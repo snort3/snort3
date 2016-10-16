@@ -24,7 +24,11 @@
 // this is for builtin module initialization.
 // ideally, modules.cc would be refactored and several files.
 
+#include "main/snort_debug.h"
+
 void module_init();
+
+extern Trace TRACE_NAME(detection);  // FIXIT-L refactor detection module out
 
 #endif
 

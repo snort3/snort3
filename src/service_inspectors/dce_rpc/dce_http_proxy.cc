@@ -63,7 +63,7 @@ void DceHttpProxy::clear(Packet* p)
             {
                 dce_http_proxy_stats.http_proxy_sessions++;
                 dce_http_bind(flow, "dce_tcp");
-            }   
+            }
             else
                 dce_http_proxy_stats.http_proxy_session_failures++;
         }

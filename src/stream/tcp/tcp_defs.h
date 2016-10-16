@@ -145,7 +145,5 @@ enum FlushPolicy
     STREAM_FLPOLICY_ON_DATA, /* protocol aware ips */
 };
 
-extern THREAD_LOCAL Packet* s5_pkt;
-
 #endif
 

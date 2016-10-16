@@ -69,6 +69,12 @@ static const Parameter detection_params[] =
     { "asn1", Parameter::PT_INT, "1:", "256",
       "maximum decode nodes" },
 
+    { "offload_limit", Parameter::PT_INT, "0:", "99999",
+      "minimum sizeof PDU to offload fast pattern search (defaults to disabled)" },
+
+    { "offload_threads", Parameter::PT_INT, "0:", "0",
+      "maximum number of simultaneous offloads (defaults to disabled)" },
+
     { "pcre_enable", Parameter::PT_BOOL, nullptr, "true",
       "disable pcre pattern matching" },
 
@@ -88,7 +94,8 @@ static const Parameter detection_params[] =
 class DetectionModule : public Module
 {
 public:
-    DetectionModule() : Module("detection", detection_help, detection_params) {}
+    DetectionModule() :
+        Module("detection", detection_help, detection_params, false, &TRACE_NAME(detection)) {}
     bool set(const char*, Value&, SnortConfig*) override;
 
     const PegInfo* get_pegs() const override
@@ -98,10 +105,16 @@ public:
     { return (PegCount*) &pc; }
 };
 
-bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
+bool DetectionModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
     if ( v.is("asn1") )
         sc->asn1_mem = v.get_long();
+
+    else if ( v.is("offload_limit") )
+        sc->offload_limit = v.get_long();
+
+    else if ( v.is("offload_threads") )
+        sc->offload_threads = v.get_long();
 
     else if ( v.is("pcre_enable") )
         v.update_mask(sc->run_flags, RUN_FLAG__NO_PCRE, true);
@@ -113,7 +126,7 @@ bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
         sc->pcre_match_limit_recursion = v.get_long();
 
     else
-        return false;
+        return Module::set(fqn, v, sc);
 
     return true;
 }

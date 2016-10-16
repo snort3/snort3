@@ -63,12 +63,29 @@ uint16_t FlushBucket::get_size()
 }
 
 //-------------------------------------------------------------------------
-// thread local data
+// var flush points
 //-------------------------------------------------------------------------
 
-#define RAND_FLUSH_POINTS 64
+void VarFlushBucket::set_next(uint16_t pt)
+{
+    flush_points.push_back(pt);
+}
 
-static THREAD_LOCAL uint8_t flush_points[RAND_FLUSH_POINTS] =
+uint16_t VarFlushBucket::get_next()
+{
+    if ( idx >= flush_points.size() )
+        idx = 0;
+
+    return flush_points[idx++];
+}
+
+//-------------------------------------------------------------------------
+// static flush points
+//-------------------------------------------------------------------------
+
+#define NUM_FLUSH_POINTS 64
+
+static const uint8_t fixed_points[NUM_FLUSH_POINTS] =
 {
     128, 217, 189, 130, 240, 221, 134, 129,
     250, 232, 141, 131, 144, 177, 201, 130,
@@ -80,31 +97,22 @@ static THREAD_LOCAL uint8_t flush_points[RAND_FLUSH_POINTS] =
     201, 142, 153, 187, 173, 199, 143, 201
 };
 
-//-------------------------------------------------------------------------
-// sub classes
-//-------------------------------------------------------------------------
-
 StaticFlushBucket::StaticFlushBucket()
 {
-    idx = 0;
+    for ( int i = 0; i < NUM_FLUSH_POINTS; i++ )
+        set_next(fixed_points[i]);
 }
 
-uint16_t StaticFlushBucket::get_next()
-{
-    if ( idx >= RAND_FLUSH_POINTS )
-            idx = 0;
-
-    return flush_points[idx++];
-}
+//-------------------------------------------------------------------------
+// random flush points
+//-------------------------------------------------------------------------
 
 RandomFlushBucket::RandomFlushBucket()
 {
     std::default_random_engine generator;
     std::uniform_int_distribution<int> distribution(128, 255);
 
-    for ( int i = 0; i < RAND_FLUSH_POINTS; i++ )
-    {
-        flush_points[i] = (uint8_t)distribution(generator);
-    }
+    for ( int i = 0; i < NUM_FLUSH_POINTS; i++ )
+        set_next((uint16_t)distribution(generator));
 }
 

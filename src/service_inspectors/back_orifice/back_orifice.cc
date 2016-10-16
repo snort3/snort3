@@ -109,6 +109,7 @@
 #include "config.h"
 #endif
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
@@ -315,7 +316,6 @@ static int BoGetDirection(Packet* p, const char* pkt_data)
     uint32_t id = 0;
     uint32_t l, i;
     char type;
-    static THREAD_LOCAL char buf1[BO_BUF_SIZE];
     char plaintext;
 
     /* Check for the default port on either side */
@@ -355,7 +355,7 @@ static int BoGetDirection(Packet* p, const char* pkt_data)
 
     if ( len >= BO_BUF_ATTACK_SIZE )
     {
-        SnortEventqAdd(GID_BO, BO_SNORT_BUFFER_ATTACK);
+        DetectionEngine::queue_event(GID_BO, BO_SNORT_BUFFER_ATTACK);
         return BO_FROM_UNKNOWN;
     }
 
@@ -407,14 +407,14 @@ static int BoGetDirection(Packet* p, const char* pkt_data)
         {
             return BO_FROM_CLIENT;
         }
+        char buf1[BO_BUF_SIZE];
 
         for (i=0; i<len; i++ ) /* start at 0 to advance the BoRand() function properly */
         {
             buf1[i] = (char)(pkt_data[i] ^ BoRand());
+
             if ( buf1[i] == 0 )
-            {
                 return BO_FROM_UNKNOWN;
-            }
         }
 
         if ( ( buf1[3] == 'P' || buf1[3] == 'p' ) &&
@@ -519,18 +519,18 @@ void BackOrifice::eval(Packet* p)
 
             if ( bo_direction == BO_FROM_CLIENT )
             {
-                SnortEventqAdd(GID_BO, BO_CLIENT_TRAFFIC_DETECT);
+                DetectionEngine::queue_event(GID_BO, BO_CLIENT_TRAFFIC_DETECT);
                 DebugMessage(DEBUG_INSPECTOR, "Client packet\n");
             }
 
             else if ( bo_direction == BO_FROM_SERVER )
             {
-                SnortEventqAdd(GID_BO, BO_SERVER_TRAFFIC_DETECT);
+                DetectionEngine::queue_event(GID_BO, BO_SERVER_TRAFFIC_DETECT);
                 DebugMessage(DEBUG_INSPECTOR, "Server packet\n");
             }
 
             else
-                SnortEventqAdd(GID_BO, BO_TRAFFIC_DETECT);
+                DetectionEngine::queue_event(GID_BO, BO_TRAFFIC_DETECT);
         }
     }
 }

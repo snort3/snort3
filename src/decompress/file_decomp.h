@@ -133,9 +133,6 @@ struct fd_session_t
     uint8_t State;       // main state machine
 };
 
-// FIXIT-L don't obfuscate pointers
-typedef fd_session_t* fd_session_p_t;
-
 /* Macros */
 
 /* Macros used to sync my decompression context with that
@@ -163,7 +160,7 @@ typedef fd_session_t* fd_session_p_t;
 /* Inline Functions */
 
 /* If available, look at the next available byte in the input queue */
-inline bool Peek_1(fd_session_p_t SessionPtr, uint8_t* c)
+inline bool Peek_1(fd_session_t* SessionPtr, uint8_t* c)
 {
     if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
     {
@@ -175,7 +172,7 @@ inline bool Peek_1(fd_session_p_t SessionPtr, uint8_t* c)
 }
 
 /* If available, get a byte from the input queue */
-inline bool Get_1(fd_session_p_t SessionPtr, uint8_t* c)
+inline bool Get_1(fd_session_t* SessionPtr, uint8_t* c)
 {
     if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
     {
@@ -189,8 +186,8 @@ inline bool Get_1(fd_session_p_t SessionPtr, uint8_t* c)
 }
 
 /* If available, get N bytes from the input queue.  All N must be
-   available for this call to succeed. */
-inline bool Get_N(fd_session_p_t SessionPtr, uint8_t** c, uint16_t N)
+   availble for this call to succeed. */
+inline bool Get_N(fd_session_t* SessionPtr, uint8_t** c, uint16_t N)
 {
     if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In >= N) )
     {
@@ -205,7 +202,7 @@ inline bool Get_N(fd_session_p_t SessionPtr, uint8_t** c, uint16_t N)
 }
 
 /* If there's room in the output queue, put one byte. */
-inline bool Put_1(fd_session_p_t SessionPtr, uint8_t c)
+inline bool Put_1(fd_session_t* SessionPtr, uint8_t c)
 {
     if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out > 0) )
     {
@@ -220,7 +217,7 @@ inline bool Put_1(fd_session_p_t SessionPtr, uint8_t c)
 
 /* If the output queue has room available, place N bytes onto the queue.
    The output queue must have space for N bytes for this call to succeed. */
-inline bool Put_N(fd_session_p_t SessionPtr, uint8_t* c, uint16_t N)
+inline bool Put_N(fd_session_t* SessionPtr, uint8_t* c, uint16_t N)
 {
     if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out >= N) )
     {
@@ -236,7 +233,7 @@ inline bool Put_N(fd_session_p_t SessionPtr, uint8_t* c, uint16_t N)
 
 /* If the input queue has at least one byte available AND there's at
    space for at least one byte in the output queue, then move one byte. */
-inline bool Move_1(fd_session_p_t SessionPtr)
+inline bool Move_1(fd_session_t* SessionPtr)
 {
     if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out > 0) &&
         (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
@@ -256,7 +253,7 @@ inline bool Move_1(fd_session_p_t SessionPtr)
 
 /* If the input queue has at least N bytes available AND there's at
    space for at least N bytes in the output queue, then move all N bytes. */
-inline bool Move_N(fd_session_p_t SessionPtr, uint16_t N)
+inline bool Move_N(fd_session_t* SessionPtr, uint16_t N)
 {
     if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out >= N) &&
         (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In >= N) )
@@ -279,30 +276,27 @@ inline bool Move_N(fd_session_p_t SessionPtr, uint16_t N)
 void keep_decomp_lib();  // FIXIT-L eliminate; required to keep symbols for dyn plugins
 
 /* Create a new decompression session object */
-fd_session_p_t SO_PUBLIC File_Decomp_New();
+SO_PUBLIC fd_session_t* File_Decomp_New();
 
 /* Initialize the session */
-fd_status_t SO_PUBLIC File_Decomp_Init(fd_session_p_t SessionPtr);
-
-/* Use an internal decompression buffer */
-fd_status_t SO_PUBLIC File_Decomp_SetBuf(fd_session_p_t SessionPtr);
+SO_PUBLIC fd_status_t File_Decomp_Init(fd_session_t*);
 
 /* Run the incremental decompression engine */
-fd_status_t SO_PUBLIC File_Decomp(fd_session_p_t SessionPtr);
+SO_PUBLIC fd_status_t File_Decomp(fd_session_t*);
 
 /* Close the decomp session processing */
-fd_status_t SO_PUBLIC File_Decomp_End(fd_session_p_t SessionPtr);
+SO_PUBLIC fd_status_t File_Decomp_End(fd_session_t*);
 
 /* Close the current decomp session, but setup for another */
-fd_status_t SO_PUBLIC File_Decomp_Reset(fd_session_p_t SessionPtr);
+SO_PUBLIC fd_status_t File_Decomp_Reset(fd_session_t*);
 
 /* Abort and delete the session */
-fd_status_t SO_PUBLIC File_Decomp_StopFree(fd_session_p_t SessionPtr);
+SO_PUBLIC fd_status_t File_Decomp_StopFree(fd_session_t*);
 
 /* Delete the session object */
-void SO_PUBLIC File_Decomp_Free(fd_session_p_t SessionPtr);
+SO_PUBLIC void File_Decomp_Free(fd_session_t*);
 
 /* Call the error alerting call-back function */
-void SO_PUBLIC File_Decomp_Alert(fd_session_p_t SessionPtr, int Event);
+SO_PUBLIC void File_Decomp_Alert(fd_session_t*, int Event);
 #endif
 

@@ -23,6 +23,7 @@
 
 #include "sip.h"
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
@@ -34,37 +35,20 @@
 
 THREAD_LOCAL ProfileStats sipPerfStats;
 
-/*
- * Function prototype(s)
- */
 static void snort_sip(SIP_PROTO_CONF* GlobalConf, Packet* p);
 static void FreeSipData(void*);
 
 unsigned SipFlowData::flow_id = 0;
-THREAD_LOCAL uint32_t numSessions = 0;
 
 SipFlowData::~SipFlowData()
 {
     FreeSipData(&session);
 }
 
-static SIPData* SetNewSIPData(Packet* p, SIP_PROTO_CONF* config)
+static SIPData* SetNewSIPData(Packet* p)
 {
-    static int MaxSessionsAlerted = 0;
-    if (numSessions > config->maxNumSessions)
-    {
-        if (!MaxSessionsAlerted)
-            SnortEventqAdd(GID_SIP, SIP_EVENT_MAX_SESSIONS);
-        MaxSessionsAlerted = 1;
-        return NULL;
-    }
-    else
-    {
-        MaxSessionsAlerted = 0;
-    }
     SipFlowData* fd = new SipFlowData;
     p->flow->set_flow_data(fd);
-    numSessions++;
     return &fd->session;
 }
 
@@ -78,9 +62,6 @@ static void FreeSipData(void* data)
 {
     SIPData* ssn = (SIPData*)data;
 
-    if (numSessions > 0)
-        numSessions--;
-
     /*Free all the dialog data*/
     sip_freeDialogs(&ssn->dialogs);
 }
@@ -91,11 +72,6 @@ static void PrintSipConf(SIP_PROTO_CONF* config)
     if (config == NULL)
         return;
     LogMessage("SIP config: \n");
-    LogMessage("    Max number of sessions: %d %s \n",
-        config->maxNumSessions,
-        config->maxNumSessions
-        == SIP_DEFAULT_MAX_SESSIONS ?
-        "(Default)" : "");
     LogMessage("    Max number of dialogs in a session: %d %s \n",
         config->maxNumDialogsInSession,
         config->maxNumDialogsInSession
@@ -240,7 +216,7 @@ static void snort_sip(SIP_PROTO_CONF* config, Packet* p)
         /* Check the stream session. If it does not currently
          * have our SIP data-block attached, create one.
          */
-        sessp = SetNewSIPData(p, config);
+        sessp = SetNewSIPData(p);
 
         if ( !sessp )
             // Could not get/create the session data for this packet.

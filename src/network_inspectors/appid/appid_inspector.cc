@@ -50,7 +50,7 @@
 #include "profiler/profiler.h"
 #include "target_based/snort_protocols.h"
 
-THREAD_LOCAL AppIdStatistics* appid_stats_manager = nullptr;
+static THREAD_LOCAL AppIdStatistics* appid_stats_manager = nullptr;
 
 static void dump_appid_stats()
 {

@@ -31,6 +31,7 @@
 #include "perf_monitor.h"
 
 #include "log/messages.h"
+#include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
@@ -49,7 +50,7 @@ THREAD_LOCAL ProfileStats perfmonStats;
 THREAD_LOCAL bool perfmon_rotate_perf_file = false;
 static PerfConfig config;
 PerfConfig* perfmon_config = &config;   // FIXIT-M remove this after flowip can be decoupled.
-THREAD_LOCAL std::vector<PerfTracker*>* trackers;
+static THREAD_LOCAL std::vector<PerfTracker*>* trackers;
 
 static bool ready_to_process(Packet* p);
 
@@ -70,9 +71,6 @@ public:
     void tinit() override;
     void tterm() override;
 };
-
-static THREAD_LOCAL PerfMonitor* this_perf_monitor = nullptr;
-
 
 PerfMonitor::PerfMonitor(PerfMonModule* mod)
 {
@@ -174,8 +172,6 @@ void PerfMonitor::tinit()
 
     for (auto& tracker : *trackers)
         tracker->reset();
-
-    this_perf_monitor = this;
 }
 
 void PerfMonitor::tterm()
@@ -241,8 +237,11 @@ void PerfMonitor::eval(Packet* p)
 //FIXIT-M uncouple from Snort class when framework permits
 void perf_monitor_idle_process()
 {
-    if ( this_perf_monitor )
-        this_perf_monitor->eval(nullptr);
+    PerfMonitor* pm =
+    (PerfMonitor*)InspectorManager::get_inspector("perf_monitor", true);
+
+    if ( pm )
+        pm->eval(nullptr);
 }
 
 static bool ready_to_process(Packet* p)

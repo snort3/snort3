@@ -91,7 +91,6 @@ typedef SIPMethodNode* SIPMethodlist;
 
 struct SIP_PROTO_CONF
 {
-    uint32_t maxNumSessions; // Maximum amount of run-time memory
     uint32_t maxNumDialogsInSession;
     uint32_t methodsConfig;
     SIPMethodlist methods;   // Which methods to check

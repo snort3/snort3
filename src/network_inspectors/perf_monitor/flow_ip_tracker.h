@@ -70,7 +70,7 @@ public:
 
 private:
     FlowStateValue stats;
-    SFXHASH* ipMap;
+    SFXHASH* ip_map;
     char ip_a[41], ip_b[41];
 
     FlowStateValue* find_stats(const SfIp* src_addr, const SfIp* dst_addr, int* swapped);

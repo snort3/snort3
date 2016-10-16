@@ -141,13 +141,13 @@ protected:
     int purge_alerts(uint32_t /*flush_seq*/,  Flow*);
     void show_rebuilt_packet(Packet*);
     uint32_t get_flush_data_len(TcpSegmentNode*, uint32_t to_seq, unsigned max);
-    int flush_data_segments(Packet*, uint32_t total);
-    void prep_s5_pkt(Flow*, Packet*, uint32_t pkt_flags);
+    int flush_data_segments(Packet*, uint32_t total, Packet* pdu);
+    void prep_pdu(Flow*, Packet*, uint32_t pkt_flags, Packet* pdu);
     int _flush_to_seq(uint32_t bytes, Packet*, uint32_t pkt_flags);
     int flush_to_seq(uint32_t bytes, Packet*, uint32_t pkt_flags);
     uint32_t get_q_footprint();
     uint32_t get_q_sequenced();
-    void final_flush(Packet*, PegCount&, uint32_t dir);
+    void final_flush(Packet*, uint32_t dir);
     uint32_t get_reverse_packet_dir(const Packet*);
     uint32_t get_forward_packet_dir(const Packet*);
     int32_t flush_pdu_ips(uint32_t*);

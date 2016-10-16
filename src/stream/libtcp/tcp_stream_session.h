@@ -22,7 +22,11 @@
 #ifndef TCP_STREAM_SESSION_H_
 #define TCP_STREAM_SESSION_H_
 
-#include "detection/detect.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "detection/detection_engine.h"
 #include "flow/session.h"
 #include "stream/libtcp/tcp_stream_tracker.h"
 #include "stream/tcp/tcp_stream_config.h"
@@ -42,7 +46,7 @@ public:
 
     bool setup(Packet*) override;
     void clear() override;
-    void cleanup() override;
+    void cleanup(Packet* = nullptr) override;
     void set_splitter(bool, StreamSplitter*) override;
     StreamSplitter* get_splitter(bool) override;
     bool is_sequenced(uint8_t /*dir*/) override;
@@ -72,10 +76,10 @@ public:
 
     // FIXIT-L these 2 function names convey no meaning afaict... figure out
     // why are they called and name appropriately...
-    virtual void retransmit_process()
+    virtual void retransmit_process(Packet* p)
     {
         // Data has already been analyzed so don't bother looking at it again.
-        DisableDetect();
+        DetectionEngine::disable_content(p);
     }
 
     virtual void retransmit_handle(Packet* p)

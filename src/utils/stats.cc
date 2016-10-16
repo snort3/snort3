@@ -23,6 +23,7 @@
 
 #include "stats.h"
 
+#include "detection/detection_engine.h"
 #include "file_api/file_stats.h"
 #include "filters/sfthreshold.h"
 #include "helpers/process.h"
@@ -197,6 +198,7 @@ const PegInfo pc_names[] =
     { "header_searches", "fast pattern searches in header buffer" },
     { "body_searches", "fast pattern searches in body buffer" },
     { "file_searches", "fast pattern searches in file buffer" },
+    { "offloads", "fast pattern searches that were offloaded" },
     { "alerts", "alerts not including IP reputation" },
     { "total_alerts", "alerts including IP reputation" },
     { "logged", "logged packets" },
@@ -281,9 +283,6 @@ void DropStats()
     show_stats((PegCount*)&daq_stats, daq_names, array_size(daq_names)-1, "daq");
 
     PacketManager::dump_stats();
-
-    // ensure proper counting of log_limit
-    SnortEventqResetCounts();
 
     LogLabel("Module Statistics");
     const char* exclude = "daq snort";

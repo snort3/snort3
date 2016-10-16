@@ -38,7 +38,7 @@ static const char* const statext[] =
 
 static const char* const flushxt[] = { "IGN", "FPR", "PRE", "PRO", "PAF" };
 
-static THREAD_LOCAL int s5_trace_enabled = -1;  // FIXIT-L should not be thread specific
+static THREAD_LOCAL int s5_trace_enabled = -1;  // FIXIT-L should use module trace feature
 
 inline void TraceEvent(const Packet* p, TcpSegmentDescriptor*, uint32_t txd, uint32_t rxd)
 {

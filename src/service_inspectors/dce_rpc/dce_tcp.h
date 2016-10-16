@@ -28,8 +28,6 @@
 
 #define DCE2_TCP_NAME "dce_tcp"
 #define DCE2_TCP_HELP "dce over tcp inspection"
-#define DCE2_TCP_RPKT_TYPE_MAX 2
-#define DCE2_TCP_RPKT_TYPE_START 5
 
 struct dce2TcpStats
 {
@@ -70,7 +68,6 @@ struct dce2TcpStats
 };
 
 extern THREAD_LOCAL dce2TcpStats dce2_tcp_stats;
-extern THREAD_LOCAL Packet* dce2_tcp_rpkt[DCE2_TCP_RPKT_TYPE_MAX];
 extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_main;
 extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_session;
 extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_new_session;

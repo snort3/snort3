@@ -22,6 +22,7 @@
 #endif
 
 #include "detection/detection_defines.h"
+#include "detection/detection_engine.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -151,7 +152,7 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
         {
             /* Turn off inspection */
             lwssn->ssn_state.ignore_direction |= srod.direction;
-            DisableInspection();
+            DetectionEngine::disable_all(pkt);
 
             /* TBD: Set TF_FORCE_FLUSH ? */
         }
@@ -294,7 +295,6 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
 
     Flow* flow = new Flow;
     Packet* pkt = get_syn_packet(flow);
-    pkt->flow->session = new TcpSession(flow);
     Cursor cursor(pkt);
 
     SECTION("reassembler initialization")
@@ -321,8 +321,7 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
             == STREAM_FLPOLICY_IGNORE ) );
     }
 #endif
-    delete pkt->flow->session;
-    delete pkt;
+    release_packet(pkt);
     delete flow;
     ips_stream_reassemble->mod_dtor(reassembler);
 }

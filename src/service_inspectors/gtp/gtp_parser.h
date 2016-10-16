@@ -26,25 +26,27 @@
 
 struct GTP_IEData
 {
+    uint64_t msg_id;  /* used to associate to current msg */
     uint16_t length;
-    uint16_t shift;  /*shift relative to the header*/
-    uint32_t msg_id;  /* used to associate to current msg */
+    uint16_t shift;   /* shift relative to the header*/
 };
 
 struct GTPMsg
 {
-    uint8_t version;
-    uint8_t msg_type;
-    uint16_t msg_length;
-    uint16_t header_len;
     uint8_t* gtp_header;
     GTP_IEData* info_elements;
 
+    uint16_t msg_length;
+    uint16_t header_len;
+
+    uint8_t version;
+    uint8_t msg_type;
+
     /* nothing after this point is zeroed ...*/
-    uint32_t msg_id; /*internal state, new msg will have a new id*/
+    uint64_t msg_id; /*internal state, new msg will have a new id*/
 };
 
-int gtp_parse(struct GTPMsg*, const uint8_t*, uint16_t);
+int gtp_parse(const struct GTPConfig&, struct GTPMsg*, const uint8_t*, uint16_t);
 void gtp_cleanInfoElements();
 
 #endif

@@ -49,17 +49,18 @@ struct fd_PDF_Parse_Stack_t
 
 struct fd_PDF_Parse_t
 {
-    uint8_t Dict_Nesting_Cnt;
-    uint8_t Elem_Buf[ELEM_BUF_LEN];
-    uint8_t Elem_Index;
-    uint8_t Filter_Spec_Buf[FILTER_SPEC_BUF_LEN+1];
-    uint8_t Filter_Spec_Index;
-    fd_PDF_Parse_Stack_t Parse_Stack[PARSE_STACK_LEN];
-    uint8_t Parse_Stack_Index;
+    const uint8_t* xref_tok;
     uint32_t Obj_Number;
     uint32_t Gen_Number;
+    uint8_t Parse_Stack_Index;
     uint8_t Sub_State;
     uint8_t State;
+    uint8_t Dict_Nesting_Cnt;
+    uint8_t Elem_Index;
+    uint8_t Filter_Spec_Index;
+    uint8_t Elem_Buf[ELEM_BUF_LEN];
+    uint8_t Filter_Spec_Buf[FILTER_SPEC_BUF_LEN+1];
+    fd_PDF_Parse_Stack_t Parse_Stack[PARSE_STACK_LEN];
 };
 
 struct fd_PDF_Deflate_t
@@ -86,13 +87,13 @@ typedef fd_PDF_t* fd_PDF_p_t;
 /* API Functions */
 
 /* Init the PDF decompressor */
-fd_status_t File_Decomp_Init_PDF(fd_session_p_t SessionPtr);
+fd_status_t File_Decomp_Init_PDF(fd_session_t*);
 
 /* Run the incremental PDF file parser/decompressor */
-fd_status_t File_Decomp_End_PDF(fd_session_p_t SessionPtr);
+fd_status_t File_Decomp_End_PDF(fd_session_t*);
 
 /* End the decompressor */
-fd_status_t File_Decomp_PDF(fd_session_p_t SessionPtr);
+fd_status_t File_Decomp_PDF(fd_session_t*);
 
 #endif
 

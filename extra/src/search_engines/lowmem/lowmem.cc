@@ -43,8 +43,8 @@ private:
     KTRIE_STRUCT* obj;
 
 public:
-    LowmemMpse(SnortConfig*, bool use_gc, const MpseAgent* agent)
-        : Mpse("lowmem", use_gc)
+    LowmemMpse(SnortConfig*, const MpseAgent* agent)
+        : Mpse("lowmem")
     { obj = KTrieNew(0, agent); }
 
     ~LowmemMpse()
@@ -78,9 +78,9 @@ public:
 // api
 //-------------------------------------------------------------------------
 
-static Mpse* lm_ctor(SnortConfig* sc, class Module*, bool use_gc, const MpseAgent* agent)
+static Mpse* lm_ctor(SnortConfig* sc, class Module*, const MpseAgent* agent)
 {
-    return new LowmemMpse(sc, use_gc, agent);
+    return new LowmemMpse(sc, agent);
 }
 
 static void lm_dtor(Mpse* p)

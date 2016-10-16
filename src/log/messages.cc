@@ -431,56 +431,6 @@ void PrintPacketData(const uint8_t* data, const uint32_t len)
     LogMessage("\n");
 }
 
-char* ObfuscateIpToText(const SfIp* ip)
-{
-    static THREAD_LOCAL char ip_buf1[INET6_ADDRSTRLEN];
-    static THREAD_LOCAL char ip_buf2[INET6_ADDRSTRLEN];
-    static THREAD_LOCAL int buf_num = 0;
-    int buf_size = INET6_ADDRSTRLEN;
-    char* ip_buf;
-
-    if (buf_num)
-        ip_buf = ip_buf2;
-    else
-        ip_buf = ip_buf1;
-
-    buf_num ^= 1;
-    ip_buf[0] = 0;
-
-    if (ip == NULL)
-        return ip_buf;
-
-    if (!snort_conf->obfuscation_net.is_set())
-    {
-        if (ip->is_ip6())
-            SnortSnprintf(ip_buf, buf_size, "x:x:x:x::x:x:x:x");
-        else
-            SnortSnprintf(ip_buf, buf_size, "xxx.xxx.xxx.xxx");
-    }
-    else
-    {
-        SfIp tmp;
-        const char* tmp_buf;
-
-        tmp.set(*ip);
-
-        if (snort_conf->homenet.is_set())
-        {
-            if (snort_conf->homenet.contains(&tmp) == SFIP_CONTAINS)
-                tmp.obfuscate(&snort_conf->obfuscation_net);
-        }
-        else
-        {
-            tmp.obfuscate(&snort_conf->obfuscation_net);
-        }
-
-        tmp_buf = tmp.ntoa();
-        SnortSnprintf(ip_buf, buf_size, "%s", tmp_buf);
-    }
-
-    return ip_buf;
-}
-
 void log_safec_error(const char* msg, void*, int e)
 {
     static THREAD_LOCAL unsigned safec_errors = 0;

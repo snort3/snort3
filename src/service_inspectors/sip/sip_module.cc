@@ -28,7 +28,6 @@
 
 using namespace std;
 
-#define SIP_EVENT_MAX_SESSIONS_STR       "maximum sessions reached"
 #define SIP_EVENT_EMPTY_REQUEST_URI_STR  "empty request URI"
 #define SIP_EVENT_BAD_URI_STR            "URI is too long"
 #define SIP_EVENT_EMPTY_CALL_ID_STR      "empty call-Id"
@@ -81,9 +80,6 @@ static const Parameter s_params[] =
     { "max_requestName_len", Parameter::PT_INT, "0:65535", "20",
       "maximum request name field size" },
 
-    { "max_sessions", Parameter::PT_INT, "1024:4194303", "10000",
-      "maximum number of sessions that can be allocated" },
-
     { "max_to_len", Parameter::PT_INT, "0:65535", "256",
       "maximum to field size" },
 
@@ -101,7 +97,6 @@ static const Parameter s_params[] =
 
 static const RuleMap sip_rules[] =
 {
-    { SIP_EVENT_MAX_SESSIONS, SIP_EVENT_MAX_SESSIONS_STR },
     { SIP_EVENT_EMPTY_REQUEST_URI, SIP_EVENT_EMPTY_REQUEST_URI_STR },
     { SIP_EVENT_BAD_URI, SIP_EVENT_BAD_URI_STR },
     { SIP_EVENT_EMPTY_CALL_ID, SIP_EVENT_EMPTY_CALL_ID_STR },
@@ -219,9 +214,6 @@ bool SipModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("max_requestName_len") )
         conf->maxRequestNameLen = v.get_long();
-
-    else if ( v.is("max_sessions") )
-        conf->maxNumSessions = v.get_long();
 
     else if ( v.is("max_to_len") )
         conf->maxToLen = v.get_long();

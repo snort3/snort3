@@ -41,7 +41,7 @@ public:
     virtual void restart(Packet*) { }
     virtual void precheck(Packet*) { }
     virtual void clear() = 0;
-    virtual void cleanup() { clear(); }
+    virtual void cleanup(Packet* = nullptr) { clear(); }
 
     virtual bool add_alert(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }
     virtual bool check_alerted(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }

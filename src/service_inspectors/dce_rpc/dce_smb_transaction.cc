@@ -1196,8 +1196,6 @@ DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
                 status = DCE2_SmbProcessResponseData(ssd, data_ptr, data_len);
 
-                DCE2_SmbReturnRpkt(ssd);
-
                 if (status != DCE2_RET__SUCCESS)
                     return status;
             }
@@ -1658,8 +1656,6 @@ DCE2_Ret DCE2_SmbTransactionSecondary(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_
 
         status = DCE2_SmbTransactionReq(ssd, ttracker, data_ptr, data_len,
             DCE2_BufferData(ttracker->pbuf), DCE2_BufferLength(ttracker->pbuf));
-
-        DCE2_SmbReturnRpkt(ssd);
     }
     break;
 

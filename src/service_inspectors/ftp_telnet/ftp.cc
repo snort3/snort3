@@ -113,12 +113,11 @@ static int SnortFTP(
     if ( ret == FTPP_SUCCESS )
     {
         ProfileExclude exclude(ftpPerfStats);
-        // Ideally, snort_detect(), called from do_detection, will look at
-        // the cmd & param buffers, or the rsp & msg buffers.  Current
-        // architecture does not support this...
-        // So, we call do_detection() here.  Otherwise, we'd call it
-        // from inside check_ftp -- each time we process a pipelined
-        // FTP command.
+
+        // FIXIT-L ideally do_detection will look at the cmd & param buffers
+        // or the rsp & msg buffers.  We should call it from inside check_ftp
+        // each time we process a pipelined FTP command.
+
         do_detection(p);
     }
 

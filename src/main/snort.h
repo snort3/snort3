@@ -26,6 +26,8 @@
 
 #include "main/snort_types.h"
 
+#include "main/snort_types.h"
+
 class Flow;
 struct Packet;
 struct SnortConfig;
@@ -53,14 +55,16 @@ public:
     static void thread_rotate();
 
     static void capture_packet();
-    static void detect_rebuilt_packet(Packet*);
 
     static DAQ_Verdict process_packet(
         Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, bool is_frag=false);
 
     static DAQ_Verdict packet_callback(void*, const DAQ_PktHdr_t*, const uint8_t*);
 
+    static void inspect(Packet*);
+
     static void set_main_hook(MainHook_f);
+    static class ContextSwitcher* get_switcher();
 
     SO_PUBLIC static Packet* get_packet();
 

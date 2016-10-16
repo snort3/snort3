@@ -23,12 +23,14 @@
 
 #include "flow.h"
 
+#include "detection/detection_engine.h"
 #include "flow/ha.h"
 #include "flow/session.h"
 #include "ips_options/ips_flowbits.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
 #include "utils/bitop.h"
+#include "utils/stats.h"
 #include "utils/util.h"
 
 unsigned FlowData::flow_id = 0;
@@ -61,6 +63,7 @@ void Flow::init(PktType type)
 {
     pkt_type = type;
     bitop = nullptr;
+    flow_flags = 0;
 
     if ( HighAvailabilityManager::active() )
     {
@@ -124,6 +127,10 @@ inline void Flow::clean()
 
 void Flow::reset(bool do_cleanup)
 {
+    DetectionEngine::onload(this);
+    DetectionEngine::set_packet();
+    DetectionEngine de;
+
     if ( session )
     {
         if ( do_cleanup )
@@ -166,6 +173,8 @@ void Flow::reset(bool do_cleanup)
 
 void Flow::restart(bool dump_flow_data)
 {
+    DetectionEngine::onload(this);
+
     if ( dump_flow_data )
         free_flow_data();
 
@@ -473,7 +482,7 @@ Layer Flow::get_mpls_layer_per_dir(bool client)
 
 bool Flow::is_pdu_inorder(uint8_t dir)
 {
-    return ( (session != nullptr) && session->is_sequenced(dir) 
-            && (session->missing_in_reassembled(dir) == SSN_MISSING_NONE) 
+    return ( (session != nullptr) && session->is_sequenced(dir)
+            && (session->missing_in_reassembled(dir) == SSN_MISSING_NONE)
             && !(ssn_state.session_flags & SSNFLAG_MIDSTREAM));
 }

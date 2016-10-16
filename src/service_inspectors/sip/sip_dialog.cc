@@ -25,6 +25,7 @@
 
 #include "sip_dialog.h"
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "framework/data_bus.h"
 #include "main/snort_debug.h"
@@ -155,7 +156,7 @@ static int SIP_processInvite(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogL
         DebugFormat(DEBUG_SIP, "Dialog state code: %hu\n",
             dialog->status_code);
 
-        SnortEventqAdd(GID_SIP, SIP_EVENT_AUTH_INVITE_REPLAY_ATTACK);
+        DetectionEngine::queue_event(GID_SIP, SIP_EVENT_AUTH_INVITE_REPLAY_ATTACK);
         return false;
     }
     if (SIP_DLG_ESTABLISHED == dialog->state)
@@ -172,7 +173,7 @@ static int SIP_processInvite(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogL
     {
         ret = SIP_checkMediaChange(sipMsg, dialog);
         if (false == ret)
-            SnortEventqAdd(GID_SIP, SIP_EVENT_AUTH_INVITE_DIFF_SESSION);
+            DetectionEngine::queue_event(GID_SIP, SIP_EVENT_AUTH_INVITE_DIFF_SESSION);
         SIP_updateMedias(sipMsg->mediaSession, &dialog->mediaSessions);
     }
     else if (SIP_DLG_TERMINATED == dialog->state)
@@ -703,7 +704,7 @@ int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO
     /*If the number of dialogs exceeded, release the oldest one*/
     if ((dList->num_dialogs >= config->maxNumDialogsInSession) && (!dialog))
     {
-        SnortEventqAdd(GID_SIP, SIP_EVENT_MAX_DIALOGS_IN_A_SESSION);
+        DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MAX_DIALOGS_IN_A_SESSION);
         SIP_deleteDialog(oldDialog, dList);
     }
 

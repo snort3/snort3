@@ -17,6 +17,7 @@
 //--------------------------------------------------------------------------
 // dpx.cc author Russ Combs <rcombs@sourcefire.com>
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
@@ -70,7 +71,7 @@ void Dpx::eval(Packet* p)
     assert(p->is_udp());
 
     if ( p->ptrs.dp == port && p->dsize > max )
-        SnortEventqAdd(DPX_GID, DPX_SID);
+        DetectionEngine::queue_event(DPX_GID, DPX_SID);
 
     ++dpxstats.total_packets;
 }

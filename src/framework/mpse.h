@@ -41,10 +41,6 @@ struct ProfileStats;
 class SO_PUBLIC Mpse
 {
 public:
-    static uint64_t get_pattern_byte_count();
-    static void reset_pattern_byte_count();
-
-public:
     virtual ~Mpse() { }
 
     struct PatternDescriptor
@@ -82,14 +78,13 @@ public:
     const MpseApi* get_api() { return api; }
 
 protected:
-    Mpse(const char* method, bool use_gc);
+    Mpse(const char* method);
 
     virtual int _search(
         const uint8_t* T, int n, MpseMatch, void* context, int* current_state) = 0;
 
 private:
     std::string method;
-    bool inc_global_counter;
     int verbose;
     const MpseApi* api;
 };
@@ -100,7 +95,7 @@ typedef void (* MpseOptFunc)(SnortConfig*);
 typedef void (* MpseExeFunc)();
 
 typedef Mpse* (* MpseNewFunc)(
-    SnortConfig* sc, class Module*, bool use_gc, const MpseAgent*);
+    SnortConfig* sc, class Module*, const MpseAgent*);
 
 typedef void (* MpseDelFunc)(Mpse*);
 

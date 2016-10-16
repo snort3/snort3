@@ -25,7 +25,7 @@
 
 #include "dce_tcp.h"
 
-#include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "utils/util.h"
 
 #include "dce_tcp_module.h"
@@ -39,13 +39,6 @@ Dce2TcpFlowData::~Dce2TcpFlowData()
 {
     DCE2_CoCleanTracker(&dce2_tcp_session.co_tracker);
 }
-
-THREAD_LOCAL int dce2_tcp_inspector_instances = 0;
-
-// FIXIT-L currently using separate buffers for segment and fragment reassembly
-// as in Snort2x code. Doesn't seem necessary for TCP but may be the case for
-// SMB/HTTP ..keeping logic consistent for now
-THREAD_LOCAL Packet* dce2_tcp_rpkt[DCE2_TCP_RPKT_TYPE_MAX] = { nullptr, nullptr };
 
 THREAD_LOCAL dce2TcpStats dce2_tcp_stats;
 
@@ -176,24 +169,16 @@ void Dce2Tcp::eval(Packet* p)
 
     if (dce2_tcp_sess)
     {
-        // FIXIT-L evaluate moving pushpkt out of session pstats
-        if (DCE2_PushPkt(p,&dce2_tcp_sess->sd) != DCE2_RET__SUCCESS)
-        {
-            DebugMessage(DEBUG_DCE_TCP, "Failed to push packet onto packet stack.\n");
-            return;
-        }
         p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
         dce2_detected = 0;
         dce2_tcp_stats.tcp_pkts++;
-        p->endianness = (Endianness*)new DceEndianness();
-        DCE2_CoProcess(
-            &dce2_tcp_sess->sd, &dce2_tcp_sess->co_tracker, p->data, p->dsize);
+        p->endianness = new DceEndianness();
+        DCE2_CoProcess(&dce2_tcp_sess->sd, &dce2_tcp_sess->co_tracker, p->data, p->dsize);
 
         if (!dce2_detected)
             DCE2_Detect(&dce2_tcp_sess->sd);
 
         DCE2_ResetRopts(&dce2_tcp_sess->sd.ropts);
-        DCE2_PopPkt(&dce2_tcp_sess->sd);
 
         delete p->endianness;
         p->endianness = nullptr;
@@ -232,56 +217,6 @@ static void dce2_tcp_init()
     Dce2TcpFlowData::init();
 }
 
-static void dce2_tcp_thread_init()
-{
-    if (dce2_inspector_instances == 0)
-    {
-        dce2_pkt_stack = DCE2_CStackNew(DCE2_PKT_STACK__SIZE, nullptr);
-    }
-    if (dce2_tcp_inspector_instances == 0)
-    {
-        for (int i=0; i < DCE2_TCP_RPKT_TYPE_MAX; i++)
-        {
-            Packet* p = (Packet*)snort_calloc(sizeof(Packet));
-            p->data = (uint8_t*)snort_calloc(DCE2_REASSEMBLY_BUF_SIZE);
-            p->endianness = (Endianness*)new DceEndianness();
-            p->dsize = DCE2_REASSEMBLY_BUF_SIZE;
-            dce2_tcp_rpkt[i] = p;
-        }
-    }
-    dce2_tcp_inspector_instances++;
-    dce2_inspector_instances++;
-}
-
-static void dce2_tcp_thread_term()
-{
-    dce2_inspector_instances--;
-    dce2_tcp_inspector_instances--;
-
-    if (dce2_tcp_inspector_instances == 0)
-    {
-        for (int i=0; i<DCE2_TCP_RPKT_TYPE_MAX; i++)
-        {
-            if ( dce2_tcp_rpkt[i] != nullptr )
-            {
-                Packet* p = dce2_tcp_rpkt[i];
-                if (p->data)
-                {
-                    snort_free((void*)p->data);
-                }
-                delete p->endianness;
-                snort_free(p);
-                dce2_tcp_rpkt[i] = nullptr;
-            }
-        }
-    }
-    if (dce2_inspector_instances == 0)
-    {
-        DCE2_CStackDestroy(dce2_pkt_stack);
-        dce2_pkt_stack = nullptr;
-    }
-}
-
 const InspectApi dce2_tcp_api =
 {
     {
@@ -302,8 +237,8 @@ const InspectApi dce2_tcp_api =
     "dce_tcp",
     dce2_tcp_init,
     nullptr, // pterm
-    dce2_tcp_thread_init, // tinit
-    dce2_tcp_thread_term, // tterm
+    nullptr, // tinit
+    nullptr, // tterm
     dce2_tcp_ctor,
     dce2_tcp_dtor,
     nullptr, // ssn

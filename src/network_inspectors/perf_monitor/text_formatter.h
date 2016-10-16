@@ -27,7 +27,7 @@ class TextFormatter : public PerfFormatter
 {
 public:
     TextFormatter(std::string tracker_name) : PerfFormatter(tracker_name) {}
-    
+
     const char* get_extension() override
     { return ".txt"; }
 

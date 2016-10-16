@@ -75,13 +75,13 @@ struct fd_SWF_t
 /* API Functions */
 
 /* Initialize the SWF file decompressor */
-fd_status_t File_Decomp_Init_SWF(fd_session_p_t SessionPtr);
+fd_status_t File_Decomp_Init_SWF(fd_session_t*);
 
 /* Process the file incrementally */
-fd_status_t File_Decomp_SWF(fd_session_p_t SessionPtr);
+fd_status_t File_Decomp_SWF(fd_session_t*);
 
 /* End the SWF file decompression */
-fd_status_t File_Decomp_End_SWF(fd_session_p_t SessionPtr);
+fd_status_t File_Decomp_End_SWF(fd_session_t*);
 
 #endif
 

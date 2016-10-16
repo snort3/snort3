@@ -27,7 +27,7 @@
 
 #include "codecs/codec_module.h"
 #include "codecs/ip/checksum.h"
-#include "events/event_queue.h"
+#include "detection/detection_engine.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
@@ -65,12 +65,8 @@ const std::array<const char*, PacketManager::stat_offset> PacketManager::stat_na
 };
 
 // Encoder Foo
-static THREAD_LOCAL Packet* encode_pkt = nullptr;
 static THREAD_LOCAL PegCount total_rebuilt_pkts = 0;
-static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt {
-    { 0 }
-};
-static THREAD_LOCAL uint8_t* dst_mac = nullptr;
+static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt { { 0 } };
 
 //-------------------------------------------------------------------------
 // Private helper functions
@@ -162,7 +158,7 @@ void PacketManager::decode(
         {
             if ( codec_data.next_prot_id < ProtocolId::ETHERTYPE_MINIMUM )
             {
-                SnortEventqAdd(GID_DECODE, DECODE_BAD_ETHER_TYPE);
+                DetectionEngine::queue_event(GID_DECODE, DECODE_BAD_ETHER_TYPE);
                 break;
             }
             codec_data.codec_flags &= ~CODEC_ETHER_NEXT;
@@ -210,7 +206,7 @@ void PacketManager::decode(
         // If we have reached the MAX_LAYERS, we keep decoding
         // but no longer keep track of the layers.
         if ( p->num_layers == CodecManager::max_layers )
-            SnortEventqAdd(GID_DECODE, DECODE_TOO_MANY_LAYERS);
+            DetectionEngine::queue_event(GID_DECODE, DECODE_TOO_MANY_LAYERS);
         else
             push_layer(p, prev_prot_id, raw.data, codec_data.lyr_len);
 
@@ -285,7 +281,7 @@ void PacketManager::decode(
                     (to_utype(prev_prot_id) <= std::numeric_limits<uint8_t>::max()) &&
                     !(codec_data.codec_flags & CODEC_STREAM_REBUILT) )
                 {
-                    SnortEventqAdd(GID_DECODE, DECODE_IP_UNASSIGNED_PROTO);
+                    DetectionEngine::queue_event(GID_DECODE, DECODE_IP_UNASSIGNED_PROTO);
                 }
             }
         }
@@ -361,8 +357,8 @@ bool PacketManager::encode(const Packet* p,
     IpProtocol next_prot,
     Buffer& buf)
 {
-    if ( encode_pkt )
-        p = encode_pkt;
+    if ( Packet* pe = DetectionEngine::get_encode_packet() )
+        p = pe;
 
     uint8_t ttl = GetTTL(p, (flags & ENC_FLAG_FWD));
     if ( ttl )
@@ -642,7 +638,7 @@ int PacketManager::format_tcp(
     pkth->pktlen = 0;
     pkth->ts = p->pkth->ts;
 
-    total_rebuilt_pkts++;  // update local counter
+    total_rebuilt_pkts++;
     return 0;
 }
 
@@ -744,8 +740,8 @@ int PacketManager::encode_format(
     pkth->pktlen = len;
     pkth->ts = p->pkth->ts;
 
-    layer::set_packet_pointer(c);  // set layer pointer to ensure looking at the new packet
-    total_rebuilt_pkts++;  // update local counter
+    layer::set_packet_pointer(c);  // set layer pointer to ensure lookin at the new packet
+    total_rebuilt_pkts++;
     return 0;
 }
 
@@ -822,17 +818,8 @@ void PacketManager::encode_update(Packet* p)
 // codec support and statistics
 //-------------------------------------------------------------------------
 
-void PacketManager::encode_set_dst_mac(uint8_t* mac)
-{ dst_mac = mac; }
-
-uint8_t* PacketManager::encode_get_dst_mac()
-{ return dst_mac; }
-
 PegCount PacketManager::get_rebuilt_packet_count()
 { return total_rebuilt_pkts; }
-
-void PacketManager::encode_set_pkt(Packet* p)
-{ encode_pkt = p; }
 
 uint16_t PacketManager::encode_get_max_payload(const Packet* p)
 {

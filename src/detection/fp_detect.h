@@ -43,12 +43,6 @@ extern THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
 extern THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
 extern THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
 
-/*
-**  This is the only function that is needed to do an
-**  inspection on a packet.
-*/
-int fpEvalPacket(Packet*);
-
 struct RuleTreeNode;
 int fpLogEvent(const RuleTreeNode*, const OptTreeNode*, Packet*);
 int fpEvalRTN(RuleTreeNode*, Packet*, int check_ports);
@@ -61,12 +55,11 @@ int fpEvalRTN(RuleTreeNode*, Packet*, int check_ports);
 #define MAX_EVENT_MATCH 100
 
 /*
-**  MATCH_INFO
 **  The events that are matched get held in this structure,
 **  and iMatchIndex gets set to the event that holds the
 **  highest priority.
 */
-struct MATCH_INFO
+struct MatchInfo
 {
     const OptTreeNode* MatchArray[MAX_EVENT_MATCH];
     int iMatchCount;
@@ -75,7 +68,6 @@ struct MATCH_INFO
 };
 
 /*
-**  OTNX_MATCH_DATA
 **  This structure holds information that is
 **  referenced during setwise pattern matches.
 **  It also contains information regarding the
@@ -83,7 +75,7 @@ struct MATCH_INFO
 **  the event to log based on the event comparison
 **  function.
 */
-struct OTNX_MATCH_DATA
+struct OtnxMatchData
 {
     PortGroup* pg;
     Packet* p;
@@ -93,20 +85,21 @@ struct OTNX_MATCH_DATA
 
     int check_ports;
     bool have_match;
+    bool do_fp;
 
-    MATCH_INFO* matchInfo;
+    MatchInfo* matchInfo;
     int iMatchInfoArraySize;
 };
 
-void otnx_match_data_init(int);
-void otnx_match_data_term();
+int fpAddMatch(OtnxMatchData*, int pLen, const OptTreeNode*);
 
-int fpAddMatch(OTNX_MATCH_DATA*, int pLen, const OptTreeNode*);
-OptTreeNode* GetOTN(uint32_t gid, uint32_t sid);
+class IpsContext;
+void fp_set_context(IpsContext&);
+void fp_clear_context(IpsContext&);
 
-/* counter for number of times we evaluate rules.  Used to
- * cache result of check for rule option tree nodes. */
-extern THREAD_LOCAL uint64_t rule_eval_pkt_count;
+void fp_local(Packet*);
+void fp_offload(Packet*);
+void fp_onload(Packet*);
 
 #endif
 

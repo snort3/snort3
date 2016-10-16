@@ -36,8 +36,8 @@ private:
 
 public:
     AcbMpse(
-        SnortConfig*, bool use_gc, const MpseAgent* agent)
-        : Mpse("ac_banded", use_gc)
+        SnortConfig*, const MpseAgent* agent)
+        : Mpse("ac_banded")
     {
         obj = acsmNew2(agent, ACF_BANDED);
     }
@@ -85,9 +85,9 @@ public:
 //-------------------------------------------------------------------------
 
 static Mpse* acb_ctor(
-    SnortConfig* sc, class Module*, bool use_gc, const MpseAgent* agent)
+    SnortConfig* sc, class Module*, const MpseAgent* agent)
 {
-    return new AcbMpse(sc, use_gc, agent);
+    return new AcbMpse(sc, agent);
 }
 
 static void acb_dtor(Mpse* p)

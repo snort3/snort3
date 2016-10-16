@@ -23,6 +23,7 @@
 #include <bitset>
 #include <cassert>
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "utils/util_cstring.h"
 
@@ -37,12 +38,13 @@ class HttpEventGen
 public:
     virtual ~HttpEventGen() = default;
     void reset() { events_generated = 0; }
+
     virtual void create_event(HttpEnums::EventSid sid)
     {
         assert(((int)sid > 0) && ((int)sid <= MAX));
         if (!events_generated[sid-1])
         {
-            SnortEventqAdd(HttpEnums::HTTP_GID, (uint32_t)sid);
+            DetectionEngine::queue_event(HttpEnums::HTTP_GID, (uint32_t)sid);
             events_generated[sid-1] = true;
         }
     }

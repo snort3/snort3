@@ -30,46 +30,21 @@ struct ProfileStats;
 struct RuleFpList;
 struct RuleTreeNode;
 
-extern THREAD_LOCAL bool do_detect;
-extern THREAD_LOCAL bool do_detect_content;
-
 extern THREAD_LOCAL ProfileStats eventqPerfStats;
 extern THREAD_LOCAL ProfileStats detectPerfStats;
 extern THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
 
 // main loop hooks
 void snort_ignore(Packet*);
-void snort_inspect(Packet*);
 void snort_log(Packet*);
-
-// detection only (no decode or inspection)
-SO_PUBLIC bool snort_detect(Packet*);
-
-// parsing
-int RuleListEnd(Packet*, RuleTreeNode*, RuleFpList*, int);
-int OptListEnd(void* option_data, class Cursor&, Packet*);
-
-// detection
-int CheckBidirectional(Packet*, RuleTreeNode*, RuleFpList*, int);
-int CheckSrcIP(Packet*, RuleTreeNode*, RuleFpList*, int);
-int CheckDstIP(Packet*, RuleTreeNode*, RuleFpList*, int);
-int CheckSrcPortEqual(Packet*, RuleTreeNode*, RuleFpList*, int);
-int CheckDstPortEqual(Packet*, RuleTreeNode*, RuleFpList*, int);
-int CheckSrcPortNotEq(Packet*, RuleTreeNode*, RuleFpList*, int);
-int CheckDstPortNotEq(Packet*, RuleTreeNode*, RuleFpList*, int);
 
 // alerts
 void CallLogFuncs(Packet*, ListHead*, Event*, const char*);
 void CallLogFuncs(Packet*, const OptTreeNode*, ListHead*);
 void CallAlertFuncs(Packet*, const OptTreeNode*, ListHead*);
 
-// don't eval content rules
-// non-content rules are still evaluated
-SO_PUBLIC void DisableDetect();
-
-// don't want to do any detection with rules
-// (no content and no non-content)
-SO_PUBLIC void DisableInspection();
+void enable_tags();
+void check_tags(Packet*);
 
 #endif
 

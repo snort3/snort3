@@ -37,15 +37,21 @@ struct sf_timeval32
 
 struct Event
 {
-    const SigInfo* sig_info;
+    SigInfo* sig_info;
     uint32_t event_id;
     uint32_t event_reference; // reference to other events that have gone off,
                               // such as in the case of tagged packets...
     struct sf_timeval32 ref_time;   /* reference time for the event reference */
     const char* alt_msg;
+
+    Event() { }
+    Event(SigInfo& si)
+    { sig_info = &si; }
 };
 
-void SetEvent(Event*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+void SetEvent(
+    Event&, uint32_t gid, uint32_t sid, uint32_t rev,
+    uint32_t classification, uint32_t priority, uint32_t event_ref);
 
 #endif
 

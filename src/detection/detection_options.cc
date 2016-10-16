@@ -53,6 +53,16 @@
 #include "fp_detect.h"
 #include "pattern_match_data.h"
 
+#include "detection_defines.h"
+#include "detection_engine.h"
+#include "detection_util.h"
+#include "fp_create.h"
+#include "fp_detect.h"
+#include "ips_context.h"
+#include "pattern_match_data.h"
+#include "rules.h"
+#include "treenodes.h"
+
 #define HASH_RULE_OPTIONS 16384
 #define HASH_RULE_TREE     8192
 
@@ -350,8 +360,9 @@ int detection_option_node_evaluate(
     char flowbits_setoperation = 0;
     int loop_count = 0;
     uint32_t tmp_byte_extract_vars[NUM_IPS_OPTIONS_VARS];
-    uint64_t cur_eval_pkt_count =
-        (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
+
+    uint64_t cur_eval_pkt_count = DetectionEngine::get_context()->pkt_count
+        + PacketManager::get_rebuilt_packet_count();
 
     if ( !eval_data || !eval_data->p || !eval_data->pomd )
         return 0;
@@ -410,7 +421,7 @@ int detection_option_node_evaluate(
             int16_t app_proto = p->get_application_protocol();
             int check_ports = 1;
 
-            if ( app_proto and ((OTNX_MATCH_DATA*)(pomd))->check_ports != 2 )
+            if ( app_proto and ((OtnxMatchData*)(pomd))->check_ports != 2 )
             {
                 auto sig_info = otn->sigInfo;
 
@@ -459,7 +470,7 @@ int detection_option_node_evaluate(
                     {
                         PatternMatchData* pmd = (PatternMatchData*)eval_data->pmd;
                         int pattern_size = pmd ? pmd->pattern_size : 0;
-                        fpAddMatch((OTNX_MATCH_DATA*)pomd, pattern_size, otn);
+                        fpAddMatch((OtnxMatchData*)pomd, pattern_size, otn);
                     }
                     result = rval = DETECTION_OPTION_MATCH;
                 }

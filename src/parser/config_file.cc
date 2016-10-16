@@ -26,6 +26,7 @@
 #include <cstring>
 
 #include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/policy.h"
@@ -179,7 +180,7 @@ void config_conf(const char* val)
 {
     lua_conf = val;
     SetSnortConfDir(lua_conf.c_str());
-    Snort::set_main_hook(snort_inspect);
+    Snort::set_main_hook(DetectionEngine::inspect);
 }
 
 void SetSnortConfDir(const char* file)

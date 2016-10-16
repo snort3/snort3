@@ -104,7 +104,7 @@ void FbsFormatter::commit_field_reorder()
 
     for( unsigned i = 0; i < non_offset_names.size(); i++ )
         PerfFormatter::register_field(non_offset_names[i], non_offset_values[i]);
-    
+
     non_offset_names.clear();
     non_offset_values.clear();
 }
@@ -121,8 +121,8 @@ void FbsFormatter::finalize_fields()
     vtable_offsets.clear();
 
     schema = "namespace Perfmon;table ";
-    schema += get_tracker_name() + "{";  
-    
+    schema += get_tracker_name() + "{";
+
     string module_tables;
     for( unsigned i = 0; i < section_names.size(); i++ )
     {
@@ -159,7 +159,7 @@ void FbsFormatter::finalize_fields()
     flatbuffers::Parser parser;
     assert(parser.Parse(schema.c_str())); // Above code is broken or bad peg names if this hits
     parser.Serialize();
-    
+
     auto& schema_builder = parser.builder_;
 
     auto reflection_schema = reflection::GetSchema(schema_builder.GetBufferPointer());
@@ -352,7 +352,7 @@ TEST_CASE("peg schema", "[FbsFormatter]")
 {
     PegCount one = 1, two = 0, three = 0;
 
-    const char* schema = 
+    const char* schema =
         "namespace Perfmon;"
         "table fbs_formatter{pegs:Pegs;}"
         "table Pegs{one:ulong;two:ulong;three:ulong}"
@@ -378,7 +378,7 @@ TEST_CASE("string schema", "[FbsFormatter]")
 {
     const char one[] = "1", two[] = "0", three[] = "0";
 
-    const char* schema = 
+    const char* schema =
         "namespace Perfmon;"
         "table fbs_formatter{strings:Strings;}"
         "table Strings{one:string;two:string;three:string}"
@@ -404,7 +404,7 @@ TEST_CASE("vector schema", "[FbsFormatter]")
 {
     vector<PegCount> one(10), two(10);
 
-    const char* schema = 
+    const char* schema =
         "namespace Perfmon;"
         "table fbs_formatter{vectors:Vectors;}"
         "table Vectors{one:[ulong];one_map:[ulong];two:[ulong];two_map:[ulong];}"
@@ -432,7 +432,7 @@ TEST_CASE("mixed schema", "[FbsFormatter]")
     vector<PegCount> three(10);
 
     // meat of this test: fields are reordered
-    const char* schema = 
+    const char* schema =
         "namespace Perfmon;"
         "table fbs_formatter{mixed:Mixed;}"
         "table Mixed{two:string;three:[ulong];three_map[ulong];one:ulong;}"

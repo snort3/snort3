@@ -54,7 +54,7 @@ int TcpSession::process(Packet*){ return 0; }
 void TcpSession::restart(Packet*){ }
 void TcpSession::precheck(Packet*){ }
 void TcpSession::clear(){ }
-void TcpSession::cleanup(){ }
+void TcpSession::cleanup(Packet* = nullptr){ }
 bool TcpSession::add_alert(Packet*, unsigned int, unsigned int){ return true; }
 bool TcpSession::check_alerted(Packet*, unsigned int, unsigned int){ return true; }
 int TcpSession::update_alert(Packet*, unsigned int, unsigned int, unsigned int, unsigned int){ return 0; }

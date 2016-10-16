@@ -45,7 +45,7 @@ using namespace std;
     "rule option to perform mathematical operations on extracted value and a specified \
 value or existing variable"
 
-enum BM_Oper // must match the exact order in Paramter table - i.e "+|-|*|/|<<|>>"
+enum BM_Oper // must match the exact order in Parameter table - i.e "+|-|*|/|<<|>>"
 {
     BM_PLUS = 0,
     BM_MINUS,

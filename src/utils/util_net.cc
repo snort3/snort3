@@ -22,37 +22,53 @@
 #endif
 
 #include "util_net.h"
-
-#include "main/thread.h"
 #include "sfip/sf_ip.h"
-
+#include "sfip/sf_cidr.h"
 #include "util_cstring.h"
 
-/**
- * A inet_ntoa that has 2 static buffers that are changed between
- * subsequent calls
- *
- * @param ip ip in NETWORK BYTE ORDER
- */
-char* inet_ntoax(const SfIp* ip)
+char* inet_ntoax(const SfIp* ip, InetBuf& ab)
 {
-    static THREAD_LOCAL char ip_buf1[INET6_ADDRSTRLEN];
-    static THREAD_LOCAL char ip_buf2[INET6_ADDRSTRLEN];
-    static THREAD_LOCAL int buf_num = 0;
-    int buf_size = INET6_ADDRSTRLEN;
-    char* ip_buf;
-
-    if (buf_num)
-        ip_buf = ip_buf2;
-    else
-        ip_buf = ip_buf1;
-
-    buf_num ^= 1;
-    ip_buf[0] = 0;
+    ab[0] = 0;
 
     if (ip)
-        SnortSnprintf(ip_buf, buf_size, "%s", ip->ntoa());
+        SnortSnprintf(ab, sizeof(ab), "%s", ip->ntoa());
 
-    return ip_buf;
+    return ab;
+}
+
+char* ObfuscateIpToText(const SfIp* ip, SfCidr& homenet, SfCidr& obfunet, InetBuf& ab)
+{
+    ab[0] = 0;
+
+    if ( !ip )
+        return ab;
+
+    if ( !obfunet.is_set() )
+    {
+        if (ip->is_ip6())
+            SnortSnprintf(ab, sizeof(ab), "x:x:x:x::x:x:x:x");
+        else
+            SnortSnprintf(ab, sizeof(ab), "xxx.xxx.xxx.xxx");
+    }
+    else
+    {
+        SfIp tmp;
+        tmp.set(*ip);
+
+        if ( homenet.is_set() )
+        {
+            if ( homenet.contains(&tmp) == SFIP_CONTAINS )
+                tmp.obfuscate(&obfunet);
+        }
+        else
+        {
+            tmp.obfuscate(&obfunet);
+        }
+
+        const char* tmp_buf = tmp.ntoa();
+        SnortSnprintf(ab, sizeof(ab), "%s", tmp_buf);
+    }
+
+    return ab;
 }
 

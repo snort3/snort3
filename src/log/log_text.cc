@@ -28,7 +28,7 @@
 
 #include <sfbpf_dlt.h>
 
-#include "detection/detection_util.h"
+#include "detection/detection_engine.h"
 #include "detection/signature.h"
 #include "events/event.h"
 #include "main/snort_config.h"
@@ -296,35 +296,45 @@ void LogIpAddrs(TextLog* log, Packet* p)
     if ( p->is_fragment() || (!p->is_tcp() && !p->is_udp() && !p->is_data()) )
     {
         const char* ip_fmt = "%s -> %s";
+        InetBuf src, dst;
 
         if (SnortConfig::obfuscate())
         {
-            TextLog_Print(log, ip_fmt,
-                ObfuscateIpToText(p->ptrs.ip_api.get_src()),
-                ObfuscateIpToText(p->ptrs.ip_api.get_dst()));
+            ObfuscateIpToText(p->ptrs.ip_api.get_src(),
+                snort_conf->homenet, snort_conf->obfuscation_net, src),
+
+            ObfuscateIpToText(p->ptrs.ip_api.get_dst(),
+                snort_conf->homenet, snort_conf->obfuscation_net, dst);
+
+            TextLog_Print(log, ip_fmt, src, dst);
         }
         else
         {
             TextLog_Print(log, ip_fmt,
-                inet_ntoax(p->ptrs.ip_api.get_src()),
-                inet_ntoax((p->ptrs.ip_api.get_dst())));
+                inet_ntoax(p->ptrs.ip_api.get_src(), src),
+                inet_ntoax(p->ptrs.ip_api.get_dst(), dst));
         }
     }
     else
     {
         const char* ip_fmt = "%s:%d -> %s:%d";
+        InetBuf src, dst;
 
         if (SnortConfig::obfuscate())
         {
-            TextLog_Print(log, ip_fmt,
-                ObfuscateIpToText(p->ptrs.ip_api.get_src()), p->ptrs.sp,
-                ObfuscateIpToText(p->ptrs.ip_api.get_dst()), p->ptrs.dp);
+            ObfuscateIpToText(p->ptrs.ip_api.get_src(),
+                snort_conf->homenet, snort_conf->obfuscation_net, src);
+
+            ObfuscateIpToText(p->ptrs.ip_api.get_dst(),
+                snort_conf->homenet, snort_conf->obfuscation_net, dst);
+
+            TextLog_Print(log, ip_fmt, src, p->ptrs.sp, dst, p->ptrs.dp);
         }
         else
         {
             TextLog_Print(log, ip_fmt,
-                inet_ntoax(p->ptrs.ip_api.get_src()), p->ptrs.sp,
-                inet_ntoax(p->ptrs.ip_api.get_dst()), p->ptrs.dp);
+                inet_ntoax(p->ptrs.ip_api.get_src(), src), p->ptrs.sp,
+                inet_ntoax(p->ptrs.ip_api.get_dst(), dst), p->ptrs.dp);
         }
     }
 }
@@ -1183,10 +1193,10 @@ void LogXrefs(TextLog* log, const Event* e, bool doNewLine)
  * Returns: void function
  *--------------------------------------------------------------------
  */
-static void LogCharData(TextLog* log, const char* data, int len)
+static void LogCharData(TextLog* log, const uint8_t* data, int len)
 {
-    const char* pb = data;
-    const char* end = data + len;
+    const uint8_t* pb = data;
+    const uint8_t* end = data + len;
     int lineCount = 0;
 
     if ( !data )
@@ -1458,14 +1468,15 @@ void LogPayload(TextLog* log, Packet* p)
     {
         if (SnortConfig::output_char_data())
         {
-            LogCharData(log, (const char*)p->data, p->dsize);
+            LogCharData(log, p->data, p->dsize);
 
-            DataPointer& fdata = get_file_data();
+            DataPointer file_data;
+            DetectionEngine::get_file_data(file_data);
 
-            if ( fdata.len > 0 )
+            if ( file_data.len > 0 )
             {
                 TextLog_Print(log, "%s\n", "File data");
-                LogCharData(log, (const char*)fdata.data, fdata.len);
+                LogCharData(log, file_data.data, file_data.len);
             }
         }
         else
@@ -1484,10 +1495,13 @@ void LogPayload(TextLog* log, Packet* p)
             {
                 LogNetData(log, p->data, p->dsize, p);
 
-                if ( g_file_data.len > 0 )
+                DataPointer file_data;
+                DetectionEngine::get_file_data(file_data);
+
+                if ( file_data.len > 0 )
                 {
                     TextLog_Print(log, "%s\n", "File data");
-                    LogNetData(log, g_file_data.data, g_file_data.len, p);
+                    LogNetData(log, file_data.data, file_data.len, p);
                 }
             }
         }

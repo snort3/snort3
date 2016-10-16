@@ -87,6 +87,9 @@
 #define STREAM_STATE_NO_PICKUP         0x2000
 #define STREAM_STATE_BLOCK_PENDING     0x4000
 
+#define FLOW_IS_OFFLOADED              0x01
+#define FLOW_WAS_OFFLOADED             0x02  // FIXIT-L debug only
+
 // FIXIT-L move to appid class if/when the application ids array
 // is moved
 typedef int32_t AppId;
@@ -182,29 +185,22 @@ public:
     Layer get_mpls_layer_per_dir(bool);
 
     uint32_t update_session_flags(uint32_t flags)
-    {
-        return ssn_state.session_flags = flags;
-    }
+    { return ssn_state.session_flags = flags; }
 
     uint32_t set_session_flags(uint32_t flags)
-    {
-        return ssn_state.session_flags |= flags;
-    }
-
-    uint32_t clear_session_flags(uint32_t flags)
-    {
-        return ssn_state.session_flags &= ~flags;
-    }
+    { return ssn_state.session_flags |= flags; }
 
     uint32_t get_session_flags()
-    {
-        return ssn_state.session_flags;
-    }
+    { return ssn_state.session_flags; }
+
+    uint32_t test_session_flags(uint32_t flags)
+    { return (ssn_state.session_flags & flags) != 0; }
+
+    uint32_t clear_session_flags(uint32_t flags)
+    { return ssn_state.session_flags &= ~flags; }
 
     int get_ignore_direction()
-    {
-        return ssn_state.ignore_direction;
-    }
+    { return ssn_state.ignore_direction; }
 
     int set_ignore_direction(char ignore_direction)
     {
@@ -298,6 +294,15 @@ public:
         return disable_inspect;
     }
 
+    bool is_offloaded() const
+    { return flow_flags & FLOW_IS_OFFLOADED; }
+
+    void set_offloaded()
+    { flow_flags |= (FLOW_IS_OFFLOADED|FLOW_WAS_OFFLOADED); }
+
+    void clear_offloaded()
+    { flow_flags &= ~FLOW_IS_OFFLOADED; }
+
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
     // void space and allow for memset of tail end of struct
@@ -312,6 +317,7 @@ public:  // FIXIT-M privatize if possible
     PktType pkt_type; // ^^
 
     // these fields are always set; not zeroed
+    uint64_t flow_flags;  // FIXIT-H required to ensure atomic?
     Flow* prev, * next;
     Inspector* ssn_client;
     Inspector* ssn_server;

@@ -24,7 +24,7 @@
 
 #include "pop.h"
 
-#include "events/event_queue.h"
+#include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
@@ -72,8 +72,9 @@ SearchTool* pop_cmd_search_mpse = nullptr;
 
 POPSearch pop_resp_search[RESP_LAST];
 POPSearch pop_cmd_search[CMD_LAST];
-THREAD_LOCAL const POPSearch* pop_current_search = NULL;
-THREAD_LOCAL POPSearchInfo pop_search_info;
+
+static THREAD_LOCAL const POPSearch* pop_current_search = NULL;
+static THREAD_LOCAL POPSearchInfo pop_search_info;
 
 const PegInfo pop_peg_names[] =
 {
@@ -369,7 +370,7 @@ static const uint8_t* POP_HandleCommand(Packet* p, POPData* pop_ssn, const uint8
         }
         else
         {
-            SnortEventqAdd(GID_POP, POP_UNKNOWN_CMD);
+            DetectionEngine::queue_event(GID_POP, POP_UNKNOWN_CMD);
             DebugMessage(DEBUG_POP, "No known command found\n");
             return eol;
         }
@@ -495,7 +496,7 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
             }
             else if (*ptr == '+')
             {
-                SnortEventqAdd(GID_POP, POP_UNKNOWN_RESP);
+                DetectionEngine::queue_event(GID_POP, POP_UNKNOWN_RESP);
                 DebugMessage(DEBUG_POP, "Server response not found\n");
             }
         }
@@ -623,13 +624,13 @@ void PopMime::decode_alert()
     switch ( decode_state->get_decode_type() )
     {
     case DECODE_B64:
-        SnortEventqAdd(GID_POP, POP_B64_DECODING_FAILED);
+        DetectionEngine::queue_event(GID_POP, POP_B64_DECODING_FAILED);
         break;
     case DECODE_QP:
-        SnortEventqAdd(GID_POP, POP_QP_DECODING_FAILED);
+        DetectionEngine::queue_event(GID_POP, POP_QP_DECODING_FAILED);
         break;
     case DECODE_UU:
-        SnortEventqAdd(GID_POP, POP_UU_DECODING_FAILED);
+        DetectionEngine::queue_event(GID_POP, POP_UU_DECODING_FAILED);
         break;
 
     default:

@@ -206,7 +206,8 @@ public:
     char padding[3];
 };
 
-THREAD_LOCAL std::map<AppIdServiceStateKey, ServiceDiscoveryState*>* service_state_cache = nullptr;
+static THREAD_LOCAL std::map<AppIdServiceStateKey, ServiceDiscoveryState*>* service_state_cache =
+    nullptr;
 
 void AppIdServiceState::initialize()
 {

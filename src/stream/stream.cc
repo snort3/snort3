@@ -23,10 +23,14 @@
 
 #include "stream.h"
 
+#include <assert.h>
+
+#include "detection/detection_engine.h"
 #include "flow/flow_control.h"
 #include "flow/flow_key.h"
 #include "flow/ha.h"
 #include "flow/prune_stats.h"
+#include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "packet_io/active.h"
@@ -231,7 +235,7 @@ void Stream::stop_inspection(
 
     /* FIXIT-M handle bytes/response parameters */
 
-    DisableInspection();
+    DetectionEngine::disable_all(p);
     flow->set_state(Flow::FlowState::ALLOW);
 }
 
@@ -347,15 +351,19 @@ void Stream::purge_flows()
 
 void Stream::timeout_flows(time_t cur_time)
 {
-    if ( flow_con )
-        // FIXIT-M batch here or loop vs looping over idle?
-        flow_con->timeout_flows(cur_time);
+    if ( !flow_con )
+        return;
+
+    // FIXIT-M batch here or loop vs looping over idle?
+    flow_con->timeout_flows(cur_time);
 }
 
 void Stream::prune_flows()
 {
-    if ( flow_con )
-        flow_con->prune_one(PruneReason::MEMCAP, false);
+    if ( !flow_con )
+        return;
+
+    flow_con->prune_one(PruneReason::MEMCAP, false);
 }
 
 bool Stream::expected_flow(Flow* f, Packet* p)
@@ -608,7 +616,7 @@ bool Stream::blocked_flow(Flow* flow, Packet* p)
             "Blocking %s packet as session was blocked\n",
             p->is_from_server() ?  "server" : "client");
 
-        DisableDetect();
+        DetectionEngine::disable_content(p);
         Active::drop_packet(p);
         active_response(p, flow);
         return true;
@@ -627,7 +635,7 @@ bool Stream::ignored_flow(Flow* flow, Packet* p)
             "Stream Ignoring packet from %s. Session marked as ignore\n",
             p->is_from_client() ? "sender" : "responder");
 
-        DisableInspection();
+        DetectionEngine::disable_all(p);
         return true;
     }
 
@@ -822,7 +830,6 @@ TEST_CASE("Stream API", "[stream_api][stream]")
     SECTION("stop inspection")
     {
         Packet* pkt = get_syn_packet(flow);
-        pkt->flow->session = new TcpSession(flow);
         int dir;
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0);
@@ -835,83 +842,73 @@ TEST_CASE("Stream API", "[stream_api][stream]")
         CHECK( ( dir == SSN_DIR_FROM_SERVER ) );
         CHECK( ( flow->flow_state == Flow::FlowState::ALLOW ) );
 
-        delete pkt->flow->session;
-        delete pkt;
+        release_packet(pkt);
     }
 
     SECTION("stop inspection from server - client packet")
     {
         Packet* pkt = get_syn_packet(flow);
-        pkt->flow->session = new TcpSession(flow);
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_SERVER, 0, 0);
         bool ignored = Stream::ignored_flow(flow, pkt);
         CHECK(ignored);
 
-        delete pkt->flow->session;
-        delete pkt;
+        release_packet(pkt);
     }
 
     SECTION("stop inspection from server - server packet")
     {
         Packet* pkt = get_syn_ack_packet(flow);
-        pkt->flow->session = new TcpSession(flow);
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_SERVER, 0, 0);
         bool ignored = Stream::ignored_flow(flow, pkt);
         CHECK(!ignored);
-        delete pkt->flow->session;
-        delete pkt;
+
+        release_packet(pkt);
     }
 
     SECTION("stop inspection from client - client packet")
     {
         Packet* pkt = get_syn_packet(flow);
-        pkt->flow->session = new TcpSession(flow);
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0);
         bool ignored = Stream::ignored_flow(flow, pkt);
         CHECK(!ignored);
 
-        delete pkt->flow->session;
-        delete pkt;
+        release_packet(pkt);
     }
 
     SECTION("stop inspection from client - server packet")
     {
         Packet* pkt = get_syn_ack_packet(flow);
-        pkt->flow->session = new TcpSession(flow);
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0);
         bool ignored = Stream::ignored_flow(flow, pkt);
         CHECK(ignored);
-        delete pkt->flow->session;
-        delete pkt;
+
+        release_packet(pkt);
     }
 
     SECTION("stop inspection both - client packet")
     {
         Packet* pkt = get_syn_packet(flow);
-        pkt->flow->session = new TcpSession(flow);
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_BOTH, 0, 0);
         bool ignored = Stream::ignored_flow(flow, pkt);
         CHECK(ignored);
 
-        delete pkt->flow->session;
-        delete pkt;
+        release_packet(pkt);
     }
 
     SECTION("stop inspection both - server packet")
     {
         Packet* pkt = get_syn_ack_packet(flow);
-        pkt->flow->session = new TcpSession(flow);
 
         Stream::stop_inspection(flow, pkt, SSN_DIR_BOTH, 0, 0);
         bool ignored = Stream::ignored_flow(flow, pkt);
         CHECK(ignored);
-        delete pkt->flow->session;
-        delete pkt;
+
+        release_packet(pkt);
     }
 
     delete flow;

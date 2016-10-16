@@ -41,8 +41,8 @@
 
 #define MODULE_SYMBOL "thirdparty_appid_impl_module"
 
-THREAD_LOCAL void* module_handle = nullptr;
-THREAD_LOCAL struct ThirdPartyConfig thirdpartyConfig;
+static THREAD_LOCAL void* module_handle = nullptr;
+static THREAD_LOCAL struct ThirdPartyConfig thirdpartyConfig;
 THREAD_LOCAL ThirdPartyAppIDModule* thirdparty_appid_module = nullptr;
 
 static char const* defaultXffFields[] = { HTTP_XFF_FIELD_X_FORWARDED_FOR,

@@ -25,14 +25,13 @@
 
 #include "smtp_util.h"
 
+#include "detection/detection_engine.h"
 #include "detection/detection_util.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
 #include "utils/safec.h"
 
 #include "smtp.h"
-
-static THREAD_LOCAL DataBuffer DecodeBuf;
 
 void SMTP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
@@ -72,23 +71,21 @@ void SMTP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     *eolm = tmp_eolm;
 }
 
-void SMTP_ResetAltBuffer()
+void SMTP_ResetAltBuffer(Packet* p)
 {
-    DecodeBuf.len = 0;
+    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    buf.len = 0;
 }
 
-const uint8_t* SMTP_GetAltBuffer(unsigned& len)
+const uint8_t* SMTP_GetAltBuffer(Packet* p, unsigned& len)
 {
-    len = DecodeBuf.len;
-    return len ? DecodeBuf.data : nullptr;
+    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    len = buf.len;
+    return len ? buf.data : nullptr;
 }
 
-int SMTP_CopyToAltBuffer(const uint8_t* start, int length)
+int SMTP_CopyToAltBuffer(Packet* p, const uint8_t* start, int length)
 {
-    uint8_t* alt_buf;
-    int alt_size;
-    unsigned int* alt_len;
-
     /* if we make a call to this it means we want to use the alt buffer
      * regardless of whether we copy any data into it or not - barring a failure */
     smtp_normalizing = true;
@@ -97,19 +94,18 @@ int SMTP_CopyToAltBuffer(const uint8_t* start, int length)
     if (length == 0)
         return 0;
 
-    alt_buf = DecodeBuf.data;
-    alt_size = sizeof(DecodeBuf.data);
-    alt_len = &DecodeBuf.len;
+    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    unsigned alt_size = sizeof(buf.data);
 
-    if ((unsigned long)length > alt_size - *alt_len)
+    if ((unsigned long)length > alt_size - buf.len)
     {
         //SetDetectLimit(p, 0);
         smtp_normalizing = false;
         return -1;
     }
 
-    memcpy_s(alt_buf + *alt_len, alt_size - *alt_len, start, length);
-    *alt_len += length;
+    memcpy_s(buf.data + buf.len, alt_size - buf.len, start, length);
+    buf.len += length;
 
     return 0;
 }
@@ -144,53 +140,4 @@ void SMTP_LogFuncs(SMTP_PROTO_CONF* config, Packet* p, MimeSession* mime_ssn)
         Stream::set_extra_data(p->flow, p, config->xtra_ehdrs_id);
     }
 }
-
-#ifdef DEBUG_MSGS
-char smtp_print_buffer[65537];
-
-const char* SMTP_PrintBuffer(Packet* p)
-{
-    const uint8_t* ptr = NULL;
-    int len = 0;
-    int iorig, inew;
-
-    if (smtp_normalizing)
-    {
-        ptr = DecodeBuf.data;
-        len = DecodeBuf.len;
-    }
-    else
-    {
-        ptr = p->data;
-        len = p->dsize;
-    }
-
-    for (iorig = 0, inew = 0; iorig < len; iorig++, inew++)
-    {
-        if ((isascii((int)ptr[iorig]) && isprint((int)ptr[iorig])) || (ptr[iorig] == '\n'))
-        {
-            smtp_print_buffer[inew] = ptr[iorig];
-        }
-        else if (ptr[iorig] == '\r' &&
-            ((iorig + 1) < len) && (ptr[iorig + 1] == '\n'))
-        {
-            iorig++;
-            smtp_print_buffer[inew] = '\n';
-        }
-        else if (isspace((int)ptr[iorig]))
-        {
-            smtp_print_buffer[inew] = ' ';
-        }
-        else
-        {
-            smtp_print_buffer[inew] = '.';
-        }
-    }
-
-    smtp_print_buffer[inew] = '\0';
-
-    return &smtp_print_buffer[0];
-}
-
-#endif
 

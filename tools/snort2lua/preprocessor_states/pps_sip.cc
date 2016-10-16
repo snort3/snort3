@@ -104,7 +104,7 @@ bool Sip::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("max_sessions"))
         {
-            tmpval = parse_int_option("max_sessions", arg_stream, false);
+            table_api.add_deleted_comment("max_sessions");
         }
 
         else if (!keyword.compare("max_to_len"))

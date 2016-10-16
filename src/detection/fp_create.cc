@@ -346,7 +346,7 @@ static int fpFinishPortGroupRule(
         };
 
         pg->mpse[pmd->pm_type] = MpseManager::get_search_engine(
-            sc, fp->get_search_api(), true, &agent);
+            sc, fp->get_search_api(), &agent);
 
         if ( !pg->mpse[pmd->pm_type] )
         {

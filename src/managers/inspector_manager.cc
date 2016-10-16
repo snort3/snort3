@@ -29,6 +29,7 @@
 #include "binder/bind_module.h"
 #include "binder/binder.h"
 #include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "flow/flow.h"
 #include "flow/session.h"
 #include "log/messages.h"
@@ -781,7 +782,7 @@ bool InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
         return false;
 
     else if ( !p->dsize )
-        DisableDetect();
+        DetectionEngine::disable_content(p);
 
     else if ( flow->gadget && flow->gadget->likes(p) )
     {

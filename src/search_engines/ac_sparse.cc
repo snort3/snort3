@@ -35,8 +35,8 @@ private:
     ACSM_STRUCT2* obj;
 
 public:
-    AcsMpse(SnortConfig*, bool use_gc, const MpseAgent* agent)
-        : Mpse("ac_sparse", use_gc)
+    AcsMpse(SnortConfig*, const MpseAgent* agent)
+        : Mpse("ac_sparse")
     {
         obj = acsmNew2(agent, ACF_SPARSE);
     }
@@ -79,9 +79,9 @@ public:
 //-------------------------------------------------------------------------
 
 static Mpse* acs_ctor(
-    SnortConfig* sc, class Module*, bool use_gc, const MpseAgent* agent)
+    SnortConfig* sc, class Module*, const MpseAgent* agent)
 {
-    return new AcsMpse(sc, use_gc, agent);
+    return new AcsMpse(sc, agent);
 }
 
 static void acs_dtor(Mpse* p)

@@ -71,7 +71,6 @@ extern THREAD_LOCAL ProfileStats dce2_udp_pstat_log;
 extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_acts;
 extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_frag;
 extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_reass;
-extern THREAD_LOCAL Packet* dce2_udp_rpkt;
 
 struct DceRpcClHdr   /* Connectionless header */
 {

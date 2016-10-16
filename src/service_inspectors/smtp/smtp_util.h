@@ -29,15 +29,10 @@
 struct Packet;
 
 void SMTP_GetEOL(const uint8_t*, const uint8_t*, const uint8_t**, const uint8_t**);
-void SMTP_LogFuncs(SMTP_PROTO_CONF* config, Packet* p, MimeSession* mime_ssn);
-void SMTP_ResetAltBuffer();
+void SMTP_LogFuncs(SMTP_PROTO_CONF*, Packet*, MimeSession*);
 
-#ifdef DEBUG_MSGS
-const char* SMTP_PrintBuffer(Packet*);
-#endif
-
-int SMTP_CopyToAltBuffer(const uint8_t*, int);
-const uint8_t* SMTP_GetAltBuffer(unsigned& len);
-void SMTP_ResetAltBuffer();
+int SMTP_CopyToAltBuffer(Packet*, const uint8_t*, int);
+const uint8_t* SMTP_GetAltBuffer(Packet*, unsigned& len);
+void SMTP_ResetAltBuffer(Packet*);
 
 #endif

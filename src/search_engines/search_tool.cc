@@ -36,7 +36,8 @@ SearchTool::SearchTool(const char* method)
     if ( snort_conf->fast_pattern_config )
     {
         const struct MpseApi* mpse_api = snort_conf->fast_pattern_config->get_search_api();
-        mpse = MpseManager::get_search_engine(snort_conf, mpse_api, false, nullptr);
+        mpse = MpseManager::get_search_engine(snort_conf, mpse_api, nullptr);
+
         if ( mpse && snort_conf->fast_pattern_config->get_search_opt() )
             mpse->set_opt(1);
     }

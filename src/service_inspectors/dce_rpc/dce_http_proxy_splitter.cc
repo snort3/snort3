@@ -36,19 +36,20 @@
 #define HTTP_PROXY_REQUEST    "RPC_CONNECT"
 #define HTTP_PROXY_RESPONSE   "HTTP/1."
 
-const StreamBuffer* DceHttpProxySplitter::reassemble(Flow* flow, unsigned total, unsigned offset,
+const StreamBuffer DceHttpProxySplitter::reassemble(
+    Flow* flow, unsigned total, unsigned offset,
     const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
-// FIXIT-M Framework should permit the null return on both PDU directions
+    // FIXIT-M Framework should permit the null return on both PDU directions
     if ( to_server() )
     {
         copied = len;
-        return nullptr;
+        return { nullptr, 0 };
     }
     else
         return StreamSplitter::reassemble(flow,total,offset,data,len,flags,copied);
 }
- 
+
 StreamSplitter::Status DceHttpProxySplitter::scan(
     Flow*, const uint8_t* data, uint32_t len,
     uint32_t flags, uint32_t* fp)
@@ -158,7 +159,7 @@ DceHttpProxySplitter::DceHttpProxySplitter(bool c2s) : StreamSplitter(c2s)
 }
 
 //--------------------------------------------------------------------------
-// unit tests 
+// unit tests
 //--------------------------------------------------------------------------
 
 #ifdef UNIT_TEST

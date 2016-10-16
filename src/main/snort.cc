@@ -30,16 +30,20 @@
 #include "codecs/codec_api.h"
 #include "connectors/connectors.h"
 #include "decompress/file_decomp.h"
+#include "detection/context_switcher.h"
 #include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "detection/detection_util.h"
 #include "detection/fp_config.h"
 #include "detection/fp_detect.h"
+#include "detection/ips_context.h"
 #include "detection/tag.h"
 #include "file_api/file_service.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
 #include "flow/ha.h"
+#include "framework/endianness.h"
 #include "framework/mpse.h"
 #include "helpers/process.h"
 #include "host_tracker/host_cache.h"
@@ -106,6 +110,10 @@ static pid_t snort_main_thread_pid = 0;
 static THREAD_LOCAL DAQ_PktHdr_t s_pkth;
 static THREAD_LOCAL uint8_t s_data[65536];
 static THREAD_LOCAL Packet* s_packet = nullptr;
+static THREAD_LOCAL ContextSwitcher* s_switcher = nullptr;
+
+ContextSwitcher* Snort::get_switcher()
+{ return s_switcher; }
 
 //-------------------------------------------------------------------------
 // perf stats
@@ -682,21 +690,24 @@ bool Snort::thread_init_privileged(const char* intf)
  */
 void Snort::thread_init_unprivileged()
 {
-    s_packet = new Packet(false);
+    // using dummy values until further integration
+    const unsigned max_contexts = 20;
+
+    s_switcher = new ContextSwitcher(max_contexts);
+
+    for ( unsigned i = 0; i < max_contexts; ++i )
+        s_switcher->push(new IpsContext);
+
     CodecManager::thread_init(snort_conf);
 
     // this depends on instantiated daq capabilities
     // so it is done here instead of init()
     Active::init(snort_conf);
 
-    SnortEventqNew(snort_conf->event_queue_config);
-
     InitTag();
-
     EventTrace_Init();
     detection_filter_init(snort_conf->detection_filter_config);
-
-    otnx_match_data_init(snort_conf->num_rule_types);
+    DetectionEngine::thread_init();
 
     EventManager::open_outputs();
     IpsManager::setup_options();
@@ -717,6 +728,7 @@ void Snort::thread_term()
     if ( !snort_conf->dirty_pig )
         Stream::purge_flows();
 
+    DetectionEngine::idle();
     InspectorManager::thread_stop(snort_conf);
     ModuleManager::accumulate(snort_conf);
     InspectorManager::thread_term(snort_conf);
@@ -728,11 +740,7 @@ void Snort::thread_term()
     HighAvailabilityManager::thread_term();
     SideChannelManager::thread_term();
 
-    if ( s_packet )
-    {
-        delete s_packet;
-        s_packet = nullptr;
-    }
+    s_packet = nullptr;
 
     SFDAQInstance *daq_instance = SFDAQ::get_local_instance();
     if ( daq_instance->was_started() )
@@ -745,33 +753,24 @@ void Snort::thread_term()
 
     Profiler::consolidate_stats();
 
-    otnx_match_data_term();
+    DetectionEngine::thread_term();
     detection_filter_term();
     EventTrace_Term();
     CleanupTag();
     FileService::thread_term();
 
-    SnortEventqFree();
     Active::term();
+    delete s_switcher;
 }
 
-void Snort::detect_rebuilt_packet(Packet* p)
+void Snort::inspect(Packet* p)
 {
     // Need to include this b/c call is outside the detect tree
     Profile detect_profile(detectPerfStats);
     Profile rebuilt_profile(rebuiltPacketPerfStats);
 
-    auto save_do_detect = do_detect;
-    auto save_do_detect_content = do_detect_content;
-
-    SnortEventqPush();
+    DetectionEngine de;
     main_hook(p);
-    SnortEventqPop();
-
-    DetectReset();
-
-    do_detect = save_do_detect;
-    do_detect_content = save_do_detect_content;
 }
 
 DAQ_Verdict Snort::process_packet(
@@ -788,10 +787,9 @@ DAQ_Verdict Snort::process_packet(
 
     set_policy(p);  // FIXIT-M should not need this here
 
-    /* just throw away the packet if we are configured to ignore this port */
     if ( !(p->packet_flags & PKT_IGNORE) )
     {
-        DetectReset();
+        clear_file_data();
         main_hook(p);
     }
 
@@ -874,16 +872,14 @@ DAQ_Verdict Snort::packet_callback(
     Profile profile(totalPerfStats);
 
     pc.total_from_daq++;
-    rule_eval_pkt_count++;
     packet_time_update(&pkthdr->ts);
 
     if ( snort_conf->pkt_skip && pc.total_from_daq <= snort_conf->pkt_skip )
         return DAQ_VERDICT_PASS;
 
-    {
-        Profile eventq_profile(eventqPerfStats);
-        SnortEventqReset();
-    }
+    s_switcher->start();
+    s_packet = s_switcher->get_context()->packet;
+    s_switcher->get_context()->pkt_count++;
 
     sfthreshold_reset();
     ActionManager::reset_queue();
@@ -899,7 +895,6 @@ DAQ_Verdict Snort::packet_callback(
     HighAvailabilityManager::process_update(s_packet->flow, pkthdr);
 
     Active::reset();
-    PacketManager::encode_reset();
     Stream::timeout_flows(pkthdr->ts.tv_sec);
     HighAvailabilityManager::process_receive();
 
@@ -910,6 +905,8 @@ DAQ_Verdict Snort::packet_callback(
 
     else if ( break_time() )
         SFDAQ::break_loop(0);
+
+    s_switcher->stop();
 
     return verdict;
 }

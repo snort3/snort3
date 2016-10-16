@@ -27,27 +27,25 @@
 #include "main/snort_config.h"
 
 THREAD_LOCAL uint16_t event_id; // FIXIT-M also incremented in fpLogEvent()
-THREAD_LOCAL SigInfo sig_info;  // FIXIT-M move to stack
 
 void SetEvent(
-    Event* event, uint32_t gid, uint32_t sid, uint32_t rev,
+    Event& event, uint32_t gid, uint32_t sid, uint32_t rev,
     uint32_t classification, uint32_t priority, uint32_t event_ref)
 {
-    sig_info.gid = gid;
-    sig_info.sid = sid;
-    sig_info.rev = rev;
-    sig_info.class_id = classification;
-    sig_info.priority = priority;
+    event.sig_info->gid = gid;
+    event.sig_info->sid = sid;
+    event.sig_info->rev = rev;
+    event.sig_info->class_id = classification;
+    event.sig_info->priority = priority;
 
-    event->sig_info = &sig_info;
     /* this one gets set automatically */
-    event->event_id = ++event_id | SnortConfig::get_event_log_id();
+    event.event_id = ++event_id | SnortConfig::get_event_log_id();
 
     if (event_ref)
-        event->event_reference = event_ref;
+        event.event_reference = event_ref;
     else
-        event->event_reference = event->event_id;
+        event.event_reference = event.event_id;
 
-    event->ref_time.tv_sec = event->ref_time.tv_usec = 0;
+    event.ref_time.tv_sec = event.ref_time.tv_usec = 0;
 }
 

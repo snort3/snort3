@@ -38,7 +38,7 @@
 // base stuff
 //-------------------------------------------------------------------------
 
-Mpse::Mpse(const char*, bool) { }
+Mpse::Mpse(const char*) { }
 
 int Mpse::search(
     const unsigned char* T, int n, MpseMatch match,
@@ -53,12 +53,6 @@ int Mpse::search_all(
 {
     return _search(T, n, match, context, current_state);
 }
-
-uint64_t Mpse::get_pattern_byte_count()
-{ return 0; }
-
-void Mpse::reset_pattern_byte_count()
-{ }
 
 //-------------------------------------------------------------------------
 // stubs, spies, etc.
@@ -166,7 +160,7 @@ TEST(mpse_hs_base, mpse)
     CHECK(mpse_api->print);
 
     mpse_api->init();
-    Mpse* p = mpse_api->ctor(snort_conf, nullptr, false, &s_agent);
+    Mpse* p = mpse_api->ctor(snort_conf, nullptr, &s_agent);
     mpse_api->print();
 
     CHECK(p);
@@ -187,7 +181,7 @@ TEST_GROUP(mpse_hs_match)
         // FIXIT-L cpputest hangs or crashes in the leak detector
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         CHECK(se_hyperscan);
-        hs = mpse_api->ctor(snort_conf, nullptr, false, &s_agent);
+        hs = mpse_api->ctor(snort_conf, nullptr, &s_agent);
         CHECK(hs);
         hits = 0;
         parse_errors = 0;
@@ -329,10 +323,10 @@ TEST_GROUP(mpse_hs_multi)
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         CHECK(se_hyperscan);
 
-        hs1 = mpse_api->ctor(snort_conf, nullptr, false, &s_agent);
+        hs1 = mpse_api->ctor(snort_conf, nullptr, &s_agent);
         CHECK(hs1);
 
-        hs2 = mpse_api->ctor(snort_conf, nullptr, false, &s_agent);
+        hs2 = mpse_api->ctor(snort_conf, nullptr, &s_agent);
         CHECK(hs2);
 
         hits = 0;

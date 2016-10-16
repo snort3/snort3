@@ -25,15 +25,16 @@
 
 #include "tcp_reassembler.h"
 
+#include "detection/detection_engine.h"
 #include "log/log.h"
 #include "main/snort.h"
 #include "profiler/profiler.h"
+#include "detection/detection_engine.h"
 #include "protocols/packet_manager.h"
+#include "time/packet_time.h"
 
 #include "tcp_module.h"
 #include "tcp_normalizer.h"
-
-THREAD_LOCAL Packet* s5_pkt = nullptr;
 
 ReassemblyPolicy stream_reassembly_policy_map[] =
 {
@@ -451,7 +452,7 @@ uint32_t TcpReassembler::get_flush_data_len(TcpSegmentNode* tsn, uint32_t to_seq
 }
 
 // flush the client seglist up to the most recently acked segment
-int TcpReassembler::flush_data_segments(Packet* p, uint32_t total)
+int TcpReassembler::flush_data_segments(Packet* p, uint32_t total, Packet* pdu)
 {
     uint32_t bytes_flushed = 0;
     uint32_t segs = 0;
@@ -476,16 +477,17 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t total)
             || SEQ_EQ(tsn->seq +  bytes_to_copy, to_seq) )
             flags |= PKT_PDU_TAIL;
 
-        const StreamBuffer* sb = tracker->splitter->reassemble(
-            p->flow, total, bytes_flushed, tsn->payload(), bytes_to_copy, flags, bytes_copied);
+        const StreamBuffer sb = tracker->splitter->reassemble(
+            session->flow, total, bytes_flushed, tsn->payload(),
+            bytes_to_copy, flags, bytes_copied);
 
         flags = 0;
 
-        if ( sb )
+        if ( sb.data )
         {
-            s5_pkt->data = sb->data;
-            s5_pkt->dsize = sb->length;
-            assert(sb->length <= s5_pkt->max_dsize);
+            pdu->data = sb.data;
+            pdu->dsize = sb.length;
+            assert(sb.length <= pdu->max_dsize);
 
             bytes_to_copy = bytes_copied;
         }
@@ -523,7 +525,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t total)
             break;
         }
 
-        if ( sb || !seglist.next )
+        if ( sb.data || !seglist.next )
             break;
 
         if ( bytes_flushed + seglist.next->payload_size >= StreamSplitter::max_buf )
@@ -539,70 +541,76 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t total)
 }
 
 // FIXIT-L consolidate encode format, update, and this into new function?
-void TcpReassembler::prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags)
+void TcpReassembler::prep_pdu(Flow* flow, Packet* p, uint32_t pkt_flags, Packet* pdu)
 {
-    s5_pkt->ptrs.set_pkt_type(PktType::PDU);
-    s5_pkt->proto_bits |= PROTO_BIT__TCP;
-    s5_pkt->packet_flags |= (pkt_flags & PKT_PDU_FULL);
-    s5_pkt->flow = flow;
+    pdu->ptrs.set_pkt_type(PktType::PDU);
+    pdu->proto_bits |= PROTO_BIT__TCP;
+    pdu->packet_flags |= (pkt_flags & PKT_PDU_FULL);
+    pdu->flow = flow;
 
-    if (p == s5_pkt)
+    if (p == pdu)
     {
         // final
         if (pkt_flags & PKT_FROM_SERVER)
         {
-            s5_pkt->packet_flags |= PKT_FROM_SERVER;
-            s5_pkt->ptrs.ip_api.set(flow->server_ip, flow->client_ip);
-            s5_pkt->ptrs.sp = flow->server_port;
-            s5_pkt->ptrs.dp = flow->client_port;
+            pdu->packet_flags |= PKT_FROM_SERVER;
+            pdu->ptrs.ip_api.set(flow->server_ip, flow->client_ip);
+            pdu->ptrs.sp = flow->server_port;
+            pdu->ptrs.dp = flow->client_port;
         }
         else
         {
-            s5_pkt->packet_flags |= PKT_FROM_CLIENT;
-            s5_pkt->ptrs.ip_api.set(flow->client_ip, flow->server_ip);
-            s5_pkt->ptrs.sp = flow->client_port;
-            s5_pkt->ptrs.dp = flow->server_port;
+            pdu->packet_flags |= PKT_FROM_CLIENT;
+            pdu->ptrs.ip_api.set(flow->client_ip, flow->server_ip);
+            pdu->ptrs.sp = flow->client_port;
+            pdu->ptrs.dp = flow->server_port;
         }
     }
     else if (!p->packet_flags || (pkt_flags & p->packet_flags))
     {
         // forward
-        s5_pkt->packet_flags |= (p->packet_flags
+        pdu->packet_flags |= (p->packet_flags
             & (PKT_FROM_CLIENT | PKT_FROM_SERVER));
-        s5_pkt->ptrs.ip_api.set(*p->ptrs.ip_api.get_src(),
+        pdu->ptrs.ip_api.set(*p->ptrs.ip_api.get_src(),
             *p->ptrs.ip_api.get_dst());
-        s5_pkt->ptrs.sp = p->ptrs.sp;
-        s5_pkt->ptrs.dp = p->ptrs.dp;
+        pdu->ptrs.sp = p->ptrs.sp;
+        pdu->ptrs.dp = p->ptrs.dp;
     }
     else
     {
         // reverse
         if (p->is_from_client())
-            s5_pkt->packet_flags |= PKT_FROM_SERVER;
+            pdu->packet_flags |= PKT_FROM_SERVER;
         else
-            s5_pkt->packet_flags |= PKT_FROM_CLIENT;
+            pdu->packet_flags |= PKT_FROM_CLIENT;
 
-        s5_pkt->ptrs.ip_api.set(*p->ptrs.ip_api.get_dst(),
+        pdu->ptrs.ip_api.set(*p->ptrs.ip_api.get_dst(),
             *p->ptrs.ip_api.get_src());
-        s5_pkt->ptrs.dp = p->ptrs.sp;
-        s5_pkt->ptrs.sp = p->ptrs.dp;
+        pdu->ptrs.dp = p->ptrs.sp;
+        pdu->ptrs.sp = p->ptrs.dp;
     }
 }
 
 int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
     Profile profile(s5TcpFlushPerfStats);
-    DAQ_PktHdr_t pkth;
-    EncodeFlags enc_flags = 0;
 
-    session->GetPacketHeaderFoo(&pkth, pkt_flags);
-    PacketManager::format_tcp(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
-    prep_s5_pkt(session->flow, p, pkt_flags);
+    DetectionEngine::onload(session->flow);
+    Packet* pdu = DetectionEngine::set_packet();
+
+    if ( !p )
+    {
+        // FIXIT-H we need to have user_policy_id in this case
+        // FIXIT-H this leads to format_tcp() copying from pdu to pdu
+        // (neither of these issues is created by passing null through to here)
+        p = pdu;
+    }
 
     DebugFormat(DEBUG_STREAM_STATE, "Attempting to flush %u bytes\n", bytes);
 
     uint32_t bytes_processed = 0;
     uint32_t stop_seq = seglist.next->seq + bytes;
+
     while ( seglist.next and SEQ_LT(seglist.next->seq, stop_seq) )
     {
         seglist_base_seq = seglist.next->seq;
@@ -611,40 +619,52 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         if ( footprint == 0 )
             return bytes_processed;
 
-        if ( footprint > s5_pkt->max_dsize )
+        if ( footprint > pdu->max_dsize )
             /* this is as much as we can pack into a stream buffer */
-            footprint = s5_pkt->max_dsize;
+            footprint = pdu->max_dsize;
 
-        ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_sec = seglist.next->tv.tv_sec;
-        ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_usec = seglist.next->tv.tv_usec;
-        s5_pkt->dsize = 0;
-        s5_pkt->data = nullptr;
+        DetectionEngine::onload(session->flow);
+        pdu = DetectionEngine::set_packet();
+
+        DAQ_PktHdr_t pkth;
+        session->GetPacketHeaderFoo(&pkth, pkt_flags);
+
+        EncodeFlags enc_flags = 0;
+        PacketManager::format_tcp(enc_flags, p, pdu, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
+        prep_pdu(session->flow, p, pkt_flags, pdu);
+
+        ((DAQ_PktHdr_t*)pdu->pkth)->ts = seglist.next->tv;
+
+        /* setup the pseudopacket payload */
+        pdu->dsize = 0;
+        pdu->data = nullptr;
 
         if ( tracker->splitter->is_paf() and ( tracker->get_tf_flags() & TF_MISSING_PREV_PKT ) )
             fallback();
 
-        int32_t flushed_bytes = flush_data_segments(p, footprint);
+        int32_t flushed_bytes = flush_data_segments(p, footprint, pdu);
+
         if ( flushed_bytes == 0 )
             break; /* No more data... bail */
 
         bytes_processed += flushed_bytes;
         seglist_base_seq += flushed_bytes;
 
-        if ( s5_pkt->dsize )
+        if ( pdu->dsize )
         {
             if ( p->packet_flags & PKT_PDU_TAIL )
-                s5_pkt->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST | PKT_PDU_TAIL );
+                pdu->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST | PKT_PDU_TAIL );
             else
-                s5_pkt->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST );
+                pdu->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST );
 
             // FIXIT-H this came with merge should it be here? YES
-            //s5_pkt->application_protocol_ordinal = p->application_protocol_ordinal;
-            show_rebuilt_packet(s5_pkt);
+            //pdu->application_protocol_ordinal = p->application_protocol_ordinal;
+            show_rebuilt_packet(pdu);
             tcpStats.rebuilt_packets++;
             tcpStats.rebuilt_bytes += flushed_bytes;
 
             ProfileExclude profile_exclude(s5TcpFlushPerfStats);
-            Snort::detect_rebuilt_packet(s5_pkt);
+            Snort::inspect(pdu);
         }
         else
         {
@@ -789,20 +809,8 @@ int TcpReassembler::flush_stream(Packet* p, uint32_t dir)
     return flush_to_seq(bytes, p, dir);
 }
 
-void TcpReassembler::final_flush(Packet* p, PegCount& peg, uint32_t dir)
+void TcpReassembler::final_flush(Packet* p, uint32_t dir)
 {
-    if ( !p )
-    {
-        p = s5_pkt;
-
-        DAQ_PktHdr_t* const tmp_pcap_hdr = const_cast<DAQ_PktHdr_t*>(p->pkth);
-        peg++;
-
-        /* Do each field individually because of size differences on 64bit OS */
-        tmp_pcap_hdr->ts.tv_sec = seglist.head->tv.tv_sec;
-        tmp_pcap_hdr->ts.tv_usec = seglist.head->tv.tv_usec;
-    }
-
     tracker->set_tf_flags(TF_FORCE_FLUSH);
 
     if ( flush_stream(p, dir) )
@@ -811,17 +819,56 @@ void TcpReassembler::final_flush(Packet* p, PegCount& peg, uint32_t dir)
     tracker->clear_tf_flags(TF_FORCE_FLUSH);
 }
 
+static Packet* set_packet(Flow* flow, uint32_t flags, bool c2s)
+{
+    Packet* p = DetectionEngine::get_current_packet();
+    p->reset();
+
+    DAQ_PktHdr_t* ph = (DAQ_PktHdr_t*)p->pkth;
+    memset(ph, 0, sizeof(*ph));
+    packet_gettimeofday(&ph->ts);
+
+    p->ptrs.set_pkt_type(PktType::PDU);
+    p->proto_bits |= PROTO_BIT__TCP;
+    p->flow = flow;
+    p->packet_flags = flags;
+
+    if ( c2s )
+    {
+        p->ptrs.ip_api.set(flow->client_ip, flow->server_ip);
+        p->ptrs.sp = flow->client_port;
+        p->ptrs.dp = flow->server_port;
+    }
+    else
+    {
+        p->ptrs.ip_api.set(flow->server_ip, flow->client_ip);
+        p->ptrs.sp = flow->server_port;
+        p->ptrs.dp = flow->client_port;
+    }
+    return p;
+}
+
 void TcpReassembler::flush_queued_segments(Flow* flow, bool clear, Packet* p)
 {
+    bool data = p or seglist.head;
+
+    if ( !p )
+    {
+        // this packet is required if we call finish and/or final_flush
+        p = set_packet(flow, packet_dir, server_side);
+
+        if ( server_side )
+            tcpStats.s5tcp2++;
+        else
+            tcpStats.s5tcp1++;
+    }
+
     bool pending = clear and paf_initialized(&tracker->paf_state)
         and (!tracker->splitter or tracker->splitter->finish(flow) );
 
-    if ((pending and (p or seglist.head) and !(flow->ssn_state.ignore_direction & ignore_dir)))
+    if ( pending and data and !(flow->ssn_state.ignore_direction & ignore_dir) )
     {
-        if (server_side)
-            final_flush(p, tcpStats.s5tcp2, packet_dir);
-        else
-            final_flush(p, tcpStats.s5tcp1, packet_dir);
+        final_flush(p, packet_dir);
     }
 }
 
@@ -861,6 +908,7 @@ uint32_t TcpReassembler::get_forward_packet_dir(const Packet* p)
 int32_t TcpReassembler::flush_pdu_ips(uint32_t* flags)
 {
     Profile profile(s5TcpPAFPerfStats);
+    DetectionEngine::onload(session->flow);
 
     uint32_t total = 0, avail;
     TcpSegmentNode* tsn;
@@ -932,6 +980,7 @@ void TcpReassembler::fallback()
 int32_t TcpReassembler::flush_pdu_ackd(uint32_t* flags)
 {
     Profile profile(s5TcpPAFPerfStats);
+    DetectionEngine::onload(session->flow);
 
     uint32_t total = 0;
     TcpSegmentNode* tsn = SEQ_LT(seglist_base_seq, tracker->r_win_base) ? seglist.head : nullptr;

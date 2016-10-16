@@ -169,7 +169,7 @@ static const int valid_chars[256] =
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-static THREAD_LOCAL char decoded_out[6335];
+static THREAD_LOCAL char decoded_out[65535];
 
 typedef struct
 {

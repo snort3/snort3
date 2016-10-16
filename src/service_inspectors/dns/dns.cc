@@ -27,7 +27,7 @@
 
 #include "dns.h"
 
-#include "events/event_queue.h"
+#include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -557,7 +557,7 @@ static uint16_t CheckRRTypeTXTVuln(
                 if (overflow_check > 0xFFFF)
                 {
                     /* Alert on obsolete DNS RR types */
-                    SnortEventqAdd(GID_DNS, DNS_EVENT_RDATA_OVERFLOW);
+                    DetectionEngine::queue_event(GID_DNS, DNS_EVENT_RDATA_OVERFLOW);
 
                     dnsSessionData->curr_txt.alerted = 1;
                 }
@@ -652,7 +652,7 @@ static uint16_t ParseDNSRData(
     case DNS_RR_TYPE_MD:
     case DNS_RR_TYPE_MF:
         /* Alert on obsolete DNS RR types */
-        SnortEventqAdd(GID_DNS, DNS_EVENT_OBSOLETE_TYPES);
+        DetectionEngine::queue_event(GID_DNS, DNS_EVENT_OBSOLETE_TYPES);
         bytes_unused = SkipDNSRData(data, bytes_unused, dnsSessionData);
         break;
 
@@ -662,7 +662,7 @@ static uint16_t ParseDNSRData(
     case DNS_RR_TYPE_NULL:
     case DNS_RR_TYPE_MINFO:
         /* Alert on experimental DNS RR types */
-        SnortEventqAdd(GID_DNS, DNS_EVENT_EXPERIMENTAL_TYPES);
+        DetectionEngine::queue_event(GID_DNS, DNS_EVENT_EXPERIMENTAL_TYPES);
         bytes_unused = SkipDNSRData(data, bytes_unused, dnsSessionData);
         break;
     case DNS_RR_TYPE_A:

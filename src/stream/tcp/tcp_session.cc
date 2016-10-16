@@ -48,6 +48,8 @@
 
 #include "tcp_session.h"
 
+#include "detection/detection_engine.h"
+#include "detection/rules.h"
 #include "log/log.h"
 #include "perf_monitor/flow_ip_tracker.h"
 #include "profiler/profiler.h"
@@ -96,6 +98,8 @@ void TcpSession::restart(Packet* p)
     // sanity check since this is called externally
     assert(p->ptrs.tcph);
 
+    assert(!p or p->flow == flow);
+    DetectionEngine::onload(flow);
     TcpStreamTracker* talker, * listener;
 
     if (p->is_from_server())
@@ -132,6 +136,9 @@ void TcpSession::restart(Packet* p)
 
 void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p)
 {
+    assert(!p or p->flow == flow);
+    DetectionEngine::onload(flow);
+
     if ( client->reassembler )
     {
         if ( flush_segments )
@@ -636,8 +643,10 @@ void TcpSession::update_session_on_rst(TcpSegmentDescriptor& tsd, bool flush)
 {
     if ( flush )
     {
+        DetectionEngine::onload(flow);
         flush_listener(tsd.get_pkt(), true);
         flush_talker(tsd.get_pkt(), true);
+        DetectionEngine::onload(flow);  // FIXIT-H don't allow offload above
         set_splitter(true, nullptr);
         set_splitter(false, nullptr);
         flow->free_flow_data();
@@ -958,7 +967,7 @@ void TcpSession::do_packet_analysis_post_checks(Packet* p)
 
     if (pkt_action_mask & ACTION_DISABLE_INSPECTION)
     {
-        DisableInspection();
+        DetectionEngine::disable_all(p);
 
         DebugFormat(DEBUG_STREAM_STATE,
             "Stream Ignoring packet from %s. Session marked as ignore\n",

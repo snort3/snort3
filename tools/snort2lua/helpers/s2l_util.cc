@@ -316,7 +316,7 @@ bool is_regular_file(std::string& path)
         return (s.st_mode & S_IFREG);
 
     return false;
-} 
+}
 
 bool case_compare(std::string arg1, std::string arg2)
 {

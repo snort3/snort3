@@ -115,7 +115,7 @@ int DisplayBanner()
         VERSION, BUILD, info);
     LogMessage("   ''''    By Martin Roesch & The Snort Team\n");
     LogMessage("           http://snort.org/contact#team\n");
-    LogMessage("           Copyright (C) 2014-2016 Cisco and/or its affiliates."
+    LogMessage("           Copyright (C) 2014-2017 Cisco and/or its affiliates."
                            " All rights reserved.\n");
     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
     LogMessage("           Using DAQ version %s\n", daq_version_string());
@@ -521,39 +521,26 @@ char* snort_strdup(const char* str)
     return p;
 }
 
-/**
- * Return a ptr to the absolute pathname of snort.  This memory must
- * be copied to another region if you wish to save it for later use.
- */
-static const char* CurrentWorkingDir()
+typedef char PathBuf[PATH_MAX_UTIL+1];
+
+static const char* CurrentWorkingDir(PathBuf& buf)
 {
-    static THREAD_LOCAL char buf[PATH_MAX_UTIL + 1];
+    if ( !getcwd(buf, sizeof(buf)-1) )
+        return nullptr;
 
-    if (getcwd(buf, PATH_MAX_UTIL) == NULL)
-    {
-        return NULL;
-    }
-
-    buf[PATH_MAX_UTIL] = '\0';
-
+    buf[sizeof(buf)-1] = '\0';
     return buf;
 }
 
-/**
- * Given a directory name, return a ptr to a static
- */
-static char* GetAbsolutePath(const char* dir)
+static char* GetAbsolutePath(const char* dir, PathBuf& buf)
 {
-    static THREAD_LOCAL char buf[PATH_MAX_UTIL + 1];
-
-    if (!dir)
-        return NULL;
-
+    assert(dir);
     errno = 0;
-    if (!realpath(dir, buf))
+
+    if ( !realpath(dir, buf) )
     {
         LogMessage("Couldn't determine absolute path for '%s': %s\n", dir, get_error(errno));
-        return NULL;
+        return nullptr;
     }
 
     return buf;
@@ -569,12 +556,11 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir)
         ParseError("Log directory not specified");
         return false;
     }
+    PathBuf pwd;
+    DebugFormat(DEBUG_INIT, "EnterChroot: %s\n", CurrentWorkingDir(pwd));
+    PathBuf abs_log_dir;
 
-    DebugFormat(DEBUG_INIT, "EnterChroot: %s\n", CurrentWorkingDir());
-
-    const char* abs_log_dir = GetAbsolutePath(log_dir.c_str());
-
-    if (!abs_log_dir)
+    if ( !GetAbsolutePath(log_dir.c_str(), abs_log_dir) )
         return false;
 
     /* change to the desired root directory */
@@ -586,7 +572,7 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir)
     }
 
     /* always returns an absolute pathname */
-    const char* abs_root_dir = CurrentWorkingDir();
+    const char* abs_root_dir = CurrentWorkingDir(pwd);
     if (!abs_root_dir)
     {
         ParseError("Couldn't retrieve current working directory");
@@ -609,7 +595,7 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir)
     }
 
     DebugFormat(DEBUG_INIT,"chroot success (%s ->", abs_root_dir);
-    DebugFormat(DEBUG_INIT,"%s)\n ", CurrentWorkingDir());
+    DebugFormat(DEBUG_INIT,"%s)\n ", CurrentWorkingDir(pwd));
 
     /* Immediately change to the root directory of the jail. */
     if (chdir("/") < 0)
@@ -619,7 +605,7 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir)
         return false;
     }
 
-    DebugFormat(DEBUG_INIT,"chdir success (%s)\n", CurrentWorkingDir());
+    DebugFormat(DEBUG_INIT,"chdir success (%s)\n", CurrentWorkingDir(pwd));
 
     if (abs_root_dir_len >= strlen(abs_log_dir))
         log_dir = "/";

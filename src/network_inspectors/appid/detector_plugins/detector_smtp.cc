@@ -64,13 +64,6 @@ struct ClientSMTPData
     int decryption_countdown;
 };
 
-struct SMTP_CLIENT_APP_CONFIG
-{
-    bool enabled;
-};
-
-THREAD_LOCAL SMTP_CLIENT_APP_CONFIG smtp_config;
-
 enum SMTPServiceState
 {
     SMTP_SERVICE_STATE_CONNECTION,
