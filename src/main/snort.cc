@@ -30,10 +30,12 @@
 #include "codecs/codec_api.h"
 #include "connectors/connectors.h"
 #include "decompress/file_decomp.h"
+#include "detection/context_switcher.h"
 #include "detection/detect.h"
 #include "detection/detection_util.h"
 #include "detection/fp_config.h"
 #include "detection/fp_detect.h"
+#include "detection/ips_context.h"
 #include "detection/tag.h"
 #include "file_api/file_service.h"
 #include "filters/detection_filter.h"
@@ -102,6 +104,7 @@ static pid_t snort_main_thread_pid = 0;
 static THREAD_LOCAL DAQ_PktHdr_t s_pkth;
 static THREAD_LOCAL uint8_t s_data[65536];
 static THREAD_LOCAL Packet* s_packet = nullptr;
+static THREAD_LOCAL ContextSwitcher* s_switcher = nullptr;
 
 //-------------------------------------------------------------------------
 // perf stats
@@ -650,6 +653,15 @@ bool Snort::thread_init_privileged(const char* intf)
  */
 void Snort::thread_init_unprivileged()
 {
+    // using dummy values until further integration
+    const unsigned max_contexts = 5;
+    const unsigned max_data = 1;
+
+    s_switcher = new ContextSwitcher(max_contexts);
+
+    for ( unsigned i = 0; i < max_contexts; ++i )
+        s_switcher->push(new IpsContext(max_data));
+
     s_packet = new Packet(false);
     CodecManager::thread_init(snort_conf);
 
@@ -721,6 +733,7 @@ void Snort::thread_term()
 
     SnortEventqFree();
     Active::term();
+    delete s_switcher;
 }
 
 void Snort::detect_rebuilt_packet(Packet* p)
@@ -848,6 +861,8 @@ DAQ_Verdict Snort::packet_callback(
     if ( snort_conf->pkt_skip && pc.total_from_daq <= snort_conf->pkt_skip )
         return DAQ_VERDICT_PASS;
 
+    s_switcher->start();
+
     {
         Profile eventq_profile(eventqPerfStats);
         SnortEventqReset();
@@ -878,6 +893,8 @@ DAQ_Verdict Snort::packet_callback(
 
     else if ( break_time() )
         SFDAQ::break_loop(0);
+
+    s_switcher->stop();
 
     return verdict;
 }

@@ -36,17 +36,11 @@ class IpsContextData
 public:
     virtual ~IpsContextData() { };
 
-    static unsigned get_ips_id()
-    { return ++ips_id; }
-
-    static unsigned get_max_id()
-    { return ips_id; }
+    static unsigned get_ips_id();
+    static unsigned get_max_id();
 
 protected:
     IpsContextData() { }
-
-private:
-    static unsigned ips_id;
 };
 
 class IpsContext

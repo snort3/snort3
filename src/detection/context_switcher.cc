@@ -20,14 +20,16 @@
 
 #include "context_switcher.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <assert.h>
 
 #include "ips_context.h"
 
-#define UNIT_TEST
-
 #ifdef UNIT_TEST
-#include "catch.hpp"
+#include "catch/catch.hpp"
 #endif
 
 //--------------------------------------------------------------------------
@@ -168,7 +170,7 @@ public:
     ContextData(int) { }
 };
 
-TEST_CASE("normal", "[ContextSwitcher]")
+TEST_CASE("ContextSwitcher normal", "[ContextSwitcher]")
 {
     const unsigned max = 3;
     auto mgr = ContextSwitcher(max);
@@ -221,7 +223,7 @@ TEST_CASE("normal", "[ContextSwitcher]")
     CHECK(!mgr.pop());
 }
 
-TEST_CASE("abort", "[ContextSwitcher]")
+TEST_CASE("ContextSwitcher abort", "[ContextSwitcher]")
 {
     const unsigned max = 3;
     auto mgr = ContextSwitcher(max);

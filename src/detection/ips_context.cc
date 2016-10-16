@@ -20,15 +20,29 @@
 
 #include "ips_context.h"
 
-#include <assert.h>
-
-#define UNIT_TEST
-
-#ifdef UNIT_TEST
-#include "catch.hpp"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
-unsigned IpsContextData::ips_id = 0;
+#include <assert.h>
+
+#ifdef UNIT_TEST
+#include "catch/catch.hpp"
+#endif
+
+//--------------------------------------------------------------------------
+// context data
+//--------------------------------------------------------------------------
+
+// ips_id is not a member of context data so that
+// tests (and only tests) can reset the id
+static unsigned ips_id = 0;
+
+unsigned IpsContextData::get_ips_id()
+{ return ++ips_id; }
+
+unsigned IpsContextData::get_max_id()
+{ return ips_id; }
 
 //--------------------------------------------------------------------------
 // context methods
@@ -64,7 +78,7 @@ IpsContextData* IpsContext::get_context_data(unsigned id) const
 class ContextData : public IpsContextData
 {
 public:
-    ContextData(int i)
+    ContextData(int)
     { ++count; }
 
     ~ContextData()
@@ -75,8 +89,9 @@ public:
 
 int ContextData::count = 0;
 
-TEST_CASE("ips_ids", "[IpsContextData]")
+TEST_CASE("IpsContextData id", "[IpsContextData]")
 {
+    ips_id = 0;
     CHECK(IpsContextData::get_max_id() == 0);
 
     unsigned id1 = IpsContextData::get_ips_id();
@@ -86,8 +101,10 @@ TEST_CASE("ips_ids", "[IpsContextData]")
     CHECK(IpsContextData::get_max_id() == id2);
 }
 
-TEST_CASE("basic", "[IpsContext]")
+TEST_CASE("IpsContext basic", "[IpsContext]")
 {
+    ips_id = 0;
+
     SECTION("one context")
     {
         auto id = IpsContextData::get_ips_id();

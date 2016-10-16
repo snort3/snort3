@@ -7,12 +7,15 @@ x_include_HEADERS = \
 detect.h \
 detection_defines.h \
 detection_util.h \
+ips_context.h \
 rule_option_types.h \
 rules.h \
 signature.h \
 treenodes.h
 
 libdetection_a_SOURCES = \
+context_switcher.cc \
+context_switcher.h \
 detect.cc \
 detection_options.cc \
 detection_options.h \
@@ -25,6 +28,7 @@ fp_detect.cc \
 fp_detect.h \
 fp_utils.cc \
 fp_utils.h \
+ips_context.cc \
 pattern_match_data.h \
 pcrm.cc \
 pcrm.h \
