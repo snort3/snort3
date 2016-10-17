@@ -155,9 +155,9 @@ protected:
     void final_flush(Packet* p, PegCount& peg, uint32_t dir);
     uint32_t get_reverse_packet_dir(const Packet* p);
     uint32_t get_forward_packet_dir(const Packet* p);
-    uint32_t flush_pdu_ips(uint32_t* flags);
+    int32_t flush_pdu_ips(uint32_t* flags);
     void fallback();
-    uint32_t flush_pdu_ackd(uint32_t* flags);
+    int32_t flush_pdu_ackd(uint32_t* flags);
     int purge_to_seq(uint32_t flush_seq);
 
     bool server_side;

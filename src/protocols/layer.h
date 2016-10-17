@@ -120,8 +120,6 @@ SO_PUBLIC int get_inner_ip6_frag_index(const Packet* const p);
 //          true - ip layer found and api set
 //          false - ip layer NOT found, api reset
 SO_PUBLIC bool set_api_ip_embed_icmp(const Packet*, ip::IpApi& api);
-// a helper function when the api to be set is inside the packet
-SO_PUBLIC bool set_api_ip_embed_icmp(const Packet* p);
 
 /*
  *When a protocol is embedded in ICMP, these functions

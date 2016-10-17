@@ -318,7 +318,7 @@ static KRB_RETCODE krb_walk_client_packet(KRBState* krbs, const uint8_t* s, cons
                 krbs->pos++;
             break;
         case KRB_STATE_APP:
-            DebugFormat(DEBUG_INSPECTOR,"%p Type %u (%02X)\n",
+            DebugFormat(DEBUG_INSPECTOR,"%p Type %d (%02X)\n",
                     (void*)asd, *s & (~ASN_1_TYPE_MASK), *s);
             if ((*s & ASN_1_TYPE_MASK) != (ASN_1_APPLICATION|ASN_1_CONSTRUCT))
                 return KRB_FAILED;
@@ -642,7 +642,7 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
                 krbs->pos++;
             break;
         case KRB_STATE_APP:
-            DebugFormat(DEBUG_INSPECTOR,"%p Type %u (%02X)\n",
+            DebugFormat(DEBUG_INSPECTOR,"%p Type %d (%02X)\n",
                     (void*)asd, *s & (~ASN_1_TYPE_MASK), *s);
             if ((*s & ASN_1_TYPE_MASK) != (ASN_1_APPLICATION|ASN_1_CONSTRUCT))
                 return KRB_FAILED;
@@ -719,7 +719,7 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
             krbs->pos++;
             break;
         case KRB_STATE_ERROR_VALUE:
-            DebugFormat(DEBUG_INSPECTOR,"%p Error %u\n", (void*)asd, *s);
+            DebugFormat(DEBUG_INSPECTOR,"%p Error %hhu\n", (void*)asd, *s);
             if (krbs->msg_len <= 1)
             {
                 krbs->flags |= KRB_FLAG_SERVICE_DETECTED;
@@ -962,7 +962,7 @@ static CLIENT_APP_RETCODE krb_client_validate(const uint8_t* data, uint16_t size
     DetectorData* fd;
 
 #ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_INSPECTOR, "%p Processing %u %u->%u %u %d",
+    DebugFormat(DEBUG_INSPECTOR, "%p Processing %u %hu->%hu %hu %d",
             (void*)asd, (unsigned int)asd->protocol, pkt->ptrs.sp, pkt->ptrs.dp, size, dir);
 #else
     UNUSED(pkt);
@@ -1035,7 +1035,7 @@ static int krb_server_validate(ServiceValidationArgs* args)
     const uint8_t* s = data;
     const uint8_t* end = (data + size);
 
-    DebugFormat(DEBUG_INSPECTOR, "%p Processing %u %u->%u %u %d",
+    DebugFormat(DEBUG_INSPECTOR, "%p Processing %u %hu->%hu %hu %d",
             (void*)asd, (unsigned int)asd->protocol, pkt->ptrs.sp, pkt->ptrs.dp, size, dir);
 
     if (dir != APP_ID_FROM_RESPONDER)

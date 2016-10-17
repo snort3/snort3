@@ -716,7 +716,7 @@ static void free_config_items(ConfigItem* ci)
     }
 }
 
-void free_port_exclusion_list( SF_LIST** pe_list )
+static void free_port_exclusion_list( SF_LIST** pe_list )
 {
     for ( unsigned i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++ )
     {

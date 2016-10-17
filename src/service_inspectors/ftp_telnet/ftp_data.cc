@@ -101,10 +101,10 @@ static int SnortFTPData(Packet* p)
     if (!p->flow)
         return -1;
 
-    FtpDataFlowData* fd = (FtpDataFlowData*)
+    FtpDataFlowData* fdfd = (FtpDataFlowData*)
         p->flow->get_flow_data(FtpDataFlowData::flow_id);
 
-    FTP_DATA_SESSION* data_ssn = fd ? &fd->session : nullptr;
+    FTP_DATA_SESSION* data_ssn = fdfd ? &fdfd->session : nullptr;
 
     if ( !data_ssn or (data_ssn->packet_flags & FTPDATA_FLG_STOP) )
         return 0;
@@ -120,10 +120,10 @@ static int SnortFTPData(Packet* p)
         /* FTP-Data session is in limbo, we need to lookup the control session
          * to figure out what to do. */
 
-        FtpFlowData* fd = (FtpFlowData*)Stream::get_flow_data(
+        FtpFlowData* ffd = (FtpFlowData*)Stream::get_flow_data(
             &data_ssn->ftp_key, FtpFlowData::flow_id);
 
-        FTP_SESSION* ftp_ssn = fd ? &fd->session : NULL;
+        FTP_SESSION* ftp_ssn = ffd ? &ffd->session : NULL;
 
         if (!PROTO_IS_FTP(ftp_ssn))
         {

@@ -1668,7 +1668,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             break;
         case FTP_RESPONSE: /* Response */
             DebugFormat(DEBUG_FTPTELNET,
-                "FTP response: code: %.*s : M len %d : M %.*s\n",
+                "FTP response: code: %.*s : M len %u : M %.*s\n",
                 req->cmd_size, req->cmd_begin, req->param_size,
                 req->param_size, req->param_begin);
             if ((ftpssn->client_conf->max_resp_len > 0) &&
@@ -1687,7 +1687,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             break;
         case FTP_RESPONSE_CONT: /* Response continued */
             DebugFormat(DEBUG_FTPTELNET,
-                "FTP response: continuation of code: %d : M len %d : M %.*s\n",
+                "FTP response: continuation of code: %d : M len %u : M %.*s\n",
                 ftpssn->server.response.state, req->param_size,
                 req->param_size, req->param_begin);
             if ((ftpssn->client_conf->max_resp_len > 0) &&
@@ -1700,7 +1700,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             break;
         case FTP_RESPONSE_ENDCONT: /* Continued response end */
             DebugFormat(DEBUG_FTPTELNET,
-                "FTP response: final continue of code: %.*s : M len %d : "
+                "FTP response: final continue of code: %.*s : M len %u : "
                 "M %.*s\n", req->cmd_size, req->cmd_begin,
                 req->param_size, req->param_size, req->param_begin);
             if ((ftpssn->client_conf->max_resp_len > 0) &&
@@ -1713,7 +1713,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             break;
         default:
             DebugFormat(DEBUG_FTPTELNET, "FTP command: CMD: %.*s : "
-                "P len %d : P %.*s\n", req->cmd_size, req->cmd_begin,
+                "P len %u : P %.*s\n", req->cmd_size, req->cmd_begin,
                 req->param_size, req->param_size, req->param_begin);
             if (CmdConf)
             {
@@ -1726,7 +1726,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                     /* Alert on param length overrun */
                     SnortEventqAdd(GID_FTP, FTP_PARAMETER_LENGTH_OVERFLOW);
                     DebugFormat(DEBUG_FTPTELNET, "FTP command: %.*s"
-                        "parameter length overrun %d > %d \n",
+                        "parameter length overrun %u > %u \n",
                         req->cmd_size, req->cmd_begin, req->param_size, max);
                     iRet = FTPP_ALERT;
                 }

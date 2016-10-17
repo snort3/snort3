@@ -373,8 +373,6 @@ int NetworkSet_Fprintf(NetworkSet* network_set, const char* prefix, FILE* stream
     return 0;
 }
 
-NODE_DATA sflist_first(SF_LIST*, SF_LNODE**);
-NODE_DATA sflist_next(SF_LNODE**);
 static inline int NetworkSet_OrderByNetmask(SF_LIST* ordered_networks, SF_LIST* networks, unsigned
     id)
 {

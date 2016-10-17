@@ -189,7 +189,7 @@ static void CServiceRegisterPattern(RNAServiceValidationFCN, IpProtocol, const u
     int, const char*);
 static void ServiceRegisterPatternUser(RNAServiceValidationFCN, IpProtocol, const uint8_t*,
     unsigned, int, const char*);
-void appSetServiceValidator( RNAServiceValidationFCN, AppId, unsigned extractsInfo);
+static void appSetServiceValidator( RNAServiceValidationFCN, AppId, unsigned extractsInfo);
 static int CServiceAddPort(const RNAServiceValidationPort*, RNAServiceValidationModule*);
 static void CServiceRemovePorts(RNAServiceValidationFCN validate);
 
@@ -252,7 +252,7 @@ static RNAServiceValidationModule* static_service_list[] =
 const uint32_t NUM_STATIC_SERVICES =
         sizeof(static_service_list) / sizeof(RNAServiceValidationModule*);
 
-void appSetServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigned extractsInfo)
+static void appSetServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigned extractsInfo)
 {
     AppInfoTableEntry* pEntry = AppInfoManager::get_instance().get_app_info_entry(appId);
     if (!pEntry)

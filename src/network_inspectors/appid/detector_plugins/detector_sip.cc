@@ -509,9 +509,9 @@ static int addFutureRtpFlows(AppIdSession* asd, const SipDialog* dialog, const P
     mdataB = dialog->mediaSessions->nextS->medias;
     while ((nullptr != mdataA)&&(nullptr != mdataB))
     {
-        DebugFormat(DEBUG_SIP, "Adding future channels Source IP: %s Port: %u\n",
+        DebugFormat(DEBUG_SIP, "Adding future channels Source IP: %s Port: %hu\n",
             sfip_to_str(&mdataA->maddress), mdataA->mport);
-        DebugFormat(DEBUG_SIP, "Adding future channels Destine IP: %s Port: %u\n",
+        DebugFormat(DEBUG_SIP, "Adding future channels Destine IP: %s Port: %hu\n",
             sfip_to_str(&mdataB->maddress), mdataB->mport);
 
         createRtpFlow(asd, p, &mdataA->maddress, mdataA->mport, &mdataB->maddress,

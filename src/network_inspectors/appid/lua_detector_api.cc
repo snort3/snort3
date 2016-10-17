@@ -1526,7 +1526,7 @@ static int Detector_addHostPortApp(lua_State* L)
 
     if (proto > UINT8_MAX)
     {
-        ErrorMessage("%s:Invalid protocol value %d\n",__func__, proto);
+        ErrorMessage("%s:Invalid protocol value %u\n",__func__, proto);
         return 0;
     }
 

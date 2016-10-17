@@ -480,10 +480,10 @@ static void dumpPatterns(const char* name, PatternService* pList)
     {
         for (pattern = ps->pattern; pattern; pattern = pattern->next)
         {
-            DebugFormat(DEBUG_LOG,"\t%s, %d\n",pattern->data, pattern->length);
+            DebugFormat(DEBUG_LOG,"\t%s, %u\n",pattern->data, pattern->length);
             if (pattern->data && pattern->length)
             {
-                DebugFormat(DEBUG_LOG,"\t\t%s, %d\n",pattern->data, pattern->length);
+                DebugFormat(DEBUG_LOG,"\t\t%s, %u\n",pattern->data, pattern->length);
             }
         }
     }

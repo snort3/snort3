@@ -399,9 +399,6 @@ bool set_outer_ip_api(const Packet* const p,
     return false;
 }
 
-bool set_api_ip_embed_icmp(Packet* const p)
-{ return set_api_ip_embed_icmp(p, p->ptrs.ip_api); }
-
 bool set_api_ip_embed_icmp(const Packet* p, ip::IpApi& api)
 {
     int num_layers = p->num_layers - 1;

@@ -30,8 +30,8 @@
  * Arguments:
  *
  * The keyword to reference this plugin is "fragbits".  Possible arguments are
- * D, M and R for DF, MF and RB, respectively. 
- * 
+ * D, M and R for DF, MF and RB, respectively.
+ *
  * Possible modes are '+', '!', and '*' for plus, not and any modes.
  *
  * Effect:
@@ -70,52 +70,52 @@
 
 static THREAD_LOCAL ProfileStats fragBitsPerfStats;
 
-// this class holds the logic for setting up the fragment test 
-// data and testing for the data match (is_match function). 
+// this class holds the logic for setting up the fragment test
+// data and testing for the data match (is_match function).
 class FragBitsData
 {
-public:    
+public:
     FragBitsData()
     {
         mode = 0;
         frag_bits = 0;
     }
-    
+
     uint8_t get_mode() const;
     uint16_t get_frag_bits() const;
     void set_frag_bits(uint16_t);
     void set_more_fragment_bit();
     void set_dont_fragment_bit();
     void set_reserved_bit();
-    
+
     //no mode for normal since it is set as the default
     void set_not_mode();
     void set_any_mode();
     void set_plus_mode();
-    
+
     void parse_fragbits(const char* data);
-    
+
     bool is_match(Packet *);
-    
+
 private:
     //numeric mode values
     enum MODE { NORMAL, PLUS, ANY, NOT};
-    
-    const static uint16_t BITMASK = 0xE000; 
-    const static uint16_t RESERVED_BIT = 0x8000;
-    const static uint16_t DONT_FRAG_BIT = 0x4000;
-    const static uint16_t MORE_FRAG_BIT = 0x2000;
-   
+
+    static const uint16_t BITMASK = 0xE000;
+    static const uint16_t RESERVED_BIT = 0x8000;
+    static const uint16_t DONT_FRAG_BIT = 0x4000;
+    static const uint16_t MORE_FRAG_BIT = 0x2000;
+
     //flags used to indicate mode
-    const static char PLUS_FLAG = '+';
-    const static char ANY_FLAG = '*'; 
-    const static char NOT_FLAG = '!';
-    
+    static const char PLUS_FLAG = '+';
+    static const char ANY_FLAG = '*';
+    static const char NOT_FLAG = '!';
+
     bool check_normal(const uint16_t);
     bool check_any(const uint16_t);
     bool check_not(const uint16_t);
     bool check_plus(const uint16_t);
-    
+
     uint8_t mode;
     uint16_t frag_bits;
 };
@@ -146,20 +146,20 @@ void FragBitsData::set_not_mode()
 { mode = NOT; }
 
 // this is the function that checks for a match
-bool FragBitsData::is_match(Packet* p) 
+bool FragBitsData::is_match(Packet* p)
 {
-    uint16_t packet_fragbits = p->ptrs.ip_api.off_w_flags();   
-    
+    uint16_t packet_fragbits = p->ptrs.ip_api.off_w_flags();
+
     // strip the offset value and leave only the fragment bits
     packet_fragbits &= BITMASK;
-    
+
     bool match = false;
-    
+
     // get the mode we have .. then check for match
     switch( get_mode() )
     {
         case NORMAL:
-            match = check_normal(packet_fragbits); 
+            match = check_normal(packet_fragbits);
             break;
         case ANY:
             match = check_any(packet_fragbits);
@@ -171,7 +171,7 @@ bool FragBitsData::is_match(Packet* p)
             match = check_not(packet_fragbits);
             break;
     }
-    
+
     return match;
 }
 
@@ -207,7 +207,7 @@ bool FragBitsData::check_any(const uint16_t packet_fragbits)
 }
 
 //check for packets that do NOT have matching flags set '!'
-bool FragBitsData::check_not(const uint16_t packet_fragbits) 
+bool FragBitsData::check_not(const uint16_t packet_fragbits)
 {
     if ( (get_frag_bits() & packet_fragbits ) == 0)
     {
@@ -220,7 +220,7 @@ bool FragBitsData::check_not(const uint16_t packet_fragbits)
 void FragBitsData::parse_fragbits(const char* data)
 {
     std::string bit_string;
-    
+
     // if its null the bit_string will stay empty
     if(data)
     {
@@ -231,32 +231,32 @@ void FragBitsData::parse_fragbits(const char* data)
         ParseError("no arguments to the fragbits keyword");
         return;
     }
-    
+
     unsigned long len = bit_string.length();
-    
+
     for(unsigned long a = 0; a <  len; a++)
     {
         //if we hit a space skip/continue
         if( isspace( bit_string.at(a) ) )
             continue;
-        
+
         switch ( bit_string.at( a ) )
         {
         case 'd': // dont fragment
-        case 'D': 
+        case 'D':
             set_dont_fragment_bit();
             break;
-            
+
         case 'm': // more fragment
-        case 'M': 
+        case 'M':
             set_more_fragment_bit();
             break;
-            
+
         case 'r': // reserved bit
-        case 'R':   
+        case 'R':
             set_reserved_bit();
             break;
-            
+
         case NOT_FLAG:// NOT flag, fire if flags are NOT set
             set_not_mode();
             break;
@@ -268,7 +268,7 @@ void FragBitsData::parse_fragbits(const char* data)
         case PLUS_FLAG: // PLUS flag, fire on these bits PLUS any others
             set_plus_mode();
             break;
-                
+
         default:
             ParseError("Bad fragbit = '%c'. Valid options are: RDM+!*",
                     bit_string.at(a) );
@@ -305,8 +305,8 @@ uint32_t FragBitsOption::hash() const
     uint32_t a,b,c;
     const FragBitsData* data = &fragBitsData;
 
-    a = data->get_mode(); 
-    b = data->get_frag_bits(); 
+    a = data->get_mode();
+    b = data->get_frag_bits();
     c = 0;
 
     mix_str(a,b,c,get_name());
@@ -341,10 +341,10 @@ int FragBitsOption::eval(Cursor&, Packet* p)
         return DETECTION_OPTION_NO_MATCH;
 
     bool is_match = fragBitsData.is_match(p);
-    
+
     if(is_match)
         return DETECTION_OPTION_MATCH;
- 
+
     // if the test isn't successful, this function *must* return 0
     return DETECTION_OPTION_NO_MATCH;
 }
@@ -374,7 +374,7 @@ public:
 
     ProfileStats* get_profile() const override
     { return &fragBitsPerfStats; }
-    
+
     FragBitsData get_fragBits_data();
 
 private:
@@ -444,10 +444,10 @@ static const IpsApi fragbits_api =
         mod_ctor,       //ModNewFunc constructor
         mod_dtor        //ModDelFunc destructor
     },
-    
+
     //IpsApi struct
     OPT_TYPE_DETECTION, //RuleOptType
-    1,                  //max per rule 
+    1,                  //max per rule
     0,                  //IpsOptFunc protos
     nullptr,            //IpsOptFunc pinit
     nullptr,            //IpsOptFunc pterm

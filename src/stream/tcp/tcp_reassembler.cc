@@ -883,7 +883,7 @@ uint32_t TcpReassembler::get_forward_packet_dir(const Packet* p)
 // see flush_pdu_ackd() for details
 // the key difference is that we operate on forward moving data
 // because we don't wait until it is acknowledged
-uint32_t TcpReassembler::flush_pdu_ips(uint32_t* flags)
+int32_t TcpReassembler::flush_pdu_ips(uint32_t* flags)
 {
     Profile profile(s5TcpPAFPerfStats);
 
@@ -952,7 +952,7 @@ void TcpReassembler::fallback()
 // - if we partially scan a segment we must save state so we
 //   know where we left off and can resume scanning the remainder
 
-uint32_t TcpReassembler::flush_pdu_ackd(uint32_t* flags)
+int32_t TcpReassembler::flush_pdu_ackd(uint32_t* flags)
 {
     Profile profile(s5TcpPAFPerfStats);
 
