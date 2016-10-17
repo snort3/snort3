@@ -40,6 +40,7 @@ option ( ENABLE_DEBUG "Enable debugging options (bugreports and developers only)
 option ( ENABLE_GDB "Enable gdb debugging information" OFF )
 option ( ENABLE_PROFILE "Enable profiling options (developers only)" OFF )
 option ( ENABLE_ADDRESS_SANITIZER "enable address sanitizer support" OFF )
+option ( ENABLE_THREAD_SANITIZER "enable thread sanitizer support" OFF )
 option ( ENABLE_CODE_COVERAGE "Whether to enable code coverage support" OFF )
 
 # signals

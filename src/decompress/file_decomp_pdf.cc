@@ -1173,9 +1173,9 @@ TEST_CASE("File_Decomp_End_PDF-null", "[file_decomp_pdf]")
 
 TEST_CASE("File_Decomp_PDF-not_pdf-error", "[file_decomp_pdf]")
 {
-    fd_session_p_t p_s;
+    fd_session_p_t p_s = File_Decomp_New();
 
-    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    REQUIRE(p_s != nullptr);
     p_s->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
     p_s->File_Type = FILE_TYPE_SWF;
     REQUIRE(File_Decomp_PDF(p_s) == File_Decomp_Error);
@@ -1185,9 +1185,9 @@ TEST_CASE("File_Decomp_PDF-not_pdf-error", "[file_decomp_pdf]")
 
 TEST_CASE("File_Decomp_PDF-bad_state-error", "[file_decomp_pdf]")
 {
-    fd_session_p_t p_s;
+    fd_session_p_t p_s = File_Decomp_New();
 
-    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    REQUIRE(p_s != nullptr);
     p_s->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
     p_s->File_Type = FILE_TYPE_PDF;
     p_s->PDF->State = PDF_STATE_NEW;
@@ -1197,9 +1197,9 @@ TEST_CASE("File_Decomp_PDF-bad_state-error", "[file_decomp_pdf]")
 
 TEST_CASE("File_Decomp_End_PDF-bad_type-error", "[file_decomp_pdf]")
 {
-    fd_session_p_t p_s;
+    fd_session_p_t p_s = File_Decomp_New();
 
-    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    REQUIRE(p_s != nullptr);
     p_s->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
     p_s->File_Type = FILE_TYPE_PDF;
     p_s->PDF->Decomp_Type = FILE_COMPRESSION_TYPE_LZMA;
@@ -1207,5 +1207,5 @@ TEST_CASE("File_Decomp_End_PDF-bad_type-error", "[file_decomp_pdf]")
     REQUIRE(File_Decomp_End_PDF(p_s) == File_Decomp_Error);
     File_Decomp_Free(p_s);
 }
-
 #endif
+

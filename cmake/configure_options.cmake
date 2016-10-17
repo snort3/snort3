@@ -113,9 +113,12 @@ if ( ENABLE_PROFILE AND CMAKE_COMPILER_IS_GNUCXX )
 endif ( ENABLE_PROFILE AND CMAKE_COMPILER_IS_GNUCXX )
 
 if ( ENABLE_ADDRESS_SANITIZER )
-    set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer" )
-    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer" )
+    set ( SPECIAL_FLAGS "-fsanitize=address -fno-omit-frame-pointer" )
 endif ( ENABLE_ADDRESS_SANITIZER )
+
+if ( ENABLE_THREAD_SANITIZER )
+    set ( SPECIAL_FLAGS "-fsanitize=thread -fno-omit-frame-pointer" )
+endif ( ENABLE_THREAD_SANITIZER )
 
 if ( ENABLE_CODE_COVERAGE )
     set ( CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -DNDEBUG" )

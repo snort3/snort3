@@ -363,9 +363,9 @@ TEST_CASE("File_Decomp_End_SWF-null", "[file_decomp_swf]")
 
 TEST_CASE("File_Decomp_SWF-not_swf-error", "[file_decomp_swf]")
 {
-    fd_session_p_t p_s;
+    fd_session_p_t p_s = File_Decomp_New();
 
-    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    REQUIRE(p_s != nullptr);
     p_s->SWF = (fd_SWF_t*)snort_calloc(sizeof(fd_SWF_t));
     p_s->File_Type = FILE_TYPE_PDF;
     REQUIRE(File_Decomp_SWF(p_s) == File_Decomp_Error);
@@ -375,9 +375,9 @@ TEST_CASE("File_Decomp_SWF-not_swf-error", "[file_decomp_swf]")
 
 TEST_CASE("File_Decomp_SWF-bad_state-error", "[file_decomp_swf]")
 {
-    fd_session_p_t p_s;
+    fd_session_p_t p_s = File_Decomp_New();
 
-    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    REQUIRE(p_s != nullptr);
     p_s->SWF = (fd_SWF_t*)snort_calloc(sizeof(fd_SWF_t));
     p_s->File_Type = FILE_TYPE_SWF;
     p_s->SWF->State = SWF_STATE_NEW;
@@ -387,9 +387,9 @@ TEST_CASE("File_Decomp_SWF-bad_state-error", "[file_decomp_swf]")
 
 TEST_CASE("File_Decomp_Init_SWF-bad_type-error", "[file_decomp_swf]")
 {
-    fd_session_p_t p_s;
+    fd_session_p_t p_s = File_Decomp_New();
 
-    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    REQUIRE(p_s != nullptr);
     p_s->File_Type = FILE_TYPE_SWF;
     p_s->Decomp_Type = FILE_COMPRESSION_TYPE_DEFLATE;
     REQUIRE(File_Decomp_Init_SWF(p_s) == File_Decomp_Error);
@@ -398,15 +398,14 @@ TEST_CASE("File_Decomp_Init_SWF-bad_type-error", "[file_decomp_swf]")
 
 TEST_CASE("File_Decomp_End_SWF-bad_type-error", "[file_decomp_swf]")
 {
-    fd_session_p_t p_s;
+    fd_session_p_t p_s = File_Decomp_New();
 
-    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    REQUIRE(p_s != nullptr);
     p_s->SWF = (fd_SWF_t*)snort_calloc(sizeof(fd_SWF_t));
     p_s->Decomp_Type = FILE_COMPRESSION_TYPE_DEFLATE;
     REQUIRE(File_Decomp_End_SWF(p_s) == File_Decomp_Error);
     p_s->File_Type = FILE_TYPE_SWF;
     File_Decomp_Free(p_s);
 }
-
-
 #endif
+

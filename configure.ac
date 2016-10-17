@@ -420,9 +420,15 @@ if test "x$enable_corefiles" = "xno"; then
 fi
 
 AC_ARG_ENABLE(address-sanitizer,
-    AS_HELP_STRING([--enable-address-sanitizer],[enable AddressSanitizer support]),
+    AS_HELP_STRING([--enable-address-sanitizer],[enable address sanitizer support]),
     [
         ASAN_CCXFLAGS="-fsanitize=address -fno-omit-frame-pointer"
+    ])
+
+AC_ARG_ENABLE(thread-sanitizer,
+    AS_HELP_STRING([--enable-thread-sanitizer],[enable thread sanitizer support]),
+    [
+        ASAN_CCXFLAGS="-fsanitize=thread -fno-omit-frame-pointer"
     ])
 
 #--------------------------------------------------------------------------

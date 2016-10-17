@@ -50,6 +50,8 @@ Optional Features:
     --disable-corefiles     prevent Snort from generating core files
     --enable-address-sanitizer
                             enable address sanitizer support
+    --enable-thread-sanitizer
+                            enable thread sanitizer support
     --enable-unit-tests     build unit tests
     --enable-piglet         build piglet test harness
     --disable-static-daq    link static DAQ modules
@@ -259,6 +261,12 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-address-sanitizer)
             append_cache_entry ENABLE_ADDRESS_SANITIZER BOOL false
+            ;;
+        --enable-thread-sanitizer)
+            append_cache_entry ENABLE_THREAD_SANITIZER  BOOL true
+            ;;
+        --disable-thread-sanitizer)
+            append_cache_entry ENABLE_THREAD_SANITIZER  BOOL false
             ;;
         --enable-unit-tests)
             append_cache_entry ENABLE_UNIT_TESTS        BOOL true
