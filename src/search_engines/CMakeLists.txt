@@ -43,12 +43,19 @@ if ( HAVE_HYPERSCAN )
     )
 endif ()
 
+if ( HAVE_RXP )
+    set(RXP_SOURCES
+        rxp.cc
+    )
+endif ()
+
 set (SEARCH_ENGINE_SOURCES
     search_engines.cc
     search_engines.h
     search_tool.cc
     ${BNFA_SOURCES}
     ${HYPER_SOURCES}
+    ${RXP_SOURCES}
 )
 
 if ( STATIC_SEARCH_ENGINES )

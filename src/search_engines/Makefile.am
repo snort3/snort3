@@ -40,6 +40,11 @@ hyperscan.cc \
 hyperscan.h
 endif
 
+if HAVE_RXP
+rxp_sources = \
+rxp.cc
+endif
+
 plugin_list = \
 $(acsmx_sources) \
 $(acsmx2_sources) \
@@ -50,7 +55,8 @@ search_engines.cc \
 search_engines.h \
 search_tool.cc \
 $(bnfa_sources) \
-$(hyper_sources)
+$(hyper_sources) \
+$(rxp_sources)
 
 if STATIC_SEARCH_ENGINES
 libsearch_engines_a_SOURCES += $(plugin_list)

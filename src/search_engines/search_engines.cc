@@ -35,6 +35,10 @@ extern const BaseApi* se_intel_cpm[];
 extern const BaseApi* se_hyperscan[];
 #endif
 
+#ifdef HAVE_RXP
+extern const BaseApi* se_rxp;
+#endif
+
 #ifdef STATIC_SEARCH_ENGINES
 extern const BaseApi* se_ac_std[];
 extern const BaseApi* se_acsmx2[];
@@ -50,6 +54,10 @@ void load_search_engines()
 
 #ifdef HAVE_HYPERSCAN
     PluginManager::load_plugins(se_hyperscan);
+#endif
+
+#ifdef HAVE_RXP
+    se_rxp,
 #endif
 
 #ifdef STATIC_SEARCH_ENGINES

@@ -180,6 +180,11 @@ if (HS_FOUND)
     check_library_exists (${HS_LIBRARIES} hs_scan "" HAVE_HYPERSCAN)
 endif()
 
+if (RXP_FOUND)
+    check_library_exists (${RXP_LIBRARIES} rxp_init ${RXP_LIBRARIES_SEARCH} HAVE_RXP)
+    set (HAVE_RXP 1) # FIXIT-T: This is a hack; ideally the above line would be all that's required
+endif()
+
 if (DEFINED LIBLZMA_LIBRARIES)
     check_library_exists (${LIBLZMA_LIBRARIES} lzma_code "" HAVE_LZMA)
 endif()

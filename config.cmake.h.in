@@ -232,6 +232,9 @@
 /* lzma available */
 #cmakedefine HAVE_LZMA 1
 
+/* rxp available */
+#cmakedefine HAVE_RXP 1
+
 /* safec available */
 #cmakedefine HAVE_SAFEC 1
 #cmakedefine ENABLE_SAFEC 1
