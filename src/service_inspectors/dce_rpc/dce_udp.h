@@ -29,6 +29,8 @@
 #define DCE2_UDP_NAME "dce_udp"
 #define DCE2_UDP_HELP "dce over udp inspection"
 
+#define DCE2_MOCK_HDR_LEN__CL  (sizeof(DceRpcClHdr))
+
 struct dce2UdpStats
 {
     /* The common stats block has to be at the beginning followed
@@ -71,6 +73,7 @@ extern THREAD_LOCAL ProfileStats dce2_udp_pstat_log;
 extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_acts;
 extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_frag;
 extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_reass;
+extern THREAD_LOCAL Packet* dce2_udp_rpkt;
 
 struct DceRpcClHdr   /* Connectionless header */
 {
@@ -93,7 +96,6 @@ struct DceRpcClHdr   /* Connectionless header */
     uint16_t fragnum;
     uint8_t auth_proto;
     uint8_t serial_lo;
-
 };
 
 enum DceRpcClFlags1
@@ -108,67 +110,67 @@ enum DceRpcClFlags1
     DCERPC_CL_FLAGS1__RESERVED_80 = 0x80
 };
 
-inline uint8_t DceRpcClRpcVers(const DceRpcClHdr *cl)
+inline uint8_t DceRpcClRpcVers(const DceRpcClHdr* cl)
 {
     return cl->rpc_vers;
 }
 
-inline uint8_t DceRpcClPduType(const DceRpcClHdr *cl)
+inline uint8_t DceRpcClPduType(const DceRpcClHdr* cl)
 {
     return cl->ptype;
 }
 
-inline DceRpcBoFlag DceRpcClByteOrder(const DceRpcClHdr *cl)
+inline DceRpcBoFlag DceRpcClByteOrder(const DceRpcClHdr* cl)
 {
     return DceRpcByteOrder(cl->drep[0]);
 }
 
-inline uint16_t DceRpcClLen(const DceRpcClHdr *cl)
+inline uint16_t DceRpcClLen(const DceRpcClHdr* cl)
 {
     return DceRpcNtohs(&cl->len, DceRpcClByteOrder(cl));
 }
 
-inline uint16_t DceRpcClOpnum(const DceRpcClHdr *cl)
+inline uint16_t DceRpcClOpnum(const DceRpcClHdr* cl)
 {
     return DceRpcNtohs(&cl->opnum, DceRpcClByteOrder(cl));
 }
 
-inline uint32_t DceRpcClSeqNum(const DceRpcClHdr *cl)
+inline uint32_t DceRpcClSeqNum(const DceRpcClHdr* cl)
 {
     return DceRpcNtohl(&cl->seqnum, DceRpcClByteOrder(cl));
 }
 
-inline const Uuid * DceRpcClIface(const DceRpcClHdr *cl)
+inline const Uuid* DceRpcClIface(const DceRpcClHdr* cl)
 {
     return &cl->if_id;
 }
 
-inline uint32_t DceRpcClIfaceVers(const DceRpcClHdr *cl)
+inline uint32_t DceRpcClIfaceVers(const DceRpcClHdr* cl)
 {
     return DceRpcNtohl(&cl->if_vers, DceRpcClByteOrder(cl));
 }
 
-inline uint16_t DceRpcClFragNum(const DceRpcClHdr *cl)
+inline uint16_t DceRpcClFragNum(const DceRpcClHdr* cl)
 {
     return DceRpcNtohs(&cl->fragnum, DceRpcClByteOrder(cl));
 }
 
-inline int DceRpcClFragFlag(const DceRpcClHdr *cl)
+inline int DceRpcClFragFlag(const DceRpcClHdr* cl)
 {
     return cl->flags1 & DCERPC_CL_FLAGS1__FRAG;
 }
 
-inline bool DceRpcClFirstFrag(const DceRpcClHdr *cl)
+inline bool DceRpcClFirstFrag(const DceRpcClHdr* cl)
 {
     return (DceRpcClFragFlag(cl) && (DceRpcClFragNum(cl) == 0));
 }
 
-inline int DceRpcClLastFrag(const DceRpcClHdr *cl)
+inline int DceRpcClLastFrag(const DceRpcClHdr* cl)
 {
     return cl->flags1 & DCERPC_CL_FLAGS1__LASTFRAG;
 }
 
-inline bool DceRpcClFrag(const DceRpcClHdr *cl)
+inline bool DceRpcClFrag(const DceRpcClHdr* cl)
 {
     if (DceRpcClFragFlag(cl))
     {
@@ -209,7 +211,8 @@ public:
 
 DCE2_UdpSsnData* get_dce2_udp_session_data(Flow*);
 
-void DCE2_ClProcess(DCE2_SsnData *sd, DCE2_ClTracker *clt);
+void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt);
+void DCE2_ClInitRdata(uint8_t*);
 
 #endif
 

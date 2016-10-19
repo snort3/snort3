@@ -178,14 +178,14 @@ static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
     {
         Profile profile(dce2_tcp_pstat_detect);
     }
-    else if  (sd->trans == DCE2_TRANS_TYPE__SMB)
+    else if (sd->trans == DCE2_TRANS_TYPE__SMB)
     {
         Profile profile(dce2_smb_pstat_detect);
-    } 
-	else 
-	{
-		Profile profile(dce2_udp_pstat_detect);
-	}
+    }
+    else
+    {
+        Profile profile(dce2_udp_pstat_detect);
+    }
     // FIXIT-M add HTTP case when these are ported
     // Same for all other instances of profiling
 
@@ -239,7 +239,7 @@ DCE2_SsnData* get_dce2_session_data(Packet* p)
         return sd;
     }
 
-	DCE2_UdpSsnData* udp_data = get_dce2_udp_session_data(p->flow);
+    DCE2_UdpSsnData* udp_data = get_dce2_udp_session_data(p->flow);
     sd = (udp_data != nullptr) ? &(udp_data->sd) : nullptr;
     if ((sd != nullptr) && (sd->trans == DCE2_TRANS_TYPE__UDP))
     {
@@ -315,8 +315,8 @@ static void dce_push_pkt_log(Packet* pkt,DCE2_SsnData* sd)
     {
         Profile profile(dce2_smb_pstat_log);
     }
-	else
-	{
+    else
+    {
         Profile profile(dce2_udp_pstat_log);
     }
 
@@ -351,7 +351,7 @@ void DCE2_PopPkt(DCE2_SsnData* sd)
     {
         Profile profile(dce2_tcp_pstat_log);
     }
-	else if (sd->trans == DCE2_TRANS_TYPE__UDP)
+    else if (sd->trans == DCE2_TRANS_TYPE__UDP)
     {
         Profile profile(dce2_udp_pstat_log);
     }
@@ -500,8 +500,13 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
         break;
 
     case DCE2_RPKT_TYPE__UDP_CL_FRAG:
-        // FIXIT-M add support when UDP is ported
-        return nullptr;
+        rpkt = dce2_udp_rpkt;
+        dce2_fill_rpkt_info(rpkt, p);
+        rpkt->pseudo_type = PSEUDO_PKT_DCE_FRAG;
+        data_overhead = DCE2_MOCK_HDR_LEN__CL;
+        memset((void*)rpkt->data, 0, data_overhead);
+        DCE2_ClInitRdata((uint8_t*)rpkt->data);
+        break;
 
     case DCE2_RPKT_TYPE__TCP_CO_SEG:
     case DCE2_RPKT_TYPE__TCP_CO_FRAG:
