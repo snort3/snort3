@@ -334,13 +334,13 @@ static int ssl_init(const IniServiceAPI* const init_api)
     init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN_PCT,
         sizeof(SSL_PATTERN_PCT), 2, "ssl");
     init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN3_0,
-        sizeof(SSL_PATTERN3_0), 0, "ssl");
+        sizeof(SSL_PATTERN3_0), -1, "ssl");
     init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN3_1,
-        sizeof(SSL_PATTERN3_1), 0, "ssl");
+        sizeof(SSL_PATTERN3_1), -1, "ssl");
     init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN3_2,
-        sizeof(SSL_PATTERN3_2), 0, "ssl");
+        sizeof(SSL_PATTERN3_2), -1, "ssl");
     init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN3_3,
-        sizeof(SSL_PATTERN3_3), 0, "ssl");
+        sizeof(SSL_PATTERN3_3), -1, "ssl");
     for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
         DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);

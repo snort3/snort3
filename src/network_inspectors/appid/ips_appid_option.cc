@@ -229,7 +229,7 @@ bool AppIdOptionModule::set(const char*, Value& v, SnortConfig*)
     v.set_first_token();
     std::string tok;
 
-    while ( v.get_next_token(tok) )
+    while ( v.get_next_csv_token(tok) )
     {
         AppIdInfo appid_info;
 
