@@ -38,6 +38,9 @@
 #include "main/snort_config.h"
 #include "utils/stats.h"
 
+#define RXP_MAX_JOBS        4   // Max jobs expected per packet
+#define RXP_MAX_SUBSETS     4   // Hardware supports max 4 at once
+
 using namespace std;
 
 // Escape a pattern to a form suitable for feeding to the RXP compiler.
@@ -112,6 +115,18 @@ RxpPattern::~RxpPattern(void)
     delete pat;
 }
 
+struct RxpJob
+{
+    uint32_t jobid;
+    uint8_t* buf;
+    int len;
+    MpseMatch match_cb;
+    void *match_ctx;
+
+    int subset_count;
+    class RxpMpse* subset[RXP_MAX_SUBSETS];
+};
+
 //-------------------------------------------------------------------------
 // mpse
 //-------------------------------------------------------------------------
@@ -138,11 +153,12 @@ public:
 
     int prep_patterns(SnortConfig*) override;
 
+    void _match(uint32_t ruleid, int to, MpseMatch mf, void *pv);
     int _search(const uint8_t*, int, MpseMatch, void*, int*) override;
 
     int get_pattern_count() override { return pats.size(); }
 
-    int rxp_search(const uint8_t* buf, int n, MpseMatch mf, void *pv);
+    int get_subset() { return instance_id; }
 
     static int write_rule_file(const string& filename);
     static int build_rule_file(const string& filename, const string& rulesdir);
@@ -162,6 +178,8 @@ private:
 
 public:
     vector<RxpPattern*> pats;
+    static RxpJob jobs[RXP_MAX_JOBS];
+    static int jobcount;
 
     static uint64_t duplicates;
     static uint64_t jobs_submitted;
@@ -179,6 +197,9 @@ uint64_t RxpMpse::patterns = 0;
 uint64_t RxpMpse::max_pattern_len = 0;
 vector<RxpMpse*> RxpMpse::instances;
 unsigned RxpMpse::portid = 0;
+
+RxpJob RxpMpse::jobs[RXP_MAX_JOBS];
+int RxpMpse::jobcount = 0;
 
 // We don't have an accessible FSM match state, so like Hyperscan we build a simple
 // tree for each option. However the same pattern can be used for several rules, so
@@ -265,73 +286,55 @@ int RxpMpse::prep_patterns(SnortConfig* sc)
     return 0;
 }
 
-int RxpMpse::rxp_search(const uint8_t* buf, int n, MpseMatch mf, void *pv)
+void RxpMpse::_match(uint32_t ruleid, int to, MpseMatch mf, void *pv)
 {
-    struct rte_mbuf* job_buf;
-    struct rte_mbuf* pkts_burst[32];
-    struct rxp_response_data rxp_resp;
-    int i, ret;
-    unsigned sent, pending, rx_pkts;
+    RxpPattern *pat = ruleidtbl[ruleid];
 
-    // FIXIT-T: Split job up and overlap; too big for RXP
-    if (n > RXP_MAX_JOB_LENGTH)
+    if (!pat)
+        return;
+
+    for ( auto& c : pat->userctx )
     {
-        LogMessage("WARNING: Truncating search from %d bytes to %d.\n", n, RXP_MAX_JOB_LENGTH);
-        n = RXP_MAX_JOB_LENGTH;
+        mf(c.user, c.user_tree, to, pv, c.user_list);
     }
-
-    // FIXIT-T: Only a single subset at once here.
-    ret = rxp_prepare_job(portid, ++jobs_submitted /* Job ID can't be 0 */,
-        (uint8_t *) buf, n, 0 /* ctrl */, instance_id, instance_id, instance_id, instance_id, &job_buf);
-
-    ret = rxp_enqueue_job(portid, 0 /* queue id */, job_buf);
-
-    ret = rxp_dispatch_jobs(portid, 0 /* queue id */, &sent, &pending);
-
-    rx_pkts = 0;
-    while (rx_pkts == 0)
-    {
-        ret = rxp_get_responses(portid, 0 /* queue id */, pkts_burst, 1, &rx_pkts);
-    }
-
-    ret = rxp_get_response_data(pkts_burst[0], &rxp_resp);
-
-    if (ret)
-        LogMessage("ERROR: %d decoding RXP response.\n", ret);
-
-    if (rxp_resp.match_count != 0) {
-        if (rxp_resp.detected_match_count > rxp_resp.match_count)
-        {
-            LogMessage("WARNING: Detected %u matches but only %u returned.\n",
-                rxp_resp.detected_match_count, rxp_resp.match_count);
-            match_limit++;
-            // FIXIT-T: We should fall back to a software search engine here. For now keep going.
-        }
-
-        for (i = 0; i < rxp_resp.match_count; i++) {
-            int to = rxp_resp.match_data[i].start_ptr + rxp_resp.match_data[i].length;
-            RxpPattern *pat = ruleidtbl[rxp_resp.match_data[i].rule_id];
-
-            for ( auto& c : pat->userctx )
-            {
-                mf(c.user, c.user_tree, to, pv, c.user_list);
-            }
-        }
-    }
-
-    rxp_free_buffer(pkts_burst[0]);
-
-    return 0;
 }
 
 int RxpMpse::_search(
     const uint8_t* buf, int n, MpseMatch mf, void* pv, int* current_state)
 {
+    int i;
+
     *current_state = 0;
 
-    SnortState* ss = snort_conf->state + get_instance_id();
+    for (i = 0; i < jobcount; i++)
+    {
+        if (jobs[i].buf == buf and jobs[i].len == n and jobs[i].match_cb == mf and
+            jobs[i].match_ctx == pv and jobs[i].subset_count < RXP_MAX_SUBSETS)
+        {
+            break;
+        }
+    }
 
-    rxp_search(buf, n, mf, pv);
+    if (i == RXP_MAX_JOBS)
+    {
+        LogMessage("ERROR: Max RXP job count of %d reached.\n", i);
+        // FIXIT-T: We should either dispatch, or expand the job table here.
+    }
+    else if (i == jobcount)
+    {
+        jobcount++;
+        jobs[i].buf = (uint8_t*) buf;
+        jobs[i].len = n;
+        jobs[i].match_cb = mf;
+        jobs[i].match_ctx = pv;
+        jobs[i].subset_count = 1;
+        jobs[i].subset[0] = this;
+    }
+    else
+    {
+        jobs[i].subset[jobs[i].subset_count] = this;
+        jobs[i].subset_count++;
+    }
 
     return 0;
 }
@@ -459,6 +462,119 @@ static void rxp_print()
     LogCount("RXP match limit exceeded", RxpMpse::match_limit);
 }
 
+static void rxp_begin_packet()
+{
+    RxpMpse::jobcount = 0;
+}
+
+static void rxp_end_packet()
+{
+    struct rte_mbuf* job_buf;
+    struct rte_mbuf* pkts_burst[32];
+    struct rxp_response_data rxp_resp;
+    int i, j, ret;
+    unsigned sent, pending, rx_pkts;
+    RxpJob* job;
+    int processed;
+
+    if (RxpMpse::jobcount == 0)
+        return; // Nothing to do.
+
+    // Prepare all the jobs for this packet
+    for (i = 0; i < RxpMpse::jobcount; i++)
+    {
+        // FIXIT-T: Split job up and overlap; too big for RXP
+        if (RxpMpse::jobs[i].len > RXP_MAX_JOB_LENGTH)
+        {
+            LogMessage("WARNING: Truncating search from %d bytes to %d.\n", RxpMpse::jobs[i].len,
+                RXP_MAX_JOB_LENGTH);
+            RxpMpse::jobs[i].len = RXP_MAX_JOB_LENGTH;
+        }
+        RxpMpse::jobs[i].jobid = ++RxpMpse::jobs_submitted; // Job ID can't be 0
+
+        // Subset ID 0 is an error, so set any unused slots to the first subset
+        for (j = 3; j >= RxpMpse::jobs[i].subset_count; j--)
+            RxpMpse::jobs[i].subset[j] = RxpMpse::jobs[i].subset[0];
+
+        ret = rxp_prepare_job(RxpMpse::portid, RxpMpse::jobs[i].jobid, RxpMpse::jobs[i].buf,
+            RxpMpse::jobs[i].len, 0 /* ctrl */, RxpMpse::jobs[i].subset[0]->get_subset(),
+            RxpMpse::jobs[i].subset[1]->get_subset(), RxpMpse::jobs[i].subset[2]->get_subset(),
+            RxpMpse::jobs[i].subset[3]->get_subset(),
+            &job_buf);
+
+        ret = rxp_enqueue_job(RxpMpse::portid, 0 /* queue id */, job_buf);
+    }
+
+    // Submit all jobs in a single batch
+    ret = rxp_dispatch_jobs(RxpMpse::portid, 0 /* queue id */, &sent, &pending);
+
+    rx_pkts = processed = 0;
+
+    while (processed < RxpMpse::jobcount)
+    {
+        while (rx_pkts == 0)
+        {
+            ret = rxp_get_responses(RxpMpse::portid, 0 /* queue id */, pkts_burst,
+                (RxpMpse::jobcount - processed), &rx_pkts);
+        }
+
+        ret = rxp_get_response_data(pkts_burst[--rx_pkts], &rxp_resp);
+
+        if (ret)
+            LogMessage("ERROR: %d decoding RXP response.\n", ret);
+
+        if (rxp_resp.match_count != 0)
+        {
+            if (rxp_resp.detected_match_count > rxp_resp.match_count)
+            {
+                LogMessage("WARNING: Detected %u matches but only %u returned.\n",
+                    rxp_resp.detected_match_count, rxp_resp.match_count);
+                RxpMpse::match_limit++;
+                // FIXIT-T: We should fall back to a software search engine here. For now keep going.
+            }
+
+            job = nullptr;
+            for (i = 0; i < RxpMpse::jobcount; i++)
+            {
+                if (rxp_resp.job_id == RxpMpse::jobs[i].jobid)
+                {
+                    job = &RxpMpse::jobs[i];
+                    break;
+                }
+            }
+
+            if (!job)
+            {
+                LogMessage("ERROR: Got job response for unexpected job %u\n", rxp_resp.job_id);
+                LogMessage("  Expected jobs are:");
+                for (i = 0; i < RxpMpse::jobcount; i++)
+                {
+                    LogMessage(" %d", RxpMpse::jobs[i].jobid);
+                }
+                LogMessage("\n");
+            }
+            else
+            {
+                for (i = 0; i < rxp_resp.match_count; i++)
+                {
+                    int to = rxp_resp.match_data[i].start_ptr + rxp_resp.match_data[i].length;
+
+                    for (j = 0; j < job->subset_count; j++)
+                    {
+                        job->subset[j]->_match(rxp_resp.match_data[i].rule_id, to,
+                            job->match_cb, job->match_ctx);
+                    }
+                }
+            }
+        }
+
+        rxp_free_buffer(pkts_burst[rx_pkts]);
+        processed++;
+    }
+
+    return;
+}
+
 static const MpseApi rxp_api =
 {
     {
@@ -482,8 +598,8 @@ static const MpseApi rxp_api =
     rxp_dtor,
     rxp_init,
     rxp_print,
-    nullptr,
-    nullptr,
+    rxp_begin_packet,
+    rxp_end_packet,
 };
 
 const BaseApi* se_rxp = &rxp_api.base;
