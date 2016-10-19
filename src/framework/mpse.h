@@ -121,6 +121,8 @@ struct MpseApi
     MpseDelFunc dtor;
     MpseExeFunc init;
     MpseExeFunc print;
+    MpseExeFunc begin_packet;
+    MpseExeFunc end_packet;
 };
 
 #endif

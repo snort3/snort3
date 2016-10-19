@@ -482,6 +482,8 @@ static const MpseApi rxp_api =
     rxp_dtor,
     rxp_init,
     rxp_print,
+    nullptr,
+    nullptr,
 };
 
 const BaseApi* se_rxp = &rxp_api.base;

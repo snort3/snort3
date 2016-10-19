@@ -148,6 +148,8 @@ static const MpseApi bnfa_api =
     bnfa_dtor,
     bnfa_init,
     bnfa_print,
+    nullptr,
+    nullptr,
 };
 
 const BaseApi* se_ac_bnfa[] =

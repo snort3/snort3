@@ -877,9 +877,7 @@ static int rule_tree_queue(
         int start_state = 0; \
         cnt++; \
         omd->data = buf; omd->size = len; \
-        stash.init(); \
         so->search(buf, len, rule_tree_queue, omd, &start_state); \
-        stash.process(rule_tree_match, omd); \
         if ( PacketLatency::fastpath() ) \
             return 1; \
     }
@@ -1252,8 +1250,14 @@ static void fpEvalPacketUdp(Packet* p)
 */
 int fpEvalPacket(Packet* p)
 {
+    const MpseApi* fpapi = snort_conf->fast_pattern_config->get_search_api();
     OTNX_MATCH_DATA* omd = &t_omd;
     InitMatchInfo(omd);
+
+    stash.init();
+
+    if (fpapi->begin_packet)
+        fpapi->begin_packet();
 
     /* Run UDP rules against the UDP header of Teredo packets */
     // FIXIT-L udph is always inner; need to check for outer
@@ -1306,6 +1310,11 @@ int fpEvalPacket(Packet* p)
     default:
         break;
     }
+
+    if (fpapi->end_packet)
+        fpapi->end_packet();
+
+    stash.process(rule_tree_match, omd);
 
     return fpFinalSelectEvent(omd, p);
 }
