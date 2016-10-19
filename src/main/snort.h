@@ -53,6 +53,8 @@ public:
     static void thread_rotate();
 
     static void capture_packet();
+    static Packet* set_detect_packet();
+    static void clear_detect_packet();
     static void detect_rebuilt_packet(Packet*);
 
     static DAQ_Verdict process_packet(

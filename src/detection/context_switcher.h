@@ -65,8 +65,9 @@ public:
     unsigned suspend();
     void resume(unsigned suspended);
 
-    void set_context_data(unsigned id, IpsContextData*) const;
+    IpsContext* get_context() const;
     IpsContextData* get_context_data(unsigned id) const;
+    void set_context_data(unsigned id, IpsContextData*) const;
 
     unsigned idle_count() const;
     unsigned busy_count() const;

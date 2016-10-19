@@ -31,6 +31,9 @@
 
 #include <vector>
 
+// required to get a decent decl of pkth
+#include "protocols/packet.h"
+
 class IpsContextData
 {
 public:
@@ -57,6 +60,10 @@ public:
 
     unsigned get_slot()
     { return slot; }
+
+public:
+    Packet* packet;
+    DAQ_PktHdr_t* pkth;
 
 private:
     std::vector<IpsContextData*> data;

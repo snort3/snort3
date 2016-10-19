@@ -131,16 +131,20 @@ void ContextSwitcher::resume(unsigned slot)
     hold[slot] = nullptr;
 }
 
-void ContextSwitcher::set_context_data(unsigned id, IpsContextData* cd) const
+IpsContext* ContextSwitcher::get_context() const
 {
     assert(!busy.empty());
-    busy.back()->set_context_data(id, cd);
+    return busy.back();
 }
 
 IpsContextData* ContextSwitcher::get_context_data(unsigned id) const
 {
-    assert(!busy.empty());
-    return busy.back()->get_context_data(id);
+    return get_context()->get_context_data(id);
+}
+
+void ContextSwitcher::set_context_data(unsigned id, IpsContextData* cd) const
+{
+    get_context()->set_context_data(id, cd);
 }
 
 unsigned ContextSwitcher::idle_count() const

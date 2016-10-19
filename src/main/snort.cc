@@ -662,7 +662,6 @@ void Snort::thread_init_unprivileged()
     for ( unsigned i = 0; i < max_contexts; ++i )
         s_switcher->push(new IpsContext(max_data));
 
-    s_packet = new Packet(false);
     CodecManager::thread_init(snort_conf);
 
     // this depends on instantiated daq capabilities
@@ -708,11 +707,7 @@ void Snort::thread_term()
     HighAvailabilityManager::thread_term();
     SideChannelManager::thread_term();
 
-    if ( s_packet )
-    {
-        delete s_packet;
-        s_packet = nullptr;
-    }
+    s_packet = nullptr;
 
     SFDAQInstance *daq_instance = SFDAQ::get_local_instance();
     if ( daq_instance->was_started() )
@@ -734,6 +729,19 @@ void Snort::thread_term()
     SnortEventqFree();
     Active::term();
     delete s_switcher;
+}
+
+Packet* Snort::set_detect_packet()
+{
+    const IpsContext* c = s_switcher->interrupt();
+    Packet* p = c->packet;
+    p->pkth = c->pkth;
+    return p;
+}
+
+void Snort::clear_detect_packet()
+{
+    s_switcher->complete();
 }
 
 void Snort::detect_rebuilt_packet(Packet* p)
@@ -862,6 +870,7 @@ DAQ_Verdict Snort::packet_callback(
         return DAQ_VERDICT_PASS;
 
     s_switcher->start();
+    s_packet = s_switcher->get_context()->packet;
 
     {
         Profile eventq_profile(eventqPerfStats);

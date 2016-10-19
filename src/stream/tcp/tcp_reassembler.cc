@@ -33,7 +33,7 @@
 #include "tcp_module.h"
 #include "tcp_normalizer.h"
 
-THREAD_LOCAL Packet* s5_pkt = nullptr;
+static THREAD_LOCAL Packet* s5_pkt = nullptr;
 
 ReassemblyPolicy stream_reassembly_policy_map[] =
 {
@@ -477,7 +477,8 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t total)
             flags |= PKT_PDU_TAIL;
 
         const StreamBuffer* sb = tracker->splitter->reassemble(
-            p->flow, total, bytes_flushed, tsn->payload(), bytes_to_copy, flags, bytes_copied);
+            session->flow, total, bytes_flushed, tsn->payload(),
+            bytes_to_copy, flags, bytes_copied);
 
         flags = 0;
 
@@ -593,11 +594,20 @@ void TcpReassembler::prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags)
 int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
     Profile profile(s5TcpFlushPerfStats);
+    s5_pkt = Snort::set_detect_packet();
 
     DAQ_PktHdr_t pkth;
-    EncodeFlags enc_flags = 0;
-
     session->GetPacketHeaderFoo(&pkth, pkt_flags);
+
+    if ( !p )
+    {
+        // FIXIT-H we need to have user_policy_id in this case
+        // FIXIT-H this leads to format_tcp() copying from s5_pkt to s5_pkt
+        // (neither of these issues is created by passing null through to here)
+        p = s5_pkt;
+    }
+
+    EncodeFlags enc_flags = 0;
     PacketManager::format_tcp(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
     prep_s5_pkt(session->flow, p, pkt_flags);
 
@@ -612,14 +622,16 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         uint32_t footprint = stop_seq - seglist_base_seq;
 
         if ( footprint == 0 )
+        {
+            Snort::clear_detect_packet();
             return bytes_processed;
+        }
 
         if ( footprint > s5_pkt->max_dsize )
             /* this is as much as we can pack into a stream buffer */
             footprint = s5_pkt->max_dsize;
 
-        ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_sec = seglist.next->tv.tv_sec;
-        ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_usec = seglist.next->tv.tv_usec;
+        ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts = seglist.next->tv;
 
         /* setup the pseudopacket payload */
         s5_pkt->dsize = 0;
@@ -681,6 +693,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             break;
     }
 
+    Snort::clear_detect_packet();
     return bytes_processed;
 }
 
@@ -811,16 +824,7 @@ int TcpReassembler::flush_stream(Packet* p, uint32_t dir)
 void TcpReassembler::final_flush(Packet* p, PegCount& peg, uint32_t dir)
 {
     if ( !p )
-    {
-        p = s5_pkt;
-
-        DAQ_PktHdr_t* const tmp_pcap_hdr = const_cast<DAQ_PktHdr_t*>(p->pkth);
         peg++;
-
-        /* Do each field individually because of size differences on 64bit OS */
-        tmp_pcap_hdr->ts.tv_sec = seglist.head->tv.tv_sec;
-        tmp_pcap_hdr->ts.tv_usec = seglist.head->tv.tv_usec;
-    }
 
     tracker->set_tf_flags(TF_FORCE_FLUSH);
 

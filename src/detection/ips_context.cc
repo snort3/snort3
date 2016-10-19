@@ -49,13 +49,19 @@ unsigned IpsContextData::get_max_id()
 //--------------------------------------------------------------------------
 
 IpsContext::IpsContext(unsigned size) : data(size, nullptr)
-{ }
+{
+    packet = new Packet(false);
+    pkth = new DAQ_PktHdr_t;
+}
 
 IpsContext::~IpsContext()
 {
     for ( auto* p : data )
         if ( p )
             delete p;
+
+    delete pkth;
+    delete packet;
 }
 
 void IpsContext::set_context_data(unsigned id, IpsContextData* cd)
