@@ -586,14 +586,11 @@ static void DCE2_ClFragReassemble(
         stub_len += fnode->frag_len;
     }
 
-    Packet* rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__UDP_CL_FRAG, dce2_cl_rbuf, stub_len);
-    if (rpkt == nullptr)
-    {
-        DebugFormat(DEBUG_DCE_UDP,
-            "%s(%d) Failed to create reassembly packet.",
-            __FILE__, __LINE__);
+    Packet* rpkt = DCE2_GetRpkt(
+        sd->wire_pkt, DCE2_RPKT_TYPE__UDP_CL_FRAG, dce2_cl_rbuf, stub_len);
+
+    if ( !rpkt )
         return;
-    }
 
     DCE2_ClSetRdata(at, cl_hdr, (uint8_t*)rpkt->data,
         (uint16_t)(rpkt->dsize - DCE2_MOCK_HDR_LEN__CL));

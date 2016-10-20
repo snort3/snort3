@@ -194,7 +194,7 @@ TEST_CASE("ContextSwitcher normal", "[ContextSwitcher]")
 
         IpsContextData* a = new ContextData(id);
         mgr.set_context_data(1, a);
-        IpsContext* p = mgr.interrupt();
+        mgr.interrupt();
         CHECK(mgr.idle_count() == max-2);
         CHECK(mgr.busy_count() == 2);
 
@@ -246,7 +246,7 @@ TEST_CASE("ContextSwitcher abort", "[ContextSwitcher]")
         mgr.interrupt();
         CHECK(mgr.idle_count() == max-3);
 
-        unsigned u = mgr.suspend();
+        mgr.suspend();
         CHECK(mgr.busy_count() == 2);
         CHECK(mgr.hold_count() == 1);
 

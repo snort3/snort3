@@ -69,7 +69,7 @@ IpsContext::~IpsContext()
 
     sfeventq_free(equeue);
 
-    delete buf;
+    delete[] buf;
     delete pkth;
     delete packet;
 }

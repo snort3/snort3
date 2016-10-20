@@ -1203,28 +1203,19 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     if (*rtype == DCE2_RPKT_TYPE__NULL)
         return nullptr;
 
-    if (frag_data != nullptr)
+    if ( frag_data )
     {
         rpkt = DCE2_GetRpkt(sd->wire_pkt, *rtype, frag_data, frag_len);
-        if (rpkt == nullptr)
-        {
-            DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly buffer.\n");
-            return nullptr;
-        }
-        if (seg_data != nullptr)
+
+        if ( rpkt and seg_data )
         {
             /* If this fails, we'll still have the frag data */
             DCE2_AddDataToRpkt(rpkt, seg_data, seg_len);
         }
     }
-    else if (seg_data != nullptr)
+    else if ( seg_data )
     {
         rpkt = DCE2_GetRpkt(sd->wire_pkt, *rtype, seg_data, seg_len);
-        if (rpkt == nullptr)
-        {
-            DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly packet.\n");
-            return nullptr;
-        }
     }
 
     return rpkt;
@@ -2142,27 +2133,18 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
     switch (sd->trans)
     {
     case DCE2_TRANS_TYPE__SMB:
-        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__SMB_CO_SEG,
-            data_ptr, data_len);
-        if (rpkt == nullptr)
-        {
-            DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly packet.\n");
+        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__SMB_CO_SEG, data_ptr, data_len);
+
+        if ( !rpkt )
             return nullptr;
-        }
+
         DCE2_SmbSetRdata((DCE2_SmbSsnData*)sd, (uint8_t*)rpkt->data,
             (uint16_t)(rpkt->dsize - smb_hdr_len));
         break;
 
     case DCE2_TRANS_TYPE__TCP:
         // FIXIT-M add HTTP cases when it is ported
-        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__TCP_CO_SEG,
-            data_ptr, data_len);
-        if (rpkt == nullptr)
-        {
-            DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly packet.\n");
-            return nullptr;
-        }
-
+        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__TCP_CO_SEG, data_ptr, data_len);
         break;
 
     default:

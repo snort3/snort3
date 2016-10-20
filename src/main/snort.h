@@ -27,13 +27,16 @@
 
 #include "main/snort_types.h"
 
+#include "main/snort_types.h"
+
 class Flow;
 struct Packet;
 struct SnortConfig;
 
 typedef void (* MainHook_f)(Packet*);
 
-class DetectionContext
+// FIXIT-H this needs to move to detection
+class SO_PUBLIC DetectionContext
 {
 public:
     DetectionContext();
@@ -42,7 +45,7 @@ public:
     Packet* get_packet();
 };
 
-class Snort
+class SO_PUBLIC Snort
 {
 public:
     static SnortConfig* get_reload_config(const char* fname);
@@ -62,6 +65,8 @@ public:
     static void thread_rotate();
 
     static void capture_packet();
+
+    // FIXIT-H these need to move to detection
     static Packet* set_detect_packet();
     static Packet* get_detect_packet();
     static void clear_detect_packet();

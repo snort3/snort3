@@ -1301,14 +1301,8 @@ Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData* ssd,
 
     Packet* rpkt = DCE2_GetRpkt(ssd->sd.wire_pkt, rtype, *data, *data_len);
 
-    if (rpkt == nullptr)
-    {
-        DebugFormat(DEBUG_DCE_SMB,
-            "%s(%d) Failed to create reassembly packet.",
-            __FILE__, __LINE__);
-
+    if ( !rpkt )
         return nullptr;
-    }
 
     *data = rpkt->data;
     *data_len = rpkt->dsize;

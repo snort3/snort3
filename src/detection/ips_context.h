@@ -30,11 +30,12 @@
 // integration into Snort.
 
 #include <vector>
+#include "main/snort_types.h"
 
 // required to get a decent decl of pkth
 #include "protocols/packet.h"
 
-class IpsContextData
+class SO_PUBLIC IpsContextData
 {
 public:
     virtual ~IpsContextData() { };
@@ -46,7 +47,7 @@ protected:
     IpsContextData() { }
 };
 
-class IpsContext
+class SO_PUBLIC IpsContext
 {
 public:
     IpsContext(unsigned size);

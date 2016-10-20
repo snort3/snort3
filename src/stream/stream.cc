@@ -23,6 +23,8 @@
 
 #include "stream.h"
 
+#include <assert.h>
+
 #include "flow/flow_control.h"
 #include "flow/flow_key.h"
 #include "flow/ha.h"
@@ -352,6 +354,9 @@ void Stream::purge_flows()
     // rebuilt packet is available)
     Snort::set_detect_packet();
     DetectionContext dc;
+    // this is a hack to work around the above issue
+    DAQ_PktHdr_t* ph = (DAQ_PktHdr_t*)dc.get_packet()->pkth;
+    memset(ph, 0, sizeof(*ph));
 
     flow_con->purge_flows(PktType::IP);
     flow_con->purge_flows(PktType::ICMP);
