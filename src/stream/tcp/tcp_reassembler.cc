@@ -693,7 +693,6 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             break;
     }
 
-    Snort::clear_detect_packet();
     return bytes_processed;
 }
 

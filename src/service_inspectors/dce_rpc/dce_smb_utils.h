@@ -338,11 +338,6 @@ inline bool DCE2_SmbIsTransactionComplete(DCE2_SmbTransactionTracker* ttracker)
     return false;
 }
 
-inline void DCE2_SmbReturnRpkt(DCE2_SmbSsnData* ssd)
-{
-    DCE2_PopPkt(&ssd->sd);
-}
-
 inline DCE2_Buffer** DCE2_SmbGetSegBuffer(DCE2_SmbSsnData* ssd)
 {
     if (DCE2_SsnFromServer(ssd->sd.wire_pkt))

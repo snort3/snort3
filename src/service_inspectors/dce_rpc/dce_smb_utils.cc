@@ -1310,14 +1310,6 @@ Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData* ssd,
         return nullptr;
     }
 
-    if (DCE2_PushPkt(rpkt, &ssd->sd) != DCE2_RET__SUCCESS)
-    {
-        DebugFormat(DEBUG_DCE_SMB,
-            "%s(%d) Failed to push packet onto packet stack.",
-            __FILE__, __LINE__);
-        return nullptr;
-    }
-
     *data = rpkt->data;
     *data_len = rpkt->dsize;
 
@@ -1463,8 +1455,6 @@ void DCE2_SmbSegAlert(DCE2_SmbSsnData* ssd, uint32_t rule_id)
         return;
 
     dce_alert(GID_DCE2, rule_id, (dce2CommonStats*)&dce2_smb_stats);
-
-    DCE2_SmbReturnRpkt(ssd);
 }
 
 static void DCE2_SmbResetFileChunks(DCE2_SmbFileTracker* ftracker)
@@ -1900,8 +1890,8 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
     }
 
     if ((file_data_depth != -1) &&
-        ((ftracker->ff_file_offset == ftracker->ff_bytes_processed)
-        && ((file_data_depth == 0) || (ftracker->ff_bytes_processed < (uint64_t)file_data_depth))))
+        ((ftracker->ff_file_offset == ftracker->ff_bytes_processed) &&
+        ((file_data_depth == 0) || (ftracker->ff_bytes_processed < (uint64_t)file_data_depth))))
     {
         set_file_data((uint8_t*)data_ptr,
             (data_len > UINT16_MAX) ? UINT16_MAX : (uint16_t)data_len);
@@ -1998,26 +1988,19 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
 
 void DCE2_FileDetect()
 {
-    Packet* top_pkt = (Packet*)DCE2_CStackTop(dce2_pkt_stack);
-    if (top_pkt == nullptr)
-    {
-        DebugMessage(DEBUG_DCE_SMB,"No packet on top of stack.\n");
-        return;
-    }
-    DebugMessage(DEBUG_DCE_SMB, "Detecting ------------------------------------------------\n");
+    Packet* top_pkt = Snort::set_detect_packet();
+    DetectionContext dc;
+
     DebugMessage(DEBUG_DCE_SMB, "Payload:\n");
     DCE2_PrintPktData(top_pkt->data, top_pkt->dsize);
 
     Profile profile(dce2_smb_pstat_smb_file_detect);
 
-    SnortEventqPush();
     snort_detect(top_pkt);
-    SnortEventqPop();
 
     // Reset file data pointer after detecting
     set_file_data(nullptr, 0);
     dce2_detected = 1;
-    DebugMessage(DEBUG_DCE_SMB, "----------------------------------------------------------\n");
 }
 
 static void DCE2_SmbSetNewFileAPIFileTracker(DCE2_SmbSsnData* ssd)

@@ -26,6 +26,7 @@
 #include "dce_co.h"
 
 #include "main/snort_debug.h"
+#include "main/snort.h"
 #include "utils/util.h"
 
 #include "dce_smb.h"
@@ -1325,26 +1326,20 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
  ********************************************************************/
 static void DCE2_CoReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoRpktType co_rtype)
 {
+    DetectionContext dc;
+
     DceRpcCoHdr* co_hdr = nullptr;
     Packet* rpkt = dce_co_reassemble(sd,cot,co_rtype,&co_hdr);
 
     if ( !rpkt )
         return;
 
-    /* Push packet onto stack */
-    if (DCE2_PushPkt(rpkt,sd) != DCE2_RET__SUCCESS)
-    {
-        DebugMessage(DEBUG_DCE_COMMON, "Failed to push packet onto packet stack.\n");
-        return;
-    }
     DCE2_CoSetRopts(sd, cot, co_hdr, rpkt);
 
     DebugMessage(DEBUG_DCE_COMMON, "Reassembled CO fragmented packet:\n");
     DCE2_PrintPktData(rpkt->data, rpkt->dsize);
 
     DCE2_Detect(sd);
-    DCE2_PopPkt(sd);
-
     co_reassembled = 1;
 }
 
@@ -2188,6 +2183,8 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
  ********************************************************************/
 static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* seg)
 {
+    DetectionContext dc;
+
     const uint8_t* frag_ptr = nullptr;
     uint16_t frag_len = 0;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
@@ -2232,12 +2229,6 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
         return;
     }
 
-    if (DCE2_PushPkt(rpkt,sd) != DCE2_RET__SUCCESS)
-    {
-        DebugMessage(DEBUG_DCE_COMMON, "Failed to push packet onto packet stack.\n");
-        return;
-    }
-
     /* All is good.  Decode the pdu */
     DCE2_CoDecode(sd, cot, frag_ptr, frag_len);
 
@@ -2248,8 +2239,6 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
      * detection engine hasn't seen yet */
     if (!co_reassembled)
         DCE2_Detect(sd);
-
-    DCE2_PopPkt(sd);
 }
 
 static DCE2_Ret DCE2_HandleSegmentation(DCE2_Buffer* seg_buf, const uint8_t* data_ptr,

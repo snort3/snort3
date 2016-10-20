@@ -42,6 +42,7 @@
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
 #include "flow/ha.h"
+#include "framework/endianness.h"
 #include "framework/mpse.h"
 #include "helpers/process.h"
 #include "host_tracker/host_cache.h"
@@ -654,7 +655,7 @@ bool Snort::thread_init_privileged(const char* intf)
 void Snort::thread_init_unprivileged()
 {
     // using dummy values until further integration
-    const unsigned max_contexts = 5;
+    const unsigned max_contexts = 20;
     const unsigned max_data = 1;
 
     s_switcher = new ContextSwitcher(max_contexts);
@@ -668,10 +669,7 @@ void Snort::thread_init_unprivileged()
     // so it is done here instead of init()
     Active::init(snort_conf);
 
-    SnortEventqNew(snort_conf->event_queue_config);
-
     InitTag();
-
     EventTrace_Init();
     detection_filter_init(snort_conf->detection_filter_config);
 
@@ -726,21 +724,60 @@ void Snort::thread_term()
     CleanupTag();
     FileService::thread_term();
 
-    SnortEventqFree();
     Active::term();
     delete s_switcher;
 }
 
+DetectionContext::DetectionContext()
+{
+    s_switcher->interrupt();
+}
+
+DetectionContext::~DetectionContext()
+{ Snort::clear_detect_packet(); }
+
+Packet* DetectionContext::get_packet()
+{ return Snort::get_detect_packet(); }
+
+SF_EVENTQ* Snort::get_event_queue()
+{
+    return s_switcher->get_context()->equeue;
+}
+
 Packet* Snort::set_detect_packet()
 {
+    // this approach is a hack until verified
+    // looks like we need to stay in the current context until 
+    // rebuild is successful; any events while rebuilding will
+    // be logged against the current packet.
     const IpsContext* c = s_switcher->interrupt();
     Packet* p = c->packet;
+    s_switcher->complete();
+
     p->pkth = c->pkth;
+    p->data = c->buf;
+    p->reset();
+    return p;
+}
+
+Packet* Snort::get_detect_packet()
+{
+    Packet* p = s_switcher->get_context()->packet;
     return p;
 }
 
 void Snort::clear_detect_packet()
 {
+    Packet* p = get_detect_packet();
+    SnortEventqLog(p);
+    SnortEventqReset();
+
+    if ( p->endianness )
+    {
+        delete p->endianness;
+        p->endianness = nullptr;
+    }
+
     s_switcher->complete();
 }
 
@@ -753,11 +790,10 @@ void Snort::detect_rebuilt_packet(Packet* p)
     auto save_do_detect = do_detect;
     auto save_do_detect_content = do_detect_content;
 
-    SnortEventqPush();
+    DetectionContext dc;
     main_hook(p);
-    SnortEventqPop();
 
-    DetectReset();
+    DetectReset();  // FIXIT-H context
 
     do_detect = save_do_detect;
     do_detect_content = save_do_detect_content;
@@ -871,11 +907,6 @@ DAQ_Verdict Snort::packet_callback(
 
     s_switcher->start();
     s_packet = s_switcher->get_context()->packet;
-
-    {
-        Profile eventq_profile(eventqPerfStats);
-        SnortEventqReset();
-    }
 
     sfthreshold_reset();
     ActionManager::reset_queue();

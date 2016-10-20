@@ -149,7 +149,6 @@ const char* Packet::get_type() const
         if ( num_layers > 0 )
             return PacketManager::get_proto_name(layers[num_layers-1].prot_id);
 
-        assert(false);
         return "None";
 
     default:

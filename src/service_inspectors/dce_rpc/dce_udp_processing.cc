@@ -34,6 +34,7 @@
 
 #include "flow/session.h"
 #include "main/snort_debug.h"
+#include "main/snort.h"
 #include "utils/safec.h"
 #include "utils/util.h"
 
@@ -554,9 +555,11 @@ static int DCE2_ClFragCompare(const void* a, const void* b)
 
 // Reassembles fragments into reassembly buffer and copies to
 // reassembly packet.
-static void DCE2_ClFragReassemble(DCE2_SsnData* sd, DCE2_ClActTracker* at, const
-    DceRpcClHdr* cl_hdr)
+static void DCE2_ClFragReassemble(
+    DCE2_SsnData* sd, DCE2_ClActTracker* at, const DceRpcClHdr* cl_hdr)
 {
+    DetectionContext dc;
+
     uint8_t dce2_cl_rbuf[IP_MAXPACKET];
     DCE2_ClFragTracker* ft = &at->frag_tracker;
     uint8_t* rdata = dce2_cl_rbuf;
@@ -597,14 +600,6 @@ static void DCE2_ClFragReassemble(DCE2_SsnData* sd, DCE2_ClActTracker* at, const
 
     const uint8_t* stub_data = rpkt->data + DCE2_MOCK_HDR_LEN__CL;
 
-    if (DCE2_PushPkt(rpkt, sd) != DCE2_RET__SUCCESS)
-    {
-        DebugFormat(DEBUG_DCE_UDP,
-            "%s(%d) Failed to push packet onto packet stack.",
-            __FILE__, __LINE__);
-        return;
-    }
-
     /* Cache relevant values for rule option processing */
     sd->ropts.first_frag = 1;
     DCE2_CopyUuid(&sd->ropts.iface, &ft->iface, DCERPC_BO_FLAG__NONE);
@@ -625,7 +620,6 @@ static void DCE2_ClFragReassemble(DCE2_SsnData* sd, DCE2_ClActTracker* at, const
     sd->ropts.stub_data = stub_data;
 
     DCE2_Detect(sd);
-    DCE2_PopPkt(sd);
 
     dce2_udp_stats.cl_frag_reassembled++;
 }

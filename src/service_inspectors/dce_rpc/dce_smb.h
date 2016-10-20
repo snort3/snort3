@@ -190,7 +190,6 @@ struct dce2SmbStats
 };
 
 extern THREAD_LOCAL dce2SmbStats dce2_smb_stats;
-extern THREAD_LOCAL Packet* dce2_smb_rpkt[DCE2_SMB_RPKT_TYPE_MAX];
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_main;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_session;
 extern THREAD_LOCAL ProfileStats dce2_smb_pstat_new_session;

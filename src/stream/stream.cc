@@ -27,6 +27,7 @@
 #include "flow/flow_key.h"
 #include "flow/ha.h"
 #include "flow/prune_stats.h"
+#include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "packet_io/active.h"
@@ -345,6 +346,12 @@ void Stream::purge_flows()
 {
     if ( !flow_con )
         return;
+
+    // FIXIT-H stream tcp needs to do this and prep pkt to handle
+    // shutdown alerts while rebuilding (during flush before a 
+    // rebuilt packet is available)
+    Snort::set_detect_packet();
+    DetectionContext dc;
 
     flow_con->purge_flows(PktType::IP);
     flow_con->purge_flows(PktType::ICMP);

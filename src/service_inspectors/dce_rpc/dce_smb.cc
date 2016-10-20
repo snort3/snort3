@@ -37,11 +37,7 @@
 #include "dce_smb_utils.h"
 #include "dce_smb2.h"
 
-THREAD_LOCAL int dce2_smb_inspector_instances = 0;
-
 THREAD_LOCAL dce2SmbStats dce2_smb_stats;
-THREAD_LOCAL Packet* dce2_smb_rpkt[DCE2_SMB_RPKT_TYPE_MAX] = { nullptr, nullptr, nullptr,
-                                                               nullptr };
 
 // used here
 THREAD_LOCAL ProfileStats dce2_smb_pstat_main;
@@ -395,14 +391,9 @@ void Dce2Smb::eval(Packet* p)
     }
 
     dce2_smb_sess = dce2_handle_smb_session(p, &config);
+
     if (dce2_smb_sess)
     {
-        //FIXIT-L evaluate moving pushpkt out of session pstats
-        if (DCE2_PushPkt(p,&dce2_smb_sess->sd) != DCE2_RET__SUCCESS)
-        {
-            DebugMessage(DEBUG_DCE_SMB, "Failed to push packet onto packet stack.\n");
-            return;
-        }
         p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
         dce2_detected = 0;
 
@@ -414,7 +405,6 @@ void Dce2Smb::eval(Packet* p)
             DCE2_Detect(&dce2_smb_sess->sd);
 
         DCE2_ResetRopts(&dce2_smb_sess->sd.ropts);
-        DCE2_PopPkt(&dce2_smb_sess->sd);
 
         delete p->endianness;
         p->endianness = nullptr;
@@ -455,56 +445,6 @@ static void dce2_smb_dtor(Inspector* p)
     delete p;
 }
 
-static void dce2_smb_thread_init()
-{
-    if (dce2_inspector_instances == 0)
-    {
-        dce2_pkt_stack = DCE2_CStackNew(DCE2_PKT_STACK__SIZE, nullptr);
-    }
-    if (dce2_smb_inspector_instances == 0)
-    {
-        for (int i=0; i < DCE2_SMB_RPKT_TYPE_MAX; i++)
-        {
-            Packet* p = (Packet*)snort_calloc(sizeof(Packet));
-            p->data = (uint8_t*)snort_calloc(DCE2_REASSEMBLY_BUF_SIZE);
-            p->endianness = (Endianness*)new DceEndianness();
-            p->dsize = DCE2_REASSEMBLY_BUF_SIZE;
-            dce2_smb_rpkt[i] = p;
-        }
-    }
-    dce2_smb_inspector_instances++;
-    dce2_inspector_instances++;
-}
-
-static void dce2_smb_thread_term()
-{
-    dce2_inspector_instances--;
-    dce2_smb_inspector_instances--;
-
-    if (dce2_smb_inspector_instances == 0)
-    {
-        for (int i=0; i<DCE2_SMB_RPKT_TYPE_MAX; i++)
-        {
-            if ( dce2_smb_rpkt[i] != nullptr )
-            {
-                Packet* p = dce2_smb_rpkt[i];
-                if (p->data)
-                {
-                    snort_free((void*)p->data);
-                }
-                delete p->endianness;
-                snort_free(p);
-                dce2_smb_rpkt[i] = nullptr;
-            }
-        }
-    }
-    if (dce2_inspector_instances == 0)
-    {
-        DCE2_CStackDestroy(dce2_pkt_stack);
-        dce2_pkt_stack = nullptr;
-    }
-}
-
 const InspectApi dce2_smb_api =
 {
     {
@@ -525,8 +465,8 @@ const InspectApi dce2_smb_api =
     "dce_smb",
     dce2_smb_init,
     nullptr, // pterm
-    dce2_smb_thread_init, // tinit
-    dce2_smb_thread_term, // tterm
+    nullptr, // tinit
+    nullptr, // tterm
     dce2_smb_ctor,
     dce2_smb_dtor,
     nullptr, // ssn

@@ -34,12 +34,8 @@ extern const InspectApi dce2_smb_api;
 extern const InspectApi dce2_tcp_api;
 extern const InspectApi dce2_udp_api;
 extern THREAD_LOCAL int dce2_detected;
-extern THREAD_LOCAL int dce2_inspector_instances;
-extern THREAD_LOCAL DCE2_CStack* dce2_pkt_stack;
 
 #define GID_DCE2 133
-#define DCE2_PKT_STACK__SIZE  10
-#define DCE2_REASSEMBLY_BUF_SIZE 65535u
 
 enum DCE2_Policy
 {
@@ -402,10 +398,7 @@ bool dce2_set_co_config(Value&, dce2CoProtoConf&);
 void print_dce2_co_config(dce2CoProtoConf&);
 bool dce2_paf_abort(Flow*, DCE2_SsnData*);
 void DCE2_Detect(DCE2_SsnData*);
-Packet* DCE2_GetRpkt(Packet*, DCE2_RpktType,
-    const uint8_t*, uint32_t);
-DCE2_Ret DCE2_PushPkt(Packet*,DCE2_SsnData*);
-void DCE2_PopPkt(DCE2_SsnData*);
+Packet* DCE2_GetRpkt(Packet*, DCE2_RpktType, const uint8_t*, uint32_t);
 uint16_t DCE2_GetRpktMaxData(DCE2_SsnData*, DCE2_RpktType);
 DCE2_Ret DCE2_AddDataToRpkt(Packet*, const uint8_t*, uint32_t);
 DCE2_SsnData* get_dce2_session_data(Packet*);

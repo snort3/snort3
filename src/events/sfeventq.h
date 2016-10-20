@@ -20,15 +20,15 @@
 #ifndef SFEVENTQ_H
 #define SFEVENTQ_H
 
-typedef struct s_SF_EVENTQ_NODE
+struct SF_EVENTQ_NODE
 {
     void* event;
 
-    struct s_SF_EVENTQ_NODE* prev;
-    struct s_SF_EVENTQ_NODE* next;
-}  SF_EVENTQ_NODE;
+    SF_EVENTQ_NODE* prev;
+    SF_EVENTQ_NODE* next;
+};
 
-typedef struct s_SF_EVENTQ
+struct SF_EVENTQ
 {
     /*
     **  Handles the actual ordering and memory
@@ -61,7 +61,7 @@ typedef struct s_SF_EVENTQ
     */
     int cur_nodes;
     int cur_events;
-}  SF_EVENTQ;
+};
 
 SF_EVENTQ* sfeventq_new(int max_nodes, int log_nodes, int event_size);
 void* sfeventq_event_alloc(SF_EVENTQ*);

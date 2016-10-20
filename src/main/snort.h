@@ -33,6 +33,15 @@ struct SnortConfig;
 
 typedef void (* MainHook_f)(Packet*);
 
+class DetectionContext
+{
+public:
+    DetectionContext();
+    ~DetectionContext();
+
+    Packet* get_packet();
+};
+
 class Snort
 {
 public:
@@ -54,8 +63,11 @@ public:
 
     static void capture_packet();
     static Packet* set_detect_packet();
+    static Packet* get_detect_packet();
     static void clear_detect_packet();
     static void detect_rebuilt_packet(Packet*);
+
+    static struct SF_EVENTQ* get_event_queue();
 
     static DAQ_Verdict process_packet(
         Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, bool is_frag=false);

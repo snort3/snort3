@@ -26,9 +26,6 @@
 #define SNORT_EVENTQ_PRIORITY    1
 #define SNORT_EVENTQ_CONTENT_LEN 2
 
-struct Packet;
-struct OptTreeNode;
-
 struct EventQueueConfig
 {
     int max_events;
@@ -47,9 +44,6 @@ struct EventNode
 EventQueueConfig* EventQueueConfigNew();
 void EventQueueConfigFree(EventQueueConfig*);
 
-void SnortEventqNew(EventQueueConfig*);
-void SnortEventqFree();
-
 SO_PUBLIC void SnortEventqReset();
 void SnortEventqResetCounts();
 
@@ -57,9 +51,6 @@ SO_PUBLIC int SnortEventqLog(struct Packet*);
 SO_PUBLIC int SnortEventqAdd(const struct OptTreeNode*);
 SO_PUBLIC int SnortEventqAdd(uint32_t gid, uint32_t sid, RuleType = RULE_TYPE__NONE);
 SO_PUBLIC bool event_is_enabled(uint32_t gid, uint32_t sid);
-
-SO_PUBLIC void SnortEventqPush();
-SO_PUBLIC void SnortEventqPop();
 
 #endif
 

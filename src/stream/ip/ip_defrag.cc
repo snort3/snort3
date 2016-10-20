@@ -886,10 +886,8 @@ static void FragRebuild(FragTracker* ft, Packet* p)
 #endif
 
     encap_frag_cnt++;
-    SnortEventqPush();
     PacketManager::encode_set_pkt(p);
     Snort::process_packet(dpkt, dpkt->pkth, dpkt->pkt, true);
-    SnortEventqPop();
     encap_frag_cnt--;
 
     trace_log(stream_ip,

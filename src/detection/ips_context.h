@@ -64,6 +64,8 @@ public:
 public:
     Packet* packet;
     DAQ_PktHdr_t* pkth;
+    uint8_t* buf;
+    struct SF_EVENTQ* equeue;
 
 private:
     std::vector<IpsContextData*> data;
