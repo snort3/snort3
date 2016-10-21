@@ -1,3 +1,12 @@
+16/10/21 - build 216
+
+-- add build configuration for thread sanitizer
+-- port dce_udp fragments
+-- build: clean up some ICC warnings
+-- fix various unit test leaks
+-- fix -Wmaybe-uninitialized issues
+-- fix related to appid name with space and SSL position
+
 16/10/13 - build 215
 
 -- added module trace facility
