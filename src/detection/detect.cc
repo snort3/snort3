@@ -17,11 +17,11 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*    Dan Roelker <droelker@sourcefire.com>
-**    Marc Norton <mnorton@sourcefire.com>
-** NOTES
-**   5.7.02: Added interface for new detection engine. (Norton/Roelker)
+
+/*   Dan Roelker <droelker@sourcefire.com>
+**   Marc Norton <mnorton@sourcefire.com>
 **
+**   5.7.02: Added interface for new detection engine. (Norton/Roelker)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -44,9 +44,9 @@
 #include "utils/stats.h"
 
 #include "detection_defines.h"
+#include "detection_engine.h"
 #include "fp_detect.h"
 #include "tag.h"
-#include "treenodes.h"
 
 #define CHECK_SRC_IP         0x01
 #define CHECK_DST_IP         0x02
@@ -108,7 +108,7 @@ void snort_inspect(Packet* p)
             Active::apply_delayed_action(p);
 
             if ( do_detect )
-                snort_detect(p);
+                DetectionEngine::process(p);
         }
 
         check_tags_flag = 1;
@@ -235,62 +235,6 @@ int CheckTagging(Packet* p)
     }
 
     return 0;
-}
-
-/****************************************************************************
- *
- * Function: snort_detect(Packet *)
- *
- * Purpose: Apply the rules lists to the current packet
- *
- * Arguments: p => ptr to the decoded packet struct
- *
- * Returns: 1 == detection event
- *          0 == no detection
- *
- ***************************************************************************/
-bool snort_detect(Packet* p)
-{
-    Profile profile(detectPerfStats);
-
-    if ((p == NULL) || !p->ptrs.ip_api.is_valid())
-    {
-        return false;
-    }
-
-    if (p->packet_flags & PKT_PASS_RULE)
-    {
-        /* If we've already seen a pass rule on this,
-         * no need to continue do inspection.
-         */
-        return false;
-    }
-
-    // FIXIT-M restrict detect to current ip layer
-    // Curently, if a rule is found on any IP layer, we perform the detect routine
-    // on the entire packet. Instead, we should only perform detect on that layer!!
-    switch ( p->type() )
-    {
-    case PktType::IP:
-    case PktType::TCP:
-    case PktType::UDP:
-    case PktType::ICMP:
-    case PktType::PDU:
-    case PktType::FILE:
-    {
-        if ( PacketLatency::fastpath() )
-            return false;
-
-        /*
-        **  This is where we short circuit so
-        **  that we can do IP checks.
-        */
-        return fpEvalPacket(p);
-    }
-
-    default:
-        return false;
-    }
 }
 
 static int CheckAddrPort(

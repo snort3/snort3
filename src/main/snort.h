@@ -35,17 +35,7 @@ struct SnortConfig;
 
 typedef void (* MainHook_f)(Packet*);
 
-// FIXIT-H this needs to move to detection
-class SO_PUBLIC DetectionContext
-{
-public:
-    DetectionContext();
-    ~DetectionContext();
-
-    Packet* get_packet();
-};
-
-class SO_PUBLIC Snort
+class Snort
 {
 public:
     static SnortConfig* get_reload_config(const char* fname);
@@ -66,20 +56,15 @@ public:
 
     static void capture_packet();
 
-    // FIXIT-H these need to move to detection
-    static Packet* set_detect_packet();
-    static Packet* get_detect_packet();
-    static void clear_detect_packet();
-    static void detect_rebuilt_packet(Packet*);
-
-    static struct SF_EVENTQ* get_event_queue();
-
     static DAQ_Verdict process_packet(
         Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, bool is_frag=false);
 
     static DAQ_Verdict packet_callback(void*, const DAQ_PktHdr_t*, const uint8_t*);
 
+    static void inspect(Packet*);
+
     static void set_main_hook(MainHook_f);
+    static class ContextSwitcher* get_switcher();
 
     SO_PUBLIC static Packet* get_packet();
 

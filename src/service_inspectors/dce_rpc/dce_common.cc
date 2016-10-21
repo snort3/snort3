@@ -24,10 +24,10 @@
 
 #include "dce_common.h"
 
-#include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "ips_options/extract.h"
 #include "log/messages.h"
-#include "main/snort.h"
+#include "main/snort_debug.h"
 #include "utils/safec.h"
 
 #include "dce_smb_utils.h"
@@ -194,7 +194,7 @@ static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
     // FIXIT-M add HTTP case when these are ported
     // Same for all other instances of profiling
 
-    snort_detect(pkt);
+    DetectionEngine::process(pkt);
 
     dce2_detected = 1;
 }
@@ -204,11 +204,11 @@ void DCE2_Detect(DCE2_SsnData* sd)
     if ( using_rpkt )
     {
         using_rpkt = false;
-        DetectionContext dc;
+        DetectionEngine de;
         DCE2_Detect(sd);
         return;
     }
-    Packet* top_pkt = Snort::get_detect_packet();
+    Packet* top_pkt = DetectionEngine::get_current_packet();
 
     DCE2_PrintRoptions(&sd->ropts);
     DebugMessage(DEBUG_DCE_COMMON, "Payload:\n");
@@ -365,7 +365,7 @@ static void dce2_fill_rpkt_info(Packet* rpkt, Packet* p)
 Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
     const uint8_t* data, uint32_t data_len)
 {
-    Packet* rpkt = Snort::set_detect_packet();
+    Packet* rpkt = DetectionEngine::set_packet();
     dce2_fill_rpkt_info(rpkt, p);
     uint16_t data_overhead = 0;
 

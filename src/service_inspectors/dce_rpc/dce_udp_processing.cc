@@ -32,9 +32,9 @@
 
 #include "dce_udp.h"
 
+#include "detection/detection_engine.h"
 #include "flow/session.h"
 #include "main/snort_debug.h"
-#include "main/snort.h"
 #include "utils/safec.h"
 #include "utils/util.h"
 
@@ -558,7 +558,7 @@ static int DCE2_ClFragCompare(const void* a, const void* b)
 static void DCE2_ClFragReassemble(
     DCE2_SsnData* sd, DCE2_ClActTracker* at, const DceRpcClHdr* cl_hdr)
 {
-    DetectionContext dc;
+    DetectionEngine de;
 
     uint8_t dce2_cl_rbuf[IP_MAXPACKET];
     DCE2_ClFragTracker* ft = &at->frag_tracker;

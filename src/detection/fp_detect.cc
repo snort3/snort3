@@ -1214,12 +1214,7 @@ static void fpEvalPacketUdp(Packet* p)
 }
 
 /*
-**
-**  NAME
-**    fpEvalPacket::
-**
 **  DESCRIPTION
-**    This function is the interface to the snort_detect() routine.
 **    the IP protocol is processed.  If it is TCP, UDP, or ICMP, we
 **    process the both that particular ruleset and the IP ruleset
 **    with in the fpEvalHeader for that protocol.  If the protocol
@@ -1236,7 +1231,6 @@ static void fpEvalPacketUdp(Packet* p)
 **
 **  FORMAL OUTPUT
 **    int - 0 means that packet has been processed.
-**
 */
 int fpEvalPacket(Packet* p)
 {

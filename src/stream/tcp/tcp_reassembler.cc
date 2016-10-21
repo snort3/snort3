@@ -28,6 +28,7 @@
 #include "log/log.h"
 #include "main/snort.h"
 #include "profiler/profiler.h"
+#include "detection/detection_engine.h"
 #include "protocols/packet_manager.h"
 
 #include "tcp_module.h"
@@ -596,6 +597,8 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
     Profile profile(s5TcpFlushPerfStats);
     s5_pkt = Snort::set_detect_packet();
 
+    s5_pkt = DetectionEngine::set_packet();
+
     DAQ_PktHdr_t pkth;
     session->GetPacketHeaderFoo(&pkth, pkt_flags);
 
@@ -664,7 +667,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             tcpStats.rebuilt_bytes += flushed_bytes;
 
             ProfileExclude profile_exclude(s5TcpFlushPerfStats);
-            Snort::detect_rebuilt_packet(s5_pkt);
+            Snort::inspect(s5_pkt);
         }
         else
         {

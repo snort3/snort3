@@ -55,17 +55,14 @@
  */
 uint32_t GenerateSnortEvent(Packet* p, uint32_t gid, uint32_t sid)
 {
-    OptTreeNode* otn;
-    RuleTreeNode* rtn;
+    OptTreeNode* otn = GetOTN(gid, sid);
 
-    otn = GetOTN(gid, sid);
-
-    if (otn == NULL)
+    if ( !otn )
         return 0;
 
-    rtn = getRuntimeRtnFromOtn(otn);
+    RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
 
-    if (rtn == NULL)
+    if ( !rtn )
         return 0;
 
     fpLogEvent(rtn, otn, p);

@@ -149,7 +149,7 @@ void UserTracker::detect(const Packet* p, const StreamBuffer* sb, uint32_t flags
     up.packet_flags |= (p->packet_flags & (PKT_STREAM_EST|PKT_STREAM_UNEST_UNI));
 
     trace_logf(stream_user, "detect[%d]\n", up.dsize);
-    Snort::detect_rebuilt_packet(&up);
+    Snort::inspect(&up);
 }
 
 int UserTracker::scan(Packet* p, uint32_t& flags)

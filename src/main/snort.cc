@@ -31,7 +31,7 @@
 #include "connectors/connectors.h"
 #include "decompress/file_decomp.h"
 #include "detection/context_switcher.h"
-#include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "detection/detection_util.h"
 #include "detection/fp_config.h"
 #include "detection/fp_detect.h"
@@ -106,6 +106,9 @@ static THREAD_LOCAL DAQ_PktHdr_t s_pkth;
 static THREAD_LOCAL uint8_t s_data[65536];
 static THREAD_LOCAL Packet* s_packet = nullptr;
 static THREAD_LOCAL ContextSwitcher* s_switcher = nullptr;
+
+ContextSwitcher* Snort::get_switcher()
+{ return s_switcher; }
 
 //-------------------------------------------------------------------------
 // perf stats
@@ -728,59 +731,7 @@ void Snort::thread_term()
     delete s_switcher;
 }
 
-DetectionContext::DetectionContext()
-{
-    s_switcher->interrupt();
-}
-
-DetectionContext::~DetectionContext()
-{ Snort::clear_detect_packet(); }
-
-Packet* DetectionContext::get_packet()
-{ return Snort::get_detect_packet(); }
-
-SF_EVENTQ* Snort::get_event_queue()
-{
-    return s_switcher->get_context()->equeue;
-}
-
-Packet* Snort::set_detect_packet()
-{
-    // we need to stay in the current context until rebuild is successful
-    // any events while rebuilding will be logged against the current packet
-    // FIXIT-H bypass the interrupt / complete
-    const IpsContext* c = s_switcher->interrupt();
-    Packet* p = c->packet;
-    s_switcher->complete();
-
-    p->pkth = c->pkth;
-    p->data = c->buf;
-    p->reset();
-    return p;
-}
-
-Packet* Snort::get_detect_packet()
-{
-    Packet* p = s_switcher->get_context()->packet;
-    return p;
-}
-
-void Snort::clear_detect_packet()
-{
-    Packet* p = get_detect_packet();
-    SnortEventqLog(p);
-    SnortEventqReset();
-
-    if ( p->endianness )
-    {
-        delete p->endianness;
-        p->endianness = nullptr;
-    }
-
-    s_switcher->complete();
-}
-
-void Snort::detect_rebuilt_packet(Packet* p)
+void Snort::inspect(Packet* p)
 {
     // Need to include this b/c call is outside the detect tree
     Profile detect_profile(detectPerfStats);
@@ -789,7 +740,7 @@ void Snort::detect_rebuilt_packet(Packet* p)
     auto save_do_detect = do_detect;
     auto save_do_detect_content = do_detect_content;
 
-    DetectionContext dc;
+    DetectionEngine de;
     main_hook(p);
 
     DetectReset();  // FIXIT-H context
@@ -812,7 +763,6 @@ DAQ_Verdict Snort::process_packet(
 
     set_policy(p);  // FIXIT-M should not need this here
 
-    /* just throw away the packet if we are configured to ignore this port */
     if ( !(p->packet_flags & PKT_IGNORE) )
     {
         DetectReset();

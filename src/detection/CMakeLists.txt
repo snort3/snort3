@@ -2,6 +2,8 @@
 set (DETECTION_INCLUDES
     detect.h
     detection_defines.h
+    detection_engine.h
+    detection_options.h
     detection_util.h
     ips_context.h
     rule_option_types.h
@@ -15,6 +17,7 @@ add_library (detection STATIC
     context_switcher.cc
     context_switcher.h
     detect.cc
+    detection_engine.cc
     detection_options.cc
     detection_options.h
     detection_util.cc

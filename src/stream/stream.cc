@@ -25,6 +25,7 @@
 
 #include <assert.h>
 
+#include "detection/detection_engine.h"
 #include "flow/flow_control.h"
 #include "flow/flow_key.h"
 #include "flow/ha.h"
@@ -352,10 +353,10 @@ void Stream::purge_flows()
     // FIXIT-H stream tcp needs to do this and prep pkt to handle
     // shutdown alerts while rebuilding (during flush before a 
     // rebuilt packet is available)
-    Snort::set_detect_packet();
-    DetectionContext dc;
+    DetectionEngine::set_packet();
+    DetectionEngine de;
     // this is a hack to work around the above issue
-    DAQ_PktHdr_t* ph = (DAQ_PktHdr_t*)dc.get_packet()->pkth;
+    DAQ_PktHdr_t* ph = (DAQ_PktHdr_t*)de.get_packet()->pkth;
     memset(ph, 0, sizeof(*ph));
 
     flow_con->purge_flows(PktType::IP);

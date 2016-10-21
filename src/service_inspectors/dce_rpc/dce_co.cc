@@ -25,8 +25,8 @@
 
 #include "dce_co.h"
 
+#include "detection/detection_engine.h"
 #include "main/snort_debug.h"
-#include "main/snort.h"
 #include "utils/util.h"
 
 #include "dce_smb.h"
@@ -1317,7 +1317,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
  ********************************************************************/
 static void DCE2_CoReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoRpktType co_rtype)
 {
-    DetectionContext dc;
+    DetectionEngine de;
 
     DceRpcCoHdr* co_hdr = nullptr;
     Packet* rpkt = dce_co_reassemble(sd,cot,co_rtype,&co_hdr);
@@ -2165,7 +2165,7 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
  ********************************************************************/
 static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* seg)
 {
-    DetectionContext dc;
+    DetectionEngine de;
 
     const uint8_t* frag_ptr = nullptr;
     uint16_t frag_len = 0;

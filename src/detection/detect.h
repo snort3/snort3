@@ -42,9 +42,6 @@ void snort_ignore(Packet*);
 void snort_inspect(Packet*);
 void snort_log(Packet*);
 
-// detection only (no decode or inspection)
-SO_PUBLIC bool snort_detect(Packet*);
-
 // parsing
 int RuleListEnd(Packet*, RuleTreeNode*, RuleFpList*, int);
 int OptListEnd(void* option_data, class Cursor&, Packet*);
