@@ -38,7 +38,7 @@
 #include "main/snort_config.h"
 #include "utils/stats.h"
 
-#define RXP_MAX_JOBS        4   // Max jobs expected per packet
+#define RXP_MAX_JOBS        8   // Max jobs expected per packet
 #define RXP_MAX_SUBSETS     4   // Hardware supports max 4 at once
 
 using namespace std;
@@ -119,7 +119,8 @@ struct RxpJob
 {
     uint32_t jobid;
     uint8_t* buf;
-    int len;
+    unsigned int len;
+    unsigned int offset;
     MpseMatch match_cb;
     void *match_ctx;
 
@@ -325,6 +326,7 @@ int RxpMpse::_search(
         jobcount++;
         jobs[i].buf = (uint8_t*) buf;
         jobs[i].len = n;
+        jobs[i].offset = 0;
         jobs[i].match_cb = mf;
         jobs[i].match_ctx = pv;
         jobs[i].subset_count = 1;
@@ -483,13 +485,26 @@ static void rxp_end_packet()
     // Prepare all the jobs for this packet
     for (i = 0; i < RxpMpse::jobcount; i++)
     {
-        // FIXIT-T: Split job up and overlap; too big for RXP
+        // Buffer is larger than a single RXP job can be, split up and overlap
         if (RxpMpse::jobs[i].len > RXP_MAX_JOB_LENGTH)
         {
-            LogMessage("WARNING: Truncating search from %d bytes to %d.\n", RxpMpse::jobs[i].len,
-                RXP_MAX_JOB_LENGTH);
-            RxpMpse::jobs[i].len = RXP_MAX_JOB_LENGTH;
+            if (RxpMpse::jobcount == RXP_MAX_JOBS)
+            {
+                LogMessage("WARNING: No spare job slot to split job of %d bytes, truncating to %d.\n",
+                    RxpMpse::jobs[i].len, RXP_MAX_JOB_LENGTH);
+                RxpMpse::jobs[i].len = RXP_MAX_JOB_LENGTH;
+            }
+            else
+            {
+                RxpMpse::jobs[RxpMpse::jobcount] = RxpMpse::jobs[i];
+                RxpMpse::jobs[i].len = RXP_MAX_JOB_LENGTH;
+                RxpMpse::jobs[RxpMpse::jobcount].offset = (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
+                RxpMpse::jobs[RxpMpse::jobcount].len -= (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
+                RxpMpse::jobs[RxpMpse::jobcount].buf += (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
+                RxpMpse::jobcount++;
+            }
         }
+
         RxpMpse::jobs[i].jobid = ++RxpMpse::jobs_submitted; // Job ID can't be 0
 
         // Subset ID 0 is an error, so set any unused slots to the first subset
@@ -557,7 +572,8 @@ static void rxp_end_packet()
             {
                 for (i = 0; i < rxp_resp.match_count; i++)
                 {
-                    int to = rxp_resp.match_data[i].start_ptr + rxp_resp.match_data[i].length;
+                    int to = job->offset + rxp_resp.match_data[i].start_ptr +
+                        rxp_resp.match_data[i].length;
 
                     for (j = 0; j < job->subset_count; j++)
                     {
