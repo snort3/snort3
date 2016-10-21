@@ -25,6 +25,7 @@
 
 #include "tcp_reassembler.h"
 
+#include "detection/detection_engine.h"
 #include "log/log.h"
 #include "main/snort.h"
 #include "profiler/profiler.h"

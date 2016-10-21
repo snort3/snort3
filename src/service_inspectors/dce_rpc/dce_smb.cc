@@ -24,7 +24,7 @@
 
 #include "dce_smb.h"
 
-#include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "file_api/file_service.h"
 #include "protocols/packet.h"
 #include "utils/util.h"

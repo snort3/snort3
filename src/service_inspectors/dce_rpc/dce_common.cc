@@ -194,7 +194,7 @@ static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
     // FIXIT-M add HTTP case when these are ported
     // Same for all other instances of profiling
 
-    DetectionEngine::process(pkt);
+    DetectionEngine::detect(pkt);
 
     dce2_detected = 1;
 }

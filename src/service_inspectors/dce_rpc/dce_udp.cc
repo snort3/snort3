@@ -25,7 +25,7 @@
 
 #include "dce_udp.h"
 
-#include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "utils/util.h"
 
 #include "dce_udp_module.h"

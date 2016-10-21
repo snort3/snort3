@@ -48,6 +48,7 @@
 
 #include "tcp_session.h"
 
+#include "detection/detection_engine.h"
 #include "log/log.h"
 #include "perf_monitor/flow_ip_tracker.h"
 #include "profiler/profiler.h"
@@ -984,7 +985,7 @@ void TcpSession::do_packet_analysis_post_checks(Packet* p)
 
     if (pkt_action_mask & ACTION_DISABLE_INSPECTION)
     {
-        DisableInspection();
+        DetectionEngine::disable_all();
 
         DebugFormat(DEBUG_STREAM_STATE,
             "Stream Ignoring packet from %s. Session marked as ignore\n",

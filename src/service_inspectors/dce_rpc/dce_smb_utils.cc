@@ -1990,7 +1990,7 @@ void DCE2_FileDetect()
 
     Profile profile(dce2_smb_pstat_smb_file_detect);
 
-    DetectionEngine::process(top_pkt);
+    DetectionEngine::detect(top_pkt);
 
     // Reset file data pointer after detecting
     set_file_data(nullptr, 0);

@@ -58,86 +58,12 @@ THREAD_LOCAL ProfileStats detectPerfStats;
 THREAD_LOCAL ProfileStats eventqPerfStats;
 THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
 
-THREAD_LOCAL bool do_detect;
-THREAD_LOCAL bool do_detect_content;
+static THREAD_LOCAL bool check_tags_flag = false;
 
-SO_PUBLIC void DisableDetect()
-{ do_detect_content = false; }
-
-SO_PUBLIC void DisableInspection()
-{ do_detect = do_detect_content = false; }
-
-static THREAD_LOCAL char check_tags_flag;
-
-static int CheckTagging(Packet*);
+void enable_tags()
+{ check_tags_flag = true; }
 
 void snort_ignore(Packet*) { }
-
-void snort_inspect(Packet* p)
-{
-    bool inspected = false;
-    {
-        PacketLatency::Context pkt_latency_ctx { p };
-
-        // If the packet has errors, we won't analyze it.
-        if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
-        {
-            DebugFormat(DEBUG_DETECT,
-                "Packet errors = 0x%x, ignoring traffic!\n",
-                (p->ptrs.decode_flags & DECODE_ERR_FLAGS));
-
-            if ( SnortConfig::inline_mode() and
-                SnortConfig::checksum_drop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
-            {
-                DebugMessage(DEBUG_DECODE, "Dropping bad packet\n");
-                Active::drop_packet(p);
-            }
-        }
-        else
-        {
-            do_detect = do_detect_content = true;
-
-            /*
-            **  Reset the appropriate application-layer protocol fields
-            */
-            p->alt_dsize = 0;
-
-            InspectorManager::execute(p);
-            inspected = true;
-
-            Active::apply_delayed_action(p);
-
-            if ( do_detect )
-                DetectionEngine::process(p);
-        }
-
-        check_tags_flag = 1;
-
-        /*
-        ** By checking tagging here, we make sure that we log the
-        ** tagged packet whether it generates an alert or not.
-        */
-        if ( p->has_ip() )
-            CheckTagging(p);
-
-        // clear closed sessions here after inspection since non-stream
-        // inspectors may depend on flow information
-        // FIXIT-H but this result in double clearing?  should normal
-        // clear_session() calls be deleted from stream?  this is a
-        // performance hit on short-lived flows
-        Stream::check_flow_closed(p);
-    }
-
-    Profile profile(eventqPerfStats);
-    SnortEventqLog(p);
-    SnortEventqReset();
-
-    if ( inspected )
-        InspectorManager::clear(p);
-
-    // Handle block pending state
-    Stream::check_flow_block_pending(p);
-}
 
 void snort_log(Packet* p)
 {
@@ -149,7 +75,7 @@ void CallLogFuncs(Packet* p, ListHead* head, Event* event, const char* msg)
 {
     event->event_id = event_id | SnortConfig::get_event_log_id();
 
-    check_tags_flag = 0;
+    check_tags_flag = false;
     pc.log_pkts++;
 
     OutputSet* idx = head ? head->LogList : NULL;
@@ -166,7 +92,7 @@ void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     event.event_id = event_id | SnortConfig::get_event_log_id();
     event.event_reference = event.event_id;
 
-    check_tags_flag = 0;
+    check_tags_flag = false;
     pc.log_pkts++;
 
     OutputSet* idx = head ? head->LogList : NULL;
@@ -199,10 +125,6 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 }
 
 /*
-**  NAME
-**    CheckTagging::
-*/
-/**
 **  This is where we check to see if we tag the packet.  We only do
 **  this if we've alerted on a non-pass rule and the packet is not
 **  rebuilt.
@@ -210,14 +132,12 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 **  We don't log rebuilt packets because the output plugins log the
 **  individual packets of a rebuilt stream, so we don't want to dup
 **  tagged packets for rebuilt streams.
-**
-**  @return integer
 */
-int CheckTagging(Packet* p)
+void check_tags(Packet* p)
 {
     Event event;
 
-    if (check_tags_flag == 1 && !(p->packet_flags & PKT_REBUILT_STREAM))
+    if ( check_tags_flag and !(p->packet_flags & PKT_REBUILT_STREAM) )
     {
         void* listhead = NULL;
         DebugMessage(DEBUG_FLOW, "calling CheckTagList\n");
@@ -233,8 +153,6 @@ int CheckTagging(Packet* p)
             CallLogFuncs(p, (ListHead*)listhead, &event, "Tagged Packet");
         }
     }
-
-    return 0;
 }
 
 static int CheckAddrPort(

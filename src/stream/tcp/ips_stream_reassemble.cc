@@ -22,6 +22,7 @@
 #endif
 
 #include "detection/detection_defines.h"
+#include "detection/detection_engine.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -151,7 +152,7 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
         {
             /* Turn off inspection */
             lwssn->ssn_state.ignore_direction |= srod.direction;
-            DisableInspection();
+            DetectionEngine::disable_all();
 
             /* TBD: Set TF_FORCE_FLUSH ? */
         }

@@ -71,6 +71,7 @@
 #include "ip_defrag.h"
 
 #include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -80,6 +81,7 @@
 #include "protocols/ipv4_options.h"
 #include "time/timersub.h"
 #include "utils/safec.h"
+#include "utils/stats.h"
 #include "utils/util.h"
 
 #include "ip_session.h"
@@ -1120,7 +1122,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     if ((frag_offset != 0)) /* ||
         ((p->get_ip_proto_next() != IpProtocol::UDP) && (p->ptrs.decode_flags & DECODE_MF))) */
     {
-        DisableDetect();
+        DetectionEngine::disable_content();
     }
 
     /*
@@ -1179,7 +1181,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     //dont forward fragments to engine if some previous fragment was dropped
     if ( ft->frag_flags & FRAG_DROP_FRAGMENTS )
     {
-        DisableDetect();
+        DetectionEngine::disable_content();
         Active::daq_drop_packet(p);
         ip_stats.drops++;
     }
@@ -1263,7 +1265,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
             {
                 // Need to reset some things here because the rebuilt packet
                 // will have reset the do_detect flag when it hits Inspect.
-                do_detect_content = do_detect = false;
+                DetectionEngine::disable_all();
             }
         }
 

@@ -30,16 +30,12 @@ struct ProfileStats;
 struct RuleFpList;
 struct RuleTreeNode;
 
-extern THREAD_LOCAL bool do_detect;
-extern THREAD_LOCAL bool do_detect_content;
-
 extern THREAD_LOCAL ProfileStats eventqPerfStats;
 extern THREAD_LOCAL ProfileStats detectPerfStats;
 extern THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
 
 // main loop hooks
 void snort_ignore(Packet*);
-void snort_inspect(Packet*);
 void snort_log(Packet*);
 
 // parsing
@@ -60,13 +56,8 @@ void CallLogFuncs(Packet*, ListHead*, Event*, const char*);
 void CallLogFuncs(Packet*, const OptTreeNode*, ListHead*);
 void CallAlertFuncs(Packet*, const OptTreeNode*, ListHead*);
 
-// don't eval content rules
-// non-content rules are still evaluated
-SO_PUBLIC void DisableDetect();
-
-// don't want to do any detection with rules
-// (no content and no non-content)
-SO_PUBLIC void DisableInspection();
+void enable_tags();
+void check_tags(Packet*);
 
 #endif
 

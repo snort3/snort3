@@ -22,7 +22,11 @@
 #ifndef TCP_STREAM_SESSION_H_
 #define TCP_STREAM_SESSION_H_
 
-#include "detection/detect.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "detection/detection_engine.h"
 #include "flow/session.h"
 #include "stream/libtcp/tcp_stream_tracker.h"
 #include "stream/tcp/tcp_stream_config.h"
@@ -75,7 +79,7 @@ public:
     virtual void retransmit_process()
     {
         // Data has already been analyzed so don't bother looking at it again.
-        DisableDetect();
+        DetectionEngine::disable_content();
     }
 
     virtual void retransmit_handle(Packet* p)
