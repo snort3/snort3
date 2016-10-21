@@ -55,6 +55,7 @@ void TcpTracker::init_tcp_state(void )
     memset(&alerts, 0, sizeof(alerts));
     memset(&mac_addr, 0, sizeof(mac_addr));
     mac_addr_valid = false;
+    fin_final_seq = 0;
     rst_pkt_sent = false;
 }
 
@@ -479,7 +480,7 @@ bool TcpTracker::update_on_fin_recv(TcpSegmentDescriptor& tsd)
     if ( SEQ_LT(tsd.get_end_seq(), r_win_base) )
     {
         DebugMessage(DEBUG_STREAM_STATE, "FIN inside r_win_base, bailing\n");
-        return true;
+        return false;
     }
 
     //--------------------------------------------------

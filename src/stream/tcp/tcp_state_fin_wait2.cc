@@ -129,15 +129,16 @@ bool TcpStateFinWait2::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
     Flow* flow = tsd.get_flow();
 
     trk.update_tracker_ack_recv(tsd);
-    trk.update_on_fin_recv(tsd);
+    if ( trk.update_on_fin_recv(tsd) )
+    {
+        if ( tsd.get_seg_len() > 0 )
+            trk.session->handle_data_segment(tsd);
 
-    if ( tsd.get_seg_len() > 0 )
-        trk.session->handle_data_segment(tsd);
+        if ( !flow->two_way_traffic() )
+            trk.set_tf_flags(TF_FORCE_FLUSH);
 
-    if ( !flow->two_way_traffic() )
-        trk.set_tf_flags(TF_FORCE_FLUSH);
-
-    trk.set_tcp_state(TcpStreamTracker::TCP_TIME_WAIT);
+        trk.set_tcp_state(TcpStreamTracker::TCP_TIME_WAIT);
+    }
 
     return default_state_action(tsd, trk);
 }

@@ -1119,7 +1119,6 @@ int TcpSession::process(Packet* p)
     assert(flow->ssn_server);
 
     // FIXIT-H need to do something here to handle check for need to swap trackers??
-
     if ( !config )
         config = get_tcp_cfg(flow->ssn_server);
 

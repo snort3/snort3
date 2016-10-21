@@ -170,9 +170,11 @@ bool TcpStateSynRecv::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
             trk.flush_data_on_fin_recv(tsd);
         }
 
-        trk.update_on_fin_recv(tsd);
-        trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
-        trk.set_tcp_state(TcpStreamTracker::TCP_CLOSE_WAIT);
+        if ( trk.update_on_fin_recv(tsd) )
+        {
+            trk.session->update_perf_base_state(TcpStreamTracker::TCP_CLOSING);
+            trk.set_tcp_state(TcpStreamTracker::TCP_CLOSE_WAIT);
+        }
     }
 
     return default_state_action(tsd, trk);
