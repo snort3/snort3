@@ -50,7 +50,7 @@ protected:
 class SO_PUBLIC IpsContext
 {
 public:
-    IpsContext(unsigned size);
+    IpsContext(unsigned size = 0);  // defaults to max id
     ~IpsContext();
 
     void set_context_data(unsigned id, IpsContextData*);

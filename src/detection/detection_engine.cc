@@ -100,6 +100,12 @@ uint8_t* DetectionEngine::get_buffer(unsigned& max)
     return Snort::get_switcher()->get_context()->buf;
 }
 
+void DetectionEngine::set_data(unsigned id, IpsContextData* p)
+{ Snort::get_switcher()->get_context()->set_context_data(id, p); }
+
+IpsContextData* DetectionEngine::get_data(unsigned id)
+{ return Snort::get_switcher()->get_context()->get_context_data(id); }
+
 DetectionEngine::ActiveRules DetectionEngine::get_detects()
 { return active_rules; }
 

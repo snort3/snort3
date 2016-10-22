@@ -660,12 +660,11 @@ void Snort::thread_init_unprivileged()
 {
     // using dummy values until further integration
     const unsigned max_contexts = 20;
-    const unsigned max_data = 1;
 
     s_switcher = new ContextSwitcher(max_contexts);
 
     for ( unsigned i = 0; i < max_contexts; ++i )
-        s_switcher->push(new IpsContext(max_data));
+        s_switcher->push(new IpsContext);
 
     CodecManager::thread_init(snort_conf);
 

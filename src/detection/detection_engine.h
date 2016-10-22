@@ -28,6 +28,7 @@
 #include "actions/actions.h"
 #include "main/snort_types.h"
 
+class IpsContextData;
 struct Packet;
 
 class SO_PUBLIC DetectionEngine
@@ -44,6 +45,9 @@ public:
     static void clear_packet();
 
     static uint8_t* get_buffer(unsigned& max);
+
+    static void set_data(unsigned id, IpsContextData*);
+    static IpsContextData* get_data(unsigned id);
 
     static bool detect(Packet*);
     static void inspect(Packet*);

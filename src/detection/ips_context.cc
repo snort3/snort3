@@ -51,7 +51,8 @@ unsigned IpsContextData::get_max_id()
 // context methods
 //--------------------------------------------------------------------------
 
-IpsContext::IpsContext(unsigned size) : data(size, nullptr)
+IpsContext::IpsContext(unsigned size) :
+    data(size ? size : IpsContextData::get_max_id() + 1, nullptr)
 {
     packet = new Packet(false);
     pkth = new DAQ_PktHdr_t;
