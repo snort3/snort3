@@ -68,6 +68,8 @@ private:
 
     // 0 element refers to client request, 1 element refers to server response
 
+    // FIXIT-P reorganize HttpFlowData to minimize void space
+
     // *** StreamSplitter internal data - scan()
     HttpCutter* cutter[2] = { nullptr, nullptr };
 

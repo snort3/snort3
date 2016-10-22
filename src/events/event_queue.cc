@@ -69,8 +69,6 @@
 
 #include "sfeventq.h"
 
-static THREAD_LOCAL unsigned s_events = 0;
-
 //-------------------------------------------------
 
 EventQueueConfig* EventQueueConfigNew()

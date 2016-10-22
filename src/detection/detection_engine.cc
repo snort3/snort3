@@ -23,6 +23,7 @@
 #include "detection/detection_engine.h"
 #include "events/sfeventq.h"
 #include "filters/sfthreshold.h"
+#include "framework/endianness.h"
 #include "latency/packet_latency.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
