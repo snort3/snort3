@@ -43,6 +43,8 @@ public:
     static Packet* set_packet();
     static void clear_packet();
 
+    static uint8_t* get_buffer(unsigned& max);
+
     static bool detect(Packet*);
     static void inspect(Packet*);
 

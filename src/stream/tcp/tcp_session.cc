@@ -49,6 +49,7 @@
 #include "tcp_session.h"
 
 #include "detection/detection_engine.h"
+#include "detection/rules.h"
 #include "log/log.h"
 #include "perf_monitor/flow_ip_tracker.h"
 #include "profiler/profiler.h"

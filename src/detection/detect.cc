@@ -47,6 +47,7 @@
 #include "detection_engine.h"
 #include "fp_detect.h"
 #include "tag.h"
+#include "treenodes.h"
 
 #define CHECK_SRC_IP         0x01
 #define CHECK_DST_IP         0x02

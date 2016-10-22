@@ -31,6 +31,7 @@
 #include "connectors/connectors.h"
 #include "decompress/file_decomp.h"
 #include "detection/context_switcher.h"
+#include "detection/detect.h"
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
 #include "detection/fp_config.h"

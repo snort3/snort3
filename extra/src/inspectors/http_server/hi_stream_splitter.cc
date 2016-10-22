@@ -49,14 +49,9 @@
 
 #include "hi_stream_splitter.h"
 
-<<<<<<< HEAD
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "main/snort_debug.h"
-=======
-#include "hi_events.h"
-#include "main/snort_debug.h"
-#include "detection/detection_engine.h"
->>>>>>> refactor event queue into DetectionEngine
 #include "protocols/packet.h"
 #include "stream/stream.h"
 #include "utils/util.h"

@@ -23,32 +23,30 @@
 
 #include "stream_splitter.h"
 
+#include "detection/detection_engine.h"
 #include "main/snort_config.h"
 #include "protocols/packet.h"
 
 #include "flush_bucket.h"
 
-static THREAD_LOCAL uint8_t pdu_buf[StreamSplitter::max_buf];
-static THREAD_LOCAL StreamBuffer str_buf;
-
 unsigned StreamSplitter::max(Flow*)
 { return snort_conf->max_pdu; }
 
-const StreamBuffer* StreamSplitter::reassemble(
+const StreamBuffer StreamSplitter::reassemble(
     Flow*, unsigned, unsigned offset, const uint8_t* p,
     unsigned n, uint32_t flags, unsigned& copied)
 {
-    assert(offset + n < sizeof(pdu_buf));
+    unsigned max;
+    uint8_t* pdu_buf = DetectionEngine::get_buffer(max);
+
+    assert(offset + n < max);
     memcpy(pdu_buf+offset, p, n);
     copied = n;
 
     if ( flags & PKT_PDU_TAIL )
-    {
-        str_buf.data = pdu_buf;
-        str_buf.length = offset + n;
-        return &str_buf;
-    }
-    return nullptr;
+        return { pdu_buf, offset + n };
+
+    return { nullptr, 0 };
 }
 
 //--------------------------------------------------------------------------

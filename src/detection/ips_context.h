@@ -68,6 +68,8 @@ public:
     uint8_t* buf;
     struct SF_EVENTQ* equeue;
 
+    static const unsigned buf_size = 65536;
+
 private:
     std::vector<IpsContextData*> data;
     unsigned slot;

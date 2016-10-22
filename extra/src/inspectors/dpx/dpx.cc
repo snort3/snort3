@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "framework/inspector.h"
 #include "framework/module.h"

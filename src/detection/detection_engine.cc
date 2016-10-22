@@ -94,6 +94,12 @@ void DetectionEngine::clear_packet()
     sw->complete();
 }
 
+uint8_t* DetectionEngine::get_buffer(unsigned& max)
+{
+    max = IpsContext::buf_size;
+    return Snort::get_switcher()->get_context()->buf;
+}
+
 DetectionEngine::ActiveRules DetectionEngine::get_detects()
 { return active_rules; }
 

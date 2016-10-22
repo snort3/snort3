@@ -63,7 +63,7 @@ struct UserTracker
     void add_data(Packet*);
     int scan(Packet*, uint32_t&);
     void flush(struct Packet*, unsigned, uint32_t);
-    void detect(const struct Packet*, const struct StreamBuffer*, uint32_t);
+    void detect(const struct Packet*, const struct StreamBuffer&, uint32_t);
 
     std::list<UserSegment*> seg_list;
     StreamSplitter* splitter;

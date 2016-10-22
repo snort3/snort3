@@ -22,7 +22,7 @@
 
 #include "flow_control.h"
 
-#include "detection/detect.h"
+#include "detection/detection_engine.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "managers/inspector_manager.h"

@@ -478,17 +478,17 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t total)
             || SEQ_EQ(tsn->seq +  bytes_to_copy, to_seq) )
             flags |= PKT_PDU_TAIL;
 
-        const StreamBuffer* sb = tracker->splitter->reassemble(
+        const StreamBuffer sb = tracker->splitter->reassemble(
             session->flow, total, bytes_flushed, tsn->payload(),
             bytes_to_copy, flags, bytes_copied);
 
         flags = 0;
 
-        if ( sb )
+        if ( sb.data )
         {
-            s5_pkt->data = sb->data;
-            s5_pkt->dsize = sb->length;
-            assert(sb->length <= s5_pkt->max_dsize);
+            s5_pkt->data = sb.data;
+            s5_pkt->dsize = sb.length;
+            assert(sb.length <= s5_pkt->max_dsize);
 
             bytes_to_copy = bytes_copied;
         }
@@ -527,7 +527,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t total)
             break;
         }
 
-        if ( sb || !seglist.next )
+        if ( sb.data || !seglist.next )
             break;
 
         if ( bytes_flushed + seglist.next->payload_size >= StreamSplitter::max_buf )
@@ -596,8 +596,6 @@ void TcpReassembler::prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags)
 int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
     Profile profile(s5TcpFlushPerfStats);
-    s5_pkt = Snort::set_detect_packet();
-
     s5_pkt = DetectionEngine::set_packet();
 
     DAQ_PktHdr_t pkth;
@@ -627,7 +625,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 
         if ( footprint == 0 )
         {
-            Snort::clear_detect_packet();
+            DetectionEngine::clear_packet();
             return bytes_processed;
         }
 

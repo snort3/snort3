@@ -131,15 +131,15 @@ void UserTracker::term()
     splitter = nullptr;
 }
 
-void UserTracker::detect(const Packet* p, const StreamBuffer* sb, uint32_t flags)
+void UserTracker::detect(const Packet* p, const StreamBuffer& sb, uint32_t flags)
 {
     Packet up(false);
 
     up.pkth = p->pkth;
     up.ptrs = p->ptrs;
     up.flow = p->flow;
-    up.data = sb->data;
-    up.dsize = sb->length;
+    up.data = sb.data;
+    up.dsize = sb.length;
 
     up.proto_bits = p->proto_bits;
     up.pseudo_type = PSEUDO_PKT_USER;
@@ -193,7 +193,7 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
 void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
 {
     unsigned bytes_flushed = 0;
-    const StreamBuffer* sb = nullptr;
+    StreamBuffer sb = { nullptr, 0 };
     trace_logf(stream_user, "flush[%d]\n", flush_amt);
     uint32_t rflags = flags & ~PKT_PDU_TAIL;
 
@@ -219,7 +219,7 @@ void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
 
         rflags &= ~PKT_PDU_HEAD;
 
-        if ( sb )
+        if ( sb.data )
             detect(p, sb, flags);
 
         if ( bytes_copied == us->get_len() )

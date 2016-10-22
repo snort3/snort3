@@ -197,10 +197,10 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
     offset += length;
 }
 
-const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, unsigned,
+const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total, unsigned,
     const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
-    static THREAD_LOCAL StreamBuffer http_buf;
+    StreamBuffer http_buf { nullptr, 0 };
 
     copied = len;
 
@@ -214,7 +214,7 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
         {
             if (!(flags & PKT_PDU_TAIL))
             {
-                return nullptr;
+                return http_buf;
             }
             bool tcp_close;
             uint8_t* test_buffer;
@@ -228,7 +228,7 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
             {
                 // Source ID does not match test data, no test data was flushed, or there is no
                 // more test data
-                return nullptr;
+                return http_buf;
             }
             data = test_buffer;
             total = len;
@@ -245,7 +245,7 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
     // FIXIT-H Workaround for TP Bug 149662
     if (session_data->section_type[source_id] == SEC__NOT_COMPUTE)
     {
-        return nullptr;
+        return { nullptr, 0 };
     }
 
     assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
@@ -290,7 +290,7 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
                 }
             }
         }
-        return nullptr;
+        return http_buf;
     }
 
     HttpModule::increment_peg_counts(PEG_REASSEMBLE);
@@ -377,10 +377,10 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
                 fflush(HttpTestManager::get_output_file());
             }
 #endif
-            return &http_buf;
+            return http_buf;
         }
         my_inspector->clear(session_data, source_id);
     }
-    return nullptr;
+    return http_buf;
 }
 

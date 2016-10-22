@@ -55,7 +55,7 @@ IpsContext::IpsContext(unsigned size) : data(size, nullptr)
 {
     packet = new Packet(false);
     pkth = new DAQ_PktHdr_t;
-    buf = new uint8_t[65536];  // FIXIT-H use codec max or let pkt do it
+    buf = new uint8_t[buf_size];  // FIXIT-H use codec max or let pkt do it?
 
     const EventQueueConfig* qc = snort_conf->event_queue_config;
     equeue = sfeventq_new(qc->max_events, qc->log_events, sizeof(EventNode));
