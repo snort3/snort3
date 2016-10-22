@@ -29,6 +29,8 @@
 #include "events/sfeventq.h"
 #include "main/snort_config.h"
 
+#include "fp_detect.h"
+
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
@@ -60,6 +62,8 @@ IpsContext::IpsContext(unsigned size) :
 
     const EventQueueConfig* qc = snort_conf->event_queue_config;
     equeue = sfeventq_new(qc->max_events, qc->log_events, sizeof(EventNode));
+
+    fp_set_context(*this);
 }
 
 IpsContext::~IpsContext()
@@ -69,6 +73,7 @@ IpsContext::~IpsContext()
             delete p;
 
     sfeventq_free(equeue);
+    fp_clear_context(*this);
 
     delete[] buf;
     delete pkth;

@@ -66,6 +66,11 @@ public:
     Packet* packet;
     DAQ_PktHdr_t* pkth;
     uint8_t* buf;
+
+    class MpseStash* stash;
+    struct OtnxMatchData* otnx;
+    uint64_t pkt_count;
+
     struct SF_EVENTQ* equeue;
 
     static const unsigned buf_size = 65536;

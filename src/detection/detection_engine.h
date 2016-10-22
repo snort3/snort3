@@ -28,6 +28,7 @@
 #include "actions/actions.h"
 #include "main/snort_types.h"
 
+class IpsContext;
 class IpsContextData;
 struct Packet;
 
@@ -40,10 +41,13 @@ public:
     Packet* get_packet();
 
 public:
+    static IpsContext* get_context();
+
     static Packet* get_current_packet();
     static Packet* set_packet();
     static void clear_packet();
 
+    static class MpseStash* get_stash();
     static uint8_t* get_buffer(unsigned& max);
 
     static void set_data(unsigned id, IpsContextData*);
