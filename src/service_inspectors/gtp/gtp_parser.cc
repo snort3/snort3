@@ -28,6 +28,7 @@
 
 #include <arpa/inet.h>
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
 
@@ -38,7 +39,7 @@
 
 static inline void alert(int sid)
 {
-    SnortEventqAdd(GID_GTP, sid);
+    DetectionEngine::queue_event(GID_GTP, sid);
     gtp_stats.events++;
 }
 

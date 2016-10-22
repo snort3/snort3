@@ -24,6 +24,7 @@
 
 #include "rule_latency.h"
 
+#include "detection/detection_engine.h"
 #include "detection/detection_options.h"
 #include "detection/treenodes.h"
 #include "main/snort_config.h"
@@ -295,11 +296,11 @@ static struct SnortEventHandler : public EventHandler
         switch ( e.type )
         {
             case Event::EVENT_ENABLED:
-                SnortEventqAdd(GID_LATENCY, LATENCY_EVENT_RULE_TREE_ENABLED);
+                DetectionEngine::queue_event(GID_LATENCY, LATENCY_EVENT_RULE_TREE_ENABLED);
                 break;
 
             case Event::EVENT_SUSPENDED:
-                SnortEventqAdd(GID_LATENCY, LATENCY_EVENT_RULE_TREE_SUSPENDED);
+                DetectionEngine::queue_event(GID_LATENCY, LATENCY_EVENT_RULE_TREE_SUSPENDED);
                 break;
 
             default:

@@ -24,6 +24,7 @@
 #include "codec.h"
 
 #include "codecs/codec_module.h"
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 
 EncState::EncState(const ip::IpApi& api, EncodeFlags f, IpProtocol pr,
@@ -81,7 +82,7 @@ void Codec::codec_event(const CodecData& codec, CodecSid sid)
     if ( codec.codec_flags & CODEC_STREAM_REBUILT )
         return;
 
-    SnortEventqAdd(GID_DECODE, sid);
+    DetectionEngine::queue_event(GID_DECODE, sid);
 }
 
 bool Codec::CheckIPV6HopOptions(const RawData& raw, CodecData& codec)

@@ -26,6 +26,7 @@
 
 #include "smtp_xlink2state.h"
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "packet_io/active.h"
 
@@ -246,7 +247,7 @@ int ParseXLink2State(SMTP_PROTO_CONF* config, Packet* p, SMTPData* smtp_ssn, con
         if (config->xlink2state == DROP_XLINK2STATE)
             Active::reset_session(p);
 
-        SnortEventqAdd(GID_SMTP, SMTP_XLINK2STATE_OVERFLOW);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_XLINK2STATE_OVERFLOW);
         smtp_ssn->session_flags |= SMTP_FLAG_XLINK2STATE_ALERTED;
 
         return 1;

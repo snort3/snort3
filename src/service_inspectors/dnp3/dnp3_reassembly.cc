@@ -161,7 +161,7 @@ static bool dnp3_reassemble_transport(dnp3_reassembly_data_t* rdata, char* buf, 
 
             /* Raise an alert so it's clear the buffer was reset.
                Could signify device trouble. */
-            SnortEventqAdd(GID_DNP3, DNP3_REASSEMBLY_BUFFER_CLEARED);
+            DetectionEngine::queue_event(GID_DNP3, DNP3_REASSEMBLY_BUFFER_CLEARED);
         }
         else
         {
@@ -169,7 +169,7 @@ static bool dnp3_reassemble_transport(dnp3_reassembly_data_t* rdata, char* buf, 
             if ((DNP3_TRANSPORT_SEQ(trans_header->control) == rdata->last_seq) &&
                 (DNP3_TRANSPORT_FIN(trans_header->control)))
             {
-                SnortEventqAdd(GID_DNP3, DNP3_DROPPED_SEGMENT);
+                DetectionEngine::queue_event(GID_DNP3, DNP3_DROPPED_SEGMENT);
                 rdata->state = DNP3_REASSEMBLY_STATE__DONE;
                 return false;
             }
@@ -178,7 +178,7 @@ static bool dnp3_reassemble_transport(dnp3_reassembly_data_t* rdata, char* buf, 
             if (DNP3_TRANSPORT_SEQ(trans_header->control) !=
                 ((rdata->last_seq + 1) % 0x40 ))
             {
-                SnortEventqAdd(GID_DNP3, DNP3_DROPPED_SEGMENT);
+                DetectionEngine::queue_event(GID_DNP3, DNP3_DROPPED_SEGMENT);
                 return false;
             }
 
@@ -206,7 +206,7 @@ static void dnp3_check_reserved_function(dnp3_session_data_t* session)
 {
     if ( !(dnp3_func_is_defined( (uint16_t)session->func)) )
     {
-        SnortEventqAdd(GID_DNP3, DNP3_RESERVED_FUNCTION);
+        DetectionEngine::queue_event(GID_DNP3, DNP3_RESERVED_FUNCTION);
     }
 }
 
@@ -291,7 +291,7 @@ static bool dnp3_check_remove_crc(dnp3ProtoConf& config, uint8_t* pdu_start,
     if ((config.check_crc) &&
         (dnp3_check_crc((unsigned char*)pdu_start, sizeof(dnp3_link_header_t)+2) == false))
     {
-        SnortEventqAdd(GID_DNP3, DNP3_BAD_CRC);
+        DetectionEngine::queue_event(GID_DNP3, DNP3_BAD_CRC);
         return false;
     }
 
@@ -305,7 +305,7 @@ static bool dnp3_check_remove_crc(dnp3ProtoConf& config, uint8_t* pdu_start,
         if ((config.check_crc) &&
             (dnp3_check_crc((unsigned char*)cursor, (DNP3_CHUNK_SIZE+DNP3_CRC_SIZE)) == false))
         {
-            SnortEventqAdd(GID_DNP3, DNP3_BAD_CRC);
+            DetectionEngine::queue_event(GID_DNP3, DNP3_BAD_CRC);
             return false;
         }
 
@@ -320,7 +320,7 @@ static bool dnp3_check_remove_crc(dnp3ProtoConf& config, uint8_t* pdu_start,
     {
         if ((config.check_crc) && (dnp3_check_crc((unsigned char*)cursor, bytes_left) == false))
         {
-            SnortEventqAdd(GID_DNP3, DNP3_BAD_CRC);
+            DetectionEngine::queue_event(GID_DNP3, DNP3_BAD_CRC);
             return false;
         }
 
@@ -344,7 +344,7 @@ static bool dnp3_check_reserved_addrs(dnp3_link_header_t* link)
 
     if (bad_addr)
     {
-        SnortEventqAdd(GID_DNP3, DNP3_RESERVED_ADDRESS);
+        DetectionEngine::queue_event(GID_DNP3, DNP3_RESERVED_ADDRESS);
         return false;
     }
 
@@ -374,7 +374,7 @@ bool dnp3_full_reassembly(dnp3ProtoConf& config, dnp3_session_data_t* session, P
 
     if (link->len < DNP3_MIN_TRANSPORT_LEN)
     {
-        SnortEventqAdd(GID_DNP3, DNP3_DROPPED_FRAME);
+        DetectionEngine::queue_event(GID_DNP3, DNP3_DROPPED_FRAME);
         return false;
     }
 

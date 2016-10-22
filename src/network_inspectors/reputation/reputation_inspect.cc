@@ -297,7 +297,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
 
     else if (BLACKLISTED == decision)
     {
-        SnortEventqAdd(GID_REPUTATION, REPUTATION_EVENT_BLACKLIST);
+        DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_BLACKLIST);
         Active::drop_packet(p, true);
         // disable all preproc analysis and detection for this packet
         DetectionEngine::disable_all();
@@ -312,12 +312,12 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
     }
     else if (MONITORED == decision)
     {
-        SnortEventqAdd(GID_REPUTATION, REPUTATION_EVENT_MONITOR);
+        DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_MONITOR);
         reputationstats.monitored++;
     }
     else if (WHITELISTED_TRUST == decision)
     {
-        SnortEventqAdd(GID_REPUTATION, REPUTATION_EVENT_WHITELIST);
+        DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_WHITELIST);
         p->packet_flags |= PKT_IGNORE;
         DetectionEngine::disable_all();
         p->disable_inspect = true;

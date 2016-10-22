@@ -23,6 +23,7 @@
 
 #include "sip.h"
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
@@ -34,9 +35,6 @@
 
 THREAD_LOCAL ProfileStats sipPerfStats;
 
-/*
- * Function prototype(s)
- */
 static void snort_sip(SIP_PROTO_CONF* GlobalConf, Packet* p);
 static void FreeSipData(void*);
 
@@ -54,7 +52,7 @@ static SIPData* SetNewSIPData(Packet* p, SIP_PROTO_CONF* config)
     if (numSessions > config->maxNumSessions)
     {
         if (!MaxSessionsAlerted)
-            SnortEventqAdd(GID_SIP, SIP_EVENT_MAX_SESSIONS);
+            DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MAX_SESSIONS);
         MaxSessionsAlerted = 1;
         return NULL;
     }

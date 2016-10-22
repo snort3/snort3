@@ -23,6 +23,7 @@
 
 #include "stats.h"
 
+#include "detection/detection_engine.h"
 #include "file_api/file_stats.h"
 #include "filters/sfthreshold.h"
 #include "helpers/process.h"
@@ -283,7 +284,7 @@ void DropStats()
     PacketManager::dump_stats();
 
     // ensure proper counting of log_limit
-    SnortEventqResetCounts();
+    DetectionEngine::reset_counts();
 
     LogLabel("Module Statistics");
     const char* exclude = "daq snort";

@@ -22,6 +22,7 @@
 
 #include "smtp_paf.h"
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
@@ -309,7 +310,7 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
                         (((int)i + pfdata->data_info.boundary_len) > max_auth_command_line_len) &&
                         !alert_generated)
                 {
-                    SnortEventqAdd(GID_SMTP, SMTP_AUTH_COMMAND_OVERFLOW);
+                    DetectionEngine::queue_event(GID_SMTP, SMTP_AUTH_COMMAND_OVERFLOW);
                     alert_generated = true;
                 }
                 if (ch == '\n')

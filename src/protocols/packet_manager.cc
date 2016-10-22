@@ -27,6 +27,7 @@
 
 #include "codecs/codec_module.h"
 #include "codecs/ip/checksum.h"
+#include "detection/detection_engine.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
@@ -199,7 +200,7 @@ void PacketManager::decode(
         // If we have reached the MAX_LAYERS, we keep decoding
         // but no longer keep track of the layers.
         if ( p->num_layers == CodecManager::max_layers )
-            SnortEventqAdd(GID_DECODE, DECODE_TOO_MANY_LAYERS);
+            DetectionEngine::queue_event(GID_DECODE, DECODE_TOO_MANY_LAYERS);
         else
             push_layer(p, prev_prot_id, raw.data, codec_data.lyr_len);
 
@@ -274,7 +275,7 @@ void PacketManager::decode(
                     (to_utype(prev_prot_id) <= std::numeric_limits<uint8_t>::max()) &&
                     !(codec_data.codec_flags & CODEC_STREAM_REBUILT) )
                 {
-                    SnortEventqAdd(GID_DECODE, DECODE_IP_UNASSIGNED_PROTO);
+                    DetectionEngine::queue_event(GID_DECODE, DECODE_IP_UNASSIGNED_PROTO);
                 }
             }
         }

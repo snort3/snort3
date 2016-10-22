@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <strings.h>
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "main/thread.h"
 
@@ -45,7 +46,7 @@ static void queue(unsigned gid, uint64_t mask)
 
     while ( (sid = ffs(mask)) )
     {
-        SnortEventqAdd(gid, sid);
+        DetectionEngine::queue_event(gid, sid);
         mask ^= (1 << (sid-1));
     }
 }

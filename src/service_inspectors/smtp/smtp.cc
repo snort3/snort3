@@ -22,6 +22,7 @@
 
 #include "smtp.h"
 
+#include "detection/detection_engine.h"
 #include "detection/detection_util.h"
 #include "log/messages.h"
 #include "log/unified2.h"
@@ -755,10 +756,10 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
 
             if (smtp_ssn->state != STATE_AUTH)
             {
-                SnortEventqAdd(GID_SMTP,SMTP_UNKNOWN_CMD);
+                DetectionEngine::queue_event(GID_SMTP,SMTP_UNKNOWN_CMD);
 
                 if (alert_long_command_line)
-                    SnortEventqAdd(GID_SMTP, SMTP_COMMAND_OVERFLOW);
+                    DetectionEngine::queue_event(GID_SMTP, SMTP_COMMAND_OVERFLOW);
             }
 
             /* if normalizing, copy line to alt buffer */
@@ -780,18 +781,18 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
     {
         if (cmd_line_len > config->cmd_config[smtp_search_info.id].max_line_len)
         {
-            SnortEventqAdd(GID_SMTP, SMTP_SPECIFIC_CMD_OVERFLOW);
+            DetectionEngine::queue_event(GID_SMTP, SMTP_SPECIFIC_CMD_OVERFLOW);
         }
     }
     else if (alert_long_command_line)
     {
-        SnortEventqAdd(GID_SMTP, SMTP_COMMAND_OVERFLOW);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_COMMAND_OVERFLOW);
     }
 
     if (config->cmd_config[smtp_search_info.id].alert)
     {
         /* Are we alerting on this command? */
-        SnortEventqAdd(GID_SMTP, SMTP_ILLEGAL_CMD);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_ILLEGAL_CMD);
     }
 
     switch (smtp_search_info.id)
@@ -852,7 +853,7 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
             eolm)
             && (smtp_ssn->state_flags & SMTP_FLAG_ABORT))
         {
-            SnortEventqAdd(GID_SMTP, SMTP_AUTH_ABORT_AUTH);
+            DetectionEngine::queue_event(GID_SMTP, SMTP_AUTH_ABORT_AUTH);
         }
         smtp_ssn->state_flags &= ~(SMTP_FLAG_ABORT);
         break;
@@ -1186,7 +1187,7 @@ static void SMTP_ProcessServerPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
         if ((config->max_response_line_len != 0) &&
             (resp_line_len > config->max_response_line_len))
         {
-            SnortEventqAdd(GID_SMTP, SMTP_RESPONSE_OVERFLOW);
+            DetectionEngine::queue_event(GID_SMTP, SMTP_RESPONSE_OVERFLOW);
         }
 
         ptr = eol;
@@ -1399,12 +1400,12 @@ int SmtpMime::handle_header_line(const uint8_t* ptr, const uint8_t* eol,
     header_line_len = eol - ptr;
 
     if (max_header_len)
-        SnortEventqAdd(GID_SMTP, SMTP_HEADER_NAME_OVERFLOW);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_HEADER_NAME_OVERFLOW);
 
     if ((config->max_header_line_len != 0) &&
         (header_line_len > config->max_header_line_len))
     {
-        SnortEventqAdd(GID_SMTP, SMTP_DATA_HDR_OVERFLOW);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_DATA_HDR_OVERFLOW);
 
     }
 
@@ -1452,13 +1453,13 @@ void SmtpMime::decode_alert()
     switch ( decode_state->get_decode_type() )
     {
     case DECODE_B64:
-        SnortEventqAdd(GID_SMTP, SMTP_B64_DECODING_FAILED);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_B64_DECODING_FAILED);
         break;
     case DECODE_QP:
-        SnortEventqAdd(GID_SMTP, SMTP_QP_DECODING_FAILED);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_QP_DECODING_FAILED);
         break;
     case DECODE_UU:
-        SnortEventqAdd(GID_SMTP, SMTP_UU_DECODING_FAILED);
+        DetectionEngine::queue_event(GID_SMTP, SMTP_UU_DECODING_FAILED);
         break;
 
     default:

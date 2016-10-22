@@ -313,21 +313,21 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 
     if (heartbleed_type & SSL_HEARTBLEED_REQUEST)
     {
-        SnortEventqAdd(GID_SSL, SSL_ALERT_HB_REQUEST);
+        DetectionEngine::queue_event(GID_SSL, SSL_ALERT_HB_REQUEST);
     }
     else if (heartbleed_type & SSL_HEARTBLEED_RESPONSE)
     {
-        SnortEventqAdd(GID_SSL, SSL_ALERT_HB_RESPONSE);
+        DetectionEngine::queue_event(GID_SSL, SSL_ALERT_HB_RESPONSE);
     }
     else if (heartbleed_type & SSL_HEARTBLEED_UNKNOWN)
     {
         if (!dir)
         {
-            SnortEventqAdd(GID_SSL, SSL_ALERT_HB_REQUEST);
+            DetectionEngine::queue_event(GID_SSL, SSL_ALERT_HB_REQUEST);
         }
         else
         {
-            SnortEventqAdd(GID_SSL, SSL_ALERT_HB_RESPONSE);
+            DetectionEngine::queue_event(GID_SSL, SSL_ALERT_HB_RESPONSE);
         }
     }
     if (sd->ssn_flags & SSL_ENCRYPTED_FLAG )
@@ -357,14 +357,14 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
     if ( (SSL_IS_CHELLO(new_flags) && SSL_IS_CHELLO(sd->ssn_flags) && SSL_IS_SHELLO(sd->ssn_flags) )
             || (SSL_IS_CHELLO(new_flags) && SSL_IS_SHELLO(sd->ssn_flags) ))
     {
-        SnortEventqAdd(GID_SSL, SSL_INVALID_CLIENT_HELLO);
+        DetectionEngine::queue_event(GID_SSL, SSL_INVALID_CLIENT_HELLO);
     }
     else if (!(config->trustservers))
     {
         if ( (SSL_IS_SHELLO(new_flags) && !SSL_IS_CHELLO(sd->ssn_flags) ))
         {
             if (!(Stream::missed_packets(p->flow, SSN_DIR_FROM_CLIENT)))
-                SnortEventqAdd(GID_SSL, SSL_INVALID_SERVER_HELLO);
+                DetectionEngine::queue_event(GID_SSL, SSL_INVALID_SERVER_HELLO);
         }
     }
 

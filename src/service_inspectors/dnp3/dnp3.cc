@@ -25,6 +25,7 @@
 
 #include "dnp3.h"
 
+#include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "protocols/packet.h"
 
@@ -140,7 +141,7 @@ static bool dnp3_process_udp(dnp3ProtoConf& config, dnp3_session_data_t* dnp3_se
 
     if (truncated_pdu)
     {
-        SnortEventqAdd(GID_DNP3, DNP3_DROPPED_FRAME);
+        DetectionEngine::queue_event(GID_DNP3, DNP3_DROPPED_FRAME);
     }
 
     return true;

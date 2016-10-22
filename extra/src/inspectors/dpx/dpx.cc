@@ -74,7 +74,7 @@ void Dpx::eval(Packet* p)
     assert(p->is_udp());
 
     if ( p->ptrs.dp == port && p->dsize > max )
-        SnortEventqAdd(DPX_GID, DPX_SID);
+        DetectionEngine::queue_event(DPX_GID, DPX_SID);
 
     ++dpxstats.total_packets;
 }

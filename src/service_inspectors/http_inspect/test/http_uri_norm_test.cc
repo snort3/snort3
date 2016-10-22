@@ -40,7 +40,7 @@ void show_stats( PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 void show_stats(SimpleStats*, const char*) { }
 
 void Value::get_bits(std::bitset<256ul>&) const {}
-int SnortEventqAdd(unsigned int, unsigned int, RuleType) { return 0; }
+int DetectionEngine::queue_event(unsigned int, unsigned int, RuleType) { return 0; }
 
 HttpJsNorm::HttpJsNorm(int, const HttpParaList::UriParam& uri_param_) :
     max_javascript_whitespaces(0), uri_param(uri_param_), javascript_search_mpse(nullptr),

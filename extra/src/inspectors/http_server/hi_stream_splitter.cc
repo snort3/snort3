@@ -49,8 +49,14 @@
 
 #include "hi_stream_splitter.h"
 
+<<<<<<< HEAD
 #include "events/event_queue.h"
 #include "main/snort_debug.h"
+=======
+#include "hi_events.h"
+#include "main/snort_debug.h"
+#include "detection/detection_engine.h"
+>>>>>>> refactor event queue into DetectionEngine
 #include "protocols/packet.h"
 #include "stream/stream.h"
 #include "utils/util.h"
@@ -654,30 +660,22 @@ static inline int xton(int c)
 
 static inline void hi_paf_event_post()
 {
-    SnortEventqAdd(
-        GID_HTTP_CLIENT,
-        HI_CLIENT_UNBOUNDED_POST);
+    DetectionEngine::queue_event(GID_HTTP_CLIENT, HI_CLIENT_UNBOUNDED_POST);
 }
 
 static inline void hi_paf_event_simple()
 {
-    SnortEventqAdd(
-        GID_HTTP_CLIENT,
-        HI_CLIENT_SIMPLE_REQUEST);
+    DetectionEngine::queue_event(GID_HTTP_CLIENT, HI_CLIENT_SIMPLE_REQUEST);
 }
 
 static inline void hi_paf_event_msg_size()
 {
-    SnortEventqAdd(
-        GID_HTTP_SERVER,
-        HI_CLISRV_MSG_SIZE_EXCEPTION);
+    DetectionEngine::queue_event(GID_HTTP_SERVER, HI_CLISRV_MSG_SIZE_EXCEPTION);
 }
 
 static inline void hi_paf_event_pipe()
 {
-    SnortEventqAdd(
-        GID_HTTP_CLIENT,
-        HI_CLIENT_PIPELINE_MAX);
+    DetectionEngine::queue_event(GID_HTTP_CLIENT, HI_CLIENT_PIPELINE_MAX);
 }
 
 static inline StreamSplitter::Status hi_exec(Hi5State* s, Action a, int c)

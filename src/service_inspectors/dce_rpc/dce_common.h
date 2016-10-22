@@ -21,7 +21,7 @@
 #ifndef DCE_COMMON_H
 #define DCE_COMMON_H
 
-#include "events/event_queue.h"
+#include "detection/detection_engine.h"
 #include "framework/counts.h"
 #include "framework/endianness.h"
 #include "framework/value.h"
@@ -388,7 +388,7 @@ inline bool DCE2_SsnIsServerSambaPolicy(DCE2_SsnData* sd)
 
 inline void dce_alert(uint32_t gid, uint32_t sid, dce2CommonStats* stats)
 {
-    SnortEventqAdd(gid,sid);
+    DetectionEngine::queue_event(gid,sid);
     stats->events++;
 }
 

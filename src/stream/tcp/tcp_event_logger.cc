@@ -25,6 +25,7 @@
 
 #include "tcp_event_logger.h"
 
+#include "detection/detection_engine.h"
 #include "detection/rules.h"
 #include "filters/sfrf.h"
 #include "main/snort_config.h"
@@ -92,7 +93,7 @@ void TcpEventLogger::log_internal_event(uint32_t eventSid)
     if (is_internal_event_enabled(snort_conf->rate_filter_config, eventSid))
     {
         tcpStats.internalEvents++;
-        SnortEventqAdd(GENERATOR_INTERNAL, eventSid);
+        DetectionEngine::queue_event(GENERATOR_INTERNAL, eventSid);
         DebugFormat(DEBUG_STREAM, "Stream raised internal event %d\n", eventSid);
     }
 }
@@ -104,7 +105,7 @@ void TcpEventLogger::log_tcp_events()
         uint32_t idx = ffs(tcp_events);
         if ( idx )
         {
-            SnortEventqAdd(GID_STREAM_TCP, tcp_event_sids[ idx ].sid);
+            DetectionEngine::queue_event(GID_STREAM_TCP, tcp_event_sids[ idx ].sid);
             tcp_events ^= tcp_event_sids[ idx ].event_id;
             tcpStats.events++;
         }

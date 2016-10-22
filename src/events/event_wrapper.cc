@@ -50,8 +50,8 @@
  * This function has been updated to find an otn and route the call to fpLogEvent
  * if possible.  This requires a rule be written for each decoder event,
  * and possibly some preporcessor events.  The bulk of eventing is handled vie the
- * SnortEventqAdd() and SnortEventLog() functions - whichalready  route the events to
- * the fpLogEvent()function.
+ * DetectionEngine::queue_event() and SnortEventLog() functions - whichalready
+ * route the events to the fpLogEvent()function.
  */
 uint32_t GenerateSnortEvent(Packet* p, uint32_t gid, uint32_t sid)
 {

@@ -39,6 +39,7 @@
 #endif
 
 #include "detection/detection_util.h"
+#include "detection/detection_engine.h"
 #include "framework/data_bus.h"
 #include "log/messages.h"
 #include "profiler/profiler.h"
@@ -152,23 +153,23 @@ static inline void RpcPreprocEvent(
     switch (event)
     {
     case RPC_FRAG_TRAFFIC:
-        SnortEventqAdd(GID_RPC_DECODE, RPC_FRAG_TRAFFIC);
+        DetectionEngine::queue_event(GID_RPC_DECODE, RPC_FRAG_TRAFFIC);
         break;
 
     case RPC_MULTIPLE_RECORD:
-        SnortEventqAdd(GID_RPC_DECODE, RPC_MULTIPLE_RECORD);
+        DetectionEngine::queue_event(GID_RPC_DECODE, RPC_MULTIPLE_RECORD);
         break;
 
     case RPC_LARGE_FRAGSIZE:
-        SnortEventqAdd(GID_RPC_DECODE, RPC_LARGE_FRAGSIZE);
+        DetectionEngine::queue_event(GID_RPC_DECODE, RPC_LARGE_FRAGSIZE);
         break;
 
     case RPC_INCOMPLETE_SEGMENT:
-        SnortEventqAdd(GID_RPC_DECODE, RPC_INCOMPLETE_SEGMENT);
+        DetectionEngine::queue_event(GID_RPC_DECODE, RPC_INCOMPLETE_SEGMENT);
         break;
 
     case RPC_ZERO_LENGTH_FRAGMENT:
-        SnortEventqAdd(GID_RPC_DECODE, RPC_ZERO_LENGTH_FRAGMENT);
+        DetectionEngine::queue_event(GID_RPC_DECODE, RPC_ZERO_LENGTH_FRAGMENT);
         break;
 
     default:
