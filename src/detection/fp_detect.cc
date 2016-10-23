@@ -41,6 +41,7 @@
 #include "fp_detect.h"
 
 #include "detection/detection_engine.h"
+#include "detection/ips_context.h"
 #include "events/event.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"

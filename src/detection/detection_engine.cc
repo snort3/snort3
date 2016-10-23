@@ -79,6 +79,8 @@ Packet* DetectionEngine::set_packet()
 
     p->pkth = c->pkth;
     p->data = c->buf;
+    p->pkt = c->buf;
+
     p->reset();
 
     return p;

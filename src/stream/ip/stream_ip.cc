@@ -76,9 +76,6 @@ public:
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
 
-    void tinit() override;
-    void tterm() override;
-
     void eval(Packet*) override;
 
 public:
@@ -102,16 +99,6 @@ bool StreamIp::configure(SnortConfig* sc)
 {
     defrag->configure(sc);
     return true;
-}
-
-void StreamIp::tinit()
-{
-    defrag->tinit();
-}
-
-void StreamIp::tterm()
-{
-    defrag->tterm();
 }
 
 void StreamIp::show(SnortConfig* sc)

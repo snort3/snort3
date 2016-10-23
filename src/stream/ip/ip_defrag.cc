@@ -97,10 +97,6 @@
 #define FRAG_NO_BSD_VULN    0x00000010
 #define FRAG_DROP_FRAGMENTS 0x00000020
 
-/* return values for CheckTimeout() */
-#define FRAG_TIME_OK            0
-#define FRAG_TIMEOUT            1
-
 /* return values for insert() */
 #define FRAG_INSERT_OK          0
 #define FRAG_INSERT_FAILED      1
@@ -114,15 +110,10 @@
 /* return values for FragCheckFirstLast() */
 #define FRAG_FIRSTLAST_OK       0
 #define FRAG_LAST_DUPLICATE     1
-
-/* return values for expire() */
-#define FRAG_OK                 0
-#define FRAG_TRACKER_TIMEOUT    1
 #define FRAG_LAST_OFFSET_ADJUST 2
 
 /*  D A T A   S T R U C T U R E S  **********************************/
 
-/* struct to manage an individual fragment */
 struct Fragment
 {
     uint8_t* data;       /* ptr to adjusted start position */
@@ -141,12 +132,6 @@ struct Fragment
 
 /*  G L O B A L S  **************************************************/
 
-// FIXIT-M convert to session memcap
-static THREAD_LOCAL unsigned long mem_in_use = 0; /* memory in use, used for self pres */
-
-static THREAD_LOCAL uint32_t pkt_snaplen = 0;
-static THREAD_LOCAL Packet** defrag_pkts;  // An array of Packet pointers
-
 /* enum for policy names */
 static const char* const frag_policy_names[] =
 {
@@ -160,32 +145,13 @@ static const char* const frag_policy_names[] =
     "SOLARIS"
 };
 
+// FIXIT-M convert to session memcap
+static THREAD_LOCAL unsigned long mem_in_use = 0; /* memory in use, used for self pres */
+
 THREAD_LOCAL ProfileStats fragPerfStats;
 THREAD_LOCAL ProfileStats fragInsertPerfStats;
 THREAD_LOCAL ProfileStats fragRebuildPerfStats;
 
-/*  P R O T O T Y P E S  ********************************************/
-static void FragRebuild(FragTracker*, Packet*);
-static inline int FragIsComplete(FragTracker*);
-static int FragHandleIPOptions(FragTracker*,
-    const Packet* const,
-    const uint16_t frag_off);
-
-/* deletion funcs */
-static THREAD_LOCAL struct timeval* pkttime;    /* packet timestamp */
-
-/* fraglist handler funcs */
-static inline void add_node(FragTracker*, Fragment*, Fragment*);
-static void delete_frag(Fragment*);
-static void delete_node(FragTracker*, Fragment*);
-
-/**
- * Print out a defrag engine
- *
- * @param Pointer to the engine structure to print
- *
- * @return none
- */
 static void FragPrintEngineConfig(FragEngine* engine)
 {
     LogMessage("Defrag engine config:\n");
@@ -205,66 +171,30 @@ static void FragPrintEngineConfig(FragEngine* engine)
 #endif
 }
 
-/**
- * Generate an event due to IP options being detected in a frag packet
- *
- * @param engine Current run engine
- *
- * @return none
- */
 static inline void EventAnomIpOpts(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_IPOPTIONS);
     ip_stats.alerts++;
 }
 
-/**
- * Generate an event due to a Teardrop-style attack detected in a frag packet
- *
- * @param engine Current run engine
- *
- * @return none
- */
 static inline void EventAttackTeardrop(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_TEARDROP);
     ip_stats.alerts++;
 }
 
-/**
- * Generate an event for very small fragment
- *
- * @param engine Current run engine
- *
- * @return none
- */
 static inline void EventTinyFragments(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_TINY_FRAGMENT);
     ip_stats.alerts++;
 }
 
-/**
- * Generate an event due to excessive fragment overlap detected in a frag packet
- *
- * @param engine Current run engine
- *
- * @return none
- */
 static inline void EventExcessiveOverlap(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_EXCESSIVE_OVERLAP);
     ip_stats.alerts++;
 }
 
-/**
- * Generate an event due to a fragment being too short, typcially based
- * on a non-last fragment that doesn't properly end on an 8-byte boundary
- *
- * @param engine Current run engine
- *
- * @return none
- */
 static inline void EventAnomShortFrag(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_SHORT_FRAG);
@@ -272,14 +202,6 @@ static inline void EventAnomShortFrag(FragEngine*)
     ip_stats.anomalies++;
 }
 
-/**
- * This fragment's size will end after the already calculated reassembled
- * fragment end, as in a Bonk/Boink/etc attack.
- *
- * @param engine Current run engine
- *
- * @return none
- */
 static inline void EventAnomOversize(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_ANOMALY_OVERSIZE);
@@ -287,14 +209,6 @@ static inline void EventAnomOversize(FragEngine*)
     ip_stats.anomalies++;
 }
 
-/**
- * The current fragment will be inserted with a size of 0 bytes, that's
- * an anomaly if I've ever seen one.
- *
- * @param engine Current run engine
- *
- * @return none
- */
 static inline void EventAnomZeroFrag(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_ANOMALY_ZERO);
@@ -302,13 +216,6 @@ static inline void EventAnomZeroFrag(FragEngine*)
     ip_stats.anomalies++;
 }
 
-/**
- * The reassembled packet will be bigger than 64k, generate an event.
- *
- * @param engine Current run engine
- *
- * @return none
- */
 static inline void EventAnomBadsizeLg(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_ANOMALY_BADSIZE_LG);
@@ -316,13 +223,6 @@ static inline void EventAnomBadsizeLg(FragEngine*)
     ip_stats.anomalies++;
 }
 
-/**
- * Fragment size is negative after insertion (end < offset).
- *
- * @param engine Current run engine
- *
- * @return none
- */
 static inline void EventAnomBadsizeSm(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_ANOMALY_BADSIZE_SM);
@@ -330,13 +230,6 @@ static inline void EventAnomBadsizeSm(FragEngine*)
     ip_stats.anomalies++;
 }
 
-/**
- * There is an overlap with this fragment, someone is probably being naughty.
- *
- * @param engine Current run engine
- *
- * @return none
- */
 static inline void EventAnomOverlap(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_ANOMALY_OVLP);
@@ -344,47 +237,22 @@ static inline void EventAnomOverlap(FragEngine*)
     ip_stats.anomalies++;
 }
 
-/**
- * Generate an event due to TTL below the configured minimum
- *
- * @param engine Current run engine
- *
- * @return none
- */
 static inline void EventAnomMinTtl(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_MIN_TTL_EVASION);
     ip_stats.alerts++;
 }
 
-/**
- * Check to see if a FragTracker has timed out
- *
- * @param current_time Time at this moment
- * @param start_time Time to compare current_time to
- * @param engine Engine engine
- *
- * @return status
- * @retval  FRAG_TIMEOUT Current time diff is greater than the current
- *                       engine's timeout value
- * @retval  FRAG_TIME_OK Current time diff is within the engine's prune
- *                       window
- */
-static inline int CheckTimeout(struct timeval* current_time,
-    struct timeval* start_time,
-    FragEngine* engine)
+static inline bool frag_timed_out(
+    const timeval* current_time, const timeval* start_time, FragEngine* engine)
 {
-    struct timeval tv_diff; /* storage struct for the difference between
-                               current_time and start_time */
-
+    struct timeval tv_diff;
     TIMERSUB(current_time, start_time, &tv_diff);
 
     if (tv_diff.tv_sec >= (int)engine->frag_timeout)
-    {
-        return FRAG_TIMEOUT;
-    }
+        return true;
 
-    return FRAG_TIME_OK;
+    return false;
 }
 
 /**
@@ -715,38 +583,20 @@ static inline int FragIsComplete(FragTracker* ft)
     return 0;
 }
 
-/**
+/*
  * Reassemble the packet from the data in the FragTracker and reinject into
  * Snort's packet analysis system
- *
- * @param ft FragTracker to rebuild
- * @param p Packet to fill in pseudopacket IP structs
- *
- * @return none
  */
 static void FragRebuild(FragTracker* ft, Packet* p)
 {
     Profile profile(fragRebuildPerfStats);
-
-    static THREAD_LOCAL uint8_t encap_frag_cnt = 0;
     size_t offset = 0;
-    uint8_t* rebuild_ptr = NULL;  /* ptr to the start of the reassembly buffer */
-    Fragment* frag;    /* frag pointer for managing fragments */
-    Packet* dpkt;
 
-// XXX NOT YET IMPLEMENTED - debugging
-
-    if (!defrag_pkts[encap_frag_cnt])
-        defrag_pkts[encap_frag_cnt] = new Packet();
-
-    dpkt = defrag_pkts[encap_frag_cnt];
-
+    Packet* dpkt = DetectionEngine::set_packet();
     PacketManager::encode_format(ENC_FLAG_DEF|ENC_FLAG_FWD, p, dpkt, PSEUDO_PKT_IP);
-    /*
-     * set the pointer to the end of the rebuild packet
-     */
-    rebuild_ptr = (uint8_t*)dpkt->data;
+
     // the encoder ensures enough space for a maximum datagram
+    uint8_t* rebuild_ptr = (uint8_t*)dpkt->data;
 
     if (p->ptrs.ip_api.is_ip4())
     {
@@ -792,7 +642,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     /*
      * walk the fragment list and rebuild the packet
      */
-    for (frag = ft->fraglist; frag; frag = frag->next)
+    for ( Fragment* frag = ft->fraglist; frag; frag = frag->next )
     {
         trace_logf(stream_ip,
             "   frag: %p\n"
@@ -887,10 +737,9 @@ static void FragRebuild(FragTracker* ft, Packet* p)
         LogIPPkt(dpkt);
 #endif
 
-    encap_frag_cnt++;
+    DetectionEngine de;
     PacketManager::encode_set_pkt(p);
     Snort::process_packet(dpkt, dpkt->pkth, dpkt->pkt, true);
-    encap_frag_cnt--;
 
     trace_log(stream_ip,
         "Done with rebuilt packet, marking rebuilt...\n");
@@ -934,13 +783,6 @@ static inline void add_node(FragTracker* ft, Fragment* prev,
     ft->fraglist_count++;
 }
 
-/**
- * Delete a Fragment struct
- *
- * @param frag Fragment to delete
- *
- * @return none
- */
 static void delete_frag(Fragment* frag)
 {
     /*
@@ -956,14 +798,6 @@ static void delete_frag(Fragment* frag)
     ip_stats.nodes_released++;
 }
 
-/**
- * Delete a Fragment from a fraglist
- *
- * @param ft FragTracker to delete the frag from
- * @param node node to be deleted
- *
- * @return none
- */
 static inline void delete_node(FragTracker* ft, Fragment* node)
 {
     trace_logf(stream_ip, "Deleting list node %p (p %p n %p)\n",
@@ -991,14 +825,9 @@ static inline void delete_node(FragTracker* ft, Fragment* node)
     ft->fraglist_count--;
 }
 
-/**
- * Delete the contents of a FragTracker, in this instance that just means to
- * dump the fraglist.
- *
- * @param ft FragTracker to delete
- *
- * @return none
- */
+// Delete the contents of a FragTracker, in this instance that just means to
+// dump the fraglist.
+
 static void delete_tracker(FragTracker* ft)
 {
     Fragment* idx = ft->fraglist;  /* pointer to the fraglist to delete */
@@ -1045,35 +874,6 @@ bool Defrag::configure(SnortConfig* sc)
     // FIXIT-L kinda squiffy ... set for each instance (but to same value) ... move to tinit() ?
     layers = sc->get_num_layers();
     return true;
-}
-
-void Defrag::tinit()
-{
-    defrag_pkts = new Packet* [layers];
-
-    for (int i = 1; i < layers; i++)
-        defrag_pkts[i] = nullptr;
-
-    defrag_pkts[0] = new Packet();
-    pkt_snaplen = SFDAQ::get_snap_len();
-}
-
-void Defrag::tterm()
-{
-    if (!defrag_pkts)
-        return;
-
-    for (int i = 0; i < layers; i++)
-    {
-        if (defrag_pkts[i] != nullptr)
-        {
-            delete defrag_pkts[i];
-            defrag_pkts[i] = nullptr;
-        }
-    }
-
-    delete[] defrag_pkts;
-    defrag_pkts = nullptr;
 }
 
 void Defrag::show(SnortConfig*)
@@ -1153,14 +953,12 @@ void Defrag::process(Packet* p, FragTracker* ft)
 
     Profile profile(fragPerfStats);
 
-    pkttime = (struct timeval*)&p->pkth->ts;
-
     if (!ft->engine )
     {
         new_tracker(p, ft);
         return;
     }
-    else if (expire(p, ft, fe) == FRAG_TRACKER_TIMEOUT)
+    else if (expired(p, ft, fe) )
     {
         /* Time'd out FragTrackers are just purged of their packets.
          * Reset the timestamp per this packet.
@@ -1660,7 +1458,7 @@ left_overlap_last:
         }
     }
 
-    if ((uint16_t)fragLength > pkt_snaplen)
+    if ((uint16_t)fragLength > SFDAQ::get_snap_len())
     {
         trace_logf(stream_ip,
             "Overly large fragment %d 0x%x 0x%x %d\n",
@@ -2035,7 +1833,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     fragStart = p->data;
 
     /* Just to double check */
-    if (fragLength > pkt_snaplen)
+    if (fragLength > SFDAQ::get_snap_len())
     {
         trace_logf(stream_ip,
             "Overly large fragment length:%d(0x%x) off:0x%x(%d)\n",
@@ -2367,16 +2165,14 @@ int Defrag::dup_frag_node(
  * @retval FRAG_TRACKER_TIMEOUT The current FragTracker has timed out
  * @retval FRAG_OK The current FragTracker has not timed out
  */
-inline int Defrag::expire(Packet*, FragTracker* ft, FragEngine* fe)
+inline int Defrag::expired(Packet* p, FragTracker* ft, FragEngine* fe)
 {
     /*
      * Check the FragTracker that was passed in first
      */
-    if (CheckTimeout(pkttime, &(ft)->frag_time, fe) == FRAG_TIMEOUT)
+    if ( frag_timed_out(&p->pkth->ts, &(ft)->frag_time, fe) )
     {
-        /*
-         * Oops, we've timed out, whack the FragTracker
-         */
+        // Oops, we've timed out, whack the FragTracker
         /*
          * Don't remove the tracker.
          * Remove all of the packets that are stored therein.
@@ -2388,9 +2184,9 @@ inline int Defrag::expire(Packet*, FragTracker* ft, FragEngine* fe)
 
         ip_stats.frag_timeouts++;
 
-        return FRAG_TRACKER_TIMEOUT;
+        return true;
     }
 
-    return FRAG_OK;
+    return false;
 }
 
