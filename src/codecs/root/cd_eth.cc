@@ -27,6 +27,7 @@
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 #include "log/text_log.h"
+#include "main/snort_config.h"
 #include "protocols/eth.h"
 #include "protocols/packet_manager.h"
 

@@ -273,7 +273,7 @@ static inline void DCE2_Smb2ProcessFileData(DCE2_SmbSsnData* ssd, const uint8_t*
 
     if (detection_size)
     {
-        set_file_data((uint8_t*)file_data,
+        set_file_data(file_data,
             (detection_size > UINT16_MAX) ? UINT16_MAX : (uint16_t)detection_size);
 
         DCE2_FileDetect();

@@ -905,8 +905,10 @@ static int fp_search(
         {
             // FIXIT-M file data should be obtained from
             // inspector gadget as is done with SEARCH_BUFFER
-            if ( g_file_data.len )
-                SEARCH_DATA(g_file_data.data, g_file_data.len, pc.file_searches);
+            DataPointer file_data;
+            DetectionEngine::get_file_data(file_data);
+            if ( file_data.len )
+                SEARCH_DATA(file_data.data, file_data.len, pc.file_searches);
         }
     }
     return 0;

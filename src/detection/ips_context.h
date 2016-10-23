@@ -36,6 +36,8 @@
 // required to get a decent decl of pkth
 #include "protocols/packet.h"
 
+#include "detection/detection_util.h"
+
 class SO_PUBLIC IpsContextData
 {
 public:
@@ -68,6 +70,8 @@ public:
     Packet* encode_packet;
     DAQ_PktHdr_t* pkth;
     uint8_t* buf;
+
+    DataPointer file_data;
 
     class MpseStash* stash;
     struct OtnxMatchData* otnx;

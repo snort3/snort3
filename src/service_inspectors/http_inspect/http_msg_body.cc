@@ -53,8 +53,10 @@ void HttpMsgBody::analyze()
             js_norm_body.length() : session_data->detect_depth_remaining[source_id];
         detect_data.set(detect_length, js_norm_body.start());
         session_data->detect_depth_remaining[source_id] -= detect_length;
+
         // Always set file data. File processing will later set a new value in some cases.
-        set_file_data(const_cast<uint8_t*>(detect_data.start()), (unsigned)detect_data.length());
+        set_next_file_data(
+            const_cast<uint8_t*>(detect_data.start()), (unsigned)detect_data.length());
     }
 
     if (session_data->file_depth_remaining[source_id] > 0)
@@ -199,7 +201,9 @@ void HttpMsgBody::print_body_section(FILE* output)
     get_classic_buffer(HTTP_BUFFER_CLIENT_BODY, 0, 0).print(output,
         HttpApi::classic_buffer_names[HTTP_BUFFER_CLIENT_BODY-1]);
 
-    DataPointer& body = get_file_data();
+    DataPointer body;
+    DetectionEngine::get_next_file_data(body);
+
     if (body.len > 0)
     {
         Field(body.len, body.data).print(output, "file_data");

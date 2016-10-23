@@ -20,7 +20,6 @@
 
 #include "detection_engine.h"
 
-#include "detection/detection_engine.h"
 #include "events/sfeventq.h"
 #include "filters/sfthreshold.h"
 #include "framework/endianness.h"
@@ -37,6 +36,7 @@
 #include "utils/stats.h"
 
 #include "context_switcher.h"
+#include "detection_util.h"
 #include "detect.h"
 #include "fp_detect.h"
 #include "ips_context.h"
@@ -72,13 +72,13 @@ Packet* DetectionEngine::get_encode_packet()
 MpseStash* DetectionEngine::get_stash()
 { return Snort::get_switcher()->get_context()->stash; }
 
+// we need to stay in the current context until rebuild is successful
+// any events while rebuilding will be logged against the current packet
 Packet* DetectionEngine::set_packet()
 {
-    // we need to stay in the current context until rebuild is successful
-    // any events while rebuilding will be logged against the current packet
-    // FIXIT-H bypass the interrupt / complete
- 
     ContextSwitcher* sw = Snort::get_switcher();
+
+    // FIXIT-H bypass the interrupt / complete
     const IpsContext* c = sw->interrupt();
     Packet* p = c->packet;
     sw->complete();
@@ -88,7 +88,6 @@ Packet* DetectionEngine::set_packet()
     p->pkt = c->buf;
 
     p->reset();
-
     return p;
 }
 
@@ -114,6 +113,35 @@ uint8_t* DetectionEngine::get_buffer(unsigned& max)
     max = IpsContext::buf_size;
     return Snort::get_switcher()->get_context()->buf;
 }
+
+// similar to set_packet() because http_inspect does everything via the
+// splitter, ie before reassembly.  maybe that should change.  for now
+// we do it this way.
+void DetectionEngine::set_next_file_data(const DataPointer& dp)
+{
+    ContextSwitcher* sw = Snort::get_switcher();
+
+    // FIXIT-H bypass the interrupt / complete
+    IpsContext* c = sw->interrupt();
+    c->file_data = dp;
+    sw->complete();
+}
+
+void DetectionEngine::get_next_file_data(DataPointer& dp)
+{
+    ContextSwitcher* sw = Snort::get_switcher();
+
+    // FIXIT-H bypass the interrupt / complete
+    IpsContext* c = sw->interrupt();
+    dp = c->file_data;
+    sw->complete();
+}
+
+void DetectionEngine::set_file_data(const DataPointer& dp)
+{ Snort::get_switcher()->get_context()->file_data = dp; }
+
+void DetectionEngine::get_file_data(DataPointer& dp)
+{ dp = Snort::get_switcher()->get_context()->file_data; }
 
 void DetectionEngine::set_data(unsigned id, IpsContextData* p)
 { Snort::get_switcher()->get_context()->set_context_data(id, p); }

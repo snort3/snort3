@@ -1887,9 +1887,7 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
         ((ftracker->ff_file_offset == ftracker->ff_bytes_processed) &&
         ((file_data_depth == 0) || (ftracker->ff_bytes_processed < (uint64_t)file_data_depth))))
     {
-        set_file_data((uint8_t*)data_ptr,
-            (data_len > UINT16_MAX) ? UINT16_MAX : (uint16_t)data_len);
-
+        set_file_data(data_ptr, (data_len > UINT16_MAX) ? UINT16_MAX : (uint16_t)data_len);
         DCE2_FileDetect();
     }
 
@@ -1993,7 +1991,7 @@ void DCE2_FileDetect()
     DetectionEngine::detect(top_pkt);
 
     // Reset file data pointer after detecting
-    set_file_data(nullptr, 0);
+    clear_file_data();
     dce2_detected = 1;
 }
 

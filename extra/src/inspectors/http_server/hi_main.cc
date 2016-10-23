@@ -1072,7 +1072,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 else
                 {
                     set_file_data((uint8_t*)session->server.response.body,
-                        (uint16_t)detect_data_size);
+                        (uint16_t)detect_data_size); 
                 }
 
                 FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
@@ -1208,7 +1208,10 @@ int IsGzipData(Flow* flow)
     if (hsd == NULL)
         return -1;
 
-    if ((hsd->log_flags & HTTP_LOG_GZIP_DATA) && ( get_file_data().len > 0 ))
+    DataPointer file_data;
+    DetectionEngine::get_file_data(file_data);
+
+    if ((hsd->log_flags & HTTP_LOG_GZIP_DATA) && (file_data.len > 0 ))
         return 0;
     else
         return -1;
@@ -1218,10 +1221,11 @@ int GetHttpGzipData(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     if (!IsGzipData(flow))
     {
-        DataPointer& gzip = get_file_data();
+        DataPointer file_data;
+        DetectionEngine::get_file_data(file_data);
 
-        *buf = gzip.data;
-        *len = gzip.len;
+        *buf = (uint8_t*)file_data.data;
+        *len = file_data.len;
         *type = EVENT_INFO_GZIP_DATA;
         return 1;
     }
@@ -1241,7 +1245,10 @@ int IsJSNormData(Flow* flow)
     if (hsd == NULL)
         return -1;
 
-    if ((hsd->log_flags & HTTP_LOG_JSNORM_DATA) && ( get_file_data().len > 0 ))
+    DataPointer file_data;
+    DetectionEngine::get_file_data(file_data);
+
+    if ((hsd->log_flags & HTTP_LOG_JSNORM_DATA) && (file_data.len > 0 ))
         return 0;
     else
         return -1;
@@ -1251,10 +1258,11 @@ int GetHttpJSNormData(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     if (!IsJSNormData(flow))
     {
-        DataPointer& js = get_file_data();
+        DataPointer file_data;
+        DetectionEngine::get_file_data(file_data);
 
-        *buf = js.data;
-        *len = js.len;
+        *buf = (uint8_t*)file_data.data;
+        *len = file_data.len;
         *type = EVENT_INFO_JSNORM_DATA;
         return 1;
     }

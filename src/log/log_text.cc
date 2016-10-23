@@ -28,7 +28,7 @@
 
 #include <sfbpf_dlt.h>
 
-#include "detection/detection_util.h"
+#include "detection/detection_engine.h"
 #include "detection/signature.h"
 #include "events/event.h"
 #include "main/snort_config.h"
@@ -1183,10 +1183,10 @@ void LogXrefs(TextLog* log, const Event* e, bool doNewLine)
  * Returns: void function
  *--------------------------------------------------------------------
  */
-static void LogCharData(TextLog* log, const char* data, int len)
+static void LogCharData(TextLog* log, const uint8_t* data, int len)
 {
-    const char* pb = data;
-    const char* end = data + len;
+    const uint8_t* pb = data;
+    const uint8_t* end = data + len;
     int lineCount = 0;
 
     if ( !data )
@@ -1463,14 +1463,15 @@ void LogPayload(TextLog* log, Packet* p)
     {
         if (SnortConfig::output_char_data())
         {
-            LogCharData(log, (const char*)p->data, p->dsize);
+            LogCharData(log, p->data, p->dsize);
 
-            DataPointer& fdata = get_file_data();
+            DataPointer file_data;
+            DetectionEngine::get_file_data(file_data);
 
-            if ( fdata.len > 0 )
+            if ( file_data.len > 0 )
             {
                 TextLog_Print(log, "%s\n", "File data");
-                LogCharData(log, (const char*)fdata.data, fdata.len);
+                LogCharData(log, file_data.data, file_data.len);
             }
         }
         else
@@ -1489,10 +1490,13 @@ void LogPayload(TextLog* log, Packet* p)
             {
                 LogNetData(log, p->data, p->dsize, p);
 
-                if ( g_file_data.len > 0 )
+                DataPointer file_data;
+                DetectionEngine::get_file_data(file_data);
+
+                if ( file_data.len > 0 )
                 {
                     TextLog_Print(log, "%s\n", "File data");
-                    LogNetData(log, g_file_data.data, g_file_data.len, p);
+                    LogNetData(log, file_data.data, file_data.len, p);
                 }
             }
         }

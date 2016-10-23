@@ -23,14 +23,17 @@
 
 // DetectionEngine manages a detection context.  To detect a rebuilt
 // packet (PDU), first call set_packet().  If rebuild is successful,
-// then instantiate a new DetectionContext() to detect that packet.
+// then instantiate a new DetectionEngine to detect that packet.
 
 #include "actions/actions.h"
+#include "detection/detection_util.h"
 #include "main/snort_types.h"
+
+struct DataPointer;
+struct Packet;
 
 class IpsContext;
 class IpsContextData;
-struct Packet;
 
 class SO_PUBLIC DetectionEngine
 {
@@ -49,6 +52,12 @@ public:
 
     static void set_encode_packet(Packet*);
     static Packet* get_encode_packet();
+
+    static void set_next_file_data(const DataPointer&);
+    static void get_next_file_data(DataPointer&);
+
+    static void set_file_data(const DataPointer&);
+    static void get_file_data(DataPointer&);
 
     static class MpseStash* get_stash();
     static uint8_t* get_buffer(unsigned& max);
@@ -86,5 +95,22 @@ private:
     static struct SF_EVENTQ* get_event_queue();
 };
 
+static inline void set_next_file_data(const uint8_t* p, unsigned n)
+{
+    DataPointer dp { p, n };
+    DetectionEngine::set_next_file_data(dp);
+}
+
+static inline void set_file_data(const uint8_t* p, unsigned n)
+{
+    DataPointer dp { p, n };
+    DetectionEngine::set_file_data(dp);
+}
+
+// FIXIT-H refactor detection resets
+// this should only be called by framework
+static inline void clear_file_data()
+{ set_file_data(nullptr, 0); }
+    
 #endif
 
