@@ -63,6 +63,12 @@ Packet* DetectionEngine::get_current_packet()
 Packet* DetectionEngine::get_packet()
 { return get_current_packet(); }
 
+void DetectionEngine::set_encode_packet(Packet* p)
+{ Snort::get_switcher()->get_context()->encode_packet = p; }
+
+Packet* DetectionEngine::get_encode_packet()
+{ return Snort::get_switcher()->get_context()->encode_packet; }
+
 MpseStash* DetectionEngine::get_stash()
 { return Snort::get_switcher()->get_context()->stash; }
 

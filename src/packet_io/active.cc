@@ -173,9 +173,6 @@ bool Active::init(SnortConfig* sc)
             s_attempts = 0;
 #endif
         }
-
-        if (NULL != sc->eth_dst)
-            PacketManager::encode_set_dst_mac(sc->eth_dst);
     }
     return true;
 }

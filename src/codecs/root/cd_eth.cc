@@ -164,25 +164,24 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
             return false;
 
         eth::EtherHdr* ho = reinterpret_cast<eth::EtherHdr*>(buf.data());
-        ho->ether_type = enc.ethertype_set() ? htons(to_utype(enc.next_ethertype)) : hi->ether_type;
-
-        uint8_t* dst_mac = PacketManager::encode_get_dst_mac();
+        ho->ether_type = enc.ethertype_set() ?
+            htons(to_utype(enc.next_ethertype)) : hi->ether_type;
 
         if ( enc.forward() )
         {
             memcpy(ho->ether_src, hi->ether_src, sizeof(ho->ether_src));
-            /*If user configured remote MAC address, use it*/
-            if (nullptr != dst_mac)
-                memcpy(ho->ether_dst, dst_mac, sizeof(ho->ether_dst));
+
+            if ( snort_conf->eth_dst )
+                memcpy(ho->ether_dst, snort_conf->eth_dst, sizeof(ho->ether_dst));
             else
                 memcpy(ho->ether_dst, hi->ether_dst, sizeof(ho->ether_dst));
         }
         else
         {
             memcpy(ho->ether_src, hi->ether_dst, sizeof(ho->ether_src));
-            /*If user configured remote MAC address, use it*/
-            if (nullptr != dst_mac)
-                memcpy(ho->ether_dst, dst_mac, sizeof(ho->ether_dst));
+
+            if ( snort_conf->eth_dst )
+                memcpy(ho->ether_dst, snort_conf->eth_dst, sizeof(ho->ether_dst));
             else
                 memcpy(ho->ether_dst, hi->ether_src, sizeof(ho->ether_dst));
         }

@@ -65,12 +65,8 @@ const std::array<const char*, PacketManager::stat_offset> PacketManager::stat_na
 };
 
 // Encoder Foo
-static THREAD_LOCAL Packet* encode_pkt = nullptr;
 static THREAD_LOCAL PegCount total_rebuilt_pkts = 0;
-static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt {
-    { 0 }
-};
-static THREAD_LOCAL uint8_t* dst_mac = nullptr;
+static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt { { 0 } };
 
 //-------------------------------------------------------------------------
 // Private helper functions
@@ -351,8 +347,8 @@ bool PacketManager::encode(const Packet* p,
     IpProtocol next_prot,
     Buffer& buf)
 {
-    if ( encode_pkt )
-        p = encode_pkt;
+    if ( Packet* pe = DetectionEngine::get_encode_packet() )
+        p = pe;
 
     uint8_t ttl = GetTTL(p, (flags & ENC_FLAG_FWD));
     if ( ttl )
@@ -812,17 +808,8 @@ void PacketManager::encode_update(Packet* p)
 // codec support and statistics
 //-------------------------------------------------------------------------
 
-void PacketManager::encode_set_dst_mac(uint8_t* mac)
-{ dst_mac = mac; }
-
-uint8_t* PacketManager::encode_get_dst_mac()
-{ return dst_mac; }
-
 uint64_t PacketManager::get_rebuilt_packet_count()
 { return total_rebuilt_pkts; }
-
-void PacketManager::encode_set_pkt(Packet* p)
-{ encode_pkt = p; }
 
 uint16_t PacketManager::encode_get_max_payload(const Packet* p)
 {

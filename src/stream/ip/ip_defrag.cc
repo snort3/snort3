@@ -738,13 +738,13 @@ static void FragRebuild(FragTracker* ft, Packet* p)
 #endif
 
     DetectionEngine de;
-    PacketManager::encode_set_pkt(p);
+    de.set_encode_packet(p);
     Snort::process_packet(dpkt, dpkt->pkth, dpkt->pkt, true);
+    de.set_encode_packet(nullptr);
 
-    trace_log(stream_ip,
-        "Done with rebuilt packet, marking rebuilt...\n");
+    trace_log(stream_ip, "Done with rebuilt packet, marking rebuilt...\n");
 
-    ft->frag_flags = ft->frag_flags | FRAG_REBUILT;
+    ft->frag_flags |= FRAG_REBUILT;
 }
 
 /**

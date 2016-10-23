@@ -57,14 +57,6 @@ public:
     // decode this packet and set all relevent packet fields.
     static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*, bool cooked = false);
 
-    // when encoding, rather than copy the destination MAC address from the
-    // inbound packet, manually set the MAC address.
-    static void encode_set_dst_mac(uint8_t*);
-
-    // get the MAC address which has been set using encode_set_dst_mac().
-    // Useful for root decoders setting the MAC address
-    static uint8_t* encode_get_dst_mac();
-
     // update the packet's checksums and length variables. Call this function
     // after Snort has changed any data in this packet
     static void encode_update(Packet*);
@@ -104,15 +96,8 @@ public:
     // get the number of packets which have been rebuilt by this thread
     static PegCount get_rebuilt_packet_count();
 
-    // set the packet to be encoded.
-    static void encode_set_pkt(Packet* p);
-
     // get the max payload for the current packet
     static uint16_t encode_get_max_payload(const Packet*);
-
-    // reset the current 'clone' packet
-    static void encode_reset()
-    { encode_set_pkt(NULL); }
 
     // print codec information.  MUST be called after thread_term.
     static void dump_stats();

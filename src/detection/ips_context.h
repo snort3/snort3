@@ -31,6 +31,7 @@
 
 #include <vector>
 #include "main/snort_types.h"
+#include "framework/codec.h"
 
 // required to get a decent decl of pkth
 #include "protocols/packet.h"
@@ -64,6 +65,7 @@ public:
 
 public:
     Packet* packet;
+    Packet* encode_packet;
     DAQ_PktHdr_t* pkth;
     uint8_t* buf;
 
@@ -73,7 +75,7 @@ public:
 
     struct SF_EVENTQ* equeue;
 
-    static const unsigned buf_size = 65536;
+    static const unsigned buf_size = Codec::PKT_MAX;
 
 private:
     std::vector<IpsContextData*> data;

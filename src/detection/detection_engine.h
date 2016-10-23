@@ -47,6 +47,9 @@ public:
     static Packet* set_packet();
     static void clear_packet();
 
+    static void set_encode_packet(Packet*);
+    static Packet* get_encode_packet();
+
     static class MpseStash* get_stash();
     static uint8_t* get_buffer(unsigned& max);
 

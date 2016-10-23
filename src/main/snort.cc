@@ -866,7 +866,6 @@ DAQ_Verdict Snort::packet_callback(
     HighAvailabilityManager::process_update(s_packet->flow, pkthdr);
 
     Active::reset();
-    PacketManager::encode_reset();
     Stream::timeout_flows(pkthdr->ts.tv_sec);
     HighAvailabilityManager::process_receive();
 
