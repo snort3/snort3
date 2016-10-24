@@ -254,7 +254,7 @@ bool Active::send_data(
     uint32_t sent = 0;
     const uint16_t maxPayload = PacketManager::encode_get_max_payload(p);
 
-    if(maxPayload)
+    if (maxPayload)
     {
         do
         {
@@ -270,7 +270,8 @@ bool Active::send_data(
 
             buf += toSend;
             sent += toSend;
-        } while(blen -= toSend);
+        }
+        while (blen -= toSend);
     }
 
     plen = 0;
@@ -281,7 +282,6 @@ bool Active::send_data(
         return false;
 
     s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
-
 
     if (flags & ENC_FLAG_RST_CLNT)
     {
@@ -417,7 +417,7 @@ void Active::block_session(const Packet* p, bool force)
     active_action = ACT_BLOCK;
 
     if ( force or SnortConfig::inline_mode() or SnortConfig::treat_drop_as_ignore() )
-        Stream::drop_flow(p);
+        Stream::block_flow(p);
 }
 
 void Active::reset_session(const Packet* p, bool force)
@@ -452,7 +452,7 @@ void Active::apply_delayed_action(const Packet* p)
 {
     bool force = (active_status == AST_FORCE);
 
-    switch(delayed_active_action)
+    switch (delayed_active_action)
     {
     case ACT_PASS:
         break;
@@ -471,6 +471,7 @@ void Active::apply_delayed_action(const Packet* p)
 
     delayed_active_action = ACT_PASS;
 }
+
 //--------------------------------------------------------------------
 
 bool Active::open(const char* dev)

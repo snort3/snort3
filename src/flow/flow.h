@@ -82,6 +82,7 @@
 #define STREAM_STATE_CLOSED            0x0800
 #define STREAM_STATE_IGNORE            0x1000
 #define STREAM_STATE_NO_PICKUP         0x2000
+#define STREAM_STATE_BLOCK_PENDING     0x4000
 
 // FIXIT-L move to appid class if/when the application ids array
 // is moved
@@ -176,7 +177,7 @@ public:
     void set_mpls_layer_per_dir(Packet*);
     Layer get_mpls_layer_per_dir(bool);
 
-    uint32_t update_session_flags( uint32_t flags )
+    uint32_t update_session_flags(uint32_t flags)
     {
         return ssn_state.session_flags = flags;
     }
@@ -342,10 +343,10 @@ public:  // FIXIT-M privatize if possible
     uint16_t ssn_policy;
     uint16_t session_state;
 
-    uint8_t  inner_client_ttl, inner_server_ttl;
-    uint8_t  outer_client_ttl, outer_server_ttl;
+    uint8_t inner_client_ttl, inner_server_ttl;
+    uint8_t outer_client_ttl, outer_server_ttl;
 
-    uint8_t  response_count;
+    uint8_t response_count;
     bool disable_inspect;
 
 private:

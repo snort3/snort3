@@ -108,13 +108,6 @@ void snort_inspect(Packet* p)
 
         check_tags_flag = 1;
 
-        // clear closed sessions here after inspection since non-stream
-        // inspectors may depend on flow information
-        // FIXIT-H but this result in double clearing?  should normal
-        // clear_session() calls be deleted from stream?  this is a
-        // performance hit on short-lived flows
-        Stream::check_flow_closed(p);
-
         /*
         ** By checking tagging here, we make sure that we log the
         ** tagged packet whether it generates an alert or not.
@@ -124,11 +117,21 @@ void snort_inspect(Packet* p)
 
         if ( inspected )
             InspectorManager::clear(p);
+
+        // clear closed sessions here after inspection since non-stream
+        // inspectors may depend on flow information
+        // FIXIT-H but this result in double clearing?  should normal
+        // clear_session() calls be deleted from stream?  this is a
+        // performance hit on short-lived flows
+        Stream::check_flow_closed(p);
     }
 
     Profile profile(eventqPerfStats);
     SnortEventqLog(p);
     SnortEventqReset();
+
+    // Handle block pending state
+    Stream::check_flow_block_pending(p);
 }
 
 void snort_log(Packet* p)

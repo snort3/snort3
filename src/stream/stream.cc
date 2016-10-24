@@ -164,6 +164,24 @@ FlowData* Stream::get_flow_data(
 // session status
 //-------------------------------------------------------------------------
 
+void Stream::check_flow_block_pending(Packet* p)
+{
+    Flow* flow = p->flow;
+
+    if ( !flow )
+        return;
+
+    if (flow->session_state & STREAM_STATE_BLOCK_PENDING)
+    {
+        flow->session->clear();
+        flow->set_state(Flow::FlowState::BLOCK);
+
+        if ( !(p->packet_flags & PKT_STATELESS) )
+            drop_traffic(flow, SSN_DIR_BOTH);
+        flow->session_state &= ~STREAM_STATE_BLOCK_PENDING;
+    }
+}
+
 void Stream::check_flow_closed(Packet* p)
 {
     Flow* flow = p->flow;
@@ -301,6 +319,17 @@ void Stream::drop_traffic(Flow* flow, char dir)
     }
 }
 
+void Stream::block_flow(const Packet* p)
+{
+    Flow* flow = p->flow;
+
+    if (!flow)
+        return;
+
+    // Postpone clear till inspection is completed
+    flow->session_state |= STREAM_STATE_BLOCK_PENDING;
+}
+
 void Stream::drop_flow(const Packet* p)
 {
     Flow* flow = p->flow;
@@ -368,7 +397,7 @@ bool Stream::expected_flow(Flow* f, Packet* p)
 int Stream::set_application_protocol_id_expected(
     const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
     const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort, 
+    const sfip_t* dstIP, uint16_t dstPort,
     int16_t appId, FlowData* fd)
 {
     assert(flow_con);

@@ -47,7 +47,7 @@
 
 // sequence must match FRAG_POLICY_* enum in stream_ip.h (1-based)
 #define IP_POLICIES  \
-     "first | linux | bsd | bsd_right | last | windows | solaris"
+    "first | linux | bsd | bsd_right | last | windows | solaris"
 
 // sequence must match STREAM_POLICY_* defines in tcp_session.cc (1-based)
 #define TCP_POLICIES \
@@ -123,6 +123,10 @@ public:
     // subsequent packets received on this flow are dropped.
     static void drop_flow(const Packet*);
 
+    // Mark flow session as block pending. Resources will be released
+    // at the end of inspection
+    static void block_flow(const Packet*);
+
     // FIXIT-L flush_request() / flush_response() are misnomers in ips mode and may cause errors
 
     // Flush queued data on the listener side of a stream flow.  The listener is the side of the
@@ -133,7 +137,7 @@ public:
     // Flush queued data on the talker side of a stream flow.  The talker is the side of the
     // connection the packet originated from, so if the Packet is from the client, then the
     // client side tracker is flushed.
-     static void flush_response(Packet*);  // flush talker
+    static void flush_response(Packet*);   // flush talker
 
     // Add session alert - true if added
     static bool add_flow_alert(Flow*, Packet*, uint32_t gid, uint32_t sid);
@@ -185,7 +189,7 @@ public:
     // Snort does not have an active packet that is relevant.
     static FlowData* get_flow_data(
         PktType type, IpProtocol proto,
-        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2,
+        const sfip_t* a1, uint16_t p1, const sfip_t* a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flow_id);
 
     // Get pointer to application data for a flow using the FlowKey as the lookup criteria
@@ -195,11 +199,14 @@ public:
     // cases where Snort does not have an active packet that is relevant.
     static Flow* get_flow(
         PktType type, IpProtocol proto,
-        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2,
+        const sfip_t* a1, uint16_t p1, const sfip_t* a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     // Delete the session if it is in the closed session state.
     static void check_flow_closed(Packet*);
+
+    // Handle session block pending state
+    static void check_flow_block_pending(Packet*);
 
     //  Create a session key from the Packet
     static FlowKey* get_flow_key(Packet*);
