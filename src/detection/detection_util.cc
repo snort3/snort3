@@ -31,21 +31,10 @@
 
 #include "treenodes.h"
 
-THREAD_LOCAL DataPointer g_file_data;
-
 #define LOG_CHARS 16
 
 static THREAD_LOCAL TextLog* tlog = NULL;
 static THREAD_LOCAL unsigned nEvents = 0;
-
-SO_PUBLIC DataPointer& get_file_data()
-{ return g_file_data; }
-
-SO_PUBLIC void set_file_data(uint8_t* p, unsigned n)
-{
-    g_file_data.data = p;
-    g_file_data.len = n;
-}
 
 static void LogBuffer(const char* s, const uint8_t* p, unsigned n)
 {

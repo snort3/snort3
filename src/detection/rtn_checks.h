@@ -18,33 +18,25 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef DETECT_H
-#define DETECT_H
+#ifndef RTN_CHECKS_H
+#define RTN_CHECKS_H
 
-#include "detection/rules.h"
-#include "main/snort_types.h"
-#include "main/thread.h"
-
-struct Event;
-struct ProfileStats;
+struct Packet;
 struct RuleFpList;
 struct RuleTreeNode;
 
-extern THREAD_LOCAL ProfileStats eventqPerfStats;
-extern THREAD_LOCAL ProfileStats detectPerfStats;
-extern THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
+// parsing
+int RuleListEnd(Packet*, RuleTreeNode*, RuleFpList*, int);
+int OptListEnd(void* option_data, class Cursor&, Packet*);
 
-// main loop hooks
-void snort_ignore(Packet*);
-void snort_log(Packet*);
-
-// alerts
-void CallLogFuncs(Packet*, ListHead*, Event*, const char*);
-void CallLogFuncs(Packet*, const OptTreeNode*, ListHead*);
-void CallAlertFuncs(Packet*, const OptTreeNode*, ListHead*);
-
-void enable_tags();
-void check_tags(Packet*);
+// detection
+int CheckBidirectional(Packet*, RuleTreeNode*, RuleFpList*, int);
+int CheckSrcIP(Packet*, RuleTreeNode*, RuleFpList*, int);
+int CheckDstIP(Packet*, RuleTreeNode*, RuleFpList*, int);
+int CheckSrcPortEqual(Packet*, RuleTreeNode*, RuleFpList*, int);
+int CheckDstPortEqual(Packet*, RuleTreeNode*, RuleFpList*, int);
+int CheckSrcPortNotEq(Packet*, RuleTreeNode*, RuleFpList*, int);
+int CheckDstPortNotEq(Packet*, RuleTreeNode*, RuleFpList*, int);
 
 #endif
 

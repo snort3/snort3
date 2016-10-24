@@ -278,7 +278,7 @@ int DetectionEngine::queue_event(const OptTreeNode* otn)
     return 0;
 }
 
-int DetectionEngine::queue_event(uint32_t gid, uint32_t sid, RuleType type)
+int DetectionEngine::queue_event(unsigned gid, unsigned sid, RuleType type)
 {
     OptTreeNode* otn = GetOTN(gid, sid);
 

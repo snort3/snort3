@@ -26,6 +26,7 @@
 #include "detection/detect.h"
 #include "detection/fp_config.h"
 #include "detection/fp_utils.h"
+#include "detection/rtn_checks.h"
 #include "detection/treenodes.h"
 #include "framework/decode_data.h"
 #include "log/messages.h"
@@ -41,6 +42,12 @@
 #include "utils/util.h"
 
 #include "parser.h"
+#include "parse_conf.h"
+#include "parse_ports.h"
+
+#include "parser.h"
+#include "cmd_line.h"
+#include "config_file.h"
 #include "parse_conf.h"
 #include "parse_ports.h"
 
