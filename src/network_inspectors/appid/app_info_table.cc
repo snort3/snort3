@@ -492,7 +492,7 @@ void AppInfoManager::init_appid_info_table(const char* path)
     tableFile = fopen(filepath, "r");
     if (tableFile == nullptr)
     {
-        ErrorMessage("Could not open RnaAppMapping Table file: %s\n", filepath);
+        ParseError("Could not open AppMapping Table file: %s, no AppId rule support", filepath);
         return;
     }
 
@@ -503,7 +503,7 @@ void AppInfoManager::init_appid_info_table(const char* path)
         token = strtok_r(buf, CONF_SEPARATORS, &context);
         if (!token)
         {
-            ErrorMessage("Could not read id for Rna Id\n");
+            ErrorMessage("Could not read id for AppId\n");
             continue;
         }
 
@@ -520,7 +520,7 @@ void AppInfoManager::init_appid_info_table(const char* path)
         token = strtok_r(nullptr, CONF_SEPARATORS, &context);
         if (!token)
         {
-            ErrorMessage("Could not read service id for Rna Id\n");
+            ErrorMessage("Could not read service id for AppId\n");
             snort_free(app_name);
             continue;
         }
@@ -530,7 +530,7 @@ void AppInfoManager::init_appid_info_table(const char* path)
         token = strtok_r(nullptr, CONF_SEPARATORS, &context);
         if (!token)
         {
-            ErrorMessage("Could not read client id for Rna Id\n");
+            ErrorMessage("Could not read client id for AppId\n");
             snort_free(app_name);
             continue;
         }
@@ -540,7 +540,7 @@ void AppInfoManager::init_appid_info_table(const char* path)
         token = strtok_r(nullptr, CONF_SEPARATORS, &context);
         if (!token)
         {
-            ErrorMessage("Could not read payload id for Rna Id\n");
+            ErrorMessage("Could not read payload id for AppId\n");
             snort_free(app_name);
             continue;
         }

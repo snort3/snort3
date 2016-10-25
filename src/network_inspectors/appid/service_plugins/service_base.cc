@@ -257,7 +257,9 @@ static void appSetServiceValidator(RNAServiceValidationFCN fcn, AppId appId, uns
     AppInfoTableEntry* pEntry = AppInfoManager::get_instance().get_app_info_entry(appId);
     if (!pEntry)
     {
-        ErrorMessage("AppId: invalid direct service AppId, %d", appId);
+        ParseError(
+          "AppId: ID to Name mapping entry missing for AppId: %d. No rule support for this ID.",
+          appId);
         return;
     }
     extractsInfo &= (APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_SERVICE_UDP_REVERSED);

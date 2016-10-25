@@ -150,7 +150,9 @@ static void appSetClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned ext
     AppInfoTableEntry* pEntry = AppInfoManager::get_instance().get_app_info_entry(appId);
     if (!pEntry)
     {
-        ErrorMessage("AppId: invalid direct client application AppId: %d\n", appId);
+        ParseError(
+            "AppId: ID to Name mapping entry missing for AppId: %d. No rule support for this ID.",
+            appId);
         return;
     }
     extractsInfo &= (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER);

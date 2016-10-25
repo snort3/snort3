@@ -19,11 +19,13 @@
 // appid_module.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: May 10, 2016
 
+#include "appid_module.h"
+
 #include <string>
 
-#include "sfip/sf_ip.h"
-#include "appid_module.h"
+#include "log/messages.h"
 #include "profiler/profiler.h"
+#include "sfip/sf_ip.h"
 #include "utils/util.h"
 
 using namespace std;
@@ -233,6 +235,11 @@ bool AppIdModule::begin(const char* /*fqn*/, int, SnortConfig*)
 
 bool AppIdModule::end(const char*, int, SnortConfig*)
 {
+    if ( (config == nullptr) || (config->app_detector_dir == nullptr) )
+    {
+        ParseWarning(WARN_CONF,"no app_detector_dir present.  No support for AppId in rules.\n");
+    }
+
     return true;
 }
 
