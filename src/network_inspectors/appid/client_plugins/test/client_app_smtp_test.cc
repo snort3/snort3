@@ -27,7 +27,9 @@
 
 #include <string>
 
+#ifdef DEBUG_MSGS
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
+#endif
 
 struct AddAppData 
 {

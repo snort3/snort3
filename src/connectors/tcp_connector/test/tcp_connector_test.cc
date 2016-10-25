@@ -75,7 +75,9 @@ void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 unsigned get_instance_id()
 { return s_instance; }
 
+#ifdef DEBUG_MSGS
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
+#endif
 void ErrorMessage(const char*, ...) { }
 void LogMessage(const char*, ...) { }
 

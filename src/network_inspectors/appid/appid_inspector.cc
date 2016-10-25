@@ -43,6 +43,7 @@
 #include "detector_plugins/detector_http.h"
 #include "detector_plugins/detector_sip.h"
 #include "detector_plugins/detector_pattern.h"
+#include "appid_http_event_handler.h"
 
 THREAD_LOCAL LuaDetectorManager* lua_detector_mgr;
 
@@ -77,6 +78,10 @@ bool AppIdInspector::configure(SnortConfig*)
     active_config = new AppIdConfig( ( AppIdModuleConfig* )config);
     if(config->debug)
     	show(nullptr);
+
+    get_data_bus().subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(HttpEventHandler::REQUEST_EVENT));
+    get_data_bus().subscribe(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(HttpEventHandler::RESPONSE_EVENT));
+
     return active_config->init_appid();
 
     // FIXIT-M some of this stuff may be needed in some fashion...

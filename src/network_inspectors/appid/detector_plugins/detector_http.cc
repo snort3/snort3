@@ -55,12 +55,12 @@
 #define HTTP_PUT_SIZE (sizeof(HTTP_PUT)-1)
 #define HTTP_POST_SIZE (sizeof(HTTP_POST)-1)
 #define HTTP_HEAD_SIZE (sizeof(HTTP_HEAD)-1)
-#define HTTP_TRACE_SIZE (sizeof(HTTP_GET)-1)
+#define HTTP_TRACE_SIZE (sizeof(HTTP_TRACE)-1)
 #define HTTP_DELETE_SIZE (sizeof(HTTP_DELETE)-1)
 #define HTTP_OPTIONS_SIZE (sizeof(HTTP_OPTIONS)-1)
 #define HTTP_PROPFIND_SIZE (sizeof(HTTP_PROPFIND)-1)
 #define HTTP_PROPPATCH_SIZE (sizeof(HTTP_PROPPATCH)-1)
-#define HTTP_MKCOL_SIZE (sizeof(HTTP_GET)-1)
+#define HTTP_MKCOL_SIZE (sizeof(HTTP_MKCOL)-1)
 #define HTTP_COPY_SIZE (sizeof(HTTP_COPY)-1)
 #define HTTP_MOVE_SIZE (sizeof(HTTP_MOVE)-1)
 #define HTTP_LOCK_SIZE (sizeof(HTTP_LOCK)-1)
@@ -1123,6 +1123,9 @@ static IpProtocol ffSetProtocol(char* buf, int buf_size, int start, int psize)
     return (IpProtocol)temp_protocol;
 }
 
+#if MUST_FIX
+            // FIXIT-H: We do not have a packet when we get called from
+            //    the HTTP inspector. Is there an alternative?
 static void fflowCreate(char* adata, fflow_info* fflow, Packet* p, AppId target_appid)
 {
     char* saddr_string = nullptr;
@@ -1316,6 +1319,7 @@ static void fflowCreate(char* adata, fflow_info* fflow, Packet* p, AppId target_
 
     fflow->flow_prepared = 1;
 }
+#endif
 
 void finalize_fflow(fflow_info* fflow, unsigned app_type_flags, AppId target_appId, Packet* p)
 {
@@ -1353,7 +1357,7 @@ void scan_key_chp(PatternType ptype, char* buf, int buf_size, CHPTallyAndActions
 }
 
 AppId scan_chp(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp, char** version,
-        char** user, char** new_field, int* total_found, httpSession* hsession, Packet* p)
+        char** user, char** new_field, int* total_found, httpSession* hsession, Packet*)
 {
     MatchedCHPAction* second_sweep_for_inserts = nullptr;
     int do_not_further_modify_field = 0;
@@ -1487,7 +1491,11 @@ AppId scan_chp(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp,
                 break;
             if (!hsession->fflow)
                 hsession->fflow = (fflow_info*)snort_calloc(sizeof(fflow_info));
+#if MUST_FIX
+            // FIXIT-H: We do not have a packet when we get called from
+            //    the HTTP inspector. Is there an alternative?
             fflowCreate(match->action_data, hsession->fflow, p, hsession->chp_candidate);
+#endif
             break;
 
         case INSERT_FIELD:

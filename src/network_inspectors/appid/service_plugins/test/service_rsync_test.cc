@@ -25,7 +25,9 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+#ifdef DEBUG_MSGS
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
+#endif
 
 extern int rsync_validate(ServiceValidationArgs*);
 

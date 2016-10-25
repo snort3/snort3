@@ -31,6 +31,7 @@
 #include "http_normalizers.h"
 #include "http_msg_request.h"
 #include "http_msg_header.h"
+#include "pub_sub/http_events.h"
 
 using namespace HttpEnums;
 
@@ -40,6 +41,19 @@ HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
     HttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
 {
     transaction->set_header(this, source_id);
+}
+
+void HttpMsgHeader::publish()
+{
+    HttpEvent http_event(this);
+    if(source_id == SRC_CLIENT)
+    {
+        get_data_bus().publish(HTTP_REQUEST_HEADER_EVENT_KEY, http_event, flow);
+    }
+    else if(source_id == SRC_SERVER)
+    {
+        get_data_bus().publish(HTTP_RESPONSE_HEADER_EVENT_KEY, http_event, flow);
+    }
 }
 
 void HttpMsgHeader::update_flow()

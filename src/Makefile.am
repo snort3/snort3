@@ -7,7 +7,6 @@ main.h
 
 if STATIC_INSPECTORS
 lib_list = \
-network_inspectors/appid/libappid.a \
 network_inspectors/arp_spoof/libarp_spoof.a \
 network_inspectors/packet_capture/libpacket_capture.a \
 service_inspectors/back_orifice/libback_orifice.a \
@@ -17,7 +16,6 @@ service_inspectors/dns/libdns.a \
 service_inspectors/ftp_telnet/libftp_telnet.a \
 service_inspectors/gtp/libgtp_inspect.a \
 service_inspectors/modbus/libmodbus.a \
-service_inspectors/http_inspect/libhttp_inspect.a \
 service_inspectors/rpc_decode/librpc_decode.a \
 service_inspectors/sip/libsip.a \
 service_inspectors/ssh/libssh.a \
@@ -58,7 +56,10 @@ network_inspectors/normalize/libnormalize.a \
 network_inspectors/perf_monitor/libperf_monitor.a \
 network_inspectors/reputation/libreputation.a \
 service_inspectors/libservice_inspectors.a \
+network_inspectors/appid/libappid.a \
+service_inspectors/http_inspect/libhttp_inspect.a \
 $(lib_list) \
+pub_sub/libpub_sub.a \
 service_inspectors/imap/libimap.a \
 service_inspectors/pop/libpop.a \
 service_inspectors/smtp/libsmtp.a \
@@ -139,6 +140,7 @@ packet_io \
 parser \
 ports \
 protocols \
+pub_sub \
 search_engines \
 service_inspectors \
 sfip \

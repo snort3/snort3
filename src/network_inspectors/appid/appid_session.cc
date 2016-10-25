@@ -441,9 +441,9 @@ bool AppIdSession::is_packet_ignored(Packet* p)
     return false;
 }
 
-#ifdef REMOVED_WHILE_NOT_IN_USE
 static int ptype_scan_counts[NUMBER_OF_PTYPES];
 
+#ifdef REMOVED_WHILE_NOT_IN_USE
 void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
         AppId* proto_list, ThirdPartyAppIDAttributeData* attribute_data)
 {
@@ -1137,6 +1137,76 @@ bool AppIdSession::do_third_party_discovery(IpProtocol protocol, const sfip_t* i
 
     return isTpAppidDiscoveryDone;
 }
+
+void AppIdSession::pickHttpXffAddress(Packet*, ThirdPartyAppIDAttributeData* attribute_data)
+{
+    int i;
+    static const char* defaultXffPrecedence[] =
+    {
+        HTTP_XFF_FIELD_X_FORWARDED_FOR,
+        HTTP_XFF_FIELD_TRUE_CLIENT_IP
+    };
+
+    // XFF precedence configuration cannot change for a session. Do not get it again if we already
+    // got it.
+// FIXIT-M:
+#ifdef REMOVED_WHILE_NOT_IN_USE
+    if (!hsession->xffPrecedence)
+        hsession->xffPrecedence = _dpd.sessionAPI->get_http_xff_precedence(
+            p->flow, p->packet_flags, &hsession->numXffFields);
+#endif
+
+    if (!hsession->xffPrecedence)
+    {
+        hsession->xffPrecedence = defaultXffPrecedence;
+        hsession->numXffFields = sizeof(defaultXffPrecedence) /
+            sizeof(defaultXffPrecedence[0]);
+    }
+
+    if (session_logging_enabled)
+    {
+        for (i = 0; i < attribute_data->numXffFields; i++)
+            LogMessage("AppIdDbg %s %s : %s\n", app_id_debug_session,
+                attribute_data->xffFieldValue[i].field, attribute_data->xffFieldValue[i].value);
+    }
+
+    // xffPrecedence array is sorted based on precedence
+    for (i = 0; (i < hsession->numXffFields) &&
+        hsession->xffPrecedence[i]; i++)
+    {
+        int j;
+        for (j = 0; j < attribute_data->numXffFields; j++)
+        {
+            if (hsession->xffAddr)
+                sfip_free(hsession->xffAddr);
+
+            if (strncasecmp(attribute_data->xffFieldValue[j].field,
+                hsession->xffPrecedence[i], UINT8_MAX) == 0)
+            {
+                char* tmp = strchr(attribute_data->xffFieldValue[j].value, ',');
+                SFIP_RET status;
+
+                if (!tmp)
+                {
+                    hsession->xffAddr = sfip_alloc(
+                        attribute_data->xffFieldValue[j].value, &status);
+                }
+                // For a comma-separated list of addresses, pick the first address
+                else
+                {
+                    attribute_data->xffFieldValue[j].value[tmp -
+                    attribute_data->xffFieldValue[j].value] = '\0';
+                    hsession->xffAddr = sfip_alloc(
+                        attribute_data->xffFieldValue[j].value, &status);
+                }
+                break;
+            }
+        }
+        if (hsession->xffAddr)
+            break;
+    }
+}
+
 #endif
 
 bool AppIdSession::do_service_discovery(IpProtocol protocol, int direction, AppId ClientAppId,
@@ -2450,6 +2520,11 @@ void AppIdSession::clear_http_field()
     if (hsession == nullptr)
         return;
 
+    if (hsession->x_working_with)
+    {
+        snort_free(hsession->x_working_with);
+        hsession->x_working_with = nullptr;
+    }
     if (hsession->referer)
     {
         snort_free(hsession->referer);
@@ -2543,6 +2618,11 @@ void AppIdSession::free_http_session_data()
     {
         snort_free(hsession->response_code);
         hsession->response_code = nullptr;
+    }
+    if (hsession->server)
+    {
+        snort_free(hsession->server);
+        hsession->server = nullptr;
     }
 
     snort_free(hsession);
@@ -2928,8 +3008,6 @@ bool AppIdSession::is_ssl_session_decrypted()
     return get_session_flags(APPID_SESSION_DECRYPTED);
 }
 
-#ifdef REMOVED_WHILE_NOT_IN_USE
-
 static const char* httpFieldName[ NUMBER_OF_PTYPES ] = // for use in debug messages
 {
     "useragent",
@@ -3066,6 +3144,22 @@ int AppIdSession::initial_CHP_sweep(char** chp_buffers, MatchedCHPAction** ppmat
     }
 
     return 1;
+}
+
+bool AppIdSession::is_payload_appid_set()
+{
+    return ( payload_app_id || tp_payload_app_id );
+}
+
+void AppIdSession::clearMiscHttpFlags()
+{
+    if (!get_session_flags(APPID_SESSION_SPDY_SESSION))
+    {
+        clear_session_flags(APPID_SESSION_CHP_INSPECTING);
+        if (thirdparty_appid_module)
+            thirdparty_appid_module->session_attr_clear(tpsession,
+                TP_ATTR_CONTINUE_MONITORING);
+    }
 }
 
 void AppIdSession::processCHP(char** version, Packet* p)
@@ -3273,97 +3367,13 @@ void AppIdSession::processCHP(char** version, Packet* p)
     }
 }
 
-bool AppIdSession::is_payload_appid_set()
-{
-    return ( payload_app_id || tp_payload_app_id );
-}
-
-void AppIdSession::clearMiscHttpFlags()
-{
-    if (!get_session_flags(APPID_SESSION_SPDY_SESSION))
-    {
-        clear_session_flags(APPID_SESSION_CHP_INSPECTING);
-        if (thirdparty_appid_module)
-            thirdparty_appid_module->session_attr_clear(tpsession,
-                TP_ATTR_CONTINUE_MONITORING);
-    }
-}
-
-void AppIdSession::pickHttpXffAddress(Packet*, ThirdPartyAppIDAttributeData* attribute_data)
-{
-    int i;
-    static const char* defaultXffPrecedence[] =
-    {
-        HTTP_XFF_FIELD_X_FORWARDED_FOR,
-        HTTP_XFF_FIELD_TRUE_CLIENT_IP
-    };
-
-    // XFF precedence configuration cannot change for a asd. Do not get it again if we already
-    // got it.
-#ifdef REMOVED_WHILE_NOT_IN_USE
-    if (!hsession->xffPrecedence)
-        hsession->xffPrecedence = _dpd.sessionAPI->get_http_xff_precedence(
-            p->flow, p->packet_flags, &hsession->numXffFields);
-#endif
-
-    if (!hsession->xffPrecedence)
-    {
-        hsession->xffPrecedence = defaultXffPrecedence;
-        hsession->numXffFields = sizeof(defaultXffPrecedence) /
-            sizeof(defaultXffPrecedence[0]);
-    }
-
-    if (session_logging_enabled)
-    {
-        for (i = 0; i < attribute_data->numXffFields; i++)
-            LogMessage("AppIdDbg %s %s : %s\n", session_logging_id,
-                attribute_data->xffFieldValue[i].field, attribute_data->xffFieldValue[i].value);
-    }
-
-    // xffPrecedence array is sorted based on precedence
-    for (i = 0; (i < hsession->numXffFields) &&
-        hsession->xffPrecedence[i]; i++)
-    {
-        int j;
-        for (j = 0; j < attribute_data->numXffFields; j++)
-        {
-            if (hsession->xffAddr)
-                sfip_free(hsession->xffAddr);
-
-            if (strncasecmp(attribute_data->xffFieldValue[j].field,
-                hsession->xffPrecedence[i], UINT8_MAX) == 0)
-            {
-                char* tmp = strchr(attribute_data->xffFieldValue[j].value, ',');
-                SFIP_RET status;
-
-                if (!tmp)
-                {
-                    hsession->xffAddr = sfip_alloc(
-                        attribute_data->xffFieldValue[j].value, &status);
-                }
-                // For a comma-separated list of addresses, pick the first address
-                else
-                {
-                    attribute_data->xffFieldValue[j].value[tmp -
-                    attribute_data->xffFieldValue[j].value] = '\0';
-                    hsession->xffAddr = sfip_alloc(
-                        attribute_data->xffFieldValue[j].value, &status);
-                }
-                break;
-            }
-        }
-        if (hsession->xffAddr)
-            break;
-    }
-}
-
-int AppIdSession::processHTTPPacket(Packet* p, int direction, HttpParsedHeaders* const)
+int AppIdSession::processHTTPPacket(int direction)
 {
     Profile http_profile_context(httpPerfStats);
     constexpr auto RESPONSE_CODE_LENGTH = 3;
     HeaderMatchedPatterns hmp;
     httpSession* http_session;
-    int start, end, size;
+    int size;
     char* version = nullptr;
     char* vendorVersion = nullptr;
     char* vendor = nullptr;
@@ -3448,7 +3458,7 @@ int AppIdSession::processHTTPPacket(Packet* p, int direction, HttpParsedHeaders*
             http_session->chp_finished, http_session->chp_hold_flow);
 
     if (!http_session->chp_finished || http_session->chp_hold_flow)
-        processCHP(&version, p);
+        processCHP(&version, nullptr);
 
     if (!http_session->skip_simple_detect)  // false unless a match happened with a call to
                                             // processCHP().
@@ -3456,23 +3466,20 @@ int AppIdSession::processHTTPPacket(Packet* p, int direction, HttpParsedHeaders*
         if (!get_session_flags(APPID_SESSION_APP_REINSPECT))
         {
             // Scan Server Header for Vendor & Version
-            if ( (thirdparty_appid_module && (scan_flags & SCAN_HTTP_VENDOR_FLAG) &&
+            
+            // FIXIT-M: Should we be checking the scan_flags even when
+            //     thirdparty_appid_module is off?
+            if ((thirdparty_appid_module && (scan_flags & SCAN_HTTP_VENDOR_FLAG) &&
                 hsession->server) ||
-                (!thirdparty_appid_module &&
-                    get_http_header_location(p->data, p->dsize, HTTP_ID_SERVER,
-                        &start, &end, &hmp) == 1) )
+                (!thirdparty_appid_module && hsession->server))
             {
                 if (serviceAppId == APP_ID_NONE || serviceAppId == APP_ID_HTTP)
                 {
-                    RNAServiceSubtype* subtype = nullptr;
+                    RNAServiceSubtype* local_subtype = nullptr;
                     RNAServiceSubtype** tmpSubtype;
 
-                    if (thirdparty_appid_module)
-                        get_server_vendor_version((uint8_t*)hsession->server,
+                    get_server_vendor_version((uint8_t*)hsession->server,
                                 strlen(hsession->server), &vendorVersion, &vendor, &subtype);
-                    else
-                        get_server_vendor_version(p->data + start, end - start, &vendorVersion,
-                            &vendor, &subtype);
                     if (vendor || vendorVersion)
                     {
                         if (serviceVendor)
@@ -3491,13 +3498,13 @@ int AppIdSession::processHTTPPacket(Packet* p, int direction, HttpParsedHeaders*
                             serviceVersion = vendorVersion;
                         scan_flags &= ~SCAN_HTTP_VENDOR_FLAG;
                     }
-                    if (subtype)
+                    if (local_subtype)
                     {
                         for (tmpSubtype = &subtype; *tmpSubtype; tmpSubtype =
                             &(*tmpSubtype)->next)
                             ;
 
-                        *tmpSubtype = subtype;
+                        *tmpSubtype = local_subtype;
                     }
                 }
             }
@@ -3553,19 +3560,16 @@ int AppIdSession::processHTTPPacket(Packet* p, int direction, HttpParsedHeaders*
         }
 
         /* Scan X-Working-With HTTP header */
+            // FIXIT-M: Should we be checking the scan_flags even when
+            //     thirdparty_appid_module is off?
         if ((thirdparty_appid_module && (scan_flags & SCAN_HTTP_XWORKINGWITH_FLAG) &&
             hsession->x_working_with) ||
-            (!thirdparty_appid_module && get_http_header_location(p->data, p->dsize,
-            HTTP_ID_X_WORKING_WITH, &start, &end, &hmp) == 1))
+            (!thirdparty_appid_module && hsession->x_working_with))
         {
             AppId appId;
 
-            if (thirdparty_appid_module)
-                appId = scan_header_x_working_with((uint8_t*)hsession->x_working_with,
+            appId = scan_header_x_working_with((uint8_t*)hsession->x_working_with,
                     strlen(hsession->x_working_with), &version);
-            else
-                appId = scan_header_x_working_with(p->data + start, end - start, &version);
-
             if (appId)
             {
                 if (direction == APP_ID_FROM_INITIATOR)
@@ -3587,17 +3591,15 @@ int AppIdSession::processHTTPPacket(Packet* p, int direction, HttpParsedHeaders*
         }
 
         // Scan Content-Type Header for multimedia types and scan contents
+            // FIXIT-M: Should we be checking the scan_flags even when
+            //     thirdparty_appid_module is off?
         if ((thirdparty_appid_module && (scan_flags & SCAN_HTTP_CONTENT_TYPE_FLAG)
             && hsession->content_type  && !is_payload_appid_set()) ||
             (!thirdparty_appid_module && !is_payload_appid_set() &&
-                get_http_header_location(p->data, p->dsize, HTTP_ID_CONTENT_TYPE,
-                    &start, &end, &hmp) == 1))
+            hsession->content_type))
         {
-            if (thirdparty_appid_module)
-                payload_id = get_appid_by_content_type((uint8_t*)hsession->content_type,
+            payload_id = get_appid_by_content_type((uint8_t*)hsession->content_type,
                     strlen(hsession->content_type));
-            else
-                payload_id = get_appid_by_content_type(p->data + start, end - start);
             if (session_logging_enabled && payload_id > APP_ID_NONE
                     && payload_app_id != payload_id)
                 LogMessage("AppIdDbg %s Content-Type is data %d\n", session_logging_id,
@@ -3670,6 +3672,7 @@ int AppIdSession::processHTTPPacket(Packet* p, int direction, HttpParsedHeaders*
         clearMiscHttpFlags();
     }  // end DON'T skip_simple_detect
 
+    snort_free(version);
     return 0;
 }
-#endif
+

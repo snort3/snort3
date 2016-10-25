@@ -154,6 +154,8 @@ fw_appid.h \
 host_port_app_cache.cc \
 host_port_app_cache.h \
 http_common.h \
+appid_http_event_handler.cc \
+appid_http_event_handler.h \
 ips_appid_option.cc \
 length_app_cache.cc \
 length_app_cache.h \
@@ -171,27 +173,28 @@ thirdparty_appid_types.h \
 thirdparty_appid_utils.cc \
 thirdparty_appid_utils.h
 
-if STATIC_INSPECTORS
+#if STATIC_INSPECTORS
 noinst_LIBRARIES = libappid.a
 libappid_a_SOURCES = $(file_list) \
 $(cp_file_list) \
 $(sp_file_list) \
 $(dp_file_list) \
 $(util_file_list)
-else
-shlibdir = $(pkglibdir)/inspectors
-shlib_LTLIBRARIES = libappid.la
-libappid_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libappid_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libappid_la_SOURCES = $(file_list) \
-$(cp_file_list) \
-$(sp_file_list) \
-$(dp_file_list) \
-$(util_file_list)
-endif
+#else
+#shlibdir = $(pkglibdir)/inspectors
+#shlib_LTLIBRARIES = libappid.la
+#libappid_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+#libappid_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
+#libappid_la_SOURCES = $(file_list) \
+#$(cp_file_list) \
+#$(sp_file_list) \
+#$(dp_file_list) \
+#$(util_file_list)
+#endif
 
 if ENABLE_UNIT_TESTS
-SUBDIRS=service_plugins/test \
+SUBDIRS=test\
+service_plugins/test \
 client_plugins/test
 endif
 

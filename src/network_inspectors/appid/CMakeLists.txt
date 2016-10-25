@@ -158,6 +158,8 @@ set ( APPID_SOURCES
     host_port_app_cache.cc
     host_port_app_cache.h
     http_common.h
+    appid_http_event_handler.cc
+    appid_http_event_handler.h
     ips_appid_option.cc
     length_app_cache.cc
     length_app_cache.h
@@ -177,7 +179,7 @@ set ( APPID_SOURCES
     )
 
 
-if (STATIC_INSPECTORS)
+#if (STATIC_INSPECTORS)
     add_library(appid STATIC
     	${APPID_SOURCES}
     	${CP_APPID_SOURCES}
@@ -185,20 +187,21 @@ if (STATIC_INSPECTORS)
     	${SP_APPID_SOURCES}
     	${UTIL_APPID_SOURCES}
     )
-else (STATIC_INSPECTORS)
-    add_shared_library(appid inspectors
-    	${APPID_SOURCES}
-    	${CP_APPID_SOURCES}
-    	${DP_APPID_SOURCES}
-    	${SP_APPID_SOURCES}
-    	${UTIL_APPID_SOURCES}
-    )
-endif (STATIC_INSPECTORS)
+#else (STATIC_INSPECTORS)
+#    add_shared_library(appid inspectors
+#    	${APPID_SOURCES}
+#    	${CP_APPID_SOURCES}
+#    	${DP_APPID_SOURCES}
+#    	${SP_APPID_SOURCES}
+#    	${UTIL_APPID_SOURCES}
+#    )
+#endif (STATIC_INSPECTORS)
 
 target_include_directories ( appid PRIVATE ${APPID_INCLUDE_DIR} )
 
 add_subdirectory(service_plugins/test)
 add_subdirectory(client_plugins/test)
+add_subdirectory(test)
 
 #install (FILES ${APPID_INCLUDES}
 #    DESTINATION "${INCLUDE_INSTALL_PATH}/appid"

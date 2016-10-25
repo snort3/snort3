@@ -43,15 +43,15 @@ include_directories(BEFORE network_inspectors)
 
 # Build options for specific libraries
 # FIXIT is this needed?  see also
-# STATIC_INSECTOR_LIBS in service_inspectors/CMakeLists.txt
+# STATIC_INSPECTOR_LIBS in service_inspectors/CMakeLists.txt
 if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_LIBRARIES
-        appid
+#        appid
         arp_spoof
         back_orifice
         dns
         ftp_telnet
-        http_inspect
+#        http_inspect
         rpc_decode
         sip
         ssh
@@ -97,6 +97,8 @@ target_link_libraries( snort
     ${STATIC_CODEC_LIBRARIES}
     network_inspectors
     service_inspectors
+    appid
+    http_inspect
     ${STATIC_INSPECTOR_LIBRARIES}
     port_scan
     reputation
@@ -123,6 +125,7 @@ target_link_libraries( snort
     codec_module
     memory
     host_tracker
+    pub_sub
     parser
     flow
     side_channel
@@ -178,6 +181,7 @@ add_subdirectory(service_inspectors)
 add_subdirectory(stream)
 add_subdirectory(target_based)
 add_subdirectory(host_tracker)
+add_subdirectory(pub_sub)
 add_subdirectory(time)
 add_subdirectory(profiler)
 add_subdirectory(utils)

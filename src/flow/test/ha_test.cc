@@ -148,7 +148,9 @@ void Stream::delete_flow(const FlowKey* flowkey)
 void ErrorMessage(const char*,...) { }
 void LogMessage(const char*,...) { }
 
+#ifdef DEBUG_MSGS
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
+#endif
 
 void packet_gettimeofday(struct timeval* tv)
 { *tv = s_packet_time; }

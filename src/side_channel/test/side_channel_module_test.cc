@@ -56,7 +56,9 @@ void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
 void ParseWarning(WarningGroup, const char*, ...) { }
 
+#ifdef DEBUG_MSGS
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
+#endif
 
 char* snort_strdup(const char* s)
 { return strdup(s); }

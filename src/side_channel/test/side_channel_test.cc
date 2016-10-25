@@ -137,7 +137,9 @@ Connector* ConnectorManager::get_connector(const std::string connector_name)
 
 void ParseWarning(WarningGroup, const char*, ...) { }
 
+#ifdef DEBUG_MSGS
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
+#endif
 
 TEST_GROUP(side_channel)
 {

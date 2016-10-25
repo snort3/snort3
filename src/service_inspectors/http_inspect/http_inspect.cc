@@ -186,6 +186,7 @@ const Field& HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flo
     }
 #endif
 
+    latest_section->publish();
     return latest_section->get_detect_buf();
 }
 

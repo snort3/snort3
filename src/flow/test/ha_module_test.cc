@@ -42,7 +42,9 @@ void ParseWarning(WarningGroup, const char*, ...) { }
 
 char* snort_strdup(const char* str) { return strdup(str); }
 
+#ifdef DEBUG_MSGS
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
+#endif
 
 static bool s_port_1_set = false;
 static bool s_use_daq = false;

@@ -56,6 +56,7 @@ const PegInfo appid_pegs[] =
     { "dns_udp_flows", "count of dns flows over udp discovered by appid" },
     { "ftp_flows", "count of ftp flows discovered by appid" },
     { "ftps_flows", "count of ftps flows discovered by appid" },
+    { "http_flows", "count of http flows discovered by appid" },
     { "imap_flows", "count of imap service flows discovered by appid" },
     { "imaps_flows", "count of imap TLS service flows discovered by appid" },
     { "irc_flows", "count of irc service flows discovered by appid" },

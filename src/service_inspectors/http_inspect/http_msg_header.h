@@ -38,6 +38,14 @@ public:
     HttpEnums::InspectSection get_inspection_section() const override
         { return detection_section ? HttpEnums::IS_DETECTION : HttpEnums::IS_NONE; }
     void update_flow() override;
+
+    void publish() override;
+
+    int32_t get_status_code()
+    {
+        return status_code_num;
+    }
+
 private:
     // Dummy configurations to support MIME processing
     MailLogConfig mime_conf;

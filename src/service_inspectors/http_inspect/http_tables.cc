@@ -147,6 +147,7 @@ const StrCode HttpMsgHeadShared::header_list[] =
     { HEAD_LAST_MODIFIED,        "last-modified" },
     { HEAD_X_FORWARDED_FOR,      "x-forwarded-for" },
     { HEAD_TRUE_CLIENT_IP,       "true-client-ip" },
+    { HEAD_X_WORKING_WITH,       "x-working-with" },
     { 0,                         nullptr }
 };
 
@@ -272,7 +273,8 @@ const HeaderNormalizer* const HttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] =
     [HEAD_EXPIRES] = &NORMALIZER_BASIC,
     [HEAD_LAST_MODIFIED] = &NORMALIZER_BASIC,
     [HEAD_X_FORWARDED_FOR] = &NORMALIZER_CAT,
-    [HEAD_TRUE_CLIENT_IP] = &NORMALIZER_BASIC
+    [HEAD_TRUE_CLIENT_IP] = &NORMALIZER_BASIC,
+    [HEAD_X_WORKING_WITH] = &NORMALIZER_BASIC
 };
 /* *INDENT-ON* */
 

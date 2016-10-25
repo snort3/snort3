@@ -53,6 +53,9 @@ public:
 
     HttpEnums::MethodId get_method_id() const { return method_id; }
 
+    // Publish an inspection event for other modules to consume.
+    virtual void publish() { }
+
 #ifdef REG_TEST
     // Test tool prints all derived message parts
     virtual void print_section(FILE* output) = 0;

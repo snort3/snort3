@@ -128,7 +128,7 @@ void DataLog::show(SnortConfig*)
 
 static const Parameter dl_params[] =
 {
-    { "key", Parameter::PT_STRING, nullptr, "http_uri",
+    { "key", Parameter::PT_SELECT, "http_uri | http_raw_uri", "http_raw_uri",
       "name of data buffer to log" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

@@ -17,7 +17,7 @@ add_subdirectory(ssl)
 add_subdirectory(wizard)
 
 if (STATIC_INSPECTORS)
-    set (STATIC_INSECTOR_LIBS
+    set (STATIC_INSPECTOR_LIBS
         back_orifice
         dce_rpc
         dnp3
@@ -26,7 +26,7 @@ if (STATIC_INSPECTORS)
         gtp_inspect
         imap
         modbus
-        http_inspect
+#        http_inspect
         pop
         rpc_decode
         sip
@@ -43,5 +43,5 @@ add_library( service_inspectors STATIC
 )
 
 target_link_libraries( service_inspectors
-    ${STATIC_INSECTOR_LIBS}
+    http_inspect ${STATIC_INSPECTOR_LIBS}
 )

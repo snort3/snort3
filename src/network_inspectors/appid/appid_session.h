@@ -203,6 +203,7 @@ public:
     static AppIdSession* create_future_session(const Packet*, const sfip_t*, uint16_t, const sfip_t*,
             uint16_t, IpProtocol, int16_t, int);
     static void do_application_discovery(Packet*);
+    int processHTTPPacket(int);
 
     AppIdConfig* config = nullptr;
     CommonAppIdData common;
@@ -371,21 +372,18 @@ private:
     void set_payload_app_id_data( ApplicationId, char**);
     void stop_rna_service_inspection(Packet*,  int);
     void set_session_logging_state(const Packet* pkt, int direction);
+    void clear_app_id_data();
+    int initial_CHP_sweep(char**, MatchedCHPAction**);
+    void clearMiscHttpFlags();
+    void processCHP(char**, Packet*);
 
 #ifdef REMOVED_WHILE_NOT_IN_USE
     // FIXIT-M these are not needed until appid for snort3 supports 3rd party detectors (e.g. NAVL)
     void ProcessThirdPartyResults(Packet*, int, AppId*, ThirdPartyAppIDAttributeData*);
     void checkTerminateTpModule(uint16_t tpPktCount);
     bool do_third_party_discovery(IpProtocol, const sfip_t*,  Packet*, int&);
-
-    // FIXIT-H when http detection is made functional we need to look at these methods and determine if they are
-    // needed and what changes are required for snort3
-    void clear_app_id_data();
     void pickHttpXffAddress(Packet*, ThirdPartyAppIDAttributeData*);
-    int initial_CHP_sweep(char**, MatchedCHPAction**);
-    void clearMiscHttpFlags();
-    int processHTTPPacket(Packet*, int, HttpParsedHeaders* const);
-    void processCHP(char**, Packet*);
+
 #endif
 
     void create_session_logging_id(int direction, Packet* pkt);
