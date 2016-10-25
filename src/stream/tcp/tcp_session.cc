@@ -1047,14 +1047,17 @@ void TcpSession::cleanup_session_if_expired(Packet* p)
     }
 }
 
+void TcpSession::precheck(Packet* p)
+{
+    // Check if the session is expired. Should be done before we do something with
+    // the packet...Insert a packet, or handle state change SYN, FIN, RST, etc.
+    cleanup_session_if_expired(p);
+}
+
 bool TcpSession::do_packet_analysis_pre_checks(Packet* p, TcpSegmentDescriptor& tsd)
 {
     if ( !is_flow_handling_packets(p) )
         return false;
-
-    // Check if the session is expired. Should be done before we do something with
-    // the packet...Insert a packet, or handle state change SYN, FIN, RST, etc.
-    cleanup_session_if_expired(p);
 
     pkt_action_mask = ACTION_NOTHING;
     tel.clear_tcp_events();

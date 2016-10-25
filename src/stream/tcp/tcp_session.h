@@ -43,6 +43,7 @@ public:
 
     bool setup(Packet*) override;
     void restart(Packet* p) override;
+    void precheck(Packet* p) override;
     int process(Packet*) override;
 
     void flush() override;

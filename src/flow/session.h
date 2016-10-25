@@ -39,6 +39,7 @@ public:
     virtual int process(Packet*) { return 0; }
 
     virtual void restart(Packet*) { }
+    virtual void precheck(Packet*) { }
     virtual void clear() = 0;
     virtual void cleanup() { clear(); }
 

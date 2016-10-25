@@ -48,6 +48,7 @@ bool TcpSession::setup(Packet*){ return true; }
 void TcpSession::update_direction(char, sfip_t const*, unsigned short){ }
 int TcpSession::process(Packet*){ return 0; }
 void TcpSession::restart(Packet*){ }
+void TcpSession::precheck(Packet*){ }
 void TcpSession::clear(){ }
 void TcpSession::cleanup(){ }
 bool TcpSession::add_alert(Packet*, unsigned int, unsigned int){ return true; }

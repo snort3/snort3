@@ -407,6 +407,8 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     last_pkt_type = p->type();
     preemptive_cleanup();
+    flow->set_direction(p);
+    flow->session->precheck(p);
 
     if ( flow->flow_state != Flow::FlowState::SETUP )
         set_policies(snort_conf, flow->policy_id);
