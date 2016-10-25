@@ -66,12 +66,17 @@ public:
     void resume(unsigned suspended);
 
     IpsContext* get_context() const;
+    IpsContext* get_context(unsigned) const;
+
     IpsContextData* get_context_data(unsigned id) const;
     void set_context_data(unsigned id, IpsContextData*) const;
 
     unsigned idle_count() const;
     unsigned busy_count() const;
     unsigned hold_count() const;
+
+    bool can_hold() const
+    { return idle_count() > 5; }  // FIXIT-H define appropriate const
 
 private:
     std::vector<IpsContext*> idle;

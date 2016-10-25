@@ -198,6 +198,7 @@ const PegInfo pc_names[] =
     { "header searches", "fast pattern searches in header buffer" },
     { "body searches", "fast pattern searches in body buffer" },
     { "file searches", "fast pattern searches in file buffer" },
+    { "offloads", "fast pattern searches that were offloaded" },
     { "alerts", "alerts not including IP reputation" },
     { "total alerts", "alerts including IP reputation" },
     { "logged", "logged packets" },

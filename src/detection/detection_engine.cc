@@ -175,6 +175,9 @@ bool DetectionEngine::detect(Packet* p)
     if ( p->packet_flags & PKT_PASS_RULE )
         return false;
         
+    if ( PacketLatency::fastpath() )
+        return false;
+
     // FIXIT-M restrict detect to current ip layer
     // Curently, if a rule is found on any IP layer, we perform the detect routine
     // on the entire packet. Instead, we should only perform detect on that layer!!
@@ -186,9 +189,6 @@ bool DetectionEngine::detect(Packet* p)
     case PktType::ICMP:
     case PktType::PDU:
     case PktType::FILE:
-        if ( PacketLatency::fastpath() )
-            return false;
-
         return fpEvalPacket(p);
 
     default:

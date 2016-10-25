@@ -221,6 +221,9 @@ static const Parameter search_engine_params[] =
     { "inspect_stream_inserts", Parameter::PT_BOOL, nullptr, "false",
       "inspect reassembled payload - disabling is good for performance, bad for detection" },
 
+    { "offload_limit", Parameter::PT_INT, nullptr, "99999",
+      "minimum sizeof PDU to offload fast pattern search (defaults to disabled)" },
+
     { "search_method", Parameter::PT_DYNAMIC, (void*)&get_search_methods, "ac_bnfa",
       "set fast pattern algorithm - choose available search engine" },
 
@@ -315,6 +318,9 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("inspect_stream_inserts") )
         fp->set_stream_insert(v.get_bool());
+
+    else if ( v.is("offload_limit") )
+        fp->set_offload_limit(v.get_long());
 
     else if ( v.is("search_method") )
     {

@@ -65,6 +65,7 @@ IpsContext::IpsContext(unsigned size) :
     const EventQueueConfig* qc = snort_conf->event_queue_config;
     equeue = sfeventq_new(qc->max_events, qc->log_events, sizeof(EventNode));
 
+    packet->context = this;
     fp_set_context(*this);
 }
 

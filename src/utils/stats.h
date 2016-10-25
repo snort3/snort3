@@ -43,6 +43,7 @@ struct PacketCount
     PegCount header_searches;
     PegCount body_searches;
     PegCount file_searches;
+    PegCount offloads;
     PegCount alert_pkts;
     PegCount total_alert_pkts;
     PegCount log_pkts;

@@ -31,7 +31,6 @@
 **  2005-02-17 - Track alerts per IP frag tracker so that they aren't double
 **               reported for rebuilt frags.  SAS (code similar to AJM's for
 **               per session tracking).
-**
 */
 
 #ifdef HAVE_CONFIG_H
@@ -50,6 +49,7 @@
 #include "latency/packet_latency.h"
 #include "latency/rule_latency.h"
 #include "log/messages.h"
+#include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "managers/action_manager.h"
@@ -71,6 +71,20 @@
 #include "pattern_match_data.h"
 #include "pcrm.h"
 #include "service_map.h"
+
+#include "context_switcher.h"
+#include "detection_util.h"
+#include "detection_engine.h"
+#include "detection_options.h"
+#include "fp_config.h"
+#include "fp_create.h"
+#include "ips_context.h"
+#include "pattern_match_data.h"
+#include "pcrm.h"
+#include "rules.h"
+#include "service_map.h"
+#include "tag.h"
+#include "treenodes.h"
 
 THREAD_LOCAL ProfileStats rulePerfStats;
 THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
@@ -370,7 +384,7 @@ static int rule_tree_match(
 
             last_check->ts.tv_sec = eval_data.p->pkth->ts.tv_sec;
             last_check->ts.tv_usec = eval_data.p->pkth->ts.tv_usec;
-            last_check->packet_number = DetectionEngine::get_context()->pkt_count
+            last_check->packet_number = eval_data.p->context->pkt_count
                 + PacketManager::get_rebuilt_packet_count();
             last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
         }
@@ -666,10 +680,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* o, Packet* p)
                         return 1;
                 }
 
-                /*
-                **  Loop here so we don't log the same event
-                **  multiple times.
-                */
+                //  Loop here so we don't log the same event multiple times.
                 for (k = 0; k < j; k++)
                 {
                     if (o->matchInfo[i].MatchArray[k] == otn)
@@ -681,9 +692,6 @@ static inline int fpFinalSelectEvent(OtnxMatchData* o, Packet* p)
 
                 if ( otn && !fpSessionAlerted(p, otn) )
                 {
-                    /*
-                    **  QueueEvent
-                    */
                     if ( DetectionEngine::queue_event(otn) )
                         pc.queue_limit++;
 
@@ -721,15 +729,27 @@ static inline int fpFinalSelectEvent(OtnxMatchData* o, Packet* p)
 class MpseStash
 {
 public:
+    // FIXIT-H use max = n * k, at most k per group
+    // need n >= 4 for src+dst+gen+svc
     static const unsigned max = 32;
 
     void init()
-    { count = flushed = 0; }
+    { if ( enable ) { count = flushed = 0; } }
 
+    // this is done in the offload thread
     bool push(void* user, void* tree, int index, void* list);
+
+    // this is done in the packet thread
     bool process(MpseMatch, void*);
 
+    void disable_process()
+    { enable = false; }
+
+    void enable_process()
+    { enable = true; }
+
 private:
+    bool enable;
     unsigned count;
     unsigned flushed;
 
@@ -774,6 +794,9 @@ bool MpseStash::push(void* user, void* tree, int index, void* list)
 
 bool MpseStash::process(MpseMatch match, void* context)
 {
+    if ( !enable )
+        return true;  // maxed out - quit
+
     if ( count > pmqs.max_inq )
         pmqs.max_inq = count;
 
@@ -821,14 +844,13 @@ void fp_clear_context(IpsContext& c)
 static int rule_tree_queue(
     void* user, void* tree, int index, void* context, void* list)
 {
-    MpseStash* stash = DetectionEngine::get_stash();
+    OtnxMatchData* pomd = (OtnxMatchData*)context;
+    MpseStash* stash = pomd->p->context->stash;
 
     if ( stash->push(user, tree, index, list) )
     {
         if ( stash->process(rule_tree_match, context) )
-        {
             return 1;
-        }
     }
     return 0;
 }
@@ -839,7 +861,7 @@ static int rule_tree_queue(
         int start_state = 0; \
         cnt++; \
         omd->data = buf; omd->size = len; \
-        MpseStash* stash = DetectionEngine::get_stash(); \
+        MpseStash* stash = omd->p->context->stash; \
         stash->init(); \
         so->search(buf, len, rule_tree_queue, omd, &start_state); \
         stash->process(rule_tree_match, omd); \
@@ -855,8 +877,7 @@ static int rule_tree_queue(
     }
 
 static int fp_search(
-    PortGroup* port_group, Packet* p,
-    int check_ports, int type, OtnxMatchData* omd)
+    PortGroup* port_group, Packet* p, int check_ports, int type, OtnxMatchData* omd)
 {
     Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
     InspectionBuffer buf;
@@ -905,12 +926,56 @@ static int fp_search(
         {
             // FIXIT-M file data should be obtained from
             // inspector gadget as is done with SEARCH_BUFFER
-            DataPointer file_data;
-            DetectionEngine::get_file_data(file_data);
+            DataPointer file_data = p->context->file_data;
+
             if ( file_data.len )
                 SEARCH_DATA(file_data.data, file_data.len, pc.file_searches);
         }
     }
+    return 0;
+}
+
+static int fp_tsearch(
+    PortGroup* port_group, Packet* p, int check_ports, int type, OtnxMatchData* omd,
+    SnortConfig* sc)
+{
+    snort_conf = sc;
+    return fp_search(port_group, p, check_ports, type, omd);
+}
+
+static int fp_offload(
+    PortGroup* port_group, Packet* p, int check_ports, int type, OtnxMatchData* omd)
+{
+    MpseStash* stash = p->context->stash;
+    ContextSwitcher* sw = Snort::get_switcher();
+    FastPatternConfig* fp = snort_conf->fast_pattern_config;
+
+    if ( p->type() != PktType::PDU or (p->dsize < fp->get_offload_limit()) or
+        p->flow->test_session_flags(SSNFLAG_OFFLOAD) or !sw->can_hold() )
+    {
+        stash->enable_process();
+        return fp_search(port_group, p, check_ports, type, omd);
+    }
+
+    assert(p == p->context->packet);
+    stash->init();
+    stash->disable_process();
+
+    p->flow->set_session_flags(SSNFLAG_OFFLOAD);
+    pc.offloads++;
+
+    unsigned id = sw->suspend();
+
+    std::thread t(fp_tsearch, port_group, p, check_ports, type, omd, snort_conf);
+    t.join();
+
+    sw->resume(id);
+
+    p->flow->clear_session_flags(SSNFLAG_OFFLOAD);
+    stash->enable_process();
+    stash->process(rule_tree_match, omd);
+    fpFinalSelectEvent(omd, p);
+
     return 0;
 }
 
@@ -960,7 +1025,7 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
     if ( DetectionEngine::content_enabled() )
     {
         if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
-            if ( fp_search(port_group, p, check_ports, type, omd) )
+            if ( fp_offload(port_group, p, check_ports, type, omd) )
                 return 0;
     }
 
@@ -1148,7 +1213,7 @@ static inline bool fpEvalHeaderSvc(Packet* p, OtnxMatchData* omd, int proto)
 
 static void fpEvalPacketUdp(Packet* p)
 {
-    OtnxMatchData* omd = DetectionEngine::get_context()->otnx;
+    OtnxMatchData* omd = p->context->otnx;
 
     uint16_t tmp_sp = p->ptrs.sp;
     uint16_t tmp_dp = p->ptrs.dp;
@@ -1207,7 +1272,7 @@ static void fpEvalPacketUdp(Packet* p)
 */
 int fpEvalPacket(Packet* p)
 {
-    OtnxMatchData* omd = DetectionEngine::get_context()->otnx;
+    OtnxMatchData* omd = p->context->otnx;
     init_match_info(omd);
 
     /* Run UDP rules against the UDP header of Teredo packets */
@@ -1261,7 +1326,9 @@ int fpEvalPacket(Packet* p)
     default:
         break;
     }
+    if ( !p->flow or !p->flow->test_session_flags(SSNFLAG_OFFLOAD) )
+        return fpFinalSelectEvent(omd, p);
 
-    return fpFinalSelectEvent(omd, p);
+    return 0;
 }
 

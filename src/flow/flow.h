@@ -62,6 +62,7 @@
 #define SSNFLAG_CLIENT_SWAPPED      0x00400000
 
 #define SSNFLAG_PROXIED             0x01000000
+#define SSNFLAG_OFFLOAD             0x02000000
 #define SSNFLAG_NONE                0x00000000 /* nothing, an MT bag of chips */
 
 #define SSNFLAG_SEEN_BOTH (SSNFLAG_SEEN_SERVER | SSNFLAG_SEEN_CLIENT)
@@ -177,29 +178,22 @@ public:
     Layer get_mpls_layer_per_dir(bool);
 
     uint32_t update_session_flags(uint32_t flags)
-    {
-        return ssn_state.session_flags = flags;
-    }
+    { return ssn_state.session_flags = flags; }
 
     uint32_t set_session_flags(uint32_t flags)
-    {
-        return ssn_state.session_flags |= flags;
-    }
-
-    uint32_t clear_session_flags(uint32_t flags)
-    {
-        return ssn_state.session_flags &= ~flags;
-    }
+    { return ssn_state.session_flags |= flags; }
 
     uint32_t get_session_flags()
-    {
-        return ssn_state.session_flags;
-    }
+    { return ssn_state.session_flags; }
+
+    uint32_t test_session_flags(uint32_t flags)
+    { return (ssn_state.session_flags & flags) != 0; }
+
+    uint32_t clear_session_flags(uint32_t flags)
+    { return ssn_state.session_flags &= ~flags; }
 
     int get_ignore_direction()
-    {
-        return ssn_state.ignore_direction;
-    }
+    { return ssn_state.ignore_direction; }
 
     int set_ignore_direction(char ignore_direction)
     {

@@ -137,6 +137,14 @@ IpsContext* ContextSwitcher::get_context() const
     return busy.back();
 }
 
+IpsContext* ContextSwitcher::get_context(unsigned slot) const
+{
+    assert(slot <= hold.capacity());
+    IpsContext* c = hold[slot];
+    assert(c);
+    return c;
+}
+
 IpsContextData* ContextSwitcher::get_context_data(unsigned id) const
 {
     return get_context()->get_context_data(id);

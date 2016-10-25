@@ -120,8 +120,9 @@ struct SO_PUBLIC Packet
     // nothing after this point is zeroed ...
 
     // Everything beyond this point is set by PacketManager::decode()
+    class IpsContext* context;   // set by control
     const DAQ_PktHdr_t* pkth;    // packet meta data
-    const uint8_t* pkt;         // raw packet data
+    const uint8_t* pkt;          // raw packet data
 
     // These are both set before PacketManager::decode() returns
     const uint8_t* data;        /* packet payload pointer */

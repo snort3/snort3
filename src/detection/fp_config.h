@@ -52,17 +52,26 @@ public:
     bool get_stream_insert()
     { return inspect_stream_insert; }
 
-    void set_max_queue_events(unsigned int num_events)
+    void set_max_queue_events(unsigned num_events)
     { max_queue_events = num_events; }
 
     unsigned get_max_queue_events()
     { return max_queue_events; }
 
-    int get_single_rule_group()
-    { return portlists_flags & PL_SINGLE_RULE_GROUP; }
+    void set_bleed_over_port_limit(unsigned n)
+    { bleedover_port_limit = n; }
 
     int get_bleed_over_port_limit()
     { return bleedover_port_limit; }
+
+    void set_offload_limit(unsigned n)
+    { offload_limit = n; }
+
+    unsigned get_offload_limit()
+    { return offload_limit; }
+
+    int get_single_rule_group()
+    { return portlists_flags & PL_SINGLE_RULE_GROUP; }
 
     int get_bleed_over_warnings()
     { return portlists_flags & PL_BLEEDOVER_WARNINGS_ENABLED; }
@@ -93,9 +102,6 @@ public:
 
     void set_single_rule_group()
     { portlists_flags |= PL_SINGLE_RULE_GROUP; }
-
-    void set_bleed_over_port_limit(unsigned int n)
-    { bleedover_port_limit = n; }
 
     void set_bleed_over_warnings()
     { portlists_flags |= PL_BLEEDOVER_WARNINGS_ENABLED; }
@@ -152,6 +158,7 @@ private:
 
     unsigned max_queue_events;
     unsigned bleedover_port_limit;
+    unsigned offload_limit;
 
     int search_opt;
     int portlists_flags;
