@@ -40,6 +40,7 @@
 
 #define RXP_MAX_JOBS        8   // Max jobs expected per packet
 #define RXP_MAX_SUBSETS     4   // Hardware supports max 4 at once
+#define RXP_PACKET_LENGTH   64  // Minimum data size to perform match with RXP
 
 using namespace std;
 
@@ -472,7 +473,7 @@ static void rxp_begin_packet()
 static void rxp_end_packet()
 {
     struct rte_mbuf* job_buf;
-    struct rte_mbuf* pkts_burst[32];
+    struct rte_mbuf* pkts_burst[RXP_MAX_PKT_BURST];
     struct rxp_response_data rxp_resp;
     int i, j, ret;
     unsigned sent, pending, rx_pkts;
