@@ -526,6 +526,22 @@ static void rxp_end_packet()
 
         ret = rxp_enqueue_job(RxpMpse::portid, 0 /* queue id */, job_buf);
 
+        /*Probable error due responses queue full*/
+        if(ret == RXP_STATUS_ENQUEUE_JOB_FAILED)
+        {
+            /*FIXIT-T: In this case we need to recover responses from RXP process once
+             *  them, and re-try to enqueue, if another failure then is an RXP error.
+             *   Related to ticket #2544 and #2545
+             *
+             *   The responses collection and processing can be in a separated
+             *   function (ticket 2544) or copied from the responses collection
+             *   algorithm below (although a copy feels unnecessary)
+             *
+             *   Note the processed variable for the current version will
+             *   have to be updated here and not re-initialized to 0 later.
+             *   However, in non blocking version this would not be necessary*/
+        }
+
         if (ret != RXP_STATUS_OK)
         {
             LogMessage("ERROR: %d rxp_enqueue_job() failed.\n", ret);
