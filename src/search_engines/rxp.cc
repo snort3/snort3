@@ -518,11 +518,29 @@ static void rxp_end_packet()
             RxpMpse::jobs[i].subset[3]->get_subset(),
             &job_buf);
 
+        if (ret != RXP_STATUS_OK)
+        {
+            LogMessage("ERROR: %d rxp_prepare_job() failed.\n", ret);
+            // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
+        }
+
         ret = rxp_enqueue_job(RxpMpse::portid, 0 /* queue id */, job_buf);
+
+        if (ret != RXP_STATUS_OK)
+        {
+            LogMessage("ERROR: %d rxp_enqueue_job() failed.\n", ret);
+            // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
+        }
     }
 
     // Submit all jobs in a single batch
     ret = rxp_dispatch_jobs(RxpMpse::portid, 0 /* queue id */, &sent, &pending);
+
+    if (ret != RXP_STATUS_OK)
+    {
+        LogMessage("ERROR: %d rxp_dispatch_jobs() failed.\n", ret);
+        exit(-1);
+    }
 
     rx_pkts = processed = 0;
 
@@ -532,12 +550,21 @@ static void rxp_end_packet()
         {
             ret = rxp_get_responses(RxpMpse::portid, 0 /* queue id */, pkts_burst,
                 (RxpMpse::jobcount - processed), &rx_pkts);
+
+            if (ret != RXP_STATUS_OK)
+            {
+                LogMessage("ERROR: %d rxp_get_responses() failed.\n", ret);
+                // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
+            }
         }
 
         ret = rxp_get_response_data(pkts_burst[--rx_pkts], &rxp_resp);
 
-        if (ret)
-            LogMessage("ERROR: %d decoding RXP response.\n", ret);
+        if (ret != RXP_STATUS_OK)
+        {
+            LogMessage("ERROR: %d rxp_get_response_data() failed.\n", ret);
+            // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
+        }
 
         if (rxp_resp.match_count != 0)
         {
