@@ -59,7 +59,7 @@ struct ServiceNTPOptional
 
 #pragma pack()
 
-static int ntp_init(const IniServiceAPI* const init_api);
+static int ntp_init(const InitServiceAPI* const init_api);
 static int ntp_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -98,7 +98,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_NTP, 0 }
 };
 
-static int ntp_init(const IniServiceAPI* const init_api)
+static int ntp_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)

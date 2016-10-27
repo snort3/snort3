@@ -23,7 +23,7 @@
 #include "http_events.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"
 
-const uint8_t* HttpEvent::get_header(unsigned id, uint64_t sub_id, unsigned& length)
+const uint8_t* HttpEvent::get_header(unsigned id, uint64_t sub_id, int32_t& length)
 {
     Field field;
     field = http_msg_header->get_classic_buffer(id, sub_id, 0);
@@ -39,19 +39,31 @@ const uint8_t* HttpEvent::get_header(unsigned id, uint64_t sub_id, unsigned& len
     }
 }
 
-const uint8_t* HttpEvent::get_content_type(unsigned& length)
+const uint8_t* HttpEvent::get_content_type(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_HEADER, 
         HttpEnums::HEAD_CONTENT_TYPE, length);
 }
 
-const uint8_t* HttpEvent::get_host(unsigned& length)
+const uint8_t* HttpEvent::get_cookie(int32_t& length)
+{
+    return get_header(HttpEnums::HTTP_BUFFER_HEADER, HttpEnums::HEAD_COOKIE,
+        length);
+}
+
+const uint8_t* HttpEvent::get_host(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_HEADER, HttpEnums::HEAD_HOST,
         length);
 }
 
-const uint8_t* HttpEvent::get_referer(unsigned& length)
+const uint8_t* HttpEvent::get_location(int32_t& length)
+{
+    return get_header(HttpEnums::HTTP_BUFFER_HEADER, HttpEnums::HEAD_LOCATION,
+        length);
+}
+
+const uint8_t* HttpEvent::get_referer(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_HEADER, HttpEnums::HEAD_REFERER,
         length);
@@ -62,30 +74,30 @@ int32_t HttpEvent::get_response_code()
     return http_msg_header->get_status_code();
 }
 
-const uint8_t* HttpEvent::get_server(unsigned& length)
+const uint8_t* HttpEvent::get_server(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_HEADER, HttpEnums::HEAD_SERVER,
         length);
 }
 
-const uint8_t* HttpEvent::get_uri(unsigned& length)
+const uint8_t* HttpEvent::get_uri(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_URI, 0, length);
 }
 
-const uint8_t* HttpEvent::get_user_agent(unsigned& length)
+const uint8_t* HttpEvent::get_user_agent(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_HEADER, HttpEnums::HEAD_USER_AGENT,
         length);
 }
 
-const uint8_t* HttpEvent::get_via(unsigned& length)
+const uint8_t* HttpEvent::get_via(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_HEADER, HttpEnums::HEAD_VIA, 
         length);
 }
 
-const uint8_t* HttpEvent::get_x_working_with(unsigned& length)
+const uint8_t* HttpEvent::get_x_working_with(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_HEADER, 
         HttpEnums::HEAD_X_WORKING_WITH, length);

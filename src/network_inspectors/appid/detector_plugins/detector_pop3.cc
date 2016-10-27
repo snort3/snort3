@@ -58,7 +58,7 @@ struct ClientPOP3Data
 
 static POP3_CLIENT_APP_CONFIG pop3_config;
 
-static CLIENT_APP_RETCODE pop3_ca_init(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE pop3_ca_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static void pop3_ca_clean();
 static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, struct Detector* userData);
@@ -192,7 +192,7 @@ struct ServicePOP3Data
     int error;
 };
 
-static int pop3_init(const IniServiceAPI* const init_api);
+static int pop3_init(const InitServiceAPI* const init_api);
 static int pop3_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -246,7 +246,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_POP3S, APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_CLIENT_USER }
 };
 
-static CLIENT_APP_RETCODE pop3_ca_init(const IniClientAppAPI* const init_api, SF_LIST* config)
+static CLIENT_APP_RETCODE pop3_ca_init(const InitClientAppAPI* const init_api, SF_LIST* config)
 {
     unsigned i;
     RNAClientAppModuleConfigItem* item;
@@ -302,7 +302,7 @@ static CLIENT_APP_RETCODE pop3_ca_init(const IniClientAppAPI* const init_api, SF
     return CLIENT_APP_SUCCESS;
 }
 
-static int pop3_init(const IniServiceAPI* const init_api)
+static int pop3_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPatternUser(&pop3_validate, IpProtocol::TCP, (uint8_t*)POP3_OK,
         sizeof(POP3_OK)-1, 0, "pop3");

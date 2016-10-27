@@ -59,7 +59,7 @@ struct RNAClientAppModuleConfigItem
 using RNAClientAppFCN = CLIENT_APP_RETCODE(*)( const uint8_t* data, uint16_t size, const int dir,
     AppIdSession*, Packet*, Detector*);
 
-struct IniClientAppAPI
+struct InitClientAppAPI
 {
     void (* RegisterPattern)(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
         unsigned size, int position);
@@ -78,7 +78,7 @@ struct FinalizeClientAppAPI
     void* data = nullptr;
 };
 
-using RNAClientAppInitFCN = CLIENT_APP_RETCODE(*)(const IniClientAppAPI* const, SF_LIST* config);
+using RNAClientAppInitFCN = CLIENT_APP_RETCODE(*)(const InitClientAppAPI* const, SF_LIST* config);
 using RNAClientAppFinalizeFCN = CLIENT_APP_RETCODE (*)(const FinalizeClientAppAPI* const);
 using RNAClientAppCleanFCN = void(*)();
 

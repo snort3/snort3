@@ -1703,12 +1703,13 @@ static int detector_add_chp_action(AppId appIdInstance, int isKeyPattern, Patter
     uint precedence;
     CHPListElement* chpa;
     CHPApp* chpapp;
+    AppInfoManager& app_info_mgr = AppInfoManager::get_instance();
 
     //find the CHP App for this
     if (!(chpapp = (decltype(chpapp))sfxhash_find(CHP_glossary, &appIdInstance)))
     {
         ErrorMessage(
-            "LuaDetectorApi:Invalid attempt to add a CHP action for unknown appId %d, instance %d. - pattern:\"%s\" - action \"%s\"",
+            "LuaDetectorApi:Invalid attempt to add a CHP action for unknown appId %d, instance %d. - pattern:\"%s\" - action \"%s\"\n",
             CHP_APPIDINSTANCE_TO_ID(appIdInstance), CHP_APPIDINSTANCE_TO_INSTANCE(appIdInstance),
             patternData, optionalActionData ? optionalActionData : "");
         snort_free(patternData);
@@ -1728,8 +1729,36 @@ static int detector_add_chp_action(AppId appIdInstance, int isKeyPattern, Patter
     precedence = chpapp->ptype_scan_counts[patternType]++;
     // at runtime we'll want to know how many of each type of pattern we are looking for.
     if (actionType == REWRITE_FIELD || actionType == INSERT_FIELD)
-        chpapp->ptype_rewrite_insert_used[patternType]=1; // true.
-    else if (actionType != ALTERNATE_APPID)
+    {
+        if (!app_info_mgr.get_app_info_flags(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SUPPORTED_SEARCH))
+        {
+            ErrorMessage( "LuaDetectorApi: CHP action type, %d, requires previous use of action type, %d, (see appId %d, pattern=\"%s\").\n",
+                         actionType, GET_OFFSETS_FROM_REBUILT,
+                         CHP_APPIDINSTANCE_TO_ID(appIdInstance), patternData);
+            snort_free(patternData);
+            if (optionalActionData)
+                snort_free(optionalActionData);
+            return 0;
+        }
+        switch (patternType)
+        {
+        // permitted pattern type (modifiable HTTP/SPDY request field)
+        case AGENT_PT:
+        case HOST_PT:
+        case REFERER_PT:
+        case URI_PT:
+        case COOKIE_PT:
+            break;
+        default:
+            ErrorMessage( "LuaDetectorApi: CHP action type, %d, on unsupported pattern type, %d, (see appId %d, pattern=\"%s\").\n",
+                         actionType, patternType, CHP_APPIDINSTANCE_TO_ID(appIdInstance), patternData);
+            snort_free(patternData);
+            if (optionalActionData)
+                snort_free(optionalActionData);
+            return 0;
+        }
+    }
+    else if (actionType != ALTERNATE_APPID && actionType != DEFER_TO_SIMPLE_DETECT)
         chpapp->ptype_req_counts[patternType]++;
 
     chpa = (CHPListElement*)snort_calloc(sizeof(CHPListElement));
@@ -1748,14 +1777,19 @@ static int detector_add_chp_action(AppId appIdInstance, int isKeyPattern, Patter
     if (actionType == GET_OFFSETS_FROM_REBUILT)
     {
         /* This is a search engine and it is SUPPORTED for safe-search packet rewrite */
-        AppInfoManager::get_instance().set_app_info_flags(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE |
+        app_info_mgr.set_app_info_flags(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE |
             APPINFO_FLAG_SUPPORTED_SEARCH);
     }
     else if (actionType == SEARCH_UNSUPPORTED)
     {
         /* This is a search engine and it is UNSUPPORTED for safe-search packet rewrite */
-        AppInfoManager::get_instance().set_app_info_flags(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE);
+        app_info_mgr.set_app_info_flags(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE);
     }
+    else if (actionType == DEFER_TO_SIMPLE_DETECT && strcmp(patternData,"<ignore-all-patterns>") == 0)
+    {
+        remove_http_patterns_for_id(appIdInstance);
+    }
+
     return 0;
 }
 

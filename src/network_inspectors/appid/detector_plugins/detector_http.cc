@@ -344,6 +344,7 @@ public:
     tMlmpTree* RTMPHosUrlMatcher = nullptr;
     SearchTool* header_matcher = nullptr;
     SearchTool* content_type_matcher = nullptr;
+    SearchTool* field_matcher = nullptr;
     SearchTool* chp_matchers[MAX_PATTERN_TYPE + 1] = { nullptr };
     HosUrlPatternsList* hosUrlPatternsList = nullptr;
 };
@@ -418,6 +419,48 @@ void insert_http_pattern_element(enum httpPatternType pType, HTTPListElement* el
         element->next = httpPatternLists->clientAgentPatternList;
         httpPatternLists->clientAgentPatternList = element;
         break;
+    }
+}
+
+void remove_http_patterns_for_id( AppId id )
+{
+    // Walk the list of all the patterns we have inserted, searching for this appIdInstance and free them.
+    // The purpose is for the 14 and 15 to be used together to only set the APPINFO_FLAG_SEARCH_ENGINE flag
+    // If the reserved pattern is not used, it is a mixed use case and should just behave normally.
+    CHPListElement* chpa = nullptr;
+    CHPListElement* prev_chpa = nullptr;
+    CHPListElement* tmp_chpa = httpPatternLists->chpList;
+    while (tmp_chpa)
+    {
+        if (tmp_chpa->chp_action.appIdInstance == id)
+        {
+            // advance the tmp_chpa pointer by removing the item pointed to. Keep prev_chpa unchanged.
+
+            // 1) unlink the struct, 2) free strings and then 3) free the struct.
+            chpa = tmp_chpa; // preserve this pointer to be freed at the end.
+            if (prev_chpa == NULL)
+            {
+                // Remove from head
+                httpPatternLists->chpList = tmp_chpa->next;
+                tmp_chpa = httpPatternLists->chpList;
+            }
+            else
+            {
+                // Remove from middle of list.
+                prev_chpa->next = tmp_chpa->next;
+                tmp_chpa = prev_chpa->next;
+            }
+            snort_free(chpa->chp_action.pattern);
+            if (chpa->chp_action.action_data)
+                snort_free(chpa->chp_action.action_data);
+            snort_free(chpa);
+        }
+        else
+        {
+            // advance both pointers
+            prev_chpa = tmp_chpa;
+            tmp_chpa = tmp_chpa->next;
+        }
     }
 }
 
@@ -603,7 +646,7 @@ static int http_pattern_match(void* id, void*, int index, void* data, void*)
     MatchedPatterns** matches = (MatchedPatterns**)data;
     DetectorHTTPPattern* target = (DetectorHTTPPattern*)id;
 
-    /* make sure we haven't already seen this pattern */
+    // make sure we haven't already seen this pattern
     for (tmp = matches; *tmp; tmp = &(*tmp)->next)
         cm = *tmp;
 
@@ -709,19 +752,16 @@ static SearchTool* processContentTypePatterns(DetectorHTTPPattern* patternList,
 
     for (uint32_t i = 0; i < patternListCount; i++)
     {
-        patternMatcher->add(patternList[i].pattern,
-            patternList[i].pattern_size,
-            &patternList[i],
-            false);
+        patternMatcher->add(patternList[i].pattern, patternList[i].pattern_size,
+            &patternList[i], false);
     }
 
-    /* Add patterns from Lua API */
+    // Add patterns from Lua API
     for (element = luaPatternList; element; element = element->next)
     {
         patternMatcher->add(element->detectorHTTPPattern.pattern,
             element->detectorHTTPPattern.pattern_size,
-            &element->detectorHTTPPattern,
-            false);
+            &element->detectorHTTPPattern, false);
     }
 
     patternMatcher->prep();
@@ -765,6 +805,102 @@ static SearchTool* registerHeaderPatterns(HeaderPattern* patternList, size_t pat
     patternMatcher->prep();
 
     return patternMatcher;
+}
+
+#define HTTP_FIELD_PREFIX_USER_AGENT    "\r\nUser-Agent: "
+#define HTTP_FIELD_PREFIX_USER_AGENT_SIZE (sizeof(HTTP_FIELD_PREFIX_USER_AGENT)-1)
+#define HTTP_FIELD_PREFIX_HOST    "\r\nHost: "
+#define HTTP_FIELD_PREFIX_HOST_SIZE (sizeof(HTTP_FIELD_PREFIX_HOST)-1)
+#define HTTP_FIELD_PREFIX_REFERER    "\r\nReferer: "
+#define HTTP_FIELD_PREFIX_REFERER_SIZE (sizeof(HTTP_FIELD_PREFIX_REFERER)-1)
+#define HTTP_FIELD_PREFIX_URI    " "
+#define HTTP_FIELD_PREFIX_URI_SIZE (sizeof(HTTP_FIELD_PREFIX_URI)-1)
+#define HTTP_FIELD_PREFIX_COOKIE    "\r\nCookie: "
+#define HTTP_FIELD_PREFIX_COOKIE_SIZE (sizeof(HTTP_FIELD_PREFIX_COOKIE)-1)
+
+typedef struct _FIELD_PATTERN
+{
+    PatternType patternType;
+    uint8_t* data;
+    unsigned length;
+} FieldPattern;
+
+static FieldPattern http_field_patterns[] =
+{
+    {URI_PT, (uint8_t*) HTTP_FIELD_PREFIX_URI, HTTP_FIELD_PREFIX_URI_SIZE},
+    {HOST_PT, (uint8_t*) HTTP_FIELD_PREFIX_HOST,HTTP_FIELD_PREFIX_HOST_SIZE},
+    {REFERER_PT, (uint8_t*) HTTP_FIELD_PREFIX_REFERER, HTTP_FIELD_PREFIX_REFERER_SIZE},
+    {COOKIE_PT, (uint8_t*) HTTP_FIELD_PREFIX_COOKIE, HTTP_FIELD_PREFIX_COOKIE_SIZE},
+    {AGENT_PT, (uint8_t*) HTTP_FIELD_PREFIX_USER_AGENT,HTTP_FIELD_PREFIX_USER_AGENT_SIZE},
+};
+
+static SearchTool* processHttpFieldPatterns(FieldPattern* patternList, size_t patternListCount)
+{
+    u_int32_t i;
+
+    SearchTool* patternMatcher = new SearchTool("ac_full");
+
+    for (i=0; i < patternListCount; i++)
+        patternMatcher->add( (char  *)patternList[i].data, patternList[i].length,
+                             &patternList[i], false);
+
+    patternMatcher->prep();
+    return patternMatcher;
+}
+
+typedef struct fieldPatternData_t
+{
+    const uint8_t*payload;
+    unsigned length;
+    httpSession *hsession;
+} FieldPatternData;
+
+static int http_field_pattern_match(void *id, void *, int index, void *data, void *)
+{
+    static const uint8_t crlf[] = "\r\n";
+    static unsigned crlfLen = sizeof(crlf)-1;
+    FieldPatternData *pFieldData = (FieldPatternData*)data;
+    FieldPattern *target = (FieldPattern  *)id;
+    const uint8_t* p;
+    unsigned fieldOffset = target->length + index;
+    unsigned remainingLength = pFieldData->length - fieldOffset;
+
+    if (!(p = (uint8_t*)service_strstr(&pFieldData->payload[fieldOffset], remainingLength, crlf, crlfLen)))
+    {
+        return 1;
+    }
+    pFieldData->hsession->fieldOffset[target->patternType] = (uint16_t)fieldOffset;
+    pFieldData->hsession->fieldEndOffset[target->patternType] = p - pFieldData->payload;
+    return 1;
+}
+
+void httpGetNewOffsetsFromPacket(Packet *pkt, httpSession *hsession)
+{
+    constexpr auto MIN_HTTP_REQ_HEADER_SIZE = (sizeof("GET /\r\n\r\n") - 1);
+    static const uint8_t crlfcrlf[] = "\r\n\r\n";
+    static unsigned crlfcrlfLen = sizeof(crlfcrlf) - 1;
+    uint8_t*headerEnd;
+    unsigned fieldId;
+    FieldPatternData patternMatchData;
+
+    for (fieldId = AGENT_PT; fieldId <= COOKIE_PT; fieldId++)
+        hsession->fieldOffset[fieldId] = 0;
+
+
+    if (!pkt->data || pkt->dsize < MIN_HTTP_REQ_HEADER_SIZE)
+        return;
+
+    patternMatchData.hsession = hsession;
+    patternMatchData.payload = pkt->data;
+
+    if (!(headerEnd = (uint8_t*)service_strstr(pkt->data, pkt->dsize, crlfcrlf, crlfcrlfLen)))
+        return;
+
+    headerEnd += crlfcrlfLen;
+    patternMatchData.length = (unsigned)(headerEnd - pkt->data);
+    detectorHttpConfig->field_matcher->find_all((char*)pkt->data, patternMatchData.length,
+                   &http_field_pattern_match, false, (void*)(&patternMatchData));
+
 }
 
 int finalize_http_detector()
@@ -812,6 +948,11 @@ int finalize_http_detector()
     if (!detectorHttpConfig->content_type_matcher)
         return -1;
 
+    numPatterns = sizeof(http_field_patterns)/sizeof(*http_field_patterns);
+    detectorHttpConfig->field_matcher = processHttpFieldPatterns(http_field_patterns, numPatterns);
+    if (!detectorHttpConfig->field_matcher)
+        return -1;
+
     if (!processCHPList(httpPatternLists->chpList))
         return -1;
 
@@ -825,6 +966,7 @@ void clean_http_detector()
     delete detectorHttpConfig->client_agent_matcher;
     delete detectorHttpConfig->header_matcher;
     delete detectorHttpConfig->content_type_matcher;
+    delete detectorHttpConfig->field_matcher;
 
     for (size_t i = 0; i <= MAX_PATTERN_TYPE; i++)
          delete detectorHttpConfig->chp_matchers[i];
@@ -902,7 +1044,7 @@ static char* normalize_userid(char* user)
     int i, old_size;
     int percent_count = 0;
     char a, b;
-    char* tmp_ret, * tmp_user;
+    char* tmp_ret, *tmp_user;
 
     old_size = strlen(user);
 
@@ -2388,10 +2530,10 @@ bool is_webdav_found(HeaderMatchedPatterns* hmp)
 // knowledge" case for HTTP/2 (i.e., the client knows the server supports
 // HTTP/2 and jumps right in with the preface).
 
-static CLIENT_APP_RETCODE http_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE http_client_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE http_client_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, struct Detector* userData);
-static int http_service_init(const IniServiceAPI* const init_api);
+static int http_service_init(const InitServiceAPI* const init_api);
 static int http_service_validate(ServiceValidationArgs* args);
 
 static AppRegistryEntry appIdRegistry[] =
@@ -2474,7 +2616,7 @@ RNAServiceValidationModule http_service_mod =
     0
 };
 
-static CLIENT_APP_RETCODE http_client_init(const IniClientAppAPI* const init_api, SF_LIST*)
+static CLIENT_APP_RETCODE http_client_init(const InitClientAppAPI* const init_api, SF_LIST*)
 {
     if (AppIdConfig::get_appid_config()->mod_config->http2_detection_enabled)
     {
@@ -2512,7 +2654,7 @@ static CLIENT_APP_RETCODE http_client_validate(const uint8_t*, uint16_t, const i
     return CLIENT_APP_SUCCESS;
 }
 
-static int http_service_init(const IniServiceAPI* const init_api)
+static int http_service_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)

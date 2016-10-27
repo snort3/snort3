@@ -236,8 +236,8 @@ public:
     void free_smb_fp_data(AppIdSession*, FpSMBData*);
     char* get_netbios_name(AppIdSession*);
     uint32_t produce_ha_state(Flow* flow, uint8_t* buf);
-    uint32_t consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t length,
-            IpProtocol proto, sfip_t* ip);
+    uint32_t consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t length, IpProtocol proto,
+        sfip_t* ip, uint16_t initiatorPort);
     AppIdSession* get_appid_data(Flow* flow);
     char* get_dns_query(AppIdSession*, uint8_t* query_len);
     uint16_t get_dns_query_offset(AppIdSession*);
@@ -246,6 +246,8 @@ public:
     uint32_t get_dns_ttl(AppIdSession*);
     char* get_http_new_field(AppIdSession*, HTTP_FIELD_ID);
     void free_http_new_field(AppIdSession*, HTTP_FIELD_ID);
+    uint16_t get_http_field_offset(AppIdSession*, HTTP_FIELD_ID);
+    uint16_t get_http_field_end_offset(AppIdSession*, HTTP_FIELD_ID);
 };
 
 SO_PUBLIC extern AppIdApi appid_api;

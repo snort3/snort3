@@ -71,7 +71,7 @@ struct BIT_CLIENT_APP_CONFIG
 
 THREAD_LOCAL BIT_CLIENT_APP_CONFIG bit_config;
 
-static CLIENT_APP_RETCODE bit_init(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE bit_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE bit_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
@@ -109,7 +109,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_BITTORRENT, 0 }
 };
 
-static CLIENT_APP_RETCODE bit_init(const IniClientAppAPI* const init_api, SF_LIST* config)
+static CLIENT_APP_RETCODE bit_init(const InitClientAppAPI* const init_api, SF_LIST* config)
 {
     unsigned i;
     RNAClientAppModuleConfigItem* item;

@@ -260,7 +260,7 @@ int ssl_detector_process_patterns()
     return retVal;
 }
 
-static int ssl_init(const IniServiceAPI* const api);
+static int ssl_init(const InitServiceAPI* const api);
 static int ssl_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -329,7 +329,7 @@ static const AppRegistryEntry appIdRegistry[] =
     { APP_ID_SSL, APPINFO_FLAG_SERVICE_ADDITIONAL }
 };
 
-static int ssl_init(const IniServiceAPI* const init_api)
+static int ssl_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN_PCT,
         sizeof(SSL_PATTERN_PCT), 2, "ssl");

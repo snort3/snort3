@@ -55,7 +55,7 @@ struct ServiceRSHELLData
     ServiceRSHELLData* child;
 };
 
-static int rshell_init(const IniServiceAPI* const init_api);
+static int rshell_init(const InitServiceAPI* const init_api);
 static int rshell_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -95,7 +95,7 @@ static AppRegistryEntry appIdRegistry[] =
 
 static int16_t app_id = 0;
 
-static int rshell_init(const IniServiceAPI* const init_api)
+static int rshell_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
 
@@ -204,8 +204,10 @@ static int rshell_validate(ServiceValidationArgs* args)
                 }
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
                 PopulateExpectedFlow(asd, pf,
+                    APPID_SESSION_CONTINUE |
+                    APPID_SESSION_REXEC_STDERR |
                     APPID_SESSION_NO_TPI |
-                    APPID_SESSION_IGNORE_HOST |
+                    APPID_SESSION_SERVICE_DETECTED |
                     APPID_SESSION_NOT_A_SERVICE |
                     APPID_SESSION_PORT_SERVICE_DONE);
                 pf->rnaServiceState = RNA_STATE_STATEFUL;

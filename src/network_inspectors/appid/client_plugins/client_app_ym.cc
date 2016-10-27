@@ -39,7 +39,7 @@ THREAD_LOCAL YM_CLIENT_APP_CONFIG ym_config;
 
 #define MAX_VERSION_SIZE    64
 
-static CLIENT_APP_RETCODE ym_init(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE ym_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
@@ -80,7 +80,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_YAHOO_MSG, APPINFO_FLAG_CLIENT_ADDITIONAL }
 };
 
-static CLIENT_APP_RETCODE ym_init(const IniClientAppAPI* const init_api, SF_LIST* config)
+static CLIENT_APP_RETCODE ym_init(const InitClientAppAPI* const init_api, SF_LIST* config)
 {
     unsigned i;
 

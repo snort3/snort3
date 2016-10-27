@@ -74,7 +74,7 @@ struct ClientAppData
 
 static CLIENT_APP_CONFIG ca_config;
 
-static CLIENT_APP_RETCODE init(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static void clean();
 static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, Detector* userData);
@@ -230,7 +230,7 @@ struct ServiceIMAPData
 #endif
 };
 
-static int imap_init(const IniServiceAPI* const init_api);
+static int imap_init(const InitServiceAPI* const init_api);
 static int imap_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -287,7 +287,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_IMAPS, APPINFO_FLAG_CLIENT_USER }
 };
 
-static CLIENT_APP_RETCODE init(const IniClientAppAPI* const init_api, SF_LIST* config)
+static CLIENT_APP_RETCODE init(const InitClientAppAPI* const init_api, SF_LIST* config)
 {
     unsigned i;
     RNAClientAppModuleConfigItem* item;
@@ -336,7 +336,7 @@ static CLIENT_APP_RETCODE init(const IniClientAppAPI* const init_api, SF_LIST* c
     return CLIENT_APP_SUCCESS;
 }
 
-static int imap_init(const IniServiceAPI* const init_api)
+static int imap_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPatternUser(&imap_validate, IpProtocol::TCP, (uint8_t*)IMAP_PATTERN,
         sizeof(IMAP_PATTERN)-1, 0, "imap");

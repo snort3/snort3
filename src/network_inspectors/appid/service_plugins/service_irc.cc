@@ -65,7 +65,7 @@ struct ServiceIRCData
     unsigned count;
 };
 
-static int irc_init(const IniServiceAPI* const init_api);
+static int irc_init(const InitServiceAPI* const init_api);
 static int irc_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -103,7 +103,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_IRCD, 0 }
 };
 
-static int irc_init(const IniServiceAPI* const init_api)
+static int irc_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)

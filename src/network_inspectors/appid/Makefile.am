@@ -14,8 +14,6 @@ client_plugins/client_app_config.h \
 client_plugins/client_app_msn.cc \
 client_plugins/client_app_msn.h \
 client_plugins/client_app_rtp.cc \
-client_plugins/client_app_smtp.cc \
-client_plugins/client_app_smtp.h \
 client_plugins/client_app_ssh.cc \
 client_plugins/client_app_timbuktu.cc \
 client_plugins/client_app_tns.cc \
@@ -38,6 +36,8 @@ detector_plugins/detector_pattern.h \
 detector_plugins/detector_pop3.cc \
 detector_plugins/detector_sip.cc \
 detector_plugins/detector_sip.h \
+detector_plugins/detector_smtp.cc \
+detector_plugins/detector_smtp.h \
 detector_plugins/http_url_patterns.cc \
 detector_plugins/http_url_patterns.h
 
@@ -93,8 +93,6 @@ service_plugins/service_rsync.cc \
 service_plugins/service_rsync.h \
 service_plugins/service_rtmp.cc \
 service_plugins/service_rtmp.h \
-service_plugins/service_smtp.cc \
-service_plugins/service_smtp.h \
 service_plugins/service_snmp.cc \
 service_plugins/service_snmp.h \
 service_plugins/service_ssh.cc \
@@ -195,6 +193,6 @@ $(util_file_list)
 if ENABLE_UNIT_TESTS
 SUBDIRS=test\
 service_plugins/test \
-client_plugins/test
+detector_plugins/test
 endif
 

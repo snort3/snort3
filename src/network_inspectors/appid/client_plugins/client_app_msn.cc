@@ -69,7 +69,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_MSNP, APPINFO_FLAG_CLIENT_ADDITIONAL }
 };
 
-static CLIENT_APP_RETCODE msn_init(const IniClientAppAPI* const init_api, SF_LIST* config)
+static CLIENT_APP_RETCODE msn_init(const InitClientAppAPI* const init_api, SF_LIST* config)
 {
     RNAClientAppModuleConfigItem* item;
     msn_config.enabled = 1;

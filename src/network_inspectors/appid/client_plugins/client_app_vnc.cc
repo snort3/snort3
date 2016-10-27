@@ -55,7 +55,7 @@ struct VNC_CLIENT_APP_CONFIG
 
 THREAD_LOCAL VNC_CLIENT_APP_CONFIG vnc_config;
 
-static CLIENT_APP_RETCODE vnc_init(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE vnc_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE vnc_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
@@ -95,7 +95,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_VNC_RFB, APPINFO_FLAG_CLIENT_ADDITIONAL }
 };
 
-static CLIENT_APP_RETCODE vnc_init(const IniClientAppAPI* const init_api, SF_LIST* config)
+static CLIENT_APP_RETCODE vnc_init(const InitClientAppAPI* const init_api, SF_LIST* config)
 {
     unsigned i;
 

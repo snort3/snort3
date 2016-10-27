@@ -80,7 +80,7 @@ struct ServiceRTMPData
     char* pageUrl;
 };
 
-static int rtmp_init(const IniServiceAPI* const api);
+static int rtmp_init(const InitServiceAPI* const api);
 static int rtmp_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -119,7 +119,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_RTMP, APPINFO_FLAG_SERVICE_ADDITIONAL }
 };
 
-static int rtmp_init(const IniServiceAPI* const init_api)
+static int rtmp_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
     for (i = 0; i < (sizeof(appIdRegistry) / sizeof(*appIdRegistry)); i++)

@@ -45,7 +45,7 @@ struct ServiceRSYNCData
     RSYNCState state;
 };
 
-static int rsync_init(const IniServiceAPI* const init_api);
+static int rsync_init(const InitServiceAPI* const init_api);
 static int rsync_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -83,7 +83,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_RSYNC, APPINFO_FLAG_SERVICE_ADDITIONAL }
 };
 
-static int rsync_init(const IniServiceAPI* const init_api)
+static int rsync_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&rsync_validate, IpProtocol::TCP, (uint8_t*)RSYNC_BANNER,
         sizeof(RSYNC_BANNER)-1, 0, "rsync");

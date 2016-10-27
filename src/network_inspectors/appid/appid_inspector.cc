@@ -87,8 +87,6 @@ bool AppIdInspector::configure(SnortConfig*)
     // FIXIT-M some of this stuff may be needed in some fashion...
 #ifdef REMOVED_WHILE_NOT_IN_USE
     _dpd.registerGeAppId(getOpenAppId);
-    if (!thirdparty_appid_module)
-        _dpd.streamAPI->register_http_header_callback(httpHeaderCallback);
     _dpd.registerSslAppIdLookup(sslAppGroupIdLookup);
 
     // FIXIT-M AppID will need to register for SIP events for sip detection to work...
@@ -242,97 +240,6 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 };
 #else
 const BaseApi* nin_appid = &appid_inspector_api.base;
-#endif
-
-#ifdef REMOVED_WHILE_NOT_IN_USE
-// FIXIT-M This is to be replace with snort3 inspection events
-void httpHeaderCallback(Packet* p, HttpParsedHeaders* const headers)
-{
-    AppIdSession* asd;
-    int direction;
-    AppIdConfig* pConfig = AppIdConfig::get_appid_config();
-
-    if (thirdparty_appid_module)
-        return;
-    if (!p || !(asd = appid_api.get_appid_data(p->flow)))
-        return;
-
-    direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
-
-    if (!asd->hsession)
-        asd->hsession = (decltype(asd->hsession))snort_calloc(sizeof(httpSession));
-
-    if (direction == APP_ID_FROM_INITIATOR)
-    {
-        if (headers->host.start)
-        {
-            snort_free(asd->hsession->host);
-            asd->hsession->host = snort_strndup((char*)headers->host.start, headers->host.len);
-            asd->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
-
-            if (headers->url.start)
-            {
-                snort_free(asd->hsession->url);
-                asd->hsession->url = (char*)snort_calloc(sizeof(HTTP_PREFIX) +
-                    headers->host.len + headers->url.len);
-                strcpy(asd->hsession->url, HTTP_PREFIX);
-                strncat(asd->hsession->url, (char*)headers->host.start, headers->host.len);
-                strncat(asd->hsession->url, (char*)headers->url.start, headers->url.len);
-                asd->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
-            }
-        }
-        if (headers->userAgent.start)
-        {
-            snort_free(asd->hsession->useragent);
-            asd->hsession->useragent = snort_strndup((char*)headers->userAgent.start,
-                headers->userAgent.len);
-            asd->scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
-        }
-        if (headers->referer.start)
-        {
-            snort_free(asd->hsession->referer);
-            asd->hsession->referer = snort_strndup((char*)headers->referer.start,
-                headers->referer.len);
-        }
-        if (headers->via.start)
-        {
-            snort_free(asd->hsession->via);
-            asd->hsession->via = snort_strndup((char*)headers->via.start, headers->via.len);
-            asd->scan_flags |= SCAN_HTTP_VIA_FLAG;
-        }
-    }
-    else
-    {
-        if (headers->via.start)
-        {
-            snort_free(asd->hsession->via);
-            asd->hsession->via = snort_strndup((char*)headers->via.start, headers->via.len);
-            asd->scan_flags |= SCAN_HTTP_VIA_FLAG;
-        }
-        if (headers->contentType.start)
-        {
-            snort_free(asd->hsession->content_type);
-            asd->hsession->content_type = snort_strndup((char*)headers->contentType.start,
-                headers->contentType.len);
-        }
-        if (headers->responseCode.start)
-        {
-            long responseCodeNum;
-            responseCodeNum = strtoul((char*)headers->responseCode.start, nullptr, 10);
-            if (responseCodeNum > 0 && responseCodeNum < 700)
-            {
-                snort_free(asd->hsession->response_code);
-                asd->hsession->response_code = snort_strndup((char*)headers->responseCode.start,
-                    headers->responseCode.len);
-            }
-        }
-    }
-
-    asd->processHTTPPacket(p, direction, headers, pConfig);
-    asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
-    p->flow->set_application_ids(asd->pick_service_app_id(), asd->pick_client_app_id(),
-            asd->pick_payload_app_id(), asd->pick_misc_app_id());
-}
 #endif
 
 /**

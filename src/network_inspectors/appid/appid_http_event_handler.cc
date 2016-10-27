@@ -28,8 +28,8 @@
 #include "thirdparty_appid_utils.h"
 #include "utils/util.h"
 
-static void replace_header_data(char **data, const uint8_t *header_start,
-    unsigned header_length)
+static void replace_header_data(char **data, uint16_t &datalen, const uint8_t *header_start,
+    int32_t header_length)
 {
     if(header_length <= 0)
         return;
@@ -39,14 +39,16 @@ static void replace_header_data(char **data, const uint8_t *header_start,
         snort_free(*data);
     
     *data = snort_strndup((char*)header_start, header_length);
+    datalen = header_length;
 }
 
 void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 {
     AppIdSession* session;
     int direction;
+    uint16_t tmplen;
     const uint8_t* header_start;
-    unsigned header_length;
+    int32_t header_length;
     HttpEvent* http_event = (HttpEvent*)&event;
 
     assert(flow);
@@ -64,39 +66,68 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         header_start = http_event->get_host(header_length);
         if(header_length > 0)
         {
-            replace_header_data(&session->hsession->host, header_start,
-                header_length);
+            replace_header_data(&session->hsession->host,
+                session->hsession->host_buflen, header_start, header_length);
             session->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
 
             header_start = http_event->get_uri(header_length);
-            replace_header_data(&session->hsession->url, header_start,
-                header_length);
+            if(header_length > 0)
+            {
+                replace_header_data(&session->hsession->uri,
+                    session->hsession->uri_buflen, header_start,
+                    header_length);
+
+                if(session->hsession->url)
+                    snort_free(session->hsession->url);
+                tmplen = sizeof(HTTP_PREFIX) + session->hsession->host_buflen +
+                    session->hsession->uri_buflen + 1;
+                session->hsession->url = (char*)snort_calloc(tmplen);
+                strcpy(session->hsession->url, HTTP_PREFIX);
+                strncat(session->hsession->url, session->hsession->host,
+                    session->hsession->host_buflen);
+                strncat(session->hsession->url, session->hsession->uri,
+                    session->hsession->uri_buflen);
+            }
         }
 
         header_start = http_event->get_user_agent(header_length);
         if(header_length > 0)
         {
-            replace_header_data(&session->hsession->useragent, header_start,
+            replace_header_data(&session->hsession->useragent,
+                session->hsession->useragent_buflen, header_start,
                 header_length);
             session->scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
         }
 
+        header_start = http_event->get_cookie(header_length);
+        replace_header_data(&session->hsession->cookie,
+            session->hsession->cookie_buflen, header_start, header_length);
+
         header_start = http_event->get_referer(header_length);
-        replace_header_data(&session->hsession->referer, header_start,
-            header_length);
+        replace_header_data(&session->hsession->referer,
+            session->hsession->referer_buflen, header_start, header_length);
 
         header_start = http_event->get_x_working_with(header_length);
-        replace_header_data(&session->hsession->x_working_with, header_start,
-            header_length);
+        replace_header_data(&session->hsession->x_working_with, tmplen,
+            header_start, header_length);
+
+        // FIXIT-M: Should we get request body (may be expensive to copy)?
+        //      It is not currently set in callback in 2.9.x, only via 
+        //      third-party.
     }
     else    // Response headers.
     {
         header_start = http_event->get_content_type(header_length);
-        replace_header_data(&session->hsession->content_type, header_start,
+        replace_header_data(&session->hsession->content_type,
+            session->hsession->content_type_buflen, header_start,
             header_length);
 
+        header_start = http_event->get_location(header_length);
+        replace_header_data(&session->hsession->location,
+            session->hsession->location_buflen, header_start, header_length);
+
         header_start = http_event->get_server(header_length);
-        replace_header_data(&session->hsession->server, header_start,
+        replace_header_data(&session->hsession->server, tmplen, header_start,
             header_length);
 
         int32_t responseCodeNum = http_event->get_response_code();
@@ -109,15 +140,21 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
             {
                 snort_free(session->hsession->response_code);
                 session->hsession->response_code = snort_strdup(tmpstr);
+                session->hsession->response_code_buflen = strlen(tmpstr);
             }
         }
+
+        // FIXIT-M: Get Location header data.
+        // FIXIT-M: Should we get response body (may be expensive to copy)?
+        //      It is not currently set in callback in 2.9.x, only via 
+        //      third-party.
     }
 
     //  The Via header can be in both the request and response.
     header_start = http_event->get_via(header_length);
     if(header_length > 0)
     {
-        replace_header_data(&session->hsession->via, header_start,
+        replace_header_data(&session->hsession->via, tmplen, header_start,
             header_length);
         session->scan_flags |= SCAN_HTTP_VIA_FLAG;
     }
@@ -126,8 +163,8 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     session->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
     if (direction == APP_ID_FROM_INITIATOR)
         appid_stats.http_flows++;
-    flow->set_application_ids(session->pick_service_app_id(), 
-        session->pick_client_app_id(), session->pick_payload_app_id(), 
+    flow->set_application_ids(session->pick_service_app_id(),
+        session->pick_client_app_id(), session->pick_payload_app_id(),
         session->pick_misc_app_id());
 }
 

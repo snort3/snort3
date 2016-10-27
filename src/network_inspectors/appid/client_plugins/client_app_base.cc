@@ -41,7 +41,6 @@
 #include "fw_appid.h"
 #include "client_app_api.h"
 #include "client_app_base.h"
-#include "client_app_smtp.h"
 #include "client_app_msn.h"
 #include "client_app_aim.h"
 #include "client_app_ym.h"
@@ -85,7 +84,7 @@ static void CClientAppRegisterPatternNoCase(RNAClientAppFCN fcn, IpProtocol prot
     const uint8_t* const pattern, unsigned size, int position);
 static void appSetClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extractsInfo);
 
-static IniClientAppAPI client_init_api =
+static InitClientAppAPI client_init_api =
 {
     &CClientAppRegisterPattern,
     &LuaClientAppRegisterPattern,
@@ -113,7 +112,6 @@ extern RNAClientAppModule http_client_mod;
 
 static RNAClientAppModule* static_client_list[] =
 {
-    &smtp_client_mod,
     &ssh_client_mod,
     &msn_client_mod,
     &aim_client_mod,
@@ -337,6 +335,9 @@ int ClientAppLoadCallback(void* symbol)
         li->module = cam;
         cam->api = &client_app_api;
         cam->flow_data_index = client_module_index | APPID_SESSION_DATA_CLIENT_MODSTATE_BIT;
+        if (cam->init && cam->init(&client_init_api, nullptr))
+            ErrorMessage("Error initializing client %s\n", cam->name);
+
         client_module_index++;
     }
     /*Can't set cam->userData to nullptr because Lua detectors use it although C detectors don't
@@ -870,26 +871,8 @@ static void ClientAppID(Packet* p, const int /*direction*/, AppIdSession* asd)
             break;
         }
     }
-    FreeClientPatternList(&match_list);
 
-    if (sflist_count(asd->candidate_client_list) == 0)
-    {
-        client = nullptr;
-        switch (p->ptrs.dp)
-        {
-        case 465:
-            if (asd->get_session_flags(APPID_SESSION_DECRYPTED))
-                client = &smtp_client_mod;
-            break;
-        default:
-            break;
-        }
-        if (client != nullptr)
-        {
-            sflist_add_tail(asd->candidate_client_list, (void*)client);
-            asd->num_candidate_clients_tried++;
-        }
-    }
+    FreeClientPatternList(&match_list);
 }
 
 int AppIdDiscoverClientApp(Packet* p, int direction, AppIdSession* rnaData)

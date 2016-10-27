@@ -44,7 +44,7 @@ struct ServiceData
     uint32_t packetCount;
 };
 
-static int battle_field_init(const IniServiceAPI* const init_api);
+static int battle_field_init(const InitServiceAPI* const init_api);
 static int battle_field_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -96,7 +96,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_BATTLEFIELD, 0 }
 };
 
-static int battle_field_init(const IniServiceAPI* const init_api)
+static int battle_field_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_HELLO,
         sizeof(PATTERN_HELLO)-1,  5, "battle_field");

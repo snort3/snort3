@@ -55,22 +55,15 @@ unsigned AppIdSession::flow_id = 0;
 THREAD_LOCAL AppIdFlowData* AppIdSession::fd_free_list = nullptr;
 THREAD_LOCAL uint32_t AppIdSession::appid_flow_data_id = 0;
 
-// FIXIT-L - determine reason for this mapping and whether we still need it snort3 or can harmonize the IDs used
-static int16_t snortId_for_ftp;
+static int16_t snortId_for_unsynchronized;
 static int16_t snortId_for_ftp_data;
-static int16_t snortId_for_imap;
-static int16_t snortId_for_pop3;
-static int16_t snortId_for_smtp;
 static int16_t snortId_for_http2;
 
 void map_app_names_to_snort_ids()
 {
     /* init globals for snortId compares */
-    snortId_for_ftp      = FindProtocolReference("ftp");
+    snortId_for_unsynchronized = AddProtocolReference("unsynchronized");
     snortId_for_ftp_data = FindProtocolReference("ftp-data");
-    snortId_for_imap     = FindProtocolReference("imap");
-    snortId_for_pop3     = FindProtocolReference("pop3");
-    snortId_for_smtp     = FindProtocolReference("smtp");
     snortId_for_http2    = FindProtocolReference("http2");
 }
 
@@ -110,92 +103,34 @@ void AppIdSession::set_session_logging_state(const Packet* pkt, int direction)
     return;
 }
 
-// FIXIT-M this function does work that probably should be in http inspector, appid should leverage that if possible
-static inline void getOffsetsFromRebuilt(Packet* pkt, httpSession* hsession)
-{
-// size of "GET /\r\n\r\n"
-    constexpr auto MIN_HTTP_REQ_HEADER_SIZE = sizeof("GET /\r\n\r\n");
-    const uint8_t cookieStr[] = "Cookie: ";
-    unsigned cookieStrLen = sizeof(cookieStr)-1;
-    const uint8_t crlf[] = "\r\n";
-    unsigned crlfLen = sizeof(crlf)-1;
-    const uint8_t crlfcrlf[] = "\r\n\r\n";
-    unsigned crlfcrlfLen = sizeof(crlfcrlf)-1;
-    const uint8_t* p;
-    uint8_t* headerEnd;
-    uint16_t headerSize;
-
-    if (!pkt || !pkt->data || pkt->dsize < MIN_HTTP_REQ_HEADER_SIZE)
-        return;
-
-    p = pkt->data;
-
-    if (!(headerEnd = (uint8_t*)service_strstr(p, pkt->dsize, crlfcrlf, crlfcrlfLen)))
-        return;
-
-    headerEnd += crlfcrlfLen;
-
-    headerSize = headerEnd - p;
-
-    //uri offset is the index of the first char after the first space in the data
-    if (!(p = (uint8_t*)memchr(pkt->data, ' ', headerSize)))
-        return;
-    hsession->uriOffset = ++p - pkt->data;
-    headerSize = headerEnd - p;
-
-    //uri end offset is the index of the first CRLF sequence after uri offset
-    if (!(p = (uint8_t*)service_strstr(p, headerSize, crlf, crlfLen)))
-    {
-        // clear uri offset if we can't find an end offset
-        hsession->uriOffset = 0;
-        return;
-    }
-    hsession->uriEndOffset = p - pkt->data;
-    headerSize = headerEnd - p;
-
-    //cookie offset is the index of the first char after the cookie header, "Cookie: "
-    if (!(p = (uint8_t*)service_strstr(p, headerSize, cookieStr, cookieStrLen)))
-        return;
-    hsession->cookieOffset = p + cookieStrLen - pkt->data;
-    headerSize = headerEnd - p;
-
-    //cookie end offset is the index of the first CRLF sequence after cookie offset
-    if (!(p = (uint8_t*)service_strstr(p, headerSize, crlf, crlfLen)))
-    {
-        // clear cookie offset if we can't find a cookie end offset
-        hsession->cookieOffset = 0;
-        return;
-    }
-    hsession->cookieEndOffset = p - pkt->data;
-}
-
-
 AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, int direction)
 {
     const sfip_t* ip;
+    uint16_t port = 0;
 
     ip = (direction == APP_ID_FROM_INITIATOR)
         ? p->ptrs.ip_api.get_src() : p->ptrs.ip_api.get_dst();
-    AppIdSession* data = new AppIdSession(proto, ip);
-
     if ( ( proto == IpProtocol::TCP || proto == IpProtocol::UDP ) && ( p->ptrs.sp != p->ptrs.dp ) )
-        data->common.initiator_port =
-            (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
+        port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
+
+    AppIdSession* data = new AppIdSession(proto, ip, port);
+
     data->flow = p->flow;
     data->stats.firstPktsecond = p->pkth->ts.tv_sec;
     data->set_session_logging_state(p, direction);
-
+    data->snort_id = snortId_for_unsynchronized;
     p->flow->set_flow_data(data);
     return data;
 }
 
-AppIdSession::AppIdSession(IpProtocol proto, const sfip_t* ip)
+AppIdSession::AppIdSession(IpProtocol proto, const sfip_t* ip, uint16_t port)
     : FlowData(flow_id), protocol(proto)
 {
     service_ip.clear();
     session_id = ++appid_flow_data_id;
     common.flow_type = APPID_FLOW_TYPE_NORMAL;
     common.initiator_ip = *ip;
+    common.initiator_port = port;
     config = AppIdConfig::get_appid_config();
     app_info_mgr = &AppInfoManager::get_instance();
     if (thirdparty_appid_module)
@@ -239,7 +174,8 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const s
 
     assert(type != PktType::NONE);
 
-    AppIdSession* asd = new AppIdSession(proto, cliIp);
+    // FIXIT-M - port parameter passed in as 0 since we may not know client port, verify this is correct
+    AppIdSession* asd = new AppIdSession(proto, cliIp, 0);
     asd->common.policyId = appIdPolicyId;
 
     // FIXIT-M expect session control packet support not ported to snort3 yet
@@ -403,7 +339,7 @@ bool AppIdSession::is_packet_ignored(Packet* p)
 
 // FIXIT-M - Need to convert this _dpd stream api call to the correct snort++ method
 #ifdef REMOVED_WHILE_NOT_IN_USE
-    bool is_http2     = _dpd.streamAPI->is_session_http2(p->flow);
+    bool is_http2     = false; // _dpd.streamAPI->is_session_http2(p->flow);
 #else
     bool is_http2     = false;
 #endif
@@ -423,15 +359,17 @@ bool AppIdSession::is_packet_ignored(Packet* p)
     {
         if ( p->is_rebuilt() && !p->flow->is_proxied() )
         {
+            // FIXIT-M - latest 2.9 checks direction in this if statement below:
+            //             ( (direction == APP_ID_FROM_INITIATOR) &&... ) do we need to add this?
             if (asd && asd->hsession && asd->hsession->get_offsets_from_rebuilt)
             {
-                getOffsetsFromRebuilt(p, asd->hsession);
+                httpGetNewOffsetsFromPacket(p, asd->hsession);
                 if (asd->session_logging_enabled)
                     LogMessage(
                         "AppIdDbg %s offsets from rebuilt packet: uri: %u-%u cookie: %u-%u\n",
-                        asd->session_logging_id, asd->hsession->uriOffset,
-                        asd->hsession->uriEndOffset, asd->hsession->cookieOffset,
-                        asd->hsession->cookieEndOffset);
+                        asd->session_logging_id,
+                        asd->hsession->fieldOffset[REQ_URI_FID], asd->hsession->fieldEndOffset[REQ_URI_FID],
+                        asd->hsession->fieldOffset[REQ_COOKIE_FID], asd->hsession->fieldEndOffset[REQ_COOKIE_FID]);
             }
             appid_stats.ignored_packets++;
             return true;
@@ -442,6 +380,20 @@ bool AppIdSession::is_packet_ignored(Packet* p)
 }
 
 static int ptype_scan_counts[NUMBER_OF_PTYPES];
+
+#ifdef REMOVED_WHILE_NOT_IN_USE
+static inline bool checkThirdPartyReinspect(const Packet* p, AppIdSession* asd)
+{
+    return p->dsize && !asd->get_session_flags(APPID_SESSION_NO_TPI) &&
+                    asd->get_session_flags(APPID_SESSION_HTTP_SESSION) && TPIsAppIdDone(asd->tpsession);
+}
+
+#else
+static inline bool checkThirdPartyReinspect(const Packet*, AppIdSession*)
+{
+    return false;
+}
+#endif
 
 #ifdef REMOVED_WHILE_NOT_IN_USE
 void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
@@ -483,33 +435,8 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
 
         if (get_session_flags(APPID_SESSION_SPDY_SESSION))
         {
-            if (attribute_data->spdyRequesHost)
-            {
-                if (session_logging_enabled)
-                    LogMessage("AppIdDbg %s SPDY host is %s\n", session_logging_id,
-                        attribute_data->spdyRequesHost);
-                if (hsession->host)
-                {
-                    snort_free(hsession->host);
-                    hsession->chp_finished = 0;
-                }
-                hsession->host = snort_strdup(attribute_data->spdyRequesHost);
-                scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
-            }
-            if (attribute_data->spdyRequestPath)
-            {
-                if (session_logging_enabled)
-                    LogMessage("AppIdDbg %s SPDY URI is %s\n", session_logging_id,
-                        attribute_data->spdyRequestPath);
-                if (hsession->uri)
-                {
-                    snort_free(hsession->uri);
-                    hsession->chp_finished = 0;
-                }
-                hsession->uri = snort_strdup(attribute_data->spdyRequestPath);
-            }
             if (attribute_data->spdyRequestScheme &&
-                attribute_data->spdyRequesHost &&
+                attribute_data->spdyRequestHost &&
                 attribute_data->spdyRequestPath)
             {
                 static const char httpsScheme[] = "https";
@@ -533,48 +460,77 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
                 }
 
                 size = strlen(scheme) +
-                    strlen(attribute_data->spdyRequesHost) +
+                    strlen(attribute_data->spdyRequestHost) +
                     strlen(attribute_data->spdyRequestPath) +
                     sizeof("://");    // see sprintf() format
                 hsession->url = (char*)snort_calloc(size);
                 sprintf(hsession->url, "%s://%s%s",
-                    scheme, attribute_data->spdyRequesHost, attribute_data->spdyRequestPath);
+                    scheme, attribute_data->spdyRequestHost, attribute_data->spdyRequestPath);
                 scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+
+                snort_free(attribute_data->spdyRequestScheme);
+                attribute_data->spdyRequestScheme = nullptr;
             }
-            if (attribute_data->spdyRequestScheme)
+            else if (attribute_data->spdyRequestScheme)
             {
                 snort_free(attribute_data->spdyRequestScheme);
                 attribute_data->spdyRequestScheme = nullptr;
             }
-            if (attribute_data->spdyRequesHost)
+
+            if (attribute_data->spdyRequestHost)
             {
-                snort_free(attribute_data->spdyRequesHost);
-                attribute_data->spdyRequesHost = nullptr;
+                if (hsession->host)
+                {
+                    snort_free(hsession->host);
+                    hsession->chp_finished = 0;
+                }
+                hsession->host = attribute_data->spdyRequestHost;
+                attribute_data->spdyRequestHost = nullptr;
+                hsession->fieldOffset[REQ_HOST_FID] = attribute_data->spdyRequestHostOffset;
+                hsession->fieldEndOffset[REQ_HOST_FID] = attribute_data->spdyRequestHostEndOffset;
+                if(session_logging_enabled)
+                    LogMessage("AppIdDbg %s SPDY Host (%u-%u) is %s\n", session_logging_id,
+                                hsession->fieldOffset[REQ_HOST_FID], hsession->fieldEndOffset[REQ_HOST_FID], hsession->host);
+                scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
             }
+
             if (attribute_data->spdyRequestPath)
             {
-                snort_free(attribute_data->spdyRequestPath);
+                if (hsession->uri)
+                {
+                    free(hsession->uri);
+                    hsession->chp_finished = 0;
+                }
+                hsession->uri = attribute_data->spdyRequestPath;
                 attribute_data->spdyRequestPath = nullptr;
+                hsession->fieldOffset[REQ_URI_FID] = attribute_data->spdyRequestPathOffset;
+                hsession->fieldEndOffset[REQ_URI_FID] = attribute_data->spdyRequestPathEndOffset;
+                if(session_logging_enabled)
+                    LogMessage("AppIdDbg %s SPDY URI (%u-%u) is %s\n", session_logging_id,
+                                hsession->fieldOffset[REQ_URI_FID], hsession->fieldEndOffset[REQ_URI_FID], hsession->uri);
             }
         }
         else
         {
-            if (attribute_data->httpRequesHost)
+            if (attribute_data->httpRequestHost)
             {
-                if (session_logging_enabled)
-                    LogMessage("AppIdDbg %s HTTP host is %s\n", session_logging_id,
-                        attribute_data->httpRequesHost);
                 if (hsession->host)
                 {
                     snort_free(hsession->host);
                     if (!get_session_flags(APPID_SESSION_APP_REINSPECT))
                         hsession->chp_finished = 0;
                 }
-                hsession->host = attribute_data->httpRequesHost;
-                attribute_data->httpRequesHost = nullptr;
+                hsession->host = attribute_data->httpRequestHost;
+                hsession->host_buflen = attribute_data->httpRequestHostLen;
+                hsession->fieldOffset[REQ_HOST_FID] = attribute_data->httpRequestHostOffset;
+                hsession->fieldEndOffset[REQ_HOST_FID] = attribute_data->httpRequestHostEndOffset;
+                attribute_data->httpRequestHost = nullptr;
+                if (session_logging_enabled)
+                    LogMessage("AppIdDbg %s HTTP host is %s\n",
+                               session_logging_id, attribute_data->httpRequestHost);
                 scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
             }
-            if (attribute_data->httpRequesUrl)
+            if (attribute_data->httpRequestUrl)
             {
                 static const char httpScheme[] = "http://";
 
@@ -588,21 +544,21 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
                 //change http to https if session was decrypted.
                 if (get_session_flags(APPID_SESSION_DECRYPTED)
                     &&
-                    memcmp(attribute_data->httpRequesUrl, httpScheme, sizeof(httpScheme)-1) == 0)
+                    memcmp(attribute_data->httpRequestUrl, httpScheme, sizeof(httpScheme)-1) == 0)
                 {
-                    hsession->url = (char*)snort_calloc(strlen(attribute_data->httpRequesUrl) + 2);
+                    hsession->url = (char*)snort_calloc(strlen(attribute_data->httpRequestUrl) + 2);
 
                     if (hsession->url)
                         sprintf(hsession->url, "https://%s",
-                            attribute_data->httpRequesUrl + sizeof(httpScheme)-1);
+                            attribute_data->httpRequestUrl + sizeof(httpScheme)-1);
 
-                    snort_free(attribute_data->httpRequesUrl);
-                    attribute_data->httpRequesUrl = nullptr;
+                    snort_free(attribute_data->httpRequestUrl);
+                    attribute_data->httpRequestUrl = nullptr;
                 }
                 else
                 {
-                    hsession->url = attribute_data->httpRequesUrl;
-                    attribute_data->httpRequesUrl = nullptr;
+                    hsession->url = attribute_data->httpRequestUrl;
+                    attribute_data->httpRequestUrl = nullptr;
                 }
 
                 scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
@@ -616,15 +572,14 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
                         hsession->chp_finished = 0;
                 }
                 hsession->uri = attribute_data->httpRequestUri;
-                hsession->uriOffset = attribute_data->httpRequestUriOffset;
-                hsession->uriEndOffset = attribute_data->httpRequestUriEndOffset;
+                hsession->uri_buflen = attribute_data->httpRequestUriLen;
+                hsession->fieldOffset[REQ_URI_FID] = attribute_data->httpRequestUriOffset;
+                hsession->fieldEndOffset[REQ_URI_FID] = attribute_data->httpRequestUriEndOffset;
                 attribute_data->httpRequestUri = nullptr;
-                attribute_data->httpRequestUriOffset = 0;
-                attribute_data->httpRequestUriEndOffset = 0;
                 if (session_logging_enabled)
                     LogMessage("AppIdDbg %s uri (%u-%u) is %s\n", session_logging_id,
-                        hsession->uriOffset, hsession->uriEndOffset,
-                        hsession->uri);
+                               hsession->fieldOffset[REQ_URI_FID], hsession->fieldEndOffset[REQ_URI_FID],
+                               hsession->uri);
             }
         }
         if (attribute_data->httpRequestVia)
@@ -692,6 +647,7 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
                     hsession->chp_finished = 0;
             }
             hsession->response_code = attribute_data->httpResponseCode;
+            hsession->response_code_buflen = attribute_data->httpResponseCodeLen;
             attribute_data->httpResponseCode = nullptr;
         }
         // Check to see if we've got an upgrade to HTTP/2 (if enabled).
@@ -715,8 +671,7 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
             snort_free(attribute_data->httpResponseUpgrade);
             attribute_data->httpResponseUpgrade = nullptr;
         }
-        if (!config->mod_config->referred_appId_disabled &&
-            attribute_data->httpRequestReferer)
+        if (attribute_data->httpRequestReferer)
         {
             if (session_logging_enabled)
                 LogMessage("AppIdDbg %s referrer is %s\n", session_logging_id,
@@ -728,8 +683,16 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
                     hsession->chp_finished = 0;
             }
             hsession->referer = attribute_data->httpRequestReferer;
+            hsession->referer_buflen = attribute_data->httpRequestRefererLen;
             attribute_data->httpRequestReferer = nullptr;
+            hsession->fieldOffset[REQ_REFERER_FID] = attribute_data->httpRequestRefererOffset;
+            hsession->fieldEndOffset[REQ_REFERER_FID] = attribute_data->httpRequestRefererEndOffset;
+            if (session_logging_enabled)
+                LogMessage("AppIdDbg %s Referer (%u-%u) is %s\n", session_logging_id,
+                             hsession->fieldOffset[REQ_REFERER_FID], hsession->fieldEndOffset[REQ_REFERER_FID],
+                             hsession->referer);
         }
+
         if (attribute_data->httpRequestCookie)
         {
             if (hsession->cookie)
@@ -739,15 +702,16 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
                     hsession->chp_finished = 0;
             }
             hsession->cookie = attribute_data->httpRequestCookie;
-            hsession->cookieOffset = attribute_data->httpRequestCookieOffset;
-            hsession->cookieEndOffset = attribute_data->httpRequestCookieEndOffset;
+            hsession->cookie_buflen = attribute_data->httpRequestCookieLen;
+            hsession->fieldOffset[REQ_COOKIE_FID] = attribute_data->httpRequestCookieOffset;
+            hsession->fieldEndOffset[REQ_COOKIE_FID] = attribute_data->httpRequestCookieEndOffset;
             attribute_data->httpRequestCookie = nullptr;
             attribute_data->httpRequestCookieOffset = 0;
             attribute_data->httpRequestCookieEndOffset = 0;
             if (session_logging_enabled)
                 LogMessage("AppIdDbg %s cookie (%u-%u) is %s\n", session_logging_id,
-                    hsession->cookieOffset, hsession->cookieEndOffset,
-                    hsession->cookie);
+                           hsession->fieldOffset[REQ_COOKIE_FID], hsession->fieldEndOffset[REQ_COOKIE_FID],
+                           hsession->cookie);
         }
         if (attribute_data->httpResponseContent)
         {
@@ -758,6 +722,7 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
                     hsession->chp_finished = 0;
             }
             hsession->content_type = attribute_data->httpResponseContent;
+            hsession->content_type_buflen = attribute_data->httpResponseContentLen;
             attribute_data->httpResponseContent = nullptr;
             scan_flags |= SCAN_HTTP_CONTENT_TYPE_FLAG;
         }
@@ -770,6 +735,7 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
                     hsession->chp_finished = 0;
             }
             hsession->location = attribute_data->httpResponseLocation;
+            hsession->location_buflen = attribute_data->httpResponseLocationLen;
             attribute_data->httpResponseLocation = nullptr;
         }
         if (attribute_data->httpRequestBody)
@@ -784,6 +750,7 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
                     hsession->chp_finished = 0;
             }
             hsession->req_body = attribute_data->httpRequestBody;
+            hsession->req_body_buflen = attribute_data->httpRequestBodyLen;
             attribute_data->httpRequestBody = nullptr;
         }
         if (ptype_scan_counts[BODY_PT] && attribute_data->httpResponseBody)
@@ -795,6 +762,7 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
                     hsession->chp_finished = 0;
             }
             hsession->body = attribute_data->httpResponseBody;
+            hsession->body_buflen = attribute_data->httpResponseBodyLen;
             attribute_data->httpResponseBody = nullptr;
         }
         if (attribute_data->numXffFields)
@@ -833,10 +801,10 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
 
         if (!hsession->url)
         {
-            if (attribute_data->httpRequesUrl)
+            if (attribute_data->httpRequestUrl)
             {
-                hsession->url = attribute_data->httpRequesUrl;
-                attribute_data->httpRequesUrl = nullptr;
+                hsession->url = attribute_data->httpRequestUrl;
+                attribute_data->httpRequestUrl = nullptr;
                 scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
             }
         }
@@ -979,19 +947,19 @@ bool AppIdSession::do_third_party_discovery(IpProtocol protocol, const sfip_t* i
 
         if (p->dsize || config->mod_config->tp_allow_probes)
         {
-            if (protocol != IpProtocol::TCP || !p->dsize || (p->packet_flags & PKT_STREAM_ORDER_OK)
-                    || config->mod_config->tp_allow_probes)
+            if (protocol != IpProtocol::TCP || (p->packet_flags & PKT_STREAM_ORDER_OK)
+                            || config->mod_config->tp_allow_probes)
             {
+
+                Profile tpLibPerfStats_profile_context(tpLibPerfStats);
+                if (!tpsession)
                 {
-                    Profile tpLibPerfStats_profile_context(tpLibPerfStats);
-                    if (!tpsession)
-                    {
-                        if (!(tpsession = thirdparty_appid_module->session_create()))
-                            FatalError("Could not allocate tpsession data");
-                    }; // debug output of packet content
-                    thirdparty_appid_module->session_process(tpsession, p, direction, &tp_app_id, &tp_confidence,
-                            &tp_proto_list, &tp_attribute_data);
-                }
+                    if (!(tpsession = thirdparty_appid_module->session_create()))
+                        FatalError("Could not allocate tpsession data");
+                }; // debug output of packet content
+                thirdparty_appid_module->session_process(tpsession, p, direction, &tp_app_id, &tp_confidence,
+                                                         &tp_proto_list, &tp_attribute_data);
+
                 isTpAppidDiscoveryDone = true;
                 if (thirdparty_appid_module->session_state_get(tpsession) == TP_STATE_CLASSIFIED)
                     clear_session_flags(APPID_SESSION_APP_REINSPECT);
@@ -999,16 +967,6 @@ bool AppIdSession::do_third_party_discovery(IpProtocol protocol, const sfip_t* i
                 if (session_logging_enabled)
                     LogMessage("AppIdDbg %s 3rd party returned %d\n", session_logging_id, tp_app_id);
 
-                if (app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_IGNORE))
-                {
-                    if (session_logging_enabled)
-                        LogMessage("AppIdDbg %s 3rd party ignored\n", session_logging_id);
-
-                    if (get_session_flags(APPID_SESSION_HTTP_SESSION))
-                        tp_app_id = APP_ID_HTTP;
-                    else
-                        tp_app_id = APP_ID_NONE;
-                }
                 // For now, third party can detect HTTP/2 (w/o metadata) for
                 // some cases.  Treat it like HTTP w/ is_http2 flag set.
                 if ((tp_app_id == APP_ID_HTTP2) && (tp_confidence == 100))
@@ -1024,6 +982,23 @@ bool AppIdSession::do_third_party_discovery(IpProtocol protocol, const sfip_t* i
                     client_app_id = tp_app_id;
 
                 ProcessThirdPartyResults(p, tp_confidence, tp_proto_list, tp_attribute_data);
+
+                if (get_session_flags(APPID_SESSION_SSL_SESSION) &&
+                                !(scan_flags & SCAN_SSL_HOST_FLAG))
+                {
+                    setSSLSquelch(p, 1, tp_app_id);
+                }
+
+                if (app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_IGNORE))
+                {
+                    if (session_logging_enabled)
+                        LogMessage("AppIdDbg %s 3rd party ignored\n", session_logging_id);
+
+                    if (get_session_flags(APPID_SESSION_HTTP_SESSION))
+                        tp_app_id = APP_ID_HTTP;
+                    else
+                        tp_app_id = APP_ID_NONE;
+                }
             }
             else
             {
@@ -1034,11 +1009,13 @@ bool AppIdSession::do_third_party_discovery(IpProtocol protocol, const sfip_t* i
                     LogMessage("AppIdDbg %s 3rd party packet out-of-order\n", session_logging_id);
                 }
             }
+
             if (thirdparty_appid_module->session_state_get(tpsession) == TP_STATE_MONITORING)
             {
                 thirdparty_appid_module->disable_flags(tpsession,
                         TP_SESSION_FLAG_ATTRIBUTE | TP_SESSION_FLAG_TUNNELING | TP_SESSION_FLAG_FUTUREFLOW);
             }
+
             if (tp_app_id == APP_ID_SSL &&
                 (Stream::get_application_protocol_id(p->flow) == snortId_for_ftp_data))
             {
@@ -1046,6 +1023,7 @@ bool AppIdSession::do_third_party_discovery(IpProtocol protocol, const sfip_t* i
                 //  to APP_ID_NONE so the FTP preprocessor picks up the flow.
                 tp_app_id = APP_ID_NONE;
             }
+
             if (tp_app_id > APP_ID_NONE
                     && (!get_session_flags(APPID_SESSION_APP_REINSPECT) || payload_app_id > APP_ID_NONE))
             {
@@ -1059,7 +1037,18 @@ bool AppIdSession::do_third_party_discovery(IpProtocol protocol, const sfip_t* i
                         tp_payload_app_id = tp_app_id;
 
                     tp_app_id = APP_ID_HTTP;
+                    // Handle HTTP tunneling and SSL possibly then being used in that tunnel
+                    if (tp_app_id == APP_ID_HTTP_TUNNEL)
+                        set_payload_app_id_data(APP_ID_HTTP_TUNNEL, NULL);
+                    if ((payload_app_id == APP_ID_HTTP_TUNNEL) && (tp_app_id == APP_ID_SSL))
+                        set_payload_app_id_data(APP_ID_HTTP_SSL_TUNNEL, NULL);
+
                     processHTTPPacket(p, direction, nullptr);
+
+                    // If SSL over HTTP tunnel, make sure Snort knows that it's encrypted.
+                    if (payload_app_id == APP_ID_HTTP_SSL_TUNNEL)
+                        snort_app_id = APP_ID_SSL;
+
                     if (TPIsAppIdAvailable(tpsession) && tp_app_id == APP_ID_HTTP
                             && !get_session_flags(APPID_SESSION_APP_REINSPECT))
                     {
@@ -1091,8 +1080,7 @@ bool AppIdSession::do_third_party_discovery(IpProtocol protocol, const sfip_t* i
                     if (tp_app_id == APP_ID_SSL)
                     {
                         tp_app_id = porAppId;
-                        //SSL policy needs to determine IMAPS/POP3S etc before appId sees first
-                        // server packet
+                        //SSL policy determines IMAPS/POP3S etc before appId sees first server packet
                         portServiceAppId = porAppId;
                         if (session_logging_enabled)
                             LogMessage("AppIdDbg %s SSL is service %d, portServiceAppId %d\n", session_logging_id,
@@ -1117,8 +1105,8 @@ bool AppIdSession::do_third_party_discovery(IpProtocol protocol, const sfip_t* i
             }
             else
             {
-                if (protocol != IpProtocol::TCP || !p->dsize
-                        || (p->packet_flags & (PKT_STREAM_ORDER_OK | PKT_STREAM_ORDER_BAD)))
+                if (protocol != IpProtocol::TCP ||
+                                (p->packet_flags & (PKT_STREAM_ORDER_OK | PKT_STREAM_ORDER_BAD)))
                 {
                     if (direction == APP_ID_FROM_INITIATOR)
                     {
@@ -1500,9 +1488,17 @@ void AppIdSession::do_application_discovery(Packet* p)
     {
         if (!asd)
         {
+            uint16_t port = 0;
+
             ip = (direction == APP_ID_FROM_INITIATOR) ?
                             p->ptrs.ip_api.get_src() : p->ptrs.ip_api.get_dst();
-            AppIdSession* tmp_session = new AppIdSession(protocol, ip);
+            if ((protocol == IpProtocol::TCP || protocol == IpProtocol::UDP)
+                 && p->ptrs.sp != p->ptrs.dp)
+             {
+                 port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
+             }
+
+            AppIdSession* tmp_session = new AppIdSession(protocol, ip, port);
 
             if ((flow_flags & APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
             APPID_SESSION_BIDIRECTIONAL_CHECKED)
@@ -1510,15 +1506,6 @@ void AppIdSession::do_application_discovery(Packet* p)
             else
                 tmp_session->common.flow_type = APPID_FLOW_TYPE_TMP;
             tmp_session->common.flags = flow_flags;
-            tmp_session->common.initiator_ip = *ip;
-            if ((protocol == IpProtocol::TCP || protocol == IpProtocol::UDP)
-                && p->ptrs.sp != p->ptrs.dp)
-            {
-                tmp_session->common.initiator_port =
-                                (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
-            }
-            else
-                tmp_session->common.initiator_port = 0;
             tmp_session->common.policyId = appIdPolicyId;
             p->flow->set_flow_data(tmp_session);
         }
@@ -1651,27 +1638,14 @@ void AppIdSession::do_application_discovery(Packet* p)
     asd->check_app_detection_restart();
 
     //restart inspection by 3rd party
-    if (!asd->get_session_flags(APPID_SESSION_NO_TPI))
+    if (!asd->tp_reinspect_by_initiator && (direction == APP_ID_FROM_INITIATOR) && checkThirdPartyReinspect(p, asd))
     {
-        if (TPIsAppIdDone(asd->tpsession) && asd->get_session_flags(
-            APPID_SESSION_HTTP_SESSION) && p->dsize)
-        {
-            if (asd->tp_reinspect_by_initiator)
-            {
-                asd->clear_session_flags(APPID_SESSION_APP_REINSPECT);
-                if (direction == APP_ID_FROM_RESPONDER)
-                    asd->tp_reinspect_by_initiator = 0; //toggle at OK response
-            }
-            else if (direction == APP_ID_FROM_INITIATOR)
-            {
-                asd->tp_reinspect_by_initiator = 1;     //once per request
-                asd->set_session_flags(APPID_SESSION_APP_REINSPECT);
-                if (asd->session_logging_enabled)
-                    LogMessage("AppIdDbg %s 3rd party allow reinspect http\n",
-                            asd->session_logging_id);
-                asd->clear_http_field();
-            }
-        }
+        asd->tp_reinspect_by_initiator = true;
+        asd->set_session_flags(APPID_SESSION_APP_REINSPECT);
+        if (asd->session_logging_enabled)
+            LogMessage("AppIdDbg %s 3rd party allow reinspect http\n",
+                    asd->session_logging_id);
+        asd->clear_http_field();
     }
 
     if (asd->tp_app_id == APP_ID_SSH && asd->payload_app_id != APP_ID_SFTP &&
@@ -1693,14 +1667,39 @@ void AppIdSession::do_application_discovery(Packet* p)
     isTpAppidDiscoveryDone = asd->do_third_party_discovery(protocol, ip, p, direction);
 #endif
 
-    if (direction == APP_ID_FROM_RESPONDER && !asd->get_session_flags(
-        APPID_SESSION_PORT_SERVICE_DONE|APPID_SESSION_SYN_RST))
+    if ( asd->tp_reinspect_by_initiator && checkThirdPartyReinspect(p, asd) )
     {
-        asd->set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
-        asd->portServiceAppId = getPortServiceId(protocol, p->ptrs.sp, asd->config);
-        if (asd->session_logging_enabled)
-            LogMessage("AppIdDbg %s port service %d\n", asd->session_logging_id,
-                asd->portServiceAppId);
+        asd->clear_session_flags(APPID_SESSION_APP_REINSPECT);
+        if (direction == APP_ID_FROM_RESPONDER)
+            asd->tp_reinspect_by_initiator = false; //toggle at OK response
+    }
+
+    if ( !asd->get_session_flags(APPID_SESSION_PORT_SERVICE_DONE) )
+    {
+        switch (protocol)
+        {
+        case IpProtocol::TCP:
+            if (asd->get_session_flags(APPID_SESSION_SYN_RST)) // TCP-specific exception
+                break;
+            // fall through to next test
+        case IpProtocol::UDP:
+            // Both TCP and UDP need this test to be made
+            //  against only the p->src_port of the response.
+            // For all other cases the port parameter is never checked.
+            if (direction != APP_ID_FROM_RESPONDER)
+                break;
+            // fall through to all other cases
+        // All protocols other than TCP and UDP come straight here.
+        default:
+            {
+                asd->portServiceAppId = getPortServiceId(protocol, p->ptrs.sp, asd->config);
+                if (asd->session_logging_enabled)
+                     LogMessage("AppIdDbg %s port service %d\n",
+                                asd->session_logging_id, asd->portServiceAppId);
+                asd->set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
+            }
+            break;
+        }
     }
 
     /* Length-based detectors. */
@@ -1740,6 +1739,7 @@ void AppIdSession::do_application_discovery(Packet* p)
         else if (asd->get_session_flags(APPID_SESSION_SSL_SESSION) && asd->tsession)
             asd->examine_ssl_metadata(p);
     }
+    // FIXIT-M - snort 2.x has added a check for midstream pickup to this if, do we need that?
     else if (protocol != IpProtocol::TCP || !p->dsize || (p->packet_flags & PKT_STREAM_ORDER_OK))
     {
         // FIXIT-M commented out assignment causes analysis warning
@@ -2279,35 +2279,58 @@ void AppIdSession::set_client_app_id_data(AppId clientAppId, char** version)
 
 void AppIdSession::sync_with_snort_id(AppId newAppId, Packet* p)
 {
-    AppInfoTableEntry* entry;
-    int16_t tempSnortId = snort_id;
-
-    if (tempSnortId == UNSYNCED_SNORT_ID)
-        tempSnortId = snort_id = p->flow->ssn_state.application_protocol;
-
-    if (tempSnortId == snortId_for_ftp || tempSnortId == snortId_for_ftp_data ||
-        tempSnortId == snortId_for_imap || tempSnortId == snortId_for_pop3 ||
-        tempSnortId == snortId_for_smtp || tempSnortId == snortId_for_http2)
+    if (newAppId  > APP_ID_NONE && newAppId < SF_APPID_MAX)
     {
-        return; // These preprocessors, in snort proper, already know and expect these to remain
-                // unchanged.
-    }
-    if ((entry = app_info_mgr->get_app_info_entry(newAppId)) && (tempSnortId = entry->snortId))
-    {
-        // Snort has a separate protocol ID for HTTP/2.  We don't.  So, when we
-        // talk to them about it, we have to play by their rules.
-        if ((newAppId == APP_ID_HTTP) && (is_http2))
-            tempSnortId = snortId_for_http2;
-
-        if (tempSnortId != snort_id)
+        // Certain AppIds are not useful to identifying snort preprocessor choices
+        switch (newAppId)
         {
-            if (session_logging_enabled)
-                if (tempSnortId == snortId_for_http2)
-                    LogMessage("AppIdDbg %s Telling Snort that it's HTTP/2\n",
-                        session_logging_id);
+        case APP_ID_FTPS:
+        case APP_ID_FTPSDATA:
 
-            p->flow->ssn_state.application_protocol = tempSnortId;
-            snort_id = tempSnortId;
+            // These all are variants of HTTPS
+        case APP_ID_DDM_SSL:
+        case APP_ID_MSFT_GC_SSL:
+        case APP_ID_NSIIOPS:
+        case APP_ID_SF_APPLIANCE_MGMT:
+        case APP_ID_HTTPS:
+
+        case APP_ID_IMAPS:
+        case APP_ID_IRCS:
+        case APP_ID_LDAPS:
+        case APP_ID_NNTPS:
+        case APP_ID_POP3S:
+        case APP_ID_SMTPS:
+        case APP_ID_SSHELL:
+        case APP_ID_TELNETS:
+            return;
+
+        case APP_ID_HTTP:
+            if (is_http2)
+                newAppId = APP_ID_HTTP2;
+            break;
+        default:
+            break;
+        }
+
+        AppInfoTableEntry *entry = app_info_mgr->get_app_info_entry(newAppId);
+        if ( entry )
+        {
+            int16_t tempSnortId = entry->snortId;
+            // A particular APP_ID_xxx may not be assigned a service_snort_key value
+            // in the rna_app.yaml file entry; so ignore the tempSnortId == 0 case.
+            if( tempSnortId == 0 && (newAppId == APP_ID_HTTP2))
+                tempSnortId = snortId_for_http2;
+
+            if ( tempSnortId != snort_id )
+            {
+                snort_id = tempSnortId;
+                if (session_logging_enabled)
+                    if (tempSnortId == snortId_for_http2)
+                        LogMessage("AppIdDbg %s Telling Snort that it's HTTP/2\n",
+                                   session_logging_id);
+
+                p->flow->ssn_state.application_protocol = tempSnortId;
+            }
         }
     }
 }
@@ -2591,14 +2614,15 @@ void AppIdSession::free_http_session_data()
 
     clear_http_field();
 
-    for (i = 0; i < NUMBER_OF_PTYPES; i++)
-    {
-        if (nullptr != hsession->new_field[i])
+    if (hsession->new_field_contents)
+        for (i = 0; i < NUMBER_OF_PTYPES; i++)
         {
-            snort_free(hsession->new_field[i]);
-            hsession->new_field[i] = nullptr;
+            if (nullptr != hsession->new_field[i])
+            {
+                snort_free(hsession->new_field[i]);
+                hsession->new_field[i] = nullptr;
+            }
         }
-    }
     if (hsession->fflow)
     {
         snort_free(hsession->fflow);
@@ -3056,19 +3080,18 @@ void AppIdSession::clear_app_id_data()
         thirdparty_appid_module->session_delete(tpsession, 1);
 }
 
-int AppIdSession::initial_CHP_sweep(char** chp_buffers, MatchedCHPAction** ppmatches)
+int AppIdSession::initial_CHP_sweep(char** chp_buffers, uint16_t* chp_buffer_lengths, MatchedCHPAction** ppmatches)
 {
     CHPApp* cah = nullptr;
     int longest = 0;
-    int size, i;
     CHPTallyAndActions chp;
     chp.matches = *ppmatches;
 
-    for (i = 0; i <= MAX_KEY_PATTERN; i++)
+    for (unsigned i = 0; i <= MAX_KEY_PATTERN; i++)
     {
         ppmatches[i] = nullptr;
-        if (chp_buffers[i] && (size = strlen(chp_buffers[i])))
-            scan_key_chp((PatternType)i, chp_buffers[i], size, chp);
+        if (chp_buffers[i] && chp_buffer_lengths[i])
+            scan_key_chp((PatternType)i, chp_buffers[i], chp_buffer_lengths[i], chp);
     }
     if (chp.match_tally.empty())
         return 0;
@@ -3091,7 +3114,7 @@ int AppIdSession::initial_CHP_sweep(char** chp_buffers, MatchedCHPAction** ppmat
     {
         // We were planning to pass along the content of ppmatches to the second phase and let
         // them be freed inside scanCHP, but we have no candidate so we free here
-        for (i = 0; i <= MAX_KEY_PATTERN; i++)
+        for (unsigned i = 0; i <= MAX_KEY_PATTERN; i++)
         {
             if (ppmatches[i])
             {
@@ -3106,7 +3129,7 @@ int AppIdSession::initial_CHP_sweep(char** chp_buffers, MatchedCHPAction** ppmat
        candidate has been chosen and it is pointed to by cah
        we will preserve any match sets until the calls to scanCHP()
       ***************************************************************/
-    for (i = 0; i < NUMBER_OF_PTYPES; i++)
+    for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
     {
         ptype_scan_counts[i] = cah->ptype_scan_counts[i];
         hsession->ptype_req_counts[i] = cah->ptype_req_counts[i] +
@@ -3164,7 +3187,7 @@ void AppIdSession::clearMiscHttpFlags()
 
 void AppIdSession::processCHP(char** version, Packet* p)
 {
-    int i, size;
+    int i;
     int found_in_buffer = 0;
     char* user = nullptr;
     AppId chp_final;
@@ -3182,6 +3205,18 @@ void AppIdSession::processCHP(char** version, Packet* p)
         http_session->content_type,
         http_session->location,
         http_session->body,
+    };
+
+    uint16_t chp_buffer_lengths[NUMBER_OF_PTYPES] = {
+        http_session->useragent_buflen,
+        http_session->host_buflen,
+        http_session->referer_buflen,
+        http_session->uri_buflen,
+        http_session->cookie_buflen,
+        http_session->req_body_buflen,
+        http_session->content_type_buflen,
+        http_session->location_buflen,
+        http_session->body_buflen,
     };
 
     char* chp_rewritten[NUMBER_OF_PTYPES] =
@@ -3213,51 +3248,68 @@ void AppIdSession::processCHP(char** version, Packet* p)
             }
         }
 
-        if (!initial_CHP_sweep(chp_buffers, chp_matches))
+        if (!initial_CHP_sweep(chp_buffers, chp_buffer_lengths, chp_matches))
             http_session->chp_finished = 1; // this is a failure case.
     }
+
     if (!http_session->chp_finished && http_session->chp_candidate)
     {
         for (i = 0; i < NUMBER_OF_PTYPES; i++)
         {
-            if (ptype_scan_counts[i] && chp_buffers[i] && (size = strlen(chp_buffers[i])) > 0)
+            if ( !ptype_scan_counts[i] )
+                continue;
+
+            if ( chp_buffers[i] && chp_buffer_lengths[i] )
             {
                 found_in_buffer = 0;
-                ret = scan_chp((PatternType)i, chp_buffers[i], size, chp_matches[i], version, &user,
-                        &chp_rewritten[i], &found_in_buffer, http_session, p);
+                ret = scan_chp((PatternType)i, chp_buffers[i], chp_buffer_lengths[i], chp_matches[i], version, &user,
+                               &chp_rewritten[i], &found_in_buffer, http_session, p);
                 chp_matches[i] = nullptr; // freed by scanCHP()
                 http_session->total_found += found_in_buffer;
-                http_session->num_scans--;
-                ptype_scan_counts[i] = 0;
-                // Give up if scanCHP returns nothing, OR
-                // (if we did not match the right numbher of patterns in this field AND EITHER
-                // (there is no match quota [all must match]) OR
-                // (the total number of matches is less than our match quota))
-                if (!ret ||
-                    (found_in_buffer < http_session->ptype_req_counts[i] &&
-                    (!http_session->num_matches ||
-                    http_session->total_found < http_session->num_matches)))
+                if (!ret || found_in_buffer < http_session->ptype_req_counts[i])
                 {
+                    // No match at all or the required matches for the field was NOT made
+                    if (!http_session->num_matches)
+                    {
+                        // num_matches == 0 means: all must succeed
+                        // give up early
+                        http_session->chp_candidate = 0;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                if (!http_session->num_matches)
+                {
+                    // num_matches == 0 means: all must succeed  give up early
                     http_session->chp_candidate = 0;
                     break;
                 }
-                /* We are finished if we have a num_matches target and we've met it or
-                   if we have done all the scans */
-                if (!http_session->num_scans ||
-                    (http_session->num_matches && http_session->total_found >=
-                    http_session->num_matches))
+            }
+
+            // Decrement the expected scan count toward 0.
+            ptype_scan_counts[i] = 0;
+            http_session->num_scans--;
+            // if we have reached the end of the list of scans (which have something to do), then num_scans == 0
+            if (http_session->num_scans == 0)
+            {
+                // we finished the last scan
+                // either the num_matches value was zero and we failed early-on or we need to check for the min.
+                if (http_session->num_matches &&
+                                http_session->total_found < http_session->num_matches)
                 {
-                    http_session->chp_finished = 1;
+                    // There was a minimum scans match count (num_matches != 0)
+                    // And we did not reach that minimum
+                    http_session->chp_candidate = 0;
                     break;
                 }
-            }
-            else if (ptype_scan_counts[i] && !http_session->chp_hold_flow)
-            {
-                /* we have a scan count, but nothing in the buffer, so we should drop out of CHP */
-                http_session->chp_candidate = 0;
+                // All required matches were met.
+                http_session->chp_finished = 1;
                 break;
             }
         }
+
         if (!http_session->chp_candidate)
         {
             http_session->chp_finished = 1;
@@ -3287,25 +3339,17 @@ void AppIdSession::processCHP(char** version, Packet* p)
         }
         if (http_session->chp_candidate && http_session->chp_finished)
         {
-            chp_final = http_session->chp_alt_candidate ?
-                http_session->chp_alt_candidate :
-                http_session->chp_candidate >> CHP_APPID_BITS_FOR_INSTANCE; // transform the
-                                                                            // instance into the
-                                                                            // appId.
+            chp_final = http_session->chp_alt_candidate ? http_session->chp_alt_candidate :
+                            CHP_APPIDINSTANCE_TO_ID(http_session->chp_candidate);
+
             if (http_session->app_type_flags & APP_TYPE_SERVICE)
-            {
                 set_service_appid_data(chp_final, nullptr, version);
-            }
 
             if (http_session->app_type_flags & APP_TYPE_CLIENT)
-            {
                 set_client_app_id_data(chp_final, version);
-            }
 
             if (http_session->app_type_flags & APP_TYPE_PAYLOAD)
-            {
                 set_payload_app_id_data((ApplicationId)chp_final, version);
-            }
 
             if (http_session->fflow && http_session->fflow->flow_prepared)
             {
@@ -3326,6 +3370,7 @@ void AppIdSession::processCHP(char** version, Packet* p)
                     username_service = serviceAppId;
                 set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
             }
+
             for (i = 0; i < NUMBER_OF_PTYPES; i++)
             {
                 if (nullptr != chp_rewritten[i])
@@ -3336,6 +3381,7 @@ void AppIdSession::processCHP(char** version, Packet* p)
                     if (http_session->new_field[i])
                         snort_free(http_session->new_field[i]);
                     http_session->new_field[i] = chp_rewritten[i];
+                    http_session->new_field_contents = true;
                     chp_rewritten[i] = nullptr;
                 }
             }
@@ -3368,6 +3414,7 @@ void AppIdSession::processCHP(char** version, Packet* p)
 }
 
 int AppIdSession::processHTTPPacket(int direction)
+
 {
     Profile http_profile_context(httpPerfStats);
     constexpr auto RESPONSE_CODE_LENGTH = 3;
@@ -3386,7 +3433,6 @@ int AppIdSession::processHTTPPacket(int direction)
     char* useragent;
     char* referer;
     char* via;
-    AppInfoTableEntry* entry;
 
     http_session = hsession;
     if (!http_session)
@@ -3416,9 +3462,8 @@ int AppIdSession::processHTTPPacket(int direction)
         if (http_session->response_code)
         {
             set_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED);
-            if (strlen(http_session->response_code) != RESPONSE_CODE_LENGTH)
-            {
-                /* received bad response code. Stop processing this asd */
+            if (http_session->response_code_buflen != RESPONSE_CODE_LENGTH)            {
+                /* received bad response code. Stop processing this session */
                 clear_app_id_data();
                 if (session_logging_enabled)
                     LogMessage("AppIdDbg %s bad http response code\n", session_logging_id);
@@ -3500,8 +3545,7 @@ int AppIdSession::processHTTPPacket(int direction)
                     }
                     if (local_subtype)
                     {
-                        for (tmpSubtype = &subtype; *tmpSubtype; tmpSubtype =
-                            &(*tmpSubtype)->next)
+                        for (tmpSubtype = &subtype; *tmpSubtype; tmpSubtype = &(*tmpSubtype)->next)
                             ;
 
                         *tmpSubtype = local_subtype;
@@ -3518,15 +3562,16 @@ int AppIdSession::processHTTPPacket(int direction)
             }
 
             // Scan User-Agent for Browser types or Skype
-            if ((scan_flags & SCAN_HTTP_USER_AGENT_FLAG) && client_app_id <=  APP_ID_NONE
-                    && useragent && (size = strlen(useragent)) > 0)
+            if ((scan_flags & SCAN_HTTP_USER_AGENT_FLAG) && client_app_id <= APP_ID_NONE
+                    && useragent && http_session->useragent_buflen)
             {
                 if (version)
                 {
                     snort_free(version);
                     version = nullptr;
                 }
-                identify_user_agent((uint8_t*)useragent, size, &service_id, &client_id, &version);
+                identify_user_agent((uint8_t*)useragent, http_session->useragent_buflen,
+                    &service_id, &client_id, &version);
                 if (session_logging_enabled && service_id > APP_ID_NONE &&
                         service_id != APP_ID_HTTP && serviceAppId != service_id)
                     LogMessage("AppIdDbg %s User Agent is service %d\n", session_logging_id,
@@ -3647,11 +3692,13 @@ int AppIdSession::processHTTPPacket(int direction)
 
         if (client_app_id == APP_ID_APPLE_CORE_MEDIA)
         {
+            AppInfoTableEntry* entry;
+
             if (tp_payload_app_id > APP_ID_NONE)
             {
                 entry = app_info_mgr->get_app_info_entry(tp_payload_app_id);
                 // only move tpPayloadAppId to client if its got a clientAppId
-                if (entry->clientId > APP_ID_NONE)
+                if (entry && entry->clientId > APP_ID_NONE)
                 {
                     misc_app_id = client_app_id;
                     client_app_id = tp_payload_app_id;
@@ -3661,7 +3708,7 @@ int AppIdSession::processHTTPPacket(int direction)
             {
                 entry =  app_info_mgr->get_app_info_entry(payload_app_id);
                 // only move payloadAppId to client if it has a ClientAppid
-                if (entry->clientId > APP_ID_NONE)
+                if (entry && entry->clientId > APP_ID_NONE)
                 {
                     misc_app_id = client_app_id;
                     client_app_id = payload_app_id;

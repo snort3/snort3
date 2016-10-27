@@ -40,20 +40,22 @@ public:
     {
     }
 
-    const uint8_t* get_content_type(unsigned &length);
-    const uint8_t* get_host(unsigned &length);
-    const uint8_t* get_referer(unsigned &length);
-    const uint8_t* get_server(unsigned &length);
-    const uint8_t* get_uri(unsigned &length);
-    const uint8_t* get_user_agent(unsigned &length);
-    const uint8_t* get_via(unsigned &length);
-    const uint8_t* get_x_working_with(unsigned &length);
+    const uint8_t* get_content_type(int32_t &length);
+    const uint8_t* get_cookie(int32_t &length);
+    const uint8_t* get_host(int32_t &length);
+    const uint8_t* get_location(int32_t &length);
+    const uint8_t* get_referer(int32_t &length);
+    const uint8_t* get_server(int32_t &length);
+    const uint8_t* get_uri(int32_t &length);
+    const uint8_t* get_user_agent(int32_t &length);
+    const uint8_t* get_via(int32_t &length);
+    const uint8_t* get_x_working_with(int32_t &length);
     int32_t get_response_code();
 
 private:
     HttpMsgHeader* const http_msg_header;
 
-    const uint8_t* get_header(unsigned, uint64_t, unsigned&);
+    const uint8_t* get_header(unsigned, uint64_t, int32_t&);
 
 };
 

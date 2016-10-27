@@ -153,7 +153,7 @@ struct SSH_CLIENT_CONFIG
 
 THREAD_LOCAL SSH_CLIENT_CONFIG ssh_client_config;
 
-static CLIENT_APP_RETCODE ssh_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE ssh_client_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd,  Packet* pkt, struct Detector* userData);
 
@@ -199,7 +199,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_OPENSSH, APPINFO_FLAG_CLIENT_ADDITIONAL }
 };
 
-static CLIENT_APP_RETCODE ssh_client_init(const IniClientAppAPI* const init_api, SF_LIST* config)
+static CLIENT_APP_RETCODE ssh_client_init(const InitClientAppAPI* const init_api, SF_LIST* config)
 {
     unsigned i;
 

@@ -48,7 +48,7 @@ struct ServiceMYSQLHdr
 
 #pragma pack()
 
-static int svc_mysql_init(const IniServiceAPI* const init_api);
+static int svc_mysql_init(const InitServiceAPI* const init_api);
 static int svc_mysql_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element
@@ -86,7 +86,7 @@ static AppRegistryEntry appIdRegistry[]
     { APP_ID_MYSQL, APPINFO_FLAG_SERVICE_ADDITIONAL }
 };
 
-static int svc_mysql_init(const IniServiceAPI* const init_api)
+static int svc_mysql_init(const InitServiceAPI* const init_api)
 {
     for ( unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++ )
     {

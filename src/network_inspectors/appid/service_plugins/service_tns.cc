@@ -87,7 +87,7 @@ struct ServiceTNSMsg
 };
 #pragma pack()
 
-static int tns_init(const IniServiceAPI* const init_api);
+static int tns_init(const InitServiceAPI* const init_api);
 static int tns_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -125,7 +125,7 @@ static const AppRegistryEntry appIdRegistry[] =
     { APP_ID_ORACLE_TNS, APPINFO_FLAG_SERVICE_ADDITIONAL },
 };
 
-static int tns_init(const IniServiceAPI* const init_api)
+static int tns_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&tns_validate, IpProtocol::TCP, (const uint8_t*)TNS_BANNER,
         TNS_BANNER_LEN, 2, svc_name);

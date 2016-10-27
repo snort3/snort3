@@ -129,7 +129,7 @@ static const char* msg_type[] =
 #endif
 THREAD_LOCAL TNS_CLIENT_APP_CONFIG tns_config;
 
-static CLIENT_APP_RETCODE tns_init(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE tns_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
@@ -167,7 +167,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_ORACLE_DATABASE, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER }
 };
 
-static CLIENT_APP_RETCODE tns_init(const IniClientAppAPI* const init_api, SF_LIST* config)
+static CLIENT_APP_RETCODE tns_init(const InitClientAppAPI* const init_api, SF_LIST* config)
 {
     unsigned i;
 

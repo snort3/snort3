@@ -65,13 +65,13 @@ struct CleanServiceAPI
     AppIdConfig* pAppidConfig;  ///< AppId context for which this API should be used
 };
 
-struct IniServiceAPI;
-using RNAServiceValidationInitFCN = int(*)(const IniServiceAPI* const);
+struct InitServiceAPI;
+using RNAServiceValidationInitFCN = int(*)(const InitServiceAPI* const);
 using RNAServiceValidationCleanFCN = void(*)();
 
 struct RNAServiceValidationPort;
 struct RNAServiceValidationModule;
-struct IniServiceAPI
+struct InitServiceAPI
 {
     void (* RegisterPattern)( RNAServiceValidationFCN, IpProtocol proto, const uint8_t* pattern,
         unsigned size, int position, const char* name);

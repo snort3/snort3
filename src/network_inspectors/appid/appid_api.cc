@@ -358,29 +358,43 @@ char* AppIdApi::get_http_request_body(AppIdSession* asd)
 uint16_t AppIdApi::get_http_uri_offset(AppIdSession* asd)
 {
     if (asd && asd->hsession)
-        return asd->hsession->uriOffset;
+        return asd->hsession->fieldOffset[REQ_URI_FID];
     return 0;
 }
 
 uint16_t AppIdApi::get_http_uri_end_offset(AppIdSession* asd)
 {
     if (asd && asd->hsession)
-        return asd->hsession->uriEndOffset;
+        return asd->hsession->fieldEndOffset[REQ_URI_FID];
     return 0;
 }
 
 uint16_t AppIdApi::get_http_cookie_offset(AppIdSession* asd)
 {
     if (asd && asd->hsession)
-        return asd->hsession->cookieOffset;
+        return asd->hsession->fieldOffset[REQ_COOKIE_FID];
     return 0;
 }
 
 uint16_t AppIdApi::get_http_cookie_end_offset(AppIdSession* asd)
 {
     if (asd && asd->hsession)
-        return asd->hsession->cookieEndOffset;
+        return asd->hsession->fieldEndOffset[REQ_COOKIE_FID];
     return 0;
+}
+
+uint16_t getHttpFieldOffset(AppIdSession* asd, HTTP_FIELD_ID fieldId)
+{
+    if (asd && asd->hsession && fieldId >= 0 && fieldId <= HTTP_FIELD_MAX)
+        return asd->hsession->fieldOffset[fieldId];
+    return 0;
+}
+
+uint16_t getHttpFieldEndOffset(AppIdSession* asd, HTTP_FIELD_ID fieldId)
+{
+    if (asd && asd->hsession && fieldId >= 0 && fieldId <= HTTP_FIELD_MAX)
+        return asd->hsession->fieldEndOffset[fieldId];
+     return 0;
 }
 
 SEARCH_SUPPORT_TYPE AppIdApi::get_http_search(AppIdSession* asd)
@@ -520,7 +534,7 @@ uint32_t AppIdApi::produce_ha_state(Flow* flow, uint8_t* buf)
 }
 
 uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpProtocol proto,
-    sfip_t* ip)
+    sfip_t* ip, uint16_t port)
 {
     AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
     if (appHA->flags & APPID_HA_FLAGS_APP)
@@ -530,8 +544,9 @@ uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpP
 
         if (!asd)
         {
-            asd = new AppIdSession(proto, ip);
+            asd = new AppIdSession(proto, ip, port);
             flow->set_flow_data(asd);
+            asd->serviceAppId = appHA->appId[1];
             if (asd->serviceAppId == APP_ID_FTP_CONTROL)
             {
                 asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED |

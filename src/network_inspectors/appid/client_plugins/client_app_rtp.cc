@@ -82,7 +82,7 @@ struct RTP_CLIENT_APP_CONFIG
 
 THREAD_LOCAL RTP_CLIENT_APP_CONFIG rtp_config;
 
-static CLIENT_APP_RETCODE rtp_init(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE rtp_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE rtp_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
@@ -231,7 +231,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_RTP, 0 }
 };
 
-static CLIENT_APP_RETCODE rtp_init(const IniClientAppAPI* const init_api, SF_LIST* config)
+static CLIENT_APP_RETCODE rtp_init(const InitClientAppAPI* const init_api, SF_LIST* config)
 {
     unsigned i;
 

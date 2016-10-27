@@ -64,7 +64,7 @@ struct ServiceREXECData
     struct ServiceREXECData* child;
 };
 
-static int rexec_init(const IniServiceAPI* const init_api);
+static int rexec_init(const InitServiceAPI* const init_api);
 static int rexec_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -104,7 +104,7 @@ static AppRegistryEntry appIdRegistry[] =
 
 static int16_t app_id = 0;
 
-static int rexec_init(const IniServiceAPI* const init_api)
+static int rexec_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
 

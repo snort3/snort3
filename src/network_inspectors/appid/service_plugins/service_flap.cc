@@ -74,7 +74,7 @@ struct FLAPHeader
 
 #pragma pack()
 
-static int flap_init(const IniServiceAPI* const init_api);
+static int flap_init(const InitServiceAPI* const init_api);
 static int flap_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -116,7 +116,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_AOL_INSTANT_MESSENGER, 0 }
 };
 
-static int flap_init(const IniServiceAPI* const init_api)
+static int flap_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&flap_validate, IpProtocol::TCP, FLAP_PATTERN,
             sizeof(FLAP_PATTERN), 0, "flap");

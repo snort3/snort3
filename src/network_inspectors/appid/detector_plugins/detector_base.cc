@@ -25,6 +25,7 @@
 #include "detector_api.h"
 #include "log/messages.h"
 #include "service_plugins/service_base.h"
+#include "detector_plugins/detector_smtp.h"
 
 static void* detector_flowdata_get(AppIdSession* asd, unsigned detector_id);
 static int detector_flowdata_add(AppIdSession* asd, void* data, unsigned detector_id,
@@ -44,6 +45,7 @@ static RNADetectorValidationModule* static_detector_list[]
 {
     &imap_detector_mod,
     &pop3_detector_mod,
+    &smtp_detector_mod,
     &kerberos_detector_mod
 };
 const uint32_t NUM_STATIC_DETECTORS =

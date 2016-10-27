@@ -57,12 +57,14 @@ FlowData::~FlowData()
 void Flow::set_application_ids(AppId, AppId, AppId, AppId) { }
 
 const char *content_type = nullptr;
+const char *cookie = nullptr;
 const char *host = nullptr;
+const char *location = nullptr;
 const char *referer = nullptr;
 int32_t response_code = 0;
 const char *server = nullptr;
 const char *x_working_with = nullptr;
-const char *url = nullptr;
+const char *uri = nullptr;
 const char *useragent = nullptr;
 const char *via = nullptr;
 
@@ -83,6 +85,12 @@ const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, ui
         {
             if(host)
                 global_field.set(strlen(host), (const uint8_t*)host);
+        }
+
+        if(sub_id == HttpEnums::HEAD_COOKIE)
+        {
+            if(cookie)
+                global_field.set(strlen(cookie), (const uint8_t*)cookie);
         }
 
         if(sub_id == HttpEnums::HEAD_USER_AGENT)
@@ -120,14 +128,20 @@ const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, ui
             if(content_type)
                 global_field.set(strlen(content_type), (const uint8_t*)content_type);
         }
+
+        if(sub_id == HttpEnums::HEAD_LOCATION)
+        {
+            if(location)
+                global_field.set(strlen(location), (const uint8_t*)location);
+        }
     }
 
     if(id == HttpEnums::HTTP_BUFFER_URI)
     {
         if(sub_id == 0)
         {
-            if(url)
-                global_field.set(strlen(url), (const uint8_t*)url);
+            if(uri)
+                global_field.set(strlen(uri), (const uint8_t*)uri);
         }
     }
 
@@ -142,7 +156,7 @@ unsigned AppIdSession::flow_id = 0;
 AppIdSession *fake_session = nullptr;
 FakeHttpMsgHeader *fake_msg_header = nullptr;
 
-AppIdSession::AppIdSession(IpProtocol, const sfip_t*) : FlowData(flow_id, nullptr)
+AppIdSession::AppIdSession(IpProtocol, const sfip_t*, uint16_t) : FlowData(flow_id, nullptr)
 {
 }
 
@@ -151,15 +165,31 @@ AppIdSession::~AppIdSession()
     if(!hsession)
         return;
 
-    if(hsession->content_type) free(hsession->content_type);
-    if(hsession->host) free(hsession->host);
-    if(hsession->referer) free(hsession->referer);
-    if(hsession->response_code) free(hsession->response_code);
-    if(hsession->server) free(hsession->server);
-    if(hsession->url) free(hsession->url);
-    if(hsession->useragent) free(hsession->useragent);
-    if(hsession->via) free(hsession->via);
-    if(hsession->x_working_with) free(hsession->x_working_with);
+    if(hsession->content_type)
+        free(hsession->content_type);
+    if(hsession->cookie)
+        free(hsession->cookie);
+    if(hsession->host)
+        free(hsession->host);
+    if(hsession->location)
+        free(hsession->location);
+    if(hsession->referer)
+        free(hsession->referer);
+    if(hsession->response_code)
+        free(hsession->response_code);
+    if(hsession->server)
+        free(hsession->server);
+    if(hsession->uri)
+        free(hsession->uri);
+    if(hsession->url)
+        snort_free(hsession->url);
+    if(hsession->useragent)
+        free(hsession->useragent);
+    if(hsession->via)
+        free(hsession->via);
+    if(hsession->x_working_with)
+        free(hsession->x_working_with);
+
     snort_free(hsession);
 }
 
@@ -194,7 +224,7 @@ AppIdSession* AppIdApi::get_appid_data(Flow*)
     return fake_session;
 }
 
-const uint8_t* HttpEvent::get_content_type(unsigned &length)
+const uint8_t* HttpEvent::get_content_type(int32_t &length)
 {
     global_field.set(0, nullptr);
     if(content_type)
@@ -203,7 +233,16 @@ const uint8_t* HttpEvent::get_content_type(unsigned &length)
     return global_field.start;
 }
 
-const uint8_t* HttpEvent::get_host(unsigned &length)
+const uint8_t* HttpEvent::get_cookie(int32_t &length)
+{
+    global_field.set(0, nullptr);
+    if(cookie)
+        global_field.set(strlen(cookie), (const uint8_t*)cookie);
+    length = global_field.length;
+    return global_field.start;
+}
+
+const uint8_t* HttpEvent::get_host(int32_t &length)
 {
     global_field.set(0, nullptr);
     if(host)
@@ -212,7 +251,16 @@ const uint8_t* HttpEvent::get_host(unsigned &length)
     return global_field.start;
 }
 
-const uint8_t* HttpEvent::get_referer(unsigned &length)
+const uint8_t* HttpEvent::get_location(int32_t &length)
+{
+    global_field.set(0, nullptr);
+    if(location)
+        global_field.set(strlen(location), (const uint8_t*)location);
+    length = global_field.length;
+    return global_field.start;
+}
+
+const uint8_t* HttpEvent::get_referer(int32_t &length)
 {
     global_field.set(0, nullptr);
     if(referer)
@@ -226,7 +274,7 @@ int32_t HttpEvent::get_response_code()
     return response_code;
 }
 
-const uint8_t* HttpEvent::get_server(unsigned &length)
+const uint8_t* HttpEvent::get_server(int32_t &length)
 {
     global_field.set(0, nullptr);
     if(server)
@@ -235,16 +283,16 @@ const uint8_t* HttpEvent::get_server(unsigned &length)
     return global_field.start;
 }
 
-const uint8_t* HttpEvent::get_uri(unsigned &length)
+const uint8_t* HttpEvent::get_uri(int32_t &length)
 {
     global_field.set(0, nullptr);
-    if(url)
-        global_field.set(strlen(url), (const uint8_t*)url);
+    if(uri)
+        global_field.set(strlen(uri), (const uint8_t*)uri);
     length = global_field.length;
     return global_field.start;
 }
 
-const uint8_t* HttpEvent::get_user_agent(unsigned &length)
+const uint8_t* HttpEvent::get_user_agent(int32_t &length)
 {
     global_field.set(0, nullptr);
     if(useragent)
@@ -253,7 +301,7 @@ const uint8_t* HttpEvent::get_user_agent(unsigned &length)
     return global_field.start;
 }
 
-const uint8_t* HttpEvent::get_via(unsigned &length)
+const uint8_t* HttpEvent::get_via(int32_t &length)
 {
     global_field.set(0, nullptr);
     if(via)
@@ -262,7 +310,7 @@ const uint8_t* HttpEvent::get_via(unsigned &length)
     return global_field.start;
 }
 
-const uint8_t* HttpEvent::get_x_working_with(unsigned &length)
+const uint8_t* HttpEvent::get_x_working_with(int32_t &length)
 {
     global_field.set(0, nullptr);
     if(x_working_with)
@@ -311,7 +359,7 @@ TEST(appid_http_event, handle_null_msg_header)
 {
     FakeFlow flow;
     HttpEvent event(nullptr);
-    AppIdSession session(IpProtocol::TCP, nullptr);
+    AppIdSession session(IpProtocol::TCP, nullptr, 1492);
     HttpEventHandler event_handler(HttpEventHandler::REQUEST_EVENT);
     fake_session = &session;
 
@@ -322,8 +370,10 @@ TEST(appid_http_event, handle_null_msg_header)
 }
 
 #define CONTENT_TYPE "html/text"
+#define COOKIE "this is my request cookie content"
 #define HOST "www.google.com"
-#define URL "http://www.google.com/path/to/index.html"
+#define LOCATION "abc.yahoo.com"
+#define URI "/path/to/index.html"
 #define USERAGENT "Mozilla/5.0 (Macintosh; Intel Mac OS X)"
 #define REFERER "http://www.yahoo.com/search"
 #define RESPONSE_CODE 301
@@ -337,12 +387,14 @@ struct TestData
     unsigned scan_flags = 0;
     PegCount http_flows = 1;   // Default to 1 since most tests have 1.
     const char *content_type = nullptr;
+    const char *cookie = nullptr;
     const char *host = nullptr;
+    const char *location = nullptr;
     const char *referer = nullptr;
     int32_t response_code = 0;
     const char *server = nullptr;
     const char *x_working_with = nullptr;
-    const char *url = nullptr;
+    const char *uri = nullptr;
     const char *useragent = nullptr;
     const char *via = nullptr;
 };
@@ -351,20 +403,22 @@ void run_event_handler(TestData test_data, TestData *expect_data = nullptr)
 {
     FakeFlow flow;
     HttpEvent event(nullptr);
-    AppIdSession session(IpProtocol::TCP, nullptr);
+    AppIdSession session(IpProtocol::TCP, nullptr, 1492);
     FakeHttpMsgHeader http_msg_header;
     HttpEventHandler event_handler(test_data.type);
     fake_session = &session;
     fake_msg_header = &http_msg_header;
 
     host = test_data.host;
+    location = test_data.location;
     referer = test_data.referer;
     server = test_data.server;
     x_working_with = test_data.x_working_with;
-    url = test_data.url;
+    uri = test_data.uri;
     useragent = test_data.useragent;
     via = test_data.via;
     content_type = test_data.content_type;
+    cookie = test_data.cookie;
     response_code = test_data.response_code;
 
     if(expect_data == nullptr)
@@ -376,8 +430,10 @@ void run_event_handler(TestData test_data, TestData *expect_data = nullptr)
     LONGS_EQUAL(expect_data->scan_flags, session.scan_flags);
     LONGS_EQUAL(expect_data->http_flows, appid_stats.http_flows);
     STRCMP_EQUAL(expect_data->host, session.hsession->host);
-    STRCMP_EQUAL(expect_data->url, session.hsession->url);
+    STRCMP_EQUAL(expect_data->uri, session.hsession->uri);
     STRCMP_EQUAL(expect_data->content_type, session.hsession->content_type);
+    STRCMP_EQUAL(expect_data->cookie, session.hsession->cookie);
+    STRCMP_EQUAL(expect_data->location, session.hsession->location);
     STRCMP_EQUAL(expect_data->referer, session.hsession->referer);
     STRCMP_EQUAL(expect_data->server, session.hsession->server);
     STRCMP_EQUAL(expect_data->x_working_with, session.hsession->x_working_with);
@@ -412,12 +468,21 @@ TEST(appid_http_event, handle_msg_header_only_host)
     run_event_handler(test_data);
 }
 
-TEST(appid_http_event, handle_msg_header_host_and_url)
+TEST(appid_http_event, handle_msg_header_cookie)
+{
+    TestData test_data;
+    test_data.scan_flags = 0;
+    test_data.cookie = COOKIE;
+    
+    run_event_handler(test_data);
+}
+
+TEST(appid_http_event, handle_msg_header_host_and_uri)
 {
     TestData test_data;
     test_data.scan_flags = SCAN_HTTP_HOST_URL_FLAG;
     test_data.host = HOST;
-    test_data.url = URL;
+    test_data.uri = URI;
     
     run_event_handler(test_data);
 }
@@ -469,6 +534,17 @@ TEST(appid_http_event, handle_msg_header_content_type)
     run_event_handler(test_data);
 }
 
+TEST(appid_http_event, handle_msg_header_location)
+{
+    TestData test_data;
+    test_data.type = HttpEventHandler::RESPONSE_EVENT;
+    test_data.scan_flags = 0;
+    test_data.http_flows = 0;   //  Flows are only counted on request header
+    test_data.location = LOCATION;
+    
+    run_event_handler(test_data);
+}
+
 TEST(appid_http_event, handle_msg_header_server)
 {
     TestData test_data;
@@ -513,16 +589,18 @@ TEST(appid_http_event, handle_msg_header_all_response_headers)
     test_data.http_flows = 0;   //  Flows are only counted on request header
     test_data.response_code = RESPONSE_CODE;
     test_data.content_type = CONTENT_TYPE;
+    test_data.location = LOCATION;
     test_data.via = VIA;
 
     TestData expect_data = test_data;
 
     //  Fill in the request data too to demonstrate that it is not copied
     //  during response header handling.
-    test_data.url = URL;
+    test_data.uri = URI;
     test_data.host = HOST;
     test_data.referer = REFERER;
     test_data.useragent = USERAGENT;
+    test_data.cookie = COOKIE;
     
     run_event_handler(test_data, &expect_data);
 }
@@ -533,7 +611,8 @@ TEST(appid_http_event, handle_msg_header_all_request_headers)
     test_data.type = HttpEventHandler::REQUEST_EVENT;
     test_data.scan_flags = SCAN_HTTP_VIA_FLAG | SCAN_HTTP_USER_AGENT_FLAG |
         SCAN_HTTP_HOST_URL_FLAG;
-    test_data.url = URL;
+    test_data.uri = URI;
+    test_data.cookie = COOKIE;
     test_data.host = HOST;
     test_data.referer = REFERER;
     test_data.useragent = USERAGENT;
@@ -545,6 +624,7 @@ TEST(appid_http_event, handle_msg_header_all_request_headers)
     //  during response header handling.
     test_data.response_code = RESPONSE_CODE;
     test_data.content_type = CONTENT_TYPE;
+    test_data.location = LOCATION;
     
     run_event_handler(test_data, &expect_data);
 }

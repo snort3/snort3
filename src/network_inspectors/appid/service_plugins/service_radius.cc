@@ -61,7 +61,7 @@ struct RADIUSHeader
 
 #pragma pack()
 
-static int radius_init(const IniServiceAPI* const init_api);
+static int radius_init(const InitServiceAPI* const init_api);
 static int radius_validate(ServiceValidationArgs* args);
 static int radius_validate_accounting(ServiceValidationArgs* args);
 
@@ -116,7 +116,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_RADIUS, APPINFO_FLAG_SERVICE_UDP_REVERSED }
 };
 
-static int radius_init(const IniServiceAPI* const init_api)
+static int radius_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)

@@ -48,7 +48,6 @@
 #include "service_rshell.h"
 #include "service_rsync.h"
 #include "service_rtmp.h"
-#include "service_smtp.h"
 #include "service_snmp.h"
 #include "service_ssh.h"
 #include "service_ssl.h"
@@ -193,7 +192,7 @@ static void appSetServiceValidator( RNAServiceValidationFCN, AppId, unsigned ext
 static int CServiceAddPort(const RNAServiceValidationPort*, RNAServiceValidationModule*);
 static void CServiceRemovePorts(RNAServiceValidationFCN validate);
 
-static IniServiceAPI svc_init_api =
+static InitServiceAPI svc_init_api =
 {
     &CServiceRegisterPattern,
     &CServiceAddPort,
@@ -232,7 +231,6 @@ static RNAServiceValidationModule* static_service_list[] =
     &rshell_service_mod,
     &rsync_service_mod,
     &rtmp_service_mod,
-    &smtp_service_mod,
     &snmp_service_mod,
     &ssh_service_mod,
     &ssl_service_mod,

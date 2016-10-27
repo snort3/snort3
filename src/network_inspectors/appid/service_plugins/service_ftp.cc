@@ -82,7 +82,7 @@ struct ServiceFTPCode
 
 #pragma pack()
 
-static int ftp_init(const IniServiceAPI* const init_api);
+static int ftp_init(const InitServiceAPI* const init_api);
 static int ftp_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -130,7 +130,7 @@ static AppRegistryEntry appIdRegistry[] =
 
 static int16_t ftp_data_app_id = 0;
 
-static int ftp_init(const IniServiceAPI* const init_api)
+static int ftp_init(const InitServiceAPI* const init_api)
 {
     ftp_data_app_id = add_appid_protocol_reference("ftp-data");
 

@@ -282,7 +282,7 @@ struct NBDgmError
 
 #pragma pack()
 
-static int netbios_init(const IniServiceAPI* const init_api);
+static int netbios_init(const InitServiceAPI* const init_api);
 static int nbns_validate(ServiceValidationArgs* args);
 static int nbss_validate(ServiceValidationArgs* args);
 static int nbdgm_validate(ServiceValidationArgs* args);
@@ -344,7 +344,7 @@ RNAServiceValidationModule netbios_service_mod
     0
 };
 
-static int netbios_init(const IniServiceAPI* const init_api)
+static int netbios_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&nbss_validate, IpProtocol::TCP, NB_SMB_BANNER,
         sizeof(NB_SMB_BANNER), -1, "netbios");

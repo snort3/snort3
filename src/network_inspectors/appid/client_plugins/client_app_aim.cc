@@ -74,7 +74,7 @@ THREAD_LOCAL AIM_CLIENT_APP_CONFIG aim_config;
 
 #define MAX_VERSION_SIZE    64
 
-static CLIENT_APP_RETCODE aim_init(const IniClientAppAPI* const, SF_LIST* config);
+static CLIENT_APP_RETCODE aim_init(const InitClientAppAPI* const, SF_LIST* config);
 static CLIENT_APP_RETCODE aim_validate( const uint8_t* data, uint16_t size, const int dir,
         AppIdSession*, Packet*, Detector*);
 
@@ -123,7 +123,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_AOL_INSTANT_MESSENGER, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER },
 };
 
-static CLIENT_APP_RETCODE aim_init(const IniClientAppAPI* const init_api, SF_LIST* config)
+static CLIENT_APP_RETCODE aim_init(const InitClientAppAPI* const init_api, SF_LIST* config)
 {
     aim_config.enabled = 1;
 

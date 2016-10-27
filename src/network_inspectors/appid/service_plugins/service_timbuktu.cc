@@ -58,7 +58,7 @@ struct ServiceTIMBUKTUMsg
 };
 #pragma pack()
 
-static int timbuktu_init(const IniServiceAPI* const init_api);
+static int timbuktu_init(const InitServiceAPI* const init_api);
 static int timbuktu_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -96,7 +96,7 @@ static const AppRegistryEntry appIdRegistry[] =
     { APP_ID_TIMBUKTU, 0 }
 };
 
-static int timbuktu_init(const IniServiceAPI* const init_api)
+static int timbuktu_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&timbuktu_validate, IpProtocol::TCP,
             (const uint8_t*)TIMBUKTU_BANNER, sizeof(TIMBUKTU_BANNER) - 1,

@@ -14,8 +14,6 @@ set ( CP_APPID_SOURCES
 	client_plugins/client_app_msn.cc
 	client_plugins/client_app_msn.h
 	client_plugins/client_app_rtp.cc
-	client_plugins/client_app_smtp.cc
-	client_plugins/client_app_smtp.h
 	client_plugins/client_app_ssh.cc
 	client_plugins/client_app_timbuktu.cc
 	client_plugins/client_app_tns.cc
@@ -76,8 +74,6 @@ set ( SP_APPID_SOURCES
 	service_plugins/service_rsync.h
 	service_plugins/service_rtmp.cc
 	service_plugins/service_rtmp.h
-	service_plugins/service_smtp.cc
-	service_plugins/service_smtp.h
 	service_plugins/service_snmp.cc
 	service_plugins/service_snmp.h
 	service_plugins/service_ssh.cc
@@ -108,6 +104,8 @@ set ( DP_APPID_SOURCES
 	detector_plugins/detector_pop3.cc
 	detector_plugins/detector_sip.cc
 	detector_plugins/detector_sip.h
+	detector_plugins/detector_smtp.cc
+	detector_plugins/detector_smtp.h
 	detector_plugins/http_url_patterns.cc
 	detector_plugins/http_url_patterns.h
 )
@@ -200,7 +198,7 @@ set ( APPID_SOURCES
 target_include_directories ( appid PRIVATE ${APPID_INCLUDE_DIR} )
 
 add_subdirectory(service_plugins/test)
-add_subdirectory(client_plugins/test)
+add_subdirectory(detector_plugins/test)
 add_subdirectory(test)
 
 #install (FILES ${APPID_INCLUDES}

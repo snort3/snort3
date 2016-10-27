@@ -34,15 +34,15 @@ static THREAD_LOCAL ClientPortPattern clientPortPattern;
 static int service_validate(ServiceValidationArgs* args);
 static int csdPatternTreeSearch(const uint8_t* data, uint16_t size, IpProtocol protocol, Packet* pkt,
     const RNAServiceElement** serviceData, bool isClient);
-static int pattern_service_init(const IniServiceAPI* const iniServiceApi);
+static int pattern_service_init(const InitServiceAPI* const iniServiceApi);
 static void pattern_service_clean();
-static CLIENT_APP_RETCODE client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
-static CLIENT_APP_RETCODE client_init_tcp(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE client_init(const InitClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE client_init_tcp(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE client_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, struct Detector* userData);
 static void client_clean();
-static const IniServiceAPI* iniServiceApi;
-static const IniClientAppAPI* iniClientApi;
+static const InitServiceAPI* iniServiceApi;
+static const InitClientAppAPI* iniClientApi;
 
 static const RNAServiceElement svc_element =
 {
@@ -183,7 +183,7 @@ static void read_patterns(PortPatternNode* portPatternList, PatternService** ser
 }
 
 // Register ports for detectors which have a pattern associated with it.
-static void install_ports(PatternService* serviceList, const IniServiceAPI* const iniServiceApi)
+static void install_ports(PatternService* serviceList, const InitServiceAPI* const iniServiceApi)
 {
     PatternService* ps;
     PortNode* port;
@@ -507,7 +507,7 @@ void finalize_service_port_patterns()
     dumpPatterns("Server", service_port_patterns.servicePortPattern);
 }
 
-static int pattern_service_init(const IniServiceAPI* const init_api)
+static int pattern_service_init(const InitServiceAPI* const init_api)
 {
     iniServiceApi = init_api;
 
@@ -747,14 +747,14 @@ fail:
     return SERVICE_NOMATCH;
 }
 
-static CLIENT_APP_RETCODE client_init(const IniClientAppAPI* const init_api, SF_LIST*)
+static CLIENT_APP_RETCODE client_init(const InitClientAppAPI* const init_api, SF_LIST*)
 {
     iniClientApi = init_api;
 
     return CLIENT_APP_SUCCESS;
 }
 
-static CLIENT_APP_RETCODE client_init_tcp(const IniClientAppAPI* const, SF_LIST*)
+static CLIENT_APP_RETCODE client_init_tcp(const InitClientAppAPI* const, SF_LIST*)
 {
     return CLIENT_APP_SUCCESS;
 }

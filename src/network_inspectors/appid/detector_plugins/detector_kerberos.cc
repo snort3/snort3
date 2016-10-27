@@ -110,7 +110,7 @@ struct DetectorData
 
 static KRB_CLIENT_APP_CONFIG krb_client_config;
 
-static CLIENT_APP_RETCODE krb_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE krb_client_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE krb_client_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
@@ -149,7 +149,7 @@ static Detector_Pattern client_patterns[] =
     { TGS_REQ_4, sizeof(TGS_REQ_4)-1 },
 };
 
-static int krb_server_init(const IniServiceAPI* const init_api);
+static int krb_server_init(const InitServiceAPI* const init_api);
 static int krb_server_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -209,7 +209,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_KERBEROS, APPINFO_FLAG_CLIENT_USER | APPINFO_FLAG_SERVICE_ADDITIONAL }
 };
 
-static CLIENT_APP_RETCODE krb_client_init(const IniClientAppAPI* const init_api, SF_LIST* config)
+static CLIENT_APP_RETCODE krb_client_init(const InitClientAppAPI* const init_api, SF_LIST* config)
 {
     unsigned i;
     RNAClientAppModuleConfigItem* item;
@@ -258,7 +258,7 @@ static CLIENT_APP_RETCODE krb_client_init(const IniClientAppAPI* const init_api,
     return CLIENT_APP_SUCCESS;
 }
 
-static int krb_server_init(const IniServiceAPI* const init_api)
+static int krb_server_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
 

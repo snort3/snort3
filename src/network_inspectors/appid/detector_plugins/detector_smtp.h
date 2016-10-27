@@ -24,7 +24,8 @@
 
 #include "detector_plugins/detector_api.h"
 
-extern RNAServiceValidationModule smtp_service_mod;
+extern RNADetectorValidationModule smtp_detector_mod;
+
 
 #endif
 

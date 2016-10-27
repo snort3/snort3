@@ -86,7 +86,7 @@ struct ServiceBGPV1Open
 
 #pragma pack()
 
-static int bgp_init(const IniServiceAPI* const init_api);
+static int bgp_init(const InitServiceAPI* const init_api);
 static int bgp_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -130,7 +130,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_BGP, 0 }
 };
 
-static int bgp_init(const IniServiceAPI* const init_api)
+static int bgp_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&bgp_validate, IpProtocol::TCP, BGP_PATTERN,
             sizeof(BGP_PATTERN), 0, "bgp");

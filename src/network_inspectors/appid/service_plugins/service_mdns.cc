@@ -92,7 +92,7 @@ struct MdnsConfig
     MatchedPatterns* patternList;
 };
 
-static int MDNS_init(const IniServiceAPI* const init_api);
+static int MDNS_init(const InitServiceAPI* const init_api);
 static int ReferencePointer(const char* start_ptr,const char** resp_endptr,   int* start_index,
     uint16_t data_size, uint8_t* user_name_len, unsigned offset, const AppIdConfig* pConfig);
 static int MDNS_validate(ServiceValidationArgs* args);
@@ -140,7 +140,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_MDNS, APPINFO_FLAG_SERVICE_ADDITIONAL }
 };
 
-static int MDNS_init(const IniServiceAPI* const init_api)
+static int MDNS_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)

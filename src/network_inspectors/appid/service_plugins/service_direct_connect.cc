@@ -44,7 +44,7 @@ struct ServiceData
     uint32_t packetCount;
 };
 
-static int direct_connect_init(const IniServiceAPI* const init_api);
+static int direct_connect_init(const InitServiceAPI* const init_api);
 static int direct_connect_validate(ServiceValidationArgs* args);
 static int validateDirectConnectTcp(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, const Packet* pkt, ServiceData* serviceData);
@@ -101,7 +101,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_DIRECT_CONNECT, 0 }
 };
 
-static int direct_connect_init(const IniServiceAPI* const init_api)
+static int direct_connect_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN1,
         sizeof(PATTERN1)-1,  0, "direct_connect");

@@ -159,12 +159,15 @@ int finalize_http_detector();
 void clean_http_detector();
 void insert_chp_pattern(CHPListElement* chpa);
 void insert_http_pattern_element(enum httpPatternType pType, HTTPListElement* element);
+void remove_http_patterns_for_id( AppId id );
 void insert_content_type_pattern(HTTPListElement* element);
 void insert_url_pattern(DetectorAppUrlPattern* pattern);
 void insert_rtmp_url_pattern(DetectorAppUrlPattern* pattern);
 void insert_app_url_pattern(DetectorAppUrlPattern* pattern);
 int get_appid_by_pattern(const uint8_t*, unsigned, char**);
 int get_http_header_location(const uint8_t*, unsigned, HttpId, int*, int*, HeaderMatchedPatterns*);
+void httpGetNewOffsetsFromPacket(Packet *pkt, httpSession *hsession);
+
 inline void free_matched_chp_actions(MatchedCHPAction* ma)
 {
 	MatchedCHPAction* tmp;

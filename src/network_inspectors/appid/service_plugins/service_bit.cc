@@ -66,7 +66,7 @@ struct ServiceBITMsg
 };
 #pragma pack()
 
-static int bit_init(const IniServiceAPI* const init_api);
+static int bit_init(const InitServiceAPI* const init_api);
 static int bit_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -112,7 +112,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_BITTORRENT, 0 }
 };
 
-static int bit_init(const IniServiceAPI* const init_api)
+static int bit_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&bit_validate, IpProtocol::TCP, (const uint8_t*)BIT_BANNER,
         sizeof(BIT_BANNER)-1, 0, svc_name);

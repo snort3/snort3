@@ -66,7 +66,7 @@ struct ServiceDHCPOption
 
 #pragma pack()
 
-static int bootp_init(const IniServiceAPI* const init_api);
+static int bootp_init(const InitServiceAPI* const init_api);
 static int bootp_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -105,7 +105,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_DHCP, APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_SERVICE_UDP_REVERSED }
 };
 
-static int bootp_init(const IniServiceAPI* const init_api)
+static int bootp_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)

@@ -161,7 +161,7 @@ struct ServiceRPCData
     int once;
 };
 
-static int rpc_init(const IniServiceAPI* const init_api);
+static int rpc_init(const InitServiceAPI* const init_api);
 static int rpc_validate(ServiceValidationArgs* args);
 static int rpc_tcp_validate(ServiceValidationArgs* args);
 
@@ -241,7 +241,7 @@ static AppRegistryEntry appIdRegistry[] =
 
 static int16_t app_id = 0;
 
-static int rpc_init(const IniServiceAPI* const init_api)
+static int rpc_init(const InitServiceAPI* const init_api)
 {
     struct rpcent* rpc;
     RPCProgram* prog;

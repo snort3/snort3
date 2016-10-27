@@ -1147,7 +1147,7 @@ src/stream/file/Makefile \
 src/network_inspectors/Makefile \
 src/network_inspectors/appid/Makefile \
 src/network_inspectors/appid/test/Makefile \
-src/network_inspectors/appid/client_plugins/test/Makefile \
+src/network_inspectors/appid/detector_plugins/test/Makefile \
 src/network_inspectors/appid/service_plugins/test/Makefile \
 src/network_inspectors/arp_spoof/Makefile \
 src/network_inspectors/binder/Makefile \

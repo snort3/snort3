@@ -36,7 +36,7 @@ struct ServiceDCERPCData
     unsigned count;
 };
 
-static int dcerpc_init(const IniServiceAPI* const init_api);
+static int dcerpc_init(const InitServiceAPI* const init_api);
 static int dcerpc_tcp_validate(ServiceValidationArgs* args);
 static int dcerpc_udp_validate(ServiceValidationArgs* args);
 
@@ -87,7 +87,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_DCE_RPC, 0 }
 };
 
-static int dcerpc_init(const IniServiceAPI* const init_api)
+static int dcerpc_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)

@@ -62,7 +62,7 @@ struct ServiceNNTPCode
 
 #pragma pack()
 
-static int nntp_init(const IniServiceAPI* const init_api);
+static int nntp_init(const InitServiceAPI* const init_api);
 static int nntp_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -103,7 +103,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_NNTP, 0 }
 };
 
-static int nntp_init(const IniServiceAPI* const init_api)
+static int nntp_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&nntp_validate, IpProtocol::TCP, (uint8_t*)NNTP_PATTERN1,
         sizeof(NNTP_PATTERN1)-1, 0, "nntp");

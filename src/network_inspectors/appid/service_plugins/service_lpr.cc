@@ -62,7 +62,7 @@ struct ServiceLPRData
     unsigned count;
 };
 
-static int lpr_init(const IniServiceAPI* const init_api);
+static int lpr_init(const InitServiceAPI* const init_api);
 static int lpr_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -100,7 +100,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_PRINTSRV, 0 }
 };
 
-static int lpr_init(const IniServiceAPI* const init_api)
+static int lpr_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)

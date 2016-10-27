@@ -97,11 +97,11 @@ struct DetectorSipConfig
 
 static THREAD_LOCAL DetectorSipConfig detector_sip_config;
 
-static CLIENT_APP_RETCODE sip_client_init(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE sip_client_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static void sip_clean();
 static CLIENT_APP_RETCODE sip_client_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, Detector* userData);
-static CLIENT_APP_RETCODE sip_tcp_client_init(const IniClientAppAPI* const init_api,
+static CLIENT_APP_RETCODE sip_tcp_client_init(const InitClientAppAPI* const init_api,
     SF_LIST* config);
 static CLIENT_APP_RETCODE sip_tcp_client_validate(const uint8_t* data, uint16_t size,
     const int dir, AppIdSession* asd, Packet* pkt, Detector* userData);
@@ -179,7 +179,7 @@ struct ServiceSIPData
     char vendor[MAX_VENDOR_SIZE];
 };
 
-static int sip_service_init(const IniServiceAPI* const init_api);
+static int sip_service_init(const InitServiceAPI* const init_api);
 static int sip_service_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -213,7 +213,7 @@ SO_PUBLIC RNAServiceValidationModule sip_service_mod =
     0
 };
 
-static CLIENT_APP_RETCODE sip_client_init(const IniClientAppAPI* const init_api, SF_LIST*)
+static CLIENT_APP_RETCODE sip_client_init(const InitClientAppAPI* const init_api, SF_LIST*)
 {
     unsigned i;
 
@@ -256,7 +256,7 @@ static void sip_clean()
         clean_sip_server();
 }
 
-static CLIENT_APP_RETCODE sip_tcp_client_init(const IniClientAppAPI* const init_api,
+static CLIENT_APP_RETCODE sip_tcp_client_init(const InitClientAppAPI* const init_api,
         SF_LIST* config)
 {
     unsigned i;
@@ -687,7 +687,7 @@ void SipSessionSnortCallback(void*, ServiceEventType, void* data)
     SipSessionCbServiceProcess(p, headers, dialog, asd);
 }
 
-static int sip_service_init(const IniServiceAPI* const init_api)
+static int sip_service_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&sip_service_validate, IpProtocol::UDP,
             (const uint8_t*)SIP_BANNER, SIP_BANNER_LEN, 0, svc_name);

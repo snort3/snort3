@@ -143,7 +143,7 @@ struct MatchedDNSPatterns
     MatchedDNSPatterns* next;
 };
 
-static int dns_service_init(const IniServiceAPI* const);
+static int dns_service_init(const InitServiceAPI* const);
 static int dns_udp_validate(ServiceValidationArgs*);
 static int dns_tcp_validate(ServiceValidationArgs*);
 
@@ -198,8 +198,8 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_DNS, APPINFO_FLAG_SERVICE_UDP_REVERSED | APPINFO_FLAG_SERVICE_ADDITIONAL }
 };
 
-static CLIENT_APP_RETCODE dns_udp_client_init(const IniClientAppAPI* const, SF_LIST*);
-static CLIENT_APP_RETCODE dns_tcp_client_init(const IniClientAppAPI* const, SF_LIST*);
+static CLIENT_APP_RETCODE dns_udp_client_init(const InitClientAppAPI* const, SF_LIST*);
+static CLIENT_APP_RETCODE dns_tcp_client_init(const InitClientAppAPI* const, SF_LIST*);
 static CLIENT_APP_RETCODE dns_udp_client_validate(const uint8_t*, uint16_t, const int,
         AppIdSession*, Packet*, Detector*);
 static CLIENT_APP_RETCODE dns_tcp_client_validate(const uint8_t*, uint16_t, const int,
@@ -244,12 +244,12 @@ struct ServiceDnsConfig
 };
 static THREAD_LOCAL ServiceDnsConfig serviceDnsConfig;      // DNS service configuration
 
-static CLIENT_APP_RETCODE dns_udp_client_init(const IniClientAppAPI* const, SF_LIST*)
+static CLIENT_APP_RETCODE dns_udp_client_init(const InitClientAppAPI* const, SF_LIST*)
 {
     return CLIENT_APP_SUCCESS;
 }
 
-static CLIENT_APP_RETCODE dns_tcp_client_init(const IniClientAppAPI* const, SF_LIST*)
+static CLIENT_APP_RETCODE dns_tcp_client_init(const InitClientAppAPI* const, SF_LIST*)
 {
     return CLIENT_APP_SUCCESS;
 }
@@ -312,7 +312,7 @@ int dns_host_detector_process_patterns()
     return retVal;
 }
 
-static int dns_service_init(const IniServiceAPI* const init_api)
+static int dns_service_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)

@@ -68,7 +68,7 @@ struct TIMBUKTU_CLIENT_APP_CONFIG
 
 THREAD_LOCAL TIMBUKTU_CLIENT_APP_CONFIG timbuktu_config;
 
-static CLIENT_APP_RETCODE timbuktu_init(const IniClientAppAPI* const init_api, SF_LIST* config);
+static CLIENT_APP_RETCODE timbuktu_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE timbuktu_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, struct Detector* userData);
 
@@ -106,7 +106,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_TIMBUKTU, 0 }
 };
 
-static CLIENT_APP_RETCODE timbuktu_init(const IniClientAppAPI* const init_api, SF_LIST* config)
+static CLIENT_APP_RETCODE timbuktu_init(const InitClientAppAPI* const init_api, SF_LIST* config)
 {
     unsigned i;
 

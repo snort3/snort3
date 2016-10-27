@@ -115,28 +115,35 @@ struct fflow_info
 struct httpSession
 {
     char* host;
+    uint16_t host_buflen;
     char* url;
     char* uri;
+    uint16_t uri_buflen;
     char* via;
     char* useragent;
+    uint16_t useragent_buflen;
     char* response_code;
+    uint16_t response_code_buflen;
     char* referer;
+    uint16_t referer_buflen;
     char* cookie;
+    uint16_t cookie_buflen;
     char* content_type;
+    uint16_t content_type_buflen;
     char* location;
+    uint16_t location_buflen;
     char* body;
+    uint16_t body_buflen;
     char* req_body;
+    uint16_t req_body_buflen;
     char* server;
     char* x_working_with;
     char* new_field[HTTP_FIELD_MAX+1];
-
-    uint16_t uriOffset;
-    uint16_t uriEndOffset;
-    uint16_t cookieOffset;
-    uint16_t cookieEndOffset;
-
+    uint16_t new_field_len[HTTP_FIELD_MAX+1];
+    uint16_t fieldOffset[HTTP_FIELD_MAX+1];
+    uint16_t fieldEndOffset[HTTP_FIELD_MAX+1];
     fflow_info* fflow;
-
+    bool new_field_contents;
     int chp_finished;
     AppId chp_candidate;
     AppId chp_alt_candidate;
@@ -147,9 +154,7 @@ struct httpSession
     int num_matches;
     int num_scans;
     int get_offsets_from_rebuilt;
-    bool skip_simple_detect;    // Flag to indicate if simple detection of client ID, payload ID,
-                                // etc
-                                // should be skipped
+    bool skip_simple_detect;
     sfip_t* xffAddr;
     const char** xffPrecedence;
     int numXffFields;
@@ -187,16 +192,12 @@ struct tlsSession
     int tls_orgUnit_strlen;
 };
 
-/* The UNSYNCED_SNORT_ID value is to cheaply insure we get
-   the value from snort rather than assume */
-#define UNSYNCED_SNORT_ID   0x5555
-
 void map_app_names_to_snort_ids();
 
 class AppIdSession : public FlowData
 {
 public:
-    AppIdSession(IpProtocol, const sfip_t*);
+    AppIdSession(IpProtocol, const sfip_t*, uint16_t port);
     ~AppIdSession();
 
     static AppIdSession* allocate_session(const Packet*, IpProtocol, int);
@@ -207,7 +208,7 @@ public:
 
     AppIdConfig* config = nullptr;
     CommonAppIdData common;
-    AppIdSession* next = nullptr;
+    //AppIdSession* next = nullptr;
     Flow* flow = nullptr;
     AppIdFlowData* flowData = nullptr;
     AppInfoManager* app_info_mgr = nullptr;
@@ -263,10 +264,10 @@ public:
     void* tpsession = nullptr;
     uint16_t init_tpPackets = 0;
     uint16_t resp_tpPackets = 0;
-    uint8_t tp_reinspect_by_initiator = 0;
+    bool tp_reinspect_by_initiator = false;
     char* payload_version = nullptr;
     uint16_t session_packet_count = 0;
-    int16_t snort_id = UNSYNCED_SNORT_ID;
+    int16_t snort_id = 0;
 
     /* Length-based detectors. */
     LengthKey length_sequence;
@@ -351,6 +352,8 @@ public:
     AppId fw_pick_payload_app_id();
     AppId fw_pick_referred_payload_app_id();
     bool is_ssl_session_decrypted();
+    int processHTTPPacket(Packet*, int, HttpParsedHeaders* const);
+
 private:
     bool do_client_discovery(int, Packet*);
     bool do_service_discovery(IpProtocol, int, AppId, AppId,  Packet*);
@@ -373,7 +376,7 @@ private:
     void stop_rna_service_inspection(Packet*,  int);
     void set_session_logging_state(const Packet* pkt, int direction);
     void clear_app_id_data();
-    int initial_CHP_sweep(char**, MatchedCHPAction**);
+    int initial_CHP_sweep(char**, uint16_t*, MatchedCHPAction**);
     void clearMiscHttpFlags();
     void processCHP(char**, Packet*);
 
@@ -383,7 +386,6 @@ private:
     void checkTerminateTpModule(uint16_t tpPktCount);
     bool do_third_party_discovery(IpProtocol, const sfip_t*,  Packet*, int&);
     void pickHttpXffAddress(Packet*, ThirdPartyAppIDAttributeData*);
-
 #endif
 
     void create_session_logging_id(int direction, Packet* pkt);

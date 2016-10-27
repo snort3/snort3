@@ -32,7 +32,7 @@
 
 #define RFB_BANNER "RFB "
 
-static int rfb_init(const IniServiceAPI* const init_api);
+static int rfb_init(const InitServiceAPI* const init_api);
 static int rfb_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -78,7 +78,7 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_VNC_RFB, APPINFO_FLAG_SERVICE_ADDITIONAL }
 };
 
-static int rfb_init(const IniServiceAPI* const init_api)
+static int rfb_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&rfb_validate, IpProtocol::TCP, (uint8_t*)RFB_BANNER,
         sizeof(RFB_BANNER) - 1, 0, "rfb");

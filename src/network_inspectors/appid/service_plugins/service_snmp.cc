@@ -85,7 +85,7 @@ struct ServiceSNMPHeader
 
 #pragma pack()
 
-static int snmp_init(const IniServiceAPI* const init_api);
+static int snmp_init(const InitServiceAPI* const init_api);
 static int snmp_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -131,7 +131,7 @@ static AppRegistryEntry appIdRegistry[] =
 
 static int16_t app_id = 0;
 
-static int snmp_init(const IniServiceAPI* const init_api)
+static int snmp_init(const InitServiceAPI* const init_api)
 {
     app_id = add_appid_protocol_reference("snmp");
 

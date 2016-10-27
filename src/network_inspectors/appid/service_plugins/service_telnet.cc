@@ -68,7 +68,7 @@ struct ServiceTelnetData
     unsigned count;
 };
 
-static int telnet_init(const IniServiceAPI* const init_api);
+static int telnet_init(const InitServiceAPI* const init_api);
 static int telnet_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -107,7 +107,7 @@ static const AppRegistryEntry appIdRegistry[] =
     { APP_ID_TELNET, 0 }
 };
 
-static int telnet_init(const IniServiceAPI* const init_api)
+static int telnet_init(const InitServiceAPI* const init_api)
 {
     for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {

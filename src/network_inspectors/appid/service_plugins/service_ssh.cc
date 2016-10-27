@@ -127,7 +127,7 @@ struct ServiceSSHKeyExchangeFinal
 
 #pragma pack()
 
-static int ssh_init(const IniServiceAPI* const init_api);
+static int ssh_init(const InitServiceAPI* const init_api);
 static int ssh_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -165,7 +165,7 @@ static const AppRegistryEntry appIdRegistry[] =
     { APP_ID_SSH, APPINFO_FLAG_SERVICE_ADDITIONAL }
 };
 
-static int ssh_init(const IniServiceAPI* const init_api)
+static int ssh_init(const InitServiceAPI* const init_api)
 {
     init_api->RegisterPattern(&ssh_validate, IpProtocol::TCP, (uint8_t*)SSH_BANNER,
         sizeof(SSH_BANNER) - 1, 0, "ssh");

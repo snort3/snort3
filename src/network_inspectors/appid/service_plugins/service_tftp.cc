@@ -76,7 +76,7 @@ struct ServiceTFTPHeader
 
 #pragma pack()
 
-static int tftp_init(const IniServiceAPI* const api);
+static int tftp_init(const InitServiceAPI* const api);
 static int tftp_validate(ServiceValidationArgs* args);
 
 static const RNAServiceElement svc_element =
@@ -116,7 +116,7 @@ static const AppRegistryEntry appIdRegistry[] =
 
 static int16_t app_id = 0;
 
-static int tftp_init(const IniServiceAPI* const init_api)
+static int tftp_init(const InitServiceAPI* const init_api)
 {
     app_id = add_appid_protocol_reference("tftp");
 
