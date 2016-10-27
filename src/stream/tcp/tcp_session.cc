@@ -98,6 +98,7 @@ void TcpSession::restart(Packet* p)
     // sanity check since this is called externally
     assert(p->ptrs.tcph);
 
+    DetectionEngine::onload(flow);
     TcpStreamTracker* talker, * listener;
 
     if (p->is_from_server())
@@ -134,6 +135,8 @@ void TcpSession::restart(Packet* p)
 
 void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p)
 {
+    DetectionEngine::onload(flow);
+
     if ( client->reassembler )
     {
         if ( flush_segments )

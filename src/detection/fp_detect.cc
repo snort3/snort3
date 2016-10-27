@@ -935,50 +935,6 @@ static int fp_search(
     return 0;
 }
 
-static int fp_tsearch(
-    PortGroup* port_group, Packet* p, int check_ports, int type, OtnxMatchData* omd,
-    SnortConfig* sc)
-{
-    snort_conf = sc;
-    return fp_search(port_group, p, check_ports, type, omd);
-}
-
-static int fp_offload(
-    PortGroup* port_group, Packet* p, int check_ports, int type, OtnxMatchData* omd)
-{
-    MpseStash* stash = p->context->stash;
-    ContextSwitcher* sw = Snort::get_switcher();
-    FastPatternConfig* fp = snort_conf->fast_pattern_config;
-
-    if ( p->type() != PktType::PDU or (p->dsize < fp->get_offload_limit()) or
-        p->flow->test_session_flags(SSNFLAG_OFFLOAD) or !sw->can_hold() )
-    {
-        stash->enable_process();
-        return fp_search(port_group, p, check_ports, type, omd);
-    }
-
-    assert(p == p->context->packet);
-    stash->init();
-    stash->disable_process();
-
-    p->flow->set_session_flags(SSNFLAG_OFFLOAD);
-    pc.offloads++;
-
-    unsigned id = sw->suspend();
-
-    std::thread t(fp_tsearch, port_group, p, check_ports, type, omd, snort_conf);
-    t.join();
-
-    sw->resume(id);
-
-    p->flow->clear_session_flags(SSNFLAG_OFFLOAD);
-    stash->enable_process();
-    stash->process(rule_tree_match, omd);
-    fpFinalSelectEvent(omd, p);
-
-    return 0;
-}
-
 /*
 **  DESCRIPTION
 **    This function does a set-wise match on content, and walks an otn list
@@ -1025,7 +981,7 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
     if ( DetectionEngine::content_enabled() )
     {
         if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
-            if ( fp_offload(port_group, p, check_ports, type, omd) )
+            if ( fp_search(port_group, p, check_ports, type, omd) )
                 return 0;
     }
 
@@ -1326,9 +1282,36 @@ int fpEvalPacket(Packet* p)
     default:
         break;
     }
-    if ( !p->flow or !p->flow->test_session_flags(SSNFLAG_OFFLOAD) )
-        return fpFinalSelectEvent(omd, p);
 
     return 0;
+}
+
+void fp_local(Packet* p)
+{
+    IpsContext* c = p->context;
+    MpseStash* stash = c->stash;
+    stash->enable_process();
+    stash->init();
+    fpEvalPacket(p);
+    fpFinalSelectEvent(c->otnx, p);
+}
+
+void fp_offload(Packet* p, SnortConfig* sc)
+{
+    snort_conf = sc;  // FIXIT-H reload issue
+    MpseStash* stash = p->context->stash;
+    stash->init();
+    stash->disable_process();
+    fpEvalPacket(p);
+    p->context->onload = true;
+}
+
+void fp_onload(Packet* p)
+{
+    IpsContext* c = p->context;
+    MpseStash* stash = c->stash;
+    stash->enable_process();
+    stash->process(rule_tree_match, c->otnx);
+    fpFinalSelectEvent(c->otnx, p);
 }
 

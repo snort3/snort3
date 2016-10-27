@@ -23,6 +23,7 @@
 #include "events/sfeventq.h"
 #include "filters/sfthreshold.h"
 #include "framework/endianness.h"
+#include "helpers/ring.h"
 #include "latency/packet_latency.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -38,18 +39,29 @@
 #include "context_switcher.h"
 #include "detection_util.h"
 #include "detect.h"
+#include "fp_config.h"
 #include "fp_detect.h"
 #include "ips_context.h"
 
-static THREAD_LOCAL unsigned s_events = 0;
-
 THREAD_LOCAL DetectionEngine::ActiveRules active_rules = DetectionEngine::NONE;
 
+static THREAD_LOCAL unsigned s_events = 0;
+static THREAD_LOCAL Ring<unsigned>* offload_ids = nullptr;
+
+void DetectionEngine::thread_init()
+{ offload_ids = new Ring<unsigned>(32); }  // FIXIT-H get size
+
+void DetectionEngine::thread_term()
+{ delete offload_ids; }
+
 DetectionEngine::DetectionEngine()
-{ Snort::get_switcher()->interrupt(); }
+{ context = Snort::get_switcher()->interrupt(); }
 
 DetectionEngine::~DetectionEngine()
-{ clear_packet(); }
+{
+    if ( context == get_context() )
+        clear_packet();
+}
 
 IpsContext* DetectionEngine::get_context()
 { return Snort::get_switcher()->get_context(); }
@@ -76,12 +88,8 @@ MpseStash* DetectionEngine::get_stash()
 // any events while rebuilding will be logged against the current packet
 Packet* DetectionEngine::set_packet()
 {
-    ContextSwitcher* sw = Snort::get_switcher();
-
-    // FIXIT-H bypass the interrupt / complete
-    const IpsContext* c = sw->interrupt();
+    const IpsContext* c = Snort::get_switcher()->get_next();
     Packet* p = c->packet;
-    sw->complete();
 
     p->pkth = c->pkth;
     p->data = c->buf;
@@ -94,7 +102,12 @@ Packet* DetectionEngine::set_packet()
 void DetectionEngine::clear_packet()
 {
     ContextSwitcher* sw = Snort::get_switcher();
-    Packet* p = sw->get_context()->packet;
+    IpsContext* c = sw->get_context();
+
+    if ( c->offload )
+        return;
+
+    Packet* p = c->packet;
 
     log_events(p);
     reset();
@@ -119,22 +132,14 @@ uint8_t* DetectionEngine::get_buffer(unsigned& max)
 // we do it this way.
 void DetectionEngine::set_next_file_data(const DataPointer& dp)
 {
-    ContextSwitcher* sw = Snort::get_switcher();
-
-    // FIXIT-H bypass the interrupt / complete
-    IpsContext* c = sw->interrupt();
+    IpsContext* c = Snort::get_switcher()->get_next();
     c->file_data = dp;
-    sw->complete();
 }
 
 void DetectionEngine::get_next_file_data(DataPointer& dp)
 {
-    ContextSwitcher* sw = Snort::get_switcher();
-
-    // FIXIT-H bypass the interrupt / complete
-    IpsContext* c = sw->interrupt();
+    const IpsContext* c = Snort::get_switcher()->get_next();
     dp = c->file_data;
-    sw->complete();
 }
 
 void DetectionEngine::set_file_data(const DataPointer& dp)
@@ -164,6 +169,90 @@ void DetectionEngine::disable_content()
 void DetectionEngine::disable_all()
 { active_rules = NONE; }
 
+bool DetectionEngine::offloaded(Flow* flow)
+{ return flow->test_session_flags(SSNFLAG_OFFLOAD); }
+
+bool DetectionEngine::offloaded(Packet* p)
+{ return p->flow and offloaded(p->flow); }
+
+void DetectionEngine::idle()
+{
+    while ( !offload_ids->empty() )
+    {
+        const struct timespec blip = { 0, 1 };
+//printf("%lu de::sleep\n", pc.total_from_daq);
+        nanosleep(&blip, nullptr);
+        onload();
+    }
+//printf("%lu de::idle (r=%d)\n", pc.total_from_daq, offload_ids->count());
+}
+
+void DetectionEngine::onload(Flow* flow)
+{
+    while ( flow->test_session_flags(SSNFLAG_OFFLOAD) )
+    {
+        const struct timespec blip = { 0, 1 };
+//printf("%lu de::sleep\n", pc.total_from_daq);
+        nanosleep(&blip, nullptr);
+        onload();
+    }
+}
+
+void DetectionEngine::onload()
+{
+    ContextSwitcher* sw = Snort::get_switcher();
+    unsigned* id = offload_ids->read();
+    IpsContext* c = sw->get_context(*id);
+
+    assert(c->offload);
+
+    if ( !c->onload )
+        return;
+
+//printf("%lu de::onload %u (r=%d)\n", pc.total_from_daq, *id, offload_ids->count());
+    Packet* p = c->packet;
+    p->flow->clear_session_flags(SSNFLAG_OFFLOAD);
+
+    c->offload->join();
+    delete c->offload;
+    c->offload = nullptr;
+
+    offload_ids->pop();
+    sw->resume(*id);
+
+    fp_onload(p);
+    InspectorManager::clear(p);
+    log_events(p);
+    reset();
+    clear_packet();
+}
+
+bool DetectionEngine::offload(Packet* p)
+{
+    ContextSwitcher* sw = Snort::get_switcher();
+    FastPatternConfig* fp = snort_conf->fast_pattern_config;
+
+    if ( p->type() != PktType::PDU or (p->dsize < fp->get_offload_limit()) or !sw->can_hold() )
+    {
+        fp_local(p);
+        return false;
+    }
+    assert(p == p->context->packet);
+    onload(p->flow);  // FIXIT-H ensures correct sequencing, suboptimal
+
+    p->flow->set_session_flags(SSNFLAG_OFFLOAD|SSNFLAG_WAS_OFF);
+    pc.offloads++;
+
+    unsigned id = sw->suspend();
+    offload_ids->put(id);
+//printf("%lu de::offload %u (r=%d)\n", pc.total_from_daq, id, offload_ids->count());
+
+    p->context->onload = false;
+    p->context->offload = new std::thread(fp_offload, p, snort_conf);
+
+    return true;
+}
+
 bool DetectionEngine::detect(Packet* p)
 {
     assert(p);
@@ -189,7 +278,7 @@ bool DetectionEngine::detect(Packet* p)
     case PktType::ICMP:
     case PktType::PDU:
     case PktType::FILE:
-        return fpEvalPacket(p);
+        return offload(p);
 
     default:
         break;
@@ -222,29 +311,36 @@ void DetectionEngine::inspect(Packet* p)
             Active::apply_delayed_action(p);
 
             if ( active_rules > NONE )
-                detect(p);
+            {
+                if ( detect(p) )
+                    return;
+            }
         }
         enable_tags();
+
+        // By checking tagging here, we make sure that we log the
+        // tagged packet whether it generates an alert or not.
+
+        if ( p->has_ip() )
+            check_tags(p);
+
+        if ( offloaded(p) )
+            return;
 
         // clear closed sessions here after inspection since non-stream
         // inspectors may depend on flow information
         // FIXIT-H but this result in double clearing?  should normal
         // clear_session() calls be deleted from stream?  this is a
         // performance hit on short-lived flows
-        Stream::check_flow_closed(p);
 
-        /*
-        ** By checking tagging here, we make sure that we log the
-        ** tagged packet whether it generates an alert or not.
-        */
-        if ( p->has_ip() )
-            check_tags(p);
+        Stream::check_flow_closed(p);
 
         if ( inspected )
             InspectorManager::clear(p);
     }
 
     Profile profile(eventqPerfStats);
+
     log_events(p);
     reset();
 }

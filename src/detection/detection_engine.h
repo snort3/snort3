@@ -32,6 +32,7 @@
 struct DataPointer;
 struct Packet;
 
+class Flow;
 class IpsContext;
 class IpsContextData;
 
@@ -44,11 +45,22 @@ public:
     Packet* get_packet();
 
 public:
+    static void thread_init();
+    static void thread_term();
+
     static IpsContext* get_context();
 
     static Packet* get_current_packet();
     static Packet* set_packet();
     static void clear_packet();
+
+    static bool offloaded(Flow*);
+    static bool offloaded(Packet*);
+    static bool offload(Packet*);
+
+    static void onload(Flow*);
+    static void onload();
+    static void idle();
 
     static void set_encode_packet(Packet*);
     static Packet* get_encode_packet();
@@ -92,6 +104,7 @@ public:
     { return get_detects() == CONTENT; }
 
 private:
+    IpsContext* context;
     static struct SF_EVENTQ* get_event_queue();
 };
 

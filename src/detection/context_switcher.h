@@ -29,7 +29,7 @@
 // available.
 //
 // 2.  during processing interrupt and complete should be called to start
-// and finis processing of a generated pseudo packet.  it is possible to
+// and finish processing of a generated pseudo packet.  it is possible to
 // interrupt pseudo packets.
 //
 // 3.  suspend may be called to place the current context on hold and
@@ -67,6 +67,7 @@ public:
 
     IpsContext* get_context() const;
     IpsContext* get_context(unsigned) const;
+    IpsContext* get_next() const;
 
     IpsContextData* get_context_data(unsigned id) const;
     void set_context_data(unsigned id, IpsContextData*) const;

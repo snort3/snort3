@@ -44,6 +44,8 @@ FlowControl::FlowControl()
 
 FlowControl::~FlowControl()
 {
+    DetectionEngine de;
+
     delete ip_cache;
     delete icmp_cache;
     delete tcp_cache;
@@ -431,6 +433,9 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     // This requires the packet direction to be set
     if ( p->proto_bits & PROTO_BIT__MPLS )
         flow->set_mpls_layer_per_dir(p);
+
+    if ( p->type() == PktType::PDU )  // FIXIT-H cooked or PDU?
+        DetectionEngine::onload(flow);
 
     switch ( flow->flow_state )
     {

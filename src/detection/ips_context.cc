@@ -67,6 +67,9 @@ IpsContext::IpsContext(unsigned size) :
 
     packet->context = this;
     fp_set_context(*this);
+
+    offload = nullptr;
+    onload = false;
 }
 
 IpsContext::~IpsContext()
@@ -74,6 +77,8 @@ IpsContext::~IpsContext()
     for ( auto* p : data )
         if ( p )
             delete p;
+
+    assert(!offload);
 
     sfeventq_free(equeue);
     fp_clear_context(*this);

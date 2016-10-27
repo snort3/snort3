@@ -221,7 +221,7 @@ static const Parameter search_engine_params[] =
     { "inspect_stream_inserts", Parameter::PT_BOOL, nullptr, "false",
       "inspect reassembled payload - disabling is good for performance, bad for detection" },
 
-    { "offload_limit", Parameter::PT_INT, nullptr, "99999",
+    { "offload_limit", Parameter::PT_INT, "0:", "99999",
       "minimum sizeof PDU to offload fast pattern search (defaults to disabled)" },
 
     { "search_method", Parameter::PT_DYNAMIC, (void*)&get_search_methods, "ac_bnfa",

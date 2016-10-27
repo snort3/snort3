@@ -30,6 +30,8 @@
 // integration into Snort.
 
 #include <vector>
+#include <thread>
+
 #include "main/snort_types.h"
 #include "framework/codec.h"
 
@@ -70,12 +72,14 @@ public:
     Packet* encode_packet;
     DAQ_PktHdr_t* pkth;
     uint8_t* buf;
+    std::thread* offload;
 
     DataPointer file_data;
 
     class MpseStash* stash;
     struct OtnxMatchData* otnx;
     uint64_t pkt_count;
+    bool onload;
 
     struct SF_EVENTQ* equeue;
 
