@@ -25,8 +25,10 @@
 #include "framework/endianness.h"
 #include "helpers/ring.h"
 #include "latency/packet_latency.h"
+#include "main/modules.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "main/thread.h"
 #include "managers/inspector_manager.h"
 #include "packet_io/active.h"
@@ -42,6 +44,8 @@
 #include "fp_config.h"
 #include "fp_detect.h"
 #include "ips_context.h"
+
+Trace TRACE_NAME(detection);
 
 THREAD_LOCAL DetectionEngine::ActiveRules active_rules = DetectionEngine::NONE;
 
@@ -183,11 +187,11 @@ void DetectionEngine::idle()
     while ( !offload_ids->empty() )
     {
         const struct timespec blip = { 0, 1 };
-//printf("%lu de::sleep\n", pc.total_from_daq);
+        trace_logf(detection, "%lu de::sleep\n", pc.total_from_daq);
         nanosleep(&blip, nullptr);
         onload();
     }
-//printf("%lu de::idle (r=%d)\n", pc.total_from_daq, offload_ids->count());
+    trace_logf(detection, "%lu de::idle (r=%d)\n", pc.total_from_daq, offload_ids->count());
 }
 
 void DetectionEngine::onload(Flow* flow)
@@ -195,7 +199,7 @@ void DetectionEngine::onload(Flow* flow)
     while ( flow->test_session_flags(SSNFLAG_OFFLOAD) )
     {
         const struct timespec blip = { 0, 1 };
-//printf("%lu de::sleep\n", pc.total_from_daq);
+        trace_logf(detection, "%lu de::sleep\n", pc.total_from_daq);
         nanosleep(&blip, nullptr);
         onload();
     }
@@ -212,7 +216,9 @@ void DetectionEngine::onload()
     if ( !c->onload )
         return;
 
-//printf("%lu de::onload %u (r=%d)\n", pc.total_from_daq, *id, offload_ids->count());
+    trace_logf(detection, "%lu de::onload %u (r=%d)\n",
+        pc.total_from_daq, *id, offload_ids->count());
+
     Packet* p = c->packet;
     p->flow->clear_session_flags(SSNFLAG_OFFLOAD);
 
@@ -233,9 +239,8 @@ void DetectionEngine::onload()
 bool DetectionEngine::offload(Packet* p)
 {
     ContextSwitcher* sw = Snort::get_switcher();
-    FastPatternConfig* fp = snort_conf->fast_pattern_config;
 
-    if ( p->type() != PktType::PDU or (p->dsize < fp->get_offload_limit()) or !sw->can_hold() )
+    if ( p->type() != PktType::PDU or (p->dsize < snort_conf->offload_limit) or !sw->can_hold() )
     {
         fp_local(p);
         return false;
@@ -248,7 +253,9 @@ bool DetectionEngine::offload(Packet* p)
 
     unsigned id = sw->suspend();
     offload_ids->put(id);
-//printf("%lu de::offload %u (r=%d)\n", pc.total_from_daq, id, offload_ids->count());
+
+    trace_logf(detection, "%lu de::offload %u (r=%d)\n",
+        pc.total_from_daq, id, offload_ids->count());
 
     p->context->onload = false;
     p->context->offload = new std::thread(fp_offload, p, snort_conf);

@@ -46,8 +46,6 @@ FastPatternConfig::FastPatternConfig()
     search_api = MpseManager::get_search_api("ac_bnfa");
     assert(search_api);
     trim = MpseManager::search_engine_trim(search_api);
-
-    offload_limit = 99999;  // FIXIT-H use common value
 }
 
 FastPatternConfig::~FastPatternConfig()

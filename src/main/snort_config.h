@@ -183,6 +183,8 @@ public:
     int asn1_mem = 0;
     uint32_t run_flags = 0;
 
+    unsigned offload_limit = 99999;
+
     //------------------------------------------------------
     // process stuff
 

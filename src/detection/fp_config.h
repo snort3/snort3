@@ -64,12 +64,6 @@ public:
     int get_bleed_over_port_limit()
     { return bleedover_port_limit; }
 
-    void set_offload_limit(unsigned n)
-    { offload_limit = n; }
-
-    unsigned get_offload_limit()
-    { return offload_limit; }
-
     int get_single_rule_group()
     { return portlists_flags & PL_SINGLE_RULE_GROUP; }
 
@@ -158,7 +152,6 @@ private:
 
     unsigned max_queue_events;
     unsigned bleedover_port_limit;
-    unsigned offload_limit;
 
     int search_opt;
     int portlists_flags;

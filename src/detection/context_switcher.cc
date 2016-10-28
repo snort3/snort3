@@ -26,7 +26,10 @@
 
 #include <assert.h>
 
+#include "main/modules.h"
+#include "main/snort_debug.h"
 #include "utils/stats.h"
+
 #include "ips_context.h"
 
 #ifdef UNIT_TEST
@@ -70,8 +73,8 @@ void ContextSwitcher::start()
 {
     assert(busy.empty());
     assert(idle.size() > 0);
-//printf("%ld cs::start %u (i=%lu, b=%lu)\n",
-//    pc.total_from_daq, idle.back()->get_slot(), idle.size(), busy.size());
+    trace_logf(detection, "%ld cs::start %u (i=%lu, b=%lu)\n",
+        pc.total_from_daq, idle.back()->get_slot(), idle.size(), busy.size());
     busy.push_back(idle.back());
     idle.pop_back();
 }
@@ -79,16 +82,16 @@ void ContextSwitcher::start()
 void ContextSwitcher::stop()
 {
     assert(busy.size() == 1);
-//printf("%ld cs::stop %u (i=%lu, b=%lu)\n",
-//    pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
+    trace_logf(detection, "%ld cs::stop %u (i=%lu, b=%lu)\n",
+        pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
     idle.push_back(busy.back());
     busy.pop_back();
 }
 
 void ContextSwitcher::abort()
 {
-//printf("%ld cs::abort (i=%lu, b=%lu)\n",
-//    pc.total_from_daq, idle.size(), busy.size());
+    trace_logf(detection, "%ld cs::abort (i=%lu, b=%lu)\n",
+        pc.total_from_daq, idle.size(), busy.size());
     for ( unsigned i = 0; i < hold.capacity(); ++i )
     {
         if ( hold[i] )
@@ -107,8 +110,8 @@ void ContextSwitcher::abort()
 IpsContext* ContextSwitcher::interrupt()
 {
     assert(!idle.empty());
-//printf("%ld cs::interrupt %u (i=%lu, b=%lu)\n",
-//    pc.total_from_daq, idle.back()->get_slot(), idle.size(), busy.size());
+    trace_logf(detection, "%ld cs::interrupt %u (i=%lu, b=%lu)\n",
+        pc.total_from_daq, idle.back()->get_slot(), idle.size(), busy.size());
     busy.push_back(idle.back());
     idle.pop_back();
     return busy.back();
@@ -117,8 +120,8 @@ IpsContext* ContextSwitcher::interrupt()
 IpsContext* ContextSwitcher::complete()
 {
     assert(!busy.empty());
-//printf("%ld cs::complete %u (i=%lu, b=%lu)\n",
-//    pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
+    trace_logf(detection, "%ld cs::complete %u (i=%lu, b=%lu)\n",
+        pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
     idle.push_back(busy.back());
     busy.pop_back();
     return busy.empty() ? nullptr : busy.back();
@@ -127,8 +130,8 @@ IpsContext* ContextSwitcher::complete()
 unsigned ContextSwitcher::suspend()
 {
     assert(!busy.empty());
-//printf("%ld cs::suspend %u (i=%lu, b=%lu)\n",
-//    pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
+    trace_logf(detection, "%ld cs::suspend %u (i=%lu, b=%lu)\n",
+        pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
     IpsContext* c = busy.back();
     busy.pop_back();
     unsigned slot = c->get_slot();
@@ -140,8 +143,8 @@ unsigned ContextSwitcher::suspend()
 void ContextSwitcher::resume(unsigned slot)
 {
     assert(slot <= hold.capacity());
-//printf("%ld cs::resume %u (i=%lu, b=%lu)\n",
-//    pc.total_from_daq, slot, idle.size(), busy.size());
+    trace_logf(detection, "%ld cs::resume %u (i=%lu, b=%lu)\n",
+        pc.total_from_daq, slot, idle.size(), busy.size());
     busy.push_back(hold[slot]);
     hold[slot] = nullptr;
 }
