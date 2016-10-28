@@ -1,3 +1,12 @@
+16/10/28 - build 217
+
+-- update appid to 2983
+-- add inspector events from http_inspect to appid
+-- fix appid error messages
+-- fix flow reinitialization after expiration
+-- fix release of blocked flow
+-- fix 129:16 false positive
+
 16/10/21 - build 216
 
 -- add build configuration for thread sanitizer
