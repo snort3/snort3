@@ -180,6 +180,7 @@ bool AppIdApi::is_appid_inspecting_session(AppIdSession* appIdSession)
             return true;
         }
     }
+
     return false;
 }
 

@@ -453,22 +453,19 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
         {
             if (pd->error)
             {
-                /* We failed to transition to POP3S - fall back to normal POP3 state, AUTHORIZATION
-                   */
-                dd->client.state = POP3_CLIENT_STATE_AUTH;
+                // We failed to transition to POP3S - fall back to normal POP3 state, AUTHORIZATION
+            	dd->client.state = POP3_CLIENT_STATE_AUTH;
             }
             else
             {
+                // we are potentially overriding the APP_ID_POP3 assessment that was made earlier.
+                // sets APPID_SESSION_CLIENT_DETECTED
                 asd->set_session_flags(APPID_SESSION_ENCRYPTED);
                 asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-                /* we are potentially overriding the APP_ID_POP3 assessment that was made earlier.
-                   */
-                client_app_mod.api->add_app(asd, APP_ID_POP3S, APP_ID_POP3S, nullptr); // sets
-                                                                                         // APPID_SESSION_CLIENT_DETECTED
+                client_app_mod.api->add_app(asd, APP_ID_POP3S, APP_ID_POP3S, nullptr);
             }
         }
-        else if (dd->client.username) // possible only with non-TLS authentication therefor:
-                                      // APP_ID_POP3
+        else if (dd->client.username) // possible only with non-TLS authentication therefore APP_ID_POP3
         {
             if (pd->error)
             {
@@ -850,10 +847,9 @@ static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, c
         case POP3_CLIENT_STATE_TRANS:
             if (pattern_index >= PATTERN_POP3_OTHER)
             {
-                /* We stayed in non-secure mode and received a TRANSACTION-state command: POP3
-                   found */
-                client_app_mod.api->add_app(asd, APP_ID_POP3, APP_ID_POP3, nullptr); // sets
-                                                                                       // APPID_SESSION_CLIENT_DETECTED
+                // Still in non-secure mode and received a TRANSACTION-state command: POP3 found
+                // sets APPID_SESSION_CLIENT_DETECTED
+                client_app_mod.api->add_app(asd, APP_ID_POP3, APP_ID_POP3, nullptr);
                 fd->detected = 1;
             }
             else
@@ -909,6 +905,9 @@ static int pop3_validate(ServiceValidationArgs* args)
     }
     else
         pd = &dd->server;
+
+    // server side is seeing packets so no need for client side to process them
+    asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
 
     if (dd->need_continue)
         asd->set_session_flags(APPID_SESSION_CONTINUE);

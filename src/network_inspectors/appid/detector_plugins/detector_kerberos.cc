@@ -1048,6 +1048,9 @@ static int krb_server_validate(ServiceValidationArgs* args)
     if (!size)
         goto inprocess;
 
+    // server side is seeing packets so no need for client side to process them
+    asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+
     fd = (DetectorData*)kerberos_detector_mod.api->data_get(asd,
         kerberos_detector_mod.flow_data_index);
     if (!fd)

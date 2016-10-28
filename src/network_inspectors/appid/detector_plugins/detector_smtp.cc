@@ -570,7 +570,6 @@ static inline SMTPDetectorData* smtp_get_SMTPDetectorData(AppIdSession* asd)
     dd->client.state = SMTP_CLIENT_STATE_HELO;
     dd->need_continue = 1;
     dd->watch_for_deprecated_port = 1;
-
     asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     return dd;
 }
@@ -900,6 +899,8 @@ static int smtp_svc_validate(ServiceValidationArgs* args)
 
     if (!size)
         goto inprocess;
+
+    asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
 
     // Whether this is bound for the client detector or not, if client doesn't care
     //  then clear the APPID_SESSION_CONTINUE flag and we will be done sooner.

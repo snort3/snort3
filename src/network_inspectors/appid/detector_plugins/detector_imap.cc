@@ -402,8 +402,8 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
     const uint8_t* end = data + size;
     ServiceIMAPData* id = &dd->server;
 
-    id->flags &= ~IMAP_FLAG_RESULT_ALL;  // when we are done these flags will tell us OK vs. NO vs.
-                                         // BAD
+    id->flags &= ~IMAP_FLAG_RESULT_ALL;  // flags will tell us OK vs. NO vs. BAD
+
     for (; data < end; data++)
     {
 #ifdef DEBUG_IMAP_DETECTOR
@@ -572,15 +572,10 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
             break;
 
         case IMAP_STATE_MID_OK_LOGIN:
-            /*add user successful */
+            // add user successful - note: use  of LOGIN cmd implies no  IMAPS
             if ((id->flags & IMAP_FLAG_RESULT_OK) && dd->client.username[0])
-            {
-                service_mod.api->add_user(asd, dd->client.username, APP_ID_IMAP, 1);  // use of
-                                                                                        // LOGIN
-                                                                                        // cmd
-                                                                                        // implies
-                                                                                        // no IMAPS
-            }
+                service_mod.api->add_user(asd, dd->client.username, APP_ID_IMAP, 1);
+
             id->state = IMAP_STATE_MID_LINE;
             break;
         case IMAP_STATE_MID_NO:
@@ -608,17 +603,9 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
                 if (id->pos >= sizeof(NO_LOGIN)-1)
                 {
                     id->state = IMAP_STATE_ALNUM_CODE_TERM;
-                    /*add user login failed */
+                    // add user login failed - note: use  of LOGIN cmd implies no  IMAPS
                     if ((id->flags & IMAP_FLAG_RESULT_NO) && dd->client.username[0])
-                    {
-                        service_mod.api->add_user(asd, dd->client.username, APP_ID_IMAP, 0); // use
-                                                                                               // of
-                                                                                               // LOGIN
-                                                                                               // cmd
-                                                                                               // implies
-                                                                                               // no
-                                                                                               // IMAPS
-                    }
+                        service_mod.api->add_user(asd, dd->client.username, APP_ID_IMAP, 0);
                 }
             }
             else
@@ -657,31 +644,25 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
             break;
         }
     }
+
     if (dd->client.state == IMAP_CLIENT_STATE_STARTTLS_CMD)
     {
         if (id->flags & IMAP_FLAG_RESULT_OK)
         {
+            client_app_mod.api->add_app(asd, APP_ID_IMAPS, APP_ID_IMAPS, nullptr);
             asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-            /* we are potentially overriding any APP_ID_IMAP assessment that was made earlier. */
-            client_app_mod.api->add_app(asd, APP_ID_IMAPS, APP_ID_IMAPS, nullptr); // sets
-                                                                                     // APPID_SESSION_CLIENT_DETECTED
         }
         else
-        {
-            /* We failed to transition to IMAPS - fall back to normal IMAP state, Non-Authenticated
-               */
             dd->client.state = IMAP_CLIENT_STATE_NON_AUTH;
-        }
     }
     else if (dd->client.state == IMAP_CLIENT_STATE_AUTHENTICATE_CMD)
     {
-        dd->client.auth = 0; // stop discarding intervening command packets (part of the
-                             // authenticate)
-        /* Change state as appropriate */
+    	// stop discarding intervening command packets (part of the authenticate)
+        dd->client.auth = 0;
         dd->client.state = (id->flags & IMAP_FLAG_RESULT_OK) ?
-            IMAP_CLIENT_STATE_AUTH :
-            IMAP_CLIENT_STATE_NON_AUTH;
+            IMAP_CLIENT_STATE_AUTH : IMAP_CLIENT_STATE_NON_AUTH;
     }
+
     return 0;
 }
 
@@ -878,7 +859,7 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
                                     {
                                         asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
                                         asd->clear_session_flags(
-                                            APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                                        		APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                                     }
                                 }
                                 *p = 0;
@@ -993,6 +974,9 @@ static int imap_validate(ServiceValidationArgs* args)
     }
     else
         id = &dd->server;
+
+    // server side is seeing packets so no need for client side to process them
+    asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
 
     if (dd->need_continue)
         asd->set_session_flags(APPID_SESSION_CONTINUE);
