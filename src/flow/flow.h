@@ -62,8 +62,6 @@
 #define SSNFLAG_CLIENT_SWAPPED      0x00400000
 
 #define SSNFLAG_PROXIED             0x01000000
-#define SSNFLAG_OFFLOAD             0x02000000
-#define SSNFLAG_WAS_OFF             0x04000000  // FIXIT-L debug only
 
 #define SSNFLAG_NONE                0x00000000 /* nothing, an MT bag of chips */
 
@@ -84,6 +82,9 @@
 #define STREAM_STATE_IGNORE            0x1000
 #define STREAM_STATE_NO_PICKUP         0x2000
 #define STREAM_STATE_BLOCK_PENDING     0x4000
+
+#define FLOW_IS_OFFLOADED              0x01
+#define FLOW_WAS_OFFLOADED             0x02  // FIXIT-L debug only
 
 // FIXIT-L move to appid class if/when the application ids array
 // is moved
@@ -287,6 +288,15 @@ public:
         return disable_inspect;
     }
 
+    bool is_offloaded() const
+    { return flow_flags & FLOW_IS_OFFLOADED; }
+
+    void set_offloaded()
+    { flow_flags |= (FLOW_IS_OFFLOADED|FLOW_WAS_OFFLOADED); }
+
+    void clear_offloaded()
+    { flow_flags &= ~FLOW_IS_OFFLOADED; }
+
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
     // void space and allow for memset of tail end of struct
@@ -301,6 +311,7 @@ public:  // FIXIT-M privatize if possible
     PktType pkt_type; // ^^
 
     // these fields are always set; not zeroed
+    uint8_t flow_flags;
     Flow* prev, * next;
     Inspector* ssn_client;
     Inspector* ssn_server;

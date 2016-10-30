@@ -70,6 +70,7 @@ IpsContext::IpsContext(unsigned size) :
 
     offload = nullptr;
     onload = false;
+    active_rules = CONTENT;
 }
 
 IpsContext::~IpsContext()

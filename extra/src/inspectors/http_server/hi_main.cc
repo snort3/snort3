@@ -609,7 +609,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
 
         if ( p->alt_dsize == 0 )
         {
-            DetectionEngine::disable_content();
+            DetectionEngine::disable_content(p);
             return 0;
         }
         {
@@ -898,7 +898,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
 
                 if ( !GetHttpBufferMask() && (p->alt_dsize == 0)  )
                 {
-                    DetectionEngine::disable_content();
+                    DetectionEngine::disable_content(p);
                     return 0;
                 }
             }
@@ -915,7 +915,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             if ( !(session->server_conf->inspect_response) &&
                 IsLimitedDetect(p) && !p->alt_dsize )
             {
-                DetectionEngine::disable_content();
+                DetectionEngine::disable_content(p);
                 return 0;
             }
             ClearHttpBuffers();
@@ -1089,7 +1089,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             if ( IsLimitedDetect(p) &&
                 !GetHttpBufferMask() && (p->alt_dsize == 0)  )
             {
-                DetectionEngine::disable_content();
+                DetectionEngine::disable_content(p);
                 return 0;
             }
         }
@@ -1107,7 +1107,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
         */
         {
             Profile exclude(hiPerfStats);
-            DetectionEngine::detect(p);
+            DetectionEngine de;
+            de.detect(p);
         }
 
         /*
@@ -1121,7 +1122,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
     if ( iCallDetect == 0 )
     {
         // DetectionEngine::detect called at least once from above pkt processing loop.
-        DetectionEngine::disable_content();
+        DetectionEngine::disable_content(p);
     }
 
     return 0;

@@ -61,6 +61,7 @@ void Flow::init(PktType type)
 {
     pkt_type = type;
     bitop = nullptr;
+    flow_flags = 0;
 
     if ( HighAvailabilityManager::active() )
     {

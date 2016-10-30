@@ -989,7 +989,7 @@ void TcpSession::do_packet_analysis_post_checks(Packet* p)
 
     if (pkt_action_mask & ACTION_DISABLE_INSPECTION)
     {
-        DetectionEngine::disable_all();
+        DetectionEngine::disable_all(p);
 
         DebugFormat(DEBUG_STREAM_STATE,
             "Stream Ignoring packet from %s. Session marked as ignore\n",

@@ -978,12 +978,15 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
         p->packet_flags &= ~PKT_IP_RULE;
     }
 
-    if ( DetectionEngine::content_enabled() )
+    if ( DetectionEngine::content_enabled(p) )
     {
         if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
             if ( fp_search(port_group, p, check_ports, type, omd) )
                 return 0;
     }
+
+    if ( DetectionEngine::offloaded(p) )
+        return 0;  // FIXIT-H can't eval nfp rules here - move to onload
 
     do
     {
@@ -1191,10 +1194,10 @@ static void fpEvalPacketUdp(Packet* p)
     if (tmp_api.pay_len() >  udp::UDP_HEADER_LEN)
         p->dsize = tmp_api.pay_len() - udp::UDP_HEADER_LEN;
 
-    auto save_detect = DetectionEngine::get_detects();
+    auto save_detect = DetectionEngine::get_detects(p);
 
     if ( p->dsize )
-        DetectionEngine::enable_content();
+        DetectionEngine::enable_content(p);
 
     fpEvalHeaderUdp(p, omd);
 
@@ -1204,7 +1207,7 @@ static void fpEvalPacketUdp(Packet* p)
     p->data = tmp_data;
     p->dsize = tmp_dsize;
     
-    DetectionEngine::set_detects(save_detect);
+    DetectionEngine::set_detects(p, save_detect);
 }
 
 /*

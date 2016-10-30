@@ -782,7 +782,7 @@ bool InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
         return false;
 
     else if ( !p->dsize )
-        DetectionEngine::disable_content();
+        DetectionEngine::disable_content(p);
 
     else if ( flow->gadget && flow->gadget->likes(p) )
     {

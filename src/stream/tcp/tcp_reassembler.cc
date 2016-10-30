@@ -596,6 +596,7 @@ void TcpReassembler::prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags)
 int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
     Profile profile(s5TcpFlushPerfStats);
+
     DetectionEngine::onload(session->flow);
     s5_pkt = DetectionEngine::set_packet();
 
@@ -625,14 +626,28 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         uint32_t footprint = stop_seq - seglist_base_seq;
 
         if ( footprint == 0 )
-        {
-            DetectionEngine::clear_packet();
             return bytes_processed;
-        }
 
         if ( footprint > s5_pkt->max_dsize )
             /* this is as much as we can pack into a stream buffer */
             footprint = s5_pkt->max_dsize;
+
+        DetectionEngine::onload(session->flow);
+        s5_pkt = DetectionEngine::set_packet();
+
+        DAQ_PktHdr_t pkth;
+        session->GetPacketHeaderFoo(&pkth, pkt_flags);
+
+        if ( !p )
+        {
+            // FIXIT-H we need to have user_policy_id in this case
+            // FIXIT-H this leads to format_tcp() copying from s5_pkt to s5_pkt
+            // (neither of these issues is created by passing null through to here)
+            p = s5_pkt;
+        }
+
+        PacketManager::format_tcp(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
+        prep_s5_pkt(session->flow, p, pkt_flags);
 
         ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts = seglist.next->tv;
 
@@ -955,6 +970,7 @@ void TcpReassembler::fallback()
 int32_t TcpReassembler::flush_pdu_ackd(uint32_t* flags)
 {
     Profile profile(s5TcpPAFPerfStats);
+    DetectionEngine::onload(session->flow);
 
     uint32_t total = 0;
     TcpSegmentNode* tsn = SEQ_LT(seglist_base_seq, tracker->r_win_base) ? seglist.head : nullptr;

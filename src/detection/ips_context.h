@@ -67,6 +67,9 @@ public:
     unsigned get_slot()
     { return slot; }
 
+    enum ActiveRules
+    { NONE, NON_CONTENT, CONTENT };
+
 public:
     Packet* packet;
     Packet* encode_packet;
@@ -78,10 +81,11 @@ public:
 
     class MpseStash* stash;
     struct OtnxMatchData* otnx;
+    struct SF_EVENTQ* equeue;
+
     uint64_t pkt_count;
     bool onload;
-
-    struct SF_EVENTQ* equeue;
+    ActiveRules active_rules;
 
     static const unsigned buf_size = Codec::PKT_MAX;
 

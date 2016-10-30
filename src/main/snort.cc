@@ -737,13 +737,13 @@ void Snort::inspect(Packet* p)
     Profile detect_profile(detectPerfStats);
     Profile rebuilt_profile(rebuiltPacketPerfStats);
 
-    auto save_detect = DetectionEngine::get_detects();
-
     DetectionEngine de;
     main_hook(p);
 
-    clear_file_data();
-    DetectionEngine::set_detects(save_detect);
+    if ( DetectionEngine::offloaded(p) )
+        return;
+
+    clear_file_data();  // FIXIT-H get rid of this
 }
 
 DAQ_Verdict Snort::process_packet(

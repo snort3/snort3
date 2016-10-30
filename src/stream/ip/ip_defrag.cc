@@ -922,7 +922,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     if ((frag_offset != 0)) /* ||
         ((p->get_ip_proto_next() != IpProtocol::UDP) && (p->ptrs.decode_flags & DECODE_MF))) */
     {
-        DetectionEngine::disable_content();
+        DetectionEngine::disable_content(p);
     }
 
     /*
@@ -979,7 +979,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     //dont forward fragments to engine if some previous fragment was dropped
     if ( ft->frag_flags & FRAG_DROP_FRAGMENTS )
     {
-        DetectionEngine::disable_content();
+        DetectionEngine::disable_content(p);
         Active::daq_drop_packet(p);
         ip_stats.drops++;
     }
@@ -1063,7 +1063,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
             {
                 // Need to reset some things here because the rebuilt packet
                 // will have reset the do_detect flag when it hits Inspect.
-                DetectionEngine::disable_all();
+                DetectionEngine::disable_all(p);
             }
         }
 

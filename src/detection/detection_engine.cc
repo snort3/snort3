@@ -47,8 +47,6 @@
 
 Trace TRACE_NAME(detection);
 
-THREAD_LOCAL DetectionEngine::ActiveRules active_rules = DetectionEngine::NONE;
-
 static THREAD_LOCAL unsigned s_events = 0;
 static THREAD_LOCAL Ring<unsigned>* offload_ids = nullptr;
 
@@ -63,9 +61,15 @@ DetectionEngine::DetectionEngine()
 
 DetectionEngine::~DetectionEngine()
 {
-    if ( context == get_context() )
-        clear_packet();
+    clear_packet(context->packet);
+    ContextSwitcher* sw = Snort::get_switcher();
+
+    if ( context == sw->get_context() )
+        sw->complete();
 }
+
+Packet* DetectionEngine::get_packet()
+{ return context->packet; }
 
 IpsContext* DetectionEngine::get_context()
 { return Snort::get_switcher()->get_context(); }
@@ -75,9 +79,6 @@ SF_EVENTQ* DetectionEngine::get_event_queue()
 
 Packet* DetectionEngine::get_current_packet()
 { return Snort::get_switcher()->get_context()->packet; }
-
-Packet* DetectionEngine::get_packet()
-{ return get_current_packet(); }
 
 void DetectionEngine::set_encode_packet(Packet* p)
 { Snort::get_switcher()->get_context()->encode_packet = p; }
@@ -103,26 +104,16 @@ Packet* DetectionEngine::set_packet()
     return p;
 }
 
-void DetectionEngine::clear_packet()
+void DetectionEngine::clear_packet(Packet* p)
 {
-    ContextSwitcher* sw = Snort::get_switcher();
-    IpsContext* c = sw->get_context();
-
-    if ( c->offload )
-        return;
-
-    Packet* p = c->packet;
-
     log_events(p);
-    reset();
+    reset(p);
 
     if ( p->endianness )
     {
         delete p->endianness;
         p->endianness = nullptr;
     }
-
-    sw->complete();
 }
 
 uint8_t* DetectionEngine::get_buffer(unsigned& max)
@@ -158,26 +149,32 @@ void DetectionEngine::set_data(unsigned id, IpsContextData* p)
 IpsContextData* DetectionEngine::get_data(unsigned id)
 { return Snort::get_switcher()->get_context()->get_context_data(id); }
 
-DetectionEngine::ActiveRules DetectionEngine::get_detects()
-{ return active_rules; }
+void DetectionEngine::disable_all(Packet* p)
+{ p->context->active_rules = IpsContext::NONE; }
 
-void DetectionEngine::set_detects(ActiveRules ar)
-{ active_rules = ar; }
+bool DetectionEngine::all_disabled(Packet* p)
+{ return p->context->active_rules == IpsContext::NONE; }
 
-void DetectionEngine::disable_content()
+void DetectionEngine::disable_content(Packet* p)
 {
-    if ( active_rules == CONTENT )
-        active_rules = NON_CONTENT;
+    if ( p->context->active_rules == IpsContext::CONTENT )
+        p->context->active_rules = IpsContext::NON_CONTENT;
 }
 
-void DetectionEngine::disable_all()
-{ active_rules = NONE; }
+void DetectionEngine::enable_content(Packet* p)
+{ p->context->active_rules = IpsContext::CONTENT; }
 
-bool DetectionEngine::offloaded(Flow* flow)
-{ return flow->test_session_flags(SSNFLAG_OFFLOAD); }
+bool DetectionEngine::content_enabled(Packet* p)
+{ return p->context->active_rules == IpsContext::CONTENT; }
+
+IpsContext::ActiveRules DetectionEngine::get_detects(Packet* p)
+{ return p->context->active_rules; }
+
+void DetectionEngine::set_detects(Packet* p, IpsContext::ActiveRules ar)
+{ p->context->active_rules = ar; }
 
 bool DetectionEngine::offloaded(Packet* p)
-{ return p->flow and offloaded(p->flow); }
+{ return p->flow and p->flow->is_offloaded(); }
 
 void DetectionEngine::idle()
 {
@@ -196,7 +193,7 @@ void DetectionEngine::idle()
 
 void DetectionEngine::onload(Flow* flow)
 {
-    while ( flow->test_session_flags(SSNFLAG_OFFLOAD) )
+    while ( flow->is_offloaded() )
     {
         const struct timespec blip = { 0, 1 };
         trace_logf(detection, "%lu de::sleep\n", pc.total_from_daq);
@@ -220,7 +217,7 @@ void DetectionEngine::onload()
         pc.total_from_daq, *id, offload_ids->count());
 
     Packet* p = c->packet;
-    p->flow->clear_session_flags(SSNFLAG_OFFLOAD);
+    p->flow->clear_offloaded();
 
     c->offload->join();
     delete c->offload;
@@ -232,8 +229,10 @@ void DetectionEngine::onload()
     fp_onload(p);
     InspectorManager::clear(p);
     log_events(p);
-    reset();
-    clear_packet();
+    reset(p);
+    clear_packet(p);
+
+    sw->complete();
 }
 
 bool DetectionEngine::offload(Packet* p)
@@ -248,8 +247,10 @@ bool DetectionEngine::offload(Packet* p)
     assert(p == p->context->packet);
     onload(p->flow);  // FIXIT-H ensures correct sequencing, suboptimal
 
-    p->flow->set_session_flags(SSNFLAG_OFFLOAD|SSNFLAG_WAS_OFF);
+    p->flow->set_offloaded();
     pc.offloads++;
+
+    assert(p->context == sw->get_context());
 
     unsigned id = sw->suspend();
     offload_ids->put(id);
@@ -312,7 +313,7 @@ void DetectionEngine::inspect(Packet* p)
         }
         else
         {
-            active_rules = CONTENT;
+            enable_content(p);
             p->alt_dsize = 0;  // FIXIT-H should be redundant
 
             InspectorManager::execute(p);
@@ -320,7 +321,7 @@ void DetectionEngine::inspect(Packet* p)
 
             Active::apply_delayed_action(p);
 
-            if ( active_rules > NONE )
+            if ( !all_disabled(p) )
             {
                 if ( detect(p) )
                     return;
@@ -352,7 +353,7 @@ void DetectionEngine::inspect(Packet* p)
     Profile profile(eventqPerfStats);
 
     log_events(p);
-    reset();
+    reset(p);
 
     Stream::check_flow_block_pending(p);
 }
@@ -443,7 +444,7 @@ static int log_events(void* event, void* user)
 */
 int DetectionEngine::log_events(Packet* p)
 {
-    SF_EVENTQ* pq = get_event_queue();
+    SF_EVENTQ* pq = p->context->equeue;
     sfeventq_action(pq, ::log_events, (void*)p);
     return 0;
 }
@@ -454,9 +455,9 @@ void DetectionEngine::reset_counts()
     s_events = 0;
 }
 
-void DetectionEngine::reset()
+void DetectionEngine::reset(Packet* p)
 {
-    SF_EVENTQ* pq = get_event_queue();
+    SF_EVENTQ* pq = p->context->equeue;
     sfeventq_reset(pq);
     reset_counts();
 }

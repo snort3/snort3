@@ -76,10 +76,10 @@ public:
 
     // FIXIT-L these 2 function names convey no meaning afaict... figure out
     // why are they called and name appropriately...
-    virtual void retransmit_process()
+    virtual void retransmit_process(Packet* p)
     {
         // Data has already been analyzed so don't bother looking at it again.
-        DetectionEngine::disable_content();
+        DetectionEngine::disable_content(p);
     }
 
     virtual void retransmit_handle(Packet* p)

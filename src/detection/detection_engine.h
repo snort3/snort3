@@ -27,6 +27,7 @@
 
 #include "actions/actions.h"
 #include "detection/detection_util.h"
+#include "detection/ips_context.h"
 #include "main/snort_types.h"
 
 struct DataPointer;
@@ -52,14 +53,11 @@ public:
 
     static Packet* get_current_packet();
     static Packet* set_packet();
-    static void clear_packet();
 
-    static bool offloaded(Flow*);
     static bool offloaded(Packet*);
     static bool offload(Packet*);
 
     static void onload(Flow*);
-    static void onload();
     static void idle();
 
     static void set_encode_packet(Packet*);
@@ -83,29 +81,28 @@ public:
     static int queue_event(const struct OptTreeNode*);
     static int queue_event(unsigned gid, unsigned sid, RuleType = RULE_TYPE__NONE);
 
-    static int log_events(struct Packet*);
+    static int log_events(Packet*);
 
-    static void reset();
+    static void reset(Packet*);
     static void reset_counts();
 
-    enum ActiveRules
-    { NONE, NON_CONTENT, CONTENT };
+    static void disable_all(Packet*);
+    static bool all_disabled(Packet*);
 
-    static ActiveRules get_detects();
-    static void set_detects(ActiveRules);
+    static void disable_content(Packet*);
+    static void enable_content(Packet*);
+    static bool content_enabled(Packet*);
 
-    static void disable_content();
-    static void disable_all();
+    static IpsContext::ActiveRules get_detects(Packet*);
+    static void set_detects(Packet*, IpsContext::ActiveRules);
 
-    static void enable_content()
-    { set_detects(CONTENT); }
-
-    static bool content_enabled()
-    { return get_detects() == CONTENT; }
+private:
+    static struct SF_EVENTQ* get_event_queue();
+    static void onload();
+    static void clear_packet(Packet*);
 
 private:
     IpsContext* context;
-    static struct SF_EVENTQ* get_event_queue();
 };
 
 static inline void set_next_file_data(const uint8_t* p, unsigned n)
