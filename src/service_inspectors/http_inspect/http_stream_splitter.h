@@ -42,6 +42,8 @@ public:
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
     bool finish(Flow* flow) override;
     bool is_paf() override { return true; }
+
+    // FIXIT-M should return actual packet buffer size
     unsigned max(Flow*) override { return HttpEnums::MAX_OCTETS; }
 
 private:

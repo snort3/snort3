@@ -1980,14 +1980,12 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
 
 void DCE2_FileDetect()
 {
-    Packet* top_pkt = DetectionEngine::set_packet();
-    DetectionEngine de;
+    Packet* top_pkt = DetectionEngine::get_current_packet();
 
     DebugMessage(DEBUG_DCE_SMB, "Payload:\n");
     DCE2_PrintPktData(top_pkt->data, top_pkt->dsize);
 
     Profile profile(dce2_smb_pstat_smb_file_detect);
-
     DetectionEngine::detect(top_pkt);
 
     // Reset file data pointer after detecting

@@ -32,5 +32,7 @@ Packet* get_fin_packet(Flow*);
 Packet* get_rst_packet(Flow*);
 Packet* get_data_packet(Flow*);
 
+void release_packet(Packet*);
+
 #endif
 

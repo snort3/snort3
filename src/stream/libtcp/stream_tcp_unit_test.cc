@@ -19,6 +19,8 @@
 // stream_libtcp_unit_test.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 30, 2015
 
+#include "stream_tcp_unit_test.h"
+
 #ifndef STREAM_LIBTCP_UNIT_TEST
 #define STREAM_LIBTCP_UNIT_TEST
 
@@ -28,7 +30,10 @@
 
 #include "stream_tcp_unit_test.h"
 
+#include "detection/ips_context.h"
 #include "protocols/packet.h"
+#include "protocols/tcp.h"
+#include "stream/tcp/tcp_session.h"
 
 // SYN PACKET
 // IP 192.168.0.89.9012 > p3nlh044.shr.prod.phx3.secureserver.net.http: Flags [S], seq 9050, win
@@ -84,7 +89,17 @@ static Packet* init_packet(Flow* flow, uint32_t talker)
     pkt->pkth = initDaqHdr();
     pkt->dsize = 0;
 
+    pkt->context = new IpsContext(1);
+    pkt->flow->session = new TcpSession(flow);
+
     return pkt;
+}
+
+void release_packet(Packet* p)
+{
+    delete p->flow->session;
+    delete p->context;
+    delete p;
 }
 
 Packet* get_syn_packet(Flow* flow)

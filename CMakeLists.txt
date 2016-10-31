@@ -47,7 +47,7 @@ if (ENABLE_UNIT_TESTS)
     include(CTest)
     add_custom_target (check COMMAND ${CMAKE_CTEST_COMMAND})
     add_dependencies (check snort)
-    add_test (catch_tests ${CMAKE_CURRENT_BINARY_DIR}/src/snort --catch-test all)
+    #add_test (catch_tests ${CMAKE_CURRENT_BINARY_DIR}/src/snort --catch-test all)
 endif (ENABLE_UNIT_TESTS)
 
 add_subdirectory (src)

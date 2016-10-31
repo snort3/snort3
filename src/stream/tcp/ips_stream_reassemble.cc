@@ -295,7 +295,6 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
 
     Flow* flow = new Flow;
     Packet* pkt = get_syn_packet(flow);
-    pkt->flow->session = new TcpSession(flow);
     Cursor cursor(pkt);
 
     SECTION("reassembler initialization")
@@ -322,8 +321,7 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
             == STREAM_FLPOLICY_IGNORE ) );
     }
 #endif
-    delete pkt->flow->session;
-    delete pkt;
+    release_packet(pkt);
     delete flow;
     ips_stream_reassemble->mod_dtor(reassembler);
 }
