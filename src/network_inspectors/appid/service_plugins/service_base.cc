@@ -183,7 +183,7 @@ const ServiceApi serviceapi =
 
 /*C service API */
 static void ServiceRegisterPattern(RNAServiceValidationFCN, IpProtocol, const uint8_t*, unsigned,
-    int, struct Detector*, int, const char* );
+    int, Detector*, int, const char* );
 static void CServiceRegisterPattern(RNAServiceValidationFCN, IpProtocol, const uint8_t*, unsigned,
     int, const char*);
 static void ServiceRegisterPatternUser(RNAServiceValidationFCN, IpProtocol, const uint8_t*,
@@ -440,7 +440,7 @@ const RNAServiceElement* get_service_element(RNAServiceValidationFCN fcn, Detect
 }
 
 static void ServiceRegisterPattern(RNAServiceValidationFCN fcn, IpProtocol proto,
-        const uint8_t* pattern, unsigned size, int position, struct Detector* userdata,
+        const uint8_t* pattern, unsigned size, int position, Detector* userdata,
         int provides_user, const char* name)
 {
     SearchTool** patterns;
@@ -520,7 +520,7 @@ static void ServiceRegisterPattern(RNAServiceValidationFCN fcn, IpProtocol proto
 
 void ServiceRegisterPatternDetector(RNAServiceValidationFCN fcn,
     IpProtocol proto, const uint8_t* pattern, unsigned size,
-    int position, struct Detector* userdata, const char* name)
+    int position, Detector* userdata, const char* name)
 {
     ServiceRegisterPattern(fcn, proto, pattern, size, position, userdata, 0, name);
 }
@@ -538,7 +538,7 @@ static void CServiceRegisterPattern(RNAServiceValidationFCN fcn, IpProtocol prot
 }
 
 static void RemoveServicePortsByType(RNAServiceValidationFCN validate, SF_LIST** services,
-    RNAServiceElement* list, struct Detector* userdata)
+    RNAServiceElement* list, Detector* userdata)
 {
     RNAServiceElement* li;
     unsigned i;
@@ -609,7 +609,7 @@ static void RemoveAllServicePorts()
     }
 }
 
-void ServiceRemovePorts(RNAServiceValidationFCN validate, struct Detector* userdata)
+void ServiceRemovePorts(RNAServiceValidationFCN validate, Detector* userdata)
 {
     RemoveServicePortsByType(validate, service_config->tcp_services,
         service_config->tcp_service_list, userdata);
@@ -625,7 +625,7 @@ static void CServiceRemovePorts(RNAServiceValidationFCN validate)
 }
 
 int ServiceAddPort(const RNAServiceValidationPort* pp, RNAServiceValidationModule* svm,
-    struct Detector* userdata)
+    Detector* userdata)
 {
     SF_LIST** services;
     RNAServiceElement** list = nullptr;
@@ -1410,8 +1410,8 @@ int AppIdServiceIncompatibleData(AppIdSession* asd, const Packet* pkt, int dir,
 
     asd->serviceAppId = APP_ID_NONE;
 
-    if (asd->get_session_flags(APPID_SESSION_IGNORE_HOST|APPID_SESSION_UDP_REVERSED) || (svc_element &&
-        !svc_element->current_ref_count))
+    if (asd->get_session_flags(APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED)
+                    || (svc_element && !svc_element->current_ref_count))
         return SERVICE_SUCCESS;
 
     if (dir == APP_ID_FROM_INITIATOR)
@@ -1428,8 +1428,8 @@ int AppIdServiceIncompatibleData(AppIdSession* asd, const Packet* pkt, int dir,
         ip = pkt->ptrs.ip_api.get_src();
         port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
 
-        if (!(id_state = add_service_id_state(ip, asd->protocol, port, AppIdServiceDetectionLevel(
-                asd))))
+        if (!(id_state = add_service_id_state(ip, asd->protocol, port,
+                                              AppIdServiceDetectionLevel(asd))))
         {
             ErrorMessage("Incompatible service failed to create state");
             return SERVICE_ENOMEM;

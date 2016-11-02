@@ -2532,7 +2532,7 @@ bool is_webdav_found(HeaderMatchedPatterns* hmp)
 
 static CLIENT_APP_RETCODE http_client_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE http_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, Detector* userData);
 static int http_service_init(const InitServiceAPI* const init_api);
 static int http_service_validate(ServiceValidationArgs* args);
 
@@ -2640,7 +2640,7 @@ static CLIENT_APP_RETCODE http_client_init(const InitClientAppAPI* const init_ap
 }
 
 static CLIENT_APP_RETCODE http_client_validate(const uint8_t*, uint16_t, const int dir,
-    AppIdSession* asd, Packet* pkt, struct Detector*)
+    AppIdSession* asd, Packet* pkt, Detector*)
 {
     http_client_mod.api->add_app(asd, APP_ID_HTTP, APP_ID_HTTP + GENERIC_APP_OFFSET, nullptr);
     asd->rna_client_state = RNA_STATE_FINISHED;

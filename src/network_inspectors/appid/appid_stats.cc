@@ -235,17 +235,17 @@ void update_appid_statistics(AppIdSession* asd)
     }
 }
 
-void init_appid_statistics(const AppIdModuleConfig* config)
+void init_appid_statistics(const AppIdModuleConfig& config)
 {
-    if (config->stats_logging_enabled)
+    if (config.stats_logging_enabled)
     {
         enableAppStats = true;
         std::string stats_file;
         appid_stats_filename = snort_strdup(get_instance_file(stats_file, appid_stats_file_suffix));
 
-        rollPeriod = config->app_stats_rollover_time;
-        rollSize = config->app_stats_rollover_size;
-        bucketInterval = config->app_stats_period;
+        rollPeriod = config.app_stats_rollover_time;
+        rollSize = config.app_stats_rollover_size;
+        bucketInterval = config.app_stats_period;
 
         time_t now = get_time();
         start_stats_period(now);

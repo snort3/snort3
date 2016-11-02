@@ -310,7 +310,7 @@ static void clientDataFree(void* data)
 
 // static const char* const SIP_USRNAME_BEGIN_MARKER = "<sip:";
 static CLIENT_APP_RETCODE sip_client_validate(const uint8_t*, uint16_t, const int,
-    AppIdSession* asd, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, Detector*)
 {
     ClientSIPData* fd;
 
@@ -329,7 +329,7 @@ static CLIENT_APP_RETCODE sip_client_validate(const uint8_t*, uint16_t, const in
 }
 
 static CLIENT_APP_RETCODE sip_tcp_client_validate(const uint8_t* data, uint16_t size, const int
-    dir, AppIdSession* asd, Packet* pkt, struct Detector* userData)
+    dir, AppIdSession* asd, Packet* pkt, Detector* userData)
 {
     return sip_client_validate(data, size, dir, asd, pkt, userData);
 }

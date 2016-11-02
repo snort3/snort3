@@ -26,31 +26,25 @@
 #include <algorithm>
 #include <glob.h>
 #include <lua.hpp>
-#include <openssl/md5.h>
 
 #include "appid_config.h"
 #include "client_plugins/client_app_base.h"
 #include "service_plugins/service_base.h"
-#include "fw_appid.h" // for lua*PerfStats
-#include "hash/sfghash.h"
 #include "log/messages.h"
 #include "lua/lua.h"
+#include "lua_detector_util.h"
 #include "lua_detector_api.h"
 #include "lua_detector_flow_api.h"
 #include "main/snort_debug.h"
 #include "utils/util.h"
 
-#define MD5CONTEXT MD5_CTX
+#define MAX_LUA_DETECTOR_FILENAME_LEN 1024
+#define MAX_DEFAULT_NUM_LUA_TRACKERS  10000
+#define AVG_LUA_TRACKER_SIZE_IN_BYTES 740
+#define MAX_MEMORY_FOR_LUA_DETECTORS (512 * 1024 * 1024)
 
-#define MD5INIT    MD5_Init
-#define MD5UPDATE  MD5_Update
-#define MD5FINAL   MD5_Final
-#define MD5DIGEST  MD5
-
-#define MAXPD 1024
-#define LUA_DETECTOR_FILENAME_MAX 1024
-
-THREAD_LOCAL SF_LIST allocatedFlowList;  /*list of flows allocated. */
+THREAD_LOCAL SF_LIST allocated_detector_flow_list;  /*list of flows allocated. */
+THREAD_LOCAL LuaDetectorManager* lua_detector_mgr;
 
 static inline bool match_char_set(char c, const char* set)
 {
@@ -156,11 +150,11 @@ static lua_State* create_lua_state()
     auto L = luaL_newstate();
     luaL_openlibs(L);
 
-    Detector_register(L);
+    register_detector(L);
     // After detector register the methods are still on the stack, remove them
     lua_pop(L, 1);
 
-    DetectorFlow_register(L);
+    register_detector_flow_api(L);
     lua_pop(L, 1);
 
 #ifdef REMOVED_WHILE_NOT_IN_USE
@@ -279,9 +273,10 @@ static void clean_client_detector(Detector* detector)
     }
 }
 
-LuaDetectorManager::LuaDetectorManager()
+LuaDetectorManager::LuaDetectorManager(AppIdConfig& config) :
+                config(config)
 {
-    sflist_init(&allocatedFlowList);
+    sflist_init(&allocated_detector_flow_list);
     allocated_detectors.clear();
 }
 
@@ -295,8 +290,37 @@ LuaDetectorManager::~LuaDetectorManager()
         delete detector;
     }
 
-    sflist_static_free_all(&allocatedFlowList, freeDetectorFlow);
+    sflist_static_free_all(&allocated_detector_flow_list, free_detector_flow);
     allocated_detectors.clear();
+}
+
+void LuaDetectorManager::initialize(AppIdConfig& config)
+{
+    static bool lua_detectors_listed = false;
+
+    lua_detector_mgr = new LuaDetectorManager(config);
+    lua_detector_mgr->initialize_lua_detectors();
+    lua_detector_mgr->activate_lua_detectors();
+    if(config.mod_config->debug && !lua_detectors_listed)
+    {
+        lua_detector_mgr->list_lua_detectors();
+        lua_detectors_listed = false;
+    }
+}
+
+void LuaDetectorManager::terminate()
+{
+    delete lua_detector_mgr;
+}
+
+void LuaDetectorManager::add_detector_flow(DetectorFlow* df)
+{
+    sflist_add_tail(&allocated_detector_flow_list, df);
+}
+
+void LuaDetectorManager::free_detector_flows()
+{
+    sflist_static_free_all(&allocated_detector_flow_list, free_detector_flow);
 }
 
 /**calculates Number of flow and host tracker entries for Lua detectors, given amount
@@ -307,9 +331,6 @@ LuaDetectorManager::~LuaDetectorManager()
  * total system memory.
  * @param numDetectors - number of lua detectors present in database.
  */
-#define LUA_TRACKERS_MAX  10000
-#define LUA_TRACKER_AVG_MEM_BYTES  740
-
 static inline void set_lua_tracker_size(lua_State* L, uint32_t numTrackers)
 {
     /*change flow tracker size according to available memory calculation */
@@ -321,16 +342,18 @@ static inline void set_lua_tracker_size(lua_State* L, uint32_t numTrackers)
         {
             lua_pushinteger (L, numTrackers);
             if (lua_pcall(L, 1, 0, 0) != 0)
-                ErrorMessage("error setting tracker size");
+                ErrorMessage("Error activating lua detector. Setting tracker size to %u failed.\n",
+                             numTrackers);
         }
     }
     else
     {
         DebugMessage(DEBUG_LOG, "hostServiceTrackerModule.setHosServiceTrackerSize not found");
     }
+
     lua_pop(L, 1);
 
-    /*change flow tracker size according to available memory calculation */
+    // change flow tracker size according to available memory calculation
     lua_getglobal(L, "flowTrackerModule");
     if (lua_istable(L, -1))
     {
@@ -346,6 +369,7 @@ static inline void set_lua_tracker_size(lua_State* L, uint32_t numTrackers)
     {
         DebugMessage(DEBUG_LOG, "flowTrackerModule.setFlowTrackerSize not found");
     }
+
     lua_pop(L, 1);
 }
 
@@ -356,45 +380,56 @@ static inline uint32_t compute_lua_tracker_size(uint64_t rnaMemory, uint32_t num
 
     if (!numDetectors)
         numDetectors = 1;
-    numTrackers = (detectorMemory / LUA_TRACKER_AVG_MEM_BYTES) / numDetectors;
-    return (numTrackers > LUA_TRACKERS_MAX) ? LUA_TRACKERS_MAX : numTrackers;
+    numTrackers = (detectorMemory / AVG_LUA_TRACKER_SIZE_IN_BYTES) / numDetectors;
+    return (numTrackers > MAX_DEFAULT_NUM_LUA_TRACKERS) ? MAX_DEFAULT_NUM_LUA_TRACKERS : numTrackers;
 }
 
-void LuaDetectorManager::initialize_lua_detector( const char* detectorName, char* validator,
-        unsigned int validatorLen, unsigned char* const digest, AppIdConfig* pConfig,
-        bool isCustom)
+// FIXIT-M lifetime of detector is easy to misuse with this idiom
+// Leaves 1 value (the Detector userdata) at the top of the stack
+static Detector* create_lua_detector(lua_State* L, const char* detectorName, AppIdConfig* config)
 {
-    Detector* detector;
+    auto detector = new Detector(config);
+    detector->myLuaState = L;
+    detector->name = detectorName;
+
+    UserData<Detector>::push(L, DETECTOR, detector);
+
+    // add a lua reference so the detector doesn't get garbage-collected
+    lua_pushvalue(L, -1);
+    detector->detectorUserDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
+    return detector;
+}
+
+void LuaDetectorManager::load_detector( const char* detector_filename, bool isCustom)
+{
+    char detectorName[MAX_LUA_DETECTOR_FILENAME_LEN];
 
     lua_State* L = create_lua_state();
     if ( !L )
     {
         ErrorMessage("can not create new luaState");
-        delete[] validator;
         return;
     }
 
-    if ( luaL_loadbuffer(L, validator, validatorLen, "<buffer>") || lua_pcall(L, 0, 0, 0) )
+    if ( luaL_loadfile(L, detector_filename) || lua_pcall(L, 0, 0, 0) )
     {
-        ErrorMessage("cannot run validator %s, error: %s\n", detectorName, lua_tostring(L, -1));
+        ErrorMessage("Error loading Lua detector: %s : %s\n", detector_filename, lua_tostring(L, -1));
         lua_close(L);
-        delete[] validator;
         return;
     }
 
-    detector = createDetector(L, detectorName);
+    snprintf(detectorName, MAX_LUA_DETECTOR_FILENAME_LEN, "%s_%s",
+        (isCustom ? "custom" : "cisco"), basename(detector_filename));
+    Detector* detector = create_lua_detector(L, detectorName, &config);
     if ( !detector )
     {
         ErrorMessage("cannot allocate detector %s\n", detectorName);
         lua_close(L);
-        delete[] validator;
         return;
     }
 
     get_detector_package_info(detector);
-    detector->validatorBuffer = validator;
     detector->isActive = true;
-    detector->appid_config =  pConfig;
     detector->isCustom = isCustom;
 
     if ( detector->packageInfo.server.initFunctionName.empty() )
@@ -404,7 +439,7 @@ void LuaDetectorManager::initialize_lua_detector( const char* detectorName, char
         cam = &detector->client.appModule;
         cam->name = detector->packageInfo.name.c_str();
         cam->proto = detector->packageInfo.proto;
-        cam->validate = validateAnyClientApp;
+        cam->validate = validate_client_application;
         cam->minimum_matches = detector->packageInfo.client.minimum_matches;
         cam->userData = detector;
         cam->api = getClientApi();
@@ -415,115 +450,41 @@ void LuaDetectorManager::initialize_lua_detector( const char* detectorName, char
         detector->server.serviceId = APP_ID_UNKNOWN;
 
         /*create a ServiceElement */
-        if (checkServiceElement(detector))
+        if (check_service_element(detector))
         {
-            detector->server.pServiceElement->validate = validateAnyService;
+            detector->server.pServiceElement->validate = validate_service_application;
             detector->server.pServiceElement->userdata = detector;
             detector->server.pServiceElement->detectorType = DETECTOR_TYPE_DECODER;
         }
     }
 
-    memcpy(detector->digest, digest, sizeof(detector->digest));
     allocated_detectors.push_front(detector);
     num_lua_detectors++;
 
     DebugFormat(DEBUG_LOG,"Loaded detector %s\n", detectorName);
 }
 
-void LuaDetectorManager::validate_lua_detector(const char* path, AppIdConfig* pConfig, bool isCustom)
+void LuaDetectorManager::load_lua_detectors(const char* path, bool isCustom)
 {
-    unsigned n;
-    FILE* file;
     char pattern[PATH_MAX];
     snprintf(pattern, sizeof(pattern), "%s/*", path);
 
+    // FIXIT-M - is glob thread safe?
     glob_t globs;
     memset(&globs, 0, sizeof(globs));
     int rval = glob(pattern, 0, nullptr, &globs);
-    if (rval != 0 && rval != GLOB_NOMATCH)
+    if (rval == 0 )
     {
-        ErrorMessage("Unable to read directory '%s'\n",pattern);
-        return;
+        for (unsigned n = 0; n < globs.gl_pathc; n++)
+            load_detector(globs.gl_pathv[n], isCustom);
+
+        globfree(&globs);
     }
-
-    // Open each RNA detector file and gather detector information from it
-    for (n = 0; n < globs.gl_pathc; n++)
-    {
-        unsigned char digest[16];
-        MD5CONTEXT context;
-        char detectorName[LUA_DETECTOR_FILENAME_MAX];
-        char* basename;
-
-        basename = strrchr(globs.gl_pathv[n], '/');
-        if (!basename)
-            basename = globs.gl_pathv[n];
-        basename++;
-
-        snprintf(detectorName, LUA_DETECTOR_FILENAME_MAX, "%s_%s", (isCustom ? "custom" : "cisco"),
-            basename);
-
-        if ((file = fopen(globs.gl_pathv[n], "r")) == nullptr)
-        {
-            ErrorMessage("Unable to read lua detector '%s'\n",globs.gl_pathv[n]);
-            continue;
-        }
-
-        /*Load lua file as a detector. */
-        if (fseek(file, 0, SEEK_END))
-        {
-            ErrorMessage("Unable to seek lua detector '%s'\n",globs.gl_pathv[n]);
-            continue;
-        }
-
-        auto validatorBufferLen = ftell(file);
-        if (validatorBufferLen == -1)
-        {
-            ErrorMessage("Unable to return offset on lua detector '%s'\n",globs.gl_pathv[n]);
-            continue;
-        }
-        if (fseek(file, 0, SEEK_SET))
-        {
-            ErrorMessage("Unable to seek lua detector '%s'\n",globs.gl_pathv[n]);
-            continue;
-        }
-
-        auto validatorBuffer = new uint8_t[validatorBufferLen + 1]();
-        if (fread(validatorBuffer, validatorBufferLen, 1, file) == 0)
-        {
-            ErrorMessage("Failed to read lua detector %s\n",globs.gl_pathv[n]);
-            delete[] validatorBuffer;
-            continue;
-        }
-
-        validatorBuffer[validatorBufferLen] = '\0';
-        MD5INIT(&context);
-        MD5UPDATE(&context, validatorBuffer, validatorBufferLen);
-        MD5FINAL(digest, &context);
-
-        // FIXIT-M this finds the wrong detector -- it should be find_last_of
-        auto it = std::find_if(
-            allocated_detectors.begin(),
-            allocated_detectors.end(),
-            [&detectorName](const Detector* d) {
-            return d->name == detectorName;
-        });
-
-        if ( it != allocated_detectors.end() )
-        {
-            Detector* detector = *it;
-            if ( !memcmp(digest, detector->digest, sizeof(digest)) )
-            {
-                detector->isActive = true;
-                detector->appid_config = pConfig;
-                delete[] validatorBuffer;
-            }
-        }
-
-        initialize_lua_detector(detectorName, (char*)validatorBuffer, validatorBufferLen, digest, pConfig,
-            isCustom);
-    }
-
-    globfree(&globs);
+    else if(rval == GLOB_NOMATCH)
+        WarningMessage("No lua detectors found in directory '%s'\n", pattern);
+    else
+        ErrorMessage("Error reading lua detectors directory '%s'. Error Code: %d\n",
+                     pattern, rval);
 }
 
 // These functions call the 'DetectorInit' function of the lua detector.
@@ -579,13 +540,9 @@ static void init_client_detector(Detector* detector)
     /*second parameter is a table containing configuration stuff. */
     // ... which is empty.???
     lua_newtable(L);
-
     if ( lua_pcall(L, 2, 1, 0) )
-    {
         ErrorMessage("Could not initialize the %s client app element: %s\n",
             detector->name.c_str(), lua_tostring(L, -1));
-        return;
-    }
 }
 
 void LuaDetectorManager::init_lua_service_detectors()
@@ -616,7 +573,7 @@ void LuaDetectorManager::activate_lua_detectors()
                     detector->server.pServiceElement->ref_count;
         }
 
-    lua_tracker_size = compute_lua_tracker_size(512*1024*1024, num_active_lua_detectors);
+    lua_tracker_size = compute_lua_tracker_size(MAX_MEMORY_FOR_LUA_DETECTORS, num_active_lua_detectors);
     for ( auto& detector : allocated_detectors )
     {
         if ( detector->isActive )
@@ -624,15 +581,16 @@ void LuaDetectorManager::activate_lua_detectors()
     }
 }
 
-void LuaDetectorManager::load_lua_detectors(AppIdConfig* pConfig)
+void LuaDetectorManager::initialize_lua_detectors()
 {
     char path[PATH_MAX];
+
     snprintf(path, sizeof(path), "%s/odp/lua",
             AppIdConfig::get_appid_config()->mod_config->app_detector_dir);
-    validate_lua_detector(path, pConfig, 0);
+    load_lua_detectors(path, false);
     snprintf(path, sizeof(path), "%s/custom/lua",
             AppIdConfig::get_appid_config()->mod_config->app_detector_dir);
-    validate_lua_detector(path, pConfig, 1);
+    load_lua_detectors(path, true);
 }
 
 void LuaDetectorManager::list_lua_detectors()

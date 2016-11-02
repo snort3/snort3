@@ -35,7 +35,7 @@ struct DetectorFlow
     int userDataRef;
 };
 
-int DetectorFlow_register(lua_State*);
-void freeDetectorFlow(void* userdata);
+int register_detector_flow_api(lua_State*);
+void free_detector_flow(void* userdata);
 
 #endif

@@ -93,7 +93,7 @@ THREAD_LOCAL SMTP_CLIENT_APP_CONFIG smtp_config;
 
 static CLIENT_APP_RETCODE smtp_ca_init(const InitClientAppAPI* const init_api, SF_LIST *config);
 static CLIENT_APP_RETCODE smtp_ca_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, Detector* userData);
 
 static RNAClientAppModule  smtp_client_mod =
 {
@@ -576,7 +576,7 @@ static inline SMTPDetectorData* smtp_get_SMTPDetectorData(AppIdSession* asd)
 
 // #define UNIT_TEST_SKIP
 static CLIENT_APP_RETCODE smtp_ca_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, struct Detector*)
+    AppIdSession* asd, Packet* pkt, Detector*)
 {
     SMTPDetectorData* dd;
     ClientSMTPData* fd;

@@ -58,60 +58,57 @@ struct DetectorPackageInfo
     UniInfo server;
 };
 
-struct Detector
+struct ValidateParameters
 {
-    ~Detector();
-
-    bool isCustom;          // true for customer created detectors
-    bool isActive;
-    bool wasActive;
-
-    struct
-    {
-        const uint8_t* data;
-        uint16_t size;
-        int dir;
-        AppIdSession* asd;
-        Packet* pkt;
-        uint8_t macAddress[6];
-    } validateParams;
-
-    struct
-    {
-        unsigned int serviceId;
-        RNAServiceValidationModule serviceModule;
-        RNAServiceElement* pServiceElement;
-    } server;
-
-    struct
-    {
-        unsigned int appFpId;
-        RNAClientAppModule appModule;
-    } client;
-
-    AppIdSession* pFlow;
-    lua_State* myLuaState;
-    int detectorUserDataRef;    // key into LUA_REGISTRYINDEX
-    std::string name;
-    DetectorPackageInfo packageInfo;
-    unsigned detector_version;
-    char* validatorBuffer;
-    unsigned char digest[16];
-    AppIdConfig* appid_config;
+    const uint8_t* data = nullptr;
+    uint16_t size = 0;
+    int dir = 0;
+    AppIdSession* asd = nullptr;
+    Packet* pkt = nullptr;
+    uint8_t macAddress[6] = {0};
 };
 
-int Detector_register(lua_State*);
-void Detector_fini(void* detector);
-void detectorRemoveAllPorts(Detector*);
-Detector* createDetector(lua_State*, const char* filename);
-CLIENT_APP_RETCODE validateAnyClientApp(const uint8_t* data, uint16_t size, const int dir,
+struct ServerDetectorState
+{
+    unsigned int serviceId = APP_ID_UNKNOWN;
+    RNAServiceValidationModule serviceModule;
+    RNAServiceElement* pServiceElement = nullptr;
+};
+
+struct ClientDetectorState
+{
+    unsigned int appFpId;
+    RNAClientAppModule appModule;
+};
+
+class Detector
+{
+public:
+    Detector(AppIdConfig* config);
+    ~Detector();
+
+    bool isCustom = false;
+    bool isActive = false;
+    bool wasActive = false;
+    ValidateParameters validateParams;
+    ServerDetectorState server;
+    ClientDetectorState client;
+    AppIdSession* pFlow = nullptr;
+    lua_State* myLuaState= nullptr;
+    int detectorUserDataRef = 0;    // key into LUA_REGISTRYINDEX
+    std::string name;
+    DetectorPackageInfo packageInfo;
+    unsigned detector_version = 0;
+    AppIdConfig* appid_config = nullptr;
+};
+
+int register_detector(lua_State*);
+void remove_detector(void* detector);
+CLIENT_APP_RETCODE validate_client_application(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession*, Packet*, Detector*);
-int Detector_addSSLCertPattern(lua_State*);
-int Detector_addDNSHostPattern(lua_State*);
-int Detector_addHttpPattern(lua_State*);
-int validateAnyService(ServiceValidationArgs*);
-int checkServiceElement(Detector*);
-int init_CHP_glossary();
-void free_CHP_glossary();
+int validate_service_application(ServiceValidationArgs*);
+int check_service_element(Detector*);
+int init_chp_glossary();
+void free_chp_glossary();
 
 #endif

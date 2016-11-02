@@ -254,6 +254,7 @@ static int rpc_init(const InitServiceAPI* const init_api)
         {
             if (rpc->r_name)
             {
+                // FIXIT-M - the memory allocate here may not be freed...
                 prog = (RPCProgram*)snort_calloc(sizeof(RPCProgram));
                 prog->program = rpc->r_number;
                 prog->next = rpc_programs;

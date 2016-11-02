@@ -26,7 +26,7 @@
 
 class AppIdConfig;
 class AppIdSession;
-struct Detector;
+class Detector;
 struct RNAServiceSubtype;
 struct Packet;
 struct DynamicPreprocessorData;
@@ -52,7 +52,7 @@ struct ServiceValidationArgs
     int dir;
     AppIdSession* asd;
     Packet* pkt;
-    struct Detector* userdata;
+    Detector* userdata;
     const AppIdConfig* pConfig;
     bool session_logging_enabled;
     char* session_logging_id;

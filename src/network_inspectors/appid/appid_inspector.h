@@ -49,7 +49,6 @@ public:
 private:
     const AppIdModuleConfig* config = nullptr;
     AppIdConfig* active_config = nullptr;
-    bool list_lua_detectors = true;
 };
 
 void httpHeaderCallback(Packet*, HttpParsedHeaders* const);

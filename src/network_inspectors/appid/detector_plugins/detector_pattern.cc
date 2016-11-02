@@ -39,7 +39,7 @@ static void pattern_service_clean();
 static CLIENT_APP_RETCODE client_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE client_init_tcp(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, Detector* userData);
 static void client_clean();
 static const InitServiceAPI* iniServiceApi;
 static const InitClientAppAPI* iniClientApi;
@@ -778,7 +778,7 @@ static void client_clean()
 }
 
 static CLIENT_APP_RETCODE client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, struct Detector*)
+    AppIdSession* asd, Packet* pkt, Detector*)
 {
     AppId id;
     const RNAServiceElement* service = nullptr;

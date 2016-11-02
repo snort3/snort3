@@ -72,7 +72,7 @@ THREAD_LOCAL BIT_CLIENT_APP_CONFIG udp_bit_config;
 
 static CLIENT_APP_RETCODE udp_bit_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE udp_bit_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, Detector* userData);
 
 SO_PUBLIC RNAClientAppModule bit_tracker_client_mod =
 {
@@ -156,7 +156,7 @@ static CLIENT_APP_RETCODE udp_bit_init(const InitClientAppAPI* const init_api, S
 }
 
 static CLIENT_APP_RETCODE udp_bit_validate(const uint8_t* data, uint16_t size, const int /*dir*/,
-    AppIdSession* asd, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, Detector*)
 {
     ClientBITData* fd;
     uint16_t offset;

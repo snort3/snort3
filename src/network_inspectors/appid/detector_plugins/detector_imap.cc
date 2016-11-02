@@ -667,7 +667,7 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
 }
 
 static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, Detector*)
 {
     const uint8_t* s = data;
     const uint8_t* end = (data + size);

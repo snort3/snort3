@@ -61,7 +61,7 @@ static POP3_CLIENT_APP_CONFIG pop3_config;
 static CLIENT_APP_RETCODE pop3_ca_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static void pop3_ca_clean();
 static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, Detector* userData);
 
 static RNAClientAppModule client_app_mod =
 {
@@ -662,7 +662,7 @@ ven_ver_done:;
 }
 
 static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, Detector*)
 {
     const uint8_t* s = data;
     const uint8_t* end = (data + size);

@@ -29,7 +29,7 @@
 #include "utils/util.h"
 
 struct Packet;
-struct Detector;
+class Detector;
 
 // Forward declaration for AppId config. Cannot include appIdConfig.h because of
 // circular dependency

@@ -53,13 +53,13 @@
 #define OVECCOUNT 30    /* should be a multiple of 3 */
 
 #define CHECK_INPUTS() \
-    if ( !checkServiceElement(ud) || !ud->validateParams.pkt ) \
+    if ( !check_service_element(ud) || !ud->validateParams.pkt ) \
     { \
         lua_pushnumber(L, SERVICE_ENULL); \
         return 1; \
     }
 
-enum
+enum LuaLogLevels
 {
     LUA_LOG_CRITICAL = 0,
     LUA_LOG_ERR = 1,
@@ -75,16 +75,16 @@ ProfileStats luaCustomPerfStats;
 
 static THREAD_LOCAL SFXHASH* CHP_glossary = nullptr;      // keep track of http multipatterns here
 
-static int genericDataFree(void* /* key */, void* data)
+static int free_chp_data(void* /* key */, void* data)
 {
     if (data)
         snort_free(data);
     return 0;
 }
 
-int init_CHP_glossary()
+int init_chp_glossary()
 {
-    if (!(CHP_glossary = sfxhash_new(1024, sizeof(AppId), 0, 0, 0, nullptr, &genericDataFree, 0)))
+    if (!(CHP_glossary = sfxhash_new(1024, sizeof(AppId), 0, 0, 0, nullptr, &free_chp_data, 0)))
     {
         ErrorMessage("Config: failed to allocate memory for an sfxhash.");
         return 0;
@@ -93,14 +93,14 @@ int init_CHP_glossary()
         return 1;
 }
 
-void free_CHP_glossary()
+void free_chp_glossary()
 {
     if (CHP_glossary)
         sfxhash_delete(CHP_glossary);
     CHP_glossary = nullptr;
 }
 
-static inline int ConvertStringToAddress(const char* string, sfip_t* address)
+static inline int convert_string_to_address(const char* string, sfip_t* address)
 {
     int af;
     struct in6_addr buf;
@@ -123,30 +123,8 @@ static inline int ConvertStringToAddress(const char* string, sfip_t* address)
     return 1;    // success
 }
 
-// FIXIT-M lifetime of detector is easy to misuse with this idiom
-// Leaves 1 value (the Detector userdata) at the top of the stack
-Detector* createDetector(lua_State* L, const char* detectorName)
-{
-    auto detector = new Detector();
-    detector->myLuaState = L;
-    detector->name = detectorName;
-
-    UserData<Detector>::push(L, DETECTOR, detector);
-
-    // add a lua reference so the detector doesn't get garbage-collected
-    lua_pushvalue(L, -1);
-    detector->detectorUserDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
-    return detector;
-}
-
-// must be called only when RNA is exitting.
-static void freeDetector(Detector* detector)
-{
-	delete detector;
-}
-
 // check service element, Allocate if necessary
-int checkServiceElement(Detector* detector)
+int check_service_element(Detector* detector)
 {
     if ( !detector->server.pServiceElement )
     {
@@ -179,9 +157,9 @@ static int service_init(lua_State* L)
 
     if ( lua_isfunction(L, -1) && lua_isfunction(L, -2) )
     {
-        if ( checkServiceElement(ud) )
+        if ( check_service_element(ud) )
         {
-            ud->server.pServiceElement->validate = validateAnyService;
+            ud->server.pServiceElement->validate = validate_service_application;
             ud->server.pServiceElement->userdata = ud.ptr;
             ud->server.pServiceElement->detectorType = DETECTOR_TYPE_DECODER;
         }
@@ -210,7 +188,7 @@ static int service_init(lua_State* L)
 //  #4 - size/stack - number of bytes in pattern
 //  #5 - position/stack -  position offset where to start matching pattern.
 //  return - status/stack - 0 if successful, -1 otherwise.
-static int service_registerPattern(lua_State* L)
+static int service_register_pattern(lua_State* L)
 {
     int index = 1;
 
@@ -236,15 +214,15 @@ static int service_registerPattern(lua_State* L)
 
     /*mpse library does not hold reference to pattern therefore we dont need to allocate it. */
 
-    ServiceRegisterPatternDetector(validateAnyService, (IpProtocol)protocol, (uint8_t*)pattern,
+    ServiceRegisterPatternDetector(validate_service_application, (IpProtocol)protocol, (uint8_t*)pattern,
         size, position, ud, ud->server.serviceModule.name);
 
     lua_pushnumber(L, 0);
     return 1;
 }
 
-static void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extractsInfo,
-        struct Detector* data)
+static void set_lua_client_validator(RNAClientAppFCN fcn, AppId appId, unsigned extractsInfo,
+        Detector* data)
 {
     AppInfoTableEntry* entry;
 
@@ -276,8 +254,8 @@ static void appSetLuaClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned 
     }
 }
 
-static void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, unsigned extractsInfo,
-    struct Detector* data)
+static void set_lua_service_validator(RNAServiceValidationFCN fcn, AppId appId, unsigned extractsInfo,
+    Detector* data)
 {
     AppInfoTableEntry* entry;
 
@@ -305,21 +283,20 @@ static void appSetLuaServiceValidator(RNAServiceValidationFCN fcn, AppId appId, 
     }
 }
 
-static int common_registerAppId(lua_State* L)
+static int common_register_application_id(lua_State* L)
 {
-    unsigned int appId;
     int index = 1;
 
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
-    appId = lua_tonumber(L, index++);
+    AppId appId = lua_tonumber(L, index++);
 
     if ( !ud->packageInfo.server.initFunctionName.empty() )
-        appSetLuaServiceValidator(validateAnyService, appId, APPINFO_FLAG_SERVICE_ADDITIONAL,
-                ud.ptr);
+        set_lua_service_validator(validate_service_application, appId,
+                                  APPINFO_FLAG_SERVICE_ADDITIONAL, ud.ptr);
 
     if ( !ud->packageInfo.client.initFunctionName.empty() )
-        appSetLuaClientValidator(
-            validateAnyClientApp, appId, APPINFO_FLAG_CLIENT_ADDITIONAL, ud.ptr);
+        set_lua_client_validator(validate_client_application, appId,
+                                 APPINFO_FLAG_CLIENT_ADDITIONAL, ud.ptr);
 
     AppInfoManager::get_instance().set_app_info_active(appId);
 
@@ -327,7 +304,7 @@ static int common_registerAppId(lua_State* L)
     return 1;
 }
 
-static int Detector_htons(lua_State* L)
+static int detector_htons(lua_State* L)
 {
     unsigned short aShort = lua_tonumber(L, 2);
 
@@ -335,7 +312,7 @@ static int Detector_htons(lua_State* L)
     return 1;
 }
 
-static int Detector_htonl(lua_State* L)
+static int detector_htonl(lua_State* L)
 {
     unsigned int anInt = lua_tonumber(L, 2);
 
@@ -349,7 +326,7 @@ static int Detector_htonl(lua_State* L)
 // lua params:
 //  #1 - level - level of message. See DetectorCommon for enumeration.
 //  #2 - message - message to be logged.
-static int Detector_logMessage(lua_State* L)
+static int detector_log_message(lua_State* L)
 {
     const auto& name = (*UserData<Detector>::check(L, DETECTOR, 1))->server.serviceModule.name;
 
@@ -389,7 +366,7 @@ static int Detector_logMessage(lua_State* L)
 //  2 - major/stack - major number of application
 //  3 - minor/stack - minor number of application
 //  4 - flags/stack - any flags
-static int service_analyzePayload(lua_State* L)
+static int service_analyze_payload(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
     unsigned int payloadId = lua_tonumber(L, 2);
@@ -410,13 +387,11 @@ static int service_analyzePayload(lua_State* L)
 // Right now there is only one detector so there is a one-to-one mapping, but the framework
 // will have to support multiple detectors in production environment. Core engine API will be
 // changed to take an additional void* that will be used to call only a unique detector.
-int validateAnyService(ServiceValidationArgs* args)
+int validate_service_application(ServiceValidationArgs* args)
 {
     Profile lua_detector_context(luaCustomPerfStats);
 
-    int retValue;
     auto detector = args->userdata;
-
     if ( !detector )
     {
         ErrorMessage("The service validation arguments do not contain a detector object\n");
@@ -424,13 +399,11 @@ int validateAnyService(ServiceValidationArgs* args)
     }
 
     auto L = detector->myLuaState;
-
     detector->validateParams.data = args->data;
     detector->validateParams.size = args->size;
     detector->validateParams.dir = args->dir;
     detector->validateParams.asd = args->asd;
     detector->validateParams.pkt = args->pkt;
-
     const auto& serverName = detector->name;
 
     /*Note: Some frequently used header fields may be extracted and stored in detector for
@@ -462,7 +435,7 @@ int validateAnyService(ServiceValidationArgs* args)
     }
 
     /**detectorFlows must be destroyed after each packet is processed.*/
-    sflist_static_free_all(&allocatedFlowList, freeDetectorFlow);
+    LuaDetectorManager::free_detector_flows();
 
     /* retrieve result */
     if ( !lua_isnumber(L, -1) )
@@ -472,13 +445,10 @@ int validateAnyService(ServiceValidationArgs* args)
         return SERVICE_ENULL;
     }
 
-    retValue = lua_tonumber(L, -1);
-    lua_pop(L, 1);  /* pop returned value */
-
+    int retValue = lua_tonumber(L, -1);
+    lua_pop(L, 1);
     DebugFormat(DEBUG_APPID, "server %s: Validator returned %d\n", serverName.c_str(), retValue);
-
     detector->validateParams.pkt = nullptr;
-
     return retValue;
 }
 
@@ -491,7 +461,7 @@ int validateAnyService(ServiceValidationArgs* args)
 // get get a service Id (an integer) from database.
 // @param serviceName/stack - Name of service
 // @return serviceId/stack - serviceId if successful, -1 otherwise.
-static int service_getServiceId(lua_State* L)
+static int service_get_service_id(lua_State* L)
 {
     auto ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
@@ -504,7 +474,7 @@ static int service_getServiceId(lua_State* L)
 // @param protocol/stack - protocol type. Values can be {tcp=6, udp=17 }
 // @param port/stack - port number to register.
 // @return status/stack - 0 if successful, -1 otherwise.
-static int service_addPorts(lua_State* L)
+static int service_add_ports(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
@@ -512,7 +482,7 @@ static int service_addPorts(lua_State* L)
     pp.proto = (IpProtocol)lua_tonumber(L, 2);
     pp.port = lua_tonumber(L, 3);
     pp.reversed_validation = lua_tonumber(L, 5);
-    pp.validate = &validateAnyService;
+    pp.validate = &validate_service_application;
 
     if ( ((pp.proto != IpProtocol::UDP) && (pp.proto != IpProtocol::TCP)) || !pp.port )
     {
@@ -527,7 +497,6 @@ static int service_addPorts(lua_State* L)
     }
 
     ++ud->server.pServiceElement->ref_count;
-
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -535,20 +504,13 @@ static int service_addPorts(lua_State* L)
 // Remove all ports for a given service. Lua detectors call this function to remove ports for this
 // service when exiting. This function is not used currently by any detectors.
 // @return status/stack - 0 if successful, -1 otherwise.
-static int service_removePorts(lua_State* L)
+static int service_remove_ports(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    detectorRemoveAllPorts(ud);
-
+    ServiceRemovePorts(&validate_service_application, ud);
     lua_pushnumber(L, 0);
     return 1;
-}
-
-// Shared function between Lua API and RNA core.
-void detectorRemoveAllPorts(Detector* detector)
-{
-    ServiceRemovePorts(&validateAnyService, detector);
 }
 
 // Set service name. Lua detectors call this function to set service name. It is preferred to set
@@ -556,7 +518,7 @@ void detectorRemoveAllPorts(Detector* detector)
 // when a detector is created. Afterwards there is rarely a need to change service name.
 // @param serviceName/stack - Name of service
 // @return status/stack - 0 if successful, -1 otherwise.
-static int service_setServiceName(lua_State* L)
+static int service_set_service_name(lua_State* L)
 {
     lua_pushnumber(L, 0);
     return 1;
@@ -570,7 +532,7 @@ static int service_setServiceName(lua_State* L)
  * @return int - Number of elements on stack, which is always 1.
  * @return serviceName/stack - service name if successful, nil otherwise.
  */
-static int service_getServiceName(lua_State* L)
+static int service_get_service_name(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
@@ -586,7 +548,7 @@ static int service_getServiceName(lua_State* L)
  * @return int - Number of elements on stack, which is always 1.
  * @return integer/stack - -1 if failed, 0 if sourcefire created, 1 otherwise.
  */
-static int service_isCustomDetector(lua_State* L)
+static int service_is_custom_detector(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
     lua_pushnumber(L, ud->isCustom);
@@ -602,7 +564,7 @@ static int service_isCustomDetector(lua_State* L)
  * @param validatorName/stack - Name of service validator
  * @return int - Number of elements on stack, which is always 0.
  */
-static int service_setValidator(lua_State* L)
+static int service_set_validator(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
@@ -620,9 +582,7 @@ static int service_setValidator(lua_State* L)
     }
 
     lua_pop(L, 1);
-
     ud->packageInfo.server.validateFunctionName = pValidator;
-
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -635,21 +595,20 @@ static int service_setValidator(lua_State* L)
  * @param sourcePort/stack - Source port number.
  * @return int - Number of elements on stack, which is always 0.
  */
-static int service_addDataId(lua_State* L)
+static int service_add_data_id(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
     uint16_t sport = lua_tonumber(L, 2);
 
     /*check inputs and whether this function is called in context of a
       packet */
-    if ( !checkServiceElement(ud) || !ud->validateParams.pkt )
+    if ( !check_service_element(ud) || !ud->validateParams.pkt )
     {
         lua_pushnumber(L, -1);
         return 1;
     }
 
     ud->validateParams.asd->add_flow_data_id(sport, ud->server.pServiceElement);
-
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -664,21 +623,17 @@ static int service_addDataId(lua_State* L)
  * @return int - Number of elements on stack, which is always 1.
  * @return int/stack - values from enum SERVICE_RETCODE
  */
-static int service_addService(
-    lua_State* L
-    )
+static int service_add_service(lua_State* L)
 {
-    char* vendor, * version;
-    unsigned int serviceId, retValue = SERVICE_ENULL;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    serviceId = lua_tonumber(L, 2);
-    vendor = (char*)luaL_optstring(L, 3, nullptr);
-    version = (char*)luaL_optstring(L, 4, nullptr);
+    AppId serviceId = lua_tonumber(L, 2);
+    char* vendor = (char*)luaL_optstring(L, 3, nullptr);
+    char* version = (char*)luaL_optstring(L, 4, nullptr);
 
     /*check inputs (vendor and version may be null) and whether this function is
       called in context of a packet */
-    if ( !checkServiceElement(ud) || !ud->validateParams.pkt )
+    if ( !check_service_element(ud) || !ud->validateParams.pkt )
     {
         lua_pushnumber(L, SERVICE_ENULL);
         return 1;
@@ -687,9 +642,10 @@ static int service_addService(
     /*Phase2 - discuss RNAServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr.
       Subtype is not displayed on DC at present. */
-    retValue = AppIdServiceAddService(ud->validateParams.asd, ud->validateParams.pkt,
+    unsigned int retValue = AppIdServiceAddService(ud->validateParams.asd, ud->validateParams.pkt,
         ud->validateParams.dir, ud->server.pServiceElement,
-        AppInfoManager::get_instance().get_appid_by_service_id(serviceId), vendor, version, nullptr);
+        AppInfoManager::get_instance().get_appid_by_service_id(serviceId),
+        vendor, version, nullptr);
 
     lua_pushnumber(L, retValue);
     return 1;
@@ -702,10 +658,9 @@ static int service_addService(
  * @return int - Number of elements on stack, which is always 1.
  * @return int/stack - values from enum SERVICE_RETCODE
  */
-static int service_failService(lua_State* L)
+static int service_fail_service(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
-
     CHECK_INPUTS();
 
     unsigned int retValue = AppIdServiceFailService(ud->validateParams.asd,
@@ -723,10 +678,9 @@ static int service_failService(lua_State* L)
  * @return int - Number of elements on stack, which is always 1.
  * @return int/stack - values from enum SERVICE_RETCODE
  */
-static int service_inProcessService(lua_State* L)
+static int service_in_process_service(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
-
     CHECK_INPUTS();
 
     unsigned int retValue = AppIdServiceInProcess(ud->validateParams.asd, ud->validateParams.pkt,
@@ -743,14 +697,12 @@ static int service_inProcessService(lua_State* L)
  * @return int - Number of elements on stack, which is always 1.
  * @return int/stack - values from enum SERVICE_RETCODE
  */
-static int service_inCompatibleData(lua_State* L)
+static int service_set_incompatible_data(lua_State* L)
 {
-    unsigned int retValue = SERVICE_ENULL;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
-
     CHECK_INPUTS();
 
-    retValue = AppIdServiceIncompatibleData(ud->validateParams.asd,
+    unsigned int retValue = AppIdServiceIncompatibleData(ud->validateParams.asd,
         ud->validateParams.pkt,
         ud->validateParams.dir, ud->server.pServiceElement,
         APPID_SESSION_DATA_NONE, ud->appid_config);
@@ -768,9 +720,7 @@ static int service_inCompatibleData(lua_State* L)
  * @return int - Number of elements on stack, which is always 1 if successful, 0 otherwise.
  * @return packetSize/stack - size of packet on stack, if successful.
  */
-static int Detector_getPacketSize(
-    lua_State* L
-    )
+static int detector_get_packet_size(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
@@ -786,9 +736,7 @@ static int Detector_getPacketSize(
  * @return int - Number of elements on stack, which is always 1 if successful, 0 otherwise.
  * @return packetDir/stack - direction of packet on stack, if successful.
  */
-static int Detector_getPacketDir(
-    lua_State* L
-    )
+static int detector_get_packet_direction(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
@@ -805,79 +753,65 @@ static int Detector_getPacketDir(
  * @return matchedStrings/stack - matched strings are pushed on stack starting with group 0.
  *     There may be 0 or more strings.
  */
-static int Detector_getPcreGroups(
-    lua_State* L
-    )
+static int detector_get_pcre_groups(lua_State* L)
 {
-    char* pattern;
-    unsigned int offset;
-    pcre* re;
     int ovector[OVECCOUNT];
     const char* error;
     int erroffset;
-    int rc, i;
+
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
+    char* pattern = (char*)lua_tostring(L, 2);
+    unsigned int offset = lua_tonumber(L, 3);     /*offset can be zero, no check necessary. */
 
-    pattern = (char*)lua_tostring(L, 2);
-    offset = lua_tonumber(L, 3);     /*offset can be zero, no check necessary. */
+    /*compile the regular expression pattern, and handle errors */
+    pcre* re = pcre_compile(pattern,              /*the pattern */
+                      PCRE_DOTALL,          /*default options - dot matches everything including newline */
+                      &error,               /*for error message */
+                      &erroffset,           /*for error offset */
+                      nullptr);             /*use default character tables */
 
+    if (re == nullptr)
     {
-        /*compile the regular expression pattern, and handle errors */
-        re = pcre_compile(
-            pattern,              /*the pattern */
-            PCRE_DOTALL,          /*default options - dot matches everything including newline */
-            &error,               /*for error message */
-            &erroffset,           /*for error offset */
-            nullptr);                /*use default character tables */
+        ErrorMessage("PCRE compilation failed at offset %d: %s\n", erroffset, error);
+        return 0;
+    }
 
-        if (re == nullptr)
-        {
-            ErrorMessage("PCRE compilation failed at offset %d: %s\n", erroffset, error);
-            return 0;
-        }
+    /*pattern match against the subject string. */
+    int rc = pcre_exec(re,                                 // compiled pattern
+                       nullptr,                            // no extra data
+                       (char*)ud->validateParams.data,     // subject string
+                       ud->validateParams.size,            // length of the subject
+                       offset,                             // offset 0
+                       0,                                  // default options
+                       ovector,                            // output vector for substring information
+                       OVECCOUNT);                         // number of elements in the output vector
 
-        /*pattern match against the subject string. */
-        rc = pcre_exec(
-            re,                                         /*compiled pattern */
-            nullptr,                                       /*no extra data */
-            (char*)ud->validateParams.data,       /*subject string */
-            ud->validateParams.size,              /*length of the subject */
-            offset,                                     /*offset 0 */
-            0,                                          /*default options */
-            ovector,                                    /*output vector for substring information
-                                                           */
-            OVECCOUNT);                                 /*number of elements in the output vector
-                                                           */
 
-        if (rc < 0)
-        {
-            /*Matching failed: clubbing PCRE_ERROR_NOMATCH with other errors. */
-            pcre_free(re);
-            return 0;
-        }
-
-        /*Match succeded */
-
-        /*printf("\nMatch succeeded at offset %d", ovector[0]); */
-        pcre_free(re);
-
+    if( rc >= 0 )
+    {
         if (rc == 0)
         {
             /*overflow of matches */
-            rc = OVECCOUNT/3;
-            /*printf("ovector only has room for %d captured substrings", rc - 1); */
-            ErrorMessage("ovector only has room for %d captured substrings\n",rc - 1);
+            rc = OVECCOUNT / 3;
+            WarningMessage("ovector only has room for %d captured substrings\n", rc - 1);
+        }
+
+        lua_checkstack(L, rc);
+        for (int i = 0; i < rc; i++)
+        {
+            lua_pushlstring(L, (char*)ud->validateParams.data + ovector[2*i], ovector[2*i+1] -
+                            ovector[2*i]);
         }
     }
-
-    lua_checkstack (L, rc);
-    for (i = 0; i < rc; i++)
+    else
     {
-        /*printf("%2d: %.*s\n", i, , substring_start); */
-        lua_pushlstring(L, (char*)ud->validateParams.data + ovector[2*i], ovector[2*i+1] -
-            ovector[2*i]);
+        // log errors except no matches
+        if( rc != PCRE_ERROR_NOMATCH)
+            WarningMessage("PCRE regular expression group match failed. rc: %d\n", rc);
+        rc = 0;
     }
 
+    pcre_free(re);
     return rc;
 }
 
@@ -892,22 +826,14 @@ static int Detector_getPcreGroups(
  * @return int - Number of group matches.  May be 1 if successful, and 0 if error is encountered.
  * @return memCmpResult/stack - returns -1,0,1 based on memcmp result.
  */
-static int Detector_memcmp(
-    lua_State* L
-    )
+static int detector_memcmp(lua_State* L)
 {
-    char* pattern;
-    unsigned int patternLen;
-    unsigned int offset;
-    int rc;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    pattern = (char*)lua_tostring(L, 2);
-    patternLen = lua_tonumber(L, 3);
-    offset = lua_tonumber(L, 4);     /*offset can be zero, no check necessary. */
-
-    rc = memcmp((char*)ud->validateParams.data + offset, pattern, patternLen);
-
+    char* pattern = (char*)lua_tostring(L, 2);
+    unsigned int patternLen = lua_tonumber(L, 3);
+    unsigned int offset = lua_tonumber(L, 4);     /*offset can be zero, no check necessary. */
+    int rc = memcmp((char*)ud->validateParams.data + offset, pattern, patternLen);
     lua_checkstack (L, 1);
     lua_pushnumber(L, rc);
     return 1;
@@ -919,10 +845,9 @@ static int Detector_memcmp(
  * @return int - Number of elements on stack, which is protocol type if successful, 0 otherwise.
  * @return protocol type TCP or UDP
  */
-static int Detector_getProtocolType(lua_State* L)
+static int detector_get_protocol_type(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
-
     if ( !ud->validateParams.pkt || !ud->validateParams.pkt->has_ip() )
     {
         // FIXIT-M J why the inconsistent use of checkstack?
@@ -944,13 +869,28 @@ static int Detector_getProtocolType(lua_State* L)
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
  * @return IPv4/stack - Source IPv4 addresss.
  */
-static int Detector_getPktSrcIPAddr(lua_State* L)
+static int detector_get_packet_src_addr(lua_State* L)
 {
-    const sfip_t* ipAddr;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    ipAddr = ud->validateParams.pkt->ptrs.ip_api.get_src();
+    const sfip_t* ipAddr = ud->validateParams.pkt->ptrs.ip_api.get_src();
+    lua_checkstack (L, 1);
+    lua_pushnumber(L, ipAddr->ip32[0]);
+    return 1;
+}
 
+/**Get destination IP address from IP header.
+ *
+ * @param Lua_State* - Lua state variable.
+ * @param detector/stack - detector object
+ * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
+ * @return IPv4/stack - destination IPv4 addresss.
+ */
+static int detector_get_packet_dst_addr(lua_State* L)
+{
+    auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
+
+    const sfip_t* ipAddr = ud->validateParams.pkt->ptrs.ip_api.get_dst();
     lua_checkstack (L, 1);
     lua_pushnumber(L, ipAddr->ip32[0]);
     return 1;
@@ -963,13 +903,11 @@ static int Detector_getPktSrcIPAddr(lua_State* L)
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
  * @return portNumber/stack - source port number.
  */
-static int Detector_getPktSrcPort(lua_State* L)
+static int detector_get_packet_src_port(lua_State* L)
 {
-    unsigned int port;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    port = ud->validateParams.pkt->ptrs.sp;
-
+    unsigned int port = ud->validateParams.pkt->ptrs.sp;
     lua_checkstack (L, 1);
     lua_pushnumber(L, port);
     return 1;
@@ -982,34 +920,13 @@ static int Detector_getPktSrcPort(lua_State* L)
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
  * @return portNumber/stack - destination Port number.
  */
-static int Detector_getPktDstPort(lua_State* L)
+static int detector_get_packet_dst_port(lua_State* L)
 {
-    unsigned int port;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    port = ud->validateParams.pkt->ptrs.dp;
-
+    unsigned int port = ud->validateParams.pkt->ptrs.dp;
     lua_checkstack (L, 1);
     lua_pushnumber(L, port);
-    return 1;
-}
-
-/**Get destination IP address from IP header.
- *
- * @param Lua_State* - Lua state variable.
- * @param detector/stack - detector object
- * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
- * @return IPv4/stack - destination IPv4 addresss.
- */
-static int Detector_getPktDstIPAddr(lua_State* L)
-{
-    const sfip_t* ipAddr;
-    auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
-
-    ipAddr = ud->validateParams.pkt->ptrs.ip_api.get_dst();
-
-    lua_checkstack (L, 1);
-    lua_pushnumber(L, ipAddr->ip32[0]);
     return 1;
 }
 
@@ -1021,36 +938,31 @@ static int Detector_getPktDstIPAddr(lua_State* L)
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
  * @return packetCount/stack - Total packet processed by RNA.
  */
-static int Detector_getPktCount(lua_State* L)
+static int detector_get_packet_count(lua_State* L)
 {
     lua_checkstack (L, 1);
     lua_pushnumber(L, appid_stats.processed_packets);
     return 1;
 }
 
-CLIENT_APP_RETCODE validateAnyClientApp( const uint8_t* data, uint16_t size, const int dir,
+CLIENT_APP_RETCODE validate_client_application( const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, Packet* pkt, Detector* detector )
 {
     Profile lua_profile_context(luaCustomPerfStats);
-
-    int retValue;
-    lua_State* myLuaState;
-    const char* validateFn;
-    const char* clientName;
 
     if (!data || !asd || !pkt || !detector)
     {
         return CLIENT_APP_ENULL;
     }
 
-    myLuaState = detector->myLuaState;
+    lua_State* myLuaState = detector->myLuaState;
     detector->validateParams.data = data;
     detector->validateParams.size = size;
     detector->validateParams.dir = dir;
     detector->validateParams.asd = asd;
     detector->validateParams.pkt = (Packet*)pkt;
-    validateFn = detector->packageInfo.client.validateFunctionName.c_str();
-    clientName = detector->name.c_str();
+    const char* validateFn = detector->packageInfo.client.validateFunctionName.c_str();
+    const char* clientName = detector->name.c_str();
 
     if ((!validateFn) || !(lua_checkstack(myLuaState, 1)))
     {
@@ -1073,7 +985,7 @@ CLIENT_APP_RETCODE validateAnyClientApp( const uint8_t* data, uint16_t size, con
     }
 
     /**detectorFlows must be destroyed after each packet is processed.*/
-    sflist_static_free_all(&allocatedFlowList, freeDetectorFlow);
+    LuaDetectorManager::free_detector_flows();
 
     /* retrieve result */
     if (!lua_isnumber(myLuaState, -1))
@@ -1082,7 +994,7 @@ CLIENT_APP_RETCODE validateAnyClientApp( const uint8_t* data, uint16_t size, con
         detector->validateParams.pkt = nullptr;
     }
 
-    retValue = lua_tonumber(myLuaState, -1);
+    int retValue = lua_tonumber(myLuaState, -1);
     lua_pop(myLuaState, 1);  /* pop returned value */
     /*lua_settop(myLuaState, 0); */
 
@@ -1093,19 +1005,15 @@ CLIENT_APP_RETCODE validateAnyClientApp( const uint8_t* data, uint16_t size, con
     return (CLIENT_APP_RETCODE)retValue;
 }
 
-static int client_registerPattern(lua_State* L)
+static int client_register_pattern(lua_State* L)
 {
-    IpProtocol protocol;
-    size_t size;
-    const char* pattern;
-    unsigned int position;
     int index = 1;
 
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
-    protocol = (IpProtocol)lua_tonumber(L, index++);
-    pattern = lua_tostring(L, index++);
-    size = lua_tonumber(L, index++);
-    position = lua_tonumber(L, index++);
+    IpProtocol protocol = (IpProtocol)lua_tonumber(L, index++);
+    const char* pattern = lua_tostring(L, index++);
+    size_t size = lua_tonumber(L, index++);
+    unsigned int position = lua_tonumber(L, index++);
 
     /*Note: we can not give callback into lua directly so we have to
       give a local callback function, which will do demuxing and
@@ -1115,7 +1023,7 @@ static int client_registerPattern(lua_State* L)
 
     ud->client.appModule.userData = ud.ptr;
     ClientAppLoadCallback((void*)&(ud->client.appModule));
-    ClientAppRegisterPattern(validateAnyClientApp, protocol, (const uint8_t*)pattern,
+    ClientAppRegisterPattern(validate_client_application, protocol, (const uint8_t*)pattern,
             size, position, 0, ud);
 
     lua_pushnumber(L, 0);
@@ -1140,16 +1048,13 @@ static int client_init(lua_State*)
     return 0;
 }
 
-static int service_addClient(lua_State* L)
+static int service_add_client(lua_State* L)
 {
-    AppId clienAppId, serviceId;
-    const char* version;
-
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    clienAppId = lua_tonumber(L, 2);
-    serviceId = lua_tonumber(L, 3);
-    version = lua_tostring(L, 4);
+    AppId clientAppId = lua_tonumber(L, 2);
+    AppId serviceId = lua_tonumber(L, 3);
+    const char* version = lua_tostring(L, 4);
 
     if ( !ud->validateParams.pkt || !version )
     {
@@ -1157,21 +1062,19 @@ static int service_addClient(lua_State* L)
         return 1;
     }
 
-    AppIdAddClientApp(ud->validateParams.asd, serviceId, clienAppId, version);
+    AppIdAddClientApp(ud->validateParams.asd, serviceId, clientAppId, version);
 
     lua_pushnumber(L, 0);
     return 1;
 }
 
-static int client_addApp(lua_State* L)
+static int client_add_application(lua_State* L)
 {
-    unsigned int serviceId, productId;
-    const char* version;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    serviceId = lua_tonumber(L, 2);
-    productId = lua_tonumber(L, 4);
-    version = lua_tostring(L, 5);
+    unsigned int serviceId = lua_tonumber(L, 2);
+    unsigned int productId = lua_tonumber(L, 4);
+    const char* version = lua_tostring(L, 5);
 
     CHECK_INPUTS();
 
@@ -1189,12 +1092,11 @@ static int client_addApp(lua_State* L)
     return 1;
 }
 
-static int client_addInfo(lua_State* L)
+static int client_add_info(lua_State* L)
 {
-    const char* info;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    info = lua_tostring(L, 2);
+    const char* info = lua_tostring(L, 2);
 
     CHECK_INPUTS();
 
@@ -1210,14 +1112,12 @@ static int client_addInfo(lua_State* L)
     return 1;
 }
 
-static int client_addUser(lua_State* L)
+static int client_add_user(lua_State* L)
 {
-    unsigned int serviceId;
-    const char* userName;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    userName = lua_tostring(L, 2);
-    serviceId = lua_tonumber(L, 3);
+    const char* userName = lua_tostring(L, 2);
+    unsigned int serviceId = lua_tonumber(L, 3);
 
     CHECK_INPUTS();
 
@@ -1234,12 +1134,10 @@ static int client_addUser(lua_State* L)
     return 1;
 }
 
-static int client_addPayload(lua_State* L)
+static int client_add_payload(lua_State* L)
 {
-    unsigned int payloadId;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
-
-    payloadId = lua_tonumber(L, 2);
+    unsigned int payloadId = lua_tonumber(L, 2);
 
     CHECK_INPUTS();
 
@@ -1266,7 +1164,7 @@ static int client_addPayload(lua_State* L)
  * @return packetCount/stack - Total packet processed by RNA.
  * @todo maintain a single copy and return the same copy with every call to Detector_getFlow().
  */
-static int Detector_getFlow(lua_State* L)
+static int detector_get_flow(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
@@ -1285,11 +1183,11 @@ static int Detector_getFlow(lua_State* L)
     lua_pushvalue(L, -1);
     df->userDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
 
-    sflist_add_tail(&allocatedFlowList, df);
+    LuaDetectorManager::add_detector_flow(df);
     return 1;
 }
 
-int Detector_addHttpPattern(lua_State* L)
+int detector_add_http_pattern(lua_State* L)
 {
     int index = 1;
 
@@ -1370,13 +1268,9 @@ int Detector_addHttpPattern(lua_State* L)
 /*  On the lua side, this should look something like:
         addSSLCertPattern(<appId>, '<pattern string>' )
 */
-int Detector_addSSLCertPattern(lua_State* L)
+int detector_add_ssl_cert_pattern(lua_State* L)
 {
-    uint8_t* pattern_str;
-    size_t pattern_size;
     int index = 1;
-    uint8_t type;
-    AppId app_id;
 
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
     if ( ud->validateParams.pkt )
@@ -1385,9 +1279,9 @@ int Detector_addSSLCertPattern(lua_State* L)
         return 0;
     }
 
-    type = lua_tointeger(L, index++);
-    app_id  = (AppId)lua_tointeger(L, index++);
-    pattern_size = 0;
+    uint8_t type = lua_tointeger(L, index++);
+    AppId app_id  = (AppId)lua_tointeger(L, index++);
+    size_t pattern_size = 0;
     const char* tmpString = lua_tolstring(L, index++, &pattern_size);
     if (!tmpString || !pattern_size)
     {
@@ -1396,7 +1290,7 @@ int Detector_addSSLCertPattern(lua_State* L)
     }
 
 #ifdef REMOVED_WHILE_NOT_IN_USE
-    pattern_str = (uint8_t*)snort_strdup(tmpString);
+    uint8_t* pattern_str = (uint8_t*)snort_strdup(tmpString);
     if (!ssl_add_cert_pattern(pattern_str, pattern_size, type, app_id,
         &ud->appid_config->serviceSslConfig))
     {
@@ -1405,7 +1299,6 @@ int Detector_addSSLCertPattern(lua_State* L)
         return 0;
     }
 #else
-    UNUSED(pattern_str);
     UNUSED(type);
 #endif
 
@@ -1413,16 +1306,10 @@ int Detector_addSSLCertPattern(lua_State* L)
     return 0;
 }
 
-/*  On the lua side, this should look something like:
-        addDNSHostPattern(<appId>, '<pattern string>' )
-*/
-int Detector_addDNSHostPattern(lua_State* L)
+// for Lua this looks something like: addDNSHostPattern(<appId>, '<pattern string>')
+int detector_add_dns_host_pattern(lua_State* L)
 {
-    uint8_t* pattern_str;
-    size_t pattern_size;
     int index = 1;
-    uint8_t type;
-    AppId app_id;
 
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
     if ( ud->validateParams.pkt )
@@ -1431,17 +1318,18 @@ int Detector_addDNSHostPattern(lua_State* L)
         return 0;
     }
 
-    type = lua_tointeger(L, index++);
-    app_id  = (AppId)lua_tointeger(L, index++);
+    uint8_t type = lua_tointeger(L, index++);
+    AppId app_id = (AppId)lua_tointeger(L, index++);
 
-    pattern_size = 0;
+    size_t pattern_size = 0;
     const char* tmpString = lua_tolstring(L, index++, &pattern_size);
     if (!tmpString || !pattern_size)
     {
         ErrorMessage("LuaDetectorApi:Invalid DNS Host pattern string");
         return 0;
     }
-    pattern_str = (uint8_t*)snort_strdup(tmpString);
+
+    uint8_t* pattern_str = (uint8_t*)snort_strdup(tmpString);
     if (!dns_add_host_pattern(pattern_str, pattern_size, type, app_id))
     {
         snort_free(pattern_str);
@@ -1451,13 +1339,9 @@ int Detector_addDNSHostPattern(lua_State* L)
     return 0;
 }
 
-static int Detector_addSSLCnamePattern(lua_State* L)
+static int detector_add_ssl_cname_pattern(lua_State* L)
 {
-    uint8_t* pattern_str;
-    size_t pattern_size;
     int index = 1;
-    uint8_t type;
-    AppId app_id;
 
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
     if ( ud->validateParams.pkt )
@@ -1466,10 +1350,10 @@ static int Detector_addSSLCnamePattern(lua_State* L)
         return 0;
     }
 
-    type = lua_tointeger(L, index++);
-    app_id  = (AppId)lua_tointeger(L, index++);
+    uint8_t type = lua_tointeger(L, index++);
+    AppId app_id  = (AppId)lua_tointeger(L, index++);
 
-    pattern_size = 0;
+    size_t pattern_size = 0;
     const char* tmpString = lua_tolstring(L, index++, &pattern_size);
     if (!tmpString || !pattern_size)
     {
@@ -1478,7 +1362,7 @@ static int Detector_addSSLCnamePattern(lua_State* L)
     }
 
 #ifdef REMOVED_WHILE_NOT_IN_USE
-    pattern_str = (uint8_t*)snort_strdup(tmpString);
+    uint8_t* pattern_str = (uint8_t*)snort_strdup(tmpString);
     if (!ssl_add_cname_pattern(pattern_str, pattern_size, type, app_id,
         &ud->appid_config->serviceSslConfig))
     {
@@ -1487,7 +1371,6 @@ static int Detector_addSSLCnamePattern(lua_State* L)
         return 0;
     }
 #else
-    UNUSED(pattern_str);
     UNUSED(type);
 #endif
 
@@ -1495,13 +1378,9 @@ static int Detector_addSSLCnamePattern(lua_State* L)
     return 0;
 }
 
-static int Detector_addHostPortApp(lua_State* L)
+static int detector_add_host_port_application(lua_State* L)
 {
-    /*uint8_t *ipaddr_str; */
-    size_t ipaddr_size;
     int index = 1;
-    uint8_t type;
-    AppId app_id;
     sfip_t ip_addr;
 
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
@@ -1511,11 +1390,11 @@ static int Detector_addHostPortApp(lua_State* L)
         return 0;
     }
 
-    type = lua_tointeger(L, index++);
-    app_id  = (AppId)lua_tointeger(L, index++);
-    ipaddr_size = 0;
+    uint8_t type = lua_tointeger(L, index++);
+    AppId app_id  = (AppId)lua_tointeger(L, index++);
+    size_t ipaddr_size = 0;
     const char* ip_str= lua_tolstring(L, index++, &ipaddr_size);
-    if (!ip_str || !ipaddr_size || !ConvertStringToAddress(ip_str, &ip_addr))
+    if (!ip_str || !ipaddr_size || !convert_string_to_address(ip_str, &ip_addr))
     {
         ErrorMessage("%s: Invalid IP address: %s\n",__func__, ip_str);
         return 0;
@@ -1531,30 +1410,25 @@ static int Detector_addHostPortApp(lua_State* L)
     }
 
     if (!hostPortAppCacheAdd(&ip_addr, (uint16_t)port, (IpProtocol)proto, type, app_id))
-    {
         ErrorMessage("%s:Failed to backend call\n",__func__);
-    }
 
     return 0;
 }
 
-static int Detector_addContentTypePattern(lua_State* L)
+static int detector_add_content_type_pattern(lua_State* L)
 {
-    uint8_t* pattern;
-    AppId appId;
     int index = 1;
-
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
-
     size_t stringSize = 0;
+
     const char* tmpString = lua_tolstring(L, index++, &stringSize);
     if (!tmpString || !stringSize)
     {
         ErrorMessage("Invalid HTTP Header string");
         return 0;
     }
-    pattern = (uint8_t*)snort_strdup(tmpString);
-    appId = lua_tointeger(L, index++);
+    uint8_t* pattern = (uint8_t*)snort_strdup(tmpString);
+    AppId appId = lua_tointeger(L, index++);
 
     if (ud->validateParams.pkt)
     {
@@ -1574,7 +1448,7 @@ static int Detector_addContentTypePattern(lua_State* L)
     return 0;
 }
 
-static inline int GetDetectorUserData(lua_State* L, int index,
+static inline int get_detector_user_data(lua_State* L, int index,
     UserData<Detector>** detector_user_data, const char* errorString)
 {
     // Verify detector user data and that we are not in packet context
@@ -1588,7 +1462,7 @@ static inline int GetDetectorUserData(lua_State* L, int index,
     return 0;
 }
 
-static int detector_create_chp_app(AppId appIdInstance, unsigned app_type_flags, int num_matches)
+static int create_chp_application(AppId appIdInstance, unsigned app_type_flags, int num_matches)
 {
     CHPApp* new_app = (CHPApp*)snort_calloc(sizeof(CHPApp));
     new_app->appIdInstance = appIdInstance;
@@ -1605,24 +1479,20 @@ static int detector_create_chp_app(AppId appIdInstance, unsigned app_type_flags,
     return 0;
 }
 
-static int Detector_CHPCreateApp(lua_State* L)
+static int detector_chp_create_application(lua_State* L)
 {
     UserData<Detector>* ud;
-    AppId appId;
-    unsigned app_type_flags;
-    int num_matches;
-    AppId appIdInstance;
     int index = 1;
 
-    if (GetDetectorUserData(L, index++, &ud,
+    if (get_detector_user_data(L, index++, &ud,
         "LuaDetectorApi:Invalid HTTP detector user data in CHPCreateApp."))
         return 0;
 
-    appId = lua_tointeger(L, index++);
-    appIdInstance = CHP_APPID_SINGLE_INSTANCE(appId); // Last instance for the old API
+    AppId appId = lua_tointeger(L, index++);
+    AppId appIdInstance = CHP_APPID_SINGLE_INSTANCE(appId); // Last instance for the old API
 
-    app_type_flags =    lua_tointeger(L, index++);
-    num_matches =       lua_tointeger(L, index++);
+    unsigned app_type_flags =    lua_tointeger(L, index++);
+    int num_matches =       lua_tointeger(L, index++);
 
     // We only want one of these for each appId.
     if (sfxhash_find(CHP_glossary, &appIdInstance))
@@ -1633,16 +1503,16 @@ static int Detector_CHPCreateApp(lua_State* L)
         return 0;
     }
 
-    detector_create_chp_app(appIdInstance, app_type_flags, num_matches);
+    create_chp_application(appIdInstance, app_type_flags, num_matches);
     return 0;
 }
 
-static inline int CHPGetKeyPatternBoolean(lua_State* L, int index)
+static inline int get_chp_key_pattern_boolean(lua_State* L, int index)
 {
     return (0 != lua_tointeger(L, index));
 }
 
-static inline int CHPGetPatternType(lua_State* L, int index, PatternType* pattern_type)
+static inline int get_chp_pattern_type(lua_State* L, int index, PatternType* pattern_type)
 {
     *pattern_type = (PatternType)lua_tointeger(L, index);
     if (*pattern_type < AGENT_PT || *pattern_type > MAX_PATTERN_TYPE)
@@ -1653,7 +1523,7 @@ static inline int CHPGetPatternType(lua_State* L, int index, PatternType* patter
     return 0;
 }
 
-static inline int CHPGetPatternDataAndSize(lua_State* L, int index, char** pattern_data,
+static inline int get_chp_pattern_data_and_size(lua_State* L, int index, char** pattern_data,
     size_t* pattern_size)
 {
     const char* tmpString = nullptr; // Lua owns this pointer
@@ -1670,7 +1540,7 @@ static inline int CHPGetPatternDataAndSize(lua_State* L, int index, char** patte
     return 0;
 }
 
-static inline int CHPGetActionType(lua_State* L, int index, ActionType* action_type)
+static inline int get_chp_action_type(lua_State* L, int index, ActionType* action_type)
 {
     *action_type = (ActionType)lua_tointeger(L, index);
     if (*action_type < NO_ACTION || *action_type > MAX_ACTION_TYPE)
@@ -1683,7 +1553,7 @@ static inline int CHPGetActionType(lua_State* L, int index, ActionType* action_t
     return 0;
 }
 
-static inline int CHPGetActionData(lua_State* L, int index, char** action_data)
+static inline int get_chp_action_data(lua_State* L, int index, char** action_data)
 {
     // An empty string is translated into a nullptr pointer because the action data is optional
     const char* tmpString = nullptr; // Lua owns this pointer
@@ -1697,10 +1567,9 @@ static inline int CHPGetActionData(lua_State* L, int index, char** action_data)
     return 0;
 }
 
-static int detector_add_chp_action(AppId appIdInstance, int isKeyPattern, PatternType patternType,
+static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, PatternType patternType,
         size_t patternSize, char* patternData, ActionType actionType, char* optionalActionData)
 {
-    uint precedence;
     CHPListElement* chpa;
     CHPApp* chpapp;
     AppInfoManager& app_info_mgr = AppInfoManager::get_instance();
@@ -1726,7 +1595,8 @@ static int detector_add_chp_action(AppId appIdInstance, int isKeyPattern, Patter
 
     if (chpapp->ptype_scan_counts[patternType] == 0)
         chpapp->num_scans++;
-    precedence = chpapp->ptype_scan_counts[patternType]++;
+
+    unsigned precedence = chpapp->ptype_scan_counts[patternType]++;
     // at runtime we'll want to know how many of each type of pattern we are looking for.
     if (actionType == REWRITE_FIELD || actionType == INSERT_FIELD)
     {
@@ -1775,95 +1645,77 @@ static int detector_add_chp_action(AppId appIdInstance, int isKeyPattern, Patter
 
     /* Set the safe-search bits in the appId entry */
     if (actionType == GET_OFFSETS_FROM_REBUILT)
-    {
-        /* This is a search engine and it is SUPPORTED for safe-search packet rewrite */
         app_info_mgr.set_app_info_flags(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE |
             APPINFO_FLAG_SUPPORTED_SEARCH);
-    }
     else if (actionType == SEARCH_UNSUPPORTED)
-    {
-        /* This is a search engine and it is UNSUPPORTED for safe-search packet rewrite */
         app_info_mgr.set_app_info_flags(CHP_APPIDINSTANCE_TO_ID(appIdInstance), APPINFO_FLAG_SEARCH_ENGINE);
-    }
     else if (actionType == DEFER_TO_SIMPLE_DETECT && strcmp(patternData,"<ignore-all-patterns>") == 0)
-    {
         remove_http_patterns_for_id(appIdInstance);
-    }
 
     return 0;
 }
 
-static int Detector_CHPAddAction(lua_State* L)
+static int detector_add_chp_action(lua_State* L)
 {
     UserData<Detector>* ud;
-    int key_pattern;
     PatternType ptype;
     size_t psize;
     char* pattern;
     ActionType action;
     char* action_data;
-
-    AppId appIdInstance;
-    AppId appId;
-
     int index = 1;
 
-    if (GetDetectorUserData(L, index++, &ud,
+    if (get_detector_user_data(L, index++, &ud,
         "LuaDetectorApi:Invalid HTTP detector user data in CHPAddAction."))
         return 0;
 
     // Parameter 1
-    appId = lua_tointeger(L, index++);
-    appIdInstance = CHP_APPID_SINGLE_INSTANCE(appId); // Last instance for the old API
+    AppId appId = lua_tointeger(L, index++);
+    AppId appIdInstance = CHP_APPID_SINGLE_INSTANCE(appId); // Last instance for the old API
 
     // Parameter 2
-    key_pattern = CHPGetKeyPatternBoolean(L, index++);
+    int key_pattern = get_chp_key_pattern_boolean(L, index++);
 
     // Parameter 3
-    if (CHPGetPatternType(L, index++, &ptype))
+    if (get_chp_pattern_type(L, index++, &ptype))
         return 0;
 
     // Parameter 4
-    if (CHPGetPatternDataAndSize(L, index++, &pattern, &psize))
+    if (get_chp_pattern_data_and_size(L, index++, &pattern, &psize))
         return 0;
 
     // Parameter 5
-    if (CHPGetActionType(L, index++, &action))
+    if (get_chp_action_type(L, index++, &action))
     {
         snort_free(pattern);
         return 0;
     }
 
     // Parameter 6
-    if (CHPGetActionData(L, index++, &action_data))
+    if (get_chp_action_data(L, index++, &action_data))
     {
         snort_free(pattern);
         return 0;
     }
 
-    return detector_add_chp_action(appIdInstance, key_pattern, ptype, psize, pattern,
+    return add_chp_pattern_action(appIdInstance, key_pattern, ptype, psize, pattern,
             action, action_data);
 }
 
-static int Detector_CHPMultiCreateApp(lua_State* L)
+static int detector_create_chp_multi_application(lua_State* L)
 {
     UserData<Detector>* ud;
-    AppId appId;
-    unsigned app_type_flags;
-    int num_matches;
-
     AppId appIdInstance;
     int instance;
-
     int index = 1;
 
-    if (GetDetectorUserData(L, index++, &ud,
+    if (get_detector_user_data(L, index++, &ud,
         "LuaDetectorApi:Invalid HTTP detector user data in CHPMultiCreateApp."))
         return 0;
 
-    appId =             lua_tointeger(L, index++);
-    app_type_flags =    lua_tointeger(L, index++);
-    num_matches =       lua_tointeger(L, index++);
+    AppId appId = lua_tointeger(L, index++);
+    unsigned app_type_flags = lua_tointeger(L, index++);
+    int num_matches = lua_tointeger(L, index++);
 
     for (instance=0; instance < CHP_APPID_INSTANCE_MAX; instance++ )
     {
@@ -1881,64 +1733,60 @@ static int Detector_CHPMultiCreateApp(lua_State* L)
         return 0;
     }
 
-    if ( detector_create_chp_app(appIdInstance, app_type_flags, num_matches) )
+    if ( create_chp_application(appIdInstance, app_type_flags, num_matches) )
         return 0;
 
     lua_pushnumber(L, appIdInstance);
     return 1;
 }
 
-static int Detector_CHPMultiAddAction(lua_State* L)
+static int detector_add_chp_multi_action(lua_State* L)
 {
     UserData<Detector>* ud;
-    int key_pattern;
     PatternType ptype;
     size_t psize;
     char* pattern;
     ActionType action;
     char* action_data;
-
-    AppId appIdInstance;
-
     int index = 1;
 
-    if (GetDetectorUserData(L, index++, &ud,
+    if (get_detector_user_data(L, index++, &ud,
         "LuaDetectorApi:Invalid HTTP detector user data in CHPMultiAddAction."))
         return 0;
 
     // Parameter 1
-    appIdInstance = lua_tointeger(L, index++);
+    AppId appIdInstance = lua_tointeger(L, index++);
 
     // Parameter 2
-    key_pattern = CHPGetKeyPatternBoolean(L, index++);
+    int key_pattern = get_chp_key_pattern_boolean(L, index++);
 
     // Parameter 3
-    if (CHPGetPatternType(L, index++, &ptype))
+    if (get_chp_pattern_type(L, index++, &ptype))
         return 0;
 
     // Parameter 4
-    if (CHPGetPatternDataAndSize(L, index++, &pattern, &psize))
+    if (get_chp_pattern_data_and_size(L, index++, &pattern, &psize))
         return 0;
 
     // Parameter 5
-    if (CHPGetActionType(L, index++, &action))
+    if (get_chp_action_type(L, index++, &action))
     {
         snort_free(pattern);
         return 0;
     }
 
     // Parameter 6
-    if (CHPGetActionData(L, index++, &action_data))
+    if (get_chp_action_data(L, index++, &action_data))
     {
         snort_free(pattern);
         return 0;
     }
 
-    return detector_add_chp_action(appIdInstance, key_pattern, ptype, psize, pattern,
+    return add_chp_pattern_action(appIdInstance, key_pattern, ptype, psize, pattern,
             action, action_data);
 }
 
-static int Detector_portOnlyService(lua_State* L)
+static int detector_port_only_service(lua_State* L)
 {
     int index = 1;
 
@@ -1981,7 +1829,7 @@ static int Detector_portOnlyService(lua_State* L)
  * @return int - Number of elements on stack, which is always 1.
  * @return status/stack - 0 if successful, -1 otherwise.
  */
-static int Detector_lengthAppCacheAdd(lua_State* L)
+static int detector_add_length_app_cache(lua_State* L)
 {
     int i;
     const char* str_ptr;
@@ -2079,7 +1927,7 @@ static int Detector_lengthAppCacheAdd(lua_State* L)
     return 1;
 }
 
-static int Detector_AFAddApp(lua_State* L)
+static int detector_add_af_application(lua_State* L)
 {
     int index = 1;
 
@@ -2098,7 +1946,7 @@ static int Detector_AFAddApp(lua_State* L)
     return 0;
 }
 
-static int Detector_addAppUrl(lua_State* L)
+static int detector_add_url_application(lua_State* L)
 {
     int index = 1;
     const char* tmpString;
@@ -2197,7 +2045,7 @@ static int Detector_addAppUrl(lua_State* L)
     return 0;
 }
 
-static int Detector_addRTMPUrl(lua_State* L)
+static int detector_add_rtmp_url(lua_State* L)
 {
     int index = 1;
     const char* tmpString;
@@ -2296,7 +2144,7 @@ static int Detector_addRTMPUrl(lua_State* L)
 }
 
 /*Lua should inject patterns in <clienAppId, clientVersion, multi-Pattern> format. */
-static int Detector_addSipUserAgent(lua_State* L)
+static int detector_add_sip_user_agent(lua_State* L)
 {
     int index = 1;
 
@@ -2332,7 +2180,7 @@ static int Detector_addSipUserAgent(lua_State* L)
     return 0;
 }
 
-static int openCreateApp(lua_State* L)
+static int create_custom_application(lua_State* L)
 {
     int index = 1;
     const char* tmpString;
@@ -2367,13 +2215,13 @@ static int openCreateApp(lua_State* L)
     return 1;   /*number of results */
 }
 
-static int openAddClientApp(lua_State* L)
+static int add_client_application(lua_State* L)
 {
-    unsigned int serviceAppId, clienAppId;
+    unsigned int serviceAppId, clientAppId;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
     serviceAppId = lua_tonumber(L, 2);
-    clienAppId = lua_tonumber(L, 3);
+    clientAppId = lua_tonumber(L, 3);
 
     // check inputs and whether this function is called in context of a packet
     if ( !ud->validateParams.pkt )
@@ -2389,7 +2237,7 @@ static int openAddClientApp(lua_State* L)
     }
 
     ud->client.appModule.api->add_app(ud->validateParams.asd, serviceAppId,
-        clienAppId, "");
+        clientAppId, "");
 
     lua_pushnumber(L, 0);
     return 1;
@@ -2405,7 +2253,7 @@ static int openAddClientApp(lua_State* L)
  * @return int - Number of elements on stack, which is always 1.
  * @return int/stack - values from enum SERVICE_RETCODE
  */
-static int openAddServiceApp(lua_State* L)
+static int add_service_application(lua_State* L)
 {
     unsigned int serviceId, retValue = SERVICE_ENULL;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
@@ -2425,7 +2273,7 @@ static int openAddServiceApp(lua_State* L)
     return 1;
 }
 
-static int openAddPayloadApp(lua_State* L)
+static int add_payload_application(lua_State* L)
 {
     unsigned int payloadAppId;
 
@@ -2433,8 +2281,7 @@ static int openAddPayloadApp(lua_State* L)
 
     payloadAppId = lua_tonumber(L, 2);
 
-    /*check inputs and whether this function is called in context of a
-      packet */
+    /*check inputs and whether this function is called in context of a packet */
     if ( !ud->validateParams.pkt )
     {
         lua_pushnumber(L, -1);
@@ -2453,7 +2300,7 @@ static int openAddPayloadApp(lua_State* L)
     return 1;
 }
 
-static int openAddHttpPattern(lua_State* L)
+static int add_http_pattern(lua_State* L)
 {
     int index = 1;
 
@@ -2517,7 +2364,7 @@ static int openAddHttpPattern(lua_State* L)
     return 0;
 }
 
-static int openAddUrlPattern(lua_State* L)
+static int add_url_pattern(lua_State* L)
 {
     int index = 1;
     const char* tmpString;
@@ -2613,26 +2460,17 @@ static int openAddUrlPattern(lua_State* L)
  * @param appId/stack        - App ID to use for this detector.
  * @return int - Number of elements on stack, which is always 0.
  */
-static int addPortPatternClient(lua_State* L)
+static int add_port_pattern_client(lua_State* L)
 {
     int index = 1;
-    PortPatternNode* pPattern;
-    IpProtocol protocol;
-    uint16_t port;
-    const char* pattern;
     size_t patternSize = 0;
-    unsigned position;
-    AppId appId;
-
-    /* Verify detector user data and that we are not in packet context */
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
 
-    protocol = (IpProtocol)lua_tonumber(L, index++);
-    //port      = lua_tonumber(L, index++);
-    port = 0;
-    pattern = lua_tolstring(L, index++, &patternSize);
-    position = lua_tonumber(L, index++);
-    appId = lua_tointeger(L, index++);
+    IpProtocol protocol = (IpProtocol)lua_tonumber(L, index++);
+    uint16_t port = 0;      //port      = lua_tonumber(L, index++);  FIXIT-L - why commented out?
+    const char* pattern = lua_tolstring(L, index++, &patternSize);
+    unsigned position = lua_tonumber(L, index++);
+    AppId appId = lua_tointeger(L, index++);
     if (appId <= APP_ID_NONE || !pattern || !patternSize || (protocol != IpProtocol::TCP &&
         protocol !=
         IpProtocol::UDP))
@@ -2642,7 +2480,7 @@ static int addPortPatternClient(lua_State* L)
         return 0;
     }
 
-    pPattern  = (decltype(pPattern))snort_calloc(sizeof(PortPatternNode));
+    PortPatternNode* pPattern  = (decltype(pPattern))snort_calloc(sizeof(PortPatternNode));
     pPattern->pattern  = (decltype(pPattern->pattern))snort_calloc(patternSize);
     pPattern->appId = appId;
     pPattern->protocol = protocol;
@@ -2671,27 +2509,19 @@ static int addPortPatternClient(lua_State* L)
  * @param appId/stack        - App ID to use for this detector.
  * @return int - Number of elements on stack, which is always 0.
  */
-static int addPortPatternService(lua_State* L)
+static int add_port_pattern_service(lua_State* L)
 {
     int index = 1;
     size_t patternSize = 0;
-    PortPatternNode* pPattern;
-    IpProtocol protocol;
-    uint16_t port;
-    const char* pattern;
-    unsigned position;
-    AppId appId;
-
-    /* Verify detector user data and that we are not in packet context */
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
 
-    protocol = (IpProtocol)lua_tonumber(L, index++);
-    port      = lua_tonumber(L, index++);
-    pattern = lua_tolstring(L, index++, &patternSize);
-    position = lua_tonumber(L, index++);
-    appId = lua_tointeger(L, index++);
+    IpProtocol protocol = (IpProtocol)lua_tonumber(L, index++);
+    uint16_t port = lua_tonumber(L, index++);
+    const char* pattern = lua_tolstring(L, index++, &patternSize);
+    unsigned position = lua_tonumber(L, index++);
+    AppId appId = lua_tointeger(L, index++);
 
-    pPattern = (decltype(pPattern))snort_calloc(sizeof(PortPatternNode));
+    PortPatternNode* pPattern = (decltype(pPattern))snort_calloc(sizeof(PortPatternNode));
     pPattern->pattern  = (decltype(pPattern->pattern))snort_calloc(patternSize);
     pPattern->appId = appId;
     pPattern->protocol = protocol;
@@ -2710,7 +2540,7 @@ static int addPortPatternService(lua_State* L)
 }
 
 /*Lua should inject patterns in <clienAppId, clientVersion, multi-Pattern> format. */
-static int Detector_addSipServer(lua_State* L)
+static int detector_add_sip_server(lua_State* L)
 {
     int index = 1;
 
@@ -2774,50 +2604,42 @@ static int Detector_addSipServer(lua_State* L)
  *
  * Example: createFutureFlow("192.168.0.200", 0, "192.168.0.100", 20, 6, 166, 0, 0, 166)
  */
-static int createFutureFlow(lua_State* L)
+static int create_future_flow(lua_State* L)
 {
     sfip_t client_addr;
     sfip_t server_addr;
-    IpProtocol proto;
-    uint16_t client_port, server_port;
-    char* pattern;
-    AppId service_app_id, client_app_id, payload_app_id, app_id_to_snort;
-    int16_t snort_app_id;
-    AppIdSession* fp;
-
+    int16_t snort_app_id = 0;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
     /*check inputs and whether this function is called in context of a packet */
     if ( !ud->validateParams.pkt )
         return 0;
 
-    pattern = (char*)lua_tostring(L, 2);
-    if (!ConvertStringToAddress(pattern, &client_addr))
+    char* pattern = (char*)lua_tostring(L, 2);
+    if (!convert_string_to_address(pattern, &client_addr))
         return 0;
 
-    client_port = lua_tonumber(L, 3);
+    uint16_t client_port = lua_tonumber(L, 3);
 
     pattern = (char*)lua_tostring(L, 4);
-    if (!ConvertStringToAddress(pattern, &server_addr))
+    if (!convert_string_to_address(pattern, &server_addr))
         return 0;
 
-    server_port = lua_tonumber(L, 5);
-    proto = (IpProtocol)lua_tonumber(L, 6);
-    service_app_id = lua_tointeger(L, 7);
-    client_app_id  = lua_tointeger(L, 8);
-    payload_app_id = lua_tointeger(L, 9);
-    app_id_to_snort = lua_tointeger(L, 10);
+    uint16_t server_port = lua_tonumber(L, 5);
+    IpProtocol proto = (IpProtocol)lua_tonumber(L, 6);
+    AppId service_app_id = lua_tointeger(L, 7);
+    AppId client_app_id  = lua_tointeger(L, 8);
+    AppId payload_app_id = lua_tointeger(L, 9);
+    AppId app_id_to_snort = lua_tointeger(L, 10);
     if (app_id_to_snort > APP_ID_NONE)
     {
         AppInfoTableEntry* entry = AppInfoManager::get_instance().get_app_info_entry(app_id_to_snort);
-        if (nullptr == entry)
+        if (!entry)
             return 0;
         snort_app_id = entry->snortId;
     }
-    else
-        snort_app_id = 0;
 
-    fp = AppIdSession::create_future_session(ud->validateParams.pkt,  &client_addr,
+    AppIdSession* fp = AppIdSession::create_future_session(ud->validateParams.pkt,  &client_addr,
             client_port, &server_addr, server_port, proto, snort_app_id,
             APPID_EARLY_SESSION_FLAG_FW_RULE);
     if (fp)
@@ -2836,129 +2658,127 @@ static int createFutureFlow(lua_State* L)
         return 0;
 }
 
-static const luaL_reg Detector_methods[] =
+static const luaL_reg detector_methods[] =
 {
     /* Obsolete API names.  No longer use these!  They are here for backward
      * compatibility and will eventually be removed. */
     /*  - "memcmp" is now "matchSimplePattern" (below) */
-    { "memcmp",                   Detector_memcmp },
+    { "memcmp",                   detector_memcmp },
     /*  - "getProtocolType" is now "getL4Protocol" (below) */
-    { "getProtocolType",          Detector_getProtocolType },
+    { "getProtocolType",          detector_get_protocol_type },
     /*  - "inCompatibleData" is now "markIncompleteData" (below) */
-    { "inCompatibleData",         service_inCompatibleData },
+    { "inCompatibleData",         service_set_incompatible_data },
     /*  - "addDataId" is now "addAppIdDataToFlow" (below) */
-    { "addDataId",                service_addDataId },
+    { "addDataId",                service_add_data_id },
     /*  - "service_inCompatibleData" is now "service_markIncompleteData" (below) */
-    { "service_inCompatibleData", service_inCompatibleData },
+    { "service_inCompatibleData", service_set_incompatible_data },
     /*  - "service_addDataId" is now "service_addAppIdDataToFlow" (below) */
-    { "service_addDataId",        service_addDataId },
+    { "service_addDataId",        service_add_data_id },
 
-    { "getPacketSize",            Detector_getPacketSize },
-    { "getPacketDir",             Detector_getPacketDir },
-    { "matchSimplePattern",       Detector_memcmp },
-    { "getPcreGroups",            Detector_getPcreGroups },
-    { "getL4Protocol",            Detector_getProtocolType },
-    { "getPktSrcAddr",            Detector_getPktSrcIPAddr },
-    { "getPktDstAddr",            Detector_getPktDstIPAddr },
-    { "getPktSrcPort",            Detector_getPktSrcPort },
-    { "getPktDstPort",            Detector_getPktDstPort },
-    { "getPktCount",              Detector_getPktCount },
-    { "getFlow",                  Detector_getFlow },
-    { "htons",                    Detector_htons },
-    { "htonl",                    Detector_htonl },
-    { "log",                      Detector_logMessage },
-    { "addHttpPattern",           Detector_addHttpPattern },
-    { "addAppUrl",                Detector_addAppUrl },
-    { "addRTMPUrl",               Detector_addRTMPUrl },
-    { "addContentTypePattern",    Detector_addContentTypePattern },
-    { "addSSLCertPattern",        Detector_addSSLCertPattern },
-    { "addSipUserAgent",          Detector_addSipUserAgent },
-    { "addSipServer",             Detector_addSipServer },
-    { "addSSLCnamePattern",       Detector_addSSLCnamePattern },
-    { "addHostPortApp",           Detector_addHostPortApp },
-    { "addDNSHostPattern",        Detector_addDNSHostPattern },
+    { "getPacketSize",            detector_get_packet_size },
+    { "getPacketDir",             detector_get_packet_direction },
+    { "matchSimplePattern",       detector_memcmp },
+    { "getPcreGroups",            detector_get_pcre_groups },
+    { "getL4Protocol",            detector_get_protocol_type },
+    { "getPktSrcAddr",            detector_get_packet_src_addr },
+    { "getPktDstAddr",            detector_get_packet_dst_addr },
+    { "getPktSrcPort",            detector_get_packet_src_port },
+    { "getPktDstPort",            detector_get_packet_dst_port },
+    { "getPktCount",              detector_get_packet_count },
+    { "getFlow",                  detector_get_flow },
+    { "htons",                    detector_htons },
+    { "htonl",                    detector_htonl },
+    { "log",                      detector_log_message },
+    { "addHttpPattern",           detector_add_http_pattern },
+    { "addAppUrl",                detector_add_url_application },
+    { "addRTMPUrl",               detector_add_rtmp_url },
+    { "addContentTypePattern",    detector_add_content_type_pattern },
+    { "addSSLCertPattern",        detector_add_ssl_cert_pattern },
+    { "addSipUserAgent",          detector_add_sip_user_agent },
+    { "addSipServer",             detector_add_sip_server },
+    { "addSSLCnamePattern",       detector_add_ssl_cname_pattern },
+    { "addHostPortApp",           detector_add_host_port_application },
+    { "addDNSHostPattern",        detector_add_dns_host_pattern },
 
     /*Obsolete - new detectors should not use this API */
     { "init",                     service_init },
-    { "registerPattern",          service_registerPattern },
-    { "getServiceID",             service_getServiceId },
-    { "addPort",                  service_addPorts },
-    { "removePort",               service_removePorts },
-    { "setServiceName",           service_setServiceName },
-    { "getServiceName",           service_getServiceName },
-    { "isCustomDetector",         service_isCustomDetector },
-    { "setValidator",             service_setValidator },
-    { "addService",               service_addService },
-    { "failService",              service_failService },
-    { "inProcessService",         service_inProcessService },
-    { "markIncompleteData",       service_inCompatibleData },
-    { "analyzePayload",           service_analyzePayload },
-    { "addAppIdDataToFlow",       service_addDataId },
+    { "registerPattern",          service_register_pattern },
+    { "getServiceID",             service_get_service_id },
+    { "addPort",                  service_add_ports },
+    { "removePort",               service_remove_ports },
+    { "setServiceName",           service_set_service_name },
+    { "getServiceName",           service_get_service_name },
+    { "isCustomDetector",         service_is_custom_detector },
+    { "setValidator",             service_set_validator },
+    { "addService",               service_add_service },
+    { "failService",              service_fail_service },
+    { "inProcessService",         service_in_process_service },
+    { "markIncompleteData",       service_set_incompatible_data },
+    { "analyzePayload",           service_analyze_payload },
+    { "addAppIdDataToFlow",       service_add_data_id },
 
     /*service API */
-    { "service_init",             service_init },
-    { "service_registerPattern",  service_registerPattern },
-    { "service_getServiceId",     service_getServiceId },
-    { "service_addPort",          service_addPorts },
-    { "service_removePort",       service_removePorts },
-    { "service_setServiceName",   service_setServiceName },
-    { "service_getServiceName",   service_getServiceName },
-    { "service_isCustomDetector", service_isCustomDetector },
-    { "service_setValidator",     service_setValidator },
-    { "service_addService",       service_addService },
-    { "service_failService",      service_failService },
-    { "service_inProcessService", service_inProcessService },
-    { "service_markIncompleteData", service_inCompatibleData },
-    { "service_analyzePayload",   service_analyzePayload },
-    { "service_addAppIdDataToFlow", service_addDataId },
-    { "service_addClient",        service_addClient },
+    { "service_init",               service_init },
+    { "service_registerPattern",    service_register_pattern },
+    { "service_getServiceId",       service_get_service_id },
+    { "service_addPort",            service_add_ports },
+    { "service_removePort",         service_remove_ports },
+    { "service_setServiceName",     service_set_service_name },
+    { "service_getServiceName",     service_get_service_name },
+    { "service_isCustomDetector",   service_is_custom_detector },
+    { "service_setValidator",       service_set_validator },
+    { "service_addService",         service_add_service },
+    { "service_failService",        service_fail_service },
+    { "service_inProcessService",   service_in_process_service },
+    { "service_markIncompleteData", service_set_incompatible_data },
+    { "service_analyzePayload",     service_analyze_payload },
+    { "service_addAppIdDataToFlow", service_add_data_id },
+    { "service_addClient",          service_add_client },
 
     /*client init API */
     { "client_init",              client_init },
-    { "client_registerPattern",   client_registerPattern },
-    { "client_getServiceId",      service_getServiceId },
+    { "client_registerPattern",  client_register_pattern },
+    { "client_getServiceId",      service_get_service_id },
 
     /*client service API */
-    { "client_addApp",            client_addApp },
-    { "client_addInfo",           client_addInfo },
-    { "client_addUser",           client_addUser },
-    { "client_addPayload",        client_addPayload },
+    { "client_addApp",            client_add_application },
+    { "client_addInfo",           client_add_info },
+    { "client_addUser",           client_add_user },
+    { "client_addPayload",        client_add_payload },
 
     //HTTP Multi Pattern engine
-    { "CHPCreateApp",             Detector_CHPCreateApp },
-    { "CHPAddAction",             Detector_CHPAddAction },
-    { "CHPMultiCreateApp",        Detector_CHPMultiCreateApp }, // multiple detectors, same appId
-    { "CHPMultiAddAction",        Detector_CHPMultiAddAction },
+    { "CHPCreateApp",             detector_chp_create_application },
+    { "CHPAddAction",             detector_add_chp_action },
+    { "CHPMultiCreateApp",        detector_create_chp_multi_application }, // multiple detectors, same appId
+    { "CHPMultiAddAction",        detector_add_chp_multi_action },
 
     //App Forecasting engine
-    { "AFAddApp",                 Detector_AFAddApp },
+    { "AFAddApp",                 detector_add_af_application },
 
-    { "portOnlyService",          Detector_portOnlyService },
+    { "portOnlyService",          detector_port_only_service },
 
     /* Length-based detectors. */
-    { "AddLengthBasedDetector",   Detector_lengthAppCacheAdd },
+    { "AddLengthBasedDetector",   detector_add_length_app_cache },
 
-    { "registerAppId",           common_registerAppId },
+    { "registerAppId",            common_register_application_id },
 
-    { "open_createApp",           openCreateApp },
-    { "open_addClientApp",        openAddClientApp },
-    { "open_addServiceApp",       openAddServiceApp },
-    { "open_addPayloadApp",       openAddPayloadApp },
-    { "open_addHttpPattern",      openAddHttpPattern },
-    { "open_addUrlPattern",       openAddUrlPattern },
+    { "open_createApp",           create_custom_application },
+    { "open_addClientApp",        add_client_application },
+    { "open_addServiceApp",       add_service_application },
+    { "open_addPayloadApp",       add_payload_application },
+    { "open_addHttpPattern",      add_http_pattern },
+    { "open_addUrlPattern",       add_url_pattern },
 
-    { "addPortPatternClient",     addPortPatternClient },
-    { "addPortPatternService",    addPortPatternService },
+    { "addPortPatternClient",     add_port_pattern_client },
+    { "addPortPatternService",    add_port_pattern_service },
 
-    { "createFutureFlow",         createFutureFlow },
+    { "createFutureFlow",         create_future_flow },
 
-    { 0, 0 }
+    { nullptr, nullptr }
 };
 
-/**This function performs a clean exit on an api instance. It is called when RNA is performing
- * a clean exit.
- */
-void Detector_fini(void* data)
+// release resources and remove detector resources when snort exits
+void remove_detector(void* data)
 {
     lua_State* myLuaState;
     Detector* detector = (Detector*)data;
@@ -2997,7 +2817,7 @@ void Detector_fini(void* data)
         ErrorMessage("%s: DetectorFini not provided\n", detector->name.c_str());
     }
 
-    freeDetector(detector);
+    delete detector;
 
     /*lua_close will perform garbage collection after killing lua script. */
     /**Design: Lua_state does not allow me to store user variables so detectors store lua_state.
@@ -3049,26 +2869,23 @@ static const luaL_reg Detector_meta[] =
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
  * @return methodArray/stack - array of newly created methods
  */
-int Detector_register(lua_State* L)
+int register_detector(lua_State* L)
 {
-    /* populates a new table with Detector_methods (method_table), add the table to the globals and
-       stack*/
-    luaL_openlib(L, DETECTOR, Detector_methods, 0);
+    // populates new table from detector_methods and add it to the globals and stack
+    luaL_openlib(L, DETECTOR, detector_methods, 0);
 
-    /* create metatable for Foo, add it to the Lua registry, metatable on stack */
+    // create metatable for Foo, add it to the Lua registry, metatable on stack
     luaL_newmetatable(L, DETECTOR);
 
-    /* populates table on stack with Detector_meta methods, puts the metatable on stack*/
+    // populates table on stack with Detector_meta methods, puts the metatable on stack
     luaL_openlib(L, nullptr, Detector_meta, 0);
 
     lua_pushliteral(L, "__index");
     lua_pushvalue(L, -3);             /* dup methods table*/
-    lua_settable(L, -3);                /* metatable.__index = methods */
-
+    lua_settable(L, -3);              /* metatable.__index = methods */
     lua_pushliteral(L, "__metatable");
     lua_pushvalue(L, -3);             /* dup methods table*/
-    lua_settable(L, -3);                /* hide metatable:
-                                           metatable.__metatable = methods */
+    lua_settable(L, -3);              /* hide metatable: metatable.__metatable = methods */
     lua_pop(L, 1);                    /* drop metatable */
     return 1;                         /* return methods on the stack */
 }
@@ -3078,6 +2895,13 @@ int Detector_register(lua_State* L)
 // -----------------------------------------------------------------------------
 // Detector
 // -----------------------------------------------------------------------------
+Detector::Detector(AppIdConfig* config)
+    : appid_config(config)
+{
+    // FIXIT-L - client/server modules should initialize themselves to default values
+    memset(&client.appModule, 0, sizeof(RNAClientAppModule));
+    memset(&server.serviceModule, 0, sizeof(RNAServiceValidationModule));
+}
 
 Detector::~Detector()
 {
@@ -3089,6 +2913,4 @@ Detector::~Detector()
         luaL_unref(myLuaState, LUA_REGISTRYINDEX, detectorUserDataRef);
 
     delete pFlow;
-
-    delete[] validatorBuffer;
 }

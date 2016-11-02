@@ -45,8 +45,6 @@
 #include "detector_plugins/detector_pattern.h"
 #include "appid_http_event_handler.h"
 
-THREAD_LOCAL LuaDetectorManager* lua_detector_mgr;
-
 static void dump_appid_stats()
 {
     LogMessage("Application Identification Preprocessor:\n");
@@ -112,25 +110,16 @@ void AppIdInspector::show(SnortConfig*)
 
 void AppIdInspector::tinit()
 {
-    init_appid_statistics(config);
+    init_appid_statistics(*config);
     hostPortAppCacheInit();
     init_appid_forecast();
     init_http_detector();
     init_service_plugins();
     init_client_plugins();
     init_detector_plugins();
-    init_CHP_glossary();
+    init_chp_glossary();
     init_length_app_cache();
-
-    lua_detector_mgr = new LuaDetectorManager;
-    lua_detector_mgr->load_lua_detectors(active_config);
-    lua_detector_mgr->activate_lua_detectors();
-    if(config->debug && list_lua_detectors)
-    {
-        lua_detector_mgr->list_lua_detectors();
-        list_lua_detectors = false;
-    }
-
+    LuaDetectorManager::initialize(*active_config);
     finalize_service_port_patterns();
     finalize_client_port_patterns();
     finalize_service_patterns();
@@ -155,11 +144,11 @@ void AppIdInspector::tterm()
     clean_service_plugins();
     clean_client_plugins();
     clean_http_detector();
-    free_CHP_glossary();
+    free_chp_glossary();
     free_length_app_cache();
 
     AppIdSession::release_free_list_flow_data();
-    delete lua_detector_mgr;
+    LuaDetectorManager::terminate();
     clean_service_state();
 }
 

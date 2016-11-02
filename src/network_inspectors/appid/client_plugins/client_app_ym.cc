@@ -41,7 +41,7 @@ THREAD_LOCAL YM_CLIENT_APP_CONFIG ym_config;
 
 static CLIENT_APP_RETCODE ym_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, Detector* userData);
 
 RNAClientAppModule ym_client_mod =
 {

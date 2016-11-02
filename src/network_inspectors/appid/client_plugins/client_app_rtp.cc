@@ -84,7 +84,7 @@ THREAD_LOCAL RTP_CLIENT_APP_CONFIG rtp_config;
 
 static CLIENT_APP_RETCODE rtp_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE rtp_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, Detector* userData);
 
 SO_PUBLIC RNAClientAppModule rtp_client_mod =
 {
@@ -277,7 +277,7 @@ static CLIENT_APP_RETCODE rtp_init(const InitClientAppAPI* const init_api, SF_LI
 }
 
 static CLIENT_APP_RETCODE rtp_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, Detector*)
 {
     ClientRTPData* fd;
     ClientRTPMsg* hdr;

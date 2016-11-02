@@ -107,7 +107,7 @@ static const uint64_t FLAGS_TABLE_C_TO_LUA[32]
 };
 
 /* Convert flag bits used by the Lua code into what the C code uses. */
-static inline uint64_t ConvertFlagsLuaToC(uint64_t in)
+static inline uint64_t convert_flags_lua_to_c(uint64_t in)
 {
     uint64_t out = 0;
     unsigned i;
@@ -125,7 +125,7 @@ static inline uint64_t ConvertFlagsLuaToC(uint64_t in)
 }
 
 /* Convert flag bits used by the C code into what the Lua code uses. */
-static inline uint64_t ConvertFlagsCToLua(uint64_t in)
+static inline uint64_t convert_flags_c_to_lua(uint64_t in)
 {
     uint64_t out = 0;
     unsigned i;
@@ -154,7 +154,7 @@ static inline uint64_t ConvertFlagsCToLua(uint64_t in)
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
  * @return UserData<DetectorFlow>/stack - A userdata representing UserData<DetectorFlow>.
  */
-static int DetectorFlow_new(lua_State* L)
+static int create_detector_flow(lua_State* L)
 {
     sfip_t saddr;
     sfip_t daddr;
@@ -215,7 +215,7 @@ static int DetectorFlow_new(lua_State* L)
     lua_pushvalue(L, -1);
     detector_flow->userDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
 
-    sflist_add_tail(&allocatedFlowList, detector_flow);
+    LuaDetectorManager::add_detector_flow(detector_flow);
 
     detector_flow->asd = AppIdSession::create_future_session(detector_data->validateParams.pkt, &saddr,
             sport, &daddr, dport, proto, 0, 0);
@@ -230,9 +230,8 @@ static int DetectorFlow_new(lua_State* L)
     return 1;
 }
 
-/**free DetectorFlow and its corresponding user data.
- */
-void freeDetectorFlow(void* userdata)
+// free DetectorFlow and its corresponding user data.
+void free_detector_flow(void* userdata)
 {
     DetectorFlow* detector_flow = (DetectorFlow*)userdata;
 
@@ -254,7 +253,7 @@ void freeDetectorFlow(void* userdata)
  * @param flags/stack - flags to be set.
  * @return int - Number of elements on stack, which is 0
  */
-static int DetectorFlow_setFlowFlag(lua_State* L)
+static int set_detector_flow_flag(lua_State* L)
 {
     uint64_t flags;
 
@@ -262,7 +261,7 @@ static int DetectorFlow_setFlowFlag(lua_State* L)
     assert(pLuaData.ptr);
 
     flags = lua_tonumber(L, 2);
-    flags = ConvertFlagsLuaToC(flags);
+    flags = convert_flags_lua_to_c(flags);
 
     pLuaData->asd->set_session_flags(flags);
 
@@ -277,7 +276,7 @@ static int DetectorFlow_setFlowFlag(lua_State* L)
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
  * @return flagValue/stack - value of a given flag.
  */
-static int DetectorFlow_getFlowFlag(lua_State* L)
+static int get_detector_flow_flag(lua_State* L)
 {
     uint64_t flags;
     uint64_t ret;
@@ -286,10 +285,10 @@ static int DetectorFlow_getFlowFlag(lua_State* L)
     assert(pLuaData.ptr);
 
     flags = lua_tonumber(L, 2);
-    flags = ConvertFlagsLuaToC(flags);
+    flags = convert_flags_lua_to_c(flags);
 
     ret = pLuaData->asd->get_session_flags(flags);
-    ret = ConvertFlagsCToLua(ret);
+    ret = convert_flags_c_to_lua(ret);
     lua_pushnumber(L, ret);
 
     return 1;
@@ -302,7 +301,7 @@ static int DetectorFlow_getFlowFlag(lua_State* L)
  * @param flags/stack - flags to be cleared.
  * @return int - Number of elements on stack, which is 0.
  */
-static int DetectorFlow_clearFlowFlag(lua_State* L)
+static int clear_detector_flow_flag(lua_State* L)
 {
     uint64_t flags;
 
@@ -310,7 +309,7 @@ static int DetectorFlow_clearFlowFlag(lua_State* L)
     assert(pLuaData.ptr);
 
     flags = lua_tonumber(L, 2);
-    flags = ConvertFlagsLuaToC(flags);
+    flags = convert_flags_lua_to_c(flags);
 
     pLuaData->asd->clear_session_flags(flags);
 
@@ -324,7 +323,7 @@ static int DetectorFlow_clearFlowFlag(lua_State* L)
  * @param serviceId/stack - service Id to be set on a flow.
  * @return int - Number of elements on stack, which is 0.
  */
-static int DetectorFlow_setFlowServiceId(lua_State*)
+static int set_detector_flow_service_id(lua_State*)
 { return 0; }
 
 /**Set client application id on a flow.
@@ -334,7 +333,7 @@ static int DetectorFlow_setFlowServiceId(lua_State*)
  * @param applId/stack - client application Id to be set on a flow.
  * @return int - Number of elements on stack, which is 0.
  */
-static int DetectorFlow_setFlowClnAppId(lua_State* )
+static int set_detecter_flow_cln_app_id(lua_State* )
 {
     return 0;
 }
@@ -346,7 +345,7 @@ static int DetectorFlow_setFlowClnAppId(lua_State* )
  * @param applTypeId/stack - client application type id to be set on a flow.
  * @return int - Number of elements on stack, which is 0.
  */
-static int DetectorFlow_setFlowClnAppType(lua_State*)
+static int set_detector_flow_cln_app_type(lua_State*)
 {
     return 0;
 }
@@ -365,7 +364,7 @@ static int DetectorFlow_setFlowClnAppType(lua_State*)
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
  * @return flowKey/stack - A 20 byte flow key
  */
-static int DetectorFlow_getFlowKey(lua_State* L)
+static int get_detector_flow_key(lua_State* L)
 {
     auto& pLuaData = *UserData<DetectorFlow>::check(L, DETECTORFLOW, 1);
     assert(pLuaData.ptr);
@@ -376,32 +375,30 @@ static int DetectorFlow_getFlowKey(lua_State* L)
     return 1;
 }
 
-static const luaL_reg DetectorFlow_methods[] =
+static const luaL_reg detector_flow_api[] =
 {
     /* Obsolete API names.  No longer use these!  They are here for backward
      * compatibility and will eventually be removed. */
     /*  - "new" is now "createFlow" (below) */
-    { "new",                      DetectorFlow_new },
-    { "createFlow",               DetectorFlow_new },
-    { "setFlowFlag",              DetectorFlow_setFlowFlag },
-    { "getFlowFlag",              DetectorFlow_getFlowFlag },
-    { "clearFlowFlag",            DetectorFlow_clearFlowFlag },
-    { "setFlowServiceId",         DetectorFlow_setFlowServiceId },
-    { "setFlowClnAppId",         DetectorFlow_setFlowClnAppId },
-    { "setFlowClnAppType",       DetectorFlow_setFlowClnAppType },
-    { "getFlowKey",               DetectorFlow_getFlowKey },
-    { 0, 0 }
+    { "new",                create_detector_flow },
+    { "createFlow",         create_detector_flow },
+    { "setFlowFlag",        set_detector_flow_flag },
+    { "getFlowFlag",        get_detector_flow_flag },
+    { "clearFlowFlag",      clear_detector_flow_flag },
+    { "setFlowServiceId",   set_detector_flow_service_id },
+    { "setFlowClnAppId",    set_detecter_flow_cln_app_id },
+    { "setFlowClnAppType",  set_detector_flow_cln_app_type },
+    { "getFlowKey",         get_detector_flow_key },
+    { nullptr, nullptr }
 };
 
-/**
- * lua_close will ensure that all detectors and flows get _gc called.
- */
-static int DetectorFlow_gc(lua_State*)
+// lua_close will ensure that all detectors and flows get _gc called.
+static int gc_detector_flow(lua_State*)
 {
     return 0;
 }
 
-static int DetectorFlow_tostring(lua_State* L)
+static int detector_flow_tostring(lua_State* L)
 {
     char buff[32];
     snprintf(buff, sizeof(buff), "%p", (void*)UserData<DetectorFlow>::check(L, DETECTORFLOW, 1));
@@ -409,10 +406,10 @@ static int DetectorFlow_tostring(lua_State* L)
     return 1;
 }
 
-static const luaL_reg DetectorFlow_meta[] =
+static const luaL_reg detector_flow_meta[] =
 {
-    { "__gc",       DetectorFlow_gc },
-    { "__tostring", DetectorFlow_tostring },
+    { "__gc",       gc_detector_flow },
+    { "__tostring", detector_flow_tostring },
     { 0, 0 }
 };
 
@@ -425,29 +422,25 @@ static const luaL_reg DetectorFlow_meta[] =
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
  * @return methodArray/stack - array of newly created methods
  */
-int DetectorFlow_register(lua_State* L)
+int register_detector_flow_api(lua_State* L)
 {
     /* populates a new table with Detector_methods (method_table), add the table to the globals and
        stack*/
-    luaL_openlib(L, DETECTORFLOW, DetectorFlow_methods, 0);
+    luaL_openlib(L, DETECTORFLOW, detector_flow_api, 0);
 
     /* create metatable for Foo, add it to the Lua registry, metatable on stack */
     luaL_newmetatable(L, DETECTORFLOW);
 
     /* populates table on stack with Detector_meta methods, puts the metatable on stack*/
-    luaL_openlib(L, nullptr, DetectorFlow_meta, 0);
+    luaL_openlib(L, nullptr, detector_flow_meta, 0);
 
     lua_pushliteral(L, "__index");
     lua_pushvalue(L, -3);             /* dup methods table*/
-    lua_settable(L, -3);                /* metatable.__index = methods */
+    lua_settable(L, -3);              /* metatable.__index = methods */
 
     lua_pushliteral(L, "__metatable");
-    lua_pushvalue(L, -3);             /* dup methods table*/
-    lua_settable(L, -3);                /* hide metatable:
-                                           metatable.__metatable = methods */
-    lua_pop(L, 1);                    /* drop metatable */
-    return 1;                         /* return methods on the stack */
+    lua_pushvalue(L, -3);               /* dup methods table*/
+    lua_settable(L, -3);                /* hide metatable: metatable.__metatable = methods */
+    lua_pop(L, 1);                      /* drop metatable */
+    return 1;                           /* return methods on the stack */
 }
-
-/** @} */ /* end of LuaDetectorFlowApi */
-

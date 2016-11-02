@@ -131,7 +131,7 @@ THREAD_LOCAL TNS_CLIENT_APP_CONFIG tns_config;
 
 static CLIENT_APP_RETCODE tns_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, struct Detector* userData);
+    AppIdSession* asd, Packet* pkt, Detector* userData);
 
 SO_PUBLIC RNAClientAppModule tns_client_mod =
 {
@@ -214,7 +214,7 @@ static CLIENT_APP_RETCODE tns_init(const InitClientAppAPI* const init_api, SF_LI
 
 #define TNS_MAX_INFO_SIZE    63
 static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, Detector*)
 {
     char username[TNS_MAX_INFO_SIZE+1];
     ClientTNSData* fd;

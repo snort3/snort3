@@ -36,7 +36,7 @@ struct DHCPData;
 struct FpSMBData;
 struct Packet;
 struct ServiceMatch;
-struct Detector;
+class Detector;
 struct RNAServiceValidationPort;
 struct RNAServiceValidationModule;
 

@@ -79,7 +79,7 @@ static const ClientAppApi client_app_api =
 static void CClientAppRegisterPattern(RNAClientAppFCN fcn, IpProtocol proto,
     const uint8_t* const pattern, unsigned size, int position);
 static void LuaClientAppRegisterPattern(RNAClientAppFCN fcn, IpProtocol proto,
-    const uint8_t* const pattern, unsigned size, int position, struct Detector* userData);
+    const uint8_t* const pattern, unsigned size, int position, Detector* userData);
 static void CClientAppRegisterPatternNoCase(RNAClientAppFCN fcn, IpProtocol proto,
     const uint8_t* const pattern, unsigned size, int position);
 static void appSetClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned extractsInfo);
@@ -188,7 +188,7 @@ RNAClientAppModuleConfig* getClientAppModuleConfig(const char* moduleName)
     return mod_config;
 }
 
-const RNAClientAppModule* ClientAppGetClientAppModule(RNAClientAppFCN fcn, struct Detector* userdata)
+const RNAClientAppModule* ClientAppGetClientAppModule(RNAClientAppFCN fcn, Detector* userdata)
 {
     RNAClientAppRecord* li;
 
@@ -261,13 +261,13 @@ static void CClientAppRegisterPatternNoCase(RNAClientAppFCN fcn, IpProtocol prot
 }
 
 static void LuaClientAppRegisterPattern(RNAClientAppFCN fcn, IpProtocol proto,
-    const uint8_t* const pattern, unsigned size, int position, struct Detector* userData)
+    const uint8_t* const pattern, unsigned size, int position, Detector* userData)
 {
     ClientAppRegisterPattern(fcn, proto, pattern, size, position, 0, userData);
 }
 
 void ClientAppRegisterPattern(RNAClientAppFCN fcn, IpProtocol proto, const uint8_t* const pattern,
-    unsigned size, int position, unsigned nocase, struct Detector* userData)
+    unsigned size, int position, unsigned nocase, Detector* userData)
 {
     RNAClientAppRecord* list;
     RNAClientAppRecord* li;

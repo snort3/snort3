@@ -155,7 +155,7 @@ THREAD_LOCAL SSH_CLIENT_CONFIG ssh_client_config;
 
 static CLIENT_APP_RETCODE ssh_client_init(const InitClientAppAPI* const init_api, SF_LIST* config);
 static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd,  Packet* pkt, struct Detector* userData);
+    AppIdSession* asd,  Packet* pkt, Detector* userData);
 
 SO_PUBLIC RNAClientAppModule ssh_client_mod =
 {
@@ -613,7 +613,7 @@ static inline CLIENT_APP_RETCODE ssh_client_sm(const uint8_t* data, uint16_t siz
 }
 
 static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet*, struct Detector*)
+    AppIdSession* asd, Packet*, Detector*)
 {
     ClientSSHData* fd;
     CLIENT_APP_RETCODE sm_ret;

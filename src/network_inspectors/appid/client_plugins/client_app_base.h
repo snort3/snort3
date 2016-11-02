@@ -29,7 +29,7 @@
 
 class AppIdSession;
 class AppIdConfig;
-struct Detector;
+class Detector;
 struct RNAClientAppModule;
 struct Packet;
 struct ClientAppApi;
