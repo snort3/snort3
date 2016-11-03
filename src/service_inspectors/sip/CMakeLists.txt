@@ -19,10 +19,11 @@ set( FILE_LIST
     ips_sip_method.cc
 )
 
-if (STATIC_INSPECTORS)
+#FIXIT-M fix dependency loops
+#if (STATIC_INSPECTORS)
     add_library( sip STATIC ${FILE_LIST})
 
-else (STATIC_INSPECTORS)
-    add_shared_library(sip inspectors ${FILE_LIST})
+#else (STATIC_INSPECTORS)
+#    add_shared_library(sip inspectors ${FILE_LIST})
 
-endif (STATIC_INSPECTORS)
+#endif (STATIC_INSPECTORS)

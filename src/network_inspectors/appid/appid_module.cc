@@ -84,6 +84,8 @@ const PegInfo appid_pegs[] =
     { "rsync_flows", "count of rsync service flows discovered by appid" },
     { "rtmp_flows", "count of rtmp flows discovered by appid" },
     { "rtp_clients", "count of rtp clients discovered by appid" },
+    { "sip_clients", "count of SIP clients discovered by appid" },
+    { "sip_flows", "count of SIP flows discovered by appid" },
     { "smtp_aol_clients", "count of AOL smtp clients discovered by appid" },
     { "smtp_applemail_clients", "count of Apple Mail smtp clients discovered by appid" },
     { "smtp_eudora_clients", "count of Eudora smtp clients discovered by appid" },

@@ -44,6 +44,7 @@
 #include "detector_plugins/detector_sip.h"
 #include "detector_plugins/detector_pattern.h"
 #include "appid_http_event_handler.h"
+#include "pub_sub/sip_events.h"
 
 static void dump_appid_stats()
 {
@@ -79,6 +80,7 @@ bool AppIdInspector::configure(SnortConfig*)
 
     get_data_bus().subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(HttpEventHandler::REQUEST_EVENT));
     get_data_bus().subscribe(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(HttpEventHandler::RESPONSE_EVENT));
+    get_data_bus().subscribe(SIP_EVENT_TYPE_SIP_DIALOG_KEY, new SipEventHandler());
 
     return active_config->init_appid();
 
@@ -86,11 +88,6 @@ bool AppIdInspector::configure(SnortConfig*)
 #ifdef REMOVED_WHILE_NOT_IN_USE
     _dpd.registerGeAppId(getOpenAppId);
     _dpd.registerSslAppIdLookup(sslAppGroupIdLookup);
-
-    // FIXIT-M AppID will need to register for SIP events for sip detection to work...
-    if (_dpd.streamAPI->service_event_subscribe(PP_SIP, SIP_EVENT_TYPE_SIP_DIALOG,
-        SipSessionSnortCallback) == false)
-        DynamicPreprocessorFatalMessage("failed to subscribe to SIP_DIALOG\n");
 #endif
 }
 

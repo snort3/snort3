@@ -76,6 +76,8 @@ struct AppIdStats
     PegCount rsync_flows;
     PegCount rtmp_flows;
     PegCount rtp_clients;
+    PegCount sip_clients;
+    PegCount sip_flows;
     PegCount smtp_aol_clients;
     PegCount smtp_applemail_clients;
     PegCount smtp_eudora_clients;

@@ -31,6 +31,7 @@
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
+#include "pub_sub/sip_events.h"
 #include "protocols/vlan.h"
 #include "sfip/sf_ip.h"
 #include "stream/stream.h"
@@ -650,60 +651,11 @@ static int SIP_deleteDialog(SIP_DialogData* currDialog, SIP_DialogList* dList)
     return true;
 }
 
-// FIXIT-H Publish event for appid
-#if 0
-/*********************************************************************
- * Update appId sip detector with parsed SIP message and dialog
- *
- * Arguments:
- *  Packet * - pointer to packet structure
- *  SIPMsg        * - pointer to parserd SIP messgage
- *  SIPData       * - pointer to SIP session
- *
- * Returns:
- *  None
- *
- *********************************************************************/
-static void sip_update_appid(const Packet* p, const SIPMsg* sipMsg, const SIP_DialogData* dialog)
+static void sip_publish_data_bus(const Packet* p, const SIPMsg* sip_msg, const SIP_DialogData* dialog)
 {
-    SipHeaders hdrs;
-    SipDialog dlg;
-    SipEventData sipEventData;
-
-    hdrs.callid = sipMsg->call_id;
-    hdrs.callidLen = sipMsg->callIdLen;
-    hdrs.methodFlag = sipMsg->methodFlag;
-
-    hdrs.userAgent = sipMsg->userAgent;
-    hdrs.userAgentLen = sipMsg->userAgentLen;
-    hdrs.server = sipMsg->server;
-    hdrs.serverLen = sipMsg->serverLen;
-    hdrs.userName = sipMsg->userName;
-    hdrs.userNameLen = sipMsg->userNameLen;
-    hdrs.from = sipMsg->from;
-    hdrs.fromLen= sipMsg->fromLen;
-
-    sipEventData.headers = &hdrs;
-
-    if (dialog)
-    {
-        dlg.state = dialog->state;
-        dlg.mediaSessions = dialog->mediaSessions;
-        dlg.mediaUpdated = sipMsg->mediaUpdated;
-        sipEventData.dialog = &dlg;
-    }
-    else
-    {
-        sipEventData.dialog = NULL;
-    }
-
-    sipEventData.packet = p;
-
-    if (Stream::service_event_publish(PP_SIP, p->flow, SIP_EVENT_TYPE_SIP_DIALOG, &sipEventData)
-     == false)
-     ErrorMessage("failed to publish to SIP_DIALOG\n");
+    SipEvent event(p, sip_msg, dialog);
+    get_data_bus().publish(SIP_EVENT_TYPE_SIP_DIALOG_KEY, event, p->flow);
 }
-#endif
 
 /********************************************************************
  * Function: SIP_updateDialog()
@@ -722,10 +674,10 @@ static void sip_update_appid(const Packet* p, const SIPMsg* sipMsg, const SIP_Di
 int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO_CONF* config)
 {
     SIP_DialogData* dialog;
-    SIP_DialogData* oldDialog = NULL;
+    SIP_DialogData* oldDialog = nullptr;
     int ret;
 
-    if ((NULL == sipMsg)||(0 == sipMsg->dlgID.callIdHash))
+    if ((nullptr == sipMsg)||(0 == sipMsg->dlgID.callIdHash))
         return false;
 
     DebugFormat(DEBUG_SIP, "Updating Dialog id: %u, From: %u, To: %u\n",
@@ -735,7 +687,7 @@ int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO
 
     /*Find out the dialog in the dialog list*/
 
-    while (NULL != dialog)
+    while (nullptr != dialog)
     {
         DebugFormat(DEBUG_SIP, "Dialog id: %u, From: %u, To: %u\n",
             dialog->dlgID.callIdHash,dialog->dlgID.fromTagHash,dialog->dlgID.toTagHash);
@@ -765,17 +717,12 @@ int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO
     else
         ret = false;
 
-// FIXIT-H Publish event for appid
-#if 0
-    for (dialog = dList->head;
-        dialog;
-        dialog = dialog->nextD)
+    for (dialog = dList->head; dialog; dialog = dialog->nextD)
     {
         if (sipMsg->dlgID.callIdHash == dialog->dlgID.callIdHash)
             break;
     }
-    sip_update_appid(p, sipMsg, dialog);
-#endif
+    sip_publish_data_bus(p, sipMsg, dialog);
 
     return ret;
 }

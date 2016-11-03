@@ -27,7 +27,12 @@
 extern const BaseApi* sin_imap;
 extern const BaseApi* sin_pop;
 extern const BaseApi* sin_smtp;
+extern const BaseApi* sin_sip;
 extern const BaseApi* sin_ssl;
+extern const BaseApi* ips_sip_body;
+extern const BaseApi* ips_sip_header;
+extern const BaseApi* ips_sip_method;
+extern const BaseApi* ips_sip_stat_code;
 extern const BaseApi* ips_ssl_state;
 extern const BaseApi* ips_ssl_version;
 
@@ -46,10 +51,6 @@ extern const BaseApi* ips_gtp_version;
 extern const BaseApi* ips_modbus_data;
 extern const BaseApi* ips_modbus_func;
 extern const BaseApi* ips_modbus_unit;
-extern const BaseApi* ips_sip_body;
-extern const BaseApi* ips_sip_header;
-extern const BaseApi* ips_sip_method;
-extern const BaseApi* ips_sip_stat_code;
 
 // FIXIT-L use snort_plugins aliases for static builds
 // so only one extern symbol per library is required
@@ -82,7 +83,6 @@ extern const BaseApi* sin_gtp;
 extern const BaseApi* sin_modbus;
 extern const BaseApi* sin_http;
 extern const BaseApi* sin_rpc_decode;
-extern const BaseApi* sin_sip;
 extern const BaseApi* sin_ssh;
 extern const BaseApi* sin_telnet;
 extern const BaseApi* sin_wizard;
@@ -92,8 +92,14 @@ const BaseApi* service_inspectors[] =
 {
     sin_imap,
     sin_pop,
+    sin_sip,
     sin_smtp,
     sin_ssl,
+
+    ips_sip_body,
+    ips_sip_header,
+    ips_sip_method,
+    ips_sip_stat_code,
     ips_ssl_state,
     ips_ssl_version,
 
@@ -112,10 +118,6 @@ const BaseApi* service_inspectors[] =
     ips_modbus_data,
     ips_modbus_func,
     ips_modbus_unit,
-    ips_sip_body,
-    ips_sip_header,
-    ips_sip_method,
-    ips_sip_stat_code,
 
     ips_http_uri,
     ips_http_client_body,
@@ -146,7 +148,6 @@ const BaseApi* service_inspectors[] =
     sin_modbus,
     sin_http,
     sin_rpc_decode,
-    sin_sip,
     sin_ssh,
     sin_telnet,
     sin_wizard,

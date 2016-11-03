@@ -346,7 +346,7 @@ int ExpectCache::add_flow(const Packet *ctrlPkt,
                     last = nullptr;
                     break;
                 }
-                fd = fd->next;
+                lfd = lfd->next;
             }
         }
     }

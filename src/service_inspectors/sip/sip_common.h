@@ -22,9 +22,11 @@
 #ifndef SIP_COMMON_H
 #define SIP_COMMON_H
 
+#include "framework/data_bus.h"
+
 // Header containing datatypes/definitions shared by SSL inspector files.
 
-typedef enum _SIP_method
+enum SIPMethodsFlag
 {
     SIP_METHOD_NULL        = 0,    // 0x0000,
     SIP_METHOD_INVITE      = 1,    // 0x0001,
@@ -43,7 +45,7 @@ typedef enum _SIP_method
     SIP_METHOD_PRACK       = 14,   // 0x2000,
     SIP_METHOD_USER_DEFINE = 15,   // 0x4000,
     SIP_METHOD_USER_DEFINE_MAX = 32// 0x80000000,
-} SIPMethodsFlag;
+};
 
 struct SipHeaders
 {
@@ -101,18 +103,6 @@ struct SipDialog
     SIP_DialogState state;
     SIP_MediaList mediaSessions;
     bool mediaUpdated;
-};
-
-struct SipEventData
-{
-    const Packet* packet;
-    const SipHeaders* headers;
-    const SipDialog* dialog;
-};
-
-enum SipEventType
-{
-    SIP_EVENT_TYPE_SIP_DIALOG
 };
 
 #endif

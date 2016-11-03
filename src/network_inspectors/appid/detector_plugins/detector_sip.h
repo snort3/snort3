@@ -24,8 +24,9 @@
 
 //  AppId structures for SIP detection
 
-#include "detector_api.h"
 #include "appid_utils/sf_multi_mpse.h"
+#include "detector_api.h"
+#include "framework/data_bus.h"
 
 struct RNAServiceValidationModule;
 
@@ -53,5 +54,11 @@ void SipSessionSnortCallback(void* ssnptr, ServiceEventType, void* eventData);
 int sipUaPatternAdd( AppId, const char* clientVersion, const char* uaPattern);
 int sipServerPatternAdd(AppId, const char* clientVersion, const char* uaPattern);
 int finalize_sip_ua();
+
+class SipEventHandler : public DataHandler
+{
+public:
+    void handle(DataEvent&, Flow*);
+};
 #endif
 

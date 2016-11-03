@@ -21,15 +21,18 @@
 
 #include "detector_sip.h"
 
-#include "http_url_patterns.h"
-#include "fw_appid.h"
-#include "service_plugins/service_base.h"
+#include "appid/appid_module.h"
 #include "appid_utils/sf_mlmp.h"
+#include "fw_appid.h"
+#include "http_url_patterns.h"
+#include "service_plugins/service_base.h"
 #include "utils/util.h"
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
-#include "service_inspectors/sip/sip_common.h"
+#include "pub_sub/sip_events.h"
+
+using namespace std;
 
 static const char SIP_REGISTER_BANNER[] = "REGISTER ";
 static const char SIP_INVITE_BANNER[] = "INVITE ";
@@ -62,7 +65,7 @@ static const unsigned MAX_VENDOR_SIZE = 64;
 
 enum SIPState
 {
-    SIP_STATE_INIT=0,
+    SIP_STATE_INIT = 0,
     SIP_STATE_REGISTER,
     SIP_STATE_CALL
 };
@@ -78,12 +81,12 @@ enum tSIP_FLAGS
 
 struct ClientSIPData
 {
-    void* owner;
-    SIPState state;
-    uint32_t flags;
-    char* userName;
-    char* clientUserAgent;
-    char* from;
+    void* owner = nullptr;
+    SIPState state = SIP_STATE_INIT;
+    uint32_t flags = 0;
+    const string* user_name = nullptr;
+    const string* client_user_agent = nullptr;
+    const string* from = nullptr;
 };
 
 struct DetectorSipConfig
@@ -105,7 +108,7 @@ static CLIENT_APP_RETCODE sip_tcp_client_init(const InitClientAppAPI* const init
     SF_LIST* config);
 static CLIENT_APP_RETCODE sip_tcp_client_validate(const uint8_t* data, uint16_t size,
     const int dir, AppIdSession* asd, Packet* pkt, Detector* userData);
-static int get_sip_client_app(void* patternMatcher, char* pattern, uint32_t patternLen,
+static int get_sip_client_app(void* patternMatcher, const char* pattern, uint32_t patternLen,
     AppId* ClientAppId, char** clientVersion);
 static void clean_sip_ua();
 static void clean_sip_server();
@@ -300,25 +303,18 @@ static CLIENT_APP_RETCODE sip_tcp_client_init(const InitClientAppAPI* const init
 }
 
 static void clientDataFree(void* data)
-{
-    ClientSIPData* fd = (ClientSIPData*)data;
-    snort_free(fd->from);
-    snort_free(fd->clientUserAgent);
-    snort_free(fd->userName);
-    free (fd);
-}
+{ delete (ClientSIPData*)data; }
 
 // static const char* const SIP_USRNAME_BEGIN_MARKER = "<sip:";
 static CLIENT_APP_RETCODE sip_client_validate(const uint8_t*, uint16_t, const int,
     AppIdSession* asd, Packet*, Detector*)
 {
-    ClientSIPData* fd;
-
-    fd = (ClientSIPData*)sip_udp_client_mod.api->data_get(asd,
+    ClientSIPData* fd = (ClientSIPData*)sip_udp_client_mod.api->data_get(asd,
         sip_udp_client_mod.flow_data_index);
-    if (!fd)
+
+    if( !fd )
     {
-        fd = (ClientSIPData*)snort_calloc(sizeof(ClientSIPData));
+        fd = new ClientSIPData();
         sip_udp_client_mod.api->data_add(asd, fd,
             sip_udp_client_mod.flow_data_index, &clientDataFree);
         fd->owner = &sip_udp_client_mod;
@@ -350,7 +346,7 @@ static int sipAppAddPattern(DetectorAppSipPattern** patternList, AppId ClientApp
     return 0;
 }
 
-int sipUaPatternAdd( AppId ClientAppId, const char* clientVersion, const char* pattern)
+int sipUaPatternAdd(AppId ClientAppId, const char* clientVersion, const char* pattern)
 {
     return sipAppAddPattern(&detector_sip_config.sip_ua_list, ClientAppId, clientVersion, pattern);
 }
@@ -368,18 +364,18 @@ int finalize_sip_ua()
     DetectorAppSipPattern* patternNode;
 
     detector_sip_config.sip_ua_matcher = mlmpCreate();
-    if (!detector_sip_config.sip_ua_matcher)
+    if( !detector_sip_config.sip_ua_matcher )
         return -1;
 
     detector_sip_config.sip_server_matcher = mlmpCreate();
-    if (!detector_sip_config.sip_server_matcher)
+    if( !detector_sip_config.sip_server_matcher )
     {
         mlmpDestroy((tMlmpTree*)detector_sip_config.sip_ua_matcher);
         detector_sip_config.sip_ua_matcher = nullptr;
         return -1;
     }
 
-    for (patternNode = detector_sip_config.sip_ua_list; patternNode; patternNode = patternNode->next)
+    for( patternNode = detector_sip_config.sip_ua_list; patternNode; patternNode = patternNode->next )
     {
         num_patterns = parseMultipleHTTPPatterns((const char*)patternNode->pattern.pattern,
             patterns,  PATTERN_PART_MAX, 0);
@@ -388,7 +384,7 @@ int finalize_sip_ua()
         mlmpAddPattern((tMlmpTree*)detector_sip_config.sip_ua_matcher, patterns, patternNode);
     }
 
-    for (patternNode = detector_sip_config.sip_server_list; patternNode; patternNode = patternNode->next)
+    for( patternNode = detector_sip_config.sip_server_list; patternNode; patternNode = patternNode->next )
     {
         num_patterns = parseMultipleHTTPPatterns((const char*)patternNode->pattern.pattern,
             patterns,  PATTERN_PART_MAX, 0);
@@ -406,13 +402,13 @@ static void clean_sip_ua()
 {
     DetectorAppSipPattern* node;
 
-    if (detector_sip_config.sip_ua_matcher)
+    if( detector_sip_config.sip_ua_matcher )
     {
         mlmpDestroy((tMlmpTree*)detector_sip_config.sip_ua_matcher);
         detector_sip_config.sip_ua_matcher = nullptr;
     }
 
-    for (node = detector_sip_config.sip_ua_list; node; node = detector_sip_config.sip_ua_list)
+    for( node = detector_sip_config.sip_ua_list; node; node = detector_sip_config.sip_ua_list )
     {
         detector_sip_config.sip_ua_list = node->next;
         snort_free((void*)node->pattern.pattern);
@@ -425,13 +421,13 @@ static void clean_sip_server()
 {
     DetectorAppSipPattern* node;
 
-    if (detector_sip_config.sip_server_matcher)
+    if( detector_sip_config.sip_server_matcher )
     {
         mlmpDestroy((tMlmpTree*)detector_sip_config.sip_server_matcher);
         detector_sip_config.sip_server_matcher = nullptr;
     }
 
-    for (node = detector_sip_config.sip_server_list; node; node = detector_sip_config.sip_server_list)
+    for( node = detector_sip_config.sip_server_list; node; node = detector_sip_config.sip_server_list )
     {
         detector_sip_config.sip_server_list = node->next;
         snort_free((void*)node->pattern.pattern);
@@ -440,13 +436,13 @@ static void clean_sip_server()
     }
 }
 
-static int get_sip_client_app(void* patternMatcher, char* pattern, uint32_t patternLen,
+static int get_sip_client_app(void* patternMatcher, const char* pattern, uint32_t patternLen,
     AppId* ClientAppId, char** clientVersion)
 {
     tMlmpPattern patterns[3];
     DetectorAppSipPattern* data;
 
-    if (!pattern)
+    if( !pattern )
         return 0;
 
     patterns[0].pattern = (uint8_t*)pattern;
@@ -455,7 +451,7 @@ static int get_sip_client_app(void* patternMatcher, char* pattern, uint32_t patt
 
     data = (DetectorAppSipPattern*)mlmpMatchPatternGeneric((tMlmpTree*)patternMatcher, patterns);
 
-    if (data == nullptr)
+    if( !data )
         return 0;
 
     *ClientAppId = data->userData.ClientAppId;
@@ -471,7 +467,7 @@ static void createRtpFlow(AppIdSession* asd, const Packet* pkt, const sfip_t* cl
 
     fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort, proto, app_id,
             APPID_EARLY_SESSION_FLAG_FW_RULE);
-    if (fp)
+    if( fp )
     {
         fp->client_app_id = asd->client_app_id;
         fp->payload_app_id = asd->payload_app_id;
@@ -482,7 +478,7 @@ static void createRtpFlow(AppIdSession* asd, const Packet* pkt, const sfip_t* cl
     // create an RTCP flow as well
     fp2 = AppIdSession::create_future_session(pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, proto, app_id,
             APPID_EARLY_SESSION_FLAG_FW_RULE);
-    if (fp2)
+    if( fp2 )
     {
         fp2->client_app_id = asd->client_app_id;
         fp2->payload_app_id = asd->payload_app_id;
@@ -491,41 +487,43 @@ static void createRtpFlow(AppIdSession* asd, const Packet* pkt, const sfip_t* cl
     }
 }
 
-static int addFutureRtpFlows(AppIdSession* asd, const SipDialog* dialog, const Packet* p)
+static void addFutureRtpFlows(SipEvent& event, AppIdSession* asd)
 {
-    SIP_MediaData* mdataA,* mdataB;
+    event.begin_media_sessions();
 
-    // check the first media asd
-    if (nullptr == dialog->mediaSessions)
-        return -1;
-    // check the second media asd
-    if (nullptr == dialog->mediaSessions->nextS)
-        return -1;
+    auto session_a = event.next_media_session();
+    auto session_b= event.next_media_session();
+
+    if( !session_a || !session_b )
+        return;
 
     DebugFormat(DEBUG_SIP, "Adding future media sessions ID: %u and %u\n",
-        dialog->mediaSessions->sessionID, dialog->mediaSessions->nextS->sessionID);
+        session_b->get_id(), session_b->get_id());
 
-    mdataA = dialog->mediaSessions->medias;
-    mdataB = dialog->mediaSessions->nextS->medias;
-    while ((nullptr != mdataA)&&(nullptr != mdataB))
+    session_a->begin_media_data();
+    session_b->begin_media_data();
+
+    auto media_a = session_a->next_media_data();
+    auto media_b = session_b->next_media_data();
+
+    while( media_a && media_b )
     {
         DebugFormat(DEBUG_SIP, "Adding future channels Source IP: %s Port: %hu\n",
-            sfip_to_str(&mdataA->maddress), mdataA->mport);
+            sfip_to_str(media_a->get_address()), media_a->get_port());
         DebugFormat(DEBUG_SIP, "Adding future channels Destine IP: %s Port: %hu\n",
-            sfip_to_str(&mdataB->maddress), mdataB->mport);
+            sfip_to_str(media_b->get_address()), media_b->get_port());
 
-        createRtpFlow(asd, p, &mdataA->maddress, mdataA->mport, &mdataB->maddress,
-            mdataB->mport, IpProtocol::UDP, APP_ID_RTP);
-        createRtpFlow(asd, p, &mdataB->maddress, mdataB->mport, &mdataA->maddress,
-            mdataA->mport, IpProtocol::UDP, APP_ID_RTP);
-        mdataA = mdataA->nextM;
-        mdataB = mdataB->nextM;
+        createRtpFlow(asd, event.get_packet(), media_a->get_address(), media_a->get_port(),
+            media_b->get_address(), media_b->get_port(), IpProtocol::UDP, APP_ID_RTP);
+        createRtpFlow(asd, event.get_packet(), media_b->get_address(), media_b->get_port(),
+            media_a->get_address(), media_b->get_port(), IpProtocol::UDP, APP_ID_RTP);
+
+        media_a = session_a->next_media_data();
+        media_b = session_b->next_media_data();
     }
-    return 0;
 }
 
-static void SipSessionCbClientProcess(const Packet* p, const SipHeaders* headers, const
-    SipDialog* dialog, AppIdSession* asd)
+static void SipSessionCbClientProcess(SipEvent& event, AppIdSession* asd)
 {
     ClientSIPData* fd;
     AppId ClientAppId = APP_ID_SIP;
@@ -534,78 +532,65 @@ static void SipSessionCbClientProcess(const Packet* p, const SipHeaders* headers
 
     fd = (ClientSIPData*)sip_udp_client_mod.api->data_get(asd,
         sip_udp_client_mod.flow_data_index);
-    if (!fd)
+    if( !fd )
     {
-        fd = (ClientSIPData*)snort_calloc(sizeof(ClientSIPData));
+        fd = new ClientSIPData();
         sip_udp_client_mod.api->data_add(asd, fd,
             sip_udp_client_mod.flow_data_index, &clientDataFree);
         fd->owner = &sip_udp_client_mod;
         asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
-    if (fd->owner != &sip_udp_client_mod && fd->owner != &sip_tcp_client_mod)
+    if( fd->owner != &sip_udp_client_mod && fd->owner != &sip_tcp_client_mod )
         return;
 
-    direction = (p->is_from_client()) ?
+    direction = (event.get_packet()->is_from_client()) ?
         APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
-    if (headers->methodFlag == SIP_METHOD_INVITE && direction == APP_ID_FROM_INITIATOR)
+    if( event.is_invite() && direction == APP_ID_FROM_INITIATOR )
     {
-        if (headers->from && headers->fromLen)
-        {
-            snort_free(fd->from);
-            fd->from = snort_strndup(headers->from, headers->fromLen);
-        }
-
-        if (headers->userName && headers->userNameLen)
-        {
-            snort_free(fd->userName);
-            fd->userName = snort_strndup(headers->userName, headers->userNameLen);
-        }
-        if (headers->userAgent && headers->userAgentLen)
-        {
-            snort_free(fd->clientUserAgent);
-            fd->clientUserAgent = snort_strndup(headers->userAgent, headers->userAgentLen);
-        }
+        fd->from = event.get_from();
+        fd->user_name = event.get_user_name();
+        fd->client_user_agent = event.get_user_agent();
     }
 
-    if (fd->clientUserAgent)
+    if( fd->client_user_agent )
     {
-        if (get_sip_client_app(detector_sip_config.sip_ua_matcher,
-            fd->clientUserAgent, strlen(fd->clientUserAgent), &ClientAppId, &clientVersion))
+        if( get_sip_client_app(detector_sip_config.sip_ua_matcher,
+            fd->client_user_agent->c_str(), fd->client_user_agent->size(), &ClientAppId, &clientVersion) )
             goto success;
     }
 
-    if ( fd->from && !(fd->flags & SIP_FLAG_SERVER_CHECKED))
+    if( fd->from && !(fd->flags & SIP_FLAG_SERVER_CHECKED) )
     {
         fd->flags |= SIP_FLAG_SERVER_CHECKED;
 
-        if (get_sip_client_app(detector_sip_config.sip_server_matcher,
-            (char*)fd->from, strlen(fd->from), &ClientAppId, &clientVersion))
+        if( get_sip_client_app(detector_sip_config.sip_server_matcher,
+            fd->from->c_str(), fd->from->size(), &ClientAppId, &clientVersion) )
             goto success;
     }
 
-    if (!dialog || dialog->state != SIP_DLG_ESTABLISHED)
+    if( !event.is_dialog_established() )
         return;
 
 success:
     //client detection successful
     sip_udp_client_mod.api->add_app(asd, APP_ID_SIP, ClientAppId, clientVersion);
+    appid_stats.sip_clients++;
 
-    if (fd->userName)
-        sip_udp_client_mod.api->add_user(asd, (char*)fd->userName, APP_ID_SIP, 1);
+    if( fd->user_name )
+        sip_udp_client_mod.api->add_user(asd, fd->user_name->c_str(), APP_ID_SIP, 1);
 
     asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
 }
 
-static void SipSessionCbServiceProcess(const Packet* p, const SipHeaders* headers, const
-    SipDialog* dialog, AppIdSession* asd)
+static void SipSessionCbServiceProcess(SipEvent& event, AppIdSession* asd)
 {
     ServiceSIPData* ss;
     int direction;
 
     ss = (ServiceSIPData*)sip_service_mod.api->data_get(asd, sip_service_mod.flow_data_index);
-    if (!ss)
+    if( !ss )
     {
         ss = (ServiceSIPData*)snort_calloc(sizeof(ServiceSIPData));
         sip_service_mod.api->data_add(asd, ss, sip_service_mod.flow_data_index, &snort_free);
@@ -613,78 +598,40 @@ static void SipSessionCbServiceProcess(const Packet* p, const SipHeaders* header
 
     ss->serverPkt = 0;
 
-    direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
+    direction = event.get_packet()->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
-    if (direction == APP_ID_FROM_RESPONDER)
+    if( direction == APP_ID_FROM_RESPONDER )
     {
-        if (headers->userAgent && headers->userAgentLen)
+        if( event.get_user_agent() )
         {
-            memcpy(ss->vendor, headers->userAgent,
-                headers->userAgentLen > (MAX_VENDOR_SIZE - 1) ?  (MAX_VENDOR_SIZE - 1) :
-                headers->userAgentLen);
+            memcpy(ss->vendor, event.get_user_agent()->c_str(),
+                event.get_user_agent()->size() > (MAX_VENDOR_SIZE - 1) ?  (MAX_VENDOR_SIZE - 1) :
+                event.get_user_agent()->size());
         }
-        else if (headers->server && headers->serverLen)
+        else if( event.get_server() )
         {
-            memcpy(ss->vendor, headers->server,
-                headers->serverLen > (MAX_VENDOR_SIZE - 1) ?  (MAX_VENDOR_SIZE - 1) :
-                headers->serverLen);
+            memcpy(ss->vendor, event.get_server()->c_str(),
+                event.get_server()->size() > (MAX_VENDOR_SIZE - 1) ?  (MAX_VENDOR_SIZE - 1) :
+                event.get_server()->size());
         }
     }
 
-    if (!dialog)
+    if( !event.has_dialog() )
         return;
 
-    if (dialog->mediaUpdated)
-        addFutureRtpFlows(asd, dialog, p);
+    if( event.is_media_updated() )
+        addFutureRtpFlows(event, asd);
 
-    if (dialog->state == SIP_DLG_ESTABLISHED)
+    if( event.is_dialog_established() )
     {
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if( !asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED) )
         {
             asd->set_session_flags(APPID_SESSION_CONTINUE);
-            sip_service_mod.api->add_service(asd, p, direction, &svc_element,
+            sip_service_mod.api->add_service(asd, event.get_packet(), direction, &svc_element,
                 APP_ID_SIP, ss->vendor[0] ? ss->vendor : nullptr, nullptr, nullptr);
+            appid_stats.sip_flows++;
         }
     }
-}
-
-void SipSessionSnortCallback(void*, ServiceEventType, void* data)
-{
-    AppIdSession* asd = nullptr;
-    SipEventData* eventData = (SipEventData*)data;
-
-    const Packet* p = eventData->packet;
-    const SipHeaders* headers = eventData->headers;
-    const SipDialog* dialog = eventData->dialog;
-
-#ifdef DEBUG_APP_ID_SESSIONS
-    {
-        char src_ip[INET6_ADDRSTRLEN];
-        char dst_ip[INET6_ADDRSTRLEN];
-        const sfip_t* ip;
-
-        src_ip[0] = 0;
-        ip = p->ptrs.ip_api.get_src();
-        sfip_ntop(ip, src_ip, sizeof(src_ip));
-        dst_ip[0] = 0;
-        ip = p->ptrs.ip_api.get_dst();
-        sfip_ntop(ip, dst_ip, sizeof(dst_ip));
-        fprintf(SF_DEBUG_FILE, "AppId Sip Snort Callback Session %s-%u -> %s-%u %d\n", src_ip,
-            (unsigned)p->src_port, dst_ip, (unsigned)p->dst_port, IsTCP(p) ? IpProtocol::TCP :
-            IpProtocol::UDP);
-    }
-#endif
-    if(p->flow)
-    	asd = appid_api.get_appid_data(p->flow);
-
-    if(!asd)
-    {
-    	WarningMessage("AppId Session does not exist.\n");
-    	return;
-    }
-
-    SipSessionCbClientProcess(p, headers, dialog, asd);
-    SipSessionCbServiceProcess(p, headers, dialog, asd);
 }
 
 static int sip_service_init(const InitServiceAPI* const init_api)
@@ -764,4 +711,36 @@ static int sip_service_validate(ServiceValidationArgs* args)
 
     return SERVICE_INPROCESS;
 }
+
+void SipEventHandler::handle(DataEvent& event, Flow* flow)
+{
+    AppIdSession* asd = nullptr;
+
+#ifdef DEBUG_APP_ID_SESSIONS
+    {
+        char src_ip[INET6_ADDRSTRLEN];
+        char dst_ip[INET6_ADDRSTRLEN];
+        const sfip_t* ip;
+
+        src_ip[0] = 0;
+        ip = p->ptrs.ip_api.get_src();
+        sfip_ntop(ip, src_ip, sizeof(src_ip));
+        dst_ip[0] = 0;
+        ip = p->ptrs.ip_api.get_dst();
+        sfip_ntop(ip, dst_ip, sizeof(dst_ip));
+        fprintf(SF_DEBUG_FILE, "AppId Sip Snort Callback Session %s-%u -> %s-%u %d\n", src_ip,
+            (unsigned)p->src_port, dst_ip, (unsigned)p->dst_port, IsTCP(p) ? IpProtocol::TCP :
+            IpProtocol::UDP);
+    }
+#endif
+    if( flow )
+    	asd = appid_api.get_appid_data(flow);
+
+    if( !asd )
+    	return;
+
+    SipSessionCbClientProcess((SipEvent&)event, asd);
+    SipSessionCbServiceProcess((SipEvent&)event, asd);
+}
+
 
