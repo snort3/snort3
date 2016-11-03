@@ -43,14 +43,6 @@ StreamFileModule::StreamFileModule() :
 
 StreamFileModule::~StreamFileModule() { }
 
-#if 0
-const PegInfo* StreamFileModule::get_pegs() const
-{ return file_pegs; }
-
-PegCount* StreamFileModule::get_counts() const
-{ return (PegCount*)&file_stats; }
-#endif
-
 bool StreamFileModule::begin(const char*, int, SnortConfig*)
 {
     upload = false;

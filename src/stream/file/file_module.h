@@ -43,11 +43,6 @@ public:
     StreamFileModule();
     ~StreamFileModule();
 
-#if 0
-    const PegInfo* get_pegs() const override;
-    PegCount* get_counts() const override;
-#endif
-
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 

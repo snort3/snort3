@@ -35,7 +35,7 @@
 #include "main/snort_types.h"
 #include "framework/counts.h"
 
-typedef std::vector<unsigned> IndexVec;
+using IndexVec = std::vector<unsigned>;
 
 // FIXIT-L split this out into appropriate modules
 struct PacketCount

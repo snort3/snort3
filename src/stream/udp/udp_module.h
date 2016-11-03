@@ -62,8 +62,6 @@ public:
     PegCount* get_counts() const override;
     StreamUdpConfig* get_data();
 
-    void sum_stats() override;
-
 private:
     StreamUdpConfig* config;
 };

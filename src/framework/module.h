@@ -163,6 +163,9 @@ private:
     friend class ModuleManager;
     void init(const char*, const char* = nullptr);
 
+    std::vector<PegCount> counts;
+    int num_counts;
+
     const char* name;
     const char* help;
 
@@ -170,8 +173,6 @@ private:
     const Parameter* default_params = nullptr;
     bool list;
 
-    std::vector<PegCount> counts;
-    int num_counts;
     Trace* trace;
 };
 

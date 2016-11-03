@@ -32,18 +32,18 @@ using namespace std;
 
 #define BASE_FILE (PERF_NAME ".csv")
 
-BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf,
-    perf->output == PERF_FILE ? BASE_FILE : nullptr)
+BaseTracker::BaseTracker(PerfConfig* perf)
+    : PerfTracker(perf, perf->output == PERF_FILE ? BASE_FILE : nullptr)
 {
     for (unsigned i = 0; i < config->modules.size(); i++)
     {
         Module *m = config->modules.at(i);
-        vector<unsigned> peg_map = config->mod_peg_idxs.at(i);
+        IndexVec peg_map = config->mod_peg_idxs.at(i);
 
         formatter->register_section(m->get_name());
-        for (auto& idx : peg_map)
-             formatter->register_field(m->get_pegs()[idx].name,
-                &(m->get_counts()[idx]));
+
+        for (auto const& i : peg_map)
+            formatter->register_field(m->get_pegs()[i].name, &(m->get_counts()[i]));
     }
     formatter->finalize_fields();
 }
@@ -52,9 +52,9 @@ void BaseTracker::process(bool summary)
 {
     write();
 
-    for (unsigned i = 0; i < config->modules.size(); i++)
+    for ( auto const& m : config->modules )
         if (!summary)
-            config->modules.at(i)->sum_stats();
+            m->sum_stats();
 }
 
 #ifdef UNIT_TEST

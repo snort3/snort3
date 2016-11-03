@@ -365,20 +365,3 @@ const PegInfo* StreamTcpModule::get_pegs() const
 PegCount* StreamTcpModule::get_counts() const
 { return (PegCount*)&tcpStats; }
 
-void StreamTcpModule::sum_stats()
-{
-    // FIXIT-L is there a way these session pegs can be derived from other pegs?
-    PegCount init = tcpStats.sessions_initializing;
-    PegCount est = tcpStats.sessions_established;
-    PegCount closing = tcpStats.sessions_closing;
-    PegCount sessions = tcpStats.sessions;
-
-    Module::sum_stats();
-
-    tcpStats.sessions_initializing = init;
-    tcpStats.sessions_established = est;
-    tcpStats.sessions_closing = closing;
-    tcpStats.sessions = sessions;
-    tcpStats.max = sessions;
-}
-

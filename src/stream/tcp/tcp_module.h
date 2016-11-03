@@ -135,7 +135,6 @@ public:
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    void sum_stats() override;
 
 private:
     TcpStreamConfig* config;

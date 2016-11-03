@@ -60,8 +60,6 @@ public:
 
     StreamIcmpConfig* get_data();
 
-    void sum_stats() override;
-
 private:
     StreamIcmpConfig* config;
 };

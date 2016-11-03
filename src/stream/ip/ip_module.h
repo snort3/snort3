@@ -116,8 +116,6 @@ public:
     unsigned get_gid() const override
     { return GID_DEFRAG; }
 
-    void sum_stats() override;
-
 private:
     StreamIpConfig* config;
 };
