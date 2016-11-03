@@ -178,6 +178,7 @@ void Stream::check_flow_closed(Packet* p)
     if (flow->session_state & STREAM_STATE_CLOSED)
     {
         assert(flow_con);
+        flow->session->cleanup(p);
         flow_con->delete_flow(flow, PruneReason::NONE);
         p->flow = nullptr;
     }
@@ -350,15 +351,6 @@ void Stream::purge_flows()
     if ( !flow_con )
         return;
 
-    // FIXIT-H stream tcp needs to do this and prep pkt to handle
-    // shutdown alerts while rebuilding (during flush before a 
-    // rebuilt packet is available)
-    DetectionEngine::set_packet();
-    DetectionEngine de;
-    // this is a hack to work around the above issue
-    DAQ_PktHdr_t* ph = (DAQ_PktHdr_t*)de.get_packet()->pkth;
-    memset(ph, 0, sizeof(*ph));
-
     flow_con->purge_flows(PktType::IP);
     flow_con->purge_flows(PktType::ICMP);
     flow_con->purge_flows(PktType::TCP);
@@ -369,15 +361,19 @@ void Stream::purge_flows()
 
 void Stream::timeout_flows(time_t cur_time)
 {
-    if ( flow_con )
-        // FIXIT-M batch here or loop vs looping over idle?
-        flow_con->timeout_flows(cur_time);
+    if ( !flow_con )
+        return;
+
+    // FIXIT-M batch here or loop vs looping over idle?
+    flow_con->timeout_flows(cur_time);
 }
 
 void Stream::prune_flows()
 {
-    if ( flow_con )
-        flow_con->prune_one(PruneReason::MEMCAP, false);
+    if ( !flow_con )
+        return;
+
+    flow_con->prune_one(PruneReason::MEMCAP, false);
 }
 
 bool Stream::expected_flow(Flow* f, Packet* p)

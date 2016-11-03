@@ -46,7 +46,7 @@ public:
 
     bool setup(Packet*) override;
     void clear() override;
-    void cleanup() override;
+    void cleanup(Packet* = nullptr) override;
     void set_splitter(bool, StreamSplitter*) override;
     StreamSplitter* get_splitter(bool) override;
     bool is_sequenced(uint8_t /*dir*/) override;

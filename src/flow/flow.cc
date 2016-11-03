@@ -23,6 +23,7 @@
 
 #include "flow.h"
 
+#include "detection/detection_engine.h"
 #include "flow/ha.h"
 #include "flow/session.h"
 #include "ips_options/ips_flowbits.h"
@@ -125,6 +126,10 @@ inline void Flow::clean()
 
 void Flow::reset(bool do_cleanup)
 {
+    DetectionEngine::onload(this);
+    DetectionEngine::set_packet();
+    DetectionEngine de;
+
     if ( session )
     {
         if ( do_cleanup )

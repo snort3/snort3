@@ -284,9 +284,6 @@ void DropStats()
 
     PacketManager::dump_stats();
 
-    // ensure proper counting of log_limit
-    DetectionEngine::reset_counts();
-
     LogLabel("Module Statistics");
     const char* exclude = "daq snort";
     ModuleManager::dump_stats(snort_conf, exclude);

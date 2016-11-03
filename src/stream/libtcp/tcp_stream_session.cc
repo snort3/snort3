@@ -430,9 +430,9 @@ bool TcpStreamSession::setup(Packet*)
     return true;
 }
 
-void TcpStreamSession::cleanup()
+void TcpStreamSession::cleanup(Packet* p)
 {
-    clear_session( true, true, false );
+    clear_session(true, true, false, p);
 }
 
 void TcpStreamSession::clear()

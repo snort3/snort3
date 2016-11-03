@@ -176,8 +176,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     if ( p->ptrs.ip_api.is_valid() )
     {
         filterEvent = sfthreshold_test(
-            otn->sigInfo.generator,
-            otn->sigInfo.id,
+            otn->sigInfo.generator, otn->sigInfo.id,
             p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(),
             p->pkth->ts.tv_sec);
     }
@@ -187,10 +186,8 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         cleared.clear();
 
         filterEvent = sfthreshold_test(
-            otn->sigInfo.generator,
-            otn->sigInfo.id,
-            &cleared, &cleared,
-            p->pkth->ts.tv_sec);
+            otn->sigInfo.generator, otn->sigInfo.id,
+            &cleared, &cleared, p->pkth->ts.tv_sec);
     }
 
     if ( (filterEvent < 0) || (filterEvent > 0 && !override) )

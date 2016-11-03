@@ -61,11 +61,12 @@ struct SF_EVENTQ
     */
     int cur_nodes;
     int cur_events;
+    unsigned fails;
 };
 
 SF_EVENTQ* sfeventq_new(int max_nodes, int log_nodes, int event_size);
 void* sfeventq_event_alloc(SF_EVENTQ*);
-void sfeventq_reset(SF_EVENTQ*);
+unsigned sfeventq_reset(SF_EVENTQ*);  // returns fail count since last reset
 int sfeventq_add(SF_EVENTQ*, void* event);
 int sfeventq_action(SF_EVENTQ*, int (* action_func)(void* event, void* user), void* user);
 void sfeventq_free(SF_EVENTQ*);

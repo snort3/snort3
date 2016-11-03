@@ -31,6 +31,7 @@
 #include "profiler/profiler.h"
 #include "detection/detection_engine.h"
 #include "protocols/packet_manager.h"
+#include "time/packet_time.h"
 
 #include "tcp_module.h"
 #include "tcp_normalizer.h"
@@ -838,11 +839,8 @@ int TcpReassembler::flush_stream(Packet* p, uint32_t dir)
     return flush_to_seq(bytes, p, dir);
 }
 
-void TcpReassembler::final_flush(Packet* p, PegCount& peg, uint32_t dir)
+void TcpReassembler::final_flush(Packet* p, uint32_t dir)
 {
-    if ( !p )
-        peg++;
-
     tracker->set_tf_flags(TF_FORCE_FLUSH);
 
     if ( flush_stream(p, dir) )
@@ -851,17 +849,56 @@ void TcpReassembler::final_flush(Packet* p, PegCount& peg, uint32_t dir)
     tracker->clear_tf_flags(TF_FORCE_FLUSH);
 }
 
+static Packet* set_packet(Flow* flow, uint32_t flags, bool c2s)
+{
+    Packet* p = DetectionEngine::get_current_packet();
+    p->reset();
+
+    DAQ_PktHdr_t* ph = (DAQ_PktHdr_t*)p->pkth;
+    memset(ph, 0, sizeof(*ph));
+    packet_gettimeofday(&ph->ts);
+
+    p->ptrs.set_pkt_type(PktType::PDU);
+    p->proto_bits |= PROTO_BIT__TCP;
+    p->flow = flow;
+    p->packet_flags = flags;
+
+    if ( c2s )
+    {
+        p->ptrs.ip_api.set(flow->client_ip, flow->server_ip);
+        p->ptrs.sp = flow->client_port;
+        p->ptrs.dp = flow->server_port;
+    }
+    else
+    {
+        p->ptrs.ip_api.set(flow->server_ip, flow->client_ip);
+        p->ptrs.sp = flow->server_port;
+        p->ptrs.dp = flow->client_port;
+    }
+    return p;
+}
+
 void TcpReassembler::flush_queued_segments(Flow* flow, bool clear, Packet* p)
 {
+    bool data = p or seglist.head;
+
+    if ( !p )
+    {
+        // this packet is required if we call finish and/or final_flush
+        p = set_packet(flow, packet_dir, server_side);
+
+        if ( server_side )
+            tcpStats.s5tcp2++;
+        else
+            tcpStats.s5tcp1++;
+    }
+
     bool pending = clear and paf_initialized(&tracker->paf_state)
         and (!tracker->splitter or tracker->splitter->finish(flow) );
 
-    if ((pending and (p or seglist.head) and !(flow->ssn_state.ignore_direction & ignore_dir)))
+    if ( pending and data and !(flow->ssn_state.ignore_direction & ignore_dir) )
     {
-        if (server_side)
-            final_flush(p, tcpStats.s5tcp2, packet_dir);
-        else
-            final_flush(p, tcpStats.s5tcp1, packet_dir);
+        final_flush(p, packet_dir);
     }
 }
 

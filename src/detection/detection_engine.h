@@ -82,9 +82,7 @@ public:
     static int queue_event(unsigned gid, unsigned sid, RuleType = RULE_TYPE__NONE);
 
     static int log_events(Packet*);
-
     static void reset(Packet*);
-    static void reset_counts();
 
     static void disable_all(Packet*);
     static bool all_disabled(Packet*);
