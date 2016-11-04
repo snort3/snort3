@@ -1296,14 +1296,13 @@ void fp_local(Packet* p)
     fpFinalSelectEvent(c->otnx, p);
 }
 
-void fp_offload(Packet* p, SnortConfig* sc)
+void fp_offload(Packet* p)
 {
-    snort_conf = sc;  // FIXIT-H reload issue
-    MpseStash* stash = p->context->stash;
+    IpsContext* c = p->context;
+    MpseStash* stash = c->stash;
     stash->init();
     stash->disable_process();
     fpEvalPacket(p);
-    p->context->onload = true;
 }
 
 void fp_onload(Packet* p)

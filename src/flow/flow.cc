@@ -30,6 +30,7 @@
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
 #include "utils/bitop.h"
+#include "utils/stats.h"
 #include "utils/util.h"
 
 unsigned FlowData::flow_id = 0;
@@ -172,6 +173,8 @@ void Flow::reset(bool do_cleanup)
 
 void Flow::restart(bool dump_flow_data)
 {
+    DetectionEngine::onload(this);
+
     if ( dump_flow_data )
         free_flow_data();
 

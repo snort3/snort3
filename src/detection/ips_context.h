@@ -29,9 +29,6 @@
 // state such as an event queue.  This data will be migrated after
 // integration into Snort.
 
-#include <vector>
-#include <thread>
-
 #include "main/snort_types.h"
 #include "framework/codec.h"
 
@@ -75,16 +72,15 @@ public:
     Packet* encode_packet;
     DAQ_PktHdr_t* pkth;
     uint8_t* buf;
-    std::thread* offload;
 
     DataPointer file_data;
 
+    class SnortConfig* conf;
     class MpseStash* stash;
     struct OtnxMatchData* otnx;
     struct SF_EVENTQ* equeue;
 
     uint64_t pkt_count;
-    bool onload;
     ActiveRules active_rules;
 
     static const unsigned buf_size = Codec::PKT_MAX;

@@ -195,6 +195,17 @@ unsigned ContextSwitcher::hold_count() const
     return c;
 }
 
+bool ContextSwitcher::on_hold(Flow* f)
+{
+    for ( unsigned i = 0; i < hold.capacity(); ++i )
+    {
+        IpsContext* c = hold[i];
+        if ( c and c->packet and c->packet->flow == f )
+            return true;
+    }
+    return false;
+}
+
 //--------------------------------------------------------------------------
 // unit tests
 //--------------------------------------------------------------------------

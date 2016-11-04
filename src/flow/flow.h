@@ -311,7 +311,7 @@ public:  // FIXIT-M privatize if possible
     PktType pkt_type; // ^^
 
     // these fields are always set; not zeroed
-    uint8_t flow_flags;
+    uint64_t flow_flags;  // FIXIT-H required to ensure atomic?
     Flow* prev, * next;
     Inspector* ssn_client;
     Inspector* ssn_server;

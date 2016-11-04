@@ -68,18 +68,16 @@ IpsContext::IpsContext(unsigned size) :
     packet->context = this;
     fp_set_context(*this);
 
-    offload = nullptr;
-    onload = false;
     active_rules = CONTENT;
 }
 
 IpsContext::~IpsContext()
 {
     for ( auto* p : data )
+    {
         if ( p )
             delete p;
-
-    assert(!offload);
+    }
 
     sfeventq_free(equeue);
     fp_clear_context(*this);
@@ -138,11 +136,13 @@ TEST_CASE("IpsContext basic", "[IpsContext]")
 
     SECTION("one context")
     {
+#if 0
         auto id = IpsContextData::get_ips_id();
         auto* d1 = new ContextData(10);
         auto ctxt = IpsContext(id+1);
         ctxt.set_context_data(id, d1);
         CHECK(ctxt.get_context_data(id) == d1);
+#endif
     }
     CHECK(ContextData::count == 0);
 }

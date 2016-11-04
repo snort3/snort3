@@ -79,6 +79,8 @@ public:
     bool can_hold() const
     { return idle_count() > 5; }  // FIXIT-H define appropriate const
 
+    bool on_hold(class Flow*);
+
 private:
     std::vector<IpsContext*> idle;
     std::vector<IpsContext*> busy;

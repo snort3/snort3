@@ -103,7 +103,7 @@ void fp_set_context(IpsContext&);
 void fp_clear_context(IpsContext&);
 
 void fp_local(Packet*);
-void fp_offload(Packet*, struct SnortConfig*);
+void fp_offload(Packet*);
 void fp_onload(Packet*);
 
 #endif

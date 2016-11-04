@@ -10,6 +10,7 @@ detection_engine.h \
 detection_options.h \
 detection_util.h \
 ips_context.h \
+regex_offload.h \
 rule_option_types.h \
 rules.h \
 signature.h \
@@ -35,6 +36,7 @@ ips_context.cc \
 pattern_match_data.h \
 pcrm.cc \
 pcrm.h \
+regex_offload.cc \
 rtn_checks.cc \
 rtn_checks.h \
 service_map.cc \

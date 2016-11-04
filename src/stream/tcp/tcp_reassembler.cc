@@ -639,14 +639,6 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         DAQ_PktHdr_t pkth;
         session->GetPacketHeaderFoo(&pkth, pkt_flags);
 
-        if ( !p )
-        {
-            // FIXIT-H we need to have user_policy_id in this case
-            // FIXIT-H this leads to format_tcp() copying from s5_pkt to s5_pkt
-            // (neither of these issues is created by passing null through to here)
-            p = s5_pkt;
-        }
-
         PacketManager::format_tcp(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
         prep_s5_pkt(session->flow, p, pkt_flags);
 

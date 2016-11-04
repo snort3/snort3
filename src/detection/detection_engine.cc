@@ -44,16 +44,21 @@
 #include "fp_config.h"
 #include "fp_detect.h"
 #include "ips_context.h"
+#include "regex_offload.h"
 
 Trace TRACE_NAME(detection);
 
-static THREAD_LOCAL Ring<unsigned>* offload_ids = nullptr;
+static THREAD_LOCAL RegexOffload* offloader = nullptr;
+
+//--------------------------------------------------------------------------
+// basic de
+//--------------------------------------------------------------------------
 
 void DetectionEngine::thread_init()
-{ offload_ids = new Ring<unsigned>(32); }  // FIXIT-H get size
+{ offloader = new RegexOffload(32); }  // FIXIT-H get size (threads < contexts)
 
 void DetectionEngine::thread_term()
-{ delete offload_ids; }
+{ delete offloader; }
 
 DetectionEngine::DetectionEngine()
 { context = Snort::get_switcher()->interrupt(); }
@@ -175,19 +180,25 @@ void DetectionEngine::set_detects(Packet* p, IpsContext::ActiveRules ar)
 bool DetectionEngine::offloaded(Packet* p)
 { return p->flow and p->flow->is_offloaded(); }
 
+//--------------------------------------------------------------------------
+// offload / onload
+//--------------------------------------------------------------------------
+
 void DetectionEngine::idle()
 {
-    if ( !offload_ids )
+    if ( !offloader )
         return;
 
-    while ( !offload_ids->empty() )
+    while ( offloader->count() )
     {
-        const struct timespec blip = { 0, 1 };
         trace_logf(detection, "%lu de::sleep\n", pc.total_from_daq);
+        const struct timespec blip = { 0, 1 };
         nanosleep(&blip, nullptr);
         onload();
     }
-    trace_logf(detection, "%lu de::idle (r=%d)\n", pc.total_from_daq, offload_ids->count());
+    trace_logf(detection, "%lu de::idle (r=%d)\n", pc.total_from_daq, offloader->count());
+
+    offloader->stop();
 }
 
 void DetectionEngine::onload(Flow* flow)
@@ -199,36 +210,31 @@ void DetectionEngine::onload(Flow* flow)
         nanosleep(&blip, nullptr);
         onload();
     }
+    assert(!Snort::get_switcher()->on_hold(flow));
+    assert(!offloader->on_hold(flow));
 }
 
 void DetectionEngine::onload()
 {
-    ContextSwitcher* sw = Snort::get_switcher();
-    unsigned* id = offload_ids->read();
-    IpsContext* c = sw->get_context(*id);
+    unsigned id;
 
-    assert(c->offload);
-
-    if ( !c->onload )
+    if ( !offloader->get(id) )
         return;
 
+    ContextSwitcher* sw = Snort::get_switcher();
+    IpsContext* c = sw->get_context(id);
+    assert(c);
+
     trace_logf(detection, "%lu de::onload %u (r=%d)\n",
-        pc.total_from_daq, *id, offload_ids->count());
+        pc.total_from_daq, id, offloader->count());
 
     Packet* p = c->packet;
     p->flow->clear_offloaded();
 
-    c->offload->join();
-    delete c->offload;
-    c->offload = nullptr;
-
-    offload_ids->pop();
-    sw->resume(*id);
+    sw->resume(id);
 
     fp_onload(p);
     InspectorManager::clear(p);
-    log_events(p);
-    reset(p);
     clear_packet(p);
 
     sw->complete();
@@ -244,24 +250,26 @@ bool DetectionEngine::offload(Packet* p)
         return false;
     }
     assert(p == p->context->packet);
-    onload(p->flow);  // FIXIT-H ensures correct sequencing, suboptimal
-
-    p->flow->set_offloaded();
-    pc.offloads++;
+    onload(p->flow);  // FIXIT-L just assert !offloaded?
 
     assert(p->context == sw->get_context());
-
     unsigned id = sw->suspend();
-    offload_ids->put(id);
 
     trace_logf(detection, "%lu de::offload %u (r=%d)\n",
-        pc.total_from_daq, id, offload_ids->count());
+        pc.total_from_daq, id, offloader->count());
 
-    p->context->onload = false;
-    p->context->offload = new std::thread(fp_offload, p, snort_conf);
+    p->flow->set_offloaded();
+    p->context->conf = snort_conf;
+
+    offloader->put(id, p);
+    pc.offloads++;
 
     return true;
 }
+
+//--------------------------------------------------------------------------
+// detection / inspection
+//--------------------------------------------------------------------------
 
 bool DetectionEngine::detect(Packet* p)
 {
@@ -356,6 +364,10 @@ void DetectionEngine::inspect(Packet* p)
 
     Stream::check_flow_block_pending(p);
 }
+
+//--------------------------------------------------------------------------
+// events
+//--------------------------------------------------------------------------
 
 // Return 0 if no OTN since -1 return indicates queue limit reached.
 // See fpFinalSelectEvent()
