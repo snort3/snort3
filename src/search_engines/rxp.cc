@@ -477,7 +477,7 @@ static void rxp_begin_packet()
     RxpMpse::jobcount = 0;
 }
 
-int rxp_receive_responses()
+static int rxp_receive_responses()
 {
     struct rte_mbuf* pkts_burst[RXP_MAX_PKT_BURST];
     struct rxp_response_data rxp_resp;
@@ -560,7 +560,7 @@ int rxp_receive_responses()
     return processed;
 }
 
-int rxp_send_jobs()
+static int rxp_send_jobs()
 {
     struct rte_mbuf* job_buf;
     int i, j, ret, processed = 0;
