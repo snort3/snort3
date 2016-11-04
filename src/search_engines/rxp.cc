@@ -376,7 +376,14 @@ int RxpMpse::build_rule_file(const string& filename, const string& rulesdir)
 
     rxpc_cmd_str << "rxpc -f " << filename << " -o " << rulesdir << "/snort3 --ptpb 0 -F -i";
 
-    return system(rxpc_cmd_str.str().c_str());
+    int ret = system(rxpc_cmd_str.str().c_str());
+    if (ret != RXP_STATUS_OK)
+    {
+        LogMessage("ERROR: %d failed to exec rxpc.\n", ret);
+        exit (ret);
+    }
+
+    return 0;
 }
 
 int RxpMpse::program_rule_file(const string& rulesdir)
@@ -426,10 +433,10 @@ static void rxp_setup(SnortConfig* sc)
 {
     // FIXIT-T: These file paths should be a configuration setting.
     RxpMpse::write_rule_file("/tmp/snort3.rules");
-    RxpMpse::build_rule_file("/tmp/snort3.rules", "/tmp/rules-dir");
+    RxpMpse::build_rule_file("/tmp/snort3.rules", "/tmp/snort-rof");
 
     RxpMpse::dpdk_init();
-    RxpMpse::program_rule_file("/tmp/rules-dir");
+    RxpMpse::program_rule_file("/tmp/snort-rof");
     rxp_enable(RxpMpse::portid);
 }
 
