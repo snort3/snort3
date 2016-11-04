@@ -376,11 +376,10 @@ int RxpMpse::build_rule_file(const string& filename, const string& rulesdir)
 
     rxpc_cmd_str << "rxpc -f " << filename << " -o " << rulesdir << "/snort3 --ptpb 0 -F -i";
 
-    int ret = system(rxpc_cmd_str.str().c_str());
-    if (ret != RXP_STATUS_OK)
+    if (system(rxpc_cmd_str.str().c_str()))
     {
-        LogMessage("ERROR: %d failed to exec rxpc.\n", ret);
-        exit (ret);
+        LogMessage("ERROR: failed to exec rxpc.\n");
+        exit(-1);
     }
 
     return 0;
