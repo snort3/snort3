@@ -320,7 +320,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0-a4 (Build 213) from 2.9.7-262
+o"  )~   Version 3.0.0-a4 (Build 217) from 2.9.7-262
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
@@ -1344,7 +1344,7 @@ Configuration:
 Peg counts:
 
   * detection.analyzed: packets sent to detection
-  * detection.slow searches: non-fast pattern rule evaluations
+  * detection.hard evals: non-fast pattern rule evaluations
   * detection.raw searches: fast pattern searches in raw packet data
   * detection.cooked searches: fast pattern searches in cooked packet
     data
@@ -1598,9 +1598,8 @@ Configuration:
     thresholding (usec) { 0: }
   * bool latency.packet.fastpath = false: fastpath expensive packets
     (max_time exceeded)
-  * enum latency.packet.action = alert_and_log: event action if
-    packet times out and is fastpathed { none | alert | log |
-    alert_and_log }
+  * enum latency.packet.action = none: event action if packet times
+    out and is fastpathed { none | alert | log | alert_and_log }
   * int latency.rule.max_time = 500: set timeout for rule evaluation
     (usec) { 0: }
   * bool latency.rule.suspend = false: temporarily suspend expensive
@@ -1609,9 +1608,8 @@ Configuration:
     of timeouts before suspending a rule { 1: }
   * int latency.rule.max_suspend_time = 30000: set max time for
     suspending a rule (ms, 0 means permanently disable rule) { 0: }
-  * enum latency.rule.action = alert_and_log: event action for rule
-    latency enable and suspend events { none | alert | log |
-    alert_and_log }
+  * enum latency.rule.action = none: event action for rule latency
+    enable and suspend events { none | alert | log | alert_and_log }
 
 Rules:
 
@@ -1811,9 +1809,8 @@ Configuration:
   * int rate_filter[].count = 1: number of events in interval before
     tripping { 0: }
   * int rate_filter[].seconds = 1: count interval { 0: }
-  * select rate_filter[].new_action = alert: take this action on
-    future hits until timeout { alert | drop | log | pass | | reject
-    | sdrop }
+  * enum rate_filter[].new_action = alert: take this action on future
+    hits until timeout { log | pass | alert | drop | block | reset }
   * int rate_filter[].timeout = 1: count interval { 0: }
   * string rate_filter[].apply_to: restrict filter to these addresses
     according to track
@@ -1874,8 +1871,6 @@ Configuration:
     prints uncompiled rule group information
   * bool search_engine.debug_print_rule_groups_compiled = false:
     prints compiled rule group information
-  * bool search_engine.debug_print_fast_pattern = false: print fast
-    pattern info for each rule
   * int search_engine.max_pattern_len = 0: truncate patterns when
     compiling into state machine (0 means no maximum) { 0: }
   * int search_engine.max_queue_events = 5: maximum number of
@@ -1886,10 +1881,12 @@ Configuration:
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
     algorithm - choose available search engine { ac_banded | ac_bnfa
     | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan }
-  * bool search_engine.split_any_any = false: evaluate any-any rules
-    separately to save memory
   * bool search_engine.search_optimize = true: tweak state machine
     construction for better performance
+  * bool search_engine.show_fast_patterns = false: print fast pattern
+    info for each rule
+  * bool search_engine.split_any_any = false: evaluate any-any rules
+    separately to save memory
 
 Peg counts:
 
@@ -2659,8 +2656,7 @@ Configuration:
   * string appid.conf: RNA configuration file
   * int appid.memcap = 268435456: time period for collecting and
     logging AppId statistics { 1048576:3221225472 }
-  * string appid.app_stats_filename: Filename for logging AppId
-    statistics
+  * bool appid.log_stats = false: enable logging of AppId statistics
   * int appid.app_stats_period = 300: time period for collecting and
     logging AppId statistics { 0: }
   * int appid.app_stats_rollover_size = 20971520: max file size for
@@ -2676,6 +2672,15 @@ Configuration:
     information
   * string appid.thirdparty_appid_dir: directory to load thirdparty
     AppId detectors from
+  * addr appid.session_log_filter.src_ip = 0.0.0.0/32: source ip
+    address in CIDR format
+  * addr appid.session_log_filter.dst_ip = 0.0.0.0/32: destination ip
+    address in CIDR format
+  * port appid.session_log_filter.src_port: source port { 1: }
+  * port appid.session_log_filter.dst_port: destination port { 1: }
+  * string appid.session_log_filter.protocol: ip protocol
+  * bool appid.session_log_filter.log_all_sessions = false: enable
+    logging for all appid sessions
 
 Peg counts:
 
@@ -2684,6 +2689,7 @@ Peg counts:
     inspector
   * appid.ignored packets: count of packets ignored by appid
     inspector
+  * appid.aim_clients: count of aim clients discovered by appid
   * appid.battlefield_flows: count of battle field flows discovered
     by appid
   * appid.bgp_flows: count of bgp flows discovered by appid
@@ -2692,9 +2698,12 @@ Peg counts:
   * appid.bit_flows: count of bittorrent flows discovered by appid
   * appid.bittracker_clients: count of bittorrent tracker clients
     discovered by appid
+  * appid.bootp_flows: count of bootp flows discovered by appid
   * appid.dcerpc_tcp_flows: count of dce rpc flows over tcp
     discovered by appid
   * appid.dcerpc_udp_flows: count of dce rpc flows over udp
+    discovered by appid
+  * appid.direct_connect_flows: count of direct connect flows
     discovered by appid
   * appid.dns_tcp_flows: count of dns flows over tcp discovered by
     appid
@@ -2702,6 +2711,7 @@ Peg counts:
     appid
   * appid.ftp_flows: count of ftp flows discovered by appid
   * appid.ftps_flows: count of ftps flows discovered by appid
+  * appid.http_flows: count of http flows discovered by appid
   * appid.imap_flows: count of imap service flows discovered by appid
   * appid.imaps_flows: count of imap TLS service flows discovered by
     appid
@@ -2713,13 +2723,30 @@ Peg counts:
   * appid.kerberos_users: count of kerberos users discovered by appid
   * appid.lpr_flows: count of lpr service flows discovered by appid
   * appid.mdns_flows: count of mdns service flows discovered by appid
+  * appid.msn_clients: count of msn clients discovered by appid
   * appid.mysql_flows: count of mysql service flows discovered by
     appid
-  * appid.netbios_flows: count of netbios service flows discovered by
-    appid
+  * appid.netbios_dgm_flows: count of netbios-dgm service flows
+    discovered by appid
+  * appid.netbios_ns_flows: count of netbios-ns service flows
+    discovered by appid
+  * appid.netbios_ssn_flows: count of netbios-ssn service flows
+    discovered by appid
+  * appid.nntp_flows: count of nntp flows discovered by appid
+  * appid.ntp_flows: count of ntp flows discovered by appid
   * appid.pop_flows: count of pop service flows discovered by appid
+  * appid.radius_flows: count of radius flows discovered by appid
+  * appid.rexec_flows: count of rexec flows discovered by appid
+  * appid.rfb_flows: count of rfb flows discovered by appid
+  * appid.rlogin_flows: count of rlogin flows discovered by appid
+  * appid.rpc_flows: count of rpc flows discovered by appid
+  * appid.rshell_flows: count of rshell flows discovered by appid
   * appid.rsync_flows: count of rsync service flows discovered by
     appid
+  * appid.rtmp_flows: count of rtmp flows discovered by appid
+  * appid.rtp_clients: count of rtp clients discovered by appid
+  * appid.sip_clients: count of SIP clients discovered by appid
+  * appid.sip_flows: count of SIP flows discovered by appid
   * appid.smtp_aol_clients: count of AOL smtp clients discovered by
     appid
   * appid.smtp_applemail_clients: count of Apple Mail smtp clients
@@ -2746,11 +2773,18 @@ Peg counts:
     discovered by appid
   * appid.smtp_flows: count of smtp flows discovered by appid
   * appid.smtps_flows: count of smtps flows discovered by appid
+  * appid.snmp_flows: count of snmp flows discovered by appid
   * appid.ssh_clients: count of ssh clients discovered by appid
   * appid.ssh_flows: count of ssh flows discovered by appid
   * appid.ssl_flows: count of ssl flows discovered by appid
   * appid.telnet_flows: count of telnet flows discovered by appid
+  * appid.tftp_flows: count of tftp flows discovered by appid
   * appid.timbuktu_flows: count of timbuktu flows discovered by appid
+  * appid.tns_clients: count of tns clients discovered by appid
+  * appid.tns_flows: count of tns flows discovered by appid
+  * appid.vnc_clients: count of vnc clients discovered by appid
+  * appid.yahoo_messenger_clients: count of Yahoo Messenger clients
+    discovered by appid
 
 
 5.2. arp_spoof
@@ -3297,6 +3331,8 @@ Configuration:
     commands
   * string ftp_server.data_chan_cmds: check the formatting of the
     given commands
+  * string ftp_server.data_rest_cmds: check the formatting of the
+    given commands
   * string ftp_server.data_xfer_cmds: check the formatting of the
     given commands
   * string ftp_server.directory_cmds[].dir_cmd: directory command
@@ -3514,6 +3550,7 @@ Rules:
     URI
   * 119:64 (http_inspect) HTTP chunk misformatted
   * 119:65 (http_inspect) White space following chunk length
+  * 119:66 (http_inspect) White space within header name
   * 119:67 (http_inspect) Excessive gzip compression
   * 119:68 (http_inspect) Gzip decompression failed
   * 119:69 (http_inspect) HTTP 0.9 requested followed by another
@@ -4423,6 +4460,7 @@ Configuration:
     | linux | bsd | bsd_right | last | windows | solaris }
   * int stream_ip.session_timeout = 30: session tracking timeout {
     1:86400 }
+  * int stream_ip.trace: mask for enabling debug traces in module
 
 Rules:
 
@@ -8266,9 +8304,11 @@ with.
   * Use FIXIT (not FIXTHIS or TODO or whatever) to mark things left
     for a day or even just a minute. That way we can find them easily
     and won’t lose track of them.
-  * Presently using FIXIT-X where X = P | H | M | L, indicating perf,
-    high, med, or low priority. For now, H, M, or L can indicate
-    alpha 1, 2, or 3. Perf changes fall between alpha 1 and 2.
+  * Presently using FIXIT-X where X = A | W | P | H | M | L,
+    indicating analysis, warning, perf, high, med, or low priority.
+    Place A and W comments on the exact warning line so we can match
+    up comments and build output. Supporting comments can be added
+    above.
   * Put the copyright(s) and license in a comment block at the top of
     each source file (.h and .cc). Don’t bother with trivial scripts
     and make foo. Some interesting Lua code should get a comment
@@ -8285,7 +8325,7 @@ with.
     // based on work by Ryan Jordan
 
   * Each header should have a comment immediately after the header
-    guard to give an overview of the file so the user knows what’s
+    guard to give an overview of the file so the reader knows what’s
     going on.
 
 
@@ -9211,8 +9251,6 @@ Some additional details to note:
     cons | ndelay | perror | pid }
   * string appid.app_detector_dir: directory to load AppId detectors
     from
-  * string appid.app_stats_filename: Filename for logging AppId
-    statistics
   * int appid.app_stats_period = 300: time period for collecting and
     logging AppId statistics { 0: }
   * int appid.app_stats_rollover_size = 20971520: max file size for
@@ -9225,9 +9263,19 @@ Some additional details to note:
     information
   * int appid.instance_id = 0: instance id - need more details for
     what this is { 0: }
+  * bool appid.log_stats = false: enable logging of AppId statistics
   * int appid.memcap = 268435456: time period for collecting and
     logging AppId statistics { 1048576:3221225472 }
   * string appids.~: appid option
+  * addr appid.session_log_filter.dst_ip = 0.0.0.0/32: destination ip
+    address in CIDR format
+  * port appid.session_log_filter.dst_port: destination port { 1: }
+  * bool appid.session_log_filter.log_all_sessions = false: enable
+    logging for all appid sessions
+  * string appid.session_log_filter.protocol: ip protocol
+  * addr appid.session_log_filter.src_ip = 0.0.0.0/32: source ip
+    address in CIDR format
+  * port appid.session_log_filter.src_port: source port { 1: }
   * string appid.thirdparty_appid_dir: directory to load thirdparty
     AppId detectors from
   * ip4 arp_spoof.hosts[].ip: host ip address
@@ -9545,6 +9593,8 @@ Some additional details to note:
     maximum for command { 0: }
   * string ftp_server.data_chan_cmds: check the formatting of the
     given commands
+  * string ftp_server.data_rest_cmds: check the formatting of the
+    given commands
   * string ftp_server.data_xfer_cmds: check the formatting of the
     given commands
   * int ftp_server.def_max_param_len = 100: default maximum length of
@@ -9781,16 +9831,14 @@ Some additional details to note:
     buffer
   * string itype.~range: check if icmp type is type | min<>max | <max
     | >min
-  * enum latency.packet.action = alert_and_log: event action if
-    packet times out and is fastpathed { none | alert | log |
-    alert_and_log }
+  * enum latency.packet.action = none: event action if packet times
+    out and is fastpathed { none | alert | log | alert_and_log }
   * bool latency.packet.fastpath = false: fastpath expensive packets
     (max_time exceeded)
   * int latency.packet.max_time = 500: set timeout for packet latency
     thresholding (usec) { 0: }
-  * enum latency.rule.action = alert_and_log: event action for rule
-    latency enable and suspend events { none | alert | log |
-    alert_and_log }
+  * enum latency.rule.action = none: event action for rule latency
+    enable and suspend events { none | alert | log | alert_and_log }
   * int latency.rule.max_suspend_time = 30000: set max time for
     suspending a rule (ms, 0 means permanently disable rule) { 0: }
   * int latency.rule.max_time = 500: set timeout for rule evaluation
@@ -10022,9 +10070,8 @@ Some additional details to note:
   * int rate_filter[].count = 1: number of events in interval before
     tripping { 0: }
   * int rate_filter[].gid = 1: rule generator ID { 0: }
-  * select rate_filter[].new_action = alert: take this action on
-    future hits until timeout { alert | drop | log | pass | | reject
-    | sdrop }
+  * enum rate_filter[].new_action = alert: take this action on future
+    hits until timeout { log | pass | alert | drop | block | reset }
   * int rate_filter[].seconds = 1: count interval { 0: }
   * int rate_filter[].sid = 1: rule signature ID { 0: }
   * int rate_filter[].timeout = 1: count interval { 0: }
@@ -10078,8 +10125,6 @@ Some additional details to note:
   * bool search_engine.bleedover_warnings_enabled = false: print
     warning if a rule is demoted to any-any port group
   * bool search_engine.debug = false: print verbose fast pattern info
-  * bool search_engine.debug_print_fast_pattern = false: print fast
-    pattern info for each rule
   * bool search_engine.debug_print_nocontent_rule_tests = false:
     print rule group info during packet evaluation
   * bool search_engine.debug_print_rule_group_build_details = false:
@@ -10102,6 +10147,8 @@ Some additional details to note:
     | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan }
   * bool search_engine.search_optimize = true: tweak state machine
     construction for better performance
+  * bool search_engine.show_fast_patterns = false: print fast pattern
+    info for each rule
   * bool search_engine.split_any_any = false: evaluate any-any rules
     separately to save memory
   * string seq.~range: check if tcp sequence number value is value |
@@ -10452,6 +10499,7 @@ Some additional details to note:
     | linux | bsd | bsd_right | last | windows | solaris }
   * int stream_ip.session_timeout = 30: session tracking timeout {
     1:86400 }
+  * int stream_ip.trace: mask for enabling debug traces in module
   * enum stream_reassemble.action: stop or start stream reassembly {
     disable|enable }
   * enum stream_reassemble.direction: action applies to the given
@@ -10580,6 +10628,7 @@ Some additional details to note:
 
 --------------
 
+  * appid.aim_clients: count of aim clients discovered by appid
   * appid.battlefield_flows: count of battle field flows discovered
     by appid
   * appid.bgp_flows: count of bgp flows discovered by appid
@@ -10588,9 +10637,12 @@ Some additional details to note:
   * appid.bit_flows: count of bittorrent flows discovered by appid
   * appid.bittracker_clients: count of bittorrent tracker clients
     discovered by appid
+  * appid.bootp_flows: count of bootp flows discovered by appid
   * appid.dcerpc_tcp_flows: count of dce rpc flows over tcp
     discovered by appid
   * appid.dcerpc_udp_flows: count of dce rpc flows over udp
+    discovered by appid
+  * appid.direct_connect_flows: count of direct connect flows
     discovered by appid
   * appid.dns_tcp_flows: count of dns flows over tcp discovered by
     appid
@@ -10598,6 +10650,7 @@ Some additional details to note:
     appid
   * appid.ftp_flows: count of ftp flows discovered by appid
   * appid.ftps_flows: count of ftps flows discovered by appid
+  * appid.http_flows: count of http flows discovered by appid
   * appid.ignored packets: count of packets ignored by appid
     inspector
   * appid.imap_flows: count of imap service flows discovered by appid
@@ -10611,16 +10664,33 @@ Some additional details to note:
   * appid.kerberos_users: count of kerberos users discovered by appid
   * appid.lpr_flows: count of lpr service flows discovered by appid
   * appid.mdns_flows: count of mdns service flows discovered by appid
+  * appid.msn_clients: count of msn clients discovered by appid
   * appid.mysql_flows: count of mysql service flows discovered by
     appid
-  * appid.netbios_flows: count of netbios service flows discovered by
-    appid
+  * appid.netbios_dgm_flows: count of netbios-dgm service flows
+    discovered by appid
+  * appid.netbios_ns_flows: count of netbios-ns service flows
+    discovered by appid
+  * appid.netbios_ssn_flows: count of netbios-ssn service flows
+    discovered by appid
+  * appid.nntp_flows: count of nntp flows discovered by appid
+  * appid.ntp_flows: count of ntp flows discovered by appid
   * appid.packets: count of packets received by appid inspector
   * appid.pop_flows: count of pop service flows discovered by appid
   * appid.processed packets: count of packets processed by appid
     inspector
+  * appid.radius_flows: count of radius flows discovered by appid
+  * appid.rexec_flows: count of rexec flows discovered by appid
+  * appid.rfb_flows: count of rfb flows discovered by appid
+  * appid.rlogin_flows: count of rlogin flows discovered by appid
+  * appid.rpc_flows: count of rpc flows discovered by appid
+  * appid.rshell_flows: count of rshell flows discovered by appid
   * appid.rsync_flows: count of rsync service flows discovered by
     appid
+  * appid.rtmp_flows: count of rtmp flows discovered by appid
+  * appid.rtp_clients: count of rtp clients discovered by appid
+  * appid.sip_clients: count of SIP clients discovered by appid
+  * appid.sip_flows: count of SIP flows discovered by appid
   * appid.smtp_aol_clients: count of AOL smtp clients discovered by
     appid
   * appid.smtp_applemail_clients: count of Apple Mail smtp clients
@@ -10647,11 +10717,18 @@ Some additional details to note:
   * appid.smtps_flows: count of smtps flows discovered by appid
   * appid.smtp_thunderbird_clients: count of Thunderbird smtp clients
     discovered by appid
+  * appid.snmp_flows: count of snmp flows discovered by appid
   * appid.ssh_clients: count of ssh clients discovered by appid
   * appid.ssh_flows: count of ssh flows discovered by appid
   * appid.ssl_flows: count of ssl flows discovered by appid
   * appid.telnet_flows: count of telnet flows discovered by appid
+  * appid.tftp_flows: count of tftp flows discovered by appid
   * appid.timbuktu_flows: count of timbuktu flows discovered by appid
+  * appid.tns_clients: count of tns clients discovered by appid
+  * appid.tns_flows: count of tns flows discovered by appid
+  * appid.vnc_clients: count of vnc clients discovered by appid
+  * appid.yahoo_messenger_clients: count of Yahoo Messenger clients
+    discovered by appid
   * arp_spoof.packets: total packets
   * back_orifice.packets: total packets
   * binder.allows: allow bindings
@@ -10819,6 +10896,7 @@ Some additional details to note:
     data
   * detection.event limit: events filtered
   * detection.file searches: fast pattern searches in file buffer
+  * detection.hard evals: non-fast pattern rule evaluations
   * detection.header searches: fast pattern searches in header buffer
   * detection.key searches: fast pattern searches in key buffer
   * detection.logged: logged packets
@@ -10828,7 +10906,6 @@ Some additional details to note:
   * detection.pkt searches: fast pattern searches in packet data
   * detection.queue limit: events not queued because queue full
   * detection.raw searches: fast pattern searches in raw packet data
-  * detection.slow searches: non-fast pattern rule evaluations
   * detection.total alerts: alerts including IP reputation
   * dnp3.dnp3 application pdus: total dnp3 application pdus
   * dnp3.dnp3 link layer frames: total dnp3 link layer frames
@@ -11544,6 +11621,7 @@ Some additional details to note:
     URI
   * 119:64 (http_inspect) HTTP chunk misformatted
   * 119:65 (http_inspect) White space following chunk length
+  * 119:66 (http_inspect) White space within header name
   * 119:67 (http_inspect) Excessive gzip compression
   * 119:68 (http_inspect) Gzip decompression failed
   * 119:69 (http_inspect) HTTP 0.9 requested followed by another

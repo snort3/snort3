@@ -779,7 +779,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0-a4 (Build 206) from 2.9.7-262
+o"  )~   Version 3.0.0-a4 (Build 217) from 2.9.7-262
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
@@ -1024,18 +1024,16 @@ settings, etc., you can also script Loggers and IpsOptions.</p></div>
 <div class="sect2">
 <h3 id="_new_http_inspector">New Http Inspector</h3>
 <div class="paragraph"><p>One of the major undertakings for Snort 3.0 is developing a completely new
-HTTP inspector. It is incomplete right now but you can examine the
-work-in-progress. You can configure it by adding:</p></div>
+HTTP inspector. You can configure it by adding:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>new_http_inspect = {}</code></pre>
+<pre><code>http_inspect = {}</code></pre>
 </div></div>
 <div class="paragraph"><p>to your snort.lua configuration file. Or you can read it in the source code
-under src/service_inspectors/nhttp_inspect.</p></div>
-<div class="paragraph"><p>The classic HTTP preprocessor is still available in the alpha release as
-http_inspect. It’s probably the better choice for now if you just want to
-do some work and do not feel like experimenting. Be sure not to configure
-    both old and new HTTP inspectors at the same time.</p></div>
+under src/service_inspectors/http_inspect.</p></div>
+<div class="paragraph"><p>The classic HTTP preprocessor is still available in the alpha release under
+extra. It has been renamed http_server. Be sure not to configure both old
+and new HTTP inspectors at the same time.</p></div>
 <div class="paragraph"><p>So why a new HTTP inspector?</p></div>
 <div class="paragraph"><p>For starters it is object-oriented. That’s good for us because we maintain
 this software. But it should also be really nice for open-source
@@ -1044,20 +1042,20 @@ processing without having to understand the whole thing. In fact much of
 the new HTTP inspector’s knowledge of HTTP is centralized in a series of
 tables where it can be easily reviewed and modified. Many significant
 changes can be made just by updating these tables.</p></div>
-<div class="paragraph"><p>New_http_inspect is the first inspector written specifically for the new
+<div class="paragraph"><p>Http_inspect is the first inspector written specifically for the new
 Snort 3.0 architecture. That provides access to one of the very best
-features of Snort 3.0: purely PDU-based inspection. Classic http_inspect
+features of Snort 3.0: purely PDU-based inspection. The classic preprocessor
 processes HTTP messages, but even while doing so it is constantly aware of
 IP packets and how they divide up the TCP data stream. The same HTTP
 message might be processed differently depending on how the sender (bad
 guy) divided it up into IP packets.</p></div>
-<div class="paragraph"><p>New_http_inspect is free of this burden and can focus exclusively on HTTP.
-That makes it much more simple, easier to test, and less prone to false
+<div class="paragraph"><p>Http_inspect is free of this burden and can focus exclusively on HTTP.
+That makes it much simpler, easier to test, and less prone to false
 positives. It also greatly reduces the opportunity for adversaries to probe
 the inspector for weak spots by adjusting packet boundaries to disguise bad
 behavior.</p></div>
 <div class="paragraph"><p>Dealing solely with HTTP messages also opens the door for developing major
-new features. The new_http_inspect design supports true stateful
+new features. The http_inspect design supports true stateful
 processing. Want to ask questions that involve both the client request and
 the server response? Or different requests in the same session? These
 things are possible.</p></div>
@@ -1067,10 +1065,9 @@ the name, it is better to think of HTTP/2 not as a newer version of
 HTTP/1.1, but rather a separate protocol layer that runs under HTTP/1.1 and
 on top of TLS or TCP. It’s a perfect fit for the new Snort 3.0 architecture
 because a new HTTP/2 inspector would naturally output HTTP/1.1 messages but
-not any underlying packets. Exactly what the new_http_inspect wants to
-input.</p></div>
-<div class="paragraph"><p>New_http_inspect is taking a very different approach to HTTP header fields.
-Classic http_inspect divides all the HTTP headers following the start line
+not any underlying packets. Exactly what http_inspect wants to input.</p></div>
+<div class="paragraph"><p>Http_inspect is taking a very different approach to HTTP header fields.
+The classic preprocessor divides all the HTTP headers following the start line
 into cookies and everything else. It normalizes the two pieces using a
 generic process and puts them in buffers that one can write rules against.
 There is some limited support for examining individual headers within the
@@ -1082,7 +1079,9 @@ normalization means put that date in a standard format.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_binder_and_wizard">Binder and Wizard</h3>
-<div class="paragraph"><p>One of the fundamental differences between Snort and Snort++ concerns configuration related to networks and ports.  Here is a brief review of Snort&#8217;s configuration for network and service related components:</p></div>
+<div class="paragraph"><p>One of the fundamental differences between Snort and Snort++ concerns configuration
+related to networks and ports. Here is a brief review of Snort&#8217;s configuration for
+network and service related components:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -2477,7 +2476,7 @@ bool <strong>daq.no_promisc</strong> = false: whether to put DAQ device into pro
 </li>
 <li>
 <p>
-<strong>116:468</strong> (decode) too many protocols present
+<strong>116:472</strong> (decode) too many protocols present
 </p>
 </li>
 </ul></div>
@@ -2518,7 +2517,7 @@ int <strong>detection.pcre_match_limit_recursion</strong> = 1500: limit pcre sta
 </li>
 <li>
 <p>
-<strong>detection.slow searches</strong>: non-fast pattern rule evaluations
+<strong>detection.hard evals</strong>: non-fast pattern rule evaluations
 </p>
 </li>
 <li>
@@ -2728,6 +2727,11 @@ int <strong>file_id.capture_min_size</strong> = 0: stop file capture if file siz
 <li>
 <p>
 int <strong>file_id.capture_block_size</strong> = 32768: file capture block size in bytes { 8: }
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.max_files_cached</strong> = 65536: maximal number of files cached in memory { 8: }
 </p>
 </li>
 <li>
@@ -3067,7 +3071,7 @@ bool <strong>latency.packet.fastpath</strong> = false: fastpath expensive packet
 </li>
 <li>
 <p>
-enum <strong>latency.packet.action</strong> = alert_and_log: event action if packet times out and is fastpathed { none | alert | log | alert_and_log }
+enum <strong>latency.packet.action</strong> = none: event action if packet times out and is fastpathed { none | alert | log | alert_and_log }
 </p>
 </li>
 <li>
@@ -3092,7 +3096,7 @@ int <strong>latency.rule.max_suspend_time</strong> = 30000: set max time for sus
 </li>
 <li>
 <p>
-enum <strong>latency.rule.action</strong> = alert_and_log: event action for rule latency enable and suspend events { none | alert | log | alert_and_log }
+enum <strong>latency.rule.action</strong> = none: event action for rule latency enable and suspend events { none | alert | log | alert_and_log }
 </p>
 </li>
 </ul></div>
@@ -3118,27 +3122,37 @@ enum <strong>latency.rule.action</strong> = alert_and_log: event action for rule
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>latency.total_packets</strong>: total packets monitored
+<strong>latency.total packets</strong>: total packets monitored
 </p>
 </li>
 <li>
 <p>
-<strong>latency.packet_timeouts</strong>: packets that timed out
+<strong>latency.total usecs</strong>: total usecs elapsed
 </p>
 </li>
 <li>
 <p>
-<strong>latency.total_rule_evals</strong>: total rule evals monitored
+<strong>latency.max usecs</strong>: maximum usecs elapsed
 </p>
 </li>
 <li>
 <p>
-<strong>latency.rule_eval_timeouts</strong>: rule evals that timed out
+<strong>latency.packet timeouts</strong>: packets that timed out
 </p>
 </li>
 <li>
 <p>
-<strong>latency.rule_tree_enables</strong>: rule tree re-enables
+<strong>latency.total rule evals</strong>: total rule evals monitored
+</p>
+</li>
+<li>
+<p>
+<strong>latency.rule eval timeouts</strong>: rule evals that timed out
+</p>
+</li>
+<li>
+<p>
+<strong>latency.rule tree enables</strong>: rule tree re-enables
 </p>
 </li>
 </ul></div>
@@ -3469,7 +3483,7 @@ int <strong>rate_filter[].seconds</strong> = 1: count interval { 0: }
 </li>
 <li>
 <p>
-select <strong>rate_filter[].new_action</strong> = alert: take this action on future hits until timeout { alert | drop | log | pass | | reject | sdrop }
+enum <strong>rate_filter[].new_action</strong> = alert: take this action on future hits until timeout { log | pass | alert | drop | block | reset }
 </p>
 </li>
 <li>
@@ -3573,11 +3587,6 @@ bool <strong>search_engine.debug_print_rule_groups_compiled</strong> = false: pr
 </li>
 <li>
 <p>
-bool <strong>search_engine.debug_print_fast_pattern</strong> = false: print fast pattern info for each rule
-</p>
-</li>
-<li>
-<p>
 int <strong>search_engine.max_pattern_len</strong> = 0: truncate patterns when compiling into state machine (0 means no maximum) { 0: }
 </p>
 </li>
@@ -3598,12 +3607,17 @@ dynamic <strong>search_engine.search_method</strong> = ac_bnfa: set fast pattern
 </li>
 <li>
 <p>
-bool <strong>search_engine.split_any_any</strong> = false: evaluate any-any rules separately to save memory
+bool <strong>search_engine.search_optimize</strong> = true: tweak state machine construction for better performance
 </p>
 </li>
 <li>
 <p>
-bool <strong>search_engine.search_optimize</strong> = true: tweak state machine construction for better performance
+bool <strong>search_engine.show_fast_patterns</strong> = false: print fast pattern info for each rule
+</p>
+</li>
+<li>
+<p>
+bool <strong>search_engine.split_any_any</strong> = false: evaluate any-any rules separately to save memory
 </p>
 </li>
 </ul></div>
@@ -3655,6 +3669,11 @@ bit_list <strong>side_channel.ports</strong>: side channel message port list { 6
 <li>
 <p>
 string <strong>side_channel.connectors[].connector</strong>: connector handle
+</p>
+</li>
+<li>
+<p>
+string <strong>side_channel.connector</strong>: connector handle
 </p>
 </li>
 </ul></div>
@@ -3834,11 +3853,6 @@ implied <strong>snort.-v</strong>: be verbose
 <li>
 <p>
 implied <strong>snort.-W</strong>: lists available interfaces
-</p>
-</li>
-<li>
-<p>
-implied <strong>snort.-w</strong>: dump 802.11 management and control frames
 </p>
 </li>
 <li>
@@ -4386,6 +4400,34 @@ protocol decoding, anomaly detection, and construction of active responses.</p><
 <li>
 <p>
 <strong>116:466</strong> (auth) bad authentication header length
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_ciscometadata">ciscometadata</h3>
+<div class="paragraph"><p>What: support for cisco metadata</p></div>
+<div class="paragraph"><p>Type: codec</p></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>116:468</strong> (ciscometadata) truncated Cisco Metadata header
+</p>
+</li>
+<li>
+<p>
+<strong>116:469</strong> (ciscometadata) invalid Cisco Metadata option length
+</p>
+</li>
+<li>
+<p>
+<strong>116:470</strong> (ciscometadata) invalid Cisco Metadata option type
+</p>
+</li>
+<li>
+<p>
+<strong>116:471</strong> (ciscometadata) invalid Cisco Metadata SGT
 </p>
 </li>
 </ul></div>
@@ -5346,7 +5388,7 @@ int <strong>appid.memcap</strong> = 268435456: time period for collecting and lo
 </li>
 <li>
 <p>
-string <strong>appid.app_stats_filename</strong>: Filename for logging AppId statistics
+bool <strong>appid.log_stats</strong> = false: enable logging of AppId statistics
 </p>
 </li>
 <li>
@@ -5389,12 +5431,57 @@ bool <strong>appid.dump_ports</strong> = false: enable dump of AppId port inform
 string <strong>appid.thirdparty_appid_dir</strong>: directory to load thirdparty AppId detectors from
 </p>
 </li>
+<li>
+<p>
+addr <strong>appid.session_log_filter.src_ip</strong> = 0.0.0.0/32: source ip address in CIDR format
+</p>
+</li>
+<li>
+<p>
+addr <strong>appid.session_log_filter.dst_ip</strong> = 0.0.0.0/32: destination ip address in CIDR format
+</p>
+</li>
+<li>
+<p>
+port <strong>appid.session_log_filter.src_port</strong>: source port { 1: }
+</p>
+</li>
+<li>
+<p>
+port <strong>appid.session_log_filter.dst_port</strong>: destination port { 1: }
+</p>
+</li>
+<li>
+<p>
+string <strong>appid.session_log_filter.protocol</strong>: ip protocol
+</p>
+</li>
+<li>
+<p>
+bool <strong>appid.session_log_filter.log_all_sessions</strong> = false: enable logging for all appid sessions
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>appid.packets</strong>: count of packets processed by appid
+<strong>appid.packets</strong>: count of packets received by appid inspector
+</p>
+</li>
+<li>
+<p>
+<strong>appid.processed packets</strong>: count of packets processed by appid inspector
+</p>
+</li>
+<li>
+<p>
+<strong>appid.ignored packets</strong>: count of packets ignored by appid inspector
+</p>
+</li>
+<li>
+<p>
+<strong>appid.aim_clients</strong>: count of aim clients discovered by appid
 </p>
 </li>
 <li>
@@ -5424,12 +5511,22 @@ string <strong>appid.thirdparty_appid_dir</strong>: directory to load thirdparty
 </li>
 <li>
 <p>
+<strong>appid.bootp_flows</strong>: count of bootp flows discovered by appid
+</p>
+</li>
+<li>
+<p>
 <strong>appid.dcerpc_tcp_flows</strong>: count of dce rpc flows over tcp discovered by appid
 </p>
 </li>
 <li>
 <p>
 <strong>appid.dcerpc_udp_flows</strong>: count of dce rpc flows over udp discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.direct_connect_flows</strong>: count of direct connect flows discovered by appid
 </p>
 </li>
 <li>
@@ -5450,6 +5547,11 @@ string <strong>appid.thirdparty_appid_dir</strong>: directory to load thirdparty
 <li>
 <p>
 <strong>appid.ftps_flows</strong>: count of ftps flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.http_flows</strong>: count of http flows discovered by appid
 </p>
 </li>
 <li>
@@ -5494,17 +5596,157 @@ string <strong>appid.thirdparty_appid_dir</strong>: directory to load thirdparty
 </li>
 <li>
 <p>
+<strong>appid.msn_clients</strong>: count of msn clients discovered by appid
+</p>
+</li>
+<li>
+<p>
 <strong>appid.mysql_flows</strong>: count of mysql service flows discovered by appid
 </p>
 </li>
 <li>
 <p>
-<strong>appid.netbios_flows</strong>: count of netbios service flows discovered by appid
+<strong>appid.netbios_dgm_flows</strong>: count of netbios-dgm service flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.netbios_ns_flows</strong>: count of netbios-ns service flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.netbios_ssn_flows</strong>: count of netbios-ssn service flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.nntp_flows</strong>: count of nntp flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.ntp_flows</strong>: count of ntp flows discovered by appid
 </p>
 </li>
 <li>
 <p>
 <strong>appid.pop_flows</strong>: count of pop service flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.radius_flows</strong>: count of radius flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rexec_flows</strong>: count of rexec flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rfb_flows</strong>: count of rfb flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rlogin_flows</strong>: count of rlogin flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rpc_flows</strong>: count of rpc flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rshell_flows</strong>: count of rshell flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rsync_flows</strong>: count of rsync service flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rtmp_flows</strong>: count of rtmp flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rtp_clients</strong>: count of rtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.sip_clients</strong>: count of SIP clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.sip_flows</strong>: count of SIP flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_aol_clients</strong>: count of AOL smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_applemail_clients</strong>: count of Apple Mail smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_eudora_clients</strong>: count of Eudora smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_eudora_pro_clients</strong>: count of Eudora Pro smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_evolution_clients</strong>: count of Evolution smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_kmail_clients</strong>: count of KMail smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_lotus_notes_clients</strong>: count of Lotus Notes smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_microsoft_outlook_clients</strong>: count of Microsoft Outlook smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_microsoft_outlook_express_clients</strong>: count of Microsoft Outlook Express smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_microsoft_outlook_imo_clients</strong>: count of Microsoft Outlook IMO smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_mutt_clients</strong>: count of Mutt smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_thunderbird_clients</strong>: count of Thunderbird smtp clients discovered by appid
 </p>
 </li>
 <li>
@@ -5515,6 +5757,11 @@ string <strong>appid.thirdparty_appid_dir</strong>: directory to load thirdparty
 <li>
 <p>
 <strong>appid.smtps_flows</strong>: count of smtps flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.snmp_flows</strong>: count of snmp flows discovered by appid
 </p>
 </li>
 <li>
@@ -5539,7 +5786,32 @@ string <strong>appid.thirdparty_appid_dir</strong>: directory to load thirdparty
 </li>
 <li>
 <p>
+<strong>appid.tftp_flows</strong>: count of tftp flows discovered by appid
+</p>
+</li>
+<li>
+<p>
 <strong>appid.timbuktu_flows</strong>: count of timbuktu flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.tns_clients</strong>: count of tns clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.tns_flows</strong>: count of tns flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.vnc_clients</strong>: count of vnc clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.yahoo_messenger_clients</strong>: count of Yahoo Messenger clients discovered by appid
 </p>
 </li>
 </ul></div>
@@ -5791,6 +6063,11 @@ int <strong>dce_smb.smb_file_depth</strong> = 16384:  SMB file depth for file da
 string <strong>dce_smb.smb_invalid_shares</strong>: SMB shares to alert on
 </p>
 </li>
+<li>
+<p>
+bool <strong>dce_smb.smb_legacy_mode</strong> = false: inspect only SMBv1
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Rules:</p></div>
 <div class="ulist"><ul>
@@ -6039,6 +6316,16 @@ string <strong>dce_smb.smb_invalid_shares</strong>: SMB shares to alert on
 <strong>133:57</strong> (dce_smb) SMB - Client attempted to create or set a file&#8217;s attributes to readonly/hidden/system.
 </p>
 </li>
+<li>
+<p>
+<strong>133:58</strong> (dce_smb) SMB - File offset provided is greater than file size specified
+</p>
+</li>
+<li>
+<p>
+<strong>133:59</strong> (dce_smb) SMB - Next command specified in SMB2 header is beyond payload boundary
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Peg counts:</p></div>
 <div class="ulist"><ul>
@@ -6204,6 +6491,11 @@ string <strong>dce_smb.smb_invalid_shares</strong>: SMB shares to alert on
 </li>
 <li>
 <p>
+<strong>dce_smb.Ignored bytes</strong>: total ignored bytes
+</p>
+</li>
+<li>
+<p>
 <strong>dce_smb.Client segs reassembled</strong>: total smb client segments reassembled
 </p>
 </li>
@@ -6220,6 +6512,41 @@ string <strong>dce_smb.smb_invalid_shares</strong>: SMB shares to alert on
 <li>
 <p>
 <strong>dce_smb.Files processed</strong>: total smb files processed
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 create</strong>: total number of SMBv2 create packets seen
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 write</strong>: total number of SMBv2 write packets seen
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 read</strong>: total number of SMBv2 read packets seen
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 set info</strong>: total number of SMBv2 set info packets seen
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 tree connect</strong>: total number of SMBv2 tree connect packets seen
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 tree disconnect</strong>: total number of SMBv2 tree disconnect packets seen
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 close</strong>: total number of SMBv2 close packets seen
 </p>
 </li>
 </ul></div>
@@ -6479,6 +6806,165 @@ enum <strong>dce_tcp.policy</strong> = WinXP:  Target based policy to use { Win2
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_dce_udp">dce_udp</h3>
+<div class="paragraph"><p>What: dce over udp inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+bool <strong>dce_udp.disable_defrag</strong> = false:  Disable DCE/RPC defragmentation
+</p>
+</li>
+<li>
+<p>
+int <strong>dce_udp.max_frag_len</strong> = 65535:  Maximum fragment size for defragmentation { 1514:65535 }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>133:40</strong> (dce_udp) Connection-less DCE/RPC - Invalid major version.
+</p>
+</li>
+<li>
+<p>
+<strong>133:41</strong> (dce_udp) Connection-less DCE/RPC - Invalid pdu type.
+</p>
+</li>
+<li>
+<p>
+<strong>133:42</strong> (dce_udp) Connection-less DCE/RPC - Data length less than header size.
+</p>
+</li>
+<li>
+<p>
+<strong>133:43</strong> (dce_udp) Connection-less DCE/RPC - Bad sequence number.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>dce_udp.events</strong>: total events
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.aborted sessions</strong>: total aborted sessions
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.bad autodetects</strong>: total bad autodetects
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.udp sessions</strong>: total udp sessions
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.udp packets</strong>: total udp packets
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Requests</strong>: total connection-less requests
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Acks</strong>: total connection-less acks
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Cancels</strong>: total connection-less cancels
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Client facks</strong>: total connection-less client facks
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Ping</strong>: total connection-less ping
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Responses</strong>: total connection-less responses
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Rejects</strong>: total connection-less rejects
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Cancel acks</strong>: total connection-less cancel acks
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Server facks</strong>: total connection-less server facks
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Faults</strong>: total connection-less faults
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.No calls</strong>: total connection-less no calls
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Working</strong>: total connection-less working
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Other requests</strong>: total connection-less other requests
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Other responses</strong>: total connection-less other responses
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Fragments</strong>: total connection-less fragments
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Max fragment size</strong>: connection-less maximum fragment size
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Frags reassembled</strong>: total connection-less fragments reassembled
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Max seqnum</strong>: max connection-less seqnum
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_dnp3">dnp3</h3>
 <div class="paragraph"><p>What: dnp3 inspection</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -6689,6 +7175,11 @@ string <strong>ftp_server.chk_str_fmt</strong>: check the formatting of the give
 <li>
 <p>
 string <strong>ftp_server.data_chan_cmds</strong>: check the formatting of the given commands
+</p>
+</li>
+<li>
+<p>
+string <strong>ftp_server.data_rest_cmds</strong>: check the formatting of the given commands
 </p>
 </li>
 <li>
@@ -6937,6 +7428,11 @@ int <strong>http_inspect.response_depth</strong> = -1: maximum response message 
 <li>
 <p>
 bool <strong>http_inspect.unzip</strong> = true: decompress gzip and deflate message bodies
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.normalize_utf</strong> = true: normalize charset utf encodings
 </p>
 </li>
 <li>
@@ -7359,6 +7855,11 @@ bool <strong>http_inspect.show_pegs</strong> = true: display peg counts with tes
 </li>
 <li>
 <p>
+<strong>119:66</strong> (http_inspect) White space within header name
+</p>
+</li>
+<li>
+<p>
 <strong>119:67</strong> (http_inspect) Excessive gzip compression
 </p>
 </li>
@@ -7400,6 +7901,21 @@ bool <strong>http_inspect.show_pegs</strong> = true: display peg counts with tes
 <li>
 <p>
 <strong>119:75</strong> (http_inspect) Misformatted HTTP traffic
+</p>
+</li>
+<li>
+<p>
+<strong>119:76</strong> (http_inspect) Unsupported Transfer-Encoding or Content-Encoding used
+</p>
+</li>
+<li>
+<p>
+<strong>119:77</strong> (http_inspect) Unknown Transfer-Encoding or Content-Encoding used
+</p>
+</li>
+<li>
+<p>
+<strong>119:78</strong> (http_inspect) Multiple layers of compression encodings applied
 </p>
 </li>
 </ul></div>
@@ -9493,6 +10009,11 @@ int <strong>ssl.max_heartbeat_length</strong> = 0: maximum length of heartbeat r
 <div class="ulist"><ul>
 <li>
 <p>
+bool <strong>stream.ip_frags_only</strong> = false: don&#8217;t process non-frag flows
+</p>
+</li>
+<li>
+<p>
 int <strong>stream.ip_cache.max_sessions</strong> = 16384: maximum simultaneous sessions tracked before pruning { 2: }
 </p>
 </li>
@@ -9508,12 +10029,7 @@ int <strong>stream.ip_cache.idle_timeout</strong> = 180: maximum inactive time b
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.cleanup_pct</strong> = 5: percent of cache to clean when max_sessions is reached { 1:100 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.icmp_cache.max_sessions</strong> = 32768: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.icmp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 2: }
 </p>
 </li>
 <li>
@@ -9528,12 +10044,7 @@ int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.cleanup_pct</strong> = 5: percent of cache to clean when max_sessions is reached { 1:100 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.tcp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.tcp_cache.max_sessions</strong> = 262144: maximum simultaneous sessions tracked before pruning { 2: }
 </p>
 </li>
 <li>
@@ -9548,12 +10059,7 @@ int <strong>stream.tcp_cache.idle_timeout</strong> = 180: maximum inactive time 
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.cleanup_pct</strong> = 5: percent of cache to clean when max_sessions is reached { 1:100 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.udp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.udp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 2: }
 </p>
 </li>
 <li>
@@ -9564,11 +10070,6 @@ int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive tim
 <li>
 <p>
 int <strong>stream.udp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.udp_cache.cleanup_pct</strong> = 5: percent of cache to clean when max_sessions is reached { 1:100 }
 </p>
 </li>
 <li>
@@ -9588,11 +10089,6 @@ int <strong>stream.user_cache.idle_timeout</strong> = 180: maximum inactive time
 </li>
 <li>
 <p>
-int <strong>stream.user_cache.cleanup_pct</strong> = 5: percent of cache to clean when max_sessions is reached { 1:100 }
-</p>
-</li>
-<li>
-<p>
 int <strong>stream.file_cache.max_sessions</strong> = 128: maximum simultaneous sessions tracked before pruning { 2: }
 </p>
 </li>
@@ -9604,11 +10100,6 @@ int <strong>stream.file_cache.pruning_timeout</strong> = 30: minimum inactive ti
 <li>
 <p>
 int <strong>stream.file_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clean when max_sessions is reached { 1:100 }
 </p>
 </li>
 </ul></div>
@@ -9626,7 +10117,7 @@ int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clea
 </li>
 <li>
 <p>
-<strong>stream.ip timeout prunes</strong>: ip sessions pruned due to timeout
+<strong>stream.ip idle prunes</strong>: ip sessions pruned due to timeout
 </p>
 </li>
 <li>
@@ -9651,7 +10142,7 @@ int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clea
 </li>
 <li>
 <p>
-<strong>stream.ip user prunes</strong>: ip sessions pruned for other reasons
+<strong>stream.ip ha prunes</strong>: ip sessions pruned by high availability sync
 </p>
 </li>
 <li>
@@ -9666,7 +10157,7 @@ int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clea
 </li>
 <li>
 <p>
-<strong>stream.icmp timeout prunes</strong>: icmp sessions pruned due to timeout
+<strong>stream.icmp idle prunes</strong>: icmp sessions pruned due to timeout
 </p>
 </li>
 <li>
@@ -9691,7 +10182,7 @@ int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clea
 </li>
 <li>
 <p>
-<strong>stream.icmp user prunes</strong>: icmp sessions pruned for other reasons
+<strong>stream.icmp ha prunes</strong>: icmp sessions pruned by high availability sync
 </p>
 </li>
 <li>
@@ -9706,7 +10197,7 @@ int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clea
 </li>
 <li>
 <p>
-<strong>stream.tcp timeout prunes</strong>: tcp sessions pruned due to timeout
+<strong>stream.tcp idle prunes</strong>: tcp sessions pruned due to timeout
 </p>
 </li>
 <li>
@@ -9731,7 +10222,7 @@ int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clea
 </li>
 <li>
 <p>
-<strong>stream.tcp user prunes</strong>: tcp sessions pruned for other reasons
+<strong>stream.tcp ha prunes</strong>: tcp sessions pruned by high availability sync
 </p>
 </li>
 <li>
@@ -9746,7 +10237,7 @@ int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clea
 </li>
 <li>
 <p>
-<strong>stream.udp timeout prunes</strong>: udp sessions pruned due to timeout
+<strong>stream.udp idle prunes</strong>: udp sessions pruned due to timeout
 </p>
 </li>
 <li>
@@ -9771,7 +10262,7 @@ int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clea
 </li>
 <li>
 <p>
-<strong>stream.udp user prunes</strong>: udp sessions pruned for other reasons
+<strong>stream.udp ha prunes</strong>: udp sessions pruned by high availability sync
 </p>
 </li>
 <li>
@@ -9786,7 +10277,7 @@ int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clea
 </li>
 <li>
 <p>
-<strong>stream.user timeout prunes</strong>: user sessions pruned due to timeout
+<strong>stream.user idle prunes</strong>: user sessions pruned due to timeout
 </p>
 </li>
 <li>
@@ -9811,7 +10302,7 @@ int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clea
 </li>
 <li>
 <p>
-<strong>stream.user user prunes</strong>: user sessions pruned for other reasons
+<strong>stream.user ha prunes</strong>: user sessions pruned by high availability sync
 </p>
 </li>
 <li>
@@ -9826,7 +10317,7 @@ int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clea
 </li>
 <li>
 <p>
-<strong>stream.file timeout prunes</strong>: file sessions pruned due to timeout
+<strong>stream.file idle prunes</strong>: file sessions pruned due to timeout
 </p>
 </li>
 <li>
@@ -9851,7 +10342,7 @@ int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clea
 </li>
 <li>
 <p>
-<strong>stream.file user prunes</strong>: file sessions pruned for other reasons
+<strong>stream.file ha prunes</strong>: file sessions pruned by high availability sync
 </p>
 </li>
 </ul></div>
@@ -9951,6 +10442,11 @@ enum <strong>stream_ip.policy</strong> = linux: fragment reassembly policy { fir
 int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
 </p>
 </li>
+<li>
+<p>
+int <strong>stream_ip.trace</strong>: mask for enabling debug traces in module
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Rules:</p></div>
 <div class="ulist"><ul>
@@ -10044,12 +10540,12 @@ int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 
 </li>
 <li>
 <p>
-<strong>stream_ip.total</strong>: total fragments
+<strong>stream_ip.total frags</strong>: total fragments
 </p>
 </li>
 <li>
 <p>
-<strong>stream_ip.current</strong>: current fragments
+<strong>stream_ip.current frags</strong>: current fragments
 </p>
 </li>
 <li>
@@ -12179,17 +12675,17 @@ int <strong>rev.~</strong>: revision { 1: }
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>rpc.~app</strong>: application number
+int <strong>rpc.~app</strong>: application number
 </p>
 </li>
 <li>
 <p>
-string <strong>rpc.~ver</strong>: version number or * for any
+int <strong>rpc.ver</strong>: version number or * for any
 </p>
 </li>
 <li>
 <p>
-string <strong>rpc.~proc</strong>: procedure number or * for any
+int <strong>rpc.proc</strong>: procedure number or * for any
 </p>
 </li>
 </ul></div>
@@ -14208,8 +14704,6 @@ configure can be found by running the following command:</p></div>
 <div class="content">
 <pre><code>snort --help-config http_inspect | grep http_inspect.profile</code></pre>
 </div></div>
-<div class="paragraph"><p>The new Http Inspect (new_http_inspect) implementation of config options is
-still under development.</p></div>
 </div>
 </div>
 </div>
@@ -15976,6 +16470,12 @@ The goal is to have highly readable class declarations.  The user
   available to the client.
 </p>
 </li>
+<li>
+<p>
+Any using statements in source files should be added only after all
+  includes have been declared.
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -15990,6 +16490,12 @@ Use camel case for namespaces, classes, and types like WhizBangPdfChecker.
 <p>
 Use lower case identifiers with underscore separators, e.g. some_function()
   and my_var.
+</p>
+</li>
+<li>
+<p>
+Do not start or end variable names with an underscore.  This has a good
+  chance of conflicting with macro and/or system definitions.
 </p>
 </li>
 <li>
@@ -16050,9 +16556,10 @@ Use FIXIT (not FIXTHIS or TODO or whatever) to mark things left for a
 </li>
 <li>
 <p>
-Presently using FIXIT-X where X = P | H | M | L, indicating perf, high,
-  med, or low priority.  For now, H, M, or L can indicate alpha 1, 2, or 3.
-  Perf changes fall between alpha 1 and 2.
+Presently using FIXIT-X where X = A | W | P | H | M | L, indicating analysis,
+  warning, perf, high, med, or low priority.  Place A and W comments on the
+  exact warning line so we can match up comments and build output.  Supporting
+  comments can be added above.
 </p>
 </li>
 <li>
@@ -16080,7 +16587,7 @@ Put author, description, etc. in separate comment(s) following the
 <li>
 <p>
 Each header should have a comment immediately after the header guard to
-  give an overview of the file so the user knows what&#8217;s going on.
+  give an overview of the file so the reader knows what&#8217;s going on.
 </p>
 </li>
 </ul></div>
@@ -17597,11 +18104,6 @@ libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-w</strong> dump 802.11 management and control frames
-</p>
-</li>
-<li>
-<p>
 <strong>-W</strong> lists available interfaces
 </p>
 </li>
@@ -17958,11 +18460,6 @@ string <strong>appid.app_detector_dir</strong>: directory to load AppId detector
 </li>
 <li>
 <p>
-string <strong>appid.app_stats_filename</strong>: Filename for logging AppId statistics
-</p>
-</li>
-<li>
-<p>
 int <strong>appid.app_stats_period</strong> = 300: time period for collecting and logging AppId statistics { 0: }
 </p>
 </li>
@@ -17998,12 +18495,47 @@ int <strong>appid.instance_id</strong> = 0: instance id - need more details for 
 </li>
 <li>
 <p>
+bool <strong>appid.log_stats</strong> = false: enable logging of AppId statistics
+</p>
+</li>
+<li>
+<p>
 int <strong>appid.memcap</strong> = 268435456: time period for collecting and logging AppId statistics { 1048576:3221225472 }
 </p>
 </li>
 <li>
 <p>
 string <strong>appids.~</strong>: appid option
+</p>
+</li>
+<li>
+<p>
+addr <strong>appid.session_log_filter.dst_ip</strong> = 0.0.0.0/32: destination ip address in CIDR format
+</p>
+</li>
+<li>
+<p>
+port <strong>appid.session_log_filter.dst_port</strong>: destination port { 1: }
+</p>
+</li>
+<li>
+<p>
+bool <strong>appid.session_log_filter.log_all_sessions</strong> = false: enable logging for all appid sessions
+</p>
+</li>
+<li>
+<p>
+string <strong>appid.session_log_filter.protocol</strong>: ip protocol
+</p>
+</li>
+<li>
+<p>
+addr <strong>appid.session_log_filter.src_ip</strong> = 0.0.0.0/32: source ip address in CIDR format
+</p>
+</li>
+<li>
+<p>
+port <strong>appid.session_log_filter.src_port</strong>: source port { 1: }
 </p>
 </li>
 <li>
@@ -18523,6 +19055,11 @@ string <strong>dce_smb.smb_invalid_shares</strong>: SMB shares to alert on
 </li>
 <li>
 <p>
+bool <strong>dce_smb.smb_legacy_mode</strong> = false: inspect only SMBv1
+</p>
+</li>
+<li>
+<p>
 int <strong>dce_smb.smb_max_chain</strong> = 3:  SMB max chain size { 0:255 }
 </p>
 </li>
@@ -18554,6 +19091,16 @@ enum <strong>dce_tcp.policy</strong> = WinXP:  Target based policy to use { Win2
 <li>
 <p>
 int <strong>dce_tcp.reassemble_threshold</strong> = 0:  Minimum bytes received before performing reassembly { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>dce_udp.disable_defrag</strong> = false:  Disable DCE/RPC defragmentation
+</p>
+</li>
+<li>
+<p>
+int <strong>dce_udp.max_frag_len</strong> = 65535:  Maximum fragment size for defragmentation { 1514:65535 }
 </p>
 </li>
 <li>
@@ -18823,6 +19370,11 @@ int <strong>file_id.lookup_timeout</strong> = 2: give up on lookup after this ma
 </li>
 <li>
 <p>
+int <strong>file_id.max_files_cached</strong> = 65536: maximal number of files cached in memory { 8: }
+</p>
+</li>
+<li>
+<p>
 int <strong>file_id.show_data_depth</strong> = 100: print this many octets { 0: }
 </p>
 </li>
@@ -19019,6 +19571,11 @@ int <strong>ftp_server.cmd_validity[].length</strong> = 0: specify non-default m
 <li>
 <p>
 string <strong>ftp_server.data_chan_cmds</strong>: check the formatting of the given commands
+</p>
+</li>
+<li>
+<p>
+string <strong>ftp_server.data_rest_cmds</strong>: check the formatting of the given commands
 </p>
 </li>
 <li>
@@ -19299,6 +19856,11 @@ bool <strong>http_inspect.iis_unicode</strong> = false: use IIS unicode code poi
 <li>
 <p>
 string <strong>http_inspect.iis_unicode_map_file</strong>: file containing code points for IIS unicode. { (optional) }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.normalize_utf</strong> = true: normalize charset utf encodings
 </p>
 </li>
 <li>
@@ -19673,7 +20235,7 @@ string <strong>itype.~range</strong>: check if icmp type is <em>type | min&lt;&g
 </li>
 <li>
 <p>
-enum <strong>latency.packet.action</strong> = alert_and_log: event action if packet times out and is fastpathed { none | alert | log | alert_and_log }
+enum <strong>latency.packet.action</strong> = none: event action if packet times out and is fastpathed { none | alert | log | alert_and_log }
 </p>
 </li>
 <li>
@@ -19688,7 +20250,7 @@ int <strong>latency.packet.max_time</strong> = 500: set timeout for packet laten
 </li>
 <li>
 <p>
-enum <strong>latency.rule.action</strong> = alert_and_log: event action for rule latency enable and suspend events { none | alert | log | alert_and_log }
+enum <strong>latency.rule.action</strong> = none: event action for rule latency enable and suspend events { none | alert | log | alert_and_log }
 </p>
 </li>
 <li>
@@ -20368,7 +20930,7 @@ int <strong>rate_filter[].gid</strong> = 1: rule generator ID { 0: }
 </li>
 <li>
 <p>
-select <strong>rate_filter[].new_action</strong> = alert: take this action on future hits until timeout { alert | drop | log | pass | | reject | sdrop }
+enum <strong>rate_filter[].new_action</strong> = alert: take this action on future hits until timeout { log | pass | alert | drop | block | reset }
 </p>
 </li>
 <li>
@@ -20508,17 +21070,17 @@ int <strong>rev.~</strong>: revision { 1: }
 </li>
 <li>
 <p>
-string <strong>rpc.~app</strong>: application number
+int <strong>rpc.~app</strong>: application number
 </p>
 </li>
 <li>
 <p>
-string <strong>rpc.~proc</strong>: procedure number or * for any
+int <strong>rpc.proc</strong>: procedure number or * for any
 </p>
 </li>
 <li>
 <p>
-string <strong>rpc.~ver</strong>: version number or * for any
+int <strong>rpc.ver</strong>: version number or * for any
 </p>
 </li>
 <li>
@@ -20559,11 +21121,6 @@ bool <strong>search_engine.bleedover_warnings_enabled</strong> = false: print wa
 <li>
 <p>
 bool <strong>search_engine.debug</strong> = false: print verbose fast pattern info
-</p>
-</li>
-<li>
-<p>
-bool <strong>search_engine.debug_print_fast_pattern</strong> = false: print fast pattern info for each rule
 </p>
 </li>
 <li>
@@ -20614,6 +21171,11 @@ dynamic <strong>search_engine.search_method</strong> = ac_bnfa: set fast pattern
 <li>
 <p>
 bool <strong>search_engine.search_optimize</strong> = true: tweak state machine construction for better performance
+</p>
+</li>
+<li>
+<p>
+bool <strong>search_engine.show_fast_patterns</strong> = false: print fast pattern info for each rule
 </p>
 </li>
 <li>
@@ -20669,6 +21231,11 @@ string <strong>sha512.offset</strong>: var or number of bytes from start of buff
 <li>
 <p>
 implied <strong>sha512.relative</strong> = false: offset from cursor instead of start of buffer
+</p>
+</li>
+<li>
+<p>
+string <strong>side_channel.connector</strong>: connector handle
 </p>
 </li>
 <li>
@@ -21413,11 +21980,6 @@ implied <strong>snort.--warn-vars</strong>: warn about variable definition and u
 </li>
 <li>
 <p>
-implied <strong>snort.-w</strong>: dump 802.11 management and control frames
-</p>
-</li>
-<li>
-<p>
 implied <strong>snort.-W</strong>: lists available interfaces
 </p>
 </li>
@@ -21588,11 +22150,6 @@ implied <strong>ssl_version.tls1.2</strong>: check for tls1.2
 </li>
 <li>
 <p>
-int <strong>stream.file_cache.cleanup_pct</strong> = 5: percent of cache to clean when max_sessions is reached { 1:100 }
-</p>
-</li>
-<li>
-<p>
 int <strong>stream.file_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
@@ -21613,17 +22170,12 @@ bool <strong>stream_file.upload</strong> = false: indicate file transfer directi
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.cleanup_pct</strong> = 5: percent of cache to clean when max_sessions is reached { 1:100 }
-</p>
-</li>
-<li>
-<p>
 int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.max_sessions</strong> = 32768: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.icmp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 2: }
 </p>
 </li>
 <li>
@@ -21634,11 +22186,6 @@ int <strong>stream.icmp_cache.pruning_timeout</strong> = 30: minimum inactive ti
 <li>
 <p>
 int <strong>stream_icmp.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.ip_cache.cleanup_pct</strong> = 5: percent of cache to clean when max_sessions is reached { 1:100 }
 </p>
 </li>
 <li>
@@ -21654,6 +22201,11 @@ int <strong>stream.ip_cache.max_sessions</strong> = 16384: maximum simultaneous 
 <li>
 <p>
 int <strong>stream.ip_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+</p>
+</li>
+<li>
+<p>
+bool <strong>stream.ip_frags_only</strong> = false: don&#8217;t process non-frag flows
 </p>
 </li>
 <li>
@@ -21688,6 +22240,11 @@ int <strong>stream_ip.session_timeout</strong> = 30: session tracking timeout { 
 </li>
 <li>
 <p>
+int <strong>stream_ip.trace</strong>: mask for enabling debug traces in module
+</p>
+</li>
+<li>
+<p>
 enum <strong>stream_reassemble.action</strong>: stop or start stream reassembly { disable|enable }
 </p>
 </li>
@@ -21718,17 +22275,12 @@ string <strong>stream_size.~range</strong>: size for comparison
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.cleanup_pct</strong> = 5: percent of cache to clean when max_sessions is reached { 1:100 }
-</p>
-</li>
-<li>
-<p>
 int <strong>stream.tcp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.tcp_cache.max_sessions</strong> = 262144: maximum simultaneous sessions tracked before pruning { 2: }
 </p>
 </li>
 <li>
@@ -21813,17 +22365,12 @@ int <strong>stream_tcp.small_segments.maximum_size</strong> = 0: limit number of
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.cleanup_pct</strong> = 5: percent of cache to clean when max_sessions is reached { 1:100 }
-</p>
-</li>
-<li>
-<p>
 int <strong>stream.udp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 2: }
+int <strong>stream.udp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 2: }
 </p>
 </li>
 <li>
@@ -21839,11 +22386,6 @@ bool <strong>stream_udp.ignore_any_rules</strong> = false: process udp content r
 <li>
 <p>
 int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.user_cache.cleanup_pct</strong> = 5: percent of cache to clean when max_sessions is reached { 1:100 }
 </p>
 </li>
 <li>
@@ -21904,6 +22446,26 @@ int <strong>tag.packets</strong>: tag this many packets { 1: }
 <li>
 <p>
 int <strong>tag.seconds</strong>: tag for this many seconds { 1: }
+</p>
+</li>
+<li>
+<p>
+string <strong>tcp_connector.address</strong>: address
+</p>
+</li>
+<li>
+<p>
+port <strong>tcp_connector.base_port</strong>: base port number
+</p>
+</li>
+<li>
+<p>
+string <strong>tcp_connector.connector</strong>: connector name
+</p>
+</li>
+<li>
+<p>
+enum <strong>tcp_connector.setup</strong>: stream establishment { call | answer }
 </p>
 </li>
 <li>
@@ -22038,6 +22600,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <div class="ulist"><ul>
 <li>
 <p>
+<strong>appid.aim_clients</strong>: count of aim clients discovered by appid
+</p>
+</li>
+<li>
+<p>
 <strong>appid.battlefield_flows</strong>: count of battle field flows discovered by appid
 </p>
 </li>
@@ -22063,12 +22630,22 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>appid.bootp_flows</strong>: count of bootp flows discovered by appid
+</p>
+</li>
+<li>
+<p>
 <strong>appid.dcerpc_tcp_flows</strong>: count of dce rpc flows over tcp discovered by appid
 </p>
 </li>
 <li>
 <p>
 <strong>appid.dcerpc_udp_flows</strong>: count of dce rpc flows over udp discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.direct_connect_flows</strong>: count of direct connect flows discovered by appid
 </p>
 </li>
 <li>
@@ -22089,6 +22666,16 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>appid.ftps_flows</strong>: count of ftps flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.http_flows</strong>: count of http flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.ignored packets</strong>: count of packets ignored by appid inspector
 </p>
 </li>
 <li>
@@ -22133,17 +22720,42 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>appid.msn_clients</strong>: count of msn clients discovered by appid
+</p>
+</li>
+<li>
+<p>
 <strong>appid.mysql_flows</strong>: count of mysql service flows discovered by appid
 </p>
 </li>
 <li>
 <p>
-<strong>appid.netbios_flows</strong>: count of netbios service flows discovered by appid
+<strong>appid.netbios_dgm_flows</strong>: count of netbios-dgm service flows discovered by appid
 </p>
 </li>
 <li>
 <p>
-<strong>appid.packets</strong>: count of packets processed by appid
+<strong>appid.netbios_ns_flows</strong>: count of netbios-ns service flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.netbios_ssn_flows</strong>: count of netbios-ssn service flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.nntp_flows</strong>: count of nntp flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.ntp_flows</strong>: count of ntp flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.packets</strong>: count of packets received by appid inspector
 </p>
 </li>
 <li>
@@ -22153,12 +22765,137 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>appid.processed packets</strong>: count of packets processed by appid inspector
+</p>
+</li>
+<li>
+<p>
+<strong>appid.radius_flows</strong>: count of radius flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rexec_flows</strong>: count of rexec flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rfb_flows</strong>: count of rfb flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rlogin_flows</strong>: count of rlogin flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rpc_flows</strong>: count of rpc flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rshell_flows</strong>: count of rshell flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rsync_flows</strong>: count of rsync service flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rtmp_flows</strong>: count of rtmp flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.rtp_clients</strong>: count of rtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.sip_clients</strong>: count of SIP clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.sip_flows</strong>: count of SIP flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_aol_clients</strong>: count of AOL smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_applemail_clients</strong>: count of Apple Mail smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_eudora_clients</strong>: count of Eudora smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_eudora_pro_clients</strong>: count of Eudora Pro smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_evolution_clients</strong>: count of Evolution smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
 <strong>appid.smtp_flows</strong>: count of smtp flows discovered by appid
 </p>
 </li>
 <li>
 <p>
+<strong>appid.smtp_kmail_clients</strong>: count of KMail smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_lotus_notes_clients</strong>: count of Lotus Notes smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_microsoft_outlook_clients</strong>: count of Microsoft Outlook smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_microsoft_outlook_express_clients</strong>: count of Microsoft Outlook Express smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_microsoft_outlook_imo_clients</strong>: count of Microsoft Outlook IMO smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_mutt_clients</strong>: count of Mutt smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
 <strong>appid.smtps_flows</strong>: count of smtps flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.smtp_thunderbird_clients</strong>: count of Thunderbird smtp clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.snmp_flows</strong>: count of snmp flows discovered by appid
 </p>
 </li>
 <li>
@@ -22183,7 +22920,32 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>appid.tftp_flows</strong>: count of tftp flows discovered by appid
+</p>
+</li>
+<li>
+<p>
 <strong>appid.timbuktu_flows</strong>: count of timbuktu flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.tns_clients</strong>: count of tns clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.tns_flows</strong>: count of tns flows discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.vnc_clients</strong>: count of vnc clients discovered by appid
+</p>
+</li>
+<li>
+<p>
+<strong>appid.yahoo_messenger_clients</strong>: count of Yahoo Messenger clients discovered by appid
 </p>
 </li>
 <li>
@@ -22393,6 +23155,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>dce_smb.Ignored bytes</strong>: total ignored bytes
+</p>
+</li>
+<li>
+<p>
 <strong>dce_smb.Max outstanding requests</strong>: total smb maximum outstanding requests
 </p>
 </li>
@@ -22484,6 +23251,41 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>dce_smb.Shutdowns</strong>: total connection-oriented shutdowns
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 close</strong>: total number of SMBv2 close packets seen
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 create</strong>: total number of SMBv2 create packets seen
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 read</strong>: total number of SMBv2 read packets seen
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 set info</strong>: total number of SMBv2 set info packets seen
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 tree connect</strong>: total number of SMBv2 tree connect packets seen
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 tree disconnect</strong>: total number of SMBv2 tree disconnect packets seen
+</p>
+</li>
+<li>
+<p>
+<strong>dce_smb.SMBv2 write</strong>: total number of SMBv2 write packets seen
 </p>
 </li>
 <li>
@@ -22648,6 +23450,121 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>dce_udp.aborted sessions</strong>: total aborted sessions
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Acks</strong>: total connection-less acks
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.bad autodetects</strong>: total bad autodetects
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Cancel acks</strong>: total connection-less cancel acks
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Cancels</strong>: total connection-less cancels
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Client facks</strong>: total connection-less client facks
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.events</strong>: total events
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Faults</strong>: total connection-less faults
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Fragments</strong>: total connection-less fragments
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Frags reassembled</strong>: total connection-less fragments reassembled
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Max fragment size</strong>: connection-less maximum fragment size
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Max seqnum</strong>: max connection-less seqnum
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.No calls</strong>: total connection-less no calls
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Other requests</strong>: total connection-less other requests
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Other responses</strong>: total connection-less other responses
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Ping</strong>: total connection-less ping
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Rejects</strong>: total connection-less rejects
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Requests</strong>: total connection-less requests
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Responses</strong>: total connection-less responses
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Server facks</strong>: total connection-less server facks
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.udp packets</strong>: total udp packets
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.udp sessions</strong>: total udp sessions
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp.Working</strong>: total connection-less working
+</p>
+</li>
+<li>
+<p>
 <strong>detection.alert limit</strong>: events previously triggered on same PDU
 </p>
 </li>
@@ -22684,6 +23601,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>detection.file searches</strong>: fast pattern searches in file buffer
+</p>
+</li>
+<li>
+<p>
+<strong>detection.hard evals</strong>: non-fast pattern rule evaluations
 </p>
 </li>
 <li>
@@ -22729,11 +23651,6 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>detection.raw searches</strong>: fast pattern searches in raw packet data
-</p>
-</li>
-<li>
-<p>
-<strong>detection.slow searches</strong>: non-fast pattern rule evaluations
 </p>
 </li>
 <li>
@@ -23043,27 +23960,37 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>latency.packet_timeouts</strong>: packets that timed out
+<strong>latency.max usecs</strong>: maximum usecs elapsed
 </p>
 </li>
 <li>
 <p>
-<strong>latency.rule_eval_timeouts</strong>: rule evals that timed out
+<strong>latency.packet timeouts</strong>: packets that timed out
 </p>
 </li>
 <li>
 <p>
-<strong>latency.rule_tree_enables</strong>: rule tree re-enables
+<strong>latency.rule eval timeouts</strong>: rule evals that timed out
 </p>
 </li>
 <li>
 <p>
-<strong>latency.total_packets</strong>: total packets monitored
+<strong>latency.rule tree enables</strong>: rule tree re-enables
 </p>
 </li>
 <li>
 <p>
-<strong>latency.total_rule_evals</strong>: total rule evals monitored
+<strong>latency.total packets</strong>: total packets monitored
+</p>
+</li>
+<li>
+<p>
+<strong>latency.total rule evals</strong>: total rule evals monitored
+</p>
+</li>
+<li>
+<p>
+<strong>latency.total usecs</strong>: total usecs elapsed
 </p>
 </li>
 <li>
@@ -23873,6 +24800,16 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>stream.file ha prunes</strong>: file sessions pruned by high availability sync
+</p>
+</li>
+<li>
+<p>
+<strong>stream.file idle prunes</strong>: file sessions pruned due to timeout
+</p>
+</li>
+<li>
+<p>
 <strong>stream.file memcap prunes</strong>: file sessions pruned due to memcap
 </p>
 </li>
@@ -23883,22 +24820,12 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>stream.file timeout prunes</strong>: file sessions pruned due to timeout
-</p>
-</li>
-<li>
-<p>
 <strong>stream.file total prunes</strong>: total file sessions pruned
 </p>
 </li>
 <li>
 <p>
 <strong>stream.file uni prunes</strong>: file uni sessions pruned
-</p>
-</li>
-<li>
-<p>
-<strong>stream.file user prunes</strong>: file sessions pruned for other reasons
 </p>
 </li>
 <li>
@@ -23914,6 +24841,16 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>stream.icmp flows</strong>: total icmp sessions
+</p>
+</li>
+<li>
+<p>
+<strong>stream.icmp ha prunes</strong>: icmp sessions pruned by high availability sync
+</p>
+</li>
+<li>
+<p>
+<strong>stream.icmp idle prunes</strong>: icmp sessions pruned due to timeout
 </p>
 </li>
 <li>
@@ -23948,11 +24885,6 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>stream.icmp timeout prunes</strong>: icmp sessions pruned due to timeout
-</p>
-</li>
-<li>
-<p>
 <strong>stream_icmp.timeouts</strong>: icmp session timeouts
 </p>
 </li>
@@ -23964,11 +24896,6 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>stream.icmp uni prunes</strong>: icmp uni sessions pruned
-</p>
-</li>
-<li>
-<p>
-<strong>stream.icmp user prunes</strong>: icmp sessions pruned for other reasons
 </p>
 </li>
 <li>
@@ -23988,7 +24915,7 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>stream_ip.current</strong>: current fragments
+<strong>stream_ip.current frags</strong>: current fragments
 </p>
 </li>
 <li>
@@ -24019,6 +24946,16 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>stream_ip.frag timeouts</strong>: datagrams abandoned
+</p>
+</li>
+<li>
+<p>
+<strong>stream.ip ha prunes</strong>: ip sessions pruned by high availability sync
+</p>
+</li>
+<li>
+<p>
+<strong>stream.ip idle prunes</strong>: ip sessions pruned due to timeout
 </p>
 </li>
 <li>
@@ -24088,22 +25025,17 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>stream.ip timeout prunes</strong>: ip sessions pruned due to timeout
-</p>
-</li>
-<li>
-<p>
 <strong>stream_ip.timeouts</strong>: ip session timeouts
 </p>
 </li>
 <li>
 <p>
-<strong>stream.ip total prunes</strong>: total ip sessions pruned
+<strong>stream_ip.total frags</strong>: total fragments
 </p>
 </li>
 <li>
 <p>
-<strong>stream_ip.total</strong>: total fragments
+<strong>stream.ip total prunes</strong>: total ip sessions pruned
 </p>
 </li>
 <li>
@@ -24129,11 +25061,6 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>stream.ip uni prunes</strong>: ip uni sessions pruned
-</p>
-</li>
-<li>
-<p>
-<strong>stream.ip user prunes</strong>: ip sessions pruned for other reasons
 </p>
 </li>
 <li>
@@ -24189,6 +25116,16 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>stream_tcp.gaps</strong>: missing data between PDUs
+</p>
+</li>
+<li>
+<p>
+<strong>stream.tcp ha prunes</strong>: tcp sessions pruned by high availability sync
+</p>
+</li>
+<li>
+<p>
+<strong>stream.tcp idle prunes</strong>: tcp sessions pruned due to timeout
 </p>
 </li>
 <li>
@@ -24313,11 +25250,6 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>stream.tcp timeout prunes</strong>: tcp sessions pruned due to timeout
-</p>
-</li>
-<li>
-<p>
 <strong>stream_tcp.timeouts</strong>: tcp session timeouts
 </p>
 </li>
@@ -24338,11 +25270,6 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>stream.tcp user prunes</strong>: tcp sessions pruned for other reasons
-</p>
-</li>
-<li>
-<p>
 <strong>stream_udp.created</strong>: udp session trackers created
 </p>
 </li>
@@ -24354,6 +25281,16 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>stream.udp flows</strong>: total udp sessions
+</p>
+</li>
+<li>
+<p>
+<strong>stream.udp ha prunes</strong>: udp sessions pruned by high availability sync
+</p>
+</li>
+<li>
+<p>
+<strong>stream.udp idle prunes</strong>: udp sessions pruned due to timeout
 </p>
 </li>
 <li>
@@ -24388,11 +25325,6 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>stream.udp timeout prunes</strong>: udp sessions pruned due to timeout
-</p>
-</li>
-<li>
-<p>
 <strong>stream_udp.timeouts</strong>: udp session timeouts
 </p>
 </li>
@@ -24408,17 +25340,22 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>stream.udp user prunes</strong>: udp sessions pruned for other reasons
-</p>
-</li>
-<li>
-<p>
 <strong>stream.user excess prunes</strong>: user sessions pruned due to excess
 </p>
 </li>
 <li>
 <p>
 <strong>stream.user flows</strong>: total user sessions
+</p>
+</li>
+<li>
+<p>
+<strong>stream.user ha prunes</strong>: user sessions pruned by high availability sync
+</p>
+</li>
+<li>
+<p>
+<strong>stream.user idle prunes</strong>: user sessions pruned due to timeout
 </p>
 </li>
 <li>
@@ -24433,11 +25370,6 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>stream.user timeout prunes</strong>: user sessions pruned due to timeout
-</p>
-</li>
-<li>
-<p>
 <strong>stream.user total prunes</strong>: total user sessions pruned
 </p>
 </li>
@@ -24448,17 +25380,17 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>stream.user user prunes</strong>: user sessions pruned for other reasons
-</p>
-</li>
-<li>
-<p>
 <strong>tcp.bad checksum (ip4)</strong>: nonzero tcp over ip checksums
 </p>
 </li>
 <li>
 <p>
 <strong>tcp.bad checksum (ip6)</strong>: nonzero tcp over ipv6 checksums
+</p>
+</li>
+<li>
+<p>
+<strong>tcp_connector.messages</strong>: total messages
 </p>
 </li>
 <li>
@@ -24534,6 +25466,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>116</strong>: auth
+</p>
+</li>
+<li>
+<p>
+<strong>116</strong>: ciscometadata
 </p>
 </li>
 <li>
@@ -24684,6 +25621,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>133</strong>: dce_tcp
+</p>
+</li>
+<li>
+<p>
+<strong>133</strong>: dce_udp
 </p>
 </li>
 <li>
@@ -25518,7 +26460,27 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>116:468</strong> (decode) too many protocols present
+<strong>116:468</strong> (ciscometadata) truncated Cisco Metadata header
+</p>
+</li>
+<li>
+<p>
+<strong>116:469</strong> (ciscometadata) invalid Cisco Metadata option length
+</p>
+</li>
+<li>
+<p>
+<strong>116:470</strong> (ciscometadata) invalid Cisco Metadata option type
+</p>
+</li>
+<li>
+<p>
+<strong>116:471</strong> (ciscometadata) invalid Cisco Metadata SGT
+</p>
+</li>
+<li>
+<p>
+<strong>116:472</strong> (decode) too many protocols present
 </p>
 </li>
 <li>
@@ -25848,6 +26810,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>119:66</strong> (http_inspect) White space within header name
+</p>
+</li>
+<li>
+<p>
 <strong>119:67</strong> (http_inspect) Excessive gzip compression
 </p>
 </li>
@@ -25889,6 +26856,21 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>119:75</strong> (http_inspect) Misformatted HTTP traffic
+</p>
+</li>
+<li>
+<p>
+<strong>119:76</strong> (http_inspect) Unsupported Transfer-Encoding or Content-Encoding used
+</p>
+</li>
+<li>
+<p>
+<strong>119:77</strong> (http_inspect) Unknown Transfer-Encoding or Content-Encoding used
+</p>
+</li>
+<li>
+<p>
+<strong>119:78</strong> (http_inspect) Multiple layers of compression encodings applied
 </p>
 </li>
 <li>
@@ -26593,6 +27575,26 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>133:40</strong> (dce_udp) Connection-less DCE/RPC - Invalid major version.
+</p>
+</li>
+<li>
+<p>
+<strong>133:41</strong> (dce_udp) Connection-less DCE/RPC - Invalid pdu type.
+</p>
+</li>
+<li>
+<p>
+<strong>133:42</strong> (dce_udp) Connection-less DCE/RPC - Data length less than header size.
+</p>
+</li>
+<li>
+<p>
+<strong>133:43</strong> (dce_udp) Connection-less DCE/RPC - Bad sequence number.
+</p>
+</li>
+<li>
+<p>
 <strong>133:44</strong> (dce_smb) SMB - Invalid SMB version 1 seen.
 </p>
 </li>
@@ -26654,6 +27656,16 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>133:57</strong> (dce_smb) SMB - Client attempted to create or set a file&#8217;s attributes to readonly/hidden/system.
+</p>
+</li>
+<li>
+<p>
+<strong>133:58</strong> (dce_smb) SMB - File offset provided is greater than file size specified
+</p>
+</li>
+<li>
+<p>
+<strong>133:59</strong> (dce_smb) SMB - Next command specified in SMB2 header is beyond payload boundary
 </p>
 </li>
 <li>
@@ -27489,6 +28501,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>ciscometadata</strong> (codec): support for cisco metadata
+</p>
+</li>
+<li>
+<p>
 <strong>classifications</strong> (basic): define rule categories with priority
 </p>
 </li>
@@ -27535,6 +28552,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>dce_tcp</strong> (inspector): dce over tcp inspection
+</p>
+</li>
+<li>
+<p>
+<strong>dce_udp</strong> (inspector): dce over udp inspection
 </p>
 </li>
 <li>
@@ -28284,6 +29306,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>tcp_connector</strong> (connector): implement the tcp stream connector
+</p>
+</li>
+<li>
+<p>
 <strong>telnet</strong> (inspector): telnet inspection and normalization
 </p>
 </li>
@@ -28335,6 +29362,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>codec::auth</strong>: support for IP authentication header
+</p>
+</li>
+<li>
+<p>
+<strong>codec::ciscometadata</strong>: support for cisco metadata
 </p>
 </li>
 <li>
@@ -28514,6 +29546,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>connector::tcp_connector</strong>: implement the tcp stream connector
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::appid</strong>: application and service identification
 </p>
 </li>
@@ -28540,6 +29577,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>inspector::dce_tcp</strong>: dce over tcp inspection
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::dce_udp</strong>: dce over udp inspection
 </p>
 </li>
 <li>
@@ -29296,7 +30338,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2016-08-11 02:38:58 EDT
+Last updated 2016-11-03 23:18:47 EDT
 </div>
 </div>
 </body>

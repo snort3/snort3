@@ -47,7 +47,7 @@ private:
     void list_lua_detectors();
     void init_lua_service_detectors();
     void init_lua_client_detectors();
-    void load_detector(const char* detectorName, bool isCustom);
+    void load_detector(char* detectorName, bool isCustom);
     void load_lua_detectors(const char* path, bool isCustom);
 
     AppIdConfig& config;

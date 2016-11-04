@@ -1,3 +1,11 @@
+16/11/04 - build 218
+
+-- fix shutdown stats
+-- fix misc appid issues
+-- rewrite appid loading of lua detectors
+-- add sip inspector events for appid
+-- update default manuals
+
 16/10/28 - build 217
 
 -- update appid to 2983

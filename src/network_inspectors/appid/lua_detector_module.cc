@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <glob.h>
+#include <libgen.h>
 #include <lua.hpp>
 
 #include "appid_config.h"
@@ -400,7 +401,7 @@ static Detector* create_lua_detector(lua_State* L, const char* detectorName, App
     return detector;
 }
 
-void LuaDetectorManager::load_detector( const char* detector_filename, bool isCustom)
+void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
 {
     char detectorName[MAX_LUA_DETECTOR_FILENAME_LEN];
 
