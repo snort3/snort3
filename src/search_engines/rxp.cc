@@ -477,18 +477,10 @@ static void rxp_begin_packet()
     RxpMpse::jobcount = 0;
 }
 
-static void rxp_end_packet()
+static void rxp_send_jobs()
 {
     struct rte_mbuf* job_buf;
-    struct rte_mbuf* pkts_burst[RXP_MAX_PKT_BURST];
-    struct rxp_response_data rxp_resp;
     int i, j, ret;
-    unsigned sent, pending, rx_pkts;
-    RxpJob* job;
-    int processed;
-
-    if (RxpMpse::jobcount == 0)
-        return; // Nothing to do.
 
     // Prepare all the jobs for this packet
     for (i = 0; i < RxpMpse::jobcount; i++)
@@ -555,32 +547,27 @@ static void rxp_end_packet()
             // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
         }
     }
+}
 
-    // Submit all jobs in a single batch
-    ret = rxp_dispatch_jobs(RxpMpse::portid, 0 /* queue id */, &sent, &pending);
+static int rxp_receive_responses()
+{
+    struct rte_mbuf* pkts_burst[RXP_MAX_PKT_BURST];
+    struct rxp_response_data rxp_resp;
+    int i, j, ret, processed = 0;
+    unsigned rx_pkts = 0;
+    RxpJob* job;
+
+    ret = rxp_get_responses(RxpMpse::portid, 0 /* queue id */, pkts_burst,
+        (RxpMpse::jobcount - processed), &rx_pkts);
 
     if (ret != RXP_STATUS_OK)
     {
-        LogMessage("ERROR: %d rxp_dispatch_jobs() failed.\n", ret);
-        exit(-1);
+        LogMessage("ERROR: %d rxp_get_responses() failed.\n", ret);
+        // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
     }
 
-    rx_pkts = processed = 0;
-
-    while (processed < RxpMpse::jobcount)
+    while (rx_pkts != 0)
     {
-        while (rx_pkts == 0)
-        {
-            ret = rxp_get_responses(RxpMpse::portid, 0 /* queue id */, pkts_burst,
-                (RxpMpse::jobcount - processed), &rx_pkts);
-
-            if (ret != RXP_STATUS_OK)
-            {
-                LogMessage("ERROR: %d rxp_get_responses() failed.\n", ret);
-                // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
-            }
-        }
-
         ret = rxp_get_response_data(pkts_burst[--rx_pkts], &rxp_resp);
 
         if (ret != RXP_STATUS_OK)
@@ -637,6 +624,43 @@ static void rxp_end_packet()
 
         rxp_free_buffer(pkts_burst[rx_pkts]);
         processed++;
+    }
+
+    return processed;
+}
+
+static void rxp_dispatch_jobs()
+{
+    int ret;
+    unsigned sent, pending;
+
+    // Submit all jobs in a single batch
+    ret = rxp_dispatch_jobs(RxpMpse::portid, 0 /* queue id */, &sent, &pending);
+
+    if (ret != RXP_STATUS_OK)
+    {
+        LogMessage("ERROR: %d rxp_dispatch_jobs() failed.\n", ret);
+        exit(-1);
+    }
+}
+
+static void rxp_end_packet()
+{
+    int processed = 0;
+
+    if (RxpMpse::jobcount == 0)
+        return; // Nothing to do.
+
+    // Prepare and enqueue all the jobs for this packet
+    rxp_send_jobs();
+
+    // Submit are enqueued Jobs
+    rxp_dispatch_jobs();
+
+    // Collect all jobs responses
+    while (processed < RxpMpse::jobcount)
+    {
+        processed += rxp_receive_responses();
     }
 
     return;
