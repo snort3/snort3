@@ -119,7 +119,8 @@ bool TcpStateFinWait1::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
     trk.update_tracker_ack_recv(tsd);
     if ( trk.update_on_fin_recv(tsd) )
     {
-        if ( check_for_window_slam(tsd, trk) )
+        bool is_ack_valid = false;
+        if ( check_for_window_slam(tsd, trk, &is_ack_valid) )
         {
             if ( tsd.get_seg_len() > 0 )
                 trk.session->handle_data_segment(tsd);
@@ -127,7 +128,10 @@ bool TcpStateFinWait1::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
             if ( !flow->two_way_traffic() )
                 trk.set_tf_flags(TF_FORCE_FLUSH);
 
-            trk.set_tcp_state(TcpStreamTracker::TCP_TIME_WAIT);
+            if ( is_ack_valid )
+                trk.set_tcp_state(TcpStreamTracker::TCP_TIME_WAIT);
+            else
+                trk.set_tcp_state(TcpStreamTracker::TCP_CLOSING);
         }
     }
 
@@ -160,7 +164,7 @@ bool TcpStateFinWait1::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateFinWait1::check_for_window_slam(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
+bool TcpStateFinWait1::check_for_window_slam(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk, bool* is_ack_valid)
 {
     DebugFormat(DEBUG_STREAM_STATE, "tsd.ack %X >= listener->snd_nxt %X\n",
         tsd.get_seg_ack(), trk.get_snd_nxt());
@@ -181,7 +185,11 @@ bool TcpStateFinWait1::check_for_window_slam(TcpSegmentDescriptor& tsd, TcpStrea
         }
 
         trk.set_tcp_state(TcpStreamTracker::TCP_FIN_WAIT2);
+        if ( is_ack_valid )
+            *is_ack_valid = true;
     }
+    else if ( is_ack_valid )
+        *is_ack_valid = false;
 
     return true;
 }
