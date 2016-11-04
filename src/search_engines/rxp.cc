@@ -491,7 +491,8 @@ int rxp_receive_responses()
     if (ret != RXP_STATUS_OK)
     {
         LogMessage("ERROR: %d rxp_get_responses() failed.\n", ret);
-        // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
+        /* FIXIT-T: We should fall back to a software search engine here.
+         * For now keep going or throw an error and quit.*/
     }
 
     while (rx_pkts != 0)
@@ -501,7 +502,8 @@ int rxp_receive_responses()
         if (ret != RXP_STATUS_OK)
         {
             LogMessage("ERROR: %d rxp_get_response_data() failed.\n", ret);
-            // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
+            /* FIXIT-T: We should fall back to a software search engine here.
+             * For now keep going or throw an error and quit.*/
         }
 
         if (rxp_resp.match_count != 0)
@@ -511,7 +513,8 @@ int rxp_receive_responses()
                 LogMessage("WARNING: Detected %u matches but only %u returned.\n",
                     rxp_resp.detected_match_count, rxp_resp.match_count);
                 RxpMpse::match_limit++;
-                // FIXIT-T: We should fall back to a software search engine here. For now keep going.
+                /* FIXIT-T: We should fall back to a software search engine here.
+                 * For now keep going.*/
             }
 
             job = nullptr;
@@ -570,17 +573,21 @@ int rxp_send_jobs()
         {
             if (RxpMpse::jobcount == RXP_MAX_JOBS)
             {
-                LogMessage("WARNING: No spare job slot to split job of %d bytes, truncating to %d.\n",
-                    RxpMpse::jobs[i].len, RXP_MAX_JOB_LENGTH);
+                LogMessage("WARNING: No spare job slot to split job of %d bytes, "
+                        "truncating to %d.\n",
+                        RxpMpse::jobs[i].len, RXP_MAX_JOB_LENGTH);
                 RxpMpse::jobs[i].len = RXP_MAX_JOB_LENGTH;
             }
             else
             {
                 RxpMpse::jobs[RxpMpse::jobcount] = RxpMpse::jobs[i];
                 RxpMpse::jobs[i].len = RXP_MAX_JOB_LENGTH;
-                RxpMpse::jobs[RxpMpse::jobcount].offset = (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
-                RxpMpse::jobs[RxpMpse::jobcount].len -= (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
-                RxpMpse::jobs[RxpMpse::jobcount].buf += (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
+                RxpMpse::jobs[RxpMpse::jobcount].offset =
+                        (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
+                RxpMpse::jobs[RxpMpse::jobcount].len -=
+                        (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
+                RxpMpse::jobs[RxpMpse::jobcount].buf +=
+                        (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
                 RxpMpse::jobcount++;
             }
         }
@@ -600,7 +607,8 @@ int rxp_send_jobs()
         if (ret != RXP_STATUS_OK)
         {
             LogMessage("ERROR: %d rxp_prepare_job() failed.\n", ret);
-            // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
+            /* FIXIT-T: We should fall back to a software search engine here.
+             * For now keep going or throw an error and quit.*/
         }
 
         ret = rxp_enqueue_job(RxpMpse::portid, 0 /* queue id */, job_buf);
@@ -629,7 +637,8 @@ int rxp_send_jobs()
         if (ret != RXP_STATUS_OK)
         {
             LogMessage("ERROR: %d rxp_enqueue_job() failed.\n", ret);
-            // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
+            /* FIXIT-T: We should fall back to a software search engine here.
+             * For now keep going or throw an error and quit.*/
         }
     }
 
@@ -661,7 +670,7 @@ static void rxp_end_packet()
     // Prepare and enqueue all the jobs for this packet
     processed = rxp_send_jobs();
 
-    // Submit are enqueued Jobs
+    // Submit our enqueued Jobs
     rxp_dispatch_jobs();
 
     // Collect all jobs responses
