@@ -32,6 +32,7 @@
 #include <rte_config.h>
 #include <rte_eal.h>
 #include <rxp.h>
+#include <rxp_errors.h>
 
 #include "framework/mpse.h"
 #include "log/messages.h"
