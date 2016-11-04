@@ -477,79 +477,7 @@ static void rxp_begin_packet()
     RxpMpse::jobcount = 0;
 }
 
-static void rxp_send_jobs()
-{
-    struct rte_mbuf* job_buf;
-    int i, j, ret;
-
-    // Prepare all the jobs for this packet
-    for (i = 0; i < RxpMpse::jobcount; i++)
-    {
-        // Buffer is larger than a single RXP job can be, split up and overlap
-        if (RxpMpse::jobs[i].len > RXP_MAX_JOB_LENGTH)
-        {
-            if (RxpMpse::jobcount == RXP_MAX_JOBS)
-            {
-                LogMessage("WARNING: No spare job slot to split job of %d bytes, truncating to %d.\n",
-                    RxpMpse::jobs[i].len, RXP_MAX_JOB_LENGTH);
-                RxpMpse::jobs[i].len = RXP_MAX_JOB_LENGTH;
-            }
-            else
-            {
-                RxpMpse::jobs[RxpMpse::jobcount] = RxpMpse::jobs[i];
-                RxpMpse::jobs[i].len = RXP_MAX_JOB_LENGTH;
-                RxpMpse::jobs[RxpMpse::jobcount].offset = (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
-                RxpMpse::jobs[RxpMpse::jobcount].len -= (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
-                RxpMpse::jobs[RxpMpse::jobcount].buf += (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
-                RxpMpse::jobcount++;
-            }
-        }
-
-        RxpMpse::jobs[i].jobid = ++RxpMpse::jobs_submitted; // Job ID can't be 0
-
-        // Subset ID 0 is an error, so set any unused slots to the first subset
-        for (j = 3; j >= RxpMpse::jobs[i].subset_count; j--)
-            RxpMpse::jobs[i].subset[j] = RxpMpse::jobs[i].subset[0];
-
-        ret = rxp_prepare_job(RxpMpse::portid, RxpMpse::jobs[i].jobid, RxpMpse::jobs[i].buf,
-            RxpMpse::jobs[i].len, 0 /* ctrl */, RxpMpse::jobs[i].subset[0]->get_subset(),
-            RxpMpse::jobs[i].subset[1]->get_subset(), RxpMpse::jobs[i].subset[2]->get_subset(),
-            RxpMpse::jobs[i].subset[3]->get_subset(),
-            &job_buf);
-
-        if (ret != RXP_STATUS_OK)
-        {
-            LogMessage("ERROR: %d rxp_prepare_job() failed.\n", ret);
-            // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
-        }
-
-        ret = rxp_enqueue_job(RxpMpse::portid, 0 /* queue id */, job_buf);
-
-        /*Probable error due responses queue full*/
-        if(ret == RXP_STATUS_ENQUEUE_JOB_FAILED)
-        {
-            /*FIXIT-T: In this case we need to recover responses from RXP process once
-             *  them, and re-try to enqueue, if another failure then is an RXP error.
-             *   Related to ticket #2544 and #2545
-             *
-             *   The responses collection and processing can be in a separated
-             *   function (ticket 2544) or copied from the responses collection
-             *   algorithm below (although a copy feels unnecessary)
-             *
-             *   Note the processed variable for the current version will
-             *   have to be updated here and not re-initialized to 0 later.
-             *   However, in non blocking version this would not be necessary*/
-        }
-
-        if (ret != RXP_STATUS_OK)
-        {
-            LogMessage("ERROR: %d rxp_enqueue_job() failed.\n", ret);
-            // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
-        }
-    }
-}
-
-static int rxp_receive_responses()
+int rxp_receive_responses()
 {
     struct rte_mbuf* pkts_burst[RXP_MAX_PKT_BURST];
     struct rxp_response_data rxp_resp;
@@ -629,6 +557,85 @@ static int rxp_receive_responses()
     return processed;
 }
 
+int rxp_send_jobs()
+{
+    struct rte_mbuf* job_buf;
+    int i, j, ret, processed = 0;
+
+    // Prepare all the jobs for this packet
+    for (i = 0; i < RxpMpse::jobcount; i++)
+    {
+        // Buffer is larger than a single RXP job can be, split up and overlap
+        if (RxpMpse::jobs[i].len > RXP_MAX_JOB_LENGTH)
+        {
+            if (RxpMpse::jobcount == RXP_MAX_JOBS)
+            {
+                LogMessage("WARNING: No spare job slot to split job of %d bytes, truncating to %d.\n",
+                    RxpMpse::jobs[i].len, RXP_MAX_JOB_LENGTH);
+                RxpMpse::jobs[i].len = RXP_MAX_JOB_LENGTH;
+            }
+            else
+            {
+                RxpMpse::jobs[RxpMpse::jobcount] = RxpMpse::jobs[i];
+                RxpMpse::jobs[i].len = RXP_MAX_JOB_LENGTH;
+                RxpMpse::jobs[RxpMpse::jobcount].offset = (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
+                RxpMpse::jobs[RxpMpse::jobcount].len -= (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
+                RxpMpse::jobs[RxpMpse::jobcount].buf += (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
+                RxpMpse::jobcount++;
+            }
+        }
+
+        RxpMpse::jobs[i].jobid = ++RxpMpse::jobs_submitted; // Job ID can't be 0
+
+        // Subset ID 0 is an error, so set any unused slots to the first subset
+        for (j = 3; j >= RxpMpse::jobs[i].subset_count; j--)
+            RxpMpse::jobs[i].subset[j] = RxpMpse::jobs[i].subset[0];
+
+        ret = rxp_prepare_job(RxpMpse::portid, RxpMpse::jobs[i].jobid, RxpMpse::jobs[i].buf,
+            RxpMpse::jobs[i].len, 0 /* ctrl */, RxpMpse::jobs[i].subset[0]->get_subset(),
+            RxpMpse::jobs[i].subset[1]->get_subset(), RxpMpse::jobs[i].subset[2]->get_subset(),
+            RxpMpse::jobs[i].subset[3]->get_subset(),
+            &job_buf);
+
+        if (ret != RXP_STATUS_OK)
+        {
+            LogMessage("ERROR: %d rxp_prepare_job() failed.\n", ret);
+            // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
+        }
+
+        ret = rxp_enqueue_job(RxpMpse::portid, 0 /* queue id */, job_buf);
+
+        /*Probable error due responses queue full*/
+        if(ret == RXP_STATUS_ENQUEUE_JOB_FAILED)
+        {
+            /*  In this case we need to recover responses from RXP, process
+             *  them (until no more responses), and re-try to enqueue,
+             *  if another failure then is an RXP error.
+             *
+             *  Note the processed variable for the current version will
+             *  have to be updated here.
+             *  However, in non blocking version this would not be necessary*/
+
+            unsigned temp_responses = processed;
+            processed += rxp_receive_responses();
+            while(processed > temp_responses)
+            {
+                temp_responses = processed;
+                processed += rxp_receive_responses();
+            }
+            ret = rxp_enqueue_job(RxpMpse::portid, 0 /* queue id */, job_buf);
+        }
+
+        if (ret != RXP_STATUS_OK)
+        {
+            LogMessage("ERROR: %d rxp_enqueue_job() failed.\n", ret);
+            // FIXIT-T: We should fall back to a software search engine here. For now keep going or throw an error and quit.
+        }
+    }
+
+    return processed;
+}
+
 static void rxp_dispatch_jobs()
 {
     int ret;
@@ -652,7 +659,7 @@ static void rxp_end_packet()
         return; // Nothing to do.
 
     // Prepare and enqueue all the jobs for this packet
-    rxp_send_jobs();
+    processed = rxp_send_jobs();
 
     // Submit are enqueued Jobs
     rxp_dispatch_jobs();
