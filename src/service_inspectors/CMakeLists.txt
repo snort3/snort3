@@ -24,15 +24,9 @@ if (STATIC_INSPECTORS)
         dns
         ftp_telnet
         gtp_inspect
-        imap
         modbus
-#        http_inspect
-        pop
         rpc_decode
-        sip
-        smtp
         ssh
-        ssl
         wizard
     )
 endif()
@@ -43,5 +37,10 @@ add_library( service_inspectors STATIC
 )
 
 target_link_libraries( service_inspectors
-    http_inspect ${STATIC_INSPECTOR_LIBS}
+    ${STATIC_INSPECTOR_LIBS}
+    imap
+    pop
+    smtp
+    ssl
 )
+

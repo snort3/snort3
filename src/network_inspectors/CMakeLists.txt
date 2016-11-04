@@ -10,7 +10,6 @@ add_subdirectory(reputation)
 
 if(STATIC_INSPECTORS)
     set(STATIC_INSPECTOR_LIBS
-        appid
         arp_spoof
         packet_capture
     )
@@ -28,5 +27,4 @@ target_link_libraries( network_inspectors
     perf_monitor
     port_scan
     reputation
-    stream_tcp
 )

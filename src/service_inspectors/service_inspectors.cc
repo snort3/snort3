@@ -24,11 +24,28 @@
 #endif
 #include "framework/inspector.h"
 
+extern const BaseApi* sin_http;
 extern const BaseApi* sin_imap;
 extern const BaseApi* sin_pop;
-extern const BaseApi* sin_smtp;
 extern const BaseApi* sin_sip;
+extern const BaseApi* sin_smtp;
 extern const BaseApi* sin_ssl;
+
+extern const BaseApi* ips_http_uri;
+extern const BaseApi* ips_http_client_body;
+extern const BaseApi* ips_http_method;
+extern const BaseApi* ips_http_cookie;
+extern const BaseApi* ips_http_stat_code;
+extern const BaseApi* ips_http_stat_msg;
+extern const BaseApi* ips_http_raw_uri;
+extern const BaseApi* ips_http_raw_header;
+extern const BaseApi* ips_http_raw_cookie;
+extern const BaseApi* ips_http_version;
+extern const BaseApi* ips_http_header;
+extern const BaseApi* ips_http_trailer;
+extern const BaseApi* ips_http_raw_trailer;
+extern const BaseApi* ips_http_raw_request;
+extern const BaseApi* ips_http_raw_status;
 extern const BaseApi* ips_sip_body;
 extern const BaseApi* ips_sip_header;
 extern const BaseApi* ips_sip_method;
@@ -37,7 +54,6 @@ extern const BaseApi* ips_ssl_state;
 extern const BaseApi* ips_ssl_version;
 
 #ifdef STATIC_INSPECTORS
-extern const BaseApi* ips_appid;
 extern const BaseApi* ips_dce_iface;
 extern const BaseApi* ips_dce_opnum;
 extern const BaseApi* ips_dce_stub_data;
@@ -54,22 +70,6 @@ extern const BaseApi* ips_modbus_unit;
 
 // FIXIT-L use snort_plugins aliases for static builds
 // so only one extern symbol per library is required
-extern const BaseApi* ips_http_uri;
-extern const BaseApi* ips_http_client_body;
-extern const BaseApi* ips_http_method;
-extern const BaseApi* ips_http_cookie;
-extern const BaseApi* ips_http_stat_code;
-extern const BaseApi* ips_http_stat_msg;
-extern const BaseApi* ips_http_raw_uri;
-extern const BaseApi* ips_http_raw_header;
-extern const BaseApi* ips_http_raw_cookie;
-extern const BaseApi* ips_http_version;
-extern const BaseApi* ips_http_header;
-extern const BaseApi* ips_http_trailer;
-extern const BaseApi* ips_http_raw_trailer;
-extern const BaseApi* ips_http_raw_request;
-extern const BaseApi* ips_http_raw_status;
-
 extern const BaseApi* sin_bo;
 extern const BaseApi* sin_dce_smb;
 extern const BaseApi* sin_dce_tcp;
@@ -81,7 +81,6 @@ extern const BaseApi* sin_ftp_server;
 extern const BaseApi* sin_ftp_data;
 extern const BaseApi* sin_gtp;
 extern const BaseApi* sin_modbus;
-extern const BaseApi* sin_http;
 extern const BaseApi* sin_rpc_decode;
 extern const BaseApi* sin_ssh;
 extern const BaseApi* sin_telnet;
@@ -90,34 +89,12 @@ extern const BaseApi* sin_wizard;
 
 const BaseApi* service_inspectors[] =
 {
+    sin_http,
     sin_imap,
     sin_pop,
     sin_sip,
     sin_smtp,
     sin_ssl,
-
-    ips_sip_body,
-    ips_sip_header,
-    ips_sip_method,
-    ips_sip_stat_code,
-    ips_ssl_state,
-    ips_ssl_version,
-
-#ifdef STATIC_INSPECTORS
-    ips_appid,
-    ips_dce_iface,
-    ips_dce_opnum,
-    ips_dce_stub_data,
-    ips_dnp3_data,
-    ips_dnp3_func,
-    ips_dnp3_ind,
-    ips_dnp3_obj,
-    ips_gtp_info,
-    ips_gtp_type,
-    ips_gtp_version,
-    ips_modbus_data,
-    ips_modbus_func,
-    ips_modbus_unit,
 
     ips_http_uri,
     ips_http_client_body,
@@ -134,6 +111,27 @@ const BaseApi* service_inspectors[] =
     ips_http_raw_trailer,
     ips_http_raw_request,
     ips_http_raw_status,
+    ips_sip_body,
+    ips_sip_header,
+    ips_sip_method,
+    ips_sip_stat_code,
+    ips_ssl_state,
+    ips_ssl_version,
+
+#ifdef STATIC_INSPECTORS
+    ips_dce_iface,
+    ips_dce_opnum,
+    ips_dce_stub_data,
+    ips_dnp3_data,
+    ips_dnp3_func,
+    ips_dnp3_ind,
+    ips_dnp3_obj,
+    ips_gtp_info,
+    ips_gtp_type,
+    ips_gtp_version,
+    ips_modbus_data,
+    ips_modbus_func,
+    ips_modbus_unit,
 
     sin_bo,
     sin_dce_smb,
@@ -146,7 +144,6 @@ const BaseApi* service_inspectors[] =
     sin_ftp_data,
     sin_gtp,
     sin_modbus,
-    sin_http,
     sin_rpc_decode,
     sin_ssh,
     sin_telnet,

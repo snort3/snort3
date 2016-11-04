@@ -1672,14 +1672,15 @@ const InspectApi smtp_api =
     nullptr                 // reset
 };
 
-// can't be linked dynamically yet
-//#ifdef BUILDING_SO
-//SO_PUBLIC const BaseApi* snort_plugins[] =
-//{
-//    &smtp_api.base,
-//    nullptr
-//};
-//#else
+#undef BUILDING_SO  // FIXIT-L can't be linked dynamically yet
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &smtp_api.base,
+    nullptr
+};
+#else
 const BaseApi* sin_smtp = &smtp_api.base;
-//#endif
+#endif
 

@@ -511,14 +511,15 @@ const InspectApi ssl_api =
     nullptr  // reset
 };
 
-// can't be linked dynamically yet
-//#ifdef BUILDING_SO
-//SO_PUBLIC const BaseApi* snort_plugins[] =
-//{
-//    &ssl_api.base,
-//    nullptr
-//};
-//#else
+#undef BUILDING_SO  // FIXIT-L can't be linked dynamically yet
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &ssl_api.base,
+    nullptr
+};
+#else
 const BaseApi* sin_ssl = &ssl_api.base;
-//#endif
+#endif
 

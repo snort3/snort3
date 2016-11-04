@@ -17,7 +17,6 @@ service_inspectors/ftp_telnet/libftp_telnet.a \
 service_inspectors/gtp/libgtp_inspect.a \
 service_inspectors/modbus/libmodbus.a \
 service_inspectors/rpc_decode/librpc_decode.a \
-service_inspectors/sip/libsip.a \
 service_inspectors/ssh/libssh.a \
 service_inspectors/wizard/libwizard.a
 endif
@@ -51,13 +50,14 @@ codecs/ip/libip_codecs.a \
 codecs/misc/libmisc_codecs.a \
 $(codec_list) \
 network_inspectors/libnetwork_inspectors.a \
+network_inspectors/appid/libappid.a \
 network_inspectors/binder/libbinder.a \
 network_inspectors/normalize/libnormalize.a \
 network_inspectors/perf_monitor/libperf_monitor.a \
 network_inspectors/reputation/libreputation.a \
 service_inspectors/libservice_inspectors.a \
-network_inspectors/appid/libappid.a \
 service_inspectors/http_inspect/libhttp_inspect.a \
+service_inspectors/sip/libsip.a \
 $(lib_list) \
 pub_sub/libpub_sub.a \
 service_inspectors/imap/libimap.a \

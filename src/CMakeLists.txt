@@ -41,25 +41,6 @@ include_directories(AFTER ${EXTERNAL_INCLUDES})
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(BEFORE network_inspectors)
 
-# Build options for specific libraries
-# FIXIT is this needed?  see also
-# STATIC_INSPECTOR_LIBS in service_inspectors/CMakeLists.txt
-if (STATIC_INSPECTORS)
-    set (STATIC_INSPECTOR_LIBRARIES
-#        appid
-        arp_spoof
-        back_orifice
-        dns
-        ftp_telnet
-#        http_inspect
-        rpc_decode
-        sip
-        ssh
-        wizard
-    )
-endif()
-
-
 if (STATIC_CODECS)
     set (STATIC_CODEC_LIBRARIES
         link_codecs
@@ -97,10 +78,10 @@ target_link_libraries( snort
     ${STATIC_CODEC_LIBRARIES}
     network_inspectors
     service_inspectors
+# include only those with otherwise unresolved dependencies
     appid
     http_inspect
-    ${STATIC_INSPECTOR_LIBRARIES}
-    port_scan
+    sip
     reputation
     stream
     stream_base
@@ -113,10 +94,6 @@ target_link_libraries( snort
     stream_file
     stream_paf
     mime
-    imap
-    pop
-    smtp
-    ssl
     ${PIGLET_LIBRARIES}
     ips_options
     search_engines
