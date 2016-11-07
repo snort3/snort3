@@ -217,7 +217,8 @@ void AppInfoManager::set_app_info_active(AppId appId)
     if (entry)
         entry->flags |= APPINFO_FLAG_ACTIVE;
     else
-        ErrorMessage("AppInfo: AppId %d is UNKNOWN\n", appId);
+        DebugFormat(DEBUG_APPID, "AppInfo: AppId %d is UNKNOWN\n", appId);
+
 }
 
 void AppInfoManager::load_appid_config(const char* path)

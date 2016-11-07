@@ -122,6 +122,7 @@ static const char CURL_PATTERN[] = "curl";
 static const char GOOGLE_DESKTOP_PATTERN[] = "Google Desktop";
 static const char PICASA_PATTERN[] = "Picasa";
 static const char SAFARI_PATTERN[] = "Safari";
+static const char OPERA_PATTERN[] = "Opera";
 static const char CHROME_PATTERN[] = "Chrome";
 static const char MOBILE_PATTERN[] = "Mobile";
 static const char BLACKBERRY_PATTERN[] = "BlackBerry";
@@ -275,6 +276,8 @@ static DetectorHTTPPattern client_agent_patterns[] =
       sizeof(PICASA_PATTERN)-1, (uint8_t*)PICASA_PATTERN, APP_ID_PICASA,},
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_SAFARI, 0,
       sizeof(SAFARI_PATTERN)-1, (uint8_t*)SAFARI_PATTERN, APP_ID_SAFARI,},
+    { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_OPERA, 0,
+      sizeof(OPERA_PATTERN)-1, (uint8_t*)OPERA_PATTERN, APP_ID_OPERA,},
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_CHROME, 0,
       sizeof(CHROME_PATTERN)-1, (uint8_t*)CHROME_PATTERN, APP_ID_CHROME,},
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_SAFARI_MOBILE_DUMMY, 0,
@@ -1735,8 +1738,7 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
     char temp_ver[MAX_VERSION_SIZE];
     temp_ver[0] = 0;
 
-    detectorHttpConfig->client_agent_matcher->find_all((const char*)start, size, &http_pattern_match,
-        false, (void*)&mp);
+    detectorHttpConfig->client_agent_matcher->find_all((const char*)start, size, &http_pattern_match, false, (void*)&mp);
 
     if (mp)
     {
