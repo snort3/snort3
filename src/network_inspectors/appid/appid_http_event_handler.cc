@@ -159,7 +159,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         session->scan_flags |= SCAN_HTTP_VIA_FLAG;
     }
 
-    session->processHTTPPacket(direction);
+    session->process_http_packet(direction);
     session->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
     if (direction == APP_ID_FROM_INITIATOR)
         appid_stats.http_flows++;

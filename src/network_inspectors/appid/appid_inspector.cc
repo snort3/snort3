@@ -30,7 +30,6 @@
 #include "profiler/profiler.h"
 #include "appid_stats.h"
 #include "appid_session.h"
-#include "fw_appid.h"
 #include "lua_detector_module.h"
 #include "lua_detector_api.h"
 #include "host_port_app_cache.h"
@@ -75,8 +74,6 @@ AppIdInspector::~AppIdInspector()
 bool AppIdInspector::configure(SnortConfig*)
 {
     active_config = new AppIdConfig( ( AppIdModuleConfig* )config);
-    if(config->debug)
-    	show(nullptr);
 
     get_data_bus().subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(HttpEventHandler::REQUEST_EVENT));
     get_data_bus().subscribe(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(HttpEventHandler::RESPONSE_EVENT));
@@ -103,6 +100,8 @@ void AppIdInspector::show(SnortConfig*)
     LogMessage("    appStats Rollover time: %lu secs\n",
         config->app_stats_rollover_time);
     LogMessage("\n");
+    active_config->show();
+
 }
 
 void AppIdInspector::tinit()

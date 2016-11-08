@@ -31,6 +31,13 @@ struct RNAServiceSubtype;
 struct Packet;
 struct DynamicPreprocessorData;
 
+#define APPID_EARLY_SESSION_FLAG_FW_RULE    1
+
+enum SERVICE_HOST_INFO_CODE
+{
+    SERVICE_HOST_INFO_NETBIOS_NAME = 1
+};
+
 enum SERVICE_RETCODE
 {
     SERVICE_SUCCESS = 0,
@@ -73,13 +80,13 @@ struct RNAServiceValidationPort;
 struct RNAServiceValidationModule;
 struct InitServiceAPI
 {
-    void (* RegisterPattern)( RNAServiceValidationFCN, IpProtocol proto, const uint8_t* pattern,
+    void (*RegisterPattern)( RNAServiceValidationFCN, IpProtocol proto, const uint8_t* pattern,
         unsigned size, int position, const char* name);
-    int (* AddPort)( const RNAServiceValidationPort*, RNAServiceValidationModule*);
-    void (* RemovePorts)(RNAServiceValidationFCN);
-    void (* RegisterPatternUser)(RNAServiceValidationFCN, IpProtocol proto,
+    int (*AddPort)( const RNAServiceValidationPort*, RNAServiceValidationModule*);
+    void (*RemovePorts)(RNAServiceValidationFCN);
+    void (*RegisterPatternUser)(RNAServiceValidationFCN, IpProtocol proto,
             const uint8_t* pattern, unsigned size, int position, const char* name);
-    void (* RegisterAppId)( RNAServiceValidationFCN, AppId, uint32_t additionalInfo);
+    void (*RegisterAppId)( RNAServiceValidationFCN, AppId, uint32_t additionalInfo);
     int debug;
     uint32_t instance_id;
     AppIdConfig* pAppidConfig;  ///< AppId context for which this API should be used
@@ -102,36 +109,35 @@ struct RNAServiceElement
     const char* name;
 };
 
-typedef void*(* ServiceFlowdataGet)(AppIdSession*, unsigned);
-typedef int (* ServiceFlowdataAdd)(AppIdSession*, void*, unsigned, AppIdFreeFCN);
-typedef int (* ServiceFlowdataAddDHCP)(AppIdSession*, unsigned, const uint8_t*, unsigned, const
+typedef void* (*ServiceFlowdataGet)(AppIdSession*, unsigned);
+typedef int (*ServiceFlowdataAdd)(AppIdSession*, void*, unsigned, AppIdFreeFCN);
+typedef int (*ServiceFlowdataAddDHCP)(AppIdSession*, unsigned, const uint8_t*, unsigned, const
     uint8_t*, const uint8_t*);
-#define APPID_EARLY_SESSION_FLAG_FW_RULE    1
-typedef void (* ServiceDhcpNewLease)(AppIdSession* flow, const uint8_t* mac, uint32_t ip, int32_t
+typedef void (*ServiceDhcpNewLease)(AppIdSession* flow, const uint8_t* mac, uint32_t ip, int32_t
     zone,  uint32_t subnetmask, uint32_t leaseSecs, uint32_t router);
-typedef void (* ServiceAnalyzeFP)(AppIdSession*, unsigned, unsigned, uint32_t);
+typedef void (*ServiceAnalyzeFP)(AppIdSession*, unsigned, unsigned, uint32_t);
 
-typedef int (* AddService)(AppIdSession* flow, const Packet* pkt, int dir,
+typedef int (*AddService)(AppIdSession* flow, const Packet* pkt, int dir,
 		const RNAServiceElement* svc_element, AppId service, const char* vendor,
 		const char* version, const RNAServiceSubtype* subtype);
-typedef int (* AddServiceConsumeSubtype)(AppIdSession* flow, const Packet* pkt, int dir,
+typedef int (*AddServiceConsumeSubtype)(AppIdSession* flow, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element, AppId service, const char* vendor, const char* version,
     RNAServiceSubtype* subtype);
-typedef int (* ServiceInProcess)(AppIdSession* flow, const Packet* pkt, int dir,
+typedef int (*ServiceInProcess)(AppIdSession* flow, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element);
-typedef int (* FailService)(AppIdSession* flow, const Packet* pkt, int dir,
+typedef int (*FailService)(AppIdSession* flow, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element, unsigned flow_data_index);
-typedef int (* IncompatibleData)(AppIdSession* flow, const Packet* pkt, int dir,
+typedef int (*IncompatibleData)(AppIdSession* flow, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element, unsigned flow_data_index, const AppIdConfig*);
-typedef void (* AddHostInfo)(AppIdSession* flow, SERVICE_HOST_INFO_CODE code, const void* info);
-typedef void (* AddPayload)(AppIdSession*, AppId);
-typedef void (* AddUser)(AppIdSession*, const char*, AppId, int);
-typedef void (* AddMisc)(AppIdSession*, AppId);
-typedef void (* AddDnsQueryInfo)(AppIdSession* flow,  uint16_t id, const uint8_t* host,
+typedef void (*AddHostInfo)(AppIdSession* flow, SERVICE_HOST_INFO_CODE code, const void* info);
+typedef void (*AddPayload)(AppIdSession*, AppId);
+typedef void (*AddUser)(AppIdSession*, const char*, AppId, int);
+typedef void (*AddMisc)(AppIdSession*, AppId);
+typedef void (*AddDnsQueryInfo)(AppIdSession* flow,  uint16_t id, const uint8_t* host,
 		uint8_t host_len, uint16_t host_offset, uint16_t record_type);
-typedef void (* AddDnsResponseInfo)(AppIdSession* flow, uint16_t id, const uint8_t* host,
+typedef void (*AddDnsResponseInfo)(AppIdSession* flow, uint16_t id, const uint8_t* host,
 		uint8_t host_len, uint16_t host_offset, uint8_t response_type, uint32_t ttl);
-typedef void (* ResetDnsInfo)(AppIdSession* flow);
+typedef void (*ResetDnsInfo)(AppIdSession* flow);
 
 struct ServiceApi
 {

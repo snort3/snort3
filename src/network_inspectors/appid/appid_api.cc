@@ -22,10 +22,8 @@
 #include "appid_api.h"
 
 #include "app_info_table.h"
-#include "appid.h"
 #include "service_plugins/service_base.h"
 #include "app_info_table.h"
-#include "fw_appid.h"
 
 #include "utils/util.h"
 
@@ -159,7 +157,7 @@ bool AppIdApi::is_appid_inspecting_session(AppIdSession* appIdSession)
     if (appIdSession && appIdSession->common.flow_type == APPID_FLOW_TYPE_NORMAL)
     {
         if (appIdSession->rnaServiceState != RNA_STATE_FINISHED ||
-            !TPIsAppIdDone(appIdSession->tpsession) ||
+            !is_third_party_appid_done(appIdSession->tpsession) ||
             appIdSession->get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) ||
                 (appIdSession->get_session_flags(APPID_SESSION_ENCRYPTED) &&
                         (appIdSession->get_session_flags(APPID_SESSION_DECRYPTED) ||
@@ -204,7 +202,7 @@ bool AppIdApi::is_appid_available(AppIdSession* asd)
     {
         if (asd->get_session_flags(APPID_SESSION_NO_TPI))
             return true;
-        return TPIsAppIdAvailable(asd->tpsession);
+        return is_third_party_appid_available(asd->tpsession);
     }
     return false;
 }
@@ -512,7 +510,7 @@ uint32_t AppIdApi::produce_ha_state(Flow* flow, uint8_t* buf)
     if ( asd )
     {
         appHA->flags = APPID_HA_FLAGS_APP;
-        if (TPIsAppIdAvailable(asd->tpsession))
+        if (is_third_party_appid_available(asd->tpsession))
             appHA->flags |= APPID_HA_FLAGS_TP_DONE;
         if (asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
             appHA->flags |= APPID_HA_FLAGS_SVC_DONE;

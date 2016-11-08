@@ -27,8 +27,8 @@
 struct RNAServiceValidationModule;
 struct RNAClientAppModule;
 
-using DetectorFlowdataGet = void*(*)(AppIdSession*, unsigned);
-using DetectorFlowdataAdd = int(*)(AppIdSession*, void*, unsigned, AppIdFreeFCN);
+using DetectorFlowdataGet = void* (*)(AppIdSession*, unsigned);
+using DetectorFlowdataAdd = int (*)(AppIdSession*, void*, unsigned, AppIdFreeFCN);
 
 struct DetectorApi
 {
@@ -39,12 +39,8 @@ struct DetectorApi
 // compound detector with both service and client side.
 struct RNADetectorValidationModule
 {
-    /**service side.*/
     RNAServiceValidationModule* service;
-
-    /**client side.*/
     RNAClientAppModule* client;
-
     const DetectorApi* api;
     unsigned flow_data_index;
 };

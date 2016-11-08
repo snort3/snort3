@@ -349,16 +349,16 @@ static int netbios_init(const InitServiceAPI* const init_api)
     init_api->RegisterPattern(&nbss_validate, IpProtocol::TCP, NB_SMB_BANNER,
         sizeof(NB_SMB_BANNER), -1, "netbios");
 
-    DebugFormat(DEBUG_INSPECTOR,"registering appId: %d for NetBIOS-ns\n",APP_ID_NETBIOS_NS);
+    DebugFormat(DEBUG_APPID,"registering appId: %d for NetBIOS-ns\n",APP_ID_NETBIOS_NS);
     init_api->RegisterAppId(&nbns_validate, APP_ID_NETBIOS_NS, APPINFO_FLAG_SERVICE_UDP_REVERSED);
 
-    DebugFormat(DEBUG_INSPECTOR,"registering appId: %d for NetBIOS-dgm\n",APP_ID_NETBIOS_DGM);
+    DebugFormat(DEBUG_APPID,"registering appId: %d for NetBIOS-dgm\n",APP_ID_NETBIOS_DGM);
     init_api->RegisterAppId(&nbdgm_validate, APP_ID_NETBIOS_DGM, APPINFO_FLAG_SERVICE_ADDITIONAL);
 
-    DebugFormat(DEBUG_INSPECTOR,"registering appId: %d for NetBIOS-ssn\n",APP_ID_NETBIOS_SSN);
+    DebugFormat(DEBUG_APPID,"registering appId: %d for NetBIOS-ssn\n",APP_ID_NETBIOS_SSN);
     init_api->RegisterAppId(&nbss_validate, APP_ID_NETBIOS_SSN, APPINFO_FLAG_SERVICE_ADDITIONAL);
 
-    DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",APP_ID_DCE_RPC);
+    DebugFormat(DEBUG_APPID,"registering appId: %d\n",APP_ID_DCE_RPC);
     init_api->RegisterAppId(&nbss_validate, APP_ID_DCE_RPC, 0);
 
     return 0;

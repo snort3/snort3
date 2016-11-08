@@ -90,7 +90,7 @@ static int svc_mysql_init(const InitServiceAPI* const init_api)
 {
     for ( unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++ )
     {
-        DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
+        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&svc_mysql_validate, appIdRegistry[i].appId,
             appIdRegistry[i].additionalInfo);
     }

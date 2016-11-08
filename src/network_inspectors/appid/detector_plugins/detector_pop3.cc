@@ -260,7 +260,7 @@ static CLIENT_APP_RETCODE pop3_ca_init(const InitClientAppAPI* const init_api, S
     }
     cmd_matcher->prep();
 
-    init_api->pAppidConfig->add_generic_config_element(client_app_mod.name, cmd_matcher);
+    AppidConfigElement::add_generic_config_element(client_app_mod.name, cmd_matcher);
 
     pop3_config.enabled = 1;
 
@@ -272,7 +272,7 @@ static CLIENT_APP_RETCODE pop3_ca_init(const InitClientAppAPI* const init_api, S
             item;
             item = (RNAClientAppModuleConfigItem*)sflist_next(&iter))
         {
-            DebugFormat(DEBUG_INSPECTOR,"Processing %s: %s\n",item->name, item->value);
+            DebugFormat(DEBUG_APPID,"Processing %s: %s\n",item->name, item->value);
             if (strcasecmp(item->name, "enabled") == 0)
             {
                 pop3_config.enabled = atoi(item->value);
@@ -284,7 +284,7 @@ static CLIENT_APP_RETCODE pop3_ca_init(const InitClientAppAPI* const init_api, S
     {
         for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
         {
-            DebugFormat(DEBUG_INSPECTOR,"registering pattern: %s\n",
+            DebugFormat(DEBUG_APPID,"registering pattern: %s\n",
             		(const char*)patterns[i].pattern);
             init_api->RegisterPatternNoCase(&pop3_ca_validate, IpProtocol::TCP,
                 patterns[i].pattern, patterns[i].length, 0);
@@ -294,7 +294,7 @@ static CLIENT_APP_RETCODE pop3_ca_init(const InitClientAppAPI* const init_api, S
     unsigned j;
     for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
     {
-        DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[j].appId);
+        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[j].appId);
         init_api->RegisterAppId(&pop3_ca_validate, appIdRegistry[j].appId,
             appIdRegistry[j].additionalInfo);
     }
@@ -312,7 +312,7 @@ static int pop3_init(const InitServiceAPI* const init_api)
     unsigned j;
     for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
     {
-        DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[j].appId);
+        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[j].appId);
         init_api->RegisterAppId(&pop3_validate, appIdRegistry[j].appId,
             appIdRegistry[j].additionalInfo);
     }
@@ -322,10 +322,10 @@ static int pop3_init(const InitServiceAPI* const init_api)
 static void pop3_ca_clean()
 {
     SearchTool* cmd_matcher =
-        (SearchTool*)AppIdConfig::get_appid_config()->find_generic_config_element(client_app_mod.name);
+        (SearchTool*)AppidConfigElement::find_generic_config_element(client_app_mod.name);
     if (cmd_matcher)
         delete cmd_matcher;
-    AppIdConfig::get_appid_config()->remove_generic_config_element(client_app_mod.name);
+    AppidConfigElement::remove_generic_config_element(client_app_mod.name);
 }
 
 static int pop3_pattern_match(void* id, void*, int index, void* data, void*)
@@ -702,8 +702,8 @@ static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, c
     if (dir == APP_ID_FROM_RESPONDER)
     {
 #ifdef DEBUG_POP3
-        DebugFormat(DEBUG_INSPECTOR,"%p Calling server\n",asd);
-        DumpHex(SF_DEBUG_FILE, data, size);
+        DebugFormat(DEBUG_APPID,"%p Calling server\n",asd);
+        AppIdUtils::DumpHex(SF_DEBUG_FILE, data, size);
 #endif
 
         if (pop3_server_validate(dd, data, size, asd, 0))
@@ -712,15 +712,15 @@ static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, c
     }
 
 #ifdef DEBUG_POP3
-    DebugFormat(DEBUG_INSPECTOR,"%p Client\n",asd);
-    DumpHex(SF_DEBUG_FILE, data, size);
+    DebugFormat(DEBUG_APPID,"%p Client\n",asd);
+    AppIdUtils::DumpHex(SF_DEBUG_FILE, data, size);
 #endif
 
     while ((length = (end - s)))
     {
         unsigned pattern_index;
         SearchTool* cmd_matcher =
-            (SearchTool*)AppIdConfig::get_appid_config()->find_generic_config_element(client_app_mod.name);
+            (SearchTool*)AppidConfigElement::find_generic_config_element(client_app_mod.name);
 
         cmd = nullptr;
         cmd_matcher->find_all((char*)s, (length > longest_pattern ? longest_pattern : length),
@@ -888,8 +888,8 @@ static int pop3_validate(ServiceValidationArgs* args)
         goto inprocess;
 
 #ifdef DEBUG_POP3
-    DebugFormat(DEBUG_INSPECTOR,"%p Dir %d\n",asd, dir);
-    DumpHex(SF_DEBUG_FILE, data, size);
+    DebugFormat(DEBUG_APPID,"%p Dir %d\n",asd, dir);
+    AppIdUtils::DumpHex(SF_DEBUG_FILE, data, size);
 #endif
 
     dd = (POP3DetectorData*)pop3_detector_mod.api->data_get(asd,

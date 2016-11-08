@@ -27,6 +27,7 @@
 #include <glob.h>
 #include <libgen.h>
 #include <lua.hpp>
+#include <libgen.h>
 
 #include "appid_config.h"
 #include "client_plugins/client_app_base.h"
@@ -469,9 +470,8 @@ void LuaDetectorManager::load_lua_detectors(const char* path, bool isCustom)
 {
     char pattern[PATH_MAX];
     snprintf(pattern, sizeof(pattern), "%s/*", path);
-
-    // FIXIT-M - is glob thread safe?
     glob_t globs;
+
     memset(&globs, 0, sizeof(globs));
     int rval = glob(pattern, 0, nullptr, &globs);
     if (rval == 0 )
@@ -482,9 +482,9 @@ void LuaDetectorManager::load_lua_detectors(const char* path, bool isCustom)
         globfree(&globs);
     }
     else if(rval == GLOB_NOMATCH)
-        WarningMessage("No lua detectors found in directory '%s'\n", pattern);
+        ParseWarning(WARN_CONF, "No lua detectors found in directory '%s'\n", pattern);
     else
-        ErrorMessage("Error reading lua detectors directory '%s'. Error Code: %d\n",
+        ParseWarning(WARN_CONF, "Error reading lua detectors directory '%s'. Error Code: %d\n",
                      pattern, rval);
 }
 
@@ -511,13 +511,8 @@ static void init_service_detector(Detector* detector)
             name.c_str(), lua_tostring(L, -1));
         return;
     }
-    else
-    {
-        if ( detector->server.pServiceElement )
-            detector->server.pServiceElement->ref_count = 1;
-
-        DebugFormat(DEBUG_APPID, "Initialized %s\n", name.c_str());
-    }
+    else if ( detector->server.pServiceElement )
+        detector->server.pServiceElement->ref_count = 1;
 }
 
 static void init_client_detector(Detector* detector)

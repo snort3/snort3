@@ -61,13 +61,13 @@ using RNAClientAppFCN = CLIENT_APP_RETCODE(*)( const uint8_t* data, uint16_t siz
 
 struct InitClientAppAPI
 {
-    void (* RegisterPattern)(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
+    void (*RegisterPattern)(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
         unsigned size, int position);
-    void (* RegisterPatternEx)(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
+    void (*RegisterPatternEx)(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
         unsigned size, int position, Detector*);
-    void (* RegisterPatternNoCase)(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
+    void (*RegisterPatternNoCase)(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
         unsigned size, int position);
-    void (* RegisterAppId)(RNAClientAppFCN, AppId, uint32_t additionalInfo);
+    void (*RegisterAppId)(RNAClientAppFCN, AppId, uint32_t additionalInfo);
     int debug;
     uint32_t instance_id;
     AppIdConfig* pAppidConfig;  ///< AppId context for which this API should be used

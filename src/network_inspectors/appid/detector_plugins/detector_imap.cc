@@ -39,8 +39,6 @@
 #include "search_engines/search_tool.h"
 #include "utils/util.h"
 
-/*#define DEBUG_IMAP_DETECTOR  1 */
-
 static const unsigned IMAP_USER_NAME_MAX_LEN = 32;
 static const unsigned IMAP_TAG_MAX_LEN = 6;
 static const unsigned MIN_CMDS = 3;
@@ -225,9 +223,6 @@ struct ServiceIMAPData
     unsigned count;
     unsigned parens;
     char tagValue[IMAP_TAG_MAX_LEN+1];
-#ifdef DEBUG_IMAP_DETECTOR
-    IMAPState last_state;
-#endif
 };
 
 static int imap_init(const InitServiceAPI* const init_api);
@@ -301,7 +296,7 @@ static CLIENT_APP_RETCODE init(const InitClientAppAPI* const init_api, SF_LIST* 
     }
     cmd_matcher->prep();
 
-    AppIdConfig::get_appid_config()->add_generic_config_element(client_app_mod.name, cmd_matcher);
+    AppidConfigElement::add_generic_config_element(client_app_mod.name, cmd_matcher);
 
     ca_config.enabled = 1;
 
@@ -355,11 +350,11 @@ static int imap_init(const InitServiceAPI* const init_api)
 static void clean()
 {
     SearchTool* cmd_matcher =
-        (SearchTool*)AppIdConfig::get_appid_config()->find_generic_config_element(client_app_mod.name);
+        (SearchTool*)AppidConfigElement::find_generic_config_element(client_app_mod.name);
     if (cmd_matcher)
         delete cmd_matcher;
 
-    AppIdConfig::get_appid_config()->remove_generic_config_element(client_app_mod.name);
+    AppidConfigElement::remove_generic_config_element(client_app_mod.name);
 }
 
 static int pattern_match(void* id, void*, int index, void* data, void*)
@@ -406,13 +401,6 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
 
     for (; data < end; data++)
     {
-#ifdef DEBUG_IMAP_DETECTOR
-        if (id->state != id->last_state)
-        {
-            DebugFormat(DEBUG_INSPECTOR,"%p State %d\n",asd, id->state);
-            id->last_state = id->state;
-        }
-#endif
         switch (id->state)
         {
         case IMAP_STATE_BEGIN:
@@ -677,7 +665,7 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
     ClientAppData* fd;
     char tag[IMAP_TAG_MAX_LEN+1] = { 0 };
     SearchTool* cmd_matcher =
-        (SearchTool*)AppIdConfig::get_appid_config()->find_generic_config_element(client_app_mod.name);
+        (SearchTool*)AppidConfigElement::find_generic_config_element(client_app_mod.name);
 
 #ifdef APP_ID_USES_REASSEMBLED
     Stream::flush_response_flush(pkt);

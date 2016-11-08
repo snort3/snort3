@@ -68,7 +68,7 @@ static int detectorLoadCallback(void* symbol)
             return -1;
 
     if (svm->client)
-        if (ClientAppLoadCallback(svm->client))
+        if (load_client_application_plugin(svm->client))
             return -1;
 
     svm->api = &detector_api;

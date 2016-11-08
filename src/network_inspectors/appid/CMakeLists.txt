@@ -111,23 +111,18 @@ set ( DP_APPID_SOURCES
 )
 
 set ( UTIL_APPID_SOURCES
-	appid_utils/common_util.h
+	appid_utils/appid_utils.cc
+	appid_utils/appid_utils.h
 	appid_utils/fw_avltree.cc
 	appid_utils/fw_avltree.h
 	appid_utils/ip_funcs.cc
 	appid_utils/ip_funcs.h
 	appid_utils/network_set.cc
 	appid_utils/network_set.h
-	appid_utils/output_file.cc
-	appid_utils/output_file.h
-	appid_utils/sfksearch.cc
-	appid_utils/sfksearch.h
 	appid_utils/sf_mlmp.cc
 	appid_utils/sf_mlmp.h
 	appid_utils/sf_multi_mpse.cc
 	appid_utils/sf_multi_mpse.h
-	appid_utils/sfutil.cc
-	appid_utils/sfutil.h
 )
 
 set ( APPID_SOURCES
@@ -139,7 +134,6 @@ set ( APPID_SOURCES
     appid_config.h
     appid_session.cc
     appid_session.h
-    appid.h
     appid_inspector.cc
     appid_inspector.h
     appid_module.cc
@@ -150,9 +144,6 @@ set ( APPID_SOURCES
     app_info_table.cc
     app_info_table.h
     application_ids.h
-    flow_error.h
-    fw_appid.cc
-    fw_appid.h
     host_port_app_cache.cc
     host_port_app_cache.h
     http_common.h

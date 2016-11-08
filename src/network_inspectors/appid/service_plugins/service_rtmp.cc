@@ -124,7 +124,7 @@ static int rtmp_init(const InitServiceAPI* const init_api)
     unsigned i;
     for (i = 0; i < (sizeof(appIdRegistry) / sizeof(*appIdRegistry)); i++)
     {
-        DebugFormat(DEBUG_INSPECTOR, "registering appId: %d\n", appIdRegistry[i].appId);
+        DebugFormat(DEBUG_APPID, "registering appId: %d\n", appIdRegistry[i].appId);
         init_api->RegisterAppId(&rtmp_validate, appIdRegistry[i].appId,
             appIdRegistry[i].additionalInfo);
     }
@@ -683,9 +683,8 @@ success:
             asd->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
         else
-        {
             snort_free(ss->swfUrl);
-        }
+
         ss->swfUrl = nullptr;
     }
     if (ss->pageUrl != nullptr)
@@ -698,6 +697,7 @@ success:
             asd->hsession->referer = ss->pageUrl;
         else
             snort_free(ss->pageUrl);
+
         ss->pageUrl = nullptr;
     }
     rtmp_service_mod.api->add_service(asd, args->pkt, dir, &svc_element,

@@ -32,6 +32,10 @@
 #include "utils/util.h"
 
 #define APP_PRIORITY_DEFAULT 2
+#define SF_APPID_MAX            40000
+#define SF_APPID_BUILDIN_MAX    30000
+#define SF_APPID_CSD_MIN        1000000
+#define SF_APPID_DYNAMIC_MIN    2000000
 
 struct RNAClientAppModule;
 struct RNAServiceElement;
@@ -151,8 +155,9 @@ private:
     void load_appid_config(const char* path);
     AppInfoTableEntry* get_app_info_entry(AppId appId, const AppInfoTable& lookup_table);
     std::mutex custom_app_mutex;
-
 };
+
+void checkSandboxDetection(AppId appId);
 
 #endif
 

@@ -87,9 +87,9 @@ static int LoadCallback(const char* const path, int /* indent */)
 }
 #endif
 
-void ThirdPartyAppIDInit(AppIdModuleConfig* appidStaticConfig)
+void ThirdPartyAppIDInit(AppIdModuleConfig* config)
 {
-    const char* thirdparty_appid_dir = appidStaticConfig->thirdparty_appid_dir;
+    const char* thirdparty_appid_dir = config->thirdparty_appid_dir;
     int ret;
     struct ThirdPartyUtils thirdpartyUtils;
 
@@ -106,12 +106,12 @@ void ThirdPartyAppIDInit(AppIdModuleConfig* appidStaticConfig)
     }
 
     memset(&thirdpartyConfig, 0, sizeof(thirdpartyConfig));
-    thirdpartyConfig.chp_body_collection_max = appidStaticConfig->chp_body_collection_max;
-    thirdpartyConfig.ftp_userid_disabled = appidStaticConfig->ftp_userid_disabled;
+    thirdpartyConfig.chp_body_collection_max = config->chp_body_collection_max;
+    thirdpartyConfig.ftp_userid_disabled = config->ftp_userid_disabled;
     thirdpartyConfig.chp_body_collection_disabled =
-        appidStaticConfig->chp_body_collection_disabled;
-    thirdpartyConfig.tp_allow_probes = appidStaticConfig->tp_allow_probes;
-    if (appidStaticConfig->http2_detection_enabled)
+        config->chp_body_collection_disabled;
+    thirdpartyConfig.tp_allow_probes = config->tp_allow_probes;
+    if (config->http2_detection_enabled)
         thirdpartyConfig.http_upgrade_reporting_enabled = 1;
     else
         thirdpartyConfig.http_upgrade_reporting_enabled = 0;

@@ -23,8 +23,9 @@
 
 #include <vector>
 #include <algorithm>
-
 #include <limits.h>
+
+#include "app_info_table.h"
 #include "service_api.h"
 #include "service_battle_field.h"
 #include "service_bgp.h"
@@ -55,13 +56,13 @@
 #include "service_tftp.h"
 #include "appid_session.h"
 #include "appid_config.h"
-#include "fw_appid.h"
 #include "lua_detector_api.h"
 #include "lua_detector_module.h"
 #include "appid_utils/ip_funcs.h"
 #include "detector_plugins/detector_dns.h"
 #include "detector_plugins/detector_pattern.h"
 #include "detector_plugins/detector_sip.h"
+
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "search_engines/search_tool.h"
@@ -129,6 +130,10 @@ static const char* service_id_state_name[] =
 #define MAX_CANDIDATE_SERVICES 10
 #define DHCP_OPTION55_LEN_MAX 255
 
+#define FINGERPRINT_UDP_FLAGS_XENIX 0x00000800
+#define FINGERPRINT_UDP_FLAGS_NT    0x00001000
+#define FINGERPRINT_UDP_FLAGS_MASK  (FINGERPRINT_UDP_FLAGS_XENIX | FINGERPRINT_UDP_FLAGS_NT)
+
 static void* service_flowdata_get(AppIdSession* asd, unsigned service_id);
 static int service_flowdata_add(AppIdSession* asd, void* data, unsigned service_id, AppIdFreeFCN
     fcn);
@@ -172,8 +177,8 @@ const ServiceApi serviceapi =
     &AppIdServiceInProcess,
     &AppIdServiceIncompatibleData,
     &add_host_info,
-    &AppIdAddPayload,
-    &AppIdAddUser,
+    &AppIdSession::add_payload,
+    &AppIdSession::add_user,
     &AppIdServiceAddServiceSubtype,
     &add_miscellaneous_info,
     &add_dns_query_info,
@@ -255,7 +260,7 @@ static void appSetServiceValidator(RNAServiceValidationFCN fcn, AppId appId, uns
     AppInfoTableEntry* pEntry = AppInfoManager::get_instance().get_app_info_entry(appId);
     if (!pEntry)
     {
-        ParseError(
+        ParseWarning(WARN_RULES,
           "AppId: ID to Name mapping entry missing for AppId: %d. No rule support for this ID.",
           appId);
         return;
@@ -324,16 +329,16 @@ static int pattern_match(void* id, void*, int index, void* data, void*)
     return 0;
 }
 
-AppId getPortServiceId(IpProtocol proto, uint16_t port, const AppIdConfig* pConfig)
+AppId getPortServiceId(IpProtocol proto, uint16_t port, const AppIdConfig* config)
 {
     AppId appId;
 
     if (proto == IpProtocol::TCP)
-        appId = pConfig->tcp_port_only[port];
+        appId = config->tcp_port_only[port];
     else if (proto == IpProtocol::UDP)
-        appId = pConfig->udp_port_only[port];
+        appId = config->udp_port_only[port];
     else
-        appId = pConfig->ip_protocol[(uint16_t)proto];
+        appId = config->ip_protocol[(uint16_t)proto];
 
     checkSandboxDetection(appId);
 
@@ -432,7 +437,7 @@ const RNAServiceElement* get_service_element(RNAServiceValidationFCN fcn, Detect
         if ((li->validate == fcn) && (li->userdata == userdata))
             return li;
 
-    for (li=service_config->udp_service_list; li; li=li->next)
+    for (li = service_config->udp_service_list; li; li = li->next)
         if ((li->validate == fcn) && (li->userdata == userdata))
             return li;
 
@@ -472,7 +477,7 @@ static void ServiceRegisterPattern(RNAServiceValidationFCN fcn, IpProtocol proto
         return;
     }
 
-    for (li=*list; li; li=li->next)
+    for (li = *list; li; li=li->next)
     {
         if ((li->validate == fcn) && (li->userdata == userdata))
             break;
@@ -489,7 +494,7 @@ static void ServiceRegisterPattern(RNAServiceValidationFCN fcn, IpProtocol proto
         li->name = name;
     }
 
-    if (!(*patterns))
+    if ( !(*patterns) )
     {
         *patterns = new SearchTool("ac_full");
         if (!(*patterns))
@@ -543,7 +548,7 @@ static void RemoveServicePortsByType(RNAServiceValidationFCN validate, SF_LIST**
     RNAServiceElement* li;
     unsigned i;
 
-    for (li=list; li; li=li->next)
+    for (li = list; li; li=li->next)
     {
         if (li->validate == validate && li->userdata == userdata)
             break;
@@ -581,9 +586,7 @@ static void RemoveServicePortsByType(RNAServiceValidationFCN validate, SF_LIST**
 
 static void RemoveAllServicePorts()
 {
-    int i;
-
-    for ( i= 0; i < RNA_SERVICE_MAX_PORT; i++)
+    for (unsigned i = 0; i < RNA_SERVICE_MAX_PORT; i++)
     {
         if (service_config->tcp_services[i])
         {
@@ -591,7 +594,7 @@ static void RemoveAllServicePorts()
             service_config->tcp_services[i] = nullptr;
         }
     }
-    for (i = 0; i < RNA_SERVICE_MAX_PORT; i++)
+    for (unsigned i = 0; i < RNA_SERVICE_MAX_PORT; i++)
     {
         if (service_config->udp_services[i])
         {
@@ -599,7 +602,7 @@ static void RemoveAllServicePorts()
             service_config->udp_services[i] = nullptr;
         }
     }
-    for (i = 0; i < RNA_SERVICE_MAX_PORT; i++)
+    for (unsigned i = 0; i < RNA_SERVICE_MAX_PORT; i++)
     {
         if (service_config->udp_reversed_services[i])
         {
@@ -632,7 +635,7 @@ int ServiceAddPort(const RNAServiceValidationPort* pp, RNAServiceValidationModul
     RNAServiceElement* li;
     RNAServiceElement* serviceElement;
 
-    DebugFormat(DEBUG_INSPECTOR, "Adding service %s for protocol %u on port %u\n",
+    DebugFormat(DEBUG_APPID, "Adding service %s for protocol %u on port %u\n",
         svm->name, (unsigned)pp->proto, (unsigned)pp->port);
     if (pp->proto == IpProtocol::TCP)
     {
@@ -659,7 +662,7 @@ int ServiceAddPort(const RNAServiceValidationPort* pp, RNAServiceValidationModul
         return 0;
     }
 
-    for (li=*list; li; li=li->next)
+    for (li = *list; li; li = li->next)
     {
         if (li->validate == pp->validate && li->userdata == userdata)
             break;
@@ -773,12 +776,12 @@ void init_service_plugins()
 
 void finalize_service_patterns()
 {
-    ServicePatternData* curr;
     ServicePatternData* lists[] = { service_config->tcp_pattern_data,
                                     service_config->udp_pattern_data };
+
     for ( unsigned i = 0; i < (sizeof(lists) / sizeof(*lists)); i++)
     {
-        curr = lists[i];
+        ServicePatternData* curr = lists[i];
         while (curr != nullptr)
         {
             if (curr->svc != nullptr)
@@ -831,6 +834,7 @@ void clean_service_plugins()
         service_config->tcp_pattern_data = pattern->next;
         snort_free(pattern);
     }
+
     while ((pattern = service_config->udp_pattern_data))
     {
         service_config->udp_pattern_data = pattern->next;
@@ -910,9 +914,6 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
     const int, AppIdServiceIDState* id_state)
 {
     SearchTool* patterns = nullptr;
-    ServiceMatch* match_list;
-    uint32_t i;
-    RNAServiceElement* service = nullptr;
     std::vector<ServiceMatch*> smOrderedList;
 
     if (proto == IpProtocol::TCP)
@@ -927,7 +928,7 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
     }
 
     /*FRE didn't search */
-    match_list = nullptr;
+    ServiceMatch* match_list = nullptr;
     patterns->find_all((char*)pkt->data, pkt->dsize, &pattern_match, false, (void*)&match_list);
 
     for (ServiceMatch* sm = match_list; sm; sm = sm->next)
@@ -938,11 +939,12 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
 
     std::sort(smOrderedList.begin(), smOrderedList.end(), AppIdPatternPrecedence);
 
+    unsigned i;
     for (i = 0; i < smOrderedList.size() - 1; i++)
         smOrderedList[i]->next = smOrderedList[i + 1];
     smOrderedList[i]->next = nullptr;
 
-    service = smOrderedList[0]->svc;
+    RNAServiceElement* service = smOrderedList[0]->svc;
 
     if (id_state)
     {
@@ -995,9 +997,7 @@ static int add_dhcp_info(AppIdSession* asd, unsigned op55_len, const uint8_t* op
     if (op55_len && op55_len <= DHCP_OPTION55_LEN_MAX
             && !asd->get_session_flags(APPID_SESSION_HAS_DHCP_FP))
     {
-        DHCPData* rdd;
-
-        rdd = (DHCPData*)snort_calloc(sizeof(*rdd));
+        DHCPData* rdd = (DHCPData*)snort_calloc(sizeof(*rdd));
         if (asd->add_flow_data(rdd, APPID_SESSION_DATA_DHCP_FP_DATA,
             (AppIdFreeFCN)AppIdFreeDhcpData))
         {
@@ -1029,14 +1029,14 @@ static unsigned isIPv4HostMonitored(uint32_t ip4, int32_t zone)
 {
     NetworkSet* net_list;
     unsigned flags;
-    AppIdConfig* pConfig = AppIdConfig::get_appid_config();
+    AppIdConfig* config = AppIdConfig::get_appid_config();
 
-    if (zone >= 0 && zone < MAX_ZONES && pConfig->net_list_by_zone[zone])
-        net_list = pConfig->net_list_by_zone[zone];
+    if (zone >= 0 && zone < MAX_ZONES && config->net_list_by_zone[zone])
+        net_list = config->net_list_by_zone[zone];
     else
-        net_list = pConfig->net_list;
+        net_list = config->net_list;
 
-    NetworkSet_ContainsEx(net_list, ip4, &flags);
+    NetworkSetManager::contains_ex(net_list, ip4, &flags);
     return flags;
 }
 
@@ -1044,7 +1044,6 @@ static void add_host_ip_info(AppIdSession* asd, const uint8_t* mac, uint32_t ip,
     uint32_t subnetmask, uint32_t leaseSecs, uint32_t router)
 {
     DHCPInfo* info;
-    unsigned flags;
 
     if (memcmp(mac, zeromac, 6) == 0 || ip == 0)
         return;
@@ -1053,7 +1052,7 @@ static void add_host_ip_info(AppIdSession* asd, const uint8_t* mac, uint32_t ip,
             || asd->get_session_flags(APPID_SESSION_HAS_DHCP_INFO))
         return;
 
-    flags = isIPv4HostMonitored(ntohl(ip), zone);
+    unsigned flags = isIPv4HostMonitored(ntohl(ip), zone);
     if (!(flags & IPFUNCS_HOSTS_IP))
         return;
 
@@ -1144,7 +1143,6 @@ static int AppIdServiceAddServiceEx(AppIdSession* asd, const Packet* pkt, int di
     }
     asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
     asd->serviceAppId = appId;
-
     checkSandboxDetection(appId);
 
     if (asd->get_session_flags(APPID_SESSION_IGNORE_HOST))
@@ -1179,8 +1177,7 @@ static int AppIdServiceAddServiceEx(AppIdSession* asd, const Packet* pkt, int di
         }
     }
 
-    /* If we ended up with UDP reversed, make sure we're pointing to the
-     * correct host tracker entry. */
+    // If UDP reversed, ensure we have the correct host tracker entry.
     if (asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
     {
         asd->id_state = get_service_id_state(ip, asd->protocol, port,
@@ -1189,8 +1186,8 @@ static int AppIdServiceAddServiceEx(AppIdSession* asd, const Packet* pkt, int di
 
     if (!(id_state = asd->id_state))
     {
-        if (!(id_state = add_service_id_state(ip, asd->protocol, port, AppIdServiceDetectionLevel(
-                asd))))
+        if (!(id_state = add_service_id_state(ip, asd->protocol, port,
+            AppIdServiceDetectionLevel(asd))))
         {
             ErrorMessage("Add service failed to create state");
             return SERVICE_ENOMEM;
@@ -1279,7 +1276,6 @@ int AppIdServiceAddService(AppIdSession* asd, const Packet* pkt, int dir,
     const RNAServiceSubtype* subtype)
 {
     RNAServiceSubtype* new_subtype = nullptr;
-    RNAServiceSubtype* tmp_subtype;
 
     if (!svc_element->current_ref_count)
     {
@@ -1292,7 +1288,7 @@ int AppIdServiceAddService(AppIdSession* asd, const Packet* pkt, int dir,
 
     for (; subtype; subtype = subtype->next)
     {
-        tmp_subtype = (RNAServiceSubtype*)snort_calloc(sizeof(RNAServiceSubtype));
+        RNAServiceSubtype* tmp_subtype = (RNAServiceSubtype*)snort_calloc(sizeof(RNAServiceSubtype));
         if (subtype->service)
             tmp_subtype->service = snort_strdup(subtype->service);
 
@@ -1320,24 +1316,22 @@ int AppIdServiceInProcess(AppIdSession* asd, const Packet* pkt, int dir,
         return SERVICE_EINVALID;
     }
 
-    if (dir == APP_ID_FROM_INITIATOR || asd->get_session_flags(APPID_SESSION_IGNORE_HOST|
-        APPID_SESSION_UDP_REVERSED))
+    if (dir == APP_ID_FROM_INITIATOR ||
+        asd->get_session_flags(APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED))
         return SERVICE_SUCCESS;
 
     if (!(id_state = asd->id_state))
     {
-        uint16_t port;
-        const sfip_t* ip;
+        const sfip_t* ip = pkt->ptrs.ip_api.get_src();
+        uint16_t port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
 
-        ip = pkt->ptrs.ip_api.get_src();
-        port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
-
-        if (!(id_state = add_service_id_state(ip, asd->protocol, port, AppIdServiceDetectionLevel(
-                asd))))
+        if (!(id_state = add_service_id_state(ip, asd->protocol, port,
+            AppIdServiceDetectionLevel(asd))))
         {
             ErrorMessage("In-process service failed to create state");
             return SERVICE_ENOMEM;
         }
+
         asd->id_state = id_state;
         asd->service_ip = *ip;
         asd->service_port = port;
@@ -1348,8 +1342,7 @@ int AppIdServiceInProcess(AppIdSession* asd, const Packet* pkt, int dir,
     {
         if (!sfip_is_set(&asd->service_ip))
         {
-            const sfip_t* ip = pkt->ptrs.ip_api.get_src();
-            asd->service_ip = *ip;
+            asd->service_ip = *(pkt->ptrs.ip_api.get_src());
             if (!asd->service_port)
                 asd->service_port = pkt->ptrs.sp;
         }
@@ -1422,11 +1415,8 @@ int AppIdServiceIncompatibleData(AppIdSession* asd, const Packet* pkt, int dir,
 
     if (!(id_state = asd->id_state))
     {
-        uint16_t port;
-        const sfip_t* ip;
-
-        ip = pkt->ptrs.ip_api.get_src();
-        port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
+        const sfip_t* ip = pkt->ptrs.ip_api.get_src();
+        uint16_t port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
 
         if (!(id_state = add_service_id_state(ip, asd->protocol, port,
                                               AppIdServiceDetectionLevel(asd))))
@@ -1446,8 +1436,7 @@ int AppIdServiceIncompatibleData(AppIdSession* asd, const Packet* pkt, int dir,
     {
         if (!sfip_is_set(&asd->service_ip))
         {
-            const sfip_t* ip = pkt->ptrs.ip_api.get_src();
-            asd->service_ip = *ip;
+            asd->service_ip = *(pkt->ptrs.ip_api.get_src());
             if (!asd->service_port)
                 asd->service_port = pkt->ptrs.sp;
 
@@ -1520,11 +1509,8 @@ int AppIdServiceFailService(AppIdSession* asd, const Packet* pkt, int dir,
 
     if (!(id_state = asd->id_state))
     {
-        uint16_t port;
-        const sfip_t* ip;
-
-        ip = pkt->ptrs.ip_api.get_src();
-        port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
+        const sfip_t* ip = pkt->ptrs.ip_api.get_src();
+        uint16_t port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
 
         if (!(id_state = add_service_id_state(ip, asd->protocol, port,
                 AppIdServiceDetectionLevel(asd))))
@@ -1544,8 +1530,7 @@ int AppIdServiceFailService(AppIdSession* asd, const Packet* pkt, int dir,
     {
         if (!sfip_is_set(&asd->service_ip))
         {
-            const sfip_t* ip = pkt->ptrs.ip_api.get_src();
-            asd->service_ip = *ip;
+            asd->service_ip = *(pkt->ptrs.ip_api.get_src());
             if (!asd->service_port)
                 asd->service_port = pkt->ptrs.sp;
         }
@@ -1886,7 +1871,7 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
         args.userdata = service->userdata;
         ret = service->validate(&args);
         if (ret == SERVICE_NOT_COMPATIBLE)
-            asd->got_incompatible_services = 1;
+            asd->got_incompatible_services = true;
         if (asd->session_logging_enabled)
             LogMessage("AppIdDbg %s %s returned %d\n", asd->session_logging_id,
                 service->name ? service->name : "UNKNOWN", ret);
@@ -1949,7 +1934,7 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
             args.userdata = service->userdata;
             result = service->validate(&args);
             if (result == SERVICE_NOT_COMPATIBLE)
-                asd->got_incompatible_services = 1;
+                asd->got_incompatible_services = true;
             if (asd->session_logging_enabled)
                 LogMessage("AppIdDbg %s %s returned %d\n", asd->session_logging_id,
                     service->name ? service->name : "UNKNOWN", result);

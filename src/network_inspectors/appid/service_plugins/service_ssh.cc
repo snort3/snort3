@@ -404,8 +404,7 @@ static int ssh_validate(ServiceValidationArgs* args)
     if (!ss)
     {
         ss = (ServiceSSHData*)snort_calloc(sizeof(ServiceSSHData));
-        ssh_service_mod.api->data_add(asd, ss,
-            ssh_service_mod.flow_data_index, &ssh_free_state);
+        ssh_service_mod.api->data_add(asd, ss, ssh_service_mod.flow_data_index, &ssh_free_state);
         ss->state = SSH_STATE_BANNER;
         ss->hstate = SSH_HEADER_BEGIN;
         ss->oldhstate = OLD_SSH_HEADER_BEGIN;

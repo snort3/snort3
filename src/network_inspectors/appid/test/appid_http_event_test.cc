@@ -121,7 +121,7 @@ AppIdSession::~AppIdSession()
     snort_free(hsession);
 }
 
-int AppIdSession::processHTTPPacket(int)
+int AppIdSession::process_http_packet(int)
 {
     return 0;
 }

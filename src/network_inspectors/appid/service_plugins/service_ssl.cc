@@ -27,12 +27,12 @@
 #include <netinet/in.h>
 #include <openssl/x509.h>
 
+#include "appid_module.h"
+#include "app_info_table.h"
 #include "appid_session.h"
 #include "service_config.h"
 #include "service_base.h"
 #include "service_ssl.h"
-#include "fw_appid.h"
-#include "appid_module.h"
 
 #include "main/snort_debug.h"
 #include "utils/util.h"

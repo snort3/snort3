@@ -22,22 +22,22 @@
 #include "service_mdns.h"
 
 #include "appid_module.h"
-#include "search_engines/search_tool.h"
-#include "client_plugins/client_app_base.h"
-#include "detector_plugins/http_url_patterns.h"
-#include "detector_plugins/detector_http.h"
-#include "appid_utils/common_util.h"
+
 #include "appid_config.h"
+#include "app_info_table.h"
 #include "appid_session.h"
-#include "fw_appid.h"
 #include "http_common.h"
 #include "lua_detector_api.h"
 #include "service_api.h"
 #include "service_base.h"
 #include "service_ssl.h"
+#include "client_plugins/client_app_base.h"
+#include "detector_plugins/http_url_patterns.h"
+#include "detector_plugins/detector_http.h"
 
 #include "main/snort_debug.h"
 #include "utils/util.h"
+#include "search_engines/search_tool.h"
 
 #define MDNS_PORT   5353
 #define PATTERN_REFERENCE_PTR   3
@@ -92,16 +92,15 @@ struct MdnsConfig
     MatchedPatterns* patternList;
 };
 
-static int MDNS_init(const InitServiceAPI* const init_api);
+static int mdns_init(const InitServiceAPI* const init_api);
 static int ReferencePointer(const char* start_ptr,const char** resp_endptr,   int* start_index,
-    uint16_t data_size, uint8_t* user_name_len, unsigned offset, const AppIdConfig* pConfig);
+    uint16_t data_size, uint8_t* user_name_len, unsigned offset);
 static int MDNS_validate(ServiceValidationArgs* args);
 static int mdnsMatcherCreate();
 static void mdnsMatcherDestroy();
-static unsigned mdnsMatchListCreate(const char* data, uint16_t dataSize, const
-    AppIdConfig* pConfig);
+static unsigned mdnsMatchListCreate(const char* data, uint16_t dataSize);
 static void mdnsMatchListFind(const char* dataPtr, uint16_t index, const char** resp_endptr,
-    int* pattern_length, const AppIdConfig* pConfig);
+    int* pattern_length);
 static void mdnsMatchListDestroy();
 static void MDNS_clean();
 
@@ -126,7 +125,7 @@ static const RNAServiceValidationPort pp[] =
 RNAServiceValidationModule mdns_service_mod =
 {
     "MDNS",
-    &MDNS_init,
+    &mdns_init,
     pp,
     nullptr,
     nullptr,
@@ -140,12 +139,12 @@ static AppRegistryEntry appIdRegistry[] =
     { APP_ID_MDNS, APPINFO_FLAG_SERVICE_ADDITIONAL }
 };
 
-static int MDNS_init(const InitServiceAPI* const init_api)
+static int mdns_init(const InitServiceAPI* const init_api)
 {
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
-        DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
+        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&MDNS_validate, appIdRegistry[i].appId,
             appIdRegistry[i].additionalInfo);
     }
@@ -178,7 +177,7 @@ static int MDNS_validate_reply(const uint8_t* data, uint16_t size)
    Returns 0 or 1 for successful/unsuccessful hit for pattern '@'
    Returns -1 for invalid address pointer or past the data_size */
 static int ReferencePointer(const char* start_ptr, const char** resp_endptr,   int* start_index,
-    uint16_t data_size, uint8_t* user_name_len, unsigned size, const AppIdConfig* pConfig)
+    uint16_t data_size, uint8_t* user_name_len, unsigned size)
 {
     int index = 0;
     int pattern_length = 0;
@@ -193,7 +192,7 @@ static int ReferencePointer(const char* start_ptr, const char** resp_endptr,   i
     const char* temp_start_ptr;
     temp_start_ptr  = start_ptr+index;
 
-    mdnsMatchListFind(start_ptr, size - data_size + index, resp_endptr, &pattern_length, pConfig);
+    mdnsMatchListFind(start_ptr, size - data_size + index, resp_endptr, &pattern_length);
     /* Contains reference pointer */
     while ((index < data_size) && !(*resp_endptr) && ((uint8_t )temp_start_ptr[index]  >>
         SHIFT_BITS_REFERENCE_PTR  != PATTERN_REFERENCE_PTR))
@@ -205,8 +204,7 @@ static int ReferencePointer(const char* start_ptr, const char** resp_endptr,   i
             break;
         }
         index++;
-        mdnsMatchListFind(start_ptr, size - data_size + index, resp_endptr, &pattern_length,
-            pConfig);
+        mdnsMatchListFind(start_ptr, size - data_size + index, resp_endptr, &pattern_length);
     }
     if (index >= data_size)
         *user_name_len = 0;
@@ -219,8 +217,7 @@ static int ReferencePointer(const char* start_ptr, const char** resp_endptr,   i
             SHIFT_BITS_REFERENCE_PTR != PATTERN_REFERENCE_PTR))
         {
             index++;
-            mdnsMatchListFind(start_ptr,  size - data_size + index, resp_endptr, &pattern_length,
-                pConfig);
+            mdnsMatchListFind(start_ptr,  size - data_size + index, resp_endptr, &pattern_length);
         }
         if (index >= data_size)
             *user_name_len = 0;
@@ -246,45 +243,36 @@ static int ReferencePointer(const char* start_ptr, const char** resp_endptr,   i
                2. Calls the function which scans for pattern to identify the user
                3. Calls the function which does the Username reporting along with the host
   MDNS User Analysis*/
-static int MDNSUserAnalyser(AppIdSession* asd, const Packet* pkt, uint16_t size, const
-    AppIdConfig* pConfig)
+static int MDNSUserAnalyser(AppIdSession* asd, const Packet* pkt, uint16_t size)
 {
-    const char* query_val;
-    const char* answers;
     char user_name[MAX_LENGTH_SERVICE_NAME] = "";
     char* user_name_bkp = nullptr;
-    const char* resp_endptr;
-    const char* srv_original;
-    const char* end_srv_original;
-    const char* user_original;
-    int query_val_int;
-    int ans_count = 0;
-    int start_index =0;
-    int processed_ans =0;
-    uint16_t data_len = 0;
-    uint8_t* data_len_str;
+    int start_index = 0;
+    int processed_ans = 0;
     uint8_t user_name_len = 0;
     uint16_t data_size = size;
 
     /* Scan for MDNS response, decided on Query value */
-    query_val = (char*)pkt->data + QUERY_OFFSET;
-    query_val_int = (short)(query_val[0]<<SHIFT_BITS  | query_val[1]);
-    answers = (char*)pkt->data + ANSWER_OFFSET;
-    ans_count =  (short)(answers[0]<< SHIFT_BITS | (answers[1] ));
+    const char* query_val = (char*)pkt->data + QUERY_OFFSET;
+    int query_val_int = (short)(query_val[0]<<SHIFT_BITS  | query_val[1]);
+    const char* answers = (char*)pkt->data + ANSWER_OFFSET;
+    int ans_count =  (short)(answers[0]<< SHIFT_BITS | (answers[1] ));
 
-    if ( query_val_int ==0)
+    if ( query_val_int == 0)
     {
-        srv_original  = (char*)pkt->data + RECORD_OFFSET;
-        mdnsMatchListCreate(srv_original, size-RECORD_OFFSET, pConfig);
-        end_srv_original  = (char*)pkt->data + RECORD_OFFSET+data_size;
-        for (processed_ans =0; processed_ans< ans_count && data_size <= size && size > 0;
+        const char* resp_endptr;
+        const char* user_original;
+
+        const char* srv_original  = (char*)pkt->data + RECORD_OFFSET;
+        mdnsMatchListCreate(srv_original, size-RECORD_OFFSET);
+        const char* end_srv_original  = (char*)pkt->data + RECORD_OFFSET + data_size;
+        for (processed_ans = 0; processed_ans < ans_count && data_size <= size && size > 0;
             processed_ans++ )
         {
-            /* Call Decode Reference pointer function if referenced value instead of direct value
-               */
+            // Call Decode Reference pointer function if referenced value instead of direct value
             user_name_len = 0;
             int ret_value = ReferencePointer(srv_original, &resp_endptr,  &start_index, data_size,
-                &user_name_len, size, pConfig);
+                &user_name_len, size);
             int user_index =0;
             int user_printable_index =0;
 
@@ -300,7 +288,7 @@ static int MDNSUserAnalyser(AppIdSession* asd, const Packet* pkt, uint16_t size,
                 }
                 user_name_len -=user_index;
 
-                memcpy(user_name, srv_original+start_index, user_name_len);
+                memcpy(user_name, srv_original + start_index, user_name_len);
                 user_name[user_name_len] = '\0';
 
                 user_index =0;
@@ -315,12 +303,12 @@ static int MDNSUserAnalyser(AppIdSession* asd, const Packet* pkt, uint16_t size,
                 mdns_service_mod.api->add_user(asd, user_name, APP_ID_MDNS, 1);
                 break;
             }
-            /* Find the  length to Jump to the next response */
 
+            // Find the  length to Jump to the next response
             if ((resp_endptr  + NEXT_MESSAGE_OFFSET  ) < (srv_original + data_size))
             {
-                data_len_str = (uint8_t*)(resp_endptr+ LENGTH_OFFSET);
-                data_len =  (short)( data_len_str[0]<< SHIFT_BITS | ( data_len_str[1] ));
+                uint8_t* data_len_str = (uint8_t*)(resp_endptr+ LENGTH_OFFSET);
+                uint16_t data_len =  (short)( data_len_str[0]<< SHIFT_BITS | ( data_len_str[1] ));
                 data_size = data_size - (resp_endptr  + NEXT_MESSAGE_OFFSET + data_len -
                     srv_original);
                 /* Check if user name is available in the Domain Name field */
@@ -391,14 +379,13 @@ static int MDNSUserAnalyser(AppIdSession* asd, const Packet* pkt, uint16_t size,
 
 static int MDNS_validate(ServiceValidationArgs* args)
 {
-    ServiceMDNSData* fd;
     int ret_val;
     AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
     uint16_t size = args->size;
 
-    fd = (ServiceMDNSData*)mdns_service_mod.api->data_get(asd, mdns_service_mod.flow_data_index);
+    ServiceMDNSData* fd = (ServiceMDNSData*)mdns_service_mod.api->data_get(asd, mdns_service_mod.flow_data_index);
     if (!fd)
     {
         fd = (ServiceMDNSData*)snort_calloc(sizeof(ServiceMDNSData));
@@ -413,7 +400,7 @@ static int MDNS_validate(ServiceValidationArgs* args)
         {
             if (AppIdConfig::get_appid_config()->mod_config->mdns_user_reporting)
             {
-                MDNSUserAnalyser(asd, pkt, size, args->pConfig);
+                MDNSUserAnalyser(asd, pkt, size);
                 mdnsMatchListDestroy();
                 goto success;
             }
@@ -462,14 +449,14 @@ static int mdnsMatcherCreate()
             (char*)patterns[i].pattern, patterns[i].length, &patterns[i]);
 
     pMdnsConfig->mdnsMatcher->prep();
-    AppIdConfig::get_appid_config()->add_generic_config_element(svc_element.name, pMdnsConfig);
+    AppidConfigElement::add_generic_config_element(svc_element.name, pMdnsConfig);
     return 1;
 }
 
 static void mdnsMatcherDestroy()
 {
     MdnsConfig* pMdnsConfig =
-            (MdnsConfig*)AppIdConfig::get_appid_config()->find_generic_config_element(svc_element.name);
+            (MdnsConfig*)AppidConfigElement::find_generic_config_element(svc_element.name);
     MatchedPatterns* node;
     if (pMdnsConfig->mdnsMatcher)
         delete pMdnsConfig->mdnsMatcher;
@@ -483,7 +470,7 @@ static void mdnsMatcherDestroy()
         snort_free(node);
     }
     snort_free(pMdnsConfig);
-    AppIdConfig::get_appid_config()->remove_generic_config_element(svc_element.name);
+    AppidConfigElement::remove_generic_config_element(svc_element.name);
 }
 
 static int mdns_pattern_match(void* id, void*, int index, void* data, void*)
@@ -525,11 +512,10 @@ static int mdns_pattern_match(void* id, void*, int index, void* data, void*)
     return 0;
 }
 
-static unsigned mdnsMatchListCreate(const char* data, uint16_t dataSize, const
-    AppIdConfig* pConfig)
+static unsigned mdnsMatchListCreate(const char* data, uint16_t dataSize)
 {
-    MdnsConfig* pMdnsConfig = (MdnsConfig*)((AppIdConfig*)pConfig)->find_generic_config_element(
-        svc_element.name);
+     MdnsConfig* pMdnsConfig =
+         (MdnsConfig*)AppidConfigElement::find_generic_config_element(svc_element.name);
 
     if (pMdnsConfig->patternList)
         mdnsMatchListDestroy();
@@ -543,10 +529,10 @@ static unsigned mdnsMatchListCreate(const char* data, uint16_t dataSize, const
 }
 
 static void mdnsMatchListFind(const char* dataPtr, uint16_t index, const char** resp_endptr,
-    int* pattern_length, const AppIdConfig* pConfig)
+    int* pattern_length)
 {
-    MdnsConfig* pMdnsConfig = (MdnsConfig*)((AppIdConfig*)pConfig)->find_generic_config_element(
-        svc_element.name);
+    MdnsConfig* pMdnsConfig =
+        (MdnsConfig*)AppidConfigElement::find_generic_config_element(svc_element.name);
 
     while (pMdnsConfig->patternList)
     {
@@ -574,7 +560,8 @@ static void mdnsMatchListDestroy()
     MatchedPatterns* element;
 
     MdnsConfig* pMdnsConfig =
-            (MdnsConfig*)AppIdConfig::get_appid_config()->find_generic_config_element(svc_element.name);
+        (MdnsConfig*)AppidConfigElement::find_generic_config_element(svc_element.name);
+
     while (pMdnsConfig->patternList)
     {
         element = pMdnsConfig->patternList;

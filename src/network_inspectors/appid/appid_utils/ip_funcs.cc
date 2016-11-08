@@ -21,7 +21,7 @@
 
 #include "ip_funcs.h"
 
-#include "sfutil.h"
+#include "appid_utils.h"
 #include "log/messages.h"
 #include "utils/util.h"
 
@@ -37,7 +37,7 @@ RNAIpAddrSet* ParseIpCidr(char* ipstring, uint32_t* netmasks)
         return nullptr;
 
     ias = (RNAIpAddrSet*)snort_calloc(sizeof(RNAIpAddrSet));
-    strip(ipstring);
+    AppIdUtils::strip(ipstring);
     cp = ipstring;
     if (*cp == 'h')
     {
@@ -63,7 +63,7 @@ RNAIpAddrSet* ParseIpCidr(char* ipstring, uint32_t* netmasks)
         return ias;
     }
 
-    num_toks = Split(cp, toks, 2, "/");
+    num_toks = AppIdUtils::split(cp, toks, 2, "/");
 
     if (inet_pton(AF_INET, toks[0], &ia) <= 0)
     {
@@ -115,7 +115,7 @@ RNAIpv6AddrSet* ParseIpv6Cidr(char* ipstring)
         return nullptr;
 
     ias = (RNAIpv6AddrSet*)snort_calloc(sizeof(*ias));
-    strip(ipstring);
+    AppIdUtils::strip(ipstring);
     cp = ipstring;
     if (*cp == 'h')
     {
@@ -142,7 +142,7 @@ RNAIpv6AddrSet* ParseIpv6Cidr(char* ipstring)
         return ias;
     }
 
-    num_toks = Split(cp, toks, 2, "/");
+    num_toks = AppIdUtils::split(cp, toks, 2, "/");
 
     if (inet_pton(AF_INET6, toks[0], &ia) <= 0)
     {
@@ -151,7 +151,7 @@ RNAIpv6AddrSet* ParseIpv6Cidr(char* ipstring)
         return nullptr;
     }
     memcpy(&ias->range_min, (const void*)&ia, sizeof(ias->range_min));
-    NSIPv6AddrNtoH(&ias->range_min);
+    NetworkSetManager::ntoh_ipv6(&ias->range_min);
 
     if (num_toks > 1)
     {

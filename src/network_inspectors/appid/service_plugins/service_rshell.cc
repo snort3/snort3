@@ -103,7 +103,7 @@ static int rshell_init(const InitServiceAPI* const init_api)
 
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
-        DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
+        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&rshell_validate, appIdRegistry[i].appId,
             appIdRegistry[i].additionalInfo);
     }
@@ -204,11 +204,8 @@ static int rshell_validate(ServiceValidationArgs* args)
                 }
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
                 PopulateExpectedFlow(asd, pf,
-                    APPID_SESSION_CONTINUE |
-                    APPID_SESSION_REXEC_STDERR |
-                    APPID_SESSION_NO_TPI |
-                    APPID_SESSION_SERVICE_DETECTED |
-                    APPID_SESSION_NOT_A_SERVICE |
+                    APPID_SESSION_CONTINUE | APPID_SESSION_REXEC_STDERR | APPID_SESSION_NO_TPI |
+                    APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
                     APPID_SESSION_PORT_SERVICE_DONE);
                 pf->rnaServiceState = RNA_STATE_STATEFUL;
             }

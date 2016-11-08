@@ -64,6 +64,7 @@ stream_udp = { }
 stream_user = { }
 stream_file = { }
 
+appid = { }
 arp_spoof = { }
 back_orifice = { }
 dnp3 = { }

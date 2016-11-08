@@ -36,7 +36,6 @@
 #include "appid_session.h"
 #include "app_info_table.h"
 #include "appid_utils/fw_avltree.h"
-#include "appid_utils/output_file.h"
 
 #define URLCATBUCKETS   100
 #define URLREPBUCKETS   5
@@ -347,6 +346,33 @@ static StatsBucket* get_stats_bucket(time_t startTime)
     return bucket;
 }
 
+static FILE* open_stats_log_file(const char* const filename, time_t tstamp)
+{
+    FILE* fp;
+    char output_fullpath[512];
+    time_t curr_time;
+
+    if (tstamp)
+        curr_time = tstamp;
+    else
+        curr_time = time(nullptr);
+
+    snprintf(output_fullpath, sizeof(output_fullpath), "%s.%lu", filename, curr_time);
+    LogMessage("Opening %s for AppId statistics logging.\n", output_fullpath);
+
+    if ((fp = fopen(output_fullpath, "w")) == nullptr)
+    {
+        ErrorMessage("Unable to open output file \"%s\": %s\n for AppId statistics logging.",output_fullpath, strerror(errno));
+    }
+    return fp;
+}
+
+static FILE* rollover_stats_log_file(const char* const filename, FILE* const oldfp, time_t tstamp)
+{
+    fclose(oldfp);
+    return open_stats_log_file(filename, tstamp);
+}
+
 static void dump_statistics()
 {
     struct StatsBucket* bucket = nullptr;
@@ -445,14 +471,14 @@ static void dump_statistics()
             {
                 if (!appfp)
                 {
-                    appfp = openOutputFile(appid_stats_filename, currTime);
+                    appfp = open_stats_log_file(appid_stats_filename, currTime);
                     appTime = currTime;
                     appSize = 0;
                 }
                 else if (((currTime - appTime) > rollPeriod) ||
                     ((appSize + buffSize) > rollSize))
                 {
-                    appfp = rolloverOutputFile(appid_stats_filename, appfp, currTime);
+                    appfp = rollover_stats_log_file(appid_stats_filename, appfp, currTime);
                     appTime = currTime;
                     appSize = 0;
                 }

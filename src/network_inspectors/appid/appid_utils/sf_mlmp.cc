@@ -284,7 +284,7 @@ static void dumpTreesRecursively(tMlmpTree* rootNode)
         primaryPatternNode;
         primaryPatternNode = primaryPatternNode->nextPrimaryNode)
     {
-        DebugFormat(DEBUG_INSPECTOR, "%s%u. Primary id %u. partTotal %u, Data %p\n", prefix,
+        DebugFormat(DEBUG_APPID, "%s%u. Primary id %u. partTotal %u, Data %p\n", prefix,
             rootNode->level+1,
             primaryPatternNode->patternNode.patternId,
             primaryPatternNode->patternNode.partTotal,
@@ -294,7 +294,7 @@ static void dumpTreesRecursively(tMlmpTree* rootNode)
             ddPatternNode;
             ddPatternNode = ddPatternNode->nextPattern)
         {
-            DebugFormat(DEBUG_INSPECTOR, "%s\t part %u/%u: Pattern %s, size %u\n", prefix,
+            DebugFormat(DEBUG_APPID, "%s\t part %u/%u: Pattern %s, size %u\n", prefix,
                 ddPatternNode->partNum,
                 ddPatternNode->partTotal,
                 (char*)ddPatternNode->pattern.pattern,
@@ -333,14 +333,14 @@ static tPatternNode* patternSelector(const tMatchedPatternList* patternMatchList
 
 #if  _MLMP_DEBUG
     tPatternNode* ddPatternNode;
-    DebugMessage(DEBUG_INSPECTOR, "\tMatches found -------------------\n"); for (tmpList =
+    DebugMessage(DEBUG_APPID, "\tMatches found -------------------\n"); for (tmpList =
         patternMatchList;
         tmpList;
         tmpList = tmpList->next)
     {
         ddPatternNode = tmpList->patternNode;
         {
-            DebugFormat(DEBUG_INSPECTOR,
+            DebugFormat(DEBUG_APPID,
                 "\t\tid %d, Pattern %s, size %u, partNum %u, partTotal %u, userData %p\n",
                 ddPatternNode->patternId,
                 ddPatternNode->pattern.pattern,
@@ -398,7 +398,7 @@ static tPatternNode* patternSelector(const tMatchedPatternList* patternMatchList
     {
         ddPatternNode = bestNode;
         {
-            DebugFormat(DEBUG_INSPECTOR,
+            DebugFormat(DEBUG_APPID,
                 "\t\tSELECTED Id %d, pattern %s, size %u, partNum %u, partTotal %u, userData %p\n",
                 ddPatternNode->patternId,
                 ddPatternNode->pattern.pattern,
@@ -408,7 +408,7 @@ static tPatternNode* patternSelector(const tMatchedPatternList* patternMatchList
                 ddPatternNode->userData);
         }
     }
-    DebugMessage(DEBUG_INSPECTOR, "\tMatches end -------------------\n");
+    DebugMessage(DEBUG_APPID, "\tMatches end -------------------\n");
 #endif
     return bestNode;
 }
@@ -437,7 +437,7 @@ static int patternMatcherCallback(void* id, void*, int index, void* data, void*)
     /*sort matches by patternId, and then by partId or pattern// */
 
 #if _MLMP_DEBUG
-    DebugFormat(DEBUG_INSPECTOR,
+    DebugFormat(DEBUG_APPID,
         "\tCallback id %d, Pattern %s, size %u, partNum %u, partTotal %u, userData %p\n",
         target->patternId,
         target->pattern.pattern,

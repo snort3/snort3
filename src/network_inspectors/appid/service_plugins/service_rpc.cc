@@ -162,6 +162,7 @@ struct ServiceRPCData
 };
 
 static int rpc_init(const InitServiceAPI* const init_api);
+static void rpc_clean();
 static int rpc_validate(ServiceValidationArgs* args);
 static int rpc_tcp_validate(ServiceValidationArgs* args);
 
@@ -218,7 +219,7 @@ RNAServiceValidationModule rpc_service_mod =
     nullptr,
     nullptr,
     0,
-    nullptr,
+    &rpc_clean,
     0
 };
 
@@ -229,7 +230,7 @@ struct RPCProgram
     char* name;
 };
 
-static RPCProgram* rpc_programs;
+static THREAD_LOCAL RPCProgram* rpc_programs;
 
 static uint8_t rpc_reply_accepted_pattern[8] = { 0,0,0,1,0,0,0,0 };
 static uint8_t rpc_reply_denied_pattern[8] = { 0,0,0,1,0,0,0,1 };
@@ -277,7 +278,7 @@ static int rpc_init(const InitServiceAPI* const init_api)
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
-        DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
+        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&rpc_validate, appIdRegistry[i].appId,
             appIdRegistry[i].additionalInfo);
     }
@@ -285,11 +286,26 @@ static int rpc_init(const InitServiceAPI* const init_api)
     return 0;
 }
 
+static void rpc_clean()
+{
+    RPCProgram* rpc = rpc_programs;
+
+    while( rpc )
+    {
+        RPCProgram* toast = rpc;
+        rpc = rpc->next;
+
+        if (toast->name)
+            snort_free(toast->name);
+        snort_free(toast);
+    }
+}
+
 static const RPCProgram* FindRPCProgram(uint32_t program)
 {
     RPCProgram* rpc;
 
-    for (rpc=rpc_programs; rpc; rpc=rpc->next)
+    for (rpc = rpc_programs; rpc; rpc = rpc->next)
     {
         if (program == rpc->program)
             break;

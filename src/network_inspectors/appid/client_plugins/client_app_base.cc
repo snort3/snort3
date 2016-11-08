@@ -19,6 +19,8 @@
 
 // client_app_base.cc author Ron Dempster <Ron.Dempster@sourcefire.com>
 
+#include "client_app_base.h"
+
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,8 +28,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-#include "client_app_base.h"
 
 #include "main/snort_debug.h"
 #include "log/messages.h"
@@ -38,7 +38,7 @@
 
 #include "appid_api.h"
 #include "appid_config.h"
-#include "fw_appid.h"
+#include "app_info_table.h"
 #include "client_app_api.h"
 #include "client_app_base.h"
 #include "client_app_msn.h"
@@ -72,8 +72,8 @@ static const ClientAppApi client_app_api =
     &client_app_flowdata_add,
     &AppIdAddClientApp,
     &AppIdAddClientAppInfo,
-    &AppIdAddUser,
-    &AppIdAddPayload
+    &AppIdSession::add_user,
+    &AppIdSession::add_payload
 };
 
 static void CClientAppRegisterPattern(RNAClientAppFCN fcn, IpProtocol proto,
@@ -110,7 +110,7 @@ extern RNAClientAppModule pattern_udp_client_mod;
 extern RNAClientAppModule pattern_tcp_client_mod;
 extern RNAClientAppModule http_client_mod;
 
-static RNAClientAppModule* static_client_list[] =
+static RNAClientAppModule* builtin_client_plugins[] =
 {
     &ssh_client_mod,
     &msn_client_mod,
@@ -130,7 +130,7 @@ static RNAClientAppModule* static_client_list[] =
     &dns_tcp_client_mod,
     &http_client_mod
 };
-const uint32_t NUM_STATIC_CLIENTS =  sizeof(static_client_list)/sizeof(RNAClientAppModule*);
+const uint32_t NUM_BUILTIN_CLIENT_PLUGINS =  sizeof(builtin_client_plugins)/sizeof(RNAClientAppModule*);
 
 static THREAD_LOCAL ClientAppConfig* client_app_config = nullptr;
 
@@ -148,7 +148,7 @@ static void appSetClientValidator(RNAClientAppFCN fcn, AppId appId, unsigned ext
     AppInfoTableEntry* pEntry = AppInfoManager::get_instance().get_app_info_entry(appId);
     if (!pEntry)
     {
-        ParseError(
+        ParseWarning(WARN_RULES,
             "AppId: ID to Name mapping entry missing for AppId: %d. No rule support for this ID.",
             appId);
         return;
@@ -292,7 +292,7 @@ void ClientAppRegisterPattern(RNAClientAppFCN fcn, IpProtocol proto, const uint8
     }
 }
 
-int ClientAppLoadCallback(void* symbol)
+int load_client_application_plugin(void* symbol)
 {
     static THREAD_LOCAL unsigned client_module_index = 0;
     RNAClientAppModule* cam = (RNAClientAppModule*)symbol;
@@ -308,13 +308,9 @@ int ClientAppLoadCallback(void* symbol)
     }
 
     if (cam->proto == IpProtocol::TCP)
-    {
         list = &client_app_config->tcp_client_app_list;
-    }
     else if (cam->proto == IpProtocol::UDP)
-    {
         list = &client_app_config->udp_client_app_list;
-    }
     else
     {
         ErrorMessage("Client %s did not have a valid protocol (%u)",
@@ -327,6 +323,7 @@ int ClientAppLoadCallback(void* symbol)
         if (li->module == cam)
             break;
     }
+
     if (!li)
     {
         li = (RNAClientAppRecord*)snort_calloc(sizeof(RNAClientAppRecord));
@@ -345,18 +342,6 @@ int ClientAppLoadCallback(void* symbol)
     return 0;
 }
 
-int LoadClientAppModules()
-{
-    unsigned i;
-
-    for (i = 0; i < NUM_STATIC_CLIENTS; i++)
-    {
-        if (ClientAppLoadCallback(static_client_list[i]))
-            return -1;
-    }
-
-    return 0;
-}
 
 static void AddModuleConfigItem(char* module_name, char* item_name, char* item_value)
 {
@@ -481,14 +466,14 @@ static void DisplayClientAppConfig(ClientAppConfig* config)
 
 static int ClientAppParseArgs(SF_LIST* args)
 {
-    ConfigItem* ci;
+    AppidConfigElement* ci;
     SF_LNODE* cursor;
 
-    for (ci = (ConfigItem*)sflist_first(args, &cursor);
+    for (ci = (AppidConfigElement*)sflist_first(args, &cursor);
         ci;
-        ci = (ConfigItem*)sflist_next(&cursor))
+        ci = (AppidConfigElement*)sflist_next(&cursor))
     {
-        ClientAppParseOption(ci->name, ci->value);
+        ClientAppParseOption(ci->name, (char*)ci->value);
     }
 
 #ifdef DEBUG
@@ -559,6 +544,19 @@ static void finalize_module(RNAClientAppRecord* li)
     }
 }
 
+static int load_builtin_client_plugins()
+{
+    unsigned i;
+
+    for (i = 0; i < NUM_BUILTIN_CLIENT_PLUGINS; i++)
+    {
+        if (load_client_application_plugin(builtin_client_plugins[i]))
+            return -1;
+    }
+
+    return 0;
+}
+
 /**
  * Initialize the configuration of the client app module
  *
@@ -569,7 +567,7 @@ void init_client_plugins()
     RNAClientAppRecord* li;
 
     client_app_config = new ClientAppConfig;
-    if (LoadClientAppModules())
+    if (load_builtin_client_plugins())
          exit(-1);
 
     sflist_init(&client_app_config->module_configs);

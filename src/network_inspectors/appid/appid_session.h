@@ -30,15 +30,21 @@
 #include "protocols/packet.h"
 #include "utils/sflsq.h"
 
-#include "appid.h"
 #include "appid_api.h"
 #include "application_ids.h"
-#include "flow_error.h"
 #include "length_app_cache.h"
 #include "service_state.h"
+#include "http_common.h"
 #include "thirdparty_appid_api.h"
 #include "thirdparty_appid_types.h"
-#include "http_common.h"
+#include "thirdparty_appid_utils.h"
+
+struct RNAServiceElement;
+struct RNAServiceSubtype;
+struct RNAClientAppModule;
+class AppInfoManager;
+
+using AppIdFreeFCN = void(*)(void*);
 
 #define MAX_ATTR_LEN           1024
 #define HTTP_PREFIX "http://"
@@ -59,12 +65,26 @@
     (APPID_SESSION_RESPONDER_MONITORED | \
     APPID_SESSION_INITIATOR_MONITORED | APPID_SESSION_DISCOVER_USER | \
     APPID_SESSION_SPECIAL_MONITORED)
+
+// flow status codes
+enum AppIdFlowStatusCodes
+{
+    APPID_SESSION_SUCCESS = 0,
+    APPID_SESSION_ENULL,
+    APPID_SESSION_EINVALID,
+    APPID_SESSION_ENOMEM,
+    APPID_SESSION_NOTFOUND,
+    APPID_SESSION_BADJUJU,
+    APPID_SESSION_DISABLED,
+    APPID_SESSION_EUNSUPPORTED,
+    APPID_SESSION_STOP_PROCESSING,
+    APPID_SESSION_EEXISTS
+};
+
 #define MAX_SESSION_LOGGING_ID_LEN    (39+1+5+4+39+1+5+1+3+1+1+1+2+1+10+1+1+1+10+1)
 
-struct RNAServiceElement;
-struct RNAServiceSubtype;
-struct RNAClientAppModule;
-class AppInfoManager;
+#define MIN_SFTP_PACKET_COUNT   30
+#define MAX_SFTP_PACKET_COUNT   55
 
 enum RNA_INSPECTION_STATE
 {
@@ -72,6 +92,13 @@ enum RNA_INSPECTION_STATE
     RNA_STATE_DIRECT,
     RNA_STATE_STATEFUL,
     RNA_STATE_FINISHED
+};
+
+enum APPID_SESSION_DIRECTION
+{
+    APP_ID_FROM_INITIATOR,
+    APP_ID_FROM_RESPONDER,
+    APP_ID_APPID_SESSION_DIRECTION_MAX // Maximum value of a direction (must be last in the list)
 };
 
 struct AppIdFlowData
@@ -111,6 +138,8 @@ struct fflow_info
     AppId appId;
     int flow_prepared;
 };
+
+#define RESPONSE_CODE_PACKET_THRESHHOLD 0
 
 struct httpSession
 {
@@ -204,7 +233,8 @@ public:
     static AppIdSession* create_future_session(const Packet*, const sfip_t*, uint16_t, const sfip_t*,
             uint16_t, IpProtocol, int16_t, int);
     static void do_application_discovery(Packet*);
-    int processHTTPPacket(int);
+    static void add_user(AppIdSession*, const char* username, AppId, int success);
+    static void add_payload(AppIdSession*, AppId);
 
     AppIdConfig* config = nullptr;
     CommonAppIdData common;
@@ -217,12 +247,12 @@ public:
     uint16_t service_port = 0;
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
     uint8_t previous_tcp_flags = 0;
+
     // AppId matching service side
+    RNA_INSPECTION_STATE rnaServiceState = RNA_STATE_NONE;
     AppId serviceAppId = APP_ID_NONE;
     AppId portServiceAppId = APP_ID_NONE;
-    // RNAServiceElement for identifying detector
     const RNAServiceElement* serviceData = nullptr;
-    RNA_INSPECTION_STATE rnaServiceState = RNA_STATE_NONE;
     char* serviceVendor = nullptr;
     char* serviceVersion = nullptr;
     RNAServiceSubtype* subtype = nullptr;
@@ -230,25 +260,24 @@ public:
     char* netbios_name = nullptr;
     SF_LIST* candidate_service_list = nullptr;
     unsigned int num_candidate_services_tried = 0;
-    int got_incompatible_services = 0;
+    bool got_incompatible_services = false;
 
-    /**AppId matching client side */
+    // AppId matching client side
+    RNA_INSPECTION_STATE rna_client_state = RNA_STATE_NONE;
     AppId client_app_id = APP_ID_NONE;
     AppId client_service_app_id = APP_ID_NONE;
     char* client_version = nullptr;
-    /**RNAClientAppModule for identifying client detector*/
     const RNAClientAppModule* rna_client_data = nullptr;
-    RNA_INSPECTION_STATE rna_client_state = RNA_STATE_NONE;
     SF_LIST* candidate_client_list = nullptr;
     unsigned int num_candidate_clients_tried = 0;
     bool tried_reverse_service = false;
 
-    /**AppId matching payload*/
+    // AppId matching payload
     AppId payload_app_id = APP_ID_NONE;
     AppId referred_payload_app_id = APP_ID_NONE;
     AppId misc_app_id = APP_ID_NONE;
 
-    //appId determined by 3rd party library
+    // appId determined by 3rd party library
     AppId tp_app_id = APP_ID_NONE;
     AppId tp_payload_app_id = APP_ID_NONE;
 
@@ -352,7 +381,8 @@ public:
     AppId fw_pick_payload_app_id();
     AppId fw_pick_referred_payload_app_id();
     bool is_ssl_session_decrypted();
-    int processHTTPPacket(Packet*, int, HttpParsedHeaders* const);
+    int process_http_packet(Packet*, int, HttpParsedHeaders* const);
+    int process_http_packet(int);
 
 private:
     bool do_client_discovery(int, Packet*);
@@ -393,5 +423,41 @@ private:
     static THREAD_LOCAL uint32_t appid_flow_data_id;
     static THREAD_LOCAL AppIdFlowData* fd_free_list;
 };
+
+inline bool is_third_party_appid_done(void* tp_session)
+{
+    if (thirdparty_appid_module)
+    {
+        unsigned state;
+
+        if (tp_session)
+            state = thirdparty_appid_module->session_state_get(tp_session);
+        else
+            state = TP_STATE_INIT;
+
+        return (state  == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED
+                        || state == TP_STATE_HA);
+    }
+
+    return true;
+}
+
+inline bool is_third_party_appid_available(void* tp_session)
+{
+    if (thirdparty_appid_module)
+    {
+        unsigned state;
+
+        if (tp_session)
+            state = thirdparty_appid_module->session_state_get(tp_session);
+        else
+            state = TP_STATE_INIT;
+
+        return (state == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED
+                        || state == TP_STATE_MONITORING);
+    }
+
+    return true;
+}
 
 #endif

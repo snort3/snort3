@@ -22,7 +22,8 @@
 #ifndef APP_ID_CONFIG_H
 #define APP_ID_CONFIG_H
 
-#include "appid.h"
+#include <array>
+
 #include "client_plugins/client_app_config.h"
 #include "detector_plugins/detector_sip.h"
 #include "service_plugins/service_config.h"
@@ -53,10 +54,14 @@ struct PortExclusion
 // Currently, IMAP, PO3 and MDNS use this data structure. Lua modules currently
 // do not have any configuration. They can use this data structure in the future,
 // if needed.
-struct AppidGenericConfigItem
+struct AppidConfigElement
 {
     char* name;     ///< Module name
-    void* pData;    ///< Module configuration data
+    void* value;    ///< Module configuration data
+
+    static void add_generic_config_element(const char* name, void* pData);
+    static  void* find_generic_config_element(const char* name);
+    static  void remove_generic_config_element(const char* name);
 };
 
 struct AppIdSessionLogFilter
@@ -128,19 +133,14 @@ public:
     static AppIdConfig* get_appid_config();
     void set_safe_search_enforcement(int enabled);
 
-    // add, find, remove generic config items...
-    void add_generic_config_element(const char* name, void* pData);
-    void* find_generic_config_element(const char* name);
-    void remove_generic_config_element(const char* name);
-
     unsigned max_service_info = 0;
     unsigned net_list_count = 0;
     NetworkSet* net_list_list = nullptr;
     NetworkSet* net_list = nullptr;
     NetworkSet* net_list_by_zone[MAX_ZONES] = { nullptr };
-    AppId tcp_port_only[65536] = { 0 };            ///< Service IDs for port-only TCP services
-    AppId udp_port_only[65536] = { 0 };            ///< Service IDs for port-only UDP services
-    AppId ip_protocol[255] = { 0 };                ///< Service IDs for non-TCP / UDP protocol services
+    std::array<AppId, 65535> tcp_port_only;     ///< Service IDs for port-only TCP services
+    std::array<AppId, 65535> udp_port_only;     ///< Service IDs for port-only UDP services
+    AppId ip_protocol[255] = { 0 };         ///< Service IDs for non-TCP / UDP protocol services
     SF_LIST client_app_args;                ///< List of Client App arguments
     // for each potential port, an sflist of PortExclusion structs
     SF_LIST* tcp_port_exclusions_src[APP_ID_PORT_ARRAY_SIZE] = { nullptr };

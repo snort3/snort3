@@ -17,20 +17,26 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// flow_error.h author Sourcefire Inc.
+// appid_utils.h author Sourcefire Inc.
 
-#ifndef FLOW_ERROR_H
-#define FLOW_ERROR_H
+#ifndef SFUTIL_H
+#define SFUTIL_H
 
-#define APPID_SESSION_SUCCESS  0
-#define APPID_SESSION_ENULL    1
-#define APPID_SESSION_EINVALID 2
-#define APPID_SESSION_ENOMEM   3
-#define APPID_SESSION_NOTFOUND 4
-#define APPID_SESSION_BADJUJU  5
-#define APPID_SESSION_DISABLED 6
-#define APPID_SESSION_EUNSUPPORTED 7
-#define APPID_SESSION_STOP_PROCESSING 8
-#define APPID_SESSION_EEXISTS  9
+#include <cstdio>
+#include <cstdint>
+
+#define MAX_TOKS    256
+
+class AppIdUtils
+{
+public:
+    static int tokenize(char* data, char* toklist[]);
+    static int strip(char* data);
+    static void init_netmasks(uint32_t netmasks[]);
+    static int split(char* data, char** toklist, int max_toks, const char* separator);
+    static void dump_hex(FILE* fp, const uint8_t* data, unsigned len);
+};
+
 
 #endif
+

@@ -39,8 +39,7 @@ void init_client_plugins();
 void finalize_client_plugins();
 void UnconfigureClientApp(AppIdConfig*);
 void clean_client_plugins();
-int ClientAppLoadCallback(void* symbol);
-int LoadClientAppModules();
+int load_client_application_plugin(void* symbol);
 void ClientAppRegisterPattern(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
         unsigned size, int position, unsigned nocase, Detector*);
 const ClientAppApi* getClientApi();

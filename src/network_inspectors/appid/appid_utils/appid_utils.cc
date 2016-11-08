@@ -19,23 +19,21 @@
 
 // sfutil.cc author Sourcefire Inc.
 
-#include "sfutil.h"
-#include "common_util.h"
+#include "appid_utils.h"
 
+#include <cctype>
 #include <string.h>
-#include <stdint.h>
-#include <stdlib.h>
 
 #include "utils/util.h"
 
-int Split(char* data, char** toklist, int max_toks, const char* separator)
+int AppIdUtils::split(char* data, char** toklist, int max_toks, const char* separator)
 {
     char** ap;
     int argcount = 0;
 
     memset(toklist, 0, max_toks * sizeof(*toklist));
     for (ap = (char**)toklist;
-         ap < &toklist[max_toks] && (*ap=strsep(&data, separator)) != nullptr; )
+         ap < &toklist[max_toks] && (*ap = strsep(&data, separator)) != nullptr; )
     {
         if (**ap != '\0')
         {
@@ -47,7 +45,7 @@ int Split(char* data, char** toklist, int max_toks, const char* separator)
     return argcount;
 }
 
-void InitNetmasks(uint32_t netmasks[])
+void AppIdUtils::init_netmasks(uint32_t netmasks[])
 {
     netmasks[0] = 0x0;
     netmasks[1] = 0x80000000;
@@ -84,7 +82,7 @@ void InitNetmasks(uint32_t netmasks[])
     netmasks[32] = 0xFFFFFFFF;
 }
 
-int strip(char* data)
+int AppIdUtils::strip(char* data)
 {
     int size;
     char* idx;
@@ -110,7 +108,7 @@ int strip(char* data)
     return size;
 }
 
-int Tokenize(char* data, char* toklist[])
+int AppIdUtils::tokenize(char* data, char* toklist[])
 {
     char** ap;
     int argcount = 0;
@@ -151,3 +149,51 @@ int Tokenize(char* data, char* toklist[])
     return argcount;
 }
 
+// FIXIT-L - refactor this to be a general snort utility...also look at LogBuffer() in u2spewfoo.cc
+void AppIdUtils::dump_hex(FILE* fp, const uint8_t* data, unsigned len)
+{
+    char str[18];
+    unsigned i;
+    unsigned pos;
+    char c;
+
+    for (i=0, pos=0; i<len; i++, pos++)
+    {
+        if (pos == 17)
+        {
+            str[pos] = 0;
+            fprintf(fp, "  %s\n", str);
+            pos = 0;
+        }
+        else if (pos == 8)
+        {
+            str[pos] = ' ';
+            pos++;
+            fprintf(fp, "%s", " ");
+        }
+        c = (char)data[i];
+        if (isprint(c) && !isspace(c))
+            str[pos] = c;
+        else
+            str[pos] = '.';
+        fprintf(fp, "%02X ", data[i]);
+    }
+    if (pos)
+    {
+        str[pos] = 0;
+        for (; pos < 17; pos++)
+        {
+            if (pos == 8)
+            {
+                str[pos] = ' ';
+                pos++;
+                fprintf(fp, "%s", "    ");
+            }
+            else
+            {
+                fprintf(fp, "%s", "   ");
+            }
+        }
+        fprintf(fp, "  %s\n", str);
+    }
+}

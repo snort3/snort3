@@ -21,18 +21,26 @@
 
 #include "detector_sip.h"
 
-#include "appid/appid_module.h"
-#include "appid_utils/sf_mlmp.h"
-#include "fw_appid.h"
-#include "http_url_patterns.h"
-#include "service_plugins/service_base.h"
-#include "utils/util.h"
-
 #include "log/messages.h"
 #include "main/snort_debug.h"
+#include "utils/util.h"
 #include "pub_sub/sip_events.h"
 
+#include "service_inspectors/sip/sip_common.h"
+#include "appid_module.h"
+#include "app_info_table.h"
+#include "client_plugins/client_app_api.h"
+#include "service_plugins/service_base.h"
+#include "http_url_patterns.h"
+#include "appid_utils/sf_mlmp.h"
+
 using namespace std;
+
+#include "app_info_table.h"
+#include "client_plugins/client_app_api.h"
+#include "service_plugins/service_base.h"
+#include "http_url_patterns.h"
+#include "appid_utils/sf_mlmp.h"
 
 static const char SIP_REGISTER_BANNER[] = "REGISTER ";
 static const char SIP_INVITE_BANNER[] = "INVITE ";
@@ -166,12 +174,12 @@ static Client_App_Pattern patterns[] =
 
 static AppRegistryEntry appIdClientRegistry[] =
 {
-    { APP_ID_SIP, APPINFO_FLAG_CLIENT_ADDITIONAL|APPINFO_FLAG_CLIENT_USER },
+    { APP_ID_SIP, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER },
 };
 
 static AppRegistryEntry appIdServiceRegistry[] =
 {
-    { APP_ID_SIP, APPINFO_FLAG_SERVICE_ADDITIONAL|APPINFO_FLAG_CLIENT_USER },
+    { APP_ID_SIP, APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_CLIENT_USER },
     { APP_ID_RTP, APPINFO_FLAG_SERVICE_ADDITIONAL }
 };
 

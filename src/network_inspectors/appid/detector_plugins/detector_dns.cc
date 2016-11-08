@@ -317,7 +317,7 @@ static int dns_service_init(const InitServiceAPI* const init_api)
     unsigned i;
     for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
-        DebugFormat(DEBUG_INSPECTOR, "registering appId: %d\n", appIdRegistry[i].appId);
+        DebugFormat(DEBUG_APPID, "registering appId: %d\n", appIdRegistry[i].appId);
         init_api->RegisterAppId(&dns_udp_validate, appIdRegistry[i].appId,
             appIdRegistry[i].additionalInfo);
     }

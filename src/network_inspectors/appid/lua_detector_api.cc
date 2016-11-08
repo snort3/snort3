@@ -36,7 +36,6 @@
 #include "appid_module.h"
 #include "app_forecast.h"
 #include "app_info_table.h"
-#include "fw_appid.h"
 #include "host_port_app_cache.h"
 #include "http_common.h"
 #include "lua_detector_flow_api.h"
@@ -1022,7 +1021,7 @@ static int client_register_pattern(lua_State* L)
     /*mpse library does not hold reference to pattern therefore we dont need to allocate it. */
 
     ud->client.appModule.userData = ud.ptr;
-    ClientAppLoadCallback((void*)&(ud->client.appModule));
+    load_client_application_plugin((void*)&(ud->client.appModule));
     ClientAppRegisterPattern(validate_client_application, protocol, (const uint8_t*)pattern,
             size, position, 0, ud);
 
@@ -2257,19 +2256,17 @@ static int add_client_application(lua_State* L)
  */
 static int add_service_application(lua_State* L)
 {
-    unsigned int serviceId, retValue = SERVICE_ENULL;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    serviceId = lua_tonumber(L, 2);
+    unsigned serviceId = lua_tonumber(L, 2);
 
     CHECK_INPUTS();
 
     /*Phase2 - discuss RNAServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr.
       Subtype is not displayed on DC at present. */
-    retValue = AppIdServiceAddService(ud->validateParams.asd, ud->validateParams.pkt,
-        ud->validateParams.dir, ud->server.pServiceElement,
-        serviceId, nullptr, nullptr, nullptr);
+    unsigned retValue = AppIdServiceAddService(ud->validateParams.asd, ud->validateParams.pkt,
+        ud->validateParams.dir, ud->server.pServiceElement, serviceId, nullptr, nullptr, nullptr);
 
     lua_pushnumber(L, retValue);
     return 1;

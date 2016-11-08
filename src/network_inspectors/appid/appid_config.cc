@@ -25,8 +25,7 @@
 #include "app_info_table.h"
 #include "appid_utils/network_set.h"
 #include "appid_utils/ip_funcs.h"
-#include "appid_utils/common_util.h"
-#include "appid_utils/sfutil.h"
+#include "appid_utils/appid_utils.h"
 #include "main/snort_debug.h"
 #include "log/messages.h"
 #include "utils/util.h"
@@ -36,6 +35,7 @@
 #define ODP_PORT_DETECTORS "odp/port/*"
 #define CUSTOM_PORT_DETECTORS "custom/port/*"
 #define MAX_DISPLAY_SIZE   65536
+#define MAX_LINE    2048
 
 static AppIdConfig* appid_config = nullptr;
 unsigned appIdPolicyId;
@@ -47,7 +47,7 @@ struct PortList
     uint16_t port;
 };
 
-static THREAD_LOCAL SF_LIST genericConfigList;                      ///< List of AppidGenericConfigItem structures
+static THREAD_LOCAL SF_LIST appid_custom_configs;
 
 AppIdModuleConfig::~AppIdModuleConfig()
 {
@@ -74,49 +74,48 @@ AppIdConfig* AppIdConfig::get_appid_config()
     return appid_config;
 }
 
-void AppIdConfig::add_generic_config_element(const char* name, void* pData)
+void AppidConfigElement::add_generic_config_element(const char* name, void* data)
 {
-    AppidGenericConfigItem* pConfigItem;
+    AppidConfigElement* ce;
 
-    pConfigItem = (AppidGenericConfigItem*)snort_calloc(sizeof(AppidGenericConfigItem));
-    pConfigItem->name = snort_strdup(name);
-    pConfigItem->pData = pData;
-    sflist_add_tail(&genericConfigList, pConfigItem);
+    ce = (AppidConfigElement*)snort_calloc(sizeof(AppidConfigElement));
+    ce->name = snort_strdup(name);
+    ce->value = data;
+    sflist_add_tail(&appid_custom_configs, ce);
 }
 
-void* AppIdConfig::find_generic_config_element(const char* name)
+void* AppidConfigElement::find_generic_config_element(const char* name)
 {
-    AppidGenericConfigItem* pConfigItem;
+    AppidConfigElement* ce;
     SF_LNODE* next;
 
     // Search a module's configuration by its name
-    for (pConfigItem = (AppidGenericConfigItem*)sflist_first(
-            (SF_LIST*)&genericConfigList, &next);
-        pConfigItem != nullptr;
-        pConfigItem = (AppidGenericConfigItem*)sflist_next(&next))
+    for (ce = (AppidConfigElement*)sflist_first(&appid_custom_configs, &next);
+         ce != nullptr;
+         ce = (AppidConfigElement*)sflist_next(&next))
     {
-        if (strcmp(pConfigItem->name, name) == 0)
-            return pConfigItem->pData;
+        if (strcmp(ce->name, name) == 0)
+            return ce->value;
     }
 
     return nullptr;
 }
 
-void AppIdConfig::remove_generic_config_element(const char* name)
+void AppidConfigElement::remove_generic_config_element(const char* name)
 {
     SF_LNODE* iter;
-    AppidGenericConfigItem* cfg;
+    AppidConfigElement* ce;
 
     // Search a module's configuration by its name
-    for (cfg = (AppidGenericConfigItem*)sflist_first(&genericConfigList, &iter);
-        cfg != nullptr;
-        cfg = (AppidGenericConfigItem*)sflist_next(&iter))
+    for (ce = (AppidConfigElement*)sflist_first(&appid_custom_configs, &iter);
+        ce != nullptr;
+        ce = (AppidConfigElement*)sflist_next(&iter))
     {
-        if (strcmp(cfg->name, name) == 0)
+        if (strcmp(ce->name, name) == 0)
         {
-            snort_free(cfg->name);
-            snort_free(cfg);
-            sflist_remove_node(&genericConfigList, iter);
+            snort_free(ce->name);
+            snort_free(ce);
+            sflist_remove_node(&appid_custom_configs, iter);
             break;
         }
     }
@@ -292,18 +291,18 @@ void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
                     zone = -1;
                 ias6->addr_flags |= flag;
                 six = ias6->range_min;
-                NSIPv6AddrHtoN(&six);
+                NetworkSetManager::ntoh_ipv6(&six);
                 inet_ntop(AF_INET6, (struct in6_addr*)&six, min_ip, sizeof(min_ip));
                 six = ias6->range_max;
-                NSIPv6AddrHtoN(&six);
+                NetworkSetManager::ntoh_ipv6(&six);
                 inet_ntop(AF_INET6, (struct in6_addr*)&six, max_ip, sizeof(max_ip));
-                LogMessage("Adding %s-%s (0x%08X) with zone %d\n", min_ip, max_ip,
+                DebugFormat(DEBUG_APPID, "Adding %s-%s (0x%08X) with zone %d\n", min_ip, max_ip,
                     ias6->addr_flags, zone);
                 if (zone >= 0)
                 {
                     if (!(my_net_list = net_list_by_zone[zone]))
                     {
-                        if (NetworkSet_New(&my_net_list))
+                        if (NetworkSetManager::create(&my_net_list))
                             ErrorMessage("%s", "Failed to create a network set");
                         else
                         {
@@ -315,9 +314,8 @@ void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
                 }
                 else
                     my_net_list = net_list;
-                if (my_net_list && NetworkSet_AddCidrBlock6Ex(my_net_list, &ias6->range_min,
-                    ias6->netmask,
-                    ias6->addr_flags & IPFUNCS_EXCEPT_IP, 0,
+                if (my_net_list && NetworkSetManager::add_cidr_block6_ex(my_net_list,
+                    &ias6->range_min, ias6->netmask, ias6->addr_flags & IPFUNCS_EXCEPT_IP, 0,
                     ias6->addr_flags & (~IPFUNCS_EXCEPT_IP)))
                 {
                     ErrorMessage(
@@ -347,14 +345,13 @@ void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
                 else
                     zone = -1;
                 ias->addr_flags |= flag;
-                LogMessage("Adding 0x%08X-0x%08X (0x%08X) with zone %d\n", ias->range_min,
-                    ias->range_max,
-                    ias->addr_flags, zone);
+                DebugFormat(DEBUG_APPID, "Adding 0x%08X-0x%08X (0x%08X) with zone %d\n",
+                    ias->range_min, ias->range_max, ias->addr_flags, zone);
                 if (zone >= 0)
                 {
                     if (!(my_net_list = net_list_by_zone[zone]))
                     {
-                        if (NetworkSet_New(&my_net_list))
+                        if (NetworkSetManager::create(&my_net_list))
                             ErrorMessage("%s", "Failed to create a network set");
                         else
                         {
@@ -366,7 +363,7 @@ void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
                 }
                 else
                     my_net_list = net_list;
-                if (my_net_list && NetworkSet_AddCidrBlockEx(my_net_list, ias->range_min,
+                if (my_net_list && NetworkSetManager::add_cidr_block_ex(my_net_list, ias->range_min,
                     ias->netmask,
                     ias->addr_flags & IPFUNCS_EXCEPT_IP, 0,
                     ias->addr_flags & (~IPFUNCS_EXCEPT_IP)))
@@ -495,8 +492,8 @@ void AppIdConfig::process_port_exclusion(char* toklist[])
             ErrorMessage("Config: Invalid port exclusion address specified");
             return;
         }
-        NSIPv6AddrHtoNConv(&ias6->range_min, &ip);
-        NSIPv6AddrHtoNConv(&ias6->netmask_mask, &netmask);
+        NetworkSetManager::hton_swap_ipv6(&ias6->range_min, &ip);
+        NetworkSetManager::hton_swap_ipv6(&ias6->netmask_mask, &netmask);
         family = AF_INET6;
         snort_free(ias6);
     }
@@ -577,14 +574,14 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
     unsigned line = 0;
     NetworkSet* my_net_list;
 
-    if (NetworkSet_New(&net_list))
+    if (NetworkSetManager::create(&net_list))
         FatalError("Failed to allocate a network set");
     net_list_list = net_list;
 
     if (!config_file || (!config_file[0]))
     {
         char addrString[sizeof("0.0.0.0/0")];
-        LogMessage("Defaulting to monitoring all Snort traffic for AppID.\n");
+        DebugMessage(DEBUG_APPID, "Defaulting to monitoring all Snort traffic for AppID.\n");
         toklist[1] = nullptr;
         toklist[0] = addrString;
         strcpy(addrString,"0.0.0.0/0");
@@ -608,9 +605,7 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
         while (fgets(linebuffer, MAX_LINE, fp) != nullptr)
         {
             line++;
-
-            strip(linebuffer);
-
+            AppIdUtils::strip(linebuffer);
             cptr = linebuffer;
 
             while (isspace((int)*cptr))
@@ -619,8 +614,7 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
             if (*cptr && (*cptr != '#') && (*cptr != 0x0a))
             {
                 memset(toklist, 0, sizeof(toklist));
-                /* tokenize the line */
-                num_toks = Tokenize(cptr, toklist);
+                num_toks = AppIdUtils::tokenize(cptr, toklist);
                 if (num_toks < 2)
                 {
                     fclose(fp);
@@ -628,13 +622,9 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
                     return -1;
                 }
                 if (!(strcasecmp(toklist[0], "config")))
-                {
                     process_config_directive(toklist, reload);
-                }
                 else if (!(strcasecmp(toklist[0], "portexclusion")))
-                {
                     process_port_exclusion(toklist);
-                }
             }
         }
 
@@ -645,7 +635,7 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
     {
         char* instance_toklist[2];
         char addrString[sizeof("0.0.0.0/0")];
-        LogMessage("Defaulting to monitoring all Snort traffic for AppID.\n");
+        DebugMessage(DEBUG_APPID, "Defaulting to monitoring all Snort traffic for AppID.\n");
         instance_toklist[0] = addrString;
         instance_toklist[1] = nullptr;
         strcpy(addrString,"0.0.0.0/0");
@@ -658,16 +648,16 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
     {
         if (my_net_list != net_list)
         {
-            if (NetworkSet_AddSet(my_net_list, net_list))
+            if (NetworkSetManager::add_set(my_net_list, net_list))
                 ErrorMessage("Failed to add any network list to a zone network list");
         }
     }
     net_list_count = 0;
     for (my_net_list = net_list_list; my_net_list; my_net_list = net_list->next)
     {
-        if (NetworkSet_Reduce(my_net_list))
+        if (NetworkSetManager::reduce(my_net_list))
             ErrorMessage("Failed to reduce the IP address sets");
-        net_list_count += NetworkSet_CountEx(my_net_list) + NetworkSet_Count6Ex(my_net_list);
+        net_list_count += NetworkSetManager::count_ex(my_net_list) + NetworkSetManager::count6_ex(my_net_list);
     }
 
     return 0;
@@ -684,14 +674,13 @@ bool AppIdConfig::init_appid( )
     appid_config = this;
 	map_app_names_to_snort_ids();
 	appIdPolicyId = 53;
-	InitNetmasks(app_id_netmasks);
+	AppIdUtils::init_netmasks(app_id_netmasks);
 	app_info_mgr.init_appid_info_table(mod_config->app_detector_dir);
 	sflist_init(&appid_config->client_app_args);
 	load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);
 	read_port_detectors(ODP_PORT_DETECTORS);
 	read_port_detectors(CUSTOM_PORT_DETECTORS);
 	ThirdPartyAppIDInit(mod_config);
-	show();
 
 	if ( mod_config->dump_ports )
 	{
@@ -704,7 +693,7 @@ bool AppIdConfig::init_appid( )
 	return true;
 }
 
-static void free_config_items(ConfigItem* ci)
+static void free_config_items(AppidConfigElement* ci)
 {
     if (ci)
     {
@@ -741,7 +730,7 @@ void AppIdConfig::cleanup()
     while ((net_list = net_list_list))
     {
         net_list_list = net_list->next;
-        NetworkSet_Destroy(net_list);
+        NetworkSetManager::destroy(net_list);
     }
 
     free_port_exclusion_list(tcp_port_exclusions_src);
@@ -806,10 +795,10 @@ void AppIdConfig::show()
     for (i = 0; i < my_net_list->count6; i++)
     {
         six = my_net_list->pnetwork6[i]->range_min;
-        NSIPv6AddrHtoN(&six);
+        NetworkSetManager::ntoh_ipv6(&six);
         p = inet_ntop(AF_INET6, (struct in6_addr*)&six, inet_buffer, sizeof(inet_buffer));
         six = my_net_list->pnetwork6[i]->range_max;
-        NSIPv6AddrHtoN(&six);
+        NetworkSetManager::ntoh_ipv6(&six);
         p2 = inet_ntop(AF_INET6, (struct in6_addr*)&six, inet_buffer2, sizeof(inet_buffer2));
         LogMessage("        %s%s-%s %04X\n", (my_net_list->pnetwork6[i]->info.ip_not) ? "!" : "",
             p ?
@@ -836,10 +825,10 @@ void AppIdConfig::show()
         for (i = 0; i < my_net_list->count6; i++)
         {
             six = my_net_list->pnetwork6[i]->range_min;
-            NSIPv6AddrHtoN(&six);
+            NetworkSetManager::ntoh_ipv6(&six);
             p = inet_ntop(AF_INET6, (struct in6_addr*)&six, inet_buffer, sizeof(inet_buffer));
             six = my_net_list->pnetwork6[i]->range_max;
-            NSIPv6AddrHtoN(&six);
+            NetworkSetManager::ntoh_ipv6(&six);
             p2 = inet_ntop(AF_INET6, (struct in6_addr*)&six, inet_buffer2, sizeof(inet_buffer2));
             LogMessage("        %s%s-%s %04X\n", (my_net_list->pnetwork6[i]->info.ip_not) ? "!" :
                 "",
@@ -867,34 +856,28 @@ void AppIdConfig::show()
 
 void AppIdConfig::display_port_config()
 {
-    unsigned i;
-    int first;
+    bool first = true;
 
-    first = 1;
-    for (i = 0; i < sizeof(tcp_port_only) / sizeof(AppId); i++)
-    {
+    for ( auto& i : tcp_port_only )
         if (tcp_port_only[i])
         {
             if (first)
             {
                 LogMessage("    TCP Port-Only Services\n");
-                first = 0;
+                first = false;
             }
             LogMessage("        %5u - %u\n", i, tcp_port_only[i]);
         }
-    }
 
-    first = 1;
-    for (i = 0; i<sizeof(udp_port_only) / sizeof(AppId); i++)
-    {
+    first = true;
+    for ( auto& i : udp_port_only )
         if (udp_port_only[i])
         {
             if (first)
             {
                 LogMessage("    UDP Port-Only Services\n");
-                first = 0;
+                first = false;
             }
             LogMessage("        %5u - %u\n", i, udp_port_only[i]);
         }
-    }
 }

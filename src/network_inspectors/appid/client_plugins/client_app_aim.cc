@@ -136,7 +136,7 @@ static CLIENT_APP_RETCODE aim_init(const InitClientAppAPI* const init_api, SF_LI
             item;
             item = (RNAClientAppModuleConfigItem*)sflist_next(&cursor) )
         {
-            DebugFormat(DEBUG_INSPECTOR, "Processing %s: %s\n", item->name, item->value);
+            DebugFormat(DEBUG_APPID, "Processing %s: %s\n", item->name, item->value);
             if (strcasecmp(item->name, "enabled") == 0)
                 aim_config.enabled = atoi(item->value);
         }
@@ -146,7 +146,7 @@ static CLIENT_APP_RETCODE aim_init(const InitClientAppAPI* const init_api, SF_LI
     {
         for (unsigned i = 0; i < sizeof(patterns)/sizeof(*patterns); i++)
         {
-            DebugFormat(DEBUG_INSPECTOR, "registering pattern length %u at %d\n",
+            DebugFormat(DEBUG_APPID, "registering pattern length %u at %d\n",
                 patterns[i].length, patterns[i].index);
 
             init_api->RegisterPattern(&aim_validate, IpProtocol::TCP, patterns[i].pattern,
@@ -156,7 +156,7 @@ static CLIENT_APP_RETCODE aim_init(const InitClientAppAPI* const init_api, SF_LI
 
     for (unsigned j = 0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
     {
-        DebugFormat(DEBUG_INSPECTOR, "registering appId: %d\n",
+        DebugFormat(DEBUG_APPID, "registering appId: %d\n",
             appIdRegistry[j].appId);
 
         init_api->RegisterAppId(&aim_validate, appIdRegistry[j].appId, appIdRegistry[j].additionalInfo);

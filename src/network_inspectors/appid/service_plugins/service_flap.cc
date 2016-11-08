@@ -123,7 +123,7 @@ static int flap_init(const InitServiceAPI* const init_api)
     //unsigned i;
     for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
     {
-        DebugFormat(DEBUG_INSPECTOR,"registering appId: %d\n",appIdRegistry[i].appId);
+        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
         init_api->RegisterAppId(&flap_validate, appIdRegistry[i].appId,
             appIdRegistry[i].additionalInfo);
     }

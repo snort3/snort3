@@ -22,7 +22,6 @@
 #ifndef HTTP_COMMON_H
 #define HTTP_COMMON_H
 
-#include "appid.h"
 #include "appid_api.h"
 #include "appid_utils/sf_multi_mpse.h"
 
@@ -126,6 +125,7 @@ enum PatternType
     CONTENT_TYPE_PT,   // 6
     LOCATION_PT,       // 7
     BODY_PT,           // 8
+    NUMBER_OF_PTYPES,  // 9
     MAX_PATTERN_TYPE = BODY_PT,
     MAX_KEY_PATTERN = URI_PT,
 };

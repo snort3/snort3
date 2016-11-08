@@ -79,114 +79,6 @@ struct NSIPv6Addr
     || ((IN6_IS_ADDR_V4MAPPED(a) || IN6_IS_ADDR_V4COMPAT(a)) && (((__const uint32_t*)(a))[3] == \
     0xffffffff)))
 
-inline void NSIPv6PackIpv4(NSIPv6Addr* ipv6Addr, uint32_t ipv4Addr)
-{
-    ipv6Addr->hi = 0ULL;
-    ipv6Addr->lo = (uint64_t)ipv4Addr | 0x0000FFFF00000000ULL;
-}
-
-inline int NSIPv6UnpackIpv4(const NSIPv6Addr* ipv6Addr, uint32_t* ipv4Addr)
-{
-    if (!ipv6Addr->hi)
-    {
-        uint64_t lo = ipv6Addr->lo & 0xFFFFFFFF00000000ULL;
-        if (!lo || lo == 0x0000FFFF00000000ULL)
-        {
-            *ipv4Addr = (uint32_t)ipv6Addr->lo;
-            return 0;
-        }
-    }
-    return -1;
-}
-
-inline void NSIPv6AddrCopy(const NSIPv6Addr* src, NSIPv6Addr* dst)
-{
-    dst->hi = src->hi;
-    dst->lo = src->lo;
-}
-
-inline int NSIPv6AddrCompare(const NSIPv6Addr* a, const NSIPv6Addr* b)
-{
-    if (a->hi < b->hi)
-        return -1;
-    else if (a->hi > b->hi)
-        return 1;
-    if (a->lo < b->lo)
-        return -1;
-    else if (a->lo > b->lo)
-        return 1;
-    return 0;
-}
-
-#if defined(WORDS_BIGENDIAN)
-
-#define NSIPv6AddrNtoH(ip6) do { } while (0)
-
-#else
-
-inline void NSIPv6AddrNtoH(NSIPv6Addr* ip6)
-{
-    uint64_t tmp;
-
-    tmp = BYTE_SWAP_64(ip6->hi);
-    ip6->hi = BYTE_SWAP_64(ip6->lo);
-    ip6->lo = tmp;
-}
-
-#endif
-
-#if defined(WORDS_BIGENDIAN)
-
-inline void _NSIPv6AddrConv(const NSIPv6Addr* ip6, NSIPv6Addr* ip6h)
-{
-    ip6h->hi = ip6->hi;
-    ip6h->lo = ip6->lo;
-}
-
-#else
-
-inline void _NSIPv6AddrConv(const NSIPv6Addr* ip6, NSIPv6Addr* ip6h)
-{
-    ip6h->hi = BYTE_SWAP_64(ip6->lo);
-    ip6h->lo = BYTE_SWAP_64(ip6->hi);
-}
-
-#endif
-
-inline void NSIPv6AddrNtoHConv(const ip::snort_in6_addr* ip6, NSIPv6Addr* ip6h)
-{
-    _NSIPv6AddrConv((const NSIPv6Addr*)ip6, ip6h);
-}
-
-inline void NSIPv6AddrHtoNConv(const NSIPv6Addr* ip6, ip::snort_in6_addr* ip6h)
-{
-    _NSIPv6AddrConv(ip6, (NSIPv6Addr*)ip6h);
-}
-
-#define NSIPv6AddrHtoN(ip6) NSIPv6AddrNtoH(ip6)
-
-inline void NSIPv6AddrInc(NSIPv6Addr* ip6)
-{
-    if (ip6->lo == ULLONG_MAX)
-    {
-        ip6->lo = 0;
-        ip6->hi++;
-    }
-    else
-        ip6->lo++;
-}
-
-inline void NSIPv6AddrDec(NSIPv6Addr* ip6)
-{
-    if (!ip6->lo)
-    {
-        ip6->lo = ULLONG_MAX;
-        ip6->hi--;
-    }
-    else
-        ip6->lo--;
-}
-
 struct NSNetworkInfo
 {
     unsigned id;
@@ -222,179 +114,253 @@ struct NetworkSet
     unsigned count6;
 };
 
-// Create a new network set
-int NetworkSet_New(NetworkSet** network_set);
-
-// Destroy a network set
-int NetworkSet_Destroy(NetworkSet* network_set);
-
-// Copy a network set
-NetworkSet* NetworkSet_Copy(NetworkSet* network_set);
-
-// Add a network set to another network set
-int NetworkSet_AddSet(NetworkSet* dest_set, NetworkSet* src_set);
-
-// Add a network to the set using cidr block notation
-int NetworkSet_AddCidrBlockEx(NetworkSet* network_set, uint32_t ip,
-    unsigned cidr_bits, int ip_not, unsigned id, unsigned type);
-
-// Add a network to the set using cidr block notation
-int NetworkSet_AddCidrBlock6Ex(NetworkSet* network_set, NSIPv6Addr* ip,
-    unsigned cidr_bits, int ip_not, unsigned id, unsigned type);
-
-// Add a network to the set using cidr block notation
-int NetworkSet_AddCidrBlock(NetworkSet* network_set, uint32_t ip,
-    unsigned cidr_bits, int ip_not, unsigned id);
-
-// Add a network to the set using cidr block notation
-int NetworkSet_AddCidrBlock6(NetworkSet* network_set, NSIPv6Addr* ip,
-    unsigned cidr_bits, int ip_not, unsigned id);
-
-// Add a network to the set using a range
-int NetworkSet_AddNetworkRangeEx(NetworkSet* network_set, uint32_t range_min,
-    uint32_t range_max, unsigned cidr_bits, int ip_not, unsigned id, unsigned type);
-
-// Add a network to the set using a range
-int NetworkSet_AddNetworkRange6Ex(NetworkSet* network_set, NSIPv6Addr* range_min,
-    NSIPv6Addr* range_max, unsigned cidr_bits, int ip_not, unsigned id, unsigned type);
-
-// Add a network to the set using a range
-int NetworkSet_AddNetworkRange(NetworkSet* network_set, uint32_t range_min,
-    uint32_t range_max, unsigned cidr_bits, int ip_not, unsigned id);
-
-// Add a network to the set using a range
-int NetworkSet_AddNetworkRange6(NetworkSet* network_set, NSIPv6Addr* range_min,
-    NSIPv6Addr* range_max, unsigned cidr_bits, int ip_not, unsigned id);
-
-// Add a network to the set using a range of all IPv6, excluding IPv4
-int NetworkSet_AddNetworkRangeOnlyIPv6(NetworkSet* network_set, int ip_not, unsigned id, unsigned
-    type);
-
-// Reduce the networks to a list of existing ranges
-int NetworkSet_Reduce(NetworkSet* network_set);
-
-// Print the network to the specified stream
-int NetworkSet_Fprintf(NetworkSet* network_set, const char* prefix, FILE* stream);
-
-// Test is the set contains the specied address
-inline int NetworkSet_ContainsEx(NetworkSet* network_set, uint32_t ipaddr, unsigned* type)
+// FIXIT-L - this should be integrated into the snort3 general IP address support library
+class NetworkSetManager
 {
-    int low=0;
-    int middle=0;
-    int high=0;
+public:
+    static int create(NetworkSet** network_set);
+    static int destroy(NetworkSet* network_set);
+    static NetworkSet* copy(NetworkSet* network_set);
+    static int add_set(NetworkSet* dest_set, NetworkSet* src_set);
+    static int add_cidr_block_ex(NetworkSet* network_set, uint32_t ip,
+        unsigned cidr_bits, int ip_not, unsigned id, unsigned type);
+    static int add_cidr_block6_ex(NetworkSet* network_set, NSIPv6Addr* ip,
+        unsigned cidr_bits, int ip_not, unsigned id, unsigned type);
+    static int add_cidr_block(NetworkSet* network_set, uint32_t ip,
+        unsigned cidr_bits, int ip_not, unsigned id);
+    static int add_cidr_block6(NetworkSet* network_set, NSIPv6Addr* ip,
+        unsigned cidr_bits, int ip_not, unsigned id);
+    static int add_network_range_ex(NetworkSet* network_set, uint32_t range_min,
+        uint32_t range_max, unsigned cidr_bits, int ip_not, unsigned id, unsigned type);
+    static int add_network_range6(NetworkSet* network_set, NSIPv6Addr* range_min,
+        NSIPv6Addr* range_max, unsigned cidr_bits, int ip_not, unsigned id, unsigned type);
+    static int add_network_range(NetworkSet* network_set, uint32_t range_min,
+        uint32_t range_max, unsigned cidr_bits, int ip_not, unsigned id);
+    static int add_network_range6(NetworkSet* network_set, NSIPv6Addr* range_min,
+        NSIPv6Addr* range_max, unsigned cidr_bits, int ip_not, unsigned id);
+    static int add_network_range_only_ipv6(NetworkSet* network_set, int ip_not,
+        unsigned id, unsigned  type);
+    static int reduce(NetworkSet* network_set);
+    static int log_network_set(NetworkSet* network_set, const char* prefix, FILE* stream);
 
-    *type = 0;
-    if (!network_set)
-        return 0;
-    if (!network_set->count)
-        return 0;
-    high = network_set->count - 1;
-    if (ipaddr < network_set->pnetwork[low]->range_min || ipaddr >
-        network_set->pnetwork[high]->range_max)
-        return 0;
-    while (low <= high)
+    static void pack_ipv4_to_ipv6(NSIPv6Addr* ipv6Addr, uint32_t ipv4Addr)
     {
-        middle = low + ((high - low)>>1);
-        if (ipaddr < network_set->pnetwork[middle]->range_min)
-            high = middle - 1;
-        else if (ipaddr > network_set->pnetwork[middle]->range_max)
-            low = middle + 1;
-        else
+        ipv6Addr->hi = 0ULL;
+        ipv6Addr->lo = (uint64_t)ipv4Addr | 0x0000FFFF00000000ULL;
+    }
+
+    static int unpack_ipv4_from_ipv6(const NSIPv6Addr* ipv6Addr, uint32_t* ipv4Addr)
+    {
+        if (!ipv6Addr->hi)
         {
-            *type = network_set->pnetwork[middle]->info.type;
-            return 1;
+            uint64_t lo = ipv6Addr->lo & 0xFFFFFFFF00000000ULL;
+            if (!lo || lo == 0x0000FFFF00000000ULL)
+            {
+                *ipv4Addr = (uint32_t)ipv6Addr->lo;
+                return 0;
+            }
         }
+        return -1;
     }
-    return 0;
-}
 
-// Test is the set contains the specied address
-inline int NetworkSet_Contains6Ex(NetworkSet* network_set, NSIPv6Addr* ipaddr,
-    unsigned* type)
-{
-    int low=0;
-    int middle=0;
-    int high=0;
-
-    *type = 0;
-    if (!network_set)
-        return 0;
-    if (!network_set->count6)
-        return 0;
-    high = network_set->count6 - 1;
-    if (NSIPv6AddrCompare(ipaddr, &network_set->pnetwork6[low]->range_min) < 0 ||
-        NSIPv6AddrCompare(ipaddr, &network_set->pnetwork6[high]->range_max) > 0)
+    static void copy_ipv6_address(const NSIPv6Addr* src, NSIPv6Addr* dst)
     {
+        dst->hi = src->hi;
+        dst->lo = src->lo;
+    }
+
+    static int compare_ipv6_address(const NSIPv6Addr* a, const NSIPv6Addr* b)
+    {
+        if (a->hi < b->hi)
+            return -1;
+        else if (a->hi > b->hi)
+            return 1;
+        if (a->lo < b->lo)
+            return -1;
+        else if (a->lo > b->lo)
+            return 1;
         return 0;
     }
-    while (low <= high)
+
+#if defined(WORDS_BIGENDIAN)
+#define ntoh_ipv6(ip6) do { } while (0)
+#else
+    static void ntoh_ipv6(NSIPv6Addr* ip6)
     {
-        middle = low + ((high - low)>>1);
-        if (NSIPv6AddrCompare(ipaddr, &network_set->pnetwork6[middle]->range_min) < 0)
-            high = middle - 1;
-        else if (NSIPv6AddrCompare(ipaddr, &network_set->pnetwork6[middle]->range_max) > 0)
-            low = middle + 1;
-        else
+        uint64_t tmp;
+
+        tmp = BYTE_SWAP_64(ip6->hi);
+        ip6->hi = BYTE_SWAP_64(ip6->lo);
+        ip6->lo = tmp;
+    }
+
+#endif
+
+#if defined(WORDS_BIGENDIAN)
+
+    static void _swap_ipv6(const NSIPv6Addr* ip6, NSIPv6Addr* ip6h)
+    {
+        ip6h->hi = ip6->hi;
+        ip6h->lo = ip6->lo;
+    }
+
+#else
+    static void _swap_ipv6(const NSIPv6Addr* ip6, NSIPv6Addr* ip6h)
+    {
+        ip6h->hi = BYTE_SWAP_64(ip6->lo);
+        ip6h->lo = BYTE_SWAP_64(ip6->hi);
+    }
+
+#endif
+
+    static void ntoh_swap_ipv6(const ip::snort_in6_addr* ip6, NSIPv6Addr* ip6h)
+    {
+        _swap_ipv6((const NSIPv6Addr*)ip6, ip6h);
+    }
+
+    static void hton_swap_ipv6(const NSIPv6Addr* ip6, ip::snort_in6_addr* ip6h)
+    {
+        _swap_ipv6(ip6, (NSIPv6Addr*)ip6h);
+    }
+
+    static void increment_ipv6_addr(NSIPv6Addr* ip6)
+    {
+        if (ip6->lo == ULLONG_MAX)
         {
-            *type = network_set->pnetwork6[middle]->info.type;
-            return 1;
+            ip6->lo = 0;
+            ip6->hi++;
         }
+        else
+            ip6->lo++;
     }
-    return 0;
-}
 
-// Test is the set contains the specied address
-inline int NetworkSet_Contains(NetworkSet* network_set, uint32_t ipaddr)
-{
-    unsigned type;
-    return NetworkSet_ContainsEx(network_set, ipaddr, &type);
-}
+    static void decrement_ipv6_addr(NSIPv6Addr* ip6)
+    {
+        if (!ip6->lo)
+        {
+            ip6->lo = ULLONG_MAX;
+            ip6->hi--;
+        }
+        else
+            ip6->lo--;
+    }
 
-// Test is the set contains the specied address
-inline int NetworkSet_Contains6(NetworkSet* network_set, NSIPv6Addr* ipaddr)
-{
-    unsigned type;
-    return NetworkSet_Contains6Ex(network_set, ipaddr, &type);
-}
+    static int contains_ex(NetworkSet* network_set, uint32_t ipaddr, unsigned* type)
+    {
+        int low=0;
+        int middle=0;
+        int high=0;
 
-// Get a count of the number of networks in the set
-inline int NetworkSet_Count(NetworkSet* network_set, unsigned* count)
-{
-    if (!network_set || !count)
-        return -1;
-
-    *count = sflist_count(&network_set->networks);
-
-    return 0;
-}
-
-// Get a count of the number of networks in the set
-inline int NetworkSet_Count6(NetworkSet* network_set, unsigned* count)
-{
-    if (!network_set || !count)
-        return -1;
-
-    *count = sflist_count(&network_set->networks6);
-
-    return 0;
-}
-
-// Get a count of the number of networks in the set
-inline unsigned NetworkSet_CountEx(NetworkSet* network_set)
-{
-    if (!network_set)
+        *type = 0;
+        if (!network_set)
+            return 0;
+        if (!network_set->count)
+            return 0;
+        high = network_set->count - 1;
+        if (ipaddr < network_set->pnetwork[low]->range_min || ipaddr >
+            network_set->pnetwork[high]->range_max)
+            return 0;
+        while (low <= high)
+        {
+            middle = low + ((high - low)>>1);
+            if (ipaddr < network_set->pnetwork[middle]->range_min)
+                high = middle - 1;
+            else if (ipaddr > network_set->pnetwork[middle]->range_max)
+                low = middle + 1;
+            else
+            {
+                *type = network_set->pnetwork[middle]->info.type;
+                return 1;
+            }
+        }
         return 0;
+    }
 
-    return sflist_count(&network_set->networks);
-}
+    static int contains6_ex(NetworkSet* network_set, NSIPv6Addr* ipaddr, unsigned* type)
+    {
+        int low=0;
+        int middle=0;
+        int high=0;
 
-// Get a count of the number of networks in the set
-inline unsigned NetworkSet_Count6Ex(NetworkSet* network_set)
-{
-    if (!network_set)
+        *type = 0;
+        if (!network_set)
+            return 0;
+        if (!network_set->count6)
+            return 0;
+        high = network_set->count6 - 1;
+        if (compare_ipv6_address(ipaddr, &network_set->pnetwork6[low]->range_min) < 0 ||
+            compare_ipv6_address(ipaddr, &network_set->pnetwork6[high]->range_max) > 0)
+        {
+            return 0;
+        }
+        while (low <= high)
+        {
+            middle = low + ((high - low)>>1);
+            if (compare_ipv6_address(ipaddr, &network_set->pnetwork6[middle]->range_min) < 0)
+                high = middle - 1;
+            else if (compare_ipv6_address(ipaddr, &network_set->pnetwork6[middle]->range_max) > 0)
+                low = middle + 1;
+            else
+            {
+                *type = network_set->pnetwork6[middle]->info.type;
+                return 1;
+            }
+        }
         return 0;
+    }
 
-    return sflist_count(&network_set->networks6);
-}
+    static int contains(NetworkSet* network_set, uint32_t ipaddr)
+    {
+        unsigned type;
+        return contains_ex(network_set, ipaddr, &type);
+    }
 
+    static int contains6(NetworkSet* network_set, NSIPv6Addr* ipaddr)
+    {
+        unsigned type;
+        return contains6_ex(network_set, ipaddr, &type);
+    }
+
+    static int count4(NetworkSet* network_set, unsigned* count)
+    {
+        if (!network_set || !count)
+            return -1;
+
+        *count = sflist_count(&network_set->networks);
+
+        return 0;
+    }
+
+    static int count6(NetworkSet* network_set, unsigned* count)
+    {
+        if (!network_set || !count)
+            return -1;
+
+        *count = sflist_count(&network_set->networks6);
+
+        return 0;
+    }
+
+    static unsigned count_ex(NetworkSet* network_set)
+    {
+        if (!network_set)
+            return 0;
+
+        return sflist_count(&network_set->networks);
+    }
+
+    static unsigned count6_ex(NetworkSet* network_set)
+    {
+        if (!network_set)
+            return 0;
+
+        return sflist_count(&network_set->networks6);
+    }
+
+private:
+    static int order_by_netmask(SF_LIST* ordered_networks, SF_LIST* networks, unsigned id);
+    static int add_network_list(SF_LIST* networks, SF_LIST* new_networks);
+    static int reduce_network_set(SF_LIST* networks);
+    static int reduce_network_set6(SF_LIST* networks);
+};
 #endif
