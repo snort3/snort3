@@ -68,6 +68,10 @@ SO rules are dynamic rules that require custom coding to perform detection
 not possible with the existing rule options.  These rules typically do not
 have associated modules.
 
+== File Processing
+
+include::manual/file_processing.txt[]
+
 == Logger Modules
 
 All output of events and packets is done by Loggers.
