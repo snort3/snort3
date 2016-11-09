@@ -721,7 +721,6 @@ void AppIdAddClientApp(AppIdSession* asd, AppId service_id, AppId id, const char
     asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     asd->client_service_app_id = service_id;
     asd->client_app_id = id;
-    checkSandboxDetection(id);
 }
 
 static void AppIdAddClientAppInfo(AppIdSession* asd, const char* info)

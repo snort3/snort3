@@ -98,31 +98,6 @@ static AppId get_static_app_info_entry(AppId appid)
     return 0;
 }
 
-void checkSandboxDetection(AppId appId)
-{
-    if (AppIdConfig::get_appid_config()->mod_config->instance_id)
-    {
-        auto entry = AppInfoManager::get_instance().get_app_info_entry(appId);
-        if ( entry && ( entry->flags & APPINFO_FLAG_ACTIVE ) )
-        {
-            DebugFormat(DEBUG_APPID, "Detected application %d is active.\n", entry->appId);
-        }
-        else if( appId != 0 )
-        {
-            if(entry)
-            {
-                DebugFormat(DEBUG_APPID, "Detected application %d is not active.\n", appId);
-            }
-            else
-            {
-                DebugFormat(DEBUG_APPID,
-                            "No entry in application info table for detected application %d.\n",
-                            appId);
-            }
-        }
-    }
-}
-
 AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId appId, const AppInfoTable& lookup_table)
 {
     AppId tmp;

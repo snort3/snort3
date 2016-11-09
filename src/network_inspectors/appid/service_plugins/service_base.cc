@@ -340,8 +340,6 @@ AppId getPortServiceId(IpProtocol proto, uint16_t port, const AppIdConfig* confi
     else
         appId = config->ip_protocol[(uint16_t)proto];
 
-    checkSandboxDetection(appId);
-
     return appId;
 }
 
@@ -1143,7 +1141,6 @@ static int AppIdServiceAddServiceEx(AppIdSession* asd, const Packet* pkt, int di
     }
     asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
     asd->serviceAppId = appId;
-    checkSandboxDetection(appId);
 
     if (asd->get_session_flags(APPID_SESSION_IGNORE_HOST))
         return SERVICE_SUCCESS;

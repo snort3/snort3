@@ -157,7 +157,5 @@ private:
     std::mutex custom_app_mutex;
 };
 
-void checkSandboxDetection(AppId appId);
-
 #endif
 

@@ -91,7 +91,6 @@ void AppIdSession::add_user(AppIdSession* asd, const char* username, AppId appId
 
 void AppIdSession::add_payload(AppIdSession* asd, AppId payload_id)
 {
-    checkSandboxDetection(payload_id);
     asd->payload_app_id = payload_id;
 }
 
@@ -2286,8 +2285,6 @@ void AppIdSession::set_client_app_id_data(AppId id, char** version)
         unsigned prev_priority = app_info_mgr->get_app_info_priority(client_app_id);
         unsigned curr_priority = app_info_mgr->get_app_info_priority(id);
 
-        checkSandboxDetection(id);
-
         if ((client_app_id) && (prev_priority > curr_priority ))
             return;
         client_app_id = id;
@@ -2456,10 +2453,7 @@ void AppIdSession::set_referred_payload_app_id_data(AppId id)
         return;
 
     if (referred_payload_app_id != id)
-    {
-        checkSandboxDetection(id);
         referred_payload_app_id = id;
-    }
 }
 
 void AppIdSession::set_payload_app_id_data(ApplicationId id, char** version)
@@ -2471,8 +2465,6 @@ void AppIdSession::set_payload_app_id_data(ApplicationId id, char** version)
     {
         unsigned prev_priority = app_info_mgr->get_app_info_priority(payload_app_id);
         unsigned curr_priority = app_info_mgr->get_app_info_priority(id);
-
-        checkSandboxDetection(id);
 
         if ((payload_app_id ) && (prev_priority > curr_priority ))
             return;
@@ -2515,7 +2507,6 @@ void AppIdSession::set_service_appid_data(AppId id, char* vendor, char** version
     if (serviceAppId != id)
     {
         serviceAppId = id;
-        checkSandboxDetection(id);
 
         /* Clear out previous values of vendor & version */
         if (serviceVendor)
@@ -3513,10 +3504,7 @@ int AppIdSession::process_http_packet(int direction)
     memset(&hmp, 0, sizeof(hmp));
 
     if (serviceAppId == APP_ID_NONE)
-    {
         serviceAppId = APP_ID_HTTP;
-        checkSandboxDetection(APP_ID_HTTP);
-    }
 
     if (session_logging_enabled)
         LogMessage("AppIdDbg %s chp_finished %d chp_hold_flow %d\n", session_logging_id,
