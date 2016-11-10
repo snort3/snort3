@@ -77,9 +77,7 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
     int num_matches = 0;
     int32_t buffer_length = 0;
 
-    // FIXIT-P initialization that serves no functional purpose to prevent compiler warning
-    int curr_match = -1;
-
+    int curr_match;
     for (int k=0; k < num_headers; k++)
     {
         if (header_name_id[k] == head_id)

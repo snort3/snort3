@@ -50,7 +50,7 @@ void HttpMsgHeader::publish()
     {
         get_data_bus().publish(HTTP_REQUEST_HEADER_EVENT_KEY, http_event, flow);
     }
-    else if(source_id == SRC_SERVER)
+    else
     {
         get_data_bus().publish(HTTP_RESPONSE_HEADER_EVENT_KEY, http_event, flow);
     }
@@ -213,27 +213,41 @@ void HttpMsgHeader::setup_file_processing()
 {
     // FIXIT-M Bidirectional file processing is problematic so we don't do it. When the library
     // fully supports it remove the outer if statement that prevents it from being done.
-    // In addition, mime_state needs to become bidirectional.
     if (session_data->file_depth_remaining[1-source_id] <= 0)
     {
-        if ((session_data->file_depth_remaining[source_id] = FileService::get_max_file_depth()) < 0)
+        if ((session_data->file_depth_remaining[source_id] = FileService::get_max_file_depth())
+             < 0)
         {
            session_data->file_depth_remaining[source_id] = 0;
            return;
         }
-        // FIXIT-M check boundary to make sure this is not MIME for sure
-        if ((source_id == SRC_CLIENT) and (get_header_value_norm(HEAD_CONTENT_TYPE).length > 0 ))
+
+        // Do we meet all the conditions for MIME file processing?
+        if (source_id == SRC_CLIENT)
         {
-            session_data->mime_state = new MimeSession(&decode_conf, &mime_conf);
-            // FIX-H use specific header instead of classic raw header
-            const Field& headers = get_classic_raw_header();
-            if (headers.length > 0)
+            const Field& content_type = get_header_value_raw(HEAD_CONTENT_TYPE);
+            if (content_type.length > 0)
             {
-                session_data->mime_state->process_mime_data(flow, headers.start,
-                    headers.length, true, SNORT_FILE_POSITION_UNKNOWN);
+                if (boundary_present(content_type))
+                {
+                    session_data->mime_state[source_id] =
+                        new MimeSession(&decode_conf, &mime_conf);
+                    // Show file processing the Content-Type header as if it were regular data.
+                    // This will enable it to find the boundary string.
+                    // FIXIT-L develop a proper interface for passing the boundary string.
+                    // This interface is a leftover from when OHI pushed whole messages through
+                    // this interface.
+                    session_data->mime_state[source_id]->process_mime_data(flow,
+                        content_type.start, content_type.length, true,
+                        SNORT_FILE_POSITION_UNKNOWN);
+                    session_data->mime_state[source_id]->process_mime_data(flow,
+                        (const uint8_t*)"\r\n", 2, true, SNORT_FILE_POSITION_UNKNOWN);
+                }
             }
         }
-        else
+
+        // Otherwise do regular file processing
+        if (session_data->mime_state[source_id] == nullptr)
         {
             FileFlows* file_flows = FileFlows::get_file_flows(flow);
             if (!file_flows)

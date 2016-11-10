@@ -57,25 +57,24 @@ void HttpMsgBody::analyze()
     do_utf_decoding(msg_text, decoded_body, decoded_body_alloc);
     if ( decoded_body_alloc )
     {
-        detect_data.length = (decoded_body.length <= session_data->detect_depth_remaining[source_id]) ?
-           decoded_body.length : session_data->detect_depth_remaining[source_id];
-        detect_data.start = decoded_body.start;
+        detect_data.set((decoded_body.length <= session_data->detect_depth_remaining[source_id]) ?
+            decoded_body.length : session_data->detect_depth_remaining[source_id],
+            decoded_body.start);
     }
     else
     {
-        detect_data.length = (msg_text.length <= session_data->detect_depth_remaining[source_id]) ?
-           msg_text.length : session_data->detect_depth_remaining[source_id];
-        detect_data.start = msg_text.start;
+        detect_data.set((msg_text.length <= session_data->detect_depth_remaining[source_id]) ?
+            msg_text.length : session_data->detect_depth_remaining[source_id],
+            msg_text.start);
     }
 
     session_data->detect_depth_remaining[source_id] -= detect_data.length;
 
     // Always set file data. File processing will later set a new value in some cases.
-    file_data.length = detect_data.length;
+    file_data.set(detect_data);
 
     if (file_data.length > 0)
     {
-        file_data.start = detect_data.start;
         set_file_data(const_cast<uint8_t*>(file_data.start), (unsigned)file_data.length);
     }
 
@@ -137,7 +136,7 @@ void HttpMsgBody::do_file_processing()
     const int32_t fp_length = (file_data.length <= session_data->file_depth_remaining[source_id]) ?
         file_data.length : session_data->file_depth_remaining[source_id];
 
-    if (!session_data->mime_state)
+    if (!session_data->mime_state[source_id])
     {
         FileFlows* file_flows = FileFlows::get_file_flows(flow);
         const bool download = (source_id == SRC_SERVER);
@@ -169,14 +168,14 @@ void HttpMsgBody::do_file_processing()
     }
     else
     {
-        session_data->mime_state->process_mime_data(flow, file_data.start,
+        session_data->mime_state[source_id]->process_mime_data(flow, file_data.start,
             fp_length, true, SNORT_FILE_POSITION_UNKNOWN);
 
         session_data->file_depth_remaining[source_id] -= fp_length;
         if (session_data->file_depth_remaining[source_id] == 0)
         {
-            delete session_data->mime_state;
-            session_data->mime_state = nullptr;
+            delete session_data->mime_state[source_id];
+            session_data->mime_state[source_id] = nullptr;
         }
     }
 }

@@ -36,15 +36,11 @@ class HttpMsgHeadShared : public HttpMsgSection
 public:
     void analyze() override;
 
-    int32_t get_num_headers() const { return num_headers; }
     const Field& get_classic_raw_header();
     const Field& get_classic_raw_cookie();
     const Field& get_classic_norm_header();
     const Field& get_classic_norm_cookie();
-    const Field& get_header_line(int k) const { return header_line[k]; }
-    const Field& get_header_name(int k) const { return header_name[k]; }
-    const Field& get_header_value(int k) const { return header_value[k]; }
-    HttpEnums::HeaderId get_header_name_id(int k)  const { return header_name_id[k]; }
+    const Field& get_header_value_raw(HttpEnums::HeaderId header_id) const;
     const Field& get_header_value_norm(HttpEnums::HeaderId header_id);
     int get_header_count(HttpEnums::HeaderId header_id) const;
 
@@ -64,6 +60,8 @@ protected:
     ~HttpMsgHeadShared();
     // Get the next item in a comma-separated header value and convert it to an enum value
     static int32_t get_next_code(const Field& field, int32_t& offset, const StrCode table[]);
+    // Do a case insensitve search for "boundary=" in a Field
+    static bool boundary_present(const Field& field);
 
 #ifdef REG_TEST
     void print_headers(FILE* output);
@@ -110,7 +108,8 @@ private:
 
     struct NormalizedHeader
     {
-        HttpEnums::HeaderId id;
+        NormalizedHeader(HttpEnums::HeaderId id_) : id(id_) {}
+        const HttpEnums::HeaderId id;
         int count;
         Field norm;
         NormalizedHeader* next;

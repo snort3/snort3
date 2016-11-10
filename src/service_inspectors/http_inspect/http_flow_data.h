@@ -107,7 +107,7 @@ private:
         HttpEnums::STAT_NOT_PRESENT };
     int64_t detect_depth_remaining[2] = { HttpEnums::STAT_NOT_PRESENT,
         HttpEnums::STAT_NOT_PRESENT };
-    MimeSession* mime_state = nullptr;  // SRC_CLIENT only
+    MimeSession* mime_state[2] = { nullptr, nullptr };
     UtfDecodeSession* utf_state = nullptr; //SRC_SERVER only
     uint64_t expected_trans_num[2] = { 1, 1 };
 

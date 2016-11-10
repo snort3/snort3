@@ -18,6 +18,7 @@
 // http_msg_head_shared_util.cc author Tom Peters <thopeter@cisco.com>
 
 #include "http_msg_head_shared.h"
+#include <string>
 
 int32_t HttpMsgHeadShared::get_next_code(const Field& field, int32_t& offset,
     const StrCode table[])
@@ -28,5 +29,21 @@ int32_t HttpMsgHeadShared::get_next_code(const Field& field, int32_t& offset,
     for (length = 0; (offset+length < field.length) && (*(start+length) != ','); length++);
     offset += length + 1;
     return str_to_code(start, length, table);
+}
+
+// Case insensitive search for the substring "boundary="
+bool HttpMsgHeadShared::boundary_present(const Field& field)
+{
+    assert(field.length > 0);
+
+    const char* const BOUNDARY = "boundary=";
+    const int BOUNDARY_LEN = 9;
+
+    for (int k = 0; k + BOUNDARY_LEN <= field.length; k++)
+    {
+        if (strncasecmp(BOUNDARY, (const char*)(field.start + k), BOUNDARY_LEN) == 0)
+            return true;
+    }
+    return false;
 }
 

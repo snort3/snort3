@@ -68,11 +68,10 @@ HttpFlowData::~HttpFlowData()
             inflateEnd(compress_stream[k]);
             delete compress_stream[k];
         }
-    }
-
-    if (mime_state != nullptr)
-    {
-        delete mime_state;
+        if (mime_state[k] != nullptr)
+        {
+            delete mime_state[k];
+        }
     }
 
     if (utf_state != nullptr )
@@ -101,6 +100,11 @@ void HttpFlowData::half_reset(SourceId source_id)
         delete compress_stream[source_id];
         compress_stream[source_id] = nullptr;
     }
+    if (mime_state[source_id] != nullptr)
+    {
+        delete mime_state[source_id];
+        mime_state[source_id] = nullptr;
+    }
     infractions[source_id].reset();
     events[source_id].reset();
     section_offset[source_id] = 0;
@@ -112,11 +116,6 @@ void HttpFlowData::half_reset(SourceId source_id)
         type_expected[SRC_CLIENT] = SEC_REQUEST;
         expected_trans_num[SRC_CLIENT]++;
         method_id = METH__NOT_PRESENT;
-        if (mime_state != nullptr)
-        {
-            delete mime_state;
-            mime_state = nullptr;
-        }
     }
     else
     {
@@ -202,6 +201,11 @@ void HttpFlowData::show(FILE* out_file) const
     fprintf(out_file, "Body octets: %" PRIi64 "/%" PRIi64 "\n", body_octets[0], body_octets[1]);
     fprintf(out_file, "Pipelining: front %d back %d overflow %d underflow %d\n", pipeline_front,
         pipeline_back, pipeline_overflow, pipeline_underflow);
+    fprintf(out_file, "Cutter: %s/%s\n", (cutter[0] != nullptr) ? "Present" : "nullptr",
+        (cutter[1] != nullptr) ? "Present" : "nullptr");
+    fprintf(out_file, "utf_state: %s\n", (utf_state != nullptr) ? "Present" : "nullptr");
+    fprintf(out_file, "mime_state: %s/%s\n", (mime_state[0] != nullptr) ? "Present" : "nullptr",
+        (mime_state[1] != nullptr) ? "Present" : "nullptr");
 }
 #endif
 

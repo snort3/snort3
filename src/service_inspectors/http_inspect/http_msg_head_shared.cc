@@ -79,9 +79,8 @@ void HttpMsgHeadShared::create_norm_head_list()
             {
                 headers_present[header_name_id[j]] = true;
                 NormalizedHeader* tmp_ptr = norm_heads;
-                norm_heads = new NormalizedHeader;
+                norm_heads = new NormalizedHeader(header_name_id[j]);
                 norm_heads->next = tmp_ptr;
-                norm_heads->id = header_name_id[j];
                 norm_heads->count = 1;
             }
         }
@@ -297,6 +296,22 @@ const Field& HttpMsgHeadShared::get_classic_norm_cookie()
 {
     return classic_normalize(get_classic_raw_cookie(), classic_norm_cookie,
         classic_norm_cookie_alloc, params->uri_param);
+}
+
+const Field& HttpMsgHeadShared::get_header_value_raw(HeaderId header_id) const
+{
+    // If the same header field appears more than once the first one will be returned.
+    if (!headers_present[header_id])
+        return Field::FIELD_NULL;
+    for (int k=0; k < num_headers; k++)
+    {
+        if (header_name_id[k] == header_id)
+        {
+            return header_value[k];
+        }
+    }
+    assert(false);
+    return Field::FIELD_NULL;
 }
 
 const Field& HttpMsgHeadShared::get_header_value_norm(HeaderId header_id)

@@ -30,15 +30,15 @@ using namespace HttpEnums;
 
 void HttpMsgBodyChunk::update_flow()
 {
-    // Cutter deleted when zero-length chunk received
+    // Cutter was deleted by splitter when zero-length chunk received
     if (session_data->cutter[source_id] == nullptr)
     {
         session_data->body_octets[source_id] = body_octets;
         session_data->trailer_prep(source_id);
-        if ((source_id == SRC_CLIENT) && (session_data->mime_state != nullptr))
+        if (session_data->mime_state[source_id] != nullptr)
         {
-            delete session_data->mime_state;
-            session_data->mime_state = nullptr;
+            delete session_data->mime_state[source_id];
+            session_data->mime_state[source_id] = nullptr;
         }
 
         if ((source_id == SRC_SERVER) && (session_data->utf_state != nullptr))

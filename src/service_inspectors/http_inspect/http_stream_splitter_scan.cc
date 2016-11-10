@@ -253,7 +253,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
         (session_data->cutter[source_id] != nullptr)               &&
         (session_data->cutter[source_id]->get_octets_seen() == 0))
     {
-        if (!session_data->mime_state)
+        if (!session_data->mime_state[source_id])
         {
             FileFlows* file_flows = FileFlows::get_file_flows(flow);
             const bool download = (source_id == SRC_SERVER);
@@ -261,10 +261,10 @@ bool HttpStreamSplitter::finish(Flow* flow)
         }
         else
         {
-            session_data->mime_state->process_mime_data(flow, nullptr, 0, true,
+            session_data->mime_state[source_id]->process_mime_data(flow, nullptr, 0, true,
                 SNORT_FILE_POSITION_UNKNOWN);
-            delete session_data->mime_state;
-            session_data->mime_state = nullptr;
+            delete session_data->mime_state[source_id];
+            session_data->mime_state[source_id] = nullptr;
         }
         return false;
     }
