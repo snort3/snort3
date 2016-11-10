@@ -72,6 +72,10 @@ have associated modules.
 
 include::manual/file_processing.txt[]
 
+== Performance Monitor
+
+include::manual/perf_monitor.txt[]
+
 == Logger Modules
 
 All output of events and packets is done by Loggers.

@@ -1,0 +1,93 @@
+=== Overview
+
+The new and improved performance monitor! Is your sensor being bogged down by
+too many flows? perf_monitor! Why are certain TCP segments being dropped without
+hitting a rule? perf_monitor! Why is a sensor leaking water? Not perf_monitor, check
+with stream…
+
+The Snort performance monitor is the built-in utility for monitoring system
+and traffic statistics. All statistics are separated by processing thread.
+perf_monitor supports several trackers for monitoring such data:
+
+=== Base Tracker
+
+The base tracker is used to gather running statistics about Snort and its
+running modules. All Snort modules gather, at the very least, counters for the
+number of packets reaching it. Most supplement these counts with those for
+domain specific functions, such as http_inspect’s number of GET requests seen.
+
+Statistics are gathered live and can be reported at regular intervals. The stats
+reported correspond only to the interval in question and are reset at the
+beginning of each interval.
+
+These are the same counts displayed when Snort shuts down, only sorted amongst
+the discrete intervals in which they occurred.
+
+Base differs from prior implementations in Snort in that all stats gathered are
+only raw counts, allowing the data to be evaluated as needed. Additionally,
+base is entirely pluggable. Data from new Snort plugins can be added to the
+existing stats either automatically or, if specified, by name and function.
+
+All plugins and counters can be enabled or disabled individually, allowing for
+only the data that is actually desired instead of overly verbose performance
+logs.
+
+To enable everything:
+
+    perf_monitor = { modules = {} }
+
+To enable everything within a module:
+
+    perf_monitor =
+    {
+        modules = 
+        {
+            {   
+                name = 'stream_tcp',
+                pegs = [[ ]]
+            },
+        }
+    }
+
+To enable specific counts within modules:
+
+    perf_monitor =
+    {
+        modules = 
+        {
+            {   
+                name = 'stream_tcp',
+                pegs = [[ overlaps gaps ]]
+            },
+        }
+
+Note: Event stats from prior Snorts are now located within base statistics.
+
+=== Flow Tracker
+
+Flow tracks statistics regarding traffic and L3/L4 protocol distributions. This
+data can be used to build a profile of traffic for inspector tuning and for
+identifying where Snort may be stressed.
+
+To enable:
+
+    perf_monitor = { flow = true }
+
+=== FlowIP Tracker
+
+FlowIP provides statistics for individual hosts within a network. This data can
+be used for identifying communication habits, such as generating large or small
+amounts of data, opening a small or large number of sessions, and tendency to
+send smaller or larger IP packets.
+
+To enable:
+
+    perf_monitor = { flow_ip = true }
+
+=== CPU Tracker
+
+This tracker monitors the CPU and wall time spent by a given processing thread.
+
+To enable:
+
+    perf_monitor = { cpu = true }
