@@ -39,7 +39,8 @@
 #include "main/snort_config.h"
 #include "utils/stats.h"
 
-#define RXP_MAX_JOBS        8   // Max jobs expected per packet
+// FIXIT-T: We should determine a sensible number for this, to keep a max limit if necessary.
+#define RXP_MAX_JOBS        128 // Max jobs expected per packet
 #define RXP_MAX_SUBSETS     4   // Hardware supports max 4 at once
 #define RXP_PACKET_LENGTH   64  // Minimum data size to perform match with RXP
 
@@ -181,7 +182,7 @@ private:
 
 public:
     vector<RxpPattern*> pats;
-    static RxpJob jobs[RXP_MAX_JOBS];
+    static vector<RxpJob> jobs;
     static int jobcount;
 
     static uint64_t duplicates;
@@ -201,7 +202,7 @@ uint64_t RxpMpse::max_pattern_len = 0;
 vector<RxpMpse*> RxpMpse::instances;
 unsigned RxpMpse::portid = 0;
 
-RxpJob RxpMpse::jobs[RXP_MAX_JOBS];
+vector<RxpJob> RxpMpse::jobs;
 int RxpMpse::jobcount = 0;
 
 // We don't have an accessible FSM match state, so like Hyperscan we build a simple
@@ -326,13 +327,7 @@ int RxpMpse::_search(
     else if (i == jobcount)
     {
         jobcount++;
-        jobs[i].buf = (uint8_t*) buf;
-        jobs[i].len = n;
-        jobs[i].offset = 0;
-        jobs[i].match_cb = mf;
-        jobs[i].match_ctx = pv;
-        jobs[i].subset_count = 1;
-        jobs[i].subset[0] = this;
+        jobs.push_back({0, (uint8_t*) buf, (unsigned int) n, 0, mf, pv, 1, {this, 0, 0, 0}});
     }
     else
     {
@@ -460,6 +455,7 @@ static void rxp_init()
     RxpMpse::match_limit = 0;
     RxpMpse::patterns = 0;
     RxpMpse::max_pattern_len = 0;
+    RxpMpse::jobs.reserve(RXP_MAX_JOBS);
 }
 
 static void rxp_print()
@@ -475,6 +471,7 @@ static void rxp_print()
 static void rxp_begin_packet()
 {
     RxpMpse::jobcount = 0;
+    RxpMpse::jobs.clear();
 }
 
 static int rxp_receive_responses()
@@ -580,7 +577,12 @@ static int rxp_send_jobs()
             }
             else
             {
-                RxpMpse::jobs[RxpMpse::jobcount] = RxpMpse::jobs[i];
+                RxpMpse::jobs.push_back({0, RxpMpse::jobs[i].buf, RxpMpse::jobs[i].len, 0,
+                    RxpMpse::jobs[i].match_cb, RxpMpse::jobs[i].match_ctx,
+                    RxpMpse::jobs[i].subset_count,
+                    {RxpMpse::jobs[i].subset[0], RxpMpse::jobs[i].subset[1],
+                    RxpMpse::jobs[i].subset[2], RxpMpse::jobs[i].subset[3]}});
+
                 RxpMpse::jobs[i].len = RXP_MAX_JOB_LENGTH;
                 RxpMpse::jobs[RxpMpse::jobcount].offset =
                         (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
