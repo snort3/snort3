@@ -324,7 +324,8 @@ int RxpMpse::_search(
     if (i == RXP_MAX_JOBS)
     {
         LogMessage("ERROR: Max RXP job count of %d reached.\n", i);
-        // FIXIT-T: We should either dispatch, or expand the job table here.
+        /* FIXIT-T: We should either fall back to a software search engine, dispatch,
+         * or expand the job table here. */
     }
     else if (i == jobcount)
     {
@@ -502,8 +503,8 @@ static int rxp_receive_responses()
     if (ret != RXP_STATUS_OK)
     {
         LogMessage("ERROR: %d rxp_get_responses() failed.\n", ret);
-        /* FIXIT-T: We should fall back to a software search engine here.
-         * For now keep going or throw an error and quit.*/
+        /* FIXIT-T: We should fall back to a software search engine here
+         * or throw an error and quit (For now keep going).*/
     }
 
     while (rx_pkts != 0)
@@ -513,8 +514,8 @@ static int rxp_receive_responses()
         if (ret != RXP_STATUS_OK)
         {
             LogMessage("ERROR: %d rxp_get_response_data() failed.\n", ret);
-            /* FIXIT-T: We should fall back to a software search engine here.
-             * For now keep going or throw an error and quit.*/
+            /* FIXIT-T: We should fall back to a software search engine here
+             * or throw an error and quit (For now keep going).*/
         }
 
         if (rxp_resp.match_count != 0)
@@ -524,7 +525,7 @@ static int rxp_receive_responses()
                 LogMessage("WARNING: Detected %u matches but only %u returned.\n",
                     rxp_resp.detected_match_count, rxp_resp.match_count);
                 RxpMpse::match_limit++;
-                /* FIXIT-T: We should fall back to a software search engine here.
+                /* FIXIT-T: We should fall back to a software search engine here
                  * For now keep going.*/
             }
 
@@ -606,8 +607,8 @@ static int rxp_send_jobs()
         if (!RxpMpse::jobs[i].buf)
         {
             LogMessage("ERROR: rxp job data is NULL.\n");
-            /* FIXIT-T: We should fall back to a software search engine here.
-             * For now keep going or throw an error and quit.*/
+            /* FIXIT-T: We should fall back to a software search engine here
+             * or throw an error and quit (For now keep going).*/
         }
 
         RxpMpse::jobs[i].jobid = ++RxpMpse::jobs_submitted; // Job ID can't be 0
@@ -625,8 +626,8 @@ static int rxp_send_jobs()
         if (ret != RXP_STATUS_OK)
         {
             LogMessage("ERROR: %d rxp_prepare_job() failed.\n", ret);
-            /* FIXIT-T: We should fall back to a software search engine here.
-             * For now keep going or throw an error and quit.*/
+            /* FIXIT-T: We should fall back to a software search engine here
+             * or throw an error and quit (For now keep going).*/
         }
 
         ret = rxp_enqueue_job(RxpMpse::portid, RxpMpse::queueid /* queue id */, job_buf);
@@ -655,8 +656,8 @@ static int rxp_send_jobs()
         if (ret != RXP_STATUS_OK)
         {
             LogMessage("ERROR: %d rxp_enqueue_job() failed.\n", ret);
-            /* FIXIT-T: We should fall back to a software search engine here.
-             * For now keep going or throw an error and quit.*/
+            /* FIXIT-T: We should fall back to a software search engine here
+             * or throw an error and quit (For now keep going).*/
         }
     }
 
