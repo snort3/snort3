@@ -182,28 +182,30 @@ private:
 
 public:
     vector<RxpPattern*> pats;
-    static vector<RxpJob> jobs;
-    static int jobcount;
-
     static uint64_t duplicates;
-    static uint64_t jobs_submitted;
-    static uint64_t match_limit;
     static uint64_t patterns;
     static uint64_t max_pattern_len;
     static vector<RxpMpse*> instances;
     static unsigned portid;
+
+    static THREAD_LOCAL RxpJob jobs[RXP_MAX_JOBS];
+    static THREAD_LOCAL int jobcount;
+    static THREAD_LOCAL uint64_t jobs_submitted;
+    static THREAD_LOCAL uint64_t match_limit;
+    static THREAD_LOCAL unsigned queueid;
 };
 
 uint64_t RxpMpse::duplicates = 0;
-uint64_t RxpMpse::jobs_submitted = 0;
-uint64_t RxpMpse::match_limit = 0;
 uint64_t RxpMpse::patterns = 0;
 uint64_t RxpMpse::max_pattern_len = 0;
 vector<RxpMpse*> RxpMpse::instances;
 unsigned RxpMpse::portid = 0;
 
-vector<RxpJob> RxpMpse::jobs;
-int RxpMpse::jobcount = 0;
+THREAD_LOCAL RxpJob RxpMpse::jobs[RXP_MAX_JOBS];
+THREAD_LOCAL int RxpMpse::jobcount = 0;
+THREAD_LOCAL uint64_t RxpMpse::jobs_submitted = 0;
+THREAD_LOCAL uint64_t RxpMpse::match_limit = 0;
+THREAD_LOCAL unsigned RxpMpse::queueid = 0;
 
 // We don't have an accessible FSM match state, so like Hyperscan we build a simple
 // tree for each option. However the same pattern can be used for several rules, so
@@ -327,7 +329,13 @@ int RxpMpse::_search(
     else if (i == jobcount)
     {
         jobcount++;
-        jobs.push_back({0, (uint8_t*) buf, (unsigned int) n, 0, mf, pv, 1, {this, 0, 0, 0}});
+        jobs[i].buf = (uint8_t*) buf;
+        jobs[i].len = n;
+        jobs[i].offset = 0;
+        jobs[i].match_cb = mf;
+        jobs[i].match_ctx = pv;
+        jobs[i].subset_count = 1;
+        jobs[i].subset[0] = this;
     }
     else
     {
@@ -386,7 +394,7 @@ int RxpMpse::program_rule_file(const string& rulesdir)
 
     rulesfile << rulesdir << "/snort3.rof";
 
-    return rxp_program_rules_memories(portid, 0 /* queue id */, rulesfile.str().c_str());
+    return rxp_program_rules_memories(portid, RxpMpse::queueid, rulesfile.str().c_str());
 }
 
 int RxpMpse::dpdk_init(void)
@@ -404,7 +412,7 @@ int RxpMpse::dpdk_init(void)
         exit(-1);
     }
 
-    if (rxp_port_init(portid, 1 /* num queues */, 1))
+    if (rxp_port_init(portid, RXP_MAX_QUEUES /* num queues */, 1))
     {
         LogMessage("ERROR: Failed to initialise RXP port.\n");
         exit(-1);
@@ -455,7 +463,6 @@ static void rxp_init()
     RxpMpse::match_limit = 0;
     RxpMpse::patterns = 0;
     RxpMpse::max_pattern_len = 0;
-    RxpMpse::jobs.reserve(RXP_MAX_JOBS);
 }
 
 static void rxp_print()
@@ -471,7 +478,14 @@ static void rxp_print()
 static void rxp_begin_packet()
 {
     RxpMpse::jobcount = 0;
-    RxpMpse::jobs.clear();
+    RxpMpse::queueid = get_instance_id();
+
+    if(RxpMpse::queueid >= RXP_MAX_QUEUES)
+    {
+        LogMessage("ERROR: Queueid value is invalid (%d) must fall within the range 0 - %d.\n",
+                RxpMpse::queueid, RXP_MAX_QUEUES - 1);
+        exit(-1);
+    }
 }
 
 static int rxp_receive_responses()
@@ -482,7 +496,7 @@ static int rxp_receive_responses()
     unsigned rx_pkts = 0;
     RxpJob* job;
 
-    ret = rxp_get_responses(RxpMpse::portid, 0 /* queue id */, pkts_burst,
+    ret = rxp_get_responses(RxpMpse::portid, RxpMpse::queueid /* queue id */, pkts_burst,
         (RxpMpse::jobcount - processed), &rx_pkts);
 
     if (ret != RXP_STATUS_OK)
@@ -577,12 +591,7 @@ static int rxp_send_jobs()
             }
             else
             {
-                RxpMpse::jobs.push_back({0, RxpMpse::jobs[i].buf, RxpMpse::jobs[i].len, 0,
-                    RxpMpse::jobs[i].match_cb, RxpMpse::jobs[i].match_ctx,
-                    RxpMpse::jobs[i].subset_count,
-                    {RxpMpse::jobs[i].subset[0], RxpMpse::jobs[i].subset[1],
-                    RxpMpse::jobs[i].subset[2], RxpMpse::jobs[i].subset[3]}});
-
+                RxpMpse::jobs[RxpMpse::jobcount] = RxpMpse::jobs[i];
                 RxpMpse::jobs[i].len = RXP_MAX_JOB_LENGTH;
                 RxpMpse::jobs[RxpMpse::jobcount].offset =
                         (RXP_MAX_JOB_LENGTH - RxpMpse::max_pattern_len);
@@ -613,7 +622,7 @@ static int rxp_send_jobs()
              * For now keep going or throw an error and quit.*/
         }
 
-        ret = rxp_enqueue_job(RxpMpse::portid, 0 /* queue id */, job_buf);
+        ret = rxp_enqueue_job(RxpMpse::portid, RxpMpse::queueid /* queue id */, job_buf);
 
         /*Probable error due responses queue full*/
         if(ret == RXP_STATUS_ENQUEUE_JOB_FAILED)
@@ -633,7 +642,7 @@ static int rxp_send_jobs()
                 temp_responses = processed;
                 processed += rxp_receive_responses();
             }
-            ret = rxp_enqueue_job(RxpMpse::portid, 0 /* queue id */, job_buf);
+            ret = rxp_enqueue_job(RxpMpse::portid, RxpMpse::queueid /* queue id */, job_buf);
         }
 
         if (ret != RXP_STATUS_OK)
@@ -653,7 +662,7 @@ static void rxp_dispatch_jobs()
     unsigned sent, pending;
 
     // Submit all jobs in a single batch
-    ret = rxp_dispatch_jobs(RxpMpse::portid, 0 /* queue id */, &sent, &pending);
+    ret = rxp_dispatch_jobs(RxpMpse::portid, RxpMpse::queueid /* queue id */, &sent, &pending);
 
     if (ret != RXP_STATUS_OK)
     {
