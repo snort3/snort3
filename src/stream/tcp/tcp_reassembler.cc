@@ -523,7 +523,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq)
                 seglist.next = tsn->next;
 
             // FIXIT-L this is suboptimal - better to exclude fin from toSeq
-            if ( !tracker->fin_set() or SEQ_LT(toSeq, tracker->fin_final_seq) )
+            if ( !tracker->fin_set() or SEQ_LEQ(toSeq, tracker->fin_final_seq) )
                 tracker->set_tf_flags(TF_MISSING_PKT);
 
             break;

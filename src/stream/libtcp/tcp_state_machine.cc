@@ -56,6 +56,15 @@ bool TcpStateMachine::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& talker,
             listener.set_tcp_event(tsd);
             tcp_state_handlers[ tcp_state ]->eval(tsd, listener);
             tcp_state_handlers[ tcp_state ]->do_post_sm_packet_actions(tsd, listener);
+            if( listener.process_inorder_fin() )
+            {
+                //FIN is in order or we need to process FIN from state_queue
+                tcp_state_handlers[ tcp_state ]->eval(tsd, listener);
+                tcp_state = talker.get_tcp_state( );
+                tcp_state_handlers[ tcp_state ]->eval(tsd, talker);
+                tcp_state_handlers[ tcp_state ]->do_post_sm_packet_actions(tsd, listener);
+                listener.inorder_fin = false;
+            }
             return true;
         }
 

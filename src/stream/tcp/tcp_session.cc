@@ -357,6 +357,17 @@ void TcpSession::process_tcp_stream(TcpSegmentDescriptor& tsd)
         listener->reassembler->set_overlap_count(0);
     }
 }
+void TcpSession::check_fin_transition_status(TcpSegmentDescriptor& tsd)
+{
+    if((tsd.get_seg_len() != 0) && 
+            SEQ_EQ(listener->get_fin_final_seq(), listener->r_nxt_ack))
+    {
+        listener->set_tcp_event(TcpStreamTracker::TCP_FIN_RECV_EVENT);
+        talker->set_tcp_event(TcpStreamTracker::TCP_FIN_SENT_EVENT);
+        listener->inorder_fin = true;
+    }
+}
+
 
 int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
 {
@@ -803,6 +814,8 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
                 or (config->policy == StreamPolicy::OS_PROXY))
         {
             process_tcp_data(tsd);
+            //Check if all segments are received. Process FIN transition
+            check_fin_transition_status(tsd);
         }
         else
         {

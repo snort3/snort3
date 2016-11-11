@@ -323,6 +323,11 @@ public:
         return rst_pkt_sent;
     }
 
+    bool process_inorder_fin() const
+    {
+        return inorder_fin;
+    }
+
     virtual void init_tcp_state() =  0;
     virtual void init_toolbox() = 0;
 
@@ -373,6 +378,7 @@ public:
 
     uint32_t fin_final_seq = 0;
     bool rst_pkt_sent = false;
+    bool inorder_fin = false;
 
 // FIXIT-L make these non-public
 public:

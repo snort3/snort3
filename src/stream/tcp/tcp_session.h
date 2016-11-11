@@ -77,6 +77,7 @@ public:
 private:
     void set_os_policy() override;
     bool flow_exceeds_config_thresholds(TcpSegmentDescriptor&);
+    void check_fin_transition_status(TcpSegmentDescriptor&);
     void process_tcp_stream(TcpSegmentDescriptor&);
     int process_tcp_data(TcpSegmentDescriptor&);
     void process_tcp_packet(TcpSegmentDescriptor&);

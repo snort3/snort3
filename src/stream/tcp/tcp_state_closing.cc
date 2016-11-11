@@ -112,7 +112,7 @@ bool TcpStateClosing::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     Flow* flow = tsd.get_flow();
 
     trk.update_tracker_ack_recv(tsd);
-    if ( SEQ_GEQ(tsd.get_seg_seq(), trk.get_fin_final_seq() ) )
+    if ( SEQ_GT(tsd.get_seg_seq(), trk.get_fin_final_seq() ) )
     {
         DebugMessage(DEBUG_STREAM_STATE, "FIN beyond previous, ignoring\n");
         trk.session->tel.set_tcp_event(EVENT_BAD_FIN);
@@ -160,7 +160,6 @@ bool TcpStateClosing::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpSt
 {
     trk.session->update_paws_timestamps(tsd);
     trk.session->check_for_window_slam(tsd);
-
     return true;
 }
 

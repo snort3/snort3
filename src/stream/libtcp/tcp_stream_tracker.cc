@@ -75,7 +75,7 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor&
             tcp_event = TCP_SYN_ACK_SENT_EVENT;
         else if ( tcph->is_rst() )
             tcp_event = TCP_RST_SENT_EVENT;
-       else if ( tcph->is_fin( ) )
+        else if ( tcph->is_fin( ) )
             tcp_event = TCP_FIN_SENT_EVENT;
         else if ( tcph->is_ack() || tcph->is_psh() )
         {

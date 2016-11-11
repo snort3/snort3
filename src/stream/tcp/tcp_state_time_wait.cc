@@ -103,7 +103,7 @@ bool TcpStateTimeWait::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 bool TcpStateTimeWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_recv(tsd);
-    if ( SEQ_GEQ(tsd.get_seg_seq(), trk.get_fin_final_seq() ) )
+    if ( SEQ_GT(tsd.get_seg_seq(), trk.get_fin_final_seq() ) )
     {
         DebugMessage(DEBUG_STREAM_STATE, "FIN beyond previous, ignoring\n");
         trk.session->tel.set_tcp_event(EVENT_BAD_FIN);
