@@ -603,6 +603,13 @@ static int rxp_send_jobs()
             }
         }
 
+        if (!RxpMpse::jobs[i].buf)
+        {
+            LogMessage("ERROR: rxp job data is NULL.\n");
+            /* FIXIT-T: We should fall back to a software search engine here.
+             * For now keep going or throw an error and quit.*/
+        }
+
         RxpMpse::jobs[i].jobid = ++RxpMpse::jobs_submitted; // Job ID can't be 0
 
         // Subset ID 0 is an error, so set any unused slots to the first subset
