@@ -12,7 +12,7 @@
 --
 -- then:
 -- export LUA_PATH=$DIR/include/snort/lua/?.lua\;\;
--- export SNORT_LUA_PATH=$DIR/conf/
+-- export SNORT_LUA_PATH=$DIR/etc/snort
 ---------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------
