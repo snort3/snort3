@@ -20,6 +20,7 @@
 
 #include "host_tracker_module.h"
 
+#include "main/snort_config.h"
 #include "stream/stream.h"
 #include "target_based/snort_protocols.h"
 #include "host_cache.h"
@@ -63,7 +64,7 @@ const Parameter HostTrackerModule::host_tracker_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-bool HostTrackerModule::set(const char*, Value& v, SnortConfig*)
+bool HostTrackerModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( host and v.is("ip") )
     {
@@ -78,10 +79,10 @@ bool HostTrackerModule::set(const char*, Value& v, SnortConfig*)
         host->set_stream_policy(v.get_long() + 1);
 
     else if ( v.is("name") )
-        app.protocol = AddProtocolReference(v.get_string());
+        app.protocol = sc->proto_ref->add(v.get_string());
 
     else if ( v.is("proto") )
-        app.ipproto = AddProtocolReference(v.get_string());
+        app.ipproto = sc->proto_ref->add(v.get_string());
 
     else if ( v.is("port") )
         app.port = v.get_long();

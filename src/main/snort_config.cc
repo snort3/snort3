@@ -45,6 +45,7 @@
 #include "sfip/sf_ip.h"
 #include "thread_config.h"
 #include "target_based/sftarget_reader.h"
+#include "target_based/snort_protocols.h"
 
 #ifdef HAVE_HYPERSCAN
 #include "ips_options/ips_regex.h"
@@ -180,6 +181,7 @@ SnortConfig::SnortConfig()
     sfip_clear(obfuscation_net);
 
     memset(evalOrder, 0, sizeof(evalOrder));
+    proto_ref = new ProtocolReference;
 }
 
 SnortConfig::~SnortConfig()
@@ -227,19 +229,16 @@ SnortConfig::~SnortConfig()
     InspectorManager::delete_config(this);
 
     snort_free(state);
-
     delete thread_config;
 
     if (gtp_ports)
         delete gtp_ports;
 
     delete profiler;
-
     delete latency;
-
     delete memory;
-
     delete daq_config;
+    delete proto_ref;
 
 #ifdef INTEL_SOFT_CPM
     IntelPmRelease(ipm_handles);

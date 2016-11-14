@@ -55,6 +55,9 @@ SO_PUBLIC Inspector* InspectorManager::get_inspector(const char*, bool) { return
 InspectorType InspectorManager::get_type(const char*) { return InspectorType::IT_BINDER; }
 Inspector* InspectorManager::get_binder() { return nullptr; }
 
+int16_t ProtocolReference::find(const char*) { return 0; }
+const char* ProtocolReference::get_name(uint16_t) { return ""; }
+
 BinderModule::BinderModule() : Module("B", "B Help", nullptr, true) { }
 BinderModule::~BinderModule() { }
 ProfileStats* BinderModule::get_profile() const { return nullptr; }

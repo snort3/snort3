@@ -87,6 +87,14 @@ const StreamModuleConfig* StreamModule::get_data()
     return &config;
 }
 
+bool StreamModule::begin(const char* fqn, int, SnortConfig*)
+{
+    if ( !strcmp(fqn, MOD_NAME) )
+        memset(&config, 0, sizeof(config));
+
+    return true;
+}
+
 bool StreamModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     FlowConfig* fc = nullptr;

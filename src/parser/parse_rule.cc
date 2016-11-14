@@ -1102,7 +1102,7 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
         ParseError("unconfigured rule action '%s'", s);
 }
 
-void parse_rule_proto(SnortConfig*, const char* s, RuleTreeNode& rtn)
+void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 {
     if ( s_ignore )
         return;
@@ -1123,7 +1123,7 @@ void parse_rule_proto(SnortConfig*, const char* s, RuleTreeNode& rtn)
         // this will allow other protocols like http to have ports
         rule_proto = PROTO_BIT__TCP;
 
-    rtn.proto = AddProtocolReference(s);
+    rtn.proto = sc->proto_ref->add(s);
 
     if ( rtn.proto <= 0 )
     {
@@ -1319,7 +1319,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     OtnLookupAdd(sc->otn_map, otn);
 
     if ( is_service_protocol(otn->proto) )
-        add_service_to_otn(sc, otn, get_protocol_name(otn->proto));
+        add_service_to_otn(sc, otn, sc->proto_ref->get_name(otn->proto));
 
     /*
      * The src/dst port parsing must be done before the Head Nodes are processed, since they must

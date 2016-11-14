@@ -132,7 +132,6 @@ void show_stats(SimpleStats*, const char* module_name);
 double CalcPct(uint64_t, uint64_t);
 void DropStats();
 void pc_sum();
-void pc_accum();
 void PrintStatistics();
 void TimeStart();
 void TimeStop();

@@ -90,6 +90,8 @@ public:
     // this must be called when snort exits
     static void exit();
 
+    static FileCaptureState error_capture(FileCaptureState);
+
 private:
 
     static void init_mempool(int64_t max_file_mem, int64_t block_size);
@@ -116,35 +118,6 @@ private:
     FileCaptureState capture_state;
     FileInfo* file_info = nullptr;
 };
-
-struct File_Capture_Stats
-{
-    uint64_t files_buffered_total;
-    uint64_t files_released_total;
-    uint64_t files_freed_total;
-    uint64_t files_captured_total;
-    uint64_t file_memcap_failures_total;
-    uint64_t file_memcap_failures_reserve; /*This happens during reserve*/
-    uint64_t file_reserve_failures;        /*This happens during reserve*/
-    uint64_t file_size_min;                /*This happens during reserve*/
-    uint64_t file_size_max;                /*This happens during reserve*/
-    uint64_t file_within_packet;
-    uint64_t file_buffers_used_max;   /* maximum buffers used simultaneously*/
-    uint64_t file_buffers_allocated_total;
-    uint64_t file_buffers_freed_total;
-    uint64_t file_buffers_released_total;
-    uint64_t file_buffers_free_errors;
-    uint64_t file_buffers_release_errors;
-};
-
-extern File_Capture_Stats file_capture_stats;
-
-/*Helper function for error*/
-static inline FileCaptureState error_capture(FileCaptureState state)
-{
-    file_capture_stats.file_reserve_failures++;
-    return state;
-}
 
 #endif
 

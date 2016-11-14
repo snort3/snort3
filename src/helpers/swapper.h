@@ -22,6 +22,8 @@
 
 // used to make thread local, pointer-based config swaps by packet threads
 
+#include <mutex>
+
 struct SnortConfig;
 struct tTargetBasedConfig;
 
@@ -34,6 +36,9 @@ public:
     ~Swapper();
 
     void apply();
+
+public:
+    static std::mutex mutex;
 
 private:
     SnortConfig* old_conf;

@@ -24,6 +24,7 @@
 // runs in a different thread, it also provides a command facility so that
 // to control the thread and swap configuration.
 
+#include <atomic>
 #include "main/snort_types.h"
 
 enum AnalyzerCommand
@@ -77,11 +78,13 @@ private:
     bool handle_command();
 
 private:
-    volatile State state;
-    volatile AnalyzerCommand command;
-    volatile bool privileged_start;
+    std::atomic<State> state;
+    std::atomic<AnalyzerCommand> command;
+    std::atomic<bool> privileged_start;
+
     uint64_t count;
     unsigned id;
+
     const char* source;
     Swapper* swap;
     SFDAQInstance* daq_instance;

@@ -33,6 +33,7 @@
 #include "ftp_data.h"
 #include "telnet.h"
 
+#include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
@@ -453,7 +454,7 @@ static Module* fs_mod_ctor()
 
 static void fs_init()
 {
-    ftp_data_app_id = FindProtocolReference("ftp-data");
+    ftp_data_app_id = snort_conf->proto_ref->find("ftp-data");
     FtpFlowData::init();
 }
 

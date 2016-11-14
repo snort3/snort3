@@ -62,10 +62,10 @@ public:
     int64_t file_depth =  0;
     int64_t max_files_cached = DEFAULT_MAX_FILES_CACHED;
 
-    static int64_t show_data_depth;
-    static bool trace_type;
-    static bool trace_signature;
-    static bool trace_stream;
+    int64_t show_data_depth = DEFAULT_FILE_SHOW_DATA_DEPTH;
+    bool trace_type = false;
+    bool trace_signature = false;
+    bool trace_stream = false;
 
 private:
     FileIdentifier fileIdentifier;

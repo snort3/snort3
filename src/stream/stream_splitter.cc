@@ -22,19 +22,16 @@
 #include <assert.h>
 #include <string.h>
 
-#include "flush_bucket.h"
+#include "main/snort_config.h"
 #include "protocols/packet.h"
+
+#include "flush_bucket.h"
 
 static THREAD_LOCAL uint8_t pdu_buf[StreamSplitter::max_buf];
 static THREAD_LOCAL StreamBuffer str_buf;
 
-unsigned StreamSplitter::max_pdu = 16384;
-
-void StreamSplitter::set_max(unsigned m)
-{ max_pdu = m; }
-
 unsigned StreamSplitter::max(Flow*)
-{ return max_pdu; }
+{ return snort_conf->max_pdu; }
 
 const StreamBuffer* StreamSplitter::reassemble(
     Flow*, unsigned, unsigned offset, const uint8_t* p,

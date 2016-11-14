@@ -97,7 +97,7 @@ struct PHInstance
     Inspector* handler;
     string name;
 
-    PHInstance(PHClass&, Module* = nullptr);
+    PHInstance(PHClass&, SnortConfig*, Module* = nullptr);
     ~PHInstance();
 
     static bool comp(PHInstance* a, PHInstance* b)
@@ -107,7 +107,7 @@ struct PHInstance
     { name = s; }
 };
 
-PHInstance::PHInstance(PHClass& p, Module* mod) : pp_class(p)
+PHInstance::PHInstance(PHClass& p, SnortConfig* sc, Module* mod) : pp_class(p)
 {
     handler = p.api.ctor(mod);
 
@@ -117,7 +117,7 @@ PHInstance::PHInstance(PHClass& p, Module* mod) : pp_class(p)
         handler->add_ref();
 
         if ( p.api.service )
-            handler->set_service(AddProtocolReference(p.api.service));
+            handler->set_service(sc->proto_ref->add(p.api.service));
     }
 }
 
@@ -136,6 +136,7 @@ static PHGlobalList s_handlers;
 static PHList s_trash;
 static PHList s_trash2;
 static THREAD_LOCAL bool s_clear = false;
+static bool s_sorted = false;
 
 struct FrameworkConfig
 {
@@ -368,14 +369,14 @@ static PHInstance* get_instance(
 }
 
 static PHInstance* get_new(
-    PHClass* ppc, FrameworkPolicy* fp, const char* keyword, Module* mod)
+    PHClass* ppc, FrameworkPolicy* fp, const char* keyword, Module* mod, SnortConfig* sc)
 {
     PHInstance* p = get_instance(fp, keyword);
 
     if ( p )
         return p;
 
-    p = new PHInstance(*ppc, mod);
+    p = new PHInstance(*ppc, sc, mod);
 
     if ( !p->handler )
     {
@@ -581,7 +582,7 @@ void InspectorManager::instantiate(
         if ( name )
             keyword = name;
 
-        PHInstance* ppi = get_new(ppc, fp, keyword, mod);
+        PHInstance* ppi = get_new(ppc, fp, keyword, mod, sc);
 
         if ( !ppi )
             ParseError("can't instantiate inspector: '%s'.", keyword);
@@ -603,7 +604,7 @@ Inspector* InspectorManager::instantiate(
         return nullptr;
 
     auto fp = get_inspection_policy()->framework_policy;
-    auto ppi = get_new(ppc, fp, name, mod);
+    auto ppi = get_new(ppc, fp, name, mod, sc);
 
     if ( !ppi )
         return nullptr;
@@ -690,7 +691,11 @@ void InspectorManager::release(Inspector* pi)
 
 bool InspectorManager::configure(SnortConfig* sc)
 {
-    sort(s_handlers.begin(), s_handlers.end(), PHGlobal::comp);
+    if ( !s_sorted )
+    {
+        sort(s_handlers.begin(), s_handlers.end(), PHGlobal::comp);
+        s_sorted = true;
+    }
     bool ok = true;
 
     for ( unsigned idx = 0; idx < sc->policy_map->inspection_policy.size(); ++idx )

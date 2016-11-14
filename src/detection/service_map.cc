@@ -216,7 +216,7 @@ static int ServiceMapAddOtn(srmm_table_t* srmm, int proto, char* servicename, Op
     return 0;
 }
 
-void fpPrintServicePortGroupSummary(srmm_table_t* srvc_pg_map)
+void fpPrintServicePortGroupSummary(SnortConfig* sc, srmm_table_t* srvc_pg_map)
 {
     LogMessage("+--------------------------------\n");
     LogMessage("| Service-PortGroup Table Summary \n");
@@ -225,10 +225,10 @@ void fpPrintServicePortGroupSummary(srmm_table_t* srvc_pg_map)
     for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
     {
         if ( unsigned n = srvc_pg_map->to_srv[i]->count )
-            LogMessage("| %s to server   : %d services\n", get_protocol_name(i), n);
+            LogMessage("| %s to server   : %d services\n", sc->proto_ref->get_name(i), n);
 
         if ( unsigned n = srvc_pg_map->to_cli[i]->count )
-            LogMessage("| %s to client   : %d services\n", get_protocol_name(i), n);
+            LogMessage("| %s to client   : %d services\n", sc->proto_ref->get_name(i), n);
     }
 
     LogMessage("---------------------------------\n");
@@ -284,10 +284,8 @@ int fpCreateServiceMaps(SnortConfig* sc)
 // sopg_table_t stuff
 //-------------------------------------------------------------------------
 
-sopg_table_t::sopg_table_t()
+sopg_table_t::sopg_table_t(unsigned n)
 {
-    unsigned n = (unsigned)get_protocol_count();
-
     for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; ++i )
     {
         if ( to_srv[i].size() < n )

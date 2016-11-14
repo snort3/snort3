@@ -22,6 +22,10 @@
 #ifndef SNORT_PROTOCOLS_H
 #define SNORT_PROTOCOLS_H
 
+#include <string>
+#include <vector>
+
+#include "main/snort_config.h"
 #include "main/snort_types.h"
 
 // FIXIT-L use logical type instead of int16_t
@@ -51,20 +55,28 @@ inline bool is_builtin_protocol(int16_t proto)
 inline bool is_service_protocol(int16_t proto)
 { return proto > SNORT_PROTO_UDP; }
 
-void InitializeProtocolReferenceTable();
-void FreeProtoocolReferenceTable();
+class SO_PUBLIC ProtocolReference
+{
+public:
+    ProtocolReference();
+    ~ProtocolReference();
 
-int16_t get_protocol_count();
+    int16_t get_count();
 
-const char* get_protocol_name(uint16_t id);
-const char* get_protocol_name_sorted(uint16_t id);
+    const char* get_name(uint16_t id);
+    const char* get_name_sorted(uint16_t id);
 
-SO_PUBLIC int16_t AddProtocolReference(const char* protocol);
-SO_PUBLIC int16_t FindProtocolReference(const char* protocol);
+    int16_t add(const char* protocol);
+    int16_t find(const char* protocol);
 
-#if 0
-int16_t GetProtocolReference(struct Packet*);
-#endif
+    bool operator()(uint16_t a, uint16_t b);
+
+private:
+    std::vector<std::string> id_map;
+    std::vector<uint16_t> ind_map;
+    struct SFGHASH* ref_table = nullptr;
+    int16_t protocol_number = 1;
+};
 
 #endif
 

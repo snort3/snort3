@@ -35,7 +35,6 @@
 
 #include "file_service.h"
 #include "file_api.h"
-#include "file_stats.h"
 #include "file_capture.h"
 #include "file_cache.h"
 #include "file_enforcer.h"
@@ -47,11 +46,6 @@
 #include "packet_io/active.h"
 #include "sfip/sfip_t.h"
 #include "sfip/sf_ip.h"
-
-int64_t FileConfig::show_data_depth = DEFAULT_FILE_SHOW_DATA_DEPTH;
-bool FileConfig::trace_type = false;
-bool FileConfig::trace_signature = false;
-bool FileConfig::trace_stream = false;
 
 unsigned FileFlows::flow_id = 0;
 

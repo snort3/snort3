@@ -22,13 +22,14 @@
 
 #include <assert.h>
 
+#include "main/snort_config.h"
+#include "stream/flush_bucket.h"
+#include "stream/stream_splitter.h"
+
 #include "stream_tcp.h"
 #include "tcp_ha.h"
 #include "tcp_module.h"
 #include "tcp_session.h"
-
-#include "stream/flush_bucket.h"
-#include "stream/stream_splitter.h"
 
 //-------------------------------------------------------------------------
 // inspector stuff
@@ -67,9 +68,9 @@ void StreamTcp::show(SnortConfig*)
     TcpStreamConfig::show_config(config);
 }
 
-bool StreamTcp::configure(SnortConfig*)
+bool StreamTcp::configure(SnortConfig* sc)
 {
-    StreamSplitter::set_max(config->paf_max);
+    sc->max_pdu = config->paf_max;
     return true;
 }
 

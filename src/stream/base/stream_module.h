@@ -75,6 +75,7 @@ class StreamModule : public Module
 public:
     StreamModule();
 
+    bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     const PegInfo* get_pegs() const override;

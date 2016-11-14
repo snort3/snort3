@@ -92,9 +92,12 @@ class DetectionModule : public Module
 public:
     DetectionModule() : Module("detection", detection_help, detection_params) {}
     bool set(const char*, Value&, SnortConfig*) override;
-    const PegInfo* get_pegs() const override { return pc_names; }
-    PegCount* get_counts() const override { return (PegCount*) &pc; }
-    void sum_stats() override;
+
+    const PegInfo* get_pegs() const override
+    { return pc_names; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*) &pc; }
 };
 
 bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
@@ -115,12 +118,6 @@ bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
         return false;
 
     return true;
-}
-
-void DetectionModule::sum_stats()
-{
-    pc_accum();
-    Module::sum_stats();
 }
 
 //-------------------------------------------------------------------------
@@ -1625,7 +1622,7 @@ private:
     HostAttributeEntry* host;
 };
 
-bool HostsModule::set(const char*, Value& v, SnortConfig*)
+bool HostsModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( host and v.is("ip") )
         v.get_addr(host->ipAddr);
@@ -1637,10 +1634,10 @@ bool HostsModule::set(const char*, Value& v, SnortConfig*)
         host->hostInfo.streamPolicy = v.get_long() + 1;
 
     else if ( app and v.is("name") )
-        app->protocol = AddProtocolReference(v.get_string());
+        app->protocol = sc->proto_ref->add(v.get_string());
 
     else if ( app and v.is("proto") )
-        app->ipproto = AddProtocolReference(v.get_string());
+        app->ipproto = sc->proto_ref->add(v.get_string());
 
     else if ( app and v.is("port") )
         app->port = v.get_long();

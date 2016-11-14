@@ -35,14 +35,14 @@
 static inline bool check_file_size(FILE* fh, uint64_t max_file_size)
 {
     int fd;
-    struct stat file_stats;
+    struct stat fstats;
 
     if (!fh)
         return false;
 
     fd = fileno(fh);
-    if ((fstat(fd, &file_stats) == 0)
-        && ((uint64_t)file_stats.st_size >= max_file_size))
+    if ((fstat(fd, &fstats) == 0)
+        && ((uint64_t)fstats.st_size >= max_file_size))
         return true;
 
     return false;
@@ -136,7 +136,7 @@ static bool rotate_file(const char* old_file, FILE* old_fh,
 {
     time_t ts;
     char rotate_file[PATH_MAX];
-    struct stat file_stats;
+    struct stat fstats;
 
     if (!old_file)
         return -1;
@@ -163,7 +163,7 @@ static bool rotate_file(const char* old_file, FILE* old_fh,
     SnortSnprintf(rotate_file, PATH_MAX, "%s_" STDu64,  old_file, (uint64_t)ts);
 
     // If the rotate file doesn't exist, just rename the old one to the new one
-    if (stat(rotate_file, &file_stats) != 0)
+    if (stat(rotate_file, &fstats) != 0)
     {
         if (rename(old_file, rotate_file) != 0)
         {
@@ -193,7 +193,7 @@ static bool rotate_file(const char* old_file, FILE* old_fh,
                 SnortSnprintf(rotate_file_with_index, PATH_MAX, "%s.%02d",
                     rotate_file, rotate_index);
             }
-            while (stat(rotate_file_with_index, &file_stats) == 0);
+            while (stat(rotate_file_with_index, &fstats) == 0);
 
             // Subtract one to append to last existing file
             rotate_index--;
@@ -252,7 +252,7 @@ static bool rotate_file(const char* old_file, FILE* old_fh,
                 {
                     int rotate_fd = fileno(rotate_fh);
 
-                    if (fstat(rotate_fd, &file_stats) != 0)
+                    if (fstat(rotate_fd, &fstats) != 0)
                     {
                         ErrorMessage("Perfmonitor: Error getting file "
                             "information for \"%s\": %s.\n",
@@ -261,7 +261,7 @@ static bool rotate_file(const char* old_file, FILE* old_fh,
                         break;
                     }
 
-                    if (((uint32_t)file_stats.st_size + num_read) > max_file_size)
+                    if (((uint32_t)fstats.st_size + num_read) > max_file_size)
                     {
                         fclose(rotate_fh);
 

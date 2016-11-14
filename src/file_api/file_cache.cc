@@ -18,7 +18,6 @@
 //  file_cache.cc author Hui Cao <huica@cisco.com>
 
 #include "file_cache.h"
-#include "file_service.h"
 
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -28,7 +27,8 @@
 #include "utils/util.h"
 #include "utils/snort_bounds.h"
 
-uint64_t FileCache::num_add_fails = 0;
+#include "file_service.h"
+#include "file_stats.h"
 
 static int file_cache_free_func(void*, void* data)
 {
@@ -81,7 +81,7 @@ FileContext* FileCache::add(const FileHashKey& hashKey)
          * for key.  This means bigger problems, but fail
          * gracefully.
          */
-        FileCache::num_add_fails++;
+        file_counts.cache_add_fails++;
         delete new_node.file;
         return nullptr;
     }

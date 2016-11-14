@@ -1234,7 +1234,7 @@ static void fpBuildServicePortGroups(
             ParseError("*** failed to create and find a port group for '%s'",srvc);
             continue;
         }
-        int16_t id = FindProtocolReference(srvc);
+        int16_t id = sc->proto_ref->find(srvc);
         assert(id != SFTARGET_UNKNOWN_PROTOCOL);
 
         assert((unsigned)id < sopg.size());
@@ -1250,7 +1250,7 @@ static void fpCreateServiceMapPortGroups(SnortConfig* sc)
     FastPatternConfig* fp = sc->fast_pattern_config;
 
     sc->spgmmTable = ServicePortGroupMapNew();
-    sc->sopgTable = new sopg_table_t;
+    sc->sopgTable = new sopg_table_t(sc->proto_ref->get_count());
 
     for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
     {
@@ -1315,17 +1315,17 @@ static void fpPrintServiceRuleMapTable(SFGHASH* p, const char* proto, const char
     }
 }
 
-static void fpPrintServiceRuleMaps(srmm_table_t* service_map)
+static void fpPrintServiceRuleMaps(SnortConfig* sc, srmm_table_t* service_map)
 {
     for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; ++i )
     {
-        const char* s = get_protocol_name(i);
+        const char* s = sc->proto_ref->get_name(i);
         fpPrintServiceRuleMapTable(service_map->to_srv[i], s, "to server");
         fpPrintServiceRuleMapTable(service_map->to_cli[i], s, "to client");
     }
 }
 
-static void fp_print_service_rules(SFGHASH* cli, SFGHASH* srv, const char* msg)
+static void fp_print_service_rules(SnortConfig* sc, SFGHASH* cli, SFGHASH* srv, const char* msg)
 {
     if ( !cli->count and !srv->count )
         return;
@@ -1338,7 +1338,7 @@ static void fp_print_service_rules(SFGHASH* cli, SFGHASH* srv, const char* msg)
     uint16_t idx = 0;
     unsigned ctot = 0, stot = 0;
 
-    while ( const char* svc = get_protocol_name_sorted(idx++) )
+    while ( const char* svc = sc->proto_ref->get_name_sorted(idx++) )
     {
         SF_LIST* clist = (SF_LIST*)sfghash_find(cli, svc);
         SF_LIST* slist = (SF_LIST*)sfghash_find(srv, svc);
@@ -1358,10 +1358,11 @@ static void fp_print_service_rules(SFGHASH* cli, SFGHASH* srv, const char* msg)
         LogMessage("%25.25s: %8u%8u\n", "total", ctot, stot);
 }
 
-static void fp_print_service_rules_by_proto(srmm_table_t* srmm)
+static void fp_print_service_rules_by_proto(SnortConfig* sc, srmm_table_t* srmm)
 {
     for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; ++i )
-        fp_print_service_rules(srmm->to_srv[i], srmm->to_cli[i], get_protocol_name(i));
+        fp_print_service_rules(sc, srmm->to_srv[i], srmm->to_cli[i],
+        sc->proto_ref->get_name(i));
 }
 
 static void fp_sum_port_groups(PortGroup* pg, unsigned c[PM_TYPE_MAX])
@@ -1473,15 +1474,15 @@ static int fpCreateServicePortGroups(SnortConfig* sc)
     if (fpCreateServiceMaps(sc))
         return -1;
 
-    fp_print_service_rules_by_proto(sc->srmmTable);
+    fp_print_service_rules_by_proto(sc, sc->srmmTable);
 
     if ( fp->get_debug_print_rule_group_build_details() )
-        fpPrintServiceRuleMaps(sc->srmmTable);
+        fpPrintServiceRuleMaps(sc, sc->srmmTable);
 
     fpCreateServiceMapPortGroups(sc);
 
     if (fp->get_debug_print_rule_group_build_details())
-        fpPrintServicePortGroupSummary(sc->spgmmTable);
+        fpPrintServicePortGroupSummary(sc, sc->spgmmTable);
 
     return 0;
 }
@@ -1506,7 +1507,7 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
 
     if ( !get_rule_count() )
     {
-        sc->sopgTable = new sopg_table_t;
+        sc->sopgTable = new sopg_table_t(sc->proto_ref->get_count());
         return 0;
     }
 

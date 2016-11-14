@@ -41,23 +41,43 @@
 #include "utils/stats.h"
 #include "log/messages.h"
 
-FileStats file_stats;
+THREAD_LOCAL FileCounts file_counts;
+THREAD_LOCAL FileStats* file_stats = nullptr;
 
-void print_file_stats()
+static FileStats file_totals;
+
+void file_stats_init()
 {
-    int i;
+    file_stats = (FileStats*)snort_calloc(sizeof(*file_stats));
+}
+
+void file_stats_term()
+{
+    snort_free(file_stats);
+}
+
+void file_stats_sum()
+{
+    unsigned num = sizeof(file_totals) / sizeof(PegCount);
+
+    for ( unsigned i = 0; i < num; ++i )
+    {
+        PegCount* t = (PegCount*)&file_totals;
+        PegCount* s = (PegCount*)file_stats;
+        t[i] += s[i];
+    }
+}
+
+void file_stats_print()
+{
     uint64_t processed_total[2];
     uint64_t processed_data_total[2];
-
-    if (!file_stats.files_total)
-        return;
-
     uint64_t check_total = 0;
 
-    for (i = 0; i < FILE_ID_MAX; i++)
+    for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
-        check_total += file_stats.files_processed[i][0];
-        check_total += file_stats.files_processed[i][1];
+        check_total += file_totals.files_processed[i][0];
+        check_total += file_totals.files_processed[i][1];
     }
 
     if ( !check_total )
@@ -72,18 +92,18 @@ void print_file_stats()
     processed_data_total[0] = 0;
     processed_data_total[1] = 0;
 
-    for (i = 0; i < FILE_ID_MAX; i++)
+    for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
         const char* type_name = file_type_name(i).c_str();
         if (type_name &&
-            (file_stats.files_processed[i][0] || file_stats.files_processed[i][1] ))
+            (file_totals.files_processed[i][0] || file_totals.files_processed[i][1] ))
         {
             LogMessage("%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " \n",
                 type_name, i,
-                file_stats.files_processed[i][0],
-                file_stats.files_processed[i][1]);
-            processed_total[0]+= file_stats.files_processed[i][0];
-            processed_total[1]+= file_stats.files_processed[i][1];
+                file_totals.files_processed[i][0],
+                file_totals.files_processed[i][1]);
+            processed_total[0]+= file_totals.files_processed[i][0];
+            processed_total[1]+= file_totals.files_processed[i][1];
         }
     }
 
@@ -94,19 +114,19 @@ void print_file_stats()
 
     LogMessage("         Type              Download   Upload \n");
 
-    for (i = 0; i < FILE_ID_MAX; i++)
+    for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
         const char* type_name = file_type_name(i).c_str();
         if (type_name &&
-            (file_stats.files_processed[i][0] || file_stats.files_processed[i][1] ))
+            (file_totals.files_processed[i][0] || file_totals.files_processed[i][1] ))
         {
             LogMessage("%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " \n",
                 type_name, i,
-                file_stats.data_processed[i][0],
-                file_stats.data_processed[i][1]);
+                file_totals.data_processed[i][0],
+                file_totals.data_processed[i][1]);
 
-            processed_data_total[0]+= file_stats.data_processed[i][0];
-            processed_data_total[1]+= file_stats.data_processed[i][1];
+            processed_data_total[0]+= file_totals.data_processed[i][0];
+            processed_data_total[1]+= file_totals.data_processed[i][1];
         }
     }
 
@@ -115,10 +135,10 @@ void print_file_stats()
 
     check_total = 0;
 
-    for (i = 0; i < FILE_ID_MAX; i++)
+    for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
-        check_total += file_stats.signatures_processed[i][0];
-        check_total += file_stats.signatures_processed[i][1];
+        check_total += file_totals.signatures_processed[i][0];
+        check_total += file_totals.signatures_processed[i][1];
     }
 
     if ( !check_total )
@@ -130,58 +150,58 @@ void print_file_stats()
 
     processed_total[0] = 0;
     processed_total[1] = 0;
-    for (i = 0; i < FILE_ID_MAX; i++)
+    for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
         const char* type_name = file_type_name(i).c_str();
         if (type_name &&
-            (file_stats.signatures_processed[i][0] || file_stats.signatures_processed[i][1] ))
+            (file_totals.signatures_processed[i][0] || file_totals.signatures_processed[i][1] ))
         {
             LogMessage("%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " \n",
                 type_name, i,
-                file_stats.signatures_processed[i][0], file_stats.signatures_processed[i][1]);
-            processed_total[0]+= file_stats.signatures_processed[i][0];
-            processed_total[1]+= file_stats.signatures_processed[i][1];
+                file_totals.signatures_processed[i][0], file_totals.signatures_processed[i][1]);
+            processed_total[0]+= file_totals.signatures_processed[i][0];
+            processed_total[1]+= file_totals.signatures_processed[i][1];
         }
     }
     LogMessage("            Total          " FMTu64("-10") " " FMTu64("-10") " \n",
         processed_total[0], processed_total[1]);
 
 #if 0
-    LogLabel("file type verdicts");
+    LogLabel("file type verdicts");  // FIXIT-L what's up with this code
 
     uint64_t verdicts_total = 0;#include "file_capture.h"
-    for (i = 0; i < FILE_VERDICT_MAX; i++)
+    for (unsigned i = 0; i < FILE_VERDICT_MAX; i++)
     {
-        verdicts_total+=file_stats.verdicts_type[i];
+        verdicts_total+=file_totals.verdicts_type[i];
         switch (i)
         {
         case FILE_VERDICT_UNKNOWN:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "UNKNOWN",
-                file_stats.verdicts_type[i]);
+                file_totals.verdicts_type[i]);
             break;
         case FILE_VERDICT_LOG:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "LOG",
-                file_stats.verdicts_type[i]);
+                file_totals.verdicts_type[i]);
             break;
         case FILE_VERDICT_STOP:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "STOP",
-                file_stats.verdicts_type[i]);
+                file_totals.verdicts_type[i]);
             break;
         case FILE_VERDICT_BLOCK:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "BLOCK",
-                file_stats.verdicts_type[i]);
+                file_totals.verdicts_type[i]);
             break;
         case FILE_VERDICT_REJECT:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "REJECT",
-                file_stats.verdicts_type[i]);
+                file_totals.verdicts_type[i]);
             break;
         case FILE_VERDICT_PENDING:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "PENDING",
-                file_stats.verdicts_type[i]);
+                file_totals.verdicts_type[i]);
             break;
         case FILE_VERDICT_STOP_CAPTURE:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "STOP CAPTURE",
-                file_stats.verdicts_type[i]);
+                file_totals.verdicts_type[i]);
             break;
         default:
             break;
@@ -192,38 +212,38 @@ void print_file_stats()
     LogMessage("\nfile signature verdicts:\n");
 
     verdicts_total = 0;
-    for (i = 0; i < FILE_VERDICT_MAX; i++)
+    for (unsigned i = 0; i < FILE_VERDICT_MAX; i++)
     {
-        verdicts_total+=file_stats.verdicts_signature[i];
+        verdicts_total+=file_totals.verdicts_signature[i];
         switch (i)
         {
         case FILE_VERDICT_UNKNOWN:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "UNKNOWN",
-                file_stats.verdicts_signature[i]);
+                file_totals.verdicts_signature[i]);
             break;
         case FILE_VERDICT_LOG:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "LOG",
-                file_stats.verdicts_signature[i]);
+                file_totals.verdicts_signature[i]);
             break;
         case FILE_VERDICT_STOP:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "STOP",
-                file_stats.verdicts_signature[i]);
+                file_totals.verdicts_signature[i]);
             break;
         case FILE_VERDICT_BLOCK:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "BLOCK",
-                file_stats.verdicts_signature[i]);
+                file_totals.verdicts_signature[i]);
             break;
         case FILE_VERDICT_REJECT:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "REJECT",
-                file_stats.verdicts_signature[i]);
+                file_totals.verdicts_signature[i]);
             break;
         case FILE_VERDICT_PENDING:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "PENDING",
-                file_stats.verdicts_signature[i]);
+                file_totals.verdicts_signature[i]);
             break;
         case FILE_VERDICT_STOP_CAPTURE:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "STOP CAPTURE",
-                file_stats.verdicts_signature[i]);
+                file_totals.verdicts_signature[i]);
             break;
         default:
             break;
@@ -234,55 +254,27 @@ void print_file_stats()
     // if (IsAdaptiveConfigured())
     {
         LogMessage("\nfiles processed by protocol IDs:\n");
-        for (i = 0; i < MAX_PROTOCOL_ORDINAL; i++)
+        for (unsigned i = 0; i < MAX_PROTOCOL_ORDINAL; i++)
         {
-            if (file_stats.files_by_proto[i])
+            if (file_totals.files_by_proto[i])
             {
                 LogMessage("   %12d:           " FMTu64("-10") " \n", i,
-                    file_stats.files_by_proto[i]);
+                    file_totals.files_by_proto[i]);
             }
         }
         LogMessage("\nfile signatures processed by protocol IDs:\n");
-        for (i = 0; i < MAX_PROTOCOL_ORDINAL; i++)
+        for (unsigned i = 0; i < MAX_PROTOCOL_ORDINAL; i++)
         {
-            if (file_stats.signatures_by_proto[i])
+            if (file_totals.signatures_by_proto[i])
             {
                 LogMessage("   %12d:           " FMTu64(
-                        "-10") " \n", i,file_stats.signatures_by_proto[i]);
+                        "-10") " \n", i,file_totals.signatures_by_proto[i]);
             }
         }
     }
 
 #endif
-
-    if (file_capture_stats.files_buffered_total || file_capture_stats.file_within_packet)
-    {
-        LogLabel("file capture stats");
-        LogCount("Files buffered", file_capture_stats.files_buffered_total);
-        LogCount("Files released", file_capture_stats.files_released_total);
-        LogCount("Files freed", file_capture_stats.files_freed_total);
-        LogCount("Files captured", file_capture_stats.files_captured_total);
-        LogCount("Files within one packet", file_capture_stats.file_within_packet);
-        LogCount("Buffers allocated", file_capture_stats.file_buffers_allocated_total);
-        LogCount("Buffers freed", file_capture_stats.file_buffers_freed_total);
-        LogCount("Buffers released", file_capture_stats.file_buffers_released_total);
-        LogCount("Max file buffers used", file_capture_stats.file_buffers_used_max);
-        LogCount("Buffers free errors", file_capture_stats.file_buffers_free_errors);
-        LogCount("Buffers release errors", file_capture_stats.file_buffers_release_errors);
-        LogCount("Total memcap failures", file_capture_stats.file_memcap_failures_total);
-        LogCount("Memcap failures at reserve", file_capture_stats.file_memcap_failures_reserve);
-        LogCount("Reserve failures", file_capture_stats.file_reserve_failures);
-        LogCount("File capture size min", file_capture_stats.file_size_min);
-        LogCount("File capture size max", file_capture_stats.file_size_max);
-        LogCount("File signature max", file_stats.files_sig_depth);
-
-        FileCapture::print_mem_usage();
-    }
-
-    LogLabel("file stats summary");
-    LogCount("Files processed",file_stats.files_total);
-    LogCount("Files data processed", file_stats.file_data_total);
-    if(FileCache::num_add_fails)
-        LogCount("Fails to add to cache", FileCache::num_add_fails);
+    // these are global / shared by all threads
+    FileCapture::print_mem_usage();
 }
 

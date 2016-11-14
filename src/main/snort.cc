@@ -214,6 +214,7 @@ void Snort::init(int argc, char** argv)
 
     InitProtoNames();
     SFAT_Init();
+
     /* chew up the command line */
     snort_cmd_line_conf = parse_cmd_line(argc, argv);
     snort_conf = snort_cmd_line_conf;
@@ -656,10 +657,13 @@ void Snort::thread_init_unprivileged()
     EventManager::open_outputs();
     IpsManager::setup_options();
     ActionManager::thread_init(snort_conf);
+    FileService::thread_init();
     SideChannelManager::thread_init();
     HighAvailabilityManager::thread_init(); // must be before InspectorManager::thread_init();
     InspectorManager::thread_init(snort_conf);
-    HighAvailabilityManager::process_receive(); // in case there are HA messages waiting, process them first
+
+    // in case there are HA messages waiting, process them first
+    HighAvailabilityManager::process_receive();
 }
 
 void Snort::thread_term()
@@ -701,6 +705,7 @@ void Snort::thread_term()
     detection_filter_term();
     EventTrace_Term();
     CleanupTag();
+    FileService::thread_term();
 
     SnortEventqFree();
     Active::term();
@@ -728,8 +733,6 @@ void Snort::detect_rebuilt_packet(Packet* p)
 DAQ_Verdict Snort::process_packet(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, bool is_frag)
 {
-    set_default_policy();
-
     PacketManager::decode(p, pkthdr, pkt);
     assert(p->pkth && p->pkt);
 
@@ -822,6 +825,7 @@ static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
 DAQ_Verdict Snort::packet_callback(
     void*, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
+    set_default_policy();
     Profile profile(totalPerfStats);
 
     pc.total_from_daq++;

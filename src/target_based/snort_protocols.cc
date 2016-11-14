@@ -27,6 +27,7 @@
 
 #include "hash/sfghash.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "stream/stream.h"
 #include "utils/util.h"
@@ -43,15 +44,10 @@ struct SFTargetProtocolReference
     int16_t ordinal;
 };
 
-static SFGHASH* proto_reference_table = NULL;  // STATIC
-static int16_t protocol_number = 1;
-
-int16_t get_protocol_count()
+int16_t ProtocolReference::get_count()
 { return protocol_number; }
 
-static vector<string> id_map;
-
-const char* get_protocol_name(uint16_t id)
+const char* ProtocolReference::get_name(uint16_t id)
 {
     if ( id >= id_map.size() )
         id = 0;
@@ -59,21 +55,23 @@ const char* get_protocol_name(uint16_t id)
     return id_map[id].c_str();
 }
 
-static bool comp_ind(uint16_t a, uint16_t b)
+struct Compare
 {
-    return id_map[a] < id_map[b];
-}
+    bool operator()(uint16_t a, uint16_t b)
+    { return map[a] < map[b]; }
 
-const char* get_protocol_name_sorted(uint16_t id)
+    vector<string>& map;
+};
+
+const char* ProtocolReference::get_name_sorted(uint16_t id)
 {
-    static vector<uint16_t> ind_map;  // indirect
-
     if ( ind_map.size() < id_map.size() )
     {
         while ( ind_map.size() < id_map.size() )
             ind_map.push_back((uint16_t)ind_map.size());
 
-        sort(ind_map.begin(), ind_map.end(), comp_ind);
+        Compare c { id_map };
+        sort(ind_map.begin(), ind_map.end(), c);
     }
     if ( id >= ind_map.size() )
         return nullptr;
@@ -81,16 +79,14 @@ const char* get_protocol_name_sorted(uint16_t id)
     return id_map[ind_map[id]].c_str();
 }
 
-/* XXX XXX Probably need to do this during swap time since the
- * proto_reference_table is accessed during runtime */
-int16_t AddProtocolReference(const char* protocol)
+int16_t ProtocolReference::add(const char* protocol)
 {
-    SFTargetProtocolReference* reference;
-
     if (!protocol)
         return SFTARGET_UNKNOWN_PROTOCOL;
 
-    reference = (SFTargetProtocolReference*)sfghash_find(proto_reference_table, (void*)protocol);
+    SFTargetProtocolReference* reference = (SFTargetProtocolReference*)sfghash_find(
+        ref_table, (void*)protocol);
+
     if (reference)
     {
         DebugFormat(DEBUG_ATTRIBUTE,
@@ -109,7 +105,7 @@ int16_t AddProtocolReference(const char* protocol)
     reference->ordinal = protocol_number++;
     SnortStrncpy(reference->name, protocol, SFAT_BUFSZ);
 
-    sfghash_add(proto_reference_table, reference->name, reference);
+    sfghash_add(ref_table, reference->name, reference);
 
     DebugFormat(DEBUG_ATTRIBUTE,
         "Added Protocol Reference for %s as %d\n", protocol, reference->ordinal);
@@ -117,14 +113,14 @@ int16_t AddProtocolReference(const char* protocol)
     return reference->ordinal;
 }
 
-int16_t FindProtocolReference(const char* protocol)
+int16_t ProtocolReference::find(const char* protocol)
 {
     SFTargetProtocolReference* reference;
 
     if (!protocol)
         return SFTARGET_UNKNOWN_PROTOCOL;
 
-    reference = (SFTargetProtocolReference*)sfghash_find(proto_reference_table, (void*)protocol);
+    reference = (SFTargetProtocolReference*)sfghash_find(ref_table, (void*)protocol);
 
     if (reference)
         return reference->ordinal;
@@ -132,22 +128,18 @@ int16_t FindProtocolReference(const char* protocol)
     return SFTARGET_UNKNOWN_PROTOCOL;
 }
 
-void InitializeProtocolReferenceTable()
+ProtocolReference::ProtocolReference()
 {
-    /* If already initialized, we're done */
-    if (proto_reference_table)
-        return;
-
-    proto_reference_table = sfghash_new(65, 0, 1, snort_free);
+    ref_table = sfghash_new(65, 0, 1, snort_free);
 
     bool ok;
 
-    ok = ( AddProtocolReference("ip") == SNORT_PROTO_IP );
-    ok = ( AddProtocolReference("icmp") == SNORT_PROTO_ICMP ) and ok;
-    ok = ( AddProtocolReference("tcp") == SNORT_PROTO_TCP ) and ok;
-    ok = ( AddProtocolReference("udp") == SNORT_PROTO_UDP ) and ok;
-    ok = ( AddProtocolReference("user") == SNORT_PROTO_USER ) and ok;
-    ok = ( AddProtocolReference("file") == SNORT_PROTO_FILE ) and ok;
+    ok = ( add("ip") == SNORT_PROTO_IP );
+    ok = ( add("icmp") == SNORT_PROTO_ICMP ) and ok;
+    ok = ( add("tcp") == SNORT_PROTO_TCP ) and ok;
+    ok = ( add("udp") == SNORT_PROTO_UDP ) and ok;
+    ok = ( add("user") == SNORT_PROTO_USER ) and ok;
+    ok = ( add("file") == SNORT_PROTO_FILE ) and ok;
 
     assert(ok);
 
@@ -155,77 +147,8 @@ void InitializeProtocolReferenceTable()
         FatalError("standard protocol reference mismatch");
 }
 
-void FreeProtoocolReferenceTable()
+ProtocolReference::~ProtocolReference()
 {
-    sfghash_delete(proto_reference_table);
-    proto_reference_table = NULL;
+    sfghash_delete(ref_table);
 }
-
-#if 0
-int16_t GetProtocolReference(Packet* p)
-{
-    int16_t protocol = 0;
-    int16_t ipprotocol = 0;
-
-    if (!p)
-        return protocol;
-
-    if ( int16_t app_proto = p->get_application_protocol() )
-        return app_proto;
-
-    do /* Simple do loop to break out of quickly, not really a loop */
-    {
-        HostAttributeEntry* host_entry;
-        if ( p->flow )
-        {
-            /* Use session information via Stream API */
-            protocol = Stream::get_application_protocol_id(p->flow);
-
-            if ( protocol )
-                break;
-        }
-
-        switch (p->type())
-        {
-        case PktType::TCP:
-            ipprotocol = SNORT_PROTO_TCP;
-            break;
-        case PktType::UDP:
-            ipprotocol = SNORT_PROTO_UDP;
-            break;
-        case PktType::ICMP:
-            ipprotocol = SNORT_PROTO_ICMP;
-            break;
-        default: /* so compiler doesn't complain about unhandled cases */
-            break;
-        }
-
-        /* Lookup the destination host to find the protocol for the
-         * destination port
-         */
-        host_entry = SFAT_LookupHostEntryByDst(p);
-
-        if (host_entry)
-            protocol = getApplicationProtocolId(host_entry, ipprotocol, p->ptrs.dp, SFAT_SERVICE);
-
-        if ( protocol )
-            break;
-
-        /* If not found, do same for src host/src port. */
-        host_entry = SFAT_LookupHostEntryBySrc(p);
-
-        if (host_entry)
-            protocol = getApplicationProtocolId(host_entry, ipprotocol, p->ptrs.sp, SFAT_SERVICE);
-
-        if ( protocol )
-            break;
-    }
-    while (0);   /* Simple do loop to break out of quickly, not really a loop */
-
-    /* Store it to alleviate future lookups */
-    p->set_application_protocol(protocol);
-
-    return protocol;
-}
-#endif
 

@@ -319,8 +319,6 @@ void SFAT_Cleanup()
 {
     delete curr_cfg;
     delete next_cfg;
-
-    FreeProtoocolReferenceTable();
 }
 
 void SFAT_SetConfig(tTargetBasedConfig* p)
@@ -342,13 +340,13 @@ void SFAT_Init()
 {
     curr_cfg = nullptr;
     next_cfg = new tTargetBasedConfig;
-    InitializeProtocolReferenceTable();
 }
 
 void SFAT_Start()
 {
     curr_cfg = next_cfg;
     next_cfg = new tTargetBasedConfig;
+    proc_stats.attribute_table_hosts = SFAT_NumberOfHosts();
 }
 
 tTargetBasedConfig* SFAT_Swap()

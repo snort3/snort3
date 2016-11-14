@@ -53,8 +53,6 @@ public:
     FileContext* add(const FileHashKey&);
     FileContext* find(const FileHashKey&);
 
-    static uint64_t num_add_fails;
-
 private:
 
     /* The hash table of expected files */

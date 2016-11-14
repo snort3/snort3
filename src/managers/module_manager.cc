@@ -69,6 +69,8 @@ static string s_type;
 // for callbacks from Lua
 static SnortConfig* s_config = nullptr;
 
+static std::mutex stats_mutex;
+
 // forward decls
 extern "C"
 {
@@ -787,6 +789,8 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
     s_modules.push_back(mh);
 
     Profiler::register_module(m);
+
+    std::lock_guard<std::mutex> lock(stats_mutex);
     m->reset_stats();
 }
 
@@ -1250,25 +1254,30 @@ void ModuleManager::dump_stats(SnortConfig*, const char* skip)
     for ( auto p : s_modules )
     {
         if ( !skip || !strstr(skip, p->mod->get_name()) )
+        {
+            std::lock_guard<std::mutex> lock(stats_mutex);
             p->mod->show_stats();
+        }
     }
 }
 
 void ModuleManager::accumulate(SnortConfig*)
 {
-    static std::mutex stats_mutex;
-    stats_mutex.lock();
-
     for ( auto p : s_modules )
+    {
+        std::lock_guard<std::mutex> lock(stats_mutex);
         p->mod->sum_stats();
-
+    }
+    std::lock_guard<std::mutex> lock(stats_mutex);
     pc_sum();
-    stats_mutex.unlock();
 }
 
 void ModuleManager::reset_stats(SnortConfig*)
 {
     for ( auto p : s_modules )
+    {
+        std::lock_guard<std::mutex> lock(stats_mutex);
         p->mod->reset_stats();
+    }
 }
 

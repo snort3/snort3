@@ -20,6 +20,7 @@
 
 #include "host_tracker/host_cache.h"
 
+#include "main/snort_config.h"
 #include "target_based/snort_protocols.h"
 #include <memory>
 
@@ -34,10 +35,11 @@ void host_cache_add_host_tracker(HostTracker* ht)
     host_cache.insert(ht->get_ip_addr().ip8, sptr);
 }
 
-bool host_cache_add_service(sfip_t ipaddr, Protocol ipproto, Port port, const char* service)
+bool host_cache_add_service(sfip_t ipaddr, Protocol ipproto, Port port, const char* /*service*/)
 {
     HostIpKey ipkey(ipaddr.ip8);
-    HostApplicationEntry app_entry(ipproto, port, AddProtocolReference(service));
+    uint16_t proto = 0; // FIXIT-M not safe with multithreads snort_conf->proto_ref->add(service));
+    HostApplicationEntry app_entry(ipproto, port, proto);
     std::shared_ptr<HostTracker> ht;
 
     if (!host_cache.find(ipkey, ht))

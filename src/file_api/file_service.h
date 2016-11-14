@@ -43,6 +43,9 @@ public:
     // This must be called when snort exits
     static void close();
 
+    static void thread_init();
+    static void thread_term();
+
     static void enable_file_type();
     static void enable_file_signature();
     static void enable_file_capture();

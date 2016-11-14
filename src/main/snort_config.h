@@ -126,7 +126,7 @@ struct LatencyConfig;
 struct SFDAQConfig;
 class ThreadConfig;
 
-SO_PUBLIC extern THREAD_LOCAL struct SnortConfig* snort_conf;
+SO_PUBLIC extern THREAD_LOCAL SnortConfig* snort_conf;
 
 // SnortState members are updated during runtime. an array in SnortConfig is
 // used instead of thread_locals because these must get changed on reload
@@ -258,6 +258,7 @@ public:
     /* XXX XXX policy specific? */
     struct ThresholdConfig* threshold_config = nullptr;
     struct RateFilterConfig* rate_filter_config = nullptr;
+    struct DetectionFilterConfig* detection_filter_config = nullptr;
 
     //------------------------------------------------------
     // FIXIT-L command line only stuff, add to conf / module
@@ -285,7 +286,7 @@ public:
     struct ReferenceSystemNode* references = nullptr;
     struct SFGHASH* otn_map = nullptr;
 
-    struct DetectionFilterConfig* detection_filter_config = nullptr;
+    class ProtocolReference* proto_ref = nullptr;
 
     int num_rule_types = 0;
     struct RuleListNode* rule_lists = nullptr;
@@ -317,10 +318,14 @@ public:
     SFXHASH* detection_option_tree_hash_table = nullptr;
 
     PolicyMap* policy_map = nullptr;
+    struct VarNode* var_list = nullptr;
 
     uint8_t tunnel_mask = 0;
 
-    struct VarNode* var_list = nullptr;
+    // FIXIT-L this is temporary for legacy paf_max required only for HI;
+    // it is not appropriate for multiple stream_tcp with different
+    // paf_max; the HI splitter should pull from there
+    unsigned max_pdu = 16384;
 
     //------------------------------------------------------
     ProfilerConfig* profiler = nullptr;

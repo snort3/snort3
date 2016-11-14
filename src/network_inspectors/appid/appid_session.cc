@@ -21,6 +21,7 @@
 #include "appid_session.h"
 
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "protocols/tcp.h"
 #include "profiler/profiler.h"
 #include "target_based/snort_protocols.h"
@@ -97,9 +98,9 @@ void AppIdSession::add_payload(AppIdSession* asd, AppId payload_id)
 void map_app_names_to_snort_ids()
 {
     /* init globals for snortId compares */
-    snortId_for_unsynchronized = AddProtocolReference("unsynchronized");
-    snortId_for_ftp_data = FindProtocolReference("ftp-data");
-    snortId_for_http2    = FindProtocolReference("http2");
+    snortId_for_unsynchronized = snort_conf->proto_ref->add("unsynchronized");
+    snortId_for_ftp_data = snort_conf->proto_ref->find("ftp-data");
+    snortId_for_http2    = snort_conf->proto_ref->find("http2");
 }
 
 void AppIdSession::set_session_logging_state(const Packet* pkt, int direction)

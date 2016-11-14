@@ -44,7 +44,6 @@
     "--------------------------------------------------"
 
 static DAQ_Stats_t g_daq_stats;
-static PacketCount gpc;
 static AuxCount gaux;
 
 THREAD_LOCAL PacketCount pc;
@@ -154,9 +153,10 @@ static void timing_stats()
     LogMessage("%25.25s: %lu.%lu\n", "seconds",
         (unsigned long)difftime.tv_sec, (unsigned long)difftime.tv_usec);
 
-    LogMessage("%25.25s: " STDu64 "\n", "packets", gpc.total_from_daq);
+    PegCount num_pkts = g_daq_stats.hw_packets_received;
+    LogMessage("%25.25s: " STDu64 "\n", "packets", num_pkts);
 
-    uint64_t pps = (gpc.total_from_daq / total_secs);
+    uint64_t pps = (num_pkts / total_secs);
     LogMessage("%25.25s: " STDu64 "\n", "pkts/sec", pps);
 }
 
@@ -244,11 +244,6 @@ void pc_sum()
     memset(&gaux, 0, sizeof(gaux));
 }
 
-void pc_accum()
-{
-    sum_stats((PegCount*)&gpc, (PegCount*)&pc, array_size(pc_names)-1);
-}
-
 //-------------------------------------------------------------------------
 
 void get_daq_stats(DAQStats& daq_stats)
@@ -281,33 +276,25 @@ void get_daq_stats(DAQStats& daq_stats)
 
 void DropStats()
 {
-    LogLabel("Packet Statistics");
-
     DAQStats daq_stats;
     get_daq_stats(daq_stats);
+
+    LogLabel("Packet Statistics");
     show_stats((PegCount*)&daq_stats, daq_names, array_size(daq_names)-1, "daq");
 
     PacketManager::dump_stats();
-    //mpse_print_qinfo();
-
-    LogLabel("Module Statistics");
-    const char* exclude = "daq detection snort";
-    ModuleManager::dump_stats(snort_conf, exclude);
 
     // ensure proper counting of log_limit
     SnortEventqResetCounts();
 
-    // FIXIT-L alert_pkts excludes rep hits
-    if ( gpc.total_alert_pkts == gpc.alert_pkts )
-        gpc.total_alert_pkts = 0;
+    LogLabel("Module Statistics");
+    const char* exclude = "daq snort";
+    ModuleManager::dump_stats(snort_conf, exclude);
 
-    //LogLabel("File Statistics");
-    print_file_stats();
+    LogLabel("File Statistics");
+    file_stats_print();
 
     LogLabel("Summary Statistics");
-    show_stats((PegCount*)&gpc, pc_names, array_size(pc_names)-1, "detection");
-
-    proc_stats.attribute_table_hosts = SFAT_NumberOfHosts();
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
 
     if ( SnortConfig::log_verbose() )

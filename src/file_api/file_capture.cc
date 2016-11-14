@@ -47,13 +47,18 @@
 #include "file_stats.h"
 
 FileMemPool* FileCapture::file_mempool = nullptr;
-File_Capture_Stats file_capture_stats;
 
 std::mutex FileCapture::capture_mutex;
 std::condition_variable FileCapture::capture_cv;
 std::thread* FileCapture::file_storer = nullptr;
 std::queue<FileCapture*> FileCapture::files_waiting;
 bool FileCapture::running = true;
+
+FileCaptureState FileCapture::error_capture(FileCaptureState state)
+{
+    file_counts.file_reserve_failures++;
+    return state;
+}
 
 // Only one writer thread supported
 void FileCapture::writer_thread()
@@ -91,9 +96,9 @@ FileCapture::~FileCapture()
     FileCaptureBlock* file_block = head;
 
     if (reserved)
-        file_capture_stats.files_released_total++;
+        file_counts.files_released_total++;
     else
-        file_capture_stats.files_freed_total++;
+        file_counts.files_freed_total++;
 
     while (file_block)
     {
@@ -101,14 +106,14 @@ FileCapture::~FileCapture()
         if (reserved)
         {
             if (file_mempool->m_release(file_block) != FILE_MEM_SUCCESS)
-                file_capture_stats.file_buffers_release_errors++;
-            file_capture_stats.file_buffers_released_total++;
+                file_counts.file_buffers_release_errors++;
+            file_counts.file_buffers_released_total++;
         }
         else
         {
             if (file_mempool->m_free(file_block) != FILE_MEM_SUCCESS)
-                file_capture_stats.file_buffers_free_errors++;
-            file_capture_stats.file_buffers_freed_total++;
+                file_counts.file_buffers_free_errors++;
+            file_counts.file_buffers_freed_total++;
         }
 
         file_block = next_block;
@@ -185,18 +190,18 @@ inline FileCaptureBlock* FileCapture::create_file_buffer()
     if (fileBlock == nullptr)
     {
         FILE_DEBUG_MSGS("Failed to get file capture memory!\n");
-        file_capture_stats.file_memcap_failures_total++;
+        file_counts.file_memcap_failures_total++;
         return nullptr;
     }
 
-    file_capture_stats.file_buffers_allocated_total++;
+    file_counts.file_buffers_allocated_total++;
 
     fileBlock->length = 0;
     fileBlock->next = nullptr;     /*Only one block initially*/
 
     num_files_queued = file_mempool->allocated();
-    if (file_capture_stats.file_buffers_used_max < num_files_queued)
-        file_capture_stats.file_buffers_used_max = num_files_queued;
+    if (file_counts.file_buffers_used_max < num_files_queued)
+        file_counts.file_buffers_used_max = num_files_queued;
 
     return fileBlock;
 }
@@ -216,7 +221,7 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
     if ( data_size + (int64_t)capture_size > max_size)
     {
         FILE_DEBUG_MSGS("Exceeding max file capture size!\n");
-        file_capture_stats.file_size_max++;
+        file_counts.file_size_max++;
         capture_state = FILE_CAPTURE_MAX;
         return FILE_CAPTURE_MAX;
     }
@@ -309,7 +314,7 @@ FileCaptureState FileCapture::process_buffer(const uint8_t* file_data,
     switch (position)
     {
     case SNORT_FILE_FULL:
-        file_capture_stats.file_within_packet++;
+        file_counts.file_within_packet++;
         break;
     case SNORT_FILE_END:
         break;
@@ -328,7 +333,7 @@ FileCaptureState FileCapture::process_buffer(const uint8_t* file_data,
                 return FILE_CAPTURE_MEMCAP;
             }
 
-            file_capture_stats.files_buffered_total++;
+            file_counts.files_buffered_total++;
         }
 
         return (save_to_file_buffer(file_data, data_size, file_config.capture_max_size));
@@ -358,13 +363,13 @@ FileCaptureState FileCapture::reserve_file(const FileInfo* file)
 
     if ( fileSize < (unsigned)file_config.capture_min_size)
     {
-        file_capture_stats.file_size_min++;
+        file_counts.file_size_min++;
         return error_capture(FILE_CAPTURE_MIN);
     }
 
     if ( fileSize > (unsigned)file_config.capture_max_size)
     {
-        file_capture_stats.file_size_max++;
+        file_counts.file_size_max++;
         return error_capture(FILE_CAPTURE_MAX);
     }
 
@@ -377,11 +382,11 @@ FileCaptureState FileCapture::reserve_file(const FileInfo* file)
 
         if (!fileBlock)
         {
-            file_capture_stats.file_memcap_failures_reserve++;
+            file_counts.file_memcap_failures_reserve++;
             return error_capture(FILE_CAPTURE_MEMCAP);
         }
 
-        file_capture_stats.files_buffered_total++;
+        file_counts.files_buffered_total++;
         head = last = fileBlock;
     }
 
@@ -397,7 +402,7 @@ FileCaptureState FileCapture::reserve_file(const FileInfo* file)
         return error_capture(capture_state);
     }
 
-    file_capture_stats.files_captured_total++;
+    file_counts.files_captured_total++;
 
     current_block = head;
 

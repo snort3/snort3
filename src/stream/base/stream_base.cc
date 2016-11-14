@@ -146,13 +146,11 @@ public:
     void eval(Packet*) override;
 
 public:
-    const StreamModuleConfig* config;
+    StreamModuleConfig config;
 };
 
 StreamBase::StreamBase(const StreamModuleConfig* c)
-{
-    config = c;
-}
+{ config = *c; }
 
 void StreamBase::tinit()
 {
@@ -162,38 +160,38 @@ void StreamBase::tinit()
 
     StreamHAManager::tinit();
 
-    if ( config->ip_cfg.max_sessions )
+    if ( config.ip_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::IP)) )
-            flow_con->init_ip(config->ip_cfg, f);
+            flow_con->init_ip(config.ip_cfg, f);
     }
-    if ( config->icmp_cfg.max_sessions )
+    if ( config.icmp_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::ICMP)) )
-            flow_con->init_icmp(config->icmp_cfg, f);
+            flow_con->init_icmp(config.icmp_cfg, f);
     }
-    if ( config->tcp_cfg.max_sessions )
+    if ( config.tcp_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::TCP)) )
-            flow_con->init_tcp(config->tcp_cfg, f);
+            flow_con->init_tcp(config.tcp_cfg, f);
     }
-    if ( config->udp_cfg.max_sessions )
+    if ( config.udp_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::UDP)) )
-            flow_con->init_udp(config->udp_cfg, f);
+            flow_con->init_udp(config.udp_cfg, f);
     }
-    if ( config->user_cfg.max_sessions )
+    if ( config.user_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::PDU)) )
-            flow_con->init_user(config->user_cfg, f);
+            flow_con->init_user(config.user_cfg, f);
     }
-    if ( config->file_cfg.max_sessions )
+    if ( config.file_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::FILE)) )
-            flow_con->init_file(config->file_cfg, f);
+            flow_con->init_file(config.file_cfg, f);
     }
-    uint32_t max = config->tcp_cfg.max_sessions + config->udp_cfg.max_sessions
-        + config->user_cfg.max_sessions;
+    uint32_t max = config.tcp_cfg.max_sessions + config.udp_cfg.max_sessions
+        + config.user_cfg.max_sessions;
 
     if ( max > 0 )
         flow_con->init_exp(max);
@@ -221,7 +219,7 @@ void StreamBase::eval(Packet* p)
     {
     case PktType::IP:
         if ( p->has_ip() and
-            ((p->ptrs.decode_flags & DECODE_FRAG) or !config->ip_frags_only) )
+            ((p->ptrs.decode_flags & DECODE_FRAG) or !config.ip_frags_only) )
             flow_con->process_ip(p);
         break;
 

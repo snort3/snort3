@@ -240,7 +240,7 @@ static Inspector* get_gadget(Flow* flow)
     if ( !flow->ssn_state.application_protocol )
         return nullptr;
 
-    const char* s = get_protocol_name(flow->ssn_state.application_protocol);
+    const char* s = snort_conf->proto_ref->get_name(flow->ssn_state.application_protocol);
 
     return InspectorManager::get_inspector(s);
 }
@@ -490,7 +490,7 @@ int Binder::exec_handle_gadget( void* pv )
         flow->ssn_state.application_protocol = ins->get_service();
     }
     else if ( flow->service )
-        flow->ssn_state.application_protocol = FindProtocolReference(flow->service);
+        flow->ssn_state.application_protocol = snort_conf->proto_ref->find(flow->service);
 
     if ( !flow->is_stream() )
         return 0;

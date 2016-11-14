@@ -85,13 +85,18 @@ void FileService::close()
     FileCapture::exit();
 }
 
+void FileService::thread_init()
+{ file_stats_init(); }
+
+void FileService::thread_term()
+{ file_stats_term(); }
+
 void FileService::start_file_processing()
 {
     if (!file_processing_initiated)
     {
         file_enforcer = new FileEnforcer;
         file_cache = new FileCache;
-        //RegisterProfileStats("file", print_file_stats);  FIXIT-M put in module
         file_processing_initiated = true;
     }
 }

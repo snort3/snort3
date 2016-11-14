@@ -186,7 +186,7 @@ void add_service_to_otn(
         ParseError("too many service's specified for rule, can't add %s", svc_name);
         return;
     }
-    int16_t svc_id = AddProtocolReference(svc_name);
+    int16_t svc_id = sc->proto_ref->add(svc_name);
 
     for ( unsigned i = 0; i < otn->sigInfo.num_services; ++i )
         if ( otn->sigInfo.services[i].service_ordinal == svc_id )

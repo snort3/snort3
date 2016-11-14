@@ -27,6 +27,8 @@
 
 // FIXIT-M This will be refactored soon
 
+#include "main/thread.h"
+#include "framework/counts.h"
 #include "target_based/snort_protocols.h"
 #include "target_based/sftarget_reader.h"
 
@@ -36,25 +38,50 @@
 
 #define MAX_PROTOCOL_ORDINAL 8192  // FIXIT-L use std::vector and get_protocol_count()
 
-struct FileStats
+struct FileCounts
 {
-    uint64_t files_total;
-    uint64_t files_processed[FILE_ID_MAX + 1][2];
-    uint64_t signatures_processed[FILE_ID_MAX + 1][2];
-    uint64_t verdicts_type[FILE_VERDICT_MAX];
-    uint64_t verdicts_signature[FILE_VERDICT_MAX];
-    uint64_t files_by_proto[MAX_PROTOCOL_ORDINAL + 1];
-    uint64_t signatures_by_proto[MAX_PROTOCOL_ORDINAL + 1];
-    uint64_t data_processed[FILE_ID_MAX + 1][2];
-    uint64_t file_data_total;
-    uint64_t files_sig_depth;
+    PegCount files_total;
+    PegCount file_data_total;
+    PegCount cache_add_fails;
+    PegCount files_buffered_total;
+    PegCount files_released_total;
+    PegCount files_freed_total;
+    PegCount files_captured_total;
+    PegCount file_memcap_failures_total;
+    PegCount file_memcap_failures_reserve;  // This happens during reserve
+    PegCount file_reserve_failures;         // This happens during reserve
+    PegCount file_size_min;                 // This happens during reserve
+    PegCount file_size_max;                 // This happens during reserve
+    PegCount file_within_packet;
+    PegCount file_buffers_used_max;         // maximum buffers used simultaneously
+    PegCount file_buffers_allocated_total;
+    PegCount file_buffers_freed_total;
+    PegCount file_buffers_released_total;
+    PegCount file_buffers_free_errors;
+    PegCount file_buffers_release_errors;
 };
 
-extern FileStats file_stats;
+struct FileStats
+{
+    PegCount files_processed[FILE_ID_MAX + 1][2];
+    PegCount signatures_processed[FILE_ID_MAX + 1][2];
+    PegCount verdicts_type[FILE_VERDICT_MAX];
+    PegCount verdicts_signature[FILE_VERDICT_MAX];
+    PegCount files_by_proto[MAX_PROTOCOL_ORDINAL + 1];
+    PegCount signatures_by_proto[MAX_PROTOCOL_ORDINAL + 1];
+    PegCount data_processed[FILE_ID_MAX + 1][2];
+};
+
+extern THREAD_LOCAL FileCounts file_counts;
+extern THREAD_LOCAL FileStats* file_stats;
 
 #define FILE_DEBUG_MSGS(msg) DebugMessage(DEBUG_FILE, msg)
 
-void print_file_stats();
+void file_stats_init();
+void file_stats_term();
+
+void file_stats_sum();
+void file_stats_print();
 
 #endif
 

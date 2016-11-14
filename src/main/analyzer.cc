@@ -45,25 +45,16 @@ static THREAD_LOCAL PacketCallback main_func = Snort::packet_callback;
 
 const char* Analyzer::get_state_string()
 {
-    switch (state)
+    State s = get_state();  // can't use atomic in switch with optimization
+
+    switch ( s )
     {
-        case State::NEW:
-            return "NEW";
-
-        case State::INITIALIZED:
-            return "INITIALIZED";
-
-        case State::STARTED:
-            return "STARTED";
-
-        case State::RUNNING:
-            return "RUNNING";
-
-        case State::PAUSED:
-            return "PAUSED";
-
-        case State::STOPPED:
-            return "STOPPED";
+    case State::NEW:         return "NEW";
+    case State::INITIALIZED: return "INITIALIZED";
+    case State::STARTED:     return "STARTED";
+    case State::RUNNING:     return "RUNNING";
+    case State::PAUSED:      return "PAUSED";
+    case State::STOPPED:     return "STOPPED";
     }
 
     return "UNKNOWN";
@@ -71,31 +62,16 @@ const char* Analyzer::get_state_string()
 
 const char* Analyzer::get_command_string(AnalyzerCommand ac)
 {
-    switch (ac)
+    switch ( ac )
     {
-        case AC_NONE:
-            return "NONE";
-
-        case AC_START:
-            return "START";
-
-        case AC_RUN:
-            return "RUN";
-
-        case AC_STOP:
-            return "STOP";
-
-        case AC_PAUSE:
-            return "PAUSE";
-
-        case AC_RESUME:
-            return "RESUME";
-
-        case AC_ROTATE:
-            return "ROTATE";
-
-        case AC_SWAP:
-            return "SWAP";
+    case AC_NONE:   return "NONE";
+    case AC_START:  return "START";
+    case AC_RUN:    return "RUN";
+    case AC_STOP:   return "STOP";
+    case AC_PAUSE:  return "PAUSE";
+    case AC_RESUME: return "RESUME";
+    case AC_ROTATE: return "ROTATE";
+    case AC_SWAP:   return "SWAP";
     }
 
     return "UNRECOGNIZED";
@@ -152,79 +128,85 @@ void Analyzer::execute(AnalyzerCommand ac)
 
 bool Analyzer::handle_command()
 {
-    switch (command)
+    AnalyzerCommand ac = command;  // can't use atomic in switch with optimization
+
+    switch ( ac )
     {
-        case AC_START:
-            if (state != State::INITIALIZED)
-            {
-                if (state != State::STARTED)
-                    ErrorMessage("Analyzer: Received START command while in state %s\n", get_state_string());
-                command = AC_NONE;
-                return false;
-            }
-            if (!daq_instance->start())
-            {
-                ErrorMessage("Analyzer: Failed to start DAQ instance\n");
-                command = AC_NONE;
-                return false;
-            }
-            state = State::STARTED;
-            DebugMessage(DEBUG_ANALYZER, "Handled START command\n");
-            command = AC_NONE;
-            break;
-
-        case AC_RUN:
+    case AC_START:
+        if (state != State::INITIALIZED)
+        {
             if (state != State::STARTED)
-            {
-                if (state != State::RUNNING)
-                    ErrorMessage("Analyzer: Received RUN command while in state %s\n", get_state_string());
-                command = AC_NONE;
-                return false;
-            }
-            Snort::thread_init_unprivileged();
-            state = State::RUNNING;
-            DebugMessage(DEBUG_ANALYZER, "Handled RUN command\n");
-            command = AC_NONE;
-            break;
-
-        case AC_STOP:
-            DebugMessage(DEBUG_ANALYZER, "Handled STOP command\n");
+                ErrorMessage("Analyzer: Received START command while in state %s\n",
+                    get_state_string());
             command = AC_NONE;
             return false;
-
-        case AC_PAUSE:
-            if (state == State::RUNNING)
-                state = State::PAUSED;
-            else
-                ErrorMessage("Analyzer: Received PAUSE command while in state %s\n", get_state_string());
+        }
+        if (!daq_instance->start())
+        {
+            ErrorMessage("Analyzer: Failed to start DAQ instance\n");
             command = AC_NONE;
-            break;
+            return false;
+        }
+        state = State::STARTED;
+        DebugMessage(DEBUG_ANALYZER, "Handled START command\n");
+        command = AC_NONE;
+        break;
 
-        case AC_RESUME:
-            if (state == State::PAUSED)
-                state = State::RUNNING;
-            else
-                ErrorMessage("Analyzer: Received RESUME command while in state %s\n", get_state_string());
+    case AC_RUN:
+        if (state != State::STARTED)
+        {
+            if (state != State::RUNNING)
+                ErrorMessage("Analyzer: Received RUN command while in state %s\n",
+                    get_state_string());
             command = AC_NONE;
-            break;
+            return false;
+        }
+        Snort::thread_init_unprivileged();
+        state = State::RUNNING;
+        DebugMessage(DEBUG_ANALYZER, "Handled RUN command\n");
+        command = AC_NONE;
+        break;
 
-        case AC_ROTATE:
-            Snort::thread_rotate();
-            command = AC_NONE;
-            break;
+    case AC_STOP:
+        DebugMessage(DEBUG_ANALYZER, "Handled STOP command\n");
+        command = AC_NONE;
+        return false;
 
-        case AC_SWAP:
-            if (swap)
-            {
-                swap->apply();
-                swap = nullptr;
-            }
-            command = AC_NONE;
-            break;
+    case AC_PAUSE:
+        if (state == State::RUNNING)
+            state = State::PAUSED;
+        else
+            ErrorMessage("Analyzer: Received PAUSE command while in state %s\n",
+                get_state_string());
+        command = AC_NONE;
+        break;
 
-        default:
-            command = AC_NONE;
-            break;
+    case AC_RESUME:
+        if (state == State::PAUSED)
+            state = State::RUNNING;
+        else
+            ErrorMessage("Analyzer: Received RESUME command while in state %s\n",
+                get_state_string());
+        command = AC_NONE;
+        break;
+
+    case AC_ROTATE:
+        Snort::thread_rotate();
+        command = AC_NONE;
+        break;
+
+    case AC_SWAP:
+        if (swap)
+        {
+            swap->apply();
+            // do not clear swap in this thread; causes race cond
+        }
+        command = AC_NONE;
+        break;
+
+    default:
+        command = AC_NONE;
+        break;
     }
     return true;
 }

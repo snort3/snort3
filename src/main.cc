@@ -75,10 +75,9 @@
 #include "piglet/piglet.h"
 #endif
 
-using namespace std;
-
 //-------------------------------------------------------------------------
 
+std::mutex Swapper::mutex;
 static Swapper* swapper = NULL;
 
 static int exit_requested = 0;
@@ -139,6 +138,8 @@ Swapper::Swapper(tTargetBasedConfig* told, tTargetBasedConfig* tnew)
 
 Swapper::~Swapper()
 {
+    std::lock_guard<std::mutex> lock(mutex);
+
     if ( old_conf )
         delete old_conf;
 
@@ -148,11 +149,10 @@ Swapper::~Swapper()
 
 void Swapper::apply()
 {
+    std::lock_guard<std::mutex> lock(mutex);
+
     if ( new_conf )
-    {
         snort_conf = new_conf;
-        set_default_policy();
-    }
 
     if ( new_attribs )
         SFAT_SetConfig(new_attribs);
@@ -223,7 +223,7 @@ void Request::respond(const char* s) const
 // FIXIT-L would like to flush prompt w/o \n
 void Request::show_prompt() const
 {
-    string s = prompt;
+    std::string s = prompt;
     s += "\n";
     respond(s.c_str());
 }
@@ -302,7 +302,8 @@ bool Pig::execute(AnalyzerCommand ac)
 {
     if (attentive())
     {
-        DebugFormat(DEBUG_ANALYZER, "[%u] Executing command %s\n", idx, Analyzer::get_command_string(ac));
+        DebugFormat(DEBUG_ANALYZER, "[%u] Executing command %s\n",
+            idx, Analyzer::get_command_string(ac));
         analyzer->execute(ac);
         return true;
     }
@@ -375,6 +376,7 @@ int main_reload_config(lua_State* L)
     proc_stats.conf_reloads++;
 
     swapper = new Swapper(old, sc);
+    std::lock_guard<std::mutex> lock(Swapper::mutex);
 
     for ( unsigned idx = 0; idx < max_pigs; ++idx )
         pigs[idx].swap(swapper);
@@ -412,6 +414,7 @@ int main_reload_hosts(lua_State* L)
         return 0;
     }
     swapper = new Swapper(old, tc);
+    std::lock_guard<std::mutex> lock(Swapper::mutex);
 
     for ( unsigned idx = 0; idx < max_pigs; ++idx )
         pigs[idx].swap(swapper);
@@ -478,7 +481,7 @@ int main_help(lua_State*)
 
     while ( cmd->name )
     {
-        string info = cmd->name;
+        std::string info = cmd->name;
         info += cmd->get_arg_list();
         info += ": ";
         info += cmd->help;
@@ -625,7 +628,7 @@ static int socket_conn()
 
 static void shell(int& fd)
 {
-    string rsp;
+    std::string rsp;
 
     if ( !request.read(fd) )
         return;
