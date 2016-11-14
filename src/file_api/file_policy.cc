@@ -84,8 +84,10 @@ void FilePolicy::insert_file_rule(FileRule& rule)
     }
 
     // Enable file type for all other features
-    FileService::enable_file_type();
-    type_enabled = true;
+    if (rule.use.type_enabled) {
+        FileService::enable_file_type();
+        type_enabled = true;
+    }
 
     if (rule.use.signature_enabled)
         FileService::enable_file_signature();
