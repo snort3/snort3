@@ -43,12 +43,24 @@ FastPatternConfig::FastPatternConfig()
     bleedover_port_limit = 1024;
 
     search_api = MpseManager::get_search_api("ac_bnfa");
+    fallback_search_api = nullptr;
     assert(search_api);
     trim = MpseManager::search_engine_trim(search_api);
 }
 
 FastPatternConfig::~FastPatternConfig()
 { }
+
+bool FastPatternConfig::set_detect_fallback_search_method(const char* method)
+{
+    const MpseApi* api = MpseManager::get_search_api(method);
+
+    if ( !api )
+        return false;
+
+    fallback_search_api = api;
+    return true;
+}
 
 bool FastPatternConfig::set_detect_search_method(const char* method)
 {

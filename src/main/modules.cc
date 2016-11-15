@@ -214,6 +214,9 @@ static const Parameter search_engine_params[] =
     { "debug_print_rule_groups_compiled", Parameter::PT_BOOL, nullptr, "false",
       "prints compiled rule group information" },
 
+    { "fallback_search_method", Parameter::PT_DYNAMIC, (void*)&get_search_methods, nullptr,
+      "set fallback fast pattern algorithm (if required) - choose available search engine" },
+
     { "max_pattern_len", Parameter::PT_INT, "0:", "0",
       "truncate patterns when compiling into state machine (0 means no maximum)" },
 
@@ -308,6 +311,11 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
     {
         if ( v.get_bool() )
             fp->set_debug_print_rule_groups_compiled();
+    }
+    else if ( v.is("fallback_search_method") )
+    {
+        if ( !fp->set_detect_fallback_search_method(v.get_string()) )
+            return false;
     }
     else if ( v.is("max_pattern_len") )
         fp->set_max_pattern_len(v.get_long());

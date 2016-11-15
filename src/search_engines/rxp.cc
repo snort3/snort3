@@ -34,9 +34,11 @@
 #include <rxp.h>
 #include <rxp_errors.h>
 
+#include "detection/fp_config.h"
 #include "framework/mpse.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "managers/mpse_manager.h"
 #include "utils/stats.h"
 
 // FIXIT-T: We should determine a sensible number for this, to keep a max limit if necessary.
@@ -126,6 +128,7 @@ struct RxpJob
     unsigned int offset;
     MpseMatch match_cb;
     void *match_ctx;
+    int *current_state;
 
     int subset_count;
     class RxpMpse* subset[RXP_MAX_SUBSETS];
@@ -138,16 +141,24 @@ struct RxpJob
 class RxpMpse : public Mpse
 {
 public:
-    RxpMpse(SnortConfig*, bool use_gc, const MpseAgent* a)
+    RxpMpse(SnortConfig* sc, bool use_gc, const MpseAgent* a)
         : Mpse("rxp", use_gc)
     {
+        FastPatternConfig* fp = sc->fast_pattern_config;
+
         agent = a;
         instances.push_back(this);
         instance_id = instances.size();
+        if (fp->get_fallback_search_api())
+            fallback = MpseManager::get_search_engine(sc, fp->get_fallback_search_api(), use_gc, a);
+        else
+            fallback = nullptr;
     }
 
     ~RxpMpse()
     {
+        if (fallback)
+            delete fallback;
         user_dtor();
     }
 
@@ -170,15 +181,18 @@ public:
 
     static int dpdk_init(void);
 
+    int fallback_search (const unsigned char* buf, int len, MpseMatch match_cb,
+            void* match_ctx, int* current_state);
+
 private:
     void user_ctor(SnortConfig*);
     void user_dtor();
 
     const MpseAgent* agent;
+    Mpse* fallback;
 
     map<int, RxpPattern*> ruleidtbl;    // Maps rule ids to pattern + user ctx.
     uint64_t instance_id;               // This is used as the RXP subset ID
-
 
 public:
     vector<RxpPattern*> pats;
@@ -232,13 +246,12 @@ void RxpMpse::user_ctor(SnortConfig* sc)
 
 void RxpMpse::user_dtor()
 {
-    unsigned i;
-
     for ( auto& p : pats )
     {
         for ( auto& c : p->userctx )
         {
-            if ( c.user )
+            //User is already deleted by the fallback search engine
+            if ( c.user and !fallback)
                 agent->user_free(c.user);
 
             if ( c.user_list )
@@ -250,7 +263,7 @@ void RxpMpse::user_dtor()
     }
 }
 
-int RxpMpse::add_pattern(SnortConfig*, const uint8_t* pat, unsigned len,
+int RxpMpse::add_pattern(SnortConfig* sc, const uint8_t* pat, unsigned len,
     const PatternDescriptor& desc, void* user)
 {
     RxpPattern* rxp_pat = nullptr;
@@ -283,12 +296,19 @@ int RxpMpse::add_pattern(SnortConfig*, const uint8_t* pat, unsigned len,
         pats.push_back(rxp_pat);
     }
 
+    if (fallback)
+        fallback->add_pattern(sc, pat, len, desc, user);
+
     return 0;
 }
 
 int RxpMpse::prep_patterns(SnortConfig* sc)
 {
     user_ctor(sc);
+
+    if (fallback)
+        fallback->prep_patterns(sc);
+
     return 0;
 }
 
@@ -308,6 +328,18 @@ void RxpMpse::_match(uint32_t ruleid, int to, MpseMatch mf, void *pv)
 int RxpMpse::_search(
     const uint8_t* buf, int n, MpseMatch mf, void* pv, int* current_state)
 {
+    if(fallback and n < RXP_PACKET_LENGTH)
+    {
+        LogMessage("WARNING: Data buffer smaller than %d bytes\n",RXP_PACKET_LENGTH);
+
+        /* We fall back to a software search engine here
+         * or try to match with RXP if error/not available.*/
+        if(fallback_search ((uint8_t*) buf, n, mf, pv, current_state) == 0)
+            return 0;
+        else
+            LogMessage("WARNING: will try to analyze it with RXP \n");
+    }
+
     int i;
 
     *current_state = 0;
@@ -324,8 +356,13 @@ int RxpMpse::_search(
     if (i == RXP_MAX_JOBS)
     {
         LogMessage("ERROR: Max RXP job count of %d reached.\n", i);
-        /* FIXIT-T: We should either fall back to a software search engine, dispatch,
-         * or expand the job table here. */
+        /* We fall back to a software search engine here
+         * or throw an error and quit if error/not available.*/
+        if(fallback_search ((uint8_t*) buf, n, mf, pv, current_state) == 0)
+             return 0;
+        else
+            /* FIXIT-T: We should either dispatch, or expand the job table here. */
+            exit(-1);
     }
     else if (i == jobcount)
     {
@@ -337,6 +374,7 @@ int RxpMpse::_search(
         jobs[i].match_ctx = pv;
         jobs[i].subset_count = 1;
         jobs[i].subset[0] = this;
+        jobs[i].current_state=current_state;
     }
     else
     {
@@ -428,6 +466,21 @@ int RxpMpse::dpdk_init(void)
     return 0;
 }
 
+int RxpMpse::fallback_search (const unsigned char* buf, int len, MpseMatch match_cb,
+        void* match_ctx, int* current_state)
+{
+    if(RxpMpse::fallback)
+    {
+        LogMessage("WARNING: Analysis deferred to fallback search engine\n");
+        return RxpMpse::fallback->search((uint8_t*) buf, len, match_cb, match_ctx, current_state);
+    }
+    else
+    {
+        LogMessage("WARNING: Deferred analysis failed or not available\n");
+        return -1;
+    }
+}
+
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -493,7 +546,7 @@ static int rxp_receive_responses()
 {
     struct rte_mbuf* pkts_burst[RXP_MAX_PKT_BURST];
     struct rxp_response_data rxp_resp;
-    int i, j, ret, processed = 0;
+    int i, j = 0, ret, processed = 0;
     unsigned rx_pkts = 0;
     RxpJob* job;
 
@@ -509,6 +562,8 @@ static int rxp_receive_responses()
 
     while (rx_pkts != 0)
     {
+        int jobs_fallback = 0;
+
         ret = rxp_get_response_data(pkts_burst[--rx_pkts], &rxp_resp);
 
         if (ret != RXP_STATUS_OK)
@@ -520,15 +575,6 @@ static int rxp_receive_responses()
 
         if (rxp_resp.match_count != 0)
         {
-            if (rxp_resp.detected_match_count > rxp_resp.match_count)
-            {
-                LogMessage("WARNING: Detected %u matches but only %u returned.\n",
-                    rxp_resp.detected_match_count, rxp_resp.match_count);
-                RxpMpse::match_limit++;
-                /* FIXIT-T: We should fall back to a software search engine here
-                 * For now keep going.*/
-            }
-
             job = nullptr;
             for (i = 0; i < RxpMpse::jobcount; i++)
             {
@@ -549,7 +595,26 @@ static int rxp_receive_responses()
                 }
                 LogMessage("\n");
             }
-            else
+            else if (rxp_resp.detected_match_count > rxp_resp.match_count)
+            {
+                LogMessage("WARNING: Detected %u matches but only %u returned.\n",
+                    rxp_resp.detected_match_count, rxp_resp.match_count);
+
+                RxpMpse::match_limit++;
+                /* FIXIT-T: We fall back to a software search engine here if available.
+                 * Need to decide what to do if is not. For now analyze the results from RXP.*/
+                for (j = 0; j < job->subset_count; j++)
+                {
+                    if(job->subset[j]->fallback_search((uint8_t*) job->buf, job->len,
+                            job->match_cb, job->match_ctx, job->current_state) != 0 )
+                    {
+                        break;
+                    }
+                    jobs_fallback++;
+                }
+            }
+
+            if (job and jobs_fallback != job->subset_count)
             {
                 for (i = 0; i < rxp_resp.match_count; i++)
                 {
@@ -626,8 +691,15 @@ static int rxp_send_jobs()
         if (ret != RXP_STATUS_OK)
         {
             LogMessage("ERROR: %d rxp_prepare_job() failed.\n", ret);
-            /* FIXIT-T: We should fall back to a software search engine here
-             * or throw an error and quit (For now keep going).*/
+            /* We fall back to a software search engine here
+             * or throw an error and quit if error/not available.*/
+              for (j = 0; j < RxpMpse::jobs[i].subset_count; j++)
+              {
+                  if(RxpMpse::jobs[i].subset[j]->fallback_search((uint8_t*) RxpMpse::jobs[i].buf,
+                          RxpMpse::jobs[i].len, RxpMpse::jobs[i].match_cb,
+                          RxpMpse::jobs[i].match_ctx, RxpMpse::jobs[i].current_state) != 0 )
+                      exit(-1);
+              }
         }
 
         ret = rxp_enqueue_job(RxpMpse::portid, RxpMpse::queueid /* queue id */, job_buf);
@@ -642,7 +714,6 @@ static int rxp_send_jobs()
              *  Note the processed variable for the current version will
              *  have to be updated here.
              *  However, in non blocking version this would not be necessary*/
-
             unsigned temp_responses = processed;
             processed += rxp_receive_responses();
             while(processed > temp_responses)
@@ -656,8 +727,15 @@ static int rxp_send_jobs()
         if (ret != RXP_STATUS_OK)
         {
             LogMessage("ERROR: %d rxp_enqueue_job() failed.\n", ret);
-            /* FIXIT-T: We should fall back to a software search engine here
-             * or throw an error and quit (For now keep going).*/
+            /* We fall back to a software search engine here
+             * or throw an error and quit if error/not available.*/
+              for (j = 0; j < RxpMpse::jobs[i].subset_count; j++)
+              {
+                  if(RxpMpse::jobs[i].subset[j]->fallback_search((uint8_t*) RxpMpse::jobs[i].buf,
+                          RxpMpse::jobs[i].len, RxpMpse::jobs[i].match_cb,
+                          RxpMpse::jobs[i].match_ctx, RxpMpse::jobs[i].current_state) != 0 )
+                      exit(-1);
+              }
         }
     }
 

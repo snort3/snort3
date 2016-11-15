@@ -118,8 +118,12 @@ public:
     int get_search_opt()
     { return search_opt; }
 
+    bool set_detect_fallback_search_method(const char*);
     bool set_detect_search_method(const char*);
     void set_max_pattern_len(unsigned);
+
+    const struct MpseApi* get_fallback_search_api()
+    { return fallback_search_api; }
 
     const struct MpseApi* get_search_api()
     { return search_api; }
@@ -142,6 +146,7 @@ public:
     { return max_pattern_len; }
 
 private:
+    const struct MpseApi* fallback_search_api;
     const struct MpseApi* search_api;
 
     bool inspect_stream_insert;
