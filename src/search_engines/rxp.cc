@@ -337,7 +337,7 @@ int RxpMpse::_search(
         if(fallback_search ((uint8_t*) buf, n, mf, pv, current_state) == 0)
             return 0;
         else
-            LogMessage("WARNING: will try to analyze it with RXP \n");
+            LogMessage("WARNING: Fallback error, will try to analyze it with RXP \n");
     }
 
     int i;
@@ -361,7 +361,7 @@ int RxpMpse::_search(
         if(fallback_search ((uint8_t*) buf, n, mf, pv, current_state) == 0)
              return 0;
         else
-            /* FIXIT-T: We should either dispatch, or expand the job table here. */
+            /* FIXIT-T: We should either dispatch, or expand the job table here.*/
             exit(-1);
     }
     else if (i == jobcount)
@@ -556,8 +556,10 @@ static int rxp_receive_responses()
     if (ret != RXP_STATUS_OK)
     {
         LogMessage("ERROR: %d rxp_get_responses() failed.\n", ret);
-        /* FIXIT-T: We should fall back to a software search engine here
-         * or throw an error and quit (For now keep going).*/
+        /* FIXIT-T: This error is not recoverable as we do not have a job reference to
+         * fallback to. At the moment we exit but we need to decide if is acceptable to
+         * print an error and continue.*/
+        exit(-1);
     }
 
     while (rx_pkts != 0)
@@ -569,8 +571,10 @@ static int rxp_receive_responses()
         if (ret != RXP_STATUS_OK)
         {
             LogMessage("ERROR: %d rxp_get_response_data() failed.\n", ret);
-            /* FIXIT-T: We should fall back to a software search engine here
-             * or throw an error and quit (For now keep going).*/
+            /* FIXIT-T: This error is not recoverable as we do not have a job reference to
+             * fallback to. At the moment we exit but we need to decide if is acceptable to
+             * print an error and continue.*/
+            exit(-1);
         }
 
         if (rxp_resp.match_count != 0)
@@ -594,6 +598,11 @@ static int rxp_receive_responses()
                     LogMessage(" %d", RxpMpse::jobs[i].jobid);
                 }
                 LogMessage("\n");
+
+                /* FIXIT-T: This error is not recoverable as we do not have a job reference to
+                 * fallback to. At the moment we exit but we need to decide if is acceptable to
+                 * print an error and continue.*/
+                exit(-1);
             }
             else if (rxp_resp.detected_match_count > rxp_resp.match_count)
             {
@@ -672,8 +681,10 @@ static int rxp_send_jobs()
         if (!RxpMpse::jobs[i].buf)
         {
             LogMessage("ERROR: rxp job data is NULL.\n");
-            /* FIXIT-T: We should fall back to a software search engine here
-             * or throw an error and quit (For now keep going).*/
+            /* FIXIT-T: This error is not recoverable as we do not have a job reference to
+             * fallback to. At the moment we exit but we need to decide if is acceptable to
+             * print an error and continue.*/
+            exit(-1);
         }
 
         RxpMpse::jobs[i].jobid = ++RxpMpse::jobs_submitted; // Job ID can't be 0
