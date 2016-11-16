@@ -47,8 +47,6 @@ static const RuleMap dce2_udp_rules[] =
 static const PegInfo dce2_udp_pegs[] =
 {
     { "events", "total events" },
-    { "aborted sessions", "total aborted sessions" },
-    { "bad autodetects", "total bad autodetects" },
     { "udp sessions", "total udp sessions" },
     { "udp packets", "total udp packets" },
     { "Requests", "total connection-less requests" },

@@ -348,7 +348,6 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData*,
     const SmbNtHdr*, const uint8_t, const uint8_t*, uint32_t, DCE2_SmbComInfo&);
 static void DCE2_SmbProcessCommand(DCE2_SmbSsnData*, const SmbNtHdr*, const uint8_t*, uint32_t);
 static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData*, const SmbNtHdr*);
-static bool DCE2_SmbAutodetect(Packet* p);
 static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData*,
     const SmbNtHdr*);
 static inline DCE2_Ret DCE2_SmbCheckAndXOffset(const uint8_t*,
@@ -1550,48 +1549,6 @@ static void DCE2_SmbProcessRawData(DCE2_SmbSsnData* ssd, const uint8_t* nb_ptr, 
     }
 }
 
-static bool DCE2_SmbAutodetect(Packet* p)
-{
-    if (p->dsize > (sizeof(NbssHdr) + sizeof(SmbNtHdr)))
-    {
-        NbssHdr* nb_hdr = (NbssHdr*)p->data;
-        SmbNtHdr* smb_hdr = (SmbNtHdr*)(p->data + sizeof(NbssHdr));
-
-        if ((SmbId(smb_hdr) != DCE2_SMB_ID)
-            && (SmbId(smb_hdr) != DCE2_SMB2_ID))
-        {
-            return false;
-        }
-
-        switch (NbssType(nb_hdr))
-        {
-        // FIXIT-L currently all ports are treated as autodetect.
-        // On port 139, there is always an initial Session Request / Session Positive/Negative
-        // response.
-        // These message types were added , to make sure port 139 is treated as smb.
-        // Remove once detect/autodetect supported.
-        case NBSS_SESSION_TYPE__REQUEST:
-            if (DCE2_SsnFromClient(p))
-                return true;
-            break;
-
-        case NBSS_SESSION_TYPE__POS_RESPONSE:
-        case NBSS_SESSION_TYPE__NEG_RESPONSE:
-            if (DCE2_SsnFromServer(p))
-                return true;
-            break;
-
-        case NBSS_SESSION_TYPE__MESSAGE:
-            return true;
-            break;
-        default:
-            break;
-        }
-    }
-
-    return false;
-}
-
 static void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
 {
     if (ssd == nullptr)
@@ -1678,43 +1635,35 @@ static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf*
     DCE2_SmbSsnData* dce2_smb_sess = nullptr;
     Profile profile(dce2_smb_pstat_new_session);
 
-    //FIXIT-M Re-evaluate after infrastructure/binder support if autodetect here
-    //is necessary
+	DebugMessage(DEBUG_DCE_SMB, "DCE over SMB packet detected\n");
+	DebugMessage(DEBUG_DCE_SMB, "Creating new session\n");
 
-    if (DCE2_SmbAutodetect(p))
-    {
-        DebugMessage(DEBUG_DCE_SMB, "DCE over SMB packet detected\n");
-        DebugMessage(DEBUG_DCE_SMB, "Creating new session\n");
+	dce2_smb_sess = set_new_dce2_smb_session(p);
+	if ( dce2_smb_sess )
+	{
+		dce2_smb_sess->dialect_index = DCE2_SENTINEL;
+		dce2_smb_sess->max_outstanding_requests = 10;  // Until Negotiate/SessionSetupAndX
+		dce2_smb_sess->cli_data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+		dce2_smb_sess->srv_data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+		dce2_smb_sess->pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
+		dce2_smb_sess->uid = DCE2_SENTINEL;
+		dce2_smb_sess->tid = DCE2_SENTINEL;
+		dce2_smb_sess->ftracker.fid_v1 = DCE2_SENTINEL;
+		dce2_smb_sess->rtracker.mid = DCE2_SENTINEL;
+		dce2_smb_sess->max_file_depth = FileService::get_max_file_depth();
 
-        dce2_smb_sess = set_new_dce2_smb_session(p);
-        if ( dce2_smb_sess )
-        {
-            dce2_smb_sess->dialect_index = DCE2_SENTINEL;
-            dce2_smb_sess->max_outstanding_requests = 10;  // Until Negotiate/SessionSetupAndX
-            dce2_smb_sess->cli_data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
-            dce2_smb_sess->srv_data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
-            dce2_smb_sess->pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
-            dce2_smb_sess->uid = DCE2_SENTINEL;
-            dce2_smb_sess->tid = DCE2_SENTINEL;
-            dce2_smb_sess->ftracker.fid_v1 = DCE2_SENTINEL;
-            dce2_smb_sess->rtracker.mid = DCE2_SENTINEL;
-            dce2_smb_sess->max_file_depth = FileService::get_max_file_depth();
+		DCE2_ResetRopts(&dce2_smb_sess->sd.ropts);
 
-            DCE2_ResetRopts(&dce2_smb_sess->sd.ropts);
+		dce2_smb_stats.smb_sessions++;
+		DebugFormat(DEBUG_DCE_SMB,"Created (%p)\n", (void*)dce2_smb_sess);
 
-            dce2_smb_stats.smb_sessions++;
-            DebugFormat(DEBUG_DCE_SMB,"Created (%p)\n", (void*)dce2_smb_sess);
-
-            dce2_smb_sess->sd.trans = DCE2_TRANS_TYPE__SMB;
-            dce2_smb_sess->sd.server_policy = config->common.policy;
-            dce2_smb_sess->sd.client_policy = DCE2_POLICY__WINXP;
-            dce2_smb_sess->sd.wire_pkt = p;
-            dce2_smb_sess->sd.config = (void*)config;
-
-            DCE2_SsnSetAutodetected(&dce2_smb_sess->sd, p);
-        }
-    }
-
+		dce2_smb_sess->sd.trans = DCE2_TRANS_TYPE__SMB;
+		dce2_smb_sess->sd.server_policy = config->common.policy;
+		dce2_smb_sess->sd.client_policy = DCE2_POLICY__WINXP;
+		dce2_smb_sess->sd.wire_pkt = p;
+		dce2_smb_sess->sd.config = (void*)config;
+	}
+    
     return dce2_smb_sess;
 }
 
@@ -1728,28 +1677,8 @@ static DCE2_SmbSsnData* dce2_handle_smb_session(Packet* p, dce2SmbProtoConf* con
     {
         dce2_smb_sess = dce2_create_new_smb_session(p, config);
     }
-    else
-    {
-        DCE2_SsnData* sd = (DCE2_SsnData*)dce2_smb_sess;
-        sd->wire_pkt = p;
-
-        if (DCE2_SsnAutodetected(sd) && !(p->packet_flags & sd->autodetect_dir))
-        {
-            /* Try to autodetect in opposite direction */
-            if (!DCE2_SmbAutodetect(p))
-            {
-                DebugMessage(DEBUG_DCE_SMB, "Bad autodetect.\n");
-                DCE2_SsnNoInspect(sd);
-                dce2_smb_stats.sessions_aborted++;
-                dce2_smb_stats.bad_autodetects++;
-                return nullptr;
-            }
-            DCE2_SsnClearAutodetected(sd);
-        }
-    }
+   
     DebugFormat(DEBUG_DCE_SMB, "Session pointer: %p\n", (void*)dce2_smb_sess);
-
-    // FIXIT-M add remaining session handling logic
 
     return dce2_smb_sess;
 }
@@ -3094,9 +3023,6 @@ void Dce2Smb::eval(Packet* p)
 
         DCE2_ResetRopts(&dce2_smb_sess->sd.ropts);
         DCE2_PopPkt(&dce2_smb_sess->sd);
-
-        if (!DCE2_SsnAutodetected(&dce2_smb_sess->sd))
-            DisableInspection();
 
         delete p->endianness;
         p->endianness = nullptr;

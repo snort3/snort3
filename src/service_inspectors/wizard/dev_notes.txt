@@ -1,5 +1,5 @@
-The wizard uses hexes and spells to determine the most likely service on a
-flow.  It does not determine the service with certainty; that is the job of
+The wizard uses hexes, spells and curses to determine the most likely service 
+on a flow.  It does not determine the service with certainty; that is the job of
 the service inspector or appId.  The goal is to get the most likely service
 inspector engaged as quickly as possible.
 
@@ -37,3 +37,6 @@ The current implementation of the magic is very straightforward.  Due to
 the limited number of patterns, space is not a concern and each state has
 256 byte array of pointers to the next.
 
+Curses are presently used for binary protocols that require more than pattern
+matching. They use internal algorithms to identify services,
+implemented with custom FSMs.

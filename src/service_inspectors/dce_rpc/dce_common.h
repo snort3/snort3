@@ -58,9 +58,6 @@ enum DCE2_Policy
 struct dce2CommonStats
 {
     PegCount events;
-    PegCount sessions_aborted;
-    PegCount bad_autodetects;
-
     PegCount co_pdus;
     PegCount co_bind;
     PegCount co_bind_ack;
@@ -190,9 +187,8 @@ struct DCE2_Roptions
 enum DCE2_SsnFlag
 {
     DCE2_SSN_FLAG__NONE               = 0x0000,
-    DCE2_SSN_FLAG__AUTODETECTED       = 0x0001,
-    DCE2_SSN_FLAG__NO_INSPECT         = 0x0002,
-    DCE2_SSN_FLAG__SMB2               = 0x0004,
+    DCE2_SSN_FLAG__NO_INSPECT         = 0x0001,
+    DCE2_SSN_FLAG__SMB2               = 0x0002,
     DCE2_SSN_FLAG__ALL                = 0xffff
 };
 
@@ -205,7 +201,6 @@ struct DCE2_SsnData
     Packet* wire_pkt;
     uint64_t alert_mask;
     DCE2_Roptions ropts;
-    int autodetect_dir;
     void* config;
 
     uint32_t cli_seq;
@@ -232,28 +227,6 @@ inline void DCE2_ResetRopts(DCE2_Roptions* ropts)
     ropts->first_frag = DCE2_SENTINEL;
     ropts->opnum = DCE2_SENTINEL;
     ropts->stub_data = nullptr;
-}
-
-inline void DCE2_SsnSetAutodetected(DCE2_SsnData* sd, Packet* p)
-{
-    sd->flags |= DCE2_SSN_FLAG__AUTODETECTED;
-    sd->autodetect_dir = p->packet_flags & (PKT_FROM_CLIENT | PKT_FROM_SERVER);
-}
-
-inline int DCE2_SsnAutodetectDir(DCE2_SsnData* sd)
-{
-    return sd->autodetect_dir;
-}
-
-inline int DCE2_SsnAutodetected(DCE2_SsnData* sd)
-{
-    return sd->flags & DCE2_SSN_FLAG__AUTODETECTED;
-}
-
-inline void DCE2_SsnClearAutodetected(DCE2_SsnData* sd)
-{
-    sd->flags &= ~DCE2_SSN_FLAG__AUTODETECTED;
-    sd->autodetect_dir = 0;
 }
 
 inline void DCE2_SsnSetNoInspect(DCE2_SsnData* sd)

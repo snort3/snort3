@@ -107,12 +107,7 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
 
     if (data_len < sizeof(DceRpcClHdr))
     {
-        // FIXIT-M  currently we always do autodetect. Uncomment once
-        // detect/autodetect is supported.
-/*
-        if (!DCE2_SsnAutodetected(sd))
-             dce_alert(GID_DCE2,  DCE2_CL_DATA_LT_HDR, (dce2CommonStats*)&dce2_udp_stats);
-*/
+        dce_alert(GID_DCE2,  DCE2_CL_DATA_LT_HDR, (dce2CommonStats*)&dce2_udp_stats);
         return;
     }
 
@@ -238,23 +233,13 @@ static DCE2_Ret DCE2_ClHdrChecks(DCE2_SsnData*, const DceRpcClHdr* cl_hdr)
 {
     if (DceRpcClRpcVers(cl_hdr) != DCERPC_PROTO_MAJOR_VERS__4)
     {
-        // FIXIT-M  currently we always do autodetect. Uncomment once
-        // detect/autodetect is supported.
-        /* If we autodetected the session, we probably guessed wrong */
-        /* if (!DCE2_SsnAutodetected(sd))
-            dce_alert(GID_DCE2, DCE2_CL_BAD_MAJOR_VERSION, (dce2CommonStats*)&dce2_udp_stats);
-        */
+        dce_alert(GID_DCE2, DCE2_CL_BAD_MAJOR_VERSION, (dce2CommonStats*)&dce2_udp_stats);
         return DCE2_RET__ERROR;
     }
 
     if (DceRpcClPduType(cl_hdr) >= DCERPC_PDU_TYPE__MAX)
     {
-        // FIXIT-M  currently we always do autodetect. Uncomment once
-        // detect/autodetect is supported.
-/*
-        if (!DCE2_SsnAutodetected(sd))
-            dce_alert(GID_DCE2, DCE2_CL_BAD_PDU_TYPE, (dce2CommonStats*)&dce2_udp_stats);
-*/
+        dce_alert(GID_DCE2, DCE2_CL_BAD_PDU_TYPE, (dce2CommonStats*)&dce2_udp_stats);
         return DCE2_RET__ERROR;
     }
 
@@ -568,12 +553,12 @@ static int DCE2_ClFragCompare(const void* a, const void* b)
 static void DCE2_ClFragReassemble(DCE2_SsnData* sd, DCE2_ClActTracker* at, const
     DceRpcClHdr* cl_hdr)
 {
-	uint8_t dce2_cl_rbuf[IP_MAXPACKET];
-	DCE2_ClFragTracker* ft = &at->frag_tracker;
-	uint8_t* rdata = dce2_cl_rbuf;
+    uint8_t dce2_cl_rbuf[IP_MAXPACKET];
+    DCE2_ClFragTracker* ft = &at->frag_tracker;
+    uint8_t* rdata = dce2_cl_rbuf;
     uint16_t rlen = sizeof(dce2_cl_rbuf);
-	DCE2_ClFragNode* fnode;
-	uint32_t stub_len = 0;
+    DCE2_ClFragNode* fnode;
+    uint32_t stub_len = 0;
 
     Profile profile(dce2_udp_pstat_cl_reass);
 
@@ -594,7 +579,7 @@ static void DCE2_ClFragReassemble(DCE2_SsnData* sd, DCE2_ClActTracker* at, const
         stub_len += fnode->frag_len;
     }
 
-     Packet* rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__UDP_CL_FRAG, dce2_cl_rbuf, stub_len);
+    Packet* rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__UDP_CL_FRAG, dce2_cl_rbuf, stub_len);
     if (rpkt == nullptr)
     {
         DebugFormat(DEBUG_DCE_UDP,

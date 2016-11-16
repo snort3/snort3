@@ -61,8 +61,6 @@ static const RuleMap dce2_tcp_rules[] =
 static const PegInfo dce2_tcp_pegs[] =
 {
     { "events", "total events" },
-    { "aborted sessions", "total aborted sessions" },
-    { "bad autodetects", "total bad autodetects" },
     { "PDUs", "total connection-oriented PDUs" },
     { "Binds", "total connection-oriented binds" },
     { "Bind acks", "total connection-oriented binds acks" },

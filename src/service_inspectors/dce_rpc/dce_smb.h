@@ -169,15 +169,7 @@
 
 struct dce2SmbStats
 {
-/*  FIXIT-M add array based peg counts
-    PegCount sessions_autodetected;
-#ifdef DEBUG
-    PegCount autoports[65535][DCE2_TRANS_TYPE__MAX];
-#endif
-*/
     PegCount events;
-    PegCount sessions_aborted;
-    PegCount bad_autodetects;
 
     PegCount co_pdus;
     PegCount co_bind;

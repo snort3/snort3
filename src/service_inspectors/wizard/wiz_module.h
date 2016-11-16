@@ -53,6 +53,10 @@ public:
     ProfileStats* get_profile() const override;
 
     MagicBook* get_book(bool c2s, bool hex);
+    std::vector<std::string> get_curse_book()
+    {
+        return curses;
+    }
 
 private:
     void add_spells(MagicBook*, std::string&);
@@ -63,6 +67,7 @@ private:
 
     std::string service;
     std::vector<std::string> spells;
+    std::vector<std::string> curses;
 
     MagicBook* c2s_hexes;
     MagicBook* s2c_hexes;

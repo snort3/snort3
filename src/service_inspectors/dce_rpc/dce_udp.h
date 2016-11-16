@@ -38,8 +38,6 @@ struct dce2UdpStats
 
     /*common stats -defined in common.h*/
     PegCount events;
-    PegCount sessions_aborted;
-    PegCount bad_autodetects;
 
     /*DCE UDP specific*/
     PegCount udp_sessions;

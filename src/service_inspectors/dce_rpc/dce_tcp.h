@@ -33,19 +33,8 @@
 
 struct dce2TcpStats
 {
-/*  FIXIT-M add array based peg counts
-    PegCount sessions_autodetected;
-#ifdef DEBUG
-    PegCount autoports[65535][DCE2_TRANS_TYPE__MAX];
-#endif
-*/
-    /* The common stats block has to be at the beginning followed
-       by the protocol specific stats */
-
-    /*common stats -defined in common.h*/
+    /* common stats - defined in dce_common.h*/
     PegCount events;
-    PegCount sessions_aborted;
-    PegCount bad_autodetects;
 
     PegCount co_pdus;
     PegCount co_bind;

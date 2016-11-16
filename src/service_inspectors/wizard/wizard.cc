@@ -29,6 +29,7 @@
 #include "log/messages.h"
 #include "host_tracker/host_cache.h"
 
+#include "curses.h"
 #include "magic.h"
 #include "wiz_module.h"
 
@@ -63,10 +64,17 @@ THREAD_LOCAL WizStats tstats;
 // configuration
 //-------------------------------------------------------------------------
 
+struct CurseServiceTracker
+{
+    string service;
+    CurseTracker* tracker;
+};
+
 struct Wand
 {
     const MagicPage* hex;
     const MagicPage* spell;
+    vector<CurseServiceTracker> curse_tracker;
 };
 
 class Wizard;
@@ -103,6 +111,7 @@ public:
     void reset(Wand&, bool tcp, bool c2s);
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned);
     bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned);
+    bool cursebind(vector<CurseServiceTracker>&,Flow*, const uint8_t*, unsigned);
 
 public:
     MagicBook* c2s_hexes;
@@ -110,6 +119,7 @@ public:
 
     MagicBook* c2s_spells;
     MagicBook* s2c_spells;
+    vector<string> curse_book;
 };
 
 //-------------------------------------------------------------------------
@@ -129,6 +139,10 @@ MagicSplitter::MagicSplitter(bool c2s, class Wizard* w) :
 MagicSplitter::~MagicSplitter()
 {
     wizard->rem_ref();
+
+    // release trackers
+    for (unsigned i=0; i<wand.curse_tracker.size(); i++)
+        delete wand.curse_tracker[i].tracker;
 }
 
 // FIXIT-M stop search on hit and failure (no possible match)
@@ -155,6 +169,7 @@ Wizard::Wizard(WizardModule* m)
 
     c2s_spells = m->get_book(true, false);
     s2c_spells = m->get_book(false, false);
+    curse_book = m->get_curse_book();
 }
 
 Wizard::~Wizard()
@@ -166,7 +181,7 @@ Wizard::~Wizard()
     delete s2c_spells;
 }
 
-void Wizard::reset(Wand& w, bool /*tcp*/, bool c2s)
+void Wizard::reset(Wand& w, bool tcp, bool c2s)
 {
     if ( c2s )
     {
@@ -177,6 +192,20 @@ void Wizard::reset(Wand& w, bool /*tcp*/, bool c2s)
     {
         w.hex = s2c_hexes->page1();
         w.spell = s2c_spells->page1();
+    }
+
+    if (w.curse_tracker.empty())
+    {
+        for ( auto service:curse_book )
+        {
+            if (tcp == curse_map[service].is_tcp)
+            {
+                if (tcp)
+                    w.curse_tracker.push_back({ service, new CurseTracker });
+                else
+                    w.curse_tracker.push_back({ service, nullptr });
+            }
+        }
     }
 }
 
@@ -227,7 +256,35 @@ bool Wizard::cast_spell(
     if ( w.spell && spellbind(w.spell, f, data, len) )
         return true;
 
+    if (cursebind(w.curse_tracker, f, data, len))
+        return true;
+
     return false;
+}
+
+bool Wizard::cursebind(
+    vector<CurseServiceTracker>& curse_tracker, Flow* f, const uint8_t* data, unsigned len)
+{
+    bool match = false;
+
+    for (auto const& p : curse_tracker)
+    {
+        if (curse_map[p.service].alg(data,len, p.tracker))
+        {
+            match = true;
+            f->service = p.service.c_str();
+            break;
+        }
+    }
+
+    if (match)
+    {
+        // FIXIT-H need to make sure Flow's ipproto and service
+        // correspond to HostApplicationEntry's ipproto and service
+        host_cache_add_service(f->server_ip, f->ip_proto, f->server_port, f->service);
+    }
+
+    return match;
 }
 
 //-------------------------------------------------------------------------

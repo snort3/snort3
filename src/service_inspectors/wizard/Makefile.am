@@ -1,5 +1,7 @@
 
 file_list = \
+curses.cc \
+curses.h \
 magic.cc magic.h \
 hexes.cc \
 spells.cc \

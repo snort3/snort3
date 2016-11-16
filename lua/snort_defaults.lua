@@ -445,9 +445,6 @@ default_wizard =
     },
     hexes =
     {
-        { service = 'dcerpc', proto = 'tcp', client_first = true, 
-          to_server = { '|05 00|' }, to_client = { '|05 00|' } },
-
         { service = 'dnp3', proto = 'tcp', client_first = true, 
           to_server = { '|05 64|' }, to_client = { '|05 64|' } },
 
@@ -461,18 +458,15 @@ default_wizard =
           to_server = { '????|0 0 0 0 0 0 0 1|' },
           to_client = { '????|0 0 0 0 0 0 0 1|' } },
 --]]
-        { service = 'smb', proto = 'tcp', client_first = true,
-          to_server = { '|FF|SMB' }, to_client = { '|FF|SMB' } },
-
-        { service = 'smb', proto = 'udp', client_first = true,
-          to_server = { '|FF|SMB' }, to_client = { '|FF|SMB' } },
 
         { service = 'ssl', proto = 'tcp', client_first = true,
           to_server = { '|16 03|' }, to_client = { '|16 03|' } },
 
         { service = 'telnet', proto = 'tcp', client_first = true,
           to_server = telnet_commands, to_client = telnet_commands },
-    }
+    },
+
+    curses = {'dce_udp', 'dce_tcp', 'dce_smb'}
 }
 
 ---------------------------------------------------------------------------

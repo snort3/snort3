@@ -56,17 +56,6 @@ std::map <std::string, std::vector<uint16_t> > default_ports
     }
 };
 
-// FIXIT-M change to full range - 1025:
-std::map <std::string, std::vector<uint16_t> > autodetect_default_ports
-{
-    { "smb", { 1025 }
-    },
-    { "tcp", { 1026 }
-    },
-    { "udp", { 1027 }
-    }
-};
-
 /////////////////////////
 // Utility functions
 ////////////////////////
@@ -101,6 +90,15 @@ bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
     return tmpval;
 }
 
+bool add_deleted_comment_to_table(TableApi& table_api, std::string table_name, std::string option)
+{
+    table_api.open_table(table_name);
+    bool tmpval = table_api.add_deleted_comment(option);
+    table_api.close_table();
+
+    return tmpval;
+}
+
 /////////////////////////////
 /////   DcerpcServer
 /////////////////////////////
@@ -111,7 +109,6 @@ DcerpcServer::DcerpcServer(Converter& c) : ConversionState(c)
 {
     for (auto type: transport)
     {
-        autodetect_ports_set[type] = false;
         detect_ports_set[type] = false;
     }
 }
@@ -230,20 +227,9 @@ void DcerpcServer::add_default_ports(std::string type,  std::map<std::string,Bin
     }
 }
 
-// FIXIT-M for now add autodetect ports to binder just like regular detect port.
-// Change autodetect ports to full range once they are supported
-void DcerpcServer::add_default_autodetect_ports(std::string type,  std::map<std::string,
-    Binder*> bind)
-{
-    for (auto port : autodetect_default_ports[type])
-    {
-        bind[type]->add_when_port(std::to_string(port));
-    }
-}
-
 // add single port / range
 bool DcerpcServer::parse_and_add_ports(std::string ports, std::string type, std::map<std::string,
-    Binder*> bind, bool is_detect)
+    Binder*> bind)
 {
     if (ports.empty())
     {
@@ -287,14 +273,7 @@ bool DcerpcServer::parse_and_add_ports(std::string ports, std::string type, std:
         }
     }
 
-    if (is_detect)
-    {
-        detect_ports_set[type] = true;
-    }
-    else
-    {
-        autodetect_ports_set[type] = true;
-    }
+    detect_ports_set[type] = true;
 
     return true;
 }
@@ -357,9 +336,10 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
                 for (auto transport_type: transport)
                 {
                     if (is_detect)
+                    {
                         detect_ports_set[transport_type] = true;
-                    else
-                        autodetect_ports_set[transport_type] = true;
+                        bind[transport_type]->print_binding(false);
+                    }
                 }
             }
 
@@ -437,6 +417,12 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
             {
                 continue;
             }
+            // if this is autodetect- stop here
+            if (!is_detect)
+            {
+                add_deleted_comment_to_table(table_api, table_name[type], "autodetect");
+                continue;
+            }
 
             // remove '[',']'
             ports.erase(std::remove(ports.begin(), ports.end(), '['), ports.end());
@@ -444,7 +430,7 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
             // remove extra spaces
             ports.erase(remove_if(ports.begin(), ports.end(), isspace), ports.end());
 
-            if (!parse_and_add_ports(ports, type, bind, is_detect))
+            if (!parse_and_add_ports(ports, type, bind))
             {
                 return false;
             }
@@ -764,10 +750,6 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
         if (!detect_ports_set[type])
         {
             add_default_ports(type, bind);
-        }
-        if (!autodetect_ports_set[type])
-        {
-            add_default_autodetect_ports(type, bind);
         }
     }
 

@@ -31,7 +31,6 @@ public:
     virtual bool convert(std::istringstream& data);
 
 private:
-    bool add_deleted_comment_to_table(std::string table_name, std::string option);
     bool add_deleted_comment_to_defaults(std::string option);
     bool add_option_to_all(std::string option, const bool val, bool co_only);
     bool add_option_to_all(std::string option, const int val, bool co_only);
@@ -42,14 +41,6 @@ private:
         std::istringstream& stream);
 };
 
-bool Dcerpc::add_deleted_comment_to_table(std::string table_name, std::string option)
-{
-    table_api.open_table(table_name);
-    bool tmpval = table_api.add_deleted_comment(option);
-    table_api.close_table();
-
-    return tmpval;
-}
 
 bool Dcerpc::add_option_to_all(std::string option, const bool val, bool co_only)
 {
@@ -119,7 +110,7 @@ bool Dcerpc::add_deleted_comment_to_defaults(std::string option)
 
     for (auto type : transport)
     {
-        tmpval = add_deleted_comment_to_table("dce_" + type, option) && tmpval;
+        tmpval = add_deleted_comment_to_table(table_api,"dce_" + type, option) && tmpval;
     }
     return tmpval;
 }

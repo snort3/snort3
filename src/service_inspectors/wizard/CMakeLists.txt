@@ -1,5 +1,7 @@
 
 set(FILE_LIST
+    curses.cc
+    curses.h
     magic.cc
     magic.h
     hexes.cc

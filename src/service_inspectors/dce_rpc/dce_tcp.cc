@@ -77,31 +77,24 @@ static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf*
     DCE2_TcpSsnData* dce2_tcp_sess = nullptr;
     Profile profile(dce2_tcp_pstat_new_session);
 
-    // FIXIT-M re-evaluate after infrastructure/binder support if autodetect here
-    // is necessary
-    if (DCE2_TcpAutodetect(p))
+    DebugMessage(DEBUG_DCE_TCP, "DCE over TCP packet detected\n");
+    DebugMessage(DEBUG_DCE_TCP, "Creating new session\n");
+
+    dce2_tcp_sess = set_new_dce2_tcp_session(p);
+
+    if ( dce2_tcp_sess )
     {
-        DebugMessage(DEBUG_DCE_TCP, "DCE over TCP packet detected\n");
-        DebugMessage(DEBUG_DCE_TCP, "Creating new session\n");
+        DCE2_CoInitTracker(&dce2_tcp_sess->co_tracker);
+        DCE2_ResetRopts(&dce2_tcp_sess->sd.ropts);
 
-        dce2_tcp_sess = set_new_dce2_tcp_session(p);
+        dce2_tcp_stats.tcp_sessions++;
+        DebugFormat(DEBUG_DCE_TCP,"Created (%p)\n", (void*)dce2_tcp_sess);
 
-        if ( dce2_tcp_sess )
-        {
-            DCE2_CoInitTracker(&dce2_tcp_sess->co_tracker);
-            DCE2_ResetRopts(&dce2_tcp_sess->sd.ropts);
-
-            dce2_tcp_stats.tcp_sessions++;
-            DebugFormat(DEBUG_DCE_TCP,"Created (%p)\n", (void*)dce2_tcp_sess);
-
-            dce2_tcp_sess->sd.trans = DCE2_TRANS_TYPE__TCP;
-            dce2_tcp_sess->sd.server_policy = config->common.policy;
-            dce2_tcp_sess->sd.client_policy = DCE2_POLICY__WINXP;
-            dce2_tcp_sess->sd.wire_pkt = p;
-            dce2_tcp_sess->sd.config = (void*)config;
-
-            DCE2_SsnSetAutodetected(&dce2_tcp_sess->sd, p);
-        }
+        dce2_tcp_sess->sd.trans = DCE2_TRANS_TYPE__TCP;
+        dce2_tcp_sess->sd.server_policy = config->common.policy;
+        dce2_tcp_sess->sd.client_policy = DCE2_POLICY__WINXP;
+        dce2_tcp_sess->sd.wire_pkt = p;
+        dce2_tcp_sess->sd.config = (void*)config;
     }
 
     return dce2_tcp_sess;
@@ -116,26 +109,6 @@ static DCE2_TcpSsnData* dce2_handle_tcp_session(Packet* p, dce2TcpProtoConf* con
     if (dce2_tcp_sess == nullptr)
     {
         dce2_tcp_sess = dce2_create_new_tcp_session(p, config);
-    }
-    else
-    {
-        DCE2_SsnData* sd = (DCE2_SsnData*)dce2_tcp_sess;
-        sd->wire_pkt = p;
-
-        if (DCE2_SsnAutodetected(sd) && !(p->packet_flags & sd->autodetect_dir))
-        {
-            /* Try to autodetect in opposite direction */
-            if (!DCE2_TcpAutodetect(p))
-            {
-                DebugMessage(DEBUG_DCE_TCP, "Bad autodetect.\n");
-                DCE2_SsnNoInspect(sd);
-                dce2_tcp_stats.sessions_aborted++;
-                dce2_tcp_stats.bad_autodetects++;
-                return nullptr;
-            }
-
-            DCE2_SsnClearAutodetected(sd);
-        }
     }
 
     DebugFormat(DEBUG_DCE_TCP, "Session pointer: %p\n", (void*)dce2_tcp_sess);
@@ -218,9 +191,6 @@ void Dce2Tcp::eval(Packet* p)
 
         DCE2_ResetRopts(&dce2_tcp_sess->sd.ropts);
         DCE2_PopPkt(&dce2_tcp_sess->sd);
-
-        if (!DCE2_SsnAutodetected(&dce2_tcp_sess->sd))
-            DisableInspection();
 
         delete p->endianness;
         p->endianness = nullptr;

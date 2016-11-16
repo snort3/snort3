@@ -52,29 +52,6 @@ static void DCE2_ClCleanTracker(DCE2_ClTracker* clt)
     clt->act_trackers = nullptr;
 }
 
-// Tries to determine if a packet is likely to be DCE/RPC over UDP
-static DCE2_TransType DCE2_UdpAutodetect(const Packet* p)
-{
-    if (p->dsize >= sizeof(DceRpcClHdr))
-    {
-        const DceRpcClHdr* cl_hdr = (DceRpcClHdr*)p->data;
-
-        if ((DceRpcClRpcVers(cl_hdr) == DCERPC_PROTO_MAJOR_VERS__4) &&
-            ((DceRpcClPduType(cl_hdr) == DCERPC_PDU_TYPE__REQUEST) ||
-            (DceRpcClPduType(cl_hdr) == DCERPC_PDU_TYPE__RESPONSE) ||
-            (DceRpcClPduType(cl_hdr) == DCERPC_PDU_TYPE__FAULT) ||
-            (DceRpcClPduType(cl_hdr) == DCERPC_PDU_TYPE__REJECT) ||
-            (DceRpcClPduType(cl_hdr) == DCERPC_PDU_TYPE__FACK)) &&
-            ((DceRpcClLen(cl_hdr) != 0) &&
-            (DceRpcClLen(cl_hdr) + sizeof(DceRpcClHdr)) <= p->dsize))
-        {
-            return DCE2_TRANS_TYPE__UDP;
-        }
-    }
-
-    return DCE2_TRANS_TYPE__NONE;
-}
-
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -109,26 +86,19 @@ static DCE2_UdpSsnData* dce2_create_new_udp_session(Packet* p, dce2UdpProtoConf*
     DCE2_UdpSsnData* dce2_udp_sess = nullptr;
     Profile profile(dce2_udp_pstat_new_session);
 
-    // FIXIT-M re-evaluate after infrastructure/binder support if autodetect here
-    // is necessary
-    if (DCE2_UdpAutodetect(p))
-    {
-        DebugMessage(DEBUG_DCE_UDP, "DCE over UDP packet detected\n");
-        DebugMessage(DEBUG_DCE_UDP, "Creating new session\n");
+    DebugMessage(DEBUG_DCE_UDP, "DCE over UDP packet detected\n");
+    DebugMessage(DEBUG_DCE_UDP, "Creating new session\n");
 
-        dce2_udp_sess = set_new_dce2_udp_session(p);
+    dce2_udp_sess = set_new_dce2_udp_session(p);
 
-        DCE2_ResetRopts(&dce2_udp_sess->sd.ropts);
+    DCE2_ResetRopts(&dce2_udp_sess->sd.ropts);
 
-        dce2_udp_stats.udp_sessions++;
-        DebugFormat(DEBUG_DCE_UDP,"Created (%p)\n", (void*)dce2_udp_sess);
+    dce2_udp_stats.udp_sessions++;
+    DebugFormat(DEBUG_DCE_UDP,"Created (%p)\n", (void*)dce2_udp_sess);
 
-        dce2_udp_sess->sd.trans = DCE2_TRANS_TYPE__UDP;
-        dce2_udp_sess->sd.wire_pkt = p;
-        dce2_udp_sess->sd.config = (void*)config;
-
-        DCE2_SsnSetAutodetected(&dce2_udp_sess->sd, p);
-    }
+    dce2_udp_sess->sd.trans = DCE2_TRANS_TYPE__UDP;
+    dce2_udp_sess->sd.wire_pkt = p;
+    dce2_udp_sess->sd.config = (void*)config;
 
     return dce2_udp_sess;
 }
@@ -142,26 +112,6 @@ static DCE2_UdpSsnData* dce2_handle_udp_session(Packet* p, dce2UdpProtoConf* con
     if (dce2_udp_sess == nullptr)
     {
         dce2_udp_sess = dce2_create_new_udp_session(p, config);
-    }
-    else
-    {
-        DCE2_SsnData* sd = (DCE2_SsnData*)dce2_udp_sess;
-        sd->wire_pkt = p;
-
-        if (DCE2_SsnAutodetected(sd) && !(p->packet_flags & sd->autodetect_dir))
-        {
-            /* Try to autodetect in opposite direction */
-            if (!DCE2_UdpAutodetect(p))
-            {
-                DebugMessage(DEBUG_DCE_UDP, "Bad autodetect.\n");
-                DCE2_SsnNoInspect(sd);
-                dce2_udp_stats.sessions_aborted++;
-                dce2_udp_stats.bad_autodetects++;
-                return nullptr;
-            }
-
-            DCE2_SsnClearAutodetected(sd);
-        }
     }
 
     DebugFormat(DEBUG_DCE_UDP, "Session pointer: %p\n", (void*)dce2_udp_sess);
@@ -227,9 +177,6 @@ void Dce2Udp::eval(Packet* p)
 
         DCE2_ResetRopts(&dce2_udp_sess->sd.ropts);
         DCE2_PopPkt(&dce2_udp_sess->sd);
-
-        if (!DCE2_SsnAutodetected(&dce2_udp_sess->sd))
-            DisableInspection();
 
         delete p->endianness;
         p->endianness = nullptr;

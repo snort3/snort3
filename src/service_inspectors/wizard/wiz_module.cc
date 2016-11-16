@@ -25,6 +25,7 @@
 
 #include <string>
 
+#include "curses.h"
 #include "magic.h"
 
 using namespace std;
@@ -97,6 +98,9 @@ static const Parameter s_params[] =
     { "spells", Parameter::PT_LIST, wizard_spells_params, nullptr,
       "criteria for text service identification" },
 
+    { "curses", Parameter::PT_MULTI, "dce_smb | dce_udp | dce_tcp", nullptr,
+      "enable service identification based on internal algorithm" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -138,6 +142,9 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("spell") )
         spells.push_back(v.get_string());
 
+    else if ( v.is("curses") )
+        curses.push_back(v.get_string());
+
     else
         return false;
 
@@ -153,6 +160,7 @@ bool WizardModule::begin(const char* fqn, int, SnortConfig*)
 
         c2s_spells = new SpellBook;
         s2c_spells = new SpellBook;
+        curses.clear();
     }
     else if ( !strcmp(fqn, "wizard.hexes") )
         hex = true;
@@ -200,6 +208,7 @@ bool WizardModule::end(const char*, int idx, SnortConfig*)
         else
             add_spells(s2c_spells, service);
     }
+
     spells.clear();
     service.clear();
 

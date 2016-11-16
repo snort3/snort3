@@ -359,9 +359,9 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
 
     if (frag_len < sizeof(DceRpcCoHdr))
     {
-        /* Assume we autodetected incorrectly or that DCE/RPC is not running
+        /* Assume that DCE/RPC is not running
          * over the SMB named pipe */
-        if (!DCE2_SsnAutodetected(sd) && (sd->trans != DCE2_TRANS_TYPE__SMB))
+        if (sd->trans != DCE2_TRANS_TYPE__SMB)
         {
             // FIXIT-L PORT_IF_NEEDED segment check, same for all cases below
             dce_alert(GID_DCE2, DCE2_CO_FRAG_LEN_LT_HDR,dce_common_stats);
@@ -372,7 +372,7 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
 
     if (DceRpcCoVersMaj(co_hdr) != DCERPC_PROTO_MAJOR_VERS__5)
     {
-        if (!DCE2_SsnAutodetected(sd) && (sd->trans != DCE2_TRANS_TYPE__SMB))
+        if (sd->trans != DCE2_TRANS_TYPE__SMB)
         {
             dce_alert(GID_DCE2, DCE2_CO_BAD_MAJOR_VERSION,dce_common_stats);
         }
@@ -382,7 +382,7 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
 
     if (DceRpcCoVersMin(co_hdr) != DCERPC_PROTO_MINOR_VERS__0)
     {
-        if (!DCE2_SsnAutodetected(sd) && (sd->trans != DCE2_TRANS_TYPE__SMB))
+        if (sd->trans != DCE2_TRANS_TYPE__SMB)
         {
             dce_alert(GID_DCE2, DCE2_CO_BAD_MINOR_VERSION,dce_common_stats);
         }
@@ -391,7 +391,7 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
     }
     if (pdu_type >= DCERPC_PDU_TYPE__MAX)
     {
-        if (!DCE2_SsnAutodetected(sd) && (sd->trans != DCE2_TRANS_TYPE__SMB))
+        if (sd->trans != DCE2_TRANS_TYPE__SMB)
         {
             dce_alert(GID_DCE2, DCE2_CO_BAD_PDU_TYPE,dce_common_stats);
         }

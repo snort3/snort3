@@ -48,9 +48,8 @@ private:
     bool parse_detect(std::istringstream& data_stream, std::map<std::string, Binder*> bind, bool
         is_detect);
     void add_default_ports(std::string type, std::map<std::string, Binder*> bind);
-    void add_default_autodetect_ports(std::string type, std::map<std::string, Binder*> bind);
     bool parse_and_add_ports(std::string ports, std::string type,  std::map<std::string,
-        Binder*> bind, bool is_detect);
+        Binder*> bind);
     bool init_net_created_table();
     bool init_new_tables(bool is_default);
     bool parse_nets(std::istringstream& data_stream, std::map<std::string,
@@ -70,6 +69,9 @@ bool add_option_to_table(
 
 bool add_option_to_table(
     TableApi&, std::string table_name, std::string option, const bool val);
+
+bool add_deleted_comment_to_table(
+    TableApi&, std::string table_name, std::string option);
 } // namespace dce
 } // namespace preprocessors
 
