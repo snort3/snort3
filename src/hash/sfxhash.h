@@ -41,8 +41,10 @@ struct SFHASHFCN;
 
 struct SFXHASH_NODE
 {
-    struct SFXHASH_NODE* gnext, * gprev; // global node list - used for ageing nodes
-    struct SFXHASH_NODE* next,  * prev;  // row node list
+    struct SFXHASH_NODE* gnext; // global node list - used for ageing nodes
+    struct SFXHASH_NODE* gprev;
+    struct SFXHASH_NODE* next;  // row node list
+    struct SFXHASH_NODE* prev;
 
     int rindex;  // row index of table this node belongs to.
 
@@ -75,7 +77,6 @@ struct SFXHASH
     unsigned find_success;
 
     SFXHASH_NODE* ghead, * gtail;  // global - root of all nodes allocated in table
-
     SFXHASH_NODE* fhead, * ftail;  // list of free nodes, which are recyled
     SFXHASH_NODE* gnode;           // gfirst/gnext node ptr */
     int recycle_nodes;             // recycle nodes. Nodes are not freed, but are used for

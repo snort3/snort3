@@ -150,14 +150,6 @@ static void add_dns_response_info(AppIdSession*, uint16_t id, const uint8_t* hos
         uint16_t host_offset, uint8_t response_type, uint32_t ttl);
 static void reset_dns_info(AppIdSession*);
 
-struct ServiceMatch
-{
-    struct ServiceMatch* next;
-    unsigned count;
-    unsigned size;
-    RNAServiceElement* svc;
-};
-
 static const uint8_t zeromac[6] = { 0, 0, 0, 0, 0, 0 };
 static THREAD_LOCAL DHCPInfo* dhcp_info_free_list = nullptr;
 static THREAD_LOCAL FpSMBData* smb_data_free_list = nullptr;
@@ -278,17 +270,6 @@ static void appSetServiceValidator(RNAServiceValidationFCN fcn, AppId appId, uns
         ErrorMessage("AppId: failed to find a service element for AppId %d", appId);
 }
 
-void AppIdFreeServiceMatchList(ServiceMatch* sm)
-{
-    ServiceMatch* tmpSm;
-
-    while( sm )
-    {
-        tmpSm = sm;
-        sm = sm->next;
-        snort_free(tmpSm);
-    }
-}
 
 int AddFTPServiceState(AppIdSession* asd)
 {
@@ -900,6 +881,18 @@ static int AppIdPatternPrecedence(const void* a, const void* b)
         return (sm2->size - sm1->size);
 }
 
+void free_service_match_list(ServiceMatch* sm)
+{
+    ServiceMatch* tmpSm;
+
+    while( sm )
+    {
+        tmpSm = sm;
+        sm = sm->next;
+        snort_free(tmpSm);
+    }
+}
+
 /**Perform pattern match of a packet and construct a list of services sorted in order of
  * precedence criteria. Criteria is count and then size. The first service in the list is
  * returned. The list itself is saved in AppIdServiceIDState. If
@@ -947,14 +940,12 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
     if (id_state)
     {
         id_state->svc = service;
-        if (id_state->service_list != nullptr)
-            AppIdFreeServiceMatchList(id_state->service_list);
-
+        id_state->free_service_match_list();
         id_state->service_list = smOrderedList[0];
         id_state->current_service = smOrderedList[0];
     }
     else
-        AppIdFreeServiceMatchList(smOrderedList[0]);
+        free_service_match_list(smOrderedList[0]);
 
     APPID_LOG_FILTER_PORTS(pkt->ptrs.dp, pkt->ptrs.sp,
         "Pattern service for protocol %u (%u->%u), %s\n",
@@ -966,7 +957,7 @@ static inline RNAServiceElement* AppIdGetServiceByPattern(const Packet* pkt, IpP
 static inline RNAServiceElement* AppIdGetServiceByBruteForce(IpProtocol protocol,
     const RNAServiceElement* lasService)
 {
-    RNAServiceElement* service;
+    RNAServiceElement* service = nullptr;
 
     if (lasService)
         service = lasService->next;
@@ -1115,9 +1106,9 @@ static void add_smb_info(AppIdSession* asd, unsigned major, unsigned minor, uint
 static int AppIdServiceAddServiceEx(AppIdSession* asd, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element, AppId appId, const char* vendor, const char* version)
 {
-    AppIdServiceIDState* id_state;
-    uint16_t port;
-    const sfip_t* ip;
+    AppIdServiceIDState* id_state = nullptr;
+    uint16_t port = 0;
+    const sfip_t* ip = nullptr;
 
     if (!asd || !pkt || !svc_element)
     {
@@ -1177,13 +1168,13 @@ static int AppIdServiceAddServiceEx(AppIdSession* asd, const Packet* pkt, int di
     // If UDP reversed, ensure we have the correct host tracker entry.
     if (asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
     {
-        asd->id_state = get_service_id_state(ip, asd->protocol, port,
+        asd->id_state = AppIdServiceState::get(ip, asd->protocol, port,
             AppIdServiceDetectionLevel(asd));
     }
 
     if (!(id_state = asd->id_state))
     {
-        if (!(id_state = add_service_id_state(ip, asd->protocol, port,
+        if (!(id_state = AppIdServiceState::add(ip, asd->protocol, port,
             AppIdServiceDetectionLevel(asd))))
         {
             ErrorMessage("Add service failed to create state");
@@ -1198,8 +1189,7 @@ static int AppIdServiceAddServiceEx(AppIdSession* asd, const Packet* pkt, int di
     {
         if (id_state->service_list)
         {
-            AppIdFreeServiceMatchList(id_state->service_list);
-            id_state->service_list = nullptr;
+            id_state->free_service_match_list();
             id_state->current_service = nullptr;
         }
 
@@ -1322,7 +1312,7 @@ int AppIdServiceInProcess(AppIdSession* asd, const Packet* pkt, int dir,
         const sfip_t* ip = pkt->ptrs.ip_api.get_src();
         uint16_t port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
 
-        if (!(id_state = add_service_id_state(ip, asd->protocol, port,
+        if (!(id_state = AppIdServiceState::add(ip, asd->protocol, port,
             AppIdServiceDetectionLevel(asd))))
         {
             ErrorMessage("In-process service failed to create state");
@@ -1415,7 +1405,7 @@ int AppIdServiceIncompatibleData(AppIdSession* asd, const Packet* pkt, int dir,
         const sfip_t* ip = pkt->ptrs.ip_api.get_src();
         uint16_t port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
 
-        if (!(id_state = add_service_id_state(ip, asd->protocol, port,
+        if (!(id_state = AppIdServiceState::add(ip, asd->protocol, port,
                                               AppIdServiceDetectionLevel(asd))))
         {
             ErrorMessage("Incompatible service failed to create state");
@@ -1509,7 +1499,7 @@ int AppIdServiceFailService(AppIdSession* asd, const Packet* pkt, int dir,
         const sfip_t* ip = pkt->ptrs.ip_api.get_src();
         uint16_t port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
 
-        if (!(id_state = add_service_id_state(ip, asd->protocol, port,
+        if (!(id_state = AppIdServiceState::add(ip, asd->protocol, port,
                 AppIdServiceDetectionLevel(asd))))
         {
             ErrorMessage("Fail service failed to create state");
@@ -1644,13 +1634,11 @@ static void HandleFailure(AppIdSession* asd, AppIdServiceIDState* id_state,
  */
 void FailInProcessService(AppIdSession* asd, const AppIdConfig*)
 {
-    AppIdServiceIDState* id_state;
-
     if (asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_UDP_REVERSED))
         return;
 
-    id_state = get_service_id_state(&asd->service_ip, asd->protocol, asd->service_port,
-        AppIdServiceDetectionLevel(asd));
+    AppIdServiceIDState* id_state = AppIdServiceState::get(&asd->service_ip,
+    		asd->protocol, asd->service_port, AppIdServiceDetectionLevel(asd));
 
     APPID_LOG_FILTER_SERVICE_PORT(asd->service_port,
             "FailInProcess %" PRIx64 ", %08X:%u proto %u\n", asd->common.flags,
@@ -1739,7 +1727,7 @@ static const RNAServiceElement* get_next_service(const Packet* p, const int dir,
                 const RNAServiceElement* reverse_service = nullptr;
                 const sfip_t* reverse_ip = p->ptrs.ip_api.get_src();
                 asd->tried_reverse_service = true;
-                if ((reverse_id_state = get_service_id_state(reverse_ip, proto, p->ptrs.sp,
+                if ((reverse_id_state = AppIdServiceState::get(reverse_ip, proto, p->ptrs.sp,
                         AppIdServiceDetectionLevel(asd))))
                 {
                     reverse_service = reverse_id_state->svc;
@@ -1785,11 +1773,10 @@ static const RNAServiceElement* get_next_service(const Packet* p, const int dir,
 
 int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
 {
-    const sfip_t* ip;
+    const sfip_t* ip = nullptr;
     int ret = SERVICE_NOMATCH;
-    const RNAServiceElement* service;
-    AppIdServiceIDState* id_state;
-    uint16_t port;
+    const RNAServiceElement* service = nullptr;
+    uint16_t port = 0;
     ServiceValidationArgs args;
 
     /* Get packet info. */
@@ -1814,15 +1801,15 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
     }
 
     /* Get host tracker state. */
-    id_state = asd->id_state;
+    AppIdServiceIDState* id_state = asd->id_state;
     if (id_state == nullptr)
     {
-        id_state = get_service_id_state(ip, proto, port, AppIdServiceDetectionLevel(asd));
+        id_state = AppIdServiceState::get(ip, proto, port, AppIdServiceDetectionLevel(asd));
 
         /* Create it if it doesn't exist yet. */
         if (id_state == nullptr)
         {
-            if (!(id_state = add_service_id_state(ip, proto, port,
+            if (!(id_state = AppIdServiceState::add(ip, proto, port,
                     AppIdServiceDetectionLevel(asd))))
             {
                 ErrorMessage("Discover service failed to create state");
@@ -2009,10 +1996,7 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
     if (    (id_state->state == SERVICE_ID_BRUTE_FORCE)
         || (id_state->state == SERVICE_ID_VALID) )
     {
-        if (id_state->service_list != nullptr)
-            AppIdFreeServiceMatchList(id_state->service_list);
-
-        id_state->service_list    = nullptr;
+        id_state->free_service_match_list();
         id_state->current_service = nullptr;
     }
 

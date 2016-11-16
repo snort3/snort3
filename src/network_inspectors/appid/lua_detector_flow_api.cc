@@ -157,10 +157,6 @@ static int create_detector_flow(lua_State* L)
 {
     sfip_t saddr;
     sfip_t daddr;
-    IpProtocol proto;
-    uint16_t sport, dport;
-    char* pattern;
-    size_t patternLen;
 
     auto& detector_data = *UserData<Detector>::check(L, DETECTOR, 1);
 
@@ -168,8 +164,8 @@ static int create_detector_flow(lua_State* L)
     if ( !detector_data->validateParams.pkt )
         return 0;   /*number of results */
 
-    pattern = (char*)lua_tostring(L, 2);
-    patternLen = lua_strlen (L, 2);
+    char* pattern = (char*)lua_tostring(L, 2);
+    size_t patternLen = lua_strlen (L, 2);
 
     if (patternLen == 16)
     {
@@ -203,9 +199,9 @@ static int create_detector_flow(lua_State* L)
         return 0;
     }
 
-    sport = lua_tonumber(L, 4);
-    dport = lua_tonumber(L, 5);
-    proto = (IpProtocol)lua_tonumber(L, 6);
+    uint16_t sport = lua_tonumber(L, 4);
+    uint16_t dport = lua_tonumber(L, 5);
+    IpProtocol proto = (IpProtocol)lua_tonumber(L, 6);
 
     auto detector_flow = new DetectorFlow();
     UserData<DetectorFlow>::push(L, DETECTORFLOW, detector_flow);

@@ -49,6 +49,12 @@ struct PortList
 
 static THREAD_LOCAL SF_LIST appid_custom_configs;
 
+AppIdModuleConfig::AppIdModuleConfig()
+{
+    session_log_filter.sip.clear();
+    session_log_filter.dip.clear();
+}
+
 AppIdModuleConfig::~AppIdModuleConfig()
 {
     snort_free((void*)conf_file);

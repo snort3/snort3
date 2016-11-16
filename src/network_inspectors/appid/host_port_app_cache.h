@@ -22,30 +22,26 @@
 #ifndef HOST_PORT_APP_CACHE_H
 #define HOST_PORT_APP_CACHE_H
 
+#include "protocols/protocol_ids.h"
 #include "sfip/sfip_t.h"
 #include "appid_api.h"
 
-class AppIdConfig;
-enum class IpProtocol : uint8_t;
-
-struct HostPortKey
-{
-    sfip_t ip;
-    uint16_t port;
-    IpProtocol proto;
-};
-
 struct HostPortVal
 {
-    AppId appId;
-    unsigned type;
+	AppId appId;
+	unsigned type;
 };
 
-void hostPortAppCacheInit();
-void hostPortAppCacheFini();
-HostPortVal* hostPortAppCacheFind(const sfip_t*, uint16_t port, IpProtocol proto);
-int hostPortAppCacheAdd(const sfip_t*, uint16_t port, IpProtocol proto, unsigned type, AppId);
-void hostPortAppCacheDump();
+class HostPortCache
+{
+public:
+	static void initialize();
+	static void terminate();
+	static HostPortVal* find(const sfip_t*, uint16_t port, IpProtocol proto);
+	static bool add(const sfip_t*, uint16_t port, IpProtocol proto, unsigned type, AppId);
+	static void dump();
+};
+
 
 #endif
 

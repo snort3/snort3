@@ -103,20 +103,25 @@ enum APPID_SESSION_DIRECTION
 
 struct AppIdFlowData
 {
-    AppIdFlowData* next;
-    unsigned fd_id;
-    void* fd_data;
-    AppIdFreeFCN fd_free;
+    AppIdFlowData* next = nullptr;
+    unsigned fd_id = 0;
+    void* fd_data = nullptr;
+    AppIdFreeFCN fd_free = nullptr;
 };
 
 struct CommonAppIdData
 {
-    APPID_FLOW_TYPE flow_type;
-    unsigned policyId;
+    CommonAppIdData()
+    {
+        initiator_ip.clear();
+    }
+
+    APPID_FLOW_TYPE flow_type = APPID_FLOW_TYPE_IGNORE;
+    unsigned policyId = 0;
     //flags shared with other preprocessor via session attributes.
-    uint64_t flags;
+    uint64_t flags = 0;
     sfip_t initiator_ip;
-    uint16_t initiator_port;
+    uint16_t initiator_port = 0;
 };
 
 #define SCAN_HTTP_VIA_FLAG          (1<<0)
@@ -130,68 +135,69 @@ struct CommonAppIdData
 
 struct fflow_info
 {
-    uint32_t sip;
-    uint32_t dip;
-    uint16_t sport;
-    uint16_t dport;
-    IpProtocol protocol;
-    AppId appId;
-    int flow_prepared;
+    uint32_t sip = 0;
+    uint32_t dip = 0;
+    uint16_t sport = 0;
+    uint16_t dport = 0;
+    IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
+    AppId appId = APP_ID_NONE;
+    int flow_prepared = 0;
 };
 
 #define RESPONSE_CODE_PACKET_THRESHHOLD 0
 
 struct httpSession
 {
-    char* host;
-    uint16_t host_buflen;
-    char* url;
-    char* uri;
-    uint16_t uri_buflen;
-    char* via;
-    char* useragent;
-    uint16_t useragent_buflen;
-    char* response_code;
-    uint16_t response_code_buflen;
-    char* referer;
-    uint16_t referer_buflen;
-    char* cookie;
-    uint16_t cookie_buflen;
-    char* content_type;
-    uint16_t content_type_buflen;
-    char* location;
-    uint16_t location_buflen;
-    char* body;
-    uint16_t body_buflen;
-    char* req_body;
-    uint16_t req_body_buflen;
-    char* server;
-    char* x_working_with;
-    char* new_field[HTTP_FIELD_MAX+1];
-    uint16_t new_field_len[HTTP_FIELD_MAX+1];
-    uint16_t fieldOffset[HTTP_FIELD_MAX+1];
-    uint16_t fieldEndOffset[HTTP_FIELD_MAX+1];
-    fflow_info* fflow;
-    bool new_field_contents;
-    int chp_finished;
-    AppId chp_candidate;
-    AppId chp_alt_candidate;
-    int chp_hold_flow;
-    int ptype_req_counts[NUMBER_OF_PTYPES];
-    int total_found;
-    unsigned app_type_flags;
-    int num_matches;
-    int num_scans;
-    int get_offsets_from_rebuilt;
-    bool skip_simple_detect;
-    sfip_t* xffAddr;
-    const char** xffPrecedence;
-    int numXffFields;
+    char* host = nullptr;
+    uint16_t host_buflen = 0;
+    char* url = nullptr;
+    char* uri = nullptr;
+    uint16_t uri_buflen = 0;
+    char* via = nullptr;
+    char* useragent = nullptr;
+    uint16_t useragent_buflen = 0;
+    char* response_code = nullptr;
+    uint16_t response_code_buflen = 0;
+    char* referer = nullptr;
+    uint16_t referer_buflen = 0;
+    char* cookie = nullptr;
+    uint16_t cookie_buflen = 0;
+    char* content_type = nullptr;
+    uint16_t content_type_buflen = 0;
+    char* location = nullptr;
+    uint16_t location_buflen = 0;
+    char* body = nullptr;
+    uint16_t body_buflen = 0;
+    char* req_body = nullptr;
+    uint16_t req_body_buflen = 0;
+    char* server = nullptr;
+    char* x_working_with = nullptr;
+    char* new_field[HTTP_FIELD_MAX+1] = { nullptr };
+    uint16_t new_field_len[HTTP_FIELD_MAX+1] = { 0 };
+    uint16_t fieldOffset[HTTP_FIELD_MAX+1] = { 0 };
+    uint16_t fieldEndOffset[HTTP_FIELD_MAX+1] = { 0 };
+    fflow_info* fflow = nullptr;
+    bool new_field_contents = false;
+    int chp_finished = 0;
+    AppId chp_candidate = APP_ID_NONE;
+    AppId chp_alt_candidate = APP_ID_NONE;
+    int chp_hold_flow = 0;
+    int ptype_req_counts[NUMBER_OF_PTYPES] = { 0 };
+    int total_found = 0;
+    unsigned app_type_flags = 0;
+    int num_matches = 0;
+    int num_scans = 0;
+    int get_offsets_from_rebuilt = 0;
+    bool skip_simple_detect = false;
+    sfip_t* xffAddr = nullptr;
+    const char** xffPrecedence = nullptr;
+    int numXffFields = 0;
 
 #if RESPONSE_CODE_PACKET_THRESHHOLD
-    unsigned response_code_packets;
+    unsigned response_code_packets = 0;
 #endif
 };
+
 
 // For dnsSession.state:
 #define DNS_GOT_QUERY    0x01
@@ -199,26 +205,26 @@ struct httpSession
 
 struct dnsSession
 {
-    uint8_t state;              // state
-    uint8_t host_len;           // for host
-    uint8_t response_type;      // response: RCODE
-    uint16_t id;                // DNS msg ID
-    uint16_t host_offset;       // for host
-    uint16_t record_type;       // query: QTYPE
-    uint32_t ttl;               // response: TTL
-    char* host;                 // host (usually query, but could be response for reverse lookup)
+    uint8_t state = 0;              // state
+    uint8_t host_len = 0;           // for host
+    uint8_t response_type = 0;      // response: RCODE
+    uint16_t id = 0;                // DNS msg ID
+    uint16_t host_offset = 0;       // for host
+    uint16_t record_type = 0;       // query: QTYPE
+    uint32_t ttl = 0;               // response: TTL
+    char* host = nullptr;           // host (usually query, but could be response for reverse lookup)
 };
 
 struct _RNAServiceSubtype;
 
 struct tlsSession
 {
-    char* tls_host;
-    int tls_host_strlen;
-    char* tls_cname;
-    int tls_cname_strlen;
-    char* tls_orgUnit;
-    int tls_orgUnit_strlen;
+    char* tls_host = nullptr;
+    int tls_host_strlen = 0;
+    char* tls_cname = nullptr;
+    int tls_cname_strlen = 0;
+    char* tls_orgUnit = nullptr;
+    int tls_orgUnit_strlen = 0;
 };
 
 void map_app_names_to_snort_ids();

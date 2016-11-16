@@ -79,7 +79,7 @@ struct AppIdSessionLogFilter
 class AppIdModuleConfig
 {
 public:
-    AppIdModuleConfig() { }
+    AppIdModuleConfig();
     ~AppIdModuleConfig();
 
     const char* conf_file = nullptr;

@@ -856,14 +856,14 @@ static int ftp_validate(ServiceValidationArgs* args)
     static const char FTP_EPSV_CMD[] = "EPSV";
     static const char FTP_PORT_CMD[] = "PORT ";
     static const char FTP_EPRT_CMD[] = "EPRT ";
-    ServiceFTPData* fd;
-    uint16_t offset;
-    uint16_t init_offset;
-    int code;
-    int code_index;
-    uint32_t address;
-    uint16_t port;
-    AppIdSession* fp;
+    ServiceFTPData* fd = nullptr;
+    uint16_t offset = 0;
+    uint16_t init_offset = 0;
+    int code = 0;
+    int code_index = 0;
+    uint32_t address = 0;
+    uint16_t port = 0;
+    AppIdSession* fp = nullptr;
     int retval = SERVICE_INPROCESS;
     AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
@@ -1206,8 +1206,7 @@ static int ftp_validate(ServiceValidationArgs* args)
             case 229:
             {
                 code = ftp_validate_epsv(data + init_offset,
-                    (uint16_t)(offset-init_offset),
-                    &port);
+                    (uint16_t)(offset-init_offset), &port);
 
                 if (!code)
                 {

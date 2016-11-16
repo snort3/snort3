@@ -51,17 +51,11 @@ void free_length_app_cache()
 
 AppId find_length_app_cache(const LengthKey* key)
 {
-    AppId* val;
-
-    val = (AppId*)sfxhash_find(lengthCache, (void*)key);
+    AppId* val = (AppId*)sfxhash_find(lengthCache, (void*)key);
     if (val == nullptr)
-    {
         return APP_ID_NONE;    /* no match */
-    }
     else
-    {
         return *val;           /* match found */
-    }
 }
 
 bool add_length_app_cache(const LengthKey* key, AppId val)

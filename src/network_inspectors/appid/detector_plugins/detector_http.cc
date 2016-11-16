@@ -1719,54 +1719,51 @@ static inline int optionallyReplaceWithStrdup(char** optionalStr, const char* st
     return 0;
 }
 
+static inline uint8_t* continue_buffer_scan(const uint8_t* start, const uint8_t* end, MatchedPatterns* mp,
+    DetectorHTTPPattern* match)
+{
+    uint8_t* bp = (uint8_t*) (start) + mp->index + match->pattern_size;
+    if( (bp >= end) || (*bp != ' ' && *bp != 0x09 && *bp != '/') )
+        return nullptr;
+    else
+        return ++bp;
+}
+
 void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, AppId* ClientAppId,
     char** version)
 {
-    int skypeDetect;
-    int mobileDetect;
-    int safariDetect;
-    unsigned int appleEmailDetect;
-    int firefox_detected, android_browser_detected;
-    int dominant_pattern_detected;
-    int longest_misc_match;
-    const uint8_t* end;
+    char temp_ver[MAX_VERSION_SIZE] = { 0 };
     MatchedPatterns* mp = nullptr;
-    MatchedPatterns* tmp;
-    DetectorHTTPPattern* match;
-    uint8_t* buffPtr;
-    unsigned int i;
-    char temp_ver[MAX_VERSION_SIZE];
-    temp_ver[0] = 0;
+    uint8_t* buffPtr = nullptr;
 
     detectorHttpConfig->client_agent_matcher->find_all((const char*)start, size, &http_pattern_match, false, (void*)&mp);
-
     if (mp)
     {
-        end = start + size;
-        temp_ver[0] = 0;
-        skypeDetect = 0;
-        mobileDetect = 0;
-        safariDetect = 0;
-        firefox_detected = 0;
-        android_browser_detected = 0;
-        dominant_pattern_detected = 0;
-        longest_misc_match = 0;
-        i = 0;
+        const uint8_t* end = start + size;
+        int skypeDetect = 0;
+        int mobileDetect = 0;
+        int safariDetect = 0;
+        int firefox_detected = 0;
+        int android_browser_detected = 0;
+        int dominant_pattern_detected = 0;
+        bool appleEmailDetect = true;
+        int longest_misc_match = 0;
+        unsigned i = 0;
+
         *ClientAppId = APP_ID_NONE;
         *serviceAppId = APP_ID_HTTP;
-        for (tmp = mp; tmp; tmp = tmp->next)
+        for (MatchedPatterns* tmp = mp; tmp; tmp = tmp->next)
         {
-            match = (DetectorHTTPPattern*)tmp->mpattern;
+            DetectorHTTPPattern* match = (DetectorHTTPPattern*)tmp->mpattern;
             switch (match->client_app)
             {
             case APP_ID_INTERNET_EXPLORER:
             case APP_ID_FIREFOX:
                 if (dominant_pattern_detected)
                     break;
-                buffPtr = (uint8_t*)start + tmp->index + match->pattern_size;
-                if (*buffPtr != ' ' && *buffPtr != 0x09 && *buffPtr != '/')
+                buffPtr = continue_buffer_scan(start, end, tmp, match);
+                if(!buffPtr)
                     break;
-                buffPtr++;
                 while (i < MAX_VERSION_SIZE-1 && buffPtr < end)
                 {
                     if (*buffPtr != ' ' && *buffPtr != 0x09 && *buffPtr != ';' && *buffPtr != ')')
@@ -1798,10 +1795,9 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
             case APP_ID_CHROME:
                 if (dominant_pattern_detected)
                     break;
-                buffPtr = (uint8_t*)start + tmp->index + match->pattern_size;
-                if (*buffPtr != ' ' && *buffPtr != 0x09 && *buffPtr != '/')
+                buffPtr = continue_buffer_scan(start, end, tmp, match);
+                if(!buffPtr)
                     break;
-                buffPtr++;
                 while (i < MAX_VERSION_SIZE-1 && buffPtr < end)
                 {
                     if (*buffPtr != ' ' && *buffPtr != 0x09 && *buffPtr != ';' && *buffPtr != ')')
@@ -1821,10 +1817,9 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
             case APP_ID_ANDROID_BROWSER:
                 if (dominant_pattern_detected)
                     break;
-                buffPtr = (uint8_t*)start + tmp->index + match->pattern_size;
-                if (*buffPtr != ' ' && *buffPtr != 0x09 && *buffPtr != '/')
+                buffPtr = continue_buffer_scan(start, end, tmp, match);
+                if(!buffPtr)
                     break;
-                buffPtr++;
                 while (i < MAX_VERSION_SIZE-1 && buffPtr < end)
                 {
                     if (*buffPtr != ' ' && *buffPtr != 0x09 && *buffPtr != ';' && *buffPtr != ')')
@@ -1846,10 +1841,9 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
                     break;
             case APP_ID_WINDOWS_MEDIA_PLAYER:
             case APP_ID_BITTORRENT:
-                buffPtr = (uint8_t*)start + tmp->index + match->pattern_size;
-                if (*buffPtr != ' ' && *buffPtr != 0x09 && *buffPtr != '/')
+                buffPtr = continue_buffer_scan(start, end, tmp, match);
+                if(!buffPtr)
                     break;
-                buffPtr++;
                 while (i < MAX_VERSION_SIZE-1 && buffPtr < end)
                 {
                     if (*buffPtr != ' ' && *buffPtr != 0x09 && *buffPtr != ';' && *buffPtr != ')')
@@ -1898,12 +1892,12 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
                 break;
 
             case APP_ID_APPLE_EMAIL:
-                appleEmailDetect = 1;
+                appleEmailDetect = true;
                 for (i = 0; i < 3 && appleEmailDetect; i++)
                 {
                     buffPtr = (uint8_t*)strstr((char*)start, (char*)APPLE_EMAIL_PATTERNS[i]);
-                    appleEmailDetect  = ((uint8_t*)buffPtr && (i != 0 || (i == 0 && buffPtr ==
-                        ((uint8_t*)start))));
+                    appleEmailDetect  = ((uint8_t*)buffPtr &&
+                                    (i != 0 || (i == 0 && buffPtr == ((uint8_t*)start))));
                 }
                 if (appleEmailDetect)
                 {
@@ -2014,6 +2008,7 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
                 }
             }
         }
+
         if (mobileDetect && safariDetect && !dominant_pattern_detected)
         {
             *serviceAppId = APP_ID_HTTP;
@@ -2043,7 +2038,7 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
     }
 
 done:
-    optionallyReplaceWithStrdup(version,temp_ver);
+    optionallyReplaceWithStrdup(version, temp_ver);
     FreeMatchStructures(mp);
 }
 

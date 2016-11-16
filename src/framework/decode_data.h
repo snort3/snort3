@@ -131,6 +131,8 @@ struct DecodeData
     {
         memset(this, 0, offsetof(DecodeData, ip_api));
         ip_api.reset();
+        sp = 0;
+        dp = 0;
     }
 
     inline void set_pkt_type(PktType pkt_type)

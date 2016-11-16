@@ -33,14 +33,14 @@ enum class IpProtocol : uint8_t;
 
 struct LengthSequenceEntry
 {
-    uint8_t direction;     /* APP_ID_FROM_INITIATOR or APP_ID_FROM_RESPONDER */
-    uint16_t length;       /* payload size (bytes) */
+    uint8_t direction = 0;     /* APP_ID_FROM_INITIATOR or APP_ID_FROM_RESPONDER */
+    uint16_t length = 0;       /* payload size (bytes) */
 };
 
 struct LengthKey
 {
-    IpProtocol proto;                        /* IpProtocol::TCP or IpProtocol::UDP */
-    uint8_t sequence_cnt;                 /* num valid entries in sequence */
+    IpProtocol proto = IpProtocol::PROTO_NOT_SET;  // IpProtocol::TCP or IpProtocol::UDP
+    uint8_t sequence_cnt = 0;                      // num valid entries in sequence
     LengthSequenceEntry sequence[LENGTH_SEQUENCE_CNT_MAX];
 };
 

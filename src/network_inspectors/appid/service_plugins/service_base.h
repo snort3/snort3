@@ -74,7 +74,7 @@ const RNAServiceElement* get_service_element(RNAServiceValidationFCN, Detector*)
 void add_service_to_active_list(RNAServiceValidationModule* service);
 extern uint32_t app_id_instance_id;
 
-void AppIdFreeServiceMatchList(ServiceMatch* sm);
+void free_service_match_list(ServiceMatch* sm);
 
 inline bool compareServiceElements(const RNAServiceElement* first,
         const RNAServiceElement* second)

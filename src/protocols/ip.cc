@@ -28,6 +28,8 @@ void IpApi::reset()
 {
     type = IAT_NONE;
     iph = nullptr;
+    src.clear();
+    dst.clear();
 }
 
 void IpApi::set(const IP4Hdr* h4)

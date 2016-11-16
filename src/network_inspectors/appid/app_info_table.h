@@ -23,7 +23,7 @@
 #define APP_INFO_TABLE_H
 
 #include <cstdint>
-#include <map>
+#include <unordered_map>
 #include <mutex>
 
 #include "application_ids.h"
@@ -90,8 +90,8 @@ public:
     char* app_name_key = nullptr;
 };
 
-typedef std::map<AppId, AppInfoTableEntry*> AppInfoTable;
-typedef std::map<std::string, AppInfoTableEntry*> AppInfoNameTable;
+typedef std::unordered_map<AppId, AppInfoTableEntry*> AppInfoTable;
+typedef std::unordered_map<std::string, AppInfoTableEntry*> AppInfoNameTable;
 
 class AppInfoManager
 {

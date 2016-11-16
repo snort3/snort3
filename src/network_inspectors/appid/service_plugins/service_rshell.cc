@@ -134,10 +134,10 @@ static void rshell_free_state(void* data)
 static int rshell_validate(ServiceValidationArgs* args)
 {
     ServiceRSHELLData* rd = nullptr;
-    ServiceRSHELLData* tmp_rd;
-    int i;
-    uint32_t port;
-    AppIdSession* pf;
+    ServiceRSHELLData* tmp_rd = nullptr;
+    int i = 0;
+    uint32_t port = 0;
+    AppIdSession* pf = nullptr;
     AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;
@@ -180,14 +180,11 @@ static int rshell_validate(ServiceValidationArgs* args)
             goto bail;
         if (port)
         {
-            const sfip_t* sip;
-            const sfip_t* dip;
-
             tmp_rd = (ServiceRSHELLData*)snort_calloc(sizeof(ServiceRSHELLData));
             tmp_rd->state = RSHELL_STATE_STDERR_CONNECT_SYN;
             tmp_rd->parent = rd;
-            dip = pkt->ptrs.ip_api.get_dst();
-            sip = pkt->ptrs.ip_api.get_src();
+            const sfip_t* dip = pkt->ptrs.ip_api.get_dst();
+            const sfip_t* sip = pkt->ptrs.ip_api.get_src();
             pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)port, IpProtocol::TCP, app_id,
                     APPID_EARLY_SESSION_FLAG_FW_RULE);
             if (pf)

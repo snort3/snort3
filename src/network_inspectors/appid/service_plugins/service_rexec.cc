@@ -142,9 +142,9 @@ static void rexec_free_state(void* data)
 
 static int rexec_validate(ServiceValidationArgs* args)
 {
-    int i;
-    uint32_t port;
-    AppIdSession* pf;
+    int i = 0;
+    uint32_t port = 0;
+    AppIdSession* pf = nullptr;
     AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;

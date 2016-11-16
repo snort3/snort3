@@ -88,7 +88,7 @@ static THREAD_LOCAL time_t bucketStart;
 static THREAD_LOCAL time_t bucketInterval;
 static THREAD_LOCAL time_t bucketEnd;
 
-static const char appid_stats_file_suffix[] = "_appid_stats.log";
+static const char appid_stats_file_suffix[] = "appid_stats.log";
 static size_t rollSize;
 static time_t rollPeriod;
 static bool enableAppStats;
@@ -449,7 +449,6 @@ static void dump_statistics()
                     app_name = "__none";
                 else
                 {
-                    ErrorMessage("invalid appid in appStatRecord (%u)\n", record->app_id);
                     if (cooked_client)
                         snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_err_cl_%u",app_id);
                     else

@@ -23,37 +23,24 @@
 #define SERVICE_STATE_H
 
 #include "sfip/sfip_t.h"
+#include "protocols/protocol_ids.h"
+#include "utils/util.h"
 
 struct RNAServiceElement;
-struct ServiceMatch;
 enum class IpProtocol : uint8_t;
 
 // Service state stored in hosttracker for maintaining service matching states.
 enum SERVICE_ID_STATE
 {
-    /**first search of service. The matching criteria is coded in ProtocolID funtion.
-     */
-    SERVICE_ID_NEW = 0,
-
-    /**service is already detected and valid.
-     */
-    SERVICE_ID_VALID,
-
-    /**match based on source or destination port in first packet in flow.
-     */
-    SERVICE_ID_PORT,
-
-    /**match based on pattern in first response from server or client in
-     * case of client_services.
-     */
-    SERVICE_ID_PATTERN,
-
-    /**match based on round-robin through tcpServiceList or UdpServiceList. RNA walks
-     * the list from first element to last. In a detector declares a flow incompatible
-     * or the flow closes earlier than expected by detector, then the next detector is
-     * tried. This can obviously delay detection under some scenarios.
-     */
-    SERVICE_ID_BRUTE_FORCE,
+    SERVICE_ID_NEW = 0,     // service search starting
+    SERVICE_ID_VALID,       // service detected
+    SERVICE_ID_PORT,        // matched based on src/dest port of first packet
+    SERVICE_ID_PATTERN,     // match based on pattern in first response packet
+    SERVICE_ID_BRUTE_FORCE, // match based on round-robin through tcp/udp service lists
+                            // the lists are walked from first element to last. In a detector
+                            // declares a flow incompatible or the flow closes earlier than
+                            // expected by detector, then the next detector is tried. This can
+                            //  obviously delay detection under some scenarios.
 };
 
 #define DETECTOR_TYPE_PASSIVE   0
@@ -64,21 +51,52 @@ enum SERVICE_ID_STATE
 #define DETECTOR_TYPE_CONFLICT  4
 #define DETECTOR_TYPE_PATTERN   5
 
+struct ServiceMatch
+{
+    struct ServiceMatch* next;
+    unsigned count;
+    unsigned size;
+    RNAServiceElement* svc;
+};
+
 // Service state saved in hosttracker, for identifying a service across multiple flow instances.
 struct AppIdServiceIDState
 {
-    const RNAServiceElement* svc;
+	AppIdServiceIDState()
+	{
+		last_detract.clear();
+		last_invalid_client.clear();
+		reset_time = 0;
+	}
+
+	~AppIdServiceIDState()
+	{
+	    free_service_match_list();
+	}
+
+	void free_service_match_list()
+	{
+	    ServiceMatch* sm;
+
+	    while( (sm = service_list) )
+	    {
+	        service_list = sm->next;
+	        snort_free(sm);
+	    }
+	}
+
+    const RNAServiceElement* svc = nullptr;
 
     /**State of service identification.*/
-    SERVICE_ID_STATE state;
-    unsigned valid_count;
-    unsigned detract_count;
+    SERVICE_ID_STATE state = SERVICE_ID_NEW;
+    unsigned valid_count = 0;
+    unsigned detract_count = 0;
     sfip_t last_detract;
 
     /**Number of consequetive flows that were declared incompatible by detectors. Incompatibility
      * means client packet did not match.
      */
-    unsigned invalid_client_count;
+    unsigned invalid_client_count = 0;
 
     /**IP address of client in last flow that was declared incompatible. If client IP address is
      * different everytime, then consequetive incompatible status indicate that flow is not using
@@ -88,7 +106,7 @@ struct AppIdServiceIDState
 
     /** Count for number of unknown sessions saved
      */
-    unsigned unknowns_logged;
+    unsigned unknowns_logged = 0;
     time_t reset_time;
 
     /**List of ServiceMatch nodes which are sorted in order of pattern match. The list is contructed
@@ -96,40 +114,23 @@ struct AppIdServiceIDState
      * matching, but has the disadvantage of making one flow match dependent on first instance of the
      * same flow.
      */
-    ServiceMatch* service_list;
-    ServiceMatch* current_service;
+    ServiceMatch* service_list = nullptr;
+    ServiceMatch* current_service = nullptr;
 
     /** Is this entry currently being used in an active session? */
-    bool searching;
+    bool searching = false;
 };
 
-struct AppIdServiceStateKey4
+
+class AppIdServiceState
 {
-    uint16_t port;
-    IpProtocol proto;
-    uint32_t ip;
-    uint32_t level;
+public:
+	static void initialize(unsigned long);
+	static void clean();
+	static AppIdServiceIDState* add( const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
+    static AppIdServiceIDState* get( const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
+    static void remove(const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
+    static void dump_stats();
 };
-
-struct AppIdServiceStateKey6
-{
-    uint16_t port;
-    IpProtocol proto;
-    uint8_t ip[16];
-    uint32_t level;
-};
-
-union AppIdServiceStateKey
-{
-    AppIdServiceStateKey4 key4;
-    AppIdServiceStateKey6 key6;
-};
-
-int init_service_state(unsigned long memcap);
-void clean_service_state();
-void remove_service_id_state(const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
-AppIdServiceIDState* get_service_id_state( const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
-AppIdServiceIDState* add_service_id_state( const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
-void dump_service_state_stats();
 
 #endif

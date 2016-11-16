@@ -1148,15 +1148,13 @@ void ssl_detector_free_patterns()
 
 bool setSSLSquelch(Packet* p, int type, AppId appId)
 {
-    const sfip_t* sip;
-    const sfip_t* dip;
-    AppIdSession* f;
+    AppIdSession* f = nullptr;
 
     if (!AppInfoManager::get_instance().get_app_info_flags(appId, APPINFO_FLAG_SSL_SQUELCH))
         return false;
 
-    dip = p->ptrs.ip_api.get_dst();
-    sip = p->ptrs.ip_api.get_src();
+    const sfip_t* dip = p->ptrs.ip_api.get_dst();
+    const sfip_t* sip = p->ptrs.ip_api.get_src();
 
     if (!(f = AppIdSession::create_future_session(p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP,
     		appId, 0)))

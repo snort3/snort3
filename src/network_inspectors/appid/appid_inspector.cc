@@ -53,7 +53,7 @@ static void dump_appid_stats()
     if (thirdparty_appid_module)
         thirdparty_appid_module->print_stats();
     LogMessage("    Total packets ignored : %" PRIu64 "\n", appid_stats.ignored_packets);
-    dump_service_state_stats();
+    AppIdServiceState::dump_stats();
 }
 
 AppIdInspector::AppIdInspector(const AppIdModuleConfig* pc)
@@ -107,7 +107,7 @@ void AppIdInspector::show(SnortConfig*)
 void AppIdInspector::tinit()
 {
     init_appid_statistics(*config);
-    hostPortAppCacheInit();
+    HostPortCache::initialize();
     init_appid_forecast();
     init_http_detector();
     init_service_plugins();
@@ -124,16 +124,14 @@ void AppIdInspector::tinit()
     finalize_sip_ua();
     ssl_detector_process_patterns();
     dns_host_detector_process_patterns();
-
-    if (init_service_state(config->memcap))
-        exit(-1);
+   	AppIdServiceState::initialize(config->memcap);
 }
 
 void AppIdInspector::tterm()
 {
     cleanup_appid_statistics();
 
-    hostPortAppCacheFini();
+    HostPortCache::terminate();
     clean_appid_forecast();
     service_dns_host_clean();
     service_ssl_clean();
@@ -145,7 +143,7 @@ void AppIdInspector::tterm()
 
     AppIdSession::release_free_list_flow_data();
     LuaDetectorManager::terminate();
-    clean_service_state();
+    AppIdServiceState::clean();
 }
 
 void AppIdInspector::eval(Packet* pkt)

@@ -163,14 +163,14 @@ static int tftp_verify_header(const uint8_t* data, uint16_t size,
 
 static int tftp_validate(ServiceValidationArgs* args)
 {
-    ServiceTFTPData* td;
-    ServiceTFTPData* tmp_td;
-    int mode;
+    ServiceTFTPData* td = nullptr;
+    ServiceTFTPData* tmp_td = nullptr;
+    int mode = 0;
     uint16_t block = 0;
-    uint16_t tmp;
-    AppIdSession* pf;
-    const sfip_t* sip;
-    const sfip_t* dip;
+    uint16_t tmp = 0;
+    AppIdSession* pf = nullptr;
+    const sfip_t* sip = nullptr;
+    const sfip_t* dip = nullptr;
     AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;

@@ -437,13 +437,11 @@ static int snmp_verify_packet(const uint8_t** const data,
 
 static int snmp_validate(ServiceValidationArgs* args)
 {
-    ServiceSNMPData* sd;
-    ServiceSNMPData* tmp_sd;
-    AppIdSession* pf;
-    uint8_t pdu;
-    const sfip_t* sip;
-    const sfip_t* dip;
-    uint8_t version;
+    ServiceSNMPData* sd = nullptr;
+    ServiceSNMPData* tmp_sd = nullptr;
+    AppIdSession* pf = nullptr;
+    uint8_t pdu = 0;
+    uint8_t version = 0;
     const char* version_str = nullptr;
     AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
@@ -488,6 +486,7 @@ static int snmp_validate(ServiceValidationArgs* args)
     switch (sd->state)
     {
     case SNMP_STATE_CONNECTION:
+    {
         if (pdu != SNMP_PDU_GET_RESPONSE && dir == APP_ID_FROM_RESPONDER)
         {
             sd->state = SNMP_STATE_R_RESPONSE;
@@ -517,8 +516,8 @@ static int snmp_validate(ServiceValidationArgs* args)
         sd->state = SNMP_STATE_RESPONSE;
 
         /*adding expected connection in case the server doesn't send from 161*/
-        dip = pkt->ptrs.ip_api.get_dst();
-        sip = pkt->ptrs.ip_api.get_src();
+        const sfip_t* dip = pkt->ptrs.ip_api.get_dst();
+        const sfip_t* sip = pkt->ptrs.ip_api.get_src();
         pf = AppIdSession::create_future_session(pkt, dip, 0, sip, pkt->ptrs.sp, asd->protocol, app_id, 0);
         if (pf)
         {
@@ -538,6 +537,7 @@ static int snmp_validate(ServiceValidationArgs* args)
             pf->scan_flags |= SCAN_HOST_PORT_FLAG;
             pf->common.initiator_ip = *sip;
         }
+    }
         break;
     case SNMP_STATE_RESPONSE:
         if (pdu == SNMP_PDU_GET_RESPONSE)

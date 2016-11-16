@@ -217,7 +217,7 @@ void AppInfoManager::set_app_info_active(AppId appId)
     if (entry)
         entry->flags |= APPINFO_FLAG_ACTIVE;
     else
-        ErrorMessage("AppInfo: AppId %d has no entry in application info table\n", appId);
+        WarningMessage("AppInfo: AppId %d has no entry in application info table\n", appId);
 }
 
 void AppInfoManager::load_appid_config(const char* path)

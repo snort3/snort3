@@ -141,10 +141,9 @@ void AppIdSession::set_session_logging_state(const Packet* pkt, int direction)
 
 AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, int direction)
 {
-    const sfip_t* ip;
     uint16_t port = 0;
 
-    ip = (direction == APP_ID_FROM_INITIATOR)
+    const sfip_t* ip = (direction == APP_ID_FROM_INITIATOR)
         ? p->ptrs.ip_api.get_src() : p->ptrs.ip_api.get_dst();
     if ( ( proto == IpProtocol::TCP || proto == IpProtocol::UDP ) && ( p->ptrs.sp != p->ptrs.dp ) )
         port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
@@ -172,12 +171,25 @@ AppIdSession::AppIdSession(IpProtocol proto, const sfip_t* ip, uint16_t port)
     if (thirdparty_appid_module)
         if (!(tpsession = thirdparty_appid_module->session_create()))
             ErrorMessage("Could not allocate third party session data");
+
+    length_sequence.proto = IpProtocol::PROTO_NOT_SET;
+    length_sequence.sequence_cnt = 0;
+    memset(length_sequence.sequence, '\0', sizeof(length_sequence.sequence));
+    session_logging_id[0] = '\0';
 }
 
 AppIdSession::~AppIdSession()
 {
 	if( !in_expected_cache)
-		delete_shared_data();
+	{
+	    update_appid_statistics(this);
+	    if (flow)
+	        FailInProcessService(this, config);
+	}
+
+	delete_shared_data();
+
+    free_flow_data();
 }
 
 // FIXIT-L X Move this to somewhere more generally available/appropriate.
@@ -1236,7 +1248,7 @@ void AppIdSession::pickHttpXffAddress(Packet*, ThirdPartyAppIDAttributeData* att
 bool AppIdSession::do_service_discovery(IpProtocol protocol, int direction, AppId client_app_id,
         AppId payload_app_id, Packet* p)
 {
-    AppInfoTableEntry* entry;
+    AppInfoTableEntry* entry = nullptr;
     bool isTpAppidDiscoveryDone = false;
 
     if (rnaServiceState != RNA_STATE_FINISHED)
@@ -1466,14 +1478,12 @@ bool AppIdSession::do_client_discovery(int direction, Packet* p)
 
 void AppIdSession::do_application_discovery(Packet* p)
 {
-    IpProtocol protocol;
+    IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
     AppId client_app_id = 0;
     AppId payload_app_id = 0;
     bool isTpAppidDiscoveryDone = false;
-    uint64_t flow_flags;
-    int direction;
-    const sfip_t* ip;
-    uint16_t port;
+    int direction = 0;
+    const sfip_t* ip = nullptr;
 
     if( is_packet_ignored(p) )
         return;
@@ -1519,7 +1529,7 @@ void AppIdSession::do_application_discovery(Packet* p)
         direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
     }
 
-    flow_flags = AppIdSession::is_session_monitored(p, direction, asd);
+    uint64_t flow_flags = AppIdSession::is_session_monitored(p, direction, asd);
     if (!(flow_flags & (APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED)))
     {
         if (!asd)
@@ -1594,11 +1604,10 @@ void AppIdSession::do_application_discovery(Packet* p)
 
     else if ( p->is_tcp() && p->ptrs.tcph )
     {
+        uint16_t port = 0;
         const auto* tcph = p->ptrs.tcph;
         if ( tcph->is_rst() && asd->previous_tcp_flags == TH_SYN )
         {
-            AppIdServiceIDState* id_state;
-
             asd->set_session_flags(APPID_SESSION_SYN_RST);
             if (sfip_is_set(&asd->service_ip))
             {
@@ -1611,7 +1620,7 @@ void AppIdSession::do_application_discovery(Packet* p)
                 port = p->ptrs.sp;
             }
 
-            id_state = get_service_id_state(ip, IpProtocol::TCP, port,
+            AppIdServiceIDState* id_state = AppIdServiceState::get(ip, IpProtocol::TCP, port,
                 AppIdServiceDetectionLevel(asd));
 
             if (id_state)
@@ -1620,7 +1629,7 @@ void AppIdSession::do_application_discovery(Packet* p)
                     id_state->reset_time = packet_time();
                 else if ((packet_time() - id_state->reset_time) >= 60)
                 {
-                    remove_service_id_state(ip, IpProtocol::TCP, port,
+                    AppIdServiceState::remove(ip, IpProtocol::TCP, port,
                             AppIdServiceDetectionLevel(asd));
                     asd->set_session_flags(APPID_SESSION_SERVICE_DELETED);
                 }
@@ -1633,7 +1642,8 @@ void AppIdSession::do_application_discovery(Packet* p)
     /*HostPort based AppId.  */
     if (!(asd->scan_flags & SCAN_HOST_PORT_FLAG))
     {
-        HostPortVal* hv;
+        HostPortVal* hv = nullptr;
+        uint16_t port = 0;
 
         asd->scan_flags |= SCAN_HOST_PORT_FLAG;
         if (direction == APP_ID_FROM_INITIATOR)
@@ -1647,7 +1657,7 @@ void AppIdSession::do_application_discovery(Packet* p)
             port = p->ptrs.sp;
         }
 
-        if ((hv = hostPortAppCacheFind(ip, port, protocol)))
+        if ((hv = HostPortCache::find(ip, port, protocol)))
         {
             switch (hv->type)
             {
@@ -1877,7 +1887,6 @@ static inline int check_port_exclusion(const Packet* pkt, bool reversed)
     SF_LIST* pe_list;
     PortExclusion* pe;
     const sfip_t* s_ip;
-    uint16_t port;
     AppIdConfig* config = AppIdConfig::get_appid_config();
 
     if ( pkt->is_tcp() )
@@ -1894,7 +1903,7 @@ static inline int check_port_exclusion(const Packet* pkt, bool reversed)
         return 0;
 
     /* check the source port */
-    port = reversed ? pkt->ptrs.dp : pkt->ptrs.sp;
+    uint16_t port = reversed ? pkt->ptrs.dp : pkt->ptrs.sp;
     if ( port && (pe_list = src_port_exclusions[port]) != nullptr )
     {
         s_ip = reversed ? pkt->ptrs.ip_api.get_dst() : pkt->ptrs.ip_api.get_src();
@@ -1999,7 +2008,7 @@ bool AppIdSession::is_ssl_decryption_enabled()
 
 uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSession* asd)
 {
-    uint64_t flags;
+    uint64_t flags = 0;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
 
     flow_flags |= (dir == APP_ID_FROM_INITIATOR) ?
@@ -2711,22 +2720,15 @@ void AppIdSession::free_flow_data()
         flowData = tmp_fd->next;
         if (tmp_fd->fd_data && tmp_fd->fd_free)
             tmp_fd->fd_free(tmp_fd->fd_data);
-        tmp_fd->next = fd_free_list;
-        fd_free_list = tmp_fd;
+
+        snort_free( tmp_fd );
+        //tmp_fd->next = fd_free_list;
+        //fd_free_list = tmp_fd;
     }
 }
 
 void AppIdSession::delete_shared_data()
 {
-    RNAServiceSubtype* rna_service_subtype;
-
-    /*check daq flag */
-    update_appid_statistics(this);
-
-    if (flow)
-        FailInProcessService(this, config);
-    free_flow_data();
-
     if (thirdparty_appid_module)
     {
         thirdparty_appid_module->session_delete(tpsession, 0);
@@ -2737,14 +2739,18 @@ void AppIdSession::delete_shared_data()
     snort_free(serviceVendor);
     snort_free(serviceVersion);
     snort_free(netbios_name);
-    while ((rna_service_subtype = subtype))
+
+    RNAServiceSubtype* rna_ss = subtype;
+    while ( rna_ss )
     {
-        subtype = rna_service_subtype->next;
-        snort_free(*(void**)&rna_service_subtype->service);
-        snort_free(*(void**)&rna_service_subtype->vendor);
-        snort_free(*(void**)&rna_service_subtype->version);
-        snort_free(rna_service_subtype);
+        subtype = rna_ss->next;
+        snort_free(*(void**)&rna_ss->service);
+        snort_free(*(void**)&rna_ss->vendor);
+        snort_free(*(void**)&rna_ss->version);
+        snort_free(rna_ss);
+        rna_ss = subtype;
     }
+
     if (candidate_service_list)
     {
         sflist_free(candidate_service_list);
@@ -2812,6 +2818,7 @@ void AppIdSession::free_flow_data_by_id(unsigned id)
 
     for (pfd = &flowData; *pfd && (*pfd)->fd_id != id; pfd = &(*pfd)->next)
         ;
+
     if ((fd = *pfd))
     {
         *pfd = fd->next;

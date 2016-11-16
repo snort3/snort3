@@ -30,6 +30,7 @@
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
+#include "protocols/protocol_ids.h"
 #include "sfip/sf_ip.h"
 #include "utils/util.h"
 
@@ -196,10 +197,10 @@ static int service_register_pattern(lua_State* L)
     // FIXIT-M  none of these params check for signedness casting issues
     // FIXIT-M May want to create a lua_toipprotocol() so we can handle
     //          error checking in that function.
-    int protocol = lua_tonumber(L, index++);
-    if (protocol > UINT8_MAX)
+    unsigned protocol = lua_tonumber(L, index++);
+    if (protocol > (unsigned)IpProtocol::RESERVED)
     {
-        ErrorMessage("Invalid protocol value %d\n", protocol);
+        ErrorMessage("Invalid protocol value %u\n", protocol);
         return -1;
     }
 
@@ -1401,14 +1402,13 @@ static int detector_add_host_port_application(lua_State* L)
 
     unsigned port  = lua_tointeger(L, index++);
     unsigned proto  = lua_tointeger(L, index++);
-
-    if (proto > UINT8_MAX)
+    if (proto > (unsigned)IpProtocol::RESERVED)
     {
         ErrorMessage("%s:Invalid protocol value %u\n",__func__, proto);
         return 0;
     }
 
-    if (!hostPortAppCacheAdd(&ip_addr, (uint16_t)port, (IpProtocol)proto, type, app_id))
+    if (!HostPortCache::add(&ip_addr, (uint16_t)port, (IpProtocol)proto, type, app_id))
         ErrorMessage("%s:Failed to backend call\n",__func__);
 
     return 0;

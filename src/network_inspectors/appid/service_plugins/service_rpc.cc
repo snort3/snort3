@@ -316,17 +316,17 @@ static const RPCProgram* FindRPCProgram(uint32_t program)
 static int validate_packet(const uint8_t* data, uint16_t size, int dir, AppIdSession* asd,
         Packet* pkt, ServiceRPCData* rd, const char** pname, uint32_t* program)
 {
-    const ServiceRPCCall* call;
-    const ServiceRPCReply* reply;
-    const ServiceRPC* rpc;
-    const ServiceRPCPortmap* pm;
-    const ServiceRPCAuth* a;
-    const ServiceRPCPortmapReply* pmr;
-    uint32_t tmp;
-    uint32_t val;
-    const uint8_t* end;
-    AppIdSession* pf;
-    const RPCProgram* rprog;
+    const ServiceRPCCall* call = nullptr;
+    const ServiceRPCReply* reply = nullptr;
+    const ServiceRPC* rpc = nullptr;
+    const ServiceRPCPortmap* pm = nullptr;
+    const ServiceRPCAuth* a = nullptr;
+    const ServiceRPCPortmapReply* pmr = nullptr;
+    uint32_t tmp = 0;
+    uint32_t val = 0;
+    const uint8_t* end = nullptr;
+    AppIdSession* pf = nullptr;
+    const RPCProgram* rprog = nullptr;
 
     if (!size)
         return SERVICE_INPROCESS;
@@ -439,11 +439,8 @@ static int validate_packet(const uint8_t* data, uint16_t size, int dir, AppIdSes
                     pmr = (ServiceRPCPortmapReply*)data;
                     if (pmr->port)
                     {
-                        const sfip_t* sip;
-                        const sfip_t* dip;
-
-                        dip = pkt->ptrs.ip_api.get_dst();
-                        sip = pkt->ptrs.ip_api.get_src();
+                        const sfip_t* dip = pkt->ptrs.ip_api.get_dst();
+                        const sfip_t* sip = pkt->ptrs.ip_api.get_src();
                         tmp = ntohl(pmr->port);
                         pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)tmp,
                             (IpProtocol)ntohl((uint32_t)rd->proto), app_id, 0);
