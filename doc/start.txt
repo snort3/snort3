@@ -122,7 +122,7 @@ Then give it a go:
 * Examine and dump a pcap:
 
     $my_path/bin/snort -r <pcap>
-    $my_path/bin/snort -K text -d -e -q -r <pcap>
+    $my_path/bin/snort -L dump -d -e -q -r <pcap>
 
 * Verify config, with or w/o rules:
 

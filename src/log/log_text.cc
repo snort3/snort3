@@ -1254,6 +1254,7 @@ static void LogCharData(TextLog* log, const char* data, int len)
  *
  * Returns: void function
  */
+#ifdef REG_TEST
 static const char SEPARATOR[] =
           "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -";
 
@@ -1263,6 +1264,17 @@ static const char SEPARATOR[] =
 
 static const char PAD3[] =
           "                                                             ";
+#else
+static const char SEPARATOR[] =
+          "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -";
+
+#define BYTES_PER_FRAME 16
+/* middle:"41 02 43 04 45 06 47 08 49 0A 4B 0C 4D 0E 4F 0F  A.C.E.G.I.K.M.O....."
+   at end:"41 02 43 04 45 06 47 08                          A.C.E.G."*/
+
+static const char PAD3[] =
+          "                                                 ";
+#endif
 
 void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
 {

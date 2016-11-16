@@ -167,7 +167,7 @@ Then give it a go:
 
     ```shell
     $my_path/bin/snort -r a.pcap
-    $my_path/bin/snort -K text -d -e -q -r a.pcap
+    $my_path/bin/snort -L dump -d -e -q -r a.pcap
     ```
 
 * Verify a config, with or w/o rules:

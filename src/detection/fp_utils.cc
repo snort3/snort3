@@ -270,6 +270,7 @@ bool FpSelector::is_better_than(FpSelector& rhs, bool srvc, RuleDirection dir)
             ParseWarning(WARN_RULES,
                 "only one fast_pattern content per rule allowed - using first");
             pmd->fp = 0;
+            return false;
         }
         return true;
     }
@@ -531,14 +532,14 @@ TEST_CASE("fp_pkt_key_port_user", "[FastPatternSelect]")
 TEST_CASE("fp_pkt_key_port_user_user", "[FastPatternSelect]")
 {
     PatternMatchData p0;
-    set_pmd(p0, 0x10, "short");
+    set_pmd(p0, 0x10, "longer");
     FpSelector s0(CAT_SET_KEY, &p0);
 
     PatternMatchData p1;
-    set_pmd(p1, 0x10, "longer");
+    set_pmd(p1, 0x10, "short");
     FpSelector s1(CAT_SET_KEY, &p1);
 
-    CHECK(s0.is_better_than(s1, false, RULE_WO_DIR));
+    CHECK(!s0.is_better_than(s1, false, RULE_WO_DIR));
 }
 
 TEST_CASE("fp_pkt_key_port_user_user2", "[FastPatternSelect]")

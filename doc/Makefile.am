@@ -24,18 +24,21 @@ search_engine.txt
 #so_rule.txt
 
 unbuilt_sources = \
-snort_manual.txt \
-config_changes.txt \
 bugs.txt \
+building.txt \
+config_changes.txt \
 daq.txt \
 differences.txt \
 enviro.txt \
 errors.txt \
 extending.txt \
 features.txt \
+file_processing.txt \
 overview.txt \
 params.txt \
+perf_monitor.txt \
 reference.txt \
+snort_manual.txt \
 snort2lua.txt \
 snorty.png \
 snort2x.png \

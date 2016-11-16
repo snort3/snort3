@@ -16,6 +16,12 @@ include::overview.txt[]
 
 include::start.txt[]
 
+== Features
+
+This section explains how to use key features of Snort++.
+
+include::features.txt[]
+
 == Basic Modules
 
 Internal modules which are not plugins are termed "basic".  These include
@@ -67,14 +73,6 @@ is done with the basic detection module.
 SO rules are dynamic rules that require custom coding to perform detection
 not possible with the existing rule options.  These rules typically do not
 have associated modules.
-
-== File Processing
-
-include::manual/file_processing.txt[]
-
-== Performance Monitor
-
-include::manual/perf_monitor.txt[]
 
 == Logger Modules
 

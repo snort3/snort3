@@ -33,14 +33,17 @@ set (
 set (
     UNBUILT_SOURCES
     bugs.txt
+    building.txt
     daq.txt
     differences.txt
     errors.txt
     enviro.txt
     extending.txt
     features.txt
+    file_processing.txt
     overview.txt
     params.txt
+    perf_monitor.txt
     reference.txt
     snort2lua.txt
     snorty.png

@@ -779,7 +779,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0-a4 (Build 217) from 2.9.7-262
+o"  )~   Version 3.0.0-a4 (Build 218) from 2.9.7-262
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
@@ -1208,7 +1208,7 @@ explain these concepts, let&#8217;s start by examining how Snort processes
 packets.  The key steps are given in the following figure:</p></div>
 <div class="imageblock">
 <div class="content">
-<img src="./snort2x.png" alt="Snort 2X" width="640" />
+<img src="./snort2x.png" alt="Snort 2X" width="480" />
 </div>
 </div>
 <div class="paragraph"><p>The preprocess step is highly configurable.  Arbitrary preprocessors can be
@@ -1238,7 +1238,7 @@ analysis in both cases.  (Snort++ provides hooks for arbitrary inspectors,
 but they are not central to basic flow processing and are not shown.)</p></div>
 <div class="imageblock">
 <div class="content">
-<img src="./snort3x.png" alt="Snort 3X" width="640" />
+<img src="./snort3x.png" alt="Snort 3X" width="480" />
 </div>
 </div>
 <div class="paragraph"><p>However, Snort++ also provides a more flexible mechanism than callback
@@ -1503,7 +1503,7 @@ Examine and dump a pcap:
 <div class="literalblock">
 <div class="content">
 <pre><code>$my_path/bin/snort -r &lt;pcap&gt;
-$my_path/bin/snort -K text -d -e -q -r &lt;pcap&gt;</code></pre>
+$my_path/bin/snort -L dump -d -e -q -r &lt;pcap&gt;</code></pre>
 </div></div>
 </li>
 <li>
@@ -2156,6 +2156,299 @@ stream_tcp gap count is broken.
 </p>
 </li>
 </ul></div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_features">Features</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>This section explains how to use key features of Snort++.</p></div>
+<div class="sect2">
+<h3 id="_file_processing">File Processing</h3>
+<div class="paragraph"><p>With the volume of malware transferred through network increasing,
+network file inspection becomes more and more important. This feature
+will provide file type identification, file signature creation, and file
+capture capabilities to help users deal with those challenges.</p></div>
+<div class="sect3">
+<h4 id="_overview_2">Overview</h4>
+<div class="paragraph"><p>There are two parts of file services: file APIs and file policy.
+File APIs provides all the file inspection functionalities, such as file
+type identification, file signature calculation, and file capture.
+File policy provides users ability to control file services, such
+as enable/disable/configure file type identification, file signature, or
+file capture.</p></div>
+<div class="paragraph"><p>In addition to all capabilities from snort 2x, we support customized file
+policy along with file event log.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Supported protocols: HTTP, SMTP, IMAP, POP3, FTP, and SMB.
+</p>
+</li>
+<li>
+<p>
+Supported file signature calculation: SHA256
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect3">
+<h4 id="_quick_guide">Quick Guide</h4>
+<div class="paragraph"><p>A very simple configuration has been included in lua/snort.lua file.
+A typical file configuration looks like this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>dofile('magic.lua')</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>my_file_policy =
+{
+    {  when = { file_type_id = 0 }, use = { verdict = 'log', enable_file_signature = true, enable_file_capture = true } }
+    {  when = { file_type_id = 22 }, use = { verdict = 'log', enable_file_signature = true } },
+    {  when = { sha256 = "F74DC976BC8387E7D4FC0716A069017A0C7ED13F309A523CC41A8739CCB7D4B6" }, use = { verdict = 'block'} },
+}</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>file_id =
+{
+    enable_type = true,
+    enable_signature = true,
+    enable_capture = true,
+    file_rules = magics,
+    trace_type = true,
+    trace_signature = true,
+    trace_stream = true,
+    file_policy = my_file_policy,
+ }</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>file_log =
+{
+    log_pkt_time = true,
+    log_sys_time = false,
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>There are 3 steps to enable file processing:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+First, you need to include the file magic rules.
+</p>
+</li>
+<li>
+<p>
+Then, define the file policy and configure the inspector
+</p>
+</li>
+<li>
+<p>
+At last, enable file_log to get detailed information about file event
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect3">
+<h4 id="_pre_packaged_file_magic_rules">Pre-packaged File Magic Rules</h4>
+<div class="paragraph"><p>A set of file magic rules is packaged with Snort. They can be located at
+"lua/file_magic.lua". To use this feature, it is recommended that these
+pre-packaged rules are used; doing so requires that you include
+the file in your Snort configuration as such (already in snort.lua):</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>dofile('magic.lua')</code></pre>
+</div></div>
+<div class="paragraph"><p>Example:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>{ type = "GIF", id = 62, category = "Graphics", rev = 1,
+  magic = { { content = "| 47 49 46 38 37 61 |",offset = 0 } } },</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>{ type = "GIF", id = 63, category = "Graphics", rev = 1,
+  magic = { { content = "| 47 49 46 38 39 61 |",offset = 0 } } },</code></pre>
+</div></div>
+<div class="paragraph"><p>The previous two rules define GIF format, because two file magics are
+different. File magics are specifed by content and offset, which look
+at content at particular file offset to identify the file type. In this
+case, two magics look at the beginning of the file. You can use character
+if it is printable or hex value in between "|".</p></div>
+</div>
+<div class="sect3">
+<h4 id="_file_policy">File Policy</h4>
+<div class="paragraph"><p>You can enabled file type, file signature, or file capture by configuring
+file_id. In addition, you can enable trace to see file stream data, file
+type, and file signature information.</p></div>
+<div class="paragraph"><p>Most importantly, you can configure a file policy that can block/alert
+some file type or an individual file based on SHA. This allows you
+build a file blacklist or whitelist.</p></div>
+<div class="paragraph"><p>Example:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>file_policy =
+{
+    {  when = { file_type_id = 22 }, use = { verdict = 'log', enable_file_signature = true } },
+    {  when = { sha256 = "F74DC976BC8387E7D4FC0716A069017A0C7ED13F309A523CC41A8739CCB7D4B6" }, use = { verdict = 'block'} },
+    {  when = { file_type_id = 0 }, use = { verdict = 'log', enable_file_signature = true, enable_file_capture = true } }
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>In this example, it enables this policy:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+For PDF files, they will be logged with signatures.
+</p>
+</li>
+<li>
+<p>
+For the file matching this SHA, it will be blocked
+</p>
+</li>
+<li>
+<p>
+For all file types identified, they will be logged with signature, and
+also captured onto log folder.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect3">
+<h4 id="_file_capture">File Capture</h4>
+<div class="paragraph"><p>File can be captured and stored to log folder. We use SHA as file name
+instead of actual file name to avoid conflicts. You can capture either
+all files, some file type, or a particular file based on SHA.</p></div>
+<div class="paragraph"><p>You can enable file capture through this config:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>enable_capture = true,</code></pre>
+</div></div>
+<div class="paragraph"><p>or enable it for some file or  file type in your file policy:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>{  when = { file_type_id = 22 }, use = { verdict = 'log', enable_file_capture = true } },</code></pre>
+</div></div>
+<div class="paragraph"><p>The above rule will enable PDF file capture.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_file_events">File Events</h4>
+<div class="paragraph"><p>File inspect preprocessor also works as a dynamic output plugin for file
+events. It logs basic information about file. The log file is in the same
+folder as other log files with name starting with "file.log".</p></div>
+<div class="paragraph"><p>Example:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>file_log = { log_pkt_time = true, log_sys_time = false }</code></pre>
+</div></div>
+<div class="paragraph"><p>All file events will be logged in packet time, system time is not logged.</p></div>
+<div class="paragraph"><p>File event example:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>08/14-19:14:19.100891  10.22.75.72:33734 -&gt; 10.22.75.36:80,
+[Name: "malware.exe"] [Verdict: Block] [Type: MSEXE]
+[SHA: 6F26E721FDB1AAFD29B41BCF90196DEE3A5412550615A856DAE8E3634BCE9F7A]
+[Size: 1039328]</code></pre>
+</div></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_performance_monitor">Performance Monitor</h3>
+<div class="paragraph"><p>The new and improved performance monitor! Is your sensor being bogged down by
+too many flows? perf_monitor! Why are certain TCP segments being dropped without
+hitting a rule? perf_monitor! Why is a sensor leaking water? Not perf_monitor, check
+with stream…</p></div>
+<div class="sect3">
+<h4 id="_overview_3">Overview</h4>
+<div class="paragraph"><p>The Snort performance monitor is the built-in utility for monitoring system
+and traffic statistics. All statistics are separated by processing thread.
+perf_monitor supports several trackers for monitoring such data:</p></div>
+</div>
+<div class="sect3">
+<h4 id="_base_tracker">Base Tracker</h4>
+<div class="paragraph"><p>The base tracker is used to gather running statistics about Snort and its
+running modules. All Snort modules gather, at the very least, counters for the
+number of packets reaching it. Most supplement these counts with those for
+domain specific functions, such as http_inspect’s number of GET requests seen.</p></div>
+<div class="paragraph"><p>Statistics are gathered live and can be reported at regular intervals. The stats
+reported correspond only to the interval in question and are reset at the
+beginning of each interval.</p></div>
+<div class="paragraph"><p>These are the same counts displayed when Snort shuts down, only sorted amongst
+the discrete intervals in which they occurred.</p></div>
+<div class="paragraph"><p>Base differs from prior implementations in Snort in that all stats gathered are
+only raw counts, allowing the data to be evaluated as needed. Additionally,
+base is entirely pluggable. Data from new Snort plugins can be added to the
+existing stats either automatically or, if specified, by name and function.</p></div>
+<div class="paragraph"><p>All plugins and counters can be enabled or disabled individually, allowing for
+only the data that is actually desired instead of overly verbose performance
+logs.</p></div>
+<div class="paragraph"><p>To enable everything:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>perf_monitor = { modules = {} }</code></pre>
+</div></div>
+<div class="paragraph"><p>To enable everything within a module:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>perf_monitor =
+{
+    modules =
+    {
+        {
+            name = 'stream_tcp',
+            pegs = [[ ]]
+        },
+    }
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>To enable specific counts within modules:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>perf_monitor =
+{
+    modules =
+    {
+        {
+            name = 'stream_tcp',
+            pegs = [[ overlaps gaps ]]
+        },
+    }</code></pre>
+</div></div>
+<div class="paragraph"><p>Note: Event stats from prior Snorts are now located within base statistics.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_flow_tracker">Flow Tracker</h4>
+<div class="paragraph"><p>Flow tracks statistics regarding traffic and L3/L4 protocol distributions. This
+data can be used to build a profile of traffic for inspector tuning and for
+identifying where Snort may be stressed.</p></div>
+<div class="paragraph"><p>To enable:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>perf_monitor = { flow = true }</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_flowip_tracker">FlowIP Tracker</h4>
+<div class="paragraph"><p>FlowIP provides statistics for individual hosts within a network. This data can
+be used for identifying communication habits, such as generating large or small
+amounts of data, opening a small or large number of sessions, and tendency to
+send smaller or larger IP packets.</p></div>
+<div class="paragraph"><p>To enable:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>perf_monitor = { flow_ip = true }</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_cpu_tracker">CPU Tracker</h4>
+<div class="paragraph"><p>This tracker monitors the CPU and wall time spent by a given processing thread.</p></div>
+<div class="paragraph"><p>To enable:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>perf_monitor = { cpu = true }</code></pre>
+</div></div>
 </div>
 </div>
 </div>
@@ -2837,6 +3130,24 @@ bool <strong>file_id.trace_signature</strong> = false: enable runtime dump of si
 <li>
 <p>
 bool <strong>file_id.trace_stream</strong> = false: enable runtime dump of file data
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>file_id.total_files</strong>: number of files processed
+</p>
+</li>
+<li>
+<p>
+<strong>file_id.total_file_data</strong>: number of file data bytes processed
+</p>
+</li>
+<li>
+<p>
+<strong>file_id.cache_failures</strong>: number of file cache add failures
 </p>
 </li>
 </ul></div>
@@ -14230,7 +14541,7 @@ added --script-path
 </li>
 <li>
 <p>
-added -K text; -K text/pcap is old dump/log mode
+added -L none|dump|pcap
 </p>
 </li>
 <li>
@@ -14573,7 +14884,7 @@ all text mode outputs default to stdout
 </li>
 <li>
 <p>
-changed default logging mode to -K none
+changed default logging mode to -L none
 </p>
 </li>
 <li>
@@ -17464,9 +17775,9 @@ kill -hup &lt;pid&gt;</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_optional_features">Optional Features</h3>
-<div class="paragraph"><p>The features listed below must be explicitly enabled so they are built
-into the Snort binary.  For a full list of build features, run ./configure
+<h3 id="_build_options_2">Build Options</h3>
+<div class="paragraph"><p>The options listed below must be explicitly enabled so they are built
+into the Snort binary.  For a full list of build options, run ./configure
 --help.</p></div>
 <div class="ulist"><ul>
 <li>
@@ -17476,7 +17787,7 @@ into the Snort binary.  For a full list of build features, run ./configure
 </p>
 </li>
 </ul></div>
-<div class="paragraph"><p>These features are built only if the required libraries and headers are
+<div class="paragraph"><p>These options are built only if the required libraries and headers are
 present.  There is no need to explicitly enable.</p></div>
 <div class="ulist"><ul>
 <li>
@@ -23701,6 +24012,21 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>file_connector.messages</strong>: total messages
+</p>
+</li>
+<li>
+<p>
+<strong>file_id.cache_failures</strong>: number of file cache add failures
+</p>
+</li>
+<li>
+<p>
+<strong>file_id.total_file_data</strong>: number of file data bytes processed
+</p>
+</li>
+<li>
+<p>
+<strong>file_id.total_files</strong>: number of files processed
 </p>
 </li>
 <li>
@@ -30338,7 +30664,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2016-11-03 23:18:47 EDT
+Last updated 2016-11-16 08:37:01 EST
 </div>
 </div>
 </body>

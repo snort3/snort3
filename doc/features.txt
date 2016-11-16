@@ -1,33 +1,8 @@
-The features listed below must be explicitly enabled so they are built
-into the Snort binary.  For a full list of build features, run ./configure
---help.
+=== File Processing
 
-*  *--enable-shell*: enable building local and remote command line shell
-   support.
+include::file_processing.txt[]
 
-These features are built only if the required libraries and headers are
-present.  There is no need to explicitly enable.
+=== Performance Monitor
 
-* *lzma*: for decompression of SWF and PDF files.
-
-* *openssl*: for SHA and MD5 file signatures and the protected_content rule
-  option.
-
-* *intel-soft-cpm": an optional pattern matcher based on a library from
-  Intel.
-
-* hyperscan for the regex rule option and hyperscan search engine.
-
-If you need to use headers and/or libraries in non-standard locations, you
-can use these options:
-
-* *--with-pkg-includes*: specify the directory containing the package
-  headers.
-
-* *--with-pkg-libraries*: specify the directory containing the package
-  libraries.
-
-These can be use for pcap, luajit, pcre, dnet, daq, lzma, openssl,
-intel-soft-cpm, and hyperscan packages.  For more information on these
-libraries see the Getting Started section of the manual.
+include::perf_monitor.txt[]
 

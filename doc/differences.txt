@@ -23,7 +23,7 @@ Snort++ differs from Snort in the following ways:
 * -T is assumed if no input given
 * added --help-config prefix to dump all matching settings
 * added --script-path
-* added -K text; -K text/pcap is old dump/log mode
+* added -L none|dump|pcap
 * added -z <#> and --max-packet-threads <#>
 * delete --enable-mpls-multicast, --enable-mpls-overlapping-ip, 
   --max-mpls-labelchain-len, --mpls-payload-type
@@ -109,7 +109,7 @@ Snort++ differs from Snort in the following ways:
 
 * alert_fast includes packet data by default
 * all text mode outputs default to stdout
-* changed default logging mode to -K none
+* changed default logging mode to -L none
 * deleted layer2resets and flexresp2_*
 * deleted log_ascii
 * general output guideline: don't print zero counts

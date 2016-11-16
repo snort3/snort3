@@ -273,7 +273,7 @@ packets.  The key steps are given in the following figure:
 ////
 (pkt) -> [decode] -> [preprocess] -> [detect] -> [log] -> (verdict)
 ////
-image::snort2x.png["Snort 2X",width="640"]
+image::snort2x.png["Snort 2X",width="480"]
 
 The preprocess step is highly configurable.  Arbitrary preprocessors can be
 loaded dynamically at startup, configured in snort.conf, and then executed
@@ -309,7 +309,7 @@ but they are not central to basic flow processing and are not shown.)
          -----------------------------------------------------
                     [app id]   [firewall]   [other]
 ////
-image::snort3x.png["Snort 3X",width="640"]
+image::snort3x.png["Snort 3X",width="480"]
 
 However, Snort++ also provides a more flexible mechanism than callback
 functions.  By using inspection events, it is possible for an inspector to

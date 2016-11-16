@@ -1,9 +1,9 @@
-=== Overview
-
 With the volume of malware transferred through network increasing, 
 network file inspection becomes more and more important. This feature 
 will provide file type identification, file signature creation, and file 
 capture capabilities to help users deal with those challenges. 
+
+==== Overview
 
 There are two parts of file services: file APIs and file policy.
 File APIs provides all the file inspection functionalities, such as file 
@@ -18,7 +18,7 @@ policy along with file event log.
 * Supported protocols: HTTP, SMTP, IMAP, POP3, FTP, and SMB.
 * Supported file signature calculation: SHA256
 
-=== Quick Guide
+==== Quick Guide
 
 A very simple configuration has been included in lua/snort.lua file.
 A typical file configuration looks like this:
@@ -56,7 +56,7 @@ There are 3 steps to enable file processing:
 * Then, define the file policy and configure the inspector
 * At last, enable file_log to get detailed information about file event
  
-=== Pre-packaged File Magic Rules
+==== Pre-packaged File Magic Rules
 
 A set of file magic rules is packaged with Snort. They can be located at
 "lua/file_magic.lua". To use this feature, it is recommended that these
@@ -79,7 +79,7 @@ at content at particular file offset to identify the file type. In this
 case, two magics look at the beginning of the file. You can use character
 if it is printable or hex value in between "|".
 
-=== File Policy
+==== File Policy
 
 You can enabled file type, file signature, or file capture by configuring 
 file_id. In addition, you can enable trace to see file stream data, file 
@@ -105,7 +105,7 @@ In this example, it enables this policy:
 * For all file types identified, they will be logged with signature, and 
 also captured onto log folder.
 
-=== File Capture
+==== File Capture
 
 File can be captured and stored to log folder. We use SHA as file name
 instead of actual file name to avoid conflicts. You can capture either 
@@ -121,7 +121,7 @@ or enable it for some file or  file type in your file policy:
   
 The above rule will enable PDF file capture.
   
-=== File Events
+==== File Events
 
 File inspect preprocessor also works as a dynamic output plugin for file 
 events. It logs basic information about file. The log file is in the same

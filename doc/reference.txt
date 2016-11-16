@@ -6,9 +6,9 @@ include::terms.txt[]
 
 include::usage.txt[]
 
-=== Optional Features
+=== Build Options
 
-include::features.txt[]
+include::building.txt[]
 
 === Environment Variables
 
