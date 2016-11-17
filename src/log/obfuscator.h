@@ -65,7 +65,7 @@ public:
     bool first(ObfuscatorBlock &b);
     bool next(ObfuscatorBlock &b);
 
-    const char get_mask_char()
+    char get_mask_char()
     { return mask_char; }
 
 private:
