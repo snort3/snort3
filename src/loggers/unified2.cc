@@ -555,7 +555,7 @@ static void _Unified2LogPacketAlert(
                 off = 0;
 
             for ( const auto& b : *p->obfuscator )
-                memset(&start[ off + b.offset ], '.', b.length);
+                memset(&start[ off + b.offset ], p->obfuscator->get_mask_char(), b.length);
         }
     }
 

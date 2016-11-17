@@ -65,9 +65,13 @@ public:
     bool first(ObfuscatorBlock &b);
     bool next(ObfuscatorBlock &b);
 
+    const char get_mask_char()
+    { return mask_char; }
+
 private:
     ObSet blocks;
     iterator it;
+    const char mask_char = 'X';
 };
 
 #endif

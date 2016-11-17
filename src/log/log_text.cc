@@ -1502,7 +1502,7 @@ void LogPayload(TextLog* log, Packet* p)
                 std::string buf(p->data, p->data + p->dsize);
 
                 for ( const auto& b : *p->obfuscator )
-                    buf.replace(b.offset, b.length, b.length, '.');
+                    buf.replace(b.offset, b.length, b.length, p->obfuscator->get_mask_char());
 
                 LogNetData(log, (const uint8_t*)buf.c_str(), p->dsize, p);
             }
