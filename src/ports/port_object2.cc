@@ -213,7 +213,7 @@ PortObject2* PortObject2Dup(PortObject* po)
 
             if (!poinew)
             {
-                snort_free(ponew);
+                PortObject2Free(ponew);
                 return NULL;
             }
 

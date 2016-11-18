@@ -291,7 +291,6 @@ void DropStats()
     const char* exclude = "daq snort";
     ModuleManager::dump_stats(snort_conf, exclude);
 
-    LogLabel("File Statistics");
     file_stats_print();
 
     LogLabel("Summary Statistics");

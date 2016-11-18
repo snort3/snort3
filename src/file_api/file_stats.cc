@@ -83,6 +83,7 @@ void file_stats_print()
     if ( !check_total )
         return;
 
+    LogLabel("File Statistics");
     LogLabel("file type stats (files)");
 
     LogMessage("         Type              Download   Upload \n");

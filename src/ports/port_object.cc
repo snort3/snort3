@@ -233,7 +233,7 @@ PortObject* PortObjectDup(PortObject* po)
 
     ponew = PortObjectNew();
     if ( !ponew )
-        return 0;
+        return nullptr;
 
     /* Dup the Name */
     if ( po->name )
@@ -251,9 +251,8 @@ PortObject* PortObjectDup(PortObject* po)
             poinew = PortObjectItemDup(poi);
             if (!poinew)
             {
-                snort_free(ponew->name);
-                snort_free(ponew);
-                return 0;
+                PortObjectFree(ponew);
+                return nullptr;
             }
 
             PortObjectAddItem(ponew, poinew, NULL);
@@ -288,7 +287,7 @@ PortObject* PortObjectDupPorts(PortObject* po)
 
     ponew = PortObjectNew();
     if ( !ponew )
-        return 0;
+        return nullptr;
 
     /* Dup the Name */
     if ( po->name )
@@ -306,8 +305,8 @@ PortObject* PortObjectDupPorts(PortObject* po)
             poinew = PortObjectItemDup(poi);
             if (!poinew)
             {
-                snort_free(ponew);
-                return NULL;
+                PortObjectFree(ponew);
+                return nullptr;
             }
             PortObjectAddItem(ponew, poinew, NULL);
         }

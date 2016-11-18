@@ -323,14 +323,9 @@ void Snort::init(int argc, char** argv)
 // packet passing is done by the driver/hardware.  the goal then is to put as
 // much initialization stuff in Snort::init() as possible and to restrict this
 // function to those things that depend on DAQ startup or non-root user/group.
-//
-// FIXIT-L breaks DAQ_New()/Start() because packet threads won't be root when
-// opening iface
+
 void Snort::drop_privileges()
 {
-    if ( SnortConfig::create_pid_file() )
-        CreatePidFile(snort_main_thread_pid);
-
     /* FIXIT-M X - I have no idea if the chroot functionality actually works. */
     /* Drop the Chrooted Settings */
     if ( !snort_conf->chroot_dir.empty() )
@@ -338,6 +333,9 @@ void Snort::drop_privileges()
 
     /* Drop privileges if requested, when initialization is done */
     SetUidGid(SnortConfig::get_uid(), SnortConfig::get_gid());
+
+    if ( SnortConfig::create_pid_file() )
+        CreatePidFile(snort_main_thread_pid);
 
     initializing = false;
     privileges_dropped = true;

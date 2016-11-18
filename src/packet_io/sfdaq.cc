@@ -60,6 +60,7 @@ static const DAQ_Module_t* daq_mod = nullptr;
 static DAQ_Mode daq_mode = DAQ_MODE_PASSIVE;
 static uint32_t snap = DEFAULT_PKT_SNAPLEN;
 static bool loaded = false;
+static std::mutex bpf_gate;
 
 // specific for each thread / instance
 static THREAD_LOCAL SFDAQInstance *local_instance = nullptr;
@@ -422,15 +423,15 @@ bool SFDAQInstance::can_whitelist()
 bool SFDAQInstance::set_filter(const char* bpf)
 {
     int err = 0;
-    static std::mutex bpf_gate;
 
-    // doesn't look like the bpf flex scanner is reentrant
-    bpf_gate.lock();
+    // The BPF can be compiled either during daq_set_filter() or daq_start(),
+    // so protect the thread-unsafe BPF scanner/compiler in both places.
 
     if (bpf and *bpf)
+    {
+        std::lock_guard<std::mutex> lock(bpf_gate);
         err = daq_set_filter(daq_mod, daq_hand, bpf);
-
-    bpf_gate.unlock();
+    }
 
     if (err)
         FatalError("Can't set DAQ BPF filter to '%s' (%s)\n",
@@ -441,7 +442,14 @@ bool SFDAQInstance::set_filter(const char* bpf)
 
 bool SFDAQInstance::start()
 {
-    int err = daq_start(daq_mod, daq_hand);
+    int err;
+
+    // The BPF can be compiled either during daq_set_filter() or daq_start(),
+    // so protect the thread-unsafe BPF scanner/compiler in both places.
+    {
+        std::lock_guard<std::mutex> lock(bpf_gate);
+        err = daq_start(daq_mod, daq_hand);
+    }
 
     if (err)
         ErrorMessage("Can't start DAQ (%d) - %s\n", err, daq_get_error(daq_mod, daq_hand));
