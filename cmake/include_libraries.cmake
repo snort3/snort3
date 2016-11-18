@@ -10,6 +10,9 @@ find_package(PCAP REQUIRED)
 find_package(PCRE REQUIRED)
 find_package(SFBPF REQUIRED)
 find_package(ZLIB REQUIRED)
+if (ENABLE_UNIT_TESTS)
+    find_package(CppUTest REQUIRED)
+endif (ENABLE_UNIT_TESTS)
 
 # optional libraries
 find_package(LibLZMA QUIET)

@@ -10,6 +10,6 @@ find_library(HS_LIBRARIES NAMES hs
     HINTS ${HS_LIBRARIES_DIR} ${PC_HYPERSCAN_LIBDIR} ${PC_HYPERSCAN_LIBRARY_DIRS})
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(hs DEFAULT_MSG HS_LIBRARIES HS_INCLUDE_DIRS)
+find_package_handle_standard_args(HS DEFAULT_MSG HS_LIBRARIES HS_INCLUDE_DIRS)
 
 mark_as_advanced(HS_INCLUDE_DIRS HS_LIBRARIES)

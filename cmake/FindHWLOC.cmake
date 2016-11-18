@@ -15,6 +15,6 @@ find_library(HWLOC_LIBRARIES NAMES hwloc
     HINTS ${PC_HWLOC_LIBDIR} ${PC_HWLOC_LIBRARY_DIRS})
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(hwloc DEFAULT_MSG HWLOC_LIBRARIES HWLOC_INCLUDE_DIRS)
+find_package_handle_standard_args(HWLOC DEFAULT_MSG HWLOC_LIBRARIES HWLOC_INCLUDE_DIRS)
 
 mark_as_advanced(HWLOC_INCLUDE_DIRS HWLOC_LIBRARIES)

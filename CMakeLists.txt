@@ -44,7 +44,6 @@ include_directories (${PROJECT_BINARY_DIR})
 include_directories (${PROJECT_SOURCE_DIR})
 
 if (ENABLE_UNIT_TESTS)
-    pkg_check_modules (CPPUTEST REQUIRED cpputest)
     include(CTest)
     add_custom_target (check COMMAND ${CMAKE_CTEST_COMMAND})
     add_dependencies (check snort)
