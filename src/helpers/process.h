@@ -41,6 +41,7 @@ PigSignal get_pending_signal();
 const char* get_signal_name(PigSignal);
 
 void init_signals();
+void term_signals();
 void help_signals();
 
 void daemonize();

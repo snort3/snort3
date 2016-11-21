@@ -77,6 +77,7 @@ struct PHClass
     {
         init = new bool[ThreadConfig::get_instance_max()];
         term = new bool[ThreadConfig::get_instance_max()];
+
         for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
             init[i] = term[i] = true;
     }

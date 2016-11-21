@@ -81,7 +81,7 @@ static volatile sig_atomic_t child_ready_signal = 0;
 static THREAD_LOCAL bool is_main_thread = false;
 
 typedef void (* sighandler_t)(int);
-static int add_signal(int sig, sighandler_t, int check_needed);
+static bool add_signal(int sig, sighandler_t, bool check_needed);
 
 static bool exit_pronto = true;
 
@@ -167,7 +167,7 @@ static void oops_handler(int signal)
     if ( !is_main_thread )
         Snort::capture_packet();
 
-    add_signal(signal, SIG_DFL, 0);
+    add_signal(signal, SIG_DFL, false);
     raise(signal);
 }
 
@@ -196,7 +196,7 @@ const char* get_signal_name(PigSignal s)
 // SIG_IGN nor SIG_DFL
 
 // FIXIT-L convert sigaction, etc. to c++11
-static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
+static bool add_signal(int sig, sighandler_t signal_handler, bool check_needed)
 {
     sighandler_t pre_handler;
 
@@ -213,14 +213,14 @@ static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
 #endif
     if (SIG_ERR == pre_handler)
     {
-        ErrorMessage("Could not add handler for signal %d \n", sig);
-        return 0;
+        ParseError("Could not add handler for signal %d \n", sig);
+        return false;
     }
     else if (check_needed && (SIG_IGN != pre_handler) && (SIG_DFL!= pre_handler))
     {
         ParseWarning(WARN_CONF, "handler is already installed for signal %d.\n", sig);
     }
-    return 1;
+    return true;
 }
 
 void init_signals()
@@ -235,21 +235,38 @@ void init_signals()
      * Windows doesn't like all of these signals, and will
      * set errno for some.  Ignore/reset this error so it
      * doesn't interfere with later checks of errno value.  */
-    add_signal(SIGTERM, exit_handler, 1);
-    add_signal(SIGINT, exit_handler, 1);
-    add_signal(SIGQUIT, dirty_handler, 1);
+    add_signal(SIGTERM, exit_handler, true);
+    add_signal(SIGINT, exit_handler, true);
+    add_signal(SIGQUIT, dirty_handler, true);
 
-    add_signal(SIGNAL_SNORT_DUMP_STATS, dump_stats_handler, 1);
-    add_signal(SIGNAL_SNORT_ROTATE_STATS, rotate_stats_handler, 1);
-    add_signal(SIGNAL_SNORT_RELOAD, reload_config_handler, 1);
-    add_signal(SIGNAL_SNORT_READ_ATTR_TBL, reload_attrib_handler, 1);
+    add_signal(SIGNAL_SNORT_DUMP_STATS, dump_stats_handler, true);
+    add_signal(SIGNAL_SNORT_ROTATE_STATS, rotate_stats_handler, true);
+    add_signal(SIGNAL_SNORT_RELOAD, reload_config_handler, true);
+    add_signal(SIGNAL_SNORT_READ_ATTR_TBL, reload_attrib_handler, true);
 
-    add_signal(SIGPIPE, ignore_handler, 1);
-    add_signal(SIGABRT, oops_handler, 1);
-    add_signal(SIGSEGV, oops_handler, 1);
-    add_signal(SIGBUS, oops_handler, 1);
+    add_signal(SIGPIPE, ignore_handler, true);
+    add_signal(SIGABRT, oops_handler, true);
+    add_signal(SIGSEGV, oops_handler, true);
+    add_signal(SIGBUS, oops_handler, true);
 
     errno = 0;
+}
+
+void term_signals()
+{
+    add_signal(SIGTERM, SIG_DFL, false);
+    add_signal(SIGINT, SIG_DFL, false);
+    add_signal(SIGQUIT, SIG_DFL, false);
+
+    add_signal(SIGNAL_SNORT_DUMP_STATS, SIG_DFL, false);
+    add_signal(SIGNAL_SNORT_ROTATE_STATS, SIG_DFL, false);
+    add_signal(SIGNAL_SNORT_RELOAD, SIG_DFL, false);
+    add_signal(SIGNAL_SNORT_READ_ATTR_TBL, SIG_DFL, false);
+
+    add_signal(SIGPIPE, SIG_DFL, false);
+    add_signal(SIGABRT, SIG_DFL, false);
+    add_signal(SIGSEGV, SIG_DFL, false);
+    add_signal(SIGBUS, SIG_DFL, false);
 }
 
 static void help_signal(unsigned n, const char* name, const char* h)
@@ -316,7 +333,7 @@ void daemonize()
     LogMessage("initializing daemon mode\n");
 
     // register signal handler so that parent can trap signal
-    add_signal(SIGNAL_SNORT_CHILD_READY, child_ready_handler, 1);
+    add_signal(SIGNAL_SNORT_CHILD_READY, child_ready_handler, true);
 
     pid_t cpid = fork();
 

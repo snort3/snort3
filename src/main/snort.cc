@@ -203,7 +203,6 @@ static void show_source(const char* pcap)
 void Snort::init(int argc, char** argv)
 {
     init_signals();
-
     ThreadConfig::init();
 
 #if defined(NOCOREFILE)
@@ -355,14 +354,14 @@ void Snort::term()
      * double-freeing any memory.  Not guaranteed to be
      * thread-safe, but it will prevent the simple cases.
      */
-    static int already_exiting = 0;
-    if ( already_exiting != 0 )
-    {
+    static bool already_exiting = false;
+    if ( already_exiting )
         return;
-    }
-    already_exiting = 1;
-    initializing = false;  /* just in case we cut out early */
 
+    already_exiting = true;
+    initializing = false;  // just in case we cut out early
+
+    term_signals();
     IpsManager::global_term(snort_conf);
     SFAT_Cleanup();
     host_cache.clear();

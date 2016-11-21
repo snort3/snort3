@@ -45,5 +45,7 @@ int main_dump_plugins(lua_State* = nullptr);
 int main_detach(lua_State* = nullptr);
 #endif
 
+void main_poke(unsigned);
+
 #endif
 

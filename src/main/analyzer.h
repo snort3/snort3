@@ -60,7 +60,6 @@ public:
 
     State get_state() { return state; }
     const char* get_state_string();
-    uint64_t get_count() { return count; }
     const char* get_source() { return source; }
 
     // FIXIT-M add asynchronous response too
@@ -76,13 +75,13 @@ public:
 private:
     void analyze();
     bool handle_command();
+    void set_state(State);
 
 private:
     std::atomic<State> state;
     std::atomic<AnalyzerCommand> command;
     std::atomic<bool> privileged_start;
 
-    uint64_t count;
     unsigned id;
 
     const char* source;

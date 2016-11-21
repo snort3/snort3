@@ -23,6 +23,7 @@
 #include <chrono>
 #include <thread>
 
+#include "main.h"
 #include "snort.h"
 #include "snort_debug.h"
 #include "thread.h"
@@ -42,6 +43,12 @@ static THREAD_LOCAL PacketCallback main_func = Snort::packet_callback;
 //-------------------------------------------------------------------------
 // analyzer
 //-------------------------------------------------------------------------
+
+void Analyzer::set_state(State s)
+{
+    state = s;
+    main_poke(id);
+}
 
 const char* Analyzer::get_state_string()
 {
@@ -79,36 +86,35 @@ const char* Analyzer::get_command_string(AnalyzerCommand ac)
 
 Analyzer::Analyzer(unsigned i, const char* s)
 {
-    state = State::NEW;
-    count = 0;
     id = i;
     source = s;
     command = AC_NONE;
     swap = nullptr;
     daq_instance = nullptr;
     privileged_start = false;
+    set_state(State::NEW);
 }
 
 void Analyzer::operator()(Swapper* ps)
 {
     set_thread_type(STHREAD_TYPE_PACKET);
-
     set_instance_id(id);
+
     ps->apply();
+    delete ps;
 
     if (Snort::thread_init_privileged(source))
     {
         daq_instance = SFDAQ::get_local_instance();
         privileged_start = daq_instance->can_start_unprivileged();
-        state = State::INITIALIZED;
+        set_state(State::INITIALIZED);
 
         analyze();
 
         Snort::thread_term();
     }
 
-    delete ps;
-    state = State::STOPPED;
+    set_state(State::STOPPED);
 }
 
 /* Note: This will be called from the main thread.  Everything it does must be
@@ -133,61 +139,47 @@ bool Analyzer::handle_command()
     switch ( ac )
     {
     case AC_START:
-        if (state != State::INITIALIZED)
-        {
-            if (state != State::STARTED)
-                ErrorMessage("Analyzer: Received START command while in state %s\n",
-                    get_state_string());
-            command = AC_NONE;
-            return false;
-        }
+        assert(state == State::INITIALIZED);
+
         if (!daq_instance->start())
         {
             ErrorMessage("Analyzer: Failed to start DAQ instance\n");
-            command = AC_NONE;
             return false;
         }
-        state = State::STARTED;
-        DebugMessage(DEBUG_ANALYZER, "Handled START command\n");
         command = AC_NONE;
+        set_state(State::STARTED);
+        DebugMessage(DEBUG_ANALYZER, "Handled START command\n");
         break;
 
     case AC_RUN:
-        if (state != State::STARTED)
-        {
-            if (state != State::RUNNING)
-                ErrorMessage("Analyzer: Received RUN command while in state %s\n",
-                    get_state_string());
-            command = AC_NONE;
-            return false;
-        }
+        assert(state == State::STARTED);
         Snort::thread_init_unprivileged();
-        state = State::RUNNING;
-        DebugMessage(DEBUG_ANALYZER, "Handled RUN command\n");
         command = AC_NONE;
+        set_state(State::RUNNING);
+        DebugMessage(DEBUG_ANALYZER, "Handled RUN command\n");
         break;
 
     case AC_STOP:
-        DebugMessage(DEBUG_ANALYZER, "Handled STOP command\n");
         command = AC_NONE;
+        DebugMessage(DEBUG_ANALYZER, "Handled STOP command\n");
         return false;
 
     case AC_PAUSE:
+        command = AC_NONE;
         if (state == State::RUNNING)
-            state = State::PAUSED;
+            set_state(State::PAUSED);
         else
             ErrorMessage("Analyzer: Received PAUSE command while in state %s\n",
                 get_state_string());
-        command = AC_NONE;
         break;
 
     case AC_RESUME:
+        command = AC_NONE;
         if (state == State::PAUSED)
-            state = State::RUNNING;
+            set_state(State::RUNNING);
         else
             ErrorMessage("Analyzer: Received RESUME command while in state %s\n",
                 get_state_string());
-        command = AC_NONE;
         break;
 
     case AC_ROTATE:
@@ -197,15 +189,13 @@ bool Analyzer::handle_command()
 
     case AC_SWAP:
         if (swap)
-        {
             swap->apply();
-            // do not clear swap in this thread; causes race cond
-        }
+
+        // clear cmd only; swap ptr cleared by main thread
         command = AC_NONE;
         break;
 
-    default:
-        command = AC_NONE;
+    case AC_NONE:
         break;
     }
     return true;
