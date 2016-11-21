@@ -823,8 +823,3 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(
     return dynNode;
 }
 
-#ifdef UNIT_TEST
-// FIXIT-L Catch issue; see sfip/sf_ip.cc
-#include "sfrf_test.cc"
-#endif
-

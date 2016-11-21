@@ -22,23 +22,17 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "catch/catch.hpp"
-
-#include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "filters/rate_filter.h"
-#include "filters/sfrf.h"
-#include "hash/sfghash.h"
-#include "main/snort_types.h"
-#include "main/policy.h"
+#include "catch/unit_test.h"
 #include "parser/parse_ip.h"
 #include "sfip/sf_ip.h"
-#include "utils/util.h"
+
+#include "rate_filter.h"
+#include "sfrf.h"
 
 //---------------------------------------------------------------
+
+SNORT_CATCH_FORCED_INCLUSION_DEFINITION(sfrf_test);
 
 #define IP_ANY   NULL          // used to get "unset"
 

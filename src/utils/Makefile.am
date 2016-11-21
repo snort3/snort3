@@ -35,3 +35,6 @@ util_net.cc util_net.h \
 util_unfold.cc \
 util_utf.cc
 
+if ENABLE_UNIT_TESTS
+libutils_a_SOURCES += bitop_test.cc
+endif

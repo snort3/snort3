@@ -806,8 +806,3 @@ int main()
 
 #endif /* DEBUG_SFRT */
 
-#ifdef UNIT_TEST
-// FIXIT-L Catch issue; see sfip/sf_ip.cc
-#include "sfrt_test.cc"
-#endif
-

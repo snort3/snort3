@@ -68,7 +68,7 @@
 #include "utils/safec.h"
 
 #ifdef UNIT_TEST
-#include "catch/unit_test.h"
+#include "catch/unit_test_main.h"
 #endif
 
 #ifdef PIGLET

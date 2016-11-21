@@ -1,5 +1,9 @@
-#include "bitop.h"
 #include "catch/catch.hpp"
+#include "catch/unit_test.h"
+
+#include "bitop.h"
+
+SNORT_CATCH_FORCED_INCLUSION_DEFINITION(bitop_test);
 
 static bool t_bitop_buffer_zero(BitOp& bitop)
 {

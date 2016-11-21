@@ -31,10 +31,6 @@
 
 #include "sfdaq_config.h"
 
-#ifdef UNIT_TEST
-#include "catch/catch.hpp"
-#endif
-
 #define sfdaq_help "configure packet acquisition interface"
 
 static const Parameter string_list_param[] =
@@ -178,6 +174,3 @@ PegCount* SFDAQModule::get_counts() const
     return (PegCount*) &ds;
 }
 
-#ifdef UNIT_TEST
-#include "test/sfdaq_module_test.cc"
-#endif

@@ -18,9 +18,13 @@
 
 // stopwatch_test.cc author Joel Cornett <jocornet@cisco.com>
 
+#include "catch/catch.hpp"
+#include "catch/unit_test.h"
+
 #include "clock_defs.h"
 #include "stopwatch.h"
-#include "catch/catch.hpp"
+
+SNORT_CATCH_FORCED_INCLUSION_DEFINITION(stopwatch_test);
 
 namespace t_stopwatch
 {

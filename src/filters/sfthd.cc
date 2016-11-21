@@ -1307,8 +1307,3 @@ int sfthd_show_objects(ThresholdObjects* thd_objs)
 
 #endif // THD_DEBUG
 
-#ifdef UNIT_TEST
-// FIXIT-L Catch issue; see sfip/sf_ip.cc
-#include "sfthd_test.cc"
-#endif
-

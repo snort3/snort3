@@ -1,4 +1,10 @@
 
+if (ENABLE_UNIT_TESTS)
+    set(TEST_FILES
+        test/sfdaq_module_test.cc
+    )
+endif (ENABLE_UNIT_TESTS)
+
 add_library (packet_io STATIC
     active.cc
     active.h
@@ -12,5 +18,6 @@ add_library (packet_io STATIC
     sfdaq_module.h
     trough.cc
     trough.h
+    ${TEST_FILES}
 )
 

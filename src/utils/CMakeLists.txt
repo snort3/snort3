@@ -1,7 +1,3 @@
-find_package(Threads REQUIRED)
-
-# FIXIT-M  remove.
-add_definitions(" -std=c++11 -DHAVE_PTHREADS  ")
 
 if ( BUILD_SNPRINTF )
     SET (SNPRINTF_SOURCES
@@ -28,6 +24,10 @@ set( UTIL_INCLUDES
     util_utf.h
 )
 
+if ( ENABLE_UNIT_TESTS )
+    set(TEST_FILES bitop_test.cc)
+endif()
+
 ADD_LIBRARY( utils STATIC
     ${UTIL_INCLUDES}
     ${SNPRINTF_SOURCES}
@@ -47,6 +47,7 @@ ADD_LIBRARY( utils STATIC
     util_net.h
     util_unfold.cc 
     util_utf.cc 
+    ${TEST_FILES}
 )
 
 target_link_libraries(utils

@@ -65,7 +65,7 @@ enum DceRpcProtoMinorVers
     DCERPC_PROTO_MINOR_VERS__1 = 1
 };
 
-bool dce_udp_curse(const uint8_t* data, unsigned len, CurseTracker*)
+static bool dce_udp_curse(const uint8_t* data, unsigned len, CurseTracker*)
 {
     const uint8_t dcerpc_cl_hdr_len = 80;
     const uint8_t cl_len_offset = 74;
@@ -100,7 +100,7 @@ bool dce_udp_curse(const uint8_t* data, unsigned len, CurseTracker*)
     return false;
 }
 
-bool dce_tcp_curse(const uint8_t* data, unsigned len, CurseTracker* tracker)
+static bool dce_tcp_curse(const uint8_t* data, unsigned len, CurseTracker* tracker)
 {
     const uint8_t dce_rpc_co_hdr_len = 16;
 
@@ -189,7 +189,7 @@ bool dce_tcp_curse(const uint8_t* data, unsigned len, CurseTracker* tracker)
     return false;
 }
 
-bool dce_smb_curse(const uint8_t* data, unsigned len, CurseTracker* tracker)
+static bool dce_smb_curse(const uint8_t* data, unsigned len, CurseTracker* tracker)
 {
     const uint32_t dce_smb_id = 0xff534d42;  /* \xffSMB */
     const uint32_t dce_smb2_id = 0xfe534d42;  /* \xfeSMB */

@@ -930,6 +930,3 @@ const char* get_error(int errnum)
 #endif
 }
 
-#ifdef UNIT_TEST
-#include "bitop_test.cc"
-#endif

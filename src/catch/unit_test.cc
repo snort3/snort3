@@ -46,16 +46,12 @@ bool catch_enabled()
 
 static bool run_catch()
 {
-  Catch::Session session;
+    Catch::Session session;
 
-  // write to session.configData() or session.Config() to customize
-  //if( s_mode == CK_VERBOSE )
-  //    session.configData().showSuccessfulTests = true;
+    if ( test_tags.size() > 0 )
+        session.configData().testsOrTags = test_tags;
 
-  if( test_tags.size() > 0 )
-      session.configData().testsOrTags = test_tags;
-
-  return session.run() == 0;
+    return session.run() == 0;
 }
 
 int catch_test()

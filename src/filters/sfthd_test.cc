@@ -18,20 +18,16 @@
 //--------------------------------------------------------------------------
 // sfthd_test.cc author Russ Combs <rcombs@sourcefire.com>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "catch/catch.hpp"
-
-#include "filters/sfthd.h"
-#include "hash/sfxhash.h"
-#include "main/policy.h"
+#include "catch/unit_test.h"
 #include "parser/parse_ip.h"
 #include "sfip/sf_ip.h"
-#include "utils/util.h"
+
+#include "sfthd.h"
 
 //---------------------------------------------------------------
+
+SNORT_CATCH_FORCED_INCLUSION_DEFINITION(sfthd_test);
 
 #define IP_ANY   NULL          // used to get "unset"
 

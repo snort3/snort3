@@ -22,16 +22,17 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "catch/catch.hpp"
-
+#include "catch/unit_test.h"
 #include "main/snort_types.h"
+
 #include "sf_ip.h"
 
 //---------------------------------------------------------------
+
+SNORT_CATCH_FORCED_INCLUSION_DEFINITION(sfip_test);
 
 static int s_debug = 0;
 

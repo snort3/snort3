@@ -18,20 +18,17 @@
 //--------------------------------------------------------------------------
 // sfrt_test.cc author Hui Cao <hcao@sourcefire.com>
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "catch/catch.hpp"
-#include "main/snort_types.h"
+#include "catch/unit_test.h"
+#include "sfip/sf_ip.h"
 #include "utils/util.h"
 
-#include "sfrt/sfrt.h"
-#include "sfip/sf_ip.h"
+#include "sfrt.h"
 
 #define NUM_IPS 32
 #define NUM_DATA 4
+
+SNORT_CATCH_FORCED_INCLUSION_DEFINITION(sfrt_test);
 
 typedef struct
 {

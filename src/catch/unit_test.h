@@ -27,5 +27,16 @@ void catch_set_filter(const char* s);
 bool catch_enabled();
 
 int catch_test();
+
+// Macros for supporting standalone Catch test source files
+#define SNORT_CATCH_FORCED_INCLUSION_SYMBOL( name ) \
+    __catch_include_##name
+
+#define SNORT_CATCH_FORCED_INCLUSION_DEFINITION( name ) \
+    bool SNORT_CATCH_FORCED_INCLUSION_SYMBOL( name )
+
+#define SNORT_CATCH_FORCED_INCLUSION_EXTERN( name ) \
+    extern SNORT_CATCH_FORCED_INCLUSION_DEFINITION( name )
+
 #endif
 
