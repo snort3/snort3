@@ -30,16 +30,16 @@ SipEvent::SipEvent(const Packet* p, const SIPMsg* msg, const SIP_DialogData* dia
     this->msg = msg;
     this->dialog = dialog;
 
-    if( msg->from )
+    if( msg->fromLen )
         from = string(msg->from, msg->fromLen);
 
-    if( msg->userName )
+    if( msg->userNameLen )
         user_name = string(msg->userName, msg->userNameLen);
 
-    if( msg->userAgent )
+    if( msg->userAgentLen )
         user_agent = string(msg->userAgent, msg->userAgentLen);
 
-    if( msg->server )
+    if( msg->serverLen )
         server = string(msg->server, msg->serverLen);
 }
 

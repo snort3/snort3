@@ -464,13 +464,9 @@ static void ServiceRegisterPattern(RNAServiceValidationFCN fcn, IpProtocol proto
     if (!li)
     {
         li = new RNAServiceElement;
+        li->init(name, fcn, userdata, provides_user, DETECTOR_TYPE_PATTERN);
         li->next = *list;
         *list = li;
-        li->validate = fcn;
-        li->userdata = userdata;
-        li->detectorType = UINT_MAX;
-        li->provides_user = provides_user;
-        li->name = name;
     }
 
     if ( !(*patterns) )
@@ -649,13 +645,9 @@ int ServiceAddPort(const RNAServiceValidationPort* pp, RNAServiceValidationModul
     if (!li)
     {
         li = new RNAServiceElement;
+        li->init(svm->name, pp->validate, userdata, svm->provides_user, DETECTOR_TYPE_PORT);
         li->next = *list;
         *list = li;
-        li->validate = pp->validate;
-        li->provides_user = svm->provides_user;
-        li->userdata = userdata;
-        li->detectorType = UINT_MAX;
-        li->name = svm->name;
     }
 
     if (pp->proto == IpProtocol::TCP && pp->port == 21 && !ftp_service)

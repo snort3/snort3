@@ -192,6 +192,8 @@ static int ReferencePointer(const char* start_ptr, const char** resp_endptr,   i
     const char* temp_start_ptr;
     temp_start_ptr  = start_ptr+index;
 
+    // FIXIT-M - This code needs review to ensure it works correctly with the new semantics of the
+    //           index returned by the SearchTool find_all pattern matching function
     mdnsMatchListFind(start_ptr, size - data_size + index, resp_endptr, &pattern_length);
     /* Contains reference pointer */
     while ((index < data_size) && !(*resp_endptr) && ((uint8_t )temp_start_ptr[index]  >>

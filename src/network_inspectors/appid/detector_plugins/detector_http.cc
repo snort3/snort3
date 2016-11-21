@@ -2382,29 +2382,23 @@ AppId get_appid_from_url(char* host, char* url, char** version, char* referer, A
 void get_server_vendor_version(const uint8_t* data, int len, char** version, char** vendor,
     RNAServiceSubtype** subtype)
 {
-    const uint8_t* subname;
-    const uint8_t* subver;
-    int subname_len;
-    int subver_len;
-    const uint8_t* paren;
-    const uint8_t* ver;
-    const uint8_t* p;
-    const uint8_t* end = data + len;
-    RNAServiceSubtype* sub;
-    int vendor_len;
-    int version_len;
-    char* tmp;
+    int vendor_len = len;
 
-    ver = (const uint8_t*)memchr(data, '/', len);
+    const uint8_t* ver = (const uint8_t*)memchr(data, '/', len);
     if (ver)
     {
-        version_len = 0;
+        RNAServiceSubtype* sub;
+        int version_len = 0;
+        int subver_len;
+        const uint8_t* subname = nullptr;
+        int subname_len = 0;
+        const uint8_t* subver = nullptr;
+        const uint8_t* paren = nullptr;
+        const uint8_t* p;
+        const uint8_t* end = data + len;
         vendor_len = ver - data;
         ver++;
-        subname = nullptr;
-        subname_len = 0;
-        subver = nullptr;
-        paren = nullptr;
+
         for (p=ver; *p && p < end; p++)
         {
             if (*p == '(')
@@ -2429,7 +2423,7 @@ void get_server_vendor_version(const uint8_t* data, int len, char** version, cha
                     if (subname && subname_len > 0 && subver && *subname)
                     {
                         sub = (RNAServiceSubtype*)snort_calloc(sizeof(RNAServiceSubtype));
-                        tmp = (char*)snort_calloc(subname_len + 1);
+                        char* tmp = (char*)snort_calloc(subname_len + 1);
                         memcpy(tmp, subname, subname_len);
                         tmp[subname_len] = 0;
                         sub->service = tmp;
@@ -2460,7 +2454,7 @@ void get_server_vendor_version(const uint8_t* data, int len, char** version, cha
         if (subname && subname_len > 0 && subver && *subname)
         {
             sub = (RNAServiceSubtype*)snort_calloc(sizeof(RNAServiceSubtype));
-            tmp = (char*)snort_calloc(subname_len + 1);
+            char* tmp = (char*)snort_calloc(subname_len + 1);
             memcpy(tmp, subname, subname_len);
             tmp[subname_len] = 0;
             sub->service = tmp;
@@ -2484,10 +2478,6 @@ void get_server_vendor_version(const uint8_t* data, int len, char** version, cha
         *version = (char*)snort_calloc(sizeof(char) * (version_len + 1));
         memcpy(*version, ver, version_len);
         *(*version + version_len) = '\0';
-    }
-    else
-    {
-        vendor_len = len;
     }
 
     if (vendor_len >= MAX_VERSION_SIZE)

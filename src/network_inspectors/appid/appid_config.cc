@@ -67,7 +67,25 @@ AppIdModuleConfig::~AppIdModuleConfig()
 AppIdConfig::AppIdConfig( AppIdModuleConfig* config )
      : mod_config( config ), app_info_mgr(AppInfoManager::get_instance())
 {
+    for( unsigned i = 0; i < MAX_ZONES; i++ )
+        net_list_by_zone[ i ] = nullptr;
 
+    for( unsigned i = 0; i < 65535; i++ )
+    {
+        tcp_port_only[ i ] = APP_ID_NONE;
+        udp_port_only[ i ] = APP_ID_NONE;
+    }
+
+    for( unsigned i = 0; i < 255; i++ )
+        ip_protocol[ i ] = APP_ID_NONE;
+
+    for( unsigned i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++ )
+    {
+        tcp_port_exclusions_src[ i ] = nullptr;
+        udp_port_exclusions_src[ i ] = nullptr;
+        tcp_port_exclusions_dst[ i ] = nullptr;
+        udp_port_exclusions_dst[ i ] = nullptr;
+    }
 }
 
 AppIdConfig::~AppIdConfig()
@@ -385,13 +403,12 @@ void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
     }
 }
 
-int AppIdConfig::add_port_exclusion(SF_LIST* port_exclusions[], const ip::snort_in6_addr* ip,
+int AppIdConfig::add_port_exclusion(AppIdPortExclusions& port_exclusions, const ip::snort_in6_addr* ip,
     const ip::snort_in6_addr* netmask, int family, uint16_t port)
 {
-    PortExclusion* port_ex;
     SF_LIST* pe_list;
 
-    port_ex = (PortExclusion*)snort_calloc(sizeof(PortExclusion));
+    PortExclusion* port_ex = (PortExclusion*)snort_calloc(sizeof(PortExclusion));
     port_ex->ip = *ip;
     if (family == AF_INET)
     {
@@ -424,7 +441,6 @@ void AppIdConfig::process_port_exclusion(char* toklist[])
     char* p;
     RNAIpAddrSet* ias;
     RNAIpv6AddrSet* ias6;
-    SF_LIST** port_exclusions;
     IpProtocol proto;
     unsigned long dir;
     unsigned long port;
@@ -522,18 +538,17 @@ void AppIdConfig::process_port_exclusion(char* toklist[])
     if (dir & 1)
     {
         if (proto == IpProtocol::TCP)
-            port_exclusions = tcp_port_exclusions_src;
+            add_port_exclusion(tcp_port_exclusions_src, &ip, &netmask, family, (uint16_t)port);
         else
-            port_exclusions = udp_port_exclusions_src;
-        add_port_exclusion(port_exclusions, &ip, &netmask, family, (uint16_t)port);
+            add_port_exclusion(udp_port_exclusions_src, &ip, &netmask, family, (uint16_t)port);
     }
+
     if (dir & 2)
     {
         if (proto == IpProtocol::TCP)
-            port_exclusions = tcp_port_exclusions_dst;
+            add_port_exclusion(tcp_port_exclusions_dst, &ip, &netmask, family, (uint16_t)port);
         else
-            port_exclusions = udp_port_exclusions_dst;
-        add_port_exclusion(port_exclusions, &ip, &netmask, family, (uint16_t)port);
+            add_port_exclusion(udp_port_exclusions_dst, &ip, &netmask, family, (uint16_t)port);
     }
 }
 
@@ -711,7 +726,7 @@ static void free_config_items(AppidConfigElement* ci)
     }
 }
 
-static void free_port_exclusion_list( SF_LIST** pe_list )
+static void free_port_exclusion_list( AppIdPortExclusions& pe_list )
 {
     for ( unsigned i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++ )
     {
@@ -744,7 +759,6 @@ void AppIdConfig::cleanup()
     free_port_exclusion_list(udp_port_exclusions_src);
     free_port_exclusion_list(udp_port_exclusions_dst);
 
-    memset(net_list_by_zone, 0, sizeof(net_list_by_zone));
     sflist_static_free_all(&client_app_args, (void (*)(void*))free_config_items);
 }
 

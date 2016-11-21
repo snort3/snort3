@@ -38,7 +38,9 @@ static void replace_header_data(char **data, uint16_t &datalen, const uint8_t *h
     if(*data)
         snort_free(*data);
     
-    *data = snort_strndup((char*)header_start, header_length);
+    *data = (char*)snort_alloc(header_length + 1);
+    memcpy(*data, header_start, header_length);
+    *(*data + header_length) = '\0';
     datalen = header_length;
 }
 
@@ -94,8 +96,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         if(header_length > 0)
         {
             replace_header_data(&session->hsession->useragent,
-                session->hsession->useragent_buflen, header_start,
-                header_length);
+                session->hsession->useragent_buflen, header_start, header_length);
             session->scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
         }
 

@@ -86,6 +86,7 @@ FakeHttpMsgHeader *fake_msg_header = nullptr;
 
 AppIdSession::AppIdSession(IpProtocol, const sfip_t*, uint16_t) : FlowData(flow_id, nullptr)
 {
+    hsession = nullptr;
 }
 
 AppIdSession::~AppIdSession()
@@ -94,29 +95,29 @@ AppIdSession::~AppIdSession()
         return;
 
     if(hsession->content_type)
-        free(hsession->content_type);
+        snort_free(hsession->content_type);
     if(hsession->cookie)
-        free(hsession->cookie);
+        snort_free(hsession->cookie);
     if(hsession->host)
-        free(hsession->host);
+        snort_free(hsession->host);
     if(hsession->location)
-        free(hsession->location);
+        snort_free(hsession->location);
     if(hsession->referer)
-        free(hsession->referer);
+        snort_free(hsession->referer);
     if(hsession->response_code)
         free(hsession->response_code);
     if(hsession->server)
-        free(hsession->server);
+        snort_free(hsession->server);
     if(hsession->uri)
-        free(hsession->uri);
+        snort_free(hsession->uri);
     if(hsession->url)
         snort_free(hsession->url);
     if(hsession->useragent)
-        free(hsession->useragent);
+        snort_free(hsession->useragent);
     if(hsession->via)
-        free(hsession->via);
+        snort_free(hsession->via);
     if(hsession->x_working_with)
-        free(hsession->x_working_with);
+        snort_free(hsession->x_working_with);
 
     snort_free(hsession);
 }
@@ -297,17 +298,17 @@ TEST(appid_http_event, handle_null_msg_header)
     mock().checkExpectations();
 }
 
-#define CONTENT_TYPE "html/text"
-#define COOKIE "this is my request cookie content"
-#define HOST "www.google.com"
-#define LOCATION "abc.yahoo.com"
-#define URI "/path/to/index.html"
-#define USERAGENT "Mozilla/5.0 (Macintosh; Intel Mac OS X)"
-#define REFERER "http://www.yahoo.com/search"
+const char* CONTENT_TYPE = "html/text";
+const char* COOKIE = "this is my request cookie content";
+const char* HOST = "www.google.com";
+const char* LOCATION = "abc.yahoo.com";
+const char* URI = "/path/to/index.html";
+const char* USERAGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X)";
+const char* REFERER = "http://www.yahoo.com/search";
+const char* SERVER = "Apache";
+const char* X_WORKING_WITH = "working with string";
+const char* VIA = "via string";
 #define RESPONSE_CODE 301
-#define SERVER "Apache"
-#define X_WORKING_WITH "working with string"
-#define VIA "via string"
 
 struct TestData
 {

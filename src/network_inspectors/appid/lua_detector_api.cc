@@ -129,6 +129,7 @@ int check_service_element(Detector* detector)
     if ( !detector->server.pServiceElement )
     {
         detector->server.pServiceElement = new RNAServiceElement;
+        detector->server.pServiceElement->init();
         detector->server.pServiceElement->name = detector->server.serviceModule.name;
     }
 

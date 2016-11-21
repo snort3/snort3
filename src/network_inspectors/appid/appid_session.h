@@ -244,7 +244,6 @@ public:
 
     AppIdConfig* config = nullptr;
     CommonAppIdData common;
-    //AppIdSession* next = nullptr;
     Flow* flow = nullptr;
     AppIdFlowData* flowData = nullptr;
     AppInfoManager* app_info_mgr = nullptr;

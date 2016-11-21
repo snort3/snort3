@@ -43,13 +43,17 @@ enum SERVICE_ID_STATE
                             //  obviously delay detection under some scenarios.
 };
 
-#define DETECTOR_TYPE_PASSIVE   0
-#define DETECTOR_TYPE_DECODER   0
-#define DETECTOR_TYPE_NETFLOW   1
-#define DETECTOR_TYPE_PORT      2
-#define DETECTOR_TYPE_DERIVED   3
-#define DETECTOR_TYPE_CONFLICT  4
-#define DETECTOR_TYPE_PATTERN   5
+enum DetectorType
+{
+    DETECTOR_TYPE_PASSIVE =  0,
+    DETECTOR_TYPE_DECODER =  0,
+    DETECTOR_TYPE_NETFLOW,
+    DETECTOR_TYPE_PORT,
+    DETECTOR_TYPE_DERIVED,
+    DETECTOR_TYPE_CONFLICT,
+    DETECTOR_TYPE_PATTERN,
+    DETECTOR_TYPE_NOT_SET
+};
 
 struct ServiceMatch
 {

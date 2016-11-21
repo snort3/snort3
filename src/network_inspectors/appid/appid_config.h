@@ -66,6 +66,12 @@ struct AppidConfigElement
 
 struct AppIdSessionLogFilter
 {
+    AppIdSessionLogFilter()
+    {
+        sip.clear();
+        dip.clear();
+    }
+
     sfip_t sip;
     bool sip_flag = false;
     sfip_t dip;
@@ -120,6 +126,8 @@ enum RnaFwConfigState
     RNA_FW_CONFIG_STATE_PENDING,
 };
 
+typedef std::array<SF_LIST*, APP_ID_PORT_ARRAY_SIZE> AppIdPortExclusions;
+
 class AppIdConfig
 {
 public:
@@ -137,22 +145,22 @@ public:
     unsigned net_list_count = 0;
     NetworkSet* net_list_list = nullptr;
     NetworkSet* net_list = nullptr;
-    NetworkSet* net_list_by_zone[MAX_ZONES] = { nullptr };
-    std::array<AppId, 65535> tcp_port_only;     ///< Service IDs for port-only TCP services
-    std::array<AppId, 65535> udp_port_only;     ///< Service IDs for port-only UDP services
-    AppId ip_protocol[255] = { 0 };         ///< Service IDs for non-TCP / UDP protocol services
+    std::array<NetworkSet*, MAX_ZONES> net_list_by_zone;
+    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only;     ///< Service IDs for port-only TCP services
+    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only;     ///< Service IDs for port-only UDP services
+    std::array<AppId, 255> ip_protocol;         ///< Service IDs for non-TCP / UDP protocol services
     SF_LIST client_app_args;                ///< List of Client App arguments
     // for each potential port, an sflist of PortExclusion structs
-    SF_LIST* tcp_port_exclusions_src[APP_ID_PORT_ARRAY_SIZE] = { nullptr };
-    SF_LIST* udp_port_exclusions_src[APP_ID_PORT_ARRAY_SIZE] = { nullptr };
-    SF_LIST* tcp_port_exclusions_dst[APP_ID_PORT_ARRAY_SIZE] = { nullptr };
-    SF_LIST* udp_port_exclusions_dst[APP_ID_PORT_ARRAY_SIZE] = { nullptr };
-    AppIdModuleConfig* mod_config;
+    AppIdPortExclusions tcp_port_exclusions_src;
+    AppIdPortExclusions udp_port_exclusions_src;
+    AppIdPortExclusions tcp_port_exclusions_dst;
+    AppIdPortExclusions udp_port_exclusions_dst;
+    AppIdModuleConfig* mod_config = nullptr;
 
 private:
     void read_port_detectors(const char* files);
     void configure_analysis_networks(char* toklist[], uint32_t flag);
-    int add_port_exclusion(SF_LIST* port_exclusions[], const ip::snort_in6_addr* ip,
+    int add_port_exclusion(AppIdPortExclusions& port_exclusions, const ip::snort_in6_addr* ip,
         const ip::snort_in6_addr* netmask, int family, uint16_t port);
     void process_port_exclusion(char* toklist[]);
     void process_config_directive(char* toklist[], int /* reload */);

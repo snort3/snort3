@@ -894,6 +894,7 @@ success:
             goto fail;
         }
     }
+
     asd->set_session_flags(APPID_SESSION_SSL_SESSION);
     if (ss->host_name || ss->common_name || ss->org_name)
     {
@@ -1032,8 +1033,7 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* pattern, size_t
     while (mp)
     {
         //only patterns that match start of payload, or patterns starting with '.' or patterns
-        // folowing '.' in payload
-        //are considered a match.
+        // folowing '.' in payload are considered a match.
         if (mp->index == 0 || *mp->mpattern->pattern == '.' || pattern[mp->index-1] == '.')
         {
             if (!best_match || mp->mpattern->pattern_size > best_match->pattern_size)

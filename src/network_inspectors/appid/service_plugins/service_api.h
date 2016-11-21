@@ -96,17 +96,37 @@ struct RNAServiceElement
 {
     RNAServiceElement* next;
     RNAServiceValidationFCN validate;
-    // Value of userdata pointer and validate pointer forms key for comparison.
     Detector* userdata;
-
-    /**type of detector - pattern based, Sourcefire (validator) or User (Validator). */
     unsigned detectorType;
-
-    /**Number of resources registered */
     unsigned ref_count;
     unsigned current_ref_count;
     int provides_user;
     const char* name;
+
+    void init()
+    {
+        next = nullptr;
+        name = nullptr;
+        validate = nullptr;
+        userdata = nullptr;
+        provides_user = 0;
+        detectorType = DETECTOR_TYPE_NOT_SET;
+        ref_count = 0;
+        current_ref_count = 0;
+    }
+
+    void init(const char* service_name, RNAServiceValidationFCN fcn, Detector* ud,
+        int has_user, unsigned type)
+    {
+        next = nullptr;
+        name = service_name;
+        validate = fcn;
+        userdata = ud;
+        provides_user = has_user;
+        detectorType = type;
+        ref_count = 0;
+        current_ref_count = 0;
+    }
 };
 
 typedef void* (*ServiceFlowdataGet)(AppIdSession*, unsigned);

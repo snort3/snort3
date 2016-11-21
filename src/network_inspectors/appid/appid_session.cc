@@ -188,7 +188,6 @@ AppIdSession::~AppIdSession()
 	}
 
 	delete_shared_data();
-
     free_flow_data();
 }
 
@@ -1882,8 +1881,8 @@ static inline int PENetworkMatch(const sfip_t* pktAddr, const PortExclusion* pe)
 
 static inline int check_port_exclusion(const Packet* pkt, bool reversed)
 {
-    SF_LIST** src_port_exclusions;
-    SF_LIST** dst_port_exclusions;
+    AppIdPortExclusions* src_port_exclusions;
+    AppIdPortExclusions* dst_port_exclusions;
     SF_LIST* pe_list;
     PortExclusion* pe;
     const sfip_t* s_ip;
@@ -1891,20 +1890,20 @@ static inline int check_port_exclusion(const Packet* pkt, bool reversed)
 
     if ( pkt->is_tcp() )
     {
-        src_port_exclusions = config->tcp_port_exclusions_src;
-        dst_port_exclusions = config->tcp_port_exclusions_dst;
+        src_port_exclusions = &config->tcp_port_exclusions_src;
+        dst_port_exclusions = &config->tcp_port_exclusions_dst;
     }
     else if ( pkt->is_udp() )
     {
-        src_port_exclusions = config->udp_port_exclusions_src;
-        dst_port_exclusions = config->udp_port_exclusions_dst;
+        src_port_exclusions = &config->udp_port_exclusions_src;
+        dst_port_exclusions = &config->udp_port_exclusions_dst;
     }
     else
         return 0;
 
     /* check the source port */
     uint16_t port = reversed ? pkt->ptrs.dp : pkt->ptrs.sp;
-    if ( port && (pe_list = src_port_exclusions[port]) != nullptr )
+    if ( port && (pe_list = (*src_port_exclusions)[port]) != nullptr )
     {
         s_ip = reversed ? pkt->ptrs.ip_api.get_dst() : pkt->ptrs.ip_api.get_src();
 
@@ -1922,7 +1921,7 @@ static inline int check_port_exclusion(const Packet* pkt, bool reversed)
 
     /* check the dest port */
     port = reversed ? pkt->ptrs.sp : pkt->ptrs.dp;
-    if ( port && (pe_list=dst_port_exclusions[port]) != nullptr )
+    if ( port && (pe_list = (*dst_port_exclusions)[port]) != nullptr )
     {
         s_ip = reversed ? pkt->ptrs.ip_api.get_src() : pkt->ptrs.ip_api.get_dst();
 
@@ -2698,7 +2697,7 @@ void AppIdSession::free_dns_session_data()
 
 void AppIdSession::free_tls_session_data()
 {
-    if (tsession )
+    if ( tsession )
     {
         if (tsession->tls_host)
             snort_free(tsession->tls_host);
@@ -2768,7 +2767,6 @@ void AppIdSession::delete_shared_data()
     free_http_session_data();
     free_tls_session_data();
     free_dns_session_data();
-    tsession = nullptr;
 
     snort_free(firewallEarlyData);
     firewallEarlyData = nullptr;
@@ -3078,16 +3076,19 @@ void AppIdSession::clear_app_id_data()
     serviceAppId = APP_ID_UNKNOWN;
     tp_payload_app_id = APP_ID_UNKNOWN;
     tp_app_id = APP_ID_UNKNOWN;
+
     if (payload_version)
     {
         snort_free(payload_version);
         payload_version = nullptr;
     }
+
     if (serviceVendor)
     {
         snort_free(serviceVendor);
         serviceVendor = nullptr;
     }
+
     if (serviceVersion)
     {
         snort_free(serviceVersion);
