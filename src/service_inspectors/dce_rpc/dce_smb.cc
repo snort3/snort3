@@ -1663,7 +1663,7 @@ static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf*
 		dce2_smb_sess->sd.wire_pkt = p;
 		dce2_smb_sess->sd.config = (void*)config;
 	}
-    
+
     return dce2_smb_sess;
 }
 
@@ -1677,7 +1677,7 @@ static DCE2_SmbSsnData* dce2_handle_smb_session(Packet* p, dce2SmbProtoConf* con
     {
         dce2_smb_sess = dce2_create_new_smb_session(p, config);
     }
-   
+
     DebugFormat(DEBUG_DCE_SMB, "Session pointer: %p\n", (void*)dce2_smb_sess);
 
     return dce2_smb_sess;

@@ -44,8 +44,8 @@ class SipEventMediaData
 {
 public:
     SipEventMediaData(SIP_MediaData* data)
-    { this->data = data; } 
-    
+    { this->data = data; }
+
     const sfip_t* get_address() const;
     uint16_t get_port() const;
 

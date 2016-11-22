@@ -41,7 +41,7 @@ const uint8_t* HttpEvent::get_header(unsigned id, uint64_t sub_id, int32_t& leng
 
 const uint8_t* HttpEvent::get_content_type(int32_t& length)
 {
-    return get_header(HttpEnums::HTTP_BUFFER_HEADER, 
+    return get_header(HttpEnums::HTTP_BUFFER_HEADER,
         HttpEnums::HEAD_CONTENT_TYPE, length);
 }
 
@@ -93,13 +93,13 @@ const uint8_t* HttpEvent::get_user_agent(int32_t& length)
 
 const uint8_t* HttpEvent::get_via(int32_t& length)
 {
-    return get_header(HttpEnums::HTTP_BUFFER_HEADER, HttpEnums::HEAD_VIA, 
+    return get_header(HttpEnums::HTTP_BUFFER_HEADER, HttpEnums::HEAD_VIA,
         length);
 }
 
 const uint8_t* HttpEvent::get_x_working_with(int32_t& length)
 {
-    return get_header(HttpEnums::HTTP_BUFFER_HEADER, 
+    return get_header(HttpEnums::HTTP_BUFFER_HEADER,
         HttpEnums::HEAD_X_WORKING_WITH, length);
 }
 

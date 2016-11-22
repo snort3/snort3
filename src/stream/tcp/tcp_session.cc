@@ -359,7 +359,7 @@ void TcpSession::process_tcp_stream(TcpSegmentDescriptor& tsd)
 }
 void TcpSession::check_fin_transition_status(TcpSegmentDescriptor& tsd)
 {
-    if((tsd.get_seg_len() != 0) && 
+    if((tsd.get_seg_len() != 0) &&
             SEQ_EQ(listener->get_fin_final_seq(), listener->r_nxt_ack))
     {
         listener->set_tcp_event(TcpStreamTracker::TCP_FIN_RECV_EVENT);

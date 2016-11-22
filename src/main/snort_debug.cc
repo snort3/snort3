@@ -222,7 +222,7 @@ TEST_CASE("macros", "[trace]")
 TEST_CASE("trace_log", "[trace]")
 {
     Trace TRACE_NAME(testing) = TRACE_SECTION_2 | TRACE_SECTION_3;
-    
+
     testing_dump[0] = '\0';
     trace_log(testing, "my message");
     CHECK( !strcmp(testing_dump, "testing: my message") );
@@ -239,7 +239,7 @@ TEST_CASE("trace_log", "[trace]")
 TEST_CASE("trace_logf", "[trace]")
 {
     Trace TRACE_NAME(testing) = TRACE_SECTION_2 | TRACE_SECTION_3;
-    
+
     testing_dump[0] = '\0';
     trace_logf(testing, "%s %s", "my", "message");
     CHECK( !strcmp(testing_dump, "testing: my message") );
@@ -256,7 +256,7 @@ TEST_CASE("trace_logf", "[trace]")
 TEST_CASE("trace_debug", "[trace]")
 {
     Trace TRACE_NAME(testing) = TRACE_SECTION_2 | TRACE_SECTION_3;
-    
+
     testing_dump[0] = '\0';
     trace_debug(testing, "my message"); CHECK( !strcmp(testing_dump, "testing: " __FILE__ ":" sx(__LINE__) ": my message") );
 
@@ -271,7 +271,7 @@ TEST_CASE("trace_debug", "[trace]")
 TEST_CASE("trace_debugf", "[trace]")
 {
     Trace TRACE_NAME(testing) = TRACE_SECTION_2 | TRACE_SECTION_3;
-    
+
     testing_dump[0] = '\0';
     trace_debugf(testing, "%s %s", "my", "message"); CHECK( !strcmp(testing_dump, "testing: " __FILE__ ":" sx(__LINE__) ": my message") );
 

@@ -112,8 +112,8 @@ bool TcpStateEstablished::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         listener = trk.session->client;
     trk.update_on_fin_sent(tsd);
 
-    if( SEQ_EQ(tsd.get_end_seq(), (listener->r_nxt_ack +  tsd.get_seg_len())) || listener->process_inorder_fin() 
-            || !listener->is_segment_seq_valid(tsd) )
+    if ( SEQ_EQ(tsd.get_end_seq(), (listener->r_nxt_ack +  tsd.get_seg_len())) ||
+        listener->process_inorder_fin() || !listener->is_segment_seq_valid(tsd) )
     {
         trk.session->eof_handle(tsd.get_pkt());
         trk.set_tcp_state(TcpStreamTracker::TCP_FIN_WAIT1);

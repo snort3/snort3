@@ -74,7 +74,7 @@ void LogValue(const char*, const char*, FILE* = stdout)
 {
 }
 
-SO_PUBLIC void LogMessage(const char*, ...) 
+SO_PUBLIC void LogMessage(const char*, ...)
 {
 }
 

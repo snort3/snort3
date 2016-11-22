@@ -1,3 +1,23 @@
+16/11/21 - build 219
+
+-- add dce auto detect to wizard
+-- add MIME file processing to new http_inspect
+-- add chapters on perf_monitor and file processing to user manual
+-- appid refactoring and cleanup
+-- many appid fixes for leaks, sanitizer, and analyzer issues
+-- fix appid pattern matching for http
+-- fix various race conditions reported by thread sanitizer
+-- fix out-of-order FIN handling
+-- fix cmake package name used in HS and HWLOC so that REQUIRED works
+-- fix out-of-tree doc builds
+-- fix image sizes to fit page; thanks to wyatuestc for reporting the issue
+-- fix fast pattern selection when multiple designated
+   thanks to j.mcdowell@titanicsystems.com for reporting the issue
+-- change -L to -K in README and manual; thanks to jncornett for reporting the issue
+-- support compiling catch tests in standalone source files
+-- create pid file after dropping privileges
+-- improve detection and use of CppUTest in non-standard locations
+
 16/11/04 - build 218
 
 -- fix shutdown stats

@@ -996,7 +996,7 @@ void ModuleManager::show_configs(const char* pfx, bool exact)
         {
             dump_field(s, pfx, m->params);
         }
-        
+
         s = m->name;
 
         if ( m->default_params )

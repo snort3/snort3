@@ -36,7 +36,7 @@ int mlpAddPattern(void* root, const tMlpPattern** patterns, void* metaData);
 int mlpProcessPatterns(void* root);
 void* mlpMatchPatternLongest(void* root, tMlpPattern** inputPatternList);
 void* mlpMatchPatternUrl(void* root, tMlpPattern** inputPatternList);
-void* mlpMatchPatternCustom(void* root, tMlpPattern** inputPatternList, 
+void* mlpMatchPatternCustom(void* root, tMlpPattern** inputPatternList,
     int (* callback)(void*, void*, int, void*, void*));
 void mlpDestroy(void* root);
 void mlpDump(void* root);

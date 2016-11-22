@@ -1808,7 +1808,7 @@ static int detector_port_only_service(lua_State* L)
         ud->appid_config->tcp_port_only[port] = appId;
     else if (protocol == 17)
         ud->appid_config->udp_port_only[port] = appId;
-    
+
     AppInfoManager::get_instance().set_app_info_active(appId);
 
     return 0;

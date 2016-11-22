@@ -71,7 +71,7 @@ SipEventMediaSession* SipEvent::next_media_session()
 {
     if( !current_media_session )
         return nullptr;
-    
+
     auto session = new SipEventMediaSession(current_media_session);
     sessions.push_front(session);
 
@@ -97,13 +97,13 @@ SipEventMediaData* SipEventMediaSession::next_media_data()
 {
     if( !current_media_data )
         return nullptr;
-    
+
    auto d = new SipEventMediaData(current_media_data);
    data.push_front(d);
-   
+
    current_media_data = current_media_data->nextM;
-   
-   return d; 
+
+   return d;
 }
 
 

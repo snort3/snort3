@@ -37,7 +37,7 @@ static void replace_header_data(char **data, uint16_t &datalen, const uint8_t *h
     assert(data);
     if(*data)
         snort_free(*data);
-    
+
     *data = (char*)snort_alloc(header_length + 1);
     memcpy(*data, header_start, header_length);
     *(*data + header_length) = '\0';

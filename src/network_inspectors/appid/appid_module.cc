@@ -53,7 +53,7 @@ const PegInfo appid_pegs[] =
     { "bootp_flows", "count of bootp flows discovered by appid" },
     { "dcerpc_tcp_flows", "count of dce rpc flows over tcp discovered by appid" },
     { "dcerpc_udp_flows", "count of dce rpc flows over udp discovered by appid" },
-    { "direct_connect_flows", "count of direct connect flows discovered by appid" },    
+    { "direct_connect_flows", "count of direct connect flows discovered by appid" },
     { "dns_tcp_flows", "count of dns flows over tcp discovered by appid" },
     { "dns_udp_flows", "count of dns flows over udp discovered by appid" },
     { "ftp_flows", "count of ftp flows discovered by appid" },

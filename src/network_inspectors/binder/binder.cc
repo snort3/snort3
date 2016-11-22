@@ -521,7 +521,7 @@ int Binder::exec_eval_standby_flow( void* pv )
     ++bstats.verdicts[stuff.action];
     return 0;
 }
- 
+
 int Binder::exec(int operation, void* pv)
 {
     switch( operation )

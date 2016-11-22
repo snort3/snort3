@@ -93,7 +93,7 @@ bool CiscoMetaDataCodec::decode(const RawData& raw, CodecData& codec, DecodeData
         return false;
     }
 
-    const CiscoMetaDataOpt* cmd_options = 
+    const CiscoMetaDataOpt* cmd_options =
         reinterpret_cast<const CiscoMetaDataOpt*>(raw.data + sizeof(CiscoMetaDataHdr));
     // validate options, lengths, and SGTs
     cmdh_rem_len -= sizeof(CiscoMetaDataHdr) + sizeof(uint16_t); //2 octects for ethertype
@@ -102,7 +102,7 @@ bool CiscoMetaDataCodec::decode(const RawData& raw, CodecData& codec, DecodeData
 
     for(int i = 0; cmdh_rem_len > 0; i++)
     {
-        // Top 3 bits (length) must be equal to 0 or 4 
+        // Top 3 bits (length) must be equal to 0 or 4
         // Bottom 13 bits (type) must be 1 to indicate SGT
         const CiscoMetaDataOpt* opt = &cmd_options[i];
         uint16_t len = ntohs(opt->opt_len_type) >> CISCO_META_OPT_LEN_SHIFT;

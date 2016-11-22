@@ -31,7 +31,7 @@
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 #endif
 
-struct AddAppData 
+struct AddAppData
 {
     AppId client_id = 0;
     std::string *version_str = nullptr;
@@ -46,7 +46,7 @@ void fake_add_app(AppIdSession*, AppId, AppId client_id, const char* version)
     app_data.version_str = new std::string(version);
 }
 
-ClientAppApi fake_clientappapi = 
+ClientAppApi fake_clientappapi =
 {
     nullptr,
     nullptr,

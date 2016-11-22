@@ -303,7 +303,7 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
         case SMTP_PAF_DATA_STATE:
             if (pfdata->cmd_info.search_id == SMTP_PAF_AUTH_CMD)
             {
-                if ( max_auth_command_line_len && 
+                if ( max_auth_command_line_len &&
                         (((int)i + pfdata->data_info.boundary_len) > max_auth_command_line_len) &&
                         !alert_generated)
                 {

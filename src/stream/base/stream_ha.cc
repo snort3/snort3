@@ -92,7 +92,7 @@ bool StreamHAClient::consume(Flow*& flow, FlowKey* key, HAMessage* msg)
     assert(msg);
 
     // Is the message long enough to have our content?
-    if ( ((unsigned)(msg->content_length()) - (unsigned)(msg->cursor - msg->content())) < 
+    if ( ((unsigned)(msg->content_length()) - (unsigned)(msg->cursor - msg->content())) <
         sizeof(SessionHAContent) )
         return false;
 

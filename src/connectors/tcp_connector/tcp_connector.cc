@@ -163,7 +163,7 @@ static TcpConnectorMsgHandle* read_message(int sock_fd)
 
     return handle;
 }
- 
+
 void TcpConnector::process_receive()
 {
     TcpConnectorMsgHdr hdr;
@@ -207,7 +207,7 @@ void TcpConnector::start_receive_thread()
     run_thread = true;
     receive_thread = new std::thread(&TcpConnector::receive_processing_thread, this);
 }
- 
+
 void TcpConnector::stop_receive_thread()
 {
     if ( receive_thread != nullptr )
@@ -217,7 +217,7 @@ void TcpConnector::stop_receive_thread()
         delete receive_thread;
     }
 }
- 
+
 TcpConnector::TcpConnector(TcpConnectorConfig* tcp_connector_config, int sfd)
 {
     DebugMessage(DEBUG_CONNECTORS,"TcpConnector::TcpConnector()\n");
@@ -440,7 +440,7 @@ static Connector* tcp_connector_tinit(ConnectorConfig* config)
     sprintf(port_string, "%5d", (cfg->base_port + instance));
 
     TcpConnector* tcp_connector;
- 
+
     if ( cfg->setup == TcpConnectorConfig::Setup::CALL )
         tcp_connector = tcp_connector_tinit_call(cfg, port_string);
     else if ( cfg->setup == TcpConnectorConfig::Setup::ANSWER )

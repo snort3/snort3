@@ -398,7 +398,7 @@ void HttpMsgHeader::setup_utf_decoding()
         {
             charset_code = (CharsetCode)substr_to_code(last_token.start, last_token.length, HttpMsgHeadShared::charset_code_opt_list);
 
-            if( charset_code != CHARSET_UNKNOWN ) 
+            if ( charset_code != CHARSET_UNKNOWN )
                 return;
         }
         else if ( charset_code == CHARSET_UTF7 )

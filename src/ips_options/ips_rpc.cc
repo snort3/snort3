@@ -64,7 +64,7 @@ public:
     bool operator==(const IpsOption&) const override;
 
     int eval(Cursor&, Packet*) override;
-    
+
 private:
     uint32_t get_int(const uint8_t *&);
     bool check_rpc_call(const uint8_t *&);
@@ -76,7 +76,7 @@ private:
 
     const uint32_t RPC_MSG_VERSION = 2;
     const uint32_t CALL = 0;
-    
+
     RpcCheckData config;
 };
 
@@ -137,15 +137,15 @@ int RpcOption::eval(Cursor&, Packet* p)
     return DETECTION_OPTION_NO_MATCH;
 }
 
-// check if there is a detection match 
+// check if there is a detection match
 bool RpcOption::is_match(Packet * p)
-{ 
-    // get pointer to packet data 
+{
+    // get pointer to packet data
     const uint8_t* packet_data = p->data;
-        
+
     // read xid.. not being used currently
     // so just move to the next int
-    packet_data += 4; 
+    packet_data += 4;
 
     // read direction .. CALL or REPLY etc..
     uint32_t message_type =  get_int(packet_data);
@@ -187,7 +187,7 @@ bool RpcOption::is_valid(Packet* p){
     {
         return false;
     }
-   
+
     // assumed to be valid packet
     return true;
 }
@@ -214,11 +214,11 @@ bool RpcOption::check_rpc_call(const uint8_t*& packet_data)
     if ( !check_procedure(procedure) )
         return false;
 
-    // if nothing fails, return a match 
+    // if nothing fails, return a match
     return true;
-} 
+}
 
-// only check program values 
+// only check program values
 bool RpcOption::check_program( uint32_t program )
 {
     return (config.program == program);
@@ -231,8 +231,8 @@ bool RpcOption::check_version(uint32_t version)
     if(config.flags & RPC_CHECK_VERSION)
     {
         return (config.version == version);
-    }   
-    
+    }
+
     return true;
 }
 
@@ -243,9 +243,9 @@ bool RpcOption::check_procedure( uint32_t procedure)
     {
         return (config.procedure == procedure);
     }
-    
+
     return true;
-} 
+}
 
 //-------------------------------------------------------------------------
 // module

@@ -163,13 +163,13 @@ bool NHttpInspectServer::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("ascii"))
             parse_deleted_option("ascii", data_stream);
-        
+
         else if (!keyword.compare("utf_8"))
         {
             table_api.add_diff_option_comment("utf_8", "utf8");
             tmpval = parse_yn_bool_option("utf8", data_stream, false);
         }
-        
+
         else if (!keyword.compare("u_encode"))
         {
             table_api.add_diff_option_comment("u_encode", "percent_u");

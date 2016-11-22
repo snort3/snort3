@@ -119,7 +119,7 @@ int IcmpIdOption::eval(Cursor&, Packet* p)
         (uint8_t)p->ptrs.icmph->type == icmp::Icmp6Types::ECHO_REPLY) )
     {
 		uint16_t icmp_id = ntohs(p->ptrs.icmph->s_icmp_id);
-        if ( config.eval( icmp_id ) ) 
+        if ( config.eval( icmp_id ) )
             return DETECTION_OPTION_MATCH;
     }
     return DETECTION_OPTION_NO_MATCH;

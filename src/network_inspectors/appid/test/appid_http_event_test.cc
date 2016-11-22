@@ -383,7 +383,7 @@ TEST(appid_http_event, handle_msg_header_no_headers_exist)
 {
     TestData test_data;
     test_data.scan_flags = 0;
-    
+
     run_event_handler(test_data);
 }
 
@@ -393,7 +393,7 @@ TEST(appid_http_event, handle_msg_header_only_host)
     TestData test_data;
     test_data.scan_flags = SCAN_HTTP_HOST_URL_FLAG;
     test_data.host = HOST;
-    
+
     run_event_handler(test_data);
 }
 
@@ -402,7 +402,7 @@ TEST(appid_http_event, handle_msg_header_cookie)
     TestData test_data;
     test_data.scan_flags = 0;
     test_data.cookie = COOKIE;
-    
+
     run_event_handler(test_data);
 }
 
@@ -412,7 +412,7 @@ TEST(appid_http_event, handle_msg_header_host_and_uri)
     test_data.scan_flags = SCAN_HTTP_HOST_URL_FLAG;
     test_data.host = HOST;
     test_data.uri = URI;
-    
+
     run_event_handler(test_data);
 }
 
@@ -421,7 +421,7 @@ TEST(appid_http_event, handle_msg_header_user_agent)
     TestData test_data;
     test_data.scan_flags = SCAN_HTTP_USER_AGENT_FLAG;
     test_data.useragent = USERAGENT;
-    
+
     run_event_handler(test_data);
 }
 
@@ -430,7 +430,7 @@ TEST(appid_http_event, handle_msg_header_x_working_with)
     TestData test_data;
     test_data.scan_flags = 0;
     test_data.x_working_with = X_WORKING_WITH;
-    
+
     run_event_handler(test_data);
 }
 
@@ -439,7 +439,7 @@ TEST(appid_http_event, handle_msg_header_referer)
     TestData test_data;
     test_data.scan_flags = 0;
     test_data.referer = REFERER;
-    
+
     run_event_handler(test_data);
 }
 
@@ -448,7 +448,7 @@ TEST(appid_http_event, handle_msg_header_via)
     TestData test_data;
     test_data.scan_flags = SCAN_HTTP_VIA_FLAG;
     test_data.via = VIA;
-    
+
     run_event_handler(test_data);
 }
 
@@ -459,7 +459,7 @@ TEST(appid_http_event, handle_msg_header_content_type)
     test_data.scan_flags = 0;
     test_data.http_flows = 0;   //  Flows are only counted on request header
     test_data.content_type = CONTENT_TYPE;
-    
+
     run_event_handler(test_data);
 }
 
@@ -470,7 +470,7 @@ TEST(appid_http_event, handle_msg_header_location)
     test_data.scan_flags = 0;
     test_data.http_flows = 0;   //  Flows are only counted on request header
     test_data.location = LOCATION;
-    
+
     run_event_handler(test_data);
 }
 
@@ -481,7 +481,7 @@ TEST(appid_http_event, handle_msg_header_server)
     test_data.scan_flags = 0;
     test_data.http_flows = 0;   //  Flows are only counted on request header
     test_data.server = SERVER;
-    
+
     run_event_handler(test_data);
 }
 
@@ -492,7 +492,7 @@ TEST(appid_http_event, handle_msg_header_response_code)
     test_data.scan_flags = 0;
     test_data.http_flows = 0;   //  Flows are only counted on request header
     test_data.response_code = RESPONSE_CODE;
-    
+
     run_event_handler(test_data);
 }
 
@@ -503,7 +503,7 @@ TEST(appid_http_event, handle_msg_header_response_code_out_of_range)
     test_data.scan_flags = 0;
     test_data.http_flows = 0;   //  Flows are only counted on request header
     test_data.response_code = 1000;
-    
+
     TestData expect_data = test_data;
     expect_data.response_code = 0;
 
@@ -530,7 +530,7 @@ TEST(appid_http_event, handle_msg_header_all_response_headers)
     test_data.referer = REFERER;
     test_data.useragent = USERAGENT;
     test_data.cookie = COOKIE;
-    
+
     run_event_handler(test_data, &expect_data);
 }
 
@@ -554,7 +554,7 @@ TEST(appid_http_event, handle_msg_header_all_request_headers)
     test_data.response_code = RESPONSE_CODE;
     test_data.content_type = CONTENT_TYPE;
     test_data.location = LOCATION;
-    
+
     run_event_handler(test_data, &expect_data);
 }
 

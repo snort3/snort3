@@ -1719,8 +1719,8 @@ static inline int optionallyReplaceWithStrdup(char** optionalStr, const char* st
     return 0;
 }
 
-static inline uint8_t* continue_buffer_scan(const uint8_t* start, const uint8_t* end, MatchedPatterns* mp,
-    DetectorHTTPPattern* match)
+static inline uint8_t* continue_buffer_scan(
+    const uint8_t* start, const uint8_t* end, MatchedPatterns* mp, DetectorHTTPPattern*)
 {
     uint8_t* bp = (uint8_t*) (start) + mp->index;
     if( (bp >= end) || (*bp != ' ' && *bp != 0x09 && *bp != '/') )
@@ -1861,10 +1861,10 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
 
             case APP_ID_GOOGLE_DESKTOP:
                 buffPtr = (uint8_t*)start + tmp->index;
-                
+
                 if(buffPtr >= end)
-                    break;    
-                
+                    break;
+
                 if (*buffPtr != ')')
                 {
                     if (*buffPtr != ' ' && *buffPtr != 0x09 && *buffPtr != '/')
@@ -1917,7 +1917,7 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
             case APP_ID_WGET:
                 buffPtr = (uint8_t*)start + tmp->index;
                 if(buffPtr >= end)
-                    break;    
+                    break;
                 while (i < MAX_VERSION_SIZE - 1 && buffPtr < end)
                 {
                     temp_ver[i++] = *buffPtr++;
@@ -1969,7 +1969,7 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
                 buffPtr = (uint8_t*)start + tmp->index;
 
                 if(buffPtr >= end)
-                    break;    
+                    break;
 
                 if (*buffPtr == (uint8_t)'/')
                 {
@@ -2076,10 +2076,10 @@ int get_appid_by_pattern(const uint8_t* data, unsigned size, char** version)
         {
         case APP_ID_SQUID:
             data_ptr = (uint8_t*)data + mp->index;
-        
+
             if (data_ptr >= end)
                 break;
-        
+
             if (*data_ptr == '/')
             {
                 data_ptr++;
