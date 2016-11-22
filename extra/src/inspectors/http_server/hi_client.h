@@ -171,5 +171,23 @@ char** hi_client_get_field_names();
 extern const u_char* proxy_start;
 extern const u_char* proxy_end;
 
+struct HI_SESSION;
+
+int CheckLongDir(HI_SESSION* session, URI_PTR* uri_ptr, const u_char* ptr);
+
+/**  This makes passing function arguments much more readable and easier
+**  to follow.
+*/
+typedef int (* LOOKUP_FCN)(
+    HI_SESSION*, const u_char* start, const u_char* end, const u_char**, URI_PTR*);
+
+int NextNonWhiteSpace(HI_SESSION*, const u_char*, const u_char*, const u_char**, URI_PTR*);
+
+/*
+**  The lookup table contains functions for different HTTP delimiters
+**  (like whitespace and the HTTP delimiter \r and \n).
+*/
+extern LOOKUP_FCN lookup_table[256];
+
 #endif
 

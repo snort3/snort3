@@ -3,7 +3,7 @@ file_list = \
 http_inspect.cc \
 hi_main.cc hi_main.h \
 hi_ad.cc hi_ad.h \
-hi_client.cc hi_client.h \
+hi_client.cc hi_client_init.cc hi_client.h \
 hi_client_norm.cc hi_client_norm.h \
 hi_cmd_lookup.cc hi_cmd_lookup.h \
 hi_events.cc hi_events.h \

@@ -36,8 +36,10 @@ dce_utils.cc \
 dce_utils.h \
 ips_dce_iface.cc \
 ips_dce_opnum.cc \
-ips_dce_stub_data.cc
-
+ips_dce_stub_data.cc \
+smb_common.h \
+smb_message.cc \
+smb_message.h
 
 if STATIC_INSPECTORS
 noinst_LIBRARIES = libdce_rpc.a

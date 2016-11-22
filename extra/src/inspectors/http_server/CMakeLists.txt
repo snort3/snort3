@@ -6,6 +6,7 @@ set (FILE_LIST
     hi_ad.cc
     hi_ad.h
     hi_client.cc
+    hi_client_init.cc
     hi_client.h
     hi_client_norm.cc
     hi_client_norm.h
