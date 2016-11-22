@@ -215,13 +215,6 @@ void FtpDataFlowData::handle_eof(Packet* p)
     initFilePosition(&data_ssn->position, get_file_processed_size(p->flow));
     finalFilePosition(&data_ssn->position);
 
-    Stream::flush_request(p);
-
-    if (!(data_ssn->packet_flags & FTPDATA_FLG_STOP))
-    {
-        data_ssn->packet_flags |= FTPDATA_FLG_STOP;
-        FTPDataProcess(p, data_ssn, (uint8_t*)p->data, p->dsize);
-    }
 }
 
 //-------------------------------------------------------------------------

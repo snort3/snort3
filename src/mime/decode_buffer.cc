@@ -21,7 +21,7 @@
 #include "decode_buffer.h"
 #include "utils/util.h"
 
-void DecodeBuffer::reset()
+void DecodeBuffer::reset_saved()
 {
     prev_encoded_bytes = 0;
     prev_encoded_buf = nullptr;

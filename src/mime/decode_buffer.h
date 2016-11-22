@@ -40,7 +40,7 @@ public:
     // Move forward buffer pointer
     void update_buffer(uint32_t act_encode_size, uint32_t act_decode_size);
 
-    void reset();
+    void reset_saved();
     uint8_t* get_decode_buff() { return decodeBuf; }
     uint8_t* get_encode_buff() { return encodeBuf; }
     uint32_t get_decode_bytes_read() { return decode_bytes_read; }

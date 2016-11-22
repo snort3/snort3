@@ -23,6 +23,7 @@
 #include "file_api/file_flows.h"
 #include "http_enum.h"
 #include "http_field.h"
+#include "http_msg_request.h"
 #include "http_test_manager.h"
 #include "http_test_input.h"
 #include "http_cutter.h"
@@ -257,7 +258,19 @@ bool HttpStreamSplitter::finish(Flow* flow)
         {
             FileFlows* file_flows = FileFlows::get_file_flows(flow);
             const bool download = (source_id == SRC_SERVER);
-            file_flows->file_process(nullptr, 0, SNORT_FILE_END, !download);
+
+            size_t file_index = 0;
+
+            if (session_data->transaction[source_id] != nullptr)
+            {
+                HttpMsgRequest* request = session_data->transaction[source_id]->get_request();
+                if ((request != nullptr) and (request->get_http_uri() != nullptr))
+                {
+                    file_index = request->get_http_uri()->get_file_proc_hash();
+                }
+            }
+
+            file_flows->file_process(nullptr, 0, SNORT_FILE_END, !download, file_index);
         }
         else
         {

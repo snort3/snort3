@@ -57,6 +57,7 @@ public:
     const Field& get_norm_query() { return query_norm; }
     const Field& get_norm_fragment() { return fragment_norm; }
     const Field& get_norm_classic() { return classic_norm; }
+    size_t get_file_proc_hash();
 
 private:
     const Field uri;
@@ -81,6 +82,7 @@ private:
     Field fragment_norm;
     Field classic_norm;
     bool classic_norm_allocated = false;
+    size_t abs_path_hash = 0;
 
     void normalize();
     void parse_uri();

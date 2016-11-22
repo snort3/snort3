@@ -26,6 +26,8 @@
 #include "http_module.h"
 #include "http_uri.h"
 
+#include "hash/sfhashfcn.h"
+
 using namespace HttpEnums;
 
 HttpUri::~HttpUri()
@@ -319,3 +321,15 @@ void HttpUri::normalize()
     classic_norm_allocated = true;
 }
 
+size_t HttpUri::get_file_proc_hash()
+{
+    if (abs_path_hash)
+        return abs_path_hash;
+
+    if (abs_path.length > 0 )
+    {
+        abs_path_hash = str_to_hash(abs_path.start, abs_path.length);
+    }
+
+    return abs_path_hash;
+}

@@ -55,6 +55,8 @@ SO_PUBLIC void mix_str(
     // n == 0 => strlen(s)
     const char* s, unsigned n = 0);
 
+SO_PUBLIC size_t str_to_hash(const uint8_t *str, int length);
+
 struct SFHASHFCN
 {
     unsigned seed;

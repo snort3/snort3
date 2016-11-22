@@ -33,7 +33,7 @@ void UUDecode::reset_decode_state()
     reset_decoded_bytes();
 
     if (buffer)
-        buffer->reset();
+        buffer->reset_saved();
 
     begin_found = end_found = false;
 }
@@ -96,6 +96,8 @@ DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
         buffer->save_buffer(buffer->get_encode_buff() + bytes_read, (act_encode_size - bytes_read));
         act_encode_size = bytes_read;
     }
+    else
+        buffer->reset_saved();
 
     decoded_bytes = act_decode_size;
     decodePtr = buffer->get_decode_buff();

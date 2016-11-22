@@ -29,7 +29,7 @@
 void B64Decode::reset_decode_state()
 {
     reset_decoded_bytes();
-    buffer->reset();
+    buffer->reset_saved();
 }
 
 DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end)
@@ -63,6 +63,8 @@ DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end)
         act_encode_size = act_encode_size - i;
         buffer->save_buffer(buffer->get_encode_buff() + act_encode_size, i);
     }
+    else
+        buffer->reset_saved();
 
     if (sf_base64decode(buffer->get_encode_buff(), act_encode_size,
         buffer->get_decode_buff(), buffer->get_decode_avail(), &act_decode_size) != 0)

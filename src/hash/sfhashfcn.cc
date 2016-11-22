@@ -158,3 +158,45 @@ void mix_str(
     }
 }
 
+size_t str_to_hash(const uint8_t *str, int length )
+{
+    size_t a,b,c,tmp;
+    int i,j,k,m;
+    a = b = c = 0;
+    for (i = 0, j = 0; i < length; i += 4)
+    {
+        tmp = 0;
+        k = length - i;
+        if (k > 4)
+            k=4;
+
+        for (m = 0; m < k; m++)
+        {
+            tmp |= *(str + i + m) << m*8;
+        }
+
+        switch (j)
+        {
+        case 0:
+            a += tmp;
+            break;
+        case 1:
+            b += tmp;
+            break;
+        case 2:
+            c += tmp;
+            break;
+        }
+        j++;
+
+        if (j == 3)
+        {
+            mix(a,b,c);
+            j = 0;
+        }
+    }
+
+    finalize(a,b,c);
+    return c;
+}
+

@@ -141,15 +141,23 @@ void HttpMsgBody::do_file_processing()
         FileFlows* file_flows = FileFlows::get_file_flows(flow);
         const bool download = (source_id == SRC_SERVER);
 
+        HttpMsgRequest* request = transaction->get_request();
+
+        size_t file_index = 0;
+
+        if ((request != nullptr) and (request->get_http_uri() != nullptr))
+        {
+            file_index = request->get_http_uri()->get_file_proc_hash();
+        }
+
         if (file_flows->file_process(file_data.start, fp_length,
-            file_position, !download))
+            file_position, !download, file_index))
         {
             session_data->file_depth_remaining[source_id] -= fp_length;
 
             // With the first piece of the file we must provide the "name" which means URI
             if (front)
             {
-                HttpMsgRequest* request = transaction->get_request();
                 if (request != nullptr)
                 {
                     const Field& tranaction_uri = request->get_uri_norm_classic();
