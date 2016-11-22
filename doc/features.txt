@@ -6,3 +6,6 @@ include::file_processing.txt[]
 
 include::perf_monitor.txt[]
 
+=== Sensitive Data Filtering
+
+include::sensitive_data.txt[]
