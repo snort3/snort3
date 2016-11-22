@@ -355,15 +355,6 @@ void AppInfoManager::load_appid_config(const char* path)
                     continue;
                 }
             }
-            else if (!(strcasecmp(conf_key, "chp_fflow")))
-            {
-                if (!(strcasecmp(conf_val, "disabled")))
-                {
-                    DebugMessage(DEBUG_APPID, "AppId: HTTP future flow creation disabled.\n");
-                    AppIdConfig::get_appid_config()->mod_config->chp_fflow_disabled = 1;
-                    continue;
-                }
-            }
             else if (!(strcasecmp(conf_key, "ftp_userid")))
             {
                 if (!(strcasecmp(conf_val, "disabled")))

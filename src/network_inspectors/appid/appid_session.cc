@@ -2651,11 +2651,6 @@ void AppIdSession::free_http_session_data()
                 hsession->new_field[i] = nullptr;
             }
         }
-    if (hsession->fflow)
-    {
-        snort_free(hsession->fflow);
-        hsession->fflow = nullptr;
-    }
     if (hsession->via)
     {
         snort_free(hsession->via);
@@ -3379,13 +3374,6 @@ void AppIdSession::processCHP(char** version, Packet* p)
             if (http_session->app_type_flags & APP_TYPE_PAYLOAD)
                 set_payload_app_id_data((ApplicationId)chp_final, version);
 
-            if (http_session->fflow && http_session->fflow->flow_prepared)
-            {
-                finalize_fflow(http_session->fflow, http_session->app_type_flags,
-                    (http_session->fflow->appId ? http_session->fflow->appId : chp_final), p);
-                snort_free(http_session->fflow);
-                http_session->fflow = nullptr;
-            }
             if (*version)
                 *version = nullptr;
             if (user)

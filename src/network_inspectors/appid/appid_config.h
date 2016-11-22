@@ -110,7 +110,6 @@ public:
     uint32_t ftp_userid_disabled = 0;
     uint32_t chp_userid_disabled = 0;
     uint32_t chp_body_collection_disabled = 0;
-    uint32_t chp_fflow_disabled = 0;
     uint32_t chp_body_collection_max = 0;
     uint32_t max_tp_flow_depth = 0;
     uint32_t tp_allow_probes = 0;

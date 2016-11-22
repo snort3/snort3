@@ -133,17 +133,6 @@ struct CommonAppIdData
 #define SCAN_HTTP_XWORKINGWITH_FLAG (1<<7)
 #define SCAN_HTTP_CONTENT_TYPE_FLAG (1<<8)
 
-struct fflow_info
-{
-    uint32_t sip = 0;
-    uint32_t dip = 0;
-    uint16_t sport = 0;
-    uint16_t dport = 0;
-    IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
-    AppId appId = APP_ID_NONE;
-    int flow_prepared = 0;
-};
-
 #define RESPONSE_CODE_PACKET_THRESHHOLD 0
 
 struct httpSession
@@ -176,7 +165,6 @@ struct httpSession
     uint16_t new_field_len[HTTP_FIELD_MAX+1] = { 0 };
     uint16_t fieldOffset[HTTP_FIELD_MAX+1] = { 0 };
     uint16_t fieldEndOffset[HTTP_FIELD_MAX+1] = { 0 };
-    fflow_info* fflow = nullptr;
     bool new_field_contents = false;
     int chp_finished = 0;
     AppId chp_candidate = APP_ID_NONE;

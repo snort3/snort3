@@ -28,7 +28,6 @@
 #include "utils/util.h"
 
 struct httpSession;
-struct fflow_info;
 struct CHPAction;
 struct CHPApp;
 class AppIdConfig;
@@ -189,7 +188,6 @@ AppId scan_header_x_working_with(const uint8_t*, uint32_t, char**);
 void identify_user_agent(const uint8_t*, int, AppId*, AppId*, char**);
 void get_server_vendor_version(const uint8_t*, int, char**, char**, RNAServiceSubtype**);
 bool is_webdav_found(HeaderMatchedPatterns*);
-void finalize_fflow(fflow_info*, unsigned app_type_flags, AppId, Packet* );
 
 #endif
 
