@@ -202,12 +202,14 @@ public:
         IpsOption(s_name), version(iface_version), any_frag(iface_any_frag), uuid(iface_uuid)
     {
         memset(&pmd, 0, sizeof(pmd));
+        memset(&alt_pmd, 0, sizeof(alt_pmd));
     }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
     int eval(Cursor&, Packet*) override;
     PatternMatchData* get_pattern(int proto, RuleDirection direction) override;
+    PatternMatchData* get_alternate_pattern() override;
     ~Dce2IfaceOption();
 
 private:
@@ -215,6 +217,7 @@ private:
     const bool any_frag;
     const Uuid uuid;
     PatternMatchData pmd;
+    PatternMatchData alt_pmd;
 };
 
 Dce2IfaceOption::~Dce2IfaceOption()
@@ -223,6 +226,38 @@ Dce2IfaceOption::~Dce2IfaceOption()
     {
         snort_free((char*)pmd.pattern_buf);
     }
+    if ( alt_pmd.pattern_buf)
+    {
+        snort_free((char*)alt_pmd.pattern_buf);
+    }
+}
+
+static char* make_pattern_buffer( const Uuid &uuid, DceRpcBoFlag type )
+{
+    int index = 0;
+    char* pattern_buf = (char*)snort_alloc(sizeof(Uuid));
+
+    uint32_t time32 = DceRpcNtohl(&uuid.time_low, type);
+    memcpy(&pattern_buf[index], &time32, sizeof(uint32_t));
+    index += sizeof(uint32_t);
+
+    uint16_t time16 = DceRpcNtohs(&uuid.time_mid, type);
+    memcpy(&pattern_buf[index], &time16, sizeof(uint16_t));
+    index += sizeof(uint16_t);
+
+    time16 = DceRpcNtohs(&uuid.time_high_and_version, type);
+    memcpy(&pattern_buf[index], &time16, sizeof(uint16_t));
+    index += sizeof(uint16_t);
+
+    pattern_buf[index] = uuid.clock_seq_and_reserved;
+    index += sizeof(uint8_t);
+
+    pattern_buf[index] = uuid.clock_seq_low;
+    index += sizeof(uint8_t);
+
+    memcpy(&pattern_buf[index], uuid.node, 6);
+
+    return pattern_buf;
 }
 
 PatternMatchData* Dce2IfaceOption::get_pattern(int proto, RuleDirection direction)
@@ -260,7 +295,25 @@ PatternMatchData* Dce2IfaceOption::get_pattern(int proto, RuleDirection directio
         }
         return &pmd;
     }
-    // FIXIT-L add udp fast pattern
+    else if (proto == SNORT_PROTO_UDP)
+    {
+        pmd.pattern_buf = make_pattern_buffer( uuid, DCERPC_BO_FLAG__LITTLE_ENDIAN );
+        pmd.pattern_size = sizeof(Uuid);
+        alt_pmd.pattern_buf = make_pattern_buffer( uuid, DCERPC_BO_FLAG__BIG_ENDIAN );
+        alt_pmd.pattern_size = sizeof(Uuid);
+
+        return &pmd;
+    }
+
+    return nullptr;
+}
+
+PatternMatchData* Dce2IfaceOption::get_alternate_pattern()
+{
+    if (alt_pmd.pattern_buf)
+    {
+        return &alt_pmd;
+    }
 
     return nullptr;
 }

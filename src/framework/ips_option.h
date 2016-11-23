@@ -88,6 +88,9 @@ public:
     virtual struct PatternMatchData* get_pattern(int /*proto*/, RuleDirection = RULE_WO_DIR)
     { return nullptr; }
 
+    virtual struct PatternMatchData* get_alternate_pattern()
+    { return nullptr; }
+
     static int eval(void* v, Cursor& c, Packet* p)
     {
         IpsOption* opt = (IpsOption*)v;

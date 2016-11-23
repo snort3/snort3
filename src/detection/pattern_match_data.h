@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <sys/time.h>
+#include <vector>
 
 #include "detection/treenodes.h"
 #include "framework/ips_option.h"  // FIXIT-L not a good dependency
@@ -79,6 +80,8 @@ struct PatternMatchData
 
     bool can_be_fp() const;
 };
+
+typedef std::vector<PatternMatchData*> PatternMatchVector;
 
 inline bool PatternMatchData::can_be_fp() const
 {

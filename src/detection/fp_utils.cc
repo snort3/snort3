@@ -290,12 +290,13 @@ bool FpSelector::is_better_than(FpSelector& rhs, bool srvc, RuleDirection dir)
 // public methods
 //--------------------------------------------------------------------------
 
-PatternMatchData* get_fp_content(OptTreeNode* otn, OptFpList*& next, bool srvc)
+PatternMatchVector get_fp_content(OptTreeNode* otn, OptFpList*& next, bool srvc)
 {
     CursorActionType curr_cat = CAT_SET_RAW;
     FpSelector best;
     bool content = false;
     bool fp_only = true;
+    PatternMatchVector pmds;
 
     for (OptFpList* ofl = otn->opt_func; ofl; ofl = ofl->next)
     {
@@ -329,6 +330,13 @@ PatternMatchData* get_fp_content(OptTreeNode* otn, OptFpList*& next, bool srvc)
         {
             best = curr;
             next = ofl->next;
+            pmds.clear();
+            // Add alternate pattern
+            PatternMatchData* alt_pmd = ofl->ips_opt->get_alternate_pattern();
+            if (alt_pmd)
+                pmds.push_back(alt_pmd);
+            // Add main pattern last
+            pmds.push_back(best.pmd);
         }
     }
 
@@ -336,17 +344,14 @@ PatternMatchData* get_fp_content(OptTreeNode* otn, OptFpList*& next, bool srvc)
     {
         ParseWarning(WARN_RULES, "file rule %u:%u does not have file_data fast pattern",
             otn->sigInfo.generator, otn->sigInfo.id);
-        return nullptr;
+        pmds.clear();
     }
 
-    if ( best.pmd )
-        return best.pmd;
-
-    if ( content )
+    if ( content && !best.pmd)
         ParseWarning(WARN_RULES, "content based rule %u:%u has no eligible fast pattern",
             otn->sigInfo.generator, otn->sigInfo.id);
 
-    return nullptr;
+    return pmds;
 }
 
 //--------------------------------------------------------------------------

@@ -458,10 +458,25 @@ static int fpFinishPortGroup(
     return 0;
 }
 
+static void fpAddAlternatePatterns(SnortConfig* sc, PortGroup* pg,
+    OptTreeNode* otn, PatternMatchData* pmd, FastPatternConfig* fp)
+{
+    if ( fp->get_debug_print_fast_patterns() )
+        print_fp_info(s_group, otn, pmd, pmd->pattern_buf, pmd->pattern_size);
+
+    PMX* pmx = (PMX*)snort_calloc(sizeof(PMX));
+    pmx->rule_node.rnRuleData = otn;
+    pmx->pmd = pmd;
+
+    Mpse::PatternDescriptor desc(pmd->no_case, pmd->negated, pmd->literal, pmd->flags);
+    pg->mpse[pmd->pm_type]->add_pattern(sc, (uint8_t*)pmd->pattern_buf, pmd->pattern_size, desc,
+        pmx);
+}
+
 static int fpAddPortGroupRule(
     SnortConfig* sc, PortGroup* pg, OptTreeNode* otn, FastPatternConfig* fp, bool srvc)
 {
-    PatternMatchData* pmd = NULL;
+    PatternMatchVector pmv;
 
     // skip builtin rules, continue for text and so rules
     if ( !otn->sigInfo.text_rule )
@@ -472,23 +487,27 @@ static int fpAddPortGroupRule(
         return -1;
 
     OptFpList* next = nullptr;
-    pmd = get_fp_content(otn, next, srvc);
+    pmv = get_fp_content(otn, next, srvc);
 
-    if ( pmd )
+    if ( !pmv.empty() )
     {
-        if (
-            !pmd->relative && !pmd->negated && pmd->fp_only >= 0 &&
+        PatternMatchData* main_pmd = pmv.back();
+        pmv.pop_back();
+
+        if ( !main_pmd->relative && !main_pmd->negated && main_pmd->fp_only >= 0 &&
             // FIXIT-L no_case consideration is mpse specific, delegate
-            !pmd->offset && !pmd->depth && pmd->no_case )
+            !main_pmd->offset && !main_pmd->depth && main_pmd->no_case )
         {
             if ( !next || !next->ips_opt || !next->ips_opt->is_relative() )
-                pmd->fp_only = 1;
+                main_pmd->fp_only = 1;
         }
 
-        if (fpFinishPortGroupRule(sc, pg, otn, pmd, fp) == 0)
+        if (fpFinishPortGroupRule(sc, pg, otn, main_pmd, fp) == 0)
         {
-            if (pmd->pattern_size > otn->longestPatternLen)
-                otn->longestPatternLen = pmd->pattern_size;
+            if (main_pmd->pattern_size > otn->longestPatternLen)
+                otn->longestPatternLen = main_pmd->pattern_size;
+            for (auto p : pmv)
+                fpAddAlternatePatterns(sc, pg, otn, p, fp);
 
             return 0;
         }
@@ -1617,4 +1636,3 @@ static void print_fp_info(
         pm_type_strings[pmd->pm_type], pattern_length,
         txt.c_str(), hex.c_str(), opts.c_str());
 }
-

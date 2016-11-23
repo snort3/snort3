@@ -22,7 +22,7 @@
 #define FP_UTILS_H
 
 // fast pattern utilities
-
+#include <vector>
 #include "framework/ips_option.h"
 
 struct OptFpList;
@@ -35,7 +35,7 @@ void validate_fast_pattern(OptTreeNode*);
 int flp_trim(const char* p, int plen, const char** buff);
 bool set_fp_content(OptTreeNode*);
 
-PatternMatchData* get_fp_content(OptTreeNode*, OptFpList*&, bool srvc);
+std::vector <PatternMatchData*> get_fp_content(OptTreeNode*, OptFpList*&, bool srvc);
 
 #endif
 
