@@ -1574,6 +1574,8 @@ void AppIdSession::do_application_discovery(Packet* p)
             LogMessage("AppIdDbg %s new session\n", asd->session_logging_id);
     }
 
+    // FIXIT-L - from this point on we always have a valid ptr to an AppIdSession and a Packet
+    //           refactor to pass these as refs and delete any checks for null
     appid_stats.processed_packets++;
     asd->session_packet_count++;
 
@@ -1620,7 +1622,7 @@ void AppIdSession::do_application_discovery(Packet* p)
             }
 
             AppIdServiceIDState* id_state = AppIdServiceState::get(ip, IpProtocol::TCP, port,
-                AppIdServiceDetectionLevel(asd));
+                get_service_detect_level(asd));
 
             if (id_state)
             {
@@ -1629,7 +1631,7 @@ void AppIdSession::do_application_discovery(Packet* p)
                 else if ((packet_time() - id_state->reset_time) >= 60)
                 {
                     AppIdServiceState::remove(ip, IpProtocol::TCP, port,
-                            AppIdServiceDetectionLevel(asd));
+                            get_service_detect_level(asd));
                     asd->set_session_flags(APPID_SESSION_SERVICE_DELETED);
                 }
             }

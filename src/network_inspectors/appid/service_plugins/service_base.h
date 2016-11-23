@@ -86,7 +86,7 @@ inline bool compareServiceElements(const RNAServiceElement* first,
     return (first->validate != second->validate || first->userdata != second->userdata);
 }
 
-inline uint32_t AppIdServiceDetectionLevel(AppIdSession* asd)
+inline uint32_t get_service_detect_level(AppIdSession* asd)
 {
     if (asd->get_session_flags(APPID_SESSION_DECRYPTED))
         return 1;

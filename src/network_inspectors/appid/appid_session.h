@@ -249,7 +249,6 @@ public:
     char* serviceVendor = nullptr;
     char* serviceVersion = nullptr;
     RNAServiceSubtype* subtype = nullptr;
-    AppIdServiceIDState* id_state = nullptr;
     char* netbios_name = nullptr;
     SF_LIST* candidate_service_list = nullptr;
     unsigned int num_candidate_services_tried = 0;

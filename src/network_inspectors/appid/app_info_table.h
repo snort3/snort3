@@ -154,7 +154,7 @@ private:
     AppInfoManager() {}
     void load_appid_config(const char* path);
     AppInfoTableEntry* get_app_info_entry(AppId appId, const AppInfoTable& lookup_table);
-    std::mutex custom_app_mutex;
+    std::mutex app_info_tables_rw_mutex;
 };
 
 #endif
