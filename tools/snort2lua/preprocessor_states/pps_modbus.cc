@@ -66,6 +66,8 @@ bool Modbus::convert(std::istringstream& data_stream)
     bind.set_when_proto("tcp");
     bind.set_use_type("modbus");
 
+    converted_args = true;
+
     table_api.open_table("modbus");
 
     // parse the file configuration
@@ -129,4 +131,3 @@ static const ConvertMap preprocessor_modbus =
 
 const ConvertMap* modbus_map = &preprocessor_modbus;
 }
-
