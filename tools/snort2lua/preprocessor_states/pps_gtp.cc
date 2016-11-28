@@ -68,6 +68,8 @@ bool Gtp::convert(std::istringstream& data_stream)
     bind.set_when_proto("udp");
     bind.set_use_type("gtp_inspect");
 
+    converted_args = true;
+
     table_api.open_table("gtp_inspect");
 
     // parse the file configuration
@@ -134,4 +136,3 @@ static const ConvertMap preprocessor_gtp =
 
 const ConvertMap* gtp_map = &preprocessor_gtp;
 } // namespace preprocessors
-
