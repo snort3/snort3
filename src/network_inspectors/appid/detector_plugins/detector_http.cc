@@ -1104,7 +1104,7 @@ static char* normalize_userid(char* user)
 
 static void extractCHP(char* buf, int bs, int start, int psize, char* adata,  char** outbuf)
 {
-    char* begin = buf+start+psize;
+    char* begin = buf + start + psize;
     char* end = nullptr;
     char* tmp;
     int i, as;

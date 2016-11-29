@@ -426,8 +426,6 @@ bool AppIdSession::is_packet_ignored(Packet* p)
     return false;
 }
 
-static int ptype_scan_counts[NUMBER_OF_PTYPES];
-
 #ifdef REMOVED_WHILE_NOT_IN_USE
 static inline bool checkThirdPartyReinspect(const Packet* p, AppIdSession* asd)
 {
@@ -477,7 +475,8 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
         if (!hsession)
         {
             hsession = (httpSession*)snort_calloc(sizeof(httpSession));
-            memset(ptype_scan_counts, 0, 7 * sizeof(ptype_scan_counts[0]));
+            memset(hsession->ptype_scan_counts, 0,
+                NUMBER_OF_PTYPES * sizeof(hsession->ptype_scan_counts[0]));
         }
 
         if (get_session_flags(APPID_SESSION_SPDY_SESSION))
@@ -773,7 +772,7 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
             attribute_data->httpResponseContent = nullptr;
             scan_flags |= SCAN_HTTP_CONTENT_TYPE_FLAG;
         }
-        if (ptype_scan_counts[LOCATION_PT] && attribute_data->httpResponseLocation)
+        if (hsession->ptype_scan_counts[LOCATION_PT] && attribute_data->httpResponseLocation)
         {
             if (hsession->location)
             {
@@ -800,7 +799,7 @@ void AppIdSession::ProcessThirdPartyResults(Packet* p, int confidence,
             hsession->req_body_buflen = attribute_data->httpRequestBodyLen;
             attribute_data->httpRequestBody = nullptr;
         }
-        if (ptype_scan_counts[BODY_PT] && attribute_data->httpResponseBody)
+        if (hsession->ptype_scan_counts[BODY_PT] && attribute_data->httpResponseBody)
         {
             if (hsession->body)
             {
@@ -3156,7 +3155,7 @@ int AppIdSession::initial_CHP_sweep(char** chp_buffers, uint16_t* chp_buffer_len
       ***************************************************************/
     for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
     {
-        ptype_scan_counts[i] = cah->ptype_scan_counts[i];
+        hsession->ptype_scan_counts[i] = cah->ptype_scan_counts[i];
         hsession->ptype_req_counts[i] = cah->ptype_req_counts[i] +
             cah->ptype_rewrite_insert_used[i];
         if (i > 3 && !cah->ptype_scan_counts[i]
@@ -3175,17 +3174,17 @@ int AppIdSession::initial_CHP_sweep(char** chp_buffers, uint16_t* chp_buffer_len
 
     if (thirdparty_appid_module)
     {
-        if ((ptype_scan_counts[CONTENT_TYPE_PT]))
+        if ((hsession->ptype_scan_counts[CONTENT_TYPE_PT]))
             thirdparty_appid_module->session_attr_set(tpsession, TP_ATTR_COPY_RESPONSE_CONTENT);
         else
             thirdparty_appid_module->session_attr_clear(tpsession, TP_ATTR_COPY_RESPONSE_CONTENT);
 
-        if ((ptype_scan_counts[LOCATION_PT]))
+        if ((hsession->ptype_scan_counts[LOCATION_PT]))
             thirdparty_appid_module->session_attr_set(tpsession, TP_ATTR_COPY_RESPONSE_LOCATION);
         else
             thirdparty_appid_module->session_attr_clear(tpsession, TP_ATTR_COPY_RESPONSE_LOCATION);
 
-        if ((ptype_scan_counts[BODY_PT]))
+        if ((hsession->ptype_scan_counts[BODY_PT]))
             thirdparty_appid_module->session_attr_set(tpsession, TP_ATTR_COPY_RESPONSE_BODY);
         else
             thirdparty_appid_module->session_attr_clear(tpsession, TP_ATTR_COPY_RESPONSE_BODY);
@@ -3212,36 +3211,29 @@ void AppIdSession::clearMiscHttpFlags()
 
 void AppIdSession::processCHP(char** version, Packet* p)
 {
-    int i;
-    int found_in_buffer = 0;
-    char* user = nullptr;
-    AppId chp_final;
-    AppId ret = 0;
-    httpSession* http_session = hsession;
-
     char* chp_buffers[NUMBER_OF_PTYPES] =
     {
-        http_session->useragent,
-        http_session->host,
-        http_session->referer,
-        http_session->uri,
-        http_session->cookie,
-        http_session->req_body,
-        http_session->content_type,
-        http_session->location,
-        http_session->body,
+        hsession->useragent,
+        hsession->host,
+        hsession->referer,
+        hsession->uri,
+        hsession->cookie,
+        hsession->req_body,
+        hsession->content_type,
+        hsession->location,
+        hsession->body,
     };
 
     uint16_t chp_buffer_lengths[NUMBER_OF_PTYPES] = {
-        http_session->useragent_buflen,
-        http_session->host_buflen,
-        http_session->referer_buflen,
-        http_session->uri_buflen,
-        http_session->cookie_buflen,
-        http_session->req_body_buflen,
-        http_session->content_type_buflen,
-        http_session->location_buflen,
-        http_session->body_buflen,
+        hsession->useragent_buflen,
+        hsession->host_buflen,
+        hsession->referer_buflen,
+        hsession->uri_buflen,
+        hsession->cookie_buflen,
+        hsession->req_body_buflen,
+        hsession->content_type_buflen,
+        hsession->location_buflen,
+        hsession->body_buflen,
     };
 
     char* chp_rewritten[NUMBER_OF_PTYPES] =
@@ -3258,97 +3250,99 @@ void AppIdSession::processCHP(char** version, Packet* p)
         nullptr,nullptr,nullptr
     };
 
-    if (http_session->chp_hold_flow)
-        http_session->chp_finished = 0;
+    if ( hsession->chp_hold_flow )
+        hsession->chp_finished = 0;
 
-    if (!http_session->chp_candidate)
+    if ( !hsession->chp_candidate )
     {
         // remove artifacts from previous matches before we start again.
-        for (i = 0; i < NUMBER_OF_PTYPES; i++)
-        {
-            if (http_session->new_field[i])
+        for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
+            if (hsession->new_field[i])
             {
-                snort_free(http_session->new_field[i]);
-                http_session->new_field[i] = nullptr;
+                snort_free(hsession->new_field[i]);
+                hsession->new_field[i] = nullptr;
             }
-        }
 
-        if (!initial_CHP_sweep(chp_buffers, chp_buffer_lengths, chp_matches))
-            http_session->chp_finished = 1; // this is a failure case.
+        if ( !initial_CHP_sweep(chp_buffers, chp_buffer_lengths, chp_matches) )
+            hsession->chp_finished = 1; // this is a failure case.
     }
 
-    if (!http_session->chp_finished && http_session->chp_candidate)
+    if ( !hsession->chp_finished && hsession->chp_candidate )
     {
-        for (i = 0; i < NUMBER_OF_PTYPES; i++)
+        char* user = nullptr;
+
+        for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
         {
-            if ( !ptype_scan_counts[i] )
+            if ( !hsession->ptype_scan_counts[i] )
                 continue;
 
             if ( chp_buffers[i] && chp_buffer_lengths[i] )
             {
-                found_in_buffer = 0;
-                ret = scan_chp((PatternType)i, chp_buffers[i], chp_buffer_lengths[i], chp_matches[i], version, &user,
-                               &chp_rewritten[i], &found_in_buffer, http_session, p);
+                int found_in_buffer = 0;
+                AppId ret = scan_chp((PatternType)i, chp_buffers[i], chp_buffer_lengths[i], chp_matches[i], version, &user,
+                               &chp_rewritten[i], &found_in_buffer, hsession, p);
                 chp_matches[i] = nullptr; // freed by scanCHP()
-                http_session->total_found += found_in_buffer;
-                if (!ret || found_in_buffer < http_session->ptype_req_counts[i])
+                hsession->total_found += found_in_buffer;
+                if (!ret || found_in_buffer < hsession->ptype_req_counts[i])
                 {
                     // No match at all or the required matches for the field was NOT made
-                    if (!http_session->num_matches)
+                    if (!hsession->num_matches)
                     {
                         // num_matches == 0 means: all must succeed
                         // give up early
-                        http_session->chp_candidate = 0;
+                        hsession->chp_candidate = 0;
                         break;
                     }
                 }
             }
             else
             {
-                if (!http_session->num_matches)
+                if ( !hsession->num_matches )
                 {
                     // num_matches == 0 means: all must succeed  give up early
-                    http_session->chp_candidate = 0;
+                    hsession->chp_candidate = 0;
                     break;
                 }
             }
 
             // Decrement the expected scan count toward 0.
-            ptype_scan_counts[i] = 0;
-            http_session->num_scans--;
+            hsession->ptype_scan_counts[i] = 0;
+            hsession->num_scans--;
             // if we have reached the end of the list of scans (which have something to do), then num_scans == 0
-            if (http_session->num_scans == 0)
+            if (hsession->num_scans == 0)
             {
                 // we finished the last scan
                 // either the num_matches value was zero and we failed early-on or we need to check for the min.
-                if (http_session->num_matches &&
-                                http_session->total_found < http_session->num_matches)
+                if (hsession->num_matches &&
+                                hsession->total_found < hsession->num_matches)
                 {
                     // There was a minimum scans match count (num_matches != 0)
                     // And we did not reach that minimum
-                    http_session->chp_candidate = 0;
+                    hsession->chp_candidate = 0;
                     break;
                 }
                 // All required matches were met.
-                http_session->chp_finished = 1;
+                hsession->chp_finished = 1;
                 break;
             }
         }
 
-        if (!http_session->chp_candidate)
+        if ( !hsession->chp_candidate )
         {
-            http_session->chp_finished = 1;
-            if (*version)
+            hsession->chp_finished = 1;
+            if ( *version )
             {
                 snort_free(*version);
                 *version = nullptr;
             }
-            if (user)
+
+            if ( user )
             {
                 snort_free(user);
                 user = nullptr;
             }
-            for (i = 0; i < NUMBER_OF_PTYPES; i++)
+
+            for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
             {
                 if (nullptr != chp_rewritten[i])
                 {
@@ -3356,77 +3350,78 @@ void AppIdSession::processCHP(char** version, Packet* p)
                     chp_rewritten[i] = nullptr;
                 }
             }
-            memset(ptype_scan_counts, 0, 7 * sizeof(ptype_scan_counts[0]));
+            memset(hsession->ptype_scan_counts, 0, NUMBER_OF_PTYPES * sizeof(int));
 
             // Make it possible for other detectors to run.
-            http_session->skip_simple_detect = false;
+            hsession->skip_simple_detect = false;
             return;
         }
-        if (http_session->chp_candidate && http_session->chp_finished)
-        {
-            chp_final = http_session->chp_alt_candidate ? http_session->chp_alt_candidate :
-                            CHP_APPIDINSTANCE_TO_ID(http_session->chp_candidate);
 
-            if (http_session->app_type_flags & APP_TYPE_SERVICE)
+        if (hsession->chp_candidate && hsession->chp_finished)
+        {
+            AppId chp_final = hsession->chp_alt_candidate ? hsession->chp_alt_candidate
+                            : CHP_APPIDINSTANCE_TO_ID(hsession->chp_candidate);
+
+            if (hsession->app_type_flags & APP_TYPE_SERVICE)
                 set_service_appid_data(chp_final, nullptr, version);
 
-            if (http_session->app_type_flags & APP_TYPE_CLIENT)
+            if (hsession->app_type_flags & APP_TYPE_CLIENT)
                 set_client_app_id_data(chp_final, version);
 
-            if (http_session->app_type_flags & APP_TYPE_PAYLOAD)
+            if ( hsession->app_type_flags & APP_TYPE_PAYLOAD )
                 set_payload_app_id_data((ApplicationId)chp_final, version);
 
-            if (*version)
+            if ( *version )
                 *version = nullptr;
-            if (user)
+
+            if ( user )
             {
                 username = user;
                 user = nullptr;
-                if (http_session->app_type_flags & APP_TYPE_SERVICE)
+                if (hsession->app_type_flags & APP_TYPE_SERVICE)
                     username_service = chp_final;
                 else
                     username_service = serviceAppId;
                 set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
             }
 
-            for (i = 0; i < NUMBER_OF_PTYPES; i++)
-            {
-                if (nullptr != chp_rewritten[i])
+            for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
+                if ( chp_rewritten[i] )
                 {
                     if (session_logging_enabled)
                         LogMessage("AppIdDbg %s rewritten %s: %s\n", session_logging_id,
                             httpFieldName[i], chp_rewritten[i]);
-                    if (http_session->new_field[i])
-                        snort_free(http_session->new_field[i]);
-                    http_session->new_field[i] = chp_rewritten[i];
-                    http_session->new_field_contents = true;
+                    if (hsession->new_field[i])
+                        snort_free(hsession->new_field[i]);
+                    hsession->new_field[i] = chp_rewritten[i];
+                    hsession->new_field_contents = true;
                     chp_rewritten[i] = nullptr;
                 }
-            }
-            http_session->chp_candidate = 0;
+
+            hsession->chp_candidate = 0;
             //if we're doing safesearch rewrites, we want to continue to hold the flow
-            if (!http_session->get_offsets_from_rebuilt)
-                http_session->chp_hold_flow = 0;
+            if (!hsession->get_offsets_from_rebuilt)
+                hsession->chp_hold_flow = 0;
             scan_flags &= ~SCAN_HTTP_VIA_FLAG;
             scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
             scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
-            memset(ptype_scan_counts, 0, 7 * sizeof(ptype_scan_counts[0]));
+            memset(hsession->ptype_scan_counts, 0,
+                NUMBER_OF_PTYPES * sizeof(hsession->ptype_scan_counts[0]));
         }
         else /* if we have a candidate, but we're not finished */
         {
-            if (user)
+            if ( user )
             {
                 snort_free(user);
                 user = nullptr;
             }
-            for (i = 0; i < NUMBER_OF_PTYPES; i++)
-            {
+
+            for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
                 if (nullptr != chp_rewritten[i])
                 {
                     snort_free(chp_rewritten[i]);
                     chp_rewritten[i] = nullptr;
                 }
-            }
         }
     }
 }
@@ -3445,8 +3440,7 @@ int AppIdSession::process_http_packet(int direction)
     AppId client_id = 0;
     AppId payload_id = 0;
 
-    httpSession* http_session = hsession;
-    if (!http_session)
+    if (!hsession)
     {
         clear_app_id_data();
         if (session_logging_enabled)
@@ -3458,10 +3452,10 @@ int AppIdSession::process_http_packet(int direction)
 
     // For fragmented HTTP headers, do not process if none of the fields are set.
     // These fields will get set when the HTTP header is reassembled.
-    if ((!http_session->useragent) && (!http_session->host) && (!http_session->referer) &&
-        (!http_session->uri))
+    if ((!hsession->useragent) && (!hsession->host) && (!hsession->referer) &&
+        (!hsession->uri))
     {
-        if (!http_session->skip_simple_detect)
+        if (!hsession->skip_simple_detect)
             clearMiscHttpFlags();
 
         return 0;
@@ -3470,10 +3464,10 @@ int AppIdSession::process_http_packet(int direction)
     if (direction == APP_ID_FROM_RESPONDER && !get_session_flags(
         APPID_SESSION_RESPONSE_CODE_CHECKED))
     {
-        if (http_session->response_code)
+        if (hsession->response_code)
         {
             set_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED);
-            if (http_session->response_code_buflen != RESPONSE_CODE_LENGTH)            {
+            if (hsession->response_code_buflen != RESPONSE_CODE_LENGTH)            {
                 /* received bad response code. Stop processing this session */
                 clear_app_id_data();
                 if (session_logging_enabled)
@@ -3483,7 +3477,7 @@ int AppIdSession::process_http_packet(int direction)
             }
         }
 #if RESPONSE_CODE_PACKET_THRESHHOLD
-        else if (++(http_session->response_code_packets) == RESPONSE_CODE_PACKET_THRESHHOLD)
+        else if (++(hsession->response_code_packets) == RESPONSE_CODE_PACKET_THRESHHOLD)
         {
             set_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED);
             /* didn't receive response code in first X packets. Stop processing this asd */
@@ -3495,11 +3489,11 @@ int AppIdSession::process_http_packet(int direction)
         }
 #endif
     }
-    char* host = http_session->host;
-    char* url = http_session->url;
-    char* via = http_session->via;
-    char* useragent = http_session->useragent;
-    char* referer = http_session->referer;
+    char* host = hsession->host;
+    char* url = hsession->url;
+    char* via = hsession->via;
+    char* useragent = hsession->useragent;
+    char* referer = hsession->referer;
     memset(&hmp, 0, sizeof(hmp));
 
     if (serviceAppId == APP_ID_NONE)
@@ -3507,12 +3501,12 @@ int AppIdSession::process_http_packet(int direction)
 
     if (session_logging_enabled)
         LogMessage("AppIdDbg %s chp_finished %d chp_hold_flow %d\n", session_logging_id,
-            http_session->chp_finished, http_session->chp_hold_flow);
+            hsession->chp_finished, hsession->chp_hold_flow);
 
-    if (!http_session->chp_finished || http_session->chp_hold_flow)
+    if (!hsession->chp_finished || hsession->chp_hold_flow)
         processCHP(&version, nullptr);
 
-    if (!http_session->skip_simple_detect)  // true if processCHP found match
+    if (!hsession->skip_simple_detect)  // true if processCHP found match
     {
         if (!get_session_flags(APPID_SESSION_APP_REINSPECT))
         {
@@ -3568,14 +3562,14 @@ int AppIdSession::process_http_packet(int direction)
 
             // Scan User-Agent for Browser types or Skype
             if ((scan_flags & SCAN_HTTP_USER_AGENT_FLAG) && client_app_id <= APP_ID_NONE
-                    && useragent && http_session->useragent_buflen)
+                    && useragent && hsession->useragent_buflen)
             {
                 if (version)
                 {
                     snort_free(version);
                     version = nullptr;
                 }
-                identify_user_agent((uint8_t*)useragent, http_session->useragent_buflen,
+                identify_user_agent((uint8_t*)useragent, hsession->useragent_buflen,
                     &service_id, &client_id, &version);
                 if (session_logging_enabled && service_id > APP_ID_NONE &&
                         service_id != APP_ID_HTTP && serviceAppId != service_id)

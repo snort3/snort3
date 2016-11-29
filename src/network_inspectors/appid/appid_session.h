@@ -180,6 +180,7 @@ struct httpSession
     sfip_t* xffAddr = nullptr;
     const char** xffPrecedence = nullptr;
     int numXffFields = 0;
+    int ptype_scan_counts[NUMBER_OF_PTYPES] = { 0 };
 
 #if RESPONSE_CODE_PACKET_THRESHHOLD
     unsigned response_code_packets = 0;

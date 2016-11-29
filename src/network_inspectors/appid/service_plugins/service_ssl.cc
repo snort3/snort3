@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <mutex>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <openssl/x509.h>
@@ -195,6 +196,7 @@ struct ServiceSslConfig
 };
 
 static THREAD_LOCAL ServiceSslConfig service_ssl_config;
+static std::mutex crypto_lib_mutex;
 
 #pragma pack()
 
@@ -503,7 +505,10 @@ static int parse_certificates(ServiceSSLData* ss)
                 success = 0;
                 break;
             }
+            crypto_lib_mutex.lock();
             cert = d2i_X509(nullptr, (const unsigned char**)&data, cert_len);
+            crypto_lib_mutex.unlock();
+
             len -= cert_len;    /* Above call increments data pointer already. */
             if (!cert)
             {
@@ -610,12 +615,13 @@ static int parse_certificates(ServiceSSLData* ss)
         ss->org_name_strlen    = org_name_tot_len - 1;       /* Minus terminator. */
 
 parse_certificates_clean:
-
         while (certs_head)
         {
             certs_curr = certs_head;
             certs_head = certs_head->next;
+            crypto_lib_mutex.lock();
             X509_free(certs_curr->cert);
+            crypto_lib_mutex.unlock();
             snort_free(certs_curr);
         }
 
