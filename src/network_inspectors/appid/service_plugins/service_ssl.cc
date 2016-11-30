@@ -470,16 +470,11 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
     }
 }
 
-static int parse_certificates(ServiceSSLData* ss)
+static bool parse_certificates(ServiceSSLData* ss)
 {
-    int success = 0;
+    bool success = false;
     if (ss->certs_data && ss->certs_len)
     {
-        char* common_name;
-        char* org_name;
-        char* common_name_ptr;
-        char* org_name_ptr;
-
         /* Pull out certificates from block of data. */
         uint8_t* data = ss->certs_data;
         int len  = ss->certs_len;
@@ -488,31 +483,25 @@ static int parse_certificates(ServiceSSLData* ss)
         int common_name_tot_len = 0;
         int org_name_tot_len    = 0;
         int num_certs = 0;
-        success = 1;
+        success = true;
+
         while (len > 0)
         {
-            X509* cert;
-            char* start;
-            char* end;
-            int length;
-
-            /* Get each certificate. */
             int cert_len = ntoh3(data);
             data += 3;
             len  -= 3;
             if (len < cert_len)
             {
-                success = 0;
+                success = false;
                 break;
             }
             crypto_lib_mutex.lock();
-            cert = d2i_X509(nullptr, (const unsigned char**)&data, cert_len);
+            X509* cert = d2i_X509(nullptr, (const unsigned char**)&data, cert_len);
             crypto_lib_mutex.unlock();
-
             len -= cert_len;    /* Above call increments data pointer already. */
             if (!cert)
             {
-                success = 0;
+                success = false;
                 break;
             }
 
@@ -523,13 +512,14 @@ static int parse_certificates(ServiceSSLData* ss)
             certs_head       = certs_curr;
             num_certs++;
 
-            /* Find "common name" value. */
-            start = strstr(cert->name, COMMON_NAME_STR);
+            char* start = strstr(cert->name, COMMON_NAME_STR);
             if (start)
             {
+                int length;
+
                 start += strlen(COMMON_NAME_STR);
                 certs_curr->common_name_ptr = (uint8_t*)start;
-                end = strstr(start, FIELD_SEPARATOR);
+                char* end = strstr(start, FIELD_SEPARATOR);
                 if (end)
                     length = end - start;
                 else
@@ -539,13 +529,14 @@ static int parse_certificates(ServiceSSLData* ss)
                 common_name_tot_len += length;
             }
 
-            /* Find "org name" value. */
             start = strstr(cert->name, ORG_NAME_STR);
             if (start)
             {
+                int length;
+
                 start += strlen(ORG_NAME_STR);
                 certs_curr->org_name_ptr = (uint8_t*)start;
-                end = strstr(start, FIELD_SEPARATOR);
+                char* end = strstr(start, FIELD_SEPARATOR);
                 if (end)
                     length = end - start;
                 else
@@ -555,66 +546,66 @@ static int parse_certificates(ServiceSSLData* ss)
                 org_name_tot_len += length;
             }
         }
-        if (!success)
-            goto parse_certificates_clean;
 
-        // Build up concatenated string of fields.
-        common_name = nullptr;
-        org_name    = nullptr;
-        if (common_name_tot_len)
+        if ( success )
         {
-            common_name_tot_len += num_certs;    /* Space between each and terminator at end. */
-            common_name = (char*)snort_calloc(common_name_tot_len);
-        }
-
-        if (org_name_tot_len)
-        {
-            org_name_tot_len += num_certs;    /* Space between each and terminator at end. */
-            org_name = (char*)snort_calloc(org_name_tot_len);
-        }
-
-        common_name_ptr = common_name;
-        org_name_ptr    = org_name;
-        certs_curr = certs_head;
-        while (certs_curr)
-        {
-            /* Grab this common name. */
-            if (common_name_ptr && certs_curr->common_name_ptr && certs_curr->common_name_len)
+            char* common_name = nullptr;
+            if (common_name_tot_len)
             {
-                memcpy(common_name_ptr, certs_curr->common_name_ptr, certs_curr->common_name_len);
-                common_name_ptr += certs_curr->common_name_len;
-                *common_name_ptr = ' ';
-                common_name_ptr += 1;
+                common_name_tot_len += num_certs;    /* Space between each and terminator at end. */
+                common_name = (char*)snort_calloc(common_name_tot_len);
             }
 
-            /* Grab this org name. */
-            if (org_name_ptr && certs_curr->org_name_ptr && certs_curr->org_name_len)
+            char* org_name = nullptr;
+            if (org_name_tot_len)
             {
-                memcpy(org_name_ptr, certs_curr->org_name_ptr, certs_curr->org_name_len);
-                org_name_ptr += certs_curr->org_name_len;
-                *org_name_ptr = ' ';
-                org_name_ptr += 1;
+                org_name_tot_len += num_certs;    /* Space between each and terminator at end. */
+                org_name = (char*)snort_calloc(org_name_tot_len);
             }
 
-            certs_curr = certs_curr->next;
+            char* common_name_ptr = common_name;
+            char* org_name_ptr = org_name;
+            certs_curr = certs_head;
+            while (certs_curr)
+            {
+                /* Grab this common name. */
+                if (common_name_ptr && certs_curr->common_name_ptr && certs_curr->common_name_len)
+                {
+                    memcpy(common_name_ptr, certs_curr->common_name_ptr, certs_curr->common_name_len);
+                    common_name_ptr += certs_curr->common_name_len;
+                    *common_name_ptr = ' ';
+                    common_name_ptr += 1;
+                }
+
+                /* Grab this org name. */
+                if (org_name_ptr && certs_curr->org_name_ptr && certs_curr->org_name_len)
+                {
+                    memcpy(org_name_ptr, certs_curr->org_name_ptr, certs_curr->org_name_len);
+                    org_name_ptr += certs_curr->org_name_len;
+                    *org_name_ptr = ' ';
+                    org_name_ptr += 1;
+                }
+
+                certs_curr = certs_curr->next;
+            }
+
+            if (common_name_tot_len)
+            {
+                common_name_ptr  -= 1;
+                *common_name_ptr  = '\0';
+            }
+            if (org_name_tot_len)
+            {
+                org_name_ptr     -= 1;
+                *org_name_ptr     = '\0';
+            }
+            ss->common_name        = common_name;
+            ss->common_name_strlen = common_name_tot_len - 1;    /* Minus terminator. */
+            ss->org_name           = org_name;
+            ss->org_name_strlen    = org_name_tot_len - 1;       /* Minus terminator. */
         }
 
-        if (common_name_tot_len)
-        {
-            common_name_ptr  -= 1;
-            *common_name_ptr  = '\0';    /* Put terminator at end rather than space. */
-        }
-        if (org_name_tot_len)
-        {
-            org_name_ptr     -= 1;
-            *org_name_ptr     = '\0';    /* Put terminator at end rather than space. */
-        }
-        ss->common_name        = common_name;
-        ss->common_name_strlen = common_name_tot_len - 1;    /* Minus terminator. */
-        ss->org_name           = org_name;
-        ss->org_name_strlen    = org_name_tot_len - 1;       /* Minus terminator. */
-
-parse_certificates_clean:
+        crypto_lib_mutex.lock();
         while (certs_head)
         {
             certs_curr = certs_head;
@@ -630,7 +621,8 @@ parse_certificates_clean:
         ss->certs_data = nullptr;
         ss->certs_len  = 0;
     }
-    return success;    /* 1 is OK; 0 is fail. */
+
+    return success;
 }
 
 static int ssl_validate(ServiceValidationArgs* args)

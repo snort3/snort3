@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include <openssl/crypto.h>
+
 #include "log/messages.h"
 #include "main/thread.h"
 #include "profiler/profiler.h"
@@ -54,6 +56,13 @@ static void dump_appid_stats()
         thirdparty_appid_module->print_stats();
     LogMessage("    Total packets ignored : %" PRIu64 "\n", appid_stats.ignored_packets);
     AppIdServiceState::dump_stats();
+}
+
+// FIXIT-L - appid cleans up openssl now as it is the primary (only) user... eventually this
+//           should probably be done outside of appid
+void openssl_cleanup()
+{
+     CRYPTO_cleanup_all_ex_data();
 }
 
 AppIdInspector::AppIdInspector(const AppIdModuleConfig* pc)
@@ -168,9 +177,14 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static void appid_inspector_init()
+static void appid_inspector_pinit()
 {
     AppIdSession::init();
+}
+
+static void appid_inspector_pterm()
+{
+    openssl_cleanup();
 }
 
 static Inspector* appid_inspector_ctor(Module* m)
@@ -202,8 +216,8 @@ const InspectApi appid_inspector_api =
     (uint16_t)PktType::ANY_IP,
     nullptr, // buffers
     nullptr, // service
-    appid_inspector_init, // pinit
-    nullptr, // pterm
+    appid_inspector_pinit, // pinit
+    appid_inspector_pterm, // pterm
     nullptr, // tinit
     nullptr, // tterm
     appid_inspector_ctor,
