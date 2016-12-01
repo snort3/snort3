@@ -57,7 +57,6 @@ void TcpStreamSession::init_new_tcp_session(TcpSegmentDescriptor& tsd)
     flow->set_expire(tsd.get_pkt(), config->session_timeout);
 
     update_perf_base_state(TcpStreamTracker::TCP_SYN_SENT);
-    tel.log_internal_event(INTERNAL_EVENT_SESSION_ADD);
 
     tcp_init = true;
     lws_init = true;

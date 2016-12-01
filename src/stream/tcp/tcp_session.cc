@@ -225,6 +225,7 @@ void TcpSession::update_perf_base_state(char newState)
                     &flow->server_ip, SFS_STATE_TCP_ESTABLISHED);
 
             session_flags |= SSNFLAG_COUNTED_ESTABLISH;
+            tel.log_internal_event(INTERNAL_EVENT_SESSION_ADD);
             if ( ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
                 && !( session_flags & SSNFLAG_COUNTED_CLOSING ) )
             {
