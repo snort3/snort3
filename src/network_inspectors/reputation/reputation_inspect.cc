@@ -57,7 +57,7 @@ const PegInfo reputation_peg_names[] =
     { "blacklisted", "number of packets blacklisted" },
     { "whitelisted", "number of packets whitelisted" },
     { "monitored", "number of packets monitored" },
-    { "memory_allocated", "total memory allocated" },
+    { "memory allocated", "total memory allocated" },
 
     { nullptr, nullptr }
 };
