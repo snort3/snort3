@@ -605,7 +605,6 @@ static bool parse_certificates(ServiceSSLData* ss)
             ss->org_name_strlen    = org_name_tot_len - 1;       /* Minus terminator. */
         }
 
-        crypto_lib_mutex.lock();
         while (certs_head)
         {
             certs_curr = certs_head;
