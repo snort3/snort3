@@ -32,6 +32,7 @@ set (
 
 set (
     UNBUILT_SOURCES
+    binder.txt
     bugs.txt
     building.txt
     daq.txt
@@ -41,6 +42,7 @@ set (
     extending.txt
     features.txt
     file_processing.txt
+    http_inspect.txt
     overview.txt
     params.txt
     perf_monitor.txt
@@ -58,6 +60,7 @@ set (
     style.txt
     terms.txt
     usage.txt
+    wizard.txt
 )
 
 foreach ( output_file ${HELP_SOURCES} )

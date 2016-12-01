@@ -24,6 +24,7 @@ search_engine.txt
 #so_rule.txt
 
 unbuilt_sources = \
+binder.txt \
 bugs.txt \
 building.txt \
 config_changes.txt \
@@ -34,6 +35,7 @@ errors.txt \
 extending.txt \
 features.txt \
 file_processing.txt \
+http_inspect.txt \
 overview.txt \
 params.txt \
 perf_monitor.txt \
@@ -47,7 +49,8 @@ snorty.png \
 start.txt \
 style.txt \
 terms.txt \
-usage.txt
+usage.txt \
+wizard.txt
 
 all_sources = \
 $(unbuilt_sources) \

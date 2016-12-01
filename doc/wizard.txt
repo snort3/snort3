@@ -1,0 +1,31 @@
+Using the wizard enables port-independent configuration and the detection of
+malware command and control channels.  If the wizard is bound to a session, it
+peeks at the initial payload to determine the service.  For example, 'GET'
+would indicate HTTP and 'HELO' would indicate SMTP.  Upon finding a match, the
+service bindings are reevaluated so the session can be handed off to the
+appropriate inspector.  The wizard is still under development; if you find you
+need to tweak the defaults please let us know.
+
+Additional Details:
+
+* If the wizard and one or more service inspectors are configured w/o
+  explicitly configuring the binder, default bindings will be generated which
+  should work for most common cases.
+
+* Also note that while Snort 2.X bindings can only be configured in the
+  default policy, each Snort 3.0 policy can contain a binder leading to an
+  arbitrary hierarchy.
+
+* The entire configuration can be reloaded and hot-swapped during run-time
+  via signal or command in both Snort 2.X and 3.0.  Ultimately, Snort 3.0
+  will support commands to update the binder on the fly, thus enabling
+  incremental reloads of individual inspectors.
+
+* Both Snort 2.X and 3.0 support server specific configurations via a hosts
+  table (XML in Snort 2.X and Lua in Snort 3.0).  The table allows you to
+  map network, protocol, and port to a service and policy.  This table can
+  be reloaded and hot-swapped separately from the config file.
+
+* You can find the specifics on the binder, wizard, and hosts tables in the
+  manual or command line like this:  snort --help-module binder, etc.
+

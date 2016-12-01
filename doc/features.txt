@@ -1,6 +1,14 @@
+=== Binder
+
+include::binder.txt[]
+
 === File Processing
 
 include::file_processing.txt[]
+
+=== HTTP Inspector
+
+include::http_inspect.txt[]
 
 === Performance Monitor
 
@@ -9,3 +17,8 @@ include::perf_monitor.txt[]
 === Sensitive Data Filtering
 
 include::sensitive_data.txt[]
+
+=== Wizard
+
+include::wizard.txt[]
+
