@@ -36,8 +36,8 @@ set (
     building.txt
     daq.txt
     differences.txt
-    errors.txt
     enviro.txt
+    errors.txt
     extending.txt
     features.txt
     file_processing.txt
@@ -45,14 +45,15 @@ set (
     params.txt
     perf_monitor.txt
     reference.txt
+    sensitive_data.txt
     snort2lua.txt
-    snorty.png
     snort2x.png
     snort3x.png
     snort_manual.html
     snort_manual.pdf
     snort_manual.text
     snort_manual.txt
+    snorty.png
     start.txt
     style.txt
     terms.txt

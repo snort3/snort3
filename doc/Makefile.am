@@ -38,11 +38,12 @@ overview.txt \
 params.txt \
 perf_monitor.txt \
 reference.txt \
-snort_manual.txt \
+sensitive_data.txt \
 snort2lua.txt \
-snorty.png \
 snort2x.png \
 snort3x.png \
+snort_manual.txt \
+snorty.png \
 start.txt \
 style.txt \
 terms.txt \

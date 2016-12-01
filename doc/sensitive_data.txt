@@ -1,11 +1,7 @@
-=== Overview
-
 The `sd_pattern` IPS option provides detection and filtering of Personally
 Identifiable Information (PII).  This information includes credit card
 numbers, U.S. Social Security numbers, and email addresses.  A rich regular
 expression syntax is available for defining your own PII. 
-
-=== Dependencies
 
 ==== Hyperscan
 
@@ -14,7 +10,7 @@ library from Intel.  It provides a regex grammar which is mostly PCRE
 compatible. To learn more about Hyperscan see
 http://01org.github.io/hyperscan/dev-reference/
 
-=== Syntax 
+==== Syntax 
 
 Snort provides `sd_pattern` as IPS rule option with no additional inspector
 overhead.  The Rule option takes the following syntax.
@@ -51,8 +47,8 @@ regex, '\b' matches a word boundary (whitespace, end of line, non-word
 characters)  and '\w+' matches one or more word characters. '\.' matches
 a literal '.'.
 
-The above pattern would match "a@ourdomain.com", "aa@ourdomain.com" but
-would not match "1@ourdomain.com", "ab12@ourdomain.com" or "@ourdomain.com".
+The above pattern would match "a@ourdomain.com", "aa@ourdomain.com" but would
+not match `1@ourdomain.com` `ab12@ourdomain.com` or `@ourdomain.com`.
 
 Note: This is just an example, this pattern is not suitable to detect many
 correctly formatted emails.
@@ -75,7 +71,7 @@ This example requires 300 matches of the pattern "This is a string literal"
 to qualify as a positive match. That is, if the string only occurred 299x
 in a packet, you will not see an even.
 
-==== Obfuscating Credit Cards and Social Security Numbers
+===== Obfuscating Credit Cards and Social Security Numbers
 
 Snort provides discreet logging for the built in patterns "credit_card",
 "us_social" and "us_social_nodashes". Enabling `output.obfuscate_pii` makes
@@ -87,7 +83,7 @@ patterns. This configuration is disabled by default.
         obfuscate_pii = true
     }
 
-===== Example
+==== Example
 
 A complete Snort IPS rule
 
