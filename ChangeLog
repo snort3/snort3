@@ -1,3 +1,21 @@
+16/12/01 - build 220
+
+-- fixed uu and qp decode issue
+-- fixed file signature calculation for ftp
+-- fixed file resume blocking
+-- fix 135:2 to be upon completion of 3-way handshake
+-- fix memory leak with libcrypto use
+-- fix multithreaded use of libcrypto
+-- fix default snort2lua output for gtp and modbus
+-- fix Lua ordering issue with net and port vars
+-- fix miscellaneous multithreading issues with appid
+-- fix comment in snort.lua re install directory use;
+   thanks to Yang Wang for sending the pull request
+-- add alternate fast patterns for dce_udp endianness
+-- removed underscores from all peg counts
+-- document sensitive data use
+-- user manual refactoring and updages
+
 16/11/21 - build 219
 
 -- add dce auto detect to wizard

@@ -40,9 +40,12 @@ Additional are already under development:
 * Anomaly detection
 * and more!
 
-The remainder of this chapter provides some background and overview
-information.  The next chapter describes how to use the major features of
+The remainder of this section provides some background and overview
+information.  The next section describes how to use the major features of
 Snort.  Most of the rest of the manual is reference material.
+
+The 2.X Snort manual may be useful only for some background information not
+yet documented here.
 
 
 === Background
@@ -98,13 +101,13 @@ hampers future development when the flow of data from one preprocessor to
 the next depends on traffic conditions, a common situation with advanced
 features like application identification.  In this case, a preprocessor
 like HTTP may be extracting and normalizing data that ultimately is not
-used, or app ID may be repeatedly checking for data that is just not
+used, or appID may be repeatedly checking for data that is just not
 available.
 
 Callbacks help break out of the preprocess straightjacket.  This is where
 one preprocessor supplies another with a function to call when certain data
 is available.  Snort has started to take this approach to pass some HTTP and
-SIP preprocessor data to app ID.  However, it remains a peripheral feature
+SIP preprocessor data to appID.  However, it remains a peripheral feature
 and still requires the production of data that may not be consumed.
 
 
@@ -112,7 +115,7 @@ and still requires the production of data that may not be consumed.
 
 One of the goals of Snort++ is to provide a more flexible framework for
 packet processing by implementing an event-driven approach.  Another is to
-produce data only when needed, to minimize expensive normalizations.
+produce data only when needed to minimize expensive normalizations.
 However, the basic packet processing provides very similar functionality.
 
 The basic processing steps Snort\++ takes are similar to Snort's as seen in
@@ -125,7 +128,7 @@ but they are not central to basic flow processing and are not shown.)
 ////
 (pkt) -> [decode] -> [stream] -> [service] -> [detect] -> [log] -> (verdict)
          -----------------------------------------------------
-                    [app id]   [firewall]   [other]
+                      [appid]   [firewall]   [other]
 ////
 image::snort3x.png["Snort 3X",width="480"]
 
@@ -157,15 +160,12 @@ more and more as Snort++ development continues.
 Effective configuration of Snort++ is done via the environment, command
 line, a Lua configruation file, and a rules file.
 
-Note that retaining backwards compatibility is not a goal.  While Snort\++
-leverages some of the Snort code base, a lot has changed.  The
-configuration of Snort++ is done with Lua, so your old conf won't work as
-is.  Rules are still text based but nonetheless incompatible.  However,
-Snort2Lua will help you convert your conf and rules to the new format.
-
-The original Snort manual may be useful for some background information not
-yet documented for Snort++.  The configuration differences are given in
-this manual.
+Note that backwards compatibility was sacrificed to obtain new and improved
+functionality.  While Snort\++ leverages some of the Snort code base, a lot
+has changed.  The configuration of Snort++ is done with Lua, so your old
+conf won't work as is.  Rules are still text based but with syntax tweaks,
+so your 2.X rules must be fixed up.  However, snort2lua will help you
+convert your conf and rules to the new format.
 
 ==== Environment
 
@@ -176,7 +176,7 @@ LUA_PATH must be set based on your install:
 SNORT_LUA_PATH must be set to load auxillary configuration files if you use
 the default snort.lua.  For example:
 
-    export SNORT_LUA_PATH=$install_prefixDIR/etc/snort
+    export SNORT_LUA_PATH=$install_prefix/etc/snort
 
 ==== Command Line
 
@@ -192,8 +192,9 @@ options is available via a suitable command line.  In this case:
 executed when loaded.
 
 -R cool.rules contains some detection rules.  You can write your own or
-obtain them from Talos.  You can also put your rules directly in your
-configuration file.
+obtain them from Talos (native 3.0 rules are not yet available from Talos
+so you must convert them with snort2lua).  You can also put your rules
+directly in your configuration file.
 
 -r some.pcap tells Snort to read network traffic from the given packet
 capture file.  You could instead use -i eth0 to read from a live interface.
