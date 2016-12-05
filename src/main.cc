@@ -82,6 +82,7 @@
 std::mutex Swapper::mutex;
 static Swapper* swapper = NULL;
 
+static bool swap_requested = false;
 static bool exit_requested = false;
 static int main_exit_code = 0;
 static bool paused = false;
@@ -378,14 +379,6 @@ int main_rotate_stats(lua_State*)
     return 0;
 }
 
-static void main_load(Swapper* ps)
-{
-    std::lock_guard<std::mutex> lock(Swapper::mutex);
-
-    for ( unsigned idx = 0; idx < max_pigs; ++idx )
-        pigs[idx].swap(ps);
-}
-
 int main_reload_config(lua_State* L)
 {
     if ( swapper )
@@ -410,12 +403,12 @@ int main_reload_config(lua_State* L)
         request.respond("== reload failed\n");
         return 0;
     }
-    request.respond(".. swapping configuration\n");
     snort_conf = sc;
     proc_stats.conf_reloads++;
-
     swapper = new Swapper(old, sc);
-    main_load(swapper);
+    swap_requested = true;
+    request.respond(".. swapping configuration\n");
+
     return 0;
 }
 
@@ -449,7 +442,9 @@ int main_reload_hosts(lua_State* L)
         return 0;
     }
     swapper = new Swapper(old, tc);
-    main_load(swapper);
+    swap_requested = true;
+    request.respond(".. swapping hosts table\n");
+
     return 0;
 }
 
@@ -737,14 +732,27 @@ static bool service_users()
     }
     return false;
 }
-
 #endif
 
-static bool check_response()
+static bool issue_swap()
 {
-    if ( !swapper )
-        return false;
+    for ( unsigned idx = 0; idx < max_pigs; ++idx )
+    {
+        if ( !pigs[idx].attentive() )
+            return false;
+    }
 
+    std::lock_guard<std::mutex> lock(Swapper::mutex);
+
+    for ( unsigned idx = 0; idx < max_pigs; ++idx )
+        pigs[idx].swap(swapper);
+
+    swap_requested = false;
+    return true;
+}
+
+static bool check_swap()
+{
     for ( unsigned idx = 0; idx < max_pigs; ++idx )
     {
         if ( pigs[idx].analyzer and pigs[idx].analyzer->swap_pending() )
@@ -765,8 +773,18 @@ static void service_check()
         return;
 #endif
 
-    if ( check_response() )
-        return;
+    if ( swapper )
+    {
+        bool done;
+
+        if ( swap_requested )
+            done = issue_swap();
+        else
+            done = check_swap();
+
+        if ( done )
+            return;
+    }
 
     if ( house_keeping() )
         return;
