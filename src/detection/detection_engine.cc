@@ -65,7 +65,7 @@ DetectionEngine::DetectionEngine()
 
 DetectionEngine::~DetectionEngine()
 {
-    clear_packet(context->packet);
+    finish_packet(context->packet);
     ContextSwitcher* sw = Snort::get_switcher();
 
     if ( context == sw->get_context() )
@@ -108,7 +108,7 @@ Packet* DetectionEngine::set_packet()
     return p;
 }
 
-void DetectionEngine::clear_packet(Packet* p)
+void DetectionEngine::finish_packet(Packet* p)
 {
     log_events(p);
     reset(p);
@@ -234,9 +234,9 @@ void DetectionEngine::onload()
     sw->resume(id);
 
     fp_onload(p);
-    InspectorManager::clear(p);
-    clear_packet(p);
+    finish_packet(p);
 
+    InspectorManager::clear(p);
     sw->complete();
 }
 
@@ -306,9 +306,9 @@ bool DetectionEngine::detect(Packet* p)
 
 void DetectionEngine::inspect(Packet* p)
 {
+    bool inspected = false;
     {
         PacketLatency::Context pkt_latency_ctx { p };
-        bool inspected = false;
 
         if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
         {
@@ -352,17 +352,18 @@ void DetectionEngine::inspect(Packet* p)
         // performance hit on short-lived flows
 
         Stream::check_flow_closed(p);
-
-        if ( inspected )
-            InspectorManager::clear(p);
     }
 
     Profile profile(eventqPerfStats);
 
     log_events(p);
-    reset(p);
 
     Stream::check_flow_block_pending(p);
+
+    if ( inspected )
+        InspectorManager::clear(p);
+
+    reset(p);
 }
 
 //--------------------------------------------------------------------------

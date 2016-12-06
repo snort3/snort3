@@ -98,7 +98,7 @@ private:
     static struct SF_EVENTQ* get_event_queue();
     static void offload_thread(IpsContext*);
     static void onload();
-    static void clear_packet(Packet*);
+    static void finish_packet(Packet*);
 
 private:
     IpsContext* context;
