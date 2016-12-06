@@ -21,15 +21,9 @@
 #include "config.h"
 #endif
 
-#include <string>
-
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
 #include "detection/treenodes.h"
-#include "detection/detection_defines.h"
+#include "framework/decode_data.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
 
 #define s_name "reference"

@@ -1018,15 +1018,15 @@ static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, cons
     const u_char* end, HI_CLIENT_HDR_ARGS* hdrs_args)
 {
     int num_spaces = 0;
-    SFIP_RET status;
-    sfip_t* tmp;
+    SfIpRet status;
+    SfIp* tmp;
     char* ipAddr = NULL;
     uint8_t unfold_buf[DECODE_BLEN];
     uint32_t unfold_size =0;
     const u_char* start_ptr, * end_ptr, * cur_ptr;
     const u_char* port;
     HEADER_PTR* header_ptr;
-    sfip_t** true_ip;
+    SfIp** true_ip;
 
     header_ptr = hdrs_args->hdr_ptr;
     true_ip = &(hdrs_args->sd->true_ip);
@@ -1082,7 +1082,8 @@ static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, cons
         }
         if (ipAddr)
         {
-            if ( (tmp = sfip_alloc(ipAddr, &status)) == NULL )
+            tmp = new SfIp();
+            if ((status = tmp->set(ipAddr)) != SFIP_SUCCESS)
             {
                 port = (u_char*)SnortStrnStr((const char*)start_ptr, (cur_ptr - start_ptr), ":");
                 if (port)
@@ -1090,11 +1091,12 @@ static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, cons
                     snort_free(ipAddr);
                     ipAddr = snort_strndup((const char*)start_ptr, port - start_ptr);
 
-                    if ( (tmp = sfip_alloc(ipAddr, &status)) == NULL )
+                    if ((status = tmp->set(ipAddr)) != SFIP_SUCCESS)
                     {
                         if ((status != SFIP_ARG_ERR) && (status !=SFIP_ALLOC_ERR))
                         {
                             hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_INVALID_TRUEIP);
+                            delete tmp;
                             return p;
                         }
                     }
@@ -1103,6 +1105,7 @@ static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, cons
                 {
                     hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_INVALID_TRUEIP);
                     snort_free(ipAddr);
+                    delete tmp;
                     return p;
                 }
             }
@@ -1114,7 +1117,7 @@ static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, cons
                 if ( (hdrs_args->top_precedence > 0) &&
                     (hdrs_args->new_precedence >= hdrs_args->top_precedence) )
                 {
-                    sfip_free(tmp);
+                    delete tmp;
                     snort_free(ipAddr);
                     return( p );
                 }
@@ -1131,16 +1134,16 @@ static const u_char* extract_http_xff(HI_SESSION* session, const u_char* p, cons
                new IP differs from the current IP. If so, replace it and post an alert. */
             if (*true_ip)
             {
-                if (!sfip_equals(*true_ip, tmp))
+                if (!(*true_ip)->equals(*tmp))
                 {
-                    sfip_free(*true_ip);
+                    delete *true_ip;
                     *true_ip = tmp;
 
                     if ((hdrs_args->true_clnt_xff & XFF_HEADERS) == 0)
                         hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_MULTIPLE_TRUEIP_IN_SESSION);
                 }
                 else
-                    sfip_free(tmp);
+                    delete tmp;
             }
             else
                 *true_ip = tmp;

@@ -20,7 +20,7 @@
 #ifndef SFTHRESHOLD_H
 #define SFTHRESHOLD_H
 
-struct sfip_t;
+struct SfIp;
 struct THDX_STRUCT;
 struct ThresholdObjects;
 
@@ -35,7 +35,7 @@ ThresholdConfig* ThresholdConfigNew();
 void ThresholdConfigFree(ThresholdConfig*);
 void sfthreshold_reset();
 int sfthreshold_create(struct SnortConfig*, ThresholdConfig*, THDX_STRUCT*);
-int sfthreshold_test(unsigned int, unsigned int, const sfip_t*, const sfip_t*, long curtime);
+int sfthreshold_test(unsigned int, unsigned int, const SfIp*, const SfIp*, long curtime);
 void print_thresholding(ThresholdConfig*, unsigned shutdown);
 void sfthreshold_reset_active();
 void sfthreshold_free();

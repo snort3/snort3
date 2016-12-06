@@ -26,28 +26,18 @@
 // to request the file data left. To block the new session, we use URL and IPs
 // to continue blocking the same file.
 
-#include "file_api.h"
-#include "file_lib.h"
-#include "file_config.h"
-
-#include "protocols/packet.h"
 #include "hash/sfxhash.h"
-#include "hash/hashes.h"
+#include "sfip/sf_ip.h"
+
+#include "file_config.h"
 
 class FileInfo;
 
+#define MAX_FILES_TRACKED 16384
+#define MAX_MEMORY_USED (10*1024*1024)  // 10M
+
 class FileEnforcer
 {
-    struct FileHashKey
-    {
-        sfip_t sip;
-        sfip_t dip;
-        size_t file_sig;
-    };
-
-    #define MAX_FILES_TRACKED 16384
-    #define MAX_MEMORY_USED (10*1024*1024)  // 10M
-
 public:
     struct FileNode
     {
@@ -61,6 +51,18 @@ public:
     bool apply_verdict(Flow*, FileInfo*, FileVerdict);
 
 private:
+// FIXIT-L Merge definition with duplicate in file_cache.h?
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wpadded"
+    struct FileHashKey
+    {
+        SfIp sip;
+        SfIp dip;
+        uint32_t padding;
+        uint64_t file_sig;
+    };
+#pragma GCC diagnostic pop
+
     void update_file_node(FileNode*, FileInfo*);
     FileVerdict check_verdict(Flow*, FileNode*, SFXHASH_NODE*);
     int store_verdict(Flow*, FileInfo*);

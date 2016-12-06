@@ -104,7 +104,7 @@ static void ff_dgm_len(Args& a)
 static void ff_dst_addr(Args& a)
 {
     if ( a.pkt->has_ip() or a.pkt->is_data() )
-        TextLog_Puts(csv_log, inet_ntoa(a.pkt->ptrs.ip_api.get_dst()));
+        TextLog_Puts(csv_log, a.pkt->ptrs.ip_api.get_dst()->ntoa());
 }
 
 static void ff_dst_ap(Args& a)
@@ -113,7 +113,7 @@ static void ff_dst_ap(Args& a)
     unsigned port = 0;
 
     if ( a.pkt->has_ip() or a.pkt->is_data() )
-        addr = sfip_to_str(a.pkt->ptrs.ip_api.get_dst());
+        addr = a.pkt->ptrs.ip_api.get_dst()->ntoa();
 
     if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
         port = a.pkt->ptrs.dp;
@@ -256,7 +256,7 @@ static void ff_sid(Args& a)
 static void ff_src_addr(Args& a)
 {
     if ( a.pkt->has_ip() or a.pkt->is_data() )
-        TextLog_Puts(csv_log, inet_ntoa(a.pkt->ptrs.ip_api.get_src()));
+        TextLog_Puts(csv_log, a.pkt->ptrs.ip_api.get_src()->ntoa());
 }
 
 static void ff_src_ap(Args& a)
@@ -265,7 +265,7 @@ static void ff_src_ap(Args& a)
     unsigned port = 0;
 
     if ( a.pkt->has_ip() or a.pkt->is_data() )
-        addr = sfip_to_str(a.pkt->ptrs.ip_api.get_src());
+        addr = a.pkt->ptrs.ip_api.get_src()->ntoa();
 
     if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
         port = a.pkt->ptrs.sp;

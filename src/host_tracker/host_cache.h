@@ -69,7 +69,7 @@ extern LruCacheShared<HostIpKey, std::shared_ptr<HostTracker>, HashHostIpKey> ho
 void host_cache_add_host_tracker(HostTracker*);
 
 //  Insert a new service into host cache if it doesn't already exist.
-SO_PUBLIC bool host_cache_add_service(sfip_t, Protocol, Port, const char* service);
+SO_PUBLIC bool host_cache_add_service(SfIp, Protocol, Port, const char* service);
 
 #endif
 

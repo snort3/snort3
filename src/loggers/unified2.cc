@@ -336,13 +336,13 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, Event* 
 
         if(p->ptrs.ip_api.is_ip())
         {
-            const sfip_t* ip;
+            const SfIp* ip;
 
             ip = p->ptrs.ip_api.get_src();
-            alertdata.ip_source = *(struct in6_addr*)ip->ip32;
+            alertdata.ip_source = *(struct in6_addr*)ip->get_ip6_ptr();
 
             ip = p->ptrs.ip_api.get_dst();
-            alertdata.ip_destination = *(struct in6_addr*)ip->ip32;
+            alertdata.ip_destination = *(struct in6_addr*)ip->get_ip6_ptr();
 
             if (p->is_portscan())
             {
@@ -897,12 +897,12 @@ void U2Logger::alert(Packet* p, const char* msg, Event* event)
         // FIXIT-M delete ip6 extra data; support ip6 normally
         if (SnortConfig::get_log_ip6_extra() && p->ptrs.ip_api.is_ip6())
         {
-            const sfip_t* ip = p->ptrs.ip_api.get_src();
+            const SfIp* ip = p->ptrs.ip_api.get_src();
             _WriteExtraData(&config, event->event_id, event->ref_time.tv_sec,
-                &ip->ip8[0], sizeof(struct in6_addr),  EVENT_INFO_IPV6_SRC);
+                (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_SRC);
             ip = p->ptrs.ip_api.get_dst();
             _WriteExtraData(&config, event->event_id, event->ref_time.tv_sec,
-                &ip->ip8[0], sizeof(struct in6_addr),  EVENT_INFO_IPV6_DST);
+                (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_DST);
         }
     }
     else // ip4 or data

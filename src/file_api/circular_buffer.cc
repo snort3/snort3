@@ -32,11 +32,7 @@
 
 #include "circular_buffer.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "utils/util.h"
-
-#include "main/snort_types.h"
 
 /* Circular buffer object */
 struct _CircularBuffer

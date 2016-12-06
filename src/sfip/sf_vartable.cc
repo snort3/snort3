@@ -39,6 +39,10 @@
 #include "sfip/sf_ipvar.h"
 #include "utils/util.h"
 
+#ifdef UNIT_TEST
+#include "catch/catch.hpp"
+#endif
+
 vartable_t* sfvt_alloc_table()
 {
     vartable_t* table = (vartable_t*)snort_calloc(sizeof(vartable_t));
@@ -181,12 +185,12 @@ sfvt_expand_value_error:
 
 // XXX this implementation is just used to support
 // Snort's underlying implementation better
-SFIP_RET sfvt_define(vartable_t* table, const char* name, const char* value)
+SfIpRet sfvt_define(vartable_t* table, const char* name, const char* value)
 {
     char* buf;
     int len;
     sfip_var_t* ipret = NULL;
-    SFIP_RET ret;
+    SfIpRet ret;
 
     if (!name || !value)
         return SFIP_ARG_ERR;
@@ -203,13 +207,13 @@ SFIP_RET sfvt_define(vartable_t* table, const char* name, const char* value)
 }
 
 /* Adds the variable described by "str" to the table "table" */
-SFIP_RET sfvt_add_str(vartable_t* table, const char* str, sfip_var_t** ipret)
+SfIpRet sfvt_add_str(vartable_t* table, const char* str, sfip_var_t** ipret)
 {
     sfip_var_t* var;
     sfip_var_t* swp;
     sfip_var_t* p;
     int ret;
-    SFIP_RET status = SFIP_FAILURE;
+    SfIpRet status = SFIP_FAILURE;
 
     if (!table || !str || !ipret)
         return SFIP_FAILURE;
@@ -291,9 +295,9 @@ SFIP_RET sfvt_add_str(vartable_t* table, const char* str, sfip_var_t** ipret)
 
 /* Adds the variable described by "src" to the variable "dst",
  * using the vartable for looking variables used within "src" */
-SFIP_RET sfvt_add_to_var(vartable_t* table, sfip_var_t* dst, const char* src)
+SfIpRet sfvt_add_to_var(vartable_t* table, sfip_var_t* dst, const char* src)
 {
-    SFIP_RET ret;
+    SfIpRet ret;
 
     if (!table || !dst || !src)
         return SFIP_ARG_ERR;
@@ -352,82 +356,70 @@ void sfvt_free_table(vartable_t* table)
     snort_free(table);
 }
 
-/* Prints a table's contents */
-//#define TESTER
+// FIXIT-L - Finish converting these unit tests to something that actually passes
+#if 0
+#ifdef UNIT_TEST
 
-#ifdef TESTER
-int failures = 0;
-#define TEST(x) \
-    if (x) printf("\tSuccess: line %d\n", __LINE__); \
-    else { printf("\tFAILURE: line %d\n", __LINE__); failures++; }
-
-int main()
+TEST_CASE("SfVarTable_Kitchen_Sink", "[SfVarTable]")
 {
     vartable_t* table;
     sfip_var_t* var;
-    sfip_t* ip;
+    SfIp* ip;
+    SfIpRet status;
 
-    puts("********************************************************************");
-    puts("Testing variable table parsing:");
     table = sfvt_alloc_table();
+
+    /* Parsing tests */
     /* These are all valid */
-    TEST(sfvt_add_str(table, "foo [ 1.2.0.0/16, ffff:dead:beef::0 ] ", &var) == SFIP_SUCCESS);
-    TEST(sfvt_add_str(table, " goo [ ffff:dead:beef::0 ] ", &var) == SFIP_SUCCESS);
-    TEST(sfvt_add_str(table, " moo [ any ] ", &var) == SFIP_SUCCESS);
+    CHECK(sfvt_add_str(table, "foo [ 1.2.0.0/16, ffff:dead:beef::0 ] ", &var) == SFIP_SUCCESS);
+    CHECK(sfvt_add_str(table, " goo [ ffff:dead:beef::0 ] ", &var) == SFIP_SUCCESS);
+    CHECK(sfvt_add_str(table, " moo [ any ] ", &var) == SFIP_SUCCESS);
 
     /* Test variable redefine */
-    TEST(sfvt_add_str(table, " goo [ 192.168.0.1, 192.168.0.2, 192.168.255.0 255.255.248.0 ] ",
+    CHECK(sfvt_add_str(table, " goo [ 192.168.0.1, 192.168.0.2, 192.168.255.0 255.255.248.0 ] ",
         &var) == SFIP_DUPLICATE);
 
     /* These should fail since it's a variable name with bogus arguments */
-    TEST(sfvt_add_str(table, " phlegm ", &var) == SFIP_FAILURE);
-    TEST(sfvt_add_str(table, " phlegm [", &var) == SFIP_FAILURE);
-    TEST(sfvt_add_str(table, " phlegm [ ", &var) == SFIP_FAILURE);
-    TEST(sfvt_add_str(table, " phlegm [sdfg ", &var) == SFIP_FAILURE);
-    TEST(sfvt_add_str(table, " phlegm [ sdfg, 12.123.1.4.5 }", &var) == SFIP_FAILURE);
-    TEST(sfvt_add_str(table, " [ 12.123.1.4.5 ]", &var) == SFIP_FAILURE);
-    TEST(sfvt_add_str(table, NULL, &var) == SFIP_FAILURE);
-    TEST(sfvt_add_str(table, "", &var) == SFIP_FAILURE);
+    CHECK(sfvt_add_str(table, " phlegm ", &var) == SFIP_FAILURE);
+    CHECK(sfvt_add_str(table, " phlegm [", &var) == SFIP_FAILURE);
+    CHECK(sfvt_add_str(table, " phlegm [ ", &var) == SFIP_FAILURE);
+    CHECK(sfvt_add_str(table, " phlegm [sdfg ", &var) == SFIP_FAILURE);
+    CHECK(sfvt_add_str(table, " phlegm [ sdfg, 12.123.1.4.5 }", &var) == SFIP_FAILURE);
+    CHECK(sfvt_add_str(table, " [ 12.123.1.4.5 ]", &var) == SFIP_FAILURE);
+    CHECK(sfvt_add_str(table, NULL, &var) == SFIP_FAILURE);
+    CHECK(sfvt_add_str(table, "", &var) == SFIP_FAILURE);
 
-    puts("");
-    puts("********************************************************************");
+    /* Expansion tests
     puts("Expansions:");
-    /* Note: used this way leaks memory */
     printf("\t%s\n", sfvt_alloc_expanded(table, "$foo"));
     printf("\t%s\n", sfvt_alloc_expanded(table, "goo $goo sf sfasdfasdf $moo"));
     printf("\t%s\n", sfvt_alloc_expanded(table, " ssdf $moo $moo asdf $fooadff $foo "));
     printf("\t%s\n", sfvt_alloc_expanded(table, " ssdf $moo $moo\\sdf $foo adff"));
+    */
 
-    puts("");
-    puts("********************************************************************");
-    puts("Containment checks:");
-    var = sfvt_lookup(table, "goo");
-    ip = sfip_alloc("192.168.248.255");
-    TEST(sfvar_ip_in(var, ip));
+    /* Containment tests */
+    var = sfvt_lookup_var(table, "goo");
+    ip = sfip_alloc("192.168.248.255", &status);
+    CHECK(sfvar_ip_in(var, ip));
 
     /* Check against the 'any' variable */
     var = sfvt_lookup_var(table, "moo");
-    TEST(sfvar_ip_in(var, ip));
+    CHECK(sfvar_ip_in(var, ip));
 
     /* Verify it's not in this variable */
     var = sfvt_lookup_var(table, "foo");
-    TEST(!sfvar_ip_in(var, ip));
+    CHECK(!sfvar_ip_in(var, ip));
 
     /* Check boundary cases */
     var = sfvt_lookup_var(table, "goo");
-    free_ip(ip);
-    ip = sfip_alloc_str("192.168.0.3");
-    TEST(!sfvar_ip_in(var, ip));
-    free_ip(ip);
-    ip = sfip_alloc_str("192.168.0.2");
-    TEST(sfvar_ip_in(var, ip));
-
-    puts("");
-    puts("********************************************************************");
-
-    printf("\n\tTotal Failures: %d\n", failures);
-    return 0;
+    sfip_free(ip);
+    ip = sfip_alloc("192.168.0.3", &status);
+    CHECK(!sfvar_ip_in(var, ip));
+    sfip_free(ip);
+    ip = sfip_alloc("192.168.0.2", &status);
+    CHECK(sfvar_ip_in(var, ip));
+    sfip_free(ip);
 }
 
 #endif
-
+#endif

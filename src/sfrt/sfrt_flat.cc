@@ -24,8 +24,7 @@
 #include "config.h"
 #endif
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
+#include "sfip/sf_cidr.h"
 
 
 #define MINIMUM_TABLE_MEMORY (768 * 1024)
@@ -211,15 +210,16 @@ void sfrt_flat_free(TABLE_PTR table_ptr)
 }
 
 /* Perform a lookup on value contained in "ip" */
-GENERIC sfrt_flat_lookup(void* adr, table_flat_t* table)
+GENERIC sfrt_flat_lookup(const SfIp* ip, table_flat_t* table)
 {
     tuple_flat_t tuple;
+    const uint32_t* addr;
+    int numAddrDwords;
     INFO* data;
-    sfip_t* ip;
     TABLE_PTR rt = 0;
     uint8_t* base;
 
-    if (!adr)
+    if (!ip)
     {
         return NULL;
     }
@@ -229,22 +229,22 @@ GENERIC sfrt_flat_lookup(void* adr, table_flat_t* table)
         return NULL;
     }
 
-    ip = (sfip_t*)adr;
-    if (ip->family == AF_INET)
+    if (ip->is_ip4())
     {
+        addr = ip->get_ip4_ptr();
+        numAddrDwords = 1;
         rt = table->rt;
     }
-    else if (ip->family == AF_INET6)
+    else if (ip->is_ip6())
     {
+        addr = ip->get_ip6_ptr();
+        numAddrDwords = 4;
         rt = table->rt6;
     }
-
-    if (!rt)
-    {
+    else
         return NULL;
-    }
 
-    tuple = sfrt_dir_flat_lookup(ip, rt);
+    tuple = sfrt_dir_flat_lookup(addr, numAddrDwords, rt);
 
     if (tuple.index >= table->num_ent)
     {
@@ -258,21 +258,22 @@ GENERIC sfrt_flat_lookup(void* adr, table_flat_t* table)
         return NULL;
 }
 
-/* Insert "ip", of length "len", into "table", and have it point to "ptr"
-   Insert "ip", of length "len", into "table", and have it point to "ptr" */
-int sfrt_flat_insert(void* adr, unsigned char len, INFO ptr,
+/* Insert "ip", of length "len", into "table", and have it point to "ptr" */
+int sfrt_flat_insert(SfCidr* cidr, unsigned char len, INFO ptr,
     int behavior, table_flat_t* table, updateEntryInfoFunc updateEntry)
 {
+    const SfIp* ip;
     int index;
     int res =  RT_SUCCESS;
     INFO* data;
-    sfip_t* ip;
     tuple_flat_t tuple;
-    TABLE_PTR rt = 0;
+    const uint32_t* addr;
+    int numAddrDwords;
+    TABLE_PTR rt;
     uint8_t* base;
     int64_t bytesAllocated;
 
-    if (!adr )
+    if (!cidr)
     {
         return RT_INSERT_FAILURE;
     }
@@ -285,28 +286,31 @@ int sfrt_flat_insert(void* adr, unsigned char len, INFO ptr,
         return RT_INSERT_FAILURE;
     }
 
-    if ( (table->ip_type == IPv4 && len > 32) ||
-        (table->ip_type == IPv6 && len > 128) )
+    if (len > 128)
     {
         return RT_INSERT_FAILURE;
     }
 
-    ip = (sfip_t*)adr;
-
-    if (ip->family == AF_INET)
+    ip = cidr->get_addr();
+    if (ip->is_ip4())
     {
+        if (len < 96)
+            return RT_INSERT_FAILURE;
+        len -= 96;
+        addr = ip->get_ip4_ptr();
+        numAddrDwords = 1;
         rt = table->rt;
     }
-    else if (ip->family == AF_INET6)
+    else if (ip->is_ip6())
     {
+        addr = ip->get_ip6_ptr();
+        numAddrDwords = 4;
         rt = table->rt6;
     }
-    if (!rt)
-    {
+    else
         return RT_INSERT_FAILURE;
-    }
 
-    tuple = sfrt_dir_flat_lookup(ip, table->rt);
+    tuple = sfrt_dir_flat_lookup(addr, numAddrDwords, table->rt);
 
     base = (uint8_t*)segment_basePtr();
     data = (INFO*)(&base[table->data]);
@@ -341,7 +345,7 @@ int sfrt_flat_insert(void* adr, unsigned char len, INFO ptr,
 
     /* The actual value that is looked-up is an index
      * into the data table. */
-    res = sfrt_dir_flat_insert(ip, len, index, behavior, rt, updateEntry, data);
+    res = sfrt_dir_flat_insert(addr, numAddrDwords, len, index, behavior, rt, updateEntry, data);
 
     /* Check if we ran out of memory. If so, need to decrement
      * table->num_ent */
@@ -395,24 +399,22 @@ uint32_t sfrt_flat_usage(table_flat_t* table)
 /* Perform a lookup on value contained in "ip"
  * For performance reason, we use this simplified version instead of sfrt_lookup
  * Note: this only applied to table setting: DIR_8x16 (DIR_16_8_4x2 for IPV4), DIR_8x4*/
-GENERIC sfrt_flat_dir8x_lookup(void* adr, table_flat_t* table)
+GENERIC sfrt_flat_dir8x_lookup(const SfIp* ip, table_flat_t* table)
 {
     dir_sub_table_flat_t* subtable;
     DIR_Entry* entry;
     uint8_t* base = (uint8_t*)table;
     int i;
-    sfip_t* ip;
     dir_table_flat_t* rt = NULL;
     int index;
     INFO* data = (INFO*)(&base[table->data]);
 
-    ip = (sfip_t*)adr;
-    if (ip->family == AF_INET)
+    if (ip->is_ip4())
     {
         rt = (dir_table_flat_t*)(&base[table->rt]);
         subtable = (dir_sub_table_flat_t*)(&base[rt->sub_table]);
         /* 16 bits*/
-        index = ntohs(ip->ip16[0]);
+        index = ntohs(((uint16_t*) ip->get_ip4_ptr())[0]);
         entry = (DIR_Entry*)(&base[subtable->entries]);
         if ( !entry[index].value || entry[index].length)
         {
@@ -424,7 +426,7 @@ GENERIC sfrt_flat_dir8x_lookup(void* adr, table_flat_t* table)
         subtable = (dir_sub_table_flat_t*)(&base[entry[index].value]);
 
         /* 8 bits*/
-        index = ip->ip8[2];
+        index = ((uint8_t*) ip->get_ip4_ptr())[2];
         entry = (DIR_Entry*)(&base[subtable->entries]);
         if ( !entry[index].value || entry[index].length)
         {
@@ -436,7 +438,7 @@ GENERIC sfrt_flat_dir8x_lookup(void* adr, table_flat_t* table)
         subtable = (dir_sub_table_flat_t*)(&base[entry[index].value]);
 
         /* 4 bits */
-        index = ip->ip8[3] >> 4;
+        index = ((uint8_t*) ip->get_ip4_ptr())[3] >> 4;
         entry = (DIR_Entry*)(&base[subtable->entries]);
         if ( !entry[index].value || entry[index].length)
         {
@@ -448,7 +450,7 @@ GENERIC sfrt_flat_dir8x_lookup(void* adr, table_flat_t* table)
         subtable = (dir_sub_table_flat_t*)(&base[entry[index].value]);
 
         /* 4 bits */
-        index = ip->ip8[3] & 0xF;
+        index = ((uint8_t*) ip->get_ip4_ptr())[3] & 0xF;
         entry = (DIR_Entry*)(&base[subtable->entries]);
         if ( !entry[index].value || entry[index].length)
         {
@@ -458,13 +460,13 @@ GENERIC sfrt_flat_dir8x_lookup(void* adr, table_flat_t* table)
                 return NULL;
         }
     }
-    else if (ip->family == AF_INET6)
+    else if (ip->is_ip6())
     {
         rt = (dir_table_flat_t*)(&base[table->rt6]);
         subtable = (dir_sub_table_flat_t*)(&base[rt->sub_table]);
         for (i = 0; i < 16; i++)
         {
-            index = ip->ip8[i];
+            index = ((uint8_t*) ip->get_ip6_ptr())[i];
             entry = (DIR_Entry*)(&base[subtable->entries]);
             if ( !entry[index].value || entry[index].length)
             {

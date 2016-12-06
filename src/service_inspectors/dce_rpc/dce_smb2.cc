@@ -23,6 +23,7 @@
 
 #include "detection/detection_util.h"
 #include "file_api/file_flows.h"
+#include "utils/util.h"
 
 #include "dce_smb_module.h"
 #include "dce_smb_utils.h"

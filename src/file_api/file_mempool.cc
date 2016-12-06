@@ -27,10 +27,6 @@
 
 #include "file_mempool.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
-
 #include "log/messages.h"
 #include "utils/util.h"
 

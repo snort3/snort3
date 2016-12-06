@@ -124,9 +124,9 @@ static void PrintIPMacEntryList(IPMacEntryList& ipmel)
 
     for ( auto p : ipmel )
     {
-        sfip_t in;
-        sfip_set_raw(&in, &p.ipv4_addr, AF_INET);
-        LogMessage("    %s -> ", inet_ntoa(&in));
+        SfIp in;
+        in.set(&p.ipv4_addr, AF_INET);
+        LogMessage("    %s -> ", in.ntoa());
 
         for (int i = 0; i < 6; i++)
         {

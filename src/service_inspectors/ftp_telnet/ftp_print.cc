@@ -195,7 +195,7 @@ int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF* ClientConf)
             uint8_t bits;
             bits_str[0] = '\0';
 
-            addr_str = sfip_to_str(&FTPBounce->ip);
+            addr_str = FTPBounce->ip.ntoa();
             bits = (uint8_t)FTPBounce->ip.bits;
             if (((FTPBounce->ip.family == AF_INET) && (bits != 32)) ||
                 ((FTPBounce->ip.family == AF_INET6) && (bits != 128)))

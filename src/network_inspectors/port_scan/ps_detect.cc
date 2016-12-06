@@ -56,12 +56,15 @@
 #include "sfip/sf_ip.h"
 #include "stream/stream.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wpadded"
 typedef struct s_PS_HASH_KEY
 {
     int protocol;
-    sfip_t scanner;
-    sfip_t scanned;
+    SfIp scanner;
+    SfIp scanned;
 } PS_HASH_KEY;
+#pragma GCC diagnostic pop
 
 typedef struct s_PS_ALERT_CONF
 {
@@ -238,8 +241,8 @@ void ps_reset()
 /**
 **  Check scanner and scanned ips to see if we can filter them out.
 */
-int PortScan::ps_ignore_ip(const sfip_t* scanner, uint16_t scanner_port,
-    const sfip_t* scanned, uint16_t scanned_port)
+int PortScan::ps_ignore_ip(const SfIp* scanner, uint16_t scanner_port,
+    const SfIp* scanned, uint16_t scanned_port)
 {
     if (config->ignore_scanners)
     {
@@ -268,7 +271,7 @@ int PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
 {
     Packet* p;
     int reverse_pkt = 0;
-    const sfip_t* scanner, * scanned;
+    const SfIp* scanner, * scanned;
 
     p = (Packet*)ps_pkt->pkt;
 
@@ -447,12 +450,12 @@ int PortScan::ps_tracker_lookup(PS_PKT* ps_pkt, PS_TRACKER** scanner,
     if (config->detect_scan_type &
         (PS_TYPE_PORTSCAN | PS_TYPE_DECOYSCAN | PS_TYPE_DISTPORTSCAN))
     {
-        sfip_clear(key.scanner);
+        key.scanner.clear();
 
         if (ps_pkt->reverse_pkt)
-            sfip_copy(key.scanned, p->ptrs.ip_api.get_src());
+            key.scanned.set(*p->ptrs.ip_api.get_src());
         else
-            sfip_copy(key.scanned, p->ptrs.ip_api.get_dst());
+            key.scanned.set(*p->ptrs.ip_api.get_dst());
 
         /*
         **  Get the scanned tracker.
@@ -465,12 +468,12 @@ int PortScan::ps_tracker_lookup(PS_PKT* ps_pkt, PS_TRACKER** scanner,
     */
     if (config->detect_scan_type & PS_TYPE_PORTSWEEP)
     {
-        sfip_clear(key.scanned);
+        key.scanned.clear();
 
         if (ps_pkt->reverse_pkt)
-            sfip_copy(key.scanner, p->ptrs.ip_api.get_dst());
+            key.scanner.set(*p->ptrs.ip_api.get_dst());
         else
-            sfip_copy(key.scanner, p->ptrs.ip_api.get_src());
+            key.scanner.set(*p->ptrs.ip_api.get_src());
 
         /*
         **  Get the scanner tracker
@@ -613,7 +616,7 @@ int PortScan::ps_proto_update_window(PS_PROTO* proto, time_t pkt_time)
 **  @param u_short  port/ip_proto to track
 **  @param time_t   time the packet was received. update windows.
 */
-int PortScan::ps_proto_update(PS_PROTO* proto, int ps_cnt, int pri_cnt, const sfip_t* ip,
+int PortScan::ps_proto_update(PS_PROTO* proto, int ps_cnt, int pri_cnt, const SfIp* ip,
     u_short port, time_t pkt_time)
 {
     if (!proto)
@@ -662,32 +665,32 @@ int PortScan::ps_proto_update(PS_PROTO* proto, int ps_cnt, int pri_cnt, const sf
     if (proto->connection_count < 0)
         proto->connection_count = 0;
 
-    if (!sfip_unset_equals(&proto->u_ips, ip))
+    if (!proto->u_ips.equals(*ip, false))
     {
         proto->u_ip_count++;
-        sfip_copy(proto->u_ips, ip);
+        proto->u_ips.set(*ip);
     }
 
     /* we need to do the IP comparisons in host order */
 
-    if (sfip_is_set(&proto->low_ip))
+    if (proto->low_ip.is_set())
     {
-        if (sfip_greater(&proto->low_ip, ip))
-            sfip_copy(proto->low_ip, ip);
+        if (proto->low_ip.greater_than(*ip))
+            proto->low_ip.set(*ip);
     }
     else
     {
-        sfip_copy(proto->low_ip, ip);
+        proto->low_ip.set(*ip);
     }
 
-    if (sfip_is_set(proto->high_ip))
+    if (proto->high_ip.is_set())
     {
-        if (sfip_lesser(&proto->high_ip, ip))
-            sfip_copy(proto->high_ip, ip);
+        if (proto->high_ip.less_than(*ip))
+            proto->high_ip.set(*ip);
     }
     else
     {
-        sfip_copy(proto->high_ip, ip);
+        proto->high_ip.set(*ip);
     }
 
     if (proto->u_ports != port)
@@ -762,8 +765,8 @@ int PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
 {
     Packet* p;
     uint32_t session_flags = 0x0;
-    sfip_t cleared;
-    sfip_clear(cleared);
+    SfIp cleared;
+    cleared.clear();
 
     p = (Packet*)ps_pkt->pkt;
 
@@ -942,8 +945,8 @@ int PortScan::ps_tracker_update_ip(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     PS_TRACKER* scanned)
 {
     Packet* p;
-    sfip_t cleared;
-    sfip_clear(cleared);
+    SfIp cleared;
+    cleared.clear();
 
     p = (Packet*)ps_pkt->pkt;
 
@@ -974,8 +977,8 @@ int PortScan::ps_tracker_update_udp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     PS_TRACKER* scanned)
 {
     Packet* p;
-    sfip_t cleared;
-    sfip_clear(cleared);
+    SfIp cleared;
+    cleared.clear();
 
     p = (Packet*)ps_pkt->pkt;
 
@@ -1031,8 +1034,8 @@ int PortScan::ps_tracker_update_icmp(
     PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER*)
 {
     Packet* p;
-    sfip_t cleared;
-    sfip_clear(cleared);
+    SfIp cleared;
+    cleared.clear();
 
     p = (Packet*)ps_pkt->pkt;
 

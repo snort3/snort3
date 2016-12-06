@@ -60,7 +60,7 @@ static void dump_appid_stats()
 
 // FIXIT-L - appid cleans up openssl now as it is the primary (only) user... eventually this
 //           should probably be done outside of appid
-void openssl_cleanup()
+static void openssl_cleanup()
 {
      CRYPTO_cleanup_all_ex_data();
 }

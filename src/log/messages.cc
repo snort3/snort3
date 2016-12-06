@@ -49,6 +49,7 @@
 #include "time/packet_time.h"
 #include "time/timersub.h"
 #include "sfip/sf_ip.h"
+#include "utils/util.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
@@ -451,7 +452,7 @@ void PrintPacketData(const uint8_t* data, const uint32_t len)
     LogMessage("\n");
 }
 
-char* ObfuscateIpToText(const sfip_t* ip)
+char* ObfuscateIpToText(const SfIp* ip)
 {
     static THREAD_LOCAL char ip_buf1[INET6_ADDRSTRLEN];
     static THREAD_LOCAL char ip_buf2[INET6_ADDRSTRLEN];
@@ -470,7 +471,7 @@ char* ObfuscateIpToText(const sfip_t* ip)
     if (ip == NULL)
         return ip_buf;
 
-    if (!sfip_is_set(snort_conf->obfuscation_net))
+    if (!snort_conf->obfuscation_net.is_set())
     {
         if (ip->is_ip6())
             SnortSnprintf(ip_buf, buf_size, "x:x:x:x::x:x:x:x");
@@ -479,22 +480,22 @@ char* ObfuscateIpToText(const sfip_t* ip)
     }
     else
     {
-        sfip_t tmp;
-        char* tmp_buf;
+        SfIp tmp;
+        const char* tmp_buf;
 
-        sfip_copy(tmp, ip);
+        tmp.set(*ip);
 
-        if (sfip_is_set(snort_conf->homenet))
+        if (snort_conf->homenet.is_set())
         {
-            if (sfip_contains(&snort_conf->homenet, &tmp) == SFIP_CONTAINS)
-                sfip_obfuscate(&snort_conf->obfuscation_net, &tmp);
+            if (snort_conf->homenet.contains(&tmp) == SFIP_CONTAINS)
+                tmp.obfuscate(&snort_conf->obfuscation_net);
         }
         else
         {
-            sfip_obfuscate(&snort_conf->obfuscation_net, &tmp);
+            tmp.obfuscate(&snort_conf->obfuscation_net);
         }
 
-        tmp_buf = sfip_to_str(&tmp);
+        tmp_buf = tmp.ntoa();
         SnortSnprintf(ip_buf, buf_size, "%s", tmp_buf);
     }
 

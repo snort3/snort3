@@ -175,7 +175,7 @@ enum HTTP_FIELD_ID
 // AppId API
 // -----------------------------------------------------------------------------
 
-struct sfip_t;
+struct SfIp;
 
 class SO_PUBLIC AppIdApi
 {
@@ -206,8 +206,8 @@ public:
     APPID_FLOW_TYPE get_flow_type(AppIdSession*);
     void get_service_info(AppIdSession*, char **serviceVendor, char** serviceVersion, RNAServiceSubtype** subtype);
     short get_service_port(AppIdSession*);
-    sfip_t* get_service_ip(AppIdSession*);
-    sfip_t* get_initiator_ip(AppIdSession*);
+    SfIp* get_service_ip(AppIdSession*);
+    SfIp* get_initiator_ip(AppIdSession*);
     char* get_http_user_agent(AppIdSession*);
     char* get_http_host(AppIdSession*);
     char* get_http_url(AppIdSession*);
@@ -226,7 +226,7 @@ public:
     uint16_t get_http_cookie_offset(AppIdSession*);
     uint16_t get_http_cookie_end_offset(AppIdSession*);
     SEARCH_SUPPORT_TYPE get_http_search(AppIdSession*);
-    sfip_t* get_http_xff_addr(AppIdSession*);
+    SfIp* get_http_xff_addr(AppIdSession*);
     char* get_tls_host(AppIdSession*);
     DHCPData* get_dhcp_fp_data(AppIdSession*);
     void free_dhcp_fp_data(AppIdSession*, DHCPData*);
@@ -237,7 +237,7 @@ public:
     char* get_netbios_name(AppIdSession*);
     uint32_t produce_ha_state(Flow* flow, uint8_t* buf);
     uint32_t consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t length, IpProtocol proto,
-        sfip_t* ip, uint16_t initiatorPort);
+        SfIp* ip, uint16_t initiatorPort);
     AppIdSession* get_appid_data(Flow* flow);
     char* get_dns_query(AppIdSession*, uint8_t* query_len);
     uint16_t get_dns_query_offset(AppIdSession*);

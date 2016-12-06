@@ -28,7 +28,7 @@
 #include "catch/unit_test.h"
 #include "main/snort_types.h"
 
-#include "sf_ip.h"
+#include "sf_cidr.h"
 
 //---------------------------------------------------------------
 
@@ -73,17 +73,17 @@ static FuncTest ftests[] =
     { "sfip_pton", "255.255.255.255/21", "255.255.248.0", SFIP_SUCCESS },
     { "sfip_pton", "1.1.255.255      255.255.248.0", "1.1.248.0", SFIP_SUCCESS },
     { "sfip_pton", " 2001:0db8:0000:0000:0000:0000:1428:57ab   ",
-      "2001:db8::1428:57ab", SFIP_SUCCESS },
+      "2001:0db8:0000:0000:0000:0000:1428:57ab", SFIP_SUCCESS },
     { "sfip_pton", "ffff:ffff::1",
-      "ffff:ffff::1", SFIP_SUCCESS },
+      "ffff:ffff:0000:0000:0000:0000:0000:0001", SFIP_SUCCESS },
     { "sfip_pton", "fFfF::FfFf:FFFF/127",
-      "ffff::ffff:fffe", SFIP_SUCCESS },
+      "ffff:0000:0000:0000:0000:0000:ffff:fffe", SFIP_SUCCESS },
     { "sfip_pton", "ffff::ffff:1/8",
-      "ff00::", SFIP_SUCCESS },
+      "ff00:0000:0000:0000:0000:0000:0000:0000", SFIP_SUCCESS },
     { "sfip_pton", "6543:21ff:ffff:ffff:ffff:ffff:ffff:ffff ffff:ff00::",
-      "6543:2100::", SFIP_SUCCESS },
+      "6543:2100:0000:0000:0000:0000:0000:0000", SFIP_SUCCESS },
     { "sfip_pton", "ffee:ddcc:bbaa:9988:7766:5544:3322:1100/32",
-      "ffee:ddcc::", SFIP_SUCCESS },
+      "ffee:ddcc:0000:0000:0000:0000:0000:0000", SFIP_SUCCESS },
     { "sfip_pton", "ffee:ddcc:bbaa:9988:7766:5544:3322:1100",
       "ffee:ddcc:bbaa:9988:7766:5544:3322:1100", SFIP_SUCCESS },
     { "sfip_pton", "1.2.3.4:255.0.0.0", "1.0.0.0", SFIP_SUCCESS },
@@ -96,28 +96,27 @@ static FuncTest ftests[] =
     { "sfip_pton", "1.2.3.4/ 16", "1.2.0.0", SFIP_SUCCESS },
     { "sfip_pton", "1.2.3.4 / 16", "1.2.0.0", SFIP_SUCCESS },
     { "sfip_pton", " 1.2.3.4 / 16 ", "1.2.0.0", SFIP_SUCCESS },
+    { "sfip_pton", "1.2.3.4/0", "0.0.0.0", SFIP_SUCCESS },
+    { "sfip_pton", "1.2.3.4/16", "1.2.0.0", SFIP_SUCCESS },
     { "sfip_pton", "1234::1.2.3.4",
-      "1234::102:304", SFIP_SUCCESS },
+      "1234:0000:0000:0000:0000:0000:0102:0304", SFIP_SUCCESS },
     { "sfip_pton", "FEDC:BA98:7654:3210:FEDC:BA98:7654:3210",
       "fedc:ba98:7654:3210:fedc:ba98:7654:3210", SFIP_SUCCESS },
     { "sfip_pton", "1080:0:0:0:8:800:200C:4171",
-      "1080::8:800:200c:4171", SFIP_SUCCESS },
+      "1080:0000:0000:0000:0008:0800:200c:4171", SFIP_SUCCESS },
     { "sfip_pton", "3ffe:2a00:100:7031::1",
-      "3ffe:2a00:100:7031::1", SFIP_SUCCESS },
+      "3ffe:2a00:0100:7031:0000:0000:0000:0001", SFIP_SUCCESS },
     { "sfip_pton", "1080::8:800:200C:417A",
-      "1080::8:800:200c:417a", SFIP_SUCCESS },
+      "1080:0000:0000:0000:0008:0800:200c:417a", SFIP_SUCCESS },
     { "sfip_pton", "::192.9.5.5",
-      "::192.9.5.5", SFIP_SUCCESS },
+      "0000:0000:0000:0000:0000:0000:c009:0505", SFIP_SUCCESS },
     { "sfip_pton", "::FFFF:129.144.52.38",
-      "::ffff:129.144.52.38", SFIP_SUCCESS },
-    { "sfip_pton", "2010:836B:4179::836B:4179",
-      "2010:836b:4179::836b:4179", SFIP_SUCCESS },
-    { "sfip_pton", "::", "::", SFIP_SUCCESS },
+      "0000:0000:0000:0000:0000:ffff:8190:3426", SFIP_SUCCESS },
 
-    // atoi(arg2) gives expected hash length
-    // ip format ensures alloc tests don't fail
-    { "sfip_size", "::", "20.0.0.0", SFIP_SUCCESS },
-    { "sfip_size", "1.2.3.4", "8.0.0.0", SFIP_SUCCESS },
+    { "sfip_pton", "2010:836B:4179::836B:4179",
+      "2010:836b:4179:0000:0000:0000:836b:4179", SFIP_SUCCESS },
+    { "sfip_pton", "::",
+      "0000:0000:0000:0000:0000:0000:0000:0000", SFIP_SUCCESS },
 
     { "sfip_is_set", "8::", NULL, SFIP_SUCCESS },
     { "sfip_is_set", "::1", NULL, SFIP_SUCCESS },
@@ -138,11 +137,12 @@ static FuncTest ftests[] =
     { "sfip_ismapped", "8::ffff:c000:280", NULL, SFIP_FAILURE },
     { "sfip_ismapped", "::fffe:c000:280", NULL, SFIP_FAILURE },
 
-    { "_ip6_cmp", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", SFIP_EQUAL },
-    { "_ip6_cmp", "1:2:3:4:5:6:7:8", "1:1:3:4:5:6:7:8", SFIP_GREATER },
-    { "_ip6_cmp", "1:2:3:4:5:6:7:8", "1:2:4:4:5:6:7:8", SFIP_LESSER },
-    { "_ip6_cmp", "1:2:3:4:5:6:7:8", "1:2:3:4:5:5:7:8", SFIP_GREATER },
-    { "_ip6_cmp", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:8:8", SFIP_LESSER },
+    // v6<->v6 Comparisons
+    { "sfip_compare", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", SFIP_EQUAL },
+    { "sfip_compare", "1:2:3:4:5:6:7:8", "1:1:3:4:5:6:7:8", SFIP_GREATER },
+    { "sfip_compare", "1:2:3:4:5:6:7:8", "1:2:4:4:5:6:7:8", SFIP_LESSER },
+    { "sfip_compare", "1:2:3:4:5:6:7:8", "1:2:3:4:5:5:7:8", SFIP_GREATER },
+    { "sfip_compare", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:8:8", SFIP_LESSER },
 
     { "sfip_compare", "1.2.3.4", "1.2.3.4", SFIP_EQUAL },
     { "sfip_compare", "255.255.255.255", "192.168.0.1", SFIP_GREATER },
@@ -160,15 +160,8 @@ static FuncTest ftests[] =
     { "sfip_compare_unset", "1.2.3.4", "1.2.3.4", SFIP_EQUAL },
     { "sfip_compare_unset", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", SFIP_EQUAL },
     { "sfip_compare_unset", "1.2.3.4", "0.0.0.0", SFIP_FAILURE },
+
     { "sfip_compare_unset", "1:2:3:4:5:6:7:8", "::", SFIP_FAILURE },
-
-    { "sfip_fast_lt4", "1.2.3.4", "1.2.3.4", SFIP_FAILURE },
-    { "sfip_fast_lt4", "1.2.3.4", "1.2.3.5", SFIP_SUCCESS },
-    { "sfip_fast_lt4", "1.2.3.5", "1.2.3.4", SFIP_FAILURE },
-
-    { "sfip_fast_gt4", "1.2.3.4", "1.2.3.4", SFIP_FAILURE },
-    { "sfip_fast_gt4", "1.2.3.4", "1.2.3.5", SFIP_FAILURE },
-    { "sfip_fast_gt4", "1.2.3.5", "1.2.3.4", SFIP_SUCCESS },
 
     { "sfip_fast_eq4", "1.2.3.4", "1.2.3.4", SFIP_SUCCESS },
     { "sfip_fast_eq4", "1.2.3.4", "1.2.3.5", SFIP_FAILURE },
@@ -214,8 +207,17 @@ static FuncTest ftests[] =
     { "sfip_contains", "1001:db8:85a3::/28", "1001:db0::", SFIP_CONTAINS },
     { "sfip_contains", "1001:db8:85a3::/29", "1001:db0::", SFIP_NOT_CONTAINS },
 
+    { "sfip_contains", "ffee:ddcc:bbaa:9988:7766:5544:3322:1101",
+      "ffee:ddcc:bbaa:9988:7766:5544:3322:1102", SFIP_NOT_CONTAINS },
+    { "sfip_contains", "ffee:ddcc:bbaa:9988:7766:5544:3322:1101/96",
+      "ffee:ddcc:bbaa:9988:7766:5544:3322:1102", SFIP_CONTAINS },
+    { "sfip_contains", "ffee:ddcc:bbaa:9988:7766:5544:3322:1101/97",
+      "ffee:ddcc:bbaa:9988:7766:5544:3322:1102", SFIP_CONTAINS },
+    { "sfip_contains", "ffee:ddcc:bbaa:9988:7766:5544:3322:1101/97",
+      "ffee:ddcc:bbaa:9988:7766:5544:b322:1102", SFIP_NOT_CONTAINS },
+
     { "sfip_contains", "255.255.255.255",
-      "2001:0db8:0000:0000:0000:0000:1428:57ab", SFIP_ARG_ERR },
+      "2001:0db8:0000:0000:0000:0000:1428:57ab", SFIP_NOT_CONTAINS },
 
     { "sfip_obfuscate", "::",
       "0000:0000:0000:0000:0000:0000:0000:0000", SFIP_EQUAL },
@@ -234,105 +236,87 @@ static FuncTest ftests[] =
 
 static int RunFunc(const char* func, const char* arg1, const char* arg2)
 {
-    sfip_t ip1, ip2;
-    sfip_clear(ip1);
-    sfip_clear(ip2);
+    SfCidr cidr1, cidr2;
+    const SfIp* ip1, * ip2;
     int result = SFIP_FAILURE;
 
-    if ( arg1 )
-        sfip_pton(arg1, &ip1);
-    if ( arg2 )
-        sfip_pton(arg2, &ip2);
+    cidr1.clear();
+    if (arg1)
+        cidr1.set(arg1);
+    ip1 = cidr1.get_addr();
+
+    cidr2.clear();
+    if (arg2)
+        cidr2.set(arg2);
+    ip2 = cidr2.get_addr();
 
     if ( !strcmp(func, "sfip_pton") )
     {
-        char buf1[INET6_ADDRSTRLEN];
-        char buf2[INET6_ADDRSTRLEN];
+        char buf[INET6_ADDRSTRLEN];
 
-        sfip_ntop(&ip1, buf1, sizeof(buf1));
-        sfip_ntop(&ip2, buf2, sizeof(buf2));
-
-        result = strcmp(buf1, buf2) ? SFIP_FAILURE : SFIP_SUCCESS;
-    }
-    else if ( !strcmp(func, "sfip_size") and arg2 )
-    {
-        result = sfip_size(&ip1);
-        result = (result == atoi(arg2)) ? SFIP_SUCCESS : SFIP_FAILURE;
+        sfip_ntop(ip1, buf, sizeof(buf));
+        if (arg2)
+            result = strcmp(buf, arg2) ? SFIP_FAILURE : SFIP_SUCCESS;
     }
     else if ( !strcmp(func, "sfip_contains") )
     {
-        result = sfip_contains(&ip1, &ip2);
+        result = cidr1.contains(ip2);
     }
     else if ( !strcmp(func, "sfip_is_set") )
     {
-        result = !sfip_is_set(&ip1);
+        result = !ip1->is_set();
     }
     else if ( !strcmp(func, "sfip_is_loopback") )
     {
-        result = !sfip_is_loopback(&ip1);
+        result = !ip1->is_loopback();
     }
     else if ( !strcmp(func, "sfip_ismapped") )
     {
-        result = !sfip_ismapped(&ip1);
-    }
-    else if ( !strcmp(func, "_ip6_cmp") )
-    {
-        result = _ip6_cmp(&ip1, &ip2);
+        result = !ip1->is_mapped();
     }
     else if ( !strcmp(func, "sfip_compare") )
     {
-        result = sfip_compare(&ip1, &ip2);
+        result = ip1->compare(*ip2);
     }
     else if ( !strcmp(func, "sfip_compare_unset") )
     {
-        result = sfip_compare_unset(&ip1, &ip2);
-    }
-    else if ( !strcmp(func, "sfip_fast_lt4") )
-    {
-        result = !sfip_fast_lt4(&ip1, &ip2);
-    }
-    else if ( !strcmp(func, "sfip_fast_gt4") )
-    {
-        result = !sfip_fast_gt4(&ip1, &ip2);
+        result = ip1->compare(*ip2, false);
     }
     else if ( !strcmp(func, "sfip_fast_eq4") )
     {
-        result = !sfip_fast_eq4(&ip1, &ip2);
+        result = !ip1->fast_eq4(*ip2);
     }
     else if ( !strcmp(func, "sfip_fast_lt6") )
     {
-        result = !sfip_fast_lt6(&ip1, &ip2);
+        result = !ip1->fast_lt6(*ip2);
     }
     else if ( !strcmp(func, "sfip_fast_gt6") )
     {
-        result = !sfip_fast_gt6(&ip1, &ip2);
+        result = !ip1->fast_gt6(*ip2);
     }
     else if ( !strcmp(func, "sfip_fast_eq6") )
     {
-        result = !sfip_fast_eq6(&ip1, &ip2);
+        result = !ip1->fast_eq6(*ip2);
     }
     else if ( !strcmp(func, "sfip_fast_cont4") )
     {
-        result = !sfip_fast_cont4(&ip1, &ip2);
+        result = !cidr1.fast_cont4(*ip2);
     }
     else if ( !strcmp(func, "sfip_fast_cont6") )
     {
-        result = !sfip_fast_cont6(&ip1, &ip2);
+        result = !cidr1.fast_cont6(*ip2);
     }
     else if ( !strcmp(func, "sfip_obfuscate") )
     {
-        sfip_t ip;
-        if ( ip1.family == AF_INET )
-        {
-            sfip_pton("4.3.2.1", &ip);
-        }
+        SfIp ip;
+        if ( ip1->get_family() == AF_INET )
+            ip.set("4.3.2.1");
         else
-        {
-            sfip_pton("8:7:6:5:4:3:2:1", &ip);
-        }
-        sfip_obfuscate(&ip1, &ip);
-        result = sfip_compare(&ip, &ip2);
+            ip.set("8:7:6:5:4:3:2:1");
+        ip.obfuscate(&cidr1);
+        result = ip.compare(*ip2);
     }
+
     return result;
 }
 
@@ -367,74 +351,14 @@ static int FuncCheck(int i)
     return result == f->expected;
 }
 
-static int AllocCheck(int i)
-{
-    FuncTest* f = ftests + i;
-    SFIP_RET status;
-    sfip_t* pip1, * pip2;
-
-    pip1 = sfip_alloc(f->arg1, &status);
-    if ( !pip1 || status != SFIP_SUCCESS )
-        return 0;
-
-    if ( f->arg2 )
-    {
-        pip2 = sfip_alloc(f->arg2, &status);
-    }
-    else
-    {
-        unsigned int i = 0xffffffff;
-        pip2 = sfip_alloc_raw(&i, AF_INET, &status);
-    }
-    if ( !pip2 || status != SFIP_SUCCESS )
-        return 0;
-
-    sfip_free(pip1);
-    sfip_free(pip2);
-
-    return 1;
-}
-
-static int RawCheck(int i)
-{
-    SFIP_RET status;
-    uint8_t addr[16];
-    const char* s, * exp;
-    size_t j;
-    sfip_t* pip;
-
-    for ( j = 0; j < sizeof(addr); j++ )
-        // avoid leading zero confusion
-        addr[j] = j | (j % 2 ? 0x00 : 0x80);
-
-    if ( i )
-    {
-        pip = sfip_alloc_raw(addr, AF_INET6, &status);
-        exp = "8001:8203:8405:8607:8809:8a0b:8c0d:8e0f";
-    }
-    else
-    {
-        pip = sfip_alloc_raw(addr, AF_INET, &status);
-        exp = "128.1.130.3";
-    }
-    if ( status != SFIP_SUCCESS )
-        return 0;
-
-    s = sfip_to_str(pip);
-    sfip_free(pip);
-
-    return !strcasecmp(s, exp);
-}
-
 static int SetCheck(int i)
 {
     FuncTest* f = ftests + i;
-    SFIP_RET status;
-    sfip_t ip1, ip2;
+    SfIpRet status;
+    SfIp ip1, ip2;
 
-    sfip_pton(f->arg1, &ip1);
-    status = sfip_set_raw(&ip2, ip1.ip8, ip1.family);
-    sfip_set_bits(&ip2, sfip_bits(&ip1));
+    ip1.set(f->arg1);
+    status = ip2.set(ip1.get_ptr(), ip1.get_family());
 
     return (status == SFIP_SUCCESS) && !memcmp(&ip1, &ip2, sizeof(ip1));
 }
@@ -442,13 +366,12 @@ static int SetCheck(int i)
 static int CopyCheck(int i)
 {
     FuncTest* f = ftests + i;
-    SFIP_RET status;
-    sfip_t ip1, ip2;
+    SfIp ip1, ip2;
 
-    sfip_pton(f->arg1, &ip1);
-    status = sfip_set_ip(&ip2, &ip1);
+    ip1.set(f->arg1);
+    ip2.set(ip1);
 
-    return (status == SFIP_SUCCESS) && !memcmp(&ip1, &ip2, sizeof(ip1));
+    return !memcmp(&ip1, &ip2, sizeof(ip1));
 }
 
 //---------------------------------------------------------------
@@ -470,16 +393,3 @@ TEST_CASE("sfip copy", "[sfip]")
     for ( unsigned i = 0; i < NUM_TESTS; ++i )
         CHECK(CopyCheck(i) == 1);
 }
-
-TEST_CASE("sfip alloc", "[sfip]")
-{
-    for ( unsigned i = 0; i < NUM_TESTS; ++i )
-        CHECK(AllocCheck(i) == 1);
-}
-
-TEST_CASE("sfip raw", "[sfip]")
-{
-    for ( unsigned i = 0; i < 2; ++i )
-        CHECK(RawCheck(i) == 1);
-}
-

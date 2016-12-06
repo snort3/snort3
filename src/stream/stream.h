@@ -26,7 +26,6 @@
 
 #include <sys/types.h>
 
-#include "sfip/sfip_t.h"
 #include "protocols/packet.h"
 #include "flow/flow.h"
 #include "main/snort_types.h"
@@ -55,6 +54,7 @@
     "hpux11 | hpux10 | windows | win_2003 | vista | proxy"
 
 class Flow;
+struct SfIp;
 
 typedef int (* LogFunction)(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
 typedef void (* LogExtraData)(Flow*, void* config, LogFunction* funcs,
@@ -108,8 +108,8 @@ public:
     // n-tuple parameters specified.  Inspection will be turned off for this expected session
     // when it arrives.
     static int ignore_flow(
-        const Packet* ctrlPkt, PktType, IpProtocol, const sfip_t* srcIP, uint16_t srcPort,
-        const sfip_t* dstIP, uint16_t dstPort, char direction, uint32_t flow_id);
+        const Packet* ctrlPkt, PktType, IpProtocol, const SfIp* srcIP, uint16_t srcPort,
+        const SfIp* dstIP, uint16_t dstPort, char direction, uint32_t flow_id);
 
     // Resume inspection for flow.
     // FIXIT-L does resume work only for a flow that has been stopped by call to stop_inspection?
@@ -182,14 +182,14 @@ public:
     // Turn off inspection for potential session. Adds session identifiers to a hash table.
     // TCP only.
     static int set_application_protocol_id_expected(
-        const Packet* ctrlPkt, PktType, IpProtocol, const sfip_t* srcIP, uint16_t srcPort,
-        const sfip_t* dstIP, uint16_t dstPort, int16_t appId, FlowData*);
+        const Packet* ctrlPkt, PktType, IpProtocol, const SfIp* srcIP, uint16_t srcPort,
+        const SfIp* dstIP, uint16_t dstPort, int16_t appId, FlowData*);
 
     // Get pointer to application data for a flow based on the lookup tuples for cases where
     // Snort does not have an active packet that is relevant.
     static FlowData* get_flow_data(
         PktType type, IpProtocol proto,
-        const sfip_t* a1, uint16_t p1, const sfip_t* a2, uint16_t p2,
+        const SfIp* a1, uint16_t p1, const SfIp* a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flow_id);
 
     // Get pointer to application data for a flow using the FlowKey as the lookup criteria
@@ -199,7 +199,7 @@ public:
     // cases where Snort does not have an active packet that is relevant.
     static Flow* get_flow(
         PktType type, IpProtocol proto,
-        const sfip_t* a1, uint16_t p1, const sfip_t* a2, uint16_t p2,
+        const SfIp* a1, uint16_t p1, const SfIp* a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     // Delete the session if it is in the closed session state.
@@ -214,7 +214,7 @@ public:
     //  Populate a session key from the Packet
     static void populate_flow_key(Packet*, FlowKey*);
 
-    static void update_direction(Flow*, char dir, const sfip_t* ip, uint16_t port);
+    static void update_direction(Flow*, char dir, const SfIp* ip, uint16_t port);
 
     static void set_application_protocol_id(
         Flow*, const struct HostAttributeEntry*, int direction);

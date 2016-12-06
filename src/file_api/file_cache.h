@@ -23,24 +23,25 @@
 
 #include <mutex>
 
-#include "file_api.h"
-#include "file_lib.h"
-#include "file_config.h"
-
-#include "protocols/packet.h"
 #include "hash/sfxhash.h"
-#include "hash/hashes.h"
+#include "sfip/sf_ip.h"
+
+#include "file_config.h"
 
 class FileCache
 {
 public:
-
+// FIXIT-L Merge definition with duplicate in file_enforcer.h?
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wpadded"
     struct FileHashKey
     {
-        sfip_t sip;
-        sfip_t dip;
+        SfIp sip;
+        SfIp dip;
+        uint32_t padding;
         uint64_t file_sig;
     };
+#pragma GCC diagnostic pop
 
     struct FileNode
     {
@@ -54,12 +55,10 @@ public:
     FileContext* find(const FileHashKey&);
 
 private:
-
     /* The hash table of expected files */
     SFXHASH* fileHash = nullptr;
     uint32_t timeout = DEFAULT_FILE_BLOCK_TIMEOUT;
     std::mutex cache_mutex;
-
 };
 
 #endif

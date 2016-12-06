@@ -40,6 +40,7 @@
 #include "log/unified2.h"
 #include "detection/detection_util.h"
 #include "utils/safec.h"
+#include "utils/util.h"
 
 #include "smtp_module.h"
 #include "smtp_paf.h"

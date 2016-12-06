@@ -95,6 +95,7 @@
 #include "utils/stats.h"
 #include "detection/detect.h"
 #include "utils/safec.h"
+#include "utils/util.h"
 
 /*  D E F I N E S  **************************************************/
 

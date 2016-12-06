@@ -23,13 +23,13 @@
 #include "config.h"
 #endif
 
-#ifndef HAVE_PARSER_H
 #include <ctype.h>
 
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
 #include "sfip/sf_ip.h"
+#include "utils/util.h"
 
 #include "sip_parser.h"
 #include "sip_config.h"
@@ -795,7 +795,7 @@ static int sip_parse_to(SIPMsg* msg, const char* start, const char* end, SIP_PRO
 
 static inline bool is_valid_ip(const char *start, int length)
 {
-    sfip_t ip;
+    SfIp ip;
     char ipStr[INET6_ADDRSTRLEN];
 
     /*Get the IP address*/
@@ -808,7 +808,7 @@ static inline bool is_valid_ip(const char *start, int length)
 
     DebugFormat(DEBUG_SIP, "IP data: %s\n", ipStr);
 
-    if( (sfip_pton(ipStr, &ip)) != SFIP_SUCCESS)
+    if( ip.set(ipStr) != SFIP_SUCCESS)
     {
         DebugMessage(DEBUG_SIP, "Not valid IP! \n");
         return false;
@@ -1149,7 +1149,7 @@ static int sip_parse_sdp_o(SIPMsg* msg, const char* start, const char* end)
 static int sip_parse_sdp_c(SIPMsg* msg, const char* start, const char* end)
 {
     int length;
-    sfip_t* ip;
+    SfIp* ip;
     char ipStr[INET6_ADDRSTRLEN + 5];     /* Enough for IPv4 plus netmask or
                                                        full IPv6 plus prefix */
     char* spaceIndex = NULL;
@@ -1186,12 +1186,12 @@ static int sip_parse_sdp_c(SIPMsg* msg, const char* start, const char* end)
     {
         ip = &(msg->mediaSession->medias->maddress);
     }
-    if ( (sfip_pton(ipStr, ip)) != SFIP_SUCCESS)
+    if ( ip->set(ipStr) != SFIP_SUCCESS)
     {
         DebugMessage(DEBUG_SIP, "Parsed error! \n");
         return SIP_PARSE_ERROR;
     }
-    DebugFormat(DEBUG_SIP, "Parsed Connection data: %s\n", sfip_to_str (ip));
+    DebugFormat(DEBUG_SIP, "Parsed Connection data: %s\n", ip->ntoa());
 
     return SIP_PARSE_SUCCESS;
 }
@@ -1236,7 +1236,7 @@ static int sip_parse_sdp_m(SIPMsg* msg, const char* start, const char* end)
     mdata->maddress = msg->mediaSession->maddress_default;
     msg->mediaSession->medias = mdata;
     DebugFormat(DEBUG_SIP, "Media IP: %s, Media port %hu, number of media: %d\n",
-        sfip_to_str(&mdata->maddress), mdata->mport, mdata->numPort);
+        mdata->maddress.ntoa(), mdata->mport, mdata->numPort);
     return SIP_PARSE_SUCCESS;
 }
 
@@ -1378,7 +1378,7 @@ void sip_freeMediaSession(SIP_MediaSession* mediaSession)
     while (NULL != curNode)
     {
         DebugFormat(DEBUG_SIP, "Clear media ip: %s, port: %d, number of port: %d\n",
-            sfip_to_str(&curNode->maddress), curNode->mport, curNode->numPort);
+            curNode->maddress.ntoa(), curNode->mport, curNode->numPort);
         nextNode = curNode->nextM;
         snort_free(curNode);
         curNode = nextNode;
@@ -1407,12 +1407,10 @@ void sip_freeMediaList(SIP_MediaList medias)
     while (NULL != curNode)
     {
         DebugFormat(DEBUG_SIP, "Clean Media session default IP: %s,  session ID: %u\n",
-            sfip_to_str(&curNode->maddress_default), curNode->sessionID);
+            curNode->maddress_default.ntoa(), curNode->sessionID);
         nextNode = curNode->nextS;
         sip_freeMediaSession(curNode);
         curNode = nextNode;
     }
 }
-
-#endif
 

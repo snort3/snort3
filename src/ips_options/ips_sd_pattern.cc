@@ -39,6 +39,8 @@
 #include "main/thread.h"
 #include "parser/parser.h"
 #include "profiler/profiler.h"
+#include "protocols/packet.h"
+
 #include "sd_credit_card.h"
 
 #define s_name "sd_pattern"

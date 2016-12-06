@@ -38,7 +38,7 @@
 #include "profiler/profiler.h"
 #include "utils/stats.h"
 #include "flow/flow.h"
-#include "sfip/sfip_t.h"
+#include "sfip/sf_ip.h"
 
 static const char* s_name = "data_log";
 static const char* f_name = "data.log";
@@ -87,8 +87,8 @@ void LogHandler::handle(DataEvent& e, Flow* f)
     std::string val(b, n);
 
     TextLog_Print(tlog, "%u, ", time(nullptr));
-    TextLog_Print(tlog, "%s, %d, ", sfip_to_str(&f->client_ip), f->client_port);
-    TextLog_Print(tlog, "%s, %d, ", sfip_to_str(&f->server_ip), f->server_port);
+    TextLog_Print(tlog, "%s, %d, ", f->client_ip.ntoa(), f->client_port);
+    TextLog_Print(tlog, "%s, %d, ", f->server_ip.ntoa(), f->server_port);
     TextLog_Print(tlog, "%s, %*s\n", key.c_str(), n, val.c_str());
 
     dl_stats.total_packets++;

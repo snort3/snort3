@@ -217,9 +217,9 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("log_all_sessions") )
         config->session_log_filter.log_all_sessions = v.get_bool();
     else if (v.is("src_ip") )
-        sfip_pton(v.get_string(), &config->session_log_filter.sip);
+        config->session_log_filter.sip.set(v.get_string());
     else if (v.is("dst_ip") )
-        sfip_pton(v.get_string(), &config->session_log_filter.dip);
+        config->session_log_filter.dip.set(v.get_string());
     else
         return false;
 

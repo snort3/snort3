@@ -19,9 +19,7 @@
 
 #include "file_segment.h"
 
-#include "log/messages.h"
-#include "file_flows.h"
-#include "file_service.h"
+#include "file_lib.h"
 
 FileSegment::~FileSegment ()
 {

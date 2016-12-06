@@ -22,8 +22,7 @@
 #ifndef SERVICE_STATE_H
 #define SERVICE_STATE_H
 
-#include "sfip/sfip_t.h"
-#include "protocols/protocol_ids.h"
+#include "sfip/sf_ip.h"
 #include "utils/util.h"
 
 struct RNAServiceElement;
@@ -95,7 +94,7 @@ struct AppIdServiceIDState
     SERVICE_ID_STATE state = SERVICE_ID_NEW;
     unsigned valid_count = 0;
     unsigned detract_count = 0;
-    sfip_t last_detract;
+    SfIp last_detract;
 
     /**Number of consequetive flows that were declared incompatible by detectors. Incompatibility
      * means client packet did not match.
@@ -106,7 +105,7 @@ struct AppIdServiceIDState
      * different everytime, then consequetive incompatible status indicate that flow is not using
      * specific service.
      */
-    sfip_t last_invalid_client;
+    SfIp last_invalid_client;
 
     /** Count for number of unknown sessions saved
      */
@@ -131,9 +130,9 @@ class AppIdServiceState
 public:
 	static void initialize(unsigned long);
 	static void clean();
-	static AppIdServiceIDState* add( const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
-    static AppIdServiceIDState* get( const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
-    static void remove(const sfip_t*, IpProtocol proto, uint16_t port, uint32_t level);
+	static AppIdServiceIDState* add( const SfIp*, IpProtocol proto, uint16_t port, uint32_t level);
+    static AppIdServiceIDState* get( const SfIp*, IpProtocol proto, uint16_t port, uint32_t level);
+    static void remove(const SfIp*, IpProtocol proto, uint16_t port, uint32_t level);
     static void dump_stats();
 };
 

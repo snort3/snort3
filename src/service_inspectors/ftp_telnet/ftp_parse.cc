@@ -655,7 +655,7 @@ int ProcessFTPAllowBounce(
     FTP_BOUNCE_TO* newBounce =
         (FTP_BOUNCE_TO*)snort_calloc(sizeof(FTP_BOUNCE_TO));
 
-    sfip_set_raw(&newBounce->ip, addr, len == 4 ? AF_INET : AF_INET6);
+    newBounce->ip.set(addr, len == 4 ? AF_INET : AF_INET6);
     newBounce->portlo = low;
     newBounce->porthi = high;
 

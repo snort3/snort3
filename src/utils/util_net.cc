@@ -23,11 +23,9 @@
 #include "config.h"
 #endif
 
+#include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
-
-/* for inet_ntoa */
-#include <arpa/inet.h>
 
 #include "main/thread.h"
 #include "util.h"
@@ -38,7 +36,7 @@
  *
  * @param ip ip in NETWORK BYTE ORDER
  */
-char* inet_ntoax(const sfip_t* ip)
+char* inet_ntoax(const SfIp* ip)
 {
     static THREAD_LOCAL char ip_buf1[INET6_ADDRSTRLEN];
     static THREAD_LOCAL char ip_buf2[INET6_ADDRSTRLEN];
@@ -54,23 +52,9 @@ char* inet_ntoax(const sfip_t* ip)
     buf_num ^= 1;
     ip_buf[0] = 0;
 
-    SnortSnprintf(ip_buf, buf_size, "%s", inet_ntoa(ip));
+    if (ip)
+        SnortSnprintf(ip_buf, buf_size, "%s", ip->ntoa());
 
     return ip_buf;
 }
-
-#ifdef TEST_UTIL_NET
-int main()
-{
-    uint32_t ip1 = htonl(0xFF00FF00);
-    uint32_t ip2 = htonl(0xFFAAFFAA);
-
-    printf("%s -> %s\n", inet_ntoax(ip1), inet_ntoax(ip2));
-
-    /* the following one is invalid and will break the first one*/
-    printf("%s -> %s -> %s\n", inet_ntoax(ip1), inet_ntoax(ip2), inet_ntoax(ip2));
-    return 0;
-}
-
-#endif /* TEST_UTIL_NET */
 

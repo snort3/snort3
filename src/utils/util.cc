@@ -33,6 +33,7 @@
 #include <pcre.h>
 #include <pwd.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <zlib.h>
 
 #ifdef HAVE_LZMA
@@ -55,6 +56,7 @@ extern "C" {
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "packet_io/sfdaq.h"
+#include "protocols/packet.h"   // For NUM_IP_PROTOS
 
 #ifdef PATH_MAX
 #define PATH_MAX_UTIL PATH_MAX

@@ -36,6 +36,7 @@
 #include "main/snort_debug.h"
 #include "main/snort_config.h"
 #include "protocols/tcp.h"
+#include "utils/util.h"
 
 #include "log_text.h"
 #include "messages.h"

@@ -24,15 +24,13 @@
 
 // This will be basis of file class
 
-#include <stdint.h>
-#include <stdio.h>
-#include <iostream>
+#include <ostream>
+#include <string>
 
 #include "file_api/file_api.h"
-#include "flow/flow.h"
 
-#define SNORT_FILE_TYPE_UNKNOWN          UINT16_MAX  /**/
-#define SNORT_FILE_TYPE_CONTINUE         0 /**/
+#define SNORT_FILE_TYPE_UNKNOWN          UINT16_MAX
+#define SNORT_FILE_TYPE_CONTINUE         0
 
 class FileCapture;
 class FileConfig;

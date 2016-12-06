@@ -46,6 +46,7 @@
 #include "main/snort_config.h"
 #include "parser/parser.h"
 #include "utils/sflsq.h"
+#include "utils/util.h"
 
 #include "fp_create.h"
 #include "treenodes.h"

@@ -26,50 +26,28 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <signal.h>
-
 extern "C" {
 #include <sfbpf_dlt.h>
 }
 
-#include "log.h"
-#include "text_log.h"
-#include "obfuscator.h"
-
-#include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "detection/signature.h"
 #include "detection/detection_util.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "main/snort_config.h"
 #include "packet_io/sfdaq.h"
-
-#include "sfip/sf_ip.h"
+#include "protocols/eth.h"
+#include "protocols/gre.h"
+#include "protocols/icmp4.h"
+#include "protocols/ipv4_options.h"
+#include "protocols/packet_manager.h"
+#include "protocols/tcp.h"
+#include "protocols/tcp_options.h"
+#include "protocols/udp.h"
 #include "utils/util.h"
 #include "utils/util_net.h"
 
-#include "protocols/packet.h"
-#include "protocols/layer.h"
-#include "protocols/eth.h"
-#include "protocols/ipv4.h"
-#include "protocols/ipv6.h"
-#include "protocols/icmp6.h"
-#include "protocols/icmp4.h"
-#include "protocols/udp.h"
-#include "protocols/tcp.h"
-#include "protocols/gre.h"
-#include "protocols/token_ring.h"
-#include "protocols/wlan.h"
-#include "protocols/linux_sll.h"
-#include "protocols/eapol.h"
-#include "protocols/ipv4_options.h"
-#include "protocols/tcp_options.h"
-#include "protocols/packet_manager.h"
+#include "log.h"
+#include "obfuscator.h"
+#include "text_log.h"
 
 /*--------------------------------------------------------------------
  * utility functions
@@ -1021,13 +999,13 @@ void LogICMPHeader(TextLog* log, Packet* p)
         }
 
 /* written this way since inet_ntoa was typedef'ed to use sfip_ntoa
-* which requires sfip_t instead of inaddr's.  This call to inet_ntoa
-* is a rare case that doesn't use sfip_t's. */
+* which requires SfIp instead of inaddr's.  This call to inet_ntoa
+* is a rare case that doesn't use SfIp's. */
 
 // XXX-IPv6 NOT YET IMPLEMENTED - IPV6 addresses technically not supported - need to change ICMP
 
         /* no inet_ntop in Windows */
-        sfip_raw_ntop(AF_INET, (const void*)(&p->ptrs.icmph->s_icmp_gwaddr.s_addr),
+        snort_inet_ntop(AF_INET, (const void*)(&p->ptrs.icmph->s_icmp_gwaddr.s_addr),
             buf, sizeof(buf));
         TextLog_Print(log, " NEW GW: %s", buf);
 

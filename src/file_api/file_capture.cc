@@ -44,6 +44,7 @@
 #include "utils/stats.h"
 
 #include "file_config.h"
+#include "file_mempool.h"
 #include "file_stats.h"
 
 FileMemPool* FileCapture::file_mempool = nullptr;

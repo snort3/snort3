@@ -362,8 +362,8 @@ int PrintGlobalConf(HTTPINSPECT_GLOBAL_CONF* GlobalConf)
 
 static inline int SetSiInput(HI_SI_INPUT* SiInput, Packet* p)
 {
-    sfip_copy(SiInput->sip, p->ptrs.ip_api.get_src());
-    sfip_copy(SiInput->dip, p->ptrs.ip_api.get_dst());
+    SiInput->sip.set(*p->ptrs.ip_api.get_src());
+    SiInput->dip.set(*p->ptrs.ip_api.get_dst());
     SiInput->sport = p->ptrs.sp;
     SiInput->dport = p->ptrs.dp;
 
@@ -1176,7 +1176,7 @@ void FreeHttpSessionData(void* data)
         snort_free(hsd->log_state);
 
     if (hsd->true_ip)
-        sfip_free(hsd->true_ip);
+        delete hsd->true_ip;
 
     if (hsd->mime_ssn)
         delete hsd->mime_ssn;
@@ -1198,7 +1198,7 @@ int GetHttpTrueIP(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
     if (!hsd->true_ip)
         return 0;
 
-    if (hsd->true_ip->family == AF_INET6)
+    if (hsd->true_ip->is_ip6())
     {
         *type = EVENT_INFO_XFF_IPV6;
         *len = sizeof(struct in6_addr); /*ipv6 address size in bytes*/
@@ -1209,7 +1209,7 @@ int GetHttpTrueIP(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
         *len = sizeof(struct in_addr); /*ipv4 address size in bytes*/
     }
 
-    *buf = hsd->true_ip->ip8;
+    *buf = (uint8_t*) hsd->true_ip->get_ptr();
     return 1;
 }
 

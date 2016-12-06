@@ -104,7 +104,7 @@ SipEventMediaData* SipEventMediaSession::next_media_data()
 }
 
 
-const sfip_t* SipEventMediaData::get_address() const
+const SfIp* SipEventMediaData::get_address() const
 { return &data->maddress; }
 
 uint16_t SipEventMediaData::get_port() const

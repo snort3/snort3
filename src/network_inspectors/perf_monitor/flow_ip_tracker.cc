@@ -19,39 +19,41 @@
 // flow_ip_tracker.cc author Carter Waxman <cwaxman@cisco.com>
 
 #include "flow_ip_tracker.h"
-#include "perf_module.h"
 
 #include "log/messages.h"
 #include "sfip/sf_ip.h"
 #include "utils/util.h"
+#include "utils/util_net.h"
+
+#include "perf_module.h"
 
 #define FLIP_FILE (PERF_NAME "_flow_ip.csv")
 
 struct FlowStateKey
 {
-    sfip_t ipA;
-    sfip_t ipB;
+    SfIp ipA;
+    SfIp ipB;
 };
 
 THREAD_LOCAL FlowIPTracker* perf_flow_ip;
 
-FlowStateValue* FlowIPTracker::find_stats(const sfip_t* src_addr, const sfip_t* dst_addr,
+FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_addr,
     int* swapped)
 {
     SFXHASH_NODE* node;
     FlowStateKey key;
     FlowStateValue* value;
 
-    if (sfip_lesser(src_addr, dst_addr))
+    if (src_addr->less_than(*dst_addr))
     {
-        sfip_copy(key.ipA, src_addr);
-        sfip_copy(key.ipB, dst_addr);
+        key.ipA.set(*src_addr);
+        key.ipB.set(*dst_addr);
         *swapped = 0;
     }
     else
     {
-        sfip_copy(key.ipA, dst_addr);
-        sfip_copy(key.ipB, src_addr);
+        key.ipA.set(*dst_addr);
+        key.ipB.set(*src_addr);
         *swapped = 1;
     }
 
@@ -147,8 +149,8 @@ void FlowIPTracker::update(Packet* p)
         FlowType type = SFS_TYPE_OTHER;
         int swapped;
 
-        const sfip_t* src_addr = p->ptrs.ip_api.get_src();
-        const sfip_t* dst_addr = p->ptrs.ip_api.get_dst();
+        const SfIp* src_addr = p->ptrs.ip_api.get_src();
+        const SfIp* dst_addr = p->ptrs.ip_api.get_dst();
         int len = p->pkth->caplen;
 
         if (p->ptrs.tcph)
@@ -184,8 +186,8 @@ void FlowIPTracker::process(bool)
         FlowStateKey* key = (FlowStateKey*)node->key;
         FlowStateValue* cur_stats = (FlowStateValue*)node->data;
 
-        sfip_raw_ntop(key->ipA.family, key->ipA.ip32, ip_a, sizeof(ip_a));
-        sfip_raw_ntop(key->ipB.family, key->ipB.ip32, ip_b, sizeof(ip_b));
+        key->ipA.ntop(ip_a, sizeof(ip_a));
+        key->ipB.ntop(ip_b, sizeof(ip_b));
         memcpy(&stats, cur_stats, sizeof(stats));
 
         write();
@@ -195,7 +197,7 @@ void FlowIPTracker::process(bool)
         reset();
 }
 
-int FlowIPTracker::update_state(const sfip_t* src_addr, const sfip_t* dst_addr, FlowState state)
+int FlowIPTracker::update_state(const SfIp* src_addr, const SfIp* dst_addr, FlowState state)
 {
     int swapped;
 

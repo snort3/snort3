@@ -42,7 +42,7 @@ static const PegInfo bind_pegs[] = { { nullptr, nullptr } };
 
 static std::vector<Binding*> s_bindings;
 
-static sfip_t s_src_ip, s_dst_ip;
+static SfIp s_src_ip, s_dst_ip;
 static Inspector* s_inspector;
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
@@ -50,7 +50,7 @@ void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) { }
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
 void sfvar_free(sfip_var_t*) {}
-bool sfvar_ip_in(sfip_var_t*, const sfip_t*) { return false; }
+bool sfvar_ip_in(sfip_var_t*, const SfIp*) { return false; }
 SO_PUBLIC Inspector* InspectorManager::get_inspector(const char*, bool) { return s_inspector; }
 InspectorType InspectorManager::get_type(const char*) { return InspectorType::IT_BINDER; }
 Inspector* InspectorManager::get_binder() { return nullptr; }
@@ -97,7 +97,7 @@ void Stream::set_splitter(Flow*, bool, class StreamSplitter*) { }
 const char* get_protocol_name(uint16_t) { return ""; }
 int16_t FindProtocolReference(const char*) { return 0; }
 void set_policies(SnortConfig*, unsigned) { }
-HostAttributeEntry* SFAT_LookupHostEntryByIP(const sfip_t*) { return nullptr; }
+HostAttributeEntry* SFAT_LookupHostEntryByIP(const SfIp*) { return nullptr; }
 
 Flow::Flow() { }
 Flow::~Flow() { }

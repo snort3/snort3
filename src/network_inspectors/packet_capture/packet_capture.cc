@@ -32,6 +32,7 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
+#include "protocols/packet.h"
 #include "utils/util.h"
 
 #ifdef UNIT_TEST

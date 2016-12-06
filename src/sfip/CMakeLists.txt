@@ -1,9 +1,9 @@
 
 set(SFIP_INCLUDES
-    sf_returns.h
+    sf_cidr.h
     sf_ip.h
     sf_ipvar.h
-    sfip_t.h
+    sf_returns.h
 )
 
 if ( ENABLE_UNIT_TESTS )
@@ -13,6 +13,7 @@ endif()
 add_library ( sfip STATIC
     ${SFIP_INCLUDES}
     ${TEST_FILES}
+    sf_cidr.cc
     sf_ip.cc
     sf_ipvar.cc
     sf_vartable.cc

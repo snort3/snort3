@@ -19,6 +19,7 @@
 
 #include "intf.h"
 
+#include <netinet/in.h>
 #include <pcap.h>
 #include <stdio.h>
 
@@ -56,9 +57,9 @@ void PrintAllInterfaces()
             struct sockaddr_in* saddr = (struct sockaddr_in*)dev->addresses->addr;
             if ((saddr->sin_family == AF_INET) || (saddr->sin_family == AF_INET6))
             {
-                sfip_t dev_ip;
-                sfip_set_raw(&dev_ip, &saddr->sin_addr, saddr->sin_family);
-                printf("\t%s", inet_ntoa(&dev_ip));
+                SfIp dev_ip;
+                dev_ip.set(&saddr->sin_addr, saddr->sin_family);
+                printf("\t%s", dev_ip.ntoa());
             }
             else
                 printf("\tdisabled");

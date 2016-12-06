@@ -48,9 +48,9 @@ void UserCodec::get_data_link_type(std::vector<int>& v)
 static void set_ip(const DAQ_UsrHdr_t* pci, CodecData& codec, DecodeData& snort)
 {
     // FIXIT-M support ip6
-    sfip_t sip, dip;
-    sfip_set_raw(&sip, &pci->src_addr, AF_INET);
-    sfip_set_raw(&dip, &pci->dst_addr, AF_INET);
+    SfIp sip, dip;
+    sip.set(&pci->src_addr, AF_INET);
+    dip.set(&pci->dst_addr, AF_INET);
     snort.ip_api.set(sip, dip);
 
     snort.sp = pci->src_port;
@@ -65,9 +65,9 @@ static void set_ip(const DAQ_UsrHdr_t* pci, CodecData& codec, DecodeData& snort)
 static void set_key(CodecData& codec, DecodeData& snort)
 {
     // FIXIT-L make configurable
-    sfip_t sip, dip;
-    sfip_pton("192.168.1.1", &sip);
-    sfip_pton("192.168.2.2", &dip);
+    SfIp sip, dip;
+    sip.set("192.168.1.1");
+    dip.set("192.168.2.2");
     snort.ip_api.set(sip, dip);
 
     snort.sp = 12345;

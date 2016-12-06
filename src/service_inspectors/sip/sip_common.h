@@ -77,7 +77,7 @@ enum SIP_DialogState
 
 struct SIP_MediaData
 {
-    sfip_t maddress;  // media IP
+    SfIp maddress;  // media IP
     uint16_t mport;   // media port
     uint8_t numPort;   // number of media ports
     SIP_MediaData* nextM;
@@ -91,7 +91,7 @@ struct SIP_MediaSession
     int savedFlag;      // whether this data has been saved by a dialog,
                         // if savedFlag = 1, this session will be deleted after sip message is
                         // processed.
-    sfip_t maddress_default;  // Default media IP
+    SfIp maddress_default;  // Default media IP
     SIP_MediaDataList medias; // Media list in the session
     SIP_MediaSession* nextS; // Next media session
 };

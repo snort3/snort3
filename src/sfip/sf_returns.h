@@ -20,7 +20,7 @@
 #ifndef SF_RETURNS_H
 #define SF_RETURNS_H
 
-enum SFIP_RET
+enum SfIpRet
 {
     SFIP_SUCCESS=0,
     SFIP_FAILURE,

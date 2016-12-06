@@ -45,7 +45,7 @@
 #include "sfip/sf_ip.h"
 #include "thread_config.h"
 #include "target_based/sftarget_reader.h"
-#include "target_based/snort_protocols.h"
+#include "utils/util.h"
 
 #ifdef HAVE_HYPERSCAN
 #include "ips_options/ips_regex.h"
@@ -177,8 +177,8 @@ SnortConfig::SnortConfig()
 
     thread_config = new ThreadConfig();
 
-    sfip_clear(homenet);
-    sfip_clear(obfuscation_net);
+    homenet.clear();
+    obfuscation_net.clear();
 
     memset(evalOrder, 0, sizeof(evalOrder));
     proto_ref = new ProtocolReference;
@@ -333,11 +333,11 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     if (cmd_line->max_ip_layers != 0)
         max_ip_layers = cmd_line->max_ip_layers;
 
-    if (cmd_line->obfuscation_net.family != 0)
-        memcpy(&obfuscation_net, &cmd_line->obfuscation_net, sizeof(sfip_t));
+    if (cmd_line->obfuscation_net.get_family() != 0)
+        memcpy(&obfuscation_net, &cmd_line->obfuscation_net, sizeof(obfuscation_net));
 
-    if (cmd_line->homenet.family != 0)
-        memcpy(&homenet, &cmd_line->homenet, sizeof(sfip_t));
+    if (cmd_line->homenet.get_family() != 0)
+        memcpy(&homenet, &cmd_line->homenet, sizeof(homenet));
 
     if ( !cmd_line->bpf_file.empty() )
         bpf_file = cmd_line->bpf_file;

@@ -22,7 +22,7 @@
 #ifndef SFTARGET_DATA_H
 #define SFTARGET_DATA_H
 
-#include "sfip/sfip_t.h"
+#include "sfip/sf_cidr.h"
 
 #define SFAT_OK 0
 #define SFAT_ERROR -1
@@ -68,7 +68,7 @@ struct HostInfo
 
 struct HostAttributeEntry
 {
-    sfip_t ipAddr;
+    SfCidr ipAddr;
     HostInfo hostInfo;
     ApplicationEntry* services;
     ApplicationEntry* clients;

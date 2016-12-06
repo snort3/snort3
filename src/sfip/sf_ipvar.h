@@ -34,7 +34,12 @@
 #define SFIP_ANY      2
 
 #include <stdio.h>
-#include "sfip/sf_ip.h"
+#include <stdint.h>
+
+#include "sfip/sf_returns.h"
+
+struct SfIp;
+struct SfCidr;
 
 /* Selects which mode a given variable is using to
  * store and lookup IP addresses */
@@ -44,10 +49,10 @@ typedef enum _modes
     SFIP_TABLE
 } MODES;
 
-/* Used by the "list" mode.  A doubly linked list of sfip_t objects. */
+/* Used by the "list" mode.  A doubly linked list of SfIp objects. */
 typedef struct _ip_node
 {
-    sfip_t* ip;
+    SfCidr* ip;
 #define ip_addr ip;   /* To ease porting Snort */
     struct _ip_node* next;
     int flags;
@@ -94,23 +99,23 @@ struct vartable_t
 sfip_var_t* sfvar_create_alias(const sfip_var_t* alias_from, const char* alias_to);
 
 /* Allocates a new variable as according to "str" */
-sfip_var_t* sfvar_alloc(vartable_t* table, const char* str, SFIP_RET* status);
+sfip_var_t* sfvar_alloc(vartable_t* table, const char* str, SfIpRet* status);
 
 /* Makes sure there are no IP address conflicts in the variable
    Returns SFIP_CONFLICT if so */
-SFIP_RET sfvar_validate(sfip_var_t* var);
+SfIpRet sfvar_validate(sfip_var_t* var);
 
 /* Parses an IP list described by 'str' and saves the results in 'var'. */
-SFIP_RET sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
+SfIpRet sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
     const char* str, int negation);
 
 /* Compares two variables.  Necessary when building RTN structure */
-SFIP_RET sfvar_compare(const sfip_var_t* one, const sfip_var_t* two);
+SfIpRet sfvar_compare(const sfip_var_t* one, const sfip_var_t* two);
 
 /* Free an allocated variable */
 void sfvar_free(sfip_var_t* var);
 
 // returns true if both args are valid and ip is contained by var
-bool sfvar_ip_in(sfip_var_t* var, const sfip_t* ip);
+bool sfvar_ip_in(sfip_var_t* var, const SfIp* ip);
 
 #endif

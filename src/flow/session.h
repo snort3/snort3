@@ -23,10 +23,10 @@
 // Session is an abstract base class for the various protocol subclasses.
 // the subclasses do the actual work of tracking, reassembly, etc.
 
-#include "sfip/sfip_t.h"
 #include "stream/stream.h"
 
 struct Packet;
+struct SfIp;
 class Flow;
 
 class Session
@@ -35,7 +35,7 @@ public:
     virtual ~Session() { }
 
     virtual bool setup(Packet*) { return true; }
-    virtual void update_direction(char /*dir*/, const sfip_t*, uint16_t /*port*/) { }
+    virtual void update_direction(char /*dir*/, const SfIp*, uint16_t /*port*/) { }
     virtual int process(Packet*) { return 0; }
 
     virtual void restart(Packet*) { }

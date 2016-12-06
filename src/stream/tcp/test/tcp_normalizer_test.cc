@@ -45,7 +45,7 @@ public:
 TcpSession::TcpSession( Flow* ) : Session( flow ) { }
 TcpSession::~TcpSession( void ) { }
 bool TcpSession::setup(Packet*){ return true; }
-void TcpSession::update_direction(char, sfip_t const*, unsigned short){ }
+void TcpSession::update_direction(char, SfIp const*, unsigned short){ }
 int TcpSession::process(Packet*){ return 0; }
 void TcpSession::restart(Packet*){ }
 void TcpSession::precheck(Packet*){ }

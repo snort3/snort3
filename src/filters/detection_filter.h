@@ -29,7 +29,7 @@
 // and thereby controls event generation.  event_filter is evaluated after
 // the event is queued, and thereby controls which events get logged.
 
-struct sfip_t;
+struct SfIp;
 struct THDX_STRUCT;
 
 struct DetectionFilterConfig
@@ -48,7 +48,7 @@ void detection_filter_term();
 void detection_filter_print_config(DetectionFilterConfig*);
 void detection_filter_reset_active();
 
-int detection_filter_test(void*, const sfip_t* sip, const sfip_t* dip, long curtime);
+int detection_filter_test(void*, const SfIp* sip, const SfIp* dip, long curtime);
 void* detection_filter_create(DetectionFilterConfig*, THDX_STRUCT*);
 
 #endif

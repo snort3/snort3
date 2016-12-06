@@ -84,10 +84,10 @@ void add_af_indicator(ApplicationId indicator, ApplicationId forecast, Applicati
 
 static inline void rekey_master_AF_key(Packet* p, int dir, ApplicationId forecast)
 {
-    const sfip_t* src = dir ? p->ptrs.ip_api.get_dst() : p->ptrs.ip_api.get_src();
+    const SfIp* src = dir ? p->ptrs.ip_api.get_dst() : p->ptrs.ip_api.get_src();
 
     for (int i = 0; i < 4; i++)
-        master_key.ip[i] = src->ip32[i];
+        master_key.ip[i] = src->get_ip6_ptr()[i];
 
     master_key.forecast = forecast;
 }

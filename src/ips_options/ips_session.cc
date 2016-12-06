@@ -170,7 +170,7 @@ static FILE* OpenSessionFile(Packet* p)
 {
     char filename[STD_BUF];
     char session_file[STD_BUF]; /* name of session file */
-    const sfip_t* dst, * src;
+    const SfIp* dst, * src;
 
     FILE* ret;
 
@@ -187,39 +187,39 @@ static FILE* OpenSessionFile(Packet* p)
 
     const char* addr;
 
-    if (sfip_contains(&snort_conf->homenet, dst) == SFIP_CONTAINS)
+    if (snort_conf->homenet.contains(dst) == SFIP_CONTAINS)
     {
-        if (sfip_contains(&snort_conf->homenet, src) == SFIP_NOT_CONTAINS)
+        if (snort_conf->homenet.contains(src) == SFIP_NOT_CONTAINS)
         {
-            addr = inet_ntoa(p->ptrs.ip_api.get_src());
+            addr = p->ptrs.ip_api.get_src()->ntoa();
         }
         else
         {
             if (p->ptrs.sp >= p->ptrs.dp)
             {
-                addr = inet_ntoa(p->ptrs.ip_api.get_src());
+                addr = p->ptrs.ip_api.get_src()->ntoa();
             }
             else
             {
-                addr = inet_ntoa(p->ptrs.ip_api.get_dst());
+                addr = p->ptrs.ip_api.get_dst()->ntoa();
             }
         }
     }
     else
     {
-        if (sfip_contains(&snort_conf->homenet, src) == SFIP_CONTAINS)
+        if (snort_conf->homenet.contains(src) == SFIP_CONTAINS)
         {
-            addr = inet_ntoa(p->ptrs.ip_api.get_dst());
+            addr = p->ptrs.ip_api.get_dst()->ntoa();
         }
         else
         {
             if (p->ptrs.sp >= p->ptrs.dp)
             {
-                addr = inet_ntoa(p->ptrs.ip_api.get_src());
+                addr = p->ptrs.ip_api.get_src()->ntoa();
             }
             else
             {
-                addr = inet_ntoa(p->ptrs.ip_api.get_dst());
+                addr = p->ptrs.ip_api.get_dst()->ntoa();
             }
         }
     }

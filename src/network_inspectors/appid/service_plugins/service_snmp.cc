@@ -516,8 +516,8 @@ static int snmp_validate(ServiceValidationArgs* args)
         sd->state = SNMP_STATE_RESPONSE;
 
         /*adding expected connection in case the server doesn't send from 161*/
-        const sfip_t* dip = pkt->ptrs.ip_api.get_dst();
-        const sfip_t* sip = pkt->ptrs.ip_api.get_src();
+        const SfIp* dip = pkt->ptrs.ip_api.get_dst();
+        const SfIp* sip = pkt->ptrs.ip_api.get_src();
         pf = AppIdSession::create_future_session(pkt, dip, 0, sip, pkt->ptrs.sp, asd->protocol, app_id, 0);
         if (pf)
         {

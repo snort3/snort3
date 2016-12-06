@@ -20,7 +20,7 @@
 
 #include "catch/catch.hpp"
 #include "catch/unit_test.h"
-#include "sfip/sf_ip.h"
+#include "sfip/sf_cidr.h"
 #include "utils/util.h"
 
 #include "sfrt.h"
@@ -75,8 +75,8 @@ static void test_sfrt_remove_after_insert()
 
     for (index=0; index<num_entries; index++)
     {
-        sfip_t ip;
-        sfip_t ip2;
+        SfCidr ip;
+        SfIp ip2;
         int val;
         int* result = NULL;
 
@@ -87,7 +87,7 @@ static void test_sfrt_remove_after_insert()
             char* p;
             char* ip2_str;
 
-            sfip_pton(ip_entry->ip_str, &ip);
+            ip.set(ip_entry->ip_str);
 
             ip2_str = snort_strdup(ip_entry->ip_str);
             p = strchr(ip2_str, '/');
@@ -96,20 +96,20 @@ static void test_sfrt_remove_after_insert()
             {
                 *p = 0;
             }
-            sfip_pton(ip2_str, &ip2);
+            ip2.set(ip2_str);
             snort_free(ip2_str);
         }
 
         if ( s_debug )
         {
-            printf("Insert IP addr: %s, family: %d\n", sfip_to_str(&ip), ip.family);
+            printf("Insert IP addr: %s, family: %d\n", ip.get_addr()->ntoa(), ip.get_family());
         }
-        CHECK(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) ==
+        CHECK(sfrt_insert(&ip, ip.get_bits(), &(ip_entry->value), RT_FAVOR_TIME, dir) ==
             RT_SUCCESS); // "sfrt_insert()"
 
         if ( s_debug )
         {
-            printf("Lookup IP addr: %s, family: %d\n", sfip_to_str(&ip2), ip2.family);
+            printf("Lookup IP addr: %s, family: %d\n", ip2.ntoa(), ip2.get_family());
         }
         result = (int*)sfrt_lookup(&ip2, dir);
         if ( s_debug )
@@ -124,11 +124,11 @@ static void test_sfrt_remove_after_insert()
 
         if ( s_debug )
         {
-            printf("IP addr: %s, family: %d\n", sfip_to_str(&ip), ip.family);
+            printf("IP addr: %s, family: %d\n", ip.get_addr()->ntoa(), ip.get_family());
             printf("value input: %d, output: %d\n", ip_entry->value, *result);
         }
 
-        CHECK(sfrt_remove(&ip, ip.bits, (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS);
+        CHECK(sfrt_remove(&ip, ip.get_bits(), (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS);
         CHECK(result != NULL); //sfrt_remove()"
 
         val = *result;
@@ -136,7 +136,7 @@ static void test_sfrt_remove_after_insert()
             printf("value expected: %d, actual: %d\n", ip_entry->value, val);
 
         CHECK(val == ip_entry->value); //sfrt_remove(): value return"
-        CHECK(sfrt_lookup(&ip, dir) == NULL); // "sfrt_lookup(): value return"
+        CHECK(sfrt_lookup(ip.get_addr(), dir) == NULL); // "sfrt_lookup(): value return"
     }
 
     if ( s_debug )
@@ -167,8 +167,8 @@ static void test_sfrt_remove_after_insert_all()
     /*insert all entries*/
     for (index=0; index<num_entries; index++)
     {
-        sfip_t ip;
-        sfip_t ip2;
+        SfCidr ip;
+        SfIp ip2;
         int* result;
 
         IP_entry* ip_entry =  &(ip_lists[index]);
@@ -178,7 +178,7 @@ static void test_sfrt_remove_after_insert_all()
             char* p;
             char* ip2_str;
 
-            sfip_pton(ip_entry->ip_str, &ip);
+            ip.set(ip_entry->ip_str);
 
             ip2_str = snort_strdup(ip_entry->ip_str);
             p = strchr(ip2_str, '/');
@@ -187,14 +187,14 @@ static void test_sfrt_remove_after_insert_all()
             {
                 *p = 0;
             }
-            sfip_pton(ip2_str, &ip2);
+            ip2.set(ip2_str);
             snort_free(ip2_str);
         }
 
-        CHECK(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) ==
+        CHECK(sfrt_insert(&ip, ip.get_bits(), &(ip_entry->value), RT_FAVOR_TIME, dir) ==
             RT_SUCCESS); // "sfrt_insert()"
 
-        result = (int*)sfrt_lookup(&ip, dir);
+        result = (int*)sfrt_lookup(ip.get_addr(), dir);
 
         if ( s_debug )
             printf("value input: %d, output: %d\n", ip_entry->value, result ? *result : -1);
@@ -211,23 +211,23 @@ static void test_sfrt_remove_after_insert_all()
     /*remove all entries*/
     for (index=0; index<num_entries; index++)
     {
-        sfip_t ip;
+        SfCidr ip;
         int val;
         int* result;
 
         IP_entry* ip_entry =  &(ip_lists[index]);
         /*Parse IP*/
         if (ip_entry->ip_str)
-            sfip_pton(ip_entry->ip_str, &ip);
+            ip.set(ip_entry->ip_str);
 
-        CHECK(sfrt_remove(&ip, ip.bits, (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS);
+        CHECK(sfrt_remove(&ip, ip.get_bits(), (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS);
 
         val = *result;
         if ( s_debug )
             printf("value expected: %d, actual: %d\n", ip_entry->value, val);
 
         CHECK(val == ip_entry->value); //sfrt_remove(): value return"
-        CHECK(!sfrt_lookup(&ip, dir));
+        CHECK(!sfrt_lookup(ip.get_addr(), dir));
 
         /*check the next entry still exist*/
         if (index + 1 < num_entries)
@@ -235,8 +235,8 @@ static void test_sfrt_remove_after_insert_all()
             ip_entry =  &(ip_lists[index + 1]);
             /*Parse IP*/
             if (ip_entry->ip_str)
-                sfip_pton(ip_entry->ip_str, &ip);
-            CHECK(sfrt_lookup(&ip, dir)); // "sfrt_lookup(): value return"
+                ip.set(ip_entry->ip_str);
+            CHECK(sfrt_lookup(ip.get_addr(), dir)); // "sfrt_lookup(): value return"
         }
     }
 

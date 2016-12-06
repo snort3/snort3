@@ -24,9 +24,8 @@
 
 // This provides a wrapper to start/stop file service
 
-#include <sys/types.h>
-#include "main/snort_types.h"
 #include "file_api/file_policy.h"
+#include "main/snort_types.h"
 
 class FileEnforcer;
 class FileCache;

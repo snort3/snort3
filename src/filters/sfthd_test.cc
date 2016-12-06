@@ -134,7 +134,7 @@ static ThreshData thData[] =
     ,{ 120, 102, THD_TRK_DST, THD_TYPE_SUPPRESS,    1,  0, IP4_DST, 0, 0, nullptr }
     // count/seconds < 0 means fire every time
     ,{ 120, 110, THD_TRK_SRC, THD_TYPE_SUPPRESS,   -1, -1, IP4_SRC, 0, 0, nullptr }
-    // code assumes a valid sfip_t* so can't test this
+    // code assumes a valid SfIp* so can't test this
     //,{ 120, 120, THD_TRK_SRC, THD_TYPE_SUPPRESS, 0, 0, "", 0, 0, nullptr }
     ,{ 120, 130, THD_TRK_SRC, THD_TYPE_LIMIT,      -1,  1, IP_ANY, 0, 0, nullptr }
     ,{ 120, 131, THD_TRK_SRC, THD_TYPE_THRESHOLD,  -1,  1, IP_ANY, 0, 0, nullptr }
@@ -832,9 +832,9 @@ static int EventTest(EventData* p, void* rule)
     long curtime = (long)p->now;
     int status;
 
-    sfip_t sip, dip;
-    sfip_pton(p->sip, &sip);
-    sfip_pton(p->dip, &dip);
+    SfIp sip, dip;
+    sip.set(p->sip);
+    dip.set(p->dip);
 
     if ( rule )
     {

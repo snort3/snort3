@@ -20,6 +20,7 @@
 #include "connector_manager.h"
 
 #include <assert.h>
+
 #include <list>
 #include <unordered_map>
 #include <utility>
@@ -28,6 +29,8 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
+#include "utils/util.h"
+
 #include "module_manager.h"
 
 //  ConnectorManager Private Data

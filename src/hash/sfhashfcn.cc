@@ -31,9 +31,11 @@
 
 #include "sfhashfcn.h"
 
-#include "sfprimetable.h"
 #include "main/snort_types.h"
 #include "main/snort_config.h"
+#include "utils/util.h"
+
+#include "sfprimetable.h"
 
 SFHASHFCN* sfhashfcn_new(int m)
 {

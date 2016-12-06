@@ -30,7 +30,6 @@
 #include <netinet/in.h>
 #include <net/if.h>
 
-#include "sfip/sfip_t.h"
 #include "protocols/protocol_ids.h"
 
 namespace ip

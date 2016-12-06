@@ -49,14 +49,14 @@ void FreeHostEntry(HostAttributeEntry* host);
 uint32_t SFAT_NumberOfHosts();
 
 /* API Lookup functions, to be called by Stream & Frag */
-HostAttributeEntry* SFAT_LookupHostEntryByIP(const sfip_t* ipAddr);
+HostAttributeEntry* SFAT_LookupHostEntryByIP(const SfIp* ipAddr);
 HostAttributeEntry* SFAT_LookupHostEntryBySrc(Packet* p);
 HostAttributeEntry* SFAT_LookupHostEntryByDst(Packet* p);
 
 #if 0
 int SFAT_AddApplicationData(HostAttributeEntry*, struct ApplicationEntry*);
 #endif
-void SFAT_UpdateApplicationProtocol(sfip_t*, uint16_t port, uint16_t protocol, uint16_t id);
+void SFAT_UpdateApplicationProtocol(SfIp*, uint16_t port, uint16_t protocol, uint16_t id);
 
 // reload functions
 struct tTargetBasedConfig;

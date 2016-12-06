@@ -55,7 +55,7 @@ void detection_filter_print_config(DetectionFilterConfig*)
 
 int detection_filter_test(
     void* pv,
-    const sfip_t* sip, const sfip_t* dip,
+    const SfIp* sip, const SfIp* dip,
     long curtime)
 {
     if (pv == NULL)

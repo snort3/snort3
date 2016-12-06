@@ -73,8 +73,8 @@ static int ProcessIcmpUnreach(Packet* p)
     Flow* ssn = NULL;
     uint16_t sport;
     uint16_t dport;
-    const sfip_t* src;
-    const sfip_t* dst;
+    const SfIp* src;
+    const SfIp* dst;
     ip::IpApi iph;
 
     /* Set the Ip API to the embedded IP Header. */
@@ -109,16 +109,16 @@ static int ProcessIcmpUnreach(Packet* p)
         dport = 0;
     }
 
-    if (sfip_fast_lt6(src, dst))
+    if (src->fast_lt6(*dst))
     {
-        COPY4(skey.ip_l, src->ip32);
+        COPY4(skey.ip_l, src->get_ip6_ptr());
         skey.port_l = sport;
-        COPY4(skey.ip_h, dst->ip32);
+        COPY4(skey.ip_h, dst->get_ip6_ptr());
         skey.port_h = dport;
     }
-    else if (sfip_equals(iph.get_src(), iph.get_dst()))
+    else if (iph.get_src()->equals(*iph.get_dst()))
     {
-        COPY4(skey.ip_l, src->ip32);
+        COPY4(skey.ip_l, src->get_ip6_ptr());
         COPY4(skey.ip_h, skey.ip_l);
         if (sport < dport)
         {
@@ -133,8 +133,8 @@ static int ProcessIcmpUnreach(Packet* p)
     }
     else
     {
-        COPY4(skey.ip_l, dst->ip32);
-        COPY4(skey.ip_h, src->ip32);
+        COPY4(skey.ip_l, dst->get_ip6_ptr());
+        COPY4(skey.ip_h, src->get_ip6_ptr());
         skey.port_l = dport;
         skey.port_h = sport;
     }
@@ -225,9 +225,9 @@ int IcmpSession::process(Packet* p)
 #define icmp_sender_ip flow->client_ip
 #define icmp_responder_ip flow->server_ip
 
-void IcmpSession::update_direction(char dir, const sfip_t* ip, uint16_t)
+void IcmpSession::update_direction(char dir, const SfIp* ip, uint16_t)
 {
-    if (sfip_equals(&icmp_sender_ip, ip))
+    if (icmp_sender_ip.equals(*ip))
     {
         if ((dir == SSN_DIR_FROM_CLIENT) && (flow->ssn_state.direction == FROM_CLIENT))
         {
@@ -235,7 +235,7 @@ void IcmpSession::update_direction(char dir, const sfip_t* ip, uint16_t)
             return;
         }
     }
-    else if (sfip_equals(&icmp_responder_ip, ip))
+    else if (icmp_responder_ip.equals(*ip))
     {
         if ((dir == SSN_DIR_FROM_SERVER) && (flow->ssn_state.direction == FROM_SERVER))
         {
@@ -245,7 +245,7 @@ void IcmpSession::update_direction(char dir, const sfip_t* ip, uint16_t)
     }
 
     /* Swap them -- leave ssn->ssn_state.direction the same */
-    sfip_t tmpIp = icmp_sender_ip;
+    SfIp tmpIp = icmp_sender_ip;
     icmp_sender_ip = icmp_responder_ip;
     icmp_responder_ip = tmpIp;
 }

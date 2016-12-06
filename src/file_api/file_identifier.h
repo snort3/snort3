@@ -27,8 +27,11 @@
 // most specific file type is returned.
 
 #include <list>
-#include "file_lib.h"
+#include <vector>
+
 #include "hash/sfghash.h"
+
+#include "file_lib.h"
 
 #define FILE_ID_MAX          1024
 

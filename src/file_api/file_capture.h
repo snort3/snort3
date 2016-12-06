@@ -37,8 +37,9 @@
 #include <thread>
 
 #include "file_api.h"
-#include "file_lib.h"
-#include "file_mempool.h"
+
+class FileInfo;
+class FileMemPool;
 
 struct FileCaptureBlock
 {

@@ -38,6 +38,7 @@
 #include "parser/config_file.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
+#include "utils/util.h"
 
 #define CD_UDP_NAME "udp"
 #define CD_UDP_HELP "support for user datagram protocol"

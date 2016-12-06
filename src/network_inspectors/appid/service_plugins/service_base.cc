@@ -1100,7 +1100,7 @@ static int AppIdServiceAddServiceEx(AppIdSession* asd, const Packet* pkt, int di
 {
     AppIdServiceIDState* id_state = nullptr;
     uint16_t port = 0;
-    const sfip_t* ip = nullptr;
+    const SfIp* ip = nullptr;
 
     if ( !pkt || !svc_element )
     {
@@ -1175,7 +1175,7 @@ static int AppIdServiceAddServiceEx(AppIdSession* asd, const Packet* pkt, int di
             id_state->current_service = nullptr;
         }
 
-        if (!sfip_is_set(&asd->service_ip))
+        if (!asd->service_ip.is_set())
         {
             asd->service_ip = *ip;
             asd->service_port = port;
@@ -1289,7 +1289,7 @@ int AppIdServiceInProcess(AppIdSession* asd, const Packet* pkt, int dir,
         asd->get_session_flags(APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED))
         return SERVICE_SUCCESS;
 
-    const sfip_t* ip = pkt->ptrs.ip_api.get_src();
+    const SfIp* ip = pkt->ptrs.ip_api.get_src();
     uint16_t port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
     id_state = AppIdServiceState::get(ip, asd->protocol, port, get_service_detect_level(asd));
     if ( !id_state )
@@ -1302,7 +1302,7 @@ int AppIdServiceInProcess(AppIdSession* asd, const Packet* pkt, int dir,
     }
     else
     {
-        if (!sfip_is_set(&asd->service_ip))
+        if (!asd->service_ip.is_set())
         {
             asd->service_ip = *(pkt->ptrs.ip_api.get_src());
             if (!asd->service_port)
@@ -1344,7 +1344,7 @@ int AppIdServiceIncompatibleData(AppIdSession* asd, const Packet* pkt, int dir,
 
     /* If we're still working on a port/pattern list of detectors, then ignore
      * individual fails until we're done looking at everything. */
-    const sfip_t* ip = pkt->ptrs.ip_api.get_src();
+    const SfIp* ip = pkt->ptrs.ip_api.get_src();
     uint16_t port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
     AppIdServiceIDState* id_state = AppIdServiceState::get(ip, asd->protocol, port, get_service_detect_level(asd));
     if ( (asd->serviceData == nullptr) && (asd->candidate_service_list != nullptr)
@@ -1386,7 +1386,7 @@ int AppIdServiceIncompatibleData(AppIdSession* asd, const Packet* pkt, int dir,
     }
     else
     {
-        if (!sfip_is_set(&asd->service_ip))
+        if (!asd->service_ip.is_set())
         {
             asd->service_ip = *(pkt->ptrs.ip_api.get_src());
             if (!asd->service_port)
@@ -1420,7 +1420,7 @@ int AppIdServiceIncompatibleData(AppIdSession* asd, const Packet* pkt, int dir,
 int AppIdServiceFailService(AppIdSession* asd, const Packet* pkt, int dir,
     const RNAServiceElement* svc_element, unsigned flow_data_index)
 {
-    const sfip_t* ip = pkt->ptrs.ip_api.get_src();
+    const SfIp* ip = pkt->ptrs.ip_api.get_src();
     uint16_t port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
     AppIdServiceIDState* id_state = AppIdServiceState::get(ip, asd->protocol, port, get_service_detect_level(asd));
 
@@ -1470,7 +1470,7 @@ int AppIdServiceFailService(AppIdSession* asd, const Packet* pkt, int dir,
     }
     else
     {
-        if (!sfip_is_set(&asd->service_ip))
+        if (!asd->service_ip.is_set())
         {
             asd->service_ip = *(pkt->ptrs.ip_api.get_src());
             if (!asd->service_port)
@@ -1502,7 +1502,7 @@ int AppIdServiceFailService(AppIdSession* asd, const Packet* pkt, int dir,
  *    simply because of unrecognized client data, then consider retrying
  *    the search again. */
 static void HandleFailure(AppIdSession* asd, AppIdServiceIDState* id_state,
-        const sfip_t* client_ip, unsigned timeout)
+        const SfIp* client_ip, unsigned timeout)
 {
     /* If we had a valid detector, check for too many fails.  If so, start
      * search sequence again. */
@@ -1531,7 +1531,7 @@ static void HandleFailure(AppIdSession* asd, AppIdServiceIDState* id_state,
          * search process over. */
         else if (id_state->invalid_client_count == 0)
         {
-            if (sfip_fast_eq6(&id_state->last_detract, client_ip))
+            if (id_state->last_detract.fast_eq6(*client_ip))
                 id_state->detract_count++;
             else
                 id_state->last_detract = *client_ip;
@@ -1610,7 +1610,7 @@ void FailInProcessService(AppIdSession* asd, const AppIdConfig*)
             (id_state->svc && id_state->svc->name) ? id_state->svc->name : "UNKNOWN");
 
     id_state->invalid_client_count += STATE_ID_INCONCLUSIVE_SERVICE_WEIGHT;
-    if (sfip_fast_eq6(&asd->flow->server_ip, &asd->service_ip))
+    if (asd->flow->server_ip.fast_eq6(asd->service_ip))
         HandleFailure(asd, id_state, &asd->flow->client_ip, 1);
     else
         HandleFailure(asd, id_state, &asd->flow->server_ip, 1);
@@ -1680,7 +1680,7 @@ static const RNAServiceElement* get_next_service(const Packet* p, const int dir,
                 SF_LNODE* iter;
                 AppIdServiceIDState* reverse_id_state;
                 const RNAServiceElement* reverse_service = nullptr;
-                const sfip_t* reverse_ip = p->ptrs.ip_api.get_src();
+                const SfIp* reverse_ip = p->ptrs.ip_api.get_src();
                 asd->tried_reverse_service = true;
                 if ((reverse_id_state = AppIdServiceState::get(reverse_ip, proto, p->ptrs.sp,
                         get_service_detect_level(asd))))
@@ -1728,7 +1728,7 @@ static const RNAServiceElement* get_next_service(const Packet* p, const int dir,
 
 int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
 {
-    const sfip_t* ip = nullptr;
+    const SfIp* ip = nullptr;
     int ret = SERVICE_NOMATCH;
     const RNAServiceElement* service = nullptr;
     uint16_t port = 0;
@@ -1736,7 +1736,7 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
 
     /* Get packet info. */
     auto proto = asd->protocol;
-    if (sfip_is_set(&asd->service_ip))
+    if (asd->service_ip.is_set())
     {
         ip   = &asd->service_ip;
         port = asd->service_port;
@@ -1908,7 +1908,7 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
     /* Handle failure exception cases in states. */
     if ((ret != SERVICE_INPROCESS) && (ret != SERVICE_SUCCESS))
     {
-        const sfip_t* tmp_ip;
+        const SfIp* tmp_ip;
         if (dir == APP_ID_FROM_RESPONDER)
             tmp_ip = p->ptrs.ip_api.get_dst();
         else
@@ -1918,7 +1918,7 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
         {
             if (id_state->invalid_client_count < STATE_ID_INVALID_CLIENT_THRESHOLD)
             {
-                if (sfip_fast_equals_raw(&id_state->last_invalid_client, tmp_ip))
+                if (id_state->last_invalid_client.fast_equals_raw(*tmp_ip))
                     id_state->invalid_client_count++;
                 else
                 {

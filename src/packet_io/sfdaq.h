@@ -33,7 +33,7 @@ extern "C" {
 
 struct Packet;
 struct SnortConfig;
-struct sfip_t;
+struct SfIp;
 
 class SFDAQInstance
 {
@@ -58,8 +58,8 @@ public:
     bool break_loop(int error);
     const DAQ_Stats_t* get_stats();
     int modify_flow_opaque(const DAQ_PktHdr_t*, uint32_t opaque);
-    int add_expected(const Packet* ctrlPkt, const sfip_t* cliIP, uint16_t cliPort,
-            const sfip_t* srvIP, uint16_t srvPort, IpProtocol, unsigned timeout_ms,
+    int add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,
+            const SfIp* srvIP, uint16_t srvPort, IpProtocol, unsigned timeout_ms,
             unsigned /* flags */);
 private:
     bool set_filter(const char*);

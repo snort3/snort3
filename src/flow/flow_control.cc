@@ -35,6 +35,7 @@
 #include "protocols/vlan.h"
 #include "sfip/sf_ip.h"
 #include "stream/stream.h"
+#include "utils/util.h"
 
 #include "expect_cache.h"
 #include "flow_cache.h"
@@ -299,8 +300,8 @@ static bool is_bidirectional(const Flow* flow)
 static void init_roles_ip(Packet* p, Flow* flow)
 {
     flow->ssn_state.direction = FROM_CLIENT;
-    sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
-    sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+    flow->client_ip.set(*p->ptrs.ip_api.get_src());
+    flow->server_ip.set(*p->ptrs.ip_api.get_dst());
 }
 
 static void init_roles_tcp(Packet* p, Flow* flow)
@@ -308,33 +309,33 @@ static void init_roles_tcp(Packet* p, Flow* flow)
     if ( p->ptrs.tcph->is_syn_only() )
     {
         flow->ssn_state.direction = FROM_CLIENT;
-        sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
+        flow->client_ip.set(*p->ptrs.ip_api.get_src());
         flow->client_port = ntohs(p->ptrs.tcph->th_sport);
-        sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+        flow->server_ip.set(*p->ptrs.ip_api.get_dst());
         flow->server_port = ntohs(p->ptrs.tcph->th_dport);
     }
     else if ( p->ptrs.tcph->is_syn_ack() )
     {
         flow->ssn_state.direction = FROM_SERVER;
-        sfip_copy(flow->client_ip, p->ptrs.ip_api.get_dst());
+        flow->client_ip.set(*p->ptrs.ip_api.get_dst());
         flow->client_port = ntohs(p->ptrs.tcph->th_dport);
-        sfip_copy(flow->server_ip, p->ptrs.ip_api.get_src());
+        flow->server_ip.set(*p->ptrs.ip_api.get_src());
         flow->server_port = ntohs(p->ptrs.tcph->th_sport);
     }
     else if (p->ptrs.sp > p->ptrs.dp)
     {
         flow->ssn_state.direction = FROM_CLIENT;
-        sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
+        flow->client_ip.set(*p->ptrs.ip_api.get_src());
         flow->client_port = ntohs(p->ptrs.tcph->th_sport);
-        sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+        flow->server_ip.set(*p->ptrs.ip_api.get_dst());
         flow->server_port = ntohs(p->ptrs.tcph->th_dport);
     }
     else
     {
         flow->ssn_state.direction = FROM_SERVER;
-        sfip_copy(flow->client_ip, p->ptrs.ip_api.get_dst());
+        flow->client_ip.set(*p->ptrs.ip_api.get_dst());
         flow->client_port = ntohs(p->ptrs.tcph->th_dport);
-        sfip_copy(flow->server_ip, p->ptrs.ip_api.get_src());
+        flow->server_ip.set(*p->ptrs.ip_api.get_src());
         flow->server_port = ntohs(p->ptrs.tcph->th_sport);
     }
 }
@@ -342,9 +343,9 @@ static void init_roles_tcp(Packet* p, Flow* flow)
 static void init_roles_udp(Packet* p, Flow* flow)
 {
     flow->ssn_state.direction = FROM_CLIENT;
-    sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
+    flow->client_ip.set(*p->ptrs.ip_api.get_src());
     flow->client_port = ntohs(p->ptrs.udph->uh_sport);
-    sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+    flow->server_ip.set(*p->ptrs.ip_api.get_dst());
     flow->server_port = ntohs(p->ptrs.udph->uh_dport);
 }
 
@@ -353,17 +354,17 @@ static void init_roles_user(Packet* p, Flow* flow)
     if ( p->ptrs.decode_flags & DECODE_C2S )
     {
         flow->ssn_state.direction = FROM_CLIENT;
-        sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
+        flow->client_ip.set(*p->ptrs.ip_api.get_src());
         flow->client_port = p->ptrs.sp;
-        sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+        flow->server_ip.set(*p->ptrs.ip_api.get_dst());
         flow->server_port = p->ptrs.dp;
     }
     else
     {
         flow->ssn_state.direction = FROM_SERVER;
-        sfip_copy(flow->client_ip, p->ptrs.ip_api.get_dst());
+        flow->client_ip.set(*p->ptrs.ip_api.get_dst());
         flow->client_port = p->ptrs.dp;
-        sfip_copy(flow->server_ip, p->ptrs.ip_api.get_src());
+        flow->server_ip.set(*p->ptrs.ip_api.get_src());
         flow->server_port = p->ptrs.sp;
     }
 }
@@ -775,8 +776,8 @@ bool FlowControl::expected_flow(Flow* flow, Packet* p)
 
 int FlowControl::add_expected(
     const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const SfIp *srcIP, uint16_t srcPort,
+    const SfIp *dstIP, uint16_t dstPort,
     char direction, FlowData* fd)
 {
     return exp_cache->add_flow(
@@ -786,8 +787,8 @@ int FlowControl::add_expected(
 
 int FlowControl::add_expected(
     const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const SfIp *srcIP, uint16_t srcPort,
+    const SfIp *dstIP, uint16_t dstPort,
     int16_t appId, FlowData* fd)
 {
     return exp_cache->add_flow(

@@ -505,7 +505,7 @@ VarEntry* VarDefine(
 
     if (VarIsIpList(ip_vartable, value))
     {
-        SFIP_RET ret;
+        SfIpRet ret;
 
         if (ip_vartable == NULL)
             return NULL;

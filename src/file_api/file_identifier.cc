@@ -29,14 +29,11 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
+#include <assert.h>
 
 #include <algorithm>
 
 #include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "parser/parser.h"
 #include "utils/util.h"
 
 #ifdef UNIT_TEST

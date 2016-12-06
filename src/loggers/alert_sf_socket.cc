@@ -45,6 +45,7 @@
 #include "events/event.h"
 #include "hash/sfghash.h"
 #include "parser/parser.h"
+#include "protocols/packet.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
 
@@ -311,8 +312,8 @@ static void load_sar(Packet* packet, Event* event, SnortActionRequest& sar)
     //   can be determined by reading 1 byte
     // * addresses could be moved to end of struct in uint8_t[32]
     //   and only 1st 8 used for ip4
-    sar.src_ip =  ntohl(packet->ptrs.ip_api.get_src()->ip32[0]);
-    sar.dest_ip = ntohl(packet->ptrs.ip_api.get_dst()->ip32[0]);
+    sar.src_ip =  ntohl(packet->ptrs.ip_api.get_src()->get_ip4_value());
+    sar.dest_ip = ntohl(packet->ptrs.ip_api.get_dst()->get_ip4_value());
     sar.ip_proto = packet->get_ip_proto_next();
 
     if (packet->is_tcp() || packet->is_udp())

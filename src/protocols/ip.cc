@@ -37,15 +37,8 @@ void IpApi::set(const IP4Hdr* h4)
     iph = (const void*)h4;
     type = IAT_4;
 
-    src.family = AF_INET;
-    src.bits = 32;
-    src.ip32[0] = *(uint32_t*)(&h4->ip_src);
-    std::memset(&(src.ip32[1]), 0, 12);
-
-    dst.family = AF_INET;
-    dst.bits = 32;
-    dst.ip32[0] = *(uint32_t*)(&h4->ip_dst);
-    std::memset(&(dst.ip32[1]), 0, 12);
+    src.set(&h4->ip_src, AF_INET);
+    dst.set(&h4->ip_dst, AF_INET);
 }
 
 void IpApi::set(const ip::IP6Hdr* h6)
@@ -53,20 +46,15 @@ void IpApi::set(const ip::IP6Hdr* h6)
     iph = (const void*)h6;
     type = IAT_6;
 
-    src.family = AF_INET6;
-    src.bits = 128;
-    std::memcpy(&(src.ip8), &(h6->ip6_src), 16);
-
-    dst.family = AF_INET6;
-    dst.bits = 128;
-    std::memcpy(&(dst.ip8), &(h6->ip6_dst), 16);
+    src.set(&h6->ip6_src, AF_INET6);
+    dst.set(&h6->ip6_dst, AF_INET6);
 }
 
-void IpApi::set(const sfip_t& sip, const sfip_t& dip)
+void IpApi::set(const SfIp& sip, const SfIp& dip)
 {
     type = IAT_DATA;
-    sfip_set_ip(&src, &sip);
-    sfip_set_ip(&dst, &dip);
+    src.set(sip);
+    dst.set(dip);
     iph = nullptr;
 }
 

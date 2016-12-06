@@ -24,7 +24,7 @@
 #include <sys/time.h>
 
 #include "ipobj.h"
-#include "sfip/sfip_t.h"
+#include "sfip/sf_ip.h"
 
 #define PS_OPEN_PORTS 8
 
@@ -67,9 +67,9 @@ struct PS_PROTO
     unsigned short low_p;
     unsigned short u_ports;
 
-    sfip_t high_ip;
-    sfip_t low_ip;
-    sfip_t u_ips;
+    SfIp high_ip;
+    SfIp low_ip;
+    SfIp u_ips;
 
     unsigned short open_ports[PS_OPEN_PORTS];
     unsigned char open_ports_cnt;

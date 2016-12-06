@@ -20,14 +20,10 @@
 
 #include "file_policy.h"
 
-#include <string>
-#include <iostream>
-#include <sstream>
+#include "hash/hashes.h"
 
 #include "file_capture.h"
-#include "file_config.h"
 #include "file_enforcer.h"
-#include "file_lib.h"
 #include "file_service.h"
 
 static FileRule emptyRule;

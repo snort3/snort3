@@ -72,9 +72,9 @@ struct AppIdSessionLogFilter
         dip.clear();
     }
 
-    sfip_t sip;
+    SfIp sip;
     bool sip_flag = false;
-    sfip_t dip;
+    SfIp dip;
     bool dip_flag = false;
     uint16_t sport = 0;
     uint16_t dport = 0;

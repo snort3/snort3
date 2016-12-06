@@ -21,30 +21,16 @@
 #include "config.h"
 #endif
 
-#include <string.h>
-#include <time.h>
-
-#include <iostream>
-#include <string>
+#include "framework/data_bus.h"
+#include "framework/module.h"
+#include "log/messages.h"
+#include "log/text_log.h"
+#include "time/packet_time.h"
+#include "utils/util.h"
 
 #include "file_config.h"
 #include "file_flows.h"
 #include "file_lib.h"
-
-#include "main/snort_debug.h"
-#include "main/snort_types.h"
-#include "framework/data_bus.h"
-#include "framework/inspector.h"
-#include "framework/module.h"
-#include "log/messages.h"
-#include "log/text_log.h"
-#include "protocols/packet.h"
-#include "profiler/profiler.h"
-#include "utils/stats.h"
-#include "utils/util.h"
-#include "flow/flow.h"
-#include "sfip/sfip_t.h"
-#include "time/packet_time.h"
 
 static const char* s_name = "file_log";
 static const char* f_name = "file.log";
@@ -156,8 +142,8 @@ void LogHandler::handle(DataEvent&, Flow* f)
         TextLog_Print(tlog, " ");
     }
 
-    TextLog_Print(tlog, " %s:%d -> ", sfip_to_str(&f->client_ip), f->client_port);
-    TextLog_Print(tlog, "%s:%d, ", sfip_to_str(&f->server_ip), f->server_port);
+    TextLog_Print(tlog, " %s:%d -> ", f->client_ip.ntoa(), f->client_port);
+    TextLog_Print(tlog, "%s:%d, ", f->server_ip.ntoa(), f->server_port);
 
     FileFlows* files = FileFlows::get_file_flows(f);
 

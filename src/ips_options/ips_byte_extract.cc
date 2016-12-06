@@ -36,6 +36,7 @@
 #include "framework/cursor.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+#include "utils/util.h"
 
 static THREAD_LOCAL ProfileStats byteExtractPerfStats;
 

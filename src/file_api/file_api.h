@@ -26,7 +26,6 @@
 // Currently, it provides three sets of APIs: file processing, MIME processing,
 // and configurations.
 
-#include <sys/types.h>
 #include <string>
 
 #include "main/snort_types.h"

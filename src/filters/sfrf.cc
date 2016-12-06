@@ -38,6 +38,7 @@
 #include "utils/sflsq.h"
 #include "hash/sfghash.h"
 #include "hash/sfxhash.h"
+#include "sfip/sf_ip.h"
 #include "sfip/sf_ipvar.h"
 
 // Number of hash rows for gid 1 (rules)
@@ -51,6 +52,8 @@
 // private data ...
 /* Key to find tracking nodes in trackingHash.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wpadded"
 typedef struct
 {
     ///policy identifier.
@@ -64,8 +67,10 @@ typedef struct
      * whether dos threshold is tracking by source or destination IP address. For tracking
      * by rule, it is cleared out (all 0s).
      */
-    sfip_t ip;
+    SfIp ip;
+    uint16_t padding;
 } tSFRFTrackingNodeKey;
+#pragma GCC diagnostic pop
 
 /* Tracking node for rate_filter. One node is created on fly, in tracking
  * hash for each threshold configure (identified by Tid) and source or
@@ -111,7 +116,7 @@ static int _checkSamplingPeriod(
     );
 
 static tSFRFTrackingNode* _getSFRFTrackingNode(
-    const sfip_t*,
+    const SfIp*,
     unsigned tid,
     time_t curTime
     );
@@ -120,8 +125,8 @@ static void _updateDependentThresholds(
     RateFilterConfig* config,
     unsigned gid,
     unsigned sid,
-    const sfip_t* sip,
-    const sfip_t* dip,
+    const SfIp* sip,
+    const SfIp* dip,
     time_t curTime
     );
 
@@ -338,14 +343,6 @@ int SFRF_ConfigAdd(
     return 0;
 }
 
-#ifdef SFRF_DEBUG
-static char* get_netip(const sfip_t* ip)
-{
-    return sfip_ntoa(ip);
-}
-
-#endif // SFRF_DEBUG
-
 /*
  *
  *  Find/Test/Add an event against a single threshold object.
@@ -363,7 +360,7 @@ static char* get_netip(const sfip_t* ip)
  */
 static int SFRF_TestObject(
     tSFRFConfigNode* cfgNode,
-    const sfip_t* ip,
+    const SfIp* ip,
     time_t curTime,
     SFRF_COUNT_OPERATION op
     )
@@ -422,14 +419,14 @@ static int SFRF_TestObject(
 #ifdef SFRF_DEBUG
     printf("--SFRF_DEBUG: %d-%d-%d: %d Packet IP %s, op: %d, count %d, action %d\n",
         cfgNode->tid, cfgNode->gid,
-        cfgNode->sid, (unsigned)curTime, get_netip(ip), op,
+        cfgNode->sid, (unsigned)curTime, ip->ntoa(), op,
         dynNode->count, retValue);
     fflush(stdout);
 #endif
     return retValue;
 }
 
-static inline int SFRF_AppliesTo(tSFRFConfigNode* pCfg, const sfip_t* ip)
+static inline int SFRF_AppliesTo(tSFRFConfigNode* pCfg, const SfIp* ip)
 {
     return ( !pCfg->applyTo || sfvar_ip_in(pCfg->applyTo, ip) );
 }
@@ -453,8 +450,8 @@ int SFRF_TestThreshold(
     RateFilterConfig* config,
     unsigned gid,
     unsigned sid,
-    const sfip_t* sip,
-    const sfip_t* dip,
+    const SfIp* sip,
+    const SfIp* dip,
     time_t curTime,
     SFRF_COUNT_OPERATION op
     )
@@ -548,8 +545,8 @@ int SFRF_TestThreshold(
 
         case SFRF_TRACK_BY_RULE:
         {
-            sfip_t cleared;
-            sfip_clear(cleared);
+            SfIp cleared;
+            cleared.clear();
             newStatus = SFRF_TestObject(cfgNode, &cleared, curTime, op);
         }
         break;
@@ -766,8 +763,8 @@ static void _updateDependentThresholds(
     RateFilterConfig* config,
     unsigned gid,
     unsigned sid,
-    const sfip_t* sip,
-    const sfip_t* dip,
+    const SfIp* sip,
+    const SfIp* dip,
     time_t curTime
     )
 {
@@ -788,7 +785,7 @@ static void _updateDependentThresholds(
 }
 
 static tSFRFTrackingNode* _getSFRFTrackingNode(
-    const sfip_t* ip,
+    const SfIp* ip,
     unsigned tid,
     time_t curTime
     )
@@ -801,6 +798,7 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(
     key.ip = *(ip);
     key.tid = tid;
     key.policyId = get_network_policy()->policy_id;
+    key.padding = 0;
 
     /*
      * Check for any Permanent sid objects for this gid or add this one ...

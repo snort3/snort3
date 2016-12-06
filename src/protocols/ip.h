@@ -29,10 +29,10 @@
 #include <net/if.h>
 #include <cstring>
 
+#include "main/snort_types.h"
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
-#include "sfip/sfip_t.h"
-#include "main/snort_types.h"
+#include "sfip/sf_ip.h"
 
 struct Packet;
 
@@ -54,7 +54,7 @@ public:
 
     void set(const IP4Hdr* h4);
     void set(const IP6Hdr* h6);
-    void set(const sfip_t& src, const sfip_t& dst);
+    void set(const SfIp& src, const SfIp& dst);
     bool set(const uint8_t* raw_ip_data);
     void reset();
 
@@ -102,10 +102,10 @@ public:
     inline const IP6Hdr* get_ip6h() const
     { return (type == IAT_6) ? (IP6Hdr*)iph : nullptr; }
 
-    inline const sfip_t* get_src() const
+    inline const SfIp* get_src() const
     { return (type != IAT_NONE) ? &src : nullptr; }
 
-    inline const sfip_t* get_dst() const
+    inline const SfIp* get_dst() const
     { return (type != IAT_NONE) ? &dst : nullptr; }
 
     // only relevant to IP4
@@ -130,8 +130,8 @@ public:
     uint8_t ver() const;
 
 private:
-    sfip_t src;
-    sfip_t dst;
+    SfIp src;
+    SfIp dst;
     const void* iph;
     Type type;
 };

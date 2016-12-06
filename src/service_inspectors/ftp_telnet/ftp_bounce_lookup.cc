@@ -116,7 +116,7 @@ int ftp_bounce_lookup_cleanup(BOUNCE_LOOKUP** BounceLookup)
  *
  */
 int ftp_bounce_lookup_add(BOUNCE_LOOKUP* BounceLookup,
-    const sfip_t* Ip, FTP_BOUNCE_TO* BounceTo)
+    const SfIp* Ip, FTP_BOUNCE_TO* BounceTo)
 {
     int iRet;
 
@@ -125,7 +125,7 @@ int ftp_bounce_lookup_add(BOUNCE_LOOKUP* BounceLookup,
         return FTPP_INVALID_ARG;
     }
 
-    iRet = KMapAdd(BounceLookup, (void*)Ip, Ip->sfip_size(), (void*)BounceTo);
+    iRet = KMapAdd(BounceLookup, (void*)Ip, sizeof(*Ip), (void*)BounceTo);
 
     if (iRet)
     {
@@ -147,7 +147,7 @@ int ftp_bounce_lookup_add(BOUNCE_LOOKUP* BounceLookup,
 
 /*
  * Function: ftp_bounce_lookup_find(BOUNCE_LOOKUP *BounceLookup,
- *                                  const sfip_t *ip, int *iError)
+ *                                  const SfIp *ip, int *iError)
  *
  * Purpose: Find a bounce configuration given a IP.
  *          We look up a bounce configuration given an IP and
@@ -164,7 +164,7 @@ int ftp_bounce_lookup_add(BOUNCE_LOOKUP* BounceLookup,
  *
  */
 FTP_BOUNCE_TO* ftp_bounce_lookup_find(
-    BOUNCE_LOOKUP* BounceLookup, const sfip_t* Ip, int* iError)
+    BOUNCE_LOOKUP* BounceLookup, const SfIp* Ip, int* iError)
 {
     FTP_BOUNCE_TO* BounceTo = NULL;
 
@@ -181,7 +181,7 @@ FTP_BOUNCE_TO* ftp_bounce_lookup_find(
 
     *iError = FTPP_SUCCESS;
 
-    BounceTo = (FTP_BOUNCE_TO*)KMapFind(BounceLookup, (void*)Ip, Ip->sfip_size());
+    BounceTo = (FTP_BOUNCE_TO*)KMapFind(BounceLookup, (void*)Ip, sizeof(*Ip));
     if (!BounceTo)
     {
         *iError = FTPP_NOT_FOUND;

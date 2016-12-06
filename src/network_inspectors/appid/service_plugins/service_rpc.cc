@@ -439,8 +439,8 @@ static int validate_packet(const uint8_t* data, uint16_t size, int dir, AppIdSes
                     pmr = (ServiceRPCPortmapReply*)data;
                     if (pmr->port)
                     {
-                        const sfip_t* dip = pkt->ptrs.ip_api.get_dst();
-                        const sfip_t* sip = pkt->ptrs.ip_api.get_src();
+                        const SfIp* dip = pkt->ptrs.ip_api.get_dst();
+                        const SfIp* sip = pkt->ptrs.ip_api.get_src();
                         tmp = ntohl(pmr->port);
                         pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)tmp,
                             (IpProtocol)ntohl((uint32_t)rd->proto), app_id, 0);

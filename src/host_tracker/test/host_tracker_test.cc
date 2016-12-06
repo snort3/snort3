@@ -24,6 +24,12 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+// Fake snort_strdup() because sfutil dependencies suck
+char* snort_strdup(const char* str)
+{
+    return strdup(str);
+}
+
 TEST_GROUP(host_tracker)
 {
 };
@@ -32,15 +38,16 @@ TEST_GROUP(host_tracker)
 TEST(host_tracker, ipaddr_test)
 {
     HostTracker ht;
-    sfip_t zeroed_sfip;
-    sfip_t expected_ip_addr = { 0xde,0xad, {{0xbe,0xef,0xab,0xcd,0xef,0x01,0x23,}} };
-    sfip_t actual_ip_addr;
+    SfIp zeroed_sfip;
+    SfIp expected_ip_addr;
+    SfIp actual_ip_addr;
 
     //  Test IP prior to set.
     memset(&zeroed_sfip, 0, sizeof(zeroed_sfip));
     actual_ip_addr = ht.get_ip_addr();
     CHECK(0 == memcmp(&zeroed_sfip, &actual_ip_addr, sizeof(zeroed_sfip)));
 
+    expected_ip_addr.pton(AF_INET6, "beef:abcd:ef01:2300::");
     ht.set_ip_addr(expected_ip_addr);
     actual_ip_addr = ht.get_ip_addr();
     CHECK(0 == memcmp(&expected_ip_addr, &actual_ip_addr, sizeof(expected_ip_addr)));

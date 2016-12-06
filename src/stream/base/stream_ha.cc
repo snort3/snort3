@@ -65,10 +65,10 @@ static Flow* protocol_create_session(FlowKey* key)
 
 static bool is_client_lower(Flow* flow)
 {
-    if (sfip_fast_lt6(&(flow->client_ip), &(flow->server_ip)))
+    if (flow->client_ip.fast_lt6(flow->server_ip))
         return true;
 
-    if (sfip_fast_lt6(&(flow->server_ip), &(flow->client_ip)))
+    if (flow->server_ip.fast_lt6(flow->client_ip))
         return false;
 
     switch (flow->key->pkt_type)
@@ -112,15 +112,15 @@ bool StreamHAClient::consume(Flow*& flow, FlowKey* key, HAMessage* msg)
         int family = (hac->flags & SessionHAContent::FLAG_IP6) ? AF_INET6 : AF_INET;
         if ( hac->flags & SessionHAContent::FLAG_LOW )
         {
-            sfip_set_raw(&(flow->server_ip), flow->key->ip_l, family);
-            sfip_set_raw(&(flow->client_ip), flow->key->ip_h, family);
+            flow->server_ip.set(flow->key->ip_l, family);
+            flow->client_ip.set(flow->key->ip_h, family);
             flow->server_port = flow->key->port_l;
             flow->client_port = flow->key->port_h;
         }
         else
         {
-            sfip_set_raw(&(flow->client_ip), flow->key->ip_l, family);
-            sfip_set_raw(&(flow->server_ip), flow->key->ip_h, family);
+            flow->client_ip.set(flow->key->ip_l, family);
+            flow->server_ip.set(flow->key->ip_h, family);
             flow->client_port = flow->key->port_l;
             flow->server_port = flow->key->port_h;
         }

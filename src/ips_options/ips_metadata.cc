@@ -21,19 +21,11 @@
 #include "config.h"
 #endif
 
-#include <string>
-#include <vector>
-
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
-#include "detection/detection_defines.h"
+#include "framework/decode_data.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "log/messages.h"
 #include "parser/parse_conf.h"
-#include "parser/parser.h"
 
 using namespace std;
 

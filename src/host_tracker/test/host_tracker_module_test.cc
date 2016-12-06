@@ -51,7 +51,7 @@ char* snort_strdup(const char* s)
 #define FRAG_POLICY 33
 #define STREAM_POLICY 100
 
-sfip_t expected_addr;
+SfIp expected_addr;
 
 TEST_GROUP(host_tracker_module)
 {
@@ -127,16 +127,16 @@ TEST(host_tracker_module, host_tracker_module_test_basic)
 //  Test that HostTrackerModule variables are set correctly.
 TEST(host_tracker_module, host_tracker_module_test_values)
 {
-    sfip_t cached_addr;
+    SfIp cached_addr;
 
-    HostIpKey host_ip_key(expected_addr.ip8);
+    HostIpKey host_ip_key((const uint8_t*) expected_addr.get_ip6_ptr());
     std::shared_ptr<HostTracker> ht;
 
     bool ret = host_cache.find(host_ip_key, ht);
     CHECK(ret == true);
 
     cached_addr = ht->get_ip_addr();
-    CHECK(sfip_fast_equals_raw(&cached_addr, &expected_addr) == 1);
+    CHECK(cached_addr.fast_equals_raw(expected_addr) == true);
 
     Policy policy = ht->get_stream_policy();
     CHECK(policy == STREAM_POLICY + 1);
@@ -149,7 +149,7 @@ TEST(host_tracker_module, host_tracker_module_test_values)
 //  Test that HostTrackerModule statistics are correct.
 TEST(host_tracker_module, host_tracker_module_test_stats)
 {
-    HostIpKey host_ip_key(expected_addr.ip8);
+    HostIpKey host_ip_key((const uint8_t*) expected_addr.get_ip6_ptr());
     std::shared_ptr<HostTracker> ht;
 
     bool ret = host_cache.find(host_ip_key, ht);

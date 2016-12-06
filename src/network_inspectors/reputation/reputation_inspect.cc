@@ -166,21 +166,21 @@ static void PrintReputationConf(ReputationConfig* config)
     LogMessage("\n");
 }
 
-static inline IPrepInfo* ReputationLookup(ReputationConfig* config, const sfip_t* ip)
+static inline IPrepInfo* ReputationLookup(ReputationConfig* config, const SfIp* ip)
 {
     IPrepInfo* result;
 
-    DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Lookup address: %s \n",sfip_to_str(ip) ); );
+    DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Lookup address: %s \n", ip->ntoa() ); );
     if (!config->scanlocal)
     {
-        if (sfip_is_private(ip) )
+        if (ip->is_private() )
         {
             DEBUG_WRAP(DebugMessage(DEBUG_REPUTATION, "Private address\n"); );
             return nullptr;
         }
     }
 
-    result = (IPrepInfo*)sfrt_flat_dir8x_lookup((void*)ip, config->iplist);
+    result = (IPrepInfo*)sfrt_flat_dir8x_lookup(ip, config->iplist);
 
     return (result);
 }
@@ -229,7 +229,7 @@ static inline IPdecision GetReputation(ReputationConfig* config, IPrepInfo* repI
 
 static bool ReputationDecisionPerLayer(ReputationConfig* config, Packet* p, ip::IpApi ip_api, IPdecision* decision_final)
 {
-    const sfip_t* ip;
+    const SfIp* ip;
     IPdecision decision;
     IPrepInfo* result;
 

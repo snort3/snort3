@@ -22,18 +22,12 @@
 #include "config.h"
 #endif
 
+#include "codecs/codec_module.h"
+#include "codecs/ip/checksum.h"
 #include "framework/codec.h"
+#include "log/text_log.h"
 #include "main/snort_config.h"
 #include "protocols/icmp4.h"
-#include "codecs/ip/checksum.h"
-#include "codecs/codec_module.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/packet.h"
-#include "protocols/ipv4_options.h"
-#include "packet_io/active.h"
-#include "log/text_log.h"
-#include "main/snort_debug.h"
-#include "sfip/sf_ip.h"
 
 #define CD_ICMP4_NAME "icmp4"
 #define CD_ICMP4_HELP "support for Internet control message protocol v4"
@@ -240,7 +234,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 
 void Icmp4Codec::ICMP4AddrTests(const DecodeData& snort, const CodecData& codec)
 {
-    uint32_t dst = snort.ip_api.get_dst()->ip32[0];
+    uint32_t dst = snort.ip_api.get_dst()->get_ip4_value();
 
     // check all 32 bits; all set so byte order is irrelevant ...
     if ( dst == ip::IP4_BROADCAST )
@@ -435,13 +429,13 @@ void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
         }
 
 /* written this way since inet_ntoa was typedef'ed to use sfip_ntoa
- * which requires sfip_t instead of inaddr's.  This call to inet_ntoa
- * is a rare case that doesn't use sfip_t's. */
+ * which requires SfIp instead of inaddr's.  This call to inet_ntoa
+ * is a rare case that doesn't use SfIp's. */
 
 // XXX-IPv6 NOT YET IMPLEMENTED - IPV6 addresses technically not supported - need to change ICMP
 
         /* no inet_ntop in Windows */
-        sfip_raw_ntop(AF_INET, (const void*)(&icmph->s_icmp_gwaddr.s_addr),
+        snort_inet_ntop(AF_INET, (const void*)(&icmph->s_icmp_gwaddr.s_addr),
             buf, sizeof(buf));
         TextLog_Print(log, " NEW GW: %s", buf);
         break;

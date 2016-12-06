@@ -24,23 +24,13 @@
  */
 
 #include "file_enforcer.h"
-#include "file_service.h"
-#include "file_api.h"
-#include "file_lib.h"
 
-#include "framework/data_bus.h"
-#include "hash/hashes.h"
-#include "hash/sfxhash.h"
 #include "log/messages.h"
-#include "main/snort_types.h"
-#include "managers/action_manager.h"
+#include "main/snort_debug.h"
 #include "packet_io/active.h"
-#include "protocols/packet.h"
-#include "sfip/sfip_t.h"
-#include "sfip/sf_ip.h"
 #include "time/packet_time.h"
-#include "utils/util.h"
-#include "utils/snort_bounds.h"
+
+#include "file_service.h"
 
 static int file_node_free_func(void*, void* data)
 {
@@ -114,8 +104,9 @@ int FileEnforcer::store_verdict(Flow* flow, FileInfo* file)
 
     time_t now = packet_time();
     FileHashKey hashKey;
-    sfip_copy(hashKey.dip, &(flow->client_ip));
-    sfip_copy(hashKey.sip, &(flow->server_ip));
+    hashKey.dip.set(flow->client_ip);
+    hashKey.sip.set(flow->server_ip);
+    hashKey.padding = 0;
     hashKey.file_sig = file_sig;
 
     FileNode* node;
@@ -199,7 +190,6 @@ FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file)
 {
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
     SFXHASH_NODE* hash_node;
-    FileHashKey hashKey;
     FileNode* node;
 
     /* No hash table, or its empty?  Get out of dodge.  */
@@ -214,8 +204,10 @@ FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file)
     if (!file_sig)
         return verdict;
 
-    sfip_copy(hashKey.dip, &(flow->client_ip));
-    sfip_copy(hashKey.sip, &(flow->server_ip));
+    FileHashKey hashKey;
+    hashKey.dip.set(flow->client_ip);
+    hashKey.sip.set(flow->server_ip);
+    hashKey.padding = 0;
     hashKey.file_sig = file_sig;
 
     hash_node = sfxhash_find_node(fileHash, &hashKey);

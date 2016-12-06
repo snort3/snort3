@@ -37,12 +37,12 @@
 
 inline bool FlowKey::init4(
     IpProtocol ip_proto,
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const SfIp *srcIP, uint16_t srcPort,
+    const SfIp *dstIP, uint16_t dstPort,
     uint32_t mplsId, bool order)
 {
-    const uint32_t* src;
-    const uint32_t* dst;
+    uint32_t src;
+    uint32_t dst;
     bool reversed = false;
 
     if ( ip_proto ==  IpProtocol::ICMPV4 )
@@ -58,21 +58,21 @@ inline bool FlowKey::init4(
         }
     }
 
-    src = srcIP->ip32;
-    dst = dstIP->ip32;
+    src = srcIP->get_ip4_value();
+    dst = dstIP->get_ip4_value();
 
     /* These comparisons are done in this fashion for performance reasons */
-    if ( !order || *src < *dst)
+    if ( !order || src < dst)
     {
-        COPY4(ip_l, src);
-        COPY4(ip_h, dst);
+        COPY4(ip_l, srcIP->get_ip6_ptr());
+        COPY4(ip_h, dstIP->get_ip6_ptr());
         port_l = srcPort;
         port_h = dstPort;
     }
-    else if (*src == *dst)
+    else if (src == dst)
     {
-        COPY4(ip_l, src);
-        COPY4(ip_h, dst);
+        COPY4(ip_l, srcIP->get_ip6_ptr());
+        COPY4(ip_h, dstIP->get_ip6_ptr());
         if (srcPort < dstPort)
         {
             port_l = srcPort;
@@ -87,14 +87,14 @@ inline bool FlowKey::init4(
     }
     else
     {
-        COPY4(ip_l, dst);
+        COPY4(ip_l, dstIP->get_ip6_ptr());
         port_l = dstPort;
-        COPY4(ip_h, src);
+        COPY4(ip_h, srcIP->get_ip6_ptr());
         port_h = srcPort;
         reversed = true;
     }
     if (SnortConfig::mpls_overlapping_ip() &&
-        ip::isPrivateIP(*src) && ip::isPrivateIP(*dst))
+        ip::isPrivateIP(src) && ip::isPrivateIP(dst))
         mplsLabel = mplsId;
     else
         mplsLabel = 0;
@@ -104,12 +104,10 @@ inline bool FlowKey::init4(
 
 inline bool FlowKey::init6(
     IpProtocol ip_proto,
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const SfIp *srcIP, uint16_t srcPort,
+    const SfIp *dstIP, uint16_t dstPort,
     uint32_t mplsId, bool order)
 {
-    const sfip_t* src;
-    const sfip_t* dst;
     bool reversed = false;
 
     if ( ip_proto == IpProtocol::ICMPV4 )
@@ -141,20 +139,17 @@ inline bool FlowKey::init6(
         }
     }
 
-    src = srcIP;
-    dst = dstIP;
-
-    if ( !order || sfip_fast_lt6(src, dst))
+    if ( !order || srcIP->fast_lt6(*dstIP))
     {
-        COPY4(ip_l, src->ip32);
+        COPY4(ip_l, srcIP->get_ip6_ptr());
         port_l = srcPort;
-        COPY4(ip_h, dst->ip32);
+        COPY4(ip_h, dstIP->get_ip6_ptr());
         port_h = dstPort;
     }
-    else if (sfip_fast_eq6(src, dst))
+    else if (srcIP->fast_eq6(*dstIP))
     {
-        COPY4(ip_l, src->ip32);
-        COPY4(ip_h, dst->ip32);
+        COPY4(ip_l, srcIP->get_ip6_ptr());
+        COPY4(ip_h, dstIP->get_ip6_ptr());
         if (srcPort < dstPort)
         {
             port_l = srcPort;
@@ -169,9 +164,9 @@ inline bool FlowKey::init6(
     }
     else
     {
-        COPY4(ip_l, dst->ip32);
+        COPY4(ip_l, dstIP->get_ip6_ptr());
         port_l = dstPort;
-        COPY4(ip_h, src->ip32);
+        COPY4(ip_h, srcIP->get_ip6_ptr());
         port_h = srcPort;
         reversed = true;
     }
@@ -211,8 +206,8 @@ void FlowKey::init_mpls(uint32_t mplsId)
 
 bool FlowKey::init(
     PktType type, IpProtocol ip_proto,
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const SfIp *srcIP, uint16_t srcPort,
+    const SfIp *dstIP, uint16_t dstPort,
     uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId)
 {
     bool reversed;
@@ -243,7 +238,7 @@ bool FlowKey::init(
 
 bool FlowKey::init(
     PktType type, IpProtocol ip_proto,
-    const sfip_t *srcIP, const sfip_t *dstIP,
+    const SfIp *srcIP, const SfIp *dstIP,
     uint32_t id, uint16_t vlanId,
     uint32_t mplsId, uint16_t addrSpaceId)
 {

@@ -316,7 +316,7 @@ void Flow::set_direction(Packet* p)
 
     if (ip_api->is_ip4())
     {
-        if (sfip_fast_eq4(ip_api->get_src(), &client_ip))
+        if (ip_api->get_src()->fast_eq4(client_ip))
         {
             if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_CLIENT;
@@ -327,7 +327,7 @@ void Flow::set_direction(Packet* p)
             else
                 p->packet_flags |= PKT_FROM_SERVER;
         }
-        else if (sfip_fast_eq4(ip_api->get_dst(), &client_ip))
+        else if (ip_api->get_dst()->fast_eq4(client_ip))
         {
             if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_SERVER;
@@ -341,7 +341,7 @@ void Flow::set_direction(Packet* p)
     }
     else /* IS_IP6(p) */
     {
-        if (sfip_fast_eq6(ip_api->get_src(), &client_ip))
+        if (ip_api->get_src()->fast_eq6(client_ip))
         {
             if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_CLIENT;
@@ -352,7 +352,7 @@ void Flow::set_direction(Packet* p)
             else
                 p->packet_flags |= PKT_FROM_SERVER;
         }
-        else if (sfip_fast_eq6(ip_api->get_dst(), &client_ip))
+        else if (ip_api->get_dst()->fast_eq6(client_ip))
         {
             if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_SERVER;

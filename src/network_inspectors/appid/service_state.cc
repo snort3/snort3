@@ -30,6 +30,8 @@
 
 //#define DEBUG_SERVICE_STATE 1
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wpadded"
 class AppIdServiceStateKey
 {
 public:
@@ -37,15 +39,16 @@ public:
     {
         ip.clear();
         port = 0;
-        proto = IpProtocol::PROTO_NOT_SET;
         level = 0;
+        proto = IpProtocol::PROTO_NOT_SET;
+        padding[0] = padding[1] = padding[2] = 0;
     }
 
 	bool operator<(AppIdServiceStateKey right) const
 	{
-		if( sfip_lesser(&ip, &right.ip) )
+		if( ip.less_than(right.ip) )
 			return true;
-		else if( sfip_lesser(&right.ip, &ip) )
+		else if( right.ip.less_than(ip) )
 			return false;
 		else
 		{
@@ -64,11 +67,13 @@ public:
 		}
 	}
 
-    sfip_t ip;
+    SfIp ip;
     uint16_t port;
-    IpProtocol proto;
     uint32_t level;
+    IpProtocol proto;
+    char padding[3];
 };
+#pragma GCC diagnostic pop
 
 // FIXIT-L - no memcap on size of this table, do we need that?
 THREAD_LOCAL std::map<AppIdServiceStateKey, AppIdServiceIDState*>* service_state_cache = nullptr;
@@ -88,13 +93,13 @@ void AppIdServiceState::clean(void)
 	service_state_cache = nullptr;
 }
 
-AppIdServiceIDState* AppIdServiceState::add(const sfip_t* ip, IpProtocol proto, uint16_t port,
+AppIdServiceIDState* AppIdServiceState::add(const SfIp* ip, IpProtocol proto, uint16_t port,
     uint32_t level)
 {
     AppIdServiceStateKey ssk;
     AppIdServiceIDState* ss = nullptr;
 
-    sfip_set_ip(&ssk.ip, ip);
+    ssk.ip.set(*ip);
     ssk.proto = proto;
     ssk.port = port;
     ssk.level = level;
@@ -123,7 +128,7 @@ AppIdServiceIDState* AppIdServiceState::add(const sfip_t* ip, IpProtocol proto, 
     return ss;
 }
 
-AppIdServiceIDState* AppIdServiceState::get(const sfip_t* ip, IpProtocol proto, uint16_t port,
+AppIdServiceIDState* AppIdServiceState::get(const SfIp* ip, IpProtocol proto, uint16_t port,
         uint32_t level)
 {
     AppIdServiceStateKey ssk;
@@ -131,7 +136,7 @@ AppIdServiceIDState* AppIdServiceState::get(const sfip_t* ip, IpProtocol proto, 
     char ipstr[INET6_ADDRSTRLEN];   // FIXIT-M ASAN reports mem leak on ServiceMatch* objects if this is not defined
                                     //  which makes no sense, need to investigate further
 
-    sfip_set_ip(&ssk.ip, ip);
+    ssk.ip.set(*ip);
     ssk.proto = proto;
     ssk.port = port;
     ssk.level = level;
@@ -160,11 +165,11 @@ AppIdServiceIDState* AppIdServiceState::get(const sfip_t* ip, IpProtocol proto, 
     return ss;
 }
 
-void AppIdServiceState::remove(const sfip_t* ip, IpProtocol proto, uint16_t port, uint32_t level)
+void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port, uint32_t level)
 {
     AppIdServiceStateKey ssk;
 
-    sfip_set_ip(&ssk.ip, ip);
+    ssk.ip.set(*ip);
     ssk.proto = proto;
     ssk.port = port;
     ssk.level = level;

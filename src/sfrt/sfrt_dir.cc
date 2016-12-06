@@ -26,23 +26,20 @@
  * DIR-n-m.
  */
 
+#include "sfrt.h"  // FIXIT-L these includes are circular
+#include "sfrt_dir.h"
+
+#include <stdarg.h>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "sfrt.h"  // FIXIT-L these includes are circular
-#include "sfrt_dir.h"
-
-#include <stdarg.h> /* For variadic */
-#include <stdio.h>
-#include <string.h> /* For memset   */
-
-#include "main/snort_types.h"
 #include "utils/util.h"
 
 typedef struct
 {
-    IP ip;
+    const uint32_t* addr;
     int bits;
 } IPLOOKUP;
 
@@ -374,35 +371,24 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, GENERIC ptr,
     {
         uint32_t local_index, i;
         /* need to handle bits usage across multiple 32bit vals within IPv6. */
-        if (ip->ip->family == AF_INET)
+        if (ip->bits < 32)
         {
             i=0;
         }
-        else if (ip->ip->family == AF_INET6)
+        else if (ip->bits < 64)
         {
-            if (ip->bits < 32 )
-            {
-                i=0;
-            }
-            else if (ip->bits < 64)
-            {
-                i=1;
-            }
-            else if (ip->bits < 96)
-            {
-                i=2;
-            }
-            else
-            {
-                i=3;
-            }
+            i=1;
+        }
+        else if (ip->bits < 96)
+        {
+            i=2;
         }
         else
         {
-            return RT_INSERT_FAILURE;
+            i=3;
         }
-        local_index = ip->ip->ip32[i] << (ip->bits %32);
-        index = local_index >> (sizeof(local_index)*8 - sub_table->width);
+        local_index = ip->addr[i] << (ip->bits % 32);
+        index = local_index >> (sizeof(local_index) * 8 - sub_table->width);
     }
 
     /* Check if this is the last table to traverse to */
@@ -477,18 +463,14 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, GENERIC ptr,
     return RT_SUCCESS;
 }
 
-/* Insert entry into DIR-n-m tables
- * @param ip        IP address structure
- * @param len       Number of bits of the IP used for lookup
- * @param ptr       Information to be associated with this IP range
- * @param master_table    The table that describes all, returned by dir_new */
-int sfrt_dir_insert(IP ip, int len, word data_index,
+/* Insert entry into DIR-n-m tables */
+int sfrt_dir_insert(const uint32_t* addr, int /* numAddrDwords */, int len, word data_index,
     int behavior, void* table)
 {
     dir_table_t* root = (dir_table_t*)table;
-    sfip_t h_ip;
+    uint32_t h_addr[4];
     IPLOOKUP iplu;
-    iplu.ip = &h_ip;
+    iplu.addr = h_addr;
     iplu.bits = 0;
 
     /* Validate arguments */
@@ -497,25 +479,30 @@ int sfrt_dir_insert(IP ip, int len, word data_index,
         return DIR_INSERT_FAILURE;
     }
 
-    h_ip.family = ip->family;
-    h_ip.ip32[0] = ntohl(ip->ip32[0]);
-    if (ip->family != AF_INET)
+    h_addr[0] = ntohl(addr[0]);
+    if (len > 96)
     {
-        if (len > 96)
-        {
-            h_ip.ip32[1] = ntohl(ip->ip32[1]);
-            h_ip.ip32[2] = ntohl(ip->ip32[2]);
-            h_ip.ip32[3] = ntohl(ip->ip32[3]);
-        }
-        else if (len > 64)
-        {
-            h_ip.ip32[1] = ntohl(ip->ip32[1]);
-            h_ip.ip32[2] = ntohl(ip->ip32[2]);
-        }
-        else if (len > 32)
-        {
-            h_ip.ip32[1] = ntohl(ip->ip32[1]);
-        }
+        h_addr[1] = ntohl(addr[1]);
+        h_addr[2] = ntohl(addr[2]);
+        h_addr[3] = ntohl(addr[3]);
+    }
+    else if (len > 64)
+    {
+        h_addr[1] = ntohl(addr[1]);
+        h_addr[2] = ntohl(addr[2]);
+        h_addr[3] = 0;
+    }
+    else if (len > 32)
+    {
+        h_addr[1] = ntohl(addr[1]);
+        h_addr[2] = 0;
+        h_addr[3] = 0;
+    }
+    else
+    {
+        h_addr[1] = 0;
+        h_addr[2] = 0;
+        h_addr[3] = 0;
     }
 
     /* Find the sub table in which to insert */
@@ -531,36 +518,24 @@ static tuple_t _dir_sub_lookup(IPLOOKUP* ip, dir_sub_table_t* table)
     {
         uint32_t local_index, i;
         /* need to handle bits usage across multiple 32bit vals within IPv6. */
-        if (ip->ip->family == AF_INET)
+        if (ip->bits < 32 )
         {
             i=0;
         }
-        else if (ip->ip->family == AF_INET6)
+        else if (ip->bits < 64)
         {
-            if (ip->bits < 32 )
-            {
-                i=0;
-            }
-            else if (ip->bits < 64)
-            {
-                i=1;
-            }
-            else if (ip->bits < 96)
-            {
-                i=2;
-            }
-            else
-            {
-                i=3;
-            }
+            i=1;
+        }
+        else if (ip->bits < 96)
+        {
+            i=2;
         }
         else
         {
-            tuple_t ret = { 0, 0 };
-            return ret;
+            i=3;
         }
-        local_index = ip->ip->ip32[i] << (ip->bits %32);
-        index = local_index >> (sizeof(local_index)*8 - table->width);
+        local_index = ip->addr[i] << (ip->bits % 32);
+        index = local_index >> (sizeof(local_index) * 8 - table->width);
     }
 
     if ( !table->entries[index] || table->lengths[index] )
@@ -577,29 +552,24 @@ static tuple_t _dir_sub_lookup(IPLOOKUP* ip, dir_sub_table_t* table)
 }
 
 /* Lookup information associated with the value "ip" */
-tuple_t sfrt_dir_lookup(IP ip, void* tbl)
+tuple_t sfrt_dir_lookup(const uint32_t* addr, int numAddrDwords, void* tbl)
 {
     dir_table_t* root = (dir_table_t*)tbl;
-    sfip_t h_ip;
+    uint32_t h_addr[4];
+    int i;
     IPLOOKUP iplu;
-    iplu.ip = &h_ip;
+    iplu.addr = h_addr;
     iplu.bits = 0;
 
-    if (!root || !root->sub_table)
+    if (!root || !root->sub_table || numAddrDwords < 1)
     {
         tuple_t ret = { 0, 0 };
 
         return ret;
     }
 
-    h_ip.family = ip->family;
-    h_ip.ip32[0] = ntohl(ip->ip32[0]);
-    if (ip->family != AF_INET)
-    {
-        h_ip.ip32[1] = ntohl(ip->ip32[1]);
-        h_ip.ip32[2] = ntohl(ip->ip32[2]);
-        h_ip.ip32[3] = ntohl(ip->ip32[3]);
-    }
+    for (i= 0 ; i < numAddrDwords; i++)
+        h_addr[i] = ntohl(addr[i]);
 
     return _dir_sub_lookup(&iplu, root->sub_table);
 }
@@ -680,35 +650,24 @@ static int _dir_sub_remove(IPLOOKUP* ip, int length, int cur_len,
     {
         uint32_t local_index, i;
         /* need to handle bits usage across multiple 32bit vals within IPv6. */
-        if (ip->ip->family == AF_INET)
+        if (ip->bits < 32)
         {
             i=0;
         }
-        else if (ip->ip->family == AF_INET6)
+        else if (ip->bits < 64)
         {
-            if (ip->bits < 32 )
-            {
-                i=0;
-            }
-            else if (ip->bits < 64)
-            {
-                i=1;
-            }
-            else if (ip->bits < 96)
-            {
-                i=2;
-            }
-            else
-            {
-                i=3;
-            }
+            i=1;
+        }
+        else if (ip->bits < 96)
+        {
+            i=2;
         }
         else
         {
-            return 0;
+            i=3;
         }
-        local_index = ip->ip->ip32[i] << (ip->bits %32);
-        index = local_index >> (sizeof(local_index)*8 - sub_table->width);
+        local_index = ip->addr[i] << (ip->bits % 32);
+        index = local_index >> (sizeof(local_index) * 8 - sub_table->width);
     }
 
     /* Check if this is the last table to traverse to */
@@ -767,19 +726,15 @@ static int _dir_sub_remove(IPLOOKUP* ip, int length, int cur_len,
 }
 
 /* Remove entry into DIR-n-m tables
- * @param ip    IP address structure
- * @param len   Number of bits of the IP used for lookup
- * @param behavior  RT_FAVOR_SPECIFIC or RT_FAVOR_TIME
- * @param table The table that describes all, returned by dir_new
  * @return index to data or 0 on failure. Calling function should check for 0 since
  * this is valid index for failed operation.
  */
-word sfrt_dir_remove(IP ip, int len, int behavior, void* table)
+word sfrt_dir_remove(const uint32_t* addr, int /* numAddrDwords */, int len, int behavior, void* table)
 {
     dir_table_t* root = (dir_table_t*)table;
-    sfip_t h_ip;
+    uint32_t h_addr[4];
     IPLOOKUP iplu;
-    iplu.ip = &h_ip;
+    iplu.addr = h_addr;
     iplu.bits = 0;
 
     /* Validate arguments */
@@ -788,34 +743,30 @@ word sfrt_dir_remove(IP ip, int len, int behavior, void* table)
         return 0;
     }
 
-    h_ip.family = ip->family;
-    h_ip.ip32[0] = ntohl(ip->ip32[0]);
-    if (ip->family != AF_INET)
+    h_addr[0] = ntohl(addr[0]);
+    if (len > 96)
     {
-        if (len > 96)
-        {
-            h_ip.ip32[1] = ntohl(ip->ip32[1]);
-            h_ip.ip32[2] = ntohl(ip->ip32[2]);
-            h_ip.ip32[3] = ntohl(ip->ip32[3]);
-        }
-        else if (len > 64)
-        {
-            h_ip.ip32[1] = ntohl(ip->ip32[1]);
-            h_ip.ip32[2] = ntohl(ip->ip32[2]);
-            h_ip.ip32[3] = 0;
-        }
-        else if (len > 32)
-        {
-            h_ip.ip32[1] = ntohl(ip->ip32[1]);
-            h_ip.ip32[2] = 0;
-            h_ip.ip32[3] = 0;
-        }
-        else
-        {
-            h_ip.ip32[1] = 0;
-            h_ip.ip32[2] = 0;
-            h_ip.ip32[3] = 0;
-        }
+        h_addr[1] = ntohl(addr[1]);
+        h_addr[2] = ntohl(addr[2]);
+        h_addr[3] = ntohl(addr[3]);
+    }
+    else if (len > 64)
+    {
+        h_addr[1] = ntohl(addr[1]);
+        h_addr[2] = ntohl(addr[2]);
+        h_addr[3] = 0;
+    }
+    else if (len > 32)
+    {
+        h_addr[1] = ntohl(addr[1]);
+        h_addr[2] = 0;
+        h_addr[3] = 0;
+    }
+    else
+    {
+        h_addr[1] = 0;
+        h_addr[2] = 0;
+        h_addr[3] = 0;
     }
 
     /* Find the sub table in which to remove */

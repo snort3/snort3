@@ -24,9 +24,7 @@
 
 // Use these methods to write to a TextLog
 
-#include <stdint.h>
 #include "log/text_log.h"
-#include "main/snort_types.h"
 
 struct Packet;
 struct Event;

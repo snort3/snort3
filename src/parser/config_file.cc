@@ -308,7 +308,7 @@ void ConfigObfuscationMask(SnortConfig* sc, const char* args)
 
     sc->output_flags |= OUTPUT_FLAG__OBFUSCATE;
 
-    sfip_pton(args, &sc->obfuscation_net);
+    sc->obfuscation_net.set(args);
 }
 
 void ConfigQuiet(SnortConfig* sc, const char*)

@@ -40,7 +40,7 @@
 #include "hi_client.h"
 #include "hi_server.h"
 #include "hi_ad.h"
-#include "sfip/sfip_t.h"
+#include "sfip/sf_ip.h"
 
 struct Packet;
 
@@ -107,8 +107,8 @@ struct HI_SESSION
 */
 typedef struct s_HI_SI_INPUT
 {
-    sfip_t sip;
-    sfip_t dip;
+    SfIp sip;
+    SfIp dip;
     unsigned short sport;
     unsigned short dport;
     unsigned char pdir;

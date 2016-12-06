@@ -28,13 +28,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <iostream>
-#include <sys/types.h>
 
-#include "parser/parse_utils.h"
-#include "main/snort_debug.h"
 #include "main/snort_config.h"
-#include "main/snort_types.h"
+#include "parser/parse_utils.h"
 
 bool FileConfig::process_file_magic(FileMagicData& magic)
 {

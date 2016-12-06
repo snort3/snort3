@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include "protocols/ipv6.h"
+#include "sfip/sf_ip.h"
 #include "network_set.h"
 
 #define IPFUNCS_EXCEPT_IP                0x01
@@ -66,14 +67,14 @@ inline void copyIpv4ToIpv6Network(ip::snort_in6_addr* keyIp, const uint32_t ip)
 
 //these functions are needed since snort does not store IPv4 address in highest 4 bytes
 //of 16 byte ip.
-inline void copySnortIpToIpv6Network(ip::snort_in6_addr* keyIp, const sfip_t* snortIp)
+inline void copySnortIpToIpv6Network(ip::snort_in6_addr* keyIp, const SfIp* snortIp)
 {
-    memcpy(keyIp, snortIp->ip32, sizeof(*keyIp));
+    memcpy(keyIp, snortIp->get_ip6_ptr(), sizeof(*keyIp));
 }
 
-inline int cmpSnortIpToHostKey(const ip::snort_in6_addr* keyIp, const sfip_t* snortIp)
+inline int cmpSnortIpToHostKey(const ip::snort_in6_addr* keyIp, const SfIp* snortIp)
 {
-    return memcmp(keyIp, snortIp->ip32, sizeof(*keyIp));
+    return memcmp(keyIp, snortIp->get_ip6_ptr(), sizeof(*keyIp));
 }
 
 #endif

@@ -75,12 +75,12 @@ typedef struct
    DIR-n-m functions, these are not intended to be called directly */
 dir_table_t* sfrt_dir_new(uint32_t mem_cap, int count,...);
 void sfrt_dir_free(void*);
-tuple_t sfrt_dir_lookup(IP ip, void* table);
-int sfrt_dir_insert(IP ip, int len, word data_index,
+tuple_t sfrt_dir_lookup(const uint32_t* addr, int numAddrDwords, void* table);
+int sfrt_dir_insert(const uint32_t* addr, int numAddrDwords, int len, word data_index,
     int behavior, void* table);
 uint32_t sfrt_dir_usage(void* table);
 void sfrt_dir_print(void* table);
-word sfrt_dir_remove(IP ip, int len, int behavior, void* table);
+word sfrt_dir_remove(const uint32_t* addr, int numAddrDwords, int len, int behavior, void* table);
 
 #endif /* SFRT_DIR_H */
 

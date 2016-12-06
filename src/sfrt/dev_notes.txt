@@ -2,10 +2,8 @@ SFRT implements two different routing table lookup methods that have been
 adapted to return a void pointers. Any generic information may be
 associated with a given IP or CIDR block.
 
-As of this writing, the two methods used are Stefan Nilsson and Gunnar
-Karlsson's LC-trie, and a multibit-trie method similar to Gupta et-al.'s
-DIR-n-m.  Presently, the LC-trie is used for testing purposes as the
-current implementation does not allow for fast, dynamic inserts.
+As of this writing, the method used is a multibit-trie method similar to Gupta
+et-al.'s DIR-n-m.
 
 The intended use is to associate large IP blocks with specific information.
 

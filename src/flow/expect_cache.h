@@ -61,7 +61,6 @@
 //    a la FlowCache)
 //-------------------------------------------------------------------------
 
-#include "sfip/sfip_t.h"
 #include "flow/flow.h"
 
 struct Packet;
@@ -75,8 +74,8 @@ public:
     ~ExpectCache();
 
     int add_flow(const Packet *ctrlPkt, PktType, IpProtocol,
-        const sfip_t* cliIP, uint16_t cliPort,
-        const sfip_t* srvIP, uint16_t srvPort,
+        const SfIp* cliIP, uint16_t cliPort,
+        const SfIp* srvIP, uint16_t srvPort,
         char direction, FlowData*, int16_t appId = 0);
 
     bool is_expected(Packet*);

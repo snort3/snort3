@@ -320,7 +320,7 @@ void UserSession::start(Packet* p, Flow* flow)
         if ( (flow->ssn_state.session_flags & SSNFLAG_CLIENT_SWAP) &&
             !(flow->ssn_state.session_flags & SSNFLAG_CLIENT_SWAPPED) )
         {
-            sfip_t ip = flow->client_ip;
+            SfIp ip = flow->client_ip;
             uint16_t port = flow->client_port;
 
             flow->client_ip = flow->server_ip;
@@ -500,7 +500,7 @@ int UserSession::process(Packet* p)
 // some will be deleted, some refactored, some implemented
 //-------------------------------------------------------------------------
 
-void UserSession::update_direction(char /*dir*/, const sfip_t*, uint16_t /*port*/) { }
+void UserSession::update_direction(char /*dir*/, const SfIp*, uint16_t /*port*/) { }
 
 bool UserSession::add_alert(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return true; }
 bool UserSession::check_alerted(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }

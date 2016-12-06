@@ -32,14 +32,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sfrf.h"
-#include "sfthd.h"
-
-#include "utils/util.h"
-#include "parser/parser.h"
 #include "detection/rules.h"
 #include "main/snort_config.h"
+#include "parser/parser.h"
+#include "protocols/packet.h"
 #include "sfip/sf_ip.h"
+#include "utils/util.h"
+
+#include "sfrf.h"
+#include "sfthd.h"
 
 //static int _printThresholdContext(RateFilterConfig*);
 
@@ -119,9 +120,9 @@ int RateFilter_Test(
     unsigned gid = otn->sigInfo.generator;
     unsigned sid = otn->sigInfo.id;
 
-    const sfip_t* sip;
-    const sfip_t* dip;
-    sfip_t cleared;
+    const SfIp* sip;
+    const SfIp* dip;
+    SfIp cleared;
 
     if ( p->ptrs.ip_api.is_ip() )
     {
@@ -130,7 +131,7 @@ int RateFilter_Test(
     }
     else
     {
-        sfip_clear(cleared);
+        cleared.clear();
         sip = &cleared;
         dip = &cleared;
     }

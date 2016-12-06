@@ -16,6 +16,7 @@ ips_regex_test_LDADD = \
 ../../framework/module.o \
 ../../framework/value.o \
 ../../sfip/sf_ip.o \
+../../sfip/sf_cidr.o \
 @CPPUTEST_LDFLAGS@
 endif
 

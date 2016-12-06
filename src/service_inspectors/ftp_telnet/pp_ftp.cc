@@ -40,16 +40,17 @@
 #include "config.h"
 #endif
 
+#include "detection/detection_util.h"
+#include "file_api/file_service.h"
+#include "sfip/sf_ip.h"
+#include "utils/util.h"
+
 #include "ft_main.h"
 #include "ftp_bounce_lookup.h"
 #include "ftp_cmd_lookup.h"
 #include "ftp_module.h"
 #include "ftpp_return_codes.h"
 #include "pp_telnet.h"
-
-#include "detection/detection_util.h"
-#include "file_api/file_service.h"
-#include "sfip/sf_ip.h"
 
 #ifndef MAXHOSTNAMELEN /* Why doesn't Windows define this? */
 #define MAXHOSTNAMELEN 256
@@ -86,7 +87,7 @@ static THREAD_LOCAL int ftp_cmd_pipe_index = 0;
  */
 static int getIP959(
     const char** ip_start, const char* last_char, const char* term_char,
-    sfip_t* ipRet, uint16_t* portRet
+    SfIp* ipRet, uint16_t* portRet
     )
 {
     uint32_t ip=0;
@@ -133,7 +134,7 @@ static int getIP959(
     }
 
     ip = htonl(ip);
-    sfip_set_raw(ipRet, &ip, AF_INET);
+    ipRet->set(&ip, AF_INET);
     *portRet = port;
     *ip_start = this_param;
 
@@ -160,7 +161,7 @@ static int getIP959(
  */
 static int getIP1639(
     const char** ip_start, const char* last_char, const char*,
-    sfip_t* ipRet, uint16_t* portRet
+    SfIp* ipRet, uint16_t* portRet
     )
 {
     char bytes[21];  /* max of 1+5+3 and 1+17+3 */
@@ -198,10 +199,10 @@ static int getIP1639(
             int n;
             for ( n = 0; n < 4; n++ )
                 ip4_addr = (ip4_addr << 8) | bytes[n+2];
-            /* don't call sfip_set_raw() on raw bytes
+            /* don't call sfip set() on raw bytes
                to avoid possible word alignment issues */
             ip4_addr = htonl(ip4_addr);
-            sfip_set_raw(ipRet, (void*)&ip4_addr, AF_INET);
+            ipRet->set((void*)&ip4_addr, AF_INET);
         }
         *portRet = (bytes[7] << 8) | bytes[8];
         break;
@@ -210,7 +211,7 @@ static int getIP1639(
         if ( nBytes != 21 || bytes[1] != 16 || bytes[18] != 2 )
             return FTPP_INVALID_ARG;
 
-        sfip_set_raw(ipRet, bytes+2, AF_INET6);
+        ipRet->set(bytes+2, AF_INET6);
         *portRet = (bytes[19] << 8) | bytes[20];
         break;
     default:
@@ -275,7 +276,7 @@ static void CopyField(
 
 static int getIP2428(
     const char** ip_start, const char* last_char, const char*,
-    sfip_t* ipRet, uint16_t* portRet, FTP_PARAM_TYPE ftyp
+    SfIp* ipRet, uint16_t* portRet, FTP_PARAM_TYPE ftyp
     )
 {
     const char* tok = *ip_start;
@@ -284,7 +285,7 @@ static int getIP2428(
     int family = AF_UNSPEC, port = 0;
     char buf[64];
 
-    sfip_clear((*ipRet));
+    ipRet->clear();
     *portRet = 0;
 
     /* check first delimiter */
@@ -313,7 +314,7 @@ static int getIP2428(
 
         case 2:      /* check address */
             CopyField(buf, tok, sizeof(buf), last_char, delim);
-            if ( sfip_pton(buf, ipRet) != SFIP_SUCCESS || family != ipRet->family )
+            if ( ipRet->set(buf) != SFIP_SUCCESS || family != ipRet->get_family() )
                 return FTPP_INVALID_ARG;
 
             fieldMask |= 2;
@@ -355,7 +356,7 @@ static int getIP2428(
 
 static int getFTPip(
     FTP_PARAM_TYPE ftyp, const char** ip_start, const char* last_char,
-    const char* term_char, sfip_t* ipRet, uint16_t* portRet
+    const char* term_char, SfIp* ipRet, uint16_t* portRet
     )
 {
     if ( ftyp == e_host_port )
@@ -691,7 +692,7 @@ static int validate_param(Packet* p,
     case e_long_host_port:  /* LPRT: af,hal,h1,h2,h3,h4...,pal,p1,p2... */
     case e_extd_host_port:  /* EPRT: |<af>|<addr>|<port>| */
     {
-        sfip_t ipAddr;
+        SfIp ipAddr;
         uint16_t port=0;
 
         int ret = getFTPip(
@@ -710,7 +711,7 @@ static int validate_param(Packet* p,
             return FTPP_INVALID_PARAM;
         }
 
-        if ( ThisFmt->type == e_extd_host_port && !sfip_is_set(ipAddr) )
+        if ( ThisFmt->type == e_extd_host_port && !ipAddr.is_set() )
         {
             // actually, we expect no addr in 229 responses, which is
             // understood to be server address, so we set that here
@@ -718,7 +719,7 @@ static int validate_param(Packet* p,
         }
         if ( session->client_conf->bounce )
         {
-            if (!sfip_equals(&ipAddr, p->ptrs.ip_api.get_src()))
+            if (!ipAddr.equals(*p->ptrs.ip_api.get_src()))
             {
                 int alert = 1;
 
@@ -767,7 +768,7 @@ static int validate_param(Packet* p,
             session->data_chan_state &= ~DATA_CHAN_PASV_CMD_ISSUED;
         }
 
-        sfip_clear(session->serverIP);
+        session->serverIP.clear();
         session->serverPort = 0;
     }
     break;
@@ -1009,10 +1010,10 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
 
                 if ( rsp_code >= 227 && rsp_code <= 229 )
                 {
-                    sfip_t ipAddr;
+                    SfIp ipAddr;
                     uint16_t port=0;
                     const char* ip_begin = req->param_begin;
-                    sfip_clear(ipAddr);
+                    ipAddr.clear();
                     session->data_chan_state &= ~DATA_CHAN_PASV_CMD_ISSUED;
                     session->data_chan_state |= DATA_CHAN_PASV_CMD_ACCEPT;
                     session->data_chan_index = -1;
@@ -1048,14 +1049,14 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                             );
                         if (iRet == FTPP_SUCCESS)
                         {
-                            if (!sfip_is_set(ipAddr))
-                                sfip_copy(session->serverIP, p->ptrs.ip_api.get_src());
+                            if (!ipAddr.is_set())
+                                session->serverIP.set(*p->ptrs.ip_api.get_src());
                             else
                             {
                                 session->serverIP = ipAddr;
                             }
                             session->serverPort = port;
-                            sfip_copy(session->clientIP, p->ptrs.ip_api.get_dst());
+                            session->clientIP.set(*p->ptrs.ip_api.get_dst());
                             session->clientPort = 0;
 
                             if ((FileService::get_max_file_depth() > 0) ||
@@ -1120,13 +1121,13 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                     session->data_chan_state &= ~DATA_CHAN_PORT_CMD_ISSUED;
                     session->data_chan_state |= DATA_CHAN_PORT_CMD_ACCEPT;
                     session->data_chan_index = -1;
-                    if (sfip_is_set(session->clientIP))
+                    if (session->clientIP.is_set())
                     {
                         /* This means we're not in passive mode. */
                         /* Server is listening/sending from its own IP,
                          * FTP Port -1 */
                         /* Client IP, Port specified via PORT command */
-                        sfip_copy(session->serverIP, p->ptrs.ip_api.get_src());
+                        session->serverIP.set(*p->ptrs.ip_api.get_src());
 
                         /* Can't necessarily guarantee this, especially
                          * in the case of a proxy'd connection where the
@@ -1216,8 +1217,8 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                 }
                 /* Clear the session info for next transfer -->
                  * reset host/port */
-                sfip_clear(session->serverIP);
-                sfip_clear(session->clientIP);
+                session->serverIP.clear();
+                session->clientIP.clear();
                 session->serverPort = session->clientPort = 0;
                 session->datassn = nullptr;
 

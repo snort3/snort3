@@ -28,7 +28,7 @@ public:
     IcmpSession(Flow*);
 
     bool setup(Packet*) override;
-    void update_direction(char dir, const sfip_t*, uint16_t port) override;
+    void update_direction(char dir, const SfIp*, uint16_t port) override;
     int process(Packet*) override;
     void clear() override;
 

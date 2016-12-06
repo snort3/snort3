@@ -23,9 +23,10 @@
 
 // This provides a wrapper to manage several file contexts
 
-#include <sys/types.h>
+#include "flow/flow.h"
 #include "main/snort_types.h"
-#include "file_lib.h"
+
+#include "file_api.h"
 
 class FileContext;
 class Flow;

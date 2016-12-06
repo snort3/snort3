@@ -84,7 +84,7 @@ unsigned AppIdSession::flow_id = 0;
 AppIdSession *fake_session = nullptr;
 FakeHttpMsgHeader *fake_msg_header = nullptr;
 
-AppIdSession::AppIdSession(IpProtocol, const sfip_t*, uint16_t) : FlowData(flow_id, nullptr)
+AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t) : FlowData(flow_id, nullptr)
 {
     hsession = nullptr;
 }

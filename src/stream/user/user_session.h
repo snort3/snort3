@@ -101,7 +101,7 @@ private:
     void update(Packet*, Flow*);
     void end(Packet*, Flow*);
 
-    void update_direction(char dir, const sfip_t*, uint16_t port) override;
+    void update_direction(char dir, const SfIp*, uint16_t port) override;
 
     bool add_alert(Packet*, uint32_t gid, uint32_t sid) override;
     bool check_alerted(Packet*, uint32_t gid, uint32_t sid) override;

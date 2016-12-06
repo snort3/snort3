@@ -38,7 +38,7 @@ class FlowData;
 class FlowCache;
 struct FlowKey;
 struct Packet;
-struct sfip_t;
+struct SfIp;
 
 enum class PruneReason : uint8_t;
 
@@ -79,14 +79,14 @@ public:
 
     int add_expected(
         const Packet* ctrlPkt, PktType, IpProtocol,
-        const sfip_t *srcIP, uint16_t srcPort,
-        const sfip_t *dstIP, uint16_t dstPort,
+        const SfIp *srcIP, uint16_t srcPort,
+        const SfIp *dstIP, uint16_t dstPort,
         char direction, FlowData*);
 
     int add_expected(
         const Packet* ctrlPkt, PktType, IpProtocol,
-        const sfip_t *srcIP, uint16_t srcPort,
-        const sfip_t *dstIP, uint16_t dstPort,
+        const SfIp *srcIP, uint16_t srcPort,
+        const SfIp *dstIP, uint16_t dstPort,
         int16_t appId, FlowData*);
 
     PegCount get_flows(PktType);

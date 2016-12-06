@@ -468,8 +468,8 @@ static int get_sip_client_app(void* patternMatcher, const char* pattern, uint32_
     return 1;
 }
 
-static void createRtpFlow(AppIdSession* asd, const Packet* pkt, const sfip_t* cliIp,
-        uint16_t cliPort, const sfip_t* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id)
+static void createRtpFlow(AppIdSession* asd, const Packet* pkt, const SfIp* cliIp,
+        uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id)
 {
     AppIdSession* fp, * fp2;
 
@@ -517,9 +517,9 @@ static void addFutureRtpFlows(SipEvent& event, AppIdSession* asd)
     while( media_a && media_b )
     {
         DebugFormat(DEBUG_SIP, "Adding future channels Source IP: %s Port: %hu\n",
-            sfip_to_str(media_a->get_address()), media_a->get_port());
+            media_a->get_address()->ntoa(), media_a->get_port());
         DebugFormat(DEBUG_SIP, "Adding future channels Destine IP: %s Port: %hu\n",
-            sfip_to_str(media_b->get_address()), media_b->get_port());
+            media_b->get_address()->ntoa(), media_b->get_port());
 
         createRtpFlow(asd, event.get_packet(), media_a->get_address(), media_a->get_port(),
             media_b->get_address(), media_b->get_port(), IpProtocol::UDP, APP_ID_RTP);
@@ -728,7 +728,7 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
     {
         char src_ip[INET6_ADDRSTRLEN];
         char dst_ip[INET6_ADDRSTRLEN];
-        const sfip_t* ip;
+        const SfIp* ip;
 
         src_ip[0] = 0;
         ip = p->ptrs.ip_api.get_src();

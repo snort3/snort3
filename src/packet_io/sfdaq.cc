@@ -38,6 +38,7 @@ extern "C" {
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "parser/parser.h"
+#include "protocols/packet.h"
 #include "protocols/vlan.h"
 #include "utils/util.h"
 
@@ -548,24 +549,24 @@ int SFDAQInstance::modify_flow_opaque(const DAQ_PktHdr_t* hdr, uint32_t opaque)
 }
 
 // FIXIT-L X Add Snort flag defitions for callers to use and translate/pass them through to the DAQ module
-int SFDAQInstance::add_expected(const Packet* ctrlPkt, const sfip_t* cliIP, uint16_t cliPort,
-        const sfip_t* srvIP, uint16_t srvPort, IpProtocol protocol, unsigned timeout_ms, unsigned /* flags */)
+int SFDAQInstance::add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,
+        const SfIp* srvIP, uint16_t srvPort, IpProtocol protocol, unsigned timeout_ms, unsigned /* flags */)
 {
     DAQ_Data_Channel_Params_t daq_params;
     DAQ_DP_key_t dp_key;
 
-    dp_key.src_af = cliIP->family;
+    dp_key.src_af = cliIP->get_family();
     if (cliIP->is_ip4())
-        dp_key.sa.src_ip4.s_addr = *cliIP->ip32;
+        dp_key.sa.src_ip4.s_addr = cliIP->get_ip4_value();
     else
-        memcpy(&dp_key.sa.src_ip6, cliIP->ip8, sizeof(dp_key.sa.src_ip6));
+        memcpy(&dp_key.sa.src_ip6, cliIP->get_ip6_ptr(), sizeof(dp_key.sa.src_ip6));
     dp_key.src_port = cliPort;
 
-    dp_key.dst_af = srvIP->family;
+    dp_key.dst_af = srvIP->get_family();
     if (srvIP->is_ip4())
-        dp_key.da.dst_ip4.s_addr = *srvIP->ip32;
+        dp_key.da.dst_ip4.s_addr = srvIP->get_ip4_value();
     else
-        memcpy(&dp_key.da.dst_ip6, srvIP->ip8, sizeof(dp_key.da.dst_ip6));
+        memcpy(&dp_key.da.dst_ip6, srvIP->get_ip6_ptr(), sizeof(dp_key.da.dst_ip6));
     dp_key.dst_port = srvPort;
 
     dp_key.protocol = (uint8_t) protocol;

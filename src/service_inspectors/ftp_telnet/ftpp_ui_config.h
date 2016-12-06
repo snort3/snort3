@@ -39,7 +39,7 @@
 #define FTPP_UI_CONFIG_H
 
 #include "framework/bits.h"
-#include "sfip/sfip_t.h"
+#include "sfip/sf_ip.h"
 #include "sfrt/sfrt.h"
 #include "utils/kmap.h"
 
@@ -198,7 +198,7 @@ struct FTP_SERVER_PROTO_CONF
 
 typedef struct s_FTP_BOUNCE_TO
 {
-    sfip_t ip;
+    SfIp ip;
     int relevant_bits;
     unsigned short portlo;
     unsigned short porthi;

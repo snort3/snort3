@@ -221,13 +221,13 @@ bool TcpStreamSession::are_packets_missing(uint8_t dir)
     return false;
 }
 
-void TcpStreamSession::update_direction(char dir, const sfip_t* ip, uint16_t port)
+void TcpStreamSession::update_direction(char dir, const SfIp* ip, uint16_t port)
 {
-    sfip_t tmpIp;
+    SfIp tmpIp;
     uint16_t tmpPort;
     TcpStreamTracker* tracker;
 
-    if (sfip_equals(&flow->client_ip, ip) && (flow->client_port == port))
+    if (flow->client_ip.equals(*ip) && (flow->client_port == port))
     {
         if ((dir == SSN_DIR_FROM_CLIENT) && (flow->ssn_state.direction == FROM_CLIENT))
         {
@@ -235,7 +235,7 @@ void TcpStreamSession::update_direction(char dir, const sfip_t* ip, uint16_t por
             return;
         }
     }
-    else if (sfip_equals(&flow->server_ip, ip) && (flow->server_port == port))
+    else if (flow->server_ip.equals(*ip) && (flow->server_port == port))
     {
         if ((dir == SSN_DIR_FROM_SERVER) && (flow->ssn_state.direction == FROM_SERVER))
         {
@@ -265,7 +265,7 @@ bool TcpStreamSession::add_alert(Packet* p, uint32_t gid, uint32_t sid)
     TcpStreamTracker* st;
     StreamAlertInfo* ai;
 
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &flow->client_ip))
+    if (p->ptrs.ip_api.get_src()->equals(flow->client_ip))
         st = server;
     else
         st = client;
@@ -291,7 +291,7 @@ bool TcpStreamSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
 
     TcpStreamTracker* st;
 
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &flow->client_ip))
+    if (p->ptrs.ip_api.get_src()->equals(flow->client_ip))
         st = server;
     else
         st = client;
@@ -317,7 +317,7 @@ int TcpStreamSession::update_alert(Packet* p, uint32_t gid, uint32_t sid,
     int i;
     uint32_t seq_num;
 
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &flow->client_ip))
+    if (p->ptrs.ip_api.get_src()->equals(flow->client_ip))
         st = server;
     else
         st = client;

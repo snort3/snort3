@@ -98,7 +98,7 @@ void ipset_free(IPSET* ipc)
     }
 }
 
-int ipset_add(IPSET* ipset, sfip_t* ip, void* vport, int notflag)
+int ipset_add(IPSET* ipset, SfCidr* ip, void* vport, int notflag)
 {
     if ( !ipset )
         return -1;
@@ -107,7 +107,7 @@ int ipset_add(IPSET* ipset, sfip_t* ip, void* vport, int notflag)
         PORTSET* portset = (PORTSET*)vport;
         IP_PORT* p = (IP_PORT*)snort_calloc(sizeof(IP_PORT));
 
-        sfip_set_ip(&p->ip, ip);
+        p->ip.set(*ip);
         p->portset = *portset;
         p->notflag = (char)notflag;
 
@@ -120,7 +120,7 @@ int ipset_add(IPSET* ipset, sfip_t* ip, void* vport, int notflag)
     return 0;
 }
 
-int ipset_contains(IPSET* ipc, const sfip_t* ip, void* port)
+int ipset_contains(IPSET* ipc, const SfIp* ip, void* port)
 {
     PORTRANGE* pr;
     unsigned short portu;
@@ -140,7 +140,7 @@ int ipset_contains(IPSET* ipc, const sfip_t* ip, void* port)
         p!=0;
         p =(IP_PORT*)sflist_next(&cur_ip) )
     {
-        if ( sfip_contains(&p->ip, ip) == SFIP_CONTAINS)
+        if (p->ip.contains(ip) == SFIP_CONTAINS)
         {
             SF_LNODE* cur_port;
 
@@ -182,7 +182,7 @@ int ipset_print(IPSET* ipc)
             p!=0;
             p =(IP_PORT*)sflist_next(&cur_ip) )
         {
-            SnortSnprintf(ip_str, 80, "%s", sfip_to_str(&p->ip));
+            SnortSnprintf(ip_str, 80, "%s", p->ip.get_addr()->ntoa());
             printf("CIDR BLOCK: %c%s", p->notflag ? '!' : ' ', ip_str);
             SF_LNODE* cur_port;
 
@@ -294,7 +294,7 @@ static int port_parse(char* portstr, PORTSET* portset)
     return 0;
 }
 
-static int ip_parse(char* ipstr, sfip_t* ip, char* not_flag, PORTSET* portset, char** endIP)
+static int ip_parse(char* ipstr, SfCidr* ip, char* not_flag, PORTSET* portset, char** endIP)
 {
     char* port_str;
     char* comma;
@@ -322,7 +322,7 @@ static int ip_parse(char* ipstr, sfip_t* ip, char* not_flag, PORTSET* portset, c
         *end_bracket = '\0';
     }
 
-    if (sfip_pton(ipstr, ip) != SFIP_SUCCESS)
+    if (ip->set(ipstr) != SFIP_SUCCESS)
         return -1;
 
     /* Just to get the IP string out of the way */
@@ -385,7 +385,7 @@ int ipset_parse(IPSET* ipset, const char* ipstr)
     char set_not_flag = 0;
     char item_not_flag;
     char open_bracket = 0;
-    sfip_t ip;
+    SfCidr ip;
     PORTSET portset;
 
     copy = snort_strdup(ipstr);

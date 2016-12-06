@@ -83,7 +83,7 @@
 #include "config.h"
 #endif
 
-#include "main/snort_types.h"
+#include "sfip/sf_cidr.h"
 #include "utils/util.h"
 
 const char* rt_error_messages[] =
@@ -94,12 +94,6 @@ const char* rt_error_messages[] =
     "Dir Insert Failure",
     "Dir Lookup Failure",
     "Memory Allocation Failure"
-#ifdef SUPPORT_LCTRIE
-    ,
-    "LC Trie Compile Failure",
-    "LC Trie Insert Failure",
-    "LC Trie Lookup Failure"
-#endif
 };
 
 static inline int allocateTableIndex(table_t* table);
@@ -117,18 +111,10 @@ table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
     /* If this limit is exceeded, there will be no way to distinguish
      * between pointers and indeces into the data table.  Only
      * applies to DIR-n-m. */
-#ifdef SUPPORT_LCTRIE
-#if SIZEOF_LONG_INT == 8
-    if (data_size >= 0x800000000000000 && table_type == LCT)
-#else
-    if (data_size >= 0x8000000 && table_type != LCT)
-#endif
-#else /* SUPPORT_LCTRIE */
 #if SIZEOF_LONG_INT == 8
     if (data_size >= 0x800000000000000)
 #else
     if (data_size >= 0x8000000)
-#endif
 #endif
     {
         snort_free(table);
@@ -157,24 +143,6 @@ table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
 
     switch (table_type)
     {
-#ifdef SUPPORT_LCTRIE
-    /* Setup LC-trie table */
-    case LCT:
-        /* LC trie is presently not allowed  */
-        table->insert = sfrt_lct_insert;
-        table->lookup = sfrt_lct_lookup;
-        table->free = sfrt_lct_free;
-        table->usage = sfrt_lct_usage;
-        table->print = NULL;
-        table->remove = NULL;
-
-        table->rt = sfrt_lct_new(data_size);
-        snort_free(table->data);
-        snort_free(table);
-        return NULL;
-
-        break;
-#endif
     /* Setup DIR-n-m table */
     case DIR_24_8:
     case DIR_16x2:
@@ -304,41 +272,36 @@ void sfrt_free(table_t* table)
 }
 
 /* Perform a lookup on value contained in "ip" */
-GENERIC sfrt_lookup(sfip_t* ip, table_t* table)
+GENERIC sfrt_lookup(const SfIp* ip, table_t* table)
 {
     tuple_t tuple;
-    void* rt = NULL;
+    const uint32_t* addr;
+    int numAddrDwords;
+    void* rt ;
 
-    if (!ip)
-    {
+    if (!ip || !table || !table->lookup)
         return NULL;
-    }
 
-    if (!table || !table->lookup)
+    if (ip->is_ip4())
     {
-        return NULL;
-    }
-
-    if (ip->family == AF_INET)
-    {
+        addr = ip->get_ip4_ptr();
+        numAddrDwords = 1;
         rt = table->rt;
     }
-    else if (ip->family == AF_INET6)
+    else
     {
+        addr = ip->get_ip6_ptr();
+        numAddrDwords = 4;
         rt = table->rt6;
     }
 
     if (!rt)
-    {
         return NULL;
-    }
 
-    tuple = table->lookup(ip, rt);
+    tuple = table->lookup(addr, numAddrDwords, rt);
 
     if (tuple.index >= table->max_size)
-    {
         return NULL;
-    }
 
     return table->data[tuple.index];
 }
@@ -485,22 +448,32 @@ void sfrt_cleanup(table_t* table, sfrt_iterator_callback cleanup_func)
     }
 }
 
-GENERIC sfrt_search(sfip_t* ip, unsigned char len, table_t* table)
+GENERIC sfrt_search(const SfIp* ip, unsigned char len, table_t* table)
 {
+    const uint32_t* addr;
+    int numAddrDwords;
     tuple_t tuple;
-    void* rt = NULL;
+    void* rt;
 
     if ((ip == NULL) || (table == NULL) || (len == 0))
         return NULL;
 
-    if (ip->family == AF_INET)
+    if (ip->is_ip4())
     {
+        addr = ip->get_ip4_ptr();
+        numAddrDwords = 1;
         rt = table->rt;
     }
-    else if (ip->family == AF_INET6)
+    else if (ip->is_ip6())
     {
+        addr = ip->get_ip6_ptr();
+        numAddrDwords = 4;
         rt = table->rt6;
     }
+    else
+        return NULL;
+
+    /* FIXIT-M - Is is true that we don't support v6 yet? */
     /* IPv6 not yet supported */
     if (table->ip_type == IPv6)
         return NULL;
@@ -511,7 +484,7 @@ GENERIC sfrt_search(sfip_t* ip, unsigned char len, table_t* table)
         return NULL;
     }
 
-    tuple = table->lookup(ip, rt);
+    tuple = table->lookup(addr, numAddrDwords, rt);
 
     if (tuple.length != len)
         return NULL;
@@ -519,18 +492,20 @@ GENERIC sfrt_search(sfip_t* ip, unsigned char len, table_t* table)
     return table->data[tuple.index];
 }
 
-/* Insert "ip", of length "len", into "table", and have it point to "ptr"
-   Insert "ip", of length "len", into "table", and have it point to "ptr" */
-int sfrt_insert(sfip_t* ip, unsigned char len, GENERIC ptr,
+/* Insert "ip", of length "len", into "table", and have it point to "ptr" */
+int sfrt_insert(SfCidr* cidr, unsigned char len, GENERIC ptr,
     int behavior, table_t* table)
 {
+    const uint32_t* addr;
+    const SfIp* ip;
+    int numAddrDwords;
     int index;
     int newIndex = 0;
     int res;
     tuple_t tuple;
-    void* rt = NULL;
+    void* rt;
 
-    if (!ip)
+    if (!cidr)
     {
         return RT_INSERT_FAILURE;
     }
@@ -551,39 +526,29 @@ int sfrt_insert(sfip_t* ip, unsigned char len, GENERIC ptr,
 
     /* Check if we can reuse an existing data table entry by
      * seeing if there is an existing entry with the same length. */
-    /* Only perform this if the table is not an LC-trie */
-#ifdef SUPPORT_LCTRIE
-    if (table->table_type != LCT)
+    ip = cidr->get_addr();
+    if (ip->is_ip4())
     {
-#endif
-
-    if (ip->family == AF_INET)
-    {
+        if (len < 96)
+            return RT_INSERT_FAILURE;
+        len -= 96;
+        addr = ip->get_ip4_ptr();
+        numAddrDwords = 1;
         rt = table->rt;
     }
-    else if (ip->family == AF_INET6)
+    else if (ip->is_ip6())
     {
+        addr = ip->get_ip6_ptr();
+        numAddrDwords = 4;
         rt = table->rt6;
     }
-    if (!rt)
-    {
+    else
         return RT_INSERT_FAILURE;
-    }
 
-    tuple = table->lookup(ip, rt);
+    tuple = table->lookup(addr, numAddrDwords, rt);
 
-#ifdef SUPPORT_LCTRIE
-}
-
-#endif
-
-#ifdef SUPPORT_LCTRIE
-    if (table->table_type == LCT || tuple.length != len)
-    {
-#else
     if (tuple.length != len)
     {
-#endif
         if ( table->num_ent >= table->max_size)
         {
             return RT_POLICY_TABLE_EXCEEDED;
@@ -600,7 +565,7 @@ int sfrt_insert(sfip_t* ip, unsigned char len, GENERIC ptr,
 
     /* The actual value that is looked-up is an index
      * into the data table. */
-    res = table->insert(ip, len, index, behavior, rt);
+    res = table->insert(addr, numAddrDwords, len, index, behavior, rt);
 
     if ((res == RT_SUCCESS) && newIndex)
     {
@@ -666,13 +631,16 @@ uint32_t sfrt_usage(table_t* table)
  * will then point to null data. This can cause hung or crosslinked data. RT_FAVOR_SPECIFIC does not have this drawback.
  * hung or crosslinked entries.
  */
-int sfrt_remove(sfip_t* ip, unsigned char len, GENERIC* ptr,
+int sfrt_remove(SfCidr* cidr, unsigned char len, GENERIC* ptr,
     int behavior, table_t* table)
 {
+    const uint32_t* addr;
+    const SfIp* ip;
+    int numAddrDwords;
     int index;
-    void* rt = NULL;
+    void* rt;
 
-    if (!ip)
+    if (!cidr)
     {
         return RT_REMOVE_FAILURE;
     }
@@ -681,10 +649,7 @@ int sfrt_remove(sfip_t* ip, unsigned char len, GENERIC* ptr,
         return RT_REMOVE_FAILURE;
 
     if (!table || !table->data || !table->remove || !table->lookup )
-    {
-        // remove operation will fail for LCT since this operation is not implemented
         return RT_REMOVE_FAILURE;
-    }
 
     if ( (table->ip_type == IPv4 && len > 32) ||
         (table->ip_type == IPv6 && len > 128) )
@@ -692,32 +657,28 @@ int sfrt_remove(sfip_t* ip, unsigned char len, GENERIC* ptr,
         return RT_REMOVE_FAILURE;
     }
 
-#ifdef SUPPORT_LCTRIE
-    if (table->table_type != LCT)
+    ip = cidr->get_addr();
+    if (ip->is_ip4())
     {
-#endif
-
-    if (ip->family == AF_INET)
-    {
+        if (len < 96)
+            return RT_REMOVE_FAILURE;
+        len -= 96;
+        addr = ip->get_ip4_ptr();
+        numAddrDwords = 1;
         rt = table->rt;
     }
-    else if (ip->family == AF_INET6)
+    else if (ip->is_ip6())
     {
+        addr = ip->get_ip6_ptr();
+        numAddrDwords = 4;
         rt = table->rt6;
     }
-    if (!rt)
-    {
+    else
         return RT_REMOVE_FAILURE;
-    }
-
-#ifdef SUPPORT_LCTRIE
-}
-
-#endif
 
     /* The actual value that is looked-up is an index
      * into the data table. */
-    index = table->remove(ip, len, behavior, rt);
+    index = table->remove(addr, numAddrDwords, len, behavior, rt);
 
     /* Remove value into policy table. See TBD in function header*/
     if (index)

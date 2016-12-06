@@ -35,7 +35,7 @@
 #include <string.h>
 
 #include "utils/sflsq.h"
-#include "sfip/sfip_t.h"
+#include "sfip/sf_cidr.h"
 
 struct PORTRANGE
 {
@@ -50,7 +50,7 @@ struct PORTSET
 
 struct IP_PORT
 {
-    sfip_t ip;
+    SfCidr ip;
     PORTSET portset;
     char notflag;
 };
@@ -81,8 +81,8 @@ struct IPSET
    255.255.255.255, or 0xffffffff, or -1.
 */
 IPSET* ipset_new();
-int ipset_add(IPSET* ipset, sfip_t* ip, void* port, int notflag);
-int ipset_contains(IPSET* ipset, const sfip_t* ip, void* port);
+int ipset_add(IPSET* ipset, SfCidr* ip, void* port, int notflag);
+int ipset_contains(IPSET* ipset, const SfIp* ip, void* port);
 IPSET* ipset_copy(IPSET* ipset);
 void ipset_free(IPSET* ipset);
 int ipset_print(IPSET* ipset);

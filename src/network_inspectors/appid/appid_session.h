@@ -120,7 +120,7 @@ struct CommonAppIdData
     unsigned policyId = 0;
     //flags shared with other preprocessor via session attributes.
     uint64_t flags = 0;
-    sfip_t initiator_ip;
+    SfIp initiator_ip;
     uint16_t initiator_port = 0;
 };
 
@@ -177,7 +177,7 @@ struct httpSession
     int num_scans = 0;
     int get_offsets_from_rebuilt = 0;
     bool skip_simple_detect = false;
-    sfip_t* xffAddr = nullptr;
+    SfIp* xffAddr = nullptr;
     const char** xffPrecedence = nullptr;
     int numXffFields = 0;
     int ptype_scan_counts[NUMBER_OF_PTYPES] = { 0 };
@@ -221,11 +221,11 @@ void map_app_names_to_snort_ids();
 class AppIdSession : public FlowData
 {
 public:
-    AppIdSession(IpProtocol, const sfip_t*, uint16_t port);
+    AppIdSession(IpProtocol, const SfIp*, uint16_t port);
     ~AppIdSession();
 
     static AppIdSession* allocate_session(const Packet*, IpProtocol, int);
-    static AppIdSession* create_future_session(const Packet*, const sfip_t*, uint16_t, const sfip_t*,
+    static AppIdSession* create_future_session(const Packet*, const SfIp*, uint16_t, const SfIp*,
             uint16_t, IpProtocol, int16_t, int);
     static void do_application_discovery(Packet*);
     static void add_user(AppIdSession*, const char* username, AppId, int success);
@@ -237,7 +237,7 @@ public:
     AppIdFlowData* flowData = nullptr;
     AppInfoManager* app_info_mgr = nullptr;
 
-    sfip_t service_ip;
+    SfIp service_ip;
     uint16_t service_port = 0;
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
     uint8_t previous_tcp_flags = 0;
@@ -407,7 +407,7 @@ private:
     // FIXIT-M these are not needed until appid for snort3 supports 3rd party detectors (e.g. NAVL)
     void ProcessThirdPartyResults(Packet*, int, AppId*, ThirdPartyAppIDAttributeData*);
     void checkTerminateTpModule(uint16_t tpPktCount);
-    bool do_third_party_discovery(IpProtocol, const sfip_t*,  Packet*, int&);
+    bool do_third_party_discovery(IpProtocol, const SfIp*,  Packet*, int&);
     void pickHttpXffAddress(Packet*, ThirdPartyAppIDAttributeData*);
 #endif
 

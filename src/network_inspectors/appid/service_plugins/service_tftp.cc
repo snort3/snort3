@@ -169,8 +169,8 @@ static int tftp_validate(ServiceValidationArgs* args)
     uint16_t block = 0;
     uint16_t tmp = 0;
     AppIdSession* pf = nullptr;
-    const sfip_t* sip = nullptr;
-    const sfip_t* dip = nullptr;
+    const SfIp* sip = nullptr;
+    const SfIp* dip = nullptr;
     AppIdSession* asd = args->asd;
     const uint8_t* data = args->data;
     Packet* pkt = args->pkt;

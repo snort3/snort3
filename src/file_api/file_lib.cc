@@ -29,26 +29,20 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <iostream>
 #include <iomanip>
+
+#include "hash/hashes.h"
+#include "framework/data_bus.h"
+#include "main/snort_config.h"
+#include "utils/util.h"
 
 #include "file_capture.h"
 #include "file_config.h"
 #include "file_enforcer.h"
-#include "file_identifier.h"
 #include "file_service.h"
 #include "file_segment.h"
 #include "file_stats.h"
-
-#include "hash/hashes.h"
-#include "utils/util.h"
-#include "main/snort_config.h"
-#include "framework/data_bus.h"
 
 FileInfo::~FileInfo ()
 {

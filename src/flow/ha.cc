@@ -215,30 +215,24 @@ static uint8_t write_flow_key(Flow* flow, HAMessage* msg)
     const FlowKey* key = flow->key;
     assert(key);
 
-    if (is_ip6_key(flow->key) )
+    if ( is_ip6_key(flow->key) )
     {
         hdr->key_type = KEY_TYPE_IP6;
         memcpy(msg->cursor, key, KEY_SIZE_IP6);
         msg->cursor += KEY_SIZE_IP6;
+
         return KEY_SIZE_IP6;
     }
-// FIXIT-H - remove the #ifdef COMPRESSED_KEY sections when the ip6/ip4 logic is implemented
-//   and the compressed key is available for use.  Until then all keys are IP6 and larger.
-#ifdef COMPRESSED_KEY
-    else
-    {
-        hdr->key_type = KEY_TYPE_IP4;
-        memcpy(msg->cursor, &key->ip_l[3], sizeof(key->ip_l[3]));
-        msg->cursor += sizeof(key->ip_l[3]);
-        memcpy(msg->cursor, &key->ip_h[3], sizeof(key->ip_h[3]));
-        msg->cursor += sizeof(key->ip_h[3]);
-        memcpy(msg->cursor, ((uint8_t*)key) + 32, KEY_SIZE_IP4 - 8);
-        msg->cursor += KEY_SIZE_IP4 - 8;
 
-        return KEY_SIZE_IP4;
-    }
-#endif
-    return 0;
+    hdr->key_type = KEY_TYPE_IP4;
+    memcpy(msg->cursor, &key->ip_l[3], sizeof(key->ip_l[3]));
+    msg->cursor += sizeof(key->ip_l[3]);
+    memcpy(msg->cursor, &key->ip_h[3], sizeof(key->ip_h[3]));
+    msg->cursor += sizeof(key->ip_h[3]);
+    memcpy(msg->cursor, ((uint8_t*)key) + 32, KEY_SIZE_IP4 - 8);
+    msg->cursor += KEY_SIZE_IP4 - 8;
+
+    return KEY_SIZE_IP4;
 }
 
 // Regardless of the message cursor, extract the key and
@@ -253,9 +247,9 @@ static uint8_t read_flow_key(FlowKey* key, HAMessage* msg)
     {
         memcpy(key, msg->cursor, KEY_SIZE_IP6);
         msg->cursor += KEY_SIZE_IP6;
+
         return KEY_SIZE_IP6;
     }
-#ifdef COMPRESSED_KEY
     else if ( hdr->key_type == KEY_TYPE_IP4 )
     {
         /* Lower IPv4 address */
@@ -271,9 +265,9 @@ static uint8_t read_flow_key(FlowKey* key, HAMessage* msg)
         /* The remainder of the key */
         memcpy(((uint8_t*)key) + 32, msg->cursor, KEY_SIZE_IP4 - 8);
         msg->cursor += KEY_SIZE_IP4 - 8;
+
         return KEY_SIZE_IP4;
     }
-#endif
     else
         return 0;
 }

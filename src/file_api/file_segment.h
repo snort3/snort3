@@ -20,13 +20,13 @@
 #ifndef FILE_SEGMENT_H
 #define FILE_SEGMENT_H
 
-//Segmented file data reassemble and processing
+// Segmented file data reassemble and processing
 
-#include <sys/types.h>
 #include <string>
 
-#include "file_lib.h"
 #include "file_api.h"
+
+class Flow;
 
 class FileSegment
 {

@@ -492,7 +492,7 @@ void TcpSession::swap_trackers()
         client = server;
         server = trk;
 
-        sfip_t ip = flow->client_ip;
+        SfIp ip = flow->client_ip;
         flow->client_ip = flow->server_ip;
         flow->server_ip = ip;
 
@@ -963,7 +963,7 @@ void TcpSession::set_extra_data(Packet* p, uint32_t xid)
 {
     TcpStreamTracker* st;
 
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &flow->client_ip))
+    if (p->ptrs.ip_api.get_src()->equals(flow->client_ip))
         st = server;
     else
         st = client;
@@ -975,7 +975,7 @@ void TcpSession::clear_extra_data(Packet* p, uint32_t xid)
 {
     TcpStreamTracker* st;
 
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &flow->client_ip))
+    if (p->ptrs.ip_api.get_src()->equals(flow->client_ip))
         st = server;
     else
         st = client;

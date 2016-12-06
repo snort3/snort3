@@ -32,6 +32,12 @@ int16_t AddProtocolReference(const char* protocol)
     return 1;
 }
 
+// Ditto for snort_strdup()
+char* snort_strdup(const char* str)
+{
+    return strdup(str);
+}
+
 TEST_GROUP(host_cache)
 {
 };
@@ -73,8 +79,8 @@ TEST(host_cache, host_cache_add_host_tracker_test)
     std::shared_ptr<HostTracker> actual_ht;
     uint8_t hk[16] =
     { 0xde,0xad,0xbe,0xef,0xab,0xcd,0xef,0x01,0x23,0x34,0x56,0x78,0x90,0xab,0xcd,0xef };
-    sfip_t ip_addr = { 0x1ead,0x1eef, {{0xbe,0xef,0xde,0xad,0xbe,0xef,0xab,0xcd,0xef,0x01,0x23,0x34,0x56,0x78,0x90,0xab}} };
-    sfip_t actual_ip_addr;
+    SfIp ip_addr;
+    SfIp actual_ip_addr;
     HostIpKey hkey(hk);
     Port port = 443;
     Protocol proto = 6;
@@ -82,12 +88,14 @@ TEST(host_cache, host_cache_add_host_tracker_test)
     HostApplicationEntry actual_app_entry;
     bool ret;
 
+    ip_addr.pton(AF_INET6, "beef:dead:beef:abcd:ef01:2334:5678:90ab");
+
     expected_ht->set_ip_addr(ip_addr);
     expected_ht->add_service(app_entry);
 
     host_cache_add_host_tracker(expected_ht);
 
-    ret = host_cache.find(ip_addr.ip8, actual_ht);
+    ret = host_cache.find((const uint8_t*) ip_addr.get_ip6_ptr(), actual_ht);
     CHECK(true == ret);
 
     actual_ip_addr = actual_ht->get_ip_addr();
@@ -107,8 +115,8 @@ TEST(host_cache, host_cache_add_service_test)
     std::shared_ptr<HostTracker> actual_ht;
     uint8_t hk[16] =
     { 0xde,0xad,0xbe,0xef,0xab,0xcd,0xef,0x01,0x23,0x34,0x56,0x78,0x90,0xab,0xcd,0xef };
-    sfip_t ip_addr1 = { 0x1ede,0x1ead, {{0xbe,0xef,0xde,0xad,0xbe,0xef,0xab,0xcd,0xef,0x01,0x23,0x34,0x56,0x78,0x90,0xab}} };
-    sfip_t ip_addr2 = { 0x01de,0x05ad, {{0xbe,0xef,0xde,0xad,0xbe,0xef,0xab,0xcd,0xef,0x01,0x23,0x34,0x56,0x78,0x90,0xab}} };
+    SfIp ip_addr1;
+    SfIp ip_addr2;
     HostIpKey hkey(hk);
     Port port1 = 443;
     Port port2 = 22;
@@ -119,6 +127,9 @@ TEST(host_cache, host_cache_add_service_test)
     HostApplicationEntry actual_app_entry;
     bool ret;
 
+    ip_addr1.pton(AF_INET6, "beef:dead:beef:abcd:ef01:2334:5678:90ab");
+    ip_addr2.pton(AF_INET6, "beef:dead:beef:abcd:ef01:2334:5678:90ab");
+
     //  Initialize cache with a HostTracker.
     host_cache_add_host_tracker(expected_ht);
 
@@ -126,7 +137,7 @@ TEST(host_cache, host_cache_add_service_test)
     ret = host_cache_add_service(ip_addr1, proto1, port1, "udp");
     CHECK(true == ret);
 
-    ret = host_cache.find(ip_addr1.ip8, actual_ht);
+    ret = host_cache.find((const uint8_t*) ip_addr1.get_ip6_ptr(), actual_ht);
     CHECK(true == ret);
 
     ret = actual_ht->find_service(proto1, port1, actual_app_entry);
@@ -141,7 +152,7 @@ TEST(host_cache, host_cache_add_service_test)
     ret = host_cache_add_service(ip_addr2, proto2, port2, "tcp");
     CHECK(true == ret);
 
-    ret = host_cache.find(ip_addr1.ip8, actual_ht);
+    ret = host_cache.find((const uint8_t*) ip_addr1.get_ip6_ptr(), actual_ht);
     CHECK(true == ret);
 
     ret = actual_ht->find_service(proto2, port2, actual_app_entry);
@@ -153,9 +164,11 @@ TEST(host_cache, host_cache_add_service_test)
 
 int main(int argc, char** argv)
 {
-    sfip_t ip_addr1 = { 0x00de,0x10ad,{{0xbe,0xef,0xde,0xad,0xbe,0xef,0xab,0xcd,0xef,0x01,0x23,0x34,0x56,0x78,0x90,0xab}} };
+    SfIp ip_addr1;
     Protocol proto1 = 17;
     Port port1 = 443;
+
+    ip_addr1.pton(AF_INET6, "beef:dead:beef:abcd:ef01:2334:5678:90ab");
 
     //  This is necessary to prevent the cpputest memory leak
     //  detection from thinking there's a memory leak in the map

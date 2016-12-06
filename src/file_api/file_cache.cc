@@ -21,13 +21,9 @@
 
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "sfip/sfip_t.h"
-#include "sfip/sf_ip.h"
+#include "main/snort_debug.h"
 #include "time/packet_time.h"
-#include "utils/util.h"
-#include "utils/snort_bounds.h"
 
-#include "file_service.h"
 #include "file_stats.h"
 
 static int file_cache_free_func(void*, void* data)

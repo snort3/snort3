@@ -27,7 +27,7 @@
 #include "framework/inspector.h"
 #include "ps_detect.h"
 
-struct sfip_t;
+struct SfIp;
 struct PS_PROTO;
 struct PS_TRACKER;
 struct PS_PKT;
@@ -51,8 +51,8 @@ private:
     void ps_parse(SnortConfig*, char*);
 
     int ps_ignore_ip(
-        const sfip_t* scanner, uint16_t scanner_port,
-        const sfip_t* scanned, uint16_t scanned_port);
+        const SfIp* scanner, uint16_t scanner_port,
+        const SfIp* scanned, uint16_t scanned_port);
 
     int ps_filter_ignore(PS_PKT* ps_pkt);
     int ps_tracker_lookup(
@@ -62,7 +62,7 @@ private:
     int ps_proto_update_window(PS_PROTO* proto, time_t pkt_time);
 
     int ps_proto_update(
-        PS_PROTO* proto, int ps_cnt, int pri_cnt, const sfip_t* ip,
+        PS_PROTO* proto, int ps_cnt, int pri_cnt, const SfIp* ip,
         u_short port, time_t pkt_time);
 
     int ps_tracker_update(

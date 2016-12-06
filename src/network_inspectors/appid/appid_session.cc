@@ -111,10 +111,10 @@ void AppIdSession::set_session_logging_state(const Packet* pkt, int direction)
     }
     else
     {
-        if( !sfip_equals( pkt->ptrs.ip_api.get_src(), &config->mod_config->session_log_filter.sip) )
+        if( !pkt->ptrs.ip_api.get_src()->equals(config->mod_config->session_log_filter.sip) )
             return;
 
-        if( !sfip_equals( pkt->ptrs.ip_api.get_dst(), &config->mod_config->session_log_filter.dip) )
+        if( !pkt->ptrs.ip_api.get_dst()->equals(config->mod_config->session_log_filter.dip) )
                 return;
 
         if( !( pkt->ptrs.dp == config->mod_config->session_log_filter.dport ) )
@@ -130,9 +130,9 @@ void AppIdSession::set_session_logging_state(const Packet* pkt, int direction)
     }
 
     if(session_logging_enabled)
-        snprintf(session_logging_id, MAX_SESSION_LOGGING_ID_LEN, "%s-%u -> %s-%u %u%s AS %u I %u",
-            sfip_to_str(pkt->ptrs.ip_api.get_src()), (unsigned)pkt->ptrs.sp,
-            sfip_to_str(pkt->ptrs.ip_api.get_dst()), (unsigned)pkt->ptrs.dp,
+        snprintf(session_logging_id, MAX_SESSION_LOGGING_ID_LEN, "%s-%hu -> %s-%hu %u%s AS %u I %u",
+            pkt->ptrs.ip_api.get_src()->ntoa(), pkt->ptrs.sp,
+            pkt->ptrs.ip_api.get_dst()->ntoa(), pkt->ptrs.dp,
             (unsigned)pkt->ptrs.type, (direction == APP_ID_FROM_INITIATOR) ? "" : " R",
             (unsigned)pkt->pkth->address_space_id, get_instance_id());
 
@@ -143,7 +143,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, 
 {
     uint16_t port = 0;
 
-    const sfip_t* ip = (direction == APP_ID_FROM_INITIATOR)
+    const SfIp* ip = (direction == APP_ID_FROM_INITIATOR)
         ? p->ptrs.ip_api.get_src() : p->ptrs.ip_api.get_dst();
     if ( ( proto == IpProtocol::TCP || proto == IpProtocol::UDP ) && ( p->ptrs.sp != p->ptrs.dp ) )
         port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
@@ -158,7 +158,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, 
     return data;
 }
 
-AppIdSession::AppIdSession(IpProtocol proto, const sfip_t* ip, uint16_t port)
+AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port)
     : FlowData(flow_id), protocol(proto)
 {
     service_ip.clear();
@@ -210,8 +210,8 @@ static inline PktType get_pkt_type_from_ip_proto(IpProtocol proto)
     return PktType::NONE;
 }
 
-AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const sfip_t* cliIp, uint16_t cliPort,
-    const sfip_t* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id, int /*flags*/)
+AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const SfIp* cliIp, uint16_t cliPort,
+    const SfIp* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id, int /*flags*/)
 {
     char src_ip[INET6_ADDRSTRLEN];
     char dst_ip[INET6_ADDRSTRLEN];
@@ -972,7 +972,7 @@ void AppIdSession::checkTerminateTpModule(uint16_t tpPktCount)
     }
 }
 
-bool AppIdSession::do_third_party_discovery(IpProtocol protocol, const sfip_t* ip,
+bool AppIdSession::do_third_party_discovery(IpProtocol protocol, const SfIp* ip,
         Packet* p, int& direction)
 {
     ThirdPartyAppIDAttributeData* tp_attribute_data;
@@ -1212,26 +1212,25 @@ void AppIdSession::pickHttpXffAddress(Packet*, ThirdPartyAppIDAttributeData* att
         for (j = 0; j < attribute_data->numXffFields; j++)
         {
             if (hsession->xffAddr)
-                sfip_free(hsession->xffAddr);
+            {
+                delete hsession->xffAddr;
+                hsession->xffAddr = nullptr;
+            }
 
             if (strncasecmp(attribute_data->xffFieldValue[j].field,
                 hsession->xffPrecedence[i], UINT8_MAX) == 0)
             {
                 char* tmp = strchr(attribute_data->xffFieldValue[j].value, ',');
-                SFIP_RET status;
 
-                if (!tmp)
-                {
-                    hsession->xffAddr = sfip_alloc(
-                        attribute_data->xffFieldValue[j].value, &status);
-                }
                 // For a comma-separated list of addresses, pick the first address
-                else
-                {
+                if (tmp)
                     attribute_data->xffFieldValue[j].value[tmp -
-                    attribute_data->xffFieldValue[j].value] = '\0';
-                    hsession->xffAddr = sfip_alloc(
-                        attribute_data->xffFieldValue[j].value, &status);
+                        attribute_data->xffFieldValue[j].value] = '\0';
+                hsession->xffAddr = new SfIp();
+                if (hsession->xffAddr->set(attribute_data->xffFieldValue[j].value) != SFIP_SUCCESS)
+                {
+                    delete hsession->xffAddr;
+                    hsession->xffAddr = nullptr;
                 }
                 break;
             }
@@ -1481,7 +1480,7 @@ void AppIdSession::do_application_discovery(Packet* p)
     AppId payload_app_id = 0;
     bool isTpAppidDiscoveryDone = false;
     int direction = 0;
-    const sfip_t* ip = nullptr;
+    const SfIp* ip = nullptr;
 
     if( is_packet_ignored(p) )
         return;
@@ -1507,7 +1506,7 @@ void AppIdSession::do_application_discovery(Packet* p)
             direction = (asd->common.initiator_port == p->ptrs.sp) ?
 				APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         else
-            direction = (sfip_fast_equals_raw(ip, &asd->common.initiator_ip)) ?
+            direction = ip->fast_equals_raw(asd->common.initiator_ip) ?
                 APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
         asd->in_expected_cache = false;
@@ -1609,7 +1608,7 @@ void AppIdSession::do_application_discovery(Packet* p)
         if ( tcph->is_rst() && asd->previous_tcp_flags == TH_SYN )
         {
             asd->set_session_flags(APPID_SESSION_SYN_RST);
-            if (sfip_is_set(&asd->service_ip))
+            if (asd->service_ip.is_set())
             {
                 ip = &asd->service_ip;
                 port = asd->service_port;
@@ -1869,9 +1868,9 @@ void AppIdSession::do_application_discovery(Packet* p)
     }
 }
 
-static inline int PENetworkMatch(const sfip_t* pktAddr, const PortExclusion* pe)
+static inline int PENetworkMatch(const SfIp* pktAddr, const PortExclusion* pe)
 {
-    const uint32_t* pkt = pktAddr->ip32;
+    const uint32_t* pkt = pktAddr->get_ip6_ptr();
     const uint32_t* nm = pe->netmask.u6_addr32;
     const uint32_t* peIP = pe->ip.u6_addr32;
     return (((pkt[0] & nm[0]) == peIP[0])
@@ -1886,7 +1885,7 @@ static inline int check_port_exclusion(const Packet* pkt, bool reversed)
     AppIdPortExclusions* dst_port_exclusions;
     SF_LIST* pe_list;
     PortExclusion* pe;
-    const sfip_t* s_ip;
+    const SfIp* s_ip;
     AppIdConfig* config = AppIdConfig::get_appid_config();
 
     if ( pkt->is_tcp() )
@@ -1942,7 +1941,7 @@ static inline int check_port_exclusion(const Packet* pkt, bool reversed)
 
 static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
 {
-    const sfip_t* sf_ip;
+    const SfIp* sf_ip;
     NetworkSet* net_list;
     unsigned flags;
     int32_t zone;
@@ -1970,13 +1969,13 @@ static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
 
     if ( sf_ip->is_ip4() )
     {
-        if (sf_ip->ip32[0] == 0xFFFFFFFF)
+        if (sf_ip->get_ip4_value() == 0xFFFFFFFF)
             return IPFUNCS_CHECKED;
-        NetworkSetManager::contains_ex(net_list, ntohl(sf_ip->ip32[0]), &flags);
+        NetworkSetManager::contains_ex(net_list, ntohl(sf_ip->get_ip4_value()), &flags);
     }
     else
     {
-        memcpy(&ip6, sf_ip->ip32, sizeof(ip6));
+        memcpy(&ip6, sf_ip->get_ip6_ptr(), sizeof(ip6));
         NetworkSetManager::ntoh_ipv6(&ip6);
         NetworkSetManager::contains6_ex(net_list, &ip6, &flags);
     }
@@ -2629,7 +2628,7 @@ void AppIdSession::clear_http_field()
     }
     if (hsession->xffAddr)
     {
-        sfip_free(hsession->xffAddr);
+        delete hsession->xffAddr;
         hsession->xffAddr = nullptr;
     }
 }

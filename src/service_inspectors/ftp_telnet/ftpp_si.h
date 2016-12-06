@@ -162,9 +162,9 @@ struct FTP_SESSION
     int data_chan_index;
     int data_xfer_index;
     bool data_xfer_dir;
-    sfip_t clientIP;
+    SfIp clientIP;
     uint16_t clientPort;
-    sfip_t serverIP;
+    SfIp serverIP;
     uint16_t serverPort;
 
     /* A file is being transfered on ftp-data channel */
@@ -250,8 +250,8 @@ public:
  */
 struct FTPP_SI_INPUT
 {
-    sfip_t sip;
-    sfip_t dip;
+    SfIp sip;
+    SfIp dip;
     unsigned short sport;
     unsigned short dport;
     unsigned char pdir;

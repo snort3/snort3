@@ -18,17 +18,14 @@
 //--------------------------------------------------------------------------
 // 9/7/2011 - Initial implementation ... Hui Cao <hcao@sourcefire.com>
 
+#include "sfrt_flat.h" // FIXIT-L these includes are circular
+#include "sfrt_flat_dir.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "sfrt_flat.h" // FIXIT-L these includes are circular
-#include "sfrt_flat_dir.h"
-
-#include <stdarg.h> /* For variadic */
-#include <stdio.h>
-
-#include "main/snort_types.h"
+#include <stdarg.h>
 
 #if SIZEOF_UNSIGNED_LONG_INT == 8
 #define ARCH_WIDTH 64
@@ -38,7 +35,7 @@
 
 typedef struct
 {
-    const sfip_t* ip;
+    const uint32_t* addr;
     int bits;
 } IPLOOKUP;
 
@@ -373,34 +370,23 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, INFO ptr,
     {
         uint32_t local_index, i;
         /* need to handle bits usage across multiple 32bit vals within IPv6. */
-        if (ip->ip->family == AF_INET)
+        if (ip->bits < 32)
         {
             i=0;
         }
-        else if (ip->ip->family == AF_INET6)
+        else if (ip->bits < 64)
         {
-            if (ip->bits < 32 )
-            {
-                i=0;
-            }
-            else if (ip->bits < 64)
-            {
-                i=1;
-            }
-            else if (ip->bits < 96)
-            {
-                i=2;
-            }
-            else
-            {
-                i=3;
-            }
+            i=1;
+        }
+        else if (ip->bits < 96)
+        {
+            i=2;
         }
         else
         {
-            return RT_INSERT_FAILURE;
+            i=3;
         }
-        local_index = ip->ip->ip32[i] << (ip->bits %32);
+        local_index = ip->addr[i] << (ip->bits % 32);
         index = local_index >> (ARCH_WIDTH - sub_table->width);
     }
 
@@ -483,20 +469,15 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, INFO ptr,
     return RT_SUCCESS;
 }
 
-/* Insert entry into DIR-n-m tables
- * @param ip        IP address structure
- * @param len       Number of bits of the IP used for lookup
- * @param ptr       Information to be associated with this IP range
- * @param master_table    The table that describes all, returned by dir_new */
-int sfrt_dir_flat_insert(const sfip_t* ip, int len, word data_index,
+/* Insert entry into DIR-n-m tables */
+int sfrt_dir_flat_insert(const uint32_t* addr, int /* numAddrDwords */, int len, word data_index,
     int behavior, TABLE_PTR table_ptr, updateEntryInfoFunc updateEntry, INFO* data)
 {
     dir_table_flat_t* root;
-
     uint8_t* base;
-
+    uint32_t h_addr[4];
     IPLOOKUP iplu;
-    iplu.ip = ip;
+    iplu.addr = h_addr;
     iplu.bits = 0;
 
     base = (uint8_t*)segment_basePtr();
@@ -505,6 +486,32 @@ int sfrt_dir_flat_insert(const sfip_t* ip, int len, word data_index,
     if (!root || !root->sub_table)
     {
         return DIR_INSERT_FAILURE;
+    }
+
+    h_addr[0] = ntohl(addr[0]);
+    if (len > 96)
+    {
+        h_addr[1] = ntohl(addr[1]);
+        h_addr[2] = ntohl(addr[2]);
+        h_addr[3] = ntohl(addr[3]);
+    }
+    else if (len > 64)
+    {
+        h_addr[1] = ntohl(addr[1]);
+        h_addr[2] = ntohl(addr[2]);
+        h_addr[3] = 0;
+    }
+    else if (len > 32)
+    {
+        h_addr[1] = ntohl(addr[1]);
+        h_addr[2] = 0;
+        h_addr[3] = 0;
+    }
+    else
+    {
+        h_addr[1] = 0;
+        h_addr[2] = 0;
+        h_addr[3] = 0;
     }
 
     /* Find the sub table in which to insert */
@@ -524,35 +531,23 @@ static tuple_flat_t _dir_sub_flat_lookup(IPLOOKUP* ip, TABLE_PTR table_ptr)
     {
         uint32_t local_index, i;
         /* need to handle bits usage across multiple 32bit vals within IPv6. */
-        if (ip->ip->family == AF_INET)
+        if (ip->bits < 32)
         {
             i=0;
         }
-        else if (ip->ip->family == AF_INET6)
+        else if (ip->bits < 64)
         {
-            if (ip->bits < 32 )
-            {
-                i=0;
-            }
-            else if (ip->bits < 64)
-            {
-                i=1;
-            }
-            else if (ip->bits < 96)
-            {
-                i=2;
-            }
-            else
-            {
-                i=3;
-            }
+            i=1;
+        }
+        else if (ip->bits < 96)
+        {
+            i=2;
         }
         else
         {
-            tuple_flat_t ret = { 0, 0 };
-            return ret;
+            i=3;
         }
-        local_index = ip->ip->ip32[i] << (ip->bits %32);
+        local_index = ip->addr[i] << (ip->bits %32);
         index = local_index >> (ARCH_WIDTH - table->width);
     }
     entry = (DIR_Entry*)(&base[table->entries]);
@@ -570,15 +565,17 @@ static tuple_flat_t _dir_sub_flat_lookup(IPLOOKUP* ip, TABLE_PTR table_ptr)
 }
 
 /* Lookup information associated with the value "ip" */
-tuple_flat_t sfrt_dir_flat_lookup(const sfip_t* ip, TABLE_PTR table_ptr)
+tuple_flat_t sfrt_dir_flat_lookup(const uint32_t* addr, int numAddrDwords, TABLE_PTR table_ptr)
 {
     dir_table_flat_t* root;
     uint8_t* base = (uint8_t*)segment_basePtr();
+    uint32_t h_addr[4];
+    int i;
     IPLOOKUP iplu;
-    iplu.ip = ip;
+    iplu.addr = h_addr;
     iplu.bits = 0;
 
-    if (!table_ptr )
+    if (!table_ptr)
     {
         tuple_flat_t ret = { 0, 0 };
         return ret;
@@ -591,6 +588,11 @@ tuple_flat_t sfrt_dir_flat_lookup(const sfip_t* ip, TABLE_PTR table_ptr)
         tuple_flat_t ret = { 0, 0 };
         return ret;
     }
+
+    for (i = 0; i < numAddrDwords; i++)
+        h_addr[i] = ntohl(addr[i]);
+    while (i < 4)
+        h_addr[i++] = 0;
 
     return _dir_sub_flat_lookup(&iplu, root->sub_table);
 }

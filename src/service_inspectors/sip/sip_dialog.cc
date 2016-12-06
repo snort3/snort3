@@ -35,6 +35,7 @@
 #include "protocols/vlan.h"
 #include "sfip/sf_ip.h"
 #include "stream/stream.h"
+#include "utils/util.h"
 
 #include "sip_module.h"
 #include "sip.h"
@@ -407,9 +408,9 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
     {
         //void *ssn;
         DebugFormat(DEBUG_SIP, "Ignoring channels Source IP: %s Port: %hu\n",
-            sfip_to_str(&mdataA->maddress), mdataA->mport);
+            mdataA->maddress.ntoa(), mdataA->mport);
         DebugFormat(DEBUG_SIP, "Ignoring channels Destine IP: %s Port: %hu\n",
-            sfip_to_str(&mdataB->maddress), mdataB->mport);
+            mdataB->maddress.ntoa(), mdataB->mport);
 
         /* Call into Streams to mark data channel as something to ignore. */
         Flow* ssn = Stream::get_flow(
@@ -458,7 +459,7 @@ static int SIP_compareMedias(SIP_MediaDataList mlistA, SIP_MediaDataList mlistB)
     DebugMessage(DEBUG_SIP, "Compare the media data \n");
     while ((NULL != mdataA) && (NULL != mdataB))
     {
-        if (sfip_compare(&mdataA->maddress, &mdataB->maddress) != SFIP_EQUAL)
+        if (mdataA->maddress.compare(mdataB->maddress) != SFIP_EQUAL)
             break;
         if ((mdataA->mport != mdataB->mport)|| (mdataA->numPort != mdataB->numPort))
             break;
@@ -551,7 +552,7 @@ void SIP_displayMedias(SIP_MediaList* dList)
         while (NULL != mdata)
         {
             DebugFormat(DEBUG_SIP, "Media IP: %s, port: %hu, number of ports %hhu\n",
-                sfip_to_str(&mdata->maddress), mdata->mport, mdata->numPort);
+                mdata->maddress.ntoa(), mdata->mport, mdata->numPort);
             mdata = mdata->nextM;
         }
         currSession = currSession->nextS;

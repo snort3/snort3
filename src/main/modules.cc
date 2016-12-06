@@ -665,7 +665,7 @@ bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
         sc->rate_filter_config->memcap = v.get_long();
 
     else if ( v.is("reference_net") )
-        return ( sfip_pton(v.get_string(), &sc->homenet) == SFIP_SUCCESS );
+        return ( sc->homenet.set(v.get_string()) == SFIP_SUCCESS );
 
     else if ( v.is("stateful") )
         v.update_mask(sc->run_flags, RUN_FLAG__ASSURE_EST);

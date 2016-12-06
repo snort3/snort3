@@ -185,8 +185,8 @@ static int rexec_validate(ServiceValidationArgs* args)
             goto bail;
         if (port && pkt)
         {
-            const sfip_t* sip;
-            const sfip_t* dip;
+            const SfIp* sip;
+            const SfIp* dip;
 
             dip = pkt->ptrs.ip_api.get_dst();
             sip = pkt->ptrs.ip_api.get_src();

@@ -61,7 +61,7 @@ static void log_header(const Packet* p)
     char src[INET6_ADDRSTRLEN];
     char dst[INET6_ADDRSTRLEN];
 
-    const sfip_t* addr = p->ptrs.ip_api.get_src();
+    const SfIp* addr = p->ptrs.ip_api.get_src();
     sfip_ntop(addr, src, sizeof(src));
 
     addr = p->ptrs.ip_api.get_dst();

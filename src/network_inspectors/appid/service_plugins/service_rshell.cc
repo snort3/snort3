@@ -183,8 +183,8 @@ static int rshell_validate(ServiceValidationArgs* args)
             tmp_rd = (ServiceRSHELLData*)snort_calloc(sizeof(ServiceRSHELLData));
             tmp_rd->state = RSHELL_STATE_STDERR_CONNECT_SYN;
             tmp_rd->parent = rd;
-            const sfip_t* dip = pkt->ptrs.ip_api.get_dst();
-            const sfip_t* sip = pkt->ptrs.ip_api.get_src();
+            const SfIp* dip = pkt->ptrs.ip_api.get_dst();
+            const SfIp* sip = pkt->ptrs.ip_api.get_src();
             pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)port, IpProtocol::TCP, app_id,
                     APPID_EARLY_SESSION_FLAG_FW_RULE);
             if (pf)

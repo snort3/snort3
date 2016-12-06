@@ -27,18 +27,12 @@
 #include "config.h"
 #endif
 
-#include <map>
-#include <string>
-#include <vector>
-#include <sys/stat.h>
-
-#include "sfip/sfip_t.h"
-#include "main/policy.h"
-#include "utils/util.h"
-#include "protocols/packet.h"
-#include "framework/bits.h"
 #include "events/event_queue.h"
 #include "file_api/file_config.h"
+#include "framework/bits.h"
+#include "main/policy.h"
+#include "main/thread.h"
+#include "sfip/sf_cidr.h"
 
 #define DEFAULT_LOG_DIR "."
 
@@ -165,7 +159,7 @@ public:
     // alert module stuff
     bool default_rule_state = true;
 
-    sfip_t homenet;
+    SfCidr homenet;
 
     //------------------------------------------------------
     // output module stuff
@@ -264,7 +258,7 @@ public:
     // FIXIT-L command line only stuff, add to conf / module
 
     uint32_t event_log_id = 0;
-    sfip_t obfuscation_net;
+    SfCidr obfuscation_net;
     std::string bpf_filter;
 
     //------------------------------------------------------

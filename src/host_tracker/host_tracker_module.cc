@@ -68,7 +68,7 @@ bool HostTrackerModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( host and v.is("ip") )
     {
-        sfip_t addr;
+        SfIp addr;
         v.get_addr(addr);
         host->set_ip_addr(addr);
     }

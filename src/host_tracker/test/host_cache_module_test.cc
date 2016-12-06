@@ -50,7 +50,7 @@ char* snort_strdup(const char* s)
 #define FRAG_POLICY 33
 #define STREAM_POLICY 100
 
-sfip_t expected_addr;
+SfIp expected_addr;
 
 TEST_GROUP(host_cache_module)
 { };

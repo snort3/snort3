@@ -29,23 +29,11 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "protocols/packet.h"
 
-#include "file_service.h"
-#include "file_api.h"
-#include "file_capture.h"
 #include "file_cache.h"
-#include "file_enforcer.h"
-#include "file_policy.h"
 #include "file_lib.h"
-#include "file_config.h"
-
-#include "main/snort_types.h"
-#include "packet_io/active.h"
-#include "sfip/sfip_t.h"
-#include "sfip/sf_ip.h"
+#include "file_service.h"
 
 unsigned FileFlows::flow_id = 0;
 
@@ -135,8 +123,9 @@ FileContext* FileFlows::get_file_context(uint64_t file_id, bool to_create)
     assert(file_cache);
 
     FileCache::FileHashKey key;
-    sfip_copy(key.dip, &(flow->client_ip));
-    sfip_copy(key.sip, &(flow->server_ip));
+    key.dip.set(flow->client_ip);
+    key.sip.set(flow->server_ip);
+    key.padding = 0;
     key.file_sig = file_id;
 
     FileContext* context = file_cache->find(key);

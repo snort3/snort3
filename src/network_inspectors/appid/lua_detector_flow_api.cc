@@ -155,8 +155,8 @@ static inline uint64_t convert_flags_c_to_lua(uint64_t in)
  */
 static int create_detector_flow(lua_State* L)
 {
-    sfip_t saddr;
-    sfip_t daddr;
+    SfIp saddr;
+    SfIp daddr;
 
     auto& detector_data = *UserData<Detector>::check(L, DETECTOR, 1);
 
@@ -169,12 +169,12 @@ static int create_detector_flow(lua_State* L)
 
     if (patternLen == 16)
     {
-        if (sfip_set_raw(&saddr, pattern, AF_INET6) != SFIP_SUCCESS)
+        if (saddr.set(pattern, AF_INET6) != SFIP_SUCCESS)
             return 0;
     }
     else if (patternLen == 4)
     {
-        if (sfip_set_raw(&saddr, pattern, AF_INET) != SFIP_SUCCESS)
+        if (saddr.set(pattern, AF_INET) != SFIP_SUCCESS)
             return 0;
     }
     else
@@ -186,12 +186,12 @@ static int create_detector_flow(lua_State* L)
 
     if (patternLen == 16)
     {
-        if (sfip_set_raw(&daddr, pattern, AF_INET6) != SFIP_SUCCESS)
+        if (daddr.set(pattern, AF_INET6) != SFIP_SUCCESS)
             return 0;
     }
     else if (patternLen == 4)
     {
-        if (sfip_set_raw(&daddr, pattern, AF_INET) != SFIP_SUCCESS)
+        if (daddr.set(pattern, AF_INET) != SFIP_SUCCESS)
             return 0;
     }
     else

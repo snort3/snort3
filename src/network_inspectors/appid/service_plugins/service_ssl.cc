@@ -1150,8 +1150,8 @@ bool setSSLSquelch(Packet* p, int type, AppId appId)
     if (!AppInfoManager::get_instance().get_app_info_flags(appId, APPINFO_FLAG_SSL_SQUELCH))
         return false;
 
-    const sfip_t* dip = p->ptrs.ip_api.get_dst();
-    const sfip_t* sip = p->ptrs.ip_api.get_src();
+    const SfIp* dip = p->ptrs.ip_api.get_dst();
+    const SfIp* sip = p->ptrs.ip_api.get_src();
 
     if (!(f = AppIdSession::create_future_session(p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP,
     		appId, 0)))

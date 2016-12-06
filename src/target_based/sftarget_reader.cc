@@ -46,6 +46,7 @@
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "parser/parser.h"
+#include "protocols/packet.h"
 #include "utils/stats.h"
 #include "utils/util.h"
 #include "utils/util_net.h"
@@ -186,7 +187,7 @@ int SFAT_AddApplicationData(HostAttributeEntry* host, ApplicationEntry* app)
     if ((app->fields & required_fields) != required_fields)
     {
         ParseError("Missing required field in Service attribute table for host %s",
-            inet_ntoa(&host->ipAddr));
+            host->ipAddr.ntoa());
     }
     AppendApplicationData(&host->services, app);
 
@@ -205,8 +206,8 @@ static void PrintHostAttributeEntry(HostAttributeEntry* host)
         return;
 
     DebugFormat(DEBUG_ATTRIBUTE, "Host IP: %s/%d\n",
-        inet_ntoa(&host->ipAddr),
-        host->ipAddr.bits);
+        host->ipAddr.ntoa(),
+        host->ipAddr.get_bits());
 
     DebugFormat(DEBUG_ATTRIBUTE,
         "\tPolicy Information: frag:%s (%hhu) stream: %s (%hhu)\n",
@@ -252,14 +253,14 @@ int SFAT_AddHost(HostAttributeEntry* host)
 int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
 {
     int ret;
-    sfip_t* ipAddr;
+    SfCidr* ipAddr;
 
     DEBUG_WRAP(PrintHostAttributeEntry(host); );
 
     ipAddr = &host->ipAddr;
     assert(ipAddr);
 
-    ret = sfrt_insert(ipAddr, (unsigned char)ipAddr->bits, host,
+    ret = sfrt_insert(ipAddr, (unsigned char)ipAddr->get_bits(), host,
         RT_FAVOR_SPECIFIC, next_cfg->lookupTable);
 
     if (ret != RT_SUCCESS)
@@ -291,12 +292,12 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
     return ret == RT_SUCCESS ? SFAT_OK : SFAT_ERROR;
 }
 
-HostAttributeEntry* SFAT_LookupHostEntryByIP(const sfip_t* ipAddr)
+HostAttributeEntry* SFAT_LookupHostEntryByIP(const SfIp* ipAddr)
 {
     if ( !curr_cfg )
         return NULL;
 
-    return (HostAttributeEntry*)sfrt_lookup((sfip_t*)ipAddr, curr_cfg->lookupTable);
+    return (HostAttributeEntry*)sfrt_lookup((SfIp*)ipAddr, curr_cfg->lookupTable);
 }
 
 HostAttributeEntry* SFAT_LookupHostEntryBySrc(Packet* p)
@@ -361,7 +362,7 @@ tTargetBasedConfig* SFAT_Swap()
     return curr_cfg;
 }
 
-void SFAT_UpdateApplicationProtocol(sfip_t* ipAddr, uint16_t port, uint16_t protocol, uint16_t id)
+void SFAT_UpdateApplicationProtocol(SfIp* ipAddr, uint16_t port, uint16_t protocol, uint16_t id)
 {
     HostAttributeEntry* host_entry;
     ApplicationEntry* service;
@@ -376,9 +377,9 @@ void SFAT_UpdateApplicationProtocol(sfip_t* ipAddr, uint16_t port, uint16_t prot
             return;
 
         host_entry = (HostAttributeEntry*)snort_calloc(sizeof(*host_entry));
-        sfip_set_ip(&host_entry->ipAddr, ipAddr);
+        host_entry->ipAddr.set(*ipAddr);
 
-        if ((rval = sfrt_insert(ipAddr, (unsigned char)ipAddr->bits, host_entry,
+        if ((rval = sfrt_insert(&host_entry->ipAddr, (unsigned char)host_entry->ipAddr.get_bits(), host_entry,
                 RT_FAVOR_SPECIFIC, curr_cfg->lookupTable)) != RT_SUCCESS)
         {
             FreeHostEntry(host_entry);

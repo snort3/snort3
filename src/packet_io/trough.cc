@@ -21,6 +21,7 @@
 
 #include <dirent.h>
 #include <fnmatch.h>
+#include <sys/stat.h>
 
 #include <algorithm>
 #include <fstream>
@@ -28,6 +29,7 @@
 #include "helpers/directory.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "utils/util.h"
 
 std::vector<struct Trough::PcapReadObject> Trough::pcap_object_list;
 std::vector<std::string> Trough::pcap_queue;

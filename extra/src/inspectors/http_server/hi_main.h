@@ -123,7 +123,7 @@ typedef struct _HttpSessionData
     HTTP_RESP_STATE resp_state;
     DECOMPRESS_STATE* decomp_state;
     HTTP_LOG_STATE* log_state;
-    sfip_t* true_ip;
+    SfIp* true_ip;
     UtfDecodeSession* utf_state;
     uint8_t log_flags;
     uint8_t cli_small_chunk_count;

@@ -30,8 +30,9 @@
 #include "main/snort_types.h"
 #include "framework/bits.h"
 #include "framework/parameter.h"
+#include "sfip/sf_cidr.h"
 
-struct sfip_t;
+struct SfIp;
 
 class SO_PUBLIC Value
 {
@@ -127,7 +128,8 @@ public:
     void get_addr(uint8_t (&addr)[16]) const;
     void get_addr_ip4(uint8_t (&addr)[4]) const;
     void get_addr_ip6(uint8_t (&addr)[16]) const;
-    void get_addr(sfip_t&) const;
+    void get_addr(SfIp&) const;
+    void get_addr(SfCidr&) const;
 
     void set_first_token();
     bool get_next_token(std::string&);

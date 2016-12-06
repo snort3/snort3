@@ -26,7 +26,6 @@
 #endif
 
 #include "main/snort_types.h"
-#include "sfip/sfip_t.h"
 
 #include <cstdio>
 
@@ -90,7 +89,8 @@ private:
 SO_PUBLIC NORETURN void FatalError(const char*, ...) __attribute__((format (printf, 1, 2)));
 
 SO_PUBLIC void PrintPacketData(const uint8_t*, const uint32_t);
-SO_PUBLIC char* ObfuscateIpToText(const sfip_t*);
+struct SfIp;
+SO_PUBLIC char* ObfuscateIpToText(const SfIp*);
 
 void log_safec_error(const char*, void*, int);
 

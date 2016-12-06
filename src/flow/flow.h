@@ -29,10 +29,10 @@
 
 #include <assert.h>
 
-#include "sfip/sfip_t.h"
 #include "flow/flow_key.h"
 #include "framework/inspector.h"
 #include "framework/codec.h"
+#include "sfip/sf_ip.h"
 
 #define SSNFLAG_SEEN_CLIENT         0x00000001
 #define SSNFLAG_SEEN_SENDER         0x00000001
@@ -322,8 +322,8 @@ public:  // FIXIT-M privatize if possible
 
     uint64_t expire_time;
 
-    sfip_t client_ip; // FIXIT-L family and bits should be changed to uint16_t
-    sfip_t server_ip; // or uint8_t to reduce sizeof from 24 to 20
+    SfIp client_ip;
+    SfIp server_ip;
 
     LwState ssn_state;
     LwState previous_ssn_state;

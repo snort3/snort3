@@ -100,7 +100,7 @@ void free_chp_glossary()
     CHP_glossary = nullptr;
 }
 
-static inline int convert_string_to_address(const char* string, sfip_t* address)
+static inline int convert_string_to_address(const char* string, SfIp* address)
 {
     int af;
     struct in6_addr buf;
@@ -114,7 +114,7 @@ static inline int convert_string_to_address(const char* string, sfip_t* address)
 
     if (inet_pton(af, string, &buf))
     {
-        if (sfip_set_raw(address, &buf, af) != SFIP_SUCCESS)
+        if (address->set(&buf, af) != SFIP_SUCCESS)
             return 0;
     }
     else
@@ -874,9 +874,9 @@ static int detector_get_packet_src_addr(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    const sfip_t* ipAddr = ud->validateParams.pkt->ptrs.ip_api.get_src();
+    const SfIp* ipAddr = ud->validateParams.pkt->ptrs.ip_api.get_src();
     lua_checkstack (L, 1);
-    lua_pushnumber(L, ipAddr->ip32[0]);
+    lua_pushnumber(L, ipAddr->get_ip4_value());
     return 1;
 }
 
@@ -891,9 +891,9 @@ static int detector_get_packet_dst_addr(lua_State* L)
 {
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 
-    const sfip_t* ipAddr = ud->validateParams.pkt->ptrs.ip_api.get_dst();
+    const SfIp* ipAddr = ud->validateParams.pkt->ptrs.ip_api.get_dst();
     lua_checkstack (L, 1);
-    lua_pushnumber(L, ipAddr->ip32[0]);
+    lua_pushnumber(L, ipAddr->get_ip4_value());
     return 1;
 }
 
@@ -1188,7 +1188,7 @@ static int detector_get_flow(lua_State* L)
     return 1;
 }
 
-int detector_add_http_pattern(lua_State* L)
+static int detector_add_http_pattern(lua_State* L)
 {
     int index = 1;
 
@@ -1269,7 +1269,7 @@ int detector_add_http_pattern(lua_State* L)
 /*  On the lua side, this should look something like:
         addSSLCertPattern(<appId>, '<pattern string>' )
 */
-int detector_add_ssl_cert_pattern(lua_State* L)
+static int detector_add_ssl_cert_pattern(lua_State* L)
 {
     int index = 1;
 
@@ -1308,7 +1308,7 @@ int detector_add_ssl_cert_pattern(lua_State* L)
 }
 
 // for Lua this looks something like: addDNSHostPattern(<appId>, '<pattern string>')
-int detector_add_dns_host_pattern(lua_State* L)
+static int detector_add_dns_host_pattern(lua_State* L)
 {
     int index = 1;
 
@@ -1382,7 +1382,7 @@ static int detector_add_ssl_cname_pattern(lua_State* L)
 static int detector_add_host_port_application(lua_State* L)
 {
     int index = 1;
-    sfip_t ip_addr;
+    SfIp ip_addr;
 
     auto& ud = *UserData<Detector>::check(L, DETECTOR, index++);
     if ( ud->validateParams.pkt )
@@ -2606,8 +2606,8 @@ static int detector_add_sip_server(lua_State* L)
  */
 static int create_future_flow(lua_State* L)
 {
-    sfip_t client_addr;
-    sfip_t server_addr;
+    SfIp client_addr;
+    SfIp server_addr;
     int16_t snort_app_id = 0;
     auto& ud = *UserData<Detector>::check(L, DETECTOR, 1);
 

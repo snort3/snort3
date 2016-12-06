@@ -222,7 +222,7 @@ void Ipv6Codec::IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
            fe80:0000:0000:0000:0000:5efe, followed by the IPv4 address. */
         if (isatap_interface_id == 0x00005EFE)
         {
-            if (snort.ip_api.get_src()->ip32[0] != ip6h->ip6_src.u6_addr32[3])
+            if (snort.ip_api.get_src()->get_ip4_value() != ip6h->ip6_src.u6_addr32[3])
                 codec_event(codec, DECODE_IPV6_ISATAP_SPOOF);
         }
     }
@@ -230,31 +230,27 @@ void Ipv6Codec::IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
 
 void Ipv6Codec::IPV6MiscTests(const DecodeData& snort, const CodecData& codec)
 {
-    const sfip_t* ip_src = snort.ip_api.get_src();
-    const sfip_t* ip_dst = snort.ip_api.get_dst();
+    const SfIp* ip_src = snort.ip_api.get_src();
+    const SfIp* ip_dst = snort.ip_api.get_dst();
     /*
      * Some IP Header tests
      * Land Attack(same src/dst ip)
      * Loopback (src or dst in 127/8 block)
      * Modified: 2/22/05-man for High Endian Architecture.
-     *
-     * some points in the code assume an IP of 0.0.0.0 matches anything, but
-     * that is not so here.  The sfip_compare makes that assumption for
-     * compatibility, but sfip_contains does not.  Hence, sfip_contains
-     * is used here in the interrim. */
-    if ( sfip_contains(ip_src, ip_dst) == SFIP_CONTAINS)
+     */
+    if (ip_src->fast_eq6(*ip_dst))
     {
         codec_event(codec, DECODE_BAD_TRAFFIC_SAME_SRCDST);
     }
 
-    if (sfip_is_loopback(ip_src) || sfip_is_loopback(ip_dst))
+    if (ip_src->is_loopback() || ip_dst->is_loopback())
     {
         codec_event(codec, DECODE_BAD_TRAFFIC_LOOPBACK);
     }
 
     /* Other decoder alerts for IPv6 addresses
        Added: 5/24/10 (Snort 2.9.0) */
-    if (!sfip_is_set(ip_dst))
+    if (!ip_dst->is_set())
     {
         codec_event(codec, DECODE_IPV6_DST_ZERO);
     }

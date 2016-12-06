@@ -61,6 +61,7 @@
 #include "framework/ips_action.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+#include "utils/util.h"
 
 #define s_name "react"
 

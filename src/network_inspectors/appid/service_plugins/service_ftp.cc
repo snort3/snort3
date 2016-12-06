@@ -68,7 +68,7 @@ struct ServiceFTPData
     char vendor[MAX_STRING_SIZE];
     char version[MAX_STRING_SIZE];
     FTPCmd cmd;
-    sfip_t address;
+    SfIp address;
     uint16_t port;
 };
 
@@ -704,7 +704,7 @@ static int ftp_validate_epsv(const uint8_t* data, uint16_t size,
 }
 
 static int ftp_validate_port(const uint8_t* data, uint16_t size,
-    sfip_t* address, uint16_t* port)
+    SfIp* address, uint16_t* port)
 {
     const uint8_t* end;
     const uint8_t* p;
@@ -712,7 +712,7 @@ static int ftp_validate_port(const uint8_t* data, uint16_t size,
     uint32_t addr;
     uint32_t addr2;
 
-    memset(address,0,sizeof(sfip_t));
+    memset(address,0,sizeof(*address));
     *port = 0;
 
     end = data + size;
@@ -729,8 +729,8 @@ static int ftp_validate_port(const uint8_t* data, uint16_t size,
     if (ftp_decode_octet(&data, end, ',', &tmp))
         return -1;
     addr += tmp;
-    addr2 = htonl(addr); // make it network order before calling sfip_set_raw()
-    sfip_set_raw(address, &addr2, AF_INET);
+    addr2 = htonl(addr); // make it network order before calling sfip set()
+    address->set(&addr2, AF_INET);
 
     if (ftp_decode_octet(&data, end, ',', &tmp))
         return -1;
@@ -770,7 +770,7 @@ static addr_family_map RFC2428_known_address_families[] =
     { 0, 0 }
 };
 
-static int ftp_validate_eprt(const uint8_t* data, uint16_t size, sfip_t* address, uint16_t* port)
+static int ftp_validate_eprt(const uint8_t* data, uint16_t size, SfIp* address, uint16_t* port)
 {
     int index;
     int addrFamilySupported = 0;
@@ -779,7 +779,7 @@ static int ftp_validate_eprt(const uint8_t* data, uint16_t size, sfip_t* address
     uint32_t tmp;
     char tmp_str[INET6_ADDRSTRLEN+1];
 
-    memset(address, 0, sizeof(sfip_t));
+    memset(address, 0, sizeof(*address));
     *port = 0;
 
     end = data + size;
@@ -809,10 +809,8 @@ static int ftp_validate_eprt(const uint8_t* data, uint16_t size, sfip_t* address
     tmp_str[index] = '\0'; // make the copied portion be nul terminated.
 
     // FIXIT-L recode logic above and this call to call sfip_pton instead...
-    if (sfip_convert_ip_text_to_binary(addrFamilySupported, tmp_str, &address) != SFIP_SUCCESS)
+    if (address->pton(addrFamilySupported, tmp_str) != SFIP_SUCCESS)
         return -1;
-
-    address->family = addrFamilySupported;
 
     data++; // skip the delimiter at the end of the address substring.
     if (ftp_decode_port_number(&data, end, delimiter, &tmp)) // an error is returned if port was
@@ -1176,21 +1174,21 @@ static int ftp_validate(ServiceValidationArgs* args)
                     &address, &port);
                 if (!code)
                 {
-                    sfip_t ip;
-                    const sfip_t* sip;
-                    const sfip_t* dip;
+                    SfIp ip;
+                    const SfIp* sip;
+                    const SfIp* dip;
                     uint32_t addr;
 
                     dip = pkt->ptrs.ip_api.get_dst();
                     sip = pkt->ptrs.ip_api.get_src();
                     addr = htonl(address);
-                    sfip_set_raw(&ip, &addr, AF_INET);
+                    ip.set(&addr, AF_INET);
                     fp = AppIdSession::create_future_session(pkt, dip, 0, &ip, port, asd->protocol, ftp_data_app_id,
                         APPID_EARLY_SESSION_FLAG_FW_RULE);
                     if (fp)
                         InitializeDataSession(asd,fp);
 
-                    if (!sfip_fast_eq6(&ip, sip))
+                    if (!ip.fast_eq6(*sip))
                     {
                         fp = asd->create_future_session(pkt, dip, 0, sip, port, asd->protocol, ftp_data_app_id,
                             APPID_EARLY_SESSION_FLAG_FW_RULE);
@@ -1210,8 +1208,8 @@ static int ftp_validate(ServiceValidationArgs* args)
 
                 if (!code)
                 {
-                    const sfip_t* sip;
-                    const sfip_t* dip;
+                    const SfIp* sip;
+                    const SfIp* dip;
                     dip = pkt->ptrs.ip_api.get_dst();
                     sip = pkt->ptrs.ip_api.get_src();
                     fp = asd->create_future_session(pkt, dip, 0, sip, port, asd->protocol,
@@ -1228,7 +1226,7 @@ static int ftp_validate(ServiceValidationArgs* args)
             case 200:
                 if (fd->cmd == FTP_CMD_PORT_EPRT)
                 {
-                    const sfip_t* sip;
+                    const SfIp* sip;
                     sip = pkt->ptrs.ip_api.get_src();
                     fp = asd->create_future_session(pkt, sip, 0, &fd->address, fd->port, asd->protocol, ftp_data_app_id,
                         APPID_EARLY_SESSION_FLAG_FW_RULE);

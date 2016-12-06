@@ -31,7 +31,7 @@
 #include "hash/sfghash.h"
 #include "hash/sfxhash.h"
 #include "main/policy.h"
-#include "sfip/sfip_t.h"
+#include "sfip/sf_ip.h"
 
 /*!
     Max GEN_ID value - Set this to the Max Used by Snort, this is used for the
@@ -95,20 +95,25 @@ typedef struct
     HASH Key to lookup and store Ip nodes. The structure now tracks thresholds for different
     policies. This destroys locality of reference and may cause poor performance.
 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wpadded"
 typedef struct
 {
     int thd_id;
-    sfip_t ip;
     PolicyId policyId;
+    SfIp ip;
+    uint16_t padding;
 } THD_IP_NODE_KEY;
 
 typedef struct
 {
     unsigned gen_id;
     unsigned sig_id;
-    sfip_t ip;
     PolicyId policyId;
+    SfIp ip;
+    uint16_t padding;
 } THD_IP_GNODE_KEY;
+#pragma GCC diagnostic pop
 
 /*!
     THD_NODE
@@ -217,7 +222,7 @@ ThresholdObjects* sfthd_objs_new();
 void sfthd_objs_free(ThresholdObjects*);
 
 int sfthd_test_rule(SFXHASH* rule_hash, THD_NODE* sfthd_node,
-    const sfip_t* sip, const sfip_t* dip, long curtime);
+    const SfIp* sip, const SfIp* dip, long curtime);
 
 void* sfthd_create_rule_threshold(
     int id,
@@ -250,8 +255,8 @@ int sfthd_test_threshold(
     THD_STRUCT*,
     unsigned gen_id,
     unsigned sig_id,
-    const sfip_t* sip,
-    const sfip_t* dip,
+    const SfIp* sip,
+    const SfIp* dip,
     long curtime);
 
 SFXHASH* sfthd_new_hash(unsigned, size_t, size_t);
@@ -259,8 +264,8 @@ SFXHASH* sfthd_new_hash(unsigned, size_t, size_t);
 int sfthd_test_local(
     SFXHASH* local_hash,
     THD_NODE* sfthd_node,
-    const sfip_t* sip,
-    const sfip_t* dip,
+    const SfIp* sip,
+    const SfIp* dip,
     time_t curtime);
 
 #ifdef THD_DEBUG

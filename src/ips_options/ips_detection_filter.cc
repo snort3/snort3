@@ -20,25 +20,17 @@
 // ips_detection_filter.cc author Russ Combs <rucombs@cisco.com>
 // FIXIT-L add DetectionFilterOption::eval() instead of special case
 
-#include <sys/types.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <ctype.h>
 
-#include "main/snort_types.h"
-#include "main/snort_config.h"
-#include "main/snort_debug.h"
-#include "utils/util.h"
 #include "detection/treenodes.h"
-#include "detection/detection_defines.h"
-#include "framework/ips_option.h"
-#include "framework/parameter.h"
-#include "framework/module.h"
 #include "filters/detection_filter.h"
 #include "filters/sfthd.h"
+#include "framework/decode_data.h"
+#include "framework/ips_option.h"
+#include "framework/module.h"
+#include "main/snort_config.h"
 
 #define s_name "detection_filter"
 

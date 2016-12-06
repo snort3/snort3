@@ -294,7 +294,7 @@ static int CheckAddrPort(
     Packet* p,
     uint32_t flags, int mode)
 {
-    const sfip_t* pkt_addr;          /* packet IP address */
+    const SfIp* pkt_addr;          /* packet IP address */
     u_short pkt_port;                /* packet port */
     int global_except_addr_flag = 0; /* global exception flag is set */
     int any_port_flag = 0;           /* any port flag set */
@@ -344,7 +344,7 @@ static int CheckAddrPort(
         }
     }
 
-    DebugFormat(DEBUG_DETECT, "addr %s, port %d ", sfip_to_str(pkt_addr), pkt_port);
+    DebugFormat(DEBUG_DETECT, "addr %s, port %d ", pkt_addr->ntoa(), pkt_port);
 
     if (!rule_addr)
         goto bail;

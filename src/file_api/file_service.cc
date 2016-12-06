@@ -29,27 +29,14 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "file_api.h"
-#include "file_capture.h"
-#include "file_cache.h"
-#include "file_config.h"
-#include "file_flows.h"
-#include "file_enforcer.h"
-#include "file_lib.h"
-#include "file_stats.h"
-
-#include "mime/file_mime_config.h"
+#include "main/snort_config.h"
 #include "mime/file_mime_process.h"
-#include "main/snort_types.h"
-#include "managers/action_manager.h"
-#include "detection/detect.h"
-#include "detection/detection_util.h"
-#include "packet_io/active.h"
-#include "framework/inspector.h"
+
+#include "file_cache.h"
+#include "file_capture.h"
+#include "file_enforcer.h"
+#include "file_flows.h"
+#include "file_stats.h"
 
 bool FileService::file_type_id_enabled = false;
 bool FileService::file_signature_enabled = false;

@@ -26,8 +26,10 @@
 #include "main/snort_types.h"
 #include "hash/sfhashfcn.h"
 #include "framework/decode_data.h"
-#include "sfip/sfip_t.h"
+#include "sfip/sf_ip.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wpadded"
 struct FlowKey
 {
     uint32_t   ip_l[4]; /* Low IP */
@@ -47,13 +49,13 @@ struct FlowKey
         addresses at this time. */
     bool init(
         PktType, IpProtocol,
-        const sfip_t *srcIP, uint16_t srcPort,
-        const sfip_t *dstIP, uint16_t dstPort,
+        const SfIp *srcIP, uint16_t srcPort,
+        const SfIp *dstIP, uint16_t dstPort,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     bool init(
         PktType, IpProtocol,
-        const sfip_t *srcIP, const sfip_t *dstIP,
+        const SfIp *srcIP, const SfIp *dstIP,
         uint32_t id, uint16_t vlanId,
         uint32_t mplsId, uint16_t addrSpaceId);
 
@@ -68,16 +70,17 @@ struct FlowKey
 private:
     bool init4(
         IpProtocol,
-        const sfip_t *srcIP, uint16_t srcPort,
-        const sfip_t *dstIP, uint16_t dstPort,
+        const SfIp *srcIP, uint16_t srcPort,
+        const SfIp *dstIP, uint16_t dstPort,
         uint32_t mplsId, bool order = true);
 
     bool init6(
         IpProtocol,
-        const sfip_t *srcIP, uint16_t srcPort,
-        const sfip_t *dstIP, uint16_t dstPort,
+        const SfIp *srcIP, uint16_t srcPort,
+        const SfIp *dstIP, uint16_t dstPort,
         uint32_t mplsId, bool order = true);
 };
+#pragma GCC diagnostic pop
 
 #endif
 

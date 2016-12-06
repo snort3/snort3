@@ -944,9 +944,9 @@ static int EventTest(EventData* p)
     // this is the only acceptable public value for op
     SFRF_COUNT_OPERATION op = SFRF_COUNT_INCREMENT;
 
-    sfip_t sip, dip;
-    sfip_pton(p->sip, &sip);
-    sfip_pton(p->dip, &dip);
+    SfIp sip, dip;
+    sip.set(p->sip);
+    dip.set(p->dip);
 
     status = SFRF_TestThreshold(
         rfc, p->gid, p->sid, &sip, &dip, curtime, op);

@@ -30,8 +30,8 @@
 
 #include <mutex>
 
-#include "main/snort_types.h"
 #include "main/snort_debug.h"
+
 #include "circular_buffer.h"
 
 #define FILE_MEM_SUCCESS    0  // FIXIT-L use bool

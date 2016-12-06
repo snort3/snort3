@@ -382,20 +382,6 @@ uint16_t AppIdApi::get_http_cookie_end_offset(AppIdSession* asd)
     return 0;
 }
 
-uint16_t getHttpFieldOffset(AppIdSession* asd, HTTP_FIELD_ID fieldId)
-{
-    if (asd && asd->hsession && fieldId >= 0 && fieldId <= HTTP_FIELD_MAX)
-        return asd->hsession->fieldOffset[fieldId];
-    return 0;
-}
-
-uint16_t getHttpFieldEndOffset(AppIdSession* asd, HTTP_FIELD_ID fieldId)
-{
-    if (asd && asd->hsession && fieldId >= 0 && fieldId <= HTTP_FIELD_MAX)
-        return asd->hsession->fieldEndOffset[fieldId];
-     return 0;
-}
-
 SEARCH_SUPPORT_TYPE AppIdApi::get_http_search(AppIdSession* asd)
 {
     if (asd)
@@ -404,7 +390,7 @@ SEARCH_SUPPORT_TYPE AppIdApi::get_http_search(AppIdSession* asd)
     return NOT_A_SEARCH_ENGINE;
 }
 
-sfip_t* AppIdApi::get_http_xff_addr(AppIdSession* asd)
+SfIp* AppIdApi::get_http_xff_addr(AppIdSession* asd)
 {
     if (asd && asd->hsession)
         return asd->hsession->xffAddr;
@@ -418,14 +404,14 @@ char* AppIdApi::get_tls_host(AppIdSession* asd)
     return nullptr;
 }
 
-sfip_t* AppIdApi::get_service_ip(AppIdSession* asd)
+SfIp* AppIdApi::get_service_ip(AppIdSession* asd)
 {
     if (asd)
         return &asd->service_ip;
     return nullptr;
 }
 
-sfip_t* AppIdApi::get_initiator_ip(AppIdSession* asd)
+SfIp* AppIdApi::get_initiator_ip(AppIdSession* asd)
 {
     return asd ? &asd->common.initiator_ip : nullptr;
 }
@@ -533,7 +519,7 @@ uint32_t AppIdApi::produce_ha_state(Flow* flow, uint8_t* buf)
 }
 
 uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpProtocol proto,
-    sfip_t* ip, uint16_t port)
+    SfIp* ip, uint16_t port)
 {
     AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
     if (appHA->flags & APPID_HA_FLAGS_APP)

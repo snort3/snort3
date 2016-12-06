@@ -24,22 +24,17 @@
  **  5.25.13 - Initial Source Code. Hui Cao
  */
 
+#include "file_stats.h"
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include <sys/types.h>
-#include <stdio.h>
-
-#include "file_stats.h"
-#include "file_capture.h"
-#include "file_cache.h"
-#include "file_config.h"
-
-#include "main/snort_types.h"
-#include "main/snort_config.h"
-#include "utils/stats.h"
 #include "log/messages.h"
+#include "utils/stats.h"
+#include "utils/util.h"
+
+#include "file_capture.h"
 
 THREAD_LOCAL FileCounts file_counts;
 THREAD_LOCAL FileStats* file_stats = nullptr;

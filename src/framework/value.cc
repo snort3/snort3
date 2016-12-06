@@ -24,7 +24,6 @@
 #include <sstream>
 #include <string>
 
-#include "sfip/sfip_t.h"
 #include "sfip/sf_ip.h"
 
 #ifdef UNIT_TEST
@@ -76,16 +75,28 @@ void Value::get_addr_ip6(uint8_t (&addr)[16]) const
         memset(addr, 0, sizeof(addr));
 }
 
-void Value::get_addr(sfip_t& addr) const
+void Value::get_addr(SfIp& addr) const
 {
     if ( str.size() == 4 )
-        sfip_set_raw(&addr, str.c_str(), AF_INET);
+        addr.set(str.c_str(), AF_INET);
 
     else if ( str.size() == 16 )
-        sfip_set_raw(&addr, str.c_str(), AF_INET6);
+        addr.set(str.c_str(), AF_INET6);
 
     else
-        memset(&addr, 0, sizeof(addr));
+        addr.clear();
+}
+
+void Value::get_addr(SfCidr& cidr) const
+{
+    if ( str.size() == 4 )
+        cidr.set(str.c_str(), AF_INET);
+
+    else if ( str.size() == 16 )
+        cidr.set(str.c_str(), AF_INET6);
+
+    else
+        cidr.clear();
 }
 
 void Value::get_bits(PortBitSet& list) const

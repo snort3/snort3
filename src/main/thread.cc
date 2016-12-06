@@ -19,6 +19,8 @@
 
 #include "thread.h"
 
+#include <sys/stat.h>
+
 #include "snort_config.h"
 #include "thread_config.h"
 

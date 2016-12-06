@@ -27,6 +27,8 @@
 #include "log/messages.h"
 #include "sfip/sf_ip.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wpadded"
 struct HostPortKey
 {
     HostPortKey()
@@ -34,13 +36,14 @@ struct HostPortKey
         ip.clear();
         port = 0;
         proto = IpProtocol::PROTO_NOT_SET;
+        padding = 0;
     }
 
 	bool operator<(HostPortKey right) const
 	{
-		if( sfip_lesser(&ip, &right.ip) )
+		if( ip.less_than(right.ip) )
 			return true;
-		else if( sfip_lesser(&right.ip, &ip) )
+		else if( right.ip.less_than(ip) )
 			return false;
 		else
 		{
@@ -55,10 +58,12 @@ struct HostPortKey
 		}
 	}
 
-    sfip_t ip;
+    SfIp ip;
     uint16_t port;
     IpProtocol proto;
+    char padding;
 };
+#pragma GCC diagnostic pop
 
 THREAD_LOCAL std::map<HostPortKey, HostPortVal>* host_port_cache = nullptr;
 
@@ -74,11 +79,11 @@ void HostPortCache::terminate()
 	host_port_cache = nullptr;
 }
 
-HostPortVal* HostPortCache::find(const sfip_t* ip, uint16_t port, IpProtocol protocol)
+HostPortVal* HostPortCache::find(const SfIp* ip, uint16_t port, IpProtocol protocol)
 {
     HostPortKey hk;
 
-    sfip_set_ip(&hk.ip, ip);
+    hk.ip.set(*ip);
     hk.port = port;
     hk.proto = protocol;
 
@@ -90,14 +95,15 @@ HostPortVal* HostPortCache::find(const sfip_t* ip, uint16_t port, IpProtocol pro
     	return nullptr;
 }
 
-bool HostPortCache::add(const sfip_t* ip, uint16_t port, IpProtocol proto, unsigned type, AppId appId)
+bool HostPortCache::add(const SfIp* ip, uint16_t port, IpProtocol proto, unsigned type, AppId appId)
 {
     HostPortKey hk;
     HostPortVal hv;
 
-    sfip_set_ip(&hk.ip, ip);
+    hk.ip.set(*ip);
     hk.port = port;
     hk.proto = proto;
+
     hv.appId = appId;
     hv.type = type;
 

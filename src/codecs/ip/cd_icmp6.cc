@@ -32,6 +32,7 @@
 #include "packet_io/active.h"
 #include "log/text_log.h"
 #include "main/snort_debug.h"
+#include "utils/util.h"
 
 #define CD_ICMP6_NAME "icmp6"
 #define CD_ICMP6_HELP "support for Internet control message protocol v6"
@@ -136,8 +137,8 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         {
             bad_cksum_cnt = &stats.bad_ip6_cksum;
             checksum::Pseudoheader6 ph6;
-            COPY4(ph6.sip, snort.ip_api.get_src()->ip32);
-            COPY4(ph6.dip, snort.ip_api.get_dst()->ip32);
+            COPY4(ph6.sip, snort.ip_api.get_src()->get_ip6_ptr());
+            COPY4(ph6.dip, snort.ip_api.get_dst()->get_ip6_ptr());
             ph6.zero = 0;
             ph6.protocol = codec.ip6_csum_proto;
             ph6.len = htons((u_short)raw.len);
@@ -349,8 +350,8 @@ void Icmp6Codec::update(const ip::IpApi& api, const EncodeFlags flags,
         checksum::Pseudoheader6 ps6;
         h->cksum = 0;
 
-        memcpy(ps6.sip, api.get_src()->ip32, sizeof(ps6.sip));
-        memcpy(ps6.dip, api.get_dst()->ip32, sizeof(ps6.dip));
+        memcpy(ps6.sip, api.get_src()->get_ip6_ptr(), sizeof(ps6.sip));
+        memcpy(ps6.dip, api.get_dst()->get_ip6_ptr(), sizeof(ps6.dip));
         ps6.zero = 0;
         ps6.protocol = IpProtocol::ICMPV6;
         ps6.len = htons((uint16_t)updated_len);

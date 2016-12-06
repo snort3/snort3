@@ -22,8 +22,10 @@
 #ifndef FILE_MODULE_H
 #define FILE_MODULE_H
 
-#include "file_config.h"
 #include "framework/module.h"
+
+#include "file_identifier.h"
+#include "file_policy.h"
 
 //-------------------------------------------------------------------------
 // file_id module

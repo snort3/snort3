@@ -22,19 +22,13 @@
 #ifndef FILE_STATS_H
 #define FILE_STATS_H
 
-#include <stdio.h>
-#include <stdlib.h>
-
 // FIXIT-M This will be refactored soon
 
-#include "main/thread.h"
 #include "framework/counts.h"
-#include "target_based/snort_protocols.h"
-#include "target_based/sftarget_reader.h"
+#include "main/thread.h"
 
-#include "main/snort_debug.h"
-#include "file_config.h"
 #include "file_api.h"
+#include "file_config.h"
 
 #define MAX_PROTOCOL_ORDINAL 8192  // FIXIT-L use std::vector and get_protocol_count()
 

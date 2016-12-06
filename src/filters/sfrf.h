@@ -27,7 +27,7 @@
 #include "main/policy.h"
 #include "actions/actions.h"
 
-struct sfip_t;
+struct SfIp;
 
 // define to use over rate threshold
 #define SFRF_OVER_RATE
@@ -155,8 +155,8 @@ int SFRF_TestThreshold(
     RateFilterConfig *config,
     unsigned gid,
     unsigned sid,
-    const sfip_t *sip,
-    const sfip_t *dip,
+    const SfIp *sip,
+    const SfIp *dip,
     time_t curTime,
     SFRF_COUNT_OPERATION);
 

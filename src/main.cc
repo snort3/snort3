@@ -117,7 +117,7 @@ void main_poke(unsigned id)
     pig_poke->put(id);
 }
 
-int main_read()
+static int main_read()
 {
     std::lock_guard<std::mutex> lock(poke_mutex);
     return pig_poke->get(-1);

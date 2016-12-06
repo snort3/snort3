@@ -198,8 +198,8 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     }
     else
     {
-        sfip_t cleared;
-        sfip_clear(cleared);
+        SfIp cleared;
+        cleared.clear();
 
         filterEvent = sfthreshold_test(
             otn->sigInfo.generator,

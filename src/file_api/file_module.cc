@@ -26,6 +26,7 @@
 #include "file_module.h"
 
 #include "main/snort_config.h"
+
 #include "file_stats.h"
 
 static const Parameter file_magic_params[] =

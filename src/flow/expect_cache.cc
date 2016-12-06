@@ -116,8 +116,8 @@ ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
     if (!hash_table->get_count())
         return nullptr;
 
-    const sfip_t* srcIP = p->ptrs.ip_api.get_src();
-    const sfip_t* dstIP = p->ptrs.ip_api.get_dst();
+    const SfIp* srcIP = p->ptrs.ip_api.get_src();
+    const SfIp* dstIP = p->ptrs.ip_api.get_dst();
     uint16_t vlanId = (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0;
     uint32_t mplsId = (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0;
     uint16_t addressSpaceId = p->pkth->address_space_id;
@@ -284,8 +284,8 @@ ExpectCache::~ExpectCache()
  */
 int ExpectCache::add_flow(const Packet *ctrlPkt,
     PktType type, IpProtocol ip_proto,
-    const sfip_t* cliIP, uint16_t cliPort,
-    const sfip_t* srvIP, uint16_t srvPort,
+    const SfIp* cliIP, uint16_t cliPort,
+    const SfIp* srvIP, uint16_t srvPort,
     char direction, FlowData* fd, int16_t appId)
 {
     /* Just pull the VLAN ID, MPLS ID, and Address Space ID from the

@@ -82,21 +82,12 @@ static int InitServerConf(HTTPINSPECT_CONF* GlobalConf,
     int iServerSip;
     int iServerDip;
     int http_id_found = 0;
-    sfip_t sip;
-    sfip_t dip;
+    SfIp sip;
+    SfIp dip;
 
     //structure copy
     sip = SiInput->sip;
     dip = SiInput->dip;
-
-    if (sip.family == AF_INET)
-    {
-        sip.ip32[0] = ntohl(sip.ip32[0]);
-    }
-    if (dip.family == AF_INET)
-    {
-        dip.ip32[0] = ntohl(dip.ip32[0]);
-    }
 
     ServerConfDip = ServerConfSip = GlobalConf;
 

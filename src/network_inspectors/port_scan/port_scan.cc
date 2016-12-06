@@ -98,7 +98,7 @@ THREAD_LOCAL ProfileStats psPerfStats;
 static int MakeProtoInfo(PS_PROTO* proto, const u_char* buffer, u_int* total_size)
 {
     int dsize;
-    sfip_t* ip1, * ip2;
+    SfIp* ip1, * ip2;
 
     if (!total_size || !buffer)
         return -1;
@@ -122,18 +122,18 @@ static int MakeProtoInfo(PS_PROTO* proto, const u_char* buffer, u_int* total_siz
             proto->priority_count,
             proto->connection_count,
             proto->u_ip_count,
-            inet_ntoa(ip1));
+            ip1->ntoa());
 
         /* Now print the high ip into the buffer.  This saves us
-         * from having to copy the results of inet_ntoa (which is
+         * from having to copy the results of SfIp::ntoa (which is
          * a static buffer) to avoid the reuse of that buffer when
-         * more than one use of inet_ntoa is within the same printf.
+         * more than one use of SfIp::ntoa is within the same printf.
          */
         SnortSnprintfAppend((char*)buffer, PROTO_BUFFER_SIZE,
             "%s\n"
             "Port/Proto Count: %d\n"
             "Port/Proto Range: %d:%d\n",
-            inet_ntoa(ip2),
+            ip2->ntoa(),
             proto->u_port_count,
             proto->low_p,
             proto->high_p);
@@ -148,19 +148,19 @@ static int MakeProtoInfo(PS_PROTO* proto, const u_char* buffer, u_int* total_siz
             proto->priority_count,
             proto->connection_count,
             proto->u_ip_count,
-            inet_ntoa(ip1)
+            ip1->ntoa()
             );
 
         /* Now print the high ip into the buffer.  This saves us
-         * from having to copy the results of inet_ntoa (which is
+         * from having to copy the results of SfIp::ntoa (which is
          * a static buffer) to avoid the reuse of that buffer when
-         * more than one use of inet_ntoa is within the same printf.
+         * more than one use of SfIp::ntoa is within the same printf.
          */
         SnortSnprintfAppend((char*)buffer, PROTO_BUFFER_SIZE,
             "%s\n"
             "Port/Proto Count: %d\n"
             "Port/Proto Range: %d:%d\n",
-            inet_ntoa(ip2),
+            ip2->ntoa(),
             proto->u_port_count,
             proto->low_p,
             proto->high_p);
@@ -181,8 +181,8 @@ static int LogPortscanAlert(Packet* p, uint32_t event_id,
     uint32_t event_ref, uint32_t gen_id, uint32_t sig_id)
 {
     char timebuf[TIMEBUF_SIZE];
-    const sfip_t* src_addr;
-    const sfip_t* dst_addr;
+    const SfIp* src_addr;
+    const SfIp* dst_addr;
 
     if(!p->ptrs.ip_api.is_ip())
         return -1;
@@ -205,8 +205,8 @@ static int LogPortscanAlert(Packet* p, uint32_t event_id,
     else
         fprintf(g_logfile, "event_ref: %u\n", event_ref);
 
-    fprintf(g_logfile, "%s ", inet_ntoa(p->ptrs.ip_api.get_src()));
-    fprintf(g_logfile, "-> %s\n", inet_ntoa(p->ptrs.ip_api.get_dst()));
+    fprintf(g_logfile, "%s ", p->ptrs.ip_api.get_src()->ntoa());
+    fprintf(g_logfile, "-> %s\n", p->ptrs.ip_api.get_dst()->ntoa());
     fprintf(g_logfile, "%.*s\n", p->dsize, p->data);
 
     fflush(g_logfile);
@@ -670,16 +670,16 @@ static void PrintIPPortSet(IP_PORT* p)
     char ip_str[80], output_str[80];
     PORTRANGE* pr;
 
-    SnortSnprintf(ip_str, sizeof(ip_str), "%s", sfip_to_str(&p->ip));
+    SnortSnprintf(ip_str, sizeof(ip_str), "%s", p->ip.get_addr()->ntoa());
 
     if (p->notflag)
         SnortSnprintf(output_str, sizeof(output_str), "        !%s", ip_str);
     else
         SnortSnprintf(output_str, sizeof(output_str), "        %s", ip_str);
 
-    if (((p->ip.family == AF_INET6) && (p->ip.bits != 128)) ||
-        ((p->ip.family == AF_INET ) && (p->ip.bits != 32 )))
-        SnortSnprintfAppend(output_str, sizeof(output_str), "/%d", p->ip.bits);
+    if (((p->ip.get_family() == AF_INET6) && (p->ip.get_bits() != 128)) ||
+        ((p->ip.get_family() == AF_INET ) && (p->ip.get_bits() != 32 )))
+        SnortSnprintfAppend(output_str, sizeof(output_str), "/%d", p->ip.get_bits());
 
     SF_LNODE* cursor;
     pr=(PORTRANGE*)sflist_first(&p->portset.port_list, &cursor);

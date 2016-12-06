@@ -37,6 +37,7 @@
 #include "log/log_text.h"
 #include "log/log.h"
 #include "protocols/packet_manager.h"
+#include "utils/util.h"
 
 #define CD_TCP_NAME "tcp"
 #define CD_TCP_HELP "support for transmission control protocol"

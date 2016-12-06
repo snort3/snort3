@@ -98,8 +98,8 @@ void Stream::delete_flow(const FlowKey* key)
 
 Flow* Stream::get_flow(
     PktType type, IpProtocol proto,
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
+    const SfIp* srcIP, uint16_t srcPort,
+    const SfIp* dstIP, uint16_t dstPort,
     uint16_t vlan, uint32_t mplsId, uint16_t addressSpaceId)
 {
     FlowKey key;
@@ -144,8 +144,8 @@ FlowData* Stream::get_flow_data(
 
 FlowData* Stream::get_flow_data(
     PktType type, IpProtocol proto,
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
+    const SfIp* srcIP, uint16_t srcPort,
+    const SfIp* dstIP, uint16_t dstPort,
     uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceID, unsigned flow_id)
 {
@@ -199,8 +199,8 @@ void Stream::check_flow_closed(Packet* p)
 
 int Stream::ignore_flow(
     const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
+    const SfIp* srcIP, uint16_t srcPort,
+    const SfIp* dstIP, uint16_t dstPort,
     char direction, uint32_t flow_id)
 {
     assert(flow_con);
@@ -281,7 +281,7 @@ void Stream::resume_inspection(Flow* flow, char dir)
 }
 
 void Stream::update_direction(
-    Flow* flow, char dir, const sfip_t* ip, uint16_t port)
+    Flow* flow, char dir, const SfIp* ip, uint16_t port)
 {
     if (!flow)
         return;
@@ -396,8 +396,8 @@ bool Stream::expected_flow(Flow* f, Packet* p)
 
 int Stream::set_application_protocol_id_expected(
     const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
+    const SfIp* srcIP, uint16_t srcPort,
+    const SfIp* dstIP, uint16_t dstPort,
     int16_t appId, FlowData* fd)
 {
     assert(flow_con);

@@ -21,11 +21,14 @@
 #include "reputation_parse.h"
 
 #include <assert.h>
+#include <netinet/in.h>
+
 #include <limits>
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "parser/config_file.h"
+#include "sfip/sf_cidr.h"
 #include "utils/util.h"
 
 using namespace std;
@@ -307,7 +310,7 @@ static int64_t updateEntryInfo(INFO* current, INFO new_entry, SaveDest saveDest,
     return bytesAllocated;
 }
 
-static int AddIPtoList(sfip_t* ipAddr,INFO ipInfo_ptr, ReputationConfig* config)
+static int AddIPtoList(SfCidr* ipAddr,INFO ipInfo_ptr, ReputationConfig* config)
 {
     int iRet;
     int iFinalRet = IP_INSERT_SUCCESS;
@@ -317,38 +320,27 @@ static int AddIPtoList(sfip_t* ipAddr,INFO ipInfo_ptr, ReputationConfig* config)
     uint32_t usageBeforeAdd;
     uint32_t usageAfterAdd;
 
-    if (ipAddr->family == AF_INET)
-    {
-        ipAddr->ip32[0] = ntohl(ipAddr->ip32[0]);
-    }
-    else if (ipAddr->family == AF_INET6)
-    {
-        int i;
-        for (i = 0; i < 4; i++)
-            ipAddr->ip32[i] = ntohl(ipAddr->ip32[i]);
-    }
-
 #ifdef DEBUG_MSGS
-    if (nullptr != sfrt_flat_lookup((void*)ipAddr, config->iplist))
+    if (nullptr != sfrt_flat_lookup(ipAddr->get_addr(), config->iplist))
     {
-        DebugFormat(DEBUG_REPUTATION, "Find address before insert: %s\n", sfip_to_str(ipAddr) );
+        DebugFormat(DEBUG_REPUTATION, "Find address before insert: %s\n", ipAddr->ntoa() );
     }
     else
     {
         DebugFormat(DEBUG_REPUTATION,
-            "Can't find address before insert: %s\n", sfip_to_str(ipAddr) );
+            "Can't find address before insert: %s\n", ipAddr->ntoa() );
     }
 #endif
 
     usageBeforeAdd =  sfrt_flat_usage(config->iplist);
 
     /*Check whether the same or more generic address is already in the table*/
-    if (nullptr != sfrt_flat_lookup((void*)ipAddr, config->iplist))
+    if (nullptr != sfrt_flat_lookup(ipAddr->get_addr(), config->iplist))
     {
         iFinalRet = IP_INSERT_DUPLICATE;
     }
 
-    iRet = sfrt_flat_insert((void*)ipAddr, (unsigned char)ipAddr->bits, ipInfo_ptr, RT_FAVOR_ALL,
+    iRet = sfrt_flat_insert(ipAddr, (unsigned char)ipAddr->get_bits(), ipInfo_ptr, RT_FAVOR_ALL,
         config->iplist, &updateEntryInfo);
     DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Unused memory: %zu \n",segment_unusedmem()); );
 
@@ -359,10 +351,10 @@ static int AddIPtoList(sfip_t* ipAddr,INFO ipInfo_ptr, ReputationConfig* config)
         DebugFormat(DEBUG_REPUTATION, "Number of entries input: %d, in table: %u \n",
             totalNumEntries,sfrt_flat_num_entries(config->iplist) );
         DebugFormat(DEBUG_REPUTATION, "Memory allocated: %u \n",sfrt_flat_usage(config->iplist) );
-        result = (IPrepInfo*)sfrt_flat_lookup((void*)ipAddr, config->iplist);
+        result = (IPrepInfo*)sfrt_flat_lookup(ipAddr->get_addr(), config->iplist);
         if (nullptr != result)
         {
-            DebugFormat(DEBUG_REPUTATION, "Find address after insert: %s \n",sfip_to_str(ipAddr) );
+            DebugFormat(DEBUG_REPUTATION, "Find address after insert: %s \n", ipAddr->ntoa() );
             DEBUG_WRAP(ReputationPrintRepInfo(result, (uint8_t*)config->iplist); );
         }
 #endif
@@ -372,13 +364,13 @@ static int AddIPtoList(sfip_t* ipAddr,INFO ipInfo_ptr, ReputationConfig* config)
     {
         iFinalRet = IP_MEM_ALLOC_FAILURE;
         DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Insert error: %d for address: %s \n",iRet,
-            sfip_to_str(ipAddr) ); );
+            ipAddr->ntoa() ); );
     }
     else
     {
         iFinalRet = IP_INSERT_FAILURE;
         DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Insert error: %d for address: %s \n",iRet,
-            sfip_to_str(ipAddr) ); );
+            ipAddr->ntoa() ); );
     }
 
     usageAfterAdd = sfrt_flat_usage(config->iplist);
@@ -396,32 +388,24 @@ static int AddIPtoList(sfip_t* ipAddr,INFO ipInfo_ptr, ReputationConfig* config)
     return iFinalRet;
 }
 
-static int snort_pton__address(char const* src, sfip_t* dest)
+// FIXIT-L X Remove this or at least move it to SfCidr?
+static int snort_pton__address(char const* src, SfCidr* dest)
 {
     unsigned char _temp[sizeof(struct in6_addr)];
 
     if ( inet_pton(AF_INET, src, _temp) == 1 )
-    {
-        dest->family = AF_INET;
-        dest->bits = 32;
-    }
+        dest->set(_temp, AF_INET);
     else if ( inet_pton(AF_INET6, src, _temp) == 1 )
-    {
-        dest->family = AF_INET6;
-        dest->bits = 128;
-    }
+        dest->set(_temp, AF_INET6);
     else
-    {
         return 0;
-    }
-
-    memcpy(&dest->ip8[0], _temp, sizeof(_temp));
 
     return 1;
 }
 
+// FIXIT-L X Remove this or at least move it to SfCidr?
 #define isident(x) (isxdigit((x)) || (x) == ':' || (x) == '.')
-static int snort_pton(char const* src, sfip_t* dest)
+static int snort_pton(char const* src, SfCidr* dest)
 {
     char ipbuf[INET6_ADDRSTRLEN];
     char cidrbuf[sizeof("128")];
@@ -531,10 +515,13 @@ static int snort_pton(char const* src, sfip_t* dest)
         char* end;
         int value = strtol(cidrbuf, &end, 10);
 
-        if ( value > dest->bits || value <= 0 || errno == ERANGE )
+        if ( value > dest->get_bits() || value <= 0 || errno == ERANGE )
             return 0;
 
-        dest->bits = value;
+        if (dest->get_addr()->is_ip4() && value <= 32)
+            dest->set_bits(value + 96);
+        else
+            dest->set_bits(value);
     }
 
     return 1;
@@ -542,7 +529,7 @@ static int snort_pton(char const* src, sfip_t* dest)
 
 static int ProcessLine(char* line, INFO info, ReputationConfig* config)
 {
-    sfip_t address;
+    SfCidr address;
 
     if ( !line || *line == '\0' )
         return IP_INSERT_SUCCESS;
