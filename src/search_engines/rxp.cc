@@ -128,7 +128,7 @@ struct RxpJob
     unsigned int offset;
     MpseMatch match_cb;
     void *match_ctx;
-    int *current_state;
+    int current_state;
 
     int subset_count;
     class RxpMpse* subset[RXP_MAX_SUBSETS];
@@ -328,14 +328,15 @@ void RxpMpse::_match(uint32_t ruleid, int to, MpseMatch mf, void *pv)
 int RxpMpse::_search(
     const uint8_t* buf, int n, MpseMatch mf, void* pv, int* current_state)
 {
+    int ret;
+
     if(fallback and n < RXP_PACKET_LENGTH)
     {
-        LogMessage("WARNING: Data buffer smaller than %d bytes\n",RXP_PACKET_LENGTH);
-
         /* We fall back to a software search engine here
          * or try to match with RXP if error/not available.*/
-        if(fallback_search ((uint8_t*) buf, n, mf, pv, current_state) == 0)
-            return 0;
+        ret = fallback_search((uint8_t*) buf, n, mf, pv, current_state);
+        if ( ret >= 0 )
+            return ret;
         else
             LogMessage("WARNING: Fallback error, will try to analyze it with RXP \n");
     }
@@ -358,8 +359,9 @@ int RxpMpse::_search(
         LogMessage("ERROR: Max RXP job count of %d reached.\n", i);
         /* We fall back to a software search engine here
          * or throw an error and quit if error/not available.*/
-        if(fallback_search ((uint8_t*) buf, n, mf, pv, current_state) == 0)
-             return 0;
+        ret = fallback_search((uint8_t*) buf, n, mf, pv, current_state);
+        if ( ret >= 0 )
+             return ret;
         else
             /* FIXIT-T: We should either dispatch, or expand the job table here.*/
             exit(-1);
@@ -374,7 +376,7 @@ int RxpMpse::_search(
         jobs[i].match_ctx = pv;
         jobs[i].subset_count = 1;
         jobs[i].subset[0] = this;
-        jobs[i].current_state=current_state;
+        jobs[i].current_state = *current_state;
     }
     else
     {
@@ -471,7 +473,6 @@ int RxpMpse::fallback_search (const unsigned char* buf, int len, MpseMatch match
 {
     if(RxpMpse::fallback)
     {
-        LogMessage("WARNING: Analysis deferred to fallback search engine\n");
         return RxpMpse::fallback->search((uint8_t*) buf, len, match_cb, match_ctx, current_state);
     }
     else
@@ -615,7 +616,7 @@ static int rxp_receive_responses()
                 for (j = 0; j < job->subset_count; j++)
                 {
                     if(job->subset[j]->fallback_search((uint8_t*) job->buf, job->len,
-                            job->match_cb, job->match_ctx, job->current_state) != 0 )
+                            job->match_cb, job->match_ctx, &job->current_state) < 0 )
                     {
                         break;
                     }
@@ -708,7 +709,7 @@ static int rxp_send_jobs()
               {
                   if(RxpMpse::jobs[i].subset[j]->fallback_search((uint8_t*) RxpMpse::jobs[i].buf,
                           RxpMpse::jobs[i].len, RxpMpse::jobs[i].match_cb,
-                          RxpMpse::jobs[i].match_ctx, RxpMpse::jobs[i].current_state) != 0 )
+                          RxpMpse::jobs[i].match_ctx, &RxpMpse::jobs[i].current_state) < 0 )
                       exit(-1);
               }
         }
@@ -744,7 +745,7 @@ static int rxp_send_jobs()
               {
                   if(RxpMpse::jobs[i].subset[j]->fallback_search((uint8_t*) RxpMpse::jobs[i].buf,
                           RxpMpse::jobs[i].len, RxpMpse::jobs[i].match_cb,
-                          RxpMpse::jobs[i].match_ctx, RxpMpse::jobs[i].current_state) != 0 )
+                          RxpMpse::jobs[i].match_ctx, &RxpMpse::jobs[i].current_state) < 0 )
                       exit(-1);
               }
         }
