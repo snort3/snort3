@@ -82,17 +82,29 @@ public:
     const Packet* get_packet() override
     { return p; }
 
-    const std::string* get_from() const
-    { return from.size() ? &from : nullptr; }
+    const char* get_from() const
+    { return from; }
 
-    const std::string* get_user_name() const
-    { return user_name.size() ? &user_name : nullptr; }
+    size_t get_from_len() const
+    { return from_len; }
 
-    const std::string* get_user_agent() const
-    { return user_agent.size() ? &user_agent : nullptr; }
+    const char* get_user_name() const
+    { return user_name; }
 
-    const std::string* get_server() const
-    { return server.size() ? &server : nullptr; }
+    size_t get_user_name_len() const
+    { return user_name_len; }
+
+    const char* get_user_agent() const
+    { return user_agent; }
+
+    size_t get_user_agent_len() const
+    { return user_agent_len; }
+
+    const char* get_server() const
+    { return server; }
+
+    size_t get_server_len() const
+    { return server_len; }
 
     bool is_invite() const;
     bool is_media_updated() const;
@@ -108,10 +120,14 @@ private:
     const SIPMsg* msg;
     const SIP_DialogData* dialog;
 
-    std::string from;
-    std::string user_name;
-    std::string user_agent;
-    std::string server;
+    const char* from;
+    size_t from_len;
+    const char* user_name;
+    size_t user_name_len;
+    const char* user_agent;
+    size_t user_agent_len;
+    const char* server;
+    size_t server_len;
 
     std::list<SipEventMediaSession*> sessions;
     SIP_MediaSession* current_media_session = nullptr;

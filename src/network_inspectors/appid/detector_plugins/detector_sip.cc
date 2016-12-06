@@ -92,9 +92,9 @@ struct ClientSIPData
     void* owner = nullptr;
     SIPState state = SIP_STATE_INIT;
     uint32_t flags = 0;
-    const string* user_name = nullptr;
-    const string* client_user_agent = nullptr;
-    const string* from = nullptr;
+    string user_name;
+    string user_agent;
+    string from;
 };
 
 struct DetectorSipConfig
@@ -557,24 +557,24 @@ static void SipSessionCbClientProcess(SipEvent& event, AppIdSession* asd)
 
     if( event.is_invite() && direction == APP_ID_FROM_INITIATOR )
     {
-        fd->from = event.get_from();
-        fd->user_name = event.get_user_name();
-        fd->client_user_agent = event.get_user_agent();
+        fd->from = string(event.get_from(), event.get_from_len());
+        fd->user_name = string(event.get_user_name(), event.get_user_name_len());
+        fd->user_agent = string(event.get_user_agent(), event.get_user_agent_len());
     }
 
-    if( fd->client_user_agent )
+    if( fd->user_agent.size() )
     {
         if( get_sip_client_app(detector_sip_config.sip_ua_matcher,
-            fd->client_user_agent->c_str(), fd->client_user_agent->size(), &ClientAppId, &clientVersion) )
+            fd->user_agent.c_str(), fd->user_agent.size(), &ClientAppId, &clientVersion) )
             goto success;
     }
 
-    if( fd->from && !(fd->flags & SIP_FLAG_SERVER_CHECKED) )
+    if( fd->from.size() && !(fd->flags & SIP_FLAG_SERVER_CHECKED) )
     {
         fd->flags |= SIP_FLAG_SERVER_CHECKED;
 
         if( get_sip_client_app(detector_sip_config.sip_server_matcher,
-            fd->from->c_str(), fd->from->size(), &ClientAppId, &clientVersion) )
+            fd->from.c_str(), fd->from.size(), &ClientAppId, &clientVersion) )
             goto success;
     }
 
@@ -586,8 +586,8 @@ success:
     sip_udp_client_mod.api->add_app(asd, APP_ID_SIP, ClientAppId, clientVersion);
     appid_stats.sip_clients++;
 
-    if( fd->user_name )
-        sip_udp_client_mod.api->add_user(asd, fd->user_name->c_str(), APP_ID_SIP, 1);
+    if( fd->user_name.size() )
+        sip_udp_client_mod.api->add_user(asd, fd->user_name.c_str(), APP_ID_SIP, 1);
 
     asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
 }
@@ -612,15 +612,15 @@ static void SipSessionCbServiceProcess(SipEvent& event, AppIdSession* asd)
     {
         if( event.get_user_agent() )
         {
-            memcpy(ss->vendor, event.get_user_agent()->c_str(),
-                event.get_user_agent()->size() > (MAX_VENDOR_SIZE - 1) ?  (MAX_VENDOR_SIZE - 1) :
-                event.get_user_agent()->size());
+            memcpy(ss->vendor, event.get_user_agent(),
+                event.get_user_agent_len() > (MAX_VENDOR_SIZE - 1) ?  (MAX_VENDOR_SIZE - 1) :
+                event.get_user_agent_len());
         }
         else if( event.get_server() )
         {
-            memcpy(ss->vendor, event.get_server()->c_str(),
-                event.get_server()->size() > (MAX_VENDOR_SIZE - 1) ?  (MAX_VENDOR_SIZE - 1) :
-                event.get_server()->size());
+            memcpy(ss->vendor, event.get_server(),
+                event.get_server_len() > (MAX_VENDOR_SIZE - 1) ?  (MAX_VENDOR_SIZE - 1) :
+                event.get_server_len());
         }
     }
 
