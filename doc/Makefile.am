@@ -29,6 +29,7 @@ bugs.txt \
 building.txt \
 config_changes.txt \
 daq.txt \
+dcerpc.txt \
 differences.txt \
 enviro.txt \
 errors.txt \

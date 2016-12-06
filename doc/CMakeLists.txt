@@ -36,6 +36,7 @@ set (
     bugs.txt
     building.txt
     daq.txt
+    dcerpc.txt
     differences.txt
     enviro.txt
     errors.txt

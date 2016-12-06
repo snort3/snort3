@@ -1,0 +1,365 @@
+The main purpose of these inspector are to perform SMB desegmentation and
+DCE/RPC defragmentation to avoid rule evasion using these techniques.
+
+==== Overview
+
+The following transports are supported for DCE/RPC: SMB, TCP, and UDP.  
+New rule options have been implemented to improve performance, reduce false 
+positives and reduce the count and complexity of DCE/RPC based rules.
+
+Different from snort 2x, the DCE-RPC preprocessor is split into three inspectors
+ - one for each transport: dce_smb, dce_tcp, dce_udp. This includes the 
+configuration as well as the inspector modules. The Snort 2x server configuration
+is now split between the inspectors. Options that are meaningful to all 
+inspectors, such as policy and defragmentation, are copied into each inspector 
+configuration. The address/port mapping is handled by the binder. Autodetect 
+functionality is replaced by wizard curses.
+
+==== Quick Guide
+
+A typical dcerpce configuration looks like this:
+
+   binder =
+   {    
+      {
+          when =
+          {
+              proto = 'tcp',
+              ports = '139 445 1025',
+           },
+          use =
+          {
+              type = 'dce_smb',
+          },
+       },
+       {
+          when =
+          {
+              proto = 'tcp',
+              ports = '135 2103',
+          },
+          use =
+          {
+              type = 'dce_tcp',
+          },
+       },
+       {
+          when =
+          {
+              proto = 'udp',
+              ports = '1030',
+          },
+          use =
+          {
+              type = 'dce_udp',
+          },
+       }
+    }
+    
+    dce_smb = { }
+
+    dce_tcp = { }
+    
+    dce_udp = { }
+    
+In this example, it defines smb, tcp and udp inspectors based on port. All the
+configurations are default.
+
+==== Target Based
+
+There are enough important differences between Windows and Samba versions that
+a target based approach has been implemented. Some important differences:
+
+* Named pipe instance tracking
+* Accepted SMB commands   
+* AndX command chaining
+* Transaction tracking
+* Multiple Bind requests
+* DCE/RPC Fragmented requests - Context ID
+* DCE/RPC Fragmented requests - Operation number
+* DCE/RPC Stub data byte order
+
+Because of those differences, each inspector can be configured to different 
+policy. Here are the list of policies supported:
+
+* WinXP (default)
+* Win2000 
+* WinVista
+* Win2003
+* Win2008
+* Win7
+* Samba
+* Samba-3.0.37
+* Samba-3.0.22
+* Samba-3.0.20
+
+==== Reassembling
+
+Both SMB inspector and TCP inspector support reassemble. Reassemble threshold 
+specifies a minimum number of bytes in the DCE/RPC desegmentation and 
+defragmentation buffers before creating a reassembly packet to send to the 
+detection engine. This option is useful in inline mode so as to potentially 
+catch an exploit early before full defragmentation is done. A value of 0 s
+supplied as an argument to this option will, in effect, disable this option.  
+Default is disabled.
+        
+==== SMB
+
+SMB inspector is one of the most complex inspectors. In addition to supporting 
+rule options and lots of inspector rule events, it also supports file 
+processing for both SMB version 1, 2, and 3.
+
+===== Finger Print Policy
+
+In the initial phase of an SMB session, the client needs to authenticate with a 
+SessionSetupAndX.  Both the request and response to this command contain OS and 
+version information that can allow the inspector to dynamically set the policy
+for a session which allows for better protection against Windows and Samba 
+specific evasions.
+  
+===== File Inspection
+
+SMB inspector supports file inspection. A typical configuration looks like this:      
+   
+    binder =
+    {
+       {
+           when =
+           {
+               proto = 'tcp',
+               ports = '139 445',
+           },
+           use =
+           {
+               type = 'dce_smb',
+           },
+       },
+    }
+
+    dce_smb =
+    {
+        smb_file_inspection = 'on',
+        smb_file_depth = 0,
+     }
+
+    file_id = 
+    {
+        enable_type = true,
+        enable_signature = true,
+        enable_capture = true,
+        file_rules = magics,
+    }
+    
+First, define a binder to map tcp port 139 and 445 to smb. Then, enable file
+inspection in smb inspection and set the file depth as unlimited. Lastly, enable
+file inspector to inspect file type, calculate file signature, and capture file.
+The details of file inspector are explained in file processing section.
+
+SMB inspector does inspection of normal SMB file transfers.  This includes doing
+file type and signature through the file processing as well as setting a pointer
+for the "file_data" rule option.  Note that the "file_depth" option only applies
+to the maximum amount of file data for which it will set the pointer for the 
+"file_data" rule option.  For file type and signature it will use the value 
+configured for the file API.  If "only" is specified, the inspector will only
+do SMB file inspection, i.e. it will not do any DCE/RPC tracking or inspection. 
+If "on" is specified with no arguments, the default file depth is 16384 bytes. 
+An argument of -1 to "file-depth" disables setting the pointer for "file_data",
+effectively disabling SMB file inspection in rules.  An argument of 0 to
+"file_depth" means unlimited.  Default is "off", i.e. no SMB file inspection is
+ done in the inspector. 
+ 
+==== TCP
+
+dce_tcp inspector supports defragementation, reassembling, and policy that is 
+similar to SMB.
+
+==== UDP
+
+dce_udp is a very simple inspector that only supports defragementation
+
+==== Rule Options
+
+New rule options are supported by enabling the dcerpc2 inspectors:
+
+* dce_iface
+* dce_opnum
+* dce_stub_data
+
+New modifiers to existing byte_test and byte_jump rule options:
+
+* byte_test: dce
+* byte_jump: dce
+
+===== dce_iface
+
+For DCE/RPC based rules it has been necessary to set flow-bits based on a client
+bind to a service to avoid false positives. It is necessary for a client to bind
+to a service before being able to make a call to it. When a client sends a bind
+request to the server, it can, however, specify one or more service interfaces
+to bind to.  Each interface is represented by a UUID. Each interface UUID is
+paired with a unique index (or context id) that future requests can use to
+reference the service that the client is making a call to. The server will
+respond with the interface UUIDs it accepts as valid and will allow the client
+to make requests to those services.  When a client makes a request, it will
+specify the context id so the server knows what service the client is making a
+request to. Instead of using flow-bits, a rule can simply ask the inspector,
+using this rule option, whether or not the client has bound to a specific
+interface UUID and whether or not this client request is making a request to it.
+This can eliminate false positives where more than one service is bound to
+successfully since the inspector can correlate the bind UUID to the context
+id used in the request.  A DCE/RPC request can specify whether numbers are
+represented as big endian or little endian. The representation of the interface
+UUID is different depending on the endianness specified in the DCE/RPC
+previously requiring two rules - one for big endian and one for little endian.
+The inspector eliminates the need for two rules by normalizing the UUID.
+An interface contains a version. Some versions of an interface may not be
+vulnerable to a certain exploit.  Also, a DCE/RPC request can be broken up into
+1 or more fragments. Flags (and a field in the connectionless header) are set in
+the DCE/RPC header to indicate whether the fragment is the first, a middle or
+the last fragment. Many checks for data in the DCE/RPC request are only relevant
+if the DCE/RPC request is a first fragment (or full request), since subsequent
+fragments will contain data deeper into the DCE/RPC request. A rule which is
+looking for data, say 5 bytes into the request (maybe it's a length field), will
+be looking at the wrong data on a fragment other than the first, since the
+beginning of subsequent fragments are already offset some length from the
+beginning of the request. This can be a source of false positives in fragmented
+DCE/RPC traffic. By default it is reasonable to only evaluate if the request is
+a first fragment (or full request). However, if the "any_frag" option is used to
+specify evaluating on all fragments.
+
+Examples:
+    
+    dce_iface: 4b324fc8-1670-01d3-1278-5a47bf6ee188;
+    dce_iface: 4b324fc8-1670-01d3-1278-5a47bf6ee188,<2;
+    dce_iface: 4b324fc8-1670-01d3-1278-5a47bf6ee188,any_frag;
+    dce_iface: 4b324fc8-1670-01d3-1278-5a47bf6ee188,=1,any_frag;
+
+This option is used to specify an interface UUID. Optional arguments are an
+interface version and operator to specify that the version be less than ('<'),
+greater than ('>'), equal to ('=') or not equal to ('!') the version specified.
+Also, by default the rule will only be evaluated for a first fragment (or full
+request, i.e. not a fragment) since most rules are written to start at the
+beginning of a request. The "any_frag" argument says to evaluate for middle and
+last fragments as well.  This option requires tracking client Bind and
+Alter Context requests as well as server Bind Ack and Alter Context responses
+for connection-oriented DCE/RPC in the inspector. For each Bind and
+Alter Context request, the client specifies a list of interface UUIDs along
+with a handle (or context id) for each interface UUID that will be used during
+the DCE/RPC session to reference the interface.  The server response indicates
+which interfaces it will allow the client to make requests to - it either
+accepts or rejects the client's wish to bind to a certain interface. This
+tracking is required so that when a request is processed, the context id used
+in the request can be correlated with the interface UUID it is a handle for.
+
+hexlong and hexshort will be specified and interpreted to be in big endian
+order (this is usually the default way an interface UUID will be seen and
+represented). As an example, the following Messenger interface UUID as taken
+off the wire from a little endian Bind request:
+
+    |f8 91 7b 5a 00 ff d0 11 a9 b2 00 c0 4f b6 e6 fc|
+    
+must be written as:
+
+    5a7b91f8-ff00-11d0-a9b2-00c04fb6e6fc
+    
+The same UUID taken off the wire from a big endian Bind request:
+
+    |5a 7b 91 f8 ff 00 11 d0 a9 b2 00 c0 4f b6 e6 fc|
+    
+must be written the same way:
+
+    5a7b91f8-ff00-11d0-a9b2-00c04fb6e6fc
+
+This option matches if the specified interface UUID matches the interface UUID
+(as referred to by the context id) of the DCE/RPC request and if supplied, the
+version operation is true. This option will not match if the fragment is not a
+first fragment (or full request) unless the "any_frag" option is supplied in
+which case only the interface UUID and version need match.  Note that a
+defragmented DCE/RPC request will be considered a full request.
+
+Using this rule option will automatically insert fast pattern contents into
+the fast pattern matcher.  For UDP rules, the interface UUID, in both big and
+little endian format will be inserted into the fast pattern matcher.  For TCP
+rules, (1) if the rule option "flow:to_server|from_client" is used, |05 00 00|
+will be inserted into the fast pattern matcher, (2) if the rule option
+"flow:from_server|to_client" is used, |05 00 02| will be inserted into the
+fast pattern matcher and (3) if the flow isn't known, |05 00| will be inserted
+into the fast pattern matcher.  Note that if the rule already has content rule
+options in it, the best (meaning longest) pattern will be used.  If a content
+in the rule uses the fast_pattern rule option, it will unequivocally be used
+over the above mentioned patterns.
+
+===== dce_opnum
+
+The opnum represents a specific function call to an interface. After is has
+been determined that a client has bound to a specific interface and is making
+a request to it (see above - dce_iface) usually we want to know what function
+call it is making to that service. It is likely that an exploit lies in the
+particular DCE/RPC function call.
+
+Examples:
+
+    dce_opnum: 15;
+    dce_opnum: 15-18;
+    dce_opnum: 15,18-20;
+    dce_opnum: 15,17,20-22;
+    
+This option is used to specify an opnum (or operation number), opnum range or
+list containing either or both opnum and/or opnum-range. The opnum of a
+DCE/RPC request will be matched against the opnums specified with this option.
+This option matches if any one of the opnums specified match the opnum of the
+DCE/RPC request.
+
+===== dce_stub_data
+
+Since most DCE/RPC based rules had to do protocol decoding only to get to the
+DCE/RPC stub data, i.e. the remote procedure call or function call data, this
+option will alleviate this need and place the cursor at the beginning of the
+DCE/RPC stub data. This reduces the number of rule option checks and the
+complexity of the rule.
+
+This option takes no arguments.
+
+Example:
+
+    dce_stub_data;
+
+This option is used to place the cursor (used to walk the packet payload in
+rules processing) at the beginning of the DCE/RPC stub data, regardless of
+preceding rule options. There are no arguments to this option.  This option
+matches if there is DCE/RPC stub data.
+
+The cursor is moved to the beginning of the stub data.  All ensuing rule
+options will be considered "sticky" to this buffer.  The first rule option
+following dce_stub_data should use absolute location modifiers if it is
+position-dependent.  Subsequent rule options should use a relative modifier if
+they are meant to be relative to a previous rule option match in the stub data
+buffer.  Any rule option that does not specify a relative modifier will be
+evaluated from the start of the stub data buffer.  To leave the stub data buffer
+and return to the main payload buffer, use the "pkt_data" rule option.
+
+===== byte_test and byte_jump
+
+A DCE/RPC request can specify whether numbers are represented in big or little
+endian. These rule options will take as a new argument "dce" and will work
+basically the same as the normal byte_test/byte_jump, but since the DCE/RPC
+inspector will know the endianness of the request, it will be able to do
+the correct conversion.
+
+Examples:
+
+    byte_test: 4,>,35000,0,relative,dce;
+    byte_test: 2,!=,2280,-10,relative,dce;
+
+When using the "dce" argument to a byte_test, the following normal byte_test
+arguments will not be allowed: "big", "little", "string", "hex", "dec" and
+"oct".
+
+Examples:
+
+    byte_jump:4,-4,relative,align,multiplier 2,post_offset -4,dce;
+
+When using the dce argument to a byte_jump, the following normal byte_jump
+arguments will not be allowed: "big", "little", "string", "hex", "dec", "oct"
+and "from_beginning"
+

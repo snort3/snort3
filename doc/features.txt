@@ -2,6 +2,10 @@
 
 include::binder.txt[]
 
+=== DCE Inspectors
+
+include::dcerpc.txt[]
+
 === File Processing
 
 include::file_processing.txt[]
