@@ -66,7 +66,7 @@ THREAD_LOCAL WizStats tstats;
 
 struct CurseServiceTracker
 {
-    string service;
+    const CurseDetails* curse;
     CurseTracker* tracker;
 };
 
@@ -111,7 +111,7 @@ public:
     void reset(Wand&, bool tcp, bool c2s);
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned);
     bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned);
-    bool cursebind(vector<CurseServiceTracker>&,Flow*, const uint8_t*, unsigned);
+    bool cursebind(vector<CurseServiceTracker>&, Flow*, const uint8_t*, unsigned);
 
 public:
     MagicBook* c2s_hexes;
@@ -119,7 +119,8 @@ public:
 
     MagicBook* c2s_spells;
     MagicBook* s2c_spells;
-    vector<string> curse_book;
+
+    CurseBook* curses;
 };
 
 //-------------------------------------------------------------------------
@@ -169,7 +170,8 @@ Wizard::Wizard(WizardModule* m)
 
     c2s_spells = m->get_book(true, false);
     s2c_spells = m->get_book(false, false);
-    curse_book = m->get_curse_book();
+
+    curses = m->get_curse_book();
 }
 
 Wizard::~Wizard()
@@ -179,6 +181,8 @@ Wizard::~Wizard()
 
     delete c2s_spells;
     delete s2c_spells;
+
+    delete curses;
 }
 
 void Wizard::reset(Wand& w, bool tcp, bool c2s)
@@ -196,15 +200,13 @@ void Wizard::reset(Wand& w, bool tcp, bool c2s)
 
     if (w.curse_tracker.empty())
     {
-        for ( auto service:curse_book )
+        vector<const CurseDetails*> pages = curses->get_curses(tcp);
+        for ( const CurseDetails* curse : pages )
         {
-            if (tcp == curse_map[service].is_tcp)
-            {
-                if (tcp)
-                    w.curse_tracker.push_back({ service, new CurseTracker });
-                else
-                    w.curse_tracker.push_back({ service, nullptr });
-            }
+            if (tcp)
+                w.curse_tracker.push_back({ curse, new CurseTracker });
+            else
+                w.curse_tracker.push_back({ curse, nullptr });
         }
     }
 }
@@ -247,6 +249,24 @@ bool Wizard::spellbind(
     return false;
 }
 
+bool Wizard::cursebind(vector<CurseServiceTracker>& curse_tracker, Flow* f,
+        const uint8_t* data, unsigned len)
+{
+    for (const CurseServiceTracker& cst : curse_tracker)
+    {
+        if (cst.curse->alg(data, len, cst.tracker))
+        {
+            f->service = cst.curse->service.c_str();
+            // FIXIT-H need to make sure Flow's ipproto and service
+            // correspond to HostApplicationEntry's ipproto and service
+            host_cache_add_service(f->server_ip, f->ip_proto, f->server_port, f->service);
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool Wizard::cast_spell(
     Wand& w, Flow* f, const uint8_t* data, unsigned len)
 {
@@ -260,31 +280,6 @@ bool Wizard::cast_spell(
         return true;
 
     return false;
-}
-
-bool Wizard::cursebind(
-    vector<CurseServiceTracker>& curse_tracker, Flow* f, const uint8_t* data, unsigned len)
-{
-    bool match = false;
-
-    for (auto const& p : curse_tracker)
-    {
-        if (curse_map[p.service].alg(data,len, p.tracker))
-        {
-            match = true;
-            f->service = p.service.c_str();
-            break;
-        }
-    }
-
-    if (match)
-    {
-        // FIXIT-H need to make sure Flow's ipproto and service
-        // correspond to HostApplicationEntry's ipproto and service
-        host_cache_add_service(f->server_ip, f->ip_proto, f->server_port, f->service);
-    }
-
-    return match;
 }
 
 //-------------------------------------------------------------------------

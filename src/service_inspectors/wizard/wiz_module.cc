@@ -110,6 +110,7 @@ WizardModule::WizardModule() : Module(WIZ_NAME, WIZ_HELP, s_params)
     s2c_hexes = nullptr;
     c2s_spells = nullptr;
     s2c_spells = nullptr;
+    curses = nullptr;
 }
 
 WizardModule::~WizardModule()
@@ -119,6 +120,8 @@ WizardModule::~WizardModule()
 
     delete c2s_spells;
     delete s2c_spells;
+
+    delete curses;
 }
 
 ProfileStats* WizardModule::get_profile() const
@@ -143,7 +146,7 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
         spells.push_back(v.get_string());
 
     else if ( v.is("curses") )
-        curses.push_back(v.get_string());
+        curses->add_curse(v.get_string());
 
     else
         return false;
@@ -160,7 +163,8 @@ bool WizardModule::begin(const char* fqn, int, SnortConfig*)
 
         c2s_spells = new SpellBook;
         s2c_spells = new SpellBook;
-        curses.clear();
+
+        curses = new CurseBook;
     }
     else if ( !strcmp(fqn, "wizard.hexes") )
         hex = true;
@@ -209,8 +213,8 @@ bool WizardModule::end(const char*, int idx, SnortConfig*)
             add_spells(s2c_spells, service);
     }
 
-    spells.clear();
     service.clear();
+    spells.clear();
 
     return true;
 }
@@ -244,6 +248,13 @@ MagicBook* WizardModule::get_book(bool c2s, bool hex)
         c2s_hexes = nullptr;
         break;
     }
+    return b;
+}
+
+CurseBook* WizardModule::get_curse_book()
+{
+    CurseBook* b = curses;
+    curses = nullptr;
     return b;
 }
 

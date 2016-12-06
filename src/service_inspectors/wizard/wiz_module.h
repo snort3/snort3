@@ -37,6 +37,7 @@ extern THREAD_LOCAL struct WizStats tstats;
 extern THREAD_LOCAL ProfileStats wizPerfStats;
 
 class MagicBook;
+class CurseBook;
 
 class WizardModule : public Module
 {
@@ -53,10 +54,7 @@ public:
     ProfileStats* get_profile() const override;
 
     MagicBook* get_book(bool c2s, bool hex);
-    std::vector<std::string> get_curse_book()
-    {
-        return curses;
-    }
+    CurseBook* get_curse_book();
 
 private:
     void add_spells(MagicBook*, std::string&);
@@ -64,16 +62,16 @@ private:
 private:
     bool hex;
     bool c2s;
-
     std::string service;
     std::vector<std::string> spells;
-    std::vector<std::string> curses;
 
     MagicBook* c2s_hexes;
     MagicBook* s2c_hexes;
 
     MagicBook* c2s_spells;
     MagicBook* s2c_spells;
+
+    CurseBook* curses;
 };
 
 #endif

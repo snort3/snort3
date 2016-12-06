@@ -21,9 +21,9 @@
 #define CURSES_H
 
 #include <ctype.h>
-#include <map>
-#include "flow/flow.h"
-#include "protocols/packet.h"
+
+#include <string>
+#include <vector>
 
 enum DCE_States
 {
@@ -53,12 +53,21 @@ typedef bool (* curse_alg)(const uint8_t* data, unsigned len, CurseTracker*);
 
 struct CurseDetails
 {
+    std::string service;
     curse_alg alg;
     bool is_tcp;
 };
 
-// map between service and curse details
-extern std::map<std::string, CurseDetails > curse_map;
+class CurseBook
+{
+public:
+    bool add_curse(const char* service);
+    const std::vector<const CurseDetails*>& get_curses(bool tcp) const;
+
+private:
+    std::vector<const CurseDetails*> tcp_curses;
+    std::vector<const CurseDetails*> non_tcp_curses;
+};
 
 #endif
 
