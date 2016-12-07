@@ -36,7 +36,7 @@ static void test_signed()
     lua_pushinteger(L, 3);
     {
         auto r = Lua::Stack<int>::get(L, -1);
-        CHECK(r == 3);
+        CHECK((r == 3));
     }
     lua_pop(L, 1);
 
@@ -62,7 +62,7 @@ static void test_signed()
     lua_pushinteger(L, 5);
     {
         b = Lua::Stack<int>::validate(L, -1, k);
-        CHECK(k == 5);
+        CHECK((k == 5));
         CHECK(b);
     }
     lua_pop(L, 1);
@@ -72,7 +72,7 @@ static void test_signed()
     lua_pushnil(L);
     {
         b = Lua::Stack<int>::validate(L, -1, k);
-        CHECK(k == 7);
+        CHECK((k == 7));
         CHECK(!b);
     }
     lua_pop(L, 1);
@@ -87,7 +87,7 @@ static void test_unsigned()
     lua_pushinteger(L, 3);
     {
         auto r = Lua::Stack<unsigned short>::get(L, -1);
-        CHECK(r == 3);
+        CHECK((r == 3));
     }
     lua_pop(L, 1);
 
@@ -113,7 +113,7 @@ static void test_unsigned()
     lua_pushinteger(L, 5);
     {
         b = Lua::Stack<unsigned short>::validate(L, -1, k);
-        CHECK(k == 5);
+        CHECK((k == 5));
         CHECK(b);
     }
     lua_pop(L, 1);
@@ -123,14 +123,14 @@ static void test_unsigned()
     lua_pushnil(L);
     {
         b = Lua::Stack<unsigned short>::validate(L, -1, k);
-        CHECK(k == 7);
+        CHECK((k == 7));
         CHECK(!b);
     }
     lua_pop(L, 1);
     lua_pushinteger(L, -1);
     {
         b = Lua::Stack<unsigned short>::validate(L, -1, k);
-        CHECK(k == 7);
+        CHECK((k == 7));
         CHECK(!b);
     }
     lua_pop(L, 1);
@@ -160,7 +160,7 @@ static void test_cstring()
     lua_pushlstring(L, "f\0b", 3);
     {
         s = Lua::Stack<const char*>::get(L, -1, len);
-        CHECK(len == 3);
+        CHECK((len == 3));
         CHECK(!strncmp(s, "f\0b", len));
     }
     lua_pop(L, 1);
@@ -190,7 +190,7 @@ static void test_cstring()
     Lua::Stack<const char*>::push(L, s, 3);
     {
         s = lua_tolstring(L, -1, &len);
-        CHECK(len == 3);
+        CHECK((len == 3));
         CHECK(!strncmp(s, "f\0b", len));
     }
     lua_pop(L, 1);
@@ -269,7 +269,7 @@ static void test_string()
     lua_pushlstring(L, "f\0b", 3);
     {
         s = Lua::Stack<std::string>::get(L, -1);
-        CHECK(s.length() == 3);
+        CHECK((s.length() == 3));
         CHECK(!strncmp(s.c_str(), "f\0b", 3));
     }
     lua_pop(L, 1);
@@ -288,7 +288,7 @@ static void test_string()
     Lua::Stack<std::string>::push(L, s);
     {
         cs = lua_tolstring(L, -1, &len);
-        CHECK(len == 3);
+        CHECK((len == 3));
         CHECK(!strncmp(cs, "f\0b", len));
     }
     lua_pop(L, 1);
@@ -314,7 +314,7 @@ static void test_string()
     {
         b = Lua::Stack<std::string>::validate(L, -1, s);
         CHECK(b);
-        CHECK(s.length() == 3);
+        CHECK((s.length() == 3));
         CHECK(!strncmp(s.c_str(), "f\0o", 3));
     }
     lua_pop(L, 1);

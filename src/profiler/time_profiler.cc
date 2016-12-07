@@ -248,7 +248,7 @@ TEST_CASE( "profiler tree builder", "[profiler][profiler_tree_builder]" )
 
             CHECK( root.view.name == "a" );
 
-            REQUIRE( root.children.size() == 2 );
+            REQUIRE( (root.children.size() == 2) );
 
             SECTION( "b branch" )
             {
@@ -266,7 +266,7 @@ TEST_CASE( "profiler tree builder", "[profiler][profiler_tree_builder]" )
                 auto &c_entry = root.children[1];
 
                 REQUIRE( c_entry.view.name == "c" );
-                REQUIRE( c_entry.children.size() == 2 );
+                REQUIRE( (c_entry.children.size() == 2) );
 
                 CHECK( c_entry.children[0].view.name == "e" );
                 CHECK( c_entry.children[1].view.name == "f" );
@@ -312,16 +312,16 @@ TEST_CASE( "time profiler stats", "[profiler][time_profiler]" )
         TimeProfilerStats stats_b = { 1_ticks, 1 };
         stats += stats_b;
 
-        CHECK( stats.elapsed == 3_ticks );
-        CHECK( stats.checks == 4 );
+        CHECK( (stats.elapsed == 3_ticks) );
+        CHECK( (stats.checks == 4) );
     }
 
     SECTION( "update" )
     {
         stats.update(1_ticks);
 
-        CHECK( stats.elapsed == 3_ticks );
-        CHECK( stats.checks == 4 );
+        CHECK( (stats.elapsed == 3_ticks) );
+        CHECK( (stats.checks == 4) );
     }
 
     SECTION( "reset" )
@@ -359,28 +359,28 @@ TEST_CASE( "time profiler view", "[profiler][time_profiler]" )
 
         SECTION( "elapsed" )
         {
-            CHECK( view.elapsed() == 12_ticks );
+            CHECK( (view.elapsed() == 12_ticks) );
         }
 
         SECTION( "checks" )
         {
-            CHECK( view.checks() == 6 );
+            CHECK( (view.checks() == 6) );
         }
 
         SECTION( "avg_check" )
         {
-            CHECK( view.avg_check() == 2_ticks );
+            CHECK( (view.avg_check() == 2_ticks) );
         }
 
         SECTION( "pct_of" )
         {
             TimeProfilerStats tps = { 24_ticks, 6 };
-            CHECK( view.pct_of(tps) == 50.0 );
+            CHECK( (view.pct_of(tps) == 50.0) );
 
             SECTION( "zero division" )
             {
                 tps.elapsed = 0_ticks;
-                CHECK( view.pct_of(tps) == 0.0 );
+                CHECK( (view.pct_of(tps) == 0.0) );
             }
         }
     }
@@ -395,7 +395,7 @@ TEST_CASE( "time profiler view", "[profiler][time_profiler]" )
 
         SECTION( "pct_caller" )
         {
-            CHECK( child.pct_caller() == 50.0 );
+            CHECK( (child.pct_caller() == 50.0) );
         }
     }
 }
@@ -514,7 +514,7 @@ TEST_CASE( "time profiler time context", "[profiler][time_profiler]" )
             {
                 TimeContext ctx2(stats);
 
-                CHECK( stats.ref_count == 2 );
+                CHECK( (stats.ref_count == 2) );
             }
 
             CHECK( stats.ref_count == 1 );

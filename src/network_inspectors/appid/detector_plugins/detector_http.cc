@@ -674,9 +674,14 @@ static SearchTool* processPatterns(DetectorHTTPPattern* patternList,
 {
     SearchTool* patternMatcher = new SearchTool("ac_full");
 
-    for (uint32_t i = 0; i < patternListCount; i++)
-        patternMatcher->add(patternList[i].pattern, patternList[i].pattern_size,
-            &patternList[i], false);
+    if( patternList )
+    {
+        for (size_t i = 0; i < patternListCount; i++)
+        {
+            patternMatcher->add(patternList[i].pattern, patternList[i].pattern_size,
+                &patternList[i], false);
+        }
+    }
 
     /* Add patterns from Lua API */
     HTTPListElement* element;
@@ -698,7 +703,7 @@ static int processHostPatterns(DetectorHTTPPattern* patternList, size_t patternL
     if (!detectorHttpConfig->RTMPHosUrlMatcher)
         detectorHttpConfig->RTMPHosUrlMatcher = mlmpCreate();
 
-    for (uint32_t i = 0; i < patternListCount; i++)
+    for (size_t i = 0; i < patternListCount; i++)
     {
         if (addMlmpPattern(detectorHttpConfig->host_url_matcher,  &detectorHttpConfig->hosUrlPatternsList,
             patternList[i].pattern, patternList[i].pattern_size,
@@ -753,7 +758,7 @@ static SearchTool* processContentTypePatterns(DetectorHTTPPattern* patternList,
     SearchTool* patternMatcher = new SearchTool("ac_full");
     HTTPListElement* element;
 
-    for (uint32_t i = 0; i < patternListCount; i++)
+    for (size_t i = 0; i < patternListCount; i++)
     {
         patternMatcher->add(patternList[i].pattern, patternList[i].pattern_size,
             &patternList[i], false);
@@ -802,7 +807,7 @@ static SearchTool* registerHeaderPatterns(HeaderPattern* patternList, size_t pat
 {
     SearchTool* patternMatcher = new SearchTool("ac_full");
 
-    for (uint32_t i = 0; i < patternListCount; i++)
+    for (size_t i = 0; i < patternListCount; i++)
         patternMatcher->add(patternList[i].data, patternList[i].length, &patternList[i], true);
 
     patternMatcher->prep();
@@ -839,11 +844,9 @@ static FieldPattern http_field_patterns[] =
 
 static SearchTool* processHttpFieldPatterns(FieldPattern* patternList, size_t patternListCount)
 {
-    u_int32_t i;
-
     SearchTool* patternMatcher = new SearchTool("ac_full");
 
-    for (i=0; i < patternListCount; i++)
+    for (size_t i=0; i < patternListCount; i++)
         patternMatcher->add( (char  *)patternList[i].data, patternList[i].length,
                              &patternList[i], false);
 

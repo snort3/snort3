@@ -102,6 +102,8 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
 
     uint8_t* const norm_value = new uint8_t[buffer_length];
     uint8_t* const temp_space = new uint8_t[buffer_length];
+    memset(norm_value, 0, buffer_length);
+    memset(temp_space, 0, buffer_length);
     uint8_t* working = (num_normalizers%2 == 0) ? norm_value : temp_space;
     int32_t data_length = 0;
     for (int j=0; j < num_matches; j++)

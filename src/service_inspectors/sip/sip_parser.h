@@ -90,7 +90,7 @@ struct SIPMsg
 #define MAX_STAT_CODE      999
 #define MIN_STAT_CODE      100
 
-int sip_parse(SIPMsg*, const char*, char*, SIP_PROTO_CONF*);
+bool sip_parse(SIPMsg*, const char*, char*, SIP_PROTO_CONF*);
 void sip_freeMsg(SIPMsg* msg);
 void sip_freeMediaSession(SIP_MediaSession*);
 void sip_freeMediaList(SIP_MediaList medias);

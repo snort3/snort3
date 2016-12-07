@@ -442,8 +442,8 @@ TEST_CASE ("FileIdRuleUnknow", "[FileMagic]")
 
     void* context = nullptr;
 
-    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) ==
-        SNORT_FILE_TYPE_UNKNOWN);
+    CHECK((rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) ==
+        SNORT_FILE_TYPE_UNKNOWN));
 }
 
 TEST_CASE ("FileIdRuleEXE", "[FileMagic]")
@@ -510,7 +510,7 @@ TEST_CASE ("FileIdRulePDFEXE", "[FileMagic]")
     void* context = nullptr;
 
     // Match the last one
-    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) == 3);
+    CHECK((rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) == 3));
 }
 
 TEST_CASE ("FileIdRuleFirst", "[FileMagic]")

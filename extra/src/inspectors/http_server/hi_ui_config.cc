@@ -62,15 +62,15 @@ HTTPINSPECT_GLOBAL_CONF::~HTTPINSPECT_GLOBAL_CONF()
         delete(decode_conf);
 }
 
+HTTPINSPECT_CONF_BASE::HTTPINSPECT_CONF_BASE()
+{ 
+    memset(this, 0, sizeof(*this)); 
+} 
+
+HTTPINSPECT_CONF_BASE::~HTTPINSPECT_CONF_BASE(){}
+
 HTTPINSPECT_CONF::HTTPINSPECT_CONF()
 {
-    // can't just zero the whole thing because of embedded objects
-    // FIXIT-L really need explicit assignments or refactor into substruct(s)
-    // that can simply be zeroed
-    uint8_t* end = (uint8_t*)&whitespace;
-    unsigned len = end - (uint8_t*)this;
-    memset(this, 0, len);
-
     hi_ui_config_default(this);
     http_cmd_lookup_init(&cmd_lookup);
 }

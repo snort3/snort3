@@ -598,7 +598,7 @@ int main(int argc, char** argv)
         exit (0);
     }
     acsm = acsmNew ();
-    strcpy (text, argv[1]);
+    strncpy(text, argv[1], sizeof(text));
     for (i = 1; i < argc; i++)
         if (strcmp (argv[i], "-nocase") == 0)
             nocase = 1;

@@ -150,6 +150,7 @@ bool IpSession::setup(Packet*)
         ip_stats.sessions--; // Incremented in SESSION_STATS_ADD
         MODULE_PROFILE_END(ip_perf_stats);
         return false;
+    }
 #endif
     return true;
 }

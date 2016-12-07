@@ -90,12 +90,12 @@ void file_stats_print()
 
     for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
-        const char* type_name = file_type_name(i).c_str();
-        if (type_name &&
+        std::string type_name = file_type_name(i);
+        if (type_name.length() &&
             (file_totals.files_processed[i][0] || file_totals.files_processed[i][1] ))
         {
             LogMessage("%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " \n",
-                type_name, i,
+                type_name.c_str(), i,
                 file_totals.files_processed[i][0],
                 file_totals.files_processed[i][1]);
             processed_total[0]+= file_totals.files_processed[i][0];
@@ -112,12 +112,12 @@ void file_stats_print()
 
     for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
-        const char* type_name = file_type_name(i).c_str();
-        if (type_name &&
+        std::string type_name = file_type_name(i);
+        if (type_name.length() &&
             (file_totals.files_processed[i][0] || file_totals.files_processed[i][1] ))
         {
             LogMessage("%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " \n",
-                type_name, i,
+                type_name.c_str(), i,
                 file_totals.data_processed[i][0],
                 file_totals.data_processed[i][1]);
 
@@ -148,12 +148,12 @@ void file_stats_print()
     processed_total[1] = 0;
     for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
-        const char* type_name = file_type_name(i).c_str();
-        if (type_name &&
+        std::string type_name = file_type_name(i);
+        if (type_name.length() &&
             (file_totals.signatures_processed[i][0] || file_totals.signatures_processed[i][1] ))
         {
             LogMessage("%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " \n",
-                type_name, i,
+                type_name.c_str(), i,
                 file_totals.signatures_processed[i][0], file_totals.signatures_processed[i][1]);
             processed_total[0]+= file_totals.signatures_processed[i][0];
             processed_total[1]+= file_totals.signatures_processed[i][1];

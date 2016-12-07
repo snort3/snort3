@@ -220,10 +220,10 @@ TEST_CASE( "memory stats", "[profiler][memory_profiler]" )
         MemoryStats stats_b = { 5, 6, 7, 8 };
         stats += stats_b;
 
-        CHECK( stats.allocs == 6 );
-        CHECK( stats.deallocs == 8 );
-        CHECK( stats.allocated == 10 );
-        CHECK( stats.deallocated == 12 );
+        CHECK( (stats.allocs == 6) );
+        CHECK( (stats.deallocs == 8) );
+        CHECK( (stats.allocated == 10) );
+        CHECK( (stats.deallocated == 12) );
     }
 
     SECTION( "update" )
@@ -232,19 +232,19 @@ TEST_CASE( "memory stats", "[profiler][memory_profiler]" )
         {
             stats.update_allocs(10);
 
-            CHECK( stats.allocs == 2 );
-            CHECK( stats.deallocs == 2 ); // e.g. no change
-            CHECK( stats.allocated == 13 );
-            CHECK( stats.deallocated == 4 ); // e.g. no change
+            CHECK( (stats.allocs == 2) );
+            CHECK( (stats.deallocs == 2) ); // e.g. no change
+            CHECK( (stats.allocated == 13) );
+            CHECK( (stats.deallocated == 4) ); // e.g. no change
 
             SECTION( "deallocations" )
             {
                 stats.update_deallocs(10);
 
-                CHECK( stats.allocs == 2 ); // e.g. no change
-                CHECK( stats.deallocs == 3 );
-                CHECK( stats.allocated == 13 ); // e.g. no change
-                CHECK( stats.deallocated == 14 );
+                CHECK( (stats.allocs == 2) ); // e.g. no change
+                CHECK( (stats.deallocs == 3) );
+                CHECK( (stats.allocated == 13) ); // e.g. no change
+                CHECK( (stats.deallocated == 14) );
             }
         }
     }
@@ -287,24 +287,24 @@ TEST_CASE( "memory profiler view", "[profiler][memory_profiler]" )
 
         SECTION( "total_used" )
         {
-            CHECK( view.total() == 100 );
+            CHECK( (view.total() == 100) );
         }
 
         SECTION( "avg_allocation" )
         {
-            CHECK( view.avg_alloc() == 100.0 );
+            CHECK( (view.avg_alloc() == 100.0) );
         }
 
         SECTION( "pct_of" )
         {
             MemoryStats ms = { 0, 0, 200, 0 };
 
-            CHECK( view.pct_of(ms) == 50.0 );
+            CHECK( (view.pct_of(ms) == 50.0) );
 
             SECTION( "zero division" )
             {
                 ms.allocated = 0;
-                CHECK( view.pct_of(ms) == 0.0 );
+                CHECK( (view.pct_of(ms) == 0.0) );
             }
         }
     }
@@ -320,7 +320,7 @@ TEST_CASE( "memory profiler view", "[profiler][memory_profiler]" )
 
         SECTION( "pct_caller" )
         {
-            CHECK( child.pct_caller() == 50.0 );
+            CHECK( (child.pct_caller() == 50.0) );
         }
     }
 }

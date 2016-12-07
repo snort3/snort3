@@ -185,10 +185,10 @@ TEST_CASE("no protocol", "[FlowTracker]")
     tracker.update(&p);
 
     tracker.process(false);
-    CHECK( *f->public_values["flow.byte_total"].pc == 32639 );
+    CHECK( (*f->public_values["flow.byte_total"].pc == 32639) );
     CHECK( f->public_values["flow.packets_by_bytes"].ipc->at(123) == 0 );
     CHECK( f->public_values["flow.packets_by_bytes"].ipc->at(127) == 1 );
-    CHECK( f->public_values["flow.packets_by_bytes"].ipc->at(256) == 2 );
+    CHECK( (f->public_values["flow.packets_by_bytes"].ipc->at(256) == 2) );
     CHECK( *f->public_values["flow.oversized_packets"].pc == 1 );
 
     tracker.real_clear();
@@ -234,9 +234,9 @@ TEST_CASE("icmp", "[FlowTracker]")
     tracker.update(&p);
 
     tracker.process(false);
-    CHECK( f->public_values["flow_icmp.bytes_by_type"].ipc->at(3) == 127 );
-    CHECK( f->public_values["flow_icmp.bytes_by_type"].ipc->at(9) == 512 );
-    CHECK( f->public_values["flow_icmp.bytes_by_type"].ipc->at(127) == 32000 );
+    CHECK( (f->public_values["flow_icmp.bytes_by_type"].ipc->at(3) == 127) );
+    CHECK( (f->public_values["flow_icmp.bytes_by_type"].ipc->at(9) == 512) );
+    CHECK( (f->public_values["flow_icmp.bytes_by_type"].ipc->at(127) == 32000) );
 
     tracker.real_clear();
     CHECK( f->public_values["flow_icmp.bytes_by_type"].ipc->at(3) == 0 );
@@ -288,9 +288,9 @@ TEST_CASE("tcp", "[FlowTracker]")
     tracker.update(&p);
 
     tracker.process(false);
-    CHECK( f->public_values["flow_tcp.bytes_by_source"].ipc->at(1024) == 1663 );
-    CHECK( f->public_values["flow_tcp.bytes_by_dest"].ipc->at(1024) == 2048 );
-    CHECK( *f->public_values["flow_tcp.high_port_bytes"].pc == 32000 );
+    CHECK( (f->public_values["flow_tcp.bytes_by_source"].ipc->at(1024) == 1663) );
+    CHECK( (f->public_values["flow_tcp.bytes_by_dest"].ipc->at(1024) == 2048) );
+    CHECK( (*f->public_values["flow_tcp.high_port_bytes"].pc == 32000) );
 
     tracker.real_clear();
     CHECK( f->public_values["flow_tcp.bytes_by_source"].ipc->at(1024) == 0 );
@@ -342,9 +342,9 @@ TEST_CASE("udp", "[FlowTracker]")
     tracker.update(&p);
 
     tracker.process(false);
-    CHECK( f->public_values["flow_udp.bytes_by_source"].ipc->at(1024) == 1663 );
-    CHECK( f->public_values["flow_udp.bytes_by_dest"].ipc->at(1024) == 2048 );
-    CHECK( *f->public_values["flow_udp.high_port_bytes"].pc == 32000 );
+    CHECK( (f->public_values["flow_udp.bytes_by_source"].ipc->at(1024) == 1663) );
+    CHECK( (f->public_values["flow_udp.bytes_by_dest"].ipc->at(1024) == 2048) );
+    CHECK( (*f->public_values["flow_udp.high_port_bytes"].pc == 32000) );
 
     tracker.real_clear();
     CHECK( f->public_values["flow_udp.bytes_by_source"].ipc->at(1024) == 0 );

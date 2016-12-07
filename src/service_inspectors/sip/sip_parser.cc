@@ -52,10 +52,10 @@
 #define SIP_TAG_KEYWORD      "tag="
 #define SIP_TAG_KEYWORD_LEN      4
 
-static int sip_headers_parse(SIPMsg*, const char*, char*,char**, SIP_PROTO_CONF*);
-static int sip_startline_parse(SIPMsg*, const char*, char*,char**, SIP_PROTO_CONF*);
-static int sip_body_parse(SIPMsg*, const char*, char*, char**);
-static int sip_check_headers(SIPMsg*, SIP_PROTO_CONF*);
+static bool sip_headers_parse(SIPMsg*, const char*, char*,char**, SIP_PROTO_CONF*);
+static bool sip_startline_parse(SIPMsg*, const char*, char*,char**, SIP_PROTO_CONF*);
+static bool sip_body_parse(SIPMsg*, const char*, char*, char**);
+static bool sip_check_headers(SIPMsg*, SIP_PROTO_CONF*);
 
 static int sip_parse_via(SIPMsg*, const char*, const char*, SIP_PROTO_CONF*);
 static int sip_parse_from(SIPMsg*, const char*, const char*, SIP_PROTO_CONF*);
@@ -320,7 +320,7 @@ static inline int sip_is_valid_version(const char* start)
  *  true
  ********************************************************************/
 
-static int sip_startline_parse(SIPMsg* msg, const char* buff, char* end, char** lineEnd,
+static bool sip_startline_parse(SIPMsg* msg, const char* buff, char* end, char** lineEnd,
     SIP_PROTO_CONF* config)
 {
     char* next;
@@ -458,7 +458,7 @@ static int sip_startline_parse(SIPMsg* msg, const char* buff, char* end, char** 
  *  false
  *  true
  ********************************************************************/
-static int sip_headers_parse(SIPMsg* msg, const char* buff, char* end, char** headEnd,
+static bool sip_headers_parse(SIPMsg* msg, const char* buff, char* end, char** headEnd,
     SIP_PROTO_CONF* config)
 {
     char* next;
@@ -515,7 +515,7 @@ static int sip_headers_parse(SIPMsg* msg, const char* buff, char* end, char** he
  *  false
  *  true
  ********************************************************************/
-static int sip_body_parse(SIPMsg* msg, const char* buff, char* end, char** bodyEnd)
+static bool sip_body_parse(SIPMsg* msg, const char* buff, char* end, char** bodyEnd)
 {
     int length;
     char* next;
@@ -575,7 +575,7 @@ static int sip_body_parse(SIPMsg* msg, const char* buff, char* end, char** bodyE
  *  false
  *  true
  ********************************************************************/
-static int sip_check_headers(SIPMsg* msg, SIP_PROTO_CONF* config)
+static bool sip_check_headers(SIPMsg* msg, SIP_PROTO_CONF* config)
 {
     int ret = true;
     if (0 == msg->fromLen)
@@ -1254,11 +1254,11 @@ static int sip_parse_sdp_m(SIPMsg* msg, const char* start, const char* end)
  *  false
  *  true
  ********************************************************************/
-int sip_parse(SIPMsg* msg, const char* buff, char* end, SIP_PROTO_CONF* config)
+bool sip_parse(SIPMsg* msg, const char* buff, char* end, SIP_PROTO_CONF* config)
 {
     char* nextIndex;
     char* start;
-    int status;
+    bool status;
 
     /*Initialize key values*/
     msg->methodFlag = SIP_METHOD_NULL;

@@ -272,7 +272,7 @@ TEST_CASE("dflt op", "[RangeCheck]")
 
     REQUIRE(rc.parse("5"));
     REQUIRE(rc.op == RangeCheck::EQ);
-    REQUIRE(rc.max == 5);
+    REQUIRE((rc.max == 5));
 
     CHECK(rc.eval(5));
 
@@ -286,7 +286,7 @@ TEST_CASE("=", "[RangeCheck]")
 
     REQUIRE(rc.parse("=+0x5"));
     REQUIRE(rc.op == RangeCheck::EQ);
-    REQUIRE(rc.max == 5);
+    REQUIRE((rc.max == 5));
 
     CHECK(rc.eval(5));
 
@@ -300,7 +300,7 @@ TEST_CASE("!", "[RangeCheck]")
 
     REQUIRE(rc.parse("!-5"));
     REQUIRE(rc.op == RangeCheck::NOT);
-    REQUIRE(rc.max == -5);
+    REQUIRE((rc.max == -5));
 
     CHECK(rc.eval(-4));
     CHECK(rc.eval(-6));
@@ -314,7 +314,7 @@ TEST_CASE("!=", "[RangeCheck]")
 
     REQUIRE(rc.parse("!=5"));
     REQUIRE(rc.op == RangeCheck::NOT);
-    REQUIRE(rc.max == 5);
+    REQUIRE((rc.max == 5));
 
     CHECK(rc.eval(4));
     CHECK(rc.eval(6));
@@ -328,7 +328,7 @@ TEST_CASE("<", "[RangeCheck]")
 
     REQUIRE(rc.parse("<5"));
     REQUIRE(rc.op == RangeCheck::LT);
-    REQUIRE(rc.max == 5);
+    REQUIRE((rc.max == 5));
 
     CHECK(rc.eval(4));
     CHECK(rc.eval(-1));
@@ -343,7 +343,7 @@ TEST_CASE("<=", "[RangeCheck]")
 
     REQUIRE(rc.parse("<=5"));
     REQUIRE(rc.op == RangeCheck::LE);
-    REQUIRE(rc.max == 5);
+    REQUIRE((rc.max == 5));
 
     CHECK(rc.eval(5));
     CHECK(rc.eval(-1));
@@ -357,8 +357,8 @@ TEST_CASE(">", "[RangeCheck]")
     RangeCheck rc;
 
     REQUIRE(rc.parse(">5"));
-    REQUIRE(rc.op == RangeCheck::GT);
-    REQUIRE(rc.min == 5);
+    REQUIRE((rc.op == RangeCheck::GT));
+    REQUIRE((rc.min == 5));
 
     CHECK(rc.eval(6));
     CHECK(rc.eval(10));
@@ -372,8 +372,8 @@ TEST_CASE(">=", "[RangeCheck]")
     RangeCheck rc;
 
     REQUIRE(rc.parse(">=5"));
-    REQUIRE(rc.op == RangeCheck::GE);
-    REQUIRE(rc.min == 5);
+    REQUIRE((rc.op == RangeCheck::GE));
+    REQUIRE((rc.min == 5));
 
     CHECK(rc.eval(5));
     CHECK(rc.eval(10));
@@ -387,9 +387,9 @@ TEST_CASE("<>", "[RangeCheck]")
     RangeCheck rc;
 
     REQUIRE(rc.parse("0<>5"));
-    REQUIRE(rc.op == RangeCheck::LG);
+    REQUIRE((rc.op == RangeCheck::LG));
     REQUIRE(rc.min == 0);
-    REQUIRE(rc.max == 5);
+    REQUIRE((rc.max == 5));
 
     CHECK(rc.eval(1));
     CHECK(rc.eval(4));
@@ -405,8 +405,8 @@ TEST_CASE("<=>", "[RangeCheck]")
     RangeCheck rc;
 
     REQUIRE(rc.parse("0<=>5"));
-    REQUIRE(rc.op == RangeCheck::LEG);
-    REQUIRE(rc.max == 5);
+    REQUIRE((rc.op == RangeCheck::LEG));
+    REQUIRE((rc.max == 5));
 
     CHECK(rc.eval(0));
     CHECK(rc.eval(1));
@@ -427,80 +427,80 @@ TEST_CASE("parsing", "[RangeCheck]")
         {
             REQUIRE(rc.parse("5"));
             CHECK(rc.op == RangeCheck::EQ);
-            CHECK(rc.max == 5);
+            CHECK((rc.max == 5));
         }
 
         SECTION("b")
         {
             REQUIRE(rc.parse(" 5 "));
             CHECK(rc.op == RangeCheck::EQ);
-            CHECK(rc.max == 5);
+            CHECK((rc.max == 5));
         }
 
         SECTION("c")
         {
             REQUIRE(rc.parse(" ! 5 "));
             CHECK(rc.op == RangeCheck::NOT);
-            CHECK(rc.max == 5);
+            CHECK((rc.max == 5));
         }
 
         SECTION("d")
         {
             REQUIRE(rc.parse(" != 5 "));
             CHECK(rc.op == RangeCheck::NOT);
-            CHECK(rc.max == 5);
+            CHECK((rc.max == 5));
         }
 
         SECTION("e")
         {
             REQUIRE(rc.parse(" < 5 "));
-            CHECK(rc.op == RangeCheck::LT);
-            CHECK(rc.max == 5);
+            CHECK((rc.op == RangeCheck::LT));
+            CHECK((rc.max == 5));
         }
 
         SECTION("f")
         {
             REQUIRE(rc.parse(" > 5 "));
-            CHECK(rc.op == RangeCheck::GT);
-            CHECK(rc.min == 5);
+            CHECK((rc.op == RangeCheck::GT));
+            CHECK((rc.min == 5));
         }
 
         SECTION("g")
         {
             REQUIRE(rc.parse(" <= 5 "));
-            CHECK(rc.op == RangeCheck::LE);
-            CHECK(rc.max == 5);
+            CHECK((rc.op == RangeCheck::LE));
+            CHECK((rc.max == 5));
         }
 
         SECTION("h")
         {
             REQUIRE(rc.parse(" >= 5 "));
-            CHECK(rc.op == RangeCheck::GE);
-            CHECK(rc.min == 5);
+            CHECK((rc.op == RangeCheck::GE));
+            CHECK((rc.min == 5));
         }
 
         SECTION("i")
         {
             REQUIRE(rc.parse(" 10 <> 50 "));
-            CHECK(rc.op == RangeCheck::LG);
-            CHECK(rc.min == 10);
-            CHECK(rc.max == 50);
+            CHECK((rc.op == RangeCheck::LG));
+            CHECK((rc.min == 10));
+            CHECK((rc.max == 50));
         }
 
         SECTION("j")
         {
             REQUIRE(rc.parse(" 0x10 <=> 0x50 "));
-            CHECK(rc.op == RangeCheck::LEG);
-            CHECK(rc.min == 0x10);
-            CHECK(rc.max == 0x50);
+            CHECK((rc.op == RangeCheck::LEG));
+            CHECK((rc.min == 0x10));
+            CHECK((rc.max == 0x50));
         }
 
         SECTION("k")
         {
             REQUIRE(rc.parse(" -0123 <=> 0x123 "));
-            CHECK(rc.op == RangeCheck::LEG);
-            CHECK(rc.min == -83);
-            CHECK(rc.max == 291);
+            CHECK((rc.op == RangeCheck::LEG));
+            CHECK((rc.min == -83));
+            CHECK((rc.max == 291));
         }
     }
 

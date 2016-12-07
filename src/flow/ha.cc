@@ -293,13 +293,16 @@ static uint16_t calculate_update_msg_content_length(Flow* flow)
     uint16_t length = 0;
 
     for (int i=0; i<s_handle_counter; i++)
-        if ( (i==SESSION_HA_CLIENT_INDEX) || flow->ha_state->check_pending(1<<(i-1)) )
+    {
+        // Don't check 'i' against SESSION_HA_CLIENT_INDEX (==0), as this creates a false positive with cppcheck
+        if ( (i == 0 ) || flow->ha_state->check_pending(1<<(i-1)) )
         {
             assert((*s_client_map)[i]);
             length += ((*s_client_map)[i]->get_message_size() + sizeof(HAClientHeader));
             DebugFormat(DEBUG_HA,
                 "HighAvailability::calculate_update_msg_content_length(): length: %d\n", length);
         }
+    }
 
     return length;
 }
@@ -329,8 +332,11 @@ static void write_update_msg_content(Flow* flow, HAMessage* msg)
     assert(s_client_map);
 
     for ( int i=0; i<s_handle_counter; i++ )
-        if ( (i==SESSION_HA_CLIENT_INDEX) || flow->ha_state->check_pending(1<<(i-1)) )
+    {
+        // Don't check 'i' against SESSION_HA_CLIENT_INDEX (==0), as this creates a false positive with cppcheck
+        if ( (i == 0) || flow->ha_state->check_pending(1<<(i-1)) )
             write_update_msg_client((*s_client_map)[i],flow, msg);
+    }
 }
 
 static void consume_receive_delete_message(HAMessage* msg)

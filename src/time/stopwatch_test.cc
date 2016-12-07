@@ -56,7 +56,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
     Clock::reset();
 
     REQUIRE_FALSE( sw.active() );
-    REQUIRE( sw.get() == 0_ticks );
+    REQUIRE( (sw.get() == 0_ticks) );
 
     SECTION( "start" )
     {
@@ -70,7 +70,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
         SECTION( "running elapsed time should be non-zero" )
         {
             Clock::inc();
-            CHECK( sw.get() > 0_ticks );
+            CHECK( (sw.get() > 0_ticks) );
         }
 
         SECTION( "start on running clock has no effect" )
@@ -115,7 +115,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
         {
             sw.reset();
             CHECK_FALSE( sw.active() );
-            CHECK( sw.get() == 0_ticks );
+            CHECK( (sw.get() == 0_ticks) );
         }
 
         SECTION( "reset on stopped clock" )
@@ -123,7 +123,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
             sw.stop();
             sw.reset();
             CHECK_FALSE( sw.active() );
-            CHECK( sw.get() == 0_ticks );
+            CHECK( (sw.get() == 0_ticks) );
         }
     }
 
@@ -134,7 +134,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
         {
             sw.cancel();
             CHECK_FALSE( sw.active() );
-            CHECK( sw.get() == 0_ticks );
+            CHECK( (sw.get() == 0_ticks) );
         }
 
         SECTION( "cancel on stopped clock that has lap time" )

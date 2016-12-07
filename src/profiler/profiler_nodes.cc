@@ -292,8 +292,8 @@ TEST_CASE( "profiler node", "[profiler]" )
 
         auto& result = node.get_stats();
 
-        CHECK( result.time.elapsed == 2_ticks );
-        CHECK( result.time.checks == 2 );
+        CHECK( (result.time.elapsed == 2_ticks) );
+        CHECK( (result.time.checks == 2) );
     }
 
     SECTION( "reset" )

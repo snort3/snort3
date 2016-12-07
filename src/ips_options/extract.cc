@@ -178,7 +178,7 @@ int string_extract(int bytes_to_grab, int base, const uint8_t* ptr,
 
 #ifdef TEST_BYTE_EXTRACT
     printf("[----]\n");
-    for (x=0; (x<=TEXTLEN) && (byte_array[x] != '\0'); x++)
+    for (x=0; (x<TEXTLEN) && (byte_array[x] != '\0'); x++)
         printf("%c", byte_array[x]);
     printf("\n");
 

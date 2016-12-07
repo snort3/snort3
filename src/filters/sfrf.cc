@@ -332,7 +332,7 @@ int SFRF_ConfigAdd(
     }
 
 #ifdef SFRF_DEBUG
-    printf("--%d-%d-%d: Threshold node added to tail of list\n",
+    printf("--%d-%u-%u: Threshold node added to tail of list\n",
         pNewConfigNode->tid,
         pNewConfigNode->gid,
         pNewConfigNode->sid);
@@ -417,7 +417,7 @@ static int SFRF_TestObject(
             dynNode->count--;
 
 #ifdef SFRF_DEBUG
-    printf("--SFRF_DEBUG: %d-%d-%d: %d Packet IP %s, op: %d, count %d, action %d\n",
+    printf("--SFRF_DEBUG: %d-%u-%u: %u Packet IP %s, op: %d, count %u, action %d\n",
         cfgNode->tid, cfgNode->gid,
         cfgNode->sid, (unsigned)curTime, ip->ntoa(), op,
         dynNode->count, retValue);
@@ -466,7 +466,7 @@ int SFRF_TestThreshold(
     PolicyId policy_id = get_network_policy()->policy_id;
 
 #ifdef SFRF_DEBUG
-    printf("--%d-%d-%d: %s() entering\n", 0, gid, sid, __func__);
+    printf("--%d-%u-%u: %s() entering\n", 0, gid, sid, __func__);
     fflush(stdout);
 #endif
 
@@ -485,7 +485,7 @@ int SFRF_TestThreshold(
     if ( !genHash )
     {
 #ifdef SFRF_DEBUG
-        printf("--SFRF_DEBUG: %d-%d-%d: no hash table entry for gid\n", 0, gid, sid);
+        printf("--SFRF_DEBUG: %d-%u-%u: no hash table entry for gid\n", 0, gid, sid);
         fflush(stdout);
 #endif
         return status;
@@ -501,7 +501,7 @@ int SFRF_TestThreshold(
     if ( !pSidNode )
     {
 #ifdef SFRF_DEBUG
-        printf("--SFRF_DEBUG: %d-%d-%d: no DOS THD object\n", 0, gid, sid);
+        printf("--SFRF_DEBUG: %d-%u-%u: no DOS THD object\n", 0, gid, sid);
         fflush(stdout);
 #endif
         return status;
@@ -511,7 +511,7 @@ int SFRF_TestThreshold(
     if ( !pSidNode->configNodeList )
     {
 #ifdef SFRF_DEBUG
-        printf("--SFRF_DEBUG: %d-%d-%d: No user configuration\n",
+        printf("--SFRF_DEBUG: %d-%u-%u: No user configuration\n",
             0, gid, sid);
         fflush(stdout);
 #endif
@@ -557,7 +557,7 @@ int SFRF_TestThreshold(
         }
 
 #ifdef SFRF_DEBUG
-        printf("--SFRF_DEBUG: %d-%d-%d: Time %d, rate limit blocked: %d\n",
+        printf("--SFRF_DEBUG: %d-%u-%u: Time %u, rate limit blocked: %d\n",
             cfgNode->tid, gid, sid, (unsigned)curTime, newStatus);
         fflush(stdout);
 #endif

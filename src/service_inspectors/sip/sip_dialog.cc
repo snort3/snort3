@@ -42,7 +42,7 @@
 
 static void SIP_updateMedias(SIP_MediaSession*, SIP_MediaList*);
 static int SIP_compareMedias(SIP_MediaDataList, SIP_MediaDataList);
-static int SIP_checkMediaChange(SIPMsg* sipMsg, SIP_DialogData* dialog);
+static bool SIP_checkMediaChange(SIPMsg* sipMsg, SIP_DialogData* dialog);
 static int SIP_processRequest(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
 static int SIP_processInvite(SIPMsg*, SIP_DialogData*, SIP_DialogList*);
 static int SIP_processACK(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
@@ -144,11 +144,12 @@ static int SIP_processRequest(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialog
  ********************************************************************/
 static int SIP_processInvite(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogList* dList)
 {
-    int ret = true;
-    DebugFormat(DEBUG_SIP, "Processing invite, dialog state %d \n", dialog->state);
+    bool ret = true;
 
     if (NULL == dialog)
         return false;
+
+    DebugFormat(DEBUG_SIP, "Processing invite, dialog state %d \n", dialog->state);
 
     /*Check for the invite replay attack: authenticated invite without challenge*/
     // check whether this invite has authorization information
@@ -334,7 +335,7 @@ static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialo
  *  true: media not changed
  *  false: media changed
  ********************************************************************/
-static int SIP_checkMediaChange(SIPMsg* sipMsg, SIP_DialogData* dialog)
+static bool SIP_checkMediaChange(SIPMsg* sipMsg, SIP_DialogData* dialog)
 {
     SIP_MediaSession* medias;
 

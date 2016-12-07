@@ -427,7 +427,8 @@ FileCaptureState FileCapture::reserve_file(const FileInfo* file)
  */
 FileCaptureBlock* FileCapture::get_file_data(uint8_t** buff, int* size)
 {
-    if (!buff||!size || (current_block == nullptr))
+    assert(buff && size);
+    if (current_block == nullptr)
     {
         *size = 0;
         *buff = nullptr;

@@ -294,7 +294,7 @@ TEST_CASE("safety", "[trace]")
 
     testing_dump[0] = '\0';
     trace_log(testing, message);
-    CHECK( strlen(testing_dump) == STD_BUF - 1 );
+    CHECK( (strlen(testing_dump) == STD_BUF - 1) );
 }
 
 #endif

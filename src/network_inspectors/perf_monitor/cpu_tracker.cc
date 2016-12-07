@@ -144,7 +144,7 @@ TEST_CASE("timeval to scalar", "[cpu_tracker]")
 
     t.tv_sec = 1459523272;
     t.tv_usec = 123456;
-    CHECK(get_microseconds(t) == 1459523272123456 );
+    CHECK((get_microseconds(t) == 1459523272123456));
 
     t.tv_sec = 0;
     t.tv_usec = 0;

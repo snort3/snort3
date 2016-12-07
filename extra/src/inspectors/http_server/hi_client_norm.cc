@@ -71,11 +71,12 @@ int hi_split_header_cookie(
     const u_char* this_header_start = raw_header;
     const u_char* this_header_end;
     int this_header_len = 0;
-    size_t header_rem = *i_header_len;
-    size_t cookie_rem = *i_cookie_len;
 
     if (!cookie || !i_header_len || !i_cookie_len)
         return HI_INVALID_ARG;
+
+    size_t header_rem = *i_header_len;
+    size_t cookie_rem = *i_cookie_len;
 
     /* Can't use hi_util_in_bounds header because == is okay */
     if (cookie->cookie_end > raw_header + i_raw_header_len)

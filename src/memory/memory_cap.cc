@@ -274,7 +274,7 @@ TEST_CASE( "memory cap free space", "[memory]" )
         HandlerSpy handler { -1, tracker };
 
         CHECK( memory::free_space(2, 1024, tracker, handler) );
-        CHECK( handler.calls == 2 );
+        CHECK( (handler.calls == 2) );
     }
 
     SECTION( "handler fails to free enough space" )

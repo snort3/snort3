@@ -35,7 +35,7 @@ TEST_CASE( "bitop", "[bitop]" )
     {
         bitop.set(6);
 
-        CHECK( bitop.get_buf_element(0) == 0x02 );
+        CHECK( (bitop.get_buf_element(0) == 0x02) );
 
         CHECK( bitop.is_set(6) );
         CHECK_FALSE( bitop.is_set(7) );
@@ -48,6 +48,6 @@ TEST_CASE( "bitop", "[bitop]" )
 
     SECTION( "size" )
     {
-        CHECK( bitop.size() == 24 );
+        CHECK( (bitop.size() == 24) );
     }
 }

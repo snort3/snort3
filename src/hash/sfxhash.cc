@@ -1296,7 +1296,7 @@ int main(int argc, char** argv)
         }
     }
 
-    printf("...Auto-Node-Recovery: %d recycle attempts, %d completions.\n",t->anr_tries,
+    printf("...Auto-Node-Recovery: %u recycle attempts, %u completions.\n",t->anr_tries,
         t->anr_count);
 
     /* Free the table and it's user data */

@@ -29,6 +29,7 @@
 #include "framework/inspector.h"
 #include "managers/inspector_manager.h"
 #include "main/policy.h"
+#include "main/snort_config.h"
 #include "profiler/profiler.h"
 #include "stream/stream_splitter.h"
 #include "utils/stats.h"
@@ -37,6 +38,34 @@
 #include <CppUTest/TestHarness.h>
 
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
+
+static SnortState s_state;
+
+SnortConfig::SnortConfig()
+{
+    state = &s_state;
+    memset(state, 0, sizeof(*state));
+    num_slots = 1;
+}
+
+SnortConfig::~SnortConfig() { }
+unsigned get_instance_id()
+{ return 0; }
+
+FileIdentifier::~FileIdentifier() { }
+
+FileVerdict FilePolicy::type_lookup(Flow*, FileContext*)
+{ return FILE_VERDICT_UNKNOWN; }
+
+FileVerdict FilePolicy::type_lookup(Flow*, FileInfo*)
+{ return FILE_VERDICT_UNKNOWN; }
+
+FileVerdict FilePolicy::signature_lookup(Flow*, FileContext*)
+{ return FILE_VERDICT_UNKNOWN; }
+
+FileVerdict FilePolicy::signature_lookup(Flow*, FileInfo*)
+{ return FILE_VERDICT_UNKNOWN; }
+
 THREAD_LOCAL BindStats bstats;
 static const PegInfo bind_pegs[] = { { nullptr, nullptr } };
 
@@ -99,7 +128,7 @@ int16_t FindProtocolReference(const char*) { return 0; }
 void set_policies(SnortConfig*, unsigned) { }
 HostAttributeEntry* SFAT_LookupHostEntryByIP(const SfIp*) { return nullptr; }
 
-Flow::Flow() { }
+Flow::Flow() { memset(this, 0, sizeof(*this)); }
 Flow::~Flow() { }
 
 extern const BaseApi* nin_binder;
@@ -116,22 +145,11 @@ TEST_GROUP(binder)
 
 TEST(binder, exec)
 {
-    uint8_t* conf = new uint8_t[sizeof(SnortConfig)];
-    memset(conf,0,sizeof(SnortConfig));
-    snort_conf = (SnortConfig*)conf;
+    snort_conf = new SnortConfig;
     Flow* flow = new Flow;
-    constexpr size_t offset = offsetof(Flow, flow_data);
-    memset((uint8_t*)flow+offset, 0, sizeof(Flow)-offset);
-
     s_inspector = new MyInspector();
 
     flow->pkt_type = PktType::UDP;
-    flow->key = nullptr;
-    flow->session = nullptr;
-    flow->clouseau = nullptr;
-    flow->gadget = nullptr;
-    flow->ssn_client = nullptr;
-    flow->ssn_server = nullptr;
     flow->key = new FlowKey;
     ((FlowKey*)flow->key)->init(PktType::UDP, IpProtocol::UDP, &s_src_ip, (uint16_t)10, &s_dst_ip, (uint16_t)11, 0, 0, 0);
     InspectApi* api = (InspectApi*)nin_binder;
@@ -154,7 +172,7 @@ TEST(binder, exec)
     delete flow->key;
     delete flow;
     delete s_inspector;
-    delete[] conf;
+    delete snort_conf;
 }
 
 int main(int argc, char** argv)

@@ -56,7 +56,7 @@ enum PerfOutput
     PERF_CONSOLE
 };
 
-struct PerfConfig
+struct PerfConfigBase
 {
 
     int perf_flags;
@@ -67,7 +67,10 @@ struct PerfConfig
     uint32_t flowip_memcap;
     PerfFormat format;
     PerfOutput output;
+};
 
+struct PerfConfig:public PerfConfigBase
+{
     std::vector<Module*> modules;
     std::vector<IndexVec> mod_peg_idxs;
 };

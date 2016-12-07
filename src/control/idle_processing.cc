@@ -69,14 +69,14 @@ TEST_CASE("idle callback", "[control]")
     CHECK(s_niph2 == 1);
 
     IdleProcessing::execute();
-    CHECK(s_niph1 == 2);
-    CHECK(s_niph2 == 2);
+    CHECK((s_niph1 == 2));
+    CHECK((s_niph2 == 2));
 
     IdleProcessing::unregister_all();
 
     IdleProcessing::execute();
-    CHECK(s_niph1 == 2);
-    CHECK(s_niph2 == 2);
+    CHECK((s_niph1 == 2));
+    CHECK((s_niph2 == 2));
 }
 #endif
 

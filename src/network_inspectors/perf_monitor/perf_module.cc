@@ -179,7 +179,7 @@ bool PerfMonModule::begin(const char* fqn, int, SnortConfig*)
         mod_pegs.clear();
     }
     else
-        memset(&config, 0, sizeof(PerfConfig));
+        memset(static_cast<PerfConfigBase*>(&config), 0, sizeof(config));
 
     return true;
 }

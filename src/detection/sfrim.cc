@@ -97,23 +97,23 @@ TEST_CASE("basic", "[RuleIndexMap]")
     rule_index_map_t* rim = RuleIndexMapCreate();
     unsigned gid, sid;
 
-    CHECK(RuleIndexMapAdd(rim, 1, 2) == 0);
-    CHECK(RuleIndexMapAdd(rim, 2, 4) == 1);
-    CHECK(RuleIndexMapAdd(rim, 4, 8) == 2);
+    CHECK((RuleIndexMapAdd(rim, 1, 2) == 0));
+    CHECK((RuleIndexMapAdd(rim, 2, 4) == 1));
+    CHECK((RuleIndexMapAdd(rim, 4, 8) == 2));
 
     SECTION("valid")
     {
         CHECK(RuleIndexMapGet(rim, 1, gid, sid));
 
-        CHECK(gid == 2);
-        CHECK(sid == 4);
+        CHECK((gid == 2));
+        CHECK((sid == 4));
     }
     SECTION("invalid")
     {
         CHECK(!RuleIndexMapGet(rim, 3, gid, sid));
 
-        CHECK(gid == 0);
-        CHECK(sid == 0);
+        CHECK((gid == 0));
+        CHECK((sid == 0));
     }
     RuleIndexMapFree(rim);
 }

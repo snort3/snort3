@@ -265,7 +265,7 @@ TEST_CASE("mac addr negative test", "[Value]")
     Value test_val("12345");
 
     test_val.get_buffer(num_chars);
-    REQUIRE(num_chars == 5);
+    REQUIRE((num_chars == 5));
 
     test_val.get_mac(mac);
     CHECK(memcmp(mac,zero,6)==0);
@@ -285,7 +285,7 @@ TEST_CASE("get addr test", "[Value]")
     {
         Value test_val("1234567890123456");
         test_str = (uint8_t*)test_val.get_buffer(num_chars);
-        REQUIRE(num_chars == 16);
+        REQUIRE((num_chars == 16));
 
         test_val.get_addr(addr);
         CHECK(memcmp(addr,test_str,16)==0);
@@ -294,7 +294,7 @@ TEST_CASE("get addr test", "[Value]")
     {
         Value test_val("12345678901234567890");
         test_val.get_buffer(num_chars);
-        REQUIRE(num_chars == 20);
+        REQUIRE((num_chars == 20));
 
         test_val.get_addr(addr);
         CHECK(memcmp(addr,zero,16)==0);
@@ -315,7 +315,7 @@ TEST_CASE("get addr IPv4 test", "[Value]")
     {
         Value test_val("1234");
         test_str = (uint8_t*)test_val.get_buffer(num_chars);
-        REQUIRE(num_chars == 4);
+        REQUIRE((num_chars == 4));
 
         test_val.get_addr_ip4(addr);
         CHECK(memcmp(addr,test_str,4)==0);
@@ -324,7 +324,7 @@ TEST_CASE("get addr IPv4 test", "[Value]")
     {
         Value test_val("123456");
         test_val.get_buffer(num_chars);
-        REQUIRE(num_chars == 6);
+        REQUIRE((num_chars == 6));
 
         test_val.get_addr_ip4(addr);
         CHECK(memcmp(addr,zero,4)==0);
@@ -344,7 +344,7 @@ TEST_CASE("get addr IPv6 test", "[Value]")
     {
         Value test_val("1234567890123456");
         test_str = (uint8_t *)test_val.get_buffer(num_chars);
-        REQUIRE(num_chars == 16);
+        REQUIRE((num_chars == 16));
 
         test_val.get_addr_ip6(addr);
         CHECK(memcmp(addr,test_str,16)==0);
@@ -353,7 +353,7 @@ TEST_CASE("get addr IPv6 test", "[Value]")
     {
         Value test_val("123456");
         test_val.get_buffer(num_chars);
-        REQUIRE(num_chars == 6);
+        REQUIRE((num_chars == 6));
 
         test_val.get_addr_ip6(addr);
         CHECK(memcmp(addr,zero,16)==0);
@@ -429,15 +429,15 @@ TEST_CASE("update mask", "[Value]")
 
             mask16 = 0x1100;
             test_val.update_mask(mask16, flag16, invert);
-            CHECK(mask16 == 0x0100);
+            CHECK((mask16 == 0x0100));
 
             mask32 = 0x11000000;
             test_val.update_mask(mask32, flag32, invert);
-            CHECK(mask32 == 0x01000000);
+            CHECK((mask32 == 0x01000000));
 
             mask64 = 0x1100000000000000;
             test_val.update_mask(mask64, flag64, invert);
-            CHECK(mask64 == 0x0100000000000000);
+            CHECK((mask64 == 0x0100000000000000));
         }
 
         SECTION("invert false")
@@ -445,19 +445,19 @@ TEST_CASE("update mask", "[Value]")
             invert = false;
             mask8 = 0x01;
             test_val.update_mask(mask8, flag8, invert);
-            CHECK(mask8 == 0x11);
+            CHECK((mask8 == 0x11));
 
             mask16 = 0x0100;
             test_val.update_mask(mask16, flag16, invert);
-            CHECK(mask16 == 0x1100);
+            CHECK((mask16 == 0x1100));
 
             mask32 = 0x01000000;
             test_val.update_mask(mask32, flag32, invert);
-            CHECK(mask32 == 0x11000000);
+            CHECK((mask32 == 0x11000000));
 
             mask64 = 0x0100000000000000;
             test_val.update_mask(mask64, flag64, invert);
-            CHECK(mask64 == 0x1100000000000000);
+            CHECK((mask64 == 0x1100000000000000));
         }
     }
 
@@ -475,15 +475,15 @@ TEST_CASE("update mask", "[Value]")
 
             mask16 = 0x1100;
             test_val.update_mask(mask16, flag16, invert);
-            CHECK(mask16 == 0x0100);
+            CHECK((mask16 == 0x0100));
 
             mask32 = 0x11000000;
             test_val.update_mask(mask32, flag32, invert);
-            CHECK(mask32 == 0x01000000);
+            CHECK((mask32 == 0x01000000));
 
             mask64 = 0x1100000000000000;
             test_val.update_mask(mask64, flag64, invert);
-            CHECK(mask64 == 0x0100000000000000);
+            CHECK((mask64 == 0x0100000000000000));
         }
 
         SECTION("invert true")
@@ -491,19 +491,19 @@ TEST_CASE("update mask", "[Value]")
             invert = false;
             mask8 = 0x01;
             test_val.update_mask(mask8, flag8, invert);
-            CHECK(mask8 == 0x11);
+            CHECK((mask8 == 0x11));
 
             mask16 = 0x0100;
             test_val.update_mask(mask16, flag16, invert);
-            CHECK(mask16 == 0x1100);
+            CHECK((mask16 == 0x1100));
 
             mask32 = 0x01000000;
             test_val.update_mask(mask32, flag32, invert);
-            CHECK(mask32 == 0x11000000);
+            CHECK((mask32 == 0x11000000));
 
             mask64 = 0x0100000000000000;
             test_val.update_mask(mask64, flag64, invert);
-            CHECK(mask64 == 0x1100000000000000);
+            CHECK((mask64 == 0x1100000000000000));
         }
     }
 }

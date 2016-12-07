@@ -185,7 +185,7 @@ static void PrintSipConf(SIP_PROTO_CONF* config)
  *********************************************************************/
 static inline int SIP_Process(Packet* p, SIPData* sessp, SIP_PROTO_CONF* config)
 {
-    int status;
+    bool status;
     char* sip_buff = (char*)p->data;
     char* end;
     SIP_Roptions* pRopts;

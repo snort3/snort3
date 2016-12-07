@@ -256,11 +256,11 @@ int PrintFTPServerConf(FTP_SERVER_PROTO_CONF* ServerConf)
                 FTPCmd->cmd_name, FTPCmd->max_param_len);
 #ifdef PRINT_DEFAULT_CONFIGS
             if (FTPCmd->data_chan_cmd)
-                snprintf(buf, BUF_SIZE, "%s data_chan ");
+                snprintf(buf, BUF_SIZE, "%s", "data_chan ");
             if (FTPCmd->data_xfer_cmd)
-                snprintf(buf, BUF_SIZE, "%s data_xfer ");
+                snprintf(buf, BUF_SIZE, "%s", "data_xfer ");
             if (FTPCmd->encr_cmd)
-                snprintf(buf, BUF_SIZE, "%s encr ");
+                snprintf(buf, BUF_SIZE, "%s", "encr ");
 #endif
 
             if (FTPCmd->check_validity)

@@ -114,7 +114,7 @@ struct HTTPINSPECT_GLOBAL_CONF
 **  and there is a global structure for servers that don't have
 **  a unique configuration.
 */
-struct HTTPINSPECT_CONF
+struct HTTPINSPECT_CONF_BASE
 {
     HTTPINSPECT_GLOBAL_CONF* global;
 
@@ -227,6 +227,12 @@ struct HTTPINSPECT_CONF
     PROFILES profile;
     CMD_LOOKUP* cmd_lookup;
 
+    HTTPINSPECT_CONF_BASE();
+    ~HTTPINSPECT_CONF_BASE();
+};
+
+struct HTTPINSPECT_CONF:public HTTPINSPECT_CONF_BASE
+{
     ByteBitSet whitespace;
     ByteBitSet non_rfc_chars;
 

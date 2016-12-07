@@ -430,11 +430,11 @@ TEST_CASE("bpf filter", "[PacketCapture]")
     cap.eval(&p_match);
     CHECK ( cap.write_packet_called );
 
-    CHECK ( cap_count_stats.checked == 3 );
-    CHECK ( cap_count_stats.matched == 2 );
+    CHECK ( (cap_count_stats.checked == 3) );
+    CHECK ( (cap_count_stats.matched == 2) );
 
-    REQUIRE ( cap.pcap.size() >= 2 );
-    CHECK ( cap.pcap.size() == 2 );
+    REQUIRE ( (cap.pcap.size() >= 2) );
+    CHECK ( (cap.pcap.size() == 2) );
     CHECK ( cap.pcap[0] == &p_match );
     CHECK ( cap.pcap[1] == &p_match );
 

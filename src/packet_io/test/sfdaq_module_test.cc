@@ -86,7 +86,7 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
     /* Validate the configuration */
     SFDAQConfig *cfg = sc.daq_config;
 
-    REQUIRE(cfg->module_dirs.size() == 2);
+    REQUIRE((cfg->module_dirs.size() == 2));
     CHECK(cfg->module_dirs[0] == module_dir1.get_string());
     CHECK(cfg->module_dirs[1] == module_dir2.get_string());
 
@@ -94,7 +94,7 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
 
     CHECK(cfg->input_spec == input_spec.get_string());
 
-    REQUIRE(cfg->variables.size() == 3);
+    REQUIRE((cfg->variables.size() == 3));
     CHECK(cfg->variables[0].first == "foo");
     CHECK(cfg->variables[0].second == "bar");
     CHECK(cfg->variables[1].first == "debug");
@@ -102,15 +102,15 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
     CHECK(cfg->variables[2].first == "hello");
     CHECK(cfg->variables[2].second == "world");
 
-    CHECK(cfg->mru_size == 6666);
+    CHECK((cfg->mru_size == 6666));
 
     REQUIRE(cfg->instances.size() == 1);
     for (auto it : cfg->instances)
     {
-        CHECK(it.first == 5);
+        CHECK((it.first == 5));
         SFDAQInstanceConfig* icfg = it.second;
         CHECK(icfg->input_spec == instance_input_spec.get_string());
-        REQUIRE(icfg->variables.size() == 2);
+        REQUIRE((icfg->variables.size() == 2));
         CHECK(icfg->variables[0].first == "instance5_var1");
         CHECK(icfg->variables[0].second == "foo");
         CHECK(icfg->variables[1].first == instance_var2.get_string());
@@ -140,8 +140,8 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
     REQUIRE(cfg->variables.size() == 1);
     CHECK(cfg->variables[0].first == "cli_global_variable");
     CHECK(cfg->variables[0].second == "abc");
-    CHECK(cfg->mru_size == 3333);
-    REQUIRE(cfg->instances.size() == 2);
+    CHECK((cfg->mru_size == 3333));
+    REQUIRE((cfg->instances.size() == 2));
     for (auto it : cfg->instances)
     {
         CHECK((it.first == 2 || it.first == 5));

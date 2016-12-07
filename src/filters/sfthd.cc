@@ -565,7 +565,7 @@ static int sfthd_create_threshold_global(
 
 #ifdef THD_DEBUG
     printf("THD_DEBUG-GLOBAL: created global threshold object "
-        "for gen_id=%d\n",config->gen_id);
+        "for gen_id=%u\n",config->gen_id);
     fflush(stdout);
 #endif
 
@@ -723,8 +723,8 @@ static inline int sfthd_test_non_suppress(
         sfthd_ip_node->tlast = curtime;
 
 #ifdef THD_DEBUG
-        printf("...dt=%d, sfthd_node->seconds=%d\n",dt, sfthd_node->seconds);
-        printf("...sfthd_ip_node->count=%d, sfthd_node->count=%d\n",
+        printf("...dt=%u, sfthd_node->seconds=%u\n",dt, sfthd_node->seconds);
+        printf("...sfthd_ip_node->count=%u, sfthd_node->count=%d\n",
             sfthd_ip_node->count,sfthd_node->count);
         fflush(stdout);
 #endif
@@ -754,8 +754,8 @@ static inline int sfthd_test_non_suppress(
         }
 
 #ifdef THD_DEBUG
-        printf("...dt=%d, sfthd_node->seconds=%d\n",dt, sfthd_node->seconds);
-        printf("...sfthd_ip_node->count=%d, sfthd_node->count=%d\n",
+        printf("...dt=%u, sfthd_node->seconds=%u\n",dt, sfthd_node->seconds);
+        printf("...sfthd_ip_node->count=%u, sfthd_node->count=%d\n",
             sfthd_ip_node->count,sfthd_node->count);
         fflush(stdout);
 #endif
@@ -1164,7 +1164,7 @@ int sfthd_test_threshold(
         if ( status < 0 ) /* -1 == Don't log and stop looking */
         {
 #ifdef THD_DEBUG
-            printf("THD_DEBUG: gen_id=%u sig_id=%u, UnLoggable\n\n",gen_id, sig_id,cnt);
+            printf("THD_DEBUG: gen_id=%u sig_id=%u, UnLoggable %d\n\n",gen_id, sig_id,cnt);
             fflush(stdout);
 #endif
             return (status < -1) ? 1 : -1;  /* !0 == Don't log it*/
@@ -1242,7 +1242,7 @@ int sfthd_show_objects(ThresholdObjects* thd_objs)
     SFGHASH* sfthd_hash;
     THD_ITEM* sfthd_item;
     THD_NODE* sfthd_node;
-    int gen_id;
+    unsigned gen_id;
     SFGHASH_NODE* item_hash_node;
     PolicyId policyId;
 
@@ -1298,7 +1298,7 @@ int sfthd_show_objects(ThresholdObjects* thd_objs)
                 else
                 {
                     printf(".........count   =%d\n",sfthd_node->count);
-                    printf(".........seconds =%d\n",sfthd_node->seconds);
+                    printf(".........seconds =%u\n",sfthd_node->seconds);
                 }
             }
         }

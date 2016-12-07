@@ -412,19 +412,19 @@ TEST_CASE( "otn state", "[profiler][rule_profiler]" )
 
         state_a += state_b;
 
-        CHECK( state_a.elapsed == 5_ticks );
-        CHECK( state_a.elapsed_match == 7_ticks );
-        CHECK( state_a.checks == 6 );
-        CHECK( state_a.matches == 8 );
-        CHECK( state_a.alerts == 12 );
+        CHECK( (state_a.elapsed == 5_ticks) );
+        CHECK( (state_a.elapsed_match == 7_ticks) );
+        CHECK( (state_a.checks == 6) );
+        CHECK( (state_a.matches == 8) );
+        CHECK( (state_a.alerts == 12) );
     }
 
     SECTION( "reset" )
     {
         state_a = OtnState();
 
-        CHECK( state_a.elapsed == 0_ticks );
-        CHECK( state_a.elapsed_match == 0_ticks );
+        CHECK( (state_a.elapsed == 0_ticks) );
+        CHECK( (state_a.elapsed_match == 0_ticks) );
         CHECK( state_a.checks == 0 );
         CHECK( state_a.matches == 0 );
         CHECK( state_a.alerts == 0 );
@@ -473,27 +473,27 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
 
     SECTION( "elapsed" )
     {
-        CHECK( entry.elapsed() == 3_ticks );
+        CHECK( (entry.elapsed() == 3_ticks) );
     }
 
     SECTION( "elapsed_match" )
     {
-        CHECK( entry.elapsed_match() == 2_ticks );
+        CHECK( (entry.elapsed_match() == 2_ticks) );
     }
 
     SECTION( "elapsed_no_match" )
     {
-        CHECK( entry.elapsed_no_match() == 1_ticks );
+        CHECK( (entry.elapsed_no_match() == 1_ticks) );
     }
 
     SECTION( "checks" )
     {
-        CHECK( entry.checks() == 3 );
+        CHECK( (entry.checks() == 3) );
     }
 
     SECTION( "matches" )
     {
-        CHECK( entry.matches() == 2 );
+        CHECK( (entry.matches() == 2) );
     }
 
     SECTION( "no_matches" )
@@ -503,17 +503,17 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
 
     SECTION( "alerts" )
     {
-        CHECK( entry.alerts() == 77 );
+        CHECK( (entry.alerts() == 77) );
     }
 
     SECTION( "timeouts" )
     {
-        CHECK( entry.timeouts() == 5 );
+        CHECK( (entry.timeouts() == 5) );
     }
 
     SECTION( "suspends" )
     {
-        CHECK( entry.suspends() == 2 );
+        CHECK( (entry.suspends() == 2) );
     }
 
 
@@ -521,21 +521,21 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
     {
         auto ticks = entry.avg_match();
         INFO( ticks.count() << " == " << (1_ticks).count() );
-        CHECK( ticks == 1_ticks );
+        CHECK( (ticks == 1_ticks) );
     }
 
     SECTION( "avg_no_match" )
     {
         auto ticks = entry.avg_no_match();
         INFO( ticks.count() << " == " << (1_ticks).count() );
-        CHECK( ticks == 1_ticks );
+        CHECK( (ticks == 1_ticks) );
     }
 
     SECTION( "avg_check" )
     {
         auto ticks = entry.avg_check();
         INFO( ticks.count() << " == " << (1_ticks).count() );
-        CHECK( ticks == 1_ticks );
+        CHECK( (ticks == 1_ticks) );
     }
 }
 
@@ -693,10 +693,10 @@ TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
         }
 
         INFO( "elapsed: " << stats.elapsed.count() );
-        CHECK( stats.elapsed > 0_ticks );
+        CHECK( (stats.elapsed > 0_ticks) );
         CHECK( stats.checks == 1 );
         INFO( "elapsed_match: " << stats.elapsed_match.count() );
-        CHECK( stats.elapsed_match == 0_ticks );
+        CHECK( (stats.elapsed_match == 0_ticks) );
     }
 
     SECTION( "explicitly calling stop" )
@@ -711,7 +711,7 @@ TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
                 ctx.stop(true);
 
                 INFO( "elapsed: " << stats.elapsed.count() );
-                CHECK( stats.elapsed > 0_ticks );
+                CHECK( (stats.elapsed > 0_ticks) );
                 CHECK( stats.checks == 1 );
                 CHECK( stats.elapsed_match == stats.elapsed );
                 save = stats;
@@ -726,9 +726,9 @@ TEST_CASE( "rule profiler time context", "[profiler][rule_profiler]" )
                 ctx.stop(false);
 
                 INFO( "elapsed: " << stats.elapsed.count() );
-                CHECK( stats.elapsed > 0_ticks );
+                CHECK( (stats.elapsed > 0_ticks) );
                 CHECK( stats.checks == 1 );
-                CHECK( stats.elapsed_match == 0_ticks );
+                CHECK( (stats.elapsed_match == 0_ticks) );
                 save = stats;
             }
         }

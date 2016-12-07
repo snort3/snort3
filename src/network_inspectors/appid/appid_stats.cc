@@ -398,7 +398,7 @@ static void dump_statistics()
             header.length = buffSize - ( 2 * sizeof(uint32_t));
             buffer = (uint8_t*)snort_calloc(buffSize);
 #           ifdef DEBUG_STATS
-            fprintf(SF_DEBUG_FILE, "Write App Records %u Size: %lu\n",
+            fprintf(SF_DEBUG_FILE, "Write App Records %u Size: %zu\n",
                 bucket->appRecordCnt, buffSize);
 #           endif
         }
