@@ -304,7 +304,7 @@ yet firm so feedback is welcome to get something we can live with.
     -Wno-deprecated-declarations
     -fsanitize=address -fno-omit-frame-pointer
 
-* Two macros (PADDING_GUARD_START and PADDING_GUARD_END) are provided by
+* Two macros (PADDING_GUARD_BEGIN and PADDING_GUARD_END) are provided by
   utils/cpp_macros.h.  These should be used to surround any structure used as
   a hash key with a raw comparator or that would otherwise suffer from
   unintentional padding.  A compiler warning will be generated if any structure
