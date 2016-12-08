@@ -201,9 +201,11 @@ void HttpMsgBody::print_body_section(FILE* output)
     detect_data.print(output, "Detect data");
     get_classic_buffer(HTTP_BUFFER_CLIENT_BODY, 0, 0).print(output,
         HttpApi::classic_buffer_names[HTTP_BUFFER_CLIENT_BODY-1]);
-    if (g_file_data.len > 0)
+
+    DataPointer& body = get_file_data();
+    if (body.len > 0)
     {
-        Field(g_file_data.len, g_file_data.data).print(output, "file_data");
+        Field(body.len, body.data).print(output, "file_data");
     }
     HttpMsgSection::print_section_wrapup(output);
 }

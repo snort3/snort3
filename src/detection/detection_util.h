@@ -47,7 +47,7 @@ struct DataBuffer
     unsigned len;
 };
 
-extern SO_PUBLIC THREAD_LOCAL DataPointer g_file_data;
+extern THREAD_LOCAL DataPointer g_file_data;
 
 #define SetDetectLimit(pktPtr, altLen) \
 { \
@@ -56,11 +56,8 @@ extern SO_PUBLIC THREAD_LOCAL DataPointer g_file_data;
 
 #define IsLimitedDetect(pktPtr) (pktPtr->packet_flags & PKT_HTTP_DECODE)
 
-inline void set_file_data(uint8_t* p, unsigned n)
-{
-    g_file_data.data = p;
-    g_file_data.len = n;
-}
+SO_PUBLIC DataPointer& get_file_data();
+SO_PUBLIC void set_file_data(uint8_t*, unsigned);
 
 // FIXIT-L event trace should be placed in its own files
 void EventTrace_Init();
@@ -74,9 +71,7 @@ inline int EventTrace_IsEnabled()
 }
 
 inline void DetectReset()
-{
-    g_file_data.len = 0;
-}
+{ set_file_data(nullptr, 0); }
 
 #endif
 

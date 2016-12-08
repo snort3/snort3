@@ -1466,10 +1466,12 @@ void LogPayload(TextLog* log, Packet* p)
         {
             LogCharData(log, (const char*)p->data, p->dsize);
 
-            if ( g_file_data.len > 0 )
+            DataPointer& fdata = get_file_data();
+
+            if ( fdata.len > 0 )
             {
                 TextLog_Print(log, "%s\n", "File data");
-                LogCharData(log, (const char*)g_file_data.data, g_file_data.len);
+                LogCharData(log, (const char*)fdata.data, fdata.len);
             }
         }
         else

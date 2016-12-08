@@ -62,6 +62,12 @@ THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
 THREAD_LOCAL bool do_detect;
 THREAD_LOCAL bool do_detect_content;
 
+SO_PUBLIC void DisableDetect()
+{ do_detect_content = false; }
+
+SO_PUBLIC void DisableInspection()
+{ do_detect = do_detect_content = false; }
+
 static THREAD_LOCAL char check_tags_flag;
 
 static int CheckTagging(Packet*);

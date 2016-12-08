@@ -1225,7 +1225,7 @@ int IsGzipData(Flow* flow)
     if (hsd == NULL)
         return -1;
 
-    if ((hsd->log_flags & HTTP_LOG_GZIP_DATA) && (g_file_data.len > 0 ))
+    if ((hsd->log_flags & HTTP_LOG_GZIP_DATA) && ( get_file_data().len > 0 ))
         return 0;
     else
         return -1;
@@ -1235,8 +1235,10 @@ int GetHttpGzipData(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     if (!IsGzipData(flow))
     {
-        *buf = g_file_data.data;
-        *len = g_file_data.len;
+        DataPointer& gzip = get_file_data();
+
+        *buf = gzip.data;
+        *len = gzip.len;
         *type = EVENT_INFO_GZIP_DATA;
         return 1;
     }
@@ -1256,7 +1258,7 @@ int IsJSNormData(Flow* flow)
     if (hsd == NULL)
         return -1;
 
-    if ((hsd->log_flags & HTTP_LOG_JSNORM_DATA) && (g_file_data.len > 0 ))
+    if ((hsd->log_flags & HTTP_LOG_JSNORM_DATA) && ( get_file_data().len > 0 ))
         return 0;
     else
         return -1;
@@ -1266,8 +1268,10 @@ int GetHttpJSNormData(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     if (!IsJSNormData(flow))
     {
-        *buf = g_file_data.data;
-        *len = g_file_data.len;
+        DataPointer& js = get_file_data();
+
+        *buf = js.data;
+        *len = js.len;
         *type = EVENT_INFO_JSNORM_DATA;
         return 1;
     }

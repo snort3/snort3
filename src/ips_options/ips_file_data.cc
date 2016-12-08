@@ -60,13 +60,12 @@ int FileDataOption::eval(Cursor& c, Packet*)
 {
     Profile profile(fileDataPerfStats);
 
-    uint8_t* data = g_file_data.data;
-    uint16_t len = g_file_data.len;
+    DataPointer& dp = get_file_data();
 
-    if ( !data || !len )
+    if ( !dp.data || !dp.len )
         return DETECTION_OPTION_NO_MATCH;
 
-    c.set(s_name, data, len);
+    c.set(s_name, dp.data, dp.len);
 
     return DETECTION_OPTION_MATCH;
 }
