@@ -82,6 +82,7 @@ AppIdInspector::~AppIdInspector()
 
 bool AppIdInspector::configure(SnortConfig*)
 {
+    assert(!active_config);
     active_config = new AppIdConfig( ( AppIdModuleConfig* )config);
 
     get_data_bus().subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(HttpEventHandler::REQUEST_EVENT));

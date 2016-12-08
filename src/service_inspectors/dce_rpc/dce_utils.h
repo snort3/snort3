@@ -392,5 +392,5 @@ inline void DCE2_BufferEmpty(DCE2_Buffer* buf)
 #define DCE2_MOVE(data_ptr, data_len, amount) \
     { data_len -= (amount); data_ptr = (uint8_t*)data_ptr + (amount); }
 
-#endif  /* _DCE2_UTILS_H_ */
+#endif
 

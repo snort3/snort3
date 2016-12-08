@@ -31,8 +31,4 @@ struct SSH_PROTO_CONF
     uint16_t MaxServerVersionLen;
 };
 
-#define SSH_DEFAULT_MAX_ENC_PKTS    25
-#define SSH_DEFAULT_MAX_CLIENT_BYTES    19600
-#define SSH_DEFAULT_MAX_SERVER_VERSION_LEN 80
-
 #endif

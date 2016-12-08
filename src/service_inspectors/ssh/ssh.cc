@@ -75,26 +75,14 @@ static SSHData* get_session_data(Flow* flow)
 
 static void PrintSshConf(SSH_PROTO_CONF* config)
 {
-    if (config == NULL)
+    if ( !config )
         return;
 
     LogMessage("SSH config: \n");
-    LogMessage("    Max Encrypted Packets: %d %s \n",
-        config->MaxEncryptedPackets,
-        config->MaxEncryptedPackets
-        == SSH_DEFAULT_MAX_ENC_PKTS ?
-        "(Default)" : "");
-    LogMessage("    Max Server Version String Length: %d %s \n",
-        config->MaxServerVersionLen,
-        config->MaxServerVersionLen
-        == SSH_DEFAULT_MAX_SERVER_VERSION_LEN ?
-        "(Default)" : "");
 
-    LogMessage("    MaxClientBytes: %d %s \n",
-        config->MaxClientBytes,
-        config->MaxClientBytes
-        == SSH_DEFAULT_MAX_CLIENT_BYTES ?
-        "(Default)" : "");
+    LogMessage("    Max Encrypted Packets: %d\n", config->MaxEncryptedPackets);
+    LogMessage("    Max Server Version String Length: %d\n", config->MaxServerVersionLen);
+    LogMessage("    MaxClientBytes: %d\n", config->MaxClientBytes);
 
     LogMessage("\n");
 }

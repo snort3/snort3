@@ -836,13 +836,15 @@ DCE2_Ret DCE2_Smb2InitFileTracker(DCE2_SmbFileTracker* ftracker,
 DCE2_SmbVersion DCE2_Smb2Version(const Packet* p)
 {
     /* Only check reassembled SMB2 packet*/
-    if (p->has_paf_payload() &&
-        (p->dsize > sizeof(NbssHdr) + sizeof(DCE2_SMB_ID)))
+    if ( p->has_paf_payload() and
+        (p->dsize > sizeof(NbssHdr) + 4) )  // DCE2_SMB_ID is u32
     {
         Smb2Hdr* smb_hdr = (Smb2Hdr*)(p->data + sizeof(NbssHdr));
         uint32_t smb_version_id = SmbId((SmbNtHdr*)smb_hdr);
+
         if (smb_version_id == DCE2_SMB_ID)
             return DCE2_SMB_VERISON_1;
+
         else if (smb_version_id == DCE2_SMB2_ID)
             return DCE2_SMB_VERISON_2;
     }

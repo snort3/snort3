@@ -106,6 +106,7 @@ TELNET_PROTO_CONF* TelnetModule::get_data()
 
 bool TelnetModule::begin(const char*, int, SnortConfig*)
 {
+    assert(!conf);
     conf = new TELNET_PROTO_CONF;
     return true;
 }

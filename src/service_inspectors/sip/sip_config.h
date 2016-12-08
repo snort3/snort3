@@ -104,7 +104,7 @@ struct SIP_PROTO_CONF
     uint16_t maxViaLen;      // Maximum Via field size
     uint16_t maxContactLen;  // Maximum Contact field size
     uint16_t maxContentLen;  // Maximum Content length
-    uint8_t ignoreChannel;   // Whether to ignore media channels found by SIP PP
+    bool ignoreChannel;   // Whether to ignore media channels found by SIP PP
 };
 
 // API to parse method list

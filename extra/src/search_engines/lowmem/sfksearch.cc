@@ -705,7 +705,7 @@ int match(unsigned id, int index, void* context)
 {
     trie_nmatches++;
     data = context;
-    printf("id=%d found at index=%d, %s\n",id,index,gargv[id]);
+    printf("id=%u found at index=%d, %s\n", id, index, gargv[id]);
     return 0;
 }
 

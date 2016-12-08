@@ -134,8 +134,8 @@ POP_PROTO_CONF* PopModule::get_data()
 
 bool PopModule::begin(const char*, int, SnortConfig*)
 {
+    assert(!config);
     config = new POP_PROTO_CONF;
-
     return true;
 }
 

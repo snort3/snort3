@@ -247,9 +247,9 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
         {
             sfip_ntop(cliIp, src_ip, sizeof(src_ip));
             sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
-            LogMessage("AppIdDbg %s related flow %s for %s-%u -> %s-%u %u\n",
-                asd->session_logging_id, asd ? "created" : "creation failed",
-                                src_ip, (unsigned)cliPort, dst_ip, (unsigned)srvPort, (unsigned)proto);
+            LogMessage("AppIdDbg %s related flow created for %s-%u -> %s-%u %u\n",
+                asd->session_logging_id,
+                src_ip, (unsigned)cliPort, dst_ip, (unsigned)srvPort, (unsigned)proto);
         }
 
         asd->in_expected_cache = true;

@@ -130,7 +130,7 @@ bool HttpHeaderOption::operator==(const IpsOption& ips) const
     return ( hdr_name == rhs.hdr_name );
 }
 
-static bool find(
+static bool find_hdr(
     const string& s, const InspectionBuffer& b, Cursor& c)
 {
     const char* h = s.c_str();
@@ -201,7 +201,7 @@ int HttpHeaderOption::eval(Cursor& c, Packet* p)
         return DETECTION_OPTION_MATCH;
     }
 
-    if ( find(hdr_name, hb, c) )
+    if ( find_hdr(hdr_name, hb, c) )
         return DETECTION_OPTION_MATCH;
 
     return DETECTION_OPTION_NO_MATCH;

@@ -199,7 +199,7 @@ ProfileStats* SipModule::get_profile() const
 bool SipModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("ignore_call_channel") )
-        conf->ignoreChannel  = 1;
+        conf->ignoreChannel = v.get_bool();
 
     else if ( v.is("max_call_id_len") )
         conf->maxCallIdLen = v.get_long();
@@ -249,23 +249,13 @@ SIP_PROTO_CONF* SipModule::get_data()
 
 bool SipModule::begin(const char*, int, SnortConfig*)
 {
+    assert(!conf);
     conf = new SIP_PROTO_CONF;
-    conf->ignoreChannel  = 0;
-    conf->maxNumSessions = 10000;
-    conf->maxNumDialogsInSession = 4;
-    conf->maxUriLen = 256;
-    conf->maxCallIdLen = 256;
-    conf->maxRequestNameLen = 20;
-    conf->maxFromLen = 256;
-    conf->maxToLen = 256;
-
-    conf->maxViaLen = 1024;
-    conf->maxContactLen = 256;
-    conf->maxContentLen = 1024;
 
     conf->methodsConfig = SIP_METHOD_NULL;
     conf->methods = NULL;
     sip_methods = default_methods;
+
     return true;
 }
 

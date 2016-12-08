@@ -1939,19 +1939,18 @@ AppId get_appid_from_url(char* host, char* url, char** version, char* referer, A
     snort_free(temp_host);
 
     /* if referred_id feature id disabled, referer will be null */
-    if (referer && (!payload_found || AppInfoManager::get_instance().get_app_info_flags(data->payload_id, APPINFO_FLAG_REFERRED)))
+    if (referer && (!payload_found ||
+        AppInfoManager::get_instance().get_app_info_flags(data->payload_id, APPINFO_FLAG_REFERRED)))
     {
         referer_start = referer;
 
         char* referer_offset = (char*)service_strstr((uint8_t*)referer_start, URL_SCHEME_MAX_LEN,
             (uint8_t*)URL_SCHEME_END_PATTERN, sizeof(URL_SCHEME_END_PATTERN)-1);
-        if (referer_offset)
-        {
-            referer_offset += sizeof(URL_SCHEME_END_PATTERN)-1;
-        }
-        else
+
+        if ( !referer_offset )
             return 0;
 
+        referer_offset += sizeof(URL_SCHEME_END_PATTERN)-1;
         referer_start = referer_offset;
         referer_len = strlen(referer_start);
         referer_path = strchr(referer_start, '/');
@@ -1967,7 +1966,7 @@ AppId get_appid_from_url(char* host, char* url, char** version, char* referer, A
             referer_path_len = 1;
         }
 
-        if (referer_start && referer_len > 0)
+        if ( referer_len > 0 )
         {
             data = nullptr;
             patterns[0].pattern = (uint8_t*)referer_start;

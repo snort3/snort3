@@ -695,7 +695,7 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     }
 
     // Move just past byte count field which is the end of the command
-    DCE2_MOVE(nb_ptr, nb_len, com_info.cmd_size);
+    nb_len -= com_info.cmd_size;
 
     // Validate that there is enough data to be able to process the command
     if (nb_len < DCE2_SmbGetMinByteCount(smb_com, (uint8_t)com_info.smb_type))

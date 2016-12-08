@@ -84,10 +84,8 @@ ProfileStats* SslModule::get_profile() const
 bool SslModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("trust_servers") )
-    {
-        if (v.get_bool())
-            conf->trustservers = true;
-    }
+        conf->trustservers = v.get_bool();
+
     else if ( v.is("max_heartbeat_length") )
         conf->max_heartbeat_len = v.get_long();
 
@@ -106,9 +104,8 @@ SSL_PROTO_CONF* SslModule::get_data()
 
 bool SslModule::begin(const char*, int, SnortConfig*)
 {
+    assert(!conf);
     conf = new SSL_PROTO_CONF;
-    conf->max_heartbeat_len = 0;
-    conf->trustservers = false;
     return true;
 }
 

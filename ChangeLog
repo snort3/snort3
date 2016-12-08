@@ -14,7 +14,7 @@
 -- add alternate fast patterns for dce_udp endianness
 -- removed underscores from all peg counts
 -- document sensitive data use
--- user manual refactoring and updages
+-- user manual refactoring and updates
 
 16/11/21 - build 219
 

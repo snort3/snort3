@@ -662,7 +662,7 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         return false;
 
     // FIXIT-M only basic modules and inspectors can be reloaded at present
-    if ( Snort::is_reloading() && h && h->api && h->api->type != PT_INSPECTOR )
+    if ( Snort::is_reloading() and h->api and h->api->type != PT_INSPECTOR )
         return false;
 
     Module* m = h->mod;

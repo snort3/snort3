@@ -35,8 +35,6 @@ public:
     std::string name;
     std::string chunk;
 
-    static const char* type;
-
 protected:
     LuaApi(std::string& s, std::string& c)
     {

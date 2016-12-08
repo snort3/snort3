@@ -1281,7 +1281,7 @@ int main(int argc, char** argv)
         n != 0;
         n  = sfxhash_findnext(t) )
     {
-        printf("hash-findfirst/next: n=%x, key=%s, data=%s\n", n, n->key, n->data);
+        printf("hash-findfirst/next: n=%p, key=%s, data=%s\n", n, n->key, n->data);
 
         /*
           remove node we are looking at, this is first/next safe.

@@ -311,6 +311,7 @@ HashMatchData* HashModule::get_data()
 
 bool HashModule::begin(const char*, int, SnortConfig*)
 {
+    assert(!hmd);
     hmd = new HashMatchData;
     return true;
 }

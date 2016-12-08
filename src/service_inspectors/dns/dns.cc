@@ -112,14 +112,10 @@ static DNSData* get_dns_session_data(Packet* p, bool from_server)
 }
 
 static uint16_t ParseDNSHeader(
-    const unsigned char* data,
-    uint16_t bytes_unused,
-    DNSData* dnsSessionData)
+    const unsigned char* data, uint16_t bytes_unused, DNSData* dnsSessionData)
 {
-    if (bytes_unused == 0)
-    {
-        return bytes_unused;
-    }
+    if ( !bytes_unused )
+        return 0;
 
     switch (dnsSessionData->state)
     {
@@ -128,144 +124,123 @@ static uint16_t ParseDNSHeader(
         dnsSessionData->length = ((uint8_t)*data) << 8;
         dnsSessionData->state = DNS_RESP_STATE_LENGTH_PART;
         data++;
-        bytes_unused--;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_LENGTH_PART:
         dnsSessionData->length |= ((uint8_t)*data);
         dnsSessionData->state = DNS_RESP_STATE_HDR_ID;
         data++;
-        bytes_unused--;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_HDR_ID:
         dnsSessionData->hdr.id = (uint8_t)*data << 8;
-        data++;
-        bytes_unused--;
         dnsSessionData->state = DNS_RESP_STATE_HDR_ID_PART;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_HDR_ID_PART:
         dnsSessionData->hdr.id |= (uint8_t)*data;
-        data++;
-        bytes_unused--;
         dnsSessionData->state = DNS_RESP_STATE_HDR_FLAGS;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_HDR_FLAGS:
         dnsSessionData->hdr.flags = (uint8_t)*data << 8;
-        data++;
-        bytes_unused--;
         dnsSessionData->state = DNS_RESP_STATE_HDR_FLAGS_PART;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_HDR_FLAGS_PART:
         dnsSessionData->hdr.flags |= (uint8_t)*data;
-        data++;
-        bytes_unused--;
         dnsSessionData->state = DNS_RESP_STATE_HDR_QS;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_HDR_QS:
         dnsSessionData->hdr.questions = (uint8_t)*data << 8;
-        data++;
-        bytes_unused--;
         dnsSessionData->state = DNS_RESP_STATE_HDR_QS_PART;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_HDR_QS_PART:
         dnsSessionData->hdr.questions |= (uint8_t)*data;
-        data++;
-        bytes_unused--;
         dnsSessionData->state = DNS_RESP_STATE_HDR_ANSS;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_HDR_ANSS:
         dnsSessionData->hdr.answers = (uint8_t)*data << 8;
-        data++;
-        bytes_unused--;
         dnsSessionData->state = DNS_RESP_STATE_HDR_ANSS_PART;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_HDR_ANSS_PART:
         dnsSessionData->hdr.answers |= (uint8_t)*data;
-        data++;
-        bytes_unused--;
         dnsSessionData->state = DNS_RESP_STATE_HDR_AUTHS;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_HDR_AUTHS:
         dnsSessionData->hdr.authorities = (uint8_t)*data << 8;
-        data++;
-        bytes_unused--;
         dnsSessionData->state = DNS_RESP_STATE_HDR_AUTHS_PART;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_HDR_AUTHS_PART:
         dnsSessionData->hdr.authorities |= (uint8_t)*data;
-        data++;
-        bytes_unused--;
         dnsSessionData->state = DNS_RESP_STATE_HDR_ADDS;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_HDR_ADDS:
         dnsSessionData->hdr.additionals = (uint8_t)*data << 8;
-        data++;
-        bytes_unused--;
         dnsSessionData->state = DNS_RESP_STATE_HDR_ADDS_PART;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_HDR_ADDS_PART:
         dnsSessionData->hdr.additionals |= (uint8_t)*data;
-        data++;
-        bytes_unused--;
         dnsSessionData->state = DNS_RESP_STATE_QUESTION;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
-    default:
-        /* Continue -- we're beyond the header */
+        bytes_unused--;
         break;
     }
 
@@ -273,9 +248,7 @@ static uint16_t ParseDNSHeader(
 }
 
 static uint16_t ParseDNSName(
-    const unsigned char* data,
-    uint16_t bytes_unused,
-    DNSData* dnsSessionData)
+    const unsigned char* data, uint16_t bytes_unused, DNSData* dnsSessionData)
 {
     uint16_t bytes_required = dnsSessionData->curr_txt.txt_len -
         dnsSessionData->curr_txt.txt_bytes_seen;
@@ -366,17 +339,13 @@ static uint16_t ParseDNSName(
 }
 
 static uint16_t ParseDNSQuestion(
-    const unsigned char* data,
-    uint16_t bytes_unused,
-    DNSData* dnsSessionData)
+    const unsigned char* data, uint16_t bytes_unused, DNSData* dnsSessionData)
 {
     uint16_t bytes_used = 0;
     uint16_t new_bytes_unused = 0;
 
-    if (bytes_unused == 0)
-    {
-        return bytes_unused;
-    }
+    if ( !bytes_unused )
+        return 0;
 
     if (dnsSessionData->curr_rec_state < DNS_RESP_STATE_Q_NAME_COMPLETE)
     {
@@ -390,11 +359,8 @@ static uint16_t ParseDNSQuestion(
             data = data + bytes_used;
             bytes_unused = new_bytes_unused;
 
-            if (bytes_unused == 0)
-            {
-                /* ran out of data */
-                return bytes_unused;
-            }
+            if ( !bytes_unused )
+                return 0;  /* ran out of data */
         }
         else
         {
@@ -407,46 +373,35 @@ static uint16_t ParseDNSQuestion(
     {
     case DNS_RESP_STATE_Q_TYPE:
         dnsSessionData->curr_q.type = (uint8_t)*data << 8;
-        data++;
-        bytes_unused--;
         dnsSessionData->curr_rec_state = DNS_RESP_STATE_Q_TYPE_PART;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_Q_TYPE_PART:
         dnsSessionData->curr_q.type |= (uint8_t)*data;
-        data++;
-        bytes_unused--;
         dnsSessionData->curr_rec_state = DNS_RESP_STATE_Q_CLASS;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_Q_CLASS:
         dnsSessionData->curr_q.dns_class = (uint8_t)*data << 8;
-        data++;
-        bytes_unused--;
         dnsSessionData->curr_rec_state = DNS_RESP_STATE_Q_CLASS_PART;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_Q_CLASS_PART:
         dnsSessionData->curr_q.dns_class |= (uint8_t)*data;
-        data++;
-        bytes_unused--;
         dnsSessionData->curr_rec_state = DNS_RESP_STATE_Q_COMPLETE;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
-    default:
-        /* Continue -- we're beyond this question */
+        bytes_unused--;
         break;
     }
 
@@ -454,17 +409,13 @@ static uint16_t ParseDNSQuestion(
 }
 
 static uint16_t ParseDNSAnswer(
-    const unsigned char* data,
-    uint16_t bytes_unused,
-    DNSData* dnsSessionData)
+    const unsigned char* data, uint16_t bytes_unused, DNSData* dnsSessionData)
 {
     uint16_t bytes_used = 0;
     uint16_t new_bytes_unused = 0;
 
-    if (bytes_unused == 0)
-    {
-        return bytes_unused;
-    }
+    if ( !bytes_unused )
+        return 0;
 
     if (dnsSessionData->curr_rec_state < DNS_RESP_STATE_RR_NAME_COMPLETE)
     {
@@ -479,66 +430,58 @@ static uint16_t ParseDNSAnswer(
         }
         bytes_unused = new_bytes_unused;
 
-        if (bytes_unused == 0)
-        {
-            /* ran out of data */
-            return bytes_unused;
-        }
+        if ( !bytes_unused )
+            return 0;  /* ran out of data */
     }
 
     switch (dnsSessionData->curr_rec_state)
     {
     case DNS_RESP_STATE_RR_TYPE:
         dnsSessionData->curr_rr.type = (uint8_t)*data << 8;
-        data++;
-        bytes_unused--;
         dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_TYPE_PART;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_RR_TYPE_PART:
         dnsSessionData->curr_rr.type |= (uint8_t)*data;
-        data++;
-        bytes_unused--;
         dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_CLASS;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_RR_CLASS:
         dnsSessionData->curr_rr.dns_class = (uint8_t)*data << 8;
-        data++;
-        bytes_unused--;
         dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_CLASS_PART;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_RR_CLASS_PART:
         dnsSessionData->curr_rr.dns_class |= (uint8_t)*data;
-        data++;
-        bytes_unused--;
         dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_TTL;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_RR_TTL:
         dnsSessionData->curr_rr.ttl = (uint8_t)*data << 24;
-        data++;
-        bytes_unused--;
         dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_TTL_PART;
         dnsSessionData->bytes_seen_curr_rec = 1;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_RR_TTL_PART:
         while (dnsSessionData->bytes_seen_curr_rec < 4)
         {
@@ -546,36 +489,26 @@ static uint16_t ParseDNSAnswer(
             dnsSessionData->curr_rr.ttl |=
                 (uint8_t)*data << (4-dnsSessionData->bytes_seen_curr_rec)*8;
             data++;
-            bytes_unused--;
-            if (bytes_unused == 0)
-            {
-                return bytes_unused;
-            }
+
+            if ( !--bytes_unused )
+                return 0;
         }
         dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_RDLENGTH;
-    /* Fall through */
+        // Fall through
+
     case DNS_RESP_STATE_RR_RDLENGTH:
         dnsSessionData->curr_rr.length = (uint8_t)*data << 8;
-        data++;
-        bytes_unused--;
         dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_RDLENGTH_PART;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
+        data++;
+
+        if ( !--bytes_unused )
+            return 0;
+        // Fall through
+
     case DNS_RESP_STATE_RR_RDLENGTH_PART:
         dnsSessionData->curr_rr.length |= (uint8_t)*data;
-        data++;
-        bytes_unused--;
         dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_RDATA_START;
-        if (bytes_unused == 0)
-        {
-            return bytes_unused;
-        }
-    /* Fall through */
-    default:
-        /* Continue -- we're beyond this answer */
+        bytes_unused--;
         break;
     }
 

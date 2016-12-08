@@ -132,8 +132,8 @@ IMAP_PROTO_CONF* ImapModule::get_data()
 
 bool ImapModule::begin(const char*, int, SnortConfig*)
 {
+    assert(!config);
     config = new IMAP_PROTO_CONF;
-
     return true;
 }
 

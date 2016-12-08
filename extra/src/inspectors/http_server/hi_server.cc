@@ -256,13 +256,13 @@ static inline int hi_server_extract_status_msg(const u_char* start, const u_char
     {
         const u_char* crlf = (u_char*)SnortStrnStr((const char*)ptr, end - ptr, "\n");
         result->uri = ptr;
+
         if (crlf)
         {
             if (crlf[-1] == '\r')
                 result->uri_end = crlf - 1;
             else
                 result->uri_end = crlf;
-            ptr = crlf;
         }
         else
         {

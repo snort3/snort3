@@ -54,12 +54,13 @@
  * swap on big endian hardware */
 #ifdef WORDS_BIGENDIAN
 #define SWAP_BYTES(a) \
+    a = \
     ((((uint32_t)(a) & 0xFF000000) >> 24) | \
     (((uint32_t)(a) & 0x00FF0000) >> 8) | \
     (((uint32_t)(a) & 0x0000FF00) << 8) | \
     (((uint32_t)(a) & 0x000000FF) << 24))
 #else
-#define SWAP_BYTES(a) (a)
+#define SWAP_BYTES(a)
 #endif
 
 static unsigned po_rule_hash_func(SFHASHFCN* p, unsigned char* k, int n)
@@ -70,7 +71,7 @@ static unsigned po_rule_hash_func(SFHASHFCN* p, unsigned char* k, int n)
     /* Since the input is really an int, put the bytes into a normalized
      * order so that the hash function returns consistent results across
      * on BE & LE hardware. */
-    ikey = SWAP_BYTES(ikey);
+    SWAP_BYTES(ikey);
 
     /* Set a pointer to the key to pass to the hashing function */
     key = (unsigned char*)&ikey;

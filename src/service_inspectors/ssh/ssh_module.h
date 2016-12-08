@@ -54,7 +54,6 @@ public:
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
     unsigned get_gid() const override
     { return GID_SSH; }

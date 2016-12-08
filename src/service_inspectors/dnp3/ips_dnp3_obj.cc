@@ -42,7 +42,8 @@
 
 static THREAD_LOCAL ProfileStats dnp3_obj_perf_stats;
 
-static int dnp3_decode_object(uint8_t* buf, uint16_t buflen, uint8_t rule_group, uint8_t rule_var)
+static int dnp3_decode_object(
+    uint8_t* buf, uint16_t buflen, uint8_t rule_group, uint8_t rule_var)
 {
     uint8_t group, var;
 
@@ -56,8 +57,6 @@ static int dnp3_decode_object(uint8_t* buf, uint16_t buflen, uint8_t rule_group,
 
     /* Decode var */
     var = *buf;
-    buf++;
-    buflen--;
 
     /* Match the rule option here, quit decoding if we found the right header. */
     if ((group == rule_group) && (var == rule_var))

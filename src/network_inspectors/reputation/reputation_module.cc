@@ -84,9 +84,7 @@ ReputationModule::ReputationModule() : Module(REPUTATION_NAME, REPUTATION_HELP, 
 ReputationModule::~ReputationModule()
 {
     if ( conf )
-    {
         delete conf;
-    }
 }
 
 const RuleMap* ReputationModule::get_rules() const
@@ -139,8 +137,8 @@ ReputationConfig* ReputationModule::get_data()
 
 bool ReputationModule::begin(const char*, int, SnortConfig*)
 {
+    assert(!conf);
     conf = new ReputationConfig;
-
     return true;
 }
 

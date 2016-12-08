@@ -116,15 +116,8 @@ SSH_PROTO_CONF* SshModule::get_data()
 
 bool SshModule::begin(const char*, int, SnortConfig*)
 {
+    assert(!conf);
     conf = new SSH_PROTO_CONF;
-    conf->MaxClientBytes = SSH_DEFAULT_MAX_CLIENT_BYTES;
-    conf->MaxEncryptedPackets = SSH_DEFAULT_MAX_ENC_PKTS;
-    conf->MaxServerVersionLen = SSH_DEFAULT_MAX_SERVER_VERSION_LEN;
-    return true;
-}
-
-bool SshModule::end(const char*, int, SnortConfig*)
-{
     return true;
 }
 
