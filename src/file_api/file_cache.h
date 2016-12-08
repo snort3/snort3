@@ -25,6 +25,7 @@
 
 #include "hash/sfxhash.h"
 #include "sfip/sf_ip.h"
+#include "utils/cpp_macros.h"
 
 #include "file_config.h"
 
@@ -32,8 +33,7 @@ class FileCache
 {
 public:
 // FIXIT-L Merge definition with duplicate in file_enforcer.h?
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wpadded"
+PADDING_GUARD_BEGIN
     struct FileHashKey
     {
         SfIp sip;
@@ -41,7 +41,7 @@ public:
         uint32_t padding;
         uint64_t file_sig;
     };
-#pragma GCC diagnostic pop
+PADDING_GUARD_END
 
     struct FileNode
     {

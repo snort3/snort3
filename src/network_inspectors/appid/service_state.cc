@@ -30,8 +30,7 @@
 
 //#define DEBUG_SERVICE_STATE 1
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wpadded"
+PADDING_GUARD_BEGIN
 class AppIdServiceStateKey
 {
 public:
@@ -73,7 +72,7 @@ public:
     IpProtocol proto;
     char padding[3];
 };
-#pragma GCC diagnostic pop
+PADDING_GUARD_END
 
 // FIXIT-L - no memcap on size of this table, do we need that?
 THREAD_LOCAL std::map<AppIdServiceStateKey, AppIdServiceIDState*>* service_state_cache = nullptr;

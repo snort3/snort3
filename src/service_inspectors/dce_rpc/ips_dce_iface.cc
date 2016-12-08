@@ -26,6 +26,7 @@
 #include "framework/module.h"
 #include "framework/ips_option.h"
 #include "framework/range.h"
+#include "hash/sfhashfcn.h"
 #include "profiler/profiler.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"

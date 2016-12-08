@@ -56,8 +56,7 @@
 /*  D A T A   S T R U C T U R E S  **********************************/
 /**Key used for identifying a session or host.
  */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wpadded"
+PADDING_GUARD_BEGIN
 struct tTagFlowKey
 {
     SfIp sip;  ///source IP address
@@ -67,7 +66,7 @@ struct tTagFlowKey
     uint16_t sp; ///source port
     uint16_t dp; ///destination port
 };
-#pragma GCC diagnostic pop
+PADDING_GUARD_END
 
 /**Node identifying a session or host based tagging.
  */

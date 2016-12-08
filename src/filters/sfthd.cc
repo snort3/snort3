@@ -33,19 +33,12 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <netinet/in.h>
-
-#include "sfip/sf_ip.h"
-#include "sfip/sf_ipvar.h"
-#include "utils/sflsq.h"
 #include "hash/sfghash.h"
 #include "hash/sfxhash.h"
-#include "utils/util.h"
+#include "sfip/sf_ipvar.h"
 #include "utils/dyn_array.h"
+#include "utils/sflsq.h"
+#include "utils/util.h"
 
 //  Debug Printing
 //#define THD_DEBUG

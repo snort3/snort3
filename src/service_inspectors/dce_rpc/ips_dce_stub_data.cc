@@ -23,6 +23,7 @@
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "hash/sfhashfcn.h"
 #include "profiler/profiler.h"
 
 #include "dce_common.h"

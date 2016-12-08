@@ -23,13 +23,15 @@
 // FlowKey is used to store Flows in the caches.  the data members are
 // sequenced to avoid void space.
 
-#include "main/snort_types.h"
-#include "hash/sfhashfcn.h"
-#include "framework/decode_data.h"
-#include "sfip/sf_ip.h"
+#include <stdint.h>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wpadded"
+#include "framework/decode_data.h"
+#include "utils/cpp_macros.h"
+
+struct SFHASHFCN;
+struct SfIp;
+
+PADDING_GUARD_BEGIN
 struct FlowKey
 {
     uint32_t   ip_l[4]; /* Low IP */
@@ -80,7 +82,7 @@ private:
         const SfIp *dstIP, uint16_t dstPort,
         uint32_t mplsId, bool order = true);
 };
-#pragma GCC diagnostic pop
+PADDING_GUARD_END
 
 #endif
 

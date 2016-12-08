@@ -20,6 +20,7 @@
 
 #include "catch/catch.hpp"
 #include "catch/unit_test.h"
+#include "hash/sfxhash.h"
 #include "parser/parse_ip.h"
 #include "sfip/sf_ip.h"
 

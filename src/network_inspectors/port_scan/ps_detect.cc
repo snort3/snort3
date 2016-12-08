@@ -56,15 +56,14 @@
 #include "sfip/sf_ip.h"
 #include "stream/stream.h"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wpadded"
+PADDING_GUARD_BEGIN
 typedef struct s_PS_HASH_KEY
 {
     int protocol;
     SfIp scanner;
     SfIp scanned;
 } PS_HASH_KEY;
-#pragma GCC diagnostic pop
+PADDING_GUARD_END
 
 typedef struct s_PS_ALERT_CONF
 {

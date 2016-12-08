@@ -24,8 +24,8 @@
 
 // Implements rate_filter feature for snort
 
-#include "main/policy.h"
 #include "actions/actions.h"
+#include "main/policy.h"
 
 struct SfIp;
 

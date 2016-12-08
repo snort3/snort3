@@ -27,8 +27,7 @@
 #include "log/messages.h"
 #include "sfip/sf_ip.h"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wpadded"
+PADDING_GUARD_BEGIN
 struct HostPortKey
 {
     HostPortKey()
@@ -63,7 +62,7 @@ struct HostPortKey
     IpProtocol proto;
     char padding;
 };
-#pragma GCC diagnostic pop
+PADDING_GUARD_END
 
 THREAD_LOCAL std::map<HostPortKey, HostPortVal>* host_port_cache = nullptr;
 

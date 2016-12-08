@@ -27,20 +27,13 @@
 #include "config.h"
 #endif
 
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "detection/rules.h"
+#include "detection/treenodes.h"
 #include "main/snort_config.h"
-#include "parser/parser.h"
 #include "protocols/packet.h"
-#include "sfip/sf_ip.h"
 #include "utils/util.h"
 
 #include "sfrf.h"
-#include "sfthd.h"
 
 //static int _printThresholdContext(RateFilterConfig*);
 

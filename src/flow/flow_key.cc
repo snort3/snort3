@@ -24,12 +24,11 @@
 #include "config.h"
 #endif
 
+#include "hash/sfhashfcn.h"
 #include "main/snort_config.h"
-#include "utils/util.h"
-#include "sfip/sf_ip.h"
-#include "protocols/packet.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
+#include "utils/util.h"
 
 //-------------------------------------------------------------------------
 // init foo

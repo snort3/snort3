@@ -26,20 +26,14 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "utils/util.h"
-#include "utils/sflsq.h"
 #include "hash/sfghash.h"
 #include "hash/sfxhash.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_ipvar.h"
+#include "utils/cpp_macros.h"
+#include "utils/sflsq.h"
+#include "utils/util.h"
 
 // Number of hash rows for gid 1 (rules)
 #define SFRF_GEN_ID_1_ROWS 4096
@@ -52,8 +46,7 @@
 // private data ...
 /* Key to find tracking nodes in trackingHash.
  */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wpadded"
+PADDING_GUARD_BEGIN
 typedef struct
 {
     ///policy identifier.
@@ -70,7 +63,7 @@ typedef struct
     SfIp ip;
     uint16_t padding;
 } tSFRFTrackingNodeKey;
-#pragma GCC diagnostic pop
+PADDING_GUARD_END
 
 /* Tracking node for rate_filter. One node is created on fly, in tracking
  * hash for each threshold configure (identified by Tid) and source or

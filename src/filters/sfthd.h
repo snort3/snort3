@@ -27,11 +27,13 @@
 #include "config.h"
 #endif
 
-#include "utils/sflsq.h"
-#include "hash/sfghash.h"
-#include "hash/sfxhash.h"
 #include "main/policy.h"
 #include "sfip/sf_ip.h"
+#include "utils/cpp_macros.h"
+
+struct SFGHASH;
+struct SFXHASH;
+typedef struct sf_list SF_LIST;
 
 /*!
     Max GEN_ID value - Set this to the Max Used by Snort, this is used for the
@@ -95,8 +97,7 @@ typedef struct
     HASH Key to lookup and store Ip nodes. The structure now tracks thresholds for different
     policies. This destroys locality of reference and may cause poor performance.
 */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wpadded"
+PADDING_GUARD_BEGIN
 typedef struct
 {
     int thd_id;
@@ -113,7 +114,7 @@ typedef struct
     SfIp ip;
     uint16_t padding;
 } THD_IP_GNODE_KEY;
-#pragma GCC diagnostic pop
+PADDING_GUARD_END
 
 /*!
     THD_NODE

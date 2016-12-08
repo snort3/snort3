@@ -9,6 +9,7 @@ endif ( BUILD_SNPRINTF )
 
 set( UTIL_INCLUDES
     bitop.h
+    cpp_macros.h
     dnet_header.h
     kmap.h
     safec.h

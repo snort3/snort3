@@ -19,15 +19,12 @@
 
 #include "detection_filter.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "filters/sfthd.h"
+#include "hash/sfxhash.h"
 #include "log/messages.h"
 #include "main/thread.h"
-#include "parser/parser.h"
 #include "utils/util.h"
+
+#include "sfthd.h"
 
 static THREAD_LOCAL SFXHASH* detection_filter_hash = NULL;
 
