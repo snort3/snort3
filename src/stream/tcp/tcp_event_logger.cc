@@ -90,11 +90,8 @@ void TcpEventLogger::log_internal_event(uint32_t eventSid)
     if (is_internal_event_enabled(snort_conf->rate_filter_config, eventSid))
     {
         tcpStats.internalEvents++;
-
-        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE, "Stream raised internal event %d\n",
-                eventSid); );
-
         SnortEventqAdd(GENERATOR_INTERNAL, eventSid);
+        DebugFormat(DEBUG_STREAM, "Stream raised internal event %d\n", eventSid);
     }
 }
 

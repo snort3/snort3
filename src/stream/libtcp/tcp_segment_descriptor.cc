@@ -49,14 +49,6 @@ TcpSegmentDescriptor::TcpSegmentDescriptor(Flow* flow, Packet* pkt, TcpEventLogg
         if ( !tcph->is_ack() )
             tel.log_internal_event(INTERNAL_EVENT_SYN_RECEIVED);
     }
-
-#ifdef DEBUG_STREAM_EX
-    LogMessage("Tcp Segment Descriptor:\n");
-    LogMessage("    seq:    0x%08X\n", seg_seq);
-    LogMessage("    ack:    0x%08X\n", seg_ack);
-    LogMessage("    win:    %d\n", seg_wnd);
-    LogMessage("    end:    0x%08X\n", end_seq);
-#endif
 }
 
 TcpSegmentDescriptor::~TcpSegmentDescriptor()

@@ -560,14 +560,10 @@ uint32_t Stream::reg_xtra_data_cb(LogFunction f)
     return stream.xtradata_func_count;
 }
 
-uint32_t Stream::get_xtra_data_map(LogFunction** f)
+uint32_t Stream::get_xtra_data_map(LogFunction*& f)
 {
-    if (f)
-    {
-        *f = stream.xtradata_map;
-        return stream.xtradata_func_count;
-    }
-    return 0;
+    f = stream.xtradata_map;
+    return stream.xtradata_func_count;
 }
 
 void Stream::reg_xtra_data_log(LogExtraData f, void* config)

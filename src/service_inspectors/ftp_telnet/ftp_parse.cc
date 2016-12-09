@@ -25,9 +25,7 @@
 
 #include "ftp_parse.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <assert.h>
 
 #include "ftp_bounce_lookup.h"
 #include "ftp_cmd_lookup.h"
@@ -118,62 +116,43 @@ static char* NextToken(const char* delimiters)
     return retTok;
 }
 
-/*
- * Function: SetOptionalsNext(FTP_PARAM_FMT *ThisFmt,
- *                            FTP_PARAM_FMT *NextFmt,
- *                            FTP_PARAM_FMT **choices,
- *                            int numChoices)
- *
- * Purpose: Recursively updates the next value for nodes in the FTP
- *          Parameter validation tree.
- *
- * Arguments: ThisFmt       => pointer to an FTP parameter validation node
- *            NextFmt       => pointer to an FTP parameter validation node
- *            choices       => pointer to a list of FTP parameter
- *                             validation nodes
- *            numChoices    => the number of nodes in the list
- *
- * Returns: int     => an error code integer (0 = success,
- *                     >0 = non-fatal error, <0 = fatal error)
- *
- */
-static void SetOptionalsNext(FTP_PARAM_FMT* ThisFmt, FTP_PARAM_FMT* NextFmt,
+// Recursively update the next value for nodes in the FTP Parameter validation tree.
+
+static void SetOptionalsNext(
+    FTP_PARAM_FMT* ThisFmt, FTP_PARAM_FMT* NextFmt,
     FTP_PARAM_FMT** choices, int numChoices)
 {
-    if (!ThisFmt)
+    if ( !ThisFmt )
         return;
 
-    if (ThisFmt->optional)
+    if ( ThisFmt->optional )
     {
-        if (ThisFmt->next_param_fmt == NULL)
+        if ( ThisFmt->next_param_fmt )
+            SetOptionalsNext(ThisFmt->next_param_fmt, NextFmt, choices, numChoices);
+
+        else
         {
             ThisFmt->next_param_fmt = NextFmt;
-            if (numChoices)
+
+            if ( numChoices )
             {
+                assert(choices);
                 ThisFmt->numChoices = numChoices;
                 ThisFmt->choices =
                     (FTP_PARAM_FMT**)snort_calloc(numChoices, sizeof(FTP_PARAM_FMT*));
                 memcpy(ThisFmt->choices, choices, sizeof(FTP_PARAM_FMT*) * numChoices);
             }
         }
-        else
-        {
-            SetOptionalsNext(ThisFmt->next_param_fmt, NextFmt,
-                choices, numChoices);
-        }
     }
     else
     {
-        int i;
         SetOptionalsNext(ThisFmt->optional_fmt, ThisFmt->next_param_fmt,
             ThisFmt->choices, ThisFmt->numChoices);
-        for (i=0; i<ThisFmt->numChoices; i++)
-        {
-            SetOptionalsNext(ThisFmt->choices[i], ThisFmt,
-                choices, numChoices);
-        }
-        SetOptionalsNext(ThisFmt->next_param_fmt, ThisFmt,
-            choices, numChoices);
+
+        for ( int i=0; i<ThisFmt->numChoices; i++ )
+            SetOptionalsNext(ThisFmt->choices[i], ThisFmt, choices, numChoices);
+
+        SetOptionalsNext(ThisFmt->next_param_fmt, ThisFmt, choices, numChoices);
     }
 }
 

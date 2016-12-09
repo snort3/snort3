@@ -237,7 +237,7 @@ public:
 
     static uint32_t reg_xtra_data_cb(LogFunction);
     static void reg_xtra_data_log(LogExtraData, void*);
-    static uint32_t get_xtra_data_map(LogFunction**);
+    static uint32_t get_xtra_data_map(LogFunction*&);
 
 private:
     static void set_ip_protocol(Flow*);

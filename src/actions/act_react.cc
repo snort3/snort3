@@ -230,7 +230,7 @@ static bool react_getpage(const char* file)
 // format response buffer
 static void react_config(ReactData* rd)
 {
-    size_t body_len, head_len, total_len;
+    int body_len, head_len, total_len;
     char dummy;
 
     const char* head = DEFAULT_HTTP;

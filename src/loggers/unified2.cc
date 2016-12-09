@@ -918,7 +918,7 @@ void U2Logger::alert(Packet* p, const char* msg, Event* event)
     if ( p->xtradata_mask )
     {
         LogFunction* log_funcs;
-        uint32_t max_count = Stream::get_xtra_data_map(&log_funcs);
+        uint32_t max_count = Stream::get_xtra_data_map(log_funcs);
 
         if ( max_count > 0 )
             AlertExtraData(
