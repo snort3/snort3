@@ -1,3 +1,14 @@
+16/12/09 - build 221
+
+-- fix appid handling of sip inspection events
+-- fix wizard to prevent use-after-free of service name
+-- fix various issues reported by cppcheck
+-- fix reload race condition
+-- fix cmake + clang builds
+-- add padding guards around hash key structs
+-- update manual for dce_* inspectors
+-- refactor IP address handling
+
 16/12/01 - build 220
 
 -- fixed uu and qp decode issue
