@@ -524,11 +524,8 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
  */
 static void snort_pop(POP_PROTO_CONF* config, Packet* p)
 {
-    POPData* pop_ssn = NULL;
-    int pkt_dir;
-
     /* Attempt to get a previously allocated POP block. */
-    pop_ssn = get_session_data(p->flow);
+    POPData* pop_ssn = get_session_data(p->flow);
 
     if (pop_ssn == NULL)
     {
@@ -544,7 +541,7 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
         }
     }
 
-    pkt_dir = POP_Setup(p, pop_ssn);
+    int pkt_dir = POP_Setup(p, pop_ssn);
 
     if (pkt_dir == POP_PKT_FROM_CLIENT)
     {

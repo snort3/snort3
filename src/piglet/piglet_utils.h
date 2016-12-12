@@ -63,7 +63,7 @@ struct Chunk
     std::string target;
     std::string buffer;
 
-    Chunk(std::string f, std::string t, std::string b) :
+    Chunk(const std::string& f, const std::string& t, const std::string& b) :
         filename { f }, target { t }, buffer { b } { }
 };
 

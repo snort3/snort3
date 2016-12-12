@@ -199,7 +199,7 @@ static bool DCE2_ParseIface(char* token, Uuid* uuid)
 class Dce2IfaceOption : public IpsOption
 {
 public:
-    Dce2IfaceOption(RangeCheck iface_version, bool iface_any_frag, Uuid iface_uuid) :
+    Dce2IfaceOption(const RangeCheck& iface_version, bool iface_any_frag, const Uuid& iface_uuid) :
         IpsOption(s_name), version(iface_version), any_frag(iface_any_frag), uuid(iface_uuid)
     {
         memset(&pmd, 0, sizeof(pmd));

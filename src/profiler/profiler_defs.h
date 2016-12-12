@@ -54,7 +54,7 @@ struct SO_PUBLIC ProfileStats
     ProfileStats& operator+=(const ProfileStats&);
 
     constexpr ProfileStats() : time(), memory() { }
-    constexpr ProfileStats(TimeProfilerStats time, MemoryTracker memory) :
+    constexpr ProfileStats(const TimeProfilerStats& time, const MemoryTracker& memory) :
         time(time), memory(memory) { }
 };
 

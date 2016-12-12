@@ -131,16 +131,16 @@ inline bool DCE2_GcSmbFingerprintClient(const dce2SmbProtoConf* sc)
 {
     if (sc == nullptr)
         return false;
-    return sc->smb_fingerprint_policy
-           & DCE2_SMB_FINGERPRINT_POLICY_CLIENT ? true : false;
+    return (sc->smb_fingerprint_policy
+           & DCE2_SMB_FINGERPRINT_POLICY_CLIENT) ? true : false;
 }
 
 inline bool DCE2_GcSmbFingerprintServer(const dce2SmbProtoConf* sc)
 {
     if (sc == nullptr)
         return false;
-    return sc->smb_fingerprint_policy
-           & DCE2_SMB_FINGERPRINT_POLICY_SERVER ? true : false;
+    return (sc->smb_fingerprint_policy
+           & DCE2_SMB_FINGERPRINT_POLICY_SERVER) ? true : false;
 }
 
 inline bool DCE2_GcIsLegacyMode(const dce2SmbProtoConf* sc)

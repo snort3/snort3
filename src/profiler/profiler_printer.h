@@ -65,7 +65,7 @@ public:
     ProfilerPrinter(const StatsTable::Field* fields, const PrintFn print, const Sorter& sort) :
         fields(fields), print(print), sort(sort) { }
 
-    void print_table(std::string title, Entry& root, unsigned count, int max_depth = -1)
+    void print_table(const std::string& title, Entry& root, unsigned count, int max_depth = -1)
     {
         std::ostringstream ss;
 

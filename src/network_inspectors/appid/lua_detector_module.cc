@@ -436,9 +436,8 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
 
     if ( detector->packageInfo.server.initFunctionName.empty() )
     {
-        RNAClientAppModule* cam = nullptr;
         detector->client.appFpId = APP_ID_UNKNOWN;
-        cam = &detector->client.appModule;
+        RNAClientAppModule* cam = &detector->client.appModule;
         cam->name = detector->packageInfo.name.c_str();
         cam->proto = detector->packageInfo.proto;
         cam->validate = validate_client_application;
@@ -607,7 +606,7 @@ void LuaDetectorManager::list_lua_detectors()
         LogMessage("\tDetector %s: Lua Memory usage %zu kb\n", detector->name.c_str(), mem);
     }
 
-    LogMessage("Lua Stats total detectors: %lu\n", allocated_detectors.size());
+    LogMessage("Lua Stats total detectors: %zu\n", allocated_detectors.size());
     LogMessage("Lua Stats total memory usage %zu kb\n", totalMem);
 }
 

@@ -217,9 +217,9 @@ struct SSLv2_shello_t
     SSL_BAD_VER_FLAG | SSL_BAD_TYPE_FLAG | \
     SSL_TRAILING_GARB_FLAG | SSL_UNKNOWN_FLAG))
 
-#define SSL_HEARTBLEED_REQUEST 0x01
+#define SSL_HEARTBLEED_REQUEST  0x01
 #define SSL_HEARTBLEED_RESPONSE 0x02
-#define SSL_HEARTBLEED_UNKNOWN 0x03
+#define SSL_HEARTBLEED_UNKNOWN  0x04
 
 SO_PUBLIC uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pktflags, uint32_t prevflags,

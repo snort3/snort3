@@ -83,13 +83,12 @@ static DCE2_UdpSsnData* set_new_dce2_udp_session(Packet* p)
 
 static DCE2_UdpSsnData* dce2_create_new_udp_session(Packet* p, dce2UdpProtoConf* config)
 {
-    DCE2_UdpSsnData* dce2_udp_sess = nullptr;
     Profile profile(dce2_udp_pstat_new_session);
 
     DebugMessage(DEBUG_DCE_UDP, "DCE over UDP packet detected\n");
     DebugMessage(DEBUG_DCE_UDP, "Creating new session\n");
 
-    dce2_udp_sess = set_new_dce2_udp_session(p);
+    DCE2_UdpSsnData* dce2_udp_sess = set_new_dce2_udp_session(p);
 
     DCE2_ResetRopts(&dce2_udp_sess->sd.ropts);
 

@@ -425,9 +425,8 @@ static int List_PutNextState(ACSM_STRUCT2* acsm, int state, int input, int next_
 
     tnew->key        = input;
     tnew->next_state = next_state;
-    tnew->next       = 0;
-
     tnew->next = acsm->acsmTransTable[state];
+
     acsm->acsmTransTable[state] = tnew;
 
     acsm->acsmNumTrans++;
@@ -800,7 +799,7 @@ static int Conv_List_To_Full(ACSM_STRUCT2* acsm)
 static int Conv_Full_DFA_To_Sparse(ACSM_STRUCT2* acsm)
 {
     int cnt, m, k, i;
-    acstate_t* p, state, maxstates=0;
+    acstate_t* p, state;
     acstate_t** NextState = acsm->acsmNextState;
     acstate_t full[MAX_ALPHABET_SIZE];
 
@@ -816,9 +815,6 @@ static int Conv_Full_DFA_To_Sparse(ACSM_STRUCT2* acsm)
             if ( state != 0 && state != ACSM_FAIL_STATE2 )
                 cnt++;
         }
-
-        if ( cnt > 0 )
-            maxstates++;
 
         if ( k== 0 || cnt > acsm->acsmSparseMaxRowNodes )
         {

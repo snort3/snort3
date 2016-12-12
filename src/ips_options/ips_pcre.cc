@@ -292,7 +292,6 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
             }
         }
 
-#ifdef PCRE_EXTRA_MATCH_LIMIT_RECURSION
         if ((SnortConfig::get_pcre_match_limit_recursion() != -1) &&
             !(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT))
         {
@@ -308,7 +307,6 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
                     SnortConfig::get_pcre_match_limit_recursion();
             }
         }
-#endif
     }
     else
     {
@@ -325,14 +323,12 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
                 pcre_data->pe->match_limit = SnortConfig::get_pcre_match_limit();
             }
 
-#ifdef PCRE_EXTRA_MATCH_LIMIT_RECURSION
             if (SnortConfig::get_pcre_match_limit_recursion() != -1)
             {
                 pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT_RECURSION;
                 pcre_data->pe->match_limit_recursion =
                     SnortConfig::get_pcre_match_limit_recursion();
             }
-#endif
         }
     }
 

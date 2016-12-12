@@ -53,7 +53,6 @@ static int dnp3_decode_object(
     /* Decode group */
     group = *buf;
     buf++;
-    buflen--;
 
     /* Decode var */
     var = *buf;

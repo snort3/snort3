@@ -210,11 +210,9 @@ bool PflogCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         codec.next_prot_id = ProtocolId::ETHERTYPE_IPV4;
         break;
 
-#if defined(AF_INET6)
     case AF_INET6:      /* IPv6 */
         codec.next_prot_id = ProtocolId::ETHERTYPE_IPV6;
         break;
-#endif
 
     default:
         /* FIXIT-L add decoder drop event for unknown pflog network type

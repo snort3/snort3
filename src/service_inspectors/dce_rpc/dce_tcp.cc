@@ -74,13 +74,12 @@ static DCE2_TcpSsnData* set_new_dce2_tcp_session(Packet* p)
 
 static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf* config)
 {
-    DCE2_TcpSsnData* dce2_tcp_sess = nullptr;
     Profile profile(dce2_tcp_pstat_new_session);
 
     DebugMessage(DEBUG_DCE_TCP, "DCE over TCP packet detected\n");
     DebugMessage(DEBUG_DCE_TCP, "Creating new session\n");
 
-    dce2_tcp_sess = set_new_dce2_tcp_session(p);
+    DCE2_TcpSsnData* dce2_tcp_sess = set_new_dce2_tcp_session(p);
 
     if ( dce2_tcp_sess )
     {

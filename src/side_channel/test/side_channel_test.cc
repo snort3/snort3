@@ -123,7 +123,7 @@ void ConnectorManager::thread_term()
     delete duplex_connector;
 }
 
-Connector* ConnectorManager::get_connector(const std::string connector_name)
+Connector* ConnectorManager::get_connector(const std::string& connector_name)
 {
     if ( connector_name == "R" )
         return receive_connector;

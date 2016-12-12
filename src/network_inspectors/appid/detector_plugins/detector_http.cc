@@ -1123,7 +1123,7 @@ static void extractCHP(char* buf, int bs, int start, int psize, char* adata,  ch
         tmp = strchr(begin, *(adata+i));
         if (tmp)
         {
-            if ((!end) || (end && tmp < end))
+            if (!end || tmp < end)
                 end = tmp;
         }
     }
@@ -1135,7 +1135,7 @@ static void extractCHP(char* buf, int bs, int start, int psize, char* adata,  ch
         }
         if ((tmp = strchr(begin, 0x0a)))
         {
-            if ((!end) || (end && tmp < end))
+            if (!end || tmp < end)
                 end = tmp;
         }
     }
@@ -1495,7 +1495,7 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
                 {
                     buffPtr = (uint8_t*)strstr((char*)start, (char*)APPLE_EMAIL_PATTERNS[i]);
                     appleEmailDetect  = ((uint8_t*)buffPtr &&
-                                    (i != 0 || (i == 0 && buffPtr == ((uint8_t*)start))));
+                                    (i != 0 || buffPtr == ((uint8_t*)start)));
                 }
                 if (appleEmailDetect)
                 {
@@ -1968,7 +1968,6 @@ AppId get_appid_from_url(char* host, char* url, char** version, char* referer, A
 
         if ( referer_len > 0 )
         {
-            data = nullptr;
             patterns[0].pattern = (uint8_t*)referer_start;
             patterns[0].patternSize = referer_len;
             patterns[1].pattern = (uint8_t*)referer_path;

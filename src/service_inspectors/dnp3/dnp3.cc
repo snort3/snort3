@@ -119,7 +119,7 @@ static bool dnp3_process_udp(dnp3ProtoConf& config, dnp3_session_data_t* dnp3_se
 
         /* Calculate the actual length of data to inspect */
         user_data = link->len - DNP3_HEADER_REMAINDER_LEN;
-        num_crcs = 1 + (user_data/DNP3_CHUNK_SIZE) + (user_data % DNP3_CHUNK_SIZE ? 1 : 0);
+        num_crcs = 1 + (user_data/DNP3_CHUNK_SIZE) + ((user_data % DNP3_CHUNK_SIZE) ? 1 : 0);
         pdu_length = DNP3_MIN_LEN + link->len + (DNP3_CRC_SIZE*num_crcs);
 
         if (bytes_processed + pdu_length > p->dsize)

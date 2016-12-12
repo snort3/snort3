@@ -34,13 +34,13 @@
 class SoRulePiglet : public Piglet::BasePlugin
 {
 public:
-    SoRulePiglet(Lua::State&, std::string, Module*, SnortConfig*);
+    SoRulePiglet(Lua::State&, const std::string&, Module*, SnortConfig*);
     virtual ~SoRulePiglet() override;
     virtual bool setup() override;
 };
 
 SoRulePiglet::SoRulePiglet(
-    Lua::State& state, std::string target, Module* m, SnortConfig* sc) :
+    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc) :
     BasePlugin(state, target, m, sc) { }
 
 SoRulePiglet::~SoRulePiglet() { }

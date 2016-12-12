@@ -1237,7 +1237,6 @@ int sfthd_show_objects(ThresholdObjects* thd_objs)
     THD_NODE* sfthd_node;
     unsigned gen_id;
     SFGHASH_NODE* item_hash_node;
-    PolicyId policyId;
 
     for (gen_id=0; gen_id < THD_MAX_GENID; gen_id++ )
     {

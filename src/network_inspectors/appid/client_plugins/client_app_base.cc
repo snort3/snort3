@@ -749,14 +749,13 @@ static ClientAppMatch* BuildClientPatternList(const Packet* pkt, IpProtocol prot
 
 static const RNAClientAppModule* GetNextFromClientPatternList(ClientAppMatch** match_list)
 {
-    ClientAppMatch* curr = nullptr;
     ClientAppMatch* prev = nullptr;
     ClientAppMatch* max_curr = nullptr;
     ClientAppMatch* max_prev = nullptr;
     unsigned max_count;
     unsigned max_precedence;
 
-    curr = *match_list;
+    ClientAppMatch* curr = *match_list;
     max_count = 0;
     max_precedence = 0;
     while (curr)

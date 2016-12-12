@@ -227,7 +227,8 @@ static inline IPdecision GetReputation(ReputationConfig* config, IPrepInfo* repI
     return decision;
 }
 
-static bool ReputationDecisionPerLayer(ReputationConfig* config, Packet* p, ip::IpApi ip_api, IPdecision* decision_final)
+static bool ReputationDecisionPerLayer(ReputationConfig* config, Packet* p,
+        const ip::IpApi& ip_api, IPdecision* decision_final)
 {
     const SfIp* ip;
     IPdecision decision;

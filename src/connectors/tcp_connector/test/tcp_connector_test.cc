@@ -113,7 +113,7 @@ int poll (struct pollfd* fds, nfds_t nfds, int)
 ssize_t recv (int, void *buf, size_t n, int)
 {
     if ( (s_rec_error_size == -1) ||
-        ( (s_rec_error_size != -1) && (s_rec_error_size == (int)n) ) )
+         (s_rec_error_size == (int)n) )
     {
         if ( s_rec_return_zero )
             return 0;

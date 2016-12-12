@@ -98,7 +98,7 @@ void ConnectorManager::release_plugins()
     s_connector_commons.clear();
 }
 
-Connector* ConnectorManager::get_connector(const std::string connector_name)
+Connector* ConnectorManager::get_connector(const std::string& connector_name)
 {
     DebugFormat(DEBUG_SIDE_CHANNEL, "ConnectorManager::get_connector(): name: %s\n",
         connector_name.c_str());

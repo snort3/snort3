@@ -772,6 +772,7 @@ DAQ_Verdict Snort::process_packet(
 // process (wire-only) packet verdicts here
 static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
 {
+    // FIXIT-M X PKT_RESIZED is a superset of PKT_MODIFIED, so this conditional is broken
     if ( Active::packet_was_dropped() and Active::can_block() )
     {
         if ( verdict == DAQ_VERDICT_PASS )

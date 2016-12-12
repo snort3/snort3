@@ -48,7 +48,6 @@ using namespace std;
 static void replace_parse(const char* args, string& s)
 {
     bool negated;
-    std::string buf;
 
     if ( !parse_byte_code(args, negated, s) )
         return;

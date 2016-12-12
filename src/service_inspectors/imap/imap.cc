@@ -587,11 +587,8 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
  */
 static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
 {
-    IMAPData* imap_ssn = NULL;
-    int pkt_dir;
-
     /* Attempt to get a previously allocated IMAP block. */
-    imap_ssn = get_session_data(p->flow);
+    IMAPData* imap_ssn = get_session_data(p->flow);
 
     if (imap_ssn == NULL)
     {
@@ -607,7 +604,7 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
         }
     }
 
-    pkt_dir = IMAP_Setup(p, imap_ssn);
+    int pkt_dir = IMAP_Setup(p, imap_ssn);
 
     if (pkt_dir == IMAP_PKT_FROM_CLIENT)
     {

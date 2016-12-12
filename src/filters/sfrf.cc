@@ -785,7 +785,6 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(
 {
     tSFRFTrackingNode* dynNode = NULL;
     tSFRFTrackingNodeKey key;
-    SFXHASH_NODE* hnode = NULL;
 
     /* Setup key */
     key.ip = *(ip);
@@ -796,7 +795,7 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(
     /*
      * Check for any Permanent sid objects for this gid or add this one ...
      */
-    hnode = sfxhash_get_node(rf_hash, (void*)&key);
+    SFXHASH_NODE* hnode = sfxhash_get_node(rf_hash, (void*)&key);
     if ( hnode && hnode->data )
     {
         dynNode = (tSFRFTrackingNode*)hnode->data;

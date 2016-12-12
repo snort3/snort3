@@ -55,7 +55,7 @@ public:
 
     static const BaseApi* get_api(PlugType, const char* name);
 #ifdef PIGLET
-    static PlugType get_type_from_name(std::string);
+    static PlugType get_type_from_name(const std::string&);
 #endif
     static const char* get_current_plugin();
 

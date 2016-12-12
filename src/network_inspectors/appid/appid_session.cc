@@ -1584,7 +1584,6 @@ void AppIdSession::do_application_discovery(Packet* p)
 
     asd->common.flags = flow_flags;
     asd->common.policyId = appIdPolicyId;
-    asd->common.policyId = appIdPolicyId;
 
     if (asd->get_session_flags(APPID_SESSION_IGNORE_FLOW))
     {

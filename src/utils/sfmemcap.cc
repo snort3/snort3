@@ -128,11 +128,8 @@ void sfmemcap_showmem(MEMCAP* mc)
 */
 char* sfmemcap_SnortStrdup(MEMCAP* mc, const char* str)
 {
-    char* data = NULL;
-    int data_size;
-
-    data_size = strlen(str) + 1;
-    data = (char*)sfmemcap_alloc(mc, data_size);
+    int data_size = strlen(str) + 1;
+    char* data = (char*)sfmemcap_alloc(mc, data_size);
 
     if (data == NULL)
     {

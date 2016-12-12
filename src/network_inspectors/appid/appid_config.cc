@@ -192,8 +192,8 @@ void AppIdConfig::read_port_detectors(const char* files)
                 key = line;
                 *value = '\0';
                 value++;
-                for (; *value && *value == ' '; value++)
-                    ;
+                while (*value == ' ')
+                    value++;
 
                 if (strcasecmp(key, "ports") == 0)
                 {
@@ -204,8 +204,8 @@ void AppIdConfig::read_port_detectors(const char* files)
                     for (ptr = strtok_r(value, ",", &context); ptr; ptr = strtok_r(nullptr, ",",
                             &context))
                     {
-                        for (; *ptr && *ptr == ' '; ptr++)
-                            ;
+                        while (*ptr == ' ')
+                            ptr++;
                         len = strlen(ptr);
                         for (; len && ptr[len - 1] == ' '; len--)
                             ptr[len - 1] = 0;

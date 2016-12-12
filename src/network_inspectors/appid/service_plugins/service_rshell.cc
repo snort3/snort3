@@ -133,7 +133,6 @@ static void rshell_free_state(void* data)
 
 static int rshell_validate(ServiceValidationArgs* args)
 {
-    ServiceRSHELLData* rd = nullptr;
     ServiceRSHELLData* tmp_rd = nullptr;
     int i = 0;
     uint32_t port = 0;
@@ -144,7 +143,7 @@ static int rshell_validate(ServiceValidationArgs* args)
     const int dir = args->dir;
     uint16_t size = args->size;
 
-    rd = (ServiceRSHELLData*)rshell_service_mod.api->data_get(asd,
+    ServiceRSHELLData* rd = (ServiceRSHELLData*)rshell_service_mod.api->data_get(asd,
         rshell_service_mod.flow_data_index);
     if (!rd)
     {

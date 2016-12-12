@@ -1156,7 +1156,7 @@ void RuleListSortUniq(SF_LIST* rl)
     int* currNode = NULL;
     unsigned uniqElements = 0;
     int* node = 0;
-    int* rlist = NULL;
+    int* rlist;
 
     rlist = RuleListToSortedArray(rl);
     if (!rlist )

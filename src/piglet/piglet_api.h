@@ -47,7 +47,7 @@ struct Api;
 class SO_PUBLIC BasePlugin
 {
 public:
-    BasePlugin(Lua::State& lua, std::string t,
+    BasePlugin(Lua::State& lua, const std::string& t,
         Module* m = nullptr, SnortConfig* sc = nullptr) :
         L { lua.get_ptr() }, target { t },
         module { m }, snort_conf { sc } { }

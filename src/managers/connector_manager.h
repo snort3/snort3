@@ -44,7 +44,7 @@ public:
     static void thread_term();
 
     /* get_connector() returns the thread-specific object. */
-    static Connector* get_connector(const std::string name);
+    static Connector* get_connector(const std::string& name);
 };
 
 #endif

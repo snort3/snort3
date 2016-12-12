@@ -43,7 +43,7 @@
 class TestPiglet : public Piglet::BasePlugin
 {
 public:
-    TestPiglet(Lua::State& state, std::string target) :
+    TestPiglet(Lua::State& state, const std::string& target) :
         BasePlugin(state, target) { }
 
     virtual bool setup() override;

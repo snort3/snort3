@@ -589,7 +589,7 @@ int main(int argc, char** argv)
 {
     int i;
     SFGHASH* t;
-    SFGHASH_NODE* n, * m;
+    SFGHASH_NODE* n;
     char str[256],* p;
     int num=100;
 

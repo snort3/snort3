@@ -56,31 +56,6 @@
 #include "main/snort_debug.h"
 #include "utils/util.h"
 
-#ifdef TEST_MSTRING
-int main()
-{
-    char test[] = "\0\0\0\0\0\0\0\0\0CKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\0\0";
-    char find[] = "CKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\0\0";
-
-/*   char test[] = "\x90\x90\x90\x90\x90\x90\xe8\xc0\xff\xff\xff/bin/sh\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90";
-     char find[] = "\xe8\xc0\xff\xff\xff/bin/sh";  */
-    int i;
-    int toks;
-    int* shift;
-    int* skip;
-
-/*   shift=make_shift(find,sizeof(find)-1);
-     skip=make_skip(find,sizeof(find)-1); */
-
-    DebugFormat(DEBUG_PATTERN_MATCH,"%d\n",
-        mSearch(test, sizeof(test) - 1, find,
-        sizeof(find) - 1, shift, skip));
-
-    return 0;
-}
-
-#endif
-
 /****************************************************************
  *
  *  Function: make_skip(char *, int)

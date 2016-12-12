@@ -1326,13 +1326,12 @@ static DCE2_SmbSsnData* set_new_dce2_smb_session(Packet* p)
 
 static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf* config)
 {
-    DCE2_SmbSsnData* dce2_smb_sess = nullptr;
     Profile profile(dce2_smb_pstat_new_session);
 
 	DebugMessage(DEBUG_DCE_SMB, "DCE over SMB packet detected\n");
 	DebugMessage(DEBUG_DCE_SMB, "Creating new session\n");
 
-	dce2_smb_sess = set_new_dce2_smb_session(p);
+    DCE2_SmbSsnData* dce2_smb_sess = set_new_dce2_smb_session(p);
 	if ( dce2_smb_sess )
 	{
 		dce2_smb_sess->dialect_index = DCE2_SENTINEL;

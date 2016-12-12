@@ -64,15 +64,13 @@ void FileEnforcer::update_file_node(FileNode* node, FileInfo* file)
 
 FileVerdict FileEnforcer::check_verdict(Flow* flow, FileNode* node, SFXHASH_NODE* hash_node)
 {
-    FileVerdict verdict = FILE_VERDICT_UNKNOWN;
-
     // Query the file policy in case verdict has been changed
     // Check file type first
     FilePolicy& inspect = FileService::get_inspect();
 
     assert(node->file);
 
-    verdict = inspect.type_lookup(flow, node->file);
+    FileVerdict verdict = inspect.type_lookup(flow, node->file);
 
     if ((verdict == FILE_VERDICT_UNKNOWN) ||
         (verdict == FILE_VERDICT_STOP_CAPTURE))

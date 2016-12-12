@@ -738,10 +738,9 @@ int sfxhash_add(SFXHASH* t, void* key, void* data)
 SFXHASH_NODE* sfxhash_get_node(SFXHASH* t, const void* key)
 {
     int index = 0;
-    SFXHASH_NODE* hnode = nullptr;
 
     /* Enforce uniqueness: Check for the key in the table */
-    hnode = sfxhash_find_node_row(t, key, &index);
+    SFXHASH_NODE* hnode = sfxhash_find_node_row(t, key, &index);
     if ( hnode )
     {
         t->cnode = hnode;

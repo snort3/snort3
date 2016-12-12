@@ -243,7 +243,7 @@ const char* Trough::get_next()
         return NULL;
 
     pcap = pcap_queue_iter->c_str();
-    pcap_queue_iter++;
+    ++pcap_queue_iter;
     /* If we've reached the end, reset the iterator if we have more
         loops to cover. */
     if (pcap_queue_iter == pcap_queue.cend() && pcap_loop_count > 1)

@@ -622,7 +622,7 @@ static CLIENT_APP_RETCODE smtp_ca_validate(const uint8_t* data, uint16_t size, c
 #ifdef UNIT_TESTING
     if (app_id_debug_session_flag && currState != fd->state)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_APPID, "AppIdDbg %s SMTP client state %s\n", app_id_debug_session, stateName[fd->state]););
+        DEBUG_WRAP(DebugFormat(DEBUG_APPID, "AppIdDbg %s SMTP client state %s\n", app_id_debug_session, stateName[fd->state]););
         currState = fd->state;
     }
 #endif

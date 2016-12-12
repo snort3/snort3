@@ -878,12 +878,12 @@ static void SetupRTNFuncList(RuleTreeNode* rtn)
          * been set so the PortToFunc call can determine which port testing
          * function to attach to the list
          */
-        PortToFunc(rtn, (rtn->flags & ANY_DST_PORT ? 1 : 0),
-            (rtn->flags & EXCEPT_DST_PORT ? 1 : 0), DST);
+        PortToFunc(rtn, (rtn->flags & ANY_DST_PORT) ? 1 : 0,
+            (rtn->flags & EXCEPT_DST_PORT) ? 1 : 0, DST);
 
         /* as above */
-        PortToFunc(rtn, (rtn->flags & ANY_SRC_PORT ? 1 : 0),
-            (rtn->flags & EXCEPT_SRC_PORT ? 1 : 0), SRC);
+        PortToFunc(rtn, (rtn->flags & ANY_SRC_PORT) ? 1 : 0,
+            (rtn->flags & EXCEPT_SRC_PORT) ? 1 : 0, SRC);
 
         /* link in the proper IP address detection function */
         AddrToFunc(rtn, SRC);

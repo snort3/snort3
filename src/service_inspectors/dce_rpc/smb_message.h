@@ -994,12 +994,12 @@ inline uint16_t SmbTransactionReqFid(const SmbTransactionReq* req)
 
 inline bool SmbTransactionReqDisconnectTid(const SmbTransactionReq* req)
 {
-    return alignedNtohs(&req->smb_flags) & 0x0001 ? true : false;
+    return (alignedNtohs(&req->smb_flags) & 0x0001) ? true : false;
 }
 
 inline bool SmbTransactionReqOneWay(const SmbTransactionReq* req)
 {
-    return alignedNtohs(&req->smb_flags) & 0x0002 ? true : false;
+    return (alignedNtohs(&req->smb_flags) & 0x0002) ? true : false;
 }
 
 inline uint8_t SmbTransactionReqSetupCnt(const SmbTransactionReq* req)

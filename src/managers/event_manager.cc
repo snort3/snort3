@@ -193,7 +193,6 @@ void EventManager::instantiate(
     // override prior outputs
     // (last cmdline option wins)
     s_loggers.outputs.clear();
-    string tmp = name;
 
     const char* pfx = (sc->output_flags & OUTPUT_FLAG__ALERTS) ? "alert_" : "log_";
     Output* p = get_out(name, pfx);

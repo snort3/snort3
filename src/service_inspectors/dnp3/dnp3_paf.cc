@@ -77,7 +77,7 @@ static StreamSplitter::Status dnp3_paf(dnp3_paf_data* pafdata, const uint8_t* da
             }
 
             user_data = pafdata->dnp3_length - DNP3_HEADER_REMAINDER_LEN;
-            num_crcs = 1 + (user_data/DNP3_CHUNK_SIZE) + (user_data % DNP3_CHUNK_SIZE ? 1 : 0);
+            num_crcs = 1 + (user_data/DNP3_CHUNK_SIZE) + ((user_data % DNP3_CHUNK_SIZE) ? 1 : 0);
             pafdata->real_length = pafdata->dnp3_length + (DNP3_CRC_SIZE*num_crcs);
 
             pafdata->paf_state = (dnp3_paf_state)(((int)pafdata->paf_state) + 1);

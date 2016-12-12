@@ -224,14 +224,13 @@ int PortObjectAddPortAny(PortObject* po)
  */
 PortObject* PortObjectDup(PortObject* po)
 {
-    PortObject* ponew = NULL;
     PortObjectItem* poi = NULL;
     PortObjectItem* poinew = NULL;
     SF_LNODE* lpos = NULL;
     int* prid = NULL;
     int* prule = NULL;
 
-    ponew = PortObjectNew();
+    PortObject* ponew = PortObjectNew();
     if ( !ponew )
         return nullptr;
 
@@ -280,12 +279,11 @@ PortObject* PortObjectDup(PortObject* po)
  */
 PortObject* PortObjectDupPorts(PortObject* po)
 {
-    PortObject* ponew = NULL;
     PortObjectItem* poi = NULL;
     PortObjectItem* poinew = NULL;
     SF_LNODE* lpos = NULL;
 
-    ponew = PortObjectNew();
+    PortObject* ponew = PortObjectNew();
     if ( !ponew )
         return nullptr;
 

@@ -501,7 +501,7 @@ const BaseApi* PluginManager::get_api(PlugType type, const char* name)
 }
 
 #ifdef PIGLET
-PlugType PluginManager::get_type_from_name(std::string name)
+PlugType PluginManager::get_type_from_name(const std::string& name)
 {
     for ( auto it = plug_map.begin(); it != plug_map.end(); ++it )
     {

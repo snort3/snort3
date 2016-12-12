@@ -1526,10 +1526,10 @@ static inline int get_chp_pattern_type(lua_State* L, int index, PatternType* pat
 static inline int get_chp_pattern_data_and_size(lua_State* L, int index, char** pattern_data,
     size_t* pattern_size)
 {
-    const char* tmpString = nullptr; // Lua owns this pointer
+    const char* tmpString; // Lua owns this pointer
     *pattern_size = 0;
     *pattern_data = nullptr;
-    tmpString = lua_tolstring(L, index, &*pattern_size);
+    tmpString = lua_tolstring(L, index, pattern_size);
     // non-empty pattern required
     if (!tmpString || !*pattern_size)
     {
@@ -1556,7 +1556,7 @@ static inline int get_chp_action_type(lua_State* L, int index, ActionType* actio
 static inline int get_chp_action_data(lua_State* L, int index, char** action_data)
 {
     // An empty string is translated into a nullptr pointer because the action data is optional
-    const char* tmpString = nullptr; // Lua owns this pointer
+    const char* tmpString; // Lua owns this pointer
     size_t action_data_size = 0;
     tmpString = lua_tolstring(L, index, &action_data_size);
     if (action_data_size)
@@ -2082,7 +2082,7 @@ static int detector_add_rtmp_url(lua_State* L)
         ErrorMessage("Invalid host pattern string.");
         return 0;
     }
-    u_int8_t* hostPattern = (u_int8_t*)snort_strdup(tmpString);
+    uint8_t* hostPattern = (uint8_t*)snort_strdup(tmpString);
 
     /* Verify that path pattern is a valid string */
     size_t pathPatternSize = 0;
@@ -2093,7 +2093,7 @@ static int detector_add_rtmp_url(lua_State* L)
         snort_free(hostPattern);
         return 0;
     }
-    u_int8_t* pathPattern = (u_int8_t*)snort_strdup(tmpString);
+    uint8_t* pathPattern = (uint8_t*)snort_strdup(tmpString);
 
     /* Verify that scheme pattern is a valid string */
     size_t schemePatternSize;
@@ -2105,7 +2105,7 @@ static int detector_add_rtmp_url(lua_State* L)
         snort_free(hostPattern);
         return 0;
     }
-    u_int8_t* schemePattern = (u_int8_t*)snort_strdup(tmpString);
+    uint8_t* schemePattern = (uint8_t*)snort_strdup(tmpString);
 
     /* Verify that query pattern is a valid string */
     size_t queryPatternSize;
@@ -2114,7 +2114,7 @@ static int detector_add_rtmp_url(lua_State* L)
     if (tmpString  && queryPatternSize)
         queryPattern = (uint8_t*)snort_strdup(tmpString);
 
-    u_int32_t appId = lua_tointeger(L, index++);
+    uint32_t appId = lua_tointeger(L, index++);
 
     /* Allocate memory for data structures */
     DetectorAppUrlPattern* pattern =

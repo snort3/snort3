@@ -35,8 +35,7 @@ void host_cache_add_host_tracker(HostTracker* ht)
     host_cache.insert((const uint8_t*) ht->get_ip_addr().get_ip6_ptr(), sptr);
 }
 
-// FIXIT-L ipaddr should probably be a reference
-bool host_cache_add_service(SfIp ipaddr, Protocol ipproto, Port port, const char* /*service*/)
+bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, const char* /*service*/)
 {
     HostIpKey ipkey((const uint8_t*) ipaddr.get_ip6_ptr());
     uint16_t proto = 0; // FIXIT-M not safe with multithreads snort_conf->proto_ref->add(service));

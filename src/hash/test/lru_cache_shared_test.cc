@@ -86,7 +86,6 @@ TEST(lru_cache_shared, insert_test)
 //  the capacity of the LruCache.
 TEST(lru_cache_shared, lru_removal_test)
 {
-    std::string data;
     LruCacheShared<int, std::string, std::hash<int> > lru_cache(5);
 
     for (int i = 0; i < 10; i++)

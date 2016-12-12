@@ -159,7 +159,7 @@ struct MemoryTracker
     { stats.update_deallocs(n); }
 
     constexpr MemoryTracker() : stats() { }
-    constexpr MemoryTracker(CombinedMemoryStats stats) : stats(stats) { }
+    constexpr MemoryTracker(const CombinedMemoryStats &stats) : stats(stats) { }
 };
 
 #endif

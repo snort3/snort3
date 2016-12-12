@@ -678,7 +678,9 @@ static int KcontainsJ(bnfa_trans_node_t* tk, bnfa_trans_node_t* tj)
  */
 static int _bnfa_opt_nfa(bnfa_struct_t* bnfa)
 {
+#if 0
     int cnt=0;
+#endif
     int k, fs, fr;
     bnfa_state_t* FailState = bnfa->bnfaFailState;
 
@@ -691,7 +693,9 @@ static int _bnfa_opt_nfa(bnfa_struct_t* bnfa)
         }
         if ( fr != fs )
         {
+#if 0
             cnt++;
+#endif
             FailState[ k ] = fs;
         }
     }
