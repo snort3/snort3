@@ -1,4 +1,4 @@
-Snort++ differs from Snort in the following ways:
+Snort 3 differs from Snort 2 in the following ways:
 
 * command line and conf file syntax made more uniform
 * removed unused and deprecated features
@@ -6,7 +6,7 @@ Snort++ differs from Snort in the following ways:
   (e.g.: no upper bounds on memcaps)
 * assume the simplest mode of operation
   (e.g.: never assume input from or output to some hardcoded filename)
-* all Snort config options are grouped into Snort++ modules
+* all Snort 2 config options are grouped into Snort 3 modules
 
 === Build Options
 
@@ -38,10 +38,10 @@ Snort++ differs from Snort in the following ways:
 
 === Conf File
 
-* Snort++ has a default unicode.map
-* Snort++ will not enforce an upper bound on memcaps and the like within 64 bits
-* Snort++ will supply a default *_global config if not specified
-  (Snort would fatal; e.g. http_inspect_server w/o http_inspect_global)
+* Snort 3 has a default unicode.map
+* Snort 3 will not enforce an upper bound on memcaps and the like within 64 bits
+* Snort 3 will supply a default *_global config if not specified
+  (Snort 2 would fatal; e.g. http_inspect_server w/o http_inspect_global)
 * address list syntax changes: [[ and ]] must be [ [ and ] ] to avoid Lua string
   parsing errors (unless in quoted string)
 * because the Lua conf is live code, we lose file:line locations in app error messages
@@ -113,9 +113,9 @@ Snort++ differs from Snort in the following ways:
 * deleted layer2resets and flexresp2_*
 * deleted log_ascii
 * general output guideline: don't print zero counts
-* Snort++ queues decoder and inspector events to the main event queue before ips policy
+* Snort 3 queues decoder and inspector events to the main event queue before ips policy
   is selected; since some events may not be enabled, the queue needs to be sized larger
-  than with Snort which used an intermediate queue for decoder events.
+  than with Snort 2 which used an intermediate queue for decoder events.
 * deleted the intermediate http and ftp_telnet event queues
 * alert_unified2 and log_unified2 have been deleted
 
@@ -123,20 +123,20 @@ Snort++ differs from Snort in the following ways:
 
 This section describes the changes to the Http Inspect config option "profile".
 
-Snort 2.X allows users to select pre-defined HTTP server profiles using the
+Snort 2 allows users to select pre-defined HTTP server profiles using the
 config option "profile". The user can choose one of five predefined profiles.
 When defined, this option will set defaults for other config options within
 Http Inspect.
 
-With Snort++, the user has the flexibility of defining and fine tuning custom
+With Snort 3, the user has the flexibility of defining and fine tuning custom
 profiles along with the five predefined profiles. 
 
-Snort 2.X conf
+Snort 2 conf
 
     preprocessor http_inspect_server: server default \
         profile apache ports { 80 3128 } max_headers 200
 
-Snort 3.0 conf
+Snort 3 conf
 
     http_inspect = { profile = http_profile_apache }
     http_inspect.profile.max_headers = 200 
@@ -180,8 +180,8 @@ overwritten by "http_inspect.profile.max_headers = 200".
 
 Conversion
 
-Snort2lua can convert the existing snort.conf with the "profile" option to
-Snort3.0 compatible "profile". Please refer to the Snort2Lua post for more
+snort2lua can convert the existing snort.conf with the "profile" option to
+Snort 3 compatible "profile".  Please refer to the snort2Lua post for more
 details.
 
 Examples

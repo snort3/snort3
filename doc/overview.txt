@@ -1,7 +1,7 @@
 Snort 3.0 is an updated version of the Snort Intrusion Prevention System
-(IPS) which features a new design that provides a superset of 2.9
-functionality with better throughput, detection, scalability, and usability.
-Some of the key features of Snort 3.0 are:
+(IPS) which features a new design that provides a superset of Snort 2.X
+functionality with better throughput, detection, scalability, and
+usability.  Some of the key features of Snort 3.0 are:
 
 * Support multiple packet processing threads
 * Use a shared configuration and attribute table
@@ -25,7 +25,7 @@ Some of the key features of Snort 3.0 are:
 * Automake and Cmake
 * Autogenerate reference documentation
 
-Additional are already under development:
+Additional features are on the road map:
 
 * Use a shared network map
 * Support hardware offload for fast pattern acceleration
@@ -40,132 +40,103 @@ Additional are already under development:
 * Anomaly detection
 * and more!
 
-The remainder of this section provides some background and overview
-information.  The next section describes how to use the major features of
-Snort.  Most of the rest of the manual is reference material.
+The remainder of this section provides a high level survey of the inputs,
+processing, and outputs available with Snort 3.0.
 
-The 2.X Snort manual may be useful only for some background information not
-yet documented here.
-
-
-=== Background
-
-Snort is a signature-based IPS, which means that as it receives network
-packets it reassembles and normalizes the content so that a set of rules can
-be evaluated to detect the presence of any significant conditions that
-merit further action.  A rough processing flow is as follows:
-
-////
-(pkt) -> [decode] -> [preprocess] -> [detect] -> [log] -> (verdict)
-////
-image::snort2x.png["Snort 2X",width="480"]
-
-The steps are:
-
-1.  Decode each packet to determine the basic network characteristics such
-as source and destination addresses and ports.  A typical packet might have
-ethernet containing IP containing TCP containing HTTP (ie eth:ip:tcp:http).
-The various encapsulating protocols are examined for sanity and anomalies
-as the packet is decoded.  This is essentially a stateless effort.
-
-2.  Preprocess each decoded packet using accumulated state to determine the
-purpose and content of the innermost message.  This step may involve
-reordering and reassembling IP fragments and TCP segments to produce the
-original application protocol data unit (PDU).  Such PDUs are analyzed and
-normalized as needed to support further processing.
-
-3.  Detection is a two step process.  For efficiency, most rules contain a
-specific content pattern that can be searched for such that if no match is
-found no further processing is necessary.  Upon start up, the rules are
-compiled into pattern groups such that a single, parallel search can be
-done for all patterns in the group.  If any match is found, the full rule
-is examined according to the specifics of the signature.
-
-4.  The logging step is where Snort saves any pertinent information
-resulting from the earlier steps.  More generally, this is where other
-actions can be taken as well such as blocking the packet.
+Snort++ is the project that is creating Snort 3.0.  In this manual "Snort"
+or "Snort 3" refers to the 3.0 version and earlier versions will be
+referred to as "Snort 2" where the distinction is relevant.
 
 
-==== Snort 2.X Processing
+=== First Steps
 
-The preprocess step in Snort 2.X is highly configurable.  Arbitrary
-preprocessors can be loaded dynamically at startup, configured in
-snort.conf, and then executed at runtime.  Basically, the preprocessors are
-put into a list which is iterated for each packet.  Recent versions have
-tweaked the list handling some, but the same basic architecture has allowed
-Snort to grow from a sniffer, with no preprocessing, to a full-fledged IPS,
-with lots of preprocessing.
+Snort can be configured to perform complex packet processing and deep
+packet inspection but it is best start simply and work up to more
+interesting tasks.  Snort won't do anything you didn't specifically ask it
+to do so it is safe to just try things out and see what happens.  Let's
+start by just running Snort with no arguments:
 
-While this "list of plugins" approach has considerable flexibility, it
-hampers future development when the flow of data from one preprocessor to
-the next depends on traffic conditions, a common situation with advanced
-features like application identification.  In this case, a preprocessor
-like HTTP may be extracting and normalizing data that ultimately is not
-used, or appID may be repeatedly checking for data that is just not
-available.
+    $ snort
 
-Callbacks help break out of the preprocess straightjacket.  This is where
-one preprocessor supplies another with a function to call when certain data
-is available.  Snort has started to take this approach to pass some HTTP and
-SIP preprocessor data to appID.  However, it remains a peripheral feature
-and still requires the production of data that may not be consumed.
+That will output usage information including some basic help commands.  You
+should run all of these commands now to see what is available:
 
+    $ snort -V
+    $ snort -?
+    $ snort --help
 
-==== Snort 3.0 Processing
+Note that Snort has extensive command line help available so if anything
+below isn't clear, there is probably a way to get the exact information you
+need from the command line.
 
-One of the goals of Snort++ is to provide a more flexible framework for
-packet processing by implementing an event-driven approach.  Another is to
-produce data only when needed to minimize expensive normalizations.
-However, the basic packet processing provides very similar functionality.
+Now let's examine the packets in a capture file (pcap):
 
-The basic processing steps Snort\++ takes are similar to Snort's as seen in
-the following diagram.  The preprocess step employs specific inspector
-types instead of a generalized list, but the basic procedure includes
-stateless packet decoding, TCP stream reassembly, and service specific
-analysis in both cases.  (Snort++ provides hooks for arbitrary inspectors,
-but they are not central to basic flow processing and are not shown.)
+    $ snort -r a.pcap
 
-////
-(pkt) -> [decode] -> [stream] -> [service] -> [detect] -> [log] -> (verdict)
-         -----------------------------------------------------
-                      [appid]   [firewall]   [other]
-////
-image::snort3x.png["Snort 3X",width="480"]
+Snort will decode and count the packets in the file and output some
+statistics.  Note that the output excludes non-zero numbers so it is easy
+to see what is there.
 
-However, Snort++ also provides a more flexible mechanism than callback
-functions.  By using inspection events, it is possible for an inspector to
-supply data that other inspectors can process.  This is known as the
-observer pattern or publish-subscribe pattern.
+You may have noticed that there are command line options to limit the
+number of packets examined or set a filter to select particular packets.
+Now is a good time to experiment with those options.
 
-Note that the data is not actually published.  Instead, access to the data
-is published, and that means that subscribers can access the raw or
-normalized version(s) as needed.  Normalizations are done only on the first
-access, and subsequent accesses get the previously normalized data.  This
-results in just in time (JIT) processing.
+If you want to see details on each packet, you can dump the packets to
+console like this:
 
-A basic example of this in action is provided by the extra data_log plugin.
-It is a passive inspector, ie it does nothing until it receives the data it
-subscribed for ('other' in the above diagram).  By adding data_log = { key
-= 'http_raw_uri' } to your snort.lua configuration, you will get a simple
-URI logger.
+    $ snort -r a.pcap -L dump
 
-Inspection events coupled with pluggable inspectors provide a very flexible
-framework for implementing new features.  And JIT buffer stuffers allow
-Snort\++ to work smarter, not harder.  These capabilities will be leveraged
-more and more as Snort++ development continues.
+Add the -d option to see the TCP and UDP payload.  Now let's switch to live
+traffic.  Replace eth0 in the below command with an available network
+interface:
+
+    $ snort -i eth0 -L dump
+
+Unless the interface is taken down, Snort will just keep running, so enter
+Control-C to terminate or use the -n option to limit the number of packets.
+
+Generally it is better to capture the packets for later analysis like this:
+
+    $ snort -i eth0 -L pcap -n 10
+
+Snort will write 10 packets to log.pcap.# where # is a timestamp value.
+You can read these back with -r and dump to console or pcap with -L.  You
+get the idea.
+
+Note that you can do similar things with other tools like tcpdump or
+Wireshark however these commands are very useful when you want to check
+your Snort setup.  
+
+The examples above use the default pcap DAQ.  Snort supports non-pcap
+interfaces as well via the DAQ (data acquisition) library.  Other DAQs
+provide additional functionality such as inline operation and/or higher
+performance.  There are even DAQs that support raw file processing (ie
+without packets), socket processing, and plain text packets.  To load
+external DAQ libraries and see available DAQs or select a particular DAQ
+use one of these commands:
+
+    $ snort --daq-dir <path> --daq-list
+    $ snort --daq-dir <path> --daq <type>
+
+Be sure to put the --daq-dir option ahead of the --daq-list option or the
+external DAQs won't appear in the list.
+
+To leverage intrusion detection features of Snort you will need to provide
+some configuration details.  The next section breaks down what must be
+done.
 
 
 === Configuration
 
-Effective configuration of Snort++ is done via the environment, command
-line, a Lua configruation file, and a rules file.
+Effective configuration of Snort is done via the environment, command
+line, a Lua configuration file, and a set of rules.
 
-Note that backwards compatibility was sacrificed to obtain new and improved
-functionality.  While Snort\++ leverages some of the Snort code base, a lot
-has changed.  The configuration of Snort++ is done with Lua, so your old
-conf won't work as is.  Rules are still text based but with syntax tweaks,
-so your 2.X rules must be fixed up.  However, snort2lua will help you
-convert your conf and rules to the new format.
+Note that backwards compatibility with Snort 2 was sacrificed to obtain
+new and improved functionality.  While Snort 3 leverages some of the
+Snort 2 code base, a lot has changed.  The configuration of Snort 3 is
+done with Lua, so your old conf won't work as is.  Rules are still text
+based but with syntax tweaks, so your 2.X rules must be fixed up.  However,
+snort2lua will help you convert your conf and rules to the new format.
 
 ==== Environment
 
@@ -173,7 +144,7 @@ LUA_PATH must be set based on your install:
 
     LUA_PATH=$install_prefix/include/snort/lua/\?.lua\;\;
 
-SNORT_LUA_PATH must be set to load auxillary configuration files if you use
+SNORT_LUA_PATH must be set to load auxiliary configuration files if you use
 the default snort.lua.  For example:
 
     export SNORT_LUA_PATH=$install_prefix/etc/snort
@@ -228,7 +199,7 @@ those are, you could run:
 
     snort --help-config stream
 
-Snort++ is organized into a collection of builtin and plugin modules.
+Snort is organized into a collection of builtin and plugin modules.
 If a module has parameters, it is configured by a Lua table of the same
 name.  For example, we can see what the active module has to offer with
 this command:
@@ -276,52 +247,26 @@ If we also wanted to limit retries to at least 5 seconds, we could do:
 
 ==== Rules
 
-Rules tell Snort how to detect interesting conditions, such as an attack,
-and what to do when the condition is detected.  Here is an example rule:
+Rules determine what Snort is looking for.  They can be put directly in
+your Lua configuration file with the ips module, on the command line with
+--lua, or in external files.  Generally you will have many rules obtained
+from various sources such as Talos and loading external files is the way to
+go so we will summarize that here.  Add this to your Lua configuration:
 
-    alert tcp any any -> 192.168.1.1 80 ( msg:"A ha!"; content:"attack"; sid:1; )
+    ips = { include = 'rules.txt' }
 
-The structure is:
+to load the external rules file named rules.txt.  You can only specify
+one file this way but rules files can include other rules files with the
+include statement.  In addition you can load rules like:
 
-    action proto source dir dest ( body )
+    $ sort -c snort.lua -R rules.txt
 
-Where:
-
-action - tells Snort what to do when a rule "fires", ie when the signature
-matches.  In this case Snort will log the event.  It can also do thing like
-block the flow when running inline.
-
-proto - tells Snort what protocol applies.  This may be ip, icmp, tcp, udp,
-http, etc.
-
-source - specifies the sending IP address and port, either of which can be
-the keyword any, which is a wildcard.
-
-dir - must be either unidirectional as above or bidirectional indicated by
-<>.
-
-dest - similar to source but indicates the receiving end.
-
-body - detection and other information contained in parenthesis.
-
-There are many rule options available to construct as sophisticated a
-signature as needed.  In this case we are simply looking for the "attack"
-in any TCP packet.  A better rule might look like this:
-
-    alert http
-    (
-        msg:"Gotcha!";
-        flow:established, to_server;
-        http_uri:"attack";
-        sid:2;
-    )
-
-For details on these and other options, see the reference section.
+You can use both approaches together.
 
 ==== Converting Your 2.X Configuration
 
 If you have a working 2.X configuration snort2lua makes it easy to get up
-and running with Snort++.  This tool will convert your configuration and/or
+and running with Snort 3.  This tool will convert your configuration and/or
 rules files automatically.  You will want to clean up the results and
 double check that it is doing exactly what you need.
 
@@ -331,30 +276,98 @@ The above command will generate snort.lua based on your 2.X configuration.
 For more information and options for more sophisticated use cases, see the
 Snort2Lua section later in the manual.
 
-=== Plugins and Scripts
+=== Output
 
-There are several plugin types:
+Snort can produce quite a lot of data.  In the following we will summarize
+the key aspects of the core output types.  Additional data such as from
+appid is covered later.
 
-* Codec - to decode and encode packets
-* Inspector - like the prior preprocessors, for normalization, etc.
-* IpsOption - for detection in Snort++ IPS rules
-* IpsAction - for custom rule actions
-* Logger - for handling events
-* Mpse - for fast pattern matching
-* So - for dynamic rules
+==== Basic Statistics
 
-Most plugins can be built statically or dynamically.  By default they are
-all static.  There is no difference in functionality between static or
-dynamic plugins but the dynamic build generates a slightly lighter weight
-binary.  Either way you can add dynamic plugins with --plugin-path and
-newer versions will replace older versions, even when built statically.
+At shutdown, Snort will output various counts depending on configuration
+and the traffic processed.  Generally, you may see:
 
-The power of plugins is that they have a very focused purpose and can be
-created with relative ease.  For example, you can extend the rule language
-by writing your own IpsOption and it will plug in and function just like
-existing options.  The extra directory has examples of each type of plugin.
+* Packet Statistics - this includes data from the DAQ and decoders such as
+  the number of packets received and number of UDP packets.
 
-Some things just need to be tweaked or prototyped quickly.  In addition to
-the Lua conf, which is a script that can contain functions to compute
-settings, etc., you can also script Loggers and IpsOptions.
+* Module Statistics - each module tracks activity via a set of peg counts
+  that indicate how many times something was observed or performed.  This
+  might include the number of HTTP GET requests processed and the number of
+  TCP reset packets trimmed.
+
+* File Statistics - look here for a breakdown of file type, bytes,
+  signatures.
+
+* Summary Statistics - this includes total runtime for packet processing
+  and the packets per second.  Profiling data will appear here as well if
+  configured.
+
+Note that only the non-zero counts are output.  Run this to see the
+available counts:
+
+    $ snort --help-counts
+
+==== Alerts
+
+If you configured rules, you will need to configure alerts to see the
+details of detection events.  Use the -A option like this:
+
+    $ snort -c snort.lua -r a.pcap -A cmg
+
+There are many types of alert outputs possible.  Here is a brief list:
+
+* -A cmg is the same as -A fast -d -e and will show information about the
+  alert along with packet headers and payload.
+
+* -A u2 is the same as -A unified2 and will log events and triggering
+  packets in a binary file that you can feed to other tools for post
+  processing.  Note that Snort 3 does not provide the raw packets for
+  alerts on PDUs; you will get the actual buffer that alerted.
+
+* -A csv will output various fields in comma separated value format.  This
+  is entirely customizable and very useful for pcap analysis.
+
+To see the available alert types, you can run this command:
+
+    $ snort --list-plugins | grep logger
+
+==== Files and Paths
+
+Note that output is specific to each packet thread.  If you run 4 packet
+threads with u2 output, you will get 4 different u2 files.  The basic
+structure is:
+
+    <logdir>/[<run_prefix>][<id#>][<X>]<name>
+
+where:
+
+* logdir is set with -l and defaults to ./
+
+* run_prefix is set with --run-prefix else not used
+
+* id# is the packet thread number that writes the file; with one packet
+  thread, id# (zero) is omitted without --id-zero
+
+* X is / if you use --id-subdir, else _ if id# is used
+
+* name is based on module name that writes the file
+
+Additional considerations:
+
+* There is no way to explicitly configure a full path to avoid issues with
+  multiple packet threads.
+  
+* All text mode outputs default to stdout
+
+==== Performance Statistics
+
+Still more data is available beyond the above.
+
+* By configuring the perf_monitor module you can capture a configurable set
+  of peg counts during runtime.  This is useful to feed to an external
+  program so you can see what is happening without stopping Snort.
+
+* The profiler module allows you to track time and space used by module and
+  rules.  Use this data to tune your system for best performance.  The
+  output will show up under Summary Statistics at shutdown.
 

@@ -1,9 +1,9 @@
 For the following examples "$my_path" is assumed to be the path to the
-Snort++ install directory. Additionally, it is assumed that "$my_path/bin"
+Snort install directory. Additionally, it is assumed that "$my_path/bin"
 is in your PATH.
 
 
-==== Environment
+=== Environment
 
 LUA_PATH is used directly by Lua to load and run required libraries.
 SNORT_LUA_PATH is used by Snort to load supplemental configuration files.
@@ -12,7 +12,7 @@ SNORT_LUA_PATH is used by Snort to load supplemental configuration files.
     export SNORT_LUA_PATH=$my_path/etc/snort
 
 
-==== Help
+=== Help
 
 Print the help summary:
 
@@ -34,11 +34,11 @@ Output help on "rule" options in AsciiDoc format:
 
     snort --markup --help-options rule
 
-NOTE: Snort++ stops reading command-line options after the "--help-*" and
+NOTE: Snort stops reading command-line options after the "--help-*" and
 "--list-*" options, so any other options should be placed before them.
 
 
-==== Sniffing and Logging
+=== Sniffing and Logging
 
 Read a pcap:
 
@@ -65,7 +65,7 @@ Log packets to a directory:
     snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -L dump -l /path/to/log/dir
 
 
-==== Configuration
+=== Configuration
 
 Validate a configuration file:
 
@@ -83,14 +83,14 @@ Enable warnings for Lua configurations and make warnings fatal:
 
     snort -c $my_path/etc/snort/snort.lua --warn-all --pedantic
 
-Tell Snort++ where to look for additional Lua scripts:
+Tell Snort where to look for additional Lua scripts:
 
     snort --script-path /path/to/script/dir
 
 
-==== IDS mode
+=== IDS mode
 
-Run Snort++ in IDS mode, reading packets from a pcap:
+Run Snort in IDS mode, reading packets from a pcap:
 
     snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap
 
@@ -105,17 +105,17 @@ Add or modify a configuration from the command line using the "--lua" option:
 
 NOTE: The "--lua" option can be specified multiple times.
 
-Run Snort++ in IDS mode on an entire directory of pcaps, processing each
+Run Snort in IDS mode on an entire directory of pcaps, processing each
 input source on a separate thread:
 
     snort -c $my_path/etc/snort/snort.lua --pcap-dir /path/to/pcap/dir \
         --pcap-filter '*.pcap' --max-packet-threads 8
 
-Run Snort++ on 2 interfaces, eth0 and eth1:
+Run Snort on 2 interfaces, eth0 and eth1:
 
     snort -c $my_path/etc/snort/snort.lua -i "eth0 eth1" -z 2 -A cmg
 
-Run Snort++ inline with the afpacket DAQ:
+Run Snort inline with the afpacket DAQ:
 
     snort -c $my_path/etc/snort/snort.lua --daq afpacket -i "eth0:eth1" \
         -A cmg
@@ -176,7 +176,7 @@ is based on module name that writes the file.  All text mode outputs
 default to stdout.  These options can be combined.
 
 
-==== DAQ Alternatives
+=== DAQ Alternatives
 
 Process hext packets from stdin:
 
@@ -207,7 +207,7 @@ Bridge two TCP connections on port 8000 and inspect the traffic:
         --daq-dir $my_path/lib/snort/daqs --daq socket
 
 
-==== Logger Alternatives
+=== Logger Alternatives
 
 Dump TCP stream payload in hext mode:
 
@@ -224,7 +224,7 @@ Output the old test format alerts:
         --lua "alert_csv = { fields = 'pkt_num gid sid rev', separator = '\t' }"
 
 
-==== Shell
+=== Shell
 
 You must build with --enable-shell to make the command line shell available.
 
@@ -255,10 +255,10 @@ The command line interface is still under development.  Suggestions are
 welcome.
 
 
-==== Signals
+=== Signals
 
-NOTE: The following examples assume that Snort++ is currently running and
-has a process ID of <pid>.
+NOTE: The following examples assume that Snort is currently running and has
+a process ID of <pid>.
 
 Modify and Reload Configuration:
 

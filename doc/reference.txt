@@ -1,11 +1,3 @@
-=== Terminology
-
-include::terms.txt[]
-
-=== Usage
-
-include::usage.txt[]
-
 === Build Options
 
 include::building.txt[]
@@ -17,10 +9,6 @@ include::enviro.txt[]
 === Command Line Options
 
 include::options.txt[]
-
-=== Parameters
-
-include::params.txt[]
 
 === Configuration
 
@@ -57,13 +45,13 @@ include::config_changes.txt[]
 
 === Module Listing
 
-// FIXIT-L    Either Fix Snort++ output or begin
-//            really using these.
-:leveloffset: 1
 include::modules.txt[]
-:leveloffset: 0
 
 === Plugin Listing
 
 include::plugins.txt[]
+
+=== Bugs
+
+include::bugs.txt[]
 

@@ -1,0 +1,246 @@
+
+=== Terminology
+
+include::terms.txt[]
+
+=== Parameters
+
+include::params.txt[]
+
+=== Operation
+
+Snort is a signature-based IPS, which means that as it receives network
+packets it reassembles and normalizes the content so that a set of rules can
+be evaluated to detect the presence of any significant conditions that
+merit further action.  A rough processing flow is as follows:
+
+////
+(pkt) -> [decode] -> [preprocess] -> [detect] -> [log] -> (verdict)
+////
+image::snort2x.png["Snort 2",width="480"]
+
+The steps are:
+
+1.  Decode each packet to determine the basic network characteristics such
+as source and destination addresses and ports.  A typical packet might have
+ethernet containing IP containing TCP containing HTTP (ie eth:ip:tcp:http).
+The various encapsulating protocols are examined for sanity and anomalies
+as the packet is decoded.  This is essentially a stateless effort.
+
+2.  Preprocess each decoded packet using accumulated state to determine the
+purpose and content of the innermost message.  This step may involve
+reordering and reassembling IP fragments and TCP segments to produce the
+original application protocol data unit (PDU).  Such PDUs are analyzed and
+normalized as needed to support further processing.
+
+3.  Detection is a two step process.  For efficiency, most rules contain a
+specific content pattern that can be searched for such that if no match is
+found no further processing is necessary.  Upon start up, the rules are
+compiled into pattern groups such that a single, parallel search can be
+done for all patterns in the group.  If any match is found, the full rule
+is examined according to the specifics of the signature.
+
+4.  The logging step is where Snort saves any pertinent information
+resulting from the earlier steps.  More generally, this is where other
+actions can be taken as well such as blocking the packet.
+
+
+==== Snort 2 Processing
+
+The preprocess step in Snort 2 is highly configurable.  Arbitrary
+preprocessors can be loaded dynamically at startup, configured in
+snort.conf, and then executed at runtime.  Basically, the preprocessors are
+put into a list which is iterated for each packet.  Recent versions have
+tweaked the list handling some, but the same basic architecture has allowed
+Snort 2 to grow from a sniffer, with no preprocessing, to a full-fledged
+IPS, with lots of preprocessing.
+
+While this "list of plugins" approach has considerable flexibility, it
+hampers future development when the flow of data from one preprocessor to
+the next depends on traffic conditions, a common situation with advanced
+features like application identification.  In this case, a preprocessor
+like HTTP may be extracting and normalizing data that ultimately is not
+used, or appID may be repeatedly checking for data that is just not
+available.
+
+Callbacks help break out of the preprocess straitjacket.  This is where one
+preprocessor supplies another with a function to call when certain data is
+available.  Snort has started to take this approach to pass some HTTP and
+SIP preprocessor data to appID.  However, it remains a peripheral feature
+and still requires the production of data that may not be consumed.
+
+
+==== Snort 3 Processing
+
+One of the goals of Snort 3 is to provide a more flexible framework for
+packet processing by implementing an event-driven approach.  Another is to
+produce data only when needed to minimize expensive normalizations.
+However, the basic packet processing provides very similar functionality.
+
+The basic processing steps Snort 3 takes are similar to Snort 2 as seen
+in the following diagram.  The preprocess step employs specific inspector
+types instead of a generalized list, but the basic procedure includes
+stateless packet decoding, TCP stream reassembly, and service specific
+analysis in both cases.  (Snort 3 provides hooks for arbitrary inspectors,
+but they are not central to basic flow processing and are not shown.)
+
+////
+(pkt) -> [decode] -> [stream] -> [service] -> [detect] -> [log] -> (verdict)
+         -----------------------------------------------------
+                      [appid]   [firewall]   [other]
+////
+image::snort3x.png["Snort 3",width="480"]
+
+However, Snort 3 also provides a more flexible mechanism than callback
+functions.  By using inspection events, it is possible for an inspector to
+supply data that other inspectors can process.  This is known as the
+observer pattern or publish-subscribe pattern.
+
+Note that the data is not actually published.  Instead, access to the data
+is published, and that means that subscribers can access the raw or
+normalized version(s) as needed.  Normalizations are done only on the first
+access, and subsequent accesses get the previously normalized data.  This
+results in just in time (JIT) processing.
+
+A basic example of this in action is provided by the extra data_log plugin.
+It is a passive inspector, ie it does nothing until it receives the data it
+subscribed for ('other' in the above diagram).  By adding the following to
+your snort.lua configuration, you will get a simple URI logger.
+
+    data_log = { key = 'http_raw_uri' }
+
+Inspection events coupled with pluggable inspectors provide a very flexible
+framework for implementing new features.  And JIT buffer stuffers allow
+Snort to work smarter, not harder.  These capabilities will be leveraged
+more and more as Snort development continues.
+
+
+=== Rules
+
+Rules tell Snort how to detect interesting conditions, such as an attack,
+and what to do when the condition is detected.  Here is an example rule:
+
+    alert tcp any any -> 192.168.1.1 80 ( msg:"A ha!"; content:"attack"; sid:1; )
+
+The structure is:
+
+    action proto source dir dest ( body )
+
+Where:
+
+action - tells Snort what to do when a rule "fires", ie when the signature
+matches.  In this case Snort will log the event.  It can also do thing like
+block the flow when running inline.
+
+proto - tells Snort what protocol applies.  This may be ip, icmp, tcp, udp,
+http, etc.
+
+source - specifies the sending IP address and port, either of which can be
+the keyword any, which is a wildcard.
+
+dir - must be either unidirectional as above or bidirectional indicated by
+<>.
+
+dest - similar to source but indicates the receiving end.
+
+body - detection and other information contained in parenthesis.
+
+There are many rule options available to construct as sophisticated a
+signature as needed.  In this case we are simply looking for the "attack"
+in any TCP packet.  A better rule might look like this:
+
+    alert http
+    (
+        msg:"Gotcha!";
+        flow:established, to_server;
+        http_uri:"attack";
+        sid:2;
+    )
+
+Note that these examples have a sid option, which indicates the signature
+ID.  In general rules are specified by gid:sid:rev notation, where gid is
+the generator ID and rev is the revision of the rule.  By default, text
+rules are gid 1 and shared-object (SO) rules are gid 3.  The various
+components within Snort that generate events have 1XX gids, for example the
+decoder is gid 116.  You can list the internal gids and sids with these
+commands:
+
+    $ snort --list-gids
+    $ snort --list-builtin
+
+For details on these and other options, see the reference section.
+
+=== Pattern Matching
+
+Snort evaluates rules in a two-step process which includes a fast pattern
+search and full evaluation of the signature.  More details on this process
+follow.
+
+==== Rule Groups
+
+When Snort starts or reloads configuration, rules are grouped by protocol,
+port and service.  For example, all TCP rules using the HTTP_PORTS variable
+will go in one group and all service HTTP rules will go in another group.
+These rule groups are compiled into multipattern search engines (MPSE)
+which are designed to search for all patterns with just a single pass
+through a given packet or buffer.  You can select the algorithm to use for
+fast pattern searches with search_engine.search_method which defaults to
+'ac_bnfa', which balances speed and memory.  For a faster search at the
+expense of significantly more memory, use 'ac_full'.  For best performance
+and reasonable memory, download the hyperscan source from Intel.
+
+==== Fast Patterns
+
+Fast patterns are content strings that have the fast_pattern option or
+which have been selected by Snort automatically to be used as a fast
+pattern.  Snort will by default choose the longest pattern in the rule
+since that is likely to be most unique.  That is not always the case so add
+fast_pattern to the appropriate content option for best performance.  The
+ideal fast pattern is one which, if found, is very likely to result in a
+rule match.  Fast patterns that match frequently for unrelated traffic will
+cause Snort to work hard with little to show for it.
+
+Certain contents are not eligible to be used as fast patterns.
+Specifically, if a content is negated, then if it is also relative to
+another content, case sensitive, or has non-zero offset or depth, then it
+is not eligible to be used as a fast pattern.
+
+==== Rule Evaluation
+
+For each fast pattern match, the corresponding rule(s) are evaluated
+left-to-right.  Rule evaluation requires checking each detection option in
+a rule and is a fairly costly process which is why fast patterns are so
+important.  Rule evaluation aborts on the first non-matching option.
+
+When rule evaluation takes place, the fast pattern may or may not need to
+be searched for a second time.  Note that this differs from Snort 2 which
+provided the fast_pattern:only option to designate such cases.  This was
+removed because it is difficult for the rule writer get it right.
+
+=== Plugins and Scripts
+
+There are several plugin types:
+
+* Codec - to decode and encode packets
+* Inspector - like the prior preprocessors, for normalization, etc.
+* IpsOption - for detection in Snort IPS rules
+* IpsAction - for custom rule actions
+* Logger - for handling events
+* Mpse - for fast pattern matching
+* So - for dynamic rules
+
+Most plugins can be built statically or dynamically.  By default they are
+all static.  There is no difference in functionality between static or
+dynamic plugins but the dynamic build generates a slightly lighter weight
+binary.  Either way you can add dynamic plugins with --plugin-path and
+newer versions will replace older versions, even when built statically.
+
+The power of plugins is that they have a very focused purpose and can be
+created with relative ease.  For example, you can extend the rule language
+by writing your own IpsOption and it will plug in and function just like
+existing options.  The extra directory has examples of each type of plugin.
+
+Some things just need to be tweaked or prototyped quickly.  In addition to
+the Lua conf, which is a script that can contain functions to compute
+settings, etc., you can also script Loggers and IpsOptions.
+

@@ -1,5 +1,5 @@
-One of the fundamental differences between Snort and Snort++ concerns configuration
-related to networks and ports. Here is a brief review of Snort's configuration for
+One of the fundamental differences between Snort 2 and Snort 3 concerns configuration
+related to networks and ports. Here is a brief review of Snort 2 configuration for
 network and service related components:
 
 * Snort's configuration has a default policy and optional policies selected by
@@ -14,26 +14,26 @@ network and service related components:
 
 * The default policy may also contain a list of ports to ignore.
 
-In Snort++, the above configurations are done in a single module called the
+In Snort 3, the above configurations are done in a single module called the
 binder.  Here is an example:
 
     binder =
     {
         -- allow all tcp port 22:
-        -- (similar to snort 2.X config ignore_ports)
+        -- (similar to Snort 2 config ignore_ports)
         { when = { proto = 'tcp', ports = '22' }, use = { action = 'allow' } },
 
         -- select a config file by vlan
-        -- (similar to snort 2.X config binding by vlan)
+        -- (similar to Snort 2 config binding by vlan)
         { when = { vlans = '1024' }, use = { file = 'vlan.lua' } },
 
         -- use a non-default HTTP inspector for port 8080:
-        -- (similar to a snort 2.X targeted preprocessor config)
+        -- (similar to a Snort 2 targeted preprocessor config)
         { when = { nets = '192.168.0.0/16', proto = 'tcp', ports = '8080' },
           use = { name = 'alt_http', type = 'http_inspect' } },
 
         -- use the default inspectors:
-        -- (similar to a snort 2.X default preprocessor config)
+        -- (similar to a Snort 2 default preprocessor config)
         { when = { proto = 'tcp' }, use = { type = 'stream_tcp' } },
         { when = { service = 'http' }, use = { type = 'http_inspect' } },
 

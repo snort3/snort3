@@ -27,6 +27,7 @@ unbuilt_sources = \
 binder.txt \
 bugs.txt \
 building.txt \
+concepts.txt \
 config_changes.txt \
 daq.txt \
 dcerpc.txt \
@@ -47,9 +48,9 @@ snort2x.png \
 snort3x.png \
 snort_manual.txt \
 snorty.png \
-start.txt \
 style.txt \
 terms.txt \
+tutorial.txt \
 usage.txt \
 wizard.txt
 

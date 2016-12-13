@@ -1,11 +1,11 @@
 === Plugins
 
-Snort++ uses a variety of plugins to accomplish much of its processing
+Snort uses a variety of plugins to accomplish much of its processing
 objectives, including:
 
 * Codec - to decode and encode packets
 * Inspector - like the prior preprocessors, for normalization, etc.
-* IpsOption - for detection in Snort++ rules
+* IpsOption - for detection in Snort rules
 * IpsAction - for custom actions
 * Logger - for handling events
 * Mpse - for fast pattern matching
@@ -23,10 +23,10 @@ various other data and functions for their given roles.
 
 === Modules
 
-The Module is pervasive in Snort\++.  It is how everything, including
-plugins, are configured.  It also provides access to builtin rules.  And as
-the glue that binds functionality to Snort++, the capabilities of a Module
-are expected to grow to include statistics support, etc.
+The Module is pervasive in Snort.  It is how everything, including plugins,
+are configured.  It also provides access to builtin rules.  And as the glue
+that binds functionality to Snort, the capabilities of a Module are
+expected to grow to include statistics support, etc.
 
 Module configuration is handled by a list of Parameters.  Most parameters
 can be validated by the framework, which means for example that conversion
@@ -43,7 +43,7 @@ configured in snort.lua like this:
         claw = 3
     }
 
-When the gadget table is processed, Snort++ will look for a module called
+When the gadget table is processed, Snort will look for a module called
 gadget.  If that Module has an associated API, it will be used to configure
 a new instance of the plugin.  In this case, a GadgetModule would be
 instantiated, brain and claw would be set, and the Module instance would be
@@ -51,11 +51,11 @@ passed to the GadgetInspector constructor.
 
 Module has three key virtual methods:
 
-* *begin()* - called when Snort++ starts processing the associated Lua
+* *begin()* - called when Snort starts processing the associated Lua
   table.  This is a good place to allocate any required data and set
   defaults.
 * *set()* - called to set each parameter after validation.
-* *end()* - called when Snort++ finishes processing the associated Lua
+* *end()* - called when Snort finishes processing the associated Lua
   table.  This is where additional integrity checks of related parameters
   should be done.
 
@@ -66,7 +66,7 @@ the plugin instance which takes ownership.
 
 Note that there is at most one instance of a given Module, even if multiple
 plugin instances are created which use that Module.  (Multiple instances
-require Snort++ binding configuration.)
+require Snort binding configuration.)
 
 
 === Inspectors
@@ -94,16 +94,16 @@ executed when:
 
 === Codecs
 
-The Snort3.0 Codecs decipher raw packets. These Codecs are now completely
-pluggable; almost every Snort3.0 Codec can be built dynamically and replaced
-with an alternative, customized Codec. The pluggable nature has also made it
-easier to build new Codecs for protocols without having to touch the Snort3.0
-code base. 
+The Snort Codecs decipher raw packets. These Codecs are now completely
+pluggable; almost every Snort Codec can be built dynamically and replaced
+with an alternative, customized Codec. The pluggable nature has also made
+it easier to build new Codecs for protocols without having to touch the
+Snort code base. 
 
-The first step in creating a Codec is defining its class and protocol. Every
-Codec must inherit from the Snort3.0 Codec class defined in
-"framework/codec.h". The following is an example Codec named "example" and has
-an associated struct that is 14 bytes long.
+The first step in creating a Codec is defining its class and protocol.
+Every Codec must inherit from the Snort Codec class defined in
+"framework/codec.h". The following is an example Codec named "example" and
+has an associated struct that is 14 bytes long.
 
     #include <cstdint>
     #include <arpa/inet.h>
@@ -139,11 +139,11 @@ function. The first parameter, which is the RawData struct, provides both a
 pointer to the raw data that has come from a wire and the length of that raw
 data. The function takes this information and validates that there are enough
 bytes for this protocol. If the raw data's length is less than 14 bytes, the
-function returns false and Snort3.0 discards the packet; the packet is neither
+function returns false and Snort discards the packet; the packet is neither
 inspected nor processed. If the length is greater than 14 bytes, the function
 populates two fields in the CodecData struct, next_prot_id and lyr_len. The
-lyr_len field tells Snort3.0 the number of bytes that this layer contains. The
-next_prot_id field provides Snort3.0 the value of the next EtherType or IP
+lyr_len field tells Snort the number of bytes that this layer contains. The
+next_prot_id field provides Snort the value of the next EtherType or IP
 protocol number.
 
     bool ExCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
@@ -173,7 +173,7 @@ following data with a validated length of 18 ( == 32 – 14):
     45 00 00 38 00 01 00 00    40 06 5c ac 0a 01 02 03
     0a 09
 
-How does Snort3.0 know that the IPv4 Codec has an EtherType of 0x0800? The
+How does Snort know that the IPv4 Codec has an EtherType of 0x0800? The
 Codec class has a second virtual function named get_protocol_ids(). When
 implementing the function, a Codec can register for any number of values
 between 0x0000 - 0xFFFF. Then, if the next_proto_id is set to a value for which
@@ -199,19 +199,19 @@ To register a Codec for Data Link Type's rather than protocols, the function
 get_data_link_type() can be similarly implemented.
 
 The final step to creating a pluggable Codec is the snort_plugins array. This
-array is important because when Snort3.0 loads a dynamic library, the program
+array is important because when Snort loads a dynamic library, the program
 only find plugins that are inside the snort_plugins array. In other words, if a
 plugin has not been added to the snort_plugins array, that plugin will not be
-loaded into Snort3.0.
+loaded into Snort.
 
 Although the details will not be covered in this post, the following code
-snippet is a basic CodecApi that Snort3.0 can load. This snippet can be copied
+snippet is a basic CodecApi that Snort can load. This snippet can be copied
 and used with only three minor changes. First, in the function ctor, ExCodec
 should be replaced with the name of the Codec that is being built. Second,
 EX_NAME must match the Codec's name or Snort will be unable to load this Codec.
 Third, EX_HELP should be replaced with the general description of this Codec.
 Once this code snippet has been added, ExCodec is ready to be compiled and
-plugged into Snort3.0.
+plugged into Snort.
 
     static Codec* ctor(Module*)
     { return new ExCodec; }
@@ -245,7 +245,7 @@ plugged into Snort3.0.
     };
 
 Two example Codecs are available in the extra directory on git and the extra
-tarball on the Snort3.0 page. One of those examples is the Token Ring Codec
+tarball on the Snort page. One of those examples is the Token Ring Codec
 while the other example is the PIM Codec.
 
 As a final note, there are four more virtual functions that a Codec should
@@ -267,7 +267,7 @@ to accomplish some of its basic functionality.
   packet. Unlike format, this function only sets length fields.
 
 * log is called when either the log_codecs logger or a custom logger that calls
-  PacketManager::log_protocols is used when running Snort3.0.
+  PacketManager::log_protocols is used when running Snort.
 
 
 === IPS Actions

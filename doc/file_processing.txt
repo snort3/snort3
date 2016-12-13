@@ -12,7 +12,7 @@ File policy provides users ability to control file services, such
 as enable/disable/configure file type identification, file signature, or 
 file capture.  
 
-In addition to all capabilities from snort 2x, we support customized file
+In addition to all capabilities from Snort 2, we support customized file
 policy along with file event log.
 
 * Supported protocols: HTTP, SMTP, IMAP, POP3, FTP, and SMB.

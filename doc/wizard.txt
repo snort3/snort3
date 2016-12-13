@@ -12,17 +12,17 @@ Additional Details:
   explicitly configuring the binder, default bindings will be generated which
   should work for most common cases.
 
-* Also note that while Snort 2.X bindings can only be configured in the
-  default policy, each Snort 3.0 policy can contain a binder leading to an
+* Also note that while Snort 2 bindings can only be configured in the
+  default policy, each Snort 3 policy can contain a binder leading to an
   arbitrary hierarchy.
 
 * The entire configuration can be reloaded and hot-swapped during run-time
-  via signal or command in both Snort 2.X and 3.0.  Ultimately, Snort 3.0
+  via signal or command in both Snort 2 and Snort 3.  Ultimately, Snort 3
   will support commands to update the binder on the fly, thus enabling
   incremental reloads of individual inspectors.
 
-* Both Snort 2.X and 3.0 support server specific configurations via a hosts
-  table (XML in Snort 2.X and Lua in Snort 3.0).  The table allows you to
+* Both Snort 2 and Snort 3 support server specific configurations via a hosts
+  table (XML in Snort 2 and Lua in Snort 3).  The table allows you to
   map network, protocol, and port to a service and policy.  This table can
   be reloaded and hot-swapped separately from the config file.
 

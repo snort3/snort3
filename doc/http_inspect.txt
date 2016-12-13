@@ -1,4 +1,4 @@
-One of the major undertakings for Snort 3.0 is developing a completely new
+One of the major undertakings for Snort 3 is developing a completely new
 HTTP inspector. You can configure it by adding:
 
     http_inspect = {}
@@ -21,8 +21,8 @@ tables where it can be easily reviewed and modified. Many significant
 changes can be made just by updating these tables.
 
 Http_inspect is the first inspector written specifically for the new
-Snort 3.0 architecture. That provides access to one of the very best
-features of Snort 3.0: purely PDU-based inspection. The classic preprocessor
+Snort 3 architecture. That provides access to one of the very best
+features of Snort 3: purely PDU-based inspection. The classic preprocessor
 processes HTTP messages, but even while doing so it is constantly aware of
 IP packets and how they divide up the TCP data stream. The same HTTP
 message might be processed differently depending on how the sender (bad
@@ -44,7 +44,7 @@ Another new feature on the horizon is HTTP/2 analysis. HTTP/2 derives from
 Google’s SPDY project and is in the process of being standardized. Despite
 the name, it is better to think of HTTP/2 not as a newer version of
 HTTP/1.1, but rather a separate protocol layer that runs under HTTP/1.1 and
-on top of TLS or TCP. It’s a perfect fit for the new Snort 3.0 architecture
+on top of TLS or TCP. It’s a perfect fit for the new Snort 3 architecture
 because a new HTTP/2 inspector would naturally output HTTP/1.1 messages but
 not any underlying packets. Exactly what http_inspect wants to input.
 

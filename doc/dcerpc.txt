@@ -7,9 +7,9 @@ The following transports are supported for DCE/RPC: SMB, TCP, and UDP.
 New rule options have been implemented to improve performance, reduce false 
 positives and reduce the count and complexity of DCE/RPC based rules.
 
-Different from snort 2x, the DCE-RPC preprocessor is split into three inspectors
+Different from Snort 2, the DCE-RPC preprocessor is split into three inspectors
  - one for each transport: dce_smb, dce_tcp, dce_udp. This includes the 
-configuration as well as the inspector modules. The Snort 2x server configuration
+configuration as well as the inspector modules. The Snort 2 server configuration
 is now split between the inspectors. Options that are meaningful to all 
 inspectors, such as policy and defragmentation, are copied into each inspector 
 configuration. The address/port mapping is handled by the binder. Autodetect 

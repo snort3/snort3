@@ -35,6 +35,7 @@ set (
     binder.txt
     bugs.txt
     building.txt
+    concepts.txt
     daq.txt
     dcerpc.txt
     differences.txt
@@ -57,9 +58,9 @@ set (
     snort_manual.text
     snort_manual.txt
     snorty.png
-    start.txt
     style.txt
     terms.txt
+    tutorial.txt
     usage.txt
     wizard.txt
 )
@@ -272,7 +273,7 @@ if ( MAKE_PDF_DOC )
         COMMAND mkdir -p ${PDF_DOC_TMP}
     )
 
-    add_custom_command ( 
+    add_custom_command (
         OUTPUT snort_manual.pdf
         COMMAND cp ${LIST_DIR_SOURCES} ${BINARY_DIR_BUILT_SOURCES} .
         COMMAND ${ASCIIDOC_A2X_EXE} ${PDF_A2X_ARGS} snort_manual.txt

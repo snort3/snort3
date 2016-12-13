@@ -21,7 +21,7 @@
 * *hex*: a type of protocol magic that the wizard uses to identify binary
   protocols.
 
-* *inspector*: plugin that processes packets (similar to the legacy Snort 
+* *inspector*: plugin that processes packets (similar to the Snort 2
   preprocessor)
 
 * *IPS*:  intrusion prevention system, like Snort.

@@ -8,7 +8,7 @@ applications and the modular nature allows you to build new modules for
 other platforms.
 
 The DAQ library is provided as an external package on snort.org.  There are
-a few additional modules provided with Snort++.  This section summarizes
+a few additional modules provided with Snort 3.  This section summarizes
 the important things you need to know to use these DAQ modules.  There are
 also 3rd DAQ modules available.
 
@@ -187,7 +187,7 @@ Notes on FreeBSD and OpenBSD are given below.
 === Dump Module
 
 The dump DAQ allows you to test the various inline mode features available in
-2.9 Snort like injection and normalization.
+Snort like injection and normalization.
 
     ./snort -i <device> --daq dump
     ./snort -r <pcap> --daq dump
@@ -465,21 +465,21 @@ Here is one way to set things up:
 
 The socket module provides provides a stream socket server that will accept
 up to 2 simultaneous connections and bridge them together while also
-passing data to Snort++ for inspection.  The first connection accepted is
+passing data to Snort for inspection.  The first connection accepted is
 considered the client and the second connection accepted is considered the
 server.  If there is only one connection, stream data can't be forwarded
 but it is still inspected.
 
 Each read from a socket of up to snaplen bytes is passed as a packet to
-Snort++ along with a DAQ_SktHdr_t pointer in DAQ_PktHdr_t->priv_ptr.
+Snort along with a DAQ_SktHdr_t pointer in DAQ_PktHdr_t->priv_ptr.
 DAQ_SktHdr_t conveys IP4 address, ports, protocol, and direction.  Socket
 packets can be configured to be TCP or UDP.  The socket DAQ can be operated
 in inline mode and is able to block packets.
 
-The socket DAQ uses DLT_SOCKET and requires that Snort++ load the socket
+The socket DAQ uses DLT_SOCKET and requires that Snort load the socket
 codec which is included in the extra package.
 
-To use the socket DAQ, start Snort++ like this:
+To use the socket DAQ, start Snort like this:
 
     ./snort --plugin-path /path/to/lib/snort_extra \
         --daq socket [--daq-var port=<port>] [--daq-var proto=<proto>] [-Q]
@@ -489,8 +489,8 @@ To use the socket DAQ, start Snort++ like this:
 
 * This module only supports ip4 traffic.
 
-* This module is only supported by Snort++.  It is not compatible with
-  Snort.
+* This module is only supported by Snort 3.  It is not compatible with
+  Snort 2.
 
 * This module is primarily for development and test.
 
@@ -507,8 +507,8 @@ with these Snort options:
 
     --pcap-dir path -z 8
 
-* This module is only supported by Snort++.  It is not compatible with
-  Snort.
+* This module is only supported by Snort 3.  It is not compatible with
+  Snort 2.
 
 * This module is primarily for development and test.
 
@@ -565,8 +565,8 @@ generate hext input from a pcap.
 
 * This module only supports ip4 traffic.
 
-* This module is only supported by Snort++.  It is not compatible with
-  Snort.
+* This module is only supported by Snort 3.  It is not compatible with
+  Snort 2.
 
 * This module is primarily for development and test.
 

@@ -1,8 +1,5 @@
 ==== Build
 
-* With cmake, make install will rebuild the docs even though when already
-  built.
-
 * Enabling large pcap may erroneously affect the number of packets processed
   from pcaps.
 
@@ -18,9 +15,6 @@
   warning many times.  Please ignore.
 
     clang: warning: argument unused during compilation: '-pthread'
-
-* It is not possible to build dynamic plugins using apple clang due to its
-  limited support for thread local variables.
 
 
 ==== Config
@@ -52,10 +46,6 @@
 
 * ip_proto doesn't work properly with reassembled packets so it can't be
   used to restrict the protocol of service rules.
-
-* Inspector events generated while parsing TCP payload in non-IPS mode will
-  indicate the wrong direction (ie they will be based on the ACK packet).
-  (Same is true for Snort.)
 
 
 ==== snort2lua
@@ -100,6 +90,4 @@
 
 * stream_tcp alert squash mechanism incorrectly squashes alerts for
   different TCP packets.
-
-* stream_tcp gap count is broken.
 

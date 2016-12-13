@@ -1,4 +1,4 @@
-= Snort++ User Manual
+= Snort 3 User Manual
 :author: The Snort Team
 :toc:
 :toc-placement: manual
@@ -12,13 +12,23 @@ toc::[]
 
 include::overview.txt[]
 
-== Getting Started
+== Concepts
 
-include::start.txt[]
+This section provides background on essential aspects of Snort's operation.
+
+include::concepts.txt[]
+
+== Tutorial
+
+include::tutorial.txt[]
+
+== Usage
+
+include::usage.txt[]
 
 == Features
 
-This section explains how to use key features of Snort++.
+This section explains how to use key features of Snort.
 
 include::features.txt[]
 
@@ -84,7 +94,7 @@ include::logger.txt[]
 
 include::daq.txt[]
 
-== Snort++ vs Snort
+== Snort 3 vs Snort 2
 
 include::differences.txt[]
 
@@ -92,7 +102,7 @@ include::differences.txt[]
 
 include::snort2lua.txt[]
 
-== Extending Snort++
+== Extending Snort
 
 include::extending.txt[]
 

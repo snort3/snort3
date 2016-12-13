@@ -1,4 +1,6 @@
-The following pointers will help you get started:
+The section will walk you through building and running Snort.  It is not
+exhaustive but, once you master this material, you should be able to figure
+out more advanced usage.
 
 
 === Dependencies
@@ -104,7 +106,7 @@ d. Or use ccmake directly to configure and generate from an arbitrary build
     export CXX=g++
 
 
-=== Run
+=== Running
 
 First set up the environment:
 
@@ -149,7 +151,7 @@ For more examples, see the usage section.
 
 === Tips
 
-One of the goals of Snort++ is to make it easier to configure your sensor.
+One of the goals of Snort 3 is to make it easier to configure your sensor.
 Here is a summary of tips and tricks you may find useful.
 
 General Use
@@ -191,18 +193,18 @@ Lua Configuration
   changing normalizer to  Xnormalizer (an unknown symbol) will disable the
   normalizer.  This can be easier than commenting in some cases.
 
-* By default, symbols unknown to Snort++ are silently ignored.  You can
+* By default, symbols unknown to Snort are silently ignored.  You can
   generate warnings for them  with --warn-unknown.  To ignore such symbols,
   export them in the environment variable SNORT_IGNORE.
 
 Writing and Loading Rules
 
-Snort++ rules allow arbitrary whitespace.  Multi-line rules make it easier to
+Snort rules allow arbitrary whitespace.  Multi-line rules make it easier to
 structure your rule  for clarity.  There are multiple ways to add comments to
 your rules:
 
-* Like Snort, the # character starts a comment to end of line.  In addition, all
-  lines between #begin and #end are comments.
+* The # character starts a comment to end of line.  In addition, all lines
+  between #begin and #end are comments.
 
 * The rem option allows you to write a comment that is conveyed with the rule.
 
@@ -214,7 +216,7 @@ There are multiple ways to load rules too:
 
 * Set ips.rules or ips.include.
 
-* Snort 2.X include statements can be used in rules files.
+* include statements can be used in rules files.
 
 * Use -R to load a rules file.
 
@@ -310,8 +312,4 @@ include::errors.txt[]
     install_name_tool -change @rpath/libhs.4.0.dylib \
         /path-to/libhs.4.0.dylib src/snort
 
-
-=== Bugs
-
-include::bugs.txt[]
 

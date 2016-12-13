@@ -1,14 +1,14 @@
-One of the major differences between Snort 2.9.X and Snort 3.0 is the
-configuration. Snort 2.9.X configuration files are written in Snort-specific
-syntax while Snort 3.0 configuration files are written in Lua. Snort2Lua is a
-program specifically designed to convert Snort 2.9.X configuration files into
-Lua files that Snort 3.0 can understand.
+One of the major differences between Snort 2 and Snort 3 is the
+configuration. Snort 2 configuration files are written in Snort-specific
+syntax while Snort 3 configuration files are written in Lua. Snort2Lua is
+a program specifically designed to convert Snort 2 configuration files
+into Lua files that Snort 3 can understand.
 
-Snort2Lua reads your legacy Snort conf file(s) and generates Snort++ Lua
+Snort2Lua reads your legacy Snort conf file(s) and generates Snort 3 Lua
 and rules files.  When running this program, the only mandatory option is
-to provide Snort2Lua with a Snort configuration file. The default output
-file file is snort.lua, the default error file will be snort.rej, and the
-default rule file is the output file (default is snort.lua).  When
+to provide Snort2Lua with a Snort 2 configuration file. The default
+output file file is snort.lua, the default error file will be snort.rej,
+and the default rule file is the output file (default is snort.lua).  When
 Snort2Lua finishes running, the resulting configuration file can be
 successfully run as the Snort3.0 configuration file.  The sole exception to
 this rule is when Snort2Lua cannot find an included file.  If that occurs,
@@ -21,17 +21,17 @@ Those errors can occur for a multitude of reasons and are not necessarily
 bad.  For instance, Snort2Lua will only convert preprocessors that are
 currently supported. Therefore, any unsupported preprocessors or
 configuration options including DCERP, SIP, and SMTP, will cause an error
-in Snort2Lua since Snort3.0 does not support those preprocessors.
+in Snort2Lua since Snort 3 does not support those preprocessors.
 Additionally, any rule options associated with those preprocessors are also
-not supported.  Finally, Snort2Lua expects a valid Snort configuration.
+not supported.  Finally, Snort2Lua expects a valid Snort 2 configuration.
 Therefore, if the configuration is invalid or has questionable syntax,
 Snort2Lua may fail to parse the configuration file or create an invalid
-Snort3.0 configuration file.
+Snort 3 configuration file.
 
 There are a also few peculiarities of Snort2Lua that may be confusing to a
 first time user. Specifically, aside from an initial configuration file
 (which is specified from the command line or as the file in ‘config
-binding’), every file that is included into Snort3.0 must be either a Lua
+binding’), every file that is included into Snort 3 must be either a Lua
 file or a rule file; the file cannot contain both rules and Lua syntax.
 Therefore, when parsing a file specified with the ‘include’ command,
 Snort2Lua will output both a Lua file and a rule file.  Additionally, any
@@ -54,14 +54,14 @@ configuration into a single rule file.  Similarly, there is an option
 pull all of the Lua syntax from every ‘include’ file into the output file.
 
 There are currently three output modes: default, quiet, and differences.
-As expected, quiet mode produces a Snort\++ configuration.  All errors
-(aside from Fatal Snort2Lua errors), differences, and comments will omitted
-from the final output file.  Default mode will print everything. That mean
-you will be able to see exactly what changes have occurred between Snort and
-Snort++ in addition to the new syntax, the original file's comments, and
-all errors that have occurred.  Finally, differences mode will not actually
-output a valid Snort3.0 configuration.  Instead, you can see the exact
-options from the input configuration that have changed.
+As expected, quiet mode produces a Snort configuration.  All errors (aside
+from Fatal Snort2Lua errors), differences, and comments will omitted from
+the final output file.  Default mode will print everything. That mean you
+will be able to see exactly what changes have occurred between Snort 2
+and Snort 3 in addition to the new syntax, the original file's comments,
+and all errors that have occurred.  Finally, differences mode will not
+actually output a valid Snort 3 configuration.  Instead, you can see the
+exact options from the input configuration that have changed.
 
 :leveloffset: 1
 include::snort2lua_cmds.txt[]
@@ -69,7 +69,7 @@ include::snort2lua_cmds.txt[]
 
 === Known Problems
 
-*  Any Snort ‘string’ which is dependent on a variable will no longer have
+*  Any Snort 2 ‘string’ which is dependent on a variable will no longer have
 that variable in the Lua string.
 
 *  Snort2Lua currently does not handle variables well. First, that means
@@ -97,21 +97,21 @@ one output.
 
 === Usage
 
-Snort2Lua is included in the Snort 3.0 distribution. The Snort2Lua source code
+Snort2Lua is included in the Snort 3 distribution. The Snort2Lua source code
 is located in the tools/snort2lua directory. The program is automatically built
 and installed.
 
 Translating your configuration
 
-To run Snort2Lua, the only requirement is a file containing Snort 2.9.X syntax.
+To run Snort2Lua, the only requirement is a file containing Snort 2 syntax.
 Assuming your configuration file is named snort.conf, run the command
 
     snort2lua –c snort.conf
 
 Snort2Lua will output a file named snort.lua. Assuming your snort.conf file is
-a valid Snort 2.9.X configuration file, than the resulting snort.lua file will
-always be a valid Snort 3.0 configuration file; any errors that occur are
-because Snort 3.0 currently does not support all of the Snort 2.9.X options.
+a valid Snort 2 configuration file, than the resulting snort.lua file will
+always be a valid Snort 3 configuration file; any errors that occur are
+because Snort 3 currently does not support all of the Snort 2 options.
 
 Every keyword from the Snort configuration can be found in the output file. If
 the option or keyword has changed, then a comment containing both the option or
@@ -120,13 +120,13 @@ keyword’s old name and new name will be present in the output file.
 Translating a rule file
 
 Snort2Lua can also accommodate translating individual rule files. Assuming the
-Snort 2.9.X rule file is named snort.rules and you want the new rule file to be
+Snort 2 rule file is named snort.rules and you want the new rule file to be
 name updated.rules, run the command
 
     snort2lua –c snort.rules -r updated.rules
 
 Snort2Lua will output a file named updated.rules. That file, updated.rules,
-will always be a valid Snort 3.0 rule file. Any rule that contains unsupported
+will always be a valid Snort 3 rule file. Any rule that contains unsupported
 options will be a comment in the output file.
 
 Understanding the Output
@@ -135,31 +135,31 @@ Although Snort2Lua outputs very little to the console, there are several things
 that occur when Snort2Lua runs.  This is a list of Snort2Lua outputs.
 
 _The console_.   Every line that Snort2Lua is unable to translate from the Snort
-2.9.X format to the Snort 3.0 format is considered an error. Upon exiting,
+2.X format to the Snort 3 format is considered an error. Upon exiting,
 Snort2Lua will print the number of errors that occurred. Snort2Lua will also
 print the name of the error file. 
 
 _The output file_.  As previously mentioned, Snort2Lua will create a Lua file
-with valid Snort 3.0 syntax.  The default Lua file is named snort.lua.  This
-file is the equivalent of your main Snort 2.9.X configuration file.
+with valid Snort 3 syntax.  The default Lua file is named snort.lua.  This
+file is the equivalent of your main Snort 2 configuration file.
 
 _The rule file_.   By default, all rules will be printed to the Lua file.
 However, if a rule file is specified on the command line, any rules found in
-the Snort 2.9.X configuration will be written to the rule file instead
+the Snort 2 configuration will be written to the rule file instead
 
 _The error file_.  By default, the error file is snort.rej. It will only be
 created if errors exist.  Every error referenced on the command line can be
 found in this file.  There are two reasons an error can occur.
 
-* The Snort 2.9.X configuration file has invalid syntax. If Snort 2.9.X cannot
+* The Snort 2 configuration file has invalid syntax. If Snort 2 cannot
   parse the configuration file, neither can Snort2Lua.  In the example below,
   Snort2Lua could not convert the line 'config bad_option'.  Since that is not
-  valid Snort 2.9.X syntax, this is a syntax error.
+  valid Snort 2 syntax, this is a syntax error.
     
-* The Snort 2.9.X configuration file contains preprocessors and rule options
-  that are not supported in Snort 3.0.  If Snort 2.9.X can parse a line that
-  Snort2Lua cannot parse, than Snort 3.0 does not support something in the line.
-  As Snort 3.0 begins supporting these preprocessors and rule options, Snort2Lua
+* The Snort 2 configuration file contains preprocessors and rule options
+  that are not supported in Snort 3.  If Snort 2 can parse a line that
+  Snort2Lua cannot parse, than Snort 3 does not support something in the line.
+  As Snort 3 begins supporting these preprocessors and rule options, Snort2Lua
   will also begin translating these lines. One example of such an error is
   dcerpc2.
 
