@@ -68,8 +68,8 @@ That's pretty easy, but here is one more example anyway.
     sd_pattern:"This is a string literal", threshold 300;
 
 This example requires 300 matches of the pattern "This is a string literal"
-to qualify as a positive match. That is, if the string only occurred 299x
-in a packet, you will not see an even.
+to qualify as a positive match. That is, if the string only occurred 299 times
+in a packet, you will not see an event.
 
 ===== Obfuscating Credit Cards and Social Security Numbers
 
@@ -96,7 +96,7 @@ Logged output when running Snort in "cmg" alert format.
     10.1.2.3:48620 -> 10.9.8.7:8 TCP TTL:64 TOS:0x0 ID:14 IpLen:20 DgmLen:56
     ***A**** Seq: 0xB2  Ack: 0x2  Win: 0x2000  TcpLen: 20
     - - - raw[16] - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    2E 2E 2E 2E 2E 2E 2E 2E 2E 2E 2E 2E 39 32 39 34              ............9294
+    58 58 58 58 58 58 58 58 58 58 58 58 39 32 39 34              XXXXXXXXXXXX9294
     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ==== Caveats
