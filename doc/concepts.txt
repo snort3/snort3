@@ -3,15 +3,87 @@
 
 include::terms.txt[]
 
+
+=== Modules
+
+Modules are the building blocks of Snort.  They encapsulate the types of
+data that many components need including parameters, peg counts, profiling,
+builtin rules, and commands.  This allows Snort to handle them generically
+and consistently.  You can learn quite a lot about any given module from
+the command line.  For example, to see what stream_tcp is all about, do
+this:
+
+    $ snort --help-config stream_tcp
+
+Modules are configured using Lua tables with the same name.  So the
+stream_tcp module is configured with defaults like this:
+
+    stream_tcp = { }
+
+The earlier help output showed that the default session tracking timeout is
+30 seconds.  To change that to 60 seconds, you can configure it this way:
+
+    stream_tcp = { session_timeout = 60 }
+
+Or this way:
+
+    stream_tcp = { }
+    stream_tcp.session_timeout = 60
+
+More on parameters is given in the next section.
+
+Other things to note about modules:
+
+* Shutdown output will show the non-zero peg counts for all modules.  For
+  example, if stream_tcp did anything, you would see the number of sessions
+  processed among other things.
+
+* Providing the builtin rules allows the documentation to include them
+  automatically and also allows for autogenerating the rules at startup.
+
+* Only a few module provide commands at this point, most notably the snort
+  module.
+
+
 === Parameters
 
 include::params.txt[]
 
+
+=== Plugins
+
+Snort uses a variety of plugins to accomplish much of its processing
+objectives, including:
+
+* Codec - to decode and encode packets
+* Inspector - like Snort 2 preprocessors, for normalization, etc.
+* IpsOption - for detection in Snort rules
+* IpsAction - for custom actions
+* Logger - for handling events
+* Mpse - for fast pattern matching
+* So - for dynamic rules
+
+The power of plugins is that they have a very focused purpose and can be
+created with relative ease.  For example, you can extend the rule language
+by writing your own IpsOption and it will plug in and function just like
+existing options.  The extra directory has examples of each type of plugin.
+
+Most plugins can be built statically or dynamically.  By default they are
+all static.  There is no difference in functionality between static or
+dynamic plugins but the dynamic build generates a slightly lighter weight
+binary.  Either way you can add dynamic plugins with --plugin-path and
+newer versions will replace older versions, even when built statically.
+
+A single dynamic library may contain more than one plugin.  For example, an
+inspector will typically be packaged together with any associated rule
+options.
+
+
 === Operation
 
 Snort is a signature-based IPS, which means that as it receives network
-packets it reassembles and normalizes the content so that a set of rules can
-be evaluated to detect the presence of any significant conditions that
+packets it reassembles and normalizes the content so that a set of rules
+can be evaluated to detect the presence of any significant conditions that
 merit further action.  A rough processing flow is as follows:
 
 ////
@@ -216,31 +288,4 @@ When rule evaluation takes place, the fast pattern may or may not need to
 be searched for a second time.  Note that this differs from Snort 2 which
 provided the fast_pattern:only option to designate such cases.  This was
 removed because it is difficult for the rule writer get it right.
-
-=== Plugins and Scripts
-
-There are several plugin types:
-
-* Codec - to decode and encode packets
-* Inspector - like the prior preprocessors, for normalization, etc.
-* IpsOption - for detection in Snort IPS rules
-* IpsAction - for custom rule actions
-* Logger - for handling events
-* Mpse - for fast pattern matching
-* So - for dynamic rules
-
-Most plugins can be built statically or dynamically.  By default they are
-all static.  There is no difference in functionality between static or
-dynamic plugins but the dynamic build generates a slightly lighter weight
-binary.  Either way you can add dynamic plugins with --plugin-path and
-newer versions will replace older versions, even when built statically.
-
-The power of plugins is that they have a very focused purpose and can be
-created with relative ease.  For example, you can extend the rule language
-by writing your own IpsOption and it will plug in and function just like
-existing options.  The extra directory has examples of each type of plugin.
-
-Some things just need to be tweaked or prototyped quickly.  In addition to
-the Lua conf, which is a script that can contain functions to compute
-settings, etc., you can also script Loggers and IpsOptions.
 
