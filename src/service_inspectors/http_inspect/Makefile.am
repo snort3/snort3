@@ -29,6 +29,7 @@ http_test_manager.cc http_test_manager.h \
 http_field.cc http_field.h \
 http_infractions.h \
 http_event_gen.h \
+http_js_norm.cc http_js_norm.h \
 ips_http.cc ips_http.h
 
 #if STATIC_INSPECTORS

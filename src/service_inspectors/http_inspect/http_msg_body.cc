@@ -30,6 +30,7 @@
 #include "http_api.h"
 #include "http_msg_request.h"
 #include "http_msg_body.h"
+#include "http_js_norm.h"
 
 using namespace HttpEnums;
 
@@ -50,37 +51,30 @@ HttpMsgBody::~HttpMsgBody()
 
     if (decoded_body_alloc)
         decoded_body.delete_buffer();
+
+    if (js_norm_body_alloc)
+        js_norm_body.delete_buffer();
 }
 
 void HttpMsgBody::analyze()
 {
     do_utf_decoding(msg_text, decoded_body, decoded_body_alloc);
-    if ( decoded_body_alloc )
-    {
-        detect_data.set((decoded_body.length <= session_data->detect_depth_remaining[source_id]) ?
-            decoded_body.length : session_data->detect_depth_remaining[source_id],
-            decoded_body.start);
-    }
-    else
-    {
-        detect_data.set((msg_text.length <= session_data->detect_depth_remaining[source_id]) ?
-            msg_text.length : session_data->detect_depth_remaining[source_id],
-            msg_text.start);
-    }
 
-    session_data->detect_depth_remaining[source_id] -= detect_data.length;
-
-    // Always set file data. File processing will later set a new value in some cases.
-    file_data.set(detect_data);
-
-    if (file_data.length > 0)
+    if (session_data->detect_depth_remaining[source_id] > 0)
     {
-        set_file_data(const_cast<uint8_t*>(file_data.start), (unsigned)file_data.length);
+        do_js_normalization(decoded_body, js_norm_body, js_norm_body_alloc);
+        const int32_t detect_length =
+            (js_norm_body.length <= session_data->detect_depth_remaining[source_id]) ?
+            js_norm_body.length : session_data->detect_depth_remaining[source_id];
+        detect_data.set(detect_length, js_norm_body.start);
+        session_data->detect_depth_remaining[source_id] -= detect_length;
+        // Always set file data. File processing will later set a new value in some cases.
+        set_file_data(const_cast<uint8_t*>(detect_data.start), (unsigned)detect_data.length);
     }
 
     if (session_data->file_depth_remaining[source_id] > 0)
     {
-        do_file_processing();
+        do_file_processing(decoded_body);
     }
 
     body_octets += msg_text.length;
@@ -88,11 +82,13 @@ void HttpMsgBody::analyze()
 
 void HttpMsgBody::do_utf_decoding(const Field& input, Field& output, bool& decoded_alloc)
 {
-
-    if (!params->normalize_utf || source_id == SRC_CLIENT )
+    if (!params->normalize_utf || source_id == SRC_CLIENT)
+    {
+        output.set(input);
         return;
+    }
 
-    if (session_data->utf_state && session_data->utf_state->is_utf_encoding_present() )
+    if (session_data->utf_state && session_data->utf_state->is_utf_encoding_present())
     {
         int bytes_copied;
         bool decoded;
@@ -102,25 +98,43 @@ void HttpMsgBody::do_utf_decoding(const Field& input, Field& output, bool& decod
         if (!decoded)
         {
             delete[] buffer;
+            output.set(input);
             infractions += INF_UTF_NORM_FAIL;
             events.create_event(EVENT_UTF_NORM_FAIL);
         }
-        else if ( bytes_copied )
+        else if (bytes_copied > 0)
         {
             output.set(bytes_copied, buffer);
             decoded_alloc = true;
         }
         else
+        {
             delete[] buffer;
+            output.set(input);
+        }
     }
 
+    else
+        output.set(input);
 }
 
-void HttpMsgBody::do_file_processing()
+void HttpMsgBody::do_js_normalization(const Field& input, Field& output, bool& js_norm_alloc)
+{
+    if (!params->js_norm_param.normalize_javascript || source_id == SRC_CLIENT)
+    {
+        output.set(input);
+        return;
+    }
+
+    params->js_norm_param.js_norm->normalize(input, output, js_norm_alloc, infractions, events);
+}
+
+void HttpMsgBody::do_file_processing(Field& file_data)
 {
     // Using the trick that cutter is deleted when regular or chunked body is complete
     const bool front = (body_octets == 0);
     const bool back = (session_data->cutter[source_id] == nullptr) || tcp_close;
+
     FilePosition file_position;
     if (front && back) file_position = SNORT_FILE_FULL;
     else if (front) file_position = SNORT_FILE_START;

@@ -37,6 +37,17 @@ public:
     long response_depth;
     bool unzip;
     bool normalize_utf = true;
+
+    struct JsNormParam
+    {
+    public:
+        ~JsNormParam();
+        bool normalize_javascript = false;
+        int max_javascript_whitespaces = 200;
+        class HttpJsNorm* js_norm = nullptr;
+    };
+    JsNormParam js_norm_param;
+
     struct UriParam
     {
     public:
@@ -60,6 +71,7 @@ public:
         HttpEnums::CharAction uri_char[256];
     };
     UriParam uri_param;
+
 #ifdef REG_TEST
     bool test_input;
     bool test_output;

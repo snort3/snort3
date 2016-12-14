@@ -76,9 +76,9 @@ void snort_ignore(Packet*) { }
 
 void snort_inspect(Packet* p)
 {
+    bool inspected = false;
     {
         PacketLatency::Context pkt_latency_ctx { p };
-        bool inspected = false;
 
         // If the packet has errors, we won't analyze it.
         if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
@@ -121,9 +121,6 @@ void snort_inspect(Packet* p)
         if ( p->has_ip() )
             CheckTagging(p);
 
-        if ( inspected )
-            InspectorManager::clear(p);
-
         // clear closed sessions here after inspection since non-stream
         // inspectors may depend on flow information
         // FIXIT-H but this result in double clearing?  should normal
@@ -135,6 +132,9 @@ void snort_inspect(Packet* p)
     Profile profile(eventqPerfStats);
     SnortEventqLog(p);
     SnortEventqReset();
+
+    if ( inspected )
+        InspectorManager::clear(p);
 
     // Handle block pending state
     Stream::check_flow_block_pending(p);

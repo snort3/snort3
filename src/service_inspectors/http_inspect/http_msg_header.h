@@ -41,11 +41,6 @@ public:
 
     void publish() override;
 
-    int32_t get_status_code()
-    {
-        return status_code_num;
-    }
-
 private:
     // Dummy configurations to support MIME processing
     MailLogConfig mime_conf;

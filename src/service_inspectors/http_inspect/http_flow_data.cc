@@ -21,6 +21,7 @@
 #include "http_test_manager.h"
 #include "http_flow_data.h"
 #include "http_transaction.h"
+#include "http_js_norm.h"
 
 using namespace HttpEnums;
 

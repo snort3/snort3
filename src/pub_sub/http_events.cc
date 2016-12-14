@@ -71,7 +71,7 @@ const uint8_t* HttpEvent::get_referer(int32_t& length)
 
 int32_t HttpEvent::get_response_code()
 {
-    return http_msg_header->get_status_code();
+    return http_msg_header->get_status_code_num();
 }
 
 const uint8_t* HttpEvent::get_server(int32_t& length)

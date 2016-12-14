@@ -21,6 +21,7 @@
 
 #include "log/messages.h"
 #include "service_inspectors/http_inspect/http_uri_norm.h"
+#include "service_inspectors/http_inspect/http_js_norm.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -36,6 +37,11 @@ void show_stats(SimpleStats*, const char*) { }
 
 void Value::get_bits(std::bitset<256ul>&) const {}
 int SnortEventqAdd(unsigned int, unsigned int, RuleType) { return 0; }
+
+HttpJsNorm::HttpJsNorm(int, const HttpParaList::UriParam& uri_param_) :
+    max_javascript_whitespaces(0), uri_param(uri_param_), javascript_search_mpse(nullptr),
+    htmltype_search_mpse(nullptr) {}
+HttpJsNorm::~HttpJsNorm() {}
 
 TEST_GROUP(http_inspect_uri_norm)
 {

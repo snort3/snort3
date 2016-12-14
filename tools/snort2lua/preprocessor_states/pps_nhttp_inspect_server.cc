@@ -126,7 +126,7 @@ bool NHttpInspectServer::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("unlimited_decompress");
 
         else if (!keyword.compare("normalize_javascript"))
-            table_api.add_deleted_comment("normalize_javascript");
+            table_api.add_option("normalize_javascript", true);
 
         else if (!keyword.compare("enable_xff"))
             table_api.add_deleted_comment("enable_xff");
@@ -229,7 +229,7 @@ bool NHttpInspectServer::convert(std::istringstream& data_stream)
             parse_deleted_option("webroot", data_stream);
 
         else if (!keyword.compare("max_javascript_whitespaces"))
-            parse_deleted_option("max_javascript_whitespaces", data_stream);
+            tmpval = parse_int_option("max_javascript_whitespaces", data_stream, false);
 
         else if (!keyword.compare("server_flow_depth") || !keyword.compare("flow_depth"))
         {
@@ -376,4 +376,3 @@ static const ConvertMap preprocessor_nhttpinpect_server =
 
 const ConvertMap* nhttpinspect_server_map = &preprocessor_nhttpinpect_server;
 }
-

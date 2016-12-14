@@ -60,6 +60,8 @@ set (FILE_LIST
     http_cutter.h
     http_infractions.h
     http_event_gen.h
+    http_js_norm.cc
+    http_js_norm.h
 )
 
 #if (STATIC_INSPECTORS)

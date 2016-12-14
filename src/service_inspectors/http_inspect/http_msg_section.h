@@ -53,6 +53,8 @@ public:
 
     HttpEnums::MethodId get_method_id() const { return method_id; }
 
+    int32_t get_status_code_num() { return status_code_num; }
+
     // Publish an inspection event for other modules to consume.
     virtual void publish() { }
 

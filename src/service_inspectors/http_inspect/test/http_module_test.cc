@@ -25,6 +25,7 @@
 #include "service_inspectors/http_inspect/http_module.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 #include "service_inspectors/http_inspect/http_str_to_code.h"
+#include "service_inspectors/http_inspect/http_js_norm.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -47,6 +48,11 @@ int32_t str_to_code(const uint8_t*, const int32_t, const StrCode []) { return 0;
 int32_t substr_to_code(const uint8_t*, const int32_t, const StrCode []) { return 0; }
 long HttpTestManager::print_amount {};
 bool HttpTestManager::print_hex {};
+
+HttpJsNorm::HttpJsNorm(int, const HttpParaList::UriParam& uri_param_) :
+    max_javascript_whitespaces(0), uri_param(uri_param_), javascript_search_mpse(nullptr),
+    htmltype_search_mpse(nullptr) {}
+HttpJsNorm::~HttpJsNorm() {}
 
 TEST_GROUP(http_peg_count_test)
 {

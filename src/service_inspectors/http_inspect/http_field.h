@@ -47,6 +47,10 @@ public:
     // Only call this method if the field owns the dynamically allocated buffer you are deleting.
     // This method is a convenience but you still must know where the buffer came from. Many fields
     // refer to static buffers or a subfield of someone else's buffer.
+
+    // FIXIT-M the following test should undoubtedly be > 0. But this cannot be changed until a
+    // survey is done to ensure that no old code creates zero-length buffers. In practice this will
+    // happen naturally when start and length become private.
     void delete_buffer() { if (length >= 0) delete[] start; }
 
 #ifdef REG_TEST

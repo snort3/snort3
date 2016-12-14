@@ -32,6 +32,7 @@
 #include "http_event_gen.h"
 
 class HttpTransaction;
+class HttpJsNorm;
 
 class HttpFlowData : public FlowData
 {
@@ -108,7 +109,7 @@ private:
     int64_t detect_depth_remaining[2] = { HttpEnums::STAT_NOT_PRESENT,
         HttpEnums::STAT_NOT_PRESENT };
     MimeSession* mime_state[2] = { nullptr, nullptr };
-    UtfDecodeSession* utf_state = nullptr; //SRC_SERVER only
+    UtfDecodeSession* utf_state = nullptr; // SRC_SERVER only
     uint64_t expected_trans_num[2] = { 1, 1 };
 
     // number of user data octets seen so far (regular body or chunks)

@@ -412,7 +412,6 @@ void HttpMsgHeader::setup_utf_decoding()
     session_data->utf_state->set_decode_utf_state_charset(charset_code);
 }
 
-
 #ifdef REG_TEST
 void HttpMsgHeader::print_section(FILE* output)
 {

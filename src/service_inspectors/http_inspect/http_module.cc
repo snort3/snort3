@@ -23,6 +23,7 @@
 #include "log/messages.h"
 
 #include "http_uri_norm.h"
+#include "http_js_norm.h"
 #include "http_module.h"
 
 using namespace HttpEnums;
@@ -34,7 +35,12 @@ const Parameter HttpModule::http_params[] =
     { "response_depth", Parameter::PT_INT, "-1:", "-1",
           "maximum response message body bytes to examine (-1 no limit)" },
     { "unzip", Parameter::PT_BOOL, nullptr, "true", "decompress gzip and deflate message bodies" },
-    { "normalize_utf", Parameter::PT_BOOL, nullptr, "true", "normalize charset utf encodings" },
+    { "normalize_utf", Parameter::PT_BOOL, nullptr, "true",
+          "normalize charset utf encodings in response bodies" },
+    { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
+          "normalize javascript in response bodies" },
+    { "max_javascript_whitespaces", Parameter::PT_INT, "1:65535", "200",
+          "maximum consecutive whitespaces allowed within the Javascript obfuscated data" },
     { "bad_characters", Parameter::PT_BIT_LIST, "255", nullptr,
           "alert when any of specified bytes are present in URI after percent decoding" },
     { "ignore_unreserved", Parameter::PT_STRING, "(optional)", nullptr,
@@ -99,6 +105,14 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("normalize_utf"))
     {
         params->normalize_utf = val.get_bool();
+    }
+    else if (val.is("normalize_javascript"))
+    {
+        params->js_norm_param.normalize_javascript = val.get_bool();
+    }
+    else if (val.is("max_javascript_whitespaces"))
+    {
+        params->js_norm_param.max_javascript_whitespaces = val.get_long();
     }
     else if (val.is("bad_characters"))
     {
@@ -206,7 +220,17 @@ bool HttpModule::end(const char*, int, SnortConfig*)
                 params->uri_param.iis_unicode_map_file.c_str(),
                 params->uri_param.iis_unicode_code_page);
     }
+    if (params->js_norm_param.normalize_javascript)
+    {
+        params->js_norm_param.js_norm =
+            new HttpJsNorm(params->js_norm_param.max_javascript_whitespaces, params->uri_param);
+    }
     return true;
+}
+
+HttpParaList::JsNormParam::~JsNormParam()
+{
+    delete js_norm;
 }
 
 // Some values in these tables may be changed by configuration parameters.
