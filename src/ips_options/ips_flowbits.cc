@@ -1127,7 +1127,7 @@ static void flowbits_gterm(SnortConfig*)
 static const Parameter s_params[] =
 {
     { "~command", Parameter::PT_STRING, nullptr, nullptr,
-      "set|reset|isset|etc." },
+      "set|reset|isset|etc." },  // FIXIT-L replace this legacy flowbits parsing with PT_SELECT
 
     { "~arg1", Parameter::PT_STRING, nullptr, nullptr,
       "bits or group" },

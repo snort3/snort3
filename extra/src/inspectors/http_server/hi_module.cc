@@ -81,11 +81,11 @@ static const Parameter hi_global_params[] =
     { "detect_anomalous_servers", Parameter::PT_BOOL, nullptr, "false",
       "inspect non-configured ports for HTTP - bad idea" },
 
-    { "max_gzip_mem", Parameter::PT_INT, "3276:", "838860",
-      "total memory used for decompression across all active sessions" },
+    { "max_gzip_mem", Parameter::PT_INT, "0:", "0",
+      "disregard - not implemented" },
 
-    { "memcap", Parameter::PT_INT, "2304:", "150994944",
-      "limit of memory used for logging extra data" },
+    { "memcap", Parameter::PT_INT, "0:", "0",
+      "disregard - not implemented" },
 
     //{ "mime", Parameter::PT_TABLE, hi_mime_params, nullptr,
     //  "help" },

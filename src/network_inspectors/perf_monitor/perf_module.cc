@@ -60,7 +60,7 @@ static const Parameter s_params[] =
       "report interval" },
 
     { "flow_ip_memcap", Parameter::PT_INT, "8200:", "52428800",
-      "maximum memory for flow tracking" },
+      "maximum memory in bytes for flow tracking" },
 
     { "max_file_size", Parameter::PT_INT, "4096:", "1073741824",
       "files will be rolled over if they exceed this size" },
@@ -69,16 +69,16 @@ static const Parameter s_params[] =
       "maximum ports to track" },
 
     { "output", Parameter::PT_ENUM, "file | console", "file",
-      "Output location for stats" },
+      "output location for stats" },
 
     { "modules", Parameter::PT_LIST, module_params, nullptr,
       "gather statistics from the specified modules" },
 
     { "format", Parameter::PT_ENUM, "csv | text", "csv",
-      "Output format for stats" },
+      "output format for stats" },
 
     { "summary", Parameter::PT_BOOL, nullptr, "false",
-      "Output summary at shutdown" },
+      "output summary at shutdown" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

@@ -610,16 +610,16 @@ static const Parameter alerts_params[] =
       "enable or disable ips rules" },
 
     { "detection_filter_memcap", Parameter::PT_INT, "0:", "1048576",
-      "set available memory for filters" },
+      "set available bytes of memory for detection_filters" },
 
     { "event_filter_memcap", Parameter::PT_INT, "0:", "1048576",
-      "set available memory for filters" },
+      "set available bytes of memory for event_filters" },
 
     { "order", Parameter::PT_STRING, nullptr, "pass drop alert log",
       "change the order of rule action application" },
 
     { "rate_filter_memcap", Parameter::PT_INT, "0:", "1048576",
-      "set available memory for filters" },
+      "set available bytes of memory for rate_filters" },
 
     { "reference_net", Parameter::PT_STRING, nullptr, nullptr,
       "set the CIDR for homenet "
@@ -718,7 +718,7 @@ static const Parameter output_params[] =
       "obfuscate the logged IP addresses (same as -O)" },
 
     { "obfuscate_pii", Parameter::PT_BOOL, nullptr, "false",
-        "Mask all but the last 4 characters of credit card and social security numbers" },
+      "mask all but the last 4 characters of credit card and social security numbers" },
 
     { "show_year", Parameter::PT_BOOL, nullptr, "false",
       "include year in timestamp in the alert and log files (same as -y)" },
@@ -976,15 +976,15 @@ static const Parameter network_params[] =
       "use this value for responses and when normalizing" },
 
     { "layers", Parameter::PT_INT, "3:255", "40",
-      "The maximum number of protocols that Snort can correctly decode" },
+      "the maximum number of protocols that Snort can correctly decode" },
 
     { "max_ip6_extensions", Parameter::PT_INT, "0:255", "0",
-      "The number of IP6 options Snort will process for a given IPv6 layer. "
-      "If this limit is hit, rule 116:456 may fire.  0 = unlimited" },
+      "the maximum number of IP6 options Snort will process for a given IPv6 layer "
+      "before raising 116:456 (0 = unlimited)" },
 
     { "max_ip_layers", Parameter::PT_INT, "0:255", "0",
-      "The maximum number of IP layers Snort will process for a given packet "
-      "If this limit is hit, rule 116:293 may fire.  0 = unlimited" },
+      "the maximum number of IP layers Snort will process for a given packet "
+      "before raising 116:293 (0 = unlimited)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1674,62 +1674,6 @@ bool HostsModule::end(const char* fqn, int idx, SnortConfig*)
 
     return true;
 }
-
-
-#if 0
-//-------------------------------------------------------------------------
-// xxx module - used as copy/paste template
-//-------------------------------------------------------------------------
-
-static const RuleMap xxx_rules[] =
-{
-    { SID, "STR" },
-    { 0, 0, nullptr }
-};
-
-static const Parameter xxx_params[] =
-{
-    { "name", Parameter::PT_INT, "range", "deflt",
-      "help" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-#define xxx_help \
-    "configure "
-
-class XXXModule : public Module
-{
-public:
-    XXXModule() : Module("xxx", xxx_help, xxx_params) { }
-    const RuleMap* get_rules() { return xxx_rules; }
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
-};
-
-bool XXXModule::set(const char*, Value& v, SnortConfig* sc)
-{
-    if ( v.is("name") )
-        sc->pkt_cnt = v.get_long();
-
-    else
-        return false;
-
-    return true;
-}
-
-bool XXXModule::begin(const char*, int, SnortConfig*)
-{
-    return true;
-}
-
-bool XXXModule::end(const char*, int, SnortConfig*)
-{
-    return true;
-}
-
-#endif
 
 //-------------------------------------------------------------------------
 // module manager stuff - move to framework/module_manager.cc

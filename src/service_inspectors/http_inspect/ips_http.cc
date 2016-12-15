@@ -231,9 +231,9 @@ int HttpIpsOption::eval(Cursor& c, Packet* p)
 static const Parameter http_uri_params[] =
 {
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body" },
+        "parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message trailers" },
+        "parts of this rule examine HTTP message trailers" },
     { "scheme", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against scheme section of URI only" },
     { "host", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -332,9 +332,9 @@ static const IpsApi client_body_api =
 static const Parameter http_method_params[] =
 {
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body" },
+        "parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message trailers" },
+        "parts of this rule examine HTTP message trailers" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -381,11 +381,11 @@ static const IpsApi method_api =
 static const Parameter http_cookie_params[] =
 {
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Match against the cookie from the request message even when examining the response" },
+        "match against the cookie from the request message even when examining the response" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body" },
+        "parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message trailers" },
+        "parts of this rule examine HTTP message trailers" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -432,9 +432,9 @@ static const IpsApi cookie_api =
 static const Parameter http_stat_code_params[] =
 {
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body" },
+        "parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message trailers" },
+        "parts of this rule examine HTTP message trailers" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -481,9 +481,9 @@ static const IpsApi stat_code_api =
 static const Parameter http_stat_msg_params[] =
 {
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body" },
+        "parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message trailers" },
+        "parts of this rule examine HTTP message trailers" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -530,9 +530,9 @@ static const IpsApi stat_msg_api =
 static const Parameter http_raw_uri_params[] =
 {
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body" },
+        "parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message trailers" },
+        "parts of this rule examine HTTP message trailers" },
     { "scheme", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against scheme section of URI only" },
     { "host", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -591,11 +591,11 @@ static const IpsApi raw_uri_api =
 static const Parameter http_raw_header_params[] =
 {
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Match against the headers from the request message even when examining the response" },
+        "match against the headers from the request message even when examining the response" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body" },
+        "parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message trailers" },
+        "parts of this rule examine HTTP message trailers" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -642,11 +642,11 @@ static const IpsApi raw_header_api =
 static const Parameter http_raw_cookie_params[] =
 {
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Match against the cookie from the request message even when examining the response" },
+        "match against the cookie from the request message even when examining the response" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body" },
+        "parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message trailers" },
+        "parts of this rule examine HTTP message trailers" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -693,11 +693,11 @@ static const IpsApi raw_cookie_api =
 static const Parameter http_version_params[] =
 {
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Match against the version from the request message even when examining the response" },
+        "match against the version from the request message even when examining the response" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body" },
+        "parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message trailers" },
+        "parts of this rule examine HTTP message trailers" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -750,13 +750,13 @@ static const IpsApi version_api =
 static const Parameter http_header_params[] =
 {
     { "field", Parameter::PT_STRING, nullptr, nullptr,
-        "Restrict to given header. Header name is case insensitive." },
+        "restrict to given header. Header name is case insensitive." },
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Match against the headers from the request message even when examining the response" },
+        "match against the headers from the request message even when examining the response" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body" },
+        "parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message trailers" },
+        "parts of this rule examine HTTP message trailers" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -804,12 +804,12 @@ static const Parameter http_trailer_params[] =
 {
     { "field", Parameter::PT_STRING, nullptr, nullptr, "restrict to given trailer" },
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Match against the trailers from the request message even when examining the response" },
+        "match against the trailers from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP response message headers (must be combined with request)"
+        "parts of this rule examine HTTP response message headers (must be combined with request)"
         },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body (must be combined with request)" },
+        "parts of this rule examine HTTP message body (must be combined with request)" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -856,12 +856,12 @@ static const IpsApi trailer_api =
 static const Parameter http_raw_trailer_params[] =
 {
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Match against the trailers from the request message even when examining the response" },
+        "match against the trailers from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP response message headers (must be combined with request)"
+        "parts of this rule examine HTTP response message headers (must be combined with request)"
         },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP response message body (must be combined with request)" },
+        "parts of this rule examine HTTP response message body (must be combined with request)" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -908,9 +908,9 @@ static const IpsApi raw_trailer_api =
 static const Parameter http_raw_request_params[] =
 {
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body" },
+        "parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message trailers" },
+        "parts of this rule examine HTTP message trailers" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -957,9 +957,9 @@ static const IpsApi raw_request_api =
 static const Parameter http_raw_status_params[] =
 {
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message body" },
+        "parts of this rule examine HTTP message body" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "Parts of this rule examine HTTP message trailers" },
+        "parts of this rule examine HTTP message trailers" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 

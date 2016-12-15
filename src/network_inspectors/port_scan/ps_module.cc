@@ -205,7 +205,7 @@ PortscanConfig* PortScanModule::get_data()
 static const Parameter psg_params[] =
 {
     { "memcap", Parameter::PT_INT, "1:", "1048576",
-      "maximum tracker memory" },
+      "maximum tracker memory in bytes" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

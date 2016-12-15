@@ -186,22 +186,22 @@ int Asn1Option::eval(Cursor& c, Packet* p)
 static const Parameter s_params[] =
 {
     { BITSTRING_OPT, Parameter::PT_IMPLIED, nullptr, nullptr,
-      "Detects invalid bitstring encodings that are known to be remotely exploitable." },
+      "detects invalid bitstring encodings that are known to be remotely exploitable" },
 
     { DOUBLE_OPT, Parameter::PT_IMPLIED, nullptr, nullptr,
-      "Detects a double ASCII encoding that is larger than a standard buffer." },
+      "detects a double ASCII encoding that is larger than a standard buffer" },
 
     { PRINT_OPT, Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump decode data to console; always true" },
 
     { LENGTH_OPT, Parameter::PT_INT, "0:", nullptr,
-      "Compares ASN.1 type lengths with the supplied argument." },
+      "compares ASN.1 type lengths with the supplied argument" },
 
     { ABS_OFFSET_OPT, Parameter::PT_INT, "0:", nullptr,
-      "Absolute offset from the beginning of the packet." },
+      "absolute offset from the beginning of the packet" },
 
     { REL_OFFSET_OPT, Parameter::PT_INT, nullptr, nullptr,
-      "relative offset from the cursor." },
+      "relative offset from the cursor" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

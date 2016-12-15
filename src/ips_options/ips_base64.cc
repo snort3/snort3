@@ -175,13 +175,13 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
 static const Parameter s_params[] =
 {
     { "bytes", Parameter::PT_INT, "1:", nullptr,
-      "Number of base64 encoded bytes to decode." },
+      "number of base64 encoded bytes to decode" },
 
     { "offset", Parameter::PT_INT, "0:", "0",
-      "Bytes past start of buffer to start decoding." },
+      "bytes past start of buffer to start decoding" },
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "Apply offset to cursor instead of start of buffer." },
+      "apply offset to cursor instead of start of buffer" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

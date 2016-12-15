@@ -43,7 +43,7 @@ static const Parameter s_params[] =
       "blacklist file name with ip lists" },
 
     { "memcap", Parameter::PT_INT, "1:4095", "500",
-      "maximum total memory allocated" },
+      "maximum total MB of memory allocated" },
 
     { "nested_ip", Parameter::PT_ENUM, "inner|outer|all", "inner",
       "ip to use when there is IP encapsulation" },
