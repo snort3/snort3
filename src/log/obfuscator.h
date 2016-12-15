@@ -71,7 +71,7 @@ public:
 private:
     ObSet blocks;
     iterator it;
-    const char mask_char = 'X';
+    static const char mask_char = 'X';
 };
 
 #endif

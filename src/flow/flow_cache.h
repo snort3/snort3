@@ -76,7 +76,7 @@ private:
     int remove(Flow*);
 
 private:
-    const unsigned cleanup_flows = 1;
+    static const unsigned cleanup_flows = 1;
     const FlowConfig& config;
     unsigned uni_count;
     uint32_t flags;
