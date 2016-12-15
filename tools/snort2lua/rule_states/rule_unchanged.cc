@@ -530,7 +530,7 @@ static const std::string modbus_data = "modbus_data";
 static const ConvertMap rule_modbus_data =
 {
     modbus_data,
-    unchanged_rule_ctor<& modbus_data>,
+    unchanged_rule_ctor<& modbus_data, false>,
 };
 
 const ConvertMap* modbus_data_map = &rule_modbus_data;

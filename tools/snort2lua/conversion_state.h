@@ -254,10 +254,8 @@ protected:
             std::size_t semi_colon_pos = keyword.find(';');
             if (semi_colon_pos != std::string::npos)
             {
-                // found an option without a colon, so set stream
-                // to semi-colon
-                std::streamoff off = 1 + (std::streamoff)(pos) +
-                    (std::streamoff)(semi_colon_pos);
+                // found an option without a colon, so set stream to semi-colon
+                std::streamoff off = 1 + (std::streamoff)(pos) + (std::streamoff)(semi_colon_pos);
                 stream.seekg(off);
                 keyword = keyword.substr(0, semi_colon_pos);
             }
