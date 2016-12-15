@@ -69,9 +69,9 @@ private:
     bool header;  // true if a string was passed into constructor
     enum CommentType type;
     static const std::size_t max_line_length = 80;
-    static constexpr const char* comment_line = "--";
-    static constexpr const char* start_multi_com = "--[[";
-    static constexpr const char* end_multi_com = "--]]";
+    const std::string comment_line = "--";
+    const std::string start_multi_com = "--[[";
+    const std::string end_multi_com = "--]]";
 };
 
 #endif
