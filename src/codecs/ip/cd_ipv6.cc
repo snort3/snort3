@@ -44,10 +44,10 @@ static const RuleMap ipv6_rules[] =
 {
     { DECODE_IPV6_MIN_TTL, "IPv6 packet below TTL limit" },
     { DECODE_IPV6_IS_NOT, "IPv6 header claims to not be IPv6" },
-    { DECODE_IPV6_TRUNCATED_EXT, "IPV6 truncated extension header" },
-    { DECODE_IPV6_TRUNCATED, "IPV6 truncated header" },
-    { DECODE_IPV6_DGRAM_LT_IPHDR, "IP dgm len < IP Hdr len" },
-    { DECODE_IPV6_DGRAM_GT_CAPLEN, "IP dgm len > captured len" },
+    { DECODE_IPV6_TRUNCATED_EXT, "IPv6 truncated extension header" },
+    { DECODE_IPV6_TRUNCATED, "IPv6 truncated header" },
+    { DECODE_IPV6_DGRAM_LT_IPHDR, "IPv6 datagram length < header field" },
+    { DECODE_IPV6_DGRAM_GT_CAPLEN, "IPv6 datagram length > captured length" },
     { DECODE_IPV6_DST_ZERO, "IPv6 packet with destination address ::0" },
     { DECODE_IPV6_SRC_MULTICAST, "IPv6 packet with multicast source address" },
     { DECODE_IPV6_DST_RESERVED_MULTICAST,
@@ -67,11 +67,11 @@ static const RuleMap ipv6_rules[] =
     { DECODE_IPV6_BAD_OPT_LEN,
       "IPv6 header includes an option which is too big for the containing header" },
     { DECODE_IPV6_UNORDERED_EXTENSIONS, "IPv6 packet includes out-of-order extension headers" },
-    { DECODE_IP6_ZERO_HOP_LIMIT, "IPV6 packet has zero hop limit" },
-    { DECODE_IPV6_ISATAP_SPOOF, "BAD-TRAFFIC ISATAP-addressed IPv6 traffic spoofing attempt" },
+    { DECODE_IP6_ZERO_HOP_LIMIT, "IPv6 packet has zero hop limit" },
+    { DECODE_IPV6_ISATAP_SPOOF, "ISATAP-addressed IPv6 traffic spoofing attempt" },
     { DECODE_IPV6_BAD_FRAG_PKT, "bogus fragmentation packet, possible BSD attack" },
-    { DECODE_IPV6_ROUTE_ZERO, "IPV6 routing type 0 extension header" },
-    { DECODE_IP6_EXCESS_EXT_HDR, "too many IP6 extension headers" },
+    { DECODE_IPV6_ROUTE_ZERO, "IPv6 routing type 0 extension header" },
+    { DECODE_IP6_EXCESS_EXT_HDR, "too many IPv6 extension headers" },
     { 0, nullptr }
 };
 

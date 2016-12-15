@@ -29,13 +29,13 @@
 #define DNP3_NAME "dnp3"
 #define DNP3_HELP "dnp3 inspection"
 
-#define DNP3_BAD_CRC_STR  "DNP3 Link-Layer Frame contains bad CRC."
-#define DNP3_DROPPED_FRAME_STR "DNP3 Link-Layer Frame was dropped."
-#define DNP3_DROPPED_SEGMENT_STR "DNP3 Transport-Layer Segment was dropped during reassembly."
+#define DNP3_BAD_CRC_STR  "DNP3 link-layer frame contains bad CRC"
+#define DNP3_DROPPED_FRAME_STR "DNP3 link-layer frame was dropped"
+#define DNP3_DROPPED_SEGMENT_STR "DNP3 transport-layer segment was dropped during reassembly"
 #define DNP3_REASSEMBLY_BUFFER_CLEARED_STR \
-    "DNP3 Reassembly Buffer was cleared without reassembling a complete message."
-#define DNP3_RESERVED_ADDRESS_STR "DNP3 Link-Layer Frame uses a reserved address."
-#define DNP3_RESERVED_FUNCTION_STR "DNP3 Application-Layer Fragment uses a reserved function code."
+    "DNP3 reassembly buffer was cleared without reassembling a complete message"
+#define DNP3_RESERVED_ADDRESS_STR "DNP3 link-layer frame uses a reserved address"
+#define DNP3_RESERVED_FUNCTION_STR "DNP3 application-layer fragment uses a reserved function code"
 
 #define DNP3_BAD_CRC                    1
 #define DNP3_DROPPED_FRAME              2

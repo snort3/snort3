@@ -28,25 +28,25 @@
 
 using namespace std;
 
-#define IMAP_UNKNOWN_CMD_STR                 "Unknown IMAP3 command"
-#define IMAP_UNKNOWN_RESP_STR                "Unknown IMAP3 response"
-#define IMAP_B64_DECODING_FAILED_STR         "Base64 Decoding failed."
-#define IMAP_QP_DECODING_FAILED_STR          "Quoted-Printable Decoding failed."
-#define IMAP_UU_DECODING_FAILED_STR          "Unix-to-Unix Decoding failed."
+#define IMAP_UNKNOWN_CMD_STR                 "unknown IMAP3 command"
+#define IMAP_UNKNOWN_RESP_STR                "unknown IMAP3 response"
+#define IMAP_B64_DECODING_FAILED_STR         "base64 decoding failed"
+#define IMAP_QP_DECODING_FAILED_STR          "quoted-printable decoding failed"
+#define IMAP_UU_DECODING_FAILED_STR          "Unix-to-Unix decoding failed"
 
 static const Parameter s_params[] =
 {
     { "b64_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
-      " base64 decoding depth" },
+      "base64 decoding depth" },
 
     { "bitenc_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
-      " Non-Encoded MIME attachment extraction depth" },
+      "non-Encoded MIME attachment extraction depth" },
 
     { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
-      " Quoted Printable decoding depth" },
+      "quoted Printable decoding depth" },
 
     { "uu_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
-      " Unix-to-Unix decoding depth" },
+      "Unix-to-Unix decoding depth" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

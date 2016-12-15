@@ -155,7 +155,7 @@ static const Parameter s_params[] =
     { "thirdparty_appid_dir", Parameter::PT_STRING, nullptr, nullptr,
       "directory to load thirdparty appid detectors from" },
     { "session_log_filter", Parameter::PT_TABLE, session_log_filter, nullptr,
-        "session log filter options" },
+      "session log filter options" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 

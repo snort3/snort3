@@ -24,17 +24,15 @@
 #include "dce_common.h"
 #include "framework/module.h"
 
-#define DCE2_CL_BAD_MAJOR_VERSION           40
-#define DCE2_CL_BAD_PDU_TYPE                41
-#define DCE2_CL_DATA_LT_HDR                 42
-#define DCE2_CL_BAD_SEQ_NUM                 43
+#define DCE2_CL_BAD_MAJOR_VERSION 40
+#define DCE2_CL_BAD_PDU_TYPE      41
+#define DCE2_CL_DATA_LT_HDR       42
+#define DCE2_CL_BAD_SEQ_NUM       43
 
-#define DCE2_CL_BAD_MAJOR_VERSION_STR  "Connection-less DCE/RPC - Invalid major version."
-#define DCE2_CL_BAD_PDU_TYPE_STR  "Connection-less DCE/RPC - Invalid pdu type."
-#define DCE2_CL_DATA_LT_HDR_STR \
-    "Connection-less DCE/RPC - Data length less than header size."
-#define DCE2_CL_BAD_SEQ_NUM_STR \
-    "Connection-less DCE/RPC - Bad sequence number."
+#define DCE2_CL_BAD_MAJOR_VERSION_STR "connection-less DCE/RPC - invalid major version"
+#define DCE2_CL_BAD_PDU_TYPE_STR "connection-less DCE/RPC - invalid PDU type"
+#define DCE2_CL_DATA_LT_HDR_STR  "connection-less DCE/RPC - data length less than header size"
+#define DCE2_CL_BAD_SEQ_NUM_STR  "connection-less DCE/RPC - bad sequence number"
 
 struct SnortConfig;
 

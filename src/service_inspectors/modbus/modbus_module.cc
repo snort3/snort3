@@ -51,7 +51,7 @@ PegCount* ModbusModule::get_counts() const
     "length in Modbus MBAP header does not match the length needed for the given function"
 
 #define MODBUS_BAD_PROTO_ID_STR      "Modbus protocol ID is non-zero"
-#define MODBUS_RESERVED_FUNCTION_STR "Reserved Modbus function code in use"
+#define MODBUS_RESERVED_FUNCTION_STR "reserved Modbus function code in use"
 
 static const RuleMap modbus_rules[] =
 {

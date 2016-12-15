@@ -38,10 +38,10 @@ namespace
 
 static const RuleMap tkr_rules[] =
 {
-    { DECODE_BAD_TRH, "(" TR_NAME ") Bad Token Ring Header" },
-    { DECODE_BAD_TR_ETHLLC, "(" TR_NAME ") Bad Token Ring ETHLLC Header" },
-    { DECODE_BAD_TR_MR_LEN, "(" TR_NAME ") Bad Token Ring MRLENHeader" },
-    { DECODE_BAD_TRHMR, "(" TR_NAME ") Bad Token Ring MR Header" },
+    { DECODE_BAD_TRH, "bad Token Ring header" },
+    { DECODE_BAD_TR_ETHLLC, "bad Token Ring ETHLLC header" },
+    { DECODE_BAD_TR_MR_LEN, "bad Token Ring MRLEN header" },
+    { DECODE_BAD_TRHMR, "bad Token Ring MR header" },
     { 0, nullptr }
 };
 

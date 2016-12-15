@@ -25,17 +25,17 @@
 using namespace std;
 
 #define SSH_EVENT_RESPOVERFLOW_STR \
-    "Challenge-Response Overflow exploit"
+    "challenge-response overflow exploit"
 #define SSH_EVENT_CRC32_STR \
     "SSH1 CRC32 exploit"
 #define SSH_EVENT_SECURECRT_STR \
-    "Server version string overflow"
+    "server version string overflow"
 #define SSH_EVENT_WRONGDIR_STR \
-    "Bad message direction"
+    "bad message direction"
 #define SSH_PAYLOAD_SIZE_STR \
-    "Payload size incorrect for the given payload"
+    "payload size incorrect for the given payload"
 #define SSH_VERSION_STR \
-    "Failed to detect SSH version string"
+    "failed to detect SSH version string"
 
 static const Parameter s_params[] =
 {

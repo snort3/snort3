@@ -85,17 +85,17 @@ THREAD_LOCAL TcpStats tcpStats;
 #define STREAM_TCP_BAD_TIMESTAMP_STR \
     "TCP timestamp is outside of PAWS window"
 #define STREAM_TCP_BAD_SEGMENT_STR \
-    "bad segment, adjusted size <= 0"
+    "bad segment, adjusted size <= 0 (deprecated)"
 #define STREAM_TCP_WINDOW_TOO_LARGE_STR \
     "window size (after scaling) larger than policy allows"
 #define STREAM_TCP_EXCESSIVE_TCP_OVERLAPS_STR \
     "limit on number of overlapping TCP packets reached"
 #define STREAM_TCP_DATA_AFTER_RESET_STR \
-    "data sent on stream after TCP Reset sent"
+    "data sent on stream after TCP reset sent"
 #define STREAM_TCP_SESSION_HIJACKED_CLIENT_STR \
     "TCP client possibly hijacked, different ethernet address"
 #define STREAM_TCP_SESSION_HIJACKED_SERVER_STR \
-    "TCP Server possibly hijacked, different ethernet address"
+    "TCP server possibly hijacked, different ethernet address"
 #define STREAM_TCP_DATA_WITHOUT_FLAGS_STR \
     "TCP data with no TCP flags set"
 #define STREAM_TCP_SMALL_SEGMENT_STR \
@@ -111,7 +111,7 @@ THREAD_LOCAL TcpStats tcpStats;
 #define STREAM_TCP_BAD_ACK_STR \
     "ACK number is greater than prior FIN"
 #define STREAM_TCP_DATA_AFTER_RST_RCVD_STR \
-    "data sent on stream after TCP Reset received"
+    "data sent on stream after TCP reset received"
 #define STREAM_TCP_WINDOW_SLAM_STR \
     "TCP window closed before receiving data"
 #define STREAM_TCP_NO_3WHS_STR \

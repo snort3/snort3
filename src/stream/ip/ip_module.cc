@@ -54,10 +54,10 @@ using namespace std;
 
 #if 0  // OBE
 #define DEFRAG_IPV6_BSD_ICMP_FRAG_STR
-"IPv6 BSD mbufs remote kernel buffer overflow"
+    "IPv6 BSD mbufs remote kernel buffer overflow"
 
 #define DEFRAG_IPV6_BAD_FRAG_PKT_STR
-"bogus fragmentation packet, possible BSD attack"
+    "bogus fragmentation packet, possible BSD attack"
 #endif
 
 #define DEFRAG_MIN_TTL_EVASION_STR \

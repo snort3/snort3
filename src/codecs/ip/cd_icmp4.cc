@@ -62,7 +62,7 @@ static const RuleMap icmp4_rules[] =
     { DECODE_ICMP4_DST_MULTICAST, "ICMP4 packet to multicast dest address" },
     { DECODE_ICMP4_DST_BROADCAST, "ICMP4 packet to broadcast dest address" },
     { DECODE_ICMP4_TYPE_OTHER, "ICMP4 type other" },
-    { DECODE_ICMP_PING_NMAP, "ICMP ping NMAP" },
+    { DECODE_ICMP_PING_NMAP, "ICMP ping Nmap" },
     { DECODE_ICMP_ICMPENUM, "ICMP icmpenum v1.1.1" },
     { DECODE_ICMP_REDIRECT_HOST, "ICMP redirect host" },
     { DECODE_ICMP_REDIRECT_NET, "ICMP redirect net" },
@@ -72,11 +72,13 @@ static const RuleMap icmp4_rules[] =
     { DECODE_ICMP_DST_UNREACH_ADMIN_PROHIBITED,
       "ICMP destination unreachable communication administratively prohibited" },
     { DECODE_ICMP_DST_UNREACH_DST_HOST_PROHIBITED,
-      "ICMP destination unreachable communication with destination host is administratively prohibited" },
+      "ICMP destination unreachable communication with destination host is "
+      "administratively prohibited" },
     { DECODE_ICMP_DST_UNREACH_DST_NET_PROHIBITED,
-      "ICMP destination unreachable communication with destination network is administratively prohibited" },
+      "ICMP destination unreachable communication with destination network is "
+      "administratively prohibited" },
     { DECODE_ICMP_PATH_MTU_DOS, "ICMP path MTU denial of service attempt" },
-    { DECODE_ICMP_DOS_ATTEMPT, "BAD-TRAFFIC Linux ICMP header DOS attempt" },
+    { DECODE_ICMP_DOS_ATTEMPT, "Linux ICMP header DOS attempt" },
     { DECODE_ICMP4_HDR_TRUNC, "truncated ICMP4 header" },
     { 0, nullptr }
 };

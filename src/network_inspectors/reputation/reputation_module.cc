@@ -33,9 +33,9 @@ using namespace std;
 #define REPUTATION_EVENT_BLACKLIST_STR \
     "packets blacklisted"
 #define REPUTATION_EVENT_WHITELIST_STR \
-    "Packets whitelisted"
+    "packets whitelisted"
 #define REPUTATION_EVENT_MONITOR_STR \
-    "Packets monitored"
+    "packets monitored"
 
 static const Parameter s_params[] =
 {

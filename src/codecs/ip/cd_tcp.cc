@@ -63,10 +63,9 @@ static THREAD_LOCAL Stats stats;
 
 static const RuleMap tcp_rules[] =
 {
-    { DECODE_TCP_DGRAM_LT_TCPHDR, "TCP packet len is smaller than 20 bytes" },
+    { DECODE_TCP_DGRAM_LT_TCPHDR, "TCP packet length is smaller than 20 bytes" },
     { DECODE_TCP_INVALID_OFFSET, "TCP data offset is less than 5" },
     { DECODE_TCP_LARGE_OFFSET, "TCP header length exceeds packet length" },
-
     { DECODE_TCPOPT_BADLEN, "TCP options found with bad lengths" },
     { DECODE_TCPOPT_TRUNCATED, "truncated TCP options" },
     { DECODE_TCPOPT_TTCP, "T/TCP detected" },
@@ -81,9 +80,9 @@ static const RuleMap tcp_rules[] =
     { DECODE_TCP_MUST_ACK, "TCP PDU missing ack for established session" },
     { DECODE_TCP_NO_SYN_ACK_RST, "TCP has no SYN, ACK, or RST" },
     { DECODE_TCP_SHAFT_SYNFLOOD, "DDOS shaft SYN flood" },
-    { DECODE_TCP_PORT_ZERO, "BAD-TRAFFIC TCP port 0 traffic" },
+    { DECODE_TCP_PORT_ZERO, "TCP port 0 traffic" },
     { DECODE_DOS_NAPTHA, "DOS NAPTHA vulnerability detected" },
-    { DECODE_SYN_TO_MULTICAST, "bad traffic SYN to multicast address" },
+    { DECODE_SYN_TO_MULTICAST, "SYN to multicast address" },
     { 0, nullptr }
 };
 

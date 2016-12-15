@@ -50,9 +50,6 @@ static const Parameter mpls_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-// rules which will loaded into snort.
-// You can now reference these rules by calling a codec_event
-// in your main codec's functions
 static const RuleMap mpls_rules[] =
 {
     { DECODE_BAD_MPLS, "bad MPLS frame" },

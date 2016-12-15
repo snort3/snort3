@@ -28,10 +28,10 @@
 
 using namespace std;
 
-#define SSL_INVALID_CLIENT_HELLO_STR "Invalid Client HELLO after Server HELLO Detected"
-#define SSL_INVALID_SERVER_HELLO_STR "Invalid Server HELLO without Client HELLO Detected"
-#define SSL_HEARTBLEED_REQUEST_STR "Heartbeat Read Overrun Attempt Detected"
-#define SSL_HEARTBLEED_RESPONSE_STR "Large Heartbeat Response Detected"
+#define SSL_INVALID_CLIENT_HELLO_STR "invalid client HELLO after server HELLO detected"
+#define SSL_INVALID_SERVER_HELLO_STR "invalid server HELLO without client HELLO detected"
+#define SSL_HEARTBLEED_REQUEST_STR "heartbeat read overrun attempt detected"
+#define SSL_HEARTBLEED_RESPONSE_STR "large heartbeat response detected"
 
 static const Parameter s_params[] =
 {

@@ -39,34 +39,34 @@
 #define DCE2_CO_FRAG_DIFF_OPNUM             38
 #define DCE2_CO_FRAG_DIFF_CTX_ID            39
 
-#define DCE2_CO_BAD_MAJOR_VERSION_STR  "Connection oriented DCE/RPC - Invalid major version."
-#define DCE2_CO_BAD_MINOR_VERSION_STR  "Connection oriented DCE/RPC - Invalid minor version."
-#define DCE2_CO_BAD_PDU_TYPE_STR       "Connection-oriented DCE/RPC - Invalid pdu type."
+#define DCE2_CO_BAD_MAJOR_VERSION_STR  "connection oriented DCE/RPC - invalid major version"
+#define DCE2_CO_BAD_MINOR_VERSION_STR  "connection oriented DCE/RPC - invalid minor version"
+#define DCE2_CO_BAD_PDU_TYPE_STR       "connection-oriented DCE/RPC - invalid PDU type"
 #define DCE2_CO_FRAG_LEN_LT_HDR_STR \
-    "Connection-oriented DCE/RPC - Fragment length less than header size."
+    "connection-oriented DCE/RPC - fragment length less than header size"
 #define DCE2_CO_REM_FRAG_LEN_LT_SIZE_STR \
-    "Connection-oriented DCE/RPC - Remaining fragment length less than size needed."
+    "connection-oriented DCE/RPC - remaining fragment length less than size needed"
 #define DCE2_CO_NO_CTX_ITEMS_SPECFD_STR \
-    "Connection-oriented DCE/RPC - No context items specified."
+    "connection-oriented DCE/RPC - no context items specified"
 #define DCE2_CO_NO_TFER_SYNTAX_SPECFD_STR \
-    "Connection-oriented DCE/RPC -No transfer syntaxes specified."
+    "connection-oriented DCE/RPC -no transfer syntaxes specified"
 #define DCE2_CO_FRAG_LT_MAX_XMIT_FRAG_STR \
-    "Connection-oriented DCE/RPC - Fragment length on non-last fragment less than \
-maximum negotiated fragment transmit size for client."
+    "connection-oriented DCE/RPC - fragment length on non-last fragment less than \
+maximum negotiated fragment transmit size for client"
 #define DCE2_CO_FRAG_GT_MAX_XMIT_FRAG_STR \
-    "Connection-oriented DCE/RPC - Fragment length greater than \
-maximum negotiated fragment transmit size."
+    "connection-oriented DCE/RPC - fragment length greater than \
+maximum negotiated fragment transmit size"
 #define DCE2_CO_ALTER_CHANGE_BYTE_ORDER_STR \
-    "Connection-oriented DCE/RPC - Alter Context byte order different from Bind"
+    "connection-oriented DCE/RPC - alter context byte order different from bind"
 #define DCE2_CO_FRAG_DIFF_CALL_ID_STR \
-    "Connection-oriented DCE/RPC - Call id of non first/last fragment different \
-from call id established for fragmented request."
+    "connection-oriented DCE/RPC - call id of non first/last fragment different \
+from call id established for fragmented request"
 #define DCE2_CO_FRAG_DIFF_OPNUM_STR \
-    "Connection-oriented DCE/RPC - Opnum of non first/last fragment different \
-from opnum established for fragmented request."
+    "connection-oriented DCE/RPC - opnum of non first/last fragment different \
+from opnum established for fragmented request"
 #define DCE2_CO_FRAG_DIFF_CTX_ID_STR \
-    "Connection-oriented DCE/RPC - Context id of non first/last fragment different \
-from context id established for fragmented request."
+    "connection-oriented DCE/RPC - context id of non first/last fragment different \
+from context id established for fragmented request"
 
 #define DCE2_MAX_XMIT_SIZE_FUZZ    500
 #define DCE2_MOCK_HDR_LEN__CO_CLI   (sizeof(DceRpcCoHdr) + sizeof(DceRpcCoRequest))

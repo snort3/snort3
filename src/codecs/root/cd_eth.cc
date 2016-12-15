@@ -41,7 +41,7 @@ namespace
 {
 static const RuleMap eth_rules[] =
 {
-    { DECODE_ETH_HDR_TRUNC, "truncated eth header" },
+    { DECODE_ETH_HDR_TRUNC, "truncated ethernet header" },
     { 0, nullptr }
 };
 

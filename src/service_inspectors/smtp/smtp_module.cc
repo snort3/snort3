@@ -140,19 +140,19 @@ static const Parameter s_params[] =
 
 static const RuleMap smtp_rules[] =
 {
-    { SMTP_COMMAND_OVERFLOW, "Attempted command buffer overflow" },
-    { SMTP_DATA_HDR_OVERFLOW, "Attempted data header buffer overflow" },
-    { SMTP_RESPONSE_OVERFLOW, "Attempted response buffer overflow" },
-    { SMTP_SPECIFIC_CMD_OVERFLOW, "Attempted specific command buffer overflow" },
-    { SMTP_UNKNOWN_CMD, "Unknown command" },
-    { SMTP_ILLEGAL_CMD, "Illegal command" },
-    { SMTP_HEADER_NAME_OVERFLOW, "Attempted header name buffer overflow" },
-    { SMTP_XLINK2STATE_OVERFLOW, "Attempted X-Link2State command buffer overflow" },
-    { SMTP_B64_DECODING_FAILED, "Base64 Decoding failed" },
-    { SMTP_QP_DECODING_FAILED, "Quoted-Printable Decoding failed" },
-    { SMTP_UU_DECODING_FAILED, "Unix-to-Unix Decoding failed" },
+    { SMTP_COMMAND_OVERFLOW, "attempted command buffer overflow" },
+    { SMTP_DATA_HDR_OVERFLOW, "attempted data header buffer overflow" },
+    { SMTP_RESPONSE_OVERFLOW, "attempted response buffer overflow" },
+    { SMTP_SPECIFIC_CMD_OVERFLOW, "attempted specific command buffer overflow" },
+    { SMTP_UNKNOWN_CMD, "unknown command" },
+    { SMTP_ILLEGAL_CMD, "illegal command" },
+    { SMTP_HEADER_NAME_OVERFLOW, "attempted header name buffer overflow" },
+    { SMTP_XLINK2STATE_OVERFLOW, "attempted X-Link2State command buffer overflow" },
+    { SMTP_B64_DECODING_FAILED, "base64 decoding failed" },
+    { SMTP_QP_DECODING_FAILED, "quoted-printable decoding failed" },
+    { SMTP_UU_DECODING_FAILED, "Unix-to-Unix decoding failed" },
     { SMTP_AUTH_ABORT_AUTH, "Cyrus SASL authentication attack" },
-    { SMTP_AUTH_COMMAND_OVERFLOW, "Attempted authentication command buffer overflow" },
+    { SMTP_AUTH_COMMAND_OVERFLOW, "attempted authentication command buffer overflow" },
 
     { 0, nullptr }
 };

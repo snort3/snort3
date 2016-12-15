@@ -35,8 +35,8 @@ static const Parameter s_params[] =
     { "reassemble_threshold", Parameter::PT_INT, "0:65535", "0",
       " Minimum bytes received before performing reassembly" },
     { "policy", Parameter::PT_ENUM,
-      "Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20",
-      "WinXP",
+      "Win2000 |  WinXP | WinVista | Win2003 | Win2008 | Win7 | "
+      "Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20", "WinXP",
       " Target based policy to use" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

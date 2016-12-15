@@ -25,11 +25,11 @@
 using namespace std;
 
 #define DNS_EVENT_OBSOLETE_TYPES_STR \
-    "Obsolete DNS RR Types"
+    "obsolete DNS RR types"
 #define DNS_EVENT_EXPERIMENTAL_TYPES_STR \
-    "Experimental DNS RR Types"
+    "experimental DNS RR types"
 #define DNS_EVENT_RDATA_OVERFLOW_STR \
-    "DNS Client rdata txt Overflow"
+    "DNS client rdata txt overflow"
 
 static const Parameter s_params[] =
 {

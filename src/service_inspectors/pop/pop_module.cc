@@ -28,11 +28,11 @@
 
 using namespace std;
 
-#define POP_UNKNOWN_CMD_STR                 "Unknown POP3 command"
-#define POP_UNKNOWN_RESP_STR                "Unknown POP3 response"
-#define POP_B64_DECODING_FAILED_STR         "Base64 Decoding failed."
-#define POP_QP_DECODING_FAILED_STR          "Quoted-Printable Decoding failed."
-#define POP_UU_DECODING_FAILED_STR          "Unix-to-Unix Decoding failed."
+#define POP_UNKNOWN_CMD_STR                 "unknown POP3 command"
+#define POP_UNKNOWN_RESP_STR                "unknown POP3 response"
+#define POP_B64_DECODING_FAILED_STR         "base64 decoding failed"
+#define POP_QP_DECODING_FAILED_STR          "quoted-printable decoding failed"
+#define POP_UU_DECODING_FAILED_STR          "Unix-to-Unix decoding failed"
 
 static const Parameter s_params[] =
 {

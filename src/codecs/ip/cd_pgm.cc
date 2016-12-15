@@ -34,7 +34,7 @@ namespace
 
 static const RuleMap pgm_rules[] =
 {
-    { DECODE_PGM_NAK_OVERFLOW, "BAD-TRAFFIC PGM nak list overflow attempt" },
+    { DECODE_PGM_NAK_OVERFLOW, "PGM nak list overflow attempt" },
     { 0, nullptr }
 };
 

@@ -57,8 +57,8 @@ static THREAD_LOCAL Stats stats;
 static const RuleMap icmp6_rules[] =
 {
     { DECODE_ICMP6_HDR_TRUNC, "truncated ICMP6 header" },
-    { DECODE_ICMP6_TYPE_OTHER, "ICMP6 type not decoded" },
-    { DECODE_ICMP6_DST_MULTICAST, "ICMP6 packet to multicast address" },
+    { DECODE_ICMP6_TYPE_OTHER, "ICMPv6 type not decoded" },
+    { DECODE_ICMP6_DST_MULTICAST, "ICMPv6 packet to multicast address" },
     { DECODE_ICMPV6_TOO_BIG_BAD_MTU,
       "ICMPv6 packet of type 2 (message too big) with MTU field < 1280" },
     { DECODE_ICMPV6_UNREACHABLE_NON_RFC_2463_CODE,

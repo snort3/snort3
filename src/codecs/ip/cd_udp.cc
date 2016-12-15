@@ -81,8 +81,8 @@ static const RuleMap udp_rules[] =
     { DECODE_UDP_DGRAM_SHORT_PACKET, "short UDP packet, length field > payload length" },
     { DECODE_UDP_DGRAM_LONG_PACKET, "long UDP packet, length field < payload length" },
     { DECODE_UDP_IPV6_ZERO_CHECKSUM, "invalid IPv6 UDP packet, checksum zero" },
-    { DECODE_UDP_LARGE_PACKET, "misc large UDP Packet" },
-    { DECODE_UDP_PORT_ZERO, "BAD-TRAFFIC UDP port 0 traffic" },
+    { DECODE_UDP_LARGE_PACKET, "large UDP packet (> 4000 bytes)" },
+    { DECODE_UDP_PORT_ZERO, "UDP port 0 traffic" },
     { 0, nullptr }
 };
 
