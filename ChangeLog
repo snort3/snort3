@@ -1,3 +1,18 @@
+16/12/16 - build 222
+
+-- add JavaScript Normalization to http_inspect
+-- fix appid service check dispatch list
+-- fix modbus_data handling to not skip options
+   thanks to FabianMalte.Kopp@b-tu.de for reporting the issue
+-- fix sensitive data filtering documentation issues
+-- build: Illumos build fixes
+-- build: Address some cppcheck concerns
+-- miscellaneous const tweaks
+-- reformat builtin rule text for consistency
+-- reformat help text for consistency
+-- refactor user manual for clarity
+-- update default user manuals
+
 16/12/09 - build 221
 
 -- fix appid handling of sip inspection events
