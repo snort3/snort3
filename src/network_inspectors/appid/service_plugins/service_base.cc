@@ -1850,6 +1850,8 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
         ret = SERVICE_INPROCESS;
         SF_LNODE* iter;
         service = (RNAServiceElement*)sflist_first(asd->candidate_service_list, &iter);
+        const RNAServiceElement* failed_svc[MAX_CANDIDATE_SERVICES];
+        unsigned num_failed = 0;
         while (service)
         {
             int result;
@@ -1871,12 +1873,20 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
                 break;    /* done */
             }
             else if (result != SERVICE_INPROCESS)    /* fail */
-            {
-                sflist_remove_node(asd->candidate_service_list, iter);
-                service = (RNAServiceElement*)sflist_first(asd->candidate_service_list, &iter);
-            }
-            else
+               failed_svc[num_failed++] = service;
+
+            service = (RNAServiceElement*)sflist_next(&iter);
+        }
+
+        for(unsigned i = 0; i < num_failed; i++)
+        {
+            SF_LNODE* iter;
+            RNAServiceElement* service = (RNAServiceElement*)sflist_first(asd->candidate_service_list, &iter);
+            assert(service);
+
+            while( service != failed_svc[i] )
                 service = (RNAServiceElement*)sflist_next(&iter);
+            sflist_remove_node(asd->candidate_service_list, iter);
         }
 
         /* If we tried everything and found nothing, then fail. */
