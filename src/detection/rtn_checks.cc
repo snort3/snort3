@@ -97,7 +97,7 @@ static int CheckAddrPort(
         }
     }
 
-    DebugFormat(DEBUG_DETECT, "addr %s, port %d ", sfip_to_str(pkt_addr), pkt_port);
+    DebugFormat(DEBUG_DETECT, "addr %s, port %d ", pkt_addr->ntoa(), pkt_port);
 
     if (!rule_addr)
         goto bail;
