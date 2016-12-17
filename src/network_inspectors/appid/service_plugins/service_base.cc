@@ -1881,11 +1881,15 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
         for(unsigned i = 0; i < num_failed; i++)
         {
             SF_LNODE* iter;
-            RNAServiceElement* service = (RNAServiceElement*)sflist_first(asd->candidate_service_list, &iter);
-            assert(service);
+            RNAServiceElement* service = (RNAServiceElement*)sflist_first(
+                asd->candidate_service_list, &iter);
+
+            if ( !service )
+                break;
 
             while( service != failed_svc[i] )
                 service = (RNAServiceElement*)sflist_next(&iter);
+
             sflist_remove_node(asd->candidate_service_list, iter);
         }
 
