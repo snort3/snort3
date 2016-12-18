@@ -456,7 +456,7 @@ uint32_t TcpReassembler::get_flush_data_len(TcpSegmentNode* tsn, uint32_t to_seq
 }
 
 // flush the client seglist up to the most recently acked segment
-int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq)
+int TcpReassembler::flush_data_segments(Packet* p, uint32_t total)
 {
     uint32_t bytes_flushed = 0;
     uint32_t segs = 0;
@@ -466,18 +466,19 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq)
     assert(seglist.next);
     Profile profile(s5TcpBuildPacketPerfStats);
 
-    uint32_t total = toSeq - seglist.next->seq;
-    while ( SEQ_LT(seglist.next->seq, toSeq) )
+    uint32_t to_seq = seglist.next->seq + total;
+
+    while ( SEQ_LT(seglist.next->seq, to_seq) )
     {
         TcpSegmentNode* tsn = seglist.next, * sr = nullptr;
-        unsigned bytes_to_copy = get_flush_data_len(tsn, toSeq, tracker->splitter->max(p->flow));
+        unsigned bytes_to_copy = get_flush_data_len(tsn, to_seq, tracker->splitter->max(p->flow));
         unsigned bytes_copied = 0;
         assert(bytes_to_copy);
 
         DebugFormat(DEBUG_STREAM_STATE, "Flushing %u bytes from %X\n", bytes_to_copy, tsn->seq);
 
         if ( !tsn->next || ( bytes_to_copy < tsn->payload_size )
-            || SEQ_EQ(tsn->seq +  bytes_to_copy, toSeq) )
+            || SEQ_EQ(tsn->seq +  bytes_to_copy, to_seq) )
             flags |= PKT_PDU_TAIL;
 
         const StreamBuffer* sb = tracker->splitter->reassemble(
@@ -508,27 +509,25 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t toSeq)
         flush_count++;
         segs++;
 
-        if ( SEQ_EQ(tsn->seq + bytes_to_copy, toSeq) )
+        seglist.next = tsn->next;
+
+        if ( SEQ_EQ(tsn->seq + bytes_to_copy, to_seq) )
             break;
 
         /* Check for a gap/missing packet */
         // FIXIT-L PAF should account for missing data and resume
         // scanning at the start of next PDU instead of aborting.
-        // FIXIT-L FIN may be in toSeq causing bogus gap counts.
+        // FIXIT-L FIN may be in to_seq causing bogus gap counts.
         if (((tsn->next && (tsn->seq + tsn->payload_size != tsn->next->seq))
-            || (!tsn->next && (tsn->seq + tsn->payload_size < toSeq)))
+            || (!tsn->next && (tsn->seq + tsn->payload_size < to_seq)))
             && !(tracker->get_tf_flags() & TF_FIRST_PKT_MISSING))
         {
-            if ( tsn->next )
-                seglist.next = tsn->next;
-
-            // FIXIT-L this is suboptimal - better to exclude fin from toSeq
-            if ( !tracker->fin_set() or SEQ_LEQ(toSeq, tracker->fin_final_seq) )
+            // FIXIT-L this is suboptimal - better to exclude fin from to_seq
+            if ( !tracker->fin_set() or SEQ_LEQ(to_seq, tracker->fin_final_seq) )
                 tracker->set_tf_flags(TF_MISSING_PKT);
 
             break;
         }
-        seglist.next = tsn->next;
 
         if ( sb || !seglist.next )
             break;
@@ -600,37 +599,29 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
     Profile profile(s5TcpFlushPerfStats);
 
-    uint32_t stop_seq;
-    uint32_t footprint;
-    uint32_t bytes_processed = 0;
-    int32_t flushed_bytes;
+    DAQ_PktHdr_t pkth;
     EncodeFlags enc_flags = 0;
 
-    DAQ_PktHdr_t pkth;
     session->GetPacketHeaderFoo(&pkth, pkt_flags);
     PacketManager::format_tcp(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
-
     prep_s5_pkt(session->flow, p, pkt_flags);
 
-    // FIXIT-L this should not be necessary here
-    seglist_base_seq = seglist.next->seq;
-    stop_seq = seglist_base_seq + bytes;
+    DebugFormat(DEBUG_STREAM_STATE, "Attempting to flush %u bytes\n", bytes);
+
+    uint32_t bytes_processed = 0;
+    uint32_t stop_seq = seglist.next->seq + bytes;
 
     do
     {
-        footprint = stop_seq - seglist_base_seq;
+        seglist_base_seq = seglist.next->seq;
+        uint32_t footprint = stop_seq - seglist_base_seq;
 
-        if (footprint == 0)
+        if ( footprint == 0 )
             return bytes_processed;
 
-        if (footprint > s5_pkt->max_dsize )
-        {
+        if ( footprint > s5_pkt->max_dsize )
             /* this is as much as we can pack into a stream buffer */
             footprint = s5_pkt->max_dsize;
-            stop_seq = seglist_base_seq + footprint;
-        }
-
-        DebugFormat(DEBUG_STREAM_STATE, "Attempting to flush %u bytes\n", footprint);
 
         ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_sec = seglist.next->tv.tv_sec;
         ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_usec = seglist.next->tv.tv_usec;
@@ -638,7 +629,8 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         /* setup the pseudopacket payload */
         s5_pkt->dsize = 0;
         s5_pkt->data = nullptr;
-        flushed_bytes = flush_data_segments(p, stop_seq);
+
+        int32_t flushed_bytes = flush_data_segments(p, footprint);
 
         if ( flushed_bytes == 0 )
             break; /* No more data... bail */
@@ -666,8 +658,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         }
         else
         {
-            tcpStats.rebuilt_buffers++;
-            tcpStats.rebuilt_buffers++;
+            tcpStats.rebuilt_buffers++; // FIXIT-L this is not accurate
         }
 
         DebugFormat(DEBUG_STREAM_STATE, "setting seglist_base_seq to 0x%X\n", seglist_base_seq);
@@ -711,7 +702,8 @@ int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         return 0;
     }
 
-    if ( !flush_data_ready( ) && !( tracker->get_tf_flags() & TF_FORCE_FLUSH ) )
+    if ( !flush_data_ready() and !(tracker->get_tf_flags() & TF_FORCE_FLUSH) and
+        (!tracker->splitter or !tracker->splitter->is_paf()) )
     {
         DebugMessage(DEBUG_STREAM_STATE, "only 1 packet in seglist no need to flush\n");
         return 0;

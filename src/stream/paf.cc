@@ -144,6 +144,7 @@ static bool paf_callback (
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t flags)
 {
+    ps->fpt = 0;
     ps->paf = ss->scan(ssn, data, len, flags, &ps->fpt);
 
     if ( ps->paf == StreamSplitter::ABORT )

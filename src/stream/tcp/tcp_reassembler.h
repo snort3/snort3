@@ -130,7 +130,7 @@ protected:
     int add_reassembly_segment(TcpSegmentDescriptor&, int16_t len, uint32_t slide, uint32_t trunc,
         uint32_t seq, TcpSegmentNode* left) override;
     int dup_reassembly_segment(TcpSegmentNode* left, TcpSegmentNode** retSeg) override;
-    int delete_reassembly_segment(TcpSegmentNode* seg) override;
+    int delete_reassembly_segment(TcpSegmentNode*) override;
 
     virtual void insert_segment_in_empty_seglist(TcpSegmentDescriptor&);
     virtual int insert_segment_in_seglist(TcpSegmentDescriptor&);
@@ -139,23 +139,23 @@ protected:
     virtual uint32_t get_pending_segment_count(unsigned max);
 
     bool flush_data_ready();
-    int trim_delete_reassembly_segment(TcpSegmentNode* seg, uint32_t flush_seq);
-    void queue_reassembly_segment(TcpSegmentNode* prev, TcpSegmentNode* ss);
+    int trim_delete_reassembly_segment(TcpSegmentNode*, uint32_t flush_seq);
+    void queue_reassembly_segment(TcpSegmentNode* prev, TcpSegmentNode*);
     void init_overlap_editor(TcpSegmentDescriptor&);
     bool is_segment_fasttrack(TcpSegmentNode* tail, TcpSegmentDescriptor&);
-    int purge_alerts(uint32_t /*flush_seq*/,  Flow* flow);
-    void show_rebuilt_packet(Packet* pkt);
-    uint32_t get_flush_data_len(TcpSegmentNode* ss, uint32_t to_seq, unsigned max);
-    int flush_data_segments(Packet* p, uint32_t toSeq);
-    void prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags);
-    int _flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags);
-    int flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags);
+    int purge_alerts(uint32_t /*flush_seq*/,  Flow*);
+    void show_rebuilt_packet(Packet*);
+    uint32_t get_flush_data_len(TcpSegmentNode*, uint32_t to_seq, unsigned max);
+    int flush_data_segments(Packet*, uint32_t total);
+    void prep_s5_pkt(Flow*, Packet*, uint32_t pkt_flags);
+    int _flush_to_seq(uint32_t bytes, Packet*, uint32_t pkt_flags);
+    int flush_to_seq(uint32_t bytes, Packet*, uint32_t pkt_flags);
     uint32_t get_q_footprint();
     uint32_t get_q_sequenced();
-    void final_flush(Packet* p, PegCount& peg, uint32_t dir);
-    uint32_t get_reverse_packet_dir(const Packet* p);
-    uint32_t get_forward_packet_dir(const Packet* p);
-    int32_t flush_pdu_ips(uint32_t* flags);
+    void final_flush(Packet*, PegCount&, uint32_t dir);
+    uint32_t get_reverse_packet_dir(const Packet*);
+    uint32_t get_forward_packet_dir(const Packet*);
+    int32_t flush_pdu_ips(uint32_t*);
     void fallback();
     int32_t flush_pdu_ackd(uint32_t* flags);
     int purge_to_seq(uint32_t flush_seq);
