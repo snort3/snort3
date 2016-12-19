@@ -38,24 +38,24 @@ struct HostPortKey
         padding = 0;
     }
 
-	bool operator<(HostPortKey right) const
-	{
-		if( ip.less_than(right.ip) )
-			return true;
-		else if( right.ip.less_than(ip) )
-			return false;
-		else
-		{
-			if( port < right.port)
-				return true;
-			else if( right.port < port )
-				return false;
-			else if( proto < right.proto)
-				return true;
-			else
-				return false;
-		}
-	}
+    bool operator<(HostPortKey right) const
+    {
+        if( ip.less_than(right.ip) )
+            return true;
+        else if( right.ip.less_than(ip) )
+            return false;
+        else
+        {
+            if( port < right.port)
+                return true;
+            else if( right.port < port )
+                return false;
+            else if( proto < right.proto)
+                return true;
+            else
+                return false;
+        }
+    }
 
     SfIp ip;
     uint16_t port;
@@ -68,14 +68,17 @@ THREAD_LOCAL std::map<HostPortKey, HostPortVal>* host_port_cache = nullptr;
 
 void HostPortCache::initialize()
 {
-	host_port_cache = new std::map<HostPortKey, HostPortVal>;
+    host_port_cache = new std::map<HostPortKey, HostPortVal>;
 }
 
 void HostPortCache::terminate()
 {
-	host_port_cache->empty();
-	delete host_port_cache;
-	host_port_cache = nullptr;
+    if (host_port_cache)
+    {
+        host_port_cache->empty();
+        delete host_port_cache;
+        host_port_cache = nullptr;
+    }
 }
 
 HostPortVal* HostPortCache::find(const SfIp* ip, uint16_t port, IpProtocol protocol)
@@ -89,9 +92,9 @@ HostPortVal* HostPortCache::find(const SfIp* ip, uint16_t port, IpProtocol proto
     std::map<HostPortKey, HostPortVal>::iterator it;
     it = host_port_cache->find(hk);
     if (it != host_port_cache->end())
-    	return &it->second;
+        return &it->second;
     else
-    	return nullptr;
+        return nullptr;
 }
 
 bool HostPortCache::add(const SfIp* ip, uint16_t port, IpProtocol proto, unsigned type, AppId appId)

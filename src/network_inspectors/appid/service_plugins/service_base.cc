@@ -788,6 +788,9 @@ void clean_service_plugins()
     FpSMBData* sd;
     DHCPInfo* info;
 
+    if (!service_config)
+        return;
+
     if (service_config->tcp_patterns)
     {
         delete service_config->tcp_patterns;
@@ -859,6 +862,7 @@ void clean_service_plugins()
     clean_service_port_patterns();
 
     delete service_config;
+    service_config = nullptr;
 }
 
 static int AppIdPatternPrecedence(const void* a, const void* b)

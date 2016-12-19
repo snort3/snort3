@@ -967,6 +967,9 @@ int finalize_http_detector()
 
 void clean_http_detector()
 {
+    if (!detectorHttpConfig)
+        return;
+
     delete detectorHttpConfig->via_matcher;
     delete detectorHttpConfig->url_matcher;
     delete detectorHttpConfig->client_agent_matcher;
@@ -983,7 +986,9 @@ void clean_http_detector()
 
     CleanHttpPatternLists();
     delete httpPatternLists;
+
     delete detectorHttpConfig;
+    detectorHttpConfig = nullptr;
 }
 
 static inline void FreeMatchStructures(MatchedPatterns* mp)

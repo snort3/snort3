@@ -84,6 +84,9 @@ void AppIdServiceState::initialize(unsigned long)
 
 void AppIdServiceState::clean(void)
 {
+    if (!service_state_cache)
+        return;
+
 	for( auto& kv : *service_state_cache )
     	delete kv.second;
 

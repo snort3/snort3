@@ -1072,6 +1072,9 @@ void Defrag::tinit()
 
 void Defrag::tterm()
 {
+    if (!defrag_pkts)
+        return;
+
     for (int i = 0; i < layers; i++)
     {
         if (defrag_pkts[i] != nullptr)

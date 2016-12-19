@@ -611,6 +611,9 @@ void clean_client_plugins()
     ClientPatternData* pd;
     RNAClientAppRecord* li;
 
+    if (!client_app_config)
+        return;
+
     if (client_app_config->tcp_patterns)
     {
         delete client_app_config->tcp_patterns;
@@ -653,6 +656,7 @@ void clean_client_plugins()
 
     clean_client_port_patterns();
     delete client_app_config;
+    client_app_config = nullptr;
 }
 
 /*

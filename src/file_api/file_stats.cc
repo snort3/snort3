@@ -53,6 +53,9 @@ void file_stats_term()
 
 void file_stats_sum()
 {
+    if (!file_stats)
+        return;
+
     unsigned num = sizeof(file_totals) / sizeof(PegCount);
 
     for ( unsigned i = 0; i < num; ++i )
