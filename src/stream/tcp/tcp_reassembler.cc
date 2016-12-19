@@ -630,6 +630,9 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         s5_pkt->dsize = 0;
         s5_pkt->data = nullptr;
 
+        if ( tracker->splitter->is_paf() and tracker->get_tf_flags() & TF_MISSING_PREV_PKT )
+            fallback();
+
         int32_t flushed_bytes = flush_data_segments(p, footprint);
 
         if ( flushed_bytes == 0 )
@@ -664,6 +667,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         DebugFormat(DEBUG_STREAM_STATE, "setting seglist_base_seq to 0x%X\n", seglist_base_seq);
 
         if ( tracker->splitter )
+            // FIXIT-L must check because above may clear session
             tracker->splitter->update();
 
         // FIXIT-L abort should be by PAF callback only since recovery may be
@@ -703,7 +707,7 @@ int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
     }
 
     if ( !flush_data_ready() and !(tracker->get_tf_flags() & TF_FORCE_FLUSH) and
-        (!tracker->splitter or !tracker->splitter->is_paf()) )
+        !tracker->splitter->is_paf() )
     {
         DebugMessage(DEBUG_STREAM_STATE, "only 1 packet in seglist no need to flush\n");
         return 0;
@@ -793,7 +797,7 @@ uint32_t TcpReassembler::get_q_sequenced()
 int TcpReassembler::flush_stream(Packet* p, uint32_t dir)
 {
     // this is not always redundant; stream_reassemble rule option causes trouble
-    if ( !tracker->flush_policy )
+    if ( !tracker->flush_policy or !tracker->splitter )
         return 0;
 
     uint32_t bytes;
