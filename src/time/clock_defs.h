@@ -32,7 +32,7 @@ using SnortClock = TscClock;
 #include <chrono>
 using hr_clock = std::chrono::high_resolution_clock;
 using SnortClock = hr_clock;
-inline long clock_scale() { return 1.0; }
+inline long clock_scale() { return 1; }
 #endif
 
 using hr_duration = SnortClock::duration;

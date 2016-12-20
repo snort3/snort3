@@ -18,10 +18,18 @@
 // tsc_clock.cc author Russ Combs <rucombs@cisco.com>
 
 #include "tsc_clock.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <time.h>
 
 long clock_scale()
 {
+#ifndef USE_TSC_CLOCK
+    return 1;
+#else
     static long tpus = 0;  // ticks / usec
 
     if ( !tpus )
@@ -33,5 +41,6 @@ long clock_scale()
         tpus = (long)((end - start)/1e6);
     }
     return tpus;
+#endif
 }
 
