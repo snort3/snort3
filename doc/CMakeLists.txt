@@ -32,6 +32,7 @@ set (
 
 set (
     UNBUILT_SOURCES
+    appid.txt
     binder.txt
     bugs.txt
     building.txt

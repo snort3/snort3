@@ -1,3 +1,7 @@
+=== AppId
+
+include::appid.txt[]
+
 === Binder
 
 include::binder.txt[]

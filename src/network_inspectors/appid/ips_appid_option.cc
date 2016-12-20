@@ -186,7 +186,7 @@ int AppIdIpsOption::eval(Cursor&, Packet* p)
 
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_STRING, nullptr, nullptr, "appid option" },
+    { "~", Parameter::PT_STRING, nullptr, nullptr, "comma separated list of application names" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 

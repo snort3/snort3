@@ -88,7 +88,9 @@ public:
     AppIdModuleConfig();
     ~AppIdModuleConfig();
 
+#if USE_RNA_CONFIG
     const char* conf_file = nullptr;
+#endif
     bool stats_logging_enabled = false;
     unsigned long app_stats_period = 0;
     unsigned long app_stats_rollover_size = 0;

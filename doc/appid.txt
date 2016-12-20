@@ -1,0 +1,241 @@
+Network administrators need application awareness in order to fine tune
+their management of the ever-growing number of applications passing traffic
+over the network. Application awareness allows an administrator to create
+rules for applications as needed by the business. The rules can be used to
+take action based on the application, such as block, allow or alert.
+
+==== Overview
+
+The AppId inspector provides an application level view when managing
+networks by providing the following features:
+
+* Network control: The inspector works with Snort rules by providing a set of
+  application identifiers (AppIds) to Snort rule writers.
+
+* Application usage awareness: The inspector outputs statistics to show
+  how many times applications are being used on the network.
+
+* Custom applications: Administrators can create their own application
+  detectors to detect new applications. The detectors are written in Lua
+  and interface with Snort using a well-defined C-Lua API.
+
+* Open Detector Package (ODP): A set of pre-defined application detectors are
+  provided by the Snort team and can be downloaded from snort.org.
+
+==== Dependency Requirements
+
+For proper functioning of the AppId inspector, at a minimum stream flow
+tracking must be enabled. In addition, to identify TCP-based or UDP-based
+applications then the appropriate stream inspector must be enabled, e.g.
+stream_tcp or stream_udp.
+
+In addition, in order to identify HTTP-based applications, the HTTP
+inspector must be enabled. Otherwise, only non-HTTP applications will be
+identified.
+
+AppId subscribes to the inspection events published by other inspectors,
+such as the HTTP and SSL inspectors, to gain access to the data needed. It
+uses that data to help determine the application ID.
+
+==== Configuration
+
+The AppId feature can be enabled via configuration. To enable it with the
+default settings use:
+
+    appid = { }
+
+To use an AppId as a matching parameter in an IPS rule, use the 'appids'
+keyword.  For example, to block HTTP traffic that contains a specific header:
+
+    block tcp any any -> 192.168.0.1 any ( msg:"Block Malicious HTTP header";
+      appids:"HTTP"; content:"X-Header: malicious"; sid:18000; )
+
+Alternatively, the HTTP application can be specified in place of 'tcp' instead
+of using the 'appids' keyword. The AppId inspector will set the service when
+it is discovered so it can be used in IPS rules like this. Note that this rule
+also does not specify the IPs or ports which default to 'any'.
+
+    block http ( msg:"Block Malicious HTTP header";
+      content:"X-Header: malicious"; sid:18000; )
+
+It's possible to specify multiple applications (as many as desired) with
+the appids keyword. A rule is considered a match if any of the applications
+on the rule match. Note that this rule does not match specific content which
+will reduce performance.
+
+    alert tcp any any -> 192.168.0.1 any ( msg:"Alert ";
+      appids:"telnet,ssh,smtp,http";
+
+Below is a minimal Snort configuration that is sufficient to block flows
+based on a specific HTTP header:
+
+    require("snort_config")
+
+    dir = os.getenv('SNORT_LUA_PATH')
+
+    if ( not dir ) then
+        dir = '.'
+    end
+
+    dofile(dir .. '/snort_defaults.lua')
+
+
+    local_rules =
+    [[
+    block http ( msg:"openAppId: test content match for app http";
+    content:"X-Header: malicious"; sid:18760; rev:4; )
+    ]]
+
+    stream = { }
+
+    stream_tcp = { }
+
+    binder =
+    {
+        {
+            when =
+            {
+                proto = 'tcp',
+                ports = [[ 80 8080 ]],
+            },
+            use =
+            {
+                type = 'http_inspect',
+            },
+        },
+    }
+
+    http_inspect = { }
+
+    appid = { }
+
+    ips =
+    {
+        rules = local_rules,
+    }
+
+==== Session Application Identifiers
+
+There are up to four AppIds stored in a session as defined below:
+
+* serviceAppId - An appId associated with server side of a session. Example:
+  http server.
+
+* clientAppId - An appId associated with application on client side of a
+  session.  Example: Firefox.
+
+* payloadAppId - For services like http this appId is associated with a
+  webserver host.  Example: Facebook.
+
+* miscAppId - For some encapsulated protocols, this is the highest
+  encapsulated application.
+
+For packets originating from the client, a payloadAppid in a session is
+matched with all AppIds listed on a rule. Thereafter miscAppId, clientAppId
+and serviceAppId are matched. Since Alert Events contain one AppId, only the
+first match is reported. If a rule without an appids option matches, then the
+most specific appId (in order of payload, misc, client, server) is reported.
+
+The same logic is followed for packets originating from the server with one
+exception.  The order of matching is changed to make serviceAppId come
+before clientAppId.
+
+==== AppId Usage Statistics
+
+The AppId inspector prints application network usage periodically in the snort
+log directory in unified2 format. File name, time interval for statistic and
+file rollover are controlled by appId inspection configuration.
+
+==== Open Detector Package (ODP) Installation
+
+Application detectors from Snort team will be delivered in a separate package
+called the Open Detector Package (ODP) that can be downloaded from snort.org.
+ODP is a package that contains the following artifacts:
+
+* Application detectors in the Lua language.
+
+* Port detectors, which are port only application detectors, in meta-data in
+  YAML format.
+
+* appMapping.data file containing application metadata. This file should not
+  be modified.  The first column contains application identifier and second
+  column contains application name.  Other columns contain internal
+  information.
+
+* Lua library files DetectorCommon.lua, flowTrackerModule.lua and
+  hostServiceTrackerModule.lua
+
+A user can install the ODP package in any directory and configure this
+directory via the app_detector_dir option in the appid preprocessor
+configuration.  Installing ODP will not modify any subdirectory named
+custom, where user-created detectors are located.
+
+When installed, ODP will create following sub-directories:
+
+    * odp/port    //Cisco port-only detectors
+    * odp/lua     //Cisco Lua detectors
+    * odp/libs    //Cisco Lua modules
+
+==== User Created Application Detectors
+
+Users can detect new applications by adding detectors in the Lua language. A
+document will be posted on the Snort Website with details on API. Users can also
+copy over Snort team provided detectors and modify them. Users can also use the
+detector creation tool described in the next section.
+
+Users must organize their Lua detectors and libraries by creating the
+following directory structure, under the ODP installation directory.
+
+    * custom/port    //port-only detectors
+    * custom/lua     //Lua detectors
+    * custom/libs    //Lua modules
+
+The root path is specified by the "app_detector_dir" parameter of the appid
+section of snort.conf:
+
+    appid  =
+    {
+        app_detector_dir = '/usr/local/lib/openappid',
+    }
+
+So the path to the user-created lua files would be
+/usr/local/lib/openappid/custom/lua/
+
+None of the directories below /usr/local/lib/openappid/ would be added for
+you.
+
+==== Application Detector Creation Tool
+
+For rudimentary Lua detectors, there is a tool provided called
+appid_detector_builder.sh.  This is a simple, menu-driven bash script
+which creates .lua files in your current directory, based on your choices
+and on patterns you supply.
+
+When you launch the script, it will prompt for the Application Id
+that you are giving for your detector. This is free-form ASCII with
+minor restrictions. The Lua detector file will be named based on your
+Application Id. If the file name already exists you will be prompted to
+overwrite it.
+
+You will also be prompted for a description of your detector to be placed
+in the comments of the Lua source code. This is optional.
+
+You will then be asked a series of questions designed to construct Lua
+code based on the kind of pattern data, protocol, port(s), etc.
+
+When complete, the Protocol menu will be changed to include the option,
+"Save Detector".  Instead of saving the file and exiting the script,
+you are allowed to give additional criteria for another pattern which
+may also be incorporated in the detection scheme. Then either pattern,
+when matched, will be considered a valid detection.
+
+For example, your first choices might create an HTTP detection pattern
+of "example.com", and the next set of choices would add the HTTP
+detection pattern of "example.uk.co" (an equally fictional British
+counterpart). They would then co-exist in the Lua detector, and either
+would cause a detection with the name you give for your Application Id.
+
+The resulting .lua file will need to be placed in the directory,
+"custom/lua", described in the previous section of the README above called
+"User Created Application Detectors"
+

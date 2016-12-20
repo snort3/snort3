@@ -24,6 +24,7 @@ search_engine.txt
 #so_rule.txt
 
 unbuilt_sources = \
+appid.txt \
 binder.txt \
 bugs.txt \
 building.txt \

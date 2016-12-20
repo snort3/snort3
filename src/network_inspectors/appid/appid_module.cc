@@ -132,8 +132,10 @@ static const Parameter session_log_filter[] =
 
 static const Parameter s_params[] =
 {
+#if USE_RNA_CONFIG
     { "conf", Parameter::PT_STRING, nullptr, nullptr,
       "RNA configuration file" },  // FIXIT-L eliminate reference to "RNA"
+#endif
     { "memcap", Parameter::PT_INT, "0:", "0",
       "disregard - not implemented" },  // FIXIT-M implement or delete appid.memcap
     { "log_stats", Parameter::PT_BOOL, nullptr, "false",
@@ -192,9 +194,12 @@ const AppIdModuleConfig* AppIdModule::get_data()
 
 bool AppIdModule::set(const char*, Value& v, SnortConfig*)
 {
+#if USE_RNA_CONFIG
     if ( v.is("conf") )
         config->conf_file = snort_strdup(v.get_string());
-    else if ( v.is("memcap") )
+    else
+#endif
+    if ( v.is("memcap") )
         config->memcap = v.get_long();
     else if ( v.is("log_stats") )
         config->stats_logging_enabled = v.get_bool();

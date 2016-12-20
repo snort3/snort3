@@ -57,7 +57,9 @@ AppIdModuleConfig::AppIdModuleConfig()
 
 AppIdModuleConfig::~AppIdModuleConfig()
 {
+#if USE_RNA_CONFIG
     snort_free((void*)conf_file);
+#endif
     snort_free((void*)app_detector_dir);
     snort_free((void*)thirdparty_appid_dir);
     appid_config = nullptr;
@@ -280,6 +282,7 @@ next:;
     globfree(&globs);
 }
 
+#if USE_RNA_CONFIG
 void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
 {
     int zone;
@@ -683,6 +686,7 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
 
     return 0;
 }
+#endif
 
 void AppIdConfig::set_safe_search_enforcement(int enabled)
 {
@@ -698,7 +702,9 @@ bool AppIdConfig::init_appid( )
 	AppIdUtils::init_netmasks(app_id_netmasks);
 	app_info_mgr.init_appid_info_table(mod_config->app_detector_dir);
 	sflist_init(&appid_config->client_app_args);
+#if USE_RNA_CONFIG
 	load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);
+#endif
 	read_port_detectors(ODP_PORT_DETECTORS);
 	read_port_detectors(CUSTOM_PORT_DETECTORS);
 	ThirdPartyAppIDInit(mod_config);
