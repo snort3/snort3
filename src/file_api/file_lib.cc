@@ -246,6 +246,17 @@ void FileContext::log_file_event(Flow* flow)
     }
 }
 
+FileVerdict FileContext::file_signature_lookup(Flow* flow)
+{
+    if (get_file_sig_sha256() && is_file_signature_enabled())
+    {
+        FilePolicy& inspect = FileService::get_inspect();
+        return inspect.signature_lookup(flow, this);
+    }
+    else
+        return FILE_VERDICT_UNKNOWN;
+}
+
 void FileContext::finish_signature_lookup(Flow* flow)
 {
     if (get_file_sig_sha256())

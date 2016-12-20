@@ -447,10 +447,8 @@ struct DCE2_SmbSsnData
 
     Smb2Request* smb2_requests;
 
-#ifdef ACTIVE_RESPONSE
     DCE2_SmbFileTracker* fb_ftracker;
     bool block_pdus;
-#endif
 
     // Maximum file depth as returned from file API
     int64_t max_file_depth;

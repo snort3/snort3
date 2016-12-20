@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include "main/snort_types.h"
 
 extern "C" {
 #include <daq_common.h>
@@ -65,6 +66,8 @@ public:
     static DAQ_Verdict packet_callback(void*, const DAQ_PktHdr_t*, const uint8_t*);
 
     static void set_main_hook(MainHook_f);
+
+    SO_PUBLIC static Packet* get_packet();
 
 private:
     static void init(int, char**);

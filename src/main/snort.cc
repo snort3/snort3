@@ -459,6 +459,9 @@ bool Snort::has_dropped_privileges()
 void Snort::set_main_hook(MainHook_f f)
 { main_hook = f; }
 
+Packet* Snort::get_packet()
+{ return s_packet; }
+
 void Snort::setup(int argc, char* argv[])
 {
     set_main_thread();
@@ -866,4 +869,3 @@ DAQ_Verdict Snort::packet_callback(
 
     return verdict;
 }
-

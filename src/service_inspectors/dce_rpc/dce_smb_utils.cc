@@ -22,10 +22,13 @@
 #include "dce_smb_utils.h"
 
 #include "detection/detection_util.h"
-#include "file_api/file_flows.h"
 #include "utils/util.h"
+#include "packet_io/active.h"
+#include "main/snort.h"
 
 #include "dce_smb_module.h"
+
+static uint8_t dce2_smb_delete_pdu[65535];
 
 /********************************************************************
  * Private function prototypes
@@ -33,25 +36,16 @@
 static void DCE2_SmbSetNewFileAPIFileTracker(DCE2_SmbSsnData* ssd);
 static void DCE2_SmbResetFileChunks(DCE2_SmbFileTracker* ssd);
 static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd);
+static void DCE2_SmbFinishFileBlockVerdict(DCE2_SmbSsnData* ssd);
 
 /********************************************************************
  * Inline functions
  ********************************************************************/
 static inline bool DCE2_SmbIsVerdictSuspend(bool upload, FilePosition position)
 {
-    // FIXIT-M port active response related code
-/*
-#ifdef ACTIVE_RESPONSE
     if (upload &&
         ((position == SNORT_FILE_FULL) || (position == SNORT_FILE_END)))
         return true;
-#else
-*/
-    UNUSED(upload);
-    UNUSED(position);
-/*
-#endif
-*/
     return false;
 }
 
@@ -254,13 +248,10 @@ void DCE2_SmbRemoveUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
                 {
                     if (ssd->fapi_ftracker == ftracker)
                         DCE2_SmbFinishFileAPI(ssd);
-                    // FIXIT-M port active response related code
-/*
-#ifdef ACTIVE_RESPONSE
-                        if (ssd->fb_ftracker == ftracker)
-                            DCE2_SmbFinishFileBlockVerdict(ssd);
-#endif
-*/
+
+                    if (ssd->fb_ftracker == ftracker)
+                        DCE2_SmbFinishFileBlockVerdict(ssd);
+
                     DCE2_ListRemoveCurrent(ssd->ftrackers);
                     DCE2_SmbRemoveFileTrackerFromRequestTrackers(ssd, ftracker);
                 }
@@ -609,13 +600,9 @@ void DCE2_SmbRemoveFileTracker(DCE2_SmbSsnData* ssd, DCE2_SmbFileTracker* ftrack
     if (ssd->fapi_ftracker == ftracker)
         DCE2_SmbFinishFileAPI(ssd);
 
-    // FIXIT-M port active response related code
-/*
-#ifdef ACTIVE_RESPONSE
     if (ssd->fb_ftracker == ftracker)
         DCE2_SmbFinishFileBlockVerdict(ssd);
-#endif
-*/
+
     if (ftracker == &ssd->ftracker)
         DCE2_SmbCleanFileTracker(&ssd->ftracker);
     else if (ssd->ftrackers != nullptr)
@@ -926,13 +913,10 @@ void DCE2_SmbRemoveTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
             {
                 if (ssd->fapi_ftracker == ftracker)
                     DCE2_SmbFinishFileAPI(ssd);
-                // FIXIT-M port active response related code
-/*
-#ifdef ACTIVE_RESPONSE
+
                 if (ssd->fb_ftracker == ftracker)
                     DCE2_SmbFinishFileBlockVerdict(ssd);
-#endif
-*/
+
                 DCE2_ListRemoveCurrent(ssd->ftrackers);
                 DCE2_SmbRemoveFileTrackerFromRequestTrackers(ssd, ftracker);
             }
@@ -1494,6 +1478,106 @@ void DCE2_SmbAbortFileAPI(DCE2_SmbSsnData* ssd)
     ssd->fapi_ftracker = nullptr;
 }
 
+FileContext* DCE2_get_main_file_context(DCE2_SmbSsnData* ssd)
+{
+    assert(ssd->sd.wire_pkt);
+    FileFlows* file_flows = FileFlows::get_file_flows((ssd->sd.wire_pkt)->flow);
+    assert(file_flows);
+    return file_flows->get_current_file_context();
+}
+
+FileVerdict DCE2_get_file_verdict(DCE2_SmbSsnData* ssd)
+{
+    FileContext* file = DCE2_get_main_file_context(ssd);
+    if ( !file )
+        return FILE_VERDICT_UNKNOWN;
+    return file->verdict;
+}
+
+void DCE2_SmbInitDeletePdu(void)
+{
+    NbssHdr *nb_hdr = (NbssHdr *)dce2_smb_delete_pdu;
+    SmbNtHdr *smb_hdr = (SmbNtHdr *)((uint8_t *)nb_hdr + sizeof(*nb_hdr));
+    SmbDeleteReq *del_req = (SmbDeleteReq *)((uint8_t *)smb_hdr + sizeof(*smb_hdr));
+    uint8_t *del_req_fmt = (uint8_t *)del_req + sizeof(*del_req);
+    uint16_t smb_flg2 = 0x4001;
+    uint16_t search_attrs = 0x0006;
+
+    memset(dce2_smb_delete_pdu, 0, sizeof(dce2_smb_delete_pdu));
+
+    nb_hdr->type = 0;
+    nb_hdr->flags = 0;
+
+    memcpy((void *)smb_hdr->smb_idf, (void *)"\xffSMB", sizeof(smb_hdr->smb_idf));
+    smb_hdr->smb_com = SMB_COM_DELETE;
+    smb_hdr->smb_status.nt_status = 0;
+    //smb_hdr->smb_flg = 0x18;
+    smb_hdr->smb_flg = 0;
+    smb_hdr->smb_flg2 = SmbHtons(&smb_flg2);
+    smb_hdr->smb_tid = 0;   // needs to be set before injected
+    smb_hdr->smb_pid = 777;
+    smb_hdr->smb_uid = 0;   // needs to be set before injected
+    smb_hdr->smb_mid = 777;
+
+    del_req->smb_wct = 1;
+    del_req->smb_search_attrs = SmbHtons(&search_attrs);
+    *del_req_fmt = SMB_FMT__ASCII;
+}
+
+static void DCE2_SmbInjectDeletePdu(DCE2_SmbSsnData *ssd, DCE2_SmbFileTracker *ftracker)
+{
+    Packet* inject_pkt = Snort::get_packet();
+    if( inject_pkt->flow != ssd->sd.wire_pkt->flow )
+        return;
+
+    NbssHdr *nb_hdr = (NbssHdr *)dce2_smb_delete_pdu;
+    SmbNtHdr *smb_hdr = (SmbNtHdr *)((uint8_t *)nb_hdr + sizeof(*nb_hdr));
+    SmbDeleteReq *del_req = (SmbDeleteReq *)((uint8_t *)smb_hdr + sizeof(*smb_hdr));
+    char *del_filename = (char *)((uint8_t *)del_req + sizeof(*del_req) + 1);
+    uint16_t file_name_len = strlen(ftracker->file_name) + 1;
+
+    nb_hdr->length = htons(sizeof(*smb_hdr) + sizeof(*del_req) + 1 + file_name_len);
+    uint32_t len = ntohs(nb_hdr->length) + sizeof(*nb_hdr);
+    smb_hdr->smb_tid = SmbHtons(&ftracker->tid_v1);
+    smb_hdr->smb_uid = SmbHtons(&ftracker->uid_v1);
+    del_req->smb_bcc = 1 + file_name_len;
+    memcpy(del_filename, ftracker->file_name, file_name_len);
+
+    Active::inject_data(inject_pkt, 0, (uint8_t *)nb_hdr, len);
+}
+
+static FileVerdict DCE2_SmbLookupFileVerdict(DCE2_SmbSsnData* ssd)
+{
+    Profile profile(dce2_smb_pstat_smb_file_api);
+
+    FileContext* file = DCE2_get_main_file_context(ssd);
+
+    if ( !file )
+        return FILE_VERDICT_UNKNOWN;
+
+    FileVerdict verdict = file->verdict;
+
+    if (verdict == FILE_VERDICT_PENDING)
+        verdict = file->file_signature_lookup(ssd->sd.wire_pkt->flow);
+
+    return verdict;
+}
+
+static void DCE2_SmbFinishFileBlockVerdict(DCE2_SmbSsnData* ssd)
+{
+    Profile profile(dce2_smb_pstat_smb_file);
+
+    FileVerdict verdict = DCE2_SmbLookupFileVerdict(ssd);
+    if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT))
+    {
+        DCE2_SmbInjectDeletePdu(ssd, ssd->fb_ftracker);
+    }
+
+    ssd->fb_ftracker = nullptr;
+    ssd->block_pdus = false;
+
+}
+
 static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
 {
     Packet* p = ssd->sd.wire_pkt;
@@ -1514,26 +1598,16 @@ static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
             && (ftracker->ff_bytes_processed != 0))
         {
             Profile profile(dce2_smb_pstat_smb_file_api);
-            // FIXIT-M port active response related code
-/*
-#ifdef ACTIVE_RESPONSE
-            if (_dpd.fileAPI->file_process(p, nullptr, 0, SNORT_FILE_END, upload, upload))
+            if (file_flows->file_process(nullptr, 0, SNORT_FILE_END, upload))
             {
                 if (upload)
                 {
-                    File_Verdict verdict =
-                        _dpd.fileAPI->get_file_verdict(ssd->sd.wire_pkt->stream_session);
+                    FileVerdict verdict = DCE2_get_file_verdict(ssd);
 
                     if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT))
                         ssd->fb_ftracker = ftracker;
                 }
             }
-#else
-*/
-            file_flows->file_process(nullptr, 0, SNORT_FILE_END, upload);
-/*
-#endif
-*/
             dce2_smb_stats.smb_files_processed++;
         }
     }
@@ -1546,13 +1620,10 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
     uint32_t data_len, bool upload)
 {
     FilePosition position;
-    // FIXIT-M port active response related code
-/*
-#ifdef ACTIVE_RESPONSE
+
     if (ssd->fb_ftracker && (ssd->fb_ftracker != ftracker))
         return DCE2_RET__SUCCESS;
-#endif
-*/
+
     // Trim data length if it exceeds the maximum file depth
     if ((ssd->max_file_depth != 0)
         && (ftracker->ff_bytes_processed + data_len) > (uint64_t)ssd->max_file_depth)
@@ -1616,12 +1687,9 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
 
         if ((position == SNORT_FILE_FULL) || (position == SNORT_FILE_END))
         {
-            // FIXIT-M port active response related code
-/*#ifdef
- ACTIVE_RESPONSE
             if (upload)
             {
-                File_Verdict verdict = _dpd.fileAPI->get_file_verdict(ssd->sd.wire_pkt->stream_session);
+                FileVerdict verdict = DCE2_get_file_verdict(ssd);
 
                 if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT)
                         || (verdict == FILE_VERDICT_PENDING))
@@ -1629,8 +1697,6 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
                     ssd->fb_ftracker = ftracker;
                 }
             }
-#endif
-*/
             ftracker->ff_sequential_only = false;
 
             dce2_smb_stats.smb_files_processed++;

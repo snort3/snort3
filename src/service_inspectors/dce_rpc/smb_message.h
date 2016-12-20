@@ -143,6 +143,16 @@ inline uint16_t SmbCloseReqFid(const SmbCloseReq* req)
 }
 
 /********************************************************************
+ * SMB_COM_DELETE
+ ********************************************************************/
+struct SmbDeleteReq  /* smb_wct = 1 */
+{
+    uint8_t  smb_wct;
+    uint16_t smb_search_attrs;
+    uint16_t smb_bcc;
+};
+
+/********************************************************************
  * SMB_COM_READ
  ********************************************************************/
 struct SmbReadReq   /* smb_wct = 5 */

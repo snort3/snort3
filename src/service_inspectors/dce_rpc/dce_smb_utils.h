@@ -23,6 +23,7 @@
 #define DCE_SMB_UTILS_H
 
 #include "dce_smb.h"
+#include "file_api/file_flows.h"
 
 /********************************************************************
  * Enums
@@ -176,6 +177,8 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
     DCE2_SmbFileTracker* ftracker, const uint8_t* data_ptr,
     uint32_t data_len, bool upload);
 void DCE2_FileDetect();
+FileVerdict DCE2_get_file_verdict(DCE2_SmbSsnData* );
+void DCE2_SmbInitDeletePdu(void);
 
 /********************************************************************
  * Inline functions

@@ -96,6 +96,7 @@ public:
     FileCaptureState process_file_capture(const uint8_t* file_data, int data_size,
         FilePosition pos);
     void log_file_event(Flow*);
+    FileVerdict file_signature_lookup(Flow*);
 
     // Preserve the file in memory until it is released
     // The file reserved will be returned and it will be detached from file context/session

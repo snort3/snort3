@@ -643,20 +643,13 @@ DCE2_Ret DCE2_SmbClose(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         // Set this for response
         ssd->cur_rtracker->ftracker = DCE2_SmbGetFileTracker(ssd, fid);
 
-        //FIXIT-M port active response related code
-/*
-#ifdef ACTIVE_RESPONSE
         if ((ssd->fb_ftracker != NULL) && (ssd->fb_ftracker == ssd->cur_rtracker->ftracker))
         {
-            void *ssnptr = ssd->sd.wire_pkt->stream_session;
-            void *p = (void *)ssd->sd.wire_pkt;
-            File_Verdict verdict = DCE2_SmbGetFileVerdict(p, ssnptr);
+            FileVerdict verdict = DCE2_get_file_verdict(ssd);
 
             if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT))
                 ssd->block_pdus = true;
         }
-#endif
-*/
     }
     else
     {

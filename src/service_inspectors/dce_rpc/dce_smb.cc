@@ -24,6 +24,7 @@
 #include "file_api/file_service.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
+#include "packet_io/active.h"
 
 #include "dce_smb_module.h"
 #include "dce_smb_utils.h"
@@ -354,6 +355,11 @@ private:
 Dce2Smb::Dce2Smb(dce2SmbProtoConf& pc)
 {
     config = pc;
+    if ((config.smb_file_inspection == DCE2_SMB_FILE_INSPECTION_ONLY)
+        || (config.smb_file_inspection == DCE2_SMB_FILE_INSPECTION_ON))
+    {
+        Active::set_enabled();
+    }
 }
 
 Dce2Smb::~Dce2Smb()
@@ -429,6 +435,7 @@ static void dce2_smb_init()
 {
     Dce2SmbFlowData::init();
     DCE2_SmbInitGlobals();
+    DCE2_SmbInitDeletePdu();
 }
 
 static Inspector* dce2_smb_ctor(Module* m)

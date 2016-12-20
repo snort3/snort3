@@ -24,6 +24,7 @@
 #include "file_api/file_service.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
+#include "packet_io/active.h"
 
 #include "dce_smb_module.h"
 #include "dce_smb_utils.h"
@@ -769,6 +770,12 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
 
     while (nb_len > 0)
     {
+        if (ssd->block_pdus && (DCE2_SmbType(ssd) == SMB_TYPE__REQUEST))
+        {
+            Active::drop_packet(ssd->sd.wire_pkt);
+            status = DCE2_RET__IGNORE;
+            break;
+        }
         // Break out if command not supported
         if (smb_com_funcs[smb_com] == nullptr)
             break;
