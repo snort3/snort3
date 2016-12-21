@@ -300,19 +300,19 @@ static void snuff_stdio()
 {
     bool err = false;
 
-    err = close(0) or err;
-    err = close(1) or err;
-    err = close(2) or err;
+    err = close(STDIN_FILENO) != 0;
+    err = err or (close(STDOUT_FILENO) != 0);
+    err = err or (close(STDERR_FILENO) != 0);
 
     /* redirect stdin/stdout/stderr to /dev/null */
-    err = open("/dev/null", O_RDWR) or err;  /* stdin, fd 0 */
+    err = err or (open("/dev/null", O_RDWR) != STDIN_FILENO);  // fd 0
 
-    err = dup(0) or err;  /* stdout, fd 0 => fd 1 */
-    err = dup(0) or err;  /* stderr, fd 0 => fd 2 */
+    err = err or (dup(STDIN_FILENO) != STDOUT_FILENO);  // fd 0 => fd 1
+    err = err or (dup(STDIN_FILENO) != STDERR_FILENO);  // fd 0 => fd 2
 
     if ( err )
         // message is hit or miss but we will exit with failure
-        FatalError("daemonization errors - %s", get_error(errno));
+        FatalError("failed to snuff stdio - %s", get_error(errno));
 }
 
 // All threads need to be created after daemonizing.  If created in the
@@ -357,7 +357,12 @@ void daemonize()
     }
 
     // child
+    errno = 0;  // disregard any inherited issues
+
     setsid();
+
+    if ( errno )
+        FatalError("failed to setsid - %s", get_error(errno));
 
     if ( SnortConfig::log_quiet() or SnortConfig::log_syslog() )
         snuff_stdio();
