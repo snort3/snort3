@@ -23,10 +23,10 @@
 int32_t HttpMsgHeadShared::get_next_code(const Field& field, int32_t& offset,
     const StrCode table[])
 {
-    assert(field.length > 0);
-    const uint8_t* start = field.start + offset;
+    assert(field.length() > 0);
+    const uint8_t* start = field.start() + offset;
     int32_t length;
-    for (length = 0; (offset+length < field.length) && (*(start+length) != ','); length++);
+    for (length = 0; (offset+length < field.length()) && (*(start+length) != ','); length++);
     offset += length + 1;
     return str_to_code(start, length, table);
 }
@@ -34,14 +34,14 @@ int32_t HttpMsgHeadShared::get_next_code(const Field& field, int32_t& offset,
 // Case insensitive search for the substring "boundary="
 bool HttpMsgHeadShared::boundary_present(const Field& field)
 {
-    assert(field.length > 0);
+    assert(field.length() > 0);
 
     const char* const BOUNDARY = "boundary=";
     const int BOUNDARY_LEN = 9;
 
-    for (int k = 0; k + BOUNDARY_LEN <= field.length; k++)
+    for (int k = 0; k + BOUNDARY_LEN <= field.length(); k++)
     {
-        if (strncasecmp(BOUNDARY, (const char*)(field.start + k), BOUNDARY_LEN) == 0)
+        if (strncasecmp(BOUNDARY, (const char*)(field.start() + k), BOUNDARY_LEN) == 0)
             return true;
     }
     return false;

@@ -35,7 +35,7 @@
 class HttpMsgSection
 {
 public:
-    virtual ~HttpMsgSection() { if (delete_msg_on_destruct) delete[] msg_text.start; }
+    virtual ~HttpMsgSection() = default;
     virtual HttpEnums::InspectSection get_inspection_section() const
         { return HttpEnums::IS_NONE; }
     HttpEnums::SourceId get_source_id() { return source_id; }
@@ -86,16 +86,13 @@ protected:
 
     // Convenience methods shared by multiple subclasses
     void update_depth() const;
-    static const Field& classic_normalize(const Field& raw, Field& norm, bool& norm_alloc,
+    static const Field& classic_normalize(const Field& raw, Field& norm,
         const HttpParaList::UriParam& uri_param);
 #ifdef REG_TEST
     void print_section_title(FILE* output, const char* title) const;
     void print_section_wrapup(FILE* output) const;
     void print_peg_counts(FILE* output) const;
 #endif
-
-private:
-    const bool delete_msg_on_destruct;
 };
 
 #endif

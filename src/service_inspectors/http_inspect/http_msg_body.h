@@ -30,7 +30,7 @@
 class HttpMsgBody : public HttpMsgSection
 {
 public:
-    virtual ~HttpMsgBody();
+    virtual ~HttpMsgBody() = default;
     void analyze() override;
     const Field& get_detect_buf() const override { return detect_data; }
     HttpEnums::InspectSection get_inspection_section() const override
@@ -50,17 +50,14 @@ protected:
 
 private:
     void do_file_processing(Field& file_data);
-    void do_utf_decoding(const Field& input, Field& output, bool& decoded_alloc);
-    void do_js_normalization(const Field& input, Field& output, bool& js_norm_alloc);
+    void do_utf_decoding(const Field& input, Field& output);
+    void do_js_normalization(const Field& input, Field& output);
 
     Field detect_data;
     const bool detection_section;
     Field classic_client_body;   // URI normalization applied
-    bool classic_client_body_alloc = false;
     Field decoded_body;
-    bool decoded_body_alloc = false;
     Field js_norm_body;
-    bool js_norm_body_alloc = false;
 };
 
 #endif

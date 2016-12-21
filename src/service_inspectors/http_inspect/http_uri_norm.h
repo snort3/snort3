@@ -42,7 +42,7 @@ public:
         HttpEventGen& events);
     static bool classic_need_norm(const Field& uri_component, bool do_path,
         const HttpParaList::UriParam& uri_param);
-    static void classic_normalize(const Field& input, Field& result, uint8_t* buffer,
+    static void classic_normalize(const Field& input, Field& result,
         const HttpParaList::UriParam& uri_param);
     static void load_default_unicode_map(uint8_t map[65536]);
     static void load_unicode_map(uint8_t map[65536], const char* filename, int code_page);
@@ -92,33 +92,33 @@ private:
 
 bool UriNormalizer::is_percent_encoding(const Field& input, int32_t index)
 {
-    return (index+2 < input.length) &&
-           (HttpEnums::as_hex[input.start[index+1]] != -1) &&
-           (HttpEnums::as_hex[input.start[index+2]] != -1);
+    return (index+2 < input.length()) &&
+           (HttpEnums::as_hex[input.start()[index+1]] != -1) &&
+           (HttpEnums::as_hex[input.start()[index+2]] != -1);
 }
 
 uint8_t UriNormalizer::extract_percent_encoding(const Field& input, int32_t index)
 {
-    return HttpEnums::as_hex[input.start[index+1]] << 4 |
-           HttpEnums::as_hex[input.start[index+2]];
+    return HttpEnums::as_hex[input.start()[index+1]] << 4 |
+           HttpEnums::as_hex[input.start()[index+2]];
 }
 
 bool UriNormalizer::is_u_encoding(const Field& input, int32_t index)
 {
-    return (index+5 < input.length) &&
-           ((input.start[index+1] == 'u') || (input.start[index+1] == 'U')) &&
-           (HttpEnums::as_hex[input.start[index+2]] != -1) &&
-           (HttpEnums::as_hex[input.start[index+3]] != -1) &&
-           (HttpEnums::as_hex[input.start[index+4]] != -1) &&
-           (HttpEnums::as_hex[input.start[index+5]] != -1);
+    return (index+5 < input.length()) &&
+           ((input.start()[index+1] == 'u') || (input.start()[index+1] == 'U')) &&
+           (HttpEnums::as_hex[input.start()[index+2]] != -1) &&
+           (HttpEnums::as_hex[input.start()[index+3]] != -1) &&
+           (HttpEnums::as_hex[input.start()[index+4]] != -1) &&
+           (HttpEnums::as_hex[input.start()[index+5]] != -1);
 }
 
 uint16_t UriNormalizer::extract_u_encoding(const Field& input, int32_t index)
 {
-    return (HttpEnums::as_hex[input.start[index+2]] << 12) |
-           (HttpEnums::as_hex[input.start[index+3]] << 8)  |
-           (HttpEnums::as_hex[input.start[index+4]] << 4)  |
-            HttpEnums::as_hex[input.start[index+5]];
+    return (HttpEnums::as_hex[input.start()[index+2]] << 12) |
+           (HttpEnums::as_hex[input.start()[index+3]] << 8)  |
+           (HttpEnums::as_hex[input.start()[index+4]] << 4)  |
+            HttpEnums::as_hex[input.start()[index+5]];
 }
 
 #endif

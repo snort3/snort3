@@ -285,26 +285,18 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
 
     HttpModule::increment_peg_counts(PEG_REASSEMBLE);
 
-    uint8_t*& buffer = session_data->section_buffer[source_id];
-
     const bool is_body = (session_data->section_type[source_id] == SEC_BODY_CHUNK) ||
                          (session_data->section_type[source_id] == SEC_BODY_CL) ||
                          (session_data->section_type[source_id] == SEC_BODY_OLD);
+    uint8_t*& buffer = session_data->section_buffer[source_id];
     if (buffer == nullptr)
     {
-        // The type of buffer used is based on section type. All body sections reuse a single
-        // static buffer. Other sections use a dynamic buffer that may be saved for a while.
-        // Changes here must be mirrored below where the buffer is passed to HttpInspect::process
-        // and in ~HttpFlowData where the buffer will be deleted if it has not been processed.
+        // Body sections need extra space to accommodate unzipping
         if (is_body)
-        {
-            buffer = HttpInspect::body_buffer;
-        }
+            buffer = new uint8_t[MAX_OCTETS];
         else
-        {
             buffer = new uint8_t[total];
-        }
-    }
+     }
 
     if (session_data->section_type[source_id] != SEC_BODY_CHUNK)
     {
@@ -323,7 +315,7 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
     {
         const Field& send_to_detection = my_inspector->process(buffer,
             session_data->section_offset[source_id] - session_data->num_excess[source_id], flow,
-            source_id, !is_body);
+            source_id, true);
         // delete[] not necessary because HttpMsgSection is now responsible.
         buffer = nullptr;
 
@@ -334,14 +326,16 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
         // framework and forwarded to detection even if it is empty. Other body sections and the
         // trailer section are only forwarded if nonempty. The start line section and header
         // sections other than the detection section are never forwarded.
-        if (((send_to_detection.length > 0) && (HttpInspect::get_latest_is() != IS_NONE)) ||
-            ((send_to_detection.length == 0) && (HttpInspect::get_latest_is() == IS_DETECTION)))
+        if (((send_to_detection.length() > 0) &&
+                (session_data->latest_section->get_inspection_section() != IS_NONE)) ||
+            ((send_to_detection.length() == 0) &&
+                (session_data->latest_section->get_inspection_section() == IS_DETECTION)))
         {
             // FIXIT-M kludge until we work out issues with returning an empty buffer
-            if (send_to_detection.length > 0)
+            if (send_to_detection.length() > 0)
             {
-                http_buf.data = send_to_detection.start;
-                http_buf.length = send_to_detection.length;
+                http_buf.data = send_to_detection.start();
+                http_buf.length = send_to_detection.length();
             }
             else
             {

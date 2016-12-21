@@ -29,60 +29,62 @@
 using namespace HttpEnums;
 
 const Field Field::FIELD_NULL { STAT_NO_SOURCE };
-void Field::set(int32_t length_, const uint8_t* start_)
+
+void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 {
-    assert(length == STAT_NOT_COMPUTE);
-    assert(start == nullptr);
-    assert(start_ != nullptr);
-    assert(length_ >= 0);
-    assert(length_ <= MAX_OCTETS);
-    start = start_;
-    length = length_;
+    assert(len == STAT_NOT_COMPUTE);
+    assert(strt == nullptr);
+    assert(start != nullptr);
+    assert(length >= 0);
+    assert(length <= MAX_OCTETS);
+    strt = start;
+    len = length;
+    own_the_buffer = own_the_buffer_;
 }
 
 void Field::set(StatusCode stat_code)
 {
-    assert(length == STAT_NOT_COMPUTE);
-    assert(start == nullptr);
+    assert(len == STAT_NOT_COMPUTE);
+    assert(strt == nullptr);
     assert(stat_code <= 0);
-    start = nullptr;
-    length = stat_code;
+    len = stat_code;
 }
 
 void Field::set(const Field& f)
 {
-    assert(length == STAT_NOT_COMPUTE);
-    assert(start == nullptr);
-    start = f.start;
-    length = f.length;
+    assert(len == STAT_NOT_COMPUTE);
+    assert(strt == nullptr);
+    strt = f.strt;
+    len = f.len;
+    // Both Fields cannot be responsible for deleting the buffer so do not copy own_the_buffer
 }
 
 #ifdef REG_TEST
 void Field::print(FILE* output, const char* name) const
 {
-    if ((length == STAT_NOT_PRESENT) || (length == STAT_NOT_COMPUTE) || (length == STAT_NO_SOURCE))
+    if ((len == STAT_NOT_PRESENT) || (len == STAT_NOT_COMPUTE) || (len == STAT_NO_SOURCE))
     {
         return;
     }
-    const int out_count = fprintf(output, "%s, length = %d, ", name, length);
-    if (length <= 0)
+    const int out_count = fprintf(output, "%s, length = %d, ", name, len);
+    if (len <= 0)
     {
         fprintf(output, "\n");
         return;
     }
     // Limit the amount of data printed
-    const int32_t print_length = (length <= HttpTestManager::get_print_amount()) ? length :
+    const int32_t print_length = (len <= HttpTestManager::get_print_amount()) ? len :
         HttpTestManager::get_print_amount();
     for (int32_t k=0; k < print_length; k++)
     {
-        if ((start[k] >= 0x20) && (start[k] <= 0x7E))
-            fprintf(output, "%c", (char)start[k]);
-        else if (start[k] == 0xD)
+        if ((strt[k] >= 0x20) && (strt[k] <= 0x7E))
+            fprintf(output, "%c", (char)strt[k]);
+        else if (strt[k] == 0xD)
             fprintf(output, "~");
-        else if (start[k] == 0xA)
+        else if (strt[k] == 0xA)
             fprintf(output, "^");
         else if (HttpTestManager::get_print_hex())
-            fprintf(output, "[%.2x]", (uint8_t)start[k]);
+            fprintf(output, "[%.2x]", (uint8_t)strt[k]);
         else
             fprintf(output, "*");
         if ((k%120 == (119 - out_count)) && (k+1 < print_length))

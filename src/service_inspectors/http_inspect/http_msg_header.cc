@@ -111,7 +111,7 @@ void HttpMsgHeader::update_flow()
     }
 
     // If there is a Transfer-Encoding header, see if the last of the encoded values is "chunked".
-    if (get_header_value_norm(HEAD_TRANSFER_ENCODING).length > 0)
+    if (get_header_value_norm(HEAD_TRANSFER_ENCODING).length() > 0)
     {
         if (chunked_before_end(get_header_value_norm(HEAD_TRANSFER_ENCODING)))
         {
@@ -136,7 +136,7 @@ void HttpMsgHeader::update_flow()
 
     // else because Transfer-Encoding header negates Content-Length header even if something was
     // wrong with Transfer-Encoding header.
-    else if (get_header_value_norm(HEAD_CONTENT_LENGTH).length > 0)
+    else if (get_header_value_norm(HEAD_CONTENT_LENGTH).length() > 0)
     {
         const int64_t content_length =
             norm_decimal_integer(get_header_value_norm(HEAD_CONTENT_LENGTH));
@@ -226,7 +226,7 @@ void HttpMsgHeader::setup_file_processing()
         if (source_id == SRC_CLIENT)
         {
             const Field& content_type = get_header_value_raw(HEAD_CONTENT_TYPE);
-            if (content_type.length > 0)
+            if (content_type.length() > 0)
             {
                 if (boundary_present(content_type))
                 {
@@ -238,7 +238,7 @@ void HttpMsgHeader::setup_file_processing()
                     // This interface is a leftover from when OHI pushed whole messages through
                     // this interface.
                     session_data->mime_state[source_id]->process_mime_data(flow,
-                        content_type.start, content_type.length, true,
+                        content_type.start(), content_type.length(), true,
                         SNORT_FILE_POSITION_UNKNOWN);
                     session_data->mime_state[source_id]->process_mime_data(flow,
                         (const uint8_t*)"\r\n", 2, true, SNORT_FILE_POSITION_UNKNOWN);
@@ -276,7 +276,7 @@ void HttpMsgHeader::setup_decompression()
 
     const Field& norm_content_encoding = get_header_value_norm(HEAD_CONTENT_ENCODING);
     int32_t cont_offset = 0;
-    while (norm_content_encoding.length > cont_offset)
+    while (norm_content_encoding.length() > cont_offset)
     {
         const Contentcoding content_code = (Contentcoding)get_next_code(norm_content_encoding,
             cont_offset, HttpMsgHeadShared::content_code_list);
@@ -313,7 +313,7 @@ void HttpMsgHeader::setup_decompression()
 
     const Field& norm_transfer_encoding = get_header_value_norm(HEAD_TRANSFER_ENCODING);
     int32_t trans_offset = 0;
-    while (norm_transfer_encoding.length > trans_offset)
+    while (norm_transfer_encoding.length() > trans_offset)
     {
         const Transcoding transfer_code = (Transcoding)get_next_code(norm_transfer_encoding,
             trans_offset, HttpMsgHeadShared::trans_code_list);
@@ -374,15 +374,16 @@ void HttpMsgHeader::setup_utf_decoding()
         return;
 
     const Field& norm_content_type = get_header_value_norm(HEAD_CONTENT_TYPE);
-    if (norm_content_type.length <= 0)
+    if (norm_content_type.length() <= 0)
         return;
 
     get_last_token(norm_content_type, last_token, ';');
 
     // No semicolon in the Content-Type header
-    if ( last_token.length == norm_content_type.length )
+    if ( last_token.length() == norm_content_type.length() )
     {
-        if( SnortStrnStr((const char*)norm_content_type.start, norm_content_type.length, "text") )
+        if (SnortStrnStr((const char*)norm_content_type.start(), norm_content_type.length(),
+            "text"))
         {
             charset_code = CHARSET_UNKNOWN;
         }
@@ -391,12 +392,13 @@ void HttpMsgHeader::setup_utf_decoding()
     }
     else
     {
-
-        charset_code = (CharsetCode)str_to_code(last_token.start, last_token.length, HttpMsgHeadShared::charset_code_list);
+        charset_code = (CharsetCode)str_to_code(last_token.start(), last_token.length(),
+            HttpMsgHeadShared::charset_code_list);
 
         if( charset_code == CHARSET_OTHER )
         {
-            charset_code = (CharsetCode)substr_to_code(last_token.start, last_token.length, HttpMsgHeadShared::charset_code_opt_list);
+            charset_code = (CharsetCode)substr_to_code(last_token.start(), last_token.length(),
+                HttpMsgHeadShared::charset_code_opt_list);
 
             if ( charset_code != CHARSET_UNKNOWN )
                 return;

@@ -73,10 +73,14 @@ former case the original message is constant and there is no reason for a Field 
 the latter case, once the value has been derived from the original message there is no reason to
 derive it again.
 
-Once Field is set to a non-null value it should never change. The set functions will assert if this
-rule is disregarded. Because the set functions are much newer than the class there are still large
-amounts of code that have not yet been converted to use them. Meanwhile adhere to the rule even
-when not using the set functions.
+Once Field is set to a non-null value it should never change. The set() functions will assert if
+this rule is disregarded.
+
+A Field may own the buffer containing the message or it may point to a buffer that belongs to
+someone else. When a Field owning a buffer is deleted the buffer is deleted as well. Ownership is
+determined with the Field is initially set. In general any dynamically allocated buffer should be
+owned by a Field. If you follow this rule you won't need to keep track of allocated buffers or have
+delete[]s all over the place.
 
 HI implements flow depth using the request_depth and response_depth parameters. HI seeks to provide
 a consistent experience to detection by making flow depth independent of factors that a sender

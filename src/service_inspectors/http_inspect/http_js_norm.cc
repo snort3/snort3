@@ -60,20 +60,20 @@ HttpJsNorm::~HttpJsNorm()
     delete htmltype_search_mpse;
 }
 
-void HttpJsNorm::normalize(const Field& input, Field& output, bool& js_norm_alloc,
-    HttpInfractions& infractions, HttpEventGen& events) const
+void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions& infractions,
+    HttpEventGen& events) const
 {
     bool js_present = false;
     int index = 0;
-    const char* ptr = (const char*)input.start;
-    const char* const end = ptr + input.length;
+    const char* ptr = (const char*)input.start();
+    const char* const end = ptr + input.length();
 
     JSState js;
     js.allowed_spaces = max_javascript_whitespaces;
     js.allowed_levels = MAX_ALLOWED_OBFUSCATION;
     js.alerts = 0;
 
-    uint8_t* buffer = new uint8_t[input.length];
+    uint8_t* buffer = new uint8_t[input.length()];
 
     while (ptr < end)
     {
@@ -119,9 +119,9 @@ void HttpJsNorm::normalize(const Field& input, Field& output, bool& js_norm_allo
             // Save before the <script> begins
             if (js_start > ptr)
             {
-                if ((js_start - ptr) > (input.length - index))
+                if ((js_start - ptr) > (input.length() - index))
                     break;
-                memmove_s(buffer + index, input.length - index, ptr, js_start - ptr);
+                memmove_s(buffer + index, input.length() - index, ptr, js_start - ptr);
                 index += js_start - ptr;
             }
 
@@ -131,7 +131,7 @@ void HttpJsNorm::normalize(const Field& input, Field& output, bool& js_norm_allo
 
             // FIXIT-L need to fix this library so we don't have to cast away const here.
             JSNormalizeDecode((char*)js_start, (uint16_t)(end-js_start), (char*)buffer+index,
-                (uint16_t)(input.length - index), (char**)&ptr, &bytes_copied, &js,
+                (uint16_t)(input.length() - index), (char**)&ptr, &bytes_copied, &js,
                 uri_param.iis_unicode ? uri_param.unicode_map : nullptr);
             index += bytes_copied;
         }
@@ -141,9 +141,9 @@ void HttpJsNorm::normalize(const Field& input, Field& output, bool& js_norm_allo
 
     if (js_present)
     {
-        if ((ptr < end) && ((input.length - index) >= (end - ptr)))
+        if ((ptr < end) && ((input.length() - index) >= (end - ptr)))
         {
-            memmove_s(buffer + index, input.length - index, ptr, end - ptr); index += end - ptr;
+            memmove_s(buffer + index, input.length() - index, ptr, end - ptr); index += end - ptr;
         }
         if (js.alerts)
         {
@@ -163,8 +163,7 @@ void HttpJsNorm::normalize(const Field& input, Field& output, bool& js_norm_allo
                 events.create_event(EVENT_MIXED_ENCODINGS);
             }
         }
-        output.set(index, buffer);
-        js_norm_alloc = true;
+        output.set(index, buffer, true);
     }
     else
     {

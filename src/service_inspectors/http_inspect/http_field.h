@@ -32,30 +32,30 @@
 class Field
 {
 public:
-    int32_t length = HttpEnums::STAT_NOT_COMPUTE;
-    const uint8_t* start = nullptr;
-
     static const Field FIELD_NULL;
 
-    Field(int32_t length_, const uint8_t* start_) : length(length_), start(start_) { }
-    explicit Field(int32_t length_) : length(length_) { assert(length<=0); }
+    Field(int32_t length, const uint8_t* start, bool own_the_buffer_ = false) : len(length),
+        own_the_buffer(own_the_buffer_), strt(start) { }
+    explicit Field(int32_t length) : len(length) { assert(length<=0); }
     Field() = default;
-    void set(int32_t length_, const uint8_t* start_);
+    ~Field() { if (own_the_buffer) delete[] strt; }
+    int32_t length() const { return len; }
+    const uint8_t* start() const { return strt; }
+    void set(int32_t length, const uint8_t* start, bool own_the_buffer_ = false);
     void set(const Field& f);
     void set(HttpEnums::StatusCode stat_code);
     void set(int32_t length) { set(static_cast<HttpEnums::StatusCode>(length)); }
-    // Only call this method if the field owns the dynamically allocated buffer you are deleting.
-    // This method is a convenience but you still must know where the buffer came from. Many fields
-    // refer to static buffers or a subfield of someone else's buffer.
-
-    // FIXIT-M the following test should undoubtedly be > 0. But this cannot be changed until a
-    // survey is done to ensure that no old code creates zero-length buffers. In practice this will
-    // happen naturally when start and length become private.
-    void delete_buffer() { if (length >= 0) delete[] start; }
 
 #ifdef REG_TEST
     void print(FILE* output, const char* name) const;
 #endif
+
+private:
+    Field& operator=(const Field&) = delete;
+
+    int32_t len = HttpEnums::STAT_NOT_COMPUTE;
+    bool own_the_buffer = false;
+    const uint8_t* strt = nullptr;
 };
 
 #endif

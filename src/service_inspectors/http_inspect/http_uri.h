@@ -40,7 +40,6 @@ public:
         uri(length, start), method_id(method_id_), uri_param(uri_param_),
         infractions(infractions_), events(events_)
         { normalize(); }
-    ~HttpUri();
     const Field& get_uri() const { return uri; }
     HttpEnums::UriType get_uri_type() { return uri_type; }
     const Field& get_scheme() { return scheme; }
@@ -81,7 +80,6 @@ private:
     Field query_norm;
     Field fragment_norm;
     Field classic_norm;
-    bool classic_norm_allocated = false;
     size_t abs_path_hash = 0;
 
     void normalize();

@@ -28,33 +28,32 @@ using namespace HttpEnums;
 
 void HttpMsgStart::analyze()
 {
-    start_line.start = msg_text.start;
-    start_line.length = msg_text.length;
+    start_line.set(msg_text);
     parse_start_line();
     gen_events();
 }
 
 void HttpMsgStart::derive_version_id()
 {
-    if (version.start[6] != '.')
+    if (version.start()[6] != '.')
     {
         version_id = VERS__PROBLEMATIC;
         infractions += INF_BAD_VERSION;
         events.create_event(EVENT_BAD_VERS);
     }
-    else if ((version.start[5] == '1') && (version.start[7] == '1'))
+    else if ((version.start()[5] == '1') && (version.start()[7] == '1'))
     {
         version_id = VERS_1_1;
     }
-    else if ((version.start[5] == '1') && (version.start[7] == '0'))
+    else if ((version.start()[5] == '1') && (version.start()[7] == '0'))
     {
         version_id = VERS_1_0;
     }
-    else if ((version.start[5] == '2') && (version.start[7] == '0'))
+    else if ((version.start()[5] == '2') && (version.start()[7] == '0'))
     {
         version_id = VERS_2_0;
     }
-    else if ((version.start[5] == '0') && (version.start[7] == '9'))
+    else if ((version.start()[5] == '0') && (version.start()[7] == '9'))
     {
         // Real 0.9 traffic would never be labeled HTTP/0.9 because 0.9 is older than the version
         // system. Aside from the possibility that someone might do this to make trouble,
@@ -63,8 +62,8 @@ void HttpMsgStart::derive_version_id()
         // labeled 0.9.
         version_id = VERS_0_9;
     }
-    else if ((version.start[5] >= '0') && (version.start[5] <= '9') &&
-        (version.start[7] >= '0') && (version.start[7] <= '9'))
+    else if ((version.start()[5] >= '0') && (version.start()[5] <= '9') &&
+        (version.start()[7] >= '0') && (version.start()[7] <= '9'))
     {
         version_id = VERS__OTHER;
         infractions += INF_UNKNOWN_VERSION;

@@ -33,6 +33,7 @@
 
 class HttpTransaction;
 class HttpJsNorm;
+class HttpMsgSection;
 
 class HttpFlowData : public FlowData
 {
@@ -111,6 +112,7 @@ private:
     MimeSession* mime_state[2] = { nullptr, nullptr };
     UtfDecodeSession* utf_state = nullptr; // SRC_SERVER only
     uint64_t expected_trans_num[2] = { 1, 1 };
+    HttpMsgSection* latest_section = nullptr;
 
     // number of user data octets seen so far (regular body or chunks)
     int64_t body_octets[2] = { HttpEnums::STAT_NOT_PRESENT, HttpEnums::STAT_NOT_PRESENT };

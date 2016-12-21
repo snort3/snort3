@@ -39,15 +39,8 @@ HttpMsgHeadShared::~HttpMsgHeadShared()
     {
         NormalizedHeader* temp_ptr = list_ptr;
         list_ptr = list_ptr->next;
-        temp_ptr->norm.delete_buffer();
         delete temp_ptr;
     }
-    if (classic_raw_header_alloc)
-        classic_raw_header.delete_buffer();
-    if (classic_norm_header_alloc)
-        classic_norm_header.delete_buffer();
-    if (classic_norm_cookie_alloc)
-        classic_norm_cookie.delete_buffer();
 }
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
@@ -96,24 +89,25 @@ void HttpMsgHeadShared::parse_header_block()
     // session_data->num_head_lines is computed without consideration of wrapping and may overstate
     // actual number of headers. Rely on num_headers which is calculated correctly.
     header_line = new Field[session_data->num_head_lines[source_id]];
-    while (bytes_used < msg_text.length)
+    while (bytes_used < msg_text.length())
     {
         assert(num_headers < session_data->num_head_lines[source_id]);
-        header_line[num_headers].start = msg_text.start + bytes_used;
-        header_line[num_headers].length = find_header_end(header_line[num_headers].start,
-            msg_text.length - bytes_used, num_seps);
-        if (header_line[num_headers].length > MAX_HEADER_LENGTH)
+        header_line[num_headers].set(
+            find_header_end(msg_text.start() + bytes_used, msg_text.length() - bytes_used,
+                num_seps),
+            msg_text.start() + bytes_used);
+        if (header_line[num_headers].length() > MAX_HEADER_LENGTH)
         {
             infractions += INF_TOO_LONG_HEADER;
             events.create_event(EVENT_LONG_HDR);
         }
-        bytes_used += header_line[num_headers++].length + num_seps;
+        bytes_used += header_line[num_headers++].length() + num_seps;
         if (num_headers >= MAX_HEADERS)
         {
             break;
         }
     }
-    if (bytes_used < msg_text.length)
+    if (bytes_used < msg_text.length())
     {
         // FIXIT-M eventually need to separate max header alert from internal maximum
         infractions += INF_TOO_MANY_HEADERS;
@@ -166,17 +160,16 @@ void HttpMsgHeadShared::parse_header_lines()
     int colon;
     for (int k=0; k < num_headers; k++)
     {
-        for (colon=0; colon < header_line[k].length; colon++)
+        for (colon=0; colon < header_line[k].length(); colon++)
         {
-            if (header_line[k].start[colon] == ':')
+            if (header_line[k].start()[colon] == ':')
                 break;
         }
-        if (colon < header_line[k].length)
+        if (colon < header_line[k].length())
         {
-            header_name[k].start = header_line[k].start;
-            header_name[k].length = colon;
-            header_value[k].start = header_line[k].start + colon + 1;
-            header_value[k].length = header_line[k].length - colon - 1;
+            header_name[k].set(colon, header_line[k].start());
+            header_value[k].set(header_line[k].length() - colon - 1,
+                                header_line[k].start() + colon + 1);
         }
         else
         {
@@ -190,8 +183,8 @@ void HttpMsgHeadShared::parse_header_lines()
 
 void HttpMsgHeadShared::derive_header_name_id(int index)
 {
-    const int32_t& length = header_name[index].length;
-    const uint8_t*& buffer = header_name[index].start;
+    const int32_t length = header_name[index].length();
+    const uint8_t* buffer = header_name[index].start();
 
     if (length <= 0)
     {
@@ -237,7 +230,7 @@ int HttpMsgHeadShared::get_header_count(HeaderId header_id) const
 
 const Field& HttpMsgHeadShared::get_classic_raw_header()
 {
-    if (classic_raw_header.length != STAT_NOT_COMPUTE)
+    if (classic_raw_header.length() != STAT_NOT_COMPUTE)
         return classic_raw_header;
     const HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
     if (!headers_present[cookie_head])
@@ -256,8 +249,8 @@ const Field& HttpMsgHeadShared::get_classic_raw_header()
         // All header line Fields point into the buffer holding the entire message section.
         // Calculation must account for separators between header lines, but there are none
         // following the final header line.
-        const int32_t head_len = (k == num_headers-1) ? header_line[k].length :
-            header_line[k+1].start - header_line[k].start;
+        const int32_t head_len = (k == num_headers-1) ? header_line[k].length() :
+            header_line[k+1].start() - header_line[k].start();
         length += head_len;
     }
 
@@ -268,22 +261,20 @@ const Field& HttpMsgHeadShared::get_classic_raw_header()
     {
         if (header_name_id[k] == cookie_head)
             continue;
-        const int32_t head_len = (k == num_headers-1) ? header_line[k].length :
-            header_line[k+1].start - header_line[k].start;
-        memcpy(buffer + current, header_line[k].start, head_len);
+        const int32_t head_len = (k == num_headers-1) ? header_line[k].length() :
+            header_line[k+1].start() - header_line[k].start();
+        memcpy(buffer + current, header_line[k].start(), head_len);
         current += head_len;
     }
     assert(current == length);
 
-    classic_raw_header.set(length, buffer);
-    classic_raw_header_alloc = true;
+    classic_raw_header.set(length, buffer, true);
     return classic_raw_header;
 }
 
 const Field& HttpMsgHeadShared::get_classic_norm_header()
 {
-    return classic_normalize(get_classic_raw_header(), classic_norm_header,
-        classic_norm_header_alloc, params->uri_param);
+    return classic_normalize(get_classic_raw_header(), classic_norm_header, params->uri_param);
 }
 
 const Field& HttpMsgHeadShared::get_classic_raw_cookie()
@@ -294,8 +285,7 @@ const Field& HttpMsgHeadShared::get_classic_raw_cookie()
 
 const Field& HttpMsgHeadShared::get_classic_norm_cookie()
 {
-    return classic_normalize(get_classic_raw_cookie(), classic_norm_cookie,
-        classic_norm_cookie_alloc, params->uri_param);
+    return classic_normalize(get_classic_raw_cookie(), classic_norm_cookie, params->uri_param);
 }
 
 const Field& HttpMsgHeadShared::get_header_value_raw(HeaderId header_id) const
@@ -337,7 +327,7 @@ void HttpMsgHeadShared::print_headers(FILE* output)
     }
     for (int k=1; k <= HEAD__MAX_VALUE-1; k++)
     {
-        if (get_header_value_norm((HeaderId)k).length != STAT_NO_SOURCE)
+        if (get_header_value_norm((HeaderId)k).length() != STAT_NO_SOURCE)
         {
             snprintf(title_buf, sizeof(title_buf), "Normalized header %d", k);
             get_header_value_norm((HeaderId)k).print(output, title_buf);

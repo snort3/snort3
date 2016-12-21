@@ -30,40 +30,32 @@
 
 using namespace HttpEnums;
 
-HttpUri::~HttpUri()
-{
-    if (classic_norm_allocated)
-        delete[] classic_norm.start;
-}
-
 void HttpUri::parse_uri()
 {
     // Four basic types of HTTP URI
     // "*" means request does not apply to any specific resource
-    if ((uri.length == 1) && (uri.start[0] == '*'))
+    if ((uri.length() == 1) && (uri.start()[0] == '*'))
     {
         uri_type = URI_ASTERISK;
-        scheme.length = STAT_NOT_PRESENT;
-        authority.length = STAT_NOT_PRESENT;
-        abs_path.length = STAT_NOT_PRESENT;
+        scheme.set(STAT_NOT_PRESENT);
+        authority.set(STAT_NOT_PRESENT);
+        abs_path.set(STAT_NOT_PRESENT);
     }
     // CONNECT method uses an authority
     else if (method_id == METH_CONNECT)
     {
         uri_type = URI_AUTHORITY;
-        scheme.length = STAT_NOT_PRESENT;
-        authority.length = uri.length;
-        authority.start = uri.start;
-        abs_path.length = STAT_NOT_PRESENT;
+        scheme.set(STAT_NOT_PRESENT);
+        authority.set(uri);
+        abs_path.set(STAT_NOT_PRESENT);
     }
     // Absolute path is a path but no scheme or authority
-    else if (uri.start[0] == '/')
+    else if (uri.start()[0] == '/')
     {
         uri_type = URI_ABSPATH;
-        scheme.length = STAT_NOT_PRESENT;
-        authority.length = STAT_NOT_PRESENT;
-        abs_path.length = uri.length;
-        abs_path.start = uri.start;
+        scheme.set(STAT_NOT_PRESENT);
+        authority.set(STAT_NOT_PRESENT);
+        abs_path.set(uri);
     }
     // Absolute URI includes scheme, authority, and path
     else
@@ -71,88 +63,87 @@ void HttpUri::parse_uri()
         // Find the "://" and then the "/"
         int j;
         int k;
-        for (j = 0; (j < uri.length) && (uri.start[j] != ':'); j++);
-        for (k = j+3; (k < uri.length) && (uri.start[k] != '/'); k++);
-        if ((k < uri.length) && (uri.start[j+1] == '/') && (uri.start[j+2] == '/'))
+        for (j = 0; (j < uri.length()) && (uri.start()[j] != ':'); j++);
+        for (k = j+3; (k < uri.length()) && (uri.start()[k] != '/'); k++);
+        if ((k < uri.length()) && (uri.start()[j+1] == '/') && (uri.start()[j+2] == '/'))
         {
             uri_type = URI_ABSOLUTE;
-            scheme.length = j;
-            scheme.start = uri.start;
-            authority.length = k - j - 3;
-            authority.start = uri.start + j + 3;
-            abs_path.length = uri.length - k;
-            abs_path.start = uri.start + k;
+            scheme.set(j, uri.start());
+            authority.set(k - j - 3, uri.start() + j + 3);
+            abs_path.set(uri.length() - k, uri.start() + k);
         }
         else
         {
             infractions += INF_BAD_URI;
             events.create_event(EVENT_URI_BAD_FORMAT);
             uri_type = URI__PROBLEMATIC;
-            scheme.length = STAT_PROBLEMATIC;
-            authority.length = STAT_PROBLEMATIC;
-            abs_path.length = STAT_PROBLEMATIC;
+            scheme.set(STAT_PROBLEMATIC);
+            authority.set(STAT_PROBLEMATIC);
+            abs_path.set(STAT_PROBLEMATIC);
         }
     }
 }
 
 void HttpUri::parse_authority()
 {
-    if (authority.length <= 0)
+    if (authority.length() <= 0)
     {
-        host.length = STAT_NO_SOURCE;
-        port.length = STAT_NO_SOURCE;
+        host.set(STAT_NO_SOURCE);
+        port.set(STAT_NO_SOURCE);
         return;
     }
-    host.start = authority.start;
-    for (host.length = 0; (host.length < authority.length) &&
-        (authority.start[host.length] != ':'); host.length++);
-    if (host.length < authority.length)
+    int32_t host_len;
+    for (host_len = 0; (host_len < authority.length()) && (authority.start()[host_len] != ':');
+        host_len++);
+    host.set(host_len, authority.start());
+    if (host.length() < authority.length())
     {
-        port.length = authority.length - host.length - 1;
-        port.start = authority.start + host.length + 1;
+        port.set(authority.length() - host.length() - 1, authority.start() + host.length() + 1);
     }
     else
-        port.length = STAT_NOT_PRESENT;
+        port.set(STAT_NOT_PRESENT);
 }
 
 void HttpUri::parse_abs_path()
 {
     // path?query#fragment
     // path is always present in absolute path, while query and fragment are optional
-    if (abs_path.length <= 0)
+    if (abs_path.length() <= 0)
     {
-        path.length = STAT_NO_SOURCE;
-        query.length = STAT_NO_SOURCE;
-        fragment.length = STAT_NO_SOURCE;
+        path.set(STAT_NO_SOURCE);
+        query.set(STAT_NO_SOURCE);
+        fragment.set(STAT_NO_SOURCE);
         return;
     }
-    path.start = abs_path.start;
-    for (path.length = 0; (path.length < abs_path.length) && (abs_path.start[path.length] != '?')
-        && (abs_path.start[path.length] != '#'); path.length++);
-    if (path.length == abs_path.length)
+    int32_t path_len;
+    for (path_len = 0; (path_len < abs_path.length()) && (abs_path.start()[path_len] != '?') &&
+        (abs_path.start()[path_len] != '#'); path_len++);
+    path.set(path_len, abs_path.start());
+    if (path.length() == abs_path.length())
     {
-        query.length = STAT_NOT_PRESENT;
-        fragment.length = STAT_NOT_PRESENT;
+        query.set(STAT_NOT_PRESENT);
+        fragment.set(STAT_NOT_PRESENT);
         return;
     }
-    if (abs_path.start[path.length] == '?')
+    if (abs_path.start()[path.length()] == '?')
     {
-        query.start = abs_path.start + path.length + 1;
-        for (query.length = 0; (query.length < abs_path.length - path.length - 1) &&
-            (query.start[query.length] != '#'); query.length++);
-        if (abs_path.length - path.length - 1 - query.length == 0)
+        int32_t query_len;
+        const uint8_t* const query_start = abs_path.start() + path.length() + 1;
+        for (query_len = 0; (query_len < abs_path.length() - path.length() - 1) &&
+            (query_start[query_len] != '#'); query_len++);
+        query.set(query_len, query_start);
+        if (abs_path.length() - path.length() - 1 - query.length() == 0)
         {
-            fragment.length = STAT_NOT_PRESENT;
+            fragment.set(STAT_NOT_PRESENT);
             return;
         }
-        fragment.start = query.start + query.length + 1;
-        fragment.length = abs_path.length - path.length - 1 - query.length - 1;
+        fragment.set(abs_path.length() - path.length() - 1 - query.length() - 1,
+                     query.start() + query.length() + 1);
     }
     else
     {
-        query.length = STAT_NOT_PRESENT;
-        fragment.start = abs_path.start + path.length + 1;
-        fragment.length = abs_path.length - path.length - 1;
+        query.set(STAT_NOT_PRESENT);
+        fragment.set(abs_path.length() - path.length() - 1, abs_path.start() + path.length() + 1);
     }
 }
 
@@ -163,11 +154,11 @@ void HttpUri::check_oversize_dir(Field uri_field)
     const uint8_t* cur;
     const uint8_t* end;
 
-    if ( uri_field.length <= 0 )
+    if ( uri_field.length() <= 0 )
         return;
 
-    cur = uri_field.start;
-    end = uri_field.start + uri_field.length;
+    cur = uri_field.start();
+    end = uri_field.start() + uri_field.length();
 
     while ( cur < end )
     {
@@ -200,26 +191,28 @@ void HttpUri::normalize()
     // Almost all HTTP requests are honest and rarely need expensive normalization processing. We
     // do a quick scan for red flags and only perform normalization if something comes up.
     // Otherwise we set the normalized fields to point at the raw values.
-    if ((host.length > 0) && UriNormalizer::need_norm(host, false, uri_param, infractions, events))
+    if ((host.length() > 0) &&
+            UriNormalizer::need_norm(host, false, uri_param, infractions, events))
         infractions += INF_URI_NEED_NORM_HOST;
-    if ((path.length > 0) && UriNormalizer::need_norm(path, true, uri_param, infractions, events))
+    if ((path.length() > 0) &&
+            UriNormalizer::need_norm(path, true, uri_param, infractions, events))
         infractions += INF_URI_NEED_NORM_PATH;
-    if ((query.length > 0) && UriNormalizer::need_norm(query, false, uri_param, infractions,
-            events))
+    if ((query.length() > 0) &&
+            UriNormalizer::need_norm(query, false, uri_param, infractions, events))
         infractions += INF_URI_NEED_NORM_QUERY;
-    if ((fragment.length > 0) && UriNormalizer::need_norm(fragment, false, uri_param, infractions,
-            events))
+    if ((fragment.length() > 0) &&
+            UriNormalizer::need_norm(fragment, false, uri_param, infractions, events))
         infractions += INF_URI_NEED_NORM_FRAGMENT;
 
     if (!((infractions & INF_URI_NEED_NORM_PATH)  || (infractions & INF_URI_NEED_NORM_HOST) ||
           (infractions & INF_URI_NEED_NORM_QUERY) || (infractions & INF_URI_NEED_NORM_FRAGMENT)))
     {
         // This URI is OK, normalization not required
-        host_norm = host;
-        path_norm = path;
-        query_norm = query;
-        fragment_norm = fragment;
-        classic_norm = uri;
+        host_norm.set(host);
+        path_norm.set(path);
+        query_norm.set(query);
+        fragment_norm.set(fragment);
+        classic_norm.set(uri);
         check_oversize_dir(path_norm);
         return;
     }
@@ -227,17 +220,17 @@ void HttpUri::normalize()
     HttpModule::increment_peg_counts(PEG_URI_NORM);
 
     // Create a new buffer containing the normalized URI by normalizing each individual piece.
-    const uint32_t total_length = uri.length + UriNormalizer::URI_NORM_EXPANSION;
+    const uint32_t total_length = uri.length() + UriNormalizer::URI_NORM_EXPANSION;
     uint8_t* const new_buf = new uint8_t[total_length];
     uint8_t* current = new_buf;
-    if (scheme.length >= 0)
+    if (scheme.length() >= 0)
     {
-        memcpy(current, scheme.start, scheme.length);
-        current += scheme.length;
+        memcpy(current, scheme.start(), scheme.length());
+        current += scheme.length();
         memcpy(current, "://", 3);
         current += 3;
     }
-    if (host.length > 0)
+    if (host.length() > 0)
     {
         if (infractions & INF_URI_NEED_NORM_HOST)
             UriNormalizer::normalize(host, host_norm, false, current, uri_param, infractions,
@@ -248,31 +241,31 @@ void HttpUri::normalize()
             // We need a copy of the raw host to provide that part of the normalized URI buffer we
             // are assembling. But the normalized component will refer to the original raw buffer
             // on the chance that the data retention policy in use might keep it longer.
-            memcpy(current, host.start, host.length);
-            host_norm = host;
+            memcpy(current, host.start(), host.length());
+            host_norm.set(host);
         }
-        current += host_norm.length;
+        current += host_norm.length();
     }
-    if (port.length >= 0)
+    if (port.length() >= 0)
     {
         memcpy(current, ":", 1);
         current += 1;
-        memcpy(current, port.start, port.length);
-        current += port.length;
+        memcpy(current, port.start(), port.length());
+        current += port.length();
     }
-    if (path.length > 0)
+    if (path.length() > 0)
     {
         if (infractions & INF_URI_NEED_NORM_PATH)
             UriNormalizer::normalize(path, path_norm, true, current, uri_param, infractions,
                 events);
         else
         {
-            memcpy(current, path.start, path.length);
-            path_norm = path;
+            memcpy(current, path.start(), path.length());
+            path_norm.set(path);
         }
-        current += path_norm.length;
+        current += path_norm.length();
     }
-    if (query.length >= 0)
+    if (query.length() >= 0)
     {
         memcpy(current, "?", 1);
         current += 1;
@@ -281,12 +274,12 @@ void HttpUri::normalize()
                 events);
         else
         {
-            memcpy(current, query.start, query.length);
-            query_norm = query;
+            memcpy(current, query.start(), query.length());
+            query_norm.set(query);
         }
-        current += query_norm.length;
+        current += query_norm.length();
     }
-    if (fragment.length >= 0)
+    if (fragment.length() >= 0)
     {
         memcpy(current, "#", 1);
         current += 1;
@@ -295,10 +288,10 @@ void HttpUri::normalize()
                 infractions, events);
         else
         {
-            memcpy(current, fragment.start, fragment.length);
-            fragment_norm = fragment;
+            memcpy(current, fragment.start(), fragment.length());
+            fragment_norm.set(fragment);
         }
-        current += fragment_norm.length;
+        current += fragment_norm.length();
     }
     assert(current - new_buf <= total_length);
 
@@ -317,8 +310,7 @@ void HttpUri::normalize()
 
     check_oversize_dir(path_norm);
 
-    classic_norm.set(current - new_buf, new_buf);
-    classic_norm_allocated = true;
+    classic_norm.set(current - new_buf, new_buf, true);
 }
 
 size_t HttpUri::get_file_proc_hash()
@@ -326,9 +318,9 @@ size_t HttpUri::get_file_proc_hash()
     if (abs_path_hash)
         return abs_path_hash;
 
-    if (abs_path.length > 0 )
+    if (abs_path.length() > 0 )
     {
-        abs_path_hash = str_to_hash(abs_path.start, abs_path.length);
+        abs_path_hash = str_to_hash(abs_path.start(), abs_path.length());
     }
 
     return abs_path_hash;

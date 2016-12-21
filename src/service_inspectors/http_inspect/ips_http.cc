@@ -205,18 +205,18 @@ int HttpIpsOption::eval(Cursor& c, Packet* p)
     if (!p->flow || !p->flow->gadget)
         return DETECTION_OPTION_NO_MATCH;
 
-    if (HttpInspect::get_latest_is() != inspect_section)
+    if (HttpInspect::get_latest_is(p) != inspect_section)
     {
         // It is OK to provide a body buffer during the detection section. If there actually is
         // a body buffer available then the detection section must also be the first body section.
-        if (! ((inspect_section == IS_BODY) && (HttpInspect::get_latest_is() == IS_DETECTION)) )
+        if (! ((inspect_section == IS_BODY) && (HttpInspect::get_latest_is(p) == IS_DETECTION)) )
             return DETECTION_OPTION_NO_MATCH;
     }
 
     InspectionBuffer hb;
 
     if (! ((HttpInspect*)(p->flow->gadget))->
-           http_get_buf((unsigned)buffer_index, sub_id, form, nullptr, hb))
+           http_get_buf((unsigned)buffer_index, sub_id, form, p, hb))
         return DETECTION_OPTION_NO_MATCH;
 
     c.set(key, hb.data, hb.len);

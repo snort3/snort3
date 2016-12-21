@@ -25,12 +25,11 @@
 
 const uint8_t* HttpEvent::get_header(unsigned id, uint64_t sub_id, int32_t& length)
 {
-    Field field;
-    field = http_msg_header->get_classic_buffer(id, sub_id, 0);
-    if(field.length > 0)
+    const Field& field = http_msg_header->get_classic_buffer(id, sub_id, 0);
+    if(field.length() > 0)
     {
-        length = field.length;
-        return field.start;
+        length = field.length();
+        return field.start();
     }
     else
     {

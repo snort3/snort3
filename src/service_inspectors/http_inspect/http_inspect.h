@@ -37,14 +37,12 @@ class HttpApi;
 class HttpInspect : public Inspector
 {
 public:
-    static THREAD_LOCAL uint8_t body_buffer[HttpEnums::MAX_OCTETS];
-
     HttpInspect(const HttpParaList* params_);
     ~HttpInspect() { delete params; }
 
-    bool get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b) override;
-    bool http_get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet*, InspectionBuffer& b);
-    bool get_fp_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b) override;
+    bool get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override;
+    bool http_get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet* p, InspectionBuffer& b);
+    bool get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override;
     bool configure(SnortConfig*) override { return true; }
     void show(SnortConfig*) override { LogMessage("HttpInspect\n"); }
     void eval(Packet*) override { }
@@ -55,7 +53,7 @@ public:
     {
         return new HttpStreamSplitter(is_client_to_server, this);
     }
-    static HttpEnums::InspectSection get_latest_is();
+    static HttpEnums::InspectSection get_latest_is(const Packet* p);
 
 private:
     friend HttpApi;
@@ -64,10 +62,7 @@ private:
     const Field& process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
         HttpEnums::SourceId source_id_, bool buf_owner) const;
     void clear(HttpFlowData* session_data, HttpEnums::SourceId source_id);
-    static HttpEnums::SourceId get_latest_src() { return (latest_section != nullptr) ?
-        latest_section->get_source_id() : HttpEnums::SRC__NOT_COMPUTE; }
-
-    static THREAD_LOCAL HttpMsgSection* latest_section;
+    static HttpEnums::SourceId get_latest_src(const Packet* p);
 
     const HttpParaList* const params;
 };

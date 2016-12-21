@@ -72,13 +72,13 @@ int32_t norm_remove_quotes_lws(const uint8_t* in_buf, int32_t in_length, uint8_t
 // Convert a decimal field such as Content-Length to an integer.
 int64_t norm_decimal_integer(const Field& input)
 {
-    assert(input.length > 0);
+    assert(input.length() > 0);
     // Limited to 18 decimal digits, not including leading zeros, to fit comfortably into int64_t
     int64_t total = 0;
     int non_leading_zeros = 0;
-    for (int32_t k=0; k < input.length; k++)
+    for (int32_t k=0; k < input.length(); k++)
     {
-        int value = input.start[k] - '0';
+        int value = input.start()[k] - '0';
         if ((non_leading_zeros > 0) || (value != 0))
             non_leading_zeros++;
         if (non_leading_zeros > 18)
@@ -92,11 +92,11 @@ int64_t norm_decimal_integer(const Field& input)
 
 void get_last_token(const Field& input, Field& last_token, char ichar)
 {
-    assert(input.length > 0);
-    for (last_token.start = input.start + input.length - 1; (last_token.start >= input.start) &&
-        (*(last_token.start)!= ichar); (last_token.start)--);
-    (last_token.start)++;
-    last_token.length = input.length - (last_token.start - input.start);
+    assert(input.length() > 0);
+    const uint8_t* last_start = input.start() + input.length() - 1;
+    for (; (last_start >= input.start()) && (*last_start != ichar); last_start--);
+    last_start++;
+    last_token.set(input.length() - (last_start - input.start()), last_start);
     return;
 }
 
@@ -106,15 +106,15 @@ int32_t norm_last_token_code(const Field& input, const StrCode table[])
     Field last_token;
     get_last_token(input, last_token, ',');
 
-    return str_to_code(last_token.start, last_token.length, table);
+    return str_to_code(last_token.start(), last_token.length(), table);
 }
 
 // Given a comma-separated list of words, does "chunked" appear before the last word
 bool chunked_before_end(const Field& input)
 {
-    for (int k=0; k < (input.length - 7); k++)
+    for (int k=0; k < (input.length() - 7); k++)
     {
-        if (((k == 0) || (input.start[k-1] == ',')) && !memcmp(input.start+k, "chunked,", 8))
+        if (((k == 0) || (input.start()[k-1] == ',')) && !memcmp(input.start()+k, "chunked,", 8))
         {
             return true;
         }

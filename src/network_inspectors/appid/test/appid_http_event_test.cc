@@ -68,10 +68,11 @@ const char *uri = nullptr;
 const char *useragent = nullptr;
 const char *via = nullptr;
 
-void Field::set(int32_t length_, const uint8_t* start_)
+void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 {
-    start = start_;
-    length = length_;
+    strt = start;
+    len = length;
+    own_the_buffer = own_the_buffer_;
 }
 
 Field global_field;
@@ -158,8 +159,8 @@ const uint8_t* HttpEvent::get_content_type(int32_t &length)
     global_field.set(0, nullptr);
     if(content_type)
         global_field.set(strlen(content_type), (const uint8_t*)content_type);
-    length = global_field.length;
-    return global_field.start;
+    length = global_field.length();
+    return global_field.start();
 }
 
 const uint8_t* HttpEvent::get_cookie(int32_t &length)
@@ -167,8 +168,8 @@ const uint8_t* HttpEvent::get_cookie(int32_t &length)
     global_field.set(0, nullptr);
     if(cookie)
         global_field.set(strlen(cookie), (const uint8_t*)cookie);
-    length = global_field.length;
-    return global_field.start;
+    length = global_field.length();
+    return global_field.start();
 }
 
 const uint8_t* HttpEvent::get_host(int32_t &length)
@@ -176,8 +177,8 @@ const uint8_t* HttpEvent::get_host(int32_t &length)
     global_field.set(0, nullptr);
     if(host)
         global_field.set(strlen(host), (const uint8_t*)host);
-    length = global_field.length;
-    return global_field.start;
+    length = global_field.length();
+    return global_field.start();
 }
 
 const uint8_t* HttpEvent::get_location(int32_t &length)
@@ -185,8 +186,8 @@ const uint8_t* HttpEvent::get_location(int32_t &length)
     global_field.set(0, nullptr);
     if(location)
         global_field.set(strlen(location), (const uint8_t*)location);
-    length = global_field.length;
-    return global_field.start;
+    length = global_field.length();
+    return global_field.start();
 }
 
 const uint8_t* HttpEvent::get_referer(int32_t &length)
@@ -194,8 +195,8 @@ const uint8_t* HttpEvent::get_referer(int32_t &length)
     global_field.set(0, nullptr);
     if(referer)
         global_field.set(strlen(referer), (const uint8_t*)referer);
-    length = global_field.length;
-    return global_field.start;
+    length = global_field.length();
+    return global_field.start();
 }
 
 int32_t HttpEvent::get_response_code()
@@ -208,8 +209,8 @@ const uint8_t* HttpEvent::get_server(int32_t &length)
     global_field.set(0, nullptr);
     if(server)
         global_field.set(strlen(server), (const uint8_t*)server);
-    length = global_field.length;
-    return global_field.start;
+    length = global_field.length();
+    return global_field.start();
 }
 
 const uint8_t* HttpEvent::get_uri(int32_t &length)
@@ -217,8 +218,8 @@ const uint8_t* HttpEvent::get_uri(int32_t &length)
     global_field.set(0, nullptr);
     if(uri)
         global_field.set(strlen(uri), (const uint8_t*)uri);
-    length = global_field.length;
-    return global_field.start;
+    length = global_field.length();
+    return global_field.start();
 }
 
 const uint8_t* HttpEvent::get_user_agent(int32_t &length)
@@ -226,8 +227,8 @@ const uint8_t* HttpEvent::get_user_agent(int32_t &length)
     global_field.set(0, nullptr);
     if(useragent)
         global_field.set(strlen(useragent), (const uint8_t*)useragent);
-    length = global_field.length;
-    return global_field.start;
+    length = global_field.length();
+    return global_field.start();
 }
 
 const uint8_t* HttpEvent::get_via(int32_t &length)
@@ -235,8 +236,8 @@ const uint8_t* HttpEvent::get_via(int32_t &length)
     global_field.set(0, nullptr);
     if(via)
         global_field.set(strlen(via), (const uint8_t*)via);
-    length = global_field.length;
-    return global_field.start;
+    length = global_field.length();
+    return global_field.start();
 }
 
 const uint8_t* HttpEvent::get_x_working_with(int32_t &length)
@@ -244,8 +245,8 @@ const uint8_t* HttpEvent::get_x_working_with(int32_t &length)
     global_field.set(0, nullptr);
     if(x_working_with)
         global_field.set(strlen(x_working_with), (const uint8_t*)x_working_with);
-    length = global_field.length;
-    return global_field.start;
+    length = global_field.length();
+    return global_field.start();
 }
 
 Flow::Flow() {}

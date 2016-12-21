@@ -38,8 +38,8 @@ class HttpJsNorm
 public:
     HttpJsNorm(int max_javascript_whitespaces_, const HttpParaList::UriParam& uri_param_);
     ~HttpJsNorm();
-    void normalize(const Field& input, Field& output, bool& js_norm_alloc,
-        HttpInfractions& infractions, HttpEventGen& events) const;
+    void normalize(const Field& input, Field& output, HttpInfractions& infractions,
+        HttpEventGen& events) const;
 private:
     enum JsSearchId { JS_JAVASCRIPT };
     enum HtmlSearchId { HTML_JS, HTML_EMA, HTML_VB };

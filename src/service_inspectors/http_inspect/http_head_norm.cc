@@ -63,7 +63,7 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
     HttpInfractions& infractions, HttpEventGen& events, const HeaderId header_name_id[],
     const Field header_value[], const int32_t num_headers, Field& result_field) const
 {
-    if (result_field.length != STAT_NOT_COMPUTE)
+    if (result_field.length() != STAT_NOT_COMPUTE)
     {
         return;
     }
@@ -84,7 +84,7 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
         {
             if (++num_matches == 1)
                 curr_match = k;   // remembering location of the first matching header
-            buffer_length += header_value[k].length;
+            buffer_length += header_value[k].length();
             if (!concatenate_repeats || (num_matches >= count))
                 break;
         }
@@ -114,8 +114,8 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
             data_length++;
             while (header_name_id[++curr_match] != head_id);
         }
-        int32_t growth = derive_header_content(header_value[curr_match].start,
-            header_value[curr_match].length, working);
+        int32_t growth = derive_header_content(header_value[curr_match].start(),
+            header_value[curr_match].length(), working);
         working += growth;
         data_length += growth;
     }
@@ -132,7 +132,7 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
         }
     }
     delete[] temp_space;
-    result_field.set(data_length, norm_value);
+    result_field.set(data_length, norm_value, true);
     return;
 }
 

@@ -56,8 +56,8 @@ TEST(http_inspect_uri_norm, normalize)
     Field input(20, (const uint8_t*) "/uri//to/%6eormalize");
     Field result;
     UriNormalizer::normalize(input, result, true, buffer, uri_param, infractions, events);
-    CHECK(result.length == 17);
-    CHECK(memcmp(result.start, "/uri/to/normalize", 17) == 0);
+    CHECK(result.length() == 17);
+    CHECK(memcmp(result.start(), "/uri/to/normalize", 17) == 0);
 }
 
 TEST_GROUP(http_double_decode_test)
@@ -82,8 +82,8 @@ TEST(http_double_decode_test, single)
     Field input(19, (const uint8_t*) "/uri/to%5Cnormalize");
     Field result;
     UriNormalizer::normalize(input, result, true, buffer, uri_param, infractions, events);
-    CHECK(result.length == 17);
-    CHECK(memcmp(result.start, "/uri/to/normalize", 17) == 0);
+    CHECK(result.length() == 17);
+    CHECK(memcmp(result.start(), "/uri/to/normalize", 17) == 0);
 }
 
 TEST(http_double_decode_test, encoded_percent)
@@ -91,8 +91,8 @@ TEST(http_double_decode_test, encoded_percent)
     Field input(21, (const uint8_t*) "/uri/to%255Cnormalize");
     Field result;
     UriNormalizer::normalize(input, result, true, buffer, uri_param, infractions, events);
-    CHECK(result.length == 17);
-    CHECK(memcmp(result.start, "/uri/to/normalize", 17) == 0);
+    CHECK(result.length() == 17);
+    CHECK(memcmp(result.start(), "/uri/to/normalize", 17) == 0);
 }
 
 TEST(http_double_decode_test, double_percent)
@@ -100,8 +100,8 @@ TEST(http_double_decode_test, double_percent)
     Field input(20, (const uint8_t*) "/uri/to%%5Cnormalize");
     Field result;
     UriNormalizer::normalize(input, result, true, buffer, uri_param, infractions, events);
-    CHECK(result.length == 17);
-    CHECK(memcmp(result.start, "/uri/to/normalize", 17) == 0);
+    CHECK(result.length() == 17);
+    CHECK(memcmp(result.start(), "/uri/to/normalize", 17) == 0);
 }
 
 TEST(http_double_decode_test, encoded_all)
@@ -109,8 +109,8 @@ TEST(http_double_decode_test, encoded_all)
     Field input(25, (const uint8_t*) "/uri/to%25%35%43normalize");
     Field result;
     UriNormalizer::normalize(input, result, true, buffer, uri_param, infractions, events);
-    CHECK(result.length == 17);
-    CHECK(memcmp(result.start, "/uri/to/normalize", 17) == 0);
+    CHECK(result.length() == 17);
+    CHECK(memcmp(result.start(), "/uri/to/normalize", 17) == 0);
 }
 
 TEST(http_double_decode_test, utf8_all)
@@ -118,8 +118,8 @@ TEST(http_double_decode_test, utf8_all)
     Field input(24, (const uint8_t*) "/uri/to\xE0\x80\xA5\xC0\xB5\xE0\x81\x83normalize");
     Field result;
     UriNormalizer::normalize(input, result, true, buffer, uri_param, infractions, events);
-    CHECK(result.length == 17);
-    CHECK(memcmp(result.start, "/uri/to/normalize", 17) == 0);
+    CHECK(result.length() == 17);
+    CHECK(memcmp(result.start(), "/uri/to/normalize", 17) == 0);
 }
 
 TEST(http_double_decode_test, u_encode_percent)
@@ -127,8 +127,8 @@ TEST(http_double_decode_test, u_encode_percent)
     Field input(24, (const uint8_t*) "/%%uri/to%u005cnormalize");
     Field result;
     UriNormalizer::normalize(input, result, true, buffer, uri_param, infractions, events);
-    CHECK(result.length == 18);
-    CHECK(memcmp(result.start, "/%uri/to/normalize", 17) == 0);
+    CHECK(result.length() == 18);
+    CHECK(memcmp(result.start(), "/%uri/to/normalize", 17) == 0);
 }
 
 TEST(http_double_decode_test, u_encode_all)
@@ -136,8 +136,8 @@ TEST(http_double_decode_test, u_encode_all)
     Field input(52, (const uint8_t*) "/uri/to%u0025%U0075%u0030%U0030%u0035%U0063normalize");
     Field result;
     UriNormalizer::normalize(input, result, true, buffer, uri_param, infractions, events);
-    CHECK(result.length == 17);
-    CHECK(memcmp(result.start, "/uri/to/normalize", 17) == 0);
+    CHECK(result.length() == 17);
+    CHECK(memcmp(result.start(), "/uri/to/normalize", 17) == 0);
 }
 
 int main(int argc, char** argv)

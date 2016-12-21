@@ -100,11 +100,8 @@ private:
     Field* header_value = nullptr;
 
     Field classic_raw_header;    // raw headers with cookies spliced out
-    bool classic_raw_header_alloc = false;
     Field classic_norm_header;   // URI normalization applied
-    bool classic_norm_header_alloc = false;
     Field classic_norm_cookie;   // URI normalization applied to concatenated cookie values
-    bool classic_norm_cookie_alloc = false;
 
     struct NormalizedHeader
     {

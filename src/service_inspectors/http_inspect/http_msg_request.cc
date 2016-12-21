@@ -41,14 +41,14 @@ HttpMsgRequest::HttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size,
 void HttpMsgRequest::parse_start_line()
 {
     // Check the version field
-    if ((start_line.length < 10) || !is_sp_tab[start_line.start[start_line.length-9]] ||
-         memcmp(start_line.start + start_line.length - 8, "HTTP/", 5))
+    if ((start_line.length() < 10) || !is_sp_tab[start_line.start()[start_line.length()-9]] ||
+         memcmp(start_line.start() + start_line.length() - 8, "HTTP/", 5))
     {
         if (!handle_zero_nine())
         {
             // Just a plain old bad request
             infractions += INF_BAD_REQ_LINE;
-            events.generate_misformatted_http(start_line.start, start_line.length);
+            events.generate_misformatted_http(start_line.start(), start_line.length());
         }
         return;
     }
@@ -59,20 +59,19 @@ void HttpMsgRequest::parse_start_line()
     // octets 2-81. The following algorithm uses those assumptions.
 
     int32_t first_space; // first whitespace in request line
-    for (first_space = 1; !is_sp_tab[start_line.start[first_space]]; first_space++);
+    for (first_space = 1; !is_sp_tab[start_line.start()[first_space]]; first_space++);
 
     int32_t first_end; // last whitespace in first clump of whitespace
-    for (first_end = first_space+1; is_sp_tab[start_line.start[first_end]]; first_end++);
+    for (first_end = first_space+1; is_sp_tab[start_line.start()[first_end]]; first_end++);
     first_end--;
 
     int32_t last_begin; // first whitespace in clump of whitespace before version
-    for (last_begin = start_line.length - 10; is_sp_tab[start_line.start[last_begin]];
+    for (last_begin = start_line.length() - 10; is_sp_tab[start_line.start()[last_begin]];
         last_begin--);
     last_begin++;
 
-    method.start = start_line.start;
-    method.length = first_space;
-    method_id = (MethodId)str_to_code(method.start, method.length, method_list);
+    method.set(first_space, start_line.start());
+    method_id = (MethodId)str_to_code(method.start(), method.length(), method_list);
 
     switch (method_id)
     {
@@ -87,13 +86,12 @@ void HttpMsgRequest::parse_start_line()
     default: HttpModule::increment_peg_counts(PEG_OTHER_METHOD); break;
     }
 
-    version.start = start_line.start + (start_line.length - 8);
-    version.length = 8;
+    version.set(8, start_line.start() + (start_line.length() - 8));
     derive_version_id();
 
     if (first_end < last_begin)
     {
-        uri = new HttpUri(start_line.start + first_end + 1, last_begin - first_end - 1,
+        uri = new HttpUri(start_line.start() + first_end + 1, last_begin - first_end - 1,
             method_id, params->uri_param, infractions, events);
     }
     else
@@ -106,26 +104,27 @@ void HttpMsgRequest::parse_start_line()
 bool HttpMsgRequest::handle_zero_nine()
 {
     // 0.9 request line is supposed to be "GET <URI>\r\n"
-    if ((start_line.length >= 3) &&
-        !memcmp(start_line.start, "GET", 3) &&
-        ((start_line.length == 3) || is_sp_tab[start_line.start[3]]))
+    if ((start_line.length() >= 3) &&
+        !memcmp(start_line.start(), "GET", 3) &&
+        ((start_line.length() == 3) || is_sp_tab[start_line.start()[3]]))
     {
         infractions += INF_ZERO_NINE_REQ;
         events.create_event(EVENT_SIMPLE_REQUEST);
-        method.set(3, start_line.start);
+        method.set(3, start_line.start());
         method_id = METH_GET;
         version_id = VERS_0_9;
 
         // Eliminate the clump of whitespace following GET and possible clump of whitespace at the
         // end and whatever is left is assumed to be the URI
         int32_t uri_begin;
-        for (uri_begin = 4; (uri_begin < start_line.length) &&
-            is_sp_tab[start_line.start[uri_begin]]; uri_begin++);
-        if (uri_begin < start_line.length)
+        for (uri_begin = 4; (uri_begin < start_line.length()) &&
+            is_sp_tab[start_line.start()[uri_begin]]; uri_begin++);
+        if (uri_begin < start_line.length())
         {
             int32_t uri_end;
-            for (uri_end = start_line.length - 1; is_sp_tab[start_line.start[uri_end]]; uri_end--);
-            uri = new HttpUri(start_line.start + uri_begin, uri_end - uri_begin + 1, method_id,
+            for (uri_end = start_line.length() - 1; is_sp_tab[start_line.start()[uri_end]];
+                uri_end--);
+            uri = new HttpUri(start_line.start() + uri_begin, uri_end - uri_begin + 1, method_id,
                 params->uri_param, infractions, events);
         }
         else
@@ -163,8 +162,8 @@ void HttpMsgRequest::gen_events()
 
     const bool zero_nine = infractions & INF_ZERO_NINE_REQ;
 
-    if ((start_line.start[method.length] == '\t') ||
-        (!zero_nine && (start_line.start[start_line.length - 9] == '\t')))
+    if ((start_line.start()[method.length()] == '\t') ||
+        (!zero_nine && (start_line.start()[start_line.length() - 9] == '\t')))
     {
         infractions += INF_REQUEST_TAB;
         events.create_event(EVENT_APACHE_WS);
@@ -172,16 +171,16 @@ void HttpMsgRequest::gen_events()
 
     // Look for white space issues in and around the URI.
     // Supposed to be <method><space><URI><space><version> or 0.9 format GET<space><URI>
-    const int32_t version_start = !zero_nine ? start_line.length - 9 : start_line.length;
-    for (int32_t k = method.length + 1; k < version_start; k++)
+    const int32_t version_start = !zero_nine ? start_line.length() - 9 : start_line.length();
+    for (int32_t k = method.length() + 1; k < version_start; k++)
     {
-        if (is_sp_tab[start_line.start[k]])
+        if (is_sp_tab[start_line.start()[k]])
         {
-            if (uri && (uri->get_uri().start <= start_line.start + k) &&
-                       (start_line.start + k < uri->get_uri().start + uri->get_uri().length))
+            if (uri && (uri->get_uri().start() <= start_line.start() + k) &&
+                       (start_line.start() + k < uri->get_uri().start() + uri->get_uri().length()))
             {
                 // white space inside the URI is not allowed
-                if (start_line.start[k] == ' ')
+                if (start_line.start()[k] == ' ')
                 {
                     infractions += INF_URI_SPACE;
                     events.create_event(EVENT_UNESCAPED_SPACE_URI);
@@ -192,7 +191,7 @@ void HttpMsgRequest::gen_events()
                 // extra white space before or after the URI
                 infractions += INF_REQUEST_WS;
                 events.create_event(EVENT_IMPROPER_WS);
-                if (start_line.start[k] == '\t')
+                if (start_line.start()[k] == '\t')
                 {
                     // which is also a tab
                     infractions += INF_REQUEST_TAB;

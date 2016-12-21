@@ -42,7 +42,7 @@ void HttpMsgStatus::parse_start_line()
 {
     // Splitter guarantees line begins with "HTTP/"
 
-    if ((start_line.length < 12) || !is_sp_tab[start_line.start[8]])
+    if ((start_line.length() < 12) || !is_sp_tab[start_line.start()[8]])
     {
         infractions += INF_BAD_STAT_LINE;
         events.create_event(EVENT_MISFORMATTED_HTTP);
@@ -50,18 +50,18 @@ void HttpMsgStatus::parse_start_line()
     }
 
     int32_t first_end; // last whitespace in first clump of whitespace
-    for (first_end = 9; (first_end < start_line.length) && is_sp_tab[start_line.start[first_end]];
-        first_end++);
+    for (first_end = 9; (first_end < start_line.length())
+        && is_sp_tab[start_line.start()[first_end]]; first_end++);
     first_end--;
 
-    if (start_line.length < first_end + 4)
+    if (start_line.length() < first_end + 4)
     {
         infractions += INF_BAD_STAT_LINE;
         events.create_event(EVENT_MISFORMATTED_HTTP);
         return;
     }
 
-    if ((start_line.length > first_end + 4) && !is_sp_tab[start_line.start[first_end + 4]])
+    if ((start_line.length() > first_end + 4) && !is_sp_tab[start_line.start()[first_end + 4]])
     {
         // FIXIT-M This should not be fatal. HI supports something like "HTTP/1.1 200\\OK\r\n" as
         // seen in a status line test.
@@ -72,34 +72,31 @@ void HttpMsgStatus::parse_start_line()
 
     HttpModule::increment_peg_counts(PEG_RESPONSE);
 
-    version.start = start_line.start;
-    version.length = 8;
+    version.set(8, start_line.start());
     derive_version_id();
 
-    status_code.start = start_line.start + first_end + 1;
-    status_code.length = 3;
+    status_code.set(3, start_line.start() + first_end + 1);
     derive_status_code_num();
 
-    if (start_line.length > first_end + 5)
+    if (start_line.length() > first_end + 5)
     {
-        reason_phrase.start = start_line.start + first_end + 5;
-        reason_phrase.length = start_line.length - first_end - 5;
+        reason_phrase.set(start_line.length() - first_end - 5, start_line.start() + first_end + 5);
     }
 }
 
 void HttpMsgStatus::derive_status_code_num()
 {
-    if ((status_code.start[0] < '0') || (status_code.start[0] > '9') || (status_code.start[1] <
-        '0') || (status_code.start[1] > '9') ||
-        (status_code.start[2] < '0') || (status_code.start[2] > '9'))
+    if ((status_code.start()[0] < '0') || (status_code.start()[0] > '9') ||
+        (status_code.start()[1] < '0') || (status_code.start()[1] > '9') ||
+        (status_code.start()[2] < '0') || (status_code.start()[2] > '9'))
     {
         infractions += INF_BAD_STAT_CODE;
         events.create_event(EVENT_INVALID_STATCODE);
         status_code_num = STAT_PROBLEMATIC;
         return;
     }
-    status_code_num = (status_code.start[0] - '0') * 100 + (status_code.start[1] - '0') * 10 +
-        (status_code.start[2] - '0');
+    status_code_num = (status_code.start()[0] - '0') * 100 + (status_code.start()[1] - '0') * 10 +
+        (status_code.start()[2] - '0');
     if ((status_code_num < 100) || (status_code_num > 599))
     {
         infractions += INF_BAD_STAT_CODE;
@@ -112,33 +109,33 @@ void HttpMsgStatus::gen_events()
     if (infractions & INF_BAD_STAT_LINE)
         return;
 
-    if (status_code.start > start_line.start + 9)
+    if (status_code.start() > start_line.start() + 9)
     {
         infractions += INF_STATUS_WS;
         events.create_event(EVENT_IMPROPER_WS);
     }
 
-    for (int k = 8; k < status_code.start - start_line.start; k++)
+    for (int k = 8; k < status_code.start() - start_line.start(); k++)
     {
-        if (start_line.start[k] == '\t')
+        if (start_line.start()[k] == '\t')
         {
             infractions += INF_STATUS_TAB;
             events.create_event(EVENT_APACHE_WS);
         }
     }
 
-    if (status_code.start - start_line.start + 3 < start_line.length)
+    if (status_code.start() - start_line.start() + 3 < start_line.length())
     {
-        if (status_code.start[3] == '\t')
+        if (status_code.start()[3] == '\t')
         {
             infractions += INF_STATUS_TAB;
             events.create_event(EVENT_APACHE_WS);
         }
     }
 
-    for (int k=0; k < reason_phrase.length; k++)
+    for (int k=0; k < reason_phrase.length(); k++)
     {
-        if ((reason_phrase.start[k] <= 31) || (reason_phrase.start[k] >= 127))
+        if ((reason_phrase.start()[k] <= 31) || (reason_phrase.start()[k] >= 127))
         {
             // Illegal character in reason phrase
             infractions += INF_BAD_PHRASE;

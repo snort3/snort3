@@ -37,7 +37,7 @@ using namespace HttpEnums;
 HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
        HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
        const HttpParaList* params_) :
-    msg_text(buf_size, buffer),
+    msg_text(buf_size, buffer, buf_owner),
     session_data(session_data_),
     source_id(source_id_),
     flow(flow_),
@@ -49,8 +49,7 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     events(session_data->events[source_id]),
     version_id(session_data->version_id[source_id]),
     method_id((source_id == SRC_CLIENT) ? session_data->method_id : METH__NOT_PRESENT),
-    status_code_num((source_id == SRC_SERVER) ? session_data->status_code_num : STAT_NOT_PRESENT),
-    delete_msg_on_destruct(buf_owner)
+    status_code_num((source_id == SRC_SERVER) ? session_data->status_code_num : STAT_NOT_PRESENT)
 {
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
 }
@@ -82,20 +81,18 @@ void HttpMsgSection::update_depth() const
     }
 }
 
-const Field& HttpMsgSection::classic_normalize(const Field& raw, Field& norm, bool& norm_alloc,
+const Field& HttpMsgSection::classic_normalize(const Field& raw, Field& norm,
     const HttpParaList::UriParam& uri_param)
 {
-    if (norm.length != STAT_NOT_COMPUTE)
+    if (norm.length() != STAT_NOT_COMPUTE)
         return norm;
 
-    if ((raw.length <= 0) || !UriNormalizer::classic_need_norm(raw, true, uri_param))
+    if ((raw.length() <= 0) || !UriNormalizer::classic_need_norm(raw, true, uri_param))
     {
         norm.set(raw);
         return norm;
     }
-    uint8_t* buffer = new uint8_t[raw.length + UriNormalizer::URI_NORM_EXPANSION];
-    UriNormalizer::classic_normalize(raw, norm, buffer, uri_param);
-    norm_alloc = true;
+    UriNormalizer::classic_normalize(raw, norm, uri_param);
     return norm;
 }
 
