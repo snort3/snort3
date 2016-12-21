@@ -17,10 +17,10 @@
 //--------------------------------------------------------------------------
 // codec_api.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef CODEC_CODECS_API_H
-#define CODEC_CODECS_API_H
+#ifndef CODEC_API_H
+#define CODEC_API_H
 
-extern const struct BaseApi* codecs[];
+void load_codecs();
 
 #endif
 

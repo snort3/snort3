@@ -317,11 +317,11 @@ static const InspectApi as_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* nin_arp_spoof[] =
+#endif
 {
     &as_api.base,
     nullptr
 };
-#else
-const BaseApi* nin_arp_spoof = &as_api.base;
-#endif
 

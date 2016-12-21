@@ -189,11 +189,11 @@ static const IpsApi tag_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_tag[] =
+#endif
 {
     &tag_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_tag = &tag_api.base;
-#endif
 

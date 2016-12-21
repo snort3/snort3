@@ -670,11 +670,11 @@ static const CodecApi ipv6_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_ipv6[] =
+#endif
 {
     &ipv6_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_ipv6 = &ipv6_api.base;
-#endif
 

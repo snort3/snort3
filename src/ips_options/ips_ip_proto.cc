@@ -320,11 +320,11 @@ static const IpsApi ip_proto_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_ip_proto[] =
+#endif
 {
     &ip_proto_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_ip_proto = &ip_proto_api.base;
-#endif
 

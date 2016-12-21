@@ -176,11 +176,11 @@ static const CodecApi ciscometadata_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_ciscometadata[] =
+#endif
 {
     &ciscometadata_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_ciscometadata = &ciscometadata_api.base;
-#endif
 

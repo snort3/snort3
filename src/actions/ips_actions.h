@@ -20,7 +20,7 @@
 #ifndef IPS_ACTIONS_H
 #define IPS_ACTIONS_H
 
-extern const struct BaseApi* ips_actions[];
+void load_actions();
 
 #endif
 

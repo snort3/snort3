@@ -123,11 +123,11 @@ static const CodecApi arp_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_arp[] =
+#endif
 {
     &arp_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_arp = &arp_api.base;
-#endif
 

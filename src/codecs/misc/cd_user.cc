@@ -147,11 +147,11 @@ static const CodecApi user_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_user[] =
+#endif
 {
     &user_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_user = &user_api.base;
-#endif
 

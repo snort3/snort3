@@ -129,11 +129,11 @@ static const CodecApi igmp_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_igmp[] =
+#endif
 {
     &igmp_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_igmp = &igmp_api.base;
-#endif
 

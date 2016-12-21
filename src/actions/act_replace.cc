@@ -203,11 +203,11 @@ static ActionApi rep_api
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* act_replace[] =
+#endif
 {
     &rep_api.base,
     nullptr
 };
-#else
-const BaseApi* act_replace = &rep_api.base;
-#endif
 

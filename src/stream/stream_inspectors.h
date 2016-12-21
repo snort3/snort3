@@ -20,7 +20,7 @@
 #ifndef STREAM_INSPECTORS_H
 #define STREAM_INSPECTORS_H
 
-extern const struct BaseApi* stream_inspectors[];
+void load_stream_inspectors();
 
 #endif
 

@@ -117,11 +117,11 @@ static const IpsApi msg_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_msg[] =
+#endif
 {
     &msg_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_msg = &msg_api.base;
-#endif
 

@@ -111,17 +111,17 @@ static MpseAgent s_agent =
     [](void** ppl) { CHECK(*ppl == s_list); }
 };
 
-extern const BaseApi* se_ac_full;
-const MpseApi* mpse_api = (MpseApi*)se_ac_full;
+extern const BaseApi* se_ac_bnfa;
+const MpseApi* mpse_api = (MpseApi*)se_ac_bnfa;
 Mpse* acf = nullptr;
 
 Mpse* MpseManager::get_search_engine(const char *type)
 {
     acf = nullptr;
 
-    if(strcmp(type, "ac_full") == 0)
+    if(strcmp(type, "ac_bnfa") == 0)
     {
-        CHECK(se_ac_full);
+        CHECK(se_ac_bnfa);
         mpse_api->init();
         acf = mpse_api->ctor(snort_conf, nullptr, false, &s_agent);
         CHECK(acf);
@@ -168,18 +168,13 @@ TEST_GROUP(search_tool_tests)
 {
     void setup()
     {
-        CHECK(se_ac_full);
+        CHECK(se_ac_bnfa);
     }
 };
 
-TEST(search_tool_tests, ac_full)
+TEST(search_tool_tests, ac_bnfa)
 {
-    // get_search_engine returns nullptr any search engine other than ac_full.
     SearchTool *stool = new SearchTool;
-    CHECK(!stool->mpse);
-    delete stool;
-
-    stool = new SearchTool("ac_full");
     CHECK(stool->mpse);
 
     pattern_id = 1;
@@ -206,9 +201,9 @@ TEST(search_tool_tests, ac_full)
     delete stool;
 }
 
-TEST(search_tool_tests, search_all_ac_full)
+TEST(search_tool_tests, search_all_ac_bnfa)
 {
-    SearchTool *stool = new SearchTool("ac_full");
+    SearchTool *stool = new SearchTool("ac_bnfa");
     CHECK(stool->mpse);
 
     pattern_id = 1;

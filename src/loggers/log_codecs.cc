@@ -201,5 +201,9 @@ static const LogApi log_codecs_api =
     codec_log_dtor
 };
 
-const BaseApi* log_codecs = &log_codecs_api.base;
+const BaseApi* log_codecs[] =
+{
+    &log_codecs_api.base,
+    nullptr
+};
 

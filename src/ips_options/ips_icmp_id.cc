@@ -220,11 +220,11 @@ static const IpsApi icmp_id_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_icmp_id[] =
+#endif
 {
     &icmp_id_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_icmp_id = &icmp_id_api.base;
-#endif
 

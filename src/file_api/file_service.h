@@ -67,6 +67,5 @@ private:
     static FileCache* file_cache;
 };
 
-extern const struct BaseApi* file_inspectors[];
 #endif
 

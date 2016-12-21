@@ -148,11 +148,11 @@ static const CodecApi pppencap_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_pppencap[] =
+#endif
 {
     &pppencap_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_pppencap = &pppencap_api.base;
-#endif
 

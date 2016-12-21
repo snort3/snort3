@@ -494,11 +494,11 @@ static const IpsApi cvs_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_cvs[] =
+#endif
 {
     &cvs_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_cvs = &cvs_api.base;
-#endif
 

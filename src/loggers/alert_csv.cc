@@ -562,11 +562,11 @@ static LogApi csv_api
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* alert_csv[] =
+#endif
 {
     &csv_api.base,
     nullptr
 };
-#else
-const BaseApi* alert_csv = &csv_api.base;
-#endif
 

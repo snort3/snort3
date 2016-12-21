@@ -187,11 +187,11 @@ static const IpsApi len_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_bufferlen[] =
+#endif
 {
     &len_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_bufferlen = &len_api.base;
-#endif
 

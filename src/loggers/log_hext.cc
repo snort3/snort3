@@ -279,11 +279,11 @@ static const LogApi hext_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* log_hext[] =
+#endif
 {
     &hext_api.base,
     nullptr
 };
-#else
-const BaseApi* log_hext = &hext_api.base;
-#endif
 

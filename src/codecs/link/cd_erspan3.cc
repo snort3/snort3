@@ -144,11 +144,11 @@ static const CodecApi erspan3_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_erspan3[] =
+#endif
 {
     &erspan3_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_erspan3 = &erspan3_api.base;
-#endif
 

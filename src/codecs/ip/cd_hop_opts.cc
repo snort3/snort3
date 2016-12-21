@@ -130,23 +130,15 @@ static const CodecApi ipv6_hopopts_api =
 
 /*  This codec is static to ensure the symbols CheckIPV6HopOptions
  *  and CheckIPv6ExtensionOrder are included in the binary.
- *
- *  If this Codec is no longer static, also edit the file codec_api.cc
  */
-#if 0
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
+//#ifdef BUILDING_SO
+//SO_PUBLIC const BaseApi* snort_plugins[] =
+//#else
+const BaseApi* cd_hopopts[] =
+//#endif
 {
     &ipv6_hopopts_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_hopopts = &ipv6_hopopts_api.base;
-#endif
-
-#else /* 0 */
-const BaseApi* cd_hopopts = &ipv6_hopopts_api.base;
-
-#endif /* 0 */
 

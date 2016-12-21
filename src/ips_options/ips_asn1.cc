@@ -310,11 +310,11 @@ static const IpsApi asn1_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_asn1[] =
+#endif
 {
     &asn1_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_asn1 = &asn1_api.base;
-#endif
 

@@ -265,11 +265,11 @@ static const CodecApi gre_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_gre[] =
+#endif
 {
     &gre_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_gre = &gre_api.base;
-#endif
 

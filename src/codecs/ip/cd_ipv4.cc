@@ -783,18 +783,13 @@ static const CodecApi ipv4_api =
     dtor, // dtor
 };
 
-#if 0
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_ipv4[] =
+#endif
 {
     &ipv4_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_ipv4 = &ipv4_api.base;
-#endif
-#endif
-
-// Currently needs to be static
-const BaseApi* cd_ipv4 = &ipv4_api.base;
 

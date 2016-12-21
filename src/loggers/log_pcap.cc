@@ -371,11 +371,11 @@ static LogApi tcpdump_api
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* log_pcap[] =
+#endif
 {
     &tcpdump_api.base,
     nullptr
 };
-#else
-const BaseApi* log_pcap = &tcpdump_api.base;
-#endif
 

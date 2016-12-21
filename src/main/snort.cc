@@ -35,6 +35,9 @@
 #include <netinet/in.h>
 #include <sys/stat.h>
 
+#include "actions/ips_actions.h"
+#include "codecs/codec_api.h"
+#include "connectors/connectors.h"
 #include "decompress/file_decomp.h"
 #include "detection/detect.h"
 #include "detection/detection_util.h"
@@ -50,9 +53,11 @@
 #include "helpers/process.h"
 #include "host_tracker/host_cache.h"
 #include "ips_options/ips_flowbits.h"
+#include "ips_options/ips_options.h"
 #include "latency/packet_latency.h"
 #include "latency/rule_latency.h"
 #include "log/messages.h"
+#include "loggers/loggers.h"
 #include "managers/action_manager.h"
 #include "managers/codec_manager.h"
 #include "managers/inspector_manager.h"
@@ -62,6 +67,7 @@
 #include "managers/mpse_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
+#include "network_inspectors/network_inspectors.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
 #include "packet_io/trough.h"
@@ -71,8 +77,11 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"
+#include "search_engines/search_engines.h"
+#include "service_inspectors/service_inspectors.h"
 #include "side_channel/side_channel.h"
 #include "stream/stream.h"
+#include "stream/stream_inspectors.h"
 #include "target_based/sftarget_reader.h"
 #include "time/packet_time.h"
 #include "time/periodic.h"
@@ -84,6 +93,7 @@
 #ifdef PIGLET
 #include "piglet/piglet.h"
 #include "piglet/piglet_manager.h"
+#include "piglet_plugins/piglet_plugins.h"
 #endif
 
 #include "build.h"
@@ -213,6 +223,19 @@ void Snort::init(int argc, char** argv)
 
     InitProtoNames();
     SFAT_Init();
+
+    load_actions();
+    load_codecs();
+    load_connectors();
+    load_ips_options();
+    load_loggers();
+#ifdef PIGLET
+    load_piglets();
+#endif
+    load_search_engines();
+    load_stream_inspectors();
+    load_network_inspectors();
+    load_service_inspectors();
 
     /* chew up the command line */
     snort_cmd_line_conf = parse_cmd_line(argc, argv);

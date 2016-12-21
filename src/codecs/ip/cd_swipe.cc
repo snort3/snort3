@@ -84,11 +84,11 @@ static const CodecApi swipe_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_swipe[] =
+#endif
 {
     &swipe_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_swipe = &swipe_api.base;
-#endif
 

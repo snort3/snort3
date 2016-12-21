@@ -71,8 +71,9 @@ add_executable( snort
 target_link_libraries( snort
     ${UNIT_TESTS_LIBRARIES}
     managers
-    loggers
+    main
     codecs
+    loggers
     ip_codecs
     misc_codecs
     ${STATIC_CODEC_LIBRARIES}
@@ -94,11 +95,10 @@ target_link_libraries( snort
     stream_file
     stream_paf
     mime
-    ${PIGLET_LIBRARIES}
     ips_options
     search_engines
     target_based
-    main
+    ${PIGLET_LIBRARIES}
     codec_module
     memory
     host_tracker

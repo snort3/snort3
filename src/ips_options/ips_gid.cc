@@ -114,11 +114,11 @@ static const IpsApi gid_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_gid[] =
+#endif
 {
     &gid_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_gid = &gid_api.base;
-#endif
 

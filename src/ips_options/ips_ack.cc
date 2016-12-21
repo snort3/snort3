@@ -192,11 +192,11 @@ static const IpsApi ack_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_ack[] =
+#endif
 {
     &ack_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_ack = &ack_api.base;
-#endif
 

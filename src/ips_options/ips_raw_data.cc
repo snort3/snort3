@@ -121,11 +121,11 @@ static const IpsApi raw_data_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_raw_data[] =
+#endif
 {
     &raw_data_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_raw_data = &raw_data_api.base;
-#endif
 

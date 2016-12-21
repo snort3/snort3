@@ -26,14 +26,14 @@
 *   3/06 - Added AC_BNFA search
 */
 
-#include "bnfa_search.h"
-
+#include "framework/mpse.h"
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "main/snort_config.h"
-#include "utils/util.h"
 #include "profiler/profiler.h"
-#include "framework/mpse.h"
+#include "utils/util.h"
+
+#include "bnfa_search.h"
 
 //-------------------------------------------------------------------------
 // "ac_bnfa"
@@ -150,5 +150,9 @@ static const MpseApi bnfa_api =
     bnfa_print,
 };
 
-const BaseApi* se_ac_bnfa = &bnfa_api.base;
+const BaseApi* se_ac_bnfa[] =
+{
+    &bnfa_api.base,
+    nullptr
+};
 

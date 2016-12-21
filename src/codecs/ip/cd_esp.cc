@@ -217,11 +217,11 @@ static const CodecApi esp_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_esp[] =
+#endif
 {
     &esp_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_esp = &esp_api.base;
-#endif
 

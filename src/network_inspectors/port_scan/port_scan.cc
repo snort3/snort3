@@ -1038,13 +1038,12 @@ static const InspectApi sp_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* nin_port_scan[] =
+#endif
 {
     &sd_api.base,
     &sp_api.base,
     nullptr
 };
-#else
-const BaseApi* nin_port_scan_global = &sd_api.base;
-const BaseApi* nin_port_scan = &sp_api.base;
-#endif
 

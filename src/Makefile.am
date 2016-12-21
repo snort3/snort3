@@ -44,11 +44,12 @@ snort_LDFLAGS = $(AM_LDFLAGS) -export-dynamic
 snort_LDADD = \
 $(test_list) \
 managers/libmanagers.a \
-loggers/libloggers.a \
+main/libmain.a \
 codecs/libcodecs.a \
 codecs/ip/libip_codecs.a \
 codecs/misc/libmisc_codecs.a \
 $(codec_list) \
+loggers/libloggers.a \
 network_inspectors/libnetwork_inspectors.a \
 network_inspectors/appid/libappid.a \
 network_inspectors/binder/libbinder.a \
@@ -76,11 +77,10 @@ stream/user/libstream_user.a \
 stream/file/libstream_file.a \
 stream/libstream_paf.a \
 mime/libmime.a \
-$(pig_list) \
 ips_options/libips_options.a \
 search_engines/libsearch_engines.a \
 target_based/libtarget_based.a \
-main/libmain.a \
+$(pig_list) \
 codecs/libcodec_module.a \
 memory/libmemory.a \
 host_tracker/libhost_tracker.a \

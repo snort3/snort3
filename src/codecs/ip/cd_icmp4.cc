@@ -615,11 +615,11 @@ static const CodecApi icmp4_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_icmp4[] =
+#endif
 {
     &icmp4_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_icmp4 = &icmp4_api.base;
-#endif
 

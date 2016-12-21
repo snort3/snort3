@@ -503,11 +503,11 @@ static const IpsApi byte_jump_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_byte_jump[] =
+#endif
 {
     &byte_jump_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_byte_jump = &byte_jump_api.base;
-#endif
 

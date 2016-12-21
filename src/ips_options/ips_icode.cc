@@ -193,11 +193,11 @@ static const IpsApi icode_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_icode[] =
+#endif
 {
     &icode_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_icode = &icode_api.base;
-#endif
 

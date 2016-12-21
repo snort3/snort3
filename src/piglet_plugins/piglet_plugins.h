@@ -20,7 +20,7 @@
 #ifndef PIGLET_PLUGINS_H
 #define PIGLET_PLUGINS_H
 
-extern const struct BaseApi* piglets[];
+void load_piglets();
 
 #endif
 

@@ -24,48 +24,41 @@
 #endif
 
 #include "framework/logger.h"
+#include "managers/plugin_manager.h"
 
 // to ensure PacketManager::log_protocols() is built into Snort++
-extern const BaseApi* log_codecs;
-
-#if defined(__linux__)
-extern const BaseApi* alert_sf_socket;
-#endif
+extern const BaseApi* log_codecs[];
+extern const BaseApi* alert_sf_socket[];
 
 #ifdef STATIC_LOGGERS
-extern const BaseApi* alert_csv;
-extern const BaseApi* alert_fast;
-extern const BaseApi* alert_full;
-extern const BaseApi* alert_syslog;
-extern const BaseApi* log_hext;
-extern const BaseApi* log_pcap;
-extern const BaseApi* eh_unified2;
+extern const BaseApi* alert_csv[];
+extern const BaseApi* alert_fast[];
+extern const BaseApi* alert_full[];
+extern const BaseApi* alert_syslog[];
+extern const BaseApi* log_hext[];
+extern const BaseApi* log_pcap[];
+extern const BaseApi* eh_unified2[];
 #endif
 
-const BaseApi* loggers[] =
+void load_loggers()
 {
     // loggers
-    log_codecs,
-
-#if defined(__linux__)
-    alert_sf_socket,
-#endif
+    PluginManager::load_plugins(log_codecs);
+    PluginManager::load_plugins(alert_sf_socket);
 
 #ifdef STATIC_LOGGERS
     // alerters
-    alert_csv,
-    alert_fast,
-    alert_full,
-    alert_syslog,
+    PluginManager::load_plugins(alert_csv);
+    PluginManager::load_plugins(alert_fast);
+    PluginManager::load_plugins(alert_full);
+    PluginManager::load_plugins(alert_syslog);
 
     // loggers
-    log_hext,
-    log_pcap,
+    PluginManager::load_plugins(log_hext);
+    PluginManager::load_plugins(log_pcap);
 
     // both
-    eh_unified2,
+    PluginManager::load_plugins(eh_unified2);
 #endif
-
-    nullptr
-};
+}
 

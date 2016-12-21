@@ -87,11 +87,11 @@ static const CodecApi sun_nd_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_sun_nd[] =
+#endif
 {
     &sun_nd_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_sun_nd = &sun_nd_api.base;
-#endif
 

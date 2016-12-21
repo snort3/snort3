@@ -114,11 +114,11 @@ static const IpsApi priority_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_priority[] =
+#endif
 {
     &priority_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_priority = &priority_api.base;
-#endif
 

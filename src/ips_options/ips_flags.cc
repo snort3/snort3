@@ -490,11 +490,11 @@ static const IpsApi flags_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_flags[] =
+#endif
 {
     &flags_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_flags = &flags_api.base;
-#endif
 

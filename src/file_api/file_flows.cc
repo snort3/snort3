@@ -302,5 +302,5 @@ static const InspectApi file_inspect_api =
     nullptr  // reset
 };
 
-const BaseApi* sin_file = &file_inspect_api.base;
+const BaseApi* sin_file_flow = &file_inspect_api.base;
 

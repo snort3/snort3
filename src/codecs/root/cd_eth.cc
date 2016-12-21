@@ -260,11 +260,11 @@ static const CodecApi eth_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_eth[] =
+#endif
 {
     &eth_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_eth = &eth_api.base;
-#endif
 

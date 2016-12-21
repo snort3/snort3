@@ -460,10 +460,11 @@ static const IpsApi fragbits_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_fragbits[] =
+#endif
 {
     &fragbits_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_fragbits = &fragbits_api.base;
-#endif
+

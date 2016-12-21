@@ -317,13 +317,17 @@ const InspectApi dnp3_api =
     nullptr, // ssn
     nullptr  // reset
 };
-#ifdef BUILDING_SO
+
 extern const BaseApi* ips_dnp3_func;
 extern const BaseApi* ips_dnp3_ind;
 extern const BaseApi* ips_dnp3_obj;
 extern const BaseApi* ips_dnp3_data;
 
+#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* sin_dnp3[] =
+#endif
 {
     &dnp3_api.base,
     ips_dnp3_func,
@@ -332,7 +336,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     ips_dnp3_data,
     nullptr
 };
-#else
-const BaseApi* sin_dnp3 = &dnp3_api.base;
-#endif
 

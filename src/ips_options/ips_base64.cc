@@ -355,13 +355,12 @@ static const IpsApi base64_data_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_base64[] =
+#endif
 {
     &base64_decode_api.base,
     &base64_data_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_base64_decode = &base64_decode_api.base;
-const BaseApi* ips_base64_data = &base64_data_api.base;
-#endif
 

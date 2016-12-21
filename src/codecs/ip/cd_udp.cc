@@ -495,11 +495,11 @@ static const CodecApi udp_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_udp[] =
+#endif
 {
     &udp_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_udp = &udp_api.base;
-#endif
 

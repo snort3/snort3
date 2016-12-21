@@ -213,11 +213,11 @@ static const IpsApi file_type_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_file_type[] =
+#endif
 {
     &file_type_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_file_type = &file_type_api.base;
-#endif
 

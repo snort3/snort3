@@ -161,12 +161,15 @@ static const InspectApi modbus_api =
     nullptr  // reset
 };
 
-#ifdef BUILDING_SO
 extern const BaseApi* ips_modbus_data;
 extern const BaseApi* ips_modbus_func;
 extern const BaseApi* ips_modbus_unit;
 
+#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* sin_modbus[] =
+#endif
 {
     &modbus_api.base,
     ips_modbus_data,
@@ -174,7 +177,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     ips_modbus_unit,
     nullptr
 };
-#else
-const BaseApi* sin_modbus = &modbus_api.base;
-#endif
 

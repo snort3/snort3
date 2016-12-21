@@ -577,13 +577,15 @@ DCE2_Ret DCE2_AddDataToRpkt(Packet* rpkt, const uint8_t* data, uint32_t data_len
     return DCE2_RET__SUCCESS;
 }
 
-#ifdef BUILDING_SO
-
 extern const BaseApi* ips_dce_iface;
 extern const BaseApi* ips_dce_opnum;
 extern const BaseApi* ips_dce_stub_data;
 
+#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* sin_dce[] =
+#endif
 {
     &dce2_tcp_api.base,
     &dce2_smb_api.base,
@@ -593,11 +595,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     ips_dce_stub_data,
     nullptr
 };
-#else
-
-const BaseApi* sin_dce_tcp = &dce2_tcp_api.base;
-const BaseApi* sin_dce_smb = &dce2_smb_api.base;
-const BaseApi* sin_dce_udp = &dce2_udp_api.base;
-
-#endif
 

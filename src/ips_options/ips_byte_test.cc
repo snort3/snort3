@@ -648,11 +648,11 @@ static const IpsApi byte_test_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_byte_test[] =
+#endif
 {
     &byte_test_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_byte_test = &byte_test_api.base;
-#endif
 

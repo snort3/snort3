@@ -24,93 +24,90 @@
 #endif
 
 #include "framework/codec.h"
+#include "managers/plugin_manager.h"
 
-extern const BaseApi* cd_ipv4;    // static due to dependence on fpdetect
-extern const BaseApi* cd_hopopts; // static to ensure the symbols CheckIPV6HopOptions
-                                  // and CheckIPv6ExtensionOrder the final executuable.
-extern const BaseApi* cd_tcp;     // static because only file that specific functions
-                                  //    (symbols will be removed from final executabel)
+extern const BaseApi* cd_ipv4[];    // static due to dependence on fpdetect
+extern const BaseApi* cd_hopopts[]; // static to ensure the symbols CheckIPV6HopOptions
+                                    // and CheckIPv6ExtensionOrder the final executuable.
+extern const BaseApi* cd_tcp[];     // static because only file that specific functions
+                                    // (symbols will be removed from final executabel)
 
 #ifdef STATIC_CODECS
-extern const BaseApi* cd_ah;
-extern const BaseApi* cd_arp;
-extern const BaseApi* cd_ciscometadata;
-extern const BaseApi* cd_dstopts;
-extern const BaseApi* cd_erspan2;
-extern const BaseApi* cd_erspan3;
-extern const BaseApi* cd_esp;
-extern const BaseApi* cd_eth;
-extern const BaseApi* cd_fabricpath;
-extern const BaseApi* cd_frag;
-extern const BaseApi* cd_gre;
-extern const BaseApi* cd_gtp;
-extern const BaseApi* cd_icmp4;
-extern const BaseApi* cd_icmp4_ip;
-extern const BaseApi* cd_icmp6;
-extern const BaseApi* cd_icmp6_ip;
-extern const BaseApi* cd_ipv6;
-extern const BaseApi* cd_igmp;
-extern const BaseApi* cd_llc;
-extern const BaseApi* cd_mobility;
-extern const BaseApi* cd_mpls;
-extern const BaseApi* cd_no_next;
-extern const BaseApi* cd_pgm;
-extern const BaseApi* cd_pppencap;
-extern const BaseApi* cd_pppoepkt_disc;
-extern const BaseApi* cd_pppoepkt_sess;
-extern const BaseApi* cd_routing;
-extern const BaseApi* cd_sun_nd;
-extern const BaseApi* cd_swipe;
-extern const BaseApi* cd_teredo;
-extern const BaseApi* cd_transbridge;
-extern const BaseApi* cd_udp;
-extern const BaseApi* cd_user;
-extern const BaseApi* cd_vlan;
+extern const BaseApi* cd_ah[];
+extern const BaseApi* cd_arp[];
+extern const BaseApi* cd_ciscometadata[];
+extern const BaseApi* cd_dstopts[];
+extern const BaseApi* cd_erspan2[];
+extern const BaseApi* cd_erspan3[];
+extern const BaseApi* cd_esp[];
+extern const BaseApi* cd_eth[];
+extern const BaseApi* cd_fabricpath[];
+extern const BaseApi* cd_frag[];
+extern const BaseApi* cd_gre[];
+extern const BaseApi* cd_gtp[];
+extern const BaseApi* cd_icmp4[];
+extern const BaseApi* cd_icmp4_ip[];
+extern const BaseApi* cd_icmp6[];
+extern const BaseApi* cd_icmp6_ip[];
+extern const BaseApi* cd_ipv6[];
+extern const BaseApi* cd_igmp[];
+extern const BaseApi* cd_llc[];
+extern const BaseApi* cd_mobility[];
+extern const BaseApi* cd_mpls[];
+extern const BaseApi* cd_no_next[];
+extern const BaseApi* cd_pgm[];
+extern const BaseApi* cd_pppencap[];
+extern const BaseApi* cd_pppoepkt[];
+extern const BaseApi* cd_routing[];
+extern const BaseApi* cd_sun_nd[];
+extern const BaseApi* cd_swipe[];
+extern const BaseApi* cd_teredo[];
+extern const BaseApi* cd_transbridge[];
+extern const BaseApi* cd_udp[];
+extern const BaseApi* cd_user[];
+extern const BaseApi* cd_vlan[];
 #endif
 
-const BaseApi* codecs[] =
+void load_codecs()
 {
-    cd_ipv4,
-    cd_tcp,
-    cd_hopopts,
+    PluginManager::load_plugins(cd_ipv4);
+    PluginManager::load_plugins(cd_tcp);
+    PluginManager::load_plugins(cd_hopopts);
 
 #ifdef STATIC_CODECS
-    cd_ah,
-    cd_arp,
-    cd_ciscometadata,
-    cd_dstopts,
-    cd_erspan2,
-    cd_erspan3,
-    cd_esp,
-    cd_eth,
-    cd_fabricpath,
-    cd_frag,
-    cd_gre,
-    cd_gtp,
-    cd_icmp4,
-    cd_icmp4_ip,
-    cd_icmp6,
-    cd_icmp6_ip,
-    cd_ipv6,
-    cd_igmp,
-    cd_llc,
-    cd_mobility,
-    cd_mpls,
-    cd_no_next,
-    cd_pgm,
-    cd_pppencap,
-    cd_pppoepkt_disc,
-    cd_pppoepkt_sess,
-    cd_routing,
-    cd_sun_nd,
-    cd_swipe,
-    cd_teredo,
-    cd_transbridge,
-    cd_udp,
-    cd_user,
-    cd_vlan,
+    PluginManager::load_plugins(cd_ah);
+    PluginManager::load_plugins(cd_arp);
+    PluginManager::load_plugins(cd_ciscometadata);
+    PluginManager::load_plugins(cd_dstopts);
+    PluginManager::load_plugins(cd_erspan2);
+    PluginManager::load_plugins(cd_erspan3);
+    PluginManager::load_plugins(cd_esp);
+    PluginManager::load_plugins(cd_eth);
+    PluginManager::load_plugins(cd_fabricpath);
+    PluginManager::load_plugins(cd_frag);
+    PluginManager::load_plugins(cd_gre);
+    PluginManager::load_plugins(cd_gtp);
+    PluginManager::load_plugins(cd_icmp4);
+    PluginManager::load_plugins(cd_icmp4_ip);
+    PluginManager::load_plugins(cd_icmp6);
+    PluginManager::load_plugins(cd_icmp6_ip);
+    PluginManager::load_plugins(cd_ipv6);
+    PluginManager::load_plugins(cd_igmp);
+    PluginManager::load_plugins(cd_llc);
+    PluginManager::load_plugins(cd_mobility);
+    PluginManager::load_plugins(cd_mpls);
+    PluginManager::load_plugins(cd_no_next);
+    PluginManager::load_plugins(cd_pgm);
+    PluginManager::load_plugins(cd_pppencap);
+    PluginManager::load_plugins(cd_pppoepkt);
+    PluginManager::load_plugins(cd_routing);
+    PluginManager::load_plugins(cd_sun_nd);
+    PluginManager::load_plugins(cd_swipe);
+    PluginManager::load_plugins(cd_teredo);
+    PluginManager::load_plugins(cd_transbridge);
+    PluginManager::load_plugins(cd_udp);
+    PluginManager::load_plugins(cd_user);
+    PluginManager::load_plugins(cd_vlan);
 #endif
-
-    nullptr
-};
+}
 

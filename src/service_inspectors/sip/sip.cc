@@ -428,13 +428,16 @@ const InspectApi sip_api =
     nullptr  // reset
 };
 
-#ifdef BUILDING_SO
 extern const BaseApi* ips_sip_header;
 extern const BaseApi* ips_sip_body;
 extern const BaseApi* ips_sip_method;
 extern const BaseApi* ips_sip_stat_code;
 
+#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* sin_sip[] =
+#endif
 {
     &sip_api.base,
     ips_sip_header,
@@ -443,7 +446,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     ips_sip_stat_code,
     nullptr
 };
-#else
-const BaseApi* sin_sip = &sip_api.base;
-#endif
 

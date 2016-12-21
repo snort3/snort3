@@ -302,12 +302,12 @@ static const InspectApi fl_api
     nullptr  // reset
 };
 
-extern const BaseApi* sin_file;
+extern const BaseApi* sin_file_flow;
 
-const BaseApi* file_inspectors[] =
+const BaseApi* sin_file[] =
 {
     &fl_api.base,
-    sin_file,
+    sin_file_flow,
     nullptr
 };
 

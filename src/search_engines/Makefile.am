@@ -19,7 +19,8 @@ ac_full.cc \
 ac_sparse.cc \
 ac_sparse_bands.cc \
 acsmx2.cc \
-acsmx2.h
+acsmx2.h \
+acsmx2_api.cc
 
 bnfa_sources = \
 ac_bnfa.cc \
@@ -64,7 +65,7 @@ libacsmx_la_SOURCES = $(acsmx_sources)
 mpselib_LTLIBRARIES += libacsmx2.la
 libacsmx2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libacsmx2_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libacsmx2_la_SOURCES = $(acsmx2_sources) acsmx2_api.cc
+libacsmx2_la_SOURCES = $(acsmx2_sources)
 endif
 
 if BUILD_CPPUTESTS

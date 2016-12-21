@@ -16,10 +16,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef CONNECTORS
-#define CONNECTORS
+#ifndef CONNECTORS_H
+#define CONNECTORS_H
 
-extern const struct BaseApi* connectors[];
+void load_connectors();
 
 #endif
 

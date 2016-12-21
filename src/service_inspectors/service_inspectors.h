@@ -20,7 +20,7 @@
 #ifndef SERVICE_INSPECTORS_H
 #define SERVICE_INSPECTORS_H
 
-extern const struct BaseApi* service_inspectors[];
+void load_service_inspectors();
 
 #endif
 

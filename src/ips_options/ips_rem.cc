@@ -109,11 +109,11 @@ static const IpsApi rem_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_rem[] =
+#endif
 {
     &rem_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_rem = &rem_api.base;
-#endif
 

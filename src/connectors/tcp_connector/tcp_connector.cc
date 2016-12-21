@@ -501,11 +501,11 @@ const ConnectorApi tcp_connector_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* tcp_connector[] =
+#endif
 {
     &tcp_connector_api.base,
     nullptr
 };
-#else
-const BaseApi* tcp_connector = &tcp_connector_api.base;
-#endif
 

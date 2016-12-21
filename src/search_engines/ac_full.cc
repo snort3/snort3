@@ -17,15 +17,15 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "acsmx.h"
-#include "acsmx2.h"
-
+#include "framework/mpse.h"
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "main/snort_config.h"
-#include "utils/util.h"
 #include "profiler/profiler.h"
-#include "framework/mpse.h"
+#include "utils/util.h"
+
+#include "acsmx.h"
+#include "acsmx2.h"
 
 //-------------------------------------------------------------------------
 // "ac_full"

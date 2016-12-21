@@ -513,13 +513,18 @@ const InspectApi ssl_api =
 
 #undef BUILDING_SO  // FIXIT-L can't be linked dynamically yet
 
+extern const BaseApi* ips_ssl_state;
+extern const BaseApi* ips_ssl_version;
+
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* sin_ssl[] =
+#endif
 {
     &ssl_api.base,
+    ips_ssl_state,
+    ips_ssl_version,
     nullptr
 };
-#else
-const BaseApi* sin_ssl = &ssl_api.base;
-#endif
 

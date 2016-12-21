@@ -154,11 +154,11 @@ static const CodecApi ipv6_routing_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_routing[] =
+#endif
 {
     &ipv6_routing_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_routing = &ipv6_routing_api.base;
-#endif
 

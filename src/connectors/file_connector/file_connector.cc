@@ -353,11 +353,11 @@ const ConnectorApi file_connector_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* file_connector[] =
+#endif
 {
     &file_connector_api.base,
     nullptr
 };
-#else
-const BaseApi* file_connector = &file_connector_api.base;
-#endif
 

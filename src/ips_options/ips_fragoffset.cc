@@ -193,11 +193,11 @@ static const IpsApi fragoffset_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_fragoffset[] =
+#endif
 {
     &fragoffset_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_fragoffset = &fragoffset_api.base;
-#endif
 

@@ -20,7 +20,7 @@
 #ifndef LOGGERS_H
 #define LOGGERS_H
 
-extern const struct BaseApi* loggers[];
+void load_loggers();
 
 #endif
 

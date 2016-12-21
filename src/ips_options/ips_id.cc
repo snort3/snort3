@@ -193,11 +193,11 @@ static const IpsApi id_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_id[] =
+#endif
 {
     &id_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_id = &id_api.base;
-#endif
 

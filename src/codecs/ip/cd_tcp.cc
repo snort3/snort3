@@ -784,5 +784,13 @@ static const CodecApi tcp_api =
     dtor, // dtor
 };
 
-const BaseApi* cd_tcp = &tcp_api.base;
+//#ifdef BUILDING_SO
+//SO_PUBLIC const BaseApi* snort_plugins[] =
+//#else
+const BaseApi* cd_tcp[] =
+//#endif
+{
+    &tcp_api.base,
+    nullptr
+};
 

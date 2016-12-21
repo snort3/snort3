@@ -18,24 +18,24 @@
 // ips_actions.cc author Russ Combs <rucombs@cisco.com>
 
 #include "ips_actions.h"
+#include "managers/plugin_manager.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #ifdef STATIC_IPS_ACTIONS
-extern const BaseApi* act_react;
-extern const BaseApi* act_reject;
+extern const BaseApi* act_react[];
+extern const BaseApi* act_reject[];
 #endif
-extern const BaseApi* act_replace;
+extern const BaseApi* act_replace[];
 
-const BaseApi* ips_actions[] =
+void load_actions()
 {
 #ifdef STATIC_IPS_ACTIONS
-    act_react,
-    act_reject,
+    PluginManager::load_plugins(act_react);
+    PluginManager::load_plugins(act_reject);
 #endif
-    act_replace,
-    nullptr,
-};
+    PluginManager::load_plugins(act_replace);
+}
 

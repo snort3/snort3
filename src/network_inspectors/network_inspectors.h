@@ -20,7 +20,7 @@
 #ifndef NETWORK_INSPECTORS_H
 #define NETWORK_INSPECTORS_H
 
-extern const struct BaseApi* network_inspectors[];
+void load_network_inspectors();
 
 #endif
 

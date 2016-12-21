@@ -213,13 +213,13 @@ static const InspectApi pc_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* nin_packet_capture[] =
+#endif
 {
     &pc_api.base,
     nullptr
 };
-#else
-const BaseApi* nin_packet_capture = &pc_api.base;
-#endif
 
 #ifdef UNIT_TEST
 static Packet* init_null_packet()

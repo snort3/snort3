@@ -187,11 +187,11 @@ static const IpsApi seq_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_seq[] =
+#endif
 {
     &seq_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_seq = &seq_api.base;
-#endif
 

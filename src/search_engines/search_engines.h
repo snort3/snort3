@@ -21,7 +21,7 @@
 
 struct BaseApi;
 
-extern const BaseApi* search_engines[];
+void load_search_engines();
 
 #endif
 

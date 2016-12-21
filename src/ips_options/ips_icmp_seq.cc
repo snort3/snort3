@@ -221,11 +221,11 @@ static const IpsApi icmp_seq_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_icmp_seq[] =
+#endif
 {
     &icmp_seq_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_icmp_seq = &icmp_seq_api.base;
-#endif
 

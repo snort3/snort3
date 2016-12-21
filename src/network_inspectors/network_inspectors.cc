@@ -21,39 +21,41 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "framework/inspector.h"
 
-extern const BaseApi* nin_appid;
+#include "framework/inspector.h"
+#include "managers/plugin_manager.h"
+
 extern const BaseApi* nin_binder;
 extern const BaseApi* nin_normalize;
 extern const BaseApi* nin_perf_monitor;
-extern const BaseApi* nin_port_scan_global;
-extern const BaseApi* nin_port_scan;
 extern const BaseApi* nin_reputation;
 
-extern const BaseApi* ips_appid;
+extern const BaseApi* nin_appid[];
+extern const BaseApi* nin_port_scan[];
 
 #ifdef STATIC_INSPECTORS
-extern const BaseApi* nin_arp_spoof;
-extern const BaseApi* nin_packet_capture;
+extern const BaseApi* nin_arp_spoof[];
+extern const BaseApi* nin_packet_capture[];
 #endif
 
-const BaseApi* network_inspectors[] =
+static const BaseApi* network_inspectors[] =
 {
-    nin_appid,
     nin_binder,
     nin_normalize,
     nin_perf_monitor,
-    nin_port_scan_global,
-    nin_port_scan,
     nin_reputation,
-
-    ips_appid,
-
-#ifdef STATIC_INSPECTORS
-    nin_arp_spoof,
-    nin_packet_capture,
-#endif
     nullptr
 };
+
+void load_network_inspectors()
+{
+    PluginManager::load_plugins(network_inspectors);
+    PluginManager::load_plugins(nin_appid);
+    PluginManager::load_plugins(nin_port_scan);
+
+#ifdef STATIC_INSPECTORS
+    PluginManager::load_plugins(nin_arp_spoof);
+    PluginManager::load_plugins(nin_packet_capture);
+#endif
+}
 

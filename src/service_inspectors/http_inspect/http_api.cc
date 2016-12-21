@@ -81,7 +81,6 @@ const InspectApi HttpApi::http_api =
     nullptr
 };
 
-#ifdef BUILDING_SO
 extern const BaseApi* ips_http_uri;
 extern const BaseApi* ips_http_client_body;
 extern const BaseApi* ips_http_method;
@@ -98,7 +97,11 @@ extern const BaseApi* ips_http_raw_trailer;
 extern const BaseApi* ips_http_raw_request;
 extern const BaseApi* ips_http_raw_status;
 
+#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* sin_http[] =
+#endif
 {
     &HttpApi::http_api.base,
     ips_http_uri,
@@ -118,7 +121,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     ips_http_raw_status,
     nullptr
 };
-#else
-const BaseApi* sin_http = &HttpApi::http_api.base;
-#endif
 

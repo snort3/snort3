@@ -188,11 +188,11 @@ static const IpsApi window_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_window[] =
+#endif
 {
     &window_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_window = &window_api.base;
-#endif
 

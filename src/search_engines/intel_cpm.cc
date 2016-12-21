@@ -24,12 +24,12 @@
 #include "config.h"
 #endif
 
+#include "framework/mpse.h"
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "main/snort_config.h"
-#include "utils/util.h"
 #include "profiler/profiler.h"
-#include "framework/mpse.h"
+#include "utils/util.h"
 
 //-------------------------------------------------------------------------
 // "intel_cpm"
@@ -149,13 +149,13 @@ static const MpseApi cpm_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* se_intel_cpm[] =
+#endif
 {
     &cpm_api.base,
     nullptr
 };
-#else
-const BaseApi* se_intel_cpm = &cpm_api.base;
-#endif
 
 #endif
 

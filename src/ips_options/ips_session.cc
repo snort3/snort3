@@ -412,11 +412,11 @@ static const IpsApi session_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_session[] =
+#endif
 {
     &session_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_session = &session_api.base;
-#endif
 

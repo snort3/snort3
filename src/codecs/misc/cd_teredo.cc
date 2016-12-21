@@ -137,11 +137,11 @@ static const CodecApi teredo_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_teredo[] =
+#endif
 {
     &teredo_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_teredo = &teredo_api.base;
-#endif
 

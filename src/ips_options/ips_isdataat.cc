@@ -342,11 +342,11 @@ static const IpsApi isdataat_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_isdataat[] =
+#endif
 {
     &isdataat_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_isdataat = &isdataat_api.base;
-#endif
 

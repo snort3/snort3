@@ -183,11 +183,11 @@ static const CodecApi ipv6_frag_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_frag[] =
+#endif
 {
     &ipv6_frag_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_frag = &ipv6_frag_api.base;
-#endif
 

@@ -117,11 +117,11 @@ static const IpsApi soid_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_soid[] =
+#endif
 {
     &soid_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_soid = &soid_api.base;
-#endif
 

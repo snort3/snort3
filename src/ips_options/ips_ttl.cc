@@ -188,11 +188,11 @@ static const IpsApi ttl_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_ttl[] =
+#endif
 {
     &ttl_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_ttl = &ttl_api.base;
-#endif
 

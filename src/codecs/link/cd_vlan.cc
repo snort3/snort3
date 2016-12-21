@@ -164,11 +164,11 @@ static const CodecApi vlan_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_vlan[] =
+#endif
 {
     &vlan_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_vlan = &vlan_api.base;
-#endif
 

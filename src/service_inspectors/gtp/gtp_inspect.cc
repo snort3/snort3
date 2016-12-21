@@ -207,12 +207,15 @@ static const InspectApi gtp_api =
     nullptr  // reset
 };
 
-#ifdef BUILDING_SO
 extern const BaseApi* ips_gtp_info;
 extern const BaseApi* ips_gtp_type;
 extern const BaseApi* ips_gtp_version;
 
+#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* sin_gtp[] =
+#endif
 {
     &gtp_api.base,
     ips_gtp_info,
@@ -220,7 +223,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     ips_gtp_version,
     nullptr
 };
-#else
-const BaseApi* sin_gtp = &gtp_api.base;
-#endif
 

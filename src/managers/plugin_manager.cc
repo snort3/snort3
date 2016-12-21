@@ -31,24 +31,10 @@
 #include <vector>
 #include <iostream>
 
-#include "action_manager.h"
-#include "event_manager.h"
-#include "inspector_manager.h"
-#include "ips_manager.h"
-#include "module_manager.h"
-#include "mpse_manager.h"
-#include "codec_manager.h"
-#include "script_manager.h"
-#include "so_manager.h"
-
 #ifdef PIGLET
 #include "piglet/piglet_api.h"
 #include "piglet/piglet_manager.h"
-#include "piglet_plugins/piglet_plugins.h"
 #endif
-
-#include "connector_manager.h"
-#include "connectors/connectors.h"
 
 #include "framework/codec.h"
 #include "framework/logger.h"
@@ -58,19 +44,21 @@
 #include "framework/mpse.h"
 #include "framework/so_rule.h"
 
-#include "loggers/loggers.h"
-#include "ips_options/ips_options.h"
-#include "actions/ips_actions.h"
 #include "log/messages.h"
-#include "stream/stream_inspectors.h"
-#include "network_inspectors/network_inspectors.h"
-#include "service_inspectors/service_inspectors.h"
-#include "search_engines/search_engines.h"
-#include "codecs/codec_api.h"
 #include "helpers/directory.h"
 #include "helpers/markup.h"
 #include "parser/parser.h"
-#include "file_api/file_service.h"
+
+#include "action_manager.h"
+#include "connector_manager.h"
+#include "event_manager.h"
+#include "inspector_manager.h"
+#include "ips_manager.h"
+#include "module_manager.h"
+#include "mpse_manager.h"
+#include "codec_manager.h"
+#include "script_manager.h"
+#include "so_manager.h"
 
 using namespace std;
 
@@ -401,23 +389,14 @@ static void unload_plugins()
 // framework methods
 //-------------------------------------------------------------------------
 
-void PluginManager::load_plugins(const std::string& paths)
+void PluginManager::load_plugins(const BaseApi** lp)
 {
     // builtins
-    load_list(codecs);
-    load_list(ips_actions);
-    load_list(ips_options);
-    load_list(stream_inspectors);
-    load_list(network_inspectors);
-    load_list(service_inspectors);
-    load_list(search_engines);
-    load_list(loggers);
-    load_list(connectors);
-    load_list(file_inspectors);
-#ifdef PIGLET
-    load_list(piglets);
-#endif
+    load_list(lp);
+}
 
+void PluginManager::load_plugins(const std::string& paths)
+{
     // dynamic plugins
     if ( !paths.empty() )
         ::load_plugins(paths);

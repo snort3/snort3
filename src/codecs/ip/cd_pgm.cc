@@ -192,11 +192,11 @@ static const CodecApi pgm_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_pgm[] =
+#endif
 {
     &pgm_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_pgm = &pgm_api.base;
-#endif
 

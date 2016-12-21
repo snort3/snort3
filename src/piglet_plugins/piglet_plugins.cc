@@ -19,6 +19,8 @@
 
 #include "piglet_plugins.h"
 
+#include "managers/plugin_manager.h"
+
 extern const BaseApi* pp_codec;
 extern const BaseApi* pp_inspector;
 extern const BaseApi* pp_ips_action;
@@ -28,7 +30,8 @@ extern const BaseApi* pp_search_engine;
 extern const BaseApi* pp_so_rule;
 extern const BaseApi* pp_test;
 
-const struct BaseApi* piglets[] = {
+static const BaseApi* pp_piglets[] =
+{
     pp_codec,
     pp_inspector,
     pp_ips_action,
@@ -39,4 +42,9 @@ const struct BaseApi* piglets[] = {
     pp_test,
     nullptr
 };
+
+void load_piglets()
+{
+    PluginManager::load_plugins(pp_piglets);
+}
 

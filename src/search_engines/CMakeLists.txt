@@ -18,6 +18,7 @@ set (ACSMX2_SOURCES
     ac_sparse_bands.cc
     acsmx2.cc
     acsmx2.h
+    acsmx2_api.cc
 )
 
 set (BNFA_SOURCES
@@ -66,7 +67,7 @@ else ( STATIC_SEARCH_ENGINES)
     )
 
     add_shared_library(acsmx search_engines ${ACSMX_SOURCES})
-    add_shared_library(acsmx2 search_engines ${ACSMX2_SOURCES} acsmx2_api.cc)
+    add_shared_library(acsmx2 search_engines ${ACSMX2_SOURCES})
 
 endif (STATIC_SEARCH_ENGINES)
 

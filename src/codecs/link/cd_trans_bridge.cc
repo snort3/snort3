@@ -101,11 +101,11 @@ static const CodecApi transbridge_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* cd_transbridge[] =
+#endif
 {
     &transbridge_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_transbridge = &transbridge_api.base;
-#endif
 

@@ -20,7 +20,7 @@
 #ifndef IPS_OPTIONS_H
 #define IPS_OPTIONS_H
 
-extern const struct BaseApi* ips_options[];
+void load_ips_options();
 
 #endif
 

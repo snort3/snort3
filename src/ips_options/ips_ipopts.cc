@@ -299,11 +299,11 @@ static const IpsApi ipopts_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_ipopts[] =
+#endif
 {
     &ipopts_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_ipopts = &ipopts_api.base;
-#endif
 

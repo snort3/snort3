@@ -290,11 +290,11 @@ static LogApi full_api
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* alert_full[] =
+#endif
 {
     &full_api.base,
     nullptr
 };
-#else
-const BaseApi* alert_full = &full_api.base;
-#endif
 

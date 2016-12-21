@@ -371,11 +371,11 @@ static LogApi syslog_api
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* alert_syslog[] =
+#endif
 {
     &syslog_api.base,
     nullptr
 };
-#else
-const BaseApi* alert_syslog = &syslog_api.base;
-#endif
 

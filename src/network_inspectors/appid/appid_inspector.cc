@@ -227,18 +227,18 @@ const InspectApi appid_inspector_api =
     nullptr  // reset
 };
 
-#ifdef BUILDING_SO
 extern const BaseApi* ips_appid;
 
+#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* nin_appid[] =
+#endif
 {
     &appid_inspector_api.base,
     ips_appid,
     nullptr
 };
-#else
-const BaseApi* nin_appid = &appid_inspector_api.base;
-#endif
 
 /**
  * @returns 1 if some appid is found, 0 otherwise.

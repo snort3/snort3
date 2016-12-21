@@ -240,11 +240,11 @@ static const ActionApi rej_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* act_reject[] =
+#endif
 {
     &rej_api.base,
     nullptr
 };
-#else
-const BaseApi* act_reject = &rej_api.base;
-#endif
 

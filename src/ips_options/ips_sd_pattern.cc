@@ -435,11 +435,11 @@ static const IpsApi sd_pattern_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_sd_pattern[] =
+#endif
 {
     &sd_pattern_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_sd_pattern = &sd_pattern_api.base;
-#endif
 

@@ -190,11 +190,11 @@ static const IpsApi tos_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_tos[] =
+#endif
 {
     &tos_api.base,
     nullptr
 };
-#else
-const BaseApi* ips_tos = &tos_api.base;
-#endif
 

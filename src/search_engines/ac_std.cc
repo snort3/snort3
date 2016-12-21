@@ -21,15 +21,15 @@
 #include "config.h"
 #endif
 
-#include "acsmx.h"
-#include "acsmx2.h"
-
+#include "framework/mpse.h"
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "main/snort_config.h"
-#include "utils/util.h"
 #include "profiler/profiler.h"
-#include "framework/mpse.h"
+#include "utils/util.h"
+
+#include "acsmx.h"
+#include "acsmx2.h"
 
 //-------------------------------------------------------------------------
 // "ac_std"
@@ -124,11 +124,11 @@ static const MpseApi ac_api =
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* se_ac_std[] =
+#endif
 {
     &ac_api.base,
     nullptr
 };
-#else
-const BaseApi* se_ac_std = &ac_api.base;
-#endif
 

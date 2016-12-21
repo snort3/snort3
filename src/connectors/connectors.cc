@@ -19,14 +19,14 @@
 #include "connectors.h"
 
 #include "framework/connector.h"
+#include "managers/plugin_manager.h"
 
-extern const BaseApi* file_connector;
-extern const BaseApi* tcp_connector;
+extern const BaseApi* file_connector[];
+extern const BaseApi* tcp_connector[];
 
-const BaseApi* connectors[] =
+void load_connectors()
 {
-    file_connector,
-    tcp_connector,
-    nullptr
-};
+    PluginManager::load_plugins(file_connector);
+    PluginManager::load_plugins(tcp_connector);
+}
 

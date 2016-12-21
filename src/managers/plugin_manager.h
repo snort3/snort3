@@ -44,7 +44,9 @@ class PluginManager
 {
 public:
     // plugin methods
+    static void load_plugins(const BaseApi**);
     static void load_plugins(const std::string& lib_paths);
+
     static void list_plugins();
     static void show_plugins();
     static void dump_plugins();
