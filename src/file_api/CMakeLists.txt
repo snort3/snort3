@@ -5,7 +5,8 @@ set( FILE_API_INCLUDES
     file_cache.h 
     file_flows.h
     file_identifier.h 
-    file_lib.h 
+    file_lib.h
+    file_module.h 
     file_policy.h
     file_segment.h
     file_service.h 

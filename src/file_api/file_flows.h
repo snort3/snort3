@@ -27,9 +27,11 @@
 #include "main/snort_types.h"
 
 #include "file_api.h"
+#include "file_module.h"
 
 class FileContext;
 class Flow;
+class FileConfig;
 
 class SO_PUBLIC FileFlows : public FlowData
 {
@@ -76,5 +78,15 @@ private:
     uint64_t current_file_id = 0;
     Flow* flow = nullptr;
 };
+
+class FileInspect : public Inspector
+{
+public:
+    FileInspect(FileIdModule*);
+    void eval(Packet*) override { }
+
+    FileConfig* config;
+};
+
 #endif
 

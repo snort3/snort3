@@ -178,10 +178,7 @@ static const PegInfo file_pegs[] =
     { nullptr, nullptr }
 };
 
-#define file_id_help \
-    "configure file identification"
-
-FileIdModule::FileIdModule() : Module("file_id", file_id_help, file_id_params) { }
+FileIdModule::FileIdModule() : Module(FILE_ID_NAME, FILE_ID_HELP, file_id_params) { }
 
 const PegInfo* FileIdModule::get_pegs() const
 { return file_pegs; }
@@ -195,10 +192,8 @@ void FileIdModule::sum_stats()
     Module::sum_stats();
 }
 
-bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
+bool FileIdModule::set(const char*, Value& v, SnortConfig*)
 {
-    FileConfig& fc = sc->file_config;
-
     FilePolicy& fp = fc.get_file_policy();
 
     if ( v.is("type_depth") )
@@ -348,10 +343,8 @@ bool FileIdModule::begin(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-bool FileIdModule::end(const char* fqn, int idx, SnortConfig* sc)
+bool FileIdModule::end(const char* fqn, int idx, SnortConfig*)
 {
-    FileConfig& fc = sc->file_config;
-
     if (!idx)
         return true;
 

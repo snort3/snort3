@@ -54,7 +54,6 @@ public:
     static bool is_file_service_enabled();
     static int64_t get_max_file_depth();
 
-    static FilePolicy& get_inspect();
     static FileEnforcer* get_file_enforcer() { return file_enforcer; }
     static FileCache* get_file_cache() { return file_cache; }
 

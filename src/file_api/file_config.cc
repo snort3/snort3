@@ -30,7 +30,10 @@
 #endif
 
 #include "main/snort_config.h"
+#include "managers/inspector_manager.h"
 #include "parser/parse_utils.h"
+
+#include "file_flows.h"
 
 bool FileConfig::process_file_magic(FileMagicData& magic)
 {
@@ -86,6 +89,19 @@ std::string FileConfig::file_type_name(uint32_t id)
 
 std::string file_type_name(uint32_t id)
 {
-    return snort_conf->file_config.file_type_name(id);
+    FileConfig* conf = get_file_config();
+    if (conf)
+        return conf->file_type_name(id);
+    else
+        return "NA";
 }
 
+FileConfig* get_file_config ()
+{
+    FileInspect* fi = (FileInspect*)InspectorManager::get_inspector(FILE_ID_NAME);
+
+    if (fi)
+        return (fi->config);
+    else
+        return nullptr;
+}

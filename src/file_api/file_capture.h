@@ -50,11 +50,11 @@ struct FileCaptureBlock
 class FileCapture
 {
 public:
-    FileCapture();
+    FileCapture(int64_t capture_min_size, int64_t capture_max_size);
     ~FileCapture();
 
     // this must be called during snort init
-    static void init();
+    static void init(int64_t memcap, int64_t block_size);
 
     // Capture file data to local buffer
     // This is the main function call to enable file capture
@@ -93,6 +93,8 @@ public:
 
     static FileCaptureState error_capture(FileCaptureState);
 
+    static int64_t get_block_size() { return capture_block_size; };
+
 private:
 
     static void init_mempool(int64_t max_file_mem, int64_t block_size);
@@ -103,6 +105,7 @@ private:
     void write_file_data(uint8_t* buf, size_t buf_len, FILE* fh);
 
     static FileMemPool* file_mempool;
+    static int64_t capture_block_size;
     static std::mutex capture_mutex;
     static std::condition_variable capture_cv;
     static std::thread* file_storer;
@@ -118,6 +121,8 @@ private:
     uint32_t current_data_len;
     FileCaptureState capture_state;
     FileInfo* file_info = nullptr;
+    int64_t capture_min_size;
+    int64_t capture_max_size;
 };
 
 #endif

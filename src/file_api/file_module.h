@@ -24,6 +24,7 @@
 
 #include "framework/module.h"
 
+#include "file_config.h"
 #include "file_identifier.h"
 #include "file_policy.h"
 
@@ -44,6 +45,8 @@ public:
     PegCount* get_counts() const override;
 
     void sum_stats() override;
+
+    FileConfig fc;
 
 private:
     FileMagicRule rule;

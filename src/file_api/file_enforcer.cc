@@ -62,12 +62,9 @@ void FileEnforcer::update_file_node(FileNode* node, FileInfo* file)
     *(node->file) = *file;
 }
 
-FileVerdict FileEnforcer::check_verdict(Flow* flow, FileNode* node, SFXHASH_NODE* hash_node)
+FileVerdict FileEnforcer::check_verdict(Flow* flow, FileNode* node,
+    SFXHASH_NODE* hash_node, FilePolicy& inspect)
 {
-    // Query the file policy in case verdict has been changed
-    // Check file type first
-    FilePolicy& inspect = FileService::get_inspect();
-
     assert(node->file);
 
     FileVerdict verdict = inspect.type_lookup(flow, node->file);
@@ -184,7 +181,8 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
     return false;
 }
 
-FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file)
+FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file,
+    FilePolicy& inspect)
 {
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
     SFXHASH_NODE* hash_node;
@@ -228,7 +226,7 @@ FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file)
             return verdict;
         }
         /*Query the file policy in case verdict has been changed*/
-        verdict = check_verdict(flow, node, hash_node);
+        verdict = check_verdict(flow, node, hash_node, inspect);
     }
 
     return verdict;

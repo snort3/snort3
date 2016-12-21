@@ -36,6 +36,7 @@ class FileCapture;
 class FileConfig;
 class FileSegments;
 class Flow;
+class FileInspect;
 
 class SO_PUBLIC FileInfo
 {
@@ -125,6 +126,7 @@ private:
     void* file_type_context;
     void* file_signature_context;
     FileConfig* file_config;
+    FileInspect* inspector;
     FileCapture* file_capture;
     FileSegments* file_segments;
     FileState file_state = { FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING };

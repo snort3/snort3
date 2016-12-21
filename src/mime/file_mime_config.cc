@@ -28,11 +28,6 @@
 
 #include "file_mime_process.h"
 
-DecodeConfig::DecodeConfig()
-{
-    sync_all_depths();
-}
-
 void DecodeConfig::set_ignore_data(bool ignored)
 {
     ignore_data = ignored;

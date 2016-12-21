@@ -53,12 +53,13 @@ void FileService::init()
 
 void FileService::post_init()
 {
-    FilePolicy& fp  = get_inspect();
+    FileConfig* conf = get_file_config();
 
-    fp.load();
+    if (!conf)
+        return;
 
     if (file_capture_enabled)
-        FileCapture::init();
+        FileCapture::init(conf->capture_memcap, conf->capture_block_size);
 }
 
 void FileService::close()
@@ -126,39 +127,37 @@ bool FileService::is_file_service_enabled()
  */
 int64_t FileService::get_max_file_depth()
 {
-    FileConfig& file_config =  snort_conf->file_config;
+    FileConfig* file_config = get_file_config();
 
-    if (file_config.file_depth)
-        return file_config.file_depth;
+    if (!file_config)
+        return -1;
 
-    file_config.file_depth = -1;
+    if (file_config->file_depth)
+        return file_config->file_depth;
+
+    file_config->file_depth = -1;
 
     if (file_type_id_enabled)
     {
-        file_config.file_depth = file_config.file_type_depth;
+        file_config->file_depth = file_config->file_type_depth;
     }
 
     if (file_signature_enabled)
     {
-        if (file_config.file_signature_depth > file_config.file_depth)
-            file_config.file_depth = file_config.file_signature_depth;
+        if (file_config->file_signature_depth > file_config->file_depth)
+            file_config->file_depth = file_config->file_signature_depth;
     }
 
-    if (file_config.file_depth > 0)
+    if (file_config->file_depth > 0)
     {
         /*Extra byte for deciding whether file data will be over limit*/
-        file_config.file_depth++;
-        return (file_config.file_depth);
+        file_config->file_depth++;
+        return (file_config->file_depth);
     }
     else
     {
         return -1;
     }
-}
-
-FilePolicy& FileService::get_inspect()
-{
-    return (snort_conf->file_config.get_file_policy());
 }
 
 uint64_t get_file_processed_size(Flow* flow)

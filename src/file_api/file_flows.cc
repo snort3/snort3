@@ -29,9 +29,11 @@
 #include "config.h"
 #endif
 
+#include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 
 #include "file_cache.h"
+#include "file_config.h"
 #include "file_lib.h"
 #include "file_service.h"
 
@@ -239,4 +241,66 @@ FilePosition get_file_position(Packet* pkt)
 
     return position;
 }
+
+FileInspect::FileInspect(FileIdModule* fm)
+{
+    fm->fc.get_file_policy().load();
+    config = &(fm->fc);
+}
+
+static Module* mod_ctor()
+{ return new FileIdModule; }
+
+static void mod_dtor(Module* m)
+{ delete m; }
+
+static void file_init()
+{
+    FileFlows::init();
+}
+
+static void file_term()
+{
+}
+
+static Inspector* file_ctor(Module* m)
+{
+    FileIdModule* mod = (FileIdModule*)m;
+    return new FileInspect(mod);
+}
+
+static void file_dtor(Inspector* p)
+{
+    delete p;
+}
+
+static const InspectApi file_inspect_api =
+{
+    {
+        PT_INSPECTOR,
+        sizeof(InspectApi),
+        INSAPI_VERSION,
+        0,
+        API_RESERVED,
+        API_OPTIONS,
+        FILE_ID_NAME,
+        FILE_ID_HELP,
+        mod_ctor,
+        mod_dtor
+    },
+    IT_PASSIVE,
+    (uint16_t)PktType::NONE,
+    nullptr,
+    "file",
+    file_init,
+    file_term,
+    nullptr, // tinit
+    nullptr, // tterm
+    file_ctor,
+    file_dtor,
+    nullptr, // ssn
+    nullptr  // reset
+};
+
+const BaseApi* sin_file = &file_inspect_api.base;
 

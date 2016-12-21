@@ -48,6 +48,7 @@
 #include "file_stats.h"
 
 FileMemPool* FileCapture::file_mempool = nullptr;
+int64_t FileCapture::capture_block_size = 0;
 
 std::mutex FileCapture::capture_mutex;
 std::condition_variable FileCapture::capture_cv;
@@ -82,7 +83,7 @@ void FileCapture::writer_thread()
     }
 }
 
-FileCapture::FileCapture()
+FileCapture::FileCapture(int64_t min_size, int64_t max_size)
 {
     reserved = 0;
     capture_size = 0;
@@ -90,6 +91,8 @@ FileCapture::FileCapture()
     current_data = nullptr;
     current_data_len = 0;
     capture_state = FILE_CAPTURE_SUCCESS;
+    capture_min_size = min_size;
+    capture_max_size = max_size;
 }
 
 FileCapture::~FileCapture()
@@ -126,10 +129,10 @@ FileCapture::~FileCapture()
         delete file_info;
 }
 
-void FileCapture::init()
+void FileCapture::init(int64_t memcap, int64_t block_size)
 {
-    FileConfig& file_config = snort_conf->file_config;
-    init_mempool(file_config.capture_memcap, file_config.capture_block_size);
+    capture_block_size = block_size;
+    init_mempool(memcap, capture_block_size);
     file_storer = new std::thread(writer_thread);
 }
 
@@ -217,7 +220,6 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
 {
     FileCaptureBlock* lastBlock = last;
     int64_t available_bytes;
-    FileConfig& file_config =  snort_conf->file_config;
 
     if ( data_size + (int64_t)capture_size > max_size)
     {
@@ -228,7 +230,7 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
     }
 
     /* Check whether current file block can hold file data*/
-    available_bytes = file_config.capture_block_size - lastBlock->length;
+    available_bytes = capture_block_size - lastBlock->length;
 
     if ( data_size > available_bytes)
     {
@@ -240,7 +242,7 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
         memcpy((uint8_t*)lastBlock + lastBlock->length + sizeof (*lastBlock),
             file_current, available_bytes);
 
-        lastBlock->length = file_config.capture_block_size;
+        lastBlock->length = capture_block_size;
         file_current += available_bytes;
 
         /* We can support any file capture block size */
@@ -259,12 +261,12 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
             last = new_block;
 
             /*Save data to the new block*/
-            if (file_current + file_config.capture_block_size < file_end)
+            if (file_current + capture_block_size < file_end)
             {
                 memcpy((uint8_t*)last + sizeof(*new_block),
-                    file_current,  file_config.capture_block_size);
-                new_block->length =  file_config.capture_block_size;
-                file_current += file_config.capture_block_size;
+                    file_current,  capture_block_size);
+                new_block->length =  capture_block_size;
+                file_current += capture_block_size;
             }
             else
             {
@@ -307,8 +309,6 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
 FileCaptureState FileCapture::process_buffer(const uint8_t* file_data,
     int data_size, FilePosition position)
 {
-    FileConfig& file_config =  snort_conf->file_config;
-
     current_data = file_data;
     current_data_len = data_size;
 
@@ -337,7 +337,7 @@ FileCaptureState FileCapture::process_buffer(const uint8_t* file_data,
             file_counts.files_buffered_total++;
         }
 
-        return (save_to_file_buffer(file_data, data_size, file_config.capture_max_size));
+        return (save_to_file_buffer(file_data, data_size, capture_max_size));
     }
 
     return FILE_CAPTURE_SUCCESS;
@@ -347,8 +347,6 @@ FileCaptureState FileCapture::process_buffer(const uint8_t* file_data,
 FileCaptureState FileCapture::reserve_file(const FileInfo* file)
 {
     uint64_t fileSize;
-
-    FileConfig& file_config =  snort_conf->file_config;
 
     if (capture_state != FILE_CAPTURE_SUCCESS)
     {
@@ -362,13 +360,13 @@ FileCaptureState FileCapture::reserve_file(const FileInfo* file)
      */
     fileSize = file->get_file_size();
 
-    if ( fileSize < (unsigned)file_config.capture_min_size)
+    if ( fileSize < (unsigned)capture_min_size)
     {
         file_counts.file_size_min++;
         return error_capture(FILE_CAPTURE_MIN);
     }
 
-    if ( fileSize > (unsigned)file_config.capture_max_size)
+    if ( fileSize > (unsigned)capture_max_size)
     {
         file_counts.file_size_max++;
         return error_capture(FILE_CAPTURE_MAX);
@@ -398,7 +396,7 @@ FileCaptureState FileCapture::reserve_file(const FileInfo* file)
 
     /*Copy the last piece of file to file buffer*/
     if (save_to_file_buffer(current_data,
-            current_data_len, file_config.capture_max_size) )
+            current_data_len, capture_max_size) )
     {
         return error_capture(capture_state);
     }

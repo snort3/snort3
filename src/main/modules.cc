@@ -1708,7 +1708,6 @@ void module_init()
 
     // these modules could be in traffic policy
     ModuleManager::add_module(new ActiveModule);
-    ModuleManager::add_module(new FileIdModule);
 
     ModuleManager::add_module(new LatencyModule);
 

@@ -31,6 +31,7 @@
 #include "utils/cpp_macros.h"
 
 #include "file_config.h"
+#include "file_policy.h"
 
 class FileInfo;
 
@@ -48,7 +49,7 @@ public:
 
     FileEnforcer();
     ~FileEnforcer();
-    FileVerdict cached_verdict_lookup(Flow*, FileInfo*);
+    FileVerdict cached_verdict_lookup(Flow*, FileInfo*, FilePolicy&);
     bool apply_verdict(Flow*, FileInfo*, FileVerdict);
 
 private:
@@ -64,7 +65,7 @@ PADDING_GUARD_BEGIN
 PADDING_GUARD_END
 
     void update_file_node(FileNode*, FileInfo*);
-    FileVerdict check_verdict(Flow*, FileNode*, SFXHASH_NODE*);
+    FileVerdict check_verdict(Flow*, FileNode*, SFXHASH_NODE*, FilePolicy&);
     int store_verdict(Flow*, FileInfo*);
 
     /* The hash table of expected files */

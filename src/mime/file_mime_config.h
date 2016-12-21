@@ -38,7 +38,6 @@
 class SO_PUBLIC DecodeConfig
 {
 public:
-    DecodeConfig();
     void set_ignore_data(bool);
     bool is_ignore_data();
     void set_max_mime_mem(int);
