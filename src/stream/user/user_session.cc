@@ -153,7 +153,7 @@ void UserTracker::detect(const Packet* p, const StreamBuffer* sb, uint32_t flags
     up.packet_flags |= (p->packet_flags & (PKT_FROM_CLIENT|PKT_FROM_SERVER));
     up.packet_flags |= (p->packet_flags & (PKT_STREAM_EST|PKT_STREAM_UNEST_UNI));
 
-    //printf("user detect[%d] %*s\n", up.dsize, up.dsize, (char*)up.data);
+    trace_logf(stream_user, "detect[%d]\n", up.dsize);
     Snort::detect_rebuilt_packet(&up);
 }
 
@@ -173,7 +173,7 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
 
         flags = p->packet_flags & (PKT_FROM_CLIENT|PKT_FROM_SERVER);
         unsigned len = us->get_unused_len();
-        //printf("user scan[%d] '%*s'\n", len, len, us->get_unused_data());
+        trace_logf(stream_user, "scan[%d]\n", len);
 
         int32_t flush_amt = paf_check(
             splitter, &paf_state, p->flow, us->get_unused_data(), len,
@@ -199,41 +199,42 @@ void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
 {
     unsigned bytes_flushed = 0;
     const StreamBuffer* sb = nullptr;
-    //printf("user flush[%d]\n", flush_amt);
+    trace_logf(stream_user, "flush[%d]\n", flush_amt);
     uint32_t rflags = flags & ~PKT_PDU_TAIL;
 
-    while ( !seg_list.empty() and flush_amt )
+    while ( !seg_list.empty() and bytes_flushed < flush_amt )
     {
         UserSegment* us = seg_list.front();
         const uint8_t* data = us->get_data();
         unsigned len = us->get_len();
         unsigned bytes_copied = 0;
 
-        if ( len == flush_amt )
+        if ( len + bytes_flushed > flush_amt )
+            len = flush_amt - bytes_flushed;
+
+        if ( len + bytes_flushed == flush_amt )
             rflags |= (flags & PKT_PDU_TAIL);
 
-        //printf("user reassemble[%d]\n", len);
+        trace_logf(stream_user, "reassemble[%d]\n", len);
         sb = splitter->reassemble(
             p->flow, flush_amt, bytes_flushed, data, len, rflags, bytes_copied);
 
         bytes_flushed += bytes_copied;
+        total -= bytes_copied;
+
         rflags &= ~PKT_PDU_HEAD;
 
         if ( sb )
             detect(p, sb, flags);
 
-        if ( len == bytes_copied )
+        if ( bytes_copied == us->get_len() )
         {
-            total -= len;
-            flush_amt -= len;
             seg_list.pop_front();
             UserSegment::term(us);
         }
         else
         {
-            total -= bytes_copied;
             us->shift(bytes_copied);
-            flush_amt = 0;
         }
     }
 }
@@ -259,7 +260,7 @@ void UserTracker::process(Packet* p)
 
 void UserTracker::add_data(Packet* p)
 {
-    //printf("user add[%d]\n", p->dsize);
+    trace_logf(stream_user, "add[%d]\n", p->dsize);
     unsigned avail = 0;
 
     if ( !seg_list.empty() )

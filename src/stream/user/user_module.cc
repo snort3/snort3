@@ -26,6 +26,8 @@
 
 using namespace std;
 
+Trace TRACE_NAME(stream_user);
+
 //-------------------------------------------------------------------------
 // stream_user module
 //-------------------------------------------------------------------------
@@ -39,7 +41,7 @@ static const Parameter s_params[] =
 };
 
 StreamUserModule::StreamUserModule() :
-    Module(MOD_NAME, MOD_HELP, s_params)
+    Module(MOD_NAME, MOD_HELP, s_params, false, &TRACE_NAME(stream_user))
 {
     config = nullptr;
 }
@@ -57,13 +59,13 @@ StreamUserConfig* StreamUserModule::get_data()
     return temp;
 }
 
-bool StreamUserModule::set(const char*, Value& v, SnortConfig*)
+bool StreamUserModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
     if ( v.is("session_timeout") )
         config->session_timeout = v.get_long();
 
     else
-        return false;
+        return Module::set(fqn, v, sc);
 
     return true;
 }

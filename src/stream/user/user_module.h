@@ -20,6 +20,7 @@
 #ifndef USER_MODULE_H
 #define USER_MODULE_H
 
+#include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "main/thread.h"
 #include "framework/module.h"
@@ -30,6 +31,8 @@ struct SnortConfig;
 extern const PegInfo user_pegs[];
 extern THREAD_LOCAL struct UserStats user_stats;
 extern THREAD_LOCAL ProfileStats user_perf_stats;
+
+extern Trace TRACE_NAME(stream_user);
 
 //-------------------------------------------------------------------------
 // stream_user module
