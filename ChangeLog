@@ -1,3 +1,23 @@
+16/21/16 - build 223
+
+-- port 2983 smb active response updates
+-- fix reload crash with file inspector
+-- fix appid service dispatch handling issue
+   thanks to João Soares <joaosoares11@hotmail.com> for reporting the issue
+-- fix paf-type flushing of single segments
+   thanks to João Soares <joaosoares11@hotmail.com> for reporting the issue
+-- fix daemonization
+   thanks to João Soares <joaosoares11@hotmail.com> for reporting the issue
+-- also fixes double counting of reassembled buffers
+-- fix fallback from paf to atom splitter if flushing past gap
+-- fix thread termination segfaults after DAQ module initialization fails
+-- fix non-x86 builds - do not build tsc clock scaling
+-- added appid to user manual features
+-- update default user manuals
+-- minor refactor of flush loop for clarity
+-- improve http_inspect Field class
+-- refactor plugin loading
+
 16/12/16 - build 222
 
 -- add JavaScript Normalization to http_inspect

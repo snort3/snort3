@@ -53,13 +53,14 @@ Table of Contents
 
 5. Features
 
-    5.1. Binder
-    5.2. DCE Inspectors
-    5.3. File Processing
-    5.4. HTTP Inspector
-    5.5. Performance Monitor
-    5.6. Sensitive Data Filtering
-    5.7. Wizard
+    5.1. AppId
+    5.2. Binder
+    5.3. DCE Inspectors
+    5.4. File Processing
+    5.5. HTTP Inspector
+    5.6. Performance Monitor
+    5.7. Sensitive Data Filtering
+    5.8. Wizard
 
 6. Basic Modules
 
@@ -347,7 +348,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0-a4 (Build 221) from 2.9.8-383
+o"  )~   Version 3.0.0-a4 (Build 222) from 2.9.8-383
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
@@ -1888,7 +1889,255 @@ The available signals may vary from platform to platform.
 This section explains how to use key features of Snort.
 
 
-5.1. Binder
+5.1. AppId
+
+--------------
+
+Network administrators need application awareness in order to fine
+tune their management of the ever-growing number of applications
+passing traffic over the network. Application awareness allows an
+administrator to create rules for applications as needed by the
+business. The rules can be used to take action based on the
+application, such as block, allow or alert.
+
+5.1.1. Overview
+
+The AppId inspector provides an application level view when managing
+networks by providing the following features:
+
+  * Network control: The inspector works with Snort rules by
+    providing a set of application identifiers (AppIds) to Snort rule
+    writers.
+  * Application usage awareness: The inspector outputs statistics to
+    show how many times applications are being used on the network.
+  * Custom applications: Administrators can create their own
+    application detectors to detect new applications. The detectors
+    are written in Lua and interface with Snort using a well-defined
+    C-Lua API.
+  * Open Detector Package (ODP): A set of pre-defined application
+    detectors are provided by the Snort team and can be downloaded
+    from snort.org.
+
+5.1.2. Dependency Requirements
+
+For proper functioning of the AppId inspector, at a minimum stream
+flow tracking must be enabled. In addition, to identify TCP-based or
+UDP-based applications then the appropriate stream inspector must be
+enabled, e.g. stream_tcp or stream_udp.
+
+In addition, in order to identify HTTP-based applications, the HTTP
+inspector must be enabled. Otherwise, only non-HTTP applications will
+be identified.
+
+AppId subscribes to the inspection events published by other
+inspectors, such as the HTTP and SSL inspectors, to gain access to
+the data needed. It uses that data to help determine the application
+ID.
+
+5.1.3. Configuration
+
+The AppId feature can be enabled via configuration. To enable it with
+the default settings use:
+
+appid = { }
+
+To use an AppId as a matching parameter in an IPS rule, use the 
+appids keyword. For example, to block HTTP traffic that contains a
+specific header:
+
+block tcp any any -> 192.168.0.1 any ( msg:"Block Malicious HTTP header";
+  appids:"HTTP"; content:"X-Header: malicious"; sid:18000; )
+
+Alternatively, the HTTP application can be specified in place of tcp
+instead of using the appids keyword. The AppId inspector will set the
+service when it is discovered so it can be used in IPS rules like
+this. Note that this rule also does not specify the IPs or ports
+which default to any.
+
+block http ( msg:"Block Malicious HTTP header";
+  content:"X-Header: malicious"; sid:18000; )
+
+It’s possible to specify multiple applications (as many as desired)
+with the appids keyword. A rule is considered a match if any of the
+applications on the rule match. Note that this rule does not match
+specific content which will reduce performance.
+
+alert tcp any any -> 192.168.0.1 any ( msg:"Alert ";
+  appids:"telnet,ssh,smtp,http";
+
+Below is a minimal Snort configuration that is sufficient to block
+flows based on a specific HTTP header:
+
+require("snort_config")
+
+dir = os.getenv('SNORT_LUA_PATH')
+
+if ( not dir ) then
+    dir = '.'
+end
+
+dofile(dir .. '/snort_defaults.lua')
+
+local_rules =
+[[
+block http ( msg:"openAppId: test content match for app http";
+content:"X-Header: malicious"; sid:18760; rev:4; )
+]]
+
+stream = { }
+
+stream_tcp = { }
+
+binder =
+{
+    {
+        when =
+        {
+            proto = 'tcp',
+            ports = [[ 80 8080 ]],
+        },
+        use =
+        {
+            type = 'http_inspect',
+        },
+    },
+}
+
+http_inspect = { }
+
+appid = { }
+
+ips =
+{
+    rules = local_rules,
+}
+
+5.1.4. Session Application Identifiers
+
+There are up to four AppIds stored in a session as defined below:
+
+  * serviceAppId - An appId associated with server side of a session.
+    Example: http server.
+  * clientAppId - An appId associated with application on client side
+    of a session. Example: Firefox.
+  * payloadAppId - For services like http this appId is associated
+    with a webserver host. Example: Facebook.
+  * miscAppId - For some encapsulated protocols, this is the highest
+    encapsulated application.
+
+For packets originating from the client, a payloadAppid in a session
+is matched with all AppIds listed on a rule. Thereafter miscAppId,
+clientAppId and serviceAppId are matched. Since Alert Events contain
+one AppId, only the first match is reported. If a rule without an
+appids option matches, then the most specific appId (in order of
+payload, misc, client, server) is reported.
+
+The same logic is followed for packets originating from the server
+with one exception. The order of matching is changed to make
+serviceAppId come before clientAppId.
+
+5.1.5. AppId Usage Statistics
+
+The AppId inspector prints application network usage periodically in
+the snort log directory in unified2 format. File name, time interval
+for statistic and file rollover are controlled by appId inspection
+configuration.
+
+5.1.6. Open Detector Package (ODP) Installation
+
+Application detectors from Snort team will be delivered in a separate
+package called the Open Detector Package (ODP) that can be downloaded
+from snort.org. ODP is a package that contains the following
+artifacts:
+
+  * Application detectors in the Lua language.
+  * Port detectors, which are port only application detectors, in
+    meta-data in YAML format.
+  * appMapping.data file containing application metadata. This file
+    should not be modified. The first column contains application
+    identifier and second column contains application name. Other
+    columns contain internal information.
+  * Lua library files DetectorCommon.lua, flowTrackerModule.lua and
+    hostServiceTrackerModule.lua
+
+A user can install the ODP package in any directory and configure
+this directory via the app_detector_dir option in the appid
+preprocessor configuration. Installing ODP will not modify any
+subdirectory named custom, where user-created detectors are located.
+
+When installed, ODP will create following sub-directories:
+
+  * odp/port //Cisco port-only detectors
+  * odp/lua //Cisco Lua detectors
+  * odp/libs //Cisco Lua modules
+
+5.1.7. User Created Application Detectors
+
+Users can detect new applications by adding detectors in the Lua
+language. A document will be posted on the Snort Website with details
+on API. Users can also copy over Snort team provided detectors and
+modify them. Users can also use the detector creation tool described
+in the next section.
+
+Users must organize their Lua detectors and libraries by creating the
+following directory structure, under the ODP installation directory.
+
+  * custom/port //port-only detectors
+  * custom/lua //Lua detectors
+  * custom/libs //Lua modules
+
+The root path is specified by the "app_detector_dir" parameter of the
+appid section of snort.conf:
+
+appid  =
+{
+    app_detector_dir = '/usr/local/lib/openappid',
+}
+
+So the path to the user-created lua files would be /usr/local/lib/
+openappid/custom/lua/
+
+None of the directories below /usr/local/lib/openappid/ would be
+added for you.
+
+5.1.8. Application Detector Creation Tool
+
+For rudimentary Lua detectors, there is a tool provided called
+appid_detector_builder.sh. This is a simple, menu-driven bash script
+which creates .lua files in your current directory, based on your
+choices and on patterns you supply.
+
+When you launch the script, it will prompt for the Application Id
+that you are giving for your detector. This is free-form ASCII with
+minor restrictions. The Lua detector file will be named based on your
+Application Id. If the file name already exists you will be prompted
+to overwrite it.
+
+You will also be prompted for a description of your detector to be
+placed in the comments of the Lua source code. This is optional.
+
+You will then be asked a series of questions designed to construct
+Lua code based on the kind of pattern data, protocol, port(s), etc.
+
+When complete, the Protocol menu will be changed to include the
+option, "Save Detector". Instead of saving the file and exiting the
+script, you are allowed to give additional criteria for another
+pattern which may also be incorporated in the detection scheme. Then
+either pattern, when matched, will be considered a valid detection.
+
+For example, your first choices might create an HTTP detection
+pattern of "example.com", and the next set of choices would add the
+HTTP detection pattern of "example.uk.co" (an equally fictional
+British counterpart). They would then co-exist in the Lua detector,
+and either would cause a detection with the name you give for your
+Application Id.
+
+The resulting .lua file will need to be placed in the directory,
+"custom/lua", described in the previous section of the README above
+called "User Created Application Detectors"
+
+
+5.2. Binder
 
 --------------
 
@@ -1941,7 +2190,7 @@ can contain any combination of criteria and binder.use can specify an
 action, config file, or inspector configuration.
 
 
-5.2. DCE Inspectors
+5.3. DCE Inspectors
 
 --------------
 
@@ -1949,7 +2198,7 @@ The main purpose of these inspector are to perform SMB desegmentation
 and DCE/RPC defragmentation to avoid rule evasion using these
 techniques.
 
-5.2.1. Overview
+5.3.1. Overview
 
 The following transports are supported for DCE/RPC: SMB, TCP, and
 UDP. New rule options have been implemented to improve performance,
@@ -1965,7 +2214,7 @@ defragmentation, are copied into each inspector configuration. The
 address/port mapping is handled by the binder. Autodetect
 functionality is replaced by wizard curses.
 
-5.2.2. Quick Guide
+5.3.2. Quick Guide
 
 A typical dcerpce configuration looks like this:
 
@@ -2015,7 +2264,7 @@ dce_udp = { }
 In this example, it defines smb, tcp and udp inspectors based on
 port. All the configurations are default.
 
-5.2.3. Target Based
+5.3.3. Target Based
 
 There are enough important differences between Windows and Samba
 versions that a target based approach has been implemented. Some
@@ -2044,7 +2293,7 @@ different policy. Here are the list of policies supported:
   * Samba-3.0.22
   * Samba-3.0.20
 
-5.2.4. Reassembling
+5.3.4. Reassembling
 
 Both SMB inspector and TCP inspector support reassemble. Reassemble
 threshold specifies a minimum number of bytes in the DCE/RPC
@@ -2055,13 +2304,13 @@ before full defragmentation is done. A value of 0 s supplied as an
 argument to this option will, in effect, disable this option. Default
 is disabled.
 
-5.2.5. SMB
+5.3.5. SMB
 
 SMB inspector is one of the most complex inspectors. In addition to
 supporting rule options and lots of inspector rule events, it also
 supports file processing for both SMB version 1, 2, and 3.
 
-5.2.5.1. Finger Print Policy
+5.3.5.1. Finger Print Policy
 
 In the initial phase of an SMB session, the client needs to
 authenticate with a SessionSetupAndX. Both the request and response
@@ -2069,7 +2318,7 @@ to this command contain OS and version information that can allow the
 inspector to dynamically set the policy for a session which allows
 for better protection against Windows and Samba specific evasions.
 
-5.2.5.2. File Inspection
+5.3.5.2. File Inspection
 
 SMB inspector supports file inspection. A typical configuration looks
 like this:
@@ -2124,17 +2373,17 @@ inspection in rules. An argument of 0 to "file_depth" means
 unlimited. Default is "off", i.e. no SMB file inspection is done in
 the inspector.
 
-5.2.6. TCP
+5.3.6. TCP
 
 dce_tcp inspector supports defragementation, reassembling, and policy
 that is similar to SMB.
 
-5.2.7. UDP
+5.3.7. UDP
 
 dce_udp is a very simple inspector that only supports
 defragementation
 
-5.2.8. Rule Options
+5.3.8. Rule Options
 
 New rule options are supported by enabling the dcerpc2 inspectors:
 
@@ -2147,7 +2396,7 @@ New modifiers to existing byte_test and byte_jump rule options:
   * byte_test: dce
   * byte_jump: dce
 
-5.2.8.1. dce_iface
+5.3.8.1. dce_iface
 
 For DCE/RPC based rules it has been necessary to set flow-bits based
 on a client bind to a service to avoid false positives. It is
@@ -2258,7 +2507,7 @@ longest) pattern will be used. If a content in the rule uses the
 fast_pattern rule option, it will unequivocally be used over the
 above mentioned patterns.
 
-5.2.8.2. dce_opnum
+5.3.8.2. dce_opnum
 
 The opnum represents a specific function call to an interface. After
 is has been determined that a client has bound to a specific
@@ -2280,7 +2529,7 @@ opnum of a DCE/RPC request will be matched against the opnums
 specified with this option. This option matches if any one of the
 opnums specified match the opnum of the DCE/RPC request.
 
-5.2.8.3. dce_stub_data
+5.3.8.3. dce_stub_data
 
 Since most DCE/RPC based rules had to do protocol decoding only to
 get to the DCE/RPC stub data, i.e. the remote procedure call or
@@ -2309,7 +2558,7 @@ that does not specify a relative modifier will be evaluated from the
 start of the stub data buffer. To leave the stub data buffer and
 return to the main payload buffer, use the "pkt_data" rule option.
 
-5.2.8.4. byte_test and byte_jump
+5.3.8.4. byte_test and byte_jump
 
 A DCE/RPC request can specify whether numbers are represented in big
 or little endian. These rule options will take as a new argument
@@ -2335,7 +2584,7 @@ byte_jump arguments will not be allowed: "big", "little", "string",
 "hex", "dec", "oct" and "from_beginning"
 
 
-5.3. File Processing
+5.4. File Processing
 
 --------------
 
@@ -2344,7 +2593,7 @@ network file inspection becomes more and more important. This feature
 will provide file type identification, file signature creation, and
 file capture capabilities to help users deal with those challenges.
 
-5.3.1. Overview
+5.4.1. Overview
 
 There are two parts of file services: file APIs and file policy. File
 APIs provides all the file inspection functionalities, such as file
@@ -2359,7 +2608,7 @@ file policy along with file event log.
   * Supported protocols: HTTP, SMTP, IMAP, POP3, FTP, and SMB.
   * Supported file signature calculation: SHA256
 
-5.3.2. Quick Guide
+5.4.2. Quick Guide
 
 A very simple configuration has been included in lua/snort.lua file.
 A typical file configuration looks like this:
@@ -2398,7 +2647,7 @@ There are 3 steps to enable file processing:
   * At last, enable file_log to get detailed information about file
     event
 
-5.3.3. Pre-packaged File Magic Rules
+5.4.3. Pre-packaged File Magic Rules
 
 A set of file magic rules is packaged with Snort. They can be located
 at "lua/file_magic.lua". To use this feature, it is recommended that
@@ -2421,7 +2670,7 @@ at content at particular file offset to identify the file type. In
 this case, two magics look at the beginning of the file. You can use
 character if it is printable or hex value in between "|".
 
-5.3.4. File Policy
+5.4.4. File Policy
 
 You can enabled file type, file signature, or file capture by
 configuring file_id. In addition, you can enable trace to see file
@@ -2447,7 +2696,7 @@ In this example, it enables this policy:
   * For all file types identified, they will be logged with
     signature, and also captured onto log folder.
 
-5.3.5. File Capture
+5.4.5. File Capture
 
 File can be captured and stored to log folder. We use SHA as file
 name instead of actual file name to avoid conflicts. You can capture
@@ -2463,7 +2712,7 @@ or enable it for some file or file type in your file policy:
 
 The above rule will enable PDF file capture.
 
-5.3.6. File Events
+5.4.6. File Events
 
 File inspect preprocessor also works as a dynamic output plugin for
 file events. It logs basic information about file. The log file is in
@@ -2485,7 +2734,7 @@ File event example:
 [Size: 1039328]
 
 
-5.4. HTTP Inspector
+5.5. HTTP Inspector
 
 --------------
 
@@ -2556,7 +2805,7 @@ to be a date then normalization means put that date in a standard
 format.
 
 
-5.5. Performance Monitor
+5.6. Performance Monitor
 
 --------------
 
@@ -2565,14 +2814,14 @@ down by too many flows? perf_monitor! Why are certain TCP segments
 being dropped without hitting a rule? perf_monitor! Why is a sensor
 leaking water? Not perf_monitor, check with stream…
 
-5.5.1. Overview
+5.6.1. Overview
 
 The Snort performance monitor is the built-in utility for monitoring
 system and traffic statistics. All statistics are separated by
 processing thread. perf_monitor supports several trackers for
 monitoring such data:
 
-5.5.2. Base Tracker
+5.6.2. Base Tracker
 
 The base tracker is used to gather running statistics about Snort and
 its running modules. All Snort modules gather, at the very least,
@@ -2629,7 +2878,7 @@ perf_monitor =
 Note: Event stats from prior Snorts are now located within base
 statistics.
 
-5.5.3. Flow Tracker
+5.6.3. Flow Tracker
 
 Flow tracks statistics regarding traffic and L3/L4 protocol
 distributions. This data can be used to build a profile of traffic
@@ -2639,7 +2888,7 @@ To enable:
 
 perf_monitor = { flow = true }
 
-5.5.4. FlowIP Tracker
+5.6.4. FlowIP Tracker
 
 FlowIP provides statistics for individual hosts within a network.
 This data can be used for identifying communication habits, such as
@@ -2651,7 +2900,7 @@ To enable:
 
 perf_monitor = { flow_ip = true }
 
-5.5.5. CPU Tracker
+5.6.5. CPU Tracker
 
 This tracker monitors the CPU and wall time spent by a given
 processing thread.
@@ -2661,7 +2910,7 @@ To enable:
 perf_monitor = { cpu = true }
 
 
-5.6. Sensitive Data Filtering
+5.7. Sensitive Data Filtering
 
 --------------
 
@@ -2671,21 +2920,21 @@ credit card numbers, U.S. Social Security numbers, and email
 addresses. A rich regular expression syntax is available for defining
 your own PII.
 
-5.6.1. Hyperscan
+5.7.1. Hyperscan
 
 The sd_pattern rule option is powered by the open source Hyperscan
 library from Intel. It provides a regex grammar which is mostly PCRE
 compatible. To learn more about Hyperscan see http://01org.github.io/
 hyperscan/dev-reference/
 
-5.6.2. Syntax
+5.7.2. Syntax
 
 Snort provides sd_pattern as IPS rule option with no additional
 inspector overhead. The Rule option takes the following syntax.
 
 sd_pattern: "<pattern>"[, threshold <count>];
 
-5.6.2.1. Pattern
+5.7.2.1. Pattern
 
 Pattern is the most important and is the only required parameter to
 sd_pattern. It supports 3 built in patterns which are configured by
@@ -2723,7 +2972,7 @@ but would not match 1@ourdomain.com ab12@ourdomain.com or
 Note: This is just an example, this pattern is not suitable to detect
 many correctly formatted emails.
 
-5.6.2.2. Threshold
+5.7.2.2. Threshold
 
 Threshold is an optional parameter allowing you to change built in
 default value (default value is 1). The following two instances are
@@ -2741,7 +2990,7 @@ This example requires 300 matches of the pattern "This is a string
 literal" to qualify as a positive match. That is, if the string only
 occurred 299 times in a packet, you will not see an event.
 
-5.6.2.3. Obfuscating Credit Cards and Social Security Numbers
+5.7.2.3. Obfuscating Credit Cards and Social Security Numbers
 
 Snort provides discreet logging for the built in patterns
 "credit_card", "us_social" and "us_social_nodashes". Enabling
@@ -2754,7 +3003,7 @@ output =
     obfuscate_pii = true
 }
 
-5.6.3. Example
+5.7.3. Example
 
 A complete Snort IPS rule
 
@@ -2770,7 +3019,7 @@ Logged output when running Snort in "cmg" alert format.
 58 58 58 58 58 58 58 58 58 58 58 58 39 32 39 34              XXXXXXXXXXXX9294
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-5.6.4. Caveats
+5.7.4. Caveats
 
  1. Snort currently requires setting the fast pattern engine to use
     "hyperscan" in order for sd_pattern ips option to function
@@ -2787,7 +3036,7 @@ Logged output when running Snort in "cmg" alert format.
     (This is a known bug).
 
 
-5.7. Wizard
+5.8. Wizard
 
 --------------
 
@@ -4316,7 +4565,6 @@ Type: inspector
 
 Configuration:
 
-  * string appid.conf: RNA configuration file
   * int appid.memcap = 0: disregard - not implemented { 0: }
   * bool appid.log_stats = false: enable logging of appid statistics
   * int appid.app_stats_period = 300: time period for collecting and
@@ -6468,7 +6716,7 @@ Type: ips_option
 
 Configuration:
 
-  * string appids.~: appid option
+  * string appids.~: comma separated list of application names
 
 
 10.3. asn1
@@ -10472,7 +10720,6 @@ libraries see the Getting Started section of the manual.
     appid stats before rolling over the log file { 0: }
   * int appid.app_stats_rollover_time = 86400: max time period for
     collection appid stats before rolling over the log file { 0: }
-  * string appid.conf: RNA configuration file
   * bool appid.debug = false: enable appid debug logging
   * bool appid.dump_ports = false: enable dump of appid port
     information
@@ -10480,7 +10727,7 @@ libraries see the Getting Started section of the manual.
     what this is { 0: }
   * bool appid.log_stats = false: enable logging of appid statistics
   * int appid.memcap = 0: disregard - not implemented { 0: }
-  * string appids.~: appid option
+  * string appids.~: comma separated list of application names
   * addr appid.session_log_filter.dst_ip = 0.0.0.0/32: destination ip
     address in CIDR format
   * port appid.session_log_filter.dst_port: destination port { 1: }

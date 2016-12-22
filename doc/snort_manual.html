@@ -779,7 +779,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0-a4 (Build 221) from 2.9.8-383
+o"  )~   Version 3.0.0-a4 (Build 222) from 2.9.8-383
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
@@ -3061,6 +3061,328 @@ kill -hup &lt;pid&gt;</code></pre>
 <div class="sectionbody">
 <div class="paragraph"><p>This section explains how to use key features of Snort.</p></div>
 <div class="sect2">
+<h3 id="_appid">AppId</h3>
+<div class="paragraph"><p>Network administrators need application awareness in order to fine tune
+their management of the ever-growing number of applications passing traffic
+over the network. Application awareness allows an administrator to create
+rules for applications as needed by the business. The rules can be used to
+take action based on the application, such as block, allow or alert.</p></div>
+<div class="sect3">
+<h4 id="_overview_2">Overview</h4>
+<div class="paragraph"><p>The AppId inspector provides an application level view when managing
+networks by providing the following features:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Network control: The inspector works with Snort rules by providing a set of
+  application identifiers (AppIds) to Snort rule writers.
+</p>
+</li>
+<li>
+<p>
+Application usage awareness: The inspector outputs statistics to show
+  how many times applications are being used on the network.
+</p>
+</li>
+<li>
+<p>
+Custom applications: Administrators can create their own application
+  detectors to detect new applications. The detectors are written in Lua
+  and interface with Snort using a well-defined C-Lua API.
+</p>
+</li>
+<li>
+<p>
+Open Detector Package (ODP): A set of pre-defined application detectors are
+  provided by the Snort team and can be downloaded from snort.org.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect3">
+<h4 id="_dependency_requirements">Dependency Requirements</h4>
+<div class="paragraph"><p>For proper functioning of the AppId inspector, at a minimum stream flow
+tracking must be enabled. In addition, to identify TCP-based or UDP-based
+applications then the appropriate stream inspector must be enabled, e.g.
+stream_tcp or stream_udp.</p></div>
+<div class="paragraph"><p>In addition, in order to identify HTTP-based applications, the HTTP
+inspector must be enabled. Otherwise, only non-HTTP applications will be
+identified.</p></div>
+<div class="paragraph"><p>AppId subscribes to the inspection events published by other inspectors,
+such as the HTTP and SSL inspectors, to gain access to the data needed. It
+uses that data to help determine the application ID.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_configuration_3">Configuration</h4>
+<div class="paragraph"><p>The AppId feature can be enabled via configuration. To enable it with the
+default settings use:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>appid = { }</code></pre>
+</div></div>
+<div class="paragraph"><p>To use an AppId as a matching parameter in an IPS rule, use the <em>appids</em>
+keyword.  For example, to block HTTP traffic that contains a specific header:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>block tcp any any -&gt; 192.168.0.1 any ( msg:"Block Malicious HTTP header";
+  appids:"HTTP"; content:"X-Header: malicious"; sid:18000; )</code></pre>
+</div></div>
+<div class="paragraph"><p>Alternatively, the HTTP application can be specified in place of <em>tcp</em> instead
+of using the <em>appids</em> keyword. The AppId inspector will set the service when
+it is discovered so it can be used in IPS rules like this. Note that this rule
+also does not specify the IPs or ports which default to <em>any</em>.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>block http ( msg:"Block Malicious HTTP header";
+  content:"X-Header: malicious"; sid:18000; )</code></pre>
+</div></div>
+<div class="paragraph"><p>It&#8217;s possible to specify multiple applications (as many as desired) with
+the appids keyword. A rule is considered a match if any of the applications
+on the rule match. Note that this rule does not match specific content which
+will reduce performance.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>alert tcp any any -&gt; 192.168.0.1 any ( msg:"Alert ";
+  appids:"telnet,ssh,smtp,http";</code></pre>
+</div></div>
+<div class="paragraph"><p>Below is a minimal Snort configuration that is sufficient to block flows
+based on a specific HTTP header:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>require("snort_config")</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>dir = os.getenv('SNORT_LUA_PATH')</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>if ( not dir ) then
+    dir = '.'
+end</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>dofile(dir .. '/snort_defaults.lua')</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>local_rules =
+[[
+block http ( msg:"openAppId: test content match for app http";
+content:"X-Header: malicious"; sid:18760; rev:4; )
+]]</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>stream = { }</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>stream_tcp = { }</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>binder =
+{
+    {
+        when =
+        {
+            proto = 'tcp',
+            ports = [[ 80 8080 ]],
+        },
+        use =
+        {
+            type = 'http_inspect',
+        },
+    },
+}</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>http_inspect = { }</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>appid = { }</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>ips =
+{
+    rules = local_rules,
+}</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_session_application_identifiers">Session Application Identifiers</h4>
+<div class="paragraph"><p>There are up to four AppIds stored in a session as defined below:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+serviceAppId - An appId associated with server side of a session. Example:
+  http server.
+</p>
+</li>
+<li>
+<p>
+clientAppId - An appId associated with application on client side of a
+  session.  Example: Firefox.
+</p>
+</li>
+<li>
+<p>
+payloadAppId - For services like http this appId is associated with a
+  webserver host.  Example: Facebook.
+</p>
+</li>
+<li>
+<p>
+miscAppId - For some encapsulated protocols, this is the highest
+  encapsulated application.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>For packets originating from the client, a payloadAppid in a session is
+matched with all AppIds listed on a rule. Thereafter miscAppId, clientAppId
+and serviceAppId are matched. Since Alert Events contain one AppId, only the
+first match is reported. If a rule without an appids option matches, then the
+most specific appId (in order of payload, misc, client, server) is reported.</p></div>
+<div class="paragraph"><p>The same logic is followed for packets originating from the server with one
+exception.  The order of matching is changed to make serviceAppId come
+before clientAppId.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_appid_usage_statistics">AppId Usage Statistics</h4>
+<div class="paragraph"><p>The AppId inspector prints application network usage periodically in the snort
+log directory in unified2 format. File name, time interval for statistic and
+file rollover are controlled by appId inspection configuration.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_open_detector_package_odp_installation">Open Detector Package (ODP) Installation</h4>
+<div class="paragraph"><p>Application detectors from Snort team will be delivered in a separate package
+called the Open Detector Package (ODP) that can be downloaded from snort.org.
+ODP is a package that contains the following artifacts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Application detectors in the Lua language.
+</p>
+</li>
+<li>
+<p>
+Port detectors, which are port only application detectors, in meta-data in
+  YAML format.
+</p>
+</li>
+<li>
+<p>
+appMapping.data file containing application metadata. This file should not
+  be modified.  The first column contains application identifier and second
+  column contains application name.  Other columns contain internal
+  information.
+</p>
+</li>
+<li>
+<p>
+Lua library files DetectorCommon.lua, flowTrackerModule.lua and
+  hostServiceTrackerModule.lua
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>A user can install the ODP package in any directory and configure this
+directory via the app_detector_dir option in the appid preprocessor
+configuration.  Installing ODP will not modify any subdirectory named
+custom, where user-created detectors are located.</p></div>
+<div class="paragraph"><p>When installed, ODP will create following sub-directories:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+odp/port    //Cisco port-only detectors
+</p>
+</li>
+<li>
+<p>
+odp/lua     //Cisco Lua detectors
+</p>
+</li>
+<li>
+<p>
+odp/libs    //Cisco Lua modules
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect3">
+<h4 id="_user_created_application_detectors">User Created Application Detectors</h4>
+<div class="paragraph"><p>Users can detect new applications by adding detectors in the Lua language. A
+document will be posted on the Snort Website with details on API. Users can also
+copy over Snort team provided detectors and modify them. Users can also use the
+detector creation tool described in the next section.</p></div>
+<div class="paragraph"><p>Users must organize their Lua detectors and libraries by creating the
+following directory structure, under the ODP installation directory.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+custom/port    //port-only detectors
+</p>
+</li>
+<li>
+<p>
+custom/lua     //Lua detectors
+</p>
+</li>
+<li>
+<p>
+custom/libs    //Lua modules
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>The root path is specified by the "app_detector_dir" parameter of the appid
+section of snort.conf:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>appid  =
+{
+    app_detector_dir = '/usr/local/lib/openappid',
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>So the path to the user-created lua files would be
+/usr/local/lib/openappid/custom/lua/</p></div>
+<div class="paragraph"><p>None of the directories below /usr/local/lib/openappid/ would be added for
+you.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_application_detector_creation_tool">Application Detector Creation Tool</h4>
+<div class="paragraph"><p>For rudimentary Lua detectors, there is a tool provided called
+appid_detector_builder.sh.  This is a simple, menu-driven bash script
+which creates .lua files in your current directory, based on your choices
+and on patterns you supply.</p></div>
+<div class="paragraph"><p>When you launch the script, it will prompt for the Application Id
+that you are giving for your detector. This is free-form ASCII with
+minor restrictions. The Lua detector file will be named based on your
+Application Id. If the file name already exists you will be prompted to
+overwrite it.</p></div>
+<div class="paragraph"><p>You will also be prompted for a description of your detector to be placed
+in the comments of the Lua source code. This is optional.</p></div>
+<div class="paragraph"><p>You will then be asked a series of questions designed to construct Lua
+code based on the kind of pattern data, protocol, port(s), etc.</p></div>
+<div class="paragraph"><p>When complete, the Protocol menu will be changed to include the option,
+"Save Detector".  Instead of saving the file and exiting the script,
+you are allowed to give additional criteria for another pattern which
+may also be incorporated in the detection scheme. Then either pattern,
+when matched, will be considered a valid detection.</p></div>
+<div class="paragraph"><p>For example, your first choices might create an HTTP detection pattern
+of "example.com", and the next set of choices would add the HTTP
+detection pattern of "example.uk.co" (an equally fictional British
+counterpart). They would then co-exist in the Lua detector, and either
+would cause a detection with the name you give for your Application Id.</p></div>
+<div class="paragraph"><p>The resulting .lua file will need to be placed in the directory,
+"custom/lua", described in the previous section of the README above called
+"User Created Application Detectors"</p></div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_binder">Binder</h3>
 <div class="paragraph"><p>One of the fundamental differences between Snort 2 and Snort 3 concerns configuration
 related to networks and ports. Here is a brief review of Snort 2 configuration for
@@ -3142,7 +3464,7 @@ configuration.</p></div>
 <div class="paragraph"><p>The main purpose of these inspector are to perform SMB desegmentation and
 DCE/RPC defragmentation to avoid rule evasion using these techniques.</p></div>
 <div class="sect3">
-<h4 id="_overview_2">Overview</h4>
+<h4 id="_overview_3">Overview</h4>
 <div class="paragraph"><p>The following transports are supported for DCE/RPC: SMB, TCP, and UDP.
 New rule options have been implemented to improve performance, reduce false
 positives and reduce the count and complexity of DCE/RPC based rules.</p></div>
@@ -3615,7 +3937,7 @@ network file inspection becomes more and more important. This feature
 will provide file type identification, file signature creation, and file
 capture capabilities to help users deal with those challenges.</p></div>
 <div class="sect3">
-<h4 id="_overview_3">Overview</h4>
+<h4 id="_overview_4">Overview</h4>
 <div class="paragraph"><p>There are two parts of file services: file APIs and file policy.
 File APIs provides all the file inspection functionalities, such as file
 type identification, file signature calculation, and file capture.
@@ -3861,7 +4183,7 @@ too many flows? perf_monitor! Why are certain TCP segments being dropped without
 hitting a rule? perf_monitor! Why is a sensor leaking water? Not perf_monitor, check
 with stream…</p></div>
 <div class="sect3">
-<h4 id="_overview_4">Overview</h4>
+<h4 id="_overview_5">Overview</h4>
 <div class="paragraph"><p>The Snort performance monitor is the built-in utility for monitoring system
 and traffic statistics. All statistics are separated by processing thread.
 perf_monitor supports several trackers for monitoring such data:</p></div>
@@ -7377,16 +7699,11 @@ bit_list <strong>udp.gtp_ports</strong> = 2152 3386: set GTP ports { 65535 }
 <div class="paragraph"><p>These modules perform a variety of functions, including analysis of
 protocols beyond basic decoding.</p></div>
 <div class="sect2">
-<h3 id="_appid">appid</h3>
+<h3 id="_appid_2">appid</h3>
 <div class="paragraph"><p>What: application and service identification</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
-<li>
-<p>
-string <strong>appid.conf</strong>: RNA configuration file
-</p>
-</li>
 <li>
 <p>
 int <strong>appid.memcap</strong> = 0: disregard - not implemented { 0: }
@@ -13268,7 +13585,7 @@ string <strong>ack.~range</strong>: check if tcp ack value is <em>value | min&lt
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>appids.~</strong>: appid option
+string <strong>appids.~</strong>: comma separated list of application names
 </p>
 </li>
 </ul></div>
@@ -19584,7 +19901,7 @@ libraries see the Getting Started section of the manual.</p></div>
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_configuration_3">Configuration</h3>
+<h3 id="_configuration_4">Configuration</h3>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -19773,11 +20090,6 @@ int <strong>appid.app_stats_rollover_time</strong> = 86400: max time period for 
 </li>
 <li>
 <p>
-string <strong>appid.conf</strong>: RNA configuration file
-</p>
-</li>
-<li>
-<p>
 bool <strong>appid.debug</strong> = false: enable appid debug logging
 </p>
 </li>
@@ -19803,7 +20115,7 @@ int <strong>appid.memcap</strong> = 0: disregard - not implemented { 0: }
 </li>
 <li>
 <p>
-string <strong>appids.~</strong>: appid option
+string <strong>appids.~</strong>: comma separated list of application names
 </p>
 </li>
 <li>
@@ -31819,7 +32131,7 @@ stream_tcp alert squash mechanism incorrectly squashes alerts for
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2016-12-15 23:03:37 EST
+Last updated 2016-12-20 23:07:29 EST
 </div>
 </div>
 </body>
