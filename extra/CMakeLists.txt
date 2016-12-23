@@ -25,13 +25,45 @@ set (CPACK_SOURCE_GENERATOR TGZ)
 
 include(CPack)
 
-# hacks for the DAQ
+set ( C_FLAGS "" CACHE STRING "" )
+set ( CXX_FLAGS "" CACHE STRING "" )
+
+set ( CMAKE_C_FLAGS "${C_FLAGS}" CACHE STRING "" FORCE )
+set ( CMAKE_CXX_FLAGS "${CXX_FLAGS}" CACHE STRING "" FORCE )
+
 execute_process (
-    COMMAND pkg-config --variable=daq_cppflags snort
-    OUTPUT_VARIABLE DAQ_CPPFLAGS
+    COMMAND pkg-config --variable=cpp_opts snort
+    OUTPUT_VARIABLE CPP_OPTS
 )
+string ( REGEX REPLACE "[\r\n]" " " CPP_OPTS "${CPP_OPTS}" )
+separate_arguments ( CPP_OPTS )
 
-string ( REGEX REPLACE "[\r\n]" " " DAQ_CPPFLAGS "${DAQ_CPPFLAGS}" )
+foreach ( OPT ${CPP_OPTS} )
+    execute_process (
+        COMMAND pkg-config --variable=${OPT}_CPPFLAGS snort
+        OUTPUT_VARIABLE CPPFLAGS
+    )
 
-set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${DAQ_CPPFLAGS}" )
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DAQ_CPPFLAGS}" )
+    string ( REGEX REPLACE "[\r\n]" " " CPPFLAGS "${CPPFLAGS}" )
+    set ( ${OPT}_CPPFLAGS "${CPPFLAGS}" CACHE STRING "" )
+
+    set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${${OPT}_CPPFLAGS}" CACHE STRING "" FORCE )
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${${OPT}_CPPFLAGS}" CACHE STRING "" FORCE )
+endforeach ( OPT )
+
+execute_process (
+    COMMAND pkg-config --variable=cpp_opts_other snort
+    OUTPUT_VARIABLE CPP_OPTS_OTHER
+)
+string ( REGEX REPLACE "[\r\n]" " " CPP_OPTS_OTHER "${CPP_OPTS_OTHER}" )
+separate_arguments ( CPP_OPTS_OTHER )
+
+foreach ( OPT ${CPP_OPTS_OTHER} )
+    execute_process (
+        COMMAND pkg-config --variable=${OPT}_CPPFLAGS snort
+        OUTPUT_VARIABLE CPPFLAGS
+    )
+
+    string ( REGEX REPLACE "[\r\n]" " " CPPFLAGS "${CPPFLAGS}" )
+    set ( ${OPT}_CPPFLAGS "${CPPFLAGS}" CACHE STRING "" )
+endforeach ( OPT )

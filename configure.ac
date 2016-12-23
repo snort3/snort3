@@ -578,8 +578,10 @@ AC_ARG_WITH(pcap_includes,
     AS_HELP_STRING([--with-pcap-includes=DIR],[libpcap include directory]),
     [with_libpcap_includes="$withval"],[with_libpcap_includes="no"])
 
+PCAP_CPPFLAGS=""
 if test "x$with_libpcap_includes" != "xno"; then
-    CPPFLAGS="${CPPFLAGS} -I${with_libpcap_includes}"
+    PCAP_CPPFLAGS="-I${with_libpcap_includes}"
+    CPPFLAGS="${CPPFLAGS} ${PCAP_CPPFLAGS}"
 fi
 
 AC_ARG_WITH(pcap_libraries,
@@ -628,8 +630,9 @@ AC_MSG_CHECKING([for hwloc pkg-config presence])
 PKG_CHECK_EXISTS([hwloc], [have_hwloc_pkgconfig="yes"], [have_hwloc_pkgconfig="no"])
 AC_MSG_RESULT(${have_hwloc_pkgconfig})
 
+HWLOC_CPPFLAGS=""
 if test "${have_hwloc_pkgconfig}" = "yes" ; then
-    HWLOC_CFLAGS=`${PKG_CONFIG} --cflags hwloc`
+    HWLOC_CPPFLAGS=`${PKG_CONFIG} --cflags hwloc`
     HWLOC_LDFLAGS=`${PKG_CONFIG} --libs-only-L hwloc`
 fi
 
@@ -638,7 +641,7 @@ AC_ARG_WITH(hwloc_includes,
     [with_hwloc_includes="$withval"],[with_hwloc_includes="no"])
 
 if test "x$with_hwloc_includes" != "xno"; then
-    HWLOC_CFLAGS="-I${with_hwloc_includes}"
+    HWLOC_CPPFLAGS="-I${with_hwloc_includes}"
 fi
 
 AC_ARG_WITH(hwloc_libraries,
@@ -649,7 +652,7 @@ if test "x$with_hwloc_libraries" != "xno"; then
     HWLOC_LDFLAGS="-L${with_hwloc_libraries}"
 fi
 
-CPPFLAGS="${HWLOC_CFLAGS} ${CPPFLAGS}"
+CPPFLAGS="${HWLOC_CPPFLAGS} ${CPPFLAGS}"
 LDFLAGS="${HWLOC_LDFLAGS} ${LDFLAGS}"
 
 AC_CHECK_HEADERS([hwloc.h], , [AC_MSG_ERROR(hwloc header not found.)])
@@ -663,8 +666,9 @@ AC_MSG_CHECKING([for luajit pkg-config presence])
 PKG_CHECK_EXISTS([luajit], [ have_luajit_pkgconfig="yes" ], [ have_luajit_pkgconfig="no" ])
 AC_MSG_RESULT(${have_luajit_pkgconfig})
 
+LUAJIT_CPPFLAGS=""
 if test "${have_luajit_pkgconfig}" = "yes" ; then
-    LUAJIT_CFLAGS=`${PKG_CONFIG} --cflags luajit`
+    LUAJIT_CPPFLAGS=`${PKG_CONFIG} --cflags luajit`
     LUAJIT_LDFLAGS=`${PKG_CONFIG} --libs-only-L luajit`
 fi
 
@@ -673,7 +677,7 @@ AC_ARG_WITH(luajit_includes,
     [with_luajit_includes="$withval"],[with_luajit_includes="no"])
 
 if test "x$with_luajit_includes" != "xno"; then
-    LUAJIT_CFLAGS="-I${with_luajit_includes}"
+    LUAJIT_CPPFLAGS="-I${with_luajit_includes}"
 fi
 
 AC_ARG_WITH(luajit_libraries,
@@ -688,7 +692,7 @@ if test "x$macos" != "xno"; then
     LUAJIT_LDFLAGS="${LUAJIT_LDFLAGS} -pagezero_size 10000 -image_base 100000000"
 fi
 
-CPPFLAGS="${CPPFLAGS} ${LUAJIT_CFLAGS}"
+CPPFLAGS="${CPPFLAGS} ${LUAJIT_CPPFLAGS}"
 LDFLAGS="${LDFLAGS} ${LUAJIT_LDFLAGS}"
 
 AC_LANG_PUSH([C++])
@@ -704,6 +708,7 @@ AC_MSG_CHECKING([for libpcre pkg-config presence])
 PKG_CHECK_EXISTS([libpcre], [ have_libpcre_pkgconfig="yes" ], [ have_libpcre_pkgconfig="no" ])
 AC_MSG_RESULT(${have_libpcre_pkgconfig})
 
+PCRE_CPPFLAGS=""
 if test "${have_libpcre_pkgconfig}" = "yes" ; then
     PCRE_CFLAGS=`${PKG_CONFIG} --cflags libpcre`
     PCRE_LDFLAGS=`${PKG_CONFIG} --libs-only-L libpcre`
@@ -714,9 +719,9 @@ AC_ARG_WITH(pcre_includes,
     [with_libpcre_includes="$withval"],[with_libpcre_includes="no"])
 
 if test "x$with_libpcre_includes" != "xno"; then
-    PCRE_CFLAGS="-I${with_libpcre_includes}"
+    PCRE_CPPFLAGS="-I${with_libpcre_includes}"
 elif test "${have_libpcre_pkgconfig}" = "no"; then
-    PCRE_CFLAGS="`pcre-config --cflags`"
+    PCRE_CPPFLAGS="`pcre-config --cflags`"
 fi
 
 AC_ARG_WITH(pcre_libraries,
@@ -729,7 +734,7 @@ elif test "${have_libpcre_pkgconfig}" = "no"; then
     PCRE_LDFLAGS="`pcre-config --libs`"
 fi
 
-CPPFLAGS="${CPPFLAGS} ${PCRE_CFLAGS}"
+CPPFLAGS="${CPPFLAGS} ${PCRE_CPPFLAGS}"
 LDFLAGS="${LDFLAGS} ${PCRE_LDFLAGS}"
 
 # PCRE configuration (required)
@@ -762,21 +767,24 @@ AC_ARG_WITH(dnet_includes,
     AS_HELP_STRING([--with-dnet-includes=DIR],[libdnet include directory]),
     [with_dnet_includes="$withval"],[with_dnet_includes="no"])
 
+DNET_CPPFLAGS=""
 if test "x$with_dnet_includes" != "xno"; then
-    CPPFLAGS="${CPPFLAGS} -I${with_dnet_includes}"
+    DNET_CPPFLAGS="-I${with_dnet_includes}"
 else
-    CPPFLAGS="${CPPFLAGS} `dnet-config --cflags 2>/dev/null`"
+    DNET_CPPFLAGS="`dnet-config --cflags 2>/dev/null`"
 fi
+CPPFLAGS="${CPPFLAGS} ${DNET_CPPFLAGS}"
 
 AC_ARG_WITH(dnet_libraries,
     AS_HELP_STRING([--with-dnet-libraries=DIR],[libdnet library directory]),
     [with_dnet_libraries="$withval"],[with_dnet_libraries="no"])
 
 if test "x$with_dnet_libraries" != "xno"; then
-    LDFLAGS="${LDFLAGS} -L${with_dnet_libraries}"
+    DNET_LIBS="-L${with_dnet_libraries}"
 else
-    LDFLAGS="${LDFLAGS} `dnet-config --libs 2>/dev/null`"
+    DNET_LIBS="`dnet-config --libs 2>/dev/null`"
 fi
+LDFLAGS="${LDFLAGS} ${DNET_LIBS}"
 
 AC_CHECK_HEADERS(dnet.h,,DNET_H="no")
 AC_CHECK_HEADERS(dumbnet.h,,DUMBNET_H="no")
@@ -808,6 +816,7 @@ AC_ARG_WITH(daq_includes,
     AS_HELP_STRING([--with-daq-includes=DIR],[DAQ include directory]),
     [with_daq_includes="$withval"],[with_daq_includes="no"])
 
+DAQ_CPPFLAGS=""
 if test "x$with_daq_includes" != "xno"; then
     DAQ_CPPFLAGS="-I${with_daq_includes}"
     CPPFLAGS="${CPPFLAGS} ${DAQ_CPPFLAGS}"
@@ -916,8 +925,10 @@ AC_ARG_WITH(lzma_includes,
     AS_HELP_STRING([--with-lzma-includes=DIR],[liblzma include directory]),
     [with_lzma_includes="$withval"],[with_lzma_includes="no"])
 
+LZMA_CPPFLAGS=""
 if test "x$with_lzma_includes" != "xno"; then
-    CPPFLAGS="${CPPFLAGS} -I${with_lzma_includes}"
+    LZMA_CPPFLAGS="-I${with_lzma_includes}"
+    CPPFLAGS="${CPPFLAGS} ${LZMA_CPPFLAGS}"
 fi
 
 AC_ARG_WITH(lzma_libraries,
@@ -971,8 +982,10 @@ AC_ARG_WITH(openssl_includes,
     AS_HELP_STRING([--with-openssl-includes=DIR],[openssl include directory]),
     [with_openssl_includes="$withval"],[with_openssl_includes="no"])
 
+OPENSSL_CPPFLAGS=""
 if test "x$with_openssl_includes" != "xno"; then
-    CPPFLAGS="${CPPFLAGS} -I${with_openssl_includes}"
+    OPENSSL_CPPFLAGS="-I${with_openssl_includes}"
+    CPPFLAGS="${CPPFLAGS} ${OPENSSL_CPPFLAGS}"
 fi
 
 AC_ARG_WITH(openssl_libraries,
@@ -996,8 +1009,10 @@ AC_ARG_WITH(intel_soft_cpm_includes,
     AS_HELP_STRING([--with-intel-soft-cpm-includes=DIR],[Intel Soft CPM include directory]),
     [with_intel_soft_cpm_includes="$withval"],[with_intel_soft_cpm_includes="no"])
 
+INTEL_SOFT_CPM_CPPFLAGS=""
 if test "x$with_intel_soft_cpm_includes" != "xno"; then
-    CPPFLAGS="${CPPFLAGS} -I${with_intel_soft_cpm_includes}"
+    INTEL_SOFT_CPM_CPPFLAGS="-I${with_intel_soft_cpm_includes}"
+    CPPFLAGS="${CPPFLAGS} ${INTEL_SOFT_CPM_CPPFLAGS}"
 else
     enable_intel_soft_cpm="no"
 fi
@@ -1027,8 +1042,9 @@ AC_MSG_CHECKING([for hyperscan pkg-config presence])
 PKG_CHECK_EXISTS([libhs], [ have_hyperscan_pkgconfig="yes" ], [ have_hyperscan_pkgconfig="no" ])
 AC_MSG_RESULT(${have_hyperscan_pkgconfig})
 
+HYPERSCAN_CPPFLAGS=""
 if test "${have_hyperscan_pkgconfig}" = "yes" ; then
-    HYPERSCAN_CFLAGS=`${PKG_CONFIG} --cflags libhs`
+    HYPERSCAN_CPPFLAGS=`${PKG_CONFIG} --cflags libhs`
     HYPERSCAN_LDFLAGS=`${PKG_CONFIG} --libs-only-L libhs`
 fi
 
@@ -1037,7 +1053,7 @@ AC_ARG_WITH(hyperscan_includes,
     [with_hyperscan_includes="$withval"],[with_hyperscan_includes="no"])
 
 if test "x$with_hyperscan_includes" != "xno"; then
-    HYPERSCAN_CFLAGS="-I${with_hyperscan_includes}"
+    HYPERSCAN_CPPFLAGS="-I${with_hyperscan_includes}"
 fi
 
 AC_ARG_WITH(hyperscan_libraries,
@@ -1048,7 +1064,7 @@ if test "x$with_hyperscan_libraries" != "xno"; then
     HYPERSCAN_LDFLAGS="-L${with_hyperscan_libraries}"
 fi
 
-CPPFLAGS="${CPPFLAGS} ${HYPERSCAN_CFLAGS}"
+CPPFLAGS="${CPPFLAGS} ${HYPERSCAN_CPPFLAGS}"
 LDFLAGS="${LDFLAGS} ${HYPERSCAN_LDFLAGS}"
 
 AC_CHECK_HEADERS(hs.h, HS_HEADERS="yes", HS_HEADERS="no")
@@ -1096,10 +1112,20 @@ AC_SUBST(AM_CXXFLAGS)
 AC_SUBST(AM_LDFLAGS)
 
 AC_SUBST(snort2lua_CPPFLAGS)
-AC_SUBST(DAQ_CPPFLAGS)
 
 AC_SUBST(CPPUTEST_CPPFLAGS)
 AC_SUBST(CPPUTEST_LDFLAGS)
+
+AC_SUBST(PCAP_CPPFLAGS)
+AC_SUBST(HWLOC_CPPFLAGS)
+AC_SUBST(LUAJIT_CPPFLAGS)
+AC_SUBST(PCRE_CPPFLAGS)
+AC_SUBST(DNET_CPPFLAGS)
+AC_SUBST(DAQ_CPPFLAGS)
+AC_SUBST(LZMA_CPPFLAGS)
+AC_SUBST(OPENSSL_CPPFLAGS)
+AC_SUBST(INTEL_SOFT_CPM_CPPFLAGS)
+AC_SUBST(HYPERSCAN_CPPFLAGS)
 
 AC_CONFIG_FILES([ \
 snort.pc \
