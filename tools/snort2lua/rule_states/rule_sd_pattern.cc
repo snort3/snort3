@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// rule_metadata.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// rule_sd_pattern.cc author Victor Roemer <viroemer@cisco.com>
 
 #include <sstream>
 #include <vector>
