@@ -710,7 +710,7 @@ AC_MSG_RESULT(${have_libpcre_pkgconfig})
 
 PCRE_CPPFLAGS=""
 if test "${have_libpcre_pkgconfig}" = "yes" ; then
-    PCRE_CFLAGS=`${PKG_CONFIG} --cflags libpcre`
+    PCRE_CPPFLAGS=`${PKG_CONFIG} --cflags libpcre`
     PCRE_LDFLAGS=`${PKG_CONFIG} --libs-only-L libpcre`
 fi
 
